@@ -491,6 +491,10 @@ static bool channel_write(Channel *channel, WBuffer *buffer)
 {
   bool success;
 
+  if (channel->closed) {
+    return false;
+  }
+
   if (channel->is_job) {
     success = job_write(channel->data.job, buffer);
   } else {
