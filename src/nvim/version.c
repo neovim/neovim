@@ -917,6 +917,7 @@ void intro_message(int colon)
     "",
     N_("type  :q<Enter>               to exit         "),
     N_("type  :help<Enter>  or  <F1>  for on-line help"),
+    N_("type  :help nvim<Enter>       for Neovim help "),
   };
 
   // blanklines = screen height - # message lines
