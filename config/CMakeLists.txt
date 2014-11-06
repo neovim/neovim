@@ -43,7 +43,14 @@ check_function_exists(fsync HAVE_FSYNC)
 check_function_exists(getpwent HAVE_GETPWENT)
 check_function_exists(getpwnam HAVE_GETPWNAM)
 check_function_exists(getpwuid HAVE_GETPWUID)
+
+check_include_files(iconv.h HAVE_ICONV_H)
+check_library_exists(iconv iconv "" HAVE_ICONV_LIB)
+if(HAVE_ICONV_LIB)
+  set(CMAKE_REQUIRED_LIBRARIES iconv)
+endif()
 check_function_exists(iconv HAVE_ICONV)
+
 check_function_exists(lstat HAVE_LSTAT)
 if(NOT HAVE_LSTAT)
   # os_unix.c uses lstat.c

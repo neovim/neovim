@@ -23,6 +23,7 @@
 #endif
 
 #include "nvim/ex_eval.h"
+#include "nvim/iconv.h"
 #include "nvim/mbyte.h"
 #include "nvim/menu.h"
 #include "nvim/syntax_defs.h"

@@ -28,6 +28,7 @@
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
 #include "nvim/hashtab.h"
+#include "nvim/iconv.h"
 #include "nvim/if_cscope.h"
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
@@ -275,7 +276,7 @@ int main(int argc, char **argv)
       // initial screen size of 80x20
       full_screen = true;
       set_shellsize(80, 20, false);
-    } else { 
+    } else {
       // set terminal name and get terminal capabilities (will set full_screen)
       // Do some initialization of the screen
       termcapinit(params.term);
@@ -546,7 +547,7 @@ int main(int argc, char **argv)
  * Also used to handle ":visual" command after ":global": execute Normal mode
  * commands, return when entering Ex mode.  "noexmode" is TRUE then.
  */
-void 
+void
 main_loop (
     int cmdwin,                 /* TRUE when working in the command-line window */
     int noexmode               /* TRUE when return on entering Ex mode */
@@ -842,7 +843,7 @@ void getout(int exitval)
 /*
  * Get a (optional) count for a Vim argument.
  */
-static int 
+static int
 get_number_arg (
     char_u *p,             /* pointer to argument */
     int *idx,           /* index in argument, is incremented */
@@ -2062,7 +2063,7 @@ static void main_start_gui(void)
  * Get an environment variable, and execute it as Ex commands.
  * Returns FAIL if the environment variable was not executed, OK otherwise.
  */
-int 
+int
 process_env (
     char_u *env,
     int is_viminit             /* when TRUE, called for VIMINIT */
@@ -2113,7 +2114,7 @@ static int file_owned(char *fname)
 /*
  * Give an error message main_errors["n"] and exit.
  */
-static void 
+static void
 mainerr (
     int n,                  /* one of the ME_ defines */
     char_u *str       /* extra argument or NULL */
