@@ -18,6 +18,15 @@ if(NOT DEFINED TARGET)
   message(FATAL_ERROR "TARGET must be defined.")
 endif()
 
+set(SRC_DIR ${PREFIX}/src/${TARGET})
+
+# Check whether the source has been downloaded. If true, skip it.
+# Useful for external downloads like homebrew.
+if(EXISTS "${SRC_DIR}" AND IS_DIRECTORY "${SRC_DIR}")
+  message(STATUS "${SRC_DIR} is found, skipping download and extraction. ")
+  return()
+endif()
+
 # Taken from ExternalProject_Add.  Let's hope we can drop this one day when
 # ExternalProject_Add allows you to disable SHOW_PROGRESS on the file download.
 if(TIMEOUT)
@@ -64,8 +73,6 @@ if(NOT status_code EQUAL 0)
 endif()
 
 message(STATUS "downloading... done")
-
-set(SRC_DIR ${PREFIX}/src/${TARGET})
 
 # Slurped from a generated extract-TARGET.cmake file.
 message(STATUS "extracting...
