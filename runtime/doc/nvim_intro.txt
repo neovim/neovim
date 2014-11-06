@@ -4,7 +4,7 @@
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
 
 
-Introduction to Nvim						   *nvim-intro*
+Introduction to Nvim					*nvim* *nvim-intro*
 
 This is an introduction to Vim users that are just getting started with Nvim.
 It is not meant for Vim beginners. For a basic introduction to Vim,
