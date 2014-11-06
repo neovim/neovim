@@ -22,21 +22,21 @@ option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAJIT "Use the bundled version of luajit." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAROCKS "Use the bundled version of luarocks." ${USE_BUNDLED})
 
-# TODO: add windows support
-
-find_program(MAKE_PRG NAMES gmake make)
-if(MAKE_PRG)
-  execute_process(
-    COMMAND "${MAKE_PRG}" --version
-    OUTPUT_VARIABLE MAKE_VERSION_INFO)
-  if(NOT "${OUTPUT_VARIABLE}" MATCHES ".*GNU.*")
-    unset(MAKE_PRG)
+if(UNIX)
+  find_program(MAKE_PRG NAMES gmake make)
+  if(MAKE_PRG)
+    execute_process(
+      COMMAND "${MAKE_PRG}" --version
+      OUTPUT_VARIABLE MAKE_VERSION_INFO)
+    if(NOT "${OUTPUT_VARIABLE}" MATCHES ".*GNU.*")
+      unset(MAKE_PRG)
+    endif()
   endif()
-endif()
-if(NOT MAKE_PRG)
-  message(FATAL_ERROR "GNU Make is required to build the dependencies.")
-else()
-  message(STATUS "Found GNU Make at ${MAKE_PRG}")
+  if(NOT MAKE_PRG)
+    message(FATAL_ERROR "GNU Make is required to build the dependencies.")
+  else()
+    message(STATUS "Found GNU Make at ${MAKE_PRG}")
+  endif()
 endif()
 
 # When using make, use the $(MAKE) variable to avoid warning about the job
