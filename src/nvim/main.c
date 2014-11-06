@@ -291,8 +291,9 @@ int main(int argc, char **argv)
   win_init_size();
   /* Set the 'diff' option now, so that it can be checked for in a .vimrc
    * file.  There is no buffer yet though. */
-  if (params.diff_mode)
-    diff_win_options(firstwin, FALSE);
+  if (params.diff_mode) {
+    diff_win_options(firstwin, false);
+  }
 
   cmdline_row = Rows - p_ch;
   msg_row = cmdline_row;
@@ -476,7 +477,7 @@ int main(int argc, char **argv)
   if (params.diff_mode) {
     /* set options in each window for "vimdiff". */
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      diff_win_options(wp, TRUE);
+      diff_win_options(wp, true);
     }
   }
 

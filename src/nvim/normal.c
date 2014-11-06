@@ -7247,7 +7247,7 @@ static void nv_put(cmdarg_T *cap)
     /* "dp" is ":diffput" */
     if (cap->oap->op_type == OP_DELETE && cap->cmdchar == 'p') {
       clearop(cap->oap);
-      nv_diffgetput(TRUE);
+      nv_diffgetput(true);
     } else
       clearopbeep(cap->oap);
   } else {
@@ -7351,7 +7351,7 @@ static void nv_open(cmdarg_T *cap)
   /* "do" is ":diffget" */
   if (cap->oap->op_type == OP_DELETE && cap->cmdchar == 'o') {
     clearop(cap->oap);
-    nv_diffgetput(FALSE);
+    nv_diffgetput(false);
   } else if (VIsual_active) /* switch start and end of visual */
     v_swap_corners(cap->cmdchar);
   else
