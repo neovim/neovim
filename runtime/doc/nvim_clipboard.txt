@@ -12,24 +12,24 @@ will be implemented by UI programs, which connect to Nvim via |msgpack-rpc|.
 Even though externalized UIs are not available yet, there's a workaround that
 enables clipboard usage through the python interface(which also uses
 |msgpack-rpc| and consequently can implement the clipboard methods required
-by Nvim): 
+by Nvim):
 
 - Make sure you follow the setup instructions in |nvim-python-quickstart|.
 - Install the `xerox` python module:
   >
       $ pip install xerox
 <
-- Create a ~/.vim/pythonx/nvim_clipboard.py file with the following contents:
+- Create a ~/.nvim/pythonx/nvim_clipboard.py file with the following contents:
   >
     import xerox
-     
+
     class NvimClipboard(object):
         def __init__(self, vim):
             self.provides = ['clipboard']
-     
+
         def clipboard_get(self):
             return xerox.paste().split('\n')
-        
+
         def clipboard_set(self, lines):
             xerox.copy(u'\n'.join([line.decode('utf-8') for line in lines]))
 <
