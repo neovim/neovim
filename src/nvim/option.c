@@ -1177,10 +1177,9 @@ do_set (
           errmsg = e_invarg;
           goto skip;
         }
-        arg[len] = NUL;                             /* put NUL after name */
         if (arg[1] == 't' && arg[2] == '_')         /* could be term code */
-          opt_idx = findoption(arg + 1);
-        arg[len++] = '>';                           /* restore '>' */
+          opt_idx = findoption_len(arg + 1, (size_t) (len - 1));
+        len++;
         if (opt_idx == -1)
           key = find_key_option(arg + 1);
       } else {
@@ -1193,10 +1192,7 @@ do_set (
         else
           while (ASCII_ISALNUM(arg[len]) || arg[len] == '_')
             ++len;
-        nextchar = arg[len];
-        arg[len] = NUL;                             /* put NUL after name */
-        opt_idx = findoption(arg);
-        arg[len] = nextchar;                        /* restore nextchar */
+        opt_idx = findoption_len(arg, (size_t) len);
         if (opt_idx == -1)
           key = find_key_option(arg);
       }
