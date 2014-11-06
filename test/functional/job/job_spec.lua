@@ -82,7 +82,7 @@ describe('jobs', function()
 
   it('will not allow jobsend/stop on a non-existent job', function()
     eq(false, pcall(eval, "jobsend(-1, 'lol')"))
-    eq(false, pcall(eval, "jobstop(-1, 'lol')"))
+    eq(false, pcall(eval, "jobstop(-1)"))
   end)
 
   it('will not allow jobstop twice on the same job', function()
