@@ -14623,10 +14623,10 @@ static void f_tagfiles(typval_T *argvars, typval_T *rettv)
   rettv_list_alloc(rettv);
   fname = xmalloc(MAXPATHL);
 
-  int first = TRUE;
+  bool first = true;
   while (get_tagfname(&tn, first, fname) == OK) {
     list_append_string(rettv->vval.v_list, fname, -1);
-    first = FALSE;
+    first = false;
   }
 
   tagname_free(&tn);
