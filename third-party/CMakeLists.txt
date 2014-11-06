@@ -52,27 +52,31 @@ endif()
 include(ExternalProject)
 
 set(LIBUV_URL https://github.com/joyent/libuv/archive/v0.11.28.tar.gz)
+set(LIBUV_SHA1 3b70b65467ee693228b8b8385665a52690d74092)
 set(LIBUV_MD5 1a849ba4fc571d531482ed74bc7aabc4)
 
 set(MSGPACK_URL https://github.com/msgpack/msgpack-c/archive/ecf4b09acd29746829b6a02939db91dfdec635b4.tar.gz)
+set(MSGPACK_SHA1 c160ff99f20d9d0a25bea0a57f4452f1c9bde370)
 set(MSGPACK_MD5 3599eaf904b8ba0c36cea7ed80973364)
 
 set(LUAJIT_URL http://luajit.org/download/LuaJIT-2.0.3.tar.gz)
+set(LUAJIT_SHA1 2db39e7d1264918c2266b0436c313fbd12da4ceb)
 set(LUAJIT_MD5 f14e9104be513913810cd59c8c658dc0)
 
 set(LUAROCKS_URL https://github.com/keplerproject/luarocks/archive/0587afbb5fe8ceb2f2eea16f486bd6183bf02f29.tar.gz)
+set(LUAROCKS_SHA1 61a894fd5d61987bf7e7f9c3e0c5de16ba4b68c4)
 set(LUAROCKS_MD5 0f53f42909fbcd2c88be303e8f970516)
 
 if(USE_BUNDLED_LIBUV)
   ExternalProject_Add(libuv
     PREFIX ${DEPS_BUILD_DIR}
     URL ${LIBUV_URL}
-    URL_MD5 ${LIBUV_MD5}
     DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/libuv
     DOWNLOAD_COMMAND ${CMAKE_COMMAND}
       -DPREFIX=${DEPS_BUILD_DIR}
       -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/libuv
       -DURL=${LIBUV_URL}
+      -DEXPECTED_SHA1=${LIBUV_SHA1}
       -DEXPECTED_MD5=${LIBUV_MD5}
       -DTARGET=libuv
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
@@ -87,12 +91,12 @@ if(USE_BUNDLED_MSGPACK)
   ExternalProject_Add(msgpack
     PREFIX ${DEPS_BUILD_DIR}
     URL ${MSGPACK_URL}
-    URL_MD5 ${MSGPACK_MD5}
     DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/msgpack
     DOWNLOAD_COMMAND ${CMAKE_COMMAND}
       -DPREFIX=${DEPS_BUILD_DIR}
       -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/msgpack
       -DURL=${MSGPACK_URL}
+      -DEXPECTED_SHA1=${MSGPACK_SHA1}
       -DEXPECTED_MD5=${MSGPACK_MD5}
       -DTARGET=msgpack
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
@@ -114,12 +118,12 @@ if(USE_BUNDLED_LUAJIT)
   ExternalProject_Add(luajit
     PREFIX ${DEPS_BUILD_DIR}
     URL ${LUAJIT_URL}
-    URL_MD5 ${LUAJIT_MD5}
     DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/luajit
     DOWNLOAD_COMMAND ${CMAKE_COMMAND}
       -DPREFIX=${DEPS_BUILD_DIR}
       -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/luajit
       -DURL=${LUAJIT_URL}
+      -DEXPECTED_SHA1=${LUAJIT_SHA1}
       -DEXPECTED_MD5=${LUAJIT_MD5}
       -DTARGET=luajit
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
@@ -143,12 +147,12 @@ if(USE_BUNDLED_LUAROCKS)
   ExternalProject_Add(luarocks
     PREFIX ${DEPS_BUILD_DIR}
     URL ${LUAROCKS_URL}
-    URL_MD5 ${LUAROCKS_MD5}
     DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/luarocks
     DOWNLOAD_COMMAND ${CMAKE_COMMAND}
       -DPREFIX=${DEPS_BUILD_DIR}
       -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/luarocks
       -DURL=${LUAROCKS_URL}
+      -DEXPECTED_SHA1=${LUAROCKS_SHA1}
       -DEXPECTED_MD5=${LUAROCKS_MD5}
       -DTARGET=luarocks
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
