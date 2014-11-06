@@ -4289,7 +4289,7 @@ static void check_redraw(uint32_t flags)
  * Find index for option 'arg' that has given length.
  * Return -1 if not found.
  */
-static int findoption_len(const char_u *const arg, const size_t len)
+int findoption_len(const char_u *const arg, const size_t len)
 {
   char            *s, *p;
   static short quick_tab[27] = {0, 0};          /* quick access table */
@@ -4670,7 +4670,7 @@ char_u *get_highlight_default(void)
 /*
  * Translate a string like "t_xx", "<t_xx>" or "<S-Tab>" to a key number.
  */
-static int find_key_option(const char_u *arg)
+int find_key_option_len(const char_u *arg, size_t len)
 {
   int key;
   int modifiers;
@@ -4679,18 +4679,24 @@ static int find_key_option(const char_u *arg)
    * Don't use get_special_key_code() for t_xx, we don't want it to call
    * add_termcap_entry().
    */
-  if (arg[0] == 't' && arg[1] == '_' && arg[2] && arg[3])
+  if (len >= 4 && arg[0] == 't' && arg[1] == '_')
     key = TERMCAP2KEY(arg[2], arg[3]);
   else {
     --arg;                          /* put arg at the '<' */
     modifiers = 0;
-    key = find_special_key(&arg, STRLEN(arg), &modifiers, true, true);
+    key = find_special_key(&arg, len + 1, &modifiers, true, true);
     if (modifiers) {  // can't handle modifiers here
       key = 0;
     }
   }
   return key;
 }
+
+static int find_key_option(const char_u *arg)
+{
+  return find_key_option_len(arg, STRLEN(arg));
+}
+
 
 /*
  * if 'all' == 0: show changed options
