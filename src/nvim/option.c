@@ -5010,7 +5010,7 @@ set_bool_option (
     else
       /* no need to reset curbuf->b_may_swap, ml_open_file() will check
        * buf->b_p_swf */
-      mf_close_file(curbuf, TRUE);              /* remove the swap file */
+      mf_close_file(curbuf, true);              /* remove the swap file */
   }
   /* when 'terse' is set change 'shortmess' */
   else if ((int *)varp == &p_terse) {

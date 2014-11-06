@@ -10,6 +10,7 @@
  * eval.c: Expression evaluation.
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdarg.h>
@@ -3034,10 +3035,10 @@ static char_u *cat_prefix_varname(int prefix, char_u *name)
  */
 char_u *get_user_var_name(expand_T *xp, int idx)
 {
-  static long_u gdone;
-  static long_u bdone;
-  static long_u wdone;
-  static long_u tdone;
+  static size_t gdone;
+  static size_t bdone;
+  static size_t wdone;
+  static size_t tdone;
   static int vidx;
   static hashitem_T   *hi;
   hashtab_T           *ht;
@@ -11749,7 +11750,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
       if (*p == '\n' || readlen <= 0) {
         listitem_T  *li;
         char_u      *s  = NULL;
-        long_u len = p - start;
+        size_t len = p - start;
 
         /* Finished a line.  Remove CRs before NL. */
         if (readlen > 0 && !binary) {
@@ -11760,9 +11761,10 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
             while (prevlen > 0 && prev[prevlen - 1] == '\r')
               --prevlen;
         }
-        if (prevlen == 0)
+        if (prevlen == 0) {
+          assert(len < INT_MAX);
           s = vim_strnsave(start, (int)len);
-        else {
+        } else {
           /* Change "prev" buffer to be the right size.  This way
            * the bytes are only copied once, and very long lines are
            * allocated only once.  */
@@ -18152,7 +18154,7 @@ static char_u *autoload_name(char_u *name)
  */
 char_u *get_user_func_name(expand_T *xp, int idx)
 {
-  static long_u done;
+  static size_t done;
   static hashitem_T   *hi;
   ufunc_T             *fp;
 
