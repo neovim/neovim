@@ -436,6 +436,11 @@ static void handle_request(Channel *channel, msgpack_object *request)
                                      &error,
                                      NIL,
                                      &out_buffer));
+    char buf[256];
+    snprintf(buf, sizeof(buf),
+             "Channel %" PRIu64 " sent an invalid message, closing.",
+             channel->id);
+    call_set_error(channel, buf);
     return;
   }
 
@@ -490,6 +495,10 @@ static void on_request_event(Event event)
 static bool channel_write(Channel *channel, WBuffer *buffer)
 {
   bool success;
+
+  if (channel->closed) {
+    return false;
+  }
 
   if (channel->is_job) {
     success = job_write(channel->data.job, buffer);
