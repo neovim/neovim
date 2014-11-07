@@ -4825,6 +4825,7 @@ void write_reg_contents_ex(int name,
   if (!y_append && !must_append)
     free_yank_all();
   str_to_reg(y_current, yank_type, str, len, block_len);
+  set_clipboard(name);
 
 
   /* ':let @" = "val"' should change the meaning of the "" register */

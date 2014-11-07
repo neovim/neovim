@@ -106,6 +106,18 @@ describe('clipboard usage', function()
         ]])
     reset()
 
+    -- test let @+ (issue #1427)
+    execute("let @+ = 'some'")
+    execute("let @* = ' other stuff'")
+    eq({'some'}, eval("g:test_clip['+']"))
+    eq({' other stuff'}, eval("g:test_clip['*']"))
+    feed('"+p"*p')
+    expect('some other stuff')
+    execute("let @+ .= ' more'")
+    feed('dd"+p')
+    expect('some more')
+    reset()
+
     -- the basic behavior of unnamed register should be the same
     -- even when handled by clipboard provider
     execute('set clipboard=unnamed')
