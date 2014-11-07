@@ -270,10 +270,10 @@ void job_stop(Job *job)
   }
 
   job->stopped_time = os_hrtime();
-  // Close the standard streams of the job
+  // Close the job's stdin. If the job doesn't close it's own stdout/stderr,
+  // they will be closed when the job exits(possibly due to being terminated
+  // after a timeout)
   close_job_in(job);
-  close_job_out(job);
-  close_job_err(job);
 
   if (!stop_requests++) {
     // When there's at least one stop request pending, start a timer that
