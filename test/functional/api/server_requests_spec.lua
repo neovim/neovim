@@ -4,7 +4,6 @@
 local helpers = require('test.functional.helpers')
 local clear, nvim, eval = helpers.clear, helpers.nvim, helpers.eval
 local eq, run, stop = helpers.eq, helpers.run, helpers.stop
-local restart = helpers.restart
 
 
 
@@ -15,7 +14,6 @@ describe('server -> client', function()
     clear()
     cid = nvim('get_api_info')[1]
   end)
-  teardown(restart)
 
   describe('simple call', function()
     it('works', function()
@@ -110,7 +108,7 @@ describe('server -> client', function()
           return
         end
         notified = notified + 1
-        eq('notified', eval('rpcrequest('..cid..', "notify")'))
+        eq('notified!', eval('rpcrequest('..cid..', "notify")'))
       end
 
       run(on_request, on_notification, on_setup)

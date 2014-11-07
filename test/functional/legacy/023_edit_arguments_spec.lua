@@ -35,8 +35,8 @@ describe(':edit', function()
     execute('%d')
     execute('0put a')
 
-    -- Remove empty lines
-    execute('1d | $d')
+    -- Remove empty line
+    execute('$d')
 
     -- The buffer should now contain
     expect([[

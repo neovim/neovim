@@ -1,10 +1,11 @@
+require('coxpcall')
 local Loop = require('nvim.loop')
 local MsgpackStream = require('nvim.msgpack_stream')
 local AsyncSession = require('nvim.async_session')
 local Session = require('nvim.session')
 
 local nvim_prog = os.getenv('NVIM_PROG') or 'build/bin/nvim'
-local nvim_argv = {nvim_prog, '-u', 'NONE', '-N', '--embed'}
+local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N', '--embed'}
 
 if os.getenv('VALGRIND') then
   local log_file = os.getenv('VALGRIND_LOG') or 'valgrind-%p.log'
@@ -23,74 +24,7 @@ if os.getenv('VALGRIND') then
   nvim_argv = valgrind_argv
 end
 
-local session
-
-local rawfeed
-local function restart()
-  local loop = Loop.new()
-  local msgpack_stream = MsgpackStream.new(loop)
-  local async_session = AsyncSession.new(msgpack_stream)
-  session = Session.new(async_session)
-  loop:spawn(nvim_argv)
-  rawfeed([[:function BeforeEachTest()
-    set all&
-    redir => groups
-    silent augroup
-    redir END
-    for group in split(groups)
-      exe 'augroup '.group
-      autocmd!
-      augroup END
-    endfor
-    autocmd!
-    tabnew
-    let curbufnum = eval(bufnr('%'))
-    redir => buflist
-    silent ls!
-    redir END
-    let bufnums = []
-    for buf in split(buflist, '\n')
-      let bufnum = eval(split(buf, '[ u]')[0])
-      if bufnum != curbufnum
-        call add(bufnums, bufnum)
-      endif
-    endfor
-    if len(bufnums) > 0
-      exe 'silent bwipeout! '.join(bufnums, ' ')
-    endif
-    silent tabonly
-    for k in keys(g:)
-      exe 'unlet g:'.k
-    endfor
-    filetype plugin indent off
-    mapclear
-    mapclear!
-    abclear
-    comclear
-    let regs = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-"'
-    let i = 0
-    while i < strlen(regs)
-      call setreg(regs[i], '')
-      let i = i+1
-    endwhile
-    redir => funcs
-    silent! function
-    redir END
-    for fname in split(funcs, '\n')
-      let matches = matchlist(fname, '\v^function ([^()<>]+)')
-      if type([]) == type(matches) && matches[1] !~ 'BeforeEachTest'
-        exe 'silent! delfunc '.matches[1]
-      endif
-    endfor
-    let options = ['shell', 'fileignorecase']
-    for option in options
-      exe 'set '.option.'&'
-    endfor
-  endfunction
-  ]])
-end
-
-local loop_running, last_error
+local session, loop_running, last_error
 
 local function request(method, ...)
   local status, rv = session:request(method, ...)
@@ -112,9 +46,32 @@ local function next_message()
   return session:next_message()
 end
 
+local function call_and_stop_on_error(...)
+  local status, result = copcall(...)
+  if not status then
+    session:stop()
+    last_error = result
+    return ''
+  end
+  return result
+end
+
 local function run(request_cb, notification_cb, setup_cb)
+
+  local function on_request(method, args)
+    return call_and_stop_on_error(request_cb, method, args)
+  end
+
+  local function on_notification(method, args)
+    call_and_stop_on_error(notification_cb, method, args)
+  end
+
+  local function on_setup()
+    call_and_stop_on_error(setup_cb)
+  end
+
   loop_running = true
-  session:run(request_cb, notification_cb, setup_cb)
+  session:run(on_request, on_notification, on_setup)
   loop_running = false
   if last_error then
     local err = last_error
@@ -153,7 +110,7 @@ local function buffer_slice(start, stop, buffer_idx)
 end
 
 local function nvim_replace_termcodes(input)
-  return request('vim_replace_termcodes', input, false, true, true )
+  return request('vim_replace_termcodes', input, false, true, true)
 end
 
 local function dedent(str)
@@ -178,20 +135,27 @@ local function dedent(str)
   return str
 end
 
-local function clear()
-  nvim_command('call BeforeEachTest()')
-end
-
 local function feed(...)
   for _, v in ipairs({...}) do
     nvim_feed(nvim_replace_termcodes(dedent(v)))
   end
 end
 
-function rawfeed(...)
+local function rawfeed(...)
   for _, v in ipairs({...}) do
     nvim_feed(dedent(v), 'nt')
   end
+end
+
+local function clear()
+  if session then
+    session:request('vim_command', 'qa!')
+  end
+  local loop = Loop.new()
+  local msgpack_stream = MsgpackStream.new(loop)
+  local async_session = AsyncSession.new(msgpack_stream)
+  session = Session.new(async_session)
+  loop:spawn(nvim_argv)
 end
 
 local function insert(...)
@@ -271,12 +235,11 @@ local function curtab(method, ...)
   return tabpage(method, tab, ...)
 end
 
-restart()
+clear()
 
 return {
   clear = clear,
   dedent = dedent,
-  restart = restart,
   rawfeed = rawfeed,
   insert = insert,
   feed = feed,
