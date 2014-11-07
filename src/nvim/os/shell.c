@@ -6,6 +6,7 @@
 #include <uv.h>
 
 #include "nvim/ascii.h"
+#include "nvim/dynamic_buffer.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/log.h"
 #include "nvim/os/event.h"
@@ -25,13 +26,6 @@
 #include "nvim/charset.h"
 #include "nvim/strings.h"
 #include "nvim/ui.h"
-
-#define DYNAMIC_BUFFER_INIT {NULL, 0, 0}
-
-typedef struct {
-  char *data;
-  size_t cap, len;
-} DynamicBuffer;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/shell.c.generated.h"
@@ -140,9 +134,7 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_arg)
                      emsg_silent,
                      forward_output);
 
-  if (input.data) {
-    free(input.data);
-  }
+  dynamic_buffer_clear(&input);
 
   if (output) {
     write_output(output, nread);
@@ -274,20 +266,6 @@ static int shell(const char *cmd,
   return status;
 }
 
-///  - ensures at least `desired` bytes in buffer
-///
-/// TODO(aktau): fold with kvec/garray
-static void dynamic_buffer_ensure(DynamicBuffer *buf, size_t desired)
-{
-  if (buf->cap >= desired) {
-    return;
-  }
-
-  buf->cap = desired;
-  kv_roundup32(buf->cap);
-  buf->data = xrealloc(buf->data, buf->cap);
-}
-
 static void system_data_cb(RStream *rstream, void *data, bool eof)
 {
   Job *job = data;
@@ -295,7 +273,7 @@ static void system_data_cb(RStream *rstream, void *data, bool eof)
 
   size_t nread = rstream_pending(rstream);
 
-  dynamic_buffer_ensure(buf, buf->len + nread + 1);
+  dynamic_buffer_grow(buf, nread + 1);
   rstream_read(rstream, buf->data + buf->len, nread);
 
   buf->len += nread;
@@ -371,25 +349,23 @@ static size_t word_length(const char_u *str)
 /// before we finish writing.
 static void read_input(DynamicBuffer *buf)
 {
-  size_t written = 0, l = 0, len = 0;
+  size_t written = 0;
+  ptrdiff_t len = 0;
   linenr_T lnum = curbuf->b_op_start.lnum;
   char_u *lp = ml_get(lnum);
 
   for (;;) {
-    l = strlen((char *)lp + written);
+    ptrdiff_t l = (ptrdiff_t) strlen((char *)lp + written);
     if (l == 0) {
       len = 0;
     } else if (lp[written] == NL) {
       // NL -> NUL translation
       len = 1;
-      dynamic_buffer_ensure(buf, buf->len + len);
-      buf->data[buf->len++] = NUL;
+      dynamic_buffer_append(buf, NUL);
     } else {
       char_u  *s = vim_strchr(lp + written, NL);
-      len = s == NULL ? l : (size_t)(s - (lp + written));
-      dynamic_buffer_ensure(buf, buf->len + len);
-      memcpy(buf->data + buf->len, lp + written, len);
-      buf->len += len;
+      len = s == NULL ? l : s - (lp + written);
+      dynamic_buffer_concat(buf, lp + written, len);
     }
     if (len == l) {
       // Finished a line, add a NL, unless this line should not have one.
@@ -400,8 +376,7 @@ static void read_input(DynamicBuffer *buf)
             && (lnum !=
               curbuf->b_ml.ml_line_count
               || curbuf->b_p_eol))) {
-        dynamic_buffer_ensure(buf, buf->len + 1);
-        buf->data[buf->len++] = NL;
+        dynamic_buffer_append(buf, NL);
       }
       ++lnum;
       if (lnum > curbuf->b_op_end.lnum) {
@@ -410,7 +385,7 @@ static void read_input(DynamicBuffer *buf)
       lp = ml_get(lnum);
       written = 0;
     } else if (len > 0) {
-      written += len;
+      written += (size_t) len;
     }
   }
 }
