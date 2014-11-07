@@ -11,8 +11,12 @@ describe('jobs', function()
   before_each(clear)
 
   -- Creates the string to make an autocmd to notify us.
-  local notify_str = function(expr)
-    return "au! JobActivity xxx call rpcnotify("..channel..", "..expr..")"
+  local notify_str = function(expr1, expr2)
+    local str = "au! JobActivity xxx call rpcnotify("..channel..", "..expr1
+    if expr2 ~= nil then
+      str = str..", "..expr2
+    end
+    return str..")"
   end
 
   local notify_job = function()
@@ -33,21 +37,52 @@ describe('jobs', function()
   end)
 
   it('allows interactive commands', function()
-    nvim('command', notify_str('v:job_data[2]'))
+    nvim('command', notify_str('v:job_data[1]', 'v:job_data[2]'))
     nvim('command', "let j = jobstart('xxx', 'cat', ['-'])")
     neq(0, eval('j'))
-    nvim('command', "call jobsend(j, 'abc')")
-    eq({'notification', 'abc', {}}, next_message())
-    nvim('command', "call jobsend(j, '123')")
-    eq({'notification', '123', {}}, next_message())
+    nvim('command', 'call jobsend(j, "abc\\n")')
+    eq({'notification', 'stdout', {{'abc'}}}, next_message())
+    nvim('command', 'call jobsend(j, "123\\nxyz\\n")')
+    eq({'notification', 'stdout', {{'123', 'xyz'}}}, next_message())
+    nvim('command', 'call jobsend(j, [123, "xyz"])')
+    eq({'notification', 'stdout', {{'123', 'xyz'}}}, next_message())
     nvim('command', notify_str('v:job_data[1])'))
     nvim('command', "call jobstop(j)")
     eq({'notification', 'exit', {}}, next_message())
   end)
 
+  it('preserves NULs', function()
+    -- Make a file with NULs in it.
+    local filename = os.tmpname()
+    local file = io.open(filename, "w")
+    file:write("abc\0def\n")
+    file:close()
+
+    -- v:job_data preserves NULs.
+    nvim('command', notify_str('v:job_data[1]', 'v:job_data[2]'))
+    nvim('command', "let j = jobstart('xxx', 'cat', ['"..filename.."'])")
+    eq({'notification', 'stdout', {{'abc\ndef'}}}, next_message())
+    os.remove(filename)
+
+    -- jobsend() preserves NULs.
+    nvim('command', "let j = jobstart('xxx', 'cat', ['-'])")
+    nvim('command', [[call jobsend(j, ["123\n456"])]])
+    eq({'notification', 'stdout', {{'123\n456'}}}, next_message())
+    nvim('command', "call jobstop(j)")
+  end)
+
+  it('will hold data if it does not end in a newline', function()
+    nvim('command', notify_str('v:job_data[1]', 'v:job_data[2]'))
+    nvim('command', "let j = jobstart('xxx', 'cat', ['-'])")
+    nvim('command', 'call jobsend(j, "abc\\nxyz")')
+    eq({'notification', 'stdout', {{'abc'}}}, next_message())
+    nvim('command', "call jobstop(j)")
+    eq({'notification', 'stdout', {{'xyz'}}}, next_message())
+  end)
+
   it('will not allow jobsend/stop on a non-existent job', function()
     eq(false, pcall(eval, "jobsend(-1, 'lol')"))
-    eq(false, pcall(eval, "jobstop(-1, 'lol')"))
+    eq(false, pcall(eval, "jobstop(-1)"))
   end)
 
   it('will not allow jobstop twice on the same job', function()
@@ -65,9 +100,9 @@ describe('jobs', function()
     nvim('command', notify_job())
     nvim('command', "let j = jobstart('xxx', 'cat', ['-'])")
     local jobid = nvim('eval', 'j')
-    nvim('eval', 'jobsend(j, "abc\ndef")')
+    nvim('eval', 'jobsend(j, "abcdef")')
     nvim('eval', 'jobstop(j)')
-    eq({'notification', 'j', {{jobid, 'stdout', 'abc\ndef'}}}, next_message())
+    eq({'notification', 'j', {{jobid, 'stdout', {'abcdef'}}}}, next_message())
     eq({'notification', 'j', {{jobid, 'exit'}}}, next_message())
   end)
 end)

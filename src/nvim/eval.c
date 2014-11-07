@@ -453,6 +453,7 @@ static dictitem_T vimvars_var;                  /* variable used for v: */
 typedef struct {
   int id;
   char *name, *type, *received;
+  size_t received_len;
 } JobEvent;
 #define JobEventFreer(x)
 KMEMPOOL_INIT(JobEventPool, JobEvent, JobEventFreer)
@@ -10592,9 +10593,9 @@ static void f_jobsend(typval_T *argvars, typval_T *rettv)
     return;
   }
 
-  if (argvars[0].v_type != VAR_NUMBER || argvars[1].v_type != VAR_STRING) {
-    // First argument is the job id and second is the string to write to 
-    // the job's stdin
+  if (argvars[0].v_type != VAR_NUMBER || argvars[1].v_type == VAR_UNKNOWN) {
+    // First argument is the job id and second is the string or list to write
+    // to the job's stdin
     EMSG(_(e_invarg));
     return;
   }
@@ -10607,10 +10608,15 @@ static void f_jobsend(typval_T *argvars, typval_T *rettv)
     return;
   }
 
-  WBuffer *buf = wstream_new_buffer(xstrdup((char *)argvars[1].vval.v_string),
-                                    strlen((char *)argvars[1].vval.v_string),
-                                    1,
-                                    free);
+  ssize_t input_len;
+  char *input = (char *) save_tv_as_string(&argvars[1], &input_len, true);
+  if (input_len < 0) {
+    return;  // Error handled by save_tv_as_string().
+  } else if (input_len == 0) {
+    return;  // Not an error, but nothing to do.
+  }
+
+  WBuffer *buf = wstream_new_buffer(input, input_len, 1, free);
   rettv->vval.v_number = job_write(job, buf);
 }
 
@@ -14433,6 +14439,29 @@ static void f_synstack(typval_T *argvars, typval_T *rettv)
   }
 }
 
+static list_T* string_to_list(char_u *str, size_t len)
+{
+  list_T *list = list_alloc();
+
+  // Copy each line to a list element using NL as the delimiter.
+  for (size_t i = 0; i < len; i++) {
+    char_u *start = str + i;
+    size_t line_len = (char_u *) xmemscan(start, NL, len - i) - start;
+    i += line_len;
+
+    // Don't use a str function to copy res as it may contains NULs.
+    char_u *s = xmemdupz(start, line_len);
+    memchrsub(s, NUL, NL, line_len);  // Replace NUL with NL to avoid truncation
+
+    listitem_T  *li = listitem_alloc();
+    li->li_tv.v_type = VAR_STRING;
+    li->li_tv.vval.v_string = s;
+    list_append(list, li);
+  }
+
+  return list;
+}
+
 static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv, 
                                        bool retlist)
 {
@@ -14445,7 +14474,7 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
 
   // get input to the shell command (if any), and its length
   ssize_t input_len;
-  char *input = (char *) save_tv_as_string(&argvars[1], &input_len);
+  char *input = (char *) save_tv_as_string(&argvars[1], &input_len, false);
   if (input_len == -1) {
     return;
   }
@@ -14467,23 +14496,9 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
   }
 
   if (retlist) {
-    list_T *list = rettv_list_alloc(rettv);
-
-    // Copy each line to a list element using NL as the delimiter.
-    for (size_t i = 0; i < nread; i++) {
-      char_u *start = (char_u *) res + i;
-      size_t len = (char_u *) xmemscan(start, NL, nread - i) - start;
-      i += len;
-
-      // Don't use a str function to copy res as it may contains NULs.
-      char_u *s = xmemdupz(start, len);
-      memchrsub(s, NUL, NL, len);  // Replace NUL with NL to avoid truncation.
-
-      listitem_T  *li = listitem_alloc();
-      li->li_tv.v_type = VAR_STRING;
-      li->li_tv.vval.v_string = s;
-      list_append(list, li);
-    }
+    rettv->vval.v_list = string_to_list((char_u *) res, nread);
+    rettv->vval.v_list->lv_refcount++;
+    rettv->v_type = VAR_LIST;
 
     free(res);
   } else {
@@ -15148,9 +15163,10 @@ static bool write_list(FILE *fd, list_T *list, bool binary)
 ///
 /// @param[in]  tv   A value to store as a string.
 /// @param[out] len  The length of the resulting string or -1 on error.
+/// @param[in]  endnl If true, the output will end in a newline (if a list).
 /// @returns an allocated string if `tv` represents a VimL string, list, or
 ///          number; NULL otherwise.
-static char_u *save_tv_as_string(typval_T *tv, ssize_t *len)
+static char_u *save_tv_as_string(typval_T *tv, ssize_t *len, bool endnl)
   FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   if (tv->v_type == VAR_UNKNOWN) {
@@ -15182,13 +15198,13 @@ static char_u *save_tv_as_string(typval_T *tv, ssize_t *len)
     return NULL;
   }
 
-  char_u *ret = xmalloc(*len);
+  char_u *ret = xmalloc(*len + endnl);
   char_u *end = ret;
   for (listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
     for (char_u *s = get_tv_string(&li->li_tv); *s != NUL; s++) {
       *end++ = (*s == '\n') ? NUL : *s;
     }
-    if (li->li_next != NULL) {
+    if (endnl || li->li_next != NULL) {
       *end++ = '\n';
     }
   }
@@ -19528,15 +19544,33 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
 
 // JobActivity autocommands will execute vimscript code, so it must be executed
 // on Nvim main loop
-#define push_job_event(j, r, t)                                      \
+#define push_job_event(j, r, t, eof)                                 \
   do {                                                               \
     JobEvent *event_data = kmp_alloc(JobEventPool, job_event_pool);  \
     event_data->received = NULL;                                     \
+    size_t read_count = 0;                                           \
     if (r) {                                                         \
-      size_t read_count = rstream_pending(r);                        \
-      event_data->received = xmalloc(read_count + 1);                \
+      if (eof) {                                                     \
+        read_count = rstream_pending(r);                             \
+      } else {                                                       \
+        char *read = rstream_read_ptr(r);                            \
+        char *lastnl = xmemrchr(read, NL, rstream_pending(r));       \
+        if (lastnl) {                                                \
+          read_count = (size_t) (lastnl - read) + 1;                 \
+        } else if (rstream_available(r) == 0) {                      \
+          /* No newline or room to grow; flush everything. */        \
+          read_count = rstream_pending(r);                           \
+        }                                                            \
+      }                                                              \
+      if (read_count == 0) {                                         \
+        /* Either we're at EOF or we need to wait until next time */ \
+        /* to receive a '\n. */                                      \
+        kmp_free(JobEventPool, job_event_pool, event_data);          \
+        return;                                                      \
+      }                                                              \
+      event_data->received_len = read_count;                         \
+      event_data->received = xmallocz(read_count);                   \
       rstream_read(r, event_data->received, read_count);             \
-      event_data->received[read_count] = NUL;                        \
     }                                                                \
     event_data->id = job_id(j);                                      \
     event_data->name = job_data(j);                                  \
@@ -19549,31 +19583,33 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
 
 static void on_job_stdout(RStream *rstream, void *data, bool eof)
 {
-  if (!eof) {
-    push_job_event(data, rstream, "stdout");
+  if (rstream_pending(rstream)) {
+    push_job_event(data, rstream, "stdout", eof);
   }
 }
 
 static void on_job_stderr(RStream *rstream, void *data, bool eof)
 {
-  if (!eof) {
-    push_job_event(data, rstream, "stderr");
+  if (rstream_pending(rstream)) {
+    push_job_event(data, rstream, "stderr", eof);
   }
 }
 
 static void on_job_exit(Job *job, void *data)
 {
-  push_job_event(job, NULL, "exit");
+  push_job_event(job, NULL, "exit", true);
 }
 
 static void on_job_event(Event event)
 {
   JobEvent *data = event.data;
-  apply_job_autocmds(data->id, data->name, data->type, data->received);
+  apply_job_autocmds(data->id, data->name, data->type,
+                     data->received, data->received_len);
   kmp_free(JobEventPool, job_event_pool, data);
 }
 
-static void apply_job_autocmds(int id, char *name, char *type, char *received)
+static void apply_job_autocmds(int id, char *name, char *type,
+                               char *received, size_t received_len)
 {
   // Create the list which will be set to v:job_data
   list_T *list = list_alloc();
@@ -19582,10 +19618,14 @@ static void apply_job_autocmds(int id, char *name, char *type, char *received)
 
   if (received) {
     listitem_T *str_slot = listitem_alloc();
-    str_slot->li_tv.v_type = VAR_STRING;
+    str_slot->li_tv.v_type = VAR_LIST;
     str_slot->li_tv.v_lock = 0;
-    str_slot->li_tv.vval.v_string = (uint8_t *)received;
+    str_slot->li_tv.vval.v_list =
+      string_to_list((char_u *) received, received_len);
+    str_slot->li_tv.vval.v_list->lv_refcount++;
     list_append(list, str_slot);
+
+    free(received);
   }
 
   // Update v:job_data for the autocommands

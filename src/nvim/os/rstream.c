@@ -190,6 +190,18 @@ RStream * rstream_new(rstream_cb cb, RBuffer *buffer, void *data)
   return rv;
 }
 
+/// Returns the read pointer used by the rstream.
+char *rstream_read_ptr(RStream *rstream)
+{
+  return rbuffer_read_ptr(rstream->buffer);
+}
+
+/// Returns the number of bytes before the rstream is full.
+size_t rstream_available(RStream *rstream)
+{
+  return rbuffer_available(rstream->buffer);
+}
+
 /// Frees all memory allocated for a RStream instance
 ///
 /// @param rstream The `RStream` instance

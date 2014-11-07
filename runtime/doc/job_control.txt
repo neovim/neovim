@@ -47,9 +47,9 @@ event. The best way to understand is with a complete example:
     
     function JobHandler()
       if v:job_data[1] == 'stdout'
-        let str = 'shell '. v:job_data[0].' stdout: '.v:job_data[2]
+        let str = 'shell '. v:job_data[0].' stdout: '.join(v:job_data[2])
       elseif v:job_data[1] == 'stderr'
-        let str = 'shell '.v:job_data[0].' stderr: '.v:job_data[2]
+        let str = 'shell '.v:job_data[0].' stderr: '.join(v:job_data[2])
       else
         let str = 'shell '.v:job_data[0].' exited'
       endif
@@ -80,8 +80,8 @@ Here's what is happening:
   following elements:
   0: The job id
   1: The kind of activity: one of "stdout", "stderr" or "exit"
-  2: When "activity" is "stdout" or "stderr", this will contain the data read
-     from stdout or stderr
+  2: When "activity" is "stdout" or "stderr", this will contain a list of
+     lines read from stdout or stderr
 
 To send data to the job's stdin, one can use the |jobsend()| function, like
 this:
