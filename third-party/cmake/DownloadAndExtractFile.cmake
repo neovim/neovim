@@ -10,8 +10,8 @@ if(NOT DEFINED DOWNLOAD_DIR)
   message(FATAL_ERROR "DOWNLOAD_DIR must be defined.")
 endif()
 
-if(NOT DEFINED EXPECTED_MD5)
-  message(FATAL_ERROR "EXPECTED_MD5 must be defined.")
+if((NOT DEFINED EXPECTED_SHA1) OR (NOT DEFINED EXPECTED_MD5))
+  message(FATAL_ERROR "EXPECTED_SHA1 or EXPECTED_MD5 must be defined.")
 endif()
 
 if(NOT DEFINED TARGET)
@@ -46,9 +46,15 @@ message(STATUS "downloading...
      dst='${file}'
      timeout='${timeout_msg}'")
 
+if((DEFINED EXPECTED_SHA1) AND (${CMAKE_VERSION} VERSION_GREATER 2.8.10))
+  set(hash_args EXPECTED_HASH SHA1=${EXPECTED_SHA1})
+else()
+  set(hash_args EXPECTED_MD5 ${EXPECTED_MD5})
+endif()
+
 file(DOWNLOAD ${URL} ${file}
   ${timeout_args}
-  EXPECTED_MD5 ${EXPECTED_MD5}
+  ${hash_args}
   STATUS status
   LOG log)
 
