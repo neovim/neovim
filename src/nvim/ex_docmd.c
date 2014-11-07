@@ -5084,7 +5084,7 @@ static void ex_highlight(exarg_T *eap)
 {
   if (*eap->arg == NUL && eap->cmd[2] == '!')
     MSG(_("Greetings, Vim user!"));
-  do_highlight(eap->arg, eap->forceit, FALSE);
+  do_highlight(eap->arg, eap->forceit, false);
 }
 
 

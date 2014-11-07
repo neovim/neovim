@@ -14236,7 +14236,7 @@ static void f_synID(typval_T *argvars, typval_T *rettv)
   int id = 0;
   long lnum;
   long col;
-  int trans;
+  bool trans;
   bool transerr = false;
 
   lnum = get_tv_lnum(argvars);                  /* -1 on type error */
@@ -14245,7 +14245,7 @@ static void f_synID(typval_T *argvars, typval_T *rettv)
 
   if (!transerr && lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count
       && col >= 0 && col < (long)STRLEN(ml_get(lnum)))
-    id = syn_get_id(curwin, lnum, (colnr_T)col, trans, NULL, FALSE);
+    id = syn_get_id(curwin, lnum, (colnr_T)col, trans, NULL, false);
 
   rettv->vval.v_number = id;
 }
@@ -14367,7 +14367,7 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv)
   rettv_list_alloc(rettv);
   if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count && col >= 0
       && col <= (long)STRLEN(ml_get(lnum)) && curwin->w_p_cole > 0) {
-    (void)syn_get_id(curwin, lnum, col, FALSE, NULL, FALSE);
+    (void)syn_get_id(curwin, lnum, col, false, NULL, false);
     syntax_flags = get_syntax_info(&matchid);
 
     // get the conceal character
@@ -14410,7 +14410,7 @@ static void f_synstack(typval_T *argvars, typval_T *rettv)
       && col >= 0
       && col <= (long)STRLEN(ml_get(lnum))) {
     rettv_list_alloc(rettv);
-    (void)syn_get_id(curwin, lnum, (colnr_T)col, FALSE, NULL, TRUE);
+    (void)syn_get_id(curwin, lnum, (colnr_T)col, false, NULL, true);
 
     int id;
     int i = 0;

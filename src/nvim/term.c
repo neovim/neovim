@@ -4256,7 +4256,7 @@ static void got_code_from_term(char_u *code, int len)
            * might work. */
           set_keep_msg_from_hist();
           set_color_count(i);
-          init_highlight(TRUE, FALSE);
+          init_highlight(true, false);
 #ifdef DEBUG_TERMRESPONSE
           {
             char buf[100];

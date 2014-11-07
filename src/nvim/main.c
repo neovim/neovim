@@ -304,7 +304,7 @@ int main(int argc, char **argv)
   msg_scroll = TRUE;
   no_wait_return = TRUE;
 
-  init_highlight(TRUE, FALSE);   /* set the default highlight groups */
+  init_highlight(true, false);   /* set the default highlight groups */
   TIME_MSG("init highlight");
 
   /* Set the break level after the terminal is initialized. */

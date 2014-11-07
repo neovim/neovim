@@ -398,7 +398,7 @@ typedef struct {
   hashtab_T b_keywtab;                  /* syntax keywords hash table */
   hashtab_T b_keywtab_ic;               /* idem, ignore case */
   int b_syn_error;                      /* TRUE when error occurred in HL */
-  int b_syn_ic;                         /* ignore case for :syn cmds */
+  bool b_syn_ic;                        /* ignore case for :syn cmds */
   int b_syn_spell;                      /* SYNSPL_ values */
   garray_T b_syn_patterns;              /* table for syntax patterns */
   garray_T b_syn_clusters;              /* table for syntax clusters */
@@ -416,7 +416,7 @@ typedef struct {
   syn_time_T b_syn_linecont_time;
   int b_syn_linecont_ic;                /* ignore-case flag for above */
   int b_syn_topgrp;                     /* for ":syntax include" */
-  int b_syn_conceal;                    /* auto-conceal for :syn cmds */
+  bool b_syn_conceal;                   /* auto-conceal for :syn cmds */
   int b_syn_folditems;                  /* number of patterns with the HL_FOLD
                                            flag set */
   /*

@@ -2150,7 +2150,7 @@ spell_move_to (
             if (has_syntax) {
               col = (int)(p - buf);
               (void)syn_get_id(wp, lnum, (colnr_T)col,
-                  FALSE, &can_spell, FALSE);
+                  false, &can_spell, false);
               if (!can_spell)
                 attr = HLF_COUNT;
             } else

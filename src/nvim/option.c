@@ -3907,7 +3907,7 @@ did_set_string_option (
     if (check_opt_strings(p_bg, p_bg_values, FALSE) == OK) {
       int dark = (*p_bg == 'd');
 
-      init_highlight(FALSE, FALSE);
+      init_highlight(false, false);
 
       if (dark != (*p_bg == 'd')
           && get_var_value((char_u *)"g:colors_name") != NULL) {
@@ -3918,7 +3918,7 @@ did_set_string_option (
         free_string_option(p_bg);
         p_bg = vim_strsave((char_u *)(dark ? "dark" : "light"));
         check_string_option(&p_bg);
-        init_highlight(FALSE, FALSE);
+        init_highlight(false, false);
       }
     } else
       errmsg = e_invarg;
@@ -4180,7 +4180,7 @@ did_set_string_option (
           T_CCO = empty_option;
         }
         /* We now have a different color setup, initialize it again. */
-        init_highlight(TRUE, FALSE);
+        init_highlight(true, false);
       }
     }
     ttest(false);
