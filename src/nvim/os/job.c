@@ -139,6 +139,7 @@ Job *job_start(char **argv,
 
   if (i == MAX_RUNNING_JOBS) {
     // No free slots
+    shell_free_argv(argv);
     *status = 0;
     return NULL;
   }
