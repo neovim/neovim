@@ -11,6 +11,7 @@ if os.getenv('VALGRIND') then
   local log_file = os.getenv('VALGRIND_LOG') or 'valgrind-%p.log'
   local valgrind_argv = {'valgrind', '-q', '--tool=memcheck',
                          '--leak-check=yes', '--track-origins=yes',
+                         '--show-possibly-lost=no',
                          '--suppressions=.valgrind.supp',
                          '--log-file='..log_file}
   if os.getenv('VALGRIND_GDB') then
