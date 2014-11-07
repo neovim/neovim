@@ -10,6 +10,7 @@
  * ex_cmds.c: some functions for command line commands
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <string.h>
@@ -2765,9 +2766,12 @@ do_ecmd (
         /* Autocommands may open a new window and leave oldwin open
          * which leads to crashes since the above call sets
          * oldwin->w_buffer to NULL. */
-        if (curwin != oldwin && oldwin != aucmd_win
-            && win_valid(oldwin) && oldwin->w_buffer == NULL)
-          win_close(oldwin, FALSE);
+        if (curwin != oldwin && oldwin != aucmd_win && win_valid(oldwin)) {
+          assert(oldwin);
+          if (oldwin->w_buffer == NULL) {
+            win_close(oldwin, FALSE);
+          }
+        }
 
         if (aborting()) {           /* autocmds may abort script processing */
           free(new_name);
