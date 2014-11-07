@@ -25,7 +25,7 @@ describe('writing and reading a file of over 100 Kbyte', function()
     execute('6005yank A')
     execute('%d')
     execute('0put a')
-    execute('1d | $d')
+    execute('$d')
     execute('w!')
 
     expect([[

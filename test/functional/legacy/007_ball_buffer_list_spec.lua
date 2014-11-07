@@ -51,7 +51,7 @@ describe(':ball', function()
     execute('bf')
     execute('%d')
     execute('0put=@a')
-    execute('1d | $d')
+    execute('$d')
 
     expect([[
       start of test file Xxx4

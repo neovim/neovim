@@ -31,7 +31,7 @@ describe('CTRL-W CTRL-I', function()
 
     -- Clean buffer and put register
     feed('ggdG"ap')
-    execute('1,2d')
+    execute('1d')
 
     -- The buffer should now contain:
     expect([[

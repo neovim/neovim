@@ -50,7 +50,7 @@ describe('argument list', function()
 
     execute('%d')
     execute('0put=@a')
-    execute('1d | $d')
+    execute('$d')
 
     eq(dedent([[
       start of test file Xxx1
