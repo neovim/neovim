@@ -1516,7 +1516,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       op_shift(oap, TRUE,
           oap->is_VIsual ? (int)cap->count1 :
           1);
-      auto_format(FALSE, TRUE);
+      auto_format(false, true);
       break;
 
     case OP_JOIN_NS:
@@ -1528,7 +1528,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         beep_flush();
       else {
         do_join(oap->line_count, oap->op_type == OP_JOIN, TRUE, TRUE, true);
-        auto_format(FALSE, TRUE);
+        auto_format(false, true);
       }
       break;
 
@@ -1541,7 +1541,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         (void)op_delete(oap);
         if (oap->motion_type == MLINE && has_format_option(FO_AUTO))
           u_save_cursor();                  /* cursor line wasn't saved yet */
-        auto_format(FALSE, TRUE);
+        auto_format(false, true);
       }
       break;
 
@@ -1652,7 +1652,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
 
         /* TODO: when inserting in several lines, should format all
          * the lines. */
-        auto_format(FALSE, TRUE);
+        auto_format(false, true);
 
         if (restart_edit == 0)
           restart_edit = restart_edit_save;
@@ -7339,7 +7339,7 @@ static void nv_put(cmdarg_T *cap)
         coladvance((colnr_T)MAXCOL);
       }
     }
-    auto_format(FALSE, TRUE);
+    auto_format(false, true);
   }
 }
 

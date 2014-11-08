@@ -2280,7 +2280,8 @@ static int jumpto_tag (
   int save_secure;
   int save_magic;
   bool save_p_ws;
-  int save_p_scs, save_p_ic;
+  int save_p_scs;
+  bool save_p_ic;
   linenr_T save_lnum;
   int csave = 0;
   char_u      *str;
@@ -2432,7 +2433,7 @@ static int jumpto_tag (
       save_p_ic = p_ic;
       save_p_scs = p_scs;
       p_ws = true;              /* need 'wrapscan' for backward searches */
-      p_ic = FALSE;             /* don't ignore case now */
+      p_ic = false;             /* don't ignore case now */
       p_scs = FALSE;
       save_lnum = curwin->w_cursor.lnum;
       curwin->w_cursor.lnum = 0;        /* start search before first line */
@@ -2446,7 +2447,7 @@ static int jumpto_tag (
         /*
          * try again, ignore case now
          */
-        p_ic = TRUE;
+        p_ic = true;
         if (!do_search(NULL, pbuf[0], pbuf + 1, (long)1,
                 search_options, NULL)) {
           /*

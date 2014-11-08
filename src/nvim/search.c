@@ -308,17 +308,18 @@ void free_search_patterns(void)
 #endif
 
 /*
- * Return TRUE when case should be ignored for search pattern "pat".
+ * Return true when case should be ignored for search pattern "pat".
  * Uses the 'ignorecase' and 'smartcase' options.
  */
-int ignorecase(char_u *pat)
+bool ignorecase(char_u *pat)
 {
-  int ic = p_ic;
+  bool ic = p_ic;
 
   if (ic && !no_smartcase && p_scs
       && !(ctrl_x_mode && curbuf->b_p_inf)
-      )
+      ) {
     ic = !pat_has_uppercase(pat);
+  }
   no_smartcase = FALSE;
 
   return ic;

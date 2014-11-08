@@ -415,7 +415,7 @@ EXTERN int p_altkeymap;         /* 'altkeymap' */
 EXTERN int p_arshape;           /* 'arabicshape' */
 EXTERN int p_icon;              /* 'icon' */
 EXTERN char_u   *p_iconstring;  /* 'iconstring' */
-EXTERN int p_ic;                /* 'ignorecase' */
+EXTERN bool p_ic;               /* 'ignorecase' */
 #ifdef USE_IM_CONTROL
 EXTERN int p_imcmdline;         /* 'imcmdline' */
 EXTERN int p_imdisable;         /* 'imdisable' */
