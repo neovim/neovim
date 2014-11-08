@@ -12,6 +12,26 @@ set(DEPS_BIN_DIR "${DEPS_INSTALL_DIR}/bin")
 
 list(APPEND CMAKE_PREFIX_PATH ${DEPS_INSTALL_DIR})
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  # CMake tries to treat /sw and /opt/local as extension of the system path, but
+  # that doesn't really work out very well.  Once you have a dependency that
+  # resides there and have to add it as an include directory, then any other
+  # dependency that could be satisfied from there must be--otherwise you can end
+  # up with conflicting versions.  So, let's make them more of a priority having
+  # them be included as one of the first places to look for dependencies.
+  list(APPEND CMAKE_PREFIX_PATH /sw /opt/local)
+
+  # Work around some old, broken detection by CMake for knowing when to use the
+  # isystem flag.  Apple's compilers have supported this for quite some time
+  # now.
+  if(CMAKE_COMPILER_IS_GNUCC)
+    set(CMAKE_INCLUDE_SYSTEM_FLAG_C "-isystem ")
+  endif()
+  if(CMAKE_COMPILER_IS_GNUCXX)
+    set(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "-isystem ")
+  endif()
+endif()
+
 # Version tokens
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC NVIM_VERSION_COMMIT)
@@ -30,17 +50,6 @@ if(GIT_TIMESTAMP)
 endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-# Work around some old, broken detection by CMake for knowing when to use the
-# isystem flag.  Apple's compilers have supported this for quite some time now.
-if(APPLE)
-  if(CMAKE_COMPILER_IS_GNUCC)
-    set(CMAKE_INCLUDE_SYSTEM_FLAG_C "-isystem ")
-  endif()
-  if(CMAKE_COMPILER_IS_GNUCXX)
-    set(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "-isystem ")
-  endif()
-endif()
 
 # Default to -O2 on release builds.
 string(REPLACE "-O3" "-O2" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
