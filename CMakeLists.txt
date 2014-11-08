@@ -119,7 +119,7 @@ include_directories(SYSTEM ${LUAJIT_INCLUDE_DIRS})
 
 find_package(LibIntl)
 if(LibIntl_FOUND)
-  include_directories(SYSTEM ${LibIntl_INCLUDE_DIR})
+  include_directories(SYSTEM ${LibIntl_INCLUDE_DIRS})
 endif()
 
 # Determine platform's threading library. Set CMAKE_THREAD_PREFER_PTHREAD
