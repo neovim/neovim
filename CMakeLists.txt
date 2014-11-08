@@ -64,15 +64,24 @@ if(TRAVIS_CI_BUILD)
   add_definitions(-Werror)
 endif()
 
-add_definitions(-DINCLUDE_GENERATED_DECLARATIONS)
+# Set custom build flags for RelWithDebInfo.
+# -DNDEBUG purposely omitted because we want assertions.
+if(CMAKE_COMPILER_IS_GNUCC)
+  set(CMAKE_C_FLAGS_RELWITHDEBINFO "-Og -g"
+    CACHE STRING "Flags used by the compiler during release builds with debug info." FORCE)
+else()
+  set(CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g"
+    CACHE STRING "Flags used by the compiler during release builds with debug info." FORCE)
+endif()
 
-add_definitions(-DHAVE_CONFIG_H)
 if(CMAKE_BUILD_TYPE MATCHES Debug)
-  # cmake automatically appends -g to the compiler flags
   set(DEBUG 1)
 else()
   set(DEBUG 0)
 endif()
+
+add_definitions(-DINCLUDE_GENERATED_DECLARATIONS)
+add_definitions(-DHAVE_CONFIG_H)
 
 if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-undefined")
