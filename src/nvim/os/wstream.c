@@ -230,7 +230,11 @@ static void write_cb(uv_write_t *req, int status)
 
   if (data->wstream->freed && data->wstream->pending_reqs == 0) {
     // Last pending write, free the wstream;
-    free(data->wstream);
+    if (data->wstream->free_handle) {
+      uv_close((uv_handle_t *)data->wstream->stream, close_cb);
+    } else {
+      free(data->wstream);
+    }
   }
 
   kmp_free(WRequestPool, wrequest_pool, data);
