@@ -3587,12 +3587,12 @@ void scroll_redraw(int up, long count)
            ) {
       if (up) {
         if (curwin->w_cursor.lnum > prev_lnum
-            || cursor_down(1L, FALSE) == FAIL)
+            || cursor_down(1L, false) == FAIL)
           break;
       } else {
         if (curwin->w_cursor.lnum < prev_lnum
             || prev_topline == 1L
-            || cursor_up(1L, FALSE) == FAIL)
+            || cursor_up(1L, false) == FAIL)
           break;
       }
       /* Mark w_topline as valid, otherwise the screen jumps back at the

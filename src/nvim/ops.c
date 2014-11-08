@@ -1122,7 +1122,7 @@ insert_reg (
   get_clipboard(regname);
 
   if (regname == '.')                   /* insert last inserted text */
-    retval = stuff_inserted(NUL, 1L, TRUE);
+    retval = stuff_inserted(NUL, 1L, true);
   else if (get_spec_reg(regname, &arg, &allocated, true)) {
     if (arg == NULL)
       return FAIL;
@@ -2636,7 +2636,7 @@ do_put (
    */
   if (regname == '.') {
     (void)stuff_inserted((dir == FORWARD ? (count == -1 ? 'o' : 'a') :
-                          (count == -1 ? 'O' : 'i')), count, FALSE);
+                          (count == -1 ? 'O' : 'i')), count, false);
     /* Putting the text is done later, so can't really move the cursor to
      * the next character.  Use "l" to simulate it. */
     if ((flags & PUT_CURSEND) && gchar_cursor() != NUL)
@@ -3164,7 +3164,7 @@ int preprocs_left(void)
 {
   return
     (curbuf->b_p_si && !curbuf->b_p_cin) ||
-    (curbuf->b_p_cin && in_cinkeys('#', ' ', TRUE)
+    (curbuf->b_p_cin && in_cinkeys('#', ' ', true)
      && curbuf->b_ind_hash_comment == 0)
   ;
 }
@@ -3809,7 +3809,7 @@ format_lines (
   int old_State = State;
 
   /* length of a line to force formatting: 3 * 'tw' */
-  max_len = comp_textwidth(TRUE) * 3;
+  max_len = comp_textwidth(true) * 3;
 
   /* check for 'q', '2' and '1' in 'formatoptions' */
   do_comments = has_format_option(FO_Q_COMS);

@@ -3915,9 +3915,9 @@ static int is_one_char(char_u *pattern)
 }
 
 /*
- * return TRUE if line 'lnum' is empty or has white chars only.
+ * Return true if line 'lnum' is empty or has white chars only.
  */
-int linewhite(linenr_T lnum)
+bool linewhite(linenr_T lnum)
 {
   char_u  *p;
 

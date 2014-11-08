@@ -2053,7 +2053,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
         if (p->lnum != lnum)
           add = TRUE;
         else {
-          cols = comp_textwidth(FALSE);
+          cols = comp_textwidth(false);
           if (cols == 0)
             cols = 79;
           add = (p->col + cols < col || col + cols < p->col);

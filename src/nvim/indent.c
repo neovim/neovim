@@ -493,7 +493,7 @@ int get_breakindent_win(win_T *wp, char_u *line) {
 // non-blank in the line.
 // When extra == 1: Return true if the cursor is before the first non-blank in
 // the line.
-int inindent(int extra)
+bool inindent(int extra)
 {
   char_u      *ptr;
   colnr_T col;
