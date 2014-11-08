@@ -10,6 +10,7 @@
  * ex_cmds2.c: some more functions for command line commands
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -2422,6 +2423,7 @@ do_source (
   save_current_SID = current_SID;
   FileID file_id;
   bool file_id_ok = os_fileid((char *)fname_exp, &file_id);
+  assert(script_items.ga_len >= 0);
   for (current_SID = script_items.ga_len; current_SID > 0; --current_SID) {
     si = &SCRIPT_ITEM(current_SID);
     // Compare dev/ino when possible, it catches symbolic links.
