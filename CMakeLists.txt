@@ -131,6 +131,11 @@ if(LibIntl_FOUND)
   include_directories(SYSTEM ${LibIntl_INCLUDE_DIRS})
 endif()
 
+find_package(Iconv)
+if(Iconv_FOUND)
+  include_directories(SYSTEM ${Iconv_INCLUDE_DIRS})
+endif()
+
 # Determine platform's threading library. Set CMAKE_THREAD_PREFER_PTHREAD
 # explicitly to indicate a strong preference for pthread.
 set(CMAKE_THREAD_PREFER_PTHREAD ON)

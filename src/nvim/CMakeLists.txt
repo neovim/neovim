@@ -158,8 +158,8 @@ else()
   endif()
 endif()
 
-if(HAVE_ICONV_LIB)
-  list(APPEND NVIM_LINK_LIBRARIES iconv)
+if(Iconv_LIBRARIES)
+  list(APPEND NVIM_LINK_LIBRARIES ${Iconv_LIBRARIES})
 endif()
 
 # Put these last on the link line, since multiple things may depend on them.
