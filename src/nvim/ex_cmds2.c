@@ -2405,11 +2405,13 @@ do_source (
   // time_fd was successfully opened afterwards.
   proftime_T rel_time;
   proftime_T start_time;
-  if (time_fd != NULL) {
+  FILE * const l_time_fd = time_fd;
+  if (l_time_fd != NULL) {
     time_push(&rel_time, &start_time);
   }
 
-  if (do_profiling == PROF_YES)
+  const int l_do_profiling = do_profiling;
+  if (l_do_profiling == PROF_YES)
     prof_child_enter(&wait_start);              /* entering a child now */
 
   /* Don't use local function variables, if called from a function.
@@ -2457,7 +2459,7 @@ do_source (
     new_script_vars(current_SID);
   }
 
-  if (do_profiling == PROF_YES) {
+  if (l_do_profiling == PROF_YES) {
     int forceit;
 
     /* Check if we do profiling for this script. */
@@ -2479,7 +2481,7 @@ do_source (
       DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_REPEAT);
   retval = OK;
 
-  if (do_profiling == PROF_YES) {
+  if (l_do_profiling == PROF_YES) {
     /* Get "si" again, "script_items" may have been reallocated. */
     si = &SCRIPT_ITEM(current_SID);
     if (si->sn_prof_on) {
@@ -2503,7 +2505,7 @@ do_source (
     verbose_leave();
   }
 
-  if (time_fd != NULL) {
+  if (l_time_fd != NULL) {
     vim_snprintf((char *)IObuff, IOSIZE, "sourcing %s", fname);
     time_msg((char *)IObuff, &start_time);
     time_pop(rel_time);
@@ -2519,7 +2521,7 @@ do_source (
 
   current_SID = save_current_SID;
   restore_funccal(save_funccalp);
-  if (do_profiling == PROF_YES)
+  if (l_do_profiling == PROF_YES)
     prof_child_exit(&wait_start);               /* leaving a child now */
   fclose(cookie.fp);
   free(cookie.nextline);
