@@ -207,7 +207,7 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
     /* Move the line right if it doesn't start with '#', 'smartindent'
      * isn't set or 'cindent' isn't set or '#' isn't in 'cino'. */
     if (first_char != '#' || !preprocs_left()) {
-      shift_line(oap->op_type == OP_LSHIFT, p_sr, amount, FALSE);
+      shift_line(oap->op_type == OP_LSHIFT, p_sr, amount, false);
     }
     ++curwin->w_cursor.lnum;
   }
@@ -260,12 +260,11 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
  * shift the current line one shiftwidth left (if left != 0) or right
  * leaves cursor on first blank in the line
  */
-void 
-shift_line (
-    int left,
-    int round,
+void shift_line (
+    bool left,
+    bool round,
     int amount,
-    int call_changed_bytes         /* call changed_bytes() */
+    bool call_changed_bytes        /* call changed_bytes() */
 )
 {
   int count;
@@ -297,7 +296,7 @@ shift_line (
 
   /* Set new indent */
   if (State & VREPLACE_FLAG)
-    change_indent(INDENT_SET, count, FALSE, NUL, call_changed_bytes);
+    change_indent(INDENT_SET, count, false, NUL, call_changed_bytes);
   else
     (void)set_indent(count, call_changed_bytes ? SIN_CHANGED : 0);
 }

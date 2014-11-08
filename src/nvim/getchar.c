@@ -2279,7 +2279,7 @@ static int vgetorpeek(int advance)
                 && ptr2cells(typebuf.tb_buf + typebuf.tb_off
                     + typebuf.tb_len - 1) == 1) {
               edit_putchar(typebuf.tb_buf[typebuf.tb_off
-                                          + typebuf.tb_len - 1], FALSE);
+                                          + typebuf.tb_len - 1], false);
               setcursor();               /* put cursor back where it belongs */
               c1 = 1;
             }

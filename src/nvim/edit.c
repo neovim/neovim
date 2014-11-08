@@ -269,20 +269,20 @@ bool edit (
   /* Don't allow inserting in the sandbox. */
   if (sandbox != 0) {
     EMSG(_(e_sandbox));
-    return FALSE;
+    return false;
   }
 #endif
   /* Don't allow changes in the buffer while editing the cmdline.  The
    * caller of getcmdline() may get confused. */
   if (textlock != 0) {
     EMSG(_(e_secure));
-    return FALSE;
+    return false;
   }
 
   /* Don't allow recursive insert mode when busy with completion. */
   if (compl_started || compl_busy || pum_visible()) {
     EMSG(_(e_secure));
-    return FALSE;
+    return false;
   }
   ins_compl_clear();        /* clear stuff for CTRL-X mode */
 
@@ -574,7 +574,7 @@ bool edit (
      * Redraw the display when no characters are waiting.
      * Also shows mode, ruler and positions cursor.
      */
-    ins_redraw(TRUE);
+    ins_redraw(true);
 
     if (curwin->w_p_scb)
       do_check_scrollbind(true);
@@ -671,7 +671,7 @@ bool edit (
      * CTRL-\ CTRL-O is like CTRL-O but without moving the cursor.  */
     if (c == Ctrl_BSL) {
       /* may need to redraw when no more chars available now */
-      ins_redraw(FALSE);
+      ins_redraw(false);
       ++no_mapping;
       ++allow_keys;
       c = plain_vgetc();
@@ -864,7 +864,7 @@ doESCkey:
 
     case Ctrl_T:        /* Make indent one shiftwidth greater. */
       if (c == Ctrl_T && ctrl_x_mode == CTRL_X_THESAURUS) {
-        if (has_compl_option(FALSE))
+        if (has_compl_option(false))
           goto docomplete;
         break;
       }
@@ -1060,7 +1060,7 @@ doESCkey:
 
     case Ctrl_K:            /* digraph or keyword completion */
       if (ctrl_x_mode == CTRL_X_DICTIONARY) {
-        if (has_compl_option(TRUE))
+        if (has_compl_option(true))
           goto docomplete;
         break;
       }
@@ -1224,9 +1224,8 @@ force_cindent:
  * Only redraw when there are no characters available.  This speeds up
  * inserting sequences of characters (e.g., for CTRL-R).
  */
-static void 
-ins_redraw (
-    int ready                   /* not busy with something */
+static void ins_redraw (
+    bool ready                  /* not busy with something */
 )
 {
   linenr_T conceal_old_cursor_line = 0;
@@ -1301,10 +1300,10 @@ static void ins_ctrl_v(void)
   int did_putchar = FALSE;
 
   /* may need to redraw when no more chars available now */
-  ins_redraw(FALSE);
+  ins_redraw(false);
 
   if (redrawing() && !char_avail()) {
-    edit_putchar('^', TRUE);
+    edit_putchar('^', true);
     did_putchar = TRUE;
   }
   AppendToRedobuff((char_u *)CTRL_V_STR);       /* CTRL-V */
@@ -1336,7 +1335,7 @@ static int pc_attr;
 static int pc_row;
 static int pc_col;
 
-void edit_putchar(int c, int highlight)
+void edit_putchar(int c, bool highlight)
 {
   int attr;
 
@@ -1414,7 +1413,7 @@ void display_dollar(colnr_T col)
   }
   curs_columns(FALSE);              /* recompute w_wrow and w_wcol */
   if (curwin->w_wcol < curwin->w_width) {
-    edit_putchar('$', FALSE);
+    edit_putchar('$', false);
     dollar_vcol = curwin->w_virtcol;
   }
   curwin->w_cursor.col = save_col;
@@ -1438,15 +1437,14 @@ static void undisplay_dollar(void)
  * type == INDENT_INC	increase indent (for CTRL-T or <Tab>)
  * type == INDENT_DEC	decrease indent (for CTRL-D)
  * type == INDENT_SET	set indent to "amount"
- * if round is TRUE, round the indent to 'shiftwidth' (only with _INC and _Dec).
+ * if round is true, round the indent to 'shiftwidth' (only with _INC and _Dec).
  */
-void 
-change_indent (
+void change_indent (
     int type,
     int amount,
-    int round,
+    bool round,
     int replaced,                   /* replaced character, put on replace stack */
-    int call_changed_bytes                 /* call changed_bytes() */
+    bool call_changed_bytes                /* call changed_bytes() */
 )
 {
   int vcol;
@@ -1691,9 +1689,9 @@ void backspace_until_column(int col)
 /*
  * Like del_char(), but make sure not to go before column "limit_col".
  * Only matters when there are composing characters.
- * Return TRUE when something was deleted.
+ * Return true when something was deleted.
  */
-static int del_char_after_col(int limit_col)
+static bool del_char_after_col(int limit_col)
 {
   if (enc_utf8 && limit_col >= 0) {
     colnr_T ecol = curwin->w_cursor.col + 1;
@@ -1710,11 +1708,11 @@ static int del_char_after_col(int limit_col)
       curwin->w_cursor.col += l;
     }
     if (*get_cursor_pos_ptr() == NUL || curwin->w_cursor.col == ecol)
-      return FALSE;
+      return false;
     del_bytes((long)((int)ecol - curwin->w_cursor.col), FALSE, TRUE);
   } else
     (void)del_char(FALSE);
-  return TRUE;
+  return true;
 }
 
 /*
@@ -1740,9 +1738,9 @@ static void ins_ctrl_x(void)
 }
 
 /*
- * Return TRUE if the 'dict' or 'tsr' option can be used.
+ * Return true if the 'dict' or 'tsr' option can be used.
  */
-static int has_compl_option(int dict_opt)
+static bool has_compl_option(bool dict_opt)
 {
   if (dict_opt ? (*curbuf->b_p_dict == NUL && *p_dict == NUL
                   && !curwin->w_p_spell
@@ -1759,24 +1757,24 @@ static int has_compl_option(int dict_opt)
       out_flush();
       ui_delay(2000L, false);
     }
-    return FALSE;
+    return false;
   }
-  return TRUE;
+  return true;
 }
 
 /*
  * Is the character 'c' a valid key to go to or keep us in CTRL-X mode?
  * This depends on the current mode.
  */
-int vim_is_ctrl_x_key(int c)
+bool vim_is_ctrl_x_key(int c)
 {
   /* Always allow ^R - let it's results then be checked */
   if (c == Ctrl_R)
-    return TRUE;
+    return true;
 
   /* Accept <PageUp> and <PageDown> if the popup menu is visible. */
   if (ins_compl_pum_key(c))
-    return TRUE;
+    return true;
 
   switch (ctrl_x_mode) {
   case 0:                   /* Not in any CTRL-X mode */
@@ -1815,15 +1813,15 @@ int vim_is_ctrl_x_key(int c)
     return c == Ctrl_S || c == Ctrl_P || c == Ctrl_N;
   }
   EMSG(_(e_internal));
-  return FALSE;
+  return false;
 }
 
 /*
- * Return TRUE when character "c" is part of the item currently being
+ * Return true when character "c" is part of the item currently being
  * completed.  Used to decide whether to abandon complete mode when the menu
  * is visible.
  */
-static int ins_compl_accept_char(int c)
+static bool ins_compl_accept_char(int c)
 {
   if (ctrl_x_mode & CTRL_X_WANT_IDENT)
     /* When expanding an identifier only accept identifier chars. */
@@ -2114,7 +2112,7 @@ static void ins_compl_longest_match(compl_T *match)
     had_match = (curwin->w_cursor.col > compl_col);
     ins_compl_delete();
     ins_bytes(compl_leader + ins_compl_len());
-    ins_redraw(FALSE);
+    ins_redraw(false);
 
     /* When the match isn't there (to avoid matching itself) remove it
      * again after redrawing. */
@@ -2151,7 +2149,7 @@ static void ins_compl_longest_match(compl_T *match)
       had_match = (curwin->w_cursor.col > compl_col);
       ins_compl_delete();
       ins_bytes(compl_leader + ins_compl_len());
-      ins_redraw(FALSE);
+      ins_redraw(false);
 
       /* When the match isn't there (to avoid matching itself) remove it
        * again after redrawing. */
@@ -5306,7 +5304,7 @@ internal_format (
         if (second_indent >= 0) {
           if (State & VREPLACE_FLAG)
             change_indent(INDENT_SET, second_indent,
-                FALSE, NUL, TRUE);
+                false, NUL, true);
           else if (leader_len > 0 && second_indent - leader_len > 0) {
             int i;
             int padding = second_indent - leader_len;
@@ -6396,7 +6394,7 @@ static int cindent_on(void) {
  */
 void fixthisline(IndentGetter get_the_indent)
 {
-  change_indent(INDENT_SET, get_the_indent(), FALSE, 0, TRUE);
+  change_indent(INDENT_SET, get_the_indent(), false, 0, true);
   if (linewhite(curwin->w_cursor.lnum))
     did_ai = TRUE;          /* delete the indent if the line stays empty */
 }
@@ -6715,9 +6713,9 @@ static void ins_reg(void)
   pc_status = PC_STATUS_UNSET;
   if (redrawing() && !char_avail()) {
     /* may need to redraw when no more chars available now */
-    ins_redraw(FALSE);
+    ins_redraw(false);
 
-    edit_putchar('"', TRUE);
+    edit_putchar('"', true);
     add_to_showcmd_c(Ctrl_R);
   }
 
@@ -7145,9 +7143,9 @@ static void ins_shift(int c, int lastc)
       replace_pop_ins();
     if (lastc == '^')
       old_indent = get_indent();        /* remember curr. indent */
-    change_indent(INDENT_SET, 0, TRUE, 0, TRUE);
+    change_indent(INDENT_SET, 0, true, 0, true);
   } else
-    change_indent(c == Ctrl_D ? INDENT_DEC : INDENT_INC, 0, TRUE, 0, TRUE);
+    change_indent(c == Ctrl_D ? INDENT_DEC : INDENT_INC, 0, true, 0, true);
 
   if (did_ai && *skipwhite(get_cursor_line_ptr()) != NUL)
     did_ai = FALSE;
@@ -8069,9 +8067,9 @@ static int ins_digraph(void)
   pc_status = PC_STATUS_UNSET;
   if (redrawing() && !char_avail()) {
     /* may need to redraw when no more chars available now */
-    ins_redraw(FALSE);
+    ins_redraw(false);
 
-    edit_putchar('?', TRUE);
+    edit_putchar('?', true);
     did_putchar = TRUE;
     add_to_showcmd_c(Ctrl_K);
   }
@@ -8101,11 +8099,11 @@ static int ins_digraph(void)
     did_putchar = FALSE;
     if (redrawing() && !char_avail()) {
       /* may need to redraw when no more chars available now */
-      ins_redraw(FALSE);
+      ins_redraw(false);
 
       if (char2cells(c) == 1) {
-        ins_redraw(FALSE);
-        edit_putchar(c, TRUE);
+        ins_redraw(false);
+        edit_putchar(c, true);
         did_putchar = TRUE;
       }
       add_to_showcmd_c(c);
@@ -8240,7 +8238,7 @@ static void ins_try_si(int c)
       i = get_indent();
       curwin->w_cursor = old_pos;
       if (State & VREPLACE_FLAG)
-        change_indent(INDENT_SET, i, FALSE, NUL, TRUE);
+        change_indent(INDENT_SET, i, false, NUL, true);
       else
         (void)set_indent(i, SIN_CHANGED);
     } else if (curwin->w_cursor.col > 0) {
@@ -8264,7 +8262,7 @@ static void ins_try_si(int c)
         curwin->w_cursor = old_pos;
       }
       if (temp)
-        shift_line(TRUE, FALSE, 1, TRUE);
+        shift_line(true, false, 1, true);
     }
   }
 
