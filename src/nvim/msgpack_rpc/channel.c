@@ -119,7 +119,7 @@ void channel_teardown(void)
 /// Creates an API channel by starting a job and connecting to its
 /// stdin/stdout. stderr is forwarded to the editor error stream.
 ///
-/// @param argv The argument vector for the process
+/// @param argv The argument vector for the process. [consumed]
 /// @return The channel id
 uint64_t channel_from_job(char **argv)
 {

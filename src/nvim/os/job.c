@@ -105,7 +105,8 @@ void job_teardown(void)
 /// Tries to start a new job.
 ///
 /// @param argv Argument vector for the process. The first item is the
-///        executable to run.
+///             executable to run.
+///             [consumed]
 /// @param data Caller data that will be associated with the job
 /// @param writable If true the job stdin will be available for writing with
 ///                 job_write, otherwise it will be redirected to /dev/null
