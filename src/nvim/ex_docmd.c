@@ -7699,6 +7699,10 @@ eval_vars (
       sprintf((char *)strbuf, "%" PRId64, (int64_t)sourcing_lnum);
       result = strbuf;
       break;
+    default:
+      // should not happen
+      *errormsg = (char_u *)"";
+      return NULL;
     }
 
     resultlen = (int)STRLEN(result);            /* length of new string */
