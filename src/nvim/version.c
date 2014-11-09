@@ -21,6 +21,8 @@
 char *Version = VIM_VERSION_SHORT;
 char *longVersion = NVIM_VERSION_LONG " (compiled " __DATE__ " " __TIME__ ")";
 char *version_commit = "Commit: " NVIM_VERSION_COMMIT;
+char *version_buildtype = "Build type: " NVIM_VERSION_BUILD_TYPE;
+char *version_cflags = "Compilation: " NVIM_VERSION_CFLAGS;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "version.c.generated.h"
@@ -778,6 +780,8 @@ void list_version(void)
   // internal variables in eval.c!
   MSG(longVersion);
   MSG(version_commit);
+  MSG(version_buildtype);
+  MSG(version_cflags);
 
   // Print the list of extra patch descriptions if there is at least one.
   char *s = "";
@@ -857,10 +861,6 @@ void list_version(void)
     version_msg("\"\n");
   }
 #endif  // ifdef HAVE_PATHDEF
-#ifdef DEBUG
-  version_msg("\n");
-  version_msg(_("  DEBUG BUILD"));
-#endif  // ifdef DEBUG
 }
 
 /// Output a string for the version message.  If it's going to wrap, output a

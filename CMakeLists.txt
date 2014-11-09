@@ -32,6 +32,17 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   endif()
 endif()
 
+# Set available build types for CMake GUIs.
+# A different build type can still be set by -DCMAKE_BUILD_TYPE=...
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
+  STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+
+# Set default build type.
+if(NOT CMAKE_BUILD_TYPE)
+  message(STATUS "CMAKE_BUILD_TYPE not given; setting to 'RelWithDebInfo'.")
+  set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build." FORCE)
+endif()
+
 # Version tokens
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC NVIM_VERSION_COMMIT)
@@ -48,6 +59,8 @@ git_timestamp(GIT_TIMESTAMP)
 if(GIT_TIMESTAMP)
   set(NVIM_VERSION_BUILD "+${GIT_TIMESTAMP}")
 endif()
+set(NVIM_VERSION_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
+# NVIM_VERSION_CFLAGS set further below.
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -249,9 +262,14 @@ install(SCRIPT ${CMAKE_MODULE_PATH}/GenerateHelptags.cmake)
 
 # Go down the tree.
 
-add_subdirectory(config)
 add_subdirectory(src/nvim)
+# Read compilation flags from src/nvim,
+# used in config subdirectory below.
+include(GetCompileFlags)
+get_compile_flags(NVIM_VERSION_CFLAGS)
+
 add_subdirectory(test/includes)
+add_subdirectory(config)
 
 # Setup some test-related bits.  We do this after going down the tree because we
 # need some of the targets.
