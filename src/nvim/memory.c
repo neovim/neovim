@@ -424,6 +424,36 @@ void do_outofmem_msg(size_t size)
 
 #if defined(EXITFREE) || defined(PROTO)
 
+#include "nvim/file_search.h"
+#include "nvim/buffer.h"
+#include "nvim/charset.h"
+#include "nvim/diff.h"
+#include "nvim/edit.h"
+#include "nvim/ex_cmds.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/ex_getln.h"
+#include "nvim/fileio.h"
+#include "nvim/fold.h"
+#include "nvim/getchar.h"
+#include "nvim/mark.h"
+#include "nvim/mbyte.h"
+#include "nvim/memline.h"
+#include "nvim/move.h"
+#include "nvim/option.h"
+#include "nvim/ops.h"
+#include "nvim/os_unix.h"
+#include "nvim/path.h"
+#include "nvim/quickfix.h"
+#include "nvim/regexp.h"
+#include "nvim/screen.h"
+#include "nvim/search.h"
+#include "nvim/spell.h"
+#include "nvim/syntax.h"
+#include "nvim/tag.h"
+#include "nvim/ui.h"
+#include "nvim/window.h"
+#include "nvim/os/os.h"
+
 /*
  * Free everything that we allocated.
  * Can be used to detect memory leaks, e.g., with ccmalloc.
