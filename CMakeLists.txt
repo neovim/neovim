@@ -67,9 +67,16 @@ if(TRAVIS_CI_BUILD)
   add_definitions(-Werror)
 endif()
 
+if(CMAKE_COMPILER_IS_GNUCC)
+  include(CheckCCompilerFlag)
+  check_c_compiler_flag(-Og HAS_OG_FLAG)
+else()
+  set(HAS_OG_FLAG 0)
+endif()
+
 # Set custom build flags for RelWithDebInfo.
 # -DNDEBUG purposely omitted because we want assertions.
-if(CMAKE_COMPILER_IS_GNUCC)
+if(HAS_OG_FLAG)
   set(CMAKE_C_FLAGS_RELWITHDEBINFO "-Og -g"
     CACHE STRING "Flags used by the compiler during release builds with debug info." FORCE)
 else()
