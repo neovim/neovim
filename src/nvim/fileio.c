@@ -6191,12 +6191,9 @@ aucmd_prepbuf (
     }
   }
 
-  /* Allocate "aucmd_win" when needed.  If this fails (out of memory) fall
-   * back to using the current window. */
+  /* Allocate "aucmd_win" when needed. */
   if (win == NULL && aucmd_win == NULL) {
     win_alloc_aucmd_win();
-    if (aucmd_win == NULL)
-      win = curwin;
   }
   if (win == NULL && aucmd_win_used)
     /* Strange recursive autocommand, fall back to using the current
