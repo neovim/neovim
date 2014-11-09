@@ -89,8 +89,8 @@ get_directory_property(gen_includes INCLUDE_DIRECTORIES)
 foreach(gen_include ${gen_includes})
   set(gen_cflags "${gen_cflags} -I${gen_include}")
 endforeach()
-string(TOUPPER "${CMAKE_BUILD_TYPE}" _build_type)
-set(gen_cflags "${gen_cflags} ${CMAKE_C_FLAGS_${_build_type}} ${CMAKE_C_FLAGS}")
+string(TOUPPER "${CMAKE_BUILD_TYPE}" build_type)
+set(gen_cflags "${gen_cflags} ${CMAKE_C_FLAGS_${build_type}} ${CMAKE_C_FLAGS}")
 
 foreach(sfile ${NEOVIM_SOURCES}
               "${PROJECT_SOURCE_DIR}/src/nvim/regexp_nfa.c")
