@@ -3231,6 +3231,7 @@ static buf_T *ins_compl_next_buf(buf_T *buf, int flag)
   if (flag == 'w') {            /* just windows */
     if (buf == curbuf)          /* first call for this flag/expansion */
       wp = curwin;
+    assert(wp);
     while ((wp = (wp->w_next != NULL ? wp->w_next : firstwin)) != curwin
            && wp->w_buffer->b_scanned)
       ;
@@ -3612,6 +3613,7 @@ static int ins_compl_get_exp(pos_T *ini)
        * If 'infercase' is set, don't use 'smartcase' here
        */
       save_p_scs = p_scs;
+      assert(ins_buf);
       if (ins_buf->b_p_inf)
         p_scs = FALSE;
 
@@ -3760,8 +3762,10 @@ static int ins_compl_get_exp(pos_T *ini)
       compl_started = TRUE;
     } else {
       /* Mark a buffer scanned when it has been scanned completely */
-      if (type == 0 || type == CTRL_X_PATH_PATTERNS)
+      if (type == 0 || type == CTRL_X_PATH_PATTERNS) {
+        assert(ins_buf);
         ins_buf->b_scanned = TRUE;
+      }
 
       compl_started = FALSE;
     }
@@ -6286,6 +6290,7 @@ static void mb_replace_pop_ins(int cc)
         break;
       } else {
         buf[0] = c;
+        assert(n > 1);
         for (i = 1; i < n; ++i)
           buf[i] = replace_pop();
         if (utf_iscomposing(utf_ptr2char(buf)))
@@ -6331,10 +6336,11 @@ static void replace_do_bs(int limit_col)
   char_u      *p;
   int i;
   int vcol;
+  const int l_State = State;
 
   cc = replace_pop();
   if (cc > 0) {
-    if (State & VREPLACE_FLAG) {
+    if (l_State & VREPLACE_FLAG) {
       /* Get the number of screen cells used by the character we are
        * going to delete. */
       getvcol(curwin, &curwin->w_cursor, NULL, &start_vcol, NULL);
@@ -6342,17 +6348,17 @@ static void replace_do_bs(int limit_col)
     }
     if (has_mbyte) {
       (void)del_char_after_col(limit_col);
-      if (State & VREPLACE_FLAG)
+      if (l_State & VREPLACE_FLAG)
         orig_len = (int)STRLEN(get_cursor_pos_ptr());
       replace_push(cc);
     } else {
       pchar_cursor(cc);
-      if (State & VREPLACE_FLAG)
+      if (l_State & VREPLACE_FLAG)
         orig_len = (int)STRLEN(get_cursor_pos_ptr()) - 1;
     }
     replace_pop_ins();
 
-    if (State & VREPLACE_FLAG) {
+    if (l_State & VREPLACE_FLAG) {
       /* Get the number of screen cells used by the inserted characters */
       p = get_cursor_pos_ptr();
       ins_len = (int)STRLEN(p) - orig_len;
@@ -7449,7 +7455,9 @@ static int ins_bs(int c, int mode, int *inserted_space_p)
         if (State & REPLACE_FLAG)
           replace_do_bs(-1);
         else {
-          if (enc_utf8 && p_deco)
+          const bool l_enc_utf8 = enc_utf8;
+          const int l_p_deco = p_deco;
+          if (l_enc_utf8 && l_p_deco)
             (void)utfc_ptr2char(get_cursor_pos_ptr(), cpc);
           (void)del_char(FALSE);
           /*
@@ -7457,7 +7465,7 @@ static int ins_bs(int c, int mode, int *inserted_space_p)
            * move the cursor back.  Don't back up before the base
            * character.
            */
-          if (enc_utf8 && p_deco && cpc[0] != NUL)
+          if (l_enc_utf8 && l_p_deco && cpc[0] != NUL)
             inc_cursor();
           if (revins_chars) {
             revins_chars--;

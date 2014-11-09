@@ -43,6 +43,7 @@
 /* #undef REGEXP_DEBUG */
 /* #define REGEXP_DEBUG */
 
+#include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
@@ -1199,10 +1200,7 @@ char_u *skip_regexp(char_u *startp, int dirc, int magic, char_u **newp)
           *newp = vim_strsave(startp);
           p = *newp + (p - startp);
         }
-        if (*newp != NULL)
-          STRMOVE(p, p + 1);
-        else
-          ++p;
+        STRMOVE(p, p + 1);
       } else
         ++p;            /* skip next character */
       if (*p == 'v')
@@ -1300,16 +1298,18 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
         r->regstart = (*mb_ptr2char)(OPERAND(scan));
       else
         r->regstart = *OPERAND(scan);
-    } else if ((OP(scan) == BOW
-                || OP(scan) == EOW
-                || OP(scan) == NOTHING
-                || OP(scan) == MOPEN + 0 || OP(scan) == NOPEN
-                || OP(scan) == MCLOSE + 0 || OP(scan) == NCLOSE)
-               && OP(regnext(scan)) == EXACTLY) {
-      if (has_mbyte)
-        r->regstart = (*mb_ptr2char)(OPERAND(regnext(scan)));
-      else
-        r->regstart = *OPERAND(regnext(scan));
+    } else if (OP(scan) == BOW
+               || OP(scan) == EOW
+               || OP(scan) == NOTHING
+               || OP(scan) == MOPEN  + 0 || OP(scan) == NOPEN
+               || OP(scan) == MCLOSE + 0 || OP(scan) == NCLOSE) {
+      char_u *regnext_scan = regnext(scan);
+      if (OP(regnext_scan) == EXACTLY) {
+        if (has_mbyte)
+          r->regstart = (*mb_ptr2char)(OPERAND(regnext_scan));
+        else
+          r->regstart = *OPERAND(regnext_scan);
+      }
     }
 
     /*
@@ -5626,6 +5626,8 @@ static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T e
 
     /* Get the line to compare with. */
     p = reg_getline(clnum);
+    assert(p);
+
     if (clnum == end_lnum)
       len = end_col - ccol;
     else

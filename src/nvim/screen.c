@@ -244,6 +244,9 @@ int redraw_asap(int type)
   u8char_T    *screenlineUC = NULL;     /* copy from ScreenLinesUC[] */
   u8char_T    *screenlineC[MAX_MCO];    /* copy from ScreenLinesC[][] */
   schar_T     *screenline2 = NULL;      /* copy from ScreenLines2[] */
+  const bool l_enc_utf8 = enc_utf8;
+  const int l_enc_dbcs = enc_dbcs;
+  const long l_p_mco = p_mco;
 
   redraw_later(type);
   if (msg_scrolled || (State != NORMAL && State != NORMAL_BUSY))
@@ -254,14 +257,14 @@ int redraw_asap(int type)
   screenline = xmalloc((size_t)(rows * Columns * sizeof(schar_T)));
   screenattr = xmalloc((size_t)(rows * Columns * sizeof(sattr_T)));
 
-  if (enc_utf8) {
+  if (l_enc_utf8) {
     screenlineUC = xmalloc((size_t)(rows * Columns * sizeof(u8char_T)));
 
-    for (i = 0; i < p_mco; ++i) {
+    for (i = 0; i < l_p_mco; ++i) {
       screenlineC[i] = xmalloc((size_t)(rows * Columns * sizeof(u8char_T)));
     }
   }
-  if (enc_dbcs == DBCS_JPNU) {
+  if (l_enc_dbcs == DBCS_JPNU) {
     screenline2 = xmalloc((size_t)(rows * Columns * sizeof(schar_T)));
   }
 
@@ -273,16 +276,16 @@ int redraw_asap(int type)
     memmove(screenattr + r * Columns,
         ScreenAttrs + LineOffset[cmdline_row + r],
         (size_t)Columns * sizeof(sattr_T));
-    if (enc_utf8) {
+    if (l_enc_utf8) {
       memmove(screenlineUC + r * Columns,
           ScreenLinesUC + LineOffset[cmdline_row + r],
           (size_t)Columns * sizeof(u8char_T));
-      for (i = 0; i < p_mco; ++i)
+      for (i = 0; i < l_p_mco; ++i)
         memmove(screenlineC[i] + r * Columns,
             ScreenLinesC[r] + LineOffset[cmdline_row + r],
             (size_t)Columns * sizeof(u8char_T));
     }
-    if (enc_dbcs == DBCS_JPNU)
+    if (l_enc_dbcs == DBCS_JPNU)
       memmove(screenline2 + r * Columns,
           ScreenLines2 + LineOffset[cmdline_row + r],
           (size_t)Columns * sizeof(schar_T));
@@ -302,16 +305,16 @@ int redraw_asap(int type)
       memmove(ScreenAttrs + off,
           screenattr + r * Columns,
           (size_t)Columns * sizeof(sattr_T));
-      if (enc_utf8) {
+      if (l_enc_utf8) {
         memmove(ScreenLinesUC + off,
             screenlineUC + r * Columns,
             (size_t)Columns * sizeof(u8char_T));
-        for (i = 0; i < p_mco; ++i)
+        for (i = 0; i < l_p_mco; ++i)
           memmove(ScreenLinesC[i] + off,
               screenlineC[i] + r * Columns,
               (size_t)Columns * sizeof(u8char_T));
       }
-      if (enc_dbcs == DBCS_JPNU)
+      if (l_enc_dbcs == DBCS_JPNU)
         memmove(ScreenLines2 + off,
             screenline2 + r * Columns,
             (size_t)Columns * sizeof(schar_T));
@@ -322,12 +325,12 @@ int redraw_asap(int type)
 
   free(screenline);
   free(screenattr);
-  if (enc_utf8) {
+  if (l_enc_utf8) {
     free(screenlineUC);
-    for (i = 0; i < p_mco; ++i)
+    for (i = 0; i < l_p_mco; ++i)
       free(screenlineC[i]);
   }
-  if (enc_dbcs == DBCS_JPNU)
+  if (l_enc_dbcs == DBCS_JPNU)
     free(screenline2);
 
   /* Show the intro message when appropriate. */
@@ -3474,7 +3477,6 @@ win_line (
             n_extra = tab_len;
           } else {
             char_u *p;
-            int    len = n_extra;
             int    i;
             int    saved_nextra = n_extra;
 
@@ -3485,7 +3487,7 @@ win_line (
 
             /* if n_extra > 0, it gives the number of chars to use for
              * a tab, else we need to calculate the width for a tab */
-            len = (tab_len * mb_char2len(lcs_tab2));
+            int len = (tab_len * mb_char2len(lcs_tab2));
             if (n_extra > 0) {
               len += n_extra - tab_len;
             }
@@ -3865,7 +3867,7 @@ win_line (
       /* Get rid of the boguscols now, we want to draw until the right
        * edge for 'cursorcolumn'. */
       col -= boguscols;
-      boguscols = 0;
+      // boguscols = 0;  // Disabled because value never read after this
 
       if (draw_color_col)
         draw_color_col = advance_color_col(VCOL_HLC, &color_cols);
@@ -7532,7 +7534,6 @@ int showmode(void)
             msg_puts_attr(edit_submode_extra, sub_attr);
           }
         }
-        length = 0;
       } else {
         if (State & VREPLACE_FLAG)
           MSG_PUTS_ATTR(_(" VREPLACE"), attr);
@@ -7708,7 +7709,6 @@ static void draw_tabline(void)
 
     attr = attr_nosel;
     tabcount = 0;
-    scol = 0;
 
     FOR_ALL_TABS(tp) {
       if (col >= Columns - 4) {
