@@ -684,28 +684,17 @@ void ex_diffupdate(exarg_T *eap)
       }
       fclose(fd);
 
-      {
-        diff_file(tmp_orig, "line2\n", 0, tmp_diff);
-        fd = mch_fopen((char *)tmp_diff, "r");
+      size_t len;
+      char *diff = (char *) diff_file(tmp_orig, "line2\n", 6, &len);
 
-        if (fd == NULL) {
-          io_error = TRUE;
-        } else {
-          char_u linebuf[LBUFLEN];
-
-          for (;;) {
-            // There must be a line that contains "1c1".
-            if (vim_fgets(linebuf, LBUFLEN, fd)) {
-              break;
-            }
-
-            if (STRNCMP(linebuf, "1c1", 3) == 0) {
-              ok = TRUE;
-            }
+      if (diff) {
+        for (char *p = diff; p < diff + len; p = xstrchrnul(p, NL) + 1) {
+          if (STRNCMP(p, "1c1", 3) == 0) {
+            ok = true;
+            break;
           }
-          fclose(fd);
         }
-        os_remove((char *)tmp_diff);
+        free(diff);
       }
       os_remove((char *)tmp_orig);
     }
@@ -729,7 +718,7 @@ void ex_diffupdate(exarg_T *eap)
 
   if (!ok) {
     if (io_error) {
-      EMSG(_("E810: Cannot read or write temp files"));
+      EMSG(_("E810: Cannot open or write temp files"));
     }
     EMSG(_("E97: Cannot create diffs"));
     diff_a_works = MAYBE;
@@ -765,16 +754,21 @@ void ex_diffupdate(exarg_T *eap)
     for (linenr_T lnum = 1; lnum < buf->b_ml.ml_line_count + 1; lnum++) {
       size_t pos = db.len;
       dynamic_buffer_concat(&db, ml_get_buf(buf, lnum, false), -1);
-      strchrsub(db.data + pos, NL, NUL);
+      memchrsub(db.data + pos, NL, NUL, db.len - pos);
       dynamic_buffer_append(&db, '\n');
     }
 
-    diff_file(tmp_orig, db.data, db.len, tmp_diff);
+    size_t diff_len;
+    char_u *diff = diff_file(tmp_orig, db.data, db.len, &diff_len);
 
-    // Read the diff output and add each entry to the diff list.
-    diff_read(idx_orig, idx_new, tmp_diff);
-    os_remove((char *)tmp_diff);
+    if (!diff) {
+      EMSG(_("E98: Cannot read diff output"));
+    } else {
+      // Read the diff output and add each entry to the diff list.
+      diff_read(idx_orig, idx_new, diff, diff_len);
+    }
     dynamic_buffer_clear(&db);
+    free(diff);
   }
   os_remove((char *)tmp_orig);
 
@@ -794,16 +788,57 @@ theend:
 /// @param cmp      The text of the file to compare with `tmp_orig`.
 /// @param cmp_len  The length of `cmp`.
 /// @param tmp_diff
-static void diff_file(char_u *tmp_orig, const char *cmp, size_t cmp_len,
-                      char_u *tmp_diff)
+static char_u * diff_file(char_u *tmp_orig, const char *cmp, size_t cmp_len,
+                          size_t *diff_len)
 {
   if (*p_dex != NUL) {
+    // Resort to old implementation for 'diffexpr'.
+    // To store the output from v:fname_out.
+    DynamicBuffer db = DYNAMIC_BUFFER_INIT;
+
     // Use 'diffexpr' to generate the diff file.
     char_u *tmp_new = vim_tempname();
+    char_u *tmp_diff = vim_tempname();
+    FILE *cmpf = fopen((char *) tmp_new, "w");
+    if (!cmpf) {
+      EMSG(_("E810: Cannot create temp files"));
+      goto diff_exp_end;
+    }
+    bool ok = fwrite(cmp, cmp_len, 1, cmpf) == 1
+           && fwrite("\n", 1, 1, cmpf) == 1;
+    fclose(cmpf);
+    if (!ok) {
+      EMSG(_("E810: Cannot write temp files"));
+      goto diff_exp_end;
+    }
+
     eval_diff(tmp_orig, tmp_new, tmp_diff);
+
+    FILE *diff = fopen((char *) tmp_diff, "r");
+
+    if (diff) {
+      char_u linebuf[LBUFLEN];
+      while(fgets((char *) linebuf, LBUFLEN, diff)) {
+        // We only need lines of the format "##d##".
+        if (vim_isdigit(*linebuf)) {
+          dynamic_buffer_concat(&db, linebuf, -1);
+        }
+      }
+      fclose(diff);
+      os_remove((char *) tmp_diff);
+    } else {
+      EMSG(_("E810: Cannot read v:fname_out"));
+    }
+
+diff_exp_end:
+    os_remove((char *) tmp_new);
     free(tmp_new);
+    free(tmp_diff);
+
+    *diff_len = db.len;
+    return (char_u *) db.data;
   } else {
-    size_t len = STRLEN(tmp_orig) + STRLEN(tmp_diff) + STRLEN(p_srr) + 27;
+    size_t len = STRLEN(tmp_orig) + STRLEN(p_srr) + 27;
     char *cmd = xmalloc(len);
 
     /* We don't want $DIFF_OPTIONS to get in the way. */
@@ -820,9 +855,11 @@ static void diff_file(char_u *tmp_orig, const char *cmp, size_t cmp_len,
                  (diff_flags & DIFF_IWHITE) ? "-b " : "",
                  (diff_flags & DIFF_ICASE) ? "-i " : "",
                  tmp_orig);
-    append_redir((char_u *) cmd, (int)len, p_srr, tmp_diff);
-    os_system(cmd, cmp, cmp_len ? cmp_len : strlen(cmp), NULL, NULL);
+
+    char *output;
+    os_system(cmd, (char *) cmp, cmp_len ? cmp_len : STRLEN(cmp), &output, diff_len);
     free(cmd);
+    return (char_u *) output;
   }
 }
 
@@ -1175,15 +1212,14 @@ void ex_diffoff(exarg_T *eap)
 ///
 /// @param idx_orig idx of original file
 /// @param idx_new idx of new file
-/// @param fname name of diff output file
-static void diff_read(int idx_orig, int idx_new, char_u *fname)
+/// @param diff the diff output file
+/// @param diff_len the length of `diff`
+static void diff_read(int idx_orig, int idx_new, char_u *diff, size_t diff_len)
 {
-  FILE *fd;
   diff_T *dprev = NULL;
   diff_T *dp = curtab->tp_first_diff;
   diff_T *dn, *dpl;
   long f1, l1, f2, l2;
-  char_u linebuf[LBUFLEN]; // only need to hold the diff line
   int difftype;
   char_u *p;
   long off;
@@ -1192,20 +1228,10 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
   long count_orig, count_new;
   int notset = TRUE; // block "*dp" not set yet
 
-  fd = mch_fopen((char *)fname, "r");
-
-  if (fd == NULL) {
-    EMSG(_("E98: Cannot read diff output"));
-    return;
-  }
-
-  for (;;) {
-    if (vim_fgets(linebuf, LBUFLEN, fd)) {
-      // end of file
-      break;
-    }
-
-    if (!isdigit(*linebuf)) {
+  char_u *end = diff + diff_len;
+  for (char_u *line = diff; line < end;
+       line = (char_u *) xmemscan(line, NL, end - line) + 1) {
+    if (!isdigit(*line)) {
       // not the start of a diff block
       continue;
     }
@@ -1214,7 +1240,7 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
     // {first}[,{last}]c{first}[,{last}]
     // {first}a{first}[,{last}]
     // {first}[,{last}]d{first}
-    p = linebuf;
+    p = line;
     f1 = getdigits(&p);
 
     if (*p == ',') {
@@ -1367,8 +1393,6 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
     dp = dp->df_next;
     notset = TRUE;
   }
-
-  fclose(fd);
 }
 
 /// Copy an entry at "dp" from "idx_orig" to "idx_new".
