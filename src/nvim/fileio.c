@@ -1751,7 +1751,9 @@ failed:
 # ifdef USE_ICONV
   if (iconv_fd != (iconv_t)-1) {
     iconv_close(iconv_fd);
+#  ifndef __clang_analyzer__
     iconv_fd = (iconv_t)-1;
+#  endif
   }
 # endif
 
