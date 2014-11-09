@@ -22,10 +22,6 @@ function(create_install_dir_with_perms)
 
   install(CODE
     "
-    if(DEFINED ENV{DESTDIR} AND NOT IS_ABSOLUTE \${CMAKE_INSTALL_PREFIX})
-      message(FATAL_ERROR \"Install prefix must be absolute when using DESTDIR\")
-    endif()
-
     set(_current_dir \"\${CMAKE_INSTALL_PREFIX}/${_install_dir_DESTINATION}\")
     set(_dir_permissions \"${_install_dir_DIRECTORY_PERMISSIONS}\")
 
