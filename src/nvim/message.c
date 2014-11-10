@@ -3323,7 +3323,6 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
       case 'c':
       case 's':
       case 'S':
-        length_modifier = '\0';
         str_arg_l = 1;
         switch (fmt_spec) {
         case '%':
@@ -3587,7 +3586,6 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
                * zero value is formatted with an
                * explicit precision of zero */
               precision = num_of_digits + 1;
-              precision_specified = 1;
             }
           }
           /* zero padding to specified precision? */
