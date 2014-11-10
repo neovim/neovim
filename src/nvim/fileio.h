@@ -35,6 +35,7 @@ typedef enum auto_event {
   EVENT_BUFWRITEPOST,           /* after writing a buffer */
   EVENT_BUFWRITEPRE,            /* before writing a buffer */
   EVENT_BUFWRITECMD,            /* write buffer using command */
+  EVENT_CMDPRE,                 /* before executing a command */
   EVENT_CMDWINENTER,            /* after entering the cmdline window */
   EVENT_CMDWINLEAVE,            /* before leaving the cmdline window */
   EVENT_COLORSCHEME,            /* after loading a colorscheme */
