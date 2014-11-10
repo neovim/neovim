@@ -166,7 +166,7 @@ describe('systemlist()', function()
   if xclip then
     describe("with a program that doesn't close stdout", function()
       it('will exit properly after passing input', function()
-        eq(nil, eval(
+        eq({}, eval(
           "systemlist('xclip -i -selection clipboard', ['clip', 'data'])"))
         eq({'clip', 'data'}, eval(
           "systemlist('xclip -o -selection clipboard')"))
