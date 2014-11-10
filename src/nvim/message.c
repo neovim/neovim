@@ -12,6 +12,7 @@
 
 #define MESSAGE_FILE            /* don't include prototype for smsg() */
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -691,8 +692,10 @@ int delete_first_msg(void)
     return FAIL;
   p = first_msg_hist;
   first_msg_hist = p->next;
-  if (first_msg_hist == NULL)
-    last_msg_hist = NULL;      /* history is empty */
+  if (first_msg_hist == NULL) {  /* history is becoming empty */
+    assert(msg_hist_len == 1);
+    last_msg_hist = NULL;
+  }
   free(p->msg);
   free(p);
   --msg_hist_len;
