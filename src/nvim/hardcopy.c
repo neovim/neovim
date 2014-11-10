@@ -3006,7 +3006,7 @@ int mch_print_text_out(char_u *p, int len)
     /* Convert from multi-byte to 8-bit encoding */
     p = string_convert(&prt_conv, p, &len);
     if (p == NULL)
-      p = (char_u *)"";
+      p = (char_u *)xstrdup("");
   }
 
   if (prt_out_mbyte) {
@@ -3054,7 +3054,7 @@ int mch_print_text_out(char_u *p, int len)
   }
 
   /* Need to free any translated characters */
-  if (prt_do_conv && (*p != NUL))
+  if (prt_do_conv)
     free(p);
 
   prt_text_run += char_width;
