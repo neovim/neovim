@@ -1461,7 +1461,7 @@ int get_digraph(int cmdline)
 
     if (cmdline) {
       if ((char2cells(c) == 1) && (cmdline_star == 0)) {
-        putcmdline(c, TRUE);
+        putcmdline(c, true);
       }
     } else {
       add_to_showcmd(c);
@@ -1752,12 +1752,12 @@ char_u* keymap_init(void)
     vim_snprintf(buf, buflen, "keymap/%s_%s.vim",
                  curbuf->b_p_keymap, p_enc);
 
-    if (source_runtime((char_u *)buf, FALSE) == FAIL) {
+    if (source_runtime((char_u *)buf, false) == FAIL) {
       // try finding "keymap/'keymap'.vim" in 'runtimepath'
       vim_snprintf(buf, buflen, "keymap/%s.vim",
                    curbuf->b_p_keymap);
 
-      if (source_runtime((char_u *)buf, FALSE) == FAIL) {
+      if (source_runtime((char_u *)buf, false) == FAIL) {
         free(buf);
         return (char_u *)N_("E544: Keymap file not found");
       }

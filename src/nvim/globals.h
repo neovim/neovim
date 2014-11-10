@@ -300,14 +300,14 @@ EXTERN int check_cstack INIT(= FALSE);
 EXTERN int trylevel INIT(= 0);
 
 /*
- * When "force_abort" is TRUE, always skip commands after an error message,
+ * When "force_abort" is true, always skip commands after an error message,
  * even after the outermost ":endif", ":endwhile" or ":endfor" or for a
- * function without the "abort" flag.  It is set to TRUE when "trylevel" is
+ * function without the "abort" flag.  It is set to true when "trylevel" is
  * non-zero (and ":silent!" was not used) or an exception is being thrown at
- * the time an error is detected.  It is set to FALSE when "trylevel" gets
+ * the time an error is detected.  It is set to false when "trylevel" gets
  * zero again and there was no error or interrupt or throw.
  */
-EXTERN int force_abort INIT(= FALSE);
+EXTERN bool force_abort INIT(= false);
 
 /*
  * "msg_list" points to a variable in the stack of do_cmdline() which keeps

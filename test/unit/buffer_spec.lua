@@ -40,37 +40,37 @@ describe('buffer functions', function()
   describe('buf_valid', function()
 
     it('should view NULL as an invalid buffer', function()
-      eq(0, buffer.buf_valid(NULL))
+      eq(false, buffer.buf_valid(NULL))
     end)
 
     it('should view an open buffer as valid', function()
       local buf = buflist_new(path1, buffer.BLN_LISTED)
 
-      eq(1, buffer.buf_valid(buf))
+      eq(true, buffer.buf_valid(buf))
     end)
 
     it('should view a closed and hidden buffer as valid', function()
       local buf = buflist_new(path1, buffer.BLN_LISTED)
 
-      close_buffer(NULL, buf, 0, 0)
+      close_buffer(NULL, buf, 0, false)
 
-      eq(1, buffer.buf_valid(buf))
+      eq(true, buffer.buf_valid(buf))
     end)
 
     it('should view a closed and unloaded buffer as valid', function()
       local buf = buflist_new(path1, buffer.BLN_LISTED)
 
-      close_buffer(NULL, buf, buffer.DOBUF_UNLOAD, 0)
+      close_buffer(NULL, buf, buffer.DOBUF_UNLOAD, false)
 
-      eq(1, buffer.buf_valid(buf))
+      eq(true, buffer.buf_valid(buf))
     end)
 
     it('should view a closed and wiped buffer as invalid', function()
       local buf = buflist_new(path1, buffer.BLN_LISTED)
 
-      close_buffer(NULL, buf, buffer.DOBUF_WIPE, 0)
+      close_buffer(NULL, buf, buffer.DOBUF_WIPE, false)
 
-      eq(0, buffer.buf_valid(buf))
+      eq(false, buffer.buf_valid(buf))
     end)
   end)
 
@@ -89,7 +89,7 @@ describe('buffer functions', function()
 
       eq(buf.b_fnum, buflist_findpat(path1, ONLY_LISTED))
 
-      close_buffer(NULL, buf, buffer.DOBUF_WIPE, 0)
+      close_buffer(NULL, buf, buffer.DOBUF_WIPE, false)
     end)
 
     it('should prefer to match the start of a file path', function()
@@ -101,9 +101,9 @@ describe('buffer functions', function()
       eq(buf2.b_fnum, buflist_findpat("file", ONLY_LISTED))
       eq(buf3.b_fnum, buflist_findpat("path", ONLY_LISTED))
 
-      close_buffer(NULL, buf1, buffer.DOBUF_WIPE, 0)
-      close_buffer(NULL, buf2, buffer.DOBUF_WIPE, 0)
-      close_buffer(NULL, buf3, buffer.DOBUF_WIPE, 0)
+      close_buffer(NULL, buf1, buffer.DOBUF_WIPE, false)
+      close_buffer(NULL, buf2, buffer.DOBUF_WIPE, false)
+      close_buffer(NULL, buf3, buffer.DOBUF_WIPE, false)
     end)
 
     it('should prefer to match the end of a file over the middle', function()
@@ -117,7 +117,7 @@ describe('buffer functions', function()
       --}
 
       --{ When: We close buf2
-      close_buffer(NULL, buf2, buffer.DOBUF_WIPE, 0)
+      close_buffer(NULL, buf2, buffer.DOBUF_WIPE, false)
 
       -- And: Open buf1, which has 'file' in the middle of its name
       local buf1 = buflist_new(path1, buffer.BLN_LISTED)
@@ -126,8 +126,8 @@ describe('buffer functions', function()
       eq(buf3.b_fnum, buflist_findpat("file", ONLY_LISTED))
       --}
 
-      close_buffer(NULL, buf1, buffer.DOBUF_WIPE, 0)
-      close_buffer(NULL, buf3, buffer.DOBUF_WIPE, 0)
+      close_buffer(NULL, buf1, buffer.DOBUF_WIPE, false)
+      close_buffer(NULL, buf3, buffer.DOBUF_WIPE, false)
     end)
 
     it('should match a unique fragment of a file path', function()
@@ -137,9 +137,9 @@ describe('buffer functions', function()
 
       eq(buf3.b_fnum, buflist_findpat("_test_", ONLY_LISTED))
 
-      close_buffer(NULL, buf1, buffer.DOBUF_WIPE, 0)
-      close_buffer(NULL, buf2, buffer.DOBUF_WIPE, 0)
-      close_buffer(NULL, buf3, buffer.DOBUF_WIPE, 0)
+      close_buffer(NULL, buf1, buffer.DOBUF_WIPE, false)
+      close_buffer(NULL, buf2, buffer.DOBUF_WIPE, false)
+      close_buffer(NULL, buf3, buffer.DOBUF_WIPE, false)
     end)
 
     it('should include / ignore unlisted buffers based on the flag.', function()
@@ -151,7 +151,7 @@ describe('buffer functions', function()
       --}
 
       --{ When: We unlist the buffer
-      close_buffer(NULL, buf3, buffer.DOBUF_DEL, 0)
+      close_buffer(NULL, buf3, buffer.DOBUF_DEL, false)
 
       -- Then: It should not find the buffer when searching only listed buffers
       eq(-1, buflist_findpat("_test_", ONLY_LISTED))
@@ -161,7 +161,7 @@ describe('buffer functions', function()
       --}
 
       --{ When: We wipe the buffer
-      close_buffer(NULL, buf3, buffer.DOBUF_WIPE, 0)
+      close_buffer(NULL, buf3, buffer.DOBUF_WIPE, false)
 
       -- Then: It should not find the buffer at all
       eq(-1, buflist_findpat("_test_", ONLY_LISTED))
@@ -179,7 +179,7 @@ describe('buffer functions', function()
       --}
 
       --{ When: The first buffer is unlisted
-      close_buffer(NULL, buf1, buffer.DOBUF_DEL, 0)
+      close_buffer(NULL, buf1, buffer.DOBUF_DEL, false)
 
       -- Then: The second buffer is preferred because
       --       unlisted buffers are not allowed
@@ -193,7 +193,7 @@ describe('buffer functions', function()
       --}
 
       --{ When: We unlist the second buffer
-      close_buffer(NULL, buf2, buffer.DOBUF_DEL, 0)
+      close_buffer(NULL, buf2, buffer.DOBUF_DEL, false)
 
       -- Then: The first buffer is preferred again
       --       because buf1 matches better which takes precedence
@@ -204,8 +204,8 @@ describe('buffer functions', function()
       eq(-1, buflist_findpat("test", ONLY_LISTED))
       --}
 
-      close_buffer(NULL, buf1, buffer.DOBUF_WIPE, 0)
-      close_buffer(NULL, buf2, buffer.DOBUF_WIPE, 0)
+      close_buffer(NULL, buf1, buffer.DOBUF_WIPE, false)
+      close_buffer(NULL, buf2, buffer.DOBUF_WIPE, false)
     end)
   end)
 end)

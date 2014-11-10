@@ -747,8 +747,8 @@ static void set_option_value_for(char *key,
   switch (opt_type)
   {
     case SREQ_WIN:
-      if (switch_win(&save_curwin, &save_curtab, (win_T *)from,
-            win_find_tabpage((win_T *)from), false) == FAIL)
+      if (!switch_win(&save_curwin, &save_curtab, (win_T *)from,
+            win_find_tabpage((win_T *)from), false))
       {
         if (try_end(err)) {
           return;

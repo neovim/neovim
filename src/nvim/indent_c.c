@@ -1569,7 +1569,7 @@ int get_c_indent(void)
   /*
    * #defines and so on always go at the left when included in 'cinkeys'.
    */
-  if (*theline == '#' && (*linecopy == '#' || in_cinkeys('#', ' ', TRUE)))
+  if (*theline == '#' && (*linecopy == '#' || in_cinkeys('#', ' ', true)))
     amount = curbuf->b_ind_hash_comment;
 
   /*

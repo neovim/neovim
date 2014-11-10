@@ -31,7 +31,7 @@
 #endif
 
 
-static int chartab_initialized = FALSE;
+static bool chartab_initialized = false;
 
 // b_chartab[] is an array of 32 bytes, each bit representing one of the
 // characters 0-255.
@@ -64,20 +64,20 @@ static int chartab_initialized = FALSE;
 /// - CT_FNAME_CHAR bit is set when the character can be in a file name.
 /// - CT_ID_CHAR bit is set when the character can be in an identifier.
 ///
-/// @return FAIL if 'iskeyword', 'isident', 'isfname' or 'isprint' option has
-/// an error, OK otherwise.
-int init_chartab(void)
+/// @return false if 'iskeyword', 'isident', 'isfname' or 'isprint' option has
+/// an error, true otherwise.
+bool init_chartab(void)
 {
-  return buf_init_chartab(curbuf, TRUE);
+  return buf_init_chartab(curbuf, true);
 }
 
 /// Helper for init_chartab
 ///
-/// @param global FALSE: only set buf->b_chartab[]
+/// @param global false: only set buf->b_chartab[]
 ///
-/// @return FAIL if 'iskeyword', 'isident', 'isfname' or 'isprint' option has
-/// an error, OK otherwise.
-int buf_init_chartab(buf_T *buf, int global)
+/// @return false if 'iskeyword', 'isident', 'isfname' or 'isprint' option has
+/// an error, true otherwise.
+bool buf_init_chartab(buf_T *buf, bool global)
 {
   int c;
   int c2;
@@ -202,7 +202,7 @@ int buf_init_chartab(buf_T *buf, int global)
           || ((c2 < c) && (c2 != -1))
           || (c2 >= 256)
           || !((*p == NUL) || (*p == ','))) {
-        return FAIL;
+        return false;
       }
 
       if (c2 == -1) {  // not a range
@@ -275,12 +275,12 @@ int buf_init_chartab(buf_T *buf, int global)
 
       if ((c == ',') && (*p == NUL)) {
         // Trailing comma is not allowed.
-        return FAIL;
+        return false;
       }
     }
   }
-  chartab_initialized = TRUE;
-  return OK;
+  chartab_initialized = true;
+  return true;
 }
 
 /// Translate any special characters in buf[bufsize] in-place.
@@ -498,7 +498,7 @@ char_u* str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
 
 // Catch 22: chartab[] can't be initialized before the options are
 // initialized, and initializing options may cause transchar() to be called!
-// When chartab_initialized == FALSE don't use chartab[].
+// When chartab_initialized == false don't use chartab[].
 // Does NOT work for multi-byte characters, c must be <= 255.
 // Also doesn't work for the first byte of a multi-byte, "c" must be a
 // character!
@@ -802,32 +802,32 @@ int win_linetabsize(win_T *wp, char_u *line, colnr_T len)
   return (int)col;
 }
 
-/// Return TRUE if 'c' is a normal identifier character:
+/// Return true if 'c' is a normal identifier character:
 ///
 /// Letters and characters from the 'isident' option.
 ///
 /// @param c
 ///
-/// @return TRUE if 'c' is a normal identifier character.
-int vim_isIDc(int c)
+/// @return true if 'c' is a normal identifier character.
+bool vim_isIDc(int c)
 {
   return c > 0 && c < 0x100 && (chartab[c] & CT_ID_CHAR);
 }
 
-/// return TRUE if 'c' is a keyword character: Letters and characters from
+/// Return true if 'c' is a keyword character: Letters and characters from
 /// 'iskeyword' option for current buffer.
 ///
 /// For multi-byte characters mb_get_class() is used (builtin rules).
 ///
 /// @param c
 ///
-/// @return TRUE if 'c' is a keyword character.
-int vim_iswordc(int c)
+/// @return true if 'c' is a keyword character.
+bool vim_iswordc(int c)
 {
   return vim_iswordc_buf(c, curbuf);
 }
 
-int vim_iswordc_buf(int c, buf_T *buf)
+bool vim_iswordc_buf(int c, buf_T *buf)
 {
   if (c >= 0x100) {
     if (enc_dbcs != 0) {
@@ -845,8 +845,8 @@ int vim_iswordc_buf(int c, buf_T *buf)
 ///
 /// @param p
 ///
-/// @return TRUE if 'p' points to a keyword character.
-int vim_iswordp(char_u *p)
+/// @return true if 'p' points to a keyword character.
+bool vim_iswordp(char_u *p)
 {
   if (has_mbyte && (MB_BYTE2LEN(*p) > 1)) {
     return mb_get_class(p) >= 2;
@@ -854,7 +854,7 @@ int vim_iswordp(char_u *p)
   return GET_CHARTAB(curbuf, *p) != 0;
 }
 
-int vim_iswordp_buf(char_u *p, buf_T *buf)
+bool vim_iswordp_buf(char_u *p, buf_T *buf)
 {
   if (has_mbyte && (MB_BYTE2LEN(*p) > 1)) {
     return mb_get_class(p) >= 2;
@@ -862,26 +862,26 @@ int vim_iswordp_buf(char_u *p, buf_T *buf)
   return GET_CHARTAB(buf, *p) != 0;
 }
 
-/// return TRUE if 'c' is a valid file-name character
+/// Return true if 'c' is a valid file-name character
 /// Assume characters above 0x100 are valid (multi-byte).
 ///
 /// @param c
 ///
-/// @return TRUE if 'c' is a valid file name character.
-int vim_isfilec(int c)
+/// @return true if 'c' is a valid file name character.
+bool vim_isfilec(int c)
 {
   return c >= 0x100 || (c > 0 && (chartab[c] & CT_FNAME_CHAR));
 }
 
-/// return TRUE if 'c' is a valid file-name character or a wildcard character
+/// Return true if 'c' is a valid file-name character or a wildcard character
 /// Assume characters above 0x100 are valid (multi-byte).
 /// Explicitly interpret ']' as a wildcard character as mch_has_wildcard("]")
 /// returns false.
 ///
 /// @param c
 ///
-/// @return TRUE if 'c' is a valid file-name character or wildcard character.
-int vim_isfilec_or_wc(int c)
+/// @return true if 'c' is a valid file-name character or wildcard character.
+bool vim_isfilec_or_wc(int c)
 {
   char_u buf[2];
   buf[0] = (char_u)c;
@@ -889,14 +889,14 @@ int vim_isfilec_or_wc(int c)
   return vim_isfilec(c) || c == ']' || mch_has_wildcard(buf);
 }
 
-/// return TRUE if 'c' is a printable character
+/// Return true if 'c' is a printable character
 /// Assume characters above 0x100 are printable (multi-byte), except for
 /// Unicode.
 ///
 /// @param c
 ///
-/// @return TRUE if 'c' a printable character.
-int vim_isprintc(int c)
+/// @return true if 'c' a printable character.
+bool vim_isprintc(int c)
 {
   if (enc_utf8 && (c >= 0x100)) {
     return utf_printable(c);
@@ -904,16 +904,16 @@ int vim_isprintc(int c)
   return c >= 0x100 || (c > 0 && (chartab[c] & CT_PRINT_CHAR));
 }
 
-/// Strict version of vim_isprintc(c), don't return TRUE if "c" is the head
+/// Strict version of vim_isprintc(c), don't return true if "c" is the head
 /// byte of a double-byte character.
 ///
 /// @param c
 ///
-/// @return TRUE if 'c' is a printable character.
-int vim_isprintc_strict(int c)
+/// @return true if 'c' is a printable character.
+bool vim_isprintc_strict(int c)
 {
   if ((enc_dbcs != 0) && (c < 0x100) && (MB_BYTE2LEN(c) > 1)) {
-    return FALSE;
+    return false;
   }
 
   if (enc_utf8 && (c >= 0x100)) {
@@ -1121,35 +1121,35 @@ static int win_nolbr_chartabsize(win_T *wp, char_u *s, colnr_T col, int *headp)
   return n;
 }
 
-/// Return TRUE if virtual column "vcol" is in the rightmost column of window
+/// Return true if virtual column "vcol" is in the rightmost column of window
 /// "wp".
 ///
 /// @param wp
 /// @param vcol
 ///
-/// @return TRUE if the virtual column is in the rightmost column.
-int in_win_border(win_T *wp, colnr_T vcol)
+/// @return true if the virtual column is in the rightmost column.
+bool in_win_border(win_T *wp, colnr_T vcol)
 {
   int width1;             // width of first line (after line number)
   int width2;             // width of further lines
 
   if (wp->w_width == 0) {
     // there is no border
-    return FALSE;
+    return false;
   }
   width1 = wp->w_width - win_col_off(wp);
 
   if ((int)vcol < width1 - 1) {
-    return FALSE;
+    return false;
   }
 
   if ((int)vcol == width1 - 1) {
-    return TRUE;
+    return true;
   }
   width2 = width1 + win_col_off2(wp);
 
   if (width2 <= 0) {
-    return FALSE;
+    return false;
   }
   return (vcol - width1) % width2 == width2 - 1;
 }
@@ -1484,8 +1484,8 @@ char_u* skiptohex(char_u *q)
 ///
 /// @param c
 ///
-/// @return TRUE if the character is a digit.
-int vim_isdigit(int c)
+/// @return true if the character is a digit.
+bool vim_isdigit(int c)
 {
   return c >= '0' && c <= '9';
 }
@@ -1496,8 +1496,8 @@ int vim_isdigit(int c)
 ///
 /// @param c
 ///
-/// @return TRUE if the character is a digit.
-int vim_isxdigit(int c)
+/// @return true if the character is a digit.
+bool vim_isxdigit(int c)
 {
   return (c >= '0' && c <= '9')
          || (c >= 'a' && c <= 'f')
@@ -1539,10 +1539,10 @@ static char_u latin1lower[257] =
     "\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee"
     "\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff";
 
-int vim_islower(int c)
+bool vim_islower(int c)
 {
   if (c <= '@') {
-    return FALSE;
+    return false;
   }
 
   if (c >= 0x80) {
@@ -1556,7 +1556,7 @@ int vim_islower(int c)
       }
 
       // islower() can't handle these chars and may crash
-      return FALSE;
+      return false;
     }
 
     if (enc_latin1like) {
@@ -1566,10 +1566,10 @@ int vim_islower(int c)
   return islower(c);
 }
 
-int vim_isupper(int c)
+bool vim_isupper(int c)
 {
   if (c <= '@') {
-    return FALSE;
+    return false;
   }
 
   if (c >= 0x80) {
@@ -1583,7 +1583,7 @@ int vim_isupper(int c)
       }
 
       // islower() can't handle these chars and may crash
-      return FALSE;
+      return false;
     }
 
     if (enc_latin1like) {
@@ -1697,12 +1697,12 @@ long getdigits(char_u **pp)
   return retval;
 }
 
-/// Return TRUE if "lbuf" is empty or only contains blanks.
+/// Return true if "lbuf" is empty or only contains blanks.
 ///
 /// @param lbuf
 ///
-/// @return TRUE if `lbuf` is empty or only contains blanks.
-int vim_isblankline(char_u *lbuf)
+/// @return true if `lbuf` is empty or only contains blanks.
+bool vim_isblankline(char_u *lbuf)
 {
   char_u *p = skipwhite(lbuf);
   return *p == NUL || *p == '\r' || *p == '\n';
@@ -1857,7 +1857,7 @@ int hexhex2nr(char_u *p)
 #endif // if defined(FEAT_TERMRESPONSE) || defined(FEAT_GUI_GTK)
        // || defined(PROTO)
 
-/// Return TRUE if "str" starts with a backslash that should be removed.
+/// Return true if "str" starts with a backslash that should be removed.
 /// For WIN32 this is only done when the character after the
 /// backslash is not a normal file name character.
 /// '$' is a valid file name character, we don't remove the backslash before
@@ -1871,8 +1871,8 @@ int hexhex2nr(char_u *p)
 ///
 /// @param str
 ///
-/// @return TRUE if `str` starts with a backslash that should be removed.
-int rem_backslash(char_u *str)
+/// @return true if `str` starts with a backslash that should be removed.
+bool rem_backslash(char_u *str)
 {
 #ifdef BACKSLASH_IN_FILENAME
   return str[0] == '\\'

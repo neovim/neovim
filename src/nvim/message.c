@@ -797,8 +797,9 @@ void wait_return(int redraw)
     /* Avoid the sequence that the user types ":" at the hit-return prompt
      * to start an Ex command, but the file-changed dialog gets in the
      * way. */
-    if (need_check_timestamps)
-      check_timestamps(FALSE);
+    if (need_check_timestamps) {
+      check_timestamps(false);
+    }
 
     hit_return_msg();
 
@@ -1362,7 +1363,7 @@ void str2specialbuf(char_u *sp, char_u *buf, int len)
 /*
  * print line for :print or :list command
  */
-void msg_prt_line(char_u *s, int list)
+void msg_prt_line(char_u *s, bool list)
 {
   int c;
   int col = 0;
@@ -1375,8 +1376,9 @@ void msg_prt_line(char_u *s, int list)
   int l;
   char_u buf[MB_MAXBYTES + 1];
 
-  if (curwin->w_p_list)
-    list = TRUE;
+  if (curwin->w_p_list) {
+    list = true;
+  }
 
   /* find start of trailing whitespace */
   if (list && lcs_trail) {
@@ -3036,7 +3038,7 @@ static long tv_nr(typval_T *tvs, int *idxp)
 {
   int idx = *idxp - 1;
   long n = 0;
-  int err = FALSE;
+  bool err = false;
 
   if (tvs[idx].v_type == VAR_UNKNOWN)
     EMSG(_(e_printf));

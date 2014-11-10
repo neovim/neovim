@@ -591,7 +591,7 @@ char_u *fm_getname(fmark_T *fmark, int lead_len)
 {
   if (fmark->fnum == curbuf->b_fnum)                /* current buffer */
     return mark_line(&(fmark->mark), lead_len);
-  return buflist_nr2name(fmark->fnum, FALSE, TRUE);
+  return buflist_nr2name(fmark->fnum, false, true);
 }
 
 /*
@@ -1231,7 +1231,7 @@ int read_viminfo_filemark(vir_T *virp, int force)
       str = skipwhite(str);
       free(fm->fname);
       fm->fname = viminfo_readstring(virp, (int)(str - virp->vir_line),
-          FALSE);
+          false);
     }
   }
   return vim_fgets(virp->vir_line, LSIZE, virp->vir_fd);
@@ -1256,7 +1256,7 @@ void write_viminfo_filemarks(FILE *fp)
    * Set '0 mark to current cursor position.
    */
   if (curbuf->b_ffname != NULL && !removable(curbuf->b_ffname)) {
-    name = buflist_nr2name(curbuf->b_fnum, TRUE, FALSE);
+    name = buflist_nr2name(curbuf->b_fnum, true, false);
     for (i = NMARKS; i < NMARKS + EXTRA_MARKS - 1; ++i)
       if (namedfm[i].fmark.mark.lnum == curwin->w_cursor.lnum
           && (namedfm[i].fname == NULL
@@ -1300,7 +1300,7 @@ static void write_one_filemark(FILE *fp, xfmark_T *fm, int c1, int c2)
     return;
 
   if (fm->fmark.fnum != 0)              /* there is a buffer */
-    name = buflist_nr2name(fm->fmark.fnum, TRUE, FALSE);
+    name = buflist_nr2name(fm->fmark.fnum, true, false);
   else
     name = fm->fname;                   /* use name from .viminfo */
   if (name != NULL && *name != NUL) {
@@ -1447,7 +1447,7 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
      * Ignore leading and trailing white space.
      */
     str = skipwhite(line + 1);
-    str = viminfo_readstring(virp, (int)(str - virp->vir_line), FALSE);
+    str = viminfo_readstring(virp, (int)(str - virp->vir_line), false);
     if (str == NULL)
       continue;
     p = str + STRLEN(str);

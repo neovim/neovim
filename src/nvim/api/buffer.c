@@ -512,7 +512,7 @@ static void switch_to_win_for_buf(buf_T *buf,
   tabpage_T *tp;
 
   if (!find_win_for_buf(buf, &wp, &tp)
-      || switch_win(save_curwinp, save_curtabp, wp, tp, true) == FAIL)
+      || !switch_win(save_curwinp, save_curtabp, wp, tp, true))
     switch_buffer(save_curbufp, buf);
 }
 

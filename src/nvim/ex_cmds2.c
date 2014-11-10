@@ -67,7 +67,7 @@ typedef struct scriptitem_S {
   bool file_id_valid;
   FileID file_id;
   int sn_prof_on;               /* TRUE when script is/was profiled */
-  int sn_pr_force;              /* forceit: profile functions in this script */
+  bool sn_pr_force;             /* forceit: profile functions in this script */
   proftime_T sn_pr_child;       /* time set when going into first child */
   int sn_pr_nest;               /* nesting for sn_pr_child */
   /* profiling the script as a whole */
@@ -330,7 +330,7 @@ static linenr_T debug_breakpoint_lnum;
  * a skipped command decides itself that a debug prompt should be displayed, it
  * can do so by calling dbg_check_skipped().
  */
-static int debug_skipped;
+static bool debug_skipped;
 static char_u   *debug_skipped_name;
 
 /*
@@ -344,7 +344,7 @@ void dbg_check_breakpoint(exarg_T *eap)
 {
   char_u      *p;
 
-  debug_skipped = FALSE;
+  debug_skipped = false;
   if (debug_breakpoint_name != NULL) {
     if (!eap->skip) {
       /* replace K_SNR with "<SNR>" */
@@ -361,7 +361,7 @@ void dbg_check_breakpoint(exarg_T *eap)
       debug_breakpoint_name = NULL;
       do_debug(eap->cmd);
     } else {
-      debug_skipped = TRUE;
+      debug_skipped = true;
       debug_skipped_name = debug_breakpoint_name;
       debug_breakpoint_name = NULL;
     }
@@ -369,7 +369,7 @@ void dbg_check_breakpoint(exarg_T *eap)
     if (!eap->skip)
       do_debug(eap->cmd);
     else {
-      debug_skipped = TRUE;
+      debug_skipped = true;
       debug_skipped_name = NULL;
     }
   }
@@ -377,9 +377,9 @@ void dbg_check_breakpoint(exarg_T *eap)
 
 /*
  * Go to debug mode if skipped by dbg_check_breakpoint() because eap->skip was
- * set.  Return TRUE when the debug mode is entered this time.
+ * set.  Return true when the debug mode is entered this time.
  */
-int dbg_check_skipped(exarg_T *eap)
+bool dbg_check_skipped(exarg_T *eap)
 {
   int prev_got_int;
 
@@ -396,9 +396,9 @@ int dbg_check_skipped(exarg_T *eap)
     (void)dbg_check_breakpoint(eap);
     eap->skip = TRUE;
     got_int |= prev_got_int;
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 /*
@@ -411,7 +411,7 @@ struct debuggy {
   char_u      *dbg_name;        /* function or file name */
   regprog_T   *dbg_prog;        /* regexp program */
   linenr_T dbg_lnum;            /* line number in function or file */
-  int dbg_forceit;              /* ! used */
+  bool dbg_forceit;             /* ! used */
 };
 
 static garray_T dbg_breakp = {0, 0, sizeof(struct debuggy), 4, NULL};
@@ -429,10 +429,9 @@ static garray_T prof_ga = {0, 0, sizeof(struct debuggy), 4, NULL};
  * Parse the arguments of ":profile", ":breakadd" or ":breakdel" and put them
  * in the entry just after the last one in dbg_breakp.  Note that "dbg_name"
  * is allocated.
- * Returns FAIL for failure.
+ * Returns false for failure.
  */
-static int 
-dbg_parsearg (
+static bool dbg_parsearg (
     char_u *arg,
     garray_T *gap           /* either &dbg_breakp or &prof_ga */
 )
@@ -456,13 +455,13 @@ dbg_parsearg (
     STRNCMP(p, "here", 4) == 0) {
     if (curbuf->b_ffname == NULL) {
       EMSG(_(e_noname));
-      return FAIL;
+      return false;
     }
     bp->dbg_type = DBG_FILE;
     here = TRUE;
   } else {
     EMSG2(_(e_invarg2), p);
-    return FAIL;
+    return false;
   }
   p = skipwhite(p + 4);
 
@@ -482,7 +481,7 @@ dbg_parsearg (
       || (here && *p != NUL)
       || (bp->dbg_type == DBG_FUNC && strstr((char *)p, "()") != NULL)) {
     EMSG2(_(e_invarg2), arg);
-    return FAIL;
+    return false;
   }
 
   if (bp->dbg_type == DBG_FUNC)
@@ -495,11 +494,11 @@ dbg_parsearg (
      * "~/dir". */
     q = expand_env_save(p);
     if (q == NULL)
-      return FAIL;
+      return false;
     p = expand_env_save(q);
     free(q);
     if (p == NULL)
-      return FAIL;
+      return false;
     if (*p != '*') {
       bp->dbg_name = fix_fname(p);
       free(p);
@@ -508,8 +507,8 @@ dbg_parsearg (
   }
 
   if (bp->dbg_name == NULL)
-    return FAIL;
-  return OK;
+    return false;
+  return true;
 }
 
 /*
@@ -529,7 +528,7 @@ void ex_breakadd(exarg_T *eap)
     bp = &DEBUGGY(gap, gap->ga_len);
     bp->dbg_forceit = eap->forceit;
 
-    pat = file_pat_to_reg_pat(bp->dbg_name, NULL, NULL, FALSE);
+    pat = file_pat_to_reg_pat(bp->dbg_name, NULL, NULL, false);
     if (pat != NULL) {
       bp->dbg_prog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
       free(pat);
@@ -655,9 +654,8 @@ void ex_breaklist(exarg_T *eap)
  * Find a breakpoint for a function or sourced file.
  * Returns line number at which to break; zero when no matching breakpoint.
  */
-linenr_T 
-dbg_find_breakpoint (
-    int file,                   /* TRUE for a file, FALSE for a function */
+linenr_T dbg_find_breakpoint (
+    bool file,             /* true for a file, false for a function */
     char_u *fname,         /* file or function name */
     linenr_T after             /* after this line number */
 )
@@ -666,13 +664,12 @@ dbg_find_breakpoint (
 }
 
 /*
- * Return TRUE if profiling is on for a function or sourced file.
+ * Return true if profiling is on for a function or sourced file.
  */
-int 
-has_profiling (
-    int file,                   /* TRUE for a file, FALSE for a function */
+bool has_profiling (
+    bool file,             /* true for a file, false for a function */
     char_u *fname,         /* file or function name */
-    int *fp            /* return: forceit */
+    bool *fp            /* return: forceit */
 )
 {
   return debuggy_find(file, fname, (linenr_T)0, &prof_ga, fp)
@@ -682,13 +679,12 @@ has_profiling (
 /*
  * Common code for dbg_find_breakpoint() and has_profiling().
  */
-static linenr_T 
-debuggy_find (
-    int file,                   /* TRUE for a file, FALSE for a function */
+static linenr_T debuggy_find (
+    bool file,             /* true for a file, false for a function */
     char_u *fname,         /* file or function name */
     linenr_T after,             /* after this line number */
     garray_T *gap,           /* either &dbg_breakp or &prof_ga */
-    int *fp            /* if not NULL: return forceit */
+    bool *fp           /* if not NULL: return forceit */
 )
 {
   struct debuggy *bp;
@@ -1004,37 +1000,38 @@ static void script_dump_profile(FILE *fd)
 }
 
 /*
- * Return TRUE when a function defined in the current script should be
+ * Return true when a function defined in the current script should be
  * profiled.
  */
-int prof_def_func(void)
+bool prof_def_func(void)
 {
-  if (current_SID > 0)
+  if (current_SID > 0) {
     return SCRIPT_ITEM(current_SID).sn_pr_force;
-  return FALSE;
+  }
+  return false;
 }
 
 /*
  * If 'autowrite' option set, try to write the file.
  * Careful: autocommands may make "buf" invalid!
  *
- * return FAIL for failure, OK otherwise
+ * return false for failure, true otherwise
  */
-int autowrite(buf_T *buf, int forceit)
+bool autowrite(buf_T *buf, bool forceit)
 {
-  int r;
-
   if (!(p_aw || p_awa) || !p_write
       /* never autowrite a "nofile" or "nowrite" buffer */
       || bt_dontwrite(buf)
-      || (!forceit && buf->b_p_ro) || buf->b_ffname == NULL)
-    return FAIL;
-  r = buf_write_all(buf, forceit);
+      || (!forceit && buf->b_p_ro) || buf->b_ffname == NULL) {
+    return false;
+  }
+  bool r = buf_write_all(buf, forceit);
 
   /* Writing may succeed but the buffer still changed, e.g., when there is a
    * conversion error.  We do want to return FAIL then. */
-  if (buf_valid(buf) && bufIsChanged(buf))
-    r = FAIL;
+  if (buf_valid(buf) && bufIsChanged(buf)) {
+    r = false;
+  }
   return r;
 }
 
@@ -1049,7 +1046,7 @@ void autowrite_all(void)
 
   FOR_ALL_BUFFERS(buf) {
     if (bufIsChanged(buf) && !buf->b_p_ro) {
-      (void)buf_write_all(buf, FALSE);
+      (void)buf_write_all(buf, false);
       /* an autocommand may have deleted the buffer */
       if (!buf_valid(buf))
         buf = firstbuf;
@@ -1058,12 +1055,12 @@ void autowrite_all(void)
 }
 
 /*
- * Return TRUE if buffer was changed and cannot be abandoned.
+ * Return true if buffer was changed and cannot be abandoned.
  * For flags use the CCGD_ values.
  */
-int check_changed(buf_T *buf, int flags)
+bool check_changed(buf_T *buf, int flags)
 {
-  int forceit = (flags & CCGD_FORCEIT);
+  bool forceit = (flags & CCGD_FORCEIT);
 
   if (       !forceit
              && bufIsChanged(buf)
@@ -1080,20 +1077,20 @@ int check_changed(buf_T *buf, int flags)
         }
       if (!buf_valid(buf))
         /* Autocommand deleted buffer, oops!  It's not changed now. */
-        return FALSE;
+        return false;
       dialog_changed(buf, count > 1);
       if (!buf_valid(buf))
         /* Autocommand deleted buffer, oops!  It's not changed now. */
-        return FALSE;
+        return false;
       return bufIsChanged(buf);
     }
     if (flags & CCGD_EXCMD)
       EMSG(_(e_nowrtmsg));
     else
       EMSG(_(e_nowrtmsg_nobang));
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 
@@ -1102,10 +1099,9 @@ int check_changed(buf_T *buf, int flags)
  * Ask the user what to do when abandoning a changed buffer.
  * Must check 'write' option first!
  */
-void 
-dialog_changed (
+void dialog_changed (
     buf_T *buf,
-    int checkall                   /* may abandon all changed buffers */
+    bool checkall                  /* may abandon all changed buffers */
 )
 {
   char_u buff[DIALOG_MSG_SIZE];
@@ -1128,7 +1124,7 @@ dialog_changed (
     if (buf->b_fname != NULL && check_overwrite(&ea, buf,
             buf->b_fname, buf->b_ffname, FALSE) == OK)
       /* didn't hit Cancel */
-      (void)buf_write_all(buf, FALSE);
+      (void)buf_write_all(buf, false);
   } else if (ret == VIM_NO) {
     unchanged(buf, TRUE);
   } else if (ret == VIM_ALL) {
@@ -1145,7 +1141,7 @@ dialog_changed (
         if (buf2->b_fname != NULL && check_overwrite(&ea, buf2,
                 buf2->b_fname, buf2->b_ffname, FALSE) == OK)
           /* didn't hit Cancel */
-          (void)buf_write_all(buf2, FALSE);
+          (void)buf_write_all(buf2, false);
         /* an autocommand may have deleted the buffer */
         if (!buf_valid(buf2))
           buf2 = firstbuf;
@@ -1165,7 +1161,7 @@ dialog_changed (
  * Return TRUE if the buffer "buf" can be abandoned, either by making it
  * hidden, autowriting it or unloading it.
  */
-int can_abandon(buf_T *buf, int forceit)
+bool can_abandon(buf_T *buf, bool forceit)
 {
   return P_HID(buf)
          || !bufIsChanged(buf)
@@ -1190,15 +1186,14 @@ static void add_bufnum(int *bufnrs, int *bufnump, int nr)
 }
 
 /*
- * Return TRUE if any buffer was changed and cannot be abandoned.
+ * Return true if any buffer was changed and cannot be abandoned.
  * That changed buffer becomes the current buffer.
  */
-int 
-check_changed_any (
-    int hidden                     /* Only check hidden buffers */
+bool check_changed_any (
+    bool hidden                    /* Only check hidden buffers */
 )
 {
-  int ret = FALSE;
+  bool ret = false;
   int save;
   int i;
   int bufnum = 0;
@@ -1210,7 +1205,7 @@ check_changed_any (
   }
 
   if (bufcount == 0)
-    return FALSE;
+    return false;
 
   bufnrs = xmalloc(sizeof(*bufnrs) * bufcount);
 
@@ -1255,7 +1250,7 @@ check_changed_any (
   if (i >= bufnum)
     goto theend;
 
-  ret = TRUE;
+  ret = true;
   exiting = FALSE;
   /*
    * When ":confirm" used, don't give an error message.
@@ -1304,31 +1299,31 @@ theend:
 }
 
 /*
- * return FAIL if there is no file name, OK if there is one
- * give error message for FAIL
+ * return false if there is no file name, true if there is one
+ * give error message for false
  */
-int check_fname(void)
+bool check_fname(void)
 {
   if (curbuf->b_ffname == NULL) {
     EMSG(_(e_noname));
-    return FAIL;
+    return false;
   }
-  return OK;
+  return true;
 }
 
 /*
  * flush the contents of a buffer, unless it has no file name
  *
- * return FAIL for failure, OK otherwise
+ * return false for failure, true otherwise
  */
-int buf_write_all(buf_T *buf, int forceit)
+bool buf_write_all(buf_T *buf, bool forceit)
 {
   int retval;
   buf_T       *old_curbuf = curbuf;
 
   retval = (buf_write(buf, buf->b_ffname, buf->b_fname,
                 (linenr_T)1, buf->b_ml.ml_line_count, NULL,
-                FALSE, forceit, TRUE, FALSE));
+                false, forceit, true, false));
   if (curbuf != old_curbuf) {
     msg_source(hl_attr(HLF_W));
     MSG(_("Warning: Entered other buffer unexpectedly (check autocommands)"));
@@ -1394,12 +1389,11 @@ void get_arglist(garray_T *gap, char_u *str)
 /*
  * Parse a list of arguments (file names), expand them and return in
  * "fnames[fcountp]".  When "wig" is true, removes files matching 'wildignore'.
- * Return FAIL or OK.
  */
-int get_arglist_exp(char_u *str, int *fcountp, char_u ***fnamesp, bool wig)
+bool get_arglist_exp(char_u *str, int *fcountp, char_u ***fnamesp, bool wig)
 {
   garray_T ga;
-  int i;
+  bool i;
 
   get_arglist(&ga, str);
 
@@ -1420,10 +1414,9 @@ int get_arglist_exp(char_u *str, int *fcountp, char_u ***fnamesp, bool wig)
  * "what" == AL_ADD: add files in 'str' to the argument list after "after".
  * "what" == AL_DEL: remove files in 'str' from the argument list.
  *
- * Return FAIL for failure, OK otherwise.
+ * Return false for failure, true otherwise.
  */
-static int 
-do_arglist (
+static bool do_arglist (
     char_u *str,
     int what,
     int after                       /* 0 means before first one */
@@ -1451,7 +1444,7 @@ do_arglist (
     regmatch.rm_ic = p_fic;     /* ignore case when 'fileignorecase' is set */
     for (int i = 0; i < new_ga.ga_len && !got_int; ++i) {
       p = ((char_u **)new_ga.ga_data)[i];
-      p = file_pat_to_reg_pat(p, NULL, NULL, FALSE);
+      p = file_pat_to_reg_pat(p, NULL, NULL, false);
       if (p == NULL)
         break;
       regmatch.regprog = vim_regcomp(p, p_magic ? RE_MAGIC : 0);
@@ -1485,10 +1478,10 @@ do_arglist (
         &exp_count, &exp_files, EW_DIR|EW_FILE|EW_ADDSLASH|EW_NOTFOUND);
     ga_clear(&new_ga);
     if (i == FAIL)
-      return FAIL;
+      return false;
     if (exp_count == 0) {
       EMSG(_(e_nomatch));
-      return FAIL;
+      return false;
     }
 
     if (what == AL_ADD) {
@@ -1500,7 +1493,7 @@ do_arglist (
 
   alist_check_arg_idx();
 
-  return OK;
+  return true;
 }
 
 /*
@@ -1516,10 +1509,10 @@ static void alist_check_arg_idx(void)
 }
 
 /*
- * Return TRUE if window "win" is editing the file at the current argument
+ * Return true if window "win" is editing the file at the current argument
  * index.
  */
-static int editing_arg_idx(win_T *win)
+static bool editing_arg_idx(win_T *win)
 {
   return !(win->w_arg_idx >= WARGCOUNT(win)
            || (win->w_buffer->b_fnum
@@ -1586,7 +1579,7 @@ void ex_args(exarg_T *eap)
     if (ARGCOUNT > 0) {
       /* Overwrite the command, for a short list there is no scrolling
        * required and no wait_return(). */
-      gotocmdline(TRUE);
+      gotocmdline(true);
       for (int i = 0; i < ARGCOUNT; ++i) {
         if (i == curwin->w_arg_idx)
           msg_putchar('[');
@@ -1881,7 +1874,7 @@ void ex_listdo(exarg_T *eap)
         /* go to window "tp" */
         if (!valid_tabpage(tp))
           break;
-        goto_tabpage_tp(tp, TRUE, TRUE);
+        goto_tabpage_tp(tp, true, true);
         tp = tp->tp_next;
       } else if (eap->cmdidx == CMD_bufdo) {
         /* Remember the number of the next listed buffer, in case
@@ -1932,7 +1925,7 @@ void ex_listdo(exarg_T *eap)
         validate_cursor();              /* cursor may have moved */
         /* required when 'scrollbind' has been set */
         if (curwin->w_p_scb)
-          do_check_scrollbind(TRUE);
+          do_check_scrollbind(true);
       }
     }
     listcmd_busy = FALSE;
@@ -2011,11 +2004,11 @@ void ex_compiler(exarg_T *eap)
       do_cmdline_cmd((char_u *)
           "command -nargs=* CompilerSet setlocal <args>");
     }
-    do_unlet((char_u *)"g:current_compiler", TRUE);
-    do_unlet((char_u *)"b:current_compiler", TRUE);
+    do_unlet((char_u *)"g:current_compiler", true);
+    do_unlet((char_u *)"b:current_compiler", true);
 
     sprintf((char *)buf, "compiler/%s.vim", eap->arg);
-    if (source_runtime(buf, TRUE) == FAIL)
+    if (source_runtime(buf, true) == FAIL)
       EMSG2(_("E666: compiler not supported: %s"), eap->arg);
     free(buf);
 
@@ -2033,7 +2026,7 @@ void ex_compiler(exarg_T *eap)
             old_cur_comp);
         free(old_cur_comp);
       } else
-        do_unlet((char_u *)"g:current_compiler", TRUE);
+        do_unlet((char_u *)"g:current_compiler", true);
     }
   }
 }
@@ -2049,16 +2042,16 @@ void ex_runtime(exarg_T *eap)
 
 static void source_callback(char_u *fname, void *cookie)
 {
-  (void)do_source(fname, FALSE, DOSO_NONE);
+  (void)do_source(fname, false, DOSO_NONE);
 }
 
 /*
  * Source the file "name" from all directories in 'runtimepath'.
  * "name" can contain wildcards.
- * When "all" is TRUE, source all files, otherwise only the first one.
- * return FAIL when no file could be sourced, OK otherwise.
+ * When "all" is true, source all files, otherwise only the first one.
+ * return false when no file could be sourced, true otherwise.
  */
-int source_runtime(char_u *name, int all)
+bool source_runtime(char_u *name, bool all)
 {
   return do_in_runtimepath(name, all, source_callback, NULL);
 }
@@ -2066,16 +2059,16 @@ int source_runtime(char_u *name, int all)
 /*
  * Find "name" in 'runtimepath'.  When found, invoke the callback function for
  * it: callback(fname, "cookie")
- * When "all" is TRUE repeat for all matches, otherwise only the first one is
+ * When "all" is true repeat for all matches, otherwise only the first one is
  * used.
- * Returns OK when at least one match found, FAIL otherwise.
+ * Returns true when at least one match found, false otherwise.
  *
  * If "name" is NULL calls callback for each entry in runtimepath. Cookie is
  * passed by reference in this case, setting it to NULL indicates that callback
  * has done its job.
  */
-int do_in_runtimepath(char_u *name, int all, DoInRuntimepathCB callback,
-                      void *cookie)
+bool do_in_runtimepath(char_u *name, bool all, DoInRuntimepathCB callback,
+                       void *cookie)
 {
   char_u      *rtp;
   char_u      *np;
@@ -2187,7 +2180,7 @@ static void cmd_source(char_u *fname, exarg_T *eap)
         );
 
   /* ":source" read ex commands */
-  else if (do_source(fname, FALSE, DOSO_NONE) == FAIL)
+  else if (do_source(fname, false, DOSO_NONE) == FAIL)
     EMSG2(_(e_notopen), fname);
 }
 
@@ -2251,12 +2244,11 @@ static FILE *fopen_noinh_readbin(char *filename)
  *
  * This function may be called recursively!
  *
- * return FAIL if file could not be opened, OK otherwise
+ * return false if file could not be opened, true otherwise
  */
-int 
-do_source (
+bool do_source (
     char_u *fname,
-    int check_other,                    /* check for .vimrc and _vimrc */
+    bool check_other,                  /* check for .vimrc and _vimrc */
     int is_vimrc                       /* DOSO_ value */
 )
 {
@@ -2371,7 +2363,7 @@ do_source (
   /*
    * Check if this script has a breakpoint.
    */
-  cookie.breakpoint = dbg_find_breakpoint(TRUE, fname_exp, (linenr_T)0);
+  cookie.breakpoint = dbg_find_breakpoint(true, fname_exp, (linenr_T)0);
   cookie.fname = fname_exp;
   cookie.dbg_tick = debug_tick;
 
@@ -2456,7 +2448,7 @@ do_source (
   }
 
   if (do_profiling == PROF_YES) {
-    int forceit;
+    bool forceit;
 
     /* Check if we do profiling for this script. */
     if (!si->sn_prof_on && has_profiling(TRUE, si->sn_name, &forceit)) {
@@ -2602,7 +2594,7 @@ char_u *getsourceline(int c, void *cookie, int indent)
 
   /* If breakpoints have been added/deleted need to check for it. */
   if (sp->dbg_tick < debug_tick) {
-    sp->breakpoint = dbg_find_breakpoint(TRUE, sp->fname, sourcing_lnum);
+    sp->breakpoint = dbg_find_breakpoint(true, sp->fname, sourcing_lnum);
     sp->dbg_tick = debug_tick;
   }
   if (do_profiling == PROF_YES)
@@ -2675,7 +2667,7 @@ char_u *getsourceline(int c, void *cookie, int indent)
   if (sp->breakpoint != 0 && sp->breakpoint <= sourcing_lnum) {
     dbg_breakpoint(sp->fname, sourcing_lnum);
     /* Find next breakpoint. */
-    sp->breakpoint = dbg_find_breakpoint(TRUE, sp->fname, sourcing_lnum);
+    sp->breakpoint = dbg_find_breakpoint(true, sp->fname, sourcing_lnum);
     sp->dbg_tick = debug_tick;
   }
 
@@ -2887,7 +2879,7 @@ void ex_scriptencoding(exarg_T *eap)
 void ex_finish(exarg_T *eap)
 {
   if (getline_equal(eap->getline, eap->cookie, getsourceline))
-    do_finish(eap, FALSE);
+    do_finish(eap, false);
   else
     EMSG(_("E168: :finish used outside of a sourced file"));
 }
@@ -2897,7 +2889,7 @@ void ex_finish(exarg_T *eap)
  * Also called for a pending finish at the ":endtry" or after returning from
  * an extra do_cmdline().  "reanimate" is used in the latter case.
  */
-void do_finish(exarg_T *eap, int reanimate)
+void do_finish(exarg_T *eap, bool reanimate)
 {
   int idx;
 
@@ -2922,11 +2914,11 @@ void do_finish(exarg_T *eap, int reanimate)
 
 
 /*
- * Return TRUE when a sourced file had the ":finish" command: Don't give error
+ * Return true when a sourced file had the ":finish" command: Don't give error
  * message for missing ":endif".
- * Return FALSE when not sourcing a file.
+ * Return false when not sourcing a file.
  */
-int source_finished(LineGetter fgetline, void *cookie)
+bool source_finished(LineGetter fgetline, void *cookie)
 {
   return getline_equal(fgetline, cookie, getsourceline)
          && ((struct source_cookie *)getline_cookie(
@@ -2942,9 +2934,9 @@ void ex_checktime(exarg_T *eap)
   int save_no_check_timestamps = no_check_timestamps;
 
   no_check_timestamps = 0;
-  if (eap->addr_count == 0)     /* default is all buffers */
-    check_timestamps(FALSE);
-  else {
+  if (eap->addr_count == 0) {   /* default is all buffers */
+    check_timestamps(false);
+  } else {
     buf = buflist_findnr((int)eap->line2);
     if (buf != NULL)            /* cannot happen? */
       (void)buf_check_timestamp(buf, FALSE);
@@ -3159,7 +3151,7 @@ void ex_language(exarg_T *eap)
 
 
 static char_u   **locales = NULL;       /* Array of all available locales */
-static int did_init_locales = FALSE;
+static bool did_init_locales = false;
 
 /*
  * Lazy initialization of all available locales.
@@ -3167,7 +3159,7 @@ static int did_init_locales = FALSE;
 static void init_locales(void)
 {
   if (!did_init_locales) {
-    did_init_locales = TRUE;
+    did_init_locales = true;
     locales = find_locales();
   }
 }

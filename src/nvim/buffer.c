@@ -87,16 +87,15 @@ static char *e_auabort = N_("E855: Autocommands caused command to abort");
 /*
  * Open current buffer, that is: open the memfile and read the file into
  * memory.
- * Return FAIL for failure, OK otherwise.
+ * Return false on failure. True otherwise.
  */
-int 
-open_buffer (
-    int read_stdin,                     /* read file from stdin */
+bool open_buffer (
+    bool read_stdin,                     /* read file from stdin */
     exarg_T *eap,                   /* for forced 'ff' and 'fenc' or NULL */
     int flags                          /* extra flags for readfile() */
 )
 {
-  int retval = OK;
+  bool success = true;
   buf_T       *old_curbuf;
   long old_tw = curbuf->b_p_tw;
 
@@ -114,7 +113,7 @@ open_buffer (
      * There MUST be a memfile, otherwise we can't do anything
      * If we can't create one for the current buffer, take another buffer
      */
-    close_buffer(NULL, curbuf, 0, FALSE);
+    close_buffer(NULL, curbuf, 0, false);
 
     curbuf = NULL;
     FOR_ALL_BUFFERS(buf) {
@@ -136,7 +135,7 @@ open_buffer (
     enter_buffer(curbuf);
     if (old_tw != curbuf->b_p_tw)
       check_colorcolumn(curwin);
-    return FAIL;
+    return false;
   }
 
   /* The autocommands in readfile() may change the buffer, but only AFTER
@@ -149,7 +148,7 @@ open_buffer (
 
   if (curbuf->b_ffname != NULL
       ) {
-    retval = readfile(curbuf->b_ffname, curbuf->b_fname,
+    success = readfile(curbuf->b_ffname, curbuf->b_fname,
         (linenr_T)0, (linenr_T)0, (linenr_T)MAXLNUM, eap,
         flags | READ_NEW);
     /* Help buffer is filtered. */
@@ -166,16 +165,16 @@ open_buffer (
      * guessed wrong.
      */
     curbuf->b_p_bin = TRUE;
-    retval = readfile(NULL, NULL, (linenr_T)0,
+    success = readfile(NULL, NULL, (linenr_T)0,
         (linenr_T)0, (linenr_T)MAXLNUM, NULL,
         flags | (READ_NEW + READ_STDIN));
     curbuf->b_p_bin = save_bin;
-    if (retval == OK) {
+    if (success) {
       line_count = curbuf->b_ml.ml_line_count;
-      retval = readfile(NULL, NULL, (linenr_T)line_count,
+      success = readfile(NULL, NULL, (linenr_T)line_count,
           (linenr_T)0, (linenr_T)MAXLNUM, eap,
           flags | READ_BUFFER);
-      if (retval == OK) {
+      if (success) {
         /* Delete the binary lines. */
         while (--line_count >= 0)
           ml_delete((linenr_T)1, FALSE);
@@ -192,10 +191,10 @@ open_buffer (
        * it can be changed there. */
       if (!readonlymode && !bufempty())
         changed();
-      else if (retval != FAIL)
+      else if (success)
         unchanged(curbuf, FALSE);
       apply_autocmds_retval(EVENT_STDINREADPOST, NULL, NULL, FALSE,
-          curbuf, &retval);
+          curbuf, &success);
     }
   }
 
@@ -218,7 +217,7 @@ open_buffer (
       || (aborting() && vim_strchr(p_cpo, CPO_INTMOD) != NULL)
       )
     changed();
-  else if (retval != FAIL && !read_stdin)
+  else if (success && !read_stdin)
     unchanged(curbuf, FALSE);
   save_file_ff(curbuf);                 /* keep this fileformat */
 
@@ -235,9 +234,9 @@ open_buffer (
     curwin->w_topline = 1;
     curwin->w_topfill = 0;
   }
-  apply_autocmds_retval(EVENT_BUFENTER, NULL, NULL, FALSE, curbuf, &retval);
+  apply_autocmds_retval(EVENT_BUFENTER, NULL, NULL, FALSE, curbuf, &success);
 
-  if (retval != FAIL) {
+  if (success) {
     /*
      * The autocommands may have changed the current buffer.  Apply the
      * modelines to the correct buffer, if it still exists and is loaded.
@@ -251,27 +250,27 @@ open_buffer (
       curbuf->b_flags &= ~(BF_CHECK_RO | BF_NEVERLOADED);
 
       apply_autocmds_retval(EVENT_BUFWINENTER, NULL, NULL, FALSE, curbuf,
-          &retval);
+          &success);
 
       /* restore curwin/curbuf and a few other things */
       aucmd_restbuf(&aco);
     }
   }
 
-  return retval;
+  return success;
 }
 
 /*
- * Return TRUE if "buf" points to a valid buffer (in the buffer list).
+ * Return true if "buf" points to a valid buffer (in the buffer list).
  */
-int buf_valid(buf_T *buf)
+bool buf_valid(buf_T *buf)
 {
   FOR_ALL_BUFFERS(bp) {
     if (bp == buf) {
-      return TRUE;
+      return true;
     }
   }
-  return FALSE;
+  return false;
 }
 
 /*
@@ -287,16 +286,15 @@ int buf_valid(buf_T *buf)
  *
  * The 'bufhidden' option can force freeing and deleting.
  *
- * When "abort_if_last" is TRUE then do not close the buffer if autocommands
+ * When "abort_if_last" is true then do not close the buffer if autocommands
  * cause there to be only one window with this buffer.  e.g. when ":quit" is
  * supposed to close the window but autocommands close all other windows.
  */
-void 
-close_buffer (
+void close_buffer (
     win_T *win,               /* if not NULL, set b_last_cursor */
     buf_T *buf,
     int action,
-    int abort_if_last
+    bool abort_if_last
 )
 {
   bool unload_buf = (action != 0);
@@ -327,7 +325,7 @@ close_buffer (
       set_last_cursor(win);
     buflist_setfpos(buf, win,
         win->w_cursor.lnum == 1 ? 0 : win->w_cursor.lnum,
-        win->w_cursor.col, TRUE);
+        win->w_cursor.col, true);
   }
 
   /* When the buffer is no longer in a window, trigger BufWinLeave */
@@ -441,7 +439,7 @@ close_buffer (
     if (del_buf) {
       /* Free all internal variables and reset option values, to make
        * ":bdel" compatible with Vim 5.7. */
-      free_buffer_stuff(buf, TRUE);
+      free_buffer_stuff(buf, true);
 
       /* Make it look like a new buffer. */
       buf->b_flags = BF_CHECK_RO | BF_NEVERLOADED;
@@ -537,7 +535,7 @@ void buf_freeall(buf_T *buf, int flags)
 static void free_buffer(buf_T *buf)
 {
   handle_unregister_buffer(buf);
-  free_buffer_stuff(buf, TRUE);
+  free_buffer_stuff(buf, true);
   unref_var_dict(buf->b_vars);
   aubuflocal_remove(buf);
   if (autocmd_busy) {
@@ -553,15 +551,14 @@ static void free_buffer(buf_T *buf)
 /*
  * Free stuff in the buffer for ":bdel" and when wiping out the buffer.
  */
-static void 
-free_buffer_stuff (
+static void free_buffer_stuff (
     buf_T *buf,
-    int free_options                       /* free options as well */
+    bool free_options                      /* free options as well */
 )
 {
   if (free_options) {
     clear_wininfo(buf);                 /* including window-local options */
-    free_buf_options(buf, TRUE);
+    free_buf_options(buf, true);
     ga_clear(&buf->b_s.b_langp);
   }
   vars_clear(&buf->b_vars->dv_hashtab);   /* free all internal variables */
@@ -611,7 +608,7 @@ void goto_buffer(exarg_T *eap, int start, int dir, int count)
     enter_cleanup(&cs);
 
     /* Quitting means closing the split window, nothing else. */
-    win_close(curwin, TRUE);
+    win_close(curwin, true);
     swap_exists_action = SEA_NONE;
     swap_exists_did_quit = TRUE;
 
@@ -644,7 +641,7 @@ void handle_swap_exists(buf_T *old_curbuf)
      * open a new, empty buffer. */
     swap_exists_action = SEA_NONE;      /* don't want it again */
     swap_exists_did_quit = TRUE;
-    close_buffer(curwin, curbuf, DOBUF_UNLOAD, FALSE);
+    close_buffer(curwin, curbuf, DOBUF_UNLOAD, false);
     if (!buf_valid(old_curbuf) || old_curbuf == curbuf)
       old_curbuf = buflist_new(NULL, NULL, 1L, BLN_CURBUF | BLN_LISTED);
     if (old_curbuf != NULL) {
@@ -690,14 +687,13 @@ void handle_swap_exists(buf_T *old_curbuf)
  *
  * Returns error message or NULL
  */
-char_u *
-do_bufdel (
+char_u * do_bufdel (
     int command,
     char_u *arg,               /* pointer to extra arguments */
     int addr_count,
     int start_bnr,                  /* first buffer number in a range */
     int end_bnr,                    /* buffer nr or last buffer nr in a range */
-    int forceit
+    bool forceit
 )
 {
   int do_current = 0;           /* delete current buffer? */
@@ -792,32 +788,32 @@ do_bufdel (
  * Make the current buffer empty.
  * Used when it is wiped out and it's the last buffer.
  */
-static int empty_curbuf(int close_others, int forceit, int action)
+static bool empty_curbuf(bool close_others, bool forceit, int action)
 {
-  int retval;
   buf_T   *buf = curbuf;
 
   if (action == DOBUF_UNLOAD) {
     EMSG(_("E90: Cannot unload last buffer"));
-    return FAIL;
+    return false;
   }
 
   if (close_others) {
     /* Close any other windows on this buffer, then make it empty. */
-    close_windows(buf, TRUE);
+    close_windows(buf, true);
   }
 
   setpcmark();
-  retval = do_ecmd(0, NULL, NULL, NULL, ECMD_ONE,
-      forceit ? ECMD_FORCEIT : 0, curwin);
+  bool retval = do_ecmd(0, NULL, NULL, NULL, ECMD_ONE,
+                  forceit ? ECMD_FORCEIT : 0, curwin);
 
   /*
    * do_ecmd() may create a new buffer, then we have to delete
    * the old one.  But do_ecmd() may have done that already, check
    * if the buffer still exists.
    */
-  if (buf != curbuf && buf_valid(buf) && buf->b_nwindows == 0)
-    close_buffer(NULL, buf, action, FALSE);
+  if (buf != curbuf && buf_valid(buf) && buf->b_nwindows == 0) {
+    close_buffer(NULL, buf, action, false);
+  }
   if (!close_others)
     need_fileinfo = FALSE;
   return retval;
@@ -836,21 +832,20 @@ static int empty_curbuf(int close_others, int forceit, int action)
  * start == DOBUF_LAST	    go to "count" buffer from last buffer
  * start == DOBUF_MOD	    go to "count" modified buffer from current buffer
  *
- * Return FAIL or OK.
+ * Return false on failure. Otherwise true.
  */
-int 
-do_buffer (
+bool do_buffer (
     int action,
     int start,
     int dir,                        /* FORWARD or BACKWARD */
     int count,                      /* buffer number or number of buffers */
-    int forceit                    /* TRUE for :...! */
+    bool forceit                    /* TRUE for :...! */
 )
 {
   buf_T       *buf;
   buf_T       *bp;
-  int unload = (action == DOBUF_UNLOAD || action == DOBUF_DEL
-                || action == DOBUF_WIPE);
+  bool unload = (action == DOBUF_UNLOAD || action == DOBUF_DEL
+                 || action == DOBUF_WIPE);
 
   switch (start) {
   case DOBUF_FIRST:   buf = firstbuf; break;
@@ -867,7 +862,7 @@ do_buffer (
     }
     if (!bufIsChanged(buf)) {
       EMSG(_("E84: No modified buffer found"));
-      return FAIL;
+      return false;
     }
   } else if (start == DOBUF_FIRST && count) { /* find specified buffer number */
     while (buf != NULL && buf->b_fnum != count)
@@ -896,7 +891,7 @@ do_buffer (
       if (bp == buf) {
         /* back where we started, didn't find anything. */
         EMSG(_("E85: There is no listed buffer"));
-        return FAIL;
+        return false;
       }
     }
   }
@@ -904,13 +899,15 @@ do_buffer (
   if (buf == NULL) {        /* could not find it */
     if (start == DOBUF_FIRST) {
       /* don't warn when deleting */
-      if (!unload)
+      if (!unload) {
         EMSGN(_("E86: Buffer %" PRId64 " does not exist"), count);
-    } else if (dir == FORWARD)
+      }
+    } else if (dir == FORWARD) {
       EMSG(_("E87: Cannot go beyond last buffer"));
-    else
+    } else {
       EMSG(_("E88: Cannot go before first buffer"));
-    return FAIL;
+    }
+    return false;
   }
 
 
@@ -922,25 +919,26 @@ do_buffer (
 
     /* When unloading or deleting a buffer that's already unloaded and
      * unlisted: fail silently. */
-    if (action != DOBUF_WIPE && buf->b_ml.ml_mfp == NULL && !buf->b_p_bl)
-      return FAIL;
+    if (action != DOBUF_WIPE && buf->b_ml.ml_mfp == NULL && !buf->b_p_bl) {
+      return false;
+    }
 
     if (!forceit && bufIsChanged(buf)) {
       if ((p_confirm || cmdmod.confirm) && p_write) {
-        dialog_changed(buf, FALSE);
+        dialog_changed(buf, false);
         if (!buf_valid(buf))
           /* Autocommand deleted buffer, oops!  It's not changed
            * now. */
-          return FAIL;
+          return false;
         /* If it's still changed fail silently, the dialog already
          * mentioned why it fails. */
         if (bufIsChanged(buf))
-          return FAIL;
+          return false;
       } else {
         EMSGN(_("E89: No write since last change for buffer %" PRId64
                 " (add ! to override)"),
               buf->b_fnum);
-        return FAIL;
+        return false;
       }
     }
 
@@ -956,7 +954,7 @@ do_buffer (
       }
     }
     if (bp == NULL && buf == curbuf)
-      return empty_curbuf(TRUE, forceit, action);
+      return empty_curbuf(true, forceit, action);
 
     /*
      * If the deleted buffer is the current one, close the current window
@@ -966,18 +964,20 @@ do_buffer (
     while (buf == curbuf
            && !(curwin->w_closing || curwin->w_buffer->b_closing)
            && (firstwin != lastwin || first_tabpage->tp_next != NULL)) {
-      if (win_close(curwin, FALSE) == FAIL)
+      if (!win_close(curwin, false)) {
         break;
+      }
     }
 
     /*
      * If the buffer to be deleted is not the current one, delete it here.
      */
     if (buf != curbuf) {
-      close_windows(buf, FALSE);
-      if (buf != curbuf && buf_valid(buf) && buf->b_nwindows <= 0)
-        close_buffer(NULL, buf, action, FALSE);
-      return OK;
+      close_windows(buf, false);
+      if (buf != curbuf && buf_valid(buf) && buf->b_nwindows <= 0) {
+        close_buffer(NULL, buf, action, false);
+      }
+      return true;
     }
 
     /*
@@ -1071,7 +1071,7 @@ do_buffer (
   if (buf == NULL) {
     /* Autocommands must have wiped out all other buffers.  Only option
      * now is to make the current buffer empty. */
-    return empty_curbuf(FALSE, forceit, action);
+    return empty_curbuf(false, forceit, action);
   }
 
   /*
@@ -1080,33 +1080,38 @@ do_buffer (
   if (action == DOBUF_SPLIT) {      /* split window first */
     /* If 'switchbuf' contains "useopen": jump to first window containing
      * "buf" if one exists */
-    if ((swb_flags & SWB_USEOPEN) && buf_jump_open_win(buf))
-      return OK;
+    if ((swb_flags & SWB_USEOPEN) && buf_jump_open_win(buf)) {
+      return true;
+    }
     /* If 'switchbuf' contains "usetab": jump to first window in any tab
      * page containing "buf" if one exists */
-    if ((swb_flags & SWB_USETAB) && buf_jump_open_tab(buf))
-      return OK;
-    if (win_split(0, 0) == FAIL)
-      return FAIL;
+    if ((swb_flags & SWB_USETAB) && buf_jump_open_tab(buf)) {
+      return true;
+    }
+    if (!win_split(0, 0)) {
+      return false;
+    }
   }
 
   /* go to current buffer - nothing to do */
-  if (buf == curbuf)
-    return OK;
+  if (buf == curbuf) {
+    return true;
+  }
 
   /*
    * Check if the current buffer may be abandoned.
    */
   if (action == DOBUF_GOTO && !can_abandon(curbuf, forceit)) {
     if ((p_confirm || cmdmod.confirm) && p_write) {
-      dialog_changed(curbuf, FALSE);
-      if (!buf_valid(buf))
+      dialog_changed(curbuf, false);
+      if (!buf_valid(buf)) {
         /* Autocommand deleted buffer, oops! */
-        return FAIL;
+        return false;
+      }
     }
     if (bufIsChanged(curbuf)) {
       EMSG(_(e_nowrtmsg));
-      return FAIL;
+      return false;
     }
   }
 
@@ -1117,10 +1122,11 @@ do_buffer (
     RESET_BINDING(curwin);      /* reset 'scrollbind' and 'cursorbind' */
   }
 
-  if (aborting())           /* autocmds may abort script processing */
-    return FAIL;
+  if (aborting()) {         /* autocmds may abort script processing */
+    return false;
+  }
 
-  return OK;
+  return true;
 }
 
 
@@ -1153,19 +1159,21 @@ void set_curbuf(buf_T *buf, int action)
 
   apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, FALSE, curbuf);
   if (buf_valid(prevbuf) && !aborting()) {
-    if (prevbuf == curwin->w_buffer)
+    if (prevbuf == curwin->w_buffer) {
       reset_synblock(curwin);
-    if (unload)
-      close_windows(prevbuf, FALSE);
+    }
+    if (unload) {
+      close_windows(prevbuf, false);
+    }
     if (buf_valid(prevbuf) && !aborting()) {
       win_T  *previouswin = curwin;
       if (prevbuf == curbuf)
-        u_sync(FALSE);
+        u_sync(false);
       close_buffer(prevbuf == curwin->w_buffer ? curwin : NULL, prevbuf,
           unload ? action : (action == DOBUF_GOTO
                              && !P_HID(prevbuf)
                              && !bufIsChanged(
-                                 prevbuf)) ? DOBUF_UNLOAD : 0, FALSE);
+                                 prevbuf)) ? DOBUF_UNLOAD : 0, false);
       if (curwin != previouswin && win_valid(previouswin))
         /* autocommands changed curwin, Grr! */
         curwin = previouswin;
@@ -1271,7 +1279,7 @@ void do_autochdir(void)
 {
   if (p_acd) {
     if (curbuf->b_ffname != NULL && vim_chdirfile(curbuf->b_ffname) == OK) {
-      shorten_fnames(TRUE);
+      shorten_fnames(true);
     }
   }
 }
@@ -1316,7 +1324,7 @@ buflist_new (
                                          file_id_valid)) != NULL) {
     free(ffname);
     if (lnum != 0)
-      buflist_setfpos(buf, curwin, lnum, (colnr_T)0, FALSE);
+      buflist_setfpos(buf, curwin, lnum, (colnr_T)0, false);
     /* copy the options now, if 'cpo' doesn't have 's' and not done
      * already */
     buf_copy_options(buf, 0);
@@ -1395,7 +1403,7 @@ buflist_new (
     if (aborting())             /* autocmds may abort script processing */
       return NULL;
     /* buf->b_nwindows = 0; why was this here? */
-    free_buffer_stuff(buf, FALSE);      /* delete local variables et al. */
+    free_buffer_stuff(buf, false);      /* delete local variables et al. */
 
     /* Init the options. */
     buf->b_p_initialized = FALSE;
@@ -1477,7 +1485,7 @@ buflist_new (
  * If "free_p_ff" is TRUE also free 'fileformat', 'buftype' and
  * 'fileencoding'.
  */
-void free_buf_options(buf_T *buf, int free_p_ff)
+void free_buf_options(buf_T *buf, bool free_p_ff)
 {
   if (free_p_ff) {
     clear_string_option(&buf->b_p_fenc);
@@ -1537,9 +1545,9 @@ void free_buf_options(buf_T *buf, int free_p_ff)
  * if (options & GETF_ALT) we are jumping to an alternate file.
  * if (options & GETF_SWITCH) respect 'switchbuf' settings when jumping
  *
- * return FAIL for failure, OK for success
+ * return false for failure, true for success
  */
-int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
+bool buflist_getfile(int n, linenr_T lnum, int options, bool forceit)
 {
   buf_T       *buf;
   win_T       *wp = NULL;
@@ -1552,19 +1560,19 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
       EMSG(_(e_noalt));
     else
       EMSGN(_("E92: Buffer %" PRId64 " not found"), n);
-    return FAIL;
+    return false;
   }
 
   /* if alternate file is the current buffer, nothing to do */
   if (buf == curbuf)
-    return OK;
+    return true;
 
   if (text_locked()) {
     text_locked_msg();
-    return FAIL;
+    return false;
   }
   if (curbuf_locked())
-    return FAIL;
+    return false;
 
   /* altfpos may be changed by getfile(), get it now */
   if (lnum == 0) {
@@ -1589,7 +1597,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
       if (swb_flags & SWB_NEWTAB)               /* Open in a new tab */
         tabpage_new();
       else if (win_split(0, 0) == FAIL)         /* Open in a new window */
-        return FAIL;
+        return false;
       RESET_BINDING(curwin);
     }
   }
@@ -1606,10 +1614,10 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
       curwin->w_cursor.coladd = 0;
       curwin->w_set_curswant = TRUE;
     }
-    return OK;
+    return true;
   }
   --RedrawingDisabled;
-  return FAIL;
+  return false;
 }
 
 /*
@@ -1729,7 +1737,7 @@ buflist_findpat (
    * listed buffer.
    */
   else {
-    pat = file_pat_to_reg_pat(pattern, pattern_end, NULL, FALSE);
+    pat = file_pat_to_reg_pat(pattern, pattern_end, NULL, false);
     if (pat == NULL)
       return -1;
     patend = pat + STRLEN(pat) - 1;
@@ -1804,9 +1812,9 @@ buflist_findpat (
 /*
  * Find all buffer names that match.
  * For command line expansion of ":buf" and ":sbuf".
- * Return OK if matches found, FAIL otherwise.
+ * Return true if matches found, false otherwise.
  */
-int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
+bool ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
 {
   int count = 0;
   int round;
@@ -1837,7 +1845,7 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
     if (prog == NULL) {
       if (patc != pat)
         free(patc);
-      return FAIL;
+      return false;
     }
 
     /*
@@ -1877,7 +1885,7 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
     free(patc);
 
   *num_file = count;
-  return count == 0 ? FAIL : OK;
+  return count == 0 ? false : true;
 }
 
 
@@ -1948,11 +1956,10 @@ buf_T *buflist_findnr(int nr)
  * home_replace() is used to shorten the file name (used for marks).
  * Returns a pointer to allocated memory, of NULL when failed.
  */
-char_u *
-buflist_nr2name (
+char_u *buflist_nr2name (
     int n,
-    int fullname,
-    int helptail                   /* for help buffers return tail only */
+    bool fullname,
+    bool helptail                  /* for help buffers return tail only */
 )
 {
   buf_T       *buf;
@@ -1966,10 +1973,15 @@ buflist_nr2name (
 
 /*
  * Set the "lnum" and "col" for the buffer "buf" and the current window.
- * When "copy_options" is TRUE save the local window option values.
+ * When "copy_options" is true save the local window option values.
  * When "lnum" is 0 only do the options.
  */
-static void buflist_setfpos(buf_T *buf, win_T *win, linenr_T lnum, colnr_T col, int copy_options)
+static void buflist_setfpos(
+    buf_T *buf,
+    win_T *win,
+    linenr_T lnum,
+    colnr_T col,
+    bool copy_options)
 {
   wininfo_T   *wip;
 
@@ -2040,11 +2052,11 @@ static bool wininfo_other_tab_diff(wininfo_T *wip)
 /*
  * Find info for the current window in buffer "buf".
  * If not found, return the info for the most recently used window.
- * When "skip_diff_buffer" is TRUE avoid windows with 'diff' set that is in
+ * When "skip_diff_buffer" is true avoid windows with 'diff' set that is in
  * another tab page.
  * Returns NULL when there isn't any info.
  */
-static wininfo_T *find_wininfo(buf_T *buf, int skip_diff_buffer)
+static wininfo_T *find_wininfo(buf_T *buf, bool skip_diff_buffer)
 {
   wininfo_T   *wip;
 
@@ -2080,7 +2092,7 @@ void get_winopts(buf_T *buf)
   clear_winopt(&curwin->w_onebuf_opt);
   clearFolding(curwin);
 
-  wip = find_wininfo(buf, TRUE);
+  wip = find_wininfo(buf, true);
   if (wip != NULL && wip->wi_optset) {
     copy_winopt(&wip->wi_opt, &curwin->w_onebuf_opt);
     curwin->w_fold_manual = wip->wi_fold_manual;
@@ -2105,7 +2117,7 @@ pos_T *buflist_findfpos(buf_T *buf)
   wininfo_T   *wip;
   static pos_T no_position = INIT_POS_T(1, 0, 0);
 
-  wip = find_wininfo(buf, FALSE);
+  wip = find_wininfo(buf, false);
   if (wip != NULL)
     return &(wip->wi_fpos);
   else
@@ -2170,34 +2182,33 @@ void buflist_list(exarg_T *eap)
  * Get file name and line number for file 'fnum'.
  * Used by DoOneCmd() for translating '%' and '#'.
  * Used by insert_reg() and cmdline_paste() for '#' register.
- * Return FAIL if not found, OK for success.
+ * Return false if not found, true for success.
  */
-int buflist_name_nr(int fnum, char_u **fname, linenr_T *lnum)
+bool buflist_name_nr(int fnum, char_u **fname, linenr_T *lnum)
 {
   buf_T       *buf;
 
   buf = buflist_findnr(fnum);
   if (buf == NULL || buf->b_fname == NULL)
-    return FAIL;
+    return false;
 
   *fname = buf->b_fname;
   *lnum = buflist_findlnum(buf);
 
-  return OK;
+  return true;
 }
 
 /*
  * Set the file name for "buf"' to 'ffname', short file name to 'sfname'.
  * The file name with the full path is also remembered, for when :cd is used.
- * Returns FAIL for failure (file name already in use by other buffer)
- *	OK otherwise.
+ * Returns false for failure (file name already in use by other buffer)
+ *	true otherwise.
  */
-int 
-setfname (
+bool setfname (
     buf_T *buf,
     char_u *ffname,
     char_u *sfname,
-    int message                    /* give message when buffer already exists */
+    bool message                   /* give message when buffer already exists */
 )
 {
   buf_T       *obuf = NULL;
@@ -2212,8 +2223,9 @@ setfname (
     buf->b_sfname = NULL;
   } else {
     fname_expand(buf, &ffname, &sfname);     /* will allocate ffname */
-    if (ffname == NULL)                     /* out of memory */
-      return FAIL;
+    if (ffname == NULL) {                   /* out of memory */
+      return false;
+    }
 
     /*
      * if the file name is already used in another buffer:
@@ -2229,10 +2241,10 @@ setfname (
         if (message)
           EMSG(_("E95: Buffer with this name already exists"));
         free(ffname);
-        return FAIL;
+        return false;
       }
       /* delete from the list */
-      close_buffer(NULL, obuf, DOBUF_WIPE, FALSE);
+      close_buffer(NULL, obuf, DOBUF_WIPE, false);
     }
     sfname = vim_strsave(sfname);
 #ifdef USE_FNAME_CASE
@@ -2252,7 +2264,7 @@ setfname (
   }
 
   buf_name_changed(buf);
-  return OK;
+  return true;
 }
 
 /*
@@ -2317,9 +2329,8 @@ buf_T *setaltfname(char_u *ffname, char_u *sfname, linenr_T lnum)
  * Get alternate file name for current window.
  * Return NULL if there isn't any, and give error message if requested.
  */
-char_u *
-getaltfname (
-    int errmsg                     /* give error message */
+char_u *getaltfname (
+    bool errmsg                    /* give error message */
 )
 {
   char_u      *fname;
@@ -2371,27 +2382,27 @@ void buflist_slash_adjust(void)
  */
 void buflist_altfpos(win_T *win)
 {
-  buflist_setfpos(curbuf, win, win->w_cursor.lnum, win->w_cursor.col, TRUE);
+  buflist_setfpos(curbuf, win, win->w_cursor.lnum, win->w_cursor.col, true);
 }
 
 /*
  * Return TRUE if 'ffname' is not the same file as current file.
  * Fname must have a full path (expanded by path_get_absolute_path()).
  */
-int otherfile(char_u *ffname)
+bool otherfile(char_u *ffname)
 {
   return otherfile_buf(curbuf, ffname, NULL, false);
 }
 
-static int otherfile_buf(buf_T *buf, char_u *ffname,
-                         FileID *file_id_p, bool file_id_valid)
+static bool otherfile_buf(buf_T *buf, char_u *ffname,
+                          FileID *file_id_p, bool file_id_valid)
 {
   /* no name is different */
   if (ffname == NULL || *ffname == NUL || buf->b_ffname == NULL) {
-    return TRUE;
+    return true;
   }
   if (fnamecmp(ffname, buf->b_ffname) == 0) {
-    return FALSE;
+    return false;
   }
   {
     FileID file_id;
@@ -2402,7 +2413,7 @@ static int otherfile_buf(buf_T *buf, char_u *ffname,
     }
     if (!file_id_valid) {
       // file_id not valid, assume files are different.
-      return TRUE;
+      return true;
     }
     /* Use dev/ino to check if the files are the same, even when the names
      * are different (possible with links).  Still need to compare the
@@ -2415,11 +2426,12 @@ static int otherfile_buf(buf_T *buf, char_u *ffname,
      * file. */
     if (buf_same_file_id(buf, file_id_p)) {
       buf_set_file_id(buf);
-      if (buf_same_file_id(buf, file_id_p))
-        return FALSE;
+      if (buf_same_file_id(buf, file_id_p)) {
+        return false;
+      }
     }
   }
-  return TRUE;
+  return true;
 }
 
 // Set file_id for a buffer.
@@ -2436,7 +2448,7 @@ void buf_set_file_id(buf_T *buf)
   }
 }
 
-// return TRUE if file_id in buffer "buf" matches with "file_id".
+// return true if file_id in buffer "buf" matches with "file_id".
 static bool buf_same_file_id(buf_T *buf, FileID *file_id)
 {
   return buf->file_id_valid
@@ -2446,11 +2458,10 @@ static bool buf_same_file_id(buf_T *buf, FileID *file_id)
 /*
  * Print info about the current buffer.
  */
-void 
-fileinfo (
+void fileinfo (
     int fullname,               /* when non-zero print full path */
-    int shorthelp,
-    int dont_truncate
+    bool shorthelp,
+    bool dont_truncate
 )
 {
   char_u      *name;
@@ -2594,7 +2605,7 @@ void maketitle(void)
     t_str = buf;
     if (*p_titlestring != NUL) {
       if (stl_syntax & STL_IN_TITLE) {
-        int use_sandbox = FALSE;
+        bool use_sandbox = false;
         int save_called_emsg = called_emsg;
 
         use_sandbox = was_set_insecurely((char_u *)"titlestring", 0);
@@ -2684,7 +2695,7 @@ void maketitle(void)
     i_str = buf;
     if (*p_iconstring != NUL) {
       if (stl_syntax & STL_IN_ICON) {
-        int use_sandbox = FALSE;
+        bool use_sandbox = false;
         int save_called_emsg = called_emsg;
 
         use_sandbox = was_set_insecurely((char_u *)"iconstring", 0);
@@ -2726,20 +2737,21 @@ void maketitle(void)
 /*
  * Used for title and icon: Check if "str" differs from "*last".  Set "*last"
  * from "str" if it does.
- * Return TRUE when "*last" changed.
+ * Return true when "*last" changed.
  */
-static int ti_change(char_u *str, char_u **last)
+static bool ti_change(char_u *str, char_u **last)
 {
   if ((str == NULL) != (*last == NULL)
       || (str != NULL && *last != NULL && STRCMP(str, *last) != 0)) {
     free(*last);
-    if (str == NULL)
+    if (str == NULL) {
       *last = NULL;
-    else
+    } else {
       *last = vim_strsave(str);
-    return TRUE;
+    }
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 /*
@@ -2774,13 +2786,12 @@ void free_titles(void)
  * If maxwidth is not zero, the string will be filled at any middle marker
  * or truncated if too long, fillchar is used for all whitespace.
  */
-int 
-build_stl_str_hl (
+int build_stl_str_hl (
     win_T *wp,
     char_u *out,               /* buffer to write into != NameBuff */
     size_t outlen,                  /* length of out[] */
     char_u *fmt,
-    int use_sandbox,             /* "fmt" was set insecurely, use sandbox */
+    bool use_sandbox,            /* "fmt" was set insecurely, use sandbox */
     int fillchar,
     int maxwidth,
     struct stl_hlrec *hltab,        /* return: HL attributes (can be NULL) */
@@ -3101,7 +3112,7 @@ build_stl_str_hl (
 
       curwin = o_curwin;
       curbuf = o_curbuf;
-      do_unlet((char_u *)"g:actual_curbuf", TRUE);
+      do_unlet((char_u *)"g:actual_curbuf", true);
 
       if (str != NULL && *str != 0) {
         if (*skipdigits(str) == NUL) {
@@ -3518,24 +3529,25 @@ void get_rel_pos(win_T *wp, char_u *buf, int buflen)
 
 /*
  * Append (file 2 of 8) to "buf[buflen]", if editing more than one file.
- * Return TRUE if it was appended.
+ * Return true if it was appended.
  */
-static int 
-append_arg_number (
+static bool append_arg_number (
     win_T *wp,
     char_u *buf,
     int buflen,
-    int add_file                   /* Add "file" before the arg number */
+    bool add_file                  /* Add "file" before the arg number */
 )
 {
   char_u      *p;
 
-  if (ARGCOUNT <= 1)            /* nothing to do */
-    return FALSE;
+  if (ARGCOUNT <= 1) {          /* nothing to do */
+    return false;
+  }
 
   p = buf + STRLEN(buf);        /* go to the end of the buffer */
-  if (p - buf + 35 >= buflen)   /* getting too long */
-    return FALSE;
+  if (p - buf + 35 >= buflen) { /* getting too long */
+    return false;
+  }
   *p++ = ' ';
   *p++ = '(';
   if (add_file) {
@@ -3545,7 +3557,7 @@ append_arg_number (
   vim_snprintf((char *)p, (size_t)(buflen - (p - buf)),
       wp->w_arg_idx_invalid ? "(%d) of %d)"
       : "%d of %d)", wp->w_arg_idx + 1, ARGCOUNT);
-  return TRUE;
+  return true;
 }
 
 /*
@@ -3592,11 +3604,10 @@ char_u *alist_name(aentry_T *aep)
 /*
  * do_arg_all(): Open up to 'count' windows, one for each argument.
  */
-void 
-do_arg_all (
+void do_arg_all (
     int count,
-    int forceit,                    /* hide buffers in current windows */
-    int keep_tabs                  /* keep current tabs, for ":tab drop file" */
+    bool forceit,                  /* hide buffers in current windows */
+    bool keep_tabs                 /* keep current tabs, for ":tab drop file" */
 )
 {
   int i;
@@ -3646,8 +3657,9 @@ do_arg_all (
    * Windows that have a changed buffer and can't be hidden won't be closed.
    * When the ":tab" modifier was used do this for all tab pages.
    */
-  if (had_tab > 0)
-    goto_tabpage_tp(first_tabpage, TRUE, TRUE);
+  if (had_tab > 0) {
+    goto_tabpage_tp(first_tabpage, true, true);
+  }
   for (;; ) {
     win_T *wpnext = NULL;
     tpnext = curtab->tp_next;
@@ -3705,7 +3717,7 @@ do_arg_all (
            * try autowriting. */
           if (!P_HID(buf) && buf->b_nwindows <= 1
               && bufIsChanged(buf)) {
-            (void)autowrite(buf, FALSE);
+            (void)autowrite(buf, false);
             /* check if autocommands removed the window */
             if (!win_valid(wp) || !buf_valid(buf)) {
               wpnext = firstwin;                /* start all over... */
@@ -3731,9 +3743,10 @@ do_arg_all (
       break;
 
     /* check if autocommands removed the next tab page */
-    if (!valid_tabpage(tpnext))
+    if (!valid_tabpage(tpnext)) {
       tpnext = first_tabpage;           /* start all over...*/
-    goto_tabpage_tp(tpnext, TRUE, TRUE);
+    }
+    goto_tabpage_tp(tpnext, true, true);
   }
 
   /*
@@ -3814,16 +3827,20 @@ do_arg_all (
   --autocmd_no_enter;
   /* restore last referenced tabpage's curwin */
   if (last_curtab != new_curtab) {
-    if (valid_tabpage(last_curtab))
-      goto_tabpage_tp(last_curtab, TRUE, TRUE);
-    if (win_valid(last_curwin))
+    if (valid_tabpage(last_curtab)) {
+      goto_tabpage_tp(last_curtab, true, true);
+    }
+    if (win_valid(last_curwin)) {
       win_enter(last_curwin, false);
+    }
   }
   /* to window with first arg */
-  if (valid_tabpage(new_curtab))
-    goto_tabpage_tp(new_curtab, TRUE, TRUE);
-  if (win_valid(new_curwin))
+  if (valid_tabpage(new_curtab)) {
+    goto_tabpage_tp(new_curtab, true, true);
+  }
+  if (win_valid(new_curwin)) {
     win_enter(new_curwin, false);
+  }
 
   --autocmd_no_leave;
   free(opened);
@@ -3861,8 +3878,9 @@ void ex_buffer_all(exarg_T *eap)
    * Close superfluous windows (two windows for the same buffer).
    * Also close windows that are not full-width.
    */
-  if (had_tab > 0)
-    goto_tabpage_tp(first_tabpage, TRUE, TRUE);
+  if (had_tab > 0) {
+    goto_tabpage_tp(first_tabpage, true, true);
+  }
   for (;; ) {
     tpnext = curtab->tp_next;
     for (wp = firstwin; wp != NULL; wp = wpnext) {
@@ -3876,7 +3894,7 @@ void ex_buffer_all(exarg_T *eap)
            ) && firstwin != lastwin
           && !(wp->w_closing || wp->w_buffer->b_closing)
           ) {
-        win_close(wp, FALSE);
+        win_close(wp, false);
         wpnext = firstwin;              /* just in case an autocommand does
                                            something strange with windows */
         tpnext = first_tabpage;         /* start all over...*/
@@ -3886,9 +3904,10 @@ void ex_buffer_all(exarg_T *eap)
     }
 
     /* Without the ":tab" modifier only do the current tab page. */
-    if (had_tab == 0 || tpnext == NULL)
+    if (had_tab == 0 || tpnext == NULL) {
       break;
-    goto_tabpage_tp(tpnext, TRUE, TRUE);
+    }
+    goto_tabpage_tp(tpnext, true, true);
   }
 
   /*
@@ -3951,7 +3970,7 @@ void ex_buffer_all(exarg_T *eap)
         enter_cleanup(&cs);
 
         /* User selected Quit at ATTENTION prompt; close this window. */
-        win_close(curwin, TRUE);
+        win_close(curwin, true);
         --open_wins;
         swap_exists_action = SEA_NONE;
         swap_exists_did_quit = TRUE;
@@ -3986,7 +4005,7 @@ void ex_buffer_all(exarg_T *eap)
    */
   for (wp = lastwin; open_wins > count; ) {
     r = (P_HID(wp->w_buffer) || !bufIsChanged(wp->w_buffer)
-         || autowrite(wp->w_buffer, FALSE) == OK);
+         || autowrite(wp->w_buffer, false) == OK);
     if (!win_valid(wp)) {
       /* BufWrite Autocommands made the window invalid, start over */
       wp = lastwin;
@@ -4044,10 +4063,9 @@ void do_modelines(int flags)
 
 /*
  * chk_modeline() - check a single line for a mode string
- * Return FAIL if an error encountered.
+ * Return false if an error encountered.
  */
-static int 
-chk_modeline (
+static bool chk_modeline (
     linenr_T lnum,
     int flags                      /* Same as for do_modelines(). */
 )
@@ -4058,7 +4076,7 @@ chk_modeline (
   int prev;
   int vers;
   int end;
-  int retval = OK;
+  bool retval = true;
   char_u      *save_sourcing_name;
   linenr_T save_sourcing_lnum;
   scid_T save_SID;
@@ -4139,8 +4157,9 @@ chk_modeline (
         current_SID = SID_MODELINE;
         retval = do_set(s, OPT_MODELINE | OPT_LOCAL | flags);
         current_SID = save_SID;
-        if (retval == FAIL)                     /* stop if error found */
+        if (!retval) {                   /* stop if error found */
           break;
+        }
       }
       s = e + 1;                        /* advance to next part */
     }
@@ -4153,7 +4172,7 @@ chk_modeline (
   return retval;
 }
 
-int read_viminfo_bufferlist(vir_T *virp, int writing)
+bool read_viminfo_bufferlist(vir_T *virp, bool writing)
 {
   char_u      *tab;
   linenr_T lnum;
@@ -4163,7 +4182,7 @@ int read_viminfo_bufferlist(vir_T *virp, int writing)
   char_u      *xline;
 
   /* Handle long line and escaped characters. */
-  xline = viminfo_readstring(virp, 1, FALSE);
+  xline = viminfo_readstring(virp, 1, false);
 
   /* don't read in if there are files on the command-line or if writing: */
   if (xline != NULL && !writing && ARGCOUNT == 0
@@ -4192,7 +4211,7 @@ int read_viminfo_bufferlist(vir_T *virp, int writing)
     if (buf != NULL) {          /* just in case... */
       buf->b_last_cursor.lnum = lnum;
       buf->b_last_cursor.col = col;
-      buflist_setfpos(buf, curwin, lnum, col, FALSE);
+      buflist_setfpos(buf, curwin, lnum, col, false);
     }
   }
   free(xline);
@@ -4390,7 +4409,7 @@ int buf_getsigntype(
                     || (type == SIGN_TEXT
                         && sign_get_text(sign->typenr) != NULL)
                     || (type == SIGN_LINEHL
-                        && sign_get_attr(sign->typenr, TRUE) != 0))) {
+                        && sign_get_attr(sign->typenr, true) != 0))) {
             return sign->typenr;
         }
     }
@@ -4562,7 +4581,7 @@ void sign_mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_a
 /*
  * Set 'buflisted' for curbuf to "on" and trigger autocommands if it changed.
  */
-void set_buflisted(int on)
+void set_buflisted(bool on)
 {
   if (on != curbuf->b_p_bl) {
     curbuf->b_p_bl = on;
@@ -4577,18 +4596,19 @@ void set_buflisted(int on)
  * Read the file for "buf" again and check if the contents changed.
  * Return TRUE if it changed or this could not be checked.
  */
-int buf_contents_changed(buf_T *buf)
+bool buf_contents_changed(buf_T *buf)
 {
   buf_T       *newbuf;
-  int differ = TRUE;
+  bool differ = true;
   linenr_T lnum;
   aco_save_T aco;
   exarg_T ea;
 
   /* Allocate a buffer without putting it in the buffer list. */
   newbuf = buflist_new(NULL, NULL, (linenr_T)1, BLN_DUMMY);
-  if (newbuf == NULL)
-    return TRUE;
+  if (newbuf == NULL) {
+    return true;
+  }
 
   /* Force the 'fileencoding' and 'fileformat' to be equal. */
   prep_exarg(&ea, buf);
@@ -4602,10 +4622,10 @@ int buf_contents_changed(buf_T *buf)
           &ea, READ_NEW | READ_DUMMY) == OK) {
     /* compare the two files line by line */
     if (buf->b_ml.ml_line_count == curbuf->b_ml.ml_line_count) {
-      differ = FALSE;
+      differ = false;
       for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; ++lnum)
         if (STRCMP(ml_get_buf(buf, lnum, FALSE), ml_get(lnum)) != 0) {
-          differ = TRUE;
+          differ = true;
           break;
         }
     }
@@ -4616,7 +4636,7 @@ int buf_contents_changed(buf_T *buf)
   aucmd_restbuf(&aco);
 
   if (curbuf != newbuf)         /* safety check */
-    wipe_buffer(newbuf, FALSE);
+    wipe_buffer(newbuf, false);
 
   return differ;
 }
@@ -4626,10 +4646,9 @@ int buf_contents_changed(buf_T *buf)
  * this buffer.  Call this to wipe out a temp buffer that does not contain any
  * marks.
  */
-void 
-wipe_buffer (
+void wipe_buffer (
     buf_T *buf,
-    int aucmd                   /* When TRUE trigger autocommands. */
+    bool aucmd                  /* When true trigger autocommands. */
 )
 {
   if (buf->b_fnum == top_file_num - 1)
@@ -4637,7 +4656,7 @@ wipe_buffer (
 
   if (!aucmd)               /* Don't trigger BufDelete autocommands here. */
     block_autocmds();
-  close_buffer(NULL, buf, DOBUF_WIPE, FALSE);
+  close_buffer(NULL, buf, DOBUF_WIPE, false);
   if (!aucmd)
     unblock_autocmds();
 }

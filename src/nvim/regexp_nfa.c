@@ -6343,10 +6343,9 @@ static void nfa_regfree(regprog_T *prog)
  * Uses curbuf for line count and 'iskeyword'.
  * If "line_lbr" is true, consider a "\n" in "line" to be a line break.
  *
- * Return TRUE if there is a match, FALSE if not.
+ * Return true if there is a match, false if not.
  */
-static int 
-nfa_regexec_nl (
+static bool nfa_regexec_nl (
     regmatch_T *rmp,
     char_u *line,      /* string to match against */
     colnr_T col,       /* column to start looking for match */

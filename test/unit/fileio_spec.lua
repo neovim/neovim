@@ -11,7 +11,7 @@ describe('file_pat functions', function()
   describe('file_pat_to_reg_pat', function()
 
     local file_pat_to_reg_pat = function(pat)
-      local res = fileio.file_pat_to_reg_pat(to_cstr(pat), NULL, NULL, 0)
+      local res = fileio.file_pat_to_reg_pat(to_cstr(pat), NULL, NULL, false)
       return ffi.string(res)
     end
 

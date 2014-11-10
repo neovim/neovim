@@ -174,7 +174,7 @@ search_regcomp (
     magic = spats[i].magic;
     no_smartcase = spats[i].no_scs;
   } else if (options & SEARCH_HIS)      /* put new pattern in history */
-    add_to_history(HIST_SEARCH, pat, TRUE, NUL);
+    add_to_history(HIST_SEARCH, pat, true, NUL);
 
   if (mr_pattern_alloced) {
     free(mr_pattern);
@@ -308,17 +308,18 @@ void free_search_patterns(void)
 #endif
 
 /*
- * Return TRUE when case should be ignored for search pattern "pat".
+ * Return true when case should be ignored for search pattern "pat".
  * Uses the 'ignorecase' and 'smartcase' options.
  */
-int ignorecase(char_u *pat)
+bool ignorecase(char_u *pat)
 {
-  int ic = p_ic;
+  bool ic = p_ic;
 
   if (ic && !no_smartcase && p_scs
       && !(ctrl_x_mode && curbuf->b_p_inf)
-      )
+      ) {
     ic = !pat_has_uppercase(pat);
+  }
   no_smartcase = FALSE;
 
   return ic;
@@ -1085,7 +1086,7 @@ int do_search(
         msg_check();
         free(msgbuf);
 
-        gotocmdline(FALSE);
+        gotocmdline(false);
         out_flush();
         msg_nowait = TRUE;                  /* don't wait for this message */
       }
@@ -3914,9 +3915,9 @@ static int is_one_char(char_u *pattern)
 }
 
 /*
- * return TRUE if line 'lnum' is empty or has white chars only.
+ * Return true if line 'lnum' is empty or has white chars only.
  */
-int linewhite(linenr_T lnum)
+bool linewhite(linenr_T lnum)
 {
   char_u  *p;
 
@@ -4070,7 +4071,7 @@ find_pattern_in_path (
         if (did_show)
           msg_putchar('\n');                /* cursor below last one */
         else {
-          gotocmdline(TRUE);                /* cursor at status line */
+          gotocmdline(true);                /* cursor at status line */
           MSG_PUTS_TITLE(_("--- Included files "));
           if (action != ACTION_SHOW_ALL)
             MSG_PUTS_TITLE(_("not found "));
@@ -4346,8 +4347,9 @@ search_line:
           break;
       } else if (action == ACTION_SHOW_ALL) {
         found = TRUE;
-        if (!did_show)
-          gotocmdline(TRUE);                    /* cursor at status line */
+        if (!did_show) {
+          gotocmdline(true);                    /* cursor at status line */
+        }
         if (curr_fname != prev_fname) {
           if (did_show)
             msg_putchar('\n');                  /* cursor below last one */
@@ -4393,14 +4395,14 @@ search_line:
             /* match in current file */
             if (g_do_tagpreview != 0) {
               if (getfile(0, curwin_save->w_buffer->b_fname,
-                      NULL, TRUE, lnum, FALSE) > 0)
+                      NULL, true, lnum, false) > 0)
                 break;                  /* failed to jump to file */
             } else
               setpcmark();
             curwin->w_cursor.lnum = lnum;
           } else {
-            if (getfile(0, files[depth].name, NULL, TRUE,
-                    files[depth].lnum, FALSE) > 0)
+            if (getfile(0, files[depth].name, NULL, true,
+                    files[depth].lnum, false) > 0)
               break;                    /* failed to jump to file */
             /* autocommands may have changed the lnum, we don't
              * want that here */
@@ -4512,10 +4514,11 @@ static void show_pat_in_path(char_u *line, int type, int did_show, int action, F
 {
   char_u  *p;
 
-  if (did_show)
+  if (did_show) {
     msg_putchar('\n');          /* cursor below last one */
-  else if (!msg_silent)
-    gotocmdline(TRUE);          /* cursor at status line */
+  } else if (!msg_silent) {
+    gotocmdline(true);          /* cursor at status line */
+  }
   if (got_int)                  /* 'q' typed at "--more--" message */
     return;
   for (;; ) {
@@ -4612,7 +4615,7 @@ int read_viminfo_search_pattern(vir_T *virp, int force)
   if (idx >= 0) {
     if (force || spats[idx].pat == NULL) {
       val = viminfo_readstring(virp, (int)(lp - virp->vir_line + 1),
-          TRUE);
+          true);
       if (val != NULL) {
         set_last_search_pat(val, idx, magic, setlast);
         free(val);

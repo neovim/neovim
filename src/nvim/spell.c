@@ -2150,7 +2150,7 @@ spell_move_to (
             if (has_syntax) {
               col = (int)(p - buf);
               (void)syn_get_id(wp, lnum, (colnr_T)col,
-                  FALSE, &can_spell, FALSE);
+                  false, &can_spell, false);
               if (!can_spell)
                 attr = HLF_COUNT;
             } else
@@ -2284,7 +2284,7 @@ void spell_cat_line(char_u *buf, char_u *line, int maxlen)
 static void spell_load_lang(char_u *lang)
 {
   char_u fname_enc[85];
-  int r;
+  bool r;
   spelload_T sl;
   int round;
 
@@ -2301,14 +2301,14 @@ static void spell_load_lang(char_u *lang)
     vim_snprintf((char *)fname_enc, sizeof(fname_enc) - 5,
         "spell/%s.%s.spl",
         lang, spell_enc());
-    r = do_in_runtimepath(fname_enc, FALSE, spell_load_cb, &sl);
+    r = do_in_runtimepath(fname_enc, false, spell_load_cb, &sl);
 
     if (r == FAIL && *sl.sl_lang != NUL) {
       // Try loading the ASCII version.
       vim_snprintf((char *)fname_enc, sizeof(fname_enc) - 5,
           "spell/%s.ascii.spl",
           lang);
-      r = do_in_runtimepath(fname_enc, FALSE, spell_load_cb, &sl);
+      r = do_in_runtimepath(fname_enc, false, spell_load_cb, &sl);
 
       if (r == FAIL && *sl.sl_lang != NUL && round == 1
           && apply_autocmds(EVENT_SPELLFILEMISSING, lang,
@@ -2326,7 +2326,7 @@ static void spell_load_lang(char_u *lang)
   } else if (sl.sl_slang != NULL) {
     // At least one file was loaded, now load ALL the additions.
     STRCPY(fname_enc + STRLEN(fname_enc) - 3, "add.spl");
-    do_in_runtimepath(fname_enc, TRUE, spell_load_cb, &sl);
+    do_in_runtimepath(fname_enc, true, spell_load_cb, &sl);
   }
 }
 

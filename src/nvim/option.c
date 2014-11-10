@@ -2722,7 +2722,7 @@ do_set (
         if (did_show)
           msg_putchar('\n');                /* cursor below last one */
         else {
-          gotocmdline(TRUE);                /* cursor at status line */
+          gotocmdline(true);                /* cursor at status line */
           did_show = TRUE;                  /* remember that we did a line */
         }
         if (opt_idx >= 0) {
@@ -2746,7 +2746,7 @@ do_set (
             errmsg = (char_u *)N_("E846: Key code not set");
             goto skip;
           } else
-            (void)show_one_termcode(key_name, p, TRUE);
+            (void)show_one_termcode(key_name, p, true);
         }
         if (nextchar != '?'
             && nextchar != NUL && !vim_iswhite(afterchar))
@@ -3153,7 +3153,7 @@ do_set (
             char_u      *p;
 
             if (nextchar == '&') {
-              if (add_termcap_entry(key_name, TRUE) == FAIL)
+              if (add_termcap_entry(key_name, true) == FAIL)
                 errmsg = (char_u *)N_("E522: Not found in termcap");
             } else {
               ++arg;               /* jump to after the '=' or ':' */
@@ -3166,7 +3166,7 @@ do_set (
               *p = nextchar;
             }
             if (full_screen)
-              ttest(FALSE);
+              ttest(false);
             redraw_all_later(CLEAR);
           }
         }
@@ -3589,7 +3589,7 @@ void set_term_option_alloced(char_u **p)
 /*
  * Return TRUE when option "opt" was set from a modeline or in secure mode.
  * Return FALSE when it wasn't.
- * Return -1 for an unknown option.
+ * Return -1 for an unknown option. (This will evaluate to true in an if-statment).
  */
 int was_set_insecurely(char_u *opt, int opt_flags)
 {
@@ -3907,18 +3907,18 @@ did_set_string_option (
     if (check_opt_strings(p_bg, p_bg_values, FALSE) == OK) {
       int dark = (*p_bg == 'd');
 
-      init_highlight(FALSE, FALSE);
+      init_highlight(false, false);
 
       if (dark != (*p_bg == 'd')
           && get_var_value((char_u *)"g:colors_name") != NULL) {
         /* The color scheme must have set 'background' back to another
          * value, that's not what we want here.  Disable the color
          * scheme and set the colors again. */
-        do_unlet((char_u *)"g:colors_name", TRUE);
+        do_unlet((char_u *)"g:colors_name", true);
         free_string_option(p_bg);
         p_bg = vim_strsave((char_u *)(dark ? "dark" : "light"));
         check_string_option(&p_bg);
-        init_highlight(FALSE, FALSE);
+        init_highlight(false, false);
       }
     } else
       errmsg = e_invarg;
@@ -4180,10 +4180,10 @@ did_set_string_option (
           T_CCO = empty_option;
         }
         /* We now have a different color setup, initialize it again. */
-        init_highlight(TRUE, FALSE);
+        init_highlight(true, false);
       }
     }
-    ttest(FALSE);
+    ttest(false);
     if (varp == &T_ME) {
       out_str(T_ME);
       redraw_later(CLEAR);
@@ -4409,7 +4409,7 @@ did_set_string_option (
   /* 'pastetoggle': translate key codes like in a mapping */
   else if (varp == &p_pt) {
     if (*p_pt) {
-      (void)replace_termcodes(p_pt, &p, TRUE, TRUE, FALSE);
+      (void)replace_termcodes(p_pt, &p, true, true, false);
       if (p != NULL) {
         if (new_value_alloced)
           free_string_option(p_pt);
@@ -4611,7 +4611,7 @@ did_set_string_option (
         if (vim_strchr((char_u *)"_.,", *p) != NULL)
           break;
       vim_snprintf((char *)fname, 200, "spell/%.*s.vim", (int)(p - q), q);
-      source_runtime(fname, TRUE);
+      source_runtime(fname, true);
     }
   }
 
@@ -5058,7 +5058,7 @@ set_bool_option (
    * at the end of normal_cmd() */
   else if ((int *)varp == &curwin->w_p_scb) {
     if (curwin->w_p_scb) {
-      do_check_scrollbind(FALSE);
+      do_check_scrollbind(false);
       curwin->w_scbind_pos = curwin->w_topline;
     }
   }
@@ -5118,7 +5118,7 @@ set_bool_option (
       curwin->w_leftcol = 0;
   } else if ((int *)varp == &p_ea) {
     if (p_ea && !old_value)
-      win_equal(curwin, FALSE, 0);
+      win_equal(curwin, false, 0);
   } else if ((int *)varp == &p_wiv) {
     /*
      * When 'weirdinvert' changed, set/reset 't_xs'.
@@ -5390,7 +5390,7 @@ set_num_option (
   }
   /* (re)set last window status line */
   else if (pp == &p_ls) {
-    last_status(FALSE);
+    last_status(false);
   }
   /* (re)set tab page line */
   else if (pp == &p_stal) {
@@ -5504,12 +5504,12 @@ set_num_option (
   else if (pp == &p_ul) {
     /* use the old value, otherwise u_sync() may not work properly */
     p_ul = old_value;
-    u_sync(TRUE);
+    u_sync(true);
     p_ul = value;
   } else if (pp == &curbuf->b_p_ul) {
     /* use the old value, otherwise u_sync() may not work properly */
     curbuf->b_p_ul = old_value;
-    u_sync(TRUE);
+    u_sync(true);
     curbuf->b_p_ul = value;
   }
   /* 'numberwidth' must be positive */
@@ -5567,7 +5567,7 @@ set_num_option (
       *pp = old_value;
     else if (full_screen
              )
-      set_shellsize((int)Columns, (int)Rows, TRUE);
+      set_shellsize((int)Columns, (int)Rows, true);
     else {
       /* Postpone the resizing; check the size and cmdline position for
        * messages. */
@@ -6929,14 +6929,14 @@ void buf_copy_options(buf_T *buf, int flags)
        * If not already initialized, set 'readonly' and copy 'fileformat'.
        */
       if (!buf->b_p_initialized) {
-        free_buf_options(buf, TRUE);
+        free_buf_options(buf, true);
         buf->b_p_ro = FALSE;                    /* don't copy readonly */
         buf->b_p_fenc = vim_strsave(p_fenc);
         buf->b_p_ff = vim_strsave(p_ff);
         buf->b_p_bh = empty_option;
         buf->b_p_bt = empty_option;
       } else
-        free_buf_options(buf, FALSE);
+        free_buf_options(buf, false);
 
       buf->b_p_ai = p_ai;
       buf->b_p_ai_nopaste = p_ai_nopaste;
