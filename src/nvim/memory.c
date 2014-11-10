@@ -78,17 +78,11 @@ static void try_to_free_memory(void)
 /// @return pointer to allocated space. NULL if out of memory
 void *try_malloc(size_t size) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1)
 {
+  size = size ? size : 1;
   void *ret = malloc(size);
-
-  if (!ret && !size) {
-    ret = malloc(1);
-  }
   if (!ret) {
     try_to_free_memory();
     ret = malloc(size);
-    if (!ret && !size) {
-      ret = malloc(1);
-    }
   }
   return ret;
 }
@@ -120,7 +114,6 @@ void *xmalloc(size_t size)
   FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1) FUNC_ATTR_NONNULL_RET
 {
   void *ret = try_malloc(size);
-
   if (!ret) {
     OUT_STR(e_outofmem);
     out_char('\n');
@@ -138,23 +131,16 @@ void *xmalloc(size_t size)
 void *xcalloc(size_t count, size_t size)
   FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE_PROD(1, 2) FUNC_ATTR_NONNULL_RET
 {
-  void *ret = calloc(count, size);
-
-  if (!ret && (!count || !size))
-    ret = calloc(1, 1);
-
+  void *ret = count && size ? calloc(count, size) : calloc(1, 1);
   if (!ret) {
     try_to_free_memory();
-    ret = calloc(count, size);
-    if (!ret && (!count || !size))
-      ret = calloc(1, 1);
+    ret = count && size ? calloc(count, size) : calloc(1, 1);
     if (!ret) {
       OUT_STR(e_outofmem);
       out_char('\n');
       preserve_exit();
     }
   }
-
   return ret;
 }
 
@@ -166,23 +152,16 @@ void *xcalloc(size_t count, size_t size)
 void *xrealloc(void *ptr, size_t size)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALLOC_SIZE(2) FUNC_ATTR_NONNULL_RET
 {
-  void *ret = realloc(ptr, size);
-
-  if (!ret && !size)
-    ret = realloc(ptr, 1);
-
+  void *ret = size ? realloc(ptr, size) : realloc(ptr, 1);
   if (!ret) {
     try_to_free_memory();
-    ret = realloc(ptr, size);
-    if (!ret && !size)
-      ret = realloc(ptr, 1);
+    ret = size ? realloc(ptr, size) : realloc(ptr, 1);
     if (!ret) {
       OUT_STR(e_outofmem);
       out_char('\n');
       preserve_exit();
     }
   }
-
   return ret;
 }
 
@@ -195,14 +174,12 @@ void *xmallocz(size_t size)
   FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
   size_t total_size = size + 1;
-  void *ret;
-
   if (total_size < size) {
     OUT_STR(_("Vim: Data too large to fit into virtual memory space\n"));
     preserve_exit();
   }
 
-  ret = xmalloc(total_size);
+  void *ret = xmalloc(total_size);
   ((char*)ret)[size] = 0;
 
   return ret;
