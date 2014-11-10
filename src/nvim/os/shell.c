@@ -244,6 +244,9 @@ static int shell(const char *cmd,
       job_stop(job);
       return -1;
     }
+    // close the input stream after everything is written
+    job_write_cb(job, shell_write_cb);
+  } else {
     // close the input stream, let the process know that no more input is
     // coming
     job_close_in(job);
@@ -446,4 +449,10 @@ static void write_output(char *output, size_t remaining)
   } else {
     curbuf->b_no_eol_lnum = 0;
   }
+}
+
+static void shell_write_cb(WStream *wstream, void *data, int status)
+{
+  Job *job = data;
+  job_close_in(job);
 }

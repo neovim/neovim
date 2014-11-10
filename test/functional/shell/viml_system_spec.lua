@@ -3,8 +3,8 @@
 -- - `systemlist()`
 
 local helpers = require('test.functional.helpers')
-local eq, clear, eval, feed =
-  helpers.eq, helpers.clear, helpers.eval, helpers.feed
+local eq, clear, eval, feed, nvim =
+  helpers.eq, helpers.clear, helpers.eval, helpers.feed, helpers.nvim
 
 
 local function create_file_with_nuls(name)
@@ -52,6 +52,21 @@ describe('system()', function()
   describe('passing input', function()
     it('returns the program output', function()
       eq("input", eval('system("cat -", "input")'))
+    end)
+  end)
+
+  describe('passing a lot of input', function()
+    it('returns the program output', function()
+      local input = {}
+      -- write more than 1mb of data, which should be enough to overcome
+      -- the os buffer limit and force multiple event loop iterations to write
+      -- everything
+      for i = 1, 0xffff do
+        input[#input + 1] = '01234567890ABCDEFabcdef'
+      end
+      input = table.concat(input, '\n')
+      nvim('set_var', 'input', input)
+      eq(input, eval('system("cat -", g:input)'))
     end)
   end)
 
@@ -126,6 +141,17 @@ describe('systemlist()', function()
   describe('passing string with linefeed characters as input', function()
     it('splits the output on linefeed characters', function()
       eq({'abc', 'def', 'ghi'}, eval([[systemlist("cat -", "abc\ndef\nghi")]]))
+    end)
+  end)
+
+  describe('passing a lot of input', function()
+    it('returns the program output', function()
+      local input = {}
+      for i = 1, 0xffff do
+        input[#input + 1] = '01234567890ABCDEFabcdef'
+      end
+      nvim('set_var', 'input', input)
+      eq(input, eval('systemlist("cat -", g:input)'))
     end)
   end)
 
