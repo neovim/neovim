@@ -435,18 +435,18 @@ static void handle_request(Channel *channel, msgpack_object *request)
 
   // Retrieve the request handler
   MsgpackRpcRequestHandler handler;
-  msgpack_object method = request->via.array.ptr[2];
+  msgpack_object *method = msgpack_rpc_method(request);
 
-  if (method.type == MSGPACK_OBJECT_BIN || method.type == MSGPACK_OBJECT_STR) {
-    handler = msgpack_rpc_get_handler_for(method.via.bin.ptr,
-                                          method.via.bin.size);
+  if (method) {
+    handler = msgpack_rpc_get_handler_for(method->via.bin.ptr,
+                                          method->via.bin.size);
   } else {
     handler.fn = msgpack_rpc_handle_missing_method;
     handler.defer = false;
   }
 
   Array args = ARRAY_DICT_INIT;
-  msgpack_rpc_to_array(request->via.array.ptr + 3, &args);
+  msgpack_rpc_to_array(msgpack_rpc_args(request), &args);
   bool defer = (!kv_size(channel->call_stack) && handler.defer);
   RequestEvent *event_data = xmalloc(sizeof(RequestEvent));
   event_data->channel = channel;
@@ -469,14 +469,18 @@ static void on_request_event(Event event)
   uint64_t request_id = e->request_id;
   Error error = ERROR_INIT;
   Object result = handler.fn(channel->id, request_id, args, &error);
-  // send the response
-  msgpack_packer response;
-  msgpack_packer_init(&response, &out_buffer, msgpack_sbuffer_write);
-  channel_write(channel, serialize_response(channel->id,
-                                            request_id,
-                                            &error,
-                                            result,
-                                            &out_buffer));
+  if (request_id != NO_RESPONSE) {
+    // send the response
+    msgpack_packer response;
+    msgpack_packer_init(&response, &out_buffer, msgpack_sbuffer_write);
+    channel_write(channel, serialize_response(channel->id,
+                                              request_id,
+                                              &error,
+                                              result,
+                                              &out_buffer));
+  } else {
+    api_free_object(result);
+  }
   // All arguments were freed already, but we still need to free the array
   xfree(args.items);
   decref(channel);
