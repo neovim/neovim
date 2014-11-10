@@ -33,7 +33,52 @@ sub read_in_file {
   use constant EMIT_DESCRIPTION => 0;
   use constant EMIT_COMMAND => 1;
   use constant EMIT_INPUT => 2;
-  use constant END_INPUT => 3;
+
+  # Push lines from current input and
+  # command blocks into @test_body_lines
+  # in the correct order.
+  sub end_input {
+    my $input_lines = $_[0];
+    my $command_lines = $_[1];
+    my $test_body_lines = $_[2];
+
+    # Only keep first input line if it is not empty.
+    my $first_input_line = shift @{$input_lines};
+    if ($first_input_line =~ /^$/) {
+      unshift @{$input_lines}, $first_input_line;
+    }
+
+    # If there are input lines left, wrap them with
+    # `insert` command and add before the previous command
+    # block.
+    if (@{$input_lines}) {
+      my $last_input_line = pop @{$input_lines};
+      unshift @{$command_lines}, '';
+      unshift @{$command_lines}, $last_input_line . ']])';
+      unshift @{$command_lines}, @{$input_lines};
+      unshift @{$command_lines}, "insert([[";
+
+      push @{$test_body_lines}, @{$command_lines};
+
+      @{$command_lines} = ();
+      @{$input_lines} = ();
+    }
+  }
+
+  sub format_comment {
+    # Handle empty comments.
+    if (/^$/) {
+      return '';
+    }
+
+    # Capitalize first character and emit as Lua comment.
+    my $comment = '-- ' . ucfirst $_;
+
+    # Add trailing dot if not already there.
+    $comment .= '.' unless $comment =~ /\.$/;
+
+    return $comment;
+  }
 
   my %states = (
     # Add test description to @description_lines.
@@ -57,56 +102,52 @@ sub read_in_file {
 
       # If line starts with ':"', emit a comment.
       if (/^:"/) {
-        # If it's an empty comment, just add an empty line
-        # to improve readability.
-        push @command_lines, (/^$/ ? '' : '-- ' . $_);
-      } else {
-        # Extract possible inline comment.
-        if (/^[^"]*"[^"]*$/) {
-          # Remove command part and prepended whitespace.
-          s/^(.*?)\s*"\s*//;
+        # Remove Vim comment prefix.
+        s/^:"\s*//;
 
-          # Capitalize first character and emit as Lua comment.
-          my $comment = '-- ' . ucfirst $_;
+        push @command_lines, format_comment $_;
 
-          # Add trailing dot if not already there.
-          $comment .= '.' unless $comment =~ /\.$/;
+        return EMIT_COMMAND;
+      }
 
-          push @command_lines, '';
-          push @command_lines, $comment;
+      # Extract possible inline comment.
+      if (/^[^"]*"[^"]*$/) {
+        # Remove command part and prepended whitespace.
+        s/^(.*?)\s*"\s*//;
 
-          # Set implicit variable to command without comment.
-          $_ = $1;
+        push @command_lines, format_comment $_;
+
+        # Set implicit variable to command without comment.
+        $_ = $1;
+      }
+
+      # Only continue if remaining command is not empty.
+      if (!/^:?\s*$/) {
+        # Replace terminal escape characters with <esc>.
+        s/\e/<esc>/g;
+
+        my $startstr = "'";
+        my $endstr = "'";
+
+        # If line contains single quotes or backslashes, use double
+        # square brackets to wrap string.
+        if (/'/ || /\\/) {
+          $startstr = '[[';
+          $endstr = ']]';
         }
 
-        # Only continue if remaining command is not empty.
-        if (!/^:?\s*$/) {
-          # Replace terminal escape characters with <esc>.
-          s/\e/<esc>/g;
+        # Emit 'feed' if not a search ('/') or ex (':') command.
+        if (!/^\// && !/^:/) {
+          # If command does not end with <esc>, insert trailing <cr>.
+          my $command = 'feed(' . $startstr . $_;
+          $command .= '<cr>' unless /<esc>$/;
+          $command .= $endstr . ')';
 
-          my $startstr = "'";
-          my $endstr = "'";
-
-          # If line contains single quotes or backslashes, use double
-          # square brackets to wrap string.
-          if (/'/ || /\\/) {
-            $startstr = '[[';
-            $endstr = ']]';
-          }
-
-          # Emit 'feed' if not a search ('/') or ex (':') command.
-          if (!/^\// && !/^:/) {
-            # If command does not end with <esc>, insert trailing <cr>.
-            my $command = 'feed(' . $startstr . $_;
-            $command .= '<cr>' unless /<esc>$/;
-            $command .= $endstr . ')';
-
-            push @command_lines, $command;
-          } else {
-            # Remove prepending ':'.
-            s/^://;
-            push @command_lines, 'execute(' . $startstr . $_ . $endstr . ')';
-          }
+          push @command_lines, $command;
+        } else {
+          # Remove prepending ':'.
+          s/^://;
+          push @command_lines, 'execute(' . $startstr . $_ . $endstr . ')';
         }
       }
 
@@ -115,40 +156,13 @@ sub read_in_file {
     # Add input to @input_lines.
     EMIT_INPUT() => sub {
       if (/^STARTTEST/) {
-        return END_INPUT;
+        end_input \@input_lines, \@command_lines, \@test_body_lines;
+        return EMIT_COMMAND;
       }
 
       push @input_lines, '  ' . $_;
       return EMIT_INPUT;
     },
-    # The END_INPUT state is used to push lines from current
-    # input and command blocks into @test_body_lines
-    # in the correct order.
-    END_INPUT() => sub {
-      # Only keep first input line if it is not empty.
-      my $first_input_line = shift @input_lines;
-      if ($first_input_line =~ /^$/) {
-        unshift @input_lines, $first_input_line;
-      }
-
-      # If there are input lines left, wrap them with
-      # `insert` command and add before the previous command
-      # block.
-      if (@input_lines) {
-        my $last_input_line = pop @input_lines;
-        unshift @command_lines, '';
-        unshift @command_lines, $last_input_line . ']])';
-        unshift @command_lines, @input_lines;
-        unshift @command_lines, "insert([[";
-
-        push @test_body_lines, @command_lines;
-
-        @command_lines = ();
-        @input_lines = ();
-      }
-
-      return EMIT_COMMAND;
-    }
   );
 
   my $state = EMIT_DESCRIPTION;
@@ -162,7 +176,7 @@ sub read_in_file {
   # If not all input lines have been processed,
   # do it now.
   if (@input_lines) {
-    $states{END_INPUT()}->();
+    end_input \@input_lines, \@command_lines, \@test_body_lines;
   }
 
   close $in_file_handle;
@@ -216,7 +230,13 @@ my ($test_name, $base_path, $suffix) = fileparse($legacy_testfile, @legacy_suffi
 my $in_file = catfile($base_path, $test_name . '.in');
 my $ok_file = catfile($base_path, $test_name . '.ok');
 
-my $spec_file = catfile($out_dir,  $test_name . '_spec.lua');
+my $spec_file = do {
+  if ($test_name =~ /^test([0-9]+)/) {
+    catfile($out_dir,  sprintf('%03d', $1) . '_' . $test_name . '_spec.lua')
+  } else {
+    catfile($out_dir,  $test_name . '_spec.lua')
+  }
+};
 
 if (! -f $in_file) {
   say "Test input file $in_file not found.";
