@@ -8,7 +8,7 @@
 #include <stdbool.h>
 
 #include "nvim/ascii.h"
-#include "nvim/misc2.h"
+#include "nvim/core.h"
 #include "nvim/garray.h"
 
 /*

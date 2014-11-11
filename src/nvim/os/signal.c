@@ -13,7 +13,7 @@
 #include "nvim/term.h"
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
-#include "nvim/misc2.h"
+#include "nvim/core.h"
 #include "nvim/os/signal.h"
 #include "nvim/os/event.h"
 

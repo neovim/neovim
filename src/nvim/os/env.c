@@ -4,7 +4,7 @@
 
 #include "nvim/ascii.h"
 #include "nvim/os/os.h"
-#include "nvim/misc2.h"
+#include "nvim/core.h"
 #include "nvim/strings.h"
 
 #ifdef HAVE__NSGETENVIRON

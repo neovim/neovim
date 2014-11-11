@@ -7,7 +7,7 @@
  */
 
 /*
- * misc2.c: Various functions.
+ * core.c: Various fundamental functions.
  */
 #include <errno.h>
 #include <inttypes.h>
@@ -15,10 +15,9 @@
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
-#include "nvim/misc2.h"
-#include "nvim/file_search.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
+#include "nvim/core.h"
 #include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/edit.h"
@@ -27,6 +26,7 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/fileio.h"
+#include "nvim/file_search.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
 #include "nvim/mark.h"
@@ -57,7 +57,7 @@
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "misc2.c.generated.h"
+# include "core.c.generated.h"
 #endif
 /*
  * Return TRUE if in the current mode we need to use virtual.

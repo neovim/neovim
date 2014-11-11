@@ -10,7 +10,7 @@
 #include "nvim/window.h"
 #include "nvim/screen.h"
 #include "nvim/move.h"
-#include "nvim/misc2.h"
+#include "nvim/core.h"
 
 
 /// Gets the current buffer in a window

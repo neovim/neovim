@@ -61,7 +61,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
-#include "nvim/misc2.h"
+#include "nvim/core.h"
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"

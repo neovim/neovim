@@ -33,7 +33,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
-#include "nvim/misc2.h"
+#include "nvim/core.h"
 #include "nvim/keymap.h"
 #include "nvim/garray.h"
 #include "nvim/ops.h"
@@ -581,7 +581,7 @@ int emsg2(char_u *s, char_u *a1)
   return emsg3(s, a1, NULL);
 }
 
-/* emsg3() and emsgn() are in misc2.c to avoid warnings for the prototypes. */
+/* emsg3() and emsgn() are in core.c to avoid warnings for the prototypes. */
 
 void emsg_invreg(int name)
 {

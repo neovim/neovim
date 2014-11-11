@@ -53,7 +53,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
-#include "nvim/misc2.h"
+#include "nvim/core.h"
 #include "nvim/keymap.h"
 #include "nvim/file_search.h"
 #include "nvim/garray.h"
