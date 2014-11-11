@@ -740,7 +740,7 @@ char_u *get_key_name(int i)
  * Look up the given mouse code to return the relevant information in the other
  * arguments.  Return which button is down or was released.
  */
-int get_mouse_button(int code, int *is_click, int *is_drag)
+int get_mouse_button(int code, bool *is_click, bool *is_drag)
 {
   int i;
 

@@ -1137,7 +1137,7 @@ int do_search(
       goto end_do_search;
     }
     if (spats[0].off.end && oap != NULL)
-      oap->inclusive = TRUE;        /* 'e' includes last character */
+      oap->inclusive = true;        /* 'e' includes last character */
 
     retval = 1;                     /* pattern found */
 
@@ -1324,9 +1324,9 @@ int searchc(cmdarg_T *cap, int t_cmd)
   }
 
   if (dir == BACKWARD)
-    cap->oap->inclusive = FALSE;
+    cap->oap->inclusive = false;
   else
-    cap->oap->inclusive = TRUE;
+    cap->oap->inclusive = true;
 
   p = get_cursor_line_ptr();
   col = curwin->w_cursor.col;
@@ -2185,9 +2185,9 @@ found:
  * If 'both' is TRUE also stop at '}'.
  * Return TRUE if the next paragraph or section was found.
  */
-int 
+bool
 findpar (
-    int *pincl,             /* Return: TRUE if last char is to be included */
+    bool *pincl,        /* Return: true if last char is to be included */
     int dir,
     long count,
     int what,
@@ -2195,27 +2195,27 @@ findpar (
 )
 {
   linenr_T curr;
-  int did_skip;             /* TRUE after separating lines have been skipped */
-  int first;                /* TRUE on first line */
+  bool did_skip;            /* true after separating lines have been skipped */
+  bool first;               /* true on first line */
   int posix = (vim_strchr(p_cpo, CPO_PARA) != NULL);
   linenr_T fold_first;      /* first line of a closed fold */
   linenr_T fold_last;       /* last line of a closed fold */
-  int fold_skipped;           /* TRUE if a closed fold was skipped this
-                                 iteration */
+  bool fold_skipped;        /* true if a closed fold was skipped this
+                               iteration */
 
   curr = curwin->w_cursor.lnum;
 
   while (count--) {
-    did_skip = FALSE;
-    for (first = TRUE;; first = FALSE) {
+    did_skip = false;
+    for (first = true;; first = false) {
       if (*ml_get(curr) != NUL)
-        did_skip = TRUE;
+        did_skip = true;
 
       /* skip folded lines */
-      fold_skipped = FALSE;
+      fold_skipped = false;
       if (first && hasFolding(curr, &fold_first, &fold_last)) {
         curr = ((dir > 0) ? fold_last : fold_first) + dir;
-        fold_skipped = TRUE;
+        fold_skipped = true;
       }
 
       /* POSIX has it's own ideas of what a paragraph boundary is and it
@@ -2230,7 +2230,7 @@ findpar (
         curr -= dir;
       if ((curr += dir) < 1 || curr > curbuf->b_ml.ml_line_count) {
         if (count)
-          return FALSE;
+          return false;
         curr -= dir;
         break;
       }
@@ -2243,11 +2243,11 @@ findpar (
   if (curr == curbuf->b_ml.ml_line_count && what != '}') {
     if ((curwin->w_cursor.col = (colnr_T)STRLEN(ml_get(curr))) != 0) {
       --curwin->w_cursor.col;
-      *pincl = TRUE;
+      *pincl = true;
     }
   } else
     curwin->w_cursor.col = 0;
-  return TRUE;
+  return true;
 }
 
 /*
@@ -2654,7 +2654,7 @@ current_word (
 {
   pos_T start_pos;
   pos_T pos;
-  int inclusive = TRUE;
+  bool inclusive = true;
   int include_white = FALSE;
 
   cls_bigword = bigword;
@@ -2702,7 +2702,7 @@ current_word (
     }
 
     if (VIsual_active) {
-      /* should do something when inclusive == FALSE ! */
+      /* should do something when inclusive == false ! */
       VIsual = start_pos;
       redraw_curbuf_later(INVERTED);            /* update the inversion */
     } else {
@@ -2716,7 +2716,7 @@ current_word (
    * When count is still > 0, extend with more objects.
    */
   while (count > 0) {
-    inclusive = TRUE;
+    inclusive = true;
     if (VIsual_active && lt(curwin->w_cursor, VIsual)) {
       /*
        * In Visual mode, with cursor at start: move cursor back.
@@ -2746,7 +2746,7 @@ current_word (
          * Put cursor on last char of white.
          */
         if (oneleft() == FAIL)
-          inclusive = FALSE;
+          inclusive = false;
       } else {
         if (end_word(1L, bigword, TRUE, TRUE) == FAIL)
           return FAIL;
@@ -2938,9 +2938,9 @@ extend:
   } else {
     /* include a newline after the sentence, if there is one */
     if (incl(&curwin->w_cursor) == -1)
-      oap->inclusive = TRUE;
+      oap->inclusive = true;
     else
-      oap->inclusive = FALSE;
+      oap->inclusive = false;
     oap->start = start_pos;
     oap->motion_type = MCHAR;
   }
@@ -3065,12 +3065,12 @@ current_block (
   } else {
     oap->start = start_pos;
     oap->motion_type = MCHAR;
-    oap->inclusive = FALSE;
+    oap->inclusive = false;
     if (sol)
       incl(&curwin->w_cursor);
     else if (ltoreq(start_pos, curwin->w_cursor))
       /* Include the character under the cursor. */
-      oap->inclusive = TRUE;
+      oap->inclusive = true;
     else
       /* End is before the start (no text in between <>, [], etc.): don't
        * operate on any text. */
@@ -3307,9 +3307,9 @@ again:
       /* End is before the start: there is no text between tags; operate
        * on an empty area. */
       curwin->w_cursor = start_pos;
-      oap->inclusive = FALSE;
+      oap->inclusive = false;
     } else
-      oap->inclusive = TRUE;
+      oap->inclusive = true;
   }
   retval = OK;
 
@@ -3554,7 +3554,7 @@ current_quote (
   char_u      *line = get_cursor_line_ptr();
   int col_end;
   int col_start = curwin->w_cursor.col;
-  int inclusive = FALSE;
+  bool inclusive = false;
   int vis_empty = TRUE;                 /* Visual selection <= 1 char */
   int vis_bef_curs = FALSE;             /* Visual starts before cursor */
   int inside_quotes = FALSE;            /* Looks like "i'" done before */
@@ -3717,7 +3717,7 @@ current_quote (
        /* After vi" another i" must include the ". */
        || (!vis_empty && inside_quotes)
        ) && inc_cursor() == 2)
-    inclusive = TRUE;
+    inclusive = true;
   if (VIsual_active) {
     if (vis_empty || vis_bef_curs) {
       /* decrement cursor when 'selection' is not exclusive */
