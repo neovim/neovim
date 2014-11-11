@@ -25,7 +25,7 @@ if os.getenv('VALGRIND') then
   nvim_argv = valgrind_argv
 end
 
-local session, loop_running, last_error
+local session, loop_running, loop_stopped, last_error
 
 local function request(method, ...)
   local status, rv = session:request(method, ...)
@@ -39,7 +39,11 @@ local function request(method, ...)
   end
   -- Make sure this will only return after all buffered characters have been
   -- processed
-  session:request('vim_eval', '1')
+  if not loop_stopped then
+    -- Except when the loop has been stopped by a notification triggered
+    -- by the initial request, for example.
+    session:request('vim_eval', '1')
+  end
   return rv
 end
 
@@ -71,6 +75,7 @@ local function run(request_cb, notification_cb, setup_cb)
     call_and_stop_on_error(setup_cb)
   end
 
+  loop_stopped = false
   loop_running = true
   session:run(on_request, on_notification, on_setup)
   loop_running = false
@@ -82,6 +87,7 @@ local function run(request_cb, notification_cb, setup_cb)
 end
 
 local function stop()
+  loop_stopped = true
   session:stop()
 end
 
