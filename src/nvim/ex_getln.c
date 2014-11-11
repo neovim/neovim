@@ -4245,8 +4245,10 @@ void init_history(void)
           for (i = newlen - 1;; --i) {
             if (i >= 0)                         /* copy newest entries */
               temp[i] = history[type][j];
-            else                                /* remove older entries */
+            else {                              /* remove older entries */
               free(history[type][j].hisstr);
+              history[type][j].hisstr = NULL;
+            }
             if (--j < 0)
               j = hislen - 1;
             if (j == hisidx[type])

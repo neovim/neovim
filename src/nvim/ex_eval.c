@@ -9,8 +9,8 @@
 /*
  * ex_eval.c: functions for Ex command line for the +eval feature.
  */
+#include <assert.h>
 #include <stdbool.h>
-
 #include <inttypes.h>
 
 #include "nvim/vim.h"
@@ -670,6 +670,7 @@ static void report_pending(int action, int pending, void *value)
   char        *s;
   int save_msg_silent;
 
+  assert(value || !(pending & CSTP_THROW));
 
   switch (action) {
   case RP_MAKE:

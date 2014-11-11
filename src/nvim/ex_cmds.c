@@ -10,6 +10,7 @@
  * ex_cmds.c: some functions for command line commands
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <string.h>
@@ -90,8 +91,9 @@ void do_ascii(exarg_T *eap)
   int cc[MAX_MCO];
   int ci = 0;
   int len;
+  const bool l_enc_utf8 = enc_utf8;
 
-  if (enc_utf8)
+  if (l_enc_utf8)
     c = utfc_ptr2char(get_cursor_pos_ptr(), cc);
   else
     c = gchar_cursor();
@@ -123,20 +125,20 @@ void do_ascii(exarg_T *eap)
     vim_snprintf((char *)IObuff, IOSIZE,
         _("<%s>%s%s  %d,  Hex %02x,  Octal %03o"),
         transchar(c), buf1, buf2, cval, cval, cval);
-    if (enc_utf8)
+    if (l_enc_utf8)
       c = cc[ci++];
     else
       c = 0;
   }
 
   /* Repeat for combining characters. */
-  while (has_mbyte && (c >= 0x100 || (enc_utf8 && c >= 0x80))) {
+  while (has_mbyte && (c >= 0x100 || (l_enc_utf8 && c >= 0x80))) {
     len = (int)STRLEN(IObuff);
     /* This assumes every multi-byte char is printable... */
     if (len > 0)
       IObuff[len++] = ' ';
     IObuff[len++] = '<';
-    if (enc_utf8 && utf_iscomposing(c)
+    if (l_enc_utf8 && utf_iscomposing(c)
 # ifdef USE_GUI
         && !gui.in_use
 # endif
@@ -148,7 +150,7 @@ void do_ascii(exarg_T *eap)
         : _("> %d, Hex %08x, Octal %o"), c, c, c);
     if (ci == MAX_MCO)
       break;
-    if (enc_utf8)
+    if (l_enc_utf8)
       c = cc[ci++];
     else
       c = 0;
@@ -2764,9 +2766,12 @@ do_ecmd (
         /* Autocommands may open a new window and leave oldwin open
          * which leads to crashes since the above call sets
          * oldwin->w_buffer to NULL. */
-        if (curwin != oldwin && oldwin != aucmd_win
-            && win_valid(oldwin) && oldwin->w_buffer == NULL)
-          win_close(oldwin, FALSE);
+        if (curwin != oldwin && oldwin != aucmd_win && win_valid(oldwin)) {
+          assert(oldwin);
+          if (oldwin->w_buffer == NULL) {
+            win_close(oldwin, FALSE);
+          }
+        }
 
         if (aborting()) {           /* autocmds may abort script processing */
           free(new_name);

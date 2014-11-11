@@ -22,6 +22,7 @@
 #include "nvim/diff.h"
 #include "nvim/eval.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/func_attr.h"
 #include "nvim/indent.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
@@ -1680,7 +1681,9 @@ static void foldDelMarker(linenr_T lnum, char_u *marker, int markerlen)
  * When 'foldtext' isn't set puts the result in "buf[51]".  Otherwise the
  * result is in allocated memory.
  */
-char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T *foldinfo, char_u *buf)
+char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
+                     foldinfo_T *foldinfo, char_u *buf)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   char_u      *text = NULL;
   /* an error occurred when evaluating 'fdt' setting */
@@ -1689,8 +1692,7 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T *foldi
   static win_T    *last_wp = NULL;
   static linenr_T last_lnum = 0;
 
-  if (last_wp != wp || last_wp == NULL
-      || last_lnum > lnum || last_lnum == 0)
+  if (last_wp == NULL || last_wp != wp || last_lnum > lnum || last_lnum == 0)
     /* window changed, try evaluating foldtext setting once again */
     got_fdt_error = FALSE;
 
