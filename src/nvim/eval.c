@@ -457,7 +457,7 @@ typedef struct {
 } JobEvent;
 #define JobEventFreer(x)
 KMEMPOOL_INIT(JobEventPool, JobEvent, JobEventFreer)
-kmempool_t(JobEventPool) *job_event_pool = NULL;
+static kmempool_t(JobEventPool) *job_event_pool = NULL;
 
 /*
  * Initialize the global and v: variables.
@@ -12540,11 +12540,52 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv)
     ADD(args, vim_to_object(tv));
   }
 
+  scid_T save_current_SID;
+  uint8_t *save_sourcing_name, *save_autocmd_fname, *save_autocmd_match;
+  linenr_T save_sourcing_lnum;
+  int save_autocmd_fname_full, save_autocmd_bufnr;
+  void *save_funccalp;
+
+  if (provider_call_nesting) {
+    // If this is called from a provider function, restore the scope
+    // information of the caller.
+    save_current_SID = current_SID;
+    save_sourcing_name = sourcing_name;
+    save_sourcing_lnum = sourcing_lnum;
+    save_autocmd_fname = autocmd_fname;
+    save_autocmd_match = autocmd_match;
+    save_autocmd_fname_full = autocmd_fname_full;
+    save_autocmd_bufnr = autocmd_bufnr;
+    save_funccalp = save_funccal();
+    //
+    current_SID = provider_caller_scope.SID;
+    sourcing_name = provider_caller_scope.sourcing_name;
+    sourcing_lnum = provider_caller_scope.sourcing_lnum;
+    autocmd_fname = provider_caller_scope.autocmd_fname;
+    autocmd_match = provider_caller_scope.autocmd_match;
+    autocmd_fname_full = provider_caller_scope.autocmd_fname_full;
+    autocmd_bufnr = provider_caller_scope.autocmd_bufnr;
+    restore_funccal(provider_caller_scope.funccalp);
+  }
+
+
   Error err = ERROR_INIT;
   Object result = channel_send_call((uint64_t)argvars[0].vval.v_number,
                                     (char *)argvars[1].vval.v_string,
                                     args,
                                     &err);
+
+  if (provider_call_nesting) {
+    current_SID = save_current_SID;
+    sourcing_name = save_sourcing_name;
+    sourcing_lnum = save_sourcing_lnum;
+    autocmd_fname = save_autocmd_fname;
+    autocmd_match = save_autocmd_match;
+    autocmd_fname_full = save_autocmd_fname_full;
+    autocmd_bufnr = save_autocmd_bufnr;
+    restore_funccal(save_funccalp);
+  }
+
   if (err.set) {
     vim_report_error(cstr_as_string(err.msg));
     goto end;
@@ -19690,3 +19731,79 @@ static void script_host_eval(char *method, typval_T *argvars, typval_T *rettv)
   api_free_object(result);
 }
 
+typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
+{
+  char func[256];
+  int name_len = snprintf(func, sizeof(func), "provider#%s#Call", provider);
+
+  // Save caller scope information
+  struct caller_scope saved_provider_caller_scope = provider_caller_scope;
+  provider_caller_scope = (struct caller_scope) {
+    .SID = current_SID,
+    .sourcing_name = sourcing_name,
+    .sourcing_lnum = sourcing_lnum,
+    .autocmd_fname = autocmd_fname,
+    .autocmd_match = autocmd_match,
+    .autocmd_fname_full = autocmd_fname_full,
+    .autocmd_bufnr = autocmd_bufnr,
+    .funccalp = save_funccal()
+  };
+  provider_call_nesting++;
+
+  typval_T argvars[3] = {
+    {.v_type = VAR_STRING, .vval.v_string = (uint8_t *)method, .v_lock = 0},
+    {.v_type = VAR_LIST, .vval.v_list = arguments, .v_lock = 0},
+    {.v_type = VAR_UNKNOWN}
+  };
+  typval_T rettv = {.v_type = VAR_UNKNOWN, .v_lock = 0};
+  arguments->lv_refcount++;
+
+  int dummy;
+  (void)call_func((uint8_t *)func,
+                  name_len,
+                  &rettv,
+                  2,
+                  argvars,
+                  curwin->w_cursor.lnum,
+                  curwin->w_cursor.lnum,
+                  &dummy,
+                  true,
+                  NULL);
+
+  arguments->lv_refcount--;
+  // Restore caller scope information
+  restore_funccal(provider_caller_scope.funccalp);
+  provider_caller_scope = saved_provider_caller_scope;
+  provider_call_nesting--;
+  
+  return rettv;
+}
+
+bool eval_has_provider(char *name)
+{
+#define source_provider(name) \
+  do_source((uint8_t *)"$VIMRUNTIME/autoload/provider/" name ".vim", \
+                       false, \
+                       false)
+
+#define check_provider(name)                                              \
+  if (has_##name == -1) {                                                 \
+    has_##name = !!find_func((uint8_t *)"provider#" #name "#Call");       \
+    if (!has_##name) {                                                    \
+      source_provider(#name);                                             \
+      has_##name = !!find_func((uint8_t *)"provider#" #name "#Call");     \
+    }                                                                     \
+  }
+
+  static int has_clipboard = -1, has_python = -1;
+
+  if (!strcmp(name, "clipboard")) {
+    check_provider(clipboard);
+    return has_clipboard;
+  } else if (!strcmp(name, "python")) {
+    check_provider(python);
+    return has_python;
+  }
+
+  return false;
+}
