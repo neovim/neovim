@@ -1308,7 +1308,7 @@ bool adjust_clipboard_register(int *rp)
 {
   // If no reg. specified and 'unnamedclip' is set, use the
   // clipboard register.
-  if (*rp == 0 && p_unc && provider_has_feature("clipboard")) {
+  if (*rp == 0 && p_unc && eval_has_provider("clipboard")) {
     *rp = '+';
     return true;
   }
@@ -5240,28 +5240,29 @@ static void copy_register(struct yankreg *dest, struct yankreg *src)
 static void get_clipboard(int name)
 {
   if (!(name == '*' || name == '+'
-        || (p_unc && !name && provider_has_feature("clipboard")))) {
+        || (p_unc && !name && eval_has_provider("clipboard")))) {
     return;
   }
 
   struct yankreg *reg = &y_regs[CLIP_REGISTER];
   free_register(reg);
-  Array args = ARRAY_DICT_INIT;
-  Object result = provider_call("clipboard_get", args);
+  list_T *args = list_alloc();
+  typval_T result = eval_call_provider("clipboard", "get", args);
 
-  if (result.type != kObjectTypeArray) {
+  if (result.v_type != VAR_LIST) {
     goto err;
   }
 
-  Array lines = result.data.array;
-  reg->y_array = xcalloc(lines.size, sizeof(uint8_t *));
-  reg->y_size = lines.size;
+  list_T *lines = result.vval.v_list;
+  reg->y_array = xcalloc(lines->lv_len, sizeof(uint8_t *));
+  reg->y_size = lines->lv_len;
 
-  for (size_t i = 0; i < lines.size; i++) {
-    if (lines.items[i].type != kObjectTypeString) {
+  int i = 0;
+  for (listitem_T *li = lines->lv_first; li != NULL; li = li->li_next) {
+    if (li->li_tv.v_type != VAR_STRING) {
       goto err;
     }
-    reg->y_array[i] = (uint8_t *)lines.items[i].data.string.data;
+    reg->y_array[i++] = (uint8_t *)xstrdup((char *)li->li_tv.vval.v_string);
   }
 
   if (!name && p_unc) {
@@ -5272,8 +5273,12 @@ static void get_clipboard(int name)
   return;
 
 err:
-  api_free_object(result);
-  free(reg->y_array);
+  if (reg->y_array) {
+    for (int i = 0; i < reg->y_size; i++) {
+      free(reg->y_array[i]);
+    }
+    free(reg->y_array);
+  }
   reg->y_array = NULL;
   reg->y_size = 0;
   EMSG("Clipboard provider returned invalid data");
@@ -5282,7 +5287,7 @@ err:
 static void set_clipboard(int name)
 {
   if (!(name == '*' || name == '+'
-        || (p_unc && !name && provider_has_feature("clipboard")))) {
+        || (p_unc && !name && eval_has_provider("clipboard")))) {
     return;
   }
 
@@ -5293,15 +5298,11 @@ static void set_clipboard(int name)
     copy_register(reg, &y_regs[0]);
   }
 
-  Array lines = ARRAY_DICT_INIT;
+  list_T *lines = list_alloc();
 
   for (int i = 0; i < reg->y_size; i++) {
-    ADD(lines, STRING_OBJ(cstr_to_string((char *)reg->y_array[i])));
+    list_append_string(lines, reg->y_array[i], -1);
   }
 
-  Array args = ARRAY_DICT_INIT;
-  ADD(args, ARRAY_OBJ(lines));
-
-  Object result = provider_call("clipboard_set", args);
-  api_free_object(result);
+  (void)eval_call_provider("clipboard", "set", lines);
 }

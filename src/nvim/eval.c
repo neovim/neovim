@@ -5152,7 +5152,7 @@ void list_append_string(list_T *l, char_u *str, int len)
 /*
  * Append "n" to list "l".
  */
-static void list_append_number(list_T *l, varnumber_T n)
+void list_append_number(list_T *l, varnumber_T n)
 {
   listitem_T *li = listitem_alloc();
   li->li_tv.v_type = VAR_NUMBER;
@@ -9987,7 +9987,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     }
   }
 
-  if (n == FALSE && provider_has_feature((char *)name)) {
+  if (n == FALSE && eval_has_provider((char *)name)) {
     n = TRUE;
   }
 
@@ -11695,7 +11695,7 @@ static void f_pumvisible(typval_T *argvars, typval_T *rettv)
  */
 static void f_pyeval(typval_T *argvars, typval_T *rettv)
 {
-  script_host_eval("python_eval", argvars, rettv);
+  script_host_eval("python", argvars, rettv);
 }
 
 /*
@@ -19712,23 +19712,19 @@ static void apply_job_autocmds(int id, char *name, char *type,
   }
 }
 
-static void script_host_eval(char *method, typval_T *argvars, typval_T *rettv)
+static void script_host_eval(char *name, typval_T *argvars, typval_T *rettv)
 {
-  Array args = ARRAY_DICT_INIT;
-  ADD(args, vim_to_object(argvars));
-  Object result = provider_call(method, args);
-
-  if (result.type == kObjectTypeNil) {
+  if (check_restricted() || check_secure()) {
     return;
   }
 
-  Error err = ERROR_INIT;
-
-  if (!object_to_vim(result, rettv, &err)){
-    EMSG("Error converting value back to vim");
+  if (argvars[0].v_type != VAR_STRING) {
+    EMSG(_(e_invarg));
   }
 
-  api_free_object(result);
+  list_T *args = list_alloc();
+  list_append_string(args, argvars[0].vval.v_string, -1);
+  *rettv = eval_call_provider(name, "eval", args);
 }
 
 typval_T eval_call_provider(char *provider, char *method, list_T *arguments)

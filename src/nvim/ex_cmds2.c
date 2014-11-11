@@ -791,17 +791,17 @@ void ex_profile(exarg_T *eap)
 
 void ex_python(exarg_T *eap)
 {
-  script_host_execute("python_execute", eap);
+  script_host_execute("python", eap);
 }
 
 void ex_pyfile(exarg_T *eap)
 {
-  script_host_execute_file("python_execute_file", eap);
+  script_host_execute_file("python", eap);
 }
 
 void ex_pydo(exarg_T *eap)
 {
-  script_host_do_range("python_do_range", eap);
+  script_host_do_range("python", eap);
 }
 
 
@@ -3254,46 +3254,43 @@ char_u *get_locales(expand_T *xp, int idx)
 #endif
 
 
-static void script_host_execute(char *method, exarg_T *eap)
+static void script_host_execute(char *name, exarg_T *eap)
 {
-  char *script = (char *)script_get(eap, eap->arg);
+  uint8_t *script = script_get(eap, eap->arg);
 
   if (!eap->skip) {
-    Array args = ARRAY_DICT_INIT;
-    ADD(args, STRING_OBJ(cstr_to_string(script ? script : (char *)eap->arg)));
-    // add current range
-    ADD(args, INTEGER_OBJ(eap->line1));
-    ADD(args, INTEGER_OBJ(eap->line2));
-    Object result = provider_call(method, args);
-    // We don't care about the result, so free it just in case a bad provider
-    // returned something
-    api_free_object(result);
+    list_T *args = list_alloc();
+    // script
+    list_append_string(args, script ? script : eap->arg, -1);
+    // current range
+    list_append_number(args, eap->line1);
+    list_append_number(args, eap->line2);
+    (void)eval_call_provider(name, "execute", args);
   }
 
   free(script);
 }
 
-static void script_host_execute_file(char *method, exarg_T *eap)
+static void script_host_execute_file(char *name, exarg_T *eap)
 {
-  char buffer[MAXPATHL];
-  vim_FullName(eap->arg, (uint8_t *)buffer, sizeof(buffer), false);
+  uint8_t buffer[MAXPATHL];
+  vim_FullName(eap->arg, buffer, sizeof(buffer), false);
 
-  Array args = ARRAY_DICT_INIT;
-  ADD(args, STRING_OBJ(cstr_to_string(buffer)));
-  // add current range
-  ADD(args, INTEGER_OBJ(eap->line1));
-  ADD(args, INTEGER_OBJ(eap->line2));
-  Object result = provider_call(method, args);
-  api_free_object(result);
+  list_T *args = list_alloc();
+  // filename
+  list_append_string(args, buffer, -1);
+  // current range
+  list_append_number(args, eap->line1);
+  list_append_number(args, eap->line2);
+  (void)eval_call_provider(name, "execute_file", args);
 }
 
-static void script_host_do_range(char *method, exarg_T *eap)
+static void script_host_do_range(char *name, exarg_T *eap)
 {
-  Array args = ARRAY_DICT_INIT;
-  ADD(args, INTEGER_OBJ(eap->line1));
-  ADD(args, INTEGER_OBJ(eap->line2));
-  ADD(args, STRING_OBJ(cstr_to_string((char *)eap->arg)));
-  Object result = provider_call(method, args);
-  api_free_object(result);
+  list_T *args = list_alloc();
+  list_append_number(args, eap->line1);
+  list_append_number(args, eap->line2);
+  list_append_string(args, eap->arg, -1);
+  (void)eval_call_provider(name, "do_range", args);
 }
 
