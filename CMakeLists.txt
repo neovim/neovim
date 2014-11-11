@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.8.7)
 project (NEOVIM)
 
 # Point CMake at any custom modules we may ship
-set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 # Prefer our bundled versions of dependencies.
 set(DEPS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.deps")
@@ -249,7 +249,7 @@ foreach(PROG ${RUNTIME_PROGRAMS})
   install_helper(PROGRAMS ${PROG} DESTINATION share/nvim/${BASEDIR})
 endforeach()
 
-install(SCRIPT ${CMAKE_MODULE_PATH}/GenerateHelptags.cmake)
+install(SCRIPT ${PROJECT_SOURCE_DIR}/cmake/GenerateHelptags.cmake)
 
 # Unfortunately, the below does not work under Ninja.  Ninja doesn't use a
 # pseudo-tty when launching processes, because it can put many jobs in parallel
@@ -297,7 +297,7 @@ if(BUSTED_PRG)
       -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -DTEST_TYPE=unit
-      -P ${CMAKE_MODULE_PATH}/RunTests.cmake
+      -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS nvim-test unittest-headers)
 
   add_custom_target(functionaltest
@@ -309,6 +309,6 @@ if(BUSTED_PRG)
       -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -DTEST_TYPE=functional
-      -P ${CMAKE_MODULE_PATH}/RunTests.cmake
+      -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS nvim)
 endif()
