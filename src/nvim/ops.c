@@ -3357,7 +3357,6 @@ dis_msg (
 static char_u *skip_comment(char_u *line, int process, int include_space, int *is_comment)
 {
   char_u *comment_flags = NULL;
-  int lead_len;
   int leader_offset = get_last_leader_offset(line, &comment_flags);
 
   *is_comment = FALSE;
@@ -3378,7 +3377,7 @@ static char_u *skip_comment(char_u *line, int process, int include_space, int *i
   if (process == FALSE)
     return line;
 
-  lead_len = get_leader_len(line, &comment_flags, FALSE, include_space);
+  size_t lead_len = get_leader_len(line, &comment_flags, FALSE, include_space);
 
   if (lead_len == 0)
     return line;
@@ -3414,12 +3413,16 @@ static char_u *skip_comment(char_u *line, int process, int include_space, int *i
 // to set those marks.
 //
 // return FAIL for failure, OK otherwise
-int do_join(long count,
+int do_join(size_t count,
             int insert_space,
             int save_undo,
             int use_formatoptions,
             bool setmark)
 {
+  if (count < 2) {
+    return OK;
+  }
+
   char_u      *curr = NULL;
   char_u      *curr_start = NULL;
   char_u      *cend;
@@ -3429,7 +3432,6 @@ int do_join(long count,
   int endcurr2 = NUL;
   int currsize = 0;             /* size of the current line */
   int sumsize = 0;              /* size of the long new line */
-  linenr_T t;
   colnr_T col = 0;
   int ret = OK;
   int         *comments = NULL;
@@ -3454,7 +3456,7 @@ int do_join(long count,
    * Don't move anything, just compute the final line length
    * and setup the array of space strings lengths
    */
-  for (t = 0; t < count; ++t) {
+  for (size_t t = 0; t < count; ++t) {
     curr = curr_start = ml_get((linenr_T)(curwin->w_cursor.lnum + t));
     if (t == 0 && setmark) {
       // Set the '[ mark.
@@ -3536,14 +3538,14 @@ int do_join(long count,
    * column.  This is not Vi compatible, but Vi deletes the marks, thus that
    * should not really be a problem.
    */
-  for (t = count - 1;; --t) {
+  for (size_t t = count - 1; ; --t) {
     cend -= currsize;
     memmove(cend, curr, (size_t)currsize);
     if (spaces[t] > 0) {
       cend -= spaces[t];
       copy_spaces(cend, (size_t)(spaces[t]));
     }
-    mark_col_adjust(curwin->w_cursor.lnum + t, (colnr_T)0, (linenr_T)-t,
+    mark_col_adjust(curwin->w_cursor.lnum + t, (colnr_T)0, -((linenr_T)t),
         (long)(cend - newp + spaces[t] - (curr - curr_start)));
     if (t == 0)
       break;
@@ -3570,12 +3572,12 @@ int do_join(long count,
   /*
    * Delete following lines. To do this we move the cursor there
    * briefly, and then move it back. After del_lines() the cursor may
-   * have moved up (last line deleted), so the current lnum is kept in t.
+   * have moved up (last line deleted), so the current lnum is kept in tmp.
    */
-  t = curwin->w_cursor.lnum;
+  linenr_T tmp = curwin->w_cursor.lnum;
   ++curwin->w_cursor.lnum;
   del_lines(count - 1, FALSE);
-  curwin->w_cursor.lnum = t;
+  curwin->w_cursor.lnum = tmp;
 
   /*
    * Set the cursor column:
@@ -3601,9 +3603,10 @@ theend:
  * the first line.  White-space is ignored.  Note that the whole of
  * 'leader1' must match 'leader2_len' characters from 'leader2' -- webb
  */
-static int same_leader(linenr_T lnum, int leader1_len, char_u *leader1_flags, int leader2_len, char_u *leader2_flags)
+static int same_leader(linenr_T lnum, size_t leader1_len, char_u *leader1_flags,
+                       size_t leader2_len, char_u *leader2_flags)
 {
-  int idx1 = 0, idx2 = 0;
+  size_t idx1 = 0, idx2 = 0;
   char_u  *p;
   char_u  *line1;
   char_u  *line2;
@@ -3792,8 +3795,8 @@ format_lines (
   int is_end_par;                       /* at end of paragraph */
   int prev_is_end_par = FALSE;          /* prev. line not part of parag. */
   int next_is_start_par = FALSE;
-  int leader_len = 0;                   /* leader len of current line */
-  int next_leader_len;                  /* leader len of next line */
+  size_t leader_len = 0;                /* leader len of current line */
+  size_t next_leader_len;               /* leader len of next line */
   char_u      *leader_flags = NULL;     /* flags for leader of current line */
   char_u      *next_leader_flags;       /* flags for leader of next line */
   int do_comments;                      /* format comments */
@@ -3824,14 +3827,12 @@ format_lines (
    * Get info about the previous and current line.
    */
   if (curwin->w_cursor.lnum > 1)
-    is_not_par = fmt_check_par(curwin->w_cursor.lnum - 1
-        , &leader_len, &leader_flags, do_comments
-        );
+    is_not_par = fmt_check_par(curwin->w_cursor.lnum - 1, &leader_len,
+                               &leader_flags, do_comments);
   else
     is_not_par = TRUE;
-  next_is_not_par = fmt_check_par(curwin->w_cursor.lnum
-      , &next_leader_len, &next_leader_flags, do_comments
-      );
+  next_is_not_par = fmt_check_par(curwin->w_cursor.lnum, &next_leader_len,
+                                  &next_leader_flags, do_comments);
   is_end_par = (is_not_par || next_is_not_par);
   if (!is_end_par && do_trail_white)
     is_end_par = !ends_in_white(curwin->w_cursor.lnum - 1);
@@ -3857,9 +3858,10 @@ format_lines (
       next_leader_len = 0;
       next_leader_flags = NULL;
     } else {
-      next_is_not_par = fmt_check_par(curwin->w_cursor.lnum + 1
-          , &next_leader_len, &next_leader_flags, do_comments
-          );
+      next_is_not_par = fmt_check_par(curwin->w_cursor.lnum + 1,
+                                      &next_leader_len,
+                                      &next_leader_flags,
+                                      do_comments);
       if (do_number_indent)
         next_is_start_par =
           (get_number_indent(curwin->w_cursor.lnum + 1) > 0);
@@ -3967,10 +3969,10 @@ format_lines (
         curwin->w_cursor.col = 0;
         if (line_count < 0 && u_save_cursor() == FAIL)
           break;
-        if (next_leader_len > 0) {
+        if (next_leader_len != 0) {
           (void)del_bytes((long)next_leader_len, FALSE, FALSE);
           mark_col_adjust(curwin->w_cursor.lnum, (colnr_T)0, 0L,
-              (long)-next_leader_len);
+                          -((long)next_leader_len));
         } else if (second_indent > 0) {  /* the "leader" for FO_Q_SECOND */
           char_u *p = get_cursor_line_ptr();
           int indent = (int)(skipwhite(p) - p);
@@ -4022,7 +4024,8 @@ static int ends_in_white(linenr_T lnum)
  * previous line.  A new paragraph starts after a blank line, or when the
  * comment leader changes -- webb.
  */
-static int fmt_check_par(linenr_T lnum, int *leader_len, char_u **leader_flags, int do_comments)
+static int fmt_check_par(linenr_T lnum, size_t *leader_len,
+                         char_u **leader_flags, int do_comments)
 {
   char_u      *flags = NULL;        /* init for GCC */
   char_u      *ptr;
@@ -4054,9 +4057,9 @@ static int fmt_check_par(linenr_T lnum, int *leader_len, char_u **leader_flags, 
 int paragraph_start(linenr_T lnum)
 {
   char_u *p;
-  int leader_len = 0;                   /* leader len of current line */
+  size_t leader_len = 0;                /* leader len of current line */
   char_u *leader_flags = NULL;          /* flags for leader of current line */
-  int next_leader_len = 0;              /* leader len of next line */
+  size_t next_leader_len = 0;           /* leader len of next line */
   char_u *next_leader_flags = NULL;     /* flags for leader of next line */
   int do_comments;                      /* format comments */
 
@@ -4068,14 +4071,10 @@ int paragraph_start(linenr_T lnum)
     return TRUE;                /* after empty line */
 
   do_comments = has_format_option(FO_Q_COMS);
-  if (fmt_check_par(lnum - 1
-          , &leader_len, &leader_flags, do_comments
-          ))
+  if (fmt_check_par(lnum - 1, &leader_len, &leader_flags, do_comments))
     return TRUE;                /* after non-paragraph line */
 
-  if (fmt_check_par(lnum
-          , &next_leader_len, &next_leader_flags, do_comments
-          ))
+  if (fmt_check_par(lnum, &next_leader_len, &next_leader_flags, do_comments))
     return TRUE;                /* "lnum" is not a paragraph line */
 
   if (has_format_option(FO_WHITE_PAR) && !ends_in_white(lnum - 1))
@@ -4085,7 +4084,7 @@ int paragraph_start(linenr_T lnum)
     return TRUE;                /* numbered item starts in "lnum". */
 
   if (!same_leader(lnum - 1, leader_len, leader_flags,
-          next_leader_len, next_leader_flags))
+                   next_leader_len, next_leader_flags))
     return TRUE;                /* change of comment leader. */
 
   return FALSE;

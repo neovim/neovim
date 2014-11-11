@@ -213,7 +213,7 @@ open_line (
       old_cursor = curwin->w_cursor;
       ptr = saved_line;
       if (flags & OPENLINE_DO_COM)
-        lead_len = get_leader_len(ptr, NULL, FALSE, TRUE);
+        lead_len = (int)get_leader_len(ptr, NULL, FALSE, TRUE);
       else
         lead_len = 0;
       if (dir == FORWARD) {
@@ -229,7 +229,7 @@ open_line (
           newindent = get_indent();
         }
         if (flags & OPENLINE_DO_COM)
-          lead_len = get_leader_len(ptr, NULL, FALSE, TRUE);
+          lead_len = (int)get_leader_len(ptr, NULL, FALSE, TRUE);
         else
           lead_len = 0;
         if (lead_len > 0) {
@@ -352,7 +352,8 @@ open_line (
    */
   end_comment_pending = NUL;
   if (flags & OPENLINE_DO_COM)
-    lead_len = get_leader_len(saved_line, &lead_flags, dir == BACKWARD, TRUE);
+    lead_len = (int)get_leader_len(saved_line, &lead_flags,
+                                   dir == BACKWARD, TRUE);
   else
     lead_len = 0;
   if (lead_len > 0) {
@@ -949,16 +950,17 @@ theend:
  * If "include_space" is set, include trailing whitespace while calculating the
  * length.
  */
-int get_leader_len(char_u *line, char_u **flags, int backward, int include_space)
+size_t get_leader_len(char_u *line, char_u **flags, int backward,
+                      int include_space)
 {
-  int i, j;
-  int result;
+  size_t i, j;
+  size_t result;
   int got_com = FALSE;
   int found_one;
   char_u part_buf[COM_MAX_LEN];         /* buffer for one option part */
   char_u      *string;                  /* pointer to comment string */
   char_u      *list;
-  int middle_match_len = 0;
+  size_t middle_match_len = 0;
   char_u      *prev_list;
   char_u      *saved_flags = NULL;
 

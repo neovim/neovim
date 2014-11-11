@@ -4239,7 +4239,7 @@ search_line:
           if (!define_matched && skip_comments) {
             if ((*line != '#' ||
                  STRNCMP(skipwhite(line + 1), "define", 6) != 0)
-                && get_leader_len(line, NULL, FALSE, TRUE))
+                && get_leader_len(line, NULL, FALSE, TRUE) != 0)
               matched = FALSE;
 
             /*

@@ -2054,17 +2054,17 @@ spell_move_to (
 {
   linenr_T lnum;
   pos_T found_pos;
-  int found_len = 0;
+  size_t found_len = 0;
   char_u      *line;
   char_u      *p;
   char_u      *endp;
   hlf_T attr;
-  int len;
+  size_t len;
   int has_syntax = syntax_present(wp);
   int col;
   bool can_spell;
   char_u      *buf = NULL;
-  int buflen = 0;
+  size_t buflen = 0;
   int skip = 0;
   int capcol = -1;
   bool found_one = false;
@@ -2088,7 +2088,7 @@ spell_move_to (
   while (!got_int) {
     line = ml_get_buf(wp->w_buffer, lnum, FALSE);
 
-    len = (int)STRLEN(line);
+    len = STRLEN(line);
     if (buflen < len + MAXWLEN + 2) {
       free(buf);
       buflen = len + MAXWLEN + 2;
@@ -2144,9 +2144,8 @@ spell_move_to (
               || lnum != wp->w_cursor.lnum
               || (lnum == wp->w_cursor.lnum
                   && (wrapped
-                      || (colnr_T)(curline ? p - buf + len
-                                   : p - buf)
-                      > wp->w_cursor.col))) {
+                      || (colnr_T)(p - buf + (curline ? len : 0))
+                          > wp->w_cursor.col))) {
             if (has_syntax) {
               col = (int)(p - buf);
               (void)syn_get_id(wp, lnum, (colnr_T)col,

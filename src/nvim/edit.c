@@ -4915,14 +4915,13 @@ insertchar (
     char_u  *line;
     char_u lead_end[COM_MAX_LEN];           /* end-comment string */
     int middle_len, end_len;
-    int i;
 
     /*
      * Need to remove existing (middle) comment leader and insert end
      * comment leader.  First, check what comment leader we can find.
      */
-    i = get_leader_len(line = get_cursor_line_ptr(), &p, FALSE, TRUE);
-    if (i > 0 && vim_strchr(p, COM_MIDDLE) != NULL) {   /* Just checking */
+    size_t i = get_leader_len(line = get_cursor_line_ptr(), &p, FALSE, TRUE);
+    if (i != 0 && vim_strchr(p, COM_MIDDLE) != NULL) {   /* Just checking */
       /* Skip middle-comment string */
       while (*p && p[-1] != ':')        /* find end of middle flags */
         ++p;
@@ -4938,17 +4937,16 @@ insertchar (
 
       /* Skip white space before the cursor */
       i = curwin->w_cursor.col;
-      while (--i >= 0 && vim_iswhite(line[i]))
-        ;
-      i++;
-
-      /* Skip to before the middle leader */
-      i -= middle_len;
+      while (i != 0 && vim_iswhite(line[i - 1])) {
+        i--;
+      }
 
       /* Check some expected things before we go on */
-      if (i >= 0 && lead_end[end_len - 1] == end_comment_pending) {
-        /* Backspace over all the stuff we want to replace */
-        backspace_until_column(i);
+      if (i >= (size_t)middle_len
+          && lead_end[end_len - 1] == end_comment_pending) {
+        // Backspace over all the stuff we want to replace.
+        // Subtract middle_len to skip to before the middle leader.
+        backspace_until_column(i - middle_len);
 
         /*
          * Insert the end-comment string, except for the last
@@ -5071,7 +5069,7 @@ internal_format (
   int fo_multibyte = has_format_option(FO_MBYTE_BREAK);
   int fo_white_par = has_format_option(FO_WHITE_PAR);
   int first_line = TRUE;
-  colnr_T leader_len;
+  size_t leader_len;
   int no_leader = FALSE;
   int do_comments = (flags & INSCHAR_DO_COM);
 
@@ -5166,15 +5164,19 @@ internal_format (
         if (curwin->w_cursor.col == 0 && WHITECHAR(cc))
           break;                        /* only spaces in front of text */
         /* Don't break until after the comment leader */
-        if (curwin->w_cursor.col < leader_len)
+        if (curwin->w_cursor.col < 0
+            || (size_t)curwin->w_cursor.col < leader_len) {
           break;
+        }
         if (has_format_option(FO_ONE_LETTER)) {
           /* do not break after one-letter words */
           if (curwin->w_cursor.col == 0)
             break;              /* one-letter word at begin */
           /* do not break "#a b" when 'tw' is 2 */
-          if (curwin->w_cursor.col <= leader_len)
+          if (curwin->w_cursor.col < 0
+              || (size_t)curwin->w_cursor.col <= leader_len) {
             break;
+          }
           col = curwin->w_cursor.col;
           dec_cursor();
           cc = gchar_cursor();
@@ -5194,8 +5196,10 @@ internal_format (
         /* Break after or before a multi-byte character. */
         if (curwin->w_cursor.col != startcol) {
           /* Don't break until after the comment leader */
-          if (curwin->w_cursor.col < leader_len)
+          if (curwin->w_cursor.col < 0
+              || (size_t)curwin->w_cursor.col < leader_len) {
             break;
+          }
           col = curwin->w_cursor.col;
           inc_cursor();
           /* Don't change end_foundcol if already set. */
@@ -5219,8 +5223,10 @@ internal_format (
         if (WHITECHAR(cc))
           continue;                     /* break with space */
         /* Don't break until after the comment leader */
-        if (curwin->w_cursor.col < leader_len)
+        if (curwin->w_cursor.col < 0
+            || (size_t)curwin->w_cursor.col < leader_len) {
           break;
+        }
 
         curwin->w_cursor.col = col;
 
@@ -5311,9 +5317,10 @@ internal_format (
           if (State & VREPLACE_FLAG)
             change_indent(INDENT_SET, second_indent,
                 FALSE, NUL, TRUE);
-          else if (leader_len > 0 && second_indent - leader_len > 0) {
+          else if (leader_len != 0 && second_indent >= 0
+                   && (size_t)second_indent > leader_len) {
             int i;
-            int padding = second_indent - leader_len;
+            int padding = second_indent - (int)leader_len;
 
             /* We started at the first_line of a numbered list
              * that has a comment.  the open_line() function has

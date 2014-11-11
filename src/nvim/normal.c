@@ -3343,7 +3343,7 @@ find_decl (
       }
       break;
     }
-    if (get_leader_len(get_cursor_line_ptr(), NULL, FALSE, TRUE) > 0) {
+    if (get_leader_len(get_cursor_line_ptr(), NULL, FALSE, TRUE) != 0) {
       /* Ignore this line, continue at start of next line. */
       ++curwin->w_cursor.lnum;
       curwin->w_cursor.col = 0;
