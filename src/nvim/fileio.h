@@ -99,6 +99,7 @@ typedef enum auto_event {
   EVENT_SHELLFILTERPOST,        /* after ":1,2!cmd", ":w !cmd", ":r !cmd". */
   EVENT_TEXTCHANGED,            /* text was modified */
   EVENT_TEXTCHANGEDI,           /* text was modified in Insert mode*/
+  EVENT_CMDUNDEFINED,           ///< command undefined
   NUM_EVENTS                    /* MUST be the last one */
 } event_T;
 

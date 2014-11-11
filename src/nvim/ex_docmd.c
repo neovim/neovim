@@ -1459,6 +1459,23 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   /* Find the command and let "p" point to after it. */
   p = find_command(&ea, NULL);
 
+  // If this looks like an undefined user command and there are CmdUndefined
+  // autocommands defined, trigger the matching autocommands.
+  if (p != NULL && ea.cmdidx == CMD_SIZE && !ea.skip
+      && ASCII_ISUPPER(*ea.cmd)
+      && has_cmdundefined()) {
+    p = ea.cmd;
+    while (ASCII_ISALNUM(*p)) {
+      ++p;
+    }
+    p = vim_strnsave(ea.cmd, p - ea.cmd);
+    int ret = apply_autocmds(EVENT_CMDUNDEFINED, p, p, TRUE, NULL);
+    free(p);
+    if (ret && !aborting()) {
+      p = find_command(&ea, NULL);
+    }
+  }
+
   if (p == NULL) {
     if (!ea.skip)
       errormsg = (char_u *)_("E464: Ambiguous use of user-defined command");
