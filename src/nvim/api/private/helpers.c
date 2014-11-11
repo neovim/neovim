@@ -7,7 +7,6 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/handle.h"
-#include "nvim/os/provider.h"
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
@@ -548,7 +547,6 @@ Dictionary api_metadata(void)
     msgpack_rpc_init_function_metadata(&metadata);
     init_error_type_metadata(&metadata);
     init_type_metadata(&metadata);
-    provider_init_feature_metadata(&metadata);
   }
 
   return copy_object(DICTIONARY_OBJ(metadata)).data.dictionary;
