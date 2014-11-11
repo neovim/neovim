@@ -33,7 +33,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
-#include "nvim/core.h"
+#include "nvim/fundamental.h"
 #include "nvim/keymap.h"
 #include "nvim/garray.h"
 #include "nvim/ops.h"

@@ -47,7 +47,7 @@ set(CONV_SOURCES
   map.c
   memfile.c
   memory.c
-  core.c
+  fundamental.c
   profile.c
   tempfile.c
   )

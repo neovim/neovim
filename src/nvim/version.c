@@ -13,7 +13,7 @@
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/core.h"
+#include "nvim/fundamental.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/version_defs.h"

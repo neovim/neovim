@@ -21,7 +21,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/eval.h"
-#include "nvim/core.h"
+#include "nvim/fundamental.h"
 #include "nvim/term.h"
 #include "nvim/getchar.h"
 #include "nvim/os/input.h"

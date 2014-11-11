@@ -7,7 +7,7 @@
  */
 
 /*
- * core.c: Various fundamental functions.
+ * fundamental.c: Various fundamental functions.
  */
 #include <errno.h>
 #include <inttypes.h>
@@ -17,7 +17,7 @@
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
-#include "nvim/core.h"
+#include "nvim/fundamental.h"
 #include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/edit.h"
@@ -57,7 +57,7 @@
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "core.c.generated.h"
+# include "fundamental.c.generated.h"
 #endif
 /*
  * Return TRUE if in the current mode we need to use virtual.

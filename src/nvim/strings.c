@@ -7,7 +7,7 @@
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/strings.h"
-#include "nvim/core.h"
+#include "nvim/fundamental.h"
 #include "nvim/file_search.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
