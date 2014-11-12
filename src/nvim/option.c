@@ -279,7 +279,7 @@ static char_u   *p_spf;
 static char_u   *p_spl;
 static long p_ts;
 static long p_tw;
-static int p_udf;
+static bool p_udf;
 static long p_wm;
 static char_u   *p_keymap;
 
@@ -4916,11 +4916,11 @@ static char_u *
 set_bool_option (
     int opt_idx,                            /* index in options[] table */
     char_u *varp,                      /* pointer to the option variable */
-    int value,                              /* new value */
+    bool value,                              /* new value */
     int opt_flags                          /* OPT_LOCAL and/or OPT_GLOBAL */
 )
 {
-  int old_value = *(int *)varp;
+  bool old_value = *(bool *)varp;
 
   /* Disallow changing some options from secure mode */
   if ((secure
@@ -4930,25 +4930,25 @@ set_bool_option (
        ) && (options[opt_idx].flags & P_SECURE))
     return e_secure;
 
-  *(int *)varp = value;             /* set the new value */
+  *(bool *)varp = value;            /* set the new value */
   /* Remember where the option was set. */
   set_option_scriptID_idx(opt_idx, opt_flags, current_SID);
 
 
   /* May set global value for local option. */
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0)
-    *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = value;
+    *(bool *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = value;
 
   /*
    * Handle side effects of changing a bool option.
    */
 
   /* 'compatible' */
-  if ((int *)varp == &p_cp) {
+  if ((bool *)varp == &p_cp) {
     compatible_set();
   }
   /* 'undofile' */
-  else if ((int *)varp == &curbuf->b_p_udf || (int *)varp == &p_udf) {
+  else if ((bool *)varp == &curbuf->b_p_udf || (bool *)varp == &p_udf) {
     /* Only take action when the option was set. When reset we do not
      * delete the undo file, the option may be set again without making
      * any changes in between. */
@@ -5965,7 +5965,7 @@ set_option_value (
           return set_num_option(opt_idx, varp, number,
               NULL, 0, opt_flags);
         else
-          return set_bool_option(opt_idx, varp, (int)number,
+          return set_bool_option(opt_idx, varp, (bool)number,
               opt_flags);
       }
     }

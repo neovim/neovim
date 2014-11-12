@@ -283,7 +283,7 @@
  */
 
 EXTERN long p_aleph;            /* 'aleph' */
-EXTERN int p_acd;               /* 'autochdir' */
+EXTERN bool p_acd;              /* 'autochdir' */
 EXTERN char_u   *p_ambw;        /* 'ambiwidth' */
 EXTERN int p_ar;                /* 'autoread' */
 EXTERN int p_aw;                /* 'autowrite' */
@@ -320,7 +320,7 @@ EXTERN char_u   *p_cedit;       /* 'cedit' */
 EXTERN long p_cwh;              /* 'cmdwinheight' */
 EXTERN long p_ch;               /* 'cmdheight' */
 EXTERN int p_confirm;           /* 'confirm' */
-EXTERN int p_cp;                /* 'compatible' */
+EXTERN bool p_cp;                /* 'compatible' */
 EXTERN char_u   *p_cot;         /* 'completeopt' */
 EXTERN long p_ph;               /* 'pumheight' */
 EXTERN char_u   *p_cpo;         /* 'cpoptions' */
@@ -411,8 +411,8 @@ EXTERN long p_hi;               /* 'history' */
 EXTERN int p_hkmap;             /* 'hkmap' */
 EXTERN int p_hkmapp;            /* 'hkmapp' */
 EXTERN int p_fkmap;             /* 'fkmap' */
-EXTERN int p_altkeymap;         /* 'altkeymap' */
-EXTERN int p_arshape;           /* 'arabicshape' */
+EXTERN bool p_altkeymap;        /* 'altkeymap' */
+EXTERN bool p_arshape;          /* 'arabicshape' */
 EXTERN int p_icon;              /* 'icon' */
 EXTERN char_u   *p_iconstring;  /* 'iconstring' */
 EXTERN bool p_ic;               /* 'ignorecase' */
@@ -469,7 +469,7 @@ EXTERN int p_remap;             /* 'remap' */
 EXTERN long p_re;               /* 'regexpengine' */
 EXTERN long p_report;           /* 'report' */
 EXTERN long p_pvh;              /* 'previewheight' */
-EXTERN int p_ari;               /* 'allowrevins' */
+EXTERN bool p_ari;              /* 'allowrevins' */
 EXTERN int p_ri;                /* 'revins' */
 EXTERN int p_ru;                /* 'ruler' */
 EXTERN char_u   *p_ruf;         /* 'rulerformat' */
