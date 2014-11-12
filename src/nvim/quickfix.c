@@ -10,6 +10,7 @@
  * quickfix.c: functions for quickfix mode, using a file with error messages
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -880,7 +881,7 @@ void qf_free_all(win_T *wp)
 static int 
 qf_add_entry (
     qf_info_T *qi,                /* quickfix list */
-    qfline_T **prevp,            /* pointer to previously added entry or NULL */
+    qfline_T **prevp,            /* nonnull pointer (to previously added entry or NULL) */
     char_u *dir,               /* optional directory name */
     char_u *fname,             /* file name or NULL */
     int bufnum,                     /* buffer number or zero */
@@ -920,6 +921,7 @@ qf_add_entry (
     qi->qf_lists[qi->qf_curlist].qf_start = qfp;
     qfp->qf_prev = qfp;         /* first element points to itself */
   } else {
+    assert(*prevp);
     qfp->qf_prev = *prevp;
     (*prevp)->qf_next = qfp;
   }
