@@ -1599,7 +1599,9 @@ static void find_word(matchinf_T *mip, int mode)
             mip->mi_compoff = (int)(p - mip->mi_fword);
           }
         }
+#if 0
         c = mip->mi_compoff;
+#endif
         ++mip->mi_complen;
         if (flags & WF_COMPROOT)
           ++mip->mi_compextra;
