@@ -87,9 +87,7 @@ report:
 	                 echo ALL DONE;        \
 	             fi"
 
-test1.out: $(VIMPROG)
-
-$(SCRIPTS) $(SCRIPTS_GUI): $(VIMPROG) test1.out
+$(SCRIPTS) $(SCRIPTS_GUI): $(VIMPROG)
 
 RM_ON_RUN   := test.out X* viminfo
 RM_ON_START := tiny.vim small.vim mbyte.vim mzscheme.vim lua.vim test.ok
@@ -106,23 +104,6 @@ clean:
 	        valgrind.*     \
 	        .*.swp         \
 	        .*.swo
-
-test1.out: .gdbinit test1.in
-	-rm -rf $*.failed $(RM_ON_RUN) $(RM_ON_START) wrongtermsize
-	$(RUN_VIM) $*.in
-	@/bin/sh -c "if test -e wrongtermsize; then                                 \
-	                 echo;                                                      \
-	                 echo test1 FAILED - terminal size must be 80x24 or larger; \
-	                 echo; exit 1;                                              \
-	             elif diff test.out $*.ok; then                                 \
-	                 mv -f test.out $*.out;                                     \
-	             else                                                           \
-	                 echo;                                                      \
-	                 echo test1 FAILED - Something basic is wrong;              \
-	                 echo;                                                      \
-	                 exit 1;                                                    \
-	             fi"
-	-rm -rf X* viminfo
 
 %.out: %.in .gdbinit
 	-rm -rf $*.failed test.ok $(RM_ON_RUN)
