@@ -86,6 +86,11 @@ FFFFFFF
 FFpFFpp
 0000-000
 ppppppp
+[1, 2, 3, 4]
+[1, 2, 3, 4]
+[1, 2, 3, 4]
+[1, 2, 3, 4]
+[1, 2, 3, 4]
 locked g:footest#x:-1
 exists g:footest#x:0
 g:footest#x: 1

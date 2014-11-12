@@ -2241,6 +2241,22 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv, int copy, ch
                  : lp->ll_tv->vval.v_dict->dv_lock, lp->ll_name))
     ;
   else if (lp->ll_range) {
+    listitem_T *ll_li = lp->ll_li;
+    int ll_n1 = lp->ll_n1;
+
+    // Check whether any of the list items is locked
+    for (listitem_T *ri = rettv->vval.v_list->lv_first; ri != NULL; ) {
+      if (tv_check_lock(ll_li->li_tv.v_lock, lp->ll_name)) {
+        return;
+      }
+      ri = ri->li_next;
+      if (ri == NULL || (!lp->ll_empty2 && lp->ll_n2 == ll_n1)) {
+        break;
+      }
+      ll_li = ll_li->li_next;
+      ll_n1++;
+    }
+
     /*
      * Assign the List values to the list items.
      */
@@ -2804,6 +2820,17 @@ static int do_unlet_var(lval_T *lp, char_u *name_end, int forceit)
     return FAIL;
   else if (lp->ll_range) {
     listitem_T    *li;
+    listitem_T *ll_li = lp->ll_li;
+    int ll_n1 = lp->ll_n1;
+
+    while (ll_li != NULL && (lp->ll_empty2 || lp->ll_n2 >= ll_n1)) {
+      li = ll_li->li_next;
+      if (tv_check_lock(ll_li->li_tv.v_lock, lp->ll_name)) {
+        return false;
+      }
+      ll_li = li;
+      ll_n1++;
+    }
 
     /* Delete a range of List items. */
     while (lp->ll_li != NULL && (lp->ll_empty2 || lp->ll_n2 >= lp->ll_n1)) {
