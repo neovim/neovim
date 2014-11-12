@@ -284,6 +284,7 @@
 //                          stored as an offset to the previous number in as
 //                          few bytes as possible, see offset2bytes())
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -2096,6 +2097,7 @@ spell_move_to (
       buflen = len + MAXWLEN + 2;
       buf = xmalloc(buflen);
     }
+    assert(buf && buflen >= len + MAXWLEN + 2);
 
     // In first line check first word for Capital.
     if (lnum == 1)
