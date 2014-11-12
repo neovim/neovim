@@ -1,0 +1,57 @@
+
+First a simple test to check if the test script works.
+
+If Vim was not compiled with the +eval feature, the small.vim script will be
+set to copy the test.ok file to test.out, so that it looks like the test
+succeeded.  Otherwise an empty small.vim is written.  small.vim is sourced by
+tests that require the +eval feature or other features that are missing in the
+small version.
+
+If Vim was not compiled with the +windows feature, the tiny.vim script will be
+set like small.vim above.  tiny.vim is sourced by tests that require the
++windows feature or other features that are missing in the tiny version.
+
+If Vim was not compiled with the +multi_byte feature, the mbyte.vim script will
+be set like small.vim above.  mbyte.vim is sourced by tests that require the
++multi_byte feature.
+Similar logic is applied to the +mzscheme feature, using mzscheme.vim.
+Similar logic is applied to the +lua feature, using lua.vim.
+
+STARTTEST
+:" If columns or lines are too small, create wrongtermsize.
+:" (Some tests will fail. When columns and/or lines are small)
+:if &lines < 24 || &columns < 80 | sp another | w! wrongtermsize | qa! | endif
+:"
+:" Write a single line to test.out to check if testing works at all.
+:%d
+athis is a test:w! test.out
+:" Create small.vim and tiny.vim empty, create mbyte.vim to skip the test.
+0D:w! small.vim
+:w! tiny.vim
+ae! test.ok
+w! test.out
+qa!
+:w! mbyte.vim
+:w! mzscheme.vim
+:w! lua.vim
+:"
+:" If +multi_byte feature supported, make mbyte.vim empty.
+:if has("multi_byte") | sp another | w! mbyte.vim | q | endif
+:"
+:" If +mzscheme feature supported, make mzscheme.vim empty.
+:if has("mzscheme") | sp another | w! mzscheme.vim | q | endif
+:"
+:" If +lua feature supported, make lua.vim empty.
+:if has("lua") | sp another | w! lua.vim | q | endif
+:"
+:" If +eval feature supported quit here, leaving tiny.vim and small.vim empty.
+:" Otherwise write small.vim to skip the test.
+:if 1 | q! | endif
+:w! small.vim
+:" If +windows feature not supported :sp will fail and tiny.vim will be
+:" written to skip the test.
+:sp another
+:wq! tiny.vim
+:qa!
+ENDTEST
+
