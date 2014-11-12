@@ -77,6 +77,10 @@ typedef uv_uid_t uid_t;
 # define VIMRC_FILE     "_nvimrc"
 #endif
 
+#ifndef USR_LOG_FILE
+# define USR_LOG_FILE "$HOME\\_nvimlog"
+#endif
+
 #ifndef USR_VIMRC_FILE
 #  define USR_VIMRC_FILE "$HOME\\_nvimrc"
 #endif

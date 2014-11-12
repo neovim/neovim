@@ -133,6 +133,9 @@
 # define VIMRC_FILE     ".nvimrc"
 #endif
 
+#ifndef USR_LOG_FILE
+# define USR_LOG_FILE "$HOME/.nvimlog"
+#endif
 
 #ifndef SYNTAX_FNAME
 # define SYNTAX_FNAME   "$VIMRUNTIME/syntax/%s.vim"

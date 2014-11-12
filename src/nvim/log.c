@@ -16,9 +16,6 @@
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 
-#define USR_LOG_FILE "$HOME/.nvimlog"
-
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "log.c.generated.h"
 #endif
