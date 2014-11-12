@@ -1855,7 +1855,7 @@ void changed(void)
  */
 void changed_int(void)
 {
-  curbuf->b_changed = TRUE;
+  curbuf->b_changed = true;
   ml_setflags(curbuf);
   check_status(curbuf);
   redraw_tabline = TRUE;
@@ -1900,7 +1900,7 @@ static void changedOneline(buf_T *buf, linenr_T lnum)
       buf->b_mod_bot = lnum + 1;
   } else {
     /* set the area that must be redisplayed to one line */
-    buf->b_mod_set = TRUE;
+    buf->b_mod_set = true;
     buf->b_mod_top = lnum;
     buf->b_mod_bot = lnum + 1;
     buf->b_mod_xlines = 0;
@@ -2013,7 +2013,7 @@ changed_lines_buf (
     buf->b_mod_xlines += xtra;
   } else {
     /* set the area that must be redisplayed */
-    buf->b_mod_set = TRUE;
+    buf->b_mod_set = true;
     buf->b_mod_top = lnum;
     buf->b_mod_bot = lnume + xtra;
     buf->b_mod_xlines = xtra;
@@ -2063,7 +2063,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
         /* This is the first of a new sequence of undo-able changes
          * and it's at some distance of the last change.  Use a new
          * position in the changelist. */
-        curbuf->b_new_change = FALSE;
+        curbuf->b_new_change = false;
 
         if (curbuf->b_changelistlen == JUMPLISTSIZE) {
           /* changelist is full: remove oldest entry */
@@ -2195,7 +2195,7 @@ unchanged (
 )
 {
   if (buf->b_changed || (ff && file_ff_differs(buf, FALSE))) {
-    buf->b_changed = 0;
+    buf->b_changed = false;
     ml_setflags(buf);
     if (ff)
       save_file_ff(buf);
@@ -2226,8 +2226,8 @@ void check_status(buf_T *buf)
  * If the file is readonly, give a warning message with the first change.
  * Don't do this for autocommands.
  * Don't use emsg(), because it flushes the macro buffer.
- * If we have undone all changes b_changed will be FALSE, but "b_did_warn"
- * will be TRUE.
+ * If we have undone all changes b_changed will be false, but "b_did_warn"
+ * will be true.
  * Careful: may trigger autocommands that reload the buffer.
  */
 void 
@@ -2238,7 +2238,7 @@ change_warning (
 {
   static char *w_readonly = N_("W10: Warning: Changing a readonly file");
 
-  if (curbuf->b_did_warn == FALSE
+  if (curbuf->b_did_warn == false
       && curbufIsChanged() == 0
       && !autocmd_busy
       && curbuf->b_p_ro) {
@@ -2263,7 +2263,7 @@ change_warning (
       out_flush();
       ui_delay(1000L, true);       /* give the user time to think about it */
     }
-    curbuf->b_did_warn = TRUE;
+    curbuf->b_did_warn = true;
     redraw_cmdline = FALSE;     /* don't redraw and erase the message */
     if (msg_row < Rows - 1)
       showmode();

@@ -277,9 +277,9 @@ int ml_open(buf_T *buf)
    * When 'updatecount' is non-zero swap file may be opened later.
    */
   if (p_uc && buf->b_p_swf)
-    buf->b_may_swap = TRUE;
+    buf->b_may_swap = true;
   else
-    buf->b_may_swap = FALSE;
+    buf->b_may_swap = false;
 
   /*
    * Open the memfile.  No swap file is created yet.
@@ -495,7 +495,7 @@ void ml_open_file(buf_T *buf)
     fname = vim_tempname();
     if (fname != NULL)
       (void)mf_open_file(mfp, fname);           /* consumes fname! */
-    buf->b_may_swap = FALSE;
+    buf->b_may_swap = false;
     return;
   }
 
@@ -540,7 +540,7 @@ void ml_open_file(buf_T *buf)
   }
 
   /* don't try to open a swap file again */
-  buf->b_may_swap = FALSE;
+  buf->b_may_swap = false;
 }
 
 /*

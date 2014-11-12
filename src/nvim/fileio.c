@@ -2197,7 +2197,7 @@ static void check_marks_read(void)
 
   /* Always set b_marks_read; needed when 'viminfo' is changed to include
    * the ' parameter after opening a buffer. */
-  curbuf->b_marks_read = TRUE;
+  curbuf->b_marks_read = true;
 }
 
 #ifdef UNIX
@@ -2690,7 +2690,7 @@ buf_write (
   got_int = FALSE;
 
   /* Mark the buffer as 'being saved' to prevent changed buffer warnings */
-  buf->b_saving = TRUE;
+  buf->b_saving = true;
 
   /*
    * If we are not appending or filtering, the file exists, and the
@@ -3665,7 +3665,7 @@ fail:
 nofail:
 
   /* Done saving, we accept changed buffer warnings again */
-  buf->b_saving = FALSE;
+  buf->b_saving = false;
 
   free(backup);
   if (buffer != smallbuf)
@@ -6489,7 +6489,7 @@ apply_autocmds_group (
 {
   char_u      *sfname = NULL;   /* short file name */
   char_u      *tail;
-  int save_changed;
+  bool save_changed;
   buf_T       *old_curbuf;
   int retval = FALSE;
   char_u      *save_sourcing_name;

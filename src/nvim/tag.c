@@ -1180,7 +1180,7 @@ find_tags (
    * Initialize a few variables
    */
   if (help_only)                                /* want tags from help file */
-    curbuf->b_help = TRUE;                      /* will be restored later */
+    curbuf->b_help = true;                      /* will be restored later */
 
   orgpat.len = (int)STRLEN(pat);
   if (curbuf->b_help) {

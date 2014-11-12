@@ -369,11 +369,11 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
   size = bot - top - 1;
 
   /*
-   * If curbuf->b_u_synced == TRUE make a new header.
+   * If curbuf->b_u_synced == true make a new header.
    */
   if (curbuf->b_u_synced) {
     /* Need to create new entry in b_changelist. */
-    curbuf->b_new_change = TRUE;
+    curbuf->b_new_change = true;
 
     if (get_undolevel() >= 0) {
       /*
@@ -424,7 +424,7 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
     if (uhp == NULL) {                  /* no undo at all */
       if (old_curhead != NULL)
         u_freebranch(curbuf, old_curhead, NULL);
-      curbuf->b_u_synced = FALSE;
+      curbuf->b_u_synced = false;
       return OK;
     }
 
@@ -510,7 +510,7 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
              * entry now.  Following deleted/inserted lines go to
              * the re-used entry. */
             u_getbot();
-            curbuf->b_u_synced = FALSE;
+            curbuf->b_u_synced = false;
 
             /* Move the found entry to become the last entry.  The
              * order of undo/redo doesn't matter for the entries
@@ -581,7 +581,7 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
     uep->ue_array = NULL;
   uep->ue_next = curbuf->b_u_newhead->uh_entry;
   curbuf->b_u_newhead->uh_entry = uep;
-  curbuf->b_u_synced = FALSE;
+  curbuf->b_u_synced = false;
   undo_undoes = FALSE;
 
 #ifdef U_DEBUG
@@ -1461,7 +1461,7 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
   curbuf->b_u_save_nr_last = last_save_nr;
   curbuf->b_u_save_nr_cur = last_save_nr;
 
-  curbuf->b_u_synced = TRUE;
+  curbuf->b_u_synced = true;
   free(uhp_table);
 
 #ifdef U_DEBUG
@@ -1506,7 +1506,7 @@ void u_undo(int count)
    * original vi. If this happens twice in one macro the result will not
    * be compatible.
    */
-  if (curbuf->b_u_synced == FALSE) {
+  if (curbuf->b_u_synced == false) {
     u_sync(TRUE);
     count = 1;
   }
@@ -1618,7 +1618,7 @@ void undo_time(long step, int sec, int file, int absolute)
   int did_undo = TRUE;
 
   /* First make sure the current undoable change is synced. */
-  if (curbuf->b_u_synced == FALSE)
+  if (curbuf->b_u_synced == false)
     u_sync(TRUE);
 
   u_newcount = 0;
@@ -2219,7 +2219,7 @@ u_sync (
   if (curbuf->b_u_synced || (!force && no_u_sync > 0))
     return;
   if (get_undolevel() < 0)
-    curbuf->b_u_synced = TRUE;      /* no entries, nothing to do */
+    curbuf->b_u_synced = true;      /* no entries, nothing to do */
   else {
     u_getbot();                     /* compute ue_bot of previous u_save */
     curbuf->b_u_curhead = NULL;
@@ -2354,7 +2354,7 @@ void ex_undojoin(exarg_T *eap)
   else {
     /* Go back to the last entry */
     curbuf->b_u_curhead = curbuf->b_u_newhead;
-    curbuf->b_u_synced = FALSE;      /* no entries, nothing to do */
+    curbuf->b_u_synced = false;      /* no entries, nothing to do */
   }
 }
 
@@ -2365,7 +2365,7 @@ void ex_undojoin(exarg_T *eap)
 void u_unchanged(buf_T *buf)
 {
   u_unch_branch(buf->b_u_oldhead);
-  buf->b_did_warn = FALSE;
+  buf->b_did_warn = false;
 }
 
 /*
@@ -2446,7 +2446,7 @@ static u_entry_T *u_get_headentry(void)
 
 /*
  * u_getbot(): compute the line number of the previous u_save
- *		It is called only when b_u_synced is FALSE.
+ *		It is called only when b_u_synced is false.
  */
 static void u_getbot(void)
 {
@@ -2477,7 +2477,7 @@ static void u_getbot(void)
     curbuf->b_u_newhead->uh_getbot_entry = NULL;
   }
 
-  curbuf->b_u_synced = TRUE;
+  curbuf->b_u_synced = true;
 }
 
 /*
@@ -2602,7 +2602,7 @@ static void u_freeentry(u_entry_T *uep, long n)
 void u_clearall(buf_T *buf)
 {
   buf->b_u_newhead = buf->b_u_oldhead = buf->b_u_curhead = NULL;
-  buf->b_u_synced = TRUE;
+  buf->b_u_synced = true;
   buf->b_u_numhead = 0;
   buf->b_u_line_ptr = NULL;
   buf->b_u_line_lnum = 0;

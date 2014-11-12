@@ -554,7 +554,7 @@ void update_screen(int type)
   /* Reset b_mod_set flags.  Going through all windows is probably faster
    * than going through all buffers (there could be many buffers). */
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    wp->w_buffer->b_mod_set = FALSE;
+    wp->w_buffer->b_mod_set = false;
   }
 
   updating_screen = FALSE;
@@ -1672,7 +1672,7 @@ static void win_update(win_T *wp)
       if (must_redraw != 0) {
         /* Don't update for changes in buffer again. */
         i = curbuf->b_mod_set;
-        curbuf->b_mod_set = FALSE;
+        curbuf->b_mod_set = false;
         win_update(curwin);
         must_redraw = 0;
         curbuf->b_mod_set = i;

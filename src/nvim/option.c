@@ -2007,7 +2007,7 @@ void set_init_1(void)
   set_options_default(0);
 
 
-  curbuf->b_p_initialized = TRUE;
+  curbuf->b_p_initialized = true;
   curbuf->b_p_ar = -1;          /* no local 'autoread' value */
   curbuf->b_p_ul = NO_LOCAL_UNDOLEVEL;
   check_buf_options(curbuf);
@@ -4977,7 +4977,7 @@ set_bool_option (
 
     /* when 'readonly' is set may give W10 again */
     if (curbuf->b_p_ro)
-      curbuf->b_did_warn = FALSE;
+      curbuf->b_did_warn = false;
 
     redraw_titles();
   }
@@ -5086,7 +5086,7 @@ set_bool_option (
     did_set_title(FALSE);
   } else if ((int *)varp == &p_icon) {
     did_set_title(TRUE);
-  } else if ((int *)varp == &curbuf->b_changed) {
+  } else if ((bool *)varp == &curbuf->b_changed) {
     if (!value)
       save_file_ff(curbuf);             /* Buffer is unchanged */
     redraw_titles();
@@ -5782,7 +5782,7 @@ get_option_value (
   else {
     /* Special case: 'modified' is b_changed, but we also want to consider
      * it set when 'ff' or 'fenc' changed. */
-    if ((int *)varp == &curbuf->b_changed)
+    if ((bool *)varp == &curbuf->b_changed)
       *numval = curbufIsChanged();
     else
       *numval = *(int *)varp;
@@ -6173,8 +6173,8 @@ showoneopt (
   varp = get_varp_scope(p, opt_flags);
 
   /* for 'modified' we also need to check if 'ff' or 'fenc' changed. */
-  if ((p->flags & P_BOOL) && ((int *)varp == &curbuf->b_changed
-                              ? !curbufIsChanged() : !*(int *)varp))
+  if ((p->flags & P_BOOL) && ((bool *)varp == &curbuf->b_changed
+                              ? !curbufIsChanged() : !*(bool *)varp))
     MSG_PUTS("no");
   else if ((p->flags & P_BOOL) && *(int *)varp < 0)
     MSG_PUTS("--");
@@ -7026,7 +7026,7 @@ void buf_copy_options(buf_T *buf, int flags)
         buf->b_p_isk = vim_strsave(p_isk);
         did_isk = TRUE;
         buf->b_p_ts = p_ts;
-        buf->b_help = FALSE;
+        buf->b_help = false;
         if (buf->b_p_bt[0] == 'h')
           clear_string_option(&buf->b_p_bt);
         buf->b_p_ma = p_ma;
@@ -7038,7 +7038,7 @@ void buf_copy_options(buf_T *buf, int flags)
      * flag that indicates that the options have been initialized.
      */
     if (should_copy)
-      buf->b_p_initialized = TRUE;
+      buf->b_p_initialized = true;
   }
 
   check_buf_options(buf);           /* make sure we don't have NULLs */
