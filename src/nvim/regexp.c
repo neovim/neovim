@@ -1983,9 +1983,15 @@ static char_u *regatom(int *flagp)
       break;
 
     case 's': ret = regnode(MOPEN + 0);
+      if (!re_mult_next("\\zs")) {
+        return NULL;
+      }
       break;
 
     case 'e': ret = regnode(MCLOSE + 0);
+      if (!re_mult_next("\\ze")) {
+        return NULL;
+      }
       break;
 
     default:  EMSG_RET_NULL(_("E68: Invalid character after \\z"));
@@ -2458,6 +2464,15 @@ do_multibyte:
   }
 
   return ret;
+}
+
+/// Used in a place where no * or \+ can follow.
+static bool re_mult_next(char *what)
+{
+  if (re_multi_type(peekchr()) == MULTI_MULT) {
+    EMSG2_RET_FAIL(_("E888: (NFA regexp) cannot repeat %s"), what);
+  }
+  return true;
 }
 
 /*
