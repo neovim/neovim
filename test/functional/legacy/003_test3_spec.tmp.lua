@@ -11,17 +11,6 @@ describe('cindent', function()
   it('is working', function()
     insert([[
       {
-          var = this + that + vec[0] * vec[0]
-      				      + vec[1] * vec[1]
-      					  + vec2[2] * vec[2];
-      }
-      ]])
-
-    execute('set cin')
-    execute('/vec2')
-    feed('==<cr>')
-    insert([[
-      {
       		asdf asdflkajds f;
       	if (tes & ting) {
       		asdf asdf asdf ;
@@ -1091,11 +1080,6 @@ describe('cindent', function()
       
       
       
-      {
-          var = this + that + vec[0] * vec[0]
-      				      + vec[1] * vec[1]
-      					  + vec2[2] * vec[2];
-      }
       
       
       {

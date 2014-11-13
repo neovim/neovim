@@ -7,6 +7,10 @@ local execute, expect = helpers.execute, helpers.expect
 
 describe('cindent', function()
   before_each(clear)
+  
+  before_each(function ()
+      execute("set ts=4 sw=4")
+  end)
 
   it('indents blocks correctly', function()
       insert([[
@@ -1851,6 +1855,28 @@ describe('cindent', function()
       		/* how about
       hello
       		                this one */
+      }
+      ]])
+  end)
+
+  it('indents variable assignments correctly', function()
+      insert([[
+      {
+          var = this + that + vec[0] * vec[0]
+      				      + vec[1] * vec[1]
+      					  + vec2[2] * vec[2];
+      }
+      ]])
+
+      execute('set cin')
+      feed('/vec2<cr>')
+      feed('==')
+
+      expect([[
+      {
+          var = this + that + vec[0] * vec[0]
+      				      + vec[1] * vec[1]
+      					  + vec2[2] * vec[2];
       }
       ]])
   end)
