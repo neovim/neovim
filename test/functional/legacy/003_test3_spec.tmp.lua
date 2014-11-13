@@ -10,34 +10,6 @@ describe('cindent', function()
 
   it('is working', function()
     insert([[
-      main ( int first_par, /*
-                             * Comment for
-                             * first par
-                             */
-                int second_par /*
-                             * Comment for
-                             * second par
-                             */
-           )
-      {
-      	func( first_par, /*
-                            * Comment for
-                            * first par
-                            */
-          second_par /*
-                            * Comment for
-                            * second par
-                            */
-              );
-      
-      }
-      ]])
-
-    execute('set cin')
-    execute('set cino=(0,)20')
-    execute('/main')
-    feed('=][<cr>')
-    insert([[
       main(void)
       {
       	/* Make sure that cino=X0s is not parsed like cino=Xs. */
@@ -1054,27 +1026,6 @@ describe('cindent', function()
 
     -- Assert buffer contents.
     expect([[
-      main ( int first_par, /*
-      					   * Comment for
-      					   * first par
-      					   */
-      	   int second_par /*
-      					   * Comment for
-      					   * second par
-      					   */
-      	 )
-      {
-      	func( first_par, /*
-      					  * Comment for
-      					  * first par
-      					  */
-      		  second_par /*
-      					  * Comment for
-      					  * second par
-      					  */
-      		);
-      
-      }
       
       
       main(void)

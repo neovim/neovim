@@ -1921,6 +1921,61 @@ describe('cindent', function()
       	testing2;
       }
       ]])
+  end)
 
-    end)
+  it('indents multi-line parameter comments correctly', function()
+      insert([[
+      main ( int first_par, /*
+                             * Comment for
+                             * first par
+                             */
+                int second_par /*
+                             * Comment for
+                             * second par
+                             */
+           )
+      {
+      	func( first_par, /*
+                            * Comment for
+                            * first par
+                            */
+          second_par /*
+                            * Comment for
+                            * second par
+                            */
+              );
+      
+      }
+      ]])
+
+      execute('set cin')
+      execute('set cino=(0,)20')
+      feed('/main<cr>')
+      feed('=][<cr>')
+    
+      expect([[
+      main ( int first_par, /*
+      					   * Comment for
+      					   * first par
+      					   */
+      	   int second_par /*
+      					   * Comment for
+      					   * second par
+      					   */
+      	 )
+      {
+      	func( first_par, /*
+      					  * Comment for
+      					  * first par
+      					  */
+      		  second_par /*
+      					  * Comment for
+      					  * second par
+      					  */
+      		);
+      
+      }
+      ]])
+  end)
+
 end)
