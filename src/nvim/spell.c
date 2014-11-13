@@ -4466,7 +4466,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
             || aff->af_pref.ht_used > 0)
           smsg((char_u *)_("FLAG after using flags in %s line %d: %s"),
               fname, lnum, items[1]);
-      } else if (spell_info_item(items[0]))   {
+      } else if (spell_info_item(items[0]) && itemcnt > 1)   {
         p = (char_u *)getroom(spin,
             (spin->si_info == NULL ? 0 : STRLEN(spin->si_info))
             + STRLEN(items[0])
