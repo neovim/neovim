@@ -5804,6 +5804,8 @@ store_aff_word (
                   // Get compound IDS from the affix list.
                   get_compflags(affile, ae->ae_flags,
                       use_pfxlist + use_pfxlen);
+                else
+                  use_pfxlist[use_pfxlen] = NUL;
 
                 // Combine the list of compound flags.
                 // Concatenate them to the prefix IDs list.
