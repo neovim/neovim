@@ -10,28 +10,6 @@ describe('cindent', function()
 
   it('is working', function()
     insert([[
-      {
-      		asdf asdflkajds f;
-      	if (tes & ting) {
-      		asdf asdf asdf ;
-      		asdfa sdf asdf;
-      		}
-      	testing1;
-      	if (tes & ting)
-      	{
-      		asdf asdf asdf ;
-      		asdfa sdf asdf;
-      		}
-      	testing2;
-      }
-      ]])
-
-    execute('set cin')
-    execute('set cino=}4')
-    execute('/testing1')
-    feed('k2==/testing2<cr>')
-    feed('k2==<cr>')
-    insert([[
       main ( int first_par, /*
                              * Comment for
                              * first par
@@ -1076,28 +1054,6 @@ describe('cindent', function()
 
     -- Assert buffer contents.
     expect([[
-      
-      
-      
-      
-      
-      
-      {
-      		asdf asdflkajds f;
-      	if (tes & ting) {
-      		asdf asdf asdf ;
-      		asdfa sdf asdf;
-      		}
-      	testing1;
-      	if (tes & ting)
-      	{
-      		asdf asdf asdf ;
-      		asdfa sdf asdf;
-      		}
-      	testing2;
-      }
-      
-      
       main ( int first_par, /*
       					   * Comment for
       					   * first par

@@ -1880,4 +1880,47 @@ describe('cindent', function()
       }
       ]])
   end)
+
+  it('indents erroneous mixed statements correctly', function()
+      insert([[
+      {
+      		asdf asdflkajds f;
+      	if (tes & ting) {
+      		asdf asdf asdf ;
+      		asdfa sdf asdf;
+      		}
+      	testing1;
+      	if (tes & ting)
+      	{
+      		asdf asdf asdf ;
+      		asdfa sdf asdf;
+      		}
+      	testing2;
+      }
+      ]])
+
+      execute('set cin')
+      execute('set cino=}4')
+      execute('/testing1')
+      feed('k2==/testing2<cr>')
+      feed('k2==<cr>')
+
+      expect([[
+      {
+      		asdf asdflkajds f;
+      	if (tes & ting) {
+      		asdf asdf asdf ;
+      		asdfa sdf asdf;
+      		}
+      	testing1;
+      	if (tes & ting)
+      	{
+      		asdf asdf asdf ;
+      		asdfa sdf asdf;
+      		}
+      	testing2;
+      }
+      ]])
+
+    end)
 end)
