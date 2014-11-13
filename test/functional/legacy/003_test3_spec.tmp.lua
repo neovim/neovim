@@ -11,30 +11,6 @@ describe('cindent', function()
   it('is working', function()
     insert([[
       {
-      	/*
-      	 * Testing for comments, without 'cin' set
-      	 */
-      
-      /*
-      * what happens here?
-      */
-      
-      	/*
-      	   the end of the comment, try inserting a line below */
-      
-      		/* how about
-      		                this one */
-      }
-      ]])
-
-    execute('set nocin')
-    execute('/comments')
-    feed('joabout life<esc>/happens<cr>')
-    feed('jothere<esc>/below<cr>')
-    feed('oline<esc>/this<cr>')
-    feed('Ohello<esc>')
-    insert([[
-      {
           var = this + that + vec[0] * vec[0]
       				      + vec[1] * vec[1]
       					  + vec2[2] * vec[2];
@@ -1113,25 +1089,6 @@ describe('cindent', function()
     expect([[
       
       
-      {
-      	/*
-      	 * Testing for comments, without 'cin' set
-      	 */
-      about life
-      
-      /*
-      * what happens here?
-      */
-      there
-      
-      	/*
-      	   the end of the comment, try inserting a line below */
-      line
-      
-      		/* how about
-      hello
-      		                this one */
-      }
       
       
       {

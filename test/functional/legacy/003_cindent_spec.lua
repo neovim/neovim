@@ -6,8 +6,6 @@ local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local execute, expect = helpers.execute, helpers.expect
 
 describe('cindent', function()
-  setup(clear)
-
   before_each(clear)
 
   it('indents blocks correctly', function()
@@ -1777,7 +1775,7 @@ describe('cindent', function()
 
   end)
 
-  it('indents comments properly', function()
+  it('indents comments correctly', function()
       insert([[
       {
       
@@ -1804,6 +1802,55 @@ describe('cindent', function()
        * comment
        */
       	/* insert " about life, the universe, and the rest" after "serious" */
+      }
+      ]])
+  end)
+
+  it("indents comments correctly without 'cin' set", function ()
+      insert([[
+      {
+      	/*
+      	 * Testing for comments, without 'cin' set
+      	 */
+      
+      /*
+      * what happens here?
+      */
+      
+      	/*
+      	   the end of the comment, try inserting a line below */
+      
+      		/* how about
+      		                this one */
+      }
+      ]])
+
+      execute('set nocin')
+      feed('/comments<cr>')
+      feed('joabout life<esc>/happens<cr>')
+      feed('jothere<esc>/below<cr>')
+      feed('oline<esc>/this<cr>')
+      feed('Ohello<esc>')
+
+      expect([[
+      {
+      	/*
+      	 * Testing for comments, without 'cin' set
+      	 */
+      about life
+      
+      /*
+      * what happens here?
+      */
+      there
+      
+      	/*
+      	   the end of the comment, try inserting a line below */
+      line
+      
+      		/* how about
+      hello
+      		                this one */
       }
       ]])
   end)
