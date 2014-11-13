@@ -141,6 +141,27 @@ void init_homedir(void)
 
   char_u *var = (char_u *)os_getenv("HOME");
 
+#ifdef WIN32
+  // Typically, $HOME is not defined on Windows, unless the user has
+  // specifically defined it for Vim's sake. However, on Windows NT
+  // platforms, $HOMEDRIVE and $HOMEPATH are automatically defined for
+  // each user. Try constructing $HOME from these.
+  if (var == NULL) {
+    const char *homedrive = os_getenv("HOMEDRIVE");
+    const char *homepath = os_getenv("HOMEPATH");
+    if (homepath == NULL) {
+        homepath = "\\";
+    }
+    if (homedrive != NULL && strlen(homedrive) + strlen(homepath) < MAXPATHL) {
+      snprintf((char *)NameBuff, MAXPATHL, "%s%s", homedrive, homepath);
+      if (NameBuff[0] != NUL) {
+        var = NameBuff;
+        vim_setenv("HOME", (char *)NameBuff);
+      }
+    }
+  }
+#endif
+
   if (var != NULL) {
 #ifdef UNIX
     /*
