@@ -304,6 +304,7 @@
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/fileio.h"
+#include "nvim/func_attr.h"
 #include "nvim/getchar.h"
 #include "nvim/hashtab.h"
 #include "nvim/mbyte.h"
@@ -6072,14 +6073,17 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
 /// track of them).
 /// The memory is cleared to all zeros.
 ///
-/// @param len Length needed.
+/// @param len Length needed (<= SBLOCKSIZE).
 /// @param align Align for pointer.
-/// @return NULL when out of memory.
+/// @return Pointer into block data.
 static void *getroom(spellinfo_T *spin, size_t len, bool align)
+  FUNC_ATTR_NONNULL_RET
 {
   char_u      *p;
   sblock_T    *bl = spin->si_blocks;
 
+  assert(len <= SBLOCKSIZE);
+  
   if (align && bl != NULL)
     // Round size up for alignment.  On some systems structures need to be
     // aligned to the size of a pointer (e.g., SPARC).
@@ -6087,11 +6091,8 @@ static void *getroom(spellinfo_T *spin, size_t len, bool align)
                   & ~(sizeof(char *) - 1);
 
   if (bl == NULL || bl->sb_used + len > SBLOCKSIZE) {
-    if (len >= SBLOCKSIZE)
-      bl = NULL;
-    else
-      // Allocate a block of memory. It is not freed until much later.
-      bl = xcalloc(1, (sizeof(sblock_T) + SBLOCKSIZE));
+    // Allocate a block of memory. It is not freed until much later.
+    bl = xcalloc(1, (sizeof(sblock_T) + SBLOCKSIZE));
     bl->sb_next = spin->si_blocks;
     spin->si_blocks = bl;
     bl->sb_used = 0;
