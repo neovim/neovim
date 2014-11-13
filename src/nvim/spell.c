@@ -12503,8 +12503,9 @@ static int spell_edit_score(slang_T *slang, char_u *badword, char_u *goodword)
   char_u      *p;
   int wbadword[MAXWLEN];
   int wgoodword[MAXWLEN];
+  const int l_has_mbyte = has_mbyte;
 
-  if (has_mbyte) {
+  if (l_has_mbyte) {
     // Get the characters from the multi-byte strings and put them in an
     // int array for easy access.
     for (p = badword, badlen = 0; *p != NUL; )
@@ -12529,7 +12530,7 @@ static int spell_edit_score(slang_T *slang, char_u *badword, char_u *goodword)
   for (i = 1; i <= badlen; ++i) {
     CNT(i, 0) = CNT(i - 1, 0) + SCORE_DEL;
     for (j = 1; j <= goodlen; ++j) {
-      if (has_mbyte) {
+      if (l_has_mbyte) {
         bc = wbadword[i - 1];
         gc = wgoodword[j - 1];
       } else {
@@ -12553,7 +12554,7 @@ static int spell_edit_score(slang_T *slang, char_u *badword, char_u *goodword)
         }
 
         if (i > 1 && j > 1) {
-          if (has_mbyte) {
+          if (l_has_mbyte) {
             pbc = wbadword[i - 2];
             pgc = wgoodword[j - 2];
           } else {
