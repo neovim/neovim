@@ -31,6 +31,7 @@
 #include "nvim/ex_getln.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
+#include "nvim/func_attr.h"
 #include "nvim/getchar.h"
 #include "nvim/hardcopy.h"
 #include "nvim/if_cscope.h"
@@ -4025,7 +4026,7 @@ static void ex_blast(exarg_T *eap)
   goto_buffer(eap, DOBUF_LAST, BACKWARD, 0);
 }
 
-int ends_excmd(int c)
+int ends_excmd(int c) FUNC_ATTR_CONST
 {
   return c == NUL || c == '|' || c == '"' || c == '\n';
 }

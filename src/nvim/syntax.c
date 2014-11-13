@@ -5106,7 +5106,7 @@ get_id_list (
      * parse the arguments after "contains"
      */
     count = 0;
-    while (!ends_excmd(*p)) {
+    do {
       for (end = p; *end && !vim_iswhite(*end) && *end != ','; ++end)
         ;
       name = xmalloc((int)(end - p + 3));             /* leave room for "^$" */
@@ -5199,7 +5199,7 @@ get_id_list (
       if (*p != ',')
         break;
       p = skipwhite(p + 1);             /* skip comma in between arguments */
-    }
+    } while (!ends_excmd(*p));
     if (failed)
       break;
     if (round == 1) {
