@@ -107,14 +107,14 @@ string 'hello world!' on the current nvim instance:
     require 'msgpack/rpc'
     require 'msgpack/rpc/transport/unix'
 
-    vim = MessagePack::RPC::Client.new(MessagePack::RPC::UNIXTransport.new, ENV['NVIM_LISTEN_ADDRESS'])
-    result = vim.call(:vim_command, 'echo "hello world!"')
+    nvim = MessagePack::RPC::Client.new(MessagePack::RPC::UNIXTransport.new, ENV['NVIM_LISTEN_ADDRESS'])
+    result = nvim.call(:vim_command, 'echo "hello world!"')
 <
 A better way is to use the python REPL with the `neovim` package, where API
 functions can be called interactively:
 >
-    >>> import neovim; vim = neovim.connect('[address]')
-    >>> vim.command('echo "hello world!"')
+    >>> import neovim; nvim = neovim.connect('[address]')
+    >>> nvim.command('echo "hello world!"')
 <
 ==============================================================================
 4. Implementing new clients				  *msgpack-rpc-clients*
