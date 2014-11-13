@@ -2851,15 +2851,16 @@ static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T 
 {
   int r;
   proftime_T pt;
+  const int l_syn_time_on = syn_time_on;
 
-  if (syn_time_on) {
+  if (l_syn_time_on) {
     pt = profile_start();
   }
 
   rmp->rmm_maxcol = syn_buf->b_p_smc;
   r = vim_regexec_multi(rmp, syn_win, syn_buf, lnum, col, NULL);
 
-  if (syn_time_on) {
+  if (l_syn_time_on) {
     pt = profile_end(pt);
     st->total = profile_add(st->total, pt);
     if (profile_cmp(pt, st->slowest) < 0) {
