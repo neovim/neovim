@@ -2061,7 +2061,7 @@ spell_move_to (
   char_u      *line;
   char_u      *p;
   char_u      *endp;
-  hlf_T attr;
+  hlf_T attr = HLF_COUNT;
   int len;
   int has_syntax = syntax_present(wp);
   int col;
