@@ -149,6 +149,35 @@ void init_homedir(void)
   if (var != NULL && *var == NUL)       /* empty is same as not set */
     var = NULL;
 
+#ifdef WIN32
+  /*
+   * Typically, $HOME is not defined on Windows, unless the user has
+   * specifically defined it for Vim's sake.  However, on Windows NT
+   * platforms, $HOMEDRIVE and $HOMEPATH are automatically defined for
+   * each user.  Try constructing $HOME from these.
+   */
+  if (var == NULL)
+  {
+    const char *homedrive, *homepath;
+
+    homedrive = os_getenv("HOMEDRIVE");
+    homepath = os_getenv("HOMEPATH");
+    if (homepath == NULL || *homepath == NUL) {
+        homepath = "\\";
+    }
+    if (homedrive != NULL
+               && STRLEN(homedrive) + STRLEN(homepath) < MAXPATHL)
+    {
+      snprintf((char *)NameBuff, MAXPATHL, "%s%s", homedrive, homepath);
+      if (NameBuff[0] != NUL)
+      {
+        var = NameBuff;
+        /* Also set $HOME, it's needed for _viminfo. */
+        vim_setenv((char_u *)"HOME", NameBuff);
+      }
+    }
+  }
+#endif
 
   if (var != NULL) {
 #ifdef UNIX
