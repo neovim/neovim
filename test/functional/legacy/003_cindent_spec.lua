@@ -1978,4 +1978,37 @@ describe('cindent', function()
       ]])
   end)
 
+  it('parses cino=X0s differently from cino=Xs', function()
+      insert([[
+      main(void)
+      {
+      	/* Make sure that cino=X0s is not parsed like cino=Xs. */
+      	if (cond)
+      		foo();
+      	else
+      	{
+      		bar();
+      	}
+      }
+      ]])
+
+      execute('set cin')
+      execute('set cino=es,n0s')
+      feed('/main<cr>')
+      feed('=][<cr>')
+
+      expect([[
+      main(void)
+      {
+      	/* Make sure that cino=X0s is not parsed like cino=Xs. */
+      	if (cond)
+      		foo();
+      	else
+      	{
+      		bar();
+      	}
+      }
+      ]])
+  end)
+
 end)

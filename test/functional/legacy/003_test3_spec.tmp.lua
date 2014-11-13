@@ -10,23 +10,6 @@ describe('cindent', function()
 
   it('is working', function()
     insert([[
-      main(void)
-      {
-      	/* Make sure that cino=X0s is not parsed like cino=Xs. */
-      	if (cond)
-      		foo();
-      	else
-      	{
-      		bar();
-      	}
-      }
-      ]])
-
-    execute('set cin')
-    execute('set cino=es,n0s')
-    execute('/main')
-    feed('=][<cr>')
-    insert([[
       {
       	do
       	{
@@ -1026,20 +1009,6 @@ describe('cindent', function()
 
     -- Assert buffer contents.
     expect([[
-      
-      
-      main(void)
-      {
-      	/* Make sure that cino=X0s is not parsed like cino=Xs. */
-      	if (cond)
-      		foo();
-      	else
-      	{
-      		bar();
-      	}
-      }
-      
-      
       {
       	do
       	{
