@@ -10,12 +10,6 @@ describe('cindent', function()
 
   before_each(clear)
 
-  before_each(function ()
-      execute('set cin ts=4 sw=4')
-      execute('set nocompatible viminfo+=nviminfo modeline')
-      execute('edit                " read modeline')
-  end)
-
   it('indents blocks correctly', function()
       insert([[
       /* start of AUTO matically checked vim: set ts=4 : */
@@ -894,12 +888,15 @@ describe('cindent', function()
       /* end of AUTO */
       ]])
 
-      execute('so small.vim')
+      execute('set cin ts=4 sw=4')
       execute('set nocompatible viminfo+=nviminfo modeline')
+      execute('edit                " read modeline')
+
       -- Read modeline.
       execute('edit')
       execute('/start of AUTO')
       feed('=/end of AUTO<cr>')
+
 
       expect([[
       /* start of AUTO matically checked vim: set ts=4 : */
@@ -1778,5 +1775,36 @@ describe('cindent', function()
       /* end of AUTO */
       ]])
 
+  end)
+
+  it('indents comments properly', function()
+      insert([[
+      {
+      
+      /* this is
+       * a real serious important big
+       * comment
+       */
+      	/* insert " about life, the universe, and the rest" after "serious" */
+      }
+      ]])
+
+      execute('set tw=0 wm=60 columns=80 noai fo=croq')
+      feed('/serious/e<cr>')
+      feed('a about life, the universe, and the rest<esc>')
+
+      expect([[
+      {
+      
+      /* this is
+       * a real serious
+       * about life, the
+       * universe, and the
+       * rest important big
+       * comment
+       */
+      	/* insert " about life, the universe, and the rest" after "serious" */
+      }
+      ]])
   end)
 end)

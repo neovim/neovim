@@ -10,31 +10,6 @@ describe('cindent', function()
 
   it('is working', function()
     insert([[
-      /* start of AUTO matically checked vim: set ts=4 : */
-      /* end of AUTO */
-      ]])
-
-    execute('so small.vim')
-    execute('set nocompatible viminfo+=nviminfo modeline')
-    -- Read modeline.
-    execute('edit')
-    execute('/start of AUTO')
-    feed('=/end of AUTO<cr>')
-    insert([[
-      {
-      
-      /* this is
-       * a real serious important big
-       * comment
-       */
-      	/* insert " about life, the universe, and the rest" after "serious" */
-      }
-      ]])
-
-    execute('set tw=0 wm=60 columns=80 noai fo=croq')
-    execute('/serious/e')
-    feed('a about life, the universe, and the rest<esc>')
-    insert([[
       {
       	/*
       	 * Testing for comments, without 'cin' set
@@ -1136,21 +1111,6 @@ describe('cindent', function()
 
     -- Assert buffer contents.
     expect([[
-      /* start of AUTO matically checked vim: set ts=4 : */
-      /* end of AUTO */
-      
-      
-      {
-      
-      /* this is
-       * a real serious
-       * about life, the
-       * universe, and the
-       * rest important big
-       * comment
-       */
-      	/* insert " about life, the universe, and the rest" after "serious" */
-      }
       
       
       {
