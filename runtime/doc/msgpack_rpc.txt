@@ -50,7 +50,7 @@ metadata from a compiled nvim instance.
 
 There are two ways to obtain API metadata:
 
-1. By connecting to a running nvim instance and calling `vim_get_api_metadata`
+1. By connecting to a running nvim instance and calling `vim_get_api_info`
    via msgpack-rpc. This is the preferred way for clients written in
    dynamically-typed languages, which can define functions at runtime.
 
@@ -179,7 +179,7 @@ Tabpage				  -> enum value kObjectTypeTabpage
 
 The most reliable way of determining the type codes for the special nvim types
 is at runtime by inspecting the `types` key of metadata dictionary returned by
-`vim_get_api_metadata` method. Here's an example json representation of the
+`vim_get_api_info` method. Here's an example json representation of the
 `types` object:
 >
   "types": {
