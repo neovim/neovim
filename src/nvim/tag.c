@@ -2308,6 +2308,7 @@ jumpto_tag (
   win_T       *curwin_save = NULL;
   char_u      *full_fname = NULL;
   int old_KeyTyped = KeyTyped;              /* getting the file may reset it */
+  const int l_g_do_tagpreview = g_do_tagpreview;
 
   pbuf = xmalloc(LSIZE);
 
@@ -2364,7 +2365,7 @@ jumpto_tag (
   ++RedrawingDisabled;
 
 
-  if (g_do_tagpreview != 0) {
+  if (l_g_do_tagpreview != 0) {
     postponed_split = 0;        /* don't split again below */
     curwin_save = curwin;       /* Save current window */
 
@@ -2396,7 +2397,7 @@ jumpto_tag (
   if (keep_help) {
     /* A :ta from a help file will keep the b_help flag set.  For ":ptag"
      * we need to use the flag from the window where we came from. */
-    if (g_do_tagpreview != 0)
+    if (l_g_do_tagpreview != 0)
       keep_help_flag = curwin_save->w_buffer->b_help;
     else
       keep_help_flag = curbuf->b_help;
@@ -2542,7 +2543,7 @@ jumpto_tag (
         foldOpenCursor();
     }
 
-    if (g_do_tagpreview != 0
+    if (l_g_do_tagpreview != 0
         && curwin != curwin_save && win_valid(curwin_save)) {
       /* Return cursor to where we were */
       validate_cursor();
