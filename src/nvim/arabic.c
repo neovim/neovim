@@ -96,7 +96,6 @@
 //  i -> initial
 //  m -> medial
 //  f -> final
-//
 #define a_s_FATHATAN                    0xfe70
 #define a_m_TATWEEL_FATHATAN            0xfe71
 #define a_s_DAMMATAN                    0xfe72
@@ -246,7 +245,8 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "arabic.c.generated.h"
 #endif
-// Returns True if c is an ISO-8859-6 shaped ARABIC letter (user entered).
+
+// Returns true if c is an ISO-8859-6 shaped ARABIC letter (user entered).
 static bool A_is_a(int cur_c)
 {
   switch (cur_c) {
@@ -293,7 +293,7 @@ static bool A_is_a(int cur_c)
   return false;
 }
 
-// Returns True if c is an Isolated Form-B ARABIC letter
+// Returns true if c is an Isolated Form-B ARABIC letter
 static bool A_is_s(int cur_c)
 {
   switch (cur_c) {
@@ -339,7 +339,7 @@ static bool A_is_s(int cur_c)
   return false;
 }
 
-// Returns True if c is a Final shape of an ARABIC letter
+// Returns true if c is a Final shape of an ARABIC letter
 static bool A_is_f(int cur_c)
 {
   switch (cur_c) {
@@ -1259,12 +1259,11 @@ static int chg_c_f2m(int cur_c)
       tempc = a_m_YEH;
       break;
 
-    /* NOTE: these encodings are multi-positional, no ?
-        case a_f_LAM_ALEF_MADDA_ABOVE:
-        case a_f_LAM_ALEF_HAMZA_ABOVE:
-        case a_f_LAM_ALEF_HAMZA_BELOW:
-        case a_f_LAM_ALEF:
-     */
+    // NOTE: these encodings are multi-positional, no ?
+    //   case a_f_LAM_ALEF_MADDA_ABOVE:
+    //   case a_f_LAM_ALEF_HAMZA_ABOVE:
+    //   case a_f_LAM_ALEF_HAMZA_BELOW:
+    //   case a_f_LAM_ALEF:
     default:
       tempc = 0;
   }
@@ -1272,9 +1271,7 @@ static int chg_c_f2m(int cur_c)
   return tempc;
 }
 
-/*
- * Change shape - from Combination (2 char) to an Isolated
- */
+// Change shape - from Combination (2 char) to an Isolated.
 static int chg_c_laa2i(int hid_c)
 {
   int tempc;
@@ -1303,9 +1300,7 @@ static int chg_c_laa2i(int hid_c)
   return tempc;
 }
 
-/*
- * Change shape - from Combination-Isolated to Final
- */
+// Change shape - from Combination-Isolated to Final.
 static int chg_c_laa2f(int hid_c)
 {
   int tempc;
@@ -1334,9 +1329,7 @@ static int chg_c_laa2f(int hid_c)
   return tempc;
 }
 
-/*
- * Do "half-shaping" on character "c".  Return zero if no shaping.
- */
+// Do "half-shaping" on character "c". Return zero if no shaping.
 static int half_shape(int c)
 {
   if (A_is_a(c)) {
@@ -1349,27 +1342,25 @@ static int half_shape(int c)
   return 0;
 }
 
-/*
- * Do Arabic shaping on character "c".  Returns the shaped character.
- * out:    "ccp" points to the first byte of the character to be shaped.
- * in/out: "c1p" points to the first composing char for "c".
- * in:     "prev_c"  is the previous character (not shaped)
- * in:     "prev_c1" is the first composing char for the previous char
- *		     (not shaped)
- * in:     "next_c"  is the next character (not shaped).
- */
+// Do Arabic shaping on character "c".  Returns the shaped character.
+// out:    "ccp" points to the first byte of the character to be shaped.
+// in/out: "c1p" points to the first composing char for "c".
+// in:     "prev_c"  is the previous character (not shaped)
+// in:     "prev_c1" is the first composing char for the previous char
+//  	     (not shaped)
+// in:     "next_c"  is the next character (not shaped).
 int arabic_shape(int c, int *ccp, int *c1p, int prev_c, int prev_c1,
                  int next_c)
 {
-  /* Deal only with Arabic character, pass back all others */
+  // Deal only with Arabic character, pass back all others
   if (!A_is_ok(c)) {
     return c;
   }
 
-  /* half-shape current and previous character */
+  // half-shape current and previous character
   int shape_c = half_shape(prev_c);
 
-  /* Save away current character */
+  // Save away current character
   int curr_c = c;
 
   int curr_laa = A_firstc_laa(c, *c1p);
@@ -1383,7 +1374,7 @@ int arabic_shape(int c, int *ccp, int *c1p, int prev_c, int prev_c1,
       curr_c = chg_c_laa2i(curr_laa);
     }
 
-    /* Remove the composing character */
+    // Remove the composing character
     *c1p = 0;
   } else if (!A_is_valid(prev_c) && A_is_valid(next_c)) {
     curr_c = chg_c_a2i(c);
@@ -1397,8 +1388,8 @@ int arabic_shape(int c, int *ccp, int *c1p, int prev_c, int prev_c1,
     curr_c = chg_c_a2s(c);
   }
 
-  /* Sanity check -- curr_c should, in the future, never be 0.
-   * We should, in the future, insert a fatal error here. */
+  // Sanity check -- curr_c should, in the future, never be 0.
+  // We should, in the future, insert a fatal error here.
   if (curr_c == NUL) {
     curr_c = c;
   }
@@ -1406,12 +1397,12 @@ int arabic_shape(int c, int *ccp, int *c1p, int prev_c, int prev_c1,
   if ((curr_c != c) && (ccp != NULL)) {
     char_u buf[MB_MAXBYTES + 1];
 
-    /* Update the first byte of the character. */
+    // Update the first byte of the character
     (*mb_char2bytes)(curr_c, buf);
     *ccp = buf[0];
   }
 
-  /* Return the shaped character */
+  // Return the shaped character
   return curr_c;
 }
 
@@ -1441,11 +1432,9 @@ bool arabic_maycombine(int two)
   return false;
 }
 
-/*
- * A_firstc_laa returns first character of LAA combination if it exists
- * in: "c" base character
- * in: "c1" first composing character
- */
+// A_firstc_laa returns first character of LAA combination if it ex.ists
+// in: "c" base character
+// in: "c1" first composing character
 static int A_firstc_laa(int c, int c1)
 {
   if ((c1 != NUL) && (c == a_LAM) && !A_is_harakat(c1)) {
@@ -1454,19 +1443,15 @@ static int A_firstc_laa(int c, int c1)
   return 0;
 }
 
-/*
- * A_is_harakat returns TRUE if 'c' is an Arabic Harakat character
- *		(harakat/tanween)
- */
+// A_is_harakat returns true if 'c' is an Arabic Harakat character.
+//     (harakat/tanween)
 static bool A_is_harakat(int c)
 {
   return c >= a_FATHATAN && c <= a_SUKUN;
 }
 
-/*
- * A_is_iso returns TRUE if 'c' is an Arabic ISO-8859-6 character
- *		(alphabet/number/punctuation)
- */
+// A_is_iso returns true if 'c' is an Arabic ISO-8859-6 character.
+//     (alphabet/number/punctuation)
 static bool A_is_iso(int c)
 {
   return (c >= a_HAMZA && c <= a_GHAIN) ||
@@ -1474,10 +1459,8 @@ static bool A_is_iso(int c)
          c == a_MINI_ALEF;
 }
 
-/*
- * A_is_formb returns TRUE if 'c' is an Arabic 10646-1 FormB character
- *		(alphabet/number/punctuation)
- */
+// A_is_formb returns true if 'c' is an Arabic 10646-1 FormB character.
+//     (alphabet/number/punctuation)
 static bool A_is_formb(int c)
 {
   return (c >= a_s_FATHATAN && c <= a_s_DAMMATAN) ||
@@ -1486,27 +1469,21 @@ static bool A_is_formb(int c)
          c == a_BYTE_ORDER_MARK;
 }
 
-/*
- * A_is_ok returns TRUE if 'c' is an Arabic 10646 (8859-6 or Form-B)
- */
+// A_is_ok returns true if 'c' is an Arabic 10646 (8859-6 or Form-B).
 static bool A_is_ok(int c)
 {
   return A_is_iso(c) || A_is_formb(c);
 }
 
-/*
- * A_is_valid returns TRUE if 'c' is an Arabic 10646 (8859-6 or Form-B)
- *		with some exceptions/exclusions
- */
+// A_is_valid returns true if 'c' is an Arabic 10646 (8859-6 or Form-B),
+// with some exceptions/exclusions.
 static bool A_is_valid(int c)
 {
   return A_is_ok(c) && !A_is_special(c);
 }
 
-/*
- * A_is_special returns TRUE if 'c' is not a special Arabic character.
- *		Specials don't adhere to most of the rules.
- */
+// A_is_special returns true if 'c' is not a special Arabic character.
+// Specials don't adhere to most of the rules.
 static bool A_is_special(int c)
 {
   return c == a_HAMZA || c == a_s_HAMZA;
