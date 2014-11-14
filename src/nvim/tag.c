@@ -2799,7 +2799,7 @@ int get_tags(list_T *list, char_u *pat)
           || add_tag_field(dict, "cmd", tp.command,
               tp.command_end) == FAIL
           || add_tag_field(dict, "kind", tp.tagkind,
-              tp.tagkind_end) == FAIL
+              tp.tagkind ? tp.tagkind_end : NULL) == FAIL
           || dict_add_nr_str(dict, "static", is_static, NULL) == FAIL)
         ret = FAIL;
 
