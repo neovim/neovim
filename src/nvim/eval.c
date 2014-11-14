@@ -10668,13 +10668,13 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
   argv = xmalloc(sizeof(char_u *) * argvl);
 
   // Copy program name
-  argv[0] = xstrdup((char *)argvars[1].vval.v_string);
+  argv[0] = xstrdup((char *)get_tv_string(&argvars[1]));
 
   i = 1;
   // Copy arguments to the vector
   if (argsl > 0) {
     for (arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-      argv[i++] = xstrdup((char *)arg->li_tv.vval.v_string);
+      argv[i++] = xstrdup((char *)get_tv_string(&arg->li_tv));
     }
   }
 
