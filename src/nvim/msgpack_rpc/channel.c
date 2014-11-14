@@ -137,7 +137,6 @@ uint64_t channel_from_job(char **argv)
                                 &status);
 
   if (status <= 0) {
-    free_channel(channel);
     return 0;
   }
 
