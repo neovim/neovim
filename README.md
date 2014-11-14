@@ -32,6 +32,8 @@ For lots more details, see
 - Performance, reliability, and portability improvements
 - See the [progress page](https://github.com/neovim/neovim/wiki/Progress) for a comprehensive list.
 
+[![Throughput Graph](https://graphs.waffle.io/neovim/neovim/throughput.svg)](https://waffle.io/neovim/neovim/metrics)
+
 ### What's being worked on now
 
 - Port all IO to [libuv](https://github.com/joyent/libuv/blob/master/README.md)
