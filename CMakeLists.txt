@@ -205,28 +205,6 @@ if(NOT BUSTED_OUTPUT_TYPE)
   set(BUSTED_OUTPUT_TYPE "utfTerminal")
 endif()
 
-# Setup make.
-find_program(MAKE_PRG NAMES gmake make)
-if(MAKE_PRG)
-  execute_process(
-    COMMAND "${MAKE_PRG}" --version
-    OUTPUT_VARIABLE MAKE_VERSION_INFO)
-  if(NOT "${OUTPUT_VARIABLE}" MATCHES ".*GNU.*")
-    unset(MAKE_PRG)
-  endif()
-endif()
-if(NOT MAKE_PRG)
-  message(FATAL_ERROR "GNU Make is required to build the dependencies.")
-else()
-  message(STATUS "Found GNU Make at ${MAKE_PRG}")
-endif()
-
-# When using make, use the $(MAKE) variable to avoid warnings about the job
-# server.
-if(CMAKE_GENERATOR MATCHES "Makefiles")
-  set(MAKE_PRG "$(MAKE)")
-endif()
-
 # CMake is painful here.  It will create the destination using the user's
 # current umask, and we don't want that.  And we don't just want to install
 # the target directory, as it will mess with existing permissions.  So this
@@ -250,15 +228,6 @@ foreach(PROG ${RUNTIME_PROGRAMS})
 endforeach()
 
 install(SCRIPT ${PROJECT_SOURCE_DIR}/cmake/GenerateHelptags.cmake)
-
-# Unfortunately, the below does not work under Ninja.  Ninja doesn't use a
-# pseudo-tty when launching processes, because it can put many jobs in parallel
-# and eat-up all the available pseudo-ttys.  Unfortunately, that doesn't work
-# well with the legacy tests.  I have a branch that converts them to run under
-# CTest, but it needs a little more work.
-# add_custom_target(test
-#   COMMAND ${MAKE_PRG} -C ${CMAKE_CURRENT_SOURCE_DIR}/src/nvim/testdir
-#     VIMPROG=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/nvim)
 
 # Go down the tree.
 

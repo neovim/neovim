@@ -1,5 +1,5 @@
 execute_process(
-  COMMAND ${MAKE_PRG} install
+  COMMAND ${CMAKE_COMMAND} --build . --target install
   RESULT_VARIABLE res)
 
 if(NOT res EQUAL 0)
