@@ -337,7 +337,7 @@ void vim_err_write(String str)
 }
 
 /// Higher level error reporting function that ensures all str contents
-/// are written by sending a trailing linefeed to `vim_wrr_write`
+/// are written by sending a trailing linefeed to `vim_err_write`
 ///
 /// @param str The message
 void vim_report_error(String str)
