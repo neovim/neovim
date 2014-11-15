@@ -1230,7 +1230,6 @@ static void win_rotate(int upwards, int count)
     return;
   }
 
-
   /* Check if all frames in this row/col have one window. */
   for (frp = curwin->w_frame->fr_parent->fr_child; frp != NULL;
        frp = frp->fr_next)
@@ -1246,6 +1245,7 @@ static void win_rotate(int upwards, int count)
       wp1 = frp->fr_win;
       win_remove(wp1, NULL);
       frame_remove(frp);
+      assert(frp->fr_parent->fr_child);
 
       /* find last frame and append removed window/frame after it */
       for (; frp->fr_next != NULL; frp = frp->fr_next)
@@ -1263,6 +1263,7 @@ static void win_rotate(int upwards, int count)
       wp2 = wp1->w_prev;                    /* will become last window */
       win_remove(wp1, NULL);
       frame_remove(frp);
+      assert(frp->fr_parent->fr_child);
 
       /* append the removed window/frame before the first in the list */
       win_append(frp->fr_parent->fr_child->fr_win->w_prev, wp1);
