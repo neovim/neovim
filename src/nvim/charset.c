@@ -978,7 +978,6 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
   int mb_added = 0;
   int numberextra;
   char_u *ps;
-  int tab_corr = (*s == TAB);
   int n;
 
   // No 'linebreak', 'showbreak' and 'breakindent': return quickly.
@@ -992,7 +991,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
   // First get normal size, without 'linebreak'
   int size = win_chartabsize(wp, s, col);
   int c = *s;
-  if (tab_corr) {
+  if (*s == TAB) {
       col_adj = size - 1;
   }
 
@@ -1034,7 +1033,6 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
 
       if (col2 >= colmax) { /* doesn't fit */
         size = colmax - col + col_adj;
-        tab_corr = FALSE;
         break;
       }
     }

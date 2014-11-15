@@ -284,6 +284,7 @@
 //                          stored as an offset to the previous number in as
 //                          few bytes as possible, see offset2bytes())
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -303,6 +304,7 @@
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/fileio.h"
+#include "nvim/func_attr.h"
 #include "nvim/getchar.h"
 #include "nvim/hashtab.h"
 #include "nvim/mbyte.h"
@@ -1599,7 +1601,9 @@ static void find_word(matchinf_T *mip, int mode)
             mip->mi_compoff = (int)(p - mip->mi_fword);
           }
         }
+#if 0
         c = mip->mi_compoff;
+#endif
         ++mip->mi_complen;
         if (flags & WF_COMPROOT)
           ++mip->mi_compextra;
@@ -2058,7 +2062,7 @@ spell_move_to (
   char_u      *line;
   char_u      *p;
   char_u      *endp;
-  hlf_T attr;
+  hlf_T attr = HLF_COUNT;
   int len;
   int has_syntax = syntax_present(wp);
   int col;
@@ -2094,6 +2098,7 @@ spell_move_to (
       buflen = len + MAXWLEN + 2;
       buf = xmalloc(buflen);
     }
+    assert(buf && buflen >= len + MAXWLEN + 2);
 
     // In first line check first word for Capital.
     if (lnum == 1)
@@ -4462,7 +4467,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
             || aff->af_pref.ht_used > 0)
           smsg((char_u *)_("FLAG after using flags in %s line %d: %s"),
               fname, lnum, items[1]);
-      } else if (spell_info_item(items[0]))   {
+      } else if (spell_info_item(items[0]) && itemcnt > 1)   {
         p = (char_u *)getroom(spin,
             (spin->si_info == NULL ? 0 : STRLEN(spin->si_info))
             + STRLEN(items[0])
@@ -5800,6 +5805,8 @@ store_aff_word (
                   // Get compound IDS from the affix list.
                   get_compflags(affile, ae->ae_flags,
                       use_pfxlist + use_pfxlen);
+                else
+                  use_pfxlist[use_pfxlen] = NUL;
 
                 // Combine the list of compound flags.
                 // Concatenate them to the prefix IDs list.
@@ -6066,14 +6073,17 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
 /// track of them).
 /// The memory is cleared to all zeros.
 ///
-/// @param len Length needed.
+/// @param len Length needed (<= SBLOCKSIZE).
 /// @param align Align for pointer.
-/// @return NULL when out of memory.
+/// @return Pointer into block data.
 static void *getroom(spellinfo_T *spin, size_t len, bool align)
+  FUNC_ATTR_NONNULL_RET
 {
   char_u      *p;
   sblock_T    *bl = spin->si_blocks;
 
+  assert(len <= SBLOCKSIZE);
+  
   if (align && bl != NULL)
     // Round size up for alignment.  On some systems structures need to be
     // aligned to the size of a pointer (e.g., SPARC).
@@ -6081,11 +6091,8 @@ static void *getroom(spellinfo_T *spin, size_t len, bool align)
                   & ~(sizeof(char *) - 1);
 
   if (bl == NULL || bl->sb_used + len > SBLOCKSIZE) {
-    if (len >= SBLOCKSIZE)
-      bl = NULL;
-    else
-      // Allocate a block of memory. It is not freed until much later.
-      bl = xcalloc(1, (sizeof(sblock_T) + SBLOCKSIZE));
+    // Allocate a block of memory. It is not freed until much later.
+    bl = xcalloc(1, (sizeof(sblock_T) + SBLOCKSIZE));
     bl->sb_next = spin->si_blocks;
     spin->si_blocks = bl;
     bl->sb_used = 0;
@@ -12496,8 +12503,9 @@ static int spell_edit_score(slang_T *slang, char_u *badword, char_u *goodword)
   char_u      *p;
   int wbadword[MAXWLEN];
   int wgoodword[MAXWLEN];
+  const int l_has_mbyte = has_mbyte;
 
-  if (has_mbyte) {
+  if (l_has_mbyte) {
     // Get the characters from the multi-byte strings and put them in an
     // int array for easy access.
     for (p = badword, badlen = 0; *p != NUL; )
@@ -12522,7 +12530,7 @@ static int spell_edit_score(slang_T *slang, char_u *badword, char_u *goodword)
   for (i = 1; i <= badlen; ++i) {
     CNT(i, 0) = CNT(i - 1, 0) + SCORE_DEL;
     for (j = 1; j <= goodlen; ++j) {
-      if (has_mbyte) {
+      if (l_has_mbyte) {
         bc = wbadword[i - 1];
         gc = wgoodword[j - 1];
       } else {
@@ -12546,7 +12554,7 @@ static int spell_edit_score(slang_T *slang, char_u *badword, char_u *goodword)
         }
 
         if (i > 1 && j > 1) {
-          if (has_mbyte) {
+          if (l_has_mbyte) {
             pbc = wbadword[i - 2];
             pgc = wgoodword[j - 2];
           } else {

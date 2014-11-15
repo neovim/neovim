@@ -1084,7 +1084,6 @@ static int nfa_regatom(void)
   int extra = 0;
   int emit_range;
   int negated;
-  int result;
   int startc = -1;
   int endc = -1;
   int oldstartc = -1;
@@ -1452,8 +1451,8 @@ collection:
        * recognize that [0-9] stands for \d and [A-Za-z_] for \h,
        * and perform the necessary substitutions in the NFA.
        */
-      result = nfa_recognize_char_class(regparse, endp,
-          extra == NFA_ADD_NL);
+      int result = nfa_recognize_char_class(regparse, endp,
+                                            extra == NFA_ADD_NL);
       if (result != FAIL) {
         if (result >= NFA_FIRST_NL && result <= NFA_LAST_NL) {
           EMIT(result - NFA_ADD_NL);
@@ -1557,7 +1556,6 @@ collection:
           /* Try equivalence class [=a=] and the like */
           if (equiclass != 0) {
             nfa_emit_equi_class(equiclass);
-            result = OK;
             continue;
           }
           /* Try collating class like [. .]  */

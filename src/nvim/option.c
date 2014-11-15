@@ -2563,7 +2563,6 @@ do_set (
       /* find end of name */
       key = 0;
       if (*arg == '<') {
-        nextchar = 0;
         opt_idx = -1;
         /* look out for <t_>;> */
         if (arg[1] == 't' && arg[2] == '_' && arg[3] && arg[4])

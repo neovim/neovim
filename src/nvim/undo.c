@@ -80,6 +80,7 @@
 #define UH_MAGIC 0x18dade       /* value for uh_magic when in use */
 #define UE_MAGIC 0xabc123       /* value for ue_magic when in use */
 
+#include <assert.h>
 #include <inttypes.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -2682,8 +2683,11 @@ void u_undoline(void)
  */
 void u_blockfree(buf_T *buf)
 {
-  while (buf->b_u_oldhead != NULL)
+  while (buf->b_u_oldhead != NULL) {
+    u_header_T *previous_oldhead = buf->b_u_oldhead;
     u_freeheader(buf, buf->b_u_oldhead, NULL);
+    assert(buf->b_u_oldhead != previous_oldhead);
+  }
   free(buf->b_u_line_ptr);
 }
 

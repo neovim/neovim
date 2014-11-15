@@ -3973,6 +3973,7 @@ find_pattern_in_path (
   char_u      *startp = NULL;
   char_u      *inc_opt = NULL;
   win_T       *curwin_save = NULL;
+  const int l_g_do_tagpreview = g_do_tagpreview;
 
   regmatch.regprog = NULL;
   incl_regmatch.regprog = NULL;
@@ -4370,7 +4371,7 @@ search_line:
       } else if (--count <= 0) {
         found = TRUE;
         if (depth == -1 && lnum == curwin->w_cursor.lnum
-            && g_do_tagpreview == 0
+            && l_g_do_tagpreview == 0
             )
           EMSG(_("E387: Match is on current line"));
         else if (action == ACTION_SHOW) {
@@ -4380,7 +4381,7 @@ search_line:
           did_show = TRUE;
         } else {
           /* ":psearch" uses the preview window */
-          if (g_do_tagpreview != 0) {
+          if (l_g_do_tagpreview != 0) {
             curwin_save = curwin;
             prepare_tagpreview(true);
           }
@@ -4391,7 +4392,7 @@ search_line:
           }
           if (depth == -1) {
             /* match in current file */
-            if (g_do_tagpreview != 0) {
+            if (l_g_do_tagpreview != 0) {
               if (getfile(0, curwin_save->w_buffer->b_fname,
                       NULL, TRUE, lnum, FALSE) > 0)
                 break;                  /* failed to jump to file */
@@ -4412,7 +4413,7 @@ search_line:
           curwin->w_set_curswant = TRUE;
         }
 
-        if (g_do_tagpreview != 0
+        if (l_g_do_tagpreview != 0
             && curwin != curwin_save && win_valid(curwin_save)) {
           /* Return cursor to where we were */
           validate_cursor();
