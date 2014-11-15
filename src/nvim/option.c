@@ -4309,13 +4309,12 @@ int findoption_len(const char_u *const arg, const size_t len)
     }
   }
 
-  assert(len > 0);
-
   /*
    * Check for name starting with an illegal character.
    */
-  if (arg[0] < 'a' || arg[0] > 'z')
+  if (len == 0 || arg[0] < 'a' || arg[0] > 'z') {
     return -1;
+  }
 
   int opt_idx;
   is_term_opt = (len > 2 && arg[0] == 't' && arg[1] == '_');
