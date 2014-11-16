@@ -5734,7 +5734,9 @@ dict_free (
 dictitem_T *dictitem_alloc(char_u *key) FUNC_ATTR_NONNULL_RET
 {
   dictitem_T *di = xmalloc(sizeof(dictitem_T) + STRLEN(key));
+#ifndef __clang_analyzer__
   STRCPY(di->di_key, key);
+#endif
   di->di_flags = 0;
   return di;
 }
