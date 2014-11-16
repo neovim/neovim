@@ -2194,6 +2194,7 @@ winframe_remove (
        * the frames into this list. */
       if (frp2->fr_child == frp)
         frp2->fr_child = frp->fr_child;
+      assert(frp->fr_child);
       frp->fr_child->fr_prev = frp->fr_prev;
       if (frp->fr_prev != NULL)
         frp->fr_prev->fr_next = frp->fr_child;
