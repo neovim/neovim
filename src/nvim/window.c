@@ -4504,6 +4504,7 @@ void win_drag_vsep_line(win_T *dragwin, int offset)
       room += fr->fr_width - frame_minwidth(fr, NULL);
     fr = curfr;                         /* put fr at window that grows */
   }
+  assert(fr);
 
   if (room < offset)            /* Not enough room */
     offset = room;              /* Move as far as we can */
