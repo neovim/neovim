@@ -4976,6 +4976,7 @@ static void last_status_rec(frame_T *fr, int statusline)
  */
 int tabline_height(void)
 {
+  assert(first_tabpage);
   switch (p_stal) {
   case 0: return 0;
   case 1: return (first_tabpage->tp_next == NULL) ? 0 : 1;
