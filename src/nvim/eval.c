@@ -2272,6 +2272,7 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv, int copy, ch
       if (lp->ll_li->li_next == NULL) {
         /* Need to add an empty item. */
         list_append_number(lp->ll_list, 0);
+        assert(lp->ll_li->li_next);
       }
       lp->ll_li = lp->ll_li->li_next;
       ++lp->ll_n1;
