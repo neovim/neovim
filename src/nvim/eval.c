@@ -18901,8 +18901,10 @@ int do_return(exarg_T *eap, int reanimate, int is_cmd, void *rettv)
     else {
       /* When undoing a return in order to make it pending, get the stored
        * return rettv. */
-      if (reanimate)
+      if (reanimate) {
+        assert(current_funccal->rettv);
         rettv = current_funccal->rettv;
+      }
 
       if (rettv != NULL) {
         /* Store the value of the pending return. */
