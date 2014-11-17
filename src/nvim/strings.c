@@ -401,7 +401,7 @@ int vim_strnicmp(char *s1, char *s2, size_t len)
  * with characters from 128 to 255 correctly.  It also doesn't return a
  * pointer to the NUL at the end of the string.
  */
-char_u *vim_strchr(char_u *string, int c)
+char_u *vim_strchr(char_u *string, int c) FUNC_ATTR_NONNULL_ARG(1)
 {
   char_u      *p;
   int b;
