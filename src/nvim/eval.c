@@ -18280,6 +18280,7 @@ char_u *get_user_func_name(expand_T *xp, int idx)
     done = 0;
     hi = func_hashtab.ht_array;
   }
+  assert(hi);
   if (done < func_hashtab.ht_used) {
     if (done++ > 0)
       ++hi;
