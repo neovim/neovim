@@ -2434,19 +2434,14 @@ int mch_print_begin(prt_settings_T *psettings)
   double right;
   double top;
   double bottom;
-  struct prt_ps_resource_S *res_prolog;
-  struct prt_ps_resource_S *res_encoding;
+  struct prt_ps_resource_S res_prolog;
+  struct prt_ps_resource_S res_encoding;
   char buffer[256];
   char_u      *p_encoding;
   char_u      *p;
-  struct prt_ps_resource_S *res_cidfont;
-  struct prt_ps_resource_S *res_cmap;
+  struct prt_ps_resource_S res_cidfont;
+  struct prt_ps_resource_S res_cmap;
   int retval = FALSE;
-
-  res_prolog = xmalloc(sizeof(struct prt_ps_resource_S));
-  res_encoding = xmalloc(sizeof(struct prt_ps_resource_S));
-  res_cidfont = xmalloc(sizeof(struct prt_ps_resource_S));
-  res_cmap = xmalloc(sizeof(struct prt_ps_resource_S));
 
   /*
    * PS DSC Header comments - no PS code!
@@ -2515,23 +2510,23 @@ int mch_print_begin(prt_settings_T *psettings)
   }
 
   /* Search for external resources VIM supplies */
-  if (!prt_find_resource("prolog", res_prolog)) {
+  if (!prt_find_resource("prolog", &res_prolog)) {
     EMSG(_("E456: Can't find PostScript resource file \"prolog.ps\""));
     return FALSE;
   }
-  if (!prt_open_resource(res_prolog))
+  if (!prt_open_resource(&res_prolog))
     return FALSE;
-  if (!prt_check_resource(res_prolog, PRT_PROLOG_VERSION))
+  if (!prt_check_resource(&res_prolog, PRT_PROLOG_VERSION))
     return FALSE;
   if (prt_out_mbyte) {
     /* Look for required version of multi-byte printing procset */
-    if (!prt_find_resource("cidfont", res_cidfont)) {
+    if (!prt_find_resource("cidfont", &res_cidfont)) {
       EMSG(_("E456: Can't find PostScript resource file \"cidfont.ps\""));
       return FALSE;
     }
-    if (!prt_open_resource(res_cidfont))
+    if (!prt_open_resource(&res_cidfont))
       return FALSE;
-    if (!prt_check_resource(res_cidfont, PRT_CID_PROLOG_VERSION))
+    if (!prt_check_resource(&res_cidfont, PRT_CID_PROLOG_VERSION))
       return FALSE;
   }
 
@@ -2543,25 +2538,25 @@ int mch_print_begin(prt_settings_T *psettings)
   if (!prt_out_mbyte) {
     p_encoding = enc_skip(p_penc);
     if (*p_encoding == NUL
-        || !prt_find_resource((char *)p_encoding, res_encoding)) {
+        || !prt_find_resource((char *)p_encoding, &res_encoding)) {
       /* 'printencoding' not set or not supported - find alternate */
       int props;
 
       p_encoding = enc_skip(p_enc);
       props = enc_canon_props(p_encoding);
       if (!(props & ENC_8BIT)
-          || !prt_find_resource((char *)p_encoding, res_encoding)) {
+          || !prt_find_resource((char *)p_encoding, &res_encoding)) {
         /* 8-bit 'encoding' is not supported */
         /* Use latin1 as default printing encoding */
         p_encoding = (char_u *)"latin1";
-        if (!prt_find_resource((char *)p_encoding, res_encoding)) {
+        if (!prt_find_resource((char *)p_encoding, &res_encoding)) {
           EMSG2(_("E456: Can't find PostScript resource file \"%s.ps\""),
               p_encoding);
           return FALSE;
         }
       }
     }
-    if (!prt_open_resource(res_encoding))
+    if (!prt_open_resource(&res_encoding))
       return FALSE;
     /* For the moment there are no checks on encoding resource files to
      * perform */
@@ -2571,12 +2566,12 @@ int mch_print_begin(prt_settings_T *psettings)
       p_encoding = enc_skip(p_enc);
     if (prt_use_courier) {
       /* Include ASCII range encoding vector */
-      if (!prt_find_resource(prt_ascii_encoding, res_encoding)) {
+      if (!prt_find_resource(prt_ascii_encoding, &res_encoding)) {
         EMSG2(_("E456: Can't find PostScript resource file \"%s.ps\""),
             prt_ascii_encoding);
         return FALSE;
       }
-      if (!prt_open_resource(res_encoding))
+      if (!prt_open_resource(&res_encoding))
         return FALSE;
       /* For the moment there are no checks on encoding resource files to
        * perform */
@@ -2597,37 +2592,37 @@ int mch_print_begin(prt_settings_T *psettings)
 
   if (prt_out_mbyte && prt_custom_cmap) {
     /* Find user supplied CMap */
-    if (!prt_find_resource(prt_cmap, res_cmap)) {
+    if (!prt_find_resource(prt_cmap, &res_cmap)) {
       EMSG2(_("E456: Can't find PostScript resource file \"%s.ps\""),
           prt_cmap);
       return FALSE;
     }
-    if (!prt_open_resource(res_cmap))
+    if (!prt_open_resource(&res_cmap))
       return FALSE;
   }
 
   /* List resources supplied */
-  STRCPY(buffer, res_prolog->title);
+  STRCPY(buffer, res_prolog.title);
   STRCAT(buffer, " ");
-  STRCAT(buffer, res_prolog->version);
+  STRCAT(buffer, res_prolog.version);
   prt_dsc_resources("DocumentSuppliedResources", "procset", buffer);
   if (prt_out_mbyte) {
-    STRCPY(buffer, res_cidfont->title);
+    STRCPY(buffer, res_cidfont.title);
     STRCAT(buffer, " ");
-    STRCAT(buffer, res_cidfont->version);
+    STRCAT(buffer, res_cidfont.version);
     prt_dsc_resources(NULL, "procset", buffer);
 
     if (prt_custom_cmap) {
-      STRCPY(buffer, res_cmap->title);
+      STRCPY(buffer, res_cmap.title);
       STRCAT(buffer, " ");
-      STRCAT(buffer, res_cmap->version);
+      STRCAT(buffer, res_cmap.version);
       prt_dsc_resources(NULL, "cmap", buffer);
     }
   }
   if (!prt_out_mbyte || prt_use_courier) {
-    STRCPY(buffer, res_encoding->title);
+    STRCPY(buffer, res_encoding.title);
     STRCAT(buffer, " ");
-    STRCAT(buffer, res_encoding->version);
+    STRCAT(buffer, res_encoding.version);
     prt_dsc_resources(NULL, "encoding", buffer);
   }
   prt_dsc_requirements(prt_duplex, prt_tumble, prt_collate,
@@ -2661,20 +2656,20 @@ int mch_print_begin(prt_settings_T *psettings)
   prt_dsc_noarg("BeginProlog");
 
   /* Add required procsets - NOTE: order is important! */
-  if (!prt_add_resource(res_prolog))
+  if (!prt_add_resource(&res_prolog))
     return FALSE;
   if (prt_out_mbyte) {
     /* Add CID font procset, and any user supplied CMap */
-    if (!prt_add_resource(res_cidfont))
+    if (!prt_add_resource(&res_cidfont))
       return FALSE;
-    if (prt_custom_cmap && !prt_add_resource(res_cmap))
+    if (prt_custom_cmap && !prt_add_resource(&res_cmap))
       return FALSE;
   }
 
   if (!prt_out_mbyte || prt_use_courier)
     /* There will be only one Roman font encoding to be included in the PS
      * file. */
-    if (!prt_add_resource(res_encoding))
+    if (!prt_add_resource(&res_encoding))
       return FALSE;
 
   prt_dsc_noarg("EndProlog");
@@ -2779,11 +2774,6 @@ int mch_print_begin(prt_settings_T *psettings)
 
   /* Fail if any problems writing out to the PS file */
   retval = !prt_file_error;
-
-  free(res_prolog);
-  free(res_encoding);
-  free(res_cidfont);
-  free(res_cmap);
 
   return retval;
 }
