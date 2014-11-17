@@ -1,8 +1,8 @@
 /// @file farsi.c
 ///
 /// Functions for Farsi language
-///
 
+#include <stdbool.h>
 
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
@@ -26,7 +26,7 @@
 
 #define AT_CURSOR 0
 
-// special Farsi text messages
+// Special Farsi text messages
 
 const char_u farsi_text_1[] = {
   YE_, _SIN, RE, ALEF_, _FE, ' ', 'V', 'I', 'M',
@@ -59,6 +59,7 @@ const char_u farsi_text_5[] = {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "farsi.c.generated.h"
 #endif
+
 /// Convert the given Farsi character into a _X or _X_ type
 ///
 /// @param c The character to convert.
@@ -287,8 +288,8 @@ int toF_TyA(int c)
 /// @param src
 /// @param offset
 ///
-/// @return TRUE if the character under the cursor+offset is a join type.
-static int F_is_TyB_TyC_TyD(int src, int offset)
+/// @return true if the character under the cursor+offset is a join type.
+static bool F_is_TyB_TyC_TyD(int src, int offset)
 {
   int c;
 
@@ -330,17 +331,17 @@ static int F_is_TyB_TyC_TyD(int src, int offset)
     case _IE:
     case _HE_:
     case _HE:
-      return TRUE;
+      return true;
   }
-  return FALSE;
+  return false;
 }
 
 /// Is the Farsi character one of the terminating only type.
 ///
 /// @param c The character to check.
 ///
-/// @return TRUE if the Farsi character is one of the terminating only types.
-static int F_is_TyE(int c)
+/// @return true if the Farsi character is one of the terminating only types.
+static bool F_is_TyE(int c)
 {
   switch (c) {
     case ALEF_A:
@@ -353,17 +354,17 @@ static int F_is_TyE(int c)
     case WAW:
     case WAW_H:
     case HAMZE:
-      return TRUE;
+      return true;
   }
-  return FALSE;
+  return false;
 }
 
 /// Is the Farsi character one of the none leading type.
 ///
 /// @param c The character to check.
 ///
-/// @return TRUE if the Farsi character is one of the none-leading types.
-static int F_is_TyC_TyD(int c)
+/// @return true if the Farsi character is one of the none-leading types.
+static bool F_is_TyC_TyD(int c)
 {
   switch (c) {
     case ALEF_:
@@ -377,9 +378,9 @@ static int F_is_TyC_TyD(int c)
     case IE_:
     case TEE_:
     case YEE_:
-      return TRUE;
+      return true;
   }
-  return FALSE;
+  return false;
 }
 
 /// Convert a none leading Farsi char into a leading type.
@@ -2081,8 +2082,8 @@ static int toF_Rjoin(int c)
 ///
 /// @param c The character to check.
 ///
-/// @return TRUE if the character can join via its left edj.
-static int canF_Ljoin(int c)
+/// @return true if the character can join via its left edj.
+static bool canF_Ljoin(int c)
 {
   switch (c) {
     case _BE:
@@ -2146,17 +2147,17 @@ static int canF_Ljoin(int c)
     case F_HE:
     case _HE:
     case _HE_:
-      return TRUE;
+      return true;
   }
-  return FALSE;
+  return false;
 }
 
 /// Can a given Farsi character join via its right edj.
 ///
 /// @param c
 ///
-/// @return TRUE if the character can join via its right edj.
-static int canF_Rjoin(int c)
+/// @return true if the character can join via its right edj.
+static bool canF_Rjoin(int c)
 {
   switch (c) {
     case ALEF:
@@ -2172,9 +2173,8 @@ static int canF_Rjoin(int c)
     case TEE_:
     case WAW:
     case WAW_H:
-      return TRUE;
+      return true;
   }
-
   return canF_Ljoin(c);
 }
 
@@ -2182,8 +2182,8 @@ static int canF_Rjoin(int c)
 ///
 /// @param c
 ///
-/// @return TRUE if the character is a terminating type.
-static int F_isterm(int c)
+/// @return true if the character is a terminating type.
+static bool F_isterm(int c)
 {
   switch (c) {
     case ALEF:
@@ -2199,10 +2199,9 @@ static int F_isterm(int c)
     case WAW_H:
     case TEE:
     case TEE_:
-      return TRUE;
+      return true;
   }
-
-  return FALSE;
+  return false;
 }
 
 /// Convert the given Farsi character into an ending type.
@@ -2915,34 +2914,34 @@ int cmdl_fkmap(int c)
   return c;
 }
 
-/// F_isalpha returns TRUE if 'c' is a Farsi alphabet
+/// F_isalpha returns true if 'c' is in the Farsi alphabet.
 ///
 /// @param c The character to check.
 ///
-/// @return TRUE if 'c' is a Farsi alphabet character.
-int F_isalpha(int c)
+/// @return true if 'c' is a Farsi alphabet character.
+bool F_isalpha(int c)
 {
   return (c >= TEE_ && c <= _YE)
          || (c >= ALEF_A && c <= YE)
          || (c >= _IE && c <= YE_);
 }
 
-/// F_isdigit returns TRUE if 'c' is a Farsi digit
+/// F_isdigit returns true if 'c' is a Farsi digit
 ///
 /// @param c The character to check.
 ///
-/// @return TRUE if 'c' is a Farsi digit.
-int F_isdigit(int c)
+/// @return true if 'c' is a Farsi digit.
+bool F_isdigit(int c)
 {
   return c >= FARSI_0 && c <= FARSI_9;
 }
 
-/// F_ischar returns TRUE if 'c' is a Farsi character.
+/// F_ischar returns true if 'c' is a Farsi character.
 ///
 /// @param c The character to check.
 ///
-/// @return TRUE if 'c' is a Farsi character.
-int F_ischar(int c)
+/// @return true if 'c' is a Farsi character.
+bool F_ischar(int c)
 {
   return c >= TEE_ && c <= YE_;
 }
