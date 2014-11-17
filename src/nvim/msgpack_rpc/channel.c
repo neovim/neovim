@@ -380,7 +380,7 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
     bool is_response = is_rpc_response(&unpacked.data);
     log_client_msg(channel->id, !is_response, unpacked.data);
 
-    if (kv_size(channel->call_stack) && is_response) {
+    if (is_response) {
       if (is_valid_rpc_response(&unpacked.data, channel)) {
         complete_call(&unpacked.data, channel);
       } else {
@@ -388,8 +388,8 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
         snprintf(buf,
                  sizeof(buf),
                  "Channel %" PRIu64 " returned a response that doesn't have "
-                 " a matching id for the current RPC call. Ensure the client "
-                 " is properly synchronized",
+                 "a matching request id. Ensure the client is properly "
+                 "synchronized",
                  channel->id);
         call_set_error(channel, buf);
       }
@@ -684,8 +684,8 @@ static bool is_valid_rpc_response(msgpack_object *obj, Channel *channel)
 {
   uint64_t response_id = obj->via.array.ptr[1].via.u64;
   // Must be equal to the frame at the stack's bottom
-  return response_id == kv_A(channel->call_stack,
-                             kv_size(channel->call_stack) - 1)->request_id;
+  return kv_size(channel->call_stack) && response_id
+    == kv_A(channel->call_stack, kv_size(channel->call_stack) - 1)->request_id;
 }
 
 static void complete_call(msgpack_object *obj, Channel *channel)
