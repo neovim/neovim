@@ -434,12 +434,8 @@ char_u *vim_strchr(char_u *string, int c)
     }
     return NULL;
   }
-  while ((b = *p) != NUL) {
-    if (b == c)
-      return p;
-    ++p;
-  }
-  return NULL;
+
+  return vim_strbyte(p, c);
 }
 
 /*
