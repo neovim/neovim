@@ -178,6 +178,8 @@ static char *e_nofunc = N_("E130: Unknown function: %s");
 static char *e_illvar = N_("E461: Illegal variable name: %s");
 static char *e_float_as_string = N_("E806: using Float as a String");
 
+static char_u * const empty_string = (char_u *)"";
+
 static dictitem_T globvars_var;                 /* variable used for g: */
 #define globvarht globvardict.dv_hashtab
 
@@ -4124,7 +4126,7 @@ eval7 (
          * get_func_tv, but it's needed in handle_subscript() to parse
          * what follows. So set it here. */
         if (rettv->v_type == VAR_UNKNOWN && !evaluate && **arg == '(') {
-          rettv->vval.v_string = (char_u *)"";
+          rettv->vval.v_string = empty_string;
           rettv->v_type = VAR_FUNC;
         }
 
@@ -13799,6 +13801,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
 
       if (!item_compare_func_err) {
         while (--i >= 0) {
+          assert(ptrs[i].item->li_next);
           li = ptrs[i].item->li_next;
           ptrs[i].item->li_next = li->li_next;
           if (li->li_next != NULL) {
@@ -16134,7 +16137,11 @@ void clear_tv(typval_T *varp)
     switch (varp->v_type) {
     case VAR_FUNC:
       func_unref(varp->vval.v_string);
-    /*FALLTHROUGH*/
+      if (varp->vval.v_string != empty_string) {
+        free(varp->vval.v_string);
+      }
+      varp->vval.v_string = NULL;
+      break;
     case VAR_STRING:
       free(varp->vval.v_string);
       varp->vval.v_string = NULL;
