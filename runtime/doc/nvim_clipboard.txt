@@ -6,42 +6,25 @@
 
 Clipboard integration for Nvim			       *nvim-clipboard*
 
-By default, Nvim has no connection to the system clipboard. Eventually that
-will be implemented by UI programs, which connect to Nvim via |msgpack-rpc|.
+Nvim has no connection to the system clipboard, instead it is accessible
+through the |nvim-provider| infrastructure which transparently uses shell
+commands for communicating with the clipboard.
 
-Even though externalized UIs are not available yet, there's a workaround that
-enables clipboard usage through the python interface(which also uses
-|msgpack-rpc| and consequently can implement the clipboard methods required
-by Nvim):
+To use clipboard on Nvim, make sure you have one of the following programs
+installed and available on $PATH:
 
-- Make sure you follow the setup instructions in |nvim-python-quickstart|.
-- Install the `xerox` python module:
-  >
-      $ pip install xerox
-<
-- Create a ~/.nvim/pythonx/nvim_clipboard.py file with the following contents:
-  >
-    import xerox
+- xclip
+- xsel(newer alternative to xclip)
+- pbcopy/pbpaste(already available on Mac OS X)
 
-    class NvimClipboard(object):
-        def __init__(self, vim):
-            self.provides = ['clipboard']
-
-        def clipboard_get(self):
-            return xerox.paste().split('\n')
-
-        def clipboard_set(self, lines):
-            xerox.copy(u'\n'.join([line.decode('utf-8') for line in lines]))
-<
-This should enable the '+' and '*' registers. As an optional step, set the
-'unnamedclip' option to transparently access clipboard using the unnamed
-register. If you use the same |vimrc| for both Vim and Nvim, make sure you
-only set the option when `has('nvim')` is true:
+Having any of these programs should enable the '+' and '*' registers. As an
+optional step, set the 'unnamedclip' option to transparently access clipboard
+using the unnamed register. If you use the same |vimrc| for both Vim and Nvim,
+make sure you only set the option when `has('nvim')` is true:
 >
     if has('nvim')
       set unnamedclip
     endif
 <
-
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:
