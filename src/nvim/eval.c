@@ -18496,8 +18496,10 @@ call_user_func (
     /* Set l:self to "selfdict".  Use "name" to avoid a warning from
      * some compiler that checks the destination size. */
     v = &fc->fixvar[fixvar_idx++].var;
+#ifndef __clang_analyzer__
     name = v->di_key;
     STRCPY(name, "self");
+#endif
     v->di_flags = DI_FLAGS_RO + DI_FLAGS_FIX;
     hash_add(&fc->l_vars.dv_hashtab, DI2HIKEY(v));
     v->di_tv.v_type = VAR_DICT;
@@ -18517,8 +18519,10 @@ call_user_func (
   /* Use "name" to avoid a warning from some compiler that checks the
    * destination size. */
   v = &fc->fixvar[fixvar_idx++].var;
+#ifndef __clang_analyzer__
   name = v->di_key;
   STRCPY(name, "000");
+#endif
   v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
   hash_add(&fc->l_avars.dv_hashtab, DI2HIKEY(v));
   v->di_tv.v_type = VAR_LIST;
