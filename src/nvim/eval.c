@@ -13545,13 +13545,12 @@ static bool item_compare_numeric;
 static char_u   *item_compare_func;
 static dict_T   *item_compare_selfdict;
 static int item_compare_func_err;
-static bool  item_compare_keep_zero;
 #define ITEM_COMPARE_FAIL 999
 
 /*
  * Compare functions for f_sort() and f_uniq() below.
  */
-static int item_compare(const void *s1, const void *s2)
+static int item_compare(const void *s1, const void *s2, bool keep_zero)
 {
   sortItem_T  *si1, *si2;
   char_u      *p1, *p2;
@@ -13604,7 +13603,7 @@ static int item_compare(const void *s1, const void *s2)
 
   // When the result would be zero, compare the item indexes.  Makes the
   // sort stable.
-  if (res == 0 && !item_compare_keep_zero) {
+  if (res == 0 && !keep_zero) {
     res = si1->idx > si2->idx ? 1 : -1;
   }
   
@@ -13613,7 +13612,17 @@ static int item_compare(const void *s1, const void *s2)
   return res;
 }
 
-static int item_compare2(const void *s1, const void *s2)
+static int item_compare_keeping_zero(const void *s1, const void *s2)
+{
+  return item_compare(s1, s2, true);
+}
+
+static int item_compare_not_keeping_zero(const void *s1, const void *s2)
+{
+  return item_compare(s1, s2, false);
+}
+
+static int item_compare2(const void *s1, const void *s2, bool keep_zero)
 {
   sortItem_T  *si1, *si2;
   int res;
@@ -13650,11 +13659,21 @@ static int item_compare2(const void *s1, const void *s2)
 
   // When the result would be zero, compare the pointers themselves.  Makes
   // the sort stable.
-  if (res == 0 && !item_compare_keep_zero) {
+  if (res == 0 && !keep_zero) {
     res = si1->idx > si2->idx ? 1 : -1;
   }
 
   return res;
+}
+
+static int item_compare2_keeping_zero(const void *s1, const void *s2)
+{
+  return item_compare2(s1, s2, true);
+}
+
+static int item_compare2_not_keeping_zero(const void *s1, const void *s2)
+{
+  return item_compare2(s1, s2, false);
 }
 
 /*
@@ -13737,15 +13756,16 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
       }
 
       item_compare_func_err = FALSE;
-      item_compare_keep_zero = false;
       // Test the compare function.
       if (item_compare_func != NULL
-          && item_compare2(&ptrs[0], &ptrs[1]) == ITEM_COMPARE_FAIL) {
+          && item_compare2_not_keeping_zero(&ptrs[0], &ptrs[1])
+             == ITEM_COMPARE_FAIL) {
         EMSG(_("E702: Sort compare function failed"));
       } else {
         // Sort the array with item pointers.
         qsort(ptrs, (size_t)len, sizeof (sortItem_T),
-              item_compare_func == NULL ? item_compare : item_compare2);
+              item_compare_func == NULL ? item_compare_not_keeping_zero :
+                                          item_compare2_not_keeping_zero);
 
         if (!item_compare_func_err) {
           // Clear the list and append the items in the sorted order.
@@ -13764,8 +13784,8 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
 
       // f_uniq(): ptrs will be a stack of items to remove.
       item_compare_func_err = FALSE;
-      item_compare_keep_zero = true;
-      item_compare_func_ptr = item_compare_func ? item_compare2 : item_compare;
+      item_compare_func_ptr = item_compare_func ? item_compare2_keeping_zero :
+                                                  item_compare_keeping_zero;
 
       for (li = l->lv_first; li != NULL && li->li_next != NULL; li = li->li_next) {
         if (item_compare_func_ptr(&li, &li->li_next) == 0) {
