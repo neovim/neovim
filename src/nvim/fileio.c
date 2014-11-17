@@ -5235,6 +5235,7 @@ static struct event_name {
   {"InsertCharPre",   EVENT_INSERTCHARPRE},
   {"JobActivity",     EVENT_JOBACTIVITY},
   {"MenuPopup",       EVENT_MENUPOPUP},
+  {"ProviderCall",    EVENT_PROVIDERCALL},
   {"QuickFixCmdPost", EVENT_QUICKFIXCMDPOST},
   {"QuickFixCmdPre",  EVENT_QUICKFIXCMDPRE},
   {"QuitPre",         EVENT_QUITPRE},
@@ -6509,6 +6510,7 @@ apply_autocmds_group (
   long save_cmdbang;
   static int filechangeshell_busy = FALSE;
   proftime_T wait_time;
+  struct caller_scope save_provider_caller_scope;
 
   /*
    * Quickly return if there are no autocommands for this event or
@@ -6627,20 +6629,11 @@ apply_autocmds_group (
     fname = vim_strsave(fname);         /* make a copy, so we can change it */
   } else {
     sfname = vim_strsave(fname);
-    /* Don't try expanding FileType, Syntax, FuncUndefined, WindowID,
-     * ColorScheme, QuickFixCmd or JobActivity */
-    if (event == EVENT_FILETYPE
-        || event == EVENT_SYNTAX
-        || event == EVENT_FUNCUNDEFINED
-        || event == EVENT_REMOTEREPLY
-        || event == EVENT_SPELLFILEMISSING
-        || event == EVENT_QUICKFIXCMDPRE
-        || event == EVENT_COLORSCHEME
-        || event == EVENT_QUICKFIXCMDPOST
-        || event == EVENT_JOBACTIVITY)
-      fname = vim_strsave(fname);
-    else
+    if (should_expand_filename(event)) {
       fname = FullName_save(fname, FALSE);
+    } else {
+      fname = vim_strsave(fname);
+    }
   }
   if (fname == NULL) {      /* out of memory */
     free(sfname);
@@ -6679,6 +6672,21 @@ apply_autocmds_group (
 
   /* Don't use local function variables, if called from a function */
   save_funccalp = save_funccal();
+
+  if (event == EVENT_PROVIDERCALL) {
+    save_provider_caller_scope = provider_caller_scope;
+    provider_caller_scope = (struct caller_scope) {
+      .SID = save_current_SID,
+      .sourcing_name = save_sourcing_name,
+      .autocmd_fname = save_autocmd_fname,
+      .autocmd_match = save_autocmd_match,
+      .sourcing_lnum = save_sourcing_lnum,
+      .autocmd_fname_full = save_autocmd_fname_full,
+      .autocmd_bufnr = save_autocmd_bufnr,
+      .funccalp = save_funccalp
+    };
+    provider_call_nesting++;
+  }
 
   /*
    * When starting to execute autocommands, save the search patterns.
@@ -6758,6 +6766,12 @@ apply_autocmds_group (
   autocmd_bufnr = save_autocmd_bufnr;
   autocmd_match = save_autocmd_match;
   current_SID = save_current_SID;
+
+  if (event == EVENT_PROVIDERCALL) {
+    provider_caller_scope = save_provider_caller_scope;
+    provider_call_nesting--;
+  }
+
   restore_funccal(save_funccalp);
   if (do_profiling == PROF_YES)
     prof_child_exit(&wait_time);
@@ -6960,20 +6974,21 @@ int has_autocmd(event_T event, char_u *sfname, buf_T *buf)
   char_u      *fname;
   char_u      *tail = path_tail(sfname);
   int retval = FALSE;
+  bool expand_fname = should_expand_filename(event);
 
-  fname = FullName_save(sfname, FALSE);
-  if (fname == NULL)
-    return FALSE;
+  if (expand_fname) {
+    fname = FullName_save(sfname, FALSE);
+    if (fname == NULL)
+      return false;
 
 #ifdef BACKSLASH_IN_FILENAME
-  /*
-   * Replace all backslashes with forward slashes.  This makes the
-   * autocommand patterns portable between Unix and MS-DOS.
-   */
-  sfname = vim_strsave(sfname);
-  forward_slash(sfname);
-  forward_slash(fname);
+    // Replace all backslashes with forward slashes.  This makes the
+    // autocommand patterns portable between Unix and MS-DOS.
+    sfname = vim_strsave(sfname);
+    forward_slash(sfname);
+    forward_slash(fname);
 #endif
+  }
 
   for (ap = first_autopat[(int)event]; ap != NULL; ap = ap->next)
     if (ap->pat != NULL && ap->cmds != NULL
@@ -6986,7 +7001,10 @@ int has_autocmd(event_T event, char_u *sfname, buf_T *buf)
       break;
     }
 
-  free(fname);
+  if (expand_fname) {
+    free(fname);
+  }
+
 #ifdef BACKSLASH_IN_FILENAME
   free(sfname);
 #endif
@@ -7488,3 +7506,17 @@ long write_eintr(int fd, void *buf, size_t bufsize)
   return ret;
 }
 #endif
+
+static bool should_expand_filename(event_T event)
+{
+  return (event != EVENT_FILETYPE
+       && event != EVENT_SYNTAX
+       && event != EVENT_FUNCUNDEFINED
+       && event != EVENT_REMOTEREPLY
+       && event != EVENT_SPELLFILEMISSING
+       && event != EVENT_QUICKFIXCMDPRE
+       && event != EVENT_COLORSCHEME
+       && event != EVENT_QUICKFIXCMDPOST
+       && event != EVENT_JOBACTIVITY
+       && event != EVENT_PROVIDERCALL);
+}

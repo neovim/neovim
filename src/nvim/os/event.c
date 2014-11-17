@@ -11,7 +11,6 @@
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/msgpack_rpc/helpers.h"
-#include "nvim/os/provider.h"
 #include "nvim/os/signal.h"
 #include "nvim/os/rstream.h"
 #include "nvim/os/wstream.h"
@@ -62,8 +61,6 @@ void event_init(void)
   // finish mspgack-rpc initialization
   channel_init();
   server_init();
-  // Providers
-  provider_init();
 }
 
 void event_teardown(void)

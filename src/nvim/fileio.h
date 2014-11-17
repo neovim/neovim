@@ -65,6 +65,7 @@ typedef enum auto_event {
   EVENT_INSERTLEAVE,            /* when leaving Insert mode */
   EVENT_JOBACTIVITY,            /* when job sent some data */
   EVENT_MENUPOPUP,              /* just before popup menu is displayed */
+  EVENT_PROVIDERCALL,           /* when a provider is called */
   EVENT_QUICKFIXCMDPOST,        /* after :make, :grep etc. */
   EVENT_QUICKFIXCMDPRE,         /* before :make, :grep etc. */
   EVENT_QUITPRE,                /* before :quit */

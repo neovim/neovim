@@ -89,7 +89,6 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
 #include "nvim/os/dl.h"
-#include "nvim/os/provider.h"
 #include "nvim/os/event.h"
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
@@ -427,7 +426,9 @@ static struct vimvar {
   {VV_NAME("windowid",         VAR_NUMBER), VV_RO},
   {VV_NAME("progpath",         VAR_STRING), VV_RO},
   {VV_NAME("job_data",         VAR_LIST), 0},
-  {VV_NAME("command_output",   VAR_STRING), 0}
+  {VV_NAME("command_output",   VAR_STRING), 0},
+  {VV_NAME("provider_args",    VAR_UNKNOWN), 0},
+  {VV_NAME("provider_result",  VAR_UNKNOWN), 0}
 };
 
 /* shorthand */
@@ -5152,7 +5153,7 @@ void list_append_string(list_T *l, char_u *str, int len)
 /*
  * Append "n" to list "l".
  */
-static void list_append_number(list_T *l, varnumber_T n)
+void list_append_number(list_T *l, varnumber_T n)
 {
   listitem_T *li = listitem_alloc();
   li->li_tv.v_type = VAR_NUMBER;
@@ -9987,7 +9988,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     }
   }
 
-  if (n == FALSE && provider_has_feature((char *)name)) {
+  if (n == FALSE && eval_has_provider((char *)name)) {
     n = TRUE;
   }
 
@@ -12540,11 +12541,51 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv)
     ADD(args, vim_to_object(tv));
   }
 
+  scid_T save_current_SID;
+  uint8_t *save_sourcing_name, *save_autocmd_fname, *save_autocmd_match;
+  linenr_T save_sourcing_lnum;
+  int save_autocmd_fname_full, save_autocmd_bufnr;
+  void *save_funccalp;
+
+  if (provider_call_nesting) {
+    // If this is called from a ProviderCall autocommand, restore the scope
+    // information of the caller.
+    save_current_SID = current_SID;
+    save_sourcing_name = sourcing_name;
+    save_autocmd_fname = autocmd_fname;
+    save_autocmd_match = autocmd_match;
+    save_sourcing_lnum = sourcing_lnum;
+    save_autocmd_fname_full = autocmd_fname_full;
+    save_autocmd_bufnr = autocmd_bufnr;
+    save_funccalp = save_funccal();
+    //
+    current_SID = provider_caller_scope.SID;
+    sourcing_name = provider_caller_scope.sourcing_name;
+    autocmd_fname = provider_caller_scope.autocmd_fname;
+    autocmd_match = provider_caller_scope.autocmd_match;
+    sourcing_lnum = provider_caller_scope.sourcing_lnum;
+    autocmd_fname_full = provider_caller_scope.autocmd_fname_full;
+    autocmd_bufnr = provider_caller_scope.autocmd_bufnr;
+    restore_funccal(provider_caller_scope.funccalp);
+  }
+
   Error err = ERROR_INIT;
   Object result = channel_send_call((uint64_t)argvars[0].vval.v_number,
                                     (char *)argvars[1].vval.v_string,
                                     args,
                                     &err);
+
+  if (provider_call_nesting) {
+    current_SID = save_current_SID;
+    sourcing_name = save_sourcing_name;
+    autocmd_fname = save_autocmd_fname;
+    autocmd_match = save_autocmd_match;
+    sourcing_lnum = save_sourcing_lnum;
+    autocmd_fname_full = save_autocmd_fname_full;
+    autocmd_bufnr = save_autocmd_bufnr;
+    restore_funccal(save_funccalp);
+  }
+
   if (err.set) {
     vim_report_error(cstr_as_string(err.msg));
     goto end;
@@ -16580,7 +16621,7 @@ set_var (
     if (var_check_ro(v->di_flags, name)
         || tv_check_lock(v->di_tv.v_lock, name))
       return;
-    if (v->di_tv.v_type != tv->v_type
+    if (v->di_tv.v_type != VAR_UNKNOWN && v->di_tv.v_type != tv->v_type
         && !((v->di_tv.v_type == VAR_STRING
               || v->di_tv.v_type == VAR_NUMBER)
              && (tv->v_type == VAR_STRING
@@ -16599,7 +16640,10 @@ set_var (
      * the type.
      */
     if (ht == &vimvarht) {
-      if (v->di_tv.v_type == VAR_STRING) {
+      if (v->di_tv.v_type == VAR_UNKNOWN) {
+        // Allow setting variables of unknown type
+        copy_tv(tv, &v->di_tv);
+      } else if (v->di_tv.v_type == VAR_STRING) {
         free(v->di_tv.vval.v_string);
         if (copy || tv->v_type != VAR_STRING)
           v->di_tv.vval.v_string = vim_strsave(get_tv_string(tv));
@@ -19673,20 +19717,93 @@ static void apply_job_autocmds(int id, char *name, char *type,
 
 static void script_host_eval(char *method, typval_T *argvars, typval_T *rettv)
 {
-  Array args = ARRAY_DICT_INIT;
-  ADD(args, vim_to_object(argvars));
-  Object result = provider_call(method, args);
-
-  if (result.type == kObjectTypeNil) {
+  if (check_restricted() || check_secure()) {
     return;
   }
 
-  Error err = ERROR_INIT;
-
-  if (!object_to_vim(result, rettv, &err)){
-    EMSG("Error converting value back to vim");
+  if (argvars[0].v_type != VAR_STRING) {
+    EMSG(_(e_invarg));
   }
 
-  api_free_object(result);
+  list_T *args = list_alloc();
+  list_append_string(args, argvars[0].vval.v_string, -1);
+  *rettv = eval_call_provider(method, args);
+}
+
+typval_T eval_call_provider(char *method, list_T *args)
+{
+  if (!has_provider_method(method)) {
+    EMSG2(_("No provider for method \"%s\""), method);
+    return (typval_T) {.v_type = VAR_UNKNOWN};
+  }
+
+  typval_T dummy, rv;
+  // enable v:provider_args/v:provider_result(make visible to userland)
+  prepare_vimvar(VV_PROVIDER_ARGS, &dummy);
+  prepare_vimvar(VV_PROVIDER_RESULT, &dummy);
+  // set v:provider_args with the argument list
+  vimvars[VV_PROVIDER_ARGS].vv_type = VAR_LIST;
+  vimvars[VV_PROVIDER_ARGS].vv_list = args;
+  args->lv_refcount++;
+  // run the autocommands
+  apply_autocmds(EVENT_PROVIDERCALL, (uint8_t *)method, NULL, TRUE, NULL);
+  args->lv_refcount--;
+  // get the result
+  rv = vimvars[VV_PROVIDER_RESULT].vv_tv;
+  // disable v:provider_args/v:provider_result
+  restore_vimvar(VV_PROVIDER_ARGS, &dummy);
+  restore_vimvar(VV_PROVIDER_RESULT, &dummy);
+  return rv;
+}
+
+bool eval_has_provider(char *name)
+{
+#define provider_exists(method) \
+  has_autocmd(EVENT_PROVIDERCALL, (uint8_t *)method, NULL)
+
+#define source_provider(name) \
+  do_source((uint8_t *)"$VIMRUNTIME/provider/" name "/init.vim", \
+                       false, \
+                       false)
+
+  // Cache the result of "has" in these static variables
+  static int has_clipboard = -1, has_python = -1;
+
+  if (!strcmp(name, "clipboard")) {
+
+    if (has_clipboard == -1) {
+      source_provider("clipboard");
+      has_clipboard = provider_exists("clipboard_get")
+                   && provider_exists("clipboard_get");
+    }
+    return has_clipboard;
+
+  } else if (!strcmp(name, "python")) {
+
+    if (has_python == -1) {
+      source_provider("python");
+      has_python = provider_exists("python_execute")
+                && provider_exists("python_execute_file")
+                && provider_exists("python_do_range")
+                && provider_exists("python_eval");
+    }
+    return has_python;
+
+  }
+  return false;
+}
+
+static bool has_provider_method(char *name)
+{
+#define matches(_method, _provider) \
+  (!strncmp(_method, _provider, sizeof(_provider) - 1))
+
+  if (matches(name, "clipboard_")) {
+    return eval_has_provider("clipboard");
+  } else if (matches(name, "python_")) {
+    return eval_has_provider("python");
+  }
+
+  return false;
 }
 
