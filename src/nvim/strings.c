@@ -443,7 +443,7 @@ char_u *vim_strchr(char_u *string, int c) FUNC_ATTR_NONNULL_ARG(1)
  * strings with characters above 128 correctly. It also doesn't return a
  * pointer to the NUL at the end of the string.
  */
-char_u *vim_strbyte(char_u *string, int c)
+char_u *vim_strbyte(char_u *string, int c) FUNC_ATTR_NONNULL_ARG(1)
 {
   char_u      *p = string;
 
