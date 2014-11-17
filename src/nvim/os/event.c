@@ -18,7 +18,7 @@
 #include "nvim/os/job.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
-#include "nvim/misc2.h"
+#include "nvim/fundamental.h"
 
 #include "nvim/lib/klist.h"
 

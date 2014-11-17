@@ -30,7 +30,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/misc1.h"
-#include "nvim/misc2.h"
+#include "nvim/fundamental.h"
 #include "nvim/popupmnu.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"

@@ -38,7 +38,7 @@
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"
 #include "nvim/message.h"
-#include "nvim/misc2.h"
+#include "nvim/fundamental.h"
 #include "nvim/garray.h"
 #include "nvim/keymap.h"
 #include "nvim/memory.h"
