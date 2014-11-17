@@ -18809,7 +18809,9 @@ free_funccal (
  */
 static void add_nr_var(dict_T *dp, dictitem_T *v, char *name, varnumber_T nr)
 {
+#ifndef __clang_analyzer__
   STRCPY(v->di_key, name);
+#endif
   v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
   hash_add(&dp->dv_hashtab, DI2HIKEY(v));
   v->di_tv.v_type = VAR_NUMBER;
