@@ -73,7 +73,6 @@ set(CONV_SOURCES
   popupmnu.c
   quickfix.c
   regexp.c
-  regexp_nfa.c
   screen.c
   search.c
   sha256.c
