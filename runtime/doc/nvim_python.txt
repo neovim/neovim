@@ -27,13 +27,6 @@ simple step-by-step:
   >
       $ pip install neovim
 <
-- Add the following snippet to your `vimrc`, before any python plugins are
-  loaded:
->
-  if has('nvim')
-    runtime! python_setup.vim
-  endif
-<
 Most python plugins created for Vim 7.3 should work after these steps.
 
 ==============================================================================

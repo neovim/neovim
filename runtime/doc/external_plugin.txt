@@ -1,0 +1,104 @@
+*external_plugin.txt*    For Nvim.					 {Nvim}
+
+
+		 NVIM REFERENCE MANUAL    by Thiago de Arruda
+
+
+Nvim support for external plugins 		  *external-plugin*
+
+1. Introduction			|external-plugin-intro|
+2. Plugin Hosts			|external-plugin-hosts|
+3. Example			|external-plugin-example|
+
+==============================================================================
+1. Introduction					    *external-plugin-intro*
+
+A big Nvim goal is to allow extensibility in arbitrary programming languages
+without requiring direct support from the editor. This is achieved with
+external plugins, coprocesses that have a direct communication channel(via
+|msgpack-rpc|) with the Nvim process.
+
+Even though these plugins are running in separate processes, they can call, be
+called, and receive events just as if the code was being executed in the main
+process.
+
+==============================================================================
+2. Plugin Hosts					    *external-plugin-hosts*
+
+While plugins can be implemented as arbitrary programs that communicate
+directly with Nvim API and are called via |rpcrequest()| and |rpcnotify()|,
+that is not the best approach available. Instead, developers should first
+check if a plugin host implementation is available for their favorite
+programming language.
+
+Plugin hosts are programs that provide a high level environment for plugins,
+and also take care of most boilerplate involved in defining commands, autocmds
+and functions that are implemented over msgpack-rpc connections. They are
+loaded the first time one of it's registered plugins are required, keeping
+Nvim startup as fast a possible despite the number of installed plugins/hosts.
+
+==============================================================================
+3. Example					    *external-plugin-example*
+
+The best way to learn how to create external plugins is with an example, so
+let's see how to implement a very useless python plugin that exports a
+command, a function and an autocmd(requires configuration detailed in
+|nvim-python| to work).
+
+The plugin is called 'Limit', and all it does is limit the number of "calls"
+made to it. Here's the plugin source code:
+>
+    import neovim
+
+    @neovim.plugin
+    class Limit(object):
+        def __init__(self, vim):
+            self.vim = vim
+            self.calls = 0
+    
+        @neovim.command('Cmd', range='', nargs='*', sync=True)
+        def command_handler(self, args, range):
+            self._increment_calls()
+            self.vim.current.line = (
+                'Command: Called %d times, args: %s, range: %s' % (self.calls,
+                                                                   args,
+                                                                   range))
+    
+        @neovim.autocmd('BufEnter', pattern='*.py', eval='expand("<afile>")',
+                        sync=True)
+        def autocmd_handler(self, filename):
+            self._increment_calls()
+            self.vim.current.line = (
+                'Autocmd: Called %s times, file: %s' % (self.calls, filename))
+    
+        @neovim.function('Func')
+        def function_handler(self, args):
+            self._increment_calls()
+            self.vim.current.line = (
+                'Function: Called %d times, args: %s' % (self.calls, args))
+    
+        def _increment_calls(self):
+            if self.calls == 5:
+                raise Exception('Too many calls!')
+            self.calls += 1
+<
+
+This code needs to be saved to "external/python/limit.py" in a runtime
+directory(~/.nvim/plugin/external/python/limit.py for example).
+
+As can be seen, the plugin is implemented using pure python idioms(classes,
+methods and decorators). It is the host's responsibility to translate
+language-specific idioms to vimscript entities. Notice that the exported
+command and autocmd are defined with the "sync" flag, which tells Nvim to call
+it using |rpcrequest()|. Since the "Func" doesn't set "sync", it will be
+called using |rpcnotify()|.
+
+Just installing the plugin to ~/.nvim/plugin/external/python/limit.py won't
+make Nvim load it at startup. That is because external plugins are loaded
+only when required, and for that Nvim must be fed with information about
+installed external plugins with the `:UpdateExternalPlugins` command(must be
+called whenever plugins are updated, this is analogous to the |:helptags|
+command but for external plugins).
+
+==============================================================================
+ vim:tw=78:ts=8:noet:ft=help:norl:
