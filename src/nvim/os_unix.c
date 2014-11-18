@@ -569,9 +569,8 @@ void mch_settmode(int tmode)
 {
   static int first = TRUE;
 
-  /* Why is NeXT excluded here (and not in os_unixx.h)? */
 #if defined(ECHOE) && defined(ICANON) && (defined(HAVE_TERMIO_H) || \
-  defined(HAVE_TERMIOS_H)) && !defined(__NeXT__)
+  defined(HAVE_TERMIOS_H))
   /*
    * for "new" tty systems
    */
@@ -667,9 +666,8 @@ void get_stty(void)
   char_u buf[2];
   char_u  *p;
 
-  /* Why is NeXT excluded here (and not in os_unixx.h)? */
 #if defined(ECHOE) && defined(ICANON) && (defined(HAVE_TERMIO_H) || \
-  defined(HAVE_TERMIOS_H)) && !defined(__NeXT__)
+  defined(HAVE_TERMIOS_H))
   /* for "new" tty systems */
 # ifdef HAVE_TERMIOS_H
   struct termios keys;
