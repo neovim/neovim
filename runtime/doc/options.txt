@@ -861,7 +861,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	putting a ":gui" command in the .gvimrc file, before where the value
 	of 'background' is used (e.g., before ":syntax on").
 
-	For MS-DOS, Windows and OS/2 the default is "dark".
+	For MS-DOS and Windows the default is "dark".
 	For other systems "dark" is used when 'term' is "linux",
 	"screen.linux", "cygwin" or "putty", or $COLORFGBG suggests a dark
 	background.  Otherwise the default is "light".
@@ -1689,7 +1689,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'esckeys'	+ off		no <Esc>-keys in Insert mode
 	'expandtab'	  off		tabs not expanded to spaces
 	'fileformats'	+ ""		no automatic file format detection,
-			  "dos,unix"	except for DOS, Windows and OS/2
+			  "dos,unix"	except for DOS and Windows
 	'formatoptions'	+ "vt"		Vi compatible formatting
 	'gdefault'	  off		no default 'g' flag for ":s"
 	'history'	+ 0		no commandline history
@@ -2873,7 +2873,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	is read.
 
 					*'fileformat'* *'ff'*
-'fileformat' 'ff'	string (MS-DOS, MS-Windows, OS/2 default: "dos",
+'fileformat' 'ff'	string (MS-DOS and MS-Windows default: "dos",
 				Unix default: "unix",
 				Macintosh default: "mac")
 			local to buffer
@@ -2896,7 +2896,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 					*'fileformats'* *'ffs'*
 'fileformats' 'ffs'	string (default:
-				Vim+Vi	MS-DOS, MS-Windows OS/2: "dos,unix",
+				Vim+Vi	MS-DOS and MS-Windows: "dos,unix",
 				Vim	Unix: "unix,dos",
 				Vim	Mac: "mac,unix,dos",
 				Vi	Cygwin: "unix,dos",
@@ -4292,7 +4292,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	NOTE: This option is reset when 'compatible' is set.
 
 						*'isfname'* *'isf'*
-'isfname' 'isf'		string	(default for MS-DOS, Win32 and OS/2:
+'isfname' 'isf'		string	(default for MS-DOS and Win32:
 			     "@,48-57,/,\,.,-,_,+,,,#,$,%,{,},[,],:,@-@,!,~,="
 			    for AMIGA: "@,48-57,/,.,-,_,+,,,$,:"
 			    for VMS: "@,48-57,/,.,-,_,+,,,#,$,%,<,>,[,],:,;,~"
@@ -4347,7 +4347,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See |option-backslash| about including spaces and backslashes.
 
 						*'isident'* *'isi'*
-'isident' 'isi'		string	(default for MS-DOS, Win32 and OS/2:
+'isident' 'isi'		string	(default for MS-DOS and Win32:
 					   "@,48-57,_,128-167,224-235"
 				otherwise: "@,48-57,_,192-255")
 			global
@@ -4380,7 +4380,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	set and to the Vim default value when 'compatible' is reset.
 
 						*'isprint'* *'isp'*
-'isprint' 'isp'	string	(default for MS-DOS, Win32, OS/2 and Macintosh:
+'isprint' 'isp'	string	(default for MS-DOS, Win32, and Macintosh:
 				"@,~-255"; otherwise: "@,161-255")
 			global
 			{not in Vi}
@@ -4466,7 +4466,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 					*'keywordprg'* *'kp'*
 'keywordprg' 'kp'	string	(default "man" or "man -s",  DOS: ":help",
-						OS/2: "view /", VMS: "help")
+						VMS: "help")
 			global or local to buffer |global-local|
 			{not in Vi}
 	Program to use for the |K| command.  Environment variables are
@@ -5232,7 +5232,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'opendevice' 'odev'	boolean	(default off)
 			global
 			{not in Vi}
-			{only for MS-DOS, MS-Windows and OS/2}
+			{only for MS-DOS and MS-Windows}
 	Enable reading and writing from devices.  This may get Vim stuck on a
 	device that can be opened but doesn't actually do the I/O.  Therefore
 	it is off by default.
@@ -5363,7 +5363,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 				*'path'* *'pa'* *E343* *E345* *E347* *E854*
 'path' 'pa'		string	(default on Unix: ".,/usr/include,,"
-				   on OS/2:	  ".,/emx/include,,"
 				   other systems: ".,,")
 			global or local to buffer |global-local|
 			{not in Vi}
@@ -5740,11 +5739,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						$VIMRUNTIME,
 						$VIM/vimfiles/after,
 						home:vimfiles/after"
-					PC, OS/2: "$HOME/vimfiles,
-						$VIM/vimfiles,
-						$VIMRUNTIME,
-						$VIM/vimfiles/after,
-						$HOME/vimfiles/after"
 					Macintosh: "$VIM:vimfiles,
 						$VIMRUNTIME,
 						$VIM:vimfiles:after"
@@ -6001,7 +5995,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'shell'* *'sh'* *E91*
 'shell' 'sh'		string	(default $SHELL or "sh",
 					MS-DOS and Win32: "command.com" or
-					"cmd.exe", OS/2: "cmd")
+					"cmd.exe")
 			global
 	Name of the shell to use for ! and :! commands.  When changing the
 	value also check these options: 'shellpipe', 'shellslash'
@@ -6039,8 +6033,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Flag passed to the shell to execute "!" and ":!" commands; e.g.,
 	"bash.exe -c ls" or "command.com /c dir".  For the MS-DOS-like
 	systems, the default is set according to the value of 'shell', to
-	reduce the need to set this option by the user.  It's not used for
-	OS/2 (EMX figures this out itself).
+	reduce the need to set this option by the user.
 	On Unix it can have more than one flag.  Each white space separated
 	part is passed as an argument to the shell command.
 	See |option-backslash| about including spaces and backslashes.
@@ -6129,7 +6122,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			*'shellslash'* *'ssl'* *'noshellslash'* *'nossl'*
 'shellslash' 'ssl'	boolean	(default off)
 			global
-			{not in Vi} {only for MSDOS, MS-Windows and OS/2}
+			{not in Vi} {only for MSDOS and MS-Windows}
 	When set, a forward slash is used when expanding file names.  This is
 	useful when a Unix-like shell is used instead of command.com or
 	cmd.exe.  Backward slashes can still be typed, but they are changed to
@@ -7136,7 +7129,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 					 on BeOS: "beos-ansi"
 					  on Mac: "mac-ansi"
 				       on MS-DOS: "pcterm"
-					 on OS/2: "os2ansi"
 					 on Unix: "ansi"
 					  on VMS: "ansi"
 				       on Win 32: "win32")
@@ -7577,7 +7569,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'undolevels'* *'ul'*
 'undolevels' 'ul'	number	(default 100, 1000 for Unix, VMS,
-						Win32 and OS/2)
+						and Win32)
 			global or local to buffer |global-local|
 			{not in Vi}
 	Maximum number of changes that can be undone.  Since undo information
@@ -7679,7 +7671,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	displayed when 'verbosefile' is set.
 
 						*'viewdir'* *'vdir'*
-'viewdir' 'vdir'	string	(default for Amiga, MS-DOS, OS/2 and Win32:
+'viewdir' 'vdir'	string	(default for Amiga, MS-DOS, and Win32:
 							 "$VIM/vimfiles/view",
 				 for Unix: "~/.vim/view",
 				 for Macintosh: "$VIM:vimfiles:view"
@@ -7718,7 +7710,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 				*'viminfo'* *'vi'* *E526* *E527* *E528*
 'viminfo' 'vi'		string	(Vi default: "", Vim default for MS-DOS,
-				   Windows and OS/2: '100,<50,s10,h,rA:,rB:,
+				   Windows: '100,<50,s10,h,rA:,rB:,
 				   for Amiga: '100,<50,s10,h,rdf0:,rdf1:,rdf2:
 				   for others: '100,<50,s10,h)
 			global

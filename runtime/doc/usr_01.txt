@@ -71,7 +71,7 @@ you are using:
 
 Unix: >
 	:!cp -i $VIMRUNTIME/vimrc_example.vim ~/.vimrc
-MS-DOS, MS-Windows, OS/2: >
+MS-DOS, MS-Windows: >
 	:!copy $VIMRUNTIME/vimrc_example.vim $VIM/_vimrc
 Amiga: >
 	:!copy $VIMRUNTIME/vimrc_example.vim $VIM/.vimrc

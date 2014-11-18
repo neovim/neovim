@@ -502,8 +502,8 @@ The 'fileformat' option sets the <EOL> style for a file:
   "mac"		<CR>		   Mac format		*Mac-format*
 
 When reading a file, the mentioned characters are interpreted as the <EOL>.
-In DOS format (default for MS-DOS, OS/2 and Win32), <CR><NL> and <NL> are both
-interpreted as the <EOL>.  Note that when writing the file in DOS format,
+In DOS format (default for MS-DOS and Win32), <CR><NL> and <NL> are both
+interpreted as the <EOL>. Note that when writing the file in DOS format,
 <CR> characters will be added for each single <NL>.  Also see |file-read|.
 
 When writing a file, the mentioned characters are used for <EOL>.  For DOS
@@ -1011,11 +1011,11 @@ lost the original file.
 
 						*DOS-format-write*
 If the 'fileformat' is "dos", <CR> <NL> is used for <EOL>.  This is default
-for MS-DOS, Win32 and OS/2.  On other systems the message "[dos format]" is
-shown to remind you that an unusual <EOL> was used.
+for MS-DOS and Win32. On other systems the message "[dos format]" is shown to
+remind you that an unusual <EOL> was used.
 						*Unix-format-write*
-If the 'fileformat' is "unix", <NL> is used for <EOL>.  On MS-DOS, Win32 and
-OS/2 the message "[unix format]" is shown.
+If the 'fileformat' is "unix", <NL> is used for <EOL>.  On MS-DOS and Win32
+the message "[unix format]" is shown.
 						*Mac-format-write*
 If the 'fileformat' is "mac", <CR> is used for <EOL>.  On non-Mac systems the
 message "[mac format]" is shown.

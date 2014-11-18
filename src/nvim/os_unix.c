@@ -1,6 +1,5 @@
 /*
  * VIM - Vi IMproved	by Bram Moolenaar
- *	      OS/2 port by Paul Slootman
  *	      VMS merge by Zoltan Arpadffy
  *
  * Do ":help uganda"  in Vim to read copying and usage conditions.
