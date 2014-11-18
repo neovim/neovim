@@ -43,7 +43,6 @@ set(CONV_SOURCES
   buffer.c
   charset.c
   diff.c
-  digraph.c
   edit.c
   eval.c
   ex_cmds2.c
