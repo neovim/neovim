@@ -12523,6 +12523,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv)
 {
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
+  const int l_provider_call_nesting = provider_call_nesting;
 
   if (check_restricted() || check_secure()) {
     return;
@@ -12550,7 +12551,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv)
   int save_autocmd_fname_full, save_autocmd_bufnr;
   void *save_funccalp;
 
-  if (provider_call_nesting) {
+  if (l_provider_call_nesting) {
     // If this is called from a provider function, restore the scope
     // information of the caller.
     save_current_SID = current_SID;
@@ -12579,7 +12580,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv)
                                     args,
                                     &err);
 
-  if (provider_call_nesting) {
+  if (l_provider_call_nesting) {
     current_SID = save_current_SID;
     sourcing_name = save_sourcing_name;
     sourcing_lnum = save_sourcing_lnum;
