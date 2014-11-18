@@ -1,5 +1,5 @@
-cmake_minimum_required (VERSION 2.8.7)
-project (NEOVIM)
+cmake_minimum_required(VERSION 2.8.7)
+project(NEOVIM)
 
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
@@ -66,6 +66,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Default to -O2 on release builds.
 string(REPLACE "-O3" "-O2" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+
+# Enable -Wconversion.
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wconversion")
 
 # gcc 4.0 and better turn on _FORTIFY_SOURCE=2 automatically.  This currently
 # does not work with Neovim due to some uses of dynamically-sized structures.
