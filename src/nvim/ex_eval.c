@@ -11,6 +11,7 @@
  */
 #include <assert.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <inttypes.h>
 
 #include "nvim/vim.h"
@@ -1307,7 +1308,7 @@ void ex_catch(exarg_T *eap)
   int skip = FALSE;
   int caught = FALSE;
   char_u      *end;
-  int save_char = 0;
+  char_u save_char = 0;
   char_u      *save_cpo;
   regmatch_T regmatch;
   int prev_got_int;
@@ -1530,7 +1531,8 @@ void ex_finally(exarg_T *eap)
           pending |= did_throw ? CSTP_THROW : 0;
         pending |= did_emsg  ? CSTP_ERROR     : 0;
         pending |= got_int   ? CSTP_INTERRUPT : 0;
-        cstack->cs_pending[cstack->cs_idx] = pending;
+        assert(pending >= CHAR_MIN && pending <= CHAR_MAX);
+        cstack->cs_pending[cstack->cs_idx] = (char)pending;
 
         /* It's mandatory that the current exception is stored in the
          * cstack so that it can be rethrown at the ":endtry" or be

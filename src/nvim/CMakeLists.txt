@@ -48,7 +48,6 @@ set(CONV_SOURCES
   ex_cmds2.c
   ex_cmds.c
   ex_docmd.c
-  ex_eval.c
   ex_getln.c
   farsi.c
   fileio.c
