@@ -7135,7 +7135,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 					on Amiga: "amiga"
 					 on BeOS: "beos-ansi"
 					  on Mac: "mac-ansi"
-					 on MiNT: "vt52"
 				       on MS-DOS: "pcterm"
 					 on OS/2: "os2ansi"
 					 on Unix: "ansi"

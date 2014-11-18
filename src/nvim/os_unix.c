@@ -10,7 +10,7 @@
 
 /*
  * os_unix.c -- code for all flavors of Unix (BSD, SYSV, SVR4, POSIX, ...)
- *	     Also for BeOS and Atari MiNT.
+ *	     Also for BeOS
  *
  * A lot of this file was originally written by Juergen Weigert and later
  * changed beyond recognition.
@@ -598,9 +598,8 @@ void mch_settmode(int tmode)
      */
     tnew.c_iflag &= ~ICRNL;
     tnew.c_lflag &= ~(ICANON | ECHO | ISIG | ECHOE
-# if defined(IEXTEN) && !defined(__MINT__)
+# if defined(IEXTEN)
                       | IEXTEN      /* IEXTEN enables typing ^V on SOLARIS */
-                                    /* but it breaks function keys on MINT */
 # endif
                       );
 # ifdef ONLCR       /* don't map NL -> CR NL, we do it ourselves */

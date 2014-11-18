@@ -639,7 +639,7 @@ static struct builtin_term builtin_termcaps[] =
   {K_BS,              "\x7f"},          /* for some reason 0177 doesn't work */
 # endif
 
-# if defined(ALL_BUILTIN_TCAPS) || defined(__MINT__)
+# if defined(ALL_BUILTIN_TCAPS)
   /*
    * Ordinary vt52
    */
@@ -998,7 +998,7 @@ static struct builtin_term builtin_termcaps[] =
 
 
 
-#if defined(UNIX) && !defined(__MINT__)
+#if defined(UNIX)
 # define DEFAULT_TERM   (char_u *)"ansi"
 #endif
 
