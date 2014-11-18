@@ -1430,7 +1430,7 @@ static int check_prevcol(char_u *linep, int col, int ch, int *prevcol)
  * NULL
  */
 
-pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int maxtravel)
+pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
 {
   static pos_T pos;                     /* current search position */
   int findc = 0;                        /* matching brace */

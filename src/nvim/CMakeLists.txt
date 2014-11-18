@@ -56,7 +56,6 @@ set(CONV_SOURCES
   hardcopy.c
   if_cscope.c
   indent.c
-  indent_c.c
   keymap.c
   main.c
   mark.c
