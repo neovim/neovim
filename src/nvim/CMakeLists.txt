@@ -51,7 +51,6 @@ set(CONV_SOURCES
   ex_getln.c
   farsi.c
   fileio.c
-  file_search.c
   fold.c
   getchar.c
   hardcopy.c

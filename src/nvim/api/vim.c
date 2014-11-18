@@ -207,12 +207,11 @@ ArrayOf(String) vim_list_runtime_paths(void)
     rv.items[i].type = kObjectTypeString;
     rv.items[i].data.string.data = xmalloc(MAXPATHL);
     // Copy the path from 'runtimepath' to rv.items[i]
-    int length = copy_option_part(&rtp,
-                                 (char_u *)rv.items[i].data.string.data,
-                                 MAXPATHL,
-                                 ",");
-    assert(length >= 0);
-    rv.items[i].data.string.size = (size_t)length;
+    size_t length = copy_option_part(&rtp,
+                                     (char_u *)rv.items[i].data.string.data,
+                                     MAXPATHL,
+                                     ",");
+    rv.items[i].data.string.size = length;
   }
 
   return rv;

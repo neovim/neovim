@@ -167,9 +167,9 @@ int csh_like_shell(void)
  * "*option" is advanced to the next part.
  * The length is returned.
  */
-int copy_option_part(char_u **option, char_u *buf, int maxlen, char *sep_chars)
+size_t copy_option_part(char_u **option, char_u *buf, size_t maxlen, char *sep_chars)
 {
-  int len = 0;
+  size_t len = 0;
   char_u  *p = *option;
 
   /* skip '.' at start of option part, for 'suffixes' */
