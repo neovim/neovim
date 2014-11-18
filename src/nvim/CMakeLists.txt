@@ -42,7 +42,6 @@ list(REMOVE_ITEM NEOVIM_SOURCES ${to_remove})
 set(CONV_SOURCES
   buffer.c
   charset.c
-  cursor_shape.c
   diff.c
   digraph.c
   edit.c
