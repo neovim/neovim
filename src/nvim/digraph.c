@@ -1813,10 +1813,10 @@ void ex_loadkeymap(exarg_T *eap)
     if ((*p != '"') && (*p != NUL)) {
       kmap_T *kp = GA_APPEND_VIA_PTR(kmap_T, &curbuf->b_kmap_ga);
       s = skiptowhite(p);
-      kp->from = vim_strnsave(p, (int)(s - p));
+      kp->from = vim_strnsave(p, (size_t)(s - p));
       p = skipwhite(s);
       s = skiptowhite(p);
-      kp->to = vim_strnsave(p, (int)(s - p));
+      kp->to = vim_strnsave(p, (size_t)(s - p));
 
       if ((STRLEN(kp->from) + STRLEN(kp->to) >= KMAP_LLEN)
           || (*kp->from == NUL)
