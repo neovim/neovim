@@ -6301,6 +6301,8 @@ void screenalloc(bool doclear)
   static int entered = FALSE;                   /* avoid recursiveness */
   static int done_outofmem_msg = FALSE;         /* did outofmem message */
   int retry_count = 0;
+  const bool l_enc_utf8 = enc_utf8;
+  const int l_enc_dbcs = enc_dbcs;
 
 retry:
   /*
@@ -6311,8 +6313,8 @@ retry:
   if ((ScreenLines != NULL
        && Rows == screen_Rows
        && Columns == screen_Columns
-       && enc_utf8 == (ScreenLinesUC != NULL)
-       && (enc_dbcs == DBCS_JPNU) == (ScreenLines2 != NULL)
+       && l_enc_utf8 == (ScreenLinesUC != NULL)
+       && (l_enc_dbcs == DBCS_JPNU) == (ScreenLines2 != NULL)
        && p_mco == Screen_mco
        )
       || Rows == 0
@@ -6358,13 +6360,13 @@ retry:
 
   new_ScreenLines = xmalloc((size_t)((Rows + 1) * Columns * sizeof(schar_T)));
   memset(new_ScreenLinesC, 0, sizeof(u8char_T *) * MAX_MCO);
-  if (enc_utf8) {
+  if (l_enc_utf8) {
     new_ScreenLinesUC = xmalloc(
         (size_t)((Rows + 1) * Columns * sizeof(u8char_T)));
     for (i = 0; i < p_mco; ++i)
       new_ScreenLinesC[i] = xcalloc((Rows + 1) * Columns, sizeof(u8char_T));
   }
-  if (enc_dbcs == DBCS_JPNU)
+  if (l_enc_dbcs == DBCS_JPNU)
     new_ScreenLines2 = xmalloc(
         (size_t)((Rows + 1) * Columns * sizeof(schar_T)));
   new_ScreenAttrs = xmalloc((size_t)((Rows + 1) * Columns * sizeof(sattr_T)));
@@ -6383,8 +6385,8 @@ retry:
     if (new_ScreenLinesC[i] == NULL)
       break;
   if (new_ScreenLines == NULL
-      || (enc_utf8 && (new_ScreenLinesUC == NULL || i != p_mco))
-      || (enc_dbcs == DBCS_JPNU && new_ScreenLines2 == NULL)
+      || (l_enc_utf8 && (new_ScreenLinesUC == NULL || i != p_mco))
+      || (l_enc_dbcs == DBCS_JPNU && new_ScreenLines2 == NULL)
       || new_ScreenAttrs == NULL
       || new_LineOffset == NULL
       || new_LineWraps == NULL
@@ -6432,7 +6434,7 @@ retry:
       if (!doclear) {
         (void)memset(new_ScreenLines + new_row * Columns,
             ' ', (size_t)Columns * sizeof(schar_T));
-        if (enc_utf8) {
+        if (l_enc_utf8) {
           (void)memset(new_ScreenLinesUC + new_row * Columns,
               0, (size_t)Columns * sizeof(u8char_T));
           for (i = 0; i < p_mco; ++i)
@@ -6440,7 +6442,7 @@ retry:
                 + new_row * Columns,
                 0, (size_t)Columns * sizeof(u8char_T));
         }
-        if (enc_dbcs == DBCS_JPNU)
+        if (l_enc_dbcs == DBCS_JPNU)
           (void)memset(new_ScreenLines2 + new_row * Columns,
               0, (size_t)Columns * sizeof(schar_T));
         (void)memset(new_ScreenAttrs + new_row * Columns,
@@ -6453,12 +6455,12 @@ retry:
             len = Columns;
           /* When switching to utf-8 don't copy characters, they
            * may be invalid now.  Also when p_mco changes. */
-          if (!(enc_utf8 && ScreenLinesUC == NULL)
+          if (!(l_enc_utf8 && ScreenLinesUC == NULL)
               && p_mco == Screen_mco)
             memmove(new_ScreenLines + new_LineOffset[new_row],
                 ScreenLines + LineOffset[old_row],
                 (size_t)len * sizeof(schar_T));
-          if (enc_utf8 && ScreenLinesUC != NULL
+          if (l_enc_utf8 && ScreenLinesUC != NULL
               && p_mco == Screen_mco) {
             memmove(new_ScreenLinesUC + new_LineOffset[new_row],
                 ScreenLinesUC + LineOffset[old_row],
@@ -6469,7 +6471,7 @@ retry:
                   ScreenLinesC[i] + LineOffset[old_row],
                   (size_t)len * sizeof(u8char_T));
           }
-          if (enc_dbcs == DBCS_JPNU && ScreenLines2 != NULL)
+          if (l_enc_dbcs == DBCS_JPNU && ScreenLines2 != NULL)
             memmove(new_ScreenLines2 + new_LineOffset[new_row],
                 ScreenLines2 + LineOffset[old_row],
                 (size_t)len * sizeof(schar_T));

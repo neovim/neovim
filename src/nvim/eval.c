@@ -178,6 +178,8 @@ static char *e_nofunc = N_("E130: Unknown function: %s");
 static char *e_illvar = N_("E461: Illegal variable name: %s");
 static char *e_float_as_string = N_("E806: using Float as a String");
 
+static char_u * const empty_string = (char_u *)"";
+
 static dictitem_T globvars_var;                 /* variable used for g: */
 #define globvarht globvardict.dv_hashtab
 
@@ -2272,6 +2274,7 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv, int copy, ch
       if (lp->ll_li->li_next == NULL) {
         /* Need to add an empty item. */
         list_append_number(lp->ll_list, 0);
+        assert(lp->ll_li->li_next);
       }
       lp->ll_li = lp->ll_li->li_next;
       ++lp->ll_n1;
@@ -4123,7 +4126,7 @@ eval7 (
          * get_func_tv, but it's needed in handle_subscript() to parse
          * what follows. So set it here. */
         if (rettv->v_type == VAR_UNKNOWN && !evaluate && **arg == '(') {
-          rettv->vval.v_string = (char_u *)"";
+          rettv->vval.v_string = empty_string;
           rettv->v_type = VAR_FUNC;
         }
 
@@ -5733,7 +5736,9 @@ dict_free (
 dictitem_T *dictitem_alloc(char_u *key) FUNC_ATTR_NONNULL_RET
 {
   dictitem_T *di = xmalloc(sizeof(dictitem_T) + STRLEN(key));
+#ifndef __clang_analyzer__
   STRCPY(di->di_key, key);
+#endif
   di->di_flags = 0;
   return di;
 }
@@ -12518,6 +12523,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv)
 {
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
+  const int l_provider_call_nesting = provider_call_nesting;
 
   if (check_restricted() || check_secure()) {
     return;
@@ -12545,7 +12551,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv)
   int save_autocmd_fname_full, save_autocmd_bufnr;
   void *save_funccalp;
 
-  if (provider_call_nesting) {
+  if (l_provider_call_nesting) {
     // If this is called from a provider function, restore the scope
     // information of the caller.
     save_current_SID = current_SID;
@@ -12574,7 +12580,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv)
                                     args,
                                     &err);
 
-  if (provider_call_nesting) {
+  if (l_provider_call_nesting) {
     current_SID = save_current_SID;
     sourcing_name = save_sourcing_name;
     sourcing_lnum = save_sourcing_lnum;
@@ -13542,13 +13548,12 @@ static bool item_compare_numeric;
 static char_u   *item_compare_func;
 static dict_T   *item_compare_selfdict;
 static int item_compare_func_err;
-static bool  item_compare_keep_zero;
 #define ITEM_COMPARE_FAIL 999
 
 /*
  * Compare functions for f_sort() and f_uniq() below.
  */
-static int item_compare(const void *s1, const void *s2)
+static int item_compare(const void *s1, const void *s2, bool keep_zero)
 {
   sortItem_T  *si1, *si2;
   char_u      *p1, *p2;
@@ -13601,7 +13606,7 @@ static int item_compare(const void *s1, const void *s2)
 
   // When the result would be zero, compare the item indexes.  Makes the
   // sort stable.
-  if (res == 0 && !item_compare_keep_zero) {
+  if (res == 0 && !keep_zero) {
     res = si1->idx > si2->idx ? 1 : -1;
   }
   
@@ -13610,7 +13615,17 @@ static int item_compare(const void *s1, const void *s2)
   return res;
 }
 
-static int item_compare2(const void *s1, const void *s2)
+static int item_compare_keeping_zero(const void *s1, const void *s2)
+{
+  return item_compare(s1, s2, true);
+}
+
+static int item_compare_not_keeping_zero(const void *s1, const void *s2)
+{
+  return item_compare(s1, s2, false);
+}
+
+static int item_compare2(const void *s1, const void *s2, bool keep_zero)
 {
   sortItem_T  *si1, *si2;
   int res;
@@ -13647,11 +13662,21 @@ static int item_compare2(const void *s1, const void *s2)
 
   // When the result would be zero, compare the pointers themselves.  Makes
   // the sort stable.
-  if (res == 0 && !item_compare_keep_zero) {
+  if (res == 0 && !keep_zero) {
     res = si1->idx > si2->idx ? 1 : -1;
   }
 
   return res;
+}
+
+static int item_compare2_keeping_zero(const void *s1, const void *s2)
+{
+  return item_compare2(s1, s2, true);
+}
+
+static int item_compare2_not_keeping_zero(const void *s1, const void *s2)
+{
+  return item_compare2(s1, s2, false);
 }
 
 /*
@@ -13734,15 +13759,16 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
       }
 
       item_compare_func_err = FALSE;
-      item_compare_keep_zero = false;
       // Test the compare function.
       if (item_compare_func != NULL
-          && item_compare2(&ptrs[0], &ptrs[1]) == ITEM_COMPARE_FAIL) {
+          && item_compare2_not_keeping_zero(&ptrs[0], &ptrs[1])
+             == ITEM_COMPARE_FAIL) {
         EMSG(_("E702: Sort compare function failed"));
       } else {
         // Sort the array with item pointers.
         qsort(ptrs, (size_t)len, sizeof (sortItem_T),
-              item_compare_func == NULL ? item_compare : item_compare2);
+              item_compare_func == NULL ? item_compare_not_keeping_zero :
+                                          item_compare2_not_keeping_zero);
 
         if (!item_compare_func_err) {
           // Clear the list and append the items in the sorted order.
@@ -13761,8 +13787,8 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
 
       // f_uniq(): ptrs will be a stack of items to remove.
       item_compare_func_err = FALSE;
-      item_compare_keep_zero = true;
-      item_compare_func_ptr = item_compare_func ? item_compare2 : item_compare;
+      item_compare_func_ptr = item_compare_func ? item_compare2_keeping_zero :
+                                                  item_compare_keeping_zero;
 
       for (li = l->lv_first; li != NULL && li->li_next != NULL; li = li->li_next) {
         if (item_compare_func_ptr(&li, &li->li_next) == 0) {
@@ -13776,6 +13802,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
 
       if (!item_compare_func_err) {
         while (--i >= 0) {
+          assert(ptrs[i].item->li_next);
           li = ptrs[i].item->li_next;
           ptrs[i].item->li_next = li->li_next;
           if (li->li_next != NULL) {
@@ -16111,7 +16138,11 @@ void clear_tv(typval_T *varp)
     switch (varp->v_type) {
     case VAR_FUNC:
       func_unref(varp->vval.v_string);
-    /*FALLTHROUGH*/
+      if (varp->vval.v_string != empty_string) {
+        free(varp->vval.v_string);
+      }
+      varp->vval.v_string = NULL;
+      break;
     case VAR_STRING:
       free(varp->vval.v_string);
       varp->vval.v_string = NULL;
@@ -18250,6 +18281,7 @@ char_u *get_user_func_name(expand_T *xp, int idx)
     done = 0;
     hi = func_hashtab.ht_array;
   }
+  assert(hi);
   if (done < func_hashtab.ht_used) {
     if (done++ > 0)
       ++hi;
@@ -18465,8 +18497,10 @@ call_user_func (
     /* Set l:self to "selfdict".  Use "name" to avoid a warning from
      * some compiler that checks the destination size. */
     v = &fc->fixvar[fixvar_idx++].var;
+#ifndef __clang_analyzer__
     name = v->di_key;
     STRCPY(name, "self");
+#endif
     v->di_flags = DI_FLAGS_RO + DI_FLAGS_FIX;
     hash_add(&fc->l_vars.dv_hashtab, DI2HIKEY(v));
     v->di_tv.v_type = VAR_DICT;
@@ -18486,8 +18520,10 @@ call_user_func (
   /* Use "name" to avoid a warning from some compiler that checks the
    * destination size. */
   v = &fc->fixvar[fixvar_idx++].var;
+#ifndef __clang_analyzer__
   name = v->di_key;
   STRCPY(name, "000");
+#endif
   v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
   hash_add(&fc->l_avars.dv_hashtab, DI2HIKEY(v));
   v->di_tv.v_type = VAR_LIST;
@@ -18774,7 +18810,9 @@ free_funccal (
  */
 static void add_nr_var(dict_T *dp, dictitem_T *v, char *name, varnumber_T nr)
 {
+#ifndef __clang_analyzer__
   STRCPY(v->di_key, name);
+#endif
   v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
   hash_add(&dp->dv_hashtab, DI2HIKEY(v));
   v->di_tv.v_type = VAR_NUMBER;
@@ -18864,8 +18902,10 @@ int do_return(exarg_T *eap, int reanimate, int is_cmd, void *rettv)
     else {
       /* When undoing a return in order to make it pending, get the stored
        * return rettv. */
-      if (reanimate)
+      if (reanimate) {
+        assert(current_funccal->rettv);
         rettv = current_funccal->rettv;
+      }
 
       if (rettv != NULL) {
         /* Store the value of the pending return. */

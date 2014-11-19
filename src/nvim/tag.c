@@ -10,6 +10,7 @@
  * Code to handle tags and the tag stack
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -2307,6 +2308,7 @@ jumpto_tag (
   win_T       *curwin_save = NULL;
   char_u      *full_fname = NULL;
   int old_KeyTyped = KeyTyped;              /* getting the file may reset it */
+  const int l_g_do_tagpreview = g_do_tagpreview;
 
   pbuf = xmalloc(LSIZE);
 
@@ -2363,7 +2365,7 @@ jumpto_tag (
   ++RedrawingDisabled;
 
 
-  if (g_do_tagpreview != 0) {
+  if (l_g_do_tagpreview != 0) {
     postponed_split = 0;        /* don't split again below */
     curwin_save = curwin;       /* Save current window */
 
@@ -2395,7 +2397,7 @@ jumpto_tag (
   if (keep_help) {
     /* A :ta from a help file will keep the b_help flag set.  For ":ptag"
      * we need to use the flag from the window where we came from. */
-    if (g_do_tagpreview != 0)
+    if (l_g_do_tagpreview != 0)
       keep_help_flag = curwin_save->w_buffer->b_help;
     else
       keep_help_flag = curbuf->b_help;
@@ -2541,7 +2543,7 @@ jumpto_tag (
         foldOpenCursor();
     }
 
-    if (g_do_tagpreview != 0
+    if (l_g_do_tagpreview != 0
         && curwin != curwin_save && win_valid(curwin_save)) {
       /* Return cursor to where we were */
       validate_cursor();
@@ -2779,7 +2781,8 @@ int get_tags(list_T *list, char_u *pat)
       TAG_REGEXP | TAG_NOIC, (int)MAXCOL, NULL);
   if (ret == OK && num_matches > 0) {
     for (i = 0; i < num_matches; ++i) {
-      parse_match(matches[i], &tp);
+      int parse_result = parse_match(matches[i], &tp);
+      assert(parse_result == OK);
       is_static = test_for_static(&tp);
 
       /* Skip pseudo-tag lines. */
@@ -2796,7 +2799,7 @@ int get_tags(list_T *list, char_u *pat)
           || add_tag_field(dict, "cmd", tp.command,
               tp.command_end) == FAIL
           || add_tag_field(dict, "kind", tp.tagkind,
-              tp.tagkind_end) == FAIL
+              tp.tagkind ? tp.tagkind_end : NULL) == FAIL
           || dict_add_nr_str(dict, "static", is_static, NULL) == FAIL)
         ret = FAIL;
 

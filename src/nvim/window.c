@@ -1230,7 +1230,6 @@ static void win_rotate(int upwards, int count)
     return;
   }
 
-
   /* Check if all frames in this row/col have one window. */
   for (frp = curwin->w_frame->fr_parent->fr_child; frp != NULL;
        frp = frp->fr_next)
@@ -1246,6 +1245,7 @@ static void win_rotate(int upwards, int count)
       wp1 = frp->fr_win;
       win_remove(wp1, NULL);
       frame_remove(frp);
+      assert(frp->fr_parent->fr_child);
 
       /* find last frame and append removed window/frame after it */
       for (; frp->fr_next != NULL; frp = frp->fr_next)
@@ -1263,6 +1263,7 @@ static void win_rotate(int upwards, int count)
       wp2 = wp1->w_prev;                    /* will become last window */
       win_remove(wp1, NULL);
       frame_remove(frp);
+      assert(frp->fr_parent->fr_child);
 
       /* append the removed window/frame before the first in the list */
       win_append(frp->fr_parent->fr_child->fr_win->w_prev, wp1);
@@ -2193,6 +2194,7 @@ winframe_remove (
        * the frames into this list. */
       if (frp2->fr_child == frp)
         frp2->fr_child = frp->fr_child;
+      assert(frp->fr_child);
       frp->fr_child->fr_prev = frp->fr_prev;
       if (frp->fr_prev != NULL)
         frp->fr_prev->fr_next = frp->fr_child;
@@ -4502,6 +4504,7 @@ void win_drag_vsep_line(win_T *dragwin, int offset)
       room += fr->fr_width - frame_minwidth(fr, NULL);
     fr = curfr;                         /* put fr at window that grows */
   }
+  assert(fr);
 
   if (room < offset)            /* Not enough room */
     offset = room;              /* Move as far as we can */
@@ -4973,6 +4976,7 @@ static void last_status_rec(frame_T *fr, int statusline)
  */
 int tabline_height(void)
 {
+  assert(first_tabpage);
   switch (p_stal) {
   case 0: return 0;
   case 1: return (first_tabpage->tp_next == NULL) ? 0 : 1;
