@@ -90,7 +90,6 @@ fun! netrwSettings#NetrwSettings()
   put = 'let g:netrw_sshport           = '.g:netrw_sshport
   put = 'let g:netrw_silent            = '.g:netrw_silent
   put = 'let g:netrw_use_nt_rcp        = '.g:netrw_use_nt_rcp
-  put = 'let g:netrw_win95ftp          = '.g:netrw_win95ftp
   let s:netrw_xfer_stop= line(".")
   put =''
   put ='+ Netrw Messages'

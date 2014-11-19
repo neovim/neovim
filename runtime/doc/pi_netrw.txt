@@ -416,7 +416,7 @@ settings are described below, in |netrw-browser-options|, and in
 			   Separates priority codes from filenames internally.
 			   See |netrw-p12|.
 
-  *g:netrw_silent*	=0 : transfers done normally
+ *g:netrw_silent*	=0 : transfers done normally
 			=1 : transfers done silently
 
  *g:netrw_use_errorwindow* =1 : messages from netrw will use a separate one
@@ -425,10 +425,6 @@ settings are described below, in |netrw-browser-options|, and in
 			 =0 : messages from netrw will use echoerr ;
 			      messages don't always seem to show up this
 			      way, but one doesn't have to quit the window.
-
- *g:netrw_win95ftp*	=1 if using Win95, will remove four trailing blank
-			   lines that o/s's ftp "provides" on transfers
-			=0 force normal ftp behavior (no trailing line removal)
 
  *g:netrw_cygwin* 	=1 assume scp under windows is from cygwin. Also
 			   permits network browsing to use ls with time and
@@ -516,14 +512,10 @@ variable (ex. scp uses the variable g:netrw_scp_cmd, which is defaulted to
 
 See |netrw-p8| for more about putty, pscp, psftp, etc.
 
-Ftp, an old protocol, seems to be blessed by numerous implementations.
-Unfortunately, some implementations are noisy (ie., add junk to the end of the
-file).  Thus, concerned users may decide to write a NetReadFixup() function
-that will clean up after reading with their ftp.  Some Unix systems (ie.,
-FreeBSD) provide a utility called "fetch" which uses the ftp protocol but is
-not noisy and more convenient, actually, for <netrw.vim> to use.
-Consequently, if "fetch" is available (ie. executable), it may be preferable
-to use it for ftp://... based transfers.
+Some Unix systems (ie., FreeBSD) provide a utility called "fetch" which uses
+the ftp protocol but is not noisy and more convenient, actually, for
+<netrw.vim> to use.  Consequently, if "fetch" is available (ie. executable),
+it may be preferable to use it for ftp://... based transfers.
 
 For rcp, scp, sftp, and http, one may use network-oriented file transfers
 transparently; ie.
@@ -792,9 +784,7 @@ set in the user's <.vimrc> file: (see also |netrw-settings| |netrw-protocol|)
 	                        =1 transfers done silently
         g:netrw_uid             Holds current user-id for ftp.
         g:netrw_use_nt_rcp      =0 don't use WinNT/2K/XP's rcp (default)
-                                =1 use WinNT/2K/XP's rcp, binary mode
-        g:netrw_win95ftp        =0 use unix-style ftp even if win95/98/ME/etc
-                                =1 use default method to do ftp >
+                                =1 use WinNT/2K/XP's rcp, binary mode >
 	-----------------------------------------------------------------------
 <
 						*netrw-internal-variables*
@@ -826,11 +816,6 @@ variables listed below, and may be modified by the user.
 <    netrw_ftp         variable    =doesn't exist  userid set by "user userid"
                                   =0              userid set by "user userid"
                                   =1              userid set by "userid"
-    NetReadFixup      function    =doesn't exist  no change
-                                  =exists         Allows user to have files
-                                                  read via ftp automatically
-                                                  transformed however they wish
-                                                  by NetReadFixup()
     g:netrw_dav_cmd      var   ="cadaver"      if cadaver  is executable
     g:netrw_dav_cmd      var   ="curl -o"      elseif curl is executable
     g:netrw_fetch_cmd    var   ="fetch -o"     if fetch is available
@@ -857,10 +842,9 @@ Browsing is supported by using the |g:netrw_list_cmd|; the substring
 "HOSTNAME" will be changed via substitution with whatever the current request
 is for a hostname.
 
-Two options (|g:netrw_ftp| and |netrw-fixup|) both help with certain ftp's
-that give trouble .  In order to best understand how to use these options if
-ftp is giving you troubles, a bit of discussion is provided on how netrw does
-ftp reads.
+The option |g:netrw_ftp| helps with certain ftp's that give trouble . In
+order to best understand how to use these options if ftp is giving you
+troubles, a bit of discussion is provided on how netrw does ftp reads.
 
 For ftp, netrw typically builds up lines of one of the following formats in a
 temporary file:
@@ -900,42 +884,6 @@ To handle the SSL certificate dialog for untrusted servers, one may pull
 down the certificate and place it into /usr/ssl/cert.pem.  This operation
 renders the server treatment as "trusted".
 
-						*netrw-fixup* *netreadfixup*
-If your ftp for whatever reason generates unwanted lines (such as AUTH
-messages) you may write a NetReadFixup() function:
->
-    function! NetReadFixup(method,line1,line2)
-      " a:line1: first new line in current file
-      " a:line2: last  new line in current file
-      if     a:method == 1 "rcp
-      elseif a:method == 2 "ftp + <.netrc>
-      elseif a:method == 3 "ftp + machine,uid,password,filename
-      elseif a:method == 4 "scp
-      elseif a:method == 5 "http/wget
-      elseif a:method == 6 "dav/cadaver
-      elseif a:method == 7 "rsync
-      elseif a:method == 8 "fetch
-      elseif a:method == 9 "sftp
-      else               " complain
-      endif
-    endfunction
->
-The NetReadFixup() function will be called if it exists and thus allows you to
-customize your reading process.  As a further example, <netrw.vim> contains
-just such a function to handle Windows 95 ftp.  For whatever reason, Windows
-95's ftp dumps four blank lines at the end of a transfer, and so it is
-desirable to automate their removal.  Here's some code taken from <netrw.vim>
-itself:
->
-    if has("win95") && g:netrw_win95ftp
-     fun! NetReadFixup(method, line1, line2)
-       if method == 3   " ftp (no <.netrc>)
-        let fourblanklines= line2 - 3
-        silent fourblanklines.",".line2."g/^\s*/d"
-       endif
-     endfunction
-    endif
->
 (Related topics: |ftp| |netrw-userpass| |netrw-start|)
 
 ==============================================================================
@@ -2867,16 +2815,7 @@ Associated setting variables:	|g:netrw_chgwin|
 	(This section is likely to grow as I get feedback)
 	(also see |netrw-debug|)
 								*netrw-p1*
-	P1. I use windows 95, and my ftp dumps four blank lines at the
-	    end of every read.
-
-		See |netrw-fixup|, and put the following into your
-		<.vimrc> file:
-
-			let g:netrw_win95ftp= 1
-
-								*netrw-p2*
-	P2. I use Windows, and my network browsing with ftp doesn't sort by
+	P1. I use Windows, and my network browsing with ftp doesn't sort by
 	    time or size!  -or-  The remote system is a Windows server; why
 	    don't I get sorts by time or size?
 
@@ -2902,8 +2841,8 @@ Associated setting variables:	|g:netrw_chgwin|
 		modify its listing behavior.
 
 
-								*netrw-p3*
-	P3. I tried rcp://user@host/ (or protocol other than ftp) and netrw
+								*netrw-p2*
+	P2. I tried rcp://user@host/ (or protocol other than ftp) and netrw
 	    used ssh!  That wasn't what I asked for...
 
 		Netrw has two methods for browsing remote directories: ssh
@@ -2911,8 +2850,8 @@ Associated setting variables:	|g:netrw_chgwin|
 		When it comes time to do download a file (not just a directory
 		listing), netrw will use the given protocol to do so.
 
-								*netrw-p4*
-	P4. I would like long listings to be the default.
+								*netrw-p3*
+	P3. I would like long listings to be the default.
 
 		Put the following statement into your |.vimrc|: >
 
@@ -2921,8 +2860,8 @@ Associated setting variables:	|g:netrw_chgwin|
 		Check out |netrw-browser-var| for more customizations that
 		you can set.
 
-								*netrw-p5*
-	P5. My times come up oddly in local browsing
+								*netrw-p4*
+	P4. My times come up oddly in local browsing
 
 		Does your system's strftime() accept the "%c" to yield dates
 		such as "Sun Apr 27 11:49:23 1997"?  If not, do a
@@ -2931,16 +2870,16 @@ Associated setting variables:	|g:netrw_chgwin|
 
 			let g:netrw_timefmt= "%X"  (where X is the option)
 <
-								*netrw-p6*
-	P6. I want my current directory to track my browsing.
+								*netrw-p5*
+	P5. I want my current directory to track my browsing.
 	    How do I do that?
 
 	    Put the following line in your |.vimrc|:
 >
 		let g:netrw_keepdir= 0
 <
-								*netrw-p7*
-	P7. I use Chinese (or other non-ascii) characters in my filenames, and
+								*netrw-p6*
+	P6. I use Chinese (or other non-ascii) characters in my filenames, and
 	    netrw (Explore, Sexplore, Hexplore, etc) doesn't display them!
 
 		(taken from an answer provided by Wu Yongwei on the vim
@@ -2954,8 +2893,8 @@ Associated setting variables:	|g:netrw_chgwin|
 
 		(...it is one more reason to recommend that people use utf-8!)
 
-								*netrw-p8*
-	P8. I'm getting "ssh is not executable on your system" -- what do I
+								*netrw-p7*
+	P7. I'm getting "ssh is not executable on your system" -- what do I
 	    do?
 
 		(Dudley Fox) Most people I know use putty for windows ssh.  It
@@ -3036,8 +2975,8 @@ Associated setting variables:	|g:netrw_chgwin|
 		The first one (|g:netrw_ssh_cmd|) is the most important; most
 		of the others will use the string in g:netrw_ssh_cmd by
 		default.
-						*netrw-p9* *netrw-ml_get*
-	P9. I'm browsing, changing directory, and bang!  ml_get errors
+						*netrw-p8* *netrw-ml_get*
+	P8. I'm browsing, changing directory, and bang!  ml_get errors
 	    appear and I have to kill vim.  Any way around this?
 
 		Normally netrw attempts to avoid writing swapfiles for
@@ -3047,8 +2986,8 @@ Associated setting variables:	|g:netrw_chgwin|
 		in your <.vimrc>: >
 			let g:netrw_use_noswf= 0
 <
-								*netrw-p10*
-	P10. I'm being pestered with "[something] is a directory" and
+								*netrw-p9*
+	P9. I'm being pestered with "[something] is a directory" and
 	     "Press ENTER or type command to continue" prompts...
 
 		The "[something] is a directory" prompt is issued by Vim,
@@ -3058,8 +2997,8 @@ Associated setting variables:	|g:netrw_chgwin|
 		I also suggest that you set your |'cmdheight'| to 2 (or more) in
 		your <.vimrc> file.
 
-								*netrw-p11*
-	P11. I want to have two windows; a thin one on the left and my editing
+								*netrw-p10*
+	P10. I want to have two windows; a thin one on the left and my editing
 	     window on the right.  How may I accomplish this?
 
 		* Put the following line in your <.vimrc>:
@@ -3075,8 +3014,8 @@ Associated setting variables:	|g:netrw_chgwin|
 		  <leftmouse> in the browser window and then press the
 		  <middlemouse> to select the file.
 
-								*netrw-p12*
-	P12. My directory isn't sorting correctly, or unwanted letters are
+								*netrw-p11*
+	P11. My directory isn't sorting correctly, or unwanted letters are
 	     appearing in the listed filenames, or things aren't lining
 	     up properly in the wide listing, ...
 
@@ -3085,8 +3024,8 @@ Associated setting variables:	|g:netrw_chgwin|
 	     Multibyte encodings use two (or more) bytes per character.
 	     You may need to change |g:netrw_sepchr| and/or |g:netrw_xstrlen|.
 
-								*netrw-p13*
-	P13. I'm a Windows + putty + ssh user, and when I attempt to browse,
+								*netrw-p12*
+	P12. I'm a Windows + putty + ssh user, and when I attempt to browse,
 	     the directories are missing trailing "/"s so netrw treats them
 	     as file transfers instead of as attempts to browse
 	     subdirectories.  How may I fix this?
@@ -3106,8 +3045,8 @@ Associated setting variables:	|g:netrw_chgwin|
 	    "let g:netrw_sftp_cmd = "d:\\dev\\putty\\PSFTP.exe"
 	    "let g:netrw_scp_cmd = "d:\\dev\\putty\\PSCP.exe"
 <
-								*netrw-p14*
-	P14. I'd would like to speed up writes using Nwrite and scp/ssh
+								*netrw-p13*
+	P13. I'd would like to speed up writes using Nwrite and scp/ssh
 	     style connections.  How?  (Thomer M. Gil)
 
 	     Try using ssh's ControlMaster and ControlPath (see the ssh_config
@@ -3133,8 +3072,8 @@ Associated setting variables:	|g:netrw_chgwin|
 
 		vim scp://host.domain.com//home/user/.bashrc
 <
-								*netrw-p15*
-	P15. How may I use a double-click instead of netrw's usual single click
+								*netrw-p14*
+	P14. How may I use a double-click instead of netrw's usual single click
 	     to open a file or directory?  (Ben Fritz)
 
 	     First, disable netrw's mapping with >
@@ -3146,8 +3085,8 @@ Associated setting variables:	|g:netrw_chgwin|
 	     all netrw's mouse mappings, not just the <leftmouse> one.
 	     (see |g:netrw_mousemaps|)
 
-								*netrw-p16*
-	P16. When editing remote files (ex. :e ftp://hostname/path/file),
+								*netrw-p15*
+	P15. When editing remote files (ex. :e ftp://hostname/path/file),
 	     under Windows I get an |E303| message complaining that its unable
 	     to open a swap file.
 
@@ -3302,7 +3241,7 @@ which is loaded automatically at startup (assuming :set nocp).
 				  command line.
 		Nov 09, 2013	* |:Lexplore| introduced
 				* (Ondrej Platek) reported an issue with
-				  netrw's trees (P15).  Fixed.
+				  netrw's trees (P14).  Fixed.
 				* (Jorge Solis) reported that "t" in
 				  tree mode caused netrw to forget its
 				  line position.
@@ -3341,7 +3280,7 @@ which is loaded automatically at startup (assuming :set nocp).
 		Jan 20, 2014	* (Gideon Go) reported that, in tree listing
 				  style, with a previous window open, that
 				  the wrong directory was being used to open
-				  a file.  Fixed. (P21)
+				  a file.  Fixed.
 	v149:	Apr 18, 2013	* in wide listing format, now have maps for
 				  w and b to move to next/previous file
 		Apr 26, 2013	* one may now copy files in the same
