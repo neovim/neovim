@@ -38,34 +38,66 @@ endforeach()
 
 list(REMOVE_ITEM NEOVIM_SOURCES ${to_remove})
 
+# Handle legacy files that don't yet pass -Wconversion.
 set(CONV_SOURCES
-  arabic.c
-  cursor.c
-  garray.c
-  hashtab.c
-  log.c
-  map.c
-  memfile.c
-  memory.c
-  misc2.c
-  profile.c
-  tempfile.c
-  )
+  buffer.c
+  charset.c
+  diff.c
+  edit.c
+  eval.c
+  ex_cmds2.c
+  ex_cmds.c
+  ex_docmd.c
+  ex_eval.c
+  ex_getln.c
+  farsi.c
+  fileio.c
+  file_search.c
+  fold.c
+  getchar.c
+  hardcopy.c
+  if_cscope.c
+  indent.c
+  indent_c.c
+  keymap.c
+  main.c
+  mark.c
+  mbyte.c
+  memline.c
+  menu.c
+  message.c
+  misc1.c
+  move.c
+  normal.c
+  ops.c
+  option.c
+  os_unix.c
+  path.c
+  popupmnu.c
+  quickfix.c
+  regexp.c
+  regexp_nfa.c
+  screen.c
+  search.c
+  sha256.c
+  spell.c
+  strings.c
+  syntax.c
+  tag.c
+  term.c
+  ui.c
+  undo.c
+  version.c
+  window.c)
 
 foreach(sfile ${CONV_SOURCES})
   if(NOT EXISTS "${PROJECT_SOURCE_DIR}/src/nvim/${sfile}")
-    message(FATAL_ERROR "${sfile} doesn't exist(it was added to CONV_SOURCES)")
+    message(FATAL_ERROR "${sfile} doesn't exist (it was added to CONV_SOURCES)")
   endif()
 endforeach()
 
-file(GLOB_RECURSE EXTRA_CONV_SOURCES os/*.c api/*.c msgpack_rpc/*.c)
-foreach(sfile ${EXTRA_CONV_SOURCES})
-  file(RELATIVE_PATH f "${PROJECT_SOURCE_DIR}/src/nvim" "${sfile}")
-  list(APPEND CONV_SOURCES ${f})
-endforeach()
-
 set_source_files_properties(
-  ${CONV_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wconversion")
+  ${CONV_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
 
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
   if(DEFINED ENV{SANITIZE})

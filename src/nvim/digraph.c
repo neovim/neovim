@@ -2,7 +2,9 @@
 ///
 /// code for digraphs
 
+#include <assert.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <inttypes.h>
 
 #include "nvim/vim.h"
@@ -1582,7 +1584,7 @@ int getdigraph(int char1, int char2, int meta_char)
 /// @param str
 void putdigraph(char_u *str)
 {
-  int char1, char2, n;
+  char_u char1, char2;
   digr_T *dp;
 
   while (*str != NUL) {
@@ -1609,7 +1611,9 @@ void putdigraph(char_u *str)
       EMSG(_(e_number_exp));
       return;
     }
-    n = getdigits(&str);
+    long digits = getdigits(&str);
+    assert(digits <= INT_MAX);
+    int n = (int)digits;
 
     // If the digraph already exists, replace the result.
     dp = (digr_T *)user_digraphs.ga_data;
@@ -1711,7 +1715,8 @@ static void printdigraph(digr_T *dp)
     if (char2cells(dp->result) == 1) {
       *p++ = ' ';
     }
-    vim_snprintf((char *)p, sizeof(buf) - (p - buf), " %3d", dp->result);
+    assert(p >= buf);
+    vim_snprintf((char *)p, sizeof(buf) - (size_t)(p - buf), " %3d", dp->result);
     msg_outtrans(buf);
   }
 }
