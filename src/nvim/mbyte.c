@@ -3003,7 +3003,7 @@ int utf_head_off(const char_u *base, const char_u *p)
 /*
  * Copy a character from "*fp" to "*tp" and advance the pointers.
  */
-void mb_copy_char(char_u **fp, char_u **tp)
+void mb_copy_char(const char_u **fp, char_u **tp)
 {
   int l = (*mb_ptr2len)(*fp);
 

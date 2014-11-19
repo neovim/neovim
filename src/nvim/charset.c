@@ -1850,7 +1850,7 @@ int hexhex2nr(char_u *p)
 #endif // if defined(FEAT_TERMRESPONSE) || defined(FEAT_GUI_GTK)
        // || defined(PROTO)
 
-/// Return TRUE if "str" starts with a backslash that should be removed.
+/// Return true if "str" starts with a backslash that should be removed.
 /// For WIN32 this is only done when the character after the
 /// backslash is not a normal file name character.
 /// '$' is a valid file name character, we don't remove the backslash before
@@ -1864,8 +1864,8 @@ int hexhex2nr(char_u *p)
 ///
 /// @param str
 ///
-/// @return TRUE if `str` starts with a backslash that should be removed.
-int rem_backslash(char_u *str)
+/// @return true if `str` starts with a backslash that should be removed.
+bool rem_backslash(const char_u *str)
 {
 #ifdef BACKSLASH_IN_FILENAME
   return str[0] == '\\'
