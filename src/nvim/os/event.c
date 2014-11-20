@@ -18,6 +18,8 @@
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 #include "nvim/misc2.h"
+#include "nvim/screen.h"
+#include "nvim/term.h"
 
 #include "nvim/lib/klist.h"
 
@@ -132,11 +134,6 @@ void event_poll(int ms)
   process_events_from(immediate_events);
 }
 
-bool event_has_deferred(void)
-{
-  return !kl_empty(deferred_events);
-}
-
 // Queue an event
 void event_push(Event event, bool deferred)
 {
@@ -145,7 +142,24 @@ void event_push(Event event, bool deferred)
 
 void event_process(void)
 {
+  if (kl_empty(deferred_events)) {
+    return;
+  }
+
+  static int recursive = 0;
+  if (recursive) {
+    return;
+  }
+
+  recursive++;
   process_events_from(deferred_events);
+
+  if (must_redraw) {
+    update_screen(0);
+    out_flush();
+  }
+
+  recursive--;
 }
 
 static void process_events_from(klist_t(Event) *queue)
