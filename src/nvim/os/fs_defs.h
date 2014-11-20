@@ -14,6 +14,6 @@ typedef struct {
   uint64_t device_id;  ///< @private The id of the device containing the file
 } FileID;
 
-#define FILE_ID_EMPTY (FileID){.inode = 0, .device_id = 0}
+#define FILE_ID_EMPTY (FileID) {.inode = 0, .device_id = 0}
 
 #endif  // NVIM_OS_FS_DEFS_H
