@@ -2,7 +2,8 @@ let s:hosts = {}
 let s:plugin_patterns = {
       \ 'python': '*.py'
       \ }
-let s:external_plugins = fnamemodify($MYVIMRC, ':p:h').'/.external_plugins~'
+let s:external_plugins = fnamemodify($MYVIMRC, ':p:h')
+      \.'/.'.fnamemodify($MYVIMRC, ':t').'-external-plugins~'
 
 
 " Register a host by associating it with a factory(funcref)
