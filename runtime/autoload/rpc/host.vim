@@ -2,7 +2,8 @@ let s:hosts = {}
 let s:plugin_patterns = {
       \ 'python': '*.py'
       \ }
-let s:external_plugins = fnamemodify($MYVIMRC, ':p:h').'/.external_plugins~'
+let s:external_plugins = fnamemodify($MYVIMRC, ':p:h')
+      \.'/.'.fnamemodify($MYVIMRC, ':t').'-external-plugins~'
 
 
 " Register a host by associating it with a factory(funcref)
@@ -119,7 +120,7 @@ function! s:RegistrationCommands(host)
   let host_id = a:host.'-registration-clone'
   call rpc#host#RegisterClone(host_id, a:host)
   let pattern = s:plugin_patterns[a:host]
-  let paths = globpath(&rtp, 'plugin/external/'.a:host.'/'.pattern, 0, 1)
+  let paths = globpath(&rtp, 'external-plugin/'.a:host.'/'.pattern, 0, 1)
   for path in paths
     call rpc#host#RegisterPlugin(host_id, path, [])
   endfor

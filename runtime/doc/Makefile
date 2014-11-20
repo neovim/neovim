@@ -21,6 +21,7 @@ DOCS = \
 	digraph.txt \
 	editing.txt \
 	eval.txt \
+	external_plugin.txt \
 	farsi.txt \
 	filetype.txt \
 	fold.txt \
@@ -53,6 +54,7 @@ DOCS = \
 	msgpack_rpc.txt \
 	nvim_clipboard.txt \
 	nvim_intro.txt \
+	nvim_provider.txt \
 	nvim_python.txt \
 	options.txt \
 	os_dos.txt \
@@ -140,6 +142,7 @@ HTMLS = \
 	digraph.html \
 	editing.html \
 	eval.html \
+	external_plugin.html \
 	farsi.html \
 	filetype.html \
 	fold.html \
@@ -171,6 +174,7 @@ HTMLS = \
 	msgpack_rpc.html \
 	nvim_clipboard.html \
 	nvim_intro.html \
+	nvim_provider.html \
 	nvim_python.html \
 	options.html \
 	os_dos.html \
