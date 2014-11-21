@@ -1611,7 +1611,7 @@ void putdigraph(char_u *str)
       EMSG(_(e_number_exp));
       return;
     }
-    long digits = getdigits(&str);
+    int64_t digits = getdigits(&str);
     assert(digits <= INT_MAX);
     int n = (int)digits;
 
