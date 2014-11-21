@@ -3,6 +3,7 @@ Test for breakindent
 STARTTEST
 :so small.vim
 :if !exists("+breakindent") | e! test.ok | w! test.out | qa! | endif
+:set wildchar=^E
 :10new|:vsp|:vert resize 20
 :put =\"\tabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOP\"
 :set ts=4 sw=4 sts=4 breakindent
