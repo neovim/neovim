@@ -8,7 +8,9 @@ describe('filename modifiers', function()
   setup(clear)
 
   it('is working', function()
-    execute('cd /tmp')
+    local tmpdir = helpers.nvim('eval', 'resolve("/tmp")')
+
+    execute('cd ' .. tmpdir)
     execute([=[set shell=sh]=])
     execute([=[set shellslash]=])
     execute([=[let tab="\t"]=])
@@ -62,7 +64,7 @@ describe('filename modifiers', function()
       fnamemodify('abc.fb2.tar.gz', ':r'      )	'abc.fb2.tar'
       fnamemodify('abc.fb2.tar.gz', ':r:r'    )	'abc.fb2'
       fnamemodify('abc.fb2.tar.gz', ':r:r:r'  )	'abc'
-      substitute(fnamemodify('abc.fb2.tar.gz', ':p:r:r'), '.*\(nvim/testdir/.*\)', '\1', '')	'/tmp/abc.fb2'
+      substitute(fnamemodify('abc.fb2.tar.gz', ':p:r:r'), '.*\(nvim/testdir/.*\)', '\1', '')	']=] .. tmpdir .. [=[/abc.fb2'
       fnamemodify('abc.fb2.tar.gz', ':e'      )	'gz'
       fnamemodify('abc.fb2.tar.gz', ':e:e'    )	'tar.gz'
       fnamemodify('abc.fb2.tar.gz', ':e:e:e'  )	'fb2.tar.gz'
