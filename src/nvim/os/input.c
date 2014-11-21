@@ -84,13 +84,11 @@ void input_stop(void)
 // Low level input function.
 int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
 {
-  InbufPollResult result;
-
-  if (event_has_deferred()) {
-    // Return pending event bytes
-    return push_event_key(buf, maxlen);
+  if (rbuffer_pending(input_buffer)) {
+    return (int)rbuffer_read(input_buffer, (char *)buf, (size_t)maxlen);
   }
 
+  InbufPollResult result;
   if (ms >= 0) {
     if ((result = inbuf_poll(ms)) == kInputNone) {
       return 0;
@@ -110,24 +108,27 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
     }
   }
 
-  // If there are deferred events, return the keys directly
-  if (event_has_deferred()) {
-    return push_event_key(buf, maxlen);
-  }
-
   // If input was put directly in typeahead buffer bail out here.
   if (typebuf_changed(tb_change_cnt)) {
     return 0;
   }
 
-  if (result == kInputEof) {
-    read_error_exit();
-    return 0;
+  if (rbuffer_pending(input_buffer)) {
+    // Safe to convert rbuffer_read to int, it will never overflow since we use
+    // relatively small buffers.
+    return (int)rbuffer_read(input_buffer, (char *)buf, (size_t)maxlen);
   }
 
-  // Safe to convert rbuffer_read to int, it will never overflow since
-  // we use relatively small buffers.
-  return (int)rbuffer_read(input_buffer, (char *)buf, (size_t)maxlen);
+  // If there are deferred events, return the keys directly
+  if (event_has_deferred()) {
+    return push_event_key(buf, maxlen);
+  }
+
+  if (result == kInputEof) {
+    read_error_exit();
+  }
+
+  return 0;
 }
 
 // Check if a character is available for reading
@@ -319,10 +320,9 @@ static int push_event_key(uint8_t *buf, int maxlen)
 // Check if there's pending input
 static bool input_ready(void)
 {
-  return typebuf_was_filled ||                    // API call filled typeahead
-         event_has_deferred() ||                  // Events must be processed
-         (!embedded_mode && (
-            rbuffer_pending(input_buffer) > 0 ||  // Stdin input
-            eof));                                // Stdin closed
+  return typebuf_was_filled ||                 // API call filled typeahead
+         rbuffer_pending(input_buffer) > 0 ||  // Stdin input
+         event_has_deferred() ||               // Events must be processed
+         (!embedded_mode && eof);              // Stdin closed
 }
 
