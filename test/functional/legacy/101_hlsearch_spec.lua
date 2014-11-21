@@ -3,6 +3,7 @@
 local helpers = require('test.functional.helpers')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local execute, expect = helpers.execute, helpers.expect
+local eval = helpers.eval
 
 describe('v:hlsearch', function()
   setup(clear)
@@ -44,7 +45,7 @@ describe('v:hlsearch', function()
     execute('$put=r')
     execute('call garbagecollect(1)')
     execute('call getchar()')
-    execute('1d')
+    execute('1d', '1d')
 
     -- Assert buffer contents.
     expect([[

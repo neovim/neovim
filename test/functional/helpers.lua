@@ -42,7 +42,6 @@ local function request(method, ...)
   if not loop_stopped then
     -- Except when the loop has been stopped by a notification triggered
     -- by the initial request, for example.
-    session:request('vim_eval', '1')
   end
   return rv
 end
@@ -99,25 +98,20 @@ local function nvim_eval(expr)
   return request('vim_eval', expr)
 end
 
-local function nvim_feed(input, mode)
-  mode = mode or ''
-  request('vim_feedkeys', input, mode)
-end
-
-local function buffer_slice(start, stop, buffer_idx)
-  local include_end = false
-  if not stop then
-    stop = -1
-    include_end = true
+local function nvim_feed(input)
+  while #input > 0 do
+    local written = request('vim_input', input)
+    input = input:sub(written + 1)
   end
-  local buffer = request('vim_get_buffers')[buffer_idx or 1]
-  local slice = request('buffer_get_line_slice', buffer, start or 0, stop,
-                        true, include_end)
-  return table.concat(slice, '\n')
 end
 
 local function nvim_replace_termcodes(input)
-  return request('vim_replace_termcodes', input, false, true, true)
+  -- small hack to stop <C-@> from being replaced by the internal
+  -- representation(which is different and won't work for vim_input)
+  local temp_replacement = 'CCCCCCCCC@@@@@@@@@@'
+  input = input:gsub('<[Cc][-]@>', temp_replacement)
+  local rv = request('vim_replace_termcodes', input, false, true, true)
+  return rv:gsub(temp_replacement, '\000')
 end
 
 local function dedent(str)
@@ -150,7 +144,7 @@ end
 
 local function rawfeed(...)
   for _, v in ipairs({...}) do
-    nvim_feed(dedent(v), 'nt')
+    nvim_feed(dedent(v))
   end
 end
 
@@ -166,19 +160,19 @@ local function clear()
 end
 
 local function insert(...)
-  nvim_feed('i', 'nt')
+  nvim_feed('i')
   rawfeed(...)
-  nvim_feed(nvim_replace_termcodes('<ESC>'), 'nt')
+  nvim_feed(nvim_replace_termcodes('<ESC>'))
 end
 
 local function execute(...)
   for _, v in ipairs({...}) do
     if v:sub(1, 1) ~= '/' then
       -- not a search command, prefix with colon
-      nvim_feed(':', 'nt')
+      nvim_feed(':')
     end
-    nvim_feed(v, 'nt')
-    nvim_feed(nvim_replace_termcodes('<CR>'), 'nt')
+    nvim_feed(v)
+    nvim_feed(nvim_replace_termcodes('<CR>'))
   end
 end
 
@@ -198,10 +192,6 @@ end
 
 local function neq(expected, actual)
   return assert.are_not.same(expected, actual)
-end
-
-local function expect(contents, first, last, buffer_index)
-  return eq(dedent(contents), buffer_slice(first, last, buffer_index))
 end
 
 local function ok(expr)
@@ -233,6 +223,10 @@ local function curbuf(method, ...)
 end
 
 local function curbuf_contents()
+  -- Before inspecting the buffer, execute 'vim_eval' to wait until all
+  -- previously sent keys are processed(vim_eval is a deferred function, and
+  -- only processed after all input)
+  session:request('vim_eval', '1')
   return table.concat(curbuf('get_line_slice', 0, -1, true, true), '\n')
 end
 
@@ -250,6 +244,10 @@ local function curtab(method, ...)
     return tab
   end
   return tabpage(method, tab, ...)
+end
+
+local function expect(contents)
+  return eq(dedent(contents), curbuf_contents())
 end
 
 clear()

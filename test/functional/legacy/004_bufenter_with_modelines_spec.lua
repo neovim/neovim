@@ -31,7 +31,7 @@ describe('BufEnter with modelines', function()
     execute('sp Xxx')
 
     -- Append text with autoindent to this file
-    feed('G?this is a<Esc>')
+    feed('G?this is a<CR>')
     feed('othis should be auto-indented<Esc>')
 
     -- Go to Xxx, no autocmd anymore
@@ -39,7 +39,7 @@ describe('BufEnter with modelines', function()
     execute('buf Xxx')
 
     -- Append text without autoindent to Xxx
-    feed('G?this is a<Esc>')
+    feed('G?this is a<CR>')
     feed('othis should be in column 1<Esc>')
     execute('wq')
 
