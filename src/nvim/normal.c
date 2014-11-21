@@ -3492,7 +3492,11 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
      * screenline or move two screenlines.
      */
     validate_virtcol();
-    if (curwin->w_virtcol > curwin->w_curswant
+    colnr_T virtcol = curwin->w_virtcol;
+    if (virtcol > (colnr_T)width1 && *p_sbr != NUL)
+        virtcol -= vim_strsize(p_sbr);
+
+    if (virtcol > curwin->w_curswant
         && (curwin->w_curswant < (colnr_T)width1
             ? (curwin->w_curswant > (colnr_T)width1 / 2)
             : ((curwin->w_curswant - width1) % width2
