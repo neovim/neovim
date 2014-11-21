@@ -182,6 +182,16 @@ local function execute(...)
   end
 end
 
+local function source(code)
+  local tmpname = os.tmpname()
+  local tmpfile = io.open(tmpname, "w")
+  tmpfile:write(code)
+  tmpfile:flush()
+  tmpfile:close()
+  nvim_command('source '..tmpname)
+  os.remove(tmpname)
+end
+
 local function eq(expected, actual)
   return assert.are.same(expected, actual)
 end
@@ -247,6 +257,7 @@ clear()
 return {
   clear = clear,
   dedent = dedent,
+  source = source,
   rawfeed = rawfeed,
   insert = insert,
   feed = feed,
