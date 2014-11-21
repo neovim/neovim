@@ -44,7 +44,6 @@
 #include "nvim/term.h"
 #include "nvim/ui.h"
 #include "nvim/os/os.h"
-#include "nvim/os/event.h"
 
 /*
  * To be able to scroll back at the "more" and "hit-enter" prompts we need to
@@ -2076,9 +2075,6 @@ static int do_more_prompt(int typed_char)
 
     toscroll = 0;
     switch (c) {
-    case K_EVENT:
-      event_process();
-      break;
     case BS:                    /* scroll one line back */
     case K_BS:
     case 'k':
@@ -2738,8 +2734,6 @@ do_dialog (
       break;
     default:                  /* Could be a hotkey? */
       if (c < 0) {            /* special keys are ignored here */
-        // drain event queue to prevent infinite loop
-        event_process();
         continue;
       }
       if (c == ':' && ex_cmd) {

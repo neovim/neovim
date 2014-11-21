@@ -312,7 +312,6 @@ static const struct nv_cmd {
   {K_F8,      farsi_fkey,     0,                      0},
   {K_F9,      farsi_fkey,     0,                      0},
   {K_CURSORHOLD, nv_cursorhold, NV_KEEPREG,           0},
-  {K_EVENT,   nv_event,       NV_KEEPREG,             0},
 };
 
 /* Number of commands in nv_cmds[]. */
@@ -483,7 +482,15 @@ normal_cmd (
   /*
    * Get the command character from the user.
    */
+  event_enable_deferred();
   c = safe_vgetc();
+  event_disable_deferred();
+
+  if (c == K_EVENT) {
+    event_process();
+    return;
+  }
+
   LANGMAP_ADJUST(c, true);
 
   /*
@@ -7372,9 +7379,4 @@ static void nv_cursorhold(cmdarg_T *cap)
   apply_autocmds(EVENT_CURSORHOLD, NULL, NULL, false, curbuf);
   did_cursorhold = true;
   cap->retval |= CA_COMMAND_BUSY;       /* don't call edit() now */
-}
-
-static void nv_event(cmdarg_T *cap)
-{
-  event_process();
 }
