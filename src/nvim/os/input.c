@@ -10,7 +10,6 @@
 #include "nvim/os/event.h"
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/rstream.h"
-#include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/ui.h"
 #include "nvim/memory.h"
@@ -86,11 +85,6 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
 {
   InbufPollResult result;
 
-  if (event_has_deferred()) {
-    // Return pending event bytes
-    return push_event_key(buf, maxlen);
-  }
-
   if (ms >= 0) {
     if ((result = inbuf_poll(ms)) == kInputNone) {
       return 0;
@@ -108,11 +102,6 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
       before_blocking();
       result = inbuf_poll(-1);
     }
-  }
-
-  // If there are deferred events, return the keys directly
-  if (event_has_deferred()) {
-    return push_event_key(buf, maxlen);
   }
 
   // If input was put directly in typeahead buffer bail out here.
@@ -302,25 +291,12 @@ static void process_interrupts(void)
   }
 }
 
-static int push_event_key(uint8_t *buf, int maxlen)
-{
-  static const uint8_t key[3] = { K_SPECIAL, KS_EXTRA, KE_EVENT };
-  static int key_idx = 0;
-  int buf_idx = 0;
-
-  do {
-    buf[buf_idx++] = key[key_idx++];
-    key_idx %= 3;
-  } while (key_idx > 0 && buf_idx < maxlen);
-
-  return buf_idx;
-}
-
 // Check if there's pending input
 static bool input_ready(void)
 {
+  event_process();
+
   return typebuf_was_filled ||                    // API call filled typeahead
-         event_has_deferred() ||                  // Events must be processed
          (!embedded_mode && (
             rbuffer_pending(input_buffer) > 0 ||  // Stdin input
             eof));                                // Stdin closed
