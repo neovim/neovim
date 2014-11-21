@@ -346,20 +346,20 @@ local function host()
 end
 
 local function register()
-  eval('rpc#host#Register("busted", '..channel()..')')
+  eval('remote#host#Register("busted", '..channel()..')')
 end
 
-command_specs_for('rpc#define#CommandOnChannel', true, channel)
-command_specs_for('rpc#define#CommandOnChannel', false, channel)
-command_specs_for('rpc#define#CommandOnHost', true, host, register)
-command_specs_for('rpc#define#CommandOnHost', false, host, register)
+command_specs_for('remote#define#CommandOnChannel', true, channel)
+command_specs_for('remote#define#CommandOnChannel', false, channel)
+command_specs_for('remote#define#CommandOnHost', true, host, register)
+command_specs_for('remote#define#CommandOnHost', false, host, register)
 
-autocmd_specs_for('rpc#define#AutocmdOnChannel', true, channel)
-autocmd_specs_for('rpc#define#AutocmdOnChannel', false, channel)
-autocmd_specs_for('rpc#define#AutocmdOnHost', true, host, register)
-autocmd_specs_for('rpc#define#AutocmdOnHost', false, host, register)
+autocmd_specs_for('remote#define#AutocmdOnChannel', true, channel)
+autocmd_specs_for('remote#define#AutocmdOnChannel', false, channel)
+autocmd_specs_for('remote#define#AutocmdOnHost', true, host, register)
+autocmd_specs_for('remote#define#AutocmdOnHost', false, host, register)
 
-function_specs_for('rpc#define#FunctionOnChannel', true, channel)
-function_specs_for('rpc#define#FunctionOnChannel', false, channel)
-function_specs_for('rpc#define#FunctionOnHost', true, host, register)
-function_specs_for('rpc#define#FunctionOnHost', false, host, register)
+function_specs_for('remote#define#FunctionOnChannel', true, channel)
+function_specs_for('remote#define#FunctionOnChannel', false, channel)
+function_specs_for('remote#define#FunctionOnHost', true, host, register)
+function_specs_for('remote#define#FunctionOnHost', false, host, register)

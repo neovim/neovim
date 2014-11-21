@@ -1,22 +1,22 @@
-*external_plugin.txt*    For Nvim.					 {Nvim}
+*remote_plugin.txt*    For Nvim.					 {Nvim}
 
 
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
 
 
-Nvim support for external plugins 		  *external-plugin*
+Nvim support for remote plugins 		  *remote-plugin*
 
-1. Introduction			|external-plugin-intro|
-2. Plugin hosts			|external-plugin-hosts|
-3. Example			|external-plugin-example|
-4. Plugin manifest		|external-plugin-manifest|
+1. Introduction					|remote-plugin-intro|
+2. Plugin hosts					|remote-plugin-hosts|
+3. Example					|remote-plugin-example|
+4. Plugin manifest				|remote-plugin-manifest|
 
 ==============================================================================
-1. Introduction					    *external-plugin-intro*
+1. Introduction					    *remote-plugin-intro*
 
 A big Nvim goal is to allow extensibility in arbitrary programming languages
 without requiring direct support from the editor. This is achieved with
-external plugins, coprocesses that have a direct communication channel(via
+remote plugins, coprocesses that have a direct communication channel(via
 |msgpack-rpc|) with the Nvim process.
 
 Even though these plugins are running in separate processes, they can call, be
@@ -24,7 +24,7 @@ called, and receive events just as if the code was being executed in the main
 process.
 
 ==============================================================================
-2. Plugin hosts					    *external-plugin-hosts*
+2. Plugin hosts					    *remote-plugin-hosts*
 
 While plugins can be implemented as arbitrary programs that communicate
 directly with Nvim API and are called via |rpcrequest()| and |rpcnotify()|,
@@ -39,9 +39,9 @@ loaded the first time one of its registered plugins are required, keeping
 Nvim startup as fast a possible despite the number of installed plugins/hosts.
 
 ==============================================================================
-3. Example					    *external-plugin-example*
+3. Example					    *remote-plugin-example*
 
-The best way to learn about external plugins is with an example, so let's see
+The best way to learn about remote plugins is with an example, so let's see
 how a very useless python plugin looks like. This plugin exports a command, a
 function and an autocmd. The plugin is called 'Limit', and all it does is
 limit the number of requests made to it. Here's the plugin source code:
@@ -93,31 +93,31 @@ value. Without the "sync" flag, the call is made using a fire and forget
 approach with |rpcnotify()|(return values or exceptions raised in the handler
 function are ignored)
 
-To test the above plugin, it must be saved in "external-plugin/python" in a
-'runtimepath' directory(~/.nvim/external-plugin/python/limit.py for example).
-Then, the external plugin manifest must be generated with
-`:UpdateExternalPlugins`. 
+To test the above plugin, it must be saved in "rplugin/python" in a
+'runtimepath' directory(~/.nvim/rplugin/python/limit.py for example).
+Then, the remote plugin manifest must be generated with
+`:UpdateRemotePlugins`. 
 
 ==============================================================================
-4. External plugin manifest			    *external-plugin-manifest*
+4. remote plugin manifest			    *remote-plugin-manifest*
 
-Just installing external plugins to "external-plugin/{host}" isn't enough to
-load them at startup. The `:UpdateExternalPlugins`  command must be executed
-every time an external plugin is installed, updated, or deleted.
+Just installing remote plugins to "rplugin/{host}" isn't enough to
+load them at startup. The `:UpdateRemotePlugins`  command must be executed
+every time a remote plugin is installed, updated, or deleted.
 
-`:UpdateExternalPlugins` will generate the external plugin manifest, a special
+`:UpdateRemotePlugins` will generate the remote plugin manifest, a special
 vimscript file containing declarations for all vimscript entities
-(commands/autocommands/functions) defined by all external plugins, with each
+(commands/autocommands/functions) defined by all remote plugins, with each
 entity associated with the host and plugin path. The manifest can be seen as a
 generated extension to the user's vimrc(it even has the vimrc filename
 prepended).
 
-The manifest declarations are nothing but calls to the rpc#host#RegisterPlugin
+The manifest declarations are nothing but calls to the remote#host#RegisterPlugin
 function, which will take care of bootstrapping the host as soon as the
 declared command, autocommand or function is used for the first time.
 
 The manifest generation step is necessary to keep editor startup fast in
-situations where a user has external plugins with different hosts. For
+situations where a user has remote plugins with different hosts. For
 example, imagine a user that has three plugins, for python, java and .NET
 hosts respectively, if we were to load all three plugins at startup, then
 three language runtimes would also be spawned which could take seconds!
@@ -127,7 +127,7 @@ with the example, imagine the java plugin is a semantic completion engine for
 java files, if it defines an BufEnter *.java autocommand then the java host
 will only be spawned when java source files are loaded. 
 
-If the explicit call to `:UpdateExternalPlugins` seems incovenient, try
+If the explicit call to `:UpdateRemotePlugins` seems incovenient, try
 to see it like this: Its a way to give IDE-like capabilities to nvim while
 still keeping it a fast/lightweight editor for general use. It can also be
 seen as an analogous to the |:helptags| facility.

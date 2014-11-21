@@ -2,12 +2,12 @@ let s:hosts = {}
 let s:plugin_patterns = {
       \ 'python': '*.py'
       \ }
-let s:external_plugins = fnamemodify($MYVIMRC, ':p:h')
-      \.'/.'.fnamemodify($MYVIMRC, ':t').'-external-plugins~'
+let s:remote_plugins_manifest = fnamemodify($MYVIMRC, ':p:h')
+      \.'/.'.fnamemodify($MYVIMRC, ':t').'-rplugin~'
 
 
 " Register a host by associating it with a factory(funcref)
-function! rpc#host#Register(name, factory)
+function! remote#host#Register(name, factory)
   let s:hosts[a:name] = {'factory': a:factory, 'channel': 0, 'initialized': 0}
   if type(a:factory) == type(1) && a:factory
     " Passed a channel directly
@@ -20,7 +20,7 @@ endfunction
 " as `source`, but it will run as a different process. This can be used by
 " plugins that should run isolated from other plugins created for the same host
 " type
-function! rpc#host#RegisterClone(name, orig_name)
+function! remote#host#RegisterClone(name, orig_name)
   if !has_key(s:hosts, a:orig_name)
     throw 'No host named "'.a:orig_name.'" is registered'
   endif
@@ -30,7 +30,7 @@ endfunction
 
 
 " Get a host channel, bootstrapping it if necessary
-function! rpc#host#Require(name)
+function! remote#host#Require(name)
   if !has_key(s:hosts, a:name)
     throw 'No host named "'.a:name.'" is registered'
   endif
@@ -43,7 +43,7 @@ function! rpc#host#Require(name)
 endfunction
 
 
-function! rpc#host#IsRunning(name)
+function! remote#host#IsRunning(name)
   if !has_key(s:hosts, a:name)
     throw 'No host named "'.a:name.'" is registered'
   endif
@@ -55,7 +55,7 @@ endfunction
 " autocmd(async) and one function(sync):
 "
 " let s:plugin_path = expand('<sfile>:p:h').'/nvim_plugin.py'
-" call rpc#host#RegisterPlugin('python', s:plugin_path, [
+" call remote#host#RegisterPlugin('python', s:plugin_path, [
 "   \ {'type': 'command', 'name': 'PyCmd', 'sync': 1, 'opts': {}},
 "   \ {'type': 'command', 'name': 'PyAsyncCmd', 'sync': 0, 'opts': {'eval': 'cursor()'}},
 "   \ {'type': 'autocmd', 'name': 'BufEnter', 'sync': 0, 'opts': {'eval': 'expand("<afile>")'}},
@@ -64,7 +64,7 @@ endfunction
 "
 " The third item in a declaration is a boolean: non zero means the command,
 " autocommand or function will be executed synchronously with rpcrequest.
-function! rpc#host#RegisterPlugin(host, path, specs)
+function! remote#host#RegisterPlugin(host, path, specs)
   let plugins = s:PluginsForHost(a:host)
 
   for plugin in plugins
@@ -73,7 +73,7 @@ function! rpc#host#RegisterPlugin(host, path, specs)
     endif
   endfor
 
-  if rpc#host#IsRunning(a:host)
+  if remote#host#IsRunning(a:host)
     " For now we won't allow registration of plugins when the host is already
     " running.
     throw 'Host "'.a:host.'" is already running'
@@ -87,7 +87,7 @@ function! rpc#host#RegisterPlugin(host, path, specs)
     let rpc_method = a:path
     if type == 'command'
       let rpc_method .= ':command:'.name
-      call rpc#define#CommandOnHost(a:host, rpc_method, sync, name, opts)
+      call remote#define#CommandOnHost(a:host, rpc_method, sync, name, opts)
     elseif type == 'autocmd'
       " Since multiple handlers can be attached to the same autocmd event by a
       " single plugin, we need a way to uniquely identify the rpc method to
@@ -95,10 +95,10 @@ function! rpc#host#RegisterPlugin(host, path, specs)
       " name(This still has a limit: one handler per event/pattern combo, but
       " there's no need to allow plugins define multiple handlers in that case)
       let rpc_method .= ':autocmd:'.name.':'.get(opts, 'pattern', '*')
-      call rpc#define#AutocmdOnHost(a:host, rpc_method, sync, name, opts)
+      call remote#define#AutocmdOnHost(a:host, rpc_method, sync, name, opts)
     elseif type == 'function'
       let rpc_method .= ':function:'.name
-      call rpc#define#FunctionOnHost(a:host, rpc_method, sync, name, opts)
+      call remote#define#FunctionOnHost(a:host, rpc_method, sync, name, opts)
     else
       echoerr 'Invalid declaration type: '.type
     endif
@@ -108,9 +108,9 @@ function! rpc#host#RegisterPlugin(host, path, specs)
 endfunction
 
 
-function! rpc#host#LoadExternalPlugins()
-  if filereadable(s:external_plugins)
-    exe 'source '.s:external_plugins
+function! remote#host#LoadRemotePlugins()
+  if filereadable(s:remote_plugins_manifest)
+    exe 'source '.s:remote_plugins_manifest
   endif
 endfunction
 
@@ -118,17 +118,17 @@ endfunction
 function! s:RegistrationCommands(host)
   " Register a temporary host clone for discovering specs
   let host_id = a:host.'-registration-clone'
-  call rpc#host#RegisterClone(host_id, a:host)
+  call remote#host#RegisterClone(host_id, a:host)
   let pattern = s:plugin_patterns[a:host]
-  let paths = globpath(&rtp, 'external-plugin/'.a:host.'/'.pattern, 0, 1)
+  let paths = globpath(&rtp, 'rplugin/'.a:host.'/'.pattern, 0, 1)
   for path in paths
-    call rpc#host#RegisterPlugin(host_id, path, [])
+    call remote#host#RegisterPlugin(host_id, path, [])
   endfor
-  let channel = rpc#host#Require(host_id)
+  let channel = remote#host#Require(host_id)
   let lines = []
   for path in paths
     let specs = rpcrequest(channel, 'specs', path)
-    call add(lines, "call rpc#host#RegisterPlugin('".a:host
+    call add(lines, "call remote#host#RegisterPlugin('".a:host
           \ ."', '".path."', [")
     for spec in specs
       call add(lines, "      \\ ".string(spec).",")
@@ -143,7 +143,7 @@ function! s:RegistrationCommands(host)
 endfunction
 
 
-function! s:UpdateExternalPlugins()
+function! s:UpdateRemotePlugins()
   let commands = []
   let hosts = keys(s:hosts)
   for host in hosts
@@ -154,11 +154,11 @@ function! s:UpdateExternalPlugins()
             \ + ['', '']
     endif
   endfor
-  call writefile(commands, s:external_plugins)
+  call writefile(commands, s:remote_plugins_manifest)
 endfunction
 
 
-command! UpdateExternalPlugins call s:UpdateExternalPlugins()
+command! UpdateRemotePlugins call s:UpdateRemotePlugins()
 
 
 let s:plugins_for_host = {}
@@ -239,5 +239,5 @@ function! s:RequirePythonHost(name)
   throw 'Failed to load python host'
 endfunction
 
-call rpc#host#Register('python', function('s:RequirePythonHost'))
+call remote#host#Register('python', function('s:RequirePythonHost'))
 " }}}
