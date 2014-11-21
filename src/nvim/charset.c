@@ -1058,6 +1058,8 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
     if (col >= (colnr_T)wp->w_width) {
       col -= wp->w_width;
       numberextra = wp->w_width - (numberextra - win_col_off2(wp));
+      if (*p_sbr != NUL && col >= (colnr_T)STRLEN(p_sbr))
+        col -= (colnr_T)STRLEN(p_sbr);
       if (numberextra > 0) {
         col = col % numberextra;
       }
