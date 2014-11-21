@@ -311,9 +311,16 @@ getcmdline (
 
     /* Get a character.  Ignore K_IGNORE, it should not do anything, such
      * as stop completion. */
+    event_enable_deferred();
     do {
       c = safe_vgetc();
     } while (c == K_IGNORE);
+    event_disable_deferred();
+
+    if (c == K_EVENT) {
+      event_process();
+      continue;
+    }
 
     if (KeyTyped) {
       some_key_typed = TRUE;
@@ -769,11 +776,6 @@ getcmdline (
      * Big switch for a typed command line character.
      */
     switch (c) {
-    case K_EVENT:
-      event_process();
-      // Force a redraw even though the command line didn't change
-      shell_resized();
-      goto cmdline_not_changed;
     case K_BS:
     case Ctrl_H:
     case K_DEL:
@@ -1885,8 +1887,6 @@ redraw:
       }
 
       if (IS_SPECIAL(c1)) {
-        // Process deferred events
-        event_process();
         // Ignore other special key codes
         continue;
       }

@@ -10,6 +10,7 @@ local eq, clear, eval, feed, nvim =
 local function create_file_with_nuls(name)
   return function()
     feed('ipart1<C-V>000part2<C-V>000part3<ESC>:w '..name..'<CR>')
+    eval('1')  -- wait for the file to be created
   end
 end
 

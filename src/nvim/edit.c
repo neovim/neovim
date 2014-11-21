@@ -593,9 +593,17 @@ edit (
      * Get a character for Insert mode.  Ignore K_IGNORE.
      */
     lastc = c;                          /* remember previous char for CTRL-D */
+    event_enable_deferred();
     do {
       c = safe_vgetc();
     } while (c == K_IGNORE);
+    event_disable_deferred();
+
+    if (c == K_EVENT) {
+      c = lastc;
+      event_process();
+      continue;
+    }
 
     /* Don't want K_CURSORHOLD for the second key, e.g., after CTRL-V. */
     did_cursorhold = TRUE;
@@ -941,10 +949,6 @@ doESCkey:
     case K_CURSORHOLD:          /* Didn't type something for a while. */
       apply_autocmds(EVENT_CURSORHOLDI, NULL, NULL, FALSE, curbuf);
       did_cursorhold = TRUE;
-      break;
-
-    case K_EVENT:
-      event_process();
       break;
 
     case K_HOME:        /* <Home> */
