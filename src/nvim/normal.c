@@ -1099,6 +1099,10 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
   pos_T old_cursor;
   bool empty_region_error;
   int restart_edit_save;
+  int lbr_saved = curwin->w_p_lbr;
+
+  curwin->w_p_lbr = false; /* avoid a problem with unwanted linebreaks in 
+                            * block mode */
 
   /* The visual area is remembered for redo */
   static int redo_VIsual_mode = NUL;        /* 'v', 'V', or Ctrl-V */
@@ -1711,6 +1715,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     oap->block_mode = false;
     clearop(oap);
   }
+  curwin->w_p_lbr = lbr_saved;
 }
 
 /*
