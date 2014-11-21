@@ -11,11 +11,11 @@ let s:loaded_python_provider = 1
 let s:plugin_path = expand('<sfile>:p:h').'/script_host.py'
 " The python provider plugin will run in a separate instance of the python
 " host.
-call rpc#host#RegisterClone('legacy-python-provider', 'python')
-call rpc#host#RegisterPlugin('legacy-python-provider', s:plugin_path, [])
+call remote#host#RegisterClone('legacy-python-provider', 'python')
+call remote#host#RegisterPlugin('legacy-python-provider', s:plugin_path, [])
 " Ensure that we can load the python host before bootstrapping
 try
-  let s:host = rpc#host#Require('legacy-python-provider')
+  let s:host = remote#host#Require('legacy-python-provider')
 catch
   echomsg v:exception
   finish

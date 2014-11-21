@@ -1,4 +1,4 @@
-function! rpc#define#CommandOnHost(host, method, sync, name, opts)
+function! remote#define#CommandOnHost(host, method, sync, name, opts)
   let prefix = ''
 
   if has_key(a:opts, 'range') 
@@ -28,7 +28,7 @@ function! rpc#define#CommandOnHost(host, method, sync, name, opts)
   endif
 
   exe s:GetCommandPrefix(a:name, a:opts)
-        \ .' call rpc#define#CommandBootstrap("'.a:host.'"'
+        \ .' call remote#define#CommandBootstrap("'.a:host.'"'
         \ .                                ', "'.a:method.'"'
         \ .                                ', "'.a:sync.'"'
         \ .                                ', "'.a:name.'"'
@@ -38,11 +38,11 @@ function! rpc#define#CommandOnHost(host, method, sync, name, opts)
 endfunction
 
 
-function! rpc#define#CommandBootstrap(host, method, sync, name, opts, forward)
-  let channel = rpc#host#Require(a:host)
+function! remote#define#CommandBootstrap(host, method, sync, name, opts, forward)
+  let channel = remote#host#Require(a:host)
 
   if channel
-    call rpc#define#CommandOnChannel(channel, a:method, a:sync, a:name, a:opts)
+    call remote#define#CommandOnChannel(channel, a:method, a:sync, a:name, a:opts)
     exe a:forward
   else
     exe 'delcommand '.a:name
@@ -51,7 +51,7 @@ function! rpc#define#CommandBootstrap(host, method, sync, name, opts, forward)
 endfunction
 
 
-function! rpc#define#CommandOnChannel(channel, method, sync, name, opts)
+function! remote#define#CommandOnChannel(channel, method, sync, name, opts)
   let rpcargs = [a:channel, '"'.a:method.'"']
   if has_key(a:opts, 'nargs')
     " -nargs, pass arguments in a list
@@ -87,12 +87,12 @@ function! rpc#define#CommandOnChannel(channel, method, sync, name, opts)
 endfunction
 
 
-function! rpc#define#AutocmdOnHost(host, method, sync, name, opts)
+function! remote#define#AutocmdOnHost(host, method, sync, name, opts)
   let group = s:GetNextAutocmdGroup()
   let forward = '"doau '.group.' '.a:name.' ".'.'expand("<amatch>")'
   let a:opts.group = group
   let bootstrap_def = s:GetAutocmdPrefix(a:name, a:opts)
-        \ .' call rpc#define#AutocmdBootstrap("'.a:host.'"'
+        \ .' call remote#define#AutocmdBootstrap("'.a:host.'"'
         \ .                                ', "'.a:method.'"'
         \ .                                ', "'.a:sync.'"'
         \ .                                ', "'.a:name.'"'
@@ -103,12 +103,12 @@ function! rpc#define#AutocmdOnHost(host, method, sync, name, opts)
 endfunction
 
 
-function! rpc#define#AutocmdBootstrap(host, method, sync, name, opts, forward)
-  let channel = rpc#host#Require(a:host)
+function! remote#define#AutocmdBootstrap(host, method, sync, name, opts, forward)
+  let channel = remote#host#Require(a:host)
 
   exe 'autocmd! '.a:opts.group
   if channel
-    call rpc#define#AutocmdOnChannel(channel, a:method, a:sync, a:name,
+    call remote#define#AutocmdOnChannel(channel, a:method, a:sync, a:name,
           \ a:opts)
     exe eval(a:forward)
   else
@@ -118,7 +118,7 @@ function! rpc#define#AutocmdBootstrap(host, method, sync, name, opts, forward)
 endfunction
 
 
-function! rpc#define#AutocmdOnChannel(channel, method, sync, name, opts)
+function! remote#define#AutocmdOnChannel(channel, method, sync, name, opts)
   let rpcargs = [a:channel, '"'.a:method.'"']
   call s:AddEval(rpcargs, a:opts)
 
@@ -128,10 +128,10 @@ function! rpc#define#AutocmdOnChannel(channel, method, sync, name, opts)
 endfunction
 
 
-function! rpc#define#FunctionOnHost(host, method, sync, name, opts)
+function! remote#define#FunctionOnHost(host, method, sync, name, opts)
   let group = s:GetNextAutocmdGroup()
   exe 'autocmd! '.group.' FuncUndefined '.a:name
-        \ .' call rpc#define#FunctionBootstrap("'.a:host.'"'
+        \ .' call remote#define#FunctionBootstrap("'.a:host.'"'
         \ .                                 ', "'.a:method.'"'
         \ .                                 ', "'.a:sync.'"'
         \ .                                 ', "'.a:name.'"'
@@ -141,13 +141,13 @@ function! rpc#define#FunctionOnHost(host, method, sync, name, opts)
 endfunction
 
 
-function! rpc#define#FunctionBootstrap(host, method, sync, name, opts, group)
-  let channel = rpc#host#Require(a:host)
+function! remote#define#FunctionBootstrap(host, method, sync, name, opts, group)
+  let channel = remote#host#Require(a:host)
 
   exe 'autocmd! '.a:group
   exe 'augroup! '.a:group
   if channel
-    call rpc#define#FunctionOnChannel(channel, a:method, a:sync, a:name,
+    call remote#define#FunctionOnChannel(channel, a:method, a:sync, a:name,
           \ a:opts)
   else
     echoerr 'Host "'a:host.'" for "'.a:name.'" function is not available'
@@ -155,7 +155,7 @@ function! rpc#define#FunctionBootstrap(host, method, sync, name, opts, group)
 endfunction
 
 
-function! rpc#define#FunctionOnChannel(channel, method, sync, name, opts)
+function! remote#define#FunctionOnChannel(channel, method, sync, name, opts)
   let rpcargs = [a:channel, '"'.a:method.'"', 'a:000']
   call s:AddEval(rpcargs, a:opts)
 

@@ -21,7 +21,7 @@ DOCS = \
 	digraph.txt \
 	editing.txt \
 	eval.txt \
-	external_plugin.txt \
+	remote_plugin.txt \
 	farsi.txt \
 	filetype.txt \
 	fold.txt \
@@ -142,7 +142,7 @@ HTMLS = \
 	digraph.html \
 	editing.html \
 	eval.html \
-	external_plugin.html \
+	remote_plugin.html \
 	farsi.html \
 	filetype.html \
 	fold.html \
