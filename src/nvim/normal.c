@@ -419,7 +419,6 @@ normal_cmd (
 )
 {
   cmdarg_T ca;                          /* command arguments */
-  int c;
   bool ctrl_w = false;                  /* got CTRL-W command */
   int old_col = curwin->w_curswant;
   bool need_flushbuf;                   /* need to call out_flush() */
@@ -443,11 +442,12 @@ normal_cmd (
    * will terminate it. Finish_op tells us to finish the operation before
    * returning this time (unless the operation was cancelled).
    */
-  c = finish_op;
-  finish_op = (oap->op_type != OP_NOP);
-  if (finish_op != c) {
-    ui_cursor_shape();                  /* may show different cursor shape */
+  if( finish_op != (oap->op_type != OP_NOP) ) {
+	  // If no one down the call tree for ui_cursor_shape() uses finish_op, the following line can be removed
+	  finish_op = (oap->op_type != OP_NOP);
+	  ui_cursor_shape();
   }
+  finish_op = (oap->op_type != OP_NOP);
 
   /* When not finishing an operator and no register name typed, reset the
    * count. */
