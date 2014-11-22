@@ -6,23 +6,33 @@ local Session = require('nvim.session')
 
 local nvim_prog = os.getenv('NVIM_PROG') or 'build/bin/nvim'
 local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N', '--embed'}
+local prepend_argv
 
 if os.getenv('VALGRIND') then
   local log_file = os.getenv('VALGRIND_LOG') or 'valgrind-%p.log'
-  local valgrind_argv = {'valgrind', '-q', '--tool=memcheck',
-                         '--leak-check=yes', '--track-origins=yes',
-                         '--show-possibly-lost=no',
-                         '--suppressions=.valgrind.supp',
-                         '--log-file='..log_file}
-  if os.getenv('VALGRIND_GDB') then
-    table.insert(valgrind_argv, '--vgdb=yes')
-    table.insert(valgrind_argv, '--vgdb-error=0')
+  prepend_argv = {'valgrind', '-q', '--tool=memcheck',
+                  '--leak-check=yes', '--track-origins=yes',
+                  '--show-possibly-lost=no',
+                  '--suppressions=.valgrind.supp',
+                  '--log-file='..log_file}
+  if os.getenv('GDB') then
+    table.insert(prepend_argv, '--vgdb=yes')
+    table.insert(prepend_argv, '--vgdb-error=0')
   end
-  local len = #valgrind_argv
+elseif os.getenv('GDB') then
+  local gdbserver_port = '7777'
+  if os.getenv('GDBSERVER_PORT') then
+    gdbserver_port = os.getenv('GDBSERVER_PORT')
+  end
+  prepend_argv = {'gdbserver', 'localhost:'..gdbserver_port}
+end
+
+if prepend_argv then
+  local len = #prepend_argv
   for i = 1, #nvim_argv do
-    valgrind_argv[i + len] = nvim_argv[i]
+    prepend_argv[i + len] = nvim_argv[i]
   end
-  nvim_argv = valgrind_argv
+  nvim_argv = prepend_argv
 end
 
 local session, loop_running, loop_stopped, last_error
