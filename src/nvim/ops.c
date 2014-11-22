@@ -5255,7 +5255,35 @@ static void get_clipboard(int name)
     goto err;
   }
 
-  list_T *lines = result.vval.v_list;
+  list_T *res = result.vval.v_list, *lines = NULL;
+  if (res->lv_len == 2 && res->lv_first->li_tv.v_type == VAR_LIST) {
+    lines = res->lv_first->li_tv.vval.v_list;
+    if (res->lv_last->li_tv.v_type != VAR_STRING) {
+      goto err;
+    }
+    char_u* regtype = res->lv_last->li_tv.vval.v_string;
+    if (regtype == NULL || strlen((char*)regtype) != 1) {
+      goto err;
+    }
+    switch (regtype[0]) {
+    case 'v': case 'c':
+      reg->y_type = MCHAR;
+      break;
+    case 'V': case 'l':
+      reg->y_type = MLINE;
+      break;
+    case 'b': case Ctrl_V:
+      reg->y_type = MBLOCK;
+      break;
+    default:
+      goto err;
+    }
+  } else {
+    lines = res;
+    // provider did not specify regtype, calculate it below
+    reg->y_type = MAUTO;
+  }
+
   reg->y_array = xcalloc(lines->lv_len, sizeof(uint8_t *));
   reg->y_size = lines->lv_len;
 
@@ -5265,6 +5293,25 @@ static void get_clipboard(int name)
       goto err;
     }
     reg->y_array[i++] = (uint8_t *)xstrdup((char *)li->li_tv.vval.v_string);
+  }
+
+  if (reg->y_type == MAUTO) {
+    if (reg->y_size > 0 && strlen((char*)reg->y_array[reg->y_size-1]) == 0) {
+      reg->y_type = MLINE;
+      free(reg->y_array[reg->y_size-1]);
+      reg->y_size--;
+    } else {
+      reg->y_type = MCHAR;
+    }
+  } else if (reg->y_type == MBLOCK) {
+    int maxlen = 0;
+    for (int i = 0; i < reg->y_size; i++) {
+      int rowlen = STRLEN(reg->y_array[i]);
+      if (rowlen > maxlen) {
+        maxlen = rowlen;
+      }
+    }
+    reg->y_width = maxlen-1;
   }
 
   if (!name && p_unc) {
@@ -5309,6 +5356,21 @@ static void set_clipboard(int name)
 
   list_T *args = list_alloc();
   list_append_list(args, lines);
+
+  char_u regtype;
+  switch (reg->y_type) {
+  case MLINE:
+    regtype = 'V';
+    list_append_string(lines, (char_u*)"", 0);
+    break;
+  case MCHAR:
+    regtype = 'v';
+    break;
+  case MBLOCK:
+    regtype = 'b';
+    break;
+  }
+  list_append_string(args, &regtype, 1);
 
   char_u regname = (char_u)name;
   list_append_string(args, &regname, 1);

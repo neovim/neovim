@@ -5,7 +5,7 @@ let s:copy = {}
 let s:paste = {}
 
 function! s:try_cmd(cmd, ...)
-  let out = a:0 ? systemlist(a:cmd, a:1) : systemlist(a:cmd)
+  let out = a:0 ? systemlist(a:cmd, a:1, 1) : systemlist(a:cmd, [''], 1)
   if v:shell_error
     echo "clipboard: error: ".(len(out) ? out[0] : '')
     return ''
@@ -39,7 +39,7 @@ function! s:clipboard.get(reg)
   return s:try_cmd(s:paste[a:reg])
 endfunction
 
-function! s:clipboard.set(lines, reg)
+function! s:clipboard.set(lines, regtype, reg)
   call s:try_cmd(s:copy[a:reg], a:lines)
 endfunction
 
