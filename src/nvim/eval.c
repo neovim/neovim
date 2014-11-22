@@ -5119,6 +5119,20 @@ void list_append_tv(list_T *l, typval_T *tv)
 }
 
 /*
+ * Add a list to a list.
+ */
+void list_append_list(list_T *list, list_T *itemlist)
+{
+  listitem_T  *li = listitem_alloc();
+
+  li->li_tv.v_type = VAR_LIST;
+  li->li_tv.v_lock = 0;
+  li->li_tv.vval.v_list = itemlist;
+  list_append(list, li);
+  ++list->lv_refcount;
+}
+
+/*
  * Add a dictionary to a list.  Used by getqflist().
  */
 void list_append_dict(list_T *list, dict_T *dict)

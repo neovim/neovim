@@ -5244,7 +5244,11 @@ static void get_clipboard(int name)
 
   struct yankreg *reg = &y_regs[CLIP_REGISTER];
   free_register(reg);
+
   list_T *args = list_alloc();
+  char_u regname = (char_u)name;
+  list_append_string(args, &regname, 1);
+
   typval_T result = eval_call_provider("clipboard", "get", args);
 
   if (result.v_type != VAR_LIST) {
@@ -5294,6 +5298,7 @@ static void set_clipboard(int name)
   if (!name && p_unc) {
     // copy from the unnamed register
     copy_register(reg, &y_regs[0]);
+    name = '+';
   }
 
   list_T *lines = list_alloc();
@@ -5302,5 +5307,11 @@ static void set_clipboard(int name)
     list_append_string(lines, reg->y_array[i], -1);
   }
 
-  (void)eval_call_provider("clipboard", "set", lines);
+  list_T *args = list_alloc();
+  list_append_list(args, lines);
+
+  char_u regname = (char_u)name;
+  list_append_string(args, &regname, 1);
+
+  (void)eval_call_provider("clipboard", "set", args);
 }
