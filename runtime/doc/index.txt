@@ -1072,7 +1072,6 @@ tag	      command	      action ~
 |:@@|		:@@		repeat the previous ":@"
 |:Next|		:N[ext]		go to previous file in the argument list
 |:Print|	:P[rint]	print lines
-|:X|		:X		ask for encryption key
 |:append|	:a[ppend]	append text
 |:abbreviate|	:ab[breviate]	enter abbreviation
 |:abclear|	:abc[lear]	remove all abbreviations

@@ -1413,9 +1413,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Note that v:fname_in and v:fname_out will never be the same.
 	Note that v:charconvert_from and v:charconvert_to may be different
 	from 'encoding'.  Vim internally uses UTF-8 instead of UCS-2 or UCS-4.
-	Encryption is not done by Vim when using 'charconvert'.  If you want
-	to encrypt the file after conversion, 'charconvert' should take care
-	of this.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
@@ -2197,36 +2194,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			variables overrule the terminal size values obtained
 			with system specific functions.
 
-
 						*'cryptmethod'* *'cm'*
-'cryptmethod'		string	(default "zip")
-			global or local to buffer |global-local|
-			{not in Vi}
-	Method used for encryption when the buffer is written to a file:
-							*pkzip*
-	   zip		PkZip compatible method.  A weak kind of encryption.
-			Backwards compatible with Vim 7.2 and older.
-							*blowfish*
-	   blowfish	Blowfish method.  Strong encryption.  Requires Vim 7.3
-			or later, files can NOT be read by Vim 7.2 and older.
-			This adds a "seed" to the file, every time you write
-			the file the encrypted bytes will be different.
-
-	When reading an encrypted file 'cryptmethod' will be set automatically
-	to the detected method of the file being read.  Thus if you write it
-	without changing 'cryptmethod' the same method will be used.
-	Changing 'cryptmethod' does not mark the file as modified, you have to
-	explicitly write it, you don't get a warning unless there are other
-	modifications.  Also see |:X|.
-
-	When setting the global value to an empty string, it will end up with
-	the value "zip".  When setting the local value to an empty string the
-	buffer will use the global value.
-
-	When a new encryption method is added in a later version of Vim, and
-	the current version does not recognize it, you will get	*E821* .
-	You need to edit this file with the later version of Vim.
-
+'cryptmethod'		Removed. {Nvim}
 
 						*'cscopepathcomp'* *'cspc'*
 'cscopepathcomp' 'cspc'	number	(default 0)
@@ -4420,23 +4389,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Otherwise only one space is inserted.
 	NOTE: This option is set when 'compatible' is set.
 
-							*'key'*
-'key'			string	(default "")
-			local to buffer
-			{not in Vi}
-			{only available when compiled with the |+cryptv|
-			feature}
-	The key that is used for encrypting and decrypting the current buffer.
-	See |encryption| and 'cryptmethod'.
-	Careful: Do not set the key value by hand, someone might see the typed
-	key.  Use the |:X| command.  But you can make 'key' empty: >
-		:set key=
-<	It is not possible to get the value of this option with ":set key" or
-	"echo &key".  This is to avoid showing it to someone who shouldn't
-	know.  It also means you cannot see it yourself once you have set it,
-	be careful not to make a typing error!
-	You can use "&key" in an expression to detect whether encryption is
-	enabled.  When 'key' is set it returns "*****" (five stars).
+					*'key'*
+'key'	Removed. {Nvim}
 
 					*'keymap'* *'kmp'* *E544*
 'keymap' 'kmp'		string	(default "")
