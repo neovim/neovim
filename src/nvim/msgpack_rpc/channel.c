@@ -241,6 +241,7 @@ Object channel_send_call(uint64_t id,
 
   if (frame.errored) {
     api_set_error(err, Exception, "%s", frame.result.data.string.data);
+    api_free_object(frame.result);
     return NIL;
   }
 
