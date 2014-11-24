@@ -49,11 +49,11 @@ static void try_to_free_memory(void)
 /// @return pointer to allocated space. NULL if out of memory
 void *try_malloc(size_t size) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1)
 {
-  size = size ? size : 1;
-  void *ret = malloc(size);
+  size_t allocated_size = size ? size : 1;
+  void *ret = malloc(allocated_size);
   if (!ret) {
     try_to_free_memory();
-    ret = malloc(size);
+    ret = malloc(allocated_size);
   }
   return ret;
 }
@@ -102,10 +102,12 @@ void *xmalloc(size_t size)
 void *xcalloc(size_t count, size_t size)
   FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE_PROD(1, 2) FUNC_ATTR_NONNULL_RET
 {
-  void *ret = count && size ? calloc(count, size) : calloc(1, 1);
+  size_t allocated_count = count && size ? count : 1;
+  size_t allocated_size = count && size ? size : 1;
+  void *ret = calloc(allocated_count, allocated_size);
   if (!ret) {
     try_to_free_memory();
-    ret = count && size ? calloc(count, size) : calloc(1, 1);
+    ret = calloc(allocated_count, allocated_size);
     if (!ret) {
       OUT_STR(e_outofmem);
       out_char('\n');
@@ -123,10 +125,11 @@ void *xcalloc(size_t count, size_t size)
 void *xrealloc(void *ptr, size_t size)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALLOC_SIZE(2) FUNC_ATTR_NONNULL_RET
 {
-  void *ret = size ? realloc(ptr, size) : realloc(ptr, 1);
+  size_t allocated_size = size ? size : 1;
+  void *ret = realloc(ptr, allocated_size);
   if (!ret) {
     try_to_free_memory();
-    ret = size ? realloc(ptr, size) : realloc(ptr, 1);
+    ret = realloc(ptr, allocated_size);
     if (!ret) {
       OUT_STR(e_outofmem);
       out_char('\n');
