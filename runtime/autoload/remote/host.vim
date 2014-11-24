@@ -198,7 +198,7 @@ function! s:RequirePythonHost(name)
   catch
   endtry
 
-  " Failed, try a little harder to find the correct interpreter or 
+  " Failed, try a little harder to find the correct interpreter or
   " report a friendly error to user
   let get_version =
         \ ' -c "import sys; sys.stdout.write(str(sys.version_info[0]) + '.
@@ -246,3 +246,17 @@ endfunction
 
 call remote#host#Register('python', function('s:RequirePythonHost'))
 " }}}
+
+
+function! s:GoHost(name)
+  try
+    let channel_id = rpcstart($HOME."/.nvim/plugins/go/plugin_host")
+    call rpcrequest(channel_id, 'plugin_load')
+    return channel_id
+  catch a:exception
+    echom a:exception
+  endtry
+  throw 'Failed to start Go host'
+endfunc
+
+call remote#host#Register('go', function('s:GoHost'))
