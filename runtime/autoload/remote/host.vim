@@ -121,6 +121,11 @@ function! s:RegistrationCommands(host)
   call remote#host#RegisterClone(host_id, a:host)
   let pattern = s:plugin_patterns[a:host]
   let paths = globpath(&rtp, 'rplugin/'.a:host.'/'.pattern, 0, 1)
+  if len(paths) < 1
+    echom "Could not find any plugins when attempting to register plugin "
+          \ ."commands. See :he remote-plugin"
+    return []
+  endif
   for path in paths
     call remote#host#RegisterPlugin(host_id, path, [])
   endfor
