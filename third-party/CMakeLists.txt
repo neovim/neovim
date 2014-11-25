@@ -82,7 +82,7 @@ if(USE_BUNDLED_LIBUV)
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND sh ${DEPS_BUILD_DIR}/src/libuv/autogen.sh &&
       ${DEPS_BUILD_DIR}/src/libuv/configure --with-pic --disable-shared
-        --prefix=${DEPS_INSTALL_DIR} CC=${DEPS_C_COMPILER}
+        --disable-dtrace --prefix=${DEPS_INSTALL_DIR} CC=${DEPS_C_COMPILER}
     INSTALL_COMMAND ${MAKE_PRG} install)
   list(APPEND THIRD_PARTY_DEPS libuv)
 endif()
