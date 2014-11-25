@@ -20,5 +20,5 @@ execute_process(
   RESULT_VARIABLE res)
 
 if(NOT res EQUAL 0)
-  message(FATAL_ERROR "Running ${TEST_TYPE} tests failed.")
+  message(FATAL_ERROR "Running ${TEST_TYPE} tests failed with error: ${res}.")
 endif()
