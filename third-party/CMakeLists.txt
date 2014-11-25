@@ -194,7 +194,7 @@ if(USE_BUNDLED_LUAROCKS)
 
   add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/nvim-client
     COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build https://raw.githubusercontent.com/neovim/lua-client/master/nvim-client-0.0.1-2.rockspec CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER} LIBUV_DIR=${DEPS_INSTALL_DIR}
+    ARGS build https://raw.githubusercontent.com/neovim/lua-client/0aefb79d8f60fd180594f376d20144414e1f37a4/nvim-client-0.0.1-3.rockspec CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER} LIBUV_DIR=${DEPS_INSTALL_DIR}
     DEPENDS lpeg libuv)
   add_custom_target(nvim-client
     DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/nvim-client)
