@@ -14588,8 +14588,7 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
   if (res == NULL) {
     if (retlist) {
       // return an empty list when there's no output
-      rettv->v_type = VAR_LIST;
-      rettv->vval.v_list = list_alloc();
+      rettv_list_alloc(rettv);
     }
     return;
   }
