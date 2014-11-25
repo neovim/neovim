@@ -1,6 +1,7 @@
 let s:hosts = {}
 let s:plugin_patterns = {
-      \ 'python': '*.py'
+      \ 'python': '*.py',
+      \ 'go': 'plugin_host_go',
       \ }
 let s:remote_plugins_manifest = fnamemodify($MYVIMRC, ':p:h')
       \.'/.'.fnamemodify($MYVIMRC, ':t').'-rplugin~'
@@ -250,7 +251,7 @@ call remote#host#Register('python', function('s:RequirePythonHost'))
 
 function! s:GoHost(name)
   try
-    let channel_id = rpcstart($HOME."/.nvim/plugins/go/plugin_host")
+    let channel_id = rpcstart($HOME."/.nvim/rplugin/go/plugin_host_go")
     call rpcrequest(channel_id, 'plugin_load')
     return channel_id
   catch a:exception
