@@ -443,10 +443,12 @@ normal_cmd (
    * will terminate it. Finish_op tells us to finish the operation before
    * returning this time (unless the operation was cancelled).
    */
-  c = finish_op;
-  finish_op = (oap->op_type != OP_NOP);
-  if (finish_op != c) {
-    ui_cursor_shape();                  /* may show different cursor shape */
+  {
+  	int saved_finish_op = finish_op;
+  	finish_op = (oap->op_type != OP_NOP);
+  	if (finish_op != saved_finish_op) {
+    	ui_cursor_shape();                  /* may show different cursor shape */
+  	}
   }
 
   /* When not finishing an operator and no register name typed, reset the
