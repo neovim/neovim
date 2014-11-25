@@ -4,6 +4,7 @@
 #include <assert.h>
 
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/ascii.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -331,7 +332,7 @@ int os_mkdtemp(const char *template, char *path)
   uv_fs_t request;
   int result = uv_fs_mkdtemp(uv_default_loop(), &request, template, NULL);
   if (result == kLibuvSuccess) {
-    strcpy(path, request.path);
+    STRNCPY(path, request.path, TEMP_FILE_PATH_MAXLEN);
   }
   uv_fs_req_cleanup(&request);
   return result;
