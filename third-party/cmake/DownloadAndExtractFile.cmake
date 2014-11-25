@@ -59,9 +59,13 @@ message(STATUS "downloading...
      timeout='${timeout_msg}'")
 
 if((DEFINED EXPECTED_SHA1) AND (${CMAKE_VERSION} VERSION_GREATER 2.8.10))
-  set(hash_args EXPECTED_HASH SHA1=${EXPECTED_SHA1})
+  if(NOT (EXPECTED_SHA1 STREQUAL "0000000000000000000000000000000000000000"))
+    set(hash_args EXPECTED_HASH SHA1=${EXPECTED_SHA1})
+  endif()
 else()
-  set(hash_args EXPECTED_MD5 ${EXPECTED_MD5})
+  if(NOT (EXPECTED_MD5 STREQUAL "00000000000000000000000000000000"))
+    set(hash_args EXPECTED_MD5 ${EXPECTED_MD5})
+  endif()
 endif()
 
 file(DOWNLOAD ${URL} ${file}
