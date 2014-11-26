@@ -346,20 +346,16 @@ Directory, remote and archive browsing.			|netrw|
 
 Edit-compile-edit speedup.				|quickfix|
 	The |:make| command can be used to run the compilation and jump to the
-	first error.  A file with compiler error messages is interpreted.  Vim
-	jumps to the first error.
+	first error.  Vim jumps to the first error.
 
-	Each line in the error file is scanned for the name of a file, line
+	Each line of output is scanned for the name of a file, line
 	number and error message.  The 'errorformat' option can be set to a
 	list of scanf-like strings to handle output from many compilers.
 
 	The |:cn| command can be used to jump to the next error.
 	|:cl| lists all the error messages.  Other commands are available.
-	The 'makeef' option has the name of the file with error messages.
 	The 'makeprg' option contains the name of the program to be executed
 	with the |:make| command.
-	The 'shellpipe' option contains the string to be used to put the
-	output of the compiler into the errorfile.
 
 Finding matches in files.				|:vimgrep|
 	Vim can search for a pattern in multiple files.  This uses the

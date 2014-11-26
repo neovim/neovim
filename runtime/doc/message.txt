@@ -190,28 +190,6 @@ internal variable |v:var| which is read-only.
 Vim always requires one buffer to be loaded, otherwise there would be nothing
 to display in the window.
 
-							*E40*  >
-  Can't open errorfile <filename>
-
-When using the ":make" or ":grep" commands: The file used to save the error
-messages or grep output cannot be opened.  This can have several causes:
-- 'shellredir' has a wrong value.
-- The shell changes directory, causing the error file to be written in another
-  directory.  This could be fixed by changing 'makeef', but then the make
-  command is still executed in the wrong directory.
-- 'makeef' has a wrong value.
-- The 'grepprg' or 'makeprg' could not be executed.  This cannot always be
-  detected (especially on MS-Windows).  Check your $PATH.
-
- >
-  Can't open file C:\TEMP\VIoD243.TMP
-
-On MS-Windows, this message appears when the output of an external command was
-to be read, but the command didn't run successfully.  This can be caused by
-many things.  Check the 'shell', 'shellquote', 'shellxquote', 'shellslash' and
-related options.  It might also be that the external command was not found,
-there is no different error message for that.
-
 							*E12*  >
   Command not allowed from exrc/vimrc in current dir or tag search
 
