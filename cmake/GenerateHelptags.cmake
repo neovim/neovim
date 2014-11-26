@@ -22,5 +22,5 @@ execute_process(
   RESULT_VARIABLE res)
 
 if(NOT res EQUAL 0)
-  message(FATAL_ERROR "Generating helptags failed: ${err}")
+  message(FATAL_ERROR "Generating helptags failed: ${err} - ${res}")
 endif()
