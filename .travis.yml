@@ -2,6 +2,7 @@ language: c
 env:
   global:
     - PROJECT_ROOT="$(pwd)"
+    - BUSTED_OUTPUT_TYPE=plainTerminal
     - CI_SCRIPTS="$PROJECT_ROOT/.ci"
   matrix:
     - CI_TARGET=clang-asan

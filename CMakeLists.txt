@@ -216,7 +216,7 @@ message(STATUS "Using the Lua interpreter ${LUA_PRG}")
 # Setup busted.
 find_program(BUSTED_PRG busted)
 if(NOT BUSTED_OUTPUT_TYPE)
-  set(BUSTED_OUTPUT_TYPE "utfTerminal")
+  set(BUSTED_OUTPUT_TYPE "plainTerminal")
 endif()
 
 # CMake is painful here.  It will create the destination using the user's
