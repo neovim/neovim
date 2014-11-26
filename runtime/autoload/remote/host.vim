@@ -219,7 +219,9 @@ function! s:RequirePythonHost(name)
     " In some distros, python3 is the default python
     let python_host_prog = 'python2'
   else
-    throw 'No python interpreter found'
+    throw 'No python interpreter found.' .
+      \ " Try setting 'let g:python_host_prog=/path/to/python' in your '.nvimrc'" .
+      \ " or see ':help nvim-python'."
   endif
 
   " Make sure we pick correct python version on path.
@@ -231,7 +233,8 @@ function! s:RequirePythonHost(name)
   let import_result = system(python_host_prog .
         \ ' -c "import neovim, sys; sys.stdout.write(\"ok\")"')
   if import_result != 'ok'
-    throw 'No neovim module found for ' . python_version
+    throw 'No neovim module found for ' . python_version . '.' .
+      \ " Try installing it with 'pip install neovim' or see ':help nvim-python'."
   endif
 
   try
@@ -241,7 +244,9 @@ function! s:RequirePythonHost(name)
     endif
   catch
   endtry
-  throw 'Failed to load python host'
+  throw 'Failed to load python host.' .
+    \ " Try upgrading the Neovim python module with 'pip install --upgrade neovim'" .
+    \ " or see ':help nvim-python'."
 endfunction
 
 call remote#host#Register('python', function('s:RequirePythonHost'))
