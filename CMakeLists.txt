@@ -73,8 +73,19 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wconversion")
 # gcc 4.0 and better turn on _FORTIFY_SOURCE=2 automatically.  This currently
 # does not work with Neovim due to some uses of dynamically-sized structures.
 # See https://github.com/neovim/neovim/issues/223 for details.
-if(CMAKE_COMPILER_IS_GNUCC AND NOT CMAKE_C_COMPILER_VERSION VERSION_LESS "4"
-    AND CMAKE_BUILD_TYPE MATCHES "^Rel")
+include(CheckCSourceCompiles)
+check_c_source_compiles("
+#if defined(_FORTIFY_SOURCE) && _FORTIFY_SOURCE > 1
+#error \"_FORTIFY_SOURCE > 1\"
+#endif
+int
+main(void)
+{
+  return 0;
+}
+" _FORTIFY_SOURCE_ACCEPTABLE)
+
+if(NOT _FORTIFY_SOURCE_ACCEPTABLE)
   # -U in add_definitions doesn't end up in the correct spot, so we add it to
   # the flags variable instead.
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1")
