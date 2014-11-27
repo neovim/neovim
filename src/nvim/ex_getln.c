@@ -265,14 +265,7 @@ getcmdline (
       b_im_ptr = &curbuf->b_p_imsearch;
     if (*b_im_ptr == B_IMODE_LMAP)
       State |= LANGMAP;
-#ifdef USE_IM_CONTROL
-    im_set_active(*b_im_ptr == B_IMODE_IM);
-#endif
   }
-#ifdef USE_IM_CONTROL
-  else if (p_imcmdline)
-    im_set_active(TRUE);
-#endif
 
   setmouse();
   ui_cursor_shape();            /* may show different cursor shape */
@@ -867,9 +860,6 @@ getcmdline (
       if (map_to_exists_mode((char_u *)"", LANGMAP, FALSE)) {
         /* ":lmap" mappings exists, toggle use of mappings. */
         State ^= LANGMAP;
-#ifdef USE_IM_CONTROL
-        im_set_active(FALSE);                   /* Disable input method */
-#endif
         if (b_im_ptr != NULL) {
           if (State & LANGMAP)
             *b_im_ptr = B_IMODE_LMAP;
@@ -877,23 +867,6 @@ getcmdline (
             *b_im_ptr = B_IMODE_NONE;
         }
       }
-#ifdef USE_IM_CONTROL
-      else {
-        /* There are no ":lmap" mappings, toggle IM.  When
-         * 'imdisable' is set don't try getting the status, it's
-         * always off. */
-        if ((p_imdisable && b_im_ptr != NULL)
-            ? *b_im_ptr == B_IMODE_IM : im_get_status()) {
-          im_set_active(FALSE);                 /* Disable input method */
-          if (b_im_ptr != NULL)
-            *b_im_ptr = B_IMODE_NONE;
-        } else {
-          im_set_active(TRUE);                  /* Enable input method */
-          if (b_im_ptr != NULL)
-            *b_im_ptr = B_IMODE_IM;
-        }
-      }
-#endif
       if (b_im_ptr != NULL) {
         if (b_im_ptr == &curbuf->b_p_iminsert)
           set_iminsert_global();
@@ -1542,11 +1515,6 @@ returncmd:
     need_wait_return = FALSE;
 
   State = save_State;
-#ifdef USE_IM_CONTROL
-  if (b_im_ptr != NULL && *b_im_ptr != B_IMODE_LMAP)
-    im_save_status(b_im_ptr);
-  im_set_active(FALSE);
-#endif
   setmouse();
   ui_cursor_shape();            /* may show different cursor shape */
 
