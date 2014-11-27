@@ -22,11 +22,9 @@ end
 
 -- Some tests require the xclip program and a x server.
 local xclip = nil
-do 
+do
   if os.getenv('DISPLAY') then
-    local proc = io.popen('which xclip') 
-    xclip = proc:read()
-    proc:close()
+    xclip = (os.execute('command -v xclip > /dev/null 2>&1') == 0)
   end
 end
 
