@@ -20,6 +20,8 @@
 #include "nvim/ex_cmds2.h"
 #include "nvim/getchar.h"
 #include "nvim/term.h"
+#include "nvim/main.h"
+#include "nvim/misc1.h"
 
 #define READ_BUFFER_SIZE 0xfff
 #define INPUT_BUFFER_SIZE (READ_BUFFER_SIZE * 4)
@@ -336,3 +338,11 @@ static bool input_ready(void)
          (!embedded_mode && eof);              // Stdin closed
 }
 
+// Exit because of an input read error.
+static void read_error_exit(void)
+{
+  if (silent_mode)      /* Normal way to exit for "ex -s" */
+    getout(0);
+  STRCPY(IObuff, _("Vim: Error reading input, exiting...\n"));
+  preserve_exit();
+}

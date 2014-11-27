@@ -23,7 +23,6 @@
 #include "nvim/normal.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
-#include "nvim/ui.h"
 #include "nvim/os/input.h"
 
 typedef int result_T;

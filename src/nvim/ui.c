@@ -94,17 +94,6 @@ int ui_get_shellsize(void)
 }
 
 /*
- * Exit because of an input read error.
- */
-void read_error_exit(void)
-{
-  if (silent_mode)      /* Normal way to exit for "ex -s" */
-    getout(0);
-  STRCPY(IObuff, _("Vim: Error reading input, exiting...\n"));
-  preserve_exit();
-}
-
-/*
  * May update the shape of the cursor.
  */
 void ui_cursor_shape(void)

@@ -44,7 +44,6 @@
 #include "nvim/strings.h"
 #include "nvim/syntax_defs.h"
 #include "nvim/term.h"
-#include "nvim/ui.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 

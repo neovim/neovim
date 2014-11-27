@@ -61,7 +61,6 @@
 #include "nvim/memory.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
-#include "nvim/ui.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 
