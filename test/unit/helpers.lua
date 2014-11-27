@@ -148,6 +148,7 @@ local function vim_init()
                       './src/nvim/ex_cmds2.h',
                       './src/nvim/window.h',
                       './src/nvim/ops.h',
+                      './src/nvim/os/os.h',
                       './src/nvim/normal.h',
                       './src/nvim/mbyte.h')
   all.mch_early_init()

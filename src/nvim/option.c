@@ -1893,7 +1893,7 @@ void set_init_1(void)
 # endif
     int len;
     garray_T ga;
-    int mustfree;
+    bool mustfree;
 
     ga_init(&ga, 1, 100);
     for (n = 0; n < (long)(sizeof(names) / sizeof(char *)); ++n) {
@@ -1949,7 +1949,7 @@ void set_init_1(void)
     char_u  *buf;
     int i;
     int j;
-    int mustfree = FALSE;
+    bool mustfree = FALSE;
 
     /* Initialize the 'cdpath' option's default value. */
     cdpath = vim_getenv((char_u *)"CDPATH", &mustfree);
@@ -7771,7 +7771,7 @@ static void paste_option_changed(void)
 void vimrc_found(char_u *fname, char_u *envname)
 {
   int opt_idx;
-  int dofree = FALSE;
+  bool dofree = FALSE;
   char_u      *p;
 
   if (!option_was_set((char_u *)"cp")) {
