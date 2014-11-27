@@ -1,6 +1,6 @@
 -- Sanity checks for vim_* API calls via msgpack-rpc
 local helpers = require('test.functional.helpers')
-local clear, nvim, eq, ok = helpers.clear, helpers.nvim, helpers.eq, helpers.ok
+local clear, nvim, eq, neq, ok = helpers.clear, helpers.nvim, helpers.eq, helpers.neq, helpers.ok
 
 
 describe('vim_* functions', function()
@@ -103,6 +103,47 @@ describe('vim_* functions', function()
       nvim('set_current_tabpage', nvim('get_tabpages')[2])
       eq(nvim('get_tabpages')[2], nvim('get_current_tabpage'))
       eq(nvim('get_windows')[2], nvim('get_current_window'))
+    end)
+  end)
+
+  describe('replace_termcodes', function()
+    it('escapes K_SPECIAL as K_SPECIAL KS_SPECIAL KE_FILLER', function()
+      eq(helpers.nvim('replace_termcodes', '\x80', true, true, true), '\x80\xfeX')
+    end)
+
+    it('leaves non K_SPECIAL string unchanged', function()
+      eq(helpers.nvim('replace_termcodes', 'abc', true, true, true), 'abc')
+    end)
+
+    it('converts <expressions>', function()
+      eq(helpers.nvim('replace_termcodes', '<Leader>', true, true, true), '\\')
+    end)
+  end)
+
+  describe('feedkeys', function()
+    it('CSI escaping', function()
+      local function on_setup()
+        -- notice the special char(…) \xe2\80\xa6
+        nvim('feedkeys', ':let x1="…"\n', '', true)
+
+        -- Both replace_termcodes and feedkeys escape \x80
+        local inp = helpers.nvim('replace_termcodes', ':let x2="…"<CR>', true, true, true)
+        nvim('feedkeys', inp, '', true)
+
+        -- Disabling CSI escaping in feedkeys
+        inp = helpers.nvim('replace_termcodes', ':let x3="…"<CR>', true, true, true)
+        nvim('feedkeys', inp, '', false)
+
+        helpers.stop()
+      end
+
+      -- spin the loop a bit
+      helpers.run(nil, nil, on_setup)
+
+      eq(nvim('get_var', 'x1'), '…')
+      -- Because of the double escaping this is neq
+      neq(nvim('get_var', 'x2'), '…')
+      eq(nvim('get_var', 'x3'), '…')
     end)
   end)
 

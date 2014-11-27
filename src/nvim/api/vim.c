@@ -49,8 +49,10 @@ void vim_command(String str, Error *err)
 ///
 /// @param keys to be typed
 /// @param mode specifies the mapping options
+/// @param escape_csi the string needs escaping for K_SPECIAL/CSI bytes
 /// @see feedkeys()
-void vim_feedkeys(String keys, String mode)
+/// @see vim_strsave_escape_csi
+void vim_feedkeys(String keys, String mode, Boolean escape_csi)
   FUNC_ATTR_DEFERRED
 {
   bool remap = true;
@@ -68,12 +70,20 @@ void vim_feedkeys(String keys, String mode)
     }
   }
 
-  /* Need to escape K_SPECIAL and CSI before putting the string in the
-   * typeahead buffer. */
-  char *keys_esc = (char *)vim_strsave_escape_csi((char_u *)keys.data);
+  char *keys_esc;
+  if (escape_csi) {
+      // Need to escape K_SPECIAL and CSI before putting the string in the
+      // typeahead buffer.
+      keys_esc = (char *)vim_strsave_escape_csi((char_u *)keys.data);
+  } else {
+      keys_esc = keys.data;
+  }
   ins_typebuf((char_u *)keys_esc, (remap ? REMAP_YES : REMAP_NONE),
       typebuf.tb_len, !typed, false);
-  free(keys_esc);
+
+  if (escape_csi) {
+      free(keys_esc);
+  }
 
   if (vgetc_busy)
     typebuf_was_filled = true;
