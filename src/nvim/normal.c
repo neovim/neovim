@@ -60,6 +60,7 @@
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/event.h"
+#include "nvim/os/time.h"
 
 /*
  * The Visual area is remembered for reselection.
@@ -1008,8 +1009,8 @@ getcount:
     cursor_on();
     out_flush();
     if (msg_scroll || emsg_on_display)
-      ui_delay(1000L, true);            /* wait at least one second */
-    ui_delay(3000L, false);             /* wait up to three seconds */
+      os_delay(1000L, true);            /* wait at least one second */
+    os_delay(3000L, false);             /* wait up to three seconds */
     State = save_State;
 
     msg_scroll = false;

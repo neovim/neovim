@@ -328,6 +328,7 @@
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/os/os.h"
+#include "nvim/os/input.h"
 
 #ifndef UNIX            // it's in os_unix_defs.h for Unix
 # include <time.h>      // for time_t
@@ -9018,7 +9019,7 @@ static void spell_suggest_intern(suginfo_T *su, bool interactive)
 
   // When CTRL-C was hit while searching do show the results.  Only clear
   // got_int when using a command, not for spellsuggest().
-  ui_breakcheck();
+  os_breakcheck();
   if (interactive && got_int) {
     (void)vgetc();
     got_int = FALSE;
@@ -10616,7 +10617,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
 
       // Don't check for CTRL-C too often, it takes time.
       if (--breakcheckcount == 0) {
-        ui_breakcheck();
+        os_breakcheck();
         breakcheckcount = 1000;
       }
     }

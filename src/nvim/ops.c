@@ -48,7 +48,7 @@
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
-#include "nvim/api/private/helpers.h"
+#include "nvim/os/input.h"
 
 /*
  * Registers:
@@ -1112,7 +1112,7 @@ insert_reg (
    * register a and then, in insert mode, doing CTRL-R a.
    * If you hit CTRL-C, the loop will be broken here.
    */
-  ui_breakcheck();
+  os_breakcheck();
   if (got_int)
     return FAIL;
 
@@ -1296,7 +1296,7 @@ cmdline_paste_reg (
 
     /* Check for CTRL-C, in case someone tries to paste a few thousand
      * lines and gets bored. */
-    ui_breakcheck();
+    os_breakcheck();
     if (got_int)
       return FAIL;
   }
@@ -3254,7 +3254,7 @@ void ex_display(exarg_T *eap)
         MSG_PUTS_ATTR("^J", attr);
       out_flush();                          /* show one line at a time */
     }
-    ui_breakcheck();
+    os_breakcheck();
   }
 
   /*
@@ -3339,7 +3339,7 @@ dis_msg (
     } else
       msg_outtrans_len(p++, 1);
   }
-  ui_breakcheck();
+  os_breakcheck();
 }
 
 /*
@@ -5079,7 +5079,7 @@ void cursor_pos_info(void)
     for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; ++lnum) {
       /* Check for a CTRL-C every 100000 characters. */
       if (byte_count > last_check) {
-        ui_breakcheck();
+        os_breakcheck();
         if (got_int)
           return;
         last_check = byte_count + 100000L;

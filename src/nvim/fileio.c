@@ -57,6 +57,8 @@
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
+#include "nvim/os/time.h"
+#include "nvim/os/input.h"
 
 #if defined(HAVE_UTIME) && defined(HAVE_UTIME_H)
 # include <utime.h>             /* for struct utimbuf */
@@ -1704,7 +1706,7 @@ rewind_retry:
       }
     }
     linerest = (long)(ptr - line_start);
-    ui_breakcheck();
+    os_breakcheck();
   }
 
 failed:
@@ -2927,7 +2929,7 @@ buf_write (
                     "E506: Can't write to backup file (add ! to override)");
                 break;
               }
-              ui_breakcheck();
+              os_breakcheck();
               if (got_int) {
                 errmsg = (char_u *)_(e_interr);
                 break;
@@ -3377,7 +3379,7 @@ restore_backup:
       s = buffer;
       len = 0;
 
-      ui_breakcheck();
+      os_breakcheck();
       if (got_int) {
         end = 0;                        /* Interrupted, break loop */
         break;
@@ -4958,7 +4960,7 @@ buf_check_timestamp (
           if (emsg_silent == 0) {
             out_flush();
             /* give the user some time to think about it */
-            ui_delay(1000L, true);
+            os_delay(1000L, true);
 
             /* don't redraw and erase the message */
             redraw_cmdline = FALSE;

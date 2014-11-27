@@ -1702,14 +1702,14 @@ static int vgetorpeek(int advance)
        */
       for (;; ) {
         /*
-         * ui_breakcheck() is slow, don't use it too often when
+         * os_breakcheck() is slow, don't use it too often when
          * inside a mapping.  But call it each time for typed
          * characters.
          */
         if (typebuf.tb_maplen)
           line_breakcheck();
         else
-          ui_breakcheck();                      /* check for CTRL-C */
+          os_breakcheck();                      /* check for CTRL-C */
         keylen = 0;
         if (got_int) {
           /* flush all input */

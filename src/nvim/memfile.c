@@ -459,7 +459,7 @@ int mf_sync(memfile_T *mfp, int flags)
         if (os_char_avail())
           break;
       } else {
-        ui_breakcheck();
+        os_breakcheck();
       }
       if (got_int)
         break;

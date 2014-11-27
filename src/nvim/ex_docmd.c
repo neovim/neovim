@@ -67,6 +67,8 @@
 #include "nvim/version.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
+#include "nvim/os/input.h"
+#include "nvim/os/time.h"
 #include "nvim/ex_cmds_defs.h"
 
 static int quitmore = 0;
@@ -4337,7 +4339,7 @@ static void uc_list(char_u *name, size_t name_len)
       if (p_verbose > 0)
         last_set_msg(cmd->uc_scriptID);
       out_flush();
-      ui_breakcheck();
+      os_breakcheck();
       if (got_int)
         break;
     }
@@ -5459,7 +5461,7 @@ static void ex_print(exarg_T *eap)
   if (curbuf->b_ml.ml_flags & ML_EMPTY)
     EMSG(_(e_emptybuf));
   else {
-    for (; !got_int; ui_breakcheck()) {
+    for (; !got_int; os_breakcheck()) {
       print_line(eap->line1,
           (eap->cmdidx == CMD_number || eap->cmdidx == CMD_pound
            || (eap->flags & EXFLAG_NR)),
@@ -5586,7 +5588,7 @@ void alist_set(alist_T *al, int count, char_u **files, int use_curbuf, int *fnum
         buf_set_name(fnum_list[i], files[i]);
 
       alist_add(al, files[i], use_curbuf ? 2 : 1);
-      ui_breakcheck();
+      os_breakcheck();
     }
     free(files);
   }
@@ -5842,7 +5844,7 @@ static void ex_tabs(exarg_T *eap)
     vim_snprintf((char *)IObuff, IOSIZE, _("Tab page %d"), tabcount++);
     msg_outtrans_attr(IObuff, hl_attr(HLF_T));
     out_flush();            /* output one line at a time */
-    ui_breakcheck();
+    os_breakcheck();
 
     FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
       if (got_int) {
@@ -5861,7 +5863,7 @@ static void ex_tabs(exarg_T *eap)
             IObuff, IOSIZE, TRUE);
       msg_outtrans(IObuff);
       out_flush();                  /* output one line at a time */
-      ui_breakcheck();
+      os_breakcheck();
     }
   }
 }
@@ -6408,8 +6410,8 @@ void do_sleep(long msec)
   cursor_on();
   out_flush();
   for (done = 0; !got_int && done < msec; done += 1000L) {
-    ui_delay(msec - done > 1000L ? 1000L : msec - done, true);
-    ui_breakcheck();
+    os_delay(msec - done > 1000L ? 1000L : msec - done, true);
+    os_breakcheck();
   }
 }
 

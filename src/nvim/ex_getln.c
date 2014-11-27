@@ -1946,7 +1946,7 @@ redraw:
   msg_col = 0;
   if (msg_row < Rows - 1)
     ++msg_row;
-  emsg_on_display = FALSE;              /* don't want ui_delay() */
+  emsg_on_display = FALSE;              /* don't want os_delay() */
 
   if (got_int)
     ga_clear(&line_ga);

@@ -67,6 +67,7 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
+#include "nvim/os/input.h"
 
 /*
  * Struct to hold the sign properties.
@@ -1110,7 +1111,7 @@ do_filter (
   /* When interrupting the shell command, it may still have produced some
    * useful output.  Reset got_int here, so that readfile() won't cancel
    * reading. */
-  ui_breakcheck();
+  os_breakcheck();
   got_int = FALSE;
 
   if (do_out) {
@@ -4560,7 +4561,7 @@ void global_exe(char_u *cmd)
       do_cmdline((char_u *)"p", NULL, NULL, DOCMD_NOWAIT);
     else
       do_cmdline(cmd, NULL, NULL, DOCMD_NOWAIT);
-    ui_breakcheck();
+    os_breakcheck();
   }
 
   global_busy = 0;

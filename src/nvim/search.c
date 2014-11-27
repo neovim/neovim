@@ -48,6 +48,7 @@
 #include "nvim/term.h"
 #include "nvim/ui.h"
 #include "nvim/window.h"
+#include "nvim/os/time.h"
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -2053,9 +2054,9 @@ showmatch (
        * available.
        */
       if (vim_strchr(p_cpo, CPO_SHOWMATCH) != NULL)
-        ui_delay(p_mat * 100L, true);
+        os_delay(p_mat * 100L, true);
       else if (!char_avail())
-        ui_delay(p_mat * 100L, false);
+        os_delay(p_mat * 100L, false);
       curwin->w_cursor = save_cursor;           /* restore cursor position */
       p_so = save_so;
       p_siso = save_siso;

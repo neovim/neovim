@@ -52,6 +52,7 @@
 #include "nvim/ui.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
+#include "nvim/os/input.h"
 
 
 struct dir_stack_T {
@@ -1791,7 +1792,7 @@ void qf_list(exarg_T *eap)
 
     qfp = qfp->qf_next;
     ++i;
-    ui_breakcheck();
+    os_breakcheck();
   }
 }
 

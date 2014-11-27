@@ -31,7 +31,7 @@
 #include "nvim/strings.h"
 #include "nvim/tag.h"
 #include "nvim/types.h"
-#include "nvim/ui.h"
+#include "nvim/os/input.h"
 #include "nvim/window.h"
 
 #define URL_SLASH       1               /* path_is_url() has found "://" */
@@ -449,7 +449,7 @@ unix_expandpath (
 
   /* Expanding "**" may take a long time, check for CTRL-C. */
   if (stardepth > 0) {
-    ui_breakcheck();
+    os_breakcheck();
     if (got_int)
       return 0;
   }
@@ -850,7 +850,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
         STRMOVE(path + STRLEN(path), short_name);
       }
     }
-    ui_breakcheck();
+    os_breakcheck();
   }
 
   /* Shorten filenames in /in/current/directory/{filename} */
@@ -879,7 +879,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
     free(fnames[i]);
     fnames[i] = rel_path;
     sort_again = TRUE;
-    ui_breakcheck();
+    os_breakcheck();
   }
 
   free(curdir);

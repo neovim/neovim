@@ -73,6 +73,8 @@
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
+#include "nvim/os/time.h"
+#include "nvim/os/input.h"
 
 #define HAVE_BUFLIST_MATCH
 
@@ -716,7 +718,7 @@ do_bufdel (
     } else      /* addr_count == 1 */
       bnr = end_bnr;
 
-    for (; !got_int; ui_breakcheck()) {
+    for (; !got_int; os_breakcheck()) {
       /*
        * delete the current buffer last, otherwise when the
        * current buffer is deleted, the next buffer becomes
@@ -1422,7 +1424,7 @@ buflist_new (
       EMSG(_("W14: Warning: List of file names overflow"));
       if (emsg_silent == 0) {
         out_flush();
-        ui_delay(3000L, true);          /* make sure it is noticed */
+        os_delay(3000L, true);          /* make sure it is noticed */
       }
       top_file_num = 1;
     }
@@ -2162,7 +2164,7 @@ void buflist_list(exarg_T *eap)
                       : (int64_t)buflist_findlnum(buf));
     msg_outtrans(IObuff);
     out_flush();            /* output one line at a time */
-    ui_breakcheck();
+    os_breakcheck();
   }
 }
 
@@ -3801,7 +3803,7 @@ do_arg_all (
         ++autocmd_no_leave;
       use_firstwin = FALSE;
     }
-    ui_breakcheck();
+    os_breakcheck();
 
     /* When ":tab" was used open a new tab for a new window repeatedly. */
     if (had_tab > 0 && tabpage_index(NULL) <= p_tpm)
@@ -3965,7 +3967,7 @@ void ex_buffer_all(exarg_T *eap)
 #endif
     }
 
-    ui_breakcheck();
+    os_breakcheck();
     if (got_int) {
       (void)vgetc();            /* only break the file loading, not the rest */
       break;

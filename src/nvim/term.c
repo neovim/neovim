@@ -54,6 +54,7 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
+#include "nvim/os/input.h"
 
 #ifdef HAVE_TGETENT
 # ifdef HAVE_TERMIOS_H
@@ -1330,7 +1331,7 @@ int set_termname(char_u *term)
       if (emsg_silent == 0) {
         screen_start();                 /* don't know where cursor is now */
         out_flush();
-        ui_delay(2000L, true);
+        os_delay(2000L, true);
       }
       set_string_option_direct((char_u *)"term", -1, term,
           OPT_FREE, 0);
@@ -2302,7 +2303,7 @@ void set_shellsize(int width, int height, int mustset)
     Rows = height;
     Columns = width;
     check_shellsize();
-    ui_set_shellsize(mustset);
+    mch_set_shellsize();
   } else
     check_shellsize();
 
@@ -4111,7 +4112,7 @@ void show_termcodes(void)
           col += INC3;
       }
       out_flush();
-      ui_breakcheck();
+      os_breakcheck();
     }
   }
   free(items);

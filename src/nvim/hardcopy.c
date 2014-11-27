@@ -43,6 +43,7 @@
 #include "nvim/tempfile.h"
 #include "nvim/ui.h"
 #include "nvim/os/os.h"
+#include "nvim/os/input.h"
 
 /*
  * To implement printing on a platform, the following functions must be
@@ -724,7 +725,7 @@ void ex_hardcopy(exarg_T *eap)
            */
 
           /* Check for interrupt character every page. */
-          ui_breakcheck();
+          os_breakcheck();
           if (got_int || settings.user_abort)
             goto print_fail;
 

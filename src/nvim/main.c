@@ -57,6 +57,7 @@
 #include "nvim/ui.h"
 #include "nvim/version.h"
 #include "nvim/window.h"
+#include "nvim/os/time.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/signal.h"
@@ -1608,7 +1609,7 @@ static void check_tty(mparm_T *parmp)
       mch_errmsg(_("Vim: Warning: Input is not from a terminal\n"));
     out_flush();
     if (scriptin[0] == NULL)
-      ui_delay(2000L, true);
+      os_delay(2000L, true);
     TIME_MSG("Warning delay");
   }
 }
@@ -1742,7 +1743,7 @@ static void create_windows(mparm_T *parmp)
 #endif
         dorewind = TRUE;                        /* start again */
       }
-      ui_breakcheck();
+      os_breakcheck();
       if (got_int) {
         (void)vgetc();          /* only break the file loading, not the rest */
         break;
@@ -1832,7 +1833,7 @@ static void edit_buffers(mparm_T *parmp)
         arg_had_last = TRUE;
       ++arg_idx;
     }
-    ui_breakcheck();
+    os_breakcheck();
     if (got_int) {
       (void)vgetc();            /* only break the file loading, not the rest */
       break;

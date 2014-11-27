@@ -63,15 +63,6 @@ void ui_write(char_u *s, int len)
 }
 
 /*
- * Delay for the given number of milliseconds.	If ignoreinput is FALSE then we
- * cancel the delay if a key is hit.
- */
-void ui_delay(long msec, bool ignoreinput)
-{
-  os_delay(msec, ignoreinput);
-}
-
-/*
  * If the machine has job control, use it to suspend the program,
  * otherwise fake it by starting a new shell.
  * When running the GUI iconify the window.
@@ -103,34 +94,6 @@ int ui_get_shellsize(void)
 }
 
 /*
- * Set the size of the Vim shell according to Rows and Columns, if possible.
- * The gui_set_shellsize() or mch_set_shellsize() function will try to set the
- * new size.  If this is not possible, it will adjust Rows and Columns.
- */
-void 
-ui_set_shellsize(int mustset)
-{
-  mch_set_shellsize();
-}
-
-void ui_breakcheck(void)
-{
-  os_breakcheck();
-}
-
-/*****************************************************************************
- * Functions for copying and pasting text between applications.
- * This is always included in a GUI version, but may also be included when the
- * clipboard and mouse is available to a terminal version such as xterm.
- * Note: there are some more functions in ops.c that handle selection stuff.
- *
- * Also note that the majority of functions here deal with the X 'primary'
- * (visible - for Visual mode use) selection, and only that. There are no
- * versions of these for the 'clipboard' selection, as Visual mode has no use
- * for them.
- */
-
-/*
  * Exit because of an input read error.
  */
 void read_error_exit(void)
@@ -147,8 +110,6 @@ void read_error_exit(void)
 void ui_cursor_shape(void)
 {
   term_cursor_shape();
-
-
   conceal_check_cursur_line();
 }
 

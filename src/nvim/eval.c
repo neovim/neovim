@@ -90,6 +90,7 @@
 #include "nvim/api/vim.h"
 #include "nvim/os/dl.h"
 #include "nvim/os/event.h"
+#include "nvim/os/input.h"
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
 
@@ -17270,7 +17271,7 @@ void ex_function(exarg_T *eap)
             msg_putchar(' ');
           msg_prt_line(FUNCLINE(fp, j), FALSE);
           out_flush();                  /* show a line at a time */
-          ui_breakcheck();
+          os_breakcheck();
         }
         if (!got_int) {
           msg_putchar('\n');
@@ -19295,7 +19296,7 @@ void ex_oldfiles(exarg_T *eap)
       msg_outtrans(get_tv_string(&li->li_tv));
       msg_putchar('\n');
       out_flush();                  /* output one line at a time */
-      ui_breakcheck();
+      os_breakcheck();
     }
     /* Assume "got_int" was set to truncate the listing. */
     got_int = FALSE;

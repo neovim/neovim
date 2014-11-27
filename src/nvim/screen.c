@@ -133,6 +133,7 @@
 #include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/window.h"
+#include "nvim/os/time.h"
 
 #define MB_FILLER_CHAR '<'  /* character used when a double-width character
                              * doesn't fit. */
@@ -6255,7 +6256,7 @@ void check_for_delay(int check_msg_scroll)
       && !did_wait_return
       && emsg_silent == 0) {
     out_flush();
-    ui_delay(1000L, true);
+    os_delay(1000L, true);
     emsg_on_display = FALSE;
     if (check_msg_scroll)
       msg_scroll = FALSE;

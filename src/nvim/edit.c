@@ -59,6 +59,8 @@
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/event.h"
+#include "nvim/os/input.h"
+#include "nvim/os/time.h"
 
 /*
  * definitions used for CTRL-X submode
@@ -1761,7 +1763,7 @@ static int has_compl_option(int dict_opt)
       vim_beep();
       setcursor();
       out_flush();
-      ui_delay(2000L, false);
+      os_delay(2000L, false);
     }
     return FALSE;
   }
@@ -2005,7 +2007,7 @@ ins_compl_add (
   compl_T     *match;
   int dir = (cdir == 0 ? compl_direction : cdir);
 
-  ui_breakcheck();
+  os_breakcheck();
   if (got_int)
     return FAIL;
   if (len < 0)
