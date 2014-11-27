@@ -31,7 +31,7 @@ facilities for calling with external commands, job control does not depend
 on installed shells, calling OS functions for process management directly.
 
 Internally, Nvim job control is powered by libuv, which has a nice
-cross-platform API for managing processes. See https://github.com/joyent/libuv
+cross-platform API for managing processes. See https://github.com/libuv/libuv
 for details
 
 ==============================================================================
