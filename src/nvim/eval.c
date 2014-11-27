@@ -10273,12 +10273,6 @@ static void get_user_input(typval_T *argvars, typval_T *rettv, int inputdialog)
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
 
-#ifdef NO_CONSOLE_INPUT
-  /* While starting up, there is no place to enter text. */
-  if (no_console_input())
-    return;
-#endif
-
   cmd_silent = FALSE;           /* Want to see the prompt. */
   if (prompt != NULL) {
     /* Only the part of the message after the last NL is considered as
@@ -10373,11 +10367,6 @@ static void f_inputlist(typval_T *argvars, typval_T *rettv)
   int selected;
   int mouse_used;
 
-#ifdef NO_CONSOLE_INPUT
-  /* While starting up, there is no place to enter text. */
-  if (no_console_input())
-    return;
-#endif
   if (argvars[0].v_type != VAR_LIST || argvars[0].vval.v_list == NULL) {
     EMSG2(_(e_listarg), "inputlist()");
     return;

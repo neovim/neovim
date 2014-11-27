@@ -2481,7 +2481,7 @@ inchar (
       char_u dum[DUM_LEN + 1];
 
       for (;; ) {
-        len = ui_inchar(dum, DUM_LEN, 0L, 0);
+        len = os_inchar(dum, DUM_LEN, 0L, 0);
         if (len == 0 || (len == 1 && dum[0] == 3))
           break;
       }
@@ -2498,7 +2498,7 @@ inchar (
      * Fill up to a third of the buffer, because each character may be
      * tripled below.
      */
-    len = ui_inchar(buf, maxlen / 3, wait_time, tb_change_cnt);
+    len = os_inchar(buf, maxlen / 3, wait_time, tb_change_cnt);
   }
 
   if (typebuf_changed(tb_change_cnt))

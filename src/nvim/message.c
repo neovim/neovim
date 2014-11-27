@@ -2702,11 +2702,9 @@ do_dialog (
   int c;
   int i;
 
-#ifndef NO_CONSOLE
   /* Don't output anything in silent mode ("ex -s") */
   if (silent_mode)
     return dfltbutton;       /* return default option */
-#endif
 
 
   oldState = State;

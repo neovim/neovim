@@ -63,6 +63,7 @@
 #include "nvim/path.h"
 #include "nvim/ui.h"
 #include "nvim/os/os.h"
+#include "nvim/os/input.h"
 
 #define MEMFILE_PAGE_SIZE 4096       /// default page size
 
@@ -455,7 +456,7 @@ int mf_sync(memfile_T *mfp, int flags)
         status = FAIL;
       }
       if (flags & MFS_STOP) {   // Stop when char available now.
-        if (ui_char_avail())
+        if (os_char_avail())
           break;
       } else {
         ui_breakcheck();

@@ -44,7 +44,6 @@
 
 void ui_write(char_u *s, int len)
 {
-#ifndef NO_CONSOLE
   /* Don't output anything in silent mode ("ex -s") unless 'verbose' set */
   if (!(silent_mode && p_verbose == 0)) {
     char_u  *tofree = NULL;
@@ -61,103 +60,6 @@ void ui_write(char_u *s, int len)
     if (output_conv.vc_type != CONV_NONE)
       free(tofree);
   }
-#endif
-}
-
-/*
- * ui_inchar(): low level input function.
- * Get characters from the keyboard.
- * Return the number of characters that are available.
- * If "wtime" == 0 do not wait for characters.
- * If "wtime" == -1 wait forever for characters.
- * If "wtime" > 0 wait "wtime" milliseconds for a character.
- *
- * "tb_change_cnt" is the value of typebuf.tb_change_cnt if "buf" points into
- * it.  When typebuf.tb_change_cnt changes (e.g., when a message is received
- * from a remote client) "buf" can no longer be used.  "tb_change_cnt" is NULL
- * otherwise.
- */
-int 
-ui_inchar (
-    char_u *buf,
-    int maxlen,
-    long wtime,                 /* don't use "time", MIPS cannot handle it */
-    int tb_change_cnt
-)
-{
-  int retval = 0;
-
-
-  if (do_profiling == PROF_YES && wtime != 0)
-    prof_inchar_enter();
-
-#ifdef NO_CONSOLE_INPUT
-  /* Don't wait for character input when the window hasn't been opened yet.
-   * Do try reading, this works when redirecting stdin from a file.
-   * Must return something, otherwise we'll loop forever.  If we run into
-   * this very often we probably got stuck, exit Vim. */
-  if (no_console_input()) {
-    static int count = 0;
-
-# ifndef NO_CONSOLE
-    retval = os_inchar(buf, maxlen, (wtime >= 0 && wtime < 10)
-        ? 10L : wtime, tb_change_cnt);
-    if (retval > 0 || typebuf_changed(tb_change_cnt) || wtime >= 0)
-      goto theend;
-# endif
-    if (wtime == -1 && ++count == 1000)
-      read_error_exit();
-    buf[0] = CAR;
-    retval = 1;
-    goto theend;
-  }
-#endif
-
-  /* If we are going to wait for some time or block... */
-  if (wtime == -1 || wtime > 100L) {
-    /* ... allow signals to kill us. */
-    signal_accept_deadly();
-
-    /* ... there is no need for CTRL-C to interrupt something, don't let
-     * it set got_int when it was mapped. */
-    if (mapped_ctrl_c)
-      ctrl_c_interrupts = false;
-  }
-
-#ifndef NO_CONSOLE
-  {
-    retval = os_inchar(buf, maxlen, wtime, tb_change_cnt);
-  }
-#endif
-
-  if (wtime == -1 || wtime > 100L)
-    /* block SIGHUP et al. */
-    signal_reject_deadly();
-
-  ctrl_c_interrupts = true;
-
-#ifdef NO_CONSOLE_INPUT
-theend:
-#endif
-  if (do_profiling == PROF_YES && wtime != 0)
-    prof_inchar_exit();
-  return retval;
-}
-
-/*
- * return non-zero if a character is available
- */
-int ui_char_avail(void)
-{
-#ifndef NO_CONSOLE
-# ifdef NO_CONSOLE_INPUT
-  if (no_console_input())
-    return 0;
-# endif
-  return os_char_avail();
-#else
-  return 0;
-#endif
 }
 
 /*

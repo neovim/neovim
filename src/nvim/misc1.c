@@ -58,6 +58,7 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
+#include "nvim/os/input.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "misc1.c.generated.h"
@@ -2383,7 +2384,7 @@ int get_keystroke(void)
 
     /* First time: blocking wait.  Second time: wait up to 100ms for a
      * terminal code to complete. */
-    n = ui_inchar(buf + len, maxlen, len == 0 ? -1L : 100L, 0);
+    n = os_inchar(buf + len, maxlen, len == 0 ? -1L : 100L, 0);
     if (n > 0) {
       /* Replace zero and CSI by a special key code. */
       n = fix_input_buffer(buf + len, n, FALSE);
