@@ -6593,7 +6593,7 @@ static struct fst {
   {"synconcealed",    2, 2, f_synconcealed},
   {"synstack",        2, 2, f_synstack},
   {"system",          1, 2, f_system},
-  {"systemlist",      1, 2, f_systemlist},
+  {"systemlist",      1, 3, f_systemlist},
   {"tabpagebuflist",  0, 1, f_tabpagebuflist},
   {"tabpagenr",       0, 1, f_tabpagenr},
   {"tabpagewinnr",    1, 2, f_tabpagewinnr},
@@ -14523,7 +14523,7 @@ static void f_synstack(typval_T *argvars, typval_T *rettv)
   }
 }
 
-static list_T* string_to_list(char_u *str, size_t len)
+static list_T* string_to_list(char_u *str, size_t len, bool keepempty)
 {
   list_T *list = list_alloc();
 
@@ -14541,6 +14541,11 @@ static list_T* string_to_list(char_u *str, size_t len)
     li->li_tv.v_type = VAR_STRING;
     li->li_tv.vval.v_string = s;
     list_append(list, li);
+  }
+
+  // Optionally retain final newline, if present
+  if (keepempty && str[len-1] == NL) {
+      list_append_string(list, (char_u*)"", 0);
   }
 
   return list;
@@ -14585,7 +14590,11 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
   }
 
   if (retlist) {
-    rettv->vval.v_list = string_to_list((char_u *) res, nread);
+    int keepempty = 0;
+    if (argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN) {
+      keepempty = get_tv_number(&argvars[2]);
+    }
+    rettv->vval.v_list = string_to_list((char_u *) res, nread, keepempty != 0);
     rettv->vval.v_list->lv_refcount++;
     rettv->v_type = VAR_LIST;
 
@@ -19723,7 +19732,7 @@ static void apply_job_autocmds(int id, char *name, char *type,
     str_slot->li_tv.v_type = VAR_LIST;
     str_slot->li_tv.v_lock = 0;
     str_slot->li_tv.vval.v_list =
-      string_to_list((char_u *) received, received_len);
+      string_to_list((char_u *) received, received_len, false);
     str_slot->li_tv.vval.v_list->lv_refcount++;
     list_append(list, str_slot);
 

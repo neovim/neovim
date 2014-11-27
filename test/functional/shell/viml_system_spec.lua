@@ -188,6 +188,18 @@ describe('systemlist()', function()
     end)
   end)
 
+  describe('when keepempty option is', function()
+    it('0, ignores trailing newline', function()
+      eq({'aa','bb'}, eval("systemlist('cat',['aa','bb'],0)"))
+      eq({'aa','bb'}, eval("systemlist('cat',['aa','bb',''],0)"))
+    end)
+
+    it('1, preserves trailing newline', function()
+      eq({'aa','bb'}, eval("systemlist('cat',['aa','bb'],1)"))
+      eq({'aa','bb',''}, eval("systemlist('cat',['aa','bb',''],2)"))
+    end)
+  end)
+
   if xclip then
     describe("with a program that doesn't close stdout", function()
       it('will exit properly after passing input', function()
