@@ -717,9 +717,6 @@ getcount:
     bool lit = false;           /* get extra character literally */
     bool langmap_active = false;           /* using :lmap mappings */
     int lang;                   /* getting a text character */
-#ifdef USE_IM_CONTROL
-    bool save_smd;              /* saved value of p_smd */
-#endif
 
     ++no_mapping;
     ++allow_keys;               /* no mapping for nchar, but allow key codes */
@@ -768,12 +765,6 @@ getcount:
           State = LANGMAP;
         langmap_active = true;
       }
-#ifdef USE_IM_CONTROL
-      save_smd = p_smd;
-      p_smd = false;            /* Don't let the IM code show the mode here */
-      if (lang && curbuf->b_p_iminsert == B_IMODE_IM)
-        im_set_active(true);
-#endif
 
       *cp = plain_vgetc();
 
@@ -783,14 +774,6 @@ getcount:
         ++allow_keys;
         State = NORMAL_BUSY;
       }
-#ifdef USE_IM_CONTROL
-      if (lang) {
-        if (curbuf->b_p_iminsert != B_IMODE_LMAP)
-          im_save_status(&curbuf->b_p_iminsert);
-        im_set_active(false);
-      }
-      p_smd = save_smd;
-#endif
       State = NORMAL_BUSY;
       need_flushbuf |= add_to_showcmd(*cp);
 

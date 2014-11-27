@@ -912,18 +912,10 @@ static struct vimoption
    (char_u *)NULL, PV_NONE,
    {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
   {"imcmdline",   "imc",  P_BOOL|P_VI_DEF,
-#ifdef USE_IM_CONTROL
-   (char_u *)&p_imcmdline, PV_NONE,
-#else
    (char_u *)NULL, PV_NONE,
-#endif
    {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
   {"imdisable",   "imd",  P_BOOL|P_VI_DEF,
-#ifdef USE_IM_CONTROL
-   (char_u *)&p_imdisable, PV_NONE,
-#else
    (char_u *)NULL, PV_NONE,
-#endif
    {(char_u *)FALSE, (char_u *)0L}
    SCRIPTID_INIT},
   {"iminsert",    "imi",  P_NUM|P_VI_DEF,
@@ -5134,18 +5126,6 @@ set_bool_option (
       foldUpdateAll(curwin);
   }
 
-#ifdef USE_IM_CONTROL
-  /* 'imdisable' */
-  else if ((int *)varp == &p_imdisable) {
-    /* Only de-activate it here, it will be enabled when changing mode. */
-    if (p_imdisable)
-      im_set_active(FALSE);
-    else if (State & INSERT)
-      /* When the option is set from an autocommand, it may need to take
-       * effect right away. */
-      im_set_active(curbuf->b_p_iminsert == B_IMODE_IM);
-  }
-#endif
 
   /* 'spell' */
   else if ((int *)varp == &curwin->w_p_spell) {

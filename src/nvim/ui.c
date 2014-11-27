@@ -125,29 +125,3 @@ int check_row(int row)
     return (int)screen_Rows - 1;
   return row;
 }
-
-
-#if defined(USE_IM_CONTROL) || defined(PROTO)
-/*
- * Save current Input Method status to specified place.
- */
-void im_save_status(long *psave)
-{
-  /* Don't save when 'imdisable' is set or "xic" is NULL, IM is always
-   * disabled then (but might start later).
-   * Also don't save when inside a mapping, vgetc_im_active has not been set
-   * then.
-   * And don't save when the keys were stuffed (e.g., for a "." command).
-   * And don't save when the GUI is running but our window doesn't have
-   * input focus (e.g., when a find dialog is open). */
-  if (!p_imdisable && KeyTyped && !KeyStuffed
-      ) {
-    /* Do save when IM is on, or IM is off and saved status is on. */
-    if (vgetc_im_active)
-      *psave = B_IMODE_IM;
-    else if (*psave == B_IMODE_IM)
-      *psave = B_IMODE_NONE;
-  }
-}
-#endif
-

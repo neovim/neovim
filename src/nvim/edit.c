@@ -391,9 +391,6 @@ edit (
    */
   if (curbuf->b_p_iminsert == B_IMODE_LMAP)
     State |= LANGMAP;
-#ifdef USE_IM_CONTROL
-  im_set_active(curbuf->b_p_iminsert == B_IMODE_IM);
-#endif
 
   setmouse();
   clear_showcmd();
@@ -6758,19 +6755,11 @@ static void ins_reg(void)
    * message for it. Only call it explicitly. */
   ++no_u_sync;
   if (regname == '=') {
-# ifdef USE_IM_CONTROL
-    int im_on = im_get_status();
-# endif
     /* Sync undo when evaluating the expression calls setline() or
      * append(), so that it can be undone separately. */
     u_sync_once = 2;
 
     regname = get_expr_register();
-# ifdef USE_IM_CONTROL
-    /* Restore the Input Method. */
-    if (im_on)
-      im_set_active(TRUE);
-# endif
   }
   if (regname == NUL || !valid_yank_reg(regname, FALSE)) {
     vim_beep();
@@ -6867,24 +6856,8 @@ static void ins_ctrl_hat(void)
     } else {
       curbuf->b_p_iminsert = B_IMODE_LMAP;
       State |= LANGMAP;
-#ifdef USE_IM_CONTROL
-      im_set_active(FALSE);
-#endif
     }
   }
-#ifdef USE_IM_CONTROL
-  else {
-    /* There are no ":lmap" mappings, toggle IM */
-    if (im_get_status()) {
-      curbuf->b_p_iminsert = B_IMODE_NONE;
-      im_set_active(FALSE);
-    } else {
-      curbuf->b_p_iminsert = B_IMODE_IM;
-      State &= ~LANGMAP;
-      im_set_active(TRUE);
-    }
-  }
-#endif
   set_iminsert_global();
   showmode();
   /* Show/unshow value of 'keymap' in status lines. */
@@ -6984,14 +6957,6 @@ ins_esc (
     }
   }
 
-#ifdef USE_IM_CONTROL
-  /* Disable IM to allow typing English directly for Normal mode commands.
-   * When ":lmap" is enabled don't change 'iminsert' (IM can be enabled as
-   * well). */
-  if (!(State & LANGMAP))
-    im_save_status(&curbuf->b_p_iminsert);
-  im_set_active(FALSE);
-#endif
 
   State = NORMAL;
   /* need to position cursor again (e.g. when on a TAB ) */

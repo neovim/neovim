@@ -578,12 +578,7 @@ struct file_buffer {
 #define B_IMODE_USE_INSERT -1   /*	Use b_p_iminsert value for search */
 #define B_IMODE_NONE 0          /*	Input via none */
 #define B_IMODE_LMAP 1          /*	Input via langmap */
-#ifndef USE_IM_CONTROL
 # define B_IMODE_LAST 1
-#else
-# define B_IMODE_IM 2           /*	Input via input method */
-# define B_IMODE_LAST 2
-#endif
 
   short b_kmap_state;           /* using "lmap" mappings */
 # define KEYMAP_INIT    1       /* 'keymap' was set, call keymap_init() */
