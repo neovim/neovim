@@ -103,7 +103,6 @@
 #include "nvim/screen.h"
 #include "nvim/spell.h"
 #include "nvim/strings.h"
-#include "nvim/ui.h"
 #include "nvim/os/os.h"
 #include "nvim/arabic.h"
 
@@ -3971,4 +3970,24 @@ char_u * string_convert_ext(vimconv_T *vcp, char_u *ptr, int *lenp,
   }
 
   return retval;
+}
+
+// Check bounds for column number
+static int check_col(int col)
+{
+  if (col < 0)
+    return 0;
+  if (col >= (int)screen_Columns)
+    return (int)screen_Columns - 1;
+  return col;
+}
+
+// Check bounds for row number
+static int check_row(int row)
+{
+  if (row < 0)
+    return 0;
+  if (row >= (int)screen_Rows)
+    return (int)screen_Rows - 1;
+  return row;
 }
