@@ -77,6 +77,7 @@
 #include "nvim/tempfile.h"
 #include "nvim/term.h"
 #include "nvim/ui.h"
+#include "nvim/mouse.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/window.h"

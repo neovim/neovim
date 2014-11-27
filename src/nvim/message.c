@@ -43,6 +43,7 @@
 #include "nvim/strings.h"
 #include "nvim/term.h"
 #include "nvim/ui.h"
+#include "nvim/mouse.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
