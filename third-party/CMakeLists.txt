@@ -51,7 +51,7 @@ endif()
 
 include(ExternalProject)
 
-set(LIBUV_URL https://github.com/joyent/libuv/archive/v0.11.28.tar.gz)
+set(LIBUV_URL https://github.com/libuv/libuv/archive/v0.11.28.tar.gz)
 set(LIBUV_SHA1 3b70b65467ee693228b8b8385665a52690d74092)
 set(LIBUV_MD5 1a849ba4fc571d531482ed74bc7aabc4)
 
