@@ -71,10 +71,10 @@
 #include "nvim/strings.h"
 #include "nvim/term.h"
 #include "nvim/tempfile.h"
-#include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
+#include "nvim/os/input.h"
 
 #ifndef UNIX            /* it's in os_unix_defs.h for Unix */
 # include <time.h>
@@ -1642,7 +1642,7 @@ void ml_sync_all(int check_file, int check_char)
     if (buf->b_ml.ml_mfp->mf_dirty) {
       (void)mf_sync(buf->b_ml.ml_mfp, (check_char ? MFS_STOP : 0)
           | (bufIsChanged(buf) ? MFS_FLUSH : 0));
-      if (check_char && ui_char_avail())        /* character available now */
+      if (check_char && os_char_avail())        /* character available now */
         break;
     }
   }

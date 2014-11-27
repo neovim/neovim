@@ -430,7 +430,6 @@ void do_outofmem_msg(size_t size)
 #include "nvim/spell.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
-#include "nvim/ui.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 

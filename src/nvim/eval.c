@@ -76,7 +76,7 @@
 #include "nvim/tag.h"
 #include "nvim/tempfile.h"
 #include "nvim/term.h"
-#include "nvim/ui.h"
+#include "nvim/mouse.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/window.h"
@@ -90,6 +90,7 @@
 #include "nvim/api/vim.h"
 #include "nvim/os/dl.h"
 #include "nvim/os/event.h"
+#include "nvim/os/input.h"
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
 
@@ -10273,12 +10274,6 @@ static void get_user_input(typval_T *argvars, typval_T *rettv, int inputdialog)
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
 
-#ifdef NO_CONSOLE_INPUT
-  /* While starting up, there is no place to enter text. */
-  if (no_console_input())
-    return;
-#endif
-
   cmd_silent = FALSE;           /* Want to see the prompt. */
   if (prompt != NULL) {
     /* Only the part of the message after the last NL is considered as
@@ -10373,11 +10368,6 @@ static void f_inputlist(typval_T *argvars, typval_T *rettv)
   int selected;
   int mouse_used;
 
-#ifdef NO_CONSOLE_INPUT
-  /* While starting up, there is no place to enter text. */
-  if (no_console_input())
-    return;
-#endif
   if (argvars[0].v_type != VAR_LIST || argvars[0].vval.v_list == NULL) {
     EMSG2(_(e_listarg), "inputlist()");
     return;
@@ -17281,7 +17271,7 @@ void ex_function(exarg_T *eap)
             msg_putchar(' ');
           msg_prt_line(FUNCLINE(fp, j), FALSE);
           out_flush();                  /* show a line at a time */
-          ui_breakcheck();
+          os_breakcheck();
         }
         if (!got_int) {
           msg_putchar('\n');
@@ -19306,7 +19296,7 @@ void ex_oldfiles(exarg_T *eap)
       msg_outtrans(get_tv_string(&li->li_tv));
       msg_putchar('\n');
       out_flush();                  /* output one line at a time */
-      ui_breakcheck();
+      os_breakcheck();
     }
     /* Assume "got_int" was set to truncate the listing. */
     got_int = FALSE;

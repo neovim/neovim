@@ -44,8 +44,8 @@
 #include "nvim/strings.h"
 #include "nvim/syntax_defs.h"
 #include "nvim/term.h"
-#include "nvim/ui.h"
 #include "nvim/os/os.h"
+#include "nvim/os/time.h"
 
 /*
  * Structure that stores information about a highlight group.
@@ -7606,7 +7606,7 @@ static void highlight_list_two(int cnt, int attr)
   msg_puts_attr((char_u *)&("N \bI \b!  \b"[cnt / 11]), attr);
   msg_clr_eos();
   out_flush();
-  ui_delay(cnt == 99 ? 40L : (long)cnt * 50L, false);
+  os_delay(cnt == 99 ? 40L : (long)cnt * 50L, false);
 }
 
 

@@ -58,6 +58,8 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
+#include "nvim/os/input.h"
+#include "nvim/os/time.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "misc1.c.generated.h"
@@ -1840,7 +1842,7 @@ void changed(void)
        * and don't let the emsg() set msg_scroll. */
       if (need_wait_return && emsg_silent == 0) {
         out_flush();
-        ui_delay(2000L, true);
+        os_delay(2000L, true);
         wait_return(TRUE);
         msg_scroll = save_msg_scroll;
       }
@@ -2261,7 +2263,7 @@ change_warning (
     (void)msg_end();
     if (msg_silent == 0 && !silent_mode) {
       out_flush();
-      ui_delay(1000L, true);       /* give the user time to think about it */
+      os_delay(1000L, true);       /* give the user time to think about it */
     }
     curbuf->b_did_warn = true;
     redraw_cmdline = FALSE;     /* don't redraw and erase the message */
@@ -2383,7 +2385,7 @@ int get_keystroke(void)
 
     /* First time: blocking wait.  Second time: wait up to 100ms for a
      * terminal code to complete. */
-    n = ui_inchar(buf + len, maxlen, len == 0 ? -1L : 100L, 0);
+    n = os_inchar(buf + len, maxlen, len == 0 ? -1L : 100L, 0);
     if (n > 0) {
       /* Replace zero and CSI by a special key code. */
       n = fix_input_buffer(buf + len, n, FALSE);
@@ -3362,8 +3364,8 @@ void preserve_exit(void)
 
 /*
  * Check for CTRL-C pressed, but only once in a while.
- * Should be used instead of ui_breakcheck() for functions that check for
- * each line in the file.  Calling ui_breakcheck() each time takes too much
+ * Should be used instead of os_breakcheck() for functions that check for
+ * each line in the file.  Calling os_breakcheck() each time takes too much
  * time, because it can be a system call.
  */
 
@@ -3377,7 +3379,7 @@ void line_breakcheck(void)
 {
   if (++breakcheck_count >= BREAKCHECK_SKIP) {
     breakcheck_count = 0;
-    ui_breakcheck();
+    os_breakcheck();
   }
 }
 
@@ -3388,7 +3390,7 @@ void fast_breakcheck(void)
 {
   if (++breakcheck_count >= BREAKCHECK_SKIP * 10) {
     breakcheck_count = 0;
-    ui_breakcheck();
+    os_breakcheck();
   }
 }
 

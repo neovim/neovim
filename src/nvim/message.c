@@ -42,8 +42,10 @@
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/term.h"
-#include "nvim/ui.h"
+#include "nvim/mouse.h"
 #include "nvim/os/os.h"
+#include "nvim/os/input.h"
+#include "nvim/os/time.h"
 
 /*
  * To be able to scroll back at the "more" and "hit-enter" prompts we need to
@@ -877,7 +879,7 @@ void wait_return(int redraw)
                      || c == K_X1MOUSE
                      || c == K_X2MOUSE))
              );
-    ui_breakcheck();
+    os_breakcheck();
     /*
      * Avoid that the mouse-up event causes visual mode to start.
      */
@@ -2702,11 +2704,9 @@ do_dialog (
   int c;
   int i;
 
-#ifndef NO_CONSOLE
   /* Don't output anything in silent mode ("ex -s") */
   if (silent_mode)
     return dfltbutton;       /* return default option */
-#endif
 
 
   oldState = State;

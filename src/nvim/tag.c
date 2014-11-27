@@ -49,9 +49,10 @@
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/term.h"
-#include "nvim/ui.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
+#include "nvim/os/time.h"
+#include "nvim/os/input.h"
 
 /*
  * Structure to hold pointers to various items in a tag line.
@@ -672,7 +673,7 @@ do_tag (
           }
           if (msg_col)
             msg_putchar('\n');
-          ui_breakcheck();
+          os_breakcheck();
         }
         if (got_int)
           got_int = FALSE;              /* only stop the listing */
@@ -881,7 +882,7 @@ do_tag (
           give_warning(IObuff, ic);
         if (ic && !msg_scrolled && msg_silent == 0) {
           out_flush();
-          ui_delay(1000L, true);
+          os_delay(1000L, true);
         }
       }
 
@@ -2493,7 +2494,7 @@ jumpto_tag (
             MSG(_("E435: Couldn't find tag, just guessing!"));
             if (!msg_scrolled && msg_silent == 0) {
               out_flush();
-              ui_delay(1000L, true);
+              os_delay(1000L, true);
             }
           }
           retval = OK;

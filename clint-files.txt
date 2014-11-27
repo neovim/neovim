@@ -25,6 +25,8 @@ src/nvim/map_defs.h
 src/nvim/memfile.c
 src/nvim/memfile.h
 src/nvim/memfile_defs.h
+src/nvim/mouse.c
+src/nvim/mouse.h
 src/nvim/msgpack_rpc/channel.c
 src/nvim/msgpack_rpc/channel.h
 src/nvim/msgpack_rpc/helpers.c

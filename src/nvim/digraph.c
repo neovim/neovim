@@ -23,7 +23,7 @@
 #include "nvim/normal.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
-#include "nvim/ui.h"
+#include "nvim/os/input.h"
 
 typedef int result_T;
 
@@ -1659,13 +1659,13 @@ void listdigraphs(void)
       printdigraph(&tmp);
     }
     dp++;
-    ui_breakcheck();
+    os_breakcheck();
   }
 
   dp = (digr_T *)user_digraphs.ga_data;
   for (int i = 0; i < user_digraphs.ga_len && !got_int; ++i) {
     printdigraph(dp);
-    ui_breakcheck();
+    os_breakcheck();
     dp++;
   }
   // clear screen, because some digraphs may be wrong, in which case we messed

@@ -75,10 +75,10 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/term.h"
-#include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
+#include "nvim/os/input.h"
 
 /*
  * The options that are local to a window or buffer have "indir" set to one of
@@ -6123,7 +6123,7 @@ showoptions (
         col += INC;
       }
       out_flush();
-      ui_breakcheck();
+      os_breakcheck();
     }
   }
   free(items);

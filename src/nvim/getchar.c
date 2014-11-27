@@ -47,7 +47,6 @@
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/term.h"
-#include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/os/event.h"
 #include "nvim/os/input.h"
@@ -1702,14 +1701,14 @@ static int vgetorpeek(int advance)
        */
       for (;; ) {
         /*
-         * ui_breakcheck() is slow, don't use it too often when
+         * os_breakcheck() is slow, don't use it too often when
          * inside a mapping.  But call it each time for typed
          * characters.
          */
         if (typebuf.tb_maplen)
           line_breakcheck();
         else
-          ui_breakcheck();                      /* check for CTRL-C */
+          os_breakcheck();                      /* check for CTRL-C */
         keylen = 0;
         if (got_int) {
           /* flush all input */
@@ -2481,7 +2480,7 @@ inchar (
       char_u dum[DUM_LEN + 1];
 
       for (;; ) {
-        len = ui_inchar(dum, DUM_LEN, 0L, 0);
+        len = os_inchar(dum, DUM_LEN, 0L, 0);
         if (len == 0 || (len == 1 && dum[0] == 3))
           break;
       }
@@ -2498,7 +2497,7 @@ inchar (
      * Fill up to a third of the buffer, because each character may be
      * tripled below.
      */
-    len = ui_inchar(buf, maxlen / 3, wait_time, tb_change_cnt);
+    len = os_inchar(buf, maxlen / 3, wait_time, tb_change_cnt);
   }
 
   if (typebuf_changed(tb_change_cnt))

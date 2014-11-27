@@ -62,9 +62,9 @@
 #include "nvim/path.h"
 #include "nvim/strings.h"
 #include "nvim/tag.h"
-#include "nvim/ui.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
+#include "nvim/os/input.h"
 #include "nvim/os/fs_defs.h"
 
 static char_u   *ff_expand_buffer = NULL; /* used for expanding filenames */
@@ -607,7 +607,7 @@ char_u *vim_findfile(void *search_ctx_arg)
     /* downward search loop */
     for (;; ) {
       /* check if user user wants to stop the search*/
-      ui_breakcheck();
+      os_breakcheck();
       if (got_int)
         break;
 

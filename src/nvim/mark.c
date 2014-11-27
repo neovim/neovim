@@ -38,8 +38,8 @@
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/term.h"
-#include "nvim/ui.h"
 #include "nvim/os/os.h"
+#include "nvim/os/input.h"
 
 /*
  * This file contains routines to maintain and manipulate marks.
@@ -811,7 +811,7 @@ void ex_jumps(exarg_T *eap)
           curwin->w_jumplist[i].fmark.fnum == curbuf->b_fnum
           ? hl_attr(HLF_D) : 0);
       free(name);
-      ui_breakcheck();
+      os_breakcheck();
     }
     out_flush();
   }
@@ -845,7 +845,7 @@ void ex_changes(exarg_T *eap)
       name = mark_line(&curbuf->b_changelist[i], 17);
       msg_outtrans_attr(name, hl_attr(HLF_D));
       free(name);
-      ui_breakcheck();
+      os_breakcheck();
     }
     out_flush();
   }

@@ -17,8 +17,11 @@
 #include "nvim/keymap.h"
 #include "nvim/mbyte.h"
 #include "nvim/fileio.h"
+#include "nvim/ex_cmds2.h"
 #include "nvim/getchar.h"
 #include "nvim/term.h"
+#include "nvim/main.h"
+#include "nvim/misc1.h"
 
 #define READ_BUFFER_SIZE 0xfff
 #define INPUT_BUFFER_SIZE (READ_BUFFER_SIZE * 4)
@@ -184,7 +187,16 @@ size_t input_enqueue(String keys)
 
 static bool input_poll(int ms)
 {
+  if (do_profiling == PROF_YES && ms) {
+    prof_inchar_enter();
+  }
+
   event_poll_until(ms, input_ready());
+
+  if (do_profiling == PROF_YES && ms) {
+    prof_inchar_exit();
+  }
+
   return input_ready();
 }
 
@@ -282,7 +294,7 @@ static void convert_input(void)
 
 static void process_interrupts(void)
 {
-  if (!ctrl_c_interrupts) {
+  if (mapped_ctrl_c) {
     return;
   }
 
@@ -326,3 +338,11 @@ static bool input_ready(void)
          (!embedded_mode && eof);              // Stdin closed
 }
 
+// Exit because of an input read error.
+static void read_error_exit(void)
+{
+  if (silent_mode)      /* Normal way to exit for "ex -s" */
+    getout(0);
+  STRCPY(IObuff, _("Vim: Error reading input, exiting...\n"));
+  preserve_exit();
+}
