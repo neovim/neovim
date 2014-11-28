@@ -308,7 +308,7 @@ vim_findfile_init (
       && (vim_ispathsep(path[1]) || path[1] == NUL)
       && (!tagfile || vim_strchr(p_cpo, CPO_DOTTAG) == NULL)
       && rel_fname != NULL) {
-    int len = (int)(path_tail(rel_fname) - rel_fname);
+    size_t len = (size_t)(path_tail(rel_fname) - rel_fname);
 
     if (!vim_isAbsName(rel_fname) && len + 1 < MAXPATHL) {
       /* Make the start dir an absolute path name. */
@@ -375,8 +375,9 @@ vim_findfile_init (
       search_ctx->ffsc_stopdirs_v = ptr;
       walker = vim_strchr(walker, ';');
       if (walker) {
+        assert(walker - helper >= 0);
         search_ctx->ffsc_stopdirs_v[dircount-1] =
-          vim_strnsave(helper, (int)(walker - helper));
+          vim_strnsave(helper, (size_t)(walker - helper));
         walker++;
       } else
         /* this might be "", which means ascent till top
@@ -404,7 +405,8 @@ vim_findfile_init (
     char    *errpt;
 
     /* save the fix part of the path */
-    search_ctx->ffsc_fix_path = vim_strnsave(path, (int)(wc_part - path));
+    assert(wc_part - path >= 0);
+    search_ctx->ffsc_fix_path = vim_strnsave(path, (size_t)(wc_part - path));
 
     /*
      * copy wc_path and add restricts to the '**' wildcard.

@@ -386,21 +386,19 @@ int do_intthrow(struct condstack *cstack)
 char_u *get_exception_string(void *value, int type, char_u *cmdname, int *should_free)
 {
   char_u      *ret, *mesg;
-  int cmdlen;
   char_u      *p, *val;
 
   if (type == ET_ERROR) {
     *should_free = FALSE;
     mesg = ((struct msglist *)value)->throw_msg;
     if (cmdname != NULL && *cmdname != NUL) {
-      cmdlen = (int)STRLEN(cmdname);
-      ret = vim_strnsave((char_u *)"Vim(",
-          4 + cmdlen + 2 + (int)STRLEN(mesg));
+      size_t cmdlen = STRLEN(cmdname);
+      ret = vim_strnsave((char_u *)"Vim(", 4 + cmdlen + 2 + STRLEN(mesg));
       STRCPY(&ret[4], cmdname);
       STRCPY(&ret[4 + cmdlen], "):");
       val = ret + 4 + cmdlen + 2;
     } else {
-      ret = vim_strnsave((char_u *)"Vim:", 4 + (int)STRLEN(mesg));
+      ret = vim_strnsave((char_u *)"Vim:", 4 + STRLEN(mesg));
       val = ret + 4;
     }
 
@@ -708,7 +706,7 @@ static void report_pending(int action, int pending, void *value)
     if (pending & CSTP_THROW) {
       vim_snprintf((char *)IObuff, IOSIZE,
           (char *)mesg, _("Exception"));
-      mesg = vim_strnsave(IObuff, (int)STRLEN(IObuff) + 4);
+      mesg = vim_strnsave(IObuff, STRLEN(IObuff) + 4);
       STRCAT(mesg, ": %s");
       s = (char *)((except_T *)value)->value;
     } else if ((pending & CSTP_ERROR) && (pending & CSTP_INTERRUPT))
