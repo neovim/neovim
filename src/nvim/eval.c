@@ -10631,10 +10631,10 @@ static void f_jobsend(typval_T *argvars, typval_T *rettv)
 
   ssize_t input_len;
   char *input = (char *) save_tv_as_string(&argvars[1], &input_len, true);
-  if (input_len < 0) {
-    return;  // Error handled by save_tv_as_string().
-  } else if (input_len == 0) {
-    return;  // Not an error, but nothing to do.
+  if (!input) {
+    // Either the error has been handled by save_tv_as_string(), or there is no
+    // input to send.
+    return;
   }
 
   WBuffer *buf = wstream_new_buffer(input, input_len, 1, free);
@@ -14559,7 +14559,8 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
   // get input to the shell command (if any), and its length
   ssize_t input_len;
   char *input = (char *) save_tv_as_string(&argvars[1], &input_len, false);
-  if (input_len == -1) {
+  if (input_len < 0) {
+    assert(input == NULL);
     return;
   }
 
