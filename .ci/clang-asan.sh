@@ -23,7 +23,7 @@ fi
 export CC=/usr/local/clang-$clang_version/bin/clang
 symbolizer=/usr/local/clang-$clang_version/bin/llvm-symbolizer
 
-setup_prebuilt_deps x64
+setup_deps x64
 
 export ASAN_SYMBOLIZER_PATH=$symbolizer
 export ASAN_OPTIONS="detect_leaks=1:log_path=$tmpdir/asan"

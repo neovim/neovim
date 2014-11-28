@@ -35,8 +35,12 @@ check_core_dumps() {
 	done
 }
 
-setup_prebuilt_deps() {
-	eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) deps-${1}"
+setup_deps() {
+	if [ "$BUILD_NVIM_DEPS" != "true" ]; then
+		eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) deps-${1}"
+	elif [ "$TRAVIS_OS_NAME" = "linux" ]; then
+		sudo apt-get install libtool
+	fi
 }
 
 tmpdir="$(pwd)/tmp"
