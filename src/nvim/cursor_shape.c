@@ -135,7 +135,7 @@ char_u *parse_shape_opt(int what)
               p += len;
               if (!VIM_ISDIGIT(*p))
                 return (char_u *)N_("E548: digit expected");
-              long digits = getdigits(&p);
+              int64_t digits = getdigits(&p);
               assert(digits <= INT_MAX);
               int n = (int)digits;
               if (len == 3) {               /* "ver" or "hor" */

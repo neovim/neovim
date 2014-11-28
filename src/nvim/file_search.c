@@ -44,10 +44,13 @@
  *	functions.
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <inttypes.h>
+#include <limits.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
@@ -355,12 +358,11 @@ vim_findfile_init (
    */
   if (stopdirs != NULL) {
     char_u  *walker = stopdirs;
-    int dircount;
 
     while (*walker == ';')
       walker++;
 
-    dircount = 1;
+    size_t dircount = 1;
     search_ctx->ffsc_stopdirs_v = xmalloc(sizeof(char_u *));
 
     do {
@@ -397,7 +399,7 @@ vim_findfile_init (
    */
   wc_part = vim_strchr(path, '*');
   if (wc_part != NULL) {
-    int llevel;
+    int64_t llevel;
     int len;
     char    *errpt;
 
@@ -425,7 +427,7 @@ vim_findfile_init (
 
         llevel = strtol((char *)wc_part, &errpt, 10);
         if ((char_u *)errpt != wc_part && llevel > 0 && llevel < 255)
-          ff_expand_buffer[len++] = llevel;
+          ff_expand_buffer[len++] = (char_u)llevel;
         else if ((char_u *)errpt != wc_part && llevel == 0)
           /* restrict is 0 -> remove already added '**' */
           len -= 2;
@@ -580,8 +582,7 @@ char_u *vim_findfile(void *search_ctx_arg)
   char_u      *rest_of_wildcards;
   char_u      *path_end = NULL;
   ff_stack_T  *stackp;
-  int len;
-  int i;
+  size_t len;
   char_u      *p;
   char_u      *suf;
   ff_search_ctx_T *search_ctx;
@@ -701,7 +702,7 @@ char_u *vim_findfile(void *search_ctx_arg)
 
         rest_of_wildcards = stackp->ffs_wc_path;
         if (*rest_of_wildcards != NUL) {
-          len = (int)STRLEN(file_path);
+          len = STRLEN(file_path);
           if (STRNCMP(rest_of_wildcards, "**", 2) == 0) {
             /* pointer to the restrict byte
              * The restrict byte is not a character!
@@ -772,7 +773,7 @@ char_u *vim_findfile(void *search_ctx_arg)
            * We don't have further wildcards to expand, so we have to
            * check for the final file now.
            */
-          for (i = stackp->ffs_filearray_cur;
+          for (int i = stackp->ffs_filearray_cur;
                i < stackp->ffs_filearray_size; ++i) {
             if (!path_with_url(stackp->ffs_filearray[i])
                 && !os_isdir(stackp->ffs_filearray[i]))
@@ -788,7 +789,7 @@ char_u *vim_findfile(void *search_ctx_arg)
              * Try without extra suffix and then with suffixes
              * from 'suffixesadd'.
              */
-            len = (int)STRLEN(file_path);
+            len = STRLEN(file_path);
             if (search_ctx->ffsc_tagfile)
               suf = (char_u *)"";
             else
@@ -829,7 +830,8 @@ char_u *vim_findfile(void *search_ctx_arg)
 #endif
 
                 /* push dir to examine rest of subdirs later */
-                stackp->ffs_filearray_cur = i + 1;
+                assert(i < UCHAR_MAX - 1);
+                stackp->ffs_filearray_cur = (char_u)(i + 1);
                 ff_push(search_ctx, stackp);
 
                 if (!path_with_url(file_path))
@@ -856,6 +858,7 @@ char_u *vim_findfile(void *search_ctx_arg)
               /* Not found or found already, try next suffix. */
               if (*suf == NUL)
                 break;
+              assert(MAXPATHL >= len);
               copy_option_part(&suf, file_path + len,
                   MAXPATHL - len, ",");
             }
@@ -865,7 +868,7 @@ char_u *vim_findfile(void *search_ctx_arg)
            * still wildcards left, push the directories for further
            * search
            */
-          for (i = stackp->ffs_filearray_cur;
+          for (int i = stackp->ffs_filearray_cur;
                i < stackp->ffs_filearray_size; ++i) {
             if (!os_isdir(stackp->ffs_filearray[i]))
               continue;                 /* not a directory */
@@ -886,7 +889,7 @@ char_u *vim_findfile(void *search_ctx_arg)
        * leaves of the directory tree.
        */
       if (STRNCMP(stackp->ffs_wc_path, "**", 2) == 0) {
-        for (i = stackp->ffs_filearray_cur;
+        for (int i = stackp->ffs_filearray_cur;
              i < stackp->ffs_filearray_size; ++i) {
           if (fnamecmp(stackp->ffs_filearray[i],
                   stackp->ffs_fix_path) == 0)
@@ -1397,9 +1400,6 @@ find_file_in_path_option (
      * filename on the first call.
      */
     if (first == TRUE) {
-      int l;
-      int run;
-
       if (path_with_url(ff_file_to_find)) {
         file_name = vim_strsave(ff_file_to_find);
         goto theend;
@@ -1407,8 +1407,8 @@ find_file_in_path_option (
 
       /* When FNAME_REL flag given first use the directory of the file.
        * Otherwise or when this fails use the current directory. */
-      for (run = 1; run <= 2; ++run) {
-        l = (int)STRLEN(ff_file_to_find);
+      for (int run = 1; run <= 2; ++run) {
+        size_t l = STRLEN(ff_file_to_find);
         if (run == 1
             && rel_to_curdir
             && (options & FNAME_REL)
@@ -1416,7 +1416,7 @@ find_file_in_path_option (
             && STRLEN(rel_fname) + l < MAXPATHL) {
           STRCPY(NameBuff, rel_fname);
           STRCPY(path_tail(NameBuff), ff_file_to_find);
-          l = (int)STRLEN(NameBuff);
+          l = STRLEN(NameBuff);
         } else {
           STRCPY(NameBuff, ff_file_to_find);
           run = 2;
@@ -1436,6 +1436,7 @@ find_file_in_path_option (
           }
           if (*buf == NUL)
             break;
+          assert(MAXPATHL >= l);
           copy_option_part(&buf, NameBuff + l, MAXPATHL - l, ",");
         }
       }

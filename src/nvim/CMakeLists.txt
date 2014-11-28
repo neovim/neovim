@@ -48,17 +48,14 @@ set(CONV_SOURCES
   ex_cmds2.c
   ex_cmds.c
   ex_docmd.c
-  ex_eval.c
   ex_getln.c
   farsi.c
   fileio.c
-  file_search.c
   fold.c
   getchar.c
   hardcopy.c
   if_cscope.c
   indent.c
-  indent_c.c
   keymap.c
   main.c
   mark.c
@@ -76,7 +73,6 @@ set(CONV_SOURCES
   popupmnu.c
   quickfix.c
   regexp.c
-  regexp_nfa.c
   screen.c
   search.c
   sha256.c

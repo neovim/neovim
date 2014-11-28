@@ -2116,7 +2116,8 @@ int do_in_runtimepath(char_u *name, int all, DoInRuntimepathCB callback,
         np = name;
         while (*np != NUL && (all || !did_one)) {
           /* Append the pattern from "name" to buf[]. */
-          copy_option_part(&np, tail, (int)(MAXPATHL - (tail - buf)),
+          assert(MAXPATHL >= (tail - buf));
+          copy_option_part(&np, tail, (size_t)(MAXPATHL - (tail - buf)),
               "\t ");
 
           if (p_verbose > 2) {

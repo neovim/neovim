@@ -1,4 +1,6 @@
+#include <assert.h>
 #include <inttypes.h>
+#include <stdint.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
@@ -37,7 +39,7 @@ find_start_comment (  /* XXX */
   pos_T       *pos;
   char_u      *line;
   char_u      *p;
-  int cur_maxcomment = ind_maxcomment;
+  int64_t cur_maxcomment = ind_maxcomment;
 
   for (;; ) {
     pos = findmatchlimit(NULL, '*', FM_BACKWARD, cur_maxcomment);
@@ -115,27 +117,25 @@ static char_u *skip_string(char_u *p)
 
 
 /*
- * Return TRUE if the string "line" starts with a word from 'cinwords'.
+ * Return true if the string "line" starts with a word from 'cinwords'.
  */
-int cin_is_cinword(char_u *line)
+bool cin_is_cinword(char_u *line)
 {
-  char_u      *cinw;
-  char_u      *cinw_buf;
-  int cinw_len;
-  int retval = FALSE;
-  int len;
+  bool retval = false;
 
-  cinw_len = (int)STRLEN(curbuf->b_p_cinw) + 1;
-  cinw_buf = xmalloc(cinw_len);
+  size_t cinw_len = STRLEN(curbuf->b_p_cinw) + 1;
+  char_u *cinw_buf = xmalloc(cinw_len);
   line = skipwhite(line);
-  for (cinw = curbuf->b_p_cinw; *cinw; ) {
-    len = copy_option_part(&cinw, cinw_buf, cinw_len, ",");
+
+  for (char_u *cinw = curbuf->b_p_cinw; *cinw; ) {
+    size_t len = copy_option_part(&cinw, cinw_buf, cinw_len, ",");
     if (STRNCMP(line, cinw_buf, len) == 0
         && (!vim_iswordc(line[len]) || !vim_iswordc(line[len - 1]))) {
-      retval = TRUE;
+      retval = true;
       break;
     }
   }
+
   free(cinw_buf);
 
   return retval;
@@ -662,7 +662,7 @@ static int cin_islinecomment(char_u *p)
  * Return the character terminating the line (ending char's have precedence if
  * both apply in order to determine initializations).
  */
-static int 
+static char_u
 cin_isterminated (
     char_u *s,
     int incl_open,                  /* include '{' at the end as terminator */
@@ -1281,8 +1281,6 @@ void parse_cino(buf_T *buf)
 {
   char_u      *p;
   char_u      *l;
-  char_u      *digits;
-  int n;
   int divider;
   int fraction = 0;
   int sw = (int)get_sw_value(buf);
@@ -1415,11 +1413,13 @@ void parse_cino(buf_T *buf)
     l = p++;
     if (*p == '-')
       ++p;
-    digits = p;             /* remember where the digits start */
-    n = getdigits(&p);
+    char_u *digits_start = p;             /* remember where the digits start */
+    int64_t digits = getdigits(&p);
+    assert(digits <= INT_MAX);
+    int n = (int)digits;
     divider = 0;
     if (*p == '.') {        /* ".5s" means a fraction */
-      fraction = atol((char *)++p);
+      fraction = atoi((char *)++p);
       while (VIM_ISDIGIT(*p)) {
         ++p;
         if (divider)
@@ -1429,7 +1429,7 @@ void parse_cino(buf_T *buf)
       }
     }
     if (*p == 's') {        /* "2s" means two times 'shiftwidth' */
-      if (p == digits)
+      if (p == digits_start)
         n = sw;         /* just "s" is one 'shiftwidth' */
       else {
         n *= sw;
@@ -1625,8 +1625,11 @@ int get_c_indent(void)
           what = *p++;
         else if (*p == COM_LEFT || *p == COM_RIGHT)
           align = *p++;
-        else if (VIM_ISDIGIT(*p) || *p == '-')
-          off = getdigits(&p);
+        else if (VIM_ISDIGIT(*p) || *p == '-') {
+          int64_t digits = getdigits(&p);
+          assert(digits <= INT_MAX);
+          off = (int)digits;
+        }
         else
           ++p;
       }
