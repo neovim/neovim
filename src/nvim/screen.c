@@ -1205,8 +1205,13 @@ static void win_update(win_T *wp)
        */
       if (VIsual_mode == Ctrl_V) {
         colnr_T fromc, toc;
+        int save_ve_flags = ve_flags;
+
+        if (curwin->w_p_lbr)
+          ve_flags = VE_ALL;
 
         getvcols(wp, &VIsual, &curwin->w_cursor, &fromc, &toc);
+        ve_flags = save_ve_flags;
         ++toc;
         if (curwin->w_curswant == MAXCOL)
           toc = MAXCOL;
@@ -3725,6 +3730,7 @@ win_line (
      * special character (via 'listchars' option "precedes:<char>".
      */
     if (lcs_prec_todo != NUL
+        && wp->w_p_list
         && (wp->w_p_wrap ? wp->w_skipcol > 0 : wp->w_leftcol > 0)
         && filler_todo <= 0
         && draw_state > WL_NR

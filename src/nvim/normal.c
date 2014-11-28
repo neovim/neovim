@@ -1091,6 +1091,10 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
   pos_T old_cursor;
   bool empty_region_error;
   int restart_edit_save;
+  int lbr_saved = curwin->w_p_lbr;
+
+  curwin->w_p_lbr = false; /* avoid a problem with unwanted linebreaks in 
+                            * block mode */
 
   /* The visual area is remembered for redo */
   static int redo_VIsual_mode = NUL;        /* 'v', 'V', or Ctrl-V */
@@ -1703,6 +1707,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     oap->block_mode = false;
     clearop(oap);
   }
+  curwin->w_p_lbr = lbr_saved;
 }
 
 /*
@@ -3484,7 +3489,11 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
      * screenline or move two screenlines.
      */
     validate_virtcol();
-    if (curwin->w_virtcol > curwin->w_curswant
+    colnr_T virtcol = curwin->w_virtcol;
+    if (virtcol > (colnr_T)width1 && *p_sbr != NUL)
+        virtcol -= vim_strsize(p_sbr);
+
+    if (virtcol > curwin->w_curswant
         && (curwin->w_curswant < (colnr_T)width1
             ? (curwin->w_curswant > (colnr_T)width1 / 2)
             : ((curwin->w_curswant - width1) % width2
