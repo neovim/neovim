@@ -82,47 +82,22 @@ static int did_set_title = FALSE;
 static char_u   *oldicon = NULL;
 static int did_set_icon = FALSE;
 
-
-
-/*
- * Write s[len] to the screen.
- */
-void mch_write(char_u *s, int len)
-{
-  if (embedded_mode) {
-    // TODO(tarruda): This is a temporary hack to stop Neovim from writing
-    // messages to stdout in embedded mode. In the future, embedded mode will
-    // be the only possibility(GUIs will always start neovim with a msgpack-rpc
-    // over stdio) and this function won't exist.
-    //
-    // The reason for this is because before Neovim fully migrates to a
-    // msgpack-rpc-driven architecture, we must have a fully functional
-    // UI working
-    return;
-  }
-
-  ignored = (int)write(1, (char *)s, len);
-  if (p_wd)             /* Unix is too fast, slow down a bit more */
-    os_microdelay(p_wd, false);
-}
-
 /*
  * If the machine has job control, use it to suspend the program,
  * otherwise fake it by starting a new shell.
  */
 void mch_suspend(void)
 {
-  /* BeOS does have SIGTSTP, but it doesn't work. */
-#if defined(SIGTSTP) && !defined(__BEOS__)
+#if defined(SIGTSTP)
   out_flush();              /* needed to make cursor visible on some systems */
   settmode(TMODE_COOK);
   out_flush();              /* needed to disable mouse on some systems */
 
-
+  // Note: compiler defines _REENTRANT when given -pthread flag.
 # if defined(_REENTRANT) && defined(SIGCONT)
   sigcont_received = FALSE;
 # endif
-  kill(0, SIGTSTP);         /* send ourselves a STOP signal */
+  uv_kill(0, SIGTSTP);         // send ourselves a STOP signal
 # if defined(_REENTRANT) && defined(SIGCONT)
   /*
    * Wait for the SIGCONT signal to be handled. It generally happens
@@ -152,20 +127,6 @@ void mch_suspend(void)
   need_check_timestamps = TRUE;
   did_check_timestamps = FALSE;
 #endif
-}
-
-void mch_init(void)
-{
-  Columns = 80;
-  Rows = 24;
-
-  out_flush();
-
-#ifdef MACOS_CONVERT
-  mac_conv_init();
-#endif
-
-  event_init();
 }
 
 static int get_x11_title(int test_only)
@@ -476,12 +437,6 @@ int mch_nodetype(char_u *name)
     return NODE_OTHER;
   /* Everything else is writable? */
   return NODE_WRITABLE;
-}
-
-void mch_early_init(void)
-{
-  handle_init();
-  time_init();
 }
 
 #if defined(EXITFREE) || defined(PROTO)
