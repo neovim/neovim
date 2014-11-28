@@ -855,7 +855,7 @@ These modifiers can be given, in this order:
 		separator is removed.  Thus ":p:h" on a directory name results
 		on the directory name itself (without trailing slash).
 		When the file name is an absolute path (starts with "/" for
-		Unix; "x:\" for MS-DOS, WIN32, OS/2; "drive:" for Amiga), that
+		Unix; "x:\" for MS-DOS, WIN32; "drive:" for Amiga), that
 		part is not removed.  When there is no head (path is relative
 		to current directory) the result is empty.
 	:t	Tail of the file name (last component of the name).  Must
@@ -954,10 +954,10 @@ option contains "sh", this is done twice, to avoid the shell trying to expand
 the "!".
 
 							*filename-backslash*
-For filesystems that use a backslash as directory separator (MS-DOS, Windows,
-OS/2), it's a bit difficult to recognize a backslash that is used to escape
-the special meaning of the next character.  The general rule is: If the
-backslash is followed by a normal file name character, it does not have a
+For filesystems that use a backslash as directory separator (MS-DOS and
+Windows), it's a bit difficult to recognize a backslash that is used
+to escape the special meaning of the next character.  The general rule is: If
+the backslash is followed by a normal file name character, it does not have a
 special meaning.  Therefore "\file\foo" is a valid file name, you don't have
 to type the backslash twice.
 

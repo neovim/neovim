@@ -938,8 +938,8 @@ normally happens by matching following characters and items.  When nothing is
 following the rest of the line is matched.  If "%f" is followed by a '%' or a
 backslash, it will look for a sequence of 'isfname' characters.
 
-On MS-DOS, MS-Windows and OS/2 a leading "C:" will be included in "%f", even
-when using "%f:".  This means that a file name which is a single alphabetical
+On MS-DOS and MS-Windows a leading "C:" will be included in "%f", even when
+using "%f:".  This means that a file name which is a single alphabetical
 letter will not be detected.
 
 The "%p" conversion is normally followed by a "^".  It's used for compilers

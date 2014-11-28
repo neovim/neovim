@@ -6172,7 +6172,7 @@ system({expr} [, {input}])				*system()* *E677*
 		The command executed is constructed using several options:
 	'shell' 'shellcmdflag' 'shellxquote' {expr} 'shellredir' {tmp} 'shellxquote'
 		({tmp} is an automatically generated file name).
-		For Unix and OS/2 braces are put around {expr} to allow for
+		For Unix braces are put around {expr} to allow for
 		concatenated commands.
 
 		The command will be executed in "cooked" mode, so that a
@@ -6756,7 +6756,6 @@ multi_byte_ime		Compiled with support for IME input method.
 multi_lang		Compiled with support for multiple languages.
 mzscheme		Compiled with MzScheme interface |mzscheme|.
 ole			Compiled with OLE automation support for Win32.
-os2			OS/2 version of Vim.
 path_extra		Compiled with up/downwards search in 'path' and 'tags'
 perl			Compiled with Perl interface.
 persistent_undo		Compiled with support for persistent undo history.

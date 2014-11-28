@@ -2301,14 +2301,7 @@ GUI:
     currently.  This is very obvious on a 66Mhz 486.
 
 
-MSDOS, OS/2 and Win32:
-8   OS/2: Add backtick expansion.  Undefine NO_EXPANDPATH and use
-    gen_expand_wildcards().
-8   OS/2: Add clipboard support?  See example clipbrd.exe from Alexander
-    Wagner.
-8   OS/2: Add Extended Attributes support and define HAVE_ACL.
-8   OS/2: When editing a file name "foo.txt" that is actually called FOO.txt,
-    writing uses "foo.txt".  Should obtain the real file name.
+MSDOS and Win32:
 8   Should $USERPROFILE be preferred above $HOMEDRIVE/$HOMEPATH?  No, but it's
     a good fallback, thus use:
 	    $HOME

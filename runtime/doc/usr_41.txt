@@ -1495,7 +1495,7 @@ Here is a summary of items that apply to Vim scripts.  They are also mentioned
 elsewhere, but form a nice checklist.
 
 The end-of-line character depends on the system.  For Unix a single <NL>
-character is used.  For MS-DOS, Windows, OS/2 and the like, <CR><LF> is used.
+character is used.  For MS-DOS, Windows and the like, <CR><LF> is used.
 This is important when using mappings that end in a <CR>.  See |:source_crnl|.
 
 

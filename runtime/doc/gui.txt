@@ -94,8 +94,6 @@ terminal version.
 
 Recommended place for your personal GUI initializations:
 	Unix		    $HOME/.gvimrc or $HOME/.vim/gvimrc
-	OS/2		    $HOME/.gvimrc, $HOME/vimfiles/gvimrc
-			    or $VIM/.gvimrc
 	MS-DOS and Win32    $HOME/_gvimrc, $HOME/vimfiles/gvimrc
 			    or $VIM/_gvimrc
 	Amiga		    s:.gvimrc, home:.gvimrc, home:vimfiles:gvimrc

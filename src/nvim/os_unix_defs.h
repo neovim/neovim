@@ -8,17 +8,13 @@
  * Do ":help credits" in Vim to see a list of people who contributed.
  */
 
-/*
- * NextStep has a problem with configure, undefine a few things:
- */
-
 #include <stdio.h>
 #include <ctype.h>
 
-# include <sys/types.h>
-# include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
-# include <stdlib.h>
+#include <stdlib.h>
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>

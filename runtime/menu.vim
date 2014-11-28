@@ -188,7 +188,7 @@ an 20.435	 &Edit.Startup\ &Settings		:call <SID>EditVimrc()<CR>
 fun! s:EditVimrc()
   if $MYVIMRC != ''
     let fname = $MYVIMRC
-  elseif has("win32") || has("dos32") || has("dos16") || has("os2")
+  elseif has("win32") || has("dos32") || has("dos16")
     if $HOME != ''
       let fname = $HOME . "/_vimrc"
     else
