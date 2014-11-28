@@ -1,6 +1,6 @@
 . "$CI_SCRIPTS/common.sh"
 
-set_environment /opt/neovim-deps/32
+setup_prebuilt_deps x86
 
 # Need this to keep apt-get from removing gcc when installing libncurses
 # below.
@@ -21,8 +21,17 @@ CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON \
 	-DCMAKE_IGNORE_PATH=/lib:/usr/lib:/usr/local/lib \
 	-DCMAKE_TOOLCHAIN_FILE=cmake/i386-linux-gnu.toolchain.cmake"
 
-$MAKE_CMD CMAKE_EXTRA_FLAGS="${CMAKE_EXTRA_FLAGS}" unittest
+# Build and output version info.
+$MAKE_CMD CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS" nvim
+build/bin/nvim --version
+
+# Run unittests.
+$MAKE_CMD unittest
+
+# Run functional tests.
 $MAKE_CMD test
 check_core_dumps
+
+# Run legacy tests.
 $MAKE_CMD oldtest
 check_core_dumps
