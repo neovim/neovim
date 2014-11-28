@@ -39,3 +39,8 @@ check_core_dumps
 # Run legacy tests.
 $MAKE_CMD oldtest
 check_core_dumps
+
+# Test if correctly installed.
+sudo -E $MAKE_CMD install
+/usr/local/bin/nvim --version
+/usr/local/bin/nvim -e -c "quit"
