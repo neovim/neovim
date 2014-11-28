@@ -3602,8 +3602,13 @@ void do_sub(exarg_T *eap)
       eap->flags = EXFLAG_PRINT;
     }
 
-    do_join(eap->line2 - eap->line1 + 1, FALSE, TRUE, FALSE, true);
-    sub_nlines = sub_nsubs = eap->line2 - eap->line1 + 1;
+    linenr_T joined_lines_count = eap->line2 < curbuf->b_ml.ml_line_count
+                                  ? eap->line2 - eap->line1 + 2
+                                  : eap->line2 - eap->line1 + 1;
+    if (joined_lines_count >= 2) {
+      do_join(joined_lines_count, FALSE, TRUE, FALSE, true);
+    }
+    sub_nlines = sub_nsubs = joined_lines_count - 1;
     do_sub_msg(false);
     ex_may_print(eap);
 
