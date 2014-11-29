@@ -75,6 +75,7 @@ static struct yankreg   *y_current;         /* ptr to current yankreg */
 static int y_append;                        /* TRUE when appending */
 static struct yankreg   *y_previous = NULL; /* ptr to last written yankreg */
 
+static bool clipboard_didwarn_unnamed = false;
 /*
  * structure used by block_prep, op_delete and op_yank for blockwise operators
  * also op_change, op_shift, op_insert, op_replace - AKelly
@@ -5208,17 +5209,27 @@ static void free_register(struct yankreg *reg)
 }
 
 // return target register
-static int check_clipboard_name(int *name) {
+static int adjust_clipboard_name(int *name) {
   if (*name == '*' || *name == '+') {
+    if(!eval_has_provider("clipboard")) {
+      EMSG("clipboard: provider is not available");
+      return -1;
+    }
     return CLIP_REGISTER;
-  } else if (*name == NUL && eval_has_provider("clipboard")) {
+  } else if (*name == NUL && (cb_flags & (CB_UNNAMED | CB_UNNAMEDPLUS))) {
+    if(!eval_has_provider("clipboard")) {
+      if (!clipboard_didwarn_unnamed) {
+        msg((char_u*)"clipboard: provider not available, ignoring clipboard=unnamed[plus]");
+        clipboard_didwarn_unnamed = true;
+      }
+      return -1;
+    }
     if (cb_flags & CB_UNNAMEDPLUS) {
       *name = '+';
-      return 0; //unnamed
-    } else if (cb_flags & CB_UNNAMED) {
+    } else {
       *name = '*';
-      return 0; //unnamed
     }
+    return 0; //unnamed
   }
   // don't do anything for other register names
   return -1;
@@ -5226,7 +5237,7 @@ static int check_clipboard_name(int *name) {
 
 static void get_clipboard(int name)
 {
-  int ireg = check_clipboard_name(&name);
+  int ireg = adjust_clipboard_name(&name);
   if (ireg < 0) {
     return;
   }
@@ -5314,12 +5325,12 @@ err:
   }
   reg->y_array = NULL;
   reg->y_size = 0;
-  EMSG("Clipboard provider returned invalid data");
+  EMSG("clipboard: provider returned invalid data");
 }
 
 static void set_clipboard(int name)
 {
-  int ireg = check_clipboard_name(&name);
+  int ireg = adjust_clipboard_name(&name);
   if (ireg < 0) {
     return;
   }
