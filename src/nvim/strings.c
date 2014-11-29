@@ -400,7 +400,7 @@ int vim_strnicmp(char *s1, char *s2, size_t len)
  * with characters from 128 to 255 correctly.  It also doesn't return a
  * pointer to the NUL at the end of the string.
  */
-char_u *vim_strchr(char_u *string, int c)
+char_u *vim_strchr(const char_u *string, int c) FUNC_ATTR_NONNULL_ARG(1)
 {
   char_u      *p;
   int b;
@@ -433,12 +433,8 @@ char_u *vim_strchr(char_u *string, int c)
     }
     return NULL;
   }
-  while ((b = *p) != NUL) {
-    if (b == c)
-      return p;
-    ++p;
-  }
-  return NULL;
+
+  return vim_strbyte(p, c);
 }
 
 /*
@@ -446,7 +442,7 @@ char_u *vim_strchr(char_u *string, int c)
  * strings with characters above 128 correctly. It also doesn't return a
  * pointer to the NUL at the end of the string.
  */
-char_u *vim_strbyte(char_u *string, int c)
+char_u *vim_strbyte(char_u *string, int c) FUNC_ATTR_NONNULL_ARG(1)
 {
   char_u      *p = string;
 
