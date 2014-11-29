@@ -19829,16 +19829,12 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
 
 bool eval_has_provider(char *name)
 {
-#define source_provider(name) \
-  do_source((uint8_t *)"$VIMRUNTIME/autoload/provider/" name ".vim", \
-                       false, \
-                       false)
 
 #define check_provider(name)                                              \
   if (has_##name == -1) {                                                 \
     has_##name = !!find_func((uint8_t *)"provider#" #name "#Call");       \
     if (!has_##name) {                                                    \
-      source_provider(#name);                                             \
+      script_autoload((uint8_t *)"provider#" #name "#Call", false);       \
       has_##name = !!find_func((uint8_t *)"provider#" #name "#Call");     \
     }                                                                     \
   }
