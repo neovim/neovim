@@ -77,7 +77,6 @@ set(CONV_SOURCES
   search.c
   sha256.c
   spell.c
-  strings.c
   syntax.c
   tag.c
   term.c

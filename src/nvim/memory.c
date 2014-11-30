@@ -305,6 +305,7 @@ char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen)
 /// @param size Size of destination buffer
 /// @return Length of the source string (i.e.: strlen(src))
 size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
+  FUNC_ATTR_NONNULL_ALL
 {
     size_t ret = strlen(src);
 
@@ -348,7 +349,7 @@ char *xstrdup(const char *str)
 /// @param c   The byte to search for.
 /// @param len The length of the memory object.
 /// @returns a pointer to the found byte in src[len], or NULL.
-void *xmemrchr(void *src, uint8_t c, size_t len)
+void *xmemrchr(const void *src, uint8_t c, size_t len)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   while (len--) {

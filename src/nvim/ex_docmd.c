@@ -7482,7 +7482,7 @@ static void ex_tag_cmd(exarg_T *eap, char_u *name)
  * If found return one of the SPEC_ values and set "*usedlen" to the length of
  * the variable.  Otherwise return -1 and "*usedlen" is unchanged.
  */
-int find_cmdline_var(char_u *src, int *usedlen)
+int find_cmdline_var(const char_u *src, int *usedlen) FUNC_ATTR_NONNULL_ALL
 {
   int len;
   int i;

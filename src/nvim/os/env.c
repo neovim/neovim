@@ -43,7 +43,7 @@ char *os_getenvname_at_index(size_t index)
   if (str == NULL) {
     return NULL;
   }
-  int namesize = 0;
+  size_t namesize = 0;
   while (str[namesize] != '=' && str[namesize] != NUL) {
     namesize++;
   }
