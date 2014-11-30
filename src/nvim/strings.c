@@ -479,7 +479,7 @@ char_u *vim_strbyte(const char_u *string, int c)
  * Does not handle multi-byte char for "c"!
  */
 char_u *vim_strrchr(const char_u *string, int c)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   const char_u *retval = NULL;
   const char_u *p = string;
