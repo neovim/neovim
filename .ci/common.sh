@@ -30,17 +30,19 @@ check_core_dumps() {
 	sleep 2
 
 	if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-		cores=/cores/*
+		cores="$(find /cores/ -type f -print)"
+		dbg="lldb -Q -o bt -f build/bin/nvim -c"
 	else
 		# TODO(fwalch): Will trigger if a file named core.* exists outside of .deps.
-		cores="$(find ./ -not -path '*.deps*' -name 'core.*' -print)"
+		cores="$(find ./ -type f -not -path '*.deps*' -name 'core.*' -print)"
+		dbg="gdb -n -batch -ex bt build/bin/nvim"
 	fi
 
 	if [ -z "$cores" ]; then
 		return
 	fi
 	for c in $cores; do
-		gdb -q -n -batch -ex bt build/bin/nvim $c
+		$dbg $c
 	done
 	exit 1
 }

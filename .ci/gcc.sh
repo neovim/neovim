@@ -4,17 +4,12 @@ sudo pip install cpp-coveralls
 
 if [ "$TRAVIS_OS_NAME" = "linux" ]; then
 	sudo apt-get install valgrind
-elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
-	brew install valgrind
-else
-	echo "Unknown OS '$TRAVIS_OS_NAME'."
-	exit 1
+	export VALGRIND=1
+	export VALGRIND_LOG="$tmpdir/valgrind-%p.log"
 fi
 
 setup_deps x64
 
-export VALGRIND=1
-export VALGRIND_LOG="$tmpdir/valgrind-%p.log"
 CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON \
 	-DUSE_GCOV=ON \
 	-DBUSTED_OUTPUT_TYPE=plainTerminal"
