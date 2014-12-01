@@ -51,6 +51,9 @@ all: nvim
 nvim: build/.ran-cmake deps
 	+$(BUILD_CMD) -C build
 
+libnvim: build/.ran-cmake deps
+	+$(BUILD_CMD) -C build libnvim
+
 cmake:
 	touch CMakeLists.txt
 	$(MAKE) build/.ran-cmake
@@ -95,4 +98,4 @@ distclean: clean
 install: | nvim
 	+$(BUILD_CMD) -C build install
 
-.PHONY: test functionaltest unittest clean distclean nvim cmake deps install
+.PHONY: test functionaltest unittest clean distclean nvim libnvim cmake deps install
