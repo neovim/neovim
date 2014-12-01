@@ -68,7 +68,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 string(REPLACE "-O3" "-O2" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 
 # Enable -Wconversion.
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wconversion")
+if (NOT MSVC)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wconversion")
+endif()
 
 # gcc 4.0 and better turn on _FORTIFY_SOURCE=2 automatically.  This currently
 # does not work with Neovim due to some uses of dynamically-sized structures.
