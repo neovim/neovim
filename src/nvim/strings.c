@@ -237,13 +237,9 @@ char_u *vim_strnsave_up(const char_u *string, size_t len)
 void vim_strup(char_u *p)
   FUNC_ATTR_NONNULL_ALL
 {
-  char_u  *p2;
   char_u c;
-
-  if (p != NULL) {
-    p2 = p;
-    while ((c = *p2) != NUL)
-      *p2++ = (char_u)((c < 'a' || c > 'z') ? c : c - 0x20);
+  while ((c = *p) != NUL) {
+    *p++ = (char_u)(c < 'a' || c > 'z' ? c : c - 0x20);
   }
 }
 
@@ -525,7 +521,7 @@ void sort_strings(char_u **files, int count)
  * When "s" is NULL false is returned.
  */
 bool has_non_ascii(const char_u *s)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   const char_u *p;
 
