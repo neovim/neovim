@@ -94,8 +94,9 @@ endforeach()
 set_source_files_properties(
   ${CONV_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
 
+option(SANITIZE "Enable sanitizers when using Clang" OFF)
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-  if(DEFINED ENV{SANITIZE})
+  if(SANITIZE)
     message(STATUS "Enabling the sanitizers")
     add_definitions(-DEXITFREE) # is this necessary for LeakSanitizer?
     add_definitions(-fno-sanitize-recover -fno-omit-frame-pointer
@@ -197,17 +198,13 @@ list(APPEND NVIM_LINK_LIBRARIES
     m
     ${CMAKE_THREAD_LIBS_INIT})
 
-if(NOT DEFINED ENV{SKIP_EXEC})
-  add_executable(nvim ${NEOVIM_GENERATED_SOURCES} ${NEOVIM_SOURCES}
-    ${NEOVIM_HEADERS})
-  target_link_libraries(nvim ${NVIM_LINK_LIBRARIES})
-  install_helper(TARGETS nvim)
-endif()
+add_executable(nvim ${NEOVIM_GENERATED_SOURCES} ${NEOVIM_SOURCES}
+  ${NEOVIM_HEADERS})
+target_link_libraries(nvim ${NVIM_LINK_LIBRARIES})
+install_helper(TARGETS nvim)
 
-if(NOT DEFINED ENV{SKIP_UNITTEST})
-  add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
+add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
     ${NEOVIM_SOURCES} ${NEOVIM_HEADERS})
-  target_link_libraries(nvim-test ${NVIM_LINK_LIBRARIES})
-endif()
+target_link_libraries(nvim-test ${NVIM_LINK_LIBRARIES})
 
 add_subdirectory(po)
