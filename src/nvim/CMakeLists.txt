@@ -1,5 +1,10 @@
 include(CheckLibraryExists)
 
+option(SANITIZE "Enable Clang sanitizers for nvim binary" OFF)
+if(SANITIZE AND NOT CMAKE_C_COMPILER_ID MATCHES "Clang")
+  message(WARNING "SANITIZE" is only supported for Clang)
+endif()
+
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
 set(DISPATCH_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/msgpack-gen.lua)
 file(GLOB API_HEADERS api/*.h)
@@ -106,6 +111,10 @@ endforeach()
 string(TOUPPER "${CMAKE_BUILD_TYPE}" build_type)
 set(gen_cflags "${gen_cflags} ${CMAKE_C_FLAGS_${build_type}} ${CMAKE_C_FLAGS}")
 
+if (SANITIZE)
+  set(gen_cflags "${gen_cflags} -DEXITFREE")
+endif()
+
 foreach(sfile ${NEOVIM_SOURCES}
               "${PROJECT_SOURCE_DIR}/src/nvim/regexp_nfa.c")
   get_filename_component(full_d ${sfile} PATH)
@@ -189,14 +198,11 @@ add_executable(nvim ${NEOVIM_GENERATED_SOURCES} ${NEOVIM_SOURCES}
 target_link_libraries(nvim ${NVIM_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
 
-option(SANITIZE "Enable sanitizers when using Clang" OFF)
-if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-  if(SANITIZE)
-    message(STATUS "Enabling the sanitizers")
-    set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-DEXITFREE ")
-    set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-fno-sanitize-recover -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address -fsanitize=undefined ")
-    set_property(TARGET nvim APPEND_STRING PROPERTY LINK_FLAGS "-fsanitize=address -fsanitize=undefined ")
-  endif()
+if(SANITIZE)
+  message(STATUS "Enabling Clang sanitizers for nvim")
+  set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-DEXITFREE ")
+  set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-fno-sanitize-recover -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address -fsanitize=undefined ")
+  set_property(TARGET nvim APPEND_STRING PROPERTY LINK_FLAGS "-fsanitize=address -fsanitize=undefined ")
 endif()
 
 add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
