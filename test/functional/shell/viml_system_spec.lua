@@ -188,6 +188,16 @@ describe('systemlist()', function()
     end)
   end)
 
+  describe('handles empty lines', function()
+    it('in the middle', function()
+      eq({'line one','','line two'}, eval("systemlist('cat',['line one','','line two'])"))
+    end)
+
+    it('in the beginning', function()
+      eq({'','line one','line two'}, eval("systemlist('cat',['','line one','line two'])"))
+    end)
+  end)
+
   describe('when keepempty option is', function()
     it('0, ignores trailing newline', function()
       eq({'aa','bb'}, eval("systemlist('cat',['aa','bb'],0)"))
