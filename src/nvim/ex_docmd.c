@@ -6446,7 +6446,7 @@ static void ex_winsize(exarg_T *eap)
   p = arg;
   h = getdigits(&arg);
   if (*p != NUL && *arg == NUL)
-    set_shellsize(w, h, TRUE);
+    screen_resize(w, h, TRUE);
   else
     EMSG(_("E465: :winsize requires two number arguments"));
 }

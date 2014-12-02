@@ -5540,7 +5540,7 @@ set_num_option (
       *pp = old_value;
     else if (full_screen
              )
-      set_shellsize((int)Columns, (int)Rows, TRUE);
+      screen_resize((int)Columns, (int)Rows, TRUE);
     else {
       /* Postpone the resizing; check the size and cmdline position for
        * messages. */
