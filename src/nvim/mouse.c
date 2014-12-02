@@ -169,11 +169,9 @@ retnomove:
     // (MOUSE_FOCUS was set above if we dragged first).
     if (dragwin == NULL || (flags & MOUSE_RELEASED))
       win_enter(wp, true);                      // can make wp invalid!
-# ifdef CHECK_DOUBLE_CLICK
     // set topline, to be able to check for double click ourselves
     if (curwin != old_curwin)
       set_mouse_topline(curwin);
-# endif
     if (on_status_line) {                       // In (or below) status line
       // Don't use start_arrow() if we're in the same window
       if (curwin == old_curwin)

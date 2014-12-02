@@ -2819,11 +2819,9 @@ static void switch_to_8bit(void)
   LOG_TR("Switching to 8 bit");
 }
 
-#ifdef CHECK_DOUBLE_CLICK
 static linenr_T orig_topline = 0;
 static int orig_topfill = 0;
-#endif
-#if defined(CHECK_DOUBLE_CLICK) || defined(PROTO)
+
 /*
  * Checking for double clicks ourselves.
  * "orig_topline" is used to avoid detecting a double-click when the window
@@ -2838,7 +2836,6 @@ void set_mouse_topline(win_T *wp)
   orig_topline = wp->w_topline;
   orig_topfill = wp->w_topfill;
 }
-#endif
 
 /*
  * Check if typebuf.tb_buf[] contains a terminal key code.
@@ -3529,7 +3526,6 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
           is_drag = TRUE;
         current_button = held_button;
       } else if (wheel_code == 0)   {
-# ifdef CHECK_DOUBLE_CLICK
         {
           static int orig_mouse_col = 0;
           static int orig_mouse_row = 0;
@@ -3563,9 +3559,6 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
           orig_topline = curwin->w_topline;
           orig_topfill = curwin->w_topfill;
         }
-# else
-        orig_num_clicks = NUM_MOUSE_CLICKS(mouse_code);
-# endif
         is_click = TRUE;
         orig_mouse_code = mouse_code;
       }
