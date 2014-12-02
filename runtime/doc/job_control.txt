@@ -44,8 +44,8 @@ event. The best way to understand is with a complete example:
     set nocp
     let job1 = jobstart('shell1', 'bash')
     let job2 = jobstart('shell2', 'bash', ['-c', 'for ((i = 0; i < 10; i++)); do echo -n hello $i!; sleep 2; done'])
-    
-    function JobHandler()
+
+    function! JobHandler()
       if v:job_data[1] == 'stdout'
         let str = 'shell '. v:job_data[0].' stdout: '.join(v:job_data[2])
       elseif v:job_data[1] == 'stderr'
@@ -53,10 +53,10 @@ event. The best way to understand is with a complete example:
       else
         let str = 'shell '.v:job_data[0].' exited'
       endif
-    
+
       call append(line('$'), str)
     endfunction
-    
+
     au JobActivity shell* call JobHandler()
 <
 To test the above, copy it to the ~/jobcontrol.vim file and start with a clean
@@ -78,10 +78,15 @@ Here's what is happening:
   the shells.
 - The v:job_data is an array set by the JobActivity event. It has the
   following elements:
-  0: The job id
-  1: The kind of activity: one of "stdout", "stderr" or "exit"
-  2: When "activity" is "stdout" or "stderr", this will contain a list of
-     lines read from stdout or stderr
+  0: Id:    Job identifier
+  1: Type:  "stdout", "stderr", or "exit"
+  2: Lines: A |list| of lines read from stdout or stderr. This is empty if
+     type is "exit".
+     NOTE: buffered data which hasn't been flushed to stdout (or stderr) will
+     not trigger JobActivity; this is simply how pipes work. For example,
+     `ruby -e` buffers its output, so small strings will not trigger
+     JobActivity unless you force "auto-flushing" via `$stdout.sync = true`.
+	https://github.com/neovim/neovim/issues/1592
 
 To send data to the job's stdin, one can use the |jobsend()| function, like
 this:
@@ -96,6 +101,6 @@ A job may be killed at any time with the |jobstop()| function:
 <
 When |jobstop()| is called, it will send `SIGTERM` to the job. If a job
 doesn't exit after a while, `SIGKILL` will be sent.
-    
+
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:
