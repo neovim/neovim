@@ -70,9 +70,9 @@ set(LUAROCKS_URL https://github.com/keplerproject/luarocks/archive/0587afbb5fe8c
 set(LUAROCKS_SHA1 61a894fd5d61987bf7e7f9c3e0c5de16ba4b68c4)
 set(LUAROCKS_MD5 0f53f42909fbcd2c88be303e8f970516)
 
-set(LIBUNIBILIUM_URL https://github.com/mauke/unibilium/archive/v1.1.0.tar.gz)
-set(LIBUNIBILIUM_SHA1 edda116e736396315abb33397f7815103e2d4fe4)
-set(LIBUNIBILIUM_MD5 60f3e6db236daf12cbc92f0b60d9eddc)
+set(LIBUNIBILIUM_URL https://github.com/neovim/unibilium/archive/neovim.tar.gz)
+set(LIBUNIBILIUM_SHA1 5d3d4913dd267b14f81fc665e0fa20661d3cb817)
+set(LIBUNIBILIUM_MD5 0657a906164529f1e0f60aba3b876f23)
 
 set(LIBTERMKEY_URL https://github.com/neovim/libtermkey/archive/neovim.tar.gz)
 set(LIBTERMKEY_SHA1 a309038a2297fe4905f03a8807723a9aa07c272a)
