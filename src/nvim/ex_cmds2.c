@@ -157,7 +157,6 @@ void do_debug(char_u *cmd)
 
   /* Make sure we are in raw mode and start termcap mode.  Might have side
    * effects... */
-  settmode(TMODE_RAW);
   starttermcap();
 
   ++RedrawingDisabled;          /* don't redisplay the window */

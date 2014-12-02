@@ -270,10 +270,6 @@ getcmdline (
   setmouse();
   ui_cursor_shape();            /* may show different cursor shape */
 
-  /* When inside an autocommand for writing "exiting" may be set and
-  * terminal mode set to cooked.  Need to set raw mode here then. */
-  settmode(TMODE_RAW);
-
   init_history();
   hiscnt = hislen;              /* set hiscnt to impossible history value */
   histype = hist_char2type(firstc);

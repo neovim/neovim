@@ -1865,7 +1865,7 @@ void term_write(char_u *s, size_t len)
 
 #ifdef UNIX
   if (p_wd) {           // Unix is too fast, slow down a bit more
-    os_microdelay(p_wd, false);
+    os_microdelay(p_wd);
   }
 #endif
 }
