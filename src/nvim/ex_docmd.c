@@ -5107,7 +5107,6 @@ static void ex_highlight(exarg_T *eap)
 void not_exiting(void)
 {
   exiting = FALSE;
-  settmode(TMODE_RAW);
 }
 
 /*
@@ -5994,7 +5993,6 @@ do_exedit (
 {
   int n;
   int need_hide;
-  int exmode_was = exmode_active;
 
   /*
    * ":vi" command ends Ex mode.
@@ -6014,8 +6012,6 @@ do_exedit (
           eap->nextcmd = NULL;
         }
 
-        if (exmode_was != EXMODE_VIM)
-          settmode(TMODE_RAW);
         RedrawingDisabled = 0;
         no_wait_return = 0;
         need_wait_return = FALSE;
@@ -6446,7 +6442,7 @@ static void ex_winsize(exarg_T *eap)
   p = arg;
   h = getdigits(&arg);
   if (*p != NUL && *arg == NUL)
-    set_shellsize(w, h, TRUE);
+    screen_resize(w, h, TRUE);
   else
     EMSG(_("E465: :winsize requires two number arguments"));
 }

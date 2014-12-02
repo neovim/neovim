@@ -42,6 +42,7 @@
 #include "nvim/misc2.h"
 #include "nvim/garray.h"
 #include "nvim/move.h"
+#include "nvim/mouse.h"
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
@@ -2286,8 +2287,6 @@ int ask_yesno(char_u *str, int direct)
   int r = ' ';
   int save_State = State;
 
-  if (exiting)                  /* put terminal in raw mode for this question */
-    settmode(TMODE_RAW);
   ++no_wait_return;
 #ifdef USE_ON_FLY_SCROLL
   dont_scroll = TRUE;           /* disallow scrolling here */

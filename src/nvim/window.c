@@ -41,6 +41,7 @@
 #include "nvim/file_search.h"
 #include "nvim/garray.h"
 #include "nvim/move.h"
+#include "nvim/mouse.h"
 #include "nvim/normal.h"
 #include "nvim/option.h"
 #include "nvim/os_unix.h"

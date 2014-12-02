@@ -15,6 +15,9 @@ set(DEPS_DOWNLOAD_DIR "${DEPS_BUILD_DIR}/downloads")
 
 option(USE_BUNDLED "Use bundled dependencies." ON)
 
+option(USE_BUNDLED_LIBUNIBILIUM "Use the bundled libunibilium." ${USE_BUNDLED})
+option(USE_BUNDLED_LIBTERMKEY "Use the bundled libtermkey." ${USE_BUNDLED})
+option(USE_BUNDLED_LIBTICKIT "Use the bundled libtickit." ${USE_BUNDLED})
 option(USE_BUNDLED_LIBUV "Use the bundled libuv." ${USE_BUNDLED})
 option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAJIT "Use the bundled version of luajit." ${USE_BUNDLED})
@@ -66,6 +69,90 @@ set(LUAJIT_MD5 f14e9104be513913810cd59c8c658dc0)
 set(LUAROCKS_URL https://github.com/keplerproject/luarocks/archive/0587afbb5fe8ceb2f2eea16f486bd6183bf02f29.tar.gz)
 set(LUAROCKS_SHA1 61a894fd5d61987bf7e7f9c3e0c5de16ba4b68c4)
 set(LUAROCKS_MD5 0f53f42909fbcd2c88be303e8f970516)
+
+set(LIBUNIBILIUM_URL https://github.com/mauke/unibilium/archive/v1.1.0.tar.gz)
+set(LIBUNIBILIUM_SHA1 edda116e736396315abb33397f7815103e2d4fe4)
+set(LIBUNIBILIUM_MD5 60f3e6db236daf12cbc92f0b60d9eddc)
+
+set(LIBTERMKEY_URL https://github.com/neovim/libtermkey/archive/neovim.tar.gz)
+set(LIBTERMKEY_SHA1 a309038a2297fe4905f03a8807723a9aa07c272a)
+set(LIBTERMKEY_MD5 c99e5546da0063fa26dfa7d7f1d5a26f)
+
+set(LIBTICKIT_URL https://github.com/neovim/libtickit/archive/neovim.tar.gz)
+set(LIBTICKIT_SHA1 49e609de29c3bdc3b40d2ade76e69fde6e0d74bc)
+set(LIBTICKIT_MD5 71a5d36d0ef6688d79828aabaf27eb36)
+
+if(USE_BUNDLED_LIBUNIBILIUM)
+  ExternalProject_Add(libunibilium
+    PREFIX ${DEPS_BUILD_DIR}
+    URL ${LIBUNIBILIUM_URL}
+    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/libunibilium
+    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
+      -DPREFIX=${DEPS_BUILD_DIR}
+      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/libunibilium
+      -DURL=${LIBUNIBILIUM_URL}
+      -DEXPECTED_SHA1=${LIBUNIBILIUM_SHA1}
+      -DEXPECTED_MD5=${LIBUNIBILIUM_MD5}
+      -DTARGET=libunibilium
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
+    CONFIGURE_COMMAND ""
+    BUILD_IN_SOURCE 1
+    BUILD_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
+                              PREFIX=${DEPS_INSTALL_DIR}
+                              CFLAGS=-fPIC
+    INSTALL_COMMAND ${MAKE_PRG} PREFIX=${DEPS_INSTALL_DIR} install)
+  list(APPEND THIRD_PARTY_DEPS libunibilium)
+endif()
+
+if(USE_BUNDLED_LIBTERMKEY)
+  ExternalProject_Add(libtermkey
+    PREFIX ${DEPS_BUILD_DIR}
+    URL ${LIBTERMKEY_URL}
+    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/libtermkey
+    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
+      -DPREFIX=${DEPS_BUILD_DIR}
+      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/libtermkey
+      -DURL=${LIBTERMKEY_URL}
+      -DEXPECTED_SHA1=${LIBTERMKEY_SHA1}
+      -DEXPECTED_MD5=${LIBTERMKEY_MD5}
+      -DTARGET=libtermkey
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
+    CONFIGURE_COMMAND ""
+    BUILD_IN_SOURCE 1
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
+                                PREFIX=${DEPS_INSTALL_DIR}
+                                PKG_CONFIG_PATH=${DEPS_LIB_DIR}/pkgconfig
+                                CFLAGS=-fPIC
+                                install)
+  list(APPEND THIRD_PARTY_DEPS libtermkey)
+  add_dependencies(libtermkey libunibilium)
+endif()
+
+if(USE_BUNDLED_LIBTICKIT)
+  ExternalProject_Add(libtickit
+    PREFIX ${DEPS_BUILD_DIR}
+    URL ${LIBTICKIT_URL}
+    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/libtickit
+    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
+      -DPREFIX=${DEPS_BUILD_DIR}
+      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/libtickit
+      -DURL=${LIBTICKIT_URL}
+      -DEXPECTED_SHA1=${LIBTICKIT_SHA1}
+      -DEXPECTED_MD5=${LIBTICKIT_MD5}
+      -DTARGET=libtickit
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
+    CONFIGURE_COMMAND ""
+    BUILD_IN_SOURCE 1
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
+                                PREFIX=${DEPS_INSTALL_DIR}
+                                PKG_CONFIG_PATH=${DEPS_LIB_DIR}/pkgconfig
+                                CFLAGS=-fPIC
+                                install)
+  list(APPEND THIRD_PARTY_DEPS libtickit)
+  add_dependencies(libtickit libtermkey)
+endif()
 
 if(USE_BUNDLED_LIBUV)
   ExternalProject_Add(libuv

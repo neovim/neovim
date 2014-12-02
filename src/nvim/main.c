@@ -43,6 +43,7 @@
 #include "nvim/log.h"
 #include "nvim/memory.h"
 #include "nvim/move.h"
+#include "nvim/mouse.h"
 #include "nvim/normal.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
@@ -281,7 +282,7 @@ int main(int argc, char **argv)
       // In embedded mode don't do terminal-related initializations, assume an
       // initial screen size of 80x20
       full_screen = true;
-      set_shellsize(80, 20, false);
+      screen_resize(80, 20, false);
     } else {
       // set terminal name and get terminal capabilities (will set full_screen)
       // Do some initialization of the screen

@@ -48,6 +48,7 @@
 #include "nvim/keymap.h"
 #include "nvim/garray.h"
 #include "nvim/move.h"
+#include "nvim/mouse.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
@@ -269,10 +270,6 @@ getcmdline (
 
   setmouse();
   ui_cursor_shape();            /* may show different cursor shape */
-
-  /* When inside an autocommand for writing "exiting" may be set and
-  * terminal mode set to cooked.  Need to set raw mode here then. */
-  settmode(TMODE_RAW);
 
   init_history();
   hiscnt = hislen;              /* set hiscnt to impossible history value */

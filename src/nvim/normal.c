@@ -46,6 +46,7 @@
 #include "nvim/misc2.h"
 #include "nvim/keymap.h"
 #include "nvim/move.h"
+#include "nvim/mouse.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/quickfix.h"
@@ -7373,4 +7374,12 @@ static void nv_cursorhold(cmdarg_T *cap)
   apply_autocmds(EVENT_CURSORHOLD, NULL, NULL, false, curbuf);
   did_cursorhold = true;
   cap->retval |= CA_COMMAND_BUSY;       /* don't call edit() now */
+}
+
+/*
+ * Return TRUE when 'mousemodel' is set to "popup" or "popup_setpos".
+ */
+static int mouse_model_popup(void)
+{
+  return p_mousem[0] == 'p';
 }

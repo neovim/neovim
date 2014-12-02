@@ -37,6 +37,7 @@
 #include "nvim/message.h"
 #include "nvim/misc1.h"
 #include "nvim/misc2.h"
+#include "nvim/mouse.h"
 #include "nvim/garray.h"
 #include "nvim/path.h"
 #include "nvim/screen.h"

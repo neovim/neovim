@@ -43,6 +43,7 @@
 #include "nvim/keymap.h"
 #include "nvim/memory.h"
 #include "nvim/move.h"
+#include "nvim/mouse.h"
 #include "nvim/normal.h"
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
@@ -1472,7 +1473,7 @@ int set_termname(char_u *term)
     width = 80;
     height = 24;            /* most terminals are 24 lines */
   }
-  set_shellsize(width, height, FALSE);          /* may change Rows */
+  screen_resize(width, height, FALSE);          /* may change Rows */
   if (starting != NO_SCREEN) {
     if (scroll_region)
       scroll_region_reset();                    /* In case Rows changed */
@@ -1506,7 +1507,6 @@ int set_termname(char_u *term)
 #  define HMT_PTERM     8
 #  define HMT_URXVT     16
 #  define HMT_SGR       32
-static int has_mouse_termcode = 0;
 
 void 
 set_mouse_termcode (
@@ -1517,16 +1517,6 @@ set_mouse_termcode (
   char_u name[2] = { n, KE_FILLER };
 
   add_termcode(name, s, FALSE);
-  if (n == KS_NETTERM_MOUSE)
-    has_mouse_termcode |= HMT_NETTERM;
-  else if (n == KS_DEC_MOUSE)
-    has_mouse_termcode |= HMT_DEC;
-  else if (n == KS_URXVT_MOUSE)
-    has_mouse_termcode |= HMT_URXVT;
-  else if (n == KS_SGR_MOUSE)
-    has_mouse_termcode |= HMT_SGR;
-  else
-    has_mouse_termcode |= HMT_NORMAL;
 }
 
 # if (defined(UNIX) && defined(FEAT_MOUSE_TTY)) || defined(PROTO)
@@ -1538,16 +1528,6 @@ del_mouse_termcode (
   char_u name[2] = { n, KE_FILLER };
 
   del_termcode(name);
-  if (n == KS_NETTERM_MOUSE)
-    has_mouse_termcode &= ~HMT_NETTERM;
-  else if (n == KS_DEC_MOUSE)
-    has_mouse_termcode &= ~HMT_DEC;
-  else if (n == KS_URXVT_MOUSE)
-    has_mouse_termcode &= ~HMT_URXVT;
-  else if (n == KS_SGR_MOUSE)
-    has_mouse_termcode &= ~HMT_SGR;
-  else
-    has_mouse_termcode &= ~HMT_NORMAL;
 }
 # endif
 
@@ -1865,7 +1845,7 @@ void term_write(char_u *s, size_t len)
 
 #ifdef UNIX
   if (p_wd) {           // Unix is too fast, slow down a bit more
-    os_microdelay(p_wd, false);
+    os_microdelay(p_wd);
   }
 #endif
 }
@@ -2289,7 +2269,7 @@ void win_new_shellsize(void)
  */
 void shell_resized(void)
 {
-  set_shellsize(0, 0, FALSE);
+  screen_resize(0, 0, FALSE);
 }
 
 /*
@@ -2308,102 +2288,6 @@ void shell_resized_check(void)
     if (old_Rows != Rows || old_Columns != Columns)
       shell_resized();
   }
-}
-
-/*
- * Set size of the Vim shell.
- * If 'mustset' is TRUE, we must set Rows and Columns, do not get the real
- * window size (this is used for the :win command).
- * If 'mustset' is FALSE, we may try to get the real window size and if
- * it fails use 'width' and 'height'.
- */
-void set_shellsize(int width, int height, int mustset)
-{
-  static int busy = FALSE;
-
-  /*
-   * Avoid recursiveness, can happen when setting the window size causes
-   * another window-changed signal.
-   */
-  if (busy)
-    return;
-
-  if (width < 0 || height < 0)      /* just checking... */
-    return;
-
-  if (State == HITRETURN || State == SETWSIZE) {
-    /* postpone the resizing */
-    State = SETWSIZE;
-    return;
-  }
-
-  /* curwin->w_buffer can be NULL when we are closing a window and the
-   * buffer has already been closed and removing a scrollbar causes a resize
-   * event. Don't resize then, it will happen after entering another buffer.
-   */
-  if (curwin->w_buffer == NULL)
-    return;
-
-  ++busy;
-
-
-  if (mustset || (ui_get_shellsize() == FAIL && height != 0)) {
-    Rows = height;
-    Columns = width;
-    check_shellsize();
-    mch_set_shellsize();
-  } else
-    check_shellsize();
-
-  /* The window layout used to be adjusted here, but it now happens in
-   * screenalloc() (also invoked from screenclear()).  That is because the
-   * "busy" check above may skip this, but not screenalloc(). */
-
-  if (State != ASKMORE && State != EXTERNCMD && State != CONFIRM)
-    screenclear();
-  else
-    screen_start();         /* don't know where cursor is now */
-
-  if (starting != NO_SCREEN) {
-    maketitle();
-    changed_line_abv_curs();
-    invalidate_botline();
-
-    /*
-     * We only redraw when it's needed:
-     * - While at the more prompt or executing an external command, don't
-     *   redraw, but position the cursor.
-     * - While editing the command line, only redraw that.
-     * - in Ex mode, don't redraw anything.
-     * - Otherwise, redraw right now, and position the cursor.
-     * Always need to call update_screen() or screenalloc(), to make
-     * sure Rows/Columns and the size of ScreenLines[] is correct!
-     */
-    if (State == ASKMORE || State == EXTERNCMD || State == CONFIRM
-        || exmode_active) {
-      screenalloc(false);
-      repeat_message();
-    } else {
-      if (curwin->w_p_scb)
-        do_check_scrollbind(TRUE);
-      if (State & CMDLINE) {
-        update_screen(NOT_VALID);
-        redrawcmdline();
-      } else {
-        update_topline();
-        if (pum_visible()) {
-          redraw_later(NOT_VALID);
-          ins_compl_show_pum();           /* This includes the redraw. */
-        } else
-          update_screen(NOT_VALID);
-        if (redrawing())
-          setcursor();
-      }
-    }
-    cursor_on();            /* redrawing may have switched it off */
-  }
-  out_flush();
-  --busy;
 }
 
 /*
@@ -2638,73 +2522,6 @@ static void log_tr(char *msg)                 {
 int swapping_screen(void)
 {
   return full_screen && *T_TI != NUL;
-}
-
-/*
- * setmouse() - switch mouse on/off depending on current mode and 'mouse'
- */
-void setmouse(void)
-{
-  int checkfor;
-
-
-  /* be quick when mouse is off */
-  if (*p_mouse == NUL || has_mouse_termcode == 0)
-    return;
-
-  /* don't switch mouse on when not in raw mode (Ex mode) */
-  if (cur_tmode != TMODE_RAW) {
-    mch_setmouse(FALSE);
-    return;
-  }
-
-  if (VIsual_active)
-    checkfor = MOUSE_VISUAL;
-  else if (State == HITRETURN || State == ASKMORE || State == SETWSIZE)
-    checkfor = MOUSE_RETURN;
-  else if (State & INSERT)
-    checkfor = MOUSE_INSERT;
-  else if (State & CMDLINE)
-    checkfor = MOUSE_COMMAND;
-  else if (State == CONFIRM || State == EXTERNCMD)
-    checkfor = ' ';     /* don't use mouse for ":confirm" or ":!cmd" */
-  else
-    checkfor = MOUSE_NORMAL;        /* assume normal mode */
-
-  if (mouse_has(checkfor))
-    mch_setmouse(TRUE);
-  else
-    mch_setmouse(FALSE);
-}
-
-/*
- * Return TRUE if
- * - "c" is in 'mouse', or
- * - 'a' is in 'mouse' and "c" is in MOUSE_A, or
- * - the current buffer is a help file and 'h' is in 'mouse' and we are in a
- *   normal editing mode (not at hit-return message).
- */
-int mouse_has(int c)
-{
-  for (char_u *p = p_mouse; *p; ++p)
-    switch (*p) {
-    case 'a': if (vim_strchr((char_u *)MOUSE_A, c) != NULL)
-        return TRUE;
-      break;
-    case MOUSE_HELP: if (c != MOUSE_RETURN && curbuf->b_help)
-        return TRUE;
-      break;
-    default: if (c == *p) return TRUE; break;
-    }
-  return FALSE;
-}
-
-/*
- * Return TRUE when 'mousemodel' is set to "popup" or "popup_setpos".
- */
-int mouse_model_popup(void)
-{
-  return p_mousem[0] == 'p';
 }
 
 /*
@@ -3002,11 +2819,9 @@ static void switch_to_8bit(void)
   LOG_TR("Switching to 8 bit");
 }
 
-#ifdef CHECK_DOUBLE_CLICK
 static linenr_T orig_topline = 0;
 static int orig_topfill = 0;
-#endif
-#if defined(CHECK_DOUBLE_CLICK) || defined(PROTO)
+
 /*
  * Checking for double clicks ourselves.
  * "orig_topline" is used to avoid detecting a double-click when the window
@@ -3021,7 +2836,6 @@ void set_mouse_topline(win_T *wp)
   orig_topline = wp->w_topline;
   orig_topfill = wp->w_topfill;
 }
-#endif
 
 /*
  * Check if typebuf.tb_buf[] contains a terminal key code.
@@ -3712,7 +3526,6 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
           is_drag = TRUE;
         current_button = held_button;
       } else if (wheel_code == 0)   {
-# ifdef CHECK_DOUBLE_CLICK
         {
           static int orig_mouse_col = 0;
           static int orig_mouse_row = 0;
@@ -3746,9 +3559,6 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
           orig_topline = curwin->w_topline;
           orig_topfill = curwin->w_topfill;
         }
-# else
-        orig_num_clicks = NUM_MOUSE_CLICKS(mouse_code);
-# endif
         is_click = TRUE;
         orig_mouse_code = mouse_code;
       }

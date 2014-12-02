@@ -103,6 +103,7 @@
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_getln.h"
+#include "nvim/edit.h"
 #include "nvim/farsi.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
@@ -120,6 +121,7 @@
 #include "nvim/move.h"
 #include "nvim/normal.h"
 #include "nvim/option.h"
+#include "nvim/os_unix.h"
 #include "nvim/path.h"
 #include "nvim/popupmnu.h"
 #include "nvim/quickfix.h"
@@ -129,6 +131,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/term.h"
+#include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/window.h"
@@ -8117,3 +8120,98 @@ int screen_screenrow(void)
   return screen_cur_row;
 }
 
+/*
+ * Set size of the Vim shell.
+ * If 'mustset' is TRUE, we must set Rows and Columns, do not get the real
+ * window size (this is used for the :win command).
+ * If 'mustset' is FALSE, we may try to get the real window size and if
+ * it fails use 'width' and 'height'.
+ */
+void screen_resize(int width, int height, int mustset)
+{
+  static int busy = FALSE;
+
+  /*
+   * Avoid recursiveness, can happen when setting the window size causes
+   * another window-changed signal.
+   */
+  if (busy)
+    return;
+
+  if (width < 0 || height < 0)      /* just checking... */
+    return;
+
+  if (State == HITRETURN || State == SETWSIZE) {
+    /* postpone the resizing */
+    State = SETWSIZE;
+    return;
+  }
+
+  /* curwin->w_buffer can be NULL when we are closing a window and the
+   * buffer has already been closed and removing a scrollbar causes a resize
+   * event. Don't resize then, it will happen after entering another buffer.
+   */
+  if (curwin->w_buffer == NULL)
+    return;
+
+  ++busy;
+
+
+  if (mustset || (ui_get_shellsize() == FAIL && height != 0)) {
+    Rows = height;
+    Columns = width;
+    check_shellsize();
+    mch_set_shellsize();
+  } else
+    check_shellsize();
+
+  /* The window layout used to be adjusted here, but it now happens in
+   * screenalloc() (also invoked from screenclear()).  That is because the
+   * "busy" check above may skip this, but not screenalloc(). */
+
+  if (State != ASKMORE && State != EXTERNCMD && State != CONFIRM)
+    screenclear();
+  else
+    screen_start();         /* don't know where cursor is now */
+
+  if (starting != NO_SCREEN) {
+    maketitle();
+    changed_line_abv_curs();
+    invalidate_botline();
+
+    /*
+     * We only redraw when it's needed:
+     * - While at the more prompt or executing an external command, don't
+     *   redraw, but position the cursor.
+     * - While editing the command line, only redraw that.
+     * - in Ex mode, don't redraw anything.
+     * - Otherwise, redraw right now, and position the cursor.
+     * Always need to call update_screen() or screenalloc(), to make
+     * sure Rows/Columns and the size of ScreenLines[] is correct!
+     */
+    if (State == ASKMORE || State == EXTERNCMD || State == CONFIRM
+        || exmode_active) {
+      screenalloc(false);
+      repeat_message();
+    } else {
+      if (curwin->w_p_scb)
+        do_check_scrollbind(TRUE);
+      if (State & CMDLINE) {
+        update_screen(NOT_VALID);
+        redrawcmdline();
+      } else {
+        update_topline();
+        if (pum_visible()) {
+          redraw_later(NOT_VALID);
+          ins_compl_show_pum();           /* This includes the redraw. */
+        } else
+          update_screen(NOT_VALID);
+        if (redrawing())
+          setcursor();
+      }
+    }
+    cursor_on();            /* redrawing may have switched it off */
+  }
+  out_flush();
+  --busy;
+}

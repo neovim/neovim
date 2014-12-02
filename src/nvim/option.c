@@ -66,6 +66,7 @@
 #include "nvim/garray.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/move.h"
+#include "nvim/mouse.h"
 #include "nvim/normal.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
@@ -5540,7 +5541,7 @@ set_num_option (
       *pp = old_value;
     else if (full_screen
              )
-      set_shellsize((int)Columns, (int)Rows, TRUE);
+      screen_resize((int)Columns, (int)Rows, TRUE);
     else {
       /* Postpone the resizing; check the size and cmdline position for
        * messages. */

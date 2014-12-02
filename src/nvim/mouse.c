@@ -2,8 +2,12 @@
 
 #include "nvim/mouse.h"
 #include "nvim/vim.h"
-#include "nvim/screen.h"
+#include "nvim/ascii.h"
 #include "nvim/window.h"
+#include "nvim/strings.h"
+#include "nvim/screen.h"
+#include "nvim/ui.h"
+#include "nvim/os_unix.h"
 #include "nvim/term.h"
 #include "nvim/fold.h"
 #include "nvim/diff.h"
@@ -165,11 +169,9 @@ retnomove:
     // (MOUSE_FOCUS was set above if we dragged first).
     if (dragwin == NULL || (flags & MOUSE_RELEASED))
       win_enter(wp, true);                      // can make wp invalid!
-# ifdef CHECK_DOUBLE_CLICK
     // set topline, to be able to check for double click ourselves
     if (curwin != old_curwin)
       set_mouse_topline(curwin);
-# endif
     if (on_status_line) {                       // In (or below) status line
       // Don't use start_arrow() if we're in the same window
       if (curwin == old_curwin)
@@ -435,4 +437,63 @@ win_T *mouse_find_win(int *rowp, int *colp)
     }
   }
   return fp->fr_win;
+}
+
+/*
+ * setmouse() - switch mouse on/off depending on current mode and 'mouse'
+ */
+void setmouse(void)
+{
+  int checkfor;
+
+
+  /* be quick when mouse is off */
+  if (*p_mouse == NUL)
+    return;
+
+  /* don't switch mouse on when not in raw mode (Ex mode) */
+  if (cur_tmode != TMODE_RAW) {
+    mch_setmouse(false);
+    return;
+  }
+
+  if (VIsual_active)
+    checkfor = MOUSE_VISUAL;
+  else if (State == HITRETURN || State == ASKMORE || State == SETWSIZE)
+    checkfor = MOUSE_RETURN;
+  else if (State & INSERT)
+    checkfor = MOUSE_INSERT;
+  else if (State & CMDLINE)
+    checkfor = MOUSE_COMMAND;
+  else if (State == CONFIRM || State == EXTERNCMD)
+    checkfor = ' ';     /* don't use mouse for ":confirm" or ":!cmd" */
+  else
+    checkfor = MOUSE_NORMAL;        /* assume normal mode */
+
+  if (mouse_has(checkfor))
+    mch_setmouse(true);
+  else
+    mch_setmouse(false);
+}
+
+/*
+ * Return true if
+ * - "c" is in 'mouse', or
+ * - 'a' is in 'mouse' and "c" is in MOUSE_A, or
+ * - the current buffer is a help file and 'h' is in 'mouse' and we are in a
+ *   normal editing mode (not at hit-return message).
+ */
+int mouse_has(int c)
+{
+  for (char_u *p = p_mouse; *p; ++p)
+    switch (*p) {
+    case 'a': if (vim_strchr((char_u *)MOUSE_A, c) != NULL)
+        return true;
+      break;
+    case MOUSE_HELP: if (c != MOUSE_RETURN && curbuf->b_help)
+        return true;
+      break;
+    default: if (c == *p) return true; break;
+    }
+  return false;
 }

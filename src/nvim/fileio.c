@@ -1812,7 +1812,6 @@ failed:
      * Switch on raw mode now and clear the screen.
      */
     if (read_stdin) {
-      settmode(TMODE_RAW);              /* set to raw mode */
       starttermcap();
       screenclear();
     }
@@ -2386,9 +2385,6 @@ buf_write (
     overwriting = TRUE;
   else
     overwriting = FALSE;
-
-  if (exiting)
-    settmode(TMODE_COOK);           /* when exiting allow typeahead now */
 
   ++no_wait_return;                 /* don't wait for return yet */
 

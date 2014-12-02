@@ -104,13 +104,9 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_arg)
 {
   DynamicBuffer input = DYNAMIC_BUFFER_INIT;
   char *output = NULL, **output_ptr = NULL;
-  int current_state = State, old_mode = cur_tmode;
+  int current_state = State;
   bool forward_output = true;
   out_flush();
-
-  if (opts & kShellOptCooked) {
-    settmode(TMODE_COOK);
-  }
 
   // While the child is running, ignore terminating signals
   signal_reject_deadly();
@@ -155,10 +151,6 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_arg)
     msg_putchar('\n');
   }
 
-  if (old_mode == TMODE_RAW) {
-    // restore mode
-    settmode(TMODE_RAW);
-  }
   State = current_state;
   signal_accept_deadly();
 
