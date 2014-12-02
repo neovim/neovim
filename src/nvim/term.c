@@ -43,6 +43,7 @@
 #include "nvim/keymap.h"
 #include "nvim/memory.h"
 #include "nvim/move.h"
+#include "nvim/mouse.h"
 #include "nvim/normal.h"
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
@@ -1506,7 +1507,6 @@ int set_termname(char_u *term)
 #  define HMT_PTERM     8
 #  define HMT_URXVT     16
 #  define HMT_SGR       32
-static int has_mouse_termcode = 0;
 
 void 
 set_mouse_termcode (
@@ -1517,16 +1517,6 @@ set_mouse_termcode (
   char_u name[2] = { n, KE_FILLER };
 
   add_termcode(name, s, FALSE);
-  if (n == KS_NETTERM_MOUSE)
-    has_mouse_termcode |= HMT_NETTERM;
-  else if (n == KS_DEC_MOUSE)
-    has_mouse_termcode |= HMT_DEC;
-  else if (n == KS_URXVT_MOUSE)
-    has_mouse_termcode |= HMT_URXVT;
-  else if (n == KS_SGR_MOUSE)
-    has_mouse_termcode |= HMT_SGR;
-  else
-    has_mouse_termcode |= HMT_NORMAL;
 }
 
 # if (defined(UNIX) && defined(FEAT_MOUSE_TTY)) || defined(PROTO)
@@ -1538,16 +1528,6 @@ del_mouse_termcode (
   char_u name[2] = { n, KE_FILLER };
 
   del_termcode(name);
-  if (n == KS_NETTERM_MOUSE)
-    has_mouse_termcode &= ~HMT_NETTERM;
-  else if (n == KS_DEC_MOUSE)
-    has_mouse_termcode &= ~HMT_DEC;
-  else if (n == KS_URXVT_MOUSE)
-    has_mouse_termcode &= ~HMT_URXVT;
-  else if (n == KS_SGR_MOUSE)
-    has_mouse_termcode &= ~HMT_SGR;
-  else
-    has_mouse_termcode &= ~HMT_NORMAL;
 }
 # endif
 
@@ -2542,73 +2522,6 @@ static void log_tr(char *msg)                 {
 int swapping_screen(void)
 {
   return full_screen && *T_TI != NUL;
-}
-
-/*
- * setmouse() - switch mouse on/off depending on current mode and 'mouse'
- */
-void setmouse(void)
-{
-  int checkfor;
-
-
-  /* be quick when mouse is off */
-  if (*p_mouse == NUL || has_mouse_termcode == 0)
-    return;
-
-  /* don't switch mouse on when not in raw mode (Ex mode) */
-  if (cur_tmode != TMODE_RAW) {
-    mch_setmouse(FALSE);
-    return;
-  }
-
-  if (VIsual_active)
-    checkfor = MOUSE_VISUAL;
-  else if (State == HITRETURN || State == ASKMORE || State == SETWSIZE)
-    checkfor = MOUSE_RETURN;
-  else if (State & INSERT)
-    checkfor = MOUSE_INSERT;
-  else if (State & CMDLINE)
-    checkfor = MOUSE_COMMAND;
-  else if (State == CONFIRM || State == EXTERNCMD)
-    checkfor = ' ';     /* don't use mouse for ":confirm" or ":!cmd" */
-  else
-    checkfor = MOUSE_NORMAL;        /* assume normal mode */
-
-  if (mouse_has(checkfor))
-    mch_setmouse(TRUE);
-  else
-    mch_setmouse(FALSE);
-}
-
-/*
- * Return TRUE if
- * - "c" is in 'mouse', or
- * - 'a' is in 'mouse' and "c" is in MOUSE_A, or
- * - the current buffer is a help file and 'h' is in 'mouse' and we are in a
- *   normal editing mode (not at hit-return message).
- */
-int mouse_has(int c)
-{
-  for (char_u *p = p_mouse; *p; ++p)
-    switch (*p) {
-    case 'a': if (vim_strchr((char_u *)MOUSE_A, c) != NULL)
-        return TRUE;
-      break;
-    case MOUSE_HELP: if (c != MOUSE_RETURN && curbuf->b_help)
-        return TRUE;
-      break;
-    default: if (c == *p) return TRUE; break;
-    }
-  return FALSE;
-}
-
-/*
- * Return TRUE when 'mousemodel' is set to "popup" or "popup_setpos".
- */
-int mouse_model_popup(void)
-{
-  return p_mousem[0] == 'p';
 }
 
 /*

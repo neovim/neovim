@@ -66,6 +66,7 @@
 #include "nvim/garray.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/move.h"
+#include "nvim/mouse.h"
 #include "nvim/normal.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
