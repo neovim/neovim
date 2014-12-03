@@ -3373,8 +3373,6 @@ Built-in script language:
 				Patch by Ilya Sher, 2004 Mar 4.
 				Return a list instead.
 	char2hex()		convert char string to hex string.
-	crypt()			encrypt string
-	decrypt()		decrypt string
 	base64enc()		base 64 encoding
 	base64dec()		base 64 decoding
 	attributes()		return file protection flags "drwxrwxrwx"

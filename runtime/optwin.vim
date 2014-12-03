@@ -992,8 +992,6 @@ if !has("msdos")
   call append("$", "\t(local to buffer)")
   call <SID>BinOptionL("sn")
 endif
-call append("$", "cryptmethod\tencryption method for file writing: zip or blowfish")
-call append("$", "\t(local to buffer)")
 call <SID>OptionL("cm")
 
 

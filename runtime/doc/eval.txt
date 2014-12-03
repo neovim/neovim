@@ -5604,7 +5604,6 @@ setwinvar({nr}, {varname}, {val})			*setwinvar()*
 sha256({string})						*sha256()*
 		Returns a String with 64 hex charactes, which is the SHA256
 		checksum of {string}.
-		{only available when compiled with the |+cryptv| feature}
 
 shellescape({string} [, {special}])			*shellescape()*
 		Escape {string} for use as a shell command argument.
@@ -6681,7 +6680,6 @@ cmdline_hist		Compiled with |cmdline-history| support.
 cmdline_info		Compiled with 'showcmd' and 'ruler' support.
 comments		Compiled with |'comments'| support.
 compatible		Compiled to be very Vi compatible.
-cryptv			Compiled with encryption support |encryption|.
 cscope			Compiled with |cscope| support.
 debug			Compiled with "DEBUG" defined.
 dialog_con		Compiled with console dialog support.

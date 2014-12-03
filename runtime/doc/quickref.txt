@@ -653,7 +653,6 @@ Short explanation of each option:		*option-list*
 'confirm'	  'cf'	    ask what to do about unsaved/read-only files
 'copyindent'	  'ci'	    make 'autoindent' use existing indent structure
 'cpoptions'	  'cpo'     flags for Vi-compatible behavior
-'cryptmethod'	  'cm'	    type of encryption to use for file writing
 'cscopepathcomp'  'cspc'    how many components of the path to show
 'cscopeprg'       'csprg'   command to execute cscope
 'cscopequickfix'  'csqf'    use quickfix window for cscope results
@@ -756,7 +755,6 @@ Short explanation of each option:		*option-list*
 'iskeyword'	  'isk'     characters included in keywords
 'isprint'	  'isp'     printable characters
 'joinspaces'	  'js'	    two spaces after a period with a join command
-'key'			    encryption key
 'keymap'	  'kmp'     name of a keyboard mapping
 'keymodel'	  'km'	    enable starting/stopping selection with keys
 'keywordprg'	  'kp'	    program to use for the "K" command

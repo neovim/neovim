@@ -1053,7 +1053,6 @@ VARIOUS
 
 The command-line window cannot be used:
 - when there already is a command-line window (no nesting)
-- for entering an encryption key or when using inputsecret()
 - when Vim was not compiled with the |+vertsplit| feature
 
 Some options are set when the command-line window is opened:

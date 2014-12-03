@@ -1972,7 +1972,6 @@ self explanatory.  Using the long or the short version depends on the
 					possible
 	[converted]			conversion from 'fileencoding' to
 					'encoding' done
-	[crypted]			file was decrypted
 	[READ ERRORS]			not all of the file could be read
 
 
