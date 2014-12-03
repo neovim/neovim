@@ -70,9 +70,9 @@ set(LUAROCKS_URL https://github.com/keplerproject/luarocks/archive/0587afbb5fe8c
 set(LUAROCKS_SHA1 61a894fd5d61987bf7e7f9c3e0c5de16ba4b68c4)
 set(LUAROCKS_MD5 0f53f42909fbcd2c88be303e8f970516)
 
-set(LIBUNIBILIUM_URL https://github.com/neovim/unibilium/archive/neovim.tar.gz)
-set(LIBUNIBILIUM_SHA1 5d3d4913dd267b14f81fc665e0fa20661d3cb817)
-set(LIBUNIBILIUM_MD5 0657a906164529f1e0f60aba3b876f23)
+set(LIBUNIBILIUM_URL https://github.com/mauke/unibilium/archive/v1.1.1.tar.gz)
+set(LIBUNIBILIUM_SHA1 582cbac75989d70e70953fa826cb5457cbfacc10)
+set(LIBUNIBILIUM_MD5 c6ff790d31c2fb9e2dbe6c40004d6fc3)
 
 set(LIBTERMKEY_URL https://github.com/neovim/libtermkey/archive/neovim.tar.gz)
 set(LIBTERMKEY_SHA1 a309038a2297fe4905f03a8807723a9aa07c272a)
@@ -281,7 +281,7 @@ if(USE_BUNDLED_LUAROCKS)
 
   add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/nvim-client
     COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build https://raw.githubusercontent.com/neovim/lua-client/0aefb79d8f60fd180594f376d20144414e1f37a4/nvim-client-0.0.1-3.rockspec CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER} LIBUV_DIR=${DEPS_INSTALL_DIR}
+    ARGS build https://raw.githubusercontent.com/neovim/lua-client/8c40a2fdad5cc407ed5781909965ac87db0aefb0/nvim-client-0.0.1-5.rockspec CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER} LIBUV_DIR=${DEPS_INSTALL_DIR}
     DEPENDS lpeg libuv)
   add_custom_target(nvim-client
     DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/nvim-client)
