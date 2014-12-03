@@ -25,16 +25,18 @@ symbolizer=/usr/local/clang-$clang_version/bin/llvm-symbolizer
 
 setup_prebuilt_deps x64
 
+export SANITIZE=1
 export ASAN_SYMBOLIZER_PATH=$symbolizer
 export ASAN_OPTIONS="detect_leaks=1:log_path=$tmpdir/asan"
 export TSAN_OPTIONS="external_symbolizer_path=$symbolizer:log_path=$tmpdir/tsan"
 
+export SKIP_UNITTEST=1
 export UBSAN_OPTIONS="log_path=$tmpdir/ubsan" # not sure if this works
 
 CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON -DUSE_GCOV=ON"
 
 # Build and output version info.
-$MAKE_CMD CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DSANITIZE=ON" nvim
+$MAKE_CMD CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS" nvim
 build/bin/nvim --version
 
 # Run functional tests.
