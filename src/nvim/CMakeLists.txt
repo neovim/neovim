@@ -114,7 +114,7 @@ endforeach()
 
 get_directory_property(gen_includes INCLUDE_DIRECTORIES)
 foreach(gen_include ${gen_includes})
-  set(gen_cflags "${gen_cflags} -I${gen_include}")
+  set(gen_cflags "${gen_cflags} \"-I${gen_include}\"")
 endforeach()
 string(TOUPPER "${CMAKE_BUILD_TYPE}" build_type)
 set(gen_cflags "${gen_cflags} ${CMAKE_C_FLAGS_${build_type}} ${CMAKE_C_FLAGS}")
@@ -133,13 +133,13 @@ foreach(sfile ${NEOVIM_SOURCES}
   set(gf2 "${GENERATED_INCLUDES_DIR}/${r}.h.generated.h")
   add_custom_command(
     OUTPUT "${gf1}" "${gf2}"
-    COMMAND "${LUA_PRG}" "${HEADER_GENERATOR}"
-                             "${sfile}" "${gf1}" "${gf2}"
+    COMMAND ${LUA_PRG} ${HEADER_GENERATOR}
+                             ${sfile} ${gf1} ${gf2}
                              "${CMAKE_C_COMPILER} ${gen_cflags} -E"
-    DEPENDS "${HEADER_GENERATOR}" "${sfile}"
+    DEPENDS ${HEADER_GENERATOR} ${sfile}
     )
-  list(APPEND NEOVIM_GENERATED_SOURCES "${gf1}")
-  list(APPEND NEOVIM_GENERATED_SOURCES "${gf2}")
+  list(APPEND NEOVIM_GENERATED_SOURCES ${gf1})
+  list(APPEND NEOVIM_GENERATED_SOURCES ${gf2})
   if(${d} MATCHES "^api$" AND NOT ${f} MATCHES "^api/helpers.c$")
     list(APPEND API_HEADERS ${gf2})
   endif()
