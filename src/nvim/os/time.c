@@ -54,7 +54,22 @@ void os_delay(uint64_t milliseconds, bool ignoreinput)
 /// @param microseconds Number of microseconds to sleep
 void os_microdelay(uint64_t microseconds)
 {
-  microdelay(microseconds);
+  uint64_t elapsed = 0;
+  uint64_t ns = microseconds * 1000;  // convert to nanoseconds
+  uint64_t base = uv_hrtime();
+
+  uv_mutex_lock(&delay_mutex);
+
+  while (elapsed < ns) {
+    if (uv_cond_timedwait(&delay_cond, &delay_mutex, ns - elapsed)
+        == UV_ETIMEDOUT)
+      break;
+    uint64_t now = uv_hrtime();
+    elapsed += now - base;
+    base = now;
+  }
+
+  uv_mutex_unlock(&delay_mutex);
 }
 
 /// Portable version of POSIX localtime_r()
@@ -87,24 +102,4 @@ struct tm *os_get_localtime(struct tm *result) FUNC_ATTR_NONNULL_ALL
 {
   time_t rawtime = time(NULL);
   return os_localtime_r(&rawtime, result);
-}
-
-static void microdelay(uint64_t microseconds)
-{
-  uint64_t elapsed = 0;
-  uint64_t ns = microseconds * 1000;  // convert to nanoseconds
-  uint64_t base = uv_hrtime();
-
-  uv_mutex_lock(&delay_mutex);
-
-  while (elapsed < ns) {
-    if (uv_cond_timedwait(&delay_cond, &delay_mutex, ns - elapsed)
-        == UV_ETIMEDOUT)
-      break;
-    uint64_t now = uv_hrtime();
-    elapsed += now - base;
-    base = now;
-  }
-
-  uv_mutex_unlock(&delay_mutex);
 }
