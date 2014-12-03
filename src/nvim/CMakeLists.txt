@@ -108,13 +108,15 @@ if(CMAKE_C_COMPILER_ID MATCHES "Clang")
 endif()
 
 get_directory_property(gen_cdefs COMPILE_DEFINITIONS)
-foreach(gen_cdef ${gen_cdefs})
-  set(gen_cflags "${gen_cflags} -D${gen_cdef}")
+foreach(gen_cdef ${gen_cdefs} DO_NOT_DEFINE_EMPTY_ATTRIBUTES)
+  if(NOT "${gen_cdef}" MATCHES "INCLUDE_GENERATED_DECLARATIONS")
+    list(APPEND gen_cflags "-D${gen_cdef}")
+  endif()
 endforeach()
 
 get_directory_property(gen_includes INCLUDE_DIRECTORIES)
 foreach(gen_include ${gen_includes})
-  set(gen_cflags "${gen_cflags} -I${gen_include}")
+  list(APPEND gen_cflags "-I${gen_include}")
 endforeach()
 string(TOUPPER "${CMAKE_BUILD_TYPE}" build_type)
 set(gen_cflags "${gen_cflags} ${CMAKE_C_FLAGS_${build_type}} ${CMAKE_C_FLAGS}")
@@ -131,11 +133,12 @@ foreach(sfile ${NEOVIM_SOURCES}
   endif()
   set(gf1 "${GENERATED_DIR}/${r}.c.generated.h")
   set(gf2 "${GENERATED_INCLUDES_DIR}/${r}.h.generated.h")
+  set(gf3 "${GENERATED_DIR}/${r}.i")
+  separate_arguments(C_FLAGS_ARRAY UNIX_COMMAND ${CMAKE_C_FLAGS})
   add_custom_command(
     OUTPUT "${gf1}" "${gf2}"
-    COMMAND "${LUA_PRG}" "${HEADER_GENERATOR}"
-                             "${sfile}" "${gf1}" "${gf2}"
-                             "${CMAKE_C_COMPILER} ${gen_cflags} -E"
+    COMMAND ${CMAKE_C_COMPILER} ${sfile} -o ${gf3} ${gen_cflags} -E ${C_FLAGS_ARRAY}
+    COMMAND "${LUA_PRG}" "${HEADER_GENERATOR}" "${sfile}" "${gf1}" "${gf2}" "${gf3}"
     DEPENDS "${HEADER_GENERATOR}" "${sfile}"
     )
   list(APPEND NEOVIM_GENERATED_SOURCES "${gf1}")
