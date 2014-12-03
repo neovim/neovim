@@ -158,11 +158,12 @@ function(git_timestamp _var)
     OUTPUT_VARIABLE out
     ERROR_QUIET
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-  if(NOT res EQUAL 0)
+  if(res EQUAL 0)
+    string(REGEX REPLACE "[-\" :]" "" out ${out})
+    string(SUBSTRING ${out} 0 12 out)
+  else()
     set(out "${out}-${res}-NOTFOUND")
   endif()
-  string(REGEX REPLACE "[-\" :]" "" out ${out})
-  string(SUBSTRING ${out} 0 12 out)
 
   set(${_var} ${out} PARENT_SCOPE)
 endfunction()
