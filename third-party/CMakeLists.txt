@@ -54,9 +54,9 @@ endif()
 
 include(ExternalProject)
 
-set(LIBUV_URL https://github.com/libuv/libuv/archive/v0.11.28.tar.gz)
-set(LIBUV_SHA1 3b70b65467ee693228b8b8385665a52690d74092)
-set(LIBUV_MD5 1a849ba4fc571d531482ed74bc7aabc4)
+set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.0.1.tar.gz)
+set(LIBUV_SHA1 be4edcca18a518153b5e249a17621f2674d7654d)
+set(LIBUV_MD5 c5e4bbf954b8438c57d9414ee54b4d90)
 
 set(MSGPACK_URL https://github.com/msgpack/msgpack-c/archive/ecf4b09acd29746829b6a02939db91dfdec635b4.tar.gz)
 set(MSGPACK_SHA1 c160ff99f20d9d0a25bea0a57f4452f1c9bde370)
