@@ -241,6 +241,7 @@ Object channel_send_call(uint64_t id,
 
   if (frame.errored) {
     api_set_error(err, Exception, "%s", frame.result.data.string.data);
+    api_free_object(frame.result);
     return NIL;
   }
 
@@ -347,7 +348,13 @@ static void job_err(RStream *rstream, void *data, bool eof)
 
 static void job_exit(Job *job, void *data)
 {
-  free_channel((Channel *)data);
+  Channel *channel = data;
+  // ensure the channel is flagged as closed so channel_send_call frees it
+  // later
+  channel->closed = true;
+  if (!kv_size(channel->call_stack)) {
+    free_channel(channel);
+  }
 }
 
 static void parse_msgpack(RStream *rstream, void *data, bool eof)
