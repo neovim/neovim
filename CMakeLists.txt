@@ -116,6 +116,7 @@ if (MSVC)
   # We link against static dependencies
   set(CMAKE_C_FLAGS_RELEASE -MT)
   set(CMAKE_C_FLAGS_DEBUG -MTd)
+  set(CMAKE_C_FLAGS_RELWITHDEBINFO -MTd)
 else()
   add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter
     -Wstrict-prototypes -std=gnu99)
