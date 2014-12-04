@@ -145,7 +145,7 @@ int verb_msg(char_u *s)
   return n;
 }
 
-int msg_attr(char_u *s, int attr)
+int msg_attr(char_u *s, int attr) FUNC_ATTR_NONNULL_ARG(1)
 {
   return msg_attr_keep(s, attr, FALSE);
 }
@@ -156,6 +156,7 @@ msg_attr_keep (
     int attr,
     int keep                   /* TRUE: set keep_msg if it doesn't scroll */
 )
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   static int entered = 0;
   int retval;
@@ -2623,7 +2624,7 @@ int verbose_open(void)
  * Give a warning message (for searching).
  * Use 'w' highlighting and may repeat the message after redrawing
  */
-void give_warning(char_u *message, bool hl)
+void give_warning(char_u *message, bool hl) FUNC_ATTR_NONNULL_ARG(1)
 {
   /* Don't do this for ":silent". */
   if (msg_silent != 0)
