@@ -19,6 +19,10 @@ typedef struct {
 /// Initializes the msgpack-rpc method table
 void msgpack_rpc_init_method_table(void);
 
+// Add a handler to the method table
+void msgpack_rpc_add_method_handler(String method,
+                                    MsgpackRpcRequestHandler handler);
+
 void msgpack_rpc_init_function_metadata(Dictionary *metadata);
 
 /// Dispatches to the actual API function after basic payload validation by

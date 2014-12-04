@@ -252,6 +252,11 @@ end
 output:write([[
 static Map(String, MsgpackRpcRequestHandler) *methods = NULL;
 
+void msgpack_rpc_add_method_handler(String method, MsgpackRpcRequestHandler handler)
+{
+  map_put(String, MsgpackRpcRequestHandler)(methods, method, handler);
+}
+
 void msgpack_rpc_init_method_table(void)
 {
   methods = map_new(String, MsgpackRpcRequestHandler)();
@@ -263,7 +268,7 @@ void msgpack_rpc_init_method_table(void)
 local max_fname_len = 0
 for i = 1, #functions do
   local fn = functions[i]
-  output:write('  map_put(String, MsgpackRpcRequestHandler)(methods, '..
+  output:write('  msgpack_rpc_add_method_handler('..
                '(String) {.data = "'..fn.name..'", '..
                '.size = sizeof("'..fn.name..'") - 1}, '..
                '(MsgpackRpcRequestHandler) {.fn = handle_'..  fn.name..
