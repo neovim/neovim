@@ -15,7 +15,9 @@ setup_prebuilt_deps x64
 
 export VALGRIND=1
 export VALGRIND_LOG="$tmpdir/valgrind-%p.log"
-CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON -DUSE_GCOV=ON"
+CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON \
+	-DUSE_GCOV=ON \
+	-DBUSTED_OUTPUT_TYPE=plainTerminal"
 
 # Build and output version info.
 $MAKE_CMD CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS" nvim

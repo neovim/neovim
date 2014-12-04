@@ -33,7 +33,9 @@ export TSAN_OPTIONS="external_symbolizer_path=$symbolizer:log_path=$tmpdir/tsan"
 export SKIP_UNITTEST=1
 export UBSAN_OPTIONS="log_path=$tmpdir/ubsan" # not sure if this works
 
-CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON -DUSE_GCOV=ON"
+CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON \
+	-DUSE_GCOV=ON \
+	-DBUSTED_OUTPUT_TYPE=plainTerminal"
 
 # Build and output version info.
 $MAKE_CMD CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS" nvim
