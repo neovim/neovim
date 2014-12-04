@@ -7070,7 +7070,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 'term'			string	(default is $TERM, if that fails:
 				      in the GUI: "builtin_gui"
 					on Amiga: "amiga"
-					 on BeOS: "beos-ansi"
 					  on Mac: "mac-ansi"
 				       on MS-DOS: "pcterm"
 					 on Unix: "ansi"
