@@ -161,7 +161,7 @@ end
 local function clear()
   if session then
     session:request('vim_command', 'qa!')
-    session._async_session._msgpack_stream._loop:exit()
+    session:exit()
   end
   local loop = Loop.new()
   local msgpack_stream = MsgpackStream.new(loop)
