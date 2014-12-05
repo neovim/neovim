@@ -42,23 +42,60 @@ local vim_deltempdir = function() return tempfile.vim_deltempdir() end
 
 vim_init()
 
-describe('#tempfile module:', function()
+describe('tempfile module:', function()
 
   after_each(function() vim_deltempdir() end)
 
   describe('vim_gettempdir', function()
+
     it('generates directory name to a writable, empty directory on first call', function()
       local dir = vim_gettempdir()
       ok(dir ~= nil and dir:len() > 0)
       ok((is_dir(dir)) and (is_writable(dir)) and (is_empty(dir)))
     end)
 
+    it('generates a directory which can be later deleted', function()
+      local dir = vim_gettempdir()
+      ok(is_dir(dir))
+      vim_deltempdir()
+      notok(is_dir(dir))
+    end)
+
     context('called successively', function()
 
-      it('returns the same directory on each call', function()
-        local dir1 = vim_gettempdir()
-        local dir2 = vim_gettempdir()
+      it('generates the same directory name', function()
+        local dir1, dir2
+        dir1 = vim_gettempdir()
+        dir2 = vim_gettempdir()
         ok(dir1 == dir2)
+      end)
+
+      it('interrupted by generating a file name, generates the same directory name', function()
+        local dir1, dir2
+        dir1 = vim_gettempdir()
+        vim_tempname()
+        dir2 = vim_gettempdir()
+        ok(dir1 == dir2)
+      end)
+
+      it('interrupted by deleting the temp directory, generates different directory names with corresponding directories', function()
+        local dir1, dir2
+        dir1 = vim_gettempdir()
+        ok(is_dir(dir1))
+        vim_deltempdir()
+        dir2 = vim_gettempdir()
+        ok(is_dir(dir2))
+        ok(dir1 ~= dir2)
+      end)
+
+      it('interrupted by externally deleting the temp directory, generates the same directory name and with no corresponding director ', function()
+        local dir1, dir2
+        dir1 = vim_gettempdir()
+        ok(is_dir(dir1))
+        ok(lfs.rmdir(dir1))
+        dir2 = vim_gettempdir()
+        notok(is_dir(dir2))
+        notok(dir1 ~= dir2)
       end)
     end)
   end)
@@ -74,10 +111,40 @@ describe('#tempfile module:', function()
     context('called successively', function()
 
       it('generates different paths with a common temp directory', function()
-        local path1 = vim_tempname()
-        local path2 = vim_tempname()
+        local path1, path2 = vim_tempname(), vim_tempname()
         ok(path1 ~= path2)
         ok(dir_of_path(path1) == dir_of_path(path2))
+      end)
+
+      it('interrupted by generating a directory name, generates different paths with a common temp directory', function()
+        local path1, path2
+        path1 = vim_tempname()
+        vim_gettempdir()
+        path2 = vim_tempname()
+        ok(path1 ~= path2)
+        ok(dir_of_path(path1) == dir_of_path(path2))
+      end)
+
+      it('interrupted by deleting the temp directory, generates paths with different temp directories', function()
+        local path1, path2
+        path1 = vim_tempname()
+        vim_deltempdir()
+        path2 = vim_tempname()
+        ok(path1 ~= path2)
+        notok(dir_of_path(path1) == dir_of_path(path2))
+      end)
+
+      it('interrupted by externally deleting the temp directory, generates a path that is no longer useful', function()
+        local path1, path2
+        local dir1, dir2
+        path1 = vim_tempname()
+        dir1 = dir_of_path(path1)
+        ok(lfs.rmdir(dir1))
+        path2 = vim_tempname()
+        dir2 = dir_of_path(path2)
+        ok(path1 ~= path2)
+        ok(dir1 == dir2)
+        ok(path_contains_dir(path2, dir1))
       end)
     end)
   end)
