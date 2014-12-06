@@ -22,7 +22,7 @@ describe('lisp indent', function()
       :if-exists :supersede)
       (let ((,ti ,title))
       (as title ,ti)
-      (with center
+      (with center 
       (as h2 (string-upcase ,ti)))
       (brs 3)
       ,@body))))
@@ -35,7 +35,7 @@ describe('lisp indent', function()
       ,@body
       (princ "</a>")))]])
 
-    execute('set lisp expandtab')
+    execute('set lisp')
     execute('/^(defun')
     feed('=G:/^(defun/,$yank A<cr>')
 
@@ -52,15 +52,15 @@ describe('lisp indent', function()
       (defmacro page (name title &rest body)
         (let ((ti (gensym)))
           `(with-open-file (*standard-output*
-                             (html-file ,name)
-                             :direction :output
-                             :if-exists :supersede)
+      		       (html-file ,name)
+      		       :direction :output
+      		       :if-exists :supersede)
              (let ((,ti ,title))
-               (as title ,ti)
-               (with center
-                     (as h2 (string-upcase ,ti)))
-               (brs 3)
-               ,@body))))
+      	 (as title ,ti)
+      	 (with center 
+      	       (as h2 (string-upcase ,ti)))
+      	 (brs 3)
+      	 ,@body))))
       
       ;;; Utilities for generating links
       
