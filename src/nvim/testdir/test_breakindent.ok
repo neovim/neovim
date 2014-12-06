@@ -33,13 +33,13 @@ Test 4: Simple breakindent + min width: 18
 
  Test 7: breakindent + shift by +1 + nu + sbr=? briopt:sbr
   2     ab
-?        m
-?        x
+    ?    m
+    ?    x
 
  Test 8: breakindent + shift:1 + nu + sbr=# list briopt:sbr
   2 ^Iabcd
-#      opq
-#      BCD
+    #  opq
+    #  BCD
 
  Test 9: breakindent + shift by +1 + 'nu' + sbr=# list
   2 ^Iabcd

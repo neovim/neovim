@@ -2,6 +2,7 @@ Test for "*Cmd" autocommands
 
 STARTTEST
 :so small.vim
+:set wildchar=^E
 :/^start/,$w! Xxx		" write lines below to Xxx
 :au BufReadCmd XtestA 0r Xxx|$del
 :e XtestA			" will read text of Xxd instead

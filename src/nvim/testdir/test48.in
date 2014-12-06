@@ -4,7 +4,7 @@ STARTTEST
 :so small.vim
 :set noswf
 :set ve=all
--dgg
+j-dgg
 :"
 :"   Insert "keyword keyw", ESC, C CTRL-N, shows "keyword ykeyword".
 :"    Repeating CTRL-N fixes it. (Mary Ellen Foster)

@@ -2,6 +2,7 @@ Tests for the exists() and has() functions.  vim: set ft=vim ts=8 sw=2 :
 
 STARTTEST
 :so small.vim
+:set wildchar=^E
 :function! RunTest(str, result)
     if exists(a:str) == a:result
 	echo "OK"
