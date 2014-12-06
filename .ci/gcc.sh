@@ -23,6 +23,9 @@ CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON \
 $MAKE_CMD CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS" nvim
 build/bin/nvim --version
 
+# Build library.
+$MAKE_CMD CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS" libnvim
+
 # Run unittests.
 make unittest
 
