@@ -141,7 +141,7 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_arg)
   }
 
   if (output) {
-    write_output(output, nread);
+    (void)write_output(output, nread, true, true);
     free(output);
   }
 
@@ -197,6 +197,9 @@ static int shell(const char *cmd,
   // the output buffer
   DynamicBuffer buf = DYNAMIC_BUFFER_INIT;
   rstream_cb data_cb = system_data_cb;
+  if (nread) {
+    *nread = 0;
+  }
 
   if (forward_output) {
     data_cb = out_data_cb;
@@ -296,9 +299,9 @@ static void system_data_cb(RStream *rstream, void *data, bool eof)
 static void out_data_cb(RStream *rstream, void *data, bool eof)
 {
   RBuffer *rbuffer = rstream_buffer(rstream);
-  size_t len = rbuffer_pending(rbuffer);
-  ui_write((char_u *)rbuffer_read_ptr(rbuffer), (int)len);
-  rbuffer_consumed(rbuffer, len);
+  size_t written = write_output(rbuffer_read_ptr(rbuffer),
+                                rbuffer_pending(rbuffer), false, eof);
+  rbuffer_consumed(rbuffer, written);
 }
 
 /// Parses a command string into a sequence of words, taking quotes into
@@ -407,18 +410,27 @@ static void read_input(DynamicBuffer *buf)
   }
 }
 
-static void write_output(char *output, size_t remaining)
+static size_t write_output(char *output, size_t remaining, bool to_buffer,
+                           bool eof)
 {
   if (!output) {
-    return;
+    return 0;
   }
 
+  char *start = output;
   size_t off = 0;
   while (off < remaining) {
     if (output[off] == NL) {
       // Insert the line
       output[off] = NUL;
-      ml_append(curwin->w_cursor.lnum++, (char_u *)output, 0, false);
+      if (to_buffer) {
+        ml_append(curwin->w_cursor.lnum++, (char_u *)output, 0, false);
+      } else {
+        // pending data from the output buffer has been flushed to the screen,
+        // safe to call ui_write directly
+        ui_write((char_u *)output, (int)off);
+        ui_write((char_u *)"\r\n", 2);
+      }
       size_t skip = off + 1;
       output += skip;
       remaining -= skip;
@@ -433,14 +445,26 @@ static void write_output(char *output, size_t remaining)
     off++;
   }
 
-  if (remaining) {
-    // append unfinished line
-    ml_append(curwin->w_cursor.lnum++, (char_u *)output, 0, false);
-    // remember that the NL was missing
-    curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
-  } else {
-    curbuf->b_no_eol_lnum = 0;
+  if (eof) {
+    if (remaining) {
+      if (to_buffer) {
+        // append unfinished line
+        ml_append(curwin->w_cursor.lnum++, (char_u *)output, 0, false);
+        // remember that the NL was missing
+        curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
+      } else {
+        ui_write((char_u *)output, (int)remaining);
+        ui_write((char_u *)"\r\n", 2);
+      }
+      output += remaining;
+    } else if (to_buffer) {
+      curbuf->b_no_eol_lnum = 0;
+    }
   }
+
+  out_flush();
+
+  return (size_t)(output - start);
 }
 
 static void shell_write_cb(WStream *wstream, void *data, int status)
