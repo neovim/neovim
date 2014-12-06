@@ -46,7 +46,7 @@ void input_init(void)
 {
   input_buffer = rbuffer_new(INPUT_BUFFER_SIZE + MAX_KEY_CODE_LEN);
 
-  if (embedded_mode) {
+  if (abstract_ui) {
     return;
   }
 
@@ -57,7 +57,7 @@ void input_init(void)
 
 void input_teardown(void)
 {
-  if (embedded_mode) {
+  if (abstract_ui) {
     return;
   }
 
@@ -67,7 +67,7 @@ void input_teardown(void)
 // Listen for input
 void input_start(void)
 {
-  if (embedded_mode) {
+  if (abstract_ui) {
     return;
   }
 
@@ -77,7 +77,7 @@ void input_start(void)
 // Stop listening for input
 void input_stop(void)
 {
-  if (embedded_mode) {
+  if (abstract_ui) {
     return;
   }
 
@@ -180,7 +180,23 @@ void input_buffer_restore(String str)
 
 size_t input_enqueue(String keys)
 {
-  size_t rv = rbuffer_write(input_buffer, keys.data, keys.size);
+  char *ptr = keys.data, *end = ptr + keys.size;
+
+  while (rbuffer_available(input_buffer) >= 6 && ptr < end) {
+    int new_size = trans_special((char_u **)&ptr,
+        (char_u *)rbuffer_write_ptr(input_buffer),
+        false);
+    if (!new_size) {
+      // copy the character unmodified
+      *rbuffer_write_ptr(input_buffer) = *ptr++;
+      new_size = 1;
+    }
+    // TODO(tarruda): Don't produce past unclosed '<' characters, except if
+    // there's a lot of characters after the '<'
+    rbuffer_produced(input_buffer, (size_t)new_size);
+  }
+
+  size_t rv = (size_t)(ptr - keys.data);
   process_interrupts();
   return rv;
 }
@@ -255,7 +271,7 @@ static void read_cb(RStream *rstream, void *data, bool at_eof)
 
 static void convert_input(void)
 {
-  if (embedded_mode || !rbuffer_available(input_buffer)) {
+  if (abstract_ui || !rbuffer_available(input_buffer)) {
     // No input buffer space
     return;
   }
@@ -335,7 +351,7 @@ static bool input_ready(void)
   return typebuf_was_filled ||                 // API call filled typeahead
          rbuffer_pending(input_buffer) > 0 ||  // Stdin input
          event_has_deferred() ||               // Events must be processed
-         (!embedded_mode && eof);              // Stdin closed
+         (!abstract_ui && eof);                // Stdin closed
 }
 
 // Exit because of an input read error.

@@ -265,13 +265,6 @@ int main(int argc, char **argv)
   term_init();
   TIME_MSG("shell init");
 
-  event_init();
-
-  if (!embedded_mode) {
-    // Print a warning if stdout is not a terminal.
-    check_tty(&params);
-  }
-
   /* This message comes before term inits, but after setting "silent_mode"
    * when the input is not a tty. */
   if (GARGCOUNT > 1 && !silent_mode)
@@ -283,6 +276,7 @@ int main(int argc, char **argv)
       // initial screen size of 80x20
       full_screen = true;
       screen_resize(80, 20, false);
+      termcapinit((uint8_t *)"abstract_ui");
     } else {
       // set terminal name and get terminal capabilities (will set full_screen)
       // Do some initialization of the screen
@@ -290,6 +284,16 @@ int main(int argc, char **argv)
     }
     screen_start();             /* don't know where cursor is now */
     TIME_MSG("Termcap init");
+  }
+
+  event_init();
+
+  if (abstract_ui) {
+    t_colors = 256;
+  } else {
+    // Print a warning if stdout is not a terminal TODO(tarruda): Remove this
+    // check once the new terminal UI is implemented
+    check_tty(&params);
   }
 
   /*
@@ -424,18 +428,16 @@ int main(int argc, char **argv)
     TIME_MSG("waiting for return");
   }
 
-  if (!embedded_mode) {
-    starttermcap(); // start termcap if not done by wait_return()
-    TIME_MSG("start termcap");
-    may_req_ambiguous_char_width();
-    setmouse();  // may start using the mouse
+  starttermcap(); // start termcap if not done by wait_return()
+  TIME_MSG("start termcap");
+  may_req_ambiguous_char_width();
+  setmouse();  // may start using the mouse
 
-    if (scroll_region) {
-      scroll_region_reset(); // In case Rows changed
-    }
-
-    scroll_start(); // may scroll the screen to the right position
+  if (scroll_region) {
+    scroll_region_reset(); // In case Rows changed
   }
+
+  scroll_start(); // may scroll the screen to the right position
 
   /*
    * Don't clear the screen when starting in Ex mode, unless using the GUI.

@@ -452,7 +452,7 @@ void setmouse(void)
     return;
 
   /* don't switch mouse on when not in raw mode (Ex mode) */
-  if (cur_tmode != TMODE_RAW) {
+  if (!abstract_ui && cur_tmode != TMODE_RAW) {
     mch_setmouse(false);
     return;
   }
@@ -470,10 +470,11 @@ void setmouse(void)
   else
     checkfor = MOUSE_NORMAL;        /* assume normal mode */
 
-  if (mouse_has(checkfor))
-    mch_setmouse(true);
-  else
-    mch_setmouse(false);
+  if (mouse_has(checkfor)) {
+    ui_mouse_on();
+  } else {
+    ui_mouse_off();
+  }
 }
 
 /*

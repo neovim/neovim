@@ -161,6 +161,33 @@ static bool detected_8bit = false;       // detected 8-bit terminal
 
 static struct builtin_term builtin_termcaps[] =
 {
+  // abstract UI pseudo termcap, based on vim's "builtin_gui" termcap
+  {(int)KS_NAME, "abstract_ui"},
+  {(int)KS_CE,   "\033|$"},
+  {(int)KS_AL,   "\033|i"},
+  {(int)KS_CAL,  "\033|%p1%dI"},
+  {(int)KS_DL,   "\033|d"},
+  {(int)KS_CDL,  "\033|%p1%dD"},
+  {(int)KS_CS,   "\033|%p1%d;%p2%dR"},
+  {(int)KS_CL,   "\033|C"},
+  // attributes switched on with 'h', off with * 'H'
+  {(int)KS_ME,   "\033|31H"},  // HL_ALL
+  {(int)KS_MR,   "\033|1h"},   // HL_INVERSE
+  {(int)KS_MD,   "\033|2h"},   // HL_BOLD
+  {(int)KS_SE,   "\033|16H"},  // HL_STANDOUT
+  {(int)KS_SO,   "\033|16h"},  // HL_STANDOUT
+  {(int)KS_UE,   "\033|8H"},   // HL_UNDERLINE
+  {(int)KS_US,   "\033|8h"},   // HL_UNDERLINE
+  {(int)KS_CZR,  "\033|4H"},   // HL_ITALIC
+  {(int)KS_CZH,  "\033|4h"},   // HL_ITALIC
+  {(int)KS_VB,   "\033|f"},
+  {(int)KS_MS,   "y"},
+  {(int)KS_UT,   "y"},
+  {(int)KS_LE,   "\b"},        // cursor-left = BS
+  {(int)KS_ND,   "\014"},      // cursor-right = CTRL-L
+  {(int)KS_CM,   "\033|%p1%d;%p2%dM"},
+  // there are no key sequences here, for "abstract_ui" vim key codes are
+  // parsed directly in input_enqueue()
 
 
 #ifndef NO_BUILTIN_TCAPS
@@ -1162,6 +1189,10 @@ int set_termname(char_u *term)
   if (silent_mode)
     return OK;
 
+  if (!STRCMP(term, "abstract_ui")) {
+    abstract_ui = true;
+  }
+
   detected_8bit = false;                // reset 8-bit detection
 
   if (term_is_builtin(term)) {
@@ -1829,18 +1860,6 @@ void termcapinit(char_u *name)
 /// Write s[len] to the screen.
 void term_write(char_u *s, size_t len)
 {
-  if (embedded_mode) {
-    // TODO(tarruda): This is a temporary hack to stop Neovim from writing
-    // messages to stdout in embedded mode. In the future, embedded mode will
-    // be the only possibility(GUIs will always start neovim with a msgpack-rpc
-    // over stdio) and this function won't exist.
-    //
-    // The reason for this is because before Neovim fully migrates to a
-    // msgpack-rpc-driven architecture, we must have a fully functional
-    // UI working
-    return;
-  }
-
   (void) fwrite(s, len, 1, stdout);
 
 #ifdef UNIX
@@ -2296,7 +2315,7 @@ void shell_resized_check(void)
  */
 void settmode(int tmode)
 {
-  if (embedded_mode) {
+  if (abstract_ui) {
     return;
   }
 
@@ -2340,7 +2359,7 @@ void starttermcap(void)
     out_flush();
     termcap_active = TRUE;
     screen_start();                     /* don't know where cursor is now */
-    {
+    if (!abstract_ui) {
       may_req_termresponse();
       /* Immediately check for a response.  If t_Co changes, we don't
        * want to redraw with wrong colors first. */
@@ -2356,7 +2375,7 @@ void stoptermcap(void)
   screen_stop_highlight();
   reset_cterm_colors();
   if (termcap_active) {
-    {
+    if (!abstract_ui) {
       /* May need to discard T_CRV or T_U7 response. */
       if (crv_status == CRV_SENT || u7_status == U7_SENT) {
 # ifdef UNIX
@@ -2545,6 +2564,11 @@ static int cursor_is_off = FALSE;
  */
 void cursor_on(void)
 {
+  if (abstract_ui) {
+    ui_cursor_on();
+    return;
+  }
+
   if (cursor_is_off) {
     out_str(T_VE);
     cursor_is_off = FALSE;
@@ -2556,6 +2580,11 @@ void cursor_on(void)
  */
 void cursor_off(void)
 {
+  if (abstract_ui) {
+    ui_cursor_off();
+    return;
+  }
+
   if (full_screen) {
     if (!cursor_is_off)
       out_str(T_VI);                /* disable cursor */
@@ -2852,6 +2881,11 @@ void set_mouse_topline(win_T *wp)
  */
 int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
 {
+  if (abstract_ui) {
+    // codes are parsed by input.c/input_enqueue
+    return 0;
+  }
+
   char_u      *tp;
   char_u      *p;
   int slen = 0;                 /* init for GCC */
@@ -3883,6 +3917,10 @@ int find_term_bykeys(char_u *src)
  */
 static void gather_termleader(void)
 {
+  if (abstract_ui) {
+    return;
+  }
+
   int len = 0;
 
   if (check_for_codes)

@@ -45,7 +45,7 @@ void signal_init(void)
   uv_signal_start(&shup, signal_cb, SIGHUP);
   uv_signal_start(&squit, signal_cb, SIGQUIT);
   uv_signal_start(&sterm, signal_cb, SIGTERM);
-  if (!embedded_mode) {
+  if (!abstract_ui) {
     // TODO(tarruda): There must be an API function for resizing window
     uv_signal_start(&swinch, signal_cb, SIGWINCH);
   }
