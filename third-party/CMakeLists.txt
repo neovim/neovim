@@ -97,10 +97,9 @@ if(USE_BUNDLED_LIBUNIBILIUM)
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
-    BUILD_COMMAND ${MAKE_PRG} CC=${CMAKE_C_COMPILER}
+    BUILD_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
                               PREFIX=${DEPS_INSTALL_DIR}
-                              CFLAGS+=${CMAKE_C_COMPILER_ARG1}
-                              CFLAGS+=-fPIC
+                              CFLAGS=-fPIC
     INSTALL_COMMAND ${MAKE_PRG} PREFIX=${DEPS_INSTALL_DIR} install)
   list(APPEND THIRD_PARTY_DEPS libunibilium)
 endif()
@@ -121,11 +120,10 @@ if(USE_BUNDLED_LIBTERMKEY)
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
     BUILD_COMMAND ""
-    INSTALL_COMMAND ${MAKE_PRG} CC=${CMAKE_C_COMPILER}
+    INSTALL_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
                                 PREFIX=${DEPS_INSTALL_DIR}
                                 PKG_CONFIG_PATH=${DEPS_LIB_DIR}/pkgconfig
-                                CFLAGS+=${CMAKE_C_COMPILER_ARG1}
-                                CFLAGS+=-fPIC
+                                CFLAGS=-fPIC
                                 install)
   list(APPEND THIRD_PARTY_DEPS libtermkey)
   add_dependencies(libtermkey libunibilium)
@@ -147,11 +145,10 @@ if(USE_BUNDLED_LIBTICKIT)
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
     BUILD_COMMAND ""
-    INSTALL_COMMAND ${MAKE_PRG} CC=${CMAKE_C_COMPILER}
+    INSTALL_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
                                 PREFIX=${DEPS_INSTALL_DIR}
                                 PKG_CONFIG_PATH=${DEPS_LIB_DIR}/pkgconfig
-                                CFLAGS+=${CMAKE_C_COMPILER_ARG1}
-                                CFLAGS+=-fPIC
+                                CFLAGS=-fPIC
                                 install)
   list(APPEND THIRD_PARTY_DEPS libtickit)
   add_dependencies(libtickit libtermkey)
