@@ -3439,6 +3439,7 @@ static int ins_compl_get_exp(pos_T *ini)
   int dict_f = 0;
   compl_T     *old_match;
   int set_match_pos;
+  int l_ctrl_x_mode = ctrl_x_mode;
 
   if (!compl_started) {
     FOR_ALL_BUFFERS(buf) {
@@ -3458,10 +3459,12 @@ static int ins_compl_get_exp(pos_T *ini)
     found_new_match = FAIL;
     set_match_pos = FALSE;
 
+    assert(l_ctrl_x_mode == ctrl_x_mode);
+
     /* For ^N/^P pick a new entry from e_cpt if compl_started is off,
      * or if found_all says this entry is done.  For ^X^L only use the
      * entries from 'complete' that look in loaded buffers. */
-    if ((ctrl_x_mode == 0 || ctrl_x_mode == CTRL_X_WHOLE_LINE)
+    if ((l_ctrl_x_mode == 0 || l_ctrl_x_mode == CTRL_X_WHOLE_LINE)
         && (!compl_started || found_all)) {
       found_all = FALSE;
       while (*e_cpt == ',' || *e_cpt == ' ')
@@ -3470,7 +3473,7 @@ static int ins_compl_get_exp(pos_T *ini)
         ins_buf = curbuf;
         first_match_pos = *ini;
         /* So that ^N can match word immediately after cursor */
-        if (ctrl_x_mode == 0)
+        if (l_ctrl_x_mode == 0)
           dec(&first_match_pos);
         last_match_pos = first_match_pos;
         type = 0;
@@ -3506,7 +3509,7 @@ static int ins_compl_get_exp(pos_T *ini)
       } else if (*e_cpt == NUL)
         break;
       else {
-        if (ctrl_x_mode == CTRL_X_WHOLE_LINE)
+        if (l_ctrl_x_mode == CTRL_X_WHOLE_LINE)
           type = -1;
         else if (*e_cpt == 'k' || *e_cpt == 's') {
           if (*e_cpt == 'k')
@@ -3576,7 +3579,7 @@ static int ins_compl_get_exp(pos_T *ini)
        * of matches is found when compl_pattern is empty */
       if (find_tags(compl_pattern, &num_matches, &matches,
               TAG_REGEXP | TAG_NAMES | TAG_NOIC |
-              TAG_INS_COMP | (ctrl_x_mode ? TAG_VERBOSE : 0),
+              TAG_INS_COMP | (l_ctrl_x_mode ? TAG_VERBOSE : 0),
               TAG_MANY, curbuf->b_ffname) == OK && num_matches > 0) {
         ins_compl_add_matches(num_matches, matches, p_ic);
       }
@@ -3635,9 +3638,9 @@ static int ins_compl_get_exp(pos_T *ini)
 
         ++msg_silent;          /* Don't want messages for wrapscan. */
 
-        /* ctrl_x_mode == CTRL_X_WHOLE_LINE || word-wise search that
+        /* l_ctrl_x_mode == CTRL_X_WHOLE_LINE || word-wise search that
          * has added a word that was at the beginning of the line */
-        if (    ctrl_x_mode == CTRL_X_WHOLE_LINE
+        if (    l_ctrl_x_mode == CTRL_X_WHOLE_LINE
                 || (compl_cont_status & CONT_SOL))
           found_new_match = search_for_exact_line(ins_buf, pos,
               compl_direction, compl_pattern);
@@ -3668,7 +3671,7 @@ static int ins_compl_get_exp(pos_T *ini)
                 && ini->col  == pos->col)
           continue;
         ptr = ml_get_buf(ins_buf, pos->lnum, FALSE) + pos->col;
-        if (ctrl_x_mode == CTRL_X_WHOLE_LINE) {
+        if (l_ctrl_x_mode == CTRL_X_WHOLE_LINE) {
           if (compl_cont_status & CONT_ADDING) {
             if (pos->lnum >= ins_buf->b_ml.ml_line_count)
               continue;
@@ -3751,8 +3754,8 @@ static int ins_compl_get_exp(pos_T *ini)
       found_new_match = OK;
 
     /* break the loop for specialized modes (use 'complete' just for the
-     * generic ctrl_x_mode == 0) or when we've found a new match */
-    if ((ctrl_x_mode != 0 && ctrl_x_mode != CTRL_X_WHOLE_LINE)
+     * generic l_ctrl_x_mode == 0) or when we've found a new match */
+    if ((l_ctrl_x_mode != 0 && l_ctrl_x_mode != CTRL_X_WHOLE_LINE)
         || found_new_match != FAIL) {
       if (got_int)
         break;
@@ -3760,7 +3763,7 @@ static int ins_compl_get_exp(pos_T *ini)
       if (type != -1)
         ins_compl_check_keys(0);
 
-      if ((ctrl_x_mode != 0 && ctrl_x_mode != CTRL_X_WHOLE_LINE)
+      if ((l_ctrl_x_mode != 0 && l_ctrl_x_mode != CTRL_X_WHOLE_LINE)
           || compl_interrupted)
         break;
       compl_started = TRUE;
@@ -3776,13 +3779,13 @@ static int ins_compl_get_exp(pos_T *ini)
   }
   compl_started = TRUE;
 
-  if ((ctrl_x_mode == 0 || ctrl_x_mode == CTRL_X_WHOLE_LINE)
+  if ((l_ctrl_x_mode == 0 || l_ctrl_x_mode == CTRL_X_WHOLE_LINE)
       && *e_cpt == NUL)                 /* Got to end of 'complete' */
     found_new_match = FAIL;
 
   i = -1;               /* total of matches, unknown */
   if (found_new_match == FAIL
-      || (ctrl_x_mode != 0 && ctrl_x_mode != CTRL_X_WHOLE_LINE))
+      || (l_ctrl_x_mode != 0 && l_ctrl_x_mode != CTRL_X_WHOLE_LINE))
     i = ins_compl_make_cyclic();
 
   /* If several matches were added (FORWARD) or the search failed and has
