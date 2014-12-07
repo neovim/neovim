@@ -28,11 +28,21 @@ check_logs() {
 
 check_core_dumps() {
 	sleep 2
-	local c
-	for c in $(find ./ -name '*core*' -print); do
-	 	gdb -q -n -batch -ex bt build/bin/nvim $c
-		exit 1
+
+	if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+		cores=/cores/*
+	else
+		# TODO(fwalch): Will trigger if a file named core.* exists outside of .deps.
+		cores="$(find ./ -not -path '*.deps*' -name 'core.*' -print)"
+	fi
+
+	if [ -z "$cores" ]; then
+		return
+	fi
+	for c in $cores; do
+		gdb -q -n -batch -ex bt build/bin/nvim $c
 	done
+	exit 1
 }
 
 setup_deps() {
