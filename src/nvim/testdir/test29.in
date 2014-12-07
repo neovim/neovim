@@ -5,7 +5,7 @@ Test for joining lines and marks in them
 
 STARTTEST
 :so small.vim
-:set nocompatible viminfo+=nviminfo
+:set viminfo+=nviminfo
 :set nojoinspaces
 :set cpoptions-=j
 /firstline/
@@ -13,7 +13,7 @@ j"td/^STARTTEST/-1
 PJjJjJjJjJjJjJjJjJjJjJjJjJjJj05lmx2j06lmy2k4Jy3l$p`xyl$p`yy2l$p:set cpoptions+=j
 j05lmx2j06lmy2k4Jy3l$p`xyl$p`yy2l$p:set cpoptions-=j joinspaces
 j"tpJjJjJjJjJjJjJjJjJjJjJjJjJjJj05lmx2j06lmy2k4Jy3l$p`xyl$p`yy2l$p:set cpoptions+=j
-j05lmx2j06lmy2k4Jy3l$p`xyl$p`yy2l$p:set cpoptions-=j nojoinspaces compatible
+j05lmx2j06lmy2k4Jy3l$p`xyl$p`yy2l$p:set cpo+=qo
 j"tpJjJjJjJjJjJjJjJjJjJjJjJjJjJj4Jy3l$pjd/STARTTEST/-2
 ENDTEST
 
@@ -104,7 +104,7 @@ if (condition) // Remove the next comment leader!
 STARTTEST
 :" Test with backspace set to the non-compatible setting
 /^\d\+ this
-:set cp bs=2
+:set bs=2
 Avim1
 Avim2u
 :set cpo-=<
@@ -118,7 +118,7 @@ A vim5A
 A vim6Azweiu
 :inoremap <c-u> <left><c-u>
 A vim7
-:set cp
+:set noesckeys
 ENDTEST
 1 this shouldn't be deleted
 2 this shouldn't be deleted
