@@ -857,7 +857,6 @@ Short explanation of each option:		*option-list*
 'shiftround'	  'sr'	    round indent to multiple of shiftwidth
 'shiftwidth'	  'sw'	    number of spaces to use for (auto)indent step
 'shortmess'	  'shm'     list of flags, reduce length of messages
-'shortname'	  'sn'	    non-MS-DOS: Filenames assumed to be 8.3 chars
 'showbreak'	  'sbr'     string to use at the start of wrapped lines
 'showcmd'	  'sc'	    show (partial) command in status line
 'showfulltag'	  'sft'     show full tag pattern when completing tag

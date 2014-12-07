@@ -4390,7 +4390,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	NOTE: This option is set when 'compatible' is set.
 
 					*'key'*
-'key'	Removed. {Nvim}
+'key'			Removed. {Nvim}
 
 					*'keymap'* *'kmp'* *E544*
 'keymap' 'kmp'		string	(default "")
@@ -6209,17 +6209,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	set and to the Vim default value when 'compatible' is reset.
 
 				 *'shortname'* *'sn'* *'noshortname'* *'nosn'*
-'shortname' 'sn'	boolean	(default off)
-			local to buffer
-			{not in Vi, not in MS-DOS versions}
-	Filenames are assumed to be 8 characters plus one extension of 3
-	characters.  Multiple dots in file names are not allowed.  When this
-	option is on, dots in file names are replaced with underscores when
-	adding an extension (".~" or ".swp").  This option is not available
-	for MS-DOS, because then it would always be on.  This option is useful
-	when editing files on an MS-DOS compatible filesystem, e.g., messydos
-	or crossdos.  When running the Win32 GUI version under Win32s, this
-	option is always on by default.
+'shortname' 'sn'	Removed. {Nvim}
 
 						*'showbreak'* *'sbr'* *E595*
 'showbreak' 'sbr'	string	(default "")

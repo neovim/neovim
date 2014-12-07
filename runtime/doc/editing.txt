@@ -136,22 +136,8 @@ as the original file with 'backupext' appended.  The default "~" is a bit
 strange to avoid accidentally overwriting existing files.  If you prefer ".bak"
 change the 'backupext' option.  Extra dots are replaced with '_' on MS-DOS
 machines, when Vim has detected that an MS-DOS-like filesystem is being used
-(e.g., messydos or crossdos) or when the 'shortname' option is on.  The
-backup file can be placed in another directory by setting 'backupdir'.
-
-							*auto-shortname*
-Technical: On the Amiga you can use 30 characters for a file name.  But on an
-	   MS-DOS-compatible filesystem only 8 plus 3 characters are
-	   available.  Vim tries to detect the type of filesystem when it is
-	   creating the .swp file.  If an MS-DOS-like filesystem is suspected,
-	   a flag is set that has the same effect as setting the 'shortname'
-	   option.  This flag will be reset as soon as you start editing a
-	   new file.  The flag will be used when making the file name for the
-	   ".swp" and ".~" files for the current file.  But when you are
-	   editing a file in a normal filesystem and write to an MS-DOS-like
-	   filesystem the flag will not have been set.  In that case the
-	   creation of the ".~" file may fail and you will get an error
-	   message.  Use the 'shortname' option in this case.
+(e.g., messydos or crossdos).  The backup file can be placed in another
+directory by setting 'backupdir'.
 
 When you started editing without giving a file name, "No File" is displayed in
 messages.  If the ":write" command is used with a file name argument, the file

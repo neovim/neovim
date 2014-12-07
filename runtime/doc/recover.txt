@@ -33,20 +33,13 @@ with the extension ".swp".
 - On Unix, a '.' is prepended to swap file names in the same directory as the
   edited file.  This avoids that the swap file shows up in a directory
   listing.
-- On MS-DOS machines and when the 'shortname' option is on, any '.' in the
-  original file name is replaced with '_'.
 - If this file already exists (e.g., when you are recovering from a crash) a
   warning is given and another extension is used, ".swo", ".swn", etc.
 - An existing file will never be overwritten.
 - The swap file is deleted as soon as Vim stops editing the file.
 
-Technical: The replacement of '.' with '_' is done to avoid problems with
-	   MS-DOS compatible filesystems (e.g., crossdos, multidos).  If Vim
-	   is able to detect that the file is on an MS-DOS-like filesystem, a
-	   flag is set that has the same effect as the 'shortname' option.
-	   This flag is reset when you start editing another file.
 							*E326*
-	   If the ".swp" file name already exists, the last character is
+Technical: If the ".swp" file name already exists, the last character is
 	   decremented until there is no file with that name or ".saa" is
 	   reached.  In the last case, no swap file is created.
 
