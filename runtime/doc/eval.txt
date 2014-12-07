@@ -2811,6 +2811,7 @@ exists({expr})	The result is a Number, which is non-zero if {expr} is
 		For checking for a supported feature use |has()|.
 
 		Examples: >
+			exists("&mouse")
 			exists("$HOSTNAME")
 			exists("*strftime")
 			exists("*s:MyFunc")
