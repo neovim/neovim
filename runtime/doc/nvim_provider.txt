@@ -25,7 +25,7 @@ examples of integration with external systems that are implemented in Vim and
 are now decoupled from Nvim core as providers:
 
 The first example is clipboard integration: On the original Vim source code,
-clipboard functions account for more than 1k lines of C source code(and that
+clipboard functions account for more than 1k lines of C source code (and that
 is just on ui.c). All to peform two tasks that are now accomplished with
 simple shell commands such as xclip or pbcopy/pbpaste.
 
@@ -57,21 +57,20 @@ What these functions do is simple:
   implemented, and is called by the "has" vimscript function to check if
   features are available.
 
-The basic idea is that the provider#(name)#Call function should implement 
+The basic idea is that the provider#(name)#Call function should implement
 integration with an external system, because calling shell commands and
-|msgpack-rpc| clients(Nvim only) is easier to do in vimscript.
+|msgpack-rpc| clients (Nvim only) is easier to do in vimscript.
 
-Now, back to the python example. Instead of modifying vimscript to allow the
-definition of lowercase functions and commands(for the |:python|, |:pyfile|
-and |:pydo| commands, and the |pyeval()| function), which would break
-backwards compatibility with Vim, we implemented the
+Now, back to the python example. Instead of modifying vimscript to allow for
+the definition of lowercase functions and commands (for the |:python|,
+|:pyfile|, and |:pydo| commands, and the |pyeval()| function), which would
+break backwards compatibility with Vim, we implemented the
 autoload/provider/python.vim script and the provider#python#Call function
 that is only defined if an external python host is started successfully.
 
-That works well with the has('python') expression (normally used by python
+That works well with the `has('python')` expression (normally used by python
 plugins) because if the python host isn't installed then the plugin will
-"think" it is running in a Vim compiled without +python feature.
-
+"think" it is running in a Vim compiled without |+python| feature.
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:
