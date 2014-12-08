@@ -751,10 +751,6 @@ switched off by setting the 'updatecount' option to 0 or starting Vim with
 the "-n" option.  Use the 'directory' option for placing the .swp file
 somewhere else.
 
-Vim is able to work correctly on filesystems with 8.3 file names, also when
-using messydos or crossdos filesystems on the Amiga, or any 8.3 mounted
-filesystem under Unix.  See |'shortname'|.
-
 Error messages are shown at least one second (Vi overwrites error messages).
 
 If Vim gives the |hit-enter| prompt, you can hit any key.  Characters other

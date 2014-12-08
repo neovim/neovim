@@ -4817,8 +4817,7 @@ Digraphs:
 
 Writing files:
 -   In vim_rename(), should lock "from" file when deleting "to" file for
-    systems other than Amiga.  Avoids problems with unexpected longname to
-    shortname conversion.
+    systems other than Amiga.
 8   write mch_isdevice() for Amiga, Mac, VMS, etc.
 8   When appending to a file, Vim should also make a backup and a 'patchmode'
     file.

@@ -987,12 +987,6 @@ call append("$", "patchmode\tkeep oldest version of a file; specifies file name 
 call <SID>OptionG("pm", &pm)
 call append("$", "fsync\tforcibly sync the file to disk after writing it")
 call <SID>BinOptionG("fs", &fs)
-if !has("msdos")
-  call append("$", "shortname\tuse 8.3 file names")
-  call append("$", "\t(local to buffer)")
-  call <SID>BinOptionL("sn")
-endif
-call <SID>OptionL("cm")
 
 
 call <SID>Header("the swap file")
