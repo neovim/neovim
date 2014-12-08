@@ -3624,13 +3624,7 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
           remove_trailing_zeroes = TRUE;
         }
 
-        if (fmt_spec == 'f' &&
-#ifdef VAX
-            abs_f > 1.0e38
-#else
-            abs_f > 1.0e307
-#endif
-            ) {
+        if (fmt_spec == 'f' && abs_f > 1.0e307) {
           /* Avoid a buffer overflow */
           strcpy(tmp, "inf");
           str_arg_l = 3;
