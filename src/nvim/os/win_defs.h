@@ -25,10 +25,10 @@
 #  define __func__ __FUNCTION__
 # endif
 # ifndef STDOUT_FILENO
-#  define STDOUT_FILENO fileno(stdout)
+#  define STDOUT_FILENO _fileno(stdout)
 # endif
 # ifndef STDERR_FILENO
-#  define STDERR_FILENO fileno(stderr)
+#  define STDERR_FILENO _fileno(stderr)
 # endif
 # ifndef W_OK
 // There is no W_OK for MSVC but it is 02
