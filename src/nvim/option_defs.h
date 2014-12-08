@@ -317,6 +317,13 @@ EXTERN char_u   *p_enc;         /* 'encoding' */
 EXTERN int p_deco;              /* 'delcombine' */
 EXTERN char_u   *p_ccv;         /* 'charconvert' */
 EXTERN char_u   *p_cedit;       /* 'cedit' */
+EXTERN char_u   *p_cb;          /* 'clipboard' */
+EXTERN unsigned cb_flags;
+#ifdef IN_OPTION_C
+static char *(p_cb_values[]) = {"unnamed", "unnamedplus", NULL};
+#endif
+# define CB_UNNAMED             0x001
+# define CB_UNNAMEDPLUS         0x002
 EXTERN long p_cwh;              /* 'cmdwinheight' */
 EXTERN long p_ch;               /* 'cmdheight' */
 EXTERN int p_confirm;           /* 'confirm' */
@@ -582,7 +589,6 @@ static char *(p_ttym_values[]) =
 EXTERN char_u   *p_udir;        /* 'undodir' */
 EXTERN long p_ul;               /* 'undolevels' */
 EXTERN long p_ur;               /* 'undoreload' */
-EXTERN int p_unc;               /* 'unnamedclip' */
 EXTERN long p_uc;               /* 'updatecount' */
 EXTERN long p_ut;               /* 'updatetime' */
 EXTERN char_u   *p_fcs;         /* 'fillchar' */

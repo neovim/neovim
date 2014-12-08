@@ -5119,6 +5119,20 @@ void list_append_tv(list_T *l, typval_T *tv)
 }
 
 /*
+ * Add a list to a list.
+ */
+void list_append_list(list_T *list, list_T *itemlist)
+{
+  listitem_T  *li = listitem_alloc();
+
+  li->li_tv.v_type = VAR_LIST;
+  li->li_tv.v_lock = 0;
+  li->li_tv.vval.v_list = itemlist;
+  list_append(list, li);
+  ++list->lv_refcount;
+}
+
+/*
  * Add a dictionary to a list.  Used by getqflist().
  */
 void list_append_dict(list_T *list, dict_T *dict)
@@ -19815,16 +19829,12 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
 
 bool eval_has_provider(char *name)
 {
-#define source_provider(name) \
-  do_source((uint8_t *)"$VIMRUNTIME/autoload/provider/" name ".vim", \
-                       false, \
-                       false)
 
 #define check_provider(name)                                              \
   if (has_##name == -1) {                                                 \
     has_##name = !!find_func((uint8_t *)"provider#" #name "#Call");       \
     if (!has_##name) {                                                    \
-      source_provider(#name);                                             \
+      script_autoload((uint8_t *)"provider#" #name "#Call", false);       \
       has_##name = !!find_func((uint8_t *)"provider#" #name "#Call");     \
     }                                                                     \
   }
