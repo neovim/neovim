@@ -108,6 +108,10 @@ if(NOT MSVC)
     ${CONV_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
 endif()
 
+if(DEFINED MIN_LOG_LEVEL)
+  add_definitions(-DMIN_LOG_LEVEL=${MIN_LOG_LEVEL})
+endif()
+
 get_directory_property(gen_cdefs COMPILE_DEFINITIONS)
 foreach(gen_cdef ${gen_cdefs} DO_NOT_DEFINE_EMPTY_ATTRIBUTES)
   if(NOT "${gen_cdef}" MATCHES "INCLUDE_GENERATED_DECLARATIONS")
