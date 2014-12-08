@@ -43,19 +43,19 @@ get_filename_component(_gitdescmoddir ${CMAKE_CURRENT_LIST_FILE} PATH)
 
 function(get_git_dir _gitdir)
   # check GIT_DIR in environment first
-  set(GIT_DIR "$ENV{GIT_DIR}")
+  set(GIT_DIR $ENV{GIT_DIR})
   if(NOT GIT_DIR)
-    set(GIT_PARENT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
-    set(GIT_DIR "${GIT_PARENT_DIR}/.git")
+    set(GIT_PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+    set(GIT_DIR ${GIT_PARENT_DIR}/.git)
   endif()
   # .git dir not found, search parent directories
-  while(NOT EXISTS "${GIT_DIR}")
-    set(GIT_PREVIOUS_PARENT "${GIT_PARENT_DIR}")
+  while(NOT EXISTS ${GIT_DIR})
+    set(GIT_PREVIOUS_PARENT ${GIT_PARENT_DIR})
     get_filename_component(GIT_PARENT_DIR ${GIT_PARENT_DIR} PATH)
     if(GIT_PARENT_DIR STREQUAL GIT_PREVIOUS_PARENT)
       return()
     endif()
-    set(GIT_DIR "${GIT_PARENT_DIR}/.git")
+    set(GIT_DIR ${GIT_PARENT_DIR}/.git)
   endwhile()
   # check if this is a submodule
   if(NOT IS_DIRECTORY ${GIT_DIR})
@@ -73,24 +73,24 @@ function(get_git_head_revision _refspecvar _hashvar)
     return()
   endif()
 
-  set(GIT_DATA "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/git-data")
-  if(NOT EXISTS "${GIT_DATA}")
-    file(MAKE_DIRECTORY "${GIT_DATA}")
+  set(GIT_DATA ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/git-data)
+  if(NOT EXISTS ${GIT_DATA})
+    file(MAKE_DIRECTORY ${GIT_DATA})
   endif()
 
-  if(NOT EXISTS "${GIT_DIR}/HEAD")
+  if(NOT EXISTS ${GIT_DIR}/HEAD)
     return()
   endif()
-  set(HEAD_FILE "${GIT_DATA}/HEAD")
-  configure_file("${GIT_DIR}/HEAD" "${HEAD_FILE}" COPYONLY)
+  set(HEAD_FILE ${GIT_DATA}/HEAD)
+  configure_file(${GIT_DIR}/HEAD ${HEAD_FILE} COPYONLY)
 
-  configure_file("${_gitdescmoddir}/GetGitRevisionDescription.cmake.in"
-    "${GIT_DATA}/grabRef.cmake"
+  configure_file(${_gitdescmoddir}/GetGitRevisionDescription.cmake.in
+    ${GIT_DATA}/grabRef.cmake
     @ONLY)
-  include("${GIT_DATA}/grabRef.cmake")
+  include(${GIT_DATA}/grabRef.cmake)
 
-  set(${_refspecvar} "${HEAD_REF}" PARENT_SCOPE)
-  set(${_hashvar} "${HEAD_HASH}" PARENT_SCOPE)
+  set(${_refspecvar} ${HEAD_REF} PARENT_SCOPE)
+  set(${_hashvar} ${HEAD_HASH} PARENT_SCOPE)
 endfunction()
 
 function(git_describe _var)
@@ -114,12 +114,12 @@ function(git_describe _var)
   endif()
 
   execute_process(COMMAND
-    "${GIT_EXECUTABLE}"
+    ${GIT_EXECUTABLE}
     describe
     ${hash}
     ${ARGN}
     WORKING_DIRECTORY
-    "${GIT_DIR}"
+    ${GIT_DIR}
     RESULT_VARIABLE
     res
     OUTPUT_VARIABLE
@@ -130,7 +130,7 @@ function(git_describe _var)
     set(out "${out}-${res}-NOTFOUND")
   endif()
 
-  set(${_var} "${out}" PARENT_SCOPE)
+  set(${_var} ${out} PARENT_SCOPE)
 endfunction()
 
 function(git_timestamp _var)
@@ -152,22 +152,23 @@ function(git_timestamp _var)
     return()
   endif()
 
-  execute_process(COMMAND "${GIT_EXECUTABLE}" log -1 --format="%ci" ${hash} ${ARGN}
-    WORKING_DIRECTORY "${GIT_DIR}"
+  execute_process(COMMAND ${GIT_EXECUTABLE} log -1 --format="%ci" ${hash} ${ARGN}
+    WORKING_DIRECTORY ${GIT_DIR}
     RESULT_VARIABLE res
     OUTPUT_VARIABLE out
     ERROR_QUIET
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-  if(NOT res EQUAL 0)
+  if(res EQUAL 0)
+    string(REGEX REPLACE "[-\" :]" "" out ${out})
+    string(SUBSTRING ${out} 0 12 out)
+  else()
     set(out "${out}-${res}-NOTFOUND")
   endif()
-  string(REGEX REPLACE "[-\" :]" "" out ${out})
-  string(SUBSTRING ${out} 0 12 out)
 
   set(${_var} ${out} PARENT_SCOPE)
 endfunction()
 
 function(git_get_exact_tag _var)
   git_describe(out --exact-match ${ARGN})
-  set(${_var} "${out}" PARENT_SCOPE)
+  set(${_var} ${out} PARENT_SCOPE)
 endfunction()
