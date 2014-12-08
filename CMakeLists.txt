@@ -111,13 +111,7 @@ if(NOT _FORTIFY_SOURCE_ACCEPTABLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_FORTIFY_SOURCE_PREFIX}-U_FORTIFY_SOURCE ${_FORTIFY_SOURCE_PREFIX}-D_FORTIFY_SOURCE=1")
 endif()
 
-if (MSVC)
-  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-  # We link against static dependencies
-  set(CMAKE_C_FLAGS_RELEASE -MT)
-  set(CMAKE_C_FLAGS_DEBUG -MTd)
-  set(CMAKE_C_FLAGS_RELWITHDEBINFO -MTd)
-else()
+if (NOT MSVC)
   add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter
     -Wstrict-prototypes -std=gnu99)
 endif()
@@ -150,6 +144,16 @@ else()
   set(CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g"
     CACHE STRING "Flags used by the compiler during release builds with debug info." FORCE)
 endif()
+
+if(MSVC)
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+  # We link against the static runtime - replace /MD with /MT
+  foreach(_var
+    CMAKE_C_FLAGS_RELEASE CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELWITHDEBINFO)
+    string(REPLACE "/MD" "/MT" ${_var} "${${_var}}")
+  endforeach()
+endif()
+
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   set(DEBUG 1)
