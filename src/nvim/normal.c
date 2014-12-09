@@ -1856,21 +1856,21 @@ do_mouse (
 
   save_cursor = curwin->w_cursor;
 
-  /*
-   * When GUI is active, always recognize mouse events, otherwise:
-   * - Ignore mouse event in normal mode if 'mouse' doesn't include 'n'.
-   * - Ignore mouse event in visual mode if 'mouse' doesn't include 'v'.
-   * - For command line and insert mode 'mouse' is checked before calling
-   *	 do_mouse().
-   */
-  if (do_always)
-    do_always = false;
-  else {
-    if (VIsual_active) {
-      if (!mouse_has(MOUSE_VISUAL))
+  // When "abstract_ui" is active, always recognize mouse events, otherwise:
+  // - Ignore mouse event in normal mode if 'mouse' doesn't include 'n'.
+  // - Ignore mouse event in visual mode if 'mouse' doesn't include 'v'.
+  // - For command line and insert mode 'mouse' is checked before calling
+  //   do_mouse().
+  if (!abstract_ui) {
+    if (do_always)
+      do_always = false;
+    else {
+      if (VIsual_active) {
+        if (!mouse_has(MOUSE_VISUAL))
+          return false;
+      } else if (State == NORMAL && !mouse_has(MOUSE_NORMAL))
         return false;
-    } else if (State == NORMAL && !mouse_has(MOUSE_NORMAL))
-      return false;
+    }
   }
 
   for (;; ) {
