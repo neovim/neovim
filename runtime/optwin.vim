@@ -1099,13 +1099,8 @@ if has("quickfix")
 endif
 
 
-if has("msdos") || has("win16") || has("win32") || has("osfiletype")
+if has("msdos") || has("win16") || has("win32")
   call <SID>Header("system specific")
-  if has("osfiletype")
-    call append("$", "osfiletype\tOS-specific information about the type of file")
-    call append("$", "\t(local to buffer)")
-    call <SID>OptionL("oft")
-  endif
   if has("msdos") || has("win16") || has("win32")
     call append("$", "shellslash\tuse forward slashes in file names; for Unix-like shells")
     call <SID>BinOptionG("ssl", &ssl)

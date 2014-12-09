@@ -3820,8 +3820,6 @@ GUI:
 
 
 Autocommands:
-9   Rework the code from FEAT_OSFILETYPE for autocmd-osfiletypes to use
-    'filetype'.  Only for when the current buffer is known.
 -   Put autocommand event names in a hashtable for faster lookup?
 8   When the SwapExists event is triggered, provide information about the
     swap file, e.g., whether the process is running, file was modified, etc.

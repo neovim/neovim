@@ -5204,14 +5204,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
-
-					*'osfiletype'* *'oft'*
-'osfiletype' 'oft'	string (default: "")
-			local to buffer
-			{not in Vi}
-	This option was supported on RISC OS, which has been removed.
-
-
 						*'paragraphs'* *'para'*
 'paragraphs' 'para'	string	(default "IPLPPPQPP TPHPLIPpLpItpplpipbp")
 			global
