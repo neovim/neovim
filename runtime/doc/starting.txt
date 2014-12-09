@@ -767,7 +767,7 @@ accordingly.  Vim proceeds in this order:
      a. If vim was started as |evim| or |eview| or with the |-y| argument, the
 	script $VIMRUNTIME/evim.vim will be loaded.
 							*system-vimrc*
-     b. For Unix, MS-DOS, MS-Windows, VMS, Macintosh, RISC-OS and Amiga
+     b. For Unix, MS-DOS, MS-Windows, VMS, Macintosh, and Amiga,
 	the system vimrc file is read for initializations.  The path of this
 	file is shown with the ":version" command.  Mostly it's "$VIM/vimrc".
 	Note that this file is ALWAYS read in 'compatible' mode, since the

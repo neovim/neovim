@@ -36,7 +36,6 @@ Detail: The ":filetype on" command will load one of these files:
 		Amiga	    $VIMRUNTIME/filetype.vim
 		Mac	    $VIMRUNTIME:filetype.vim
 		MS-DOS	    $VIMRUNTIME\filetype.vim
-		RiscOS	    Vim:Filetype
 		Unix	    $VIMRUNTIME/filetype.vim
 		VMS	    $VIMRUNTIME/filetype.vim
 	This file is a Vim script that defines autocommands for the
