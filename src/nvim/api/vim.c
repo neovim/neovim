@@ -21,6 +21,7 @@
 #include "nvim/message.h"
 #include "nvim/eval.h"
 #include "nvim/misc2.h"
+#include "nvim/syntax.h"
 #include "nvim/term.h"
 #include "nvim/getchar.h"
 #include "nvim/os/input.h"
@@ -544,6 +545,11 @@ void vim_unsubscribe(uint64_t channel_id, String event)
   memcpy(e, event.data, length);
   e[length] = NUL;
   channel_unsubscribe(channel_id, e);
+}
+
+Integer vim_name_to_color(String name)
+{
+  return name_to_color((uint8_t *)name.data);
 }
 
 Array vim_get_api_info(uint64_t channel_id)

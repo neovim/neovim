@@ -11,6 +11,7 @@
  */
 
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -68,9 +69,10 @@ struct hl_group {
   int sg_cterm_attr;            /* Screen attr for color term mode */
   /* Store the sp color name for the GUI or synIDattr() */
   int sg_gui;                   /* "gui=" highlighting attributes */
-  char_u      *sg_gui_fg_name;  /* GUI foreground color name */
-  char_u      *sg_gui_bg_name;  /* GUI background color name */
-  char_u      *sg_gui_sp_name;  /* GUI special color name */
+  RgbValue sg_rgb_fg;           // RGB foreground color
+  RgbValue sg_rgb_bg;           // RGB background color
+  uint8_t *sg_rgb_fg_name;      // RGB foreground color name
+  uint8_t *sg_rgb_bg_name;      // RGB background color name
   int sg_link;                  /* link to this highlight group ID */
   int sg_set;                   /* combination of SG_* flags */
   scid_T sg_scriptID;           /* script in which the group was last set */
@@ -6518,34 +6520,39 @@ do_highlight (
           if (!init)
             HL_TABLE()[idx].sg_set |= SG_GUI;
 
-          free(HL_TABLE()[idx].sg_gui_fg_name);
-          if (STRCMP(arg, "NONE"))
-            HL_TABLE()[idx].sg_gui_fg_name = vim_strsave(arg);
-          else
-            HL_TABLE()[idx].sg_gui_fg_name = NULL;
+          free(HL_TABLE()[idx].sg_rgb_fg_name);
+          if (STRCMP(arg, "NONE")) {
+            HL_TABLE()[idx].sg_rgb_fg_name = (uint8_t *)xstrdup((char *)arg);
+            HL_TABLE()[idx].sg_rgb_fg = name_to_color(arg);
+          } else {
+            HL_TABLE()[idx].sg_rgb_fg_name = NULL;
+            HL_TABLE()[idx].sg_rgb_fg = -1;
+          }
+        }
+
+        if (is_normal_group) {
+          normal_fg = HL_TABLE()[idx].sg_rgb_fg;
         }
       } else if (STRCMP(key, "GUIBG") == 0)   {
         if (!init || !(HL_TABLE()[idx].sg_set & SG_GUI)) {
           if (!init)
             HL_TABLE()[idx].sg_set |= SG_GUI;
 
-          free(HL_TABLE()[idx].sg_gui_bg_name);
-          if (STRCMP(arg, "NONE") != 0)
-            HL_TABLE()[idx].sg_gui_bg_name = vim_strsave(arg);
-          else
-            HL_TABLE()[idx].sg_gui_bg_name = NULL;
+          free(HL_TABLE()[idx].sg_rgb_bg_name);
+          if (STRCMP(arg, "NONE") != 0) {
+            HL_TABLE()[idx].sg_rgb_bg_name = (uint8_t *)xstrdup((char *)arg);
+            HL_TABLE()[idx].sg_rgb_bg = name_to_color(arg);
+          } else {
+            HL_TABLE()[idx].sg_rgb_bg_name = NULL;
+            HL_TABLE()[idx].sg_rgb_bg = -1;
+          }
+        }
+
+        if (is_normal_group) {
+          normal_bg = HL_TABLE()[idx].sg_rgb_bg;
         }
       } else if (STRCMP(key, "GUISP") == 0)   {
-        if (!init || !(HL_TABLE()[idx].sg_set & SG_GUI)) {
-          if (!init)
-            HL_TABLE()[idx].sg_set |= SG_GUI;
-
-          free(HL_TABLE()[idx].sg_gui_sp_name);
-          if (STRCMP(arg, "NONE") != 0)
-            HL_TABLE()[idx].sg_gui_sp_name = vim_strsave(arg);
-          else
-            HL_TABLE()[idx].sg_gui_sp_name = NULL;
-        }
+        // Ignored
       } else if (STRCMP(key, "START") == 0 || STRCMP(key, "STOP") == 0)   {
         char_u buf[100];
         char_u      *tname;
@@ -6670,6 +6677,8 @@ void free_highlight(void)
  */
 void restore_cterm_colors(void)
 {
+  normal_fg = -1;
+  normal_bg = -1;
   cterm_normal_fg_color = 0;
   cterm_normal_fg_bold = 0;
   cterm_normal_bg_color = 0;
@@ -6705,12 +6714,12 @@ static void highlight_clear(int idx)
   HL_TABLE()[idx].sg_cterm_bg = 0;
   HL_TABLE()[idx].sg_cterm_attr = 0;
   HL_TABLE()[idx].sg_gui = 0;
-  free(HL_TABLE()[idx].sg_gui_fg_name);
-  HL_TABLE()[idx].sg_gui_fg_name = NULL;
-  free(HL_TABLE()[idx].sg_gui_bg_name);
-  HL_TABLE()[idx].sg_gui_bg_name = NULL;
-  free(HL_TABLE()[idx].sg_gui_sp_name);
-  HL_TABLE()[idx].sg_gui_sp_name = NULL;
+  HL_TABLE()[idx].sg_rgb_fg = -1;
+  HL_TABLE()[idx].sg_rgb_bg = -1;
+  free(HL_TABLE()[idx].sg_rgb_fg_name);
+  HL_TABLE()[idx].sg_rgb_fg_name = NULL;
+  free(HL_TABLE()[idx].sg_rgb_bg_name);
+  HL_TABLE()[idx].sg_rgb_bg_name = NULL;
   /* Clear the script ID only when there is no link, since that is not
    * cleared. */
   if (HL_TABLE()[idx].sg_link == 0)
@@ -6771,7 +6780,11 @@ static int get_attr_entry(garray_T *table, attrentry_T *aep)
                      && aep->ae_u.cterm.fg_color
                      == taep->ae_u.cterm.fg_color
                      && aep->ae_u.cterm.bg_color
-                     == taep->ae_u.cterm.bg_color)
+                     == taep->ae_u.cterm.bg_color
+                     && aep->fg_color
+                     == taep->fg_color
+                     && aep->bg_color
+                     == taep->bg_color)
                  ))
 
       return i + ATTR_OFF;
@@ -6818,6 +6831,8 @@ static int get_attr_entry(garray_T *table, attrentry_T *aep)
   } else if (table == &cterm_attr_table)   {
     taep->ae_u.cterm.fg_color = aep->ae_u.cterm.fg_color;
     taep->ae_u.cterm.bg_color = aep->ae_u.cterm.bg_color;
+    taep->fg_color = aep->fg_color;
+    taep->bg_color = aep->bg_color;
   }
 
   return table->ga_len - 1 + ATTR_OFF;
@@ -6880,6 +6895,10 @@ int hl_combine_attr(int char_attr, int prim_attr)
           new_en.ae_u.cterm.fg_color = spell_aep->ae_u.cterm.fg_color;
         if (spell_aep->ae_u.cterm.bg_color > 0)
           new_en.ae_u.cterm.bg_color = spell_aep->ae_u.cterm.bg_color;
+        if (spell_aep->fg_color >= 0)
+          new_en.fg_color = spell_aep->fg_color;
+        if (spell_aep->bg_color >= 0)
+          new_en.bg_color = spell_aep->bg_color;
       }
     }
     return get_attr_entry(&cterm_attr_table, &new_en);
@@ -6974,11 +6993,11 @@ static void highlight_list_one(int id)
   didh = highlight_list_arg(id, didh, LIST_ATTR,
       sgp->sg_gui, NULL, "gui");
   didh = highlight_list_arg(id, didh, LIST_STRING,
-      0, sgp->sg_gui_fg_name, "guifg");
+      0, sgp->sg_rgb_fg_name, "guifg");
   didh = highlight_list_arg(id, didh, LIST_STRING,
-      0, sgp->sg_gui_bg_name, "guibg");
+      0, sgp->sg_rgb_bg_name, "guibg");
   didh = highlight_list_arg(id, didh, LIST_STRING,
-      0, sgp->sg_gui_sp_name, "guisp");
+      0, NULL, "guisp");
 
   if (sgp->sg_link && !got_int) {
     (void)syn_list_header(didh, 9999, id);
@@ -7092,10 +7111,10 @@ highlight_color (
     return NULL;
   if (modec == 'g') {
     if (fg)
-      return HL_TABLE()[id - 1].sg_gui_fg_name;
+      return HL_TABLE()[id - 1].sg_rgb_fg_name;
     if (sp)
-      return HL_TABLE()[id - 1].sg_gui_sp_name;
-    return HL_TABLE()[id - 1].sg_gui_bg_name;
+      return NULL;
+    return HL_TABLE()[id - 1].sg_rgb_bg_name;
   }
   if (font || sp)
     return NULL;
@@ -7192,9 +7211,14 @@ set_hl_attr (
   if (sgp->sg_cterm_fg == 0 && sgp->sg_cterm_bg == 0)
     sgp->sg_cterm_attr = sgp->sg_cterm;
   else {
-    at_en.ae_attr = sgp->sg_cterm;
+    at_en.ae_attr = abstract_ui ? sgp->sg_gui : sgp->sg_cterm;
     at_en.ae_u.cterm.fg_color = sgp->sg_cterm_fg;
     at_en.ae_u.cterm.bg_color = sgp->sg_cterm_bg;
+    // FIXME(tarruda): The "unset value" for rgb is -1, but since hlgroup is
+    // initialized with 0(by garray functions), check for sg_rgb_{f,b}g_name
+    // before setting attr_entry->{f,g}g_color to a other than -1
+    at_en.fg_color = sgp->sg_rgb_fg_name ? sgp->sg_rgb_fg : -1;
+    at_en.bg_color = sgp->sg_rgb_bg_name ? sgp->sg_rgb_bg : -1;
     sgp->sg_cterm_attr = get_attr_entry(&cterm_attr_table, &at_en);
   }
 }
@@ -7632,6 +7656,200 @@ char_u *get_highlight_name(expand_T *xp, int idx)
   return HL_TABLE()[idx].sg_name;
 }
 
+
+RgbValue name_to_color(uint8_t *name)
+{
+#define RGB(r, g, b) ((r << 16) | (g << 8) | b)
+  static struct {
+    char *name;
+    RgbValue color;
+  } color_name_table[] = {
+    // Color names taken from
+    // http://www.rapidtables.com/web/color/RGB_Color.htm
+    {"Maroon", RGB(0x80, 0x00, 0x00)},
+    {"DarkRed", RGB(0x8b, 0x00, 0x00)},
+    {"Brown", RGB(0xa5, 0x2a, 0x2a)},
+    {"Firebrick", RGB(0xb2, 0x22, 0x22)},
+    {"Crimson", RGB(0xdc, 0x14, 0x3c)},
+    {"Red", RGB(0xff, 0x00, 0x00)},
+    {"Tomato", RGB(0xff, 0x63, 0x47)},
+    {"Coral", RGB(0xff, 0x7f, 0x50)},
+    {"IndianRed", RGB(0xcd, 0x5c, 0x5c)},
+    {"LightCoral", RGB(0xf0, 0x80, 0x80)},
+    {"DarkSalmon", RGB(0xe9, 0x96, 0x7a)},
+    {"Salmon", RGB(0xfa, 0x80, 0x72)},
+    {"LightSalmon", RGB(0xff, 0xa0, 0x7a)},
+    {"OrangeRed", RGB(0xff, 0x45, 0x00)},
+    {"DarkOrange", RGB(0xff, 0x8c, 0x00)},
+    {"Orange", RGB(0xff, 0xa5, 0x00)},
+    {"Gold", RGB(0xff, 0xd7, 0x00)},
+    {"DarkGoldenRod", RGB(0xb8, 0x86, 0x0b)},
+    {"GoldenRod", RGB(0xda, 0xa5, 0x20)},
+    {"PaleGoldenRod", RGB(0xee, 0xe8, 0xaa)},
+    {"DarkKhaki", RGB(0xbd, 0xb7, 0x6b)},
+    {"Khaki", RGB(0xf0, 0xe6, 0x8c)},
+    {"Olive", RGB(0x80, 0x80, 0x00)},
+    {"Yellow", RGB(0xff, 0xff, 0x00)},
+    {"YellowGreen", RGB(0x9a, 0xcd, 0x32)},
+    {"DarkOliveGreen", RGB(0x55, 0x6b, 0x2f)},
+    {"OliveDrab", RGB(0x6b, 0x8e, 0x23)},
+    {"LawnGreen", RGB(0x7c, 0xfc, 0x00)},
+    {"ChartReuse", RGB(0x7f, 0xff, 0x00)},
+    {"GreenYellow", RGB(0xad, 0xff, 0x2f)},
+    {"DarkGreen", RGB(0x00, 0x64, 0x00)},
+    {"Green", RGB(0x00, 0x80, 0x00)},
+    {"ForestGreen", RGB(0x22, 0x8b, 0x22)},
+    {"Lime", RGB(0x00, 0xff, 0x00)},
+    {"LimeGreen", RGB(0x32, 0xcd, 0x32)},
+    {"LightGreen", RGB(0x90, 0xee, 0x90)},
+    {"PaleGreen", RGB(0x98, 0xfb, 0x98)},
+    {"DarkSeaGreen", RGB(0x8f, 0xbc, 0x8f)},
+    {"MediumSpringGreen", RGB(0x00, 0xfa, 0x9a)},
+    {"SpringGreen", RGB(0x00, 0xff, 0x7f)},
+    {"SeaGreen", RGB(0x2e, 0x8b, 0x57)},
+    {"MediumAquamarine", RGB(0x66, 0xcd, 0xaa)},
+    {"MediumSeaGreen", RGB(0x3c, 0xb3, 0x71)},
+    {"LightSeaGreen", RGB(0x20, 0xb2, 0xaa)},
+    {"DarkSlateGray", RGB(0x2f, 0x4f, 0x4f)},
+    {"Teal", RGB(0x00, 0x80, 0x80)},
+    {"DarkCyan", RGB(0x00, 0x8b, 0x8b)},
+    {"Aqua", RGB(0x00, 0xff, 0xff)},
+    {"Cyan", RGB(0x00, 0xff, 0xff)},
+    {"LightCyan", RGB(0xe0, 0xff, 0xff)},
+    {"DarkTurquoise", RGB(0x00, 0xce, 0xd1)},
+    {"Turquoise", RGB(0x40, 0xe0, 0xd0)},
+    {"MediumTurquoise", RGB(0x48, 0xd1, 0xcc)},
+    {"PaleTurquoise", RGB(0xaf, 0xee, 0xee)},
+    {"Aquamarine", RGB(0x7f, 0xff, 0xd4)},
+    {"PowderBlue", RGB(0xb0, 0xe0, 0xe6)},
+    {"CadetBlue", RGB(0x5f, 0x9e, 0xa0)},
+    {"SteelBlue", RGB(0x46, 0x82, 0xb4)},
+    {"CornFlowerBlue", RGB(0x64, 0x95, 0xed)},
+    {"DeepSkyBlue", RGB(0x00, 0xbf, 0xff)},
+    {"DodgerBlue", RGB(0x1e, 0x90, 0xff)},
+    {"LightBlue", RGB(0xad, 0xd8, 0xe6)},
+    {"SkyBlue", RGB(0x87, 0xce, 0xeb)},
+    {"LightSkyBlue", RGB(0x87, 0xce, 0xfa)},
+    {"MidnightBlue", RGB(0x19, 0x19, 0x70)},
+    {"Navy", RGB(0x00, 0x00, 0x80)},
+    {"DarkBlue", RGB(0x00, 0x00, 0x8b)},
+    {"MediumBlue", RGB(0x00, 0x00, 0xcd)},
+    {"Blue", RGB(0x00, 0x00, 0xff)},
+    {"RoyalBlue", RGB(0x41, 0x69, 0xe1)},
+    {"BlueViolet", RGB(0x8a, 0x2b, 0xe2)},
+    {"Indigo", RGB(0x4b, 0x00, 0x82)},
+    {"DarkSlateBlue", RGB(0x48, 0x3d, 0x8b)},
+    {"SlateBlue", RGB(0x6a, 0x5a, 0xcd)},
+    {"MediumSlateBlue", RGB(0x7b, 0x68, 0xee)},
+    {"MediumPurple", RGB(0x93, 0x70, 0xdb)},
+    {"DarkMagenta", RGB(0x8b, 0x00, 0x8b)},
+    {"DarkViolet", RGB(0x94, 0x00, 0xd3)},
+    {"DarkOrchid", RGB(0x99, 0x32, 0xcc)},
+    {"MediumOrchid", RGB(0xba, 0x55, 0xd3)},
+    {"Purple", RGB(0x80, 0x00, 0x80)},
+    {"Thistle", RGB(0xd8, 0xbf, 0xd8)},
+    {"Plum", RGB(0xdd, 0xa0, 0xdd)},
+    {"Violet", RGB(0xee, 0x82, 0xee)},
+    {"Magenta", RGB(0xff, 0x00, 0xff)},
+    {"Fuchsia", RGB(0xff, 0x00, 0xff)},
+    {"Orchid", RGB(0xda, 0x70, 0xd6)},
+    {"MediumVioletRed", RGB(0xc7, 0x15, 0x85)},
+    {"PaleVioletRed", RGB(0xdb, 0x70, 0x93)},
+    {"DeepPink", RGB(0xff, 0x14, 0x93)},
+    {"HotPink", RGB(0xff, 0x69, 0xb4)},
+    {"LightPink", RGB(0xff, 0xb6, 0xc1)},
+    {"Pink", RGB(0xff, 0xc0, 0xcb)},
+    {"AntiqueWhite", RGB(0xfa, 0xeb, 0xd7)},
+    {"Beige", RGB(0xf5, 0xf5, 0xdc)},
+    {"Bisque", RGB(0xff, 0xe4, 0xc4)},
+    {"BlanchedAlmond", RGB(0xff, 0xeb, 0xcd)},
+    {"Wheat", RGB(0xf5, 0xde, 0xb3)},
+    {"Cornsilk", RGB(0xff, 0xf8, 0xdc)},
+    {"LemonChiffon", RGB(0xff, 0xfa, 0xcd)},
+    {"LightGoldenRodYellow", RGB(0xfa, 0xfa, 0xd2)},
+    {"LightYellow", RGB(0xff, 0xff, 0xe0)},
+    {"SaddleBrown", RGB(0x8b, 0x45, 0x13)},
+    {"Sienna", RGB(0xa0, 0x52, 0x2d)},
+    {"Chocolate", RGB(0xd2, 0x69, 0x1e)},
+    {"Peru", RGB(0xcd, 0x85, 0x3f)},
+    {"SandyBrown", RGB(0xf4, 0xa4, 0x60)},
+    {"BurlyWood", RGB(0xde, 0xb8, 0x87)},
+    {"Tan", RGB(0xd2, 0xb4, 0x8c)},
+    {"RosyBrown", RGB(0xbc, 0x8f, 0x8f)},
+    {"Moccasin", RGB(0xff, 0xe4, 0xb5)},
+    {"NavajoWhite", RGB(0xff, 0xde, 0xad)},
+    {"PeachPuff", RGB(0xff, 0xda, 0xb9)},
+    {"MistyRose", RGB(0xff, 0xe4, 0xe1)},
+    {"LavenderBlush", RGB(0xff, 0xf0, 0xf5)},
+    {"Linen", RGB(0xfa, 0xf0, 0xe6)},
+    {"Oldlace", RGB(0xfd, 0xf5, 0xe6)},
+    {"PapayaWhip", RGB(0xff, 0xef, 0xd5)},
+    {"SeaShell", RGB(0xff, 0xf5, 0xee)},
+    {"MintCream", RGB(0xf5, 0xff, 0xfa)},
+    {"SlateGray", RGB(0x70, 0x80, 0x90)},
+    {"LightSlateGray", RGB(0x77, 0x88, 0x99)},
+    {"LightSteelBlue", RGB(0xb0, 0xc4, 0xde)},
+    {"Lavender", RGB(0xe6, 0xe6, 0xfa)},
+    {"FloralWhite", RGB(0xff, 0xfa, 0xf0)},
+    {"AliceBlue", RGB(0xf0, 0xf8, 0xff)},
+    {"GhostWhite", RGB(0xf8, 0xf8, 0xff)},
+    {"Honeydew", RGB(0xf0, 0xff, 0xf0)},
+    {"Ivory", RGB(0xff, 0xff, 0xf0)},
+    {"Azure", RGB(0xf0, 0xff, 0xff)},
+    {"Snow", RGB(0xff, 0xfa, 0xfa)},
+    {"Black", RGB(0x00, 0x00, 0x00)},
+    {"DimGray", RGB(0x69, 0x69, 0x69)},
+    {"DimGrey", RGB(0x69, 0x69, 0x69)},
+    {"Gray", RGB(0x80, 0x80, 0x80)},
+    {"Grey", RGB(0x80, 0x80, 0x80)},
+    {"DarkGray", RGB(0xa9, 0xa9, 0xa9)},
+    {"DarkGrey", RGB(0xa9, 0xa9, 0xa9)},
+    {"Silver", RGB(0xc0, 0xc0, 0xc0)},
+    {"LightGray", RGB(0xd3, 0xd3, 0xd3)},
+    {"LightGrey", RGB(0xd3, 0xd3, 0xd3)},
+    {"Gainsboro", RGB(0xdc, 0xdc, 0xdc)},
+    {"WhiteSmoke", RGB(0xf5, 0xf5, 0xf5)},
+    {"White", RGB(0xff, 0xff, 0xff)},
+    // The color names below were taken from gui_x11.c in vim source 
+    {"LightRed", RGB(0xff, 0xbb, 0xbb)},
+    {"LightMagenta",RGB(0xff, 0xbb, 0xff)},
+    {"DarkYellow", RGB(0xbb, 0xbb, 0x00)},
+    {"Gray10", RGB(0x1a, 0x1a, 0x1a)},
+    {"Grey10", RGB(0x1a, 0x1a, 0x1a)},
+    {"Gray20", RGB(0x33, 0x33, 0x33)},
+    {"Grey20", RGB(0x33, 0x33, 0x33)},
+    {"Gray30", RGB(0x4d, 0x4d, 0x4d)},
+    {"Grey30", RGB(0x4d, 0x4d, 0x4d)},
+    {"Gray40", RGB(0x66, 0x66, 0x66)},
+    {"Grey40", RGB(0x66, 0x66, 0x66)},
+    {"Gray50", RGB(0x7f, 0x7f, 0x7f)},
+    {"Grey50", RGB(0x7f, 0x7f, 0x7f)},
+    {"Gray60", RGB(0x99, 0x99, 0x99)},
+    {"Grey60", RGB(0x99, 0x99, 0x99)},
+    {"Gray70", RGB(0xb3, 0xb3, 0xb3)},
+    {"Grey70", RGB(0xb3, 0xb3, 0xb3)},
+    {"Gray80", RGB(0xcc, 0xcc, 0xcc)},
+    {"Grey80", RGB(0xcc, 0xcc, 0xcc)},
+    {"Gray90", RGB(0xe5, 0xe5, 0xe5)},
+    {"Grey90", RGB(0xe5, 0xe5, 0xe5)},
+    {NULL, 0},
+  };
+
+  if (name[0] == '#' && isxdigit(name[1]) && isxdigit(name[2])
+      && isxdigit(name[3]) && isxdigit(name[4]) && isxdigit(name[5])
+      && isxdigit(name[6]) && name[7] == NUL) {
+    // rgb hex string
+    return strtol((char *)(name + 1), NULL, 16);
+  }
+
+  for (int i = 0; color_name_table[i].name != NULL; i++) {
+    if (!STRICMP(name, color_name_table[i].name)) {
+      return color_name_table[i].color;
+    }
+  }
+
+  return -1;
+}
 
 /**************************************
 *  End of Highlighting stuff	      *

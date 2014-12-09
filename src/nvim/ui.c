@@ -316,8 +316,6 @@ static void highlight_stop(int mask)
 static void set_highlight_args(int mask, HlAttrs *attrs)
 {
   attrentry_T *aep = NULL;
-  attrs->foreground = -1;
-  attrs->background = -1;
 
   if (mask > HL_ALL) {
     aep = syn_cterm_attr2entry(mask);
@@ -330,16 +328,8 @@ static void set_highlight_args(int mask, HlAttrs *attrs)
   attrs->undercurl = mask & HL_UNDERCURL;
   attrs->italic = mask & HL_ITALIC;
   attrs->reverse = mask & HL_INVERSE;
-
-  if (aep && aep->ae_u.cterm.fg_color
-      && (cterm_normal_fg_color != aep->ae_u.cterm.fg_color)) {
-    attrs->foreground = aep->ae_u.cterm.fg_color - 1;
-  }
-
-  if (aep && aep->ae_u.cterm.bg_color
-      && (cterm_normal_bg_color != aep->ae_u.cterm.bg_color)) {
-    attrs->background = aep->ae_u.cterm.bg_color - 1;
-  }
+  attrs->foreground = aep && aep->fg_color >= 0 ? aep->fg_color : normal_fg;
+  attrs->background = aep && aep->bg_color >= 0 ? aep->bg_color : normal_bg;
 }
 
 static void parse_abstract_ui_codes(uint8_t *ptr, int len)
