@@ -5,8 +5,6 @@
 
 #include "nvim/buffer_defs.h"
 
-typedef int guicolor_T;
-
 /*
  * Terminal highlighting attribute bits.
  * Attributes above HL_ALL are used for syntax highlighting.

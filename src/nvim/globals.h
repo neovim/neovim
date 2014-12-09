@@ -465,6 +465,8 @@ EXTERN int highlight_stlnc[9];                  /* On top of user */
 EXTERN int cterm_normal_fg_color INIT(= 0);
 EXTERN int cterm_normal_fg_bold INIT(= 0);
 EXTERN int cterm_normal_bg_color INIT(= 0);
+EXTERN RgbValue normal_fg INIT(= -1);
+EXTERN RgbValue normal_bg INIT(= -1);
 
 EXTERN int autocmd_busy INIT(= FALSE);          /* Is apply_autocmds() busy? */
 EXTERN int autocmd_no_enter INIT(= FALSE);      /* *Enter autocmds disabled */
@@ -1251,6 +1253,8 @@ EXTERN int curr_tmode INIT(= TMODE_COOK); /* contains current terminal mode */
 
 // If a msgpack-rpc channel should be started over stdin/stdout
 EXTERN bool embedded_mode INIT(= false);
+// Using the "abstract_ui" termcap
+EXTERN bool abstract_ui INIT(= false);
 
 /// Used to track the status of external functions.
 /// Currently only used for iconv().

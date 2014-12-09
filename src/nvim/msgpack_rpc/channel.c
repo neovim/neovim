@@ -10,6 +10,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/msgpack_rpc/remote_ui.h"
 #include "nvim/os/event.h"
 #include "nvim/os/rstream.h"
 #include "nvim/os/rstream_defs.h"
@@ -99,6 +100,17 @@ void channel_init(void)
 
   if (embedded_mode) {
     channel_from_stdio();
+  }
+
+  if (abstract_ui) {
+    // Add handler for "attach_ui"
+    remote_ui_init();
+    String method = cstr_as_string("attach_ui");
+    MsgpackRpcRequestHandler handler = {.fn = remote_ui_attach, .defer = true};
+    msgpack_rpc_add_method_handler(method, handler);
+    method = cstr_as_string("detach_ui");
+    handler.fn = remote_ui_detach;
+    msgpack_rpc_add_method_handler(method, handler);
   }
 }
 
@@ -645,6 +657,10 @@ static void on_stdio_close(Event e)
 
 static void free_channel(Channel *channel)
 {
+  if (abstract_ui) {
+    remote_ui_disconnect(channel->id);
+  }
+
   pmap_del(uint64_t)(channels, channel->id);
   msgpack_unpacker_free(channel->unpacker);
 

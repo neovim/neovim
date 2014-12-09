@@ -2513,6 +2513,13 @@ fix_input_buffer (
     int script                     /* TRUE when reading from a script */
 )
 {
+  if (abstract_ui) {
+    // Should not escape K_SPECIAL/CSI while in embedded mode because vim key
+    // codes keys are processed in input.c/input_enqueue.
+    buf[len] = NUL;
+    return len;
+  }
+
   int i;
   char_u      *p = buf;
 

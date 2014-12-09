@@ -1984,10 +1984,6 @@ void free_cmdline_buf(void)
  */
 static void draw_cmdline(int start, int len)
 {
-  if (embedded_mode) {
-    return;
-  }
-
   int i;
 
   if (cmdline_star > 0)

@@ -5824,9 +5824,12 @@ static void screen_start_highlight(int attr)
   attrentry_T *aep = NULL;
 
   screen_attr = attr;
-  if (full_screen
-      ) {
-    {
+  if (full_screen) {
+    if (abstract_ui) {
+      char buf[20];
+      sprintf(buf, "\033|%dh", attr);
+      OUT_STR(buf);
+    } else {
       if (attr > HL_ALL) {                              /* special HL attr. */
         if (t_colors > 1)
           aep = syn_cterm_attr2entry(attr);
@@ -5877,9 +5880,13 @@ void screen_stop_highlight(void)
 {
   int do_ME = FALSE;                /* output T_ME code */
 
-  if (screen_attr != 0
-      ) {
-    {
+  if (screen_attr != 0) {
+    if (abstract_ui) {
+      // Handled in ui.c
+      char buf[20];
+      sprintf(buf, "\033|%dH", screen_attr);
+      OUT_STR(buf);
+    } else {
       if (screen_attr > HL_ALL) {                       /* special HL attr. */
         attrentry_T *aep;
 
@@ -6558,11 +6565,14 @@ static void screenclear2(void)
 {
   int i;
 
-  if (starting == NO_SCREEN || ScreenLines == NULL
-      )
+  if (starting == NO_SCREEN || ScreenLines == NULL) {
     return;
+  }
 
-  screen_attr = -1;             /* force setting the Normal colors */
+  if (!abstract_ui) {
+    screen_attr = -1;             /* force setting the Normal colors */
+  }
+
   screen_stop_highlight();      /* don't want highlighting here */
 
 
@@ -8156,14 +8166,19 @@ void screen_resize(int width, int height, int mustset)
 
   ++busy;
 
-
-  if (mustset || (ui_get_shellsize() == FAIL && height != 0)) {
+  // TODO(tarruda): "mustset" is still used in the old tests, which don't use
+  // "abstract_ui" yet. This will change when a new TUI is merged.
+  if (abstract_ui || mustset || (ui_get_shellsize() == FAIL && height != 0)) {
     Rows = height;
     Columns = width;
-    check_shellsize();
+  }
+  check_shellsize();
+
+  if (abstract_ui) {
+    ui_resize(width, height);
+  } else {
     mch_set_shellsize();
-  } else
-    check_shellsize();
+  }
 
   /* The window layout used to be adjusted here, but it now happens in
    * screenalloc() (also invoked from screenclear()).  That is because the

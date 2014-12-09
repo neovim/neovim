@@ -47,12 +47,6 @@ local function request(method, ...)
       error(rv[2])
     end
   end
-  -- Make sure this will only return after all buffered characters have been
-  -- processed
-  if not loop_stopped then
-    -- Except when the loop has been stopped by a notification triggered
-    -- by the initial request, for example.
-  end
   return rv
 end
 
@@ -70,23 +64,30 @@ local function call_and_stop_on_error(...)
   return result
 end
 
-local function run(request_cb, notification_cb, setup_cb)
+local function run(request_cb, notification_cb, setup_cb, timeout)
+  local on_request, on_notification, on_setup
 
-  local function on_request(method, args)
-    return call_and_stop_on_error(request_cb, method, args)
+  if request_cb then
+    function on_request(method, args)
+      return call_and_stop_on_error(request_cb, method, args)
+    end
   end
 
-  local function on_notification(method, args)
-    call_and_stop_on_error(notification_cb, method, args)
+  if notification_cb then
+    function on_notification(method, args)
+      call_and_stop_on_error(notification_cb, method, args)
+    end
   end
 
-  local function on_setup()
-    call_and_stop_on_error(setup_cb)
+  if setup_cb then
+    function on_setup()
+      call_and_stop_on_error(setup_cb)
+    end
   end
 
   loop_stopped = false
   loop_running = true
-  session:run(on_request, on_notification, on_setup)
+  session:run(on_request, on_notification, on_setup, timeout)
   loop_running = false
   if last_error then
     local err = last_error
@@ -115,15 +116,6 @@ local function nvim_feed(input)
   end
 end
 
-local function nvim_replace_termcodes(input)
-  -- small hack to stop <C-@> from being replaced by the internal
-  -- representation(which is different and won't work for vim_input)
-  local temp_replacement = 'CCCCCCCCC@@@@@@@@@@'
-  input = input:gsub('<[Cc][-]@>', temp_replacement)
-  local rv = request('vim_replace_termcodes', input, false, true, true)
-  return rv:gsub(temp_replacement, '\000')
-end
-
 local function dedent(str)
   -- find minimum common indent across lines
   local indent = nil
@@ -148,7 +140,7 @@ end
 
 local function feed(...)
   for _, v in ipairs({...}) do
-    nvim_feed(nvim_replace_termcodes(dedent(v)))
+    nvim_feed(dedent(v))
   end
 end
 
@@ -172,8 +164,11 @@ end
 
 local function insert(...)
   nvim_feed('i')
-  rawfeed(...)
-  nvim_feed(nvim_replace_termcodes('<ESC>'))
+  for _, v in ipairs({...}) do
+    local escaped = v:gsub('<', '<lt>')
+    rawfeed(escaped)
+  end
+  nvim_feed('<ESC>')
 end
 
 local function execute(...)
@@ -182,8 +177,8 @@ local function execute(...)
       -- not a search command, prefix with colon
       nvim_feed(':')
     end
-    nvim_feed(v)
-    nvim_feed(nvim_replace_termcodes('<CR>'))
+    nvim_feed(v:gsub('<', '<lt>'))
+    nvim_feed('<CR>')
   end
 end
 
