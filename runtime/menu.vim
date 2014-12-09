@@ -697,21 +697,13 @@ endfunc
 func! s:BMHash(name)
   " Make name all upper case, so that chars are between 32 and 96
   let nm = substitute(a:name, ".*", '\U\0', "")
-  if has("ebcdic")
-    " HACK: Replace all non alphabetics with 'Z'
-    "       Just to make it work for now.
-    let nm = substitute(nm, "[^A-Z]", 'Z', "g")
-    let sp = char2nr('A') - 1
-  else
-    let sp = char2nr(' ')
-  endif
+  let sp = char2nr(' ')
   " convert first six chars into a number for sorting:
   return (char2nr(nm[0]) - sp) * 0x800000 + (char2nr(nm[1]) - sp) * 0x20000 + (char2nr(nm[2]) - sp) * 0x1000 + (char2nr(nm[3]) - sp) * 0x80 + (char2nr(nm[4]) - sp) * 0x20 + (char2nr(nm[5]) - sp)
 endfunc
 
 func! s:BMHash2(name)
   let nm = substitute(a:name, ".", '\L\0', "")
-  " Not exactly right for EBCDIC...
   if nm[0] < 'a' || nm[0] > 'z'
     return '&others.'
   elseif nm[0] <= 'd'

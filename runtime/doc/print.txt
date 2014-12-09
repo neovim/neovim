@@ -96,8 +96,7 @@ If the option is empty, then vim will use the system default printer for
 					Windows: cp1252,
 					Macintosh: mac-roman,
 					VMS: dec-mcs,
-					HPUX: hp-roman8,
-					EBCDIC: ebcdic-uk)
+					HPUX: hp-roman8)
 			global
 Sets the character encoding used when printing.  This option tells VIM which
 print character encoding file from the "print" directory in 'runtimepath' to
@@ -121,10 +120,9 @@ other than latin1 will require VIM to be compiled with the |+iconv| feature.
 If no conversion is possible then printing will fail.  Any characters that
 cannot be converted will be replaced with upside down question marks.
 
-Four print character encoding files are provided to support default Mac, VMS,
-HPUX, and EBCDIC character encodings and are used by default on these
-platforms. Code page 1252 print character encoding is used by default on
-the Windows platform.
+Three print character encoding files are provided to support default Mac, VMS,
+and HPUX character encodings and are used by default on these platforms. Code
+page 1252 print character encoding is used by default on the Windows platform.
 
 							*pexpr-option*
 'printexpr' 'pexpr'	String	(default: see below)

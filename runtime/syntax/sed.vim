@@ -49,12 +49,8 @@ syn match sedReplaceMeta    "&\|\\\($\|.\)" contains=sedTab contained
 " Metacharacters: $ * . \ ^ [ ~
 " @ is used as delimiter and treated on its own below
 let __at = char2nr("@")
-let __sed_i = char2nr(" ") " ASCII: 32, EBCDIC: 64
-if has("ebcdic")
-    let __sed_last = 255
-else
-    let __sed_last = 126
-endif
+let __sed_i = char2nr(" ") " ASCII: 32
+let __sed_last = 126
 let __sed_metacharacters = '$*.\^[~'
 while __sed_i <= __sed_last
     let __sed_delimiter = escape(nr2char(__sed_i), __sed_metacharacters)
@@ -105,7 +101,7 @@ if version >= 508 || !exists("did_sed_syntax_inits")
     if exists("highlight_sedtabs")
 	HiLink sedTab		Todo
     endif
-    let __sed_i = char2nr(" ") " ASCII: 32, EBCDIC: 64
+    let __sed_i = char2nr(" ") " ASCII: 32
     while __sed_i <= __sed_last
 	exe "HiLink sedRegexp".__sed_i		"Macro"
 	exe "HiLink sedReplacement".__sed_i	"NONE"

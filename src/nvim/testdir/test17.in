@@ -4,11 +4,7 @@ Tests for:
 
 STARTTEST
 :so small.vim
-:if has("ebcdic")
-: set isfname=@,240-249,/,.,-,_,+,,,$,:,~,{,}
-:else
-: set isfname=@,48-57,/,.,-,_,+,,,$,:,~,{,}
-:endif
+:set isfname=@,48-57,/,.,-,_,+,,,$,:,~,{,}
 :function! DeleteDirectory(dir)
 : if has("win16") || has("win32") || has("win64") || has("dos16") || has("dos32")
 :  exec "silent !rmdir /Q /S " . a:dir
