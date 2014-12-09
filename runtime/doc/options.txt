@@ -3451,7 +3451,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	the case of X).  The font names given should be "normal" fonts.  Vim
 	will try to find the related bold and italic fonts.
 
-	For Win32, GTK, Motif, Mac OS and Photon: >
+	For Win32, GTK, Motif, and Mac OS: >
 	    :set guifont=*
 <	will bring up a font requester, where you can pick the font you want.
 
@@ -3648,7 +3648,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  't'	Include tearoff menu items.  Currently only works for Win32,
 		GTK+, and Motif 1.2 GUI.
 								*'go-T'*
-	  'T'	Include Toolbar.  Currently only in Win32, GTK+, Motif, Photon
+	  'T'	Include Toolbar.  Currently only in Win32, GTK+, Motif,
 		and Athena GUIs.
 								*'go-r'*
 	  'r'	Right-hand scrollbar is always present.
@@ -7321,8 +7321,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 				*'toolbar'* *'tb'*
 'toolbar' 'tb'		string	(default "icons,tooltips")
 			global
-			{only for |+GUI_GTK|, |+GUI_Athena|, |+GUI_Motif| and
-			|+GUI_Photon|}
+			{only for |+GUI_GTK|, |+GUI_Athena|, and |+GUI_Motif|}
 	The contents of this option controls various toolbar settings.  The
 	possible values are:
 		icons		Toolbar buttons are shown with icons.
@@ -7993,7 +7992,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'winaltkeys' 'wak'	string	(default "menu")
 			global
 			{not in Vi}
-			{only used in Win32, Motif, GTK and Photon GUI}
+			{only used in Win32, Motif, and GTK}
 	Some GUI versions allow the access to menu entries by using the ALT
 	key in combination with a character that appears underlined in the
 	menu.  This conflicts with the use of the ALT key for mappings and

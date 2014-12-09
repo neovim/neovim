@@ -3741,7 +3741,7 @@ Win32 GUI:
 
 
 GUI:
-8   Make inputdialog() work for Photon, Amiga.
+8   Make inputdialog() work for Amiga.
 -   <C--> cannot be mapped.  Should be possible to recognize this as a
     normal "-" with the Ctrl modifier.
 7   Implement ":popup" for other systems than Windows.

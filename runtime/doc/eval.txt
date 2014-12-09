@@ -6714,7 +6714,6 @@ gui_gtk			Compiled with GTK+ GUI (any version).
 gui_gtk2		Compiled with GTK+ 2 GUI (gui_gtk is also defined).
 gui_mac			Compiled with Macintosh GUI.
 gui_motif		Compiled with Motif GUI.
-gui_photon		Compiled with Photon GUI.
 gui_running		Vim is running in the GUI, or it will start soon.
 gui_win32		Compiled with MS Windows Win32 GUI.
 gui_win32s		idem, and Win32s system being used (Windows 3.1)
