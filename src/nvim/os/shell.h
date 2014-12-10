@@ -3,7 +3,7 @@
 
 #include "nvim/types.h"
 
-// Flags for mch_call_shell() second argument
+// Flags for os_call_shell() second argument
 typedef enum {
   kShellOptFilter = 1,     ///< filtering text
   kShellOptExpand = 2,     ///< expanding wildcards

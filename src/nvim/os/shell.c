@@ -38,17 +38,14 @@ typedef struct {
 #endif
 
 
-// Callbacks for libuv
-
-/// Builds the argument vector for running the shell configured in `sh`
-/// ('shell' option), optionally with a command that will be passed with `shcf`
-/// ('shellcmdflag').
+/// Builds the argument vector for running the user-configured 'shell' (p_sh)
+/// with an optional command prefixed by 'shellcmdflag' (p_shcf).
 ///
-/// @param cmd Command string. If NULL it will run an interactive shell.
-/// @param extra_shell_opt Extra argument to the shell. If NULL it is ignored
+/// @param cmd Command string, or NULL to run an interactive shell.
+/// @param extra_args Extra arguments to the shell, or NULL.
 /// @return A newly allocated argument vector. It must be freed with
 ///         `shell_free_argv` when no longer needed.
-char **shell_build_argv(const char_u *cmd, const char_u *extra_shell_opt)
+char **shell_build_argv(const char *cmd, const char *extra_args)
 {
   size_t argc = tokenize(p_sh, NULL) + tokenize(p_shcf, NULL);
   char **rv = xmalloc((unsigned)((argc + 4) * sizeof(char *)));
@@ -56,15 +53,13 @@ char **shell_build_argv(const char_u *cmd, const char_u *extra_shell_opt)
   // Split 'shell'
   size_t i = tokenize(p_sh, rv);
 
-  if (extra_shell_opt != NULL) {
-    // Push a copy of `extra_shell_opt`
-    rv[i++] = xstrdup((char *)extra_shell_opt);
+  if (extra_args) {
+    rv[i++] = xstrdup(extra_args);   // Push a copy of `extra_args`
   }
 
-  if (cmd != NULL) {
-    // Split 'shellcmdflag'
-    i += tokenize(p_shcf, rv + i);
-    rv[i++] = xstrdup((char *)cmd);
+  if (cmd) {
+    i += tokenize(p_shcf, rv + i);   // Split 'shellcmdflag'
+    rv[i++] = xstrdup(cmd);          // Push a copy of the command.
   }
 
   rv[i] = NULL;
@@ -93,14 +88,13 @@ void shell_free_argv(char **argv)
   free(argv);
 }
 
-/// Calls the user shell for running a command, interactive session or
-/// wildcard expansion. It uses the shell set in the `sh` option.
+/// Calls the user-configured 'shell' (p_sh) for running a command or wildcard
+/// expansion.
 ///
-/// @param cmd The command to be executed. If NULL it will run an interactive
-///        shell
-/// @param opts Various options that control how the shell will work
-/// @param extra_arg Extra argument to be passed to the shell
-int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_arg)
+/// @param cmd The command to execute, or NULL to run an interactive shell.
+/// @param opts Options that control how the shell will work.
+/// @param extra_args Extra arguments to the shell, or NULL.
+int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
 {
   DynamicBuffer input = DYNAMIC_BUFFER_INIT;
   char *output = NULL, **output_ptr = NULL;
@@ -128,7 +122,7 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_arg)
 
   size_t nread;
   int status = shell((const char *)cmd,
-                     (const char *)extra_arg,
+                     (const char *)extra_args,
                      input.data,
                      input.len,
                      output_ptr,
@@ -136,9 +130,7 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_arg)
                      emsg_silent,
                      forward_output);
 
-  if (input.data) {
-    free(input.data);
-  }
+  free(input.data);
 
   if (output) {
     (void)write_output(output, nread, true, true);
@@ -186,13 +178,13 @@ int os_system(const char *cmd,
 }
 
 static int shell(const char *cmd,
-                 const char *extra_arg,
+                 const char *extra_args,
                  const char *input,
                  size_t len,
                  char **output,
                  size_t *nread,
                  bool silent,
-                 bool forward_output) FUNC_ATTR_NONNULL_ARG(1)
+                 bool forward_output)
 {
   // the output buffer
   DynamicBuffer buf = DYNAMIC_BUFFER_INIT;
@@ -207,7 +199,7 @@ static int shell(const char *cmd,
     data_cb = NULL;
   }
 
-  char **argv = shell_build_argv((char_u *) cmd, (char_u *)extra_arg);
+  char **argv = shell_build_argv(cmd, extra_args);
 
   int status;
   Job *job = job_start(argv,
@@ -221,7 +213,8 @@ static int shell(const char *cmd,
 
   if (status <= 0) {
     // Failed, probably due to `sh` not being executable
-    ELOG("Couldn't start job, command: '%s', error code: '%d'", cmd, status);
+    ELOG("Couldn't start job, command: '%s', error code: '%d'",
+        (cmd ? cmd : (char *)p_sh), status);
     if (!silent) {
       MSG_PUTS(_("\nCannot execute shell "));
       msg_outtrans(p_sh);
@@ -359,9 +352,9 @@ static size_t word_length(const char_u *str)
   return length;
 }
 
-/// To remain compatible with the old implementation(which forked a process
+/// To remain compatible with the old implementation (which forked a process
 /// for writing) the entire text is copied to a temporary buffer before the
-/// event loop starts. If we don't(by writing in chunks returned by `ml_get`)
+/// event loop starts. If we don't (by writing in chunks returned by `ml_get`)
 /// the buffer being modified might get modified by reading from the process
 /// before we finish writing.
 static void read_input(DynamicBuffer *buf)
@@ -386,6 +379,7 @@ static void read_input(DynamicBuffer *buf)
       memcpy(buf->data + buf->len, lp + written, len);
       buf->len += len;
     }
+
     if (len == l) {
       // Finished a line, add a NL, unless this line should not have one.
       // FIXME need to make this more readable
