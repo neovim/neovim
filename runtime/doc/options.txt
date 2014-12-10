@@ -4265,7 +4265,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			     "@,48-57,/,\,.,-,_,+,,,#,$,%,{,},[,],:,@-@,!,~,="
 			    for AMIGA: "@,48-57,/,.,-,_,+,,,$,:"
 			    for VMS: "@,48-57,/,.,-,_,+,,,#,$,%,<,>,[,],:,;,~"
-			    for OS/390: "@,240-249,/,.,-,_,+,,,#,$,%,~,="
 			    otherwise: "@,48-57,/,.,-,_,+,,,#,$,%,~,=")
 			global
 			{not in Vi}

@@ -138,7 +138,6 @@ Support for different systems.
 	- Windows 95 and Windows NT, with support for long file names.
 	- VMS
 	- Macintosh
-	- IBM OS/390
 	Note that on some systems features need to be disabled to reduce
 	resource usage, esp. on MS-DOS.  For some outdated systems you need to
 	use an older Vim version.
