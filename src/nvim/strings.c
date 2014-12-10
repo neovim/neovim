@@ -288,33 +288,6 @@ char_u *strup_save(const char_u *orig)
 }
 
 /*
- * copy a space a number of times
- */
-void copy_spaces(char_u *ptr, size_t count)
-  FUNC_ATTR_NONNULL_ALL
-{
-  size_t i = count;
-  char_u      *p = ptr;
-
-  while (i--)
-    *p++ = ' ';
-}
-
-/*
- * Copy a character a number of times.
- * Does not work for multi-byte characters!
- */
-void copy_chars(char_u *ptr, size_t count, char_u c)
-  FUNC_ATTR_NONNULL_ALL
-{
-  size_t i = count;
-  char_u      *p = ptr;
-
-  while (i--)
-    *p++ = c;
-}
-
-/*
  * delete spaces at the end of a string
  */
 void del_trailing_spaces(char_u *ptr)

@@ -369,8 +369,8 @@ static void shift_block(oparg_T *oap, int amount)
     newp = (char_u *) xmalloc((size_t)(bd.textcol + i + j + len));
     memset(newp, NUL, (size_t)(bd.textcol + i + j + len));
     memmove(newp, oldp, (size_t)bd.textcol);
-    copy_chars(newp + bd.textcol, (size_t)i, TAB);
-    copy_spaces(newp + bd.textcol + i, (size_t)j);
+    memset(newp + bd.textcol, TAB, (size_t)i);
+    memset(newp + bd.textcol + i, ' ', (size_t)j);
     /* the end */
     memmove(newp + bd.textcol + i + j, bd.textstart, (size_t)len);
   } else { /* left */
@@ -455,7 +455,7 @@ static void shift_block(oparg_T *oap, int amount)
 
     newp = (char_u *) xmalloc((size_t)(new_line_len));
     memmove(newp, oldp, (size_t)(verbatim_copy_end - oldp));
-    copy_spaces(newp + (verbatim_copy_end - oldp), (size_t)fill);
+    memset(newp + (verbatim_copy_end - oldp), ' ', (size_t)fill);
     STRMOVE(newp + (verbatim_copy_end - oldp) + fill, non_white);
   }
   /* replace the line */
@@ -534,7 +534,7 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
     oldp += offset;
 
     /* insert pre-padding */
-    copy_spaces(newp + offset, (size_t)spaces);
+    memset(newp + offset, ' ', (size_t)spaces);
 
     /* copy the new text */
     memmove(newp + offset + spaces, s, (size_t)s_len);
@@ -542,7 +542,7 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
 
     if (spaces && !bdp->is_short) {
       /* insert post-padding */
-      copy_spaces(newp + offset + spaces, (size_t)(p_ts - spaces));
+      memset(newp + offset + spaces, ' ', (size_t)(p_ts - spaces));
       /* We're splitting a TAB, don't copy it. */
       oldp++;
       /* We allowed for that TAB, remember this now */
@@ -1468,7 +1468,7 @@ int op_delete(oparg_T *oap)
       /* copy up to deleted part */
       memmove(newp, oldp, (size_t)bd.textcol);
       /* insert spaces */
-      copy_spaces(newp + bd.textcol,
+      memset(newp + bd.textcol, ' ',
           (size_t)(bd.startspaces + bd.endspaces));
       /* copy the part after the deleted part */
       oldp += bd.textcol + bd.textlen;
@@ -1752,7 +1752,7 @@ int op_replace(oparg_T *oap, int c)
       memmove(newp, oldp, (size_t)bd.textcol);
       oldp += bd.textcol + bd.textlen;
       /* insert pre-spaces */
-      copy_spaces(newp + bd.textcol, (size_t)bd.startspaces);
+      memset(newp + bd.textcol, ' ', (size_t)bd.startspaces);
       /* insert replacement chars CHECK FOR ALLOCATED SPACE */
       /* -1/-2 is used for entering CR literally. */
       if (had_ctrl_v_cr || (c != '\r' && c != '\n')) {
@@ -1761,10 +1761,10 @@ int op_replace(oparg_T *oap, int c)
           while (--num_chars >= 0)
             n += (*mb_char2bytes)(c, newp + n);
         } else
-          copy_chars(newp + STRLEN(newp), (size_t)numc, c);
+          memset(newp + STRLEN(newp), c, (size_t)numc);
         if (!bd.is_short) {
           /* insert post-spaces */
-          copy_spaces(newp + STRLEN(newp), (size_t)bd.endspaces);
+          memset(newp + STRLEN(newp), ' ', (size_t)bd.endspaces);
           /* copy the part after the changed part */
           STRMOVE(newp + STRLEN(newp), oldp);
         }
@@ -2263,7 +2263,7 @@ int op_change(oparg_T *oap)
           /* copy up to block start */
           memmove(newp, oldp, (size_t)bd.textcol);
           offset = bd.textcol;
-          copy_spaces(newp + offset, (size_t)vpos.coladd);
+          memset(newp + offset, ' ', (size_t)vpos.coladd);
           offset += vpos.coladd;
           memmove(newp + offset, ins_text, (size_t)ins_len);
           offset += ins_len;
@@ -2554,11 +2554,11 @@ static void yank_copy_line(struct block_def *bd, long y_idx)
   char_u *pnew = xmallocz(bd->startspaces + bd->endspaces + bd->textlen);
 
   y_current->y_array[y_idx] = pnew;
-  copy_spaces(pnew, (size_t)bd->startspaces);
+  memset(pnew, ' ', (size_t)bd->startspaces);
   pnew += bd->startspaces;
   memmove(pnew, bd->textstart, (size_t)bd->textlen);
   pnew += bd->textlen;
-  copy_spaces(pnew, (size_t)bd->endspaces);
+  memset(pnew, ' ', (size_t)bd->endspaces);
   pnew += bd->endspaces;
   *pnew = NUL;
 }
@@ -2867,7 +2867,7 @@ do_put (
       memmove(ptr, oldp, (size_t)bd.textcol);
       ptr += bd.textcol;
       /* may insert some spaces before the new text */
-      copy_spaces(ptr, (size_t)bd.startspaces);
+      memset(ptr, ' ', (size_t)bd.startspaces);
       ptr += bd.startspaces;
       /* insert the new text */
       for (j = 0; j < count; ++j) {
@@ -2876,12 +2876,12 @@ do_put (
 
         /* insert block's trailing spaces only if there's text behind */
         if ((j < count - 1 || !shortline) && spaces) {
-          copy_spaces(ptr, (size_t)spaces);
+          memset(ptr, ' ', (size_t)spaces);
           ptr += spaces;
         }
       }
       /* may insert some spaces after the new text */
-      copy_spaces(ptr, (size_t)bd.endspaces);
+      memset(ptr, ' ', (size_t)bd.endspaces);
       ptr += bd.endspaces;
       /* move the text after the cursor to the end of the line. */
       memmove(ptr, oldp + bd.textcol + delcount,
@@ -3523,7 +3523,7 @@ int do_join(long count,
     memmove(cend, curr, (size_t)currsize);
     if (spaces[t] > 0) {
       cend -= spaces[t];
-      copy_spaces(cend, (size_t)(spaces[t]));
+      memset(cend, ' ', (size_t)(spaces[t]));
     }
     mark_col_adjust(curwin->w_cursor.lnum + t, (colnr_T)0, (linenr_T)-t,
         (long)(cend - newp + spaces[t] - (curr - curr_start)));
