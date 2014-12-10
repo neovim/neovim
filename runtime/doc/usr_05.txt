@@ -96,14 +96,9 @@ when pressing <Enter> in Insert mode, and when using the "o" command to open a
 new line.
 >
 
-	if has("vms")
-	  set nobackup
-	else
-	  set backup
-	endif
+	set backup
 
-This tells Vim to keep a backup copy of a file when overwriting it.  But not
-on the VMS system, since it keeps old versions of files already.  The backup
+This tells Vim to keep a backup copy of a file when overwriting it. The backup
 file will have the same name as the original file with "~" added.  See |07.4|
 >
 

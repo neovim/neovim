@@ -15,7 +15,7 @@ let b:did_ftplugin = 1
 let s:cpo_save = &cpo
 set cpo-=C
 
-let b:undo_ftplugin = "setl fo< com< ofu< | if has('vms') | setl isk< | endif"
+let b:undo_ftplugin = "setl fo< com< ofu<"
 
 " Set 'formatoptions' to break comment lines but not other lines,
 " and insert the comment leader when hitting <CR> or using "o".
@@ -28,11 +28,6 @@ endif
 
 " Set 'comments' to format dashed lists in comments.
 setlocal comments=sO:*\ -,mO:*\ \ ,exO:*/,s1:/*,mb:*,ex:*/,://
-
-" In VMS C keywords contain '$' characters.
-if has("vms")
-  setlocal iskeyword+=$
-endif
 
 " When the matchit plugin is loaded, this makes the % command skip parens and
 " braces in comments.

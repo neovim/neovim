@@ -107,9 +107,6 @@ syn match   dclGotoLabel	"^\$\s*\I\i*:\s*$"	contains=dclStart
 " parameters
 syn match   dclParam	"'\I[a-zA-Z0-9_$]*'\="
 
-" () matching (the clusters are commented out until a vim/vms comes out for v5.2+)
-"syn cluster dclNextGroups	contains=dclCmdDirPath,dclCmdProc,dclCmdProc,dclDirPath,dclFilename,dclFilename,dclMdfySet,dclMdfySetString,delCmdProc,dclExe,dclTodo
-"syn region  dclFuncList	matchgroup=Delimiter start="(" matchgroup=Delimiter end=")" contains=ALLBUT,@dclNextGroups
 syn region  dclFuncList	matchgroup=Delimiter start="(" matchgroup=Delimiter end=")" contains=ALLBUT,dclCmdDirPath,dclCmdProc,dclCmdProc,dclDirPath,dclFilename,dclFilename,dclMdfySet,dclMdfySetString,delCmdProc,dclExe,dclTodo
 syn match   dclError	")"
 

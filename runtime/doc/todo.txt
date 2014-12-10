@@ -204,9 +204,6 @@ Patch to support expression argument to sort() instead of a function name.
 Yasuhiro Matsumoto, 2013 May 31.
 Or should we add a more general mechanism, like lambda functions?
 
-VMS: Select() doesn't work properly, typing ESC may hang Vim.  Use sys$qiow
-instead. (Samuel Ferencik, 2013 Sep 28)
-
 Patch for XDG base directory support. (Jean François Bignolles, 2014 Mar 4)
 Remark on the docs.  Should not be a compile time feature.  But then what?
 
@@ -1587,12 +1584,6 @@ The buffer has the full path in ffname, should pass this to the autocommand.
 "vim -C" often has 'nocompatible', because it's set in some startup script.
 Set 'compatible' after startup is done?  Patch by James Vega, 2008 Feb 7.
 
-VMS: while editing a file found in complex, Vim will save file into the first
-directory of the path and not to the original location of the file.
-(Zoltan Arpadffy)
-
-VMS: VFC files are in some cases truncated during reading (Zoltan Arpadffy)
-
 input() completion should not insert a backslash to escape a space in a file
 name?
 
@@ -2726,8 +2717,6 @@ Problems that will (probably) not be solved:
     libraries, get a patch from Sun.
 -   Solaris 2.6 with GTK and Perl: gvim crashes when started.  Problem with X
     input method called from GDK code.  Without Perl it doesn't crash.
--   VMS: Vimdiff doesn't work with the VMS diff, because the output looks
-    different.  This makes test 47 fail.  Install a Unix-compatible diff.
 -   Win32 GUI: mouse wheel always scrolls rightmost window.  The events arrive
     in Vim as if the rightmost scrollbar was used.
 -   GTK with Gnome: Produces an error message when starting up:
@@ -4814,7 +4803,6 @@ Digraphs:
 Writing files:
 -   In vim_rename(), should lock "from" file when deleting "to" file for
     systems other than Amiga.
-8   write mch_isdevice() for Amiga, Mac, VMS, etc.
 8   When appending to a file, Vim should also make a backup and a 'patchmode'
     file.
 8   'backupskip' doesn't write a backup file at all, a bit dangerous for some

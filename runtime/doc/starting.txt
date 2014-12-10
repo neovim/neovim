@@ -122,9 +122,6 @@ The option arguments may be given in any order.  Single-letter options can be
 combined after one dash.  There can be no option arguments after the "--"
 argument.
 
-On VMS all option arguments are assumed to be lowercase, unless preceded with
-a slash.  Thus "-R" means recovery and "-/R" readonly.
-
 --help							*-h* *--help*
 -h		Give usage (help) message and exit.  {not in Vi}
 		See |info-message| about capturing the text.
@@ -488,8 +485,8 @@ a slash.  Thus "-R" means recovery and "-/R" readonly.
 		avoids a long startup time when running Vim in a terminal
 		emulator and the connection to the X server is slow.
 		See |--startuptime| to find out if affects you.
-		Only makes a difference on Unix or VMS, when compiled with the
-		|+X11| feature.  Otherwise it's ignored.
+		Only makes a difference on Unix when compiled with the |+X11|
+		feature.  Otherwise it's ignored.
 		To disable the connection only for specific terminals, see the
 		'clipboard' option.
 		When the X11 Session Management Protocol (XSMP) handler has
@@ -668,7 +665,7 @@ In Evim these options are changed from their default value:
 	:set nocompatible	Use Vim improvements
 	:set insertmode		Remain in Insert mode most of the time
 	:set hidden		Keep invisible buffers loaded
-	:set backup		Keep backup files (not for VMS)
+	:set backup		Keep backup files
 	:set backspace=2	Backspace over everything
 	:set autoindent		auto-indent new lines
 	:set history=50		keep 50 lines of Ex commands
@@ -767,9 +764,9 @@ accordingly.  Vim proceeds in this order:
      a. If vim was started as |evim| or |eview| or with the |-y| argument, the
 	script $VIMRUNTIME/evim.vim will be loaded.
 							*system-vimrc*
-     b. For Unix, MS-DOS, MS-Windows, VMS, Macintosh, and Amiga,
-	the system vimrc file is read for initializations.  The path of this
-	file is shown with the ":version" command.  Mostly it's "$VIM/vimrc".
+     b. For Unix, MS-DOS, MS-Windows, Macintosh, and Amiga, the system vimrc
+	file is read for initializations.  The path of this file is shown with
+	the ":version" command.  Mostly it's "$VIM/vimrc".
 	Note that this file is ALWAYS read in 'compatible' mode, since the
 	automatic resetting of 'compatible' is only done later.  Add a ":set
 	nocp" command if you like.

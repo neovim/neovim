@@ -832,12 +832,11 @@ These are not available when Vim has been compiled without the |+modify_fname|
 feature.
 These modifiers can be given, in this order:
 	:p	Make file name a full path.  Must be the first modifier.  Also
-		changes "~/" (and "~user/" for Unix and VMS) to the path for
-		the home directory.  If the name is a directory a path
-		separator is added at the end.  For a file name that does not
-		exist and does not have an absolute path the result is
-		unpredictable.  On MS-Windows an 8.3 filename is expanded to
-		the long name.
+		changes "~/" (and "~user/" for Unix) to the path for the home
+		directory.  If the name is a directory a path separator is
+		added at the end.  For a file name that does not exist and
+		does not have an absolute path the result is unpredictable.
+		On MS-Windows an 8.3 filename is expanded to the long name.
 	:8	Converts the path to 8.3 short format (currently only on
 		MS-Windows).  Will act on as much of a path that is an
 		existing path.

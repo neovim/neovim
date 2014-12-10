@@ -95,7 +95,6 @@ If the option is empty, then vim will use the system default printer for
 'printencoding' 'penc'	String	(default empty, except for:
 					Windows: cp1252,
 					Macintosh: mac-roman,
-					VMS: dec-mcs,
 					HPUX: hp-roman8)
 			global
 Sets the character encoding used when printing.  This option tells VIM which
@@ -120,9 +119,9 @@ other than latin1 will require VIM to be compiled with the |+iconv| feature.
 If no conversion is possible then printing will fail.  Any characters that
 cannot be converted will be replaced with upside down question marks.
 
-Three print character encoding files are provided to support default Mac, VMS,
-and HPUX character encodings and are used by default on these platforms. Code
-page 1252 print character encoding is used by default on the Windows platform.
+Two print character encoding files are provided to support default Mac and
+HPUX character encodings and are used by default on these platforms. Code page
+1252 print character encoding is used by default on the Windows platform.
 
 							*pexpr-option*
 'printexpr' 'pexpr'	String	(default: see below)
@@ -134,8 +133,8 @@ The arguments to the ":hardcopy" command are in |v:cmdarg|.
 The expression must take care of deleting the file after printing it.
 When there is an error, the expression must return a non-zero number.
 If there is no error, return zero or an empty string.
-The default for non MS-Windows or VMS systems is to simply use "lpr" to print
-the file: >
+The default for non MS-Windows systems is to simply use "lpr" to print the
+file: >
 
     system('lpr' . (&printdevice == '' ? '' : ' -P' . &printdevice)
 	. ' ' . v:fname_in) . delete(v:fname_in) + v:shell_error
@@ -146,12 +145,6 @@ currently specified printdevice: >
     system('copy' . ' ' . v:fname_in . (&printdevice == ''
 		? ' LPT1:' : (' \"' . &printdevice . '\"')))
 		. delete(v:fname_in)
-
-On VMS machines the default is to send the file to either the default or
-currently specified printdevice: >
-
-    system('print' . (&printdevice == '' ? '' : ' /queue=' .
-		&printdevice) . ' ' . v:fname_in) . delete(v:fname_in)
 
 If you change this option, using a function is an easy way to avoid having to
 escape all the spaces.  Example: >
@@ -612,12 +605,6 @@ X11
   Copies (possibly not the most recent) can be found at:
 
     http://www.cs.wisc.edu/~ghost/gv/
-
-OpenVMS
-
-- Is apparently supported in the main code now (untested).  See:
-
-    http://wwwthep.physik.uni-mainz.de/~plass/gv/
 
 Windows
 
