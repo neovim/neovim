@@ -5,7 +5,6 @@
 "
 " To use it, copy it to
 "     for Unix:  ~/.vimrc
-"     for Amiga:  s:.vimrc
 "     for MS-DOS and Win32:  $VIM\_vimrc
 
 " When started as "evim", evim.vim will already have done these settings.

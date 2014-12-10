@@ -71,10 +71,8 @@ Vim has only a few limits for the files that can be edited {Vi: can not handle
 <Nul> characters and characters above 128, has limited line length, many other
 limits}.
 							*E340*
-Maximum line length	   On machines with 16-bit ints (Amiga and MS-DOS real
-			   mode): 32767, otherwise 2147483647 characters.
-			   Longer lines are split.
-Maximum number of lines	   2147483647 lines.
+Maximum line length	   2147483647 characters
+Maximum number of lines	   2147483647 lines
 Maximum file size	   2147483647 bytes (2 Gbyte) when a long integer is
 			   32 bits.  Much more for 64 bit longs.  Also limited
 			   by available disk space for the |swap-file|.
@@ -102,9 +100,8 @@ Memory usage limits
 
 The option 'maxmem' ('mm') is used to set the maximum memory used for one
 buffer (in kilobytes).  'maxmemtot' is used to set the maximum memory used for
-all buffers (in kilobytes).  The defaults depend on the system used.  For the
-Amiga and MS-DOS, 'maxmemtot' is set depending on the amount of memory
-available.
+all buffers (in kilobytes).  The defaults depend on the system used.  For
+MS-DOS, 'maxmemtot' is set depending on the amount of memory available.
 These are not hard limits, but tell Vim when to move text into a swap file.
 If you don't like Vim to swap to a file, set 'maxmem' and 'maxmemtot' to a
 very large value.  The swap file will then only be used for recovery.  If you
@@ -132,7 +129,6 @@ Support for different systems.
 	Vim can be used on:
 	- All Unix systems (it works on all systems it was tested on, although
 	  the GUI and Perl interface may not work everywhere).
-	- Amiga (500, 1000, 1200, 2000, 3000, 4000, ...).
 	- MS-DOS in real-mode (no additional drivers required).
 	- In protected mode on Windows 3.1 and MS-DOS (DPMI driver required).
 	- Windows 95 and Windows NT, with support for long file names.
@@ -158,7 +154,7 @@ Graphical User Interface (GUI).				|gui|
 	define your own menus.  Better support for CTRL/SHIFT/ALT keys in
 	combination with special keys and mouse.  Supported for various
 	platforms, such as X11 (with Motif and Athena interfaces), GTK, Win32
-	(Windows 95 and later), Amiga and Macintosh.
+	(Windows 95 and later), and Macintosh.
 
 Multiple windows and buffers.				|windows.txt|
 	Vim can split the screen into several windows, each editing a
@@ -717,10 +713,6 @@ When the 'fileformats' option is not empty, Vim tries to detect the type of
 On systems that have no job control (older Unix systems and non-Unix systems)
 the CTRL-Z, ":stop" or ":suspend" command starts a new shell.
 
-If Vim is started on the Amiga without an interactive window for output, a
-window is opened (and :sh still works).  You can give a device to use for
-editing with the |-d| argument, e.g. "-d con:20/20/600/150".
-
 The 'columns' and 'lines' options are used to set or get the width and height
 of the display.
 
@@ -733,8 +725,8 @@ If the 'insertmode' option is set (e.g. in .exrc), Vim starts in insert mode.
 And it comes back there, when pressing <Esc>.
 
 Undo information is kept in memory.  Available memory limits the number and
-size of change that can be undone.  This may be a problem with MS-DOS, is
-hardly a problem on the Amiga and almost never with Unix and Win32.
+size of change that can be undone.  This may be a problem with MS-DOS, but is
+almost never one with Unix and Win32.
 
 If the 'backup' or 'writebackup' option is set: Before a file is overwritten,
 a backup file (.bak) is made.  If the "backup" option is set it is left
@@ -758,8 +750,6 @@ changing files.
 
 The "No lines in buffer" message is a normal message instead of an error
 message, since that may cause a mapping to be aborted.
-
-The AUX: device of the Amiga is supported.
 
 ==============================================================================
 6. Command-line arguments				*cmdline-arguments*
@@ -836,11 +826,7 @@ Only Vim is able to accept options in between and after the file names.
 		loading the edit buffer.
 		Vim: allow up to 10 "-c" arguments
 
--d {device}	Vim: Use {device} for I/O (Amiga only). {only when compiled
-		without the |+diff| feature}
 -d		Vim: start with 'diff' set. |vimdiff|
-
--dev {device}	Vim: Use {device} for I/O (Amiga only).
 
 -D		Vim: debug mode.
 
@@ -849,7 +835,7 @@ Only Vim is able to accept options in between and after the file names.
 
 -E		Vim: Start in improved Ex mode |gQ|, like "exim".
 
--f		Vim: Run GUI in foreground (Amiga: don't open new window).
+-f		Vim: Run GUI in foreground.
 -f {session}	Elvis: Use {session} as the session file.
 
 -F		Vim: Start in Farsi mode (when compiled with Farsi).

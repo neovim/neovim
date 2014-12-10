@@ -407,8 +407,7 @@ CTRL-N		After using 'wildchar' which got multiple matches, go to next
 <S-Tab>							*c_CTRL-P* *c_<S-Tab>*
 CTRL-P		After using 'wildchar' which got multiple matches, go to
 		previous match.  Otherwise recall older command-line from
-		history.  <S-Tab> only works with the GUI, on the Amiga and
-		with MS-DOS.
+		history.  <S-Tab> only works with the GUI and with MS-DOS.
 							*c_CTRL-A*
 CTRL-A		All names that match the pattern in front of the cursor are
 		inserted.
@@ -587,10 +586,9 @@ When the character '%' or '#' is used where a file name is expected, they are
 expanded to the current and alternate file name (see the chapter "editing
 files" |:_%| |:_#|).
 
-Embedded spaces in file names are allowed on the Amiga if one file name is
-expected as argument.  Trailing spaces will be ignored, unless escaped with a
-backslash or CTRL-V.  Note that the ":next" command uses spaces to separate
-file names.  Escape the spaces to include them in a file name.  Example: >
+Trailing spaces in filenames will be ignored, unless escaped with a backslash
+or CTRL-V.  Note that the ":next" command uses spaces to separate file names.
+Escape the spaces to include them in a file name.  Example: >
 	:next foo\ bar goes\ to school\
 starts editing the three files "foo bar", "goes to" and "school ".
 
@@ -854,9 +852,9 @@ These modifiers can be given, in this order:
 		separator is removed.  Thus ":p:h" on a directory name results
 		on the directory name itself (without trailing slash).
 		When the file name is an absolute path (starts with "/" for
-		Unix; "x:\" for MS-DOS, WIN32; "drive:" for Amiga), that
-		part is not removed.  When there is no head (path is relative
-		to current directory) the result is empty.
+		Unix; "x:\" for MS-DOS and WIN32), that part is not removed.
+		When there is no head (path is relative to current directory)
+		the result is empty.
 	:t	Tail of the file name (last component of the name).  Must
 		precede any :r or :e.
 	:r	Root of the file name (the last extension removed).  When

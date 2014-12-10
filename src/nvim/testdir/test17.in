@@ -16,11 +16,7 @@ STARTTEST
 :let $CDIR = "."
 /CDIR
 :else
-:if has("amiga")
-:let $TDIR = "/testdir"
-:else
 :let $TDIR = "."
-:endif
 /TDIR
 :endif
 :" Dummy writing for making that sure gf doesn't fail even if the current

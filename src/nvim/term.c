@@ -80,7 +80,7 @@
  *
  * The entries are compact, therefore they normally are included even when
  * HAVE_TGETENT is defined. When HAVE_TGETENT is defined, the builtin entries
- * can be accessed with "builtin_amiga", "builtin_ansi", "builtin_debug", etc.
+ * can be accessed with "builtin_ansi", "builtin_debug", etc.
  *
  * Each termcap is a list of builtin_term structures. It always starts with
  * KS_NAME, which separates the entries.  See parse_builtin_tcap() for all

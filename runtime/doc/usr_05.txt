@@ -309,7 +309,6 @@ Then copy the file to your plugin directory:
 
 	system		plugin directory ~
 	Unix		~/.vim/plugin/
-	Amiga		s:vimfiles/plugin
 	Macintosh	$VIM:vimfiles:plugin
 	Mac OS X	~/.vim/plugin/
 

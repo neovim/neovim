@@ -223,11 +223,6 @@ else
 	\ || s:line5 =~ '^\s*dnl\>'
     set ft=m4
 
-    " AmigaDos scripts
-  elseif $TERM == "amiga"
-	\ && (s:line1 =~ "^;" || s:line1 =~ '^\.[bB][rR][aA]')
-    set ft=amiga
-
     " SiCAD scripts (must have procn or procd as the first line to trigger this)
   elseif s:line1 =~? '^ *proc[nd] *$'
     set ft=sicad

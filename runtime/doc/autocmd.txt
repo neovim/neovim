@@ -528,8 +528,7 @@ CursorHold			When the user doesn't press a key for the time
 				Hint: to force an update of the status lines
 				use: >
 					:let &ro = &ro
-<				{only on Amiga, Unix, Win32, MSDOS and all GUI
-				versions}
+
 							*CursorHoldI*
 CursorHoldI			Just like CursorHold, but in Insert mode.
 

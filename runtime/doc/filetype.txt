@@ -33,7 +33,6 @@ compatible means options are global.  Resetting 'compatible' is recommended,
 if you didn't do that already.
 
 Detail: The ":filetype on" command will load one of these files:
-		Amiga	    $VIMRUNTIME/filetype.vim
 		Mac	    $VIMRUNTIME/filetype.vim
 		MS-DOS	    $VIMRUNTIME\filetype.vim
 		Unix	    $VIMRUNTIME/filetype.vim

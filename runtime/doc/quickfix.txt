@@ -35,12 +35,10 @@ positions in files.  For example, |:vimgrep| finds pattern matches.  You can
 use the positions in a script with the |getqflist()| function.  Thus you can
 do a lot more than the edit/compile/fix cycle!
 
-If you are using Manx's Aztec C compiler on the Amiga look here for how to use
-it with Vim: |quickfix-manx|.  If you are using another compiler you should
-save the error messages in a file and start Vim with "vim -q filename".  An
-easy way to do this is with the |:make| command (see below).  The
-'errorformat' option should be set to match the error messages from your
-compiler (see |errorformat| below).
+You should save your compiler's error messages to a file and start vim with
+"vim -q filename".  An easy way to do this is with the |:make| command (see
+below).  The 'errorformat' option should be set to match the error messages
+from your compiler (see |errorformat| below).
 
 						*location-list* *E776*
 A location list is similar to a quickfix list and contains a list of positions
@@ -501,14 +499,14 @@ or simpler >
 "$*" can be given multiple times, for example: >
    :set makeprg=gcc\ -o\ $*\ $*
 
-The 'shellpipe' option defaults to ">" for the Amiga, MS-DOS and Win32.  This
-means that the output of the compiler is saved in a file and not shown on the
-screen directly.  For Unix "| tee" is used.  The compiler output is shown on
-the screen and saved in a file the same time.  Depending on the shell used
-"|& tee" or "2>&1| tee" is the default, so stderr output will be included.
+The 'shellpipe' option defaults to ">" for MS-DOS and Win32.  This means that
+the output of the compiler is saved in a file and not shown on the screen
+directly.  For Unix "| tee" is used.  The compiler output is shown on the
+screen and saved in a file the same time.  Depending on the shell used "|&
+tee" or "2>&1| tee" is the default, so stderr output will be included.
 
 If 'shellpipe' is empty, the {errorfile} part will be omitted.  This is useful
-for compilers that write to an errorfile themselves (e.g., Manx's Amiga C).
+for compilers that write to an errorfile themselves.
 
 
 Using QuickFixCmdPost to fix the encoding ~
@@ -790,31 +788,6 @@ g:compiler_gcc_ignore_unmatched_lines
 				defined for GCC.  Useful if output from
 				commands run from make are generating false
 				positives.
-
-
-MANX AZTEC C				*quickfix-manx* *compiler-manx*
-
-To use Vim with Manx's Aztec C compiler on the Amiga you should do the
-following:
-- Set the CCEDIT environment variable with the command: >
-	mset "CCEDIT=vim -q"
-- Compile with the -qf option.  If the compiler finds any errors, Vim is
-  started and the cursor is positioned on the first error.  The error message
-  will be displayed on the last line.  You can go to other errors with the
-  commands mentioned above.  You can fix the errors and write the file(s).
-- If you exit Vim normally the compiler will re-compile the same file.  If you
-  exit with the :cq command, the compiler will terminate.  Do this if you
-  cannot fix the error, or if another file needs to be compiled first.
-
-There are some restrictions to the Quickfix mode on the Amiga.  The
-compiler only writes the first 25 errors to the errorfile (Manx's
-documentation does not say how to get more).  If you want to find the others,
-you will have to fix a few errors and exit the editor.  After recompiling,
-up to 25 remaining errors will be found.
-
-If Vim was started from the compiler, the :sh and some :!  commands will not
-work, because Vim is then running in the same process as the compiler and
-stdin (standard input) will not be interactive.
 
 
 PERL					*quickfix-perl* *compiler-perl*
@@ -1171,9 +1144,7 @@ If the error format does not contain a file name Vim cannot switch to the
 correct file.  You will have to do this by hand.
 
 
-Examples
-
-The format of the file from the Amiga Aztec compiler is:
+For example, the format of the output from the Amiga Aztec compiler is:
 
 	filename>linenumber:columnnumber:errortype:errornumber:errormessage
 

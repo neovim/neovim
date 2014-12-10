@@ -56,14 +56,9 @@ Disadvantages:
 - When you use your home directory, and somebody else tries to edit the same
   file, he will not see your swap file and will not get the ATTENTION warning
   message.
-On the Amiga you can also use a recoverable ram disk, but there is no 100%
-guarantee that this works.  Putting swap files in a normal ram disk (like RAM:
-on the Amiga) or in a place that is cleared when rebooting (like /tmp on Unix)
-makes no sense, you will lose the swap file in a crash.
 
 If you want to put swap files in a fixed place, put a command resembling the
 following ones in your .vimrc:
-	:set dir=dh2:tmp	(for Amiga)
 	:set dir=~/tmp		(for Unix)
 	:set dir=c:\\tmp	(for MS-DOS and Win32)
 This is also very handy when editing files on floppy.  Of course you will have
@@ -100,8 +95,7 @@ the time with the 'updatetime' option.  The time is given in milliseconds.
 After writing to the swap file Vim syncs the file to disk.  This takes some
 time, especially on busy Unix systems.  If you don't want this you can set the
 'swapsync' option to an empty string.  The risk of losing work becomes bigger
-though.  On some non-Unix systems (MS-DOS, Amiga) the swap file won't be
-written at all.
+though.
 
 If the writing to the swap file is not wanted, it can be switched off by
 setting the 'updatecount' option to 0.  The same is done when starting Vim

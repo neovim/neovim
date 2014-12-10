@@ -194,8 +194,6 @@ fun! s:EditVimrc()
     else
       let fname = $VIM . "/_vimrc"
     endif
-  elseif has("amiga")
-    let fname = "s:.vimrc"
   else
     let fname = $HOME . "/.vimrc"
   endif

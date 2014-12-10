@@ -300,7 +300,6 @@ g8			Print the hex values of the bytes used in the
 
 							*+feature-list*
    *+acl*		|ACL| support included
-   *+ARP*		Amiga only: ARP support included
 B  *+arabic*		|Arabic| language support
 N  *+autocmd*		|:autocmd|, automatic commands
 m  *+balloon_eval*	|balloon-eval| support. Included when compiling with

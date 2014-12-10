@@ -6,7 +6,6 @@
 "
 " To use it, copy it to
 "  for Unix:  ~/.gvimrc
-"  for Amiga:  s:.gvimrc
 "  for MS-DOS and Win32:  $VIM\_gvimrc
 
 " Make external commands work through a pipe instead of a pseudo-tty

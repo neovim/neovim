@@ -986,8 +986,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	again not rename the file.
 
 						*'backupdir'* *'bdir'*
-'backupdir' 'bdir'	string	(default for Amiga: ".,t:",
-				 for MS-DOS and Win32: ".,$TEMP,c:/tmp,c:/temp"
+'backupdir' 'bdir'	string	(default for MS-DOS and Win32: ".,$TEMP,c:/tmp,c:/temp",
 				 for Unix: ".,~/tmp,~/")
 			global
 			{not in Vi}
@@ -2455,8 +2454,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	NOTE: This option is reset when 'compatible' is set.
 
 						*'directory'* *'dir'*
-'directory' 'dir'	string	(default for Amiga: ".,t:",
-				 for MS-DOS and Win32: ".,$TEMP,c:\tmp,c:\temp"
+'directory' 'dir'	string	(default for MS-DOS and Win32: ".,$TEMP,c:\tmp,c:\temp",
 				 for Unix: ".,~/tmp,/var/tmp,/tmp")
 			global
 	List of directory names for the swap file, separated with commas.
@@ -2655,8 +2653,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	screen flash or do nothing.
 
 						*'errorfile'* *'ef'*
-'errorfile' 'ef'	string	(Amiga default: "AztecC.Err",
-					others: "errors.err")
+'errorfile' 'ef'	string	(default: "errors.err")
 			global
 			{not in Vi}
 			{not available when compiled without the |+quickfix|
@@ -4262,7 +4259,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'isfname'* *'isf'*
 'isfname' 'isf'		string	(default for MS-DOS and Win32:
 			     "@,48-57,/,\,.,-,_,+,,,#,$,%,{,},[,],:,@-@,!,~,="
-			    for AMIGA: "@,48-57,/,.,-,_,+,,,$,:"
 			    otherwise: "@,48-57,/,.,-,_,+,,,#,$,%,~,=")
 			global
 			{not in Vi}
@@ -5676,11 +5672,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						$VIMRUNTIME,
 						$VIM/vimfiles/after,
 						$HOME/.vim/after"
-					Amiga: "home:vimfiles,
-						$VIM/vimfiles,
-						$VIMRUNTIME,
-						$VIM/vimfiles/after,
-						home:vimfiles/after"
 					Macintosh: "$VIM:vimfiles,
 						$VIMRUNTIME,
 						$VIM:vimfiles:after"
@@ -5987,8 +5978,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The name of the temporary file can be represented by "%s" if necessary
 	(the file name is appended automatically if no %s appears in the value
 	of this option).
-	For the Amiga and MS-DOS the default is ">".  The output is directly
-	saved in a file and not echoed to the screen.
+	For MS-DOS the default is ">".  The output is directly saved in a file
+	and not echoed to the screen.
 	For Unix the default it "| tee".  The stdout of the compiler is saved
 	in a file and echoed to the screen.  If the 'shell' option is "csh" or
 	"tcsh" after initializations, the default becomes "|& tee".  If the
@@ -7049,7 +7040,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'term'* *E529* *E530* *E531*
 'term'			string	(default is $TERM, if that fails:
 				      in the GUI: "builtin_gui"
-					on Amiga: "amiga"
 					  on Mac: "mac-ansi"
 				       on MS-DOS: "pcterm"
 					 on Unix: "ansi"
@@ -7235,9 +7225,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 		(path)		is the path of the file being edited
 		- VIM		the server name |v:servername| or "VIM"
 	Only works if the terminal supports setting window titles
-	(currently Amiga console, Win32 console, all GUI versions and
-	terminals with a non- empty 't_ts' option - this is Unix xterm
-	by default, where 't_ts' is taken from the builtin termcap).
+	(currently Win32 console, all GUI versions and terminals with a non-
+	empty 't_ts' option - this is Unix xterm by default, where 't_ts' is
+	taken from the builtin termcap).
 								*X11*
 	When Vim was compiled with HAVE_X11 defined, the original title will
 	be restored if possible.  The output of ":version" will include "+X11"
@@ -7289,8 +7279,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When this option is not empty, it will be used for the title of the
 	window.  This happens only when the 'title' option is on.
 	Only works if the terminal supports setting window titles (currently
-	Amiga console, Win32 console, all GUI versions and terminals with a
-	non-empty 't_ts' option).
+	Win32 console, all GUI versions and terminals with a non-empty 't_ts'
+	option).
 	When Vim was compiled with HAVE_X11 defined, the original title will
 	be restored if possible |X11|.
 	When this option contains printf-style '%' items, they will be
@@ -7584,10 +7574,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	displayed when 'verbosefile' is set.
 
 						*'viewdir'* *'vdir'*
-'viewdir' 'vdir'	string	(default for Amiga, MS-DOS, and Win32:
-							 "$VIM/vimfiles/view",
-				 for Unix: "~/.vim/view",
-				 for Macintosh: "$VIM:vimfiles:view")
+'viewdir' 'vdir'	string	(default for MS-DOS and Win32: "$VIM/vimfiles/view",
+				 for Unix: "~/.vim/view")
 			global
 			{not in Vi}
 			{not available when compiled without the |+mksession|
@@ -7622,7 +7610,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 				*'viminfo'* *'vi'* *E526* *E527* *E528*
 'viminfo' 'vi'		string	(Vi default: "", Vim default for MS-DOS,
 				   Windows: '100,<50,s10,h,rA:,rB:,
-				   for Amiga: '100,<50,s10,h,rdf0:,rdf1:,rdf2:
 				   for others: '100,<50,s10,h)
 			global
 			{not in Vi}
@@ -7704,10 +7691,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 		',').  This parameter can be given several times.  Each
 		specifies the start of a path for which no marks will be
 		stored.  This is to avoid removable media.  For MS-DOS you
-		could use "ra:,rb:", for Amiga "rdf0:,rdf1:,rdf2:".  You can
-		also use it for temp files, e.g., for Unix: "r/tmp".  Case is
-		ignored.  Maximum length of each 'r' argument is 50
-		characters.
+		could use "ra:,rb:".  You can also use it for temp files,
+		e.g., for Unix: "r/tmp".  Case is ignored.  Maximum length of
+		each 'r' argument is 50 characters.
 							*viminfo-s*
 	s	Maximum size of an item in Kbyte.  If zero then registers are
 		not saved.  Currently only applies to registers.  The default
@@ -7775,9 +7761,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	might want to set it again in your |gvimrc|.
 	In the GUI, 't_vb' defaults to "<Esc>|f", which inverts the display
 	for 20 msec.  If you want to use a different time, use "<Esc>|40f",
-	where 40 is the time in msec.
-	Does not work on the Amiga, you always get a screen flash.
-	Also see 'errorbells'.
+	where 40 is the time in msec.  Also see 'errorbells'.
 
 						*'warn'* *'nowarn'*
 'warn'			boolean	(default on)

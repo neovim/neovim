@@ -73,8 +73,6 @@ Unix: >
 	:!cp -i $VIMRUNTIME/vimrc_example.vim ~/.vimrc
 MS-DOS, MS-Windows: >
 	:!copy $VIMRUNTIME/vimrc_example.vim $VIM/_vimrc
-Amiga: >
-	:!copy $VIMRUNTIME/vimrc_example.vim $VIM/.vimrc
 
 If the file already exists you probably want to keep it.
 

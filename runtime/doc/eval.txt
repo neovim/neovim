@@ -6662,9 +6662,7 @@ There are four types of features:
 
 acl			Compiled with |ACL| support.
 all_builtin_terms	Compiled with all builtin terminals enabled.
-amiga			Amiga version of Vim.
 arabic			Compiled with Arabic support |Arabic|.
-arp			Compiled with ARP support (Amiga).
 autocmd			Compiled with autocommand support. |autocommand|
 balloon_eval		Compiled with |balloon-eval| support.
 balloon_multiline	GUI supports multiline balloons.
@@ -6703,8 +6701,8 @@ filterpipe		When 'shelltemp' is off pipes are used for shell
 find_in_path		Compiled with support for include file searches
 			|+find_in_path|.
 float			Compiled with support for |Float|.
-fname_case		Case in file names matters (for Amiga, MS-DOS, and
-			Windows this is not present).
+fname_case		Case in file names matters (for MS-DOS and Windows
+			this is not present).
 folding			Compiled with |folding| support.
 footer			Compiled with GUI footer support. |gui-footer|
 fork			Compiled to use fork()/exec() instead of system().
