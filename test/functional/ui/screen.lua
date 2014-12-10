@@ -147,17 +147,21 @@ function Screen:expect(expected, attr_ids)
 end
 
 function Screen:_wait(check, timeout)
-  local err
+  local err, checked = false
   local function notification_cb(method, args)
     assert(method == 'redraw')
     self:_redraw(args)
     err = check()
+    checked = true
     if not err then
       stop()
     end
     return true
   end
   run(nil, notification_cb, nil, timeout or 5000)
+  if not checked then
+    err = check()
+  end
   if err then
     error(err)
   end

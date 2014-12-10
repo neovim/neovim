@@ -183,22 +183,105 @@ size_t input_enqueue(String keys)
   char *ptr = keys.data, *end = ptr + keys.size;
 
   while (rbuffer_available(input_buffer) >= 6 && ptr < end) {
-    int new_size = trans_special((char_u **)&ptr,
-        (char_u *)rbuffer_write_ptr(input_buffer),
-        false);
+    uint8_t buf[6] = {0};
+    int new_size = trans_special((uint8_t **)&ptr, buf, false);
+
     if (!new_size) {
       // copy the character unmodified
-      *rbuffer_write_ptr(input_buffer) = *ptr++;
+      *buf = (uint8_t)*ptr++;
       new_size = 1;
     }
+
+    new_size = handle_mouse_event(&ptr, buf, new_size);
     // TODO(tarruda): Don't produce past unclosed '<' characters, except if
     // there's a lot of characters after the '<'
-    rbuffer_produced(input_buffer, (size_t)new_size);
+    rbuffer_write(input_buffer, (char *)buf, (size_t)new_size);
   }
 
   size_t rv = (size_t)(ptr - keys.data);
   process_interrupts();
   return rv;
+}
+
+// Mouse event handling code(Extract row/col if available and detect multiple
+// clicks)
+static int handle_mouse_event(char **ptr, uint8_t *buf, int bufsize)
+{
+  int mouse_code = 0;
+
+  if (bufsize == 3) {
+    mouse_code = buf[2];
+  } else if (bufsize == 6) {
+    // prefixed with K_SPECIAL KS_MODIFIER mod
+    mouse_code = buf[5];
+  }
+
+  if (mouse_code < KE_LEFTMOUSE || mouse_code > KE_RIGHTRELEASE) {
+    return bufsize;
+  }
+
+  // a <[COL],[ROW]> sequence can follow and will set the mouse_row/mouse_col
+  // global variables. This is ugly but its how the rest of the code expects to
+  // find mouse coordinates, and it would be too expensive to refactor this
+  // now.
+  int col, row, advance;
+  if (sscanf(*ptr, "<%d,%d>%n", &col, &row, &advance)) {
+    if (col >= 0 && row >= 0) {
+      mouse_row = row;
+      mouse_col = col;
+    }
+    *ptr += advance;
+  }
+
+  static int orig_num_clicks = 0;
+  static int orig_mouse_code = 0;
+  static int orig_mouse_col = 0;
+  static int orig_mouse_row = 0;
+  static uint64_t orig_mouse_time = 0;  // time of previous mouse click
+  uint64_t mouse_time = os_hrtime();    // time of current mouse click
+
+  // compute the time elapsed since the previous mouse click and
+  // convert p_mouse from ms to ns
+  uint64_t timediff = mouse_time - orig_mouse_time;
+  uint64_t mouset = (uint64_t)p_mouset * 1000000;
+  if (mouse_code == orig_mouse_code
+      && timediff < mouset
+      && orig_num_clicks != 4
+      && orig_mouse_col == mouse_col
+      && orig_mouse_row == mouse_row) {
+    orig_num_clicks++;
+  } else {
+    orig_num_clicks = 1;
+  }
+  orig_mouse_code = mouse_code;
+  orig_mouse_col = mouse_col;
+  orig_mouse_row = mouse_row;
+  orig_mouse_time = mouse_time;
+
+  int modifiers = 0;
+  if (orig_num_clicks == 2) {
+    modifiers |= MOD_MASK_2CLICK;
+  } else if (orig_num_clicks == 3) {
+    modifiers |= MOD_MASK_3CLICK;
+  } else if (orig_num_clicks == 4) {
+    modifiers |= MOD_MASK_4CLICK;
+  }
+
+  if (modifiers) {
+    if (buf[1] != KS_MODIFIER) {
+      // no modifiers in the buffer yet, shift the bytes 3 positions
+      memcpy(buf + 3, buf, 3);
+      // add the modifier sequence
+      buf[0] = K_SPECIAL;
+      buf[1] = KS_MODIFIER;
+      buf[2] = (uint8_t)modifiers;
+      bufsize += 3;
+    } else {
+      buf[2] |= (uint8_t)modifiers;
+    }
+  }
+
+  return bufsize;
 }
 
 static bool input_poll(int ms)
