@@ -232,8 +232,6 @@ Go through more coverity reports.
 Patch to add ":undorecover", get as much text out of the undo file as
 possible. (Christian Brabandt, 2014 Mar 12)
 
-Include Haiku port? (Adrien Destugues, Siarzhuk Zharski, 2013 Oct 24)
-
 Updated spec ftplugin. (Matěj Cepl, 2013 Oct 16)
 
 Some quickfix messages appear twice. (Gary Johnson, 2014 Feb 16)
@@ -2249,7 +2247,7 @@ GUI:
     Need better separation of Vim core and GUI code.
 8   When fontset support is enabled, setting 'guifont' to a single font
     doesn't work.
-8   Menu priority for sub-menus for: Amiga, BeOS.
+8   Menu priority for sub-menus for: Amiga.
 8   When translating menus ignore the part after the Tab, the shortcut.  So
     that the same menu item with a different shortcut (e.g., for the Mac) are
     still translated.
@@ -3743,7 +3741,7 @@ Win32 GUI:
 
 
 GUI:
-8   Make inputdialog() work for Photon, Amiga.
+8   Make inputdialog() work for Amiga.
 -   <C--> cannot be mapped.  Should be possible to recognize this as a
     normal "-" with the Ctrl modifier.
 7   Implement ":popup" for other systems than Windows.
@@ -3822,8 +3820,6 @@ GUI:
 
 
 Autocommands:
-9   Rework the code from FEAT_OSFILETYPE for autocmd-osfiletypes to use
-    'filetype'.  Only for when the current buffer is known.
 -   Put autocommand event names in a hashtable for faster lookup?
 8   When the SwapExists event is triggered, provide information about the
     swap file, e.g., whether the process is running, file was modified, etc.

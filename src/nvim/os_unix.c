@@ -9,7 +9,6 @@
 
 /*
  * os_unix.c -- code for all flavors of Unix (BSD, SYSV, SVR4, POSIX, ...)
- *	     Also for BeOS
  *
  * A lot of this file was originally written by Juergen Weigert and later
  * changed beyond recognition.

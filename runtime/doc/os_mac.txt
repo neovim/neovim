@@ -54,7 +54,7 @@ algorithm is used:
 
 You can use the |$VIM| and |$VIMRUNTIME|  variable. >
 
-		:so $VIMRUNTIME:syntax:syntax.vim
+		:so $VIMRUNTIME/syntax/syntax.vim
 
 ==============================================================================
 2. .vimrc and .vim files				*mac-vimfile*

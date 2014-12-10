@@ -802,7 +802,6 @@ Short explanation of each option:		*option-list*
 'omnifunc'	  'ofu'     function for filetype-specific completion
 'opendevice'	  'odev'    allow reading/writing devices on MS-Windows
 'operatorfunc'	  'opfunc'  function to be called for |g@| operator
-'osfiletype' 	  'oft'     no longer supported
 'paragraphs'	  'para'    nroff macros that separate paragraphs
 'paste'			    allow pasting text
 'pastetoggle'	  'pt'	    key code that causes 'paste' to toggle

@@ -137,10 +137,7 @@ Support for different systems.
 	- In protected mode on Windows 3.1 and MS-DOS (DPMI driver required).
 	- Windows 95 and Windows NT, with support for long file names.
 	- VMS
-	- BeOS
 	- Macintosh
-	- Risc OS
-	- IBM OS/390
 	Note that on some systems features need to be disabled to reduce
 	resource usage, esp. on MS-DOS.  For some outdated systems you need to
 	use an older Vim version.
@@ -162,7 +159,7 @@ Graphical User Interface (GUI).				|gui|
 	define your own menus.  Better support for CTRL/SHIFT/ALT keys in
 	combination with special keys and mouse.  Supported for various
 	platforms, such as X11 (with Motif and Athena interfaces), GTK, Win32
-	(Windows 95 and later), BeOS, Amiga and Macintosh.
+	(Windows 95 and later), Amiga and Macintosh.
 
 Multiple windows and buffers.				|windows.txt|
 	Vim can split the screen into several windows, each editing a

@@ -336,8 +336,6 @@ If 'encoding' is "latin1" Vim will look for:
 This assumes none of them are found (Polish doesn't make sense when leaving
 out the non-ASCII characters).
 
-Spelling for EBCDIC is currently not supported.
-
 A spell file might not be available in the current 'encoding'.  See
 |spell-mkspell| about how to create a spell file.  Converting a spell file
 with "iconv" will NOT work!

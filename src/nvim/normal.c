@@ -2102,7 +2102,7 @@ do_mouse (
        * Windows only shows the popup menu on the button up event.
        */
 #if defined(FEAT_GUI_MOTIF) || defined(FEAT_GUI_GTK) \
-      || defined(FEAT_GUI_PHOTON) || defined(FEAT_GUI_MAC)
+      || defined(FEAT_GUI_MAC)
       if (!is_click)
         return false;
 #endif
