@@ -61,4 +61,12 @@ static inline void *ga_append_via_ptr(garray_T *gap, size_t item_size)
     ga_clear(_gap);                                             \
   } while (false)
 
+#define FREE_PTR_PTR(ptr) free(*(ptr))
+
+/// Call `free` for every pointer stored in the garray and then frees the
+/// garray.
+///
+/// @param gap the garray to be freed
+#define GA_DEEP_CLEAR_PTR(gap) GA_DEEP_CLEAR(gap, void*, FREE_PTR_PTR)
+
 #endif  // NVIM_GARRAY_H

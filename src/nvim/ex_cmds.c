@@ -5625,9 +5625,7 @@ helptags_one (
   if (mix)
     got_int = FALSE;        /* continue with other languages */
 
-  for (int i = 0; i < ga.ga_len; ++i)
-    free(((char_u **)ga.ga_data)[i]);
-  ga_clear(&ga);
+  GA_DEEP_CLEAR_PTR(&ga);
   fclose(fd_tags);          /* there is no check for an error... */
 }
 
