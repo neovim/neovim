@@ -70,7 +70,7 @@ describe('tempfile module:', function()
       it('generates the same directory name', function()
         local dir1 = vim_gettempdir()
         local dir2 = vim_gettempdir()
-        ok(dir1 == dir2)
+        eq(dir1, dir2)
       end)
 
       it('interrupted by generating a file name, generates the same directory name', function()
