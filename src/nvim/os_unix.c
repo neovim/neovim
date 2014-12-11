@@ -391,6 +391,13 @@ void mch_copy_sec(char_u *from_file, char_u *to_file)
 vim_acl_T mch_get_acl(char_u *fname)
 {
   vim_acl_T ret = NULL;
+
+  int32_t *mode = (int32_t *)malloc(sizeof(int32_t));
+  *mode = os_getperm(fname);
+  if(*mode != -1) {
+    ret = mode;
+  }
+
   return ret;
 }
 
@@ -401,12 +408,17 @@ void mch_set_acl(char_u *fname, vim_acl_T aclent)
 {
   if (aclent == NULL)
     return;
+
+  int *mode = aclent;
+  os_setperm(fname, *mode);
 }
 
 void mch_free_acl(vim_acl_T aclent)
 {
   if (aclent == NULL)
     return;
+
+  free(aclent);
 }
 #endif
 
