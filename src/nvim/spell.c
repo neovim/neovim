@@ -2379,13 +2379,26 @@ static void slang_free(slang_T *lp)
   free(lp);
 }
 
+/// Frees a salitem_T
+static void free_salitem(salitem_T *smp) {
+  free(smp->sm_lead);
+  // Don't free sm_oneof and sm_rules, they point into sm_lead.
+  free(smp->sm_to);
+  free(smp->sm_lead_w);
+  free(smp->sm_oneof_w);
+  free(smp->sm_to_w);
+}
+
+/// Frees a fromto_T
+static void free_fromto(fromto_T *ftp) {
+  free(ftp->ft_from);
+  free(ftp->ft_to);
+}
+
 // Clear an slang_T so that the file can be reloaded.
 static void slang_clear(slang_T *lp)
 {
   garray_T    *gap;
-  fromto_T    *ftp;
-  salitem_T   *smp;
-  int round;
 
   free(lp->sl_fbyts);
   lp->sl_fbyts = NULL;
@@ -2401,36 +2414,23 @@ static void slang_clear(slang_T *lp)
   free(lp->sl_pidxs);
   lp->sl_pidxs = NULL;
 
-  for (round = 1; round <= 2; ++round) {
-    gap = round == 1 ? &lp->sl_rep : &lp->sl_repsal;
-    while (!GA_EMPTY(gap)) {
-      ftp = &((fromto_T *)gap->ga_data)[--gap->ga_len];
-      free(ftp->ft_from);
-      free(ftp->ft_to);
-    }
-    ga_clear(gap);
-  }
+  GA_DEEP_CLEAR(&lp->sl_rep, fromto_T, free_fromto);
+  GA_DEEP_CLEAR(&lp->sl_repsal, fromto_T, free_fromto);
 
   gap = &lp->sl_sal;
   if (lp->sl_sofo) {
     // "ga_len" is set to 1 without adding an item for latin1
-    if (gap->ga_data != NULL)
+    if (gap->ga_data != NULL) {
       // SOFOFROM and SOFOTO items: free lists of wide characters.
       for (int i = 0; i < gap->ga_len; ++i) {
         free(((int **)gap->ga_data)[i]);
       }
-  } else
-    // SAL items: free salitem_T items
-    while (!GA_EMPTY(gap)) {
-      smp = &((salitem_T *)gap->ga_data)[--gap->ga_len];
-      free(smp->sm_lead);
-      // Don't free sm_oneof and sm_rules, they point into sm_lead.
-      free(smp->sm_to);
-      free(smp->sm_lead_w);
-      free(smp->sm_oneof_w);
-      free(smp->sm_to_w);
     }
-  ga_clear(gap);
+    ga_clear(gap);
+  } else {
+    // SAL items: free salitem_T items
+    GA_DEEP_CLEAR(gap, salitem_T, free_salitem);
+  }
 
   for (int i = 0; i < lp->sl_prefixcnt; ++i) {
     vim_regfree(lp->sl_prefprog[i]);

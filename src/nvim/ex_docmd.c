@@ -97,6 +97,8 @@ typedef struct {
   linenr_T lnum;                /* sourcing_lnum of the line */
 } wcmd_T;
 
+#define FREE_WCMD(wcmd) free((wcmd)->line)
+
 /*
  * Structure used to store info for line position in a while or for loop.
  * This is required, because do_one_cmd() may invoke ex_function(), which
@@ -708,9 +710,8 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
      */
     if (cstack.cs_looplevel == 0) {
       if (!GA_EMPTY(&lines_ga)) {
-        sourcing_lnum =
-          ((wcmd_T *)lines_ga.ga_data)[lines_ga.ga_len - 1].lnum;
-        free_cmdlines(&lines_ga);
+        sourcing_lnum = ((wcmd_T *)lines_ga.ga_data)[lines_ga.ga_len - 1].lnum;
+        GA_DEEP_CLEAR(&lines_ga, wcmd_T, FREE_WCMD);
       }
       current_line = 0;
     }
@@ -777,8 +778,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
 
   free(cmdline_copy);
   did_emsg_syntax = FALSE;
-  free_cmdlines(&lines_ga);
-  ga_clear(&lines_ga);
+  GA_DEEP_CLEAR(&lines_ga, wcmd_T, FREE_WCMD);
 
   if (cstack.cs_idx >= 0) {
     /*
@@ -1015,17 +1015,6 @@ static void store_loop_line(garray_T *gap, char_u *line)
   wcmd_T *p = GA_APPEND_VIA_PTR(wcmd_T, gap);
   p->line = vim_strsave(line);
   p->lnum = sourcing_lnum;
-}
-
-/*
- * Free the lines stored for a ":while" or ":for" loop.
- */
-static void free_cmdlines(garray_T *gap)
-{
-  while (!GA_EMPTY(gap)) {
-    free(((wcmd_T *)(gap->ga_data))[gap->ga_len - 1].line);
-    --gap->ga_len;
-  }
 }
 
 /*
