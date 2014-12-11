@@ -3408,7 +3408,7 @@ static long bt_regexec_both(char_u *line,
     if (!ireg_ic
         && !has_mbyte
         )
-      while ((s = vim_strbyte(s, c)) != NULL) {
+      while ((s = (char_u*)strchr((char*)s, c)) != NULL) {
         if (cstrncmp(s, prog->regmust, &prog->regmlen) == 0)
           break;                        /* Found it. */
         ++s;
@@ -3460,7 +3460,7 @@ static long bt_regexec_both(char_u *line,
         if (!ireg_ic
             && !has_mbyte
             )
-          s = vim_strbyte(regline + col, prog->regstart);
+          s = (char_u*)strchr((char*)(regline + col), prog->regstart);
         else
           s = cstrchr(regline + col, prog->regstart);
         if (s == NULL) {
