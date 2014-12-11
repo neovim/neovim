@@ -2,7 +2,6 @@
 #include <inttypes.h>
 #include <stdarg.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <sys/time.h>
 #include <unistd.h>

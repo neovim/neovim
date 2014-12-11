@@ -1,7 +1,6 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -30,7 +29,6 @@
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/tag.h"
-#include "nvim/types.h"
 #include "nvim/os/input.h"
 #include "nvim/window.h"
 

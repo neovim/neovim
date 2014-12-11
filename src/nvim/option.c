@@ -35,7 +35,6 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
-#include <stdint.h>
 #include <stdlib.h>
 
 #include "nvim/vim.h"
