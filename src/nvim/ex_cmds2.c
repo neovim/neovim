@@ -2580,13 +2580,11 @@ char_u *get_scriptname(scid_T id)
 }
 
 # if defined(EXITFREE) || defined(PROTO)
-void free_scriptnames(void)
+void free_scriptnames()
 {
-  for (int i = script_items.ga_len; i > 0; --i)
-    free(SCRIPT_ITEM(i).sn_name);
-  ga_clear(&script_items);
+# define FREE_SCRIPTNAME(item) free((item)->sn_name)
+  GA_DEEP_CLEAR(&script_items, scriptitem_T, FREE_SCRIPTNAME);
 }
-
 # endif
 
 

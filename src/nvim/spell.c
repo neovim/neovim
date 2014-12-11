@@ -9200,15 +9200,10 @@ static void tree_count_words(char_u *byts, idx_T *idxs)
 // Free the info put in "*su" by spell_find_suggest().
 static void spell_find_cleanup(suginfo_T *su)
 {
+# define FREE_SUG_WORD(sug) free(sug->st_word)
   // Free the suggestions.
-  for (int i = 0; i < su->su_ga.ga_len; ++i) {
-    free(SUG(su->su_ga, i).st_word);
-  }
-  ga_clear(&su->su_ga);
-  for (int i = 0; i < su->su_sga.ga_len; ++i) {
-    free(SUG(su->su_sga, i).st_word);
-  }
-  ga_clear(&su->su_sga);
+  GA_DEEP_CLEAR(&su->su_ga, suggest_T, FREE_SUG_WORD);
+  GA_DEEP_CLEAR(&su->su_sga, suggest_T, FREE_SUG_WORD);
 
   // Free the banned words.
   hash_clear_all(&su->su_banned, 0);

@@ -4535,20 +4535,18 @@ void ex_comclear(exarg_T *eap)
   uc_clear(&curbuf->b_ucmds);
 }
 
+static void free_ucmd(ucmd_T* cmd) {
+  free(cmd->uc_name);
+  free(cmd->uc_rep);
+  free(cmd->uc_compl_arg);
+}
+
 /*
  * Clear all user commands for "gap".
  */
 void uc_clear(garray_T *gap)
 {
-  ucmd_T      *cmd;
-
-  for (int i = 0; i < gap->ga_len; ++i) {
-    cmd = USER_CMD_GA(gap, i);
-    free(cmd->uc_name);
-    free(cmd->uc_rep);
-    free(cmd->uc_compl_arg);
-  }
-  ga_clear(gap);
+  GA_DEEP_CLEAR(gap, ucmd_T, free_ucmd);
 }
 
 static void ex_delcommand(exarg_T *eap)
@@ -5477,9 +5475,8 @@ static void ex_goto(exarg_T *eap)
  */
 void alist_clear(alist_T *al)
 {
-  while (--al->al_ga.ga_len >= 0)
-    free(AARGLIST(al)[al->al_ga.ga_len].ae_fname);
-  ga_clear(&al->al_ga);
+# define FREE_AENTRY_FNAME(arg) free(arg->ae_fname)
+  GA_DEEP_CLEAR(&al->al_ga, aentry_T, FREE_AENTRY_FNAME);
 }
 
 /*

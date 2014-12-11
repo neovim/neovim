@@ -550,14 +550,9 @@ void syntax_start(win_T *wp, linenr_T lnum)
  */
 static void clear_syn_state(synstate_T *p)
 {
-  garray_T    *gap;
-
   if (p->sst_stacksize > SST_FIX_STATES) {
-    gap = &(p->sst_union.sst_ga);
-    for (int i = 0; i < gap->ga_len; i++) {
-      unref_extmatch(SYN_STATE_P(gap)[i].bs_extmatch);
-    }
-    ga_clear(gap);
+#   define UNREF_BUFSTATE_EXTMATCH(bs) unref_extmatch((bs)->bs_extmatch)
+    GA_DEEP_CLEAR(&(p->sst_union.sst_ga), bufstate_T, UNREF_BUFSTATE_EXTMATCH);
   } else {
     for (int i = 0; i < p->sst_stacksize; i++) {
       unref_extmatch(p->sst_union.sst_stack[i].bs_extmatch);
@@ -570,11 +565,8 @@ static void clear_syn_state(synstate_T *p)
  */
 static void clear_current_state(void)
 {
-  stateitem_T *sip = (stateitem_T *)(current_state.ga_data);
-  for (int i = 0; i < current_state.ga_len; i++) {
-    unref_extmatch(sip[i].si_extmatch);
-  }
-  ga_clear(&current_state);
+# define UNREF_STATEITEM_EXTMATCH(si) unref_extmatch((si)->si_extmatch)
+  GA_DEEP_CLEAR(&current_state, stateitem_T, UNREF_STATEITEM_EXTMATCH);
 }
 
 /*

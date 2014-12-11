@@ -1336,9 +1336,8 @@ static void deleteFoldEntry(garray_T *gap, int idx, int recursive)
  */
 void deleteFoldRecurse(garray_T *gap)
 {
-  for (int i = 0; i < gap->ga_len; ++i)
-    deleteFoldRecurse(&(((fold_T *)(gap->ga_data))[i].fd_nested));
-  ga_clear(gap);
+# define DELETE_FOLD_NESTED(fd) deleteFoldRecurse(&((fd)->fd_nested))
+  GA_DEEP_CLEAR(gap, fold_T, DELETE_FOLD_NESTED);
 }
 
 /* foldMarkAdjust() {{{2 */
