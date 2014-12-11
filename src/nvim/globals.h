@@ -68,7 +68,7 @@
  */
 EXTERN long Rows                        /* nr of rows in the screen */
 #ifdef DO_INIT
-  = 24
+  = 24L
 #endif
 ;
 EXTERN long Columns INIT(= 80);         /* nr of columns in the screen */
