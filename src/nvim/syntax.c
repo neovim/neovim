@@ -4580,18 +4580,17 @@ static int syn_combine_list_count(const short *g1, const short *g2, int list_op)
     if (*g1 < *g2) {
       count++;
       g1++;
-      continue;
-    }
+    } else {
+      // Only add from the second list if we're adding the lists.
+      if (list_op == CLUSTER_ADD) {
+        count++;
+      }
 
-    // Only add from the second list if we're adding the lists.
-    if (list_op == CLUSTER_ADD) {
-      count++;
+      if (*g1 == *g2) {
+        g1++;
+      }
+      g2++;
     }
-
-    if (*g1 == *g2) {
-      g1++;
-    }
-    g2++;
   }
 
   // Now add the leftovers from whichever list didn't get finished first.
@@ -4625,18 +4624,17 @@ static void syn_combine_list_merge(const short *g1, const short *g2, int list_op
     if (*g1 < *g2) {
       clstr[i++] = *g1;
       g1++;
-      continue;
-    }
+    } else {
+      // Only add from the second list if we're adding the lists.
+      if (list_op == CLUSTER_ADD) {
+        clstr[i++] = *g2;
+      }
 
-    // Only add from the second list if we're adding the lists.
-    if (list_op == CLUSTER_ADD) {
-      clstr[i++] = *g2;
+      if (*g1 == *g2) {
+        g1++;
+      }
+      g2++;
     }
-
-    if (*g1 == *g2) {
-      g1++;
-    }
-    g2++;
   }
 
   // Now add the leftovers from whichever list didn't get finished first.
