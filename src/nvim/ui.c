@@ -458,6 +458,9 @@ static void parse_abstract_ui_codes(uint8_t *ptr, int len)
           UI_CALL(put, NULL, 0);
           col++;
         }
+        if (col >= width) {
+          ui_cursor_goto(row + 1, 0);
+        }
         p += clen;
       }
       ptr = p;
