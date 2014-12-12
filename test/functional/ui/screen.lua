@@ -278,6 +278,14 @@ function Screen:_handle_visual_bell()
   self._visual_bell = true
 end
 
+function Screen:_handle_update_fg(fg)
+  self._fg = fg
+end
+
+function Screen:_handle_update_bg(bg)
+  self._bg = bg
+end
+
 function Screen:_handle_suspend()
   self._suspended = true
 end

@@ -67,6 +67,8 @@ Object remote_ui_attach(uint64_t channel_id, uint64_t request_id, Array args,
   ui->put = remote_ui_put;
   ui->bell = remote_ui_bell;
   ui->visual_bell = remote_ui_visual_bell;
+  ui->update_fg = remote_ui_update_fg;
+  ui->update_bg = remote_ui_update_bg;
   ui->flush = remote_ui_flush;
   ui->suspend = remote_ui_suspend;
   pmap_put(uint64_t)(connected_uis, channel_id, ui);
@@ -264,6 +266,20 @@ static void remote_ui_visual_bell(UI *ui)
 {
   Array args = ARRAY_DICT_INIT;
   push_call(ui, "visual_bell", args);
+}
+
+static void remote_ui_update_fg(UI *ui, int fg)
+{
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, INTEGER_OBJ(fg));
+  push_call(ui, "update_fg", args);
+}
+
+static void remote_ui_update_bg(UI *ui, int bg)
+{
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, INTEGER_OBJ(bg));
+  push_call(ui, "update_bg", args);
 }
 
 static void remote_ui_flush(UI *ui)
