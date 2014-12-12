@@ -281,9 +281,7 @@ int main(int argc, char **argv)
 
   event_init();
 
-  if (abstract_ui) {
-    t_colors = 256;
-  } else {
+  if (!abstract_ui) {
     // Print a warning if stdout is not a terminal TODO(tarruda): Remove this
     // check once the new terminal UI is implemented
     check_tty(&params);

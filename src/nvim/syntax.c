@@ -5984,7 +5984,7 @@ init_highlight (
    * With 8 colors brown is equal to yellow, need to use black for Search fg
    * to avoid Statement highlighted text disappears.
    * Clear the attributes, needed when changing the t_Co value. */
-  if (t_colors > 8)
+  if (abstract_ui || t_colors > 8)
     do_highlight(
         (char_u *)(*p_bg == 'l'
                    ? "Visual cterm=NONE ctermbg=LightGrey"
@@ -6449,7 +6449,7 @@ do_highlight (
                     HL_TABLE()[idx].sg_cterm &= ~HL_BOLD;
                 }
                 color &= 7;             /* truncate to 8 colors */
-              } else if (t_colors == 16 || t_colors == 88
+              } else if (abstract_ui || t_colors == 16 || t_colors == 88
                          || t_colors == 256) {
                 /*
                  * Guess: if the termcap entry ends in 'm', it is
@@ -6497,7 +6497,7 @@ do_highlight (
                 if (color >= 0) {
                   if (termcap_active)
                     term_bg_color(color);
-                  if (t_colors < 16)
+                  if (!abstract_ui && t_colors < 16)
                     i = (color == 0 || color == 4);
                   else
                     i = (color < 7 || color == 8);
@@ -6873,7 +6873,7 @@ int hl_combine_attr(int char_attr, int prim_attr)
   if (char_attr <= HL_ALL && prim_attr <= HL_ALL)
     return char_attr | prim_attr;
 
-  if (t_colors > 1) {
+  if (abstract_ui || t_colors > 1) {
     if (char_attr > HL_ALL)
       char_aep = syn_cterm_attr2entry(char_attr);
     if (char_aep != NULL)
@@ -6937,7 +6937,7 @@ int syn_attr2attr(int attr)
 {
   attrentry_T *aep;
 
-  if (t_colors > 1)
+  if (abstract_ui || t_colors > 1)
     aep = syn_cterm_attr2entry(attr);
   else
     aep = syn_term_attr2entry(attr);
@@ -7364,7 +7364,7 @@ int syn_id2attr(int hl_id)
   hl_id = syn_get_final_id(hl_id);
   sgp = &HL_TABLE()[hl_id - 1];             /* index is ID minus one */
 
-  if (t_colors > 1)
+  if (abstract_ui || t_colors > 1)
     attr = sgp->sg_cterm_attr;
   else
     attr = sgp->sg_term_attr;
