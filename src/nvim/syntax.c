@@ -4562,13 +4562,14 @@ static int syn_compare_stub(const void *v1, const void *v2)
   return *s1 > *s2 ? 1 : *s1 < *s2 ? -1 : 0;
 }
 
-/// Counts the unique elements in lists g1 & g2
+/// Count how many elements will be necessary for the list resulting from the
+/// list_op operation on the two lists.
 ///
-/// @param g1       Pointer to list 1
-/// @param g2       Pointer to list 2
-/// @param list_op  Option for combining the lists
-///
-/// @return Count of unique elements in g1 & g2
+/// @param g1 The first sorted NUL terminated list
+/// @param g2 The second sorted NUL terminated list
+/// @param list_op The operation that will be performed on the two lists
+/// @return The count of elemnts of the list resulting from the list_op
+/// operation on the two lists
 static int syn_combine_list_count(const short *g1, const short *g2, int list_op)
 {
   int count = 0;
@@ -4594,11 +4595,10 @@ static int syn_combine_list_count(const short *g1, const short *g2, int list_op)
   }
 
   // Now add the leftovers from whichever list didn't get finished first.
-  // As before, only add from the second list if we're adding the lists.
   for (; *g1; g1++) {
     count++;
   }
-
+  // As before, only add from the second list if we're adding the lists.
   if (list_op == CLUSTER_ADD) {
     for (; *g2; g2++) {
       count++;
@@ -4608,15 +4608,13 @@ static int syn_combine_list_count(const short *g1, const short *g2, int list_op)
   return count;
 }
 
-/// Merges the 2 lists g1 & g2 and puts results in clrstr
+/// Combines two lists according to list_op using the mergesort algorithm.
 ///
-/// Uses a mergesort-like method, adding the smaller of the current
-/// elements in each list to the new list.
-///
-/// @param      g1      Pointer to list 1
-/// @param      g2      Pointer to list 2
-/// @param      list_op Option for combining the lists
-/// @param[out] clstr   Pointer to the merged list
+/// @param g1 The first sorted NUL terminated list
+/// @param g2 The second sorted NUL terminated list
+/// @param list_op The type of combination (operation) that should be performed
+/// on the two lists
+/// @param[out] clstr Pointer to the resulting list
 static void syn_combine_list_merge(const short *g1, const short *g2, int list_op, short *clstr)
 {
   int i = 0;
@@ -4642,11 +4640,10 @@ static void syn_combine_list_merge(const short *g1, const short *g2, int list_op
   }
 
   // Now add the leftovers from whichever list didn't get finished first.
-  // As before, only add from the second list if we're adding the lists.
   for (; *g1; g1++) {
     clstr[i++] = *g1;
   }
-
+  // As before, only add from the second list if we're adding the lists.
   if (list_op == CLUSTER_ADD) {
     for (; *g2; g2++) {
       clstr[i++] = *g2;
