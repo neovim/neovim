@@ -10742,11 +10742,11 @@ static void find_keepcap_word(slang_T *slang, char_u *fword, char_u *kword)
         // Found the matching char.  Copy it to "kword" and go a
         // level deeper.
         if (round[depth] == 1) {
-          STRNCPY(kword + kwordlen[depth], fword + fwordidx[depth],
+          memcpy(kword + kwordlen[depth], fword + fwordidx[depth],
               flen);
           kwordlen[depth + 1] = kwordlen[depth] + flen;
         } else {
-          STRNCPY(kword + kwordlen[depth], uword + uwordidx[depth],
+          memcpy(kword + kwordlen[depth], uword + uwordidx[depth],
               ulen);
           kwordlen[depth + 1] = kwordlen[depth] + ulen;
         }

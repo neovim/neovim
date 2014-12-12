@@ -482,7 +482,7 @@ unix_expandpath (
       e = p;
     if (has_mbyte) {
       len = (*mb_ptr2len)(path_end);
-      STRNCPY(p, path_end, len);
+      memcpy(p, path_end, len);
       p += len;
       path_end += len;
     } else
@@ -1994,7 +1994,7 @@ static int path_get_absolute_path(char_u *fname, char_u *buf, int len, int force
   // expand it if forced or not an absolute path
   if (force || !path_is_absolute_path(fname)) {
     if ((p = vim_strrchr(fname, '/')) != NULL) {
-      STRNCPY(relative_directory, fname, p-fname);
+      memcpy(relative_directory, fname, p-fname);
       relative_directory[p-fname] = NUL;
       end_of_path = (char *) (p + 1);
     } else {

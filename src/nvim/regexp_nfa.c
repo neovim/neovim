@@ -2403,10 +2403,10 @@ static void nfa_print_state2(FILE *debugf, nfa_state_T *state, garray_T *indent)
     int last = indent->ga_len - 3;
     char_u save[2];
 
-    STRNCPY(save, &p[last], 2);
-    STRNCPY(&p[last], "+-", 2);
+    memcpy(save, &p[last], 2);
+    memcpy(&p[last], "+-", 2);
     fprintf(debugf, " %s", p);
-    STRNCPY(&p[last], save, 2);
+    memcpy(&p[last], save, 2);
   } else
     fprintf(debugf, " %s", p);
 
