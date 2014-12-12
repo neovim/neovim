@@ -32,6 +32,8 @@ struct ui_t {
   void (*bell)(UI *ui);
   void (*visual_bell)(UI *ui);
   void (*flush)(UI *ui);
+  void (*update_fg)(UI *ui, int fg);
+  void (*update_bg)(UI *ui, int bg);
   void (*suspend)(UI *ui);
 };
 

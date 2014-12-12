@@ -45,6 +45,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax_defs.h"
 #include "nvim/term.h"
+#include "nvim/ui.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 
@@ -6518,6 +6519,7 @@ do_highlight (
 
         if (is_normal_group) {
           normal_fg = HL_TABLE()[idx].sg_rgb_fg;
+          ui_fg_updated();
         }
       } else if (STRCMP(key, "GUIBG") == 0)   {
         if (!init || !(HL_TABLE()[idx].sg_set & SG_GUI)) {
@@ -6536,6 +6538,7 @@ do_highlight (
 
         if (is_normal_group) {
           normal_bg = HL_TABLE()[idx].sg_rgb_bg;
+          ui_bg_updated();
         }
       } else if (STRCMP(key, "GUISP") == 0)   {
         // Ignored

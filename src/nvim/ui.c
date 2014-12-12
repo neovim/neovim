@@ -113,6 +113,18 @@ void ui_write(uint8_t *s, int len)
     free(tofree);
 }
 
+void ui_fg_updated(void)
+{
+  UI_CALL(update_fg, normal_fg);
+  UI_CALL(flush);
+}
+
+void ui_bg_updated(void)
+{
+  UI_CALL(update_bg, normal_bg);
+  UI_CALL(flush);
+}
+
 /*
  * If the machine has job control, use it to suspend the program,
  * otherwise fake it by starting a new shell.
@@ -167,6 +179,8 @@ void ui_cursor_shape(void)
 
 void ui_resize(int width, int height)
 {
+  ui_fg_updated();
+  ui_bg_updated();
   sr.top = 0;
   sr.bot = height - 1;
   sr.left = 0;
