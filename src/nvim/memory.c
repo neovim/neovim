@@ -241,7 +241,7 @@ void memchrsub(void *data, char c, char x, size_t len)
 /// @param str Pointer to the string to search.
 /// @param c   The byte to search for.
 /// @returns the number of occurrences of `c` in `str`.
-size_t strcnt(const char *str, char c, size_t len)
+size_t strcnt(const char *str, char c)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   assert(c != 0);
