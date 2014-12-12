@@ -5420,20 +5420,12 @@ static int list_join(garray_T *gap, list_T *l, char_u *sep, int echo_style, int 
 {
   garray_T join_ga;
   int retval;
-  join_T      *p;
 
   ga_init(&join_ga, (int)sizeof(join_T), l->lv_len);
   retval = list_join_inner(gap, l, sep, echo_style, copyID, &join_ga);
 
-  /* Dispose each item in join_ga. */
-  if (join_ga.ga_data != NULL) {
-    p = (join_T *)join_ga.ga_data;
-    for (int i = 0; i < join_ga.ga_len; ++i) {
-      free(p->tofree);
-      ++p;
-    }
-    ga_clear(&join_ga);
-  }
+# define FREE_JOIN_TOFREE(join) free((join)->tofree)
+  GA_DEEP_CLEAR(&join_ga, join_T, FREE_JOIN_TOFREE);
 
   return retval;
 }

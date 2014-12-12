@@ -97,6 +97,8 @@ typedef struct {
   linenr_T lnum;                /* sourcing_lnum of the line */
 } wcmd_T;
 
+#define FREE_WCMD(wcmd) free((wcmd)->line)
+
 /*
  * Structure used to store info for line position in a while or for loop.
  * This is required, because do_one_cmd() may invoke ex_function(), which
@@ -708,9 +710,8 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
      */
     if (cstack.cs_looplevel == 0) {
       if (!GA_EMPTY(&lines_ga)) {
-        sourcing_lnum =
-          ((wcmd_T *)lines_ga.ga_data)[lines_ga.ga_len - 1].lnum;
-        free_cmdlines(&lines_ga);
+        sourcing_lnum = ((wcmd_T *)lines_ga.ga_data)[lines_ga.ga_len - 1].lnum;
+        GA_DEEP_CLEAR(&lines_ga, wcmd_T, FREE_WCMD);
       }
       current_line = 0;
     }
@@ -777,8 +778,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
 
   free(cmdline_copy);
   did_emsg_syntax = FALSE;
-  free_cmdlines(&lines_ga);
-  ga_clear(&lines_ga);
+  GA_DEEP_CLEAR(&lines_ga, wcmd_T, FREE_WCMD);
 
   if (cstack.cs_idx >= 0) {
     /*
@@ -1015,17 +1015,6 @@ static void store_loop_line(garray_T *gap, char_u *line)
   wcmd_T *p = GA_APPEND_VIA_PTR(wcmd_T, gap);
   p->line = vim_strsave(line);
   p->lnum = sourcing_lnum;
-}
-
-/*
- * Free the lines stored for a ":while" or ":for" loop.
- */
-static void free_cmdlines(garray_T *gap)
-{
-  while (!GA_EMPTY(gap)) {
-    free(((wcmd_T *)(gap->ga_data))[gap->ga_len - 1].line);
-    --gap->ga_len;
-  }
 }
 
 /*
@@ -4546,20 +4535,18 @@ void ex_comclear(exarg_T *eap)
   uc_clear(&curbuf->b_ucmds);
 }
 
+static void free_ucmd(ucmd_T* cmd) {
+  free(cmd->uc_name);
+  free(cmd->uc_rep);
+  free(cmd->uc_compl_arg);
+}
+
 /*
  * Clear all user commands for "gap".
  */
 void uc_clear(garray_T *gap)
 {
-  ucmd_T      *cmd;
-
-  for (int i = 0; i < gap->ga_len; ++i) {
-    cmd = USER_CMD_GA(gap, i);
-    free(cmd->uc_name);
-    free(cmd->uc_rep);
-    free(cmd->uc_compl_arg);
-  }
-  ga_clear(gap);
+  GA_DEEP_CLEAR(gap, ucmd_T, free_ucmd);
 }
 
 static void ex_delcommand(exarg_T *eap)
@@ -5488,9 +5475,8 @@ static void ex_goto(exarg_T *eap)
  */
 void alist_clear(alist_T *al)
 {
-  while (--al->al_ga.ga_len >= 0)
-    free(AARGLIST(al)[al->al_ga.ga_len].ae_fname);
-  ga_clear(&al->al_ga);
+# define FREE_AENTRY_FNAME(arg) free(arg->ae_fname)
+  GA_DEEP_CLEAR(&al->al_ga, aentry_T, FREE_AENTRY_FNAME);
 }
 
 /*
