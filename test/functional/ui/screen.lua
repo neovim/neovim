@@ -185,12 +185,13 @@ function Screen:_handle_resize(width, height)
 end
 
 function Screen:_handle_clear()
-  self:_clear_block(1, self._height, 1, self._width)
+  self:_clear_block(self._scroll_region.top, self._scroll_region.bot,
+                    self._scroll_region.left, self._scroll_region.right)
 end
 
 function Screen:_handle_eol_clear()
   local row, col = self._cursor.row, self._cursor.col
-  self:_clear_block(row, 1, col, self._width - col)
+  self:_clear_block(row, 1, col, self._scroll_region.right - col)
 end
 
 function Screen:_handle_cursor_goto(row, col)
