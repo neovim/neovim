@@ -4570,9 +4570,9 @@ static int syn_compare_stub(const void *v1, const void *v2)
 /// @param list_op The operation that will be performed on the two lists
 /// @return The count of elemnts of the list resulting from the list_op
 /// operation on the two lists
-static int syn_combine_list_count(const short *g1, const short *g2, int list_op)
+static size_t syn_combine_list_count(const short *g1, const short *g2, int list_op)
 {
-  int count = 0;
+  size_t count = 0;
 
   // Loop through the lists until one of them is empty.
   while (*g1 && *g2) {
@@ -4616,7 +4616,7 @@ static int syn_combine_list_count(const short *g1, const short *g2, int list_op)
 /// @param[out] clstr Pointer to the resulting list
 static void syn_combine_list_merge(const short *g1, const short *g2, int list_op, short *clstr)
 {
-  int i = 0;
+  size_t i = 0;
 
   // Loop through the lists until one of them is empty.
   while (*g1 && *g2) {
@@ -4655,11 +4655,8 @@ static void syn_combine_list_merge(const short *g1, const short *g2, int list_op
  */
 static void syn_combine_list(short **clstr1, short **clstr2, int list_op)
 {
-  int count1 = 0;
-  int count2 = 0;
   short       *g1;
   short       *g2;
-  int count;
 
   /*
    * Handle degenerate cases.
@@ -4676,19 +4673,23 @@ static void syn_combine_list(short **clstr1, short **clstr2, int list_op)
     return;
   }
 
-  for (g1 = *clstr1; *g1; g1++)
+  size_t count1 = 0;
+  for (g1 = *clstr1; *g1; g1++) {
     ++count1;
-  for (g2 = *clstr2; *g2; g2++)
+  }
+  size_t count2 = 0;
+  for (g2 = *clstr2; *g2; g2++) {
     ++count2;
+  }
 
   /*
    * For speed purposes, sort both lists.
    */
-  qsort(*clstr1, (size_t)count1, sizeof(short), syn_compare_stub);
-  qsort(*clstr2, (size_t)count2, sizeof(short), syn_compare_stub);
+  qsort(*clstr1, count1, sizeof(short), syn_compare_stub);
+  qsort(*clstr2, count2, sizeof(short), syn_compare_stub);
 
   //  Count the elements to place in the new list
-  count = syn_combine_list_count(*clstr1, *clstr2, list_op);
+  size_t count = syn_combine_list_count(*clstr1, *clstr2, list_op);
 
   // If the group ended up empty, we don't need to allocate any space for it.
   short *clstr = NULL;
