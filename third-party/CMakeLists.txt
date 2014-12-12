@@ -95,7 +95,13 @@ if(USE_BUNDLED_LIBUNIBILIUM)
     BUILD_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
                               PREFIX=${DEPS_INSTALL_DIR}
                               CFLAGS=-fPIC
-    INSTALL_COMMAND ${MAKE_PRG} PREFIX=${DEPS_INSTALL_DIR} install)
+    INSTALL_COMMAND ${CMAKE_COMMAND}
+      -DLIBRARY_NAME=unibilium
+      -DDEPS_INSTALL_DIR=${DEPS_INSTALL_DIR}
+      -DCMAKE_SHARED_LIBRARY_PREFIX=${CMAKE_SHARED_LIBRARY_PREFIX}
+      -DCMAKE_SHARED_LIBRARY_SUFFIX=${CMAKE_SHARED_LIBRARY_SUFFIX}
+      "-DINSTALL_COMMAND=${MAKE_PRG} PREFIX=${DEPS_INSTALL_DIR} install"
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/InstallLibrary.cmake)
   list(APPEND THIRD_PARTY_DEPS libunibilium)
 endif()
 
@@ -114,12 +120,18 @@ if(USE_BUNDLED_LIBTERMKEY)
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
-                                PREFIX=${DEPS_INSTALL_DIR}
-                                PKG_CONFIG_PATH=${DEPS_LIB_DIR}/pkgconfig
-                                CFLAGS=-fPIC
-                                install)
+    BUILD_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
+                              PREFIX=${DEPS_INSTALL_DIR}
+                              PKG_CONFIG_PATH=${DEPS_LIB_DIR}/pkgconfig
+                              CFLAGS=-fPIC
+                              install
+    INSTALL_COMMAND ${CMAKE_COMMAND}
+      -DLIBRARY_NAME=termkey
+      -DDEPS_INSTALL_DIR=${DEPS_INSTALL_DIR}
+      -DCMAKE_SHARED_LIBRARY_PREFIX=${CMAKE_SHARED_LIBRARY_PREFIX}
+      -DCMAKE_SHARED_LIBRARY_SUFFIX=${CMAKE_SHARED_LIBRARY_SUFFIX}
+      "-DINSTALL_COMMAND=${MAKE_PRG} PREFIX=${DEPS_INSTALL_DIR} install"
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/InstallLibrary.cmake)
   list(APPEND THIRD_PARTY_DEPS libtermkey)
   add_dependencies(libtermkey libunibilium)
 endif()
@@ -139,12 +151,17 @@ if(USE_BUNDLED_LIBTICKIT)
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
-                                PREFIX=${DEPS_INSTALL_DIR}
-                                PKG_CONFIG_PATH=${DEPS_LIB_DIR}/pkgconfig
-                                CFLAGS=-fPIC
-                                install)
+    BUILD_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
+                              PREFIX=${DEPS_INSTALL_DIR}
+                              PKG_CONFIG_PATH=${DEPS_LIB_DIR}/pkgconfig
+                              CFLAGS=-fPIC
+    INSTALL_COMMAND ${CMAKE_COMMAND}
+      -DLIBRARY_NAME=tickit
+      -DDEPS_INSTALL_DIR=${DEPS_INSTALL_DIR}
+      -DCMAKE_SHARED_LIBRARY_PREFIX=${CMAKE_SHARED_LIBRARY_PREFIX}
+      -DCMAKE_SHARED_LIBRARY_SUFFIX=${CMAKE_SHARED_LIBRARY_SUFFIX}
+      "-DINSTALL_COMMAND=${MAKE_PRG} PREFIX=${DEPS_INSTALL_DIR} install"
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/InstallLibrary.cmake)
   list(APPEND THIRD_PARTY_DEPS libtickit)
   add_dependencies(libtickit libtermkey)
 endif()
@@ -190,8 +207,12 @@ if(USE_BUNDLED_MSGPACK)
        "-DCMAKE_C_FLAGS:STRING=${CMAKE_C_COMPILER_ARG1} -fPIC"
     BUILD_COMMAND ${CMAKE_COMMAND} --build .
     INSTALL_COMMAND ${CMAKE_COMMAND}
-      -DREMOVE_FILE_GLOB=${DEPS_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}msgpack*${CMAKE_SHARED_LIBRARY_SUFFIX}*
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/InstallMsgpack.cmake)
+      -DLIBRARY_NAME=msgpack
+      -DDEPS_INSTALL_DIR=${DEPS_INSTALL_DIR}
+      -DCMAKE_SHARED_LIBRARY_PREFIX=${CMAKE_SHARED_LIBRARY_PREFIX}
+      -DCMAKE_SHARED_LIBRARY_SUFFIX=${CMAKE_SHARED_LIBRARY_SUFFIX}
+      "-DINSTALL_COMMAND=${CMAKE_COMMAND} --build . --target install"
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/InstallLibrary.cmake)
   list(APPEND THIRD_PARTY_DEPS msgpack)
 endif()
 
