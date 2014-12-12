@@ -170,6 +170,7 @@ static struct builtin_term builtin_termcaps[] =
   {(int)KS_DL,   "\033|d"},
   {(int)KS_CDL,  "\033|%p1%dD"},
   {(int)KS_CS,   "\033|%p1%d;%p2%dR"},
+  {(int)KS_CSV,  "\033|%p1%d;%p2%dV"},
   {(int)KS_CL,   "\033|C"},
   // attributes switched on with 'h', off with * 'H'
   {(int)KS_ME,   "\033|31H"},  // HL_ALL
