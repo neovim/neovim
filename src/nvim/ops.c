@@ -4654,30 +4654,43 @@ char_u get_reg_type(int regname, long *reglen)
   return MAUTO;
 }
 
-/*
- * Return the contents of a register as a single allocated string.
- * Used for "@r" in expressions and for getreg().
- * Returns NULL for error.
- */
-char_u *
-get_reg_contents (
-    int regname,
-    int allowexpr,                  /* allow "=" register */
-    int expr_src                   /* get expression for "=" register */
-)
+/// When `flags` has `kGRegList` return a list with text `s`.
+/// Otherwise just return `s`.
+///
+/// Returns a void * for use in get_reg_contents().
+static void *get_reg_wrap_one_line(char_u *s, int flags)
+{
+  if (!(flags & kGRegList)) {
+    return s;
+  }
+  list_T *list = list_alloc();
+  list_append_string(list, NULL, -1);
+  list->lv_first->li_tv.vval.v_string = s;
+  return list;
+}
+
+/// Gets the contents of a register.
+/// @remark Used for `@r` in expressions and for `getreg()`.
+///
+/// @param regname  The register.
+/// @param flags    see @ref GRegFlags
+///
+/// @returns The contents of the register as an allocated string.
+/// @returns A linked list when `flags` contains @ref kGRegList.
+/// @returns NULL for error.
+void *get_reg_contents(int regname, int flags)
 {
   long i;
-  char_u      *retval;
-  int allocated;
 
-  /* Don't allow using an expression register inside an expression */
+  // Don't allow using an expression register inside an expression.
   if (regname == '=') {
-    if (allowexpr) {
-      if (expr_src)
-        return get_expr_line_src();
-      return get_expr_line();
+    if (flags & kGRegNoExpr) {
+      return NULL;
     }
-    return NULL;
+    if (flags & kGRegExprSrc) {
+      return get_reg_wrap_one_line(get_expr_line_src(), flags);
+    }
+    return get_reg_wrap_one_line(get_expr_line(), flags);
   }
 
   if (regname == '@')       /* "@@" is used for unnamed register */
@@ -4689,17 +4702,29 @@ get_reg_contents (
 
   get_clipboard(regname);
 
+  char_u *retval;
+  int allocated;
   if (get_spec_reg(regname, &retval, &allocated, FALSE)) {
     if (retval == NULL)
       return NULL;
-    if (!allocated)
-      retval = vim_strsave(retval);
-    return retval;
+    if (allocated) {
+      return get_reg_wrap_one_line(retval, flags);
+    }
+    return get_reg_wrap_one_line(vim_strsave(retval), flags);
   }
 
   get_yank_register(regname, FALSE);
   if (y_current->y_array == NULL)
     return NULL;
+
+  if (flags & kGRegList) {
+    list_T *list = list_alloc();
+    for (int i = 0; i < y_current->y_size; ++i) {
+      list_append_string(list, y_current->y_array[i], -1);
+    }
+
+    return list;
+  }
 
   /*
    * Compute length of resulting string.
@@ -4737,15 +4762,75 @@ get_reg_contents (
   return retval;
 }
 
+static bool init_write_reg(int name, struct yankreg **old_y_previous,
+                           struct yankreg **old_y_current, int must_append)
+{
+  if (!valid_yank_reg(name, true)) {  // check for valid reg name
+    emsg_invreg(name);
+    return false;
+  }
+
+  // Don't want to change the current (unnamed) register.
+  *old_y_previous = y_previous;
+  *old_y_current = y_current;
+
+  get_yank_register(name, true);
+  if (!y_append && !must_append) {
+    free_yank_all();
+  }
+  return true;
+}
+
+static void finish_write_reg(int name, struct yankreg  *old_y_previous,
+                             struct yankreg  *old_y_current)
+{
+  // Send text of clipboard register to the clipboard.
+  set_clipboard(name);
+
+  // ':let @" = "val"' should change the meaning of the "" register
+  if (name != '"') {
+    y_previous = old_y_previous;
+  }
+  y_current = old_y_current;
+}
+
 /// write_reg_contents - store `str` in register `name`
 ///
 /// @see write_reg_contents_ex
-void write_reg_contents(int name,
-                        const char_u *str,
-                        ssize_t len,
+void write_reg_contents(int name, const char_u *str, ssize_t len,
                         int must_append)
 {
   write_reg_contents_ex(name, str, len, must_append, MAUTO, 0L);
+}
+
+void write_reg_contents_lst(int name, char_u **strings, int maxlen,
+                            int must_append, int yank_type, long block_len)
+{
+  if (name == '/' || name == '=') {
+    char_u  *s = strings[0];
+    if (strings[0] == NULL) {
+      s = (char_u *)"";
+    } else if (strings[1] != NULL) {
+      EMSG(_("E883: search pattern and expression register may not "
+             "contain two or more lines"));
+      return;
+    }
+    write_reg_contents_ex(name, s, -1, must_append, yank_type, block_len);
+    return;
+  }
+
+  // black hole: nothing to do
+  if (name == '_') {
+    return;
+  }
+
+  struct yankreg  *old_y_previous, *old_y_current;
+  if (!init_write_reg(name, &old_y_previous, &old_y_current, must_append)) {
+    return;
+  }
+
+  str_to_reg(y_current, yank_type, (char_u *) strings, -1, block_len, true);
+  finish_write_reg(name, old_y_previous, old_y_current);
 }
 
 /// write_reg_contents_ex - store `str` in register `name`
@@ -4774,8 +4859,6 @@ void write_reg_contents_ex(int name,
                            int yank_type,
                            long block_len)
 {
-  struct yankreg  *old_y_previous, *old_y_current;
-
   if (len < 0) {
     len = (ssize_t) STRLEN(str);
   }
@@ -4809,29 +4892,16 @@ void write_reg_contents_ex(int name,
     return;
   }
 
-  if (!valid_yank_reg(name, TRUE)) {        /* check for valid reg name */
-    emsg_invreg(name);
+  if (name == '_') {        // black hole: nothing to do
     return;
   }
 
-  if (name == '_')          /* black hole: nothing to do */
-    return;
-
-  /* Don't want to change the current (unnamed) register */
-  old_y_previous = y_previous;
-  old_y_current = y_current;
-
-  get_yank_register(name, TRUE);
-  if (!y_append && !must_append)
-    free_yank_all();
-  str_to_reg(y_current, yank_type, str, len, block_len);
-  set_clipboard(name);
-
-
-  /* ':let @" = "val"' should change the meaning of the "" register */
-  if (name != '"')
-    y_previous = old_y_previous;
-  y_current = old_y_current;
+  struct yankreg  *old_y_previous, *old_y_current;
+  if (!init_write_reg(name, &old_y_previous, &old_y_current, must_append)) {
+	    return;
+  }
+  str_to_reg(y_current, yank_type, str, len, block_len, false);
+  finish_write_reg(name, old_y_previous, old_y_current);
 }
 
 /// str_to_reg - Put a string into a register.
@@ -4840,100 +4910,100 @@ void write_reg_contents_ex(int name,
 ///
 /// @param y_ptr pointer to yank register
 /// @param yank_type MCHAR, MLINE, MBLOCK or MAUTO
-/// @param str string to put in register
-/// @param len length of the string
-/// @param blocklen width of visual block
-static void str_to_reg(struct yankreg *y_ptr,
-                       int yank_type,
-                       const char_u *str,
-                       long len,
-                       long blocklen)
+/// @param str string or list of strings to put in register
+/// @param len length of the string (Ignored when str_list=true.)
+/// @param blocklen width of visual block, or -1 for "I don't know."
+/// @param str_list True if str is `char_u **`.
+static void str_to_reg(struct yankreg *y_ptr, int yank_type, const char_u *str,
+                       size_t len, colnr_T blocklen, bool str_list)
+  FUNC_ATTR_NONNULL_ALL
 {
-  int type;                             /* MCHAR, MLINE or MBLOCK */
-  int lnum;
-  long start;
-  long i;
-  int extra;
-  size_t newlines;                         /* number of lines added */
-  int extraline = 0;                    /* extra line at the end */
-  int append = FALSE;                   /* append to last line in register */
-  char_u      *s;
-  char_u      **pp;
-  long maxlen;
-
-  if (y_ptr->y_array == NULL)           /* NULL means empty register */
+  if (y_ptr->y_array == NULL) {  // NULL means empty register
     y_ptr->y_size = 0;
+  }
 
-  if (yank_type == MAUTO)
-    type = ((len > 0 && (str[len - 1] == NL || str[len - 1] == CAR))
+  int type = yank_type;  // MCHAR, MLINE or MBLOCK
+  if (yank_type == MAUTO) {
+    type = ((str_list ||
+             (len > 0 && (str[len - 1] == NL || str[len - 1] == CAR)))
             ? MLINE : MCHAR);
-  else
-    type = yank_type;
-
-  /*
-   * Count the number of lines within the string
-   */
-  newlines = 0;
-  for (i = 0; i < len; i++)
-    if (str[i] == '\n')
-      ++newlines;
-  if (type == MCHAR || len == 0 || str[len - 1] != '\n') {
-    extraline = 1;
-    ++newlines;         /* count extra newline at the end */
-  }
-  if (y_ptr->y_size > 0 && y_ptr->y_type == MCHAR) {
-    append = TRUE;
-    --newlines;         /* uncount newline when appending first line */
   }
 
-  /*
-   * Allocate an array to hold the pointers to the new register lines.
-   * If the register was not empty, move the existing lines to the new array.
-   */
-  pp = xcalloc((y_ptr->y_size + newlines), sizeof(char_u *));
-  for (lnum = 0; lnum < y_ptr->y_size; ++lnum)
-    pp[lnum] = y_ptr->y_array[lnum];
-  free(y_ptr->y_array);
-  y_ptr->y_array = pp;
-  maxlen = 0;
+  size_t newlines = 0;
+  bool extraline = false;  // extra line at the end
+  bool append = false;     // append to last line in register
 
-  /*
-   * Find the end of each line and save it into the array.
-   */
-  for (start = 0; start < len + extraline; start += i + 1) {
-    // Let i represent the length of one line.
-    const char_u *p = str + start;
-    i = (char_u *)xmemscan(p, '\n', len - start) - p;
-    if (i > maxlen)
-      maxlen = i;
-    if (append) {
-      --lnum;
-      extra = (int)STRLEN(y_ptr->y_array[lnum]);
-    } else
-      extra = 0;
-    s = xmalloc(i + extra + 1);
-    if (extra)
-      memmove(s, y_ptr->y_array[lnum], (size_t)extra);
-    if (append)
-      free(y_ptr->y_array[lnum]);
-    if (i)
-      memmove(s + extra, str + start, (size_t)i);
-    extra += i;
-    s[extra] = NUL;
-    y_ptr->y_array[lnum++] = s;
-    while (--extra >= 0) {
-      if (*s == NUL)
-        *s = '\n';                  /* replace NUL with newline */
-      ++s;
+  // Count the number of lines within the string
+  if (str_list) {
+    for (char_u **ss = (char_u **) str; *ss != NULL; ++ss) {
+      newlines++;
     }
-    append = FALSE;                 /* only first line is appended */
+  } else {
+    newlines = memcnt(str, '\n', len);
+    if (type == MCHAR || len == 0 || str[len - 1] != '\n') {
+      extraline = 1;
+      ++newlines;         // count extra newline at the end
+    }
+    if (y_ptr->y_size > 0 && y_ptr->y_type == MCHAR) {
+      append = true;
+      --newlines;         // uncount newline when appending first line
+    }
+  }
+
+
+  // Grow the register array to hold the pointers to the new lines.
+  char_u **pp = xrealloc(y_ptr->y_array,
+                         (y_ptr->y_size + newlines) * sizeof(char_u *));
+  y_ptr->y_array = pp;
+
+  linenr_T lnum = y_ptr->y_size;  // The current line number.
+
+  // If called with `blocklen < 0`, we have to update the yank reg's width.
+  size_t maxlen = 0;
+
+  // Find the end of each line and save it into the array.
+  if (str_list) {
+    for (char_u **ss = (char_u **) str; *ss != NULL; ++ss, ++lnum) {
+      size_t ss_len = STRLEN(*ss);
+      pp[lnum] = xmemdupz(*ss, ss_len);
+      if (ss_len > maxlen) {
+        maxlen = ss_len;
+      }
+    }
+  } else {
+    size_t line_len;
+    for (const char_u *start = str, *end = str + len;
+         start < end + extraline;
+         start += line_len + 1, lnum++) {
+      line_len = (const char_u *) xmemscan(start, '\n', end - start) - start;
+      if (line_len > maxlen) {
+        maxlen = line_len;
+      }
+
+      // When appending, copy the previous line and free it after.
+      size_t extra = append ? STRLEN(pp[--lnum]) : 0;
+      char_u *s = xmallocz(line_len + extra);
+      memcpy(s, pp[lnum], extra);
+      memcpy(s + extra, start, line_len);
+      ssize_t s_len = extra + line_len;
+
+      if (append) {
+        free(pp[lnum]);
+        append = false;  // only first line is appended
+      }
+      pp[lnum] = s;
+
+      // Convert NULs to '\n' to prevent truncation.
+      memchrsub(pp[lnum], NUL, '\n', s_len);
+    }
   }
   y_ptr->y_type = type;
   y_ptr->y_size = lnum;
-  if (type == MBLOCK)
-    y_ptr->y_width = (blocklen < 0 ? maxlen - 1 : blocklen);
-  else
+  if (type == MBLOCK) {
+    y_ptr->y_width = (blocklen == -1 ? (colnr_T) maxlen - 1 : blocklen);
+  } else {
     y_ptr->y_width = 0;
+  }
 }
 
 void clear_oparg(oparg_T *oap)

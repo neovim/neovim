@@ -1835,7 +1835,7 @@ ex_let_one (
 
       p = get_tv_string_chk(tv);
       if (p != NULL && op != NULL && *op == '.') {
-        s = get_reg_contents(*arg == '@' ? '"' : *arg, TRUE, TRUE);
+        s = get_reg_contents(*arg == '@' ? '"' : *arg, kGRegExprSrc);
         if (s != NULL) {
           p = ptofree = concat_str(s, p);
           free(s);
@@ -4076,7 +4076,7 @@ eval7 (
   case '@':   ++*arg;
     if (evaluate) {
       rettv->v_type = VAR_STRING;
-      rettv->vval.v_string = get_reg_contents(**arg, TRUE, TRUE);
+      rettv->vval.v_string = get_reg_contents(**arg, kGRegExprSrc);
     }
     if (**arg != NUL)
       ++*arg;
@@ -6458,7 +6458,7 @@ static struct fst {
   {"getpid",          0, 0, f_getpid},
   {"getpos",          1, 1, f_getpos},
   {"getqflist",       0, 0, f_getqflist},
-  {"getreg",          0, 2, f_getreg},
+  {"getreg",          0, 3, f_getreg},
   {"getregtype",      0, 1, f_getregtype},
   {"gettabvar",       2, 3, f_gettabvar},
   {"gettabwinvar",    3, 4, f_gettabwinvar},
@@ -9518,30 +9518,44 @@ static void f_getqflist(typval_T *argvars, typval_T *rettv)
   (void)get_errorlist(wp, rettv->vval.v_list);
 }
 
-/*
- * "getreg()" function
- */
+/// "getreg()" function
 static void f_getreg(typval_T *argvars, typval_T *rettv)
 {
   char_u      *strregname;
   int regname;
-  int arg2 = FALSE;
-  int error = FALSE;
+  int arg2 = false;
+  bool return_list = false;
+  int error = false;
 
   if (argvars[0].v_type != VAR_UNKNOWN) {
     strregname = get_tv_string_chk(&argvars[0]);
     error = strregname == NULL;
-    if (argvars[1].v_type != VAR_UNKNOWN)
+    if (argvars[1].v_type != VAR_UNKNOWN) {
       arg2 = get_tv_number_chk(&argvars[1], &error);
-  } else
+      if (!error && argvars[2].v_type != VAR_UNKNOWN) {
+        return_list = get_tv_number_chk(&argvars[2], &error);
+      }
+    }
+  } else {
     strregname = vimvars[VV_REG].vv_str;
+  }
+
+  if (error) {
+    return;
+  }
+
   regname = (strregname == NULL ? '"' : *strregname);
   if (regname == 0)
     regname = '"';
 
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = error ? NULL :
-                         get_reg_contents(regname, TRUE, arg2);
+  if (return_list) {
+    rettv->v_type = VAR_LIST;
+    rettv->vval.v_list = 
+      get_reg_contents(regname, (arg2 ? kGRegExprSrc : 0) | kGRegList);
+  } else {
+    rettv->v_type = VAR_STRING;
+    rettv->vval.v_string = get_reg_contents(regname, arg2 ? kGRegExprSrc : 0);
+  }
 }
 
 /*
@@ -13306,7 +13320,6 @@ static void f_setreg(typval_T *argvars, typval_T *rettv)
   int regname;
   char_u      *strregname;
   char_u      *stropt;
-  char_u      *strval;
   int append;
   char_u yank_type;
   long block_len;
@@ -13323,8 +13336,6 @@ static void f_setreg(typval_T *argvars, typval_T *rettv)
   regname = *strregname;
   if (regname == 0 || regname == '@')
     regname = '"';
-  else if (regname == '=')
-    return;
 
   if (argvars[2].v_type != VAR_UNKNOWN) {
     stropt = get_tv_string_chk(&argvars[2]);
@@ -13352,10 +13363,46 @@ static void f_setreg(typval_T *argvars, typval_T *rettv)
       }
   }
 
-  strval = get_tv_string_chk(&argvars[1]);
-  if (strval != NULL)
-    write_reg_contents_ex(regname, strval, -1,
-        append, yank_type, block_len);
+  if (argvars[1].v_type == VAR_LIST) {
+    int len = argvars[1].vval.v_list->lv_len;
+    // First half: use for pointers to result lines; second half: use for
+    // pointers to allocated copies.
+    char_u **lstval = xmalloc(sizeof(char_u *) * ((len + 1) * 2));
+    char_u **curval = lstval;
+    char_u **allocval = lstval + len + 2;
+    char_u **curallocval = allocval;
+
+    char_u buf[NUMBUFLEN];
+    for (listitem_T *li = argvars[1].vval.v_list->lv_first;
+         li != NULL;
+         li = li->li_next) {
+      char_u *strval = get_tv_string_buf_chk(&li->li_tv, buf);
+      if (strval == NULL) {
+        goto free_lstval;
+      }
+      if (strval == buf) {
+        // Need to make a copy,
+        // next get_tv_string_buf_chk() will overwrite the string.
+        strval = vim_strsave(buf);
+        *curallocval++ = strval;
+      }
+      *curval++ = strval;
+    }
+    *curval++ = NULL;
+
+    write_reg_contents_lst(regname, lstval, -1, append, yank_type, block_len);
+
+free_lstval:
+    while (curallocval > allocval)
+        free(*--curallocval);
+    free(lstval);
+  } else {
+    char_u *strval = get_tv_string_chk(&argvars[1]);
+    if (strval == NULL) {
+      return;
+    }
+    write_reg_contents_ex(regname, strval, -1, append, yank_type, block_len);
+  }
   rettv->vval.v_number = 0;
 }
 
@@ -16279,28 +16326,33 @@ static linenr_T get_tv_lnum_buf(typval_T *argvars, buf_T *buf)
  * get_tv_string_chk() and get_tv_string_buf_chk() are similar, but return
  * NULL on error.
  */
-static char_u *get_tv_string(typval_T *varp)
+static char_u *get_tv_string(const typval_T *varp)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   static char_u mybuf[NUMBUFLEN];
 
   return get_tv_string_buf(varp, mybuf);
 }
 
-static char_u *get_tv_string_buf(typval_T *varp, char_u *buf)
+static char_u *get_tv_string_buf(const typval_T *varp, char_u *buf)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   char_u      *res =  get_tv_string_buf_chk(varp, buf);
 
   return res != NULL ? res : (char_u *)"";
 }
 
-char_u *get_tv_string_chk(typval_T *varp)
+/// Careful: This uses a single, static buffer.  YOU CAN ONLY USE IT ONCE!
+char_u *get_tv_string_chk(const typval_T *varp)
+  FUNC_ATTR_NONNULL_ALL
 {
   static char_u mybuf[NUMBUFLEN];
 
   return get_tv_string_buf_chk(varp, mybuf);
 }
 
-static char_u *get_tv_string_buf_chk(typval_T *varp, char_u *buf)
+static char_u *get_tv_string_buf_chk(const typval_T *varp, char_u *buf)
+  FUNC_ATTR_NONNULL_ALL
 {
   switch (varp->v_type) {
   case VAR_NUMBER:

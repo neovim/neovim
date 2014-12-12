@@ -47,6 +47,13 @@ typedef int (*Indenter)(void);
 #define OP_FORMAT2      26      /* "gw" format operator, keeps cursor pos */
 #define OP_FUNCTION     27      /* "g@" call 'operatorfunc' */
 
+/// Flags for get_reg_contents().
+enum GRegFlags {
+  kGRegNoExpr  = 1,  ///< Do not allow expression register.
+  kGRegExprSrc = 2,  ///< Return expression itself for "=" register.
+  kGRegList    = 4   ///< Return list.
+};
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ops.h.generated.h"
 #endif
