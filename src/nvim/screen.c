@@ -2139,7 +2139,7 @@ fill_foldcolumn (
   int empty;
 
   /* Init to all spaces. */
-  copy_spaces(p, (size_t)wp->w_p_fdc);
+  memset(p, ' ', (size_t)wp->w_p_fdc);
 
   level = win_foldinfo.fi_level;
   if (level > 0) {

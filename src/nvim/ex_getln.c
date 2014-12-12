@@ -213,7 +213,7 @@ getcmdline (
 
   /* autoindent for :insert and :append */
   if (firstc <= 0) {
-    copy_spaces(ccline.cmdbuff, indent);
+    memset(ccline.cmdbuff, ' ', indent);
     ccline.cmdbuff[indent] = NUL;
     ccline.cmdpos = indent;
     ccline.cmdspos = indent;
