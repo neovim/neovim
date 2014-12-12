@@ -190,7 +190,7 @@ end
 
 function Screen:_handle_eol_clear()
   local row, col = self._cursor.row, self._cursor.col
-  self:_clear_block(row, 1, col, self._width - col)
+  self:_clear_block(row, 1, col, self._scroll_region.right - col)
 end
 
 function Screen:_handle_cursor_goto(row, col)
