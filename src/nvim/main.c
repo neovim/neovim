@@ -119,13 +119,6 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "main.c.generated.h"
 #endif
-#ifndef NO_VIM_MAIN
-# if defined(HAVE_LOCALE_H) || defined(X_LOCALE)
-static void init_locale(void);
-# endif
-# if defined(HAS_SWAP_EXISTS_ACTION)
-# endif
-#endif /* NO_VIM_MAIN */
 
 /*
  * Different types of error messages.
@@ -193,7 +186,6 @@ void early_init(void)
   set_lang_var();               // set v:lang and v:ctype
 }
 
-#ifndef NO_VIM_MAIN     /* skip this for unittests */
 #ifdef MAKE_LIB
 int nvim_main(int argc, char **argv)
 #else
@@ -551,7 +543,6 @@ int main(int argc, char **argv)
 
   return 0;
 }
-#endif /* NO_VIM_MAIN */
 
 /*
  * Main loop: Execute Normal mode commands until exiting Vim.
@@ -852,7 +843,6 @@ void getout(int exitval)
   mch_exit(exitval);
 }
 
-#ifndef NO_VIM_MAIN
 /*
  * Get a (optional) count for a Vim argument.
  */
@@ -2065,7 +2055,6 @@ static void main_start_gui(void)
   mch_exit(2);
 }
 
-#endif /* NO_VIM_MAIN */
 
 /*
  * Get an environment variable, and execute it as Ex commands.
@@ -2101,7 +2090,7 @@ process_env (
   return FAIL;
 }
 
-#if defined(UNIX) && !defined(NO_VIM_MAIN)
+#if defined(UNIX)
 /*
  * Return TRUE if we are certain the user owns the file "fname".
  * Used for ".vimrc" and ".exrc".
@@ -2148,7 +2137,6 @@ void mainerr_arg_missing(char_u *str)
   mainerr(ME_ARG_MISSING, str);
 }
 
-#ifndef NO_VIM_MAIN
 /*
  * print a message with three spaces prepended and '\n' appended.
  */
@@ -2253,4 +2241,3 @@ static void check_swap_exists_action(void)
 
 #endif
 
-#endif
