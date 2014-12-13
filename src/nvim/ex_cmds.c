@@ -3329,12 +3329,11 @@ void ex_z(exarg_T *eap)
     if (!VIM_ISDIGIT(*x)) {
       EMSG(_("E144: non-numeric argument to :z"));
       return;
-    } else {
-      bigness = atoi((char *)x);
-      p_window = bigness;
-      if (*kind == '=')
-        bigness += 2;
     }
+    bigness = atoi((char *)x);
+    p_window = bigness;
+    if (*kind == '=')
+      bigness += 2;
   }
 
   /* the number of '-' and '+' multiplies the distance */

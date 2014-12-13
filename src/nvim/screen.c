@@ -4283,7 +4283,7 @@ static int comp_char_differs(int off_from, int off_to)
  */
 static int char_needs_redraw(int off_from, int off_to, int cols)
 {
-  if (cols > 0
+  return (cols > 0
       && ((ScreenLines[off_from] != ScreenLines[off_to]
            || ScreenAttrs[off_from] != ScreenAttrs[off_to])
 
@@ -4299,10 +4299,7 @@ static int char_needs_redraw(int off_from, int off_to, int cols)
                       && comp_char_differs(off_from, off_to))
                   || ((*mb_off2cells)(off_from, off_from + cols) > 1
                       && ScreenLines[off_from + 1]
-                      != ScreenLines[off_to + 1])))
-          ))
-    return TRUE;
-  return FALSE;
+                      != ScreenLines[off_to + 1])))));
 }
 
 /*

@@ -246,28 +246,24 @@ int cause_errthrow(char_u *mesg, int severe, int *ignore)
         plist = &(*plist)->next;
 
       elem = xmalloc(sizeof(struct msglist));
-      {
-        elem->msg = vim_strsave(mesg);
-        {
-          elem->next = NULL;
-          elem->throw_msg = NULL;
-          *plist = elem;
-          if (plist == msg_list || severe) {
-            char_u      *tmsg;
+      elem->msg = vim_strsave(mesg);
+      elem->next = NULL;
+      elem->throw_msg = NULL;
+      *plist = elem;
+      if (plist == msg_list || severe) {
+        char_u      *tmsg;
 
-            /* Skip the extra "Vim " prefix for message "E458". */
-            tmsg = elem->msg;
-            if (STRNCMP(tmsg, "Vim E", 5) == 0
-                && VIM_ISDIGIT(tmsg[5])
-                && VIM_ISDIGIT(tmsg[6])
-                && VIM_ISDIGIT(tmsg[7])
-                && tmsg[8] == ':'
-                && tmsg[9] == ' ')
-              (*msg_list)->throw_msg = &tmsg[4];
-            else
-              (*msg_list)->throw_msg = tmsg;
-          }
-        }
+        /* Skip the extra "Vim " prefix for message "E458". */
+        tmsg = elem->msg;
+        if (STRNCMP(tmsg, "Vim E", 5) == 0
+            && VIM_ISDIGIT(tmsg[5])
+            && VIM_ISDIGIT(tmsg[6])
+            && VIM_ISDIGIT(tmsg[7])
+            && tmsg[8] == ':'
+            && tmsg[9] == ' ')
+          (*msg_list)->throw_msg = &tmsg[4];
+        else
+          (*msg_list)->throw_msg = tmsg;
       }
     }
     return TRUE;

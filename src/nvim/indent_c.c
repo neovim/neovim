@@ -233,9 +233,7 @@ static int cin_islabel_skip(char_u **s)
  */
 int cin_islabel(void)
 { /* XXX */
-  char_u      *s;
-
-  s = cin_skipcomment(get_cursor_line_ptr());
+  char_u *s = cin_skipcomment(get_cursor_line_ptr());
 
   /*
    * Exclude "default" from labels, since it should be indented
