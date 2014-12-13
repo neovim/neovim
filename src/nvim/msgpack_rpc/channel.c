@@ -103,14 +103,7 @@ void channel_init(void)
   }
 
   if (abstract_ui) {
-    // Add handler for "attach_ui"
     remote_ui_init();
-    String method = cstr_as_string("attach_ui");
-    MsgpackRpcRequestHandler handler = {.fn = remote_ui_attach, .defer = true};
-    msgpack_rpc_add_method_handler(method, handler);
-    method = cstr_as_string("detach_ui");
-    handler.fn = remote_ui_detach;
-    msgpack_rpc_add_method_handler(method, handler);
   }
 }
 

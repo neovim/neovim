@@ -26,10 +26,32 @@ static PMap(uint64_t) *connected_uis = NULL;
 void remote_ui_init(void)
 {
   connected_uis = pmap_new(uint64_t)();
+  // Add handler for "attach_ui"
+  String method = cstr_as_string("attach_ui");
+  MsgpackRpcRequestHandler handler = {.fn = remote_ui_attach, .defer = false};
+  msgpack_rpc_add_method_handler(method, handler);
+  method = cstr_as_string("detach_ui");
+  handler.fn = remote_ui_detach;
+  msgpack_rpc_add_method_handler(method, handler);
 }
 
-Object remote_ui_attach(uint64_t channel_id, uint64_t request_id, Array args,
-                        Error *error)
+void remote_ui_disconnect(uint64_t channel_id)
+{
+  UI *ui = pmap_get(uint64_t)(connected_uis, channel_id);
+  if (!ui) {
+    return;
+  }
+  UIData *data = ui->data;
+  // destroy pending screen updates
+  api_free_array(data->buffer);
+  pmap_del(uint64_t)(connected_uis, channel_id);
+  free(ui->data);
+  ui_detach(ui);
+  free(ui);
+}
+
+static Object remote_ui_attach(uint64_t channel_id, uint64_t request_id,
+                               Array args, Error *error)
 {
   if (pmap_has(uint64_t)(connected_uis, channel_id)) {
     api_set_error(error, Exception, _("UI already attached for channel"));
@@ -77,8 +99,8 @@ Object remote_ui_attach(uint64_t channel_id, uint64_t request_id, Array args,
   return NIL;
 }
 
-Object remote_ui_detach(uint64_t channel_id, uint64_t request_id, Array args,
-                        Error *error)
+static Object remote_ui_detach(uint64_t channel_id, uint64_t request_id,
+                               Array args, Error *error)
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
     api_set_error(error, Exception, _("UI is not attached for channel"));
@@ -86,21 +108,6 @@ Object remote_ui_detach(uint64_t channel_id, uint64_t request_id, Array args,
   remote_ui_disconnect(channel_id);
 
   return NIL;
-}
-
-void remote_ui_disconnect(uint64_t channel_id)
-{
-  UI *ui = pmap_get(uint64_t)(connected_uis, channel_id);
-  if (!ui) {
-    return;
-  }
-  UIData *data = ui->data;
-  // destroy pending screen updates
-  api_free_array(data->buffer);
-  pmap_del(uint64_t)(connected_uis, channel_id);
-  free(ui->data);
-  ui_detach(ui);
-  free(ui);
 }
 
 static void push_call(UI *ui, char *name, Array args)
