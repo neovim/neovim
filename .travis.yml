@@ -59,4 +59,4 @@ script:
   # This will pass the environment variables down to a bash process which runs
   # as $USER, while retaining the environment variables defined and belonging
   # to secondary groups given above in usermod.
-  - sudo -E su $USER -c "ulimit -c 102400; sh -e \"$CI_SCRIPTS/$CI_TARGET.sh\""
+  - sudo -E su $USER -c "sh -e \"$CI_SCRIPTS/$CI_TARGET.sh\""
