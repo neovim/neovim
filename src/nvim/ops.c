@@ -4449,7 +4449,6 @@ int read_viminfo_register(vir_T *virp, int force)
   int do_it = TRUE;
   int size;
   int limit;
-  int i;
   int set_prev = FALSE;
   char_u      *str;
   char_u      **array = NULL;
@@ -4483,9 +4482,13 @@ int read_viminfo_register(vir_T *virp, int force)
   if (do_it) {
     if (set_prev)
       y_previous = y_current;
+
+    for (int i = 0; i < y_current->y_size; i++) {
+      free(y_current->y_array[i]);
+    }
     free(y_current->y_array);
-    array = y_current->y_array =
-              (char_u **)xmalloc(limit * sizeof(char_u *));
+    array = xmalloc(limit * sizeof(char_u *));
+
     str = skipwhite(skiptowhite(str));
     if (STRNCMP(str, "CHAR", 4) == 0)
       y_current->y_type = MCHAR;
@@ -4502,30 +4505,21 @@ int read_viminfo_register(vir_T *virp, int force)
          && (virp->vir_line[0] == TAB || virp->vir_line[0] == '<')) {
     if (do_it) {
       if (size >= limit) {
-        y_current->y_array = (char_u **)xmalloc(limit * 2 * sizeof(char_u *));
-        for (i = 0; i < limit; i++)
-          y_current->y_array[i] = array[i];
-        free(array);
         limit *= 2;
-        array = y_current->y_array;
+        array = xrealloc(array, limit * sizeof(char_u *));
       }
-      str = viminfo_readstring(virp, 1, TRUE);
-      if (str != NULL)
-        array[size++] = str;
-      else
-        do_it = FALSE;
+      array[size++] = viminfo_readstring(virp, 1, TRUE);
     }
   }
+
   if (do_it) {
     if (size == 0) {
       free(array);
       y_current->y_array = NULL;
     } else if (size < limit) {
-      y_current->y_array =
-        (char_u **)xmalloc(size * sizeof(char_u *));
-      for (i = 0; i < size; i++)
-        y_current->y_array[i] = array[i];
-      free(array);
+      y_current->y_array = xrealloc(array, size * sizeof(char_u *));
+    } else {
+      y_current->y_array = array;
     }
     y_current->y_size = size;
   }

@@ -1851,8 +1851,8 @@ void set_init_1(void)
 
   langmap_init();
 
-  /* Be Vi compatible by default */
-  p_cp = TRUE;
+  /* Be nocompatible */
+  p_cp = FALSE;
 
   /* Use POSIX compatibility when $VIM_POSIX is set. */
   if (os_getenv("VIM_POSIX") != NULL) {
@@ -1994,6 +1994,9 @@ void set_init_1(void)
   check_buf_options(curbuf);
   check_win_options(curwin);
   check_options();
+
+  /* Set all options to their Vim default */
+  set_options_default(OPT_FREE);
 
   /* Must be before option_expand(), because that one needs vim_isIDc() */
   didset_options();
@@ -2617,7 +2620,7 @@ do_set (
           if (vim_strchr((char_u *)"=:!&<", nextchar) == NULL
               && (!(options[opt_idx].flags & P_BOOL)
                   || nextchar == '?'))
-            errmsg = (char_u *)N_("E519: Option not supported");
+            errmsg = (char_u *)_(e_unsupportedoption);
           goto skip;
         }
 
@@ -4922,13 +4925,10 @@ set_bool_option (
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0)
     *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = value;
 
-  /*
-   * Handle side effects of changing a bool option.
-   */
-
-  /* 'compatible' */
-  if ((int *)varp == &p_cp) {
-    compatible_set();
+  if ((int *)varp == &p_cp && p_cp == TRUE) {
+    /* Ensure that compatible can not be enabled */
+    p_cp = FALSE;
+    return e_unsupportedoption;
   }
   /* 'undofile' */
   else if ((int *)varp == &curbuf->b_p_udf || (int *)varp == &p_udf) {
@@ -7748,17 +7748,8 @@ static void paste_option_changed(void)
  */
 void vimrc_found(char_u *fname, char_u *envname)
 {
-  int opt_idx;
   int dofree = FALSE;
   char_u      *p;
-
-  if (!option_was_set((char_u *)"cp")) {
-    p_cp = FALSE;
-    for (opt_idx = 0; !istermoption(&options[opt_idx]); opt_idx++)
-      if (!(options[opt_idx].flags & (P_WAS_SET|P_VI_DEF)))
-        set_option_default(opt_idx, OPT_FREE, FALSE);
-    didset_options();
-  }
 
   if (fname != NULL) {
     p = vim_getenv(envname, &dofree);
@@ -7772,22 +7763,6 @@ void vimrc_found(char_u *fname, char_u *envname)
     } else if (dofree)
       free(p);
   }
-}
-
-/*
- * Set 'compatible' on or off.  Called for "-C" and "-N" command line arg.
- */
-void change_compatible(int on)
-{
-  int opt_idx;
-
-  if (p_cp != on) {
-    p_cp = on;
-    compatible_set();
-  }
-  opt_idx = findoption((char_u *)"cp");
-  if (opt_idx >= 0)
-    options[opt_idx].flags |= P_WAS_SET;
 }
 
 /*
@@ -7815,25 +7790,6 @@ void reset_option_was_set(char_u *name)
 
   if (idx >= 0)
     options[idx].flags &= ~P_WAS_SET;
-}
-
-/*
- * compatible_set() - Called when 'compatible' has been set or unset.
- *
- * When 'compatible' set: Set all relevant options (those that have the P_VIM)
- * flag) to a Vi compatible value.
- * When 'compatible' is unset: Set all options that have a different default
- * for Vim (without the P_VI_DEF flag) to that default.
- */
-static void compatible_set(void)
-{
-  int opt_idx;
-
-  for (opt_idx = 0; !istermoption(&options[opt_idx]); opt_idx++)
-    if (       ((options[opt_idx].flags & P_VIM) && p_cp)
-               || (!(options[opt_idx].flags & P_VI_DEF) && !p_cp))
-      set_option_default(opt_idx, OPT_FREE, p_cp);
-  didset_options();
 }
 
 /*

@@ -839,7 +839,7 @@ void wait_return(int redraw)
        * to avoid that typing one 'j' too many makes the messages
        * disappear.
        */
-      if (p_more && !p_cp) {
+      if (p_more) {
         if (c == 'b' || c == 'k' || c == 'u' || c == 'g'
             || c == K_UP || c == K_PAGEUP) {
           if (msg_scrolled > Rows)

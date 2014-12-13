@@ -944,12 +944,6 @@ void intro_message(int colon)
   if (((row >= 2) && (Columns >= 50)) || colon) {
     for (i = 0; i < (int)(sizeof(lines) / sizeof(char *)); ++i) {
       p = lines[i];
-      if (p == NULL) {
-        if (!p_cp) {
-          break;
-        }
-        continue;
-      }
 
       if (sponsor != 0) {
         if (strstr(p, "children") != NULL) {

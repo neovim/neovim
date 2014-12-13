@@ -1869,7 +1869,7 @@ int viminfo_readline(vir_T *virp)
  *
  * Check for a long line as written by viminfo_writestring().
  *
- * Return the string in allocated memory (or NULL to indicate failure).
+ * Return the string in allocated memory.
  */
 char_u *
 viminfo_readstring (
@@ -1877,6 +1877,7 @@ viminfo_readstring (
     int off,                            /* offset for virp->vir_line */
     int convert                 /* convert the string */
 )
+  FUNC_ATTR_NONNULL_RET
 {
   char_u      *retval;
   char_u      *s, *d;
