@@ -4565,8 +4565,8 @@ static int syn_compare_stub(const void *v1, const void *v2)
 /// Count how many elements will be necessary for the list resulting from the
 /// list_op operation on the two lists.
 ///
-/// @param g1 The first sorted NUL terminated list
-/// @param g2 The second sorted NUL terminated list
+/// @param g1 The first sorted zero-terminated list
+/// @param g2 The second sorted zero-terminated list
 /// @param list_op The operation that will be performed on the two lists
 /// @return The count of elemnts of the list resulting from the list_op
 /// operation on the two lists
@@ -4586,6 +4586,8 @@ static size_t syn_combine_list_count(const short *g1, const short *g2, int list_
         count++;
       }
 
+      // Count only unique elements and elements that are not removed
+      // (list_op == CLUSTER_SUBTRACT) from the result list.
       if (*g1 == *g2) {
         g1++;
       }
@@ -4607,10 +4609,10 @@ static size_t syn_combine_list_count(const short *g1, const short *g2, int list_
   return count;
 }
 
-/// Combines two lists according to list_op using the mergesort algorithm.
+/// Combines two lists according to list_op using a merge algorithm.
 ///
-/// @param g1 The first sorted NUL terminated list
-/// @param g2 The second sorted NUL terminated list
+/// @param g1 The first sorted zero-terminated list
+/// @param g2 The second sorted zero-terminated list
 /// @param list_op The type of combination (operation) that should be performed
 /// on the two lists
 /// @param[out] clstr Pointer to the resulting list
@@ -4630,6 +4632,8 @@ static void syn_combine_list_merge(const short *g1, const short *g2, int list_op
         clstr[i++] = *g2;
       }
 
+      // Add only unique elements and elements that are not removed
+      // (list_op == CLUSTER_SUBTRACT) from the result list.
       if (*g1 == *g2) {
         g1++;
       }
