@@ -7482,7 +7482,7 @@ int find_cmdline_var(const char_u *src, int *usedlen) FUNC_ATTR_NONNULL_ALL
 # define SPEC_AMATCH 9
   };
 
-  for (i = 0; i < (int)(sizeof(spec_str) / sizeof(char *)); ++i) {
+  for (i = 0; i < (int)ARRAY_SIZE(spec_str); ++i) {
     len = (int)STRLEN(spec_str[i]);
     if (STRNCMP(src, spec_str[i], len) == 0) {
       *usedlen = len;

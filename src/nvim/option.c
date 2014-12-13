@@ -1808,7 +1808,7 @@ static struct vimoption
   }
 };
 
-#define PARAM_COUNT (sizeof(options) / sizeof(struct vimoption))
+#define PARAM_COUNT ARRAY_SIZE(options)
 
 static char *(p_ambw_values[]) = {"single", "double", NULL};
 static char *(p_bg_values[]) = {"light", "dark", NULL};
