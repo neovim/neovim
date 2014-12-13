@@ -925,9 +925,9 @@ static int dbcs_ptr2len_len(const char_u *p, int size)
 }
 
 /*
- * Return true if "c" is in "table[size / sizeof(struct interval)]".
+ * Return true if "c" is in "table".
  */
-static bool intable(const struct interval *table, size_t size, int c)
+static bool intable(const struct interval *table, size_t n_items, int c)
 {
   int mid, bot, top;
 
@@ -937,7 +937,7 @@ static bool intable(const struct interval *table, size_t size, int c)
 
   /* binary search in table */
   bot = 0;
-  top = (int)(size / sizeof(struct interval) - 1);
+  top = (int)(n_items - 1);
   while (top >= bot) {
     mid = (bot + top) / 2;
     if (table[mid].last < c)
@@ -1204,7 +1204,7 @@ int utf_char2cells(int c)
 #else
     if (!utf_printable(c))
       return 6;                 /* unprintable, displays <xxxx> */
-    if (intable(doublewidth, sizeof(doublewidth), c))
+    if (intable(doublewidth, ARRAY_SIZE(doublewidth), c))
       return 2;
 #endif
   }
@@ -1212,7 +1212,7 @@ int utf_char2cells(int c)
   else if (c >= 0x80 && !vim_isprintc(c))
     return 4;                   /* unprintable, displays <xx> */
 
-  if (c >= 0x80 && *p_ambw == 'd' && intable(ambiguous, sizeof(ambiguous), c))
+  if (c >= 0x80 && *p_ambw == 'd' && intable(ambiguous, ARRAY_SIZE(ambiguous), c))
     return 2;
 
   return 1;
@@ -2026,7 +2026,7 @@ bool utf_iscomposing(int c)
     {0xe0100, 0xe01ef}
   };
 
-  return intable(combining, sizeof(combining), c);
+  return intable(combining, ARRAY_SIZE(combining), c);
 }
 
 /*
@@ -2050,7 +2050,7 @@ bool utf_printable(int c)
     {0xfffe, 0xffff}
   };
 
-  return !intable(nonprint, sizeof(nonprint), c);
+  return !intable(nonprint, ARRAY_SIZE(nonprint), c);
 #endif
 }
 
