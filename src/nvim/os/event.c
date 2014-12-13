@@ -43,11 +43,15 @@ typedef struct {
 static klist_t(Event) *deferred_events = NULL, *immediate_events = NULL;
 static int deferred_events_allowed = 0;
 
-void event_init(void)
+void event_early_init(void)
 {
   // Initialize the event queues
   deferred_events = kl_init(Event);
   immediate_events = kl_init(Event);
+}
+
+void event_init(void)
+{
   // early msgpack-rpc initialization
   msgpack_rpc_init_method_table();
   msgpack_rpc_helpers_init();

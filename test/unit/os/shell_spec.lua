@@ -24,6 +24,7 @@ local NULL = ffi.cast('void *', 0)
 
 describe('shell functions', function()
   setup(function()
+    shell.event_early_init()
     shell.event_init()
     -- os_system() can't work when the p_sh and p_shcf variables are unset
     shell.p_sh = to_cstr('/bin/bash')
