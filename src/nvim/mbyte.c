@@ -2138,7 +2138,7 @@ int utf_class(int c)
     {0x2f800, 0x2fa1f, 0x4e00},         /* CJK Ideographs */
   };
   int bot = 0;
-  int top = sizeof(classes) / sizeof(struct clinterval) - 1;
+  int top = ARRAY_SIZE(classes) - 1;
   int mid;
 
   /* First quick check for Latin1 characters, use 'iskeyword'. */

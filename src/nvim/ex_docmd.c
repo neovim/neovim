@@ -2281,7 +2281,7 @@ int modifier_len(char_u *cmd)
 
   if (VIM_ISDIGIT(*cmd))
     p = skipwhite(skipdigits(cmd));
-  for (i = 0; i < (int)(sizeof(cmdmods) / sizeof(struct cmdmod)); ++i) {
+  for (i = 0; i < (int)ARRAY_SIZE(cmdmods); ++i) {
     for (j = 0; p[j] != NUL; ++j)
       if (p[j] != cmdmods[i].name[j])
         break;
@@ -2306,7 +2306,7 @@ int cmd_exists(char_u *name)
   char_u      *p;
 
   /* Check command modifiers. */
-  for (i = 0; i < (int)(sizeof(cmdmods) / sizeof(struct cmdmod)); ++i) {
+  for (i = 0; i < (int)ARRAY_SIZE(cmdmods); ++i) {
     for (j = 0; name[j] != NUL; ++j)
       if (name[j] != cmdmods[i].name[j])
         break;
@@ -4974,7 +4974,7 @@ char_u *get_user_cmd_flags(expand_T *xp, int idx)
   {"bang", "bar", "buffer", "complete", "count",
    "nargs", "range", "register"};
 
-  if (idx >= (int)(sizeof(user_cmd_flags) / sizeof(user_cmd_flags[0])))
+  if (idx >= (int)ARRAY_SIZE(user_cmd_flags))
     return NULL;
   return (char_u *)user_cmd_flags[idx];
 }
@@ -4986,7 +4986,7 @@ char_u *get_user_cmd_nargs(expand_T *xp, int idx)
 {
   static char *user_cmd_nargs[] = {"0", "1", "*", "?", "+"};
 
-  if (idx >= (int)(sizeof(user_cmd_nargs) / sizeof(user_cmd_nargs[0])))
+  if (idx >= (int)ARRAY_SIZE(user_cmd_nargs))
     return NULL;
   return (char_u *)user_cmd_nargs[idx];
 }

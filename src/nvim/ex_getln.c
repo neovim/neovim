@@ -3715,7 +3715,7 @@ ExpandFromContext (
      * right function to do the expansion.
      */
     ret = FAIL;
-    for (i = 0; i < (int)(sizeof(tab) / sizeof(struct expgen)); ++i)
+    for (i = 0; i < (int)ARRAY_SIZE(tab); ++i)
       if (xp->xp_context == tab[i].context) {
         if (tab[i].ic) {
           regmatch.rm_ic = TRUE;
@@ -4155,7 +4155,7 @@ static char_u *get_history_arg(expand_T *xp, int idx)
   static char_u compl[2] = { NUL, NUL };
   char *short_names = ":=@>?/";
   int short_names_count = (int)STRLEN(short_names);
-  int history_name_count = sizeof(history_names) / sizeof(char *) - 1;
+  int history_name_count = ARRAY_SIZE(history_names) - 1;
 
   if (idx < short_names_count) {
     compl[0] = (char_u)short_names[idx];

@@ -4954,7 +4954,7 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
    * Recognize a few exceptions to the rule.	Some strings that contain '*'
    * with "star".  Otherwise '*' is recognized as a wildcard.
    */
-  for (i = (int)(sizeof(mtable) / sizeof(char *)); --i >= 0; )
+  for (i = (int)ARRAY_SIZE(mtable); --i >= 0; )
     if (STRCMP(arg, mtable[i]) == 0) {
       STRCPY(d, rtable[i]);
       break;

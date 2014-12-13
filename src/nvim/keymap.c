@@ -284,8 +284,7 @@ static struct key_name_entry {
   {0,                 NULL}
 };
 
-#define KEY_NAMES_TABLE_LEN (sizeof(key_names_table) / \
-                             sizeof(struct key_name_entry))
+#define KEY_NAMES_TABLE_LEN ARRAY_SIZE(key_names_table)
 
 static struct mousetable {
   int pseudo_code;              /* Code for pseudo mouse event */
