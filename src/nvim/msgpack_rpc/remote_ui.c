@@ -27,11 +27,14 @@ void remote_ui_init(void)
 {
   connected_uis = pmap_new(uint64_t)();
   // Add handler for "attach_ui"
-  String method = cstr_as_string("attach_ui");
+  String method = cstr_as_string("ui_attach");
   MsgpackRpcRequestHandler handler = {.fn = remote_ui_attach, .defer = false};
   msgpack_rpc_add_method_handler(method, handler);
-  method = cstr_as_string("detach_ui");
+  method = cstr_as_string("ui_detach");
   handler.fn = remote_ui_detach;
+  msgpack_rpc_add_method_handler(method, handler);
+  method = cstr_as_string("ui_try_resize");
+  handler.fn = remote_ui_try_resize;
   msgpack_rpc_add_method_handler(method, handler);
 }
 
@@ -95,7 +98,6 @@ static Object remote_ui_attach(uint64_t channel_id, uint64_t request_id,
   ui->suspend = remote_ui_suspend;
   pmap_put(uint64_t)(connected_uis, channel_id, ui);
   ui_attach(ui);
-
   return NIL;
 }
 
@@ -109,6 +111,30 @@ static Object remote_ui_detach(uint64_t channel_id, uint64_t request_id,
 
   return NIL;
 }
+
+static Object remote_ui_try_resize(uint64_t channel_id, uint64_t request_id,
+                                   Array args, Error *error)
+{
+  if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
+    api_set_error(error, Exception, _("UI is not attached for channel"));
+  }
+
+  if (args.size != 2 || args.items[0].type != kObjectTypeInteger
+      || args.items[1].type != kObjectTypeInteger
+      || args.items[0].data.integer <= 0 || args.items[1].data.integer <= 0) {
+    api_set_error(error, Validation,
+                  _("Arguments must be a pair of positive integers "
+                    "representing the remote screen width/height"));
+    return NIL;
+  }
+
+  UI *ui = pmap_get(uint64_t)(connected_uis, channel_id);
+  ui->width = (int)args.items[0].data.integer;
+  ui->height = (int)args.items[1].data.integer;
+  ui_refresh();
+  return NIL;
+}
+
 
 static void push_call(UI *ui, char *name, Array args)
 {

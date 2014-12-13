@@ -6529,7 +6529,6 @@ do_highlight (
 
         if (is_normal_group) {
           normal_fg = HL_TABLE()[idx].sg_rgb_fg;
-          ui_fg_updated();
         }
       } else if (STRCMP(key, "GUIBG") == 0)   {
         if (!init || !(HL_TABLE()[idx].sg_set & SG_GUI)) {
@@ -6548,7 +6547,6 @@ do_highlight (
 
         if (is_normal_group) {
           normal_bg = HL_TABLE()[idx].sg_rgb_bg;
-          ui_bg_updated();
         }
       } else if (STRCMP(key, "GUISP") == 0)   {
         // Ignored
@@ -6645,6 +6643,10 @@ do_highlight (
     if (is_normal_group) {
       HL_TABLE()[idx].sg_term_attr = 0;
       HL_TABLE()[idx].sg_cterm_attr = 0;
+      if (abstract_ui) {
+        // If the normal group has changed, it is simpler to refresh every UI
+        ui_refresh();
+      }
     } else
       set_hl_attr(idx);
     HL_TABLE()[idx].sg_scriptID = current_SID;

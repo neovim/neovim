@@ -64,7 +64,7 @@ static HlAttrs current_attrs = {
   false, false, false, false, false, false, -1, -1
 };
 static bool cursor_enabled = true;
-static int height = INT_MAX, width = INT_MAX;
+static int height, width;
 
 // This set of macros allow us to use UI_CALL to invoke any function on
 // registered UI instances. The functions can have 0-5 arguments(configurable
@@ -111,18 +111,6 @@ void ui_write(uint8_t *s, int len)
 
   if (output_conv.vc_type != CONV_NONE)
     free(tofree);
-}
-
-void ui_fg_updated(void)
-{
-  UI_CALL(update_fg, normal_fg);
-  UI_CALL(flush);
-}
-
-void ui_bg_updated(void)
-{
-  UI_CALL(update_bg, normal_bg);
-  UI_CALL(flush);
 }
 
 /*
@@ -177,10 +165,32 @@ void ui_cursor_shape(void)
   }
 }
 
-void ui_resize(int width, int height)
+void ui_refresh(void)
 {
-  ui_fg_updated();
-  ui_bg_updated();
+  width = height = INT_MAX;
+
+  for (size_t i = 0; i < ui_count; i++) {
+    UI *ui = uis[i];
+    width = ui->width < width ? ui->width : width;
+    height = ui->height < height ? ui->height : height;
+  }
+
+  screen_resize(width, height, true);
+}
+
+void ui_resize(int new_width, int new_height)
+{
+  width = new_width;
+  height = new_height;
+
+  if (normal_fg != -1) {
+    UI_CALL(update_fg, normal_fg);
+  }
+
+  if (normal_bg != -1) {
+    UI_CALL(update_bg, normal_bg);
+  }
+
   sr.top = 0;
   sr.bot = height - 1;
   sr.left = 0;
@@ -254,7 +264,7 @@ void ui_attach(UI *ui)
   }
 
   uis[ui_count++] = ui;
-  resized(ui);
+  ui_refresh();
 }
 
 void ui_detach(UI *ui)
@@ -281,17 +291,8 @@ void ui_detach(UI *ui)
 
   ui_count--;
 
-  if (ui->width == width || ui->height == height) {
-    // It is possible that the UI being detached had the smallest screen,
-    // so check for the new minimum dimensions
-    width = height = INT_MAX;
-    for (size_t i = 0; i < ui_count; i++) {
-      check_dimensions(uis[i]);
-    }
-  }
-
   if (ui_count) {
-    screen_resize(width, height, true);
+    ui_refresh();
   }
 }
 
@@ -472,25 +473,6 @@ static void parse_abstract_ui_codes(uint8_t *ptr, int len)
   }
 
   UI_CALL(flush);
-}
-
-static void resized(UI *ui)
-{
-  check_dimensions(ui);
-  screen_resize(width, height, true);
-}
-
-static void check_dimensions(UI *ui)
-{
-  // The internal screen dimensions are always the minimum required to fit on
-  // all connected screens
-  if (ui->width < width) {
-    width = ui->width;
-  }
-
-  if (ui->height < height) {
-    height = ui->height;
-  }
 }
 
 static void ui_linefeed(void)
