@@ -208,6 +208,14 @@ if(SANITIZE)
   set_property(TARGET nvim APPEND_STRING PROPERTY LINK_FLAGS "-fsanitize=address -fsanitize=undefined ")
 endif()
 
+add_library(libnvim STATIC EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
+  ${NEOVIM_SOURCES} ${NEOVIM_HEADERS})
+target_link_libraries(libnvim ${NVIM_LINK_LIBRARIES})
+set_target_properties(libnvim PROPERTIES
+  POSITION_INDEPENDENT_CODE ON
+  OUTPUT_NAME nvim)
+set_property(TARGET libnvim APPEND_STRING PROPERTY COMPILE_FLAGS " -DMAKE_LIB ")
+
 add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
     ${NEOVIM_SOURCES} ${NEOVIM_HEADERS})
 target_link_libraries(nvim-test ${NVIM_LINK_LIBRARIES})

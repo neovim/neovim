@@ -194,7 +194,11 @@ void early_init(void)
 }
 
 #ifndef NO_VIM_MAIN     /* skip this for unittests */
+#ifdef MAKE_LIB
+int nvim_main(int argc, char **argv)
+#else
 int main(int argc, char **argv)
+#endif
 {
   char_u      *fname = NULL;            /* file name from command line */
   mparm_T params;                       /* various parameters passed between
