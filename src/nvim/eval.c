@@ -5987,29 +5987,30 @@ static char_u *dict2string(typval_T *tv, int copyID)
 
   todo = (int)d->dv_hashtab.ht_used;
   for (hi = d->dv_hashtab.ht_array; todo > 0 && !got_int; ++hi) {
-    if (!HASHITEM_EMPTY(hi)) {
-      --todo;
-
-      if (first)
-        first = FALSE;
-      else
-        ga_concat(&ga, (char_u *)", ");
-
-      tofree = string_quote(hi->hi_key, FALSE);
-      if (tofree != NULL) {
-        ga_concat(&ga, tofree);
-        free(tofree);
-      }
-      ga_concat(&ga, (char_u *)": ");
-      s = tv2string(&HI2DI(hi)->di_tv, &tofree, numbuf, copyID);
-      if (s != NULL)
-        ga_concat(&ga, s);
-      free(tofree);
-      if (s == NULL || did_echo_string_emsg) {
-        break;
-      }
-      line_breakcheck();
+    if (HASHITEM_EMPTY(hi)) {
+      continue;
     }
+    --todo;
+
+    if (first)
+      first = FALSE;
+    else
+      ga_concat(&ga, (char_u *)", ");
+
+    tofree = string_quote(hi->hi_key, FALSE);
+    if (tofree != NULL) {
+      ga_concat(&ga, tofree);
+      free(tofree);
+    }
+    ga_concat(&ga, (char_u *)": ");
+    s = tv2string(&HI2DI(hi)->di_tv, &tofree, numbuf, copyID);
+    if (s != NULL)
+      ga_concat(&ga, s);
+    free(tofree);
+    if (s == NULL || did_echo_string_emsg) {
+      break;
+    }
+    line_breakcheck();
   }
   if (todo > 0) {
     free(ga.ga_data);

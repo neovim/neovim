@@ -579,24 +579,25 @@ static int diff_check_sanity(tabpage_T *tp, diff_T *dp)
 static void diff_redraw(int dofold)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_p_diff) {
-      redraw_win_later(wp, SOME_VALID);
-      if (dofold && foldmethodIsDiff(wp)) {
-        foldUpdateAll(wp);
-      }
+    if (!wp->w_p_diff) {
+      continue;
+    }
+    redraw_win_later(wp, SOME_VALID);
+    if (dofold && foldmethodIsDiff(wp)) {
+      foldUpdateAll(wp);
+    }
 
-      /* A change may have made filler lines invalid, need to take care
-       * of that for other windows. */
-      int n = diff_check(wp, wp->w_topline);
+    /* A change may have made filler lines invalid, need to take care
+     * of that for other windows. */
+    int n = diff_check(wp, wp->w_topline);
 
-      if (((wp != curwin) && (wp->w_topfill > 0)) || (n > 0)) {
-        if (wp->w_topfill > n) {
-          wp->w_topfill = (n < 0 ? 0 : n);
-        } else if ((n > 0) && (n > wp->w_topfill)) {
-          wp->w_topfill = n;
-        }
-        check_topfill(wp, FALSE);
+    if (((wp != curwin) && (wp->w_topfill > 0)) || (n > 0)) {
+      if (wp->w_topfill > n) {
+        wp->w_topfill = (n < 0 ? 0 : n);
+      } else if ((n > 0) && (n > wp->w_topfill)) {
+        wp->w_topfill = n;
       }
+      check_topfill(wp, FALSE);
     }
   }
 }

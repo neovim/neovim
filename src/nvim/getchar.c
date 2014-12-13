@@ -680,33 +680,34 @@ static int read_redo(int init, int old_redo)
     p = bp->b_str;
     return OK;
   }
-  if ((c = *p) != NUL) {
-    /* Reverse the conversion done by add_char_buff() */
-    /* For a multi-byte character get all the bytes and return the
-     * converted character. */
-    if (has_mbyte && (c != K_SPECIAL || p[1] == KS_SPECIAL))
-      n = MB_BYTE2LEN_CHECK(c);
-    else
-      n = 1;
-    for (i = 0;; ++i) {
-      if (c == K_SPECIAL) {     /* special key or escaped K_SPECIAL */
-        c = TO_SPECIAL(p[1], p[2]);
-        p += 2;
-      }
-      if (*++p == NUL && bp->b_next != NULL) {
-        bp = bp->b_next;
-        p = bp->b_str;
-      }
-      buf[i] = c;
-      if (i == n - 1) {         /* last byte of a character */
-        if (n != 1)
-          c = (*mb_ptr2char)(buf);
-        break;
-      }
-      c = *p;
-      if (c == NUL)             /* cannot happen? */
-        break;
+  if ((c = *p) == NUL) {
+    return c;
+  }
+  /* Reverse the conversion done by add_char_buff() */
+  /* For a multi-byte character get all the bytes and return the
+   * converted character. */
+  if (has_mbyte && (c != K_SPECIAL || p[1] == KS_SPECIAL))
+    n = MB_BYTE2LEN_CHECK(c);
+  else
+    n = 1;
+  for (i = 0;; ++i) {
+    if (c == K_SPECIAL) {     /* special key or escaped K_SPECIAL */
+      c = TO_SPECIAL(p[1], p[2]);
+      p += 2;
     }
+    if (*++p == NUL && bp->b_next != NULL) {
+      bp = bp->b_next;
+      p = bp->b_str;
+    }
+    buf[i] = c;
+    if (i == n - 1) {         /* last byte of a character */
+      if (n != 1)
+        c = (*mb_ptr2char)(buf);
+      break;
+    }
+    c = *p;
+    if (c == NUL)             /* cannot happen? */
+      break;
   }
 
   return c;

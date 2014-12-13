@@ -246,44 +246,45 @@ int cin_islabel(void)
   if (cin_isscopedecl(s))
     return FALSE;
 
-  if (cin_islabel_skip(&s)) {
-    /*
-     * Only accept a label if the previous line is terminated or is a case
-     * label.
-     */
-    pos_T cursor_save;
-    pos_T   *trypos;
-    char_u  *line;
-
-    cursor_save = curwin->w_cursor;
-    while (curwin->w_cursor.lnum > 1) {
-      --curwin->w_cursor.lnum;
-
-      /*
-       * If we're in a comment now, skip to the start of the comment.
-       */
-      curwin->w_cursor.col = 0;
-      if ((trypos = ind_find_start_comment()) != NULL)       /* XXX */
-        curwin->w_cursor = *trypos;
-
-      line = get_cursor_line_ptr();
-      if (cin_ispreproc(line))          /* ignore #defines, #if, etc. */
-        continue;
-      if (*(line = cin_skipcomment(line)) == NUL)
-        continue;
-
-      curwin->w_cursor = cursor_save;
-      if (cin_isterminated(line, TRUE, FALSE)
-          || cin_isscopedecl(line)
-          || cin_iscase(line, TRUE)
-          || (cin_islabel_skip(&line) && cin_nocode(line)))
-        return TRUE;
-      return FALSE;
-    }
-    curwin->w_cursor = cursor_save;
-    return TRUE;                /* label at start of file??? */
+  if (!cin_islabel_skip(&s)) {
+    return FALSE;
   }
-  return FALSE;
+
+  /*
+   * Only accept a label if the previous line is terminated or is a case
+   * label.
+   */
+  pos_T cursor_save;
+  pos_T   *trypos;
+  char_u  *line;
+
+  cursor_save = curwin->w_cursor;
+  while (curwin->w_cursor.lnum > 1) {
+    --curwin->w_cursor.lnum;
+
+    /*
+     * If we're in a comment now, skip to the start of the comment.
+     */
+    curwin->w_cursor.col = 0;
+    if ((trypos = ind_find_start_comment()) != NULL)       /* XXX */
+      curwin->w_cursor = *trypos;
+
+    line = get_cursor_line_ptr();
+    if (cin_ispreproc(line))          /* ignore #defines, #if, etc. */
+      continue;
+    if (*(line = cin_skipcomment(line)) == NUL)
+      continue;
+
+    curwin->w_cursor = cursor_save;
+    if (cin_isterminated(line, TRUE, FALSE)
+        || cin_isscopedecl(line)
+        || cin_iscase(line, TRUE)
+        || (cin_islabel_skip(&line) && cin_nocode(line)))
+      return TRUE;
+    return FALSE;
+  }
+  curwin->w_cursor = cursor_save;
+  return TRUE;                /* label at start of file??? */
 }
 
 /*
@@ -3200,80 +3201,82 @@ static int find_match(int lookfor, linenr_T ourscope)
     curwin->w_cursor.col = 0;
 
     look = cin_skipcomment(get_cursor_line_ptr());
-    if (cin_iselse(look)
-        || cin_isif(look)
-        || cin_isdo(look)                                   /* XXX */
-        || cin_iswhileofdo(look, curwin->w_cursor.lnum)) {
+    if (!cin_iselse(look)
+        && !cin_isif(look)
+        && !cin_isdo(look)                                   /* XXX */
+        && !cin_iswhileofdo(look, curwin->w_cursor.lnum)) {
+      continue;
+    }
+
+    /*
+     * if we've gone outside the braces entirely,
+     * we must be out of scope...
+     */
+    theirscope = find_start_brace();        /* XXX */
+    if (theirscope == NULL)
+      break;
+
+    /*
+     * and if the brace enclosing this is further
+     * back than the one enclosing the else, we're
+     * out of luck too.
+     */
+    if (theirscope->lnum < ourscope)
+      break;
+
+    /*
+     * and if they're enclosed in a *deeper* brace,
+     * then we can ignore it because it's in a
+     * different scope...
+     */
+    if (theirscope->lnum > ourscope)
+      continue;
+
+    /*
+     * if it was an "else" (that's not an "else if")
+     * then we need to go back to another if, so
+     * increment elselevel
+     */
+    look = cin_skipcomment(get_cursor_line_ptr());
+    if (cin_iselse(look)) {
+      mightbeif = cin_skipcomment(look + 4);
+      if (!cin_isif(mightbeif))
+        ++elselevel;
+      continue;
+    }
+
+    /*
+     * if it was a "while" then we need to go back to
+     * another "do", so increment whilelevel.  XXX
+     */
+    if (cin_iswhileofdo(look, curwin->w_cursor.lnum)) {
+      ++whilelevel;
+      continue;
+    }
+
+    /* If it's an "if" decrement elselevel */
+    look = cin_skipcomment(get_cursor_line_ptr());
+    if (cin_isif(look)) {
+      elselevel--;
       /*
-       * if we've gone outside the braces entirely,
-       * we must be out of scope...
+       * When looking for an "if" ignore "while"s that
+       * get in the way.
        */
-      theirscope = find_start_brace();        /* XXX */
-      if (theirscope == NULL)
-        break;
+      if (elselevel == 0 && lookfor == LOOKFOR_IF)
+        whilelevel = 0;
+    }
 
-      /*
-       * and if the brace enclosing this is further
-       * back than the one enclosing the else, we're
-       * out of luck too.
-       */
-      if (theirscope->lnum < ourscope)
-        break;
+    /* If it's a "do" decrement whilelevel */
+    if (cin_isdo(look))
+      whilelevel--;
 
-      /*
-       * and if they're enclosed in a *deeper* brace,
-       * then we can ignore it because it's in a
-       * different scope...
-       */
-      if (theirscope->lnum > ourscope)
-        continue;
-
-      /*
-       * if it was an "else" (that's not an "else if")
-       * then we need to go back to another if, so
-       * increment elselevel
-       */
-      look = cin_skipcomment(get_cursor_line_ptr());
-      if (cin_iselse(look)) {
-        mightbeif = cin_skipcomment(look + 4);
-        if (!cin_isif(mightbeif))
-          ++elselevel;
-        continue;
-      }
-
-      /*
-       * if it was a "while" then we need to go back to
-       * another "do", so increment whilelevel.  XXX
-       */
-      if (cin_iswhileofdo(look, curwin->w_cursor.lnum)) {
-        ++whilelevel;
-        continue;
-      }
-
-      /* If it's an "if" decrement elselevel */
-      look = cin_skipcomment(get_cursor_line_ptr());
-      if (cin_isif(look)) {
-        elselevel--;
-        /*
-         * When looking for an "if" ignore "while"s that
-         * get in the way.
-         */
-        if (elselevel == 0 && lookfor == LOOKFOR_IF)
-          whilelevel = 0;
-      }
-
-      /* If it's a "do" decrement whilelevel */
-      if (cin_isdo(look))
-        whilelevel--;
-
-      /*
-       * if we've used up all the elses, then
-       * this must be the if that we want!
-       * match the indent level of that if.
-       */
-      if (elselevel <= 0 && whilelevel <= 0) {
-        return OK;
-      }
+    /*
+     * if we've used up all the elses, then
+     * this must be the if that we want!
+     * match the indent level of that if.
+     */
+    if (elselevel <= 0 && whilelevel <= 0) {
+      return OK;
     }
   }
   return FAIL;

@@ -1360,54 +1360,58 @@ static int syn_stack_equal(synstate_T *sp)
   reg_extmatch_T      *six, *bsx;
 
   /* First a quick check if the stacks have the same size end nextlist. */
-  if (sp->sst_stacksize == current_state.ga_len
-      && sp->sst_next_list == current_next_list) {
-    /* Need to compare all states on both stacks. */
-    if (sp->sst_stacksize > SST_FIX_STATES)
-      bp = SYN_STATE_P(&(sp->sst_union.sst_ga));
-    else
-      bp = sp->sst_union.sst_stack;
+  if (sp->sst_stacksize != current_state.ga_len
+      || sp->sst_next_list != current_next_list) {
+    return FALSE;
+  }
 
-    int i;
-    for (i = current_state.ga_len; --i >= 0; ) {
-      /* If the item has another index the state is different. */
-      if (bp[i].bs_idx != CUR_STATE(i).si_idx)
-        break;
-      if (bp[i].bs_extmatch != CUR_STATE(i).si_extmatch) {
-        /* When the extmatch pointers are different, the strings in
-         * them can still be the same.  Check if the extmatch
-         * references are equal. */
-        bsx = bp[i].bs_extmatch;
-        six = CUR_STATE(i).si_extmatch;
-        /* If one of the extmatch pointers is NULL the states are
-         * different. */
-        if (bsx == NULL || six == NULL)
+  /* Need to compare all states on both stacks. */
+  if (sp->sst_stacksize > SST_FIX_STATES)
+    bp = SYN_STATE_P(&(sp->sst_union.sst_ga));
+  else
+    bp = sp->sst_union.sst_stack;
+
+  int i;
+  for (i = current_state.ga_len; --i >= 0; ) {
+    /* If the item has another index the state is different. */
+    if (bp[i].bs_idx != CUR_STATE(i).si_idx)
+      break;
+    if (bp[i].bs_extmatch == CUR_STATE(i).si_extmatch) {
+      continue;
+    }
+    /* When the extmatch pointers are different, the strings in
+     * them can still be the same.  Check if the extmatch
+     * references are equal. */
+    bsx = bp[i].bs_extmatch;
+    six = CUR_STATE(i).si_extmatch;
+    /* If one of the extmatch pointers is NULL the states are
+     * different. */
+    if (bsx == NULL || six == NULL)
+      break;
+    int j;
+    for (j = 0; j < NSUBEXP; ++j) {
+      /* Check each referenced match string. They must all be
+       * equal. */
+      if (bsx->matches[j] != six->matches[j]) {
+        /* If the pointer is different it can still be the
+         * same text.  Compare the strings, ignore case when
+         * the start item has the sp_ic flag set. */
+        if (bsx->matches[j] == NULL
+            || six->matches[j] == NULL)
           break;
-        int j;
-        for (j = 0; j < NSUBEXP; ++j) {
-          /* Check each referenced match string. They must all be
-           * equal. */
-          if (bsx->matches[j] != six->matches[j]) {
-            /* If the pointer is different it can still be the
-             * same text.  Compare the strings, ignore case when
-             * the start item has the sp_ic flag set. */
-            if (bsx->matches[j] == NULL
-                || six->matches[j] == NULL)
-              break;
-            if ((SYN_ITEMS(syn_block)[CUR_STATE(i).si_idx]).sp_ic
-                ? MB_STRICMP(bsx->matches[j],
-                    six->matches[j]) != 0
-                : STRCMP(bsx->matches[j], six->matches[j]) != 0)
-              break;
-          }
-        }
-        if (j != NSUBEXP)
+        if ((SYN_ITEMS(syn_block)[CUR_STATE(i).si_idx]).sp_ic
+            ? MB_STRICMP(bsx->matches[j],
+                six->matches[j]) != 0
+            : STRCMP(bsx->matches[j], six->matches[j]) != 0)
           break;
       }
     }
-    if (i < 0)
-      return TRUE;
+    if (j != NSUBEXP)
+      break;
   }
+  if (i < 0)
+    return TRUE;
+
   return FALSE;
 }
 
@@ -3625,23 +3629,24 @@ static void put_pattern(char *s, int c, synpat_T *spp, int attr)
   first = TRUE;
   for (i = 0; i < SPO_COUNT; ++i) {
     mask = (1 << i);
-    if (spp->sp_off_flags & (mask + (mask << SPO_COUNT))) {
-      if (!first)
-        msg_putchar(',');               /* separate with commas */
-      msg_puts((char_u *)spo_name_tab[i]);
-      n = spp->sp_offsets[i];
-      if (i != SPO_LC_OFF) {
-        if (spp->sp_off_flags & mask)
-          msg_putchar('s');
-        else
-          msg_putchar('e');
-        if (n > 0)
-          msg_putchar('+');
-      }
-      if (n || i == SPO_LC_OFF)
-        msg_outnum(n);
-      first = FALSE;
+    if (!(spp->sp_off_flags & (mask + (mask << SPO_COUNT)))) {
+      continue;
     }
+    if (!first)
+      msg_putchar(',');               /* separate with commas */
+    msg_puts((char_u *)spo_name_tab[i]);
+    n = spp->sp_offsets[i];
+    if (i != SPO_LC_OFF) {
+      if (spp->sp_off_flags & mask)
+        msg_putchar('s');
+      else
+        msg_putchar('e');
+      if (n > 0)
+        msg_putchar('+');
+    }
+    if (n || i == SPO_LC_OFF)
+      msg_outnum(n);
+    first = FALSE;
   }
   msg_putchar(' ');
 }
@@ -3675,62 +3680,63 @@ syn_list_keywords (
    */
   todo = (int)ht->ht_used;
   for (hi = ht->ht_array; todo > 0 && !got_int; ++hi) {
-    if (!HASHITEM_EMPTY(hi)) {
-      --todo;
-      for (kp = HI2KE(hi); kp != NULL && !got_int; kp = kp->ke_next) {
-        if (kp->k_syn.id == id) {
-          if (prev_contained != (kp->flags & HL_CONTAINED)
-              || prev_skipnl != (kp->flags & HL_SKIPNL)
-              || prev_skipwhite != (kp->flags & HL_SKIPWHITE)
-              || prev_skipempty != (kp->flags & HL_SKIPEMPTY)
-              || prev_cont_in_list != kp->k_syn.cont_in_list
-              || prev_next_list != kp->next_list)
-            outlen = 9999;
-          else
-            outlen = (int)STRLEN(kp->keyword);
-          /* output "contained" and "nextgroup" on each line */
-          if (syn_list_header(did_header, outlen, id)) {
-            prev_contained = 0;
-            prev_next_list = NULL;
-            prev_cont_in_list = NULL;
-            prev_skipnl = 0;
-            prev_skipwhite = 0;
-            prev_skipempty = 0;
-          }
-          did_header = TRUE;
-          if (prev_contained != (kp->flags & HL_CONTAINED)) {
-            msg_puts_attr((char_u *)"contained", attr);
-            msg_putchar(' ');
-            prev_contained = (kp->flags & HL_CONTAINED);
-          }
-          if (kp->k_syn.cont_in_list != prev_cont_in_list) {
-            put_id_list((char_u *)"containedin",
-                kp->k_syn.cont_in_list, attr);
-            msg_putchar(' ');
-            prev_cont_in_list = kp->k_syn.cont_in_list;
-          }
-          if (kp->next_list != prev_next_list) {
-            put_id_list((char_u *)"nextgroup", kp->next_list, attr);
-            msg_putchar(' ');
-            prev_next_list = kp->next_list;
-            if (kp->flags & HL_SKIPNL) {
-              msg_puts_attr((char_u *)"skipnl", attr);
-              msg_putchar(' ');
-              prev_skipnl = (kp->flags & HL_SKIPNL);
-            }
-            if (kp->flags & HL_SKIPWHITE) {
-              msg_puts_attr((char_u *)"skipwhite", attr);
-              msg_putchar(' ');
-              prev_skipwhite = (kp->flags & HL_SKIPWHITE);
-            }
-            if (kp->flags & HL_SKIPEMPTY) {
-              msg_puts_attr((char_u *)"skipempty", attr);
-              msg_putchar(' ');
-              prev_skipempty = (kp->flags & HL_SKIPEMPTY);
-            }
-          }
-          msg_outtrans(kp->keyword);
+    if (HASHITEM_EMPTY(hi)) {
+      continue;
+    }
+    --todo;
+    for (kp = HI2KE(hi); kp != NULL && !got_int; kp = kp->ke_next) {
+      if (kp->k_syn.id == id) {
+        if (prev_contained != (kp->flags & HL_CONTAINED)
+            || prev_skipnl != (kp->flags & HL_SKIPNL)
+            || prev_skipwhite != (kp->flags & HL_SKIPWHITE)
+            || prev_skipempty != (kp->flags & HL_SKIPEMPTY)
+            || prev_cont_in_list != kp->k_syn.cont_in_list
+            || prev_next_list != kp->next_list)
+          outlen = 9999;
+        else
+          outlen = (int)STRLEN(kp->keyword);
+        /* output "contained" and "nextgroup" on each line */
+        if (syn_list_header(did_header, outlen, id)) {
+          prev_contained = 0;
+          prev_next_list = NULL;
+          prev_cont_in_list = NULL;
+          prev_skipnl = 0;
+          prev_skipwhite = 0;
+          prev_skipempty = 0;
         }
+        did_header = TRUE;
+        if (prev_contained != (kp->flags & HL_CONTAINED)) {
+          msg_puts_attr((char_u *)"contained", attr);
+          msg_putchar(' ');
+          prev_contained = (kp->flags & HL_CONTAINED);
+        }
+        if (kp->k_syn.cont_in_list != prev_cont_in_list) {
+          put_id_list((char_u *)"containedin",
+              kp->k_syn.cont_in_list, attr);
+          msg_putchar(' ');
+          prev_cont_in_list = kp->k_syn.cont_in_list;
+        }
+        if (kp->next_list != prev_next_list) {
+          put_id_list((char_u *)"nextgroup", kp->next_list, attr);
+          msg_putchar(' ');
+          prev_next_list = kp->next_list;
+          if (kp->flags & HL_SKIPNL) {
+            msg_puts_attr((char_u *)"skipnl", attr);
+            msg_putchar(' ');
+            prev_skipnl = (kp->flags & HL_SKIPNL);
+          }
+          if (kp->flags & HL_SKIPWHITE) {
+            msg_puts_attr((char_u *)"skipwhite", attr);
+            msg_putchar(' ');
+            prev_skipwhite = (kp->flags & HL_SKIPWHITE);
+          }
+          if (kp->flags & HL_SKIPEMPTY) {
+            msg_puts_attr((char_u *)"skipempty", attr);
+            msg_putchar(' ');
+            prev_skipempty = (kp->flags & HL_SKIPEMPTY);
+          }
+        }
+        msg_outtrans(kp->keyword);
       }
     }
   }
@@ -3749,27 +3755,28 @@ static void syn_clear_keyword(int id, hashtab_T *ht)
   hash_lock(ht);
   todo = (int)ht->ht_used;
   for (hi = ht->ht_array; todo > 0; ++hi) {
-    if (!HASHITEM_EMPTY(hi)) {
-      --todo;
-      kp_prev = NULL;
-      for (kp = HI2KE(hi); kp != NULL; ) {
-        if (kp->k_syn.id == id) {
-          kp_next = kp->ke_next;
-          if (kp_prev == NULL) {
-            if (kp_next == NULL)
-              hash_remove(ht, hi);
-            else
-              hi->hi_key = KE2HIKEY(kp_next);
-          } else
-            kp_prev->ke_next = kp_next;
-          free(kp->next_list);
-          free(kp->k_syn.cont_in_list);
-          free(kp);
-          kp = kp_next;
-        } else {
-          kp_prev = kp;
-          kp = kp->ke_next;
-        }
+    if (HASHITEM_EMPTY(hi)) {
+      continue;
+    }
+    --todo;
+    kp_prev = NULL;
+    for (kp = HI2KE(hi); kp != NULL; ) {
+      if (kp->k_syn.id == id) {
+        kp_next = kp->ke_next;
+        if (kp_prev == NULL) {
+          if (kp_next == NULL)
+            hash_remove(ht, hi);
+          else
+            hi->hi_key = KE2HIKEY(kp_next);
+        } else
+          kp_prev->ke_next = kp_next;
+        free(kp->next_list);
+        free(kp->k_syn.cont_in_list);
+        free(kp);
+        kp = kp_next;
+      } else {
+        kp_prev = kp;
+        kp = kp->ke_next;
       }
     }
   }
@@ -5152,22 +5159,22 @@ get_id_list (
           regmatch.rm_ic = TRUE;
           id = 0;
           for (int i = highlight_ga.ga_len; --i >= 0; ) {
-            if (vim_regexec(&regmatch, HL_TABLE()[i].sg_name,
-                    (colnr_T)0)) {
-              if (round == 2) {
-                /* Got more items than expected; can happen
-                 * when adding items that match:
-                 * "contains=a.*b,axb".
-                 * Go back to first round */
-                if (count >= total_count) {
-                  free(retval);
-                  round = 1;
-                } else
-                  retval[count] = i + 1;
-              }
-              ++count;
-              id = -1;                      /* remember that we found one */
+            if (!vim_regexec(&regmatch, HL_TABLE()[i].sg_name, (colnr_T)0)) {
+              continue;
             }
+            if (round == 2) {
+              /* Got more items than expected; can happen
+               * when adding items that match:
+               * "contains=a.*b,axb".
+               * Go back to first round */
+              if (count >= total_count) {
+                free(retval);
+                round = 1;
+              } else
+                retval[count] = i + 1;
+            }
+            ++count;
+            id = -1;                      /* remember that we found one */
           }
           vim_regfree(regmatch.regprog);
         }

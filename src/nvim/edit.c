@@ -2565,75 +2565,76 @@ static void ins_compl_files(int count, char_u **files, int thesaurus, int flags,
       (void)msg_trunc_attr(IObuff, TRUE, hl_attr(HLF_R));
     }
 
-    if (fp != NULL) {
-      /*
-       * Read dictionary file line by line.
-       * Check each line for a match.
-       */
-      while (!got_int && !compl_interrupted
-             && !vim_fgets(buf, LSIZE, fp)) {
-        ptr = buf;
-        while (vim_regexec(regmatch, buf, (colnr_T)(ptr - buf))) {
-          ptr = regmatch->startp[0];
-          if (ctrl_x_mode == CTRL_X_WHOLE_LINE)
-            ptr = find_line_end(ptr);
-          else
-            ptr = find_word_end(ptr);
-          add_r = ins_compl_add_infercase(regmatch->startp[0],
-              (int)(ptr - regmatch->startp[0]),
-              p_ic, files[i], *dir, 0);
-          if (thesaurus) {
-            char_u *wstart;
-
-            /*
-             * Add the other matches on the line
-             */
-            ptr = buf;
-            while (!got_int) {
-              /* Find start of the next word.  Skip white
-               * space and punctuation. */
-              ptr = find_word_start(ptr);
-              if (*ptr == NUL || *ptr == NL)
-                break;
-              wstart = ptr;
-
-              /* Find end of the word. */
-              if (has_mbyte)
-                /* Japanese words may have characters in
-                 * different classes, only separate words
-                 * with single-byte non-word characters. */
-                while (*ptr != NUL) {
-                  int l = (*mb_ptr2len)(ptr);
-
-                  if (l < 2 && !vim_iswordc(*ptr))
-                    break;
-                  ptr += l;
-                }
-              else
-                ptr = find_word_end(ptr);
-
-              /* Add the word. Skip the regexp match. */
-              if (wstart != regmatch->startp[0])
-                add_r = ins_compl_add_infercase(wstart,
-                    (int)(ptr - wstart),
-                    p_ic, files[i], *dir, 0);
-            }
-          }
-          if (add_r == OK)
-            /* if dir was BACKWARD then honor it just once */
-            *dir = FORWARD;
-          else if (add_r == FAIL)
-            break;
-          /* avoid expensive call to vim_regexec() when at end
-           * of line */
-          if (*ptr == '\n' || got_int)
-            break;
-        }
-        line_breakcheck();
-        ins_compl_check_keys(50);
-      }
-      fclose(fp);
+    if (fp == NULL) {
+      continue;
     }
+    /*
+     * Read dictionary file line by line.
+     * Check each line for a match.
+     */
+    while (!got_int && !compl_interrupted
+           && !vim_fgets(buf, LSIZE, fp)) {
+      ptr = buf;
+      while (vim_regexec(regmatch, buf, (colnr_T)(ptr - buf))) {
+        ptr = regmatch->startp[0];
+        if (ctrl_x_mode == CTRL_X_WHOLE_LINE)
+          ptr = find_line_end(ptr);
+        else
+          ptr = find_word_end(ptr);
+        add_r = ins_compl_add_infercase(regmatch->startp[0],
+            (int)(ptr - regmatch->startp[0]),
+            p_ic, files[i], *dir, 0);
+        if (thesaurus) {
+          char_u *wstart;
+
+          /*
+           * Add the other matches on the line
+           */
+          ptr = buf;
+          while (!got_int) {
+            /* Find start of the next word.  Skip white
+             * space and punctuation. */
+            ptr = find_word_start(ptr);
+            if (*ptr == NUL || *ptr == NL)
+              break;
+            wstart = ptr;
+
+            /* Find end of the word. */
+            if (has_mbyte)
+              /* Japanese words may have characters in
+               * different classes, only separate words
+               * with single-byte non-word characters. */
+              while (*ptr != NUL) {
+                int l = (*mb_ptr2len)(ptr);
+
+                if (l < 2 && !vim_iswordc(*ptr))
+                  break;
+                ptr += l;
+              }
+            else
+              ptr = find_word_end(ptr);
+
+            /* Add the word. Skip the regexp match. */
+            if (wstart != regmatch->startp[0])
+              add_r = ins_compl_add_infercase(wstart,
+                  (int)(ptr - wstart),
+                  p_ic, files[i], *dir, 0);
+          }
+        }
+        if (add_r == OK)
+          /* if dir was BACKWARD then honor it just once */
+          *dir = FORWARD;
+        else if (add_r == FAIL)
+          break;
+        /* avoid expensive call to vim_regexec() when at end
+         * of line */
+        if (*ptr == '\n' || got_int)
+          break;
+      }
+      line_breakcheck();
+      ins_compl_check_keys(50);
+    }
+    fclose(fp);
   }
 }
 
@@ -7027,41 +7028,43 @@ static void ins_ctrl_(void)
  */
 static int ins_start_select(int c)
 {
-  if (km_startsel)
-    switch (c) {
-    case K_KHOME:
-    case K_KEND:
-    case K_PAGEUP:
-    case K_KPAGEUP:
-    case K_PAGEDOWN:
-    case K_KPAGEDOWN:
-      if (!(mod_mask & MOD_MASK_SHIFT))
-        break;
-    /* FALLTHROUGH */
-    case K_S_LEFT:
-    case K_S_RIGHT:
-    case K_S_UP:
-    case K_S_DOWN:
-    case K_S_END:
-    case K_S_HOME:
-      /* Start selection right away, the cursor can move with
-       * CTRL-O when beyond the end of the line. */
-      start_selection();
+  if (!km_startsel) {
+    return FALSE;
+  }
+  switch (c) {
+  case K_KHOME:
+  case K_KEND:
+  case K_PAGEUP:
+  case K_KPAGEUP:
+  case K_PAGEDOWN:
+  case K_KPAGEDOWN:
+    if (!(mod_mask & MOD_MASK_SHIFT))
+      break;
+  /* FALLTHROUGH */
+  case K_S_LEFT:
+  case K_S_RIGHT:
+  case K_S_UP:
+  case K_S_DOWN:
+  case K_S_END:
+  case K_S_HOME:
+    /* Start selection right away, the cursor can move with
+     * CTRL-O when beyond the end of the line. */
+    start_selection();
 
-      /* Execute the key in (insert) Select mode. */
-      stuffcharReadbuff(Ctrl_O);
-      if (mod_mask) {
-        char_u buf[4];
+    /* Execute the key in (insert) Select mode. */
+    stuffcharReadbuff(Ctrl_O);
+    if (mod_mask) {
+      char_u buf[4];
 
-        buf[0] = K_SPECIAL;
-        buf[1] = KS_MODIFIER;
-        buf[2] = mod_mask;
-        buf[3] = NUL;
-        stuffReadbuff(buf);
-      }
-      stuffcharReadbuff(c);
-      return TRUE;
+      buf[0] = K_SPECIAL;
+      buf[1] = KS_MODIFIER;
+      buf[2] = mod_mask;
+      buf[3] = NUL;
+      stuffReadbuff(buf);
     }
+    stuffcharReadbuff(c);
+    return TRUE;
+  }
   return FALSE;
 }
 

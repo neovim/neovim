@@ -238,25 +238,27 @@ open_buffer (
   }
   apply_autocmds_retval(EVENT_BUFENTER, NULL, NULL, FALSE, curbuf, &retval);
 
-  if (retval != FAIL) {
-    /*
-     * The autocommands may have changed the current buffer.  Apply the
-     * modelines to the correct buffer, if it still exists and is loaded.
-     */
-    if (buf_valid(old_curbuf) && old_curbuf->b_ml.ml_mfp != NULL) {
-      aco_save_T aco;
+  if (retval == FAIL) {
+    return FAIL;
+  }
 
-      /* Go to the buffer that was opened. */
-      aucmd_prepbuf(&aco, old_curbuf);
-      do_modelines(0);
-      curbuf->b_flags &= ~(BF_CHECK_RO | BF_NEVERLOADED);
+  /*
+   * The autocommands may have changed the current buffer.  Apply the
+   * modelines to the correct buffer, if it still exists and is loaded.
+   */
+  if (buf_valid(old_curbuf) && old_curbuf->b_ml.ml_mfp != NULL) {
+    aco_save_T aco;
 
-      apply_autocmds_retval(EVENT_BUFWINENTER, NULL, NULL, FALSE, curbuf,
-          &retval);
+    /* Go to the buffer that was opened. */
+    aucmd_prepbuf(&aco, old_curbuf);
+    do_modelines(0);
+    curbuf->b_flags &= ~(BF_CHECK_RO | BF_NEVERLOADED);
 
-      /* restore curwin/curbuf and a few other things */
-      aucmd_restbuf(&aco);
-    }
+    apply_autocmds_retval(EVENT_BUFWINENTER, NULL, NULL, FALSE, curbuf,
+        &retval);
+
+    /* restore curwin/curbuf and a few other things */
+    aucmd_restbuf(&aco);
   }
 
   return retval;
@@ -4091,66 +4093,69 @@ chk_modeline (
     prev = *s;
   }
 
-  if (*s) {
-    do                                  /* skip over "ex:", "vi:" or "vim:" */
-      ++s;
-    while (s[-1] != ':');
-
-    s = linecopy = vim_strsave(s);      /* copy the line, it will change */
-
-    save_sourcing_lnum = sourcing_lnum;
-    save_sourcing_name = sourcing_name;
-    sourcing_lnum = lnum;               /* prepare for emsg() */
-    sourcing_name = (char_u *)"modelines";
-
-    end = FALSE;
-    while (end == FALSE) {
-      s = skipwhite(s);
-      if (*s == NUL)
-        break;
-
-      /*
-       * Find end of set command: ':' or end of line.
-       * Skip over "\:", replacing it with ":".
-       */
-      for (e = s; *e != ':' && *e != NUL; ++e)
-        if (e[0] == '\\' && e[1] == ':')
-          STRMOVE(e, e + 1);
-      if (*e == NUL)
-        end = TRUE;
-
-      /*
-       * If there is a "set" command, require a terminating ':' and
-       * ignore the stuff after the ':'.
-       * "vi:set opt opt opt: foo" -- foo not interpreted
-       * "vi:opt opt opt: foo" -- foo interpreted
-       * Accept "se" for compatibility with Elvis.
-       */
-      if (STRNCMP(s, "set ", (size_t)4) == 0
-          || STRNCMP(s, "se ", (size_t)3) == 0) {
-        if (*e != ':')                  /* no terminating ':'? */
-          break;
-        end = TRUE;
-        s = vim_strchr(s, ' ') + 1;
-      }
-      *e = NUL;                         /* truncate the set command */
-
-      if (*s != NUL) {                  /* skip over an empty "::" */
-        save_SID = current_SID;
-        current_SID = SID_MODELINE;
-        retval = do_set(s, OPT_MODELINE | OPT_LOCAL | flags);
-        current_SID = save_SID;
-        if (retval == FAIL)                     /* stop if error found */
-          break;
-      }
-      s = e + 1;                        /* advance to next part */
-    }
-
-    sourcing_lnum = save_sourcing_lnum;
-    sourcing_name = save_sourcing_name;
-
-    free(linecopy);
+  if (!*s) {
+    return retval;
   }
+
+  do                                  /* skip over "ex:", "vi:" or "vim:" */
+    ++s;
+  while (s[-1] != ':');
+
+  s = linecopy = vim_strsave(s);      /* copy the line, it will change */
+
+  save_sourcing_lnum = sourcing_lnum;
+  save_sourcing_name = sourcing_name;
+  sourcing_lnum = lnum;               /* prepare for emsg() */
+  sourcing_name = (char_u *)"modelines";
+
+  end = FALSE;
+  while (end == FALSE) {
+    s = skipwhite(s);
+    if (*s == NUL)
+      break;
+
+    /*
+     * Find end of set command: ':' or end of line.
+     * Skip over "\:", replacing it with ":".
+     */
+    for (e = s; *e != ':' && *e != NUL; ++e)
+      if (e[0] == '\\' && e[1] == ':')
+        STRMOVE(e, e + 1);
+    if (*e == NUL)
+      end = TRUE;
+
+    /*
+     * If there is a "set" command, require a terminating ':' and
+     * ignore the stuff after the ':'.
+     * "vi:set opt opt opt: foo" -- foo not interpreted
+     * "vi:opt opt opt: foo" -- foo interpreted
+     * Accept "se" for compatibility with Elvis.
+     */
+    if (STRNCMP(s, "set ", (size_t)4) == 0
+        || STRNCMP(s, "se ", (size_t)3) == 0) {
+      if (*e != ':')                  /* no terminating ':'? */
+        break;
+      end = TRUE;
+      s = vim_strchr(s, ' ') + 1;
+    }
+    *e = NUL;                         /* truncate the set command */
+
+    if (*s != NUL) {                  /* skip over an empty "::" */
+      save_SID = current_SID;
+      current_SID = SID_MODELINE;
+      retval = do_set(s, OPT_MODELINE | OPT_LOCAL | flags);
+      current_SID = save_SID;
+      if (retval == FAIL)                     /* stop if error found */
+        break;
+    }
+    s = e + 1;                        /* advance to next part */
+  }
+
+  sourcing_lnum = save_sourcing_lnum;
+  sourcing_name = save_sourcing_name;
+
+  free(linecopy);
+
   return retval;
 }
 

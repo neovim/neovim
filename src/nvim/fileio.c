@@ -533,63 +533,64 @@ readfile (
       curbuf->b_p_ro = TRUE;            /* must use "w!" now */
     } else
 #endif
-    if (newfile) {
-      if (perm < 0
+    if (!newfile) {
+      return FAIL;
+    }
+    if (perm < 0
 #ifdef ENOENT
-          && errno == ENOENT
+        && errno == ENOENT
 #endif
-          ) {
-        /*
-         * Set the 'new-file' flag, so that when the file has
-         * been created by someone else, a ":w" will complain.
-         */
-        curbuf->b_flags |= BF_NEW;
+        ) {
+      /*
+       * Set the 'new-file' flag, so that when the file has
+       * been created by someone else, a ":w" will complain.
+       */
+      curbuf->b_flags |= BF_NEW;
 
-        /* Create a swap file now, so that other Vims are warned
-         * that we are editing this file.  Don't do this for a
-         * "nofile" or "nowrite" buffer type. */
-        if (!bt_dontwrite(curbuf)) {
-          check_need_swap(newfile);
-          /* SwapExists autocommand may mess things up */
-          if (curbuf != old_curbuf
-              || (using_b_ffname
-                  && (old_b_ffname != curbuf->b_ffname))
-              || (using_b_fname
-                  && (old_b_fname != curbuf->b_fname))) {
-            EMSG(_(e_auchangedbuf));
-            return FAIL;
-          }
-        }
-        if (dir_of_file_exists(fname))
-          filemess(curbuf, sfname, (char_u *)_("[New File]"), 0);
-        else
-          filemess(curbuf, sfname,
-              (char_u *)_("[New DIRECTORY]"), 0);
-        /* Even though this is a new file, it might have been
-         * edited before and deleted.  Get the old marks. */
-        check_marks_read();
-        /* Set forced 'fileencoding'.  */
-        if (eap != NULL)
-          set_forced_fenc(eap);
-        apply_autocmds_exarg(EVENT_BUFNEWFILE, sfname, sfname,
-            FALSE, curbuf, eap);
-        /* remember the current fileformat */
-        save_file_ff(curbuf);
-
-        if (aborting())               /* autocmds may abort script processing */
+      /* Create a swap file now, so that other Vims are warned
+       * that we are editing this file.  Don't do this for a
+       * "nofile" or "nowrite" buffer type. */
+      if (!bt_dontwrite(curbuf)) {
+        check_need_swap(newfile);
+        /* SwapExists autocommand may mess things up */
+        if (curbuf != old_curbuf
+            || (using_b_ffname
+                && (old_b_ffname != curbuf->b_ffname))
+            || (using_b_fname
+                && (old_b_fname != curbuf->b_fname))) {
+          EMSG(_(e_auchangedbuf));
           return FAIL;
-        return OK;                  /* a new file is not an error */
-      } else {
-        filemess(curbuf, sfname, (char_u *)(
+        }
+      }
+      if (dir_of_file_exists(fname))
+        filemess(curbuf, sfname, (char_u *)_("[New File]"), 0);
+      else
+        filemess(curbuf, sfname,
+            (char_u *)_("[New DIRECTORY]"), 0);
+      /* Even though this is a new file, it might have been
+       * edited before and deleted.  Get the old marks. */
+      check_marks_read();
+      /* Set forced 'fileencoding'.  */
+      if (eap != NULL)
+        set_forced_fenc(eap);
+      apply_autocmds_exarg(EVENT_BUFNEWFILE, sfname, sfname,
+          FALSE, curbuf, eap);
+      /* remember the current fileformat */
+      save_file_ff(curbuf);
+
+      if (aborting())               /* autocmds may abort script processing */
+        return FAIL;
+      return OK;                  /* a new file is not an error */
+    } else {
+      filemess(curbuf, sfname, (char_u *)(
 # ifdef EFBIG
-              (errno == EFBIG) ? _("[File too big]") :
+            (errno == EFBIG) ? _("[File too big]") :
 # endif
 # ifdef EOVERFLOW
-              (errno == EOVERFLOW) ? _("[File too big]") :
+            (errno == EOVERFLOW) ? _("[File too big]") :
 # endif
-              _("[Permission Denied]")), 0);
-        curbuf->b_p_ro = TRUE;                  /* must use "w!" now */
-      }
+            _("[Permission Denied]")), 0);
+      curbuf->b_p_ro = TRUE;                  /* must use "w!" now */
     }
 
     return FAIL;
@@ -5329,22 +5330,23 @@ static void show_autocmd(AutoPat *ap, event_T event)
   msg_outtrans(ap->pat);
 
   for (ac = ap->cmds; ac != NULL; ac = ac->next) {
-    if (ac->cmd != NULL) {              /* skip removed commands */
-      if (msg_col >= 14)
-        msg_putchar('\n');
-      msg_col = 14;
+    if (ac->cmd == NULL) {              /* skip removed commands */
+      continue;
+    }
+    if (msg_col >= 14)
+      msg_putchar('\n');
+    msg_col = 14;
+    if (got_int)
+      return;
+    msg_outtrans(ac->cmd);
+    if (p_verbose > 0)
+      last_set_msg(ac->scriptID);
+    if (got_int)
+      return;
+    if (ac->next != NULL) {
+      msg_putchar('\n');
       if (got_int)
         return;
-      msg_outtrans(ac->cmd);
-      if (p_verbose > 0)
-        last_set_msg(ac->scriptID);
-      if (got_int)
-        return;
-      if (ac->next != NULL) {
-        msg_putchar('\n');
-        if (got_int)
-          return;
-      }
     }
   }
 }
@@ -6120,27 +6122,28 @@ void ex_doautoall(exarg_T *eap)
    * buffers or windows...
    */
   FOR_ALL_BUFFERS(buf) {
-    if (buf->b_ml.ml_mfp != NULL) {
-      /* find a window for this buffer and save some values */
-      aucmd_prepbuf(&aco, buf);
-
-      /* execute the autocommands for this buffer */
-      retval = do_doautocmd(arg, FALSE);
-
-      if (call_do_modelines) {
-        /* Execute the modeline settings, but don't set window-local
-         * options if we are using the current window for another
-         * buffer. */
-        do_modelines(curwin == aucmd_win ? OPT_NOWIN : 0);
-      }
-
-      /* restore the current window */
-      aucmd_restbuf(&aco);
-
-      /* stop if there is some error or buffer was deleted */
-      if (retval == FAIL || !buf_valid(buf))
-        break;
+    if (buf->b_ml.ml_mfp == NULL) {
+      continue;
     }
+    /* find a window for this buffer and save some values */
+    aucmd_prepbuf(&aco, buf);
+
+    /* execute the autocommands for this buffer */
+    retval = do_doautocmd(arg, FALSE);
+
+    if (call_do_modelines) {
+      /* Execute the modeline settings, but don't set window-local
+       * options if we are using the current window for another
+       * buffer. */
+      do_modelines(curwin == aucmd_win ? OPT_NOWIN : 0);
+    }
+
+    /* restore the current window */
+    aucmd_restbuf(&aco);
+
+    /* stop if there is some error or buffer was deleted */
+    if (retval == FAIL || !buf_valid(buf))
+      break;
   }
 
   check_cursor();           /* just in case lines got deleted */
