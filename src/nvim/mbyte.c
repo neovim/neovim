@@ -2346,13 +2346,12 @@ static convertStruct foldCase[] =
  * Return the converted equivalent of "a", which is a UCS-4 character.  Use
  * the given conversion "table".  Uses binary search on "table".
  */
-static int utf_convert(int a, convertStruct *table, int tableSize)
+static int utf_convert(int a, convertStruct *table, size_t n_items)
 {
-  int start, mid, end;   /* indices into table */
-  int entries = tableSize / sizeof(convertStruct);
+  size_t start, mid, end;   /* indices into table */
 
   start = 0;
-  end = entries;
+  end = n_items;
   while (start < end) {
     /* need to search further */
     mid = (end + start) / 2;
@@ -2361,7 +2360,7 @@ static int utf_convert(int a, convertStruct *table, int tableSize)
     else
       end = mid;
   }
-  if (start < entries
+  if (start < n_items
       && table[start].rangeStart <= a
       && a <= table[start].rangeEnd
       && (a - table[start].rangeStart) % table[start].step == 0)
@@ -2376,7 +2375,7 @@ static int utf_convert(int a, convertStruct *table, int tableSize)
  */
 int utf_fold(int a)
 {
-  return utf_convert(a, foldCase, (int)sizeof(foldCase));
+  return utf_convert(a, foldCase, ARRAY_SIZE(foldCase));
 }
 
 static convertStruct toLower[] =
@@ -2702,7 +2701,7 @@ int utf_toupper(int a)
     return TOUPPER_LOC(a);
 
   /* For any other characters use the above mapping table. */
-  return utf_convert(a, toUpper, (int)sizeof(toUpper));
+  return utf_convert(a, toUpper, ARRAY_SIZE(toUpper));
 }
 
 bool utf_islower(int a)
@@ -2732,7 +2731,7 @@ int utf_tolower(int a)
     return TOLOWER_LOC(a);
 
   /* For any other characters use the above mapping table. */
-  return utf_convert(a, toLower, (int)sizeof(toLower));
+  return utf_convert(a, toLower, ARRAY_SIZE(toLower));
 }
 
 bool utf_isupper(int a)
