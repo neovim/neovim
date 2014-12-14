@@ -187,14 +187,20 @@ size_t input_enqueue(String keys)
     unsigned int new_size = trans_special((uint8_t **)&ptr, buf, false);
 
     if (!new_size) {
+      if (*ptr == '<') {
+        // Invalid key sequence, skip until the next '>' or until *end
+        do {
+          ptr++;
+        } while (ptr < end && *ptr != '>');
+        ptr++;
+        continue;
+      }
       // copy the character unmodified
       *buf = (uint8_t)*ptr++;
       new_size = 1;
     }
 
     new_size = handle_mouse_event(&ptr, buf, new_size);
-    // TODO(tarruda): Don't produce past unclosed '<' characters, except if
-    // there's a lot of characters after the '<'
     rbuffer_write(input_buffer, (char *)buf, new_size);
   }
 
