@@ -3124,40 +3124,41 @@ void check_scrollbind(linenr_T topline_diff, long leftcol_diff)
   for (curwin = firstwin; curwin; curwin = curwin->w_next) {
     curbuf = curwin->w_buffer;
     /* skip original window  and windows with 'noscrollbind' */
-    if (curwin != old_curwin && curwin->w_p_scb) {
-      /*
-       * do the vertical scroll
-       */
-      if (want_ver) {
-        if (old_curwin->w_p_diff && curwin->w_p_diff) {
-          diff_set_topline(old_curwin, curwin);
-        } else {
-          curwin->w_scbind_pos += topline_diff;
-          topline = curwin->w_scbind_pos;
-          if (topline > curbuf->b_ml.ml_line_count)
-            topline = curbuf->b_ml.ml_line_count;
-          if (topline < 1)
-            topline = 1;
+    if (curwin == old_curwin || !curwin->w_p_scb) {
+      continue;
+    }
+    /*
+     * do the vertical scroll
+     */
+    if (want_ver) {
+      if (old_curwin->w_p_diff && curwin->w_p_diff) {
+        diff_set_topline(old_curwin, curwin);
+      } else {
+        curwin->w_scbind_pos += topline_diff;
+        topline = curwin->w_scbind_pos;
+        if (topline > curbuf->b_ml.ml_line_count)
+          topline = curbuf->b_ml.ml_line_count;
+        if (topline < 1)
+          topline = 1;
 
-          y = topline - curwin->w_topline;
-          if (y > 0)
-            scrollup(y, false);
-          else
-            scrolldown(-y, false);
-        }
-
-        redraw_later(VALID);
-        cursor_correct();
-        curwin->w_redr_status = true;
+        y = topline - curwin->w_topline;
+        if (y > 0)
+          scrollup(y, false);
+        else
+          scrolldown(-y, false);
       }
 
-      /*
-       * do the horizontal scroll
-       */
-      if (want_hor && curwin->w_leftcol != tgt_leftcol) {
-        curwin->w_leftcol = tgt_leftcol;
-        leftcol_changed();
-      }
+      redraw_later(VALID);
+      cursor_correct();
+      curwin->w_redr_status = true;
+    }
+
+    /*
+     * do the horizontal scroll
+     */
+    if (want_hor && curwin->w_leftcol != tgt_leftcol) {
+      curwin->w_leftcol = tgt_leftcol;
+      leftcol_changed();
     }
   }
 

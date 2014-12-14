@@ -2375,34 +2375,35 @@ void do_wqall(exarg_T *eap)
     exiting = TRUE;
 
   FOR_ALL_BUFFERS(buf) {
-    if (bufIsChanged(buf)) {
-      /*
-       * Check if there is a reason the buffer cannot be written:
-       * 1. if the 'write' option is set
-       * 2. if there is no file name (even after browsing)
-       * 3. if the 'readonly' is set (even after a dialog)
-       * 4. if overwriting is allowed (even after a dialog)
-       */
-      if (not_writing()) {
-        ++error;
-        break;
-      }
-      if (buf->b_ffname == NULL) {
-        EMSGN(_("E141: No file name for buffer %" PRId64), buf->b_fnum);
-        ++error;
-      } else if (check_readonly(&eap->forceit, buf)
-                 || check_overwrite(eap, buf, buf->b_fname, buf->b_ffname,
-                     FALSE) == FAIL) {
-        ++error;
-      } else {
-        if (buf_write_all(buf, eap->forceit) == FAIL)
-          ++error;
-        /* an autocommand may have deleted the buffer */
-        if (!buf_valid(buf))
-          buf = firstbuf;
-      }
-      eap->forceit = save_forceit;          /* check_overwrite() may set it */
+    if (!bufIsChanged(buf)) {
+      continue;
     }
+    /*
+     * Check if there is a reason the buffer cannot be written:
+     * 1. if the 'write' option is set
+     * 2. if there is no file name (even after browsing)
+     * 3. if the 'readonly' is set (even after a dialog)
+     * 4. if overwriting is allowed (even after a dialog)
+     */
+    if (not_writing()) {
+      ++error;
+      break;
+    }
+    if (buf->b_ffname == NULL) {
+      EMSGN(_("E141: No file name for buffer %" PRId64), buf->b_fnum);
+      ++error;
+    } else if (check_readonly(&eap->forceit, buf)
+               || check_overwrite(eap, buf, buf->b_fname, buf->b_ffname,
+                   FALSE) == FAIL) {
+      ++error;
+    } else {
+      if (buf_write_all(buf, eap->forceit) == FAIL)
+        ++error;
+      /* an autocommand may have deleted the buffer */
+      if (!buf_valid(buf))
+        buf = firstbuf;
+    }
+    eap->forceit = save_forceit;          /* check_overwrite() may set it */
   }
   if (exiting) {
     if (!error)
@@ -3328,12 +3329,11 @@ void ex_z(exarg_T *eap)
     if (!VIM_ISDIGIT(*x)) {
       EMSG(_("E144: non-numeric argument to :z"));
       return;
-    } else {
-      bigness = atoi((char *)x);
-      p_window = bigness;
-      if (*kind == '=')
-        bigness += 2;
     }
+    bigness = atoi((char *)x);
+    p_window = bigness;
+    if (*kind == '=')
+      bigness += 2;
   }
 
   /* the number of '-' and '+' multiplies the distance */
@@ -5232,61 +5232,62 @@ void fix_help_buffer(void)
               if (fnames[fi] == NULL)
                 continue;
               fd = mch_fopen((char *)fnames[fi], "r");
-              if (fd != NULL) {
-                vim_fgets(IObuff, IOSIZE, fd);
-                if (IObuff[0] == '*'
-                    && (s = vim_strchr(IObuff + 1, '*'))
-                    != NULL) {
-                  int this_utf = MAYBE;
-                  /* Change tag definition to a
-                   * reference and remove <CR>/<NL>. */
-                  IObuff[0] = '|';
-                  *s = '|';
-                  while (*s != NUL) {
-                    if (*s == '\r' || *s == '\n')
-                      *s = NUL;
-                    /* The text is utf-8 when a byte
-                     * above 127 is found and no
-                     * illegal byte sequence is found.
-                     */
-                    if (*s >= 0x80 && this_utf != FALSE) {
-                      int l;
-
-                      this_utf = TRUE;
-                      l = utf_ptr2len(s);
-                      if (l == 1)
-                        this_utf = FALSE;
-                      s += l - 1;
-                    }
-                    ++s;
-                  }
-                  /* The help file is latin1 or utf-8;
-                   * conversion to the current
-                   * 'encoding' may be required. */
-                  vc.vc_type = CONV_NONE;
-                  convert_setup(&vc, (char_u *)(
-                        this_utf == TRUE ? "utf-8"
-                        : "latin1"), p_enc);
-                  if (vc.vc_type == CONV_NONE)
-                    /* No conversion needed. */
-                    cp = IObuff;
-                  else {
-                    /* Do the conversion.  If it fails
-                     * use the unconverted text. */
-                    cp = string_convert(&vc, IObuff,
-                        NULL);
-                    if (cp == NULL)
-                      cp = IObuff;
-                  }
-                  convert_setup(&vc, NULL, NULL);
-
-                  ml_append(lnum, cp, (colnr_T)0, FALSE);
-                  if (cp != IObuff)
-                    free(cp);
-                  ++lnum;
-                }
-                fclose(fd);
+              if (fd == NULL) {
+                continue;
               }
+              vim_fgets(IObuff, IOSIZE, fd);
+              if (IObuff[0] == '*'
+                  && (s = vim_strchr(IObuff + 1, '*'))
+                  != NULL) {
+                int this_utf = MAYBE;
+                /* Change tag definition to a
+                 * reference and remove <CR>/<NL>. */
+                IObuff[0] = '|';
+                *s = '|';
+                while (*s != NUL) {
+                  if (*s == '\r' || *s == '\n')
+                    *s = NUL;
+                  /* The text is utf-8 when a byte
+                   * above 127 is found and no
+                   * illegal byte sequence is found.
+                   */
+                  if (*s >= 0x80 && this_utf != FALSE) {
+                    int l;
+
+                    this_utf = TRUE;
+                    l = utf_ptr2len(s);
+                    if (l == 1)
+                      this_utf = FALSE;
+                    s += l - 1;
+                  }
+                  ++s;
+                }
+                /* The help file is latin1 or utf-8;
+                 * conversion to the current
+                 * 'encoding' may be required. */
+                vc.vc_type = CONV_NONE;
+                convert_setup(&vc, (char_u *)(
+                      this_utf == TRUE ? "utf-8"
+                      : "latin1"), p_enc);
+                if (vc.vc_type == CONV_NONE)
+                  /* No conversion needed. */
+                  cp = IObuff;
+                else {
+                  /* Do the conversion.  If it fails
+                   * use the unconverted text. */
+                  cp = string_convert(&vc, IObuff,
+                      NULL);
+                  if (cp == NULL)
+                    cp = IObuff;
+                }
+                convert_setup(&vc, NULL, NULL);
+
+                ml_append(lnum, cp, (colnr_T)0, FALSE);
+                if (cp != IObuff)
+                  free(cp);
+                ++lnum;
+              }
+              fclose(fd);
             }
             FreeWild(fcount, fnames);
           }
@@ -5368,32 +5369,33 @@ void ex_helptags(exarg_T *eap)
   ga_init(&ga, 1, 10);
   for (int i = 0; i < filecount; ++i) {
     len = (int)STRLEN(files[i]);
-    if (len > 4) {
-      if (STRICMP(files[i] + len - 4, ".txt") == 0) {
-        /* ".txt" -> language "en" */
-        lang[0] = 'e';
-        lang[1] = 'n';
-      } else if (files[i][len - 4] == '.'
-                 && ASCII_ISALPHA(files[i][len - 3])
-                 && ASCII_ISALPHA(files[i][len - 2])
-                 && TOLOWER_ASC(files[i][len - 1]) == 'x') {
-        /* ".abx" -> language "ab" */
-        lang[0] = TOLOWER_ASC(files[i][len - 3]);
-        lang[1] = TOLOWER_ASC(files[i][len - 2]);
-      } else
-        continue;
+    if (len <= 4) {
+      continue;
+    }
+    if (STRICMP(files[i] + len - 4, ".txt") == 0) {
+      /* ".txt" -> language "en" */
+      lang[0] = 'e';
+      lang[1] = 'n';
+    } else if (files[i][len - 4] == '.'
+               && ASCII_ISALPHA(files[i][len - 3])
+               && ASCII_ISALPHA(files[i][len - 2])
+               && TOLOWER_ASC(files[i][len - 1]) == 'x') {
+      /* ".abx" -> language "ab" */
+      lang[0] = TOLOWER_ASC(files[i][len - 3]);
+      lang[1] = TOLOWER_ASC(files[i][len - 2]);
+    } else
+      continue;
 
-      int j;
-      /* Did we find this language already? */
-      for (j = 0; j < ga.ga_len; j += 2)
-        if (STRNCMP(lang, ((char_u *)ga.ga_data) + j, 2) == 0)
-          break;
-      if (j == ga.ga_len) {
-        /* New language, add it. */
-        ga_grow(&ga, 2);
-        ((char_u *)ga.ga_data)[ga.ga_len++] = lang[0];
-        ((char_u *)ga.ga_data)[ga.ga_len++] = lang[1];
-      }
+    int j;
+    /* Did we find this language already? */
+    for (j = 0; j < ga.ga_len; j += 2)
+      if (STRNCMP(lang, ((char_u *)ga.ga_data) + j, 2) == 0)
+        break;
+    if (j == ga.ga_len) {
+      /* New language, add it. */
+      ga_grow(&ga, 2);
+      ((char_u *)ga.ga_data)[ga.ga_len++] = lang[0];
+      ((char_u *)ga.ga_data)[ga.ga_len++] = lang[1];
     }
   }
 

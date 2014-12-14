@@ -1463,25 +1463,26 @@ win_equal_rec (
           /* If 'winfixwidth' set keep the window width if
            * possible.
            * Watch out for this window being the next_curwin. */
-          if (frame_fixed_width(fr)) {
-            n = frame_minwidth(fr, NOWIN);
-            new_size = fr->fr_width;
-            if (frame_has_win(fr, next_curwin)) {
-              room += p_wiw - p_wmw;
-              next_curwin_size = 0;
-              if (new_size < p_wiw)
-                new_size = p_wiw;
-            } else
-              /* These windows don't use up room. */
-              totwincount -= (n + (fr->fr_next == NULL
-                                   ? extra_sep : 0)) / (p_wmw + 1);
-            room -= new_size - n;
-            if (room < 0) {
-              new_size += room;
-              room = 0;
-            }
-            fr->fr_newwidth = new_size;
+          if (!frame_fixed_width(fr)) {
+            continue;
           }
+          n = frame_minwidth(fr, NOWIN);
+          new_size = fr->fr_width;
+          if (frame_has_win(fr, next_curwin)) {
+            room += p_wiw - p_wmw;
+            next_curwin_size = 0;
+            if (new_size < p_wiw)
+              new_size = p_wiw;
+          } else
+            /* These windows don't use up room. */
+            totwincount -= (n + (fr->fr_next == NULL
+                                 ? extra_sep : 0)) / (p_wmw + 1);
+          room -= new_size - n;
+          if (room < 0) {
+            new_size += room;
+            room = 0;
+          }
+          fr->fr_newwidth = new_size;
         }
         if (next_curwin_size == -1) {
           if (!has_next_curwin)
@@ -1583,25 +1584,26 @@ win_equal_rec (
           /* If 'winfixheight' set keep the window height if
            * possible.
            * Watch out for this window being the next_curwin. */
-          if (frame_fixed_height(fr)) {
-            n = frame_minheight(fr, NOWIN);
-            new_size = fr->fr_height;
-            if (frame_has_win(fr, next_curwin)) {
-              room += p_wh - p_wmh;
-              next_curwin_size = 0;
-              if (new_size < p_wh)
-                new_size = p_wh;
-            } else
-              /* These windows don't use up room. */
-              totwincount -= (n + (fr->fr_next == NULL
-                                   ? extra_sep : 0)) / (p_wmh + 1);
-            room -= new_size - n;
-            if (room < 0) {
-              new_size += room;
-              room = 0;
-            }
-            fr->fr_newheight = new_size;
+          if (!frame_fixed_height(fr)) {
+            continue;
           }
+          n = frame_minheight(fr, NOWIN);
+          new_size = fr->fr_height;
+          if (frame_has_win(fr, next_curwin)) {
+            room += p_wh - p_wmh;
+            next_curwin_size = 0;
+            if (new_size < p_wh)
+              new_size = p_wh;
+          } else
+            /* These windows don't use up room. */
+            totwincount -= (n + (fr->fr_next == NULL
+                                 ? extra_sep : 0)) / (p_wmh + 1);
+          room -= new_size - n;
+          if (room < 0) {
+            new_size += room;
+            room = 0;
+          }
+          fr->fr_newheight = new_size;
         }
         if (next_curwin_size == -1) {
           if (!has_next_curwin)
@@ -1759,38 +1761,38 @@ bool one_window(void)
  */
 static int close_last_window_tabpage(win_T *win, int free_buf, tabpage_T *prev_curtab)
 {
-  if (firstwin == lastwin) {
-    buf_T   *old_curbuf = curbuf;
-
-    /*
-     * Closing the last window in a tab page.  First go to another tab
-     * page and then close the window and the tab page.  This avoids that
-     * curwin and curtab are invalid while we are freeing memory, they may
-     * be used in GUI events.
-     * Don't trigger autocommands yet, they may use wrong values, so do
-     * that below.
-     */
-    goto_tabpage_tp(alt_tabpage(), FALSE, TRUE);
-    redraw_tabline = TRUE;
-
-    /* Safety check: Autocommands may have closed the window when jumping
-     * to the other tab page. */
-    if (valid_tabpage(prev_curtab) && prev_curtab->tp_firstwin == win) {
-      int h = tabline_height();
-
-      win_close_othertab(win, free_buf, prev_curtab);
-      if (h != tabline_height())
-        shell_new_rows();
-    }
-    /* Since goto_tabpage_tp above did not trigger *Enter autocommands, do
-     * that now. */
-    apply_autocmds(EVENT_WINENTER, NULL, NULL, FALSE, curbuf);
-    apply_autocmds(EVENT_TABENTER, NULL, NULL, FALSE, curbuf);
-    if (old_curbuf != curbuf)
-      apply_autocmds(EVENT_BUFENTER, NULL, NULL, FALSE, curbuf);
-    return TRUE;
+  if (firstwin != lastwin) {
+    return FALSE;
   }
-  return FALSE;
+  buf_T   *old_curbuf = curbuf;
+
+  /*
+   * Closing the last window in a tab page.  First go to another tab
+   * page and then close the window and the tab page.  This avoids that
+   * curwin and curtab are invalid while we are freeing memory, they may
+   * be used in GUI events.
+   * Don't trigger autocommands yet, they may use wrong values, so do
+   * that below.
+   */
+  goto_tabpage_tp(alt_tabpage(), FALSE, TRUE);
+  redraw_tabline = TRUE;
+
+  /* Safety check: Autocommands may have closed the window when jumping
+   * to the other tab page. */
+  if (valid_tabpage(prev_curtab) && prev_curtab->tp_firstwin == win) {
+    int h = tabline_height();
+
+    win_close_othertab(win, free_buf, prev_curtab);
+    if (h != tabline_height())
+      shell_new_rows();
+  }
+  /* Since goto_tabpage_tp above did not trigger *Enter autocommands, do
+   * that now. */
+  apply_autocmds(EVENT_WINENTER, NULL, NULL, FALSE, curbuf);
+  apply_autocmds(EVENT_TABENTER, NULL, NULL, FALSE, curbuf);
+  if (old_curbuf != curbuf)
+    apply_autocmds(EVENT_BUFENTER, NULL, NULL, FALSE, curbuf);
+  return TRUE;
 }
 
 /*
@@ -2712,27 +2714,28 @@ close_others (
   /* Be very careful here: autocommands may change the window layout. */
   for (wp = firstwin; win_valid(wp); wp = nextwp) {
     nextwp = wp->w_next;
-    if (wp != curwin) {                 /* don't close current window */
-
-      /* Check if it's allowed to abandon this window */
-      r = can_abandon(wp->w_buffer, forceit);
-      if (!win_valid(wp)) {             /* autocommands messed wp up */
-        nextwp = firstwin;
-        continue;
-      }
-      if (!r) {
-        if (message && (p_confirm || cmdmod.confirm) && p_write) {
-          dialog_changed(wp->w_buffer, FALSE);
-          if (!win_valid(wp)) {                 /* autocommands messed wp up */
-            nextwp = firstwin;
-            continue;
-          }
-        }
-        if (bufIsChanged(wp->w_buffer))
-          continue;
-      }
-      win_close(wp, !P_HID(wp->w_buffer) && !bufIsChanged(wp->w_buffer));
+    if (wp == curwin) {                 /* don't close current window */
+      continue;
     }
+
+    /* Check if it's allowed to abandon this window */
+    r = can_abandon(wp->w_buffer, forceit);
+    if (!win_valid(wp)) {             /* autocommands messed wp up */
+      nextwp = firstwin;
+      continue;
+    }
+    if (!r) {
+      if (message && (p_confirm || cmdmod.confirm) && p_write) {
+        dialog_changed(wp->w_buffer, FALSE);
+        if (!win_valid(wp)) {                 /* autocommands messed wp up */
+          nextwp = firstwin;
+          continue;
+        }
+      }
+      if (bufIsChanged(wp->w_buffer))
+        continue;
+    }
+    win_close(wp, !P_HID(wp->w_buffer) && !bufIsChanged(wp->w_buffer));
   }
 
   if (message && lastwin != firstwin)
@@ -3572,20 +3575,21 @@ win_T *buf_jump_open_tab(buf_T *buf)
 
   FOR_ALL_TABS(tp) {
     // Skip the current tab since we already checked it.
-    if (tp != curtab) {
-      FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
-        if (wp->w_buffer == buf) {
-          goto_tabpage_win(tp, wp);
+    if (tp == curtab) {
+      continue;
+    }
+    FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
+      if (wp->w_buffer == buf) {
+        goto_tabpage_win(tp, wp);
 
-          // If we the current window didn't switch,
-          // something went wrong.
-          if (curwin != wp) {
-            wp = NULL;
-          }
-
-          // Return the window we switched to.
-          return wp;
+        // If we the current window didn't switch,
+        // something went wrong.
+        if (curwin != wp) {
+          wp = NULL;
         }
+
+        // Return the window we switched to.
+        return wp;
       }
     }
   }

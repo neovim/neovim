@@ -1639,39 +1639,38 @@ deleteFoldMarkers (
  */
 static void foldDelMarker(linenr_T lnum, char_u *marker, int markerlen)
 {
-  char_u      *line;
   char_u      *newline;
-  char_u      *p;
-  int len;
   char_u      *cms = curbuf->b_p_cms;
   char_u      *cms2;
 
-  line = ml_get(lnum);
-  for (p = line; *p != NUL; ++p)
-    if (STRNCMP(p, marker, markerlen) == 0) {
-      /* Found the marker, include a digit if it's there. */
-      len = markerlen;
-      if (VIM_ISDIGIT(p[len]))
-        ++len;
-      if (*cms != NUL) {
-        /* Also delete 'commentstring' if it matches. */
-        cms2 = (char_u *)strstr((char *)cms, "%s");
-        if (p - line >= cms2 - cms
-            && STRNCMP(p - (cms2 - cms), cms, cms2 - cms) == 0
-            && STRNCMP(p + len, cms2 + 2, STRLEN(cms2 + 2)) == 0) {
-          p -= cms2 - cms;
-          len += (int)STRLEN(cms) - 2;
-        }
-      }
-      if (u_save(lnum - 1, lnum + 1) == OK) {
-        /* Make new line: text-before-marker + text-after-marker */
-        newline = xmalloc(STRLEN(line) - len + 1);
-        STRNCPY(newline, line, p - line);
-        STRCPY(newline + (p - line), p + len);
-        ml_replace(lnum, newline, FALSE);
-      }
-      break;
+  char_u *line = ml_get(lnum);
+  for (char_u *p = line; *p != NUL; ++p) {
+    if (STRNCMP(p, marker, markerlen) != 0) {
+      continue;
     }
+    /* Found the marker, include a digit if it's there. */
+    int len = markerlen;
+    if (VIM_ISDIGIT(p[len]))
+      ++len;
+    if (*cms != NUL) {
+      /* Also delete 'commentstring' if it matches. */
+      cms2 = (char_u *)strstr((char *)cms, "%s");
+      if (p - line >= cms2 - cms
+          && STRNCMP(p - (cms2 - cms), cms, cms2 - cms) == 0
+          && STRNCMP(p + len, cms2 + 2, STRLEN(cms2 + 2)) == 0) {
+        p -= cms2 - cms;
+        len += (int)STRLEN(cms) - 2;
+      }
+    }
+    if (u_save(lnum - 1, lnum + 1) == OK) {
+      /* Make new line: text-before-marker + text-after-marker */
+      newline = xmalloc(STRLEN(line) - len + 1);
+      STRNCPY(newline, line, p - line);
+      STRCPY(newline + (p - line), p + len);
+      ml_replace(lnum, newline, FALSE);
+    }
+    break;
+  }
 }
 
 /* get_foldtext() {{{2 */
