@@ -1383,6 +1383,7 @@ EOF
 :debug silent! py test_keyboard_interrupt()
 :redir END
 :0 debuggreedy
+:call inputrestore()
 :silent $put =output
 :unlet output
 :py del test_keyboard_interrupt
