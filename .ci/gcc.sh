@@ -11,7 +11,7 @@ else
 	exit 1
 fi
 
-setup_prebuilt_deps x64
+setup_deps x64
 
 export VALGRIND=1
 export VALGRIND_LOG="$tmpdir/valgrind-%p.log"

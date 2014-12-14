@@ -4,6 +4,8 @@ os:
 env:
   global:
     - CI_SCRIPTS=$TRAVIS_BUILD_DIR/.ci
+    # To build third-party dependencies, set this to 'true'.
+    - BUILD_NVIM_DEPS=false
     # Travis reports back that it has 32-cores via /proc/cpuinfo, but it's not
     # what we really have available.  According to their documentation, it only has
     # 1.5 virtual cores.
@@ -57,4 +59,4 @@ script:
   # This will pass the environment variables down to a bash process which runs
   # as $USER, while retaining the environment variables defined and belonging
   # to secondary groups given above in usermod.
-  - sudo -E su $USER -c "ulimit -c 102400; sh -e \"$CI_SCRIPTS/$CI_TARGET.sh\""
+  - sudo -E su $USER -c "sh -e \"$CI_SCRIPTS/$CI_TARGET.sh\""
