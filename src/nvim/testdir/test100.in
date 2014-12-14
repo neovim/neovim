@@ -16,7 +16,7 @@ STARTTEST
 :new one
 :0put ='ONE: expecting global undolevels: 5, local undolevels: -123456 (default)'
 :call FillBuffer()
-:call feedkeys(":earlier 10\n", 't')
+:earlier 10
 :call UndoLevel()
 :set ft=unix
 :%w! test.out
@@ -24,7 +24,7 @@ STARTTEST
 :0put ='TWO: expecting global undolevels: 5, local undolevels: 2 (first) then 10 (afterwards)'
 :setlocal ul=2
 :call FillBuffer()
-:call feedkeys(":earlier 10\n", 't')
+:earlier 10
 :call UndoLevel()
 :setlocal ul=10
 :call UndoLevel()
