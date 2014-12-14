@@ -121,6 +121,10 @@
 #    define USR_VIMRC_FILE2     "~/.nvim/nvimrc"
 #endif
 
+#ifndef NVIM_DEFAULTS_FILE
+# define NVIM_DEFAULTS_FILE     "$VIMRUNTIME/defaults.vim"
+#endif
+
 # ifndef VIMINFO_FILE
 #   define VIMINFO_FILE "~/.nviminfo"
 # endif

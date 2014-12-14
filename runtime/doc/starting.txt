@@ -352,8 +352,8 @@ argument.
 <		Also consider using autocommands; see |autocommand|.
 		When {vimrc} is equal to "NONE" (all uppercase), all
 		initializations from files and environment variables are
-		skipped, including reading the |gvimrc| file when the GUI
-		starts.  Loading plugins is also skipped.
+		skipped, including the |defaults.vim| file.  Loading plugins
+                is also skipped.
 		When {vimrc} is equal to "NORC" (all uppercase), this has the
 		same effect as "NONE", but loading plugins is not skipped.
 		{not in Vi}
@@ -539,14 +539,21 @@ accordingly.  Vim proceeds in this order:
 	If Vim was started in Ex mode with the "-s" argument, all following
 	initializations until 4. are skipped.  Only the "-u" option is
 	interpreted.
+
+                                                        *defaults.vim*
+     a. $VIMRUNTIME/defaults.vim is loaded first of all. This script sets some
+        basic settings which should be desirable for everyone. These defaults
+        are set here so the behavior of "set all&" is not changed (see |:set-&|). 
+        The defaults.vim file won't be loaded if nvim is started with '|-u| NONE'.
+
 							*system-vimrc*
-     a. For Unix, MS-DOS, MS-Windows, and Macintosh, the system vimrc file is
+     b. For Unix, MS-DOS, MS-Windows, and Macintosh, the system vimrc file is
 	read for initializations.  The path of this file is shown with the
 	":version" command.  Mostly it's "$VIM/vimrc".
 	For the Macintosh the $VIMRUNTIME/macmap.vim is read.
 
 	  *VIMINIT* *.vimrc* *_vimrc* *EXINIT* *.exrc* *_exrc* *$MYVIMRC*
-     b. Four places are searched for initializations.  The first that exists
+     c. Four places are searched for initializations.  The first that exists
 	is used, the others are ignored.  The $MYVIMRC environment variable is
 	set to the file that was first found, unless $MYVIMRC was already set
 	and when using VIMINIT.
@@ -571,7 +578,7 @@ accordingly.  Vim proceeds in this order:
 	   "vimrc" replaced by "exrc".  But only one of ".exrc" and "_exrc" is
 	   used, depending on the system.
 
-     c. If the 'exrc' option is on (which is not the default), the current
+     d. If the 'exrc' option is on (which is not the default), the current
 	directory is searched for three files.  The first that exists is used,
 	the others are ignored.
 	-  The file ".vimrc" (for Unix)
