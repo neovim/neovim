@@ -3604,9 +3604,10 @@ void do_sub(exarg_T *eap)
       eap->flags = EXFLAG_PRINT;
     }
 
-    linenr_T joined_lines_count = eap->line2 < curbuf->b_ml.ml_line_count
-                                  ? eap->line2 - eap->line1 + 2
-                                  : eap->line2 - eap->line1 + 1;
+    // The number of lines joined is the number of lines in the range
+    linenr_T joined_lines_count = eap->line2 - eap->line1 + 1
+      // plus one extra line if not at the end of file.
+      + eap->line2 < curbuf->b_ml.ml_line_count ? 1 : 0;
     if (joined_lines_count > 1) {
       do_join(joined_lines_count, FALSE, TRUE, FALSE, true);
       sub_nsubs = joined_lines_count - 1;
@@ -3614,6 +3615,11 @@ void do_sub(exarg_T *eap)
       do_sub_msg(false);
       ex_may_print(eap);
     }
+
+    if (!cmdmod.keeppatterns) {
+      save_re_pat(RE_SUBST, pat, p_magic);
+    }
+    add_to_history(HIST_SEARCH, pat, TRUE, NUL);
 
     return;
   }
