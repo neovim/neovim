@@ -30,6 +30,7 @@
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
 #include "nvim/indent.h"
+#include "nvim/log.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
@@ -2641,7 +2642,10 @@ do_put (
 
   /* Autocommands may be executed when saving lines for undo, which may make
    * y_array invalid.  Start undo now to avoid that. */
-  u_save(curwin->w_cursor.lnum, curwin->w_cursor.lnum + 1);
+  if (u_save(curwin->w_cursor.lnum, curwin->w_cursor.lnum + 1) == FAIL) {
+    ELOG(_("Failed to save undo information"));
+    return;
+  }
 
   if (insert_string != NULL) {
     y_type = MCHAR;
