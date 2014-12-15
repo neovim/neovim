@@ -4483,10 +4483,7 @@ int read_viminfo_register(vir_T *virp, int force)
     if (set_prev)
       y_previous = y_current;
 
-    for (int i = 0; i < y_current->y_size; i++) {
-      free(y_current->y_array[i]);
-    }
-    free(y_current->y_array);
+    free_yank_all();
     array = xmalloc(limit * sizeof(char_u *));
 
     str = skipwhite(skiptowhite(str));
@@ -4515,7 +4512,6 @@ int read_viminfo_register(vir_T *virp, int force)
   if (do_it) {
     if (size == 0) {
       free(array);
-      y_current->y_array = NULL;
     } else if (size < limit) {
       y_current->y_array = xrealloc(array, size * sizeof(char_u *));
     } else {
