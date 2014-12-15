@@ -1,7 +1,6 @@
 #ifndef NVIM_MEMFILE_DEFS_H
 #define NVIM_MEMFILE_DEFS_H
 
-#include <stdint.h>
 #include <stdbool.h>
 
 #include "nvim/types.h"

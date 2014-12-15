@@ -16,7 +16,6 @@
  * The 'scrolloff' option makes this a bit complicated.
  */
 
-#include <inttypes.h>
 #include <stdbool.h>
 
 #include "nvim/vim.h"

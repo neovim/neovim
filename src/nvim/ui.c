@@ -16,7 +16,6 @@
  */
 
 #include <assert.h>
-#include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -28,7 +27,6 @@
 #include "nvim/ex_cmds2.h"
 #include "nvim/fold.h"
 #include "nvim/main.h"
-#include "nvim/mbyte.h"
 #include "nvim/ascii.h"
 #include "nvim/misc1.h"
 #include "nvim/misc2.h"

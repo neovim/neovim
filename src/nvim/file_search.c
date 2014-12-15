@@ -48,8 +48,6 @@
 #include <errno.h>
 #include <string.h>
 #include <stdbool.h>
-#include <stdint.h>
-#include <inttypes.h>
 #include <limits.h>
 
 #include "nvim/vim.h"

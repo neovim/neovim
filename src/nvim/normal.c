@@ -46,7 +46,6 @@
 #include "nvim/misc2.h"
 #include "nvim/keymap.h"
 #include "nvim/move.h"
-#include "nvim/mouse.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/quickfix.h"

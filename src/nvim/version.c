@@ -3,8 +3,6 @@
 /// Nvim was forked from Vim 7.4.160.
 /// Vim originated from Stevie version 3.6 (Fish disk 217) by GRWalter (Fred).
 
-#include <inttypes.h>
-
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/iconv.h"

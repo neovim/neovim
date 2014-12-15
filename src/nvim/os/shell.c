@@ -13,7 +13,6 @@
 #include "nvim/os/rstream.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/signal.h"
-#include "nvim/types.h"
 #include "nvim/vim.h"
 #include "nvim/message.h"
 #include "nvim/memory.h"

@@ -15,7 +15,6 @@
  */
 
 #include <errno.h>
-#include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -44,7 +43,6 @@
 #include "nvim/syntax.h"
 #include "nvim/tempfile.h"
 #include "nvim/term.h"
-#include "nvim/types.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 #include "nvim/os/event.h"

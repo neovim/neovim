@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <stdint.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -14,7 +13,6 @@
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/window.h"
-#include "nvim/types.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/screen.h"
 #include "nvim/memory.h"

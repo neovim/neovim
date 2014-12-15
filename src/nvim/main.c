@@ -8,7 +8,6 @@
 
 #define EXTERN
 #include <errno.h>
-#include <inttypes.h>
 #include <string.h>
 #include <stdbool.h>
 
@@ -61,7 +60,6 @@
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
-#include "nvim/os/time.h"
 #include "nvim/os/event.h"
 #include "nvim/os/signal.h"
 #include "nvim/msgpack_rpc/helpers.h"

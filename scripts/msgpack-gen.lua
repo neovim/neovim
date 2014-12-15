@@ -88,7 +88,6 @@ output = io.open(outputf, 'wb')
 output:write([[
 #include <inttypes.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <assert.h>
 #include <msgpack.h>
 

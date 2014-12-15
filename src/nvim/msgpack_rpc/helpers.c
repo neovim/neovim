@@ -1,6 +1,4 @@
-#include <stdint.h>
 #include <stdbool.h>
-#include <inttypes.h>
 
 #include <msgpack.h>
 
