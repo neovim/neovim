@@ -246,7 +246,7 @@ char_u *reverse_text(char_u *s) FUNC_ATTR_NONNULL_RET
   return rev;
 }
 
-static void save_re_pat(int idx, char_u *pat, int magic)
+void save_re_pat(int idx, char_u *pat, int magic)
 {
   if (spats[idx].pat != pat) {
     free(spats[idx].pat);
