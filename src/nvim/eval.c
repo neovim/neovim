@@ -19845,7 +19845,7 @@ static void apply_job_autocmds(int id, char *name, char *type,
     } else {
       li->li_tv.v_type = VAR_LIST;
       li->li_tv.vval.v_list =
-        string_to_list((char_u *) received, received_len, false);
+        string_to_list((char_u *) received, received_len, true);
       li->li_tv.vval.v_list->lv_refcount++;
       free(received);
     }
