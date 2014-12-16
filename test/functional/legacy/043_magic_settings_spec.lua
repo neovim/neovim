@@ -21,7 +21,6 @@ describe('regexp with magic settings', function()
       9 foobar
       ]])
 
-    execute('set nocompatible viminfo+=nviminfo')
     execute('/^1')
     execute([[/a*b\{2}c\+/e]])
     feed([[x/\Md\*e\{2}f\+/e<cr>]])

@@ -17,7 +17,6 @@ Test cases:
 
 STARTTEST
 :so small.vim
-:set nocp viminfo+=nviminfo
 :
 :" User functions
 :function MoveToCap()
