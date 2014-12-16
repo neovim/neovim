@@ -4,8 +4,11 @@ local MsgpackStream = require('nvim.msgpack_stream')
 local AsyncSession = require('nvim.async_session')
 local Session = require('nvim.session')
 
+local viminfo_name = 'nviminfo'
 local nvim_prog = os.getenv('NVIM_PROG') or 'build/bin/nvim'
-local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N', '--embed'}
+-- set viminfo file to avoid conflicts during local test runs
+local nvim_argv = {nvim_prog, '-u', 'NONE',
+                   '--cmd', 'set viminfo+=n'..viminfo_name, '-N', '--embed'}
 local prepend_argv
 
 if os.getenv('VALGRIND') then
@@ -155,6 +158,7 @@ local function clear()
     session:request('vim_command', 'qa!')
     session:exit()
   end
+  os.remove(viminfo_name)
   local loop = Loop.new()
   local msgpack_stream = MsgpackStream.new(loop)
   local async_session = AsyncSession.new(msgpack_stream)
