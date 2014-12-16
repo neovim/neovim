@@ -8543,7 +8543,9 @@ static void ex_loadview(exarg_T *eap)
 
   fname = get_view_file(*eap->arg);
   if (fname != NULL) {
-    do_source(fname, FALSE, DOSO_NONE);
+    if (do_source(fname, FALSE, DOSO_NONE) == FAIL) {
+      EMSG2(_(e_notopen), fname);
+    }
     free(fname);
   }
 }

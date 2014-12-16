@@ -2839,27 +2839,25 @@ buf_write (
            * Check if backup file already exists.
            */
           if (os_fileinfo((char *)backup, &file_info_new)) {
-            /*
-             * Check if backup file is same as original file.
-             * May happen when modname() gave the same file back (e.g. silly
-             * link). If we don't check here, we either ruin the file when
-             * copying or erase it after writing.
-             */
             if (os_fileinfo_id_equal(&file_info_new, &file_info_old)) {
+              /*
+               * Backup file is same as original file.
+               * May happen when modname() gave the same file back (e.g. silly
+               * link). If we don't check here, we either ruin the file when
+               * copying or erase it after writing.
+               */
               free(backup);
               backup = NULL;                    /* no backup file to delete */
-            }
-
-            /*
-             * If we are not going to keep the backup file, don't
-             * delete an existing one, try to use another name.
-             * Change one character, just before the extension.
-             */
-            if (!p_bk) {
-              wp = backup + STRLEN(backup) - 1
-                   - STRLEN(backup_ext);
-              if (wp < backup)                  /* empty file name ??? */
+            } else if (!p_bk) {
+              /*
+               * We are not going to keep the backup file, so don't
+               * delete an existing one, and try to use another name instead.
+               * Change one character, just before the extension.
+               */
+              wp = backup + STRLEN(backup) - 1 - STRLEN(backup_ext);
+              if (wp < backup) {                /* empty file name ??? */
                 wp = backup;
+              }
               *wp = 'z';
               while (*wp > 'a'
                      && os_fileinfo((char *)backup, &file_info_new)) {
