@@ -74,6 +74,17 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wconversion")
 # does not work with Neovim due to some uses of dynamically-sized structures.
 # See https://github.com/neovim/neovim/issues/223 for details.
 include(CheckCSourceCompiles)
+
+# Include the build type's default flags in the check for _FORTIFY_SOURCE,
+# otherwise we may incorrectly identify the level as acceptable and find out
+# later that it was not when optimizations were enabled.  CFLAGS is applied
+# even though you don't see it in CMAKE_REQUIRED_FLAGS.
+set(INIT_FLAGS_NAME CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE})
+string(TOUPPER ${INIT_FLAGS_NAME} INIT_FLAGS_NAME)
+if(${INIT_FLAGS_NAME})
+  set(CMAKE_REQUIRED_FLAGS "${${INIT_FLAGS_NAME}}")
+endif()
+
 check_c_source_compiles("
 #if defined(_FORTIFY_SOURCE) && _FORTIFY_SOURCE > 1
 #error \"_FORTIFY_SOURCE > 1\"
