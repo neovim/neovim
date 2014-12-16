@@ -268,6 +268,7 @@ static int shell(const char *cmd,
 static void dynamic_buffer_ensure(DynamicBuffer *buf, size_t desired)
 {
   if (buf->cap >= desired) {
+    assert(buf->data);
     return;
   }
 
