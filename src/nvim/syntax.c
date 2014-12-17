@@ -5157,22 +5157,21 @@ get_id_list (
           regmatch.rm_ic = TRUE;
           id = 0;
           for (int i = highlight_ga.ga_len; --i >= 0; ) {
-            if (!vim_regexec(&regmatch, HL_TABLE()[i].sg_name, (colnr_T)0)) {
-              continue;
+            if (vim_regexec(&regmatch, HL_TABLE()[i].sg_name, (colnr_T)0)) {
+              if (round == 2) {
+                /* Got more items than expected; can happen
+                 * when adding items that match:
+                 * "contains=a.*b,axb".
+                 * Go back to first round */
+                if (count >= total_count) {
+                  free(retval);
+                  round = 1;
+                } else
+                  retval[count] = i + 1;
+              }
+              ++count;
+              id = -1;                      /* remember that we found one */
             }
-            if (round == 2) {
-              /* Got more items than expected; can happen
-               * when adding items that match:
-               * "contains=a.*b,axb".
-               * Go back to first round */
-              if (count >= total_count) {
-                free(retval);
-                round = 1;
-              } else
-                retval[count] = i + 1;
-            }
-            ++count;
-            id = -1;                      /* remember that we found one */
           }
           vim_regfree(regmatch.regprog);
         }

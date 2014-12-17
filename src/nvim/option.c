@@ -6196,15 +6196,17 @@ int makeset(FILE *fd, int opt_flags, int local_only)
   int pri;
 
   /*
-   * The options that don't have a default (terminal name, columns, lines)
-   * are never written.  Terminal options are also not written.
+   * Some options are never written:
+   * - Options that don't have a default (terminal name, columns, lines).
+   * - Terminal options.
+   * - Hidden options.
+   *
    * Do the loop over "options[]" twice: once for options with the
    * P_PRI_MKRC flag and once without.
    */
   for (pri = 1; pri >= 0; --pri) {
     for (p = &options[0]; !istermoption(p); p++)
       if (!(p->flags & P_NO_MKRC)
-          && !istermoption(p)
           && ((pri == 1) == ((p->flags & P_PRI_MKRC) != 0))) {
         /* skip global option when only doing locals */
         if (p->indir == PV_NONE && !(opt_flags & OPT_GLOBAL))
@@ -6215,8 +6217,11 @@ int makeset(FILE *fd, int opt_flags, int local_only)
         if ((opt_flags & OPT_GLOBAL) && (p->flags & P_NOGLOB))
           continue;
 
-        /* Global values are only written when not at the default value. */
         varp = get_varp_scope(p, opt_flags);
+        /* Hidden options are never written. */
+        if (!varp)
+          continue;
+        /* Global values are only written when not at the default value. */
         if ((opt_flags & OPT_GLOBAL) && optval_default(p, varp))
           continue;
 
