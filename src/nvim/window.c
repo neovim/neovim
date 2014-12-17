@@ -1977,6 +1977,7 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
   tabpage_T   *ptp = NULL;
   int free_tp = FALSE;
 
+  assert(win->w_buffer);  // to avoid np dereference warning in next line
   if (win->w_closing || win->w_buffer->b_closing)
     return;     /* window is already being closed */
 
