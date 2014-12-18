@@ -9603,7 +9603,7 @@ static void f_getregtype(typval_T *argvars, typval_T *rettv)
  */
 static void f_gettabvar(typval_T *argvars, typval_T *rettv)
 {
-  win_T *win, *oldcurwin;
+  win_T *oldcurwin;
   tabpage_T *tp, *oldtabpage;
   dictitem_T  *v;
   char_u      *varname;
@@ -9615,9 +9615,9 @@ static void f_gettabvar(typval_T *argvars, typval_T *rettv)
   varname = get_tv_string_chk(&argvars[1]);
   tp = find_tabpage((int)get_tv_number_chk(&argvars[0], NULL));
   if (tp != NULL && varname != NULL) {
-    /* Set curwin to be our win, temporarily.  Also set the tabpage,
-     * otherwise the window is not valid. */
-    switch_win(&oldcurwin, &oldtabpage, win, tp, TRUE);
+    /* Set tp to be our tabpage, temporarily.  Also set the window to the
+     * first window in the tabpage, otherwise the window is not valid. */
+    switch_win(&oldcurwin, &oldtabpage, tp->tp_firstwin, tp, TRUE);
 
     /* look up the variable */
     /* Let gettabvar({nr}, "") return the "t:" dictionary. */
