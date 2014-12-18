@@ -250,7 +250,7 @@ if(USE_BUNDLED_LUAROCKS)
 
   add_custom_command(OUTPUT ${DEPS_BIN_DIR}/busted
     COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build busted 2.0.rc3 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
+    ARGS build busted 2.0.rc4 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
     DEPENDS luarocks)
   add_custom_target(busted
     DEPENDS ${DEPS_BIN_DIR}/busted)
