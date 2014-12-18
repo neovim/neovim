@@ -1066,10 +1066,12 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
               || pat[i][j + 1] == '`')
             *p++ = '\\';
           ++j;
-        } else if (!intick && vim_strchr(SHELL_SPECIAL,
-                       pat[i][j]) != NULL)
+        } else if (!intick
+            && ((flags & EW_KEEPDOLLAR) == 0 || pat[i][j] != '$')
+            && vim_strchr(SHELL_SPECIAL, pat[i][j]) != NULL)
           /* Put a backslash before a special character, but not
-           * when inside ``. */
+           * when inside ``. And not for $var when EW_KEEPDOLLAR is
+           * set. */
           *p++ = '\\';
 
         /* Copy one character. */

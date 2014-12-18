@@ -17,6 +17,7 @@
 #define EW_ICASE        0x100   /* ignore case */
 #define EW_NOERROR      0x200   /* no error for bad regexp */
 #define EW_NOTWILD      0x400   /* add match with literal name if exists */
+#define EW_KEEPDOLLAR   0x800   /* do not escape $, $var is expanded */
 /* Note: mostly EW_NOTFOUND and EW_SILENT are mutually exclusive: EW_NOTFOUND
 * is used when executing commands and EW_SILENT for interactive expanding. */
 
