@@ -64,15 +64,15 @@ build/.ran-cmake: | deps
 
 deps: | build/.ran-third-party-cmake
 ifeq ($(call filter-true,$(USE_BUNDLED_DEPS)),)
-	+$(BUILD_CMD) -C .deps/build/third-party
+	+$(BUILD_CMD) -C .deps
 endif
 
 build/.ran-third-party-cmake:
 ifeq ($(call filter-true,$(USE_BUNDLED_DEPS)),)
-	mkdir -p .deps/build/third-party
-	cd .deps/build/third-party && \
+	mkdir -p .deps
+	cd .deps && \
 		cmake -G '$(BUILD_TYPE)' $(BUNDLED_CMAKE_FLAG) \
-		$(DEPS_CMAKE_FLAGS) ../../../third-party
+		$(DEPS_CMAKE_FLAGS) ../third-party
 endif
 	mkdir -p build
 	touch $@

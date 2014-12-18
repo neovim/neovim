@@ -5,12 +5,8 @@ project(NEOVIM)
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 # Prefer our bundled versions of dependencies.
-set(DEPS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.deps")
-set(DEPS_BUILD_DIR "${DEPS_DIR}/build")
-set(DEPS_INSTALL_DIR "${DEPS_DIR}/usr")
-set(DEPS_BIN_DIR "${DEPS_INSTALL_DIR}/bin")
-
-list(APPEND CMAKE_PREFIX_PATH ${DEPS_INSTALL_DIR})
+set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/usr" CACHE PATH "Path prefix for finding dependencies")
+list(INSERT CMAKE_PREFIX_PATH 0 ${DEPS_PREFIX})
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   # CMake tries to treat /sw and /opt/local as extension of the system path, but

@@ -2,15 +2,10 @@
 cmake_minimum_required (VERSION 2.8.7)
 project(NEOVIM_DEPS)
 
-if(NOT DEPS_DIR)
-  get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} PATH)
-  set(DEPS_DIR ${PARENT_DIR}/.deps)
-endif()
-
-set(DEPS_INSTALL_DIR "${DEPS_DIR}/usr")
-set(DEPS_BIN_DIR "${DEPS_DIR}/usr/bin")
-set(DEPS_LIB_DIR "${DEPS_DIR}/usr/lib")
-set(DEPS_BUILD_DIR "${DEPS_DIR}/build")
+set(DEPS_INSTALL_DIR "${CMAKE_BINARY_DIR}/usr")
+set(DEPS_BIN_DIR "${CMAKE_BINARY_DIR}/usr/bin")
+set(DEPS_LIB_DIR "${CMAKE_BINARY_DIR}/usr/lib")
+set(DEPS_BUILD_DIR "${CMAKE_BINARY_DIR}/build")
 set(DEPS_DOWNLOAD_DIR "${DEPS_BUILD_DIR}/downloads")
 
 option(USE_BUNDLED "Use bundled dependencies." ON)
