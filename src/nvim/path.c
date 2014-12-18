@@ -1080,7 +1080,7 @@ gen_expand_wildcards (
           free(p);
           ga_clear_strings(&ga);
           i = mch_expand_wildcards(num_pat, pat, num_file, file,
-              flags);
+              flags | EW_KEEPDOLLAR);
           recursive = FALSE;
           return i;
         }
