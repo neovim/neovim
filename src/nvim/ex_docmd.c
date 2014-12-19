@@ -135,7 +135,6 @@ struct dbg_stuff {
 #endif
 
 # define HAVE_EX_SCRIPT_NI
-# define ex_drop                ex_ni
 # define ex_gui                 ex_nogui
 # define ex_tearoff             ex_ni
 # define ex_popup               ex_ni
