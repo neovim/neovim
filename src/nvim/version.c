@@ -986,7 +986,7 @@ void intro_message(int colon)
   };
 
   // blanklines = screen height - # message lines
-  blanklines = (int)Rows - ((sizeof(lines) / sizeof(char *)) - 1);
+  blanklines = (int)Rows - (ARRAY_SIZE(lines) - 1);
 
   // Don't overwrite a statusline.  Depends on 'cmdheight'.
   if (p_ls > 1) {
@@ -1006,7 +1006,7 @@ void intro_message(int colon)
   row = blanklines / 2;
 
   if (((row >= 2) && (Columns >= 50)) || colon) {
-    for (i = 0; i < (int)(sizeof(lines) / sizeof(char *)); ++i) {
+    for (i = 0; i < (int)ARRAY_SIZE(lines); ++i) {
       p = lines[i];
 
       if (sponsor != 0) {

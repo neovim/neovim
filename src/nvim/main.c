@@ -2168,7 +2168,7 @@ static void usage(void)
   for (i = 0;; ++i) {
     mch_msg(_(" vim [arguments] "));
     mch_msg(_(use[i]));
-    if (i == (sizeof(use) / sizeof(char_u *)) - 1)
+    if (i == ARRAY_SIZE(use) - 1)
       break;
     mch_msg(_("\n   or:"));
   }

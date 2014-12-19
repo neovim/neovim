@@ -1808,7 +1808,7 @@ static struct vimoption
   }
 };
 
-#define PARAM_COUNT (sizeof(options) / sizeof(struct vimoption))
+#define PARAM_COUNT ARRAY_SIZE(options)
 
 static char *(p_ambw_values[]) = {"single", "double", NULL};
 static char *(p_bg_values[]) = {"light", "dark", NULL};
@@ -1883,7 +1883,7 @@ void set_init_1(void)
     int mustfree;
 
     ga_init(&ga, 1, 100);
-    for (n = 0; n < (long)(sizeof(names) / sizeof(char *)); ++n) {
+    for (n = 0; n < (long)ARRAY_SIZE(names); ++n) {
       mustfree = FALSE;
 # ifdef UNIX
       if (*names[n] == NUL)
@@ -4723,10 +4723,10 @@ static char_u *set_chars_option(char_u **varp)
 
   if (varp == &p_lcs) {
     tab = lcstab;
-    entries = sizeof(lcstab) / sizeof(struct charstab);
+    entries = ARRAY_SIZE(lcstab);
   } else {
     tab = filltab;
-    entries = sizeof(filltab) / sizeof(struct charstab);
+    entries = ARRAY_SIZE(filltab);
   }
 
   /* first round: check for valid value, second round: assign values */
@@ -7250,7 +7250,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***
   for (loop = 0; loop <= 1; ++loop) {
     regmatch->rm_ic = ic;
     if (xp->xp_context != EXPAND_BOOL_SETTINGS) {
-      for (match = 0; match < (int)(sizeof(names) / sizeof(char *));
+      for (match = 0; match < (int)ARRAY_SIZE(names);
            ++match)
         if (vim_regexec(regmatch, (char_u *)names[match], (colnr_T)0)) {
           if (loop == 0)

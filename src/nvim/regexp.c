@@ -602,7 +602,7 @@ static int get_char_class(char_u **pp)
   int i;
 
   if ((*pp)[1] == ':') {
-    for (i = 0; i < (int)(sizeof(class_names) / sizeof(*class_names)); ++i)
+    for (i = 0; i < (int)ARRAY_SIZE(class_names); ++i)
       if (STRNCMP(*pp + 2, class_names[i], STRLEN(class_names[i])) == 0) {
         *pp += STRLEN(class_names[i]) + 2;
         return i;

@@ -6652,7 +6652,7 @@ char_u *get_function_name(expand_T *xp, int idx)
     if (name != NULL)
       return name;
   }
-  if (++intidx < (int)(sizeof(functions) / sizeof(struct fst))) {
+  if (++intidx < (int)ARRAY_SIZE(functions)) {
     STRCPY(IObuff, functions[intidx].f_name);
     STRCAT(IObuff, "(");
     if (functions[intidx].f_max_argc == 0)
@@ -6695,7 +6695,7 @@ find_internal_func (
 )
 {
   int first = 0;
-  int last = (int)(sizeof(functions) / sizeof(struct fst)) - 1;
+  int last = (int)ARRAY_SIZE(functions) - 1;
 
   /*
    * Find the function name in the table. Binary search.

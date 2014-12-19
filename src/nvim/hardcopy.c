@@ -945,8 +945,6 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
  * http://www.adobe.com
  */
 
-#define NUM_ELEMENTS(arr)   (sizeof(arr)/sizeof((arr)[0]))
-
 #define PRT_PS_DEFAULT_DPI          (72)    /* Default user space resolution */
 #define PRT_PS_DEFAULT_FONTSIZE     (10)
 #define PRT_PS_DEFAULT_BUFFER_SIZE  (80)
@@ -1139,33 +1137,33 @@ static struct prt_ps_charset_S k_charsets[] =
 static struct prt_ps_mbfont_S prt_ps_mbfonts[] =
 {
   {
-    NUM_ELEMENTS(j_encodings),
+    ARRAY_SIZE(j_encodings),
     j_encodings,
-    NUM_ELEMENTS(j_charsets),
+    ARRAY_SIZE(j_charsets),
     j_charsets,
     "jis_roman",
     "JIS_X_1983"
   },
   {
-    NUM_ELEMENTS(sc_encodings),
+    ARRAY_SIZE(sc_encodings),
     sc_encodings,
-    NUM_ELEMENTS(sc_charsets),
+    ARRAY_SIZE(sc_charsets),
     sc_charsets,
     "gb_roman",
     "GB_2312-80"
   },
   {
-    NUM_ELEMENTS(tc_encodings),
+    ARRAY_SIZE(tc_encodings),
     tc_encodings,
-    NUM_ELEMENTS(tc_charsets),
+    ARRAY_SIZE(tc_charsets),
     tc_charsets,
     "cns_roman",
     "BIG5"
   },
   {
-    NUM_ELEMENTS(k_encodings),
+    ARRAY_SIZE(k_encodings),
     k_encodings,
-    NUM_ELEMENTS(k_charsets),
+    ARRAY_SIZE(k_charsets),
     k_charsets,
     "ks_roman",
     "KS_X_1992"
@@ -1639,12 +1637,12 @@ static int prt_next_dsc(struct prt_dsc_line_S *p_dsc_line)
     return FALSE;
 
   /* Find type of DSC comment */
-  for (comment = 0; comment < (int)NUM_ELEMENTS(prt_dsc_table); comment++)
+  for (comment = 0; comment < (int)ARRAY_SIZE(prt_dsc_table); comment++)
     if (prt_resfile_strncmp(0, prt_dsc_table[comment].string,
             prt_dsc_table[comment].len) == 0)
       break;
 
-  if (comment != NUM_ELEMENTS(prt_dsc_table)) {
+  if (comment != ARRAY_SIZE(prt_dsc_table)) {
     /* Return type of comment */
     p_dsc_line->type = prt_dsc_table[comment].type;
     offset = prt_dsc_table[comment].len;
@@ -2135,7 +2133,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
   props = enc_canon_props(p_encoding);
   if (!(props & ENC_8BIT) && ((*p_pmcs != NUL) || !(props & ENC_UNICODE))) {
     p_mbenc_first = NULL;
-    for (cmap = 0; cmap < (int)NUM_ELEMENTS(prt_ps_mbfonts); cmap++)
+    for (cmap = 0; cmap < (int)ARRAY_SIZE(prt_ps_mbfonts); cmap++)
       if (prt_match_encoding((char *)p_encoding, &prt_ps_mbfonts[cmap],
               &p_mbenc)) {
         if (p_mbenc_first == NULL)
