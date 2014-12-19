@@ -1147,13 +1147,10 @@ Context-sensitive completion on the command-line:
 |-n|	-n		    do not create a swap file
 |-o|	-o [num]	    open [num] windows (default: one for each file)
 |-f|	-f		    GUI: foreground process, don't fork
-			    Amiga: do not restart Vim to open a window (for
-				e.g., mail)
 |-s|	-s {scriptin}	    first read commands from the file {scriptin}
 |-w|	-w {scriptout}	    write typed chars to file {scriptout} (append)
 |-W|	-W {scriptout}	    write typed chars to file {scriptout} (overwrite)
 |-T|	-T {terminal}	    set terminal name
-|-d|	-d {device}	    Amiga: open {device} to be used as a console
 |-u|	-u {vimrc}	    read inits from {vimrc} instead of other inits
 |-U|	-U {gvimrc}	    idem, for when starting the GUI
 |-i|	-i {viminfo}	    read info from {viminfo} instead of other files

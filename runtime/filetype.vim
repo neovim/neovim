@@ -91,11 +91,7 @@ au BufNewFile,BufRead *.wrm			setf acedb
 
 " Ada (83, 9X, 95)
 au BufNewFile,BufRead *.adb,*.ads,*.ada		setf ada
-if has("vms")
-  au BufNewFile,BufRead *.gpr,*.ada_m,*.adc	setf ada
-else
-  au BufNewFile,BufRead *.gpr			setf ada
-endif
+au BufNewFile,BufRead *.gpr			setf ada
 
 " AHDL
 au BufNewFile,BufRead *.tdf			setf ahdl

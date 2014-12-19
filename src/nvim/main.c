@@ -208,9 +208,6 @@ int main(int argc, char **argv)
 
   /*
    * Check if we have an interactive window.
-   * On the Amiga: If there is no window, we open one with a newcli command
-   * (needed for :! to * work). mch_check_win() will also handle the -d or
-   * -dev argument.
    */
   check_and_set_isatty(&params);
 
@@ -1087,8 +1084,7 @@ static void command_line_scan(mparm_T *parmp)
           exmode_active = EXMODE_VIM;
           break;
 
-        case 'f':                 /* "-f"  GUI: run in foreground.  Amiga: open
-                                     window directly, not with newcli */
+        case 'f':                 /* "-f"  GUI: run in foreground. */
           break;
 
         case 'g':                 /* "-g" start GUI */
@@ -1489,9 +1485,6 @@ static void init_startuptime(mparm_T *paramp)
 
 /*
  * Check if we have an interactive window.
- * On the Amiga: If there is no window, we open one with a newcli command
- * (needed for :! to * work). mch_check_win() will also handle the -d or
- * -dev argument.
  */
 static void check_and_set_isatty(mparm_T *paramp)
 {
@@ -1957,10 +1950,10 @@ static void source_startup_scripts(mparm_T *parmp)
     /*
      * Try to read initialization commands from the following places:
      * - environment variable VIMINIT
-     * - user vimrc file (s:.vimrc for Amiga, ~/.vimrc otherwise)
+     * - user vimrc file (~/.vimrc)
      * - second user vimrc file ($VIM/.vimrc for Dos)
      * - environment variable EXINIT
-     * - user exrc file (s:.exrc for Amiga, ~/.exrc otherwise)
+     * - user exrc file (~/.exrc)
      * - second user exrc file ($VIM/.exrc for Dos)
      * The first that exists is used, the rest is ignored.
      */

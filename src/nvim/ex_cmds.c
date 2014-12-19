@@ -1294,14 +1294,6 @@ do_shell (
     }
 
     starttermcap();             /* start termcap if not done by wait_return() */
-
-    /*
-     * In an Amiga window redrawing is caused by asking the window size.
-     * If we got an interrupt this will not work. The chance that the
-     * window size is wrong is very small, but we need to redraw the
-     * screen.  Don't do this if ':' hit in wait_return().	THIS IS UGLY
-     * but it saves an extra redraw.
-     */
   }
 
   /* display any error messages now */

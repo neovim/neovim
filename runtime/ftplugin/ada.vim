@@ -119,11 +119,7 @@ endif
 " Section: Compiler {{{1
 "
 if ! exists("g:ada_default_compiler")
-   if has("vms")
-      let g:ada_default_compiler = 'decada'
-   else
-      let g:ada_default_compiler = 'gnat'
-   endif
+   let g:ada_default_compiler = 'gnat'
 endif
 
 if ! exists("current_compiler")			||

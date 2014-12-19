@@ -986,8 +986,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	again not rename the file.
 
 						*'backupdir'* *'bdir'*
-'backupdir' 'bdir'	string	(default for Amiga: ".,t:",
-				 for MS-DOS and Win32: ".,$TEMP,c:/tmp,c:/temp"
+'backupdir' 'bdir'	string	(default for MS-DOS and Win32: ".,$TEMP,c:/tmp,c:/temp",
 				 for Unix: ".,~/tmp,~/")
 			global
 			{not in Vi}
@@ -1026,7 +1025,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'backupext'* *'bex'* *E589*
-'backupext' 'bex'	string	(default "~", for VMS: "_")
+'backupext' 'bex'	string	(default "~")
 			global
 			{not in Vi}
 	String which is appended to a file name to make the name of the
@@ -2455,8 +2454,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	NOTE: This option is reset when 'compatible' is set.
 
 						*'directory'* *'dir'*
-'directory' 'dir'	string	(default for Amiga: ".,t:",
-				 for MS-DOS and Win32: ".,$TEMP,c:\tmp,c:\temp"
+'directory' 'dir'	string	(default for MS-DOS and Win32: ".,$TEMP,c:\tmp,c:\temp",
 				 for Unix: ".,~/tmp,/var/tmp,/tmp")
 			global
 	List of directory names for the swap file, separated with commas.
@@ -2655,8 +2653,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	screen flash or do nothing.
 
 						*'errorfile'* *'ef'*
-'errorfile' 'ef'	string	(Amiga default: "AztecC.Err",
-					others: "errors.err")
+'errorfile' 'ef'	string	(default: "errors.err")
 			global
 			{not in Vi}
 			{not available when compiled without the |+quickfix|
@@ -3313,8 +3310,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'grepprg'* *'gp'*
 'grepprg' 'gp'		string	(default "grep -n ",
 					Unix: "grep -n $* /dev/null",
-					Win32: "findstr /n" or "grep -n",
-						      VMS: "SEARCH/NUMBERS ")
+					Win32: "findstr /n" or "grep -n")
 			global or local to buffer |global-local|
 			{not in Vi}
 	Program to use for the |:grep| command.  This option may contain '%'
@@ -4263,8 +4259,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'isfname'* *'isf'*
 'isfname' 'isf'		string	(default for MS-DOS and Win32:
 			     "@,48-57,/,\,.,-,_,+,,,#,$,%,{,},[,],:,@-@,!,~,="
-			    for AMIGA: "@,48-57,/,.,-,_,+,,,$,:"
-			    for VMS: "@,48-57,/,.,-,_,+,,,#,$,%,<,>,[,],:,;,~"
 			    otherwise: "@,48-57,/,.,-,_,+,,,#,$,%,~,=")
 			global
 			{not in Vi}
@@ -4418,8 +4412,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The 'keymodel' option is set by the |:behave| command.
 
 					*'keywordprg'* *'kp'*
-'keywordprg' 'kp'	string	(default "man" or "man -s",  DOS: ":help",
-						VMS: "help")
+'keywordprg' 'kp'	string	(default "man" or "man -s",  DOS: ":help")
 			global or local to buffer |global-local|
 			{not in Vi}
 	Program to use for the |K| command.  Environment variables are
@@ -4713,12 +4706,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'makeprg'* *'mp'*
-'makeprg' 'mp'		string	(default "make", VMS: "MMS")
+'makeprg' 'mp'		string	(default "make")
 			global or local to buffer |global-local|
 			{not in Vi}
 	Program to use for the ":make" command.  See |:make_makeprg|.
-	This option may contain '%' and '#' characters (see  |:_%| and |:_#|), 
-	which are expanded to the current and alternate file name.  Use |::S| 
+	This option may contain '%' and '#' characters (see  |:_%| and |:_#|),
+	which are expanded to the current and alternate file name.  Use |::S|
 	to escape file names in case they contain special characters.
 	Environment variables are expanded |:set_env|.  See |option-backslash|
 	about including spaces and backslashes.
@@ -5679,19 +5672,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 						$VIMRUNTIME,
 						$VIM/vimfiles/after,
 						$HOME/.vim/after"
-					Amiga: "home:vimfiles,
-						$VIM/vimfiles,
-						$VIMRUNTIME,
-						$VIM/vimfiles/after,
-						home:vimfiles/after"
 					Macintosh: "$VIM:vimfiles,
 						$VIMRUNTIME,
 						$VIM:vimfiles:after"
-					VMS: "sys$login:vimfiles,
-						$VIM/vimfiles,
-						$VIMRUNTIME,
-						$VIM/vimfiles/after,
-						sys$login:vimfiles/after")
 			global
 			{not in Vi}
 	This is a list of directories which will be searched for runtime
@@ -5995,8 +5978,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The name of the temporary file can be represented by "%s" if necessary
 	(the file name is appended automatically if no %s appears in the value
 	of this option).
-	For the Amiga and MS-DOS the default is ">".  The output is directly
-	saved in a file and not echoed to the screen.
+	For MS-DOS the default is ">".  The output is directly saved in a file
+	and not echoed to the screen.
 	For Unix the default it "| tee".  The stdout of the compiler is saved
 	in a file and echoed to the screen.  If the 'shell' option is "csh" or
 	"tcsh" after initializations, the default becomes "|& tee".  If the
@@ -7057,11 +7040,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'term'* *E529* *E530* *E531*
 'term'			string	(default is $TERM, if that fails:
 				      in the GUI: "builtin_gui"
-					on Amiga: "amiga"
 					  on Mac: "mac-ansi"
 				       on MS-DOS: "pcterm"
 					 on Unix: "ansi"
-					  on VMS: "ansi"
 				       on Win 32: "win32")
 			global
 	Name of the terminal.  Used for choosing the terminal control
@@ -7244,9 +7225,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 		(path)		is the path of the file being edited
 		- VIM		the server name |v:servername| or "VIM"
 	Only works if the terminal supports setting window titles
-	(currently Amiga console, Win32 console, all GUI versions and
-	terminals with a non- empty 't_ts' option - this is Unix xterm
-	by default, where 't_ts' is taken from the builtin termcap).
+	(currently Win32 console, all GUI versions and terminals with a non-
+	empty 't_ts' option - this is Unix xterm by default, where 't_ts' is
+	taken from the builtin termcap).
 								*X11*
 	When Vim was compiled with HAVE_X11 defined, the original title will
 	be restored if possible.  The output of ":version" will include "+X11"
@@ -7298,8 +7279,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When this option is not empty, it will be used for the title of the
 	window.  This happens only when the 'title' option is on.
 	Only works if the terminal supports setting window titles (currently
-	Amiga console, Win32 console, all GUI versions and terminals with a
-	non-empty 't_ts' option).
+	Win32 console, all GUI versions and terminals with a non-empty 't_ts'
+	option).
 	When Vim was compiled with HAVE_X11 defined, the original title will
 	be restored if possible |X11|.
 	When this option contains printf-style '%' items, they will be
@@ -7391,7 +7372,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'ttymouse' 'ttym'	string	(default depends on 'term')
 			global
 			{not in Vi}
-			{only in Unix and VMS, doesn't work in the GUI; not
+			{only in Unix, doesn't work in the GUI; not
 			available when compiled without |+mouse|}
 	Name of the terminal type for which mouse codes are to be recognized.
 	Currently these strings are valid:
@@ -7498,8 +7479,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When 'undofile' is turned off the undo file is NOT deleted.
 
 						*'undolevels'* *'ul'*
-'undolevels' 'ul'	number	(default 100, 1000 for Unix, VMS,
-						and Win32)
+'undolevels' 'ul'	number	(default 100, 1000 for Unix and Win32)
 			global or local to buffer |global-local|
 			{not in Vi}
 	Maximum number of changes that can be undone.  Since undo information
@@ -7594,11 +7574,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	displayed when 'verbosefile' is set.
 
 						*'viewdir'* *'vdir'*
-'viewdir' 'vdir'	string	(default for Amiga, MS-DOS, and Win32:
-							 "$VIM/vimfiles/view",
-				 for Unix: "~/.vim/view",
-				 for Macintosh: "$VIM:vimfiles:view"
-				 for VMS: "sys$login:vimfiles/view")
+'viewdir' 'vdir'	string	(default for MS-DOS and Win32: "$VIM/vimfiles/view",
+				 for Unix: "~/.vim/view")
 			global
 			{not in Vi}
 			{not available when compiled without the |+mksession|
@@ -7633,7 +7610,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 				*'viminfo'* *'vi'* *E526* *E527* *E528*
 'viminfo' 'vi'		string	(Vi default: "", Vim default for MS-DOS,
 				   Windows: '100,<50,s10,h,rA:,rB:,
-				   for Amiga: '100,<50,s10,h,rdf0:,rdf1:,rdf2:
 				   for others: '100,<50,s10,h)
 			global
 			{not in Vi}
@@ -7715,10 +7691,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 		',').  This parameter can be given several times.  Each
 		specifies the start of a path for which no marks will be
 		stored.  This is to avoid removable media.  For MS-DOS you
-		could use "ra:,rb:", for Amiga "rdf0:,rdf1:,rdf2:".  You can
-		also use it for temp files, e.g., for Unix: "r/tmp".  Case is
-		ignored.  Maximum length of each 'r' argument is 50
-		characters.
+		could use "ra:,rb:".  You can also use it for temp files,
+		e.g., for Unix: "r/tmp".  Case is ignored.  Maximum length of
+		each 'r' argument is 50 characters.
 							*viminfo-s*
 	s	Maximum size of an item in Kbyte.  If zero then registers are
 		not saved.  Currently only applies to registers.  The default
@@ -7786,9 +7761,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	might want to set it again in your |gvimrc|.
 	In the GUI, 't_vb' defaults to "<Esc>|f", which inverts the display
 	for 20 msec.  If you want to use a different time, use "<Esc>|40f",
-	where 40 is the time in msec.
-	Does not work on the Amiga, you always get a screen flash.
-	Also see 'errorbells'.
+	where 40 is the time in msec.  Also see 'errorbells'.
 
 						*'warn'* *'nowarn'*
 'warn'			boolean	(default on)

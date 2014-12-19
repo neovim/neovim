@@ -28,11 +28,7 @@ cnoremap <silent> <C-F> <C-C>:promptfind<CR>
 
 set backspace=2		" allow backspacing over everything in insert mode
 set autoindent		" always set autoindenting on
-if has("vms")
-  set nobackup		" do not keep a backup file, use versions instead
-else
-  set backup		" keep a backup file
-endif
+set backup		" keep a backup file
 set history=50		" keep 50 lines of command line history
 set ruler		" show the cursor position all the time
 set incsearch		" do incremental searching

@@ -204,9 +204,6 @@ Patch to support expression argument to sort() instead of a function name.
 Yasuhiro Matsumoto, 2013 May 31.
 Or should we add a more general mechanism, like lambda functions?
 
-VMS: Select() doesn't work properly, typing ESC may hang Vim.  Use sys$qiow
-instead. (Samuel Ferencik, 2013 Sep 28)
-
 Patch for XDG base directory support. (Jean François Bignolles, 2014 Mar 4)
 Remark on the docs.  Should not be a compile time feature.  But then what?
 
@@ -1380,11 +1377,6 @@ character typed. (Tyler Spivey, 2008 Sep 3)  Only redraw cmdline for
 Cheng Fang made javacomplete. (2007 Aug 11)
 Asked about latest version: 0.77.1 is on www.vim.org.
 
-More AmigaOS4 patches. (Peter Bengtsson, Nov 9)
-
-Amiga patches with vbcc. (Adrien Destugues, 2010 Aug 30)
-http://pulkomandy.ath.cx/drop/vim73_vbcc_amiga.diff
-
 Insert mode completion: When editing the text and pressing CTRL-N again goes
 back to originally completed text, edited text is gone. (Peng Yu, 2008 Jul 24)
 Suggestion by Ben Schmidt, 2008 Aug 6.
@@ -1586,12 +1578,6 @@ The buffer has the full path in ffname, should pass this to the autocommand.
 
 "vim -C" often has 'nocompatible', because it's set in some startup script.
 Set 'compatible' after startup is done?  Patch by James Vega, 2008 Feb 7.
-
-VMS: while editing a file found in complex, Vim will save file into the first
-directory of the path and not to the original location of the file.
-(Zoltan Arpadffy)
-
-VMS: VFC files are in some cases truncated during reading (Zoltan Arpadffy)
 
 input() completion should not insert a backslash to escape a space in a file
 name?
@@ -2247,11 +2233,9 @@ GUI:
     Need better separation of Vim core and GUI code.
 8   When fontset support is enabled, setting 'guifont' to a single font
     doesn't work.
-8   Menu priority for sub-menus for: Amiga.
 8   When translating menus ignore the part after the Tab, the shortcut.  So
     that the same menu item with a different shortcut (e.g., for the Mac) are
     still translated.
-8   Add menu separators for Amiga.
 8   Add way to specify the file filter for the browse dialog.  At least for
     browse().
 8   Add dialog for search/replace to other GUIs?  Tk has something for this,
@@ -2358,15 +2342,6 @@ Win32 console:
 7   Use SetConsoleCP() and SetConsoleOutputCP() to implement 'termencoding'?
     Avoids that input and output work differently.  Need to be restored when
     exiting.
-
-
-Amiga:
-8   In mch_inchar() should use convert_input_safe() to handle incomplete byte
-    sequences.
-9   In mch_expandpath() a "*" is to be expanded, but "\*" isn't.  Remove
-    backslashes in result.
-8   Executing a shell, only one option for 'shell' is separated.  Should do
-    all options, using white space separation.
 
 
 Macintosh:
@@ -2685,9 +2660,6 @@ Problems that will (probably) not be solved:
 -   In zsh, "gvim&" changes the terminal settings.  This is a zsh problem.
     (Jennings)
 -   Problem with HPterm under X: old contents of window is lost (Cosentino).
--   Amiga: When using quickfix with the Manx compiler we only get the first 25
-    errors.  How do we get the rest?
--   Amiga: The ":cq" command does not always abort the Manx compiler.  Why?
 -   Linux: A file with protection r--rw-rw- is seen readonly for others.  The
     access() function in GNU libc is probably wrong.
 -   MSDOS: When using smartdrive with write-back buffering, writing to a
@@ -2726,8 +2698,6 @@ Problems that will (probably) not be solved:
     libraries, get a patch from Sun.
 -   Solaris 2.6 with GTK and Perl: gvim crashes when started.  Problem with X
     input method called from GDK code.  Without Perl it doesn't crash.
--   VMS: Vimdiff doesn't work with the VMS diff, because the output looks
-    different.  This makes test 47 fail.  Install a Unix-compatible diff.
 -   Win32 GUI: mouse wheel always scrolls rightmost window.  The events arrive
     in Vim as if the rightmost scrollbar was used.
 -   GTK with Gnome: Produces an error message when starting up:
@@ -2867,7 +2837,6 @@ User Friendlier:
     disabling it.  Be careful that tear-offs don't disappear (keep one empty
     item?).
     Alternative: use BufEnter and BufLeave autocommands.
-8   make a vimtutor script for Amiga and other systems.
 7   Add the arguments for configure to the ":version" output?
 7   When Vim detects a file is being edited elsewhere and it's a gvim session
     of the same user it should offer a "Raise" button, so that the other gvim
@@ -3741,7 +3710,6 @@ Win32 GUI:
 
 
 GUI:
-8   Make inputdialog() work for Amiga.
 -   <C--> cannot be mapped.  Should be possible to recognize this as a
     normal "-" with the Ctrl modifier.
 7   Implement ":popup" for other systems than Windows.
@@ -4812,9 +4780,7 @@ Digraphs:
 
 
 Writing files:
--   In vim_rename(), should lock "from" file when deleting "to" file for
-    systems other than Amiga.
-8   write mch_isdevice() for Amiga, Mac, VMS, etc.
+-   In vim_rename(), should lock "from" file when deleting "to" file.
 8   When appending to a file, Vim should also make a backup and a 'patchmode'
     file.
 8   'backupskip' doesn't write a backup file at all, a bit dangerous for some
@@ -4869,7 +4835,6 @@ Mouse support:
 8   Add 'mouse' flag, which sets a behavior like Visual mode, but automatic
     yanking at the button-up event.  Or like Select mode, but typing gets you
     out of Select mode, instead of replacing the text. (Bhaskar)
--   Implement mouse support for the Amiga console.
 -   Using right mouse button to extend a blockwise selection should attach to
     the nearest corner of the rectangle (four possible corners).
 -   Precede mouse click by a number to simulate double clicks?!?
@@ -5211,8 +5176,6 @@ Various improvements:
 -   Add "-d null" for editing from a script file without displaying.
 -   In Insert mode: Remember the characters that were removed with backspace
     and re-insert them one at a time with <key1>, all together with <key2>.
--   Amiga: Add possibility to set a keymap.  The code in amiga.c does not work
-    yet.
 -   Implement 'redraw' option.
 -   Add special code to 'sections' option to define something else but '{' or
     '}' as the start of a section (e.g. one shiftwidth to the right).
@@ -5231,15 +5194,12 @@ Various improvements:
     off".
 -   Check handling of CTRL-V and '\' for ":" commands that do not have TRLBAR.
 -   When a file cannot be opened but does exist, give error message.
--   Amiga: When 'r' protection bit is not set, file can still be opened but
-    gives read errors.  Check protection before opening.
 -   When writing check for file exists but no permission, "Permission denied".
 -   If file does not exist, check if directory exists.
 -   MSDOS: although t_cv and t_ci are not set, do invert char under cursor.
 -   Settings edit mode: make file with ":set opt=xx", edit it, parse it as ex
     commands.
 -   ":set -w all": list one option per line.
--   Amiga: test for 'w' flag when reading a file.
 -   :table command (Webb)
 -   Add new operator: clear, make area white (replace with spaces): "g ".
 -   Add command to ":read" a file at a certain column (blockwise read?).

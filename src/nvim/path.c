@@ -179,7 +179,7 @@ char_u *path_next_component(char_u *fname)
 
 /*
  * Get a pointer to one character past the head of a path name.
- * Unix: after "/"; DOS: after "c:\"; Amiga: after "disk:/"; Mac: no head.
+ * Unix: after "/"; DOS: after "c:\"; Mac: no head.
  * If there is no head, path is returned.
  */
 char_u *get_past_head(char_u *path)

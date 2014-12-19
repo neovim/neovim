@@ -24,9 +24,9 @@ NOTE: Most of this is not used when running the |GUI|.
 ==============================================================================
 1. Startup						*startup-terminal*
 
-When Vim is started a default terminal type is assumed.  For the Amiga this is
-a standard CLI window, for MS-DOS the pc terminal, for Unix an ansi terminal.
-A few other terminal types are always available, see below |builtin-terms|.
+When Vim is started a default terminal type is assumed.  for MS-DOS this is
+the pc terminal, for Unix an ansi terminal.  A few other terminal types are
+always available, see below |builtin-terms|.
 
 You can give the terminal name with the '-T' Vim argument.  If it is not given
 Vim will try to get the name from the TERM environment variable.
@@ -84,10 +84,7 @@ defined with 't_ti' and 't_ks' will be sent to the terminal.  Normally this
 puts the terminal in a state where the termcap codes are valid and activates
 the cursor and function keys.  When Vim exits the terminal will be put back
 into the mode it was before Vim started.  The strings defined with 't_te' and
-'t_ke' will be sent to the terminal.  On the Amiga, with commands that execute
-an external command (e.g., "!!"), the terminal will be put into Normal mode
-for a moment.  This means that you can stop the output to the screen by
-hitting a printing key.  Output resumes when you hit <BS>.
+'t_ke' will be sent to the terminal.
 
 							*cs7-problem*
 Note: If the terminal settings are changed after running Vim, you might have
@@ -100,17 +97,6 @@ cursor keys send codes different from the codes defined in the termcap.  To
 avoid this you can set 't_ks' (and 't_ke') to empty strings.  This must be
 done during initialization (see |initialization|), otherwise it's too late.
 
-Some termcap entries assume that the highest bit is always reset.  For
-example: The cursor-up entry for the Amiga could be ":ku=\E[A:".  But the
-Amiga really sends "\233A".  This works fine if the highest bit is reset,
-e.g., when using an Amiga over a serial line.  If the cursor keys don't work,
-try the entry ":ku=\233A:".
-
-Some termcap entries have the entry ":ku=\E[A:".  But the Amiga really sends
-"\233A".  On output "\E[" and "\233" are often equivalent, on input they
-aren't.  You will have to change the termcap entry, or change the key code with
-the :set command to fix this.
-
 Many cursor key codes start with an <Esc>.  Vim must find out if this is a
 single hit of the <Esc> key or the start of a cursor key sequence.  It waits
 for a next character to arrive.  If it does not arrive within one second a
@@ -120,9 +106,6 @@ option.  Vim will wait for the next character to arrive after an <Esc>.  If
 you want to enter a single <Esc> you must type it twice.  Resetting the
 'esckeys' option avoids this problem in Insert mode, but you lose the
 possibility to use cursor and function keys in Insert mode.
-
-On the Amiga the recognition of window resizing is activated only when the
-terminal name is "amiga" or "builtin_amiga".
 
 Some terminals have confusing codes for the cursor keys.  The televideo 925 is
 such a terminal.  It sends a CTRL-H for cursor-left.  This would make it
@@ -516,9 +499,7 @@ closes the window.  On other systems you can probably use them.)
 [This is about the size of the whole window Vim is using, not a window that is
 created with the ":split" command.]
 
-If you are running Vim on an Amiga and the terminal name is "amiga" or
-"builtin_amiga", the amiga-specific window resizing will be enabled.  On Unix
-systems three methods are tried to get the window size:
+On Unix systems, three methods are tried to get the window size:
 
 - an ioctl call (TIOCGSIZE or TIOCGWINSZ, depends on your system)
 - the environment variables "LINES" and "COLUMNS"

@@ -194,8 +194,6 @@ fun! s:EditVimrc()
     else
       let fname = $VIM . "/_vimrc"
     endif
-  elseif has("amiga")
-    let fname = "s:.vimrc"
   else
     let fname = $HOME . "/.vimrc"
   endif
@@ -345,7 +343,7 @@ endfun
 " get NL separated string with file names
 let s:n = globpath(&runtimepath, "colors/*.vim")
 
-" split at NL, Ignore case for VMS and windows, sort on name
+" split at NL, ignore case for Windows, sort on name
 let s:names = sort(map(split(s:n, "\n"), 'substitute(v:val, "\\c.*[/\\\\:\\]]\\([^/\\\\:]*\\)\\.vim", "\\1", "")'), 1)
 
 " define all the submenu entries
@@ -372,7 +370,7 @@ if has("keymap")
 	let s:name = strpart(s:n, 0, s:i)
 	let s:n = strpart(s:n, s:i + 1, 19999)
       endif
-      " Ignore case for VMS and windows
+      " Ignore case for Windows
       let s:name = substitute(s:name, '\c.*[/\\:\]]\([^/\\:_]*\)\(_[0-9a-zA-Z-]*\)\=\.vim', '\1', '')
       exe "an 20.460." . s:idx . ' &Edit.&Keymap.' . s:name . " :set keymap=" . s:name . "<CR>"
       unlet s:name
@@ -389,11 +387,7 @@ endif
 
 " Programming menu
 if !exists("g:ctags_command")
-  if has("vms")
-    let g:ctags_command = "mc vim:ctags *.*"
-  else
-    let g:ctags_command = "ctags -R ."
-  endif
+  let g:ctags_command = "ctags -R ."
 endif
 
 an 40.300 &Tools.&Jump\ to\ this\ tag<Tab>g^]	g<C-]>
@@ -538,12 +532,8 @@ an <silent> 40.540 &Tools.Conve&rt\ back<Tab>:%!xxd\ -r
 " set.
 func! s:XxdConv()
   let mod = &mod
-  if has("vms")
-    %!mc vim:xxd
-  else
-    call s:XxdFind()
-    exe '%!"' . g:xxdprogram . '"'
-  endif
+  call s:XxdFind()
+  exe '%!"' . g:xxdprogram . '"'
   if getline(1) =~ "^0000000:"		" only if it worked
     set ft=xxd
   endif
@@ -552,12 +542,8 @@ endfun
 
 func! s:XxdBack()
   let mod = &mod
-  if has("vms")
-    %!mc vim:xxd -r
-  else
-    call s:XxdFind()
-    exe '%!"' . g:xxdprogram . '" -r'
-  endif
+  call s:XxdFind()
+  exe '%!"' . g:xxdprogram . '" -r'
   set ft=
   doautocmd filetypedetect BufReadPost
   let &mod = mod
@@ -586,7 +572,7 @@ while strlen(s:n) > 0
     let s:name = strpart(s:n, 0, s:i)
     let s:n = strpart(s:n, s:i + 1, 19999)
   endif
-  " Ignore case for VMS and windows
+  " Ignore case for Windows
   let s:name = substitute(s:name, '\c.*[/\\:\]]\([^/\\:]*\)\.vim', '\1', '')
   exe "an 30.440." . s:idx . ' &Tools.Se&T\ Compiler.' . s:name . " :compiler " . s:name . "<CR>"
   unlet s:name

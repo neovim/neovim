@@ -340,9 +340,6 @@ A spell file might not be available in the current 'encoding'.  See
 |spell-mkspell| about how to create a spell file.  Converting a spell file
 with "iconv" will NOT work!
 
-Note: on VMS ".{enc}.spl" is changed to "_{enc}.spl" to avoid trouble with
-filenames.
-
 						    *spell-sug-file* *E781*
 If there is a file with exactly the same name as the ".spl" file but ending in
 ".sug", that file will be used for giving better suggestions.  It isn't loaded

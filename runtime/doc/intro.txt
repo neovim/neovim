@@ -466,9 +466,7 @@ notation	meaning		    equivalent	decimal value(s)	~
 -----------------------------------------------------------------------
 
 Note: The shifted cursor keys, the help key, and the undo key are only
-available on a few terminals.  On the Amiga, shifted function key 10 produces
-a code (CSI) that is also used by key sequences.  It will be recognized only
-after typing another key.
+available on a few terminals.
 
 Note: There are two codes for the delete key.  127 is the decimal ASCII value
 for the delete key, which is always recognized.  Some delete keys send another
@@ -809,12 +807,11 @@ messages before you have a chance to read them}
 Some commands show how many lines were affected.  Above which threshold this
 happens can be controlled with the 'report' option (default 2).
 
-On the Amiga Vim will run in a CLI window.  The name Vim and the full name of
-the current file name will be shown in the title bar.  When the window is
-resized, Vim will automatically redraw the window.  You may make the window as
-small as you like, but if it gets too small not a single line will fit in it.
-Make it at least 40 characters wide to be able to read most messages on the
-last line.
+The name Vim and the full name of the current file name will be shown in the
+title bar.  When the window is resized, Vim will automatically redraw the
+window.  You may make the window as small as you like, but if it gets too
+small not a single line will fit in it.  Make it at least 40 characters wide
+to be able to read most messages on the last line.
 
 On most Unix systems, resizing the window is recognized and handled correctly
 by Vim.  {Vi: not ok}

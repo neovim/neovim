@@ -94,8 +94,6 @@ Recommended place for your personal GUI initializations:
 	Unix		    $HOME/.gvimrc or $HOME/.vim/gvimrc
 	MS-DOS and Win32    $HOME/_gvimrc, $HOME/vimfiles/gvimrc
 			    or $VIM/_gvimrc
-	Amiga		    s:.gvimrc, home:.gvimrc, home:vimfiles:gvimrc
-			    or $VIM/.gvimrc
 
 The personal initialization files are searched in the order specified above
 and only the first one that is found is read.

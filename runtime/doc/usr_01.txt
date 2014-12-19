@@ -73,8 +73,6 @@ Unix: >
 	:!cp -i $VIMRUNTIME/vimrc_example.vim ~/.vimrc
 MS-DOS, MS-Windows: >
 	:!copy $VIMRUNTIME/vimrc_example.vim $VIM/_vimrc
-Amiga: >
-	:!copy $VIMRUNTIME/vimrc_example.vim $VIM/.vimrc
 
 If the file already exists you probably want to keep it.
 
@@ -126,14 +124,7 @@ available, use the two-letter language code.  For French: >
 	vimtutor fr
 
 On Unix, if you prefer using the GUI version of Vim, use "gvimtutor" or
-"vimtutor -g" instead of "vimtutor".
-
-For OpenVMS, if Vim has been properly installed, you can start vimtutor from a
-VMS prompt with: >
-
-	@VIM:vimtutor
-
-Optionally add the two-letter language code as above.
+"vimtutor -g", optionally with a two-letter language code.
 
 
 On other systems, you have to do a little work:

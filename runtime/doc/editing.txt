@@ -359,10 +359,10 @@ expected are mentioned at |cmdline-special|.
 Note for systems other than Unix: When using a command that accepts a single
 file name (like ":edit file") spaces in the file name are allowed, but
 trailing spaces are ignored.  This is useful on systems that regularly embed
-spaces in file names (like MS-Windows and the Amiga).  Example: The command
-":e   Long File Name " will edit the file "Long File Name".  When using a
-command that accepts more than one file name (like ":next file1 file2")
-embedded spaces must be escaped with a backslash.
+spaces in file names (like MS-Windows).  Example: The command ":e   Long File
+Name " will edit the file "Long File Name".  When using a command that accepts
+more than one file name (like ":next file1 file2") embedded spaces must be
+escaped with a backslash.
 
 						*wildcard* *wildcards*
 Wildcards in {file} are expanded, but as with file completion, 'wildignore'
@@ -510,10 +510,10 @@ characters will be replaced with <CR><NL> (assuming 'fileformats' includes
 If you start editing a new file and the 'fileformats' option is not empty
 (which is the default), Vim will try to detect whether the lines in the file
 are separated by the specified formats.  When set to "unix,dos", Vim will
-check for lines with a single <NL> (as used on Unix and Amiga) or by a <CR>
-<NL> pair (MS-DOS).  Only when ALL lines end in <CR><NL>, 'fileformat' is set
-to "dos", otherwise it is set to "unix".  When 'fileformats' includes "mac",
-and no <NL> characters are found in the file, 'fileformat' is set to "mac".
+check for lines with a single <NL> (as used on Unix) or by a <CR><NL> pair
+(MS-DOS).  Only when ALL lines end in <CR><NL>, 'fileformat' is set to "dos",
+otherwise it is set to "unix".  When 'fileformats' includes "mac", and no <NL>
+characters are found in the file, 'fileformat' is set to "mac".
 
 If the 'fileformat' option is set to "dos" on non-MS-DOS systems the message
 "[dos format]" is shown to remind you that something unusual is happening.  On
@@ -1031,7 +1031,6 @@ and for MS-DOS or MS-Windows: >
 For Unix a device is detected when the name doesn't refer to a normal file or
 a directory.  A fifo or named pipe also looks like a device to Vim.
 For MS-DOS and MS-Windows the device is detected by its name:
-	AUX
 	CON
 	CLOCK$
 	NUL
@@ -1063,8 +1062,7 @@ The names can be in upper- or lowercase.
 			buffers.  Use ":qall!" to exit always.
 
 :cq[uit]		Quit always, without writing, and return an error
-			code.  See |:cq|.  Used for Manx's QuickFix mode (see
-			|quickfix|).  {not in Vi}
+			code.  See |:cq|.  {not in Vi}
 
 							*:wq*
 :wq [++opt]		Write the current file and quit.  Writing fails when
@@ -1316,11 +1314,10 @@ There are a few things to remember when editing binary files:
   split in two.
 - When there are not many <EOL>s, the lines will become very long.  If you
   want to edit a line that does not fit on the screen reset the 'wrap' option.
-  Horizontal scrolling is used then.  If a line becomes too long (more than
-  about 32767 characters on the Amiga, much more on 32-bit systems, see
-  |limits|) you cannot edit that line.  The line will be split when reading
-  the file.  It is also possible that you get an "out of memory" error when
-  reading the file.
+  Horizontal scrolling is used then.  If a line becomes too long (see |limits|)
+  you cannot edit that line.  The line will be split when reading the file.
+  It is also possible that you get an "out of memory" error when reading the
+  file.
 - Make sure the 'binary' option is set BEFORE loading the
   file.  Otherwise both <CR> <NL> and <NL> are considered to end a line
   and when the file is written the <NL> will be replaced with <CR> <NL>.

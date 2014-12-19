@@ -24,12 +24,7 @@ STARTTEST
 :set nobin eol
 :bwipe XXUnix XXDos XXMac
 :" create mixed format files
-:if has("vms")
-: !copy XXUnix,XXDos XXUxDs.
-: !copy XXUnix,XXMac XXUxMac.
-: !copy XXDos,XXMac  XXDosMac.
-: !copy XXUnix,XXDos,XXMac XXUxDsMc.
-:elseif has("win32")
+:if has("win32")
 : !copy /b XXUnix+XXDos XXUxDs
 : !copy /b XXUnix+XXMac XXUxMac
 : !copy /b XXDos+XXMac XXDosMac
