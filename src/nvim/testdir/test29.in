@@ -5,7 +5,6 @@ Test for joining lines and marks in them
 
 STARTTEST
 :so small.vim
-:set viminfo+=nviminfo
 :set nojoinspaces
 :set cpoptions-=j
 /firstline/

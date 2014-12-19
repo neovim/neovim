@@ -2,7 +2,7 @@ Tests for 'undolevel' setting being global-local
 
 STARTTEST
 :so small.vim
-:set nocompatible viminfo+=nviminfo ul=5
+:set ul=5
 :fu! FillBuffer()
   :for i in range(1,13)
     :put=i

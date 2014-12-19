@@ -81,7 +81,7 @@ STARTTEST
 :" https://groups.google.com/d/msg/vim_dev/ZOdg2mc9c9Y/TT8EhFjEy0IJ
 :only
 :vert 20new
-:set all& nocp breakindent briopt=min:10
+:set all& breakindent briopt=min:10
 :call setline(1, ["    a\tb\tc\td\te", "    z   y       x       w       v"])
 :/^\s*a
 fbgjyl:let line1 = @0

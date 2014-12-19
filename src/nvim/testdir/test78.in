@@ -6,7 +6,7 @@ blocks.
 
 STARTTEST
 :so small.vim
-:set nocp fileformat=unix undolevels=-1 viminfo+=nviminfo
+:set fileformat=unix undolevels=-1
 :e! Xtest
 ggdG
 :let text = "\tabcdefghijklmnoparstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnoparstuvwxyz0123456789"
