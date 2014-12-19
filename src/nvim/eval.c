@@ -9603,7 +9603,8 @@ static void f_getregtype(typval_T *argvars, typval_T *rettv)
  */
 static void f_gettabvar(typval_T *argvars, typval_T *rettv)
 {
-  tabpage_T   *tp;
+  win_T *oldcurwin;
+  tabpage_T *tp, *oldtabpage;
   dictitem_T  *v;
   char_u      *varname;
   int done = FALSE;
@@ -9614,16 +9615,25 @@ static void f_gettabvar(typval_T *argvars, typval_T *rettv)
   varname = get_tv_string_chk(&argvars[1]);
   tp = find_tabpage((int)get_tv_number_chk(&argvars[0], NULL));
   if (tp != NULL && varname != NULL) {
+    /* Set tp to be our tabpage, temporarily.  Also set the window to the
+     * first window in the tabpage, otherwise the window is not valid. */
+    switch_win(&oldcurwin, &oldtabpage, tp->tp_firstwin, tp, TRUE);
+
     /* look up the variable */
-    v = find_var_in_ht(&tp->tp_vars->dv_hashtab, 0, varname, FALSE);
+    /* Let gettabvar({nr}, "") return the "t:" dictionary. */
+    v = find_var_in_ht(&tp->tp_vars->dv_hashtab, 't', varname, FALSE);
     if (v != NULL) {
       copy_tv(&v->di_tv, rettv);
       done = TRUE;
     }
+
+    /* restore previous notion of curwin */
+    restore_win(oldcurwin, oldtabpage, TRUE);
   }
 
-  if (!done && argvars[2].v_type != VAR_UNKNOWN)
+  if (!done && argvars[2].v_type != VAR_UNKNOWN) {
     copy_tv(&argvars[2], rettv);
+  }
 }
 
 /*
