@@ -19,15 +19,11 @@
  *   - For a buffer string option, add code to check_buf_options().
  * - If it's a numeric option, add any necessary bounds checks to do_set().
  * - If it's a list of flags, add some code in do_set(), search for WW_ALL.
- * - When adding an option with expansion (P_EXPAND), but with a different
- *   default for Vi and Vim (no P_VI_DEF), add some code at VIMEXP.
  * - Add documentation!  One line in doc/help.txt, full description in
  *   options.txt, and any other related places.
  * - Add an entry in runtime/optwin.vim.
  * When making changes:
  * - Adjust the help for the option in doc/option.txt.
- * - When an entry has the P_VIM flag, or is lacking the P_VI_DEF flag, add a
- *   comment at the help for the 'compatible' option.
  */
 
 #define IN_OPTION_C
@@ -305,13 +301,10 @@ struct vimoption {
                                 * buffer-local option: global value */
   idopt_T indir;                /* global option: PV_NONE;
                                  * local option: indirect option index */
-  char_u      *def_val[2];      /* default values for variable (vi and vim) */
+  char_u      *def_val;         /* default values for variable (vi and vim) */
   scid_T scriptID;              /* script in which the option was last set */
 # define SCRIPTID_INIT , 0
 };
-
-#define VI_DEFAULT  0       /* def_val[VI_DEFAULT] is Vi default value */
-#define VIM_DEFAULT 1       /* def_val[VIM_DEFAULT] is Vim default value */
 
 /*
  * Flags
@@ -330,8 +323,6 @@ struct vimoption {
                                     use free() when assigning new value */
 #define P_WAS_SET       0x100   /* option has been set/reset */
 #define P_NO_MKRC       0x200   /* don't include in :mkvimrc output */
-#define P_VI_DEF        0x400   /* Use Vi default for Vim */
-#define P_VIM           0x800   /* Vim option, reset when 'cp' set */
 
 /* when option changed, what to display: */
 #define P_RSTAT         0x1000  /* redraw status lines */
@@ -381,244 +372,203 @@ struct vimoption {
 static struct vimoption
   options[] =
 {
-  {"aleph",       "al",   P_NUM|P_VI_DEF|P_CURSWANT,
-   (char_u *)&p_aleph, PV_NONE,
-   {
-     (char_u *)224L,
-     (char_u *)0L
-   } SCRIPTID_INIT},
-  {"antialias",   "anti", P_BOOL|P_VI_DEF|P_VIM|P_RCLR,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)FALSE, (char_u *)FALSE}
+  {"aleph",       "al",   P_NUM|P_CURSWANT,
+   (char_u *)&p_aleph, PV_NONE, (char_u *)224L
+    SCRIPTID_INIT},
+  {"antialias",   "anti", P_BOOL|P_RCLR,
+   (char_u *)NULL, PV_NONE, (char_u *)FALSE
    SCRIPTID_INIT},
-  {"arabic",      "arab", P_BOOL|P_VI_DEF|P_VIM|P_CURSWANT,
-   (char_u *)VAR_WIN, PV_ARAB,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"arabicshape", "arshape", P_BOOL|P_VI_DEF|P_VIM|P_RCLR,
-   (char_u *)&p_arshape, PV_NONE,
-   {(char_u *)TRUE, (char_u *)0L} SCRIPTID_INIT},
-  {"allowrevins", "ari",  P_BOOL|P_VI_DEF|P_VIM,
-   (char_u *)&p_ari, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"altkeymap",   "akm",  P_BOOL|P_VI_DEF,
-   (char_u *)&p_altkeymap, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"ambiwidth",  "ambw",  P_STRING|P_VI_DEF|P_RCLR,
-   (char_u *)&p_ambw, PV_NONE,
-   {(char_u *)"single", (char_u *)0L}
+  {"arabic",      "arab", P_BOOL|P_CURSWANT,
+   (char_u *)VAR_WIN, PV_ARAB, (char_u *)FALSE
    SCRIPTID_INIT},
-  {"autochdir",  "acd",   P_BOOL|P_VI_DEF,
-   (char_u *)&p_acd, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"autoindent",  "ai",   P_BOOL|P_VI_DEF,
-   (char_u *)&p_ai, PV_AI,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"autoprint",   "ap",   P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"autoread",    "ar",   P_BOOL|P_VI_DEF,
-   (char_u *)&p_ar, PV_AR,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"autowrite",   "aw",   P_BOOL|P_VI_DEF,
-   (char_u *)&p_aw, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"autowriteall","awa",  P_BOOL|P_VI_DEF,
-   (char_u *)&p_awa, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"background",  "bg",   P_STRING|P_VI_DEF|P_RCLR,
-   (char_u *)&p_bg, PV_NONE,
-   {
-     (char_u *)"light",
-     (char_u *)0L
-   } SCRIPTID_INIT},
-  {"backspace",   "bs",   P_STRING|P_VI_DEF|P_VIM|P_COMMA|P_NODUP,
-   (char_u *)&p_bs, PV_NONE,
-   {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
-  {"backup",      "bk",   P_BOOL|P_VI_DEF|P_VIM,
-   (char_u *)&p_bk, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"backupcopy",  "bkc",  P_STRING|P_VIM|P_COMMA|P_NODUP,
-   (char_u *)&p_bkc, PV_NONE,
-#ifdef UNIX
-   {(char_u *)"yes", (char_u *)"auto"}
-#else
-   {(char_u *)"auto", (char_u *)"auto"}
-#endif
+  {"arabicshape", "arshape", P_BOOL|P_RCLR,
+   (char_u *)&p_arshape, PV_NONE, (char_u *)TRUE
    SCRIPTID_INIT},
-  {"backupdir",   "bdir", P_STRING|P_EXPAND|P_VI_DEF|P_COMMA|P_NODUP|P_SECURE,
-   (char_u *)&p_bdir, PV_NONE,
-   {(char_u *)DFLT_BDIR, (char_u *)0L} SCRIPTID_INIT},
-  {"backupext",   "bex",  P_STRING|P_VI_DEF|P_NFNAME,
-   (char_u *)&p_bex, PV_NONE,
-   {
-     (char_u *)"~",
-     (char_u *)0L
-   } SCRIPTID_INIT},
-  {"backupskip",  "bsk",  P_STRING|P_VI_DEF|P_COMMA,
-   (char_u *)&p_bsk, PV_NONE,
-   {(char_u *)"", (char_u *)0L}
+  {"allowrevins", "ari",  P_BOOL,
+   (char_u *)&p_ari, PV_NONE, (char_u *)FALSE
    SCRIPTID_INIT},
-  {"beautify",    "bf",   P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"binary",      "bin",  P_BOOL|P_VI_DEF|P_RSTAT,
-   (char_u *)&p_bin, PV_BIN,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"bomb",        NULL,   P_BOOL|P_NO_MKRC|P_VI_DEF|P_RSTAT,
-   (char_u *)&p_bomb, PV_BOMB,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"breakat",     "brk",  P_STRING|P_VI_DEF|P_RALL|P_FLAGLIST,
-   (char_u *)&p_breakat, PV_NONE,
-   {(char_u *)" \t!@*-+;:,./?", (char_u *)0L}
+  {"altkeymap",   "akm",  P_BOOL,
+   (char_u *)&p_altkeymap, PV_NONE, (char_u *)FALSE
    SCRIPTID_INIT},
-  {"breakindent",   "bri",  P_BOOL|P_VI_DEF|P_VIM|P_RWIN,
-   (char_u *)VAR_WIN, PV_BRI,
-   {(char_u *)FALSE, (char_u *)0L}
+  {"ambiwidth",  "ambw",  P_STRING|P_RCLR,
+   (char_u *)&p_ambw, PV_NONE, (char_u *)"single"
    SCRIPTID_INIT},
-  {"breakindentopt", "briopt", P_STRING|P_ALLOCED|P_VI_DEF|P_RBUF|P_COMMA|P_NODUP,
-   (char_u *)VAR_WIN, PV_BRIOPT,
-   {(char_u *)"", (char_u *)NULL}
+  {"autochdir",  "acd",   P_BOOL,
+   (char_u *)&p_acd, PV_NONE, (char_u *)FALSE
    SCRIPTID_INIT},
-  {"browsedir",   "bsdir",P_STRING|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)0L, (char_u *)0L}
+  {"autoindent",  "ai",   P_BOOL,
+   (char_u *)&p_ai, PV_AI, (char_u *)FALSE
    SCRIPTID_INIT},
-  {"bufhidden",   "bh",   P_STRING|P_ALLOCED|P_VI_DEF|P_NOGLOB,
-   (char_u *)&p_bh, PV_BH,
-   {(char_u *)"", (char_u *)0L}
+  {"autoprint",   "ap",   P_BOOL,
+   (char_u *)NULL, PV_NONE, (char_u *)FALSE
    SCRIPTID_INIT},
-  {"buflisted",   "bl",   P_BOOL|P_VI_DEF|P_NOGLOB,
-   (char_u *)&p_bl, PV_BL,
-   {(char_u *)1L, (char_u *)0L}
+  {"autoread",    "ar",   P_BOOL,
+   (char_u *)&p_ar, PV_AR, (char_u *)FALSE
    SCRIPTID_INIT},
-  {"buftype",     "bt",   P_STRING|P_ALLOCED|P_VI_DEF|P_NOGLOB,
-   (char_u *)&p_bt, PV_BT,
-   {(char_u *)"", (char_u *)0L}
+  {"autowrite",   "aw",   P_BOOL,
+   (char_u *)&p_aw, PV_NONE, (char_u *)FALSE
    SCRIPTID_INIT},
-  {"casemap",     "cmp",   P_STRING|P_VI_DEF|P_COMMA|P_NODUP,
-   (char_u *)&p_cmp, PV_NONE,
-   {(char_u *)"internal,keepascii", (char_u *)0L}
+  {"autowriteall","awa",  P_BOOL,
+   (char_u *)&p_awa, PV_NONE, (char_u *)FALSE
    SCRIPTID_INIT},
-  {"cdpath",      "cd",   P_STRING|P_EXPAND|P_VI_DEF|P_COMMA|P_NODUP,
-   (char_u *)&p_cdpath, PV_NONE,
-   {(char_u *)",,", (char_u *)0L}
+  {"background",  "bg",   P_STRING|P_RCLR,
+   (char_u *)&p_bg, PV_NONE, (char_u *)"light"
+    SCRIPTID_INIT},
+  {"backspace",   "bs",   P_STRING|P_COMMA|P_NODUP,
+   (char_u *)&p_bs, PV_NONE, (char_u *)""
+   SCRIPTID_INIT},
+  {"backup",      "bk",   P_BOOL,
+   (char_u *)&p_bk, PV_NONE, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"backupcopy",  "bkc",  P_STRING|P_COMMA|P_NODUP,
+   (char_u *)&p_bkc, PV_NONE, (char_u *)"auto"
+   SCRIPTID_INIT},
+  {"backupdir",   "bdir", P_STRING|P_EXPAND|P_COMMA|P_NODUP|P_SECURE,
+   (char_u *)&p_bdir, PV_NONE, (char_u *)DFLT_BDIR
+   SCRIPTID_INIT},
+  {"backupext",   "bex",  P_STRING|P_NFNAME,
+   (char_u *)&p_bex, PV_NONE, (char_u *)"~"
+    SCRIPTID_INIT},
+  {"backupskip",  "bsk",  P_STRING|P_COMMA,
+   (char_u *)&p_bsk, PV_NONE, (char_u *)""
+   SCRIPTID_INIT},
+  {"beautify",    "bf",   P_BOOL,
+   (char_u *)NULL, PV_NONE, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"binary",      "bin",  P_BOOL|P_RSTAT,
+   (char_u *)&p_bin, PV_BIN, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"bomb",        NULL,   P_BOOL|P_NO_MKRC|P_RSTAT,
+   (char_u *)&p_bomb, PV_BOMB, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"breakat",     "brk",  P_STRING|P_RALL|P_FLAGLIST,
+   (char_u *)&p_breakat, PV_NONE, (char_u *)" \t!@*-+;:,./?"
+   SCRIPTID_INIT},
+  {"breakindent",   "bri",  P_BOOL|P_RWIN,
+   (char_u *)VAR_WIN, PV_BRI, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"breakindentopt", "briopt", P_STRING|P_ALLOCED|P_RBUF|P_COMMA|P_NODUP,
+   (char_u *)VAR_WIN, PV_BRIOPT, (char_u *)""
+   SCRIPTID_INIT},
+  {"browsedir",   "bsdir",P_STRING,
+   (char_u *)NULL, PV_NONE, (char_u *)0L
+   SCRIPTID_INIT},
+  {"bufhidden",   "bh",   P_STRING|P_ALLOCED|P_NOGLOB,
+   (char_u *)&p_bh, PV_BH, (char_u *)""
+   SCRIPTID_INIT},
+  {"buflisted",   "bl",   P_BOOL|P_NOGLOB,
+   (char_u *)&p_bl, PV_BL, (char_u *)1L
+   SCRIPTID_INIT},
+  {"buftype",     "bt",   P_STRING|P_ALLOCED|P_NOGLOB,
+   (char_u *)&p_bt, PV_BT, (char_u *)""
+   SCRIPTID_INIT},
+  {"casemap",     "cmp",   P_STRING|P_COMMA|P_NODUP,
+   (char_u *)&p_cmp, PV_NONE, (char_u *)"internal,keepascii"
+   SCRIPTID_INIT},
+  {"cdpath",      "cd",   P_STRING|P_EXPAND|P_COMMA|P_NODUP,
+   (char_u *)&p_cdpath, PV_NONE, (char_u *)",,"
    SCRIPTID_INIT},
   {"cedit",       NULL,   P_STRING,
-   (char_u *)&p_cedit, PV_NONE,
-   {(char_u *)"", (char_u *)CTRL_F_STR}
+   (char_u *)&p_cedit, PV_NONE, (char_u *)CTRL_F_STR
    SCRIPTID_INIT},
-  {"charconvert",  "ccv", P_STRING|P_VI_DEF|P_SECURE,
-   (char_u *)&p_ccv, PV_NONE,
-   {(char_u *)"", (char_u *)0L}
+  {"charconvert",  "ccv", P_STRING|P_SECURE,
+   (char_u *)&p_ccv, PV_NONE, (char_u *)""
    SCRIPTID_INIT},
-  {"cindent",     "cin",  P_BOOL|P_VI_DEF|P_VIM,
-   (char_u *)&p_cin, PV_CIN,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"cinkeys",     "cink", P_STRING|P_ALLOCED|P_VI_DEF|P_COMMA|P_NODUP,
-   (char_u *)&p_cink, PV_CINK,
-   {(char_u *)"0{,0},0),:,0#,!^F,o,O,e", (char_u *)0L}
+  {"cindent",     "cin",  P_BOOL,
+   (char_u *)&p_cin, PV_CIN, (char_u *)FALSE
    SCRIPTID_INIT},
-  {"cinoptions",  "cino", P_STRING|P_ALLOCED|P_VI_DEF|P_COMMA|P_NODUP,
-   (char_u *)&p_cino, PV_CINO,
-   {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
-  {"cinwords",    "cinw", P_STRING|P_ALLOCED|P_VI_DEF|P_COMMA|P_NODUP,
+  {"cinkeys",     "cink", P_STRING|P_ALLOCED|P_COMMA|P_NODUP,
+   (char_u *)&p_cink, PV_CINK, (char_u *)"0{,0},0),:,0#,!^F,o,O,e"
+   SCRIPTID_INIT},
+  {"cinoptions",  "cino", P_STRING|P_ALLOCED|P_COMMA|P_NODUP,
+   (char_u *)&p_cino, PV_CINO, (char_u *)""
+   SCRIPTID_INIT},
+  {"cinwords",    "cinw", P_STRING|P_ALLOCED|P_COMMA|P_NODUP,
    (char_u *)&p_cinw, PV_CINW,
-   {(char_u *)"if,else,while,do,for,switch",
-    (char_u *)0L}
+   (char_u *)"if,else,while,do,for,switch"
    SCRIPTID_INIT},
-  {"clipboard",   "cb",   P_STRING|P_VI_DEF|P_COMMA|P_NODUP,
-   (char_u *)&p_cb, PV_NONE,
-   {(char_u *)"", (char_u *)0L}
+  {"clipboard",   "cb",   P_STRING|P_COMMA|P_NODUP,
+   (char_u *)&p_cb, PV_NONE, (char_u *)""
    SCRIPTID_INIT},
-  {"cmdheight",   "ch",   P_NUM|P_VI_DEF|P_RALL,
-   (char_u *)&p_ch, PV_NONE,
-   {(char_u *)1L, (char_u *)0L} SCRIPTID_INIT},
-  {"cmdwinheight", "cwh", P_NUM|P_VI_DEF,
-   (char_u *)&p_cwh, PV_NONE,
-   {(char_u *)7L, (char_u *)0L} SCRIPTID_INIT},
-  {"colorcolumn", "cc",   P_STRING|P_VI_DEF|P_COMMA|P_NODUP|P_RWIN,
-   (char_u *)VAR_WIN, PV_CC,
-   {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
-  {"columns",     "co",   P_NUM|P_NODEFAULT|P_NO_MKRC|P_VI_DEF|P_RCLR,
-   (char_u *)&Columns, PV_NONE,
-   {(char_u *)80L, (char_u *)0L} SCRIPTID_INIT},
-  {"comments",    "com",  P_STRING|P_ALLOCED|P_VI_DEF|P_COMMA|P_NODUP|
+  {"cmdheight",   "ch",   P_NUM|P_RALL,
+   (char_u *)&p_ch, PV_NONE, (char_u *)1L
+   SCRIPTID_INIT},
+  {"cmdwinheight", "cwh", P_NUM,
+   (char_u *)&p_cwh, PV_NONE, (char_u *)7L
+   SCRIPTID_INIT},
+  {"colorcolumn", "cc",   P_STRING|P_COMMA|P_NODUP|P_RWIN,
+   (char_u *)VAR_WIN, PV_CC, (char_u *)""
+   SCRIPTID_INIT},
+  {"columns",     "co",   P_NUM|P_NODEFAULT|P_NO_MKRC|P_RCLR,
+   (char_u *)&Columns, PV_NONE, (char_u *)80L
+   SCRIPTID_INIT},
+  {"comments",    "com",  P_STRING|P_ALLOCED|P_COMMA|P_NODUP|
    P_CURSWANT,
    (char_u *)&p_com, PV_COM,
-   {(char_u *)"s1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:-",
-    (char_u *)0L}
+   (char_u *)"s1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:-"
    SCRIPTID_INIT},
-  {"commentstring", "cms", P_STRING|P_ALLOCED|P_VI_DEF|P_CURSWANT,
-   (char_u *)&p_cms, PV_CMS,
-   {(char_u *)"/*%s*/", (char_u *)0L}
+  {"commentstring", "cms", P_STRING|P_ALLOCED|P_CURSWANT,
+   (char_u *)&p_cms, PV_CMS, (char_u *)"/*%s*/"
    SCRIPTID_INIT},
   /* P_PRI_MKRC isn't needed here, optval_default()
    * always returns TRUE for 'compatible' */
   {"compatible",  "cp",   P_BOOL|P_RALL,
-   (char_u *)&p_cp, PV_NONE,
-   {(char_u *)TRUE, (char_u *)FALSE} SCRIPTID_INIT},
-  {"complete",    "cpt",  P_STRING|P_ALLOCED|P_VI_DEF|P_COMMA|P_NODUP,
-   (char_u *)&p_cpt, PV_CPT,
-   {(char_u *)".,w,b,u,t,i", (char_u *)0L}
+   (char_u *)&p_cp, PV_NONE, (char_u *)FALSE
    SCRIPTID_INIT},
-  {"concealcursor","cocu", P_STRING|P_ALLOCED|P_RWIN|P_VI_DEF,
-   (char_u *)VAR_WIN, PV_COCU,
-   {(char_u *)"", (char_u *)NULL}
+  {"complete",    "cpt",  P_STRING|P_ALLOCED|P_COMMA|P_NODUP,
+   (char_u *)&p_cpt, PV_CPT, (char_u *)".,w,b,u,t,i"
    SCRIPTID_INIT},
-  {"conceallevel","cole", P_NUM|P_RWIN|P_VI_DEF,
-   (char_u *)VAR_WIN, PV_COLE,
-   {(char_u *)0L, (char_u *)0L}
+  {"concealcursor","cocu", P_STRING|P_ALLOCED|P_RWIN,
+   (char_u *)VAR_WIN, PV_COCU, (char_u *)""
    SCRIPTID_INIT},
-  {"completefunc", "cfu", P_STRING|P_ALLOCED|P_VI_DEF|P_SECURE,
-   (char_u *)&p_cfu, PV_CFU,
-   {(char_u *)"", (char_u *)0L}
+  {"conceallevel","cole", P_NUM|P_RWIN,
+   (char_u *)VAR_WIN, PV_COLE, (char_u *)0L
    SCRIPTID_INIT},
-  {"completeopt",   "cot",  P_STRING|P_VI_DEF|P_COMMA|P_NODUP,
-   (char_u *)&p_cot, PV_NONE,
-   {(char_u *)"menu,preview", (char_u *)0L}
+  {"completefunc", "cfu", P_STRING|P_ALLOCED|P_SECURE,
+   (char_u *)&p_cfu, PV_CFU, (char_u *)""
    SCRIPTID_INIT},
-  {"confirm",     "cf",   P_BOOL|P_VI_DEF,
-   (char_u *)&p_confirm, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"copyindent",  "ci",   P_BOOL|P_VI_DEF|P_VIM,
-   (char_u *)&p_ci, PV_CI,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"cpoptions",   "cpo",  P_STRING|P_VIM|P_RALL|P_FLAGLIST,
-   (char_u *)&p_cpo, PV_NONE,
-   {(char_u *)CPO_VI, (char_u *)CPO_VIM}
+  {"completeopt",   "cot",  P_STRING|P_COMMA|P_NODUP,
+   (char_u *)&p_cot, PV_NONE, (char_u *)"menu,preview"
    SCRIPTID_INIT},
-  {"cscopepathcomp", "cspc", P_NUM|P_VI_DEF|P_VIM,
-   (char_u *)&p_cspc, PV_NONE,
-   {(char_u *)0L, (char_u *)0L} SCRIPTID_INIT},
-  {"cscopeprg",   "csprg", P_STRING|P_EXPAND|P_VI_DEF|P_SECURE,
-   (char_u *)&p_csprg, PV_NONE,
-   {(char_u *)"cscope", (char_u *)0L}
+  {"confirm",     "cf",   P_BOOL,
+   (char_u *)&p_confirm, PV_NONE, (char_u *)FALSE
    SCRIPTID_INIT},
-  {"cscopequickfix", "csqf", P_STRING|P_VI_DEF|P_COMMA|P_NODUP,
-   (char_u *)&p_csqf, PV_NONE,
-   {(char_u *)"", (char_u *)0L}
+  {"copyindent",  "ci",   P_BOOL,
+   (char_u *)&p_ci, PV_CI, (char_u *)FALSE
    SCRIPTID_INIT},
-  {"cscoperelative", "csre", P_BOOL|P_VI_DEF|P_VIM,
-   (char_u *)&p_csre, PV_NONE,
-   {(char_u *)0L, (char_u *)0L} SCRIPTID_INIT},
-  {"cscopetag",   "cst",  P_BOOL|P_VI_DEF|P_VIM,
-   (char_u *)&p_cst, PV_NONE,
-   {(char_u *)0L, (char_u *)0L} SCRIPTID_INIT},
-  {"cscopetagorder", "csto", P_NUM|P_VI_DEF|P_VIM,
-   (char_u *)&p_csto, PV_NONE,
-   {(char_u *)0L, (char_u *)0L} SCRIPTID_INIT},
-  {"cscopeverbose", "csverb", P_BOOL|P_VI_DEF|P_VIM,
-   (char_u *)&p_csverbose, PV_NONE,
-   {(char_u *)0L, (char_u *)0L} SCRIPTID_INIT},
-  {"cursorbind",  "crb",  P_BOOL|P_VI_DEF,
-   (char_u *)VAR_WIN, PV_CRBIND,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"cursorcolumn", "cuc", P_BOOL|P_VI_DEF|P_RWIN,
-   (char_u *)VAR_WIN, PV_CUC,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"cursorline",   "cul", P_BOOL|P_VI_DEF|P_RWIN,
-   (char_u *)VAR_WIN, PV_CUL,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
+  {"cpoptions",   "cpo",  P_STRING|P_RALL|P_FLAGLIST,
+   (char_u *)&p_cpo, PV_NONE, (char_u *)CPO_VIM
+   SCRIPTID_INIT},
+  {"cscopepathcomp", "cspc", P_NUM,
+   (char_u *)&p_cspc, PV_NONE, (char_u *)0L
+   SCRIPTID_INIT},
+  {"cscopeprg",   "csprg", P_STRING|P_EXPAND|P_SECURE,
+   (char_u *)&p_csprg, PV_NONE, (char_u *)"cscope"
+   SCRIPTID_INIT},
+  {"cscopequickfix", "csqf", P_STRING|P_COMMA|P_NODUP,
+   (char_u *)&p_csqf, PV_NONE, (char_u *)""
+   SCRIPTID_INIT},
+  {"cscoperelative", "csre", P_BOOL,
+   (char_u *)&p_csre, PV_NONE, (char_u *)0L
+   SCRIPTID_INIT},
+  {"cscopetag",   "cst",  P_BOOL,
+   (char_u *)&p_cst, PV_NONE, (char_u *)0L
+   SCRIPTID_INIT},
+  {"cscopetagorder", "csto", P_NUM,
+   (char_u *)&p_csto, PV_NONE, (char_u *)0L
+   SCRIPTID_INIT},
+  {"cscopeverbose", "csverb", P_BOOL,
+   (char_u *)&p_csverbose, PV_NONE, (char_u *)0L
+   SCRIPTID_INIT},
+  {"cursorbind",  "crb",  P_BOOL,
+   (char_u *)VAR_WIN, PV_CRBIND, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"cursorcolumn", "cuc", P_BOOL|P_RWIN,
+   (char_u *)VAR_WIN, PV_CUC, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"cursorline",   "cul", P_BOOL|P_RWIN,
+   (char_u *)VAR_WIN, PV_CUL, (char_u *)FALSE
+   SCRIPTID_INIT},
   {"debug",       NULL,   P_STRING|P_VI_DEF,
    (char_u *)&p_debug, PV_NONE,
    {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
