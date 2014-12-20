@@ -569,249 +569,213 @@ static struct vimoption
   {"cursorline",   "cul", P_BOOL|P_RWIN,
    (char_u *)VAR_WIN, PV_CUL, (char_u *)FALSE
    SCRIPTID_INIT},
-  {"debug",       NULL,   P_STRING|P_VI_DEF,
-   (char_u *)&p_debug, PV_NONE,
-   {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
-  {"define",      "def",  P_STRING|P_ALLOCED|P_VI_DEF|P_CURSWANT,
-   (char_u *)&p_def, PV_DEF,
-   {(char_u *)"^\\s*#\\s*define", (char_u *)0L}
+  {"debug",       NULL,   P_STRING,
+   (char_u *)&p_debug, PV_NONE, (char_u *)""
    SCRIPTID_INIT},
-  {"delcombine", "deco",  P_BOOL|P_VI_DEF|P_VIM,
-   (char_u *)&p_deco, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"dictionary",  "dict", P_STRING|P_EXPAND|P_VI_DEF|P_COMMA|P_NODUP,
-   (char_u *)&p_dict, PV_DICT,
-   {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
-  {"diff",        NULL,   P_BOOL|P_VI_DEF|P_RWIN|P_NOGLOB,
-   (char_u *)VAR_WIN, PV_DIFF,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"diffexpr",    "dex",  P_STRING|P_VI_DEF|P_SECURE|P_CURSWANT,
-   (char_u *)&p_dex, PV_NONE,
-   {(char_u *)"", (char_u *)0L}
+  {"define",      "def",  P_STRING|P_ALLOCED|P_CURSWANT,
+   (char_u *)&p_def, PV_DEF, (char_u *)"^\\s*#\\s*define"
    SCRIPTID_INIT},
-  {"diffopt",     "dip",  P_STRING|P_ALLOCED|P_VI_DEF|P_RWIN|P_COMMA|P_NODUP,
-   (char_u *)&p_dip, PV_NONE,
-   {(char_u *)"filler", (char_u *)NULL}
+  {"delcombine", "deco",  P_BOOL,
+   (char_u *)&p_deco, PV_NONE, (char_u *)FALSE SCRIPTID_INIT},
+  {"dictionary",  "dict", P_STRING|P_EXPAND|P_COMMA|P_NODUP,
+   (char_u *)&p_dict, PV_DICT, (char_u *)""
    SCRIPTID_INIT},
-  {"digraph",     "dg",   P_BOOL|P_VI_DEF|P_VIM,
-   (char_u *)&p_dg, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"directory",   "dir",  P_STRING|P_EXPAND|P_VI_DEF|P_COMMA|P_NODUP|P_SECURE,
-   (char_u *)&p_dir, PV_NONE,
-   {(char_u *)DFLT_DIR, (char_u *)0L} SCRIPTID_INIT},
-  {"display",     "dy",   P_STRING|P_VI_DEF|P_COMMA|P_RALL|P_NODUP,
-   (char_u *)&p_dy, PV_NONE,
-   {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
-  {"eadirection", "ead",  P_STRING|P_VI_DEF,
-   (char_u *)&p_ead, PV_NONE,
-   {(char_u *)"both", (char_u *)0L}
+  {"diff",        NULL,   P_BOOL|P_RWIN|P_NOGLOB,
+   (char_u *)VAR_WIN, PV_DIFF, (char_u *)FALSE
    SCRIPTID_INIT},
-  {"edcompatible","ed",   P_BOOL|P_VI_DEF,
-   (char_u *)&p_ed, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"encoding",    "enc",  P_STRING|P_VI_DEF|P_RCLR|P_NO_ML,
-   (char_u *)&p_enc, PV_NONE,
-   {(char_u *)ENC_DFLT, (char_u *)0L}
+  {"diffexpr",    "dex",  P_STRING|P_SECURE|P_CURSWANT,
+   (char_u *)&p_dex, PV_NONE, (char_u *)""
    SCRIPTID_INIT},
-  {"endofline",   "eol",  P_BOOL|P_NO_MKRC|P_VI_DEF|P_RSTAT,
-   (char_u *)&p_eol, PV_EOL,
-   {(char_u *)TRUE, (char_u *)0L} SCRIPTID_INIT},
-  {"equalalways", "ea",   P_BOOL|P_VI_DEF|P_RALL,
-   (char_u *)&p_ea, PV_NONE,
-   {(char_u *)TRUE, (char_u *)0L} SCRIPTID_INIT},
-  {"equalprg",    "ep",   P_STRING|P_EXPAND|P_VI_DEF|P_SECURE,
-   (char_u *)&p_ep, PV_EP,
-   {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
-  {"errorbells",  "eb",   P_BOOL|P_VI_DEF,
-   (char_u *)&p_eb, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"errorfile",   "ef",   P_STRING|P_EXPAND|P_VI_DEF|P_SECURE,
-   (char_u *)&p_ef, PV_NONE,
-   {(char_u *)DFLT_ERRORFILE, (char_u *)0L}
+  {"diffopt",     "dip",  P_STRING|P_ALLOCED|P_RWIN|P_COMMA|P_NODUP,
+   (char_u *)&p_dip, PV_NONE, (char_u *)"filler"
    SCRIPTID_INIT},
-  {"errorformat", "efm",  P_STRING|P_VI_DEF|P_COMMA|P_NODUP,
-   (char_u *)&p_efm, PV_EFM,
-   {(char_u *)DFLT_EFM, (char_u *)0L}
+  {"digraph",     "dg",   P_BOOL,
+   (char_u *)&p_dg, PV_NONE, (char_u *)FALSE
    SCRIPTID_INIT},
-  {"esckeys",     "ek",   P_BOOL|P_VIM,
-   (char_u *)&p_ek, PV_NONE,
-   {(char_u *)FALSE, (char_u *)TRUE} SCRIPTID_INIT},
-  {"eventignore", "ei",   P_STRING|P_VI_DEF|P_COMMA|P_NODUP,
-   (char_u *)&p_ei, PV_NONE,
-   {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
-  {"expandtab",   "et",   P_BOOL|P_VI_DEF|P_VIM,
-   (char_u *)&p_et, PV_ET,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"exrc",        "ex",   P_BOOL|P_VI_DEF|P_SECURE,
-   (char_u *)&p_exrc, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"fileencoding","fenc", P_STRING|P_ALLOCED|P_VI_DEF|P_RSTAT|P_RBUF|P_NO_MKRC,
-   (char_u *)&p_fenc, PV_FENC,
-   {(char_u *)"", (char_u *)0L}
+  {"directory",   "dir",  P_STRING|P_EXPAND|P_COMMA|P_NODUP|P_SECURE,
+   (char_u *)&p_dir, PV_NONE, (char_u *)DFLT_DIR
    SCRIPTID_INIT},
-  {"fileencodings","fencs", P_STRING|P_VI_DEF|P_COMMA,
-   (char_u *)&p_fencs, PV_NONE,
-   {(char_u *)"ucs-bom", (char_u *)0L}
+  {"display",     "dy",   P_STRING|P_COMMA|P_RALL|P_NODUP,
+   (char_u *)&p_dy, PV_NONE, (char_u *)""
    SCRIPTID_INIT},
-  {"fileformat",  "ff",   P_STRING|P_ALLOCED|P_VI_DEF|P_RSTAT|P_NO_MKRC|
+  {"eadirection", "ead",  P_STRING,
+   (char_u *)&p_ead, PV_NONE, (char_u *)"both"
+   SCRIPTID_INIT},
+  {"edcompatible","ed",   P_BOOL,
+   (char_u *)&p_ed, PV_NONE, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"encoding",    "enc",  P_STRING|P_RCLR|P_NO_ML,
+   (char_u *)&p_enc, PV_NONE, (char_u *)ENC_DFLT
+   SCRIPTID_INIT},
+  {"endofline",   "eol",  P_BOOL|P_NO_MKRC|P_RSTAT,
+   (char_u *)&p_eol, PV_EOL, (char_u *)TRUE
+   SCRIPTID_INIT},
+  {"equalalways", "ea",   P_BOOL|P_RALL,
+   (char_u *)&p_ea, PV_NONE, (char_u *)TRUE
+   SCRIPTID_INIT},
+  {"equalprg",    "ep",   P_STRING|P_EXPAND|P_SECURE,
+   (char_u *)&p_ep, PV_EP, (char_u *)""
+   SCRIPTID_INIT},
+  {"errorbells",  "eb",   P_BOOL,
+   (char_u *)&p_eb, PV_NONE, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"errorfile",   "ef",   P_STRING|P_EXPAND|P_SECURE,
+   (char_u *)&p_ef, PV_NONE, (char_u *)DFLT_ERRORFILE
+   SCRIPTID_INIT},
+  {"errorformat", "efm",  P_STRING|P_COMMA|P_NODUP,
+   (char_u *)&p_efm, PV_EFM, (char_u *)DFLT_EFM
+   SCRIPTID_INIT},
+  {"esckeys",     "ek",   P_BOOL,
+   (char_u *)&p_ek, PV_NONE, (char_u *)TRUE
+   SCRIPTID_INIT},
+  {"eventignore", "ei",   P_STRING|P_COMMA|P_NODUP,
+   (char_u *)&p_ei, PV_NONE, (char_u *)""
+   SCRIPTID_INIT},
+  {"expandtab",   "et",   P_BOOL,
+   (char_u *)&p_et, PV_ET, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"exrc",        "ex",   P_BOOL|P_SECURE,
+   (char_u *)&p_exrc, PV_NONE, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"fileencoding","fenc", P_STRING|P_ALLOCED|P_RSTAT|P_RBUF|P_NO_MKRC,
+   (char_u *)&p_fenc, PV_FENC, (char_u *)""
+   SCRIPTID_INIT},
+  {"fileencodings","fencs", P_STRING|P_COMMA,
+   (char_u *)&p_fencs, PV_NONE, (char_u *)"ucs-bom"
+   SCRIPTID_INIT},
+  {"fileformat",  "ff",   P_STRING|P_ALLOCED|P_RSTAT|P_NO_MKRC|
    P_CURSWANT,
-   (char_u *)&p_ff, PV_FF,
-   {(char_u *)DFLT_FF, (char_u *)0L} SCRIPTID_INIT},
-  {"fileformats", "ffs",  P_STRING|P_VIM|P_COMMA|P_NODUP,
-   (char_u *)&p_ffs, PV_NONE,
-   {(char_u *)DFLT_FFS_VI, (char_u *)DFLT_FFS_VIM}
+   (char_u *)&p_ff, PV_FF, (char_u *)DFLT_FF
    SCRIPTID_INIT},
-  {"fileignorecase", "fic", P_BOOL|P_VI_DEF,
+  {"fileformats", "ffs",  P_STRING|P_COMMA|P_NODUP,
+   (char_u *)&p_ffs, PV_NONE, (char_u *)DFLT_FFS_VIM
+   SCRIPTID_INIT},
+  {"fileignorecase", "fic", P_BOOL,
    (char_u *)&p_fic, PV_NONE,
-   {
 #ifdef CASE_INSENSITIVE_FILENAME
-     (char_u *)TRUE,
+     (char_u *)TRUE
 #else
-     (char_u *)FALSE,
+     (char_u *)FALSE
 #endif
-     (char_u *)0L
-   } SCRIPTID_INIT},
-  {"filetype",    "ft",   P_STRING|P_ALLOCED|P_VI_DEF|P_NOGLOB|P_NFNAME,
-   (char_u *)&p_ft, PV_FT,
-   {(char_u *)"", (char_u *)0L}
    SCRIPTID_INIT},
-  {"fillchars",   "fcs",  P_STRING|P_VI_DEF|P_RALL|P_COMMA|P_NODUP,
-   (char_u *)&p_fcs, PV_NONE,
-   {(char_u *)"vert:|,fold:-", (char_u *)0L}
+  {"filetype",    "ft",   P_STRING|P_ALLOCED|P_NOGLOB|P_NFNAME,
+   (char_u *)&p_ft, PV_FT, (char_u *)""
    SCRIPTID_INIT},
-  {"fkmap",       "fk",   P_BOOL|P_VI_DEF,
-   (char_u *)&p_fkmap, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"flash",       "fl",   P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"foldclose",   "fcl",  P_STRING|P_VI_DEF|P_COMMA|P_NODUP|P_RWIN,
-   (char_u *)&p_fcl, PV_NONE,
-   {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
-  {"foldcolumn",  "fdc",  P_NUM|P_VI_DEF|P_RWIN,
-   (char_u *)VAR_WIN, PV_FDC,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"foldenable",  "fen",  P_BOOL|P_VI_DEF|P_RWIN,
-   (char_u *)VAR_WIN, PV_FEN,
-   {(char_u *)TRUE, (char_u *)0L} SCRIPTID_INIT},
-  {"foldexpr",    "fde",  P_STRING|P_ALLOCED|P_VIM|P_VI_DEF|P_RWIN,
-   (char_u *)VAR_WIN, PV_FDE,
-   {(char_u *)"0", (char_u *)NULL}
+  {"fillchars",   "fcs",  P_STRING|P_RALL|P_COMMA|P_NODUP,
+   (char_u *)&p_fcs, PV_NONE, (char_u *)"vert:|,fold:-"
    SCRIPTID_INIT},
-  {"foldignore",  "fdi",  P_STRING|P_ALLOCED|P_VIM|P_VI_DEF|P_RWIN,
-   (char_u *)VAR_WIN, PV_FDI,
-   {(char_u *)"#", (char_u *)NULL} SCRIPTID_INIT},
-  {"foldlevel",   "fdl",  P_NUM|P_VI_DEF|P_RWIN,
-   (char_u *)VAR_WIN, PV_FDL,
-   {(char_u *)0L, (char_u *)0L} SCRIPTID_INIT},
-  {"foldlevelstart","fdls", P_NUM|P_VI_DEF|P_CURSWANT,
-   (char_u *)&p_fdls, PV_NONE,
-   {(char_u *)-1L, (char_u *)0L} SCRIPTID_INIT},
-  {"foldmarker",  "fmr",  P_STRING|P_ALLOCED|P_VIM|P_VI_DEF|
-   P_RWIN|P_COMMA|P_NODUP,
-   (char_u *)VAR_WIN, PV_FMR,
-   {(char_u *)"{{{,}}}", (char_u *)NULL}
+  {"fkmap",       "fk",   P_BOOL,
+   (char_u *)&p_fkmap, PV_NONE, (char_u *)FALSE
    SCRIPTID_INIT},
-  {"foldmethod",  "fdm",  P_STRING|P_ALLOCED|P_VIM|P_VI_DEF|P_RWIN,
-   (char_u *)VAR_WIN, PV_FDM,
-   {(char_u *)"manual", (char_u *)NULL} SCRIPTID_INIT},
-  {"foldminlines","fml",  P_NUM|P_VI_DEF|P_RWIN,
-   (char_u *)VAR_WIN, PV_FML,
-   {(char_u *)1L, (char_u *)0L} SCRIPTID_INIT},
-  {"foldnestmax", "fdn",  P_NUM|P_VI_DEF|P_RWIN,
-   (char_u *)VAR_WIN, PV_FDN,
-   {(char_u *)20L, (char_u *)0L} SCRIPTID_INIT},
-  {"foldopen",    "fdo",  P_STRING|P_VI_DEF|P_COMMA|P_NODUP|P_CURSWANT,
+  {"flash",       "fl",   P_BOOL,
+   (char_u *)NULL, PV_NONE, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"foldclose",   "fcl",  P_STRING|P_COMMA|P_NODUP|P_RWIN,
+   (char_u *)&p_fcl, PV_NONE, (char_u *)""
+   SCRIPTID_INIT},
+  {"foldcolumn",  "fdc",  P_NUM|P_RWIN,
+   (char_u *)VAR_WIN, PV_FDC, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"foldenable",  "fen",  P_BOOL|P_RWIN,
+   (char_u *)VAR_WIN, PV_FEN, (char_u *)TRUE
+   SCRIPTID_INIT},
+  {"foldexpr",    "fde",  P_STRING|P_ALLOCED|P_RWIN,
+   (char_u *)VAR_WIN, PV_FDE, (char_u *)"0"
+   SCRIPTID_INIT},
+  {"foldignore",  "fdi",  P_STRING|P_ALLOCED|P_RWIN,
+   (char_u *)VAR_WIN, PV_FDI, (char_u *)"#"
+   SCRIPTID_INIT},
+  {"foldlevel",   "fdl",  P_NUM|P_RWIN,
+   (char_u *)VAR_WIN, PV_FDL, (char_u *)0L
+   SCRIPTID_INIT},
+  {"foldlevelstart","fdls", P_NUM|P_CURSWANT,
+   (char_u *)&p_fdls, PV_NONE, (char_u *)-1L
+   SCRIPTID_INIT},
+  {"foldmarker",  "fmr",  P_STRING|P_ALLOCED|P_RWIN|P_COMMA|P_NODUP,
+   (char_u *)VAR_WIN, PV_FMR, (char_u *)"{{{,}}}"
+   SCRIPTID_INIT},
+  {"foldmethod",  "fdm",  P_STRING|P_ALLOCED|P_RWIN,
+   (char_u *)VAR_WIN, PV_FDM, (char_u *)"manual"
+   SCRIPTID_INIT},
+  {"foldminlines","fml",  P_NUM|P_RWIN,
+   (char_u *)VAR_WIN, PV_FML, (char_u *)1L
+   SCRIPTID_INIT},
+  {"foldnestmax", "fdn",  P_NUM|P_RWIN,
+   (char_u *)VAR_WIN, PV_FDN, (char_u *)20L
+   SCRIPTID_INIT},
+  {"foldopen",    "fdo",  P_STRING|P_COMMA|P_NODUP|P_CURSWANT,
    (char_u *)&p_fdo, PV_NONE,
-   {(char_u *)"block,hor,mark,percent,quickfix,search,tag,undo",
-    (char_u *)0L} SCRIPTID_INIT},
-  {"foldtext",    "fdt",  P_STRING|P_ALLOCED|P_VIM|P_VI_DEF|P_RWIN,
-   (char_u *)VAR_WIN, PV_FDT,
-   {(char_u *)"foldtext()", (char_u *)NULL}
+   (char_u *)"block,hor,mark,percent,quickfix,search,tag,undo"
    SCRIPTID_INIT},
-  {"formatexpr", "fex",   P_STRING|P_ALLOCED|P_VI_DEF|P_VIM,
-   (char_u *)&p_fex, PV_FEX,
-   {(char_u *)"", (char_u *)0L}
+  {"foldtext",    "fdt",  P_STRING|P_ALLOCED|P_RWIN,
+   (char_u *)VAR_WIN, PV_FDT, (char_u *)"foldtext()"
    SCRIPTID_INIT},
-  {"formatoptions","fo",  P_STRING|P_ALLOCED|P_VIM|P_FLAGLIST,
-   (char_u *)&p_fo, PV_FO,
-   {(char_u *)DFLT_FO_VI, (char_u *)DFLT_FO_VIM}
+  {"formatexpr", "fex",   P_STRING|P_ALLOCED,
+   (char_u *)&p_fex, PV_FEX, (char_u *)""
    SCRIPTID_INIT},
-  {"formatlistpat","flp", P_STRING|P_ALLOCED|P_VI_DEF,
+  {"formatoptions","fo",  P_STRING|P_ALLOCED|P_FLAGLIST,
+   (char_u *)&p_fo, PV_FO, (char_u *)DFLT_FO_VIM
+   SCRIPTID_INIT},
+  {"formatlistpat","flp", P_STRING|P_ALLOCED,
    (char_u *)&p_flp, PV_FLP,
-   {(char_u *)"^\\s*\\d\\+[\\]:.)}\\t ]\\s*",
-    (char_u *)0L} SCRIPTID_INIT},
-  {"formatprg",   "fp",   P_STRING|P_EXPAND|P_VI_DEF|P_SECURE,
-   (char_u *)&p_fp, PV_NONE,
-   {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
-  {"fsync",       "fs",   P_BOOL|P_SECURE|P_VI_DEF,
+   (char_u *)"^\\s*\\d\\+[\\]:.)}\\t ]\\s*"
+   SCRIPTID_INIT},
+  {"formatprg",   "fp",   P_STRING|P_EXPAND|P_SECURE,
+   (char_u *)&p_fp, PV_NONE, (char_u *)""
+   SCRIPTID_INIT},
+  {"fsync",       "fs",   P_BOOL|P_SECURE,
 #ifdef HAVE_FSYNC
-   (char_u *)&p_fs, PV_NONE,
-   {(char_u *)TRUE, (char_u *)0L}
+   (char_u *)&p_fs, PV_NONE, (char_u *)TRUE
 #else
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L}
+   (char_u *)NULL, PV_NONE, (char_u *)FALSE
 #endif
    SCRIPTID_INIT},
-  {"gdefault",    "gd",   P_BOOL|P_VI_DEF|P_VIM,
-   (char_u *)&p_gd, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"graphic",     "gr",   P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"grepformat",  "gfm",  P_STRING|P_VI_DEF|P_COMMA|P_NODUP,
-   (char_u *)&p_gefm, PV_NONE,
-   {(char_u *)DFLT_GREPFORMAT, (char_u *)0L}
+  {"gdefault",    "gd",   P_BOOL,
+   (char_u *)&p_gd, PV_NONE, (char_u *)FALSE
    SCRIPTID_INIT},
-  {"grepprg",     "gp",   P_STRING|P_EXPAND|P_VI_DEF|P_SECURE,
+  {"graphic",     "gr",   P_BOOL,
+   (char_u *)NULL, PV_NONE, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"grepformat",  "gfm",  P_STRING|P_COMMA|P_NODUP,
+   (char_u *)&p_gefm, PV_NONE, (char_u *)DFLT_GREPFORMAT
+   SCRIPTID_INIT},
+  {"grepprg",     "gp",   P_STRING|P_EXPAND|P_SECURE,
    (char_u *)&p_gp, PV_GP,
-   {
 #  ifdef UNIX
      /* Add an extra file name so that grep will always
       * insert a file name in the match line. */
-     (char_u *)"grep -n $* /dev/null",
+     (char_u *)"grep -n $* /dev/null"
 #  else
-     (char_u *)"grep -n ",
+     (char_u *)"grep -n "
 #  endif
-     (char_u *)0L
-   }
    SCRIPTID_INIT},
-  {"guicursor",    "gcr",  P_STRING|P_VI_DEF|P_COMMA|P_NODUP,
+  {"guicursor",    "gcr",  P_STRING|P_COMMA|P_NODUP,
    (char_u *)&p_guicursor, PV_NONE,
-   {
-     (char_u *)"n-v-c:block,o:hor50,i-ci:hor15,r-cr:hor30,sm:block",
-     (char_u *)0L
-   }
+   (char_u *)"n-v-c:block,o:hor50,i-ci:hor15,r-cr:hor30,sm:block"
    SCRIPTID_INIT},
-  {"guifont",     "gfn",  P_STRING|P_VI_DEF|P_RCLR|P_COMMA|P_NODUP,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)NULL, (char_u *)0L}
+  {"guifont",     "gfn",  P_STRING|P_RCLR|P_COMMA|P_NODUP,
+   (char_u *)NULL, PV_NONE, (char_u *)NULL
    SCRIPTID_INIT},
-  {"guifontset",  "gfs",  P_STRING|P_VI_DEF|P_RCLR|P_COMMA,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)NULL, (char_u *)0L}
+  {"guifontset",  "gfs",  P_STRING|P_RCLR|P_COMMA,
+   (char_u *)NULL, PV_NONE, (char_u *)NULL
    SCRIPTID_INIT},
-  {"guifontwide", "gfw",  P_STRING|P_VI_DEF|P_RCLR|P_COMMA|P_NODUP,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)NULL, (char_u *)0L}
+  {"guifontwide", "gfw",  P_STRING|P_RCLR|P_COMMA|P_NODUP,
+   (char_u *)NULL, PV_NONE, (char_u *)NULL
    SCRIPTID_INIT},
-  {"guiheadroom", "ghr",  P_NUM|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)50L, (char_u *)0L} SCRIPTID_INIT},
-  {"guioptions",  "go",   P_STRING|P_VI_DEF|P_RALL|P_FLAGLIST,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)NULL, (char_u *)0L}
+  {"guiheadroom", "ghr",  P_NUM,
+   (char_u *)NULL, PV_NONE, (char_u *)50L
    SCRIPTID_INIT},
-  {"guipty",      NULL,   P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)TRUE, (char_u *)0L} SCRIPTID_INIT},
-  {"guitablabel",  "gtl", P_STRING|P_VI_DEF|P_RWIN,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)NULL, (char_u *)0L}
+  {"guioptions",  "go",   P_STRING|P_RALL|P_FLAGLIST,
+   (char_u *)NULL, PV_NONE, (char_u *)NULL
    SCRIPTID_INIT},
-  {"guitabtooltip",  "gtt", P_STRING|P_VI_DEF|P_RWIN,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)NULL, (char_u *)0L}
+  {"guipty",      NULL,   P_BOOL,
+   (char_u *)NULL, PV_NONE, (char_u *)TRUE
+   SCRIPTID_INIT},
+  {"guitablabel",  "gtl", P_STRING|P_RWIN,
+   (char_u *)NULL, PV_NONE, (char_u *)NULL
+   SCRIPTID_INIT},
+  {"guitabtooltip",  "gtt", P_STRING|P_RWIN,
+   (char_u *)NULL, PV_NONE, (char_u *)NULL
    SCRIPTID_INIT},
   {"hardtabs",    "ht",   P_NUM|P_VI_DEF,
    (char_u *)NULL, PV_NONE,
