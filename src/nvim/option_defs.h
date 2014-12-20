@@ -292,7 +292,7 @@ EXTERN char_u   *p_bs;          /* 'backspace' */
 EXTERN char_u   *p_bg;          /* 'background' */
 EXTERN int p_bk;                /* 'backup' */
 EXTERN char_u   *p_bkc;         /* 'backupcopy' */
-EXTERN unsigned bkc_flags;
+EXTERN unsigned int bkc_flags;  ///< flags from 'backupcopy'
 #ifdef IN_OPTION_C
 static char *(p_bkc_values[]) =
 {"yes", "auto", "no", "breaksymlink", "breakhardlink", NULL};
@@ -643,6 +643,7 @@ enum {
   BV_AI = 0
   , BV_AR
   , BV_BH
+  , BV_BKC
   , BV_BT
   , BV_EFM
   , BV_GP

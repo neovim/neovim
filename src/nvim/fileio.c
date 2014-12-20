@@ -2313,6 +2313,7 @@ buf_write (
 #endif
   int write_undo_file = FALSE;
   context_sha256_T sha_ctx;
+  unsigned int bkc = get_bkc_value(buf);
 
   if (fname == NULL || *fname == NUL)   /* safety check */
     return FAIL;
@@ -2701,9 +2702,9 @@ buf_write (
   if (!(append && *p_pm == NUL) && !filtering && perm >= 0 && dobackup) {
     FileInfo file_info;
 
-    if ((bkc_flags & BKC_YES) || append) {       /* "yes" */
+    if ((bkc & BKC_YES) || append) {       /* "yes" */
       backup_copy = TRUE;
-    } else if ((bkc_flags & BKC_AUTO)) {          /* "auto" */
+    } else if ((bkc & BKC_AUTO)) {          /* "auto" */
       int i;
 
 # ifdef UNIX
@@ -2758,19 +2759,19 @@ buf_write (
     /*
      * Break symlinks and/or hardlinks if we've been asked to.
      */
-    if ((bkc_flags & BKC_BREAKSYMLINK) || (bkc_flags & BKC_BREAKHARDLINK)) {
+    if ((bkc & BKC_BREAKSYMLINK) || (bkc & BKC_BREAKHARDLINK)) {
 # ifdef UNIX
       bool file_info_link_ok = os_fileinfo_link((char *)fname, &file_info);
 
       /* Symlinks. */
-      if ((bkc_flags & BKC_BREAKSYMLINK)
+      if ((bkc & BKC_BREAKSYMLINK)
           && file_info_link_ok
           && !os_fileinfo_id_equal(&file_info, &file_info_old)) {
         backup_copy = FALSE;
       }
 
       /* Hardlinks. */
-      if ((bkc_flags & BKC_BREAKHARDLINK)
+      if ((bkc & BKC_BREAKHARDLINK)
           && os_fileinfo_hardlinks(&file_info_old) > 1
           && (!file_info_link_ok
               || os_fileinfo_id_equal(&file_info, &file_info_old))) {
