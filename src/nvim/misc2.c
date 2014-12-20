@@ -285,9 +285,7 @@ int default_fileformat(void)
   return EOL_UNIX;
 }
 
-/*
- * Call shell.	Calls mch_call_shell, with 'shellxquote' added.
- */
+// Call shell. Calls os_call_shell, with 'shellxquote' added.
 int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
 {
   char_u      *ncmd;

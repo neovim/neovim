@@ -1118,7 +1118,7 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
 
   free(command);
 
-  if (i != 0) {                         /* mch_call_shell() failed */
+  if (i) {                         /* os_call_shell() failed */
     os_remove((char *)tempname);
     free(tempname);
     /*
