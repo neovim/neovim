@@ -1758,7 +1758,7 @@ buflist_findpat (
         FOR_ALL_BUFFERS(buf) {
           if (buf->b_p_bl == find_listed
               && (!diffmode || diff_mode_buf(buf))
-              && buflist_match(prog, buf) != NULL) {
+              && buflist_match(prog, buf, false) != NULL) {
             if (curtab_only) {
               /* Ignore the match if the buffer is not open in
                * the current tab. */
@@ -1852,7 +1852,7 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
       FOR_ALL_BUFFERS(buf) {
         if (!buf->b_p_bl)               /* skip unlisted buffers */
           continue;
-        p = buflist_match(prog, buf);
+        p = buflist_match(prog, buf, p_wic);
         if (p != NULL) {
           if (round == 1)
             ++count;
@@ -1885,26 +1885,27 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
 
 
 #ifdef HAVE_BUFLIST_MATCH
-/*
- * Check for a match on the file name for buffer "buf" with regprog "prog".
- */
-static char_u *buflist_match(regprog_T *prog, buf_T *buf)
+/// Check for a match on the file name for buffer "buf" with regprog "prog".
+///
+/// @param ignore_case When TRUE, ignore case. Use 'fic' otherwise.
+static char_u *buflist_match(regprog_T *prog, buf_T *buf, bool ignore_case)
 {
   char_u      *match;
 
   /* First try the short file name, then the long file name. */
-  match = fname_match(prog, buf->b_sfname);
-  if (match == NULL)
-    match = fname_match(prog, buf->b_ffname);
+  match = fname_match(prog, buf->b_sfname, ignore_case);
+  if (match == NULL) {
+    match = fname_match(prog, buf->b_ffname, ignore_case);
+  }
 
   return match;
 }
 
-/*
- * Try matching the regexp in "prog" with file name "name".
- * Return "name" when there is a match, NULL when not.
- */
-static char_u *fname_match(regprog_T *prog, char_u *name)
+/// Try matching the regexp in "prog" with file name "name".
+///
+/// @param ignore_case When TRUE, ignore case. Use 'fileignorecase' otherwise.
+/// @return "name" when there is a match, NULL when not.
+static char_u *fname_match(regprog_T *prog, char_u *name, bool ignore_case)
 {
   char_u      *match = NULL;
   char_u      *p;
@@ -1912,7 +1913,8 @@ static char_u *fname_match(regprog_T *prog, char_u *name)
 
   if (name != NULL) {
     regmatch.regprog = prog;
-    regmatch.rm_ic = p_fic;     /* ignore case when 'fileignorecase' is set */
+    // Ignore case when 'fileignorecase' or the argument is set.
+    regmatch.rm_ic = p_fic || ignore_case;
     if (vim_regexec(&regmatch, name, (colnr_T)0))
       match = name;
     else {

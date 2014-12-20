@@ -369,7 +369,7 @@ EXTERN int p_ek;                /* 'esckeys' */
 EXTERN int p_exrc;              /* 'exrc' */
 EXTERN char_u   *p_fencs;       /* 'fileencodings' */
 EXTERN char_u   *p_ffs;         /* 'fileformats' */
-EXTERN long p_fic;              /* 'fileignorecase' */
+EXTERN bool p_fic;              ///< 'fileignorecase'
 EXTERN char_u   *p_fcl;         /* 'foldclose' */
 EXTERN long p_fdls;             /* 'foldlevelstart' */
 EXTERN char_u   *p_fdo;         /* 'foldopen' */
@@ -621,7 +621,7 @@ EXTERN int p_wiv;               /* 'weirdinvert' */
 EXTERN char_u   *p_ww;          /* 'whichwrap' */
 EXTERN long p_wc;               /* 'wildchar' */
 EXTERN long p_wcm;              /* 'wildcharm' */
-EXTERN long p_wic;              /* 'wildignorecase' */
+EXTERN bool p_wic;              ///< 'wildignorecase'
 EXTERN char_u   *p_wim;         /* 'wildmode' */
 EXTERN int p_wmnu;              /* 'wildmenu' */
 EXTERN long p_wh;               /* 'winheight' */
