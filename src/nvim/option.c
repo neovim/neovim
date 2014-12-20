@@ -951,244 +951,212 @@ static struct vimoption
   {"loadplugins", "lpl",  P_BOOL,
    (char_u *)&p_lpl, PV_NONE, (char_u *)TRUE
    SCRIPTID_INIT},
-  {"magic",       NULL,   P_BOOL|P_VI_DEF,
-   (char_u *)&p_magic, PV_NONE,
-   {(char_u *)TRUE, (char_u *)0L} SCRIPTID_INIT},
-  {"makeef",      "mef",  P_STRING|P_EXPAND|P_VI_DEF|P_SECURE,
-   (char_u *)&p_mef, PV_NONE,
-   {(char_u *)"", (char_u *)0L}
+  {"magic",       NULL,   P_BOOL,
+   (char_u *)&p_magic, PV_NONE, (char_u *)TRUE
    SCRIPTID_INIT},
-  {"makeprg",     "mp",   P_STRING|P_EXPAND|P_VI_DEF|P_SECURE,
-   (char_u *)&p_mp, PV_MP,
-   {(char_u *)"make", (char_u *)0L}
+  {"makeef",      "mef",  P_STRING|P_EXPAND|P_SECURE,
+   (char_u *)&p_mef, PV_NONE, (char_u *)""
    SCRIPTID_INIT},
-  {"matchpairs",  "mps",  P_STRING|P_ALLOCED|P_VI_DEF|P_COMMA|P_NODUP,
-   (char_u *)&p_mps, PV_MPS,
-   {(char_u *)"(:),{:},[:]", (char_u *)0L}
+  {"makeprg",     "mp",   P_STRING|P_EXPAND|P_SECURE,
+   (char_u *)&p_mp, PV_MP, (char_u *)"make"
    SCRIPTID_INIT},
-  {"matchtime",   "mat",  P_NUM|P_VI_DEF,
-   (char_u *)&p_mat, PV_NONE,
-   {(char_u *)5L, (char_u *)0L} SCRIPTID_INIT},
-  {"maxcombine",  "mco",  P_NUM|P_VI_DEF|P_CURSWANT,
-   (char_u *)&p_mco, PV_NONE,
-   {(char_u *)2, (char_u *)0L} SCRIPTID_INIT},
-  {"maxfuncdepth", "mfd", P_NUM|P_VI_DEF,
-   (char_u *)&p_mfd, PV_NONE,
-   {(char_u *)100L, (char_u *)0L} SCRIPTID_INIT},
-  {"maxmapdepth", "mmd",  P_NUM|P_VI_DEF,
-   (char_u *)&p_mmd, PV_NONE,
-   {(char_u *)1000L, (char_u *)0L} SCRIPTID_INIT},
-  {"maxmem",      "mm",   P_NUM|P_VI_DEF,
-   (char_u *)&p_mm, PV_NONE,
-   {(char_u *)DFLT_MAXMEM, (char_u *)0L}
+  {"matchpairs",  "mps",  P_STRING|P_ALLOCED|P_COMMA|P_NODUP,
+   (char_u *)&p_mps, PV_MPS, (char_u *)"(:),{:},[:]"
    SCRIPTID_INIT},
-  {"maxmempattern","mmp", P_NUM|P_VI_DEF,
-   (char_u *)&p_mmp, PV_NONE,
-   {(char_u *)1000L, (char_u *)0L} SCRIPTID_INIT},
-  {"maxmemtot",   "mmt",  P_NUM|P_VI_DEF,
-   (char_u *)&p_mmt, PV_NONE,
-   {(char_u *)DFLT_MAXMEMTOT, (char_u *)0L}
+  {"matchtime",   "mat",  P_NUM,
+   (char_u *)&p_mat, PV_NONE, (char_u *)5L
    SCRIPTID_INIT},
-  {"menuitems",   "mis",  P_NUM|P_VI_DEF,
-   (char_u *)&p_mis, PV_NONE,
-   {(char_u *)25L, (char_u *)0L} SCRIPTID_INIT},
-  {"mesg",        NULL,   P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"mkspellmem",  "msm",  P_STRING|P_VI_DEF|P_EXPAND|P_SECURE,
-   (char_u *)&p_msm, PV_NONE,
-   {(char_u *)"460000,2000,500", (char_u *)0L}
+  {"maxcombine",  "mco",  P_NUM|P_CURSWANT,
+   (char_u *)&p_mco, PV_NONE, (char_u *)2
    SCRIPTID_INIT},
-  {"modeline",    "ml",   P_BOOL|P_VIM,
-   (char_u *)&p_ml, PV_ML,
-   {(char_u *)FALSE, (char_u *)TRUE} SCRIPTID_INIT},
-  {"modelines",   "mls",  P_NUM|P_VI_DEF,
-   (char_u *)&p_mls, PV_NONE,
-   {(char_u *)5L, (char_u *)0L} SCRIPTID_INIT},
-  {"modifiable",  "ma",   P_BOOL|P_VI_DEF|P_NOGLOB,
-   (char_u *)&p_ma, PV_MA,
-   {(char_u *)TRUE, (char_u *)0L} SCRIPTID_INIT},
-  {"modified",    "mod",  P_BOOL|P_NO_MKRC|P_VI_DEF|P_RSTAT,
-   (char_u *)&p_mod, PV_MOD,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"more",        NULL,   P_BOOL|P_VIM,
-   (char_u *)&p_more, PV_NONE,
-   {(char_u *)FALSE, (char_u *)TRUE} SCRIPTID_INIT},
-  {"mouse",       NULL,   P_STRING|P_VI_DEF|P_FLAGLIST,
-   (char_u *)&p_mouse, PV_NONE,
-   {
-     (char_u *)"",
-     (char_u *)0L
-   } SCRIPTID_INIT},
-  {"mousefocus",   "mousef", P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"mousehide",   "mh",   P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)TRUE, (char_u *)0L} SCRIPTID_INIT},
-  {"mousemodel",  "mousem", P_STRING|P_VI_DEF,
-   (char_u *)&p_mousem, PV_NONE,
-   {
-     (char_u *)"extend",
-     (char_u *)0L
-   } SCRIPTID_INIT},
-  {"mouseshape",  "mouses",  P_STRING|P_VI_DEF|P_COMMA|P_NODUP,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)NULL, (char_u *)0L}
+  {"maxfuncdepth", "mfd", P_NUM,
+   (char_u *)&p_mfd, PV_NONE, (char_u *)100L
    SCRIPTID_INIT},
-  {"mousetime",   "mouset",   P_NUM|P_VI_DEF,
-   (char_u *)&p_mouset, PV_NONE,
-   {(char_u *)500L, (char_u *)0L} SCRIPTID_INIT},
-  {"novice",      NULL,   P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"nrformats",   "nf",   P_STRING|P_ALLOCED|P_VI_DEF|P_COMMA|P_NODUP,
-   (char_u *)&p_nf, PV_NF,
-   {(char_u *)"octal,hex", (char_u *)0L}
+  {"maxmapdepth", "mmd",  P_NUM,
+   (char_u *)&p_mmd, PV_NONE, (char_u *)1000L
    SCRIPTID_INIT},
-  {"number",      "nu",   P_BOOL|P_VI_DEF|P_RWIN,
-   (char_u *)VAR_WIN, PV_NU,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"numberwidth", "nuw",  P_NUM|P_RWIN|P_VIM,
-   (char_u *)VAR_WIN, PV_NUW,
-   {(char_u *)8L, (char_u *)4L} SCRIPTID_INIT},
-  {"omnifunc",    "ofu",  P_STRING|P_ALLOCED|P_VI_DEF|P_SECURE,
-   (char_u *)&p_ofu, PV_OFU,
-   {(char_u *)"", (char_u *)0L}
+  {"maxmem",      "mm",   P_NUM,
+   (char_u *)&p_mm, PV_NONE, (char_u *)DFLT_MAXMEM
    SCRIPTID_INIT},
-  {"open",        NULL,   P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"opendevice",  "odev", P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)FALSE, (char_u *)FALSE}
+  {"maxmempattern","mmp", P_NUM,
+   (char_u *)&p_mmp, PV_NONE, (char_u *)1000L
    SCRIPTID_INIT},
-  {"operatorfunc", "opfunc", P_STRING|P_VI_DEF|P_SECURE,
-   (char_u *)&p_opfunc, PV_NONE,
-   {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
-  {"optimize",    "opt",  P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"paragraphs",  "para", P_STRING|P_VI_DEF,
+  {"maxmemtot",   "mmt",  P_NUM,
+   (char_u *)&p_mmt, PV_NONE, (char_u *)DFLT_MAXMEMTOT
+   SCRIPTID_INIT},
+  {"menuitems",   "mis",  P_NUM,
+   (char_u *)&p_mis, PV_NONE, (char_u *)25L
+   SCRIPTID_INIT},
+  {"mesg",        NULL,   P_BOOL,
+   (char_u *)NULL, PV_NONE, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"mkspellmem",  "msm",  P_STRING|P_EXPAND|P_SECURE,
+   (char_u *)&p_msm, PV_NONE, (char_u *)"460000,2000,500"
+   SCRIPTID_INIT},
+  {"modeline",    "ml",   P_BOOL,
+   (char_u *)&p_ml, PV_ML, (char_u *)TRUE
+   SCRIPTID_INIT},
+  {"modelines",   "mls",  P_NUM,
+   (char_u *)&p_mls, PV_NONE, (char_u *)5L
+   SCRIPTID_INIT},
+  {"modifiable",  "ma",   P_BOOL|P_NOGLOB,
+   (char_u *)&p_ma, PV_MA, (char_u *)TRUE
+   SCRIPTID_INIT},
+  {"modified",    "mod",  P_BOOL|P_NO_MKRC|P_RSTAT,
+   (char_u *)&p_mod, PV_MOD, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"more",        NULL,   P_BOOL,
+   (char_u *)&p_more, PV_NONE, (char_u *)TRUE
+   SCRIPTID_INIT},
+  {"mouse",       NULL,   P_STRING|P_FLAGLIST,
+   (char_u *)&p_mouse, PV_NONE, (char_u *)""
+   SCRIPTID_INIT},
+  {"mousefocus",   "mousef", P_BOOL,
+   (char_u *)NULL, PV_NONE, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"mousehide",   "mh",   P_BOOL,
+   (char_u *)NULL, PV_NONE, (char_u *)TRUE
+   SCRIPTID_INIT},
+  {"mousemodel",  "mousem", P_STRING,
+   (char_u *)&p_mousem, PV_NONE, (char_u *)"extend"
+   SCRIPTID_INIT},
+  {"mouseshape",  "mouses",  P_STRING|P_COMMA|P_NODUP,
+   (char_u *)NULL, PV_NONE, (char_u *)NULL
+   SCRIPTID_INIT},
+  {"mousetime",   "mouset",   P_NUM,
+   (char_u *)&p_mouset, PV_NONE, (char_u *)500L
+   SCRIPTID_INIT},
+  {"novice",      NULL,   P_BOOL,
+   (char_u *)NULL, PV_NONE, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"nrformats",   "nf",   P_STRING|P_ALLOCED|P_COMMA|P_NODUP,
+   (char_u *)&p_nf, PV_NF, (char_u *)"octal,hex"
+   SCRIPTID_INIT},
+  {"number",      "nu",   P_BOOL|P_RWIN,
+   (char_u *)VAR_WIN, PV_NU, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"numberwidth", "nuw",  P_NUM|P_RWIN,
+   (char_u *)VAR_WIN, PV_NUW, (char_u *)4L
+   SCRIPTID_INIT},
+  {"omnifunc",    "ofu",  P_STRING|P_ALLOCED|P_SECURE,
+   (char_u *)&p_ofu, PV_OFU, (char_u *)""
+   SCRIPTID_INIT},
+  {"open",        NULL,   P_BOOL,
+   (char_u *)NULL, PV_NONE, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"opendevice",  "odev", P_BOOL,
+   (char_u *)NULL, PV_NONE, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"operatorfunc", "opfunc", P_STRING|P_SECURE,
+   (char_u *)&p_opfunc, PV_NONE, (char_u *)""
+   SCRIPTID_INIT},
+  {"optimize",    "opt",  P_BOOL,
+   (char_u *)NULL, PV_NONE, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"paragraphs",  "para", P_STRING,
    (char_u *)&p_para, PV_NONE,
-   {(char_u *)"IPLPPPQPP TPHPLIPpLpItpplpipbp",
-    (char_u *)0L} SCRIPTID_INIT},
-  {"paste",       NULL,   P_BOOL|P_VI_DEF|P_PRI_MKRC,
-   (char_u *)&p_paste, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"pastetoggle", "pt",   P_STRING|P_VI_DEF,
-   (char_u *)&p_pt, PV_NONE,
-   {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
-  {"patchexpr",   "pex",  P_STRING|P_VI_DEF|P_SECURE,
-   (char_u *)&p_pex, PV_NONE,
-   {(char_u *)"", (char_u *)0L}
+   (char_u *)"IPLPPPQPP TPHPLIPpLpItpplpipbp"
    SCRIPTID_INIT},
-  {"patchmode",   "pm",   P_STRING|P_VI_DEF|P_NFNAME,
-   (char_u *)&p_pm, PV_NONE,
-   {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
-  {"path",        "pa",   P_STRING|P_EXPAND|P_VI_DEF|P_COMMA|P_NODUP,
+  {"paste",       NULL,   P_BOOL|P_PRI_MKRC,
+   (char_u *)&p_paste, PV_NONE, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"pastetoggle", "pt",   P_STRING,
+   (char_u *)&p_pt, PV_NONE, (char_u *)""
+   SCRIPTID_INIT},
+  {"patchexpr",   "pex",  P_STRING|P_SECURE,
+   (char_u *)&p_pex, PV_NONE, (char_u *)""
+   SCRIPTID_INIT},
+  {"patchmode",   "pm",   P_STRING|P_NFNAME,
+   (char_u *)&p_pm, PV_NONE, (char_u *)""
+   SCRIPTID_INIT},
+  {"path",        "pa",   P_STRING|P_EXPAND|P_COMMA|P_NODUP,
    (char_u *)&p_path, PV_PATH,
-   {
-     (char_u *)".,/usr/include,,",
-     (char_u *)0L
-   } SCRIPTID_INIT},
-  {"preserveindent", "pi", P_BOOL|P_VI_DEF|P_VIM,
-   (char_u *)&p_pi, PV_PI,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"previewheight", "pvh", P_NUM|P_VI_DEF,
-   (char_u *)&p_pvh, PV_NONE,
-   {(char_u *)12L, (char_u *)0L} SCRIPTID_INIT},
-  {"previewwindow", "pvw", P_BOOL|P_VI_DEF|P_RSTAT|P_NOGLOB,
-   (char_u *)VAR_WIN, PV_PVW,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"printdevice", "pdev", P_STRING|P_VI_DEF|P_SECURE,
-   (char_u *)&p_pdev, PV_NONE,
-   {(char_u *)"", (char_u *)0L}
+   (char_u *)".,/usr/include,,"
    SCRIPTID_INIT},
-  {"printencoding", "penc", P_STRING|P_VI_DEF,
-   (char_u *)&p_penc, PV_NONE,
-   {(char_u *)"", (char_u *)0L}
+  {"preserveindent", "pi", P_BOOL,
+   (char_u *)&p_pi, PV_PI, (char_u *)FALSE
    SCRIPTID_INIT},
-  {"printexpr", "pexpr",  P_STRING|P_VI_DEF,
-   (char_u *)&p_pexpr, PV_NONE,
-   {(char_u *)"", (char_u *)0L}
+  {"previewheight", "pvh", P_NUM,
+   (char_u *)&p_pvh, PV_NONE, (char_u *)12L
    SCRIPTID_INIT},
-  {"printfont", "pfn",    P_STRING|P_VI_DEF,
-   (char_u *)&p_pfn, PV_NONE,
-   {
-     (char_u *)"courier",
-     (char_u *)0L
-   }
+  {"previewwindow", "pvw", P_BOOL|P_RSTAT|P_NOGLOB,
+   (char_u *)VAR_WIN, PV_PVW, (char_u *)FALSE
    SCRIPTID_INIT},
-  {"printheader", "pheader",  P_STRING|P_VI_DEF|P_GETTEXT,
+  {"printdevice", "pdev", P_STRING|P_SECURE,
+   (char_u *)&p_pdev, PV_NONE, (char_u *)""
+   SCRIPTID_INIT},
+  {"printencoding", "penc", P_STRING,
+   (char_u *)&p_penc, PV_NONE, (char_u *)""
+   SCRIPTID_INIT},
+  {"printexpr", "pexpr",  P_STRING,
+   (char_u *)&p_pexpr, PV_NONE, (char_u *)""
+   SCRIPTID_INIT},
+  {"printfont", "pfn",    P_STRING,
+   (char_u *)&p_pfn, PV_NONE, (char_u *)"courier"
+   SCRIPTID_INIT},
+  {"printheader", "pheader",  P_STRING|P_GETTEXT,
    (char_u *)&p_header, PV_NONE,
-   {(char_u *)N_("%<%f%h%m%=Page %N"), (char_u *)0L}
+   (char_u *)N_("%<%f%h%m%=Page %N")
    SCRIPTID_INIT},
-  {"printmbcharset", "pmbcs",  P_STRING|P_VI_DEF,
-   (char_u *)&p_pmcs, PV_NONE,
-   {(char_u *)"", (char_u *)0L}
+  {"printmbcharset", "pmbcs",  P_STRING,
+   (char_u *)&p_pmcs, PV_NONE, (char_u *)""
    SCRIPTID_INIT},
-  {"printmbfont", "pmbfn",  P_STRING|P_VI_DEF,
-   (char_u *)&p_pmfn, PV_NONE,
-   {(char_u *)"", (char_u *)0L}
+  {"printmbfont", "pmbfn",  P_STRING,
+   (char_u *)&p_pmfn, PV_NONE, (char_u *)""
    SCRIPTID_INIT},
-  {"printoptions", "popt", P_STRING|P_VI_DEF|P_COMMA|P_NODUP,
-   (char_u *)&p_popt, PV_NONE,
-   {(char_u *)"", (char_u *)0L}
+  {"printoptions", "popt", P_STRING|P_COMMA|P_NODUP,
+   (char_u *)&p_popt, PV_NONE, (char_u *)""
    SCRIPTID_INIT},
-  {"prompt",      NULL,   P_BOOL|P_VI_DEF,
-   (char_u *)&p_prompt, PV_NONE,
-   {(char_u *)TRUE, (char_u *)0L} SCRIPTID_INIT},
-  {"pumheight",   "ph",   P_NUM|P_VI_DEF,
-   (char_u *)&p_ph, PV_NONE,
-   {(char_u *)0L, (char_u *)0L} SCRIPTID_INIT},
-  {"quoteescape", "qe",   P_STRING|P_ALLOCED|P_VI_DEF,
-   (char_u *)&p_qe, PV_QE,
-   {(char_u *)"\\", (char_u *)0L}
+  {"prompt",      NULL,   P_BOOL,
+   (char_u *)&p_prompt, PV_NONE, (char_u *)TRUE
    SCRIPTID_INIT},
-  {"readonly",    "ro",   P_BOOL|P_VI_DEF|P_RSTAT|P_NOGLOB,
-   (char_u *)&p_ro, PV_RO,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"redraw",      NULL,   P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"redrawtime",  "rdt",  P_NUM|P_VI_DEF,
-   (char_u *)&p_rdt, PV_NONE,
-   {(char_u *)2000L, (char_u *)0L} SCRIPTID_INIT},
-  {"regexpengine", "re",  P_NUM|P_VI_DEF,
-   (char_u *)&p_re, PV_NONE,
-   {(char_u *)0L, (char_u *)0L} SCRIPTID_INIT},
-  {"relativenumber", "rnu", P_BOOL|P_VI_DEF|P_RWIN,
-   (char_u *)VAR_WIN, PV_RNU,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"remap",       NULL,   P_BOOL|P_VI_DEF,
-   (char_u *)&p_remap, PV_NONE,
-   {(char_u *)TRUE, (char_u *)0L} SCRIPTID_INIT},
-  {"report",      NULL,   P_NUM|P_VI_DEF,
-   (char_u *)&p_report, PV_NONE,
-   {(char_u *)2L, (char_u *)0L} SCRIPTID_INIT},
-  {"restorescreen", "rs", P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)TRUE, (char_u *)0L} SCRIPTID_INIT},
-  {"revins",      "ri",   P_BOOL|P_VI_DEF|P_VIM,
-   (char_u *)&p_ri, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"rightleft",   "rl",   P_BOOL|P_VI_DEF|P_RWIN,
-   (char_u *)VAR_WIN, PV_RL,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"rightleftcmd", "rlc", P_STRING|P_ALLOCED|P_VI_DEF|P_RWIN,
-   (char_u *)VAR_WIN, PV_RLC,
-   {(char_u *)"search", (char_u *)NULL}
+  {"pumheight",   "ph",   P_NUM,
+   (char_u *)&p_ph, PV_NONE, (char_u *)0L
    SCRIPTID_INIT},
-  {"ruler",       "ru",   P_BOOL|P_VI_DEF|P_VIM|P_RSTAT,
-   (char_u *)&p_ru, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"rulerformat", "ruf",  P_STRING|P_VI_DEF|P_ALLOCED|P_RSTAT,
-   (char_u *)&p_ruf, PV_NONE,
-   {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
-  {"runtimepath", "rtp",  P_STRING|P_VI_DEF|P_EXPAND|P_COMMA|P_NODUP|P_SECURE,
-   (char_u *)&p_rtp, PV_NONE,
-   {(char_u *)DFLT_RUNTIMEPATH, (char_u *)0L}
+  {"quoteescape", "qe",   P_STRING|P_ALLOCED,
+   (char_u *)&p_qe, PV_QE, (char_u *)"\\"
+   SCRIPTID_INIT},
+  {"readonly",    "ro",   P_BOOL|P_RSTAT|P_NOGLOB,
+   (char_u *)&p_ro, PV_RO, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"redraw",      NULL,   P_BOOL,
+   (char_u *)NULL, PV_NONE, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"redrawtime",  "rdt",  P_NUM,
+   (char_u *)&p_rdt, PV_NONE, (char_u *)2000L
+   SCRIPTID_INIT},
+  {"regexpengine", "re",  P_NUM,
+   (char_u *)&p_re, PV_NONE, (char_u *)0L
+   SCRIPTID_INIT},
+  {"relativenumber", "rnu", P_BOOL|P_RWIN,
+   (char_u *)VAR_WIN, PV_RNU, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"remap",       NULL,   P_BOOL,
+   (char_u *)&p_remap, PV_NONE, (char_u *)TRUE
+   SCRIPTID_INIT},
+  {"report",      NULL,   P_NUM,
+   (char_u *)&p_report, PV_NONE, (char_u *)2L
+   SCRIPTID_INIT},
+  {"restorescreen", "rs", P_BOOL,
+   (char_u *)NULL, PV_NONE, (char_u *)TRUE
+   SCRIPTID_INIT},
+  {"revins",      "ri",   P_BOOL,
+   (char_u *)&p_ri, PV_NONE, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"rightleft",   "rl",   P_BOOL|P_RWIN,
+   (char_u *)VAR_WIN, PV_RL, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"rightleftcmd", "rlc", P_STRING|P_ALLOCED|P_RWIN,
+   (char_u *)VAR_WIN, PV_RLC, (char_u *)"search"
+   SCRIPTID_INIT},
+  {"ruler",       "ru",   P_BOOL|P_RSTAT,
+   (char_u *)&p_ru, PV_NONE, (char_u *)FALSE
+   SCRIPTID_INIT},
+  {"rulerformat", "ruf",  P_STRING|P_ALLOCED|P_RSTAT,
+   (char_u *)&p_ruf, PV_NONE, (char_u *)""
+   SCRIPTID_INIT},
+  {"runtimepath", "rtp",  P_STRING|P_EXPAND|P_COMMA|P_NODUP|P_SECURE,
+   (char_u *)&p_rtp, PV_NONE, (char_u *)DFLT_RUNTIMEPATH
    SCRIPTID_INIT},
   {"scroll",      "scr",  P_NUM|P_NO_MKRC|P_VI_DEF,
    (char_u *)VAR_WIN, PV_SCROLL,
