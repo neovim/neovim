@@ -19749,68 +19749,63 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
 
 // JobActivity autocommands will execute vimscript code, so it must be executed
 // on Nvim main loop
-#define push_job_event(jid, j, r, t, unbuffered, str, eof)           \
-  do {                                                               \
-    JobEvent *event_data = kmp_alloc(JobEventPool, job_event_pool);  \
-    event_data->received = NULL;                                     \
-    if (r) {                                                         \
-      size_t read_count = 0;                                         \
-      if (eof || unbuffered) {                                       \
-        read_count = rstream_pending(r);                             \
-      } else {                                                       \
-        char *read = rstream_read_ptr(r);                            \
-        char *lastnl = xmemrchr(read, NL, rstream_pending(r));       \
-        if (lastnl) {                                                \
-          read_count = (size_t) (lastnl - read) + 1;                 \
-        } else if (rstream_available(r) == 0) {                      \
-          /* No newline or room to grow; flush everything. */        \
-          read_count = rstream_pending(r);                           \
-        }                                                            \
-      }                                                              \
-      if (read_count == 0) {                                         \
-        /* Either we're at EOF or we need to wait until next time */ \
-        /* to receive a '\n. */                                      \
-        kmp_free(JobEventPool, job_event_pool, event_data);          \
-        return;                                                      \
-      }                                                              \
-      event_data->received_len = read_count;                         \
-      event_data->received = xmallocz(read_count);                   \
-      rstream_read(r, event_data->received, read_count);             \
-    }                                                                \
-    event_data->as_string = str;                                     \
-    event_data->id = jid;                                            \
-    event_data->name = j;                                            \
-    event_data->type = t;                                            \
-    event_push((Event) {                                             \
-      .handler = on_job_event,                                       \
-      .data = event_data                                             \
-    }, true);                                                        \
-  } while(0)
+static void push_job_event(Job *job, RStream *r, char *type, bool eof)
+{
+  JobData *data = job_data(job);
+  JobEvent *event_data = kmp_alloc(JobEventPool, job_event_pool);
+  event_data->received = NULL;
+  if (r) {
+    size_t read_count = 0;
+    if (eof || data->unbuffered) {
+      read_count = rstream_pending(r);
+    } else {
+      char *read = rstream_read_ptr(r);
+      char *lastnl = xmemrchr(read, NL, rstream_pending(r));
+      if (lastnl) {
+        read_count = (size_t) (lastnl - read) + 1;
+      } else if (rstream_available(r) == 0) {
+        // No newline or room to grow; flush everything.
+        read_count = rstream_pending(r);
+      }
+    }
+    if (read_count == 0) {
+      // Either we're at EOF or we need to wait until next time
+      // to receive a '\n.
+      kmp_free(JobEventPool, job_event_pool, event_data);
+      return;
+    }
+    event_data->received_len = read_count;
+    event_data->received = xmallocz(read_count);
+    rstream_read(r, event_data->received, read_count);
+  }
+  event_data->as_string = data->as_string;
+  event_data->id = job_id(job);
+  event_data->name = data->name;
+  event_data->type = type;
+  event_push((Event) {
+             .handler = on_job_event,
+             .data = event_data
+             }, true);
+}
 
 static void on_job_stdout(RStream *rstream, void *job, bool eof)
 {
-  JobData *data = job_data(job);
   if (rstream_pending(rstream)) {
-    push_job_event(job_id(job), data->name, rstream, "stdout",
-                   data->unbuffered, data->as_string, eof);
+    push_job_event(job, rstream, "stdout", eof);
   }
 }
 
 static void on_job_stderr(RStream *rstream, void *job, bool eof)
 {
-  JobData *data = job_data(job);
   if (rstream_pending(rstream)) {
-    push_job_event(job_id(job), data->name, rstream, "stderr",
-                   data->unbuffered, data->as_string, eof);
+    push_job_event(job, rstream, "stderr", eof);
   }
 }
 
 static void on_job_exit(Job *job, void *vdata)
 {
-  JobData *data = vdata;
-  push_job_event(job_id(job), data->name, NULL, "exit",
-                 data->unbuffered, data->as_string, true);
-  free(data);
+  push_job_event(job, NULL, "exit", true);
+  free(job_data(job));
   // data->name will be freed in apply_job_autocmds().
 }
 
