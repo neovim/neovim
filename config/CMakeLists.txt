@@ -5,7 +5,6 @@ include(CheckIncludeFiles)
 
 check_type_size("int" SIZEOF_INT)
 check_type_size("long" SIZEOF_LONG)
-check_type_size("time_t" SIZEOF_TIME_T)
 check_type_size("off_t" SIZEOF_OFF_T)
 check_type_size("void *" SIZEOF_VOID_PTR)
 
