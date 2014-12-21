@@ -82,6 +82,7 @@
 
 #include <assert.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <string.h>
@@ -569,7 +570,7 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
   }
 
   if (size > 0) {
-    uep->ue_array = xmalloc(sizeof(char_u *) * size);
+    uep->ue_array = xmalloc(sizeof(char_u *) * (size_t)size);
     for (i = 0, lnum = top + 1; i < size; ++i) {
       fast_breakcheck();
       if (got_int) {
@@ -638,7 +639,6 @@ char_u *u_get_undo_file_name(char_u *buf_ffname, int reading)
   char_u dir_name[IOSIZE + 1];
   char_u      *munged_name = NULL;
   char_u      *undo_file_name = NULL;
-  int dir_len;
   char_u      *p;
   char_u      *ffname = buf_ffname;
 #ifdef HAVE_READLINK
@@ -659,11 +659,11 @@ char_u *u_get_undo_file_name(char_u *buf_ffname, int reading)
    * When not reading use the first directory that exists or ".". */
   dirp = p_udir;
   while (*dirp != NUL) {
-    dir_len = copy_option_part(&dirp, dir_name, IOSIZE, ",");
+    size_t dir_len = copy_option_part(&dirp, dir_name, IOSIZE, ",");
     if (dir_len == 1 && dir_name[0] == '.') {
       /* Use same directory as the ffname,
        * "dir/name" -> "dir/.name.un~" */
-      undo_file_name = vim_strnsave(ffname, (int)(STRLEN(ffname) + 5));
+      undo_file_name = vim_strnsave(ffname, STRLEN(ffname) + 5);
       p = path_tail(undo_file_name);
       memmove(p + 1, p, STRLEN(p) + 1);
       *p = '.';
@@ -902,8 +902,8 @@ static u_entry_T *unserialize_uep(FILE *fp, int *error, char_u *file_name)
   uep->ue_lcount = get4c(fp);
   uep->ue_size = get4c(fp);
   if (uep->ue_size > 0) {
-    array = xmalloc(sizeof(char_u *) * uep->ue_size);
-    memset(array, 0, sizeof(char_u *) * uep->ue_size);
+    array = xmalloc(sizeof(char_u *) * (size_t)uep->ue_size);
+    memset(array, 0, sizeof(char_u *) * (size_t)uep->ue_size);
   } else
     array = NULL;
   uep->ue_array = array;
@@ -1053,9 +1053,7 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
         goto theend;
       } else {
         char_u mbuf[UF_START_MAGIC_LEN];
-        int len;
-
-        len = read_eintr(fd, mbuf, UF_START_MAGIC_LEN);
+        ssize_t len = read_eintr(fd, mbuf, UF_START_MAGIC_LEN);
         close(fd);
         if (len < UF_START_MAGIC_LEN
             || memcmp(mbuf, UF_START_MAGIC, UF_START_MAGIC_LEN) != 0) {
@@ -1113,7 +1111,7 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
       && os_fileinfo((char *)buf->b_ffname, &file_info_old)
       && os_fileinfo((char *)file_name, &file_info_new)
       && file_info_old.stat.st_gid != file_info_new.stat.st_gid
-      && os_fchown(fd, -1, file_info_old.stat.st_gid) != 0) {
+      && os_fchown(fd, (uv_uid_t)-1, (uv_gid_t)file_info_old.stat.st_gid)) {
     os_setperm(file_name, (perm & 0707) | ((perm & 07) << 3));
   }
 # ifdef HAVE_SELINUX
@@ -1350,7 +1348,7 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
    * sequence numbers of the headers.
    * When there are no headers uhp_table is NULL. */
   if (num_head > 0) {
-    uhp_table = xmalloc(num_head * sizeof(u_header_T *));
+    uhp_table = xmalloc((size_t)num_head * sizeof(u_header_T *));
   }
 
   while ((c = get2c(fp)) == UF_HEADER_MAGIC) {
@@ -1425,15 +1423,18 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
         break;
       }
     if (old_header_seq > 0 && old_idx < 0 && uhp->uh_seq == old_header_seq) {
-      old_idx = i;
+      assert(i <= SHRT_MAX);
+      old_idx = (short)i;
       SET_FLAG(i);
     }
     if (new_header_seq > 0 && new_idx < 0 && uhp->uh_seq == new_header_seq) {
-      new_idx = i;
+      assert(i <= SHRT_MAX);
+      new_idx = (short)i;
       SET_FLAG(i);
     }
     if (cur_header_seq > 0 && cur_idx < 0 && uhp->uh_seq == cur_header_seq) {
-      cur_idx = i;
+      assert(i <= SHRT_MAX);
+      cur_idx = (short)i;
       SET_FLAG(i);
     }
   }
@@ -1985,7 +1986,7 @@ static void u_undoredo(int undo)
 
     /* delete the lines between top and bot and save them in newarray */
     if (oldsize > 0) {
-      newarray = xmalloc(sizeof(char_u *) * oldsize);
+      newarray = xmalloc(sizeof(char_u *) * (size_t)oldsize);
       /* delete backwards, it goes faster in most cases */
       for (lnum = bot - 1, i = oldsize; --i >= 0; --lnum) {
         /* what can we do when we run out of memory? */
