@@ -501,15 +501,12 @@ char *read_string(FILE *fd, size_t cnt)
   return (char *)str;
 }
 
-/*
- * Write a number to file "fd", MSB first, in "len" bytes.
- */
-int put_bytes(FILE *fd, long_u nr, int len)
+/// Write a number to file "fd", MSB first, in "len" bytes.
+/// @return OK/FAIL.
+int put_bytes(FILE *fd, uintmax_t number, unsigned int len)
 {
-  int i;
-
-  for (i = len - 1; i >= 0; --i)
-    if (putc((int)(nr >> (i * 8)), fd) == EOF)
+  for (unsigned int i = len - 1; i < len; --i)
+    if (putc((int)(number >> (i * 8)), fd) == EOF)
       return FAIL;
   return OK;
 }
