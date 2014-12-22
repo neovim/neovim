@@ -296,6 +296,7 @@ Name			triggered by ~
 |WinLeave|		before leaving a window
 |TabEnter|		after entering another tab page
 |TabLeave|		before leaving a tab page
+|TabNew|		when creating a new tab page
 |CmdwinEnter|		after entering the command-line window
 |CmdwinLeave|		before leaving the command-line window
 
@@ -859,6 +860,10 @@ TabEnter			Just after entering a tab page. |tab-page|
 TabLeave			Just before leaving a tab page. |tab-page|
 				A WinLeave event will have been triggered
 				first.
+							*TabNew*
+TabNew				When creating a new tab page. |tab-page|
+				After WinEnter and before TabEnter.
+
 							*TermChanged*
 TermChanged			After the value of 'term' has changed.  Useful
 				for re-loading the syntax file to update the

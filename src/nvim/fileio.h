@@ -95,6 +95,7 @@ typedef enum auto_event {
   EVENT_CURSORMOVEDI,           /* cursor was moved in Insert mode */
   EVENT_TABLEAVE,               /* before leaving a tab page */
   EVENT_TABENTER,               /* after entering a tab page */
+  EVENT_TABNEW,                 /* when creating a new tab */
   EVENT_SHELLCMDPOST,           /* after ":!cmd" */
   EVENT_SHELLFILTERPOST,        /* after ":1,2!cmd", ":w !cmd", ":r !cmd". */
   EVENT_TEXTCHANGED,            /* text was modified */
