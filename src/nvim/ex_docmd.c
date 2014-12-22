@@ -5715,6 +5715,8 @@ void ex_splitview(exarg_T *eap)
     if (win_new_tabpage(cmdmod.tab != 0 ? cmdmod.tab
             : eap->addr_count == 0 ? 0
             : (int)eap->line2 + 1) != FAIL) {
+      apply_autocmds(EVENT_TABNEW, eap->arg, eap->arg,  FALSE, curbuf); 
+      entering_new_tab = true;
       do_exedit(eap, old_curwin);
 
       /* set the alternate buffer for the window we came from */
