@@ -29,7 +29,7 @@ if [[ ! -d ${VIM_SOURCE_DIR} ]]; then
 else
   echo "Updating Vim sources in '${VIM_SOURCE_DIR}'."
   cd ${VIM_SOURCE_DIR}
-  hg pull --update
+  hg pull --update || echo 'Could not update Vim sources.'
 fi
 
 vim_tag="v${vim_version//./-}"
