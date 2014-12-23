@@ -627,11 +627,13 @@ getcmdline (
     }
 
     if (c == cedit_key || c == K_CMDWIN) {
-      /*
-       * Open a window to edit the command line (and history).
-       */
-      c = ex_window();
-      some_key_typed = TRUE;
+      if (ex_normal_busy == 0 && got_int == FALSE) {
+        /*
+         * Open a window to edit the command line (and history).
+         */
+        c = ex_window();
+        some_key_typed = TRUE;
+      }
     } else
       c = do_digraph(c);
 
