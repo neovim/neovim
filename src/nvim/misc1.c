@@ -3329,32 +3329,35 @@ void prepare_to_exit(void)
  */
 void preserve_exit(void)
 {
+  // 'true' when we are sure to exit, e.g., after a deadly signal
+  static bool really_exiting = false;
+
   // Prevent repeated calls into this method.
   if (really_exiting) {
     exit(2);
   }
 
-  really_exiting = TRUE;
+  really_exiting = true;
 
   prepare_to_exit();
 
   out_str(IObuff);
-  screen_start();                   /* don't know where cursor is now */
+  screen_start();                   // don't know where cursor is now
   out_flush();
 
-  ml_close_notmod();                /* close all not-modified buffers */
+  ml_close_notmod();                // close all not-modified buffers
 
   FOR_ALL_BUFFERS(buf) {
     if (buf->b_ml.ml_mfp != NULL && buf->b_ml.ml_mfp->mf_fname != NULL) {
       OUT_STR("Vim: preserving files...\n");
-      screen_start();               /* don't know where cursor is now */
+      screen_start();               // don't know where cursor is now
       out_flush();
-      ml_sync_all(FALSE, FALSE);        /* preserve all swap files */
+      ml_sync_all(false, false);    // preserve all swap files
       break;
     }
   }
 
-  ml_close_all(FALSE);              /* close all memfiles, without deleting */
+  ml_close_all(false);              // close all memfiles, without deleting
 
   OUT_STR("Vim: Finished.\n");
 
