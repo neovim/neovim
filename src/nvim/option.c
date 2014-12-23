@@ -103,6 +103,7 @@
  */
 #define PV_AI           OPT_BUF(BV_AI)
 #define PV_AR           OPT_BOTH(OPT_BUF(BV_AR))
+#define PV_BKC          OPT_BOTH(OPT_BUF(BV_BKC))
 # define PV_BH          OPT_BUF(BV_BH)
 # define PV_BT          OPT_BUF(BV_BT)
 # define PV_EFM         OPT_BOTH(OPT_BUF(BV_EFM))
@@ -438,7 +439,7 @@ static struct vimoption
    (char_u *)&p_bk, PV_NONE,
    {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
   {"backupcopy",  "bkc",  P_STRING|P_VIM|P_COMMA|P_NODUP,
-   (char_u *)&p_bkc, PV_NONE,
+   (char_u *)&p_bkc, PV_BKC,
 #ifdef UNIX
    {(char_u *)"yes", (char_u *)"auto"}
 #else
@@ -3526,6 +3527,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_dict);
   check_string_option(&buf->b_p_tsr);
   check_string_option(&buf->b_p_lw);
+  check_string_option(&buf->b_p_bkc);
 }
 
 /*
@@ -3782,14 +3784,24 @@ did_set_string_option (
       redraw_later_clear();
   }
   /* 'backupcopy' */
-  else if (varp == &p_bkc) {
-    if (opt_strings_flags(p_bkc, p_bkc_values, &bkc_flags, TRUE) != OK)
+  else if (gvarp == &p_bkc) {
+    char_u       *bkc   = p_bkc;
+    unsigned int *flags = &bkc_flags;
+
+    if (opt_flags & OPT_LOCAL) {
+      bkc   = curbuf->b_p_bkc;
+      flags = &curbuf->b_bkc_flags;
+    }
+
+    if (opt_strings_flags(bkc, p_bkc_values, flags, TRUE) != OK) {
       errmsg = e_invarg;
-    if (((bkc_flags & BKC_AUTO) != 0)
-        + ((bkc_flags & BKC_YES) != 0)
-        + ((bkc_flags & BKC_NO) != 0) != 1) {
+    }
+
+    if (((*flags & BKC_AUTO) != 0)
+        + ((*flags & BKC_YES) != 0)
+        + ((*flags & BKC_NO) != 0) != 1) {
       /* Must have exactly one of "auto", "yes"  and "no". */
-      (void)opt_strings_flags(oldval, p_bkc_values, &bkc_flags, TRUE);
+      (void)opt_strings_flags(oldval, p_bkc_values, flags, TRUE);
       errmsg = e_invarg;
     }
   }
@@ -6518,6 +6530,10 @@ void unset_global_local_option(char *name, void *from)
     case PV_AR:
       buf->b_p_ar = -1;
       break;
+    case PV_BKC:
+      clear_string_option(&buf->b_p_bkc);
+      buf->b_bkc_flags = 0;
+      break;
     case PV_TAGS:
       clear_string_option(&buf->b_p_tags);
       break;
@@ -6581,6 +6597,7 @@ static char_u *get_varp_scope(struct vimoption *p, int opt_flags)
     case PV_STL:  return (char_u *)&(curwin->w_p_stl);
     case PV_UL:   return (char_u *)&(curbuf->b_p_ul);
     case PV_LW:   return (char_u *)&(curbuf->b_p_lw);
+    case PV_BKC:  return (char_u *)&(curbuf->b_p_bkc);
     }
     return NULL;     /* "cannot happen" */
   }
@@ -6610,6 +6627,8 @@ static char_u *get_varp(struct vimoption *p)
            ? (char_u *)&(curbuf->b_p_ar) : p->var;
   case PV_TAGS:   return *curbuf->b_p_tags != NUL
            ? (char_u *)&(curbuf->b_p_tags) : p->var;
+  case PV_BKC:    return *curbuf->b_p_bkc != NUL
+           ? (char_u *)&(curbuf->b_p_bkc) : p->var;
   case PV_DEF:    return *curbuf->b_p_def != NUL
            ? (char_u *)&(curbuf->b_p_def) : p->var;
   case PV_INC:    return *curbuf->b_p_inc != NUL
@@ -6975,6 +6994,8 @@ void buf_copy_options(buf_T *buf, int flags)
        * are not copied, start using the global value */
       buf->b_p_ar = -1;
       buf->b_p_ul = NO_LOCAL_UNDOLEVEL;
+      buf->b_p_bkc = empty_option;
+      buf->b_bkc_flags = 0;
       buf->b_p_gp = empty_option;
       buf->b_p_mp = empty_option;
       buf->b_p_efm = empty_option;
@@ -8116,3 +8137,10 @@ static bool briopt_check(win_T *wp)
   return true;
 }
 
+/// Get the local or global value of 'backupcopy'.
+///
+/// @param buf The buffer.
+unsigned int get_bkc_value(buf_T *buf)
+{
+  return buf->b_bkc_flags ? buf->b_bkc_flags : bkc_flags;
+}

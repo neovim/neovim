@@ -1530,6 +1530,7 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   buf->b_p_ar = -1;
   buf->b_p_ul = NO_LOCAL_UNDOLEVEL;
   clear_string_option(&buf->b_p_lw);
+  clear_string_option(&buf->b_p_bkc);
 }
 
 /*
