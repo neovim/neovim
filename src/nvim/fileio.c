@@ -5248,6 +5248,7 @@ static struct event_name {
   {"TabEnter",        EVENT_TABENTER},
   {"TabLeave",        EVENT_TABLEAVE},
   {"TabNew",          EVENT_TABNEW},
+  {"TabNewEntered",   EVENT_TABNEWENTERED},
   {"TermChanged",     EVENT_TERMCHANGED},
   {"TermResponse",    EVENT_TERMRESPONSE},
   {"TextChanged",     EVENT_TEXTCHANGED},
