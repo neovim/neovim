@@ -12,6 +12,8 @@ describe('mapping', function()
       test starts here:
       ]])
 
+    execute('set encoding=utf-8')
+
     -- Abbreviations with р (0x80) should work.
     execute('inoreab чкпр   vim')
     feed('GAчкпр <cr><esc>')
