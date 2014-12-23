@@ -806,6 +806,7 @@ typedef struct afffile_S {
   unsigned af_nosuggest;        // NOSUGGEST ID
   int af_pfxpostpone;           // postpone prefixes without chop string and
                                 // without flags
+  bool af_ignoreextra;          // IGNOREEXTRA present
   hashtab_T af_pref;            // hashtable for prefixes, affheader_T
   hashtab_T af_suff;            // hashtable for suffixes, affheader_T
   hashtab_T af_comp;            // hashtable for compound flags, compitem_T
@@ -4629,6 +4630,8 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         spin->si_nosugfile = true;
       } else if (is_aff_rule(items, itemcnt, "PFXPOSTPONE", 1))   {
         aff->af_pfxpostpone = true;
+      } else if (is_aff_rule(items, itemcnt, "IGNOREEXTRA", 1)) {
+        aff->af_ignoreextra = true;
       } else if ((STRCMP(items[0], "PFX") == 0
                   || STRCMP(items[0], "SFX") == 0)
                  && aff_todo == 0
@@ -4692,8 +4695,11 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
           cur_aff->ah_follows = false;
 
         // Myspell allows extra text after the item, but that might
-        // mean mistakes go unnoticed.  Require a comment-starter.
-        if (itemcnt > lasti && *items[lasti] != '#')
+        // mean mistakes go unnoticed.  Require a comment-starter,
+        // unless IGNOREEXTRA is used.  Hunspell uses a "-" item.
+        if (itemcnt > lasti
+            && !aff->af_ignoreextra
+            && *items[lasti] != '#')
           smsg((char_u *)_(e_afftrailing), fname, lnum, items[lasti]);
 
         if (STRCMP(items[2], "Y") != 0 && STRCMP(items[2], "N") != 0)
