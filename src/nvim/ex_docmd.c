@@ -70,6 +70,7 @@
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/mouse.h"
 
 static int quitmore = 0;
 static int ex_pressedreturn = FALSE;
@@ -7222,8 +7223,10 @@ static void ex_normal(exarg_T *eap)
   msg_didout |= save_msg_didout;        /* don't reset msg_didout now */
 
   /* Restore the state (needed when called from a function executed for
-   * 'indentexpr'). */
+   * 'indentexpr'). Update the mouse and cursor, they may have changed. */
   State = save_State;
+  setmouse();
+  ui_cursor_shape(); /* may show different cursor shape */
   free(arg);
 }
 
