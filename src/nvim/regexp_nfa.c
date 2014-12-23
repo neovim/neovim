@@ -3955,7 +3955,6 @@ skip_add:
 #endif
   switch (state->c) {
   case NFA_MATCH:
-    //nfa_match = TRUE;
     break;
 
   case NFA_SPLIT:
