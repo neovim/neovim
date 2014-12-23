@@ -19665,6 +19665,7 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
   regmatch_T regmatch;
   int do_all;
   char_u      *tail;
+  char_u      *end;
   garray_T ga;
   char_u      *save_cpo;
   char_u      *zero_width = NULL;
@@ -19681,6 +19682,7 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
   regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
   if (regmatch.regprog != NULL) {
     tail = str;
+    end = str + STRLEN(str);
     while (vim_regexec_nl(&regmatch, str, (colnr_T)(tail - str))) {
       /* Skip empty match except for first match. */
       if (regmatch.startp[0] == regmatch.endp[0]) {
@@ -19703,7 +19705,7 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
        * - The text after the match.
        */
       sublen = vim_regsub(&regmatch, sub, tail, FALSE, TRUE, FALSE);
-      ga_grow(&ga, (int)(STRLEN(tail) + sublen -
+      ga_grow(&ga, (int)((end - tail) + sublen -
                      (regmatch.endp[0] - regmatch.startp[0])));
 
       /* copy the text up to where the match is */
