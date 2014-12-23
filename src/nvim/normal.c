@@ -11,6 +11,7 @@
  *		the operators.
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <string.h>
@@ -7246,7 +7247,8 @@ static void nv_put(cmdarg_T *cap)
     /* "dp" is ":diffput" */
     if (cap->oap->op_type == OP_DELETE && cap->cmdchar == 'p') {
       clearop(cap->oap);
-      nv_diffgetput(true);
+      assert(cap->opcount >= 0);
+      nv_diffgetput(true, (size_t)cap->opcount);
     } else
       clearopbeep(cap->oap);
   } else {
@@ -7348,7 +7350,8 @@ static void nv_open(cmdarg_T *cap)
   /* "do" is ":diffget" */
   if (cap->oap->op_type == OP_DELETE && cap->cmdchar == 'o') {
     clearop(cap->oap);
-    nv_diffgetput(false);
+    assert(cap->opcount >= 0);
+    nv_diffgetput(false, (size_t)cap->opcount);
   } else if (VIsual_active) /* switch start and end of visual */
     v_swap_corners(cap->cmdchar);
   else

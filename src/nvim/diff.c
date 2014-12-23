@@ -2017,17 +2017,24 @@ int diff_infold(win_T *wp, linenr_T lnum)
 }
 
 /// "dp" and "do" commands.
-///
-/// @param put
-void nv_diffgetput(int put)
+void nv_diffgetput(bool put, size_t count)
 {
   exarg_T ea;
-  ea.arg = (char_u *)"";
+  char buf[30];
+
+  if (count == 0) {
+    ea.arg = (char_u *)"";
+  } else {
+    vim_snprintf(buf, 30, "%zu", count);
+    ea.arg = (char_u *)buf;
+  }
+
   if (put) {
     ea.cmdidx = CMD_diffput;
   } else {
     ea.cmdidx = CMD_diffget;
   }
+
   ea.addr_count = 0;
   ea.line1 = curwin->w_cursor.lnum;
   ea.line2 = curwin->w_cursor.lnum;
