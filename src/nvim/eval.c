@@ -9553,6 +9553,9 @@ static void f_getreg(typval_T *argvars, typval_T *rettv)
     rettv->v_type = VAR_LIST;
     rettv->vval.v_list = 
       get_reg_contents(regname, (arg2 ? kGRegExprSrc : 0) | kGRegList);
+    if (rettv->vval.v_list != NULL) {
+      rettv->vval.v_list->lv_refcount++;
+    }
   } else {
     rettv->v_type = VAR_STRING;
     rettv->vval.v_string = get_reg_contents(regname, arg2 ? kGRegExprSrc : 0);
