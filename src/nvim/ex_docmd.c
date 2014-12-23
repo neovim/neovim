@@ -92,6 +92,9 @@ static garray_T ucmds = {0, 0, sizeof(ucmd_T), 4, NULL};
 #define USER_CMD(i) (&((ucmd_T *)(ucmds.ga_data))[i])
 #define USER_CMD_GA(gap, i) (&((ucmd_T *)((gap)->ga_data))[i])
 
+/* Wether a command index indicates a user command. */
+# define IS_USER_CMDIDX(idx) ((int)(idx) < 0)
+
 /* Struct for storing a line inside a while/for loop */
 typedef struct {
   char_u      *line;            /* command line */
@@ -1489,11 +1492,10 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     goto doend;
   }
 
-  ni = (
-    !USER_CMDIDX(ea.cmdidx) &&
-    (cmdnames[ea.cmdidx].cmd_func == ex_ni
+  ni = (!IS_USER_CMDIDX(ea.cmdidx)
+        && (cmdnames[ea.cmdidx].cmd_func == ex_ni
 #ifdef HAVE_EX_SCRIPT_NI
-     || cmdnames[ea.cmdidx].cmd_func == ex_script_ni
+           || cmdnames[ea.cmdidx].cmd_func == ex_script_ni
 #endif
     ));
 
@@ -1509,8 +1511,9 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   /*
    * 5. parse arguments
    */
-  if (!USER_CMDIDX(ea.cmdidx))
+  if (!IS_USER_CMDIDX(ea.cmdidx)) {
     ea.argt = (long)cmdnames[(int)ea.cmdidx].cmd_argt;
+  }
 
   if (!ea.skip) {
 #ifdef HAVE_SANDBOX
@@ -1527,8 +1530,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     }
 
     if (text_locked() && !(ea.argt & CMDWIN)
-        && !USER_CMDIDX(ea.cmdidx)
-        ) {
+        && !IS_USER_CMDIDX(ea.cmdidx)) {
       /* Command not allowed when editing the command line. */
       if (cmdwin_type != 0)
         errormsg = (char_u *)_(e_cmdwin);
@@ -1542,7 +1544,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     if (!(ea.argt & CMDWIN)
         && ea.cmdidx != CMD_edit
         && ea.cmdidx != CMD_checktime
-        && !USER_CMDIDX(ea.cmdidx)
+        && !IS_USER_CMDIDX(ea.cmdidx)
         && curbuf_locked())
       goto doend;
 
@@ -1708,17 +1710,15 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   if (       (ea.argt & REGSTR)
              && *ea.arg != NUL
              /* Do not allow register = for user commands */
-             && (!USER_CMDIDX(ea.cmdidx) || *ea.arg != '=')
+             && (!IS_USER_CMDIDX(ea.cmdidx) || *ea.arg != '=')
              && !((ea.argt & COUNT) && VIM_ISDIGIT(*ea.arg))) {
     /* check these explicitly for a more specific error message */
     if (*ea.arg == '*' || *ea.arg == '+') {
       errormsg = (char_u *)_(e_invalidreg);
       goto doend;
     }
-    if (
-      valid_yank_reg(*ea.arg, (ea.cmdidx != CMD_put
-                               && USER_CMDIDX(ea.cmdidx)))
-      ) {
+    if (valid_yank_reg(*ea.arg, (ea.cmdidx != CMD_put
+                                 && !IS_USER_CMDIDX(ea.cmdidx)))) {
       ea.regname = *ea.arg++;
       /* for '=' register: accept the rest of the line as an expression */
       if (ea.arg[-1] == '=' && ea.arg[0] != NUL) {
@@ -1868,7 +1868,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
    * number.  Don't do this for a user command.
    */
   if ((ea.argt & BUFNAME) && *ea.arg != NUL && ea.addr_count == 0
-      && !USER_CMDIDX(ea.cmdidx)
+      && !IS_USER_CMDIDX(ea.cmdidx)
       ) {
     /*
      * :bdelete, :bwipeout and :bunload take several arguments, separated
@@ -1901,7 +1901,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   ea.cookie = cookie;
   ea.cstack = cstack;
 
-  if (USER_CMDIDX(ea.cmdidx)) {
+  if (IS_USER_CMDIDX(ea.cmdidx)) {
     /*
      * Execute a user-defined command.
      */
@@ -1949,9 +1949,9 @@ doend:
     emsg(errormsg);
   }
   do_errthrow(cstack,
-      (ea.cmdidx != CMD_SIZE
-       && !USER_CMDIDX(ea.cmdidx)
-      ) ? cmdnames[(int)ea.cmdidx].cmd_name : (char_u *)NULL);
+      (ea.cmdidx != CMD_SIZE && !IS_USER_CMDIDX(ea.cmdidx))
+      ? cmdnames[(int)ea.cmdidx].cmd_name
+      : (char_u *)NULL);
 
   if (verbose_save >= 0)
     p_verbose = verbose_save;
@@ -2464,8 +2464,9 @@ set_one_cmd_context (
   /*
    * 5. parse arguments
    */
-  if (!USER_CMDIDX(ea.cmdidx))
+  if (!IS_USER_CMDIDX(ea.cmdidx)) {
     ea.argt = (long)cmdnames[(int)ea.cmdidx].cmd_argt;
+  }
 
   arg = skipwhite(p);
 
