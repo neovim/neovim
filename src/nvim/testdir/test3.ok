@@ -452,6 +452,14 @@ label:  if (asdf &&
 	asdfasdf
 }
 
+{
+	for ( int i = 0;
+			i < 10; i++ )
+	{
+	}
+	i = 0;
+}
+
 class bob
 {
 	int foo() {return 1;}
