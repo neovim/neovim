@@ -15278,7 +15278,7 @@ static void f_winrestview(typval_T *argvars, typval_T *rettv)
     win_new_width(curwin, curwin->w_width);
     changed_window_setting();
 
-    if (curwin->w_topline == 0)
+    if (curwin->w_topline <= 0)
       curwin->w_topline = 1;
     if (curwin->w_topline > curbuf->b_ml.ml_line_count)
       curwin->w_topline = curbuf->b_ml.ml_line_count;
