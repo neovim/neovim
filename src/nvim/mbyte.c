@@ -347,6 +347,7 @@ enc_alias_table[] =
   {"unix-jis",        IDX_EUC_JP},
   {"ujis",            IDX_EUC_JP},
   {"shift-jis",       IDX_SJIS},
+  {"pck",             IDX_SJIS},        /* Sun: PCK */
   {"euckr",           IDX_EUC_KR},
   {"5601",            IDX_EUC_KR},      /* Sun: KS C 5601 */
   {"euccn",           IDX_EUC_CN},
