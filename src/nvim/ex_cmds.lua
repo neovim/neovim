@@ -841,6 +841,11 @@ return {
     func='ex_help',
   },
   {
+    command='helpclose',
+    flags=bit.bor(RANGE, NOTADR, COUNT, TRLBAR),
+    func='ex_helpclose',
+  },
+  {
     command='helpfind',
     flags=bit.bor(EXTRA, NOTRLCOM),
     func='ex_helpfind',
