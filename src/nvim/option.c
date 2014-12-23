@@ -2202,6 +2202,8 @@ set_options_default (
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     win_comp_scroll(wp);
   }
+
+  parse_cino(curbuf);
 }
 
 /// Set the Vi-default value of a string option.
