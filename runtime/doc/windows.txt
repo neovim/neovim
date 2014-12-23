@@ -1042,36 +1042,41 @@ list of buffers. |unlisted-buffer|
 		a number).  Insert a backslash before a space in a buffer
 		name.
 
-:[N]b[uffer][!] [N]			*:b* *:bu* *:buf* *:buffer* *E86*
+:[N]b[uffer][!] [+cmd] [N]		*:b* *:bu* *:buf* *:buffer* *E86*
 		Edit buffer [N] from the buffer list.  If [N] is not given,
 		the current buffer remains being edited.  See |:buffer-!| for
 		[!].  This will also edit a buffer that is not in the buffer
 		list, without setting the 'buflisted' flag.
+		Also see ||+cmd|.
 
-:[N]b[uffer][!] {bufname}
+:[N]b[uffer][!] [+cmd] {bufname}
 		Edit buffer for {bufname} from the buffer list.  See
 		|:buffer-!| for [!].  This will also edit a buffer that is not
 		in the buffer list, without setting the 'buflisted' flag.
+		Also see ||+cmd|.
 
-:[N]sb[uffer] [N]					*:sb* *:sbuffer*
+:[N]sb[uffer] [+cmd] [N]				*:sb* *:sbuffer*
 		Split window and edit buffer [N] from the buffer list.  If [N]
 		is not given, the current buffer is edited.  Respects the
 		"useopen" setting of 'switchbuf' when splitting.  This will
 		also edit a buffer that is not in the buffer list, without
 		setting the 'buflisted' flag.
+		Also see ||+cmd|.
 
-:[N]sb[uffer] {bufname}
+:[N]sb[uffer] [+cmd] {bufname}
 		Split window and edit buffer for {bufname} from the buffer
 		list.  This will also edit a buffer that is not in the buffer
 		list, without setting the 'buflisted' flag.
 		Note: If what you want to do is split the buffer, make a copy
 		under another name, you can do it this way: >
 			:w foobar | sp #
+<		Also see ||+cmd|.
 
-:[N]bn[ext][!] [N]					*:bn* *:bnext* *E87*
+:[N]bn[ext][!] [+cmd] [N]				*:bn* *:bnext* *E87*
 		Go to [N]th next buffer in buffer list.  [N] defaults to one.
 		Wraps around the end of the buffer list.
 		See |:buffer-!| for [!].
+		Also see ||+cmd|.
 		If you are in a help buffer, this takes you to the next help
 		buffer (if there is one).  Similarly, if you are in a normal
 		(non-help) buffer, this takes you to the next normal buffer.
@@ -1079,55 +1084,61 @@ list of buffers. |unlisted-buffer|
 		the way when you're browsing code/text buffers.  The next three
 		commands also work like this.
 
+
 							*:sbn* *:sbnext*
-:[N]sbn[ext] [N]
+:[N]sbn[ext] [+cmd] [N]
 		Split window and go to [N]th next buffer in buffer list.
 		Wraps around the end of the buffer list.  Uses 'switchbuf'
+		Also see ||+cmd|.
 
-:[N]bN[ext][!] [N]			*:bN* *:bNext* *:bp* *:bprevious* *E88*
-:[N]bp[revious][!] [N]
+:[N]bN[ext][!] [+cmd] [N]		*:bN* *:bNext* *:bp* *:bprevious* *E88*
+:[N]bp[revious][!] [+cmd] [N]
 		Go to [N]th previous buffer in buffer list.  [N] defaults to
 		one.  Wraps around the start of the buffer list.
 		See |:buffer-!| for [!] and 'switchbuf'.
+		Also see ||+cmd|.
 
-:[N]sbN[ext] [N]			*:sbN* *:sbNext* *:sbp* *:sbprevious*
-:[N]sbp[revious] [N]
+:[N]sbN[ext] [+cmd] [N]			*:sbN* *:sbNext* *:sbp* *:sbprevious*
+:[N]sbp[revious] [+cmd] [N]
 		Split window and go to [N]th previous buffer in buffer list.
 		Wraps around the start of the buffer list.
 		Uses 'switchbuf'.
+		Also see ||+cmd|.
 
-							*:br* *:brewind*
-:br[ewind][!]	Go to first buffer in buffer list.  If the buffer list is
+:br[ewind][!] [+cmd]					*:br* *:brewind*
+		Go to first buffer in buffer list.  If the buffer list is
 		empty, go to the first unlisted buffer.
 		See |:buffer-!| for [!].
 
-							*:bf* *:bfirst*
-:bf[irst]	Same as ":brewind".
+:bf[irst] [+cmd]					*:bf* *:bfirst*
+		Same as |:brewind|.
+		Also see |+cmd|.
 
-							*:sbr* *:sbrewind*
-:sbr[ewind]	Split window and go to first buffer in buffer list.  If the
+:sbr[ewind] [+cmd]					*:sbr* *:sbrewind*
+		Split window and go to first buffer in buffer list.  If the
 		buffer list is empty, go to the first unlisted buffer.
 		Respects the 'switchbuf' option.
+		Also see |+cmd|.
 
-							*:sbf* *:sbfirst*
-:sbf[irst]	Same as ":sbrewind".
+:sbf[irst] [+cmd]					*:sbf* *:sbfirst*
+		Same as ":sbrewind".
 
-							*:bl* *:blast*
-:bl[ast][!]	Go to last buffer in buffer list.  If the buffer list is
+:bl[ast][!] [+cmd]					*:bl* *:blast*
+		Go to last buffer in buffer list.  If the buffer list is
 		empty, go to the last unlisted buffer.
 		See |:buffer-!| for [!].
 
-							*:sbl* *:sblast*
-:sbl[ast]	Split window and go to last buffer in buffer list.  If the
+:sbl[ast] [+cmd]					*:sbl* *:sblast*
+		Split window and go to last buffer in buffer list.  If the
 		buffer list is empty, go to the last unlisted buffer.
 		Respects 'switchbuf' option.
 
-:[N]bm[odified][!] [N]				*:bm* *:bmodified* *E84*
+:[N]bm[odified][!] [+cmd] [N]			*:bm* *:bmodified* *E84*
 		Go to [N]th next modified buffer.  Note: this command also
 		finds unlisted buffers.  If there is no modified buffer the
 		command fails.
 
-:[N]sbm[odified] [N]					*:sbm* *:sbmodified*
+:[N]sbm[odified] [+cmd] [N]				*:sbm* *:sbmodified*
 		Split window and go to [N]th next modified buffer.
 		Respects 'switchbuf' option.
 		Note: this command also finds buffers not in the buffer list.
