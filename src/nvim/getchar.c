@@ -2980,8 +2980,12 @@ do_map (
   }
 
   if (maptype == 1) {                       /* delete entry */
-    if (!did_it)
+    if (!did_it) {
       retval = 2;                           /* no match */
+    } else if (*keys == Ctrl_C) {
+      /* If CTRL-C has been unmapped, reuse it for Interrupting. */
+      mapped_ctrl_c = FALSE;
+    }
     goto theend;
   }
 
@@ -3005,7 +3009,7 @@ do_map (
    */
   mp = xmalloc(sizeof(mapblock_T));
 
-  /* If CTRL-C has been mapped, don't always use it for Interrupting */
+  /* If CTRL-C has been mapped, don't always use it for Interrupting. */
   if (*keys == Ctrl_C)
     mapped_ctrl_c = TRUE;
 
