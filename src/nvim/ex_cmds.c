@@ -5645,14 +5645,14 @@ static sign_T   *first_sign = NULL;
 static int      next_sign_typenr = 1;
 
 /*
- * ":helpclose": Close the help window
+ * ":helpclose": Close one help window
  */
 void ex_helpclose(exarg_T *eap)
 {
   FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
     if (win->w_buffer->b_help) {
       win_close(win, FALSE);
-      break;
+      return;
     }
   }
 }
