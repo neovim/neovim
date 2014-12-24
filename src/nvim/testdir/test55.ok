@@ -129,6 +129,7 @@ caught a:000[3]
 {'a': {'b': 'B'}}
 Vim(call):E737: a
 {'a': {'b': 'B'}}
+[1, 2]
 Vim(foldopen):E490:
 
 

@@ -2247,7 +2247,7 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv, int copy, ch
     int ll_n1 = lp->ll_n1;
 
     // Check whether any of the list items is locked
-    for (listitem_T *ri = rettv->vval.v_list->lv_first; ri != NULL; ) {
+    for (listitem_T *ri = rettv->vval.v_list->lv_first; ri != NULL && ll_li != NULL; ) {
       if (tv_check_lock(ll_li->li_tv.v_lock, lp->ll_name)) {
         return;
       }
