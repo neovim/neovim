@@ -87,7 +87,6 @@ set(CONV_SOURCES
   tag.c
   term.c
   ui.c
-  undo.c
   version.c
   window.c)
 
