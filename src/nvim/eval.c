@@ -2580,10 +2580,10 @@ void set_context_for_expression(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
     } else if (c == '=') {
       got_eq = TRUE;
       xp->xp_context = EXPAND_EXPRESSION;
-    } else if (c == '<'
+    } else if ((c == '<' || c == '#')
                && xp->xp_context == EXPAND_FUNCTIONS
                && vim_strchr(xp->xp_pattern, '(') == NULL) {
-      /* Function name can start with "<SNR>" */
+      /* Function name can start with "<SNR>" and contain '#'. */
       break;
     } else if (cmdidx != CMD_let || got_eq) {
       if (c == '"') {               /* string */
@@ -9553,6 +9553,9 @@ static void f_getreg(typval_T *argvars, typval_T *rettv)
     rettv->v_type = VAR_LIST;
     rettv->vval.v_list = 
       get_reg_contents(regname, (arg2 ? kGRegExprSrc : 0) | kGRegList);
+    if (rettv->vval.v_list != NULL) {
+      rettv->vval.v_list->lv_refcount++;
+    }
   } else {
     rettv->v_type = VAR_STRING;
     rettv->vval.v_string = get_reg_contents(regname, arg2 ? kGRegExprSrc : 0);
