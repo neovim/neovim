@@ -6011,7 +6011,7 @@ nextchar:
 
 /*
  * Try match of "prog" with at regline["col"].
- * Returns 0 for failure, number of lines contained in the match otherwise.
+ * Returns <= 0 for failure, number of lines contained in the match otherwise.
  */
 static long nfa_regtry(nfa_regprog_T *prog, colnr_T col)
 {
@@ -6116,7 +6116,7 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col)
  * Match a regexp against a string ("line" points to the string) or multiple
  * lines ("line" is NULL, use reg_getline()).
  *
- * Returns 0 for failure, number of lines contained in the match otherwise.
+ * Returns <= 0 for failure, number of lines contained in the match otherwise.
  */
 static long 
 nfa_regexec_both (
@@ -6346,7 +6346,7 @@ static void nfa_regfree(regprog_T *prog)
  * Uses curbuf for line count and 'iskeyword'.
  * If "line_lbr" is true, consider a "\n" in "line" to be a line break.
  *
- * Return TRUE if there is a match, FALSE if not.
+ * Returns <= 0 for failure, number of lines contained in the match otherwise.
  */
 static int 
 nfa_regexec_nl (
@@ -6365,7 +6365,7 @@ nfa_regexec_nl (
   ireg_ic = rmp->rm_ic;
   ireg_icombine = FALSE;
   ireg_maxcol = 0;
-  return nfa_regexec_both(line, col) != 0;
+  return nfa_regexec_both(line, col);
 }
 
 /// Matches a regexp against multiple lines.
@@ -6378,7 +6378,7 @@ nfa_regexec_nl (
 /// @param col Column to start looking for match
 /// @param tm Timeout limit or NULL
 ///
-/// @return Zero if there is no match and number of lines contained in the match
+/// @return <= 0 if there is no match and number of lines contained in the match
 /// otherwise.
 ///
 /// @note The body is the same as bt_regexec() except for nfa_regexec_both()
