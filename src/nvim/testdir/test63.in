@@ -7,9 +7,9 @@ STARTTEST
 :" --- Check that "matcharg()" returns the correct group and pattern if a match
 :" --- is defined.
 :let @r = "*** Test 1: "
-:highlight MyGroup1 ctermbg=red guibg=red
-:highlight MyGroup2 ctermbg=green guibg=green
-:highlight MyGroup3 ctermbg=blue guibg=blue
+:highlight MyGroup1 term=bold ctermbg=red guibg=red
+:highlight MyGroup2 term=italic ctermbg=green guibg=green
+:highlight MyGroup3 term=underline ctermbg=blue guibg=blue
 :match MyGroup1 /TODO/
 :2match MyGroup2 /FIXME/
 :3match MyGroup3 /XXX/
