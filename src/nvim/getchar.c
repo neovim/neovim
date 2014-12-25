@@ -15,6 +15,7 @@
  * mappings and abbreviations
  */
 
+#include <assert.h>
 #include <stdbool.h>
 #include <string.h>
 #include <inttypes.h>
@@ -3637,11 +3638,28 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
     for (; mp;
          mp->m_next == NULL ? (mp = mp2, mp2 = NULL) :
          (mp = mp->m_next)) {
+      int qlen = mp->m_keylen;
+      char_u *q = mp->m_keys;
+      int match;
+
+      if (vim_strbyte(mp->m_keys, K_SPECIAL) != NULL) {
+        /* might have CSI escaped mp->m_keys */
+        q = vim_strsave(mp->m_keys);
+        if (q != NULL) {
+          vim_unescape_csi(q);
+          qlen = (int)STRLEN(q);
+        }
+      }
       /* find entries with right mode and keys */
-      if (       (mp->m_mode & State)
-                 && mp->m_keylen == len
-                 && !STRNCMP(mp->m_keys, ptr, (size_t)len))
+      match = (mp->m_mode & State)
+              && qlen == len
+              && !STRNCMP(q, ptr, (size_t)len);
+      if (q != mp->m_keys) {
+        free(q);
+      }
+      if (match) {
         break;
+      }
     }
     if (mp != NULL) {
       /*
