@@ -606,9 +606,6 @@ EXTERN int exiting INIT(= FALSE);
 /* TRUE when planning to exit Vim.  Might
  * still keep on running if there is a changed
  * buffer. */
-EXTERN int really_exiting INIT(= FALSE);
-/* TRUE when we are sure to exit, e.g., after
- * a deadly signal */
 /* volatile because it is used in signal handler deathtrap(). */
 EXTERN volatile int full_screen INIT(= FALSE);
 /* TRUE when doing full-screen output
