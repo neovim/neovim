@@ -3645,10 +3645,8 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
       if (vim_strbyte(mp->m_keys, K_SPECIAL) != NULL) {
         /* might have CSI escaped mp->m_keys */
         q = vim_strsave(mp->m_keys);
-        if (q != NULL) {
-          vim_unescape_csi(q);
-          qlen = (int)STRLEN(q);
-        }
+        vim_unescape_csi(q);
+        qlen = (int)STRLEN(q);
       }
       /* find entries with right mode and keys */
       match = (mp->m_mode & State)
