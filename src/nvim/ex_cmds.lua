@@ -1236,6 +1236,21 @@ return {
     func='ex_tag',
   },
   {
+    command='lua',
+    flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN),
+    func='ex_script_ni',
+  },
+  {
+    command='luado',
+    flags=bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, CMDWIN),
+    func='ex_ni',
+  },
+  {
+    command='luafile',
+    flags=bit.bor(RANGE, FILE1, NEEDARG, CMDWIN),
+    func='ex_ni',
+  },
+  {
     command='lunmap',
     flags=bit.bor(EXTRA, TRLBAR, NOTRLCOM, USECTRLV, CMDWIN),
     func='ex_unmap',
@@ -1339,6 +1354,16 @@ return {
     command='mode',
     flags=bit.bor(WORD1, TRLBAR, CMDWIN),
     func='ex_mode',
+  },
+  {
+    command='mzscheme',
+    flags=bit.bor(RANGE, EXTRA, DFLALL, NEEDARG, CMDWIN, SBOXOK),
+    func='ex_script_ni',
+  },
+  {
+    command='mzfile',
+    flags=bit.bor(RANGE, FILE1, NEEDARG, CMDWIN),
+    func='ex_ni',
   },
   {
     command='next',
@@ -1511,6 +1536,16 @@ return {
     func='ex_pclose',
   },
   {
+    command='perl',
+    flags=bit.bor(RANGE, EXTRA, DFLALL, NEEDARG, SBOXOK, CMDWIN),
+    func='ex_script_ni',
+  },
+  {
+    command='perldo',
+    flags=bit.bor(RANGE, EXTRA, DFLALL, NEEDARG, CMDWIN),
+    func='ex_ni',
+  },
+  {
     command='pedit',
     flags=bit.bor(BANG, FILE1, EDITCMD, ARGOPT, TRLBAR),
     func='ex_pedit',
@@ -1636,6 +1671,26 @@ return {
     func='ex_pyfile',
   },
   {
+    command='py3',
+    flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN),
+    func='ex_script_ni',
+  },
+  {
+    command='py3do',
+    flags=bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, CMDWIN),
+    func='ex_ni',
+  },
+  {
+    command='python3',
+    flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN),
+    func='ex_script_ni',
+  },
+  {
+    command='py3file',
+    flags=bit.bor(RANGE, FILE1, NEEDARG, CMDWIN),
+    func='ex_ni',
+  },
+  {
     command='quit',
     flags=bit.bor(BANG, TRLBAR, CMDWIN),
     func='ex_quit',
@@ -1724,6 +1779,21 @@ return {
     command='rundo',
     flags=bit.bor(NEEDARG, FILE1),
     func='ex_rundo',
+  },
+  {
+    command='ruby',
+    flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN),
+    func='ex_script_ni',
+  },
+  {
+    command='rubydo',
+    flags=bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, CMDWIN),
+    func='ex_ni',
+  },
+  {
+    command='rubyfile',
+    flags=bit.bor(RANGE, FILE1, NEEDARG, CMDWIN),
+    func='ex_ni',
   },
   {
     command='rviminfo',
@@ -2149,6 +2219,21 @@ return {
     command='tabs',
     flags=bit.bor(TRLBAR, CMDWIN),
     func='ex_tabs',
+  },
+  {
+    command='tcl',
+    flags=bit.bor(RANGE,EXTRA,NEEDARG,CMDWIN),
+    func='ex_script_ni',
+  },
+  {
+    command='tcldo',
+    flags=bit.bor(RANGE,DFLALL,EXTRA,NEEDARG,CMDWIN),
+    func='ex_ni',
+  },
+  {
+    command='tclfile',
+    flags=bit.bor(RANGE,FILE1,NEEDARG,CMDWIN),
+    func='ex_ni',
   },
   {
     command='tearoff',
