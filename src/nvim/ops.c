@@ -2979,9 +2979,11 @@ do_put (
         }
         if (VIsual_active)
           lnum++;
-      } while (
-        VIsual_active && lnum <= curbuf->b_visual.vi_end.lnum
-        );
+      } while (VIsual_active && lnum <= curbuf->b_visual.vi_end.lnum);
+
+      if (VIsual_active) {  /* reset lnum to the last visual line */
+        lnum--;
+      }
 
       curbuf->b_op_end = curwin->w_cursor;
       /* For "CTRL-O p" in Insert mode, put cursor after last char */

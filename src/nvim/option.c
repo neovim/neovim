@@ -3645,6 +3645,7 @@ set_string_option_direct (
     idx = findoption(name);
     if (idx < 0) {      /* not found (should not happen) */
       EMSG2(_(e_intern2), "set_string_option_direct()");
+      EMSG2(_("For option %s"), name);
       return;
     }
   }

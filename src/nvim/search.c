@@ -3294,10 +3294,11 @@ again:
   if (VIsual_active) {
     /* If the end is before the start there is no text between tags, select
      * the char under the cursor. */
-    if (lt(end_pos, start_pos))
+    if (lt(end_pos, start_pos)) {
       curwin->w_cursor = start_pos;
-    else if (*p_sel == 'e')
-      ++curwin->w_cursor.col;
+    } else if (*p_sel == 'e') {
+      inc_cursor();
+    }
     VIsual = start_pos;
     VIsual_mode = 'v';
     redraw_curbuf_later(INVERTED);      /* update the inversion */

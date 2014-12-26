@@ -2962,8 +2962,13 @@ win_line (
             if (shl->startcol != MAXCOL
                 && v >= (long)shl->startcol
                 && v < (long)shl->endcol) {
+              int tmp_col = v + MB_PTR2LEN(ptr);
+
+              if (shl->endcol < tmp_col) {
+                shl->endcol = tmp_col;
+              }
               shl->attr_cur = shl->attr;
-            } else if (v >= (long)shl->endcol && shl->lnum == lnum) {
+            } else if (v == (long)shl->endcol) {
               shl->attr_cur = 0;
 
               next_search_hl(wp, shl, lnum, (colnr_T)v, cur);
