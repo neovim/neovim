@@ -127,12 +127,12 @@ return {
   },
   {
     command='buffer',
-    flags=bit.bor(BANG, RANGE, NOTADR, BUFNAME, BUFUNL, COUNT, EXTRA, TRLBAR),
+    flags=bit.bor(BANG, RANGE, NOTADR, BUFNAME, BUFUNL, COUNT, EXTRA, EDITCMD, TRLBAR),
     func='ex_buffer',
   },
   {
     command='bNext',
-    flags=bit.bor(BANG, RANGE, NOTADR, COUNT, TRLBAR),
+    flags=bit.bor(BANG, RANGE, NOTADR, COUNT, EDITCMD, TRLBAR),
     func='ex_bprevious',
   },
   {
@@ -162,22 +162,22 @@ return {
   },
   {
     command='bfirst',
-    flags=bit.bor(BANG, RANGE, NOTADR, TRLBAR),
+    flags=bit.bor(BANG, RANGE, NOTADR, EDITCMD, TRLBAR),
     func='ex_brewind',
   },
   {
     command='blast',
-    flags=bit.bor(BANG, RANGE, NOTADR, TRLBAR),
+    flags=bit.bor(BANG, RANGE, NOTADR, EDITCMD, TRLBAR),
     func='ex_blast',
   },
   {
     command='bmodified',
-    flags=bit.bor(BANG, RANGE, NOTADR, COUNT, TRLBAR),
+    flags=bit.bor(BANG, RANGE, NOTADR, COUNT, EDITCMD, TRLBAR),
     func='ex_bmodified',
   },
   {
     command='bnext',
-    flags=bit.bor(BANG, RANGE, NOTADR, COUNT, TRLBAR),
+    flags=bit.bor(BANG, RANGE, NOTADR, COUNT, EDITCMD, TRLBAR),
     func='ex_bnext',
   },
   {
@@ -187,12 +187,12 @@ return {
   },
   {
     command='bprevious',
-    flags=bit.bor(BANG, RANGE, NOTADR, COUNT, TRLBAR),
+    flags=bit.bor(BANG, RANGE, NOTADR, COUNT, EDITCMD, TRLBAR),
     func='ex_bprevious',
   },
   {
     command='brewind',
-    flags=bit.bor(BANG, RANGE, NOTADR, TRLBAR),
+    flags=bit.bor(BANG, RANGE, NOTADR, EDITCMD, TRLBAR),
     func='ex_brewind',
   },
   {
@@ -1762,47 +1762,47 @@ return {
   },
   {
     command='sbuffer',
-    flags=bit.bor(BANG, RANGE, NOTADR, BUFNAME, BUFUNL, COUNT, EXTRA, TRLBAR),
+    flags=bit.bor(BANG, RANGE, NOTADR, BUFNAME, BUFUNL, COUNT, EXTRA, EDITCMD, TRLBAR),
     func='ex_buffer',
   },
   {
     command='sbNext',
-    flags=bit.bor(RANGE, NOTADR, COUNT, TRLBAR),
+    flags=bit.bor(RANGE, NOTADR, COUNT, EDITCMD, TRLBAR),
     func='ex_bprevious',
   },
   {
     command='sball',
-    flags=bit.bor(RANGE, NOTADR, COUNT, TRLBAR),
+    flags=bit.bor(RANGE, NOTADR, COUNT, EDITCMD, TRLBAR),
     func='ex_buffer_all',
   },
   {
     command='sbfirst',
-    flags=bit.bor(TRLBAR),
+    flags=bit.bor(EDITCMD, TRLBAR),
     func='ex_brewind',
   },
   {
     command='sblast',
-    flags=bit.bor(TRLBAR),
+    flags=bit.bor(EDITCMD, TRLBAR),
     func='ex_blast',
   },
   {
     command='sbmodified',
-    flags=bit.bor(RANGE, NOTADR, COUNT, TRLBAR),
+    flags=bit.bor(RANGE, NOTADR, COUNT, EDITCMD, TRLBAR),
     func='ex_bmodified',
   },
   {
     command='sbnext',
-    flags=bit.bor(RANGE, NOTADR, COUNT, TRLBAR),
+    flags=bit.bor(RANGE, NOTADR, COUNT, EDITCMD, TRLBAR),
     func='ex_bnext',
   },
   {
     command='sbprevious',
-    flags=bit.bor(RANGE, NOTADR, COUNT, TRLBAR),
+    flags=bit.bor(RANGE, NOTADR, COUNT, EDITCMD, TRLBAR),
     func='ex_bprevious',
   },
   {
     command='sbrewind',
-    flags=bit.bor(TRLBAR),
+    flags=bit.bor(EDITCMD, TRLBAR),
     func='ex_brewind',
   },
   {

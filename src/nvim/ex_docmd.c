@@ -3958,13 +3958,17 @@ static void ex_bunload(exarg_T *eap)
  */
 static void ex_buffer(exarg_T *eap)
 {
-  if (*eap->arg)
+  if (*eap->arg) {
     eap->errmsg = e_trailing;
-  else {
-    if (eap->addr_count == 0)           /* default is current buffer */
+  } else {
+    if (eap->addr_count == 0) {  // default is current buffer
       goto_buffer(eap, DOBUF_CURRENT, FORWARD, 0);
-    else
+    } else {
       goto_buffer(eap, DOBUF_FIRST, FORWARD, (int)eap->line2);
+    }
+    if (eap->do_ecmd_cmd != NULL) {
+      do_cmdline_cmd(eap->do_ecmd_cmd);
+    }
   }
 }
 
@@ -3975,6 +3979,9 @@ static void ex_buffer(exarg_T *eap)
 static void ex_bmodified(exarg_T *eap)
 {
   goto_buffer(eap, DOBUF_MOD, FORWARD, (int)eap->line2);
+  if (eap->do_ecmd_cmd != NULL) {
+    do_cmdline_cmd(eap->do_ecmd_cmd);
+  }
 }
 
 /*
@@ -3984,6 +3991,9 @@ static void ex_bmodified(exarg_T *eap)
 static void ex_bnext(exarg_T *eap)
 {
   goto_buffer(eap, DOBUF_CURRENT, FORWARD, (int)eap->line2);
+  if (eap->do_ecmd_cmd != NULL) {
+    do_cmdline_cmd(eap->do_ecmd_cmd);
+  }
 }
 
 /*
@@ -3995,6 +4005,9 @@ static void ex_bnext(exarg_T *eap)
 static void ex_bprevious(exarg_T *eap)
 {
   goto_buffer(eap, DOBUF_CURRENT, BACKWARD, (int)eap->line2);
+  if (eap->do_ecmd_cmd != NULL) {
+    do_cmdline_cmd(eap->do_ecmd_cmd);
+  }
 }
 
 /*
@@ -4006,6 +4019,9 @@ static void ex_bprevious(exarg_T *eap)
 static void ex_brewind(exarg_T *eap)
 {
   goto_buffer(eap, DOBUF_FIRST, FORWARD, 0);
+  if (eap->do_ecmd_cmd != NULL) {
+    do_cmdline_cmd(eap->do_ecmd_cmd);
+  }
 }
 
 /*
@@ -4015,6 +4031,9 @@ static void ex_brewind(exarg_T *eap)
 static void ex_blast(exarg_T *eap)
 {
   goto_buffer(eap, DOBUF_LAST, BACKWARD, 0);
+  if (eap->do_ecmd_cmd != NULL) {
+    do_cmdline_cmd(eap->do_ecmd_cmd);
+  }
 }
 
 int ends_excmd(int c) FUNC_ATTR_CONST
