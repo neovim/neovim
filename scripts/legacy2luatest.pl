@@ -58,11 +58,12 @@ sub read_in_file {
       unshift @{$command_lines}, @{$input_lines};
       unshift @{$command_lines}, "insert([[";
 
-      push @{$test_body_lines}, @{$command_lines};
-
-      @{$command_lines} = ();
       @{$input_lines} = ();
     }
+
+    # Output remaining command lines.
+    push @{$test_body_lines}, @{$command_lines};
+    @{$command_lines} = ();
   }
 
   sub format_comment {
@@ -173,11 +174,9 @@ sub read_in_file {
     $state = $states{$state}->($_);
   }
 
-  # If not all input lines have been processed,
+  # If not all lines have been processed yet,
   # do it now.
-  if (@input_lines) {
-    end_input \@input_lines, \@command_lines, \@test_body_lines;
-  }
+  end_input \@input_lines, \@command_lines, \@test_body_lines;
 
   close $in_file_handle;
 
@@ -226,13 +225,17 @@ if ($#ARGV != 1) {
 }
 
 my @legacy_suffixes = ('.in', '.ok');
-my ($test_name, $base_path, $suffix) = fileparse($legacy_testfile, @legacy_suffixes);
-my $in_file = catfile($base_path, $test_name . '.in');
-my $ok_file = catfile($base_path, $test_name . '.ok');
+my ($base_name, $base_path, $suffix) = fileparse($legacy_testfile, @legacy_suffixes);
+my $in_file = catfile($base_path, $base_name . '.in');
+my $ok_file = catfile($base_path, $base_name . '.ok');
+
+# Remove leading 'test'.
+my $test_name = $base_name;
+$test_name =~ s/^test_?//;
 
 my $spec_file = do {
-  if ($test_name =~ /^test([0-9]+)/) {
-    catfile($out_dir,  sprintf('%03d', $1) . '_' . $test_name . '_spec.lua')
+  if ($test_name =~ /^([0-9]+)/) {
+    catfile($out_dir,  sprintf('%03d', $1) . '_spec.lua')
   } else {
     catfile($out_dir,  $test_name . '_spec.lua')
   }
@@ -250,7 +253,13 @@ if (! -d $out_dir) {
 
 if (-f $spec_file) {
   say "Output file $spec_file already exists.";
-  exit 4;
+  print "Overwrite (Y/n)? ";
+  my $input = <STDIN>;
+  chomp($input);
+  unless ($input =~ /^y|Y/) {
+    say "Aborting.";
+    exit 4;
+  }
 }
 
 # Read .in and .ok files.
@@ -267,8 +276,8 @@ print $spec_file_handle <<"EOS";
 @{[join "\n", @{$description_lines}]}
 
 local helpers = require('test.functional.helpers')
-local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute, expect = helpers.execute, helpers.expect
+local feed, insert, source = helpers.feed, helpers.insert, helpers.source
+local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 
 describe('$test_name', function()
   setup(clear)
@@ -280,3 +289,5 @@ end)
 EOS
 
 close $spec_file_handle;
+
+say "Written to $spec_file."
