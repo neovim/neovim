@@ -1,4 +1,4 @@
-*pattern.txt*   For Vim version 7.4.  Last change: 2014 May 28
+*pattern.txt*   For Vim version 7.4.  Last change: 2014 Jul 30
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -706,11 +706,18 @@ overview.
 	But to limit the time needed, only the line where what follows matches
 	is searched, and one line before that (if there is one).  This should
 	be sufficient to match most things and not be too slow.
-	The part of the pattern after "\@<=" and "\@<!" are checked for a
-	match first, thus things like "\1" don't work to reference \(\) inside
-	the preceding atom.  It does work the other way around:
-	Example			matches ~
-	\1\@<=,\([a-z]\+\)	",abc" in "abc,abc"
+
+	In the old regexp engine the part of the pattern after "\@<=" and
+	"\@<!" are checked for a match first, thus things like "\1" don't work
+	to reference \(\) inside the preceding atom.  It does work the other
+	way around:
+	Bad example			matches ~
+	\%#=1\1\@<=,\([a-z]\+\)		",abc" in "abc,abc"
+
+	However, the new regexp engine works differently, it is better to not
+	rely on this behavior, do not use \@<= if it can be avoided:
+	Example				matches ~
+	\([a-z]\+\)\zs,\1		",abc" in "abc,abc"
 
 \@123<=
 	Like "\@<=" but only look back 123 bytes. This avoids trying lots

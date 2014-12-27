@@ -1,4 +1,4 @@
-*options.txt*	For Vim version 7.4.  Last change: 2014 Jul 23
+*options.txt*	For Vim version 7.4.  Last change: 2014 Aug 09
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -5557,6 +5557,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	NOTE: To avoid portability problems with Vim scripts, always keep
 	this option at the default "on".  Only switch it off when working with
 	old Vi scripts.
+
+						*'renderoptions'* *'rop'*
+'renderoptions' 'rop'	Removed. {Nvim} will choose the best renderer available.
 
 						*'report'*
 'report'		number	(default 2)
