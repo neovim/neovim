@@ -5738,7 +5738,18 @@ next_search_hl (
 
     shl->lnum = lnum;
     if (shl->rm.regprog != NULL) {
+      /* Remember whether shl->rm is using a copy of the regprog in
+       * cur->match. */
+      bool regprog_is_copy = (shl != &search_hl
+                              && cur != NULL
+                              && shl == &cur->hl
+                              && cur->match.regprog == cur->hl.rm.regprog);
+
       nmatched = vim_regexec_multi(&shl->rm, win, shl->buf, lnum, matchcol, &(shl->tm));
+      /* Copy the regprog, in case it got freed and recompiled. */
+      if (regprog_is_copy) {
+        cur->match.regprog = cur->hl.rm.regprog;
+      }
       if (called_emsg || got_int) {
         // Error while handling regexp: stop using this regexp.
         if (shl == &search_hl) {
