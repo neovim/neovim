@@ -138,7 +138,6 @@ struct dbg_stuff {
 # include "ex_docmd.c.generated.h"
 #endif
 
-# define HAVE_EX_SCRIPT_NI
 # define ex_gui                 ex_nogui
 # define ex_tearoff             ex_ni
 # define ex_popup               ex_ni
@@ -1494,9 +1493,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
 
   ni = (!IS_USER_CMDIDX(ea.cmdidx)
         && (cmdnames[ea.cmdidx].cmd_func == ex_ni
-#ifdef HAVE_EX_SCRIPT_NI
            || cmdnames[ea.cmdidx].cmd_func == ex_script_ni
-#endif
     ));
 
 
@@ -1832,19 +1829,26 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     case CMD_leftabove:
     case CMD_let:
     case CMD_lockmarks:
+    case CMD_lua:
     case CMD_match:
+    case CMD_mzscheme:
     case CMD_noautocmd:
     case CMD_noswapfile:
+    case CMD_perl:
     case CMD_psearch:
     case CMD_python:
+    case CMD_py3:
+    case CMD_python3:
     case CMD_return:
     case CMD_rightbelow:
+    case CMD_ruby:
     case CMD_silent:
     case CMD_smagic:
     case CMD_snomagic:
     case CMD_substitute:
     case CMD_syntax:
     case CMD_tab:
+    case CMD_tcl:
     case CMD_throw:
     case CMD_tilde:
     case CMD_topleft:
@@ -1854,7 +1858,8 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     case CMD_wincmd:
       break;
 
-    default:            goto doend;
+    default:
+      goto doend;
     }
   }
 
@@ -3291,9 +3296,7 @@ static void get_flags(exarg_T *eap)
   }
 }
 
-/*
- * Function called for command which is Not Implemented.  NI!
- */
+/// Stub function for command which is Not Implemented. NI!
 void ex_ni(exarg_T *eap)
 {
   if (!eap->skip)
@@ -3301,11 +3304,8 @@ void ex_ni(exarg_T *eap)
         "E319: Sorry, the command is not available in this version");
 }
 
-#ifdef HAVE_EX_SCRIPT_NI
-/*
- * Function called for script command which is Not Implemented.  NI!
- * Skips over ":perl <<EOF" constructs.
- */
+/// Stub function for script command which is Not Implemented. NI!
+/// Skips over ":perl <<EOF" constructs.
 static void ex_script_ni(exarg_T *eap)
 {
   if (!eap->skip)
@@ -3313,7 +3313,6 @@ static void ex_script_ni(exarg_T *eap)
   else
     free(script_get(eap, eap->arg));
 }
-#endif
 
 /*
  * Check range in Ex command for validity.
