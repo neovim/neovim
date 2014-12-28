@@ -1236,6 +1236,11 @@ return {
     func='ex_tag',
   },
   {
+    command='lunmap',
+    flags=bit.bor(EXTRA, TRLBAR, NOTRLCOM, USECTRLV, CMDWIN),
+    func='ex_unmap',
+  },
+  {
     command='lua',
     flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN),
     func='ex_script_ni',
@@ -1249,11 +1254,6 @@ return {
     command='luafile',
     flags=bit.bor(RANGE, FILE1, NEEDARG, CMDWIN),
     func='ex_ni',
-  },
-  {
-    command='lunmap',
-    flags=bit.bor(EXTRA, TRLBAR, NOTRLCOM, USECTRLV, CMDWIN),
-    func='ex_unmap',
   },
   {
     command='lvimgrep',
