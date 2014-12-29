@@ -3543,27 +3543,28 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid, int tri
 }
 
 
-/*
- * Jump to the first open window that contains buffer "buf", if one exists.
- * Returns a pointer to the window found, otherwise NULL.
- */
+/// Jump to the first open window that contains buffer "buf", if one exists.
+/// Returns a pointer to the window found, otherwise NULL.
 win_T *buf_jump_open_win(buf_T *buf)
 {
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_buffer == buf) {
-      win_enter(wp, false);
-      return wp;
+  if (curwin->w_buffer == buf) {
+    win_enter(curwin, false);
+    return curwin;
+  } else {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (wp->w_buffer == buf) {
+        win_enter(wp, false);
+        return wp;
+      }
     }
   }
 
   return NULL;
 }
 
-/*
- * Jump to the first open window in any tab page that contains buffer "buf",
- * if one exists.
- * Returns a pointer to the window found, otherwise NULL.
- */
+/// Jump to the first open window in any tab page that contains buffer "buf",
+/// if one exists.
+/// @return the found window, or NULL.
 win_T *buf_jump_open_tab(buf_T *buf)
 {
 
