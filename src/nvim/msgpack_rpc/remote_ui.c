@@ -249,10 +249,6 @@ static void remote_ui_highlight_set(UI *ui, HlAttrs attrs)
     PUT(hl, "bold", BOOLEAN_OBJ(true));
   }
 
-  if (attrs.standout) {
-    PUT(hl, "standout", BOOLEAN_OBJ(true));
-  }
-
   if (attrs.underline) {
     PUT(hl, "underline", BOOLEAN_OBJ(true));
   }

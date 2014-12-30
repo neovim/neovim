@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 typedef struct {
-  bool bold, standout, underline, undercurl, italic, reverse;
+  bool bold, underline, undercurl, italic, reverse;
   int foreground, background;
 } HlAttrs;
 
