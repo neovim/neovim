@@ -1,4 +1,4 @@
-*todo.txt*      For Vim version 7.4.  Last change: 2014 Aug 22
+*todo.txt*      For Vim version 7.4.  Last change: 2014 Aug 23
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -53,10 +53,6 @@ Regexp problems:
 
 Still using freed memory after using setloclist(). (lcd, 2014 Jul 23)
 More info Jul 24.  Not clear why.
-
-Patch for:
-    CmdUndefined    - Like FuncUndefined but for user commands.
-Yasuhiro Matsumoto, 2014 Aug 18
 
 Patch to make getregtype() return the right size for non-linux systems.
 (Yasuhiro Matsumoto, 2014 Jul 8)
@@ -262,7 +258,7 @@ Issue 28.
 Go through more coverity reports.
 
 Patch to add ":undorecover", get as much text out of the undo file as
-possible. (Christian Brabandt, 2014 Mar 12, update Aug 16)
+possible. (Christian Brabandt, 2014 Mar 12, update Aug 22)
 
 Updated spec ftplugin. (Matěj Cepl, 2013 Oct 16)
 
