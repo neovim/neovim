@@ -18,9 +18,20 @@ describe('mapping', function()
     execute('inoreab чкпр   vim')
     feed('GAчкпр <cr><esc>')
 
+    -- langmap should not get remapped in insert mode.
+    execute('inoremap { FAIL_ilangmap')
+    execute('set langmap=+{ langnoremap')
+    feed('o+<esc>')
+
+    -- expr mapping with langmap.
+    execute('inoremap <expr> { "FAIL_iexplangmap"')
+    feed('o+<esc>')
+
     -- Assert buffer contents.
     expect([[
       test starts here:
-      vim]])
+      vim
+      +
+      +]])
   end)
 end)
