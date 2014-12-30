@@ -61,7 +61,7 @@ static struct {
 } sr;
 static int current_highlight_mask = 0;
 static HlAttrs current_attrs = {
-  false, false, false, false, false, false, -1, -1
+  false, false, false, false, false, -1, -1
 };
 static bool cursor_enabled = true;
 static int height, width;
@@ -338,11 +338,10 @@ static void set_highlight_args(int mask, HlAttrs *attrs)
   }
 
   attrs->bold = mask & HL_BOLD;
-  attrs->standout = mask & HL_STANDOUT;
   attrs->underline = mask & HL_UNDERLINE;
   attrs->undercurl = mask & HL_UNDERCURL;
   attrs->italic = mask & HL_ITALIC;
-  attrs->reverse = mask & HL_INVERSE;
+  attrs->reverse = mask & (HL_INVERSE | HL_STANDOUT);
   attrs->foreground = aep && aep->fg_color >= 0 ? aep->fg_color : normal_fg;
   attrs->background = aep && aep->bg_color >= 0 ? aep->bg_color : normal_bg;
 }
