@@ -2,7 +2,7 @@
 " Language:         Shell Script
 " Maintainer:       Peter Aronoff <telemachus@arpinum.org>
 " Original Author:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2013-11-28
+" Latest Revision:  2014-08-22
 
 if exists("b:did_indent")
   finish
@@ -91,7 +91,9 @@ function! GetShIndent()
     if s:is_case(pine)
       let ind = indent(lnum) + s:indent_value('case-labels')
     else
-      let ind -= s:indent_value('case-statements') - s:indent_value('case-breaks')
+      let ind -= (s:is_case_label(pine, lnum) && s:is_case_ended(pine) ?
+                  \ 0 : s:indent_value('case-statements')) -
+                  \ s:indent_value('case-breaks')
     endif
   elseif s:is_case_break(line)
     let ind -= s:indent_value('case-breaks')

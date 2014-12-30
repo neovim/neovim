@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Vroom (vim testing and executable documentation)
-" Maintainer:	David Barnett (https://github.com/google/vim-ft.vroom)
+" Maintainer:	David Barnett (https://github.com/google/vim-ft-vroom)
 " Last Change:	2014 Jul 23
 
 " For version 5.x: Clear all syntax items.

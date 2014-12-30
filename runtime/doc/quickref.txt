@@ -1,4 +1,4 @@
-*quickref.txt*  For Vim version 7.4.  Last change: 2014 Jun 25
+*quickref.txt*  For Vim version 7.4.  Last change: 2014 Aug 06
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -826,6 +826,7 @@ Short explanation of each option:		*option-list*
 'regexpengine'	  're'	    default regexp engine to use
 'relativenumber'  'rnu'	    show relative line number in front of each line
 'remap'			    allow mappings to work recursively
+'renderoptions'	  'rop'	    options for text rendering on Windows
 'report'		    threshold for reporting nr. of lines changed
 'restorescreen'   'rs'	    Win32: restore screen when exiting
 'revins'	  'ri'	    inserting characters will work backwards

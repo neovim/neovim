@@ -1,4 +1,4 @@
-*insert.txt*    For Vim version 7.4.  Last change: 2014 Jul 06
+*insert.txt*    For Vim version 7.4.  Last change: 2014 Aug 04
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -51,6 +51,8 @@ char		action	~
 		abbreviation.
 		Note: If your <Esc> key is hard to hit on your keyboard, train
 		yourself to use CTRL-[.
+		If Esc doesn't work and you are using a Mac, try CTRL-Esc.
+		Or disable Listening under Accessibility preferences.
 						*i_CTRL-C*
 CTRL-C		Quit insert mode, go back to Normal mode.  Do not check for
 		abbreviations.  Does not trigger the |InsertLeave| autocommand

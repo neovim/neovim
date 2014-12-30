@@ -1,4 +1,4 @@
-*cmdline.txt*   For Vim version 7.4.  Last change: 2014 Feb 23
+*cmdline.txt*   For Vim version 7.4.  Last change: 2014 Aug 16
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -1079,6 +1079,9 @@ While in the command-line window you cannot use the mouse to put the cursor in
 another window, or drag statuslines of other windows.  You can drag the
 statusline of the command-line window itself and the statusline above it.
 Thus you can resize the command-line window, but not others.
+
+The |getcmdwintype()| function returns the type of the command-line being
+edited as described in |cmdwin-char|.
 
 
 AUTOCOMMANDS
