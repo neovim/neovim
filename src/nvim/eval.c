@@ -17580,15 +17580,14 @@ void ex_function(exarg_T *eap)
 
       /* Check for defining a function inside this function. */
       if (checkforcmd(&p, "function", 2)) {
-        if (*p == '!')
+        if (*p == '!') {
           p = skipwhite(p + 1);
+        }
         p += eval_fname_script(p);
-        if (ASCII_ISALPHA(*p)) {
-          free(trans_function_name(&p, TRUE, 0, NULL));
-          if (*skipwhite(p) == '(') {
-            ++nesting;
-            indent += 2;
-          }
+        free(trans_function_name(&p, TRUE, 0, NULL));
+        if (*skipwhite(p) == '(') {
+          nesting++;
+          indent += 2;
         }
       }
 
