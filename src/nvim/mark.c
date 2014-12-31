@@ -1219,8 +1219,10 @@ int read_viminfo_filemark(vir_T *virp, int force)
       }
     } else if (VIM_ISDIGIT(*str))
       fm = &namedfm[*str - '0' + NMARKS];
-    else
+    else {  // is uppercase
+      assert(*str >= 'A' && *str <= 'Z');
       fm = &namedfm[*str - 'A'];
+    }
     if (fm != NULL && (fm->fmark.mark.lnum == 0 || force)) {
       str = skipwhite(str + 1);
       fm->fmark.mark.lnum = getdigits(&str);
