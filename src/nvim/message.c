@@ -85,7 +85,7 @@ static int verbose_did_open = FALSE;
 
 /*
  * When writing messages to the screen, there are many different situations.
- * A number of variables is used to remember the current state:
+ * A number of variables are used to remember the current state:
  * msg_didany	    TRUE when messages were written since the last time the
  *		    user reacted to a prompt.
  *		    Reset: After hitting a key for the hit-return prompt,
@@ -124,20 +124,18 @@ static int verbose_did_open = FALSE;
  * When terminal not initialized (yet) mch_errmsg(..) is used.
  * return TRUE if wait_return not called
  */
-int msg(char_u *s)
+int msg(char_u *s) FUNC_ATTR_NONNULL_ALL
 {
-  return msg_attr_keep(s, 0, FALSE);
+  return msg_attr_keep(s, 0, false);
 }
 
 /*
  * Like msg() but keep it silent when 'verbosefile' is set.
  */
-int verb_msg(char_u *s)
+int verb_msg(char_u *s) FUNC_ATTR_NONNULL_ALL
 {
-  int n;
-
   verbose_enter();
-  n = msg_attr_keep(s, 0, FALSE);
+  int n = msg_attr_keep(s, 0, false);
   verbose_leave();
 
   return n;
@@ -145,15 +143,12 @@ int verb_msg(char_u *s)
 
 int msg_attr(char_u *s, int attr) FUNC_ATTR_NONNULL_ARG(1)
 {
-  return msg_attr_keep(s, attr, FALSE);
+  return msg_attr_keep(s, attr, false);
 }
 
-int 
-msg_attr_keep (
-    char_u *s,
-    int attr,
-    int keep                   /* TRUE: set keep_msg if it doesn't scroll */
-)
+// @param keep true: set keep_msg (if it doesn't scroll)
+// @see msg(char_u)
+int msg_attr_keep(char_u *s, int attr, bool keep)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   static int entered = 0;
@@ -179,7 +174,7 @@ msg_attr_keep (
           && last_msg_hist != NULL
           && last_msg_hist->msg != NULL
           && STRCMP(s, last_msg_hist->msg)))
-    add_msg_hist(s, -1, attr);
+    msg_hist_add(s, -1, attr);
 
   /* When displaying keep_msg, don't let msg_start() free it, caller must do
    * that. */
@@ -629,7 +624,7 @@ char_u *msg_trunc_attr(char_u *s, int force, int attr)
   int n;
 
   /* Add message to history before truncating */
-  add_msg_hist(s, -1, attr);
+  msg_hist_add(s, -1, attr);
 
   s = msg_may_trunc(force, s);
 
@@ -674,19 +669,17 @@ char_u *msg_may_trunc(int force, char_u *s)
   return s;
 }
 
-static void 
-add_msg_hist (
-    char_u *s,
-    int len,                        /* -1 for undetermined length */
-    int attr
-)
+/// @param len length of `s`, or -1 for undetermined length
+///        (assumes NUL-terminated `s`)
+static void msg_hist_add(char_u *s, int len, int attr)
 {
   if (msg_hist_off || msg_silent != 0)
     return;
 
   /* Don't let the message history get too big */
-  while (msg_hist_len > MAX_MSG_HIST_LEN)
-    (void)delete_first_msg();
+  while (msg_hist_len > MAX_MSG_HIST_LEN) {
+    (void)msg_delete_first();
+  }
 
   /* allocate an entry and add the message at the end of the history */
   struct msg_hist *p = xmalloc(sizeof(struct msg_hist));
@@ -710,11 +703,9 @@ add_msg_hist (
   ++msg_hist_len;
 }
 
-/*
- * Delete the first (oldest) message from the history.
- * Returns FAIL if there are no messages.
- */
-int delete_first_msg(void)
+/// Delete the first (oldest) message from the history.
+/// @return true if a message was deleted; false if there are no messages.
+bool msg_delete_first(void)
 {
   struct msg_hist *p;
 
@@ -1003,22 +994,22 @@ void msg_start(void)
 
   if (!msg_silent) {
     xfree(keep_msg);
-    keep_msg = NULL;                    /* don't display old message now */
+    keep_msg = NULL;                   // don't display old message now
   }
 
   if (need_clr_eos) {
-    /* Halfway an ":echo" command and getting an (error) message: clear
-     * any text from the command. */
+    // Halfway in ":echo" command and getting an (error) message: clear
+    // any text from the command.
     need_clr_eos = FALSE;
     msg_clr_eos();
   }
 
-  if (!msg_scroll && full_screen) {     /* overwrite last message */
+  if (!msg_scroll && full_screen) {    // overwrite last message
     msg_row = cmdline_row;
     msg_col =
       cmdmsg_rl ? Columns - 1 :
       0;
-  } else if (msg_didout) {                /* start message on next line */
+  } else if (msg_didout) {             // start message on next line
     msg_putchar('\n');
     did_return = TRUE;
     if (exmode_active != EXMODE_NORMAL)
@@ -1027,7 +1018,8 @@ void msg_start(void)
   if (!msg_didany || lines_left < 0)
     msg_starthere();
   if (msg_silent == 0) {
-    msg_didout = FALSE;                     /* no output on current line yet */
+    msg_didout = FALSE;                // no output on current line yet
+    cursor_off();
   }
 
   /* when redirecting, may need to start a new line. */
@@ -1139,7 +1131,7 @@ int msg_outtrans_len_attr(char_u *msgstr, int len, int attr)
 
   /* if MSG_HIST flag set, add message to history */
   if (attr & MSG_HIST) {
-    add_msg_hist(str, len, attr);
+    msg_hist_add(str, len, attr);
     attr &= ~MSG_HIST;
   }
 
@@ -1535,24 +1527,19 @@ void msg_puts_long_len_attr(char_u *longstr, int len, int attr)
   msg_outtrans_len_attr(longstr + len - slen, slen, attr);
 }
 
-/*
- * Basic function for writing a message with highlight attributes.
- */
+/// Writes a message with highlight attributes.
 void msg_puts_attr(char_u *s, int attr)
 {
   msg_puts_attr_len(s, -1, attr);
 }
 
-/*
- * Like msg_puts_attr(), but with a maximum length "maxlen" (in bytes).
- * When "maxlen" is -1 there is no maximum length.
- * When "maxlen" is >= 0 the message is not put in the history.
- */
+/// Writes a message with highlight attributes.
+//  @param maxlen maximum length (in bytes), or -1 for unlimited.
+///        When `maxlen` is >= 0 the message is not put in the history.
+/// @see msg_puts_attr
 static void msg_puts_attr_len(char_u *str, int maxlen, int attr)
 {
-  /*
-   * If redirection is on, also write to the redirection file.
-   */
+  // If redirection is on, also write to the redirection file.
   redir_write(str, maxlen);
 
   /*
@@ -1563,7 +1550,7 @@ static void msg_puts_attr_len(char_u *str, int maxlen, int attr)
 
   /* if MSG_HIST flag set, add message to history */
   if ((attr & MSG_HIST) && maxlen < 0) {
-    add_msg_hist(str, -1, attr);
+    msg_hist_add(str, -1, attr);
     attr &= ~MSG_HIST;
   }
 
@@ -1587,14 +1574,14 @@ static void msg_puts_attr_len(char_u *str, int maxlen, int attr)
   if (msg_use_printf())
     msg_puts_printf(str, maxlen);
   else
-    msg_puts_display(str, maxlen, attr, FALSE);
+    msg_puts_display(str, maxlen, attr, false);
 }
 
 /*
  * The display part of msg_puts_attr_len().
  * May be called recursively to display scroll-back text.
  */
-static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
+static void msg_puts_display(char_u *str, int maxlen, int attr, bool recurse)
 {
   char_u      *s = str;
   char_u      *t_s = str;       /* string from "t_s" to "s" is still todo */
@@ -1938,7 +1925,7 @@ static msgchunk_T *disp_sb_line(int row, msgchunk_T *smp)
     p = mp->sb_text;
     if (*p == '\n')         /* don't display the line break */
       ++p;
-    msg_puts_display(p, -1, mp->sb_attr, TRUE);
+    msg_puts_display(p, -1, mp->sb_attr, true);
     if (mp->sb_eol || mp->sb_next == NULL)
       break;
     mp = mp->sb_next;

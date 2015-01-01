@@ -1669,7 +1669,7 @@ win_found:
         msg_scroll = TRUE;
       else if (!msg_scrolled && shortmess(SHM_OVERALL))
         msg_scroll = FALSE;
-      msg_attr_keep(IObuff, 0, TRUE);
+      msg_attr_keep(IObuff, 0, true);
       msg_scroll = i;
     }
   } else {
