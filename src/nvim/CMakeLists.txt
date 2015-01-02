@@ -81,7 +81,6 @@ set(CONV_SOURCES
   regexp.c
   screen.c
   search.c
-  sha256.c
   spell.c
   syntax.c
   tag.c
