@@ -3448,23 +3448,19 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
           if (Pb) {
             held_button = mouse_code;
             mouse_code |= MOUSE_DRAG;
-            WantQueryMouse = TRUE;
           }
           is_drag = TRUE;
           showmode();
           break;
         case  2: mouse_code = MOUSE_LEFT;
-          WantQueryMouse = TRUE;
           break;
         case  3: mouse_code = MOUSE_RELEASE | MOUSE_LEFT;
           break;
         case  4: mouse_code = MOUSE_MIDDLE;
-          WantQueryMouse = TRUE;
           break;
         case  5: mouse_code = MOUSE_RELEASE | MOUSE_MIDDLE;
           break;
         case  6: mouse_code = MOUSE_RIGHT;
-          WantQueryMouse = TRUE;
           break;
         case  7: mouse_code = MOUSE_RELEASE | MOUSE_RIGHT;
           break;
