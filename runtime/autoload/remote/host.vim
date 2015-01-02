@@ -174,7 +174,6 @@ function! s:PluginsForHost(host)
   return s:plugins_for_host[a:host]
 endfunction
 
-
 " Registration of standard hosts
 
 " Python {{{
@@ -200,42 +199,53 @@ function! s:RequirePythonHost(name)
 
   " Failed, try a little harder to find the correct interpreter or 
   " report a friendly error to user
-  let get_version =
+  let l:check_py_version=
         \ ' -c "import sys; sys.stdout.write(str(sys.version_info[0]) + '.
         \ '\".\" + str(sys.version_info[1]))"'
+  let l:check_neovim_module=
+        \ ' -c "import neovim, sys; sys.stdout.write(\"ok\")"'
+  let l:python_interpreters = []
+  let l:python_versions = ['2.6', '2.7', '2', '']
+  let l:python_supported = ['2.6', '2.7']
 
-  let supported = ['2.6', '2.7']
-
-  " To load the python host a python executable must be available
+  " Construct the list of working python interpreters
+  "  First the user supplied
   if exists('g:python_host_prog')
         \ && executable(g:python_host_prog)
-        \ && index(supported, system(g:python_host_prog.get_version)) >= 0
-    let python_host_prog = g:python_host_prog
-  elseif executable('python')
-        \ && index(supported, system('python'.get_version)) >= 0
-    let python_host_prog = 'python'
-  elseif executable('python2')
-        \ && index(supported, system('python2'.get_version)) >= 0
-    " In some distros, python3 is the default python
-    let python_host_prog = 'python2'
-  else
-    throw 'No python interpreter found.' .
+    call add(s:python_to_check, g:python_host_prog)
+  endif
+
+  " Second the well-known name of executables
+  for py_ver in l:python_versions
+    let l:py_exec = 'python'.py_ver
+    if executable(l:py_exec)
+      call add(l:python_interpreters, l:py_exec)
+    endif
+  endfor
+
+  " To load the python host a python executable must be available
+  "  check if this python interpreter is supported
+  call filter(l:python_interpreters, 'index(l:python_supported, system(v:val.l:check_py_version))')
+
+  if empty(l:python_interpreters)
+    throw 'No compatible python interpreter found.' .
       \ " Try setting 'let g:python_host_prog=/path/to/python' in your '.nvimrc'" .
       \ " or see ':help nvim-python'."
   endif
 
-  " Make sure we pick correct python version on path.
-  let python_host_prog = exepath(python_host_prog)
-  let python_version = systemlist(python_host_prog . ' --version')[0]
+  " ... check if this python interpreter has neovim module
+  " Execute python, import neovim and print a string. If output isn't 'ok',
+  "  the user is missing the neovim module or it is wrongly installed
+  call filter(l:python_interpreters, '"ok" == system(v:val.l:check_neovim_module)')
 
-  " Execute python, import neovim and print a string. If import_result doesn't
-  " matches the printed string, the user is missing the neovim module
-  let import_result = system(python_host_prog .
-        \ ' -c "import neovim, sys; sys.stdout.write(\"ok\")"')
-  if import_result != 'ok'
-    throw 'No neovim module found for ' . python_version . '.' .
+  if empty(l:python_interpreters)
+    throw 'No neovim module found for python interpreter'.
       \ " Try installing it with 'pip install neovim' or see ':help nvim-python'."
   endif
+
+  " Pick the first interpreter that passed the required tests
+  let python_host_prog = l:python_interpreters[0]
+  let python_version = systemlist(python_host_prog . ' --version')[0]
 
   try
     let channel_id = rpcstart(python_host_prog, args)
@@ -244,7 +254,7 @@ function! s:RequirePythonHost(name)
     endif
   catch
   endtry
-  throw 'Failed to load python host.' .
+  throw 'Failed to load python host.' . python_version . '.' .
     \ " Try upgrading the Neovim python module with 'pip install --upgrade neovim'" .
     \ " or see ':help nvim-python'."
 endfunction
