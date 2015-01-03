@@ -45,7 +45,7 @@ function! s:Highlight_Matching_Pair()
 
   " Avoid that we remove the popup menu.
   " Return when there are no colors (looks like the cursor jumps).
-  if pumvisible() || (&t_Co < 8 && !has("gui_running"))
+  if pumvisible() || (&term != 'abstract_ui' && &t_Co < 8 && !has("gui_running"))
     return
   endif
 
