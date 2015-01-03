@@ -7209,9 +7209,10 @@ set_hl_attr (
    * For the color term mode: If there are other than "normal"
    * highlighting attributes, need to allocate an attr number.
    */
-  if (sgp->sg_cterm_fg == 0 && sgp->sg_cterm_bg == 0)
+  if (sgp->sg_cterm_fg == 0 && sgp->sg_cterm_bg == 0
+      && sgp->sg_rgb_fg == -1 && sgp->sg_rgb_bg == -1) {
     sgp->sg_cterm_attr = sgp->sg_cterm;
-  else {
+  } else {
     at_en.ae_attr = abstract_ui ? sgp->sg_gui : sgp->sg_cterm;
     at_en.ae_u.cterm.fg_color = sgp->sg_cterm_fg;
     at_en.ae_u.cterm.bg_color = sgp->sg_cterm_bg;
