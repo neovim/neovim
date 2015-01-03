@@ -79,7 +79,6 @@
 #define FEAT_BROWSE
 #define FEAT_CSCOPE
 #define FEAT_MOUSE
-#define FEAT_MOUSE_DEC
 #define FEAT_MOUSE_NET
 #define FEAT_MOUSE_SGR
 #define FEAT_MOUSE_TTY

@@ -497,14 +497,6 @@ EXTERN bool mouse_past_bottom INIT(= false);    /* mouse below last line */
 EXTERN bool mouse_past_eol INIT(= false);       /* mouse right of line */
 EXTERN int mouse_dragging INIT(= 0);            /* extending Visual area with
                                                    mouse dragging */
-/*
- * When the DEC mouse has been pressed but not yet released we enable
- * automatic querys for the mouse position.
- */
-EXTERN int WantQueryMouse INIT(= FALSE);
-
-
-
 
 /* Value set from 'diffopt'. */
 EXTERN int diff_context INIT(= 6);              /* context for folds */
