@@ -38,11 +38,14 @@ G$khhhhhkkcmno
 /^C23$/
 :exe ":norm! l\<C-V>j$hhAab\<Esc>"
 :.,/^$/w >> test.out
-:" Test for Visual block insert when virtualedit=all
-:set ve=all
+:" Test for Visual block insert when virtualedit=all and utf-8 encoding
+:set ve=all enc=utf-8
 :/\t\tline
 :exe ":norm! 07l\<C-V>jjIx\<Esc>"
-:set ve=
+:.,/^$/w >> test.out
+:" Test for Visual block append when virtualedit=all
+:exe ":norm! 012l\<C-v>jjAx\<Esc>"
+:set ve= enc=latin1
 :.,/^$/w >> test.out
 :" gUe must uppercase a whole word, also when ﬂ changes to SS
 Gothe youtuﬂeuu endYpk0wgUe
