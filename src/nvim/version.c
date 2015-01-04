@@ -982,8 +982,8 @@ void intro_message(int colon)
   static char *(lines[]) = {
     N_(NVIM_VERSION_LONG),
     "",
-    N_("by Bram Moolenaar et al."),
-    N_("Vim is open source and freely distributable"),
+    N_("by Thiago de Arruda."),
+    N_("Neovim is open source and freely distributable"),
     "",
     N_("Help poor children in Uganda!"),
     N_("type  :help iccf<Enter>       for information "),
@@ -1020,8 +1020,8 @@ void intro_message(int colon)
       if (sponsor != 0) {
         if (strstr(p, "children") != NULL) {
           p = sponsor < 0
-              ? N_("Sponsor Vim development!")
-              : N_("Become a registered Vim user!");
+              ? N_("Sponsor Neovim development!")
+              : N_("Become a registered Neovim user!");
         } else if (strstr(p, "iccf") != NULL) {
           p = sponsor < 0
               ? N_("type  :help sponsor<Enter>    for information ")
