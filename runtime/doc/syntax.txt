@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 7.4.  Last change: 2014 Aug 29
+*syntax.txt*	For Vim version 7.4.  Last change: 2014 Sep 09
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -2975,6 +2975,7 @@ TEX				*tex.vim* *ft-tex-syntax* *latex-syntax*
 	Tex: Taking Advantage of Conceal Mode		|tex-conceal|
 	Tex: Selective Conceal Mode			|g:tex_conceal|
 	Tex: Controlling iskeyword			|g:tex_isk|
+	Tex: Fine Subscript and Superscript Control	|tex-supersub|
 
 				*tex-folding* *g:tex_fold_enabled*
  Tex: Want Syntax Folding? ~
@@ -3068,6 +3069,7 @@ selectively to enable just some syntax highlighting: >
 <
 As an example, let g:tex_fast= "M" will allow math-associated highlighting
 but suppress all the other region-based syntax highlighting.
+(also see: |g:tex_conceal| and |tex-supersub|)
 
 					*tex-morecommands* *tex-package*
  Tex: Want To Highlight More Commands? ~
@@ -3168,6 +3170,28 @@ syntax highlighting script handles this with the following logic:
 
 	* If g:tex_isk exists, then it will be used for the local 'iskeyword'
 	* Else the local 'iskeyword' will be set to 48-57,a-z,A-Z,192-255
+
+			*tex-supersub* *g:tex_superscripts* *g:tex_subscripts*
+ Tex: Fine Subscript and Superscript Control~
+
+	See |tex-conceal| for how to enable concealed character replacement.
+
+	See |g:tex_conceal| for selectively concealing accents, bold/italic,
+	math, Greek, and superscripts/subscripts.
+
+	One may exert fine control over which superscripts and subscripts one
+	wants syntax-based concealment for (see |:syn-cchar|).  Since not all
+	fonts support all characters, one may override the
+	concealed-replacement lists; by default these lists are given by: >
+
+	    let g:tex_superscripts= "[0-9a-zA-W.,:;+-<>/()=]"
+	    let g:tex_subscripts= "[0-9aehijklmnoprstuvx,+-/().]"
+<
+	For example, I use Luxi Mono Bold; it doesn't support subscript
+	characters for "hklmnpst", so I put >
+		let g:tex_subscripts= "[0-9aeijoruvx,+-/().]"
+<	in ~/.vim/ftplugin/tex/tex.vim in order to avoid having inscrutable
+	utf-8 glyphs appear.
 
 
 TF						*tf.vim* *ft-tf-syntax*

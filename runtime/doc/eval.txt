@@ -1,4 +1,4 @@
-*eval.txt*	For Vim version 7.4.  Last change: 2014 Aug 29
+*eval.txt*	For Vim version 7.4.  Last change: 2014 Sep 09
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -3356,6 +3356,7 @@ getcmdtype()						*getcmdtype()*
 		    ?	backward search command
 		    @	|input()| command
 		    -	|:insert| or |:append| command
+		    =	|i_CTRL-R_=|
 		Only works when editing the command line, thus requires use of
 		|c_CTRL-\_e| or |c_CTRL-R_=| or an expression mapping.
 		Returns an empty string otherwise.

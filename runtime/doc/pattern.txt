@@ -1,4 +1,4 @@
-*pattern.txt*   For Vim version 7.4.  Last change: 2014 Aug 29
+*pattern.txt*   For Vim version 7.4.  Last change: 2014 Sep 06
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -838,7 +838,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	branch is used.
 	Example: "end\ze\(if\|for\)" matches the "end" in "endif" and
 	"endfor".
-	This cannot be followed by a multi. *E888*
+	This cannot be followed by a multi. |E888|
 	{not in Vi} {not available when compiled without the |+syntax| feature}
 
 						*/\%^* *start-of-file*

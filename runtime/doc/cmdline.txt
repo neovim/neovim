@@ -1,4 +1,4 @@
-*cmdline.txt*   For Vim version 7.4.  Last change: 2014 Aug 16
+*cmdline.txt*   For Vim version 7.4.  Last change: 2014 Sep 06
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -56,7 +56,7 @@ history tables:
 These are completely separate.  Each history can only be accessed when
 entering the same type of line.
 Use the 'history' option to set the number of lines that are remembered
-(default: 20).
+(default: 50).
 Notes:
 - When you enter a command-line that is exactly the same as an older one, the
   old one is removed (to avoid repeated commands moving older commands out of
