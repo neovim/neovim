@@ -887,7 +887,7 @@ static struct vimoption
    SCRIPTID_INIT},
   {"history",     "hi",   P_NUM|P_VIM,
    (char_u *)&p_hi, PV_NONE,
-   {(char_u *)0L, (char_u *)20L} SCRIPTID_INIT},
+   {(char_u *)0L, (char_u *)50L} SCRIPTID_INIT},
   {"hkmap",       "hk",   P_BOOL|P_VI_DEF|P_VIM,
    (char_u *)&p_hkmap, PV_NONE,
    {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
