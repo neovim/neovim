@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 7.4.  Last change: 2014 Jun 27
+*syntax.txt*	For Vim version 7.4.  Last change: 2014 Aug 29
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -501,7 +501,7 @@ inserted for that purpose if no line numbers are shown. This ID attribute
 takes the form of L123 for single-buffer HTML pages, or W2L123 for diff-view
 pages, and is used to jump to a specific line (in a specific window of a diff
 view). Javascript is inserted to open any closed dynamic folds
-(|g:html_dynamic_folds|) containing the specificed line before jumping. The
+(|g:html_dynamic_folds|) containing the specified line before jumping. The
 javascript also allows omitting the window ID in the url, and the leading L.
 For example: >
 

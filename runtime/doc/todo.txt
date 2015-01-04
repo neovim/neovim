@@ -1,4 +1,4 @@
-*todo.txt*      For Vim version 7.4.  Last change: 2014 Aug 23
+*todo.txt*      For Vim version 7.4.  Last change: 2014 Aug 29
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -58,14 +58,8 @@ Patch to make getregtype() return the right size for non-linux systems.
 (Yasuhiro Matsumoto, 2014 Jul 8)
 Breaks test_eval.  Inefficient, can we only compute y_width when needed?
 
-Patch to fix a problem with breakindent. (Christian Brabandt, 2014 Aug 17)
-It's actually not a breakindent problem. With test: Aug 19.
-With renamed test: Aug 20
-
 Problem that a previous silent ":throw" causes a following try/catch not to
 work. (ZyX, 2013 Sep 28)
-
-ml_get error when using Python, issue 248.
 
 Patch to fix typos in help files. (Dominique, 2014 Aug 9)
 
@@ -75,10 +69,20 @@ Related to setting TMODE_COOK.  Perhaps we can omit that for system()?
 
 Update for Romanian spell file. (Vanilla Ice, 2014 Aug 13)
 
+exepath() may return the wrong value.  Patch by Yasuhiro Matsumoto, 2014 Aug
+26.
+
+Win32: use different args for SearchPath()? (Yasuhiro Matsumoto, 2009 Jan 30)
+Also fixes wrong result from executable().
+Update from Ken Takata, 2014 Jan 10. Newer 2014 Apr 3.
+
 Patch to remove ETO_IGNORELANGUAGE, it causes Chinese characters not to show
 up. (Paul Moore, 2014 Jul 30)
 Should it depend on the Windows version?  Waiting for feedback.
 No longer needed after including DirectX patch?
+
+Fix for ":set all&" not taking care of side effect. (Yukihiro Nakadaira, 2014
+Aug 28)
 
 Patch by Marcin Szamotulski to add count to :close (2014 Aug 10, update Aug
 14)
@@ -104,6 +108,8 @@ Completion for :buf does not use 'wildignorecase'. (Akshay H, 2014 May 31)
 Patch to handle list with some items locked. (ZyX, 2014 Aug 17)
 Prefer the second solution.
 
+Issue 252.  Patch by Christian, 2014 Aug 26.
+
 ":cd C:\Windows\System32\drivers\etc*" does not work, even though the
 directory exists. (Sergio Gallelli, 2013 Dec 29)
 
@@ -118,7 +124,7 @@ Problem using ":try" inside ":execute". (ZyX, 2013 Sep 15)
 Python: ":py raw_input('prompt')" doesn't work. (Manu Hack)
 
 Value returned by virtcol() changes depending on how lines wrap.  This is
-inconsistant with the documentation.
+inconsistent with the documentation.
 
 MS-Windows: Crash opening very long file name starting with "\\".
 (Christian Brock, 2012 Jun 29)
@@ -141,20 +147,18 @@ Spell files use a latin single quote. Unicode also has another single quote:
 New OpenOffice spell files support this with ICONV.  But they are not
 compatible with Vim spell files.  The old files can no longer be downloaded.
 
-Win32: use different args for SearchPath()? (Yasuhiro Matsumoto, 2009 Jan 30)
-Also fixes wrong result from executable().
-Update from Ken Takata, 2014 Jan 10. Newer 2014 Apr 3.
-
 Win32: patch to use 64 bit stat() if possible. (Ken Takata, 2014 May 12)
 More tests May 14. Update May 29.  Update Aug 10.
 
 The garbage collector may use too much stack.  Make set_ref_in_item()
 iterative instead of recursive.   Test program by Marc Weber (2013 Dec 10)
 Patch by Ben Fritz, 2014 Jun 22.
+Related: Vim hangs when freeing a lot of objects.  Patch by Yasuhiro
+Matsumoto, 2014 Aug 26.
 
 Idea: For a window in the middle (has window above and below it), use
 right-mouse-drag on the status line to move a window up/down without changing
-it's height?  It's like dragging the status bar above it at the same time.
+its height?  It's like dragging the status bar above it at the same time.
 
 Can we make ":unlet $VAR" use unsetenv() to delete the env var?
 What for systems that don't have unsetenv()?
@@ -236,7 +240,7 @@ Or should we add a more general mechanism, like lambda functions?
 Patch for XDG base directory support. (Jean François Bignolles, 2014 Mar 4)
 Remark on the docs.  Should not be a compile time feature.  But then what?
 
-Completion of ":e" is ":earlier", whould be ":edit".  Complete to the matching
+Completion of ":e" is ":earlier", should be ":edit".  Complete to the matching
 command instead of doing this alphabetically. (Mikel Jorgensen)
 
 Patch to add v:completed_item. (Shougo Matsu, 2013 Nov 29).
@@ -1437,8 +1441,8 @@ files with "foo/**" in 'path'.  (Kalisiak, 2006 July 15)
 Additional info: When using the |wildcards| ** globing, vim hangs
 indefinitely on lots of directories. The |file-searching| globing, like in
 ":set path=/**" does not hang as often as with globing with |wildcards|, like
-in ":1find /**/file".  This is for a files that unix "find" can find very
-quick. Merging the 2 kinds of globing might make this an easier fix. (Ian
+in ":1find /**/file".  This is for files that unix "find" can find very
+quickly. Merging the 2 kinds of globing might make this an easier fix. (Ian
 Kelling, 2008 July 4)
 
 When the file name has parenthesis, e.g., "foo (bar).txt", ":!ls '%'" has the
