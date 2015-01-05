@@ -1791,6 +1791,9 @@ static int close_last_window_tabpage(win_T *win, int free_buf, tabpage_T *prev_c
   }
   /* Since goto_tabpage_tp above did not trigger *Enter autocommands, do
    * that now. */
+  char_u prev_idx[NUMBUFLEN];
+  sprintf((char *)prev_idx, "%i", tabpage_index(prev_curtab));
+  apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, FALSE, curbuf);
   apply_autocmds(EVENT_WINENTER, NULL, NULL, FALSE, curbuf);
   apply_autocmds(EVENT_TABENTER, NULL, NULL, FALSE, curbuf);
   if (old_curbuf != curbuf)

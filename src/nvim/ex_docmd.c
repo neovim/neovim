@@ -5328,10 +5328,12 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
   int done = 0;
   win_T       *wp;
   int h = tabline_height();
+  char_u prev_idx[NUMBUFLEN];
 
   /* Limit to 1000 windows, autocommands may add a window while we close
    * one.  OK, so I'm paranoid... */
   while (++done < 1000) {
+    sprintf((char *)prev_idx, "%i", tabpage_index(tp));
     wp = tp->tp_firstwin;
     ex_win_close(forceit, wp, tp);
 
@@ -5340,6 +5342,7 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
     if (!valid_tabpage(tp) || tp->tp_firstwin == wp)
       break;
   }
+  apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, FALSE, curbuf);
 
   redraw_tabline = TRUE;
   if (h != tabline_height())

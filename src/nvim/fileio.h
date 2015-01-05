@@ -93,6 +93,7 @@ typedef enum auto_event {
   EVENT_SPELLFILEMISSING,       /* spell file missing */
   EVENT_CURSORMOVED,            /* cursor was moved */
   EVENT_CURSORMOVEDI,           /* cursor was moved in Insert mode */
+  EVENT_TABCLOSED,               /* a tab has closed */
   EVENT_TABLEAVE,               /* before leaving a tab page */
   EVENT_TABENTER,               /* after entering a tab page */
   EVENT_TABNEW,                 /* when creating a new tab */
