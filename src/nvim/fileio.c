@@ -5246,6 +5246,7 @@ static struct event_name {
   {"StdinReadPre",    EVENT_STDINREADPRE},
   {"SwapExists",      EVENT_SWAPEXISTS},
   {"Syntax",          EVENT_SYNTAX},
+  {"TabClosed",       EVENT_TABCLOSED},
   {"TabEnter",        EVENT_TABENTER},
   {"TabLeave",        EVENT_TABLEAVE},
   {"TabNew",          EVENT_TABNEW},
@@ -6641,7 +6642,8 @@ apply_autocmds_group (
         || event == EVENT_QUICKFIXCMDPRE
         || event == EVENT_COLORSCHEME
         || event == EVENT_QUICKFIXCMDPOST
-        || event == EVENT_JOBACTIVITY)
+        || event == EVENT_JOBACTIVITY
+        || event == EVENT_TABCLOSED)
       fname = vim_strsave(fname);
     else
       fname = FullName_save(fname, FALSE);
