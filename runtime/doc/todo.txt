@@ -1,4 +1,4 @@
-*todo.txt*      For Vim version 7.4.  Last change: 2014 Aug 23
+*todo.txt*      For Vim version 7.4.  Last change: 2014 Sep 09
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -58,30 +58,27 @@ Patch to make getregtype() return the right size for non-linux systems.
 (Yasuhiro Matsumoto, 2014 Jul 8)
 Breaks test_eval.  Inefficient, can we only compute y_width when needed?
 
-Patch to fix a problem with breakindent. (Christian Brabandt, 2014 Aug 17)
-It's actually not a breakindent problem. With test: Aug 19.
-With renamed test: Aug 20
-
 Problem that a previous silent ":throw" causes a following try/catch not to
 work. (ZyX, 2013 Sep 28)
 
-ml_get error when using Python, issue 248.
-
-Patch to fix typos in help files. (Dominique, 2014 Aug 9)
-
-Way to reproduce problem that characters are put on the screen twice in Insert
-mode when using system(). (Jacob Niehus, 2014 Aug 9)
-Related to setting TMODE_COOK.  Perhaps we can omit that for system()?
-
 Update for Romanian spell file. (Vanilla Ice, 2014 Aug 13)
+Still produces errors.
+Add flag to ignore fifth argument of SFX.
+Conversion from utf-8 to cp1250 can't be without errors.
 
 Patch to remove ETO_IGNORELANGUAGE, it causes Chinese characters not to show
 up. (Paul Moore, 2014 Jul 30)
 Should it depend on the Windows version?  Waiting for feedback.
 No longer needed after including DirectX patch?
+Related to issue 255?
+
+Problem with linebreak, adds a test that fails. (Nazri Ramliy, 2014 Sep 6)
+
+Patch to avoid problems with encoding conversion with diff.vim.
+(Yasuhiro Matsumoto, 2014 Sep 1.
 
 Patch by Marcin Szamotulski to add count to :close (2014 Aug 10, update Aug
-14)
+14, Aug 30)
     Make ":1close" close the first window.
     Make ":+1close" close the next window.
     Make ":-1close" close the previous window.
@@ -89,8 +86,15 @@ Can't easily close the help window, like ":pc" closes the preview window and
 ":ccl" closes the quickfix window.  Add ":hclose". (Chris Gaal)
 Patch for :helpclose, Christian Brabandt, 2010 Sep 6.
 
+Patch to fix line formatting bug. (Christian Brabandt, 2014 Sep 7)
+
+Patch to fix ml_get error. (Christian Brabandt, 2014 Sep 7)
+
 Patch by Marcin Szamotulski to add +cmd to buffer commands.
 (2014 Aug 18)
+
+Patch to fix encoding of arguments when setting 'encoding'. (Yasuhiro
+Matsumoto, 2014 Sep 4)
 
 Patch to fix that system() with empty input fails. (Olaf Dabrunz, 2014 Aug 19)
 
@@ -103,6 +107,8 @@ Completion for :buf does not use 'wildignorecase'. (Akshay H, 2014 May 31)
 
 Patch to handle list with some items locked. (ZyX, 2014 Aug 17)
 Prefer the second solution.
+
+Issue 252.  Patch by Christian, 2014 Aug 26.
 
 ":cd C:\Windows\System32\drivers\etc*" does not work, even though the
 directory exists. (Sergio Gallelli, 2013 Dec 29)
@@ -118,12 +124,15 @@ Problem using ":try" inside ":execute". (ZyX, 2013 Sep 15)
 Python: ":py raw_input('prompt')" doesn't work. (Manu Hack)
 
 Value returned by virtcol() changes depending on how lines wrap.  This is
-inconsistant with the documentation.
+inconsistent with the documentation.
 
 MS-Windows: Crash opening very long file name starting with "\\".
 (Christian Brock, 2012 Jun 29)
 
 Syntax highlighting slow (hangs) in SASS file. (Niek Bosch, 2013 Aug 21)
+
+Patch to allow for a different icon on MS-Windows. (Yasuhiro Matsumoto, 2014
+Sep 7).
 
 Adding "~" to 'cdpath' doesn't work for completion?  (Davido, 2013 Aug 19)
 
@@ -141,20 +150,18 @@ Spell files use a latin single quote. Unicode also has another single quote:
 New OpenOffice spell files support this with ICONV.  But they are not
 compatible with Vim spell files.  The old files can no longer be downloaded.
 
-Win32: use different args for SearchPath()? (Yasuhiro Matsumoto, 2009 Jan 30)
-Also fixes wrong result from executable().
-Update from Ken Takata, 2014 Jan 10. Newer 2014 Apr 3.
-
 Win32: patch to use 64 bit stat() if possible. (Ken Takata, 2014 May 12)
 More tests May 14. Update May 29.  Update Aug 10.
 
 The garbage collector may use too much stack.  Make set_ref_in_item()
 iterative instead of recursive.   Test program by Marc Weber (2013 Dec 10)
 Patch by Ben Fritz, 2014 Jun 22.
+Related: Vim hangs when freeing a lot of objects.  Patch by Yasuhiro
+Matsumoto, 2014 Aug 26.
 
 Idea: For a window in the middle (has window above and below it), use
 right-mouse-drag on the status line to move a window up/down without changing
-it's height?  It's like dragging the status bar above it at the same time.
+its height?  It's like dragging the status bar above it at the same time.
 
 Can we make ":unlet $VAR" use unsetenv() to delete the env var?
 What for systems that don't have unsetenv()?
@@ -236,7 +243,7 @@ Or should we add a more general mechanism, like lambda functions?
 Patch for XDG base directory support. (Jean François Bignolles, 2014 Mar 4)
 Remark on the docs.  Should not be a compile time feature.  But then what?
 
-Completion of ":e" is ":earlier", whould be ":edit".  Complete to the matching
+Completion of ":e" is ":earlier", should be ":edit".  Complete to the matching
 command instead of doing this alphabetically. (Mikel Jorgensen)
 
 Patch to add v:completed_item. (Shougo Matsu, 2013 Nov 29).
@@ -261,9 +268,6 @@ Patch to add ":undorecover", get as much text out of the undo file as
 possible. (Christian Brabandt, 2014 Mar 12, update Aug 22)
 
 Updated spec ftplugin. (Matěj Cepl, 2013 Oct 16)
-
-Some quickfix messages appear twice. (Gary Johnson, 2014 Feb 16)
-Patch by Christian Brabandt, 2014 Feb 17.
 
 Patch to right-align signs. (James Kolb (email james), 2013 Sep 23)
 
@@ -1437,8 +1441,8 @@ files with "foo/**" in 'path'.  (Kalisiak, 2006 July 15)
 Additional info: When using the |wildcards| ** globing, vim hangs
 indefinitely on lots of directories. The |file-searching| globing, like in
 ":set path=/**" does not hang as often as with globing with |wildcards|, like
-in ":1find /**/file".  This is for a files that unix "find" can find very
-quick. Merging the 2 kinds of globing might make this an easier fix. (Ian
+in ":1find /**/file".  This is for files that unix "find" can find very
+quickly. Merging the 2 kinds of globing might make this an easier fix. (Ian
 Kelling, 2008 July 4)
 
 When the file name has parenthesis, e.g., "foo (bar).txt", ":!ls '%'" has the
@@ -1885,6 +1889,10 @@ restored. (Luc St-Louis)
 
 Patch to support horizontal scroll wheel in GTK. Untested. (Bjorn Winckler,
 2010 Jun 30)
+
+Add an option for a minimal text length before inserting a line break for
+'textwidth'.  Avoids very short lines when a very long word follows.
+(Kartik Agaram)
 
 
 At next release:

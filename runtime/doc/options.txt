@@ -1,4 +1,4 @@
-*options.txt*	For Vim version 7.4.  Last change: 2014 Aug 09
+*options.txt*	For Vim version 7.4.  Last change: 2014 Sep 09
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -3300,7 +3300,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	NOTE: This option is reset when 'compatible' is set.
 
 						*'grepformat'* *'gfm'*
-'grepformat' 'gfm'	string	(default "%f:%l%m,%f  %l%m")
+'grepformat' 'gfm'	string	(default "%f:%l:%m,%f:%l%m,%f  %l%m")
 			global
 			{not in Vi}
 	Format to recognize for the ":grep" command output.
@@ -7601,6 +7601,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			fold options
 	   options	options and mappings local to a window or buffer (not
 			global values for local options)
+	   localoptions same as "options"
 	   slash	backslashes in file names replaced with forward
 			slashes
 	   unix		with Unix end-of-line format (single <NL>), even when
