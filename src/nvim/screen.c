@@ -5971,7 +5971,7 @@ void screen_stop_highlight(void)
  */
 void reset_cterm_colors(void)
 {
-  if (abstract_ui || t_colors > 1) {
+  if (t_colors > 1) {
     /* set Normal cterm colors */
     if (cterm_normal_fg_color > 0 || cterm_normal_bg_color > 0) {
       out_str(T_OP);
