@@ -3757,7 +3757,6 @@ current_quote (
 /*
  * Find next search match under cursor, cursor at end.
  * Used while an operator is pending, and in Visual mode.
- * TODO: redo only works when used in operator pending mode
  */
 int 
 current_search (
@@ -3792,7 +3791,7 @@ current_search (
     orig_pos = pos = curwin->w_cursor;
 
   /* Is the pattern is zero-width? */
-  int one_char = is_one_char(spats[last_idx].pat);
+  int one_char = is_one_char(spats[last_idx].pat, true);
   if (one_char == -1) {
     p_ws = old_p_ws;
     return FAIL;      /* pattern not found */
@@ -3840,6 +3839,10 @@ current_search (
   int flags = forward ? SEARCH_END : 0;
   pos_T start_pos = pos;
 
+  /* Check again from the current cursor position,
+   * since the next match might actually be only one char wide */
+  one_char = is_one_char(spats[last_idx].pat, false);
+
   /* move to match, except for zero-width matches, in which case, we are
    * already on the next match */
   if (!one_char)
@@ -3878,24 +3881,33 @@ current_search (
 
 /*
  * Check if the pattern is one character or zero-width.
+ * If move is true, check from the beginning of the buffer,
+ * else from the current cursor position.
  * Returns TRUE, FALSE or -1 for failure.
  */
-static int is_one_char(char_u *pattern)
+static int is_one_char(char_u *pattern, bool move)
 {
   regmmatch_T regmatch;
   int nmatched = 0;
   int result = -1;
   pos_T pos;
   int save_called_emsg = called_emsg;
+  int flag = 0;
 
   if (search_regcomp(pattern, RE_SEARCH, RE_SEARCH,
           SEARCH_KEEP, &regmatch) == FAIL)
     return -1;
 
   /* move to match */
-  clearpos(&pos);
+  if (move) {
+    clearpos(&pos);
+  } else {
+    pos = curwin->w_cursor;
+    /* accept a match at the cursor position */
+    flag = SEARCH_START;
+  }
   if (searchit(curwin, curbuf, &pos, FORWARD, spats[last_idx].pat, 1,
-          SEARCH_KEEP, RE_SEARCH, 0, NULL) != FAIL) {
+          SEARCH_KEEP + flag, RE_SEARCH, 0, NULL) != FAIL) {
     /* Zero-width pattern should match somewhere, then we can check if
      * start and end are in the same position. */
     called_emsg = FALSE;
