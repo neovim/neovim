@@ -5129,7 +5129,7 @@ void list_append_list(list_T *list, list_T *itemlist)
   li->li_tv.v_lock = 0;
   li->li_tv.vval.v_list = itemlist;
   list_append(list, li);
-  ++list->lv_refcount;
+  ++itemlist->lv_refcount;
 }
 
 /*
