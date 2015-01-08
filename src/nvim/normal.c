@@ -11,6 +11,7 @@
  *		the operators.
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <string.h>
@@ -388,6 +389,7 @@ static int find_command(int cmdchar)
 
   /* If the character is in the first part: The character is the index into
    * nv_cmd_idx[]. */
+  assert(nv_max_linear < (int)NV_CMDS_SIZE);
   if (cmdchar <= nv_max_linear)
     return nv_cmd_idx[cmdchar];
 
