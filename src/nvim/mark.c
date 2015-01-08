@@ -127,6 +127,7 @@ int setmark_pos(int c, pos_T *pos, int fnum)
     return OK;
   }
   if (isupper(c)) {
+    assert(c >= 'A' && c <= 'Z');
     i = c - 'A';
     namedfm[i].fmark.mark = *pos;
     namedfm[i].fmark.fnum = fnum;
