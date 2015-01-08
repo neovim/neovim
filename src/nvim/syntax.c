@@ -6432,7 +6432,9 @@ do_highlight (
             /* Use the _16 table to check if its a valid color name. */
             color = color_numbers_16[i];
             if (color >= 0) {
-              if (t_colors == 8) {
+              if (abstract_ui) {
+                color = color_numbers_256[i];
+              } else if (t_colors == 8) {
                 /* t_Co is 8: use the 8 colors table */
 #if defined(__QNXNTO__)
                 color = color_numbers_8_qansi[i];
@@ -6449,8 +6451,7 @@ do_highlight (
                     HL_TABLE()[idx].sg_cterm &= ~HL_BOLD;
                 }
                 color &= 7;             /* truncate to 8 colors */
-              } else if (abstract_ui || t_colors == 16 || t_colors == 88
-                         || t_colors == 256) {
+              } else if (t_colors == 16 || t_colors == 88 || t_colors == 256) {
                 /*
                  * Guess: if the termcap entry ends in 'm', it is
                  * probably an xterm-like terminal.  Use the changed

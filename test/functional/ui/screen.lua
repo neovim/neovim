@@ -115,7 +115,7 @@ function Screen:set_default_attr_ids(attr_ids)
 end
 
 function Screen:attach()
-  request('ui_attach', self._width, self._height)
+  request('ui_attach', self._width, self._height, true)
   self._suspended = false
 end
 
