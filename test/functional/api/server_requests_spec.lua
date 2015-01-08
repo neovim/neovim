@@ -292,6 +292,11 @@ describe('server -> client', function()
       eq(clientpid, funcs.getpid())
       eq('howdy!', meths.get_current_line())
 
+      -- Check for different instance IDs
+      local client_instance = funcs.rpcrequest(id, 'nvim_get_instance_id')
+      local server_instance = server.rpcrequest(id, 'nvim_get_instance_id')
+      neq(server_instance, client_instance)
+
       server:close()
       client:close()
     end
@@ -335,6 +340,11 @@ describe('server -> client', function()
       local address = funcs.serverstart("localhost:")
       eq('localhost:', string.sub(address,1,10))
       connect_test(server, 'tcp', address)
+    end)
+
+    it('check instance ID', function()
+      local server = spawn(nvim_argv)
+      set_session(server)
     end)
   end)
 

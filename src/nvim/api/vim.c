@@ -32,6 +32,8 @@
 #include "nvim/eval/typval.h"
 #include "nvim/option.h"
 #include "nvim/state.h"
+#include "nvim/os/time.h"
+#include "nvim/sha256.h"
 #include "nvim/syntax.h"
 #include "nvim/getchar.h"
 #include "nvim/os/input.h"
@@ -991,6 +993,33 @@ Array nvim_get_api_info(uint64_t channel_id)
 
   return rv;
 }
+
+/// RPC Clients need a way to find out whether a connected neovim instance is
+/// the same as before (so that eg. Buffer IDs can be reused), or whether it's
+/// a different one.
+///
+/// Returns a string that uniquely identifies this instance.
+String nvim_get_instance_id(void)
+  FUNC_API_SINCE(5) FUNC_API_ASYNC
+{
+  static char result[65] = { 0 };
+
+  if (!result[0]) {
+    /* TODO: add the hostname, or use a UUID instead? */
+    snprintf(result, sizeof(result)-1, "%" PRIx64 ".%x.%X",
+        os_hrtime(), getpid(), rand()); // NOLINT(runtime/threadsafe_fn)
+    /* Return a hash, so that nobody tries to parse any information
+     * out of this ID. */
+    memcpy(result,
+        sha256_bytes((char_u*)result, sizeof(result), NULL, 0),
+        sizeof(result));
+    result[sizeof(result)-1] = 0;
+  }
+
+  /* Do not free this string after passing it! */
+  return cstr_to_string(result);
+}
+
 
 /// Identify the client for nvim. Can be called more than once, but subsequent
 /// calls will remove earlier info, which should be resent if it is still
