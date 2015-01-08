@@ -60,9 +60,6 @@ static struct {
   int top, bot, left, right;
 } sr;
 static int current_highlight_mask = 0;
-static HlAttrs current_attrs = {
-  false, false, false, false, false, -1, -1
-};
 static bool cursor_enabled = true;
 static int height, width;
 
@@ -187,13 +184,8 @@ void ui_resize(int new_width, int new_height)
   width = new_width;
   height = new_height;
 
-  if (normal_fg != -1) {
-    UI_CALL(update_fg, normal_fg);
-  }
-
-  if (normal_bg != -1) {
-    UI_CALL(update_bg, normal_bg);
-  }
+  UI_CALL(update_fg, (ui->rgb ? normal_fg : cterm_normal_fg_color - 1));
+  UI_CALL(update_bg, (ui->rgb ? normal_bg : cterm_normal_bg_color - 1));
 
   sr.top = 0;
   sr.bot = height - 1;
@@ -314,8 +306,7 @@ static void highlight_start(int mask)
     return;
   }
 
-  set_highlight_args(current_highlight_mask, &current_attrs);
-  UI_CALL(highlight_set, current_attrs);
+  set_highlight_args(current_highlight_mask);
 }
 
 static void highlight_stop(int mask)
@@ -328,12 +319,12 @@ static void highlight_stop(int mask)
     current_highlight_mask &= ~mask;
   }
 
-  set_highlight_args(current_highlight_mask, &current_attrs);
-  UI_CALL(highlight_set, current_attrs);
+  set_highlight_args(current_highlight_mask);
 }
 
-static void set_highlight_args(int mask, HlAttrs *attrs)
+static void set_highlight_args(int mask)
 {
+  HlAttrs rgb_attrs = { false, false, false, false, false, -1, -1 };
   attrentry_T *aep = NULL;
 
   if (mask > HL_ALL) {
@@ -341,13 +332,32 @@ static void set_highlight_args(int mask, HlAttrs *attrs)
     mask = aep ? aep->ae_attr : 0;
   }
 
-  attrs->bold = mask & HL_BOLD;
-  attrs->underline = mask & HL_UNDERLINE;
-  attrs->undercurl = mask & HL_UNDERCURL;
-  attrs->italic = mask & HL_ITALIC;
-  attrs->reverse = mask & (HL_INVERSE | HL_STANDOUT);
-  attrs->foreground = aep && aep->fg_color >= 0 ? aep->fg_color : normal_fg;
-  attrs->background = aep && aep->bg_color >= 0 ? aep->bg_color : normal_bg;
+  rgb_attrs.bold = mask & HL_BOLD;
+  rgb_attrs.underline = mask & HL_UNDERLINE;
+  rgb_attrs.undercurl = mask & HL_UNDERCURL;
+  rgb_attrs.italic = mask & HL_ITALIC;
+  rgb_attrs.reverse = mask & (HL_INVERSE | HL_STANDOUT);
+  HlAttrs cterm_attrs = rgb_attrs;
+
+  if (aep) {
+    if (aep->fg_color != normal_fg) {
+      rgb_attrs.foreground = aep->fg_color;
+    }
+
+    if (aep->bg_color != normal_bg) {
+      rgb_attrs.background = aep->bg_color;
+    }
+
+    if (cterm_normal_fg_color != aep->ae_u.cterm.fg_color) {
+      cterm_attrs.foreground = aep->ae_u.cterm.fg_color - 1;
+    }
+
+    if (cterm_normal_bg_color != aep->ae_u.cterm.bg_color) {
+      cterm_attrs.background = aep->ae_u.cterm.bg_color - 1;
+    }
+  }
+
+  UI_CALL(highlight_set, (ui->rgb ? rgb_attrs : cterm_attrs));
 }
 
 static void parse_abstract_ui_codes(uint8_t *ptr, int len)

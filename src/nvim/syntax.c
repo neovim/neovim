@@ -6439,8 +6439,7 @@ do_highlight (
                     HL_TABLE()[idx].sg_cterm &= ~HL_BOLD;
                 }
                 color &= 7;             /* truncate to 8 colors */
-              } else if (t_colors == 16 || t_colors == 88
-                         || t_colors == 256) {
+              } else if (t_colors == 16 || t_colors == 88 || t_colors == 256) {
                 /*
                  * Guess: if the termcap entry ends in 'm', it is
                  * probably an xterm-like terminal.  Use the changed

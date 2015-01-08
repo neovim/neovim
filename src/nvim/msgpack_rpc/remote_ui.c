@@ -61,8 +61,9 @@ static Object remote_ui_attach(uint64_t channel_id, uint64_t request_id,
     return NIL;
   }
 
-  if (args.size != 2 || args.items[0].type != kObjectTypeInteger
+  if (args.size != 3 || args.items[0].type != kObjectTypeInteger
       || args.items[1].type != kObjectTypeInteger
+      || args.items[2].type != kObjectTypeBoolean
       || args.items[0].data.integer <= 0 || args.items[1].data.integer <= 0) {
     api_set_error(error, Validation,
                   _("Arguments must be a pair of positive integers "
@@ -75,6 +76,7 @@ static Object remote_ui_attach(uint64_t channel_id, uint64_t request_id,
   UI *ui = xcalloc(1, sizeof(UI));
   ui->width = (int)args.items[0].data.integer;
   ui->height = (int)args.items[1].data.integer;
+  ui->rgb = args.items[2].data.boolean;
   ui->data = data;
   ui->resize = remote_ui_resize;
   ui->clear = remote_ui_clear;
