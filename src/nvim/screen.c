@@ -4548,7 +4548,7 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
       int c;
 
       c = fillchar_vsep(&hl);
-      if (ScreenLines[off_to] != c
+      if (ScreenLines[off_to] != (schar_T)c
           || (enc_utf8 && (int)ScreenLinesUC[off_to]
               != (c >= 0x80 ? c : 0))
           || ScreenAttrs[off_to] != hl) {
