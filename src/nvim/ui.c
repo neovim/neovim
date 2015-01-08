@@ -167,6 +167,10 @@ void ui_cursor_shape(void)
 
 void ui_refresh(void)
 {
+  if (!ui_count) {
+    return;
+  }
+
   width = height = INT_MAX;
 
   for (size_t i = 0; i < ui_count; i++) {
