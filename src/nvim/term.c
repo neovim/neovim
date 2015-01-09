@@ -2115,31 +2115,6 @@ void ttest(int pairs)
   t_colors = atoi((char *)T_CCO);
 }
 
-#if defined(FEAT_GUI) || defined(PROTO)
-/*
- * Interpret the next string of bytes in buf as a long integer, with the most
- * significant byte first.  Note that it is assumed that buf has been through
- * inchar(), so that NUL and K_SPECIAL will be represented as three bytes each.
- * Puts result in val, and returns the number of bytes read from buf
- * (between sizeof(long_u) and 2 * sizeof(long_u)), or -1 if not enough bytes
- * were present.
- */
-static int get_long_from_buf(char_u *buf, long_u *val)
-{
-  char_u bytes[sizeof(long_u)];
-
-  *val = 0;
-  int len = get_bytes_from_buf(buf, bytes, (int)sizeof(long_u));
-  if (len != -1) {
-    for (int i = 0; i < (int)sizeof(long_u); i++) {
-      int shift = 8 * (sizeof(long_u) - 1 - i);
-      *val += (long_u)bytes[i] << shift;
-    }
-  }
-  return len;
-}
-#endif
-
 #if defined(FEAT_GUI) \
   || (defined(FEAT_MOUSE) && (!defined(UNIX) || defined(FEAT_MOUSE_XTERM) \
   || defined(FEAT_MOUSE_GPM) || defined(FEAT_SYSMOUSE)))
