@@ -119,6 +119,7 @@ void ui_suspend(void)
 {
   if (abstract_ui) {
     UI_CALL(suspend);
+    UI_CALL(flush);
   } else {
     mch_suspend();
   }

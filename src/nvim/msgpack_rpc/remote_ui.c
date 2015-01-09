@@ -322,6 +322,6 @@ static void remote_ui_flush(UI *ui)
 
 static void remote_ui_suspend(UI *ui)
 {
-  UIData *data = ui->data;
-  remote_ui_disconnect(data->channel_id);
+  Array args = ARRAY_DICT_INIT;
+  push_call(ui, "suspend", args);
 }
