@@ -362,6 +362,10 @@ static void set_highlight_args(int mask)
 
 static void parse_abstract_ui_codes(uint8_t *ptr, int len)
 {
+  if (!ui_count) {
+    return;
+  }
+
   int arg1 = 0, arg2 = 0;
   uint8_t *end = ptr + len, *p, c;
   bool update_cursor = false;
