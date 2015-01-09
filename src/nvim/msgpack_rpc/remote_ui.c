@@ -97,7 +97,6 @@ static Object remote_ui_attach(uint64_t channel_id, uint64_t request_id,
   ui->update_fg = remote_ui_update_fg;
   ui->update_bg = remote_ui_update_bg;
   ui->flush = remote_ui_flush;
-  ui->suspend = remote_ui_suspend;
   pmap_put(uint64_t)(connected_uis, channel_id, ui);
   ui_attach(ui);
   return NIL;
@@ -318,10 +317,4 @@ static void remote_ui_flush(UI *ui)
   UIData *data = ui->data;
   channel_send_event(data->channel_id, "redraw", data->buffer);
   data->buffer = (Array)ARRAY_DICT_INIT;
-}
-
-static void remote_ui_suspend(UI *ui)
-{
-  UIData *data = ui->data;
-  remote_ui_disconnect(data->channel_id);
 }

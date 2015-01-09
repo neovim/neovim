@@ -71,6 +71,7 @@
 #include "nvim/os/time.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/mouse.h"
+#include "nvim/msgpack_rpc/channel.h"
 
 static int quitmore = 0;
 static int ex_pressedreturn = FALSE;
@@ -5398,10 +5399,16 @@ static void ex_stop(exarg_T *eap)
   /*
    * Disallow suspending for "rvim".
    */
-  if (!check_restricted()
-      ) {
-    if (!eap->forceit)
+  if (!check_restricted()) {
+    if (!eap->forceit) {
       autowrite_all();
+    }
+
+    if (abstract_ui) {
+      channel_close(last_message_source);
+      return;
+    }
+
     windgoto((int)Rows - 1, 0);
     out_char('\n');
     out_flush();

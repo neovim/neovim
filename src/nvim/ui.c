@@ -117,9 +117,7 @@ void ui_write(uint8_t *s, int len)
  */
 void ui_suspend(void)
 {
-  if (abstract_ui) {
-    UI_CALL(suspend);
-  } else {
+  if (!abstract_ui) {
     mch_suspend();
   }
 }

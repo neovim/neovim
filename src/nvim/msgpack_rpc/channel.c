@@ -485,6 +485,7 @@ static void on_request_event(Event event)
 {
   RequestEvent *e = event.data;
   Channel *channel = e->channel;
+  last_message_source = channel->id;
   MsgpackRpcRequestHandler handler = e->handler;
   Array args = e->args;
   uint64_t request_id = e->request_id;

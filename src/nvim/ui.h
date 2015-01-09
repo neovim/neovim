@@ -35,7 +35,6 @@ struct ui_t {
   void (*flush)(UI *ui);
   void (*update_fg)(UI *ui, int fg);
   void (*update_bg)(UI *ui, int bg);
-  void (*suspend)(UI *ui);
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

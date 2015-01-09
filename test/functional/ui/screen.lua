@@ -99,7 +99,6 @@ function Screen.new(width, height)
     _mouse_enabled = true,
     _bell = false,
     _visual_bell = false,
-    _suspended = true,
     _attrs = {},
     _cursor = {
       enabled = true, row = 1, col = 1
@@ -116,12 +115,10 @@ end
 
 function Screen:attach()
   request('ui_attach', self._width, self._height, true)
-  self._suspended = false
 end
 
 function Screen:detach()
   request('ui_detach')
-  self._suspended = true
 end
 
 function Screen:expect(expected, attr_ids)
@@ -284,10 +281,6 @@ end
 
 function Screen:_handle_update_bg(bg)
   self._bg = bg
-end
-
-function Screen:_handle_suspend()
-  self._suspended = true
 end
 
 function Screen:_clear_block(top, lines, left, columns)
