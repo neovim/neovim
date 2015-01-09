@@ -637,6 +637,7 @@ static void close_channel(Channel *channel)
     uv_handle_t *handle = (uv_handle_t *)channel->data.streams.uv;
     if (handle) {
       uv_close(handle, close_cb);
+      free_channel(channel);
     } else {
       event_push((Event) { .handler = on_stdio_close }, false);
     }
