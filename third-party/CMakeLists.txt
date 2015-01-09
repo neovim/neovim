@@ -65,17 +65,17 @@ set(LUAROCKS_URL https://github.com/keplerproject/luarocks/archive/0587afbb5fe8c
 set(LUAROCKS_SHA1 61a894fd5d61987bf7e7f9c3e0c5de16ba4b68c4)
 set(LUAROCKS_MD5 0f53f42909fbcd2c88be303e8f970516)
 
-set(LIBUNIBILIUM_URL https://github.com/neovim/unibilium/archive/neovim.tar.gz)
-set(LIBUNIBILIUM_SHA1 ab22e465150458a4ea91b72de997a35f25df1bcf)
-set(LIBUNIBILIUM_MD5 b0749651429aa4c619baf44eedcd15c6)
+set(LIBUNIBILIUM_URL https://github.com/mauke/unibilium/archive/520abbc8b26910e2580619f669b5cc2c4ef7f864.tar.gz)
+set(LIBUNIBILIUM_SHA1 c546e5e8861380f5c109a256f25c93419e4076bf)
+set(LIBUNIBILIUM_MD5 d80d1fc45b22b1e92bebd5bf76e8a98b)
 
-set(LIBTERMKEY_URL https://github.com/neovim/libtermkey/archive/neovim.tar.gz)
-set(LIBTERMKEY_SHA1 a309038a2297fe4905f03a8807723a9aa07c272a)
-set(LIBTERMKEY_MD5 c99e5546da0063fa26dfa7d7f1d5a26f)
+set(LIBTERMKEY_URL https://github.com/neovim/libtermkey/archive/7b3bdafdf589d08478f2493273d4d75636ecc183.tar.gz)
+set(LIBTERMKEY_SHA1 28bfe54dfd9269910a132b51dee7725a2121578d)
+set(LIBTERMKEY_MD5 f0bac9c2467cc80c821be937ea5c13bc)
 
-set(LIBTICKIT_URL https://github.com/neovim/libtickit/archive/neovim.tar.gz)
-set(LIBTICKIT_SHA1 08a2aa9ab4bacbeeafefac430691089d829fdb13)
-set(LIBTICKIT_MD5 d2d45eb4f2968b068aa5cc310b7f9abd)
+set(LIBTICKIT_URL https://github.com/neovim/libtickit/archive/0430ba2f43fdf1c31bca66def52a2537c581ade5.tar.gz)
+set(LIBTICKIT_SHA1 732b145a4dab06e6f1b40a352424f808730726bf)
+set(LIBTICKIT_MD5 3fcb635e572851472fc5009709d980fe)
 
 if(USE_BUNDLED_LIBUNIBILIUM)
   ExternalProject_Add(libunibilium
