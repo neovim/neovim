@@ -83,7 +83,6 @@ set(CONV_SOURCES
   spell.c
   syntax.c
   tag.c
-  term.c
   ui.c
   version.c
   window.c)

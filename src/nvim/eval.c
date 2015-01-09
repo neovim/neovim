@@ -4498,7 +4498,7 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
 {
   char_u      *p;
   char_u      *name;
-  int extra = 0;
+  unsigned int extra = 0;
 
   /*
    * Find the end of the string, skipping backslashed characters.

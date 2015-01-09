@@ -184,7 +184,7 @@ size_t input_enqueue(String keys)
 
   while (rbuffer_available(input_buffer) >= 6 && ptr < end) {
     uint8_t buf[6] = {0};
-    int new_size = trans_special((uint8_t **)&ptr, buf, false);
+    unsigned int new_size = trans_special((uint8_t **)&ptr, buf, false);
 
     if (!new_size) {
       // copy the character unmodified
@@ -195,7 +195,7 @@ size_t input_enqueue(String keys)
     new_size = handle_mouse_event(&ptr, buf, new_size);
     // TODO(tarruda): Don't produce past unclosed '<' characters, except if
     // there's a lot of characters after the '<'
-    rbuffer_write(input_buffer, (char *)buf, (size_t)new_size);
+    rbuffer_write(input_buffer, (char *)buf, new_size);
   }
 
   size_t rv = (size_t)(ptr - keys.data);
@@ -205,7 +205,8 @@ size_t input_enqueue(String keys)
 
 // Mouse event handling code(Extract row/col if available and detect multiple
 // clicks)
-static int handle_mouse_event(char **ptr, uint8_t *buf, int bufsize)
+static unsigned int handle_mouse_event(char **ptr, uint8_t *buf,
+                                       unsigned int bufsize)
 {
   int mouse_code = 0;
 

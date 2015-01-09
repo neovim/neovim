@@ -7257,7 +7257,6 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***
 {
   int num_normal = 0;               /* Nr of matching non-term-code settings */
   int num_term = 0;                 /* Nr of matching terminal code settings */
-  int opt_idx;
   int match;
   int count = 0;
   char_u      *str;
@@ -7283,7 +7282,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***
             (*file)[count++] = vim_strsave((char_u *)names[match]);
         }
     }
-    for (opt_idx = 0; (str = (char_u *)options[opt_idx].fullname) != NULL;
+    for (size_t opt_idx = 0; (str = (char_u *)options[opt_idx].fullname) != NULL;
          opt_idx++) {
       if (options[opt_idx].var == NULL)
         continue;
@@ -7326,7 +7325,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***
      * Check terminal key codes, these are not in the option table
      */
     if (xp->xp_context != EXPAND_BOOL_SETTINGS  && num_normal == 0) {
-      for (opt_idx = 0; (str = get_termcode(opt_idx)) != NULL; opt_idx++) {
+      for (size_t opt_idx = 0; (str = get_termcode(opt_idx)) != NULL; opt_idx++) {
         if (!isprint(str[0]) || !isprint(str[1]))
           continue;
 
@@ -7363,7 +7362,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***
        * Check special key names.
        */
       regmatch->rm_ic = TRUE;                   /* ignore case here */
-      for (opt_idx = 0; (str = get_key_name(opt_idx)) != NULL; opt_idx++) {
+      for (size_t opt_idx = 0; (str = get_key_name(opt_idx)) != NULL; opt_idx++) {
         name_buf[0] = '<';
         STRCPY(name_buf + 1, str);
         STRCAT(name_buf, ">");
