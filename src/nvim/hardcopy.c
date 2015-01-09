@@ -10,6 +10,7 @@
  * hardcopy.c: printing to paper
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <string.h>
 #include <inttypes.h>
@@ -455,8 +456,11 @@ static void prt_line_number(prt_settings_T *psettings, int page_line, linenr_T l
  */
 int prt_header_height(void)
 {
-  if (printer_opts[OPT_PRINT_HEADERHEIGHT].present)
-    return printer_opts[OPT_PRINT_HEADERHEIGHT].number;
+  if (printer_opts[OPT_PRINT_HEADERHEIGHT].present) {
+    assert(printer_opts[OPT_PRINT_HEADERHEIGHT].number >= INT_MIN
+           && printer_opts[OPT_PRINT_HEADERHEIGHT].number <= INT_MAX);
+    return (int)printer_opts[OPT_PRINT_HEADERHEIGHT].number;
+  }
   return 2;
 }
 
@@ -503,7 +507,8 @@ static void prt_header(prt_settings_T *psettings, int pagenum, linenr_T lnum)
   if (prt_use_number())
     width += PRINT_NUMBER_WIDTH;
 
-  tbuf = xmalloc(width + IOSIZE);
+  assert(width >= 0);
+  tbuf = xmalloc((size_t)width + IOSIZE);
 
   if (*p_header != NUL) {
     linenr_T tmp_lnum, tmp_topline, tmp_botline;
@@ -524,7 +529,7 @@ static void prt_header(prt_settings_T *psettings, int pagenum, linenr_T lnum)
     printer_page_num = pagenum;
 
     use_sandbox = was_set_insecurely((char_u *)"printheader", 0);
-    build_stl_str_hl(curwin, tbuf, (size_t)(width + IOSIZE),
+    build_stl_str_hl(curwin, tbuf, (size_t)width + IOSIZE,
         p_header, use_sandbox,
         ' ', width, NULL, NULL);
 
@@ -820,7 +825,7 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
   int need_break = FALSE;
   int outputlen;
   int tab_spaces;
-  long_u print_pos;
+  int print_pos;
   prt_text_attr_T attr;
   int id;
 
@@ -900,7 +905,7 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
   }
 
   ppos->lead_spaces = tab_spaces;
-  ppos->print_pos = (int)print_pos;
+  ppos->print_pos = print_pos;
 
   /*
    * Start next line of file if we clip lines, or have reached end of the
@@ -1240,19 +1245,19 @@ static char_u *prt_ps_file_name = NULL;
  * Various offsets and dimensions in default PostScript user space (points).
  * Used for text positioning calculations
  */
-static float prt_page_width;
-static float prt_page_height;
-static float prt_left_margin;
-static float prt_right_margin;
-static float prt_top_margin;
-static float prt_bottom_margin;
-static float prt_line_height;
-static float prt_first_line_height;
-static float prt_char_width;
-static float prt_number_width;
-static float prt_bgcol_offset;
-static float prt_pos_x_moveto = 0.0;
-static float prt_pos_y_moveto = 0.0;
+static double prt_page_width;
+static double prt_page_height;
+static double prt_left_margin;
+static double prt_right_margin;
+static double prt_top_margin;
+static double prt_bottom_margin;
+static double prt_line_height;
+static double prt_first_line_height;
+static double prt_char_width;
+static double prt_number_width;
+static double prt_bgcol_offset;
+static double prt_pos_x_moveto = 0.0;
+static double prt_pos_y_moveto = 0.0;
 
 /*
  * Various control variables used to decide when and how to change the
@@ -1272,7 +1277,7 @@ static int prt_do_bgcol;
 static int prt_bgcol;
 static int prt_new_bgcol;
 static int prt_attribute_change;
-static float prt_text_run;
+static double prt_text_run;
 static int prt_page_num;
 static int prt_bufsiz;
 
@@ -1304,11 +1309,10 @@ static int prt_half_width;
 static char *prt_ascii_encoding;
 static char_u prt_hexchar[] = "0123456789abcdef";
 
-static void prt_write_file_raw_len(char_u *buffer, int bytes)
+static void prt_write_file_raw_len(char_u *buffer, size_t bytes)
 {
   if (!prt_file_error
-      && fwrite(buffer, sizeof(char_u), bytes, prt_ps_fd)
-      != (size_t)bytes) {
+      && fwrite(buffer, sizeof(char_u), bytes, prt_ps_fd) != bytes) {
     EMSG(_("E455: Error writing to PostScript output file"));
     prt_file_error = TRUE;
   }
@@ -1316,10 +1320,10 @@ static void prt_write_file_raw_len(char_u *buffer, int bytes)
 
 static void prt_write_file(char_u *buffer)
 {
-  prt_write_file_len(buffer, (int)STRLEN(buffer));
+  prt_write_file_len(buffer, STRLEN(buffer));
 }
 
-static void prt_write_file_len(char_u *buffer, int bytes)
+static void prt_write_file_len(char_u *buffer, size_t bytes)
 {
   prt_write_file_raw_len(buffer, bytes);
 }
@@ -1398,15 +1402,11 @@ static void prt_dup_cidfont(char *original_name, char *new_name)
  */
 static void prt_real_bits(double real, int precision, int *pinteger, int *pfraction)
 {
-  int i;
-  int integer;
-  float fraction;
-
-  integer = (int)real;
-  fraction = (float)(real - integer);
-  if (real < (double)integer)
+  int integer = (int)real;
+  double fraction = real - integer;
+  if (real < integer)
     fraction = -fraction;
-  for (i = 0; i < precision; i++)
+  for (int i = 0; i < precision; i++)
     fraction *= 10.0;
 
   *pinteger = integer;
@@ -1463,7 +1463,7 @@ static void prt_flush_buffer(void)
   if (!GA_EMPTY(&prt_ps_buffer)) {
     /* Any background color must be drawn first */
     if (prt_do_bgcol && (prt_new_bgcol != PRCOLOR_WHITE)) {
-      int r, g, b;
+      unsigned int r, g, b;
 
       if (prt_do_moveto) {
         prt_write_real(prt_pos_x_moveto, 2);
@@ -1505,7 +1505,8 @@ static void prt_flush_buffer(void)
       prt_write_string("<");
     else
       prt_write_string("(");
-    prt_write_file_raw_len(prt_ps_buffer.ga_data, prt_ps_buffer.ga_len);
+    assert(prt_ps_buffer.ga_len >= 0);
+    prt_write_file_raw_len(prt_ps_buffer.ga_data, (size_t)prt_ps_buffer.ga_len);
     if (prt_out_mbyte)
       prt_write_string(">");
     else
@@ -1954,32 +1955,34 @@ void mch_print_cleanup(void)
   }
 }
 
-static float to_device_units(int idx, double physsize, int def_number)
+static double to_device_units(int idx, double physsize, int def_number)
 {
-  float ret;
-  int u;
+  double ret;
   int nr;
 
-  u = prt_get_unit(idx);
+  int u = prt_get_unit(idx);
   if (u == PRT_UNIT_NONE) {
     u = PRT_UNIT_PERC;
     nr = def_number;
-  } else
-    nr = printer_opts[idx].number;
+  } else {
+    assert(printer_opts[idx].number >= INT_MIN
+           && printer_opts[idx].number <= INT_MAX);
+    nr = (int)printer_opts[idx].number;
+  }
 
   switch (u) {
   case PRT_UNIT_INCH:
-    ret = (float)(nr * PRT_PS_DEFAULT_DPI);
+    ret = nr * PRT_PS_DEFAULT_DPI;
     break;
   case PRT_UNIT_MM:
-    ret = (float)(nr * PRT_PS_DEFAULT_DPI) / (float)25.4;
+    ret = nr * PRT_PS_DEFAULT_DPI / 25.4;
     break;
   case PRT_UNIT_POINT:
-    ret = (float)nr;
+    ret = nr;
     break;
   case PRT_UNIT_PERC:
   default:
-    ret = (float)(physsize * nr) / 100;
+    ret = physsize * nr / 100;
     break;
   }
 
@@ -2022,7 +2025,8 @@ static int prt_get_cpl(void)
 
 static void prt_build_cid_fontname(int font, char_u *name, int name_len)
 {
-  char *fontname = xstrndup((char *)name, name_len);
+  assert(name_len >= 0);
+  char *fontname = xstrndup((char *)name, (size_t)name_len);
   prt_ps_mb_font.ps_fontname[font] = fontname;
 }
 
@@ -2408,7 +2412,7 @@ static int prt_add_resource(struct prt_ps_resource_S *resource)
     }
     if (bytes_read == 0)
       break;
-    prt_write_file_raw_len(resource_buffer, (int)bytes_read);
+    prt_write_file_raw_len(resource_buffer, bytes_read);
     if (prt_file_error) {
       fclose(fd_resource);
       return FALSE;
@@ -2863,8 +2867,8 @@ int mch_print_blank_page(void)
   return mch_print_begin_page(NULL) ? (mch_print_end_page()) : FALSE;
 }
 
-static float prt_pos_x = 0;
-static float prt_pos_y = 0;
+static double prt_pos_x = 0;
+static double prt_pos_y = 0;
 
 void mch_print_start_line(int margin, int page_line)
 {
@@ -2885,8 +2889,8 @@ int mch_print_text_out(char_u *p, int len)
   int need_break;
   char_u ch;
   char_u ch_buff[8];
-  float char_width;
-  float next_pos;
+  double char_width;
+  double next_pos;
   int in_ascii;
   int half_width;
 
@@ -2959,7 +2963,7 @@ int mch_print_text_out(char_u *p, int len)
       prt_need_font = FALSE;
     }
     if (prt_need_fgcol) {
-      int r, g, b;
+      unsigned int r, g, b;
       r = ((unsigned)prt_fgcol & 0xff0000) >> 16;
       g = ((unsigned)prt_fgcol & 0xff00) >> 8;
       b = prt_fgcol & 0xff;
@@ -3003,9 +3007,9 @@ int mch_print_text_out(char_u *p, int len)
      */
     do {
       ch = prt_hexchar[(unsigned)(*p) >> 4];
-      ga_append(&prt_ps_buffer, ch);
+      ga_append(&prt_ps_buffer, (char)ch);
       ch = prt_hexchar[(*p) & 0xf];
-      ga_append(&prt_ps_buffer, ch);
+      ga_append(&prt_ps_buffer, (char)ch);
       p++;
     } while (--len);
   } else {
@@ -3032,13 +3036,13 @@ int mch_print_text_out(char_u *p, int len)
 
       default:
         sprintf((char *)ch_buff, "%03o", (unsigned int)ch);
-        ga_append(&prt_ps_buffer, ch_buff[0]);
-        ga_append(&prt_ps_buffer, ch_buff[1]);
-        ga_append(&prt_ps_buffer, ch_buff[2]);
+        ga_append(&prt_ps_buffer, (char)ch_buff[0]);
+        ga_append(&prt_ps_buffer, (char)ch_buff[1]);
+        ga_append(&prt_ps_buffer, (char)ch_buff[2]);
         break;
       }
     } else
-      ga_append(&prt_ps_buffer, ch);
+      ga_append(&prt_ps_buffer, (char)ch);
   }
 
   /* Need to free any translated characters */
