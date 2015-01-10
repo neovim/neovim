@@ -59,7 +59,6 @@ set(CONV_SOURCES
   fileio.c
   fold.c
   getchar.c
-  hardcopy.c
   if_cscope.c
   indent.c
   keymap.c
@@ -84,7 +83,6 @@ set(CONV_SOURCES
   spell.c
   syntax.c
   tag.c
-  term.c
   ui.c
   version.c
   window.c)

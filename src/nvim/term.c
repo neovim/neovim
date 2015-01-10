@@ -22,6 +22,7 @@
  */
 
 #define tgetstr tgetstr_defined_wrong
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -1065,8 +1066,8 @@ static void parse_builtin_tcap(char_u *term)
           term_strings[p->bt_entry] = (char_u *)p->bt_string;
       }
     } else {
-      name[0] = KEY2TERMCAP0((int)p->bt_entry);
-      name[1] = KEY2TERMCAP1((int)p->bt_entry);
+      name[0] = (char_u)KEY2TERMCAP0(p->bt_entry);
+      name[1] = (char_u)KEY2TERMCAP1(p->bt_entry);
       if (find_termcode(name) == NULL)
         add_termcode(name, (char_u *)p->bt_string, term_8bit);
     }
@@ -1255,7 +1256,7 @@ int set_termname(char_u *term)
         UP = (char *)TGETSTR("up", &tp);
         p = TGETSTR("pc", &tp);
         if (p)
-          PC = *p;
+          PC = (char)*p;
       }
     } else          /* try == 0 || try == 2 */
 #endif /* HAVE_TGETENT */
@@ -1478,7 +1479,7 @@ int set_termname(char_u *term)
 
 void 
 set_mouse_termcode (
-    int n,                  /* KS_MOUSE, KS_NETTERM_MOUSE or KS_DEC_MOUSE */
+    char_u n,                  /* KS_MOUSE, KS_NETTERM_MOUSE or KS_DEC_MOUSE */
     char_u *s
 )
 {
@@ -1490,7 +1491,7 @@ set_mouse_termcode (
 # if (defined(UNIX) && defined(FEAT_MOUSE_TTY)) || defined(PROTO)
 void 
 del_mouse_termcode (
-    int n                  /* KS_MOUSE, KS_NETTERM_MOUSE or KS_DEC_MOUSE */
+    char_u n                  /* KS_MOUSE, KS_NETTERM_MOUSE or KS_DEC_MOUSE */
 )
 {
   char_u name[2] = { n, KE_FILLER };
@@ -1690,7 +1691,7 @@ bool term_is_8bit(char_u *name)
  * <Esc>] -> <M-C-]>
  * <Esc>O -> <M-C-O>
  */
-static int term_7to8bit(char_u *p)
+static char_u term_7to8bit(char_u *p)
 {
   if (*p == ESC) {
     if (p[1] == '[')
@@ -1801,7 +1802,9 @@ void term_write(char_u *s, size_t len)
 
 #ifdef UNIX
   if (p_wd) {           // Unix is too fast, slow down a bit more
-    os_microdelay(p_wd);
+    assert(p_wd >= 0
+           && (sizeof(long) <= sizeof(uint64_t) || p_wd <= UINT64_MAX));
+    os_microdelay((uint64_t)p_wd);
   }
 #endif
 }
@@ -1843,7 +1846,7 @@ void out_flush_check(void)
  * This should not be used for outputting text on the screen (use functions
  * like msg_puts() and screen_putchar() for that).
  */
-void out_char(unsigned c)
+void out_char(char_u c)
 {
 #if defined(UNIX) || defined(MACOS_X_UNIX)
   if (c == '\n')        /* turn LF into CR-LF (CRMOD doesn't seem to do this) */
@@ -1861,7 +1864,7 @@ void out_char(unsigned c)
 /*
  * out_char_nf(c): like out_char(), but don't flush when p_wd is set
  */
-static void out_char_nf(unsigned c)
+static void out_char_nf(char_u c)
 {
 #if defined(UNIX) || defined(MACOS_X_UNIX)
   if (c == '\n')        /* turn LF into CR-LF (CRMOD doesn't seem to do this) */
@@ -2112,31 +2115,6 @@ void ttest(int pairs)
   t_colors = atoi((char *)T_CCO);
 }
 
-#if defined(FEAT_GUI) || defined(PROTO)
-/*
- * Interpret the next string of bytes in buf as a long integer, with the most
- * significant byte first.  Note that it is assumed that buf has been through
- * inchar(), so that NUL and K_SPECIAL will be represented as three bytes each.
- * Puts result in val, and returns the number of bytes read from buf
- * (between sizeof(long_u) and 2 * sizeof(long_u)), or -1 if not enough bytes
- * were present.
- */
-static int get_long_from_buf(char_u *buf, long_u *val)
-{
-  char_u bytes[sizeof(long_u)];
-
-  *val = 0;
-  int len = get_bytes_from_buf(buf, bytes, (int)sizeof(long_u));
-  if (len != -1) {
-    for (int i = 0; i < (int)sizeof(long_u); i++) {
-      int shift = 8 * (sizeof(long_u) - 1 - i);
-      *val += (long_u)bytes[i] << shift;
-    }
-  }
-  return len;
-}
-#endif
-
 #if defined(FEAT_GUI) \
   || (defined(FEAT_MOUSE) && (!defined(UNIX) || defined(FEAT_MOUSE_XTERM) \
   || defined(FEAT_MOUSE_GPM) || defined(FEAT_SYSMOUSE)))
@@ -2203,8 +2181,8 @@ void limit_screen_size(void)
  */
 void win_new_shellsize(void)
 {
-  static int old_Rows = 0;
-  static int old_Columns = 0;
+  static long old_Rows = 0;
+  static long old_Columns = 0;
 
   if (old_Rows != Rows) {
     /* if 'window' uses the whole screen, keep it using that */
@@ -2234,11 +2212,10 @@ void shell_resized(void)
  */
 void shell_resized_check(void)
 {
-  int old_Rows = Rows;
-  int old_Columns = Columns;
+  long old_Rows = Rows;
+  long old_Columns = Columns;
 
-  if (!exiting
-      ) {
+  if (!exiting) {
     (void)ui_get_shellsize();
     check_shellsize();
     if (old_Rows != Rows || old_Columns != Columns)
@@ -2588,13 +2565,13 @@ static struct termcode {
   int modlen;               /* length of part before ";*~". */
 } *termcodes = NULL;
 
-static int tc_max_len = 0;  /* number of entries that termcodes[] can hold */
-static int tc_len = 0;      /* current number of entries in termcodes[] */
+static size_t tc_max_len = 0;  /* number of entries that termcodes[] can hold */
+static size_t tc_len = 0;      /* current number of entries in termcodes[] */
 
 
 void clear_termcodes(void)
 {
-  while (tc_len > 0)
+  while (tc_len != 0)
     free(termcodes[--tc_len].code);
   free(termcodes);
   termcodes = NULL;
@@ -2621,7 +2598,7 @@ void clear_termcodes(void)
 void add_termcode(char_u *name, char_u *string, int flags)
 {
   struct termcode *new_tc;
-  int i, j;
+  size_t i, j;
 
   if (string == NULL || *string == NUL) {
     del_termcode(name);
@@ -2635,7 +2612,7 @@ void add_termcode(char_u *name, char_u *string, int flags)
     STRMOVE(s, s + 1);
     s[0] = term_7to8bit(string);
   }
-  int len = (int)STRLEN(s);
+  size_t len = STRLEN(s);
 
   need_gather = true;           // need to fill termleader[]
 
@@ -2666,15 +2643,14 @@ void add_termcode(char_u *name, char_u *string, int flags)
        * Exact match: May replace old code.
        */
       if (termcodes[i].name[1] == name[1]) {
-        if (flags == ATC_FROM_TERM && (j = termcode_star(
-                                           termcodes[i].code,
-                                           termcodes[i].len)) > 0) {
+        if (flags == ATC_FROM_TERM
+            && (j = termcode_star(termcodes[i].code, termcodes[i].len)) > 0) {
           /* Don't replace ESC[123;*X or ESC O*X with another when
            * invoked from got_code_from_term(). */
-          if (len == termcodes[i].len - j
+          assert(termcodes[i].len >= 0);
+          if (len == (size_t)termcodes[i].len - j
               && STRNCMP(s, termcodes[i].code, len - 1) == 0
-              && s[len - 1]
-              == termcodes[i].code[termcodes[i].len - 1]) {
+              && s[len - 1] == termcodes[i].code[termcodes[i].len - 1]) {
             /* They are equal but for the ";*": don't add it. */
             free(s);
             return;
@@ -2698,14 +2674,15 @@ void add_termcode(char_u *name, char_u *string, int flags)
   termcodes[i].name[0] = name[0];
   termcodes[i].name[1] = name[1];
   termcodes[i].code = s;
-  termcodes[i].len = len;
+  assert(len <= INT_MAX);
+  termcodes[i].len = (int)len;
 
   /* For xterm we recognize special codes like "ESC[42;*X" and "ESC O*X" that
    * accept modifiers. */
   termcodes[i].modlen = 0;
-  j = termcode_star(s, len);
+  j = termcode_star(s, (int)len);
   if (j > 0)
-    termcodes[i].modlen = len - 1 - j;
+    termcodes[i].modlen = (int)(len - 1 - j);
   ++tc_len;
 }
 
@@ -2714,7 +2691,7 @@ void add_termcode(char_u *name, char_u *string, int flags)
  * The "X" can be any character.
  * Return 0 if not found, 2 for ;*X and 1 for O*X and <M-O>*X.
  */
-static int termcode_star(char_u *code, int len)
+static unsigned int termcode_star(char_u *code, int len)
 {
   /* Shortest is <M-O>*X.  With ; shortest is <CSI>1;*X */
   if (len >= 3 && code[len - 2] == '*') {
@@ -2728,13 +2705,13 @@ static int termcode_star(char_u *code, int len)
 
 char_u *find_termcode(char_u *name)
 {
-  for (int i = 0; i < tc_len; ++i)
+  for (size_t i = 0; i < tc_len; ++i)
     if (termcodes[i].name[0] == name[0] && termcodes[i].name[1] == name[1])
       return termcodes[i].code;
   return NULL;
 }
 
-char_u *get_termcode(int i)
+char_u *get_termcode(size_t i)
 {
   if (i >= tc_len)
     return NULL;
@@ -2748,7 +2725,7 @@ void del_termcode(char_u *name)
 
   need_gather = true;           // need to fill termleader[]
 
-  for (int i = 0; i < tc_len; ++i)
+  for (size_t i = 0; i < tc_len; ++i)
     if (termcodes[i].name[0] == name[0] && termcodes[i].name[1] == name[1]) {
       del_termcode_idx(i);
       return;
@@ -2756,11 +2733,11 @@ void del_termcode(char_u *name)
   /* not found. Give error message? */
 }
 
-static void del_termcode_idx(int idx)
+static void del_termcode_idx(size_t idx)
 {
   free(termcodes[idx].code);
   --tc_len;
-  for (int i = idx; i < tc_len; ++i)
+  for (size_t i = idx; i < tc_len; ++i)
     termcodes[i] = termcodes[i + 1];
 }
 
@@ -2772,8 +2749,8 @@ static void switch_to_8bit(void)
 {
   /* Only need to do something when not already using 8-bit codes. */
   if (!term_is_8bit(T_NAME)) {
-    for (int i = 0; i < tc_len; ++i) {
-      int c = term_7to8bit(termcodes[i].code);
+    for (size_t i = 0; i < tc_len; ++i) {
+      char_u c = term_7to8bit(termcodes[i].code);
       if (c != 0) {
         STRMOVE(termcodes[i].code + 1, termcodes[i].code + 2);
         termcodes[i].code[0] = c;
@@ -2837,19 +2814,18 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
   int extra;
   char_u string[MAX_KEY_CODE_LEN + 1];
   int i, j;
-  int idx = 0;
 # if !defined(UNIX) || defined(FEAT_MOUSE_XTERM) || defined(FEAT_GUI) \
   || defined(FEAT_MOUSE_GPM) || defined(FEAT_SYSMOUSE)
   char_u bytes[6];
   int num_bytes;
 # endif
-  int mouse_code = 0;               /* init for GCC */
+  long mouse_code = 0;               /* init for GCC */
   int is_click, is_drag;
-  int wheel_code = 0;
-  int current_button;
-  static int held_button = MOUSE_RELEASE;
+  long wheel_code = 0;
+  long current_button;
+  static long held_button = MOUSE_RELEASE;
   static int orig_num_clicks = 1;
-  static int orig_mouse_code = 0x0;
+  static long orig_mouse_code = 0x0;
   int cpo_koffset;
 
   cpo_koffset = (vim_strchr(p_cpo, CPO_KOFFSET) != NULL);
@@ -2912,6 +2888,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
     key_name[1] = NUL;          /* no key name found yet */
     modifiers = 0;              /* no modifiers yet */
 
+    size_t idx;
     {
       for (idx = 0; idx < tc_len; ++idx) {
         /*
@@ -2936,10 +2913,10 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
            */
           if (termcodes[idx].name[0] == 'K'
               && VIM_ISDIGIT(termcodes[idx].name[1])) {
-            for (j = idx + 1; j < tc_len; ++j)
-              if (termcodes[j].len == slen &&
-                  STRNCMP(termcodes[idx].code,
-                      termcodes[j].code, slen) == 0) {
+            for (size_t j = idx + 1; j < tc_len; ++j)
+              if (termcodes[j].len == slen
+                  && STRNCMP(termcodes[idx].code,
+                             termcodes[j].code, slen) == 0) {
                 idx = j;
                 break;
               }
@@ -3261,11 +3238,15 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
           if (key_name[0] == KS_SGR_MOUSE)
             mouse_code += 32;
 
-          mouse_col = getdigits(&p) - 1;
+          long digits = getdigits(&p);
+          assert(digits >= INT_MIN && digits <= INT_MAX);
+          mouse_col = (int)digits - 1;
           if (*p++ != ';')
             return -1;
 
-          mouse_row = getdigits(&p) - 1;
+          digits = getdigits(&p);
+          assert(digits >= INT_MIN && digits <= INT_MAX);
+          mouse_row = (int)digits - 1;
           if (key_name[0] == KS_SGR_MOUSE && *p == 'm')
             mouse_code |= MOUSE_RELEASE;
           else if (*p != 'M')
@@ -3331,7 +3312,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
       }
 # endif /* !UNIX || FEAT_MOUSE_XTERM */
       if (key_name[0] == (int)KS_NETTERM_MOUSE) {
-        int mc, mr;
+        long mc, mr;
 
         /* expect a rather limited sequence like: balancing {
          * \033}6,45\r
@@ -3345,8 +3326,10 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
         if (*p++ != '\r')
           return -1;
 
-        mouse_col = mc - 1;
-        mouse_row = mr - 1;
+        assert(mc - 1 >= INT_MIN && mc - 1 <= INT_MAX);
+        mouse_col = (int)(mc - 1);
+        assert(mr - 1 >= INT_MIN && mr - 1 <= INT_MAX);
+        mouse_row = (int)(mr - 1);
         mouse_code = MOUSE_LEFT;
         slen += (int)(p - (tp + slen));
       }
@@ -3401,7 +3384,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
          *   The page coordinate may be omitted if the locator is on
          *   page one (the default).  We ignore it anyway.
          */
-        int Pe, Pb, Pr, Pc;
+        long Pe, Pb, Pr, Pc;
 
         p = tp + slen;
 
@@ -3470,8 +3453,10 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
         default: return -1;         /* should never occur */
         }
 
-        mouse_col = Pc - 1;
-        mouse_row = Pr - 1;
+        assert(Pc - 1 >= INT_MIN && Pc - 1 <= INT_MAX);
+        mouse_col = (int)(Pc - 1);
+        assert(Pr - 1 >= INT_MIN && Pr - 1 <= INT_MAX);
+        mouse_row = (int)(Pr - 1);
 
         slen += (int)(p - (tp + slen));
       }
@@ -3502,7 +3487,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
 
           // compute the time elapsed since the previous mouse click and
           // convert it from ns to ms because p_mouset is stored as ms
-          long timediff = (long) (mouse_time - orig_mouse_time) / 1E6;
+          long timediff = (long) (mouse_time - orig_mouse_time) / 1000000;
           orig_mouse_time = mouse_time;
 
           if (mouse_code == orig_mouse_code
@@ -3558,9 +3543,11 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
           modifiers |= MOD_MASK_ALT;
         key_name[1] = (wheel_code & 1)
                       ? (int)KE_MOUSEUP : (int)KE_MOUSEDOWN;
-      } else
-        key_name[1] = get_pseudo_mouse_code(current_button,
-            is_click, is_drag);
+      } else {
+        assert(current_button >= INT_MIN && current_button <= INT_MAX);
+        key_name[1] = (char_u)get_pseudo_mouse_code((int)current_button,
+                                                    is_click, is_drag);
+      }
     }
 
 
@@ -3580,13 +3567,13 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
       if (modifiers != 0) {
         string[new_slen++] = K_SPECIAL;
         string[new_slen++] = (int)KS_MODIFIER;
-        string[new_slen++] = modifiers;
+        string[new_slen++] = (char_u)modifiers;
       }
     }
 
     /* Finally, add the special key code to our string */
-    key_name[0] = KEY2TERMCAP0(key);
-    key_name[1] = KEY2TERMCAP1(key);
+    key_name[0] = (char_u)KEY2TERMCAP0(key);
+    key_name[1] = (char_u)KEY2TERMCAP1(key);
     if (key_name[0] == KS_KEY) {
       /* from ":set <M-b>=xx" */
       if (has_mbyte)
@@ -3670,10 +3657,10 @@ replace_termcodes (
     int special                    /* always accept <key> notation */
 )
 {
-  int i;
-  int slen;
-  int key;
-  int dlen = 0;
+  ssize_t i;
+  size_t slen;
+  char_u key;
+  size_t dlen = 0;
   char_u      *src;
   int do_backslash;             /* backslash is a special character */
   int do_special;               /* recognize <> key codes */
@@ -3727,7 +3714,7 @@ replace_termcodes (
           result[dlen++] = (int)KS_EXTRA;
           result[dlen++] = (int)KE_SNR;
           sprintf((char *)result + dlen, "%" PRId64, (int64_t)current_SID);
-          dlen += (int)STRLEN(result + dlen);
+          dlen += STRLEN(result + dlen);
           result[dlen++] = '_';
           continue;
         }
@@ -3832,14 +3819,17 @@ replace_termcodes (
  * Find a termcode with keys 'src' (must be NUL terminated).
  * Return the index in termcodes[], or -1 if not found.
  */
-int find_term_bykeys(char_u *src)
+ssize_t find_term_bykeys(char_u *src)
 {
-  int slen = (int)STRLEN(src);
+  size_t slen = STRLEN(src);
 
-  for (int i = 0; i < tc_len; ++i) {
-    if (slen == termcodes[i].len
-        && STRNCMP(termcodes[i].code, src, (size_t)slen) == 0)
-      return i;
+  for (size_t i = 0; i < tc_len; ++i) {
+    assert(termcodes[i].len >= 0);
+    if (slen == (size_t)termcodes[i].len
+        && STRNCMP(termcodes[i].code, src, slen) == 0) {
+      assert(i <= SSIZE_MAX);
+      return (ssize_t)i;
+    }
   }
   return -1;
 }
@@ -3861,7 +3851,7 @@ static void gather_termleader(void)
                                        in 8-bit mode */
   termleader[len] = NUL;
 
-  for (int i = 0; i < tc_len; ++i)
+  for (size_t i = 0; i < tc_len; ++i)
     if (vim_strchr(termleader, termcodes[i].code[0]) == NULL) {
       termleader[len++] = termcodes[i].code[0];
       termleader[len] = NUL;
@@ -3876,22 +3866,14 @@ static void gather_termleader(void)
  */
 void show_termcodes(void)
 {
-  int col;
-  int         *items;
-  int item_count;
-  int run;
-  int row, rows;
-  int cols;
-  int i;
-  int len;
-
 #define INC3 27     /* try to make three columns */
 #define INC2 40     /* try to make two columns */
 #define GAP 2       /* spaces between columns */
 
   if (tc_len == 0)          /* no terminal codes (must be GUI) */
     return;
-  items = xmalloc(sizeof(int) * tc_len);
+
+  size_t *items = xmalloc(sizeof(size_t) * tc_len);
 
   /* Highlight title */
   MSG_PUTS_TITLE(_("\n--- Terminal keys ---"));
@@ -3902,14 +3884,14 @@ void show_termcodes(void)
    * 2. display the medium items (medium length strings)
    * 3. display the long items (remaining strings)
    */
-  for (run = 1; run <= 3 && !got_int; ++run) {
+  for (int run = 1; run <= 3 && !got_int; ++run) {
     /*
      * collect the items in items[]
      */
-    item_count = 0;
-    for (i = 0; i < tc_len; i++) {
-      len = show_one_termcode(termcodes[i].name,
-          termcodes[i].code, FALSE);
+    size_t item_count = 0;
+    for (size_t i = 0; i < tc_len; i++) {
+      int len = show_one_termcode(termcodes[i].name,
+                                  termcodes[i].code, FALSE);
       if (len <= INC3 - GAP ? run == 1
           : len <= INC2 - GAP ? run == 2
           : run == 3)
@@ -3919,22 +3901,24 @@ void show_termcodes(void)
     /*
      * display the items
      */
+    size_t rows, cols;
     if (run <= 2) {
-      cols = (Columns + GAP) / (run == 1 ? INC3 : INC2);
+      cols = (size_t)(Columns + GAP) / (run == 1 ? INC3 : INC2);
       if (cols == 0)
         cols = 1;
       rows = (item_count + cols - 1) / cols;
     } else      /* run == 3 */
       rows = item_count;
-    for (row = 0; row < rows && !got_int; ++row) {
+    for (size_t row = 0; row < rows && !got_int; ++row) {
       msg_putchar('\n');                        /* go to next line */
       if (got_int)                              /* 'q' typed in more */
         break;
-      col = 0;
-      for (i = row; i < item_count; i += rows) {
-        msg_col = col;                          /* make columns */
+      size_t col = 0;
+      for (size_t i = row; i < item_count; i += rows) {
+        assert(col <= INT_MAX);
+        msg_col = (int)col;                     /* make columns */
         show_one_termcode(termcodes[items[i]].name,
-            termcodes[items[i]].code, TRUE);
+                          termcodes[items[i]].code, TRUE);
         if (run == 2)
           col += INC2;
         else
@@ -4047,7 +4031,7 @@ static void got_code_from_term(char_u *code, int len)
 #define XT_LEN 100
   char_u name[3];
   char_u str[XT_LEN];
-  int i;
+  ssize_t i;
   int j = 0;
   int c;
 
@@ -4056,12 +4040,17 @@ static void got_code_from_term(char_u *code, int len)
    * Our names are currently all 2 characters. */
   if (code[0] == '1' && code[7] == '=' && len / 2 < XT_LEN) {
     /* Get the name from the response and find it in the table. */
-    name[0] = hexhex2nr(code + 3);
-    name[1] = hexhex2nr(code + 5);
+    int byte = hexhex2nr(code + 3);
+    assert(byte != -1);
+    name[0] = (char_u)byte;
+    byte = hexhex2nr(code + 5);
+    assert(byte != -1);
+    name[1] = (char_u)byte;
     name[2] = NUL;
     for (i = 0; key_names[i] != NULL; ++i) {
       if (STRCMP(key_names[i], name) == 0) {
-        xt_index_in = i;
+        assert(i <= INT_MAX);
+        xt_index_in = (int)i;
         break;
       }
     }
@@ -4075,7 +4064,7 @@ static void got_code_from_term(char_u *code, int len)
 # endif
     if (key_names[i] != NULL) {
       for (i = 8; (c = hexhex2nr(code + i)) >= 0; i += 2)
-        str[j++] = c;
+        str[j++] = (char_u)c;
       str[j] = NUL;
       if (name[0] == 'C' && name[1] == 'o') {
         /* Color count is not a key code. */
@@ -4104,7 +4093,7 @@ static void got_code_from_term(char_u *code, int len)
         /* First delete any existing entry with the same code. */
         i = find_term_bykeys(str);
         if (i >= 0)
-          del_termcode_idx(i);
+          del_termcode_idx((size_t)i);
         add_termcode(name, str, ATC_FROM_TERM);
       }
     }
@@ -4192,7 +4181,7 @@ translate_mapping (
       }
       if (cpo_special && cpo_keycode && c == K_SPECIAL && !modifiers) {
         /* try to find special key in termcodes */
-        int i;
+        size_t i;
         for (i = 0; i < tc_len; ++i)
           if (termcodes[i].name[0] == str[1]
               && termcodes[i].name[1] == str[2])
@@ -4226,7 +4215,7 @@ translate_mapping (
         || (c == '<' && !cpo_special) || (c == '\\' && !cpo_bslash))
       ga_append(&ga, cpo_bslash ? Ctrl_V : '\\');
     if (c)
-      ga_append(&ga, c);
+      ga_append(&ga, (char)c);
   }
   ga_append(&ga, NUL);
   return (char_u *)(ga.ga_data);
