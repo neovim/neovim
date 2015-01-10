@@ -15,6 +15,7 @@
 #include "nvim/os/rstream.h"
 #include "nvim/os/wstream.h"
 #include "nvim/os/job.h"
+#include "nvim/fswatch.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 #include "nvim/misc2.h"
@@ -63,6 +64,9 @@ void event_init(void)
   // finish mspgack-rpc initialization
   channel_init();
   server_init();
+
+  // init filesystem watcher
+  fswatch_init();
 }
 
 void event_teardown(void)
@@ -79,6 +83,7 @@ void event_teardown(void)
   job_teardown();
   server_teardown();
   signal_teardown();
+  fswatch_teardown();
   // this last `uv_run` will return after all handles are stopped, it will
   // also take care of finishing any uv_close calls made by other *_teardown
   // functions.
