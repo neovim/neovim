@@ -1823,12 +1823,9 @@ static int out_pos = 0;                 /* number of chars in out_buf */
  */
 void out_flush(void)
 {
-  if (out_pos != 0) {
-    /* set out_pos to 0 before ui_write, to avoid recursiveness */
-    int len = out_pos;
-    out_pos = 0;
-    ui_write(out_buf, len);
-  }
+  int len = out_pos;
+  out_pos = 0;
+  ui_write(out_buf, len);
 }
 
 /*
