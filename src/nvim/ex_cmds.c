@@ -1946,9 +1946,7 @@ void print_line_no_prefix(linenr_T lnum, int use_number, int list)
   msg_prt_line(ml_get(lnum), list);
 }
 
-/*
- * Print a text line.  Also in silent mode ("ex -s").
- */
+/// Prints a text line from the current buffer. Also in silent mode ("ex -s").
 void print_line(linenr_T lnum, int use_number, int list)
 {
   int save_silent = silent_mode;
