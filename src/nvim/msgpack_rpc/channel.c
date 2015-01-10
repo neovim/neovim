@@ -45,6 +45,7 @@ typedef struct {
 
 typedef struct {
   uint64_t id;
+  size_t pending_requests;
   PMap(cstr_t) *subscribed_events;
   bool is_job, closed;
   msgpack_unpacker *unpacker;
@@ -83,7 +84,6 @@ static uint64_t next_id = 1;
 static PMap(uint64_t) *channels = NULL;
 static PMap(cstr_t) *event_strings = NULL;
 static msgpack_sbuffer out_buffer;
-static size_t pending_requests = 0;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "msgpack_rpc/channel.c.generated.h"
@@ -193,20 +193,21 @@ bool channel_send_event(uint64_t id, char *name, Array args)
     return false;
   }
 
-  if (pending_requests) {
-    DelayedNotification p = {
-      .channel = channel,
-      .method = cstr_to_string(name),
-      .args = args
-    };
-    // Pending request, queue the notification for sending later
-    *kl_pushp(DelayedNotification, delayed_notifications) = p;
-  } else {
-    if (channel) {
-      send_event(channel, name, args);
+  if (channel) {
+    if (channel->pending_requests) {
+      DelayedNotification p = {
+        .channel = channel,
+        .method = cstr_to_string(name),
+        .args = args
+      };
+      // Pending request, queue the notification for sending later
+      *kl_pushp(DelayedNotification, delayed_notifications) = p;
     } else {
-      broadcast_event(name, args);
+      send_event(channel, name, args);
     }
+  }  else {
+    // TODO(tarruda): Implement event broadcasting in vimscript
+    broadcast_event(name, args);
   }
 
   return true;
@@ -239,10 +240,10 @@ Object channel_send_call(uint64_t id,
   // Push the frame
   ChannelCallFrame frame = {request_id, false, false, NIL};
   kv_push(ChannelCallFrame *, channel->call_stack, &frame);
-  pending_requests++;
+  channel->pending_requests++;
   event_poll_until(-1, frame.returned);
   (void)kv_pop(channel->call_stack);
-  pending_requests--;
+  channel->pending_requests--;
 
   if (frame.errored) {
     api_set_error(err, Exception, "%s", frame.result.data.string.data);
@@ -254,7 +255,7 @@ Object channel_send_call(uint64_t id,
     free_channel(channel);
   }
 
-  if (!pending_requests) {
+  if (!channel->pending_requests) {
     send_delayed_notifications();
   }
 
@@ -682,6 +683,7 @@ static Channel *register_channel(void)
   rv->closed = false;
   rv->unpacker = msgpack_unpacker_new(MSGPACK_UNPACKER_INIT_BUFFER_SIZE);
   rv->id = next_id++;
+  rv->pending_requests = 0;
   rv->subscribed_events = pmap_new(cstr_t)();
   rv->next_request_id = 1;
   kv_init(rv->call_stack);
