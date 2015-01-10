@@ -71,6 +71,14 @@
 #define WORD1   (EXTRA | NOSPC) /* one extra word allowed */
 #define FILE1   (FILES | NOSPC) /* 1 file allowed, defaults to current file */
 
+// values for cmd_addr_type
+#define ADDR_LINES              0
+#define ADDR_WINDOWS            1
+#define ADDR_ARGUMENTS          2
+#define ADDR_LOADED_BUFFERS     3
+#define ADDR_UNLOADED_BUFFERS   4
+#define ADDR_TABS               5
+
 typedef struct exarg exarg_T;
 
 /* behavior for bad character, "++bad=" argument */
@@ -87,6 +95,7 @@ typedef struct cmdname {
   char_u *cmd_name;    ///< Name of the command.
   ex_func_T cmd_func;  ///< Function with implementation of this command.
   uint32_t cmd_argt;     ///< Relevant flags from the declared above.
+  int cmd_addr_type;     ///< Flag for address type
 } CommandDefinition;
 
 /// Arguments used for Ex commands.
@@ -102,6 +111,7 @@ struct exarg {
   int addr_count;               ///< the number of addresses given
   linenr_T line1;               ///< the first line number
   linenr_T line2;               ///< the second line number or count
+  int addr_type;                ///< type of the count/range
   int flags;                    ///< extra flags after count: EXFLAG_
   char_u      *do_ecmd_cmd;     ///< +command arg to be used in edited file
   linenr_T do_ecmd_lnum;        ///< the line number in an edited file

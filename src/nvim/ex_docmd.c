@@ -1066,16 +1066,44 @@ void * getline_cookie(LineGetter fgetline,
 }
 
 /*
+ * Helper function to apply an offset for buffer commands, i.e. ":bdelete",
+ * ":bwipeout", etc.
+ * Returns the buffer number.
+ */
+static int compute_buffer_local_count(int addr_type, int lnum, int offset)
+{
+  buf_T *buf;
+  int count = offset;
+
+  buf = firstbuf;
+  while (buf->b_next != NULL && buf->b_fnum < lnum)
+    buf = buf->b_next;
+  while (count != 0) {
+    count += (count < 0) ? 1 : -1;
+    if (buf->b_prev == NULL)
+      break;
+    buf = (count < 0) ? buf->b_prev : buf->b_next;
+    if (addr_type == ADDR_LOADED_BUFFERS)
+      /* skip over unloaded buffers */
+      while (buf->b_prev != NULL && buf->b_ml.ml_mfp == NULL) {
+        buf = (count < 0) ? buf->b_prev : buf->b_next;
+      }
+  }
+  return buf->b_fnum;
+}
+
+/*
  * Execute one Ex command.
  *
  * If 'sourcing' is TRUE, the command will be included in the error message.
  *
  * 1. skip comment lines and leading space
  * 2. handle command modifiers
- * 3. parse range
- * 4. parse command
- * 5. parse arguments
- * 6. switch on command name
+ * 3. skip over the range to find the command
+ * 4. parse the range
+ * 5. parse the command
+ * 6. parse arguments
+ * 7. switch on command name
  *
  * Note: "fgetline" can be NULL.
  *
@@ -1100,6 +1128,9 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   int did_sandbox = FALSE;
   cmdmod_T save_cmdmod;
   int ni;                                       /* set when Not Implemented */
+  win_T *wp;
+  tabpage_T *tp;
+  char_u *cmd;
 
   memset(&ea, 0, sizeof(ea));
   ea.line1 = 1;
@@ -1132,7 +1163,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   ea.cmd = *cmdlinep;
   for (;; ) {
     /*
-     * 1. skip comment lines and leading white space and colons
+     * 1. Skip comment lines and leading white space and colons.
      */
     while (*ea.cmd == ' ' || *ea.cmd == '\t' || *ea.cmd == ':')
       ++ea.cmd;
@@ -1155,7 +1186,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     }
 
     /*
-     * 2. handle command modifiers.
+     * 2. Handle command modifiers.
      */
     p = ea.cmd;
     if (ascii_isdigit(*ea.cmd))
@@ -1319,8 +1350,18 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     (void)do_intthrow(cstack);
   }
 
+  // 3. Skip over the range to find the command. Let "p" point to after it.
+  //
+  // We need the command to know what kind of range it uses.
+
+  cmd = ea.cmd;
+  ea.cmd = skip_range(ea.cmd, NULL);
+  if (*ea.cmd == '*' && vim_strchr(p_cpo, CPO_STAR) == NULL)
+    ea.cmd = skipwhite(ea.cmd + 1);
+  p = find_command(&ea, NULL);
+
   /*
-   * 3. parse a range specifier of the form: addr [,addr] [;addr] ..
+   * 4. Parse a range specifier of the form: addr [,addr] [;addr] ..
    *
    * where 'addr' is:
    *
@@ -1336,24 +1377,81 @@ static char_u * do_one_cmd(char_u **cmdlinep,
    * is equal to the lower.
    */
 
+  if (ea.cmdidx != CMD_SIZE) {
+    ea.addr_type = cmdnames[(int)ea.cmdidx].cmd_addr_type;
+  } else {
+    ea.addr_type = ADDR_LINES;
+  }
+  ea.cmd = cmd;
+
   /* repeat for all ',' or ';' separated addresses */
   for (;; ) {
     ea.line1 = ea.line2;
-    ea.line2 = curwin->w_cursor.lnum;       /* default is current line number */
+    switch (ea.addr_type) {
+      case ADDR_LINES:
+        // default is current line number
+        ea.line2 = curwin->w_cursor.lnum;
+        break;
+      case ADDR_WINDOWS:
+        lnum = 0;
+        for (wp = firstwin; wp != NULL; wp = wp->w_next) {
+          lnum++;
+          if (wp == curwin)
+            break;
+        }
+        ea.line2 = lnum;
+        break;
+      case ADDR_ARGUMENTS:
+        ea.line2 = curwin->w_arg_idx + 1;
+        break;
+      case ADDR_LOADED_BUFFERS:
+      case ADDR_UNLOADED_BUFFERS:
+        ea.line2 = curbuf->b_fnum;
+        break;
+      case ADDR_TABS:
+        lnum = 0;
+        for (tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
+          lnum++;
+          if (tp == curtab)
+            break;
+        }
+        ea.line2 = lnum;
+        break;
+    }
     ea.cmd = skipwhite(ea.cmd);
-    lnum = get_address(&ea.cmd, ea.skip, ea.addr_count == 0);
+    lnum = get_address(&ea.cmd, ea.addr_type, ea.skip, ea.addr_count == 0);
     if (ea.cmd == NULL)                     /* error detected */
       goto doend;
     if (lnum == MAXLNUM) {
       if (*ea.cmd == '%') {                 /* '%' - all lines */
         ++ea.cmd;
-        ea.line1 = 1;
-        ea.line2 = curbuf->b_ml.ml_line_count;
+        switch (ea.addr_type) {
+          case ADDR_LINES:
+            ea.line1 = 1;
+            ea.line2 = curbuf->b_ml.ml_line_count;
+            break;
+          case ADDR_WINDOWS:
+          case ADDR_LOADED_BUFFERS:
+          case ADDR_UNLOADED_BUFFERS:
+          case ADDR_TABS:
+            errormsg = (char_u *)_(e_invrange);
+            goto doend;
+            break;
+          case ADDR_ARGUMENTS:
+            ea.line1 = 1;
+            ea.line2 = ARGCOUNT;
+            break;
+        }
         ++ea.addr_count;
       }
       /* '*' - visual area */
       else if (*ea.cmd == '*' && vim_strchr(p_cpo, CPO_STAR) == NULL) {
         pos_T       *fp;
+
+        if (ea.addr_type != ADDR_LINES) {
+          errormsg = (char_u *)_(e_invrange);
+          goto doend;
+        }
 
         ++ea.cmd;
         if (!ea.skip) {
@@ -1392,7 +1490,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   check_cursor_lnum();
 
   /*
-   * 4. parse command
+   * 5. Parse the command.
    */
 
   /*
@@ -1445,9 +1543,6 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     }
     goto doend;
   }
-
-  /* Find the command and let "p" point to after it. */
-  p = find_command(&ea, NULL);
 
   // If this looks like an undefined user command and there are CmdUndefined
   // autocommands defined, trigger the matching autocommands.
@@ -1502,7 +1597,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     ea.forceit = FALSE;
 
   /*
-   * 5. parse arguments
+   * 6. Parse arguments.
    */
   if (!IS_USER_CMDIDX(ea.cmdidx)) {
     ea.argt = cmdnames[(int)ea.cmdidx].cmd_argt;
@@ -1888,7 +1983,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   }
 
   /*
-   * 6. switch on command name
+   * 7. Switch on command name.
    *
    * The "ea" structure holds the arguments that can be used.
    */
@@ -3098,12 +3193,11 @@ skip_range (
  *
  * Return MAXLNUM when no Ex address was found.
  */
-static linenr_T 
-get_address (
-    char_u **ptr,
-    int skip,                   /* only skip the address, don't use it */
-    int to_other_file              /* flag: may jump to other file */
-)
+static linenr_T get_address(char_u **ptr,
+                            int addr_type,  // flag: one of ADDR_LINES, ...
+                            int skip,  // only skip the address, don't use it
+                            int to_other_file  // flag: may jump to other file
+                            )
 {
   int c;
   int i;
@@ -3112,6 +3206,9 @@ get_address (
   pos_T pos;
   pos_T       *fp;
   linenr_T lnum;
+  win_T *wp;
+  tabpage_T *tp;
+  buf_T *buf;
 
   cmd = skipwhite(*ptr);
   lnum = MAXLNUM;
@@ -3119,17 +3216,77 @@ get_address (
     switch (*cmd) {
     case '.':                               /* '.' - Cursor position */
       ++cmd;
-      lnum = curwin->w_cursor.lnum;
+      switch (addr_type) {
+        case ADDR_LINES:
+          lnum = curwin->w_cursor.lnum;
+          break;
+        case ADDR_WINDOWS:
+          lnum = 0;
+          for (wp = firstwin; wp != NULL; wp = wp->w_next) {
+            lnum++;
+            if (wp == curwin)
+              break;
+          }
+          break;
+        case ADDR_ARGUMENTS:
+          lnum = curwin->w_arg_idx + 1;
+          break;
+        case ADDR_LOADED_BUFFERS:
+        case ADDR_UNLOADED_BUFFERS:
+          lnum = curbuf->b_fnum;
+          for (tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
+            lnum++;
+            if (tp == curtab)
+              break;
+          }
+          break;
+      }
       break;
 
     case '$':                               /* '$' - last line */
       ++cmd;
-      lnum = curbuf->b_ml.ml_line_count;
+      switch (addr_type) {
+        case ADDR_LINES:
+          lnum = curbuf->b_ml.ml_line_count;
+          break;
+        case ADDR_WINDOWS:
+          lnum = 0;
+          for (wp = firstwin; wp != NULL; wp = wp->w_next) {
+            lnum++;
+          }
+          break;
+        case ADDR_ARGUMENTS:
+          lnum = ARGCOUNT;
+          break;
+        case ADDR_LOADED_BUFFERS:
+          buf = lastbuf;
+          while (buf->b_ml.ml_mfp == NULL) {
+            if (buf->b_prev == NULL) {
+              break;
+            }
+            buf = buf->b_prev;
+          }
+          lnum = buf->b_fnum;
+          break;
+        case ADDR_UNLOADED_BUFFERS:
+          lnum = lastbuf->b_fnum;
+          break;
+        case ADDR_TABS:
+          lnum = 0;
+          for (tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
+            lnum++;
+          }
+          break;
+      }
       break;
 
     case '\'':                              /* ''' - mark */
       if (*++cmd == NUL) {
         cmd = NULL;
+        goto error;
+      }
+      if (addr_type != ADDR_LINES) {
+        EMSG(_(e_invaddr));
         goto error;
       }
       if (skip)
@@ -3155,6 +3312,10 @@ get_address (
     case '/':
     case '?':                           /* '/' or '?' - search */
       c = *cmd++;
+      if (addr_type != ADDR_LINES) {
+        EMSG(_(e_invaddr));
+        goto error;
+      }
       if (skip) {                       /* skip "/pat/" */
         cmd = skip_regexp(cmd, c, p_magic, NULL);
         if (*cmd == c)
@@ -3194,6 +3355,10 @@ get_address (
 
     case '\\':                      /* "\?", "\/" or "\&", repeat search */
       ++cmd;
+      if (addr_type != ADDR_LINES) {
+        EMSG(_(e_invaddr));
+        goto error;
+      }
       if (*cmd == '&')
         i = RE_SUBST;
       else if (*cmd == '?' || *cmd == '/')
@@ -3233,8 +3398,37 @@ get_address (
       if (*cmd != '-' && *cmd != '+' && !ascii_isdigit(*cmd))
         break;
 
-      if (lnum == MAXLNUM)
-        lnum = curwin->w_cursor.lnum;           /* "+1" is same as ".+1" */
+      if (lnum == MAXLNUM) {
+        switch (addr_type) {
+          case ADDR_LINES:
+            lnum = curwin->w_cursor.lnum; /* "+1" is same as ".+1" */
+            break;
+          case ADDR_WINDOWS:
+            lnum = 0;
+            for (wp = firstwin; wp != NULL; wp = wp->w_next) {
+              lnum++;
+              if (wp == curwin)
+                break;
+            }
+            break;
+          case ADDR_ARGUMENTS:
+            lnum = curwin->w_arg_idx + 1;
+            break;
+          case ADDR_LOADED_BUFFERS:
+          case ADDR_UNLOADED_BUFFERS:
+            lnum = curbuf->b_fnum;
+            break;
+          case ADDR_TABS:
+            lnum = 0;
+            for (tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
+              lnum++;
+              if (tp == curtab)
+                break;
+            }
+            break;
+        }
+      }
+
       if (ascii_isdigit(*cmd))
         i = '+';                        /* "number" is same as "+number" */
       else
@@ -3242,11 +3436,56 @@ get_address (
       if (!ascii_isdigit(*cmd))           /* '+' is '+1', but '+0' is not '+1' */
         n = 1;
       else
-        n = getdigits_long(&cmd);
-      if (i == '-')
+        n = getdigits(&cmd);
+      if (addr_type == ADDR_LOADED_BUFFERS ||
+          addr_type == ADDR_UNLOADED_BUFFERS)
+        lnum = compute_buffer_local_count(addr_type, lnum, n);
+      else if (i == '-')
         lnum -= n;
       else
         lnum += n;
+
+      switch (addr_type) {
+        case ADDR_LINES:
+          break;
+        case ADDR_ARGUMENTS:
+          if (lnum < 0)
+            lnum = 0;
+          else if (lnum >= ARGCOUNT)
+            lnum = ARGCOUNT;
+          break;
+        case ADDR_TABS:
+          if (lnum < 0) {
+            lnum = 0;
+            break;
+          }
+          c = 0;
+          for (tp = first_tabpage; tp != NULL; tp = tp->tp_next)
+            c++;
+          if (lnum >= c)
+            lnum = c;
+          break;
+        case ADDR_WINDOWS:
+          if (lnum < 0) {
+            lnum = 0;
+            break;
+          }
+          c = 0;
+          for (wp = firstwin; wp != NULL; wp = wp->w_next)
+            c++;
+          if (lnum > c)
+            lnum = c;
+          break;
+        case ADDR_LOADED_BUFFERS:
+        case ADDR_UNLOADED_BUFFERS:
+          if (lnum < firstbuf->b_fnum) {
+            lnum = firstbuf->b_fnum;
+            break;
+          }
+          if (lnum > lastbuf->b_fnum)
+            lnum = lastbuf->b_fnum;
+          break;
+      }
     }
   } while (*cmd == '/' || *cmd == '?');
 
@@ -5102,10 +5341,29 @@ static void ex_quit(exarg_T *eap)
     text_locked_msg();
     return;
   }
+
+  win_T *wp;
+  buf_T *buf;
+  int wnr;
+
+  if (eap->addr_count > 0) {
+    wnr = eap->line2;
+    for (wp = firstwin; --wnr > 0;) {
+      if (wp->w_next == NULL)
+        break;
+      else
+        wp = wp->w_next;
+    }
+    buf = wp->w_buffer;
+  } else {
+    wp = curwin;
+    buf = curbuf;
+  }
+
   apply_autocmds(EVENT_QUITPRE, NULL, NULL, FALSE, curbuf);
   /* Refuse to quit when locked or when the buffer in the last window is
    * being closed (can only happen in autocommands). */
-  if (curbuf_locked() || (curbuf->b_nwindows == 1 && curbuf->b_closing))
+  if (curbuf_locked() || (buf->b_nwindows == 1 && curbuf->b_closing))
     return;
 
 
@@ -5127,7 +5385,7 @@ static void ex_quit(exarg_T *eap)
       getout(0);
     }
     /* close window; may free buffer */
-    win_close(curwin, !P_HID(curwin->w_buffer) || eap->forceit);
+    win_close(wp, !P_HID(wp->w_buffer) || eap->forceit);
   }
 }
 
@@ -5174,12 +5432,24 @@ static void ex_quit_all(exarg_T *eap)
  */
 static void ex_close(exarg_T *eap)
 {
+  win_T *win;
+  int winnr = 0;
   if (cmdwin_type != 0)
     cmdwin_result = Ctrl_C;
-  else if (!text_locked()
-           && !curbuf_locked()
-           )
-    ex_win_close(eap->forceit, curwin, NULL);
+  else if (!text_locked() && !curbuf_locked()) {
+    if (eap->addr_count == 0)
+      ex_win_close(eap->forceit, curwin, NULL);
+    else {
+      for (win = firstwin; win != NULL; win = win->w_next) {
+        winnr++;
+        if (winnr == eap->line2)
+          break;
+      }
+      if (win == NULL)
+        win = lastwin;
+      ex_win_close(eap->forceit, win, NULL);
+    }
+  }
 }
 
 /*
@@ -5271,6 +5541,8 @@ static void ex_tabonly(exarg_T *eap)
   else if (first_tabpage->tp_next == NULL)
     MSG(_("Already only one tab page"));
   else {
+    if (eap->addr_count > 0)
+      goto_tabpage(eap->line2);
     /* Repeat this up to a 1000 times, because autocommands may mess
      * up the lists. */
     for (int done = 0; done < 1000; ++done) {
@@ -5341,6 +5613,18 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
  */
 static void ex_only(exarg_T *eap)
 {
+  win_T *wp;
+  int wnr;
+  if (eap->addr_count > 0) {
+    wnr = eap->line2;
+    for (wp = firstwin; --wnr > 0;) {
+      if (wp->w_next == NULL)
+        break;
+      else
+        wp = wp->w_next;
+    }
+    win_goto(wp);
+  }
   close_others(TRUE, eap->forceit);
 }
 
@@ -5357,13 +5641,26 @@ void ex_all(exarg_T *eap)
 
 static void ex_hide(exarg_T *eap)
 {
+  win_T *win;
+  int winnr = 0;
   if (*eap->arg != NUL && check_nextcmd(eap->arg) == NULL)
     eap->errmsg = e_invarg;
   else {
     /* ":hide" or ":hide | cmd": hide current window */
     eap->nextcmd = check_nextcmd(eap->arg);
     if (!eap->skip) {
-      win_close(curwin, FALSE);         /* don't free buffer */
+      if (eap->addr_count == 0)
+        win_close(curwin, FALSE); /* don't free buffer */
+      else {
+        for (win = firstwin; win != NULL; win = win->w_next) {
+          winnr++;
+          if (winnr == eap->line2)
+            break;
+        }
+        if (win == NULL)
+          win = lastwin;
+        win_close(win, FALSE);
+      }
     }
   }
 }
@@ -6518,7 +6815,7 @@ static void ex_copymove(exarg_T *eap)
 {
   long n;
 
-  n = get_address(&eap->arg, FALSE, FALSE);
+  n = get_address(&eap->arg, eap->addr_type, FALSE, FALSE);
   if (eap->arg == NULL) {           /* error detected */
     eap->nextcmd = NULL;
     return;

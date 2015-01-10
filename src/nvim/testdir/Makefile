@@ -29,7 +29,9 @@ SCRIPTS := test_autoformat_join.out                                    \
            test86.out  test87.out  test88.out                          \
            test96.out                                                  \
            test_listlbr.out                                            \
-           test_breakindent.out
+           test_breakindent.out                                        \
+           test_argument_count.out                                     \
+           test_close_count.out
 
 SCRIPTS_GUI := test16.out
 

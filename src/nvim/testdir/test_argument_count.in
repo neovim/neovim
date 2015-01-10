@@ -1,0 +1,47 @@
+Tests for :[count]argument! and :[count]argdelete     vim: set ft=vim :
+
+STARTTEST
+:%argd
+:argadd a b c d
+:set hidden
+:let buffers = []
+:augroup TEST
+:au BufEnter * call add(buffers, expand('%:t'))
+:augroup END
+:$argu
+:$-argu
+:-argu
+:1argu
+:+2argu
+:augroup TEST
+:au!
+:augroup END
+:let arglists = []
+:.argd
+:call add(arglists, argv())
+:-argd
+:call add(arglists, argv())
+:$argd
+:call add(arglists, argv())
+:1arga c
+:1arga b
+:$argu
+:+arga d
+:$arga x
+:call add(arglists, argv())
+:$-10arga Y
+:call add(arglists, argv())
+:%argd
+:call add(arglists, argv())
+:arga a b c d e f
+:2,$-argd
+:call add(arglists, argv())
+:e! test.out
+:call append(0, buffers)
+:let lnr = line('$')
+:call append(lnr, map(copy(arglists), 'join(v:val, " ")'))
+:w
+:qa!
+ENDTEST
+
+
