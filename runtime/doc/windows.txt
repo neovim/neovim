@@ -263,28 +263,54 @@ left of the Vim window.
 Closing a window
 ----------------
 
+:q[uit]
+:{count}q[uit]
 CTRL-W q						*CTRL-W_q*
 CTRL-W CTRL-Q						*CTRL-W_CTRL-Q*
-:q[uit]		Quit current window.  When quitting the last window (not
-		counting a help window), exit Vim.
+		Without {count}: Quit the current window.  If {count} is 
+		given quit the {count} window
+
+		When quitting the last window (not counting a help window), 
+		exit Vim.
+
 		When 'hidden' is set, and there is only one window for the
-		current buffer, it becomes hidden.
-		When 'hidden' is not set, and there is only one window for the
-		current buffer, and the buffer was changed, the command fails.
-		(Note: CTRL-Q does not work on all terminals)
+		current buffer, it becomes hidden. When 'hidden' is not set, 
+		and there is only one window for the current buffer, and the
+		buffer was changed, the command fails.
+		(Note: CTRL-Q does not 
+		work on all terminals). If [count] is greater than
+		the last window number the last window will be closed: >
+		    :1quit  " quit the first window
+		    :$quit  " quit the last window
+		    :9quit  " quit the last window
+			    " if there are less than  windows opened
+		    :-quit  " quit the previous window
+		    :+quit  " quit the next window
+		    :+2quit " will also work as expected
+<
+:q[uit]!
+:{count}q[uit]!
+		Without {count}: Quit the current window.  If {count} is 
+		given quit the {count} window
+		If this was the last window for a buffer, any changes to that 
+		buffer are lost.  When quitting the last window (not counting 
+		help windows), exit Vim.  The contents of the buffer are lost,
+		even when 'hidden' is set.
 
-:q[uit]!	Quit current window.  If this was the last window for a buffer,
-		any changes to that buffer are lost.  When quitting the last
-		window (not counting help windows), exit Vim.  The contents of
-		the buffer are lost, even when 'hidden' is set.
-
+:clo[se][!]
+:{count}clo[se][!]
 CTRL-W c					*CTRL-W_c* *:clo* *:close*
-:clo[se][!]	Close current window.  When the 'hidden' option is set, or
-		when the buffer was changed and the [!] is used, the buffer
-		becomes hidden (unless there is another window editing it).
-		When there is only one window in the current tab page and
+        	Without {count}: Close the current window. If given close the
+                {count} window.
+
+                When the 'hidden' option is set, or when the buffer was changed 
+                and the [!] is used, the buffer becomes hidden (unless there is
+                another window editing it).
+		
+                When there is only one window in the current tab page and
 		there is another tab page, this closes the current tab page.
 		|tab-page|.
+
 		This command fails when:			*E444*
 		- There is only one window on the screen.
 		- When 'hidden' is not set, [!] is not used, the buffer has
@@ -297,29 +323,38 @@ CTRL-W CTRL-C						*CTRL-W_CTRL-C*
 		window, but that does not work, because the CTRL-C cancels the
 		command.
 
-							*:hide*
-:hid[e]		Quit current window, unless it is the last window on the
-		screen.  The buffer becomes hidden (unless there is another
-		window editing it or 'bufhidden' is "unload" or "delete").
-		If the window is the last one in the current tab page the tab
-		page is closed. |tab-page|
+                                                                *:hide*
+:hid[e]
+:{count}hid[e]
+		Quit the current window, unless it is the last window on the
+		screen.  For {count} see |:quit| command.
+
+		The buffer becomes hidden (unless there is another window 
+		editing it or 'bufhidden' is "unload" or "delete"). If the 
+		window is the last one in the current tab page the tab page is 
+		closed.  |tab-page|
+
 		The value of 'hidden' is irrelevant for this command.
 		Changes to the buffer are not written and won't get lost, so
 		this is a "safe" command.
 
-:hid[e] {cmd}	Execute {cmd} with 'hidden' is set.  The previous value of
+:hid[e] {cmd}	Execute {cmd} with 'hidden' set.  The previous value of
 		'hidden' is restored after {cmd} has been executed.
 		Example: >
 		    :hide edit Makefile
 <		This will edit "Makefile", and hide the current buffer if it
 		has any changes.
 
+:on[ly][!]
+:{count}on[ly][!]
 CTRL-W o						*CTRL-W_o* *E445*
 CTRL-W CTRL-O					*CTRL-W_CTRL-O* *:on* *:only*
-:on[ly][!]	Make the current window the only one on the screen.  All other
-		windows are closed.
+        	Make the current window the only one on the screen.  All other
+		windows are closed. For {count} see |:quit| command.
+
 		When the 'hidden' option is set, all buffers in closed windows
 		become hidden.
+
 		When 'hidden' is not set, and the 'autowrite' option is set,
 		modified buffers are written.  Otherwise, windows that have
 		buffers that are modified are not removed, unless the [!] is

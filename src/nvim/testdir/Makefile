@@ -37,7 +37,9 @@ SCRIPTS := test_autoformat_join.out                                    \
            test_qf_title.out                                           \
            test_breakindent.out                                        \
            test_insertcount.out                                        \
-           test_utf8.out
+           test_utf8.out                                               \
+           test_argument_count.out                                     \
+           test_close_count.out
 
 SCRIPTS_GUI := test16.out
 
