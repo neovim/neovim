@@ -5543,49 +5543,48 @@ int garbage_collect(void)
   return did_free;
 }
 
-/*
- * Free lists and dictionaries that are no longer referenced.
- */
+/// Free lists and dictionaries that are no longer referenced.
+///
+/// Note: This function may only be called from garbage_collect().
+///
+/// @param copyID Free lists/dictionaries that don't have this ID.
+/// @return true, if something was freed.
 static int free_unref_items(int copyID)
 {
-  dict_T      *dd;
-  list_T      *ll;
-  int did_free = FALSE;
+  bool did_free = false;
 
-  /*
-   * Go through the list of dicts and free items without the copyID.
-   */
-  for (dd = first_dict; dd != NULL; )
+  // Go through the list of dicts and free items without the copyID.
+  for (dict_T *dd = first_dict; dd != NULL; ) {
     if ((dd->dv_copyID & COPYID_MASK) != (copyID & COPYID_MASK)) {
-      /* Free the Dictionary and ordinary items it contains, but don't
-       * recurse into Lists and Dictionaries, they will be in the list
-       * of dicts or list of lists. */
+      // Free the Dictionary and ordinary items it contains, but don't
+      // recurse into Lists and Dictionaries, they will be in the list
+      // of dicts or list of lists. */
+      dict_T *dd_next = dd->dv_used_next;
       dict_free(dd, FALSE);
-      did_free = TRUE;
-
-      /* restart, next dict may also have been freed */
-      dd = first_dict;
-    } else
+      did_free = true;
+      dd = dd_next;
+    } else {
       dd = dd->dv_used_next;
+    }
+  }
 
-  /*
-   * Go through the list of lists and free items without the copyID.
-   * But don't free a list that has a watcher (used in a for loop), these
-   * are not referenced anywhere.
-   */
-  for (ll = first_list; ll != NULL; )
+  // Go through the list of lists and free items without the copyID.
+  // But don't free a list that has a watcher (used in a for loop), these
+  // are not referenced anywhere.
+  for (list_T *ll = first_list; ll != NULL;) {
     if ((ll->lv_copyID & COPYID_MASK) != (copyID & COPYID_MASK)
         && ll->lv_watch == NULL) {
-      /* Free the List and ordinary items it contains, but don't recurse
-       * into Lists and Dictionaries, they will be in the list of dicts
-       * or list of lists. */
+      // Free the List and ordinary items it contains, but don't recurse
+      // into Lists and Dictionaries, they will be in the list of dicts
+      // or list of lists.
+      list_T* ll_next = ll->lv_used_next;
       list_free(ll, FALSE);
-      did_free = TRUE;
-
-      /* restart, next list may also have been freed */
-      ll = first_list;
-    } else
+      did_free = true;
+      ll = ll_next;
+    } else {
       ll = ll->lv_used_next;
+    }
+  }
 
   return did_free;
 }
@@ -5717,6 +5716,7 @@ dict_free (
 
   /* Lock the hashtab, we don't want it to resize while freeing items. */
   hash_lock(&d->dv_hashtab);
+  assert(d->dv_hashtab.ht_locked > 0);
   todo = (int)d->dv_hashtab.ht_used;
   for (hi = d->dv_hashtab.ht_array; todo > 0; ++hi) {
     if (!HASHITEM_EMPTY(hi)) {
