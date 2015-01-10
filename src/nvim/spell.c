@@ -6603,10 +6603,10 @@ static size_t write_len_and_string(const char_u *str, FILE *file)
   int len = (int)STRLEN(str);
   assert(len < INT_MAX);
   putc(len, file);
-  if (len > 0) {
-    return fwrite(str, (size_t)len, (size_t)1, file);
+  if (len <= 0) {
+    return 1;
   }
-  return 1;
+  return fwrite(str, (size_t)len, (size_t)1, file);
 }
 
 // Write the Vim .spl file "fname".
