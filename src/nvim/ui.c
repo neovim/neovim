@@ -95,6 +95,10 @@ void ui_write(uint8_t *s, int len)
     return;
   }
 
+  if (!len) {
+    return;
+  }
+
   char_u  *tofree = NULL;
 
   if (output_conv.vc_type != CONV_NONE) {
