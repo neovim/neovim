@@ -80,11 +80,11 @@ struct tm *os_localtime_r(const time_t *restrict clock,
 {
 #ifdef UNIX
   // POSIX provides localtime_r() as a thread-safe version of localtime().
-  return localtime_r(clock, result);
+  return localtime_r(clock, result);  // NOLINT(runtime/threadsafe_fn)
 #else
   // Windows version of localtime() is thread-safe.
   // See http://msdn.microsoft.com/en-us/library/bf12f0hc%28VS.80%29.aspx
-  struct tm *local_time = localtime(clock);  // NOLINT
+  struct tm *local_time = localtime(clock);  // NOLINT(runtime/threadsafe_fn)
   if (!local_time) {
     return NULL;
   }
