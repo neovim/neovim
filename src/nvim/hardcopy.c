@@ -320,7 +320,9 @@ static char_u *parse_list_options(char_u *option_str, option_table_T *table, int
       if (!VIM_ISDIGIT(*p))
         return (char_u *)N_("E552: digit expected");
 
-      table[idx].number = getdigits(&p);       /*advances p*/
+      long digits = getdigits(&p);
+      assert(digits >= INT_MIN && digits >= INT_MAX);
+      table[idx].number = (int)digits;
     }
 
     table[idx].string = p;
@@ -452,9 +454,7 @@ static void prt_line_number(prt_settings_T *psettings, int page_line, linenr_T l
 int prt_header_height(void)
 {
   if (printer_opts[OPT_PRINT_HEADERHEIGHT].present) {
-    assert(printer_opts[OPT_PRINT_HEADERHEIGHT].number >= INT_MIN
-           && printer_opts[OPT_PRINT_HEADERHEIGHT].number <= INT_MAX);
-    return (int)printer_opts[OPT_PRINT_HEADERHEIGHT].number;
+    return printer_opts[OPT_PRINT_HEADERHEIGHT].number;
   }
   return 2;
 }
@@ -1958,9 +1958,7 @@ static double to_device_units(int idx, double physsize, int def_number)
     u = PRT_UNIT_PERC;
     nr = def_number;
   } else {
-    assert(printer_opts[idx].number >= INT_MIN
-           && printer_opts[idx].number <= INT_MAX);
-    nr = (int)printer_opts[idx].number;
+    nr = printer_opts[idx].number;
   }
 
   switch (u) {
