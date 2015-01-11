@@ -120,7 +120,7 @@ ex_menu (
       break;
   if (vim_iswhite(*p)) {
     for (i = 0; i < MENUDEPTH && !vim_iswhite(*arg); ++i) {
-      pri_tab[i] = get_int_digits(&arg);
+      pri_tab[i] = getdigits_int(&arg);
       if (pri_tab[i] == 0)
         pri_tab[i] = 500;
       if (*arg == '.')

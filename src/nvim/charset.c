@@ -177,7 +177,7 @@ int buf_init_chartab(buf_T *buf, int global)
       }
 
       if (VIM_ISDIGIT(*p)) {
-        c = get_int_digits(&p);
+        c = getdigits_int(&p);
       } else if (has_mbyte) {
         c = mb_ptr2char_adv(&p);
       } else {
@@ -189,7 +189,7 @@ int buf_init_chartab(buf_T *buf, int global)
         ++p;
 
         if (VIM_ISDIGIT(*p)) {
-          c2 = get_int_digits(&p);
+          c2 = getdigits_int(&p);
         } else if (has_mbyte) {
           c2 = mb_ptr2char_adv(&p);
         } else {
@@ -1682,7 +1682,7 @@ char_u* skiptowhite_esc(char_u *p) {
 ///                  It will be advanced past the read number.
 ///
 /// @return Number read from the string.
-intmax_t get_digits(char_u **pp)
+intmax_t getdigits(char_u **pp)
 {
   intmax_t number = strtoimax((char *)*pp, (char **)pp, 10);
   assert(errno != ERANGE);
@@ -1691,20 +1691,20 @@ intmax_t get_digits(char_u **pp)
 
 /// Get an int number from a string.
 ///
-/// A get_digits wrapper restricted to int values.
-int get_int_digits(char_u **pp)
+/// A getdigits wrapper restricted to int values.
+int getdigits_int(char_u **pp)
 {
-  intmax_t number = get_digits(pp);
+  intmax_t number = getdigits(pp);
   assert(number >= INT_MIN && number <= INT_MAX);
   return (int)number;
 }
 
 /// Get a long number from a string.
 ///
-/// A get_digits wrapper restricted to long values.
-long get_long_digits(char_u **pp)
+/// A getdigits wrapper restricted to long values.
+long getdigits_long(char_u **pp)
 {
-  intmax_t number = get_digits(pp);
+  intmax_t number = getdigits(pp);
   assert(number >= LONG_MIN && number <= LONG_MAX);
   return (long)number;
 }

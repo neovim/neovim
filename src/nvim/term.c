@@ -3230,7 +3230,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
            */
           p = tp + slen;
 
-          mouse_code = get_int_digits(&p);
+          mouse_code = getdigits_int(&p);
           if (*p++ != ';')
             return -1;
 
@@ -3238,11 +3238,11 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
           if (key_name[0] == KS_SGR_MOUSE)
             mouse_code += 32;
 
-          mouse_col = get_int_digits(&p);
+          mouse_col = getdigits_int(&p);
           if (*p++ != ';')
             return -1;
 
-          mouse_row = get_int_digits(&p);
+          mouse_row = getdigits_int(&p);
           if (key_name[0] == KS_SGR_MOUSE && *p == 'm')
             mouse_code |= MOUSE_RELEASE;
           else if (*p != 'M')
@@ -3269,7 +3269,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
               }
             }
             p += j;
-            if (cmd_complete && get_int_digits(&p) == mouse_code) {
+            if (cmd_complete && getdigits_int(&p) == mouse_code) {
               slen += j;               /* skip the \033[ */
               continue;
             }
@@ -3315,10 +3315,10 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
          * '6' is the row, 45 is the column
          */
         p = tp + slen;
-        mr = get_int_digits(&p);
+        mr = getdigits_int(&p);
         if (*p++ != ',')
           return -1;
-        mc = get_int_digits(&p);
+        mc = getdigits_int(&p);
         if (*p++ != '\r')
           return -1;
 
@@ -3383,27 +3383,27 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
         p = tp + slen;
 
         /* get event status */
-        Pe = get_int_digits(&p);
+        Pe = getdigits_int(&p);
         if (*p++ != ';')
           return -1;
 
         /* get button status */
-        Pb = get_int_digits(&p);
+        Pb = getdigits_int(&p);
         if (*p++ != ';')
           return -1;
 
         /* get row status */
-        Pr = get_int_digits(&p);
+        Pr = getdigits_int(&p);
         if (*p++ != ';')
           return -1;
 
         /* get column status */
-        Pc = get_int_digits(&p);
+        Pc = getdigits_int(&p);
 
         /* the page parameter is optional */
         if (*p == ';') {
           p++;
-          (void)get_int_digits(&p);
+          (void)getdigits_int(&p);
         }
         if (*p++ != '&')
           return -1;

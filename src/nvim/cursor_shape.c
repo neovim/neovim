@@ -135,7 +135,7 @@ char_u *parse_shape_opt(int what)
               p += len;
               if (!VIM_ISDIGIT(*p))
                 return (char_u *)N_("E548: digit expected");
-              int n = get_int_digits(&p);
+              int n = getdigits_int(&p);
               if (len == 3) {               /* "ver" or "hor" */
                 if (n == 0)
                   return (char_u *)N_("E549: Illegal percentage");

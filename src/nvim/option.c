@@ -2918,7 +2918,7 @@ do_set (
                */
               else if (varp == (char_u *)&p_bs
                        && VIM_ISDIGIT(**(char_u **)varp)) {
-                i = get_int_digits((char_u **)varp);
+                i = getdigits_int((char_u **)varp);
                 switch (i) {
                 case 0:
                   *(char_u **)varp = empty_option;
@@ -2943,7 +2943,7 @@ do_set (
               else if (varp == (char_u *)&p_ww
                        && VIM_ISDIGIT(*arg)) {
                 *errbuf = NUL;
-                i = get_int_digits(&arg);
+                i = getdigits_int(&arg);
                 if (i & 1)
                   STRCAT(errbuf, "b,");
                 if (i & 2)
@@ -4359,7 +4359,7 @@ did_set_string_option (
       /* set ru_wid if 'ruf' starts with "%99(" */
       if (*++s == '-')          /* ignore a '-' */
         s++;
-      wid = get_int_digits(&s);
+      wid = getdigits_int(&s);
       if (wid && *s == '(' && (errmsg = check_stl_option(p_ruf)) == NULL)
         ru_wid = wid;
       else
@@ -4664,14 +4664,14 @@ char_u *check_colorcolumn(win_T *wp)
       ++s;
       if (!VIM_ISDIGIT(*s))
         return e_invarg;
-      col = col * get_int_digits(&s);
+      col = col * getdigits_int(&s);
       if (wp->w_buffer->b_p_tw == 0)
         goto skip;          /* 'textwidth' not set, skip this item */
       col += wp->w_buffer->b_p_tw;
       if (col < 0)
         goto skip;
     } else if (VIM_ISDIGIT(*s))
-      col = get_int_digits(&s);
+      col = getdigits_int(&s);
     else
       return e_invarg;
     color_cols[count++] = col - 1;      /* 1-based to 0-based */
@@ -8114,12 +8114,12 @@ static bool briopt_check(win_T *wp)
         && ((p[6] == '-' && VIM_ISDIGIT(p[7])) || VIM_ISDIGIT(p[6])))
     {
       p += 6;
-      bri_shift = get_int_digits(&p);
+      bri_shift = getdigits_int(&p);
     }
     else if (STRNCMP(p, "min:", 4) == 0 && VIM_ISDIGIT(p[4]))
     {
       p += 4;
-      bri_min = get_long_digits(&p);
+      bri_min = getdigits_long(&p);
     }
     else if (STRNCMP(p, "sbr", 3) == 0)
     {

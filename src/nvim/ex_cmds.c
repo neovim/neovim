@@ -569,7 +569,7 @@ void ex_retab(exarg_T *eap)
   save_list = curwin->w_p_list;
   curwin->w_p_list = 0;             /* don't want list mode here */
 
-  new_ts = get_int_digits(&(eap->arg));
+  new_ts = getdigits_int(&(eap->arg));
   if (new_ts < 0) {
     EMSG(_(e_positive));
     return;
@@ -3674,7 +3674,7 @@ void do_sub(exarg_T *eap)
    */
   cmd = skipwhite(cmd);
   if (VIM_ISDIGIT(*cmd)) {
-    i = get_long_digits(&cmd);
+    i = getdigits_long(&cmd);
     if (i <= 0 && !eap->skip && do_error) {
       EMSG(_(e_zerocount));
       return;
@@ -5920,7 +5920,7 @@ void ex_sign(exarg_T *eap)
 	arg1 = arg;
 	if (VIM_ISDIGIT(*arg))
 	{
-	    id = get_int_digits(&arg);
+	    id = getdigits_int(&arg);
 	    if (!vim_iswhite(*arg) && *arg != NUL)
 	    {
 		id = -1;
@@ -5985,7 +5985,7 @@ void ex_sign(exarg_T *eap)
 	    else if (STRNCMP(arg, "buffer=", 7) == 0)
 	    {
 		arg += 7;
-		buf = buflist_findnr(get_int_digits(&arg));
+		buf = buflist_findnr(getdigits_int(&arg));
 		if (*skipwhite(arg) != NUL)
 		    EMSG(_(e_trailing));
 		break;

@@ -471,7 +471,7 @@ dbg_parsearg (
   else if (
     gap != &prof_ga &&
     VIM_ISDIGIT(*p)) {
-    bp->dbg_lnum = get_long_digits(&p);
+    bp->dbg_lnum = getdigits_long(&p);
     p = skipwhite(p);
   } else
     bp->dbg_lnum = 0;

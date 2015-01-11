@@ -344,14 +344,14 @@ static void parse_abstract_ui_codes(uint8_t *ptr, int len)
       assert(p != end);
 
       if (VIM_ISDIGIT(*p)) {
-        arg1 = get_int_digits(&p);
+        arg1 = getdigits_int(&p);
         if (p >= end) {
           break;
         }
 
         if (*p == ';') {
           p++;
-          arg2 = get_int_digits(&p);
+          arg2 = getdigits_int(&p);
           if (p >= end)
             break;
         }

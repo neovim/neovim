@@ -525,7 +525,7 @@ open_line (
           if (*p == COM_RIGHT || *p == COM_LEFT)
             c = *p++;
           else if (VIM_ISDIGIT(*p) || *p == '-')
-            off = get_int_digits(&p);
+            off = getdigits_int(&p);
           else
             ++p;
         }
