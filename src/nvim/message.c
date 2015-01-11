@@ -728,18 +728,9 @@ bool msg_delete_first(void)
  */
 void ex_messages(exarg_T *eap)
 {
-  struct msg_hist *p;
-  const char      *s;
-
   msg_hist_off = TRUE;
 
-  s = os_getenv("LANG");
-  if (s != NULL && *s != NUL)
-    msg_attr((char_u *)
-        _("Messages maintainer: Bram Moolenaar <Bram@vim.org>"),
-        hl_attr(HLF_T));
-
-  for (p = first_msg_hist; p != NULL && !got_int; p = p->next)
+  for (struct msg_hist *p = first_msg_hist; p != NULL && !got_int; p = p->next)
     if (p->msg != NULL)
       msg_attr(p->msg, p->attr);
 
