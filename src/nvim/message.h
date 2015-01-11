@@ -13,7 +13,7 @@
 
 /* special attribute addition: Put message in history */
 #define MSG_HIST                0x1000
-#define MAX_MSG_HIST_LEN        200
+#define MAX_MSG_HIST_LEN        400
 
 #define MSG(s)                      msg((char_u *)(s))
 #define MSG_ATTR(s, attr)           msg_attr((char_u *)(s), (attr), false)
