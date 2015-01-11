@@ -7696,7 +7696,8 @@ This does NOT work: >
 			otherwise all following echo's will be highlighted.
 
 							*:echom* *:echomsg*
-:echom[sg] {expr1} ..	Echo the expression(s) as a true message, saving the
+:echom[sg][!] {expr1} ..
+			Echo the expression(s) as a true message, saving the
 			message in the |message-history|.
 			Spaces are placed between the arguments as with the
 			|:echo| command.  But unprintable characters are
@@ -7711,8 +7712,18 @@ This does NOT work: >
 		:echomsg "It's a Zizzer Zazzer Zuzz, as you can plainly see."
 <			See |:echo-redraw| to avoid the message disappearing
 			when the screen is redrawn.
+
+				      *:echom!* *:echomsg!* *:echoe!* *:echoerr!*
+			|:echomsg| or |:echoerr| followed by [!] creates a
+			"transient" message, which will never cause a screen
+			scroll or a |press-enter| prompt, and is _always_
+			added to the |:messages| history (even if |:silent| or
+			|:map-<silent>| are used). This is useful for leaving
+			passive diagnostic messages without disturbing
+			usability.
+
 							*:echoe* *:echoerr*
-:echoe[rr] {expr1} ..	Echo the expression(s) as an error message, saving the
+:echoe[rr][!]{expr1} .. Echo the expression(s) as an error message, saving the
 			message in the |message-history|.  When used in a
 			script or function the line number will be added.
 			Spaces are placed between the arguments as with the

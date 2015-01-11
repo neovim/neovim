@@ -496,7 +496,8 @@ N  *+X11*		Unix only: can restore window title |X11|
 
 						*:sil* *:silent*
 :sil[ent][!] {command}	Execute {command} silently.  Normal messages will not
-			be given or added to the message history.
+			be given or added to the message history (except for
+			|echomsg!| and |echoerr!|).
 			When [!] is added, error messages will also be
 			skipped, and commands and mappings will not be aborted
 			when an error is detected.  |v:errmsg| is still set.
