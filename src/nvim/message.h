@@ -5,8 +5,9 @@
 #include <stdarg.h>
 #include "nvim/eval_defs.h"  // for typval_T
 
-#define SHOWCMD_COLS 13     // columns needed by shown command
-                            // (also used by the notifications area)
+// Columns needed by 'showcmd' display.
+// Also used for the notifications summary (enough to show "+NN :messages").
+#define SHOWCMD_COLS 13
 
 #define DIALOG_MSG_SIZE 1000    /* buffer size for dialog_msg() */
 
