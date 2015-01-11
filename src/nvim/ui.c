@@ -482,7 +482,7 @@ static void parse_abstract_ui_codes(uint8_t *ptr, int len)
           col++;
         }
         if (col >= width) {
-          ui_cursor_goto(row + 1, 0);
+          ui_linefeed();
         }
         p += clen;
       }
