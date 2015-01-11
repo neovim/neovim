@@ -316,10 +316,6 @@ enum {
  * plus six following composing characters of three bytes each. */
 # define MB_MAXBYTES    21
 
-/* This has to go after the include of proto.h, as proto/gui.pro declares
- * functions of these names. The declarations would break if the defines had
- * been seen at that stage.  But it must be before globals.h, where error_ga
- * is declared. */
 # define mch_errmsg(str)        fprintf(stderr, "%s", (str))
 # define display_errors()       fflush(stderr)
 # define mch_msg(str)           printf("%s", (str))
