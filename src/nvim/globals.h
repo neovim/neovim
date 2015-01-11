@@ -1080,16 +1080,6 @@ EXTERN linenr_T spell_redraw_lnum INIT(= 0);
 EXTERN int need_cursor_line_redraw INIT(= FALSE);
 
 
-#ifdef USE_MCH_ERRMSG
-/* Grow array to collect error messages in until they can be displayed. */
-EXTERN garray_T error_ga
-# ifdef DO_INIT
-  = GA_EMPTY_INIT_VALUE
-# endif
-;
-#endif
-
-
 /*
  * The error messages that can be shared are included here.
  * Excluded are errors that are only used once and debugging messages.
