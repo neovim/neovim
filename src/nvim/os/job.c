@@ -310,8 +310,15 @@ int job_wait(Job *job, int ms) FUNC_ATTR_NONNULL_ALL
   // we'll assume that a user frantically hitting interrupt doesn't like
   // the current job. Signal that it has to be killed.
   if (got_int) {
+    got_int = false;
     job_stop(job);
-    event_poll(0);
+    if (ms == -1) {
+      // We can only return, if all streams/handles are closed and the job
+      // exited.
+      event_poll_until(-1, job->refcount == 1);
+    } else {
+      event_poll(0);
+    }
   }
 
   if (job->refcount == 1) {
