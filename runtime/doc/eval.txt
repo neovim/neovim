@@ -5100,12 +5100,12 @@ rpcnotify({channel}, {event}[, {args}...])		  {Nvim} *rpcnotify()*
 rpcrequest({channel}, {method}[, {args}...])		 {Nvim} *rpcrequest()*
 		Sends a request to {channel} to invoke {method} via
 		|msgpack-rpc| and blocks until a response is received.
-		Example:  >
+		Example: >
 			:let result = rpcrequest(rpc_chan, "func", 1, 2, 3)
 
 rpcstart({prog}[, {argv}])				   {Nvim} *rpcstart()*
-		Spawns {prog} as a job(optionally passing the {argv} list),
-		and opens a |msgpack-rpc| channel with the spawned process
+		Spawns {prog} as a job (optionally passing the list {argv}),
+		and opens a |msgpack-rpc| channel with the spawned process's
 		stdin/stdout. It returns:
 		  - The channel id on success, which is used by |rpcrequest()|,
 		    |rpcnotify()| and |rpcstop()|
@@ -5114,10 +5114,9 @@ rpcstart({prog}[, {argv}])				   {Nvim} *rpcstart()*
 			:let rpc_chan = rpcstart('prog', ['arg1', 'arg2'])
 
 rpcstop({channel})					    {Nvim} *rpcstop()*
-		Closes a |msgpack-rpc| channel, possibly created via
-		|rpcstart()| (Though it will also close channels created by
-		connections to |$NVIM_LISTEN_ADDRESS|). It accepts the rpc
-		channel id as only argument.
+		Closes a |msgpack-rpc| {channel}, possibly created via
+		|rpcstart()|. Also closes channels created by connections to
+		|$NVIM_LISTEN_ADDRESS|.
 
 screenattr(row, col)						*screenattr()*
 		Like screenchar(), but return the attribute.  This is a rather
