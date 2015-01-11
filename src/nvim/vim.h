@@ -16,7 +16,6 @@
 
 /* Some defines from the old feature.h */
 #define SESSION_FILE "Session.vim"
-#define MAX_MSG_HIST_LEN 200
 #define SYS_OPTWIN_FILE "$VIMRUNTIME/optwin.vim"
 #define RUNTIME_DIRNAME "runtime"
 /* end */
@@ -76,9 +75,6 @@ Error: configure did not run properly.Check auto/config.log.
 #  define bind_textdomain_codeset(x, y) /* empty */
 #  define textdomain(x) /* empty */
 #endif
-
-/* special attribute addition: Put message in history */
-#define MSG_HIST                0x1000
 
 /*
  * values for State
@@ -230,8 +226,6 @@ enum {
 
 #define LSIZE       512         /* max. size of a line in the tags file */
 
-#define DIALOG_MSG_SIZE 1000    /* buffer size for dialog_msg() */
-
 /*
  * Maximum length of key sequence to be mapped.
  * Must be able to hold an Amiga resize report.
@@ -288,28 +282,11 @@ enum {
 
 # define vim_strpbrk(s, cs) (char_u *)strpbrk((char *)(s), (char *)(cs))
 
-#define MSG(s)                      msg((char_u *)(s))
-#define MSG_ATTR(s, attr)           msg_attr((char_u *)(s), (attr))
-#define EMSG(s)                     emsg((char_u *)(s))
-#define EMSG2(s, p)                 emsg2((char_u *)(s), (char_u *)(p))
-#define EMSG3(s, p, q)              emsg3((char_u *)(s), (char_u *)(p), \
-    (char_u *)(q))
-#define EMSGN(s, n)                 emsgn((char_u *)(s), (int64_t)(n))
-#define EMSGU(s, n)                 emsgu((char_u *)(s), (uint64_t)(n))
-#define OUT_STR(s)                  out_str((char_u *)(s))
-#define OUT_STR_NF(s)               out_str_nf((char_u *)(s))
-#define MSG_PUTS(s)                 msg_puts((char_u *)(s))
-#define MSG_PUTS_ATTR(s, a)         msg_puts_attr((char_u *)(s), (a))
-#define MSG_PUTS_TITLE(s)           msg_puts_title((char_u *)(s))
-#define MSG_PUTS_LONG(s)            msg_puts_long_attr((char_u *)(s), 0)
-#define MSG_PUTS_LONG_ATTR(s, a)    msg_puts_long_attr((char_u *)(s), (a))
-
 /* Prefer using emsg3(), because perror() may send the output to the wrong
  * destination and mess up the screen. */
 #define PERROR(msg) \
   (void) emsg3((char_u *) "%s: %s", (char_u *)msg, (char_u *)strerror(errno))
 
-#define SHOWCMD_COLS 10                 /* columns needed by shown command */
 #define STL_MAX_ITEM 80                 /* max nr of %<flag> in statusline */
 
 /*

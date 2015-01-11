@@ -5,6 +5,31 @@
 #include <stdarg.h>
 #include "nvim/eval_defs.h"  // for typval_T
 
+#define SHOWCMD_COLS 13     // columns needed by shown command
+                            // (also used by the notifications area)
+
+#define DIALOG_MSG_SIZE 1000    /* buffer size for dialog_msg() */
+
+/* special attribute addition: Put message in history */
+#define MSG_HIST                0x1000
+#define MAX_MSG_HIST_LEN        200
+
+#define MSG(s)                      msg((char_u *)(s))
+#define MSG_ATTR(s, attr)           msg_attr((char_u *)(s), (attr), false)
+#define EMSG(s)                     emsg((char_u *)(s))
+#define EMSG2(s, p)                 emsg2((char_u *)(s), (char_u *)(p))
+#define EMSG3(s, p, q)              emsg3((char_u *)(s), (char_u *)(p), \
+    (char_u *)(q))
+#define EMSGN(s, n)                 emsgn((char_u *)(s), (int64_t)(n))
+#define EMSGU(s, n)                 emsgu((char_u *)(s), (uint64_t)(n))
+#define OUT_STR(s)                  out_str((char_u *)(s))
+#define OUT_STR_NF(s)               out_str_nf((char_u *)(s))
+#define MSG_PUTS(s)                 msg_puts((char_u *)(s))
+#define MSG_PUTS_ATTR(s, a)         msg_puts_attr((char_u *)(s), (a))
+#define MSG_PUTS_TITLE(s)           msg_puts_title((char_u *)(s))
+#define MSG_PUTS_LONG(s)            msg_puts_long_attr((char_u *)(s), 0)
+#define MSG_PUTS_LONG_ATTR(s, a)    msg_puts_long_attr((char_u *)(s), (a))
+
 /*
  * Types of dialogs passed to do_dialog().
  */
