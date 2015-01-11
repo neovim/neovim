@@ -1264,11 +1264,11 @@ static int prt_need_underline;
 static int prt_underline;
 static int prt_do_underline;
 static int prt_need_fgcol;
-static int prt_fgcol;
+static uint32_t prt_fgcol;
 static int prt_need_bgcol;
 static int prt_do_bgcol;
-static int prt_bgcol;
-static int prt_new_bgcol;
+static uint32_t prt_bgcol;
+static uint32_t prt_new_bgcol;
 static int prt_attribute_change;
 static double prt_text_run;
 static int prt_page_num;
@@ -1470,8 +1470,8 @@ static void prt_flush_buffer(void)
       prt_write_real(prt_line_height, 2);
 
       /* Lastly add the color of the background */
-      r = ((unsigned)prt_new_bgcol & 0xff0000) >> 16;
-      g = ((unsigned)prt_new_bgcol & 0xff00) >> 8;
+      r = (prt_new_bgcol & 0xff0000) >> 16;
+      g = (prt_new_bgcol & 0xff00) >> 8;
       b = prt_new_bgcol & 0xff;
       prt_write_real(r / 255.0, 3);
       prt_write_real(g / 255.0, 3);
@@ -2957,8 +2957,8 @@ int mch_print_text_out(char_u *p, int len)
     }
     if (prt_need_fgcol) {
       unsigned int r, g, b;
-      r = ((unsigned)prt_fgcol & 0xff0000) >> 16;
-      g = ((unsigned)prt_fgcol & 0xff00) >> 8;
+      r = (prt_fgcol & 0xff0000) >> 16;
+      g = (prt_fgcol & 0xff00) >> 8;
       b = prt_fgcol & 0xff;
 
       prt_write_real(r / 255.0, 3);
@@ -3079,17 +3079,15 @@ void mch_print_set_font(int iBold, int iItalic, int iUnderline)
 
 void mch_print_set_bg(uint32_t bgcol)
 {
-  assert(bgcol <= INT_MAX);
-  prt_bgcol = (int)bgcol;
+  prt_bgcol = bgcol;
   prt_attribute_change = TRUE;
   prt_need_bgcol = TRUE;
 }
 
 void mch_print_set_fg(uint32_t fgcol)
 {
-  assert(fgcol <= INT_MAX);
-  if ((int)fgcol != prt_fgcol) {
-    prt_fgcol = (int)fgcol;
+  if (fgcol != prt_fgcol) {
+    prt_fgcol = fgcol;
     prt_attribute_change = TRUE;
     prt_need_fgcol = TRUE;
   }
