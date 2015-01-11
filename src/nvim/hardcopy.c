@@ -358,7 +358,6 @@ static void prt_get_attr(int hl_id, prt_text_attr_T *pattr, int modec)
 {
   int colorindex;
   uint32_t fg_color;
-  uint32_t bg_color;
   char    *color;
 
   pattr->bold = (highlight_has_attr(hl_id, HL_BOLD, modec) != NULL);
@@ -367,8 +366,6 @@ static void prt_get_attr(int hl_id, prt_text_attr_T *pattr, int modec)
   pattr->undercurl = (highlight_has_attr(hl_id, HL_UNDERCURL, modec) != NULL);
 
   {
-    bg_color = PRCOLOR_WHITE;
-
     color = (char *)highlight_color(hl_id, (char_u *)"fg", modec);
     if (color == NULL)
       colorindex = 0;
@@ -387,7 +384,7 @@ static void prt_get_attr(int hl_id, prt_text_attr_T *pattr, int modec)
     fg_color = darken_rgb(fg_color);
 
   pattr->fg_color = fg_color;
-  pattr->bg_color = bg_color;
+  pattr->bg_color = PRCOLOR_WHITE;
 }
 
 static void prt_set_fg(uint32_t fg)
