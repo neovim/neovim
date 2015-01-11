@@ -3230,7 +3230,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
            */
           p = tp + slen;
 
-          mouse_code = getdigits(&p);
+          mouse_code = get_long_digits(&p);
           if (*p++ != ';')
             return -1;
 
@@ -3238,15 +3238,11 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
           if (key_name[0] == KS_SGR_MOUSE)
             mouse_code += 32;
 
-          long digits = getdigits(&p);
-          assert(digits >= INT_MIN && digits <= INT_MAX);
-          mouse_col = (int)digits - 1;
+          mouse_col = get_int_digits(&p);
           if (*p++ != ';')
             return -1;
 
-          digits = getdigits(&p);
-          assert(digits >= INT_MIN && digits <= INT_MAX);
-          mouse_row = (int)digits - 1;
+          mouse_row = get_int_digits(&p);
           if (key_name[0] == KS_SGR_MOUSE && *p == 'm')
             mouse_code |= MOUSE_RELEASE;
           else if (*p != 'M')
@@ -3273,7 +3269,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
               }
             }
             p += j;
-            if (cmd_complete && getdigits(&p) == mouse_code) {
+            if (cmd_complete && get_long_digits(&p) == mouse_code) {
               slen += j;               /* skip the \033[ */
               continue;
             }
@@ -3319,10 +3315,10 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
          * '6' is the row, 45 is the column
          */
         p = tp + slen;
-        mr = getdigits(&p);
+        mr = get_long_digits(&p);
         if (*p++ != ',')
           return -1;
-        mc = getdigits(&p);
+        mc = get_long_digits(&p);
         if (*p++ != '\r')
           return -1;
 
@@ -3389,27 +3385,27 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
         p = tp + slen;
 
         /* get event status */
-        Pe = getdigits(&p);
+        Pe = get_long_digits(&p);
         if (*p++ != ';')
           return -1;
 
         /* get button status */
-        Pb = getdigits(&p);
+        Pb = get_long_digits(&p);
         if (*p++ != ';')
           return -1;
 
         /* get row status */
-        Pr = getdigits(&p);
+        Pr = get_long_digits(&p);
         if (*p++ != ';')
           return -1;
 
         /* get column status */
-        Pc = getdigits(&p);
+        Pc = get_long_digits(&p);
 
         /* the page parameter is optional */
         if (*p == ';') {
           p++;
-          (void)getdigits(&p);
+          (void)get_long_digits(&p);
         }
         if (*p++ != '&')
           return -1;

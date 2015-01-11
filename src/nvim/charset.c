@@ -177,7 +177,7 @@ int buf_init_chartab(buf_T *buf, int global)
       }
 
       if (VIM_ISDIGIT(*p)) {
-        c = getdigits(&p);
+        c = get_int_digits(&p);
       } else if (has_mbyte) {
         c = mb_ptr2char_adv(&p);
       } else {
@@ -189,7 +189,7 @@ int buf_init_chartab(buf_T *buf, int global)
         ++p;
 
         if (VIM_ISDIGIT(*p)) {
-          c2 = getdigits(&p);
+          c2 = get_int_digits(&p);
         } else if (has_mbyte) {
           c2 = mb_ptr2char_adv(&p);
         } else {
@@ -1676,26 +1676,37 @@ char_u* skiptowhite_esc(char_u *p) {
   return p;
 }
 
-/// Getdigits: Get a number from a string and skip over it.
+/// Get a number from a string and skip over it.
 ///
-/// Note: the argument is a pointer to a char_u pointer!
+/// @param[out]  pp  A pointer to a pointer to char_u.
+///                  It will be advanced past the read number.
 ///
-/// @param pp
-///
-/// @return Number from the string.
-long getdigits(char_u **pp)
+/// @return Number read from the string.
+intmax_t get_digits(char_u **pp)
 {
-  char_u *p = *pp;
-  long retval = atol((char *)p);
+  intmax_t number = strtoimax((char *)*pp, (char **)pp, 10);
+  assert(errno != ERANGE);
+  return number;
+}
 
-  if (*p == '-') {
-    // skip negative sign
-    ++p;
-  }
-  // skip to next non-digit
-  p = skipdigits(p);
-  *pp = p;
-  return retval;
+/// Get an int number from a string.
+///
+/// A get_digits wrapper restricted to int values.
+int get_int_digits(char_u **pp)
+{
+  intmax_t number = get_digits(pp);
+  assert(number >= INT_MIN && number <= INT_MAX);
+  return (int)number;
+}
+
+/// Get a long number from a string.
+///
+/// A get_digits wrapper restricted to long values.
+long get_long_digits(char_u **pp)
+{
+  intmax_t number = get_digits(pp);
+  assert(number >= LONG_MIN && number <= LONG_MAX);
+  return (long)number;
 }
 
 /// Return TRUE if "lbuf" is empty or only contains blanks.

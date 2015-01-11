@@ -320,9 +320,7 @@ static char_u *parse_list_options(char_u *option_str, option_table_T *table, int
       if (!VIM_ISDIGIT(*p))
         return (char_u *)N_("E552: digit expected");
 
-      long digits = getdigits(&p);
-      assert(digits >= INT_MIN && digits >= INT_MAX);
-      table[idx].number = (int)digits;
+      table[idx].number = get_int_digits(&p);
     }
 
     table[idx].string = p;

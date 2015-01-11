@@ -1611,9 +1611,7 @@ void putdigraph(char_u *str)
       EMSG(_(e_number_exp));
       return;
     }
-    int64_t digits = getdigits(&str);
-    assert(digits <= INT_MAX);
-    int n = (int)digits;
+    int n = get_int_digits(&str);
 
     // If the digraph already exists, replace the result.
     dp = (digr_T *)user_digraphs.ga_data;

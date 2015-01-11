@@ -2750,7 +2750,7 @@ void ex_lockvar(exarg_T *eap)
   if (eap->forceit)
     deep = -1;
   else if (vim_isdigit(*arg)) {
-    deep = getdigits(&arg);
+    deep = get_int_digits(&arg);
     arg = skipwhite(arg);
   }
 
@@ -13370,7 +13370,7 @@ static void f_setreg(typval_T *argvars, typval_T *rettv)
         yank_type = MBLOCK;
         if (VIM_ISDIGIT(stropt[1])) {
           ++stropt;
-          block_len = getdigits(&stropt) - 1;
+          block_len = get_long_digits(&stropt) - 1;
           --stropt;
         }
         break;

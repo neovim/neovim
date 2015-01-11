@@ -5162,7 +5162,7 @@ static unsigned get_affitem(int flagtype, char_u **pp)
       ++*pp;            // always advance, avoid getting stuck
       return 0;
     }
-    res = getdigits(pp);
+    res = get_int_digits(pp);
   } else {
     res = mb_ptr2char_adv(pp);
     if (flagtype == AFT_LONG || (flagtype == AFT_CAPLONG
@@ -5283,7 +5283,9 @@ static bool flag_in_afflist(int flagtype, char_u *afflist, unsigned flag)
 
   case AFT_NUM:
     for (p = afflist; *p != NUL; ) {
-      n = getdigits(&p);
+      int digits = get_int_digits(&p);
+      assert(digits >= 0);
+      n = (unsigned int)digits;
       if (n == flag)
         return true;
       if (*p != NUL)            // skip over comma
@@ -6357,19 +6359,19 @@ int spell_check_msm(void)
   if (!VIM_ISDIGIT(*p))
     return FAIL;
   // block count = (value * 1024) / SBLOCKSIZE (but avoid overflow)
-  start = (getdigits(&p) * 10) / (SBLOCKSIZE / 102);
+  start = (get_long_digits(&p) * 10) / (SBLOCKSIZE / 102);
   if (*p != ',')
     return FAIL;
   ++p;
   if (!VIM_ISDIGIT(*p))
     return FAIL;
-  incr = (getdigits(&p) * 102) / (SBLOCKSIZE / 10);
+  incr = (get_long_digits(&p) * 102) / (SBLOCKSIZE / 10);
   if (*p != ',')
     return FAIL;
   ++p;
   if (!VIM_ISDIGIT(*p))
     return FAIL;
-  added = getdigits(&p) * 1024;
+  added = get_long_digits(&p) * 1024;
   if (*p != NUL)
     return FAIL;
 
@@ -8355,7 +8357,7 @@ int spell_check_sps(void)
     f = 0;
     if (VIM_ISDIGIT(*buf)) {
       s = buf;
-      sps_limit = getdigits(&s);
+      sps_limit = get_int_digits(&s);
       if (*s != NUL && !VIM_ISDIGIT(*s))
         f = -1;
     } else if (STRCMP(buf, "best") == 0)

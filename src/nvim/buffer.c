@@ -750,7 +750,7 @@ do_bufdel (
             break;
           arg = p;
         } else
-          bnr = getdigits(&arg);
+          bnr = get_int_digits(&arg);
       }
     }
     if (!got_int && do_current && do_buffer(command, DOBUF_FIRST,
@@ -2997,7 +2997,7 @@ build_stl_str_hl (
       l = -1;
     }
     if (VIM_ISDIGIT(*s)) {
-      minwid = (int)getdigits(&s);
+      minwid = get_int_digits(&s);
       if (minwid < 0)           /* overflow */
         minwid = 0;
     }
@@ -3033,7 +3033,7 @@ build_stl_str_hl (
     if (*s == '.') {
       s++;
       if (VIM_ISDIGIT(*s)) {
-        maxwid = (int)getdigits(&s);
+        maxwid = get_int_digits(&s);
         if (maxwid <= 0)                /* overflow */
           maxwid = 50;
       }
@@ -4077,7 +4077,7 @@ chk_modeline (
           e = s + 4;
         else
           e = s + 3;
-        vers = getdigits(&e);
+        vers = get_int_digits(&e);
         if (*e == ':'
             && (s[0] != 'V'
                 || STRNCMP(skipwhite(e + 1), "set", 3) == 0)

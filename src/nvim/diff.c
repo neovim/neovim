@@ -1221,11 +1221,11 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
     // {first}a{first}[,{last}]
     // {first}[,{last}]d{first}
     p = linebuf;
-    f1 = getdigits(&p);
+    f1 = get_long_digits(&p);
 
     if (*p == ',') {
       ++p;
-      l1 = getdigits(&p);
+      l1 = get_long_digits(&p);
     } else {
       l1 = f1;
     }
@@ -1235,11 +1235,11 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
       continue;
     }
     difftype = *p++;
-    f2 = getdigits(&p);
+    f2 = get_long_digits(&p);
 
     if (*p == ',') {
       ++p;
-      l2 = getdigits(&p);
+      l2 = get_long_digits(&p);
     } else {
       l2 = f2;
     }
@@ -1783,7 +1783,7 @@ int diffopt_changed(void)
       diff_flags_new |= DIFF_FILLER;
     } else if ((STRNCMP(p, "context:", 8) == 0) && VIM_ISDIGIT(p[8])) {
       p += 8;
-      diff_context_new = getdigits(&p);
+      diff_context_new = get_int_digits(&p);
     } else if (STRNCMP(p, "icase", 5) == 0) {
       p += 5;
       diff_flags_new |= DIFF_ICASE;
@@ -1798,7 +1798,7 @@ int diffopt_changed(void)
       diff_flags_new |= DIFF_VERTICAL;
     } else if ((STRNCMP(p, "foldcolumn:", 11) == 0) && VIM_ISDIGIT(p[11])) {
       p += 11;
-      diff_foldcolumn_new = getdigits(&p);
+      diff_foldcolumn_new = get_int_digits(&p);
     }
 
     if ((*p != ',') && (*p != NUL)) {

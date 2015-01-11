@@ -4611,7 +4611,7 @@ int read_viminfo_search_pattern(vir_T *virp, int force)
     if (lp[4] == 'E')
       off_end = SEARCH_END;
     lp += 5;
-    off = getdigits(&lp);
+    off = get_long_digits(&lp);
   }
   if (lp[0] == '~') {           /* use this pattern for last-used pattern */
     setlast = TRUE;

@@ -4501,7 +4501,7 @@ int read_viminfo_register(vir_T *virp, int force)
       y_current->y_type = MLINE;
     /* get the block width; if it's missing we get a zero, which is OK */
     str = skipwhite(skiptowhite(str));
-    y_current->y_width = getdigits(&str);
+    y_current->y_width = get_int_digits(&str);
   }
 
   while (!(eof = viminfo_readline(virp))
