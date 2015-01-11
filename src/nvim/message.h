@@ -30,6 +30,9 @@
 #define MSG_PUTS_LONG(s)            msg_puts_long_attr((char_u *)(s), 0)
 #define MSG_PUTS_LONG_ATTR(s, a)    msg_puts_long_attr((char_u *)(s), (a))
 
+#define PERROR(msg) \
+  (void) emsg3((char_u *) "%s: %s", (char_u *)msg, (char_u *)strerror(errno))
+
 /*
  * Types of dialogs passed to do_dialog().
  */

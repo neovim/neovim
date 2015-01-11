@@ -282,11 +282,6 @@ enum {
 
 # define vim_strpbrk(s, cs) (char_u *)strpbrk((char *)(s), (char *)(cs))
 
-/* Prefer using emsg3(), because perror() may send the output to the wrong
- * destination and mess up the screen. */
-#define PERROR(msg) \
-  (void) emsg3((char_u *) "%s: %s", (char_u *)msg, (char_u *)strerror(errno))
-
 #define STL_MAX_ITEM 80                 /* max nr of %<flag> in statusline */
 
 /*
