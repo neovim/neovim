@@ -1733,7 +1733,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   if ((ea.argt & COUNT) && VIM_ISDIGIT(*ea.arg)
       && (!(ea.argt & BUFNAME) || *(p = skipdigits(ea.arg)) == NUL
           || vim_iswhite(*p))) {
-    n = getdigits(&ea.arg);
+    n = getdigits_long(&ea.arg);
     ea.arg = skipwhite(ea.arg);
     if (n <= 0 && !ni && (ea.argt & ZEROR) == 0) {
       errormsg = (char_u *)_(e_zerocount);
@@ -3250,7 +3250,7 @@ get_address (
 
     default:
       if (VIM_ISDIGIT(*cmd))                    /* absolute line number */
-        lnum = getdigits(&cmd);
+        lnum = getdigits_long(&cmd);
     }
 
     for (;; ) {
@@ -3267,7 +3267,7 @@ get_address (
       if (!VIM_ISDIGIT(*cmd))           /* '+' is '+1', but '+0' is not '+1' */
         n = 1;
       else
-        n = getdigits(&cmd);
+        n = getdigits_long(&cmd);
       if (i == '-')
         lnum -= n;
       else
@@ -4439,7 +4439,7 @@ two_count:
           return FAIL;
         }
 
-        *def = getdigits(&p);
+        *def = getdigits_long(&p);
         *argt |= (ZEROR | NOTADR);
 
         if (p != val + vallen || vallen == 0) {
@@ -4456,7 +4456,7 @@ invalid_count:
         if (*def >= 0)
           goto two_count;
 
-        *def = getdigits(&p);
+        *def = getdigits_long(&p);
 
         if (p != val + vallen)
           goto invalid_count;
@@ -5819,7 +5819,7 @@ static void ex_tabmove(exarg_T *eap)
       return;
     }
 
-    tab_number = getdigits(&p);
+    tab_number = getdigits_int(&p);
     if (relative != 0)
       tab_number = tab_number * relative + tabpage_index(curtab) - 1; ;
   } else if (eap->addr_count != 0)
@@ -6441,10 +6441,10 @@ static void ex_winsize(exarg_T *eap)
   char_u      *arg = eap->arg;
   char_u      *p;
 
-  w = getdigits(&arg);
+  w = getdigits_int(&arg);
   arg = skipwhite(arg);
   p = arg;
-  h = getdigits(&arg);
+  h = getdigits_int(&arg);
   if (*p != NUL && *arg == NUL)
     screen_resize(w, h, TRUE);
   else
@@ -6494,10 +6494,10 @@ static void ex_winpos(exarg_T *eap)
   if (*arg == NUL) {
     EMSG(_("E188: Obtaining window position not implemented for this platform"));
   } else {
-    x = getdigits(&arg);
+    x = getdigits_int(&arg);
     arg = skipwhite(arg);
     p = arg;
-    y = getdigits(&arg);
+    y = getdigits_int(&arg);
     if (*p == NUL || *arg != NUL) {
       EMSG(_("E466: :winpos requires two number arguments"));
       return;
@@ -6744,7 +6744,7 @@ static void ex_later(exarg_T *eap)
   if (*p == NUL)
     count = 1;
   else if (isdigit(*p)) {
-    count = getdigits(&p);
+    count = getdigits_long(&p);
     switch (*p) {
     case 's': ++p; sec = TRUE; break;
     case 'm': ++p; sec = TRUE; count *= 60; break;
@@ -7354,7 +7354,7 @@ static void ex_findpat(exarg_T *eap)
 
   n = 1;
   if (vim_isdigit(*eap->arg)) { /* get count */
-    n = getdigits(&eap->arg);
+    n = getdigits_long(&eap->arg);
     eap->arg = skipwhite(eap->arg);
   }
   if (*eap->arg == '/') {   /* Match regexp, not just whole words */
@@ -7618,7 +7618,7 @@ eval_vars (
       s = src + 1;
       if (*s == '<')                    /* "#<99" uses v:oldfiles */
         ++s;
-      i = (int)getdigits(&s);
+      i = getdigits_int(&s);
       *usedlen = (int)(s - src);           /* length of what we expand */
 
       if (src[1] == '<') {

@@ -320,7 +320,7 @@ static char_u *parse_list_options(char_u *option_str, option_table_T *table, int
       if (!VIM_ISDIGIT(*p))
         return (char_u *)N_("E552: digit expected");
 
-      table[idx].number = getdigits(&p);       /*advances p*/
+      table[idx].number = getdigits_int(&p);
     }
 
     table[idx].string = p;
@@ -358,7 +358,6 @@ static void prt_get_attr(int hl_id, prt_text_attr_T *pattr, int modec)
 {
   int colorindex;
   uint32_t fg_color;
-  uint32_t bg_color;
   char    *color;
 
   pattr->bold = (highlight_has_attr(hl_id, HL_BOLD, modec) != NULL);
@@ -367,8 +366,6 @@ static void prt_get_attr(int hl_id, prt_text_attr_T *pattr, int modec)
   pattr->undercurl = (highlight_has_attr(hl_id, HL_UNDERCURL, modec) != NULL);
 
   {
-    bg_color = PRCOLOR_WHITE;
-
     color = (char *)highlight_color(hl_id, (char_u *)"fg", modec);
     if (color == NULL)
       colorindex = 0;
@@ -387,7 +384,7 @@ static void prt_get_attr(int hl_id, prt_text_attr_T *pattr, int modec)
     fg_color = darken_rgb(fg_color);
 
   pattr->fg_color = fg_color;
-  pattr->bg_color = bg_color;
+  pattr->bg_color = PRCOLOR_WHITE;
 }
 
 static void prt_set_fg(uint32_t fg)
@@ -455,9 +452,7 @@ static void prt_line_number(prt_settings_T *psettings, int page_line, linenr_T l
 int prt_header_height(void)
 {
   if (printer_opts[OPT_PRINT_HEADERHEIGHT].present) {
-    assert(printer_opts[OPT_PRINT_HEADERHEIGHT].number >= INT_MIN
-           && printer_opts[OPT_PRINT_HEADERHEIGHT].number <= INT_MAX);
-    return (int)printer_opts[OPT_PRINT_HEADERHEIGHT].number;
+    return printer_opts[OPT_PRINT_HEADERHEIGHT].number;
   }
   return 2;
 }
@@ -731,7 +726,8 @@ void ex_hardcopy(exarg_T *eap)
           if (got_int || settings.user_abort)
             goto print_fail;
 
-          assert(prtpos.bytes_printed * 100 > prtpos.bytes_printed);
+          assert(prtpos.bytes_printed == 0
+                 || prtpos.bytes_printed * 100 > prtpos.bytes_printed);
           sprintf((char *)IObuff, _("Printing page %d (%zu%%)"),
                   page_count + 1 + side,
                   prtpos.bytes_printed * 100 / bytes_to_print);
@@ -1266,11 +1262,11 @@ static int prt_need_underline;
 static int prt_underline;
 static int prt_do_underline;
 static int prt_need_fgcol;
-static int prt_fgcol;
+static uint32_t prt_fgcol;
 static int prt_need_bgcol;
 static int prt_do_bgcol;
-static int prt_bgcol;
-static int prt_new_bgcol;
+static uint32_t prt_bgcol;
+static uint32_t prt_new_bgcol;
 static int prt_attribute_change;
 static double prt_text_run;
 static int prt_page_num;
@@ -1472,8 +1468,8 @@ static void prt_flush_buffer(void)
       prt_write_real(prt_line_height, 2);
 
       /* Lastly add the color of the background */
-      r = ((unsigned)prt_new_bgcol & 0xff0000) >> 16;
-      g = ((unsigned)prt_new_bgcol & 0xff00) >> 8;
+      r = (prt_new_bgcol & 0xff0000) >> 16;
+      g = (prt_new_bgcol & 0xff00) >> 8;
       b = prt_new_bgcol & 0xff;
       prt_write_real(r / 255.0, 3);
       prt_write_real(g / 255.0, 3);
@@ -1960,9 +1956,7 @@ static double to_device_units(int idx, double physsize, int def_number)
     u = PRT_UNIT_PERC;
     nr = def_number;
   } else {
-    assert(printer_opts[idx].number >= INT_MIN
-           && printer_opts[idx].number <= INT_MAX);
-    nr = (int)printer_opts[idx].number;
+    nr = printer_opts[idx].number;
   }
 
   switch (u) {
@@ -2959,8 +2953,8 @@ int mch_print_text_out(char_u *p, int len)
     }
     if (prt_need_fgcol) {
       unsigned int r, g, b;
-      r = ((unsigned)prt_fgcol & 0xff0000) >> 16;
-      g = ((unsigned)prt_fgcol & 0xff00) >> 8;
+      r = (prt_fgcol & 0xff0000) >> 16;
+      g = (prt_fgcol & 0xff00) >> 8;
       b = prt_fgcol & 0xff;
 
       prt_write_real(r / 255.0, 3);
@@ -3081,17 +3075,15 @@ void mch_print_set_font(int iBold, int iItalic, int iUnderline)
 
 void mch_print_set_bg(uint32_t bgcol)
 {
-  assert(bgcol <= INT_MAX);
-  prt_bgcol = (int)bgcol;
+  prt_bgcol = bgcol;
   prt_attribute_change = TRUE;
   prt_need_bgcol = TRUE;
 }
 
 void mch_print_set_fg(uint32_t fgcol)
 {
-  assert(fgcol <= INT_MAX);
-  if ((int)fgcol != prt_fgcol) {
-    prt_fgcol = (int)fgcol;
+  if (fgcol != prt_fgcol) {
+    prt_fgcol = fgcol;
     prt_attribute_change = TRUE;
     prt_need_fgcol = TRUE;
   }

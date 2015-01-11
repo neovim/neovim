@@ -1226,9 +1226,9 @@ int read_viminfo_filemark(vir_T *virp, int force)
     }
     if (fm != NULL && (fm->fmark.mark.lnum == 0 || force)) {
       str = skipwhite(str + 1);
-      fm->fmark.mark.lnum = getdigits(&str);
+      fm->fmark.mark.lnum = getdigits_long(&str);
       str = skipwhite(str);
-      fm->fmark.mark.col = getdigits(&str);
+      fm->fmark.mark.col = getdigits_int(&str);
       fm->fmark.mark.coladd = 0;
       fm->fmark.fnum = 0;
       str = skipwhite(str);

@@ -2819,13 +2819,13 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
   char_u bytes[6];
   int num_bytes;
 # endif
-  long mouse_code = 0;               /* init for GCC */
+  int mouse_code = 0;               /* init for GCC */
   int is_click, is_drag;
-  long wheel_code = 0;
-  long current_button;
-  static long held_button = MOUSE_RELEASE;
+  int wheel_code = 0;
+  int current_button;
+  static int held_button = MOUSE_RELEASE;
   static int orig_num_clicks = 1;
-  static long orig_mouse_code = 0x0;
+  static int orig_mouse_code = 0x0;
   int cpo_koffset;
 
   cpo_koffset = (vim_strchr(p_cpo, CPO_KOFFSET) != NULL);
@@ -3230,7 +3230,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
            */
           p = tp + slen;
 
-          mouse_code = getdigits(&p);
+          mouse_code = getdigits_int(&p);
           if (*p++ != ';')
             return -1;
 
@@ -3238,15 +3238,11 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
           if (key_name[0] == KS_SGR_MOUSE)
             mouse_code += 32;
 
-          long digits = getdigits(&p);
-          assert(digits >= INT_MIN && digits <= INT_MAX);
-          mouse_col = (int)digits - 1;
+          mouse_col = getdigits_int(&p);
           if (*p++ != ';')
             return -1;
 
-          digits = getdigits(&p);
-          assert(digits >= INT_MIN && digits <= INT_MAX);
-          mouse_row = (int)digits - 1;
+          mouse_row = getdigits_int(&p);
           if (key_name[0] == KS_SGR_MOUSE && *p == 'm')
             mouse_code |= MOUSE_RELEASE;
           else if (*p != 'M')
@@ -3273,7 +3269,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
               }
             }
             p += j;
-            if (cmd_complete && getdigits(&p) == mouse_code) {
+            if (cmd_complete && getdigits_int(&p) == mouse_code) {
               slen += j;               /* skip the \033[ */
               continue;
             }
@@ -3312,24 +3308,22 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
       }
 # endif /* !UNIX || FEAT_MOUSE_XTERM */
       if (key_name[0] == (int)KS_NETTERM_MOUSE) {
-        long mc, mr;
+        int mc, mr;
 
         /* expect a rather limited sequence like: balancing {
          * \033}6,45\r
          * '6' is the row, 45 is the column
          */
         p = tp + slen;
-        mr = getdigits(&p);
+        mr = getdigits_int(&p);
         if (*p++ != ',')
           return -1;
-        mc = getdigits(&p);
+        mc = getdigits_int(&p);
         if (*p++ != '\r')
           return -1;
 
-        assert(mc - 1 >= INT_MIN && mc - 1 <= INT_MAX);
-        mouse_col = (int)(mc - 1);
-        assert(mr - 1 >= INT_MIN && mr - 1 <= INT_MAX);
-        mouse_row = (int)(mr - 1);
+        mouse_col = mc - 1;
+        mouse_row = mr - 1;
         mouse_code = MOUSE_LEFT;
         slen += (int)(p - (tp + slen));
       }
@@ -3384,32 +3378,32 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
          *   The page coordinate may be omitted if the locator is on
          *   page one (the default).  We ignore it anyway.
          */
-        long Pe, Pb, Pr, Pc;
+        int Pe, Pb, Pr, Pc;
 
         p = tp + slen;
 
         /* get event status */
-        Pe = getdigits(&p);
+        Pe = getdigits_int(&p);
         if (*p++ != ';')
           return -1;
 
         /* get button status */
-        Pb = getdigits(&p);
+        Pb = getdigits_int(&p);
         if (*p++ != ';')
           return -1;
 
         /* get row status */
-        Pr = getdigits(&p);
+        Pr = getdigits_int(&p);
         if (*p++ != ';')
           return -1;
 
         /* get column status */
-        Pc = getdigits(&p);
+        Pc = getdigits_int(&p);
 
         /* the page parameter is optional */
         if (*p == ';') {
           p++;
-          (void)getdigits(&p);
+          (void)getdigits_int(&p);
         }
         if (*p++ != '&')
           return -1;
@@ -3453,10 +3447,8 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
         default: return -1;         /* should never occur */
         }
 
-        assert(Pc - 1 >= INT_MIN && Pc - 1 <= INT_MAX);
-        mouse_col = (int)(Pc - 1);
-        assert(Pr - 1 >= INT_MIN && Pr - 1 <= INT_MAX);
-        mouse_row = (int)(Pr - 1);
+        mouse_col = Pc - 1;
+        mouse_row = Pr - 1;
 
         slen += (int)(p - (tp + slen));
       }
@@ -3544,8 +3536,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
         key_name[1] = (wheel_code & 1)
                       ? (int)KE_MOUSEUP : (int)KE_MOUSEDOWN;
       } else {
-        assert(current_button >= INT_MIN && current_button <= INT_MAX);
-        key_name[1] = (char_u)get_pseudo_mouse_code((int)current_button,
+        key_name[1] = (char_u)get_pseudo_mouse_code(current_button,
                                                     is_click, is_drag);
       }
     }
