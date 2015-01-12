@@ -4548,7 +4548,7 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
       int c;
 
       c = fillchar_vsep(&hl);
-      if (ScreenLines[off_to] != ((schar_T)c)
+      if (ScreenLines[off_to] != c
           || (enc_utf8 && (int)ScreenLinesUC[off_to]
               != (c >= 0x80 ? c : 0))
           || ScreenAttrs[off_to] != hl) {
@@ -6150,7 +6150,8 @@ void screen_fill(int start_row, int end_row, int start_col, int end_col, int c1,
     return;
 
   /* it's a "normal" terminal when not in a GUI or cterm */
-  norm_term = (!abstract_ui && t_colors <= 1);
+  norm_term = (
+    t_colors <= 1);
   for (row = start_row; row < end_row; ++row) {
     if (has_mbyte
         ) {
@@ -6674,7 +6675,7 @@ static void linecopy(int to, int from, win_T *wp)
  */
 int can_clear(char_u *p)
 {
-  return *p != NUL && ((!abstract_ui && t_colors <= 1)
+  return *p != NUL && (t_colors <= 1
                        || cterm_normal_bg_color == 0 || *T_UT != NUL);
 }
 
@@ -7701,7 +7702,8 @@ static void draw_tabline(void)
   int attr_fill = hl_attr(HLF_TPF);
   char_u      *p;
   int room;
-  int use_sep_chars = !abstract_ui && t_colors < 8;
+  int use_sep_chars = (t_colors < 8
+                       );
 
   redraw_tabline = FALSE;
 
@@ -8186,9 +8188,6 @@ void screen_resize(int width, int height, int mustset)
   check_shellsize();
 
   if (abstract_ui) {
-    // Clear the output buffer to ensure UIs don't receive redraw command meant
-    // for invalid screen sizes.
-    out_buf_clear();
     ui_resize(width, height);
   } else {
     mch_set_shellsize();

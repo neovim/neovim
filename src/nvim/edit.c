@@ -2294,7 +2294,8 @@ static int pum_wanted(void)
     return FALSE;
 
   /* The display looks bad on a B&W display. */
-  if (!abstract_ui && t_colors < 8)
+  if (t_colors < 8
+      )
     return FALSE;
   return TRUE;
 }
