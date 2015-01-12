@@ -24,6 +24,7 @@
 #include "nvim/option_defs.h"
 #include "nvim/charset.h"
 #include "nvim/strings.h"
+#include "nvim/ui.h"
 
 #define DYNAMIC_BUFFER_INIT {NULL, 0, 0}
 
@@ -413,7 +414,6 @@ static size_t write_output(char *output, size_t remaining, bool to_buffer,
 
   char *start = output;
   size_t off = 0;
-  int lastrow = (int)Rows - 1;
   while (off < remaining) {
     if (output[off] == NL) {
       // Insert the line
@@ -421,8 +421,10 @@ static size_t write_output(char *output, size_t remaining, bool to_buffer,
       if (to_buffer) {
         ml_append(curwin->w_cursor.lnum++, (char_u *)output, 0, false);
       } else {
-        screen_del_lines(0, 0, 1, (int)Rows, true, NULL);
-        screen_puts_len((char_u *)output, (int)off, lastrow, 0, 0);
+        // pending data from the output buffer has been flushed to the screen,
+        // safe to call ui_write directly
+        ui_write((char_u *)output, (int)off);
+        ui_write((char_u *)"\r\n", 2);
       }
       size_t skip = off + 1;
       output += skip;
@@ -446,8 +448,8 @@ static size_t write_output(char *output, size_t remaining, bool to_buffer,
         // remember that the NL was missing
         curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
       } else {
-        screen_del_lines(0, 0, 1, (int)Rows, true, NULL);
-        screen_puts_len((char_u *)output, (int)remaining, lastrow, 0, 0);
+        ui_write((char_u *)output, (int)remaining);
+        ui_write((char_u *)"\r\n", 2);
       }
       output += remaining;
     } else if (to_buffer) {

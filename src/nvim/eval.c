@@ -14440,7 +14440,7 @@ static void f_synIDattr(typval_T *argvars, typval_T *rettv)
     if (modec != 't' && modec != 'c' && modec != 'g')
       modec = 0;        /* replace invalid with current */
   } else {
-    if (abstract_ui || t_colors > 1)
+    if (t_colors > 1)
       modec = 'c';
     else
       modec = 't';

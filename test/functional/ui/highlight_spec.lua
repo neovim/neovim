@@ -142,6 +142,7 @@ describe('Default highlight groups', function()
   end)
 
   it('end of file markers', function()
+    nvim('command', 'hi Normal guibg=black')
     screen:expect([[
       ^                                                    |
       {1:~                                                    }|

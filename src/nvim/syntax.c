@@ -45,7 +45,6 @@
 #include "nvim/strings.h"
 #include "nvim/syntax_defs.h"
 #include "nvim/term.h"
-#include "nvim/ui.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 
@@ -5984,7 +5983,7 @@ init_highlight (
    * With 8 colors brown is equal to yellow, need to use black for Search fg
    * to avoid Statement highlighted text disappears.
    * Clear the attributes, needed when changing the t_Co value. */
-  if (abstract_ui || t_colors > 8)
+  if (t_colors > 8)
     do_highlight(
         (char_u *)(*p_bg == 'l'
                    ? "Visual cterm=NONE ctermbg=LightGrey"
@@ -6037,7 +6036,6 @@ int load_colors(char_u *name)
   apply_autocmds(EVENT_COLORSCHEME, name, curbuf->b_fname, FALSE, curbuf);
 
   recursive = FALSE;
-  ui_refresh();
 
   return retval;
 }
@@ -6433,9 +6431,7 @@ do_highlight (
             /* Use the _16 table to check if its a valid color name. */
             color = color_numbers_16[i];
             if (color >= 0) {
-              if (abstract_ui) {
-                color = color_numbers_256[i];
-              } else if (t_colors == 8) {
+              if (t_colors == 8) {
                 /* t_Co is 8: use the 8 colors table */
 #if defined(__QNXNTO__)
                 color = color_numbers_8_qansi[i];
@@ -6452,7 +6448,8 @@ do_highlight (
                     HL_TABLE()[idx].sg_cterm &= ~HL_BOLD;
                 }
                 color &= 7;             /* truncate to 8 colors */
-              } else if (t_colors == 16 || t_colors == 88 || t_colors == 256) {
+              } else if (t_colors == 16 || t_colors == 88
+                         || t_colors == 256) {
                 /*
                  * Guess: if the termcap entry ends in 'm', it is
                  * probably an xterm-like terminal.  Use the changed
@@ -6499,7 +6496,7 @@ do_highlight (
                 if (color >= 0) {
                   if (termcap_active)
                     term_bg_color(color);
-                  if (!abstract_ui && t_colors < 16)
+                  if (t_colors < 16)
                     i = (color == 0 || color == 4);
                   else
                     i = (color < 7 || color == 8);
@@ -6645,10 +6642,6 @@ do_highlight (
     if (is_normal_group) {
       HL_TABLE()[idx].sg_term_attr = 0;
       HL_TABLE()[idx].sg_cterm_attr = 0;
-      if (abstract_ui) {
-        // If the normal group has changed, it is simpler to refresh every UI
-        ui_refresh();
-      }
     } else
       set_hl_attr(idx);
     HL_TABLE()[idx].sg_scriptID = current_SID;
@@ -6877,7 +6870,7 @@ int hl_combine_attr(int char_attr, int prim_attr)
   if (char_attr <= HL_ALL && prim_attr <= HL_ALL)
     return char_attr | prim_attr;
 
-  if (abstract_ui || t_colors > 1) {
+  if (t_colors > 1) {
     if (char_attr > HL_ALL)
       char_aep = syn_cterm_attr2entry(char_attr);
     if (char_aep != NULL)
@@ -6941,7 +6934,7 @@ int syn_attr2attr(int attr)
 {
   attrentry_T *aep;
 
-  if (abstract_ui || t_colors > 1)
+  if (t_colors > 1)
     aep = syn_cterm_attr2entry(attr);
   else
     aep = syn_term_attr2entry(attr);
@@ -7211,10 +7204,9 @@ set_hl_attr (
    * For the color term mode: If there are other than "normal"
    * highlighting attributes, need to allocate an attr number.
    */
-  if (sgp->sg_cterm_fg == 0 && sgp->sg_cterm_bg == 0
-      && sgp->sg_rgb_fg == -1 && sgp->sg_rgb_bg == -1) {
+  if (sgp->sg_cterm_fg == 0 && sgp->sg_cterm_bg == 0)
     sgp->sg_cterm_attr = sgp->sg_cterm;
-  } else {
+  else {
     at_en.ae_attr = abstract_ui ? sgp->sg_gui : sgp->sg_cterm;
     at_en.ae_u.cterm.fg_color = sgp->sg_cterm_fg;
     at_en.ae_u.cterm.bg_color = sgp->sg_cterm_bg;
@@ -7369,7 +7361,7 @@ int syn_id2attr(int hl_id)
   hl_id = syn_get_final_id(hl_id);
   sgp = &HL_TABLE()[hl_id - 1];             /* index is ID minus one */
 
-  if (abstract_ui || t_colors > 1)
+  if (t_colors > 1)
     attr = sgp->sg_cterm_attr;
   else
     attr = sgp->sg_term_attr;

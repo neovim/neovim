@@ -1245,9 +1245,6 @@ EXTERN int curr_tmode INIT(= TMODE_COOK); /* contains current terminal mode */
 EXTERN bool embedded_mode INIT(= false);
 // Using the "abstract_ui" termcap
 EXTERN bool abstract_ui INIT(= false);
-// Id of the last channel sent a message to nvim. Used to determine the target
-// of channel-specific actions such as suspending
-EXTERN uint64_t last_message_source INIT(= 0);
 
 /// Used to track the status of external functions.
 /// Currently only used for iconv().

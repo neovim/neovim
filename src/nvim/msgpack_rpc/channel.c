@@ -45,7 +45,6 @@ typedef struct {
 
 typedef struct {
   uint64_t id;
-  size_t pending_requests;
   PMap(cstr_t) *subscribed_events;
   bool is_job, closed;
   msgpack_unpacker *unpacker;
@@ -84,6 +83,7 @@ static uint64_t next_id = 1;
 static PMap(uint64_t) *channels = NULL;
 static PMap(cstr_t) *event_strings = NULL;
 static msgpack_sbuffer out_buffer;
+static size_t pending_requests = 0;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "msgpack_rpc/channel.c.generated.h"
@@ -103,7 +103,14 @@ void channel_init(void)
   }
 
   if (abstract_ui) {
+    // Add handler for "attach_ui"
     remote_ui_init();
+    String method = cstr_as_string("attach_ui");
+    MsgpackRpcRequestHandler handler = {.fn = remote_ui_attach, .defer = true};
+    msgpack_rpc_add_method_handler(method, handler);
+    method = cstr_as_string("detach_ui");
+    handler.fn = remote_ui_detach;
+    msgpack_rpc_add_method_handler(method, handler);
   }
 }
 
@@ -193,21 +200,20 @@ bool channel_send_event(uint64_t id, char *name, Array args)
     return false;
   }
 
-  if (channel) {
-    if (channel->pending_requests) {
-      DelayedNotification p = {
-        .channel = channel,
-        .method = cstr_to_string(name),
-        .args = args
-      };
-      // Pending request, queue the notification for sending later
-      *kl_pushp(DelayedNotification, delayed_notifications) = p;
-    } else {
+  if (pending_requests) {
+    DelayedNotification p = {
+      .channel = channel,
+      .method = cstr_to_string(name),
+      .args = args
+    };
+    // Pending request, queue the notification for sending later
+    *kl_pushp(DelayedNotification, delayed_notifications) = p;
+  } else {
+    if (channel) {
       send_event(channel, name, args);
+    } else {
+      broadcast_event(name, args);
     }
-  }  else {
-    // TODO(tarruda): Implement event broadcasting in vimscript
-    broadcast_event(name, args);
   }
 
   return true;
@@ -240,10 +246,10 @@ Object channel_send_call(uint64_t id,
   // Push the frame
   ChannelCallFrame frame = {request_id, false, false, NIL};
   kv_push(ChannelCallFrame *, channel->call_stack, &frame);
-  channel->pending_requests++;
+  pending_requests++;
   event_poll_until(-1, frame.returned);
   (void)kv_pop(channel->call_stack);
-  channel->pending_requests--;
+  pending_requests--;
 
   if (frame.errored) {
     api_set_error(err, Exception, "%s", frame.result.data.string.data);
@@ -255,7 +261,7 @@ Object channel_send_call(uint64_t id,
     free_channel(channel);
   }
 
-  if (!channel->pending_requests) {
+  if (!pending_requests) {
     send_delayed_notifications();
   }
 
@@ -486,7 +492,6 @@ static void on_request_event(Event event)
 {
   RequestEvent *e = event.data;
   Channel *channel = e->channel;
-  last_message_source = channel->id;
   MsgpackRpcRequestHandler handler = e->handler;
   Array args = e->args;
   uint64_t request_id = e->request_id;
@@ -639,7 +644,6 @@ static void close_channel(Channel *channel)
     uv_handle_t *handle = (uv_handle_t *)channel->data.streams.uv;
     if (handle) {
       uv_close(handle, close_cb);
-      free_channel(channel);
     } else {
       event_push((Event) { .handler = on_stdio_close }, false);
     }
@@ -683,7 +687,6 @@ static Channel *register_channel(void)
   rv->closed = false;
   rv->unpacker = msgpack_unpacker_new(MSGPACK_UNPACKER_INIT_BUFFER_SIZE);
   rv->id = next_id++;
-  rv->pending_requests = 0;
   rv->subscribed_events = pmap_new(cstr_t)();
   rv->next_request_id = 1;
   kv_init(rv->call_stack);
