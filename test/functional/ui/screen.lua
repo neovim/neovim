@@ -99,7 +99,6 @@ function Screen.new(width, height)
     _mouse_enabled = true,
     _bell = false,
     _visual_bell = false,
-    _suspended = true,
     _attrs = {},
     _cursor = {
       enabled = true, row = 1, col = 1
@@ -115,13 +114,11 @@ function Screen:set_default_attr_ids(attr_ids)
 end
 
 function Screen:attach()
-  request('attach_ui', self._width, self._height)
-  self._suspended = false
+  request('ui_attach', self._width, self._height, true)
 end
 
 function Screen:detach()
-  request('detach_ui')
-  self._suspended = true
+  request('ui_detach')
 end
 
 function Screen:expect(expected, attr_ids)
@@ -190,7 +187,7 @@ end
 
 function Screen:_handle_eol_clear()
   local row, col = self._cursor.row, self._cursor.col
-  self:_clear_block(row, 1, col, self._width - col)
+  self:_clear_block(row, 1, col, self._scroll_region.right - col)
 end
 
 function Screen:_handle_cursor_goto(row, col)
@@ -278,8 +275,12 @@ function Screen:_handle_visual_bell()
   self._visual_bell = true
 end
 
-function Screen:_handle_suspend()
-  self._suspended = true
+function Screen:_handle_update_fg(fg)
+  self._fg = fg
+end
+
+function Screen:_handle_update_bg(bg)
+  self._bg = bg
 end
 
 function Screen:_clear_block(top, lines, left, columns)

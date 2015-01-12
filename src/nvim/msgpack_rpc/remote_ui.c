@@ -26,18 +26,44 @@ static PMap(uint64_t) *connected_uis = NULL;
 void remote_ui_init(void)
 {
   connected_uis = pmap_new(uint64_t)();
+  // Add handler for "attach_ui"
+  String method = cstr_as_string("ui_attach");
+  MsgpackRpcRequestHandler handler = {.fn = remote_ui_attach, .defer = false};
+  msgpack_rpc_add_method_handler(method, handler);
+  method = cstr_as_string("ui_detach");
+  handler.fn = remote_ui_detach;
+  msgpack_rpc_add_method_handler(method, handler);
+  method = cstr_as_string("ui_try_resize");
+  handler.fn = remote_ui_try_resize;
+  msgpack_rpc_add_method_handler(method, handler);
 }
 
-Object remote_ui_attach(uint64_t channel_id, uint64_t request_id, Array args,
-                        Error *error)
+void remote_ui_disconnect(uint64_t channel_id)
+{
+  UI *ui = pmap_get(uint64_t)(connected_uis, channel_id);
+  if (!ui) {
+    return;
+  }
+  UIData *data = ui->data;
+  // destroy pending screen updates
+  api_free_array(data->buffer);
+  pmap_del(uint64_t)(connected_uis, channel_id);
+  free(ui->data);
+  ui_detach(ui);
+  free(ui);
+}
+
+static Object remote_ui_attach(uint64_t channel_id, uint64_t request_id,
+                               Array args, Error *error)
 {
   if (pmap_has(uint64_t)(connected_uis, channel_id)) {
     api_set_error(error, Exception, _("UI already attached for channel"));
     return NIL;
   }
 
-  if (args.size != 2 || args.items[0].type != kObjectTypeInteger
+  if (args.size != 3 || args.items[0].type != kObjectTypeInteger
       || args.items[1].type != kObjectTypeInteger
+      || args.items[2].type != kObjectTypeBoolean
       || args.items[0].data.integer <= 0 || args.items[1].data.integer <= 0) {
     api_set_error(error, Validation,
                   _("Arguments must be a pair of positive integers "
@@ -50,6 +76,7 @@ Object remote_ui_attach(uint64_t channel_id, uint64_t request_id, Array args,
   UI *ui = xcalloc(1, sizeof(UI));
   ui->width = (int)args.items[0].data.integer;
   ui->height = (int)args.items[1].data.integer;
+  ui->rgb = args.items[2].data.boolean;
   ui->data = data;
   ui->resize = remote_ui_resize;
   ui->clear = remote_ui_clear;
@@ -67,16 +94,16 @@ Object remote_ui_attach(uint64_t channel_id, uint64_t request_id, Array args,
   ui->put = remote_ui_put;
   ui->bell = remote_ui_bell;
   ui->visual_bell = remote_ui_visual_bell;
+  ui->update_fg = remote_ui_update_fg;
+  ui->update_bg = remote_ui_update_bg;
   ui->flush = remote_ui_flush;
-  ui->suspend = remote_ui_suspend;
   pmap_put(uint64_t)(connected_uis, channel_id, ui);
   ui_attach(ui);
-
   return NIL;
 }
 
-Object remote_ui_detach(uint64_t channel_id, uint64_t request_id, Array args,
-                        Error *error)
+static Object remote_ui_detach(uint64_t channel_id, uint64_t request_id,
+                               Array args, Error *error)
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
     api_set_error(error, Exception, _("UI is not attached for channel"));
@@ -86,20 +113,29 @@ Object remote_ui_detach(uint64_t channel_id, uint64_t request_id, Array args,
   return NIL;
 }
 
-void remote_ui_disconnect(uint64_t channel_id)
+static Object remote_ui_try_resize(uint64_t channel_id, uint64_t request_id,
+                                   Array args, Error *error)
 {
-  UI *ui = pmap_get(uint64_t)(connected_uis, channel_id);
-  if (!ui) {
-    return;
+  if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
+    api_set_error(error, Exception, _("UI is not attached for channel"));
   }
-  UIData *data = ui->data;
-  // destroy pending screen updates
-  api_free_array(data->buffer);
-  pmap_del(uint64_t)(connected_uis, channel_id);
-  free(ui->data);
-  ui_detach(ui);
-  free(ui);
+
+  if (args.size != 2 || args.items[0].type != kObjectTypeInteger
+      || args.items[1].type != kObjectTypeInteger
+      || args.items[0].data.integer <= 0 || args.items[1].data.integer <= 0) {
+    api_set_error(error, Validation,
+                  _("Arguments must be a pair of positive integers "
+                    "representing the remote screen width/height"));
+    return NIL;
+  }
+
+  UI *ui = pmap_get(uint64_t)(connected_uis, channel_id);
+  ui->width = (int)args.items[0].data.integer;
+  ui->height = (int)args.items[1].data.integer;
+  ui_refresh();
+  return NIL;
 }
+
 
 static void push_call(UI *ui, char *name, Array args)
 {
@@ -214,10 +250,6 @@ static void remote_ui_highlight_set(UI *ui, HlAttrs attrs)
     PUT(hl, "bold", BOOLEAN_OBJ(true));
   }
 
-  if (attrs.standout) {
-    PUT(hl, "standout", BOOLEAN_OBJ(true));
-  }
-
   if (attrs.underline) {
     PUT(hl, "underline", BOOLEAN_OBJ(true));
   }
@@ -266,15 +298,23 @@ static void remote_ui_visual_bell(UI *ui)
   push_call(ui, "visual_bell", args);
 }
 
+static void remote_ui_update_fg(UI *ui, int fg)
+{
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, INTEGER_OBJ(fg));
+  push_call(ui, "update_fg", args);
+}
+
+static void remote_ui_update_bg(UI *ui, int bg)
+{
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, INTEGER_OBJ(bg));
+  push_call(ui, "update_bg", args);
+}
+
 static void remote_ui_flush(UI *ui)
 {
   UIData *data = ui->data;
   channel_send_event(data->channel_id, "redraw", data->buffer);
   data->buffer = (Array)ARRAY_DICT_INIT;
-}
-
-static void remote_ui_suspend(UI *ui)
-{
-  UIData *data = ui->data;
-  remote_ui_disconnect(data->channel_id);
 }

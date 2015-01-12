@@ -170,6 +170,7 @@ static struct builtin_term builtin_termcaps[] =
   {(int)KS_DL,   "\033|d"},
   {(int)KS_CDL,  "\033|%p1%dD"},
   {(int)KS_CS,   "\033|%p1%d;%p2%dR"},
+  {(int)KS_CSV,  "\033|%p1%d;%p2%dV"},
   {(int)KS_CL,   "\033|C"},
   // attributes switched on with 'h', off with * 'H'
   {(int)KS_ME,   "\033|31H"},  // HL_ALL
@@ -1817,17 +1818,20 @@ void term_write(char_u *s, size_t len)
 static char_u out_buf[OUT_SIZE + 1];
 static int out_pos = 0;                 /* number of chars in out_buf */
 
+// Clear the output buffer
+void out_buf_clear(void)
+{
+  out_pos = 0;
+}
+
 /*
  * out_flush(): flush the output buffer
  */
 void out_flush(void)
 {
-  if (out_pos != 0) {
-    /* set out_pos to 0 before ui_write, to avoid recursiveness */
-    int len = out_pos;
-    out_pos = 0;
-    ui_write(out_buf, len);
-  }
+  int len = out_pos;
+  out_pos = 0;
+  ui_write(out_buf, len);
 }
 
 /*

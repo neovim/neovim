@@ -60,11 +60,8 @@ static struct {
   int top, bot, left, right;
 } sr;
 static int current_highlight_mask = 0;
-static HlAttrs current_attrs = {
-  false, false, false, false, false, false, -1, -1
-};
 static bool cursor_enabled = true;
-static int height = INT_MAX, width = INT_MAX;
+static int height, width;
 
 // This set of macros allow us to use UI_CALL to invoke any function on
 // registered UI instances. The functions can have 0-5 arguments(configurable
@@ -98,6 +95,10 @@ void ui_write(uint8_t *s, int len)
     return;
   }
 
+  if (!len) {
+    return;
+  }
+
   char_u  *tofree = NULL;
 
   if (output_conv.vc_type != CONV_NONE) {
@@ -120,9 +121,7 @@ void ui_write(uint8_t *s, int len)
  */
 void ui_suspend(void)
 {
-  if (abstract_ui) {
-    UI_CALL(suspend);
-  } else {
+  if (!abstract_ui) {
     mch_suspend();
   }
 }
@@ -165,8 +164,31 @@ void ui_cursor_shape(void)
   }
 }
 
-void ui_resize(int width, int height)
+void ui_refresh(void)
 {
+  if (!ui_count) {
+    return;
+  }
+
+  int width = INT_MAX, height = INT_MAX;
+
+  for (size_t i = 0; i < ui_count; i++) {
+    UI *ui = uis[i];
+    width = ui->width < width ? ui->width : width;
+    height = ui->height < height ? ui->height : height;
+  }
+
+  screen_resize(width, height, true);
+}
+
+void ui_resize(int new_width, int new_height)
+{
+  width = new_width;
+  height = new_height;
+
+  UI_CALL(update_fg, (ui->rgb ? normal_fg : cterm_normal_fg_color - 1));
+  UI_CALL(update_bg, (ui->rgb ? normal_bg : cterm_normal_bg_color - 1));
+
   sr.top = 0;
   sr.bot = height - 1;
   sr.left = 0;
@@ -240,7 +262,7 @@ void ui_attach(UI *ui)
   }
 
   uis[ui_count++] = ui;
-  resized(ui);
+  ui_refresh();
 }
 
 void ui_detach(UI *ui)
@@ -267,17 +289,8 @@ void ui_detach(UI *ui)
 
   ui_count--;
 
-  if (ui->width == width || ui->height == height) {
-    // It is possible that the UI being detached had the smallest screen,
-    // so check for the new minimum dimensions
-    width = height = INT_MAX;
-    for (size_t i = 0; i < ui_count; i++) {
-      check_dimensions(uis[i]);
-    }
-  }
-
   if (ui_count) {
-    screen_resize(width, height, true);
+    ui_refresh();
   }
 }
 
@@ -295,8 +308,7 @@ static void highlight_start(int mask)
     return;
   }
 
-  set_highlight_args(current_highlight_mask, &current_attrs);
-  UI_CALL(highlight_set, current_attrs);
+  set_highlight_args(current_highlight_mask);
 }
 
 static void highlight_stop(int mask)
@@ -309,12 +321,12 @@ static void highlight_stop(int mask)
     current_highlight_mask &= ~mask;
   }
 
-  set_highlight_args(current_highlight_mask, &current_attrs);
-  UI_CALL(highlight_set, current_attrs);
+  set_highlight_args(current_highlight_mask);
 }
 
-static void set_highlight_args(int mask, HlAttrs *attrs)
+static void set_highlight_args(int mask)
 {
+  HlAttrs rgb_attrs = { false, false, false, false, false, -1, -1 };
   attrentry_T *aep = NULL;
 
   if (mask > HL_ALL) {
@@ -322,18 +334,40 @@ static void set_highlight_args(int mask, HlAttrs *attrs)
     mask = aep ? aep->ae_attr : 0;
   }
 
-  attrs->bold = mask & HL_BOLD;
-  attrs->standout = mask & HL_STANDOUT;
-  attrs->underline = mask & HL_UNDERLINE;
-  attrs->undercurl = mask & HL_UNDERCURL;
-  attrs->italic = mask & HL_ITALIC;
-  attrs->reverse = mask & HL_INVERSE;
-  attrs->foreground = aep && aep->fg_color >= 0 ? aep->fg_color : normal_fg;
-  attrs->background = aep && aep->bg_color >= 0 ? aep->bg_color : normal_bg;
+  rgb_attrs.bold = mask & HL_BOLD;
+  rgb_attrs.underline = mask & HL_UNDERLINE;
+  rgb_attrs.undercurl = mask & HL_UNDERCURL;
+  rgb_attrs.italic = mask & HL_ITALIC;
+  rgb_attrs.reverse = mask & (HL_INVERSE | HL_STANDOUT);
+  HlAttrs cterm_attrs = rgb_attrs;
+
+  if (aep) {
+    if (aep->fg_color != normal_fg) {
+      rgb_attrs.foreground = aep->fg_color;
+    }
+
+    if (aep->bg_color != normal_bg) {
+      rgb_attrs.background = aep->bg_color;
+    }
+
+    if (cterm_normal_fg_color != aep->ae_u.cterm.fg_color) {
+      cterm_attrs.foreground = aep->ae_u.cterm.fg_color - 1;
+    }
+
+    if (cterm_normal_bg_color != aep->ae_u.cterm.bg_color) {
+      cterm_attrs.background = aep->ae_u.cterm.bg_color - 1;
+    }
+  }
+
+  UI_CALL(highlight_set, (ui->rgb ? rgb_attrs : cterm_attrs));
 }
 
 static void parse_abstract_ui_codes(uint8_t *ptr, int len)
 {
+  if (!ui_count) {
+    return;
+  }
+
   int arg1 = 0, arg2 = 0;
   uint8_t *end = ptr + len, *p, c;
   bool update_cursor = false;
@@ -444,6 +478,9 @@ static void parse_abstract_ui_codes(uint8_t *ptr, int len)
           UI_CALL(put, NULL, 0);
           col++;
         }
+        if (col >= width) {
+          ui_linefeed();
+        }
         p += clen;
       }
       ptr = p;
@@ -455,25 +492,6 @@ static void parse_abstract_ui_codes(uint8_t *ptr, int len)
   }
 
   UI_CALL(flush);
-}
-
-static void resized(UI *ui)
-{
-  check_dimensions(ui);
-  screen_resize(width, height, true);
-}
-
-static void check_dimensions(UI *ui)
-{
-  // The internal screen dimensions are always the minimum required to fit on
-  // all connected screens
-  if (ui->width < width) {
-    width = ui->width;
-  }
-
-  if (ui->height < height) {
-    height = ui->height;
-  }
 }
 
 static void ui_linefeed(void)

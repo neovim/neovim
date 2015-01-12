@@ -6,13 +6,14 @@
 #include <stdint.h>
 
 typedef struct {
-  bool bold, standout, underline, undercurl, italic, reverse;
+  bool bold, underline, undercurl, italic, reverse;
   int foreground, background;
 } HlAttrs;
 
 typedef struct ui_t UI;
 
 struct ui_t {
+  bool rgb;
   int width, height;
   void *data;
   void (*resize)(UI *ui, int rows, int columns);
@@ -32,7 +33,8 @@ struct ui_t {
   void (*bell)(UI *ui);
   void (*visual_bell)(UI *ui);
   void (*flush)(UI *ui);
-  void (*suspend)(UI *ui);
+  void (*update_fg)(UI *ui, int fg);
+  void (*update_bg)(UI *ui, int bg);
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
