@@ -46,7 +46,7 @@ void vim_command(String str, Error *err)
   try_end(err);
 }
 
-/// Pass input keys to Neovim
+/// Passes input keys to Neovim
 ///
 /// @param keys to be typed
 /// @param mode specifies the mapping options
@@ -90,19 +90,19 @@ void vim_feedkeys(String keys, String mode, Boolean escape_csi)
     typebuf_was_filled = true;
 }
 
-/// Pass input keys to Neovim. Unlike `vim_feedkeys`, this will use a
+/// Passes input keys to Neovim. Unlike `vim_feedkeys`, this will use a
 /// lower-level input buffer and the call is not deferred.
 /// This is the most reliable way to emulate real user input.
 ///
 /// @param keys to be typed
-/// @return The number bytes actually written, which can be lower than
+/// @return The number of bytes actually written, which can be lower than
 ///         requested if the buffer becomes full.
 Integer vim_input(String keys)
 {
   return (Integer)input_enqueue(keys);
 }
 
-/// Replace any terminal codes with the internal representation
+/// Replaces any terminal codes with the internal representation
 ///
 /// @see replace_termcodes
 /// @see cpoptions
@@ -133,7 +133,7 @@ String vim_command_output(String str, Error *err)
   return cstr_to_string((char *)get_vim_var_str(VV_COMMAND_OUTPUT));
 }
 
-/// Evaluates the expression str using the vim internal expression
+/// Evaluates the expression str using the Vim internal expression
 /// evaluator (see |expression|).
 /// Dictionaries and lists are recursively expanded.
 ///
@@ -178,7 +178,7 @@ Integer vim_strwidth(String str, Error *err)
   return (Integer) mb_string2cells((char_u *) str.data);
 }
 
-/// Returns a list of paths contained in 'runtimepath'
+/// Gets a list of paths contained in 'runtimepath'
 ///
 /// @return The list of paths
 ArrayOf(String) vim_list_runtime_paths(void)
@@ -201,7 +201,7 @@ ArrayOf(String) vim_list_runtime_paths(void)
 
   // Allocate memory for the copies
   rv.items = xmalloc(sizeof(Object) * rv.size);
-  // reset the position
+  // Reset the position
   rtp = p_rtp;
   // Start copying
   for (size_t i = 0; i < rv.size && *rtp != NUL; i++) {
@@ -218,7 +218,7 @@ ArrayOf(String) vim_list_runtime_paths(void)
   return rv;
 }
 
-/// Changes vim working directory
+/// Changes Vim working directory
 ///
 /// @param dir The new working directory
 /// @param[out] err Details of an error that may have occurred
@@ -246,7 +246,7 @@ void vim_change_directory(String dir, Error *err)
   try_end(err);
 }
 
-/// Return the current line
+/// Gets the current line
 ///
 /// @param[out] err Details of an error that may have occurred
 /// @return The current line string
@@ -265,7 +265,7 @@ void vim_set_current_line(String line, Error *err)
   buffer_set_line(curbuf->handle, curwin->w_cursor.lnum - 1, line, err);
 }
 
-/// Delete the current line
+/// Deletes the current line
 ///
 /// @param[out] err Details of an error that may have occurred
 void vim_del_current_line(Error *err)
@@ -306,7 +306,7 @@ Object vim_get_vvar(String name, Error *err)
   return dict_get_value(&vimvardict, name, err);
 }
 
-/// Get an option value string
+/// Gets an option value string
 ///
 /// @param name The option name
 /// @param[out] err Details of an error that may have occurred
@@ -327,7 +327,7 @@ void vim_set_option(String name, Object value, Error *err)
   set_option_to(NULL, SREQ_GLOBAL, name, value, err);
 }
 
-/// Write a message to vim output buffer
+/// Writes a message to vim output buffer
 ///
 /// @param str The message
 void vim_out_write(String str)
@@ -336,7 +336,7 @@ void vim_out_write(String str)
   write_msg(str, false);
 }
 
-/// Write a message to vim error buffer
+/// Writes a message to vim error buffer
 ///
 /// @param str The message
 void vim_err_write(String str)
@@ -346,7 +346,7 @@ void vim_err_write(String str)
 }
 
 /// Higher level error reporting function that ensures all str contents
-/// are written by sending a trailing linefeed to `vim_wrr_write`
+/// are written by sending a trailing linefeed to `vim_err_write`
 ///
 /// @param str The message
 void vim_report_error(String str)
@@ -381,7 +381,7 @@ ArrayOf(Buffer) vim_get_buffers(void)
   return rv;
 }
 
-/// Return the current buffer
+/// Gets the current buffer
 ///
 /// @reqturn The buffer handle
 Buffer vim_get_current_buffer(void)
@@ -433,7 +433,7 @@ ArrayOf(Window) vim_get_windows(void)
   return rv;
 }
 
-/// Return the current window
+/// Gets the current window
 ///
 /// @return The window handle
 Window vim_get_current_window(void)
@@ -488,7 +488,7 @@ ArrayOf(Tabpage) vim_get_tabpages(void)
   return rv;
 }
 
-/// Return the current tab page
+/// Gets the current tab page
 ///
 /// @return The tab page handle
 Tabpage vim_get_current_tabpage(void)
@@ -521,7 +521,7 @@ void vim_set_current_tabpage(Tabpage tabpage, Error *err)
 
 /// Subscribes to event broadcasts
 ///
-/// @param channel_id The channel id(passed automatically by the dispatcher)
+/// @param channel_id The channel id (passed automatically by the dispatcher)
 /// @param event The event type string
 void vim_subscribe(uint64_t channel_id, String event)
 {
@@ -534,7 +534,7 @@ void vim_subscribe(uint64_t channel_id, String event)
 
 /// Unsubscribes to event broadcasts
 ///
-/// @param channel_id The channel id(passed automatically by the dispatcher)
+/// @param channel_id The channel id (passed automatically by the dispatcher)
 /// @param event The event type string
 void vim_unsubscribe(uint64_t channel_id, String event)
 {
@@ -568,7 +568,7 @@ Array vim_get_api_info(uint64_t channel_id)
 /// later.
 ///
 /// @param message The message to write
-/// @param to_err True if it should be treated as an error message(use
+/// @param to_err true if it should be treated as an error message (use
 ///        `emsg` instead of `msg` to print each line)
 static void write_msg(String message, bool to_err)
 {

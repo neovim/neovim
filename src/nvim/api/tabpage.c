@@ -9,11 +9,11 @@
 #include "nvim/memory.h"
 #include "nvim/window.h"
 
-/// Gets the number of windows in a tabpage
+/// Gets the windows in a tabpage
 ///
 /// @param tabpage The tabpage
 /// @param[out] err Details of an error that may have occurred
-/// @return The number of windows in `tabpage`
+/// @return The windows in `tabpage`
 ArrayOf(Window) tabpage_get_windows(Tabpage tabpage, Error *err)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -37,7 +37,7 @@ ArrayOf(Window) tabpage_get_windows(Tabpage tabpage, Error *err)
   return rv;
 }
 
-/// Gets a tabpage variable
+/// Gets a tab-scoped (t:) variable
 ///
 /// @param tabpage The tab page handle
 /// @param name The variable name
@@ -54,7 +54,7 @@ Object tabpage_get_var(Tabpage tabpage, String name, Error *err)
   return dict_get_value(tab->tp_vars, name, err);
 }
 
-/// Sets a tabpage variable. Passing 'nil' as value deletes the variable.
+/// Sets a tab-scoped (t:) variable. 'nil' value deletes the variable.
 ///
 /// @param tabpage handle
 /// @param name The variable name
