@@ -6037,6 +6037,7 @@ int load_colors(char_u *name)
   apply_autocmds(EVENT_COLORSCHEME, name, curbuf->b_fname, FALSE, curbuf);
 
   recursive = FALSE;
+  ui_refresh();
 
   return retval;
 }
