@@ -1818,6 +1818,12 @@ void term_write(char_u *s, size_t len)
 static char_u out_buf[OUT_SIZE + 1];
 static int out_pos = 0;                 /* number of chars in out_buf */
 
+// Clear the output buffer
+void out_buf_clear(void)
+{
+  out_pos = 0;
+}
+
 /*
  * out_flush(): flush the output buffer
  */

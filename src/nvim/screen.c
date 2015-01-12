@@ -8186,6 +8186,9 @@ void screen_resize(int width, int height, int mustset)
   check_shellsize();
 
   if (abstract_ui) {
+    // Clear the output buffer to ensure UIs don't receive redraw command meant
+    // for invalid screen sizes.
+    out_buf_clear();
     ui_resize(width, height);
   } else {
     mch_set_shellsize();

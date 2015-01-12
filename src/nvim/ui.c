@@ -170,7 +170,7 @@ void ui_refresh(void)
     return;
   }
 
-  width = height = INT_MAX;
+  int width = INT_MAX, height = INT_MAX;
 
   for (size_t i = 0; i < ui_count; i++) {
     UI *ui = uis[i];
