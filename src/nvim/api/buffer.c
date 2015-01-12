@@ -308,7 +308,7 @@ end:
   try_end(err);
 }
 
-/// Gets a buffer variable
+/// Gets a buffer-scoped (b:) variable.
 ///
 /// @param buffer The buffer handle
 /// @param name The variable name
@@ -325,7 +325,7 @@ Object buffer_get_var(Buffer buffer, String name, Error *err)
   return dict_get_value(buf->b_vars, name, err);
 }
 
-/// Sets a buffer variable. Passing 'nil' as value deletes the variable.
+/// Sets a buffer-scoped (b:) variable. 'nil' value deletes the variable.
 ///
 /// @param buffer The buffer handle
 /// @param name The variable name

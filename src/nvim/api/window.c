@@ -182,7 +182,7 @@ void window_set_width(Window window, Integer width, Error *err)
   try_end(err);
 }
 
-/// Gets a window variable
+/// Gets a window-scoped (w:) variable
 ///
 /// @param window The window handle
 /// @param name The variable name
@@ -199,7 +199,7 @@ Object window_get_var(Window window, String name, Error *err)
   return dict_get_value(win->w_vars, name, err);
 }
 
-/// Sets a window variable. Passing 'nil' as value deletes the variable.
+/// Sets a window-scoped (w:) variable. 'nil' value deletes the variable.
 ///
 /// @param window The window handle
 /// @param name The variable name
