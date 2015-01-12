@@ -647,7 +647,7 @@ return {
   },
   {
     command='echoerr',
-    flags=bit.bor(EXTRA, NOTRLCOM, SBOXOK, CMDWIN),
+    flags=bit.bor(BANG, EXTRA, NOTRLCOM, SBOXOK, CMDWIN),
     func='ex_execute',
   },
   {
@@ -657,7 +657,7 @@ return {
   },
   {
     command='echomsg',
-    flags=bit.bor(EXTRA, NOTRLCOM, SBOXOK, CMDWIN),
+    flags=bit.bor(BANG, EXTRA, NOTRLCOM, SBOXOK, CMDWIN),
     func='ex_execute',
   },
   {

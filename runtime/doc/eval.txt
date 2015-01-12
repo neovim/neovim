@@ -7713,14 +7713,13 @@ This does NOT work: >
 <			See |:echo-redraw| to avoid the message disappearing
 			when the screen is redrawn.
 
-				      *:echom!* *:echomsg!* *:echoe!* *:echoerr!*
-			|:echomsg| or |:echoerr| followed by [!] creates a
-			"transient" message, which will never cause a screen
-			scroll or a |press-enter| prompt, and is _always_
-			added to the |:messages| history (even if |:silent| or
-			|:map-<silent>| are used). This is useful for leaving
-			passive diagnostic messages without disturbing
-			usability.
+						    *:echomsg!* *:echoerr!*
+			|:echomsg| or |:echoerr| with [!] writes a "passive"
+			message, which will never cause a screen scroll or
+			a |press-enter| prompt, and is _always_ added to
+			the |:messages| history (even if |:silent| or
+			|:map-<silent>| are used). Useful for reporting
+			diagnostic or non-critical messages.
 
 							*:echoe* *:echoerr*
 :echoe[rr][!]{expr1} .. Echo the expression(s) as an error message, saving the

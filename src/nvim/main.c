@@ -635,17 +635,18 @@ main_loop (
       redraw_statuslines();
       if (need_maketitle)
         maketitle();
-      /* display message after redraw */
-      if (keep_msg != NULL) {
-        char_u *p;
 
+      // Display message after redraw.
+      if (keep_msg != NULL) {
         // msg_attr_keep() will set keep_msg to NULL, must free the string
         // here. Don't reset keep_msg, msg_attr_keep() uses it to check for
         // duplicates.
-        p = keep_msg;
+        char_u *p = keep_msg;
         msg_attr(p, keep_msg_attr);
         xfree(p);
+        msg_notif_summary();
       }
+
       if (need_fileinfo) {              /* show file info after redraw */
         fileinfo(FALSE, TRUE, FALSE);
         need_fileinfo = FALSE;

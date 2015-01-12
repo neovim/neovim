@@ -16,7 +16,7 @@
 #define MAX_MSG_HIST_LEN        400
 
 #define MSG(s)                      msg((char_u *)(s))
-#define MSG_ATTR(s, attr)           msg_attr((char_u *)(s), (attr), false)
+#define MSG_ATTR(s, attr)           msg_attr((char_u *)(s), (attr))
 #define EMSG(s)                     emsg((char_u *)(s))
 #define EMSG2(s, p)                 emsg2((char_u *)(s), (char_u *)(p))
 #define EMSG3(s, p, q)              emsg3((char_u *)(s), (char_u *)(p), \

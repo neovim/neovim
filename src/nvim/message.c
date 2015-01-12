@@ -69,6 +69,7 @@ static int confirm_msg_used = FALSE;            /* displaying confirm_msg */
 #endif
 static char_u   *confirm_msg = NULL;            /* ":confirm" message */
 static char_u   *confirm_msg_tail;              /* tail of confirm_msg */
+static size_t   notifications_pending = 0;      //< "+N :messages" count
 
 struct msg_hist {
   struct msg_hist     *next;
@@ -146,50 +147,94 @@ int msg_attr(char_u *s, int attr) FUNC_ATTR_NONNULL_ARG(1)
   return msg_attr_keep(s, attr, false);
 }
 
-// @param keep true: set keep_msg (if it doesn't scroll)
-// @see msg(char_u)
+/// Attempts to display a message in the message area. The displayed message
+/// will be truncated to avoid the "Press ENTER" prompt, and it may be
+/// overwritten by subsequent messages before the user sees it.
+//
+/// @param attr If MSG_HIST flag is set, the full (not truncated) message is
+//         saved to the :messages history; else the message is not saved.
+void msg_passive(char_u *s, int attr)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  bool add_hist         = (attr & MSG_HIST);
+  int save_msg_scroll   = msg_scroll;
+  int save_msg_hist_off = msg_hist_off;
+  int save_msg_silent   = msg_silent;
+
+  msg_scroll = false;   // do not scroll
+
+  // Add message to history even if command is :silent.
+  msg_silent   = !add_hist;
+  msg_hist_off = !add_hist;
+  // reset MSG_HIST flag for housekeeping (avoid potential duplicates).
+  // msg_attr_keep() will add to history for us.
+  attr &= ~MSG_HIST;
+
+  // TODO(jkeyes): these seem unnecessary; leave them until absolutely sure.
+  // msg_didout = false;  // overwrite current message, if any
+  // msg_didany = false;
+  // msg_nowait = true;   // don't wait for this message
+  // need_wait_return = false;
+  // no_wait_return = true;
+  // emsg_on_display = false;
+
+  msg_attr_keep(s, attr, true);
+  notifications_pending++;
+
+  msg_scroll   = save_msg_scroll;
+  msg_hist_off = save_msg_hist_off;
+  msg_silent   = save_msg_silent;
+}
+
+/// Displays "+N :messages" in the small messages area ("notifications" area).
+void msg_notif_summary(void)
+{
+  char buff[SHOWCMD_COLS + 1] = { 0 };
+  if (notifications_pending > 1) {
+    snprintf(buff, sizeof(buff), "+%zu :messages", notifications_pending);
+    screen_puts((char_u *)buff, (int)Rows - 1, sc_col, 0);
+  }
+  notifications_pending = 0;  //reset the count
+}
+
+/// @param keep set `keep_msg` for display after redraw (if it doesn't scroll)
+/// @see msg(char_u)
 int msg_attr_keep(char_u *s, int attr, bool keep)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   static int entered = 0;
-  int retval;
-  char_u      *buf = NULL;
 
   if (attr == 0)
     set_vim_var_string(VV_STATUSMSG, s, -1);
 
-  /*
-   * It is possible that displaying a messages causes a problem (e.g.,
-   * when redrawing the window), which causes another message, etc..	To
-   * break this loop, limit the recursiveness to 3 levels.
-   */
+  // Displaying a message may cause a problem (e.g., when redrawing the
+  // window), which causes another message, etc. Limit recursion to 3 levels.
   if (entered >= 3)
     return TRUE;
   ++entered;
 
-  /* Add message to history (unless it's a repeated kept message or a
-   * truncated message) */
+  // Add message to history (unless it's a repeated `keep_msg` or a truncated
+  // message).
   if (s != keep_msg
-      || (*s != '<'
-          && last_msg_hist != NULL
-          && last_msg_hist->msg != NULL
-          && STRCMP(s, last_msg_hist->msg)))
+      || (*s != '<' && last_msg_hist && last_msg_hist->msg
+          && STRCMP(s, last_msg_hist->msg))) {
     msg_hist_add(s, -1, attr);
+  }
 
-  /* When displaying keep_msg, don't let msg_start() free it, caller must do
-   * that. */
+  // When displaying keep_msg, don't let msg_start() free it, caller must do
+  // that.
   if (s == keep_msg)
     keep_msg = NULL;
 
-  /* Truncate the message if needed. */
+  // Truncate the message if needed.
   msg_start();
-  buf = msg_strtrunc(s, FALSE);
+  char_u *buf = msg_strtrunc(s, false);
   if (buf != NULL)
     s = buf;
 
   msg_outtrans_attr(s, attr);
   msg_clr_eos();
-  retval = msg_end();
+  int retval = msg_end();
 
   if (keep && retval && vim_strsize(s) < (int)(Rows - cmdline_row - 1)
       * Columns + sc_col)
@@ -997,9 +1042,7 @@ void msg_start(void)
 
   if (!msg_scroll && full_screen) {    // overwrite last message
     msg_row = cmdline_row;
-    msg_col =
-      cmdmsg_rl ? Columns - 1 :
-      0;
+    msg_col = cmdmsg_rl ? Columns - 1 : 0;
   } else if (msg_didout) {             // start message on next line
     msg_putchar('\n');
     did_return = TRUE;
@@ -1152,8 +1195,7 @@ int msg_outtrans_len_attr(char_u *msgstr, int len, int attr)
         /* unprintable multi-byte char: print the printable chars so
          * far and the translation of the unprintable char. */
         if (str > plain_start)
-          msg_puts_attr_len(plain_start, (int)(str - plain_start),
-              attr);
+          msg_puts_attr_len(plain_start, (int)(str - plain_start), attr);
         plain_start = str + mb_l;
         msg_puts_attr(transchar(c), attr == 0 ? hl_attr(HLF_8) : attr);
         retval += char2cells(c);
@@ -1166,8 +1208,7 @@ int msg_outtrans_len_attr(char_u *msgstr, int len, int attr)
         /* unprintable char: print the printable chars so far and the
          * translation of the unprintable char. */
         if (str > plain_start)
-          msg_puts_attr_len(plain_start, (int)(str - plain_start),
-              attr);
+          msg_puts_attr_len(plain_start, (int)(str - plain_start), attr);
         plain_start = str + 1;
         msg_puts_attr(s, attr == 0 ? hl_attr(HLF_8) : attr);
         retval += (int)STRLEN(s);
@@ -1526,16 +1567,14 @@ void msg_puts_attr(char_u *s, int attr)
 
 /// Writes a message with highlight attributes.
 //  @param maxlen maximum length (in bytes), or -1 for unlimited.
-///        When `maxlen` is >= 0 the message is not put in the history.
+///        When `maxlen` is >= 0 the message is _not_ put in the history.
 /// @see msg_puts_attr
 static void msg_puts_attr_len(char_u *str, int maxlen, int attr)
 {
   // If redirection is on, also write to the redirection file.
   redir_write(str, maxlen);
 
-  /*
-   * Don't print anything when using ":silent cmd".
-   */
+  // Don't print anything when using ":silent cmd".
   if (msg_silent != 0)
     return;
 

@@ -198,7 +198,7 @@ EXTERN int msg_scrolled_ign INIT(= FALSE);
    msg_puts_attr() when msg_scrolled is
    non-zero */
 
-EXTERN char_u   *keep_msg INIT(= NULL);     /* msg to be shown after redraw */
+EXTERN char_u   *keep_msg INIT(= NULL);     /* msg to be shown after redraw (in main event loop) */
 EXTERN int keep_msg_attr INIT(= 0);         /* highlight attr for keep_msg */
 EXTERN int keep_msg_more INIT(= FALSE);      /* keep_msg was set by msgmore() */
 EXTERN int need_fileinfo INIT(= FALSE);     /* do fileinfo() after redraw */
