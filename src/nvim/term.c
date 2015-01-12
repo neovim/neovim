@@ -1473,7 +1473,6 @@ int set_termname(char_u *term)
 #  define HMT_NORMAL    1
 #  define HMT_NETTERM   2
 #  define HMT_DEC       4
-#  define HMT_PTERM     8
 #  define HMT_URXVT     16
 #  define HMT_SGR       32
 

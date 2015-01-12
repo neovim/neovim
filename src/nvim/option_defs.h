@@ -576,13 +576,12 @@ EXTERN char_u   *p_ttym;        /* 'ttymouse' */
 EXTERN unsigned ttym_flags;
 # ifdef IN_OPTION_C
 static char *(p_ttym_values[]) =
-{"xterm", "xterm2", "dec", "netterm", "pterm", "urxvt", "sgr", NULL};
+{"xterm", "xterm2", "dec", "netterm", "urxvt", "sgr", NULL};
 # endif
 # define TTYM_XTERM             0x01
 # define TTYM_XTERM2            0x02
 # define TTYM_DEC               0x04
 # define TTYM_NETTERM           0x08
-# define TTYM_PTERM             0x10
 # define TTYM_URXVT             0x20
 # define TTYM_SGR               0x40
 #endif

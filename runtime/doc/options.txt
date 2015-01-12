@@ -4935,9 +4935,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 			{not in Vi}
 	Enable the use of the mouse.  Only works for certain terminals
-	(xterm, MS-DOS, Win32 |win32-mouse|, QNX pterm, *BSD console with
-	sysmouse and Linux console with gpm).  For using the mouse in the
-	GUI, see |gui-mouse|.
+	(xterm, Win32 |win32-mouse|, *BSD console with sysmouse and Linux
+	console with gpm).  For using the mouse in the GUI, see |gui-mouse|.
 	The mouse can be enabled for different modes:
 		n	Normal mode
 		v	Visual mode
@@ -7402,8 +7401,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			rather complex sequence, starting with "<Esc>[".
 			This is also available for an Xterm, if it was
 			configured with "--enable-dec-locator".
-							*pterm-mouse*
-	   pterm	QNX pterm mouse handling.
 							*urxvt-mouse*
 	   urxvt	Mouse handling for the urxvt (rxvt-unicode) terminal.
 			The mouse works only if the terminal supports this
