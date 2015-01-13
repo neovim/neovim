@@ -1198,18 +1198,28 @@ def CheckForMultilineCommentsAndStrings(filename, clean_lines, linenum, error):
 
 
 threading_list = (
-    ('asctime(', 'asctime_r('),
-    ('ctime(', 'ctime_r('),
-    ('getgrgid(', 'getgrgid_r('),
-    ('getgrnam(', 'getgrnam_r('),
-    ('getlogin(', 'getlogin_r('),
-    ('getpwnam(', 'getpwnam_r('),
-    ('getpwuid(', 'getpwuid_r('),
-    ('gmtime(', 'gmtime_r('),
-    ('localtime(', 'localtime_r('),
-    ('rand(', 'rand_r('),
-    ('strtok(', 'strtok_r('),
-    ('ttyname(', 'ttyname_r('),
+    ('asctime(', 'os_asctime_r('),
+    ('ctime(', 'os_ctime_r('),
+    ('getgrgid(', 'os_getgrgid_r('),
+    ('getgrnam(', 'os_getgrnam_r('),
+    ('getlogin(', 'os_getlogin_r('),
+    ('getpwnam(', 'os_getpwnam_r('),
+    ('getpwuid(', 'os_getpwuid_r('),
+    ('gmtime(', 'os_gmtime_r('),
+    ('localtime(', 'os_localtime_r('),
+    ('strtok(', 'os_strtok_r('),
+    ('ttyname(', 'os_ttyname_r('),
+    ('asctime_r(', 'os_asctime_r('),
+    ('ctime_r(', 'os_ctime_r('),
+    ('getgrgid_r(', 'os_getgrgid_r('),
+    ('getgrnam_r(', 'os_getgrnam_r('),
+    ('getlogin_r(', 'os_getlogin_r('),
+    ('getpwnam_r(', 'os_getpwnam_r('),
+    ('getpwuid_r(', 'os_getpwuid_r('),
+    ('gmtime_r(', 'os_gmtime_r('),
+    ('localtime_r(', 'os_localtime_r('),
+    ('strtok_r(', 'os_strtok_r('),
+    ('ttyname_r(', 'os_ttyname_r('),
     )
 
 
@@ -1235,9 +1245,10 @@ def CheckPosixThreading(filename, clean_lines, linenum, error):
     if ix >= 0 and (ix == 0 or (not line[ix - 1].isalnum() and
                                 line[ix - 1] not in ('_', '.', '>'))):
       error(filename, linenum, 'runtime/threadsafe_fn', 2,
-            'Consider using ' + multithread_safe_function +
+            'Use ' + multithread_safe_function +
             '...) instead of ' + single_thread_function +
-            '...) for improved thread safety.')
+            '...). If it is missing, consider implementing it;' +
+            ' see os_localtime_r for an example.')
 
 
 # Matches invalid increment: *count++, which moves pointer instead of
