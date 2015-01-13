@@ -83,6 +83,21 @@ local eq, dedent = helpers.eq, helpers.dedent
 local Screen = {}
 Screen.__index = Screen
 
+local debug_screen
+
+
+function Screen.debug(command)
+  if not command then
+    command = 'pynvim -n -g -c '
+  end
+  command = command .. request('vim_eval', '$NVIM_LISTEN_ADDRESS')
+  if debug_screen then
+    debug_screen:close()
+  end
+  debug_screen = io.popen(command, 'r')
+  debug_screen:read()
+end
+
 function Screen.new(width, height)
   if not width then
     width = 53
