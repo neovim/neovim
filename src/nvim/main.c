@@ -149,10 +149,6 @@ void early_init(void)
   (void)mb_init();      // init mb_bytelen_tab[] to ones
   eval_init();          // init global variables
 
-#ifdef __QNXNTO__
-  qnx_init();           // PhAttach() for clipboard, (and gui)
-#endif
-
   // Init the table of Normal mode commands.
   init_normal_cmds();
 
