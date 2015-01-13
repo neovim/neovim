@@ -76,6 +76,7 @@
 #include "nvim/tag.h"
 #include "nvim/tempfile.h"
 #include "nvim/term.h"
+#include "nvim/ui.h"
 #include "nvim/mouse.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
@@ -10023,6 +10024,8 @@ static void f_has(typval_T *argvars, typval_T *rettv)
 #endif
     } else if (STRICMP(name, "syntax_items") == 0) {
       n = syntax_present(curwin);
+    } else if (STRICMP(name, "gui_running") == 0) {
+      n = ui_rgb_attached();
     }
   }
 
@@ -14440,7 +14443,7 @@ static void f_synIDattr(typval_T *argvars, typval_T *rettv)
     if (modec != 't' && modec != 'c' && modec != 'g')
       modec = 0;        /* replace invalid with current */
   } else {
-    if (t_colors > 1)
+    if (abstract_ui || t_colors > 1)
       modec = 'c';
     else
       modec = 't';

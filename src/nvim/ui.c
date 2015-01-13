@@ -114,6 +114,16 @@ void ui_write(uint8_t *s, int len)
     free(tofree);
 }
 
+bool ui_rgb_attached(void)
+{
+  for (size_t i = 0; i < ui_count; i++) {
+    if (uis[i]->rgb) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /*
  * If the machine has job control, use it to suspend the program,
  * otherwise fake it by starting a new shell.

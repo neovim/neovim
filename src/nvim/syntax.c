@@ -6450,7 +6450,7 @@ do_highlight (
                   p = T_CAF;
                 else
                   p = T_CSF;
-                if (*p != NUL && *(p + STRLEN(p) - 1) == 'm')
+                if (abstract_ui || (*p != NUL && *(p + STRLEN(p) - 1) == 'm'))
                   switch (t_colors) {
                   case 16:
                     color = color_numbers_8[i];
@@ -6865,7 +6865,7 @@ int hl_combine_attr(int char_attr, int prim_attr)
   if (char_attr <= HL_ALL && prim_attr <= HL_ALL)
     return char_attr | prim_attr;
 
-  if (t_colors > 1) {
+  if (abstract_ui || t_colors > 1) {
     if (char_attr > HL_ALL)
       char_aep = syn_cterm_attr2entry(char_attr);
     if (char_aep != NULL)
@@ -6929,7 +6929,7 @@ int syn_attr2attr(int attr)
 {
   attrentry_T *aep;
 
-  if (t_colors > 1)
+  if (abstract_ui || t_colors > 1)
     aep = syn_cterm_attr2entry(attr);
   else
     aep = syn_term_attr2entry(attr);
@@ -7357,7 +7357,7 @@ int syn_id2attr(int hl_id)
   hl_id = syn_get_final_id(hl_id);
   sgp = &HL_TABLE()[hl_id - 1];             /* index is ID minus one */
 
-  if (t_colors > 1)
+  if (abstract_ui || t_colors > 1)
     attr = sgp->sg_cterm_attr;
   else
     attr = sgp->sg_term_attr;
