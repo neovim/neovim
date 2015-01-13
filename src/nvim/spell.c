@@ -289,6 +289,7 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <wctype.h>
@@ -6546,7 +6547,7 @@ node_compress (
       n = np->wn_flags + (np->wn_region << 8) + (np->wn_affixID << 16);
     else
       // byte node: use the byte value and the child pointer
-      n = (unsigned)(np->wn_byte + ((long_u)np->wn_child << 8));
+      n = (unsigned)(np->wn_byte + ((uintptr_t)np->wn_child << 8));
     nr = nr * 101 + n;
   }
 
