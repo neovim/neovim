@@ -820,8 +820,6 @@ EXTERN int no_zero_mapping INIT(= 0);   /* mapping zero not allowed */
 EXTERN int allow_keys INIT(= FALSE);    /* allow key codes when no_mapping
                                          * is set */
 EXTERN int no_u_sync INIT(= 0);         /* Don't call u_sync() */
-EXTERN int u_sync_once INIT(= 0);       /* Call u_sync() once when evaluating
-                                           an expression. */
 
 EXTERN int restart_edit INIT(= 0);      /* call edit when next cmd finished */
 EXTERN int arrow_used;                  /* Normally FALSE, set to TRUE after

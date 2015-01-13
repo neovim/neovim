@@ -6765,10 +6765,6 @@ static void ins_reg(void)
    * message for it. Only call it explicitly. */
   ++no_u_sync;
   if (regname == '=') {
-    /* Sync undo when evaluating the expression calls setline() or
-     * append(), so that it can be undone separately. */
-    u_sync_once = 2;
-
     regname = get_expr_register();
   }
   if (regname == NUL || !valid_yank_reg(regname, FALSE)) {
@@ -6794,9 +6790,6 @@ static void ins_reg(void)
 
   }
   --no_u_sync;
-  if (u_sync_once == 1)
-    ins_need_undo = TRUE;
-  u_sync_once = 0;
   clear_showcmd();
 
   /* If the inserted register is empty, we need to remove the '"' */
