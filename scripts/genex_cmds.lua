@@ -67,7 +67,7 @@ for i, cmd in ipairs(defs) do
   [%s] = {
     .cmd_name = (char_u *) "%s",
     .cmd_func = &%s,
-    .cmd_argt = %uL
+    .cmd_argt = %u
   }]], enumname, cmd.command, cmd.func, cmd.flags))
 end
 defsfile:write([[
