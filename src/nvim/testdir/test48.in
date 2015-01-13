@@ -44,6 +44,10 @@ $4lDi<-- 'D' should be intact
 /^"r"
 $5lrxa<-- should be 'x'
 :"
+:" Test "r" on a tab
+:" Note that for this test, 'ts' must be 8 (the default).
+^5lrxA<-- should be '  x  '
+:"
 :"   Test to make sure 'x' can delete control characters
 :set display=uhex
 ^xxxxxxi[This line should contain only the text between the brackets.]
@@ -72,6 +76,7 @@ this is a test
 this is a test
 this is a test
 "r"
+"r"	
 absd
 abcv6efi.him0kl
 

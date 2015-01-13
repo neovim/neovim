@@ -178,6 +178,13 @@ static char *(features[]) = {
 };
 
 static int included_patches[] = {
+  567,
+  //566,
+  //565,
+  //564,
+  563,
+  //562,
+  //561,
   //560 NA
   559,
   //558 NA
@@ -272,6 +279,7 @@ static int included_patches[] = {
   //469 NA
   468,
   467,
+  466,
   //465 NA
   //464 NA
   463,
