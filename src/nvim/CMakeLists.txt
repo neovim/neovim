@@ -72,7 +72,6 @@ set(CONV_SOURCES
   move.c
   normal.c
   ops.c
-  option.c
   os_unix.c
   path.c
   popupmnu.c

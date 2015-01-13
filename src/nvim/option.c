@@ -31,6 +31,7 @@
  */
 
 #define IN_OPTION_C
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -2151,7 +2152,7 @@ set_option_default (
         if ((opt_flags & OPT_FREE) && (flags & P_ALLOCED))
           free_string_option(*(char_u **)(varp));
         *(char_u **)varp = options[opt_idx].def_val[dvi];
-        options[opt_idx].flags &= ~P_ALLOCED;
+        options[opt_idx].flags &= (long_u)~P_ALLOCED;
       }
     } else if (flags & P_NUM)   {
       if (options[opt_idx].indir == PV_SCROLL)
@@ -2178,7 +2179,7 @@ set_option_default (
 
     /* The default value is not insecure. */
     flagsp = insecure_flag(opt_idx, opt_flags);
-    *flagsp = *flagsp & ~P_INSECURE;
+    *flagsp = *flagsp & (long_u)~P_INSECURE;
   }
 
   set_option_scriptID_idx(opt_idx, opt_flags, current_SID);
@@ -2300,7 +2301,7 @@ void set_init_2(void)
     set_string_option_direct(NULL, idx, (char_u *)"dark", OPT_FREE, 0);
     /* don't mark it as set, when starting the GUI it may be
      * changed again */
-    options[idx].flags &= ~P_WAS_SET;
+    options[idx].flags &= (long_u)~P_WAS_SET;
   }
 
   parse_shape_opt(SHAPE_CURSOR);   /* set cursor shapes from 'guicursor' */
@@ -2425,8 +2426,8 @@ void set_helplang_default(char_u *lang)
     p_hlg = vim_strsave(lang);
     /* zh_CN becomes "cn", zh_TW becomes "tw". */
     if (STRNICMP(p_hlg, "zh_", 3) == 0 && STRLEN(p_hlg) >= 5) {
-      p_hlg[0] = TOLOWER_ASC(p_hlg[3]);
-      p_hlg[1] = TOLOWER_ASC(p_hlg[4]);
+      p_hlg[0] = (char_u)TOLOWER_ASC(p_hlg[3]);
+      p_hlg[1] = (char_u)TOLOWER_ASC(p_hlg[4]);
     }
     p_hlg[2] = NUL;
     options[idx].flags |= P_ALLOCED;
@@ -2444,7 +2445,7 @@ void set_helplang_default(char_u *lang)
 void set_title_defaults(void)
 {
   int idx1;
-  long val;
+  int val;
 
   /*
    * If GUI is (going to be) used, we can always set the window title and
@@ -2454,13 +2455,13 @@ void set_title_defaults(void)
   idx1 = findoption((char_u *)"title");
   if (idx1 >= 0 && !(options[idx1].flags & P_WAS_SET)) {
     val = mch_can_restore_title();
-    options[idx1].def_val[VI_DEFAULT] = (char_u *)val;
+    options[idx1].def_val[VI_DEFAULT] = (char_u *)(intptr_t)val;
     p_title = val;
   }
   idx1 = findoption((char_u *)"icon");
   if (idx1 >= 0 && !(options[idx1].flags & P_WAS_SET)) {
     val = mch_can_restore_icon();
-    options[idx1].def_val[VI_DEFAULT] = (char_u *)val;
+    options[idx1].def_val[VI_DEFAULT] = (char_u *)(intptr_t)val;
     p_icon = val;
   }
 }
@@ -2491,7 +2492,7 @@ do_set (
   char_u errbuf[80];
   char_u      *startarg;
   int prefix;           /* 1: nothing, 0: "no", 2: "inv" in front of name */
-  int nextchar;                     /* next non-white char after option name */
+  char_u nextchar;                  /* next non-white char after option name */
   int afterchar;                    /* character just after option name */
   int len;
   int i;
@@ -2632,11 +2633,11 @@ do_set (
       } else {
         flags = P_STRING;
         if (key < 0) {
-          key_name[0] = KEY2TERMCAP0(key);
+          key_name[0] = (char_u)KEY2TERMCAP0(key);
           key_name[1] = KEY2TERMCAP1(key);
         } else {
           key_name[0] = KS_KEY;
-          key_name[1] = (key & 0xff);
+          key_name[1] = (char_u)(key & 0xff);
         }
       }
 
@@ -3185,7 +3186,8 @@ skip:
       if (i + (arg - startarg) < IOSIZE) {
         /* append the argument with the error */
         STRCAT(IObuff, ": ");
-        memmove(IObuff + i, startarg, (arg - startarg));
+        assert(arg >= startarg);
+        memmove(IObuff + i, startarg, (size_t)(arg - startarg));
         IObuff[i + (arg - startarg)] = NUL;
       }
       /* make sure all characters are printable */
@@ -3242,7 +3244,7 @@ did_set_option (
       || (opt_flags & OPT_MODELINE))
     *p = *p | P_INSECURE;
   else if (new_value)
-    *p = *p & ~P_INSECURE;
+    *p = *p & (long_u)~P_INSECURE;
 }
 
 static char_u *illegal_char(char_u *errbuf, int c)
@@ -4568,7 +4570,7 @@ did_set_string_option (
     if (new_value_alloced)
       options[opt_idx].flags |= P_ALLOCED;
     else
-      options[opt_idx].flags &= ~P_ALLOCED;
+      options[opt_idx].flags &= (long_u)~P_ALLOCED;
 
     if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
         && ((int)options[opt_idx].indir & PV_BOTH)) {
@@ -4649,9 +4651,8 @@ char_u *check_colorcolumn(win_T *wp)
 {
   char_u      *s;
   int col;
-  int count = 0;
+  unsigned int count = 0;
   int color_cols[256];
-  int i;
   int j = 0;
 
   if (wp->w_buffer == NULL)
@@ -4667,7 +4668,13 @@ char_u *check_colorcolumn(win_T *wp)
       col = col * getdigits_int(&s);
       if (wp->w_buffer->b_p_tw == 0)
         goto skip;          /* 'textwidth' not set, skip this item */
-      col += wp->w_buffer->b_p_tw;
+      assert((col >= 0
+              && wp->w_buffer->b_p_tw <= INT_MAX - col
+              && wp->w_buffer->b_p_tw + col >= INT_MIN)
+             || (col < 0
+                 && wp->w_buffer->b_p_tw >= INT_MIN - col
+                 && wp->w_buffer->b_p_tw + col <= INT_MAX));
+      col += (int)wp->w_buffer->b_p_tw;
       if (col < 0)
         goto skip;
     } else if (VIM_ISDIGIT(*s))
@@ -4693,7 +4700,7 @@ skip:
      * win_line() */
     qsort(color_cols, count, sizeof(int), int_cmp);
 
-    for (i = 0; i < count; ++i)
+    for (unsigned int i = 0; i < count; ++i)
       /* skip duplicates */
       if (j == 0 || wp->w_p_cc_cols[j - 1] != color_cols[i])
         wp->w_p_cc_cols[j++] = color_cols[i];
@@ -5558,8 +5565,10 @@ set_num_option (
       /* Postpone the resizing; check the size and cmdline position for
        * messages. */
       check_shellsize();
-      if (cmdline_row > Rows - p_ch && Rows > p_ch)
-        cmdline_row = Rows - p_ch;
+      if (cmdline_row > Rows - p_ch && Rows > p_ch) {
+        assert(p_ch >= 0 && Rows - p_ch <= INT_MAX);
+        cmdline_row = (int)(Rows - p_ch);
+      }
     }
     if (p_window >= Rows || !option_was_set((char_u *)"window"))
       p_window = Rows - 1;
@@ -5673,7 +5682,6 @@ static void check_redraw(long_u flags)
  */
 static int findoption(char_u *arg)
 {
-  int opt_idx;
   char            *s, *p;
   static short quick_tab[27] = {0, 0};          /* quick access table */
   int is_term_opt;
@@ -5685,12 +5693,12 @@ static int findoption(char_u *arg)
    */
   if (quick_tab[1] == 0) {
     p = options[0].fullname;
-    for (opt_idx = 1; (s = options[opt_idx].fullname) != NULL; opt_idx++) {
+    for (short int i = 1; (s = options[i].fullname) != NULL; i++) {
       if (s[0] != p[0]) {
         if (s[0] == 't' && s[1] == '_')
-          quick_tab[26] = opt_idx;
+          quick_tab[26] = i;
         else
-          quick_tab[CharOrdLow(s[0])] = opt_idx;
+          quick_tab[CharOrdLow(s[0])] = i;
       }
       p = s;
     }
@@ -5702,6 +5710,7 @@ static int findoption(char_u *arg)
   if (arg[0] < 'a' || arg[0] > 'z')
     return -1;
 
+  int opt_idx;
   is_term_opt = (arg[0] == 't' && arg[1] == '_');
   if (is_term_opt)
     opt_idx = quick_tab[26];
@@ -6099,7 +6108,11 @@ showoptions (
      * display the items
      */
     if (run == 1) {
-      cols = (Columns + GAP - 3) / INC;
+      assert(Columns <= LONG_MAX - GAP
+             && Columns + GAP >= LONG_MIN + 3
+             && (Columns + GAP - 3) / INC >= INT_MIN
+             && (Columns + GAP - 3) / INC <= INT_MAX);
+      cols = (int)((Columns + GAP - 3) / INC);
       if (cols == 0)
         cols = 1;
       rows = (item_count + cols - 1) / cols;
@@ -6416,7 +6429,7 @@ void free_termoptions(void)
         free_string_option(p->def_val[VI_DEFAULT]);
       *(char_u **)(p->var) = empty_option;
       p->def_val[VI_DEFAULT] = empty_option;
-      p->flags &= ~(P_ALLOCED|P_DEF_ALLOCED);
+      p->flags &= (long_u)~(P_ALLOCED|P_DEF_ALLOCED);
     }
   clear_termcodes();
 }
@@ -6435,7 +6448,7 @@ void free_one_termoption(char_u *var)
       if (p->flags & P_ALLOCED)
         free_string_option(*(char_u **)(p->var));
       *(char_u **)(p->var) = empty_option;
-      p->flags &= ~P_ALLOCED;
+      p->flags &= (long_u)~P_ALLOCED;
       break;
     }
 }
@@ -6452,12 +6465,12 @@ void set_term_defaults(void)
     if (istermoption(p) && p->def_val[VI_DEFAULT] != *(char_u **)(p->var)) {
       if (p->flags & P_DEF_ALLOCED) {
         free_string_option(p->def_val[VI_DEFAULT]);
-        p->flags &= ~P_DEF_ALLOCED;
+        p->flags &= (long_u)~P_DEF_ALLOCED;
       }
       p->def_val[VI_DEFAULT] = *(char_u **)(p->var);
       if (p->flags & P_ALLOCED) {
         p->flags |= P_DEF_ALLOCED;
-        p->flags &= ~P_ALLOCED;          /* don't free the value now */
+        p->flags &= (long_u)~P_ALLOCED;          /* don't free the value now */
       }
     }
   }
@@ -6497,8 +6510,14 @@ void comp_col(void)
     if (!p_ru || last_has_status)           /* no need for separating space */
       ++sc_col;
   }
-  sc_col = Columns - sc_col;
-  ru_col = Columns - ru_col;
+  assert(sc_col >= 0
+         && INT_MIN + sc_col <= Columns
+         && Columns - sc_col <= INT_MAX);
+  sc_col = (int)(Columns - sc_col);
+  assert(ru_col >= 0
+         && INT_MIN + ru_col <= Columns
+         && Columns - ru_col <= INT_MAX);
+  ru_col = (int)(Columns - ru_col);
   if (sc_col <= 0)              /* screen too narrow, will become a mess */
     sc_col = 1;
   if (ru_col <= 0)
@@ -7088,7 +7107,7 @@ set_context_in_set_cmd (
     int opt_flags                  /* OPT_GLOBAL and/or OPT_LOCAL */
 )
 {
-  int nextchar;
+  char_u nextchar;
   long_u flags = 0;             /* init for GCC */
   int opt_idx = 0;              /* init for GCC */
   char_u      *p;
@@ -7142,7 +7161,7 @@ set_context_in_set_cmd (
     }
     nextchar = *++p;
     is_term_option = TRUE;
-    expand_option_name[2] = KEY2TERMCAP0(key);
+    expand_option_name[2] = (char_u)KEY2TERMCAP0(key);
     expand_option_name[3] = KEY2TERMCAP1(key);
   } else {
     if (p[0] == 't' && p[1] == '_') {
@@ -7382,7 +7401,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***
         *num_file = num_term;
       else
         return OK;
-      *file = (char_u **)xmalloc(*num_file * sizeof(char_u *));
+      *file = (char_u **)xmalloc((size_t)(*num_file) * sizeof(char_u *));
     }
   }
   return OK;
@@ -7512,12 +7531,13 @@ static garray_T langmap_mapga = GA_EMPTY_INIT_VALUE;
 static void langmap_set_entry(int from, int to)
 {
   langmap_entry_T *entries = (langmap_entry_T *)(langmap_mapga.ga_data);
-  int a = 0;
-  int b = langmap_mapga.ga_len;
+  unsigned int a = 0;
+  assert(langmap_mapga.ga_len >= 0);
+  unsigned int b = (unsigned int)langmap_mapga.ga_len;
 
   /* Do a binary search for an existing entry. */
   while (a != b) {
-    int i = (a + b) / 2;
+    unsigned int i = (a + b) / 2;
     int d = entries[i].from - from;
 
     if (d == 0) {
@@ -7535,7 +7555,7 @@ static void langmap_set_entry(int from, int to)
   /* insert new entry at position "a" */
   entries = (langmap_entry_T *)(langmap_mapga.ga_data) + a;
   memmove(entries + 1, entries,
-      (langmap_mapga.ga_len - a) * sizeof(langmap_entry_T));
+          ((unsigned int)langmap_mapga.ga_len - a) * sizeof(langmap_entry_T));
   ++langmap_mapga.ga_len;
   entries[0].from = from;
   entries[0].to = to;
@@ -7566,10 +7586,8 @@ int langmap_adjust_mb(int c)
 
 static void langmap_init(void)
 {
-  int i;
-
-  for (i = 0; i < 256; i++)
-    langmap_mapchar[i] = i;      /* we init with a one-to-one map */
+  for (int i = 0; i < 256; i++)
+    langmap_mapchar[i] = (char_u)i;      /* we init with a one-to-one map */
   ga_init(&langmap_mapga, sizeof(langmap_entry_T), 8);
 }
 
@@ -7627,8 +7645,10 @@ static void langmap_set(void)
 
       if (from >= 256)
         langmap_set_entry(from, to);
-      else
-        langmap_mapchar[from & 255] = to;
+      else {
+        assert(to <= UCHAR_MAX);
+        langmap_mapchar[from & 255] = (char_u)to;
+      }
 
       /* Advance to next pair */
       mb_ptr_adv(p);
@@ -7817,7 +7837,7 @@ void reset_option_was_set(char_u *name)
   int idx = findoption(name);
 
   if (idx >= 0)
-    options[idx].flags &= ~P_WAS_SET;
+    options[idx].flags &= (long_u)~P_WAS_SET;
 }
 
 /*
@@ -7867,20 +7887,19 @@ opt_strings_flags (
     int list                       /* when TRUE: accept a list of values */
 )
 {
-  int i;
-  int len;
-  unsigned new_flags = 0;
+  unsigned int new_flags = 0;
 
   while (*val) {
-    for (i = 0;; ++i) {
+    for (unsigned int i = 0;; ++i) {
       if (values[i] == NULL)            /* val not found in values[] */
         return FAIL;
 
-      len = (int)STRLEN(values[i]);
+      size_t len = STRLEN(values[i]);
       if (STRNCMP(values[i], val, len) == 0
           && ((list && val[len] == ',') || val[len] == NUL)) {
         val += len + (val[len] == ',');
-        new_flags |= (1 << i);
+        assert(i < sizeof(1U) * 8);
+        new_flags |= (1U << i);
         break;                  /* check next item in val list */
       }
     }
@@ -8104,7 +8123,7 @@ void find_mps_values(int *initc, int *findc, int *backwards, int switchit)
 static bool briopt_check(win_T *wp)
 {
   int bri_shift = 0;
-  long bri_min = 20;
+  int bri_min = 20;
   bool bri_sbr = false;
 
   char_u *p = wp->w_p_briopt;
@@ -8119,7 +8138,7 @@ static bool briopt_check(win_T *wp)
     else if (STRNCMP(p, "min:", 4) == 0 && VIM_ISDIGIT(p[4]))
     {
       p += 4;
-      bri_min = getdigits_long(&p);
+      bri_min = getdigits_int(&p);
     }
     else if (STRNCMP(p, "sbr", 3) == 0)
     {
