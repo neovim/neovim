@@ -35,6 +35,7 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -298,10 +299,10 @@ static long p_wm_nopaste;
 static long p_sts_nopaste;
 static int p_ai_nopaste;
 
-struct vimoption {
+typedef struct vimoption {
   char        *fullname;        /* full option name */
   char        *shortname;       /* permissible abbreviation */
-  long_u flags;                 /* see below */
+  uint32_t flags;               /* see below */
   char_u      *var;             /* global option: pointer to variable;
                                 * window-local option: VAR_WIN;
                                 * buffer-local option: global value */
@@ -310,7 +311,7 @@ struct vimoption {
   char_u      *def_val[2];      /* default values for variable (vi and vim) */
   scid_T scriptID;              /* script in which the option was last set */
 # define SCRIPTID_INIT , 0
-};
+} vimoption_T;
 
 #define VI_DEFAULT  0       /* def_val[VI_DEFAULT] is Vi default value */
 #define VIM_DEFAULT 1       /* def_val[VIM_DEFAULT] is Vim default value */
@@ -318,43 +319,43 @@ struct vimoption {
 /*
  * Flags
  */
-#define P_BOOL          0x01    /* the option is boolean */
-#define P_NUM           0x02    /* the option is numeric */
-#define P_STRING        0x04    /* the option is a string */
-#define P_ALLOCED       0x08    /* the string option is in allocated memory,
-                                   must use free_string_option() when
-                                   assigning new value. Not set if default is
-                                   the same. */
-#define P_EXPAND        0x10    /* environment expansion.  NOTE: P_EXPAND can
-                                   never be used for local or hidden options! */
-#define P_NODEFAULT     0x40    /* don't set to default value */
-#define P_DEF_ALLOCED   0x80    /* default value is in allocated memory, must
+#define P_BOOL          0x01U    /* the option is boolean */
+#define P_NUM           0x02U    /* the option is numeric */
+#define P_STRING        0x04U    /* the option is a string */
+#define P_ALLOCED       0x08U    /* the string option is in allocated memory,
+                                    must use free_string_option() when
+                                    assigning new value. Not set if default is
+                                    the same. */
+#define P_EXPAND        0x10U    /* environment expansion.  NOTE: P_EXPAND can
+                                    never be used for local or hidden options */
+#define P_NODEFAULT     0x40U    /* don't set to default value */
+#define P_DEF_ALLOCED   0x80U    /* default value is in allocated memory, must
                                     use free() when assigning new value */
-#define P_WAS_SET       0x100   /* option has been set/reset */
-#define P_NO_MKRC       0x200   /* don't include in :mkvimrc output */
-#define P_VI_DEF        0x400   /* Use Vi default for Vim */
-#define P_VIM           0x800   /* Vim option, reset when 'cp' set */
+#define P_WAS_SET       0x100U   /* option has been set/reset */
+#define P_NO_MKRC       0x200U   /* don't include in :mkvimrc output */
+#define P_VI_DEF        0x400U   /* Use Vi default for Vim */
+#define P_VIM           0x800U   /* Vim option, reset when 'cp' set */
 
 /* when option changed, what to display: */
-#define P_RSTAT         0x1000  /* redraw status lines */
-#define P_RWIN          0x2000  /* redraw current window */
-#define P_RBUF          0x4000  /* redraw current buffer */
-#define P_RALL          0x6000  /* redraw all windows */
-#define P_RCLR          0x7000  /* clear and redraw all */
+#define P_RSTAT         0x1000U  /* redraw status lines */
+#define P_RWIN          0x2000U  /* redraw current window */
+#define P_RBUF          0x4000U  /* redraw current buffer */
+#define P_RALL          0x6000U  /* redraw all windows */
+#define P_RCLR          0x7000U  /* clear and redraw all */
 
-#define P_COMMA         0x8000  /* comma separated list */
-#define P_NODUP         0x10000L /* don't allow duplicate strings */
-#define P_FLAGLIST      0x20000L /* list of single-char flags */
+#define P_COMMA         0x8000U  /* comma separated list */
+#define P_NODUP         0x10000U /* don't allow duplicate strings */
+#define P_FLAGLIST      0x20000U /* list of single-char flags */
 
-#define P_SECURE        0x40000L /* cannot change in modeline or secure mode */
-#define P_GETTEXT       0x80000L /* expand default value with _() */
-#define P_NOGLOB       0x100000L /* do not use local value for global vimrc */
-#define P_NFNAME       0x200000L /* only normal file name chars allowed */
-#define P_INSECURE     0x400000L /* option was set from a modeline */
-#define P_PRI_MKRC     0x800000L /* priority for :mkvimrc (setting option has
+#define P_SECURE        0x40000U /* cannot change in modeline or secure mode */
+#define P_GETTEXT       0x80000U /* expand default value with _() */
+#define P_NOGLOB       0x100000U /* do not use local value for global vimrc */
+#define P_NFNAME       0x200000U /* only normal file name chars allowed */
+#define P_INSECURE     0x400000U /* option was set from a modeline */
+#define P_PRI_MKRC     0x800000U /* priority for :mkvimrc (setting option has
                                     side effects) */
-#define P_NO_ML       0x1000000L /* not allowed in modeline */
-#define P_CURSWANT    0x2000000L /* update curswant required; not needed when
+#define P_NO_ML       0x1000000U /* not allowed in modeline */
+#define P_CURSWANT    0x2000000U /* update curswant required; not needed when
                                   * there is a redraw flag */
 
 #define ISK_LATIN1  (char_u *)"@,48-57,_,192-255"
@@ -380,7 +381,7 @@ struct vimoption {
  * The options with a NULL variable are 'hidden': a set command for them is
  * ignored and they are not printed.
  */
-static struct vimoption
+static vimoption_T
   options[] =
 {
   {"aleph",       "al",   P_NUM|P_VI_DEF|P_CURSWANT,
@@ -1849,7 +1850,6 @@ void set_init_1(void)
 {
   char_u      *p;
   int opt_idx;
-  long_u n;
 
   langmap_init();
 
@@ -1885,7 +1885,7 @@ void set_init_1(void)
     int mustfree;
 
     ga_init(&ga, 1, 100);
-    for (n = 0; n < (long)ARRAY_SIZE(names); ++n) {
+    for (size_t n = 0; n < ARRAY_SIZE(names); ++n) {
       mustfree = FALSE;
 # ifdef UNIX
       if (*names[n] == NUL)
@@ -1920,10 +1920,11 @@ void set_init_1(void)
   if (opt_idx >= 0) {
     {
       /* Use half of amount of memory available to Vim. */
-      /* If too much to fit in long_u, get long_u max */
+      /* If too much to fit in uintptr_t, get uintptr_t max */
       uint64_t available_kib = os_get_total_mem_kib();
-      n = available_kib / 2 > ULONG_MAX ? ULONG_MAX
-                                        : (long_u)(available_kib /2);
+      uintptr_t n = available_kib / 2 > UINTPTR_MAX
+                    ? UINTPTR_MAX
+                    : (uintptr_t)(available_kib /2);
       options[opt_idx].def_val[VI_DEFAULT] = (char_u *)n;
       opt_idx = findoption((char_u *)"maxmem");
       if (opt_idx >= 0) {
@@ -2134,12 +2135,10 @@ set_option_default (
 {
   char_u      *varp;            /* pointer to variable for current option */
   int dvi;                      /* index in def_val[] */
-  long_u flags;
-  long_u      *flagsp;
   int both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
 
   varp = get_varp_scope(&(options[opt_idx]), both ? OPT_LOCAL : opt_flags);
-  flags = options[opt_idx].flags;
+  uint32_t flags = options[opt_idx].flags;
   if (varp != NULL) {       /* skip hidden option, nothing to do for it */
     dvi = ((flags & P_VI_DEF) || compatible) ? VI_DEFAULT : VIM_DEFAULT;
     if (flags & P_STRING) {
@@ -2152,7 +2151,7 @@ set_option_default (
         if ((opt_flags & OPT_FREE) && (flags & P_ALLOCED))
           free_string_option(*(char_u **)(varp));
         *(char_u **)varp = options[opt_idx].def_val[dvi];
-        options[opt_idx].flags &= (long_u)~P_ALLOCED;
+        options[opt_idx].flags &= ~P_ALLOCED;
       }
     } else if (flags & P_NUM)   {
       if (options[opt_idx].indir == PV_SCROLL)
@@ -2178,8 +2177,8 @@ set_option_default (
     }
 
     /* The default value is not insecure. */
-    flagsp = insecure_flag(opt_idx, opt_flags);
-    *flagsp = *flagsp & (long_u)~P_INSECURE;
+    uint32_t *flagsp = insecure_flag(opt_idx, opt_flags);
+    *flagsp = *flagsp & ~P_INSECURE;
   }
 
   set_option_scriptID_idx(opt_idx, opt_flags, current_SID);
@@ -2301,7 +2300,7 @@ void set_init_2(void)
     set_string_option_direct(NULL, idx, (char_u *)"dark", OPT_FREE, 0);
     /* don't mark it as set, when starting the GUI it may be
      * changed again */
-    options[idx].flags &= (long_u)~P_WAS_SET;
+    options[idx].flags &= ~P_WAS_SET;
   }
 
   parse_shape_opt(SHAPE_CURSOR);   /* set cursor shapes from 'guicursor' */
@@ -2498,7 +2497,7 @@ do_set (
   int i;
   long value;
   int key;
-  long_u flags;                     /* flags for current option */
+  uint32_t flags;                   /* flags for current option */
   char_u      *varp = NULL;         /* pointer to variable for current option */
   int did_show = FALSE;             /* already showed one value */
   int adding;                       /* "opt+=arg" */
@@ -3229,14 +3228,12 @@ did_set_option (
     int new_value              /* value was replaced completely */
 )
 {
-  long_u      *p;
-
   options[opt_idx].flags |= P_WAS_SET;
 
   /* When an option is set in the sandbox, from a modeline or in secure mode
    * set the P_INSECURE flag.  Otherwise, if a new value is stored reset the
    * flag. */
-  p = insecure_flag(opt_idx, opt_flags);
+  uint32_t *p = insecure_flag(opt_idx, opt_flags);
   if (secure
 #ifdef HAVE_SANDBOX
       || sandbox != 0
@@ -3244,7 +3241,7 @@ did_set_option (
       || (opt_flags & OPT_MODELINE))
     *p = *p | P_INSECURE;
   else if (new_value)
-    *p = *p & (long_u)~P_INSECURE;
+    *p = *p & ~P_INSECURE;
 }
 
 static char_u *illegal_char(char_u *errbuf, int c)
@@ -3583,10 +3580,9 @@ void set_term_option_alloced(char_u **p)
 int was_set_insecurely(char_u *opt, int opt_flags)
 {
   int idx = findoption(opt);
-  long_u  *flagp;
 
   if (idx >= 0) {
-    flagp = insecure_flag(idx, opt_flags);
+    uint32_t *flagp = insecure_flag(idx, opt_flags);
     return (*flagp & P_INSECURE) != 0;
   }
   EMSG2(_(e_intern2), "was_set_insecurely()");
@@ -3597,16 +3593,16 @@ int was_set_insecurely(char_u *opt, int opt_flags)
  * Get a pointer to the flags used for the P_INSECURE flag of option
  * "opt_idx".  For some local options a local flags field is used.
  */
-static long_u *insecure_flag(int opt_idx, int opt_flags)
+static uint32_t *insecure_flag(int opt_idx, int opt_flags)
 {
   if (opt_flags & OPT_LOCAL)
     switch ((int)options[opt_idx].indir) {
-    case PV_STL:        return &curwin->w_p_stl_flags;
-    case PV_FDE:        return &curwin->w_p_fde_flags;
-    case PV_FDT:        return &curwin->w_p_fdt_flags;
-    case PV_INDE:       return &curbuf->b_p_inde_flags;
-    case PV_FEX:        return &curbuf->b_p_fex_flags;
-    case PV_INEX:       return &curbuf->b_p_inex_flags;
+    case PV_STL:        return (uint32_t *)(&curwin->w_p_stl_flags);
+    case PV_FDE:        return (uint32_t *)(&curwin->w_p_fde_flags);
+    case PV_FDT:        return (uint32_t *)(&curwin->w_p_fdt_flags);
+    case PV_INDE:       return (uint32_t *)(&curbuf->b_p_inde_flags);
+    case PV_FEX:        return (uint32_t *)(&curbuf->b_p_fex_flags);
+    case PV_INEX:       return (uint32_t *)(&curbuf->b_p_inex_flags);
     }
 
   /* Nothing special, return global flags field. */
@@ -3757,7 +3753,7 @@ did_set_string_option (
   char_u      *s, *p;
   int did_chartab = FALSE;
   char_u      **gvarp;
-  long_u free_oldval = (options[opt_idx].flags & P_ALLOCED);
+  bool free_oldval = (options[opt_idx].flags & P_ALLOCED);
 
   /* Get the global option to compare with, otherwise we would have to check
    * two values for all local options. */
@@ -4570,7 +4566,7 @@ did_set_string_option (
     if (new_value_alloced)
       options[opt_idx].flags |= P_ALLOCED;
     else
-      options[opt_idx].flags &= (long_u)~P_ALLOCED;
+      options[opt_idx].flags &= ~P_ALLOCED;
 
     if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
         && ((int)options[opt_idx].indir & PV_BOTH)) {
@@ -5657,11 +5653,11 @@ set_num_option (
 /*
  * Called after an option changed: check if something needs to be redrawn.
  */
-static void check_redraw(long_u flags)
+static void check_redraw(uint32_t flags)
 {
   /* Careful: P_RCLR and P_RALL are a combination of other P_ flags */
-  int doclear = (flags & P_RCLR) == P_RCLR;
-  int all = ((flags & P_RALL) == P_RALL || doclear);
+  bool doclear = (flags & P_RCLR) == P_RCLR;
+  bool all = ((flags & P_RALL) == P_RALL || doclear);
 
   if ((flags & P_RSTAT) || all)         /* mark all status lines dirty */
     status_redraw_all();
@@ -5808,7 +5804,7 @@ int get_option_value_strict(char *name,
                             void *from)
 {
   char_u *varp = NULL;
-  struct vimoption *p;
+  vimoption_T *p;
   int rv = 0;
   int opt_idx = findoption((uint8_t *)name);
   if (opt_idx < 0) {
@@ -5920,13 +5916,12 @@ set_option_value (
 {
   int opt_idx;
   char_u      *varp;
-  long_u flags;
 
   opt_idx = findoption(name);
   if (opt_idx < 0)
     EMSG2(_("E355: Unknown option: %s"), name);
   else {
-    flags = options[opt_idx].flags;
+    uint32_t flags = options[opt_idx].flags;
 #ifdef HAVE_SANDBOX
     /* Disallow changing some options in the sandbox */
     if (sandbox > 0 && (flags & P_SECURE)) {
@@ -6044,7 +6039,7 @@ showoptions (
     int opt_flags                  /* OPT_LOCAL and/or OPT_GLOBAL */
 )
 {
-  struct vimoption    *p;
+  vimoption_T    *p;
   int col;
   int isterm;
   char_u              *varp;
@@ -6058,7 +6053,7 @@ showoptions (
 #define INC 20
 #define GAP 3
 
-  struct vimoption **items = xmalloc(sizeof(struct vimoption *) * PARAM_COUNT);
+  vimoption_T **items = xmalloc(sizeof(vimoption_T *) * PARAM_COUNT);
 
   /* Highlight title */
   if (all == 2)
@@ -6138,7 +6133,7 @@ showoptions (
 /*
  * Return TRUE if option "p" has its default value.
  */
-static int optval_default(struct vimoption *p, char_u *varp)
+static int optval_default(vimoption_T *p, char_u *varp)
 {
   int dvi;
 
@@ -6159,7 +6154,7 @@ static int optval_default(struct vimoption *p, char_u *varp)
  */
 static void 
 showoneopt (
-    struct vimoption *p,
+    vimoption_T *p,
     int opt_flags                          /* OPT_LOCAL or OPT_GLOBAL */
 )
 {
@@ -6215,7 +6210,7 @@ showoneopt (
  */
 int makeset(FILE *fd, int opt_flags, int local_only)
 {
-  struct vimoption    *p;
+  vimoption_T    *p;
   char_u              *varp;                    /* currently used value */
   char_u              *varp_fresh;              /* local value */
   char_u              *varp_local = NULL;       /* fresh value */
@@ -6419,7 +6414,7 @@ void clear_termoptions(void)
 
 void free_termoptions(void)
 {
-  struct vimoption   *p;
+  vimoption_T   *p;
 
   for (p = &options[0]; p->fullname != NULL; p++)
     if (istermoption(p)) {
@@ -6429,7 +6424,7 @@ void free_termoptions(void)
         free_string_option(p->def_val[VI_DEFAULT]);
       *(char_u **)(p->var) = empty_option;
       p->def_val[VI_DEFAULT] = empty_option;
-      p->flags &= (long_u)~(P_ALLOCED|P_DEF_ALLOCED);
+      p->flags &= ~(P_ALLOCED|P_DEF_ALLOCED);
     }
   clear_termcodes();
 }
@@ -6441,14 +6436,14 @@ void free_termoptions(void)
  */
 void free_one_termoption(char_u *var)
 {
-  struct vimoption   *p;
+  vimoption_T   *p;
 
   for (p = &options[0]; p->fullname != NULL; p++)
     if (p->var == var) {
       if (p->flags & P_ALLOCED)
         free_string_option(*(char_u **)(p->var));
       *(char_u **)(p->var) = empty_option;
-      p->flags &= (long_u)~P_ALLOCED;
+      p->flags &= ~P_ALLOCED;
       break;
     }
 }
@@ -6459,18 +6454,18 @@ void free_one_termoption(char_u *var)
  */
 void set_term_defaults(void)
 {
-  struct vimoption   *p;
+  vimoption_T   *p;
 
   for (p = &options[0]; p->fullname != NULL; p++) {
     if (istermoption(p) && p->def_val[VI_DEFAULT] != *(char_u **)(p->var)) {
       if (p->flags & P_DEF_ALLOCED) {
         free_string_option(p->def_val[VI_DEFAULT]);
-        p->flags &= (long_u)~P_DEF_ALLOCED;
+        p->flags &= ~P_DEF_ALLOCED;
       }
       p->def_val[VI_DEFAULT] = *(char_u **)(p->var);
       if (p->flags & P_ALLOCED) {
         p->flags |= P_DEF_ALLOCED;
-        p->flags &= (long_u)~P_ALLOCED;          /* don't free the value now */
+        p->flags &= ~P_ALLOCED;          /* don't free the value now */
       }
     }
   }
@@ -6479,7 +6474,7 @@ void set_term_defaults(void)
 /*
  * return TRUE if 'p' starts with 't_'
  */
-static int istermoption(struct vimoption *p)
+static int istermoption(vimoption_T *p)
 {
   return p->fullname[0] == 't' && p->fullname[1] == '_';
 }
@@ -6527,7 +6522,7 @@ void comp_col(void)
 // Unset local option value, similar to ":set opt<".
 void unset_global_local_option(char *name, void *from)
 {
-  struct vimoption *p;
+  vimoption_T *p;
   buf_T *buf = (buf_T *)from;
 
   int opt_idx = findoption((uint8_t *)name);
@@ -6595,7 +6590,7 @@ void unset_global_local_option(char *name, void *from)
 /*
  * Get pointer to option variable, depending on local or global scope.
  */
-static char_u *get_varp_scope(struct vimoption *p, int opt_flags)
+static char_u *get_varp_scope(vimoption_T *p, int opt_flags)
 {
   if ((opt_flags & OPT_GLOBAL) && p->indir != PV_NONE) {
     if (p->var == VAR_WIN)
@@ -6629,7 +6624,7 @@ static char_u *get_varp_scope(struct vimoption *p, int opt_flags)
 /*
  * Get pointer to option variable.
  */
-static char_u *get_varp(struct vimoption *p)
+static char_u *get_varp(vimoption_T *p)
 {
   /* hidden option, always return NULL */
   if (p->var == NULL)
@@ -7108,7 +7103,7 @@ set_context_in_set_cmd (
 )
 {
   char_u nextchar;
-  long_u flags = 0;             /* init for GCC */
+  uint32_t flags = 0;           /* init for GCC */
   int opt_idx = 0;              /* init for GCC */
   char_u      *p;
   char_u      *s;
@@ -7456,7 +7451,7 @@ void ExpandOldSetting(int *num_file, char_u ***file)
  */
 static void 
 option_value2string (
-    struct vimoption *opp,
+    vimoption_T *opp,
     int opt_flags                          /* OPT_GLOBAL and/or OPT_LOCAL */
 )
 {
@@ -7837,7 +7832,7 @@ void reset_option_was_set(char_u *name)
   int idx = findoption(name);
 
   if (idx >= 0)
-    options[idx].flags &= (long_u)~P_WAS_SET;
+    options[idx].flags &= ~P_WAS_SET;
 }
 
 /*
