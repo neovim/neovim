@@ -636,14 +636,12 @@ readfile (
 #endif
   }
 
-#if defined(HAS_SWAP_EXISTS_ACTION)
   /* If "Quit" selected at ATTENTION dialog, don't load the file */
   if (swap_exists_action == SEA_QUIT) {
     if (!read_buffer && !read_stdin)
       close(fd);
     return FAIL;
   }
-#endif
 
   ++no_wait_return;         /* don't wait for return yet */
 

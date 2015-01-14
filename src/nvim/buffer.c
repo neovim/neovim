@@ -602,7 +602,6 @@ void goto_buffer(exarg_T *eap, int start, int dir, int count)
 {
   (void)do_buffer(*eap->cmd == 's' ? DOBUF_SPLIT : DOBUF_GOTO,
       start, dir, count, eap->forceit);
-#ifdef HAS_SWAP_EXISTS_ACTION
   buf_T *old_curbuf = curbuf;
   swap_exists_action = SEA_DIALOG;
 
@@ -624,10 +623,8 @@ void goto_buffer(exarg_T *eap, int start, int dir, int count)
   } else {
     handle_swap_exists(old_curbuf);
   }
-#endif
 }
 
-#if defined(HAS_SWAP_EXISTS_ACTION)
 /*
  * Handle the situation of swap_exists_action being set.
  * It is allowed for "old_curbuf" to be NULL or invalid.
@@ -678,7 +675,6 @@ void handle_swap_exists(buf_T *old_curbuf)
   }
   swap_exists_action = SEA_NONE;
 }
-#endif
 
 /*
  * do_bufdel() - delete or unload buffer(s)
@@ -3934,17 +3930,12 @@ void ex_buffer_all(exarg_T *eap)
         continue;
 
       /* Open the buffer in this window. */
-#if defined(HAS_SWAP_EXISTS_ACTION)
       swap_exists_action = SEA_DIALOG;
-#endif
       set_curbuf(buf, DOBUF_GOTO);
       if (!buf_valid(buf)) {            /* autocommands deleted the buffer!!! */
-#if defined(HAS_SWAP_EXISTS_ACTION)
         swap_exists_action = SEA_NONE;
-# endif
         break;
       }
-#if defined(HAS_SWAP_EXISTS_ACTION)
       if (swap_exists_action == SEA_QUIT) {
         cleanup_T cs;
 
@@ -3964,7 +3955,6 @@ void ex_buffer_all(exarg_T *eap)
         leave_cleanup(&cs);
       } else
         handle_swap_exists(NULL);
-#endif
     }
 
     os_breakcheck();

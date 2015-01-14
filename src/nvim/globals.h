@@ -859,7 +859,6 @@ EXTERN int cmd_silent INIT(= FALSE);      /* don't echo the command line */
 #define SEA_QUIT        2       /* quit editing the file */
 #define SEA_RECOVER     3       /* recover the file */
 
-#define HAS_SWAP_EXISTS_ACTION
 EXTERN int swap_exists_action INIT(= SEA_NONE);
 /* For dialog when swap file already
  * exists. */

@@ -1560,19 +1560,15 @@ static void handle_quickfix(mparm_T *paramp)
 static void handle_tag(char_u *tagname)
 {
   if (tagname != NULL) {
-#if defined(HAS_SWAP_EXISTS_ACTION)
     swap_exists_did_quit = FALSE;
-#endif
 
     vim_snprintf((char *)IObuff, IOSIZE, "ta %s", tagname);
     do_cmdline_cmd(IObuff);
     TIME_MSG("jumping to tag");
 
-#if defined(HAS_SWAP_EXISTS_ACTION)
     /* If the user doesn't want to edit the file then we quit here. */
     if (swap_exists_did_quit)
       getout(1);
-#endif
   }
 }
 
@@ -1607,10 +1603,8 @@ static void read_stdin(void)
 {
   int i;
 
-#if defined(HAS_SWAP_EXISTS_ACTION)
   /* When getting the ATTENTION prompt here, use a dialog */
   swap_exists_action = SEA_DIALOG;
-#endif
   no_wait_return = TRUE;
   i = msg_didany;
   set_buflisted(TRUE);
@@ -1618,9 +1612,7 @@ static void read_stdin(void)
   no_wait_return = FALSE;
   msg_didany = i;
   TIME_MSG("reading stdin");
-#if defined(HAS_SWAP_EXISTS_ACTION)
   check_swap_exists_action();
-#endif
   /*
    * Close stdin and dup it from stderr.  Required for GPM to work
    * properly, and for running external commands.
@@ -1702,16 +1694,13 @@ static void create_windows(mparm_T *parmp)
         /* Set 'foldlevel' to 'foldlevelstart' if it's not negative. */
         if (p_fdls >= 0)
           curwin->w_p_fdl = p_fdls;
-#if defined(HAS_SWAP_EXISTS_ACTION)
         /* When getting the ATTENTION prompt here, use a dialog */
         swap_exists_action = SEA_DIALOG;
-#endif
         set_buflisted(TRUE);
 
         /* create memfile, read file */
         (void)open_buffer(FALSE, NULL, 0);
 
-#if defined(HAS_SWAP_EXISTS_ACTION)
         if (swap_exists_action == SEA_QUIT) {
           if (got_int || only_one_window()) {
             /* abort selected or quit and only one window */
@@ -1726,7 +1715,6 @@ static void create_windows(mparm_T *parmp)
           swap_exists_action = SEA_NONE;
         } else
           handle_swap_exists(NULL);
-#endif
         dorewind = TRUE;                        /* start again */
       }
       os_breakcheck();
@@ -1797,13 +1785,10 @@ static void edit_buffers(mparm_T *parmp)
       curwin->w_arg_idx = arg_idx;
       /* Edit file from arg list, if there is one.  When "Quit" selected
        * at the ATTENTION prompt close the window. */
-# ifdef HAS_SWAP_EXISTS_ACTION
       swap_exists_did_quit = FALSE;
-# endif
       (void)do_ecmd(0, arg_idx < GARGCOUNT
           ? alist_name(&GARGLIST[arg_idx]) : NULL,
           NULL, NULL, ECMD_LASTL, ECMD_HIDE, curwin);
-# ifdef HAS_SWAP_EXISTS_ACTION
       if (swap_exists_did_quit) {
         /* abort or quit selected */
         if (got_int || only_one_window()) {
@@ -1814,7 +1799,6 @@ static void edit_buffers(mparm_T *parmp)
         win_close(curwin, TRUE);
         advance = FALSE;
       }
-# endif
       if (arg_idx == GARGCOUNT - 1)
         arg_had_last = TRUE;
       ++arg_idx;
@@ -2215,7 +2199,6 @@ static void usage(void)
   mch_exit(0);
 }
 
-#if defined(HAS_SWAP_EXISTS_ACTION)
 /*
  * Check the result of the ATTENTION dialog:
  * When "Quit" selected, exit Vim.
@@ -2228,5 +2211,4 @@ static void check_swap_exists_action(void)
   handle_swap_exists(NULL);
 }
 
-#endif
 
