@@ -37,6 +37,17 @@ for details
 ==============================================================================
 2. Usage						*job-control-usage*
 
+Here's a quick one-liner that creates a job which invokes the "ls" shell
+command and prints the result:
+>
+    call jobstart('', 'ls', ['-a'])|au JobActivity * echo v:job_data|au!
+    JobActivity
+
+In the one-liner above, creating the JobActivity event handler immediately
+after the call to jobstart() is not a race because the Nvim job system will
+not publish the job result (even though it may receive it) until evaluation of
+the chained user commands (`expr1|expr2|...|exprN`) has completed.
+
 Job control is achieved by calling a combination of the |jobstart()|,
 |jobsend()| and |jobstop()| functions, and by listening to the |JobActivity|
 event. The best way to understand is with a complete example:
