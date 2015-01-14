@@ -4234,8 +4234,7 @@ int do_addsub(int command, linenr_T Prenum1)
   char_u buf2[NUMBUFLEN];
   int hex;                      /* 'X' or 'x': hex; '0': octal */
   static int hexupper = FALSE;          /* 0xABC */
-  unsigned long n;
-  long_u oldn;
+  unsigned long n, oldn;
   char_u      *ptr;
   int c;
   int length = 0;                       /* character length of the number */
