@@ -139,6 +139,18 @@ void ui_suspend(void)
   }
 }
 
+void ui_set_title(char *title)
+{
+  UI_CALL(set_title, title);
+  UI_CALL(flush);
+}
+
+void ui_set_icon(char *icon)
+{
+  UI_CALL(set_icon, icon);
+  UI_CALL(flush);
+}
+
 /*
  * Try to get the current Vim shell size.  Put the result in Rows and Columns.
  * Use the new sizes as defaults for 'columns' and 'lines'.

@@ -115,6 +115,8 @@ function Screen.new(width, height)
     _bell = false,
     _visual_bell = false,
     _suspended = true,
+    _title = nil,
+    _icon = nil,
     _attrs = {},
     _cursor = {
       enabled = true, row = 1, col = 1
@@ -304,6 +306,14 @@ end
 
 function Screen:_handle_suspend()
   self._suspended = true
+end
+
+function Screen:_handle_set_title(title)
+  self._title = title
+end
+
+function Screen:_handle_set_icon(icon)
+  self._icon = icon
 end
 
 function Screen:_clear_block(top, lines, left, columns)
