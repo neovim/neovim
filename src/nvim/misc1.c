@@ -2662,7 +2662,7 @@ void init_homedir(void)
   }
 }
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 void free_homedir(void)
 {
   free(homedir);

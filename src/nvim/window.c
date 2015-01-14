@@ -2060,7 +2060,7 @@ win_free_mem (
   return wp;
 }
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 void win_free_all(void)
 {
   int dummy;

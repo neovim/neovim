@@ -5530,7 +5530,7 @@ void alist_new(void)
   alist_init(curwin->w_alist);
 }
 
-#if !defined(UNIX) || defined(PROTO)
+#if !defined(UNIX)
 /*
  * Expand the file names in the global argument list.
  * If "fnum_list" is not NULL, use "fnum_list[fnum_len]" as a list of buffer
@@ -5623,7 +5623,7 @@ alist_add (
   ++al->al_ga.ga_len;
 }
 
-#if defined(BACKSLASH_IN_FILENAME) || defined(PROTO)
+#if defined(BACKSLASH_IN_FILENAME)
 /*
  * Adjust slashes in file names.  Called after 'shellslash' was set.
  */
@@ -6256,7 +6256,7 @@ static void ex_read(exarg_T *eap)
 
 static char_u   *prev_dir = NULL;
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 void free_cd_dir(void)
 {
   free(prev_dir);

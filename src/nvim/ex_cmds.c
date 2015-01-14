@@ -825,7 +825,7 @@ void ex_copy(linenr_T line1, linenr_T line2, linenr_T n)
 
 static char_u   *prevcmd = NULL;        /* the previous command */
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 void free_prev_shellcmd(void)
 {
   free(prevcmd);
@@ -4609,7 +4609,7 @@ void write_viminfo_sub_string(FILE *fp)
   }
 }
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 void free_old_sub(void)
 {
   free(old_sub);
@@ -6184,7 +6184,7 @@ char_u * sign_typenr2name(int typenr)
   return (char_u *)_("[Deleted]");
 }
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 /*
  * Undefine/free all signs.
  */

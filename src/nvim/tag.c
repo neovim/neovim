@@ -1981,7 +1981,7 @@ static void found_tagfile_cb(char_u *fname, void *cookie)
   GA_APPEND(char_u *, &tag_fnames, vim_strsave(fname));
 }
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 void free_tag_stuff(void)
 {
   ga_clear_strings(&tag_fnames);

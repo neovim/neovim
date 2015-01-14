@@ -627,7 +627,7 @@ void goto_buffer(exarg_T *eap, int start, int dir, int count)
 #endif
 }
 
-#if defined(HAS_SWAP_EXISTS_ACTION) || defined(PROTO)
+#if defined(HAS_SWAP_EXISTS_ACTION)
 /*
  * Handle the situation of swap_exists_action being set.
  * It is allowed for "old_curbuf" to be NULL or invalid.
@@ -2351,7 +2351,7 @@ int buflist_add(char_u *fname, int flags)
   return 0;
 }
 
-#if defined(BACKSLASH_IN_FILENAME) || defined(PROTO)
+#if defined(BACKSLASH_IN_FILENAME)
 /*
  * Adjust slashes in file names.  Called after 'shellslash' was set.
  */
@@ -2752,7 +2752,7 @@ void resettitle(void)
   mch_settitle(lasttitle, lasticon);
 }
 
-# if defined(EXITFREE) || defined(PROTO)
+# if defined(EXITFREE)
 void free_titles(void)
 {
   free(lasttitle);

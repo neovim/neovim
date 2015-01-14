@@ -3452,7 +3452,7 @@ char_u * enc_locale(void)
   return enc_canonize((char_u *)buf);
 }
 
-# if defined(USE_ICONV) || defined(PROTO)
+# if defined(USE_ICONV)
 
 
 /*
@@ -3591,7 +3591,7 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvl
   return result;
 }
 
-#  if defined(DYNAMIC_ICONV) || defined(PROTO)
+#  if defined(DYNAMIC_ICONV)
 /*
  * Dynamically load the "iconv.dll" on Win32.
  */

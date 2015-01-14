@@ -329,7 +329,7 @@ void vim_strcat(char_u *restrict to, const char_u *restrict from,
     STRCPY(to + tolen, from);
 }
 
-#if (!defined(HAVE_STRCASECMP) && !defined(HAVE_STRICMP)) || defined(PROTO)
+#if (!defined(HAVE_STRCASECMP) && !defined(HAVE_STRICMP))
 /*
  * Compare two strings, ignoring case, using current locale.
  * Doesn't work for multi-byte characters.
@@ -353,7 +353,7 @@ int vim_stricmp(const char *s1, const char *s2)
 }
 #endif
 
-#if (!defined(HAVE_STRNCASECMP) && !defined(HAVE_STRNICMP)) || defined(PROTO)
+#if (!defined(HAVE_STRNCASECMP) && !defined(HAVE_STRNICMP))
 /*
  * Compare two strings, for length "len", ignoring case, using current locale.
  * Doesn't work for multi-byte characters.

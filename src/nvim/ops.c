@@ -2293,7 +2293,7 @@ void init_yank(void)
     y_regs[i].y_array = NULL;
 }
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 void clear_registers(void)
 {
   int i;

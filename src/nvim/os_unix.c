@@ -270,7 +270,7 @@ int use_xterm_mouse(void)
   return 0;
 }
 
-#if defined(USE_FNAME_CASE) || defined(PROTO)
+#if defined(USE_FNAME_CASE)
 /*
  * Set the case of the file name, if it already exists.  This will cause the
  * file name to remain exactly the same.
@@ -326,7 +326,7 @@ int len               /* buffer size, only used when name gets longer */
 }
 #endif
 
-#if defined(HAVE_ACL) || defined(PROTO)
+#if defined(HAVE_ACL)
 # ifdef HAVE_SYS_ACL_H
 #  include <sys/acl.h>
 # endif
@@ -335,7 +335,7 @@ int len               /* buffer size, only used when name gets longer */
 # endif
 
 
-#if defined(HAVE_SELINUX) || defined(PROTO)
+#if defined(HAVE_SELINUX)
 /*
  * Copy security info from "from_file" to "to_file".
  */
@@ -437,7 +437,7 @@ int mch_nodetype(char_u *name)
   return NODE_WRITABLE;
 }
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 void mch_free_mem(void)
 {
   free(oldtitle);

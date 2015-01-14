@@ -128,7 +128,7 @@ static int undo_undoes = FALSE;
 
 static int lastmark = 0;
 
-#if defined(U_DEBUG) || defined(PROTO)
+#if defined(U_DEBUG)
 /*
  * Check the undo structures for being valid.  Print a warning when something
  * looks wrong.

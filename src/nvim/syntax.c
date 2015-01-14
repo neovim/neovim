@@ -6644,7 +6644,7 @@ do_highlight (
   need_highlight_changed = TRUE;
 }
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 void free_highlight(void)
 {
   for (int i = 0; i < highlight_ga.ga_len; ++i) {
