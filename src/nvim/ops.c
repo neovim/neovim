@@ -61,7 +61,8 @@
 #define DELETION_REGISTER 36
 #define CLIP_REGISTER 37
 
-# define CB_UNNAMEDMASK         (CB_UNNAMED | CB_UNNAMEDPLUS)
+#define CB_UNNAMEDMASK (CB_UNNAMED | CB_UNNAMEDPLUS)
+#define CB_LATEST (-1)
 /*
  * Each yank register is an array of pointers to lines.
  */
@@ -1382,10 +1383,9 @@ int op_delete(oparg_T *oap)
    * register.  For the black hole register '_' don't yank anything.
    */
   if (oap->regname != '_') {
-    bool unnamedclip = oap->regname == 0 && (cb_flags & CB_UNNAMEDMASK);
-    if (oap->regname != 0 || unnamedclip) {
+    if (oap->regname != 0) {
       /* check for read-only register */
-      if (!( valid_yank_reg(oap->regname, TRUE) || unnamedclip )) {
+      if (!( valid_yank_reg(oap->regname, TRUE) )) {
         beep_flush();
         return OK;
       }
@@ -1421,6 +1421,9 @@ int op_delete(oparg_T *oap)
       oap->regname = 0;
     }
 
+    if(oap->regname == 0 && did_yank) {
+      set_clipboard(CB_LATEST);
+    }
     /*
      * If there's too much stuff to fit in the yank register, then get a
      * confirmation before doing the delete. This is crude, but simple.
@@ -5275,40 +5278,44 @@ static void free_register(struct yankreg *reg)
 }
 
 // return target register
-static int adjust_clipboard_name(int *name) {
+static struct yankreg* adjust_clipboard_name(int *name) {
   if (*name == '*' || *name == '+') {
     if(!eval_has_provider("clipboard")) {
       EMSG("clipboard: provider is not available");
-      return -1;
+      return NULL;
     }
-    return CLIP_REGISTER;
-  } else if (*name == NUL && (cb_flags & (CB_UNNAMED | CB_UNNAMEDPLUS))) {
+    return &y_regs[CLIP_REGISTER];
+  } else if ((*name == NUL || *name == CB_LATEST) && (cb_flags & CB_UNNAMEDMASK)) {
     if(!eval_has_provider("clipboard")) {
       if (!clipboard_didwarn_unnamed) {
         msg((char_u*)"clipboard: provider not available, ignoring clipboard=unnamed[plus]");
         clipboard_didwarn_unnamed = true;
       }
-      return -1;
+      return NULL;
+    }
+    struct yankreg* target;
+    if (*name == CB_LATEST) {
+      target = y_current;
+    } else {
+      target = &y_regs[0];
     }
     if (cb_flags & CB_UNNAMEDPLUS) {
       *name = '+';
     } else {
       *name = '*';
     }
-    return 0; //unnamed
+    return target; // unnamed register
   }
   // don't do anything for other register names
-  return -1;
+  return NULL;
 }
 
 static void get_clipboard(int name)
 {
-  int ireg = adjust_clipboard_name(&name);
-  if (ireg < 0) {
+  struct yankreg* reg = adjust_clipboard_name(&name);
+  if (reg == NULL) {
     return;
   }
-
-  struct yankreg *reg = &y_regs[ireg];
   free_register(reg);
 
   list_T *args = list_alloc();
@@ -5396,12 +5403,10 @@ err:
 
 static void set_clipboard(int name)
 {
-  int ireg = adjust_clipboard_name(&name);
-  if (ireg < 0) {
+  struct yankreg* reg = adjust_clipboard_name(&name);
+  if (reg == NULL) {
     return;
   }
-
-  struct yankreg *reg = &y_regs[ireg];
 
   list_T *lines = list_alloc();
 
