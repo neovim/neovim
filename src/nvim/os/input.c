@@ -223,7 +223,8 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf,
     mouse_code = buf[5];
   }
 
-  if (mouse_code < KE_LEFTMOUSE || mouse_code > KE_RIGHTRELEASE) {
+  if (!((mouse_code >= KE_LEFTMOUSE && mouse_code <= KE_RIGHTRELEASE)
+        || (mouse_code >= KE_MOUSEDOWN && mouse_code <= KE_MOUSERIGHT))) {
     return bufsize;
   }
 
