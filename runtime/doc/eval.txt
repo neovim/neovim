@@ -1870,10 +1870,13 @@ invert( {expr})			Number  bitwise invert
 isdirectory( {directory})	Number	TRUE if {directory} is a directory
 islocked( {expr})		Number	TRUE if {expr} is locked
 items( {dict})			List	key-value pairs in {dict}
-job_close({job})		Closes a job with id {job}
-job_send({job}, {data})		Writes {data} to {job}'s stdin
-job_spawn({name}, {prog}[, {argv}])
-				Spawns {prog} as a job associated with {name}
+jobclose({job}[, {stream}])	Number	Closes a job stream(s)
+jobresize({job}, {width}, {height})
+				Number	Resize {job}'s pseudo terminal window
+jobsend({job}, {data})		Number	Writes {data} to {job}'s stdin
+jobstart({cmd}[, {opts}])	Number	Spawns {cmd} as a job
+jobstop({job})			Number	Stops a job
+jobwait({ids}[, {timeout}])	Number	Wait for a set of jobs
 join( {list} [, {sep}])		String	join {list} items into one String
 keys( {dict})			List	keys in {dict}
 len( {expr})			Number	the length of {expr}

@@ -197,7 +197,7 @@ Other options:
   'macatsui'
   'shelltype'
   'shortname'
-  'termencoding'
+  'termencoding' (Vim 7.4.852 also removed this for Windows)
   'textauto'
   'textmode'
   'toolbar'
