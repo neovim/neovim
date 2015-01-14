@@ -4,7 +4,6 @@
 
 #include "nvim/lib/klist.h"
 
-#include "nvim/types.h"
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/globals.h"
