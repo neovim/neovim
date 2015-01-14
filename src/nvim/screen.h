@@ -16,6 +16,10 @@
 #define NOT_VALID               40  /* buffer needs complete redraw */
 #define CLEAR                   50  /* screen messed up, clear it */
 
+typedef struct {
+  bool did_hlsearch;
+  matchitem_T* next;
+} iter_matches_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "screen.h.generated.h"
