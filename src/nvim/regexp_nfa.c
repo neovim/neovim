@@ -4,8 +4,10 @@
  * This file is included in "regexp.c".
  */
 
+#include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "nvim/ascii.h"
 #include "nvim/misc2.h"
@@ -4403,7 +4405,7 @@ static void nfa_restore_listids(nfa_regprog_T *prog, int *list)
   }
 }
 
-static int nfa_re_num_cmp(long_u val, int op, long_u pos)
+static bool nfa_re_num_cmp(uintmax_t val, int op, uintmax_t pos)
 {
   if (op == 1) return pos > val;
   if (op == 2) return pos < val;
@@ -5684,9 +5686,14 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       case NFA_LNUM:
       case NFA_LNUM_GT:
       case NFA_LNUM_LT:
-        result = (REG_MULTI &&
-                  nfa_re_num_cmp(t->state->val, t->state->c - NFA_LNUM,
-                      (long_u)(reglnum + reg_firstlnum)));
+        assert(t->state->val >= 0
+               && !((reg_firstlnum > 0 && reglnum > LONG_MAX - reg_firstlnum)
+                    || (reg_firstlnum <0 && reglnum < LONG_MIN + reg_firstlnum))
+               && reglnum + reg_firstlnum >= 0);
+        result = (REG_MULTI
+                  && nfa_re_num_cmp((uintmax_t)t->state->val,
+                                    t->state->c - NFA_LNUM,
+                                    (uintmax_t)(reglnum + reg_firstlnum)));
         if (result) {
           add_here = TRUE;
           add_state = t->state->out;
@@ -5696,8 +5703,12 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       case NFA_COL:
       case NFA_COL_GT:
       case NFA_COL_LT:
-        result = nfa_re_num_cmp(t->state->val, t->state->c - NFA_COL,
-            (long_u)(reginput - regline) + 1);
+        assert(t->state->val >= 0
+               && reginput >= regline
+               && (uintmax_t)(reginput - regline) <= UINTMAX_MAX - 1);
+        result = nfa_re_num_cmp((uintmax_t)t->state->val,
+                                t->state->c - NFA_COL,
+                                (uintmax_t)(reginput - regline + 1));
         if (result) {
           add_here = TRUE;
           add_state = t->state->out;
@@ -5707,13 +5718,18 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       case NFA_VCOL:
       case NFA_VCOL_GT:
       case NFA_VCOL_LT:
-        result = nfa_re_num_cmp(t->state->val, t->state->c - NFA_VCOL,
-            (long_u)win_linetabsize(
-                reg_win == NULL ? curwin : reg_win,
-                regline, (colnr_T)(reginput - regline)) + 1);
-        if (result) {
-          add_here = TRUE;
-          add_state = t->state->out;
+        {
+          uintmax_t lts = win_linetabsize(reg_win == NULL ? curwin : reg_win,
+                                          regline,
+                                          (colnr_T)(reginput - regline));
+          assert(t->state->val >= 0);
+          result = nfa_re_num_cmp((uintmax_t)t->state->val,
+                                  t->state->c - NFA_VCOL,
+                                  lts + 1);
+          if (result) {
+            add_here = TRUE;
+            add_state = t->state->out;
+          }
         }
         break;
 

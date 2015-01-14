@@ -10,6 +10,7 @@
  * misc1.c: functions that didn't seem to fit elsewhere
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -1271,7 +1272,7 @@ plines_win_nofill (
 int plines_win_nofold(win_T *wp, linenr_T lnum)
 {
   char_u      *s;
-  long col;
+  unsigned int col;
   int width;
 
   s = ml_get_buf(wp->w_buffer, lnum, FALSE);
@@ -1292,11 +1293,12 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
   width = wp->w_width - win_col_off(wp);
   if (width <= 0)
     return 32000;
-  if (col <= width)
+  if (col <= (unsigned int)width)
     return 1;
   col -= width;
   width += win_col_off2(wp);
-  return (col + (width - 1)) / width + 1;
+  assert(col <= INT_MAX && (int)col < INT_MAX - (width -1));
+  return ((int)col + (width - 1)) / width + 1;
 }
 
 /*

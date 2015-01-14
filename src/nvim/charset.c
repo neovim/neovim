@@ -791,15 +791,17 @@ int linetabsize_col(int startcol, char_u *s)
 /// @param len
 ///
 /// @return Number of characters the string will take on the screen.
-int win_linetabsize(win_T *wp, char_u *line, colnr_T len)
+unsigned int win_linetabsize(win_T *wp, char_u *line, colnr_T len)
 {
   colnr_T col = 0;
-  char_u *s;
 
-  for (s = line; *s != NUL && (len == MAXCOL || s < line + len); mb_ptr_adv(s)) {
+  for (char_u *s = line;
+       *s != NUL && (len == MAXCOL || s < line + len);
+       mb_ptr_adv(s)) {
     col += win_lbr_chartabsize(wp, line, s, col, NULL);
   }
-  return (int)col;
+
+  return (unsigned int)col;
 }
 
 /// Return TRUE if 'c' is a normal identifier character:
