@@ -96,7 +96,7 @@ struct exarg {
   char_u      *cmd;             ///< the name of the command (except for :make)
   char_u      **cmdlinep;       ///< pointer to pointer of allocated cmdline
   cmdidx_T cmdidx;              ///< the index for the command
-  long argt;                    ///< flags for the command
+  uint32_t argt;                ///< flags for the command
   int skip;                     ///< don't execute the command, only parse it
   int forceit;                  ///< TRUE if ! present
   int addr_count;               ///< the number of addresses given

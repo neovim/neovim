@@ -12,6 +12,7 @@
 
 #include <string.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <errno.h>
 #include <inttypes.h>
 
@@ -77,7 +78,7 @@ static int ex_pressedreturn = FALSE;
 
 typedef struct ucmd {
   char_u      *uc_name;         /* The command name */
-  long_u uc_argt;               /* The argument type */
+  uint32_t uc_argt;             /* The argument type */
   char_u      *uc_rep;          /* The command's replacement string */
   long uc_def;                  /* The default value for a range/count */
   int uc_compl;                 /* completion type */
@@ -1422,7 +1423,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       goto doend;
     if (*ea.cmd == '|' || (exmode_active && ea.line1 != ea.line2)) {
       ea.cmdidx = CMD_print;
-      ea.argt = RANGE+COUNT+TRLBAR;
+      ea.argt = RANGE | COUNT | TRLBAR;
       if ((errormsg = invalid_range(&ea)) == NULL) {
         correct_range(&ea);
         ex_print(&ea);
@@ -1509,7 +1510,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
    * 5. parse arguments
    */
   if (!IS_USER_CMDIDX(ea.cmdidx)) {
-    ea.argt = (long)cmdnames[(int)ea.cmdidx].cmd_argt;
+    ea.argt = cmdnames[(int)ea.cmdidx].cmd_argt;
   }
 
   if (!ea.skip) {
@@ -2204,7 +2205,7 @@ find_ucmd (
             eap->cmdidx = CMD_USER;
           else
             eap->cmdidx = CMD_USER_BUF;
-          eap->argt = (long)uc->uc_argt;
+          eap->argt = uc->uc_argt;
           eap->useridx = j;
 
           if (compl != NULL)
@@ -2470,7 +2471,7 @@ set_one_cmd_context (
    * 5. parse arguments
    */
   if (!IS_USER_CMDIDX(ea.cmdidx)) {
-    ea.argt = (long)cmdnames[(int)ea.cmdidx].cmd_argt;
+    ea.argt = cmdnames[(int)ea.cmdidx].cmd_argt;
   }
 
   arg = skipwhite(p);
@@ -4122,7 +4123,9 @@ char_u *get_command_name(expand_T *xp, int idx)
 }
 
 
-static int uc_add_command(char_u *name, size_t name_len, char_u *rep, long argt, long def, int flags, int compl, char_u *compl_arg, int force)
+static int uc_add_command(char_u *name, size_t name_len, char_u *rep,
+                          uint32_t argt, long def, int flags, int compl,
+                          char_u *compl_arg, int force)
 {
   ucmd_T      *cmd = NULL;
   char_u      *p;
@@ -4257,7 +4260,7 @@ static void uc_list(char_u *name, size_t name_len)
   int found = FALSE;
   ucmd_T      *cmd;
   int len;
-  long a;
+  uint32_t a;
   garray_T    *gap;
 
   gap = &curbuf->b_ucmds;
@@ -4265,7 +4268,7 @@ static void uc_list(char_u *name, size_t name_len)
     int i;
     for (i = 0; i < gap->ga_len; ++i) {
       cmd = USER_CMD_GA(gap, i);
-      a = (long)cmd->uc_argt;
+      a = cmd->uc_argt;
 
       /* Skip commands which don't match the requested prefix */
       if (STRNCMP(name, cmd->uc_name, name_len) != 0)
@@ -4296,7 +4299,7 @@ static void uc_list(char_u *name, size_t name_len)
       len = 0;
 
       /* Arguments */
-      switch ((int)(a & (EXTRA|NOSPC|NEEDARG))) {
+      switch (a & (EXTRA|NOSPC|NEEDARG)) {
       case 0:                     IObuff[len++] = '0'; break;
       case (EXTRA):               IObuff[len++] = '*'; break;
       case (EXTRA|NOSPC):         IObuff[len++] = '?'; break;
@@ -4374,7 +4377,7 @@ static char_u *uc_fun_cmd(void)
   return IObuff;
 }
 
-static int uc_scan_attr(char_u *attr, size_t len, long *argt, long *def, int *flags, int *compl, char_u **compl_arg)
+static int uc_scan_attr(char_u *attr, size_t len, uint32_t *argt, long *def, int *flags, int *compl, char_u **compl_arg)
 {
   char_u      *p;
 
@@ -4493,7 +4496,7 @@ static void ex_command(exarg_T *eap)
   char_u  *name;
   char_u  *end;
   char_u  *p;
-  long argt = 0;
+  uint32_t argt = 0;
   long def = -1;
   int flags = 0;
   int     compl = EXPAND_NOTHING;
@@ -5026,7 +5029,8 @@ char_u *get_user_cmd_complete(expand_T *xp, int idx)
  * copied to allocated memory and stored in "*compl_arg".
  * Returns FAIL if something is wrong.
  */
-int parse_compl_arg(char_u *value, int vallen, int *complp, long *argt, char_u **compl_arg)
+int parse_compl_arg(char_u *value, int vallen, int *complp,
+                    uint32_t *argt, char_u **compl_arg)
 {
   char_u      *arg = NULL;
   size_t arglen = 0;
