@@ -12,7 +12,6 @@ option(USE_BUNDLED "Use bundled dependencies." ON)
 
 option(USE_BUNDLED_LIBUNIBILIUM "Use the bundled libunibilium." ${USE_BUNDLED})
 option(USE_BUNDLED_LIBTERMKEY "Use the bundled libtermkey." ${USE_BUNDLED})
-option(USE_BUNDLED_LIBTICKIT "Use the bundled libtickit." ${USE_BUNDLED})
 option(USE_BUNDLED_LIBUV "Use the bundled libuv." ${USE_BUNDLED})
 option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAJIT "Use the bundled version of luajit." ${USE_BUNDLED})
@@ -64,11 +63,8 @@ set(LUAROCKS_SHA1 61a894fd5d61987bf7e7f9c3e0c5de16ba4b68c4)
 set(LIBUNIBILIUM_URL https://github.com/mauke/unibilium/archive/520abbc8b26910e2580619f669b5cc2c4ef7f864.tar.gz)
 set(LIBUNIBILIUM_SHA1 c546e5e8861380f5c109a256f25c93419e4076bf)
 
-set(LIBTERMKEY_URL https://github.com/neovim/libtermkey/archive/7b3bdafdf589d08478f2493273d4d75636ecc183.tar.gz)
-set(LIBTERMKEY_SHA1 28bfe54dfd9269910a132b51dee7725a2121578d)
-
-set(LIBTICKIT_URL https://github.com/neovim/libtickit/archive/33f4afb3891df05955429acbf5b406dfe87ec22b.tar.gz)
-set(LIBTICKIT_SHA1 3aab459b9fb3cd83e85ac2e08f05e5f162c8c9d2)
+set(LIBTERMKEY_URL https://github.com/neovim/libtermkey/archive/8c0cb7108cc63218ea19aa898968eede19e19603.tar.gz)
+set(LIBTERMKEY_SHA1 54e8b6914dab10d4467d2a563f80053a99849fcb)
 
 if(USE_BUNDLED_LIBUNIBILIUM)
   ExternalProject_Add(libunibilium
@@ -113,30 +109,6 @@ if(USE_BUNDLED_LIBTERMKEY)
                                 install)
   list(APPEND THIRD_PARTY_DEPS libtermkey)
   add_dependencies(libtermkey libunibilium)
-endif()
-
-if(USE_BUNDLED_LIBTICKIT)
-  ExternalProject_Add(libtickit
-    PREFIX ${DEPS_BUILD_DIR}
-    URL ${LIBTICKIT_URL}
-    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/libtickit
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
-      -DPREFIX=${DEPS_BUILD_DIR}
-      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/libtickit
-      -DURL=${LIBTICKIT_URL}
-      -DEXPECTED_SHA1=${LIBTICKIT_SHA1}
-      -DTARGET=libtickit
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
-    CONFIGURE_COMMAND ""
-    BUILD_IN_SOURCE 1
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
-                                PREFIX=${DEPS_INSTALL_DIR}
-                                PKG_CONFIG_PATH=${DEPS_LIB_DIR}/pkgconfig
-                                CFLAGS=-fPIC
-                                install)
-  list(APPEND THIRD_PARTY_DEPS libtickit)
-  add_dependencies(libtickit libtermkey)
 endif()
 
 if(USE_BUNDLED_LIBUV)
