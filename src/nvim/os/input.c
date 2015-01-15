@@ -233,7 +233,7 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf,
   // find mouse coordinates, and it would be too expensive to refactor this
   // now.
   int col, row, advance;
-  if (sscanf(*ptr, "<%d,%d>%n", &col, &row, &advance)) {
+  if (sscanf(*ptr, "<%d,%d>%n", &col, &row, &advance) != EOF && advance) {
     if (col >= 0 && row >= 0) {
       mouse_row = row;
       mouse_col = col;
