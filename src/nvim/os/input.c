@@ -187,14 +187,20 @@ size_t input_enqueue(String keys)
     unsigned int new_size = trans_special((uint8_t **)&ptr, buf, false);
 
     if (!new_size) {
+      if (*ptr == '<') {
+        // Invalid key sequence, skip until the next '>' or until *end
+        do {
+          ptr++;
+        } while (ptr < end && *ptr != '>');
+        ptr++;
+        continue;
+      }
       // copy the character unmodified
       *buf = (uint8_t)*ptr++;
       new_size = 1;
     }
 
     new_size = handle_mouse_event(&ptr, buf, new_size);
-    // TODO(tarruda): Don't produce past unclosed '<' characters, except if
-    // there's a lot of characters after the '<'
     rbuffer_write(input_buffer, (char *)buf, new_size);
   }
 
@@ -217,7 +223,8 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf,
     mouse_code = buf[5];
   }
 
-  if (mouse_code < KE_LEFTMOUSE || mouse_code > KE_RIGHTRELEASE) {
+  if (!((mouse_code >= KE_LEFTMOUSE && mouse_code <= KE_RIGHTRELEASE)
+        || (mouse_code >= KE_MOUSEDOWN && mouse_code <= KE_MOUSERIGHT))) {
     return bufsize;
   }
 
@@ -226,7 +233,7 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf,
   // find mouse coordinates, and it would be too expensive to refactor this
   // now.
   int col, row, advance;
-  if (sscanf(*ptr, "<%d,%d>%n", &col, &row, &advance)) {
+  if (sscanf(*ptr, "<%d,%d>%n", &col, &row, &advance) != EOF && advance) {
     if (col >= 0 && row >= 0) {
       mouse_row = row;
       mouse_col = col;

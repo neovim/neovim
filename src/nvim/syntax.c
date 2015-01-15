@@ -45,6 +45,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax_defs.h"
 #include "nvim/term.h"
+#include "nvim/ui.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 
@@ -6036,6 +6037,7 @@ int load_colors(char_u *name)
   apply_autocmds(EVENT_COLORSCHEME, name, curbuf->b_fname, FALSE, curbuf);
 
   recursive = FALSE;
+  ui_refresh();
 
   return retval;
 }
@@ -6438,8 +6440,7 @@ do_highlight (
                     HL_TABLE()[idx].sg_cterm &= ~HL_BOLD;
                 }
                 color &= 7;             /* truncate to 8 colors */
-              } else if (t_colors == 16 || t_colors == 88
-                         || t_colors == 256) {
+              } else if (t_colors == 16 || t_colors == 88 || t_colors == 256) {
                 /*
                  * Guess: if the termcap entry ends in 'm', it is
                  * probably an xterm-like terminal.  Use the changed
@@ -6449,7 +6450,7 @@ do_highlight (
                   p = T_CAF;
                 else
                   p = T_CSF;
-                if (*p != NUL && *(p + STRLEN(p) - 1) == 'm')
+                if (abstract_ui || (*p != NUL && *(p + STRLEN(p) - 1) == 'm'))
                   switch (t_colors) {
                   case 16:
                     color = color_numbers_8[i];
@@ -6632,6 +6633,10 @@ do_highlight (
     if (is_normal_group) {
       HL_TABLE()[idx].sg_term_attr = 0;
       HL_TABLE()[idx].sg_cterm_attr = 0;
+      if (abstract_ui) {
+        // If the normal group has changed, it is simpler to refresh every UI
+        ui_refresh();
+      }
     } else
       set_hl_attr(idx);
     HL_TABLE()[idx].sg_scriptID = current_SID;
@@ -6860,7 +6865,7 @@ int hl_combine_attr(int char_attr, int prim_attr)
   if (char_attr <= HL_ALL && prim_attr <= HL_ALL)
     return char_attr | prim_attr;
 
-  if (t_colors > 1) {
+  if (abstract_ui || t_colors > 1) {
     if (char_attr > HL_ALL)
       char_aep = syn_cterm_attr2entry(char_attr);
     if (char_aep != NULL)
@@ -6924,7 +6929,7 @@ int syn_attr2attr(int attr)
 {
   attrentry_T *aep;
 
-  if (t_colors > 1)
+  if (abstract_ui || t_colors > 1)
     aep = syn_cterm_attr2entry(attr);
   else
     aep = syn_term_attr2entry(attr);
@@ -7194,9 +7199,10 @@ set_hl_attr (
    * For the color term mode: If there are other than "normal"
    * highlighting attributes, need to allocate an attr number.
    */
-  if (sgp->sg_cterm_fg == 0 && sgp->sg_cterm_bg == 0)
+  if (sgp->sg_cterm_fg == 0 && sgp->sg_cterm_bg == 0
+      && sgp->sg_rgb_fg == -1 && sgp->sg_rgb_bg == -1) {
     sgp->sg_cterm_attr = sgp->sg_cterm;
-  else {
+  } else {
     at_en.ae_attr = abstract_ui ? sgp->sg_gui : sgp->sg_cterm;
     at_en.ae_u.cterm.fg_color = sgp->sg_cterm_fg;
     at_en.ae_u.cterm.bg_color = sgp->sg_cterm_bg;
@@ -7351,7 +7357,7 @@ int syn_id2attr(int hl_id)
   hl_id = syn_get_final_id(hl_id);
   sgp = &HL_TABLE()[hl_id - 1];             /* index is ID minus one */
 
-  if (t_colors > 1)
+  if (abstract_ui || t_colors > 1)
     attr = sgp->sg_cterm_attr;
   else
     attr = sgp->sg_term_attr;

@@ -261,10 +261,7 @@ int main(int argc, char **argv)
 
   if (params.want_full_screen && !silent_mode) {
     if (embedded_mode) {
-      // In embedded mode don't do terminal-related initializations, assume an
-      // initial screen size of 80x20
-      full_screen = true;
-      screen_resize(80, 20, false);
+      // embedded mode implies abstract_ui
       termcapinit((uint8_t *)"abstract_ui");
     } else {
       // set terminal name and get terminal capabilities (will set full_screen)
@@ -278,7 +275,9 @@ int main(int argc, char **argv)
   event_init();
 
   if (abstract_ui) {
+    full_screen = true;
     t_colors = 256;
+    T_CCO = (uint8_t *)"256";
   } else {
     // Print a warning if stdout is not a terminal TODO(tarruda): Remove this
     // check once the new terminal UI is implemented

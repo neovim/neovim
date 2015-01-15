@@ -83,6 +83,21 @@ local eq, dedent = helpers.eq, helpers.dedent
 local Screen = {}
 Screen.__index = Screen
 
+local debug_screen
+
+
+function Screen.debug(command)
+  if not command then
+    command = 'pynvim -n -g -c '
+  end
+  command = command .. request('vim_eval', '$NVIM_LISTEN_ADDRESS')
+  if debug_screen then
+    debug_screen:close()
+  end
+  debug_screen = io.popen(command, 'r')
+  debug_screen:read()
+end
+
 function Screen.new(width, height)
   if not width then
     width = 53
@@ -90,24 +105,22 @@ function Screen.new(width, height)
   if not height then
     height = 14
   end
-  return setmetatable({
+  local self = setmetatable({
+    title = '',
+    icon = '',
+    bell = false,
+    visual_bell = false,
+    suspended = false,
     _default_attr_ids = nil,
-    _width = width,
-    _height = height,
-    _rows = new_cell_grid(width, height),
     _mode = 'normal',
     _mouse_enabled = true,
-    _bell = false,
-    _visual_bell = false,
-    _suspended = true,
     _attrs = {},
     _cursor = {
       enabled = true, row = 1, col = 1
-    },
-    _scroll_region = {
-      top = 1, bot = height, left = 1, right = width
     }
   }, Screen)
+  self:_handle_resize(width, height)
+  return self
 end
 
 function Screen:set_default_attr_ids(attr_ids)
@@ -115,13 +128,15 @@ function Screen:set_default_attr_ids(attr_ids)
 end
 
 function Screen:attach()
-  request('attach_ui', self._width, self._height)
-  self._suspended = false
+  request('ui_attach', self._width, self._height, true)
 end
 
 function Screen:detach()
-  request('detach_ui')
-  self._suspended = true
+  request('ui_detach')
+end
+
+function Screen:try_resize(columns, rows)
+  request('ui_try_resize', columns, rows)
 end
 
 function Screen:expect(expected, attr_ids)
@@ -134,7 +149,7 @@ function Screen:expect(expected, attr_ids)
     table.insert(expected_rows, row)
   end
   local ids = attr_ids or self._default_attr_ids
-  self:_wait(function()
+  self:wait(function()
     for i = 1, self._height do
       local expected_row = expected_rows[i]
       local actual_row = self:_row_repr(self._rows[i], ids)
@@ -146,7 +161,7 @@ function Screen:expect(expected, attr_ids)
   end)
 end
 
-function Screen:_wait(check, timeout)
+function Screen:wait(check, timeout)
   local err, checked = false
   local function notification_cb(method, args)
     assert(method == 'redraw')
@@ -181,16 +196,30 @@ function Screen:_redraw(updates)
 end
 
 function Screen:_handle_resize(width, height)
-  self._rows = new_cell_grid(width, height)
+  local rows = {}
+  for i = 1, height do
+    local cols = {}
+    for j = 1, width do
+      table.insert(cols, {text = ' ', attrs = {}})
+    end
+    table.insert(rows, cols)
+  end
+  self._rows = rows
+  self._width = width
+  self._height = height
+  self._scroll_region = {
+    top = 1, bot = height, left = 1, right = width
+  }
 end
 
 function Screen:_handle_clear()
-  self:_clear_block(1, self._height, 1, self._width)
+  self:_clear_block(self._scroll_region.top, self._scroll_region.bot,
+                    self._scroll_region.left, self._scroll_region.right)
 end
 
 function Screen:_handle_eol_clear()
   local row, col = self._cursor.row, self._cursor.col
-  self:_clear_block(row, 1, col, self._width - col)
+  self:_clear_block(row, 1, col, self._scroll_region.right - col)
 end
 
 function Screen:_handle_cursor_goto(row, col)
@@ -250,11 +279,14 @@ function Screen:_handle_scroll(count)
   for i = start, stop, step do
     local target = self._rows[i]
     local source = self._rows[i + count]
-    self:_copy_row_section(target, source, left, right)
+    for j = left, right do
+      target[j].text = source[j].text
+      target[j].attrs = source[j].attrs
+    end
   end
 
   -- clear invalid rows
-  for i = stop + 1, stop + count, step do
+  for i = stop + step, stop + count, step do
     self:_clear_row_section(i, left, right)
   end
 end
@@ -271,15 +303,31 @@ function Screen:_handle_put(str)
 end
 
 function Screen:_handle_bell()
-  self._bell = true
+  self.bell = true
 end
 
 function Screen:_handle_visual_bell()
-  self._visual_bell = true
+  self.visual_bell = true
+end
+
+function Screen:_handle_update_fg(fg)
+  self._fg = fg
+end
+
+function Screen:_handle_update_bg(bg)
+  self._bg = bg
 end
 
 function Screen:_handle_suspend()
-  self._suspended = true
+  self.suspended = true
+end
+
+function Screen:_handle_set_title(title)
+  self.title = title
+end
+
+function Screen:_handle_set_icon(icon)
+  self.icon = icon
 end
 
 function Screen:_clear_block(top, lines, left, columns)
@@ -293,13 +341,6 @@ function Screen:_clear_row_section(rownum, startcol, stopcol)
   for i = startcol, stopcol do
     row[i].text = ' '
     row[i].attrs = {}
-  end
-end
-
-function Screen:_copy_row_section(target, source, startcol, stopcol)
-  for i = startcol, stopcol do
-    target[i].text = source[i].text
-    target[i].attrs = source[i].attrs
   end
 end
 
@@ -351,18 +392,6 @@ function backward_find_meaningful(tbl, from)
     end
   end
   return from
-end
-
-function new_cell_grid(width, height)
-  local rows = {}
-  for i = 1, height do
-    local cols = {}
-    for j = 1, width do
-      table.insert(cols, {text = ' ', attrs = {}})
-    end
-    table.insert(rows, cols)
-  end
-  return rows
 end
 
 function get_attr_id(attr_ids, attrs)

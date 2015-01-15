@@ -5971,7 +5971,7 @@ void screen_stop_highlight(void)
  */
 void reset_cterm_colors(void)
 {
-  if (t_colors > 1) {
+  if (!abstract_ui && t_colors > 1) {
     /* set Normal cterm colors */
     if (cterm_normal_fg_color > 0 || cterm_normal_bg_color > 0) {
       out_str(T_OP);
@@ -6150,8 +6150,7 @@ void screen_fill(int start_row, int end_row, int start_col, int end_col, int c1,
     return;
 
   /* it's a "normal" terminal when not in a GUI or cterm */
-  norm_term = (
-    t_colors <= 1);
+  norm_term = (!abstract_ui && t_colors <= 1);
   for (row = start_row; row < end_row; ++row) {
     if (has_mbyte
         ) {
@@ -6675,8 +6674,8 @@ static void linecopy(int to, int from, win_T *wp)
  */
 int can_clear(char_u *p)
 {
-  return *p != NUL && (t_colors <= 1
-                       || cterm_normal_bg_color == 0 || *T_UT != NUL);
+  return abstract_ui || (*p != NUL && (t_colors <= 1
+        || cterm_normal_bg_color == 0 || *T_UT != NUL));
 }
 
 /*
@@ -8186,8 +8185,13 @@ void screen_resize(int width, int height, int mustset)
     Columns = width;
   }
   check_shellsize();
+  height = Rows;
+  width = Columns;
 
   if (abstract_ui) {
+    // Clear the output buffer to ensure UIs don't receive redraw command meant
+    // for invalid screen sizes.
+    out_buf_clear();
     ui_resize(width, height);
   } else {
     mch_set_shellsize();

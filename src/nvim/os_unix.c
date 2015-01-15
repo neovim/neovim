@@ -43,6 +43,7 @@
 #include "nvim/syntax.h"
 #include "nvim/tempfile.h"
 #include "nvim/term.h"
+#include "nvim/ui.h"
 #include "nvim/types.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
@@ -181,22 +182,26 @@ void mch_settitle(char_u *title, char_u *icon)
    * Note: if "t_ts" is set, title is set with escape sequence rather
    *	     than x11 calls, because the x11 calls don't always work
    */
-  if ((type || *T_TS != NUL) && title != NULL) {
+  if ((type || *T_TS != NUL || abstract_ui) && title != NULL) {
     if (oldtitle == NULL
         )                       /* first call but not in GUI, save title */
       (void)get_x11_title(FALSE);
 
-    if (*T_TS != NUL)                   /* it's OK if t_fs is empty */
+    if (abstract_ui) {
+      ui_set_title((char *)title);
+    } else if (*T_TS != NUL)                   /* it's OK if t_fs is empty */
       term_settitle(title);
     did_set_title = TRUE;
   }
 
-  if ((type || *T_CIS != NUL) && icon != NULL) {
+  if ((type || *T_CIS != NUL || abstract_ui) && icon != NULL) {
     if (oldicon == NULL
         )                       /* first call, save icon */
       get_x11_icon(FALSE);
 
-    if (*T_CIS != NUL) {
+    if (abstract_ui) {
+      ui_set_icon((char *)icon);
+    } else if (*T_CIS != NUL) {
       out_str(T_CIS);                           /* set icon start */
       out_str_nf(icon);
       out_str(T_CIE);                           /* set icon end */
