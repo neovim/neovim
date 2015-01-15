@@ -1027,7 +1027,10 @@ list of buffers. |unlisted-buffer|
 		Actually, the buffer isn't completely deleted, it is removed
 		from the buffer list |unlisted-buffer| and option values,
 		variables and mappings/abbreviations for the buffer are
-		cleared.
+		cleared. Examples: >
+                    :.,$-bdelete   "delete buffers from the current one to
+                                   " last but one
+                    :%bdelete      " delete all buffers
 
 :bdelete[!] {bufname}						*E93* *E94*
 		Like ":bdelete[!] [N]", but buffer given by name.  Note that a
@@ -1051,7 +1054,10 @@ list of buffers. |unlisted-buffer|
 		Like |:bdelete|, but really delete the buffer.  Everything
 		related to the buffer is lost.  All marks in this buffer
 		become invalid, option settings are lost, etc.  Don't use this
-		unless you know what you are doing.
+		unless you know what you are doing. Examples: >
+                    :.+,$wipeout    " wipe out all buffers after the current
+                                    " one
+                    :%bwipeout      " wipe out all buffers
 
 :[N]bun[load][!]				*:bun* *:bunload* *E515*
 :bun[load][!] [N]
