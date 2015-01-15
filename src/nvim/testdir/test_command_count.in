@@ -1,0 +1,50 @@
+Test for user command counts	    vim: set ft=vim :
+
+STARTTEST
+:let g:lines = []
+:so tiny.vim
+:com -range RangeLines :call add(g:lines, 'RangeLines '.<line1>.' '.<line2>)
+:com -range -addr=arguments RangeArguments :call add(g:lines, 'RangeArguments '.<line1>.' '.<line2>)
+:com -range=% -addr=arguments RangeArgumentsAll :call add(g:lines, 'RangeArgumentsAll '.<line1>.' '.<line2>)
+:com -range -addr=loaded_buffers RangeLoadedBuffers :call add(g:lines, 'RangeLoadedBuffers '.<line1>.' '.<line2>)
+:com -range=% -addr=loaded_buffers RangeLoadedBuffersAll :call add(g:lines, 'RangeLoadedBuffersAll '.<line1>.' '.<line2>)
+:com -range -addr=buffers RangeBuffers :call add(g:lines, 'RangeBuffers '.<line1>.' '.<line2>)
+:com -range=% -addr=buffers RangeBuffersAll :call add(g:lines, 'RangeBuffersAll '.<line1>.' '.<line2>)
+:com -range -addr=windows RangeWindows :call add(g:lines, 'RangeWindows '.<line1>.' '.<line2>)
+:com -range=% -addr=windows RangeWindowsAll :call add(g:lines, 'RangeWindowsAll '.<line1>.' '.<line2>)
+:com -range -addr=tabs RangeTabs :call add(g:lines, 'RangeTabs '.<line1>.' '.<line2>)
+:com -range=% -addr=tabs RangeTabsAll :call add(g:lines, 'RangeTabsAll '.<line1>.' '.<line2>)
+:set hidden
+:arga a b c d
+:argdo echo "loading buffers"
+:argu 3
+:.-,$-RangeArguments
+:%RangeArguments
+:RangeArgumentsAll
+:N
+:.RangeArguments
+:split|split|split|split
+:3wincmd w
+:.,$RangeWindows
+:%RangeWindows
+:RangeWindowsAll
+:only
+:blast|bd
+:.,$RangeLoadedBuffers
+:%RangeLoadedBuffers
+:RangeLoadedBuffersAll
+:.,$RangeBuffers
+:%RangeBuffers
+:RangeBuffersAll
+:tabe|tabe|tabe|tabe
+:normal 2gt
+:.,$RangeTabs
+:%RangeTabs
+:RangeTabsAll
+:1tabonly
+:e! test.out
+:call append(0, g:lines)
+:w|qa!
+ENDTEST
+
+
