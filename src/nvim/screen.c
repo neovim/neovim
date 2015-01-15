@@ -8185,6 +8185,8 @@ void screen_resize(int width, int height, int mustset)
     Columns = width;
   }
   check_shellsize();
+  height = Rows;
+  width = Columns;
 
   if (abstract_ui) {
     // Clear the output buffer to ensure UIs don't receive redraw command meant
