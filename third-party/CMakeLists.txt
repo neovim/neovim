@@ -73,9 +73,9 @@ set(LIBTERMKEY_URL https://github.com/neovim/libtermkey/archive/7b3bdafdf589d084
 set(LIBTERMKEY_SHA1 28bfe54dfd9269910a132b51dee7725a2121578d)
 set(LIBTERMKEY_MD5 f0bac9c2467cc80c821be937ea5c13bc)
 
-set(LIBTICKIT_URL https://github.com/neovim/libtickit/archive/0430ba2f43fdf1c31bca66def52a2537c581ade5.tar.gz)
-set(LIBTICKIT_SHA1 732b145a4dab06e6f1b40a352424f808730726bf)
-set(LIBTICKIT_MD5 3fcb635e572851472fc5009709d980fe)
+set(LIBTICKIT_URL https://github.com/neovim/libtickit/archive/33f4afb3891df05955429acbf5b406dfe87ec22b.tar.gz)
+set(LIBTICKIT_SHA1 3aab459b9fb3cd83e85ac2e08f05e5f162c8c9d2)
+set(LIBTICKIT_MD5 19ee9271c16716620d0906db74158ec6)
 
 if(USE_BUNDLED_LIBUNIBILIUM)
   ExternalProject_Add(libunibilium
