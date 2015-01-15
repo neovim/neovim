@@ -32,7 +32,7 @@ local ADDR_LINES            =  0
 local ADDR_WINDOWS          =  1
 local ADDR_ARGUMENTS        =  2
 local ADDR_LOADED_BUFFERS   =  3
-local ADDR_UNLOADED_BUFFERS =  4
+local ADDR_BUFFERS          =  4
 local ADDR_TABS             =  5
 
 -- The following table is described in ex_cmds_defs.h file.
@@ -154,7 +154,7 @@ return {
   {
     command='buffer',
     flags=bit.bor(BANG, RANGE, NOTADR, BUFNAME, BUFUNL, COUNT, EXTRA, EDITCMD, TRLBAR),
-    addr_type=ADDR_UNLOADED_BUFFERS,
+    addr_type=ADDR_BUFFERS,
     func='ex_buffer',
   },
   {
@@ -286,7 +286,7 @@ return {
   {
     command='bwipeout',
     flags=bit.bor(BANG, RANGE, NOTADR, BUFNAME, BUFUNL, COUNT, EXTRA, TRLBAR),
-    addr_type=ADDR_UNLOADED_BUFFERS,
+    addr_type=ADDR_BUFFERS,
     func='ex_bunload',
   },
   {
@@ -2200,7 +2200,7 @@ return {
   {
     command='sbuffer',
     flags=bit.bor(BANG, RANGE, NOTADR, BUFNAME, BUFUNL, COUNT, EXTRA, EDITCMD, TRLBAR),
-    addr_type=ADDR_UNLOADED_BUFFERS,
+    addr_type=ADDR_BUFFERS,
     func='ex_buffer',
   },
   {
