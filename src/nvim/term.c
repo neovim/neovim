@@ -1488,7 +1488,7 @@ set_mouse_termcode (
   add_termcode(name, s, FALSE);
 }
 
-# if (defined(UNIX) && defined(FEAT_MOUSE_TTY)) || defined(PROTO)
+# if (defined(UNIX) && defined(FEAT_MOUSE_TTY))
 void 
 del_mouse_termcode (
     char_u n                  /* KS_MOUSE, KS_NETTERM_MOUSE or KS_DEC_MOUSE */
@@ -1705,7 +1705,7 @@ static char_u term_7to8bit(char_u *p)
 }
 
 
-#if !defined(HAVE_TGETENT) || defined(PROTO)
+#if !defined(HAVE_TGETENT)
 
 char_u *tltoa(unsigned long i)
 {
@@ -1949,7 +1949,7 @@ void term_delete_lines(int line_count)
   OUT_STR(tgoto((char *)T_CDL, 0, line_count));
 }
 
-#if defined(HAVE_TGETENT) || defined(PROTO)
+#if defined(HAVE_TGETENT)
 void term_set_winpos(int x, int y)
 {
   /* Can't handle a negative value here */
@@ -2014,7 +2014,7 @@ static void term_color(char_u *s, int n)
     OUT_STR(tgoto((char *)s, 0, n));
 }
 
-#if defined(UNIX) || defined(MACOS_X) || defined(PROTO)
+#if defined(UNIX) || defined(MACOS_X)
 /*
  * Generic function to set window title, using t_ts and t_fs.
  */

@@ -500,7 +500,7 @@ void eval_init(void)
   job_event_pool = kmp_init(JobEventPool);
 }
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 void eval_clear(void)
 {
   struct vimvar   *p;
@@ -4848,19 +4848,12 @@ list_equal (
   return item1 == NULL && item2 == NULL;
 }
 
-#if defined(PROTO)
 /*
  * Return the dictitem that an entry in a hashtable points to.
  */
 dictitem_T *dict_lookup(hashitem_T *hi)
 {
   return HI2DI(hi);
-}
-#endif
-
-dictitem_T * dict_lookup(hashitem_T *hi)
-{
-    return HI2DI(hi);
 }
 
 /*
@@ -18050,7 +18043,7 @@ static ufunc_T *find_func(char_u *name)
   return NULL;
 }
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 void free_all_functions(void)
 {
   hashitem_T  *hi;

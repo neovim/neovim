@@ -636,14 +636,12 @@ readfile (
 #endif
   }
 
-#if defined(HAS_SWAP_EXISTS_ACTION)
   /* If "Quit" selected at ATTENTION dialog, don't load the file */
   if (swap_exists_action == SEA_QUIT) {
     if (!read_buffer && !read_stdin)
       close(fd);
     return FAIL;
   }
-#endif
 
   ++no_wait_return;         /* don't wait for return yet */
 
@@ -5149,7 +5147,7 @@ void write_lnum_adjust(linenr_T offset)
     curbuf->b_no_eol_lnum += offset;
 }
 
-#if defined(BACKSLASH_IN_FILENAME) || defined(PROTO)
+#if defined(BACKSLASH_IN_FILENAME)
 /*
  * Convert all backslashes in fname to forward slashes in-place.
  */
@@ -5547,7 +5545,7 @@ void do_augroup(char_u *arg, int del_group)
   }
 }
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 void free_all_autocmds(void)
 {
   for (current_augroup = -1; current_augroup < augroups.ga_len;
@@ -7454,7 +7452,7 @@ file_pat_to_reg_pat (
   return reg_pat;
 }
 
-#if defined(EINTR) || defined(PROTO)
+#if defined(EINTR)
 /*
  * Version of read() that retries when interrupted by EINTR (possibly
  * by a SIGWINCH).

@@ -1359,7 +1359,7 @@ void ex_emenu(exarg_T *eap)
 
 #if defined(FEAT_GUI_MSWIN) \
   || defined(FEAT_GUI_GTK) \
-  || defined(FEAT_BEVAL_TIP) || defined(PROTO)
+  || defined(FEAT_BEVAL_TIP)
 /*
  * Given a menu descriptor, e.g. "File.New", find it in the menu hierarchy.
  */

@@ -825,7 +825,7 @@ void ex_copy(linenr_T line1, linenr_T line2, linenr_T n)
 
 static char_u   *prevcmd = NULL;        /* the previous command */
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 void free_prev_shellcmd(void)
 {
   free(prevcmd);
@@ -2978,9 +2978,7 @@ do_ecmd (
       lnum = curwin->w_cursor.lnum;
     topline = curwin->w_topline;
     if (!oldbuf) {                          /* need to read the file */
-#if defined(HAS_SWAP_EXISTS_ACTION)
       swap_exists_action = SEA_DIALOG;
-#endif
       curbuf->b_flags |= BF_CHECK_RO;       /* set/reset 'ro' flag */
 
       /*
@@ -2989,11 +2987,9 @@ do_ecmd (
       if (should_abort(open_buffer(FALSE, eap, readfile_flags)))
         retval = FAIL;
 
-#if defined(HAS_SWAP_EXISTS_ACTION)
       if (swap_exists_action == SEA_QUIT)
         retval = FAIL;
       handle_swap_exists(old_curbuf);
-#endif
     } else {
       /* Read the modelines, but only to set window-local options.  Any
        * buffer-local options have already been set and may have been
@@ -4609,7 +4605,7 @@ void write_viminfo_sub_string(FILE *fp)
   }
 }
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 void free_old_sub(void)
 {
   free(old_sub);
@@ -6184,7 +6180,7 @@ char_u * sign_typenr2name(int typenr)
   return (char_u *)_("[Deleted]");
 }
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 /*
  * Undefine/free all signs.
  */

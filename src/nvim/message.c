@@ -10,8 +10,6 @@
  * message.c: functions for displaying messages on the command line
  */
 
-#define MESSAGE_FILE            /* don't include prototype for smsg() */
-
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>

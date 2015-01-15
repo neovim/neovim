@@ -3000,7 +3000,7 @@ static void ml_lineadd(buf_T *buf, int count)
   }
 }
 
-#if defined(HAVE_READLINK) || defined(PROTO)
+#if defined(HAVE_READLINK)
 /*
  * Resolve a symlink in the last component of a file name.
  * Note that f_resolve() does it for every part of the path, we don't do that
@@ -3367,9 +3367,7 @@ findswapname (
         * for the current file, and the buffer was not recovered. */
         if (differ == FALSE && !(curbuf->b_flags & BF_RECOVERED)
             && vim_strchr(p_shm, SHM_ATTENTION) == NULL) {
-#if defined(HAS_SWAP_EXISTS_ACTION)
           int choice = 0;
-#endif
 
 #ifdef UNIX
           process_still_running = FALSE;
@@ -3427,7 +3425,6 @@ findswapname (
             redraw_all_later(NOT_VALID);
           }
 
-#if defined(HAS_SWAP_EXISTS_ACTION)
           if (choice > 0) {
             switch (choice) {
             case 1:
@@ -3454,7 +3451,6 @@ findswapname (
             if (!os_file_exists(fname))
               break;
           } else
-#endif
           {
             MSG_PUTS("\n");
             if (msg_silent == 0)

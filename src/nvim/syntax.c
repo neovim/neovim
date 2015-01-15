@@ -224,8 +224,6 @@ struct name_list {
 #define ATTR_OFF (HL_ALL + 1)
 
 
-#define SYN_NAMELEN     50              /* maximum length of a syntax name */
-
 static char *(spo_name_tab[SPO_COUNT]) =
 {"ms=", "me=", "hs=", "he=", "rs=", "re=", "lc="};
 
@@ -6072,8 +6070,6 @@ do_highlight (
   int error = FALSE;
   int color;
   int is_normal_group = FALSE;                  /* "Normal" group */
-# define is_menu_group 0
-# define is_tooltip_group 0
 
   /*
    * If no argument, list current highlighting.
@@ -6649,7 +6645,7 @@ do_highlight (
   need_highlight_changed = TRUE;
 }
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 void free_highlight(void)
 {
   for (int i = 0; i < highlight_ga.ga_len; ++i) {

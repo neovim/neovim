@@ -106,8 +106,6 @@
 #include "nvim/os/os.h"
 #include "nvim/arabic.h"
 
-#define WINBYTE BYTE
-
 typedef struct {
   int rangeStart;
   int rangeEnd;
@@ -364,10 +362,6 @@ enc_alias_table[] =
   {"mac-roman",       IDX_MACROMAN},
   {NULL,              0}
 };
-
-#ifndef CP_UTF8
-# define CP_UTF8 65001  /* magic number from winnls.h */
-#endif
 
 /*
  * Find encoding "name" in the list of canonical encoding names.
@@ -3452,7 +3446,7 @@ char_u * enc_locale(void)
   return enc_canonize((char_u *)buf);
 }
 
-# if defined(USE_ICONV) || defined(PROTO)
+# if defined(USE_ICONV)
 
 
 /*
@@ -3591,7 +3585,7 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvl
   return result;
 }
 
-#  if defined(DYNAMIC_ICONV) || defined(PROTO)
+#  if defined(DYNAMIC_ICONV)
 /*
  * Dynamically load the "iconv.dll" on Win32.
  */

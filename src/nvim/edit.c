@@ -5800,7 +5800,7 @@ void set_last_insert(int c)
   last_insert_skip = 0;
 }
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 void free_last_insert(void)
 {
   free(last_insert);

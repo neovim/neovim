@@ -3228,7 +3228,7 @@ static garray_T backpos = GA_EMPTY_INIT_VALUE;
 #define REGSTACK_INITIAL        2048
 #define BACKPOS_INITIAL         64
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 void free_regexp_stuff(void)
 {
   ga_clear(&regstack);

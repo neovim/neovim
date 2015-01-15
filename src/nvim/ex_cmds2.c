@@ -2546,7 +2546,7 @@ void ex_scriptnames(exarg_T *eap)
     }
 }
 
-# if defined(BACKSLASH_IN_FILENAME) || defined(PROTO)
+# if defined(BACKSLASH_IN_FILENAME)
 /*
  * Fix slashes in the list of script names for 'shellslash'.
  */
@@ -2579,7 +2579,7 @@ char_u *get_scriptname(scid_T id)
   return SCRIPT_ITEM(id).sn_name;
 }
 
-# if defined(EXITFREE) || defined(PROTO)
+# if defined(EXITFREE)
 void free_scriptnames()
 {
 # define FREE_SCRIPTNAME(item) free((item)->sn_name)
@@ -3204,7 +3204,7 @@ static char_u **find_locales(void)
   return (char_u **)locales_ga.ga_data;
 }
 
-#  if defined(EXITFREE) || defined(PROTO)
+#  if defined(EXITFREE)
 void free_locales(void)
 {
   int i;

@@ -2237,7 +2237,7 @@ void set_number_default(char *name, long val)
     options[opt_idx].def_val[VI_DEFAULT] = (char_u *)val;
 }
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 /*
  * Free all options.
  */

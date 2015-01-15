@@ -440,7 +440,7 @@ void do_outofmem_msg(size_t size)
   }
 }
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 
 #include "nvim/file_search.h"
 #include "nvim/buffer.h"

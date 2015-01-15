@@ -403,9 +403,9 @@ char_u *save_absolute_path(const char_u *name)
 }
 
 
-#if !defined(NO_EXPANDPATH) || defined(PROTO)
+#if !defined(NO_EXPANDPATH)
 
-#if defined(UNIX) || defined(USE_UNIXFILENAME) || defined(PROTO)
+#if defined(UNIX) || defined(USE_UNIXFILENAME)
 /*
  * Unix style wildcard expansion code.
  * It's here because it's used both for Unix and Mac.
@@ -1622,7 +1622,7 @@ int same_directory(char_u *f1, char_u *f2)
          && pathcmp((char *)ffname, (char *)f2, (int)(t1 - ffname)) == 0;
 }
 
-#if !defined(NO_EXPANDPATH) || defined(PROTO)
+#if !defined(NO_EXPANDPATH)
 /*
  * Compare path "p[]" to "q[]".
  * If "maxlen" >= 0 compare "p[maxlen]" to "q[maxlen]"

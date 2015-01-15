@@ -1972,7 +1972,7 @@ static void realloc_cmdbuff(int len)
 
 static char_u   *arshape_buf = NULL;
 
-# if defined(EXITFREE) || defined(PROTO)
+# if defined(EXITFREE)
 void free_cmdline_buf(void)
 {
   free(arshape_buf);

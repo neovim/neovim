@@ -294,7 +294,7 @@ void restore_search_patterns(void)
   }
 }
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 void free_search_patterns(void)
 {
   free(spats[0].pat);
