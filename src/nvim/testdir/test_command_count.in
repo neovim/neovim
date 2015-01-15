@@ -3,7 +3,7 @@ Test for user command counts	    vim: set ft=vim :
 STARTTEST
 :let g:lines = []
 :so tiny.vim
-:com -range RangeLines :call add(g:lines, 'RangeLines '.<line1>.' '.<line2>)
+:com -range=% RangeLines :call add(g:lines, 'RangeLines '.<line1>.' '.<line2>)
 :com -range -addr=arguments RangeArguments :call add(g:lines, 'RangeArguments '.<line1>.' '.<line2>)
 :com -range=% -addr=arguments RangeArgumentsAll :call add(g:lines, 'RangeArgumentsAll '.<line1>.' '.<line2>)
 :com -range -addr=loaded_buffers RangeLoadedBuffers :call add(g:lines, 'RangeLoadedBuffers '.<line1>.' '.<line2>)
@@ -42,6 +42,12 @@ STARTTEST
 :%RangeTabs
 :RangeTabsAll
 :1tabonly
+:s/\n/\r\r\r\r\r/
+:2ma<
+:$-ma>
+:'<,'>RangeLines
+:com -range=% -buffer LocalRangeLines :call add(g:lines, 'LocalRangeLines '.<line1>.' '.<line2>)
+:'<,'>LocalRangeLines
 :e! test.out
 :call append(0, g:lines)
 :w|qa!

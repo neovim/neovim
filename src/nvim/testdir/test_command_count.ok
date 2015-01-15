@@ -14,4 +14,6 @@ RangeBuffersAll 1 5
 RangeTabs 2 5
 RangeTabs 1 5
 RangeTabsAll 1 5
+RangeLines 2 5
+LocalRangeLines 2 5
 
