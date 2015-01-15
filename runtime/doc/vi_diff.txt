@@ -919,8 +919,6 @@ Only Vim is able to accept options in between and after the file names.
 
 -X		Vim: Don't connect to the X server.
 
--y		Vim: Start in easy mode, like |evim|.
-
 -Z		Vim: restricted mode
 
 @{cmdfile}	Vile: use {cmdfile} as startup file.

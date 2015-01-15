@@ -7,11 +7,6 @@
 "     for Unix:  ~/.vimrc
 "     for MS-DOS and Win32:  $VIM\_vimrc
 
-" When started as "evim", evim.vim will already have done these settings.
-if v:progname =~? "evim"
-  finish
-endif
-
 " Use Vim settings, rather than Vi settings (much better!).
 " This must be first, because it changes other options as a side effect.
 set nocompatible

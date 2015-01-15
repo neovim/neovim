@@ -254,33 +254,27 @@ HTMLS = \
 
 MANPAGES = \
 	manpages/vim.man \
-	manpages/evim.man \
 	manpages/vimdiff.man \
 	manpages/vimtutor.man \
 	manpages/xxd.man \
 	manpages/de/vim-de.man \
 	manpages/fr/vim-fr.man \
-	manpages/fr/evim-fr.man \
 	manpages/fr/vimdiff-fr.man \
 	manpages/fr/vimtutor-fr.man \
 	manpages/fr/xxd-fr.man \
 	manpages/pl/vim-pl.man \
-	manpages/pl/evim-pl.man \
 	manpages/pl/vimdiff-pl.man \
 	manpages/pl/vimtutor-pl.man \
 	manpages/pl/xxd-pl.man \
 	manpages/it/vim-it.man \
-	manpages/it/evim-it.man \
 	manpages/it/vimdiff-it.man \
 	manpages/it/vimtutor-it.man \
 	manpages/it/xxd-it.man \
 	manpages/ru/vim-ru.man \
-	manpages/ru/evim-ru.man \
 	manpages/ru/vimdiff-ru.man \
 	manpages/ru/vimtutor-ru.man \
 	manpages/ru/xxd-ru.man \
 	manpages/ja/vim-ja.man \
-	manpages/ja/evim-ja.man \
 	manpages/ja/vimdiff-ja.man \
 	manpages/ja/vimtutor-ja.man \
 	manpages/ja/xxd-ja.man

@@ -434,8 +434,6 @@ someone supplied, you can't do this.  Do delete the files manually, here is an
 example for when "/usr/local" was used as the root: >
 
 	rm -rf /usr/local/share/vim/vim61
-	rm /usr/local/bin/eview
-	rm /usr/local/bin/evim
 	rm /usr/local/bin/ex
 	rm /usr/local/bin/gview
 	rm /usr/local/bin/gvim
@@ -451,8 +449,6 @@ example for when "/usr/local" was used as the root: >
 	rm /usr/local/bin/vimdiff
 	rm /usr/local/bin/vimtutor
 	rm /usr/local/bin/xxd
-	rm /usr/local/man/man1/eview.1
-	rm /usr/local/man/man1/evim.1
 	rm /usr/local/man/man1/ex.1
 	rm /usr/local/man/man1/gview.1
 	rm /usr/local/man/man1/gvim.1
