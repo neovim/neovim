@@ -1426,10 +1426,13 @@ static char_u * do_one_cmd(char_u **cmdlinep,
    * is equal to the lower.
    */
 
-  if (ea.cmdidx != CMD_USER && ea.cmdidx != CMD_SIZE && ea.cmdidx >= 0) {
+  if (ea.cmdidx != CMD_SIZE
+      && ea.cmdidx != CMD_USER 
+      && ea.cmdidx != CMD_USER_BUF
+      && ea.cmdidx >= 0) {
     ea.addr_type = cmdnames[(int)ea.cmdidx].cmd_addr_type;
   } else {
-    if (ea.cmdidx != CMD_USER) {
+    if (ea.cmdidx != CMD_USER && ea.cmdidx != CMD_USER_BUF) {
       ea.addr_type = ADDR_LINES;
       // ea.addr_type for user commands is set by find_ucmd
     }
