@@ -904,7 +904,6 @@ struct matchitem {
   int priority;             /* match priority */
   char_u      *pattern;     /* pattern to highlight */
   int hlg_id;               /* highlight group ID */
-  regmmatch_T match;        /* regexp program for pattern */
   posmatch_T pos;           // position matches
   match_T hl;               /* struct for doing the actual highlighting */
 };

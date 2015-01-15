@@ -877,7 +877,6 @@ static void win_update(win_T *wp)
        */
       iter_matches_start(wp, &istate);
       while (iter_matches_next(false, &istate, &cur, &shl)) {
-          // XXX: orginal had cur->match.regprog when applicable, difference?
         if (shl->rm.regprog != NULL
             && re_multiline(shl->rm.regprog)) {
           top_to_mod = TRUE;
@@ -5562,7 +5561,6 @@ static void init_search_hl(win_T *wp)
   iter_matches_start(wp, &istate);
   while (iter_matches_next(false, &istate, &cur, &shl)) {
     if( cur != NULL) {
-      cur->hl.rm = cur->match;
       if (cur->hlg_id == 0)
         cur->hl.attr = 0;
       else
@@ -5701,18 +5699,7 @@ next_search_hl (
 
     shl->lnum = lnum;
     if (shl->rm.regprog != NULL) {
-      /* Remember whether shl->rm is using a copy of the regprog in
-       * cur->match. */
-      bool regprog_is_copy = (shl != &search_hl
-                              && cur != NULL
-                              && shl == &cur->hl
-                              && cur->match.regprog == cur->hl.rm.regprog);
-
       nmatched = vim_regexec_multi(&shl->rm, win, shl->buf, lnum, matchcol, &(shl->tm));
-      /* Copy the regprog, in case it got freed and recompiled. */
-      if (regprog_is_copy) {
-        cur->match.regprog = cur->hl.rm.regprog;
-      }
       if (called_emsg || got_int) {
         // Error while handling regexp: stop using this regexp.
         if (shl == &search_hl) {
@@ -5720,6 +5707,7 @@ next_search_hl (
           vim_regfree(shl->rm.regprog);
           SET_NO_HLSEARCH(TRUE);
         }
+        // FIXME: error handling for a matchadd pattern
         shl->rm.regprog = NULL;
         shl->lnum = 0;
         got_int = FALSE; // avoid the "Type :quit to exit Vim" message

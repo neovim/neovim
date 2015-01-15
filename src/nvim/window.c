@@ -5333,9 +5333,9 @@ int match_add(win_T *wp, char_u *grp, char_u *pat, int prio, int id, list_T *pos
   m->priority = prio;
   m->pattern = pat == NULL ? NULL: vim_strsave(pat);
   m->hlg_id = hlg_id;
-  m->match.regprog = regprog;
-  m->match.rmm_ic = FALSE;
-  m->match.rmm_maxcol = 0;
+  m->hl.rm.regprog = regprog;
+  m->hl.rm.rmm_ic = FALSE;
+  m->hl.rm.rmm_maxcol = 0;
 
   // Set up position matches
   if (pos_list != NULL)
@@ -5480,7 +5480,7 @@ int match_delete(win_T *wp, int id, int perr)
     wp->w_match_head = cur->next;
   else
     prev->next = cur->next;
-  vim_regfree(cur->match.regprog);
+  vim_regfree(cur->hl.rm.regprog);
   free(cur->pattern);
   if (cur->pos.toplnum != 0) {
     if (wp->w_buffer->b_mod_set) {
@@ -5512,7 +5512,7 @@ void clear_matches(win_T *wp)
 
   while (wp->w_match_head != NULL) {
     m = wp->w_match_head->next;
-    vim_regfree(wp->w_match_head->match.regprog);
+    vim_regfree(wp->w_match_head->hl.rm.regprog);
     free(wp->w_match_head->pattern);
     free(wp->w_match_head);
     wp->w_match_head = m;
