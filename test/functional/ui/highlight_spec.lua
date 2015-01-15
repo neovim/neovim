@@ -1,7 +1,30 @@
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
 local clear, feed, nvim = helpers.clear, helpers.feed, helpers.nvim
-local execute = helpers.execute
+local execute, request, eq = helpers.execute, helpers.request, helpers.eq
+
+
+describe('color scheme compatibility', function()
+  before_each(function()
+    clear()
+  end)
+
+  it('t_Co is set to 256 by default', function()
+    eq('256', request('vim_eval', '&t_Co'))
+    request('vim_set_option', 't_Co', '88')
+    eq('88', request('vim_eval', '&t_Co'))
+  end)
+
+  it('emulates gui_running when a rgb UI is attached', function()
+    eq(0, request('vim_eval', 'has("gui_running")'))
+    local screen = Screen.new()
+    screen:attach()
+    eq(1, request('vim_eval', 'has("gui_running")'))
+    screen:detach()
+    eq(0, request('vim_eval', 'has("gui_running")'))
+  end)
+end)
+
 
 describe('Default highlight groups', function()
   -- Test the default attributes for highlight groups shown by the :highlight
@@ -24,7 +47,6 @@ describe('Default highlight groups', function()
   after_each(function()
     screen:detach()
   end)
-
   it('window status bar', function()
     screen:set_default_attr_ids({
       [1] = {reverse = true, bold = true},  -- StatusLine

@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
 local clear, feed, nvim = helpers.clear, helpers.feed, helpers.nvim
+local insert, execute = helpers.insert, helpers.execute
 
 describe('Mouse input', function()
   local screen, hlgroup_colors
@@ -153,5 +154,88 @@ describe('Mouse input', function()
       nd to continue^          |
     ]])
     feed('<cr>')
+  end)
+
+  it('mouse whell will target the hovered window', function()
+    feed('ggdG')
+    insert([[
+    Inserting
+    text
+    with
+    many
+    lines
+    to
+    test
+    mouse scrolling
+    ]])
+    screen:try_resize(53, 14)
+    execute('sp', 'vsp')
+    screen:expect([[
+      lines                     |lines                     |
+      to                        |to                        |
+      test                      |test                      |
+      mouse scrolling           |mouse scrolling           |
+      ^                         |                          |
+      ~                         |~                         |
+      [No Name] [+]              [No Name] [+]             |
+      to                                                   |
+      test                                                 |
+      mouse scrolling                                      |
+                                                           |
+      ~                                                    |
+      [No Name] [+]                                        |
+      :vsp                                                 |
+    ]])
+    feed('<MouseUp><0,0>')
+    screen:expect([[
+      mouse scrolling           |lines                     |
+      ^                         |to                        |
+      ~                         |test                      |
+      ~                         |mouse scrolling           |
+      ~                         |                          |
+      ~                         |~                         |
+      [No Name] [+]              [No Name] [+]             |
+      to                                                   |
+      test                                                 |
+      mouse scrolling                                      |
+                                                           |
+      ~                                                    |
+      [No Name] [+]                                        |
+                                                           |
+    ]])
+    feed('<MouseDown><27,0>')
+    screen:expect([[
+      mouse scrolling           |text                      |
+      ^                         |with                      |
+      ~                         |many                      |
+      ~                         |lines                     |
+      ~                         |to                        |
+      ~                         |test                      |
+      [No Name] [+]              [No Name] [+]             |
+      to                                                   |
+      test                                                 |
+      mouse scrolling                                      |
+                                                           |
+      ~                                                    |
+      [No Name] [+]                                        |
+                                                           |
+    ]])
+    feed('<MouseDown><27,7><MouseDown>')
+    screen:expect([[
+      mouse scrolling           |text                      |
+      ^                         |with                      |
+      ~                         |many                      |
+      ~                         |lines                     |
+      ~                         |to                        |
+      ~                         |test                      |
+      [No Name] [+]              [No Name] [+]             |
+      Inserting                                            |
+      text                                                 |
+      with                                                 |
+      many                                                 |
+      lines                                                |
+      [No Name] [+]                                        |
+                                                           |
+    ]])
   end)
 end)
