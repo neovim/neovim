@@ -38,6 +38,26 @@ local function basic_register_test()
   expect([[
     some text, stuff and some more
     random text]])
+
+  -- deleting line or word uses "1/"- and doesn't clobber "0
+  -- and deleting word to unnamed doesn't clobber "1
+  feed('ggyyjdddw"0p"1p"-P')
+  expect([[
+    text, stuff and some more
+    some text, stuff and some more
+    some random text]])
+
+  -- delete line doesn't clobber "-
+  feed('dd"-P')
+  expect([[
+    text, stuff and some more
+    some some text, stuff and some more]])
+
+  -- deleting a word to named ("a) updates "1 (and not "-)
+  feed('gg"adwj"1P^"-P')
+  expect([[
+    , stuff and some more
+    some textsome some text, stuff and some more]])
   reset()
 end
 
