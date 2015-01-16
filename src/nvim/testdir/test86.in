@@ -255,14 +255,10 @@ EOF
 :py f=l[0]
 :delfunction New
 :py ee('f(1, 2, 3)')
-:if has('float')
-:   let l=[0.0]
-:   py l=vim.bindeval('l')
-:   py l.extend([0.0])
-:   $put =string(l)
-:else
-:   $put ='[0.0, 0.0]'
-:endif
+:let l=[0.0]
+:py l=vim.bindeval('l')
+:py l.extend([0.0])
+:$put =string(l)
 :let messages=[]
 :delfunction DictNew
 py <<EOF
@@ -328,12 +324,8 @@ EOF
 :$put =string(l)
 :let d=pyeval('{"a": "b", "c": 1, "d": ["e"]}')
 :$put =sort(items(d))
-:if has('float')
-:   let f=pyeval('0.0')
-:   $put =string(f)
-:else
-:   $put ='0.0'
-:endif
+:let f=pyeval('0.0')
+:$put =string(f)
 :" Invalid values:
 :for e in ['"\0"', '{"\0": 1}', 'undefined_name', 'vim']
 :   try

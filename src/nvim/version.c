@@ -68,7 +68,6 @@ static char *(features[]) = {
   "+farsi",
   "+file_in_path",
   "+find_in_path",
-  "+float",
   "+folding",
   "-footer",
 

@@ -43,7 +43,6 @@ Number		A 32 or 64 bit signed number.  |expr-number| *Number*
 		Examples:  -123  0x10  0177
 
 Float		A floating point number. |floating-point-format| *Float*
-		{only when compiled with the |+float| feature}
 		Examples: 123.456  1.15e-6  -1.1e3
 
 String		A NUL terminated string of 8-bit unsigned characters (bytes).
@@ -964,7 +963,6 @@ contain digits.
 {exp} is the exponent, power of 10.
 Only a decimal point is accepted, not a comma.	No matter what the current
 locale is.
-{only when compiled with the |+float| feature}
 
 Examples:
 	123.456
@@ -2067,7 +2065,6 @@ abs({expr})							*abs()*
 <			5.456  >
 			echo abs(-4)
 <			4
-		{only available when compiled with the |+float| feature}
 
 
 acos({expr})							*acos()*
@@ -2080,7 +2077,6 @@ acos({expr})							*acos()*
 <			1.570796 >
 			:echo acos(-0.5)
 <			2.094395
-		{only available when compiled with the |+float| feature}
 
 
 add({list}, {expr})					*add()*
@@ -2154,7 +2150,6 @@ asin({expr})						*asin()*
 <			0.927295 >
 			:echo asin(-0.5)
 <			-0.523599
-		{only available when compiled with the |+float| feature}
 
 
 atan({expr})						*atan()*
@@ -2166,7 +2161,6 @@ atan({expr})						*atan()*
 <			1.560797 >
 			:echo atan(-4.01)
 <			-1.326405
-		{only available when compiled with the |+float| feature}
 
 
 atan2({expr1}, {expr2})					*atan2()*
@@ -2178,7 +2172,6 @@ atan2({expr1}, {expr2})					*atan2()*
 <			-0.785398 >
 			:echo atan2(1, -1)
 <			2.356194
-		{only available when compiled with the |+float| feature}
 
 
 							*browse()*
@@ -2362,7 +2355,6 @@ ceil({expr})							*ceil()*
 <			-5.0  >
 			echo ceil(4.0)
 <			4.0
-		{only available when compiled with the |+float| feature}
 
 changenr()						*changenr()*
 		Return the number of the most recent change.  This is the same
@@ -2547,7 +2539,6 @@ cos({expr})						*cos()*
 <			0.862319 >
 			:echo cos(-4.01)
 <			-0.646043
-		{only available when compiled with the |+float| feature}
 
 
 cosh({expr})						*cosh()*
@@ -2559,9 +2550,8 @@ cosh({expr})						*cosh()*
 <			1.127626 >
 			:echo cosh(-0.5)
 <			-1.127626
-		{only available when compiled with the |+float| feature}
 
-		
+
 count({comp}, {expr} [, {ic} [, {start}]])			*count()*
 		Return the number of times an item with value {expr} appears
 		in |List| or |Dictionary| {comp}.
@@ -2849,7 +2839,6 @@ exp({expr})						*exp()*
 <			7.389056 >
 			:echo exp(-1)
 <			0.367879
-		{only available when compiled with the |+float| feature}
 
 
 expand({expr} [, {nosuf} [, {list}]])				*expand()*
@@ -3074,7 +3063,6 @@ float2nr({expr})					*float2nr()*
 <			-2147483647  >
 			echo float2nr(1.0e-100)
 <			0
-		{only available when compiled with the |+float| feature}
 
 
 floor({expr})							*floor()*
@@ -3088,8 +3076,7 @@ floor({expr})							*floor()*
 <			-6.0  >
 			echo floor(4.0)
 <			4.0
-		{only available when compiled with the |+float| feature}
-		
+
 
 fmod({expr1}, {expr2})					*fmod()*
 		Return the remainder of {expr1} / {expr2}, even if the
@@ -3104,7 +3091,6 @@ fmod({expr1}, {expr2})					*fmod()*
 <			0.13 >
 			:echo fmod(-12.33, 1.22)
 <			-0.13
-		{only available when compiled with |+float| feature}
 
 
 fnameescape({string})					*fnameescape()*
@@ -4195,7 +4181,6 @@ log({expr})						*log()*
 <			2.302585 >
 			:echo log(exp(5))
 <			5.0
-		{only available when compiled with the |+float| feature}
 
 
 log10({expr})						*log10()*
@@ -4206,16 +4191,15 @@ log10({expr})						*log10()*
 <			3.0 >
 			:echo log10(0.01)
 <			-2.0
-		{only available when compiled with the |+float| feature}
-		
+
+
 luaeval({expr}[, {expr}])					*luaeval()*
 		Evaluate Lua expression {expr} and return its result converted 
 		to Vim data structures. Second {expr} may hold additional 
 		argument accessible as _A inside first {expr}.
 		Strings are returned as they are.
 		Boolean objects are converted to numbers.
-		Numbers are converted to |Float| values if vim was compiled 
-		with |+float| and to numbers otherwise.
+		Numbers are converted to |Float| values.
 		Dictionaries and lists obtained by vim.eval() are returned 
 		as-is.
 		Other objects are returned as zero without any errors.
@@ -4649,8 +4633,7 @@ pow({x}, {y})						*pow()*
 <			65536.0 >
 			:echo pow(32, 0.20)
 <			2.0
-		{only available when compiled with the |+float| feature}
-		
+
 prevnonblank({lnum})					*prevnonblank()*
 		Return the line number of the first line at or above {lnum}
 		that is not blank.  Example: >
@@ -5089,7 +5072,6 @@ round({expr})							*round()*
 <			5.0 >
 			echo round(-4.5)
 <			-5.0
-		{only available when compiled with the |+float| feature}
 
 rpcnotify({channel}, {event}[, {args}...])		  {Nvim} *rpcnotify()*
 		Sends {event} to {channel} via |msgpack-rpc| and returns
@@ -5682,8 +5664,7 @@ sin({expr})						*sin()*
 <			-0.506366 >
 			:echo sin(-4.01)
 <			0.763301
-		{only available when compiled with the |+float| feature}
-		
+
 
 sinh({expr})						*sinh()*
 		Return the hyperbolic sine of {expr} as a |Float| in the range
@@ -5694,7 +5675,6 @@ sinh({expr})						*sinh()*
 <			0.521095 >
 			:echo sinh(-0.9)
 <			-1.026517
-		{only available when compiled with the |+float| feature}
 
 
 sort({list} [, {func} [, {dict}]])			*sort()* *E702*
@@ -5836,8 +5816,7 @@ sqrt({expr})						*sqrt()*
 			:echo sqrt(-4.01)
 <			nan
 		"nan" may be different, it depends on system libraries.
-		{only available when compiled with the |+float| feature}
-		
+
 
 str2float( {expr})					*str2float()*
 		Convert String {expr} to a Float.  This mostly works the same
@@ -5851,7 +5830,6 @@ str2float( {expr})					*str2float()*
 		12.0.  You can strip out thousands separators with
 		|substitute()|: >
 			let f = str2float(substitute(text, ',', '', 'g'))
-<		{only available when compiled with the |+float| feature}
 
 
 str2nr( {expr} [, {base}])				*str2nr()*
@@ -6304,7 +6282,6 @@ tan({expr})						*tan()*
 <			0.648361 >
 			:echo tan(-4.01)
 <			-1.181502
-		{only available when compiled with the |+float| feature}
 
 
 tanh({expr})						*tanh()*
@@ -6316,7 +6293,6 @@ tanh({expr})						*tanh()*
 <			0.462117 >
 			:echo tanh(-1)
 <			-0.761594
-		{only available when compiled with the |+float| feature}
 
 
 tolower({expr})						*tolower()*
@@ -6354,10 +6330,9 @@ trunc({expr})							*trunc()*
 <			-5.0  >
 			echo trunc(4.0)
 <			4.0
-		{only available when compiled with the |+float| feature}
-		
-							*type()*
-type({expr})	The result is a Number, depending on the type of {expr}:
+
+type({expr})							*type()*
+		The result is a Number, depending on the type of {expr}:
 			Number:	    0
 			String:	    1
 			Funcref:    2

@@ -75,12 +75,12 @@ use of "-" and "_".
 			This sets $LC_TIME.
 			Without an argument both are set, and additionally
 			$LANG is set.
-			When compiled with the |+float| feature the LC_NUMERIC
-			value will always be set to "C", so that floating
-			point numbers use '.' as the decimal point.
-			This will make a difference for items that depend on
-			the language (some messages, time and date format).
-			Not fully supported on all systems
+			The LC_NUMERIC value will always be set to "C" so
+			that floating point numbers use '.' as the decimal
+			point.  This will make a difference for items that
+			depend on the language (some messages, time and date
+			format).
+			Not fully supported on all systems.
 			If this fails there will be an error message.  If it
 			succeeds there is no message.  Example: >
 				:language
