@@ -2,10 +2,6 @@ Test for floating point and logical operators.
 
 STARTTEST
 :so small.vim
-:if !has("float")
-:  e! test.ok
-:  wq! test.out
-:endif
 :"
 :$put =printf('%f', 123.456)
 :$put =printf('%e', 123.456)
