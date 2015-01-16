@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <string.h>
 #include <inttypes.h>
+#include <stdint.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
@@ -726,8 +727,7 @@ void ex_hardcopy(exarg_T *eap)
           if (got_int || settings.user_abort)
             goto print_fail;
 
-          assert(prtpos.bytes_printed == 0
-                 || prtpos.bytes_printed * 100 > prtpos.bytes_printed);
+          assert(prtpos.bytes_printed <= SIZE_MAX / 100);
           sprintf((char *)IObuff, _("Printing page %d (%zu%%)"),
                   page_count + 1 + side,
                   prtpos.bytes_printed * 100 / bytes_to_print);

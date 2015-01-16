@@ -1695,7 +1695,9 @@ intmax_t getdigits(char_u **pp)
 int getdigits_int(char_u **pp)
 {
   intmax_t number = getdigits(pp);
+#if SIZEOF_INTMAX_T > SIZEOF_INT
   assert(number >= INT_MIN && number <= INT_MAX);
+#endif
   return (int)number;
 }
 
@@ -1705,7 +1707,9 @@ int getdigits_int(char_u **pp)
 long getdigits_long(char_u **pp)
 {
   intmax_t number = getdigits(pp);
+#if SIZEOF_INTMAX_T > SIZEOF_LONG
   assert(number >= LONG_MIN && number <= LONG_MAX);
+#endif
   return (long)number;
 }
 
