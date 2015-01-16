@@ -42,6 +42,7 @@
 #include "nvim/misc2.h"
 #include "nvim/garray.h"
 #include "nvim/move.h"
+#include "nvim/mouse.h"
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
@@ -58,6 +59,8 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
+#include "nvim/os/input.h"
+#include "nvim/os/time.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "misc1.c.generated.h"
@@ -522,7 +525,7 @@ open_line (
           if (*p == COM_RIGHT || *p == COM_LEFT)
             c = *p++;
           else if (VIM_ISDIGIT(*p) || *p == '-')
-            off = getdigits(&p);
+            off = getdigits_int(&p);
           else
             ++p;
         }
@@ -1840,7 +1843,7 @@ void changed(void)
        * and don't let the emsg() set msg_scroll. */
       if (need_wait_return && emsg_silent == 0) {
         out_flush();
-        ui_delay(2000L, true);
+        os_delay(2000L, true);
         wait_return(TRUE);
         msg_scroll = save_msg_scroll;
       }
@@ -1855,7 +1858,7 @@ void changed(void)
  */
 void changed_int(void)
 {
-  curbuf->b_changed = TRUE;
+  curbuf->b_changed = true;
   ml_setflags(curbuf);
   check_status(curbuf);
   redraw_tabline = TRUE;
@@ -1879,7 +1882,7 @@ void changed_bytes(linenr_T lnum, colnr_T col)
   if (curwin->w_p_diff) {
     linenr_T wlnum;
 
-    FOR_ALL_WINDOWS(wp) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_p_diff && wp != curwin) {
         redraw_win_later(wp, VALID);
         wlnum = diff_lnum_win(lnum, wp);
@@ -1900,7 +1903,7 @@ static void changedOneline(buf_T *buf, linenr_T lnum)
       buf->b_mod_bot = lnum + 1;
   } else {
     /* set the area that must be redisplayed to one line */
-    buf->b_mod_set = TRUE;
+    buf->b_mod_set = true;
     buf->b_mod_top = lnum;
     buf->b_mod_bot = lnum + 1;
     buf->b_mod_xlines = 0;
@@ -1975,7 +1978,7 @@ changed_lines (
      * displaying. */
     linenr_T wlnum;
 
-    FOR_ALL_WINDOWS(wp) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_p_diff && wp != curwin) {
         redraw_win_later(wp, VALID);
         wlnum = diff_lnum_win(lnum, wp);
@@ -2013,7 +2016,7 @@ changed_lines_buf (
     buf->b_mod_xlines += xtra;
   } else {
     /* set the area that must be redisplayed */
-    buf->b_mod_set = TRUE;
+    buf->b_mod_set = true;
     buf->b_mod_top = lnum;
     buf->b_mod_bot = lnume + xtra;
     buf->b_mod_xlines = xtra;
@@ -2063,7 +2066,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
         /* This is the first of a new sequence of undo-able changes
          * and it's at some distance of the last change.  Use a new
          * position in the changelist. */
-        curbuf->b_new_change = FALSE;
+        curbuf->b_new_change = false;
 
         if (curbuf->b_changelistlen == JUMPLISTSIZE) {
           /* changelist is full: remove oldest entry */
@@ -2195,7 +2198,7 @@ unchanged (
 )
 {
   if (buf->b_changed || (ff && file_ff_differs(buf, FALSE))) {
-    buf->b_changed = 0;
+    buf->b_changed = false;
     ml_setflags(buf);
     if (ff)
       save_file_ff(buf);
@@ -2212,7 +2215,7 @@ unchanged (
  */
 void check_status(buf_T *buf)
 {
-  FOR_ALL_WINDOWS(wp) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer == buf && wp->w_status_height) {
       wp->w_redr_status = TRUE;
       if (must_redraw < VALID) {
@@ -2226,8 +2229,8 @@ void check_status(buf_T *buf)
  * If the file is readonly, give a warning message with the first change.
  * Don't do this for autocommands.
  * Don't use emsg(), because it flushes the macro buffer.
- * If we have undone all changes b_changed will be FALSE, but "b_did_warn"
- * will be TRUE.
+ * If we have undone all changes b_changed will be false, but "b_did_warn"
+ * will be true.
  * Careful: may trigger autocommands that reload the buffer.
  */
 void 
@@ -2238,7 +2241,7 @@ change_warning (
 {
   static char *w_readonly = N_("W10: Warning: Changing a readonly file");
 
-  if (curbuf->b_did_warn == FALSE
+  if (curbuf->b_did_warn == false
       && curbufIsChanged() == 0
       && !autocmd_busy
       && curbuf->b_p_ro) {
@@ -2261,9 +2264,9 @@ change_warning (
     (void)msg_end();
     if (msg_silent == 0 && !silent_mode) {
       out_flush();
-      ui_delay(1000L, true);       /* give the user time to think about it */
+      os_delay(1000L, true);       /* give the user time to think about it */
     }
-    curbuf->b_did_warn = TRUE;
+    curbuf->b_did_warn = true;
     redraw_cmdline = FALSE;     /* don't redraw and erase the message */
     if (msg_row < Rows - 1)
       showmode();
@@ -2284,8 +2287,6 @@ int ask_yesno(char_u *str, int direct)
   int r = ' ';
   int save_State = State;
 
-  if (exiting)                  /* put terminal in raw mode for this question */
-    settmode(TMODE_RAW);
   ++no_wait_return;
 #ifdef USE_ON_FLY_SCROLL
   dont_scroll = TRUE;           /* disallow scrolling here */
@@ -2383,7 +2384,7 @@ int get_keystroke(void)
 
     /* First time: blocking wait.  Second time: wait up to 100ms for a
      * terminal code to complete. */
-    n = ui_inchar(buf + len, maxlen, len == 0 ? -1L : 100L, 0);
+    n = os_inchar(buf + len, maxlen, len == 0 ? -1L : 100L, 0);
     if (n > 0) {
       /* Replace zero and CSI by a special key code. */
       n = fix_input_buffer(buf + len, n, FALSE);
@@ -2661,7 +2662,7 @@ void init_homedir(void)
   }
 }
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 void free_homedir(void)
 {
   free(homedir);
@@ -3328,32 +3329,35 @@ void prepare_to_exit(void)
  */
 void preserve_exit(void)
 {
+  // 'true' when we are sure to exit, e.g., after a deadly signal
+  static bool really_exiting = false;
+
   // Prevent repeated calls into this method.
   if (really_exiting) {
     exit(2);
   }
 
-  really_exiting = TRUE;
+  really_exiting = true;
 
   prepare_to_exit();
 
   out_str(IObuff);
-  screen_start();                   /* don't know where cursor is now */
+  screen_start();                   // don't know where cursor is now
   out_flush();
 
-  ml_close_notmod();                /* close all not-modified buffers */
+  ml_close_notmod();                // close all not-modified buffers
 
   FOR_ALL_BUFFERS(buf) {
     if (buf->b_ml.ml_mfp != NULL && buf->b_ml.ml_mfp->mf_fname != NULL) {
       OUT_STR("Vim: preserving files...\n");
-      screen_start();               /* don't know where cursor is now */
+      screen_start();               // don't know where cursor is now
       out_flush();
-      ml_sync_all(FALSE, FALSE);        /* preserve all swap files */
+      ml_sync_all(false, false);    // preserve all swap files
       break;
     }
   }
 
-  ml_close_all(FALSE);              /* close all memfiles, without deleting */
+  ml_close_all(false);              // close all memfiles, without deleting
 
   OUT_STR("Vim: Finished.\n");
 
@@ -3362,8 +3366,8 @@ void preserve_exit(void)
 
 /*
  * Check for CTRL-C pressed, but only once in a while.
- * Should be used instead of ui_breakcheck() for functions that check for
- * each line in the file.  Calling ui_breakcheck() each time takes too much
+ * Should be used instead of os_breakcheck() for functions that check for
+ * each line in the file.  Calling os_breakcheck() each time takes too much
  * time, because it can be a system call.
  */
 
@@ -3377,7 +3381,7 @@ void line_breakcheck(void)
 {
   if (++breakcheck_count >= BREAKCHECK_SKIP) {
     breakcheck_count = 0;
-    ui_breakcheck();
+    os_breakcheck();
   }
 }
 
@@ -3388,7 +3392,7 @@ void fast_breakcheck(void)
 {
   if (++breakcheck_count >= BREAKCHECK_SKIP * 10) {
     breakcheck_count = 0;
-    ui_breakcheck();
+    os_breakcheck();
   }
 }
 
@@ -3401,13 +3405,16 @@ void fast_breakcheck(void)
 
 /*
  * Get the stdout of an external command.
+ * If "ret_len" is NULL replace NUL characters with NL.  When "ret_len" is not
+ * NULL store the length there.
  * Returns an allocated string, or NULL for error.
  */
 char_u *
 get_cmd_output (
     char_u *cmd,
     char_u *infile,            /* optional input file name */
-    int flags                      /* can be SHELL_SILENT */
+    int flags,                 // can be kShellOptSilent
+    size_t *ret_len
 )
 {
   char_u      *tempname;
@@ -3463,13 +3470,15 @@ get_cmd_output (
     EMSG2(_(e_notread), tempname);
     free(buffer);
     buffer = NULL;
-  } else {
+  } else if (ret_len == NULL) {
     /* Change NUL into SOH, otherwise the string is truncated. */
     for (i = 0; i < len; ++i)
       if (buffer[i] == NUL)
         buffer[i] = 1;
 
     buffer[len] = NUL;          /* make sure the buffer is terminated */
+  } else {
+    *ret_len = len;
   }
 
 done:

@@ -292,7 +292,7 @@ EXTERN char_u   *p_bs;          /* 'backspace' */
 EXTERN char_u   *p_bg;          /* 'background' */
 EXTERN int p_bk;                /* 'backup' */
 EXTERN char_u   *p_bkc;         /* 'backupcopy' */
-EXTERN unsigned bkc_flags;
+EXTERN unsigned int bkc_flags;  ///< flags from 'backupcopy'
 #ifdef IN_OPTION_C
 static char *(p_bkc_values[]) =
 {"yes", "auto", "no", "breaksymlink", "breakhardlink", NULL};
@@ -317,6 +317,13 @@ EXTERN char_u   *p_enc;         /* 'encoding' */
 EXTERN int p_deco;              /* 'delcombine' */
 EXTERN char_u   *p_ccv;         /* 'charconvert' */
 EXTERN char_u   *p_cedit;       /* 'cedit' */
+EXTERN char_u   *p_cb;          /* 'clipboard' */
+EXTERN unsigned cb_flags;
+#ifdef IN_OPTION_C
+static char *(p_cb_values[]) = {"unnamed", "unnamedplus", NULL};
+#endif
+# define CB_UNNAMED             0x001
+# define CB_UNNAMEDPLUS         0x002
 EXTERN long p_cwh;              /* 'cmdwinheight' */
 EXTERN long p_ch;               /* 'cmdheight' */
 EXTERN int p_confirm;           /* 'confirm' */
@@ -362,7 +369,7 @@ EXTERN int p_ek;                /* 'esckeys' */
 EXTERN int p_exrc;              /* 'exrc' */
 EXTERN char_u   *p_fencs;       /* 'fileencodings' */
 EXTERN char_u   *p_ffs;         /* 'fileformats' */
-EXTERN long p_fic;              /* 'fileignorecase' */
+EXTERN bool p_fic;              ///< 'fileignorecase'
 EXTERN char_u   *p_fcl;         /* 'foldclose' */
 EXTERN long p_fdls;             /* 'foldlevelstart' */
 EXTERN char_u   *p_fdo;         /* 'foldopen' */
@@ -416,10 +423,6 @@ EXTERN int p_arshape;           /* 'arabicshape' */
 EXTERN int p_icon;              /* 'icon' */
 EXTERN char_u   *p_iconstring;  /* 'iconstring' */
 EXTERN int p_ic;                /* 'ignorecase' */
-#ifdef USE_IM_CONTROL
-EXTERN int p_imcmdline;         /* 'imcmdline' */
-EXTERN int p_imdisable;         /* 'imdisable' */
-#endif
 EXTERN int p_is;                /* 'incsearch' */
 EXTERN int p_im;                /* 'insertmode' */
 EXTERN char_u   *p_isf;         /* 'isfname' */
@@ -573,20 +576,18 @@ EXTERN char_u   *p_ttym;        /* 'ttymouse' */
 EXTERN unsigned ttym_flags;
 # ifdef IN_OPTION_C
 static char *(p_ttym_values[]) =
-{"xterm", "xterm2", "dec", "netterm", "pterm", "urxvt", "sgr", NULL};
+{"xterm", "xterm2", "dec", "netterm", "urxvt", "sgr", NULL};
 # endif
 # define TTYM_XTERM             0x01
 # define TTYM_XTERM2            0x02
 # define TTYM_DEC               0x04
 # define TTYM_NETTERM           0x08
-# define TTYM_PTERM             0x10
 # define TTYM_URXVT             0x20
 # define TTYM_SGR               0x40
 #endif
 EXTERN char_u   *p_udir;        /* 'undodir' */
 EXTERN long p_ul;               /* 'undolevels' */
 EXTERN long p_ur;               /* 'undoreload' */
-EXTERN int p_unc;               /* 'unnamedclip' */
 EXTERN long p_uc;               /* 'updatecount' */
 EXTERN long p_ut;               /* 'updatetime' */
 EXTERN char_u   *p_fcs;         /* 'fillchar' */
@@ -619,7 +620,7 @@ EXTERN int p_wiv;               /* 'weirdinvert' */
 EXTERN char_u   *p_ww;          /* 'whichwrap' */
 EXTERN long p_wc;               /* 'wildchar' */
 EXTERN long p_wcm;              /* 'wildcharm' */
-EXTERN long p_wic;              /* 'wildignorecase' */
+EXTERN bool p_wic;              ///< 'wildignorecase'
 EXTERN char_u   *p_wim;         /* 'wildmode' */
 EXTERN int p_wmnu;              /* 'wildmenu' */
 EXTERN long p_wh;               /* 'winheight' */
@@ -641,6 +642,7 @@ enum {
   BV_AI = 0
   , BV_AR
   , BV_BH
+  , BV_BKC
   , BV_BT
   , BV_EFM
   , BV_GP

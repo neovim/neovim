@@ -281,11 +281,11 @@ static struct key_name_entry {
   {K_ZERO,            (char_u *)"Nul"},
   {K_SNR,             (char_u *)"SNR"},
   {K_PLUG,            (char_u *)"Plug"},
+  {K_CURSORHOLD,      (char_u *)"CursorHold"},
   {0,                 NULL}
 };
 
-#define KEY_NAMES_TABLE_LEN (sizeof(key_names_table) / \
-                             sizeof(struct key_name_entry))
+#define KEY_NAMES_TABLE_LEN ARRAY_SIZE(key_names_table)
 
 static struct mousetable {
   int pseudo_code;              /* Code for pseudo mouse event */
@@ -487,7 +487,7 @@ char_u *get_special_key_name(int c, int modifiers)
  * If there is a match, srcp is advanced to after the <> name.
  * dst[] must be big enough to hold the result (up to six characters)!
  */
-int 
+unsigned int 
 trans_special (
     char_u **srcp,
     char_u *dst,
@@ -729,9 +729,9 @@ int get_special_key_code(char_u *name)
   return 0;
 }
 
-char_u *get_key_name(int i)
+char_u *get_key_name(size_t i)
 {
-  if (i >= (int)KEY_NAMES_TABLE_LEN)
+  if (i >= KEY_NAMES_TABLE_LEN)
     return NULL;
   return key_names_table[i].name;
 }
@@ -740,7 +740,7 @@ char_u *get_key_name(int i)
  * Look up the given mouse code to return the relevant information in the other
  * arguments.  Return which button is down or was released.
  */
-int get_mouse_button(int code, int *is_click, int *is_drag)
+int get_mouse_button(int code, bool *is_click, bool *is_drag)
 {
   int i;
 

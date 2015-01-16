@@ -120,7 +120,7 @@ ex_menu (
       break;
   if (vim_iswhite(*p)) {
     for (i = 0; i < MENUDEPTH && !vim_iswhite(*arg); ++i) {
-      pri_tab[i] = getdigits(&arg);
+      pri_tab[i] = getdigits_int(&arg);
       if (pri_tab[i] == 0)
         pri_tab[i] = 500;
       if (*arg == '.')
@@ -1359,7 +1359,7 @@ void ex_emenu(exarg_T *eap)
 
 #if defined(FEAT_GUI_MSWIN) \
   || defined(FEAT_GUI_GTK) \
-  || defined(FEAT_BEVAL_TIP) || defined(PROTO)
+  || defined(FEAT_BEVAL_TIP)
 /*
  * Given a menu descriptor, e.g. "File.New", find it in the menu hierarchy.
  */
@@ -1424,6 +1424,12 @@ typedef struct {
 
 static garray_T menutrans_ga = GA_EMPTY_INIT_VALUE;
 
+#define FREE_MENUTRANS(mt) \
+  menutrans_T* _mt = (mt); \
+  free(_mt->from); \
+  free(_mt->from_noamp); \
+  free(_mt->to)
+
 /*
  * ":menutrans".
  * This function is also defined without the +multi_lang feature, in which
@@ -1441,13 +1447,8 @@ void ex_menutranslate(exarg_T *eap)
    * ":menutrans clear": clear all translations.
    */
   if (STRNCMP(arg, "clear", 5) == 0 && ends_excmd(*skipwhite(arg + 5))) {
-    menutrans_T *tp = (menutrans_T *)menutrans_ga.ga_data;
-    for (int i = 0; i < menutrans_ga.ga_len; ++i) {
-      free(tp[i].from);
-      free(tp[i].from_noamp);
-      free(tp[i].to);
-    }
-    ga_clear(&menutrans_ga);
+    GA_DEEP_CLEAR(&menutrans_ga, menutrans_T, FREE_MENUTRANS);
+
     /* Delete all "menutrans_" global variables. */
     del_menutrans_vars();
   } else {

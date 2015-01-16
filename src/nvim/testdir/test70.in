@@ -2,7 +2,6 @@ Smoke test for MzScheme interface and mzeval() function
 
 STARTTEST
 :so mzscheme.vim
-:set nocompatible viminfo+=nviminfo
 :function! MzRequire()
 :redir => l:mzversion
 :mz (version)

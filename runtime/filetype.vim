@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2014 Jul 23
+" Last Change:	2014 Sep 05
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -91,11 +91,7 @@ au BufNewFile,BufRead *.wrm			setf acedb
 
 " Ada (83, 9X, 95)
 au BufNewFile,BufRead *.adb,*.ads,*.ada		setf ada
-if has("vms")
-  au BufNewFile,BufRead *.gpr,*.ada_m,*.adc	setf ada
-else
-  au BufNewFile,BufRead *.gpr			setf ada
-endif
+au BufNewFile,BufRead *.gpr			setf ada
 
 " AHDL
 au BufNewFile,BufRead *.tdf			setf ahdl
@@ -530,6 +526,9 @@ au BufNewFile,BufRead configure.in,configure.ac setf config
 " CUDA  Cumpute Unified Device Architecture
 au BufNewFile,BufRead *.cu			setf cuda
 
+" Dockerfile
+au BufNewFile,BufRead Dockerfile		setf dockerfile
+
 " WildPackets EtherPeek Decoder
 au BufNewFile,BufRead *.dcd			setf dcd
 
@@ -811,6 +810,9 @@ au BufNewFile,BufRead {,.}gitolite.rc,example.gitolite.rc	setf perl
 " Gnuplot scripts
 au BufNewFile,BufRead *.gpi			setf gnuplot
 
+" Go (Google)
+au BufNewFile,BufRead *.go			setf go
+
 " GrADS scripts
 au BufNewFile,BufRead *.gs			setf grads
 
@@ -1008,7 +1010,7 @@ au BufNewFile,BufRead *.jgr			setf jgraph
 au BufNewFile,BufRead *.jov,*.j73,*.jovial	setf jovial
 
 " JSON
-au BufNewFile,BufRead *.json			setf json
+au BufNewFile,BufRead *.json,*.jsonp		setf json
 
 " Kixtart
 au BufNewFile,BufRead *.kix			setf kix
@@ -1098,6 +1100,9 @@ au BufNewFile,BufRead *.lou,*.lout		setf lout
 " Lua
 au BufNewFile,BufRead *.lua			setf lua
 
+" Luarocks
+au BufNewFile,BufRead *.rockspec		setf lua
+
 " Linden Scripting Language (Second Life)
 au BufNewFile,BufRead *.lsl			setf lsl
 
@@ -1145,7 +1150,7 @@ au BufNewFile,BufRead *.map			setf map
 au BufNewFile,BufRead *.markdown,*.mdown,*.mkd,*.mkdn,*.mdwn,README.md  setf markdown
 
 " Mason
-au BufNewFile,BufRead *.mason,*.mhtml		setf mason
+au BufNewFile,BufRead *.mason,*.mhtml,*.comp	setf mason
 
 " Matlab or Objective C
 au BufNewFile,BufRead *.m			call s:FTm()

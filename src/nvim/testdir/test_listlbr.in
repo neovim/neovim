@@ -3,6 +3,7 @@ Test for linebreak and list option (non-utf8)
 STARTTEST
 :so small.vim
 :if !exists("+linebreak") | e! test.ok | w! test.out | qa! | endif
+:set wildchar=^E
 :10new|:vsp|:vert resize 20
 :put =\"\tabcdef hijklmn\tpqrstuvwxyz_1060ABCDEFGHIJKLMNOP \"
 :norm! zt
@@ -46,6 +47,24 @@ STARTTEST
 :redraw!
 :let line=ScreenChar(winwidth(0))
 :call DoRecordScreen()
+:let line="_S_\t bla"
+:$put =line
+:$
+:norm! zt
+:let g:test ="Test 5: set linebreak with conceal and set list and tab displayed by different char (line may not be truncated)"
+:set cpo&vim list linebreak conceallevel=2 concealcursor=nv listchars=tab:ab
+:syn match ConcealVar contained /_/ conceal
+:syn match All /.*/ contains=ConcealVar
+:let line=ScreenChar(winwidth(0))
+:call DoRecordScreen()
+:set cpo&vim linebreak
+:let g:test ="Test 6: set linebreak with visual block mode"
+:let line="REMOVE: this not"
+:$put =line
+:let line="REMOVE: aaaaaaaaaaaaa"
+:$put =line
+:1/^REMOVE:
+0jf x:$put
 :%w! test.out
 :qa!
 ENDTEST

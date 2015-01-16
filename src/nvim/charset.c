@@ -177,7 +177,7 @@ int buf_init_chartab(buf_T *buf, int global)
       }
 
       if (VIM_ISDIGIT(*p)) {
-        c = getdigits(&p);
+        c = getdigits_int(&p);
       } else if (has_mbyte) {
         c = mb_ptr2char_adv(&p);
       } else {
@@ -189,7 +189,7 @@ int buf_init_chartab(buf_T *buf, int global)
         ++p;
 
         if (VIM_ISDIGIT(*p)) {
-          c2 = getdigits(&p);
+          c2 = getdigits_int(&p);
         } else if (has_mbyte) {
           c2 = mb_ptr2char_adv(&p);
         } else {
@@ -978,7 +978,6 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
   int mb_added = 0;
   int numberextra;
   char_u *ps;
-  int tab_corr = (*s == TAB);
   int n;
 
   // No 'linebreak', 'showbreak' and 'breakindent': return quickly.
@@ -992,7 +991,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
   // First get normal size, without 'linebreak'
   int size = win_chartabsize(wp, s, col);
   int c = *s;
-  if (tab_corr) {
+  if (*s == TAB) {
       col_adj = size - 1;
   }
 
@@ -1034,7 +1033,6 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
 
       if (col2 >= colmax) { /* doesn't fit */
         size = colmax - col + col_adj;
-        tab_corr = FALSE;
         break;
       }
     }
@@ -1061,6 +1059,14 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
       col -= wp->w_width;
       numberextra = wp->w_width - (numberextra - win_col_off2(wp));
       if (numberextra > 0) {
+        col %= numberextra;
+      }
+      if (*p_sbr != NUL) {
+        colnr_T sbrlen = (colnr_T)MB_CHARLEN(p_sbr);
+        if (col >= sbrlen)
+          col -= sbrlen;
+      }
+      if (numberextra > 0) {
         col = col % numberextra;
       }
     }
@@ -1072,12 +1078,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
       if (wp->w_p_bri)
         added += get_breakindent_win(wp, line);
 
-      if (tab_corr) {
-        size += (added / wp->w_buffer->b_p_ts) * wp->w_buffer->b_p_ts;
-      } else {
-        size += added;
-      }
-
+      size += added;
       if (col != 0) {
         added = 0;
       }
@@ -1675,26 +1676,37 @@ char_u* skiptowhite_esc(char_u *p) {
   return p;
 }
 
-/// Getdigits: Get a number from a string and skip over it.
+/// Get a number from a string and skip over it.
 ///
-/// Note: the argument is a pointer to a char_u pointer!
+/// @param[out]  pp  A pointer to a pointer to char_u.
+///                  It will be advanced past the read number.
 ///
-/// @param pp
-///
-/// @return Number from the string.
-long getdigits(char_u **pp)
+/// @return Number read from the string.
+intmax_t getdigits(char_u **pp)
 {
-  char_u *p = *pp;
-  long retval = atol((char *)p);
+  intmax_t number = strtoimax((char *)*pp, (char **)pp, 10);
+  assert(errno != ERANGE);
+  return number;
+}
 
-  if (*p == '-') {
-    // skip negative sign
-    ++p;
-  }
-  // skip to next non-digit
-  p = skipdigits(p);
-  *pp = p;
-  return retval;
+/// Get an int number from a string.
+///
+/// A getdigits wrapper restricted to int values.
+int getdigits_int(char_u **pp)
+{
+  intmax_t number = getdigits(pp);
+  assert(number >= INT_MIN && number <= INT_MAX);
+  return (int)number;
+}
+
+/// Get a long number from a string.
+///
+/// A getdigits wrapper restricted to long values.
+long getdigits_long(char_u **pp)
+{
+  intmax_t number = getdigits(pp);
+  assert(number >= LONG_MIN && number <= LONG_MAX);
+  return (long)number;
 }
 
 /// Return TRUE if "lbuf" is empty or only contains blanks.
@@ -1837,7 +1849,7 @@ int hex2nr(int c)
   return c - '0';
 }
 
-#if defined(FEAT_TERMRESPONSE) || defined(FEAT_GUI_GTK) || defined(PROTO)
+#if defined(FEAT_TERMRESPONSE) || defined(FEAT_GUI_GTK)
 
 /// Convert two hex characters to a byte.
 /// Return -1 if one of the characters is not hex.
@@ -1854,10 +1866,9 @@ int hexhex2nr(char_u *p)
   return (hex2nr(p[0]) << 4) + hex2nr(p[1]);
 }
 
-#endif // if defined(FEAT_TERMRESPONSE) || defined(FEAT_GUI_GTK)
-       // || defined(PROTO)
+#endif  // if defined(FEAT_TERMRESPONSE) || defined(FEAT_GUI_GTK)
 
-/// Return TRUE if "str" starts with a backslash that should be removed.
+/// Return true if "str" starts with a backslash that should be removed.
 /// For WIN32 this is only done when the character after the
 /// backslash is not a normal file name character.
 /// '$' is a valid file name character, we don't remove the backslash before
@@ -1871,8 +1882,8 @@ int hexhex2nr(char_u *p)
 ///
 /// @param str
 ///
-/// @return TRUE if `str` starts with a backslash that should be removed.
-int rem_backslash(char_u *str)
+/// @return true if `str` starts with a backslash that should be removed.
+bool rem_backslash(const char_u *str)
 {
 #ifdef BACKSLASH_IN_FILENAME
   return str[0] == '\\'

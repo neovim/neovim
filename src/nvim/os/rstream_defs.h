@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 
+typedef struct rbuffer RBuffer;
 typedef struct rstream RStream;
 
 /// Type of function called when the RStream receives data

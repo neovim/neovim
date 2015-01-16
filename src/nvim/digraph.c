@@ -2,7 +2,9 @@
 ///
 /// code for digraphs
 
+#include <assert.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <inttypes.h>
 
 #include "nvim/vim.h"
@@ -21,7 +23,7 @@
 #include "nvim/normal.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
-#include "nvim/ui.h"
+#include "nvim/os/input.h"
 
 typedef int result_T;
 
@@ -1582,7 +1584,7 @@ int getdigraph(int char1, int char2, int meta_char)
 /// @param str
 void putdigraph(char_u *str)
 {
-  int char1, char2, n;
+  char_u char1, char2;
   digr_T *dp;
 
   while (*str != NUL) {
@@ -1609,7 +1611,7 @@ void putdigraph(char_u *str)
       EMSG(_(e_number_exp));
       return;
     }
-    n = getdigits(&str);
+    int n = getdigits_int(&str);
 
     // If the digraph already exists, replace the result.
     dp = (digr_T *)user_digraphs.ga_data;
@@ -1655,13 +1657,13 @@ void listdigraphs(void)
       printdigraph(&tmp);
     }
     dp++;
-    ui_breakcheck();
+    os_breakcheck();
   }
 
   dp = (digr_T *)user_digraphs.ga_data;
   for (int i = 0; i < user_digraphs.ga_len && !got_int; ++i) {
     printdigraph(dp);
-    ui_breakcheck();
+    os_breakcheck();
     dp++;
   }
   // clear screen, because some digraphs may be wrong, in which case we messed
@@ -1711,7 +1713,8 @@ static void printdigraph(digr_T *dp)
     if (char2cells(dp->result) == 1) {
       *p++ = ' ';
     }
-    vim_snprintf((char *)p, sizeof(buf) - (p - buf), " %3d", dp->result);
+    assert(p >= buf);
+    vim_snprintf((char *)p, sizeof(buf) - (size_t)(p - buf), " %3d", dp->result);
     msg_outtrans(buf);
   }
 }
@@ -1808,10 +1811,10 @@ void ex_loadkeymap(exarg_T *eap)
     if ((*p != '"') && (*p != NUL)) {
       kmap_T *kp = GA_APPEND_VIA_PTR(kmap_T, &curbuf->b_kmap_ga);
       s = skiptowhite(p);
-      kp->from = vim_strnsave(p, (int)(s - p));
+      kp->from = vim_strnsave(p, (size_t)(s - p));
       p = skipwhite(s);
       s = skiptowhite(p);
-      kp->to = vim_strnsave(p, (int)(s - p));
+      kp->to = vim_strnsave(p, (size_t)(s - p));
 
       if ((STRLEN(kp->from) + STRLEN(kp->to) >= KMAP_LLEN)
           || (*kp->from == NUL)

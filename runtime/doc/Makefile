@@ -21,13 +21,13 @@ DOCS = \
 	digraph.txt \
 	editing.txt \
 	eval.txt \
+	remote_plugin.txt \
 	farsi.txt \
 	filetype.txt \
 	fold.txt \
 	ft_ada.txt \
 	ft_sql.txt \
 	gui.txt \
-	gui_w16.txt \
 	gui_w32.txt \
 	gui_x11.txt \
 	hebrew.txt \
@@ -37,11 +37,9 @@ DOCS = \
 	if_cscop.txt \
 	if_lua.txt \
 	if_mzsch.txt \
-	if_ole.txt \
 	if_perl.txt \
 	if_pyth.txt \
 	if_ruby.txt \
-	if_sniff.txt \
 	if_tcl.txt \
 	indent.txt \
 	index.txt \
@@ -54,22 +52,14 @@ DOCS = \
 	mlang.txt \
 	motion.txt \
 	msgpack_rpc.txt \
-	netbeans.txt \
 	nvim_clipboard.txt \
 	nvim_intro.txt \
+	nvim_provider.txt \
 	nvim_python.txt \
 	options.txt \
-	os_390.txt \
-	os_amiga.txt \
-	os_beos.txt \
 	os_dos.txt \
 	os_mac.txt \
-	os_mint.txt \
-	os_os2.txt \
-	os_qnx.txt \
-	os_risc.txt \
 	os_unix.txt \
-	os_vms.txt \
 	os_win32.txt \
 	pattern.txt \
 	pi_getscript.txt \
@@ -138,8 +128,7 @@ DOCS = \
 	various.txt \
 	vi_diff.txt \
 	visual.txt \
-	windows.txt \
-	workshop.txt
+	windows.txt
 
 HTMLS = \
 	arabic.html \
@@ -153,13 +142,13 @@ HTMLS = \
 	digraph.html \
 	editing.html \
 	eval.html \
+	remote_plugin.html \
 	farsi.html \
 	filetype.html \
 	fold.html \
 	ft_ada.html \
 	ft_sql.html \
 	gui.html \
-	gui_w16.html \
 	gui_w32.html \
 	gui_x11.html \
 	hebrew.html \
@@ -168,11 +157,9 @@ HTMLS = \
 	if_cscop.html \
 	if_lua.html \
 	if_mzsch.html \
-	if_ole.html \
 	if_perl.html \
 	if_pyth.html \
 	if_ruby.html \
-	if_sniff.html \
 	if_tcl.html \
 	indent.html \
 	index.html \
@@ -185,22 +172,14 @@ HTMLS = \
 	mlang.html \
 	motion.html \
 	msgpack_rpc.html \
-	netbeans.html \
 	nvim_clipboard.html \
 	nvim_intro.html \
+	nvim_provider.html \
 	nvim_python.html \
 	options.html \
-	os_390.html \
-	os_amiga.html \
-	os_beos.html \
 	os_dos.html \
 	os_mac.html \
-	os_mint.html \
-	os_os2.html \
-	os_qnx.html \
-	os_risc.html \
 	os_unix.html \
-	os_vms.html \
 	os_win32.html \
 	pattern.html \
 	pi_getscript.html \
@@ -271,8 +250,7 @@ HTMLS = \
 	vi_diff.html \
 	vimindex.html \
 	visual.html \
-	windows.html \
-	workshop.html
+	windows.html
 
 MANPAGES = \
 	manpages/vim.man \
@@ -327,7 +305,7 @@ doctags: doctags.c
 
 manpages: $(MANPAGES)
 
-# OSX groff dosn't support utf-8 as input encoding, so this won't work there.
+# OSX groff doesn't support utf-8 as input encoding, so this won't work there.
 .1.man:
 	groff -k -mandoc -Tutf8 $< | sed -e s/.^H//g > $@
 
@@ -353,12 +331,6 @@ vimindex.html: index.txt
 
 tags.ref tags.html: tags
 	$(AWK) -f maketags.awk tags >tags.html
-
-# Perl version of .txt to .html conversion.
-# There can't be two rules to produce a .html from a .txt file.
-# Just run over all .txt files each time one changes.  It's fast anyway.
-perlhtml: tags $(DOCS)
-	./vim2html.pl tags $(DOCS)
 
 clean:
 	-rm -f doctags *.html tags.ref $(MANPAGES) $(HTMLS) errors.log

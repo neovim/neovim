@@ -5,6 +5,8 @@
 
 #include <uv.h>
 
+#include "nvim/lib/klist.h"
+
 #include "nvim/os/uv_helpers.h"
 #include "nvim/os/wstream.h"
 #include "nvim/os/wstream_defs.h"
@@ -36,12 +38,26 @@ struct wbuffer {
 typedef struct {
   WStream *wstream;
   WBuffer *buffer;
-} WriteData;
+  uv_write_t uv_req;
+} WRequest;
 
+#define WRequestFreer(x)
+KMEMPOOL_INIT(WRequestPool, WRequest, WRequestFreer)
+kmempool_t(WRequestPool) *wrequest_pool = NULL;
+#define WBufferFreer(x)
+KMEMPOOL_INIT(WBufferPool, WBuffer, WBufferFreer)
+kmempool_t(WBufferPool) *wbuffer_pool = NULL;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/wstream.c.generated.h"
 #endif
+
+/// Initialize pools for reusing commonly created objects
+void wstream_init(void)
+{
+  wrequest_pool = kmp_init(WRequestPool);
+  wbuffer_pool = kmp_init(WBufferPool);
+}
 
 /// Creates a new WStream instance. A WStream encapsulates all the boilerplate
 /// necessary for writing to a libuv stream.
@@ -148,20 +164,17 @@ bool wstream_write(WStream *wstream, WBuffer *buffer)
 
   wstream->curmem += buffer->size;
 
-  WriteData *data = xmalloc(sizeof(WriteData));
+  WRequest *data = kmp_alloc(WRequestPool, wrequest_pool);
   data->wstream = wstream;
   data->buffer = buffer;
-
-  uv_write_t *req = xmalloc(sizeof(uv_write_t));
-  req->data = data;
+  data->uv_req.data = data;
 
   uv_buf_t uvbuf;
   uvbuf.base = buffer->data;
   uvbuf.len = buffer->size;
 
-  if (uv_write(req, wstream->stream, &uvbuf, 1, write_cb)) {
-    free(data);
-    free(req);
+  if (uv_write(&data->uv_req, wstream->stream, &uvbuf, 1, write_cb)) {
+    kmp_free(WRequestPool, wrequest_pool, data);
     goto err;
   }
 
@@ -190,7 +203,7 @@ WBuffer *wstream_new_buffer(char *data,
                             size_t refcount,
                             wbuffer_data_finalizer cb)
 {
-  WBuffer *rv = xmalloc(sizeof(WBuffer));
+  WBuffer *rv = kmp_alloc(WBufferPool, wbuffer_pool);
   rv->size = size;
   rv->refcount = refcount;
   rv->cb = cb;
@@ -201,28 +214,30 @@ WBuffer *wstream_new_buffer(char *data,
 
 static void write_cb(uv_write_t *req, int status)
 {
-  WriteData *data = req->data;
+  WRequest *data = req->data;
 
-  free(req);
   data->wstream->curmem -= data->buffer->size;
 
   release_wbuffer(data->buffer);
 
-  data->wstream->pending_reqs--;
-
   if (data->wstream->cb) {
     data->wstream->cb(data->wstream,
                       data->wstream->data,
-                      data->wstream->pending_reqs,
                       status);
   }
 
+  data->wstream->pending_reqs--;
+
   if (data->wstream->freed && data->wstream->pending_reqs == 0) {
     // Last pending write, free the wstream;
-    free(data->wstream);
+    if (data->wstream->free_handle) {
+      uv_close((uv_handle_t *)data->wstream->stream, close_cb);
+    } else {
+      free(data->wstream);
+    }
   }
 
-  free(data);
+  kmp_free(WRequestPool, wrequest_pool, data);
 }
 
 static void release_wbuffer(WBuffer *buffer)
@@ -232,7 +247,7 @@ static void release_wbuffer(WBuffer *buffer)
       buffer->cb(buffer->data);
     }
 
-    free(buffer);
+    kmp_free(WBufferPool, wbuffer_pool, buffer);
   }
 }
 

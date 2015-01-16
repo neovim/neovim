@@ -22,6 +22,7 @@
 #include "nvim/diff.h"
 #include "nvim/eval.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/func_attr.h"
 #include "nvim/indent.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
@@ -463,7 +464,7 @@ void newFoldLevel(void)
     /*
      * Set the same foldlevel in other windows in diff mode.
      */
-    FOR_ALL_WINDOWS(wp) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp != curwin && foldmethodIsDiff(wp) && wp->w_p_scb) {
         wp->w_p_fdl = curwin->w_p_fdl;
         newFoldLevelWin(wp);
@@ -484,7 +485,7 @@ static void newFoldLevelWin(win_T *wp)
     fp = (fold_T *)wp->w_folds.ga_data;
     for (int i = 0; i < wp->w_folds.ga_len; ++i)
       fp[i].fd_flags = FD_LEVEL;
-    wp->w_fold_manual = FALSE;
+    wp->w_fold_manual = false;
   }
   changed_window_setting_win(wp);
 }
@@ -647,7 +648,7 @@ void foldCreate(linenr_T start, linenr_T end)
     if (use_level && !closed && level < curwin->w_p_fdl)
       closeFold(start, 1L);
     if (!use_level)
-      curwin->w_fold_manual = TRUE;
+      curwin->w_fold_manual = true;
     fp->fd_flags = FD_CLOSED;
     fp->fd_small = MAYBE;
 
@@ -754,7 +755,7 @@ deleteFold (
 void clearFolding(win_T *win)
 {
   deleteFoldRecurse(&win->w_folds);
-  win->w_foldinvalid = FALSE;
+  win->w_foldinvalid = false;
 }
 
 /* foldUpdate() {{{2 */
@@ -799,7 +800,7 @@ void foldUpdate(win_T *wp, linenr_T top, linenr_T bot)
  */
 void foldUpdateAll(win_T *win)
 {
-  win->w_foldinvalid = TRUE;
+  win->w_foldinvalid = true;
   redraw_win_later(win, NOT_VALID);
 }
 
@@ -1097,7 +1098,7 @@ static void checkupdate(win_T *wp)
 {
   if (wp->w_foldinvalid) {
     foldUpdate(wp, (linenr_T)1, (linenr_T)MAXLNUM);     /* will update all */
-    wp->w_foldinvalid = FALSE;
+    wp->w_foldinvalid = false;
   }
 }
 
@@ -1143,7 +1144,7 @@ setManualFold (
      * Do the same operation in other windows in diff mode.  Calculate the
      * line number from the diffs.
      */
-    FOR_ALL_WINDOWS(wp) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp != curwin && foldmethodIsDiff(wp) && wp->w_p_scb) {
         dlnum = diff_lnum_win(curwin->w_cursor.lnum, wp);
         if (dlnum != 0) {
@@ -1250,7 +1251,7 @@ setManualFoldWin (
       found->fd_flags = FD_CLOSED;
       done |= DONE_ACTION;
     }
-    wp->w_fold_manual = TRUE;
+    wp->w_fold_manual = true;
     if (done & DONE_ACTION)
       changed_window_setting_win(wp);
     done |= DONE_FOLD;
@@ -1335,9 +1336,8 @@ static void deleteFoldEntry(garray_T *gap, int idx, int recursive)
  */
 void deleteFoldRecurse(garray_T *gap)
 {
-  for (int i = 0; i < gap->ga_len; ++i)
-    deleteFoldRecurse(&(((fold_T *)(gap->ga_data))[i].fd_nested));
-  ga_clear(gap);
+# define DELETE_FOLD_NESTED(fd) deleteFoldRecurse(&((fd)->fd_nested))
+  GA_DEEP_CLEAR(gap, fold_T, DELETE_FOLD_NESTED);
 }
 
 /* foldMarkAdjust() {{{2 */
@@ -1639,39 +1639,38 @@ deleteFoldMarkers (
  */
 static void foldDelMarker(linenr_T lnum, char_u *marker, int markerlen)
 {
-  char_u      *line;
   char_u      *newline;
-  char_u      *p;
-  int len;
   char_u      *cms = curbuf->b_p_cms;
   char_u      *cms2;
 
-  line = ml_get(lnum);
-  for (p = line; *p != NUL; ++p)
-    if (STRNCMP(p, marker, markerlen) == 0) {
-      /* Found the marker, include a digit if it's there. */
-      len = markerlen;
-      if (VIM_ISDIGIT(p[len]))
-        ++len;
-      if (*cms != NUL) {
-        /* Also delete 'commentstring' if it matches. */
-        cms2 = (char_u *)strstr((char *)cms, "%s");
-        if (p - line >= cms2 - cms
-            && STRNCMP(p - (cms2 - cms), cms, cms2 - cms) == 0
-            && STRNCMP(p + len, cms2 + 2, STRLEN(cms2 + 2)) == 0) {
-          p -= cms2 - cms;
-          len += (int)STRLEN(cms) - 2;
-        }
-      }
-      if (u_save(lnum - 1, lnum + 1) == OK) {
-        /* Make new line: text-before-marker + text-after-marker */
-        newline = xmalloc(STRLEN(line) - len + 1);
-        STRNCPY(newline, line, p - line);
-        STRCPY(newline + (p - line), p + len);
-        ml_replace(lnum, newline, FALSE);
-      }
-      break;
+  char_u *line = ml_get(lnum);
+  for (char_u *p = line; *p != NUL; ++p) {
+    if (STRNCMP(p, marker, markerlen) != 0) {
+      continue;
     }
+    /* Found the marker, include a digit if it's there. */
+    int len = markerlen;
+    if (VIM_ISDIGIT(p[len]))
+      ++len;
+    if (*cms != NUL) {
+      /* Also delete 'commentstring' if it matches. */
+      cms2 = (char_u *)strstr((char *)cms, "%s");
+      if (p - line >= cms2 - cms
+          && STRNCMP(p - (cms2 - cms), cms, cms2 - cms) == 0
+          && STRNCMP(p + len, cms2 + 2, STRLEN(cms2 + 2)) == 0) {
+        p -= cms2 - cms;
+        len += (int)STRLEN(cms) - 2;
+      }
+    }
+    if (u_save(lnum - 1, lnum + 1) == OK) {
+      /* Make new line: text-before-marker + text-after-marker */
+      newline = xmalloc(STRLEN(line) - len + 1);
+      STRNCPY(newline, line, p - line);
+      STRCPY(newline + (p - line), p + len);
+      ml_replace(lnum, newline, FALSE);
+    }
+    break;
+  }
 }
 
 /* get_foldtext() {{{2 */
@@ -1680,7 +1679,9 @@ static void foldDelMarker(linenr_T lnum, char_u *marker, int markerlen)
  * When 'foldtext' isn't set puts the result in "buf[51]".  Otherwise the
  * result is in allocated memory.
  */
-char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T *foldinfo, char_u *buf)
+char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
+                     foldinfo_T *foldinfo, char_u *buf)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   char_u      *text = NULL;
   /* an error occurred when evaluating 'fdt' setting */
@@ -1689,8 +1690,7 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T *foldi
   static win_T    *last_wp = NULL;
   static linenr_T last_lnum = 0;
 
-  if (last_wp != wp || last_wp == NULL
-      || last_lnum > lnum || last_lnum == 0)
+  if (last_wp == NULL || last_wp != wp || last_lnum > lnum || last_lnum == 0)
     /* window changed, try evaluating foldtext setting once again */
     got_fdt_error = FALSE;
 
@@ -1875,7 +1875,7 @@ static void foldUpdateIEMS(win_T *wp, linenr_T top, linenr_T bot)
     /* Need to update all folds. */
     top = 1;
     bot = wp->w_buffer->b_ml.ml_line_count;
-    wp->w_foldinvalid = FALSE;
+    wp->w_foldinvalid = false;
 
     /* Mark all folds a maybe-small. */
     setSmallMaybe(&wp->w_folds);
@@ -2283,12 +2283,12 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
            * The new fold is closed if the fold above it is closed.
            * The first fold depends on the containing fold. */
           if (topflags == FD_OPEN) {
-            flp->wp->w_fold_manual = TRUE;
+            flp->wp->w_fold_manual = true;
             fp->fd_flags = FD_OPEN;
           } else if (i <= 0) {
             fp->fd_flags = topflags;
             if (topflags != FD_LEVEL)
-              flp->wp->w_fold_manual = TRUE;
+              flp->wp->w_fold_manual = true;
           } else
             fp->fd_flags = (fp - 1)->fd_flags;
           fp->fd_small = MAYBE;

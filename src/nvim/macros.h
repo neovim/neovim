@@ -143,12 +143,21 @@
 /* get length of multi-byte char, not including composing chars */
 # define mb_cptr2len(p)     (enc_utf8 ? utf_ptr2len(p) : (*mb_ptr2len)(p))
 
-# define MB_COPY_CHAR(f, \
-                      t) if (has_mbyte) mb_copy_char(&f, &t); else *t++ = *f++
+# define MB_COPY_CHAR(f, t) \
+  if (has_mbyte) mb_copy_char((const char_u **)(&f), &t); \
+  else *t++ = *f++
 # define MB_CHARLEN(p)      (has_mbyte ? mb_charlen(p) : (int)STRLEN(p))
 # define MB_CHAR2LEN(c)     (has_mbyte ? mb_char2len(c) : 1)
 # define PTR2CHAR(p)        (has_mbyte ? mb_ptr2char(p) : (int)*(p))
 
 # define RESET_BINDING(wp)  (wp)->w_p_scb = FALSE; (wp)->w_p_crb = FALSE
+
+/// Calculate the length of a C array.
+///
+/// This should be called with a real array. Calling this with a pointer is an
+/// error. A mechanism to detect many (though not all) of those errors at compile
+/// time is implemented. It works by the second division producing a division by
+/// zero in those cases (-Wdiv-by-zero in GCC).
+#define ARRAY_SIZE(arr) ((sizeof(arr)/sizeof((arr)[0])) / ((size_t)(!(sizeof(arr) % sizeof((arr)[0])))))
 
 #endif  // NVIM_MACROS_H

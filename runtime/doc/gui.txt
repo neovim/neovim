@@ -24,9 +24,7 @@ Other GUI documentation:
 1. Starting the GUI				*gui-start* *E229* *E233*
 
 First you must make sure you actually have a version of Vim with the GUI code
-included.  You can check this with the ":version" command, it says "with xxx
-GUI", where "xxx" is X11-Motif, X11-Athena, Photon, GTK, GTK2, etc., or
-"MS-Windows 32 bit GUI version".
+included.
 
 How to start the GUI depends on the system used.  Mostly you can run the
 GUI version of Vim with:
@@ -94,12 +92,8 @@ terminal version.
 
 Recommended place for your personal GUI initializations:
 	Unix		    $HOME/.gvimrc or $HOME/.vim/gvimrc
-	OS/2		    $HOME/.gvimrc, $HOME/vimfiles/gvimrc
-			    or $VIM/.gvimrc
 	MS-DOS and Win32    $HOME/_gvimrc, $HOME/vimfiles/gvimrc
 			    or $VIM/_gvimrc
-	Amiga		    s:.gvimrc, home:.gvimrc, home:vimfiles:gvimrc
-			    or $VIM/.gvimrc
 
 The personal initialization files are searched in the order specified above
 and only the first one that is found is read.
@@ -692,13 +686,10 @@ because the item will never be selected.  Use a single colon to keep it
 simple.
 
 							*gui-toolbar*
-The toolbar is currently available in the Win32, Athena, Motif, GTK+ (X11),
-and Photon GUI.  It should turn up in other GUIs in due course.  The
-default toolbar is setup in menu.vim.
-The display of the toolbar is controlled by the 'guioptions' letter 'T'.  You
-can thus have menu & toolbar together, or either on its own, or neither.
-The appearance is controlled by the 'toolbar' option.  You can choose between
-an image, text or both.
+The default toolbar is setup in menu.vim.  The display of the toolbar is
+controlled by the 'guioptions' letter 'T'.  You can thus have menu & toolbar
+together, or either on its own, or neither.  The appearance is controlled by
+the 'toolbar' option.  You can choose between an image, text or both.
 
 							*toolbar-icon*
 The toolbar is defined as a special menu called ToolBar, which only has one
@@ -781,9 +772,9 @@ from the main menu bar.  You must then use the |:popup| or |:tearoff| command
 to display it.
 
 							*popup-menu*
-In the Win32, GTK+, Motif, Athena and Photon GUI, you can define the
-special menu "PopUp".  This is the menu that is displayed when the right mouse
-button is pressed, if 'mousemodel' is set to popup or popup_setpos.
+You can define the special menu "PopUp".  This is the menu that is displayed
+when the right mouse button is pressed, if 'mousemodel' is set to popup or
+popup_setpos.
 
 
 5.3 Showing What Menus Are Mapped To			*showing-menus*

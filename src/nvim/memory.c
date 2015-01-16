@@ -1,5 +1,6 @@
  // Various routines dealing with allocation and deallocation of memory.
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <string.h>
@@ -7,41 +8,12 @@
 
 #include "nvim/vim.h"
 #include "nvim/misc2.h"
-#include "nvim/file_search.h"
-#include "nvim/buffer.h"
-#include "nvim/charset.h"
-#include "nvim/diff.h"
-#include "nvim/edit.h"
 #include "nvim/eval.h"
-#include "nvim/ex_cmds.h"
-#include "nvim/ex_docmd.h"
-#include "nvim/ex_getln.h"
-#include "nvim/fileio.h"
-#include "nvim/fold.h"
-#include "nvim/getchar.h"
-#include "nvim/mark.h"
-#include "nvim/mbyte.h"
 #include "nvim/memfile.h"
-#include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
-#include "nvim/move.h"
-#include "nvim/option.h"
-#include "nvim/ops.h"
-#include "nvim/os_unix.h"
-#include "nvim/path.h"
-#include "nvim/quickfix.h"
-#include "nvim/regexp.h"
-#include "nvim/screen.h"
-#include "nvim/search.h"
-#include "nvim/spell.h"
-#include "nvim/syntax.h"
-#include "nvim/tag.h"
 #include "nvim/term.h"
-#include "nvim/ui.h"
-#include "nvim/window.h"
-#include "nvim/os/os.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "memory.c.generated.h"
@@ -77,17 +49,11 @@ static void try_to_free_memory(void)
 /// @return pointer to allocated space. NULL if out of memory
 void *try_malloc(size_t size) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1)
 {
-  void *ret = malloc(size);
-
-  if (!ret && !size) {
-    ret = malloc(1);
-  }
+  size_t allocated_size = size ? size : 1;
+  void *ret = malloc(allocated_size);
   if (!ret) {
     try_to_free_memory();
-    ret = malloc(size);
-    if (!ret && !size) {
-      ret = malloc(1);
-    }
+    ret = malloc(allocated_size);
   }
   return ret;
 }
@@ -119,7 +85,6 @@ void *xmalloc(size_t size)
   FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1) FUNC_ATTR_NONNULL_RET
 {
   void *ret = try_malloc(size);
-
   if (!ret) {
     OUT_STR(e_outofmem);
     out_char('\n');
@@ -137,23 +102,18 @@ void *xmalloc(size_t size)
 void *xcalloc(size_t count, size_t size)
   FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE_PROD(1, 2) FUNC_ATTR_NONNULL_RET
 {
-  void *ret = calloc(count, size);
-
-  if (!ret && (!count || !size))
-    ret = calloc(1, 1);
-
+  size_t allocated_count = count && size ? count : 1;
+  size_t allocated_size = count && size ? size : 1;
+  void *ret = calloc(allocated_count, allocated_size);
   if (!ret) {
     try_to_free_memory();
-    ret = calloc(count, size);
-    if (!ret && (!count || !size))
-      ret = calloc(1, 1);
+    ret = calloc(allocated_count, allocated_size);
     if (!ret) {
       OUT_STR(e_outofmem);
       out_char('\n');
       preserve_exit();
     }
   }
-
   return ret;
 }
 
@@ -165,23 +125,17 @@ void *xcalloc(size_t count, size_t size)
 void *xrealloc(void *ptr, size_t size)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALLOC_SIZE(2) FUNC_ATTR_NONNULL_RET
 {
-  void *ret = realloc(ptr, size);
-
-  if (!ret && !size)
-    ret = realloc(ptr, 1);
-
+  size_t allocated_size = size ? size : 1;
+  void *ret = realloc(ptr, allocated_size);
   if (!ret) {
     try_to_free_memory();
-    ret = realloc(ptr, size);
-    if (!ret && !size)
-      ret = realloc(ptr, 1);
+    ret = realloc(ptr, allocated_size);
     if (!ret) {
       OUT_STR(e_outofmem);
       out_char('\n');
       preserve_exit();
     }
   }
-
   return ret;
 }
 
@@ -194,14 +148,12 @@ void *xmallocz(size_t size)
   FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
   size_t total_size = size + 1;
-  void *ret;
-
   if (total_size < size) {
     OUT_STR(_("Vim: Data too large to fit into virtual memory space\n"));
     preserve_exit();
   }
 
-  ret = xmalloc(total_size);
+  void *ret = xmalloc(total_size);
   ((char*)ret)[size] = 0;
 
   return ret;
@@ -220,6 +172,103 @@ void *xmemdupz(const void *data, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
   return memcpy(xmallocz(len), data, len);
+}
+
+/// A version of strchr() that returns a pointer to the terminating NUL if it
+/// doesn't find `c`.
+///
+/// @param str The string to search.
+/// @param c   The char to look for.
+/// @returns a pointer to the first instance of `c`, or to the NUL terminator
+///          if not found.
+char *xstrchrnul(const char *str, char c)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+{
+  char *p = strchr(str, c);
+  return p ? p : (char *)(str + strlen(str));
+}
+
+/// A version of memchr() that returns a pointer one past the end
+/// if it doesn't find `c`.
+///
+/// @param addr The address of the memory object.
+/// @param c    The char to look for.
+/// @param size The size of the memory object.
+/// @returns a pointer to the first instance of `c`, or one past the end if not
+///          found.
+void *xmemscan(const void *addr, char c, size_t size)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+{
+  char *p = memchr(addr, c, size);
+  return p ? p : (char *)addr + size;
+}
+
+/// Replaces every instance of `c` with `x`.
+///
+/// @warning Will read past `str + strlen(str)` if `c == NUL`.
+///
+/// @param str A NUL-terminated string.
+/// @param c   The unwanted byte.
+/// @param x   The replacement.
+void strchrsub(char *str, char c, char x)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert(c != '\0');
+  while ((str = strchr(str, c))) {
+    *str++ = x;
+  }
+}
+
+/// Replaces every instance of `c` with `x`.
+///
+/// @param data An object in memory. May contain NULs.
+/// @param c    The unwanted byte.
+/// @param x    The replacement.
+/// @param len  The length of data.
+void memchrsub(void *data, char c, char x, size_t len)
+  FUNC_ATTR_NONNULL_ALL
+{
+  char *p = data, *end = (char *)data + len;
+  while ((p = memchr(p, c, (size_t)(end - p)))) {
+    *p++ = x;
+  }
+}
+
+/// Counts the number of occurrences of `c` in `str`.
+///
+/// @warning Unsafe if `c == NUL`.
+///
+/// @param str Pointer to the string to search.
+/// @param c   The byte to search for.
+/// @returns the number of occurrences of `c` in `str`.
+size_t strcnt(const char *str, char c)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+{
+  assert(c != 0);
+  size_t cnt = 0;
+  while ((str = strchr(str, c))) {
+    cnt++;
+    str++;  // Skip the instance of c.
+  }
+  return cnt;
+}
+
+/// Counts the number of occurrences of byte `c` in `data[len]`.
+///
+/// @param data Pointer to the data to search.
+/// @param c    The byte to search for.
+/// @param len  The length of `data`.
+/// @returns the number of occurrences of `c` in `data[len]`.
+size_t memcnt(const void *data, char c, size_t len)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+{
+  size_t cnt = 0;
+  const char *ptr = data, *end = ptr + len;
+  while ((ptr = memchr(ptr, c, (size_t)(end - ptr))) != NULL) {
+    cnt++;
+    ptr++;  // Skip the instance of c.
+  }
+  return cnt;
 }
 
 /// The xstpcpy() function shall copy the string pointed to by src (including
@@ -293,6 +342,7 @@ char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen)
 /// @param size Size of destination buffer
 /// @return Length of the source string (i.e.: strlen(src))
 size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
+  FUNC_ATTR_NONNULL_ALL
 {
     size_t ret = strlen(src);
 
@@ -326,6 +376,25 @@ char *xstrdup(const char *str)
   }
 
   return ret;
+}
+
+/// A version of memchr that starts the search at `src + len`.
+///
+/// Based on glibc's memrchr.
+///
+/// @param src The source memory object.
+/// @param c   The byte to search for.
+/// @param len The length of the memory object.
+/// @returns a pointer to the found byte in src[len], or NULL.
+void *xmemrchr(const void *src, uint8_t c, size_t len)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+{
+  while (len--) {
+    if (((uint8_t *)src)[len] == c) {
+      return (uint8_t *) src + len;
+    }
+  }
+  return NULL;
 }
 
 /// strndup() wrapper
@@ -371,7 +440,36 @@ void do_outofmem_msg(size_t size)
   }
 }
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
+
+#include "nvim/file_search.h"
+#include "nvim/buffer.h"
+#include "nvim/charset.h"
+#include "nvim/diff.h"
+#include "nvim/edit.h"
+#include "nvim/ex_cmds.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/ex_getln.h"
+#include "nvim/fileio.h"
+#include "nvim/fold.h"
+#include "nvim/getchar.h"
+#include "nvim/mark.h"
+#include "nvim/mbyte.h"
+#include "nvim/memline.h"
+#include "nvim/move.h"
+#include "nvim/option.h"
+#include "nvim/ops.h"
+#include "nvim/os_unix.h"
+#include "nvim/path.h"
+#include "nvim/quickfix.h"
+#include "nvim/regexp.h"
+#include "nvim/screen.h"
+#include "nvim/search.h"
+#include "nvim/spell.h"
+#include "nvim/syntax.h"
+#include "nvim/tag.h"
+#include "nvim/window.h"
+#include "nvim/os/os.h"
 
 /*
  * Free everything that we allocated.

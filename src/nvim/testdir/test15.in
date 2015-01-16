@@ -12,7 +12,6 @@ STARTTEST
 :set fo+=tcroql tw=72
 /xxxxxxxx$
 0gq6kk
-:set nocp viminfo+=nviminfo
 :" undo/redo here to make the next undo only work on the following changes
 u
 :map gg :.,.+2s/^/x/<CR>kk:set tw=3<CR>gqq

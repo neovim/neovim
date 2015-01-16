@@ -1,5 +1,5 @@
-#ifndef NVIM_OS_UNIX_DEFS_H
-#define NVIM_OS_UNIX_DEFS_H
+#ifndef NVIM_OS_UNIX_DEFS_LEGACY_H
+#define NVIM_OS_UNIX_DEFS_LEGACY_H
 
 /*
  * VIM - Vi IMproved	by Bram Moolenaar
@@ -8,17 +8,13 @@
  * Do ":help credits" in Vim to see a list of people who contributed.
  */
 
-/*
- * NextStep has a problem with configure, undefine a few things:
- */
-
 #include <stdio.h>
 #include <ctype.h>
 
-# include <sys/types.h>
-# include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
-# include <stdlib.h>
+#include <stdlib.h>
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -257,4 +253,4 @@
 /* We have three kinds of ACL support. */
 #define HAVE_ACL (HAVE_POSIX_ACL || HAVE_SOLARIS_ACL || HAVE_AIX_ACL)
 
-#endif  // NVIM_OS_UNIX_DEFS_H
+#endif  // NVIM_OS_UNIX_DEFS_LEGACY_H

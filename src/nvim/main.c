@@ -28,6 +28,7 @@
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
 #include "nvim/hashtab.h"
+#include "nvim/iconv.h"
 #include "nvim/if_cscope.h"
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
@@ -42,6 +43,7 @@
 #include "nvim/log.h"
 #include "nvim/memory.h"
 #include "nvim/move.h"
+#include "nvim/mouse.h"
 #include "nvim/normal.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
@@ -56,12 +58,16 @@
 #include "nvim/ui.h"
 #include "nvim/version.h"
 #include "nvim/window.h"
+#include "nvim/os/time.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
+#include "nvim/os/time.h"
+#include "nvim/os/event.h"
 #include "nvim/os/signal.h"
-#include "nvim/os/msgpack_rpc_helpers.h"
+#include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/handle.h"
 
 /* Maximum number of commands from + or -c arguments. */
 #define MAX_ARG_CMDS 10
@@ -113,13 +119,6 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "main.c.generated.h"
 #endif
-#ifndef NO_VIM_MAIN
-# if defined(HAVE_LOCALE_H) || defined(X_LOCALE)
-static void init_locale(void);
-# endif
-# if defined(HAS_SWAP_EXISTS_ACTION)
-# endif
-#endif /* NO_VIM_MAIN */
 
 /*
  * Different types of error messages.
@@ -140,13 +139,59 @@ static char *(main_errors[]) =
 #define ME_INVALID_ARG          5
 };
 
-#ifndef NO_VIM_MAIN     /* skip this for unittests */
+/// Performs early initialization.
+///
+/// Needed for unit tests. Must be called after `time_init()`.
+void early_init(void)
+{
+  handle_init();
+
+  (void)mb_init();      // init mb_bytelen_tab[] to ones
+  eval_init();          // init global variables
+
+  // Init the table of Normal mode commands.
+  init_normal_cmds();
+
+#if defined(HAVE_LOCALE_H) || defined(X_LOCALE)
+  // Setup to use the current locale (for ctype() and many other things).
+  // NOTE: Translated messages with encodings other than latin1 will not
+  // work until set_init_1() has been called!
+  init_locale();
+#endif
+
+  // Allocate the first window and buffer.
+  // Can't do anything without it, exit when it fails.
+  if (!win_alloc_first()) {
+    mch_exit(0);
+  }
+
+  init_yank();                  // init yank buffers
+
+  alist_init(&global_alist);    // Init the argument list to empty.
+  global_alist.id = 0;
+
+  // Set the default values for the options.
+  // NOTE: Non-latin1 translated messages are working only after this,
+  // because this is where "has_mbyte" will be set, which is used by
+  // msg_outtrans_len_attr().
+  // First find out the home directory, needed to expand "~" in options.
+  init_homedir();               // find real value of $HOME
+  set_init_1();
+  TIME_MSG("inits 1");
+
+  set_lang_var();               // set v:lang and v:ctype
+}
+
+#ifdef MAKE_LIB
+int nvim_main(int argc, char **argv)
+#else
 int main(int argc, char **argv)
+#endif
 {
   char_u      *fname = NULL;            /* file name from command line */
   mparm_T params;                       /* various parameters passed between
                                          * main() and other functions. */
-  mch_early_init();
+  time_init();
 
   /* Many variables are in "params" so that we can pass them to invoked
    * functions without a lot of arguments.  "argc" and "argv" are also
@@ -155,58 +200,12 @@ int main(int argc, char **argv)
 
   init_startuptime(&params);
 
-  (void)mb_init();      /* init mb_bytelen_tab[] to ones */
-  eval_init();          /* init global variables */
-
-#ifdef __QNXNTO__
-  qnx_init();           /* PhAttach() for clipboard, (and gui) */
-#endif
-
-  /* Init the table of Normal mode commands. */
-  init_normal_cmds();
-
-#if defined(HAVE_LOCALE_H) || defined(X_LOCALE)
-  /*
-   * Setup to use the current locale (for ctype() and many other things).
-   * NOTE: Translated messages with encodings other than latin1 will not
-   * work until set_init_1() has been called!
-   */
-  init_locale();
-#endif
+  early_init();
 
   /*
    * Check if we have an interactive window.
-   * On the Amiga: If there is no window, we open one with a newcli command
-   * (needed for :! to * work). mch_check_win() will also handle the -d or
-   * -dev argument.
    */
   check_and_set_isatty(&params);
-
-  /*
-   * Allocate the first window and buffer.
-   * Can't do anything without it, exit when it fails.
-   */
-  if (win_alloc_first() == FAIL)
-    mch_exit(0);
-
-  init_yank();                  /* init yank buffers */
-
-  alist_init(&global_alist);    /* Init the argument list to empty. */
-  global_alist.id = 0;
-
-  /*
-   * Set the default values for the options.
-   * NOTE: Non-latin1 translated messages are working only after this,
-   * because this is where "has_mbyte" will be set, which is used by
-   * msg_outtrans_len_attr().
-   * First find out the home directory, needed to expand "~" in options.
-   */
-  init_homedir();               /* find real value of $HOME */
-  set_init_1();
-  TIME_MSG("inits 1");
-
-  set_lang_var();               /* set v:lang and v:ctype */
-
 
   /*
    * Figure out the way to work from the command name argv[0].
@@ -250,19 +249,10 @@ int main(int argc, char **argv)
    */
 
 
-  /*
-   * mch_init() sets up the terminal (window) for use.  This must be
-   * done after resetting full_screen, otherwise it may move the cursor
-   * Note that we may use mch_exit() before mch_init()!
-   */
-  mch_init();
+  // term_init() sets up the terminal (window) for use.  This must be
+  // done after resetting full_screen, otherwise it may move the cursor
+  term_init();
   TIME_MSG("shell init");
-
-
-  if (!embedded_mode) {
-    // Print a warning if stdout is not a terminal.
-    check_tty(&params);
-  }
 
   /* This message comes before term inits, but after setting "silent_mode"
    * when the input is not a tty. */
@@ -271,17 +261,27 @@ int main(int argc, char **argv)
 
   if (params.want_full_screen && !silent_mode) {
     if (embedded_mode) {
-      // In embedded mode don't do terminal-related initializations, assume an
-      // initial screen size of 80x20
-      full_screen = true;
-      set_shellsize(80, 20, false);
-    } else { 
+      // embedded mode implies abstract_ui
+      termcapinit((uint8_t *)"abstract_ui");
+    } else {
       // set terminal name and get terminal capabilities (will set full_screen)
       // Do some initialization of the screen
       termcapinit(params.term);
     }
     screen_start();             /* don't know where cursor is now */
     TIME_MSG("Termcap init");
+  }
+
+  event_init();
+
+  if (abstract_ui) {
+    full_screen = true;
+    t_colors = 256;
+    T_CCO = (uint8_t *)"256";
+  } else {
+    // Print a warning if stdout is not a terminal TODO(tarruda): Remove this
+    // check once the new terminal UI is implemented
+    check_tty(&params);
   }
 
   /*
@@ -416,18 +416,16 @@ int main(int argc, char **argv)
     TIME_MSG("waiting for return");
   }
 
-  if (!embedded_mode) {
-    starttermcap(); // start termcap if not done by wait_return()
-    TIME_MSG("start termcap");
-    may_req_ambiguous_char_width();
-    setmouse();  // may start using the mouse
+  starttermcap(); // start termcap if not done by wait_return()
+  TIME_MSG("start termcap");
+  may_req_ambiguous_char_width();
+  setmouse();  // may start using the mouse
 
-    if (scroll_region) {
-      scroll_region_reset(); // In case Rows changed
-    }
-
-    scroll_start(); // may scroll the screen to the right position
+  if (scroll_region) {
+    scroll_region_reset(); // In case Rows changed
   }
+
+  scroll_start(); // may scroll the screen to the right position
 
   /*
    * Don't clear the screen when starting in Ex mode, unless using the GUI.
@@ -475,7 +473,7 @@ int main(int argc, char **argv)
 
   if (params.diff_mode) {
     /* set options in each window for "vimdiff". */
-    FOR_ALL_WINDOWS(wp) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       diff_win_options(wp, TRUE);
     }
   }
@@ -537,7 +535,6 @@ int main(int argc, char **argv)
 
   return 0;
 }
-#endif /* NO_VIM_MAIN */
 
 /*
  * Main loop: Execute Normal mode commands until exiting Vim.
@@ -546,7 +543,7 @@ int main(int argc, char **argv)
  * Also used to handle ":visual" command after ":global": execute Normal mode
  * commands, return when entering Ex mode.  "noexmode" is TRUE then.
  */
-void 
+void
 main_loop (
     int cmdwin,                 /* TRUE when working in the command-line window */
     int noexmode               /* TRUE when return on entering Ex mode */
@@ -681,10 +678,10 @@ main_loop (
       if (keep_msg != NULL) {
         char_u *p;
 
-        /* msg_attr_keep() will set keep_msg to NULL, must free the
-         * string here. */
+        // msg_attr_keep() will set keep_msg to NULL, must free the string
+        // here. Don't reset keep_msg, msg_attr_keep() uses it to check for
+        // duplicates.
         p = keep_msg;
-        keep_msg = NULL;
         msg_attr(p, keep_msg_attr);
         free(p);
       }
@@ -838,11 +835,10 @@ void getout(int exitval)
   mch_exit(exitval);
 }
 
-#ifndef NO_VIM_MAIN
 /*
  * Get a (optional) count for a Vim argument.
  */
-static int 
+static int
 get_number_arg (
     char_u *p,             /* pointer to argument */
     int *idx,           /* index in argument, is incremented */
@@ -941,7 +937,6 @@ static void parse_command_name(mparm_T *parmp)
       exmode_active = EXMODE_VIM;
     else
       exmode_active = EXMODE_NORMAL;
-    change_compatible(TRUE);            /* set 'compatible' */
   }
 }
 
@@ -1076,10 +1071,6 @@ static void command_line_scan(mparm_T *parmp)
           curbuf->b_p_bin = 1;                /* binary file I/O */
           break;
 
-        case 'C':                 /* "-C"  Compatible */
-          change_compatible(TRUE);
-          break;
-
         case 'e':                 /* "-e" Ex mode */
           exmode_active = EXMODE_NORMAL;
           break;
@@ -1088,8 +1079,7 @@ static void command_line_scan(mparm_T *parmp)
           exmode_active = EXMODE_VIM;
           break;
 
-        case 'f':                 /* "-f"  GUI: run in foreground.  Amiga: open
-                                     window directly, not with newcli */
+        case 'f':                 /* "-f"  GUI: run in foreground. */
           break;
 
         case 'g':                 /* "-g" start GUI */
@@ -1128,7 +1118,7 @@ static void command_line_scan(mparm_T *parmp)
           break;
 
         case 'N':                 /* "-N"  Nocompatible */
-          change_compatible(FALSE);
+          /* No-op */
           break;
 
         case 'n':                 /* "-n" no swap file */
@@ -1490,9 +1480,6 @@ static void init_startuptime(mparm_T *paramp)
 
 /*
  * Check if we have an interactive window.
- * On the Amiga: If there is no window, we open one with a newcli command
- * (needed for :! to * work). mch_check_win() will also handle the -d or
- * -dev argument.
  */
 static void check_and_set_isatty(mparm_T *paramp)
 {
@@ -1572,19 +1559,15 @@ static void handle_quickfix(mparm_T *paramp)
 static void handle_tag(char_u *tagname)
 {
   if (tagname != NULL) {
-#if defined(HAS_SWAP_EXISTS_ACTION)
     swap_exists_did_quit = FALSE;
-#endif
 
     vim_snprintf((char *)IObuff, IOSIZE, "ta %s", tagname);
     do_cmdline_cmd(IObuff);
     TIME_MSG("jumping to tag");
 
-#if defined(HAS_SWAP_EXISTS_ACTION)
     /* If the user doesn't want to edit the file then we quit here. */
     if (swap_exists_did_quit)
       getout(1);
-#endif
   }
 }
 
@@ -1607,7 +1590,7 @@ static void check_tty(mparm_T *parmp)
       mch_errmsg(_("Vim: Warning: Input is not from a terminal\n"));
     out_flush();
     if (scriptin[0] == NULL)
-      ui_delay(2000L, true);
+      os_delay(2000L, true);
     TIME_MSG("Warning delay");
   }
 }
@@ -1619,10 +1602,8 @@ static void read_stdin(void)
 {
   int i;
 
-#if defined(HAS_SWAP_EXISTS_ACTION)
   /* When getting the ATTENTION prompt here, use a dialog */
   swap_exists_action = SEA_DIALOG;
-#endif
   no_wait_return = TRUE;
   i = msg_didany;
   set_buflisted(TRUE);
@@ -1630,9 +1611,7 @@ static void read_stdin(void)
   no_wait_return = FALSE;
   msg_didany = i;
   TIME_MSG("reading stdin");
-#if defined(HAS_SWAP_EXISTS_ACTION)
   check_swap_exists_action();
-#endif
   /*
    * Close stdin and dup it from stderr.  Required for GPM to work
    * properly, and for running external commands.
@@ -1714,16 +1693,13 @@ static void create_windows(mparm_T *parmp)
         /* Set 'foldlevel' to 'foldlevelstart' if it's not negative. */
         if (p_fdls >= 0)
           curwin->w_p_fdl = p_fdls;
-#if defined(HAS_SWAP_EXISTS_ACTION)
         /* When getting the ATTENTION prompt here, use a dialog */
         swap_exists_action = SEA_DIALOG;
-#endif
         set_buflisted(TRUE);
 
         /* create memfile, read file */
         (void)open_buffer(FALSE, NULL, 0);
 
-#if defined(HAS_SWAP_EXISTS_ACTION)
         if (swap_exists_action == SEA_QUIT) {
           if (got_int || only_one_window()) {
             /* abort selected or quit and only one window */
@@ -1738,10 +1714,9 @@ static void create_windows(mparm_T *parmp)
           swap_exists_action = SEA_NONE;
         } else
           handle_swap_exists(NULL);
-#endif
         dorewind = TRUE;                        /* start again */
       }
-      ui_breakcheck();
+      os_breakcheck();
       if (got_int) {
         (void)vgetc();          /* only break the file loading, not the rest */
         break;
@@ -1809,13 +1784,10 @@ static void edit_buffers(mparm_T *parmp)
       curwin->w_arg_idx = arg_idx;
       /* Edit file from arg list, if there is one.  When "Quit" selected
        * at the ATTENTION prompt close the window. */
-# ifdef HAS_SWAP_EXISTS_ACTION
       swap_exists_did_quit = FALSE;
-# endif
       (void)do_ecmd(0, arg_idx < GARGCOUNT
           ? alist_name(&GARGLIST[arg_idx]) : NULL,
           NULL, NULL, ECMD_LASTL, ECMD_HIDE, curwin);
-# ifdef HAS_SWAP_EXISTS_ACTION
       if (swap_exists_did_quit) {
         /* abort or quit selected */
         if (got_int || only_one_window()) {
@@ -1826,12 +1798,11 @@ static void edit_buffers(mparm_T *parmp)
         win_close(curwin, TRUE);
         advance = FALSE;
       }
-# endif
       if (arg_idx == GARGCOUNT - 1)
         arg_had_last = TRUE;
       ++arg_idx;
     }
-    ui_breakcheck();
+    os_breakcheck();
     if (got_int) {
       (void)vgetc();            /* only break the file loading, not the rest */
       break;
@@ -1958,10 +1929,10 @@ static void source_startup_scripts(mparm_T *parmp)
     /*
      * Try to read initialization commands from the following places:
      * - environment variable VIMINIT
-     * - user vimrc file (s:.vimrc for Amiga, ~/.vimrc otherwise)
+     * - user vimrc file (~/.vimrc)
      * - second user vimrc file ($VIM/.vimrc for Dos)
      * - environment variable EXINIT
-     * - user exrc file (s:.exrc for Amiga, ~/.exrc otherwise)
+     * - user exrc file (~/.exrc)
      * - second user exrc file ($VIM/.exrc for Dos)
      * The first that exists is used, the rest is ignored.
      */
@@ -2056,13 +2027,12 @@ static void main_start_gui(void)
   mch_exit(2);
 }
 
-#endif /* NO_VIM_MAIN */
 
 /*
  * Get an environment variable, and execute it as Ex commands.
  * Returns FAIL if the environment variable was not executed, OK otherwise.
  */
-int 
+int
 process_env (
     char_u *env,
     int is_viminit             /* when TRUE, called for VIMINIT */
@@ -2092,7 +2062,7 @@ process_env (
   return FAIL;
 }
 
-#if defined(UNIX) && !defined(NO_VIM_MAIN)
+#if defined(UNIX)
 /*
  * Return TRUE if we are certain the user owns the file "fname".
  * Used for ".vimrc" and ".exrc".
@@ -2113,7 +2083,7 @@ static int file_owned(char *fname)
 /*
  * Give an error message main_errors["n"] and exit.
  */
-static void 
+static void
 mainerr (
     int n,                  /* one of the ME_ defines */
     char_u *str       /* extra argument or NULL */
@@ -2139,7 +2109,6 @@ void mainerr_arg_missing(char_u *str)
   mainerr(ME_ARG_MISSING, str);
 }
 
-#ifndef NO_VIM_MAIN
 /*
  * print a message with three spaces prepended and '\n' appended.
  */
@@ -2171,7 +2140,7 @@ static void usage(void)
   for (i = 0;; ++i) {
     mch_msg(_(" vim [arguments] "));
     mch_msg(_(use[i]));
-    if (i == (sizeof(use) / sizeof(char_u *)) - 1)
+    if (i == ARRAY_SIZE(use) - 1)
       break;
     mch_msg(_("\n   or:"));
   }
@@ -2193,8 +2162,6 @@ static void usage(void)
   main_msg(_("-M\t\t\tModifications in text not allowed"));
   main_msg(_("-b\t\t\tBinary mode"));
   main_msg(_("-l\t\t\tLisp mode"));
-  main_msg(_("-C\t\t\tCompatible with Vi: 'compatible'"));
-  main_msg(_("-N\t\t\tNot fully Vi compatible: 'nocompatible'"));
   main_msg(_("-V[N][fname]\t\tBe verbose [level N] [log messages to fname]"));
   main_msg(_("-D\t\t\tDebugging mode"));
   main_msg(_("-n\t\t\tNo swap file, use memory only"));
@@ -2231,7 +2198,6 @@ static void usage(void)
   mch_exit(0);
 }
 
-#if defined(HAS_SWAP_EXISTS_ACTION)
 /*
  * Check the result of the ATTENTION dialog:
  * When "Quit" selected, exit Vim.
@@ -2244,6 +2210,4 @@ static void check_swap_exists_action(void)
   handle_swap_exists(NULL);
 }
 
-#endif
 
-#endif

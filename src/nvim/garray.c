@@ -37,10 +37,7 @@ void ga_clear(garray_T *gap)
 /// @param gap
 void ga_clear_strings(garray_T *gap)
 {
-  for (int i = 0; i < gap->ga_len; ++i) {
-    free(((char_u **)(gap->ga_data))[i]);
-  }
-  ga_clear(gap);
+  GA_DEEP_CLEAR_PTR(gap);
 }
 
 /// Initialize a growing array.
@@ -202,7 +199,7 @@ void ga_append(garray_T *gap, char c)
   GA_APPEND(char, gap, c);
 }
 
-#if defined(UNIX) || defined(WIN3264) || defined(PROTO)
+#if defined(UNIX) || defined(WIN3264)
 
 /// Append the text in "gap" below the cursor line and clear "gap".
 ///

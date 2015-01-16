@@ -123,10 +123,6 @@ Note:
 - Once a change is included that goes under the GNU GPL, this forces all
   further changes to also be made under the GNU GPL or a compatible license.
 
-- If you distribute a modified version of Vim, you can include your name and
-  contact information with the "--with-modified-by" configure argument or the
-  MODIFIED_BY define.
-
 ==============================================================================
 Kibaale Children's Centre		*kcc* *Kibaale*  *charity*
 

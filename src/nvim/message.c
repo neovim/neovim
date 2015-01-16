@@ -10,8 +10,7 @@
  * message.c: functions for displaying messages on the command line
  */
 
-#define MESSAGE_FILE            /* don't include prototype for smsg() */
-
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -41,9 +40,10 @@
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/term.h"
-#include "nvim/ui.h"
+#include "nvim/mouse.h"
 #include "nvim/os/os.h"
-#include "nvim/os/event.h"
+#include "nvim/os/input.h"
+#include "nvim/os/time.h"
 
 /*
  * To be able to scroll back at the "more" and "hit-enter" prompts we need to
@@ -143,7 +143,7 @@ int verb_msg(char_u *s)
   return n;
 }
 
-int msg_attr(char_u *s, int attr)
+int msg_attr(char_u *s, int attr) FUNC_ATTR_NONNULL_ARG(1)
 {
   return msg_attr_keep(s, attr, FALSE);
 }
@@ -154,6 +154,7 @@ msg_attr_keep (
     int attr,
     int keep                   /* TRUE: set keep_msg if it doesn't scroll */
 )
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   static int entered = 0;
   int retval;
@@ -691,8 +692,10 @@ int delete_first_msg(void)
     return FAIL;
   p = first_msg_hist;
   first_msg_hist = p->next;
-  if (first_msg_hist == NULL)
-    last_msg_hist = NULL;      /* history is empty */
+  if (first_msg_hist == NULL) {  /* history is becoming empty */
+    assert(msg_hist_len == 1);
+    last_msg_hist = NULL;
+  }
   free(p->msg);
   free(p);
   --msg_hist_len;
@@ -834,7 +837,7 @@ void wait_return(int redraw)
        * to avoid that typing one 'j' too many makes the messages
        * disappear.
        */
-      if (p_more && !p_cp) {
+      if (p_more) {
         if (c == 'b' || c == 'k' || c == 'u' || c == 'g'
             || c == K_UP || c == K_PAGEUP) {
           if (msg_scrolled > Rows)
@@ -875,7 +878,7 @@ void wait_return(int redraw)
                      || c == K_X1MOUSE
                      || c == K_X2MOUSE))
              );
-    ui_breakcheck();
+    os_breakcheck();
     /*
      * Avoid that the mouse-up event causes visual mode to start.
      */
@@ -2073,9 +2076,6 @@ static int do_more_prompt(int typed_char)
 
     toscroll = 0;
     switch (c) {
-    case K_EVENT:
-      event_process();
-      break;
     case BS:                    /* scroll one line back */
     case K_BS:
     case 'k':
@@ -2622,7 +2622,7 @@ int verbose_open(void)
  * Give a warning message (for searching).
  * Use 'w' highlighting and may repeat the message after redrawing
  */
-void give_warning(char_u *message, bool hl)
+void give_warning(char_u *message, bool hl) FUNC_ATTR_NONNULL_ARG(1)
 {
   /* Don't do this for ":silent". */
   if (msg_silent != 0)
@@ -2703,11 +2703,9 @@ do_dialog (
   int c;
   int i;
 
-#ifndef NO_CONSOLE
   /* Don't output anything in silent mode ("ex -s") */
   if (silent_mode)
     return dfltbutton;       /* return default option */
-#endif
 
 
   oldState = State;
@@ -2735,8 +2733,6 @@ do_dialog (
       break;
     default:                  /* Could be a hotkey? */
       if (c < 0) {            /* special keys are ignored here */
-        // drain event queue to prevent infinite loop
-        event_process();
         continue;
       }
       if (c == ':' && ex_cmd) {
@@ -3173,8 +3169,7 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
     p = "";
   while (*p != NUL) {
     if (*p != '%') {
-      char    *q = strchr(p + 1, '%');
-      size_t n = (q == NULL) ? STRLEN(p) : (size_t)(q - p);
+      size_t n = xstrchrnul(p + 1, '%') - p;
 
       /* Copy up to the next '%' or NUL without any changes. */
       if (str_l < str_m) {
@@ -3321,7 +3316,6 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
       case 'c':
       case 's':
       case 'S':
-        length_modifier = '\0';
         str_arg_l = 1;
         switch (fmt_spec) {
         case '%':
@@ -3585,7 +3579,6 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
                * zero value is formatted with an
                * explicit precision of zero */
               precision = num_of_digits + 1;
-              precision_specified = 1;
             }
           }
           /* zero padding to specified precision? */
@@ -3629,13 +3622,7 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
           remove_trailing_zeroes = TRUE;
         }
 
-        if (fmt_spec == 'f' &&
-#ifdef VAX
-            abs_f > 1.0e38
-#else
-            abs_f > 1.0e307
-#endif
-            ) {
+        if (fmt_spec == 'f' && abs_f > 1.0e307) {
           /* Avoid a buffer overflow */
           strcpy(tmp, "inf");
           str_arg_l = 3;

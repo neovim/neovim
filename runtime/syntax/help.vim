@@ -19,15 +19,9 @@ if has("conceal")
 else
   syn region helpExample	matchgroup=helpIgnore start=" >$" start="^>$" end="^[^ \t]"me=e-1 end="^<"
 endif
-if has("ebcdic")
-  syn match helpHyperTextJump	"\\\@<!|[^"*|]\+|" contains=helpBar
-  syn match helpHyperTextEntry	"\*[^"*|]\+\*\s"he=e-1 contains=helpStar
-  syn match helpHyperTextEntry	"\*[^"*|]\+\*$" contains=helpStar
-else
-  syn match helpHyperTextJump	"\\\@<!|[#-)!+-~]\+|" contains=helpBar
-  syn match helpHyperTextEntry	"\*[#-)!+-~]\+\*\s"he=e-1 contains=helpStar
-  syn match helpHyperTextEntry	"\*[#-)!+-~]\+\*$" contains=helpStar
-endif
+syn match helpHyperTextJump	"\\\@<!|[#-)!+-~]\+|" contains=helpBar
+syn match helpHyperTextEntry	"\*[#-)!+-~]\+\*\s"he=e-1 contains=helpStar
+syn match helpHyperTextEntry	"\*[#-)!+-~]\+\*$" contains=helpStar
 if has("conceal")
   syn match helpBar		contained "|" conceal
   syn match helpBacktick	contained "`" conceal

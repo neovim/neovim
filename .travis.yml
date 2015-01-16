@@ -1,25 +1,62 @@
 language: c
+os:
+  - linux
 env:
   global:
-    - PROJECT_ROOT="$(pwd)"
-    - CI_SCRIPTS="$PROJECT_ROOT/.ci"
-    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-    # via the "travis encrypt" command using the project repo's public key
-    - secure: "QEz92NyItkzQu52kCFD928jEwUYnA2OIgSyeNrp+Y3gm5rOmSZerY8hGiXyNZxocap9+qIPCapRRYU3ZYKWZPeucWMLN3aIjxAFdhugKbnmNYE1jFugb6b8N3SxiX/3206NHXlYaz0OZhh6OBAFmPUXamJC8OrWVgPNPo7wv4UQ="
+    - CI_SCRIPTS=$TRAVIS_BUILD_DIR/.ci
+    # To build third-party dependencies, set this to 'true'.
+    - BUILD_NVIM_DEPS=false
+    # Travis reports back that it has 32-cores via /proc/cpuinfo, but it's not
+    # what we really have available.  According to their documentation, it only has
+    # 1.5 virtual cores.
+    # See
+    #   http://docs.travis-ci.com/user/speeding-up-the-build/#Paralellizing-your-build-on-one-VM
+    # for more information.
+    - MAKE_CMD="make -j2"
+    # Force verification of DLOG macros.
+    - CFLAGS='-DMIN_LOG_LEVEL=0'
   matrix:
     - CI_TARGET=clang-asan
-    - CI_TARGET=gcc-ia32
-    - CI_TARGET=gcc-unittest
+    - CI_TARGET=gcc
+    - CI_TARGET=gcc-32
     - CI_TARGET=clint
-    - CI_TARGET=api-python
-    - CI_TARGET=coverity
+matrix:
+  include:
+    - os: osx
+      env: CI_TARGET=clang-asan
+    - os: osx
+      env: CI_TARGET=gcc
+      compiler: gcc-4.9
+  allow_failures:
+    - os: osx
 before_install:
+  # Pins the version of the java package installed on the Travis VMs
+  # and avoids a lengthy upgrade process for them.
+  - if [ $TRAVIS_OS_NAME = linux ]; then
+      sudo apt-mark hold oracle-java7-installer oracle-java8-installer;
+      sudo apt-get update;
+    elif [ $TRAVIS_OS_NAME = osx ]; then
+      brew update;
+    fi
+install:
+  - if [ $TRAVIS_OS_NAME = linux ]; then
+      sudo apt-get install xclip gdb;
+    fi
+before_script:
   # Adds user to a dummy group.
   # That allows to test changing the group of the file by `os_fchown`.
-  - sudo groupadd chown_test
-  - sudo usermod -a -G chown_test ${USER}
+  # Need xvfb for running some tests with xclip
+  - if [ $TRAVIS_OS_NAME = linux ]; then
+      sudo groupadd chown_test;
+      sudo usermod -a -G chown_test $USER;
+      export DISPLAY=:99.0;
+      sh -e /etc/init.d/xvfb start;
+    elif [ $TRAVIS_OS_NAME = osx ]; then
+      sudo dscl . -create /Groups/chown_test;
+      sudo dscl . -append /Groups/chown_test GroupMembership $USER;
+    fi
 script:
   # This will pass the environment variables down to a bash process which runs
   # as $USER, while retaining the environment variables defined and belonging
   # to secondary groups given above in usermod.
-  - sudo -E su ${USER} -c "sh -e \"${CI_SCRIPTS}/${CI_TARGET}.sh\""
+  - sudo -E su $USER -c "sh -e \"$CI_SCRIPTS/$CI_TARGET.sh\""

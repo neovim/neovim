@@ -1,3 +1,5 @@
+#include <assert.h>
+#include <stdint.h>
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/cursor_shape.h"
@@ -51,7 +53,6 @@ char_u *parse_shape_opt(int what)
   int all_idx;
   int len;
   int i;
-  long n;
   int found_ve = FALSE;                 /* found "ve" flag */
   int round;
 
@@ -76,6 +77,7 @@ char_u *parse_shape_opt(int what)
        * For the 'a' mode, we loop to handle all the modes.
        */
       all_idx = -1;
+      assert(modep < colonp);
       while (modep < colonp || all_idx >= 0) {
         if (all_idx < 0) {
           /* Find the mode. */
@@ -133,7 +135,7 @@ char_u *parse_shape_opt(int what)
               p += len;
               if (!VIM_ISDIGIT(*p))
                 return (char_u *)N_("E548: digit expected");
-              n = getdigits(&p);
+              int n = getdigits_int(&p);
               if (len == 3) {               /* "ver" or "hor" */
                 if (n == 0)
                   return (char_u *)N_("E549: Illegal percentage");

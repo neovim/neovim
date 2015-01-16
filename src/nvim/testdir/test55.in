@@ -282,6 +282,21 @@ let l = [0, 1, 2, 3]
 :    $put =ps
 :  endfor
 :endfor
+:unlet l
+:let l = [1, 2, 3, 4]
+:lockvar! l
+:$put =string(l)
+:unlockvar l[1]
+:unlet l[0:1]
+:$put =string(l)
+:unlet l[1:2]
+:$put =string(l)
+:unlockvar l[1]
+:let l[0:1] = [0, 1]
+:$put =string(l)
+:let l[1:2] = [0, 1]
+:$put =string(l)
+:unlet l
 :" :lockvar/islocked() triggering script autoloading
 :set rtp+=./sautest
 :lockvar g:footest#x
@@ -386,6 +401,11 @@ let l = [0, 1, 2, 3]
 :  $put =v:exception[:15] . v:exception[-1:-1]
 :endtry
 :$put =string(d)
+:"
+:" test for range assign
+:let l = [0]
+:let l[:] = [1, 2]
+:$put =string(l)
 :endfun
 :"
 :call Test(1, 2, [3, 4], {5: 6})  " This may take a while

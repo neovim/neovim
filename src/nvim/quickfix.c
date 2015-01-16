@@ -10,6 +10,7 @@
  * quickfix.c: functions for quickfix mode, using a file with error messages
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -48,9 +49,9 @@
 #include "nvim/strings.h"
 #include "nvim/term.h"
 #include "nvim/tempfile.h"
-#include "nvim/ui.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
+#include "nvim/os/input.h"
 
 
 struct dir_stack_T {
@@ -798,6 +799,16 @@ qf_init_end:
   return retval;
 }
 
+static void qf_store_title(qf_info_T *qi, char_u *title)
+{
+  if (title != NULL) {
+    char_u *p = xmalloc(STRLEN(title) + 2);
+
+    qi->qf_lists[qi->qf_curlist].qf_title = p;
+    sprintf((char *)p, ":%s", (char *)title);
+  }
+}
+
 /*
  * Prepare for adding a new quickfix list.
  */
@@ -805,11 +816,9 @@ static void qf_new_list(qf_info_T *qi, char_u *qf_title)
 {
   int i;
 
-  /*
-   * If the current entry is not the last entry, delete entries below
-   * the current entry.  This makes it possible to browse in a tree-like
-   * way with ":grep'.
-   */
+  // If the current entry is not the last entry, delete entries beyond
+  // the current entry.  This makes it possible to browse in a tree-like
+  // way with ":grep'.
   while (qi->qf_listcount > qi->qf_curlist + 1)
     qf_free(qi, --qi->qf_listcount);
 
@@ -825,12 +834,7 @@ static void qf_new_list(qf_info_T *qi, char_u *qf_title)
   } else
     qi->qf_curlist = qi->qf_listcount++;
   memset(&qi->qf_lists[qi->qf_curlist], 0, (size_t)(sizeof(qf_list_T)));
-  if (qf_title != NULL) {
-    char_u *p = xmalloc(STRLEN(qf_title) + 2);
-
-    qi->qf_lists[qi->qf_curlist].qf_title = p;
-    sprintf((char *)p, ":%s", (char *)qf_title);
-  }
+  qf_store_title(qi, qf_title);
 }
 
 /*
@@ -877,7 +881,7 @@ void qf_free_all(win_T *wp)
 static int 
 qf_add_entry (
     qf_info_T *qi,                /* quickfix list */
-    qfline_T **prevp,            /* pointer to previously added entry or NULL */
+    qfline_T **prevp,            /* nonnull pointer (to previously added entry or NULL) */
     char_u *dir,               /* optional directory name */
     char_u *fname,             /* file name or NULL */
     int bufnum,                     /* buffer number or zero */
@@ -917,6 +921,7 @@ qf_add_entry (
     qi->qf_lists[qi->qf_curlist].qf_start = qfp;
     qfp->qf_prev = qfp;         /* first element points to itself */
   } else {
+    assert(*prevp);
     qfp->qf_prev = *prevp;
     (*prevp)->qf_next = qfp;
   }
@@ -1382,7 +1387,7 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
     win_T *wp = NULL;
 
     if (cmdmod.tab == 0) {
-      FOR_ALL_WINDOWS(wp2) {
+      FOR_ALL_WINDOWS_IN_TAB(wp2, curtab) {
         if (wp2->w_buffer != NULL && wp2->w_buffer->b_help) {
           wp = wp2;
           break;
@@ -1441,7 +1446,7 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
     if (ll_ref != NULL) {
       /* Find a window using the same location list that is not a
        * quickfix window. */
-      FOR_ALL_WINDOWS(wp) {
+      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
         if (wp->w_llist == ll_ref
             && wp->w_buffer->b_p_bt[0] != 'q') {
           usable_win = true;
@@ -1453,7 +1458,7 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
 
     if (!usable_win) {
       /* Locate a window showing a normal buffer */
-      FOR_ALL_WINDOWS(wp) {
+      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
         if (wp->w_buffer->b_p_bt[0] == NUL) {
           usable_win = true;
           break;
@@ -1502,7 +1507,7 @@ win_found:
         win = usable_win_ptr;
         if (win == NULL) {
           /* Find the window showing the selected file */
-          FOR_ALL_WINDOWS(wp) {
+          FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
             if (wp->w_buffer->b_fnum == qf_ptr->qf_fnum) {
               win = wp;
               break;
@@ -1786,7 +1791,7 @@ void qf_list(exarg_T *eap)
 
     qfp = qfp->qf_next;
     ++i;
-    ui_breakcheck();
+    os_breakcheck();
   }
 }
 
@@ -2124,8 +2129,9 @@ void ex_copen(exarg_T *eap)
    */
   qf_fill_buffer(qi);
 
-  if (qi->qf_lists[qi->qf_curlist].qf_title != NULL)
-    qf_set_title(qi);
+  if (qi->qf_lists[qi->qf_curlist].qf_title != NULL) {
+    qf_set_title_var(qi);
+  }
 
   curwin->w_cursor.lnum = qi->qf_lists[qi->qf_curlist].qf_index;
   curwin->w_cursor.col = 0;
@@ -2217,7 +2223,7 @@ static int is_qf_win(win_T *win, qf_info_T *qi)
  */
 static win_T *qf_find_win(qf_info_T *qi)
 {
-  FOR_ALL_WINDOWS(win) {
+  FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
     if (is_qf_win(win, qi)) {
       return win;
     }
@@ -2263,7 +2269,7 @@ static void qf_update_buffer(qf_info_T *qi)
         && (win = qf_find_win(qi)) != NULL) {
       curwin_save = curwin;
       curwin = win;
-      qf_set_title(qi);
+      qf_set_title_var(qi);
       curwin = curwin_save;
 
     }
@@ -2275,7 +2281,7 @@ static void qf_update_buffer(qf_info_T *qi)
   }
 }
 
-static void qf_set_title(qf_info_T *qi)
+static void qf_set_title_var(qf_info_T *qi)
 {
   set_internal_string_var((char_u *)"w:quickfix_title",
       qi->qf_lists[qi->qf_curlist].qf_title);
@@ -3302,8 +3308,10 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
     for (prevp = qi->qf_lists[qi->qf_curlist].qf_start;
          prevp->qf_next != prevp; prevp = prevp->qf_next)
       ;
-  else if (action == 'r')
+  else if (action == 'r') {
     qf_free(qi, qi->qf_curlist);
+    qf_store_title(qi, title);
+  }
 
   for (li = list->lv_first; li != NULL; li = li->li_next) {
     if (li->li_tv.v_type != VAR_DICT)
@@ -3507,7 +3515,7 @@ void ex_helpgrep(exarg_T *eap)
     qi = NULL;
 
     /* Find an existing help window */
-    FOR_ALL_WINDOWS(wp) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_buffer != NULL && wp->w_buffer->b_help) {
         qi = wp->w_llist;
       }

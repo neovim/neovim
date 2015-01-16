@@ -51,6 +51,9 @@ all: nvim
 nvim: build/.ran-cmake deps
 	+$(BUILD_CMD) -C build
 
+libnvim: build/.ran-cmake deps
+	+$(BUILD_CMD) -C build libnvim
+
 cmake:
 	touch CMakeLists.txt
 	$(MAKE) build/.ran-cmake
@@ -61,22 +64,26 @@ build/.ran-cmake: | deps
 
 deps: | build/.ran-third-party-cmake
 ifeq ($(call filter-true,$(USE_BUNDLED_DEPS)),)
-	+$(BUILD_CMD) -C .deps/build/third-party
+	+$(BUILD_CMD) -C .deps
 endif
 
 build/.ran-third-party-cmake:
 ifeq ($(call filter-true,$(USE_BUNDLED_DEPS)),)
-	mkdir -p .deps/build/third-party
-	cd .deps/build/third-party && \
+	mkdir -p .deps
+	cd .deps && \
 		cmake -G '$(BUILD_TYPE)' $(BUNDLED_CMAKE_FLAG) \
-		$(DEPS_CMAKE_FLAGS) ../../../third-party
+		$(DEPS_CMAKE_FLAGS) ../third-party
 endif
 	mkdir -p build
 	touch $@
 
-test: | nvim
+oldtest: | nvim
 	+$(SINGLE_MAKE) -C src/nvim/testdir $(MAKEOVERRIDES)
-	PATH="$$(pwd)/build/bin:$$PATH" vroom --neovim --crawl test
+
+functionaltest: | nvim
+	+$(BUILD_CMD) -C build functionaltest
+
+test: functionaltest
 
 unittest: | nvim
 	+$(BUILD_CMD) -C build unittest
@@ -91,4 +98,10 @@ distclean: clean
 install: | nvim
 	+$(BUILD_CMD) -C build install
 
-.PHONY: test unittest clean distclean nvim cmake deps install
+lint:
+	cmake -DLINT_PRG=./clint.py \
+		-DLINT_DIR=src \
+		-DLINT_IGNORE_FILE=clint-ignored-files.txt \
+		-P cmake/RunLint.cmake
+
+.PHONY: test functionaltest unittest lint clean distclean nvim libnvim cmake deps install

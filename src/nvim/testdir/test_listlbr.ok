@@ -25,3 +25,14 @@ Test 4: set linebreak with tab and 1 line as long as screen: should break!
 +aaaaaaaaaaaaaaaaaa 
 ~                   
 ~                   
+_S_	 bla
+
+Test 5: set linebreak with conceal and set list and tab displayed by different char (line may not be truncated)
+Sabbbbbb bla        
+~                   
+~                   
+~                   
+this not
+aaaaaaaaaaaaa
+REMOVE: 
+REMOVE: 

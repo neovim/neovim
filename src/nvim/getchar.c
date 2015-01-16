@@ -15,6 +15,7 @@
  * mappings and abbreviations
  */
 
+#include <assert.h>
 #include <stdbool.h>
 #include <string.h>
 #include <inttypes.h>
@@ -47,9 +48,9 @@
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/term.h"
-#include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/os/event.h"
+#include "nvim/os/input.h"
 
 /*
  * These buffers are used for storing:
@@ -680,33 +681,34 @@ static int read_redo(int init, int old_redo)
     p = bp->b_str;
     return OK;
   }
-  if ((c = *p) != NUL) {
-    /* Reverse the conversion done by add_char_buff() */
-    /* For a multi-byte character get all the bytes and return the
-     * converted character. */
-    if (has_mbyte && (c != K_SPECIAL || p[1] == KS_SPECIAL))
-      n = MB_BYTE2LEN_CHECK(c);
-    else
-      n = 1;
-    for (i = 0;; ++i) {
-      if (c == K_SPECIAL) {     /* special key or escaped K_SPECIAL */
-        c = TO_SPECIAL(p[1], p[2]);
-        p += 2;
-      }
-      if (*++p == NUL && bp->b_next != NULL) {
-        bp = bp->b_next;
-        p = bp->b_str;
-      }
-      buf[i] = c;
-      if (i == n - 1) {         /* last byte of a character */
-        if (n != 1)
-          c = (*mb_ptr2char)(buf);
-        break;
-      }
-      c = *p;
-      if (c == NUL)             /* cannot happen? */
-        break;
+  if ((c = *p) == NUL) {
+    return c;
+  }
+  /* Reverse the conversion done by add_char_buff() */
+  /* For a multi-byte character get all the bytes and return the
+   * converted character. */
+  if (has_mbyte && (c != K_SPECIAL || p[1] == KS_SPECIAL))
+    n = MB_BYTE2LEN_CHECK(c);
+  else
+    n = 1;
+  for (i = 0;; ++i) {
+    if (c == K_SPECIAL) {     /* special key or escaped K_SPECIAL */
+      c = TO_SPECIAL(p[1], p[2]);
+      p += 2;
     }
+    if (*++p == NUL && bp->b_next != NULL) {
+      bp = bp->b_next;
+      p = bp->b_str;
+    }
+    buf[i] = c;
+    if (i == n - 1) {         /* last byte of a character */
+      if (n != 1)
+        c = (*mb_ptr2char)(buf);
+      break;
+    }
+    c = *p;
+    if (c == NUL)             /* cannot happen? */
+      break;
   }
 
   return c;
@@ -1201,9 +1203,7 @@ void save_typeahead(tasave_T *tp)
   readbuf1.bh_first.b_next = NULL;
   tp->save_readbuf2 = readbuf2;
   readbuf2.bh_first.b_next = NULL;
-# ifdef USE_INPUT_BUF
-  tp->save_inputbuf = get_input_buf();
-# endif
+  tp->save_inputbuf = input_buffer_save();
 }
 
 /*
@@ -1224,9 +1224,7 @@ void restore_typeahead(tasave_T *tp)
   readbuf1 = tp->save_readbuf1;
   free_buff(&readbuf2);
   readbuf2 = tp->save_readbuf2;
-# ifdef USE_INPUT_BUF
-  set_input_buf(tp->save_inputbuf);
-# endif
+  input_buffer_restore(tp->save_inputbuf);
 }
 
 /*
@@ -1309,7 +1307,7 @@ static void closescript(void)
     --curscript;
 }
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 void close_all_scripts(void)
 {
   while (scriptin[0] != NULL)
@@ -1705,14 +1703,14 @@ static int vgetorpeek(int advance)
        */
       for (;; ) {
         /*
-         * ui_breakcheck() is slow, don't use it too often when
+         * os_breakcheck() is slow, don't use it too often when
          * inside a mapping.  But call it each time for typed
          * characters.
          */
         if (typebuf.tb_maplen)
           line_breakcheck();
         else
-          ui_breakcheck();                      /* check for CTRL-C */
+          os_breakcheck();                      /* check for CTRL-C */
         keylen = 0;
         if (got_int) {
           /* flush all input */
@@ -1777,7 +1775,7 @@ static int vgetorpeek(int advance)
             if (c1 == K_SPECIAL)
               nolmaplen = 2;
             else {
-              LANGMAP_ADJUST(c1, TRUE);
+              LANGMAP_ADJUST(c1, (State & INSERT) == 0);
               nolmaplen = 0;
             }
             /* First try buffer-local mappings. */
@@ -2353,11 +2351,6 @@ static int vgetorpeek(int advance)
                                 + typebuf.tb_len] != NUL)
             typebuf.tb_noremap[typebuf.tb_off
                                + typebuf.tb_len++] = RM_YES;
-#ifdef USE_IM_CONTROL
-          /* Get IM status right after getting keys, not after the
-           * timeout for a mapping (focus may be lost by then). */
-          vgetc_im_active = im_get_status();
-#endif
         }
       }             /* for (;;) */
     }           /* if (!character from stuffbuf) */
@@ -2484,8 +2477,7 @@ inchar (
       char_u dum[DUM_LEN + 1];
 
       for (;; ) {
-        event_process();
-        len = ui_inchar(dum, DUM_LEN, 0L, 0);
+        len = os_inchar(dum, DUM_LEN, 0L, 0);
         if (len == 0 || (len == 1 && dum[0] == 3))
           break;
       }
@@ -2502,7 +2494,7 @@ inchar (
      * Fill up to a third of the buffer, because each character may be
      * tripled below.
      */
-    len = ui_inchar(buf, maxlen / 3, wait_time, tb_change_cnt);
+    len = os_inchar(buf, maxlen / 3, wait_time, tb_change_cnt);
   }
 
   if (typebuf_changed(tb_change_cnt))
@@ -2523,6 +2515,13 @@ fix_input_buffer (
     int script                     /* TRUE when reading from a script */
 )
 {
+  if (abstract_ui) {
+    // Should not escape K_SPECIAL/CSI while in embedded mode because vim key
+    // codes keys are processed in input.c/input_enqueue.
+    buf[len] = NUL;
+    return len;
+  }
+
   int i;
   char_u      *p = buf;
 
@@ -2550,21 +2549,6 @@ fix_input_buffer (
   *p = NUL;             /* add trailing NUL */
   return len;
 }
-
-#if defined(USE_INPUT_BUF) || defined(PROTO)
-/*
- * Return TRUE when bytes are in the input buffer or in the typeahead buffer.
- * Normally the input buffer would be sufficient, but feedkeys() may insert
- * characters in the typeahead buffer while we are waiting for input to arrive.
- */
-int input_available(void)
-{
-  return !vim_is_input_buf_empty()
-         || typebuf_was_filled
-  ;
-}
-
-#endif
 
 /*
  * map[!]		    : show all key mappings
@@ -2997,8 +2981,12 @@ do_map (
   }
 
   if (maptype == 1) {                       /* delete entry */
-    if (!did_it)
+    if (!did_it) {
       retval = 2;                           /* no match */
+    } else if (*keys == Ctrl_C) {
+      /* If CTRL-C has been unmapped, reuse it for Interrupting. */
+      mapped_ctrl_c = FALSE;
+    }
     goto theend;
   }
 
@@ -3022,7 +3010,7 @@ do_map (
    */
   mp = xmalloc(sizeof(mapblock_T));
 
-  /* If CTRL-C has been mapped, don't always use it for Interrupting */
+  /* If CTRL-C has been mapped, don't always use it for Interrupting. */
   if (*keys == Ctrl_C)
     mapped_ctrl_c = TRUE;
 
@@ -3650,11 +3638,26 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
     for (; mp;
          mp->m_next == NULL ? (mp = mp2, mp2 = NULL) :
          (mp = mp->m_next)) {
+      int qlen = mp->m_keylen;
+      char_u *q = mp->m_keys;
+      int match;
+
+      if (vim_strbyte(mp->m_keys, K_SPECIAL) != NULL) {
+        /* might have CSI escaped mp->m_keys */
+        q = vim_strsave(mp->m_keys);
+        vim_unescape_csi(q);
+        qlen = (int)STRLEN(q);
+      }
       /* find entries with right mode and keys */
-      if (       (mp->m_mode & State)
-                 && mp->m_keylen == len
-                 && !STRNCMP(mp->m_keys, ptr, (size_t)len))
+      match = (mp->m_mode & State)
+              && qlen == len
+              && !STRNCMP(q, ptr, (size_t)len);
+      if (q != mp->m_keys) {
+        free(q);
+      }
+      if (match) {
         break;
+      }
     }
     if (mp != NULL) {
       /*

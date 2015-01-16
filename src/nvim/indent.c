@@ -58,8 +58,8 @@ int get_indent_str(char_u *ptr, int ts, int list)
       if (!list || lcs_tab1) {  // count a tab for what it is worth
         count += ts - (count % ts);
       } else {
-        // in list mode, when tab is not set, count screen char width for Tab:
-        // ^I
+        // In list mode, when tab is not set, count screen char width
+        // for Tab, displays: ^I
         count += ptr2cells(ptr);
       }
     } else if (*ptr == ' ') {

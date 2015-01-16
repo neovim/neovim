@@ -5,7 +5,7 @@ test49.failed, try to add one or more "G"s at the line ending in "test.out"
 
 STARTTEST
 :so small.vim
-:se nocp nomore viminfo+=nviminfo
+:se nomore
 :lang mess C
 :so test49.vim
 GGGGGGGGGGGGGG"rp:.-,$w! test.out

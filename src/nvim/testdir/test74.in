@@ -7,7 +7,7 @@ STARTTEST
 :"
 :" This will cause a few errors, do it silently.
 :set visualbell
-:set nocp viminfo+=!,nviminfo
+:set viminfo+=!
 :let MY_GLOBAL_DICT={'foo': 1, 'bar': 0, 'longvarible': 1000}
 :" store a really long list, so line wrapping will occur in viminfo file
 :let MY_GLOBAL_LIST=range(1,100)

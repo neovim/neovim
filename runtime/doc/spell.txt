@@ -336,14 +336,9 @@ If 'encoding' is "latin1" Vim will look for:
 This assumes none of them are found (Polish doesn't make sense when leaving
 out the non-ASCII characters).
 
-Spelling for EBCDIC is currently not supported.
-
 A spell file might not be available in the current 'encoding'.  See
 |spell-mkspell| about how to create a spell file.  Converting a spell file
 with "iconv" will NOT work!
-
-Note: on VMS ".{enc}.spl" is changed to "_{enc}.spl" to avoid trouble with
-filenames.
 
 						    *spell-sug-file* *E781*
 If there is a file with exactly the same name as the ".spl" file but ending in
@@ -1058,6 +1053,9 @@ this text to start with a "#" so that mistakes don't go unnoticed.  Example:
 	SFX F 0 in   [^i]n      # Spion > Spionin  ~
 	SFX F 0 nen  in		# Bauerin > Bauerinnen ~
 
+However, to avoid lots of errors in affix files written for Myspell, you can
+add the IGNOREEXTRA flag.
+
 Apparently Myspell allows an affix name to appear more than once.  Since this
 might also be a mistake, Vim checks for an extra "S".  The affix files for
 Myspell that use this feature apparently have this flag.  Example:
@@ -1109,6 +1107,14 @@ Specifically, the affix flags can be used for:
   word.  |spell-compound|
 - NEEDAFFIX: another affix is needed to make a valid word.
 - CIRCUMFIX, as explained just below.
+
+
+IGNOREEXTRA						*spell-IGNOREEXTRA*
+
+Normally Vim gives an error for an extra field that does not start with '#'.
+This avoids errors going unnoticed.  However, some files created for Myspell
+or Hunspell may contain many entries with an extra field.  Use the IGNOREEXTRA
+flag to avoid lots of errors.
 
 
 CIRCUMFIX						*spell-CIRCUMFIX*

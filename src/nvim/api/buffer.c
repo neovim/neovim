@@ -31,7 +31,7 @@
 /// @param buffer The buffer handle
 /// @param[out] err Details of an error that may have occurred
 /// @return The line count
-Integer buffer_get_length(Buffer buffer, Error *err)
+Integer buffer_line_count(Buffer buffer, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -51,7 +51,7 @@ Integer buffer_get_length(Buffer buffer, Error *err)
 String buffer_get_line(Buffer buffer, Integer index, Error *err)
 {
   String rv = {.size = 0};
-  Array slice = buffer_get_slice(buffer, index, index, true, true, err);
+  Array slice = buffer_get_line_slice(buffer, index, index, true, true, err);
 
   if (!err->set && slice.size) {
     rv = slice.items[0].data.string;
@@ -69,10 +69,11 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 /// @param line The new line.
 /// @param[out] err Details of an error that may have occurred
 void buffer_set_line(Buffer buffer, Integer index, String line, Error *err)
+  FUNC_ATTR_DEFERRED
 {
   Object l = STRING_OBJ(line);
   Array array = {.items = &l, .size = 1};
-  buffer_set_slice(buffer, index, index, true, true, array, err);
+  buffer_set_line_slice(buffer, index, index, true, true, array, err);
 }
 
 /// Deletes a buffer line
@@ -81,9 +82,10 @@ void buffer_set_line(Buffer buffer, Integer index, String line, Error *err)
 /// @param index The line index
 /// @param[out] err Details of an error that may have occurred
 void buffer_del_line(Buffer buffer, Integer index, Error *err)
+  FUNC_ATTR_DEFERRED
 {
   Array array = ARRAY_DICT_INIT;
-  buffer_set_slice(buffer, index, index, true, true, array, err);
+  buffer_set_line_slice(buffer, index, index, true, true, array, err);
 }
 
 /// Retrieves a line range from the buffer
@@ -95,7 +97,7 @@ void buffer_del_line(Buffer buffer, Integer index, Error *err)
 /// @param include_end True if the slice includes the `end` parameter
 /// @param[out] err Details of an error that may have occurred
 /// @return An array of lines
-ArrayOf(String) buffer_get_slice(Buffer buffer,
+ArrayOf(String) buffer_get_line_slice(Buffer buffer,
                                  Integer start,
                                  Integer end,
                                  Boolean include_start,
@@ -130,7 +132,12 @@ ArrayOf(String) buffer_get_slice(Buffer buffer,
     }
 
     const char *bufstr = (char *) ml_get_buf(buf, (linenr_T) lnum, false);
-    rv.items[i] = STRING_OBJ(cstr_to_string(bufstr));
+    Object str = STRING_OBJ(cstr_to_string(bufstr));
+
+    // Vim represents NULs as NLs, but this may confuse clients.
+    strchrsub(str.data.string.data, '\n', '\0');
+
+    rv.items[i] = str;
   }
 
 end:
@@ -156,13 +163,14 @@ end:
 /// @param replacement An array of lines to use as replacement(A 0-length
 //         array will simply delete the line range)
 /// @param[out] err Details of an error that may have occurred
-void buffer_set_slice(Buffer buffer,
+void buffer_set_line_slice(Buffer buffer,
                       Integer start,
                       Integer end,
                       Boolean include_start,
                       Boolean include_end,
                       ArrayOf(String) replacement,
                       Error *err)
+  FUNC_ATTR_DEFERRED
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -198,7 +206,18 @@ void buffer_set_slice(Buffer buffer,
     }
 
     String l = replacement.items[i].data.string;
-    lines[i] = xmemdupz(l.data, l.size);
+
+    // Fill lines[i] with l's contents. Disallow newlines in the middle of a
+    // line and convert NULs to newlines to avoid truncation.
+    lines[i] = xmallocz(l.size);
+    for (size_t j = 0; j < l.size; j++) {
+      if (l.data[j] == '\n') {
+        api_set_error(err, Exception, _("string cannot contain newlines"));
+        new_len = i + 1;
+        goto end;
+      }
+      lines[i][j] = (char) (l.data[j] == '\0' ? '\n' : l.data[j]);
+    }
   }
 
   try_start();
@@ -314,6 +333,7 @@ Object buffer_get_var(Buffer buffer, String name, Error *err)
 /// @param[out] err Details of an error that may have occurred
 /// @return The old value
 Object buffer_set_var(Buffer buffer, String name, Object value, Error *err)
+  FUNC_ATTR_DEFERRED
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -349,6 +369,7 @@ Object buffer_get_option(Buffer buffer, String name, Error *err)
 /// @param value The option value
 /// @param[out] err Details of an error that may have occurred
 void buffer_set_option(Buffer buffer, String name, Object value, Error *err)
+  FUNC_ATTR_DEFERRED
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -399,6 +420,7 @@ String buffer_get_name(Buffer buffer, Error *err)
 /// @param name The buffer name
 /// @param[out] err Details of an error that may have occurred
 void buffer_set_name(Buffer buffer, String name, Error *err)
+  FUNC_ATTR_DEFERRED
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -444,8 +466,9 @@ void buffer_insert(Buffer buffer,
                    Integer lnum,
                    ArrayOf(String) lines,
                    Error *err)
+  FUNC_ATTR_DEFERRED
 {
-  buffer_set_slice(buffer, lnum, lnum, false, true, lines, err);
+  buffer_set_line_slice(buffer, lnum, lnum, false, true, lines, err);
 }
 
 /// Return a tuple (row,col) representing the position of the named mark

@@ -299,7 +299,7 @@ with CTRL-V followed by the three digit decimal code.  This does NOT work for
 the <t_xx> termcap codes, these can only be used in mappings.
 
 							*:source_crnl* *W15*
-MS-DOS, Win32 and OS/2: Files that are read with ":source" normally have
+MS-DOS and Win32: Files that are read with ":source" normally have
 <CR><NL> <EOL>s.  These always work.  If you are using a file with <NL> <EOL>s
 (for example, a file made on Unix), this will be recognized if 'fileformats'
 is not empty and the first line does not end in a <CR>.  This fails if the

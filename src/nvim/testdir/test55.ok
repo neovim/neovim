@@ -86,6 +86,11 @@ FFFFFFF
 FFpFFpp
 0000-000
 ppppppp
+[1, 2, 3, 4]
+[1, 2, 3, 4]
+[1, 2, 3, 4]
+[1, 2, 3, 4]
+[1, 2, 3, 4]
 locked g:footest#x:-1
 exists g:footest#x:0
 g:footest#x: 1
@@ -124,6 +129,7 @@ caught a:000[3]
 {'a': {'b': 'B'}}
 Vim(call):E737: a
 {'a': {'b': 'B'}}
+[1, 2]
 Vim(foldopen):E490:
 
 

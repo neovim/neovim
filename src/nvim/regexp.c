@@ -43,6 +43,7 @@
 /* #undef REGEXP_DEBUG */
 /* #define REGEXP_DEBUG */
 
+#include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
@@ -601,7 +602,7 @@ static int get_char_class(char_u **pp)
   int i;
 
   if ((*pp)[1] == ':') {
-    for (i = 0; i < (int)(sizeof(class_names) / sizeof(*class_names)); ++i)
+    for (i = 0; i < (int)ARRAY_SIZE(class_names); ++i)
       if (STRNCMP(*pp + 2, class_names[i], STRLEN(class_names[i])) == 0) {
         *pp += STRLEN(class_names[i]) + 2;
         return i;
@@ -1199,10 +1200,7 @@ char_u *skip_regexp(char_u *startp, int dirc, int magic, char_u **newp)
           *newp = vim_strsave(startp);
           p = *newp + (p - startp);
         }
-        if (*newp != NULL)
-          STRMOVE(p, p + 1);
-        else
-          ++p;
+        STRMOVE(p, p + 1);
       } else
         ++p;            /* skip next character */
       if (*p == 'v')
@@ -1300,16 +1298,18 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
         r->regstart = (*mb_ptr2char)(OPERAND(scan));
       else
         r->regstart = *OPERAND(scan);
-    } else if ((OP(scan) == BOW
-                || OP(scan) == EOW
-                || OP(scan) == NOTHING
-                || OP(scan) == MOPEN + 0 || OP(scan) == NOPEN
-                || OP(scan) == MCLOSE + 0 || OP(scan) == NCLOSE)
-               && OP(regnext(scan)) == EXACTLY) {
-      if (has_mbyte)
-        r->regstart = (*mb_ptr2char)(OPERAND(regnext(scan)));
-      else
-        r->regstart = *OPERAND(regnext(scan));
+    } else if (OP(scan) == BOW
+               || OP(scan) == EOW
+               || OP(scan) == NOTHING
+               || OP(scan) == MOPEN  + 0 || OP(scan) == NOPEN
+               || OP(scan) == MCLOSE + 0 || OP(scan) == NCLOSE) {
+      char_u *regnext_scan = regnext(scan);
+      if (OP(regnext_scan) == EXACTLY) {
+        if (has_mbyte)
+          r->regstart = (*mb_ptr2char)(OPERAND(regnext_scan));
+        else
+          r->regstart = *OPERAND(regnext_scan);
+      }
     }
 
     /*
@@ -1983,9 +1983,15 @@ static char_u *regatom(int *flagp)
       break;
 
     case 's': ret = regnode(MOPEN + 0);
+      if (!re_mult_next("\\zs")) {
+        return NULL;
+      }
       break;
 
     case 'e': ret = regnode(MCLOSE + 0);
+      if (!re_mult_next("\\ze")) {
+        return NULL;
+      }
       break;
 
     default:  EMSG_RET_NULL(_("E68: Invalid character after \\z"));
@@ -2460,6 +2466,15 @@ do_multibyte:
   return ret;
 }
 
+/// Used in a place where no * or \+ can follow.
+static bool re_mult_next(char *what)
+{
+  if (re_multi_type(peekchr()) == MULTI_MULT) {
+    EMSG2_RET_FAIL(_("E888: (NFA regexp) cannot repeat %s"), what);
+  }
+  return true;
+}
+
 /*
  * Return TRUE if MULTIBYTECODE should be used instead of EXACTLY for
  * character "c".
@@ -2720,150 +2735,152 @@ static int peekchr(void)
 {
   static int after_slash = FALSE;
 
-  if (curchr == -1) {
-    switch (curchr = regparse[0]) {
-    case '.':
-    case '[':
-    case '~':
-      /* magic when 'magic' is on */
-      if (reg_magic >= MAGIC_ON)
-        curchr = Magic(curchr);
-      break;
-    case '(':
-    case ')':
-    case '{':
-    case '%':
-    case '+':
-    case '=':
-    case '?':
-    case '@':
-    case '!':
-    case '&':
-    case '|':
-    case '<':
-    case '>':
-    case '#':           /* future ext. */
-    case '"':           /* future ext. */
-    case '\'':          /* future ext. */
-    case ',':           /* future ext. */
-    case '-':           /* future ext. */
-    case ':':           /* future ext. */
-    case ';':           /* future ext. */
-    case '`':           /* future ext. */
-    case '/':           /* Can't be used in / command */
-      /* magic only after "\v" */
-      if (reg_magic == MAGIC_ALL)
-        curchr = Magic(curchr);
-      break;
-    case '*':
-      /* * is not magic as the very first character, eg "?*ptr", when
-       * after '^', eg "/^*ptr" and when after "\(", "\|", "\&".  But
-       * "\(\*" is not magic, thus must be magic if "after_slash" */
-      if (reg_magic >= MAGIC_ON
-          && !at_start
-          && !(prev_at_start && prevchr == Magic('^'))
-          && (after_slash
-              || (prevchr != Magic('(')
-                  && prevchr != Magic('&')
-                  && prevchr != Magic('|'))))
-        curchr = Magic('*');
-      break;
-    case '^':
-      /* '^' is only magic as the very first character and if it's after
-       * "\(", "\|", "\&' or "\n" */
-      if (reg_magic >= MAGIC_OFF
-          && (at_start
-              || reg_magic == MAGIC_ALL
-              || prevchr == Magic('(')
-              || prevchr == Magic('|')
-              || prevchr == Magic('&')
-              || prevchr == Magic('n')
-              || (no_Magic(prevchr) == '('
-                  && prevprevchr == Magic('%')))) {
-        curchr = Magic('^');
-        at_start = TRUE;
-        prev_at_start = FALSE;
-      }
-      break;
-    case '$':
-      /* '$' is only magic as the very last char and if it's in front of
-       * either "\|", "\)", "\&", or "\n" */
-      if (reg_magic >= MAGIC_OFF) {
-        char_u *p = regparse + 1;
-        bool is_magic_all = (reg_magic == MAGIC_ALL);
+  if (curchr != -1) {
+    return curchr;
+  }
 
-        // ignore \c \C \m \M \v \V and \Z after '$'
-        while (p[0] == '\\' && (p[1] == 'c' || p[1] == 'C'
-                                || p[1] == 'm' || p[1] == 'M'
-                                || p[1] == 'v' || p[1] == 'V'
-                                || p[1] == 'Z')) {
-          if (p[1] == 'v') {
-            is_magic_all = true;
-          } else if (p[1] == 'm' || p[1] == 'M' || p[1] == 'V') {
-            is_magic_all = false;
-          }
-          p += 2;
-        }
-        if (p[0] == NUL
-            || (p[0] == '\\'
-                && (p[1] == '|' || p[1] == '&' || p[1] == ')'
-                    || p[1] == 'n'))
-            || (is_magic_all
-                && (p[0] == '|' || p[0] == '&' || p[0] == ')'))
-            || reg_magic == MAGIC_ALL) {
-          curchr = Magic('$');
-        }
-      }
-      break;
-    case '\\':
-    {
-      int c = regparse[1];
-
-      if (c == NUL)
-        curchr = '\\';                  /* trailing '\' */
-      else if (
-        c <= '~' && META_flags[c]
-        ) {
-        /*
-         * META contains everything that may be magic sometimes,
-         * except ^ and $ ("\^" and "\$" are only magic after
-         * "\v").  We now fetch the next character and toggle its
-         * magicness.  Therefore, \ is so meta-magic that it is
-         * not in META.
-         */
-        curchr = -1;
-        prev_at_start = at_start;
-        at_start = FALSE;               /* be able to say "/\*ptr" */
-        ++regparse;
-        ++after_slash;
-        peekchr();
-        --regparse;
-        --after_slash;
-        curchr = toggle_Magic(curchr);
-      } else if (vim_strchr(REGEXP_ABBR, c)) {
-        /*
-         * Handle abbreviations, like "\t" for TAB -- webb
-         */
-        curchr = backslash_trans(c);
-      } else if (reg_magic == MAGIC_NONE && (c == '$' || c == '^'))
-        curchr = toggle_Magic(c);
-      else {
-        /*
-         * Next character can never be (made) magic?
-         * Then backslashing it won't do anything.
-         */
-        if (has_mbyte)
-          curchr = (*mb_ptr2char)(regparse + 1);
-        else
-          curchr = c;
-      }
-      break;
+  switch (curchr = regparse[0]) {
+  case '.':
+  case '[':
+  case '~':
+    /* magic when 'magic' is on */
+    if (reg_magic >= MAGIC_ON)
+      curchr = Magic(curchr);
+    break;
+  case '(':
+  case ')':
+  case '{':
+  case '%':
+  case '+':
+  case '=':
+  case '?':
+  case '@':
+  case '!':
+  case '&':
+  case '|':
+  case '<':
+  case '>':
+  case '#':           /* future ext. */
+  case '"':           /* future ext. */
+  case '\'':          /* future ext. */
+  case ',':           /* future ext. */
+  case '-':           /* future ext. */
+  case ':':           /* future ext. */
+  case ';':           /* future ext. */
+  case '`':           /* future ext. */
+  case '/':           /* Can't be used in / command */
+    /* magic only after "\v" */
+    if (reg_magic == MAGIC_ALL)
+      curchr = Magic(curchr);
+    break;
+  case '*':
+    /* * is not magic as the very first character, eg "?*ptr", when
+     * after '^', eg "/^*ptr" and when after "\(", "\|", "\&".  But
+     * "\(\*" is not magic, thus must be magic if "after_slash" */
+    if (reg_magic >= MAGIC_ON
+        && !at_start
+        && !(prev_at_start && prevchr == Magic('^'))
+        && (after_slash
+            || (prevchr != Magic('(')
+                && prevchr != Magic('&')
+                && prevchr != Magic('|'))))
+      curchr = Magic('*');
+    break;
+  case '^':
+    /* '^' is only magic as the very first character and if it's after
+     * "\(", "\|", "\&' or "\n" */
+    if (reg_magic >= MAGIC_OFF
+        && (at_start
+            || reg_magic == MAGIC_ALL
+            || prevchr == Magic('(')
+            || prevchr == Magic('|')
+            || prevchr == Magic('&')
+            || prevchr == Magic('n')
+            || (no_Magic(prevchr) == '('
+                && prevprevchr == Magic('%')))) {
+      curchr = Magic('^');
+      at_start = TRUE;
+      prev_at_start = FALSE;
     }
+    break;
+  case '$':
+    /* '$' is only magic as the very last char and if it's in front of
+     * either "\|", "\)", "\&", or "\n" */
+    if (reg_magic >= MAGIC_OFF) {
+      char_u *p = regparse + 1;
+      bool is_magic_all = (reg_magic == MAGIC_ALL);
 
-    default:
+      // ignore \c \C \m \M \v \V and \Z after '$'
+      while (p[0] == '\\' && (p[1] == 'c' || p[1] == 'C'
+                              || p[1] == 'm' || p[1] == 'M'
+                              || p[1] == 'v' || p[1] == 'V'
+                              || p[1] == 'Z')) {
+        if (p[1] == 'v') {
+          is_magic_all = true;
+        } else if (p[1] == 'm' || p[1] == 'M' || p[1] == 'V') {
+          is_magic_all = false;
+        }
+        p += 2;
+      }
+      if (p[0] == NUL
+          || (p[0] == '\\'
+              && (p[1] == '|' || p[1] == '&' || p[1] == ')'
+                  || p[1] == 'n'))
+          || (is_magic_all
+              && (p[0] == '|' || p[0] == '&' || p[0] == ')'))
+          || reg_magic == MAGIC_ALL) {
+        curchr = Magic('$');
+      }
+    }
+    break;
+  case '\\':
+  {
+    int c = regparse[1];
+
+    if (c == NUL)
+      curchr = '\\';                  /* trailing '\' */
+    else if (
+      c <= '~' && META_flags[c]
+      ) {
+      /*
+       * META contains everything that may be magic sometimes,
+       * except ^ and $ ("\^" and "\$" are only magic after
+       * "\v").  We now fetch the next character and toggle its
+       * magicness.  Therefore, \ is so meta-magic that it is
+       * not in META.
+       */
+      curchr = -1;
+      prev_at_start = at_start;
+      at_start = FALSE;               /* be able to say "/\*ptr" */
+      ++regparse;
+      ++after_slash;
+      peekchr();
+      --regparse;
+      --after_slash;
+      curchr = toggle_Magic(curchr);
+    } else if (vim_strchr(REGEXP_ABBR, c)) {
+      /*
+       * Handle abbreviations, like "\t" for TAB -- webb
+       */
+      curchr = backslash_trans(c);
+    } else if (reg_magic == MAGIC_NONE && (c == '$' || c == '^'))
+      curchr = toggle_Magic(c);
+    else {
+      /*
+       * Next character can never be (made) magic?
+       * Then backslashing it won't do anything.
+       */
       if (has_mbyte)
-        curchr = (*mb_ptr2char)(regparse);
+        curchr = (*mb_ptr2char)(regparse + 1);
+      else
+        curchr = c;
     }
+    break;
+  }
+
+  default:
+    if (has_mbyte)
+      curchr = (*mb_ptr2char)(regparse);
   }
 
   return curchr;
@@ -3065,10 +3082,10 @@ static int read_limits(long *minval, long *maxval)
     reverse = TRUE;
   }
   first_char = regparse;
-  *minval = getdigits(&regparse);
+  *minval = getdigits_long(&regparse);
   if (*regparse == ',') {           /* There is a comma */
     if (vim_isdigit(*++regparse))
-      *maxval = getdigits(&regparse);
+      *maxval = getdigits_long(&regparse);
     else
       *maxval = MAX_LIMIT;
   } else if (VIM_ISDIGIT(*first_char))
@@ -3211,7 +3228,7 @@ static garray_T backpos = GA_EMPTY_INIT_VALUE;
 #define REGSTACK_INITIAL        2048
 #define BACKPOS_INITIAL         64
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 void free_regexp_stuff(void)
 {
   ga_clear(&regstack);
@@ -5626,6 +5643,8 @@ static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T e
 
     /* Get the line to compare with. */
     p = reg_getline(clnum);
+    assert(p);
+
     if (clnum == end_lnum)
       len = end_col - ccol;
     else

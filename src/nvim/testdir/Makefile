@@ -34,8 +34,10 @@ SCRIPTS := test_autoformat_join.out                                    \
            test_options.out                                            \
            test_listlbr.out test_listlbr_utf8.out                      \
            test_changelist.out                                         \
+           test_qf_title.out                                           \
            test_breakindent.out                                        \
-           test_insertcount.out
+           test_insertcount.out                                        \
+           test_utf8.out
 
 SCRIPTS_GUI := test16.out
 
@@ -50,13 +52,13 @@ ifdef USE_VALGRIND
 	                 --leak-check=yes    \
 	                 --track-origins=yes
 #        VALGRIND_TOOL := exp-sgcheck
-	TOOL := valgrind -q                                  \
-	                 -q                                  \
-	                 $(VALGRIND_TOOL)                    \
-	                 --suppressions=../../.valgrind.supp \
-	                 --error-exitcode=123                \
-	                 --log-file=valgrind.\%p.$*          \
-	                 $(VGDB)                             \
+	TOOL := valgrind -q                                     \
+	                 -q                                     \
+	                 $(VALGRIND_TOOL)                       \
+	                 --suppressions=../../../.valgrind.supp \
+	                 --error-exitcode=123                   \
+	                 --log-file=valgrind.\%p.$*             \
+	                 $(VGDB)                                \
 	                 --trace-children=yes
 else
 	ifdef USE_GDB
@@ -92,7 +94,7 @@ $(SCRIPTS) $(SCRIPTS_GUI): $(VIMPROG) test1.out
 
 RM_ON_RUN   := test.out X* viminfo
 RM_ON_START := tiny.vim small.vim mbyte.vim mzscheme.vim lua.vim test.ok
-RUN_VIM     := VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(TOOL) $(VIMPROG) -u unix.vim -U NONE --noplugin -s dotest.in
+RUN_VIM     := VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(TOOL) $(VIMPROG) -u unix.vim -U NONE -i viminfo --noplugin -s dotest.in
 
 clean:
 	-rm -rf *.out          \

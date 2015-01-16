@@ -5,7 +5,6 @@ Tests for 'directory' option.
 
 STARTTEST
 :so small.vim
-:set nocompatible viminfo+=nviminfo
 :set dir=.,~
 :/start of testfile/,/end of testfile/w! Xtest1
 :" do an ls of the current dir to find the swap file (should not be there)

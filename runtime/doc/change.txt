@@ -506,9 +506,9 @@ some text through a filter, so that it is replaced by the filter output.
 Examples of filters are "sort", which sorts lines alphabetically, and
 "indent", which formats C program files (you need a version of indent that
 works like a filter; not all versions do).  The 'shell' option specifies the
-shell Vim uses to execute the filter command (See also the 'shelltype'
-option).  You can repeat filter commands with ".".  Vim does not recognize a
-comment (starting with '"') after the `:!` command.
+shell Vim uses to execute the filter command.  You can repeat filter commands
+with ".".  Vim does not recognize a comment (starting with '"') after the
+`:!` command.
 
 							*!*
 !{motion}{filter}	Filter {motion} text lines through the external

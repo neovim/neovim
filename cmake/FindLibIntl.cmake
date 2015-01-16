@@ -23,6 +23,7 @@ endif()
 
 find_path(LibIntl_INCLUDE_DIR
     NAMES libintl.h
+    PATH_SUFFIXES gettext
 )
 
 find_library(LibIntl_LIBRARY

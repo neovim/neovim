@@ -7,7 +7,7 @@ actually tried.
 STARTTEST
 :so small.vim
 :so mbyte.vim
-:set nocp encoding=utf-8 viminfo+=nviminfo nomore
+:set encoding=utf-8 nomore
 :" tl is a List of Lists with:
 :"    2: test auto/old/new  0: test auto/old  1: test auto/new
 :"    regexp pattern

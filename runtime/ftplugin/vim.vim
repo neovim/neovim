@@ -1,7 +1,7 @@
 " Vim filetype plugin
 " Language:	Vim
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2013 Jun 26
+" Last Change:	2014 Sep 07
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -62,9 +62,12 @@ if exists("loaded_matchit")
 	\ '\<try\>:\<cat\%[ch]\>:\<fina\%[lly]\>:\<endt\%[ry]\>,' .
 	\ '\<aug\%[roup]\s\+\%(END\>\)\@!\S:\<aug\%[roup]\s\+END\>,' .
 	\ '(:)'
-  " Ignore ":syntax region" commands, the 'end' argument clobbers if-endif
-  let b:match_skip = 'getline(".") =~ "^\\s*sy\\%[ntax]\\s\\+region" ||
-	\ synIDattr(synID(line("."),col("."),1),"name") =~? "comment\\|string"'
+  " Ignore syntax region commands and settings, any 'en*' would clobber
+  " if-endif.
+  " - set spl=de,en
+  " - au! FileType javascript syntax region foldBraces start=/{/ end=/}/ …
+  let b:match_skip = 'synIDattr(synID(line("."),col("."),1),"name")
+        \ =~? "comment\\|string\\|vimSynReg\\|vimSet"'
 endif
 
 let &cpo = s:cpo_save

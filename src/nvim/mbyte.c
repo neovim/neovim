@@ -88,6 +88,7 @@
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
 #endif
+#include "nvim/iconv.h"
 #include "nvim/mbyte.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
@@ -102,11 +103,8 @@
 #include "nvim/screen.h"
 #include "nvim/spell.h"
 #include "nvim/strings.h"
-#include "nvim/ui.h"
 #include "nvim/os/os.h"
 #include "nvim/arabic.h"
-
-#define WINBYTE BYTE
 
 typedef struct {
   int rangeStart;
@@ -162,7 +160,7 @@ static char utf8len_tab_zero[256] =
  * "iso-8859-n" is handled by enc_canonize() directly.
  */
 static struct
-{   char *name;         int prop;               int codepage; }
+{   const char *name;   int prop;              int codepage; }
 enc_canon_table[] =
 {
 #define IDX_LATIN_1     0
@@ -289,18 +287,16 @@ enc_canon_table[] =
 
 #define IDX_MACROMAN    57
   {"macroman",        ENC_8BIT + ENC_MACROMAN, 0},      /* Mac OS */
-#define IDX_DECMCS      58
-  {"dec-mcs",         ENC_8BIT,               0},       /* DEC MCS */
-#define IDX_HPROMAN8    59
+#define IDX_HPROMAN8    58
   {"hp-roman8",       ENC_8BIT,               0},       /* HP Roman8 */
-#define IDX_COUNT       60
+#define IDX_COUNT       59
 };
 
 /*
  * Aliases for encoding names.
  */
 static struct
-{   char *name;         int canon; }
+{   const char *name; int canon; }
 enc_alias_table[] =
 {
   {"ansi",            IDX_LATIN_1},
@@ -349,6 +345,7 @@ enc_alias_table[] =
   {"unix-jis",        IDX_EUC_JP},
   {"ujis",            IDX_EUC_JP},
   {"shift-jis",       IDX_SJIS},
+  {"pck",             IDX_SJIS},        /* Sun: PCK */
   {"euckr",           IDX_EUC_KR},
   {"5601",            IDX_EUC_KR},      /* Sun: KS C 5601 */
   {"euccn",           IDX_EUC_CN},
@@ -366,15 +363,11 @@ enc_alias_table[] =
   {NULL,              0}
 };
 
-#ifndef CP_UTF8
-# define CP_UTF8 65001  /* magic number from winnls.h */
-#endif
-
 /*
  * Find encoding "name" in the list of canonical encoding names.
  * Returns -1 if not found.
  */
-static int enc_canon_search(char_u *name)
+static int enc_canon_search(const char_u *name)
 {
   int i;
 
@@ -390,7 +383,7 @@ static int enc_canon_search(char_u *name)
  * Find canonical encoding "name" in the list and return its properties.
  * Returns 0 if not found.
  */
-int enc_canon_props(char_u *name)
+int enc_canon_props(const char_u *name)
 {
   int i;
 
@@ -667,12 +660,12 @@ void remove_bom(char_u *s)
  * 2 for an (ASCII) word character
  * >2 for other word characters
  */
-int mb_get_class(char_u *p)
+int mb_get_class(const char_u *p)
 {
   return mb_get_class_buf(p, curbuf);
 }
 
-int mb_get_class_buf(char_u *p, buf_T *buf)
+int mb_get_class_buf(const char_u *p, buf_T *buf)
 {
   if (MB_BYTE2LEN(p[0]) == 1) {
     if (p[0] == NUL || vim_iswhite(p[0]))
@@ -925,9 +918,9 @@ static int dbcs_ptr2len_len(const char_u *p, int size)
 }
 
 /*
- * Return true if "c" is in "table[size / sizeof(struct interval)]".
+ * Return true if "c" is in "table".
  */
-static bool intable(struct interval *table, size_t size, int c)
+static bool intable(const struct interval *table, size_t n_items, int c)
 {
   int mid, bot, top;
 
@@ -937,7 +930,7 @@ static bool intable(struct interval *table, size_t size, int c)
 
   /* binary search in table */
   bot = 0;
-  top = (int)(size / sizeof(struct interval) - 1);
+  top = (int)(n_items - 1);
   while (top >= bot) {
     mid = (bot + top) / 2;
     if (table[mid].last < c)
@@ -1204,7 +1197,7 @@ int utf_char2cells(int c)
 #else
     if (!utf_printable(c))
       return 6;                 /* unprintable, displays <xxxx> */
-    if (intable(doublewidth, sizeof(doublewidth), c))
+    if (intable(doublewidth, ARRAY_SIZE(doublewidth), c))
       return 2;
 #endif
   }
@@ -1212,7 +1205,7 @@ int utf_char2cells(int c)
   else if (c >= 0x80 && !vim_isprintc(c))
     return 4;                   /* unprintable, displays <xx> */
 
-  if (c >= 0x80 && *p_ambw == 'd' && intable(ambiguous, sizeof(ambiguous), c))
+  if (c >= 0x80 && *p_ambw == 'd' && intable(ambiguous, ARRAY_SIZE(ambiguous), c))
     return 2;
 
   return 1;
@@ -2026,7 +2019,7 @@ bool utf_iscomposing(int c)
     {0xe0100, 0xe01ef}
   };
 
-  return intable(combining, sizeof(combining), c);
+  return intable(combining, ARRAY_SIZE(combining), c);
 }
 
 /*
@@ -2050,7 +2043,7 @@ bool utf_printable(int c)
     {0xfffe, 0xffff}
   };
 
-  return !intable(nonprint, sizeof(nonprint), c);
+  return !intable(nonprint, ARRAY_SIZE(nonprint), c);
 #endif
 }
 
@@ -2116,6 +2109,7 @@ int utf_class(int c)
     {0x2900, 0x2998, 1},                /* arrows, brackets, etc. */
     {0x29d8, 0x29db, 1},
     {0x29fc, 0x29fd, 1},
+    {0x2e00, 0x2e7f, 1},                /* supplemental punctuation */
     {0x3000, 0x3000, 0},                /* ideographic space */
     {0x3001, 0x3020, 1},                /* ideographic punctuation */
     {0x3030, 0x3030, 1},
@@ -2137,7 +2131,7 @@ int utf_class(int c)
     {0x2f800, 0x2fa1f, 0x4e00},         /* CJK Ideographs */
   };
   int bot = 0;
-  int top = sizeof(classes) / sizeof(struct clinterval) - 1;
+  int top = ARRAY_SIZE(classes) - 1;
   int mid;
 
   /* First quick check for Latin1 characters, use 'iskeyword'. */
@@ -2345,13 +2339,12 @@ static convertStruct foldCase[] =
  * Return the converted equivalent of "a", which is a UCS-4 character.  Use
  * the given conversion "table".  Uses binary search on "table".
  */
-static int utf_convert(int a, convertStruct *table, int tableSize)
+static int utf_convert(int a, convertStruct *table, size_t n_items)
 {
-  int start, mid, end;   /* indices into table */
-  int entries = tableSize / sizeof(convertStruct);
+  size_t start, mid, end;   /* indices into table */
 
   start = 0;
-  end = entries;
+  end = n_items;
   while (start < end) {
     /* need to search further */
     mid = (end + start) / 2;
@@ -2360,7 +2353,7 @@ static int utf_convert(int a, convertStruct *table, int tableSize)
     else
       end = mid;
   }
-  if (start < entries
+  if (start < n_items
       && table[start].rangeStart <= a
       && a <= table[start].rangeEnd
       && (a - table[start].rangeStart) % table[start].step == 0)
@@ -2375,7 +2368,7 @@ static int utf_convert(int a, convertStruct *table, int tableSize)
  */
 int utf_fold(int a)
 {
-  return utf_convert(a, foldCase, (int)sizeof(foldCase));
+  return utf_convert(a, foldCase, ARRAY_SIZE(foldCase));
 }
 
 static convertStruct toLower[] =
@@ -2701,7 +2694,7 @@ int utf_toupper(int a)
     return TOUPPER_LOC(a);
 
   /* For any other characters use the above mapping table. */
-  return utf_convert(a, toUpper, (int)sizeof(toUpper));
+  return utf_convert(a, toUpper, ARRAY_SIZE(toUpper));
 }
 
 bool utf_islower(int a)
@@ -2731,7 +2724,7 @@ int utf_tolower(int a)
     return TOLOWER_LOC(a);
 
   /* For any other characters use the above mapping table. */
-  return utf_convert(a, toLower, (int)sizeof(toLower));
+  return utf_convert(a, toLower, ARRAY_SIZE(toLower));
 }
 
 bool utf_isupper(int a)
@@ -3001,7 +2994,7 @@ int utf_head_off(const char_u *base, const char_u *p)
 /*
  * Copy a character from "*fp" to "*tp" and advance the pointers.
  */
-void mb_copy_char(char_u **fp, char_u **tp)
+void mb_copy_char(const char_u **fp, char_u **tp)
 {
   int l = (*mb_ptr2len)(*fp);
 
@@ -3453,7 +3446,7 @@ char_u * enc_locale(void)
   return enc_canonize((char_u *)buf);
 }
 
-# if defined(USE_ICONV) || defined(PROTO)
+# if defined(USE_ICONV)
 
 
 /*
@@ -3569,7 +3562,7 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvl
       if ((*mb_ptr2cells)((char_u *)from) > 1)
         *to++ = '?';
       if (enc_utf8)
-        l = utfc_ptr2len_len((char_u *)from, (int)fromlen);
+        l = utfc_ptr2len_len((const char_u *)from, (int)fromlen);
       else {
         l = (*mb_ptr2len)((char_u *)from);
         if (l > (int)fromlen)
@@ -3592,7 +3585,7 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvl
   return result;
 }
 
-#  if defined(DYNAMIC_ICONV) || defined(PROTO)
+#  if defined(DYNAMIC_ICONV)
 /*
  * Dynamically load the "iconv.dll" on Win32.
  */
@@ -3802,50 +3795,6 @@ int convert_setup_ext(vimconv_T *vcp, char_u *from, bool from_unicode_is_utf8,
   return OK;
 }
 
-#if defined(FEAT_GUI) || defined(WIN3264) || defined(PROTO)
-/*
- * Do conversion on typed input characters in-place.
- * The input and output are not NUL terminated!
- * Returns the length after conversion.
- */
-int convert_input(char_u *ptr, int len, int maxlen)
-{
-  return convert_input_safe(ptr, len, maxlen, NULL, NULL);
-}
-#endif
-
-/*
- * Like convert_input(), but when there is an incomplete byte sequence at the
- * end return that as an allocated string in "restp" and set "*restlenp" to
- * the length.  If "restp" is NULL it is not used.
- */
-int convert_input_safe(char_u *ptr, int len, int maxlen, char_u **restp,
-                       int *restlenp)
-{
-  char_u      *d;
-  int dlen = len;
-  int unconvertlen = 0;
-
-  d = string_convert_ext(&input_conv, ptr, &dlen,
-      restp == NULL ? NULL : &unconvertlen);
-  if (d != NULL) {
-    if (dlen <= maxlen) {
-      if (unconvertlen > 0) {
-        /* Move the unconverted characters to allocated memory. */
-        *restp = xmalloc(unconvertlen);
-        memmove(*restp, ptr + len - unconvertlen, unconvertlen);
-        *restlenp = unconvertlen;
-      }
-      memmove(ptr, d, dlen);
-    } else
-      /* result is too long, keep the unconverted text (the caller must
-       * have done something wrong!) */
-      dlen = len;
-    free(d);
-  }
-  return dlen;
-}
-
 /*
  * Convert text "ptr[*lenp]" according to "vcp".
  * Returns the result in allocated memory and sets "*lenp".
@@ -4013,4 +3962,24 @@ char_u * string_convert_ext(vimconv_T *vcp, char_u *ptr, int *lenp,
   }
 
   return retval;
+}
+
+// Check bounds for column number
+static int check_col(int col)
+{
+  if (col < 0)
+    return 0;
+  if (col >= (int)screen_Columns)
+    return (int)screen_Columns - 1;
+  return col;
+}
+
+// Check bounds for row number
+static int check_row(int row)
+{
+  if (row < 0)
+    return 0;
+  if (row >= (int)screen_Rows)
+    return (int)screen_Rows - 1;
+  return row;
 }

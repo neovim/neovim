@@ -10,12 +10,24 @@ if(NOT DEFINED DOWNLOAD_DIR)
   message(FATAL_ERROR "DOWNLOAD_DIR must be defined.")
 endif()
 
-if(NOT DEFINED EXPECTED_MD5)
-  message(FATAL_ERROR "EXPECTED_MD5 must be defined.")
+if((NOT DEFINED EXPECTED_SHA1) OR (NOT DEFINED EXPECTED_MD5))
+  message(FATAL_ERROR "EXPECTED_SHA1 or EXPECTED_MD5 must be defined.")
 endif()
 
 if(NOT DEFINED TARGET)
   message(FATAL_ERROR "TARGET must be defined.")
+endif()
+
+set(SRC_DIR ${PREFIX}/src/${TARGET})
+
+# Check whether the source has been downloaded. If true, skip it.
+# Useful for external downloads like homebrew.
+if(EXISTS "${SRC_DIR}" AND IS_DIRECTORY "${SRC_DIR}")
+  file(GLOB EXISTED_FILES "${SRC_DIR}/*")
+  if(EXISTED_FILES)
+    message(STATUS "${SRC_DIR} is found and not empty, skipping download and extraction. ")
+    return()
+  endif()
 endif()
 
 # Taken from ExternalProject_Add.  Let's hope we can drop this one day when
@@ -46,9 +58,19 @@ message(STATUS "downloading...
      dst='${file}'
      timeout='${timeout_msg}'")
 
+if((DEFINED EXPECTED_SHA1) AND (${CMAKE_VERSION} VERSION_GREATER 2.8.10))
+  if(NOT (EXPECTED_SHA1 STREQUAL "0000000000000000000000000000000000000000"))
+    set(hash_args EXPECTED_HASH SHA1=${EXPECTED_SHA1})
+  endif()
+else()
+  if(NOT (EXPECTED_MD5 STREQUAL "00000000000000000000000000000000"))
+    set(hash_args EXPECTED_MD5 ${EXPECTED_MD5})
+  endif()
+endif()
+
 file(DOWNLOAD ${URL} ${file}
   ${timeout_args}
-  EXPECTED_MD5 ${EXPECTED_MD5}
+  ${hash_args}
   STATUS status
   LOG log)
 
@@ -64,8 +86,6 @@ if(NOT status_code EQUAL 0)
 endif()
 
 message(STATUS "downloading... done")
-
-set(SRC_DIR ${PREFIX}/src/${TARGET})
 
 # Slurped from a generated extract-TARGET.cmake file.
 message(STATUS "extracting...

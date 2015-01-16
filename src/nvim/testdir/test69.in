@@ -15,7 +15,7 @@ STARTTEST
 :set tw=2 fo=t
 gqgqjgqgqo
 ＸＹＺ
-abc ＸＹＺ
+abc ＸＹＺ
 ENDTEST
 
 {
@@ -31,7 +31,7 @@ gqgqjgqgqjgqgqjgqgqjgqgqo
 Ｘa
 Ｘ a
 ＸＹ
-Ｘ Ｙ
+Ｘ Ｙ
 ENDTEST
 
 {
@@ -55,7 +55,7 @@ aＸ
 abＸ
 abcＸ
 abＸ c
-abＸＹ
+abＸＹ
 ENDTEST
 
 {
@@ -110,7 +110,7 @@ gqgqjgqgqjgqgqjgqgqjgqgqjgqgqjgqgqjgqgqjgqgqjgqgqo
 Ｘ ＹＺ
 ＸＸ
 ＸＸa
-ＸＸＹ
+ＸＸＹ
 ENDTEST
 
 {

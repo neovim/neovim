@@ -9,8 +9,9 @@
 /*
  * ex_eval.c: functions for Ex command line for the +eval feature.
  */
+#include <assert.h>
 #include <stdbool.h>
-
+#include <stdint.h>
 #include <inttypes.h>
 
 #include "nvim/vim.h"
@@ -245,28 +246,24 @@ int cause_errthrow(char_u *mesg, int severe, int *ignore)
         plist = &(*plist)->next;
 
       elem = xmalloc(sizeof(struct msglist));
-      {
-        elem->msg = vim_strsave(mesg);
-        {
-          elem->next = NULL;
-          elem->throw_msg = NULL;
-          *plist = elem;
-          if (plist == msg_list || severe) {
-            char_u      *tmsg;
+      elem->msg = vim_strsave(mesg);
+      elem->next = NULL;
+      elem->throw_msg = NULL;
+      *plist = elem;
+      if (plist == msg_list || severe) {
+        char_u      *tmsg;
 
-            /* Skip the extra "Vim " prefix for message "E458". */
-            tmsg = elem->msg;
-            if (STRNCMP(tmsg, "Vim E", 5) == 0
-                && VIM_ISDIGIT(tmsg[5])
-                && VIM_ISDIGIT(tmsg[6])
-                && VIM_ISDIGIT(tmsg[7])
-                && tmsg[8] == ':'
-                && tmsg[9] == ' ')
-              (*msg_list)->throw_msg = &tmsg[4];
-            else
-              (*msg_list)->throw_msg = tmsg;
-          }
-        }
+        /* Skip the extra "Vim " prefix for message "E458". */
+        tmsg = elem->msg;
+        if (STRNCMP(tmsg, "Vim E", 5) == 0
+            && VIM_ISDIGIT(tmsg[5])
+            && VIM_ISDIGIT(tmsg[6])
+            && VIM_ISDIGIT(tmsg[7])
+            && tmsg[8] == ':'
+            && tmsg[9] == ' ')
+          (*msg_list)->throw_msg = &tmsg[4];
+        else
+          (*msg_list)->throw_msg = tmsg;
       }
     }
     return TRUE;
@@ -385,21 +382,19 @@ int do_intthrow(struct condstack *cstack)
 char_u *get_exception_string(void *value, int type, char_u *cmdname, int *should_free)
 {
   char_u      *ret, *mesg;
-  int cmdlen;
   char_u      *p, *val;
 
   if (type == ET_ERROR) {
     *should_free = FALSE;
     mesg = ((struct msglist *)value)->throw_msg;
     if (cmdname != NULL && *cmdname != NUL) {
-      cmdlen = (int)STRLEN(cmdname);
-      ret = vim_strnsave((char_u *)"Vim(",
-          4 + cmdlen + 2 + (int)STRLEN(mesg));
+      size_t cmdlen = STRLEN(cmdname);
+      ret = vim_strnsave((char_u *)"Vim(", 4 + cmdlen + 2 + STRLEN(mesg));
       STRCPY(&ret[4], cmdname);
       STRCPY(&ret[4 + cmdlen], "):");
       val = ret + 4 + cmdlen + 2;
     } else {
-      ret = vim_strnsave((char_u *)"Vim:", 4 + (int)STRLEN(mesg));
+      ret = vim_strnsave((char_u *)"Vim:", 4 + STRLEN(mesg));
       val = ret + 4;
     }
 
@@ -670,6 +665,7 @@ static void report_pending(int action, int pending, void *value)
   char        *s;
   int save_msg_silent;
 
+  assert(value || !(pending & CSTP_THROW));
 
   switch (action) {
   case RP_MAKE:
@@ -706,7 +702,7 @@ static void report_pending(int action, int pending, void *value)
     if (pending & CSTP_THROW) {
       vim_snprintf((char *)IObuff, IOSIZE,
           (char *)mesg, _("Exception"));
-      mesg = vim_strnsave(IObuff, (int)STRLEN(IObuff) + 4);
+      mesg = vim_strnsave(IObuff, STRLEN(IObuff) + 4);
       STRCAT(mesg, ": %s");
       s = (char *)((except_T *)value)->value;
     } else if ((pending & CSTP_ERROR) && (pending & CSTP_INTERRUPT))
@@ -1306,7 +1302,7 @@ void ex_catch(exarg_T *eap)
   int skip = FALSE;
   int caught = FALSE;
   char_u      *end;
-  int save_char = 0;
+  char_u save_char = 0;
   char_u      *save_cpo;
   regmatch_T regmatch;
   int prev_got_int;
@@ -1529,7 +1525,8 @@ void ex_finally(exarg_T *eap)
           pending |= did_throw ? CSTP_THROW : 0;
         pending |= did_emsg  ? CSTP_ERROR     : 0;
         pending |= got_int   ? CSTP_INTERRUPT : 0;
-        cstack->cs_pending[cstack->cs_idx] = pending;
+        assert(pending >= CHAR_MIN && pending <= CHAR_MAX);
+        cstack->cs_pending[cstack->cs_idx] = (char)pending;
 
         /* It's mandatory that the current exception is stored in the
          * cstack so that it can be rethrown at the ":endtry" or be

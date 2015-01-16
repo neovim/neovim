@@ -276,8 +276,7 @@ u   Unicode	Universal encoding, can replace all others.  ISO 10646.
 
 Other encodings cannot be used by Vim internally.  But files in other
 encodings can be edited by using conversion, see 'fileencoding'.
-Note that all encodings must use ASCII for the characters up to 128 (except
-when compiled for EBCDIC).
+Note that all encodings must use ASCII for the characters up to 128.
 
 Supported 'encoding' values are:			*encoding-values*
 1   latin1	8-bit characters (ISO 8859-1, also used for cp1252)

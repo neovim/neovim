@@ -34,6 +34,8 @@ c_params = Ct(c_void + c_param_list)
 c_proto = Ct(
   Cg(c_type, 'return_type') * Cg(c_id, 'name') *
   fill * P('(') * fill * Cg(c_params, 'parameters') * fill * P(')') *
+  Cg(Cc(false), 'deferred') *
+  (fill * Cg((P('FUNC_ATTR_DEFERRED') * Cc(true)), 'deferred') ^ -1) *
   fill * P(';')
   )
 grammar = Ct((c_proto + c_comment + c_preproc + ws) ^ 1)
@@ -84,6 +86,7 @@ end
 output = io.open(outputf, 'wb')
 
 output:write([[
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <assert.h>
@@ -92,8 +95,8 @@ output:write([[
 #include "nvim/map.h"
 #include "nvim/log.h"
 #include "nvim/vim.h"
-#include "nvim/os/msgpack_rpc.h"
-#include "nvim/os/msgpack_rpc_helpers.h"
+#include "nvim/msgpack_rpc/helpers.h"
+#include "nvim/msgpack_rpc/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
 ]])
@@ -159,9 +162,9 @@ for i = 1, #functions do
   local fn = functions[i]
   local args = {}
 
-  output:write('static Object handle_'..fn.name..'(uint64_t channel_id, msgpack_object *req, Error *error)')
+  output:write('static Object handle_'..fn.name..'(uint64_t channel_id, uint64_t request_id, Array args, Error *error)')
   output:write('\n{')
-  output:write('\n  DLOG("Received msgpack-rpc call to '..fn.name..'(request id: %" PRIu64 ")", req->via.array.ptr[1].via.u64);')
+  output:write('\n  Object ret = NIL;')
   -- Declare/initialize variables that will hold converted arguments
   for j = 1, #fn.parameters do
     local param = fn.parameters[j]
@@ -169,8 +172,8 @@ for i = 1, #functions do
     output:write('\n  '..param[1]..' '..converted..' api_init_'..string.lower(real_type(param[1]))..';')
   end
   output:write('\n')
-  output:write('\n  if (req->via.array.ptr[3].via.array.size != '..#fn.parameters..') {')
-  output:write('\n    snprintf(error->msg, sizeof(error->msg), "Wrong number of arguments: expecting '..#fn.parameters..' but got %u", req->via.array.ptr[3].via.array.size);')
+  output:write('\n  if (args.size != '..#fn.parameters..') {')
+  output:write('\n    snprintf(error->msg, sizeof(error->msg), "Wrong number of arguments: expecting '..#fn.parameters..' but got %zu", args.size);')
   output:write('\n    error->set = true;')
   output:write('\n    goto cleanup;')
   output:write('\n  }\n')
@@ -179,14 +182,18 @@ for i = 1, #functions do
   for j = 1, #fn.parameters do
     local converted, convert_arg, param, arg
     param = fn.parameters[j]
-    arg = '(req->via.array.ptr[3].via.array.ptr + '..(j - 1)..')'
     converted = 'arg_'..j
-    convert_arg = 'msgpack_rpc_to_'..real_type(param[1]):lower()
-    output:write('\n  if (!'..convert_arg..'('..arg..', &'..converted..')) {')
-    output:write('\n    snprintf(error->msg, sizeof(error->msg), "Wrong type for argument '..j..', expecting '..param[1]..'");')
-    output:write('\n    error->set = true;')
-    output:write('\n    goto cleanup;')
-    output:write('\n  }\n')
+    if real_type(param[1]) ~= 'Object' then
+      output:write('\n  if (args.items['..(j - 1)..'].type != kObjectType'..real_type(param[1])..') {')
+      output:write('\n    snprintf(error->msg, sizeof(error->msg), "Wrong type for argument '..j..', expecting '..param[1]..'");')
+      output:write('\n    error->set = true;')
+      output:write('\n    goto cleanup;')
+      output:write('\n  }')
+      output:write('\n  '..converted..' = args.items['..(j - 1)..'].data.'..real_type(param[1]):lower()..';\n')
+    else
+      output:write('\n  '..converted..' = args.items['..(j - 1)..'];\n')
+    end
+
     args[#args + 1] = converted
   end
 
@@ -228,7 +235,7 @@ for i = 1, #functions do
   end
 
   if fn.return_type ~= 'void' then
-    output:write('\n  Object ret = '..string.upper(real_type(fn.return_type))..'_OBJ(rv);')
+    output:write('\n  ret = '..string.upper(real_type(fn.return_type))..'_OBJ(rv);')
   end
   -- Now generate the cleanup label for freeing memory allocated for the
   -- arguments
@@ -238,20 +245,21 @@ for i = 1, #functions do
     local param = fn.parameters[j]
     output:write('\n  api_free_'..string.lower(real_type(param[1]))..'(arg_'..j..');')
   end
-  if fn.return_type ~= 'void' then
-    output:write('\n  return ret;\n}\n\n');
-  else
-    output:write('\n  return NIL;\n}\n\n');
-  end
+  output:write('\n  return ret;\n}\n\n');
 end
 
 -- Generate a function that initializes method names with handler functions
 output:write([[
-static Map(String, rpc_method_handler_fn) *methods = NULL;
+static Map(String, MsgpackRpcRequestHandler) *methods = NULL;
 
-void msgpack_rpc_init(void)
+void msgpack_rpc_add_method_handler(String method, MsgpackRpcRequestHandler handler)
 {
-  methods = map_new(String, rpc_method_handler_fn)();
+  map_put(String, MsgpackRpcRequestHandler)(methods, method, handler);
+}
+
+void msgpack_rpc_init_method_table(void)
+{
+  methods = map_new(String, MsgpackRpcRequestHandler)();
 
 ]])
 
@@ -260,10 +268,11 @@ void msgpack_rpc_init(void)
 local max_fname_len = 0
 for i = 1, #functions do
   local fn = functions[i]
-  output:write('  map_put(String, rpc_method_handler_fn)(methods, '..
+  output:write('  msgpack_rpc_add_method_handler('..
                '(String) {.data = "'..fn.name..'", '..
-               '.size = sizeof("'..fn.name..'") - 1}, handle_'..
-               fn.name..');\n')
+               '.size = sizeof("'..fn.name..'") - 1}, '..
+               '(MsgpackRpcRequestHandler) {.fn = handle_'..  fn.name..
+               ', .defer = '..tostring(fn.deferred)..'});\n')
 
   if #fn.name > max_fname_len then
     max_fname_len = #fn.name
@@ -273,26 +282,21 @@ end
 output:write('\n}\n\n')
 
 output:write([[
-Object msgpack_rpc_dispatch(uint64_t channel_id,
-                            msgpack_object *req,
-                            Error *error)
+MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *name,
+                                                     size_t name_len)
 {
-  msgpack_object method = req->via.array.ptr[2];
-  rpc_method_handler_fn handler = NULL;
+  String m = {
+    .data=(char *)name,
+    .size=min(name_len, ]]..max_fname_len..[[)
+  };
+  MsgpackRpcRequestHandler rv =
+    map_get(String, MsgpackRpcRequestHandler)(methods, m);
 
-  if (method.type == MSGPACK_OBJECT_BIN || method.type == MSGPACK_OBJECT_STR) {
-]])
-output:write('    handler = map_get(String, rpc_method_handler_fn)')
-output:write('(methods, (String){.data=(char *)method.via.bin.ptr,')
-output:write('.size=min(method.via.bin.size, '..max_fname_len..')});\n')
-output:write([[
+  if (!rv.fn) {
+    rv.fn = msgpack_rpc_handle_missing_method;
   }
 
-  if (!handler) {
-    handler = msgpack_rpc_handle_missing_method;
-  }
-
-  return handler(channel_id, req, error);
+  return rv;
 }
 ]])
 

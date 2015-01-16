@@ -2,7 +2,7 @@ Tests for sha256() function.    vim: set ft=vim et ts=2 sw=2 :
 
 STARTTEST
 :so small.vim
-:if !has('cryptv') || !exists('*sha256')
+:if !exists('*sha256')
    e! test.ok
    wq! test.out
 :endif

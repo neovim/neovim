@@ -1,4 +1,4 @@
-*usr_04.txt*	For Vim version 7.4.  Last change: 2008 Sep 06
+*usr_04.txt*	For Vim version 7.4.  Last change: 2014 Aug 29
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -186,7 +186,7 @@ commands:
 	/four<Enter>	find the first string "four"
 	cwfive<Esc>	change the word to "five"
 	n		find the next "four"
-	.		repeat the change to "five'
+	.		repeat the change to "five"
 	n		find the next "four"
 	.		repeat the change
 			etc.

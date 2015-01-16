@@ -198,9 +198,8 @@ Subjects that can be read independently.
 |usr_23.txt|  Editing other files
 		|23.1|	DOS, Mac and Unix files
 		|23.2|	Files on the internet
-		|23.3|	Encryption
-		|23.4|	Binary files
-		|23.5|	Compressed files
+		|23.3|	Binary files
+		|23.4|	Compressed files
 
 |usr_24.txt|  Inserting quickly
 		|24.1|	Making corrections

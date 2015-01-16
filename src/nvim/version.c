@@ -1,19 +1,13 @@
 /// @file version.c
 ///
-/// Vim originated from Stevie version 3.6 (Fish disk 217) by GRWalter (Fred)
-/// It has been changed beyond recognition since then.
-///
-/// Differences between version 6.x and 7.x can be found with ":help version7".
-/// Differences between version 5.x and 6.x can be found with ":help version6".
-/// Differences between version 4.x and 5.x can be found with ":help version5".
-/// Differences between version 3.0 and 4.x can be found with ":help version4".
-/// All the remarks about older versions have been removed, they are not very
-/// interesting.
+/// Nvim was forked from Vim 7.4.160.
+/// Vim originated from Stevie version 3.6 (Fish disk 217) by GRWalter (Fred).
 
 #include <inttypes.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
+#include "nvim/iconv.h"
 #include "nvim/version.h"
 #include "nvim/charset.h"
 #include "nvim/memline.h"
@@ -25,10 +19,10 @@
 #include "nvim/version_defs.h"
 
 char *Version = VIM_VERSION_SHORT;
-static char *mediumVersion = VIM_VERSION_MEDIUM;
-
-char *longVersion = VIM_VERSION_LONG_DATE __DATE__ " " __TIME__ ")";
-
+char *longVersion = NVIM_VERSION_LONG " (compiled " __DATE__ " " __TIME__ ")";
+char *version_commit = "Commit: " NVIM_VERSION_COMMIT;
+char *version_buildtype = "Build type: " NVIM_VERSION_BUILD_TYPE;
+char *version_cflags = "Compilation: " NVIM_VERSION_CFLAGS;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "version.c.generated.h"
@@ -184,89 +178,199 @@ static char *(features[]) = {
 };
 
 static int included_patches[] = {
-  //457,
-  //456,
-  //455,
+  567,
+  //566,
+  //565,
+  //564,
+  563,
+  //562,
+  //561,
+  //560 NA
+  559,
+  //558 NA
+  //557 NA
+  //556 NA
+  //555 NA
+  //554,
+  //553,
+  552,
+  551,
+  //550,
+  549,
+  //548 NA
+  547,
+  //546,
+  545,
+  //544 NA
+  543,
+  //542,
+  541,
+  //540 NA
+  //539,
+  538,
+  //537,
+  536,
+  //535,
+  //534 NA
+  533,
+  //532,
+  //531,
+  //530,
+  //529,
+  528,
+  527,
+  //526,
+  //525,
+  //524,
+  //523 NA
+  //522,
+  521,
+  520,
+  //519,
+  518,
+  //517,
+  516,
+  //515,
+  //514,
+  513,
+  //512 NA
+  //511 NA
+  //510 NA
+  //509 NA
+  508,
+  //507 NA
+  //506 NA
+  //505 NA
+  //504 NA
+  //503,
+  //502,
+  //501 NA
+  //500,
+  499,
+  //498 NA
+  //497,
+  //496 NA
+  //495 NA
+  494,
+  493,
+  //492,
+  491,
+  //490,
+  489,
+  488,
+  487,
+  486,
+  485,
+  //484 NA
+  483,
+  //482 NA
+  //481 NA
+  //480 NA
+  //479 NA
+  478,
+  477,
+  //476 NA
+  //475 NA
+  474,
+  473,
+  472,
+  //471 NA
+  470,
+  //469 NA
+  468,
+  467,
+  466,
+  //465 NA
+  //464 NA
+  463,
+  //462,
+  //461 NA
+  //460 NA
+  //459 NA
+  458,
+  457,
+  456,
+  455,
   454,
-  //453,
-  //452,
+  //453 NA
+  452,
   //451,
-  //450,
-  //449,
-  //448,
-  //447,
+  450,
+  449,
+  //448 NA
+  447,
   //446,
   //445,
-  //444,
-  //443,
-  //442,
-  //441,
-  //440,
-  //439,
-  //438,
-  //437,
-  //436,
-  //435,
-  //434,
-  //433,
+  444,
+  //443 NA
+  442,
+  441,
+  440,
+  439,
+  438,
+  437,
+  436,
+  435,
+  434,
+  433,
   //432 NA
   //431 NA
-  //430,
+  //430 NA
   //429 NA
   //428 NA
-  //427,
+  427,
   //426 NA
-  //425,
+  425,
   //424 NA
-  //423,
+  423,
   //422,
-  //421,
+  421,
   //420 NA
-  //419,
-  //418,
-  //417,
-  //416,
-  //415,
-  //414,
+  419,
+  418,
+  417,
+  416,
+  415,
+  414,
   //413 NA
   //412 NA
   411,
   410,
   //409 NA
-  //408,
+  408,
   407,
-  //406,
+  406,
   405,
   //404 NA
   //403 NA
-  //402,
+  //402 NA
   //401 NA
   //400 NA
   //399 NA
-  //398,
-  //397,
+  //398 NA
+  397,
   //396,
-  //395,
-  //394,
-  //393,
+  395,
+  //394 NA
+  //393 NA
   392,
   391,
-  //390,
+  390,
   //389,
   388,
   387,
   386,
-  //385,
+  //385 NA
   //384 NA
   383,
   382,
   381,
   //380 NA
   379,
-  //378,
+  378,
   377,
   376,
-  //375,
+  375,
   374,
   373,
   372,
@@ -275,10 +379,10 @@ static int included_patches[] = {
   369,
   368,
   367,
-  //366,
+  //366 NA
   365,
   364,
-  //363,
+  //363 NA
   362,
   361,
   360,
@@ -286,12 +390,12 @@ static int included_patches[] = {
   358,
   357,
   //356 NA
-  //355,
+  355,
   //354 NA
   353,
   352,
   351,
-  //350,
+  350,
   349,
   348,
   347,
@@ -330,7 +434,7 @@ static int included_patches[] = {
   314,
   313,
   312,
-  //311,
+  311,
   310,
   309,
   308,
@@ -385,21 +489,21 @@ static int included_patches[] = {
   //259 NA
   //258 NA
   //257 NA
-  //256,
-  //255,
-  //254,
+  256,
+  //255 NA
+  //254 NA
   253,
   //252 NA
   251,
   //250 NA
-  //249,
-  //248,
-  //247,
-  //246,
+  249,
+  248,
+  247,
+  //246 NA
   245,
   //244,
-  //243,
-  //242,
+  243,
+  242,
   241,
   240,
   239,
@@ -430,7 +534,7 @@ static int included_patches[] = {
   //214 NA
   213,
   //212 NA
-  //211,
+  211,
   210,
   209,
   //208 NA
@@ -752,59 +856,25 @@ static void list_features(void)
 
 void list_version(void)
 {
-  int i;
-  int first;
-  char *s = "";
-
   // When adding features here, don't forget to update the list of
   // internal variables in eval.c!
   MSG(longVersion);
-
-  // Print the list of patch numbers if there is at least one.
-  // Print a range when patches are consecutive: "1-10, 12, 15-40, 42-45"
-  if (included_patches[0] != 0) {
-    MSG_PUTS(_("\nIncluded patches: "));
-    first = -1;
-
-    // find last one
-    for (i = 0; included_patches[i] != 0; ++i) {}
-
-    while (--i >= 0) {
-      if (first < 0) {
-        first = included_patches[i];
-      }
-
-      if ((i == 0) || (included_patches[i - 1] != included_patches[i] + 1)) {
-        MSG_PUTS(s);
-        s = ", ";
-        msg_outnum((long)first);
-
-        if (first != included_patches[i]) {
-          MSG_PUTS("-");
-          msg_outnum((long)included_patches[i]);
-        }
-        first = -1;
-      }
-    }
-  }
+  MSG(version_commit);
+  MSG(version_buildtype);
+  MSG(version_cflags);
 
   // Print the list of extra patch descriptions if there is at least one.
+  char *s = "";
   if (extra_patches[0] != NULL) {
     MSG_PUTS(_("\nExtra patches: "));
     s = "";
 
-    for (i = 0; extra_patches[i] != NULL; ++i) {
+    for (int i = 0; extra_patches[i] != NULL; ++i) {
       MSG_PUTS(s);
       s = ", ";
       MSG_PUTS(extra_patches[i]);
     }
   }
-
-#ifdef MODIFIED_BY
-  MSG_PUTS("\n");
-  MSG_PUTS(_("Modified by "));
-  MSG_PUTS(MODIFIED_BY);
-#endif  // ifdef MODIFIED_BY
 
 #ifdef HAVE_PATHDEF
 
@@ -823,8 +893,6 @@ void list_version(void)
   }
 #endif  // ifdef HAVE_PATHDEF
 
-  MSG_PUTS(_("\nHuge version "));
-  MSG_PUTS(_("without GUI."));
   version_msg(_("  Features included (+) or not (-):\n"));
 
   list_features();
@@ -872,16 +940,7 @@ void list_version(void)
     version_msg((char *)default_vimruntime_dir);
     version_msg("\"\n");
   }
-  version_msg(_("Compilation: "));
-  version_msg((char *)all_cflags);
-  version_msg("\n");
-  version_msg(_("Linking: "));
-  version_msg((char *)all_lflags);
 #endif  // ifdef HAVE_PATHDEF
-#ifdef DEBUG
-  version_msg("\n");
-  version_msg(_("  DEBUG BUILD"));
-#endif  // ifdef DEBUG
 }
 
 /// Output a string for the version message.  If it's going to wrap, output a
@@ -929,13 +988,9 @@ void intro_message(int colon)
   int sponsor;
   char *p;
   static char *(lines[]) = {
-    N_("VIM - Vi IMproved"),
+    N_(NVIM_VERSION_LONG),
     "",
-    N_("version "),
     N_("by Bram Moolenaar et al."),
-#ifdef MODIFIED_BY
-    " ",
-#endif  // ifdef MODIFIED_BY
     N_("Vim is open source and freely distributable"),
     "",
     N_("Help poor children in Uganda!"),
@@ -943,21 +998,11 @@ void intro_message(int colon)
     "",
     N_("type  :q<Enter>               to exit         "),
     N_("type  :help<Enter>  or  <F1>  for on-line help"),
-    N_("type  :help version7<Enter>   for version info"),
-    NULL,
-    "",
-    N_("Running in Vi compatible mode"),
-    N_("type  :set nocp<Enter>        for Vim defaults"),
-    N_("type  :help cp-default<Enter> for info on this"),
+    N_("type  :help nvim<Enter>       for Neovim help "),
   };
 
   // blanklines = screen height - # message lines
-  blanklines = (int)Rows - ((sizeof(lines) / sizeof(char *)) - 1);
-
-  if (!p_cp) {
-    // add 4 for not showing "Vi compatible" message
-    blanklines += 4;
-  }
+  blanklines = (int)Rows - (ARRAY_SIZE(lines) - 1);
 
   // Don't overwrite a statusline.  Depends on 'cmdheight'.
   if (p_ls > 1) {
@@ -977,14 +1022,8 @@ void intro_message(int colon)
   row = blanklines / 2;
 
   if (((row >= 2) && (Columns >= 50)) || colon) {
-    for (i = 0; i < (int)(sizeof(lines) / sizeof(char *)); ++i) {
+    for (i = 0; i < (int)ARRAY_SIZE(lines); ++i) {
       p = lines[i];
-      if (p == NULL) {
-        if (!p_cp) {
-          break;
-        }
-        continue;
-      }
 
       if (sponsor != 0) {
         if (strstr(p, "children") != NULL) {
@@ -1001,7 +1040,7 @@ void intro_message(int colon)
       }
 
       if (*p != NUL) {
-        do_intro_line(row, (char_u *)_(p), i == 2, 0);
+        do_intro_line(row, (char_u *)_(p), 0);
       }
       row++;
     }
@@ -1013,45 +1052,16 @@ void intro_message(int colon)
   }
 }
 
-static void do_intro_line(int row, char_u *mesg, int add_version, int attr)
+static void do_intro_line(int row, char_u *mesg, int attr)
 {
-  char_u vers[20];
   int col;
   char_u *p;
   int l;
   int clen;
 
-#ifdef MODIFIED_BY
-# define MODBY_LEN 150
-  char_u modby[MODBY_LEN];
-
-  if (*mesg == ' ') {
-    l = STRLCPY(modby, _("Modified by "), MODBY_LEN);
-    if (l < MODBY_LEN - 1) {
-      STRLCPY(modby + l, MODIFIED_BY, MODBY_LEN - l);
-    }
-    mesg = modby;
-  }
-#endif  // ifdef MODIFIED_BY
-
   // Center the message horizontally.
   col = vim_strsize(mesg);
 
-  if (add_version) {
-    STRCPY(vers, mediumVersion);
-
-    if (highest_patch()) {
-      // Check for 9.9x or 9.9xx, alpha/beta version
-      if (isalpha((int)vers[3])) {
-        int len = (isalpha((int)vers[4])) ? 5 : 4;
-        sprintf((char *)vers + len, ".%d%s", highest_patch(),
-                mediumVersion + len);
-      } else {
-        sprintf((char *)vers + 3,   ".%d",   highest_patch());
-      }
-    }
-    col += (int)STRLEN(vers);
-  }
   col = (Columns - col) / 2;
 
   if (col < 0) {
@@ -1073,11 +1083,6 @@ static void do_intro_line(int row, char_u *mesg, int add_version, int attr)
     }
     screen_puts_len(p, l, row, col, *p == '<' ? hl_attr(HLF_8) : attr);
     col += clen;
-  }
-
-  // Add the version number to the version line.
-  if (add_version) {
-    screen_puts(vers, row, col, 0);
   }
 }
 

@@ -1,6 +1,7 @@
 #ifndef NVIM_NORMAL_H
 #define NVIM_NORMAL_H
 
+#include <stdbool.h>
 #include "nvim/pos.h"
 #include "nvim/buffer_defs.h"  // for win_T
 
@@ -17,11 +18,11 @@ typedef struct oparg_S {
   int regname;                  /* register to use for the operator */
   int motion_type;              /* type of the current cursor motion */
   int motion_force;             /* force motion type: 'v', 'V' or CTRL-V */
-  int use_reg_one;              /* TRUE if delete uses reg 1 even when not
+  bool use_reg_one;             /* true if delete uses reg 1 even when not
                                    linewise */
-  int inclusive;                /* TRUE if char motion is inclusive (only
+  bool inclusive;               /* true if char motion is inclusive (only
                                    valid when motion_type is MCHAR */
-  int end_adjusted;             /* backuped b_op_end one char (only used by
+  bool end_adjusted;            /* backuped b_op_end one char (only used by
                                    do_format()) */
   pos_T start;                  /* start of the operator */
   pos_T end;                    /* end of the operator */
@@ -29,10 +30,10 @@ typedef struct oparg_S {
 
   long line_count;              /* number of lines from op_start to op_end
                                    (inclusive) */
-  int empty;                    /* op_start and op_end the same (only used by
-                                   do_change()) */
-  int is_VIsual;                /* operator on Visual area */
-  int block_mode;               /* current operator is Visual block mode */
+  bool empty;                   /* op_start and op_end the same (only used by
+                                   op_change()) */
+  bool is_VIsual;               /* operator on Visual area */
+  bool block_mode;              /* current operator is Visual block mode */
   colnr_T start_vcol;           /* start col for block mode operator */
   colnr_T end_vcol;             /* end col for block mode operator */
   long prev_opcount;            /* ca.opcount saved for K_CURSORHOLD */

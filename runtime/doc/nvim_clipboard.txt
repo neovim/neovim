@@ -6,42 +6,27 @@
 
 Clipboard integration for Nvim			       *nvim-clipboard*
 
-By default, Nvim has no connection to the system clipboard. Eventually that
-will be implemented by UI programs, which connect to Nvim via |msgpack-rpc|.
+Nvim has no direct connection to the system clipboard. Instead, it is
+accessible through the |nvim-provider| infrastructure, which transparently
+uses shell commands for communicating with the clipboard.
 
-Even though externalized UIs are not available yet, there's a workaround that
-enables clipboard usage through the python interface(which also uses
-|msgpack-rpc| and consequently can implement the clipboard methods required
-by Nvim): 
+Clipboard access is implicitly enabled if any of the following clipboard tools
+is found in your `$PATH`.
 
-- Make sure you follow the setup instructions in |nvim-python-quickstart|.
-- Install the `xerox` python module:
-  >
-      $ pip install xerox
-<
-- Create a ~/.vim/pythonx/nvim_clipboard.py file with the following contents:
-  >
-    import xerox
-     
-    class NvimClipboard(object):
-        def __init__(self, vim):
-            self.provides = ['clipboard']
-     
-        def clipboard_get(self):
-            return xerox.paste().split('\n')
-        
-        def clipboard_set(self, lines):
-            xerox.copy(u'\n'.join([line.decode('utf-8') for line in lines]))
-<
-This should enable the '+' and '*' registers. As an optional step, set the
-'unnamedclip' option to transparently access clipboard using the unnamed
-register. If you use the same |vimrc| for both Vim and Nvim, make sure you
-only set the option when `has('nvim')` is true:
+- xclip
+- xsel (newer alternative to xclip)
+- pbcopy/pbpaste (only for Mac OS X)
+
+The presence of a suitable clipboard tool implicitly enables the '+' and '*'
+registers.
+
+If you want to ALWAYS use the clipboard for ALL operations (as opposed
+to interacting with the '+' and/or '*' registers explicitly), set the
+following option:
 >
-    if has('nvim')
-      set unnamedclip
-    endif
+    set clipboard+=unnamedplus
 <
+See 'clipboard' for details and more options.
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

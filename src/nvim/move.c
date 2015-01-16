@@ -34,6 +34,7 @@
 #include "nvim/popupmnu.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
+#include "nvim/window.h"
 
 typedef struct {
   linenr_T lnum;                /* line number */
@@ -144,6 +145,15 @@ void update_topline(void)
 
   if (!screen_valid(TRUE))
     return;
+
+  // If the window height is zero, just use the cursor line.
+  if (curwin->w_height == 0) {
+    curwin->w_topline = curwin->w_cursor.lnum;
+    curwin->w_botline = curwin->w_topline;
+    curwin->w_valid |= VALID_BOTLINE|VALID_BOTLINE_AP;
+    curwin->w_scbind_pos = 1;
+    return;
+  }
 
   check_cursor_moved(curwin);
   if (curwin->w_valid & VALID_TOPLINE)
@@ -312,6 +322,17 @@ void update_topline(void)
   }
 
   p_so = save_so;
+}
+
+/*
+ * Update win->w_topline to move the cursor onto the screen.
+ */
+void update_topline_win(win_T* win)
+{
+  win_T *save_curwin;
+  switch_win(&save_curwin, NULL, win, NULL, true);
+  update_topline();
+  restore_win(save_curwin, NULL, true);
 }
 
 /*
@@ -1661,7 +1682,7 @@ void scroll_cursor_halfway(int atend)
     curwin->w_topline = topline;
   curwin->w_topfill = topfill;
   if (old_topline > curwin->w_topline + curwin->w_height)
-    curwin->w_botfill = FALSE;
+    curwin->w_botfill = false;
   check_topfill(curwin, false);
   curwin->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
   curwin->w_valid |= VALID_TOPLINE;

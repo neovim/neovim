@@ -1,12 +1,14 @@
 #ifndef NVIM_HARDCOPY_H
 #define NVIM_HARDCOPY_H
 
+#include <stdint.h>
+
 /*
  * Structure to hold printing color and font attributes.
  */
 typedef struct {
-  long_u fg_color;
-  long_u bg_color;
+  uint32_t fg_color;
+  uint32_t bg_color;
   int bold;
   int italic;
   int underline;
@@ -38,7 +40,7 @@ typedef struct {
 typedef struct {
   const char  *name;
   int hasnum;
-  long number;
+  int number;
   char_u      *string;          /* points into option string */
   int strlen;
   int present;

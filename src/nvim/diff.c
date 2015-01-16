@@ -87,7 +87,7 @@ void diff_buf_adjust(win_T *win)
     // When there is no window showing a diff for this buffer, remove
     // it from the diffs.
     bool found_win = false;
-    FOR_ALL_WINDOWS(wp) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if ((wp->w_buffer == win->w_buffer) && wp->w_p_diff) {
         found_win = true;
       }
@@ -578,25 +578,26 @@ static int diff_check_sanity(tabpage_T *tp, diff_T *dp)
 /// @param dofold Also recompute the folds
 static void diff_redraw(int dofold)
 {
-  FOR_ALL_WINDOWS(wp) {
-    if (wp->w_p_diff) {
-      redraw_win_later(wp, SOME_VALID);
-      if (dofold && foldmethodIsDiff(wp)) {
-        foldUpdateAll(wp);
-      }
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (!wp->w_p_diff) {
+      continue;
+    }
+    redraw_win_later(wp, SOME_VALID);
+    if (dofold && foldmethodIsDiff(wp)) {
+      foldUpdateAll(wp);
+    }
 
-      /* A change may have made filler lines invalid, need to take care
-       * of that for other windows. */
-      int n = diff_check(wp, wp->w_topline);
+    /* A change may have made filler lines invalid, need to take care
+     * of that for other windows. */
+    int n = diff_check(wp, wp->w_topline);
 
-      if (((wp != curwin) && (wp->w_topfill > 0)) || (n > 0)) {
-        if (wp->w_topfill > n) {
-          wp->w_topfill = (n < 0 ? 0 : n);
-        } else if ((n > 0) && (n > wp->w_topfill)) {
-          wp->w_topfill = n;
-        }
-        check_topfill(wp, FALSE);
+    if (((wp != curwin) && (wp->w_topfill > 0)) || (n > 0)) {
+      if (wp->w_topfill > n) {
+        wp->w_topfill = (n < 0 ? 0 : n);
+      } else if ((n > 0) && (n > wp->w_topfill)) {
+        wp->w_topfill = n;
       }
+      check_topfill(wp, FALSE);
     }
   }
 }
@@ -918,7 +919,7 @@ void ex_diffpatch(exarg_T *eap)
 #endif  // ifdef UNIX
     // Avoid ShellCmdPost stuff
     block_autocmds();
-    (void)call_shell(buf, kShellOptFilter | kShellOptCooked, NULL);
+    (void)call_shell(buf, kShellOptFilter, NULL);
     unblock_autocmds();
   }
 
@@ -1107,7 +1108,7 @@ void ex_diffoff(exarg_T *eap)
   win_T *old_curwin = curwin;
   int diffwin = FALSE;
 
-  FOR_ALL_WINDOWS(wp) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (eap->forceit ? wp->w_p_diff : (wp == curwin)) {
       // Set 'diff', 'scrollbind' off and 'wrap' on. If option values
       // were saved in diff_win_options() restore them.
@@ -1220,11 +1221,11 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
     // {first}a{first}[,{last}]
     // {first}[,{last}]d{first}
     p = linebuf;
-    f1 = getdigits(&p);
+    f1 = getdigits_long(&p);
 
     if (*p == ',') {
       ++p;
-      l1 = getdigits(&p);
+      l1 = getdigits_long(&p);
     } else {
       l1 = f1;
     }
@@ -1234,11 +1235,11 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
       continue;
     }
     difftype = *p++;
-    f2 = getdigits(&p);
+    f2 = getdigits_long(&p);
 
     if (*p == ',') {
       ++p;
-      l2 = getdigits(&p);
+      l2 = getdigits_long(&p);
     } else {
       l2 = f2;
     }
@@ -1745,11 +1746,11 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
   }
 
   // safety check (if diff info gets outdated strange things may happen)
-  towin->w_botfill = FALSE;
+  towin->w_botfill = false;
 
   if (towin->w_topline > towin->w_buffer->b_ml.ml_line_count) {
     towin->w_topline = towin->w_buffer->b_ml.ml_line_count;
-    towin->w_botfill = TRUE;
+    towin->w_botfill = true;
   }
 
   if (towin->w_topline < 1) {
@@ -1782,7 +1783,7 @@ int diffopt_changed(void)
       diff_flags_new |= DIFF_FILLER;
     } else if ((STRNCMP(p, "context:", 8) == 0) && VIM_ISDIGIT(p[8])) {
       p += 8;
-      diff_context_new = getdigits(&p);
+      diff_context_new = getdigits_int(&p);
     } else if (STRNCMP(p, "icase", 5) == 0) {
       p += 5;
       diff_flags_new |= DIFF_ICASE;
@@ -1797,7 +1798,7 @@ int diffopt_changed(void)
       diff_flags_new |= DIFF_VERTICAL;
     } else if ((STRNCMP(p, "foldcolumn:", 11) == 0) && VIM_ISDIGIT(p[11])) {
       p += 11;
-      diff_foldcolumn_new = getdigits(&p);
+      diff_foldcolumn_new = getdigits_int(&p);
     }
 
     if ((*p != ',') && (*p != NUL)) {
@@ -2236,7 +2237,7 @@ void ex_diffgetput(exarg_T *eap)
         }
       }
 
-      buf_empty = FALSE;
+      buf_empty = bufempty();
       added = 0;
 
       for (i = 0; i < count; ++i) {
@@ -2358,7 +2359,7 @@ void ex_diffgetput(exarg_T *eap)
 /// @param skip_idx
 static void diff_fold_update(diff_T *dp, int skip_idx)
 {
-  FOR_ALL_WINDOWS(wp) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     for (int i = 0; i < DB_COUNT; ++i) {
       if ((curtab->tp_diffbuf[i] == wp->w_buffer) && (i != skip_idx)) {
         foldUpdate(wp, dp->df_lnum[i], dp->df_lnum[i] + dp->df_count[i]);

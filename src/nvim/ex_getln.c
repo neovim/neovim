@@ -48,6 +48,7 @@
 #include "nvim/keymap.h"
 #include "nvim/garray.h"
 #include "nvim/move.h"
+#include "nvim/mouse.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
@@ -212,7 +213,7 @@ getcmdline (
 
   /* autoindent for :insert and :append */
   if (firstc <= 0) {
-    copy_spaces(ccline.cmdbuff, indent);
+    memset(ccline.cmdbuff, ' ', indent);
     ccline.cmdbuff[indent] = NUL;
     ccline.cmdpos = indent;
     ccline.cmdspos = indent;
@@ -265,21 +266,10 @@ getcmdline (
       b_im_ptr = &curbuf->b_p_imsearch;
     if (*b_im_ptr == B_IMODE_LMAP)
       State |= LANGMAP;
-#ifdef USE_IM_CONTROL
-    im_set_active(*b_im_ptr == B_IMODE_IM);
-#endif
   }
-#ifdef USE_IM_CONTROL
-  else if (p_imcmdline)
-    im_set_active(TRUE);
-#endif
 
   setmouse();
   ui_cursor_shape();            /* may show different cursor shape */
-
-  /* When inside an autocommand for writing "exiting" may be set and
-  * terminal mode set to cooked.  Need to set raw mode here then. */
-  settmode(TMODE_RAW);
 
   init_history();
   hiscnt = hislen;              /* set hiscnt to impossible history value */
@@ -311,9 +301,16 @@ getcmdline (
 
     /* Get a character.  Ignore K_IGNORE, it should not do anything, such
      * as stop completion. */
+    event_enable_deferred();
     do {
       c = safe_vgetc();
     } while (c == K_IGNORE);
+    event_disable_deferred();
+
+    if (c == K_EVENT) {
+      event_process();
+      continue;
+    }
 
     if (KeyTyped) {
       some_key_typed = TRUE;
@@ -630,11 +627,13 @@ getcmdline (
     }
 
     if (c == cedit_key || c == K_CMDWIN) {
-      /*
-       * Open a window to edit the command line (and history).
-       */
-      c = ex_window();
-      some_key_typed = TRUE;
+      if (ex_normal_busy == 0 && got_int == FALSE) {
+        /*
+         * Open a window to edit the command line (and history).
+         */
+        c = ex_window();
+        some_key_typed = TRUE;
+      }
     } else
       c = do_digraph(c);
 
@@ -769,11 +768,6 @@ getcmdline (
      * Big switch for a typed command line character.
      */
     switch (c) {
-    case K_EVENT:
-      event_process();
-      // Force a redraw even though the command line didn't change
-      shell_resized();
-      goto cmdline_not_changed;
     case K_BS:
     case Ctrl_H:
     case K_DEL:
@@ -865,9 +859,6 @@ getcmdline (
       if (map_to_exists_mode((char_u *)"", LANGMAP, FALSE)) {
         /* ":lmap" mappings exists, toggle use of mappings. */
         State ^= LANGMAP;
-#ifdef USE_IM_CONTROL
-        im_set_active(FALSE);                   /* Disable input method */
-#endif
         if (b_im_ptr != NULL) {
           if (State & LANGMAP)
             *b_im_ptr = B_IMODE_LMAP;
@@ -875,23 +866,6 @@ getcmdline (
             *b_im_ptr = B_IMODE_NONE;
         }
       }
-#ifdef USE_IM_CONTROL
-      else {
-        /* There are no ":lmap" mappings, toggle IM.  When
-         * 'imdisable' is set don't try getting the status, it's
-         * always off. */
-        if ((p_imdisable && b_im_ptr != NULL)
-            ? *b_im_ptr == B_IMODE_IM : im_get_status()) {
-          im_set_active(FALSE);                 /* Disable input method */
-          if (b_im_ptr != NULL)
-            *b_im_ptr = B_IMODE_NONE;
-        } else {
-          im_set_active(TRUE);                  /* Enable input method */
-          if (b_im_ptr != NULL)
-            *b_im_ptr = B_IMODE_IM;
-        }
-      }
-#endif
       if (b_im_ptr != NULL) {
         if (b_im_ptr == &curbuf->b_p_iminsert)
           set_iminsert_global();
@@ -1540,11 +1514,6 @@ returncmd:
     need_wait_return = FALSE;
 
   State = save_State;
-#ifdef USE_IM_CONTROL
-  if (b_im_ptr != NULL && *b_im_ptr != B_IMODE_LMAP)
-    im_save_status(b_im_ptr);
-  im_set_active(FALSE);
-#endif
   setmouse();
   ui_cursor_shape();            /* may show different cursor shape */
 
@@ -1885,8 +1854,6 @@ redraw:
       }
 
       if (IS_SPECIAL(c1)) {
-        // Process deferred events
-        event_process();
         // Ignore other special key codes
         continue;
       }
@@ -1946,7 +1913,7 @@ redraw:
   msg_col = 0;
   if (msg_row < Rows - 1)
     ++msg_row;
-  emsg_on_display = FALSE;              /* don't want ui_delay() */
+  emsg_on_display = FALSE;              /* don't want os_delay() */
 
   if (got_int)
     ga_clear(&line_ga);
@@ -2005,7 +1972,7 @@ static void realloc_cmdbuff(int len)
 
 static char_u   *arshape_buf = NULL;
 
-# if defined(EXITFREE) || defined(PROTO)
+# if defined(EXITFREE)
 void free_cmdline_buf(void)
 {
   free(arshape_buf);
@@ -2019,10 +1986,6 @@ void free_cmdline_buf(void)
  */
 static void draw_cmdline(int start, int len)
 {
-  if (embedded_mode) {
-    return;
-  }
-
   int i;
 
   if (cmdline_star > 0)
@@ -3754,7 +3717,7 @@ ExpandFromContext (
      * right function to do the expansion.
      */
     ret = FAIL;
-    for (i = 0; i < (int)(sizeof(tab) / sizeof(struct expgen)); ++i)
+    for (i = 0; i < (int)ARRAY_SIZE(tab); ++i)
       if (xp->xp_context == tab[i].context) {
         if (tab[i].ic) {
           regmatch.rm_ic = TRUE;
@@ -4194,7 +4157,7 @@ static char_u *get_history_arg(expand_T *xp, int idx)
   static char_u compl[2] = { NUL, NUL };
   char *short_names = ":=@>?/";
   int short_names_count = (int)STRLEN(short_names);
-  int history_name_count = sizeof(history_names) / sizeof(char *) - 1;
+  int history_name_count = ARRAY_SIZE(history_names) - 1;
 
   if (idx < short_names_count) {
     compl[0] = (char_u)short_names[idx];
@@ -4245,8 +4208,10 @@ void init_history(void)
           for (i = newlen - 1;; --i) {
             if (i >= 0)                         /* copy newest entries */
               temp[i] = history[type][j];
-            else                                /* remove older entries */
+            else {                              /* remove older entries */
               free(history[type][j].hisstr);
+              history[type][j].hisstr = NULL;
+            }
             if (--j < 0)
               j = hislen - 1;
             if (j == hisidx[type])

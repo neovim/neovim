@@ -90,8 +90,7 @@ See ":help tag\-commands".
 Start in quickFix mode.
 The file [errorfile] is read and the first error is displayed.
 If [errorfile] is omitted, the filename is obtained from the 'errorfile'
-option (defaults to "AztecC.Err" for the Amiga, "errors.err" on other
-systems).
+option (defaults to "errors.err").
 Further errors can be jumped to with the ":cn" command.
 See ":help quickfix".
 .PP
@@ -192,12 +191,6 @@ There should be two, three or four file name arguments.
 will open all the files and show differences between them.
 Works like vimdiff(1).
 .TP
-\-d {device}
-Open {device} for use as a terminal.
-Only on the Amiga.
-Example:
-"\-d con:20/30/600/150".
-.TP
 \-D
 Debugging.  Go to debugging mode when executing the first command from a
 script.
@@ -216,14 +209,10 @@ in improved Ex mode, just like the executable was called "exim".
 Foreground.  For the GUI version,
 .B Vim
 will not fork and detach from the shell it was started in.
-On the Amiga,
-.B Vim
-is not restarted to open a new window.
 This option should be used when
 .B Vim
 is executed by a program that will wait for the edit
 session to finish (e.g. mail).
-On the Amiga the ":sh" and ":!" commands will not work.
 .TP
 \-\-nofork
 Foreground.  For the GUI version,
@@ -394,9 +383,6 @@ If the {scriptout} file exists, characters are appended.
 .TP
 \-W {scriptout}
 Like \-w, but an existing file is overwritten.
-.TP
-\-x
-Use encryption when writing files.  Will prompt for a crypt key.
 .TP
 \-X
 Don't connect to the X server.  Shortens startup time in a terminal, but the

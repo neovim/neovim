@@ -97,9 +97,6 @@
 /* Used a termcap entry that produces a normal character. */
 #define KS_KEY                  242
 
-/* Used for the qnx pterm mouse. */
-#define KS_PTERM_MOUSE          241
-
 /* Used for click in a tab pages label. */
 #define KS_TABLINE              240
 
@@ -412,7 +409,6 @@ enum key_extra {
 
 #define K_NETTERM_MOUSE TERMCAP2KEY(KS_NETTERM_MOUSE, KE_FILLER)
 #define K_DEC_MOUSE     TERMCAP2KEY(KS_DEC_MOUSE, KE_FILLER)
-#define K_PTERM_MOUSE   TERMCAP2KEY(KS_PTERM_MOUSE, KE_FILLER)
 #define K_URXVT_MOUSE   TERMCAP2KEY(KS_URXVT_MOUSE, KE_FILLER)
 #define K_SGR_MOUSE     TERMCAP2KEY(KS_SGR_MOUSE, KE_FILLER)
 

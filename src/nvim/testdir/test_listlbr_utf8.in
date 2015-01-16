@@ -3,6 +3,7 @@ Test for linebreak and list option in utf-8 mode
 STARTTEST
 :so small.vim
 :if !exists("+linebreak") | e! test.ok | w! test.out | qa! | endif
+:set wildchar=^E
 :so mbyte.vim
 :if &enc !=? 'utf-8'|:e! test.ok|:w! test.out|qa!|endif
 :10new|:vsp|:vert resize 20

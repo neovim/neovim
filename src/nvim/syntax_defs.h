@@ -3,6 +3,8 @@
 
 #include "nvim/regexp_defs.h"
 
+typedef int32_t RgbValue;
+
 # define SST_MIN_ENTRIES 150    /* minimal size for state stack array */
 # define SST_MAX_ENTRIES 1000   /* maximal size for state stack array */
 # define SST_FIX_STATES  7      /* size of sst_stack[]. */
@@ -70,6 +72,7 @@ struct syn_state {
  */
 typedef struct attr_entry {
   short ae_attr;                        /* HL_BOLD, etc. */
+  RgbValue fg_color, bg_color;
   union {
     struct {
       char_u          *start;           /* start escape sequence */

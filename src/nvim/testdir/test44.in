@@ -4,7 +4,7 @@ See test99 for exactly the same test with re=2.
 
 STARTTEST
 :so mbyte.vim
-:set nocompatible encoding=utf-8 termencoding=latin1 viminfo+=nviminfo
+:set encoding=utf-8 termencoding=latin1
 :set re=1
 /^1
 /a*b\{2}c\+/e

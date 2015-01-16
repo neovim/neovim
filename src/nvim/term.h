@@ -52,10 +52,6 @@
  * 128 = 16384 columns, now it's reduced to 10000. */
 #define MOUSE_COLOFF 10000
 
-#if defined(UNIX)
-# define CHECK_DOUBLE_CLICK 1  /* Checking for double clicks ourselves. */
-#endif
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "term.h.generated.h"
 #endif

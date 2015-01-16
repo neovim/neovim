@@ -136,22 +136,8 @@ as the original file with 'backupext' appended.  The default "~" is a bit
 strange to avoid accidentally overwriting existing files.  If you prefer ".bak"
 change the 'backupext' option.  Extra dots are replaced with '_' on MS-DOS
 machines, when Vim has detected that an MS-DOS-like filesystem is being used
-(e.g., messydos or crossdos) or when the 'shortname' option is on.  The
-backup file can be placed in another directory by setting 'backupdir'.
-
-							*auto-shortname*
-Technical: On the Amiga you can use 30 characters for a file name.  But on an
-	   MS-DOS-compatible filesystem only 8 plus 3 characters are
-	   available.  Vim tries to detect the type of filesystem when it is
-	   creating the .swp file.  If an MS-DOS-like filesystem is suspected,
-	   a flag is set that has the same effect as setting the 'shortname'
-	   option.  This flag will be reset as soon as you start editing a
-	   new file.  The flag will be used when making the file name for the
-	   ".swp" and ".~" files for the current file.  But when you are
-	   editing a file in a normal filesystem and write to an MS-DOS-like
-	   filesystem the flag will not have been set.  In that case the
-	   creation of the ".~" file may fail and you will get an error
-	   message.  Use the 'shortname' option in this case.
+(e.g., messydos or crossdos).  The backup file can be placed in another
+directory by setting 'backupdir'.
 
 When you started editing without giving a file name, "No File" is displayed in
 messages.  If the ":write" command is used with a file name argument, the file
@@ -373,10 +359,10 @@ expected are mentioned at |cmdline-special|.
 Note for systems other than Unix: When using a command that accepts a single
 file name (like ":edit file") spaces in the file name are allowed, but
 trailing spaces are ignored.  This is useful on systems that regularly embed
-spaces in file names (like MS-Windows and the Amiga).  Example: The command
-":e   Long File Name " will edit the file "Long File Name".  When using a
-command that accepts more than one file name (like ":next file1 file2")
-embedded spaces must be escaped with a backslash.
+spaces in file names (like MS-Windows).  Example: The command ":e   Long File
+Name " will edit the file "Long File Name".  When using a command that accepts
+more than one file name (like ":next file1 file2") embedded spaces must be
+escaped with a backslash.
 
 						*wildcard* *wildcards*
 Wildcards in {file} are expanded, but as with file completion, 'wildignore'
@@ -502,8 +488,8 @@ The 'fileformat' option sets the <EOL> style for a file:
   "mac"		<CR>		   Mac format		*Mac-format*
 
 When reading a file, the mentioned characters are interpreted as the <EOL>.
-In DOS format (default for MS-DOS, OS/2 and Win32), <CR><NL> and <NL> are both
-interpreted as the <EOL>.  Note that when writing the file in DOS format,
+In DOS format (default for MS-DOS and Win32), <CR><NL> and <NL> are both
+interpreted as the <EOL>. Note that when writing the file in DOS format,
 <CR> characters will be added for each single <NL>.  Also see |file-read|.
 
 When writing a file, the mentioned characters are used for <EOL>.  For DOS
@@ -524,10 +510,10 @@ characters will be replaced with <CR><NL> (assuming 'fileformats' includes
 If you start editing a new file and the 'fileformats' option is not empty
 (which is the default), Vim will try to detect whether the lines in the file
 are separated by the specified formats.  When set to "unix,dos", Vim will
-check for lines with a single <NL> (as used on Unix and Amiga) or by a <CR>
-<NL> pair (MS-DOS).  Only when ALL lines end in <CR><NL>, 'fileformat' is set
-to "dos", otherwise it is set to "unix".  When 'fileformats' includes "mac",
-and no <NL> characters are found in the file, 'fileformat' is set to "mac".
+check for lines with a single <NL> (as used on Unix) or by a <CR><NL> pair
+(MS-DOS).  Only when ALL lines end in <CR><NL>, 'fileformat' is set to "dos",
+otherwise it is set to "unix".  When 'fileformats' includes "mac", and no <NL>
+characters are found in the file, 'fileformat' is set to "mac".
 
 If the 'fileformat' option is set to "dos" on non-MS-DOS systems the message
 "[dos format]" is shown to remind you that something unusual is happening.  On
@@ -549,10 +535,6 @@ Before editing binary, executable or Vim script files you should set the
 'binary' option.  A simple way to do this is by starting Vim with the "-b"
 option.  This will avoid the use of 'fileformat'.  Without this you risk that
 single <NL> characters are unexpectedly replaced with <CR><NL>.
-
-You can encrypt files that are written by setting the 'key' option.  This
-provides some security against others reading your files. |encryption|
-
 
 ==============================================================================
 3. The argument list				*argument-list* *arglist*
@@ -1011,11 +993,11 @@ lost the original file.
 
 						*DOS-format-write*
 If the 'fileformat' is "dos", <CR> <NL> is used for <EOL>.  This is default
-for MS-DOS, Win32 and OS/2.  On other systems the message "[dos format]" is
-shown to remind you that an unusual <EOL> was used.
+for MS-DOS and Win32. On other systems the message "[dos format]" is shown to
+remind you that an unusual <EOL> was used.
 						*Unix-format-write*
-If the 'fileformat' is "unix", <NL> is used for <EOL>.  On MS-DOS, Win32 and
-OS/2 the message "[unix format]" is shown.
+If the 'fileformat' is "unix", <NL> is used for <EOL>.  On MS-DOS and Win32
+the message "[unix format]" is shown.
 						*Mac-format-write*
 If the 'fileformat' is "mac", <CR> is used for <EOL>.  On non-Mac systems the
 message "[mac format]" is shown.
@@ -1049,7 +1031,6 @@ and for MS-DOS or MS-Windows: >
 For Unix a device is detected when the name doesn't refer to a normal file or
 a directory.  A fifo or named pipe also looks like a device to Vim.
 For MS-DOS and MS-Windows the device is detected by its name:
-	AUX
 	CON
 	CLOCK$
 	NUL
@@ -1081,8 +1062,7 @@ The names can be in upper- or lowercase.
 			buffers.  Use ":qall!" to exit always.
 
 :cq[uit]		Quit always, without writing, and return an error
-			code.  See |:cq|.  Used for Manx's QuickFix mode (see
-			|quickfix|).  {not in Vi}
+			code.  See |:cq|.  {not in Vi}
 
 							*:wq*
 :wq [++opt]		Write the current file and quit.  Writing fails when
@@ -1334,11 +1314,10 @@ There are a few things to remember when editing binary files:
   split in two.
 - When there are not many <EOL>s, the lines will become very long.  If you
   want to edit a line that does not fit on the screen reset the 'wrap' option.
-  Horizontal scrolling is used then.  If a line becomes too long (more than
-  about 32767 characters on the Amiga, much more on 32-bit systems, see
-  |limits|) you cannot edit that line.  The line will be split when reading
-  the file.  It is also possible that you get an "out of memory" error when
-  reading the file.
+  Horizontal scrolling is used then.  If a line becomes too long (see |limits|)
+  you cannot edit that line.  The line will be split when reading the file.
+  It is also possible that you get an "out of memory" error when reading the
+  file.
 - Make sure the 'binary' option is set BEFORE loading the
   file.  Otherwise both <CR> <NL> and <NL> are considered to end a line
   and when the file is written the <NL> will be replaced with <CR> <NL>.
@@ -1356,119 +1335,12 @@ There are a few things to remember when editing binary files:
 ==============================================================================
 9. Encryption						*encryption*
 
-Vim is able to write files encrypted, and read them back.  The encrypted text
-cannot be read without the right key.
-{only available when compiled with the |+cryptv| feature}  *E833*
+					                *:X* *E817* *E818* *E819* *E820*
+Support for editing encrypted files has been removed, but may be added back in
+the future.  See the following discussions for more information:
 
-The text in the swap file and the undo file is also encrypted.  *E843*
-However, this is done block-by-block and may reduce the time needed to crack a
-password.  You can disable the swap file, but then a crash will cause you to
-lose your work.  The undo file can be disabled without much disadvantage. >
-	:set noundofile
-	:noswapfile edit secrets
-
-Note: The text in memory is not encrypted.  A system administrator may be able
-to see your text while you are editing it.  When filtering text with
-":!filter" or using ":w !command" the text is not encrypted, this may reveal
-it to others.  The 'viminfo' file is not encrypted.
-
-WARNING: If you make a typo when entering the key and then write the file and
-exit, the text will be lost!
-
-The normal way to work with encryption, is to use the ":X" command, which will
-ask you to enter a key.  A following write command will use that key to
-encrypt the file.  If you later edit the same file, Vim will ask you to enter
-a key.  If you type the same key as that was used for writing, the text will
-be readable again.  If you use a wrong key, it will be a mess.
-
-							*:X*
-:X	Prompt for an encryption key.  The typing is done without showing the
-	actual text, so that someone looking at the display won't see it.
-	The typed key is stored in the 'key' option, which is used to encrypt
-	the file when it is written.  The file will remain unchanged until you
-	write it.  See also |-x|.
-
-The value of the 'key' options is used when text is written.  When the option
-is not empty, the written file will be encrypted, using the value as the
-encryption key.  A magic number is prepended, so that Vim can recognize that
-the file is encrypted.
-
-To disable the encryption, reset the 'key' option to an empty value: >
-	:set key=
-
-You can use the 'cryptmethod' option to select the type of encryption, use one
-of these two: >
-	:setlocal cm=zip       " weak method, backwards compatible
-	:setlocal cm=blowfish  " strong method
-Do this before writing the file.  When reading an encrypted file it will be
-set automatically to the method used when that file was written.  You can
-change 'cryptmethod' before writing that file to change the method.
-To set the default method, used for new files, use one of these in your
-|vimrc| file: >
-	set cm=zip
-	set cm=blowfish
-The message given for reading and writing a file will show "[crypted]" when
-using zip, "[blowfish]" when using blowfish.
-
-When writing an undo file, the same key and method will be used for the text
-in the undo file. |persistent-undo|.
-
-						*E817* *E818* *E819* *E820*
-When encryption does not work properly, you would be able to write your text
-to a file and never be able to read it back.  Therefore a test is performed to
-check if the encryption works as expected.  If you get one of these errors
-don't write the file encrypted!  You need to rebuild the Vim binary to fix
-this.
-
-*E831* This is an internal error, "cannot happen".  If you can reproduce it,
-please report to the developers.
-
-When reading a file that has been encrypted and the 'key' option is not empty,
-it will be used for decryption.  If the value is empty, you will be prompted
-to enter the key.  If you don't enter a key, or you enter the wrong key, the
-file is edited without being decrypted.  There is no warning about using the
-wrong key (this makes brute force methods to find the key more difficult).
-
-If want to start reading a file that uses a different key, set the 'key'
-option to an empty string, so that Vim will prompt for a new one.  Don't use
-the ":set" command to enter the value, other people can read the command over
-your shoulder.
-
-Since the value of the 'key' option is supposed to be a secret, its value can
-never be viewed.  You should not set this option in a vimrc file.
-
-An encrypted file can be recognized by the "file" command, if you add these
-lines to "/etc/magic", "/usr/share/misc/magic" or wherever your system has the
-"magic" file: >
-     0	string	VimCrypt~	Vim encrypted file
-     >9	string	01	- "zip" cryptmethod
-     >9	string	02	- "blowfish" cryptmethod
-
-
-Notes:
-- Encryption is not possible when doing conversion with 'charconvert'.
-- Text you copy or delete goes to the numbered registers.  The registers can
-  be saved in the .viminfo file, where they could be read.  Change your
-  'viminfo' option to be safe.
-- Someone can type commands in Vim when you walk away for a moment, he should
-  not be able to get the key.
-- If you make a typing mistake when entering the key, you might not be able to
-  get your text back!
-- If you type the key with a ":set key=value" command, it can be kept in the
-  history, showing the 'key' value in a viminfo file.
-- There is never 100% safety.  The encryption in Vim has not been tested for
-  robustness.
-- The algorithm used for 'cryptmethod' "zip" is breakable.  A 4 character key
-  in about one hour, a 6 character key in one day (on a Pentium 133 PC).  This
-  requires that you know some text that must appear in the file.  An expert
-  can break it for any key.  When the text has been decrypted, this also means
-  that the key can be revealed, and other files encrypted with the same key
-  can be decrypted.
-- Pkzip uses the same encryption as 'cryptmethod' "zip", and US Govt has no
-  objection to its export.  Pkzip's public file APPNOTE.TXT describes this
-  algorithm in detail.
-- Vim originates from the Netherlands.  That is where the sources come from.
-  Thus the encryption code is not exported from the USA.
+	https://github.com/neovim/neovim/issues/694
+	https://github.com/neovim/neovim/issues/701
 
 ==============================================================================
 10. Timestamps					*timestamp* *timestamps*

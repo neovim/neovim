@@ -29,9 +29,9 @@
 #include "nvim/strings.h"
 #include "nvim/tag.h"
 #include "nvim/tempfile.h"
-#include "nvim/ui.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
+#include "nvim/os/input.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -1735,7 +1735,7 @@ static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
     if (msg_col)
       msg_putchar('\n');
 
-    ui_breakcheck();
+    os_breakcheck();
     if (got_int) {
       got_int = FALSE;          /* don't print any more matches */
       break;

@@ -7,14 +7,13 @@
 Starting Vim						*starting*
 
 1. Vim arguments		|vim-arguments|
-2. Vim on the Amiga		|starting-amiga|
-3. Running eVim			|evim-keys|
-4. Initialization		|initialization|
-5. $VIM and $VIMRUNTIME		|$VIM|
-6. Suspending			|suspend|
-7. Saving settings		|save-settings|
-8. Views and Sessions		|views-sessions|
-9. The viminfo file		|viminfo-file|
+2. Running eVim			|evim-keys|
+3. Initialization		|initialization|
+4. $VIM and $VIMRUNTIME		|$VIM|
+5. Suspending			|suspend|
+6. Saving settings		|save-settings|
+7. Views and Sessions		|views-sessions|
+8. The viminfo file		|viminfo-file|
 
 ==============================================================================
 1. Vim arguments					*vim-arguments*
@@ -121,9 +120,6 @@ use an alias instead.  For example: >
 The option arguments may be given in any order.  Single-letter options can be
 combined after one dash.  There can be no option arguments after the "--"
 argument.
-
-On VMS all option arguments are assumed to be lowercase, unless preceded with
-a slash.  Thus "-R" means recovery and "-/R" readonly.
 
 --help							*-h* *--help*
 -h		Give usage (help) message and exit.  {not in Vi}
@@ -372,8 +368,6 @@ a slash.  Thus "-R" means recovery and "-/R" readonly.
 		Can also be done with ":set updatecount=0".  You can switch it
 		on again by setting the 'updatecount' option to some value,
 		e.g., ":set uc=100".
-		NOTE: Don't combine -n with -b, making -nb, because that has a
-		different meaning: |-nb|.
 		'updatecount' is set to 0 AFTER executing commands from a
 		vimrc file, but before the GUI initializations.  Thus it
 		overrides a setting for 'updatecount' in a vimrc file, but not
@@ -418,15 +412,6 @@ a slash.  Thus "-R" means recovery and "-/R" readonly.
 		{not in Vi} {not available when compiled without the |+diff|
 		feature}
 
--d {device}	Only on the Amiga and when not compiled with the |+diff|
-		feature.  Works like "-dev".
-							*-dev*
--dev {device}	Only on the Amiga: The {device} is opened to be used for
-		editing.
-		Normally you would use this to set the window position and
-		size: "-d con:x/y/width/height", e.g.,
-		"-d con:30/10/600/150".  But you can also use it to start
-		editing on another device, e.g., AUX:.  {not in Vi}
 							*-f*
 -f		GUI: Do not disconnect from the program that started Vim.
 		'f' stands for "foreground".  If omitted, the GUI forks a new
@@ -436,11 +421,6 @@ a slash.  Thus "-R" means recovery and "-/R" readonly.
 		never to fork, include 'f' in 'guioptions' in your |gvimrc|.
 		Careful: You can use "-gf" to start the GUI in the foreground,
 		but "-fg" is used to specify the foreground color.  |gui-fork|
-
-		Amiga: Do not restart Vim to open a new window.  This
-		option should be used when Vim is started by a program that
-		will wait for the edit session to finish (e.g., mail or
-		readnews).  See |amiga-window|.
 
 		MS-Windows: This option is not supported.  However, when
 		running Vim with an installed vim.bat or gvim.bat file it
@@ -484,22 +464,14 @@ a slash.  Thus "-R" means recovery and "-/R" readonly.
 		":rv" or ":wv" are used.  See also |viminfo-file|.
 		{not in Vi}
 
-							*-x*
--x		Use encryption to read/write files.  Will prompt for a key,
-		which is then stored in the 'key' option.  All writes will
-		then use this key to encrypt the text.  The '-x' argument is
-		not needed when reading a file, because there is a check if
-		the file that is being read has been encrypted, and Vim asks
-		for a key automatically. |encryption|
-
 							*-X*
 -X		Do not try connecting to the X server to get the current
 		window title and copy/paste using the X clipboard.  This
 		avoids a long startup time when running Vim in a terminal
 		emulator and the connection to the X server is slow.
 		See |--startuptime| to find out if affects you.
-		Only makes a difference on Unix or VMS, when compiled with the
-		|+X11| feature.  Otherwise it's ignored.
+		Only makes a difference on Unix when compiled with the |+X11|
+		feature.  Otherwise it's ignored.
 		To disable the connection only for specific terminals, see the
 		'clipboard' option.
 		When the X11 Session Management Protocol (XSMP) handler has
@@ -604,16 +576,6 @@ a slash.  Thus "-R" means recovery and "-/R" readonly.
 		Note that the implementation is still primitive.  It won't
 		work with all applications and the menu doesn't work.
 
--nb							*-nb*
--nb={fname}
--nb:{hostname}:{addr}:{password}
-		Attempt connecting to Netbeans and become an editor server for
-		it.  The second form specifies a file to read connection info
-		from.  The third form specifies the hostname, address and
-		password for connecting to Netbeans. |netbeans-run|
-		{only available when compiled with the |+netbeans_intg|
-		feature; if not then -nb will make Vim exit}
-
 If the executable is called "view", Vim will start in Readonly mode.  This is
 useful if you can make a hard or symbolic link from "view" to "vim".
 Starting in Readonly mode can also be done with "vim -R".
@@ -626,57 +588,7 @@ Additional arguments are available on unix like systems when compiled with
 X11 GUI support.  See |gui-resources|.
 
 ==============================================================================
-2. Vim on the Amiga					*starting-amiga*
-
-Starting Vim from the Workbench				*workbench*
--------------------------------
-
-Vim can be started from the Workbench by clicking on its icon twice.  It will
-then start with an empty buffer.
-
-Vim can be started to edit one or more files by using a "Project" icon.  The
-"Default Tool" of the icon must be the full pathname of the Vim executable.
-The name of the ".info" file must be the same as the name of the text file.
-By clicking on this icon twice, Vim will be started with the file name as
-current file name, which will be read into the buffer (if it exists).  You can
-edit multiple files by pressing the shift key while clicking on icons, and
-clicking twice on the last one.  The "Default Tool" for all these icons must
-be the same.
-
-It is not possible to give arguments to Vim, other than file names, from the
-workbench.
-
-Vim window						*amiga-window*
-----------
-
-Vim will run in the CLI window where it was started.  If Vim was started with
-the "run" or "runback" command, or if Vim was started from the workbench, it
-will open a window of its own.
-
-Technical detail:
-	To open the new window a little trick is used.  As soon as Vim
-	recognizes that it does not run in a normal CLI window, it will
-	create a script file in "t:".  This script file contains the same
-	command as the one Vim was started with, and an "endcli" command.
-	This script file is then executed with a "newcli" command (the "c:run"
-	and "c:newcli" commands are required for this to work).  The script
-	file will hang around until reboot, or until you delete it.  This
-	method is required to get the ":sh" and ":!" commands to work
-	correctly.  But when Vim was started with the -f option (foreground
-	mode), this method is not used.  The reason for this is that
-	when a program starts Vim with the -f option it will wait for Vim to
-	exit.  With the script trick, the calling program does not know when
-	Vim exits.  The -f option can be used when Vim is started by a mail
-	program which also waits for the edit session to finish.  As a
-	consequence, the ":sh" and ":!" commands are not available when the
-	-f option is used.
-
-Vim will automatically recognize the window size and react to window
-resizing.  Under Amiga DOS 1.3, it is advised to use the fastfonts program,
-"FF", to speed up display redrawing.
-
-==============================================================================
-3. Running eVim							*evim-keys*
+2. Running eVim							*evim-keys*
 
 EVim runs Vim as click-and-type editor.  This is very unlike the original Vi
 idea.  But it helps for people that don't use Vim often enough to learn the
@@ -688,7 +600,7 @@ In Evim these options are changed from their default value:
 	:set nocompatible	Use Vim improvements
 	:set insertmode		Remain in Insert mode most of the time
 	:set hidden		Keep invisible buffers loaded
-	:set backup		Keep backup files (not for VMS)
+	:set backup		Keep backup files
 	:set backspace=2	Backspace over everything
 	:set autoindent		auto-indent new lines
 	:set history=50		keep 50 lines of Ex commands
@@ -728,7 +640,7 @@ One hint: If you want to go to Normal mode to be able to type a sequence of
 commands, use CTRL-L. |i_CTRL-L|
 
 ==============================================================================
-4. Initialization				*initialization* *startup*
+3. Initialization				*initialization* *startup*
 
 This section is about the non-GUI version of Vim.  See |gui-fork| for
 additional initialization when starting the GUI.
@@ -762,12 +674,8 @@ accordingly.  Vim proceeds in this order:
 
 	Places for your personal initializations:
 		Unix		$HOME/.vimrc or $HOME/.vim/vimrc
-		OS/2		$HOME/.vimrc, $HOME/vimfiles/vimrc
-				or $VIM/.vimrc (or _vimrc)
 		MS-Windows	$HOME/_vimrc, $HOME/vimfiles/vimrc
 				or $VIM/_vimrc
-		Amiga		s:.vimrc, home:.vimrc, home:vimfiles:vimrc
-				or $VIM/.vimrc
 
 	The files are searched in the order specified above and only the first
 	one that is found is read.
@@ -789,9 +697,9 @@ accordingly.  Vim proceeds in this order:
      a. If vim was started as |evim| or |eview| or with the |-y| argument, the
 	script $VIMRUNTIME/evim.vim will be loaded.
 							*system-vimrc*
-     b. For Unix, MS-DOS, MS-Windows, OS/2, VMS, Macintosh, RISC-OS and Amiga
-	the system vimrc file is read for initializations.  The path of this
-	file is shown with the ":version" command.  Mostly it's "$VIM/vimrc".
+     b. For Unix, MS-DOS, MS-Windows, and Macintosh, the system vimrc file is
+	read for initializations.  The path of this file is shown with the
+	":version" command.  Mostly it's "$VIM/vimrc".
 	Note that this file is ALWAYS read in 'compatible' mode, since the
 	automatic resetting of 'compatible' is only done later.  Add a ":set
 	nocp" command if you like.
@@ -805,16 +713,12 @@ accordingly.  Vim proceeds in this order:
 	-  The environment variable VIMINIT (see also |compatible-default|) (*)
 	   The value of $VIMINIT is used as an Ex command line.
 	-  The user vimrc file(s):
-		    "$HOME/.vimrc"	   (for Unix and OS/2) (*)
-		    "$HOME/.vim/vimrc"	   (for Unix and OS/2) (*)
-		    "s:.vimrc"		   (for Amiga) (*)
-		    "home:.vimrc"	   (for Amiga) (*)
-		    "home:vimfiles:vimrc"  (for Amiga) (*)
-		    "$VIM/.vimrc"	   (for OS/2 and Amiga) (*)
+		    "$HOME/.vimrc"	   (for Unix) (*)
+		    "$HOME/.vim/vimrc"	   (for Unix) (*)
 		    "$HOME/_vimrc"	   (for MS-DOS and Win32) (*)
 		    "$HOME/vimfiles/vimrc" (for MS-DOS and Win32) (*)
 		    "$VIM/_vimrc"	   (for MS-DOS and Win32) (*)
-		Note: For Unix, OS/2 and Amiga, when ".vimrc" does not exist,
+		Note: For Unix, when ".vimrc" does not exist,
 		"_vimrc" is also tried, in case an MS-DOS compatible file
 		system is used.  For MS-DOS and Win32 ".vimrc" is checked
 		after "_vimrc", in case long file names are used.
@@ -830,11 +734,11 @@ accordingly.  Vim proceeds in this order:
      d. If the 'exrc' option is on (which is not the default), the current
 	directory is searched for three files.  The first that exists is used,
 	the others are ignored.
-	-  The file ".vimrc" (for Unix, Amiga and OS/2) (*)
+	-  The file ".vimrc" (for Unix) (*)
 		    "_vimrc" (for MS-DOS and Win32) (*)
-	-  The file "_vimrc" (for Unix, Amiga and OS/2) (*)
+	-  The file "_vimrc" (for Unix) (*)
 		    ".vimrc" (for MS-DOS and Win32) (*)
-	-  The file ".exrc"  (for Unix, Amiga and OS/2)
+	-  The file ".exrc"  (for Unix)
 		    "_exrc"  (for MS-DOS and Win32)
 
      (*) Using this file or environment variable will cause 'compatible' to be
@@ -901,8 +805,7 @@ Some hints on using initializations:
 Standard setup:
 Create a vimrc file to set the default settings and mappings for all your edit
 sessions.  Put it in a place so that it will be found by 3b:
-	~/.vimrc	(Unix and OS/2)
-	s:.vimrc	(Amiga)
+	~/.vimrc	(Unix)
 	$VIM\_vimrc	(MS-DOS and Win32)
 Note that creating a vimrc file will cause the 'compatible' option to be off
 by default.  See |compatible-default|.
@@ -928,14 +831,8 @@ Avoiding setup problems for Vi users:
 Vi uses the variable EXINIT and the file "~/.exrc".  So if you do not want to
 interfere with Vi, then use the variable VIMINIT and the file "vimrc" instead.
 
-Amiga environment variables:
-On the Amiga, two types of environment variables exist.  The ones set with the
-DOS 1.3 (or later) setenv command are recognized.  See the AmigaDos 1.3
-manual.  The environment variables set with the old Manx Set command (before
-version 5.0) are not recognized.
-
 MS-DOS line separators:
-On MS-DOS-like systems (MS-DOS itself, Win32, and OS/2), Vim assumes that all
+On MS-DOS-like systems (MS-DOS itself and Win32), Vim assumes that all
 the vimrc files have <CR> <NL> pairs as line separators.  This will give
 problems if you have a file with only <NL>s and have a line like
 ":map xx yy^M".  The trailing ^M will be ignored.
@@ -1038,7 +935,7 @@ This still won't work for systems where gvim does not use stdout at all
 though.
 
 ==============================================================================
-5. $VIM and $VIMRUNTIME
+4. $VIM and $VIMRUNTIME
 								*$VIM*
 The environment variable "$VIM" is used to locate various user files for Vim,
 such as the user startup script ".vimrc".  This depends on the system, see
@@ -1054,7 +951,7 @@ will try to get the value for $VIM in this order:
    problem).  The file name ("help.txt" or any other) is removed.  Then
    trailing directory names are removed, in this order: "doc", "runtime" and
    "vim{version}" (e.g., "vim54").
-3. For MSDOS, Win32 and OS/2 Vim tries to use the directory name of the
+3. For MSDOS and Win32 Vim tries to use the directory name of the
    executable.  If it ends in "/src", this is removed.  This is useful if you
    unpacked the .zip file in some directory, and adjusted the search path to
    find the vim executable.  Trailing directory names are removed, in this
@@ -1100,7 +997,7 @@ greps in the help files) you might be able to use this: >
 	VIMRUNTIME=`vim -e -T dumb --cmd 'exe "set t_cm=\<C-M>"|echo $VIMRUNTIME|quit' | tr -d '\015' `
 
 ==============================================================================
-6. Suspending						*suspend*
+5. Suspending						*suspend*
 
 					*iconize* *iconise* *CTRL-Z* *v_CTRL-Z*
 CTRL-Z			Suspend Vim, like ":stop".
@@ -1133,7 +1030,7 @@ can't paste it in another application (since Vim is going to sleep an attempt
 to get the selection would make the program hang).
 
 ==============================================================================
-7. Saving settings					*save-settings*
+6. Saving settings					*save-settings*
 
 Mostly you will edit your vimrc files manually.  This gives you the greatest
 flexibility.  There are a few commands to generate a vimrc file automatically.
@@ -1157,10 +1054,10 @@ vimrc file.
 These commands will write ":map" and ":set" commands to a file, in such a way
 that when these commands are executed, the current key mappings and options
 will be set to the same values.  The options 'columns', 'endofline',
-'fileformat', 'key', 'lines', 'modified', 'scroll', 'term', 'ttyfast' and
-'ttymouse' are not included, because these are terminal or file dependent.
-Note that the options 'binary', 'paste' and 'readonly' are included, this
-might not always be what you want.
+'fileformat', 'lines', 'modified', 'scroll', 'term', 'ttyfast' and 'ttymouse'
+are not included, because these are terminal or file dependent.  Note that the
+options 'binary', 'paste' and 'readonly' are included, this might not always
+be what you want.
 
 When special keys are used in mappings, The 'cpoptions' option will be
 temporarily set to its Vim default, to avoid the mappings to be
@@ -1174,7 +1071,7 @@ with ":map" and ":set" commands and write the modified file.  First read the
 default ".vimrc" in with a command like ":source ~piet/.vimrc.Cprogs", change
 the settings and then save them in the current directory with ":mkvimrc!".  If
 you want to make this file your default .vimrc, move it to your home directory
-(on Unix), s: (Amiga) or $VIM directory (MS-DOS).  You could also use
+(on Unix) or $VIM directory (MS-DOS).  You could also use
 autocommands |autocommand| and/or modelines |modeline|.
 
 						*vimrc-option-example*
@@ -1195,7 +1092,7 @@ option, which has several side effects.  See |'compatible'|.
 'compatible' option to the output file first, because of these side effects.
 
 ==============================================================================
-8. Views and Sessions					*views-sessions*
+7. Views and Sessions					*views-sessions*
 
 This is introduced in sections |21.4| and |21.5| of the user manual.
 
@@ -1342,7 +1239,7 @@ To automatically save and restore views for *.c files: >
 	au BufWinEnter *.c silent loadview
 
 ==============================================================================
-9. The viminfo file				*viminfo* *viminfo-file* *E136*
+8. The viminfo file				*viminfo* *viminfo-file* *E136*
 						*E575* *E576* *E577*
 If you exit Vim and later start it again, you would normally lose a lot of
 information.  The viminfo file can be used to remember that information, which
@@ -1409,7 +1306,7 @@ stored, but the '"' mark is.  The '"' mark is very useful for jumping to the
 cursor position when the file was last exited.  No marks are saved for files
 that start with any string given with the "r" flag in 'viminfo'.  This can be
 used to avoid saving marks for files on removable media (for MS-DOS you would
-use "ra:,rb:", for Amiga "rdf0:,rdf1:,rdf2:").
+use "ra:,rb:".
 The |v:oldfiles| variable is filled with the file names that the viminfo file
 has marks for.
 
@@ -1440,11 +1337,10 @@ remembered.
 
 VIMINFO FILE NAME					*viminfo-file-name*
 
-- The default name of the viminfo file is "$HOME/.viminfo" for Unix and OS/2,
-  "s:.viminfo" for Amiga, "$HOME\_viminfo" for MS-DOS and Win32.  For the last
-  two, when $HOME is not set, "$VIM\_viminfo" is used.  When $VIM is also not
-  set, "c:\_viminfo" is used.  For OS/2 "$VIM/.viminfo" is used when $HOME is
-  not set and $VIM is set.
+- The default name of the viminfo file is "$HOME/.viminfo" for Unix,
+  "$HOME\_viminfo" for MS-DOS and Win32.  For the last two, when $HOME is not
+  set, "$VIM\_viminfo" is used.  When $VIM is also not set, "c:\_viminfo" is
+  used.
 - The 'n' flag in the 'viminfo' option can be used to specify another viminfo
   file name |'viminfo'|.
 - The "-i" Vim argument can be used to set another file name, |-i|.  When the

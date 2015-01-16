@@ -9,7 +9,7 @@
 [Bountysource](https://www.bountysource.com/teams/neovim)
 
 [![Build Status](https://travis-ci.org/neovim/neovim.svg?branch=master)](https://travis-ci.org/neovim/neovim)
-[![Stories in Ready](https://badge.waffle.io/neovim/neovim.png?label=ready)](https://waffle.io/neovim/neovim)
+[![Pull requests waiting for review](https://badge.waffle.io/neovim/neovim.svg?label=RFC&title=RFCs)](https://waffle.io/neovim/neovim)
 [![Coverage Status](https://img.shields.io/coveralls/neovim/neovim.svg)](https://coveralls.io/r/neovim/neovim)
 [![Coverity Scan Build](https://scan.coverity.com/projects/2227/badge.svg)](https://scan.coverity.com/projects/2227)
 [![Clang Scan Build](http://neovim.org/doc/reports/clang/badge.svg)](http://neovim.org/doc/reports/clang)
@@ -32,9 +32,11 @@ For lots more details, see
 - Performance, reliability, and portability improvements
 - See the [progress page](https://github.com/neovim/neovim/wiki/Progress) for a comprehensive list.
 
+[![Throughput Graph](https://graphs.waffle.io/neovim/neovim/throughput.svg)](https://waffle.io/neovim/neovim/metrics)
+
 ### What's being worked on now
 
-- Port all IO to [libuv](https://github.com/joyent/libuv/blob/master/README.md)
+- Port all IO to [libuv](https://github.com/libuv/libuv/blob/master/README.md)
 - Lots of refactoring
 - A VimL => Lua transpiler
 

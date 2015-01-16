@@ -38,8 +38,8 @@
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/term.h"
-#include "nvim/ui.h"
 #include "nvim/os/os.h"
+#include "nvim/os/input.h"
 
 /*
  * This file contains routines to maintain and manipulate marks.
@@ -127,6 +127,7 @@ int setmark_pos(int c, pos_T *pos, int fnum)
     return OK;
   }
   if (isupper(c)) {
+    assert(c >= 'A' && c <= 'Z');
     i = c - 'A';
     namedfm[i].fmark.mark = *pos;
     namedfm[i].fmark.fnum = fnum;
@@ -511,7 +512,7 @@ void fmarks_check_names(buf_T *buf)
   for (i = 0; i < NMARKS + EXTRA_MARKS; ++i)
     fmarks_check_one(&namedfm[i], name, buf);
 
-  FOR_ALL_WINDOWS(wp) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     for (i = 0; i < wp->w_jumplistlen; ++i) {
       fmarks_check_one(&wp->w_jumplist[i], name, buf);
     }
@@ -811,7 +812,7 @@ void ex_jumps(exarg_T *eap)
           curwin->w_jumplist[i].fmark.fnum == curbuf->b_fnum
           ? hl_attr(HLF_D) : 0);
       free(name);
-      ui_breakcheck();
+      os_breakcheck();
     }
     out_flush();
   }
@@ -845,7 +846,7 @@ void ex_changes(exarg_T *eap)
       name = mark_line(&curbuf->b_changelist[i], 17);
       msg_outtrans_attr(name, hl_attr(HLF_D));
       free(name);
-      ui_breakcheck();
+      os_breakcheck();
     }
     out_flush();
   }
@@ -1092,7 +1093,7 @@ void mark_col_adjust(linenr_T lnum, colnr_T mincol, long lnum_amount, long col_a
   /*
    * Adjust items in all windows related to the current buffer.
    */
-  FOR_ALL_WINDOWS(win) {
+  FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
     /* marks in the jumplist */
     for (i = 0; i < win->w_jumplistlen; ++i) {
       if (win->w_jumplist[i].fmark.fnum == fnum) {
@@ -1179,7 +1180,7 @@ void set_last_cursor(win_T *win)
     win->w_buffer->b_last_cursor = win->w_cursor;
 }
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 void free_all_marks(void)
 {
   int i;
@@ -1219,13 +1220,15 @@ int read_viminfo_filemark(vir_T *virp, int force)
       }
     } else if (VIM_ISDIGIT(*str))
       fm = &namedfm[*str - '0' + NMARKS];
-    else
+    else {  // is uppercase
+      assert(*str >= 'A' && *str <= 'Z');
       fm = &namedfm[*str - 'A'];
+    }
     if (fm != NULL && (fm->fmark.mark.lnum == 0 || force)) {
       str = skipwhite(str + 1);
-      fm->fmark.mark.lnum = getdigits(&str);
+      fm->fmark.mark.lnum = getdigits_long(&str);
       str = skipwhite(str);
-      fm->fmark.mark.col = getdigits(&str);
+      fm->fmark.mark.col = getdigits_int(&str);
       fm->fmark.mark.coladd = 0;
       fm->fmark.fnum = 0;
       str = skipwhite(str);
@@ -1533,7 +1536,7 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
         fputs((char *)line, fp_out);
     }
     if (load_marks) {
-      FOR_ALL_WINDOWS(wp) {
+      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
         if (wp->w_buffer == curbuf)
           wp->w_changelistidx = curbuf->b_changelistlen;
       }

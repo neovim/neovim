@@ -1,4 +1,4 @@
-*autocmd.txt*   For Vim version 7.4.  Last change: 2014 May 02
+*autocmd.txt*   For Vim version 7.4.  Last change: 2014 Aug 22
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -278,6 +278,7 @@ Name			triggered by ~
 |ShellCmdPost|		after executing a shell command
 |ShellFilterPost|	after filtering with a shell command
 
+|CmdUndefined|		a user command is used but it isn't defined
 |FuncUndefined|		a user function is used but it isn't defined
 |SpellFileMissing|	a spell file is used but it can't be found
 |SourcePre|		before sourcing a Vim script
@@ -466,6 +467,16 @@ BufWriteCmd			Before writing the whole buffer to a file.
 							*BufWritePost*
 BufWritePost			After writing the whole buffer to a file
 				(should undo the commands for BufWritePre).
+							*CmdUndefined*
+CmdUndefined			When a user command is used but it isn't
+				defined.  Useful for defining a command only
+				when it's used.  The pattern is matched
+				against the command name.  Both <amatch> and
+				<afile> are set to the name of the command.
+				NOTE: Autocompletion won't work until the
+				command is defined.  An alternative is to
+				always define the user command and have it
+				invoke an autoloaded function.  See |autoload|.
 							*CmdwinEnter*
 CmdwinEnter			After entering the command-line window.
 				Useful for setting options specifically for
@@ -517,8 +528,7 @@ CursorHold			When the user doesn't press a key for the time
 				Hint: to force an update of the status lines
 				use: >
 					:let &ro = &ro
-<				{only on Amiga, Unix, Win32, MSDOS and all GUI
-				versions}
+
 							*CursorHoldI*
 CursorHoldI			Just like CursorHold, but in Insert mode.
 
@@ -671,6 +681,8 @@ FuncUndefined			When a user function is used but it isn't
 				when it's used.  The pattern is matched
 				against the function name.  Both <amatch> and
 				<afile> are set to the name of the function.
+				NOTE: When writing Vim scripts a better
+				alternative is to use an autoloaded function.
 				See |autoload-functions|.
 							*GUIEnter*
 GUIEnter			After starting the GUI successfully, and after
@@ -772,8 +784,10 @@ SessionLoadPost			After loading the session file created using
 				the |:mksession| command.
 							*ShellCmdPost*
 ShellCmdPost			After executing a shell command with |:!cmd|,
-				|:shell|, |:make| and |:grep|.  Can be used to
-				check for any changed files.
+				|:make| and |:grep|.  Can be used to check for
+				any changed files.
+				For non-blocking shell commands, see
+				|JobActivity|.
 							*ShellFilterPost*
 ShellFilterPost			After executing a shell command with
 				":{range}!cmd", ":w !cmd" or ":r !cmd".
@@ -988,8 +1002,8 @@ The pattern is interpreted like mostly used in file names:
 	[^ch]   match any character but 'c' and 'h'
 
 Note that for all systems the '/' character is used for path separator (even
-MS-DOS and OS/2).  This was done because the backslash is difficult to use
-in a pattern and to make the autocommands portable across different systems.
+MS-DOS). This was done because the backslash is difficult to use in a pattern
+and to make the autocommands portable across different systems.
 
 							*autocmd-changes*
 Matching with the pattern is done when an event is triggered.  Changing the

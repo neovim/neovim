@@ -339,10 +339,6 @@ enum {
 #define fnamencmp(x, y, n) vim_fnamencmp((char_u *)(x), (char_u *)(y), \
     (size_t)(n))
 
-#if defined(UNIX) || defined(FEAT_GUI)
-# define USE_INPUT_BUF
-#endif
-
 #ifndef EINTR
 # define read_eintr(fd, buf, count) vim_read((fd), (buf), (count))
 # define write_eintr(fd, buf, count) vim_write((fd), (buf), (count))
@@ -384,38 +380,6 @@ enum {
 #include "nvim/globals.h"        /* global variables and messages */
 #include "nvim/buffer_defs.h"         /* buffer and windows */
 #include "nvim/ex_cmds_defs.h"        /* Ex command defines */
-
-# ifdef USE_ICONV
-#  ifndef EILSEQ
-#   define EILSEQ 123
-#  endif
-#  ifdef DYNAMIC_ICONV
-/* On Win32 iconv.dll is dynamically loaded. */
-#   define ICONV_ERRNO (*iconv_errno())
-#   define ICONV_E2BIG  7
-#   define ICONV_EINVAL 22
-#   define ICONV_EILSEQ 42
-#  else
-#   define ICONV_ERRNO errno
-#   define ICONV_E2BIG  E2BIG
-#   define ICONV_EINVAL EINVAL
-#   define ICONV_EILSEQ EILSEQ
-#  endif
-# endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # define SET_NO_HLSEARCH(flag) no_hlsearch = (flag); set_vim_var_nr( \
     VV_HLSEARCH, !no_hlsearch)

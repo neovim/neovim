@@ -2,8 +2,7 @@ find_package(Gettext)
 find_program(XGETTEXT_PRG xgettext)
 find_program(ICONV_PRG iconv)
 
-if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG AND
-    NOT DEFINED ENV{SKIP_EXEC})
+if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
   set(ENV{OLD_PO_FILE_INPUT} yes)
   set(ENV{OLD_PO_FILE_OUTPUT} yes)
 
@@ -50,7 +49,7 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG AND
         -DPOT_FILE=${NVIM_POT}
         -DSEARCH_DIR=${CMAKE_CURRENT_SOURCE_DIR}
         "'-DSOURCES=${NEOVIM_RELATIVE_SOURCES}'"
-        -P ${CMAKE_MODULE_PATH}/RunXgettext.cmake
+        -P ${PROJECT_SOURCE_DIR}/cmake/RunXgettext.cmake
     DEPENDS ${NEOVIM_SOURCES})
 
   add_custom_target(potfile DEPENDS ${NVIM_POT})
@@ -68,7 +67,7 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG AND
           -DMSGFMT_PRG=${GETTEXT_MSGFMT_EXECUTABLE}
           -DMO_FILE=${moFile}
           -DPO_FILE=${poFile}
-          -P ${CMAKE_MODULE_PATH}/RunMsgfmt.cmake
+          -P ${PROJECT_SOURCE_DIR}/cmake/RunMsgfmt.cmake
       DEPENDS ${poFile} ${NVIM_POT})
 
     install_helper(
@@ -107,7 +106,7 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG AND
         -DINPUT_ENC=${inputEnc}
         -DOUTPUT_ENC=${outputEnc}
         -DOUTPUT_CHARSET=${outputCharSet}
-        -P ${CMAKE_MODULE_PATH}/ConvertPo.cmake
+        -P ${PROJECT_SOURCE_DIR}/cmake/ConvertPo.cmake
       COMMENT "Updating ${outputName}.po"
       DEPENDS ${inputFile})
 
@@ -190,7 +189,7 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG AND
           -DMSGMERGE_PRG=${GETTEXT_MSGMERGE_EXECUTABLE}
           -DPO_FILE=${poFile}
           -DPOT_FILE=${NVIM_POT}
-          -P ${CMAKE_MODULE_PATH}/RunMsgmerge.cmake
+          -P ${PROJECT_SOURCE_DIR}/cmake/RunMsgmerge.cmake
       COMMENT "Updating ${LANGUAGE}.po"
       DEPENDS ${NVIM_POT})
 

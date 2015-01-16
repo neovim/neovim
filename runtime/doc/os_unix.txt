@@ -9,10 +9,10 @@ This file contains the particularities for the Unix version of Vim.
 
 For compiling Vim on Unix see "INSTALL" and "Makefile" in the src directory.
 
-The default help file name is "/usr/local/lib/vim/help.txt"
-The files "$HOME/.vimrc" and "$HOME/.exrc" are used instead of "s:.vimrc" and
-"s:.exrc".  Additionally "/usr/local/etc/vimrc" is used first.
-If "/usr/local/share" exists it is used instead of "/usr/local/lib".
+The default help file name is "/usr/local/lib/vim/help.txt" The files
+"$HOME/.vimrc" and "$HOME/.exrc" are used for configuration.  Additionally
+"/usr/local/etc/vimrc" is used first.  If "/usr/local/share" exists it is used
+instead of "/usr/local/lib".
 
 Temporary files (for filtering) are put in "/tmp".  If you want to place them
 somewhere else, set the environment variable $TMPDIR to the directory you

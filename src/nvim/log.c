@@ -20,7 +20,7 @@
 # include "log.c.generated.h"
 #endif
 
-bool do_log(int log_level, const char *func_name, int line_num,
+bool do_log(int log_level, const char *func_name, int line_num, bool eol,
             const char* fmt, ...) FUNC_ATTR_UNUSED
 {
   FILE *log_file = open_log_file();
@@ -31,8 +31,8 @@ bool do_log(int log_level, const char *func_name, int line_num,
 
   va_list args;
   va_start(args, fmt);
-  bool ret = v_do_log_to_file(log_file, log_level, func_name, line_num, fmt,
-                              args);
+  bool ret = v_do_log_to_file(log_file, log_level, func_name, line_num, eol,
+                              fmt, args);
   va_end(args);
 
   if (log_file != stderr && log_file != stdout) {
@@ -45,13 +45,13 @@ bool do_log(int log_level, const char *func_name, int line_num,
 ///
 /// @return The FILE* specified by the USR_LOG_FILE path or stderr in case of
 ///         error
-static FILE *open_log_file(void)
+FILE *open_log_file(void)
 {
   static bool opening_log_file = false;
 
   // check if it's a recursive call
   if (opening_log_file) {
-    do_log_to_file(stderr, ERROR_LOG_LEVEL, __func__, __LINE__,
+    do_log_to_file(stderr, ERROR_LOG_LEVEL, __func__, __LINE__, true,
                    "Trying to LOG() recursively! Please fix it.");
     return stderr;
   }
@@ -81,7 +81,7 @@ static FILE *open_log_file(void)
 open_log_file_error:
   opening_log_file = false;
 
-  do_log_to_file(stderr, ERROR_LOG_LEVEL, __func__, __LINE__,
+  do_log_to_file(stderr, ERROR_LOG_LEVEL, __func__, __LINE__, true,
                  "Couldn't open USR_LOG_FILE, logging to stderr! This may be "
                  "caused by attempting to LOG() before initialization "
                  "functions are called (e.g. init_homedir()).");
@@ -89,20 +89,20 @@ open_log_file_error:
 }
 
 static bool do_log_to_file(FILE *log_file, int log_level,
-                           const char *func_name, int line_num,
+                           const char *func_name, int line_num, bool eol,
                            const char* fmt, ...)
 {
   va_list args;
   va_start(args, fmt);
-  bool ret = v_do_log_to_file(log_file, log_level, func_name, line_num, fmt,
-                              args);
+  bool ret = v_do_log_to_file(log_file, log_level, func_name, line_num, eol,
+                              fmt, args);
   va_end(args);
 
   return ret;
 }
 
 static bool v_do_log_to_file(FILE *log_file, int log_level,
-                             const char *func_name, int line_num,
+                             const char *func_name, int line_num, bool eol,
                              const char* fmt, va_list args)
 {
   static const char *log_levels[] = {
@@ -133,7 +133,9 @@ static bool v_do_log_to_file(FILE *log_file, int log_level,
   if (vfprintf(log_file, fmt, args) < 0) {
     return false;
   }
-  fputc('\n', log_file);
+  if (eol) {
+    fputc('\n', log_file);
+  }
   if (fflush(log_file) == EOF) {
     return false;
   }

@@ -1084,7 +1084,6 @@ static int nfa_regatom(void)
   int extra = 0;
   int emit_range;
   int negated;
-  int result;
   int startc = -1;
   int endc = -1;
   int oldstartc = -1;
@@ -1259,10 +1258,16 @@ static int nfa_regatom(void)
     switch (c) {
     case 's':
       EMIT(NFA_ZSTART);
+      if (!re_mult_next("\\zs")) {
+        return false;
+      }
       break;
     case 'e':
       EMIT(NFA_ZEND);
-      nfa_has_zend = TRUE;
+      nfa_has_zend = true;
+      if (!re_mult_next("\\zs")) {
+        return false;
+      }
       break;
     case '1':
     case '2':
@@ -1446,8 +1451,8 @@ collection:
        * recognize that [0-9] stands for \d and [A-Za-z_] for \h,
        * and perform the necessary substitutions in the NFA.
        */
-      result = nfa_recognize_char_class(regparse, endp,
-          extra == NFA_ADD_NL);
+      int result = nfa_recognize_char_class(regparse, endp,
+                                            extra == NFA_ADD_NL);
       if (result != FAIL) {
         if (result >= NFA_FIRST_NL && result <= NFA_LAST_NL) {
           EMIT(result - NFA_ADD_NL);
@@ -1551,7 +1556,6 @@ collection:
           /* Try equivalence class [=a=] and the like */
           if (equiclass != 0) {
             nfa_emit_equi_class(equiclass);
-            result = OK;
             continue;
           }
           /* Try collating class like [. .]  */
@@ -3951,7 +3955,6 @@ skip_add:
 #endif
   switch (state->c) {
   case NFA_MATCH:
-    //nfa_match = TRUE;
     break;
 
   case NFA_SPLIT:
@@ -6008,7 +6011,7 @@ nextchar:
 
 /*
  * Try match of "prog" with at regline["col"].
- * Returns 0 for failure, number of lines contained in the match otherwise.
+ * Returns <= 0 for failure, number of lines contained in the match otherwise.
  */
 static long nfa_regtry(nfa_regprog_T *prog, colnr_T col)
 {
@@ -6113,7 +6116,7 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col)
  * Match a regexp against a string ("line" points to the string) or multiple
  * lines ("line" is NULL, use reg_getline()).
  *
- * Returns 0 for failure, number of lines contained in the match otherwise.
+ * Returns <= 0 for failure, number of lines contained in the match otherwise.
  */
 static long 
 nfa_regexec_both (
@@ -6343,7 +6346,7 @@ static void nfa_regfree(regprog_T *prog)
  * Uses curbuf for line count and 'iskeyword'.
  * If "line_lbr" is true, consider a "\n" in "line" to be a line break.
  *
- * Return TRUE if there is a match, FALSE if not.
+ * Returns <= 0 for failure, number of lines contained in the match otherwise.
  */
 static int 
 nfa_regexec_nl (
@@ -6362,7 +6365,7 @@ nfa_regexec_nl (
   ireg_ic = rmp->rm_ic;
   ireg_icombine = FALSE;
   ireg_maxcol = 0;
-  return nfa_regexec_both(line, col) != 0;
+  return nfa_regexec_both(line, col);
 }
 
 /// Matches a regexp against multiple lines.
@@ -6375,7 +6378,7 @@ nfa_regexec_nl (
 /// @param col Column to start looking for match
 /// @param tm Timeout limit or NULL
 ///
-/// @return Zero if there is no match and number of lines contained in the match
+/// @return <= 0 if there is no match and number of lines contained in the match
 /// otherwise.
 ///
 /// @note The body is the same as bt_regexec() except for nfa_regexec_both()

@@ -85,7 +85,6 @@ ggO---:0put b
 ggO---:0put a
 ggO---:w >>test.out
 :so small.vim
-:set nocp viminfo+=nviminfo
 :enew!
 oa
 :set ul=100

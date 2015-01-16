@@ -5,7 +5,7 @@
 
 STARTTEST
 :so small.vim
-:set hidden nocp nu rnu viminfo+=nviminfo
+:set hidden nu rnu
 :redir @a | set nu? rnu? | redir END
 :e! xx
 :redir @b | set nu? rnu? | redir END

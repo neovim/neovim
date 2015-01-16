@@ -25,7 +25,8 @@ find_path(LUAJIT_INCLUDE_DIR luajit.h
           PATH_SUFFIXES luajit-2.0
           ${LIMIT_SEARCH})
 
-# If we're asked to use static linkage, add libuv.a as a preferred library name.
+# If we're asked to use static linkage, add libluajit-5.1.a as a preferred
+# library name.
 if(LUAJIT_USE_STATIC)
   list(APPEND LUAJIT_NAMES
     "${CMAKE_STATIC_LIBRARY_PREFIX}luajit-5.1${CMAKE_STATIC_LIBRARY_SUFFIX}")

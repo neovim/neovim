@@ -1,4 +1,4 @@
-*usr_41.txt*	For Vim version 7.4.  Last change: 2014 May 28
+*usr_41.txt*	For Vim version 7.4.  Last change: 2014 Aug 16
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -793,6 +793,7 @@ Command line:					*command-line-functions*
 	getcmdpos()		get position of the cursor in the command line
 	setcmdpos()		set position of the cursor in the command line
 	getcmdtype()		return the current command-line type
+	getcmdwintype()		return the current command-line window type
 
 Quickfix and location lists:			*quickfix-functions*
 	getqflist()		list of quickfix errors
@@ -1495,7 +1496,7 @@ Here is a summary of items that apply to Vim scripts.  They are also mentioned
 elsewhere, but form a nice checklist.
 
 The end-of-line character depends on the system.  For Unix a single <NL>
-character is used.  For MS-DOS, Windows, OS/2 and the like, <CR><LF> is used.
+character is used.  For MS-DOS, Windows and the like, <CR><LF> is used.
 This is important when using mappings that end in a <CR>.  See |:source_crnl|.
 
 

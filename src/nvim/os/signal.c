@@ -2,6 +2,8 @@
 
 #include <uv.h>
 
+#include "nvim/lib/klist.h"
+
 #include "nvim/types.h"
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
@@ -12,9 +14,12 @@
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
 #include "nvim/misc2.h"
-#include "nvim/os/event_defs.h"
-#include "nvim/os/event.h"
 #include "nvim/os/signal.h"
+#include "nvim/os/event.h"
+
+#define SignalEventFreer(x)
+KMEMPOOL_INIT(SignalEventPool, int, SignalEventFreer)
+kmempool_t(SignalEventPool) *signal_event_pool = NULL;
 
 static uv_signal_t sint, spipe, shup, squit, sterm, swinch;
 #ifdef SIGPWR
@@ -28,6 +33,7 @@ static bool rejecting_deadly;
 #endif
 void signal_init(void)
 {
+  signal_event_pool = kmp_init(SignalEventPool);
   uv_signal_init(uv_default_loop(), &sint);
   uv_signal_init(uv_default_loop(), &spipe);
   uv_signal_init(uv_default_loop(), &shup);
@@ -39,13 +45,27 @@ void signal_init(void)
   uv_signal_start(&shup, signal_cb, SIGHUP);
   uv_signal_start(&squit, signal_cb, SIGQUIT);
   uv_signal_start(&sterm, signal_cb, SIGTERM);
-  if (!embedded_mode) {
+  if (!abstract_ui) {
     // TODO(tarruda): There must be an API function for resizing window
     uv_signal_start(&swinch, signal_cb, SIGWINCH);
   }
 #ifdef SIGPWR
   uv_signal_init(uv_default_loop(), &spwr);
   uv_signal_start(&spwr, signal_cb, SIGPWR);
+#endif
+}
+
+void signal_teardown(void)
+{
+  signal_stop();
+  uv_close((uv_handle_t *)&sint, NULL);
+  uv_close((uv_handle_t *)&spipe, NULL);
+  uv_close((uv_handle_t *)&shup, NULL);
+  uv_close((uv_handle_t *)&squit, NULL);
+  uv_close((uv_handle_t *)&sterm, NULL);
+  uv_close((uv_handle_t *)&swinch, NULL);
+#ifdef SIGPWR
+  uv_close((uv_handle_t *)&spwr, NULL);
 #endif
 }
 
@@ -70,45 +90,6 @@ void signal_reject_deadly(void)
 void signal_accept_deadly(void)
 {
   rejecting_deadly = false;
-}
-
-void signal_handle(Event event)
-{
-  int signum = event.data.signum;
-
-  switch (signum) {
-    case SIGINT:
-      got_int = true;
-      break;
-#ifdef SIGPWR
-    case SIGPWR:
-      // Signal of a power failure(eg batteries low), flush the swap files to
-      // be safe
-      ml_sync_all(false, false);
-      break;
-#endif
-    case SIGPIPE:
-      // Ignore
-      break;
-    case SIGWINCH:
-      shell_resized();
-      break;
-    case SIGTERM:
-    case SIGQUIT:
-    case SIGHUP:
-      if (!rejecting_deadly) {
-        deadly_signal(signum);
-      }
-      break;
-    default:
-      fprintf(stderr, "Invalid signal %d", signum);
-      break;
-  }
-}
-
-EventSource signal_event_source(void)
-{
-  return &sint;
 }
 
 static char * signal_name(int signum)
@@ -154,20 +135,46 @@ static void deadly_signal(int signum)
 
 static void signal_cb(uv_signal_t *handle, int signum)
 {
-  if (rejecting_deadly) {
-    if (signum == SIGINT) {
-      got_int = true;
-    }
-
-    return;
-  }
-
-  Event event = {
-    .source = signal_event_source(),
-    .type = kEventSignal,
-    .data = {
-      .signum = signum
-    }
-  };
-  event_push(event);
+  int *n = kmp_alloc(SignalEventPool, signal_event_pool);
+  *n = signum;
+  event_push((Event) {
+    .handler = on_signal_event,
+    .data = n
+  }, false);
 }
+
+static void on_signal_event(Event event)
+{
+  int signum = *((int *)event.data);
+  kmp_free(SignalEventPool, signal_event_pool, event.data);
+
+  switch (signum) {
+    case SIGINT:
+      got_int = true;
+      break;
+#ifdef SIGPWR
+    case SIGPWR:
+      // Signal of a power failure(eg batteries low), flush the swap files to
+      // be safe
+      ml_sync_all(false, false);
+      break;
+#endif
+    case SIGPIPE:
+      // Ignore
+      break;
+    case SIGWINCH:
+      shell_resized();
+      break;
+    case SIGTERM:
+    case SIGQUIT:
+    case SIGHUP:
+      if (!rejecting_deadly) {
+        deadly_signal(signum);
+      }
+      break;
+    default:
+      fprintf(stderr, "Invalid signal %d", signum);
+      break;
+  }
+}
+

@@ -1,4 +1,8 @@
-# YouCompleteMe
+# YouCompleteMe Integration
+
+## What is this?
+
+This provides the code necessary to configure vim's YCM plugin to provide C semantic support (completion, go-to-definition, etc) for the Neovim project.
 
 ## Installation
 
@@ -9,7 +13,10 @@ Install [YouCompleteMe](https://github.com/Valloric/YouCompleteMe).
 ### Step 2
 
 ```bash
-cp ycm_extra_conf.py ../../src/nvim/.ycm_extra_conf.py
-echo src/nvim/.ycm_extra_conf.py >> ../../.git/info/exclude
-make -C ../.. cmake
+cp contrib/YouCompleteMe/ycm_extra_conf.py src/.ycm_extra_conf.py
+echo .ycm_extra_conf.py >> .git/info/exclude
+make
+
+(Add the following somewhere in your .nvimrc files)
+autocmd FileType c nnoremap <buffer> <silent> <C-]> :YcmCompleter GoTo<cr>
 ```

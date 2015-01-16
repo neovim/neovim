@@ -96,6 +96,9 @@ Help on help files					*helphelp*
 			find a tag in a file with the same language as the
 			current file.  See |help-translated|.
 
+							*:helpc* *:helpclose*
+:helpc[lose]            Close one help window.
+
 							*:helpg* *:helpgrep*
 :helpg[rep] {pattern}[@xx]
 			Search all help text files and make a list of lines

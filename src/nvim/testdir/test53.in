@@ -79,6 +79,8 @@ ggdgn.
 :" test repeating gUgn
 /^Depp
 gggUgn.
+gg/a:0\@!\zs\d\+
+nygnop
 :/^start:/,/^end:/wq! test.out
 ENDTEST
 
@@ -108,6 +110,11 @@ delete first and last chars
 uniquepattern uniquepattern
 my very excellent mother just served us nachos
 for (i=0; i<=10; i++)
+a:10
+
+a:1
+
+a:20
 Y
 text
 Y

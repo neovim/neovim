@@ -33,12 +33,9 @@ compatible means options are global.  Resetting 'compatible' is recommended,
 if you didn't do that already.
 
 Detail: The ":filetype on" command will load one of these files:
-		Amiga	    $VIMRUNTIME/filetype.vim
-		Mac	    $VIMRUNTIME:filetype.vim
+		Mac	    $VIMRUNTIME/filetype.vim
 		MS-DOS	    $VIMRUNTIME\filetype.vim
-		RiscOS	    Vim:Filetype
 		Unix	    $VIMRUNTIME/filetype.vim
-		VMS	    $VIMRUNTIME/filetype.vim
 	This file is a Vim script that defines autocommands for the
 	BufNewFile and BufRead events.  If the file type is not found by the
 	name, the file $VIMRUNTIME/scripts.vim is used to detect it from the
@@ -267,38 +264,6 @@ scripts.vim files in a runtime directory that is used for everybody.  Check
 the 'runtimepath' for a directory to use.  If there isn't one, set
 'runtimepath' in the |system-vimrc|.  Be careful to keep the default
 directories!
-
-
-						*autocmd-osfiletypes*
-NOTE: this code is currently disabled, as the RISC OS implementation was
-removed.  In the future this will use the 'filetype' option.
-
-On operating systems which support storing a file type with the file, you can
-specify that an autocommand should only be executed if the file is of a
-certain type.
-
-The actual type checking depends on which platform you are running Vim
-on; see your system's documentation for details.
-
-To use osfiletype checking in an autocommand you should put a list of types to
-match in angle brackets in place of a pattern, like this: >
-
-	:au BufRead *.html,<&faf;HTML>  runtime! syntax/html.vim
-
-This will match:
-
-- Any file whose name ends in ".html"
-- Any file whose type is "&faf" or "HTML", where the meaning of these types
-  depends on which version of Vim you are using.
-  Unknown types are considered NOT to match.
-
-You can also specify a type and a pattern at the same time (in which case they
-must both match): >
-
-	:au BufRead <&fff>diff*
-
-This will match files of type "&fff" whose names start with "diff".
-
 
 							*plugin-details*
 The "plugin" directory can be in any of the directories in the 'runtimepath'

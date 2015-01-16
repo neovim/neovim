@@ -1,4 +1,4 @@
-*quickref.txt*  For Vim version 7.4.  Last change: 2014 Jun 25
+*quickref.txt*  For Vim version 7.4.  Last change: 2014 Aug 06
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -621,7 +621,6 @@ Short explanation of each option:		*option-list*
 'ballooneval'	  'beval'   switch on balloon evaluation
 'balloonexpr'	  'bexpr'   expression to show in balloon
 'binary'	  'bin'     read/write/edit file in binary mode
-'bioskey'	  'biosk'   MS-DOS: use bios calls for input characters
 'bomb'			    prepend a Byte Order Mark to the file
 'breakat'	  'brk'     characters that may cause a line break
 'breakindent'	  'bri'     wrapped line repeats indent 
@@ -652,10 +651,8 @@ Short explanation of each option:		*option-list*
 'concealcursor'	  'cocu'    whether concealable text is hidden in cursor line
 'conceallevel'	  'cole'    whether concealable text is shown or hidden
 'confirm'	  'cf'	    ask what to do about unsaved/read-only files
-'conskey'	  'consk'   get keys directly from console (MS-DOS only)
 'copyindent'	  'ci'	    make 'autoindent' use existing indent structure
 'cpoptions'	  'cpo'     flags for Vi-compatible behavior
-'cryptmethod'	  'cm'	    type of encryption to use for file writing
 'cscopepathcomp'  'cspc'    how many components of the path to show
 'cscopeprg'       'csprg'   command to execute cscope
 'cscopequickfix'  'csqf'    use quickfix window for cscope results
@@ -758,7 +755,6 @@ Short explanation of each option:		*option-list*
 'iskeyword'	  'isk'     characters included in keywords
 'isprint'	  'isp'     printable characters
 'joinspaces'	  'js'	    two spaces after a period with a join command
-'key'			    encryption key
 'keymap'	  'kmp'     name of a keyboard mapping
 'keymodel'	  'km'	    enable starting/stopping selection with keys
 'keywordprg'	  'kp'	    program to use for the "K" command
@@ -806,7 +802,6 @@ Short explanation of each option:		*option-list*
 'omnifunc'	  'ofu'     function for filetype-specific completion
 'opendevice'	  'odev'    allow reading/writing devices on MS-Windows
 'operatorfunc'	  'opfunc'  function to be called for |g@| operator
-'osfiletype' 	  'oft'     no longer supported
 'paragraphs'	  'para'    nroff macros that separate paragraphs
 'paste'			    allow pasting text
 'pastetoggle'	  'pt'	    key code that causes 'paste' to toggle
@@ -831,6 +826,7 @@ Short explanation of each option:		*option-list*
 'regexpengine'	  're'	    default regexp engine to use
 'relativenumber'  'rnu'	    show relative line number in front of each line
 'remap'			    allow mappings to work recursively
+'renderoptions'	  'rop'	    options for text rendering on Windows
 'report'		    threshold for reporting nr. of lines changed
 'restorescreen'   'rs'	    Win32: restore screen when exiting
 'revins'	  'ri'	    inserting characters will work backwards
@@ -856,13 +852,11 @@ Short explanation of each option:		*option-list*
 'shellredir'	  'srr'     string to put output of filter in a temp file
 'shellslash'	  'ssl'     use forward slash for shell file names
 'shelltemp'	  'stmp'    whether to use a temp file for shell commands
-'shelltype'	  'st'	    Amiga: influences how to use a shell
 'shellxescape'	  'sxe'     characters to escape when 'shellxquote' is (
 'shellxquote'	  'sxq'     like 'shellquote', but include redirection
 'shiftround'	  'sr'	    round indent to multiple of shiftwidth
 'shiftwidth'	  'sw'	    number of spaces to use for (auto)indent step
 'shortmess'	  'shm'     list of flags, reduce length of messages
-'shortname'	  'sn'	    non-MS-DOS: Filenames assumed to be 8.3 chars
 'showbreak'	  'sbr'     string to use at the start of wrapped lines
 'showcmd'	  'sc'	    show (partial) command in status line
 'showfulltag'	  'sft'     show full tag pattern when completing tag
@@ -968,7 +962,6 @@ Short explanation of each option:		*option-list*
 ------------------------------------------------------------------------------
 *Q_et*		External commands
 
-|:shell|	:sh[ell]	start a shell
 |:!|		:!{command}	execute {command} with a shell
 |K|		   K		lookup keyword under the cursor with
 				   'keywordprg' program (default: "man")
@@ -1155,13 +1148,10 @@ Context-sensitive completion on the command-line:
 |-n|	-n		    do not create a swap file
 |-o|	-o [num]	    open [num] windows (default: one for each file)
 |-f|	-f		    GUI: foreground process, don't fork
-			    Amiga: do not restart Vim to open a window (for
-				e.g., mail)
 |-s|	-s {scriptin}	    first read commands from the file {scriptin}
 |-w|	-w {scriptout}	    write typed chars to file {scriptout} (append)
 |-W|	-W {scriptout}	    write typed chars to file {scriptout} (overwrite)
 |-T|	-T {terminal}	    set terminal name
-|-d|	-d {device}	    Amiga: open {device} to be used as a console
 |-u|	-u {vimrc}	    read inits from {vimrc} instead of other inits
 |-U|	-U {gvimrc}	    idem, for when starting the GUI
 |-i|	-i {viminfo}	    read info from {viminfo} instead of other files

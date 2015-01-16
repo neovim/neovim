@@ -50,7 +50,6 @@
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
 #include "nvim/term.h"
-#include "nvim/ui.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
@@ -168,9 +167,9 @@ int csh_like_shell(void)
  * "*option" is advanced to the next part.
  * The length is returned.
  */
-int copy_option_part(char_u **option, char_u *buf, int maxlen, char *sep_chars)
+size_t copy_option_part(char_u **option, char_u *buf, size_t maxlen, char *sep_chars)
 {
-  int len = 0;
+  size_t len = 0;
   char_u  *p = *option;
 
   /* skip '.' at start of option part, for 'suffixes' */
@@ -286,9 +285,7 @@ int default_fileformat(void)
   return EOL_UNIX;
 }
 
-/*
- * Call shell.	Calls mch_call_shell, with 'shellxquote' added.
- */
+// Call shell. Calls os_call_shell, with 'shellxquote' added.
 int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
 {
   char_u      *ncmd;
@@ -504,47 +501,22 @@ char *read_string(FILE *fd, size_t cnt)
   return (char *)str;
 }
 
-/*
- * Write a number to file "fd", MSB first, in "len" bytes.
- */
-int put_bytes(FILE *fd, long_u nr, int len)
+/// Write a number to file "fd", MSB first, in "len" bytes.
+/// @return OK/FAIL.
+int put_bytes(FILE *fd, uintmax_t number, unsigned int len)
 {
-  int i;
-
-  for (i = len - 1; i >= 0; --i)
-    if (putc((int)(nr >> (i * 8)), fd) == EOF)
+  for (unsigned int i = len - 1; i < len; --i)
+    if (putc((int)(number >> (i * 8)), fd) == EOF)
       return FAIL;
   return OK;
 }
 
-
-/*
- * Write time_t to file "fd" in 8 bytes.
- */
-void put_time(FILE *fd, time_t the_time)
+/// Write time_t to file "fd" in 8 bytes.
+void put_time(FILE *fd, time_t time_)
 {
-  int c;
-  int i;
-  time_t wtime = the_time;
-
-  /* time_t can be up to 8 bytes in size, more than long_u, thus we
-   * can't use put_bytes() here.
-   * Another problem is that ">>" may do an arithmetic shift that keeps the
-   * sign.  This happens for large values of wtime.  A cast to long_u may
-   * truncate if time_t is 8 bytes.  So only use a cast when it is 4 bytes,
-   * it's safe to assume that long_u is 4 bytes or more and when using 8
-   * bytes the top bit won't be set. */
-  for (i = 7; i >= 0; --i) {
-    if (i + 1 > (int)sizeof(time_t))
-      /* ">>" doesn't work well when shifting more bits than avail */
-      putc(0, fd);
-    else {
-#if defined(SIZEOF_TIME_T) && SIZEOF_TIME_T > 4
-      c = (int)(wtime >> (i * 8));
-#else
-      c = (int)((long_u)wtime >> (i * 8));
-#endif
-      putc(c, fd);
-    }
+  // time_t can be up to 8 bytes in size, more than uintmax_t in 32 bits
+  // systems, thus we can't use put_bytes() here.
+  for (unsigned int i = 7; i < 8; --i) {
+    putc((int)((uint64_t)time_ >> (i * 8)), fd);
   }
 }

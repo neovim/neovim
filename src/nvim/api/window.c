@@ -9,6 +9,7 @@
 #include "nvim/cursor.h"
 #include "nvim/window.h"
 #include "nvim/screen.h"
+#include "nvim/move.h"
 #include "nvim/misc2.h"
 
 
@@ -52,6 +53,7 @@ ArrayOf(Integer, 2) window_get_cursor(Window window, Error *err)
 /// @param pos the (row, col) tuple representing the new position
 /// @param[out] err Details of an error that may have occurred
 void window_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
+  FUNC_ATTR_DEFERRED
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -85,6 +87,10 @@ void window_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   win->w_cursor.coladd = 0;
   // When column is out of range silently correct it.
   check_cursor_col_win(win);
+
+  // make sure cursor is in visible range even if win != curwin
+  update_topline_win(win);
+
   update_screen(VALID);
 }
 
@@ -111,6 +117,7 @@ Integer window_get_height(Window window, Error *err)
 /// @param height the new height in rows
 /// @param[out] err Details of an error that may have occurred
 void window_set_height(Window window, Integer height, Error *err)
+  FUNC_ATTR_DEFERRED
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -154,6 +161,7 @@ Integer window_get_width(Window window, Error *err)
 /// @param width the new width in columns
 /// @param[out] err Details of an error that may have occurred
 void window_set_width(Window window, Integer width, Error *err)
+  FUNC_ATTR_DEFERRED
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -199,6 +207,7 @@ Object window_get_var(Window window, String name, Error *err)
 /// @param[out] err Details of an error that may have occurred
 /// @return The old value
 Object window_set_var(Window window, String name, Object value, Error *err)
+  FUNC_ATTR_DEFERRED
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -234,6 +243,7 @@ Object window_get_option(Window window, String name, Error *err)
 /// @param value The option value
 /// @param[out] err Details of an error that may have occurred
 void window_set_option(Window window, String name, Object value, Error *err)
+  FUNC_ATTR_DEFERRED
 {
   win_T *win = find_window_by_handle(window, err);
 

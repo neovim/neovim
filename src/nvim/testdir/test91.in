@@ -55,6 +55,7 @@ STARTTEST
 :tabnew
 :tabnew
 :let t:var_list = [1, 2, 3]
+:let t:other = 777
 :let def_list = [4, 5, 6, 7]
 :tabrewind
 :$put =string(gettabvar(3, 'var_list'))

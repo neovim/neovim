@@ -459,7 +459,7 @@ STARTTEST
 :  let text = t[2]
 :  let matchidx = 3
 :  for engine in [0, 1, 2]
-:    if engine == 2 && re == 0 || engine == 1 && re ==1
+:    if engine == 2 && re == 0 || engine == 1 && re == 1
 :      continue
 :    endif
 :    let &regexpengine = engine
@@ -607,6 +607,17 @@ yeGopA END:"
 50%/\%$
 "ayb20gg/..\%$
 "bybGo"apo"bp:"
+:"
+:" Check for detecting error
+:set regexpengine=2
+:for pat in [' \ze*', ' \zs*']
+:  try
+:    let l = matchlist('x x', pat)
+:    $put ='E888 NOT detected for ' . pat
+:  catch
+:    $put ='E888 detected for ' . pat
+:  endtry
+:endfor
 :"
 :""""" Write the results """""""""""""
 :/\%#=1^Results/,$wq! test.out

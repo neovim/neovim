@@ -1,4 +1,4 @@
-*eval.txt*	For Vim version 7.4.  Last change: 2014 Jul 19
+*eval.txt*	For Vim version 7.4.  Last change: 2014 Sep 09
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -1102,9 +1102,9 @@ are known inside the current Vim session.  Using expand() will first try using
 the environment variables known inside the current Vim session.  If that
 fails, a shell will be used to expand the variable.  This can be slow, but it
 does expand all variables that the shell knows about.  Example: >
-	:echo $version
-	:echo expand("$version")
-The first one probably doesn't echo anything, the second echoes the $version
+	:echo $shell
+	:echo expand("$shell")
+The first one probably doesn't echo anything, the second echoes the $shell
 variable (if your shell supports it).
 
 
@@ -1807,7 +1807,8 @@ getchar( [expr])		Number	get one character from the user
 getcharmod( )			Number	modifiers for the last typed character
 getcmdline()			String	return the current command-line
 getcmdpos()			Number	return cursor position in command-line
-getcmdtype()			String	return the current command-line type
+getcmdtype()			String	return current command-line type
+getcmdwintype()			String	return current command-line window type
 getcurpos()			List	position of the cursor
 getcwd()			String	the current working directory
 getfontname( [{name}])		String	name of font being used
@@ -2122,8 +2123,8 @@ argidx()	The result is the current index in the argument list.  0 is
 arglistid([{winnr}, [ {tabnr} ]])
 		Return the argument list ID.  This is a number which
 		identifies the argument list being used.  Zero is used for the
-		global argument list.
-		Return zero if the arguments are invalid.
+		global argument list.  See |arglist|.
+		Return -1 if the arguments are invalid.
 
 		Without arguments use the current window.
 		With {winnr} only use this window in the current tab page.
@@ -2631,7 +2632,7 @@ cursor({list})
 		line.
 		If {col} is zero, the cursor will stay in the current column.
 		If {curswant} is given it is used to set the preferred column
-		for vertical movment.  Otherwise {col} is used.
+		for vertical movement.  Otherwise {col} is used.
 		When 'virtualedit' is used {off} specifies the offset in
 		screen columns from the start of the character.  E.g., a
 		position within a <Tab> or after the last character.
@@ -2811,7 +2812,7 @@ exists({expr})	The result is a Number, which is non-zero if {expr} is
 		For checking for a supported feature use |has()|.
 
 		Examples: >
-			exists("&shortname")
+			exists("&mouse")
 			exists("$HOSTNAME")
 			exists("*strftime")
 			exists("*s:MyFunc")
@@ -2922,7 +2923,8 @@ expand({expr} [, {nosuf} [, {list}]])				*expand()*
 <
 		Expand() can also be used to expand variables and environment
 		variables that are only known in a shell.  But this can be
-		slow, because a shell must be started.	See |expr-env-expand|.
+		slow, because a shell may be used to do the expansion.  See
+		|expr-env-expand|.
 		The expanded variable is still handled like a list of file
 		names.	When an environment variable cannot be expanded, it is
 		left unchanged.  Thus ":echo expand('$FOOBAR')" results in
@@ -3354,10 +3356,16 @@ getcmdtype()						*getcmdtype()*
 		    ?	backward search command
 		    @	|input()| command
 		    -	|:insert| or |:append| command
+		    =	|i_CTRL-R_=|
 		Only works when editing the command line, thus requires use of
 		|c_CTRL-\_e| or |c_CTRL-R_=| or an expression mapping.
 		Returns an empty string otherwise.
 		Also see |getcmdpos()|, |setcmdpos()| and |getcmdline()|.
+
+getcmdwintype()						*getcmdwintype()*
+		Return the current |command-line-window| type. Possible return
+		values are the same as |getcmdtype()|. Returns an empty string
+		when not in the command-line window.
 
 							*getcurpos()*
 getcurpos()	Get the position of the cursor.  This is like getpos('.'), but
@@ -3369,7 +3377,7 @@ getcurpos()	Get the position of the cursor.  This is like getpos('.'), but
 			let save_cursor = getcurpos()
 			MoveTheCursorAround
 			call setpos('.', save_cursor)
-
+<
 							*getcwd()*
 getcwd()	The result is a String, which is the name of the current
 		working directory.
@@ -3578,6 +3586,8 @@ gettabvar({tabnr}, {varname} [, {def}])				*gettabvar()*
 		Get the value of a tab-local variable {varname} in tab page
 		{tabnr}. |t:var|
 		Tabs are numbered starting with one.
+		When {varname} is empty a dictionary with all tab-local
+		variables is returned.
 		Note that the name without "t:" must be used.
 		When the tab or variable doesn't exist {def} or an empty
 		string is returned, there is no error message.
@@ -4014,7 +4024,14 @@ items({dict})						*items()*
 
 jobsend({job}, {data})					{Nvim} *jobsend()*
 		Send data to {job} by writing it to the stdin of the process.
+		Returns 1 if the write succeeded, 0 otherwise.
 		See |job-control| for more information.
+
+		{data} may be a string, string convertible, or a list.  If
+		{data} is a list, the items will be separated by newlines and
+		any newlines in an item will be sent as a NUL.  For example: >
+			:call jobsend(j, ["abc", "123\n456"])
+< 		will send "abc<NL>123<NUL>456<NL>".
 
 jobstart({name}, {prog}[, {argv}])			{Nvim} *jobstart()*
 		Spawns {prog} as a job and associate it with the {name} string,
@@ -4027,7 +4044,7 @@ jobstart({name}, {prog}[, {argv}])			{Nvim} *jobstart()*
 		See |job-control| for more information.
 
 jobstop({job})						{Nvim} *jobstop()*
-		Stop a job created with |jobstart| by sending a `SIGTERM`
+		Stop a job created with |jobstart()| by sending a `SIGTERM`
 		to the corresponding process. If the process doesn't exit
 		cleanly soon, a `SIGKILL` will be sent. When the job is
 		finally closed, a |JobActivity| event will trigger with
@@ -5083,24 +5100,23 @@ rpcnotify({channel}, {event}[, {args}...])		  {Nvim} *rpcnotify()*
 rpcrequest({channel}, {method}[, {args}...])		 {Nvim} *rpcrequest()*
 		Sends a request to {channel} to invoke {method} via
 		|msgpack-rpc| and blocks until a response is received.
-		Example:  >
+		Example: >
 			:let result = rpcrequest(rpc_chan, "func", 1, 2, 3)
 
 rpcstart({prog}[, {argv}])				   {Nvim} *rpcstart()*
-		Spawns {prog} as a job(optionally passing the {argv} list),
-		and opens a |msgpack-rpc| channel with the spawned process
+		Spawns {prog} as a job (optionally passing the list {argv}),
+		and opens a |msgpack-rpc| channel with the spawned process's
 		stdin/stdout. It returns:
 		  - The channel id on success, which is used by |rpcrequest()|,
 		    |rpcnotify()| and |rpcstop()|
 		  - 0 on failure.
 		Example: >
-			:let rpc_chan = rpcstart('prog', ['arg1', 'arg2']) 
+			:let rpc_chan = rpcstart('prog', ['arg1', 'arg2'])
 
 rpcstop({channel})					    {Nvim} *rpcstop()*
-		Closes a |msgpack-rpc| channel, possibly created via
-		|rpcspawn()| (Though it will also close channels created by
-		connections to |NVIM_LISTEN_ADDRESS|). It accepts the rpc 
-		channel id as only argument.
+		Closes a |msgpack-rpc| {channel}, possibly created via
+		|rpcstart()|. Also closes channels created by connections to
+		|$NVIM_LISTEN_ADDRESS|.
 
 screenattr(row, col)						*screenattr()*
 		Like screenchar(), but return the attribute.  This is a rather
@@ -5543,7 +5559,7 @@ setreg({regname}, {value} [,{options}])
 		Returns zero for success, non-zero for failure.
 
 							*E883*
-		Note: you may not use |List| containing more then one item to 
+		Note: you may not use |List| containing more than one item to 
 		      set search and expression registers. Lists containing no 
 		      items act like empty strings.
 
@@ -5597,7 +5613,6 @@ setwinvar({nr}, {varname}, {val})			*setwinvar()*
 sha256({string})						*sha256()*
 		Returns a String with 64 hex charactes, which is the SHA256
 		checksum of {string}.
-		{only available when compiled with the |+cryptv| feature}
 
 shellescape({string} [, {special}])			*shellescape()*
 		Escape {string} for use as a shell command argument.
@@ -5693,7 +5708,7 @@ sort({list} [, {func} [, {dict}]])			*sort()* *E702*
 		after Strings, |Lists| after Numbers.  For sorting text in the
 		current buffer use |:sort|.
 
-		When {func} is given and it is is '1' or 'i' then case is
+		When {func} is given and it is '1' or 'i' then case is
 		ignored.
 		
 		When {func} is given and it is 'n' then all items will be
@@ -6165,7 +6180,7 @@ system({expr} [, {input}])				*system()* *E677*
 		The command executed is constructed using several options:
 	'shell' 'shellcmdflag' 'shellxquote' {expr} 'shellredir' {tmp} 'shellxquote'
 		({tmp} is an automatically generated file name).
-		For Unix and OS/2 braces are put around {expr} to allow for
+		For Unix braces are put around {expr} to allow for
 		concatenated commands.
 
 		The command will be executed in "cooked" mode, so that a
@@ -6181,11 +6196,12 @@ system({expr} [, {input}])				*system()* *E677*
 		Use |:checktime| to force a check.
 
 
-systemlist({expr} [, {input}])				*systemlist()*
+systemlist({expr} [, {input} [, {keepempty}]])		*systemlist()*
 		Same as |system()|, but returns a |List| with lines (parts of 
 		output separated by NL) with NULs transformed into NLs. Output 
 		is the same as |readfile()| will output with {binary} argument 
-		set to "b".
+		set to "b", except that a final newline is not preserved,
+		unless {keepempty} is present and it's non-zero.
 
 		Returns an empty string on error, so be careful not to run 
 		into |E706|.
@@ -6653,13 +6669,10 @@ There are four types of features:
 
 acl			Compiled with |ACL| support.
 all_builtin_terms	Compiled with all builtin terminals enabled.
-amiga			Amiga version of Vim.
 arabic			Compiled with Arabic support |Arabic|.
-arp			Compiled with ARP support (Amiga).
 autocmd			Compiled with autocommand support. |autocommand|
 balloon_eval		Compiled with |balloon-eval| support.
 balloon_multiline	GUI supports multiline balloons.
-beos			BeOS version of Vim.
 browse			Compiled with |:browse| support, and browse() will
 			work.
 browsefilter		Compiled with support for |browsefilter|.
@@ -6673,7 +6686,6 @@ cmdline_hist		Compiled with |cmdline-history| support.
 cmdline_info		Compiled with 'showcmd' and 'ruler' support.
 comments		Compiled with |'comments'| support.
 compatible		Compiled to be very Vi compatible.
-cryptv			Compiled with encryption support |encryption|.
 cscope			Compiled with |cscope| support.
 debug			Compiled with "DEBUG" defined.
 dialog_con		Compiled with console dialog support.
@@ -6683,7 +6695,6 @@ digraphs		Compiled with support for digraphs.
 dnd			Compiled with support for the "~ register |quote_~|.
 dos16			16 bits DOS version of Vim.
 dos32			32 bits DOS (DJGPP) version of Vim.
-ebcdic			Compiled on a machine with ebcdic character set.
 emacs_tags		Compiled with support for Emacs tags.
 eval			Compiled with expression evaluation support.  Always
 			true, of course!
@@ -6697,8 +6708,8 @@ filterpipe		When 'shelltemp' is off pipes are used for shell
 find_in_path		Compiled with support for include file searches
 			|+find_in_path|.
 float			Compiled with support for |Float|.
-fname_case		Case in file names matters (for Amiga, MS-DOS, and
-			Windows this is not present).
+fname_case		Case in file names matters (for MS-DOS and Windows
+			this is not present).
 folding			Compiled with |folding| support.
 footer			Compiled with GUI footer support. |gui-footer|
 fork			Compiled to use fork()/exec() instead of system().
@@ -6710,11 +6721,9 @@ gui_gtk			Compiled with GTK+ GUI (any version).
 gui_gtk2		Compiled with GTK+ 2 GUI (gui_gtk is also defined).
 gui_mac			Compiled with Macintosh GUI.
 gui_motif		Compiled with Motif GUI.
-gui_photon		Compiled with Photon GUI.
 gui_running		Vim is running in the GUI, or it will start soon.
 gui_win32		Compiled with MS Windows Win32 GUI.
 gui_win32s		idem, and Win32s system being used (Windows 3.1)
-hangul_input		Compiled with Hangul input support.
 iconv			Can use iconv() for conversion.
 insert_expand		Compiled with support for CTRL-X expansion commands in
 			Insert mode.
@@ -6738,7 +6747,6 @@ mouse			Compiled with support mouse.
 mouse_dec		Compiled with support for Dec terminal mouse.
 mouse_gpm		Compiled with support for gpm (Linux console mouse)
 mouse_netterm		Compiled with support for netterm mouse.
-mouse_pterm		Compiled with support for qnx pterm mouse.
 mouse_sysmouse		Compiled with support for sysmouse (*BSD console mouse)
 mouse_sgr		Compiled with support for sgr mouse.
 mouse_urxvt		Compiled with support for urxvt mouse.
@@ -6749,10 +6757,7 @@ multi_byte_encoding	'encoding' is set to a multi-byte encoding.
 multi_byte_ime		Compiled with support for IME input method.
 multi_lang		Compiled with support for multiple languages.
 mzscheme		Compiled with MzScheme interface |mzscheme|.
-netbeans_enabled	Compiled with support for |netbeans| and connected.
-netbeans_intg		Compiled with support for |netbeans|.
 ole			Compiled with OLE automation support for Win32.
-os2			OS/2 version of Vim.
 path_extra		Compiled with up/downwards search in 'path' and 'tags'
 perl			Compiled with Perl interface.
 persistent_undo		Compiled with support for persistent undo history.
@@ -6761,7 +6766,6 @@ printer			Compiled with |:hardcopy| support.
 profile			Compiled with |:profile| support.
 python			Compiled with Python 2.x interface. |has-python|
 python3			Compiled with Python 3.x interface. |has-python|
-qnx			QNX version of Vim.
 quickfix		Compiled with |quickfix| support.
 reltime			Compiled with |reltime()| support.
 rightleft		Compiled with 'rightleft' support.
@@ -6775,7 +6779,6 @@ spell			Compiled with spell checking support |spell|.
 startuptime		Compiled with |--startuptime| support.
 statusline		Compiled with support for 'statusline', 'rulerformat'
 			and special formats of 'titlestring' and 'iconstring'.
-sun_workshop		Compiled with support for Sun |workshop|.
 syntax			Compiled with syntax highlighting support |syntax|.
 syntax_items		There are active syntax highlighting items for the
 			current buffer.
@@ -6803,7 +6806,6 @@ virtualedit		Compiled with 'virtualedit' option.
 visual			Compiled with Visual mode.
 visualextra		Compiled with extra Visual mode commands.
 			|blockwise-operators|.
-vms			VMS version of Vim.
 vreplace		Compiled with |gR| and |gr| commands.
 wildignore		Compiled with 'wildignore' option.
 wildmenu		Compiled with 'wildmenu' option.

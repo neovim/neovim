@@ -39,6 +39,8 @@
     static inline kmp_##name##_t *kmp_init_##name(void) {               \
         return xcalloc(1, sizeof(kmp_##name##_t));                      \
     }                                                                   \
+    static inline void kmp_destroy_##name(kmp_##name##_t *mp)           \
+        REAL_FATTR_UNUSED;                                              \
     static inline void kmp_destroy_##name(kmp_##name##_t *mp) {         \
         size_t k;                                                       \
         for (k = 0; k < mp->n; ++k) {                                   \

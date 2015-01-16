@@ -1,6 +1,12 @@
-file(TO_CMAKE_PATH
-  "$ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/share/nvim/runtime/doc"
-  HELPTAGS_WORKING_DIRECTORY)
+if(DEFINED ENV{DESTDIR})
+  file(TO_CMAKE_PATH
+    "$ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/share/nvim/runtime/doc"
+    HELPTAGS_WORKING_DIRECTORY)
+else()
+  file(TO_CMAKE_PATH
+    "${CMAKE_INSTALL_PREFIX}/share/nvim/runtime/doc"
+    HELPTAGS_WORKING_DIRECTORY)
+endif()
 
 message(STATUS "Generating helptags in ${HELPTAGS_WORKING_DIRECTORY}.")
 
@@ -16,5 +22,5 @@ execute_process(
   RESULT_VARIABLE res)
 
 if(NOT res EQUAL 0)
-  message(FATAL_ERROR "Generating helptags failed: ${err}")
+  message(FATAL_ERROR "Generating helptags failed: ${err} - ${res}")
 endif()

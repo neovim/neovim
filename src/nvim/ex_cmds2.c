@@ -10,6 +10,7 @@
  * ex_cmds2.c: some more functions for command line commands
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -54,7 +55,6 @@
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/fs_defs.h"
-#include "nvim/os/provider.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
 
@@ -157,7 +157,6 @@ void do_debug(char_u *cmd)
 
   /* Make sure we are in raw mode and start termcap mode.  Might have side
    * effects... */
-  settmode(TMODE_RAW);
   starttermcap();
 
   ++RedrawingDisabled;          /* don't redisplay the window */
@@ -472,7 +471,7 @@ dbg_parsearg (
   else if (
     gap != &prof_ga &&
     VIM_ISDIGIT(*p)) {
-    bp->dbg_lnum = getdigits(&p);
+    bp->dbg_lnum = getdigits_long(&p);
     p = skipwhite(p);
   } else
     bp->dbg_lnum = 0;
@@ -790,17 +789,17 @@ void ex_profile(exarg_T *eap)
 
 void ex_python(exarg_T *eap)
 {
-  script_host_execute("python_execute", eap);
+  script_host_execute("python", eap);
 }
 
 void ex_pyfile(exarg_T *eap)
 {
-  script_host_execute_file("python_execute_file", eap);
+  script_host_execute_file("python", eap);
 }
 
 void ex_pydo(exarg_T *eap)
 {
-  script_host_do_range("python_do_range", eap);
+  script_host_do_range("python", eap);
 }
 
 
@@ -1217,7 +1216,7 @@ check_changed_any (
   /* curbuf */
   bufnrs[bufnum++] = curbuf->b_fnum;
   /* buf in curtab */
-  FOR_ALL_WINDOWS(wp) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer != curbuf) {
       add_bufnum(bufnrs, &bufnum, wp->w_buffer->b_fnum);
     }
@@ -2116,7 +2115,8 @@ int do_in_runtimepath(char_u *name, int all, DoInRuntimepathCB callback,
         np = name;
         while (*np != NUL && (all || !did_one)) {
           /* Append the pattern from "name" to buf[]. */
-          copy_option_part(&np, tail, (int)(MAXPATHL - (tail - buf)),
+          assert(MAXPATHL >= (tail - buf));
+          copy_option_part(&np, tail, (size_t)(MAXPATHL - (tail - buf)),
               "\t ");
 
           if (p_verbose > 2) {
@@ -2404,11 +2404,13 @@ do_source (
   // time_fd was successfully opened afterwards.
   proftime_T rel_time;
   proftime_T start_time;
-  if (time_fd != NULL) {
+  FILE * const l_time_fd = time_fd;
+  if (l_time_fd != NULL) {
     time_push(&rel_time, &start_time);
   }
 
-  if (do_profiling == PROF_YES)
+  const int l_do_profiling = do_profiling;
+  if (l_do_profiling == PROF_YES)
     prof_child_enter(&wait_start);              /* entering a child now */
 
   /* Don't use local function variables, if called from a function.
@@ -2422,6 +2424,7 @@ do_source (
   save_current_SID = current_SID;
   FileID file_id;
   bool file_id_ok = os_fileid((char *)fname_exp, &file_id);
+  assert(script_items.ga_len >= 0);
   for (current_SID = script_items.ga_len; current_SID > 0; --current_SID) {
     si = &SCRIPT_ITEM(current_SID);
     // Compare dev/ino when possible, it catches symbolic links.
@@ -2455,7 +2458,7 @@ do_source (
     new_script_vars(current_SID);
   }
 
-  if (do_profiling == PROF_YES) {
+  if (l_do_profiling == PROF_YES) {
     int forceit;
 
     /* Check if we do profiling for this script. */
@@ -2477,7 +2480,7 @@ do_source (
       DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_REPEAT);
   retval = OK;
 
-  if (do_profiling == PROF_YES) {
+  if (l_do_profiling == PROF_YES) {
     /* Get "si" again, "script_items" may have been reallocated. */
     si = &SCRIPT_ITEM(current_SID);
     if (si->sn_prof_on) {
@@ -2501,7 +2504,7 @@ do_source (
     verbose_leave();
   }
 
-  if (time_fd != NULL) {
+  if (l_time_fd != NULL) {
     vim_snprintf((char *)IObuff, IOSIZE, "sourcing %s", fname);
     time_msg((char *)IObuff, &start_time);
     time_pop(rel_time);
@@ -2517,7 +2520,7 @@ do_source (
 
   current_SID = save_current_SID;
   restore_funccal(save_funccalp);
-  if (do_profiling == PROF_YES)
+  if (l_do_profiling == PROF_YES)
     prof_child_exit(&wait_start);               /* leaving a child now */
   fclose(cookie.fp);
   free(cookie.nextline);
@@ -2543,7 +2546,7 @@ void ex_scriptnames(exarg_T *eap)
     }
 }
 
-# if defined(BACKSLASH_IN_FILENAME) || defined(PROTO)
+# if defined(BACKSLASH_IN_FILENAME)
 /*
  * Fix slashes in the list of script names for 'shellslash'.
  */
@@ -2576,14 +2579,12 @@ char_u *get_scriptname(scid_T id)
   return SCRIPT_ITEM(id).sn_name;
 }
 
-# if defined(EXITFREE) || defined(PROTO)
-void free_scriptnames(void)
+# if defined(EXITFREE)
+void free_scriptnames()
 {
-  for (int i = script_items.ga_len; i > 0; --i)
-    free(SCRIPT_ITEM(i).sn_name);
-  ga_clear(&script_items);
+# define FREE_SCRIPTNAME(item) free((item)->sn_name)
+  GA_DEEP_CLEAR(&script_items, scriptitem_T, FREE_SCRIPTNAME);
 }
-
 # endif
 
 
@@ -3181,8 +3182,8 @@ static char_u **find_locales(void)
 
   /* Find all available locales by running command "locale -a".  If this
    * doesn't work we won't have completion. */
-  char_u *locale_a = get_cmd_output((char_u *)"locale -a",
-      NULL, kShellOptSilent);
+  char_u *locale_a = get_cmd_output((char_u *)"locale -a", NULL,
+                                    kShellOptSilent, NULL);
   if (locale_a == NULL)
     return NULL;
   ga_init(&locales_ga, sizeof(char_u *), 20);
@@ -3203,7 +3204,7 @@ static char_u **find_locales(void)
   return (char_u **)locales_ga.ga_data;
 }
 
-#  if defined(EXITFREE) || defined(PROTO)
+#  if defined(EXITFREE)
 void free_locales(void)
 {
   int i;
@@ -3250,40 +3251,119 @@ char_u *get_locales(expand_T *xp, int idx)
 #endif
 
 
-static void script_host_execute(char *method, exarg_T *eap)
+static void script_host_execute(char *name, exarg_T *eap)
 {
-  char *script = (char *)script_get(eap, eap->arg);
+  uint8_t *script = script_get(eap, eap->arg);
 
   if (!eap->skip) {
-    Array args = ARRAY_DICT_INIT;
-    ADD(args, STRING_OBJ(cstr_to_string(script ? script : (char *)eap->arg)));
-    Object result = provider_call(method, args);
-    // We don't care about the result, so free it just in case a bad provider
-    // returned something
-    api_free_object(result);
+    list_T *args = list_alloc();
+    // script
+    list_append_string(args, script ? script : eap->arg, -1);
+    // current range
+    list_append_number(args, eap->line1);
+    list_append_number(args, eap->line2);
+    (void)eval_call_provider(name, "execute", args);
   }
 
   free(script);
 }
 
-static void script_host_execute_file(char *method, exarg_T *eap)
+static void script_host_execute_file(char *name, exarg_T *eap)
 {
-  char buffer[MAXPATHL];
-  vim_FullName(eap->arg, (uint8_t *)buffer, sizeof(buffer), false);
+  uint8_t buffer[MAXPATHL];
+  vim_FullName(eap->arg, buffer, sizeof(buffer), false);
 
-  Array args = ARRAY_DICT_INIT;
-  ADD(args, STRING_OBJ(cstr_to_string(buffer)));
-  Object result = provider_call(method, args);
-  api_free_object(result);
+  list_T *args = list_alloc();
+  // filename
+  list_append_string(args, buffer, -1);
+  // current range
+  list_append_number(args, eap->line1);
+  list_append_number(args, eap->line2);
+  (void)eval_call_provider(name, "execute_file", args);
 }
 
-static void script_host_do_range(char *method, exarg_T *eap)
+static void script_host_do_range(char *name, exarg_T *eap)
 {
-  Array args = ARRAY_DICT_INIT;
-  ADD(args, INTEGER_OBJ(eap->line1));
-  ADD(args, INTEGER_OBJ(eap->line2));
-  ADD(args, STRING_OBJ(cstr_to_string((char *)eap->arg)));
-  Object result = provider_call(method, args);
-  api_free_object(result);
+  list_T *args = list_alloc();
+  list_append_number(args, eap->line1);
+  list_append_number(args, eap->line2);
+  list_append_string(args, eap->arg, -1);
+  (void)eval_call_provider(name, "do_range", args);
 }
 
+/*
+ * ":drop"
+ * Opens the first argument in a window.  When there are two or more arguments
+ * the argument list is redefined.
+ */
+void ex_drop(exarg_T   *eap)
+{
+    int                split = FALSE;
+    buf_T      *buf;
+
+    /*
+     * Check if the first argument is already being edited in a window.  If
+     * so, jump to that window.
+     * We would actually need to check all arguments, but that's complicated
+     * and mostly only one file is dropped.
+     * This also ignores wildcards, since it is very unlikely the user is
+     * editing a file name with a wildcard character.
+     */
+    do_arglist(eap->arg, AL_SET, 0);
+
+    /*
+     * Expanding wildcards may result in an empty argument list.  E.g. when
+     * editing "foo.pyc" and ".pyc" is in 'wildignore'.  Assume that we
+     * already did an error message for this.
+     */
+    if (ARGCOUNT == 0)
+       return;
+
+    if (cmdmod.tab)
+    {
+       /* ":tab drop file ...": open a tab for each argument that isn't
+        * edited in a window yet.  It's like ":tab all" but without closing
+        * windows or tabs. */
+       ex_all(eap);
+    }
+    else
+    {
+       /* ":drop file ...": Edit the first argument.  Jump to an existing
+        * window if possible, edit in current window if the current buffer
+        * can be abandoned, otherwise open a new window. */
+       buf = buflist_findnr(ARGLIST[0].ae_fnum);
+
+       FOR_ALL_TAB_WINDOWS(tp, wp)
+       {
+           if (wp->w_buffer == buf)
+           {
+               goto_tabpage_win(tp, wp);
+               curwin->w_arg_idx = 0;
+               return;
+           }
+       }
+
+       /*
+        * Check whether the current buffer is changed. If so, we will need
+        * to split the current window or data could be lost.
+        * Skip the check if the 'hidden' option is set, as in this case the
+        * buffer won't be lost.
+        */
+       if (!P_HID(curbuf))
+       {
+           ++emsg_off;
+           split = check_changed(curbuf, CCGD_AW | CCGD_EXCMD);
+           --emsg_off;
+       }
+
+       /* Fake a ":sfirst" or ":first" command edit the first argument. */
+       if (split)
+       {
+           eap->cmdidx = CMD_sfirst;
+           eap->cmd[0] = 's';
+       }
+       else
+           eap->cmdidx = CMD_first;
+       ex_rewind(eap);
+    }
+}

@@ -13,11 +13,7 @@ vaBiBD:?Bug?,/Piece/-2w! test.out
 :s/i/~u~/
 :s/o/~~~/
 :.w >>test.out
-:if has("ebcdic")
-: let tt = "o\<C-V>193\<C-V>xc2\<C-V>o303 \<C-V>90a\<C-V>xfg\<C-V>o578\<Esc>"
-:else
-: let tt = "o\<C-V>65\<C-V>x42\<C-V>o103 \<C-V>33a\<C-V>xfg\<C-V>o78\<Esc>"
-:endif
+:let tt = "o\<C-V>65\<C-V>x42\<C-V>o103 \<C-V>33a\<C-V>xfg\<C-V>o78\<Esc>"
 :exe "normal " . tt
 :unlet tt
 :.w >>test.out

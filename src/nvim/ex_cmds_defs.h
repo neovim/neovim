@@ -88,8 +88,6 @@ typedef struct cmdname {
   long_u cmd_argt;     ///< Relevant flags from the declared above.
 } CommandDefinition;
 
-#define USER_CMDIDX(idx) ((int)(idx) < 0)
-
 /// Arguments used for Ex commands.
 struct exarg {
   char_u      *arg;             ///< argument of the command

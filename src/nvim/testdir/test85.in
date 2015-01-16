@@ -3,7 +3,6 @@ Test for Lua interface and luaeval() function
 STARTTEST
 :so small.vim
 :so lua.vim
-:set nocompatible viminfo+=nviminfo
 :lua l = vim.list():add"item0":add"dictionary with list OK":add"item2"
 :lua h = vim.dict(); h.list = l
 :call garbagecollect()

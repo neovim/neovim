@@ -69,10 +69,11 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/term.h"
-#include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
+#include "nvim/os/time.h"
+#include "nvim/os/input.h"
 
 #define HAVE_BUFLIST_MATCH
 
@@ -237,25 +238,27 @@ open_buffer (
   }
   apply_autocmds_retval(EVENT_BUFENTER, NULL, NULL, FALSE, curbuf, &retval);
 
-  if (retval != FAIL) {
-    /*
-     * The autocommands may have changed the current buffer.  Apply the
-     * modelines to the correct buffer, if it still exists and is loaded.
-     */
-    if (buf_valid(old_curbuf) && old_curbuf->b_ml.ml_mfp != NULL) {
-      aco_save_T aco;
+  if (retval == FAIL) {
+    return FAIL;
+  }
 
-      /* Go to the buffer that was opened. */
-      aucmd_prepbuf(&aco, old_curbuf);
-      do_modelines(0);
-      curbuf->b_flags &= ~(BF_CHECK_RO | BF_NEVERLOADED);
+  /*
+   * The autocommands may have changed the current buffer.  Apply the
+   * modelines to the correct buffer, if it still exists and is loaded.
+   */
+  if (buf_valid(old_curbuf) && old_curbuf->b_ml.ml_mfp != NULL) {
+    aco_save_T aco;
 
-      apply_autocmds_retval(EVENT_BUFWINENTER, NULL, NULL, FALSE, curbuf,
-          &retval);
+    /* Go to the buffer that was opened. */
+    aucmd_prepbuf(&aco, old_curbuf);
+    do_modelines(0);
+    curbuf->b_flags &= ~(BF_CHECK_RO | BF_NEVERLOADED);
 
-      /* restore curwin/curbuf and a few other things */
-      aucmd_restbuf(&aco);
-    }
+    apply_autocmds_retval(EVENT_BUFWINENTER, NULL, NULL, FALSE, curbuf,
+        &retval);
+
+    /* restore curwin/curbuf and a few other things */
+    aucmd_restbuf(&aco);
   }
 
   return retval;
@@ -332,7 +335,7 @@ close_buffer (
 
   /* When the buffer is no longer in a window, trigger BufWinLeave */
   if (buf->b_nwindows == 1) {
-    buf->b_closing = TRUE;
+    buf->b_closing = true;
     apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname,
         FALSE, buf);
     if (!buf_valid(buf)) {
@@ -340,7 +343,7 @@ close_buffer (
       EMSG(_(e_auabort));
       return;
     }
-    buf->b_closing = FALSE;
+    buf->b_closing = false;
     if (abort_if_last && one_window()) {
       /* Autocommands made this the only window. */
       EMSG(_(e_auabort));
@@ -350,7 +353,7 @@ close_buffer (
     /* When the buffer becomes hidden, but is not unloaded, trigger
      * BufHidden */
     if (!unload_buf) {
-      buf->b_closing = TRUE;
+      buf->b_closing = true;
       apply_autocmds(EVENT_BUFHIDDEN, buf->b_fname, buf->b_fname,
           FALSE, buf);
       if (!buf_valid(buf)) {
@@ -358,7 +361,7 @@ close_buffer (
         EMSG(_(e_auabort));
         return;
       }
-      buf->b_closing = FALSE;
+      buf->b_closing = false;
       if (abort_if_last && one_window()) {
         /* Autocommands made this the only window. */
         EMSG(_(e_auabort));
@@ -447,7 +450,7 @@ close_buffer (
       buf->b_flags = BF_CHECK_RO | BF_NEVERLOADED;
 
       /* Init the options when loaded again. */
-      buf->b_p_initialized = FALSE;
+      buf->b_p_initialized = false;
     }
     buf_clear_file(buf);
     if (del_buf)
@@ -481,7 +484,7 @@ void buf_freeall(buf_T *buf, int flags)
 {
   bool is_curbuf = (buf == curbuf);
 
-  buf->b_closing = TRUE;
+  buf->b_closing = true;
   apply_autocmds(EVENT_BUFUNLOAD, buf->b_fname, buf->b_fname, FALSE, buf);
   if (!buf_valid(buf))              /* autocommands may delete the buffer */
     return;
@@ -496,7 +499,7 @@ void buf_freeall(buf_T *buf, int flags)
     if (!buf_valid(buf))            /* autocommands may delete the buffer */
       return;
   }
-  buf->b_closing = FALSE;
+  buf->b_closing = false;
   if (aborting())           /* autocmds may abort script processing */
     return;
 
@@ -599,7 +602,6 @@ void goto_buffer(exarg_T *eap, int start, int dir, int count)
 {
   (void)do_buffer(*eap->cmd == 's' ? DOBUF_SPLIT : DOBUF_GOTO,
       start, dir, count, eap->forceit);
-#ifdef HAS_SWAP_EXISTS_ACTION
   buf_T *old_curbuf = curbuf;
   swap_exists_action = SEA_DIALOG;
 
@@ -621,10 +623,8 @@ void goto_buffer(exarg_T *eap, int start, int dir, int count)
   } else {
     handle_swap_exists(old_curbuf);
   }
-#endif
 }
 
-#if defined(HAS_SWAP_EXISTS_ACTION) || defined(PROTO)
 /*
  * Handle the situation of swap_exists_action being set.
  * It is allowed for "old_curbuf" to be NULL or invalid.
@@ -675,7 +675,6 @@ void handle_swap_exists(buf_T *old_curbuf)
   }
   swap_exists_action = SEA_NONE;
 }
-#endif
 
 /*
  * do_bufdel() - delete or unload buffer(s)
@@ -716,7 +715,7 @@ do_bufdel (
     } else      /* addr_count == 1 */
       bnr = end_bnr;
 
-    for (; !got_int; ui_breakcheck()) {
+    for (; !got_int; os_breakcheck()) {
       /*
        * delete the current buffer last, otherwise when the
        * current buffer is deleted, the next buffer becomes
@@ -747,7 +746,7 @@ do_bufdel (
             break;
           arg = p;
         } else
-          bnr = getdigits(&arg);
+          bnr = getdigits_int(&arg);
       }
     }
     if (!got_int && do_current && do_buffer(command, DOBUF_FIRST,
@@ -1398,7 +1397,7 @@ buflist_new (
     free_buffer_stuff(buf, FALSE);      /* delete local variables et al. */
 
     /* Init the options. */
-    buf->b_p_initialized = FALSE;
+    buf->b_p_initialized = false;
     buf_copy_options(buf, BCO_ENTER);
 
     /* need to reload lmaps and set b:keymap_name */
@@ -1422,7 +1421,7 @@ buflist_new (
       EMSG(_("W14: Warning: List of file names overflow"));
       if (emsg_silent == 0) {
         out_flush();
-        ui_delay(3000L, true);          /* make sure it is noticed */
+        os_delay(3000L, true);          /* make sure it is noticed */
       }
       top_file_num = 1;
     }
@@ -1446,7 +1445,7 @@ buflist_new (
     buf->file_id_valid = true;
     buf->file_id = file_id;
   }
-  buf->b_u_synced = TRUE;
+  buf->b_u_synced = true;
   buf->b_flags = BF_CHECK_RO | BF_NEVERLOADED;
   if (flags & BLN_DUMMY)
     buf->b_flags |= BF_DUMMY;
@@ -1527,6 +1526,7 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   buf->b_p_ar = -1;
   buf->b_p_ul = NO_LOCAL_UNDOLEVEL;
   clear_string_option(&buf->b_p_lw);
+  clear_string_option(&buf->b_p_bkc);
 }
 
 /*
@@ -1755,12 +1755,12 @@ buflist_findpat (
         FOR_ALL_BUFFERS(buf) {
           if (buf->b_p_bl == find_listed
               && (!diffmode || diff_mode_buf(buf))
-              && buflist_match(prog, buf) != NULL) {
+              && buflist_match(prog, buf, false) != NULL) {
             if (curtab_only) {
               /* Ignore the match if the buffer is not open in
                * the current tab. */
               bool found_window = false;
-              FOR_ALL_WINDOWS(wp) {
+              FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
                 if (wp->w_buffer == buf) {
                   found_window = true;
                   break;
@@ -1849,7 +1849,7 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
       FOR_ALL_BUFFERS(buf) {
         if (!buf->b_p_bl)               /* skip unlisted buffers */
           continue;
-        p = buflist_match(prog, buf);
+        p = buflist_match(prog, buf, p_wic);
         if (p != NULL) {
           if (round == 1)
             ++count;
@@ -1882,26 +1882,27 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
 
 
 #ifdef HAVE_BUFLIST_MATCH
-/*
- * Check for a match on the file name for buffer "buf" with regprog "prog".
- */
-static char_u *buflist_match(regprog_T *prog, buf_T *buf)
+/// Check for a match on the file name for buffer "buf" with regprog "prog".
+///
+/// @param ignore_case When TRUE, ignore case. Use 'fic' otherwise.
+static char_u *buflist_match(regprog_T *prog, buf_T *buf, bool ignore_case)
 {
   char_u      *match;
 
   /* First try the short file name, then the long file name. */
-  match = fname_match(prog, buf->b_sfname);
-  if (match == NULL)
-    match = fname_match(prog, buf->b_ffname);
+  match = fname_match(prog, buf->b_sfname, ignore_case);
+  if (match == NULL) {
+    match = fname_match(prog, buf->b_ffname, ignore_case);
+  }
 
   return match;
 }
 
-/*
- * Try matching the regexp in "prog" with file name "name".
- * Return "name" when there is a match, NULL when not.
- */
-static char_u *fname_match(regprog_T *prog, char_u *name)
+/// Try matching the regexp in "prog" with file name "name".
+///
+/// @param ignore_case When TRUE, ignore case. Use 'fileignorecase' otherwise.
+/// @return "name" when there is a match, NULL when not.
+static char_u *fname_match(regprog_T *prog, char_u *name, bool ignore_case)
 {
   char_u      *match = NULL;
   char_u      *p;
@@ -1909,7 +1910,8 @@ static char_u *fname_match(regprog_T *prog, char_u *name)
 
   if (name != NULL) {
     regmatch.regprog = prog;
-    regmatch.rm_ic = p_fic;     /* ignore case when 'fileignorecase' is set */
+    // Ignore case when 'fileignorecase' or the argument is set.
+    regmatch.rm_ic = p_fic || ignore_case;
     if (vim_regexec(&regmatch, name, (colnr_T)0))
       match = name;
     else {
@@ -2004,7 +2006,7 @@ static void buflist_setfpos(buf_T *buf, win_T *win, linenr_T lnum, colnr_T col, 
     copy_winopt(&win->w_onebuf_opt, &wip->wi_opt);
     wip->wi_fold_manual = win->w_fold_manual;
     cloneFoldGrowArray(&win->w_folds, &wip->wi_folds);
-    wip->wi_optset = TRUE;
+    wip->wi_optset = true;
   }
 
   /* insert the entry in front of the list */
@@ -2025,7 +2027,7 @@ static void buflist_setfpos(buf_T *buf, win_T *win, linenr_T lnum, colnr_T col, 
 static bool wininfo_other_tab_diff(wininfo_T *wip)
 {
   if (wip->wi_opt.wo_diff) {
-    FOR_ALL_WINDOWS(wp) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       /* return false when it's a window in the current tab page, thus
        * the buffer was in diff mode here */
       if (wip->wi_win == wp) {
@@ -2084,7 +2086,7 @@ void get_winopts(buf_T *buf)
   if (wip != NULL && wip->wi_optset) {
     copy_winopt(&wip->wi_opt, &curwin->w_onebuf_opt);
     curwin->w_fold_manual = wip->wi_fold_manual;
-    curwin->w_foldinvalid = TRUE;
+    curwin->w_foldinvalid = true;
     cloneFoldGrowArray(&wip->wi_folds, &curwin->w_folds);
   } else
     copy_winopt(&curwin->w_allbuf_opt, &curwin->w_onebuf_opt);
@@ -2102,14 +2104,10 @@ void get_winopts(buf_T *buf)
  */
 pos_T *buflist_findfpos(buf_T *buf)
 {
-  wininfo_T   *wip;
   static pos_T no_position = INIT_POS_T(1, 0, 0);
 
-  wip = find_wininfo(buf, FALSE);
-  if (wip != NULL)
-    return &(wip->wi_fpos);
-  else
-    return &no_position;
+  wininfo_T *wip = find_wininfo(buf, FALSE);
+  return (wip == NULL) ? &no_position : &(wip->wi_fpos);
 }
 
 /*
@@ -2162,7 +2160,7 @@ void buflist_list(exarg_T *eap)
                       : (int64_t)buflist_findlnum(buf));
     msg_outtrans(IObuff);
     out_flush();            /* output one line at a time */
-    ui_breakcheck();
+    os_breakcheck();
   }
 }
 
@@ -2349,7 +2347,7 @@ int buflist_add(char_u *fname, int flags)
   return 0;
 }
 
-#if defined(BACKSLASH_IN_FILENAME) || defined(PROTO)
+#if defined(BACKSLASH_IN_FILENAME)
 /*
  * Adjust slashes in file names.  Called after 'shellslash' was set.
  */
@@ -2750,7 +2748,7 @@ void resettitle(void)
   mch_settitle(lasttitle, lasticon);
 }
 
-# if defined(EXITFREE) || defined(PROTO)
+# if defined(EXITFREE)
 void free_titles(void)
 {
   free(lasttitle);
@@ -2995,7 +2993,7 @@ build_stl_str_hl (
       l = -1;
     }
     if (VIM_ISDIGIT(*s)) {
-      minwid = (int)getdigits(&s);
+      minwid = getdigits_int(&s);
       if (minwid < 0)           /* overflow */
         minwid = 0;
     }
@@ -3031,7 +3029,7 @@ build_stl_str_hl (
     if (*s == '.') {
       s++;
       if (VIM_ISDIGIT(*s)) {
-        maxwid = (int)getdigits(&s);
+        maxwid = getdigits_int(&s);
         if (maxwid <= 0)                /* overflow */
           maxwid = 50;
       }
@@ -3761,7 +3759,7 @@ do_arg_all (
     if (opened[i] > 0) {
       /* Move the already present window to below the current window */
       if (curwin->w_arg_idx != i) {
-        FOR_ALL_WINDOWS(wp) {
+        FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
           if (wp->w_arg_idx == i) {
             if (keep_tabs) {
               new_curwin = wp;
@@ -3801,7 +3799,7 @@ do_arg_all (
         ++autocmd_no_leave;
       use_firstwin = FALSE;
     }
-    ui_breakcheck();
+    os_breakcheck();
 
     /* When ":tab" was used open a new tab for a new window repeatedly. */
     if (had_tab > 0 && tabpage_index(NULL) <= p_tpm)
@@ -3932,17 +3930,12 @@ void ex_buffer_all(exarg_T *eap)
         continue;
 
       /* Open the buffer in this window. */
-#if defined(HAS_SWAP_EXISTS_ACTION)
       swap_exists_action = SEA_DIALOG;
-#endif
       set_curbuf(buf, DOBUF_GOTO);
       if (!buf_valid(buf)) {            /* autocommands deleted the buffer!!! */
-#if defined(HAS_SWAP_EXISTS_ACTION)
         swap_exists_action = SEA_NONE;
-# endif
         break;
       }
-#if defined(HAS_SWAP_EXISTS_ACTION)
       if (swap_exists_action == SEA_QUIT) {
         cleanup_T cs;
 
@@ -3962,10 +3955,9 @@ void ex_buffer_all(exarg_T *eap)
         leave_cleanup(&cs);
       } else
         handle_swap_exists(NULL);
-#endif
     }
 
-    ui_breakcheck();
+    os_breakcheck();
     if (got_int) {
       (void)vgetc();            /* only break the file loading, not the rest */
       break;
@@ -4075,7 +4067,7 @@ chk_modeline (
           e = s + 4;
         else
           e = s + 3;
-        vers = getdigits(&e);
+        vers = getdigits_int(&e);
         if (*e == ':'
             && (s[0] != 'V'
                 || STRNCMP(skipwhite(e + 1), "set", 3) == 0)
@@ -4090,66 +4082,69 @@ chk_modeline (
     prev = *s;
   }
 
-  if (*s) {
-    do                                  /* skip over "ex:", "vi:" or "vim:" */
-      ++s;
-    while (s[-1] != ':');
-
-    s = linecopy = vim_strsave(s);      /* copy the line, it will change */
-
-    save_sourcing_lnum = sourcing_lnum;
-    save_sourcing_name = sourcing_name;
-    sourcing_lnum = lnum;               /* prepare for emsg() */
-    sourcing_name = (char_u *)"modelines";
-
-    end = FALSE;
-    while (end == FALSE) {
-      s = skipwhite(s);
-      if (*s == NUL)
-        break;
-
-      /*
-       * Find end of set command: ':' or end of line.
-       * Skip over "\:", replacing it with ":".
-       */
-      for (e = s; *e != ':' && *e != NUL; ++e)
-        if (e[0] == '\\' && e[1] == ':')
-          STRMOVE(e, e + 1);
-      if (*e == NUL)
-        end = TRUE;
-
-      /*
-       * If there is a "set" command, require a terminating ':' and
-       * ignore the stuff after the ':'.
-       * "vi:set opt opt opt: foo" -- foo not interpreted
-       * "vi:opt opt opt: foo" -- foo interpreted
-       * Accept "se" for compatibility with Elvis.
-       */
-      if (STRNCMP(s, "set ", (size_t)4) == 0
-          || STRNCMP(s, "se ", (size_t)3) == 0) {
-        if (*e != ':')                  /* no terminating ':'? */
-          break;
-        end = TRUE;
-        s = vim_strchr(s, ' ') + 1;
-      }
-      *e = NUL;                         /* truncate the set command */
-
-      if (*s != NUL) {                  /* skip over an empty "::" */
-        save_SID = current_SID;
-        current_SID = SID_MODELINE;
-        retval = do_set(s, OPT_MODELINE | OPT_LOCAL | flags);
-        current_SID = save_SID;
-        if (retval == FAIL)                     /* stop if error found */
-          break;
-      }
-      s = e + 1;                        /* advance to next part */
-    }
-
-    sourcing_lnum = save_sourcing_lnum;
-    sourcing_name = save_sourcing_name;
-
-    free(linecopy);
+  if (!*s) {
+    return retval;
   }
+
+  do                                  /* skip over "ex:", "vi:" or "vim:" */
+    ++s;
+  while (s[-1] != ':');
+
+  s = linecopy = vim_strsave(s);      /* copy the line, it will change */
+
+  save_sourcing_lnum = sourcing_lnum;
+  save_sourcing_name = sourcing_name;
+  sourcing_lnum = lnum;               /* prepare for emsg() */
+  sourcing_name = (char_u *)"modelines";
+
+  end = FALSE;
+  while (end == FALSE) {
+    s = skipwhite(s);
+    if (*s == NUL)
+      break;
+
+    /*
+     * Find end of set command: ':' or end of line.
+     * Skip over "\:", replacing it with ":".
+     */
+    for (e = s; *e != ':' && *e != NUL; ++e)
+      if (e[0] == '\\' && e[1] == ':')
+        STRMOVE(e, e + 1);
+    if (*e == NUL)
+      end = TRUE;
+
+    /*
+     * If there is a "set" command, require a terminating ':' and
+     * ignore the stuff after the ':'.
+     * "vi:set opt opt opt: foo" -- foo not interpreted
+     * "vi:opt opt opt: foo" -- foo interpreted
+     * Accept "se" for compatibility with Elvis.
+     */
+    if (STRNCMP(s, "set ", (size_t)4) == 0
+        || STRNCMP(s, "se ", (size_t)3) == 0) {
+      if (*e != ':')                  /* no terminating ':'? */
+        break;
+      end = TRUE;
+      s = vim_strchr(s, ' ') + 1;
+    }
+    *e = NUL;                         /* truncate the set command */
+
+    if (*s != NUL) {                  /* skip over an empty "::" */
+      save_SID = current_SID;
+      current_SID = SID_MODELINE;
+      retval = do_set(s, OPT_MODELINE | OPT_LOCAL | flags);
+      current_SID = save_SID;
+      if (retval == FAIL)                     /* stop if error found */
+        break;
+    }
+    s = e + 1;                        /* advance to next part */
+  }
+
+  sourcing_lnum = save_sourcing_lnum;
+  sourcing_name = save_sourcing_name;
+
+  free(linecopy);
+
   return retval;
 }
 
@@ -4423,8 +4418,8 @@ linenr_T buf_delsign(
     }
 
     /* When deleted the last sign needs to redraw the windows to remove the
-     * sign column. Not when curwin is NULL (this means we're exiting). */
-    if (buf->b_signlist != NULL && curwin != NULL) {
+     * sign column. */
+    if (buf->b_signlist == NULL) {
         redraw_buf_later(buf, NOT_VALID);
         changed_cline_bef_curs();
     }
@@ -4479,11 +4474,9 @@ void buf_delete_signs(buf_T *buf)
     signlist_T *next;
 
     // When deleting the last sign need to redraw the windows to remove the
-    // sign column.
-    if (buf->b_signlist != NULL) {
+    // sign column. Not when curwin is NULL (this means we're exiting).
+    if (buf->b_signlist != NULL && curwin != NULL){
       redraw_buf_later(buf, NOT_VALID);
-      // TODO(oni-link): Is this call necessary if curwin is not a viewport
-      // for buf?
       changed_cline_bef_curs();
     }
 

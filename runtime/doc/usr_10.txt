@@ -747,7 +747,6 @@ check the values of these options:
 	'shellcmdflag'	argument to pass a command to the shell
 	'shellquote'	quote to be used around the command
 	'shellxquote'	quote to be used around the command and redirection
-	'shelltype'	kind of shell (only for the Amiga)
 	'shellslash'	use forward slashes in the command (only for
 			MS-Windows and alikes)
 	'shellredir'	string used to write the command output into a file
