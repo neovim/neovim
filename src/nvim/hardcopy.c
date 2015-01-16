@@ -181,9 +181,9 @@ typedef struct {
 } prt_pos_T;
 
 struct prt_mediasize_S {
-  char        *name;
-  float width;                  /* width and height in points for portrait */
-  float height;
+  char *name;
+  double width;                  /* width and height in points for portrait */
+  double height;
 };
 
 /* PS font names, must be in Roman, Bold, Italic, Bold-Italic order */
@@ -1991,8 +1991,8 @@ static void prt_page_margins(double width, double height, double *left, double *
 
 static void prt_font_metrics(int font_scale)
 {
-  prt_line_height = (float)font_scale;
-  prt_char_width = (float)PRT_PS_FONT_TO_USER(font_scale, prt_ps_font->wx);
+  prt_line_height = (double)font_scale;
+  prt_char_width = (double)PRT_PS_FONT_TO_USER(font_scale, prt_ps_font->wx);
 }
 
 
@@ -2031,10 +2031,10 @@ static int prt_get_lpp(void)
    * font height (based on its bounding box) and the line height, handling the
    * case where the font height can exceed the line height.
    */
-  prt_bgcol_offset = (float)PRT_PS_FONT_TO_USER(prt_line_height,
+  prt_bgcol_offset = (double)PRT_PS_FONT_TO_USER(prt_line_height,
       prt_ps_font->bbox_min_y);
   if ((prt_ps_font->bbox_max_y - prt_ps_font->bbox_min_y) < 1000.0) {
-    prt_bgcol_offset -= (float)PRT_PS_FONT_TO_USER(prt_line_height,
+    prt_bgcol_offset -= (double)PRT_PS_FONT_TO_USER(prt_line_height,
         (1000.0 - (prt_ps_font->bbox_max_y -
                    prt_ps_font->bbox_min_y)) / 2);
   }
@@ -2099,10 +2099,6 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
   int paper_strlen;
   int fontsize;
   char_u      *p;
-  double left;
-  double right;
-  double top;
-  double bottom;
   int props;
   int cmap = 0;
   char_u      *p_encoding;
@@ -2260,16 +2256,15 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
     prt_page_height = prt_mediasize[i].width;
   }
 
-  /*
-   * Set PS page margins based on the PS pagesize, not the mediasize - this
-   * needs to be done before the cpl and lpp are calculated.
-   */
+  // Set PS page margins based on the PS pagesize, not the mediasize - this
+  // needs to be done before the cpl and lpp are calculated.
+  double left, right, top, bottom;
   prt_page_margins(prt_page_width, prt_page_height, &left, &right, &top,
       &bottom);
-  prt_left_margin = (float)left;
-  prt_right_margin = (float)right;
-  prt_top_margin = (float)top;
-  prt_bottom_margin = (float)bottom;
+  prt_left_margin = left;
+  prt_right_margin = right;
+  prt_top_margin = top;
+  prt_bottom_margin = bottom;
 
   /*
    * Set up the font size.
