@@ -219,7 +219,7 @@ end
 
 function Screen:_handle_eol_clear()
   local row, col = self._cursor.row, self._cursor.col
-  self:_clear_block(row, 1, col, self._scroll_region.right - col)
+  self:_clear_block(row, row, col, self._scroll_region.right)
 end
 
 function Screen:_handle_cursor_goto(row, col)
@@ -330,9 +330,9 @@ function Screen:_handle_set_icon(icon)
   self.icon = icon
 end
 
-function Screen:_clear_block(top, lines, left, columns)
-  for i = top, top + lines - 1 do
-    self:_clear_row_section(i, left, left + columns - 1)
+function Screen:_clear_block(top, bot, left, right)
+  for i = top, bot do
+    self:_clear_row_section(i, left, right)
   end
 end
 
