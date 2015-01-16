@@ -33,11 +33,11 @@ local absolute_executable = nil
 local executable_name = nil
 
 local function assert_file_exists(filepath)
-  eq(false, nil == (lfs.attributes(filepath, 'r')))
+  neq(nil, lfs.attributes(filepath))
 end
 
 local function assert_file_does_not_exist(filepath)
-  eq(true, nil == (lfs.attributes(filepath, 'r')))
+  eq(nil, lfs.attributes(filepath))
 end
 
 describe('fs function', function()
