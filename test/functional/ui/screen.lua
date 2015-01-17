@@ -112,6 +112,7 @@ function Screen.new(width, height)
     visual_bell = false,
     suspended = false,
     _default_attr_ids = nil,
+    _default_attr_ignore = nil,
     _mode = 'normal',
     _mouse_enabled = true,
     _attrs = {},
@@ -127,6 +128,10 @@ function Screen:set_default_attr_ids(attr_ids)
   self._default_attr_ids = attr_ids
 end
 
+function Screen:set_default_attr_ignore(attr_ignore)
+  self._default_attr_ignore = attr_ignore
+end
+
 function Screen:attach()
   request('ui_attach', self._width, self._height, true)
 end
@@ -139,7 +144,7 @@ function Screen:try_resize(columns, rows)
   request('ui_try_resize', columns, rows)
 end
 
-function Screen:expect(expected, attr_ids)
+function Screen:expect(expected, attr_ids, attr_ignore)
   -- remove the last line and dedent
   expected = dedent(expected:gsub('\n[ ]+$', ''))
   local expected_rows = {}
@@ -149,10 +154,19 @@ function Screen:expect(expected, attr_ids)
     table.insert(expected_rows, row)
   end
   local ids = attr_ids or self._default_attr_ids
+  if attr_ignore == nil and self._default_attr_ignore ~= nil then
+    attr_ignore = {}
+    -- don't ignore something we specified in attr_ids
+    for i,a in pairs(self._default_attr_ignore) do
+      if attr_index(ids, a) == nil then
+        table.insert(attr_ignore, a)
+      end
+    end
+  end
   self:wait(function()
     for i = 1, self._height do
       local expected_row = expected_rows[i]
-      local actual_row = self:_row_repr(self._rows[i], ids)
+      local actual_row = self:_row_repr(self._rows[i], ids, attr_ignore)
       if expected_row ~= actual_row then
         return 'Row '..tostring(i)..' didnt match.\nExpected: "'..
                expected_row..'"\nActual:   "'..actual_row..'"'
@@ -344,11 +358,11 @@ function Screen:_clear_row_section(rownum, startcol, stopcol)
   end
 end
 
-function Screen:_row_repr(row, attr_ids)
+function Screen:_row_repr(row, attr_ids, attr_ignore)
   local rv = {}
   local current_attr_id
   for i = 1, self._width do
-    local attr_id = get_attr_id(attr_ids, row[i].attrs)
+    local attr_id = get_attr_id(attr_ids, attr_ignore, row[i].attrs)
     if current_attr_id and attr_id ~= current_attr_id then
       -- close current attribute bracket, add it before any whitespace
       -- up to the current cell
@@ -385,36 +399,41 @@ function Screen:_current_screen()
   return table.concat(rv, '\n')
 end
 
-function Screen:snapshot_util(attrs)
+function Screen:snapshot_util(attrs, ignore)
   -- util to generate screen test
   pcall(function() self:wait(function() return "error" end, 250) end)
+  if ignore == nil then
+    ignore = self._default_attr_ignore
+  end
   if attrs == nil then
-    attrs = {{}}
+    attrs = {}
+    if self._default_attr_ids ~= nil then
+      for i, a in ipairs(self._default_attr_ids) do
+        attrs[i] = a
+      end
+    end
+
     for i = 1, self._height do
       local row = self._rows[i]
       for j = 1, self._width do
         local attr = row[j].attrs
-        local found = false
-        for i,a in pairs(attrs) do
-          if equal_attrs(a, attr) then
-            found = true
-            break
-          end
-        end
-        if not found then
+        if attr_index(attrs, attr) == nil and attr_index(ignore, attr) == nil then
           table.insert(attrs, attr)
         end
       end
     end
-    table.remove(attrs, 1)
   end
 
   local rv = {}
   for i = 1, self._height do
-    table.insert(rv, "  "..self:_row_repr(self._rows[i],attrs).."|")
+    table.insert(rv, "  "..self:_row_repr(self._rows[i],attrs, ignore).."|")
   end
   local attrstrs = {}
+  local alldefault = true
   for i, a in ipairs(attrs) do
+    if self._default_attr_ids == nil or self._default_attr_ids[i] ~= a then
+      alldefault = false
+    end
     local items = {}
     for f, v in pairs(a) do
       table.insert(items, f.." = "..tostring(v))
@@ -425,7 +444,11 @@ function Screen:snapshot_util(attrs)
   local attrstr = "{"..table.concat(attrstrs, ", ").."}"
   print( "\nscreen:expect([[")
   print( table.concat(rv, '\n'))
-  print( "]], "..attrstr..")\n")
+  if alldefault then
+    print( "]])\n")
+  else
+    print( "]], "..attrstr..")\n")
+  end
 end
 
 
@@ -438,7 +461,7 @@ function backward_find_meaningful(tbl, from)
   return from
 end
 
-function get_attr_id(attr_ids, attrs)
+function get_attr_id(attr_ids, attr_ignore, attrs)
   if not attr_ids then
     return
   end
@@ -447,7 +470,11 @@ function get_attr_id(attr_ids, attrs)
        return id
      end
   end
-  return nil
+  if attr_ignore == nil or attr_index(attr_ignore, attrs) ~= nil then
+    -- ignore this attrs
+    return nil
+  end
+  return "UNEXPECTED"
 end
 
 function equal_attrs(a, b)
@@ -456,6 +483,18 @@ function equal_attrs(a, b)
        a.italic == b.italic and a.reverse == b.reverse and
        a.foreground == b.foreground and
        a.background == b.background
+end
+
+function attr_index(attrs, attr)
+  if not attrs then
+    return nil
+  end
+  for i,a in pairs(attrs) do
+    if equal_attrs(a, attr) then
+      return i
+    end
+  end
+  return nil
 end
 
 return Screen

@@ -10,6 +10,7 @@ describe('Screen', function()
     clear()
     screen = Screen.new()
     screen:attach()
+    screen:set_default_attr_ignore( {{}, {bold=true, foreground=255}} ) 
   end)
 
   after_each(function()
