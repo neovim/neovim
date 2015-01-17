@@ -385,6 +385,50 @@ function Screen:_current_screen()
   return table.concat(rv, '\n')
 end
 
+function Screen:snapshot_util(attrs)
+  -- util to generate screen test
+  pcall(function() self:wait(function() return "error" end, 250) end)
+  if attrs == nil then
+    attrs = {{}}
+    for i = 1, self._height do
+      local row = self._rows[i]
+      for j = 1, self._width do
+        local attr = row[j].attrs
+        local found = false
+        for i,a in pairs(attrs) do
+          if equal_attrs(a, attr) then
+            found = true
+            break
+          end
+        end
+        if not found then
+          table.insert(attrs, attr)
+        end
+      end
+    end
+    table.remove(attrs, 1)
+  end
+
+  local rv = {}
+  for i = 1, self._height do
+    table.insert(rv, "  "..self:_row_repr(self._rows[i],attrs).."|")
+  end
+  local attrstrs = {}
+  for i, a in ipairs(attrs) do
+    local items = {}
+    for f, v in pairs(a) do
+      table.insert(items, f.." = "..tostring(v))
+    end
+    local dict = "{"..table.concat(items, ", ").."}"
+    table.insert(attrstrs, "["..tostring(i).."] = "..dict)
+  end
+  local attrstr = "{"..table.concat(attrstrs, ", ").."}"
+  print( "\nscreen:expect([[")
+  print( table.concat(rv, '\n'))
+  print( "]], "..attrstr..")\n")
+end
+
+
 function backward_find_meaningful(tbl, from)
   for i = from or #tbl, 1, -1 do
     if tbl[i] ~= ' ' then
@@ -399,15 +443,19 @@ function get_attr_id(attr_ids, attrs)
     return
   end
   for id, a in pairs(attr_ids) do
-    if a.bold == attrs.bold and a.standout == attrs.standout and
-       a.underline == attrs.underline and a.undercurl == attrs.undercurl and
-       a.italic == attrs.italic and a.reverse == attrs.reverse and
-       a.foreground == attrs.foreground and
-       a.background == attrs.background then
+    if equal_attrs(a, attrs) then
        return id
      end
   end
   return nil
+end
+
+function equal_attrs(a, b)
+    return a.bold == b.bold and a.standout == b.standout and
+       a.underline == b.underline and a.undercurl == b.undercurl and
+       a.italic == b.italic and a.reverse == b.reverse and
+       a.foreground == b.foreground and
+       a.background == b.background
 end
 
 return Screen
