@@ -6,6 +6,8 @@ local helpers = require('test.functional.helpers')
 local eq, clear, eval, feed, nvim =
   helpers.eq, helpers.clear, helpers.eval, helpers.feed, helpers.nvim
 
+local Screen = require('test.functional.ui.screen')
+
 
 local function create_file_with_nuls(name)
   return function()
@@ -40,6 +42,81 @@ describe('system()', function()
     eq(5, eval('v:shell_error'))
     eval([[system('this-should-not-exist')]])
     eq(127, eval('v:shell_error'))
+  end)
+
+  describe('executes shell function', function()
+    local screen
+
+    before_each(function()
+        clear()
+        screen = Screen.new()
+        screen:attach()
+    end)
+
+    after_each(function()
+        screen:detach()
+    end)
+
+    it('`echo` and waits for its return', function()
+      feed(':call system("echo")<cr>')
+      screen:expect([[
+        ^                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        :call system("echo")                                 |
+      ]])
+    end)
+
+    it('`yes` and is directly interrupted with CTRL-C', function()
+      feed(':call system("yes")<cr><c-c>')
+      screen:expect([[
+        ^                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        Type  :quit<Enter>  to exit Vim                      |
+      ]])
+    end)
+
+    it('`yes` and is a little bit later interrupted with CTRL-C', function()
+      feed(':call system("yes")<cr>')
+      feed('<c-c>')
+      screen:expect([[
+        ^                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        Type  :quit<Enter>  to exit Vim                      |
+      ]])
+    end)
   end)
 
   describe('passing no input', function()
@@ -135,6 +212,81 @@ describe('systemlist()', function()
     eq(5, eval('v:shell_error'))
     eval([[systemlist('this-should-not-exist')]])
     eq(127, eval('v:shell_error'))
+  end)
+
+  describe('exectues shell function', function()
+    local screen
+
+    before_each(function()
+        clear()
+        screen = Screen.new()
+        screen:attach()
+    end)
+
+    after_each(function()
+        screen:detach()
+    end)
+
+    it('`echo` and waits for its return', function()
+      feed(':call systemlist("echo")<cr>')
+      screen:expect([[
+        ^                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        :call systemlist("echo")                             |
+      ]])
+    end)
+
+    it('`yes` and is directly interrupted with CTRL-C', function()
+      feed(':call systemlist("echo")<cr><c-c>')
+      screen:expect([[
+        ^                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        Type  :quit<Enter>  to exit Vim                      |
+      ]])
+    end)
+
+    it('`yes` and is a little bit later interrupted with CTRL-C', function()
+      feed(':call systemlist("echo")<cr>')
+      feed('<c-c>')
+      screen:expect([[
+        ^                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        Type  :quit<Enter>  to exit Vim                      |
+      ]])
+    end)
   end)
 
   describe('passing string with linefeed characters as input', function()
