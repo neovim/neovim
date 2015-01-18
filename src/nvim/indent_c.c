@@ -508,29 +508,24 @@ get_indent_nolabel (     /* XXX */
  *   label:	if (asdf && asdfasdf)
  *		^
  */
-static int skip_label(linenr_T lnum, char_u **pp)
-{
-  char_u      *l;
-  int amount;
-  pos_T cursor_save;
+static int skip_label(linenr_T lnum, char_u **pp) FUNC_ATTR_NONNULL_ALL
+{ /* XXX */
+  char_u *l = ml_get(lnum);
+  int indent;
 
-  cursor_save = curwin->w_cursor;
-  curwin->w_cursor.lnum = lnum;
-  l = get_cursor_line_ptr();
-  /* XXX */
+  /* We repeatedly call "ml_get(lnum)" because every time it's called    */
+  /* (or any time we call a function that calls it, marked with an 'XXX' */
+  /* comment) the returned pointer is invalidated.                       */
   if (cin_iscase(l, FALSE) || cin_isscopedecl(l) || cin_islabel()) {
-    amount = get_indent_nolabel(lnum);
-    l = after_label(get_cursor_line_ptr());
-    if (l == NULL)              /* just in case */
-      l = get_cursor_line_ptr();
+    indent = get_indent_after_label(lnum);
+    l = after_label(ml_get(lnum));
+    *pp = (l == NULL) ? ml_get(lnum) : l;
   } else {
-    amount = get_indent();
-    l = get_cursor_line_ptr();
+    *pp = l = ml_get(lnum);
+    indent = get_indent_str(l, (int)curbuf->b_p_ts, false);
   }
-  *pp = l;
 
-  curwin->w_cursor = cursor_save;
-  return amount;
+  return indent;
 }
 
 /*
