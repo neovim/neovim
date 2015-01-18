@@ -1985,13 +1985,13 @@ changed_lines (
   changed_common(lnum, col, lnume, xtra);
 }
 
-static void 
-changed_lines_buf (
-    buf_T *buf,
-    linenr_T lnum,              /* first line with change */
-    linenr_T lnume,             /* line below last changed line */
-    long xtra                  /* number of extra lines (negative when deleting) */
-)
+/// Mark line range in buffer as changed.
+///
+/// @param buf the buffer where lines were changed
+/// @param lnum first line with change
+/// @param lnume line below last changed line
+/// @param xtra number of extra lines (negative when deleting)
+void changed_lines_buf(buf_T *buf, linenr_T lnum, linenr_T lnume, long xtra)
 {
   if (buf->b_mod_set) {
     /* find the maximum area that must be redisplayed */

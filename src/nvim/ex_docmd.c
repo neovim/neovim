@@ -4320,7 +4320,7 @@ static void ex_unmap(exarg_T *eap)
  */
 static void ex_mapclear(exarg_T *eap)
 {
-  map_clear(eap->cmd, eap->arg, eap->forceit, FALSE);
+  map_clear_mode(eap->cmd, eap->arg, eap->forceit, false);
 }
 
 /*
@@ -4328,7 +4328,7 @@ static void ex_mapclear(exarg_T *eap)
  */
 static void ex_abclear(exarg_T *eap)
 {
-  map_clear(eap->cmd, eap->arg, TRUE, TRUE);
+  map_clear_mode(eap->cmd, eap->arg, true, true);
 }
 
 static void ex_autocmd(exarg_T *eap)

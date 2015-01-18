@@ -28,6 +28,8 @@ typedef struct file_buffer buf_T; // Forward declaration
 #include "nvim/profile.h"
 // for String
 #include "nvim/api/private/defs.h"
+// for Map(K, V)
+#include "nvim/map.h"
 
 #define MODIFIABLE(buf) (!buf->terminal && buf->b_p_ma)
 
@@ -100,6 +102,11 @@ typedef int scid_T;                     /* script ID */
 
 // for signlist_T
 #include "nvim/sign_defs.h"
+
+// for bufhl_*_T
+#include "nvim/bufhl_defs.h"
+
+typedef Map(linenr_T, bufhl_vec_T) bufhl_info_T;
 
 // for FileID
 #include "nvim/os/fs_defs.h"
@@ -754,6 +761,8 @@ struct file_buffer {
   dict_T *additional_data;      // Additional data from shada file if any.
 
   int b_mapped_ctrl_c;          // modes where CTRL-C is mapped
+
+  bufhl_info_T *b_bufhl_info;   // buffer stored highlights
 };
 
 /*

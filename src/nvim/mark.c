@@ -922,6 +922,7 @@ void mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after)
     }
 
     sign_mark_adjust(line1, line2, amount, amount_after);
+    bufhl_mark_adjust(curbuf, line1, line2, amount, amount_after);
   }
 
   /* previous context mark */

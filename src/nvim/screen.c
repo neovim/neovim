@@ -2184,6 +2184,10 @@ win_line (
   int prev_c1 = 0;                      /* first composing char for prev_c */
   int did_line_attr = 0;
 
+  bool has_bufhl = false;                // this buffer has highlight matches
+  int bufhl_attr = 0;                   // attributes desired by bufhl
+  bufhl_lineinfo_T bufhl_info;          // bufhl data for this line
+
   /* draw_state: items that are drawn in sequence: */
 #define WL_START        0               /* nothing done yet */
 # define WL_CMDLINE     WL_START + 1    /* cmdline window column */
@@ -2242,6 +2246,11 @@ win_line (
       has_syntax = TRUE;
       extra_check = TRUE;
     }
+  }
+
+  if (bufhl_start_line(wp->w_buffer, lnum, &bufhl_info)) {
+    has_bufhl = true;
+    extra_check = true;
   }
 
   /* Check for columns to display for 'colorcolumn'. */
@@ -3333,6 +3342,17 @@ win_line (
             char_attr = hl_combine_attr(char_attr, spell_attr);
           else
             char_attr = hl_combine_attr(spell_attr, char_attr);
+        }
+
+        if (has_bufhl && v > 0) {
+          bufhl_attr = bufhl_get_attr(&bufhl_info, (colnr_T)v);
+          if (bufhl_attr != 0) {
+            if (!attr_pri) {
+              char_attr = hl_combine_attr(char_attr, bufhl_attr);
+            } else {
+              char_attr = hl_combine_attr(bufhl_attr, char_attr);
+            }
+          }
         }
 
         if (wp->w_buffer->terminal) {
