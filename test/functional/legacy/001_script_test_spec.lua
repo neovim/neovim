@@ -9,7 +9,7 @@ describe('test script', function()
   setup(clear)
 
   it('is working', function()
-    -- Write a single line to test.out to check if testing works at all.
+    -- Insert a single line to check if testing works at all.
     execute('%d')
     feed('athis is a test<esc>')
 
@@ -22,12 +22,12 @@ end)
 describe('term size', function()
   setup(clear)
 
-  it('is greater than 80x24', function()
-    -- (Some tests will fail. When columns and/or lines are small).
+  it('at least 80x24', function()
+    -- (Some tests will fail when columns and/or lines are small).
     local lines = eval('&lines')
     local columns = eval('&columns')
-    assert.False( lines < 24 )
-    assert.False( columns < 80 )
+    assert.True( lines >= 24 )
+    assert.True( columns >= 80 )
   end)
 end)
 
