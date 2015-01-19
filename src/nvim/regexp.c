@@ -1693,7 +1693,7 @@ static char_u *regpiece(int *flagp)
     if (lop == BEHIND || lop == NOBEHIND) {
       if (nr < 0)
         nr = 0;                 /* no limit is same as zero limit */
-      reginsert_nr(lop, nr, ret);
+      reginsert_nr(lop, (uint32_t)nr, ret);
     } else
       reginsert(lop, ret);
     break;
@@ -2122,14 +2122,14 @@ static char_u *regatom(int *flagp)
     default:
       if (VIM_ISDIGIT(c) || c == '<' || c == '>'
           || c == '\'') {
-        long_u n = 0;
+        uint32_t n = 0;
         int cmp;
 
         cmp = c;
         if (cmp == '<' || cmp == '>')
           c = getchr();
         while (VIM_ISDIGIT(c)) {
-          n = n * 10 + (c - '0');
+          n = n * 10 + (uint32_t)(c - '0');
           c = getchr();
         }
         if (c == '\'' && n == 0) {
@@ -2155,7 +2155,7 @@ static char_u *regatom(int *flagp)
           else {
             /* put the number and the optional
              * comparator after the opcode */
-            regcode = re_put_long(regcode, n);
+            regcode = re_put_uint32(regcode, n);
             *regcode++ = cmp;
           }
           break;
@@ -2580,7 +2580,8 @@ static void reginsert_nr(int op, long val, char_u *opnd)
   *place++ = op;
   *place++ = NUL;
   *place++ = NUL;
-  re_put_long(place, (long_u)val);
+  assert(val >= 0 && (uintmax_t)val <= UINT32_MAX);
+  re_put_uint32(place, (uint32_t)val);
 }
 
 /*
@@ -2609,15 +2610,17 @@ static void reginsert_limits(int op, long minval, long maxval, char_u *opnd)
   *place++ = op;
   *place++ = NUL;
   *place++ = NUL;
-  place = re_put_long(place, (long_u)minval);
-  place = re_put_long(place, (long_u)maxval);
+  assert(minval >= 0 && (uintmax_t)minval <= UINT32_MAX);
+  place = re_put_uint32(place, (uint32_t)minval);
+  assert(maxval >= 0 && (uintmax_t)maxval <= UINT32_MAX);
+  place = re_put_uint32(place, (uint32_t)maxval);
   regtail(opnd, place);
 }
 
 /*
- * Write a long as four bytes at "p" and return pointer to the next char.
+ * Write a four bytes number at "p" and return pointer to the next char.
  */
-static char_u *re_put_long(char_u *p, long_u val)
+static char_u *re_put_uint32(char_u *p, uint32_t val)
 {
   *p++ = (char_u) ((val >> 24) & 0377);
   *p++ = (char_u) ((val >> 16) & 0377);
@@ -3643,7 +3646,6 @@ static int reg_match_visual(void)
   int mode;
   colnr_T start, end;
   colnr_T start2, end2;
-  colnr_T cols;
 
   /* Check if the buffer is the current buffer. */
   if (reg_buf != curbuf || VIsual.lnum == 0)
@@ -3686,7 +3688,10 @@ static int reg_match_visual(void)
       end = end2;
     if (top.col == MAXCOL || bot.col == MAXCOL)
       end = MAXCOL;
-    cols = win_linetabsize(wp, regline, (colnr_T)(reginput - regline));
+    unsigned int cols_u = win_linetabsize(wp, regline,
+                                          (colnr_T)(reginput - regline));
+    assert(cols_u <= MAXCOL);
+    colnr_T cols = (colnr_T)cols_u;
     if (cols < start || cols > end - (*p_sel == 'e'))
       return FALSE;
   }
@@ -3862,20 +3867,25 @@ regmatch (
           break;
 
         case RE_LNUM:
-          if (!REG_MULTI || !re_num_cmp((long_u)(reglnum + reg_firstlnum),
-                  scan))
+          assert(reglnum + reg_firstlnum >= 0
+                 && (uintmax_t)(reglnum + reg_firstlnum) <= UINT32_MAX);
+          if (!REG_MULTI || !re_num_cmp((uint32_t)(reglnum + reg_firstlnum),
+                                        scan))
             status = RA_NOMATCH;
           break;
 
         case RE_COL:
-          if (!re_num_cmp((long_u)(reginput - regline) + 1, scan))
+          assert(reginput - regline + 1 >= 0
+                 && (uintmax_t)(reginput - regline + 1) <= UINT32_MAX);
+          if (!re_num_cmp((uint32_t)(reginput - regline + 1), scan))
             status = RA_NOMATCH;
           break;
 
         case RE_VCOL:
-          if (!re_num_cmp((long_u)win_linetabsize(
-                      reg_win == NULL ? curwin : reg_win,
-                      regline, (colnr_T)(reginput - regline)) + 1, scan))
+          if (!re_num_cmp(win_linetabsize(reg_win == NULL ? curwin : reg_win,
+                                          regline,
+                                          (colnr_T)(reginput - regline)) + 1,
+                          scan))
             status = RA_NOMATCH;
           break;
 
@@ -5599,9 +5609,9 @@ static void save_se_one(save_se_T *savep, char_u **pp)
 /*
  * Compare a number with the operand of RE_LNUM, RE_COL or RE_VCOL.
  */
-static int re_num_cmp(long_u val, char_u *scan)
+static int re_num_cmp(uint32_t val, char_u *scan)
 {
-  long_u n = OPERAND_MIN(scan);
+  uint32_t n = (uint32_t)OPERAND_MIN(scan);
 
   if (OPERAND_CMP(scan) == '>')
     return val > n;

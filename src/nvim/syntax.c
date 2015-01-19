@@ -3837,7 +3837,7 @@ static void add_keyword(char_u *name,
   }
   kp->next_list = copy_id_list(next_list);
 
-  long_u hash = hash_hash(kp->keyword);
+  hash_T hash = hash_hash(kp->keyword);
   hashtab_T *ht = (curwin->w_s->b_syn_ic) ? &curwin->w_s->b_keywtab_ic
                                           : &curwin->w_s->b_keywtab;
   hashitem_T *hi = hash_lookup(ht, kp->keyword, hash);

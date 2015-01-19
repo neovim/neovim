@@ -10332,7 +10332,7 @@ static void get_user_input(typval_T *argvars, typval_T *rettv, int inputdialog)
       if (!inputdialog && argvars[2].v_type != VAR_UNKNOWN) {
         char_u  *xp_name;
         int xp_namelen;
-        long argt;
+        uint32_t argt;
 
         /* input() with a third argument: completion */
         rettv->vval.v_string = NULL;
