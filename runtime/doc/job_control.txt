@@ -51,7 +51,7 @@ event. The best way to understand is with a complete example:
       elseif v:job_data[1] == 'stderr'
         let str = 'shell '.v:job_data[0].' stderr: '.join(v:job_data[2])
       else
-        let str = 'shell '.v:job_data[0].' exited'
+        let str = 'shell '.v:job_data[0].' exited with status '.v:job_data[2]
       endif
 
       call append(line('$'), str)
@@ -81,7 +81,8 @@ Here's what is happening:
   0: The job id
   1: The kind of activity: one of "stdout", "stderr" or "exit"
   2: When "activity" is "stdout" or "stderr", this will contain a list of
-     lines read from stdout or stderr
+     lines read from stdout or stderr. When "activity" is "exit", this will
+     contain the exit status of the job.
 
 To send data to the job's stdin, one can use the |jobsend()| function, like
 this:
