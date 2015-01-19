@@ -46,6 +46,12 @@ describe('BufEnter with modelines', function()
     -- Include Xxx in the current file
     feed('G:r Xxx<CR>')
 
+    -- Vim issue #57 do not move cursor on <c-o> when autoindent is set
+    execute('set fo+=r')
+    feed('G')
+    feed('o# abcdef<Esc>2hi<CR><c-o>d0<Esc>')
+    feed('o# abcdef<Esc>2hi<c-o>d0<Esc>')
+
     expect([[
       startstart
       start of test file Xxx
@@ -63,7 +69,10 @@ describe('BufEnter with modelines', function()
           this is a test
           this is a test
       this should be in column 1
-      end of test file Xxx]])
+      end of test file Xxx
+      # abc
+      def
+      def]])
   end)
 
   teardown(function()

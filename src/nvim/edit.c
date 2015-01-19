@@ -5751,8 +5751,12 @@ stop_insert (
       }
       if (curwin->w_cursor.lnum != tpos.lnum)
         curwin->w_cursor = tpos;
-      else if (cc != NUL)
-        ++curwin->w_cursor.col;         /* put cursor back on the NUL */
+      else {
+        tpos.col++;
+        if (cc != NUL && gchar_pos(&tpos) == NUL) {
+          ++curwin->w_cursor.col;         // put cursor back on the NUL
+        }
+      }
 
       /* <C-S-Right> may have started Visual mode, adjust the position for
        * deleted characters. */
