@@ -1805,6 +1805,7 @@ int get_c_indent(void)
     }
 
     if (trypos != NULL) {
+      our_paren_pos = *trypos;
       /*
        * If the matching paren is more than one line away, use the indent of
        * a previous non-empty line that matches the same paren.
@@ -1814,7 +1815,6 @@ int get_c_indent(void)
         amount = get_indent_lnum(curwin->w_cursor.lnum - 1);      /* XXX */
       } else {
         amount = -1;
-        our_paren_pos = *trypos;
         for (lnum = cur_curpos.lnum - 1; lnum > our_paren_pos.lnum; --lnum) {
           l = skipwhite(ml_get(lnum));
           if (cin_nocode(l))                    /* skip comment lines */
