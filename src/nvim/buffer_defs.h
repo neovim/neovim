@@ -861,6 +861,7 @@ struct frame_S {
 typedef struct {
   regmmatch_T rm;       /* points to the regexp program; contains last found
                            match (may continue in next line) */
+  bool use_regexp;      /* if the regexp should be used (set to false on error) */
   buf_T       *buf;     /* the buffer to search for a match */
   linenr_T lnum;        /* the line to search for a match */
   int attr;             /* attributes to be used for a match */

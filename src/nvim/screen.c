@@ -392,7 +392,6 @@ void update_curbuf(int type)
 void update_screen(int type)
 {
   static int did_intro = FALSE;
-  int did_one;
 
   /* Don't do anything if the screen structures are (not yet) valid. */
   if (!screen_valid(TRUE))
@@ -531,15 +530,9 @@ void update_screen(int type)
    * Go from top to bottom through the windows, redrawing the ones that need
    * it.
    */
-  did_one = FALSE;
-  search_hl.rm.regprog = NULL;
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_redr_type != 0) {
       cursor_off();
-      if (!did_one) {
-        did_one = TRUE;
-        start_search_hl();
-      }
       win_update(wp);
     }
 
@@ -549,7 +542,6 @@ void update_screen(int type)
       win_redr_status(wp);
     }
   }
-  end_search_hl();
   /* May need to redraw the popup menu. */
   if (pum_visible())
     pum_redraw();
@@ -622,10 +614,8 @@ void update_single_line(win_T *wp, linenr_T lnum)
       if (lnum == wp->w_lines[j].wl_lnum) {
         screen_start();         /* not sure of screen cursor */
         init_search_hl(wp);
-        start_search_hl();
         prepare_search_hl(wp, lnum);
         win_line(wp, lnum, row, row + wp->w_lines[j].wl_size, false);
-        end_search_hl();
         break;
       }
       row += wp->w_lines[j].wl_size;
@@ -643,7 +633,6 @@ static void update_prepare(void)
 {
     cursor_off();
     updating_screen = TRUE;
-    start_search_hl();
 }
 
 /*
@@ -655,7 +644,6 @@ static void update_finish(void)
         showmode();
     }
 
-    end_search_hl();
     updating_screen = FALSE;
 }
 
@@ -877,7 +865,7 @@ static void win_update(win_T *wp)
        */
       iter_matches_start(wp, &istate);
       while (iter_matches_next(false, &istate, &cur, &shl)) {
-        if (shl->rm.regprog != NULL
+        if (shl->use_regexp
             && re_multiline(shl->rm.regprog)) {
           top_to_mod = TRUE;
           break;
@@ -2958,7 +2946,7 @@ win_line (
           }
           bool pos_inprogress = true; // mark that a position match search is
                                       // in progress
-          while (shl->rm.regprog != NULL
+          while (shl->use_regexp
                                  || (cur != NULL && pos_inprogress)) {
             if (shl->startcol != MAXCOL
                 && v >= (long)shl->startcol
@@ -5523,28 +5511,11 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
   }
 }
 
-/*
- * Prepare for 'hlsearch' highlighting.
- */
-static void start_search_hl(void)
-{
-  if (p_hls && !no_hlsearch) {
-    last_pat_prog(&search_hl.rm);
-    search_hl.attr = hl_attr(HLF_L);
-    /* Set the time limit to 'redrawtime'. */
-    search_hl.tm = profile_setlimit(p_rdt);
-  }
-}
-
-/*
- * Clean up for 'hlsearch' highlighting.
- */
-static void end_search_hl(void)
-{
-  if (search_hl.rm.regprog != NULL) {
-    vim_regfree(search_hl.rm.regprog);
-    search_hl.rm.regprog = NULL;
-  }
+/// Should be called when the pattern used for search highlighting is changed,
+/// regardless of search highlighting is active right now, or not.
+void invalidate_search_hl(void) {
+  vim_regfree(search_hl.rm.regprog);
+  search_hl.rm.regprog = NULL;
 }
 
 /*
@@ -5556,6 +5527,17 @@ static void init_search_hl(win_T *wp)
   match_T* shl;
   iter_matches_T istate;
 
+  if (p_hls && !no_hlsearch) {
+    if (search_hl.rm.regprog == NULL) {
+      last_pat_prog(&search_hl.rm);
+    }
+    // last_pat_prog might fail to compile pattern
+    search_hl.use_regexp = (search_hl.rm.regprog != NULL);
+    search_hl.attr = hl_attr(HLF_L);
+  } else {
+    search_hl.use_regexp = false;
+  }
+
   /* Setup for match and 'hlsearch' highlighting.  Disable any previous
    * match */
   iter_matches_start(wp, &istate);
@@ -5565,9 +5547,10 @@ static void init_search_hl(win_T *wp)
         cur->hl.attr = 0;
       else
         cur->hl.attr = syn_id2attr(cur->hlg_id);
-      /* time limit for search_hl is set at the toplevel, for all windows */
-      cur->hl.tm = profile_setlimit(p_rdt);
+      cur->hl.use_regexp = (cur->hl.rm.regprog != NULL);
     }
+    /* Set the time limit to 'redrawtime'. */
+    shl->tm = profile_setlimit(p_rdt);
     shl->buf = wp->w_buffer;
     shl->lnum = 0;
     shl->first_lnum = 0;
@@ -5591,7 +5574,7 @@ static void prepare_search_hl(win_T *wp, linenr_T lnum)
    */
     iter_matches_start(wp, &istate);
     while (iter_matches_next(false, &istate, &cur, &shl)) {
-    if (shl->rm.regprog != NULL
+    if (shl->use_regexp
         && shl->lnum == 0
         && re_multiline(shl->rm.regprog)) {
       if (shl->first_lnum == 0) {
@@ -5607,7 +5590,7 @@ static void prepare_search_hl(win_T *wp, linenr_T lnum)
       bool pos_inprogress = true; // mark that a position match search is
                                   // in progress
       n = 0;
-      while (shl->first_lnum < lnum && (shl->rm.regprog != NULL
+      while (shl->first_lnum < lnum && (shl->use_regexp
                                     || (cur != NULL && pos_inprogress))) {
         next_search_hl(wp, shl, shl->first_lnum, (colnr_T)n, cur);
         pos_inprogress = !(cur == NULL ||  cur->pos.cur == 0);
@@ -5698,17 +5681,14 @@ next_search_hl (
       matchcol = shl->rm.endpos[0].col;
 
     shl->lnum = lnum;
-    if (shl->rm.regprog != NULL) {
+    if (shl->use_regexp) {
       nmatched = vim_regexec_multi(&shl->rm, win, shl->buf, lnum, matchcol, &(shl->tm));
       if (called_emsg || got_int) {
         // Error while handling regexp: stop using this regexp.
         if (shl == &search_hl) {
-          // don't free regprog in the match list, it's a copy
-          vim_regfree(shl->rm.regprog);
           SET_NO_HLSEARCH(TRUE);
         }
-        // FIXME: error handling for a matchadd pattern
-        shl->rm.regprog = NULL;
+        shl->use_regexp = false;
         shl->lnum = 0;
         got_int = FALSE; // avoid the "Type :quit to exit Vim" message
         break;
