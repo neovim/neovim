@@ -192,7 +192,7 @@ Folding.						|folding|
 	Folds can be created manually, from the syntax of the file, by indent,
 	etc.
 
-Diff mode.						|diff|
+Diff mode.						|diff-mode|
 	Vim can show two versions of a file with the differences highlighted.
 	Parts of the text that are equal are folded away.  Commands can be
 	used to move text from one version to the other.
@@ -826,7 +826,7 @@ Only Vim is able to accept options in between and after the file names.
 		loading the edit buffer.
 		Vim: allow up to 10 "-c" arguments
 
--d		Vim: start with 'diff' set. |vimdiff|
+-d		Vim: start with 'diff' set. |diff-mode|
 
 -D		Vim: debug mode.
 

@@ -133,7 +133,7 @@ Read this from start to end to learn the essential commands.
 		|08.4|	Vertical splits
 		|08.5|	Moving windows
 		|08.6|	Commands for all windows
-		|08.7|	Viewing differences with vimdiff
+		|08.7|	Viewing differences with diff mode
 		|08.8|	Various
 
 |usr_09.txt|  Using the GUI

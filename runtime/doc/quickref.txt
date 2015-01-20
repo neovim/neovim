@@ -1134,7 +1134,7 @@ Context-sensitive completion on the command-line:
 |-e|	-e		    Ex mode, start vim in Ex mode
 |-R|	-R		    Read-only mode, implies -n
 |-m|	-m		    modifications not allowed (resets 'write' option)
-|-d|	-d		    diff mode |diff|
+|-d|	-d		    |diff-mode|
 |-b|	-b		    binary mode
 |-l|	-l		    lisp mode
 |-A|	-A		    Arabic mode ('arabic' is set)
