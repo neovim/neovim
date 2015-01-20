@@ -28,7 +28,7 @@ STARTTEST
 :new
 :new
 :2wincmd w
-:-2close!
+:-1close!
 :let buffers = []
 :windo call add(buffers, bufnr('%'))
 :call add(tests, buffers)
@@ -62,7 +62,7 @@ STARTTEST
 :let buffers = []
 :windo call add(buffers, bufnr('%'))
 :call add(tests, buffers)
-:9hide
+:$hide
 :let buffers = []
 :windo call add(buffers, bufnr('%'))
 :call add(tests, buffers)
