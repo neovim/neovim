@@ -99,8 +99,8 @@ return {
   },
   {
     command='argdo',
-    flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM),
-    addr_type=ADDR_LINES,
+    flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, RANGE, NOTADR, DFLALL),
+    addr_type=ADDR_ARGUMENTS,
     func='ex_listdo',
   },
   {
@@ -273,8 +273,8 @@ return {
   },
   {
     command='bufdo',
-    flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM),
-    addr_type=ADDR_LINES,
+    flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, RANGE, NOTADR, DFLALL),
+    addr_type=ADDR_BUFFERS,
     func='ex_listdo',
   },
   {
@@ -2589,8 +2589,8 @@ return {
   },
   {
     command='tabdo',
-    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
-    addr_type=ADDR_LINES,
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, RANGE, NOTADR, DFLALL),
+    addr_type=ADDR_TABS,
     func='ex_listdo',
   },
   {
@@ -2973,8 +2973,8 @@ return {
   },
   {
     command='windo',
-    flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM),
-    addr_type=ADDR_LINES,
+    flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, RANGE, NOTADR, DFLALL),
+    addr_type=ADDR_WINDOWS,
     func='ex_listdo',
   },
   {

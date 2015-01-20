@@ -695,8 +695,9 @@ can also get to them with the buffer list commands, like ":bnext".
 8. Do a command in all buffers or windows			*list-repeat*
 
 							*:windo*
-:windo {cmd}		Execute {cmd} in each window.
-			It works like doing this: >
+:[range]windo {cmd}	Execute {cmd} in each window or if [range] is given
+                        only in windows for which the window number lies in
+                        the [range]. It works like doing this: >
 				CTRL-W t
 				:{cmd}
 				CTRL-W w
@@ -714,8 +715,10 @@ can also get to them with the buffer list commands, like ":bnext".
 			Also see |:tabdo|, |:argdo| and |:bufdo|.
 
 							*:bufdo*
-:bufdo[!] {cmd}		Execute {cmd} in each buffer in the buffer list.
-			It works like doing this: >
+:[range]bufdo[!] {cmd}	Execute {cmd} in each buffer in the buffer list or if 
+                        [range[ is given only for buffers for which their
+                        buffer name is in the [range]. It works like doing 
+                        this: >
 				:bfirst
 				:{cmd}
 				:bnext

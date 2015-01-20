@@ -1,4 +1,4 @@
-*editing.txt*   For Vim version 7.4.  Last change: 2014 Jul 19
+*editing.txt*   For Vim version 7.4.  Last change: 2015 Jan 04
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -801,8 +801,9 @@ current window.  The two windows then share this list, until one of them uses
 USING THE ARGUMENT LIST
 
 						*:argdo*
-:argdo[!] {cmd}		Execute {cmd} for each file in the argument list.
-			It works like doing this: >
+:[range]argdo[!] {cmd}	Execute {cmd} for each file in the argument list or
+                        if [range] is specified only for arguments in that
+			range. It works like doing this: >
 				:rewind
 				:{cmd}
 				:next

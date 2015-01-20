@@ -90,6 +90,40 @@ STARTTEST
 :only!
 :e! test.out
 :call append(0, g:lines)
+:unlet g:lines
+:w|bd
+:se hidden
+:b1
+ENDTEST
+
+STARTTEST
+:only!
+:let g:lines = []
+:%argd
+:arga a b c d e f
+:3argu
+:let args = ''
+:.,$-argdo let args .= ' '.expand('%')
+:call add(g:lines, 'argdo:' . args)
+:split|split|split|split
+:2wincmd w
+:let windows = ''
+:.,$-windo let windows .= ' '.winnr()
+:call add(g:lines, 'windo:'. windows)
+:b2
+:let buffers = ''
+:.,$-bufdo let buffers .= ' '.bufnr('%')
+:call add(g:lines, 'bufdo:' . buffers)
+:let buffers = ''
+:3,7bufdo let buffers .= ' '.bufnr('%')
+:call add(g:lines, 'bufdo:' . buffers)
+:tabe|tabe|tabe|tabe
+:normal! 2gt
+:let tabpages = ''
+:.,$-tabdo let tabpages .= ' '.tabpagenr()
+:call add(g:lines, 'tabdo:' . tabpages)
+:e! test.out
+:call append('$', g:lines)
 :w|qa!
 ENDTEST
 

@@ -1838,13 +1838,33 @@ void ex_listdo(exarg_T *eap)
       || !check_changed(curbuf, CCGD_AW
           | (eap->forceit ? CCGD_FORCEIT : 0)
           | CCGD_EXCMD)) {
-    /* start at the first argument/window/buffer */
     i = 0;
+    /* start at the eap->line1 argument/window/buffer */
     wp = firstwin;
     tp = first_tabpage;
+    switch (eap->cmdidx) {
+      case CMD_windo:
+        for (; wp != NULL && i + 1 < eap->line1; wp = wp->w_next) {
+          i++;
+        }
+        break;
+      case CMD_tabdo:
+        for (; tp != NULL && i + 1 < eap->line1; tp = tp->tp_next) {
+          i++;
+        }
+        break;
+      case CMD_argdo:
+        i = eap->line1 - 1;
+        break;
+      case CMD_bufdo:
+        i = eap->line1;
+        break;
+      default:
+        break;
+    }
     /* set pcmark now */
     if (eap->cmdidx == CMD_bufdo)
-      goto_buffer(eap, DOBUF_FIRST, FORWARD, 0);
+      goto_buffer(eap, DOBUF_FIRST, FORWARD, i);
     else
       setpcmark();
     listcmd_busy = TRUE;            /* avoids setting pcmark below */
@@ -1867,7 +1887,6 @@ void ex_listdo(exarg_T *eap)
         }
         if (curwin->w_arg_idx != i)
           break;
-        ++i;
       } else if (eap->cmdidx == CMD_windo) {
         /* go to window "wp" */
         if (!win_valid(wp))
@@ -1893,13 +1912,14 @@ void ex_listdo(exarg_T *eap)
           }
       }
 
+      ++i;
       /* execute the command */
       do_cmdline(eap->arg, eap->getline, eap->cookie,
           DOCMD_VERBOSE + DOCMD_NOWAIT);
 
       if (eap->cmdidx == CMD_bufdo) {
         /* Done? */
-        if (next_fnum < 0)
+        if (next_fnum < 0 || next_fnum > eap->line2)
           break;
 
         /* Check if the buffer still exists. */
@@ -1932,6 +1952,14 @@ void ex_listdo(exarg_T *eap)
         /* required when 'scrollbind' has been set */
         if (curwin->w_p_scb)
           do_check_scrollbind(TRUE);
+      }
+      if (eap->cmdidx == CMD_windo || eap->cmdidx == CMD_tabdo) {
+        if (i + 1 > eap->line2) {
+          break;
+        }
+      }
+      if (eap->cmdidx == CMD_argdo && i >= eap->line2) {
+        break;
       }
     }
     listcmd_busy = FALSE;
