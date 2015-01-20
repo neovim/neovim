@@ -1882,9 +1882,6 @@ In gvim the backspace key produces a backspace character, but on Linux the
 VERASE key is Delete.  Set VERASE to Backspace? (patch by Stephane Chazelas,
 2007 Oct 16)
 
-TermResponse autocommand isn't always triggered when using vimdiff. (Aron
-Griffis, 2007 Sep 19)
-
 Create a gvimtutor.1 file and change Makefiles to install it.
 
 When 'encoding' is utf-8 typing text at the end of the line causes previously

@@ -59,7 +59,6 @@ static char *(features[]) = {
   "+cursorbind",
   "+cursorshape",
   "+dialog_con",
-  "+diff",
   "+digraphs",
   "-dnd",
   "-ebcdic",

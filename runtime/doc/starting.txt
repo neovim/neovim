@@ -99,8 +99,6 @@ rvim	vim -Z	    Like "vim", but in restricted mode (see |-Z|)   *rvim*
 rview	vim -RZ	    Like "view", but in restricted mode.	  *rview*
 rgvim	vim -gZ	    Like "gvim", but in restricted mode.	  *rgvim*
 rgview	vim -RgZ    Like "gview", but in restricted mode.	  *rgview*
-vimdiff vim -d	    Start in diff mode |diff-mode|
-gvimdiff vim -gd    Start in diff mode |diff-mode|
 
 Additional characters may follow, they are ignored.  For example, you can have
 "gvim-5" to start the GUI.  You must have an executable by that name then, of
@@ -397,9 +395,7 @@ argument.
 		of terminal you are using.  (See |terminal-info|.)  {not in Vi}
 
 							*-d*
--d		Start in diff mode, like |vimdiff|.
-		{not in Vi} {not available when compiled without the |+diff|
-		feature}
+-d		Start in |diff-mode|.
 
 							*-f*
 -f		GUI: Do not disconnect from the program that started Vim.

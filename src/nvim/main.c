@@ -204,7 +204,7 @@ int main(int argc, char **argv)
 
   /*
    * Figure out the way to work from the command name argv[0].
-   * "vimdiff" starts diff mode, "rvim" sets "restricted", etc.
+   * "view" sets "readonlymode", "rvim" sets "restricted", etc.
    */
   parse_command_name(&params);
 
@@ -454,7 +454,7 @@ int main(int argc, char **argv)
   edit_buffers(&params);
 
   if (params.diff_mode) {
-    /* set options in each window for "vimdiff". */
+    /* set options in each window for "nvim -d". */
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       diff_win_options(wp, TRUE);
     }
@@ -867,11 +867,10 @@ static void init_locale(void)
 #endif
 
 /*
- * Check for: [r][g][vi|vim|view][diff][ex[im]]
+ * Check for: [r][g][vi|vim|view][ex[im]]
  * If the executable name starts with "r" we disable shell commands.
  * If the next character is "g" we run the GUI version.
  * If the next characters are "view" we start in readonly mode.
- * If the next characters are "diff" or "vimdiff" we start in diff mode.
  * If the next characters are "ex" we start in Ex mode.  If it's followed
  * by "im" use improved Ex mode.
  */
@@ -901,10 +900,6 @@ static void parse_command_name(mparm_T *parmp)
   } else {
     parse_string(&initstr, "vim", 3);   /* consume "vim" if it's there */
   }
-
-  /* Catch "[r][g]vimdiff" and "[r][g]viewdiff". */
-  if (parse_string(&initstr, "diff", 4))
-    parmp->diff_mode = TRUE;
 
   if (parse_string(&initstr, "ex", 2)) {
     if (parse_string(&initstr, "im", 2))
@@ -2076,7 +2071,7 @@ static void usage(void)
   mch_msg(_("  -e                    Ex mode (like \"ex\")\n"));
   mch_msg(_("  -E                    Improved Ex mode\n"));
   mch_msg(_("  -s                    Silent (batch) mode (only for \"ex\")\n"));
-  mch_msg(_("  -d                    Diff mode (like \"vimdiff\")\n"));
+  mch_msg(_("  -d                    Diff mode\n"));
   mch_msg(_("  -R                    Readonly mode (like \"view\")\n"));
   mch_msg(_("  -Z                    Restricted mode (like \"rvim\")\n"));
   mch_msg(_("  -m                    Modifications (writing files) not allowed\n"));

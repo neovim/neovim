@@ -2382,17 +2382,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 'diff'			boolean	(default off)
 			local to window
 			{not in Vi}
-			{not available when compiled without the |+diff|
-			feature}
 	Join the current window in the group of windows that shows differences
-	between files.  See |vimdiff|.
+	between files.  See |diff-mode|.
 
 						*'dex'* *'diffexpr'*
 'diffexpr' 'dex'	string	(default "")
 			global
 			{not in Vi}
-			{not available when compiled without the |+diff|
-			feature}
 	Expression which is evaluated to obtain an ed-style diff file from two
 	versions of a file.  See |diff-diffexpr|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
@@ -2402,8 +2398,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 'diffopt' 'dip'		string	(default "filler")
 			global
 			{not in Vi}
-			{not available when compiled without the |+diff|
-			feature}
 	Option settings for diff mode.  It can consist of the following items.
 	All are optional.  Items must be separated by a comma.
 
@@ -5274,8 +5268,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 'patchexpr' 'pex'	string	(default "")
 			global
 			{not in Vi}
-			{not available when compiled without the |+diff|
-			feature}
 	Expression which is evaluated to apply a patch to a file and generate
 	the resulting new version of the file.  See |diff-patchexpr|.
 
