@@ -26,10 +26,9 @@ STARTTEST
 :1arga c
 :1arga b
 :$argu
-:+arga d
 :$arga x
 :call add(arglists, argv())
-:$-10arga Y
+:0arga Y
 :call add(arglists, argv())
 :%argd
 :call add(arglists, argv())

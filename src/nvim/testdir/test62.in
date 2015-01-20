@@ -13,7 +13,7 @@ STARTTEST
 :" Open three tab pages and use ":tabdo"
 :0tabnew
 :1tabnew
-:888tabnew
+:$tabnew
 :tabdo call append(line('$'), 'this is tab page ' . tabpagenr())
 :tabclose! 2
 :tabrewind

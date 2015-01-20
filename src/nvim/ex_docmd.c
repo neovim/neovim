@@ -1453,6 +1453,9 @@ static char_u * do_one_cmd(char_u **cmdlinep,
         break;
       case ADDR_ARGUMENTS:
         ea.line2 = curwin->w_arg_idx + 1;
+        if (ea.line2 > ARGCOUNT) {
+          ea.line2 = ARGCOUNT;
+        }
         break;
       case ADDR_LOADED_BUFFERS:
       case ADDR_BUFFERS:
@@ -2261,7 +2264,7 @@ static char_u *find_command(exarg_T *eap, int *full)
    * Exceptions:
    * - the 'k' command can directly be followed by any character.
    * - the 's' command can be followed directly by 'c', 'g', 'i', 'I' or 'r'
-   *	    but :sre[wind] is another command, as are :scrip[tnames],
+   *	    but :sre[wind] is another command, as are :scr[iptnames],
    *	    :scs[cope], :sim[alt], :sig[ns] and :sil[ent].
    * - the "d" command can directly be followed by 'l' or 'p' flag.
    */
@@ -3546,40 +3549,6 @@ static linenr_T get_address(char_u **ptr,
         lnum -= n;
       else
         lnum += n;
-
-      switch (addr_type) {
-        case ADDR_LINES:
-          break;
-        case ADDR_ARGUMENTS:
-          if (lnum < 0)
-            lnum = 0;
-          else if (lnum >= ARGCOUNT)
-            lnum = ARGCOUNT;
-          break;
-        case ADDR_TABS:
-          if (lnum < 0) {
-            lnum = 0;
-            break;
-          }
-          if (lnum >= LAST_TAB_NR)
-            lnum = LAST_TAB_NR;
-          break;
-        case ADDR_WINDOWS:
-          if (lnum < 0) {
-            lnum = 0;
-            break;
-          }
-          if (lnum > LAST_WIN_NR)
-            lnum = LAST_WIN_NR;
-          break;
-        case ADDR_LOADED_BUFFERS:
-        case ADDR_BUFFERS:
-          if (lnum < firstbuf->b_fnum) {
-            lnum = firstbuf->b_fnum;
-            break;
-          }
-          break;
-      }
     }
   } while (*cmd == '/' || *cmd == '?');
 
@@ -3628,15 +3597,64 @@ static void ex_script_ni(exarg_T *eap)
  */
 static char_u *invalid_range(exarg_T *eap)
 {
-  if (       eap->line1 < 0
-             || eap->line2 < 0
-             || eap->line1 > eap->line2
-             || ((eap->argt & RANGE)
-                 && !(eap->argt & NOTADR)
-                 && eap->line2 > curbuf->b_ml.ml_line_count
-                 + (eap->cmdidx == CMD_diffget)
-                 ))
+  buf_T *buf;
+  if (eap->line1 < 0 || eap->line2 < 0 || eap->line1 > eap->line2) {
     return (char_u *)_(e_invrange);
+  }
+
+  if (eap->argt & RANGE) {
+    switch (eap->addr_type) {
+      case ADDR_LINES:
+        if (!(eap->argt & NOTADR) &&
+            eap->line2 >
+                curbuf->b_ml.ml_line_count + (eap->cmdidx == CMD_diffget)) {
+          return (char_u *)_(e_invrange);
+        }
+        break;
+      case ADDR_ARGUMENTS:
+        if (eap->line2 > ARGCOUNT + (!ARGCOUNT)) {  // add 1 if ARGCOUNT is 0
+          return (char_u *)_(e_invrange);
+        }
+        break;
+      case ADDR_BUFFERS:
+        if (eap->line1 < firstbuf->b_fnum || eap->line2 > lastbuf->b_fnum) {
+          return (char_u *)_(e_invrange);
+        }
+        break;
+      case ADDR_LOADED_BUFFERS:
+        buf = firstbuf;
+        while (buf->b_ml.ml_mfp == NULL) {
+          if (buf->b_next == NULL) {
+            return (char_u *)_(e_invrange);
+          }
+          buf = buf->b_next;
+        }
+        if (eap->line1 < buf->b_fnum) {
+          return (char_u *)_(e_invrange);
+        }
+        buf = lastbuf;
+        while (buf->b_ml.ml_mfp == NULL) {
+          if (buf->b_prev == NULL) {
+            return (char_u *)_(e_invrange);
+          }
+          buf = buf->b_prev;
+        }
+        if (eap->line2 > buf->b_fnum) {
+          return (char_u *)_(e_invrange);
+        }
+        break;
+      case ADDR_WINDOWS:
+        if (eap->line2 > LAST_WIN_NR) {
+          return (char_u *)_(e_invrange);
+        }
+        break;
+      case ADDR_TABS:
+        if (eap->line2 > LAST_TAB_NR) {
+          return (char_u *)_(e_invrange);
+        }
+        break;
+    }
+  }
   return NULL;
 }
 

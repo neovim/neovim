@@ -17,3 +17,14 @@ RangeTabsAll 1 5
 RangeLines 2 5
 LocalRangeLines 2 5
 
+5argu E16: Invalid range
+4argu d
+1argu a
+100b E16: Invalid range
+0close E16: Invalid range
+$close 4
+$+close E16: Invalid range
+$tabe 2
+$+tabe E16: Invalid range
+0tabm x
+
