@@ -178,7 +178,7 @@ return {
   {
     command='bdelete',
     flags=bit.bor(BANG, RANGE, NOTADR, BUFNAME, COUNT, EXTRA, TRLBAR),
-    addr_type=ADDR_LOADED_BUFFERS,
+    addr_type=ADDR_BUFFERS,
     func='ex_bunload',
   },
   {
