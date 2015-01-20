@@ -1,7 +1,7 @@
 " Vim compiler file
-" Compiler:	Miscrosoft Visual C
+" Compiler:	Microsoft Visual C
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2005 Nov 30
+" Last Change:	2014 Sep 20
 
 if exists("current_compiler")
   finish

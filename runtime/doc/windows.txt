@@ -1,4 +1,4 @@
-*windows.txt*   For Vim version 7.4.  Last change: 2014 Mar 25
+*windows.txt*   For Vim version 7.4.  Last change: 2014 Sep 23
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -726,18 +726,21 @@ the buffer.  The result is that all buffers will use the 'encoding' encoding
 
 CTRL-W ]					*CTRL-W_]* *CTRL-W_CTRL-]*
 CTRL-W CTRL-]	Split current window in two.  Use identifier under cursor as a
-		tag and jump to it in the new upper window.  Make new window N
-		high.
+		tag and jump to it in the new upper window.
+		In Visual mode uses the Visually selected text as a tag.
+		Make new window N high.
 
 							*CTRL-W_g]*
 CTRL-W g ]	Split current window in two.  Use identifier under cursor as a
 		tag and perform ":tselect" on it in the new upper window.
+		In Visual mode uses the Visually selected text as a tag.
 		Make new window N high.
 
 							*CTRL-W_g_CTRL-]*
 CTRL-W g CTRL-]	Split current window in two.  Use identifier under cursor as a
-		tag and perform ":tjump" on it in the new upper window.  Make
-		new window N high.
+		tag and perform ":tjump" on it in the new upper window.
+		In Visual mode uses the Visually selected text as a tag.
+		Make new window N high.
 
 CTRL-W f					*CTRL-W_f* *CTRL-W_CTRL-F*
 CTRL-W CTRL-F	Split current window in two.  Edit file name under cursor.
