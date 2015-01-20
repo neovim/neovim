@@ -1,4 +1,4 @@
-*helphelp.txt*	For Vim version 7.4.  Last change: 2012 Nov 28
+*helphelp.txt*	For Vim version 7.4.  Last change: 2014 Sep 19
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -97,7 +97,7 @@ Help on help files					*helphelp*
 			current file.  See |help-translated|.
 
 							*:helpc* *:helpclose*
-:helpc[lose]            Close one help window.
+:helpc[lose]            Close one help window, if there is one.
 
 							*:helpg* *:helpgrep*
 :helpg[rep] {pattern}[@xx]
