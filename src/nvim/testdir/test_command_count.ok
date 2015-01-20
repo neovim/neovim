@@ -28,3 +28,8 @@ $tabe 2
 $+tabe E16: Invalid range
 0tabm x
 
+argdo: c d e
+windo: 2 3 4
+bufdo: 2 3 4 5 6 7 8 9 10 12
+bufdo: 3 4 5 6 7
+tabdo: 2 3 4

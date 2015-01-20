@@ -1,4 +1,4 @@
-*tabpage.txt*   For Vim version 7.4.  Last change: 2012 Aug 08
+*tabpage.txt*   For Vim version 7.4.  Last change: 2015 Apr 18
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -222,8 +222,10 @@ clarification what +N means in this context see |[range]|.
 LOOPING OVER TAB PAGES:
 
 							*:tabd* *:tabdo*
-:tabd[o] {cmd}	Execute {cmd} in each tab page.
-		It works like doing this: >
+:[range]tabd[o] {cmd}
+		Execute {cmd} in each tab page or, if [range] is given, only
+		in tabpages which tab page number is in the [range]. It works
+		like doing this: >
 			:tabfirst
 			:{cmd}
 			:tabnext
