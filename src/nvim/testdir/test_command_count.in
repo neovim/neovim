@@ -92,11 +92,37 @@ STARTTEST
 :call append(0, g:lines)
 :unlet g:lines
 :w|bd
-:se hidden
 :b1
 ENDTEST
 
 STARTTEST
+:let g:lines = []
+:func BufStatus()
+:  call add(g:lines, 'aaa: ' . buflisted(g:buf_aaa) . ' bbb: ' . buflisted(g:buf_bbb) . ' ccc: ' . buflisted(g:buf_ccc))
+:endfunc
+:se nohidden
+:e aaa
+:let buf_aaa = bufnr('%')
+:e bbb
+:let buf_bbb = bufnr('%')
+:e ccc
+:let buf_ccc = bufnr('%')
+:b1
+:call BufStatus()
+:exe buf_bbb . "," . buf_ccc . "bdelete"
+:call BufStatus()
+:exe buf_aaa . "bdelete"
+:call BufStatus()
+:e! test.out
+:call append('$', g:lines)
+:unlet g:lines
+:delfunc BufStatus
+:w|bd
+:b1
+ENDTEST
+
+STARTTEST
+:se hidden
 :only!
 :let g:lines = []
 :%argd
