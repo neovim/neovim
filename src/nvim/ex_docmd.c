@@ -1426,20 +1426,21 @@ static char_u * do_one_cmd(char_u **cmdlinep,
    * is equal to the lower.
    */
 
-  if (ea.cmdidx != CMD_SIZE
-      && ea.cmdidx != CMD_USER 
-      && ea.cmdidx != CMD_USER_BUF
-      && ea.cmdidx >= 0) {
-    ea.addr_type = cmdnames[(int)ea.cmdidx].cmd_addr_type;
-  } else {
-    if (ea.cmdidx != CMD_USER && ea.cmdidx != CMD_USER_BUF) {
+  if (!IS_USER_CMDIDX(ea.cmdidx)) {
+    if (ea.cmdidx != CMD_SIZE && ea.cmdidx >= 0) {
+      ea.addr_type = cmdnames[(int)ea.cmdidx].cmd_addr_type;
+    } else {
       ea.addr_type = ADDR_LINES;
-      // ea.addr_type for user commands is set by find_ucmd
+    }
+  } else {
+    // :wincmd range depends on the argument
+    if (ea.cmdidx == CMD_wincmd) {
+      get_wincmd_addr_type(p, &ea);
     }
   }
-  ea.cmd = cmd;
 
   /* repeat for all ',' or ';' separated addresses */
+  ea.cmd = cmd;
   for (;; ) {
     ea.line1 = ea.line2;
     switch (ea.addr_type) {
@@ -1472,20 +1473,25 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       goto doend;
     if (lnum == MAXLNUM) {
       if (*ea.cmd == '%') {                 /* '%' - all lines */
-        buf_T *buf;
         ++ea.cmd;
         switch (ea.addr_type) {
           case ADDR_LINES:
             ea.line1 = 1;
             ea.line2 = curbuf->b_ml.ml_line_count;
             break;
-          case ADDR_LOADED_BUFFERS:
-            buf = firstbuf;
+          case ADDR_LOADED_BUFFERS: {
+            buf_T *buf = firstbuf;
             while (buf->b_next != NULL && buf->b_ml.ml_mfp == NULL) {
+              buf = buf->b_next;
+            }
+            ea.line1 = buf->b_fnum;
+            buf = lastbuf;
+            while (buf->b_prev != NULL && buf->b_ml.ml_mfp == NULL) {
               buf = buf->b_prev;
             }
             ea.line2 = buf->b_fnum;
             break;
+          }
           case ADDR_BUFFERS:
             ea.line1 = firstbuf->b_fnum;
             ea.line2 = lastbuf->b_fnum;
@@ -1494,10 +1500,10 @@ static char_u * do_one_cmd(char_u **cmdlinep,
           case ADDR_TABS:
             if (IS_USER_CMDIDX(ea.cmdidx)) {
               ea.line1 = 1;
-              ea.line2 = ea.addr_type == ADDR_WINDOWS
-                ? LAST_WIN_NR : LAST_TAB_NR;
+              ea.line2 =
+                  ea.addr_type == ADDR_WINDOWS ? LAST_WIN_NR : LAST_TAB_NR;
             } else {
-              // there is no Vim command which uses '%' and 
+              // ther is no Vim command which uses '%' and
               // ADDR_WINDOWS or ADDR_TABS
               errormsg = (char_u *)_(e_invrange);
               goto doend;
