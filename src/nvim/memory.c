@@ -489,7 +489,8 @@ void free_all_mem(void)
     return;
   entered = true;
 
-  block_autocmds();         /* don't want to trigger autocommands here */
+  // Don't want to trigger autocommands from here on.
+  block_autocmds();
 
   /* Close all tabs and windows.  Reset 'equalalways' to avoid redraws. */
   p_ea = FALSE;

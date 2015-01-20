@@ -1024,7 +1024,7 @@ static void win_init(win_T *newp, win_T *oldp, int flags)
 }
 
 /*
- * Initialize window "newp" from window"old".
+ * Initialize window "newp" from window "old".
  * Only the essential things are copied.
  */
 static void win_init_some(win_T *newp, win_T *oldp)
@@ -5190,8 +5190,8 @@ static win_T *restore_snapshot_rec(frame_T *sn, frame_T *fr)
 
 /*
  * Set "win" to be the curwin and "tp" to be the current tab page.
- * restore_win() MUST be called to undo.
- * No autocommands will be executed.
+ * restore_win() MUST be called to undo, also when FAIL is returned.
+ * No autocommands will be executed until restore_win() is called.
  * When "no_display" is TRUE the display won't be affected, no redraw is
  * triggered, another tabpage access is limited.
  * Returns FAIL if switching to "win" failed.
@@ -5212,7 +5212,6 @@ int switch_win(win_T **save_curwin, tabpage_T **save_curtab, win_T *win, tabpage
       goto_tabpage_tp(tp, FALSE, FALSE);
   }
   if (!win_valid(win)) {
-    unblock_autocmds();
     return FAIL;
   }
   curwin = win;
