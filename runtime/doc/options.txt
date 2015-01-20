@@ -1173,7 +1173,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Some applications use the BOM to recognize the encoding of the file.
 	Often used for UCS-2 files on MS-Windows.  For other applications it
 	causes trouble, for example: "cat file1 file2" makes the BOM of file2
-	appear halfway the resulting file.  Gcc doesn't accept a BOM.
+	appear halfway through the resulting file.  Gcc doesn't accept a BOM.
 	When Vim reads a file and 'fileencodings' starts with "ucs-bom", a
 	check for the presence of the BOM is done and 'bomb' set accordingly.
 	Unless 'binary' is set, it is removed from the first line, so that you
@@ -1998,9 +1998,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 			Also see the '<' flag below.
 								*cpo-K*
 		K	Don't wait for a key code to complete when it is
-			halfway a mapping.  This breaks mapping <F1><F1> when
-			only part of the second <F1> has been read.  It
-			enables cancelling the mapping by typing <F1><Esc>.
+			halfway through a mapping.  This breaks mapping
+			<F1><F1> when only part of the second <F1> has been
+			read.  It enables cancelling the mapping by typing
+			<F1><Esc>.
 								*cpo-l*
 		l	Backslash in a [] range in a search pattern is taken
 			literally, only "\]", "\^", "\-" and "\\" are special.

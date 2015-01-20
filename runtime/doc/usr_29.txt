@@ -223,8 +223,8 @@ example, suppose you want to select a tag that starts with "write_": >
 	:tselect /^write_
 
 The "^" specifies that the tag starts with "write_".  Otherwise it would also
-be found halfway a tag name.  Similarly "$" at the end makes sure the pattern
-matches until the end of a tag.
+be found halfway in a tag name.  Similarly "$" at the end makes sure the
+pattern matches until the end of a tag.
 
 
 A TAGS BROWSER

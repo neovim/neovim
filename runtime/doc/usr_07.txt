@@ -215,14 +215,14 @@ change: >
 
 	`.
 
-Suppose you are editing the file "one.txt".  Somewhere halfway the file you
-use "x" to delete a character.  Then you go to the last line with "G" and
-write the file with ":w".  You edit several other files, and then use ":edit
-one.txt" to come back to "one.txt".  If you now use `" Vim jumps to the last
-line of the file.  Using `. takes you to the position where you deleted the
-character.  Even when you move around in the file `" and `. will take you to
-the remembered position.  At least until you make another change or leave the
-file.
+Suppose you are editing the file "one.txt".  Somewhere halfway through the
+file you use "x" to delete a character.  Then you go to the last line with "G"
+and write the file with ":w".  You edit several other files, and then use
+":edit one.txt" to come back to "one.txt".  If you now use `" Vim jumps to the
+last line of the file.  Using `. takes you to the position where you deleted
+the character.  Even when you move around in the file `" and `. will take you
+to the remembered position, at least until you make another change or leave
+the file.
 
 
 FILE MARKS
@@ -233,8 +233,8 @@ another file and place marks there, these are specific for that file.  Thus
 each file has its own set of marks, they are local to the file.
    So far we were using marks with a lowercase letter.  There are also marks
 with an uppercase letter.  These are global, they can be used from any file.
-For example suppose that we are editing the file "foo.txt".  Go to halfway the
-file ("50%") and place the F mark there (F for foo): >
+For example suppose that we are editing the file "foo.txt".  Go to halfway of
+the file ("50%") and place the F mark there (F for foo): >
 
 	50%mF
 
@@ -242,8 +242,8 @@ Now edit the file "bar.txt" and place the B mark (B for bar) at its last line:
 >
 	GmB
 
-Now you can use the "'F" command to jump back to halfway foo.txt.  Or edit yet
-another file, type "'B" and you are at the end of bar.txt again.
+Now you can use the "'F" command to jump back to halfway of foo.txt.  Or edit
+yet another file, type "'B" and you jump to the end of bar.txt.
 
 The file marks are remembered until they are placed somewhere else.  Thus you
 can place the mark, do hours of editing and still be able to jump back to that

@@ -827,7 +827,7 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
       prt_line_number(psettings, page_line, ppos->file_line);
     ppos->ff = FALSE;
   } else {
-    /* left over from wrap halfway a tab */
+    // left over from wrap halfway through a tab
     print_pos = ppos->print_pos;
     tab_spaces = ppos->lead_spaces;
   }

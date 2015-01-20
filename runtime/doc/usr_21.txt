@@ -155,9 +155,9 @@ to be lost.  Each item can be remembered only once.
 
 GETTING BACK TO WHERE YOU STOPPED VIM
 
-You are halfway editing a file and it's time to leave for holidays.  You exit
-Vim and go enjoy yourselves, forgetting all about your work.  After a couple
-of weeks you start Vim, and type:
+You are halfway through editing a file and it's time to leave for holidays.
+You exit Vim and go enjoy yourselves, forgetting all about your work.  After a
+couple of weeks you start Vim, and type:
 >
 	'0
 

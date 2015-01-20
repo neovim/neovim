@@ -1345,7 +1345,7 @@ static void win_update(win_T *wp)
     /*
      * Update a line when it is in an area that needs updating, when it
      * has changes or w_lines[idx] is invalid.
-     * bot_start may be halfway a wrapped line after using
+     * bot_start may be halfway through a wrapped line after using
      * win_del_lines(), check if the current line includes it.
      * When syntax folding is being used, the saved syntax states will
      * already have been updated, we can't see where the syntax state is
@@ -4037,7 +4037,7 @@ win_line (
           /* DBCS: Put second byte in the second screen char. */
           ScreenLines[off] = mb_c & 0xff;
         ++vcol;
-        /* When "tocol" is halfway a character, set it to the end of
+        /* When "tocol" is halfway through a character, set it to the end of
          * the character, otherwise highlighting won't stop. */
         if (tocol == vcol)
           ++tocol;

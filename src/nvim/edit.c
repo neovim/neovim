@@ -766,8 +766,8 @@ edit (
 #ifdef UNIX
 do_intr:
 #endif
-      /* when 'insertmode' set, and not halfway a mapping, don't leave
-       * Insert mode */
+      // when 'insertmode' set, and not halfway through a mapping, don't leave
+      // Insert mode
       if (goto_im()) {
         if (got_int) {
           (void)vgetc();                        /* flush all buffers */

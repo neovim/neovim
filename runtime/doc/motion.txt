@@ -33,7 +33,8 @@ know what the hjkl keys do.  The mnemonic value of hjkl is clear from looking
 at the keyboard.  Think of j as an arrow pointing downwards.
 
 The 'virtualedit' option can be set to make it possible to move the cursor to
-positions where there is no character or halfway a character.
+positions where there is no character or within a multi-column character (like
+a tab).
 
 ==============================================================================
 1. Motions and operators				*operator*

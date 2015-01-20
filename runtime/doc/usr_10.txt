@@ -370,7 +370,7 @@ into "barfoo".
 was specified in this example.  This is different from ":substitute", which
 works on one line without a range.
    The command isn't perfect, since it also matches lines where "//" appears
-halfway a line, and the substitution will also take place before the "//".
+halfway in a line, and the substitution will also take place before the "//".
 
 Just like with ":substitute", any pattern can be used.  When you learn more
 complicated patterns later, you can use them here.
@@ -625,7 +625,7 @@ When you are typing plain text, it's nice if the length of each line is
 automatically trimmed to fit in the window.  To make this happen while
 inserting text, set the 'textwidth' option: >
 
-	:set textwidth=72
+	:set textwidth=78
 
 You might remember that in the example vimrc file this command was used for
 every text file.  Thus if you are using that vimrc file, you were already
@@ -633,10 +633,10 @@ using it.  To check the current value of 'textwidth': >
 
 	:set textwidth
 
-Now lines will be broken to take only up to 72 characters.  But when you
-insert text halfway a line, or when you delete a few words, the lines will get
-too long or too short.  Vim doesn't automatically reformat the text.
-   To tell Vim to format the current paragraph: >
+Now lines will be broken to take only up to 78 characters.  However, when you
+insert text halfway through a line or delete a few words, the line will get
+too long or too short as Vim won't automatically reformat the text.  To tell
+Vim to format the current paragraph:
 
 	gqap
 

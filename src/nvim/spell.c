@@ -1631,9 +1631,9 @@ static void find_word(matchinf_T *mip, int mode)
             mip->mi_compoff = wlen;
             find_word(mip, FIND_KEEPCOMPOUND);
 
-#if 0       // Disabled, a prefix must not appear halfway a compound word,
-            // unless the COMPOUNDPERMITFLAG is used and then it can't be a
-            // postponed prefix.
+#if 0       // Disabled, a prefix must not appear halfway through a compound
+            // word, unless the COMPOUNDPERMITFLAG is used, in which case it
+            // can't be a postponed prefix.
             if (!slang->sl_nobreak || mip->mi_result == SP_BAD) {
               // Check for following word with prefix.
               mip->mi_compoff = c;
@@ -2081,7 +2081,7 @@ spell_move_to (
     return 0;
 
   // Start looking for bad word at the start of the line, because we can't
-  // start halfway a word, we don't know where it starts or ends.
+  // start halfway through a word, we don't know where it starts or ends.
   //
   // When searching backwards, we continue in the line to find the last
   // bad word (in the cursor line: before the cursor).
@@ -5428,8 +5428,8 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
     if (line[0] == '#' || line[0] == '/')
       continue;         // comment line
 
-    // Remove CR, LF and white space from the end.  White space halfway
-    // the word is kept to allow e.g., "et al.".
+    // Remove CR, LF and white space from the end.  White space halfway through
+    // the word is kept to allow multi-word terms like "et al.".
     l = (int)STRLEN(line);
     while (l > 0 && line[l - 1] <= ' ')
       --l;
@@ -9740,7 +9740,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
 
       // Try word split and/or compounding.
       if ((sp->ts_fidx >= sp->ts_fidxtry || fword_ends)
-          // Don't split halfway a character.
+          // Don't split in the middle of a character
           && (!has_mbyte || sp->ts_tcharlen == 0)
           ) {
         bool try_compound;
@@ -12275,7 +12275,7 @@ soundalike_score (
   int score = 0;
 
   // Adding/inserting "*" at the start (word starts with vowel) shouldn't be
-  // counted so much, vowels halfway the word aren't counted at all.
+  // counted so much, vowels in the middle of the word aren't counted at all.
   if ((*badsound == '*' || *goodsound == '*') && *badsound != *goodsound) {
     if ((badsound[0] == NUL && goodsound[1] == NUL)
         || (goodsound[0] == NUL && badsound[1] == NUL))

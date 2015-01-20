@@ -133,7 +133,7 @@ the "2fw" command is executed and the displayed "2f" is removed.
 >
 	set incsearch
 
-Display the match for a search pattern when halfway typing it.
+Display matches for a search pattern while you type.
 
 >
 	map Q gq
