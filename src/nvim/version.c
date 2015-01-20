@@ -177,6 +177,7 @@ static char *(features[]) = {
   NULL
 };
 
+// clang-format off
 static int included_patches[] = {
   //591 NA
   //590,
@@ -771,6 +772,7 @@ static int included_patches[] = {
   1,
   0
 };
+// clang-format on
 
 /// Place to put a short description when adding a feature with a patch.
 /// Keep it short, e.g.,: "relative numbers", "persistent undo".
