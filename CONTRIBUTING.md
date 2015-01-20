@@ -68,6 +68,11 @@ For new code, please run [`clint.py`][clint] to detect style errors. It is not
 perfect and may have false positives and negatives. To have `clint.py` ignore
 certain special cases, put `// NOLINT` at the end of the line.
 
+We also provide a configuration file for [`clang-format` and 
+`git-clang-format`][clang-format], which can be used to format code according
+to the style guidelines. Be aware this formatting method might need user
+supervision.
+
 #### Commit guidelines
 
 The purpose of these guidelines is to *make reviews easier* and make the VCS logs more valuable.
@@ -93,6 +98,7 @@ The purpose of these guidelines is to *make reviews easier* and make the VCS log
 
 [cla]: https://docs.google.com/forms/d/1u54bpbwzneDIRltFx1TGi2evKxY3w0cOV3vlpj8DPbg/viewform
 [clint]: clint.py
+[clang-format]: http://clang.llvm.org/docs/ClangFormat.html
 [entry]: https://github.com/neovim/neovim/issues?labels=entry-level&state=open
 [imperative]: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
 [style]: http://neovim.org/develop/style-guide.xml
