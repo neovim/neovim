@@ -3603,11 +3603,11 @@ static char_u *invalid_range(exarg_T *eap)
   }
 
   if (eap->argt & RANGE) {
-    switch (eap->addr_type) {
+    switch(eap->addr_type) {
       case ADDR_LINES:
-        if (!(eap->argt & NOTADR) &&
-            eap->line2 >
-                curbuf->b_ml.ml_line_count + (eap->cmdidx == CMD_diffget)) {
+        if (!(eap->argt & NOTADR)
+            && eap->line2 > curbuf->b_ml.ml_line_count
+            + (eap->cmdidx == CMD_diffget)) {
           return (char_u *)_(e_invrange);
         }
         break;
@@ -3617,11 +3617,12 @@ static char_u *invalid_range(exarg_T *eap)
         }
         break;
       case ADDR_BUFFERS:
-        if (eap->line1 < firstbuf->b_fnum || eap->line2 > lastbuf->b_fnum) {
+        if (eap->line1 < firstbuf->b_fnum
+            || eap->line2 > lastbuf->b_fnum) {
           return (char_u *)_(e_invrange);
         }
         break;
-      case ADDR_LOADED_BUFFERS:
+     case ADDR_LOADED_BUFFERS:
         buf = firstbuf;
         while (buf->b_ml.ml_mfp == NULL) {
           if (buf->b_next == NULL) {
