@@ -21,8 +21,8 @@ LocalRangeLines 2 5
 4argu d
 1argu a
 100b E16: Invalid range
-0close E16: Invalid range
-$close 4
+0close
+$close 3
 $+close E16: Invalid range
 $tabe 2
 $+tabe E16: Invalid range
