@@ -481,15 +481,12 @@ static char_u *after_label(char_u *l)
  * Get indent of line "lnum", skipping a label.
  * Return 0 if there is nothing after the label.
  */
-static int 
-get_indent_nolabel (     /* XXX */
-    linenr_T lnum
-)
-{
-  char_u      *l;
+static int get_indent_after_label(linenr_T lnum)
+{ /* XXX */
+  char_u *l;
   pos_T fp;
   colnr_T col;
-  char_u      *p;
+  char_u *p;
 
   l = ml_get(lnum);
   p = after_label(l);
@@ -508,7 +505,8 @@ get_indent_nolabel (     /* XXX */
  *   label:	if (asdf && asdfasdf)
  *		^
  */
-static int skip_label(linenr_T lnum, char_u **pp) FUNC_ATTR_NONNULL_ALL
+static int get_indent_after_label_with_ref(linenr_T lnum, char_u **pp)
+  FUNC_ATTR_NONNULL_ALL
 { /* XXX */
   char_u *l = ml_get(lnum);
   int indent;
@@ -1874,7 +1872,7 @@ int get_c_indent(void)
             cin_is_if_for_while_before_offset(line, &outermost.col);
         }
 
-        amount = skip_label(our_paren_pos.lnum, &look);
+        amount = get_indent_after_label_with_ref(our_paren_pos.lnum, &look);
         look = skipwhite(look);
         if (*look == '(') {
           linenr_T save_lnum = curwin->w_cursor.lnum;
@@ -2061,7 +2059,7 @@ int get_c_indent(void)
         } else if (curbuf->b_ind_js) {
           amount = get_indent_lnum(lnum);
         } else {
-          amount = skip_label(lnum, &l);
+          amount = get_indent_after_label_with_ref(lnum, &l);
         }
 
         start_brace = BRACE_AT_END;
@@ -2392,7 +2390,7 @@ int get_c_indent(void)
               continue;
             }
 
-            n = get_indent_nolabel(curwin->w_cursor.lnum);          /* XXX */
+            n = get_indent_after_label(curwin->w_cursor.lnum);          /* XXX */
 
             /*
              *	 case xx: if (cond)	    <- line up with this if
@@ -2624,7 +2622,8 @@ int get_c_indent(void)
             if (curbuf->b_ind_js) {
               cur_amount = get_indent();
             } else {
-              cur_amount = skip_label(curwin->w_cursor.lnum, &l);
+              cur_amount = get_indent_after_label_with_ref(
+                             curwin->w_cursor.lnum, &l);
             }
             /*
              * If this is just above the line we are indenting, and it
@@ -2975,7 +2974,8 @@ term_again:
                * Get indent and pointer to text for current line,
                * ignoring any jump label.
                */
-              amount = skip_label(curwin->w_cursor.lnum, &l);
+              amount = get_indent_after_label_with_ref(
+                         curwin->w_cursor.lnum, &l);
 
               if (theline[0] == '{')
                 amount += curbuf->b_ind_open_extra;
