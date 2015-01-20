@@ -124,10 +124,7 @@ do_window (
   case Ctrl_HAT:
   case '^':
     CHECK_CMDWIN reset_VIsual_and_resel();      /* stop Visual mode */
-    STRCPY(cbuf, "split #");
-    if (Prenum)
-      vim_snprintf((char *)cbuf + 7, sizeof(cbuf) - 7,
-          "%" PRId64, (int64_t)Prenum);
+    cmd_with_count("split #", cbuf, sizeof(cbuf), Prenum);
     do_cmdline_cmd(cbuf);
     break;
 
@@ -151,9 +148,7 @@ newwindow:
   case Ctrl_Q:
   case 'q':
     reset_VIsual_and_resel();                   /* stop Visual mode */
-    STRCPY(cbuf, "quit");
-    if (Prenum)
-      vim_snprintf((char *)cbuf + 4, sizeof(cbuf) - 5, "%ld", Prenum);
+    cmd_with_count("quit", cbuf, sizeof(cbuf), Prenum);
     do_cmdline_cmd(cbuf);
     break;
 
@@ -161,9 +156,7 @@ newwindow:
   case Ctrl_C:
   case 'c':
     reset_VIsual_and_resel();                   /* stop Visual mode */
-    STRCPY(cbuf, "close");
-    if (Prenum)
-      vim_snprintf((char *)cbuf + 4, sizeof(cbuf) - 5, "%ld", Prenum);
+    cmd_with_count("close", cbuf, sizeof(cbuf), Prenum);
     do_cmdline_cmd(cbuf);
     break;
 
@@ -189,9 +182,7 @@ newwindow:
   case Ctrl_O:
   case 'o':
     CHECK_CMDWIN reset_VIsual_and_resel();      /* stop Visual mode */
-    STRCPY(cbuf, "only");
-    if (Prenum > 0)
-      vim_snprintf((char *)cbuf + 4, sizeof(cbuf) - 4, "%ld", Prenum);
+    cmd_with_count("only", cbuf, sizeof(cbuf), Prenum);
     do_cmdline_cmd(cbuf);
     break;
 
@@ -496,6 +487,107 @@ wingotofile:
 
   default:    beep_flush();
     break;
+  }
+}
+
+/*
+* Figure out the address type for ":wnncmd".
+*/
+void get_wincmd_addr_type(char_u *arg, exarg_T *eap)
+{
+  switch (*arg) {
+    case 'S':
+    case Ctrl_S:
+    case 's':
+    case Ctrl_N:
+    case 'n':
+    case 'j':
+    case Ctrl_J:
+    case 'k':
+    case Ctrl_K:
+    case 'T':
+    case Ctrl_R:
+    case 'r':
+    case 'R':
+    case 'K':
+    case 'J':
+    case '+':
+    case '-':
+    case Ctrl__:
+    case '_':
+    case '|':
+    case ']':
+    case Ctrl_RSB:
+    case 'g':
+    case Ctrl_G:
+    case Ctrl_V:
+    case 'v':
+    case 'h':
+    case Ctrl_H:
+    case 'l':
+    case Ctrl_L:
+    case 'H':
+    case 'L':
+    case '>':
+    case '<':
+    case '}':
+    case 'f':
+    case 'F':
+    case Ctrl_F:
+    case 'i':
+    case Ctrl_I:
+    case 'd':
+    case Ctrl_D:
+      /* window size or any count */
+      eap->addr_type = ADDR_LINES;
+      break;
+
+    case Ctrl_HAT:
+    case '^':
+      /* buffer number */
+      eap->addr_type = ADDR_BUFFERS;
+      break;
+
+    case Ctrl_Q:
+    case 'q':
+    case Ctrl_C:
+    case 'c':
+    case Ctrl_O:
+    case 'o':
+    case Ctrl_W:
+    case 'w':
+    case 'W':
+    case 'x':
+    case Ctrl_X:
+      /* window number */
+      eap->addr_type = ADDR_WINDOWS;
+      break;
+
+    case Ctrl_Z:
+    case 'z':
+    case 'P':
+    case 't':
+    case Ctrl_T:
+    case 'b':
+    case Ctrl_B:
+    case 'p':
+    case Ctrl_P:
+    case '=':
+    case CAR:
+      /* no count */
+      eap->addr_type = 0;
+      break;
+  }
+}
+
+static void cmd_with_count(char *cmd, char_u *bufp, size_t bufsize,
+                           uint32_t Prenum)
+{
+  size_t len = STRLEN(cmd);
+
+  STRCPY(bufp, cmd);
+  if (Prenum > 0) {
+    vim_snprintf((char *)bufp + len, bufsize - len, "%ld", Prenum);
   }
 }
 
