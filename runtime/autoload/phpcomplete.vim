@@ -3,7 +3,7 @@
 " Maintainer:	Dávid Szabó ( complex857 AT gmail DOT com )
 " Previous Maintainer:	Mikolaj Machowski ( mikmach AT wp DOT pl )
 " URL: https://github.com/shawncplus/phpcomplete.vim
-" Last Change:  2014 Jul 24
+" Last Change:  2014 Aug 10
 "
 "	OPTIONS:
 "
@@ -94,9 +94,9 @@ function! phpcomplete#CompletePHP(findstart, base) " {{{
 		" Check if we are inside of PHP markup
 		let pos = getpos('.')
 		let phpbegin = searchpairpos('<?', '', '?>', 'bWn',
-				\ 'synIDattr(synID(line("."), col("."), 0), "name") =~? "string\|comment"')
+				\ 'synIDattr(synID(line("."), col("."), 0), "name") =~? "string\\|comment"')
 		let phpend = searchpairpos('<?', '', '?>', 'Wn',
-				\ 'synIDattr(synID(line("."), col("."), 0), "name") =~? "string\|comment"')
+				\ 'synIDattr(synID(line("."), col("."), 0), "name") =~? "string\\|comment"')
 
 		if phpbegin == [0,0] && phpend == [0,0]
 			" We are outside of any PHP markup. Complete HTML
@@ -803,7 +803,7 @@ function! phpcomplete#CompleteClassName(base, kinds, current_namespace, imports)
 			endif
 			let relative_name = namespace_part.tag.name
 			" match base without the namespace part for namespaced base but not namespaced tags, for tagfiles with old ctags
-			if !has_key(tag, 'namespace') && index(kinds, tag.kind) != -1 && stridx(tag.name, base[len(namespace_part):]) == 0
+			if !has_key(tag, 'namespace') && index(kinds, tag.kind) != -1 && stridx(tolower(tag.name), tolower(base[len(namespace_part):])) == 0
 				call add(no_namespace_matches, {'word': leading_slash.relative_name, 'kind': tag.kind, 'menu': tag.filename, 'info': tag.filename })
 			endif
 			if has_key(tag, 'namespace') && index(kinds, tag.kind) != -1 && tag.namespace ==? namespace_for_class
@@ -1607,6 +1607,7 @@ function! phpcomplete#GetClassName(start_line, context, current_namespace, impor
 				for arg in args
 					if arg =~# object.'\(,\|$\)'
 						let classname_candidate = matchstr(arg, '\s*\zs'.class_name_pattern.'\ze\s\+'.object)
+						let [classname_candidate, class_candidate_namespace] = phpcomplete#ExpandClassName(classname_candidate, a:current_namespace, a:imports)
 						break
 					endif
 				endfor
@@ -1625,6 +1626,7 @@ function! phpcomplete#GetClassName(start_line, context, current_namespace, impor
 					for param in docblock.params
 						if param.name =~? object
 							let classname_candidate = matchstr(param.type, class_name_pattern.'\(\[\]\)\?')
+							let [classname_candidate, class_candidate_namespace] = phpcomplete#ExpandClassName(classname_candidate, a:current_namespace, a:imports)
 							break
 						endif
 					endfor
@@ -1934,7 +1936,7 @@ function! phpcomplete#GetClassContentsStructure(file_path, file_lines, class_nam
 	call search('{')
 	let endline = line('.')
 
-	let content = join(getline(cfline, endline),"\n")
+	let content = join(getline(cfline, endline), "\n")
 	" Catch extends
 	if content =~? 'extends'
 		let extends_class = matchstr(content, 'class\_s\+'.a:class_name.'\_s\+extends\_s\+\zs'.class_name_pattern.'\ze')

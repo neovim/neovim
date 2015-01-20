@@ -1,4 +1,4 @@
-*todo.txt*      For Vim version 7.4.  Last change: 2014 Sep 09
+*todo.txt*      For Vim version 7.4.  Last change: 2014 Sep 19
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -61,42 +61,11 @@ Breaks test_eval.  Inefficient, can we only compute y_width when needed?
 Problem that a previous silent ":throw" causes a following try/catch not to
 work. (ZyX, 2013 Sep 28)
 
-Update for Romanian spell file. (Vanilla Ice, 2014 Aug 13)
-Still produces errors.
-Add flag to ignore fifth argument of SFX.
-Conversion from utf-8 to cp1250 can't be without errors.
-
-Patch to remove ETO_IGNORELANGUAGE, it causes Chinese characters not to show
-up. (Paul Moore, 2014 Jul 30)
-Should it depend on the Windows version?  Waiting for feedback.
-No longer needed after including DirectX patch?
-Related to issue 255?
-
-Problem with linebreak, adds a test that fails. (Nazri Ramliy, 2014 Sep 6)
-
 Patch to avoid problems with encoding conversion with diff.vim.
 (Yasuhiro Matsumoto, 2014 Sep 1.
+Depends on current language, language of file can be different.
 
-Patch by Marcin Szamotulski to add count to :close (2014 Aug 10, update Aug
-14, Aug 30)
-    Make ":1close" close the first window.
-    Make ":+1close" close the next window.
-    Make ":-1close" close the previous window.
-Can't easily close the help window, like ":pc" closes the preview window and
-":ccl" closes the quickfix window.  Add ":hclose". (Chris Gaal)
-Patch for :helpclose, Christian Brabandt, 2010 Sep 6.
-
-Patch to fix line formatting bug. (Christian Brabandt, 2014 Sep 7)
-
-Patch to fix ml_get error. (Christian Brabandt, 2014 Sep 7)
-
-Patch by Marcin Szamotulski to add +cmd to buffer commands.
-(2014 Aug 18)
-
-Patch to fix encoding of arguments when setting 'encoding'. (Yasuhiro
-Matsumoto, 2014 Sep 4)
-
-Patch to fix that system() with empty input fails. (Olaf Dabrunz, 2014 Aug 19)
+Patch for C/C++ syntax string handling. (Brian Bi, 2014 Sep 13)
 
 When using a visual selection of multiple words and doing CTRL-W_] it jumps to
 the tag matching the word under the cursor, not the selected text.
@@ -105,6 +74,9 @@ Patch by Christian, 2014 Aug 8.
 
 Completion for :buf does not use 'wildignorecase'. (Akshay H, 2014 May 31)
 
+'backupcopy' should be global-local, so that some files can be written in a
+different way.  Patch by Christian, 2014 Sep 17.
+
 Patch to handle list with some items locked. (ZyX, 2014 Aug 17)
 Prefer the second solution.
 
@@ -112,6 +84,13 @@ Issue 252.  Patch by Christian, 2014 Aug 26.
 
 ":cd C:\Windows\System32\drivers\etc*" does not work, even though the
 directory exists. (Sergio Gallelli, 2013 Dec 29)
+
+Patch by Marcin Szamotulski to add count to :close (2014 Aug 10, update Aug
+14, Aug 30)
+    Make ":1close" close the first window.
+    Make ":+1close" close the next window.
+    Make ":-1close" close the previous window.
+Doesn't look right, asked for updates.
 
 Patch to add a special key name for K_CURSORHOLD. (Hirohito Higashi, 2014 Aug
 10)
@@ -129,6 +108,9 @@ inconsistent with the documentation.
 MS-Windows: Crash opening very long file name starting with "\\".
 (Christian Brock, 2012 Jun 29)
 
+ml_updatechunk() is slow when retrying for another encoding. (John Little,
+2014 Sep 11)
+
 Syntax highlighting slow (hangs) in SASS file. (Niek Bosch, 2013 Aug 21)
 
 Patch to allow for a different icon on MS-Windows. (Yasuhiro Matsumoto, 2014
@@ -136,10 +118,15 @@ Sep 7).
 
 Adding "~" to 'cdpath' doesn't work for completion?  (Davido, 2013 Aug 19)
 
+Patch to make closed folds line up. (Charles Campbell, 2014 Sep 12)
+
 "hi link" does not respect groups with GUI settings only. (Mark Lodato, 2014
 Jun 8)
 
 No error for missing endwhile. (ZyX, 2014 Mar 20)
+
+start_global_changes() plus end_global_changes() causes problem for
+clip_unnamed_plus. (Jason Pleau, 2014 Sep 12)
 
 Patch to add :arglocal and :arglists. (Marcin Szamotulski, 2014 Aug 6)
 
@@ -238,7 +225,8 @@ Patch to support sorting on floating point number.  (Alex Jakushev, 2010 Oct
 
 Patch to support expression argument to sort() instead of a function name.
 Yasuhiro Matsumoto, 2013 May 31.
-Or should we add a more general mechanism, like lambda functions?
+Or should we add a more general mechanism, like a lambda() function?
+Patch by Yasuhiro Matsumoto, 2014 Sep 16.
 
 Patch for XDG base directory support. (Jean François Bignolles, 2014 Mar 4)
 Remark on the docs.  Should not be a compile time feature.  But then what?
