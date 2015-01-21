@@ -153,10 +153,6 @@
 #endif
 
 
-#ifndef EVIM_FILE
-# define EVIM_FILE      "$VIMRUNTIME/evim.vim"
-#endif
-
 # ifndef VIMINFO_FILE
 #   define VIMINFO_FILE "$HOME/.nviminfo"
 # endif

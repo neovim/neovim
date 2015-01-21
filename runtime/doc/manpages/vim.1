@@ -22,8 +22,6 @@ vim \- Vi IMproved, a programmers text editor
 .br
 .B gvim
 .B gview
-.B evim
-.B eview
 .br
 .B rvim
 .B rview
@@ -114,11 +112,6 @@ gvim gview
 The GUI version.
 Starts a new window.
 Can also be done with the "\-g" argument.
-.TP
-evim eview
-The GUI version in easy mode.
-Starts a new window.
-Can also be done with the "\-y" argument.
 .TP
 rvim rview rgvim rgview
 Like the above, but with restrictions.  It will not be possible to start shell
@@ -387,14 +380,6 @@ Like \-w, but an existing file is overwritten.
 \-X
 Don't connect to the X server.  Shortens startup time in a terminal, but the
 window title and clipboard will not be used.
-.TP
-\-y
-Start
-.B Vim
-in easy mode, just like the executable was called "evim" or "eview".
-Makes
-.B Vim
-behave like a click-and-type editor.
 .TP
 \-Z
 Restricted mode.  Works like the executable starts with "r".

@@ -4233,7 +4233,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 			{not in Vi}
 	Makes Vim work in a way that Insert mode is the default mode.  Useful
-	if you want to use Vim as a modeless editor.  Used for |evim|.
+	if you want to use Vim as a modeless editor.
 	These Insert mode commands will be useful:
 	- Use the cursor keys to move around.
 	- Use CTRL-O to execute one Normal mode command |i_CTRL-O|).  When

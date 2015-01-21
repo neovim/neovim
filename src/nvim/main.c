@@ -82,7 +82,6 @@ typedef struct {
   int argc;
   char        **argv;
 
-  int evim_mode;                        /* started as "evim" */
   char_u      *use_vimrc;               /* vimrc from -u argument */
 
   int n_commands;                            /* no. of commands from + or -c */
@@ -888,9 +887,8 @@ static void init_locale(void)
 #endif
 
 /*
- * Check for: [r][e][g][vi|vim|view][diff][ex[im]]
+ * Check for: [r][g][vi|vim|view][diff][ex[im]]
  * If the executable name starts with "r" we disable shell commands.
- * If the next character is "e" we run in Easy mode.
  * If the next character is "g" we run the GUI version.
  * If the next characters are "view" we start in readonly mode.
  * If the next characters are "diff" or "vimdiff" we start in diff mode.
@@ -912,9 +910,6 @@ static void parse_command_name(mparm_T *parmp)
 
   if (parse_char_i(&initstr, 'r'))
     restricted = TRUE;
-
-  if (parse_char_i(&initstr, 'e'))
-    parmp->evim_mode = TRUE;
 
   /* "gvim" starts the GUI.  Also accept "Gvim" for MS-Windows. */
   if (parse_char_i(&initstr, 'g'))
@@ -1111,10 +1106,6 @@ static void command_line_scan(mparm_T *parmp)
 
         case 'm':                 /* "-m"  no writing of files */
           p_write = FALSE;
-          break;
-
-        case 'y':                 /* "-y"  easy mode */
-          parmp->evim_mode = TRUE;
           break;
 
         case 'N':                 /* "-N"  Nocompatible */
@@ -1896,15 +1887,6 @@ static void source_startup_scripts(mparm_T *parmp)
   int i;
 
   /*
-   * For "evim" source evim.vim first of all, so that the user can overrule
-   * any things he doesn't like.
-   */
-  if (parmp->evim_mode) {
-    (void)do_source((char_u *)EVIM_FILE, FALSE, DOSO_NONE);
-    TIME_MSG("source evim file");
-  }
-
-  /*
    * If -u argument given, use only the initializations from that file and
    * nothing else.
    */
@@ -2155,7 +2137,6 @@ static void usage(void)
   main_msg(_("-E\t\t\tImproved Ex mode"));
   main_msg(_("-s\t\t\tSilent (batch) mode (only for \"ex\")"));
   main_msg(_("-d\t\t\tDiff mode (like \"vimdiff\")"));
-  main_msg(_("-y\t\t\tEasy mode (like \"evim\", modeless)"));
   main_msg(_("-R\t\t\tReadonly mode (like \"view\")"));
   main_msg(_("-Z\t\t\tRestricted mode (like \"rvim\")"));
   main_msg(_("-m\t\t\tModifications (writing files) not allowed"));

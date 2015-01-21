@@ -94,14 +94,6 @@ back on.
 
 For more info see |vimrc| and |compatible-default|.
 
-	Note:
-	This manual is about using Vim in the normal way.  There is an
-	alternative called "evim" (easy Vim).  This is still Vim, but used in
-	a way that resembles a click-and-type editor like Notepad.  It always
-	stays in Insert mode, thus it feels very different.  It is not
-	explained in the user manual, since it should be mostly self
-	explanatory.  See |evim-keys| for details.
-
 ==============================================================================
 *01.3*	Using the Vim tutor				*tutor* *vimtutor*
 

@@ -1,4 +1,4 @@
-*starting.txt*  For Vim version 7.4.  Last change: 2014 Jul 09
+*starting.txt*  For Vim version 7.4.  Last change: 2015 Jan 15
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -7,13 +7,12 @@
 Starting Vim						*starting*
 
 1. Vim arguments		|vim-arguments|
-2. Running eVim			|evim-keys|
-3. Initialization		|initialization|
-4. $VIM and $VIMRUNTIME		|$VIM|
-5. Suspending			|suspend|
-6. Saving settings		|save-settings|
-7. Views and Sessions		|views-sessions|
-8. The viminfo file		|viminfo-file|
+2. Initialization		|initialization|
+3. $VIM and $VIMRUNTIME		|$VIM|
+4. Suspending			|suspend|
+5. Saving settings		|save-settings|
+6. Views and Sessions		|views-sessions|
+7. The viminfo file		|viminfo-file|
 
 ==============================================================================
 1. Vim arguments					*vim-arguments*
@@ -100,8 +99,6 @@ rvim	vim -Z	    Like "vim", but in restricted mode (see |-Z|)   *rvim*
 rview	vim -RZ	    Like "view", but in restricted mode.	  *rview*
 rgvim	vim -gZ	    Like "gvim", but in restricted mode.	  *rgvim*
 rgview	vim -RgZ    Like "gview", but in restricted mode.	  *rgview*
-evim    vim -y      Easy Vim: set 'insertmode' (see |-y|)	    *evim*
-eview   vim -yR     Like "evim" in read-only mode		  *eview*
 vimdiff vim -d	    Start in diff mode |diff-mode|
 gvimdiff vim -gd    Start in diff mode |diff-mode|
 
@@ -353,14 +350,6 @@ argument.
 		or when using "-u NONE".
 		Also see |compatible-default|.  {not in Vi}
 
-							*-y* *easy*
--y		Easy mode.  Implied for |evim| and |eview|.  Starts with
-		'insertmode' set and behaves like a click-and-type editor.
-		This sources the script $VIMRUNTIME/evim.vim.  Mappings are
-		set up to work like most click-and-type editors, see
-		|evim-keys|.  The GUI is started when available.
-		{not in Vi}
-
 							*-n*
 -n		No swap file will be used.  Recovery after a crash will be
 		impossible.  Handy if you want to view or edit a file on a
@@ -588,58 +577,6 @@ Additional arguments are available on unix like systems when compiled with
 X11 GUI support.  See |gui-resources|.
 
 ==============================================================================
-2. Running eVim							*evim-keys*
-
-EVim runs Vim as click-and-type editor.  This is very unlike the original Vi
-idea.  But it helps for people that don't use Vim often enough to learn the
-commands.  Hopefully they will find out that learning to use Normal mode
-commands will make their editing much more effective.
-
-In Evim these options are changed from their default value:
-
-	:set nocompatible	Use Vim improvements
-	:set insertmode		Remain in Insert mode most of the time
-	:set hidden		Keep invisible buffers loaded
-	:set backup		Keep backup files
-	:set backspace=2	Backspace over everything
-	:set autoindent		auto-indent new lines
-	:set history=50		keep 50 lines of Ex commands
-	:set ruler		show the cursor position
-	:set incsearch		show matches halfway typing a pattern
-	:set mouse=a		use the mouse in all modes
-	:set hlsearch		highlight all matches for a search pattern
-	:set whichwrap+=<,>,[,]  <Left> and <Right> wrap around line breaks
-	:set guioptions-=a	non-Unix only: don't do auto-select
-
-Key mappings:
-	<Down>		moves by screen lines rather than file lines
-	<Up>		idem
-	Q		does "gq", formatting, instead of Ex mode
-	<BS>		in Visual mode: deletes the selection
-	CTRL-X		in Visual mode: Cut to clipboard
-	<S-Del>		idem
-	CTRL-C		in Visual mode: Copy to clipboard
-	<C-Insert>	idem
-	CTRL-V		Pastes from the clipboard (in any mode)
-	<S-Insert>	idem
-	CTRL-Q		do what CTRL-V used to do
-	CTRL-Z		undo
-	CTRL-Y		redo
-	<M-Space>	system menu
-	CTRL-A		select all
-	<C-Tab>		next window, CTRL-W w
-	<C-F4>		close window, CTRL-W c
-
-Additionally:
-- ":behave mswin" is used |:behave|
-- syntax highlighting is enabled
-- filetype detection is enabled, filetype plugins and indenting is enabled
-- in a text file 'textwidth' is set to 78
-
-One hint: If you want to go to Normal mode to be able to type a sequence of
-commands, use CTRL-L. |i_CTRL-L|
-
-==============================================================================
 3. Initialization				*initialization* *startup*
 
 This section is about the non-GUI version of Vim.  See |gui-fork| for
@@ -693,11 +630,8 @@ accordingly.  Vim proceeds in this order:
 	If Vim was started in Ex mode with the "-s" argument, all following
 	initializations until 4. are skipped.  Only the "-u" option is
 	interpreted.
-							*evim.vim*
-     a. If vim was started as |evim| or |eview| or with the |-y| argument, the
-	script $VIMRUNTIME/evim.vim will be loaded.
 							*system-vimrc*
-     b. For Unix, MS-DOS, MS-Windows, and Macintosh, the system vimrc file is
+     a. For Unix, MS-DOS, MS-Windows, and Macintosh, the system vimrc file is
 	read for initializations.  The path of this file is shown with the
 	":version" command.  Mostly it's "$VIM/vimrc".
 	Note that this file is ALWAYS read in 'compatible' mode, since the
@@ -706,7 +640,7 @@ accordingly.  Vim proceeds in this order:
 	For the Macintosh the $VIMRUNTIME/macmap.vim is read.
 
 	  *VIMINIT* *.vimrc* *_vimrc* *EXINIT* *.exrc* *_exrc* *$MYVIMRC*
-     c. Four places are searched for initializations.  The first that exists
+     b. Four places are searched for initializations.  The first that exists
 	is used, the others are ignored.  The $MYVIMRC environment variable is
 	set to the file that was first found, unless $MYVIMRC was already set
 	and when using VIMINIT.
@@ -731,7 +665,7 @@ accordingly.  Vim proceeds in this order:
 	   "vimrc" replaced by "exrc".  But only one of ".exrc" and "_exrc" is
 	   used, depending on the system.  And without the (*)!
 
-     d. If the 'exrc' option is on (which is not the default), the current
+     c. If the 'exrc' option is on (which is not the default), the current
 	directory is searched for three files.  The first that exists is used,
 	the others are ignored.
 	-  The file ".vimrc" (for Unix) (*)
