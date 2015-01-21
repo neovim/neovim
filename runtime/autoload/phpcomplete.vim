@@ -3,7 +3,7 @@
 " Maintainer:	Dávid Szabó ( complex857 AT gmail DOT com )
 " Previous Maintainer:	Mikolaj Machowski ( mikmach AT wp DOT pl )
 " URL: https://github.com/shawncplus/phpcomplete.vim
-" Last Change:  2014 Aug 10
+" Last Change:  2014 Oct 02
 "
 "	OPTIONS:
 "
@@ -2343,6 +2343,9 @@ function! phpcomplete#GetCurrentNameSpace(file_lines) " {{{
 							endif
 						endfor
 					endif
+				endif
+				if exists('no_namespace_candidate')
+					unlet no_namespace_candidate
 				endif
 			endfor
 		endif

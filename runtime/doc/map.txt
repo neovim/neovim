@@ -1,4 +1,4 @@
-*map.txt*       For Vim version 7.4.  Last change: 2014 Jun 02
+*map.txt*       For Vim version 7.4.  Last change: 2014 Sep 30
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -1282,6 +1282,8 @@ completion can be enabled:
 	-complete=var		user variables
 	-complete=custom,{func} custom completion, defined via {func}
 	-complete=customlist,{func} custom completion, defined via {func}
+
+Note: That some completion methods might expand environment variables.
 
 
 Custom completion			*:command-completion-custom*

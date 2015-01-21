@@ -1,4 +1,4 @@
-*todo.txt*      For Vim version 7.4.  Last change: 2014 Sep 19
+*todo.txt*      For Vim version 7.4.  Last change: 2014 Oct 02
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -58,6 +58,15 @@ Patch to make getregtype() return the right size for non-linux systems.
 (Yasuhiro Matsumoto, 2014 Jul 8)
 Breaks test_eval.  Inefficient, can we only compute y_width when needed?
 
+Patch to fix 'linebreak' when applying an operator.  And fix the test not
+actually testing. (Christian Brabandt, 2014 Sep 23)
+
+patch to fix issue 26. (Christian)
+
+Test 11 and 100 do not work properly on Windows.
+Patch by Ken Takata (2014 Sep 25)
+Alternative patch Oct 1.
+
 Problem that a previous silent ":throw" causes a following try/catch not to
 work. (ZyX, 2013 Sep 28)
 
@@ -65,25 +74,14 @@ Patch to avoid problems with encoding conversion with diff.vim.
 (Yasuhiro Matsumoto, 2014 Sep 1.
 Depends on current language, language of file can be different.
 
-Patch for C/C++ syntax string handling. (Brian Bi, 2014 Sep 13)
-
-When using a visual selection of multiple words and doing CTRL-W_] it jumps to
-the tag matching the word under the cursor, not the selected text.
-(Patrick hemmer)
-Patch by Christian, 2014 Aug 8.
-
-Completion for :buf does not use 'wildignorecase'. (Akshay H, 2014 May 31)
-
-'backupcopy' should be global-local, so that some files can be written in a
-different way.  Patch by Christian, 2014 Sep 17.
-
-Patch to handle list with some items locked. (ZyX, 2014 Aug 17)
-Prefer the second solution.
-
-Issue 252.  Patch by Christian, 2014 Aug 26.
+Add books from Steve Oualline to Vim website. (2014 Sep 25)
 
 ":cd C:\Windows\System32\drivers\etc*" does not work, even though the
 directory exists. (Sergio Gallelli, 2013 Dec 29)
+
+Patch to have the fold and sign column and at the last line of the buffer.
+(Marco Hinz, 2014 Sep 25)
+Alternate suggestion: let all columns continue, also number column.
 
 Patch by Marcin Szamotulski to add count to :close (2014 Aug 10, update Aug
 14, Aug 30)
@@ -92,18 +90,40 @@ Patch by Marcin Szamotulski to add count to :close (2014 Aug 10, update Aug
     Make ":-1close" close the previous window.
 Doesn't look right, asked for updates.
 
-Patch to add a special key name for K_CURSORHOLD. (Hirohito Higashi, 2014 Aug
-10)
+Patch to handle multi-byte printer name on MS-Windows. (Yasuhiro Matsumoto,
+2014 Sept 28)
+
+Two patches by Christian, 2014 Sep 29:
+- Combination of precedes listchar and 'showbreak' doesn't work well.
+- Moving cursor is off when 'nu' and 'sbr' are set.
 
 The entries added by matchaddpos() are returned by getmatches() but can't be
 set with setmatches(). (lcd47, 2014 Jun 29)
+
+Patch to fix window title for a command window on MS-Windows. (Yasuhiro
+Matsumoto, 2014 Sep 28)
+
+Patch to fix that 0x80 in abbreviation isn't handled correctly.
+(Christian Brabandt, 2014 Oct 1)
+
+Patch to fix issue 57, on the issue.
+
+Patch for issue 101, maintainer unreachable.
+
+Remove restriction in NSIS installer that the end of the path must be "Vim".
+(Tim Lebedkov, 2014 Sep 24)
 
 Problem using ":try" inside ":execute". (ZyX, 2013 Sep 15)
 
 Python: ":py raw_input('prompt')" doesn't work. (Manu Hack)
 
+'foldexpr' applies to help. (Paul Marshall, 2014 Sep 24)
+
 Value returned by virtcol() changes depending on how lines wrap.  This is
 inconsistent with the documentation.
+
+On MS-Windows running tests with Mercurial has problems when the input files
+are changed. (Ken Takata, Taro Muraoka, 2014 Sep 25)
 
 MS-Windows: Crash opening very long file name starting with "\\".
 (Christian Brock, 2012 Jun 29)
@@ -111,10 +131,12 @@ MS-Windows: Crash opening very long file name starting with "\\".
 ml_updatechunk() is slow when retrying for another encoding. (John Little,
 2014 Sep 11)
 
-Syntax highlighting slow (hangs) in SASS file. (Niek Bosch, 2013 Aug 21)
+Make comments in the test Makefile silent. (Kartik Agaram, 2014 Sep 24)
 
-Patch to allow for a different icon on MS-Windows. (Yasuhiro Matsumoto, 2014
-Sep 7).
+When in 'comments' "n:x" follows after three-part comment directly it repeats
+any one-character from the previous line. (Kartik Agaram, 2014 Sep 19)
+
+Syntax highlighting slow (hangs) in SASS file. (Niek Bosch, 2013 Aug 21)
 
 Adding "~" to 'cdpath' doesn't work for completion?  (Davido, 2013 Aug 19)
 
@@ -164,6 +186,8 @@ from?
 
 Problem with upwards search on Windows (works OK on Linux). (Brett Stahlman,
 2014 Jun 8)
+
+Patch to load TCL dynamically. (Ken Takata, 2014 Sep 20)
 
 Include a plugin manager with Vim? Neobundle seems to be the best currently.
 Long message about this from ZyX, 2014 Mar 23.  And following replies.

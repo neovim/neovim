@@ -1,4 +1,4 @@
-*options.txt*	For Vim version 7.4.  Last change: 2014 Sep 09
+*options.txt*	For Vim version 7.4.  Last change: 2014 Sep 23
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -3937,6 +3937,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When Vim was compiled with HAVE_X11 defined, the original icon will be
 	restored if possible |X11|.  See |X11-icon| for changing the icon on
 	X11.
+	For MS-Windows the icon can be changed, see |windows-icon|.
 
 						*'iconstring'*
 'iconstring'		string	(default "")

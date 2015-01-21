@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 7.4.  Last change: 2014 Sep 09
+*syntax.txt*	For Vim version 7.4.  Last change: 2014 Sep 27
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -3799,7 +3799,7 @@ The 'foldnestmax' option limits the nesting of syntax folds.
 
 
 			*:syn-contains* *E405* *E406* *E407* *E408* *E409*
-contains={groupname},..
+contains={group-name},..
 
 The "contains" argument is followed by a list of syntax group names.  These
 groups will be allowed to begin inside the item (they may extend past the
@@ -3852,13 +3852,13 @@ region where contained items do match.	Note that this may also limit the
 area that is highlighted
 
 
-containedin={groupname}...				*:syn-containedin*
+containedin={group-name}...				*:syn-containedin*
 
 The "containedin" argument is followed by a list of syntax group names.  The
 item will be allowed to begin inside these groups.  This works as if the
 containing item has a "contains=" argument that includes this item.
 
-The {groupname}... can be used just like for "contains", as explained above.
+The {group-name}... can be used just like for "contains", as explained above.
 
 This is useful when adding a syntax item afterwards.  An item can be told to
 be included inside an already existing item, without changing the definition
@@ -3874,7 +3874,7 @@ keywords never contain another item, thus adding them to "containedin" won't
 work.
 
 
-nextgroup={groupname},..				*:syn-nextgroup*
+nextgroup={group-name},..				*:syn-nextgroup*
 
 The "nextgroup" argument is followed by a list of syntax group names,
 separated by commas (just like with "contains", so you can also use patterns).
