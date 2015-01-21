@@ -72,10 +72,10 @@ describe('clipboard usage', function()
     reset()
 
     -- handle null bytes
-    insert("some\x16000text\n\x16000very binary\x16000")
+    insert("some\022000text\n\022000very binary\022000")
     feed('"*y-+"*p')
     eq({'some\ntext', '\nvery binary\n',''}, eval("g:test_clip['*']"))
-    expect("some\x00text\n\x00very binary\x00\nsome\x00text\n\x00very binary\x00")
+    expect("some\00text\n\00very binary\00\nsome\00text\n\00very binary\00")
 
     -- test getreg/getregtype
     eq('some\ntext\n\nvery binary\n\n', eval("getreg('*', 1)"))
@@ -92,7 +92,7 @@ describe('clipboard usage', function()
     expect([[
       very much
       blocktext]])
-    eq("\x165", eval("getregtype('*')"))
+    eq("\0225", eval("getregtype('*')"))
     reset()
 
     -- test setreg
