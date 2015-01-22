@@ -117,7 +117,7 @@ describe('vim_* functions', function()
 
   describe('replace_termcodes', function()
     it('escapes K_SPECIAL as K_SPECIAL KS_SPECIAL KE_FILLER', function()
-      eq(helpers.nvim('replace_termcodes', '\x80', true, true, true), '\x80\xfeX')
+      eq(helpers.nvim('replace_termcodes', '\128', true, true, true), '\128\254X')
     end)
 
     it('leaves non K_SPECIAL string unchanged', function()
