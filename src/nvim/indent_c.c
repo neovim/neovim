@@ -477,10 +477,16 @@ static char_u *after_label(char_u *l)
   return l;
 }
 
-/*
- * Get indent of line "lnum", skipping a label.
- * Return 0 if there is nothing after the label.
- */
+/// Gets the indent of line "lnum", skipping any label.
+///
+/// For the following text the marked character is the indent value:
+///
+///   label: if (asdf && asdfasdf)
+///          ^
+/// @param lnum The line number on which to calculate the indent.
+///
+/// @returns The indent column (after any labels) or 0 if there is no text
+///          after the label.
 static int get_indent_after_label(linenr_T lnum)
 { /* XXX */
   char_u *l;
@@ -499,21 +505,26 @@ static int get_indent_after_label(linenr_T lnum)
   return (int)col;
 }
 
-/*
- * Find indent for line "lnum", ignoring any case or jump label.
- * Also return a pointer to the text (after the label) in "pp".
- *   label:	if (asdf && asdfasdf)
- *		^
- */
+/// Find indent for line "lnum", ignoring any case or jump label.
+///
+/// For the following text it'll select the marked character as the indent
+/// value:
+///
+///   label: if (asdf && asdfasdf)
+///          ^
+/// @param      lnum The line number for which you want the indent value.
+/// @param[out] pp A pointer to store a reference to the text at this indent.
+///
+/// @returns An integer representing the number of columns of indent.
 static int get_indent_after_label_with_ref(linenr_T lnum, char_u **pp)
   FUNC_ATTR_NONNULL_ALL
 { /* XXX */
   char_u *l = ml_get(lnum);
   int indent;
 
-  /* We repeatedly call "ml_get(lnum)" because every time it's called    */
-  /* (or any time we call a function that calls it, marked with an 'XXX' */
-  /* comment) the returned pointer is invalidated.                       */
+  // We repeatedly call "ml_get(lnum)" because every time it's called
+  // (or any time we call a function that calls it, marked with an 'XXX'
+  // comment) the returned pointer is invalidated.
   if (cin_iscase(l, FALSE) || cin_isscopedecl(l) || cin_islabel()) {
     indent = get_indent_after_label(lnum);
     l = after_label(ml_get(lnum));
