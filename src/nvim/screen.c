@@ -613,8 +613,7 @@ void update_single_line(win_T *wp, linenr_T lnum)
     for (j = 0; j < wp->w_lines_valid; ++j) {
       if (lnum == wp->w_lines[j].wl_lnum) {
         screen_start();         /* not sure of screen cursor */
-        init_search_hl(wp);
-        prepare_search_hl(wp, lnum);
+        init_search_hl_window(wp);
         win_line(wp, lnum, row, row + wp->w_lines[j].wl_size, false);
         break;
       }
@@ -816,7 +815,7 @@ static void win_update(win_T *wp)
     return;
   }
 
-  init_search_hl(wp);
+  init_search_hl_window(wp);
 
   /* Force redraw when width of 'number' or 'relativenumber' column
    * changes. */
@@ -1546,7 +1545,6 @@ static void win_update(win_T *wp)
          * will draw "@  " lines below. */
         row = wp->w_height + 1;
       } else {
-        prepare_search_hl(wp, lnum);
         /* Let the syntax stuff know we skipped a few lines. */
         if (syntax_last_parsed != 0 && syntax_last_parsed + 1 < lnum
             && syntax_present(wp))
@@ -2322,6 +2320,8 @@ win_line (
 
   row = startrow;
   screen_row = row + wp->w_winrow;
+
+  init_search_hl_line(wp, lnum);
 
   /*
    * To speed up the loop below, set extra_check when there is linebreak,
@@ -5518,10 +5518,8 @@ void invalidate_search_hl(void) {
   search_hl.rm.regprog = NULL;
 }
 
-/*
- * Init for calling prepare_search_hl().
- */
-static void init_search_hl(win_T *wp)
+/// Prepare for search highlighting in window.
+static void init_search_hl_window(win_T *wp)
 {
   matchitem_T *cur;
   match_T* shl;
@@ -5557,10 +5555,9 @@ static void init_search_hl(win_T *wp)
   }
 }
 
-/*
- * Advance to the match in window "wp" line "lnum" or past it.
- */
-static void prepare_search_hl(win_T *wp, linenr_T lnum)
+/// Prepare for search highlighting at line "lnum" in window "wp".
+/// Advances to the match in window "wp" line "lnum" or past it.
+static void init_search_hl_line(win_T *wp, linenr_T lnum)
 {
   matchitem_T *cur;             /* points to the match list */
   match_T     *shl;             /* points to search_hl or a match */
