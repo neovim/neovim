@@ -2432,14 +2432,12 @@ void ins_compl_show_pum(void)
       }
   }
 
-  if (compl_match_array != NULL) {
-    /* Compute the screen column of the start of the completed text.
-     * Use the cursor to get all wrapping and other settings right. */
-    col = curwin->w_cursor.col;
-    curwin->w_cursor.col = compl_col;
-    pum_display(compl_match_array, compl_match_arraysize, cur);
-    curwin->w_cursor.col = col;
-  }
+  /* Compute the screen column of the start of the completed text.
+   * Use the cursor to get all wrapping and other settings right. */
+  col = curwin->w_cursor.col;
+  curwin->w_cursor.col = compl_col;
+  pum_display(compl_match_array, compl_match_arraysize, cur);
+  curwin->w_cursor.col = col;
 }
 
 #define DICT_FIRST      (1)     /* use just first element in "dict" */
