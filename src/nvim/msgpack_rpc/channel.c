@@ -442,17 +442,18 @@ static void handle_request(Channel *channel, msgpack_object *request)
 
   if (error.set) {
     // Validation failed, send response with error
-    channel_write(channel,
-                  serialize_response(channel->id,
-                                     request_id,
-                                     &error,
-                                     NIL,
-                                     &out_buffer));
-    char buf[256];
-    snprintf(buf, sizeof(buf),
-             "Channel %" PRIu64 " sent an invalid message, closing.",
-             channel->id);
-    call_set_error(channel, buf);
+    if (channel_write(channel,
+                      serialize_response(channel->id,
+                                         request_id,
+                                         &error,
+                                         NIL,
+                                         &out_buffer))) {
+      char buf[256];
+      snprintf(buf, sizeof(buf),
+               "Channel %" PRIu64 " sent an invalid message, closing.",
+               channel->id);
+      call_set_error(channel, buf);
+    }
     return;
   }
 
@@ -619,8 +620,7 @@ static void unsubscribe(Channel *channel, char *event)
   free(event_string);
 }
 
-/// Close the channel streams/job. The channel resources will be freed by
-/// free_channel later.
+/// Close the channel streams/job and free the channel resources.
 static void close_channel(Channel *channel)
 {
   if (channel->closed) {
