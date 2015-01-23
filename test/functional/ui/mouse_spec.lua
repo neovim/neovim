@@ -8,6 +8,7 @@ describe('Mouse input', function()
 
   setup(function()
     hlgroup_colors = {
+      NonText = nvim('name_to_color', 'Blue'),
       Visual = nvim('name_to_color', 'LightGrey'),
     }
   end)
@@ -21,8 +22,10 @@ describe('Mouse input', function()
     screen = Screen.new(25, 5)
     screen:attach()
     screen:set_default_attr_ids({
-      [1] = {background = hlgroup_colors.Visual}
+      [1] = {background = hlgroup_colors.Visual},
+      [2] = {bold = true}
     })
+    screen:set_default_attr_ignore( {{bold=true, foreground=hlgroup_colors.NonText}} )
     feed('itesting<cr>mouse<cr>support and selection<esc>')
     screen:expect([[
       testing                  |
@@ -72,7 +75,7 @@ describe('Mouse input', function()
       mo{1:us}^                    |
       support and selection    |
       ~                        |
-      -- VISUAL --             |
+      {2:-- VISUAL --}             |
     ]])
     feed('<LeftDrag><2,2>')
     screen:expect([[
@@ -80,7 +83,7 @@ describe('Mouse input', function()
       mo{1:use }                   |
       {1:su}^port and selection    |
       ~                        |
-      -- VISUAL --             |
+      {2:-- VISUAL --}             |
     ]])
     feed('<LeftDrag><0,0>')
     screen:expect([[
@@ -88,7 +91,7 @@ describe('Mouse input', function()
       {1:mou}se                    |
       support and selection    |
       ~                        |
-      -- VISUAL --             |
+      {2:-- VISUAL --}             |
     ]])
   end)
 
@@ -99,7 +102,7 @@ describe('Mouse input', function()
       mouse                    |
       {1:suppor}^ and selection    |
       ~                        |
-      -- VISUAL --             |
+      {2:-- VISUAL --}             |
     ]])
   end)
 
@@ -110,7 +113,7 @@ describe('Mouse input', function()
       mouse                    |
       {1:su}^{1:port and selection }   |
       ~                        |
-      -- VISUAL LINE --        |
+      {2:-- VISUAL LINE --}        |
     ]])
   end)
 
@@ -121,7 +124,7 @@ describe('Mouse input', function()
       mouse                    |
       su^port and selection    |
       ~                        |
-      -- VISUAL BLOCK --       |
+      {2:-- VISUAL BLOCK --}       |
     ]])
   end)
 
@@ -140,7 +143,7 @@ describe('Mouse input', function()
       {1:mouse }                   |
       {1:su}^port and selection    |
       ~                        |
-      -- VISUAL --             |
+      {2:-- VISUAL --}             |
     ]])
   end)
 
@@ -153,7 +156,7 @@ describe('Mouse input', function()
       ing                      |
       Press ENTER or type comma|
       nd to continue^          |
-    ]])
+    ]],nil,true)
     feed('<cr>')
   end)
 
@@ -171,6 +174,8 @@ describe('Mouse input', function()
     ]])
     screen:try_resize(53, 14)
     execute('sp', 'vsp')
+    screen:set_default_attr_ignore( {{bold=true, foreground=hlgroup_colors.NonText},
+            {reverse=true}, {bold=true, reverse=true}} )
     screen:expect([[
       lines                     |lines                     |
       to                        |to                        |
