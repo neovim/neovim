@@ -85,6 +85,10 @@ Screen.__index = Screen
 
 local debug_screen
 
+local default_screen_timeout = 2500
+if os.getenv('VALGRIND') then
+  default_screen_timeout = 7500
+end
 
 function Screen.debug(command)
   if not command then
@@ -187,12 +191,12 @@ function Screen:wait(check, timeout)
     end
     return true
   end
-  run(nil, notification_cb, nil, timeout or 5000)
+  run(nil, notification_cb, nil, timeout or default_screen_timeout)
   if not checked then
     err = check()
   end
   if err then
-    error(err)
+    assert(false, err)
   end
 end
 

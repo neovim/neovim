@@ -6,7 +6,8 @@ local Session = require('nvim.session')
 
 local nvim_prog = os.getenv('NVIM_PROG') or 'build/bin/nvim'
 local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
-                   '--cmd', 'set shortmess+=I background=light', '--embed'}
+                   '--cmd', 'set shortmess+=I background=light noswapfile',
+                   '--embed'}
 local prepend_argv
 
 if os.getenv('VALGRIND') then
@@ -153,8 +154,7 @@ end
 
 local function clear()
   if session then
-    session:request('vim_command', 'qa!')
-    session:exit()
+    session:exit(0)
   end
   local loop = Loop.new()
   local msgpack_stream = MsgpackStream.new(loop)
