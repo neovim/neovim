@@ -1447,8 +1447,6 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
      */
     str = skipwhite(line + 1);
     str = viminfo_readstring(virp, (int)(str - virp->vir_line), FALSE);
-    if (str == NULL)
-      continue;
     p = str + STRLEN(str);
     while (p != str && (*p == NUL || vim_isspace(*p)))
       p--;
