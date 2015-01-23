@@ -4135,7 +4135,7 @@ static int ins_compl_use_match(int c)
 /*
  * Do Insert mode completion.
  * Called when character "c" was typed, which has a meaning for completion.
- * Returns OK if completion was done, FAIL if something failed (out of mem).
+ * Returns OK if completion was done, FAIL if something failed.
  */
 static int ins_complete(int c)
 {
@@ -4236,13 +4236,9 @@ static int ins_complete(int c)
           compl_length = curs_col - startcol;
         }
         if (p_ic)
-          compl_pattern = str_foldcase(line + compl_col,
-              compl_length, NULL, 0);
+          compl_pattern = str_foldcase(line + compl_col, compl_length, NULL, 0);
         else
-          compl_pattern = vim_strnsave(line + compl_col,
-              compl_length);
-        if (compl_pattern == NULL)
-          return FAIL;
+          compl_pattern = vim_strnsave(line + compl_col, compl_length);
       } else if (compl_cont_status & CONT_ADDING) {
         char_u      *prefix = (char_u *)"\\<";
 
@@ -4309,12 +4305,9 @@ static int ins_complete(int c)
       if (compl_length < 0)             /* cursor in indent: empty pattern */
         compl_length = 0;
       if (p_ic)
-        compl_pattern = str_foldcase(line + compl_col, compl_length,
-            NULL, 0);
+        compl_pattern = str_foldcase(line + compl_col, compl_length, NULL, 0);
       else
         compl_pattern = vim_strnsave(line + compl_col, compl_length);
-      if (compl_pattern == NULL)
-        return FAIL;
     } else if (ctrl_x_mode == CTRL_X_FILES) {
       /* Go back to just before the first filename character. */
       if (startcol > 0) {
