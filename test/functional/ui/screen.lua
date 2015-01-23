@@ -192,7 +192,7 @@ function Screen:wait(check, timeout)
     err = check()
   end
   if err then
-    error(err)
+    assert(false, err)
   end
 end
 
