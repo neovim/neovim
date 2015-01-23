@@ -106,7 +106,8 @@ clean:
 	        $(RM_ON_START) \
 	        valgrind.*     \
 	        .*.swp         \
-	        .*.swo
+	        .*.swo         \
+	        del
 
 test1.out: .gdbinit test1.in
 	-rm -rf $*.failed $(RM_ON_RUN) $(RM_ON_START) wrongtermsize
