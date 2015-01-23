@@ -158,19 +158,11 @@ function Screen:expect(expected, attr_ids, attr_ignore)
     table.insert(expected_rows, row)
   end
   local ids = attr_ids or self._default_attr_ids
-  if attr_ignore == nil and self._default_attr_ignore ~= nil then
-    attr_ignore = {}
-    -- don't ignore something we specified in attr_ids
-    for i,a in pairs(self._default_attr_ignore) do
-      if attr_index(ids, a) == nil then
-        table.insert(attr_ignore, a)
-      end
-    end
-  end
+  local ignore = attr_ignore or self._default_attr_ignore
   self:wait(function()
     for i = 1, self._height do
       local expected_row = expected_rows[i]
-      local actual_row = self:_row_repr(self._rows[i], ids, attr_ignore)
+      local actual_row = self:_row_repr(self._rows[i], ids, ignore)
       if expected_row ~= actual_row then
         return 'Row '..tostring(i)..' didnt match.\nExpected: "'..
                expected_row..'"\nActual:   "'..actual_row..'"'
@@ -417,12 +409,16 @@ function Screen:snapshot_util(attrs, ignore)
       end
     end
 
-    for i = 1, self._height do
-      local row = self._rows[i]
-      for j = 1, self._width do
-        local attr = row[j].attrs
-        if attr_index(attrs, attr) == nil and attr_index(ignore, attr) == nil then
-          table.insert(attrs, attr)
+    if ignore ~= true then
+      for i = 1, self._height do
+        local row = self._rows[i]
+        for j = 1, self._width do
+          local attr = row[j].attrs
+          if attr_index(attrs, attr) == nil and attr_index(ignore, attr) == nil then
+            if not equal_attrs(attr, {}) then
+              table.insert(attrs, attr)
+            end
+          end
         end
       end
     end
@@ -468,7 +464,7 @@ function backward_find_meaningful(tbl, from)
   return from
 end
 
-function get_attr_id(attr_ids, attr_ignore, attrs)
+function get_attr_id(attr_ids, ignore, attrs)
   if not attr_ids then
     return
   end
@@ -477,7 +473,8 @@ function get_attr_id(attr_ids, attr_ignore, attrs)
        return id
      end
   end
-  if attr_ignore == nil or attr_index(attr_ignore, attrs) ~= nil then
+  if equal_attrs(attrs, {}) or
+      ignore == true or attr_index(ignore, attrs) ~= nil then
     -- ignore this attrs
     return nil
   end
