@@ -18162,8 +18162,7 @@ void func_dump_profile(FILE *fd)
       --todo;
       fp = HI2UF(hi);
       if (fp->uf_profiling) {
-        if (sorttab != NULL)
-          sorttab[st_len++] = fp;
+        sorttab[st_len++] = fp;
 
         if (fp->uf_name[0] == K_SPECIAL)
           fprintf(fd, "FUNCTION  <SNR>%s()\n", fp->uf_name + 3);
@@ -18190,7 +18189,7 @@ void func_dump_profile(FILE *fd)
     }
   }
 
-  if (sorttab != NULL && st_len > 0) {
+  if (st_len > 0) {
     qsort((void *)sorttab, (size_t)st_len, sizeof(ufunc_T *),
         prof_total_cmp);
     prof_sort_list(fd, sorttab, st_len, "TOTAL", FALSE);
