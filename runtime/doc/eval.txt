@@ -5322,8 +5322,8 @@ searchpair({start}, {middle}, {end} [, {flags} [, {skip}
 		to be found.  Note that single-quote strings are used to avoid
 		having to double the backslashes.  The skip expression only
 		catches comments at the start of a line, not after a command.
-		Also, a word "en" or "if" halfway a line is considered a
-		match.
+		Also, a word "en" or "if" halfway through a line is considered
+		a match.
 		Another example, to search for the matching "{" of a "}": >
 
 	:echo searchpair('{', '', '}', 'bW')

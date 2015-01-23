@@ -1084,7 +1084,7 @@ void diff_win_options(win_T *wp, int addbuf)
   wp->w_p_fdl = 0;
   foldUpdateAll(wp);
 
-  // make sure topline is not halfway a fold
+  // make sure topline is not halfway through a fold
   changed_window_setting_win(wp);
   if (vim_strchr(p_sbo, 'h') == NULL) {
     do_cmdline_cmd((char_u *)"set sbo+=hor");
@@ -1160,7 +1160,7 @@ void ex_diffoff(exarg_T *eap)
 
       foldUpdateAll(wp);
 
-      // make sure topline is not halfway a fold
+      // make sure topline is not halfway through a fold
       changed_window_setting_win(wp);
 
       // Note: 'sbo' is not restored, it's a global option.
@@ -1511,8 +1511,8 @@ int diff_check(win_T *wp, linenr_T lnum)
     // If there is no buffer with zero lines then there is no difference
     // any longer.  Happens when making a change (or undo) that removes
     // the difference.  Can't remove the entry here, we might be halfway
-    // updating the window.  Just report the text as unchanged.  Other
-    // windows might still show the change though.
+    // through updating the window.  Just report the text as unchanged.
+    // Other windows might still show the change though.
     if (zero == FALSE) {
       return 0;
     }

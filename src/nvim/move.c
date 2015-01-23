@@ -1629,10 +1629,10 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
   curwin->w_valid |= VALID_TOPLINE;
 }
 
-/*
- * Recompute topline to put the cursor halfway the window
- * If "atend" is TRUE, also put it halfway at the end of the file.
- */
+/// Recompute topline to put the cursor halfway across the window
+///
+/// @param atend if TRUE, also put the cursor halfway to the end of the file.
+///
 void scroll_cursor_halfway(int atend)
 {
   int above = 0;

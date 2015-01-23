@@ -1783,8 +1783,8 @@ Using UTF-8 character with ":command" does not work properly. (Matt Wozniski,
 In the Netbeans interface add a "vimeval" function, so that the other side can
 check the result of has("patch13").
 
-Cursor line at bottom of window instead of halfway after saving view and
-restoring.  Only with 'nowrap'. (Robert Webb, 2008 Aug 25)
+Cursor line at bottom of window instead of halfway through after saving view
+and restoring.  Only with 'nowrap'. (Robert Webb, 2008 Aug 25)
 
 Netrw has trouble executing autocommands only for a directory.  Add <isdir>
 and <notisdir> to autocommand patterns?  Also <isfile>?
@@ -2796,7 +2796,7 @@ Most interesting new features to be added when all bugs have been fixed:
     Especially when using the scrollbar.  Typing a cursor-movement command
     scrolls back to where the cursor is.
 -   Scroll commands by screen line. g CTRL-E and g CTRL-Y ?  Requires the
-    first line to be able to start halfway.
+    first line to be able to start halfway through.
 -   Running a shell command from the GUI still has limitations.  Look into how
     the terminal emulator of the Vim shell project can help:
     http://vimshell.wana.at

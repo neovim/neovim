@@ -3093,7 +3093,7 @@ do_ecmd (
   if (!skip_redraw) {
     n = p_so;
     if (topline == 0 && command == NULL)
-      p_so = 999;                       /* force cursor halfway the window */
+      p_so = 999;        // force cursor to be vertically centered in the window
     update_topline();
     curwin->w_scbind_pos = curwin->w_topline;
     p_so = n;

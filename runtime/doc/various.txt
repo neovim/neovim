@@ -19,9 +19,9 @@ CTRL-L			Clear and redraw the screen.  The redraw may happen
 							*:redr* *:redraw*
 :redr[aw][!]		Redraw the screen right now.  When ! is included it is
 			cleared first.
-			Useful to update the screen halfway executing a script
-			or function.  Also when halfway a mapping and
-			'lazyredraw' is set.
+			Useful to update the screen halfway through executing
+			a script or function (or a mapping if 'lazyredraw'
+			set).
 
 						*:redraws* *:redrawstatus*
 :redraws[tatus][!]	Redraw the status line of the current window.  When !
@@ -79,8 +79,8 @@ g8			Print the hex values of the bytes used in the
 			encoding because it contains illegal bytes.
 			Does not wrap around the end of the file.
 			Note that when the cursor is on an illegal byte or the
-			cursor is halfway a multi-byte character the command
-			won't move the cursor.
+			cursor is halfway through a multi-byte character the
+			command won't move the cursor.
 			{not in Vi} {only when compiled with the |+multi_byte|
 			feature}
 

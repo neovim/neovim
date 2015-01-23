@@ -1357,8 +1357,8 @@ Note: this doesn't work for postponed prefixes yet.
 						    *spell-COMPOUNDPERMITFLAG*
 The COMPOUNDPERMITFLAG specifies a flag that can be used on an affix.  It
 means that the word plus affix can also be used in a compound word in a way
-where the affix ends up halfway the word.  Without this flag that is not
-allowed.
+where the affix ends up halfway through the word.  Without this flag that is
+not allowed.
 Note: this doesn't work for postponed prefixes yet.
 
 						    *spell-COMPOUNDROOT*

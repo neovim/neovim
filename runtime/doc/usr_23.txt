@@ -61,10 +61,10 @@ The three names that Vim uses are:
 USING THE MAC FORMAT
 
 On Unix, <LF> is used to break a line.  It's not unusual to have a <CR>
-character halfway a line.  Incidentally, this happens quite often in Vi (and
-Vim) scripts.
+character halfway in a line.  Incidentally, this happens quite often in Vi
+(and Vim) scripts.
    On the Macintosh, where <CR> is the line break character, it's possible to
-have a <LF> character halfway a line.
+have a <LF> character halfway in a line.
    The result is that it's not possible to be 100% sure whether a file
 containing both <CR> and <LF> characters is a Mac or a Unix file.  Therefore,
 Vim assumes that on Unix you probably won't edit a Mac file, and doesn't check

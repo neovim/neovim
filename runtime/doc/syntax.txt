@@ -4075,8 +4075,8 @@ the match doesn't move to another line.
 The skip pattern can include the "\n", but the search for an end pattern will
 continue in the first character of the next line, also when that character is
 matched by the skip pattern.  This is because redrawing may start in any line
-halfway a region and there is no check if the skip pattern started in a
-previous line.	For example, if the skip pattern is "a\nb" and an end pattern
+halfway in a region and there is no check if the skip pattern started in a
+previous line. For example, if the skip pattern is "a\nb" and an end pattern
 is "b", the end pattern does match in the second line of this: >
 	 x x a
 	 b x x

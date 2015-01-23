@@ -201,7 +201,7 @@ change.  Then you can use Visual mode.
 You start Visual mode by pressing "v".  You move the cursor over the text you
 want to work on.  While you do this, the text is highlighted.  Finally type
 the operator command.
-   For example, to delete from halfway one word to halfway another word:
+   For example, to delete from the middle of a word to the middle of another:
 
 		This is an examination sample of visual mode ~
 			       ---------->
