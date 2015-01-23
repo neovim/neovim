@@ -438,11 +438,7 @@ function Screen:snapshot_util(attrs, ignore)
     if self._default_attr_ids == nil or self._default_attr_ids[i] ~= a then
       alldefault = false
     end
-    local items = {}
-    for f, v in pairs(a) do
-      table.insert(items, f.." = "..tostring(v))
-    end
-    local dict = "{"..table.concat(items, ", ").."}"
+    local dict = "{"..pprint_attrs(a).."}"
     table.insert(attrstrs, "["..tostring(i).."] = "..dict)
   end
   local attrstr = "{"..table.concat(attrstrs, ", ").."}"
@@ -455,6 +451,13 @@ function Screen:snapshot_util(attrs, ignore)
   end
 end
 
+function pprint_attrs(attrs)
+    local items = {}
+    for f, v in pairs(attrs) do
+      table.insert(items, f.." = "..tostring(v))
+    end
+    return table.concat(items, ", ")
+end
 
 function backward_find_meaningful(tbl, from)
   for i = from or #tbl, 1, -1 do
@@ -478,7 +481,7 @@ function get_attr_id(attr_ids, attr_ignore, attrs)
     -- ignore this attrs
     return nil
   end
-  return "UNEXPECTED"
+  return "UNEXPECTED "..pprint_attrs(attrs)
 end
 
 function equal_attrs(a, b)
