@@ -3505,8 +3505,6 @@ expand_cmdline (
   /* add star to file name, or convert to regexp if not exp. files. */
   xp->xp_pattern_len = (int)(str + col - xp->xp_pattern);
   file_str = addstar(xp->xp_pattern, xp->xp_pattern_len, xp->xp_context);
-  if (file_str == NULL)
-    return EXPAND_UNSUCCESSFUL;
 
   if (p_wic)
     options += WILD_ICASE;
