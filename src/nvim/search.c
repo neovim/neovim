@@ -4627,18 +4627,15 @@ int read_viminfo_search_pattern(vir_T *virp, int force)
     hlsearch_on = TRUE;
   if (idx >= 0) {
     if (force || spats[idx].pat == NULL) {
-      val = viminfo_readstring(virp, (int)(lp - virp->vir_line + 1),
-          TRUE);
-      if (val != NULL) {
-        set_last_search_pat(val, idx, magic, setlast);
-        free(val);
-        spats[idx].no_scs = no_scs;
-        spats[idx].off.line = off_line;
-        spats[idx].off.end = off_end;
-        spats[idx].off.off = off;
-        if (setlast) {
-          SET_NO_HLSEARCH(!hlsearch_on);
-        }
+      val = viminfo_readstring(virp, (int)(lp - virp->vir_line + 1), TRUE);
+      set_last_search_pat(val, idx, magic, setlast);
+      free(val);
+      spats[idx].no_scs = no_scs;
+      spats[idx].off.line = off_line;
+      spats[idx].off.end = off_end;
+      spats[idx].off.off = off;
+      if (setlast) {
+        SET_NO_HLSEARCH(!hlsearch_on);
       }
     }
   }
