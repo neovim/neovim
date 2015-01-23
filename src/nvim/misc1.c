@@ -3466,8 +3466,6 @@ get_cmd_output (
   i = (int)fread((char *)buffer, (size_t)1, (size_t)len, fd);
   fclose(fd);
   os_remove((char *)tempname);
-  if (buffer == NULL)
-    goto done;
   if (i != len) {
     EMSG2(_(e_notread), tempname);
     free(buffer);
