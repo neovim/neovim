@@ -4921,54 +4921,51 @@ buf_check_timestamp (
 
   if (mesg != NULL) {
     path = home_replace_save(buf, buf->b_fname);
-    if (path != NULL) {
-      if (!helpmesg)
-        mesg2 = "";
-      tbuf = xmalloc(STRLEN(path) + STRLEN(mesg) + STRLEN(mesg2) + 2);
-      sprintf((char *)tbuf, mesg, path);
-      /* Set warningmsg here, before the unimportant and output-specific
-       * mesg2 has been appended. */
-      set_vim_var_string(VV_WARNINGMSG, tbuf, -1);
-      if (can_reload) {
-        if (*mesg2 != NUL) {
-          STRCAT(tbuf, "\n");
-          STRCAT(tbuf, mesg2);
-        }
-        if (do_dialog(VIM_WARNING, (char_u *)_("Warning"), tbuf,
-                (char_u *)_("&OK\n&Load File"), 1, NULL, TRUE) == 2)
-          reload = TRUE;
-      } else if (State > NORMAL_BUSY || (State & CMDLINE) ||
-                 already_warned) {
-        if (*mesg2 != NUL) {
-          STRCAT(tbuf, "; ");
-          STRCAT(tbuf, mesg2);
-        }
-        EMSG(tbuf);
-        retval = 2;
-      } else {
-        if (!autocmd_busy) {
-          msg_start();
-          msg_puts_attr(tbuf, hl_attr(HLF_E) + MSG_HIST);
-          if (*mesg2 != NUL)
-            msg_puts_attr((char_u *)mesg2,
-                hl_attr(HLF_W) + MSG_HIST);
-          msg_clr_eos();
-          (void)msg_end();
-          if (emsg_silent == 0) {
-            out_flush();
-            /* give the user some time to think about it */
-            os_delay(1000L, true);
-
-            /* don't redraw and erase the message */
-            redraw_cmdline = FALSE;
-          }
-        }
-        already_warned = TRUE;
+    if (!helpmesg)
+      mesg2 = "";
+    tbuf = xmalloc(STRLEN(path) + STRLEN(mesg) + STRLEN(mesg2) + 2);
+    sprintf((char *)tbuf, mesg, path);
+    /* Set warningmsg here, before the unimportant and output-specific
+     * mesg2 has been appended. */
+    set_vim_var_string(VV_WARNINGMSG, tbuf, -1);
+    if (can_reload) {
+      if (*mesg2 != NUL) {
+        STRCAT(tbuf, "\n");
+        STRCAT(tbuf, mesg2);
       }
+      if (do_dialog(VIM_WARNING, (char_u *)_("Warning"), tbuf,
+                    (char_u *)_("&OK\n&Load File"), 1, NULL, TRUE) == 2)
+        reload = TRUE;
+    } else if (State > NORMAL_BUSY || (State & CMDLINE) || already_warned) {
+      if (*mesg2 != NUL) {
+        STRCAT(tbuf, "; ");
+        STRCAT(tbuf, mesg2);
+      }
+      EMSG(tbuf);
+      retval = 2;
+    } else {
+      if (!autocmd_busy) {
+        msg_start();
+        msg_puts_attr(tbuf, hl_attr(HLF_E) + MSG_HIST);
+        if (*mesg2 != NUL)
+          msg_puts_attr((char_u *)mesg2,
+                        hl_attr(HLF_W) + MSG_HIST);
+        msg_clr_eos();
+        (void)msg_end();
+        if (emsg_silent == 0) {
+          out_flush();
+          /* give the user some time to think about it */
+          os_delay(1000L, true);
 
-      free(path);
-      free(tbuf);
+          /* don't redraw and erase the message */
+          redraw_cmdline = FALSE;
+        }
+      }
+      already_warned = TRUE;
     }
+
+    free(path);
+    free(tbuf);
   }
 
   if (reload) {

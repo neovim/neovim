@@ -506,8 +506,6 @@ void fmarks_check_names(buf_T *buf)
     return;
 
   name = home_replace_save(buf, buf->b_ffname);
-  if (name == NULL)
-    return;
 
   for (i = 0; i < NMARKS + EXTRA_MARKS; ++i)
     fmarks_check_one(&namedfm[i], name, buf);
@@ -1327,19 +1325,17 @@ int removable(char_u *name)
   size_t n;
 
   name = home_replace_save(NULL, name);
-  if (name != NULL) {
-    for (p = p_viminfo; *p; ) {
-      copy_option_part(&p, part, 51, ", ");
-      if (part[0] == 'r') {
-        n = STRLEN(part + 1);
-        if (MB_STRNICMP(part + 1, name, n) == 0) {
-          retval = TRUE;
-          break;
-        }
+  for (p = p_viminfo; *p; ) {
+    copy_option_part(&p, part, 51, ", ");
+    if (part[0] == 'r') {
+      n = STRLEN(part + 1);
+      if (MB_STRNICMP(part + 1, name, n) == 0) {
+        retval = TRUE;
+        break;
       }
     }
-    free(name);
   }
+  free(name);
   return retval;
 }
 
