@@ -3444,6 +3444,10 @@ win_line (
               1);
           // TODO: is passing p for start of the line OK?
           n_extra = win_lbr_chartabsize(wp, line, p, (colnr_T)vcol, NULL) - 1;
+          if (c == TAB && n_extra + col > wp->w_width) {
+            n_extra = (int)wp->w_buffer->b_p_ts
+                      - vcol % (int)wp->w_buffer->b_p_ts - 1;
+          }
           c_extra = ' ';
           if (vim_iswhite(c)) {
             if (c == TAB)
