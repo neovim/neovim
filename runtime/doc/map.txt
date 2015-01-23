@@ -1,4 +1,4 @@
-*map.txt*       For Vim version 7.4.  Last change: 2014 Sep 30
+*map.txt*       For Vim version 7.4.  Last change: 2014 Oct 03
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -923,9 +923,11 @@ Examples: ({CURSOR} is where you type a non-keyword character) >
 <		"test;;"	  is not expanded
 		"test ;;"	  is expanded to "test <endofline>"
 
-To avoid the abbreviation in insert mode: Type part of the abbreviation, exit
-insert mode with <Esc>, re-enter insert mode with "a" and type the rest.  Or
-type CTRL-V before the character after the abbreviation.
+To avoid the abbreviation in Insert mode: Type CTRL-V before the character
+that would trigger the abbreviation.  E.g. CTRL-V <Space>.  Or type part of
+the abbreviation, exit insert mode with <Esc>, re-enter insert mode with "a"
+and type the rest.
+
 To avoid the abbreviation in Command-line mode: Type CTRL-V twice somewhere in
 the abbreviation to avoid it to be replaced.  A CTRL-V in front of a normal
 character is mostly ignored otherwise.

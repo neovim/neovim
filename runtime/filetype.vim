@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2014 Sep 05
+" Last Change:	2014 Oct 09
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -1147,7 +1147,7 @@ au BufNewFile,BufRead *.mv,*.mpl,*.mws		setf maple
 au BufNewFile,BufRead *.map			setf map
 
 " Markdown
-au BufNewFile,BufRead *.markdown,*.mdown,*.mkd,*.mkdn,*.mdwn,README.md  setf markdown
+au BufNewFile,BufRead *.markdown,*.mdown,*.mkd,*.mkdn,*.mdwn,*.md  setf markdown
 
 " Mason
 au BufNewFile,BufRead *.mason,*.mhtml,*.comp	setf mason
@@ -1239,8 +1239,8 @@ au BufNewFile,BufRead *.mod
 	\   setf modsim3 |
 	\ endif
 
-" Modula 2
-au BufNewFile,BufRead *.m2,*.DEF,*.MOD,*.md,*.mi setf modula2
+" Modula 2  (.md removed in favor of Markdown)
+au BufNewFile,BufRead *.m2,*.DEF,*.MOD,*.mi	setf modula2
 
 " Modula 3 (.m3, .i3, .mg, .ig)
 au BufNewFile,BufRead *.[mi][3g]		setf modula3
