@@ -881,11 +881,9 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
   }
 
   free(curdir);
-  if (in_curdir != NULL) {
-    for (int i = 0; i < gap->ga_len; i++)
-      free(in_curdir[i]);
-    free(in_curdir);
-  }
+  for (int i = 0; i < gap->ga_len; i++)
+    free(in_curdir[i]);
+  free(in_curdir);
   ga_clear_strings(&path_ga);
   vim_regfree(regmatch.regprog);
 
