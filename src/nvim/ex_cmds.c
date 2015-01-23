@@ -4742,7 +4742,6 @@ void ex_help(exarg_T *eap)
   tag = vim_strsave(matches[i]);
   FreeWild(num_matches, matches);
 
-
   /*
    * Re-use an existing help window or open a new one.
    * Always open a new one for ":tab help".
@@ -4805,8 +4804,7 @@ void ex_help(exarg_T *eap)
    * It is needed for do_tag top open folds under the cursor. */
   KeyTyped = old_KeyTyped;
 
-  if (tag != NULL)
-    do_tag(tag, DT_HELP, 1, FALSE, TRUE);
+  do_tag(tag, DT_HELP, 1, FALSE, TRUE);
 
   /* Delete the empty buffer if we're not using it.  Careful: autocommands
    * may have jumped to another window, check that the buffer is not in a

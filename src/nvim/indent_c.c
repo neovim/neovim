@@ -1593,8 +1593,6 @@ int get_c_indent(void)
    * This is required, because only the most recent line obtained with
    * ml_get is valid! */
   linecopy = vim_strsave(ml_get(cur_curpos.lnum));
-  if (linecopy == NULL)
-    return 0;
 
   /*
    * In insert mode and the cursor is on a ')' truncate the line at the
