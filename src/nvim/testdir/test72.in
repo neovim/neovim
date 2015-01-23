@@ -8,7 +8,6 @@ STARTTEST
 :" Test 'undofile': first a simple one-line change.
 :set visualbell
 :set ul=100 undofile nomore
-:set ft=unix
 :e! Xtestfile
 ggdGithis is one line:set ul=100
 :s/one/ONE/

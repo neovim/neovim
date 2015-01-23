@@ -18,7 +18,7 @@ STARTTEST
 :call FillBuffer()
 :earlier 10
 :call UndoLevel()
-:set ft=unix
+:set ff=unix
 :%w! test.out
 :new two
 :0put ='TWO: expecting global undolevels: 5, local undolevels: 2 (first) then 10 (afterwards)'
@@ -28,7 +28,7 @@ STARTTEST
 :call UndoLevel()
 :setlocal ul=10
 :call UndoLevel()
-:set ft=unix
+:set ff=unix
 :%w >> test.out
 :wincmd p
 :redir >>test.out | echo "global value shouldn't be changed and still be 5!" | echo 'ONE: expecting global undolevels: 5, local undolevels: -123456 (default)'|:setglobal undolevels? | echon ' global' | setlocal undolevels? | echon ' local' |echo "" |redir end
@@ -37,7 +37,7 @@ STARTTEST
 :1put ='global value should be changed to 50'
 :2put ='THREE: expecting global undolevels: 50, local undolevels: -123456 (default)'
 :call UndoLevel()
-:set ft=unix
+:set ff=unix
 :%w >> test.out
 :"sleep 10
 :"
