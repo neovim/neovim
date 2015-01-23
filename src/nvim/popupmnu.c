@@ -370,17 +370,13 @@ void pum_redraw(void)
                   size++;
                 }
               }
-              screen_puts_len(rt, (int)STRLEN(rt), row, col - size + 1,
-                              attr);
+              screen_puts_len(rt, (int)STRLEN(rt), row, col - size + 1, attr);
               free(rt_start);
               free(st);
-
               col -= width;
             } else {
-              if (st != NULL) {
-                screen_puts_len(st, (int)STRLEN(st), row, col, attr);
-                free(st);
-              }
+              screen_puts_len(st, (int)STRLEN(st), row, col, attr);
+              free(st);
               col += width;
             }
 
