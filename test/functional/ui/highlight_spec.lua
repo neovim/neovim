@@ -52,6 +52,8 @@ describe('Default highlight groups', function()
       [1] = {reverse = true, bold = true},  -- StatusLine
       [2] = {reverse = true}                -- StatusLineNC
     })
+    --ignore highligting of ~-lines
+    screen:set_default_attr_ignore( {{}, {bold=true, foreground=hlgroup_colors.NonText}} )
     execute('sp', 'vsp', 'vsp')
     screen:expect([[
       ^                   {2:|}                {2:|}               |
