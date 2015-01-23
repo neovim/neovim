@@ -2127,10 +2127,6 @@ static char_u *next_fenc(char_u **pp)
     free(r);
     r = p;
   }
-  if (r == NULL) {      /* out of memory */
-    r = (char_u *)"";
-    *pp = NULL;
-  }
   return r;
 }
 
