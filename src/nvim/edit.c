@@ -1633,11 +1633,6 @@ change_indent (
    * put it back again the way we wanted it.
    */
   if (State & VREPLACE_FLAG) {
-    /* If orig_line didn't allocate, just return.  At least we did the job,
-     * even if you can't backspace. */
-    if (orig_line == NULL)
-      return;
-
     /* Save new line */
     new_line = vim_strsave(get_cursor_line_ptr());
 
