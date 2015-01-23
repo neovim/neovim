@@ -3033,10 +3033,8 @@ void tilde_replace(char_u *orig_pat, int num_files, char_u **files)
   if (orig_pat[0] == '~' && vim_ispathsep(orig_pat[1])) {
     for (i = 0; i < num_files; ++i) {
       p = home_replace_save(NULL, files[i]);
-      if (p != NULL) {
-        free(files[i]);
-        files[i] = p;
-      }
+      free(files[i]);
+      files[i] = p;
     }
   }
 }

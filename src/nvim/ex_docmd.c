@@ -8589,8 +8589,6 @@ static char_u *get_view_file(int c)
     return NULL;
   }
   sname = home_replace_save(NULL, curbuf->b_ffname);
-  if (sname == NULL)
-    return NULL;
 
   /*
    * We want a file name without separators, because we're not going to make
