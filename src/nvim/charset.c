@@ -390,19 +390,13 @@ char_u *transstr(char_u *s) FUNC_ATTR_NONNULL_RET
   return res;
 }
 
-/// Convert the string "str[orglen]" to do ignore-case comparing.  Uses the
-/// current locale.
+/// Convert the string "str[orglen]" to do ignore-case comparing.
+/// Use the current locale.
 ///
-/// When "buf" is NULL returns an allocated string (NULL for out-of-memory).
-/// Otherwise puts the result in "buf[buflen]".
-///
-/// @param str
-/// @param orglen
-/// @param buf
-/// @param buflen
-///
-/// @return converted string.
+/// When "buf" is NULL, return an allocated string.
+/// Otherwise, put the result in buf, limited by buflen, and return buf.
 char_u* str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
+  FUNC_ATTR_NONNULL_RET
 {
   garray_T ga;
   int i;

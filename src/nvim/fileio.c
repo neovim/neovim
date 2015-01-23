@@ -28,6 +28,7 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
 #include "nvim/fold.h"
+#include "nvim/func_attr.h"
 #include "nvim/getchar.h"
 #include "nvim/hashtab.h"
 #include "nvim/iconv.h"
@@ -2106,6 +2107,7 @@ void set_forced_fenc(exarg_T *eap)
  * When *pp is not set to NULL, the result is in allocated memory.
  */
 static char_u *next_fenc(char_u **pp)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   char_u      *p;
   char_u      *r;
