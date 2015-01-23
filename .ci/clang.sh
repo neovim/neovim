@@ -34,6 +34,9 @@ setup_deps x64
 $MAKE_CMD CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS" nvim
 build/bin/nvim --version
 
+# Run unittests.
+make unittest
+
 # Run functional tests.
 if ! $MAKE_CMD test; then
 	asan_check "$tmpdir"
