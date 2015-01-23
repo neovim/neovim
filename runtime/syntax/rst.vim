@@ -1,8 +1,8 @@
 " Vim syntax file
-" Language:         reStructuredText documentation format
-" Maintainer:       Marshall Ward <marshall.ward@gmail.com>
+" Language: reStructuredText documentation format
+" Maintainer: Marshall Ward <marshall.ward@gmail.com>
 " Previous Maintainer: Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2014-08-23
+" Latest Revision: 2014-10-03
 
 if exists("b:current_syntax")
   finish
@@ -150,12 +150,19 @@ endif
 
 for code in g:rst_syntax_code_list
     unlet! b:current_syntax
+    " guard against setting 'isk' option which might cause problems (issue #108)
+    let prior_isk = &l:iskeyword
     exe 'syn include @rst'.code.' syntax/'.code.'.vim'
     exe 'syn region rstDirective'.code.' matchgroup=rstDirective fold '
                 \.'start=#\%(sourcecode\|code\%(-block\)\=\)::\s\+'.code.'\_s*\n\ze\z(\s\+\)# '
                 \.'skip=#^$# '
                 \.'end=#^\z1\@!# contains=@NoSpell,@rst'.code
     exe 'syn cluster rstDirectives add=rstDirective'.code
+    " reset 'isk' setting, if it has been changed
+    if &l:iskeyword !=# prior_isk
+        let &l:iskeyword = prior_isk
+    endif
+    unlet! prior_isk
 endfor
 
 " TODO: Use better syncing.
