@@ -1649,7 +1649,6 @@ static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
   char        *cntxformat = " <<%s>>";
   char        *context;
   char        *cstag_msg = _("Cscope tag: %s");
-  char        *csfmt_str = "%4d %6s  ";
 
   assert (num_matches > 0);
 
@@ -1691,17 +1690,15 @@ static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
 
     lno[strlen(lno)-2] = '\0';      /* ignore ;" at the end */
 
+    const char *csfmt_str = "%4d %6s  ";
     /* hopefully 'num' (num of matches) will be less than 10^16 */
     newsize = strlen(csfmt_str) + 16 + strlen(lno);
     if (bufsize < newsize) {
       buf = xrealloc(buf, newsize);
       bufsize = newsize;
     }
-    if (buf != NULL) {
-      /* csfmt_str = "%4d %6s  "; */
-      (void)sprintf(buf, csfmt_str, num, lno);
-      MSG_PUTS_ATTR(buf, hl_attr(HLF_CM));
-    }
+    (void)sprintf(buf, csfmt_str, num, lno);
+    MSG_PUTS_ATTR(buf, hl_attr(HLF_CM));
     MSG_PUTS_LONG_ATTR(cs_pathcomponents(fname), hl_attr(HLF_CM));
 
     /* compute the required space for the context */
@@ -1715,16 +1712,14 @@ static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
       buf = xrealloc(buf, newsize);
       bufsize = newsize;
     }
-    if (buf != NULL) {
-      (void)sprintf(buf, cntxformat, context);
+    (void)sprintf(buf, cntxformat, context);
 
-      /* print the context only if it fits on the same line */
-      if (msg_col + (int)strlen(buf) >= (int)Columns)
-        msg_putchar('\n');
-      msg_advance(12);
-      MSG_PUTS_LONG(buf);
+    /* print the context only if it fits on the same line */
+    if (msg_col + (int)strlen(buf) >= (int)Columns)
       msg_putchar('\n');
-    }
+    msg_advance(12);
+    MSG_PUTS_LONG(buf);
+    msg_putchar('\n');
     if (extra != NULL) {
       msg_advance(13);
       MSG_PUTS_LONG(extra);
