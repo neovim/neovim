@@ -3245,11 +3245,11 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
           if (key_name[0] == KS_SGR_MOUSE)
             mouse_code += 32;
 
-          mouse_col = getdigits_int(&p);
+          mouse_col = getdigits_int(&p) - 1;
           if (*p++ != ';')
             return -1;
 
-          mouse_row = getdigits_int(&p);
+          mouse_row = getdigits_int(&p) - 1;
           if (key_name[0] == KS_SGR_MOUSE && *p == 'm')
             mouse_code |= MOUSE_RELEASE;
           else if (*p != 'M')
