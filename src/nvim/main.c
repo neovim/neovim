@@ -7,8 +7,9 @@
  */
 
 #define EXTERN
+#include <assert.h>
 #include <errno.h>
-#include <inttypes.h>
+#include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
 
@@ -58,7 +59,6 @@
 #include "nvim/ui.h"
 #include "nvim/version.h"
 #include "nvim/window.h"
-#include "nvim/os/time.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
@@ -119,11 +119,8 @@ typedef struct {
 # include "main.c.generated.h"
 #endif
 
-/*
- * Different types of error messages.
- */
-static char *(main_errors[]) =
-{
+// Error messages
+static const char *main_errors[] = {
   N_("Unknown option argument"),
 #define ME_UNKNOWN_OPTION       0
   N_("Too many edit arguments"),
@@ -132,11 +129,10 @@ static char *(main_errors[]) =
 #define ME_ARG_MISSING          2
   N_("Garbage after option argument"),
 #define ME_GARBAGE              3
-  N_("Too many \"+command\", \"-c command\" or \"--cmd command\" arguments"),
+  N_("Too many \"+command\", \"-c command\" or \"--cmd command\" arguments")
 #define ME_EXTRA_CMD            4
-  N_("Invalid argument for"),
-#define ME_INVALID_ARG          5
 };
+
 
 /// Performs early initialization.
 ///
@@ -218,12 +214,6 @@ int main(int argc, char **argv)
    */
   command_line_scan(&params);
 
-  /*
-   * On some systems, when we compile with the GUI, we always use it.  On Mac
-   * there is no terminal version, and on Windows we can't fork one off with
-   * :gui.
-   */
-
   if (GARGCOUNT > 0)
     fname = get_fname(&params);
 
@@ -240,13 +230,6 @@ int main(int argc, char **argv)
    */
   if (recoverymode && fname == NULL)
     params.want_full_screen = FALSE;
-
-  /*
-   * When certain to start the GUI, don't check capabilities of terminal.
-   * For GTK we can't be sure, but when started from the desktop it doesn't
-   * make sense to try using a terminal.
-   */
-
 
   // term_init() sets up the terminal (window) for use.  This must be
   // done after resetting full_screen, otherwise it may move the cursor
@@ -293,7 +276,8 @@ int main(int argc, char **argv)
   if (params.diff_mode)
     diff_win_options(firstwin, FALSE);
 
-  cmdline_row = Rows - p_ch;
+  assert(p_ch >= 0 && Rows >= p_ch && Rows - p_ch <= INT_MAX);
+  cmdline_row = (int)(Rows - p_ch);
   msg_row = cmdline_row;
   screenalloc(false);           /* allocate screen buffers */
   set_init_2();
@@ -380,7 +364,6 @@ int main(int argc, char **argv)
   no_wait_return = FALSE;
   if (!exmode_active)
     msg_scroll = FALSE;
-
 
   /*
    * If "-" argument given: Read file from stdin.
@@ -508,7 +491,6 @@ int main(int argc, char **argv)
   apply_autocmds(EVENT_VIMENTER, NULL, NULL, FALSE, curbuf);
   TIME_MSG("VimEnter autocommands");
 
-
   /* When a startup script or session file setup for diff'ing and
    * scrollbind, sync the scrollbind now. */
   if (curwin->w_p_diff && curwin->w_p_scb) {
@@ -517,13 +499,10 @@ int main(int argc, char **argv)
     TIME_MSG("diff scrollbinding");
   }
 
-
-
   /* If ":startinsert" command used, stuff a dummy command to be able to
    * call normal_cmd(), which will then start Insert mode. */
   if (restart_edit != 0)
     stuffcharReadbuff(K_NOP);
-
 
   TIME_MSG("before starting main loop");
 
@@ -749,8 +728,6 @@ main_loop (
 }
 
 
-
-
 /* Exit properly */
 void getout(int exitval)
 {
@@ -769,7 +746,6 @@ void getout(int exitval)
 
   /* Optionally print hashtable efficiency. */
   hash_debug_results();
-
 
   if (get_vim_var_nr(VV_DYING) <= 1) {
     /* Trigger BufWinLeave for all windows, but only once per buffer. */
@@ -834,20 +810,25 @@ void getout(int exitval)
   mch_exit(exitval);
 }
 
-/*
- * Get a (optional) count for a Vim argument.
- */
-static int
-get_number_arg (
-    char_u *p,             /* pointer to argument */
-    int *idx,           /* index in argument, is incremented */
-    int def                    /* default value */
-)
+/// Gets the integer value of a numeric command line argument if given,
+/// such as '-o10'.
+///
+/// @param[in] p         pointer to argument
+/// @param[in, out] idx  pointer to index in argument, is incremented
+/// @param[in] def       default value
+///
+/// @return def unmodified if:
+///   - argument isn't given
+///   - argument is non-numeric
+///
+/// @return argument's numeric value otherwise
+static int get_number_arg(const char *p, int *idx, int def)
 {
   if (vim_isdigit(p[*idx])) {
-    def = atoi((char *)&(p[*idx]));
-    while (vim_isdigit(p[*idx]))
+    def = atoi(&(p[*idx]));
+    while (vim_isdigit(p[*idx])) {
       *idx = *idx + 1;
+    }
   }
   return def;
 }
@@ -864,7 +845,6 @@ static void init_locale(void)
   /* Make sure strtod() uses a decimal point, not a comma. */
   setlocale(LC_NUMERIC, "C");
 # endif
-
 
   {
     int mustfree = FALSE;
@@ -900,7 +880,6 @@ static void parse_command_name(mparm_T *parmp)
   char_u      *initstr;
 
   initstr = path_tail((char_u *)parmp->argv[0]);
-
 
   set_vim_var_string(VV_PROGNAME, initstr, -1);
   set_vim_var_string(VV_PROGPATH, (char_u *)parmp->argv[0], -1);
@@ -996,7 +975,7 @@ static void command_line_scan(mparm_T *parmp)
             silent_mode = TRUE;
           else {
             if (parmp->edit_type != EDIT_NONE)
-              mainerr(ME_TOO_MANY_ARGS, (char_u *)argv[0]);
+              mainerr(ME_TOO_MANY_ARGS, argv[0]);
             parmp->edit_type = EDIT_STDIN;
             read_cmd_fd = 2;              /* read from stderr instead of stdin */
           }
@@ -1047,7 +1026,7 @@ static void command_line_scan(mparm_T *parmp)
             argv_idx += 11;
           } else {
             if (argv[0][argv_idx])
-              mainerr(ME_UNKNOWN_OPTION, (char_u *)argv[0]);
+              mainerr(ME_UNKNOWN_OPTION, argv[0]);
             had_minmin = TRUE;
           }
           if (!want_argument)
@@ -1128,28 +1107,25 @@ static void command_line_scan(mparm_T *parmp)
           }
 #endif
           /* default is 0: open window for each file */
-          parmp->window_count = get_number_arg((char_u *)argv[0],
-              &argv_idx, 0);
+          parmp->window_count = get_number_arg(argv[0], &argv_idx, 0);
           parmp->window_layout = WIN_TABS;
           break;
 
         case 'o':                 /* "-o[N]" open N horizontal split windows */
           /* default is 0: open window for each file */
-          parmp->window_count = get_number_arg((char_u *)argv[0],
-              &argv_idx, 0);
+          parmp->window_count = get_number_arg(argv[0], &argv_idx, 0);
           parmp->window_layout = WIN_HOR;
           break;
 
         case 'O':                 /* "-O[N]" open N vertical split windows */
           /* default is 0: open window for each file */
-          parmp->window_count = get_number_arg((char_u *)argv[0],
-              &argv_idx, 0);
+          parmp->window_count = get_number_arg(argv[0], &argv_idx, 0);
           parmp->window_layout = WIN_VER;
           break;
 
         case 'q':                 /* "-q" QuickFix mode */
           if (parmp->edit_type != EDIT_NONE)
-            mainerr(ME_TOO_MANY_ARGS, (char_u *)argv[0]);
+            mainerr(ME_TOO_MANY_ARGS, argv[0]);
           parmp->edit_type = EDIT_QF;
           if (argv[0][argv_idx]) {                /* "-q{errorfile}" */
             parmp->use_ef = (char_u *)argv[0] + argv_idx;
@@ -1178,7 +1154,7 @@ static void command_line_scan(mparm_T *parmp)
 
         case 't':                 /* "-t {tag}" or "-t{tag}" jump to tag */
           if (parmp->edit_type != EDIT_NONE)
-            mainerr(ME_TOO_MANY_ARGS, (char_u *)argv[0]);
+            mainerr(ME_TOO_MANY_ARGS, argv[0]);
           parmp->edit_type = EDIT_TAG;
           if (argv[0][argv_idx]) {                /* "-t{tag}" */
             parmp->tagname = (char_u *)argv[0] + argv_idx;
@@ -1195,7 +1171,7 @@ static void command_line_scan(mparm_T *parmp)
           break;
         case 'V':                 /* "-V{N}"	Verbose level */
           /* default is 10: a little bit verbose */
-          p_verbose = get_number_arg((char_u *)argv[0], &argv_idx, 10);
+          p_verbose = get_number_arg(argv[0], &argv_idx, 10);
           if (argv[0][argv_idx] != NUL) {
             set_option_value((char_u *)"verbosefile", 0L,
                 (char_u *)argv[0] + argv_idx, 0);
@@ -1210,7 +1186,7 @@ static void command_line_scan(mparm_T *parmp)
         case 'w':                 /* "-w{number}"	set window height */
           /* "-w {scriptout}"	write to script */
           if (vim_isdigit(((char_u *)argv[0])[argv_idx])) {
-            n = get_number_arg((char_u *)argv[0], &argv_idx, 10);
+            n = get_number_arg(argv[0], &argv_idx, 10);
             set_option_value((char_u *)"window", n, NULL, 0);
             break;
           }
@@ -1245,7 +1221,7 @@ static void command_line_scan(mparm_T *parmp)
           break;
 
         default:
-          mainerr(ME_UNKNOWN_OPTION, (char_u *)argv[0]);
+          mainerr(ME_UNKNOWN_OPTION, argv[0]);
       }
 
       /*
@@ -1256,11 +1232,11 @@ static void command_line_scan(mparm_T *parmp)
          * Check for garbage immediately after the option letter.
          */
         if (argv[0][argv_idx] != NUL)
-          mainerr(ME_GARBAGE, (char_u *)argv[0]);
+          mainerr(ME_GARBAGE, argv[0]);
 
         --argc;
         if (argc < 1 && c != 'S')          /* -S has an optional argument */
-          mainerr_arg_missing((char_u *)argv[0]);
+          mainerr(ME_ARG_MISSING, argv[0]);
         ++argv;
         argv_idx = -1;
 
@@ -1355,7 +1331,7 @@ scripterror:
             /* "-w {scriptout}" append to script file */
             if (vim_isdigit(*((char_u *)argv[0]))) {
               argv_idx = 0;
-              n = get_number_arg((char_u *)argv[0], &argv_idx, 10);
+              n = get_number_arg(argv[0], &argv_idx, 10);
               set_option_value((char_u *)"window", n, NULL, 0);
               argv_idx = -1;
               break;
@@ -1384,9 +1360,8 @@ scripterror:
 
       /* Check for only one type of editing. */
       if (parmp->edit_type != EDIT_NONE && parmp->edit_type != EDIT_FILE)
-        mainerr(ME_TOO_MANY_ARGS, (char_u *)argv[0]);
+        mainerr(ME_TOO_MANY_ARGS, argv[0]);
       parmp->edit_type = EDIT_FILE;
-
 
       /* Add the file to the global argument list. */
       ga_grow(&global_alist.al_ga, 1);
@@ -2044,13 +2019,11 @@ process_env (
   return FAIL;
 }
 
-#if defined(UNIX)
-/*
- * Return TRUE if we are certain the user owns the file "fname".
- * Used for ".vimrc" and ".exrc".
- * Use both stat() and lstat() for extra security.
- */
-static int file_owned(char *fname)
+#ifdef UNIX
+/// Checks if user owns file.
+/// Use both uv_fs_stat() and uv_fs_lstat() through os_fileinfo() and
+/// os_fileinfo_link() respectively for extra security.
+static bool file_owned(const char *fname)
 {
   uid_t uid = getuid();
   FileInfo file_info;
@@ -2062,34 +2035,27 @@ static int file_owned(char *fname)
 }
 #endif
 
-/*
- * Give an error message main_errors["n"] and exit.
- */
-static void
-mainerr (
-    int n,                  /* one of the ME_ defines */
-    char_u *str       /* extra argument or NULL */
-)
+/// Prints the following then exits:
+/// - An error message main_errors[n]
+/// - A string str if not null
+///
+/// @param n    error number represented by an ME_* macro
+/// @param str  string to append to the primary error message, or NULL
+static void mainerr(int n, const char *str)
 {
-  signal_stop();              /* kill us with CTRL-C here, if you like */
+  signal_stop();              // kill us with CTRL-C here, if you like
 
-  mch_errmsg(longVersion);
-  mch_errmsg("\n");
   mch_errmsg(_(main_errors[n]));
   if (str != NULL) {
     mch_errmsg(": \"");
-    mch_errmsg((char *)str);
+    mch_errmsg(str);
     mch_errmsg("\"");
   }
-  mch_errmsg(_("\nMore info with: \"vim -h\"\n"));
+  mch_errmsg(_("\nMore info with \"nvim -h\"\n"));
 
   mch_exit(1);
 }
 
-void mainerr_arg_missing(char_u *str)
-{
-  mainerr(ME_ARG_MISSING, str);
-}
 
 /*
  * print a message with three spaces prepended and '\n' appended.
@@ -2175,7 +2141,6 @@ static void usage(void)
   main_msg(_("-h  or  --help\tPrint Help (this message) and exit"));
   main_msg(_("--version\t\tPrint version information and exit"));
 
-
   mch_exit(0);
 }
 
@@ -2190,5 +2155,3 @@ static void check_swap_exists_action(void)
     getout(1);
   handle_swap_exists(NULL);
 }
-
-
