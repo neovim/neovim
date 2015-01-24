@@ -1329,7 +1329,7 @@ return {
       expand=true,
       varname='p_kp',
       defaults={
-        if_true={vi="man -s"},
+        if_true={vi=":Man"},
       }
     },
     {

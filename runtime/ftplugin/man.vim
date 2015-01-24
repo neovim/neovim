@@ -120,7 +120,7 @@ func <SID>GetPage(...)
     let sect = ""
   endif
   if s:FindPage(sect, page) == 0
-    echo "\nCannot find a '".page."'."
+    echo "\nNo manual entry for '".page."'."
     return
   endif
   exec "let s:man_tag_buf_".s:man_tag_depth." = ".bufnr("%")
