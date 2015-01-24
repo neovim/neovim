@@ -54,12 +54,18 @@
 -- having the exact same set of attributes will be substituted by "{K:S}",
 -- where K is a key associated the attribute set via the second argument of
 -- "expect".
+-- If a transformation table is present, unexpected attribute sets in the final
+-- state is considered an error. To make testing simpler, a list of attribute
+-- sets that should be ignored can be passed as a third argument. Alternatively,
+-- this third argument can be "true" to indicate that all unexpected attribute
+-- sets should be ignored.
 --
--- Too illustrate how this works, let's say that in the above example we wanted
+-- To illustrate how this works, let's say that in the above example we wanted
 -- to assert that the "-- INSERT --" string is highlighted with the bold
 -- attribute(which normally is), here's how the call to "expect" should look
 -- like:
 --
+--     NonText = nvim('name_to_color', 'Blue'),
 --     screen:expect([[
 --       hello screen             \
 --       ~                        \
@@ -71,11 +77,34 @@
 --       ~                        \
 --       ~                        \
 --       {b:-- INSERT --}             \
---     ]], {b = {bold = true}})
+--     ]], {b = {bold = true}}, {{bold = true, foreground = NonText}})
 --
 -- In this case "b" is a string associated with the set composed of one
 -- attribute: bold. Note that since the {b:} markup is not a real part of the
--- screen, the delimiter(|) had to be moved right
+-- screen, the delimiter(|) had to be moved right. Also, the highlighting of the
+-- NonText markers (~) is ignored in this test.
+--
+-- Multiple expect:s will likely share a group of attribute sets to test.
+-- Therefore these could be specified at the beginning of a test like this:
+--    NonText = nvim('name_to_color', 'Blue')
+--    screen:set_default_attr_ids( {
+--      [1] = {reverse = true, bold = true},
+--      [2] = {reverse = true}
+--    })
+--    screen:set_default_attr_ignore( {{}, {bold=true, foreground=NonText}} )
+-- These can be overridden for a specific expect expression, by passing
+-- different sets as parameters.
+--
+-- To help writing screen tests, there is a utility function
+-- "screen:snapshot_util()", that can be placed in a test file at any point an
+-- "expect(...)" should be. It will wait a short amount of time and then dump
+-- the current state of the screen, in the form of an "expect(..)" expression
+-- that would match it exactly. "snapshot_util" optionally also take the
+-- transformation and ignore set as parameters, like expect, or uses the default
+-- set. It will generate a larger attribute transformation set, if needed.
+-- To generate a text-only test without highlight checks,
+-- use `screen:snapshot_util({},true)`
+
 local helpers = require('test.functional.helpers')
 local request, run, stop = helpers.request, helpers.run, helpers.stop
 local eq, dedent = helpers.eq, helpers.dedent
