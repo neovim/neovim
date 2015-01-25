@@ -6575,7 +6575,9 @@ int in_cinkeys(int keytyped, int when, int line_is_empty)
     else if (*look == ':') {
       if (try_match && keytyped == ':') {
         p = get_cursor_line_ptr();
-        if (cin_iscase(p, FALSE) || cin_isscopedecl(p) || cin_islabel())
+        if (cin_iscase(p, FALSE)
+            || cin_isscopedecl(p)
+            || cin_islabel(curwin->w_cursor.lnum))
           return TRUE;
         /* Need to get the line again after cin_islabel(). */
         p = get_cursor_line_ptr();
@@ -6584,7 +6586,7 @@ int in_cinkeys(int keytyped, int when, int line_is_empty)
             && p[curwin->w_cursor.col - 2] == ':') {
           p[curwin->w_cursor.col - 1] = ' ';
           i = (cin_iscase(p, FALSE) || cin_isscopedecl(p)
-               || cin_islabel());
+               || cin_islabel(curwin->w_cursor.lnum));
           p = get_cursor_line_ptr();
           p[curwin->w_cursor.col - 1] = ':';
           if (i)

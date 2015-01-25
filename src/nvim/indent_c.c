@@ -254,13 +254,14 @@ static int cin_islabel_skip(char_u **s)
   return **s == ':' && *++*s != ':';
 }
 
-/*
- * Recognize a label: "label:".
- * Note: curwin->w_cursor must be where we are looking for the label.
- */
-int cin_islabel(void)
+/// Recognize a label: "label:"
+///
+/// @param lnum The line number on which to look for a label.
+///
+/// @returns TRUE if there is a label on the current line.
+int cin_islabel(linenr_T lnum)
 { /* XXX */
-  char_u *s = cin_skipcomment(get_cursor_line_ptr());
+  char_u *s = cin_skipcomment(ml_get(lnum));
 
   /*
    * Exclude "default" from labels, since it should be indented
@@ -284,6 +285,8 @@ int cin_islabel(void)
   char_u  *line;
 
   cursor_save = curwin->w_cursor;
+  curwin->w_cursor.lnum = lnum;
+
   while (curwin->w_cursor.lnum > 1) {
     --curwin->w_cursor.lnum;
 
@@ -525,7 +528,7 @@ static int get_indent_after_label_with_ref(linenr_T lnum, char_u **pp)
   // We repeatedly call "ml_get(lnum)" because every time it's called
   // (or any time we call a function that calls it, marked with an 'XXX'
   // comment) the returned pointer is invalidated.
-  if (cin_iscase(l, FALSE) || cin_isscopedecl(l) || cin_islabel()) {
+  if (cin_iscase(l, FALSE) || cin_isscopedecl(l) || cin_islabel(lnum)) {
     indent = get_indent_after_label(lnum);
     l = after_label(ml_get(lnum));
     *pp = (l == NULL) ? ml_get(lnum) : l;
@@ -1616,7 +1619,7 @@ int get_c_indent(void)
 
   curwin->w_cursor.col = 0;
 
-  original_line_islabel = cin_islabel();    /* XXX */
+  original_line_islabel = cin_islabel(curwin->w_cursor.lnum);    /* XXX */
 
   /*
    * #defines and so on always go at the left when included in 'cinkeys'.
@@ -2401,7 +2404,7 @@ int get_c_indent(void)
               continue;
             }
 
-            n = get_indent_after_label(curwin->w_cursor.lnum);          /* XXX */
+            n = get_indent_after_label(curwin->w_cursor.lnum);  /* XXX */
 
             /*
              *	 case xx: if (cond)	    <- line up with this if
@@ -2473,7 +2476,7 @@ int get_c_indent(void)
           /*
            * Ignore jump labels with nothing after them.
            */
-          if (!curbuf->b_ind_js && cin_islabel()) {
+          if (!curbuf->b_ind_js && cin_islabel(curwin->w_cursor.lnum)) {
             l = after_label(get_cursor_line_ptr());
             if (l == NULL || cin_nocode(l))
               continue;
@@ -2482,7 +2485,7 @@ int get_c_indent(void)
           /*
            * Ignore #defines, #if, etc.
            * Ignore comment and empty lines.
-           * (need to get the line again, cin_islabel() may have
+           * (need to get the line again, cin_islabel may have
            * unlocked it)
            */
           l = get_cursor_line_ptr();
