@@ -169,9 +169,6 @@ static schar_T  *current_ScreenLine;
 
 //signs column
 
-/* Ugly global: overrule attribute used by screen_char() */
-static int screen_char_attr = 0;
-
 /*
  * Redraw the current window later, with update_screen(type).
  * Set must_redraw only if not already set to a higher value.
@@ -4209,7 +4206,7 @@ win_line (
           if (screen_cur_col != wp->w_width)
             screen_char(LineOffset[screen_row - 1]
                 + (unsigned)Columns - 1,
-                screen_row - 1, (int)(Columns - 1));
+                screen_row - 1, (int)(Columns - 1), 0);
 
           /* When there is a multi-byte character, just output a
            * space to keep it simple. */
@@ -4493,9 +4490,9 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
         ScreenAttrs[off_to + 1] = ScreenAttrs[off_from];
 
       if (enc_dbcs != 0 && char_cells == 2)
-        screen_char_2(off_to, row, col + coloff);
+        screen_char_2(off_to, row, col + coloff, 0);
       else
-        screen_char(off_to, row, col + coloff);
+        screen_char(off_to, row, col + coloff, 0);
     } else if (  p_wiv
                  && col + coloff > 0) {
       if (ScreenAttrs[off_to] == ScreenAttrs[off_to - 1]) {
@@ -4519,7 +4516,7 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
     ScreenLines[off_to] = ' ';
     if (enc_utf8)
       ScreenLinesUC[off_to] = 0;
-    screen_char(off_to, row, col + coloff);
+    screen_char(off_to, row, col + coloff, 0);
   }
 
   if (clear_width > 0
@@ -4561,7 +4558,7 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
           } else
             ScreenLinesUC[off_to] = 0;
         }
-        screen_char(off_to, row, col + coloff);
+        screen_char(off_to, row, col + coloff, 0);
       }
     } else
       LineWraps[row] = FALSE;
@@ -5373,7 +5370,7 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
       ScreenLinesC[0][off - 1] = 0;
     }
     /* redraw the previous cell, make it empty */
-    screen_char(off - 1, row, col - 1);
+    screen_char(off - 1, row, col - 1, 0);
     /* force the cell at "col" to be redrawn */
     force_redraw_next = TRUE;
   }
@@ -5514,16 +5511,16 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
           ScreenLines[off + 1] = 0;
           ScreenAttrs[off + 1] = attr;
         }
-        screen_char(off, row, col);
+        screen_char(off, row, col, 0);
       } else if (mbyte_cells == 2) {
         ScreenLines[off + 1] = ptr[1];
         ScreenAttrs[off + 1] = attr;
-        screen_char_2(off, row, col);
+        screen_char_2(off, row, col, 0);
       } else if (enc_dbcs == DBCS_JPNU && c == 0x8e) {
         ScreenLines2[off] = ptr[1];
-        screen_char(off, row, col);
+        screen_char(off, row, col, 0);
       } else
-        screen_char(off, row, col);
+        screen_char(off, row, col, 0);
     }
     if (has_mbyte) {
       off += mbyte_cells;
@@ -5545,9 +5542,9 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
    * doesn't extend up to there, update the character here. */
   if (force_redraw_next && col < screen_Columns) {
     if (enc_dbcs != 0 && dbcs_off2cells(off, max_off) > 1)
-      screen_char_2(off, row, col);
+      screen_char_2(off, row, col, 0);
     else
-      screen_char(off, row, col);
+      screen_char(off, row, col, 0);
   }
 }
 
@@ -5988,7 +5985,7 @@ void reset_cterm_colors(void)
  * Put character ScreenLines["off"] on the screen at position "row" and "col",
  * using the attributes from ScreenAttrs["off"].
  */
-static void screen_char(unsigned off, int row, int col)
+static void screen_char(unsigned off, int row, int col, int char_attr)
 {
   int attr;
 
@@ -6010,8 +6007,8 @@ static void screen_char(unsigned off, int row, int col)
   /*
    * Stop highlighting first, so it's easier to move the cursor.
    */
-  if (screen_char_attr != 0)
-    attr = screen_char_attr;
+  if (char_attr != 0)
+    attr = char_attr;
   else
     attr = ScreenAttrs[off];
   if (screen_attr != attr)
@@ -6050,7 +6047,7 @@ static void screen_char(unsigned off, int row, int col)
  * The attributes of the first byte is used for all.  This is required to
  * output the two bytes of a double-byte character with nothing in between.
  */
-static void screen_char_2(unsigned off, int row, int col)
+static void screen_char_2(unsigned off, int row, int col, int char_attr)
 {
   /* Check for illegal values (could be wrong when screen was resized). */
   if (off + 1 >= (unsigned)(screen_Rows * screen_Columns))
@@ -6065,7 +6062,7 @@ static void screen_char_2(unsigned off, int row, int col)
 
   /* Output the first byte normally (positions the cursor), then write the
    * second byte directly. */
-  screen_char(off, row, col);
+  screen_char(off, row, col, char_attr);
   out_char(ScreenLines[off + 1]);
   ++screen_cur_col;
 }
@@ -6079,28 +6076,26 @@ void screen_draw_rectangle(int row, int col, int height, int width, int invert)
   int r, c;
   int off;
   int max_off;
-
+  int screen_char_attr;
   /* Can't use ScreenLines unless initialized */
   if (ScreenLines == NULL)
     return;
 
-  if (invert)
-    screen_char_attr = HL_INVERSE;
+  screen_char_attr = invert == TRUE ? HL_INVERSE : 0;
   for (r = row; r < row + height; ++r) {
     off = LineOffset[r];
     max_off = off + screen_Columns;
     for (c = col; c < col + width; ++c) {
       if (enc_dbcs != 0 && dbcs_off2cells(off + c, max_off) > 1) {
-        screen_char_2(off + c, r, c);
+        screen_char_2(off + c, r, c, screen_char_attr);
         ++c;
       } else {
-        screen_char(off + c, r, c);
+        screen_char(off + c, r, c, screen_char_attr);
         if (utf_off2cells(off + c, max_off) > 1)
           ++c;
       }
     }
   }
-  screen_char_attr = 0;
 }
 
 /*
@@ -6252,7 +6247,7 @@ void screen_fill(int start_row, int end_row, int start_col, int end_col, int c1,
         }
         ScreenAttrs[off] = attr;
         if (!did_delete || c != ' ')
-          screen_char(off, row, col);
+          screen_char(off, row, col, 0);
       }
       ++off;
       if (col == start_col) {
