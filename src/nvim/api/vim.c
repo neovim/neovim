@@ -552,6 +552,18 @@ Integer vim_name_to_color(String name)
   return name_to_color((uint8_t *)name.data);
 }
 
+Dictionary vim_get_color_map(void)
+{
+  Dictionary colors = ARRAY_DICT_INIT;
+
+  for (int i = 0; color_name_table[i].name != NULL; i++) {
+    PUT(colors, color_name_table[i].name,
+        INTEGER_OBJ(color_name_table[i].color));
+  }
+  return colors;
+}
+
+
 Array vim_get_api_info(uint64_t channel_id)
 {
   Array rv = ARRAY_DICT_INIT;
