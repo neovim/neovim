@@ -834,6 +834,7 @@ getcount:
             ca.cmdchar = Ctrl_BSL;
             ca.nchar = c;
             idx = find_command(ca.cmdchar);
+            assert(idx >= 0);
           }
         }
       }
