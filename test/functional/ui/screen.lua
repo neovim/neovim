@@ -65,7 +65,7 @@
 -- attribute(which normally is), here's how the call to "expect" should look
 -- like:
 --
---     NonText = nvim('name_to_color', 'Blue'),
+--     NonText = Screen.colors.Blue
 --     screen:expect([[
 --       hello screen             \
 --       ~                        \
@@ -86,7 +86,7 @@
 --
 -- Multiple expect:s will likely share a group of attribute sets to test.
 -- Therefore these could be specified at the beginning of a test like this:
---    NonText = nvim('name_to_color', 'Blue')
+--    NonText = Screen.colors.Blue
 --    screen:set_default_attr_ids( {
 --      [1] = {reverse = true, bold = true},
 --      [2] = {reverse = true}
@@ -118,6 +118,16 @@ local default_screen_timeout = 2500
 if os.getenv('VALGRIND') then
   default_screen_timeout = 7500
 end
+
+local colors = request('vim_get_color_map')
+local colornames = {}
+for name, rgb in pairs(colors) do
+    -- we disregard the case that colornames might not be unique, as
+    -- this is just a helper to get any canonical name of a color
+    colornames[rgb] = name
+end
+
+Screen.colors = colors
 
 function Screen.debug(command)
   if not command then
@@ -479,7 +489,13 @@ end
 function pprint_attrs(attrs)
     local items = {}
     for f, v in pairs(attrs) do
-      table.insert(items, f.." = "..tostring(v))
+      local desc = tostring(v)
+      if f == "foreground" or f == "background" then
+        if colornames[v] ~= nil then
+          desc = "Screen.colors."..colornames[v]
+        end
+      end
+      table.insert(items, f.." = "..desc)
     end
     return table.concat(items, ", ")
 end
