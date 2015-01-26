@@ -29,14 +29,12 @@ end)
 describe('Default highlight groups', function()
   -- Test the default attributes for highlight groups shown by the :highlight
   -- command
-  local screen, hlgroup_colors
+  local screen
 
-  setup(function()
-    hlgroup_colors = {
-      NonText = nvim('name_to_color', 'Blue'),
-      Question = nvim('name_to_color', 'SeaGreen')
-    }
-  end)
+  local hlgroup_colors = {
+    NonText = Screen.colors.Blue,
+    Question = Screen.colors.SeaGreen
+  }
 
   before_each(function()
     clear()

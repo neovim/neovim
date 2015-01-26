@@ -4,14 +4,12 @@ local clear, feed, nvim = helpers.clear, helpers.feed, helpers.nvim
 local insert, execute = helpers.insert, helpers.execute
 
 describe('Mouse input', function()
-  local screen, hlgroup_colors
+  local screen
 
-  setup(function()
-    hlgroup_colors = {
-      NonText = nvim('name_to_color', 'Blue'),
-      Visual = nvim('name_to_color', 'LightGrey'),
-    }
-  end)
+  local hlgroup_colors = {
+    NonText = Screen.colors.Blue,
+    Visual = Screen.colors.LightGrey
+  }
 
   before_each(function()
     clear()
