@@ -4545,11 +4545,9 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         // Turn flag "c" into COMPOUNDRULE compatible string "c+",
         // "Na" into "Na+", "1234" into "1234+".
         p = getroom(spin, STRLEN(items[1]) + 2, false);
-        if (p != NULL) {
-          STRCPY(p, items[1]);
-          STRCAT(p, "+");
-          compflags = p;
-        }
+        STRCPY(p, items[1]);
+        STRCAT(p, "+");
+        compflags = p;
       } else if (is_aff_rule(items, itemcnt, "COMPOUNDRULES", 2))   {
         // We don't use the count, but do check that it's a number and
         // not COMPOUNDRULE mistyped.
@@ -4565,14 +4563,12 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
           if (compflags != NULL)
             l += (int)STRLEN(compflags) + 1;
           p = getroom(spin, l, false);
-          if (p != NULL) {
-            if (compflags != NULL) {
-              STRCPY(p, compflags);
-              STRCAT(p, "/");
-            }
-            STRCAT(p, items[1]);
-            compflags = p;
+          if (compflags != NULL) {
+            STRCPY(p, compflags);
+            STRCAT(p, "/");
           }
+          STRCAT(p, items[1]);
+          compflags = p;
         }
       } else if (is_aff_rule(items, itemcnt, "COMPOUNDWORDMAX", 2)
                  && compmax == 0) {
@@ -5199,8 +5195,6 @@ static void process_compflags(spellinfo_T *spin, afffile_T *aff, char_u *compfla
   if (spin->si_compflags != NULL)
     len += (int)STRLEN(spin->si_compflags) + 1;
   p = getroom(spin, len, false);
-  if (p == NULL)
-    return;
   if (spin->si_compflags != NULL) {
     STRCPY(p, spin->si_compflags);
     STRCAT(p, "/");

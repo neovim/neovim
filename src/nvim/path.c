@@ -239,33 +239,31 @@ int vim_ispathlistsep(int c)
  * Shorten the path of a file from "~/foo/../.bar/fname" to "~/f/../.b/fname"
  * It's done in-place.
  */
-void shorten_dir(char_u *str)
+char_u *shorten_dir(char_u *str)
 {
-  char_u      *tail, *s, *d;
-  int skip = FALSE;
-
-  tail = path_tail(str);
-  d = str;
-  for (s = str;; ++s) {
+  char_u *tail = path_tail(str);
+  char_u *d = str;
+  bool skip = false;
+  for (char_u *s = str;; ++s) {
     if (s >= tail) {                /* copy the whole tail */
       *d++ = *s;
       if (*s == NUL)
         break;
     } else if (vim_ispathsep(*s)) {       /* copy '/' and next char */
       *d++ = *s;
-      skip = FALSE;
+      skip = false;
     } else if (!skip) {
       *d++ = *s;                    /* copy next char */
       if (*s != '~' && *s != '.')       /* and leading "~" and "." */
-        skip = TRUE;
+        skip = true;
       if (has_mbyte) {
         int l = mb_ptr2len(s);
-
         while (--l > 0)
           *d++ = *++s;
       }
     }
   }
+  return str;
 }
 
 /*
@@ -883,11 +881,9 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
   }
 
   free(curdir);
-  if (in_curdir != NULL) {
-    for (int i = 0; i < gap->ga_len; i++)
-      free(in_curdir[i]);
-    free(in_curdir);
-  }
+  for (int i = 0; i < gap->ga_len; i++)
+    free(in_curdir[i]);
+  free(in_curdir);
   ga_clear_strings(&path_ga);
   vim_regfree(regmatch.regprog);
 

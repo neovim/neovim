@@ -1240,10 +1240,8 @@ theend:
       mf_put(mfp, hp, false, false);
     mf_close(mfp, false);           /* will also free(mfp->mf_fname) */
   }
-  if (buf != NULL) {
-    free(buf->b_ml.ml_stack);
-    free(buf);
-  }
+  free(buf->b_ml.ml_stack);
+  free(buf);
   if (serious_error && called_from_main)
     ml_close(curbuf, TRUE);
   else {
@@ -3279,10 +3277,7 @@ findswapname (
   /*
    * we try different names until we find one that does not exist yet
    */
-  if (dir_name == NULL)             /* out of memory */
-    fname = NULL;
-  else
-    fname = makeswapname(buf_fname, buf->b_ffname, buf, dir_name);
+  fname = makeswapname(buf_fname, buf->b_ffname, buf, dir_name);
 
   for (;; ) {
     if (fname == NULL)          /* must be out of memory */

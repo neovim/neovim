@@ -1633,11 +1633,6 @@ change_indent (
    * put it back again the way we wanted it.
    */
   if (State & VREPLACE_FLAG) {
-    /* If orig_line didn't allocate, just return.  At least we did the job,
-     * even if you can't backspace. */
-    if (orig_line == NULL)
-      return;
-
     /* Save new line */
     new_line = vim_strsave(get_cursor_line_ptr());
 
@@ -2437,14 +2432,12 @@ void ins_compl_show_pum(void)
       }
   }
 
-  if (compl_match_array != NULL) {
-    /* Compute the screen column of the start of the completed text.
-     * Use the cursor to get all wrapping and other settings right. */
-    col = curwin->w_cursor.col;
-    curwin->w_cursor.col = compl_col;
-    pum_display(compl_match_array, compl_match_arraysize, cur);
-    curwin->w_cursor.col = col;
-  }
+  /* Compute the screen column of the start of the completed text.
+   * Use the cursor to get all wrapping and other settings right. */
+  col = curwin->w_cursor.col;
+  curwin->w_cursor.col = compl_col;
+  pum_display(compl_match_array, compl_match_arraysize, cur);
+  curwin->w_cursor.col = col;
 }
 
 #define DICT_FIRST      (1)     /* use just first element in "dict" */
@@ -4135,7 +4128,7 @@ static int ins_compl_use_match(int c)
 /*
  * Do Insert mode completion.
  * Called when character "c" was typed, which has a meaning for completion.
- * Returns OK if completion was done, FAIL if something failed (out of mem).
+ * Returns OK if completion was done, FAIL if something failed.
  */
 static int ins_complete(int c)
 {
@@ -4236,13 +4229,9 @@ static int ins_complete(int c)
           compl_length = curs_col - startcol;
         }
         if (p_ic)
-          compl_pattern = str_foldcase(line + compl_col,
-              compl_length, NULL, 0);
+          compl_pattern = str_foldcase(line + compl_col, compl_length, NULL, 0);
         else
-          compl_pattern = vim_strnsave(line + compl_col,
-              compl_length);
-        if (compl_pattern == NULL)
-          return FAIL;
+          compl_pattern = vim_strnsave(line + compl_col, compl_length);
       } else if (compl_cont_status & CONT_ADDING) {
         char_u      *prefix = (char_u *)"\\<";
 
@@ -4309,12 +4298,9 @@ static int ins_complete(int c)
       if (compl_length < 0)             /* cursor in indent: empty pattern */
         compl_length = 0;
       if (p_ic)
-        compl_pattern = str_foldcase(line + compl_col, compl_length,
-            NULL, 0);
+        compl_pattern = str_foldcase(line + compl_col, compl_length, NULL, 0);
       else
         compl_pattern = vim_strnsave(line + compl_col, compl_length);
-      if (compl_pattern == NULL)
-        return FAIL;
     } else if (ctrl_x_mode == CTRL_X_FILES) {
       /* Go back to just before the first filename character. */
       if (startcol > 0) {
@@ -4331,10 +4317,7 @@ static int ins_complete(int c)
 
       compl_col += startcol;
       compl_length = (int)curs_col - startcol;
-      compl_pattern = addstar(line + compl_col, compl_length,
-          EXPAND_FILES);
-      if (compl_pattern == NULL)
-        return FAIL;
+      compl_pattern = addstar(line + compl_col, compl_length, EXPAND_FILES);
     } else if (ctrl_x_mode == CTRL_X_CMDLINE) {
       compl_pattern = vim_strnsave(line, curs_col);
       set_cmd_context(&compl_xp, compl_pattern,

@@ -3033,10 +3033,8 @@ void tilde_replace(char_u *orig_pat, int num_files, char_u **files)
   if (orig_pat[0] == '~' && vim_ispathsep(orig_pat[1])) {
     for (i = 0; i < num_files; ++i) {
       p = home_replace_save(NULL, files[i]);
-      if (p != NULL) {
-        free(files[i]);
-        files[i] = p;
-      }
+      free(files[i]);
+      files[i] = p;
     }
   }
 }
@@ -3265,6 +3263,7 @@ addstar (
     int len,
     int context                    /* EXPAND_FILES etc. */
 )
+  FUNC_ATTR_NONNULL_RET
 {
   char_u      *retval;
   int i, j;
@@ -3343,35 +3342,33 @@ addstar (
     }
   } else {
     retval = xmalloc(len + 4);
-    if (retval != NULL) {
-      STRLCPY(retval, fname, len + 1);
+    STRLCPY(retval, fname, len + 1);
 
-      /*
-       * Don't add a star to *, ~, ~user, $var or `cmd`.
-       * * would become **, which walks the whole tree.
-       * ~ would be at the start of the file name, but not the tail.
-       * $ could be anywhere in the tail.
-       * ` could be anywhere in the file name.
-       * When the name ends in '$' don't add a star, remove the '$'.
-       */
-      tail = path_tail(retval);
-      ends_in_star = (len > 0 && retval[len - 1] == '*');
+    /*
+     * Don't add a star to *, ~, ~user, $var or `cmd`.
+     * * would become **, which walks the whole tree.
+     * ~ would be at the start of the file name, but not the tail.
+     * $ could be anywhere in the tail.
+     * ` could be anywhere in the file name.
+     * When the name ends in '$' don't add a star, remove the '$'.
+     */
+    tail = path_tail(retval);
+    ends_in_star = (len > 0 && retval[len - 1] == '*');
 #ifndef BACKSLASH_IN_FILENAME
-      for (i = len - 2; i >= 0; --i) {
-        if (retval[i] != '\\')
-          break;
-        ends_in_star = !ends_in_star;
-      }
-#endif
-      if ((*retval != '~' || tail != retval)
-          && !ends_in_star
-          && vim_strchr(tail, '$') == NULL
-          && vim_strchr(retval, '`') == NULL)
-        retval[len++] = '*';
-      else if (len > 0 && retval[len - 1] == '$')
-        --len;
-      retval[len] = NUL;
+    for (i = len - 2; i >= 0; --i) {
+      if (retval[i] != '\\')
+        break;
+      ends_in_star = !ends_in_star;
     }
+#endif
+    if ((*retval != '~' || tail != retval)
+        && !ends_in_star
+        && vim_strchr(tail, '$') == NULL
+        && vim_strchr(retval, '`') == NULL)
+      retval[len++] = '*';
+    else if (len > 0 && retval[len - 1] == '$')
+      --len;
+    retval[len] = NUL;
   }
   return retval;
 }
@@ -3506,8 +3503,6 @@ expand_cmdline (
   /* add star to file name, or convert to regexp if not exp. files. */
   xp->xp_pattern_len = (int)(str + col - xp->xp_pattern);
   file_str = addstar(xp->xp_pattern, xp->xp_pattern_len, xp->xp_context);
-  if (file_str == NULL)
-    return EXPAND_UNSUCCESSFUL;
 
   if (p_wic)
     options += WILD_ICASE;

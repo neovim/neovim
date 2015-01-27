@@ -11628,18 +11628,12 @@ static void f_or(typval_T *argvars, typval_T *rettv)
  */
 static void f_pathshorten(typval_T *argvars, typval_T *rettv)
 {
-  char_u      *p;
-
   rettv->v_type = VAR_STRING;
-  p = get_tv_string_chk(&argvars[0]);
-  if (p == NULL)
-    rettv->vval.v_string = NULL;
-  else {
-    p = vim_strsave(p);
-    rettv->vval.v_string = p;
-    if (p != NULL)
-      shorten_dir(p);
+  rettv->vval.v_string = get_tv_string_chk(&argvars[0]);
+  if (!rettv->vval.v_string) {
+    return;
   }
+  rettv->vval.v_string = shorten_dir(vim_strsave(rettv->vval.v_string));
 }
 
 /*
@@ -18168,8 +18162,7 @@ void func_dump_profile(FILE *fd)
       --todo;
       fp = HI2UF(hi);
       if (fp->uf_profiling) {
-        if (sorttab != NULL)
-          sorttab[st_len++] = fp;
+        sorttab[st_len++] = fp;
 
         if (fp->uf_name[0] == K_SPECIAL)
           fprintf(fd, "FUNCTION  <SNR>%s()\n", fp->uf_name + 3);
@@ -18196,7 +18189,7 @@ void func_dump_profile(FILE *fd)
     }
   }
 
-  if (sorttab != NULL && st_len > 0) {
+  if (st_len > 0) {
     qsort((void *)sorttab, (size_t)st_len, sizeof(ufunc_T *),
         prof_total_cmp);
     prof_sort_list(fd, sorttab, st_len, "TOTAL", FALSE);
