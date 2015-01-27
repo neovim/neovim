@@ -13,6 +13,7 @@
  * changed beyond recognition.
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -1162,6 +1163,8 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   len = ftell(fd);                      /* get size of temp file */
   fseek(fd, 0L, SEEK_SET);
   buffer = xmalloc(len + 1);
+  // fread() doesn't terminate buffer with NUL;
+  // appropiate termination (not always NUL) is done below.
   i = fread((char *)buffer, 1, len, fd);
   fclose(fd);
   os_remove((char *)tempname);
@@ -1173,8 +1176,6 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     return FAIL;
   }
   free(tempname);
-
-
 
   /* file names are separated with Space */
   if (shell_style == STYLE_ECHO) {
@@ -1235,6 +1236,8 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     if (len)
       ++i;                              /* count last entry */
   }
+  assert(buffer[len] == NUL || buffer[len] == '\n');
+
   if (i == 0) {
     /*
      * Can happen when using /bin/sh and typing ":e $NO_SUCH_VAR^I".
