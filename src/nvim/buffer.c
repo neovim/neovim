@@ -4337,10 +4337,8 @@ void buf_addsign(
         if (lnum == sign->lnum && id == sign->id) {
             sign->typenr = typenr;
             return;
-        }
-        else if (id < 0 /* keep signs sorted by lnum */
-                 && lnum < sign->lnum)
-        {
+        } else if ((lnum == sign->lnum && id != sign->id)
+                   || (id < 0 && lnum < sign->lnum)) {  // attempt to keep signs sorted by lnum
             insert_sign(buf, prev, sign, id, lnum, typenr);
             return;
         }
