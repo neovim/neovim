@@ -2057,92 +2057,65 @@ static void mainerr(int n, const char *str)
 }
 
 
-/*
- * print a message with three spaces prepended and '\n' appended.
- */
-static void main_msg(char *s)
-{
-  mch_msg("   ");
-  mch_msg(s);
-  mch_msg("\n");
-}
-
-/*
- * Print messages for "vim -h" or "vim --help" and exit.
- */
+/// Prints help message and exits; used for 'nvim -h' & 'nvim --help'
 static void usage(void)
 {
-  int i;
-  static char *(use[]) =
-  {
-    N_("[file ..]       edit specified file(s)"),
-    N_("-               read text from stdin"),
-    N_("-t tag          edit file where tag is defined"),
-    N_("-q [errorfile]  edit file with first error")
-  };
+  signal_stop();              // kill us with CTRL-C here, if you like
 
-  signal_stop();              /* kill us with CTRL-C here, if you like */
-
-  mch_msg(longVersion);
-  mch_msg(_("\n\nusage:"));
-  for (i = 0;; ++i) {
-    mch_msg(_(" vim [arguments] "));
-    mch_msg(_(use[i]));
-    if (i == ARRAY_SIZE(use) - 1)
-      break;
-    mch_msg(_("\n   or:"));
-  }
-
-  mch_msg(_("\n\nArguments:\n"));
-  main_msg(_("--\t\t\tOnly file names after this"));
+  mch_msg(_("Usage:\n"));
+  mch_msg(_("  nvim [arguments] [file ...]      Edit specified file(s)\n"));
+  mch_msg(_("  nvim [arguments] -               Read text from stdin\n"));
+  mch_msg(_("  nvim [arguments] -t <tag>        Edit file where tag is defined\n"));
+  mch_msg(_("  nvim [arguments] -q [errorfile]  Edit file with first error\n"));
+  mch_msg(_("\nArguments:\n"));
+  mch_msg(_("  --                    Only file names after this\n"));
 #if !defined(UNIX)
-  main_msg(_("--literal\t\tDon't expand wildcards"));
+  mch_msg(_("  --literal             Don't expand wildcards\n"));
 #endif
-  main_msg(_("-v\t\t\tVi mode (like \"vi\")"));
-  main_msg(_("-e\t\t\tEx mode (like \"ex\")"));
-  main_msg(_("-E\t\t\tImproved Ex mode"));
-  main_msg(_("-s\t\t\tSilent (batch) mode (only for \"ex\")"));
-  main_msg(_("-d\t\t\tDiff mode (like \"vimdiff\")"));
-  main_msg(_("-R\t\t\tReadonly mode (like \"view\")"));
-  main_msg(_("-Z\t\t\tRestricted mode (like \"rvim\")"));
-  main_msg(_("-m\t\t\tModifications (writing files) not allowed"));
-  main_msg(_("-M\t\t\tModifications in text not allowed"));
-  main_msg(_("-b\t\t\tBinary mode"));
-  main_msg(_("-l\t\t\tLisp mode"));
-  main_msg(_("-V[N][fname]\t\tBe verbose [level N] [log messages to fname]"));
-  main_msg(_("-D\t\t\tDebugging mode"));
-  main_msg(_("-n\t\t\tNo swap file, use memory only"));
-  main_msg(_("-r\t\t\tList swap files and exit"));
-  main_msg(_("-r (with file name)\tRecover crashed session"));
-  main_msg(_("-L\t\t\tSame as -r"));
-  main_msg(_("-A\t\t\tstart in Arabic mode"));
-  main_msg(_("-H\t\t\tStart in Hebrew mode"));
-  main_msg(_("-F\t\t\tStart in Farsi mode"));
-  main_msg(_("-T <terminal>\tSet terminal type to <terminal>"));
-  main_msg(_("-u <vimrc>\t\tUse <vimrc> instead of any .vimrc"));
-  main_msg(_("--noplugin\t\tDon't load plugin scripts"));
-  main_msg(_("-p[N]\t\tOpen N tab pages (default: one for each file)"));
-  main_msg(_("-o[N]\t\tOpen N windows (default: one for each file)"));
-  main_msg(_("-O[N]\t\tLike -o but split vertically"));
-  main_msg(_("+\t\t\tStart at end of file"));
-  main_msg(_("+<lnum>\t\tStart at line <lnum>"));
-  main_msg(_("--cmd <command>\tExecute <command> before loading any vimrc file"));
-  main_msg(_("-c <command>\t\tExecute <command> after loading the first file"));
-  main_msg(_(
-        "-S <session>\t\tSource file <session> after loading the first file"));
-  main_msg(_("-s <scriptin>\tRead Normal mode commands from file <scriptin>"));
-  main_msg(_("-w <scriptout>\tAppend all typed commands to file <scriptout>"));
-  main_msg(_("-W <scriptout>\tWrite all typed commands to file <scriptout>"));
-  main_msg(_("--startuptime <file>\tWrite startup timing messages to <file>"));
-  main_msg(_("-i <viminfo>\t\tUse <viminfo> instead of .viminfo"));
-  main_msg(_("--api-info\t\tDump API metadata serialized to msgpack and exit"));
-  main_msg(_("--embed\t\tUse stdin/stdout as a msgpack-rpc channel. "
-             "This can be used for embedding Neovim into other programs"));
-  main_msg(_("-h  or  --help\tPrint Help (this message) and exit"));
-  main_msg(_("--version\t\tPrint version information and exit"));
+  mch_msg(_("  -v                    Vi mode (like \"vi\")\n"));
+  mch_msg(_("  -e                    Ex mode (like \"ex\")\n"));
+  mch_msg(_("  -E                    Improved Ex mode\n"));
+  mch_msg(_("  -s                    Silent (batch) mode (only for \"ex\")\n"));
+  mch_msg(_("  -d                    Diff mode (like \"vimdiff\")\n"));
+  mch_msg(_("  -R                    Readonly mode (like \"view\")\n"));
+  mch_msg(_("  -Z                    Restricted mode (like \"rvim\")\n"));
+  mch_msg(_("  -m                    Modifications (writing files) not allowed\n"));
+  mch_msg(_("  -M                    Modifications in text not allowed\n"));
+  mch_msg(_("  -b                    Binary mode\n"));
+  mch_msg(_("  -l                    Lisp mode\n"));
+  mch_msg(_("  -V[N][file]           Be verbose [level N][log messages to file]\n"));
+  mch_msg(_("  -D                    Debugging mode\n"));
+  mch_msg(_("  -n                    No swap file, use memory only\n"));
+  mch_msg(_("  -r                    List swap files and exit\n"));
+  mch_msg(_("  -r <file>             Recover crashed session\n"));
+  mch_msg(_("  -L                    Same as -r\n"));
+  mch_msg(_("  -A                    Start in Arabic mode\n"));
+  mch_msg(_("  -F                    Start in Farsi mode\n"));
+  mch_msg(_("  -H                    Start in Hebrew mode\n"));
+  mch_msg(_("  -T <terminal>         Set terminal type to <terminal>\n"));
+  mch_msg(_("  -u <nvimrc>           Use <nvimrc> instead of any .nvimrc\n"));
+  mch_msg(_("  --noplugin            Don't load plugin scripts\n"));
+  mch_msg(_("  -p[N]                 Open N tab pages (default: one for each file)\n"));
+  mch_msg(_("  -o[N]                 Open N windows (default: one for each file)\n"));
+  mch_msg(_("  -O[N]                 Like -o but split vertically\n"));
+  mch_msg(_("  +                     Start at end of file\n"));
+  mch_msg(_("  +<lnum>               Start at line <lnum>\n"));
+  mch_msg(_("  --cmd <command>       Execute <command> before loading any vimrc file\n"));
+  mch_msg(_("  -c <command>          Execute <command> after loading the first file\n"));
+  mch_msg(_("  -S <session>          Source file <session> after loading the first file\n"));
+  mch_msg(_("  -s <scriptin>         Read Normal mode commands from file <scriptin>\n"));
+  mch_msg(_("  -w <scriptout>        Append all typed commands to file <scriptout>\n"));
+  mch_msg(_("  -W <scriptout>        Write all typed commands to file <scriptout>\n"));
+  mch_msg(_("  --startuptime <file>  Write startup timing messages to <file>\n"));
+  mch_msg(_("  -i <nviminfo>         Use <nviminfo> instead of .nviminfo\n"));
+  mch_msg(_("  --api-info            Dump API metadata serialized to msgpack and exit\n"));
+  mch_msg(_("  --embed               Use stdin/stdout as a msgpack-rpc channel\n"));
+  mch_msg(_("  --version             Print version information and exit\n"));
+  mch_msg(_("  -h | --help           Print this help message and exit\n"));
 
   mch_exit(0);
 }
+
 
 /*
  * Check the result of the ATTENTION dialog:
