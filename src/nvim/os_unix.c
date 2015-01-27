@@ -1159,16 +1159,30 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     free(tempname);
     goto notfound;
   }
-  fseek(fd, 0L, SEEK_END);
-  len = ftell(fd);                      /* get size of temp file */
+  int fseek_res = fseek(fd, 0L, SEEK_END);
+  if (fseek_res < 0) {
+    free(tempname);
+    fclose(fd);
+    return FAIL;
+  }
+  long long templen = ftell(fd);        /* get size of temp file */
+  if (templen < 0) {
+    free(tempname);
+    fclose(fd);
+    return FAIL;
+  }
+#if SIZEOF_LONG_LONG > SIZEOF_SIZE_T
+  assert(templen <= (long long)SIZE_MAX);
+#endif
+  len = (size_t)templen;
   fseek(fd, 0L, SEEK_SET);
   buffer = xmalloc(len + 1);
   // fread() doesn't terminate buffer with NUL;
   // appropiate termination (not always NUL) is done below.
-  i = fread((char *)buffer, 1, len, fd);
+  size_t readlen = fread((char *)buffer, 1, len, fd);
   fclose(fd);
   os_remove((char *)tempname);
-  if (i != (int)len) {
+  if (readlen != len) {
     /* unexpected read error */
     EMSG2(_(e_notread), tempname);
     free(tempname);
