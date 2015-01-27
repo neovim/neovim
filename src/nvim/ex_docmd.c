@@ -3219,27 +3219,15 @@ get_address (
       }
 
       if (!skip) {
-        /*
-         * When search follows another address, start from
-         * there.
-         */
-        if (lnum != MAXLNUM)
-          pos.lnum = lnum;
-        else
-          pos.lnum = curwin->w_cursor.lnum;
-
-        /*
-         * Start the search just like for the above
-         * do_search().
-         */
-        if (*cmd != '?')
-          pos.col = MAXCOL;
-        else
-          pos.col = 0;
+        // When search follows another address, start from there.
+        pos.lnum = (lnum != MAXLNUM) ? lnum : curwin->w_cursor.lnum;
+        // Start the search just like for the above do_search().
+        pos.col = (*cmd != '?') ? MAXCOL : 0;
+        pos.coladd = 0;
         if (searchit(curwin, curbuf, &pos,
-                *cmd == '?' ? BACKWARD : FORWARD,
-                (char_u *)"", 1L, SEARCH_MSG,
-                i, (linenr_T)0, NULL) != FAIL)
+                     *cmd == '?' ? BACKWARD : FORWARD,
+                     (char_u *)"", 1L, SEARCH_MSG,
+                     i, (linenr_T)0, NULL) != FAIL)
           lnum = pos.lnum;
         else {
           cmd = NULL;
