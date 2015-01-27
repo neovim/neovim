@@ -17,7 +17,7 @@
 " Cleanse your hands, you sinners; and purify your hearts, you double-minded.
 " ---------------------------------------------------------------------
 " Load Once: {{{1
-if &cp || exists("g:loaded_zipPlugin")
+if exists("g:loaded_zipPlugin")
  finish
 endif
 let g:loaded_zipPlugin = "v27"

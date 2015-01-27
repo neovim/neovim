@@ -11,7 +11,7 @@
 
 " ---------------------------------------------------------------------
 "  Load Once: {{{1
-if &cp || exists("g:loaded_vimball")
+if exists("g:loaded_vimball")
  finish
 endif
 let g:loaded_vimball = "v35"

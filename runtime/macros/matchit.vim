@@ -37,7 +37,7 @@
 
 " allow user to prevent loading
 " and prevent duplicate loading
-if exists("loaded_matchit") || &cp
+if exists("loaded_matchit")
   finish
 endif
 let loaded_matchit = 1

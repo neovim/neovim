@@ -35,7 +35,6 @@ if argc() > 0
   endwhile
 endif
 
-set nocp
 syntax on
 set so=0
 set hlsearch

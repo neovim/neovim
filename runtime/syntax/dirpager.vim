@@ -30,7 +30,7 @@
 "       -	Regular file.
 "
 
-if exists("b:current_syntax") || &compatible
+if exists("b:current_syntax")
   finish
 endif
 

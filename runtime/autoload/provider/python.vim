@@ -4,7 +4,7 @@
 "
 " Associating the plugin with the python host is the first step because plugins
 " will be passed as command-line arguments
-if exists('s:loaded_python_provider') || &cp
+if exists('s:loaded_python_provider')
   finish
 endif
 let s:loaded_python_provider = 1

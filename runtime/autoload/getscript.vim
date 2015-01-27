@@ -10,16 +10,10 @@
 "redraw!|call inputsave()|call input("Press <cr> to continue")|call inputrestore()
 " ---------------------------------------------------------------------
 " Initialization:	{{{1
-" if you're sourcing this file, surely you can't be
-" expecting vim to be in its vi-compatible mode!
 if exists("g:loaded_getscript")
  finish
 endif
 let g:loaded_getscript= "v36"
-if &cp
- echoerr "GetLatestVimScripts is not vi-compatible; not loaded (you need to set nocp)"
- finish
-endif
 if v:version < 702
  echohl WarningMsg
  echo "***warning*** this version of getscript needs vim 7.2"

@@ -4,9 +4,8 @@
 
 " Exit quickly when:
 " - this plugin was already loaded (or disabled)
-" - when 'compatible' is set
 " - the "CursorMoved" autocmd event is not available.
-if exists("g:loaded_matchparen") || &cp || !exists("##CursorMoved")
+if exists("g:loaded_matchparen") || !exists("##CursorMoved")
   finish
 endif
 let g:loaded_matchparen = 1

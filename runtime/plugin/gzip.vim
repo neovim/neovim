@@ -4,9 +4,8 @@
 
 " Exit quickly when:
 " - this plugin was already loaded
-" - when 'compatible' is set
 " - some autocommands are already taking care of compressed files
-if exists("loaded_gzip") || &cp || exists("#BufReadPre#*.gz")
+if exists("loaded_gzip") || exists("#BufReadPre#*.gz")
   finish
 endif
 let loaded_gzip = 1
