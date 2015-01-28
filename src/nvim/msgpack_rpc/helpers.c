@@ -86,8 +86,8 @@ bool msgpack_rpc_to_integer(msgpack_object *obj, Integer *arg)
 bool msgpack_rpc_to_float(msgpack_object *obj, Float *arg)
   FUNC_ATTR_NONNULL_ALL
 {
-  *arg = obj->via.dec;
-  return obj->type == MSGPACK_OBJECT_DOUBLE;
+  *arg = obj->via.f64;
+  return obj->type == MSGPACK_OBJECT_FLOAT;
 }
 
 bool msgpack_rpc_to_string(msgpack_object *obj, String *arg)
@@ -120,7 +120,7 @@ bool msgpack_rpc_to_object(msgpack_object *obj, Object *arg)
       arg->type = kObjectTypeInteger;
       return msgpack_rpc_to_integer(obj, &arg->data.integer);
 
-    case MSGPACK_OBJECT_DOUBLE:
+    case MSGPACK_OBJECT_FLOAT:
       arg->type = kObjectTypeFloat;
       return msgpack_rpc_to_float(obj, &arg->data.floating);
 
