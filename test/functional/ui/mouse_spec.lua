@@ -145,6 +145,7 @@ describe('Mouse input', function()
   end)
 
   it('ctrl + left click will search for a tag', function()
+    nvim('set_option', 'tags', './non-existent-tags-file')
     feed('<C-LeftMouse><0,0>')
     screen:expect([[
       E433: No tags file       |
