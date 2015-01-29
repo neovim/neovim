@@ -97,7 +97,8 @@ describe('jobs', function()
     nvim('command', "call jobstart('xxx', 'cat', ['-'])")
   end)
 
-  it('will only emit the "exit" event after "stdout" and "stderr"', function()
+  -- FIXME need to wait until jobsend succeeds before calling jobstop
+  pending('will only emit the "exit" event after "stdout" and "stderr"', function()
     nvim('command', notify_job())
     nvim('command', "let j = jobstart('xxx', 'cat', ['-'])")
     local jobid = nvim('eval', 'j')
