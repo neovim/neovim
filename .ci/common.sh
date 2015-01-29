@@ -46,6 +46,7 @@ check_core_dumps() {
 }
 
 setup_deps() {
+	sudo pip install neovim
 	if [ "$BUILD_NVIM_DEPS" != "true" ]; then
 		eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) deps-${1}"
 	elif [ "$TRAVIS_OS_NAME" = "linux" ]; then
