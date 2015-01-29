@@ -116,7 +116,9 @@ void wstream_set_stream(WStream *wstream, uv_stream_t *stream)
 /// @param file The file descriptor
 void wstream_set_file(WStream *wstream, uv_file file)
 {
+#ifndef NDEBUG
   uv_handle_type type = uv_guess_handle(file);
+#endif
 
   assert(type == UV_NAMED_PIPE || type == UV_TTY);
   wstream->stream = xmalloc(sizeof(uv_pipe_t));

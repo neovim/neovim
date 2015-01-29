@@ -228,9 +228,7 @@ int u_save(linenr_T top, linenr_T bot)
   if (undo_off)
     return OK;
 
-  if (top > curbuf->b_ml.ml_line_count
-      || top >= bot
-      || bot > curbuf->b_ml.ml_line_count + 1)
+  if (top >= bot || bot > curbuf->b_ml.ml_line_count + 1)
     return FAIL;        /* rely on caller to do error messages */
 
   if (top + 2 == bot)
