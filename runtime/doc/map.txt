@@ -505,9 +505,7 @@ command to the clipboard.  Use CTRL-Break to interrupt Vim.
 To include a space in {lhs} precede it with a CTRL-V (type two CTRL-Vs for
 each space).
 							*map_space_in_rhs*
-If you want a {rhs} that starts with a space, use "<Space>".  To be fully Vi
-compatible (but unreadable) don't use the |<>| notation, precede {rhs} with a
-single CTRL-V (you have to type CTRL-V two times).
+If you want a {rhs} that starts with a space, use "<Space>".
 							*map_empty_rhs*
 You can create an empty {rhs} by typing nothing after a single CTRL-V (you
 have to type CTRL-V two times).  Unfortunately, you cannot do this in a vimrc

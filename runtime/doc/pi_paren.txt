@@ -7,7 +7,6 @@
 Highlighting matching parens			*matchparen*
 
 The functionality mentioned here is a |standard-plugin|.
-This plugin is only available if 'compatible' is not set.
 
 You can avoid loading this plugin by setting the "loaded_matchparen" variable: >
 	:let loaded_matchparen = 1

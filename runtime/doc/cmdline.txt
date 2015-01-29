@@ -424,9 +424,8 @@ CTRL-L		A match is done on the pattern in front of the cursor.  If
 		no uppercase characters, the added character is converted to
 		lowercase.
 
-The 'wildchar' option defaults to <Tab> (CTRL-E when in Vi compatible mode; in
-a previous version <Esc> was used).  In the pattern standard wildcards '*' and
-'?' are accepted when matching file names.  '*' matches any string, '?'
+The 'wildchar' option defaults to <Tab>.  In the pattern standard wildcards '*'
+and '?' are accepted when matching file names.  '*' matches any string, '?'
 matches exactly one character.
 
 The 'wildignorecase' option can be set to ignore case in filenames.
@@ -983,7 +982,7 @@ OPEN						*c_CTRL-F* *q:* *q/* *q?*
 
 There are two ways to open the command-line window:
 1. From Command-line mode, use the key specified with the 'cedit' option.
-   The default is CTRL-F when 'compatible' is not set.
+   The default is CTRL-F.
 2. From Normal mode, use the "q:", "q/" or "q?" command.
    This starts editing an Ex command-line ("q:") or search string ("q/" or
    "q?").  Note that this is not possible while recording is in progress (the

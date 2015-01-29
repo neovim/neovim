@@ -1730,9 +1730,7 @@ the top of the plugin should be sufficient.  Example: >
 LINE CONTINUATION, AVOIDING SIDE EFFECTS		*use-cpo-save*
 
 In line 18 above, the line-continuation mechanism is used |line-continuation|.
-Users with 'compatible' set will run into trouble here, they will get an error
-message.  We can't just reset 'compatible', because that has a lot of side
-effects.  To avoid this, we will set the 'cpoptions' option to its Vim default
+To ensure this works, we will set the 'cpoptions' option to its Vim default
 value and restore it later.  That will allow the use of line-continuation and
 make the script work for most people.  It is done like this: >
 

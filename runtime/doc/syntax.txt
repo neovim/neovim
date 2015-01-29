@@ -3960,7 +3960,7 @@ See |pattern| for the explanation of what a pattern is.  Syntax patterns are
 always interpreted like the 'magic' option is set, no matter what the actual
 value of 'magic' is.  And the patterns are interpreted like the 'l' flag is
 not included in 'cpoptions'.  This was done to make syntax files portable and
-independent of 'compatible' and 'magic' settings.
+independent of 'cpoptions' and 'magic' settings.
 
 Try to avoid patterns that can match an empty string, such as "[a-z]*".
 This slows down the highlighting a lot, because it matches everywhere.

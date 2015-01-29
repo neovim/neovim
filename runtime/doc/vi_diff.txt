@@ -111,20 +111,6 @@ argument when starting Vim.
 ==============================================================================
 4. The most interesting additions			*vim-additions*
 
-Vi compatibility.					|'compatible'|
-	Although Vim is 99% Vi compatible, some things in Vi can be
-	considered to be a bug, or at least need improvement.  But still, Vim
-	starts in a mode which behaves like the "real" Vi as much as possible.
-	To make Vim behave a little bit better, try resetting the 'compatible'
-	option:
-		:set nocompatible
-	Or start Vim with the "-N" argument:
-		vim -N
-	Vim starts with 'nocompatible' automatically if you have a .vimrc
-	file.  See |startup|.
-	The 'cpoptions' option can be used to set Vi compatibility on/off for
-	a number of specific items.
-
 Support for different systems.
 	Vim can be used on:
 	- All Unix systems (it works on all systems it was tested on, although
@@ -820,8 +806,6 @@ Only Vim is able to accept options in between and after the file names.
 -b {blksize}	Elvis: Use {blksize} blocksize for the session file.
 -b		Vim: set 'binary' mode.
 
--C		Vim: Compatible mode.
-
 -c {command}	Elvis, Nvi, Posix, Vim: run {command} as an Ex command after
 		loading the edit buffer.
 		Vim: allow up to 10 "-c" arguments
@@ -864,8 +848,6 @@ Only Vim is able to accept options in between and after the file names.
 
 -M		Vim: Modifications not allowed, resets 'modifiable' and the
 		'write' option.
-
--N		Vim: No-compatible mode.
 
 -n		Vim: No swap file used.
 

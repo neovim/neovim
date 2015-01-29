@@ -267,15 +267,6 @@ The next u command gives you the u, and so on:
 	 young intelligent turtle ~
 	A young intelligent turtle ~
 
-	Note:
-	If you type "u" twice, and the result is that you get the same text
-	back, you have Vim configured to work Vi compatible.  Look here to fix
-	this: |not-compatible|.
-	   This text assumes you work "The Vim Way".  You might prefer to use
-	the good old Vi way, but you will have to watch out for small
-	differences in the text then.
-
-
 REDO
 
 If you undo too many times, you can press CTRL-R (redo) to reverse the
