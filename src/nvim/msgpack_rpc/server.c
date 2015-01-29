@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 #include <uv.h>
 
@@ -56,18 +57,37 @@ bool server_init(void)
 {
   ga_init(&servers, sizeof(Server *), 1);
 
-  bool must_free = false;
   const char *listen_address = os_getenv(LISTEN_ADDRESS_ENV_VAR);
   if (listen_address == NULL || *listen_address == NUL) {
-    must_free = true;
-    listen_address = (char *)vim_tempname();
+    os_setenv(LISTEN_ADDRESS_ENV_VAR, os_serveraddress(), 1);
   }
 
-  bool ok = (server_start(listen_address) == 0);
-  if (must_free) {
-    xfree((char *) listen_address);
+  return (server_start(os_getenv(LISTEN_ADDRESS_ENV_VAR)) == 0);
+}
+
+///
+/// Return default address for local server. The returned buffer
+/// is statically allocated.
+///
+/// In Windows this is a local pipe address in the format \\.\pipe\nvim-<PID>.
+/// For other systems it is a full path as returned by vim_tempname().
+///
+/// This function is NOT thread safe
+///
+const char* os_serveraddress(void)
+{
+  static char servername[ADDRESS_MAX_SIZE] = "";
+  if (servername[0] == '\0') {
+#ifdef WIN32
+    snprintf(servername, ADDRESS_MAX_SIZE,
+      "\\\\.\\pipe\\nvim-%" PRIu64, os_get_pid());
+#else
+    char *tmp = (char *)vim_tempname();
+    xstrlcpy(servername, tmp, ADDRESS_MAX_SIZE);
+    xfree(tmp);
+#endif
   }
-  return ok;
+  return servername;
 }
 
 /// Retrieve the file handle from a server.
