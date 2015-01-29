@@ -648,9 +648,6 @@ The flags that you can use for the substitute commands:
 			compiled without the |+insert_expand| feature}
 	    CTRL-Y  to scroll the screen down {not in Vi, not available when
 			compiled without the |+insert_expand| feature}
-	If the 'edcompatible' option is on, Vim remembers the [c] flag and
-	toggles it each time you use it, but resets it when you give a new
-	search pattern.
 	{not in Vi: highlighting of the match, other responses than 'y' or 'n'}
 
 [e]     When the search pattern fails, do not issue an error message and, in
@@ -665,11 +662,9 @@ The flags that you can use for the substitute commands:
 	{not in Vi}
 
 [g]	Replace all occurrences in the line.  Without this argument,
-	replacement occurs only for the first occurrence in each line.  If
-	the 'edcompatible' option is on, Vim remembers this flag and toggles
-	it each time you use it, but resets it when you give a new search
-	pattern.  If the 'gdefault' option is on, this flag is on by default
-	and the [g] argument switches it off.
+	replacement occurs only for the first occurrence in each line.  If the
+	'gdefault' option is on, this flag is on by default and the [g]
+	argument switches it off.
 
 [i]	Ignore case for the pattern.  The 'ignorecase' and 'smartcase' options
 	are not used.

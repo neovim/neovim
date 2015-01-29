@@ -4945,9 +4945,14 @@ set_bool_option (
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0)
     *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = value;
 
+  // Ensure that compatible can not be enabled
   if ((int *)varp == &p_cp && p_cp == TRUE) {
-    /* Ensure that compatible can not be enabled */
     p_cp = FALSE;
+    return e_unsupportedoption;
+  }
+  // Ensure that edcompatible can not be enabled
+  else if ((int *)varp == &p_ed && p_ed == TRUE) {
+    p_ed = FALSE;
     return e_unsupportedoption;
   }
   /* 'undofile' */

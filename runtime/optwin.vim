@@ -1228,8 +1228,6 @@ call append("$", "secure\tsafer working with script files in the current directo
 call <SID>BinOptionG("secure", &secure)
 call append("$", "gdefault\tuse the 'g' flag for \":substitute\"")
 call <SID>BinOptionG("gd", &gd)
-call append("$", "edcompatible\t'g' and 'c' flags of \":substitute\" toggle")
-call <SID>BinOptionG("ed", &ed)
 if exists("+opendevice")
   call append("$", "opendevice\tallow reading/writing devices")
   call <SID>BinOptionG("odev", &odev)

@@ -2415,12 +2415,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		both	width and height of windows is affected
 
 			   *'ed'* *'edcompatible'* *'noed'* *'noedcompatible'*
-'edcompatible' 'ed'	boolean	(default off)
-			global
-	Makes the 'g' and 'c' flags of the ":substitute" command to be
-	toggled each time the flag is given.  See |complex-change|.  See
-	also 'gdefault' option.
-	Switching this option on is discouraged!
+'edcompatible' 'ed'	Removed. {Nvim}
 
 					*'encoding'* *'enc'* *E543*
 'encoding' 'enc'	string (default: "latin1" or value from $LANG)
