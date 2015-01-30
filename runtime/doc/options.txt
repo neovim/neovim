@@ -1620,8 +1620,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|fold-marker|.
 
 			*'compatible'* *'cp'* *'nocompatible'* *'nocp'*
-'compatible' 'cp'	Removed. {Nvim}
-	"set nocp" is ignored, and "set cp" is an error.
+'compatible' 'cp'	Removed. |vim-differences| {Nvim}
 
 						*'complete'* *'cpt'* *E535*
 'complete' 'cpt'	string	(default: ".,w,b,u,t,i")
@@ -2093,7 +2092,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			with system specific functions.
 
 						*'cryptmethod'* *'cm'*
-'cryptmethod'		Removed. {Nvim}
+'cryptmethod'		Removed. |vim-differences| {Nvim}
 
 						*'cscopepathcomp'* *'cspc'*
 'cscopepathcomp' 'cspc'	number	(default 0)
@@ -2413,8 +2412,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		both	width and height of windows is affected
 
 			   *'ed'* *'edcompatible'* *'noed'* *'noedcompatible'*
-'edcompatible' 'ed'	Removed. {Nvim}
-	"set noed" is ignored, and "set ed" is an error.
+'edcompatible' 'ed'	Removed. |vim-differences| {Nvim}
 
 					*'encoding'* *'enc'* *E543*
 'encoding' 'enc'	string (default: "latin1" or value from $LANG)
@@ -4247,7 +4245,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Otherwise only one space is inserted.
 
 					*'key'*
-'key'			Removed. {Nvim}
+'key'			Removed. |vim-differences| {Nvim}
 
 					*'keymap'* *'kmp'* *E544*
 'keymap' 'kmp'		string	(default "")
@@ -5398,7 +5396,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	characters are put before the number.
 	See |hl-LineNr|  and |hl-CursorLineNr| for the highlighting used for
 	the number.
-	
+
 	The number in front of the cursor line also depends on the value of
 	'number', see |number_relativenumber| for all combinations of the two
 	options.
@@ -5411,9 +5409,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	NOTE: To avoid portability problems with Vim scripts, always keep
 	this option at the default "on".  Only switch it off when working with
 	old Vi scripts.
-
-						*'renderoptions'* *'rop'*
-'renderoptions' 'rop'	Removed. {Nvim} will choose the best renderer available.
 
 						*'report'*
 'report'		number	(default 2)
@@ -6030,7 +6025,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	    shm=at	Abbreviation, and truncate message when necessary.
 
 				 *'shortname'* *'sn'* *'noshortname'* *'nosn'*
-'shortname' 'sn'	Removed. {Nvim}
+'shortname' 'sn'	Removed. |vim-differences| {Nvim}
 
 						*'showbreak'* *'sbr'* *E595*
 'showbreak' 'sbr'	string	(default "")
@@ -7167,8 +7162,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	xterm entries...).
 
 				     *'ttyfast'* *'tf'* *'nottyfast'* *'notf'*
-'ttyfast' 'tf'		Removed. {Nvim}
-	"set tf" is ignored, and "set notf" is an error.
+'ttyfast' 'tf'		Removed. |vim-differences| {Nvim}
 
 						*'ttymouse'* *'ttym'*
 'ttymouse' 'ttym'	string	(default depends on 'term')

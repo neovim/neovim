@@ -862,13 +862,13 @@ TabEnter			Just after entering a tab page. |tab-page|
 TabLeave			Just before leaving a tab page. |tab-page|
 				A WinLeave event will have been triggered
 				first.
-							*TabNew*
+						 {Nvim} *TabNew*
 TabNew				When creating a new tab page. |tab-page|
 				After WinEnter and before TabEnter.
-							*TabNewEntered*
+						 {Nvim} *TabNewEntered*
 TabNewEntered			After entering a new tab page. |tab-page|
 				After BufEnter.
-							*TabClosed*
+						 {Nvim} *TabClosed*
 TabClosed			After closing a tab page. <afile> can be used
 				for the tab page number.
 							*TermChanged*

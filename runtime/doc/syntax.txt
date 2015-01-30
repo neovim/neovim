@@ -4761,7 +4761,7 @@ DiffChange	diff mode: Changed line |diff.txt|
 DiffDelete	diff mode: Deleted line |diff.txt|
 							*hl-DiffText*
 DiffText	diff mode: Changed text within a changed line |diff.txt|
-							*hl-EndOfBuffer*
+						 {Nvim} *hl-EndOfBuffer*
 EndOfBuffer	filler lines (~) after the end of the buffer.
 		By default, this is highlighted like |hl-NonText|.
 							*hl-ErrorMsg*

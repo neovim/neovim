@@ -21,7 +21,6 @@ DOCS = \
 	digraph.txt \
 	editing.txt \
 	eval.txt \
-	remote_plugin.txt \
 	farsi.txt \
 	filetype.txt \
 	fold.txt \
@@ -76,6 +75,7 @@ DOCS = \
 	quotes.txt \
 	recover.txt \
 	remote.txt \
+	remote_plugin.txt \
 	repeat.txt \
 	rileft.txt \
 	russian.txt \
@@ -127,6 +127,7 @@ DOCS = \
 	usr_toc.txt \
 	various.txt \
 	vi_diff.txt \
+	vim_diff.txt \
 	visual.txt \
 	windows.txt
 
@@ -142,7 +143,6 @@ HTMLS = \
 	digraph.html \
 	editing.html \
 	eval.html \
-	remote_plugin.html \
 	farsi.html \
 	filetype.html \
 	fold.html \
@@ -196,6 +196,7 @@ HTMLS = \
 	quotes.html \
 	recover.html \
 	remote.html \
+	remote_plugin.html \
 	repeat.html \
 	rileft.html \
 	russian.html \
@@ -248,6 +249,7 @@ HTMLS = \
 	usr_toc.html \
 	various.html \
 	vi_diff.html \
+	vim_diff.html \
 	vimindex.html \
 	visual.html \
 	windows.html

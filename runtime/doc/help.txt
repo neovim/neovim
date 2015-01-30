@@ -166,6 +166,7 @@ Interfaces ~
 |sign.txt|	debugging signs
 
 Versions ~
+|vim_diff.txt|	Main differences between Nvim and Vim
 |vi_diff.txt|	Main differences between Vim and Vi
 						*sys-file-list*
 Remarks about specific systems ~

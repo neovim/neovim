@@ -1,0 +1,128 @@
+*vim_diff.txt*    For Nvim.						{Nvim}
+
+
+			    NVIM REFERENCE MANUAL
+
+
+Differences between Nvim and Vim			       *vim-differences*
+
+Throughout the help files, differences between Nvim and Vim are indicated via
+the "{Nvim}" tag.  This document is a complete and centralized list of all
+these differences.
+
+1. Configuration		|nvim-configuration|
+2. Option defaults		|nvim-option-defaults|
+3. Changed features		|nvim-features-changed|
+4. New features			|nvim-features-new|
+5. Missing legacy features	|nvim-features-missing|
+6. Removed features		|nvim-features-removed|
+
+
+==============================================================================
+1. Configuration					    *nvim-configuration*
+
+- Use ".nvimrc" instead of ".vimrc" for storing configuration.
+- Use ".nvim" instead of ".vim" to store configuration files.
+- Use ".nviminfo" instead of ".viminfo" for persistent session information.
+
+==============================================================================
+2. Option defaults					  *nvim-option-defaults*
+
+- 'nocompatible' is always set
+- 'encoding' defaults to "utf-8"
+
+==============================================================================
+3. Changed features					 *nvim-features-changed*
+
+Nvim always ships with all features, in contrast to Vim which may have
+certain features removed depending at compile-time.  This is like if Vim's
+"HUGE" build was the only Vim release type (except Nvim is smaller than
+Vim's "HUGE" build).
+
+Assuming a python interpreter is installed, |:python| and |:python3| are
+always available and may be used simultaneously in separate plugins.  The
+`neovim` pip package must be installed for Nvim python plugins to work.  You
+don't need to worry about link-time details or ABI incompatibilities.
+
+==============================================================================
+4. New Features						     *nvim-features-new*
+
+See |nvim-intro| for a list of Nvim's largest new features.
+
+Events:
+- |TabNew|
+- |TabNewEntered|
+- |TabClosed|
+
+Highlight groups:
+- |hl-EndOfBuffer|
+
+==============================================================================
+5. Missing legacy features				 *nvim-features-missing*
+
+These legacy Vim features are not present currently, but may be implemented in
+the future:
+
+vim.bindeval() (new feature in Vim 7.4 python interface)
+if_lua
+if_mzscheme
+if_perl
+if_ruby
+if_tcl
+
+==============================================================================
+6. Removed features					 *nvim-features-removed*
+
+These options are in Vim, but have been removed from Nvim:
+
+Vi-compatible mode
+- ":set nocompatible" is ignored
+- ":set compatible" is an error
+
+Ed-compatible mode
+- ":set noedcompatible" is ignored
+- ":set edcompatible" is an error
+
+'ttyfast':
+- ":set ttyfast" is an error
+- ":set nottyfast" is ignored
+
+EBCDIC support
+
+8.3 filesystem support
+- 'shortname'
+
+Encryption support
+- 'cryptmethod'
+- 'key'
+
+MS-DOS support
+- 'bioskey'
+- 'conskey'
+
+'shelltype'
+":shell"
+":mode", no longer accepts an argument
+'textauto'
+'textmode'
+
+"Easy mode" (eview, evim, vim -y)
+"(g)vimdiff" (solely an alias for (g)vim -d, i.e. |diff-mode|)
+"Vi mode" (-v)
+
+The ability to start nvim via the following aliases in favor of just using
+their command line arguments:
+
+ex        nvim -e
+exim      nvim -E
+view      nvim -R
+gvim      nvim -g
+gex       nvim -eg
+gview     nvim -Rg
+rvim      nvim -Z
+rview     nvim -RZ
+rgvim     nvim -gZ
+rgview    nvim -RgZ
+
+==============================================================================
+ vim:tw=78:ts=8:noet:ft=help:norl:
