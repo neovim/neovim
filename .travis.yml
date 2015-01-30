@@ -16,19 +16,18 @@ env:
     # Force verification of DLOG macros.
     - CFLAGS='-DMIN_LOG_LEVEL=0'
   matrix:
-    - CI_TARGET=clang-asan
+    - CI_TARGET=clang
     - CI_TARGET=gcc
     - CI_TARGET=gcc-32
     - CI_TARGET=clint
 matrix:
   include:
     - os: osx
-      env: CI_TARGET=clang-asan
+      env: CI_TARGET=clang
+      compiler: clang
     - os: osx
       env: CI_TARGET=gcc
       compiler: gcc-4.9
-  allow_failures:
-    - os: osx
 before_install:
   # Pins the version of the java package installed on the Travis VMs
   # and avoids a lengthy upgrade process for them.
@@ -41,6 +40,8 @@ before_install:
 install:
   - if [ $TRAVIS_OS_NAME = linux ]; then
       sudo apt-get install xclip gdb;
+    elif [ $TRAVIS_OS_NAME = osx ]; then
+      brew install gettext;
     fi
 before_script:
   # Adds user to a dummy group.
