@@ -15,8 +15,8 @@ usage() {
   >&2 echo "        ${0} vim-revision"
   >&2 echo
   >&2 echo "Options:"
-  >&2 echo "        --help    Show this message."
-  >&2 echo "        --list    Show list of Vim patches missing from Neovim."
+  >&2 echo "    -h, --help    Show this message."
+  >&2 echo "    -l, --list    Show list of Vim patches missing from Neovim."
   >&2 echo
   >&2 echo "vim-revision can be a version number in format '7.4.xxx'"
   >&2 echo "or a Mercurial commit hash."
@@ -181,14 +181,14 @@ list_vim_patches() {
   echo "            './scripts/vim-patch.sh 1e8ebf870720e7b671f98f22d653009826304c4f'"
 }
 
-if [[ ${#} != 1 || "${1}" == "--help" ]]; then
+if [[ ${#} != 1 || "${1}" == "--help" || "${1}" == "-h" ]]; then
   usage
   exit 1
 fi
 
 get_vim_sources
 
-if [[ "${1}" == "--list" ]]; then
+if [[ "${1}" == "--list" || "${1}" == "-l" ]]; then
   list_vim_patches
 else
   get_vim_patch ${1}
