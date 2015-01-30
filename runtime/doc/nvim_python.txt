@@ -1,4 +1,4 @@
-*nvim_python.txt*    For Nvim.						 {Nvim}
+*nvim_python.txt*    For Nvim.						{Nvim}
 
 
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
