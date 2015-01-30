@@ -1706,7 +1706,7 @@ static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
       context = cntxts[idx];
     else
       context = globalcntx;
-    newsize = strlen(context) + strlen(cntxformat);
+    newsize = strlen(context) + strlen(cntxformat) + 1;
 
     if (bufsize < newsize) {
       buf = xrealloc(buf, newsize);
