@@ -1882,11 +1882,6 @@ When 'encoding' is utf-8 typing text at the end of the line causes previously
 typed characters to be redrawn.  Caused by patch 7.1.329. (Tyler Spivey, 2008
 Sep 3, 11)
 
-When Vim in an xterm owns the selection and the user does ":shell" Vim doesn't
-respond to selection requests.  Invoking XtDisownSelection() before executing
-the shell doesn't help.  Would require forking and doing a message loop, like
-what happens for the GUI.
-
 X11: Putting more than about 262040 characters of text on the clipboard and
 pasting it in another Vim doesn't work.  (Dominique Pelle, 2008 Aug 21-23)
 clip_x11_request_selection_cb() is called with zero value and length.

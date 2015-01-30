@@ -222,7 +222,7 @@ g8			Print the hex values of the bytes used in the
 			at compile time}
 
 						  *:sh* *:shell* *E371* *E360*
-:sh[ell]		Removed. {Nvim}
+:sh[ell]		Removed. |vim-differences| {Nvim}
 
 							*:!cmd* *:!* *E34*
 :!{cmd}			Execute {cmd} with the shell. See also 'shell'.
