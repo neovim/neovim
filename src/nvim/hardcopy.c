@@ -2122,19 +2122,25 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
   props = enc_canon_props(p_encoding);
   if (!(props & ENC_8BIT) && ((*p_pmcs != NUL) || !(props & ENC_UNICODE))) {
     p_mbenc_first = NULL;
+    int effective_cmap;
     for (cmap = 0; cmap < (int)ARRAY_SIZE(prt_ps_mbfonts); cmap++)
       if (prt_match_encoding((char *)p_encoding, &prt_ps_mbfonts[cmap],
-              &p_mbenc)) {
-        if (p_mbenc_first == NULL)
+                             &p_mbenc)) {
+        if (p_mbenc_first == NULL) {
           p_mbenc_first = p_mbenc;
-        if (prt_match_charset((char *)p_pmcs, &prt_ps_mbfonts[cmap],
-                &p_mbchar))
+          effective_cmap = cmap;
+        }
+        if (prt_match_charset((char *)p_pmcs, &prt_ps_mbfonts[cmap], &p_mbchar))
           break;
       }
 
     /* Use first encoding matched if no charset matched */
-    if (p_mbchar == NULL && p_mbenc_first != NULL)
+    if (p_mbchar == NULL && p_mbenc_first != NULL) {
       p_mbenc = p_mbenc_first;
+      cmap = effective_cmap;
+    }
+
+    assert(p_mbenc == NULL || cmap < (int)ARRAY_SIZE(prt_ps_mbfonts));
   }
 
   prt_out_mbyte = (p_mbenc != NULL);
