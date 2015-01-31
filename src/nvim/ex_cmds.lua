@@ -105,7 +105,7 @@ return {
   },
   {
     command='argedit',
-    flags=bit.bor(BANG, NEEDARG, RANGE, NOTADR, FILE1, EDITCMD, ARGOPT, TRLBAR),
+    flags=bit.bor(BANG, NEEDARG, RANGE, NOTADR, ZEROR, FILE1, EDITCMD, ARGOPT, TRLBAR),
     addr_type=ADDR_ARGUMENTS,
     func='ex_argedit',
   },
