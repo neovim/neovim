@@ -2,6 +2,7 @@ Test for user command counts	    vim: set ft=vim :
 
 STARTTEST
 :so tiny.vim
+:lang C
 :let g:lines = []
 :com -range=% RangeLines :call add(g:lines, 'RangeLines '.<line1>.' '.<line2>)
 :com -range -addr=arguments RangeArguments :call add(g:lines, 'RangeArguments '.<line1>.' '.<line2>)
