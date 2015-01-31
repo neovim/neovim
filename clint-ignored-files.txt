@@ -89,7 +89,6 @@ src/nvim/option.h
 src/nvim/option_defs.h
 src/nvim/os_unix.c
 src/nvim/os_unix.h
-src/nvim/os_unix_defs.h
 src/nvim/path.c
 src/nvim/path.h
 src/nvim/po/sjiscorr.c
