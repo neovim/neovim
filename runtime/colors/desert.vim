@@ -54,6 +54,8 @@ hi WarningMsg	guifg=salmon
 "hi Scrollbar
 "hi Tooltip
 
+hi link EndOfBuffer NonText
+
 " syntax highlighting groups
 hi Comment	guifg=SkyBlue
 hi Constant	guifg=#ffa0a0

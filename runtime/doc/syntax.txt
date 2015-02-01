@@ -4761,6 +4761,8 @@ DiffChange	diff mode: Changed line |diff.txt|
 DiffDelete	diff mode: Deleted line |diff.txt|
 							*hl-DiffText*
 DiffText	diff mode: Changed text within a changed line |diff.txt|
+							*hl-EndOfBuffer*
+EndOfBuffer	'~' indicating lines after the last line in the buffer
 							*hl-ErrorMsg*
 ErrorMsg	error messages on the command line
 							*hl-VertSplit*
@@ -4789,10 +4791,10 @@ ModeMsg		'showmode' message (e.g., "-- INSERT --")
 							*hl-MoreMsg*
 MoreMsg		|more-prompt|
 							*hl-NonText*
-NonText		'~' and '@' at the end of the window, characters from
-		'showbreak' and other characters that do not really exist in
-		the text (e.g., ">" displayed when a double-wide character
-		doesn't fit at the end of the line).
+NonText		'@' at the end of the window, characters from 'showbreak'
+		and other characters that do not really exist in the text
+		(e.g., ">" displayed when a double-wide character doesn't
+		fit at the end of the line).
 							*hl-Normal*
 Normal		normal text
 							*hl-Pmenu*

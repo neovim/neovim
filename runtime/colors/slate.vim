@@ -19,6 +19,7 @@ let colors_name = "slate"
 :hi ModeMsg guifg=goldenrod cterm=none ctermfg=brown
 :hi MoreMsg guifg=SeaGreen ctermfg=darkgreen
 :hi NonText guifg=RoyalBlue guibg=grey15 cterm=bold ctermfg=blue
+:hi link EndOfBuffer NonText
 :hi Question guifg=springgreen ctermfg=green
 :hi Search guibg=peru guifg=wheat cterm=none ctermfg=grey ctermbg=blue
 :hi SpecialKey guifg=yellowgreen ctermfg=darkgreen

@@ -46,6 +46,8 @@ hi DiffText term=reverse cterm=bold ctermbg=1 gui=bold guibg=#ff8060
 hi Cursor guifg=bg guibg=fg
 hi lCursor guifg=bg guibg=fg
 
+hi link EndOfBuffer NonText
+
 " Colors for syntax highlighting
 hi Comment term=bold ctermfg=4 guifg=#406090
 hi Constant term=underline ctermfg=1 guifg=#c00058

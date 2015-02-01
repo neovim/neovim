@@ -49,6 +49,8 @@ hi SpecialChar ctermfg=DarkGrey ctermbg=White guifg=DarkGrey gui=bold
 hi StorageClass ctermfg=Red ctermbg=White guifg=Red gui=bold
 hi Number ctermfg=LightRed ctermbg=White guifg=LightRed gui=bold
 
+hi link EndOfBuffer NonText
+
 " Groups for syntax highlighting
 hi Constant term=underline ctermfg=Magenta guifg=#a07070 guibg=grey80
 hi Special term=bold ctermfg=LightRed guifg=DarkOrange guibg=grey80

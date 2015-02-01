@@ -5768,8 +5768,9 @@ static void syntime_report(void)
 # define CENT(a, b) b
 static char *(highlight_init_both[]) =
 {
-  CENT(
-      "ErrorMsg term=standout ctermbg=DarkRed ctermfg=White",
+  CENT("EndOfBuffer term=bold ctermfg=Blue",
+      "EndOfBuffer term=bold ctermfg=Blue gui=bold guifg=Blue"),
+  CENT("ErrorMsg term=standout ctermbg=DarkRed ctermfg=White",
       "ErrorMsg term=standout ctermbg=DarkRed ctermfg=White guibg=Red guifg=White"),
   CENT("IncSearch term=reverse cterm=reverse",
       "IncSearch term=reverse cterm=reverse gui=reverse"),
