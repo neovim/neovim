@@ -82,7 +82,6 @@ set(CONV_SOURCES
   syntax.c
   tag.c
   ui.c
-  version.c
   window.c)
 
 foreach(sfile ${CONV_SOURCES})
