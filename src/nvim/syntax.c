@@ -5781,6 +5781,7 @@ static char *(highlight_init_both[]) =
       "StatusLine term=reverse,bold cterm=reverse,bold gui=reverse,bold"),
   CENT("StatusLineNC term=reverse cterm=reverse",
       "StatusLineNC term=reverse cterm=reverse gui=reverse"),
+  "default link EndOfBuffer NonText",
   CENT("VertSplit term=reverse cterm=reverse",
       "VertSplit term=reverse cterm=reverse gui=reverse"),
   CENT("DiffText term=reverse cterm=bold ctermbg=Red",

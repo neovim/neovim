@@ -405,7 +405,8 @@ EXTERN int no_check_timestamps INIT(= 0);       /* Don't check timestamps */
 typedef enum {
   HLF_8 = 0         /* Meta & special keys listed with ":map", text that is
                        displayed different from what it is */
-  , HLF_AT          /* @ and ~ characters at end of screen, characters that
+  , HLF_EOB         // after the last line in the buffer
+  , HLF_AT          /* @ characters at end of screen, characters that
                        don't really exist in the text */
   , HLF_D           /* directories in CTRL-D listing */
   , HLF_E           /* error messages */
@@ -451,10 +452,10 @@ typedef enum {
 
 /* The HL_FLAGS must be in the same order as the HLF_ enums!
  * When changing this also adjust the default for 'highlight'. */
-#define HL_FLAGS {'8', '@', 'd', 'e', 'i', 'l', 'm', 'M', 'n', 'N', 'r', 's', \
-                  'S', 'c', 't', 'v', 'V', 'w', 'W', 'f', 'F', 'A', 'C', 'D', \
-                  'T', '-', '>', 'B', 'P', 'R', 'L', '+', '=', 'x', 'X', '*', \
-                  '#', '_', '!', '.', 'o'}
+#define HL_FLAGS {'8', '~', '@', 'd', 'e', 'i', 'l', 'm', 'M', 'n', 'N', 'r', \
+                  's', 'S', 'c', 't', 'v', 'V', 'w', 'W', 'f', 'F', 'A', 'C', \
+                  'D', 'T', '-', '>', 'B', 'P', 'R', 'L', '+', '=', 'x', 'X', \
+                  '*', '#', '_', '!', '.', 'o'}
 
 EXTERN int highlight_attr[HLF_COUNT];       /* Highl. attr for each context. */
 # define USER_HIGHLIGHT
