@@ -1625,7 +1625,7 @@ static void win_update(win_T *wp)
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else {
-      win_draw_end(wp, '@', ' ', srow, wp->w_height, HLF_AT);
+      draw_end_of_screen(wp, '@', ' ', srow, wp->w_height, HLF_AT);
       wp->w_botline = lnum;
     }
   } else {
@@ -1643,15 +1643,13 @@ static void win_update(win_T *wp)
           i = fill_diff;
         if (row + j > wp->w_height)
           j = wp->w_height - row;
-        win_draw_end(wp, i, i, row, row + (int)j, HLF_DED);
+        draw_end_of_screen(wp, i, i, row, row + (int)j, HLF_DED);
         row += j;
       }
     } else if (dollar_vcol == -1)
       wp->w_botline = lnum;
 
-    /* make sure the rest of the screen is blank */
-    /* put '~'s on rows that aren't part of the file. */
-    win_draw_end(wp, '~', ' ', row, wp->w_height, HLF_AT);
+    draw_end_of_buffer(wp, row);
   }
 
   /* Reset the type of redrawing required, the window has been updated. */
@@ -1695,87 +1693,164 @@ static void win_update(win_T *wp)
 }
 
 
-/*
- * Clear the rest of the window and mark the unused lines with "c1".  use "c2"
- * as the filler character.
- */
-static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T hl)
+/// Fill all lines after the last line in the buffer
+/// with '~' and use the HLF_AT highlight group.
+///
+/// @param wp  The window.
+/// @param row Start at this row.
+static void draw_end_of_buffer(win_T *wp, int row)
 {
-  int n = 0;
-# define FDC_OFF n
+  if (wp->w_p_rl) {
+    // Clear everything after the last line in the
+    // buffer except for the first column.
+    screen_fill(wp->w_winrow + row,
+                wp->w_winrow + wp->w_height,
+                wp->w_wincol,
+                W_ENDCOL(wp) - 1,
+                ' ',
+                ' ',
+                hl_attr(HLF_AT));
+    // Fill the first column (mind the 'rl') with '~' characters.
+    screen_fill(wp->w_winrow + row,
+                wp->w_winrow + wp->w_height,
+                W_ENDCOL(wp) - 1,
+                W_ENDCOL(wp),
+                '~',
+                ' ',  // Not used.
+                hl_attr(HLF_AT));
+  } else {
+    // Clear everything after the last line in the buffer
+    // and fill the first column with '~' characters.
+    screen_fill(wp->w_winrow + row,
+                wp->w_winrow + wp->w_height,
+                wp->w_wincol,
+                W_ENDCOL(wp),
+                '~',
+                ' ',
+                hl_attr(HLF_AT));
+  }
+
+  set_empty_rows(wp, row);
+}
+
+/// Clear the rest of the window and mark the unused lines.
+///
+/// @param wp     The window.
+/// @param c1     Fill the first column with this character.
+/// @param c2     Fill all but the first column with this character.
+/// @param row    Start at this row.
+/// @param endrow Stop at this row.
+/// @param hl     Highlight group to use for this area.
+static void draw_end_of_screen(win_T *wp, int c1, int c2, int row, int endrow, hlf_T hl)
+{
+  int width = 0;
+# define FDC_OFF width
 
   if (wp->w_p_rl) {
-    /* No check for cmdline window: should never be right-left. */
-    n = wp->w_p_fdc;
+    // No check for cmdline window: should never be right-left.
+    width = wp->w_p_fdc;
 
-    if (n > 0) {
-      /* draw the fold column at the right */
-      if (n > wp->w_width)
-        n = wp->w_width;
-      screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
-                  W_ENDCOL(wp) - n, (int)W_ENDCOL(wp),
-                  ' ', ' ', hl_attr(HLF_FC));
+    if (width > 0) {
+      // Draw the fold column at the right.
+      if (width > wp->w_width) {
+        width = wp->w_width;
+      }
+      screen_fill(wp->w_winrow + row,
+                  wp->w_winrow + endrow,
+                  W_ENDCOL(wp) - width,
+                  W_ENDCOL(wp),
+                  ' ',
+                  ' ',
+                  hl_attr(HLF_FC));
     }
 
     if (draw_signcolumn(wp)) {
-        int nn = n + 2;
-
-        /* draw the sign column left of the fold column */
-        if (nn > wp->w_width) {
-            nn = wp->w_width;
+        int width_tmp = width + 2;
+        // Draw the sign column left of the fold column.
+        if (width_tmp > wp->w_width) {
+            width_tmp = wp->w_width;
         }
-        screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
-                    W_ENDCOL(wp) - nn, (int)W_ENDCOL(wp) - n,
-                    ' ', ' ', hl_attr(HLF_SC));
-        n = nn;
+        screen_fill(wp->w_winrow + row,
+                    wp->w_winrow + endrow,
+                    W_ENDCOL(wp) - width_tmp,
+                    W_ENDCOL(wp) - width,
+                    ' ',
+                    ' ',
+                    hl_attr(HLF_SC));
+        width = width_tmp;
     }
 
-    screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
-                wp->w_wincol, W_ENDCOL(wp) - 1 - FDC_OFF,
-                c2, c2, hl_attr(hl));
-    screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
-                W_ENDCOL(wp) - 1 - FDC_OFF, W_ENDCOL(wp) - FDC_OFF,
-                c1, c2, hl_attr(hl));
+    screen_fill(wp->w_winrow + row,
+                wp->w_winrow + endrow,
+                wp->w_wincol,
+                W_ENDCOL(wp) - 1 - FDC_OFF,
+                c2,
+                c2,
+                hl_attr(hl));
+    screen_fill(wp->w_winrow + row,
+                wp->w_winrow + endrow,
+                W_ENDCOL(wp) - 1 - FDC_OFF,
+                W_ENDCOL(wp) - FDC_OFF,
+                c1,
+                c2,
+                hl_attr(hl));
   } else {
     if (cmdwin_type != 0 && wp == curwin) {
-      /* draw the cmdline character in the leftmost column */
-      n = 1;
-      if (n > wp->w_width)
-        n = wp->w_width;
-      screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
-                  wp->w_wincol, wp->w_wincol + n,
-                  cmdwin_type, ' ', hl_attr(HLF_AT));
+      // Draw the cmdline character in the leftmost column.
+      width = 1;
+      if (width > wp->w_width) {
+        width = wp->w_width;
+      }
+      screen_fill(wp->w_winrow + row,
+                  wp->w_winrow + endrow,
+                  wp->w_wincol,
+                  wp->w_wincol + width,
+                  cmdwin_type,
+                  ' ',
+                  hl_attr(HLF_AT));
     }
+
     if (wp->w_p_fdc > 0) {
-      int nn = n + wp->w_p_fdc;
-
-      /* draw the fold column at the left */
-      if (nn > wp->w_width)
-        nn = wp->w_width;
-      screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
-                  wp->w_wincol + n, wp->w_wincol + nn,
-                  ' ', ' ', hl_attr(HLF_FC));
-      n = nn;
+      int width_tmp = width + wp->w_p_fdc;
+      // Draw the fold column at the left.
+      if (width_tmp > wp->w_width) {
+        width_tmp = wp->w_width;
+      }
+      screen_fill(wp->w_winrow + row,
+                  wp->w_winrow + endrow,
+                  wp->w_wincol + width,
+                  wp->w_wincol + width_tmp,
+                  ' ',
+                  ' ',
+                  hl_attr(HLF_FC));
+      width = width_tmp;
     }
 
-    if (draw_signcolumn(wp))
-    {
-        int nn = n + 2;
-
-        /* draw the sign column after the fold column */
-        if (nn > wp->w_width) {
-            nn = wp->w_width;
+    if (draw_signcolumn(wp)) {
+        int width_tmp = width + 2;
+        // Draw the sign column after the fold column.
+        if (width_tmp > wp->w_width) {
+            width_tmp = wp->w_width;
         }
-        screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
-                    wp->w_wincol + n, wp->w_wincol + nn,
-                    ' ', ' ', hl_attr(HLF_SC));
-        n = nn;
+        screen_fill(wp->w_winrow + row,
+                    wp->w_winrow + endrow,
+                    wp->w_wincol + width,
+                    wp->w_wincol + width_tmp,
+                    ' ',
+                    ' ',
+                    hl_attr(HLF_SC));
+        width = width_tmp;
     }
 
-    screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
-                wp->w_wincol + FDC_OFF, (int)W_ENDCOL(wp),
-                c1, c2, hl_attr(hl));
+    screen_fill(wp->w_winrow + row,
+                wp->w_winrow + endrow,
+                wp->w_wincol + FDC_OFF,
+                W_ENDCOL(wp),
+                c1,
+                c2,
+                hl_attr(hl));
   }
+
   set_empty_rows(wp, row);
 }
 
@@ -4167,7 +4242,7 @@ win_line (
       if (draw_state != WL_LINE
           && filler_todo <= 0
           ) {
-        win_draw_end(wp, '@', ' ', row, wp->w_height, HLF_AT);
+        draw_end_of_screen(wp, '@', ' ', row, wp->w_height, HLF_AT);
         draw_vsep_win(wp, row);
         row = endrow;
       }
