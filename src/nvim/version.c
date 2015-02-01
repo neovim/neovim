@@ -4,6 +4,8 @@
 /// Vim originated from Stevie version 3.6 (Fish disk 217) by GRWalter (Fred).
 
 #include <inttypes.h>
+#include <assert.h>
+#include <limits.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
@@ -1008,8 +1010,8 @@ void maybe_intro_message(void)
 void intro_message(int colon)
 {
   int i;
-  int row;
-  int blanklines;
+  long row;
+  long blanklines;
   int sponsor;
   char *p;
   static char *(lines[]) = {
@@ -1027,7 +1029,10 @@ void intro_message(int colon)
   };
 
   // blanklines = screen height - # message lines
-  blanklines = (int)Rows - (ARRAY_SIZE(lines) - 1);
+  size_t lines_size = ARRAY_SIZE(lines);
+  assert(lines_size <= LONG_MAX);
+
+  blanklines = Rows - ((long)lines_size - 1l);
 
   // Don't overwrite a statusline.  Depends on 'cmdheight'.
   if (p_ls > 1) {
@@ -1073,13 +1078,14 @@ void intro_message(int colon)
 
   // Make the wait-return message appear just below the text.
   if (colon) {
-    msg_row = row;
+    assert(row <= INT_MAX);
+    msg_row = (int)row;
   }
 }
 
-static void do_intro_line(int row, char_u *mesg, int attr)
+static void do_intro_line(long row, char_u *mesg, int attr)
 {
-  int col;
+  long col;
   char_u *p;
   int l;
   int clen;
@@ -1106,7 +1112,8 @@ static void do_intro_line(int row, char_u *mesg, int attr)
         clen += byte2cells(p[l]);
       }
     }
-    screen_puts_len(p, l, row, col, *p == '<' ? hl_attr(HLF_8) : attr);
+    assert(row <= INT_MAX && col <= INT_MAX);
+    screen_puts_len(p, l, (int)row, (int)col, *p == '<' ? hl_attr(HLF_8) : attr);
     col += clen;
   }
 }
