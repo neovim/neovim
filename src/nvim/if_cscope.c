@@ -1646,7 +1646,6 @@ static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
   char        *fname, *lno, *extra, *tbuf;
   int i, idx, num;
   char        *globalcntx = "GLOBAL";
-  char        *cntxformat = " <<%s>>";
   char        *context;
   char        *cstag_msg = _("Cscope tag: %s");
 
@@ -1706,7 +1705,11 @@ static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
       context = cntxts[idx];
     else
       context = globalcntx;
-    newsize = strlen(context) + strlen(cntxformat);
+
+    const char *cntxformat = " <<%s>>";
+    // '%s' won't appear in result string, so:
+    // newsize = len(cntxformat) - 2 + len(context) + 1 (for NUL).
+    newsize = strlen(context) + strlen(cntxformat) - 1;
 
     if (bufsize < newsize) {
       buf = xrealloc(buf, newsize);
