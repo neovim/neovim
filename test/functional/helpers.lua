@@ -1,3 +1,8 @@
+if jit then
+  -- Disable JIT because of random errors on Travis with OS X.
+  jit.off(true, true)
+end
+
 require('coxpcall')
 local Loop = require('nvim.loop')
 local MsgpackStream = require('nvim.msgpack_stream')
