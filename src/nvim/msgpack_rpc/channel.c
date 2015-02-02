@@ -102,9 +102,13 @@ void channel_init(void)
     channel_from_stdio();
   }
 
+#ifndef MAKE_LIB
   if (abstract_ui) {
+#endif
     remote_ui_init();
+#ifndef MAKE_LIB
   }
+#endif
 }
 
 /// Teardown the module
@@ -315,9 +319,11 @@ bool channel_close(uint64_t id)
   return true;
 }
 
-/// Creates an API channel from stdin/stdout. This is used when embedding
-/// Neovim
-static void channel_from_stdio(void)
+/// Creates an API channel from file descriptors
+///
+/// @param read_fd The file descriptor for reading
+/// @param write_fd The file descriptor for writing
+uint64_t channel_from_fds(uv_file read_fd, uv_file write_fd)
 {
   Channel *channel = register_channel();
   channel->is_job = false;
@@ -325,12 +331,21 @@ static void channel_from_stdio(void)
   channel->data.streams.read = rstream_new(parse_msgpack,
                                            rbuffer_new(CHANNEL_BUFFER_SIZE),
                                            channel);
-  rstream_set_file(channel->data.streams.read, 0);
+  rstream_set_file(channel->data.streams.read, read_fd);
   rstream_start(channel->data.streams.read);
   // write stream
   channel->data.streams.write = wstream_new(0);
-  wstream_set_file(channel->data.streams.write, 1);
+  wstream_set_file(channel->data.streams.write, write_fd);
   channel->data.streams.uv = NULL;
+
+  return channel->id;
+}
+
+/// Creates an API channel from stdin/stdout. This is used when embedding
+/// Neovim
+static void channel_from_stdio(void)
+{
+  channel_from_fds(0, 1);
 }
 
 static void job_out(RStream *rstream, void *data, bool eof)
@@ -652,9 +667,13 @@ static void on_stdio_close(Event e)
 
 static void free_channel(Channel *channel)
 {
+#ifndef MAKE_LIB
   if (abstract_ui) {
+#endif
     remote_ui_disconnect(channel->id);
+#ifndef MAKE_LIB
   }
+#endif
 
   pmap_del(uint64_t)(channels, channel->id);
   msgpack_unpacker_free(channel->unpacker);
