@@ -80,6 +80,7 @@ set(CONV_SOURCES
   search.c
   spell.c
   syntax.c
+  highlight.c
   tag.c
   ui.c
   version.c
