@@ -2088,7 +2088,6 @@ static void usage(void)
   mch_msg(_("  -n                    No swap file, use memory only\n"));
   mch_msg(_("  -r                    List swap files and exit\n"));
   mch_msg(_("  -r <file>             Recover crashed session\n"));
-  mch_msg(_("  -L                    Same as -r\n"));
   mch_msg(_("  -A                    Start in Arabic mode\n"));
   mch_msg(_("  -F                    Start in Farsi mode\n"));
   mch_msg(_("  -H                    Start in Hebrew mode\n"));
@@ -2100,7 +2099,7 @@ static void usage(void)
   mch_msg(_("  -O[N]                 Like -o but split vertically\n"));
   mch_msg(_("  +                     Start at end of file\n"));
   mch_msg(_("  +<lnum>               Start at line <lnum>\n"));
-  mch_msg(_("  --cmd <command>       Execute <command> before loading any vimrc file\n"));
+  mch_msg(_("  --cmd <command>       Execute <command> before loading any nvimrc\n"));
   mch_msg(_("  -c <command>          Execute <command> after loading the first file\n"));
   mch_msg(_("  -S <session>          Source file <session> after loading the first file\n"));
   mch_msg(_("  -s <scriptin>         Read Normal mode commands from file <scriptin>\n"));
