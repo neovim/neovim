@@ -51,7 +51,7 @@ include(ExternalProject)
 
 set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.2.0.tar.gz)
 set(LIBUV_SHA1 38d1ba349fcfc1b221140523ba3d7cf3ea38c20b)
-set(LIBUV_MD5 d41d8cd98f00b204e9800998ecf8427e)
+set(LIBUV_MD5 e7712a100635ec2ca1f145f2bb217200)
 
 set(MSGPACK_URL https://github.com/msgpack/msgpack-c/archive/ecf4b09acd29746829b6a02939db91dfdec635b4.tar.gz)
 set(MSGPACK_SHA1 c160ff99f20d9d0a25bea0a57f4452f1c9bde370)
