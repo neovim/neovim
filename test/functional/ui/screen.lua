@@ -54,12 +54,18 @@
 -- having the exact same set of attributes will be substituted by "{K:S}",
 -- where K is a key associated the attribute set via the second argument of
 -- "expect".
+-- If a transformation table is present, unexpected attribute sets in the final
+-- state is considered an error. To make testing simpler, a list of attribute
+-- sets that should be ignored can be passed as a third argument. Alternatively,
+-- this third argument can be "true" to indicate that all unexpected attribute
+-- sets should be ignored.
 --
--- Too illustrate how this works, let's say that in the above example we wanted
+-- To illustrate how this works, let's say that in the above example we wanted
 -- to assert that the "-- INSERT --" string is highlighted with the bold
 -- attribute(which normally is), here's how the call to "expect" should look
 -- like:
 --
+--     NonText = Screen.colors.Blue
 --     screen:expect([[
 --       hello screen             \
 --       ~                        \
@@ -71,11 +77,34 @@
 --       ~                        \
 --       ~                        \
 --       {b:-- INSERT --}             \
---     ]], {b = {bold = true}})
+--     ]], {b = {bold = true}}, {{bold = true, foreground = NonText}})
 --
 -- In this case "b" is a string associated with the set composed of one
 -- attribute: bold. Note that since the {b:} markup is not a real part of the
--- screen, the delimiter(|) had to be moved right
+-- screen, the delimiter(|) had to be moved right. Also, the highlighting of the
+-- NonText markers (~) is ignored in this test.
+--
+-- Multiple expect:s will likely share a group of attribute sets to test.
+-- Therefore these could be specified at the beginning of a test like this:
+--    NonText = Screen.colors.Blue
+--    screen:set_default_attr_ids( {
+--      [1] = {reverse = true, bold = true},
+--      [2] = {reverse = true}
+--    })
+--    screen:set_default_attr_ignore( {{}, {bold=true, foreground=NonText}} )
+-- These can be overridden for a specific expect expression, by passing
+-- different sets as parameters.
+--
+-- To help writing screen tests, there is a utility function
+-- "screen:snapshot_util()", that can be placed in a test file at any point an
+-- "expect(...)" should be. It will wait a short amount of time and then dump
+-- the current state of the screen, in the form of an "expect(..)" expression
+-- that would match it exactly. "snapshot_util" optionally also take the
+-- transformation and ignore set as parameters, like expect, or uses the default
+-- set. It will generate a larger attribute transformation set, if needed.
+-- To generate a text-only test without highlight checks,
+-- use `screen:snapshot_util({},true)`
+
 local helpers = require('test.functional.helpers')
 local request, run, stop = helpers.request, helpers.run, helpers.stop
 local eq, dedent = helpers.eq, helpers.dedent
@@ -89,6 +118,16 @@ local default_screen_timeout = 2500
 if os.getenv('VALGRIND') then
   default_screen_timeout = 7500
 end
+
+local colors = request('vim_get_color_map')
+local colornames = {}
+for name, rgb in pairs(colors) do
+    -- we disregard the case that colornames might not be unique, as
+    -- this is just a helper to get any canonical name of a color
+    colornames[rgb] = name
+end
+
+Screen.colors = colors
 
 function Screen.debug(command)
   if not command then
@@ -158,19 +197,11 @@ function Screen:expect(expected, attr_ids, attr_ignore)
     table.insert(expected_rows, row)
   end
   local ids = attr_ids or self._default_attr_ids
-  if attr_ignore == nil and self._default_attr_ignore ~= nil then
-    attr_ignore = {}
-    -- don't ignore something we specified in attr_ids
-    for i,a in pairs(self._default_attr_ignore) do
-      if attr_index(ids, a) == nil then
-        table.insert(attr_ignore, a)
-      end
-    end
-  end
+  local ignore = attr_ignore or self._default_attr_ignore
   self:wait(function()
     for i = 1, self._height do
       local expected_row = expected_rows[i]
-      local actual_row = self:_row_repr(self._rows[i], ids, attr_ignore)
+      local actual_row = self:_row_repr(self._rows[i], ids, ignore)
       if expected_row ~= actual_row then
         return 'Row '..tostring(i)..' didnt match.\nExpected: "'..
                expected_row..'"\nActual:   "'..actual_row..'"'
@@ -417,12 +448,16 @@ function Screen:snapshot_util(attrs, ignore)
       end
     end
 
-    for i = 1, self._height do
-      local row = self._rows[i]
-      for j = 1, self._width do
-        local attr = row[j].attrs
-        if attr_index(attrs, attr) == nil and attr_index(ignore, attr) == nil then
-          table.insert(attrs, attr)
+    if ignore ~= true then
+      for i = 1, self._height do
+        local row = self._rows[i]
+        for j = 1, self._width do
+          local attr = row[j].attrs
+          if attr_index(attrs, attr) == nil and attr_index(ignore, attr) == nil then
+            if not equal_attrs(attr, {}) then
+              table.insert(attrs, attr)
+            end
+          end
         end
       end
     end
@@ -438,11 +473,7 @@ function Screen:snapshot_util(attrs, ignore)
     if self._default_attr_ids == nil or self._default_attr_ids[i] ~= a then
       alldefault = false
     end
-    local items = {}
-    for f, v in pairs(a) do
-      table.insert(items, f.." = "..tostring(v))
-    end
-    local dict = "{"..table.concat(items, ", ").."}"
+    local dict = "{"..pprint_attrs(a).."}"
     table.insert(attrstrs, "["..tostring(i).."] = "..dict)
   end
   local attrstr = "{"..table.concat(attrstrs, ", ").."}"
@@ -455,6 +486,19 @@ function Screen:snapshot_util(attrs, ignore)
   end
 end
 
+function pprint_attrs(attrs)
+    local items = {}
+    for f, v in pairs(attrs) do
+      local desc = tostring(v)
+      if f == "foreground" or f == "background" then
+        if colornames[v] ~= nil then
+          desc = "Screen.colors."..colornames[v]
+        end
+      end
+      table.insert(items, f.." = "..desc)
+    end
+    return table.concat(items, ", ")
+end
 
 function backward_find_meaningful(tbl, from)
   for i = from or #tbl, 1, -1 do
@@ -465,7 +509,7 @@ function backward_find_meaningful(tbl, from)
   return from
 end
 
-function get_attr_id(attr_ids, attr_ignore, attrs)
+function get_attr_id(attr_ids, ignore, attrs)
   if not attr_ids then
     return
   end
@@ -474,11 +518,12 @@ function get_attr_id(attr_ids, attr_ignore, attrs)
        return id
      end
   end
-  if attr_ignore == nil or attr_index(attr_ignore, attrs) ~= nil then
+  if equal_attrs(attrs, {}) or
+      ignore == true or attr_index(ignore, attrs) ~= nil then
     -- ignore this attrs
     return nil
   end
-  return "UNEXPECTED"
+  return "UNEXPECTED "..pprint_attrs(attrs)
 end
 
 function equal_attrs(a, b)

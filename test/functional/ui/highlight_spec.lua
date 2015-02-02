@@ -29,19 +29,19 @@ end)
 describe('Default highlight groups', function()
   -- Test the default attributes for highlight groups shown by the :highlight
   -- command
-  local screen, hlgroup_colors
+  local screen
 
-  setup(function()
-    hlgroup_colors = {
-      NonText = nvim('name_to_color', 'Blue'),
-      Question = nvim('name_to_color', 'SeaGreen')
-    }
-  end)
+  local hlgroup_colors = {
+    NonText = Screen.colors.Blue,
+    Question = Screen.colors.SeaGreen
+  }
 
   before_each(function()
     clear()
     screen = Screen.new()
     screen:attach()
+    --ignore highligting of ~-lines
+    screen:set_default_attr_ignore( {{bold=true, foreground=hlgroup_colors.NonText}} )
   end)
 
   after_each(function()
@@ -52,8 +52,6 @@ describe('Default highlight groups', function()
       [1] = {reverse = true, bold = true},  -- StatusLine
       [2] = {reverse = true}                -- StatusLineNC
     })
-    --ignore highligting of ~-lines
-    screen:set_default_attr_ignore( {{}, {bold=true, foreground=hlgroup_colors.NonText}} )
     execute('sp', 'vsp', 'vsp')
     screen:expect([[
       ^                   {2:|}                {2:|}               |
