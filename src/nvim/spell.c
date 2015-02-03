@@ -335,7 +335,7 @@
 # include <time.h>      // for time_t
 #endif
 
-#define MAXWLEN 250             // Assume max. word len is this many bytes.
+#define MAXWLEN 254             // Assume max. word len is this many bytes.
                                 // Some places assume a word length fits in a
                                 // byte, thus it can't be above 255.
 
