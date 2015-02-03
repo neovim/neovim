@@ -19,13 +19,13 @@ The basics are explained in section |08.7| of the user manual.
 ==============================================================================
 1. Starting diff mode
 
-To start editing in diff mode, start Nvim with "nvim -d".  This starts Nvim
-and sets up for viewing the differences between the arguments. >
+To start editing in diff mode, run "nvim -d".  This starts Nvim as usual, and
+additionally sets up for viewing the differences between the arguments. >
 
 	nvim -d file1 file2 [file3 [file4]]
 
 In addition to the |-d| argument, |-Z| and |-R| may be used for restricted
-mode and read only mode respectively.
+mode and readonly mode respectively.
 
 The second and following arguments may also be a directory name.  Vim will
 then append the file name of the first argument to the directory name to find
@@ -39,7 +39,7 @@ diffs at the same time, each in their own tab page.
 
 What happens is that Nvim opens a window for each of the files.  This is like
 using the |-O| argument.  This uses vertical splits, but if you prefer
-horizontal splits add the |-o| argument instead: >
+horizontal splits use the |-o| argument instead: >
 
 	nvim -d -o file1 file2 [file3 [file4]]
 
@@ -79,20 +79,20 @@ While already in Vim you can start diff mode in three ways.
 
 							*E98*
 :diffs[plit] {filename}					*:diffs* *:diffsplit*
-		Open a new window on the file {filename}.  The options set for
-		"nvim -d" are set for the current and the newly opened window.
+		Open a new window on the file {filename}.  The options are set
+		as for "nvim -d" for the current and the newly opened window.
 		Also see 'diffexpr'.
 
 							*:difft* *:diffthis*
 :difft[his]	Make the current window part of the diff windows.  This sets
-		the options set for "nvim -d".
+		the options as for "nvim -d".
 
 :diffp[atch] {patchfile}			 *E816* *:diffp* *:diffpatch*
 		Use the current buffer, patch it with the diff found in
 		{patchfile} and open a buffer on the result.  This sets the
-		options set for "nvim -d".  {patchfile} can be in any format
-		that the "patch" program understands or 'patchexpr' can
-		handle.
+		options as for "nvim -d".
+		{patchfile} can be in any format that the "patch" program
+		understands or 'patchexpr' can handle.
 		Note that {patchfile} should only contain a diff for one file,
 		the current file.  If {patchfile} contains diffs for other
 		files as well, the results are unpredictable.  Vim changes

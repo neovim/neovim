@@ -341,9 +341,9 @@ There is a special way to start Nvim, which shows the differences between two
 files.  Let's take a file "main.c" and insert a few characters in one line.
 Write this file with the 'backup' option set, so that the backup file
 "main.c~" will contain the previous version of the file.
-Type the following in a shell to start Nvim in diff mode: >
+Type this command in a shell to start Nvim in diff mode: >
 
-    $ nvim -d main.c~ main.c
+	nvim -d main.c~ main.c
 
 Vim will start, with two windows side by side.  You will only see the line
 in which you added characters, and a few lines above and below it.
