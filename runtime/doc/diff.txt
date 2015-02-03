@@ -22,9 +22,9 @@ The basics are explained in section |08.7| of the user manual.
 To start editing in diff mode, start Nvim with "nvim -d".  This starts Nvim
 and sets up for viewing the differences between the arguments. >
 
-    $ nvim -d file1 file2 [file3 [file4]]
+	nvim -d file1 file2 [file3 [file4]]
 
-In addition to the |-d| argument, |-R| and |-Z| may be used for restricted
+In addition to the |-d| argument, |-Z| and |-R| may be used for restricted
 mode and read only mode respectively.
 
 The second and following arguments may also be a directory name.  Vim will
@@ -41,7 +41,7 @@ What happens is that Nvim opens a window for each of the files.  This is like
 using the |-O| argument.  This uses vertical splits, but if you prefer
 horizontal splits add the |-o| argument instead: >
 
-    $ nvim -d -o file1 file2 [file3 [file4]]
+	nvim -d -o file1 file2 [file3 [file4]]
 
 If you always prefer horizontal splits include "horizontal" in 'diffopt'.
 
