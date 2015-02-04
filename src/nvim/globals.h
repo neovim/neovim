@@ -457,11 +457,8 @@ typedef enum {
                   '*', '#', '_', '!', '.', 'o'}
 
 EXTERN int highlight_attr[HLF_COUNT];       /* Highl. attr for each context. */
-# define USER_HIGHLIGHT
-#ifdef USER_HIGHLIGHT
 EXTERN int highlight_user[9];                   /* User[1-9] attributes */
 EXTERN int highlight_stlnc[9];                  /* On top of user */
-#endif
 EXTERN int cterm_normal_fg_color INIT(= 0);
 EXTERN int cterm_normal_fg_bold INIT(= 0);
 EXTERN int cterm_normal_bg_color INIT(= 0);
