@@ -2574,12 +2574,10 @@ set_one_cmd_context (
       }
       /* An argument can contain just about everything, except
        * characters that end the command and white space. */
-      else if (c == '|' || c == '\n' || c == '"' || (vim_iswhite(c)
-#ifdef SPACE_IN_FILENAME
-                                                     && (!(ea.argt & NOSPC) ||
-                                                         usefilter)
-#endif
-                                                     )) {
+      else if (c == '|'
+            || c == '\n'
+            || c == '"'
+            || vim_iswhite(c)) {
         len = 0;          /* avoid getting stuck when space is in 'isfname' */
         while (*p != NUL) {
           if (has_mbyte)
