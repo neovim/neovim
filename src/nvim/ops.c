@@ -3200,13 +3200,10 @@ void ex_display(exarg_T *eap)
   MSG_PUTS_TITLE(_("\n--- Registers ---"));
   for (i = -1; i < NUM_REGISTERS && !got_int; ++i) {
     name = get_register_name(i);
-    if (arg != NULL && vim_strchr(arg, name) == NULL
-#ifdef ONE_CLIPBOARD
-        /* Star register and plus register contain the same thing. */
-        && (name != '*' || vim_strchr(arg, '+') == NULL)
-#endif
-        )
+
+    if (arg != NULL && vim_strchr(arg, name) == NULL) {
       continue;             /* did not ask for this register */
+    }
 
     get_clipboard(name);
 
