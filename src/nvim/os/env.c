@@ -36,6 +36,14 @@ int os_setenv(const char *name, const char *value, int overwrite)
 {
 #ifdef HAVE_SETENV
   return setenv(name, value, overwrite);
+#elif defined(HAVE_PUTENV_S)
+  if (!overwrite && os_getenv(name) != NULL) {
+    return 0;
+  }
+  if (_putenv_s(name, value) == 0) {
+    return 0;
+  }
+  return -1;
 #else
   // Use putenv, instead of setenv - this will leak memory
   // but in some systems only putenv is available

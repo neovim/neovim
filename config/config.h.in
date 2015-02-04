@@ -32,6 +32,7 @@
 #cmakedefine HAVE_NL_MSG_CAT_CNTR
 #define HAVE_OSPEED 1
 #cmakedefine HAVE_PUTENV
+#cmakedefine HAVE_PUTENV_S
 #cmakedefine HAVE_PWD_H
 #cmakedefine HAVE_READLINK
 // TODO: add proper cmake check
