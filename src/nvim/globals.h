@@ -622,7 +622,6 @@ EXTERN int allbuf_lock INIT(= 0);
  * changed, no buffer can be deleted and
  * current directory can't be changed.
  * Used for SwapExists et al. */
-# define HAVE_SANDBOX
 EXTERN int sandbox INIT(= 0);
 /* Non-zero when evaluating an expression in a
  * "sandbox".  Several things are not allowed
@@ -1180,9 +1179,7 @@ EXTERN char_u e_readonlyvar[] INIT(= N_(
 EXTERN char_u e_readonlysbx[] INIT(= N_(
         "E794: Cannot set variable in the sandbox: \"%s\""));
 EXTERN char_u e_readerrf[] INIT(= N_("E47: Error while reading errorfile"));
-#ifdef HAVE_SANDBOX
 EXTERN char_u e_sandbox[] INIT(= N_("E48: Not allowed in sandbox"));
-#endif
 EXTERN char_u e_secure[] INIT(= N_("E523: Not allowed here"));
 EXTERN char_u e_screenmode[] INIT(= N_(
         "E359: Screen mode setting not supported"));

@@ -3396,16 +3396,13 @@ int check_secure(void)
     EMSG(_(e_curdir));
     return TRUE;
   }
-#ifdef HAVE_SANDBOX
-  /*
-   * In the sandbox more things are not allowed, including the things
-   * disallowed in secure mode.
-   */
+
+  // In the sandbox more things are not allowed, including the things
+  // disallowed in secure mode.
   if (sandbox != 0) {
     EMSG(_(e_sandbox));
     return TRUE;
   }
-#endif
   return FALSE;
 }
 
