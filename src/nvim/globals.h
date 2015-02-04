@@ -837,10 +837,6 @@ EXTERN int ctrl_x_mode INIT(= 0);       /* Which Ctrl-X mode are we in? */
 
 EXTERN int no_abbr INIT(= TRUE);        /* TRUE when no abbreviations loaded */
 
-#ifdef USE_EXE_NAME
-EXTERN char_u   *exe_name;              /* the name of the executable */
-#endif
-
 #ifdef USE_ON_FLY_SCROLL
 EXTERN int dont_scroll INIT(= FALSE);     /* don't use scrollbars when TRUE */
 #endif
