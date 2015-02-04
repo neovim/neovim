@@ -119,7 +119,6 @@ src/nvim/tag.h
 src/nvim/term.c
 src/nvim/term.h
 src/nvim/term_defs.h
-src/nvim/types.h
 src/nvim/ui.c
 src/nvim/ui.h
 src/nvim/undo.c
