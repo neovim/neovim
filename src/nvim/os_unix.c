@@ -317,11 +317,10 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     return OK;
   }
 
-# ifdef HAVE_SANDBOX
-  /* Don't allow any shell command in the sandbox. */
-  if (sandbox != 0 && check_secure())
+  // Don't allow any shell command in the sandbox.
+  if (sandbox != 0 && check_secure()) {
     return FAIL;
-# endif
+  }
 
   /*
    * Don't allow the use of backticks in secure and restricted mode.

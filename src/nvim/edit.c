@@ -268,13 +268,11 @@ edit (
   // set Insstart_orig to Insstart
   update_Insstart_orig = true;
 
-#ifdef HAVE_SANDBOX
-  /* Don't allow inserting in the sandbox. */
+  // Don't allow inserting in the sandbox.
   if (sandbox != 0) {
     EMSG(_(e_sandbox));
     return FALSE;
   }
-#endif
   /* Don't allow changes in the buffer while editing the cmdline.  The
    * caller of getcmdline() may get confused. */
   if (textlock != 0) {

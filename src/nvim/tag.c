@@ -2416,9 +2416,7 @@ jumpto_tag (
 
     save_secure = secure;
     secure = 1;
-#ifdef HAVE_SANDBOX
     ++sandbox;
-#endif
     save_magic = p_magic;
     p_magic = FALSE;            /* always execute with 'nomagic' */
     /* Save value of no_hlsearch, jumping to a tag is not a real search */
@@ -2525,9 +2523,7 @@ jumpto_tag (
       wait_return(TRUE);
     secure = save_secure;
     p_magic = save_magic;
-#ifdef HAVE_SANDBOX
     --sandbox;
-#endif
     /* restore no_hlsearch when keeping the old search pattern */
     if (search_options) {
       SET_NO_HLSEARCH(save_no_hlsearch);
