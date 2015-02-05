@@ -7353,16 +7353,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	xterm entries...).
 
 				     *'ttyfast'* *'tf'* *'nottyfast'* *'notf'*
-'ttyfast' 'tf'		boolean	(default on)
-			global
-			{not in Vi}
-	Indicates a fast terminal connection.  More characters will be sent to
-	the screen for redrawing, instead of using insert/delete line
-	commands.  Improves smoothness of redrawing when there are multiple
-	windows and the terminal does not support a scrolling region.
-	Also enables the extra writing of characters at the end of each screen
-	line for lines that wrap.  This helps when using copy/paste with the
-	mouse in an xterm and other terminals.
+'ttyfast' 'tf'		Removed. {Nvim}
 
 						*'ttymouse'* *'ttym'*
 'ttymouse' 'ttym'	string	(default depends on 'term')

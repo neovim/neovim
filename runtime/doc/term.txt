@@ -537,11 +537,6 @@ If the characters from the terminal are arriving with more than 1 second
 between them you might want to set the 'timeout' and/or 'ttimeout' option.
 See the "Options" chapter |options|.
 
-If your terminal does not support a scrolling region, but it does support
-insert/delete line commands, scrolling with multiple windows may make the
-lines jump up and down.  If you don't want this set the 'ttyfast' option.
-This will redraw the window instead of scroll it.
-
 If your terminal scrolls very slowly, but redrawing is not slow, set the
 'ttyscroll' option to a small number, e.g., 3.  This will make Vim redraw the
 screen instead of scrolling, when there are more than 3 lines to be scrolled.

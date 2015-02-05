@@ -4196,8 +4196,7 @@ win_line (
          * Don't do this for double-width characters.
          * Don't do this for a window not at the right screen border.
          */
-        if (p_tf
-            && !(has_mbyte
+        if (!(has_mbyte
                  && ((*mb_off2cells)(LineOffset[screen_row],
                                      LineOffset[screen_row] + screen_Columns)
                      == 2
@@ -7102,8 +7101,9 @@ static int win_do_lines(win_T *wp, int row, int line_count, int mayclear, int de
     return retval;
   }
 
-  if (wp->w_next != NULL && p_tf)   /* don't delete/insert on fast terminal */
+  if (wp->w_next != NULL) {
     return FAIL;
+  }
 
   return MAYBE;
 }

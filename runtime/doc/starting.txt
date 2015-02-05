@@ -984,10 +984,10 @@ vimrc file.
 These commands will write ":map" and ":set" commands to a file, in such a way
 that when these commands are executed, the current key mappings and options
 will be set to the same values.  The options 'columns', 'endofline',
-'fileformat', 'lines', 'modified', 'scroll', 'term', 'ttyfast' and 'ttymouse'
-are not included, because these are terminal or file dependent.  Note that the
-options 'binary', 'paste' and 'readonly' are included, this might not always
-be what you want.
+'fileformat', 'lines', 'modified', 'scroll', 'term', and 'ttymouse' are not
+included, because these are terminal or file dependent.  Note that the options
+'binary', 'paste' and 'readonly' are included, this might not always be what
+you want.
 
 When special keys are used in mappings, The 'cpoptions' option will be
 temporarily set to its Vim default, to avoid the mappings to be

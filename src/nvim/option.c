@@ -1583,9 +1583,6 @@ static vimoption_T
   {"ttybuiltin",  "tbi",  P_BOOL|P_VI_DEF,
    (char_u *)&p_tbi, PV_NONE,
    {(char_u *)TRUE, (char_u *)0L} SCRIPTID_INIT},
-  {"ttyfast",     "tf",   P_BOOL|P_NO_MKRC|P_VI_DEF,
-   (char_u *)&p_tf, PV_NONE,
-   {(char_u *)TRUE, (char_u *)0L} SCRIPTID_INIT},
   {"ttymouse",    "ttym", P_STRING|P_NODEFAULT|P_NO_MKRC|P_VI_DEF,
 #if defined(FEAT_MOUSE) && defined(UNIX)
    (char_u *)&p_ttym, PV_NONE,
