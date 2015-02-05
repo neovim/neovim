@@ -30,8 +30,7 @@ can be changed at compile time.
 
 Because terminal updating under Unix is often slow (e.g. serial line
 terminal, shell window in suntools), the 'showcmd' and 'ruler' options
-are default off.  If you have a fast terminal, try setting them on.  You might
-also want to set 'ttyfast'.
+are off by default.
 
 When using Vim in an xterm the mouse clicks can be used by Vim by setting
 'mouse' to "a".  If there is access to an X-server gui style copy/paste will
