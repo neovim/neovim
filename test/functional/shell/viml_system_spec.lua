@@ -248,7 +248,7 @@ describe('systemlist()', function()
     end)
 
     it('`yes` and is directly interrupted with CTRL-C', function()
-      feed(':call systemlist("echo")<cr><c-c>')
+      feed(':call systemlist("yes | xargs")<cr><c-c>')
       screen:expect([[
         ^                                                    |
         ~                                                    |
@@ -268,7 +268,7 @@ describe('systemlist()', function()
     end)
 
     it('`yes` and is a little bit later interrupted with CTRL-C', function()
-      feed(':call systemlist("echo")<cr>')
+      feed(':call systemlist("yes | xargs")<cr>')
       feed('<c-c>')
       screen:expect([[
         ^                                                    |
