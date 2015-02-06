@@ -2959,9 +2959,12 @@ extend({expr1}, {expr2} [, {expr3}])			*extend()*
 
 feedkeys({string} [, {mode}])				*feedkeys()*
 		Characters in {string} are queued for processing as if they
-		come from a mapping or were typed by the user.	They are added
-		to the end of the typeahead buffer, thus if a mapping is still
-		being executed these characters come after them.
+		come from a mapping or were typed by the user.
+		By default the string is added to the end of the typeahead
+		buffer, thus if a mapping is still being executed the
+		characters come after them.  Use the 'i' flag to insert before
+		other characters, they will be executed next, before any
+		characters from a mapping.
 		The function does not wait for processing of keys contained in
 		{string}.
 		To include special keys into {string}, use double-quotes
@@ -2975,6 +2978,7 @@ feedkeys({string} [, {mode}])				*feedkeys()*
 		't'	Handle keys as if typed; otherwise they are handled as
 			if coming from a mapping.  This matters for undo,
 			opening folds, etc.
+		'i'	Insert the string instead of appending (see above).
 		Return value is always 0.
 
 filereadable({file})					*filereadable()*
