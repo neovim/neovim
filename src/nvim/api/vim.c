@@ -57,6 +57,7 @@ void vim_feedkeys(String keys, String mode, Boolean escape_csi)
   FUNC_ATTR_DEFERRED
 {
   bool remap = true;
+  bool insert = false;
   bool typed = false;
 
   if (keys.size == 0) {
@@ -68,6 +69,7 @@ void vim_feedkeys(String keys, String mode, Boolean escape_csi)
     case 'n': remap = false; break;
     case 'm': remap = true; break;
     case 't': typed = true; break;
+    case 'i': insert = true; break;
     }
   }
 
@@ -80,7 +82,7 @@ void vim_feedkeys(String keys, String mode, Boolean escape_csi)
       keys_esc = keys.data;
   }
   ins_typebuf((char_u *)keys_esc, (remap ? REMAP_YES : REMAP_NONE),
-      typebuf.tb_len, !typed, false);
+      insert ? 0 : typebuf.tb_len, !typed, false);
 
   if (escape_csi) {
       free(keys_esc);
