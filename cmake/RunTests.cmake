@@ -17,8 +17,10 @@ execute_process(
   COMMAND ${BUSTED_PRG} -v -o ${BUSTED_OUTPUT_TYPE}
     --lpath=${BUILD_DIR}/?.lua ${TEST_PATH}
   WORKING_DIRECTORY ${WORKING_DIR}
+  ERROR_VARIABLE err
   RESULT_VARIABLE res)
 
 if(NOT res EQUAL 0)
+  message(STATUS "Output to stderr:\n${err}")
   message(FATAL_ERROR "Running ${TEST_TYPE} tests failed with error: ${res}.")
 endif()
