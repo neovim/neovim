@@ -10,8 +10,8 @@ if(NOT DEFINED DOWNLOAD_DIR)
   message(FATAL_ERROR "DOWNLOAD_DIR must be defined.")
 endif()
 
-if((NOT DEFINED EXPECTED_SHA1) OR (NOT DEFINED EXPECTED_MD5))
-  message(FATAL_ERROR "EXPECTED_SHA1 or EXPECTED_MD5 must be defined.")
+if(NOT DEFINED EXPECTED_SHA1)
+  message(FATAL_ERROR "EXPECTED_SHA1 must be defined.")
 endif()
 
 if(NOT DEFINED TARGET)
@@ -58,16 +58,6 @@ message(STATUS "downloading...
      dst='${file}'
      timeout='${timeout_msg}'")
 
-if((DEFINED EXPECTED_SHA1) AND (${CMAKE_VERSION} VERSION_GREATER 2.8.10))
-  if(NOT (EXPECTED_SHA1 STREQUAL "0000000000000000000000000000000000000000"))
-    set(hash_args EXPECTED_HASH SHA1=${EXPECTED_SHA1})
-  endif()
-else()
-  if(NOT (EXPECTED_MD5 STREQUAL "00000000000000000000000000000000"))
-    set(hash_args EXPECTED_MD5 ${EXPECTED_MD5})
-  endif()
-endif()
-
 file(DOWNLOAD ${URL} ${file}
   ${timeout_args}
   ${hash_args}
@@ -83,6 +73,27 @@ if(NOT status_code EQUAL 0)
   status_string: ${status_string}
   log: ${log}
 ")
+endif()
+
+set(NULL_SHA1 "0000000000000000000000000000000000000000")
+
+# We could avoid computing the SHA1 entirely if a NULL_SHA1 was given,
+# but we want to warn users of an empty file.
+file(SHA1 ${file} ACTUAL_SHA1)
+if(ACTUAL_SHA1 STREQUAL "da39a3ee5e6b4b0d3255bfef95601890afd80709")
+  # File was empty.  It's likely due to lack of SSL support.
+  message(FATAL_ERROR
+    "Failed to download ${URL}.  The file is empty and likely means CMake "
+    "was built without SSL support.  Please use a version of CMake with "
+    "proper SSL support.  See "
+    "https://github.com/neovim/neovim/wiki/Building-Neovim#build-prerequisites "
+    "for more information.")
+elseif((NOT EXPECTED_SHA1 STREQUAL NULL_SHA1) AND
+       (NOT EXPECTED_SHA1 STREQUAL ACTUAL_SHA1))
+  # Wasn't a NULL SHA1 and we didn't match, so we fail.
+  message(FATAL_ERROR
+    "Failed to download ${URL}.  Expected a SHA1 of "
+    "${EXPECTED_SHA1} but got ${ACTUAL_SHA1} instead.")
 endif()
 
 message(STATUS "downloading... done")
@@ -140,4 +151,3 @@ message(STATUS "extracting... [clean up]")
 file(REMOVE_RECURSE "${ut_dir}")
 
 message(STATUS "extracting... done")
-

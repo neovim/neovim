@@ -51,31 +51,24 @@ include(ExternalProject)
 
 set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.2.0.tar.gz)
 set(LIBUV_SHA1 38d1ba349fcfc1b221140523ba3d7cf3ea38c20b)
-set(LIBUV_MD5 e7712a100635ec2ca1f145f2bb217200)
 
 set(MSGPACK_URL https://github.com/msgpack/msgpack-c/archive/ecf4b09acd29746829b6a02939db91dfdec635b4.tar.gz)
 set(MSGPACK_SHA1 c160ff99f20d9d0a25bea0a57f4452f1c9bde370)
-set(MSGPACK_MD5 3599eaf904b8ba0c36cea7ed80973364)
 
 set(LUAJIT_URL http://luajit.org/download/LuaJIT-2.0.3.tar.gz)
 set(LUAJIT_SHA1 2db39e7d1264918c2266b0436c313fbd12da4ceb)
-set(LUAJIT_MD5 f14e9104be513913810cd59c8c658dc0)
 
 set(LUAROCKS_URL https://github.com/keplerproject/luarocks/archive/0587afbb5fe8ceb2f2eea16f486bd6183bf02f29.tar.gz)
 set(LUAROCKS_SHA1 61a894fd5d61987bf7e7f9c3e0c5de16ba4b68c4)
-set(LUAROCKS_MD5 0f53f42909fbcd2c88be303e8f970516)
 
 set(LIBUNIBILIUM_URL https://github.com/mauke/unibilium/archive/520abbc8b26910e2580619f669b5cc2c4ef7f864.tar.gz)
 set(LIBUNIBILIUM_SHA1 c546e5e8861380f5c109a256f25c93419e4076bf)
-set(LIBUNIBILIUM_MD5 d80d1fc45b22b1e92bebd5bf76e8a98b)
 
 set(LIBTERMKEY_URL https://github.com/neovim/libtermkey/archive/7b3bdafdf589d08478f2493273d4d75636ecc183.tar.gz)
 set(LIBTERMKEY_SHA1 28bfe54dfd9269910a132b51dee7725a2121578d)
-set(LIBTERMKEY_MD5 f0bac9c2467cc80c821be937ea5c13bc)
 
 set(LIBTICKIT_URL https://github.com/neovim/libtickit/archive/33f4afb3891df05955429acbf5b406dfe87ec22b.tar.gz)
 set(LIBTICKIT_SHA1 3aab459b9fb3cd83e85ac2e08f05e5f162c8c9d2)
-set(LIBTICKIT_MD5 19ee9271c16716620d0906db74158ec6)
 
 if(USE_BUNDLED_LIBUNIBILIUM)
   ExternalProject_Add(libunibilium
@@ -87,7 +80,6 @@ if(USE_BUNDLED_LIBUNIBILIUM)
       -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/libunibilium
       -DURL=${LIBUNIBILIUM_URL}
       -DEXPECTED_SHA1=${LIBUNIBILIUM_SHA1}
-      -DEXPECTED_MD5=${LIBUNIBILIUM_MD5}
       -DTARGET=libunibilium
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND ""
@@ -109,7 +101,6 @@ if(USE_BUNDLED_LIBTERMKEY)
       -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/libtermkey
       -DURL=${LIBTERMKEY_URL}
       -DEXPECTED_SHA1=${LIBTERMKEY_SHA1}
-      -DEXPECTED_MD5=${LIBTERMKEY_MD5}
       -DTARGET=libtermkey
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND ""
@@ -134,7 +125,6 @@ if(USE_BUNDLED_LIBTICKIT)
       -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/libtickit
       -DURL=${LIBTICKIT_URL}
       -DEXPECTED_SHA1=${LIBTICKIT_SHA1}
-      -DEXPECTED_MD5=${LIBTICKIT_MD5}
       -DTARGET=libtickit
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND ""
@@ -159,7 +149,6 @@ if(USE_BUNDLED_LIBUV)
       -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/libuv
       -DURL=${LIBUV_URL}
       -DEXPECTED_SHA1=${LIBUV_SHA1}
-      -DEXPECTED_MD5=${LIBUV_MD5}
       -DTARGET=libuv
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND sh ${DEPS_BUILD_DIR}/src/libuv/autogen.sh &&
@@ -179,7 +168,6 @@ if(USE_BUNDLED_MSGPACK)
       -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/msgpack
       -DURL=${MSGPACK_URL}
       -DEXPECTED_SHA1=${MSGPACK_SHA1}
-      -DEXPECTED_MD5=${MSGPACK_MD5}
       -DTARGET=msgpack
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND cmake ${DEPS_BUILD_DIR}/src/msgpack
@@ -205,7 +193,6 @@ if(USE_BUNDLED_LUAJIT)
       -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/luajit
       -DURL=${LUAJIT_URL}
       -DEXPECTED_SHA1=${LUAJIT_SHA1}
-      -DEXPECTED_MD5=${LUAJIT_MD5}
       -DTARGET=luajit
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND ""
@@ -234,7 +221,6 @@ if(USE_BUNDLED_LUAROCKS)
       -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/luarocks
       -DURL=${LUAROCKS_URL}
       -DEXPECTED_SHA1=${LUAROCKS_SHA1}
-      -DEXPECTED_MD5=${LUAROCKS_MD5}
       -DTARGET=luarocks
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     BUILD_IN_SOURCE 1
