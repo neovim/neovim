@@ -73,6 +73,9 @@ void event_teardown(void)
     return;
   }
 
+  process_events_from(immediate_events);
+  process_events_from(deferred_events);
+
   channel_teardown();
   job_teardown();
   server_teardown();
