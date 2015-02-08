@@ -102,7 +102,10 @@ local Gcc = {
    '-D "EXTERN=extern"',
    '-D "INIT(...)="',
    '-D_GNU_SOURCE',
-   '-DINCLUDE_GENERATED_DECLARATIONS'
+   '-DINCLUDE_GENERATED_DECLARATIONS',
+
+   -- Needed for FreeBSD
+   '-D "_Thread_local="'
   }
 }
 
