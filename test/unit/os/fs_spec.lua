@@ -262,7 +262,7 @@ describe('fs function', function()
 
       it('owner of a file may change the group of the file to any group of which that owner is a member', function()
         -- Some systems may not have `id` utility.
-        if (os.execute('id -G &> /dev/null') == 0) then
+        if (os.execute('id -G > /dev/null 2>&1') == 0) then
           local file_gid = lfs.attributes(filename, 'gid')
 
           -- Gets ID of any group of which current user is a member except the
