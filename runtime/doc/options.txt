@@ -4197,10 +4197,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	expand "$HOME/.viminfo".  Maybe you should change 'iskeyword' instead.
 
 						*'iskeyword'* *'isk'*
-'iskeyword' 'isk'	string (Vim default for Win32:
-					    "@,48-57,_,128-167,224-235"
-				   otherwise:  "@,48-57,_,192-255"
-				Vi default: "@,48-57,_")
+'iskeyword' 'isk'	string (Vim default for
+				  Win32:     @,48-57,_,128-167,224-235
+				  otherwise: @,48-57,_,192-255
+				Vi default:  @,48-57,_)
 			local to buffer
 			{not in Vi}
 	Keywords are used in searching and recognizing with many commands:
@@ -7439,8 +7439,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 				*'viminfo'* *'vi'* *E526* *E527* *E528*
 'viminfo' 'vi'		string	(Vim default for
-				   Win32: "'100,<50,s10,h,rA:,rB:",
-				   others: "'100,<50,s10,h",
+				   Win32:  '100,<50,s10,h,rA:,rB:
+				   others: '100,<50,s10,h
 				 Vi default: "")
 			global
 			{not in Vi}
