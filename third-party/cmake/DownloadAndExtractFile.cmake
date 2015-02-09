@@ -77,6 +77,12 @@ endif()
 
 set(NULL_SHA1 "0000000000000000000000000000000000000000")
 
+# Allow users to use "SKIP" or "skip" as the sha1 to skip checking the hash.
+# You can still use the all zeros hash too.
+if((EXPECTED_SHA1 STREQUAL "SKIP") OR (EXPECTED_SHA1 STREQUAL "skip"))
+  set(EXPECTED_SHA1 ${NULL_SHA1})
+endif()
+
 # We could avoid computing the SHA1 entirely if a NULL_SHA1 was given,
 # but we want to warn users of an empty file.
 file(SHA1 ${file} ACTUAL_SHA1)
