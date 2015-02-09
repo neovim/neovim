@@ -362,20 +362,16 @@ void vim_report_error(String str)
 ArrayOf(Buffer) vim_get_buffers(void)
 {
   Array rv = ARRAY_DICT_INIT;
-  buf_T *b = firstbuf;
 
-  while (b) {
+  FOR_ALL_BUFFERS(b) {
     rv.size++;
-    b = b->b_next;
   }
 
   rv.items = xmalloc(sizeof(Object) * rv.size);
   size_t i = 0;
-  b = firstbuf;
 
-  while (b) {
+  FOR_ALL_BUFFERS(b) {
     rv.items[i++] = BUFFER_OBJ(b->handle);
-    b = b->b_next;
   }
 
   return rv;
@@ -469,20 +465,16 @@ void vim_set_current_window(Window window, Error *err)
 ArrayOf(Tabpage) vim_get_tabpages(void)
 {
   Array rv = ARRAY_DICT_INIT;
-  tabpage_T *tp = first_tabpage;
 
-  while (tp) {
+  FOR_ALL_TABS(tp) {
     rv.size++;
-    tp = tp->tp_next;
   }
 
   rv.items = xmalloc(sizeof(Object) * rv.size);
   size_t i = 0;
-  tp = first_tabpage;
 
-  while (tp) {
+  FOR_ALL_TABS(tp) {
     rv.items[i++] = TABPAGE_OBJ(tp->handle);
-    tp = tp->tp_next;
   }
 
   return rv;
