@@ -5,7 +5,7 @@ env:
   global:
     - CI_SCRIPTS=$TRAVIS_BUILD_DIR/.ci
     # To build third-party dependencies, set this to 'true'.
-    - BUILD_NVIM_DEPS=false
+    - BUILD_NVIM_DEPS=true
     # Travis reports back that it has 32-cores via /proc/cpuinfo, but it's not
     # what we really have available.  According to their documentation, it only has
     # 1.5 virtual cores.
