@@ -202,6 +202,10 @@ if(USE_BUNDLED_LUAJIT)
     INSTALL_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
                                 PREFIX=${DEPS_INSTALL_DIR}
                                 CFLAGS=-fPIC
+                                CFLAGS+=-DLUAJIT_DISABLE_JIT
+                                CFLAGS+=-DLUA_USE_APICHECK
+                                CFLAGS+=-DLUA_USE_ASSERT
+                                CCDEBUG+=-g
                                 BUILDMODE=static
                                 install)
   list(APPEND THIRD_PARTY_DEPS luajit)
@@ -263,7 +267,7 @@ if(USE_BUNDLED_LUAROCKS)
 
   add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/nvim-client
     COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build https://raw.githubusercontent.com/neovim/lua-client/af161f5f89c7877d0f650b5de6b3a6126b38f012/nvim-client-0.0.1-10.rockspec CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER} LIBUV_DIR=${DEPS_INSTALL_DIR}
+    ARGS build https://raw.githubusercontent.com/neovim/lua-client/fabecc56a7c7a3fc15fe6a1a765b58d61bc8e922/nvim-client-0.0.1-11.rockspec CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER} LIBUV_DIR=${DEPS_INSTALL_DIR}
     DEPENDS lpeg libuv)
   add_custom_target(nvim-client
     DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/nvim-client)
