@@ -99,9 +99,6 @@ install: | nvim
 	+$(BUILD_CMD) -C build install
 
 lint:
-	cmake -DLINT_PRG=./clint.py \
-		-DLINT_DIR=src \
-		-DLINT_IGNORE_FILE=clint-ignored-files.txt \
-		-P cmake/RunLint.cmake
+	+$(BUILD_CMD) -C build lint
 
 .PHONY: test functionaltest unittest lint clean distclean nvim libnvim cmake deps install

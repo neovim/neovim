@@ -310,3 +310,10 @@ if(BUSTED_PRG)
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS nvim)
 endif()
+
+add_custom_target(lint
+  COMMAND ${CMAKE_COMMAND}
+    -DLINT_PRG=${CMAKE_CURRENT_SOURCE_DIR}/clint.py
+    -DLINT_DIR=${CMAKE_CURRENT_SOURCE_DIR}/src
+    -DLINT_IGNORE_FILE=${CMAKE_CURRENT_SOURCE_DIR}/clint-ignored-files.txt
+    -P ${PROJECT_SOURCE_DIR}/cmake/RunLint.cmake)
