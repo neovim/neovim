@@ -202,6 +202,10 @@ if(USE_BUNDLED_LUAJIT)
     INSTALL_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
                                 PREFIX=${DEPS_INSTALL_DIR}
                                 CFLAGS=-fPIC
+                                CFLAGS+=-DLUAJIT_DISABLE_JIT
+                                CFLAGS+=-DLUA_USE_APICHECK
+                                CFLAGS+=-DLUA_USE_ASSERT
+                                CCDEBUG+=-g
                                 BUILDMODE=static
                                 install)
   list(APPEND THIRD_PARTY_DEPS luajit)
