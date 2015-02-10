@@ -44,6 +44,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
+#include "nvim/log.h"
 
 /*
  * To be able to scroll back at the "more" and "hit-enter" prompts we need to
@@ -127,7 +128,7 @@ static int verbose_did_open = FALSE;
  */
 int msg(char_u *s) FUNC_ATTR_NONNULL_ALL
 {
-  return msg_attr_keep(s, 0, false);
+  return msg_attr_keep(s, 0, false, false);
 }
 
 /*
@@ -136,7 +137,7 @@ int msg(char_u *s) FUNC_ATTR_NONNULL_ALL
 int verb_msg(char_u *s) FUNC_ATTR_NONNULL_ALL
 {
   verbose_enter();
-  int n = msg_attr_keep(s, 0, false);
+  int n = msg_attr_keep(s, 0, false, false);
   verbose_leave();
 
   return n;
@@ -144,7 +145,7 @@ int verb_msg(char_u *s) FUNC_ATTR_NONNULL_ALL
 
 int msg_attr(char_u *s, int attr) FUNC_ATTR_NONNULL_ARG(1)
 {
-  return msg_attr_keep(s, attr, false);
+  return msg_attr_keep(s, attr, false, false);
 }
 
 /// Attempts to display a message in the message area. The displayed message
@@ -160,11 +161,14 @@ void msg_passive(char_u *s, int attr)
   int save_msg_scroll   = msg_scroll;
   int save_msg_hist_off = msg_hist_off;
   int save_msg_silent   = msg_silent;
+  int save_msg_scrolled_ign = msg_scrolled_ign;
 
   msg_scroll = false;   // do not scroll
+  //Without this, msg_strtrunc() causes Hit-Enter for :echom! entered at
+  //cmdline or in a map not wrapped in a function.
+  msg_scrolled_ign = TRUE;
 
-  // Add message to history even if command is :silent.
-  msg_silent   = !add_hist;
+  msg_silent   = !add_hist;  // Add to history even if command is :silent.
   msg_hist_off = !add_hist;
   // reset MSG_HIST flag for housekeeping (avoid potential duplicates).
   // msg_attr_keep() will add to history for us.
@@ -173,17 +177,20 @@ void msg_passive(char_u *s, int attr)
   // TODO(jkeyes): these seem unnecessary; leave them until absolutely sure.
   // msg_didout = false;  // overwrite current message, if any
   // msg_didany = false;
-  // msg_nowait = true;   // don't wait for this message
-  // need_wait_return = false;
-  // no_wait_return = true;
-  // emsg_on_display = false;
+  msg_nowait = true;   // don't wait for this message
+  //Prevent msg_end(), do_cmdline() from dropping the wait_return() bomb.
+  //We intentionally do _not_ restore the original value, because
+  //do_cmdline() will be looking at this after we return (the purpose
+  //of this global is to act as a "toggle" for this kind of situation).
+  need_wait_return = FALSE;
 
-  msg_attr_keep(s, attr, true);
+  msg_attr_keep(s, attr, true, true);
   notifications_pending++;
 
   msg_scroll   = save_msg_scroll;
   msg_hist_off = save_msg_hist_off;
   msg_silent   = save_msg_silent;
+  msg_scrolled_ign = save_msg_scrolled_ign;
 }
 
 /// Displays "+N :messages" in the small messages area ("notifications" area).
@@ -199,7 +206,7 @@ void msg_notif_summary(void)
 
 /// @param keep set `keep_msg` for display after redraw (if it doesn't scroll)
 /// @see msg(char_u)
-int msg_attr_keep(char_u *s, int attr, bool keep)
+int msg_attr_keep(char_u *s, int attr, bool keep, bool truncate)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   static int entered = 0;
@@ -228,7 +235,7 @@ int msg_attr_keep(char_u *s, int attr, bool keep)
 
   // Truncate the message if needed.
   msg_start();
-  char_u *buf = msg_strtrunc(s, false);
+  char_u *buf = msg_strtrunc(s, truncate);
   if (buf != NULL)
     s = buf;
 
@@ -237,8 +244,10 @@ int msg_attr_keep(char_u *s, int attr, bool keep)
   int retval = msg_end();
 
   if (keep && retval && vim_strsize(s) < (int)(Rows - cmdline_row - 1)
-      * Columns + sc_col)
+      * Columns + sc_col) {
+    ILOG("keep!!");
     set_keep_msg(s, 0);
+  }
 
   xfree(buf);
   --entered;
@@ -269,6 +278,7 @@ msg_strtrunc (
     else
       /* Use up to 'showcmd' column. */
       room = (int)(Rows - msg_row - 1) * Columns + sc_col - 1;
+    ILOG("room: %d / msg_scrolled: %d / msg_row: %d", room, msg_scrolled, msg_row);
     if (len > room && room > 0) {
       if (enc_utf8)
         /* may have up to 18 bytes per cell (6 per char, up to two
@@ -714,13 +724,18 @@ char_u *msg_may_trunc(int force, char_u *s)
   return s;
 }
 
-/// @param len length of `s`, or -1 for undetermined length
-///        (assumes NUL-terminated `s`)
 static void msg_hist_add(char_u *s, int len, int attr)
 {
   if (msg_hist_off || msg_silent != 0)
     return;
 
+  msg_hist_add2(s, len, attr);
+}
+
+/// @param len length of `s`, or -1 for undetermined length
+///        (assumes NUL-terminated `s`)
+static void msg_hist_add2(char_u *s, int len, int attr)
+{
   /* Don't let the message history get too big */
   while (msg_hist_len > MAX_MSG_HIST_LEN) {
     (void)msg_delete_first();
@@ -1630,24 +1645,17 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, bool recurse)
      * - When outputting a newline.
      * - When outputting a character in the last column.
      */
-    if (!recurse && msg_row >= Rows - 1 && (*s == '\n' || (
-                                              cmdmsg_rl
-                                              ? (
-                                                msg_col <= 1
-                                                || (*s == TAB && msg_col <= 7)
-                                                || (has_mbyte &&
-                                                    (*mb_ptr2cells)(s) > 1 &&
-                                                    msg_col <= 2)
-                                                )
-                                              :
-                                              (msg_col + t_col >= Columns - 1
-                                               || (*s == TAB && msg_col +
-                                                   t_col >= ((Columns - 1) & ~7))
-                                               || (has_mbyte &&
-                                                   (*mb_ptr2cells)(s) > 1
-                                                   && msg_col + t_col >=
-                                                   Columns - 2)
-                                              )))) {
+    if (!recurse && msg_row >= Rows - 1
+      && (*s == '\n'
+        || ( cmdmsg_rl
+          ? (msg_col <= 1 || (*s == TAB && msg_col <= 7)
+            || (has_mbyte && (*mb_ptr2cells)(s) > 1 && msg_col <= 2))
+          : (msg_col + t_col >= Columns - 1
+            || (*s == TAB && msg_col + t_col >= ((Columns - 1) & ~7))
+            || (has_mbyte
+              && (*mb_ptr2cells)(s) > 1 && msg_col + t_col >= Columns - 2))
+          )))
+    {
       /*
        * The screen is scrolled up when at the last row (some terminals
        * scroll automatically, some don't.  To avoid problems we scroll
