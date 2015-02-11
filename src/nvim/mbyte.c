@@ -3931,28 +3931,6 @@ char_u * string_convert_ext(vimconv_T *vcp, char_u *ptr,
         *lenp = (size_t)(d - retval);
       break;
 
-# ifdef MACOS_CONVERT
-    case CONV_MAC_LATIN1:
-      retval = mac_string_convert(ptr, len, lenp, vcp->vc_fail,
-          'm', 'l', unconvlenp);
-      break;
-
-    case CONV_LATIN1_MAC:
-      retval = mac_string_convert(ptr, len, lenp, vcp->vc_fail,
-          'l', 'm', unconvlenp);
-      break;
-
-    case CONV_MAC_UTF8:
-      retval = mac_string_convert(ptr, len, lenp, vcp->vc_fail,
-          'm', 'u', unconvlenp);
-      break;
-
-    case CONV_UTF8_MAC:
-      retval = mac_string_convert(ptr, len, lenp, vcp->vc_fail,
-          'u', 'm', unconvlenp);
-      break;
-# endif
-
 # ifdef USE_ICONV
     case CONV_ICONV:              /* conversion with output_conv.vc_fd */
       retval = iconv_string(vcp, ptr, len, unconvlenp, lenp);

@@ -161,10 +161,6 @@ void term_init(void)
   setbuf(stdout, NULL);
 
   out_flush();
-
-#ifdef MACOS_CONVERT
-  mac_conv_init();
-#endif
 }
 
 /*

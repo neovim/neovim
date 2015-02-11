@@ -1235,7 +1235,6 @@ retry:
       if (size <= 0)
         break;
 
-
 # ifdef USE_ICONV
       if (iconv_fd != (iconv_t)-1) {
         /*
@@ -1294,16 +1293,6 @@ retry:
       }
 # endif
 
-# ifdef MACOS_CONVERT
-      if (fio_flags & FIO_MACROMAN) {
-        /*
-         * Conversion from Apple MacRoman char encoding to UTF-8 or
-         * latin1.  This is in os_mac_conv.c.
-         */
-        if (macroman2enc(ptr, &size, real_size) == FAIL)
-          goto rewind_retry;
-      } else
-# endif
       if (fio_flags != 0) {
         int u8c;
         char_u  *dest;
@@ -4028,38 +4017,6 @@ static int buf_write_bytes(struct bw_info *ip)
         len = (int)(p - ip->bw_conv_buf);
       }
     }
-
-
-# ifdef MACOS_CONVERT
-    else if (flags & FIO_MACROMAN) {
-      /*
-       * Convert UTF-8 or latin1 to Apple MacRoman.
-       */
-      char_u      *from;
-      size_t fromlen;
-
-      if (ip->bw_restlen > 0) {
-        /* Need to concatenate the remainder of the previous call and
-         * the bytes of the current call.  Use the end of the
-         * conversion buffer for this. */
-        fromlen = len + ip->bw_restlen;
-        from = ip->bw_conv_buf + ip->bw_conv_buflen - fromlen;
-        memmove(from, ip->bw_rest, (size_t)ip->bw_restlen);
-        memmove(from + ip->bw_restlen, buf, (size_t)len);
-      } else {
-        from = buf;
-        fromlen = len;
-      }
-
-      if (enc2macroman(from, fromlen,
-              ip->bw_conv_buf, &len, ip->bw_conv_buflen,
-              ip->bw_rest, &ip->bw_restlen) == FAIL) {
-        ip->bw_conv_error = TRUE;
-        return FAIL;
-      }
-      buf = ip->bw_conv_buf;
-    }
-# endif
 
 # ifdef USE_ICONV
     if (ip->bw_iconv_fd != (iconv_t)-1) {
