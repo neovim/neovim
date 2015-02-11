@@ -143,7 +143,7 @@ static char utf8len_tab[256] =
 /*
  * Like utf8len_tab above, but using a zero for illegal lead bytes.
  */
-static char utf8len_tab_zero[256] =
+static uint8_t utf8len_tab_zero[256] =
 {
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -1375,7 +1375,7 @@ static int dbcs_ptr2char(const char_u *p)
  */
 int utf_ptr2char(const char_u *p)
 {
-  int len;
+  uint8_t len;
 
   if (p[0] < 0x80)      /* be quick for ASCII */
     return p[0];
@@ -1427,12 +1427,12 @@ int utf_ptr2char(const char_u *p)
  */
 static int utf_safe_read_char_adv(char_u **s, size_t *n)
 {
-  int c, k;
+  int c;
 
   if (*n == 0)   /* end of buffer */
     return 0;
 
-  k = utf8len_tab_zero[**s];
+  uint8_t k = utf8len_tab_zero[**s];
 
   if (k == 1) {
     /* ASCII character or NUL */
@@ -1440,7 +1440,7 @@ static int utf_safe_read_char_adv(char_u **s, size_t *n)
     return *(*s)++;
   }
 
-  if ((size_t)k <= *n) {
+  if (k <= *n) {
     /* We have a multibyte sequence and it isn't truncated by buffer
      * limits so utf_ptr2char() is safe to use. Or the first byte is
      * illegal (k=0), and it's also safe to use utf_ptr2char(). */
@@ -3504,7 +3504,8 @@ void * my_iconv_open(char_u *to, char_u *from)
  * Returns the converted string in allocated memory.  NULL for an error.
  * If resultlenp is not NULL, sets it to the result length in bytes.
  */
-static char_u * iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvlenp, int *resultlenp)
+static char_u * iconv_string(vimconv_T *vcp, char_u *str, size_t slen,
+                             size_t *unconvlenp, size_t *resultlenp)
 {
   const char  *from;
   size_t fromlen;
@@ -3534,8 +3535,7 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvl
     tolen = len - done - 2;
     /* Avoid a warning for systems with a wrong iconv() prototype by
      * casting the second argument to void *. */
-    if (iconv(vcp->vc_fd, (void *)&from, &fromlen, &to, &tolen)
-        != (size_t)-1) {
+    if (iconv(vcp->vc_fd, (void *)&from, &fromlen, &to, &tolen) != SIZE_MAX) {
       /* Finished, append a NUL. */
       *to = NUL;
       break;
@@ -3547,7 +3547,7 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvl
         && (ICONV_ERRNO == ICONV_EINVAL || ICONV_ERRNO == EINVAL)) {
       /* Handle an incomplete sequence at the end. */
       *to = NUL;
-      *unconvlenp = (int)fromlen;
+      *unconvlenp = fromlen;
       break;
     }
     /* Check both ICONV_EILSEQ and EILSEQ, because the dynamically loaded
@@ -3581,7 +3581,7 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvl
   }
 
   if (resultlenp != NULL && result != NULL)
-    *resultlenp = (int)(to - (char *)result);
+    *resultlenp = (size_t)(to - (char *)result);
   return result;
 }
 
@@ -3802,7 +3802,7 @@ int convert_setup_ext(vimconv_T *vcp, char_u *from, bool from_unicode_is_utf8,
  * Illegal chars are often changed to "?", unless vcp->vc_fail is set.
  * When something goes wrong, NULL is returned and "*lenp" is unchanged.
  */
-char_u * string_convert(vimconv_T *vcp, char_u *ptr, int *lenp)
+char_u * string_convert(vimconv_T *vcp, char_u *ptr, size_t *lenp)
 {
   return string_convert_ext(vcp, ptr, lenp, NULL);
 }
@@ -3812,18 +3812,17 @@ char_u * string_convert(vimconv_T *vcp, char_u *ptr, int *lenp)
  * an incomplete sequence at the end it is not converted and "*unconvlenp" is
  * set to the number of remaining bytes.
  */
-char_u * string_convert_ext(vimconv_T *vcp, char_u *ptr, int *lenp,
-                            int *unconvlenp)
+char_u * string_convert_ext(vimconv_T *vcp, char_u *ptr,
+                            size_t *lenp, size_t *unconvlenp)
 {
   char_u      *retval = NULL;
   char_u      *d;
-  int len;
-  int i;
   int l;
   int c;
 
+  size_t len;
   if (lenp == NULL)
-    len = (int)STRLEN(ptr);
+    len = STRLEN(ptr);
   else
     len = *lenp;
   if (len == 0)
@@ -3833,7 +3832,7 @@ char_u * string_convert_ext(vimconv_T *vcp, char_u *ptr, int *lenp,
     case CONV_TO_UTF8:            /* latin1 to utf-8 conversion */
       retval = xmalloc(len * 2 + 1);
       d = retval;
-      for (i = 0; i < len; ++i) {
+      for (size_t i = 0; i < len; ++i) {
         c = ptr[i];
         if (c < 0x80)
           *d++ = c;
@@ -3844,13 +3843,13 @@ char_u * string_convert_ext(vimconv_T *vcp, char_u *ptr, int *lenp,
       }
       *d = NUL;
       if (lenp != NULL)
-        *lenp = (int)(d - retval);
+        *lenp = (size_t)(d - retval);
       break;
 
     case CONV_9_TO_UTF8:          /* latin9 to utf-8 conversion */
       retval = xmalloc(len * 3 + 1);
       d = retval;
-      for (i = 0; i < len; ++i) {
+      for (size_t i = 0; i < len; ++i) {
         c = ptr[i];
         switch (c) {
           case 0xa4: c = 0x20ac; break;                 /* euro */
@@ -3866,19 +3865,19 @@ char_u * string_convert_ext(vimconv_T *vcp, char_u *ptr, int *lenp,
       }
       *d = NUL;
       if (lenp != NULL)
-        *lenp = (int)(d - retval);
+        *lenp = (size_t)(d - retval);
       break;
 
     case CONV_TO_LATIN1:          /* utf-8 to latin1 conversion */
     case CONV_TO_LATIN9:          /* utf-8 to latin9 conversion */
       retval = xmalloc(len + 1);
       d = retval;
-      for (i = 0; i < len; ++i) {
+      for (size_t i = 0; i < len; ++i) {
         l = utf_ptr2len_len(ptr + i, len - i);
         if (l == 0)
           *d++ = NUL;
         else if (l == 1) {
-          int l_w = utf8len_tab_zero[ptr[i]];
+          uint8_t l_w = utf8len_tab_zero[ptr[i]];
 
           if (l_w == 0) {
             /* Illegal utf-8 byte cannot be converted */
@@ -3929,7 +3928,7 @@ char_u * string_convert_ext(vimconv_T *vcp, char_u *ptr, int *lenp,
       }
       *d = NUL;
       if (lenp != NULL)
-        *lenp = (int)(d - retval);
+        *lenp = (size_t)(d - retval);
       break;
 
 # ifdef MACOS_CONVERT

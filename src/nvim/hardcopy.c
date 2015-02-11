@@ -96,7 +96,7 @@
  * Sets the current position at the start of line "page_line".
  * If margin is TRUE start in the left margin (for header and line number).
  *
- * int mch_print_text_out(char_u *p, int len);
+ * int mch_print_text_out(char_u *p, size_t len);
  * Output one character of text p[len] at the current position.
  * Return TRUE if there is no room for another character in the same line.
  *
@@ -495,7 +495,6 @@ static void prt_header(prt_settings_T *psettings, int pagenum, linenr_T lnum)
   int page_line;
   char_u      *tbuf;
   char_u      *p;
-  int l;
 
   /* Also use the space for the line number. */
   if (prt_use_number())
@@ -542,9 +541,9 @@ static void prt_header(prt_settings_T *psettings, int pagenum, linenr_T lnum)
   page_line = 0 - prt_header_height();
   mch_print_start_line(TRUE, page_line);
   for (p = tbuf; *p != NUL; ) {
-    if (mch_print_text_out(p,
-            (l = (*mb_ptr2len)(p))
-            )) {
+    int l = (*mb_ptr2len)(p);
+    assert(l >= 0);
+    if (mch_print_text_out(p, (size_t)l)) {
       ++page_line;
       if (page_line >= 0)       /* out of room in header */
         break;
@@ -884,7 +883,7 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
       ppos->ff = TRUE;
       need_break = 1;
     } else {
-      need_break = mch_print_text_out(line + col, outputlen);
+      need_break = mch_print_text_out(line + col, (size_t)outputlen);
       if (has_mbyte)
         print_pos += (*mb_ptr2cells)(line + col);
       else
@@ -2871,7 +2870,7 @@ void mch_print_start_line(int margin, int page_line)
   prt_half_width = FALSE;
 }
 
-int mch_print_text_out(char_u *p, int len)
+int mch_print_text_out(char_u *p, size_t len)
 {
   int need_break;
   char_u ch;

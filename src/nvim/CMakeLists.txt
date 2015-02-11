@@ -84,7 +84,6 @@ set(CONV_SOURCES
   spell.c
   syntax.c
   tag.c
-  ui.c
   window.c)
 
 foreach(sfile ${CONV_SOURCES})

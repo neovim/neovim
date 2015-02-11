@@ -5257,8 +5257,7 @@ void fix_help_buffer(void)
                 else {
                   /* Do the conversion.  If it fails
                    * use the unconverted text. */
-                  cp = string_convert(&vc, IObuff,
-                      NULL);
+                  cp = string_convert(&vc, IObuff, NULL);
                   if (cp == NULL)
                     cp = IObuff;
                 }

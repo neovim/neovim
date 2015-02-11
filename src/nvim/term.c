@@ -545,7 +545,7 @@ void termcapinit(char_u *name)
 #  define OUT_SIZE      2047
 // Add one to allow term_write() in os_win32.c to append a NUL
 static char_u out_buf[OUT_SIZE + 1];
-static int out_pos = 0;                 /* number of chars in out_buf */
+static size_t out_pos = 0;                 /* number of chars in out_buf */
 
 // Clear the output buffer
 void out_buf_clear(void)
@@ -558,7 +558,7 @@ void out_buf_clear(void)
  */
 void out_flush(void)
 {
-  int len = out_pos;
+  size_t len = out_pos;
   out_pos = 0;
   ui_write(out_buf, len);
 }
