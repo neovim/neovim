@@ -117,7 +117,7 @@ void channel_teardown(void)
   Channel *channel;
 
   map_foreach_value(channels, channel, {
-    close_channel(channel);
+    chan_close(channel);
   });
 }
 
@@ -311,7 +311,7 @@ bool channel_close(uint64_t id)
     return false;
   }
 
-  close_channel(channel);
+  chan_close(channel);
   return true;
 }
 
@@ -368,8 +368,7 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
   Channel *channel = data;
 
   if (eof) {
-    close_channel(channel);
-    call_set_error(channel, "Channel was closed by the client");
+    chan_close_with_err(channel, "Channel was closed by the client");
     return;
   }
 
@@ -404,7 +403,7 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
                  "a matching request id. Ensure the client is properly "
                  "synchronized",
                  channel->id);
-        call_set_error(channel, buf);
+        chan_close_with_err(channel, buf);
       }
       msgpack_unpacked_destroy(&unpacked);
       // Bail out from this event loop iteration
@@ -452,7 +451,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
       snprintf(buf, sizeof(buf),
                "Channel %" PRIu64 " sent an invalid message, closing.",
                channel->id);
-      call_set_error(channel, buf);
+      chan_close_with_err(channel, buf);
     }
     return;
   }
@@ -527,7 +526,7 @@ static bool channel_write(Channel *channel, WBuffer *buffer)
              "Before returning from a RPC call, channel %" PRIu64 " was "
              "closed due to a failed write",
              channel->id);
-    call_set_error(channel, buf);
+    chan_close_with_err(channel, buf);
   }
 
   return success;
@@ -621,7 +620,7 @@ static void unsubscribe(Channel *channel, char *event)
 }
 
 /// Close the channel streams/job and free the channel resources.
-static void close_channel(Channel *channel)
+static void chan_close(Channel *channel)
 {
   if (channel->closed) {
     return;
@@ -721,7 +720,11 @@ static void complete_call(msgpack_object *obj, Channel *channel)
   }
 }
 
-static void call_set_error(Channel *channel, char *msg)
+/// Set the channel's error and closes the channel.
+///
+/// @param channel
+/// @param msg     A message to set as the error reason for closing.
+static void chan_close_with_err(Channel *channel, char *msg)
 {
   ELOG("Msgpack-RPC error: %s", msg);
   for (size_t i = 0; i < kv_size(channel->call_stack); i++) {
@@ -731,7 +734,7 @@ static void call_set_error(Channel *channel, char *msg)
     frame->result = STRING_OBJ(cstr_to_string(msg));
   }
 
-  close_channel(channel);
+  chan_close(channel);
 }
 
 static WBuffer *serialize_request(uint64_t channel_id,
