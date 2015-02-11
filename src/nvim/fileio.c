@@ -10,6 +10,7 @@
  * fileio.c: read from and write to a file
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <string.h>
@@ -5811,10 +5812,13 @@ void do_autocmd(char_u *arg, int forceit)
               nested, cmd, forceit, group) == FAIL)
         break;
   } else {
-    while (*arg && !vim_iswhite(*arg))
-      if (do_autocmd_event(event_name2nr(arg, &arg), pat,
-              nested, cmd, forceit, group) == FAIL)
+    while (*arg && !vim_iswhite(*arg)) {
+      event_T event = event_name2nr(arg, &arg);
+      assert(event < NUM_EVENTS);
+      if (do_autocmd_event(event, pat, nested, cmd, forceit, group) == FAIL) {
         break;
+      }
+    }
   }
 
   if (need_free)
