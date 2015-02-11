@@ -415,10 +415,6 @@ void mch_exit(int r)
   out_flush();
   ml_close_all(TRUE);           /* remove all memfiles */
 
-#ifdef MACOS_CONVERT
-  mac_conv_cleanup();
-#endif
-
   event_teardown();
 
 #ifdef EXITFREE
