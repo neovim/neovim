@@ -65,6 +65,7 @@ bool try_end(Error *err)
     }
   } else if (did_throw) {
     api_set_error(err, Exception, "%s", current_exception->value);
+    discard_current_exception();
   }
 
   return err->set;
