@@ -3615,7 +3615,7 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
         s1 = get_tv_string_buf(rettv, buf1);
         s2 = get_tv_string_buf(&var2, buf2);
         if (type != TYPE_MATCH && type != TYPE_NOMATCH)
-          i = ic ? MB_STRICMP(s1, s2) : STRCMP(s1, s2);
+          i = ic ? mb_stricmp(s1, s2) : STRCMP(s1, s2);
         else
           i = 0;
         n1 = FALSE;
@@ -4955,7 +4955,7 @@ tv_equal (
   case VAR_STRING:
     s1 = get_tv_string_buf(tv1, buf1);
     s2 = get_tv_string_buf(tv2, buf2);
-    return (ic ? MB_STRICMP(s1, s2) : STRCMP(s1, s2)) == 0;
+    return (ic ? mb_stricmp(s1, s2) : STRCMP(s1, s2)) == 0;
   }
 
   EMSG2(_(e_intern2), "tv_equal()");
