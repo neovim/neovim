@@ -3,6 +3,7 @@
  * special key codes.
  */
 
+#include <assert.h>
 #include <inttypes.h>
 
 #include "nvim/vim.h"
@@ -457,7 +458,7 @@ char_u *get_special_key_name(int c, int modifiers)
     if (IS_SPECIAL(c)) {
       string[idx++] = 't';
       string[idx++] = '_';
-      string[idx++] = KEY2TERMCAP0(c);
+      string[idx++] = (char_u)KEY2TERMCAP0(c);
       string[idx++] = KEY2TERMCAP1(c);
     }
     /* Not a special key, only modifiers, output directly */
@@ -465,7 +466,7 @@ char_u *get_special_key_name(int c, int modifiers)
       if (has_mbyte && (*mb_char2len)(c) > 1)
         idx += (*mb_char2bytes)(c, string + idx);
       else if (vim_isprintc(c))
-        string[idx++] = c;
+        string[idx++] = (char_u)c;
       else {
         s = transchar(c);
         while (*s)
@@ -496,7 +497,7 @@ trans_special (
 {
   int modifiers = 0;
   int key;
-  int dlen = 0;
+  unsigned int dlen = 0;
 
   key = find_special_key(srcp, &modifiers, keycode, FALSE);
   if (key == 0)
@@ -506,19 +507,22 @@ trans_special (
   if (modifiers != 0) {
     dst[dlen++] = K_SPECIAL;
     dst[dlen++] = KS_MODIFIER;
-    dst[dlen++] = modifiers;
+    dst[dlen++] = (char_u)modifiers;
   }
 
   if (IS_SPECIAL(key)) {
     dst[dlen++] = K_SPECIAL;
-    dst[dlen++] = KEY2TERMCAP0(key);
+    dst[dlen++] = (char_u)KEY2TERMCAP0(key);
     dst[dlen++] = KEY2TERMCAP1(key);
   } else if (has_mbyte && !keycode)
-    dlen += (*mb_char2bytes)(key, dst + dlen);
-  else if (keycode)
-    dlen = (int)(add_char2buf(key, dst + dlen) - dst);
+    dlen += (unsigned int)(*mb_char2bytes)(key, dst + dlen);
+  else if (keycode) {
+    char_u *after = add_char2buf(key, dst + dlen);
+    assert(after >= dst && (uintmax_t)(after - dst) <= UINT_MAX);
+    dlen = (unsigned int)(after - dst);
+  }
   else
-    dst[dlen++] = key;
+    dst[dlen++] = (char_u)key;
 
   return dlen;
 }
