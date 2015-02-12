@@ -63,7 +63,6 @@ set(CONV_SOURCES
   fold.c
   getchar.c
   if_cscope.c
-  indent.c
   keymap.c
   mbyte.c
   memline.c
