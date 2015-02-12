@@ -6594,9 +6594,10 @@ int in_cinkeys(int keytyped, int when, int line_is_empty)
             for (s = line + curwin->w_cursor.col; s > line; --s)
               if (!vim_iswordc(s[-1]))
                 break;
+          assert(p >= look && (uintmax_t)(p - look) <= SIZE_MAX);
           if (s + (p - look) <= line + curwin->w_cursor.col
               && (icase
-                  ? MB_STRNICMP(s, look, p - look)
+                  ? mb_strnicmp(s, look, (size_t)(p - look))
                   : STRNCMP(s, look, p - look)) == 0)
             match = TRUE;
         } else
@@ -6605,10 +6606,11 @@ int in_cinkeys(int keytyped, int when, int line_is_empty)
                                        && TOLOWER_LOC(keytyped) ==
                                        TOLOWER_LOC((int)p[-1]))) {
           line = get_cursor_pos_ptr();
+          assert(p >= look && (uintmax_t)(p - look) <= SIZE_MAX);
           if ((curwin->w_cursor.col == (colnr_T)(p - look)
                || !vim_iswordc(line[-(p - look) - 1]))
               && (icase
-                  ? MB_STRNICMP(line - (p - look), look, p - look)
+                  ? mb_strnicmp(line - (p - look), look, (size_t)(p - look))
                   : STRNCMP(line - (p - look), look, p - look))
               == 0)
             match = TRUE;

@@ -1641,7 +1641,8 @@ parse_line:
             /* No match yet and are at the end of the binary search. */
             break;
           } else if (state == TS_SKIP_BACK)   {
-            if (MB_STRNICMP(tagp.tagname, orgpat.head, cmplen) != 0)
+            assert(cmplen >= 0);
+            if (mb_strnicmp(tagp.tagname, orgpat.head, (size_t)cmplen) != 0)
               state = TS_STEP_FORWARD;
             else
               /* Have to skip back more.  Restore the curr_offset
@@ -1649,7 +1650,8 @@ parse_line:
               search_info.curr_offset = search_info.curr_offset_used;
             continue;
           } else if (state == TS_STEP_FORWARD)   {
-            if (MB_STRNICMP(tagp.tagname, orgpat.head, cmplen) != 0) {
+            assert(cmplen >= 0);
+            if (mb_strnicmp(tagp.tagname, orgpat.head, (size_t)cmplen) != 0) {
               if ((off_t)ftell(fp) > search_info.match_offset)
                 break;                  /* past last match */
               else
@@ -1657,7 +1659,8 @@ parse_line:
             }
           } else
           /* skip this match if it can't match */
-          if (MB_STRNICMP(tagp.tagname, orgpat.head, cmplen) != 0)
+          assert(cmplen >= 0);
+          if (mb_strnicmp(tagp.tagname, orgpat.head, (size_t)cmplen) != 0)
             continue;
 
           /*
@@ -1691,7 +1694,8 @@ parse_line:
           match = FALSE;
         else {
           if (orgpat.regmatch.rm_ic) {
-            match = (MB_STRNICMP(tagp.tagname, orgpat.pat, cmplen) == 0);
+            assert(cmplen >= 0);
+            match = mb_strnicmp(tagp.tagname, orgpat.pat, (size_t)cmplen) == 0;
             if (match)
               match_no_ic = (STRNCMP(tagp.tagname, orgpat.pat,
                                  cmplen) == 0);

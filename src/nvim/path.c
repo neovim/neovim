@@ -297,7 +297,7 @@ int vim_fnamecmp(char_u *x, char_u *y)
   return vim_fnamencmp(x, y, MAXPATHL);
 #else
   if (p_fic)
-    return MB_STRICMP(x, y);
+    return mb_stricmp(x, y);
   return STRCMP(x, y);
 #endif
 }
@@ -327,7 +327,7 @@ int vim_fnamencmp(char_u *x, char_u *y, size_t len)
   return cx - cy;
 #else
   if (p_fic)
-    return MB_STRNICMP(x, y, len);
+    return mb_strnicmp(x, y, len);
   return STRNCMP(x, y, len);
 #endif
 }

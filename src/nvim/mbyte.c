@@ -2839,6 +2839,16 @@ int mb_strnicmp(char_u *s1, char_u *s2, size_t nn)
   return 0;
 }
 
+/* We need to call mb_stricmp() even when we aren't dealing with a multi-byte
+ * encoding because mb_stricmp() takes care of all ascii and non-ascii
+ * encodings, including characters with umlauts in latin1, etc., while
+ * STRICMP() only handles the system locale version, which often does not
+ * handle non-ascii properly. */
+int mb_stricmp(char_u *s1, char_u *s2)
+{
+  return mb_strnicmp(s1, s2, MAXCOL);
+}
+
 /*
  * "g8": show bytes of the UTF-8 char under the cursor.  Doesn't matter what
  * 'encoding' has been set to.

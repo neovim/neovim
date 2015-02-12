@@ -65,7 +65,6 @@ set(CONV_SOURCES
   if_cscope.c
   indent.c
   keymap.c
-  mark.c
   mbyte.c
   memline.c
   menu.c
