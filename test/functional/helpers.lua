@@ -229,11 +229,15 @@ local function curbuf(method, ...)
   return buffer(method, buf, ...)
 end
 
+local function wait()
+  session:request('vim_eval', '1')
+end
+
 local function curbuf_contents()
   -- Before inspecting the buffer, execute 'vim_eval' to wait until all
   -- previously sent keys are processed(vim_eval is a deferred function, and
   -- only processed after all input)
-  session:request('vim_eval', '1')
+  wait()
   return table.concat(curbuf('get_line_slice', 0, -1, true, true), '\n')
 end
 
@@ -284,5 +288,6 @@ return {
   curbuf = curbuf,
   curwin = curwin,
   curtab = curtab,
-  curbuf_contents = curbuf_contents
+  curbuf_contents = curbuf_contents,
+  wait = wait
 }
