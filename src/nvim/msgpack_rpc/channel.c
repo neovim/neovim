@@ -495,6 +495,7 @@ static bool channel_write(Channel *channel, WBuffer *buffer)
   bool success;
 
   if (channel->closed) {
+    wstream_release_wbuffer(buffer);
     return false;
   }
 

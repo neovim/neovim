@@ -181,7 +181,7 @@ bool wstream_write(WStream *wstream, WBuffer *buffer)
   return true;
 
 err:
-  release_wbuffer(buffer);
+  wstream_release_wbuffer(buffer);
   return false;
 }
 
@@ -217,7 +217,7 @@ static void write_cb(uv_write_t *req, int status)
 
   data->wstream->curmem -= data->buffer->size;
 
-  release_wbuffer(data->buffer);
+  wstream_release_wbuffer(data->buffer);
 
   if (data->wstream->cb) {
     data->wstream->cb(data->wstream,
@@ -239,7 +239,7 @@ static void write_cb(uv_write_t *req, int status)
   kmp_free(WRequestPool, wrequest_pool, data);
 }
 
-static void release_wbuffer(WBuffer *buffer)
+void wstream_release_wbuffer(WBuffer *buffer)
 {
   if (!--buffer->refcount) {
     if (buffer->cb) {
