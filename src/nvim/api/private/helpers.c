@@ -644,10 +644,8 @@ static Object vim_to_object_rec(typval_T *obj, PMap(ptr_t) *lookup)
 
   switch (obj->v_type) {
     case VAR_STRING:
-      if (obj->vval.v_string != NULL) {
-        rv.type = kObjectTypeString;
-        rv.data.string = cstr_to_string((char *) obj->vval.v_string);
-      }
+      rv.type = kObjectTypeString;
+      rv.data.string = cstr_to_string((char *) obj->vval.v_string);
       break;
 
     case VAR_NUMBER:
