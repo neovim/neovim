@@ -170,12 +170,20 @@ describe('fs function', function()
 
     it('returns the absolute path when given an executable relative to the current dir', function()
       local old_dir = lfs.currentdir()
+
       lfs.chdir(directory)
       local relative_executable = './' .. executable_name
+
       -- Don't test yet; we need to chdir back first.
       local res = exe(relative_executable)
+
       lfs.chdir(old_dir)
-      eq(absolute_executable, res)
+
+      -- Need to canonicalize the absolute path taken from arg[0], because the
+      -- path may have a symlink in it.  For example, /home is symlinked in
+      -- FreeBSD 10's VM image.
+      local expected = exe(absolute_executable)
+      eq(expected, res)
     end)
   end)
 
