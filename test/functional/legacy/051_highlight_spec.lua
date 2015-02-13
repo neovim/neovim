@@ -15,9 +15,9 @@ describe(':highlight', function()
 
     -- Test setting colors.
     -- Test clearing one color and all doesn't generate error or warning
-    execute('hi NewGroup term=bold cterm=italic ctermfg=DarkBlue ctermbg=Grey gui= guifg=#00ff00 guibg=Cyan')
-    execute('hi Group2 term= cterm=')
-    execute('hi Group3 term=underline cterm=bold')
+    execute('hi NewGroup cterm=italic ctermfg=DarkBlue ctermbg=Grey gui= guifg=#00ff00 guibg=Cyan')
+    execute('hi Group2 cterm=')
+    execute('hi Group3 cterm=bold')
     execute('redir! @a')
     execute('hi NewGroup')
     execute('hi Group2')
@@ -29,7 +29,7 @@ describe(':highlight', function()
     execute('hi Group2')
     execute('hi clear')
     execute('hi Group3')
-    execute([[hi Crash term='asdf]])
+    execute([[hi Crash cterm='asdf]])
     execute('redir END')
 
     -- Filter ctermfg and ctermbg, the numbers depend on the terminal
@@ -48,11 +48,11 @@ describe(':highlight', function()
     expect([[
       
       
-      NewGroup       xxx term=bold cterm=italic ctermfg=2 ctermbg=3
+      NewGroup       xxx cterm=italic ctermfg=2 ctermbg=3
       
       Group2         xxx cleared
       
-      Group3         xxx term=underline cterm=bold
+      Group3         xxx cterm=bold
       
       
       NewGroup       xxx cleared
@@ -65,6 +65,6 @@ describe(':highlight', function()
       
       Group3         xxx cleared
       
-      E475: term='asdf]])
+      E475: cterm='asdf]])
   end)
 end)

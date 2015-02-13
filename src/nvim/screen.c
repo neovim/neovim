@@ -4359,23 +4359,6 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
       if (char_cells == 2)
         ScreenLines[off_to + 1] = ScreenLines[off_from + 1];
 
-#if defined(FEAT_GUI) || defined(UNIX)
-      /* The bold trick makes a single column of pixels appear in the
-       * next character.  When a bold character is removed, the next
-       * character should be redrawn too.  This happens for our own GUI
-       * and for some xterms. */
-      if (
-# ifdef UNIX
-        term_is_xterm
-# endif
-        ) {
-        hl = ScreenAttrs[off_to];
-        if (hl > HL_ALL)
-          hl = syn_attr2attr(hl);
-        if (hl & HL_BOLD)
-          redraw_next = TRUE;
-      }
-#endif
       ScreenAttrs[off_to] = ScreenAttrs[off_from];
       /* For simplicity set the attributes of second half of a
        * double-wide character equal to the first half. */
@@ -5343,24 +5326,6 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
     if (need_redraw
         || force_redraw_this
         ) {
-#if defined(FEAT_GUI) || defined(UNIX)
-      /* The bold trick makes a single row of pixels appear in the next
-       * character.  When a bold character is removed, the next
-       * character should be redrawn too.  This happens for our own GUI
-       * and for some xterms. */
-      if (need_redraw && ScreenLines[off] != ' ' && (
-# ifdef UNIX
-            term_is_xterm
-# endif
-            )) {
-        int n = ScreenAttrs[off];
-
-        if (n > HL_ALL)
-          n = syn_attr2attr(n);
-        if (n & HL_BOLD)
-          force_redraw_next = TRUE;
-      }
-#endif
       /* When at the end of the text and overwriting a two-cell
        * character with a one-cell character, need to clear the next
        * cell.  Also when overwriting the left halve of a two-cell char
@@ -5977,24 +5942,6 @@ void screen_fill(int start_row, int end_row, int start_col, int end_col, int c1,
           || force_next
 #endif
           ) {
-#if defined(FEAT_GUI) || defined(UNIX)
-        /* The bold trick may make a single row of pixels appear in
-         * the next character.  When a bold character is removed, the
-         * next character should be redrawn too.  This happens for our
-         * own GUI and for some xterms.  */
-        if (
-# ifdef UNIX
-          term_is_xterm
-# endif
-          ) {
-          if (ScreenLines[off] != ' '
-              && (ScreenAttrs[off] > HL_ALL
-                  || ScreenAttrs[off] & HL_BOLD))
-            force_next = TRUE;
-          else
-            force_next = FALSE;
-        }
-#endif
         ScreenLines[off] = c;
         if (enc_utf8) {
           if (c >= 0x80) {

@@ -617,10 +617,7 @@ void ex_hardcopy(exarg_T *eap)
           eap->forceit) == FAIL)
     return;
 
-  if (t_colors > 1)
-    settings.modec = 'c';
-  else
-    settings.modec = 't';
+  settings.modec = 'c';
 
   if (!syntax_present(curwin))
     settings.do_syntax = FALSE;

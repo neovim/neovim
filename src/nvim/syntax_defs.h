@@ -67,23 +67,11 @@ struct syn_state {
                                  * may have made the state invalid */
 };
 
-/*
- * Structure shared between syntax.c, screen.c and gui_x11.c.
- */
+// Structure shared between syntax.c, screen.c
 typedef struct attr_entry {
-  short ae_attr;                        /* HL_BOLD, etc. */
-  RgbValue fg_color, bg_color;
-  union {
-    struct {
-      char_u          *start;           /* start escape sequence */
-      char_u          *stop;            /* stop escape sequence */
-    } term;
-    struct {
-      /* These colors need to be > 8 bits to hold 256. */
-      uint16_t fg_color;                /* foreground color number */
-      uint16_t bg_color;                /* background color number */
-    } cterm;
-  } ae_u;
+  short rgb_ae_attr, cterm_ae_attr;  // HL_BOLD, etc.
+  RgbValue rgb_fg_color, rgb_bg_color;
+  int cterm_fg_color, cterm_bg_color;
 } attrentry_T;
 
 #endif // NVIM_SYNTAX_DEFS_H

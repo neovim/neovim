@@ -60,7 +60,7 @@ static int row, col;
 static struct {
   int top, bot, left, right;
 } sr;
-static int current_highlight_mask = 0;
+static int current_attr_code = 0;
 static bool cursor_enabled = true, pending_cursor_update = false;
 static int height, width;
 
@@ -273,71 +273,76 @@ void ui_detach(UI *ui)
   }
 }
 
-static void highlight_start(int mask)
+static void highlight_start(int attr_code)
 {
-  if (mask > HL_ALL) {
-    // attribute code
-    current_highlight_mask = mask;
-  } else {
-    // attribute mask
-    current_highlight_mask |= mask;
-  }
+  current_attr_code = attr_code;
 
   if (!ui_count) {
     return;
   }
 
-  set_highlight_args(current_highlight_mask);
+  set_highlight_args(current_attr_code);
 }
 
 static void highlight_stop(int mask)
 {
-  if (mask > HL_ALL) {
-    // attribute code
-    current_highlight_mask = HL_NORMAL;
-  } else {
-    // attribute mask
-    current_highlight_mask &= ~mask;
+  current_attr_code = HL_NORMAL;
+
+  if (!ui_count) {
+    return;
   }
 
-  set_highlight_args(current_highlight_mask);
+  set_highlight_args(current_attr_code);
 }
 
-static void set_highlight_args(int mask)
+static void set_highlight_args(int attr_code)
 {
   HlAttrs rgb_attrs = { false, false, false, false, false, -1, -1 };
-  attrentry_T *aep = NULL;
-
-  if (mask > HL_ALL) {
-    aep = syn_cterm_attr2entry(mask);
-    mask = aep ? aep->ae_attr : 0;
-  }
-
-  rgb_attrs.bold = mask & HL_BOLD;
-  rgb_attrs.underline = mask & HL_UNDERLINE;
-  rgb_attrs.undercurl = mask & HL_UNDERCURL;
-  rgb_attrs.italic = mask & HL_ITALIC;
-  rgb_attrs.reverse = mask & (HL_INVERSE | HL_STANDOUT);
   HlAttrs cterm_attrs = rgb_attrs;
 
-  if (aep) {
-    if (aep->fg_color != normal_fg) {
-      rgb_attrs.foreground = aep->fg_color;
-    }
-
-    if (aep->bg_color != normal_bg) {
-      rgb_attrs.background = aep->bg_color;
-    }
-
-    if (cterm_normal_fg_color != aep->ae_u.cterm.fg_color) {
-      cterm_attrs.foreground = aep->ae_u.cterm.fg_color - 1;
-    }
-
-    if (cterm_normal_bg_color != aep->ae_u.cterm.bg_color) {
-      cterm_attrs.background = aep->ae_u.cterm.bg_color - 1;
-    }
+  if (attr_code == HL_NORMAL) {
+    goto end;
   }
 
+  int rgb_mask = 0;
+  int cterm_mask = 0;
+  attrentry_T *aep = syn_cterm_attr2entry(attr_code);
+
+  if (!aep) {
+    goto end;
+  }
+
+  rgb_mask = aep->rgb_ae_attr;
+  cterm_mask = aep->cterm_ae_attr;
+
+  rgb_attrs.bold = rgb_mask & HL_BOLD;
+  rgb_attrs.underline = rgb_mask & HL_UNDERLINE;
+  rgb_attrs.undercurl = rgb_mask & HL_UNDERCURL;
+  rgb_attrs.italic = rgb_mask & HL_ITALIC;
+  rgb_attrs.reverse = rgb_mask & (HL_INVERSE | HL_STANDOUT);
+  cterm_attrs.bold = cterm_mask & HL_BOLD;
+  cterm_attrs.underline = cterm_mask & HL_UNDERLINE;
+  cterm_attrs.undercurl = cterm_mask & HL_UNDERCURL;
+  cterm_attrs.italic = cterm_mask & HL_ITALIC;
+  cterm_attrs.reverse = cterm_mask & (HL_INVERSE | HL_STANDOUT);
+
+  if (aep->rgb_fg_color != normal_fg) {
+    rgb_attrs.foreground = aep->rgb_fg_color;
+  }
+
+  if (aep->rgb_bg_color != normal_bg) {
+    rgb_attrs.background = aep->rgb_bg_color;
+  }
+
+  if (cterm_normal_fg_color != aep->cterm_fg_color) {
+    cterm_attrs.foreground = aep->cterm_fg_color - 1;
+  }
+
+  if (cterm_normal_bg_color != aep->cterm_bg_color) {
+    cterm_attrs.background = aep->cterm_bg_color - 1;
+  }
+
+end:
   UI_CALL(highlight_set, (ui->rgb ? rgb_attrs : cterm_attrs));
 }
 

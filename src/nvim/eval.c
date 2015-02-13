@@ -14418,7 +14418,7 @@ static void f_synIDattr(typval_T *argvars, typval_T *rettv)
   if (argvars[2].v_type != VAR_UNKNOWN) {
     mode = get_tv_string_buf(&argvars[2], modebuf);
     modec = TOLOWER_ASC(mode[0]);
-    if (modec != 't' && modec != 'c' && modec != 'g')
+    if (modec != 'c' && modec != 'g')
       modec = 0;        /* replace invalid with current */
   } else {
     modec = 'c';
