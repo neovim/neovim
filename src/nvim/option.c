@@ -5951,27 +5951,6 @@ set_option_value (
   return NULL;
 }
 
-/*
- * Get the terminal code for a terminal option.
- * Returns NULL when not found.
- */
-char_u *get_term_code(char_u *tname)
-{
-  int opt_idx;
-  char_u  *varp;
-
-  if (tname[0] != 't' || tname[1] != '_' ||
-      tname[2] == NUL || tname[3] == NUL)
-    return NULL;
-  if ((opt_idx = findoption(tname)) >= 0) {
-    varp = get_varp(&(options[opt_idx]));
-    if (varp != NULL)
-      varp = *(char_u **)(varp);
-    return varp;
-  }
-  return find_termcode(tname + 2);
-}
-
 char_u *get_highlight_default(void)
 {
   int i;
@@ -7809,17 +7788,6 @@ int option_was_set(char_u *name)
   if (options[idx].flags & P_WAS_SET)
     return TRUE;
   return FALSE;
-}
-
-/*
- * Reset the flag indicating option "name" was set.
- */
-void reset_option_was_set(char_u *name)
-{
-  int idx = findoption(name);
-
-  if (idx >= 0)
-    options[idx].flags &= ~P_WAS_SET;
 }
 
 /*

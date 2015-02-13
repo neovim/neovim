@@ -164,17 +164,6 @@ int vim_is_xterm(char_u *name)
 }
 
 /*
- * Return TRUE if "name" appears to be that of a terminal
- * known to support the xterm-style mouse protocol.
- * Relies on term_is_xterm having been set to its correct value.
- */
-int use_xterm_like_mouse(char_u *name)
-{
-  return name != NULL
-         && (term_is_xterm || STRNICMP(name, "screen", 6) == 0);
-}
-
-/*
  * Return non-zero when using an xterm mouse, according to 'ttymouse'.
  * Return 1 for "xterm".
  * Return 2 for "xterm2".
