@@ -100,7 +100,7 @@ static inline khint_t String_hash(String s)
 
 static inline bool String_eq(String a, String b)
 {
-  return strncmp(a.data, b.data, min(a.size, b.size)) == 0;
+  return strncmp(a.data, b.data, MIN(a.size, b.size)) == 0;
 }
 
 
