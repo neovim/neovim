@@ -184,7 +184,7 @@ size_t input_enqueue(String keys)
 
   while (rbuffer_available(input_buffer) >= 6 && ptr < end) {
     uint8_t buf[6] = {0};
-    unsigned int new_size = trans_special((uint8_t **)&ptr, buf, false);
+    unsigned int new_size = trans_special((uint8_t **)&ptr, buf, true);
 
     if (!new_size) {
       if (*ptr == '<') {
