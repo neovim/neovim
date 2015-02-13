@@ -157,27 +157,6 @@ bool os_isatty(int fd)
     return uv_guess_handle(fd) == UV_TTY;
 }
 
-/// Return the contents of the input buffer and make it empty. The returned
-/// pointer must be passed to `input_buffer_restore()` later.
-String input_buffer_save(void)
-{
-  size_t inbuf_size = rbuffer_pending(input_buffer);
-  String rv = {
-    .data = xmemdup(rbuffer_read_ptr(input_buffer), inbuf_size),
-    .size = inbuf_size
-  };
-  rbuffer_consumed(input_buffer, inbuf_size);
-  return rv;
-}
-
-/// Restore the contents of the input buffer and free `str`
-void input_buffer_restore(String str)
-{
-  rbuffer_consumed(input_buffer, rbuffer_pending(input_buffer));
-  rbuffer_write(input_buffer, str.data, str.size);
-  free(str.data);
-}
-
 size_t input_enqueue(String keys)
 {
   char *ptr = keys.data, *end = ptr + keys.size;

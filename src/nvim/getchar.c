@@ -1203,7 +1203,6 @@ void save_typeahead(tasave_T *tp)
   readbuf1.bh_first.b_next = NULL;
   tp->save_readbuf2 = readbuf2;
   readbuf2.bh_first.b_next = NULL;
-  tp->save_inputbuf = input_buffer_save();
 }
 
 /*
@@ -1224,7 +1223,6 @@ void restore_typeahead(tasave_T *tp)
   readbuf1 = tp->save_readbuf1;
   free_buff(&readbuf2);
   readbuf2 = tp->save_readbuf2;
-  input_buffer_restore(tp->save_inputbuf);
 }
 
 /*
