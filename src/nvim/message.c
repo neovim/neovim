@@ -3101,6 +3101,7 @@ int vim_snprintf(char *str, size_t str_m, char *fmt, ...)
 int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
 {
   size_t str_l = 0;
+  bool str_avail = str_l < str_m;
   char        *p = fmt;
   int arg_idx = 1;
 
@@ -3108,15 +3109,15 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
     p = "";
   while (*p != NUL) {
     if (*p != '%') {
-      size_t n = xstrchrnul(p + 1, '%') - p;
-
       /* Copy up to the next '%' or NUL without any changes. */
-      if (str_l < str_m) {
+      size_t n = (size_t)(xstrchrnul(p + 1, '%') - p);
+      if (str_avail) {
         size_t avail = str_m - str_l;
-
-        memmove(str + str_l, p, n > avail ? avail : n);
+        memmove(str + str_l, p, MIN(n, avail));
+        str_avail = n < avail;
       }
       p += n;
+      assert(n <= SIZE_MAX - str_l);
       str_l += n;
     } else {
       size_t min_field_width = 0, precision = 0;
@@ -3666,17 +3667,16 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
        * this does not include the zero padding in case of numerical
        * conversions*/
       if (!justify_left) {
-        /* left padding with blank or zero */
-        int pn = (int)(min_field_width - (str_arg_l + number_of_zeros_to_pad));
-
-        if (pn > 0) {
-          if (str_l < str_m) {
+        assert(str_arg_l <= SIZE_MAX - number_of_zeros_to_pad);
+        if (min_field_width > str_arg_l + number_of_zeros_to_pad) {
+          /* left padding with blank or zero */
+          size_t pn = min_field_width - (str_arg_l + number_of_zeros_to_pad);
+          if (str_avail) {
             size_t avail = str_m - str_l;
-
-            memset(str + str_l, zero_padding ? '0' : ' ',
-                (size_t)pn > avail ? avail
-                : (size_t)pn);
+            memset(str + str_l, zero_padding ? '0' : ' ', MIN(pn, avail));
+            str_avail = pn < avail;
           }
+          assert(pn <= SIZE_MAX - str_l);
           str_l += pn;
         }
       }
@@ -3688,67 +3688,58 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
         * force it to be copied later in its entirety    */
         zero_padding_insertion_ind = 0;
       } else {
-        /* insert first part of numerics (sign or '0x') before zero
-         * padding */
-        int zn = (int)zero_padding_insertion_ind;
-
-        if (zn > 0) {
-          if (str_l < str_m) {
+        /* insert first part of numerics (sign or '0x') before zero padding */
+        if (zero_padding_insertion_ind > 0) {
+          size_t zn = zero_padding_insertion_ind;
+          if (str_avail) {
             size_t avail = str_m - str_l;
-
-            memmove(str + str_l, str_arg,
-                (size_t)zn > avail ? avail
-                : (size_t)zn);
+            memmove(str + str_l, str_arg, MIN(zn, avail));
+            str_avail = zn < avail;
           }
+          assert(zn <= SIZE_MAX - str_l);
           str_l += zn;
         }
 
-        /* insert zero padding as requested by the precision or min
-         * field width */
-        zn = (int)number_of_zeros_to_pad;
-        if (zn > 0) {
-          if (str_l < str_m) {
-            size_t avail = str_m-str_l;
-
-            memset(str + str_l, '0',
-                (size_t)zn > avail ? avail
-                : (size_t)zn);
+        /* insert zero padding as requested by precision or min field width */
+        if (number_of_zeros_to_pad > 0) {
+          size_t zn = number_of_zeros_to_pad;
+          if (str_avail) {
+            size_t avail = str_m - str_l;
+            memset(str + str_l, '0', MIN(zn, avail));
+            str_avail = zn < avail;
           }
+          assert(zn <= SIZE_MAX - str_l);
           str_l += zn;
         }
       }
 
       /* insert formatted string
        * (or as-is conversion specifier for unknown conversions) */
-      {
-        int sn = (int)(str_arg_l - zero_padding_insertion_ind);
-
-        if (sn > 0) {
-          if (str_l < str_m) {
-            size_t avail = str_m - str_l;
-
-            memmove(str + str_l,
-                str_arg + zero_padding_insertion_ind,
-                (size_t)sn > avail ? avail : (size_t)sn);
-          }
-          str_l += sn;
+      if (str_arg_l > zero_padding_insertion_ind) {
+        size_t sn = str_arg_l - zero_padding_insertion_ind;
+        if (str_avail) {
+          size_t avail = str_m - str_l;
+          memmove(str + str_l,
+                  str_arg + zero_padding_insertion_ind,
+                  MIN(sn, avail));
+          str_avail = sn < avail;
         }
+        assert(sn <= SIZE_MAX - str_l);
+        str_l += sn;
       }
 
       /* insert right padding */
       if (justify_left) {
-        /* right blank padding to the field width */
-        int pn = (int)(min_field_width
-                       - (str_arg_l + number_of_zeros_to_pad));
-
-        if (pn > 0) {
-          if (str_l < str_m) {
+        assert(str_arg_l <= SIZE_MAX - number_of_zeros_to_pad);
+        if (min_field_width > str_arg_l + number_of_zeros_to_pad) {
+          /* right blank padding to the field width */
+          size_t pn = min_field_width - (str_arg_l + number_of_zeros_to_pad);
+          if (str_avail) {
             size_t avail = str_m - str_l;
-
-            memset(str + str_l, ' ',
-                (size_t)pn > avail ? avail
-                : (size_t)pn);
+            memset(str + str_l, ' ', MIN(pn, avail));
+            str_avail = pn < avail;
           }
+          assert(pn <= SIZE_MAX - str_l);
           str_l += pn;
         }
       }
