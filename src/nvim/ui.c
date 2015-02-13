@@ -60,7 +60,7 @@ static struct {
   int top, bot, left, right;
 } sr;
 static int current_highlight_mask = 0;
-static bool cursor_enabled = true;
+static bool cursor_enabled = true, pending_cursor_update = false;
 static int height, width;
 
 // This set of macros allow us to use UI_CALL to invoke any function on
@@ -71,6 +71,7 @@ static int height, width;
 // works.
 #define UI_CALL(...)                                              \
   do {                                                            \
+    flush_cursor_update();                                        \
     for (size_t i = 0; i < ui_count; i++) {                       \
       UI *ui = uis[i];                                            \
       UI_CALL_HELPER(CNT(__VA_ARGS__), __VA_ARGS__);              \
@@ -558,5 +559,13 @@ static void ui_cursor_goto(int new_row, int new_col)
   }
   row = new_row;
   col = new_col;
-  UI_CALL(cursor_goto, row, col);
+  pending_cursor_update = true;
+}
+
+static void flush_cursor_update(void)
+{
+  if (pending_cursor_update) {
+    pending_cursor_update = false;
+    UI_CALL(cursor_goto, row, col);
+  }
 }
