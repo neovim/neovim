@@ -1813,7 +1813,6 @@ failed:
      * Switch on raw mode now and clear the screen.
      */
     if (read_stdin) {
-      starttermcap();
       screenclear();
     }
 
@@ -6469,12 +6468,6 @@ int has_insertcharpre(void)
 int has_cmdundefined(void)
 {
   return first_autopat[(int)EVENT_CMDUNDEFINED] != NULL;
-}
-
-/// @returns true when there is an FuncUndefined autocommand defined.
-int has_funcundefined(void)
-{
-  return first_autopat[(int)EVENT_FUNCUNDEFINED] != NULL;
 }
 
 static int 

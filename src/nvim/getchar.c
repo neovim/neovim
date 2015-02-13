@@ -1544,22 +1544,6 @@ int vpeekc(void)
 }
 
 /*
- * Like vpeekc(), but don't allow mapping.  Do allow checking for terminal
- * codes.
- */
-int vpeekc_nomap(void)
-{
-  int c;
-
-  ++no_mapping;
-  ++allow_keys;
-  c = vpeekc();
-  --no_mapping;
-  --allow_keys;
-  return c;
-}
-
-/*
  * Check if any character is available, also half an escape sequence.
  * Trick: when no typeahead found, but there is something in the typeahead
  * buffer, it must be an ESC that is recognized as the start of a key code.
@@ -1927,8 +1911,6 @@ static int vgetorpeek(int advance)
 
           if ((mp == NULL || max_mlen >= mp_match_len)
               && keylen != KEYLEN_PART_MAP) {
-            int save_keylen = keylen;
-
             /*
              * When no matching mapping found or found a
              * non-matching mapping that matches at least what the
@@ -1945,25 +1927,7 @@ static int vgetorpeek(int advance)
                     || (p_remap && typebuf.tb_noremap[
                           typebuf.tb_off] == RM_YES))
                 && !timedout) {
-              keylen = check_termcode(max_mlen + 1,
-                  NULL, 0, NULL);
-
-              /* If no termcode matched but 'pastetoggle'
-               * matched partially it's like an incomplete key
-               * sequence. */
-              if (keylen == 0 && save_keylen == KEYLEN_PART_KEY)
-                keylen = KEYLEN_PART_KEY;
-
-              /*
-               * When getting a partial match, but the last
-               * characters were not typed, don't wait for a
-               * typed character to complete the termcode.
-               * This helps a lot when a ":normal" command ends
-               * in an ESC.
-               */
-              if (keylen < 0
-                  && typebuf.tb_len == typebuf.tb_maplen)
-                keylen = 0;
+              keylen = 0;
             } else
               keylen = 0;
             if (keylen == 0) {                  /* no matching terminal code */
@@ -2513,29 +2477,27 @@ fix_input_buffer (
     int script                     /* TRUE when reading from a script */
 )
 {
-  if (abstract_ui) {
-    // Should not escape K_SPECIAL/CSI while in embedded mode because vim key
-    // codes keys are processed in input.c/input_enqueue.
+  if (!using_script()) {
+    // Should not escape K_SPECIAL/CSI reading input from the user because vim
+    // key codes keys are processed in input.c/input_enqueue.
     buf[len] = NUL;
     return len;
   }
 
+  // Reading from script, need to process special bytes
   int i;
   char_u      *p = buf;
 
-  /*
-   * Two characters are special: NUL and K_SPECIAL.
-   * When compiled With the GUI CSI is also special.
-   * Replace	     NUL by K_SPECIAL KS_ZERO	 KE_FILLER
-   * Replace K_SPECIAL by K_SPECIAL KS_SPECIAL KE_FILLER
-   * Replace       CSI by K_SPECIAL KS_EXTRA   KE_CSI
-   * Don't replace K_SPECIAL when reading a script file.
-   */
+  // Two characters are special: NUL and K_SPECIAL.
+  // Replace	     NUL by K_SPECIAL KS_ZERO	 KE_FILLER
+  // Replace K_SPECIAL by K_SPECIAL KS_SPECIAL KE_FILLER
+  // Replace       CSI by K_SPECIAL KS_EXTRA   KE_CSI
+  // Don't replace K_SPECIAL when reading a script file.
   for (i = len; --i >= 0; ++p) {
     if (p[0] == NUL
         || (p[0] == K_SPECIAL
           && !script
-          && (i < 2 || p[1] != KS_EXTRA || is_user_input(p[2])))) {
+          && (i < 2 || p[1] != KS_EXTRA))) {
       memmove(p + 3, p + 1, (size_t)i);
       p[2] = K_THIRD(p[0]);
       p[1] = K_SECOND(p[0]);
@@ -2544,7 +2506,7 @@ fix_input_buffer (
       len += 2;
     }
   }
-  *p = NUL;             /* add trailing NUL */
+  *p = NUL;  // add trailing NUL
   return len;
 }
 
@@ -3768,11 +3730,6 @@ eval_map_expr (
   free(p);
 
   return res;
-}
-
-static bool is_user_input(int k)
-{
-  return k != (int)KE_EVENT && k != (int)KE_CURSORHOLD;
 }
 
 /*

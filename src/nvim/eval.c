@@ -9955,14 +9955,8 @@ static void f_has(typval_T *argvars, typval_T *rettv)
 #endif
     "tag_binary",
     "tag_old_static",
-#ifdef TERMINFO
-    "terminfo",
-#endif
     "termresponse",
     "textobjects",
-#ifdef HAVE_TGETENT
-    "tgetent",
-#endif
     "title",
     "user-commands",        /* was accidentally included in 5.4 */
     "user_commands",
@@ -14427,10 +14421,7 @@ static void f_synIDattr(typval_T *argvars, typval_T *rettv)
     if (modec != 't' && modec != 'c' && modec != 'g')
       modec = 0;        /* replace invalid with current */
   } else {
-    if (abstract_ui || t_colors > 1)
-      modec = 'c';
-    else
-      modec = 't';
+    modec = 'c';
   }
 
 
@@ -18078,21 +18069,6 @@ static int function_exists(char_u *name)
     n = translated_function_exists(p);
   free(p);
   return n;
-}
-
-char_u *get_expanded_name(char_u *name, int check)
-{
-  char_u      *nm = name;
-  char_u      *p;
-
-  p = trans_function_name(&nm, FALSE, TFN_INT|TFN_QUIET, NULL);
-
-  if (p != NULL && *nm == NUL)
-    if (!check || translated_function_exists(p))
-      return p;
-
-  free(p);
-  return NULL;
 }
 
 /// Return TRUE if "name" looks like a builtin function name: starts with a

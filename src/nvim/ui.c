@@ -91,28 +91,7 @@ void ui_write(uint8_t *s, int len)
     return;
   }
 
-  if (abstract_ui) {
-    parse_abstract_ui_codes(s, len);
-    return;
-  }
-
-  if (!len) {
-    return;
-  }
-
-  char_u  *tofree = NULL;
-
-  if (output_conv.vc_type != CONV_NONE) {
-    /* Convert characters from 'encoding' to 'termencoding'. */
-    tofree = string_convert(&output_conv, s, &len);
-    if (tofree != NULL)
-      s = tofree;
-  }
-
-  term_write(s, len);
-
-  if (output_conv.vc_type != CONV_NONE)
-    free(tofree);
+  parse_abstract_ui_codes(s, len);
 }
 
 bool ui_rgb_attached(void)
@@ -125,6 +104,11 @@ bool ui_rgb_attached(void)
   return false;
 }
 
+bool ui_active(void)
+{
+  return ui_count != 0;
+}
+
 /*
  * If the machine has job control, use it to suspend the program,
  * otherwise fake it by starting a new shell.
@@ -132,12 +116,8 @@ bool ui_rgb_attached(void)
  */
 void ui_suspend(void)
 {
-  if (abstract_ui) {
-    UI_CALL(suspend);
-    UI_CALL(flush);
-  } else {
-    mch_suspend();
-  }
+  UI_CALL(suspend);
+  UI_CALL(flush);
 }
 
 void ui_set_title(char *title)
@@ -153,46 +133,16 @@ void ui_set_icon(char *icon)
 }
 
 /*
- * Try to get the current Vim shell size.  Put the result in Rows and Columns.
- * Use the new sizes as defaults for 'columns' and 'lines'.
- * Return OK when size could be determined, FAIL otherwise.
- */
-int ui_get_shellsize(void)
-{
-  if (abstract_ui) {
-    return FAIL;
-  }
-
-  int retval;
-
-  retval = mch_get_shellsize();
-
-  check_shellsize();
-
-  /* adjust the default for 'lines' and 'columns' */
-  if (retval == OK) {
-    set_number_default("lines", Rows);
-    set_number_default("columns", Columns);
-  }
-  return retval;
-}
-
-/*
  * May update the shape of the cursor.
  */
 void ui_cursor_shape(void)
 {
-  if (abstract_ui) {
-    ui_change_mode();
-  } else {
-    term_cursor_shape();
-    conceal_check_cursur_line();
-  }
+  ui_change_mode();
 }
 
 void ui_refresh(void)
 {
-  if (!ui_count) {
+  if (!ui_active()) {
     return;
   }
 
@@ -204,7 +154,7 @@ void ui_refresh(void)
     height = ui->height < height ? ui->height : height;
   }
 
-  screen_resize(width, height, true);
+  screen_resize(width, height);
 }
 
 void ui_resize(int new_width, int new_height)
@@ -242,20 +192,12 @@ void ui_cursor_off(void)
 
 void ui_mouse_on(void)
 {
-  if (abstract_ui) {
-    UI_CALL(mouse_on);
-  } else {
-    mch_setmouse(true);
-  }
+  UI_CALL(mouse_on);
 }
 
 void ui_mouse_off(void)
 {
-  if (abstract_ui) {
-    UI_CALL(mouse_off);
-  } else {
-    mch_setmouse(false);
-  }
+  UI_CALL(mouse_off);
 }
 
 // Notify that the current mode has changed. Can be used to change cursor
@@ -390,7 +332,7 @@ static void set_highlight_args(int mask)
 
 static void parse_abstract_ui_codes(uint8_t *ptr, int len)
 {
-  if (!ui_count) {
+  if (!ui_active()) {
     return;
   }
 

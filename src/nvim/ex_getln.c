@@ -4618,35 +4618,6 @@ int del_history_idx(int histype, int idx)
   return TRUE;
 }
 
-
-/*
- * Very specific function to remove the value in ":set key=val" from the
- * history.
- */
-void remove_key_from_history(void)
-{
-  char_u      *p;
-  int i;
-
-  i = hisidx[HIST_CMD];
-  if (i < 0)
-    return;
-  p = history[HIST_CMD][i].hisstr;
-  if (p != NULL)
-    for (; *p; ++p)
-      if (STRNCMP(p, "key", 3) == 0 && !isalpha(p[3])) {
-        p = vim_strchr(p + 3, '=');
-        if (p == NULL)
-          break;
-        ++p;
-        for (i = 0; p[i] && !vim_iswhite(p[i]); ++i)
-          if (p[i] == '\\' && p[i + 1])
-            ++i;
-        STRMOVE(p, p + i);
-        --p;
-      }
-}
-
 /*
  * Get indices "num1,num2" that specify a range within a list (not a range of
  * text lines in a buffer!) from a string.  Used for ":history" and ":clist".

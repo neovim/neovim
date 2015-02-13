@@ -2395,11 +2395,6 @@ int get_keystroke(void)
     } else if (len > 0)
       ++waited;             /* keep track of the waiting time */
 
-    /* Incomplete termcode and not timed out yet: get more characters */
-    if ((n = check_termcode(1, buf, buflen, &len)) < 0
-        && (!p_ttimeout || waited * 100L < (p_ttm < 0 ? p_tm : p_ttm)))
-      continue;
-
     if (n == KEYLEN_REMOVED) {    /* key code removed */
       if (must_redraw != 0 && !need_wait_return && (State & CMDLINE) == 0) {
         /* Redrawing was postponed, do it now. */
@@ -3301,28 +3296,6 @@ home_replace_save (
   return dst;
 }
 
-void prepare_to_exit(void)
-{
-#if defined(SIGHUP) && defined(SIG_IGN)
-  /* Ignore SIGHUP, because a dropped connection causes a read error, which
-   * makes Vim exit and then handling SIGHUP causes various reentrance
-   * problems. */
-  signal(SIGHUP, SIG_IGN);
-#endif
-
-  {
-    windgoto((int)Rows - 1, 0);
-
-    /*
-     * Switch terminal mode back now, so messages end up on the "normal"
-     * screen (if there are two screens).
-     */
-    settmode(TMODE_COOK);
-    stoptermcap();
-    out_flush();
-  }
-}
-
 /*
  * Preserve files and exit.
  * When called IObuff must contain a message.
@@ -3340,9 +3313,6 @@ void preserve_exit(void)
   }
 
   really_exiting = true;
-
-  prepare_to_exit();
-
   out_str(IObuff);
   screen_start();                   // don't know where cursor is now
   out_flush();

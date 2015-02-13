@@ -20,7 +20,7 @@
 KMEMPOOL_INIT(SignalEventPool, int, SignalEventFreer)
 kmempool_t(SignalEventPool) *signal_event_pool = NULL;
 
-static uv_signal_t sint, spipe, shup, squit, sterm, swinch;
+static uv_signal_t spipe, shup, squit, sterm;
 #ifdef SIGPWR
 static uv_signal_t spwr;
 #endif
@@ -30,24 +30,18 @@ static bool rejecting_deadly;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/signal.c.generated.h"
 #endif
+
 void signal_init(void)
 {
   signal_event_pool = kmp_init(SignalEventPool);
-  uv_signal_init(uv_default_loop(), &sint);
   uv_signal_init(uv_default_loop(), &spipe);
   uv_signal_init(uv_default_loop(), &shup);
   uv_signal_init(uv_default_loop(), &squit);
   uv_signal_init(uv_default_loop(), &sterm);
-  uv_signal_init(uv_default_loop(), &swinch);
-  uv_signal_start(&sint, signal_cb, SIGINT);
   uv_signal_start(&spipe, signal_cb, SIGPIPE);
   uv_signal_start(&shup, signal_cb, SIGHUP);
   uv_signal_start(&squit, signal_cb, SIGQUIT);
   uv_signal_start(&sterm, signal_cb, SIGTERM);
-  if (!abstract_ui) {
-    // TODO(tarruda): There must be an API function for resizing window
-    uv_signal_start(&swinch, signal_cb, SIGWINCH);
-  }
 #ifdef SIGPWR
   uv_signal_init(uv_default_loop(), &spwr);
   uv_signal_start(&spwr, signal_cb, SIGPWR);
@@ -57,12 +51,10 @@ void signal_init(void)
 void signal_teardown(void)
 {
   signal_stop();
-  uv_close((uv_handle_t *)&sint, NULL);
   uv_close((uv_handle_t *)&spipe, NULL);
   uv_close((uv_handle_t *)&shup, NULL);
   uv_close((uv_handle_t *)&squit, NULL);
   uv_close((uv_handle_t *)&sterm, NULL);
-  uv_close((uv_handle_t *)&swinch, NULL);
 #ifdef SIGPWR
   uv_close((uv_handle_t *)&spwr, NULL);
 #endif
@@ -70,12 +62,10 @@ void signal_teardown(void)
 
 void signal_stop(void)
 {
-  uv_signal_stop(&sint);
   uv_signal_stop(&spipe);
   uv_signal_stop(&shup);
   uv_signal_stop(&squit);
   uv_signal_stop(&sterm);
-  uv_signal_stop(&swinch);
 #ifdef SIGPWR
   uv_signal_stop(&spwr);
 #endif
@@ -94,16 +84,12 @@ void signal_accept_deadly(void)
 static char * signal_name(int signum)
 {
   switch (signum) {
-    case SIGINT:
-      return "SIGINT";
 #ifdef SIGPWR
     case SIGPWR:
       return "SIGPWR";
 #endif
     case SIGPIPE:
       return "SIGPIPE";
-    case SIGWINCH:
-      return "SIGWINCH";
     case SIGTERM:
       return "SIGTERM";
     case SIGQUIT:
@@ -148,9 +134,6 @@ static void on_signal_event(Event event)
   kmp_free(SignalEventPool, signal_event_pool, event.data);
 
   switch (signum) {
-    case SIGINT:
-      got_int = true;
-      break;
 #ifdef SIGPWR
     case SIGPWR:
       // Signal of a power failure(eg batteries low), flush the swap files to
@@ -160,9 +143,6 @@ static void on_signal_event(Event event)
 #endif
     case SIGPIPE:
       // Ignore
-      break;
-    case SIGWINCH:
-      shell_resized();
       break;
     case SIGTERM:
     case SIGQUIT:

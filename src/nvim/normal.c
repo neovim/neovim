@@ -1834,7 +1834,6 @@ do_mouse (
     bool fixindent                  /* PUT_FIXINDENT if fixing indent necessary */
 )
 {
-  static bool do_always = false;        /* ignore 'mouse' setting next time */
   static bool got_click = false;        /* got a click some time back */
 
   int which_button;             /* MOUSE_LEFT, _MIDDLE or _RIGHT */
@@ -1858,23 +1857,6 @@ do_mouse (
   int regname;
 
   save_cursor = curwin->w_cursor;
-
-  // When "abstract_ui" is active, always recognize mouse events, otherwise:
-  // - Ignore mouse event in normal mode if 'mouse' doesn't include 'n'.
-  // - Ignore mouse event in visual mode if 'mouse' doesn't include 'v'.
-  // - For command line and insert mode 'mouse' is checked before calling
-  //   do_mouse().
-  if (!abstract_ui) {
-    if (do_always)
-      do_always = false;
-    else {
-      if (VIsual_active) {
-        if (!mouse_has(MOUSE_VISUAL))
-          return false;
-      } else if (State == NORMAL && !mouse_has(MOUSE_NORMAL))
-        return false;
-    }
-  }
 
   for (;; ) {
     which_button = get_mouse_button(KEY2TERMCAP1(c), &is_click, &is_drag);
@@ -1996,7 +1978,6 @@ do_mouse (
           stuffcharReadbuff('y');
           stuffcharReadbuff(K_MIDDLEMOUSE);
         }
-        do_always = true;               /* ignore 'mouse' setting next time */
         return false;
       }
       /*

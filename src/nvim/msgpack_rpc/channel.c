@@ -103,9 +103,7 @@ void channel_init(void)
     channel_from_stdio();
   }
 
-  if (abstract_ui) {
-    remote_ui_init();
-  }
+  remote_ui_init();
 }
 
 /// Teardown the module
@@ -174,13 +172,6 @@ void channel_from_stream(uv_stream_t *stream)
   channel->data.streams.write = wstream_new(0);
   wstream_set_stream(channel->data.streams.write, stream);
   channel->data.streams.uv = stream;
-}
-
-bool channel_exists(uint64_t id)
-{
-  Channel *channel;
-  return (channel = pmap_get(uint64_t)(channels, id)) != NULL
-    && !channel->closed;
 }
 
 /// Sends event/arguments to channel
@@ -665,10 +656,7 @@ static void on_stdio_close(Event e)
 
 static void free_channel(Channel *channel)
 {
-  if (abstract_ui) {
-    remote_ui_disconnect(channel->id);
-  }
-
+  remote_ui_disconnect(channel->id);
   pmap_del(uint64_t)(channels, channel->id);
   msgpack_unpacker_free(channel->unpacker);
 

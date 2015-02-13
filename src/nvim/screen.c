@@ -232,119 +232,6 @@ void redraw_buf_later(buf_T *buf, int type)
 }
 
 /*
- * Redraw as soon as possible.  When the command line is not scrolled redraw
- * right away and restore what was on the command line.
- * Return a code indicating what happened.
- */
-int redraw_asap(int type)
-{
-  int rows;
-  int r;
-  int ret = 0;
-  schar_T     *screenline;      /* copy from ScreenLines[] */
-  sattr_T     *screenattr;      /* copy from ScreenAttrs[] */
-  int i;
-  u8char_T    *screenlineUC = NULL;     /* copy from ScreenLinesUC[] */
-  u8char_T    *screenlineC[MAX_MCO];    /* copy from ScreenLinesC[][] */
-  schar_T     *screenline2 = NULL;      /* copy from ScreenLines2[] */
-  const bool l_enc_utf8 = enc_utf8;
-  const int l_enc_dbcs = enc_dbcs;
-  const long l_p_mco = p_mco;
-
-  redraw_later(type);
-  if (msg_scrolled || (State != NORMAL && State != NORMAL_BUSY))
-    return ret;
-
-  /* Allocate space to save the text displayed in the command line area. */
-  rows = Rows - cmdline_row;
-  screenline = xmalloc((size_t)(rows * Columns * sizeof(schar_T)));
-  screenattr = xmalloc((size_t)(rows * Columns * sizeof(sattr_T)));
-
-  if (l_enc_utf8) {
-    screenlineUC = xmalloc((size_t)(rows * Columns * sizeof(u8char_T)));
-
-    for (i = 0; i < l_p_mco; ++i) {
-      screenlineC[i] = xmalloc((size_t)(rows * Columns * sizeof(u8char_T)));
-    }
-  }
-  if (l_enc_dbcs == DBCS_JPNU) {
-    screenline2 = xmalloc((size_t)(rows * Columns * sizeof(schar_T)));
-  }
-
-  /* Save the text displayed in the command line area. */
-  for (r = 0; r < rows; ++r) {
-    memmove(screenline + r * Columns,
-        ScreenLines + LineOffset[cmdline_row + r],
-        (size_t)Columns * sizeof(schar_T));
-    memmove(screenattr + r * Columns,
-        ScreenAttrs + LineOffset[cmdline_row + r],
-        (size_t)Columns * sizeof(sattr_T));
-    if (l_enc_utf8) {
-      memmove(screenlineUC + r * Columns,
-          ScreenLinesUC + LineOffset[cmdline_row + r],
-          (size_t)Columns * sizeof(u8char_T));
-      for (i = 0; i < l_p_mco; ++i)
-        memmove(screenlineC[i] + r * Columns,
-            ScreenLinesC[r] + LineOffset[cmdline_row + r],
-            (size_t)Columns * sizeof(u8char_T));
-    }
-    if (l_enc_dbcs == DBCS_JPNU)
-      memmove(screenline2 + r * Columns,
-          ScreenLines2 + LineOffset[cmdline_row + r],
-          (size_t)Columns * sizeof(schar_T));
-  }
-
-  update_screen(0);
-  ret = 3;
-
-  if (must_redraw == 0) {
-    int off = (int)(current_ScreenLine - ScreenLines);
-
-    /* Restore the text displayed in the command line area. */
-    for (r = 0; r < rows; ++r) {
-      memmove(current_ScreenLine,
-          screenline + r * Columns,
-          (size_t)Columns * sizeof(schar_T));
-      memmove(ScreenAttrs + off,
-          screenattr + r * Columns,
-          (size_t)Columns * sizeof(sattr_T));
-      if (l_enc_utf8) {
-        memmove(ScreenLinesUC + off,
-            screenlineUC + r * Columns,
-            (size_t)Columns * sizeof(u8char_T));
-        for (i = 0; i < l_p_mco; ++i)
-          memmove(ScreenLinesC[i] + off,
-              screenlineC[i] + r * Columns,
-              (size_t)Columns * sizeof(u8char_T));
-      }
-      if (l_enc_dbcs == DBCS_JPNU)
-        memmove(ScreenLines2 + off,
-            screenline2 + r * Columns,
-            (size_t)Columns * sizeof(schar_T));
-      SCREEN_LINE(cmdline_row + r, 0, Columns, Columns, FALSE);
-    }
-    ret = 4;
-  }
-
-  free(screenline);
-  free(screenattr);
-  if (l_enc_utf8) {
-    free(screenlineUC);
-    for (i = 0; i < l_p_mco; ++i)
-      free(screenlineC[i]);
-  }
-  if (l_enc_dbcs == DBCS_JPNU)
-    free(screenline2);
-
-  /* Show the intro message when appropriate. */
-  maybe_intro_message();
-
-  setcursor();
-
-  return ret;
-}
-
-/*
  * Changed something in the current window, at buffer line "lnum", that
  * requires that line and possibly other lines to be redrawn.
  * Used when entering/leaving Insert mode with the cursor on a folded line.
@@ -5837,154 +5724,23 @@ next_search_hl_pos(
 
 static void screen_start_highlight(int attr)
 {
-  attrentry_T *aep = NULL;
-
   screen_attr = attr;
   if (full_screen) {
-    if (abstract_ui) {
-      char buf[20];
-      sprintf(buf, "\033|%dh", attr);
-      OUT_STR(buf);
-    } else {
-      if (attr > HL_ALL) {                              /* special HL attr. */
-        if (t_colors > 1)
-          aep = syn_cterm_attr2entry(attr);
-        else
-          aep = syn_term_attr2entry(attr);
-        if (aep == NULL)                    /* did ":syntax clear" */
-          attr = 0;
-        else
-          attr = aep->ae_attr;
-      }
-      if ((attr & HL_BOLD) && T_MD != NULL)             /* bold */
-        out_str(T_MD);
-      else if (aep != NULL && t_colors > 1 && aep->ae_u.cterm.fg_color
-               && cterm_normal_fg_bold)
-        /* If the Normal FG color has BOLD attribute and the new HL
-         * has a FG color defined, clear BOLD. */
-        out_str(T_ME);
-      if ((attr & HL_STANDOUT) && T_SO != NULL)         /* standout */
-        out_str(T_SO);
-      if ((attr & (HL_UNDERLINE | HL_UNDERCURL)) && T_US != NULL)
-        /* underline or undercurl */
-        out_str(T_US);
-      if ((attr & HL_ITALIC) && T_CZH != NULL)          /* italic */
-        out_str(T_CZH);
-      if ((attr & HL_INVERSE) && T_MR != NULL)          /* inverse (reverse) */
-        out_str(T_MR);
-
-      /*
-       * Output the color or start string after bold etc., in case the
-       * bold etc. override the color setting.
-       */
-      if (aep != NULL) {
-        if (t_colors > 1) {
-          if (aep->ae_u.cterm.fg_color)
-            term_fg_color(aep->ae_u.cterm.fg_color - 1);
-          if (aep->ae_u.cterm.bg_color)
-            term_bg_color(aep->ae_u.cterm.bg_color - 1);
-        } else {
-          if (aep->ae_u.term.start != NULL)
-            out_str(aep->ae_u.term.start);
-        }
-      }
-    }
+    char buf[20];
+    sprintf(buf, "\033|%dh", attr);
+    OUT_STR(buf);
   }
 }
 
 void screen_stop_highlight(void)
 {
-  int do_ME = FALSE;                /* output T_ME code */
-
   if (screen_attr != 0) {
-    if (abstract_ui) {
-      // Handled in ui.c
-      char buf[20];
-      sprintf(buf, "\033|%dH", screen_attr);
-      OUT_STR(buf);
-    } else {
-      if (screen_attr > HL_ALL) {                       /* special HL attr. */
-        attrentry_T *aep;
-
-        if (t_colors > 1) {
-          /*
-           * Assume that t_me restores the original colors!
-           */
-          aep = syn_cterm_attr2entry(screen_attr);
-          if (aep != NULL && (aep->ae_u.cterm.fg_color
-                              || aep->ae_u.cterm.bg_color))
-            do_ME = TRUE;
-        } else {
-          aep = syn_term_attr2entry(screen_attr);
-          if (aep != NULL && aep->ae_u.term.stop != NULL) {
-            if (STRCMP(aep->ae_u.term.stop, T_ME) == 0)
-              do_ME = TRUE;
-            else
-              out_str(aep->ae_u.term.stop);
-          }
-        }
-        if (aep == NULL)                    /* did ":syntax clear" */
-          screen_attr = 0;
-        else
-          screen_attr = aep->ae_attr;
-      }
-
-      /*
-       * Often all ending-codes are equal to T_ME.  Avoid outputting the
-       * same sequence several times.
-       */
-      if (screen_attr & HL_STANDOUT) {
-        if (STRCMP(T_SE, T_ME) == 0)
-          do_ME = TRUE;
-        else
-          out_str(T_SE);
-      }
-      if (screen_attr & (HL_UNDERLINE | HL_UNDERCURL)) {
-        if (STRCMP(T_UE, T_ME) == 0)
-          do_ME = TRUE;
-        else
-          out_str(T_UE);
-      }
-      if (screen_attr & HL_ITALIC) {
-        if (STRCMP(T_CZR, T_ME) == 0)
-          do_ME = TRUE;
-        else
-          out_str(T_CZR);
-      }
-      if (do_ME || (screen_attr & (HL_BOLD | HL_INVERSE)))
-        out_str(T_ME);
-
-      if (t_colors > 1) {
-        /* set Normal cterm colors */
-        if (cterm_normal_fg_color != 0)
-          term_fg_color(cterm_normal_fg_color - 1);
-        if (cterm_normal_bg_color != 0)
-          term_bg_color(cterm_normal_bg_color - 1);
-        if (cterm_normal_fg_bold)
-          out_str(T_MD);
-      }
-    }
+    // Handled in ui.c
+    char buf[20];
+    sprintf(buf, "\033|%dH", screen_attr);
+    OUT_STR(buf);
   }
   screen_attr = 0;
-}
-
-/*
- * Reset the colors for a cterm.  Used when leaving Vim.
- * The machine specific code may override this again.
- */
-void reset_cterm_colors(void)
-{
-  if (!abstract_ui && t_colors > 1) {
-    /* set Normal cterm colors */
-    if (cterm_normal_fg_color > 0 || cterm_normal_bg_color > 0) {
-      out_str(T_OP);
-      screen_attr = -1;
-    }
-    if (cterm_normal_fg_bold) {
-      out_str(T_ME);
-      screen_attr = -1;
-    }
-  }
 }
 
 /*
@@ -6138,7 +5894,6 @@ void screen_fill(int start_row, int end_row, int start_col, int end_col, int c1,
   int end_off;
   int did_delete;
   int c;
-  int norm_term;
 #if defined(FEAT_GUI) || defined(UNIX)
   int force_next = FALSE;
 #endif
@@ -6153,7 +5908,6 @@ void screen_fill(int start_row, int end_row, int start_col, int end_col, int c1,
     return;
 
   /* it's a "normal" terminal when not in a GUI or cterm */
-  norm_term = (!abstract_ui && t_colors <= 1);
   for (row = start_row; row < end_row; ++row) {
     if (has_mbyte
         ) {
@@ -6174,11 +5928,7 @@ void screen_fill(int start_row, int end_row, int start_col, int end_col, int c1,
     did_delete = FALSE;
     if (c2 == ' '
         && end_col == Columns
-        && can_clear(T_CE)
-        && (attr == 0
-            || (norm_term
-                && attr <= HL_ALL
-                && ((attr & ~(HL_BOLD | HL_ITALIC)) == 0)))) {
+        && attr == 0) {
       /*
        * check if we really need to clear something
        */
@@ -6584,10 +6334,6 @@ static void screenclear2(void)
     return;
   }
 
-  if (!abstract_ui) {
-    screen_attr = -1;             /* force setting the Normal colors */
-  }
-
   screen_stop_highlight();      /* don't want highlighting here */
 
 
@@ -6597,17 +6343,9 @@ static void screenclear2(void)
     LineWraps[i] = FALSE;
   }
 
-  if (can_clear(T_CL)) {
-    out_str(T_CL);              /* clear the display */
-    clear_cmdline = FALSE;
-    mode_displayed = FALSE;
-  } else {
-    /* can't clear the screen, mark all chars with invalid attributes */
-    for (i = 0; i < Rows; ++i)
-      lineinvalid(LineOffset[i], (int)Columns);
-    clear_cmdline = TRUE;
-  }
-
+  out_str(T_CL);              /* clear the display */
+  clear_cmdline = FALSE;
+  mode_displayed = FALSE;
   screen_cleared = TRUE;        /* can use contents of ScreenLines now */
 
   win_rest_invalid(firstwin);
@@ -6637,15 +6375,6 @@ static void lineclear(unsigned off, int width)
 }
 
 /*
- * Mark one line in ScreenLines invalid by setting the attributes to an
- * invalid value.
- */
-static void lineinvalid(unsigned off, int width)
-{
-  (void)memset(ScreenAttrs + off, -1, (size_t)width * sizeof(sattr_T));
-}
-
-/*
  * Copy part of a Screenline for vertically split window "wp".
  */
 static void linecopy(int to, int from, win_T *wp)
@@ -6669,16 +6398,6 @@ static void linecopy(int to, int from, win_T *wp)
         wp->w_width * sizeof(schar_T));
   memmove(ScreenAttrs + off_to, ScreenAttrs + off_from,
       wp->w_width * sizeof(sattr_T));
-}
-
-/*
- * Return TRUE if clearing with term string "p" would work.
- * It can't work when the string is empty or it won't set the right background.
- */
-int can_clear(char_u *p)
-{
-  return abstract_ui || (*p != NUL && (t_colors <= 1
-        || cterm_normal_bg_color == 0 || *T_UT != NUL));
 }
 
 /*
@@ -7167,7 +6886,7 @@ screen_ins_lines (
   int cursor_row;
   int type;
   int result_empty;
-  int can_ce = can_clear(T_CE);
+  int can_ce = true;
 
   /*
    * FAIL if
@@ -7207,7 +6926,7 @@ screen_ins_lines (
   result_empty = (row + line_count >= end);
   if (wp != NULL && wp->w_width != Columns && *T_CSV == NUL)
     type = USE_REDRAW;
-  else if (can_clear(T_CD) && result_empty)
+  else if (result_empty)
     type = USE_T_CD;
   else if (*T_CAL != NUL && (line_count > 1 || *T_AL == NUL))
     type = USE_T_CAL;
@@ -7260,10 +6979,7 @@ screen_ins_lines (
       while ((j -= line_count) >= row)
         linecopy(j + line_count, j, wp);
       j += line_count;
-      if (can_clear((char_u *)" "))
-        lineclear(LineOffset[j] + wp->w_wincol, wp->w_width);
-      else
-        lineinvalid(LineOffset[j] + wp->w_wincol, wp->w_width);
+      lineclear(LineOffset[j] + wp->w_wincol, wp->w_width);
       LineWraps[j] = FALSE;
     } else {
       j = end - 1 - i;
@@ -7274,10 +6990,7 @@ screen_ins_lines (
       }
       LineOffset[j + line_count] = temp;
       LineWraps[j + line_count] = FALSE;
-      if (can_clear((char_u *)" "))
-        lineclear(temp, (int)Columns);
-      else
-        lineinvalid(temp, (int)Columns);
+      lineclear(temp, (int)Columns);
     }
   }
 
@@ -7364,7 +7077,7 @@ screen_del_lines (
    * We can delete lines only when 'db' flag not set or when 'ce' option
    * available.
    */
-  can_delete = (*T_DB == NUL || can_clear(T_CE));
+  can_delete = true;
 
   /*
    * There are six ways to delete lines:
@@ -7380,7 +7093,7 @@ screen_del_lines (
    */
   if (wp != NULL && wp->w_width != Columns && *T_CSV == NUL)
     type = USE_REDRAW;
-  else if (can_clear(T_CD) && result_empty)
+  else if (result_empty)
     type = USE_T_CD;
   else if (row == 0 && (
              /* On the Amiga, somehow '\n' on the last line doesn't always scroll
@@ -7390,9 +7103,7 @@ screen_del_lines (
     type = USE_NL;
   else if (*T_CDL != NUL && line_count > 1 && can_delete)
     type = USE_T_CDL;
-  else if (can_clear(T_CE) && result_empty
-           && (wp == NULL || wp->w_width == Columns)
-           )
+  else if (result_empty && (wp == NULL || wp->w_width == Columns))
     type = USE_T_CE;
   else if (*T_DL != NUL && can_delete)
     type = USE_T_DL;
@@ -7424,10 +7135,7 @@ screen_del_lines (
       while ((j += line_count) <= end - 1)
         linecopy(j - line_count, j, wp);
       j -= line_count;
-      if (can_clear((char_u *)" "))
-        lineclear(LineOffset[j] + wp->w_wincol, wp->w_width);
-      else
-        lineinvalid(LineOffset[j] + wp->w_wincol, wp->w_width);
+      lineclear(LineOffset[j] + wp->w_wincol, wp->w_width);
       LineWraps[j] = FALSE;
     } else {
       /* whole width, moving the line pointers is faster */
@@ -7439,10 +7147,7 @@ screen_del_lines (
       }
       LineOffset[j - line_count] = temp;
       LineWraps[j - line_count] = FALSE;
-      if (can_clear((char_u *)" "))
-        lineclear(temp, (int)Columns);
-      else
-        lineinvalid(temp, (int)Columns);
+      lineclear(temp, (int)Columns);
     }
   }
 
@@ -8153,7 +7858,7 @@ int screen_screenrow(void)
  * If 'mustset' is FALSE, we may try to get the real window size and if
  * it fails use 'width' and 'height'.
  */
-void screen_resize(int width, int height, int mustset)
+void screen_resize(int width, int height)
 {
   static int busy = FALSE;
 
@@ -8182,24 +7887,15 @@ void screen_resize(int width, int height, int mustset)
 
   ++busy;
 
-  // TODO(tarruda): "mustset" is still used in the old tests, which don't use
-  // "abstract_ui" yet. This will change when a new TUI is merged.
-  if (abstract_ui || mustset || (ui_get_shellsize() == FAIL && height != 0)) {
-    Rows = height;
-    Columns = width;
-  }
+  Rows = height;
+  Columns = width;
   check_shellsize();
   height = Rows;
   width = Columns;
-
-  if (abstract_ui) {
-    // Clear the output buffer to ensure UIs don't receive redraw command meant
-    // for invalid screen sizes.
-    out_buf_clear();
-    ui_resize(width, height);
-  } else {
-    mch_set_shellsize();
-  }
+  // Clear the output buffer to ensure UIs don't receive redraw command meant
+  // for invalid screen sizes.
+  out_buf_clear();
+  ui_resize(width, height);
 
   /* The window layout used to be adjusted here, but it now happens in
    * screenalloc() (also invoked from screenclear()).  That is because the

@@ -2483,7 +2483,7 @@ return {
   {
     command='winpos',
     flags=bit.bor(EXTRA, TRLBAR, CMDWIN),
-    func='ex_winpos',
+    func='ex_ni',
   },
   {
     command='wnext',

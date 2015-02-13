@@ -95,7 +95,12 @@ typedef struct {
   char_u      *use_ef;                  /* 'errorfile' from -q argument */
 
   int want_full_screen;
-  bool stdout_isatty;                   /* is stdout a terminal? */
+  bool input_isatty;                    // stdin is a terminal
+  bool output_isatty;                   // stdout is a terminal
+  bool err_isatty;                      // stderr is a terminal
+  bool headless;                        // Dont try to start an user interface
+                                        // or read/write to stdio(unless
+                                        // embedding)
   char_u      *term;                    /* specified terminal name */
   int no_swap_file;                     /* "-n" argument used */
   int use_debug_break_level;
@@ -197,9 +202,7 @@ int main(int argc, char **argv)
 
   early_init();
 
-  /*
-   * Check if we have an interactive window.
-   */
+  // Check if we have an interactive window.
   check_and_set_isatty(&params);
 
   /*
@@ -242,34 +245,20 @@ int main(int argc, char **argv)
     printf(_("%d files to edit\n"), GARGCOUNT);
 
   if (params.want_full_screen && !silent_mode) {
-    if (embedded_mode) {
-      // embedded mode implies abstract_ui
-      termcapinit((uint8_t *)"abstract_ui");
-    } else {
-      // set terminal name and get terminal capabilities (will set full_screen)
-      // Do some initialization of the screen
-      termcapinit(params.term);
-    }
+    termcapinit((uint8_t *)"abstract_ui");
     screen_start();             /* don't know where cursor is now */
     TIME_MSG("Termcap init");
   }
 
   event_init();
-
-  if (abstract_ui) {
-    full_screen = true;
-    t_colors = 256;
-    T_CCO = (uint8_t *)"256";
-  } else {
-    // Print a warning if stdout is not a terminal TODO(tarruda): Remove this
-    // check once the new terminal UI is implemented
-    check_tty(&params);
-  }
+  full_screen = true;
+  t_colors = 256;
+  T_CCO = (uint8_t *)"256";
+  check_tty(&params);
 
   /*
    * Set the default values for the options that use Rows and Columns.
    */
-  ui_get_shellsize();           /* inits Rows and Columns */
   win_init_size();
   /* Set the 'diff' option now, so that it can be checked for in a .vimrc
    * file.  There is no buffer yet though. */
@@ -382,25 +371,20 @@ int main(int argc, char **argv)
     newline_on_exit = TRUE;
 #endif
 
-  /*
-   * When done something that is not allowed or error message call
-   * wait_return.  This must be done before starttermcap(), because it may
-   * switch to another screen. It must be done after settmode(TMODE_RAW),
-   * because we want to react on a single key stroke.
-   * Call settmode and starttermcap here, so the T_KS and T_TI may be
-   * defined by termcapinit and redefined in .exrc.
-   */
-  settmode(TMODE_RAW);
-  TIME_MSG("setting raw mode");
-
-  if (need_wait_return || msg_didany) {
-    wait_return(TRUE);
-    TIME_MSG("waiting for return");
+  if (!params.headless && (params.output_isatty || params.err_isatty)) {
+    if (params.input_isatty && (need_wait_return || msg_didany)) {
+      // Since at this point there's no UI instance running yet, error messages
+      // would have been printed to stdout. Before starting (which can result
+      // in a alternate screen buffer being shown) we need confirmation that
+      // the user has seen the messages and that is done with a call to
+      // wait_return. For that to work, stdin must be openend temporarily.
+      input_start_stdin();
+      wait_return(TRUE);
+      TIME_MSG("waiting for return");
+      input_stop_stdin();
+    }
   }
 
-  starttermcap(); // start termcap if not done by wait_return()
-  TIME_MSG("start termcap");
-  may_req_ambiguous_char_width();
   setmouse();  // may start using the mouse
 
   if (scroll_region) {
@@ -479,10 +463,6 @@ int main(int argc, char **argv)
   redraw_all_later(NOT_VALID);
   no_wait_return = FALSE;
   starting = 0;
-
-  /* Requesting the termresponse is postponed until here, so that a "-c q"
-   * argument doesn't make it appear in the shell Vim was started from. */
-  may_req_termresponse();
 
   /* start in insert mode */
   if (p_im)
@@ -965,14 +945,14 @@ static void command_line_scan(mparm_T *parmp)
       c = argv[0][argv_idx++];
       switch (c) {
         case NUL:                 /* "vim -"  read from stdin */
-          /* "ex -" silent mode */
-          if (exmode_active)
+          if (exmode_active) {
+            // "ex -" silent mode
             silent_mode = TRUE;
-          else {
-            if (parmp->edit_type != EDIT_NONE)
+          } else {
+            if (parmp->edit_type != EDIT_NONE) {
               mainerr(ME_TOO_MANY_ARGS, argv[0]);
+            }
             parmp->edit_type = EDIT_STDIN;
-            read_cmd_fd = 2;              /* read from stderr instead of stdin */
           }
           argv_idx = -1;                  /* skip to next argument */
           break;
@@ -1006,6 +986,7 @@ static void command_line_scan(mparm_T *parmp)
             mch_exit(0);
           } else if (STRICMP(argv[0] + argv_idx, "embed") == 0) {
             embedded_mode = true;
+            parmp->headless = true;
           } else if (STRNICMP(argv[0] + argv_idx, "literal", 7) == 0) {
 #if !defined(UNIX)
             parmp->literal = TRUE;
@@ -1418,7 +1399,8 @@ static void init_params(mparm_T *paramp, int argc, char **argv)
   memset(paramp, 0, sizeof(*paramp));
   paramp->argc = argc;
   paramp->argv = argv;
-  paramp->want_full_screen = TRUE;
+  paramp->headless = false;
+  paramp->want_full_screen = true;
   paramp->use_debug_break_level = -1;
   paramp->window_count = -1;
 }
@@ -1439,15 +1421,13 @@ static void init_startuptime(mparm_T *paramp)
   starttime = time(NULL);
 }
 
-/*
- * Check if we have an interactive window.
- */
 static void check_and_set_isatty(mparm_T *paramp)
 {
-  paramp->stdout_isatty = os_isatty(STDOUT_FILENO);
+  paramp->input_isatty = os_isatty(fileno(stdin));
+  paramp->output_isatty = os_isatty(fileno(stdout));
+  paramp->err_isatty = os_isatty(fileno(stderr));
   TIME_MSG("window checked");
 }
-
 /*
  * Get filename from command line, given that there is one.
  */
@@ -1532,27 +1512,42 @@ static void handle_tag(char_u *tagname)
   }
 }
 
-/*
- * Print a warning if stdout is not a terminal.
- * When starting in Ex mode and commands come from a file, set Silent mode.
- */
+// Print a warning if stdout is not a terminal.
+// When starting in Ex mode and commands come from a file, set Silent mode.
 static void check_tty(mparm_T *parmp)
 {
+  if (parmp->headless) {
+    return;
+  }
+
   // is active input a terminal?
-  bool input_isatty = os_isatty(read_cmd_fd);
   if (exmode_active) {
-    if (!input_isatty)
-      silent_mode = TRUE;
-  } else if (parmp->want_full_screen && (!parmp->stdout_isatty || !input_isatty)
-      ) {
-    if (!parmp->stdout_isatty)
+    if (!parmp->input_isatty) {
+      silent_mode = true;
+    }
+  } else if (parmp->want_full_screen && (!parmp->err_isatty
+        && (!parmp->output_isatty || !parmp->input_isatty))) {
+
+    if (!parmp->output_isatty) {
       mch_errmsg(_("Vim: Warning: Output is not to a terminal\n"));
-    if (!input_isatty)
+    }
+
+    if (!parmp->input_isatty) {
       mch_errmsg(_("Vim: Warning: Input is not from a terminal\n"));
+    }
+
     out_flush();
-    if (scriptin[0] == NULL)
+
+    if (scriptin[0] == NULL) {
       os_delay(2000L, true);
+    }
+
     TIME_MSG("Warning delay");
+  }
+
+  if (parmp->edit_type != EDIT_STDIN && !parmp->input_isatty) {
+    // read commands from directly from stdin
+    input_start_stdin();
   }
 }
 
@@ -1573,13 +1568,6 @@ static void read_stdin(void)
   msg_didany = i;
   TIME_MSG("reading stdin");
   check_swap_exists_action();
-  /*
-   * Close stdin and dup it from stderr.  Required for GPM to work
-   * properly, and for running external commands.
-   * Is there any other system that cannot do this?
-   */
-  close(0);
-  ignored = dup(2);
 }
 
 /*

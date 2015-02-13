@@ -56,16 +56,8 @@
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/msgpack_rpc/defs.h"
 
-#if defined(HAVE_SYS_IOCTL_H)
-# include <sys/ioctl.h>
-#endif
-
 #ifdef HAVE_STROPTS_H
 # include <stropts.h>
-#endif
-
-#if defined(HAVE_TERMIOS_H)
-# include <termios.h>
 #endif
 
 #ifdef HAVE_SELINUX
@@ -81,53 +73,6 @@ static char_u   *oldtitle = NULL;
 static int did_set_title = FALSE;
 static char_u   *oldicon = NULL;
 static int did_set_icon = FALSE;
-
-/*
- * If the machine has job control, use it to suspend the program,
- * otherwise fake it by starting a new shell.
- */
-void mch_suspend(void)
-{
-#if defined(SIGTSTP)
-  out_flush();              /* needed to make cursor visible on some systems */
-  settmode(TMODE_COOK);
-  out_flush();              /* needed to disable mouse on some systems */
-
-  // Note: compiler defines _REENTRANT when given -pthread flag.
-# if defined(_REENTRANT) && defined(SIGCONT)
-  sigcont_received = FALSE;
-# endif
-  uv_kill(0, SIGTSTP);         // send ourselves a STOP signal
-# if defined(_REENTRANT) && defined(SIGCONT)
-  /*
-   * Wait for the SIGCONT signal to be handled. It generally happens
-   * immediately, but somehow not all the time. Do not call pause()
-   * because there would be race condition which would hang Vim if
-   * signal happened in between the test of sigcont_received and the
-   * call to pause(). If signal is not yet received, call sleep(0)
-   * to just yield CPU. Signal should then be received. If somehow
-   * it's still not received, sleep 1, 2, 3 ms. Don't bother waiting
-   * further if signal is not received after 1+2+3+4 ms (not expected
-   * to happen).
-   */
-  {
-    long wait_time;
-    for (wait_time = 0; !sigcont_received && wait_time <= 3L; wait_time++)
-      /* Loop is not entered most of the time */
-      os_delay(wait_time, false);
-  }
-# endif
-
-  /*
-   * Set oldtitle to NULL, so the current title is obtained again.
-   */
-  free(oldtitle);
-  oldtitle = NULL;
-  settmode(TMODE_RAW);
-  need_check_timestamps = TRUE;
-  did_check_timestamps = FALSE;
-#endif
-}
 
 static int get_x11_title(int test_only)
 {
@@ -161,7 +106,6 @@ int mch_can_restore_icon(void)
  */
 void mch_settitle(char_u *title, char_u *icon)
 {
-  int type = 0;
   static int recursive = 0;
 
   if (T_NAME == NULL)       /* no terminal name (yet) */
@@ -175,39 +119,13 @@ void mch_settitle(char_u *title, char_u *icon)
     return;
   ++recursive;
 
-  /*
-   * if the window ID and the display is known, we may use X11 calls
-   */
-
-  /*
-   * Note: if "t_ts" is set, title is set with escape sequence rather
-   *	     than x11 calls, because the x11 calls don't always work
-   */
-  if ((type || *T_TS != NUL || abstract_ui) && title != NULL) {
-    if (oldtitle == NULL
-        )                       /* first call but not in GUI, save title */
-      (void)get_x11_title(FALSE);
-
-    if (abstract_ui) {
-      ui_set_title((char *)title);
-    } else if (*T_TS != NUL)                   /* it's OK if t_fs is empty */
-      term_settitle(title);
+  if (title != NULL) {
+    ui_set_title((char *)title);
     did_set_title = TRUE;
   }
 
-  if ((type || *T_CIS != NUL || abstract_ui) && icon != NULL) {
-    if (oldicon == NULL
-        )                       /* first call, save icon */
-      get_x11_icon(FALSE);
-
-    if (abstract_ui) {
-      ui_set_icon((char *)icon);
-    } else if (*T_CIS != NUL) {
-      out_str(T_CIS);                           /* set icon start */
-      out_str_nf(icon);
-      out_str(T_CIE);                           /* set icon end */
-      out_flush();
-    }
+  if (icon != NULL) {
+    ui_set_icon((char *)icon);
     did_set_icon = TRUE;
   }
   --recursive;
@@ -481,7 +399,6 @@ void mch_exit(int r)
   exiting = TRUE;
 
   {
-    settmode(TMODE_COOK);
     mch_restore_title(3);       /* restore xterm title and icon name */
     /*
      * When t_ti is not empty but it doesn't cause swapping terminal
@@ -491,10 +408,6 @@ void mch_exit(int r)
      */
     if (swapping_screen() && !newline_on_exit)
       exit_scroll();
-
-    /* Stop termcap: May need to check for T_CRV response, which
-     * requires RAW mode. */
-    stoptermcap();
 
     /*
      * A newline is only required after a message in the alternate screen.
@@ -522,143 +435,6 @@ void mch_exit(int r)
 #endif
 
   exit(r);
-}
-
-void mch_settmode(int tmode)
-{
-  static int first = TRUE;
-
-#if defined(ECHOE) && defined(ICANON) && (defined(HAVE_TERMIO_H) || \
-  defined(HAVE_TERMIOS_H))
-  /*
-   * for "new" tty systems
-   */
-# ifdef HAVE_TERMIOS_H
-  static struct termios told;
-  struct termios tnew;
-# else
-  static struct termio told;
-  struct termio tnew;
-# endif
-
-  if (first) {
-    first = FALSE;
-# if defined(HAVE_TERMIOS_H)
-    tcgetattr(read_cmd_fd, &told);
-# else
-    ioctl(read_cmd_fd, TCGETA, &told);
-# endif
-  }
-
-  tnew = told;
-  if (tmode == TMODE_RAW) {
-    /*
-     * ~ICRNL enables typing ^V^M
-     */
-    tnew.c_iflag &= ~ICRNL;
-    tnew.c_lflag &= ~(ICANON | ECHO | ISIG | ECHOE
-# if defined(IEXTEN)
-                      | IEXTEN      /* IEXTEN enables typing ^V on SOLARIS */
-# endif
-                      );
-# ifdef ONLCR       /* don't map NL -> CR NL, we do it ourselves */
-    tnew.c_oflag &= ~ONLCR;
-# endif
-    tnew.c_cc[VMIN] = 1;                /* return after 1 char */
-    tnew.c_cc[VTIME] = 0;               /* don't wait */
-  } else if (tmode == TMODE_SLEEP)
-    tnew.c_lflag &= ~(ECHO);
-
-# if defined(HAVE_TERMIOS_H)
-  {
-    int n = 10;
-
-    /* A signal may cause tcsetattr() to fail (e.g., SIGCONT).  Retry a
-     * few times. */
-    while (tcsetattr(read_cmd_fd, TCSANOW, &tnew) == -1
-           && errno == EINTR && n > 0)
-      --n;
-  }
-# else
-  ioctl(read_cmd_fd, TCSETA, &tnew);
-# endif
-
-#else
-
-  /*
-   * for "old" tty systems
-   */
-# ifndef TIOCSETN
-#  define TIOCSETN TIOCSETP     /* for hpux 9.0 */
-# endif
-  static struct sgttyb ttybold;
-  struct sgttyb ttybnew;
-
-  if (first) {
-    first = FALSE;
-    ioctl(read_cmd_fd, TIOCGETP, &ttybold);
-  }
-
-  ttybnew = ttybold;
-  if (tmode == TMODE_RAW) {
-    ttybnew.sg_flags &= ~(CRMOD | ECHO);
-    ttybnew.sg_flags |= RAW;
-  } else if (tmode == TMODE_SLEEP)
-    ttybnew.sg_flags &= ~(ECHO);
-  ioctl(read_cmd_fd, TIOCSETN, &ttybnew);
-#endif
-  curr_tmode = tmode;
-}
-
-/*
- * Try to get the code for "t_kb" from the stty setting
- *
- * Even if termcap claims a backspace key, the user's setting *should*
- * prevail.  stty knows more about reality than termcap does, and if
- * somebody's usual erase key is DEL (which, for most BSD users, it will
- * be), they're going to get really annoyed if their erase key starts
- * doing forward deletes for no reason. (Eric Fischer)
- */
-void get_stty(void)
-{
-  char_u buf[2];
-  char_u  *p;
-
-#if defined(ECHOE) && defined(ICANON) && (defined(HAVE_TERMIO_H) || \
-  defined(HAVE_TERMIOS_H))
-  /* for "new" tty systems */
-# ifdef HAVE_TERMIOS_H
-  struct termios keys;
-# else
-  struct termio keys;
-# endif
-
-# if defined(HAVE_TERMIOS_H)
-  if (tcgetattr(read_cmd_fd, &keys) != -1)
-# else
-  if (ioctl(read_cmd_fd, TCGETA, &keys) != -1)
-# endif
-  {
-    buf[0] = keys.c_cc[VERASE];
-    intr_char = keys.c_cc[VINTR];
-#else
-  /* for "old" tty systems */
-  struct sgttyb keys;
-
-  if (ioctl(read_cmd_fd, TIOCGETP, &keys) != -1) {
-    buf[0] = keys.sg_erase;
-    intr_char = keys.sg_kill;
-#endif
-    buf[1] = NUL;
-    add_termcode((char_u *)"kb", buf, FALSE);
-
-    /*
-     * If <BS> and <DEL> are now the same, redefine <DEL>.
-     */
-    p = find_termcode((char_u *)"kD");
-    if (p != NULL && p[0] == buf[0] && p[1] == buf[1])
-      do_fixdel(NULL);
-  }
 }
 
 /*
@@ -710,173 +486,6 @@ void mch_setmouse(int on)
     ison = on;
   }
 
-}
-
-/// Sets the mouse termcode, depending on the 'term' and 'ttymouse' options.
-void check_mouse_termcode(void)
-{
-  xterm_conflict_mouse = false;
-
-  if (use_xterm_mouse()
-      && use_xterm_mouse() != 3
-      ) {
-    set_mouse_termcode(KS_MOUSE, (char_u *)(term_is_8bit(T_NAME)
-                                            ? "\233M"
-                                            : "\033[M"));
-    if (*p_mouse != NUL) {
-      /* force mouse off and maybe on to send possibly new mouse
-       * activation sequence to the xterm, with(out) drag tracing. */
-      mch_setmouse(FALSE);
-      setmouse();
-    }
-  } else
-    del_mouse_termcode(KS_MOUSE);
-
-
-  /* There is no conflict, but one may type "ESC }" from Insert mode.  Don't
-   * define it in the GUI or when using an xterm. */
-  if (!use_xterm_mouse()
-      )
-    set_mouse_termcode(KS_NETTERM_MOUSE,
-        (char_u *)"\033}");
-  else
-    del_mouse_termcode(KS_NETTERM_MOUSE);
-
-  // Conflicts with xterm mouse: "\033[" and "\033[M".
-  // Also conflicts with the xterm termresponse, skip this if it was requested
-  // already.
-  if (!use_xterm_mouse()) {
-    set_mouse_termcode(KS_DEC_MOUSE, (char_u *)(term_is_8bit(T_NAME)
-                                                ? "\233" : "\033["));
-    xterm_conflict_mouse = true;
-  }
-  else {
-    del_mouse_termcode(KS_DEC_MOUSE);
-  }
-  /* same as the dec mouse */
-  if (use_xterm_mouse() == 3 && !did_request_esc_sequence()) {
-    set_mouse_termcode(KS_URXVT_MOUSE,
-                       (char_u *)(term_is_8bit(T_NAME) ? "\233" : "\033["));
-    if (*p_mouse != NUL) {
-      mch_setmouse(false);
-      setmouse();
-    }
-    resume_get_esc_sequence();
-  } else {
-    del_mouse_termcode(KS_URXVT_MOUSE);
-  }
-  // There is no conflict with xterm mouse.
-  if (use_xterm_mouse() == 4) {
-    set_mouse_termcode(KS_SGR_MOUSE, (char_u *)(term_is_8bit(T_NAME)
-                                                ? "\233<"
-                                                : "\033[<"));
-
-    if (*p_mouse != NUL) {
-      mch_setmouse(FALSE);
-      setmouse();
-    }
-  } else {
-    del_mouse_termcode(KS_SGR_MOUSE);
-  }
-}
-
-/*
- * Try to get the current window size:
- * 1. with an ioctl(), most accurate method
- * 2. from the environment variables LINES and COLUMNS
- * 3. from the termcap
- * 4. keep using the old values
- * Return OK when size could be determined, FAIL otherwise.
- */
-int mch_get_shellsize(void)
-{
-  long rows = 0;
-  long columns = 0;
-  char_u      *p;
-
-  /*
-   * 1. try using an ioctl. It is the most accurate method.
-   *
-   * Try using TIOCGWINSZ first, some systems that have it also define
-   * TIOCGSIZE but don't have a struct ttysize.
-   */
-# ifdef TIOCGWINSZ
-  {
-    struct winsize ws;
-    int fd = 1;
-
-    /* When stdout is not a tty, use stdin for the ioctl(). */
-    if (!isatty(fd) && isatty(read_cmd_fd))
-      fd = read_cmd_fd;
-    if (ioctl(fd, TIOCGWINSZ, &ws) == 0) {
-      columns = ws.ws_col;
-      rows = ws.ws_row;
-    }
-  }
-# else /* TIOCGWINSZ */
-#  ifdef TIOCGSIZE
-  {
-    struct ttysize ts;
-    int fd = 1;
-
-    /* When stdout is not a tty, use stdin for the ioctl(). */
-    if (!isatty(fd) && isatty(read_cmd_fd))
-      fd = read_cmd_fd;
-    if (ioctl(fd, TIOCGSIZE, &ts) == 0) {
-      columns = ts.ts_cols;
-      rows = ts.ts_lines;
-    }
-  }
-#  endif /* TIOCGSIZE */
-# endif /* TIOCGWINSZ */
-
-  /*
-   * 2. get size from environment
-   *    When being POSIX compliant ('|' flag in 'cpoptions') this overrules
-   *    the ioctl() values!
-   */
-  if (columns == 0 || rows == 0 || vim_strchr(p_cpo, CPO_TSIZE) != NULL) {
-    if ((p = (char_u *)os_getenv("LINES")))
-      rows = atoi((char *)p);
-    if ((p = (char_u *)os_getenv("COLUMNS")))
-      columns = atoi((char *)p);
-  }
-
-#ifdef HAVE_TGETENT
-  /*
-   * 3. try reading "co" and "li" entries from termcap
-   */
-  if (columns == 0 || rows == 0)
-    getlinecol(&columns, &rows);
-#endif
-
-  /*
-   * 4. If everything fails, use the old values
-   */
-  if (columns <= 0 || rows <= 0)
-    return FAIL;
-
-  Rows = rows;
-  Columns = columns;
-  limit_screen_size();
-  return OK;
-}
-
-/*
- * Try to set the window size to Rows and Columns.
- */
-void mch_set_shellsize(void)
-{
-  if (*T_CWS) {
-    /*
-     * NOTE: if you get an error here that term_set_winsize() is
-     * undefined, check the output of configure.  It could probably not
-     * find a ncurses, termcap or termlib library.
-     */
-    term_set_winsize((int)Rows, (int)Columns);
-    out_flush();
-    screen_start();                     /* don't know where cursor is now */
-  }
 }
 
 /*

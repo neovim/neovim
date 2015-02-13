@@ -6447,18 +6447,17 @@ do_highlight (
                   p = T_CAF;
                 else
                   p = T_CSF;
-                if (abstract_ui || (*p != NUL && *(p + STRLEN(p) - 1) == 'm'))
-                  switch (t_colors) {
-                  case 16:
-                    color = color_numbers_8[i];
-                    break;
-                  case 88:
-                    color = color_numbers_88[i];
-                    break;
-                  case 256:
-                    color = color_numbers_256[i];
-                    break;
-                  }
+                switch (t_colors) {
+                case 16:
+                  color = color_numbers_8[i];
+                  break;
+                case 88:
+                  color = color_numbers_88[i];
+                  break;
+                case 256:
+                  color = color_numbers_256[i];
+                  break;
+                }
               }
             }
           }
@@ -6471,8 +6470,6 @@ do_highlight (
               cterm_normal_fg_bold = (HL_TABLE()[idx].sg_cterm & HL_BOLD);
               {
                 must_redraw = CLEAR;
-                if (termcap_active && color >= 0)
-                  term_fg_color(color);
               }
             }
           } else {
@@ -6482,8 +6479,6 @@ do_highlight (
               {
                 must_redraw = CLEAR;
                 if (color >= 0) {
-                  if (termcap_active)
-                    term_bg_color(color);
                   if (t_colors < 16)
                     i = (color == 0 || color == 4);
                   else
@@ -6630,10 +6625,8 @@ do_highlight (
     if (is_normal_group) {
       HL_TABLE()[idx].sg_term_attr = 0;
       HL_TABLE()[idx].sg_cterm_attr = 0;
-      if (abstract_ui) {
-        // If the normal group has changed, it is simpler to refresh every UI
-        ui_refresh();
-      }
+      // If the normal group has changed, it is simpler to refresh every UI
+      ui_refresh();
     } else
       set_hl_attr(idx);
     HL_TABLE()[idx].sg_scriptID = current_SID;
@@ -6862,38 +6855,8 @@ int hl_combine_attr(int char_attr, int prim_attr)
   if (char_attr <= HL_ALL && prim_attr <= HL_ALL)
     return char_attr | prim_attr;
 
-  if (abstract_ui || t_colors > 1) {
-    if (char_attr > HL_ALL)
-      char_aep = syn_cterm_attr2entry(char_attr);
-    if (char_aep != NULL)
-      new_en = *char_aep;
-    else {
-      memset(&new_en, 0, sizeof(new_en));
-      if (char_attr <= HL_ALL)
-        new_en.ae_attr = char_attr;
-    }
-
-    if (prim_attr <= HL_ALL)
-      new_en.ae_attr |= prim_attr;
-    else {
-      spell_aep = syn_cterm_attr2entry(prim_attr);
-      if (spell_aep != NULL) {
-        new_en.ae_attr |= spell_aep->ae_attr;
-        if (spell_aep->ae_u.cterm.fg_color > 0)
-          new_en.ae_u.cterm.fg_color = spell_aep->ae_u.cterm.fg_color;
-        if (spell_aep->ae_u.cterm.bg_color > 0)
-          new_en.ae_u.cterm.bg_color = spell_aep->ae_u.cterm.bg_color;
-        if (spell_aep->fg_color >= 0)
-          new_en.fg_color = spell_aep->fg_color;
-        if (spell_aep->bg_color >= 0)
-          new_en.bg_color = spell_aep->bg_color;
-      }
-    }
-    return get_attr_entry(&cterm_attr_table, &new_en);
-  }
-
   if (char_attr > HL_ALL)
-    char_aep = syn_term_attr2entry(char_attr);
+    char_aep = syn_cterm_attr2entry(char_attr);
   if (char_aep != NULL)
     new_en = *char_aep;
   else {
@@ -6905,16 +6868,20 @@ int hl_combine_attr(int char_attr, int prim_attr)
   if (prim_attr <= HL_ALL)
     new_en.ae_attr |= prim_attr;
   else {
-    spell_aep = syn_term_attr2entry(prim_attr);
+    spell_aep = syn_cterm_attr2entry(prim_attr);
     if (spell_aep != NULL) {
       new_en.ae_attr |= spell_aep->ae_attr;
-      if (spell_aep->ae_u.term.start != NULL) {
-        new_en.ae_u.term.start = spell_aep->ae_u.term.start;
-        new_en.ae_u.term.stop = spell_aep->ae_u.term.stop;
-      }
+      if (spell_aep->ae_u.cterm.fg_color > 0)
+        new_en.ae_u.cterm.fg_color = spell_aep->ae_u.cterm.fg_color;
+      if (spell_aep->ae_u.cterm.bg_color > 0)
+        new_en.ae_u.cterm.bg_color = spell_aep->ae_u.cterm.bg_color;
+      if (spell_aep->fg_color >= 0)
+        new_en.fg_color = spell_aep->fg_color;
+      if (spell_aep->bg_color >= 0)
+        new_en.bg_color = spell_aep->bg_color;
     }
   }
-  return get_attr_entry(&term_attr_table, &new_en);
+  return get_attr_entry(&cterm_attr_table, &new_en);
 }
 
 
@@ -6924,25 +6891,10 @@ int hl_combine_attr(int char_attr, int prim_attr)
  */
 int syn_attr2attr(int attr)
 {
-  attrentry_T *aep;
-
-  if (abstract_ui || t_colors > 1)
-    aep = syn_cterm_attr2entry(attr);
-  else
-    aep = syn_term_attr2entry(attr);
-
+  attrentry_T *aep = syn_cterm_attr2entry(attr);
   if (aep == NULL)          /* highlighting not set */
     return 0;
   return aep->ae_attr;
-}
-
-
-attrentry_T *syn_term_attr2entry(int attr)
-{
-  attr -= ATTR_OFF;
-  if (attr >= term_attr_table.ga_len)       /* did ":syntax clear" */
-    return NULL;
-  return &(TERM_ATTR_ENTRY(attr));
 }
 
 attrentry_T *syn_cterm_attr2entry(int attr)
@@ -7200,7 +7152,7 @@ set_hl_attr (
       && sgp->sg_rgb_fg == -1 && sgp->sg_rgb_bg == -1) {
     sgp->sg_cterm_attr = sgp->sg_cterm;
   } else {
-    at_en.ae_attr = abstract_ui ? sgp->sg_gui : sgp->sg_cterm;
+    at_en.ae_attr = sgp->sg_gui;
     at_en.ae_u.cterm.fg_color = sgp->sg_cterm_fg;
     at_en.ae_u.cterm.bg_color = sgp->sg_cterm_bg;
     // FIXME(tarruda): The "unset value" for rgb is -1, but since hlgroup is
@@ -7348,18 +7300,11 @@ static void syn_unadd_group(void)
  */
 int syn_id2attr(int hl_id)
 {
-  int attr;
   struct hl_group     *sgp;
 
   hl_id = syn_get_final_id(hl_id);
   sgp = &HL_TABLE()[hl_id - 1];             /* index is ID minus one */
-
-  if (abstract_ui || t_colors > 1)
-    attr = sgp->sg_cterm_attr;
-  else
-    attr = sgp->sg_term_attr;
-
-  return attr;
+  return sgp->sg_cterm_attr;
 }
 
 
