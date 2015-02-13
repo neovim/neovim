@@ -235,9 +235,15 @@ int msg_attr_keep(char_u *s, int attr, bool keep, bool truncate)
 
   // Truncate the message if needed.
   msg_start();
+
+  int save_msg_row = msg_row;
+  if (truncate) {
+    msg_row = (int)Rows - p_ch;
+  }
   char_u *buf = msg_strtrunc(s, truncate);
   if (buf != NULL)
     s = buf;
+  msg_row = save_msg_row;
 
   msg_outtrans_attr(s, attr);
   msg_clr_eos();
