@@ -215,15 +215,19 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf,
                                        unsigned int bufsize)
 {
   int mouse_code = 0;
+  int type = 0;
 
   if (bufsize == 3) {
     mouse_code = buf[2];
+    type = buf[1];
   } else if (bufsize == 6) {
     // prefixed with K_SPECIAL KS_MODIFIER mod
     mouse_code = buf[5];
+    type = buf[4];
   }
 
-  if (!((mouse_code >= KE_LEFTMOUSE && mouse_code <= KE_RIGHTRELEASE)
+  if (type != KS_EXTRA
+      || !((mouse_code >= KE_LEFTMOUSE && mouse_code <= KE_RIGHTRELEASE)
         || (mouse_code >= KE_MOUSEDOWN && mouse_code <= KE_MOUSERIGHT))) {
     return bufsize;
   }
