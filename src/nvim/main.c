@@ -383,6 +383,8 @@ int main(int argc, char **argv)
       TIME_MSG("waiting for return");
       input_stop_stdin();
     }
+
+    ui_builtin_start();
   }
 
   setmouse();  // may start using the mouse
@@ -984,6 +986,8 @@ static void command_line_scan(mparm_T *parmp)
             }
 
             mch_exit(0);
+          } else if (STRICMP(argv[0] + argv_idx, "headless") == 0) {
+            parmp->headless = true;
           } else if (STRICMP(argv[0] + argv_idx, "embed") == 0) {
             embedded_mode = true;
             parmp->headless = true;
@@ -2092,6 +2096,7 @@ static void usage(void)
   mch_msg(_("  -i <nviminfo>         Use <nviminfo> instead of .nviminfo\n"));
   mch_msg(_("  --api-info            Dump API metadata serialized to msgpack and exit\n"));
   mch_msg(_("  --embed               Use stdin/stdout as a msgpack-rpc channel\n"));
+  mch_msg(_("  --headless            Don't start a user interface\n"));
   mch_msg(_("  --version             Print version information and exit\n"));
   mch_msg(_("  -h | --help           Print this help message and exit\n"));
 

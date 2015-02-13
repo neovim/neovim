@@ -46,6 +46,7 @@
 #include "nvim/syntax.h"
 #include "nvim/term.h"
 #include "nvim/window.h"
+#include "nvim/tui/tui.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui.c.generated.h"
@@ -81,8 +82,18 @@ static int height, width;
 #define SELECT_NTH(a1, a2, a3, a4, a5, a6, ...) a6
 #define UI_CALL_HELPER(c, ...) UI_CALL_HELPER2(c, __VA_ARGS__)
 #define UI_CALL_HELPER2(c, ...) UI_CALL_##c(__VA_ARGS__)
-#define UI_CALL_MORE(method, ...) ui->method(ui, __VA_ARGS__)
-#define UI_CALL_ZERO(method) ui->method(ui)
+#define UI_CALL_MORE(method, ...) if (ui->method) ui->method(ui, __VA_ARGS__)
+#define UI_CALL_ZERO(method) if (ui->method) ui->method(ui)
+
+void ui_builtin_start(void)
+{
+  tui_start();
+}
+
+void ui_builtin_stop(void)
+{
+  UI_CALL(stop);
+}
 
 void ui_write(uint8_t *s, int len)
 {

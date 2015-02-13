@@ -409,6 +409,8 @@ void mch_exit(int r)
     if (swapping_screen() && !newline_on_exit)
       exit_scroll();
 
+    ui_builtin_stop();
+
     /*
      * A newline is only required after a message in the alternate screen.
      * This is set to TRUE by wait_return().

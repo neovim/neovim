@@ -38,6 +38,7 @@ struct ui_t {
   void (*suspend)(UI *ui);
   void (*set_title)(UI *ui, char *title);
   void (*set_icon)(UI *ui, char *icon);
+  void (*stop)(UI *ui);
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
