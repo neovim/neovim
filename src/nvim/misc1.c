@@ -2569,7 +2569,7 @@ void msgmore(long n)
     if (got_int)
       vim_strcat(msg_buf, (char_u *)_(" (Interrupted)"), MSG_BUF_LEN);
     if (msg(msg_buf)) {
-      set_keep_msg(msg_buf, 0);
+      set_keep_msg(msg_buf, MSG_HIST);
       keep_msg_more = TRUE;
     }
   }

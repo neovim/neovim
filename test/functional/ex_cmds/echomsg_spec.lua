@@ -189,7 +189,36 @@ describe('echomsg', function()
 
     it('called from a function ', function()
       _h.nvim('set_option', 'cmdheight', 2)
-      execute('echom! "line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s"')
+      execute([[
+      func! Foo()
+        echom! "line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s"
+      endfunc]])
+      execute('call Foo()')
+      screen:expect([[
+      ^                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      line1.a line1.b line1.c line1.d line1.e line1.f li...|
+      e1.l line1.m line1.o line1.p line1.q line1.r line1.s |
+      ]])
+      expect_messages("")
+      -- execute('messages')
+      -- screen:snapshot_util(nil, nil)
+    end)
+
+    it('called from a mapping', function()
+      _h.nvim('set_option', 'cmdheight', 2)
+      execute('nnoremap foo :echom! "line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s"<cr>')
+      _h.feed('foo')
       screen:expect([[
       ^                                                    |
       ~                                                    |

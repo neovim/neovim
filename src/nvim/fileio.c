@@ -1898,7 +1898,7 @@ failed:
          *   before redrawing).
          * - When the screen was scrolled but there is no wait-return
          *   prompt. */
-        set_keep_msg(p, 0);
+        set_keep_msg(p, MSG_HIST);
       msg_scrolled_ign = FALSE;
     }
 
@@ -3558,7 +3558,7 @@ restore_backup:
         STRCAT(IObuff, shortmess(SHM_WRI) ? _(" [w]") : _(" written"));
     }
 
-    set_keep_msg(msg_trunc_attr(IObuff, FALSE, 0), 0);
+    set_keep_msg(msg_trunc_attr(IObuff, FALSE, 0), MSG_HIST);
   }
 
   /* When written everything correctly: reset 'modified'.  Unless not

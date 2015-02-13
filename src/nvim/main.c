@@ -642,7 +642,7 @@ main_loop (
         // here. Don't reset keep_msg, msg_attr_keep() uses it to check for
         // duplicates.
         char_u *p = keep_msg;
-        msg_attr(p, keep_msg_attr);
+        msg_attr_keep(p, keep_msg_attr, false, false);
         xfree(p);
         msg_notif_summary();
       }

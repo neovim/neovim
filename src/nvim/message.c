@@ -128,7 +128,7 @@ static int verbose_did_open = FALSE;
  */
 int msg(char_u *s) FUNC_ATTR_NONNULL_ALL
 {
-  return msg_attr_keep(s, 0, false, false);
+  return msg_attr_keep(s, MSG_HIST, false, false);
 }
 
 /*
@@ -137,7 +137,7 @@ int msg(char_u *s) FUNC_ATTR_NONNULL_ALL
 int verb_msg(char_u *s) FUNC_ATTR_NONNULL_ALL
 {
   verbose_enter();
-  int n = msg_attr_keep(s, 0, false, false);
+  int n = msg_attr_keep(s, MSG_HIST, false, false);
   verbose_leave();
 
   return n;
@@ -145,7 +145,7 @@ int verb_msg(char_u *s) FUNC_ATTR_NONNULL_ALL
 
 int msg_attr(char_u *s, int attr) FUNC_ATTR_NONNULL_ARG(1)
 {
-  return msg_attr_keep(s, attr, false, false);
+  return msg_attr_keep(s, attr|MSG_HIST, false, false);
 }
 
 /// Attempts to display a message in the message area. The displayed message
@@ -170,14 +170,9 @@ void msg_passive(char_u *s, int attr)
 
   msg_silent   = !add_hist;  // Add to history even if command is :silent.
   msg_hist_off = !add_hist;
-  // reset MSG_HIST flag for housekeeping (avoid potential duplicates).
-  // msg_attr_keep() will add to history for us.
-  attr &= ~MSG_HIST;
 
-  // TODO(jkeyes): these seem unnecessary; leave them until absolutely sure.
-  // msg_didout = false;  // overwrite current message, if any
-  // msg_didany = false;
   msg_nowait = true;   // don't wait for this message
+
   //Prevent msg_end(), do_cmdline() from dropping the wait_return() bomb.
   //We intentionally do _not_ restore the original value, because
   //do_cmdline() will be looking at this after we return (the purpose
@@ -222,10 +217,11 @@ int msg_attr_keep(char_u *s, int attr, bool keep, bool truncate)
 
   // Add message to history (unless it's a repeated `keep_msg` or a truncated
   // message).
-  if (s != keep_msg
-      || (*s != '<' && last_msg_hist && last_msg_hist->msg
-          && STRCMP(s, last_msg_hist->msg))) {
+  if (attr&MSG_HIST && (s != keep_msg
+        || (*s != '<' && last_msg_hist && last_msg_hist->msg
+          && STRCMP(s, last_msg_hist->msg)))) {
     msg_hist_add(s, -1, attr);
+    attr &= ~MSG_HIST;
   }
 
   // When displaying keep_msg, don't let msg_start() free it, caller must do
@@ -241,8 +237,9 @@ int msg_attr_keep(char_u *s, int attr, bool keep, bool truncate)
     msg_row = (int)Rows - p_ch;
   }
   char_u *buf = msg_strtrunc(s, truncate);
-  if (buf != NULL)
+  if (buf != NULL) {
     s = buf;
+  }
   msg_row = save_msg_row;
 
   msg_outtrans_attr(s, attr);
@@ -251,8 +248,7 @@ int msg_attr_keep(char_u *s, int attr, bool keep, bool truncate)
 
   if (keep && retval && vim_strsize(s) < (int)(Rows - cmdline_row - 1)
       * Columns + sc_col) {
-    ILOG("keep!!");
-    set_keep_msg(s, 0);
+    set_keep_msg(s, attr & MSG_HIST);
   }
 
   xfree(buf);
@@ -2533,10 +2529,7 @@ void give_warning(char_u *message, bool hl) FUNC_ATTR_NONNULL_ARG(1)
   set_vim_var_string(VV_WARNINGMSG, message, -1);
   xfree(keep_msg);
   keep_msg = NULL;
-  if (hl)
-    keep_msg_attr = hl_attr(HLF_W);
-  else
-    keep_msg_attr = 0;
+  keep_msg_attr = (hl ? hl_attr(HLF_W) : 0) | MSG_HIST;
   if (msg_attr(message, keep_msg_attr) && msg_scrolled == 0)
     set_keep_msg(message, keep_msg_attr);
   msg_didout = FALSE;       /* overwrite this message */

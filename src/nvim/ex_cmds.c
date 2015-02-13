@@ -1175,7 +1175,7 @@ do_filter (
             _("%" PRId64 " lines filtered"), (int64_t)linecount);
         if (msg(msg_buf) && !msg_scroll)
           /* save message to display it after redraw */
-          set_keep_msg(msg_buf, 0);
+          set_keep_msg(msg_buf, MSG_HIST);
       } else
         msgmore((long)linecount);
     }
@@ -4328,7 +4328,7 @@ do_sub_msg (
           _(" on %" PRId64 " lines"), (int64_t)sub_nlines);
     if (msg(msg_buf))
       /* save message to display it after redraw */
-      set_keep_msg(msg_buf, 0);
+      set_keep_msg(msg_buf, MSG_HIST);
     return true;
   }
   if (got_int) {
