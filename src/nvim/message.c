@@ -157,21 +157,16 @@ int msg_attr(char_u *s, int attr) FUNC_ATTR_NONNULL_ARG(1)
 void msg_passive(char_u *s, int attr)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  bool add_hist         = (attr & MSG_HIST);
   int save_msg_scroll   = msg_scroll;
   int save_msg_hist_off = msg_hist_off;
   int save_msg_silent   = msg_silent;
   int save_msg_scrolled_ign = msg_scrolled_ign;
 
-  msg_scroll = false;   // do not scroll
+  msg_scroll = false;
   //Without this, msg_strtrunc() causes Hit-Enter for :echom! entered at
   //cmdline or in a map not wrapped in a function.
   msg_scrolled_ign = TRUE;
-
-  msg_silent   = !add_hist;  // Add to history even if command is :silent.
-  msg_hist_off = !add_hist;
-
-  msg_nowait = true;   // don't wait for this message
+  msg_nowait = true;
 
   //Prevent msg_end(), do_cmdline() from dropping the wait_return() bomb.
   //We intentionally do _not_ restore the original value, because
@@ -179,7 +174,17 @@ void msg_passive(char_u *s, int attr)
   //of this global is to act as a "toggle" for this kind of situation).
   need_wait_return = FALSE;
 
-  msg_attr_keep(s, attr, true, true);
+  if (attr & MSG_HIST) {
+    msg_silent   = 0;  // Add to history even if :silent.
+    msg_hist_off = FALSE;
+    msg_hist_add(s, -1, attr);
+  }
+
+  if (!save_msg_silent) {
+    msg_attr_keep(s, attr, true, true);
+  }
+
+  //Even if :silent, let the user know that notifications were sent.
   notifications_pending++;
 
   msg_scroll   = save_msg_scroll;
