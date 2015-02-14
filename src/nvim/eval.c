@@ -8575,12 +8575,12 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
                   (char_u *)_(arg_errmsg)))
             break;
           vimvars[VV_KEY].vv_str = vim_strsave(di->di_key);
-          if (filter_map_one(&di->di_tv, expr, map, &rem) == FAIL
-              || did_emsg)
+          int r = filter_map_one(&di->di_tv, expr, map, &rem);
+          clear_tv(&vimvars[VV_KEY].vv_tv);
+          if (r == FAIL || did_emsg)
             break;
           if (!map && rem)
             dictitem_remove(d, di);
-          clear_tv(&vimvars[VV_KEY].vv_tv);
         }
       }
       hash_unlock(ht);
@@ -8622,6 +8622,7 @@ static int filter_map_one(typval_T *tv, char_u *expr, int map, int *remp)
     goto theend;
   if (*s != NUL) {  /* check for trailing chars after expr */
     EMSG2(_(e_invexpr2), s);
+    clear_tv(&rettv);
     goto theend;
   }
   if (map) {
