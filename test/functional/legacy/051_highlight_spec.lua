@@ -1,22 +1,43 @@
 -- vim: set foldmethod=marker foldmarker=[[,]] :
 -- Tests for ":highlight".
 
+local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local execute, expect = helpers.execute, helpers.expect
+local wait = helpers.wait
 
 describe(':highlight', function()
   setup(clear)
 
   it('is working', function()
+    local screen = Screen.new(35, 10)
+    screen:attach()
     -- Basic test if ":highlight" doesn't crash
     execute('highlight')
+    -- FIXME(tarruda): We need to be sure the prompt is displayed before
+    -- continuing, or risk a race condition where some of the following input
+    -- is discarded resulting in test failure
+    screen:expect([[
+      :highlight                         |
+      SpecialKey     xxx ctermfg=4       |
+                         guifg=Blue      |
+      EndOfBuffer    xxx links to NonText|
+                                         |
+      NonText        xxx ctermfg=12      |
+                         gui=bold        |
+                         guifg=Blue      |
+      Directory      xxx ctermfg=4       |
+      -- More --^                        |
+    ]])
+    feed('q')
+    wait() -- wait until we're back to normal
     execute('hi Search')
 
     -- Test setting colors.
     -- Test clearing one color and all doesn't generate error or warning
-    execute('hi NewGroup cterm=italic ctermfg=DarkBlue ctermbg=Grey gui= guifg=#00ff00 guibg=Cyan')
-    execute('hi Group2 cterm=')
+    execute('hi NewGroup cterm=italic ctermfg=DarkBlue ctermbg=Grey gui=NONE guifg=#00ff00 guibg=Cyan')
+    execute('hi Group2 cterm=NONE')
     execute('hi Group3 cterm=bold')
     execute('redir! @a')
     execute('hi NewGroup')
@@ -48,7 +69,11 @@ describe(':highlight', function()
     expect([[
       
       
-      NewGroup       xxx cterm=italic ctermfg=2 ctermbg=3
+      NewGroup       xxx cterm=italic
+                         ctermfg=2
+                         ctermbg=3
+                         guifg=#00ff00
+                         guibg=Cyan
       
       Group2         xxx cleared
       
@@ -66,5 +91,6 @@ describe(':highlight', function()
       Group3         xxx cleared
       
       E475: cterm='asdf]])
+    screen:detach()
   end)
 end)
