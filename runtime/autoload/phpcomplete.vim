@@ -2257,7 +2257,7 @@ function! phpcomplete#GetCurrentNameSpace(file_lines) " {{{
 			let use_parts = map(split(use_expression, '\s*,\s*'), 'substitute(v:val, "\\s+", " ", "g")')
 			for part in use_parts
 				if part =~? '\s\+as\s\+'
-					let [object, name] = split(part, '\s\+as\s\+')
+					let [object, name] = split(part, '\s\+as\s\+\c')
 					let object = substitute(object, '^\\', '', '')
 					let name   = substitute(name, '^\\', '', '')
 				else
