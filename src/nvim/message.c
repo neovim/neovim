@@ -178,6 +178,7 @@ void msg_passive(char_u *s, int attr)
     msg_silent   = 0;  // Add to history even if :silent.
     msg_hist_off = FALSE;
     msg_hist_add(s, -1, attr);
+    attr &= ~MSG_HIST;
   }
 
   if (!save_msg_silent) {
@@ -253,7 +254,7 @@ int msg_attr_keep(char_u *s, int attr, bool keep, bool truncate)
 
   if (keep && retval && vim_strsize(s) < (int)(Rows - cmdline_row - 1)
       * Columns + sc_col) {
-    set_keep_msg(s, attr & MSG_HIST);
+    set_keep_msg(s, 0);
   }
 
   xfree(buf);
@@ -731,18 +732,13 @@ char_u *msg_may_trunc(int force, char_u *s)
   return s;
 }
 
+/// @param len length of `s`, or -1 for undetermined length
+///        (assumes NUL-terminated `s`)
 static void msg_hist_add(char_u *s, int len, int attr)
 {
   if (msg_hist_off || msg_silent != 0)
     return;
 
-  msg_hist_add2(s, len, attr);
-}
-
-/// @param len length of `s`, or -1 for undetermined length
-///        (assumes NUL-terminated `s`)
-static void msg_hist_add2(char_u *s, int len, int attr)
-{
   /* Don't let the message history get too big */
   while (msg_hist_len > MAX_MSG_HIST_LEN) {
     (void)msg_delete_first();

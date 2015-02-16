@@ -6,22 +6,29 @@ local insert = _h.insert
 describe('echomsg', function()
   local screen
 
-  local function expect_messages(msg)
+  -- Asserts that:
+  --    - :messages contains `msg` exactly once
+  --    - no truncated ("...") text was written to :messages
+  local function assert_msg(msg)
+    assert(msg ~= nil and msg ~= "", "'msg' should not be empty")
+    -- Gather the :messages lines.
     -- Cannot use vim_command_output('messages') because of
-    -- https://github.com/neovim/neovim/pull/1959
-    -- This also doesn't work (in tests):
-    --    helpers.feed(':redir => g:foo | silent messages | redir END<cr>')
-    --    print(_h.eval('g:foo'))
-    -- So the workaround is:
-    --    set shortmess-=T
+    --    https://github.com/neovim/neovim/pull/1959
+    execute('redir => g:foo | silent messages | redir END')
 
-    -- screen:snapshot_util(nil, nil)
-    -- _h.command('echom! "foo 1422971560 1422971560 1422971560 1422971560 1422971560 1422971560 1422971560 1422971560 1422971560 1422971560 1422971560 1422971560"')
-    -- _h.feed(':redir => g:foo | silent messages | redir END<cr>')
-    -- execute('redir => g:foo | silent messages | redir END')
-    -- print(_h.eval('g:foo'))
-    -- ok(_h.nvim('command_output', 'messages'))
-    -- print(_h.nvim('command_output', 'messages'))
+    local messages = _h.eval('g:foo')
+
+    --Should not have truncated "..." messages.
+    local istart, iend = messages:find('...', 1, true)
+    assert(istart == nil, ':messages contains a truncated message')
+
+    --Should have the exact `msg`.
+    istart, iend = messages:find(msg, 1, true)
+    assert(istart ~= nil and istart > 0, ':messages does not have: '..msg)
+
+    --Should not have duplicates.
+    istart, iend = messages:find(msg, iend, true)
+    assert(istart == nil, ':messages contains a duplicate: '..msg)
   end
 
   before_each(function()
@@ -84,7 +91,8 @@ describe('echomsg', function()
     end)
 
     it('one very long line causes a scroll', function()
-      execute('echom "line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s "')
+      local fullmsg = "line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s"
+      execute('echom "'..fullmsg..'"')
       screen:expect([[
       ~                                                    |
       ~                                                    |
@@ -101,6 +109,7 @@ describe('echomsg', function()
       ne1.o line1.p line1.q line1.r line1.s                |
       Press ENTER or type command to continue^             |
       ]])
+      assert_msg(fullmsg)
     end)
   end)
 
@@ -157,7 +166,8 @@ describe('echomsg', function()
     end)
 
     it('one very long line causes a scroll', function()
-      execute('echom "line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s "')
+      local fullmsg = 'line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s'
+      execute('echom "'..fullmsg..'"')
       screen:expect([[
       ~                                                    |
       ~                                                    |
@@ -174,13 +184,15 @@ describe('echomsg', function()
       ne1.o line1.p line1.q line1.r line1.s                |
       {3:Press ENTER or type command to continue}^             |
       ]])
+      assert_msg(fullmsg)
     end)
   end)
 
 
-  local echomsg_bang_tests = function(cmd_under_test)
+  local function echomsg_bang_tests(cmd_under_test)
     it('one line does NOT cause scroll', function()
-      execute(cmd_under_test..' "line1, normal message"')
+      local fullmsg = 'line1, normal message'
+      execute(cmd_under_test..' "'..fullmsg..'"')
       screen:expect([[
       ^                                                    |
       ~                                                    |
@@ -197,6 +209,7 @@ describe('echomsg', function()
       ~                                                    |
       line1, normal message                                |
       ]])
+      assert_msg(fullmsg)
     end)
 
     it('overwrites previous :echom (does NOT cause a scroll)', function()
@@ -237,6 +250,8 @@ describe('echomsg', function()
       line2                                                |
       Press ENTER or type command to continue^             |
       ]])
+      assert_msg('line1')
+      assert_msg('line2')
     end)
 
     it('2x does NOT cause a scroll', function()
@@ -260,8 +275,8 @@ describe('echomsg', function()
     end)
 
     it('very long line does NOT cause a scroll', function()
-      local testline = 'line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s'
-      execute(cmd_under_test..' "'..testline..'"')
+      local fullmsg = 'line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s'
+      execute(cmd_under_test..' "'..fullmsg..'"')
       screen:expect([[
       ^                                                    |
       ~                                                    |
@@ -278,11 +293,13 @@ describe('echomsg', function()
       ~                                                    |
       line1.a line1.b line1.c....p line1.q line1.r line1.s |
       ]])
+      assert_msg(fullmsg)
     end)
 
     it('very long line fills available cmdline space', function()
+      local fullmsg = 'line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s'
       _h.nvim('set_option', 'cmdheight', 2)
-      execute(cmd_under_test..' "line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s"')
+      execute(cmd_under_test..' "'..fullmsg..'"')
       screen:expect([[
       ^                                                    |
       ~                                                    |
@@ -299,13 +316,15 @@ describe('echomsg', function()
       line1.a line1.b line1.c line1.d line1.e line1.f li...|
       e1.l line1.m line1.o line1.p line1.q line1.r line1.s |
       ]])
+      assert_msg(fullmsg)
     end)
 
     it('called from a function', function()
+      local fullmsg = 'line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s'
       _h.nvim('set_option', 'cmdheight', 2)
       execute([[
       func! Foo()
-        ]]..cmd_under_test..[[ "line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s"
+        ]]..cmd_under_test..[[ "]]..fullmsg..[["
       endfunc]])
       execute('call Foo()')
       screen:expect([[
@@ -324,14 +343,13 @@ describe('echomsg', function()
       line1.a line1.b line1.c line1.d line1.e line1.f li...|
       e1.l line1.m line1.o line1.p line1.q line1.r line1.s |
       ]])
-      expect_messages("")
-      -- execute('messages')
-      -- screen:snapshot_util(nil, nil)
+      assert_msg(fullmsg)
     end)
 
     it('in a mapping', function()
+      local fullmsg = 'line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s'
       _h.nvim('set_option', 'cmdheight', 2)
-      execute('nnoremap foo :'..cmd_under_test..' "line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s"<cr>')
+      execute('nnoremap foo :'..cmd_under_test..' "'..fullmsg..'"<cr>')
       _h.feed('foo')
       screen:expect([[
       ^                                                    |
@@ -349,14 +367,13 @@ describe('echomsg', function()
       line1.a line1.b line1.c line1.d line1.e line1.f li...|
       e1.l line1.m line1.o line1.p line1.q line1.r line1.s |
       ]])
-      expect_messages("")
-      -- execute('messages')
-      -- screen:snapshot_util(nil, nil)
+      assert_msg(fullmsg)
     end)
 
     it('in a <silent> (not :silent) mapping', function()
+      local fullmsg = 'line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s'
       _h.nvim('set_option', 'cmdheight', 2)
-      execute('nnoremap <silent> foo :'..cmd_under_test..' "line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s"<cr>')
+      execute('nnoremap <silent> foo :'..cmd_under_test..' "'..fullmsg..'"<cr>')
       _h.feed('foo')
       screen:expect([[
       ^                                                    |
@@ -374,14 +391,13 @@ describe('echomsg', function()
       line1.a line1.b line1.c line1.d line1.e line1.f li...|
       e1.l line1.m line1.o line1.p line1.q line1.r line1.s |
       ]])
-      expect_messages("")
-      -- execute('messages')
-      -- screen:snapshot_util(nil, nil)
+      assert_msg(fullmsg)
     end)
 
     it('in a <silent> :silent mapping', function()
+      local fullmsg = 'line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s'
       _h.nvim('set_option', 'cmdheight', 2)
-      execute('nnoremap <silent> foo :silent '..cmd_under_test..' "line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s"<cr>')
+      execute('nnoremap <silent> foo :silent '..cmd_under_test..' "'..fullmsg..'"<cr>')
       _h.feed('foo')
       screen:expect([[
       ^                                                    |
@@ -399,9 +415,7 @@ describe('echomsg', function()
                                                            |
                                                            |
       ]])
-      expect_messages("")
-      -- execute('messages')
-      -- screen:snapshot_util(nil, nil)
+      assert_msg(fullmsg)
     end)
   end
 
