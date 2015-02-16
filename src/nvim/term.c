@@ -3732,12 +3732,12 @@ replace_termcodes (
      * it could be a character in the file.
      */
     if (do_key_code) {
-      i = find_term_bykeys(src);
-      if (i >= 0) {
+      size_t index;
+      if (find_term_bykeys(src, &index)) {
         result[dlen++] = K_SPECIAL;
         result[dlen++] = termcodes[i].name[0];
         result[dlen++] = termcodes[i].name[1];
-        src += termcodes[i].len;
+        src += termcodes[index].len;
         /* If terminal code matched, continue after it. */
         continue;
       }
@@ -3815,9 +3815,9 @@ replace_termcodes (
 
 /*
  * Find a termcode with keys 'src' (must be NUL terminated).
- * Return the index in termcodes[], or -1 if not found.
+ * Returns true if found, and idx is set to the index in termcodes[].
  */
-ssize_t find_term_bykeys(char_u *src)
+bool find_term_bykeys(char_u *src, size_t *idx)
 {
   size_t slen = STRLEN(src);
 
@@ -3825,11 +3825,13 @@ ssize_t find_term_bykeys(char_u *src)
     assert(termcodes[i].len >= 0);
     if (slen == (size_t)termcodes[i].len
         && STRNCMP(termcodes[i].code, src, slen) == 0) {
-      assert(i <= SSIZE_MAX);
-      return (ssize_t)i;
+      if (idx != NULL) {
+        *idx = i;
+      }
+      return true;
     }
   }
-  return -1;
+  return false;
 }
 
 /*
@@ -4089,9 +4091,10 @@ static void got_code_from_term(char_u *code, int len)
         }
       } else {
         /* First delete any existing entry with the same code. */
-        i = find_term_bykeys(str);
-        if (i >= 0)
-          del_termcode_idx((size_t)i);
+        size_t index;
+        if (find_term_bykeys(str, &index) ) {
+          del_termcode_idx(index);
+        }
         add_termcode(name, str, ATC_FROM_TERM);
       }
     }
