@@ -5,19 +5,10 @@
 
 #include "nvim/buffer_defs.h"
 
-/*
- * Terminal highlighting attribute bits.
- * Attributes above HL_ALL are used for syntax highlighting.
- */
-#define HL_NORMAL      0x00
-#define HL_INVERSE     0x01
-#define HL_BOLD        0x02
-#define HL_ITALIC      0x04
-#define HL_UNDERLINE   0x08
-#define HL_UNDERCURL   0x10
-#define HL_STANDOUT    0x20
-#define HL_ALL         0x3f
+// FIXME: extend/replace usages of syntax.h with highlight.h
+#include "nvim/highlight.h"
 
+// FIXME: reusing the same prefix for two _incompatible_ bitwise enums is just atrocious...
 #define HL_CONTAINED   0x01    /* not used on toplevel */
 #define HL_TRANSP      0x02    /* has no highlighting	*/
 #define HL_ONELINE     0x04    /* match within one line only */
@@ -37,12 +28,6 @@
 #define HL_TRANS_CONT  0x10000 /* transparent item without contains arg */
 #define HL_CONCEAL     0x20000 /* can be concealed */
 #define HL_CONCEALENDS 0x40000 /* can be concealed */
-
-typedef struct {
-  char *name;
-  RgbValue color;
-} color_name_table_T;
-extern color_name_table_T color_name_table[];
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "syntax.h.generated.h"
