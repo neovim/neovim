@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
+#include <inttypes.h>  // for size_t and PRId64
 
 #include <uv.h>
 
@@ -44,28 +44,89 @@ typedef struct {
 } Server;
 
 static PMap(cstr_t) *servers = NULL;
+static char *server_ref = NULL;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "msgpack_rpc/server.c.generated.h"
 #endif
 
 /// Initializes the module
-bool server_init(void)
+bool server_init(char *listen_address)
 {
   servers = pmap_new(cstr_t)();
 
-  if (!os_getenv(LISTEN_ADDRESS_ENV_VAR)) {
-    char *listen_address = (char *)vim_tempname();
+  bool must_free = false;  // True if we allocated listen_address.
+  int error = 1;           // The result of server_start().
+
+  // Try to start the server, if given a valid address.
+  if (listen_address && *listen_address) {
+    // TODO(SplinterOfChaos): Ensure address is absolute.
+    if ((error = server_start(listen_address)) != 0) {
+      ELOG("Unable to start server at %s", listen_address);
+    }
+  }
+
+  // Either not given an address, or failed to start with it.
+  if (error) {
+    must_free = true;
+    listen_address = (char *)vim_tempname();
+    error = server_start(listen_address);
+  }
+
+  if (error == 0) {
+    // Let subprocesses know where we've put the server.
     os_setenv(LISTEN_ADDRESS_ENV_VAR, listen_address, 1);
+
+    // Add $NVIM_LISTEN_ADDRESS to the server list in ~/.nvim/servers.
+    char path[PATH_MAX];
+
+    size_t l = xstrlcpy(path, os_getenv("HOME"), PATH_MAX);
+    if (l + 2 >= PATH_MAX) {
+      goto end;  // Can't append servers directory.
+    }
+
+    l += add_pathsep((char_u *) path);
+    l += xstrlcpy(path + l, ".nvim/servers/", PATH_MAX - l);
+
+    if (l >= PATH_MAX) {
+      goto end;
+    }
+
+    os_mkdir(path, 0777);  // Ensure the directory exists.
+
+    snprintf(path + l, PATH_MAX - l, "%" PRIi64, os_get_pid());
+
+    FILE *f = fopen(path, "w");
+    if (!f) {
+      goto end;
+    }
+
+    fwrite(listen_address, strlen(listen_address), 1, f);
+    fclose(f);
+
+    // Save the address so we can delete this file upon leaving.
+    server_ref = xstrdup(path);
+  } else {
+    // Let the environment know there's no server.
+    os_setenv(LISTEN_ADDRESS_ENV_VAR, "", 1);
+  }
+
+end:
+  if (must_free) {
     free(listen_address);
   }
 
-  return server_start((char *)os_getenv(LISTEN_ADDRESS_ENV_VAR)) == 0;
+  return error == 0;
 }
 
 /// Teardown the server module
 void server_teardown(void)
 {
+  if (server_ref) {
+    remove(server_ref);
+    free(server_ref);
+  }
+
   if (!servers) {
     return;
   }

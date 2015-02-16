@@ -354,10 +354,13 @@ char_u *concat_fnames(char_u *fname1, char_u *fname2, int sep)
  * Add a path separator to a file name, unless it already ends in a path
  * separator.
  */
-void add_pathsep(char_u *p)
+bool add_pathsep(char_u *p)
 {
-  if (*p != NUL && !after_pathsep(p, p + STRLEN(p)))
+  if (*p != NUL && !after_pathsep(p, p + STRLEN(p))) {
     STRCAT(p, PATHSEPSTR);
+    return true;
+  }
+  return false;
 }
 
 /*
