@@ -6,18 +6,21 @@ local insert = _h.insert
 describe('echomsg', function()
   local screen
 
+  -- Gets the Vim :messages history.
+  local function get_messages()
+    -- Gather the :messages lines.
+    -- Cannot use vim_command_output('messages') because of
+    --    https://github.com/neovim/neovim/pull/1959
+    execute('redir => g:foo | silent messages | redir END')
+    return _h.eval('g:foo')
+  end
+
   -- Asserts that:
   --    - :messages contains `msg` exactly once
   --    - no truncated ("...") text was written to :messages
   local function assert_msg(msg)
     assert(msg ~= nil and msg ~= "", "'msg' should not be empty")
-    -- Gather the :messages lines.
-    -- Cannot use vim_command_output('messages') because of
-    --    https://github.com/neovim/neovim/pull/1959
-    execute('redir => g:foo | silent messages | redir END')
-
-    local messages = _h.eval('g:foo')
-
+    local messages = get_messages()
     --Should not have truncated "..." messages.
     local istart, iend = messages:find('...', 1, true)
     assert(istart == nil, ':messages contains a truncated message')
@@ -29,6 +32,12 @@ describe('echomsg', function()
     --Should not have duplicates.
     istart, iend = messages:find(msg, iend, true)
     assert(istart == nil, ':messages contains a duplicate: '..msg)
+  end
+
+  -- Asserts that :messages is empty.
+  local function assert_messages_empty()
+    local messages = get_messages()
+    assert(messages == '', ':messages should be empty, but it contains: '..messages)
   end
 
   before_each(function()
@@ -110,6 +119,31 @@ describe('echomsg', function()
       Press ENTER or type command to continue^             |
       ]])
       assert_msg(fullmsg)
+    end)
+
+    it(':silent, :silent!', function()
+      local fullmsg = 'line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s'
+      _h.nvim('set_option', 'cmdheight', 2)
+      execute('silent  echom "'..fullmsg..'"')
+      execute('silent! echom "'..fullmsg..'"')
+      _h.eval('1') --wait()
+      screen:expect([[
+      ^                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+                                                           |
+                                                           |
+      ]])
+      assert_messages_empty()
     end)
   end)
 
@@ -368,6 +402,31 @@ describe('echomsg', function()
       e1.l line1.m line1.o line1.p line1.q line1.r line1.s |
       ]])
       assert_msg(fullmsg)
+    end)
+
+    it(':silent, :silent!', function()
+      local fullmsg = 'line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s'
+      _h.nvim('set_option', 'cmdheight', 2)
+      execute('silent  '..cmd_under_test..' "'..fullmsg..'"')
+      execute('silent! '..cmd_under_test..' "line2 for silent!"')
+      screen:expect([[
+      ^                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      :silent! echom! "line2 for silent!"                  |
+                                                           |
+      ]])
+      assert_msg(fullmsg)
+      assert_msg("line2 for silent!")
     end)
 
     it('in a <silent> (not :silent) mapping', function()
