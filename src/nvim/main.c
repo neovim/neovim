@@ -1961,7 +1961,7 @@ static void mainerr(int n, const char *str)
 }
 
 
-/// Prints help message and exits; used for 'nvim -h' & 'nvim --help'
+/// Prints help message for "nvim -h" or "nvim --help" and exits.
 static void usage(void)
 {
   signal_stop();              // kill us with CTRL-C here, if you like

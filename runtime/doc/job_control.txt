@@ -83,7 +83,7 @@ Here's what is happening:
 - The second shell is started with the -c argument, causing it to execute a
   command then exit. In this case, the command is a for loop that will print 0
   through 9 then exit.
-- The |JobHandler()| function is called by the `JobActivity` autocommand (notice
+- The `JobHandler()` function is called by the `JobActivity` autocommand (notice
   how the shell* pattern matches the names `shell1` and `shell2` passed to
   |jobstart()|), and it takes care of displaying stdout/stderr received from
   the shells.

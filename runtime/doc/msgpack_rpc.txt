@@ -74,6 +74,7 @@ There are four ways to open msgpack-rpc streams to nvim:
 
 2. Through the stdin/stdout of a program spawned by the |rpcstart()| function.
 
+							*$NVIM_LISTEN_ADDRESS*
 3. Through the socket automatically created with each instance. To find out
    the socket location (which is random by default) from a running nvim
    instance, one can inspect the |$NVIM_LISTEN_ADDRESS| environment variable:

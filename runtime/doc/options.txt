@@ -5522,7 +5522,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						$HOME/.vim/after"
 					Macintosh: "$VIM:vimfiles,
 						$VIMRUNTIME,
-						$VIM:vimfiles:after"
+						$VIM:vimfiles:after")
 			global
 			{not in Vi}
 	This is a list of directories which will be searched for runtime
