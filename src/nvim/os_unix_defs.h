@@ -140,7 +140,7 @@
 
 
 #if !defined(USR_EXRC_FILE2)
-#    define USR_VIMRC_FILE2     "~/.nvim/nvimrc"
+#    define USR_VIMRC_FILE2     "$HOME/.nvim/nvimrc"
 #endif
 
 
@@ -149,7 +149,7 @@
 #endif
 
 #ifndef USR_GVIMRC_FILE2
-#   define USR_GVIMRC_FILE2     "~/.nvim/ngvimrc"
+#   define USR_GVIMRC_FILE2     "$HOME/.nvim/ngvimrc"
 #endif
 
 
@@ -171,11 +171,11 @@
 #endif
 
 #ifndef DFLT_BDIR
-#   define DFLT_BDIR    ".,~/tmp,~/"    /* default for 'backupdir' */
+#   define DFLT_BDIR    ".,$HOME/tmp,$HOME/"    /* default for 'backupdir' */
 #endif
 
 #ifndef DFLT_DIR
-#   define DFLT_DIR     ".,~/tmp,/var/tmp,/tmp" /* default for 'directory' */
+#   define DFLT_DIR     ".,$HOME/tmp,/var/tmp,/tmp" /* default for 'directory' */
 #endif
 
 #ifndef DFLT_VDIR
@@ -185,11 +185,11 @@
 #define DFLT_ERRORFILE          "errors.err"
 
 #  ifdef RUNTIME_GLOBAL
-#   define DFLT_RUNTIMEPATH     "~/.nvim," RUNTIME_GLOBAL ",$VIMRUNTIME," \
-  RUNTIME_GLOBAL "/after,~/.nvim/after"
+#   define DFLT_RUNTIMEPATH     "$HOME/.nvim," RUNTIME_GLOBAL ",$VIMRUNTIME," \
+  RUNTIME_GLOBAL "/after,$HOME/.nvim/after"
 #  else
 #   define DFLT_RUNTIMEPATH \
-  "~/.nvim,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,~/.nvim/after"
+  "$HOME/.nvim,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,$HOME/.nvim/after"
 #  endif
 
 /* Special wildcards that need to be handled by the shell */
