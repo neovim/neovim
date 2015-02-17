@@ -1621,9 +1621,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 			*'compatible'* *'cp'* *'nocompatible'* *'nocp'*
 'compatible' 'cp'	Removed. {Nvim}
-
-	Support for Vi-compatible mode has been removed.  "set nocp" is
-	ignored, and "set cp" is an error.
+	"set nocp" is ignored, and "set cp" is an error.
 
 						*'complete'* *'cpt'* *E535*
 'complete' 'cpt'	string	(default: ".,w,b,u,t,i")
@@ -2416,6 +2414,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 			   *'ed'* *'edcompatible'* *'noed'* *'noedcompatible'*
 'edcompatible' 'ed'	Removed. {Nvim}
+	"set noed" is ignored, and "set ed" is an error.
 
 					*'encoding'* *'enc'* *E543*
 'encoding' 'enc'	string (default: "latin1" or value from $LANG)
@@ -7169,6 +7168,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 				     *'ttyfast'* *'tf'* *'nottyfast'* *'notf'*
 'ttyfast' 'tf'		Removed. {Nvim}
+	"set tf" is ignored, and "set notf" is an error.
 
 						*'ttymouse'* *'ttym'*
 'ttymouse' 'ttym'	string	(default depends on 'term')
