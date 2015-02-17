@@ -830,10 +830,9 @@ Only Vim is able to accept options in between and after the file names.
 
 -D		Vim: debug mode.
 
--e		Elvis, Nvi, Vim: Start in Ex mode, as if the executable is
-		called "ex".
+-e		Elvis, Nvi, Vim: Start in Ex mode.
 
--E		Vim: Start in improved Ex mode |gQ|, like "exim".
+-E		Vim: Start in improved Ex mode |gQ|.
 
 -f		Vim: Run GUI in foreground.
 -f {session}	Elvis: Use {session} as the session file.

@@ -213,7 +213,7 @@ open_buffer (
    * So the modelines have priority over auto commands.
    */
   /* When reading stdin, the buffer contents always needs writing, so set
-   * the changed flag.  Unless in readonly mode: "ls | gview -".
+   * the changed flag.  Unless in readonly mode: "ls | nvim -R -".
    * When interrupted and 'cpoptions' contains 'i' set changed flag. */
   if ((got_int && vim_strchr(p_cpo, CPO_INTMOD) != NULL)
       || modified_was_set               /* ":set modified" used in autocmd */

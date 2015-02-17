@@ -601,7 +601,7 @@ EXTERN volatile int full_screen INIT(= FALSE);
  * otherwise only writing some messages */
 
 EXTERN int restricted INIT(= FALSE);
-/* TRUE when started as "rvim" */
+// TRUE when started in restricted mode (-Z)
 EXTERN int secure INIT(= FALSE);
 /* non-zero when only "safe" commands are
  * allowed, e.g. when sourcing .exrc or .vimrc

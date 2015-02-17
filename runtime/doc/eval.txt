@@ -1551,9 +1551,9 @@ v:profiling	Normally zero.	Set to one after using ":profile start".
 		See |profiling|.
 
 					*v:progname* *progname-variable*
-v:progname	Contains the name (with path removed) with which Vim was
-		invoked.  Allows you to do special initialisations for |view|,
-		|rview|, or any other name you might symlink to Vim.
+v:progname	Contains the name (with path removed) with which Nvim was
+		invoked.  Allows you to do special initialisations for any
+		other name you might symlink to Nvim.
 		Read-only.
 
 					*v:progpath* *progpath-variable*

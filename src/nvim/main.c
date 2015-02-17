@@ -204,11 +204,9 @@ int main(int argc, char **argv)
   // Check if we have an interactive window.
   check_and_set_isatty(&params);
 
-  /*
-   * Figure out the way to work from the command name argv[0].
-   * "view" sets "readonlymode", "rvim" sets "restricted", etc.
-   */
-  parse_command_name(&params);
+  // Get the name with which Nvim was invoked, with and without path.
+  set_vim_var_string(VV_PROGPATH, (char_u *)argv[0], -1);
+  set_vim_var_string(VV_PROGNAME, path_tail((char_u *)argv[0]), -1);
 
   /*
    * Process the command line arguments.  File names are put in the global
@@ -820,69 +818,8 @@ static void init_locale(void)
   }
   TIME_MSG("locale set");
 }
-
 #endif
 
-/*
- * Check for: [r][g][vi|vim|view][ex[im]]
- * If the executable name starts with "r" we disable shell commands.
- * If the next character is "g" we run the GUI version.
- * If the next characters are "view" we start in readonly mode.
- * If the next characters are "ex" we start in Ex mode.  If it's followed
- * by "im" use improved Ex mode.
- */
-static void parse_command_name(mparm_T *parmp)
-{
-  char_u      *initstr;
-
-  initstr = path_tail((char_u *)parmp->argv[0]);
-
-  set_vim_var_string(VV_PROGNAME, initstr, -1);
-  set_vim_var_string(VV_PROGPATH, (char_u *)parmp->argv[0], -1);
-
-  if (parse_string(&initstr, "editor", 6))
-    return;
-
-  if (parse_char_i(&initstr, 'r'))
-    restricted = TRUE;
-
-  /* "gvim" starts the GUI.  Also accept "Gvim" for MS-Windows. */
-  if (parse_char_i(&initstr, 'g'))
-    main_start_gui();
-
-  if (parse_string(&initstr, "view", 4)) {
-    readonlymode = TRUE;
-    curbuf->b_p_ro = TRUE;
-    p_uc = 10000;                       /* don't update very often */
-  } else {
-    parse_string(&initstr, "vim", 3);   /* consume "vim" if it's there */
-  }
-
-  if (parse_string(&initstr, "ex", 2)) {
-    if (parse_string(&initstr, "im", 2))
-      exmode_active = EXMODE_VIM;
-    else
-      exmode_active = EXMODE_NORMAL;
-  }
-}
-
-static bool parse_char_i(char_u **input, char val)
-{
-  if (TOLOWER_ASC(**input) == val) {
-    *input += 1;  /* or (*input)++ WITH parens */
-    return true;
-  }
-  return false;
-}
-
-static bool parse_string(char_u **input, char *val, int len)
-{
-  if (STRNICMP(*input, val, len) == 0) {
-    *input += len;
-    return true;
-  }
-  return false;
-}
 
 /*
  * Scan the command line arguments.
@@ -1132,10 +1069,6 @@ static void command_line_scan(mparm_T *parmp)
                 (char_u *)argv[0] + argv_idx, 0);
             argv_idx = (int)STRLEN(argv[0]);
           }
-          break;
-
-        case 'v':                 /* "-v"  Vi-mode (as if called "vi") */
-          exmode_active = 0;
           break;
 
         case 'w':                 /* "-w{number}"	set window height */
@@ -2034,13 +1967,12 @@ static void usage(void)
 #if !defined(UNIX)
   mch_msg(_("  --literal             Don't expand wildcards\n"));
 #endif
-  mch_msg(_("  -v                    Vi mode (like \"vi\")\n"));
-  mch_msg(_("  -e                    Ex mode (like \"ex\")\n"));
+  mch_msg(_("  -e                    Ex mode\n"));
   mch_msg(_("  -E                    Improved Ex mode\n"));
-  mch_msg(_("  -s                    Silent (batch) mode (only for \"ex\")\n"));
+  mch_msg(_("  -s                    Silent (batch) mode (only for ex mode)\n"));
   mch_msg(_("  -d                    Diff mode\n"));
-  mch_msg(_("  -R                    Readonly mode (like \"view\")\n"));
-  mch_msg(_("  -Z                    Restricted mode (like \"rvim\")\n"));
+  mch_msg(_("  -R                    Readonly mode\n"));
+  mch_msg(_("  -Z                    Restricted mode\n"));
   mch_msg(_("  -m                    Modifications (writing files) not allowed\n"));
   mch_msg(_("  -M                    Modifications in text not allowed\n"));
   mch_msg(_("  -b                    Binary mode\n"));

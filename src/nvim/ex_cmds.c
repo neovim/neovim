@@ -853,7 +853,7 @@ void do_bang(int addr_count, exarg_T *eap, int forceit, int do_in, int do_out)
   int scroll_save = msg_scroll;
 
   /*
-   * Disallow shell commands for "rvim".
+   * Disallow shell commands in restricted mode (-Z)
    * Disallow shell commands from .exrc and .vimrc in current directory for
    * security reasons.
    */
@@ -1217,7 +1217,7 @@ do_shell (
   int save_nwr;
 
   /*
-   * Disallow shell commands for "rvim".
+   * Disallow shell commands in restricted mode (-Z)
    * Disallow shell commands from .exrc and .vimrc in current directory for
    * security reasons.
    */
@@ -3378,7 +3378,7 @@ void ex_z(exarg_T *eap)
 int check_restricted(void)
 {
   if (restricted) {
-    EMSG(_("E145: Shell commands not allowed in rvim"));
+    EMSG(_("E145: Shell commands not allowed in restricted mode"));
     return TRUE;
   }
   return FALSE;

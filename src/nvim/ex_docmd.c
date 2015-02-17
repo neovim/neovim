@@ -5375,9 +5375,7 @@ static void ex_hide(exarg_T *eap)
  */
 static void ex_stop(exarg_T *eap)
 {
-  /*
-   * Disallow suspending for "rvim".
-   */
+  // Disallow suspending in restricted mode (-Z)
   if (!check_restricted()) {
     if (!eap->forceit) {
       autowrite_all();
