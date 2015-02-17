@@ -558,7 +558,7 @@ static vimoption_T
   /* P_PRI_MKRC isn't needed here, optval_default()
    * always returns TRUE for 'compatible' */
   {"compatible",  "cp",   P_BOOL|P_RALL,
-   (char_u *)&p_cp, PV_NONE,
+   (char_u *)&p_force_off, PV_NONE,
    {(char_u *)TRUE, (char_u *)FALSE} SCRIPTID_INIT},
   {"complete",    "cpt",  P_STRING|P_ALLOCED|P_VI_DEF|P_COMMA|P_NODUP,
    (char_u *)&p_cpt, PV_CPT,
@@ -660,7 +660,7 @@ static vimoption_T
    {(char_u *)"both", (char_u *)0L}
    SCRIPTID_INIT},
   {"edcompatible","ed",   P_BOOL|P_VI_DEF,
-   (char_u *)&p_ed, PV_NONE,
+   (char_u *)&p_force_off, PV_NONE,
    {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
   {"encoding",    "enc",  P_STRING|P_VI_DEF|P_RCLR|P_NO_ML,
    (char_u *)&p_enc, PV_NONE,
@@ -1576,6 +1576,9 @@ static vimoption_T
   {"ttimeoutlen", "ttm",  P_NUM|P_VI_DEF,
    (char_u *)&p_ttm, PV_NONE,
    {(char_u *)-1L, (char_u *)0L} SCRIPTID_INIT},
+  {"ttyfast",  "tf",  P_BOOL|P_NO_MKRC|P_VI_DEF,
+   (char_u *)&p_force_on, PV_NONE,
+   {(char_u *)TRUE, (char_u *)0L} SCRIPTID_INIT},
   {"ttymouse",    "ttym", P_STRING|P_NODEFAULT|P_NO_MKRC|P_VI_DEF,
 #if defined(FEAT_MOUSE) && defined(UNIX)
    (char_u *)&p_ttym, PV_NONE,
@@ -4709,14 +4712,14 @@ set_bool_option (
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0)
     *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = value;
 
-  // Ensure that compatible can not be enabled
-  if ((int *)varp == &p_cp && p_cp == TRUE) {
-    p_cp = FALSE;
+  // Ensure that options set to p_force_on cannot be disabled.
+  if ((int *)varp == &p_force_on && p_force_on == FALSE) {
+    p_force_on = TRUE;
     return e_unsupportedoption;
   }
-  // Ensure that edcompatible can not be enabled
-  else if ((int *)varp == &p_ed && p_ed == TRUE) {
-    p_ed = FALSE;
+  // Ensure that options set to p_force_off cannot be enabled.
+  else if ((int *)varp == &p_force_off && p_force_off == TRUE) {
+    p_force_off = FALSE;
     return e_unsupportedoption;
   }
   /* 'undofile' */

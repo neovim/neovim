@@ -630,6 +630,9 @@ EXTERN int p_wa;                /* 'writeany' */
 EXTERN int p_wb;                /* 'writebackup' */
 EXTERN long p_wd;               /* 'writedelay' */
 
+EXTERN int p_force_on;          ///< options that cannot be turned off.
+EXTERN int p_force_off;         ///< options that cannot be turned on.
+
 /*
  * "indir" values for buffer-local opions.
  * These need to be defined globally, so that the BV_COUNT can be used with
