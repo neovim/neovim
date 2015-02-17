@@ -208,6 +208,12 @@ static bool attrs_differ(HlAttrs a1, HlAttrs a2)
 static void update_attrs(UI *ui, HlAttrs attrs)
 {
   TUIData *data = ui->data;
+
+  if (!attrs_differ(attrs, data->print_attrs)) {
+    return;
+  }
+
+  data->print_attrs = attrs;
   unibi_out(ui, unibi_exit_attribute_mode, NULL);
 
   data->params[0].i = attrs.foreground != -1 ? attrs.foreground : data->fg;
@@ -236,11 +242,7 @@ static void update_attrs(UI *ui, HlAttrs attrs)
 
 static void print_cell(UI *ui, Cell *ptr)
 {
-  TUIData *data = ui->data;
-  if (attrs_differ(ptr->attrs, data->print_attrs)) {
-    update_attrs(ui, ptr->attrs);
-    data->print_attrs = ptr->attrs;
-  }
+  update_attrs(ui, ptr->attrs);
   out(ui, ptr->data);
 }
 
@@ -251,6 +253,7 @@ static void clear_region(UI *ui, int top, int bot, int left, int right,
   HlAttrs clear_attrs = EMPTY_ATTRS;
   clear_attrs.foreground = data->fg;
   clear_attrs.background = data->bg;
+  update_attrs(ui, clear_attrs);
 
   bool cleared = false;
   if (refresh && data->bg == -1 && right == ui->width -1) {
