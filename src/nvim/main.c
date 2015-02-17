@@ -55,7 +55,6 @@
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
-#include "nvim/term.h"
 #include "nvim/ui.h"
 #include "nvim/version.h"
 #include "nvim/window.h"
@@ -234,26 +233,16 @@ int main(int argc, char **argv)
   if (recoverymode && fname == NULL)
     params.want_full_screen = FALSE;
 
-  // term_init() sets up the terminal (window) for use.  This must be
-  // done after resetting full_screen, otherwise it may move the cursor
-  term_init();
-  TIME_MSG("shell init");
+  setbuf(stdout, NULL);
 
   /* This message comes before term inits, but after setting "silent_mode"
    * when the input is not a tty. */
   if (GARGCOUNT > 1 && !silent_mode)
     printf(_("%d files to edit\n"), GARGCOUNT);
 
-  if (params.want_full_screen && !silent_mode) {
-    termcapinit((uint8_t *)"abstract_ui");
-    screen_start();             /* don't know where cursor is now */
-    TIME_MSG("Termcap init");
-  }
-
   event_init();
   full_screen = true;
   t_colors = 256;
-  T_CCO = (uint8_t *)"256";
   check_tty(&params);
 
   /*
@@ -364,13 +353,6 @@ int main(int argc, char **argv)
   if (params.edit_type == EDIT_STDIN && !recoverymode)
     read_stdin();
 
-#if defined(UNIX)
-  /* When switching screens and something caused a message from a vimrc
-   * script, need to output an extra newline on exit. */
-  if ((did_emsg || msg_didout) && *T_TI != NUL)
-    newline_on_exit = TRUE;
-#endif
-
   if (!params.headless && (params.output_isatty || params.err_isatty)) {
     if (params.input_isatty && (need_wait_return || msg_didany)) {
       // Since at this point there's no UI instance running yet, error messages
@@ -388,16 +370,9 @@ int main(int argc, char **argv)
   }
 
   setmouse();  // may start using the mouse
+  ui_reset_scroll_region();  // In case Rows changed
 
-  if (scroll_region) {
-    scroll_region_reset(); // In case Rows changed
-  }
-
-  scroll_start(); // may scroll the screen to the right position
-
-  /*
-   * Don't clear the screen when starting in Ex mode, unless using the GUI.
-   */
+  // Don't clear the screen when starting in Ex mode, unless using the GUI.
   if (exmode_active)
     must_redraw = CLEAR;
   else {
@@ -668,7 +643,7 @@ main_loop (
         curwin->w_valid &= ~VALID_CROW;
       }
       setcursor();
-      cursor_on();
+      ui_cursor_on();
 
       do_redraw = FALSE;
 
@@ -724,7 +699,7 @@ void getout(int exitval)
     exitval += ex_exitval;
 
   /* Position the cursor on the last screen line, below all the text */
-  windgoto((int)Rows - 1, 0);
+  ui_cursor_goto((int)Rows - 1, 0);
 
   /* Optionally print hashtable efficiency. */
   hash_debug_results();
@@ -780,7 +755,7 @@ void getout(int exitval)
   }
 
   /* Position the cursor again, the autocommands may have moved it */
-  windgoto((int)Rows - 1, 0);
+  ui_cursor_goto((int)Rows - 1, 0);
 
 #if defined(USE_ICONV) && defined(DYNAMIC_ICONV)
   iconv_end();
@@ -1490,7 +1465,7 @@ static void handle_quickfix(mparm_T *paramp)
           paramp->use_ef, OPT_FREE, SID_CARG);
     vim_snprintf((char *)IObuff, IOSIZE, "cfile %s", p_ef);
     if (qf_init(NULL, p_ef, p_efm, TRUE, IObuff) < 0) {
-      out_char('\n');
+      ui_putc('\n');
       mch_exit(3);
     }
     TIME_MSG("reading errorfile");
@@ -1540,7 +1515,7 @@ static void check_tty(mparm_T *parmp)
       mch_errmsg(_("Vim: Warning: Input is not from a terminal\n"));
     }
 
-    out_flush();
+    ui_flush();
 
     if (scriptin[0] == NULL) {
       os_delay(2000L, true);

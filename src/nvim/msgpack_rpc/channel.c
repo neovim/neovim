@@ -24,7 +24,6 @@
 #include "nvim/memory.h"
 #include "nvim/os_unix.h"
 #include "nvim/message.h"
-#include "nvim/term.h"
 #include "nvim/map.h"
 #include "nvim/log.h"
 #include "nvim/misc1.h"
@@ -407,8 +406,8 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
   }
 
   if (result == MSGPACK_UNPACK_NOMEM_ERROR) {
-    OUT_STR(e_outofmem);
-    out_char('\n');
+    mch_errmsg(e_outofmem);
+    mch_errmsg("\n");
     decref(channel);
     preserve_exit();
   }

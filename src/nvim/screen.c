@@ -130,7 +130,6 @@
 #include "nvim/spell.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
-#include "nvim/term.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
@@ -145,12 +144,6 @@
  * The attributes that are actually active for writing to the screen.
  */
 static int screen_attr = 0;
-
-/*
- * Positioning the cursor is reduced by remembering the last position.
- * Mostly used by windgoto() and screen_char().
- */
-static int screen_cur_row, screen_cur_col;      /* last known cursor position */
 
 static match_T search_hl;       /* used for 'hlsearch' highlight matching */
 
@@ -422,7 +415,7 @@ void update_screen(int type)
   search_hl.rm.regprog = NULL;
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_redr_type != 0) {
-      cursor_off();
+      ui_cursor_off();
       if (!did_one) {
         did_one = TRUE;
         start_search_hl();
@@ -432,7 +425,7 @@ void update_screen(int type)
 
     /* redraw status line after the window to minimize cursor movement */
     if (wp->w_redr_status) {
-      cursor_off();
+      ui_cursor_off();
       win_redr_status(wp);
     }
   }
@@ -507,7 +500,6 @@ void update_single_line(win_T *wp, linenr_T lnum)
     row = 0;
     for (j = 0; j < wp->w_lines_valid; ++j) {
       if (lnum == wp->w_lines[j].wl_lnum) {
-        screen_start();         /* not sure of screen cursor */
         init_search_hl(wp);
         start_search_hl();
         prepare_search_hl(wp, lnum);
@@ -528,7 +520,7 @@ void update_single_line(win_T *wp, linenr_T lnum)
  */
 static void update_prepare(void)
 {
-    cursor_off();
+    ui_cursor_off();
     updating_screen = TRUE;
     start_search_hl();
 }
@@ -4065,7 +4057,7 @@ win_line (
         break;
       }
 
-      if (screen_cur_row == screen_row - 1
+      if (ui_current_row() == screen_row - 1
           && filler_todo <= 0
           && wp->w_width == Columns) {
         /* Remember that the line wraps, used for modeless copy. */
@@ -4096,7 +4088,7 @@ win_line (
            * then output the same character again to let the
            * terminal know about the wrap.  If the terminal doesn't
            * auto-wrap, we overwrite the character. */
-          if (screen_cur_col != wp->w_width)
+          if (ui_current_col() != wp->w_width)
             screen_char(LineOffset[screen_row - 1]
                 + (unsigned)Columns - 1,
                 screen_row - 1, (int)(Columns - 1));
@@ -4105,14 +4097,13 @@ win_line (
            * space to keep it simple. */
           if (has_mbyte && MB_BYTE2LEN(ScreenLines[LineOffset[
                                                      screen_row -
-                                                     1] + (Columns - 1)]) > 1)
-            out_char(' ');
-          else
-            out_char(ScreenLines[LineOffset[screen_row - 1]
-                                 + (Columns - 1)]);
+                                                     1] + (Columns - 1)]) > 1) {
+            ui_putc(' ');
+          } else {
+            ui_putc(ScreenLines[LineOffset[screen_row - 1] + (Columns - 1)]);
+          }
           /* force a redraw of the first char on the next line */
           ScreenAttrs[LineOffset[screen_row]] = (sattr_T)-1;
-          screen_start();               /* don't know where cursor is now */
         }
       }
 
@@ -4271,42 +4262,6 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
 
 
     if (redraw_this) {
-      /*
-       * Special handling when 'xs' termcap flag set (hpterm):
-       * Attributes for characters are stored at the position where the
-       * cursor is when writing the highlighting code.  The
-       * start-highlighting code must be written with the cursor on the
-       * first highlighted character.  The stop-highlighting code must
-       * be written with the cursor just after the last highlighted
-       * character.
-       * Overwriting a character doesn't remove it's highlighting.  Need
-       * to clear the rest of the line, and force redrawing it
-       * completely.
-       */
-      if (       p_wiv
-                 && !force
-                 && ScreenAttrs[off_to] != 0
-                 && ScreenAttrs[off_from] != ScreenAttrs[off_to]) {
-        /*
-         * Need to remove highlighting attributes here.
-         */
-        windgoto(row, col + coloff);
-        out_str(T_CE);                  /* clear rest of this screen line */
-        screen_start();                 /* don't know where cursor is now */
-        force = TRUE;                   /* force redraw of rest of the line */
-        redraw_next = TRUE;             /* or else next char would miss out */
-
-        /*
-         * If the previous character was highlighted, need to stop
-         * highlighting at this character.
-         */
-        if (col + coloff > 0 && ScreenAttrs[off_to - 1] != 0) {
-          screen_attr = ScreenAttrs[off_to - 1];
-          term_windgoto(row, col + coloff);
-          screen_stop_highlight();
-        } else
-          screen_attr = 0;                  /* highlighting has stopped */
-      }
       if (enc_dbcs != 0) {
         /* Check if overwriting a double-byte with a single-byte or
          * the other way around requires another character to be
@@ -4369,16 +4324,6 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
         screen_char_2(off_to, row, col + coloff);
       else
         screen_char(off_to, row, col + coloff);
-    } else if (  p_wiv
-                 && col + coloff > 0) {
-      if (ScreenAttrs[off_to] == ScreenAttrs[off_to - 1]) {
-        /*
-         * Don't output stop-highlight when moving the cursor, it will
-         * stop the highlighting when it should continue.
-         */
-        screen_attr = 0;
-      } else if (screen_attr != 0)
-        screen_stop_highlight();
     }
 
     off_to += CHAR_CELLS;
@@ -4720,7 +4665,7 @@ win_redr_status_matches (
         /* Put the wildmenu just above the command line.  If there is
          * no room, scroll the screen one line up. */
         if (cmdline_row == Rows - 1) {
-          screen_del_lines(0, 0, 1, (int)Rows, TRUE, NULL);
+          screen_del_lines(0, 0, 1, (int)Rows, NULL);
           ++msg_scrolled;
         } else {
           ++cmdline_row;
@@ -5686,25 +5631,15 @@ next_search_hl_pos(
   return false;
 }
 
-
 static void screen_start_highlight(int attr)
 {
   screen_attr = attr;
-  if (full_screen) {
-    char buf[20];
-    sprintf(buf, "\033|%dh", attr);
-    OUT_STR(buf);
-  }
+  ui_start_highlight(attr);
 }
 
 void screen_stop_highlight(void)
 {
-  if (screen_attr != 0) {
-    // Handled in ui.c
-    char buf[20];
-    sprintf(buf, "\033|%dH", screen_attr);
-    OUT_STR(buf);
-  }
+  ui_stop_highlight();
   screen_attr = 0;
 }
 
@@ -5741,7 +5676,7 @@ static void screen_char(unsigned off, int row, int col)
   if (screen_attr != attr)
     screen_stop_highlight();
 
-  windgoto(row, col);
+  ui_cursor_goto(row, col);
 
   if (screen_attr != attr)
     screen_start_highlight(attr);
@@ -5749,24 +5684,17 @@ static void screen_char(unsigned off, int row, int col)
   if (enc_utf8 && ScreenLinesUC[off] != 0) {
     char_u buf[MB_MAXBYTES + 1];
 
-    /* Convert UTF-8 character to bytes and write it. */
-
+    // Convert UTF-8 character to bytes and write it.
     buf[utfc_char2bytes(off, buf)] = NUL;
-
-    out_str(buf);
-    if (utf_char2cells(ScreenLinesUC[off]) > 1)
-      ++screen_cur_col;
+    ui_puts(buf);
   } else {
-    out_flush_check();
-    out_char(ScreenLines[off]);
-    /* double-byte character in single-width cell */
-    if (enc_dbcs == DBCS_JPNU && ScreenLines[off] == 0x8e)
-      out_char(ScreenLines2[off]);
+    ui_putc(ScreenLines[off]);
+    // double-byte character in single-width cell
+    if (enc_dbcs == DBCS_JPNU && ScreenLines[off] == 0x8e) {
+      ui_putc(ScreenLines2[off]);
+    }
   }
-
-  screen_cur_col++;
 }
-
 
 /*
  * Used for enc_dbcs only: Put one double-wide character at ScreenLines["off"]
@@ -5790,60 +5718,7 @@ static void screen_char_2(unsigned off, int row, int col)
   /* Output the first byte normally (positions the cursor), then write the
    * second byte directly. */
   screen_char(off, row, col);
-  out_char(ScreenLines[off + 1]);
-  ++screen_cur_col;
-}
-
-/*
- * Draw a rectangle of the screen, inverted when "invert" is TRUE.
- * This uses the contents of ScreenLines[] and doesn't change it.
- */
-void screen_draw_rectangle(int row, int col, int height, int width, int invert)
-{
-  int r, c;
-  int off;
-  int max_off;
-
-  /* Can't use ScreenLines unless initialized */
-  if (ScreenLines == NULL)
-    return;
-
-  if (invert)
-    screen_char_attr = HL_INVERSE;
-  for (r = row; r < row + height; ++r) {
-    off = LineOffset[r];
-    max_off = off + screen_Columns;
-    for (c = col; c < col + width; ++c) {
-      if (enc_dbcs != 0 && dbcs_off2cells(off + c, max_off) > 1) {
-        screen_char_2(off + c, r, c);
-        ++c;
-      } else {
-        screen_char(off + c, r, c);
-        if (utf_off2cells(off + c, max_off) > 1)
-          ++c;
-      }
-    }
-  }
-  screen_char_attr = 0;
-}
-
-/*
- * Redraw the characters for a vertically split window.
- */
-static void redraw_block(int row, int end, win_T *wp)
-{
-  int col;
-  int width;
-
-
-  if (wp == NULL) {
-    col = 0;
-    width = Columns;
-  } else {
-    col = wp->w_wincol;
-    width = wp->w_width;
-  }
-  screen_draw_rectangle(row, col, end - row, width, FALSE);
+  ui_putc(ScreenLines[off + 1]);
 }
 
 /*
@@ -5859,9 +5734,6 @@ void screen_fill(int start_row, int end_row, int start_col, int end_col, int c1,
   int end_off;
   int did_delete;
   int c;
-#if defined(FEAT_GUI) || defined(UNIX)
-  int force_next = FALSE;
-#endif
 
   if (end_row > screen_Rows)            /* safety check */
     end_row = screen_Rows;
@@ -5874,16 +5746,17 @@ void screen_fill(int start_row, int end_row, int start_col, int end_col, int c1,
 
   /* it's a "normal" terminal when not in a GUI or cterm */
   for (row = start_row; row < end_row; ++row) {
-    if (has_mbyte
-        ) {
-      /* When drawing over the right halve of a double-wide char clear
-       * out the left halve.  When drawing over the left halve of a
-       * double wide-char clear out the right halve.  Only needed in a
-       * terminal. */
-      if (start_col > 0 && mb_fix_col(start_col, row) != start_col)
+    if (has_mbyte) {
+      // When drawing over the right halve of a double-wide char clear
+      // out the left halve.  When drawing over the left halve of a
+      // double wide-char clear out the right halve.  Only needed in a
+      // terminal.
+      if (start_col > 0 && mb_fix_col(start_col, row) != start_col) {
         screen_puts_len((char_u *)" ", 1, row, start_col - 1, 0);
-      if (end_col < screen_Columns && mb_fix_col(end_col, row) != end_col)
+      }
+      if (end_col < screen_Columns && mb_fix_col(end_col, row) != end_col) {
         screen_puts_len((char_u *)" ", 1, row, end_col, 0);
+      }
     }
     /*
      * Try to use delete-line termcap code, when no attributes or in a
@@ -5916,9 +5789,8 @@ void screen_fill(int start_row, int end_row, int start_col, int end_col, int c1,
       if (off < end_off) {              /* something to be cleared */
         col = off - LineOffset[row];
         screen_stop_highlight();
-        term_windgoto(row, col);        /* clear rest of this screen line */
-        out_str(T_CE);
-        screen_start();                 /* don't know where cursor is now */
+        ui_cursor_goto(row, col);        // clear rest of this screen line
+        ui_eol_clear();
         col = end_col - col;
         while (col--) {                 /* clear chars in ScreenLines */
           ScreenLines[off] = ' ';
@@ -5938,9 +5810,6 @@ void screen_fill(int start_row, int end_row, int start_col, int end_col, int c1,
           || (enc_utf8 && (int)ScreenLinesUC[off]
               != (c >= 0x80 ? c : 0))
           || ScreenAttrs[off] != attr
-#if defined(FEAT_GUI) || defined(UNIX)
-          || force_next
-#endif
           ) {
         ScreenLines[off] = c;
         if (enc_utf8) {
@@ -5982,7 +5851,7 @@ void check_for_delay(int check_msg_scroll)
   if ((emsg_on_display || (check_msg_scroll && msg_scroll))
       && !did_wait_return
       && emsg_silent == 0) {
-    out_flush();
+    ui_flush();
     os_delay(1000L, true);
     emsg_on_display = FALSE;
     if (check_msg_scroll)
@@ -6290,7 +6159,7 @@ static void screenclear2(void)
     LineWraps[i] = FALSE;
   }
 
-  out_str(T_CL);              /* clear the display */
+  ui_clear();  // clear the display
   clear_cmdline = FALSE;
   mode_displayed = FALSE;
   screen_cleared = TRUE;        /* can use contents of ScreenLines now */
@@ -6303,7 +6172,6 @@ static void screenclear2(void)
   compute_cmdrow();
   msg_row = cmdline_row;        /* put cursor on last line for messages */
   msg_col = 0;
-  screen_start();               /* don't know where cursor is now */
   msg_scrolled = 0;             /* can't scroll back */
   msg_didany = FALSE;
   msg_didout = FALSE;
@@ -6348,238 +6216,13 @@ static void linecopy(int to, int from, win_T *wp)
 }
 
 /*
- * Reset cursor position. Use whenever cursor was moved because of outputting
- * something directly to the screen (shell commands) or a terminal control
- * code.
- */
-void screen_start(void)
-{
-  screen_cur_row = screen_cur_col = 9999;
-}
-
-/*
- * Move the cursor to position "row","col" in the screen.
- * This tries to find the most efficient way to move, minimizing the number of
- * characters sent to the terminal.
- */
-void windgoto(int row, int col)
-{
-  sattr_T         *p;
-  int i;
-  int plan;
-  int cost;
-  int wouldbe_col;
-  int noinvcurs;
-  char_u          *bs;
-  int goto_cost;
-  int attr;
-
-#define GOTO_COST   7   /* assume a term_windgoto() takes about 7 chars */
-#define HIGHL_COST  5   /* assume unhighlight takes 5 chars */
-
-#define PLAN_LE     1
-#define PLAN_CR     2
-#define PLAN_NL     3
-#define PLAN_WRITE  4
-  /* Can't use ScreenLines unless initialized */
-  if (ScreenLines == NULL)
-    return;
-
-  if (col != screen_cur_col || row != screen_cur_row) {
-    /* Check for valid position. */
-    if (row < 0)        /* window without text lines? */
-      row = 0;
-    if (row >= screen_Rows)
-      row = screen_Rows - 1;
-    if (col >= screen_Columns)
-      col = screen_Columns - 1;
-
-    /* check if no cursor movement is allowed in highlight mode */
-    if (screen_attr && *T_MS == NUL)
-      noinvcurs = HIGHL_COST;
-    else
-      noinvcurs = 0;
-    goto_cost = GOTO_COST + noinvcurs;
-
-    /*
-     * Plan how to do the positioning:
-     * 1. Use CR to move it to column 0, same row.
-     * 2. Use T_LE to move it a few columns to the left.
-     * 3. Use NL to move a few lines down, column 0.
-     * 4. Move a few columns to the right with T_ND or by writing chars.
-     *
-     * Don't do this if the cursor went beyond the last column, the cursor
-     * position is unknown then (some terminals wrap, some don't )
-     *
-     * First check if the highlighting attributes allow us to write
-     * characters to move the cursor to the right.
-     */
-    if (row >= screen_cur_row && screen_cur_col < Columns) {
-      /*
-       * If the cursor is in the same row, bigger col, we can use CR
-       * or T_LE.
-       */
-      bs = NULL;                            /* init for GCC */
-      attr = screen_attr;
-      if (row == screen_cur_row && col < screen_cur_col) {
-        /* "le" is preferred over "bc", because "bc" is obsolete */
-        if (*T_LE)
-          bs = T_LE;                        /* "cursor left" */
-        else
-          bs = T_BC;                        /* "backspace character (old) */
-        if (*bs)
-          cost = (screen_cur_col - col) * (int)STRLEN(bs);
-        else
-          cost = 999;
-        if (col + 1 < cost) {               /* using CR is less characters */
-          plan = PLAN_CR;
-          wouldbe_col = 0;
-          cost = 1;                         /* CR is just one character */
-        } else {
-          plan = PLAN_LE;
-          wouldbe_col = col;
-        }
-        if (noinvcurs) {                    /* will stop highlighting */
-          cost += noinvcurs;
-          attr = 0;
-        }
-      }
-      /*
-       * If the cursor is above where we want to be, we can use CR LF.
-       */
-      else if (row > screen_cur_row) {
-        plan = PLAN_NL;
-        wouldbe_col = 0;
-        cost = (row - screen_cur_row) * 2;          /* CR LF */
-        if (noinvcurs) {                    /* will stop highlighting */
-          cost += noinvcurs;
-          attr = 0;
-        }
-      }
-      /*
-       * If the cursor is in the same row, smaller col, just use write.
-       */
-      else {
-        plan = PLAN_WRITE;
-        wouldbe_col = screen_cur_col;
-        cost = 0;
-      }
-
-      /*
-       * Check if any characters that need to be written have the
-       * correct attributes.  Also avoid UTF-8 characters.
-       */
-      i = col - wouldbe_col;
-      if (i > 0)
-        cost += i;
-      if (cost < goto_cost && i > 0) {
-        /*
-         * Check if the attributes are correct without additionally
-         * stopping highlighting.
-         */
-        p = ScreenAttrs + LineOffset[row] + wouldbe_col;
-        while (i && *p++ == attr)
-          --i;
-        if (i != 0) {
-          /*
-           * Try if it works when highlighting is stopped here.
-           */
-          if (*--p == 0) {
-            cost += noinvcurs;
-            while (i && *p++ == 0)
-              --i;
-          }
-          if (i != 0)
-            cost = 999;                 /* different attributes, don't do it */
-        }
-        if (enc_utf8) {
-          /* Don't use an UTF-8 char for positioning, it's slow. */
-          for (i = wouldbe_col; i < col; ++i)
-            if (ScreenLinesUC[LineOffset[row] + i] != 0) {
-              cost = 999;
-              break;
-            }
-        }
-      }
-
-      /*
-       * We can do it without term_windgoto()!
-       */
-      if (cost < goto_cost) {
-        if (plan == PLAN_LE) {
-          if (noinvcurs)
-            screen_stop_highlight();
-          while (screen_cur_col > col) {
-            out_str(bs);
-            --screen_cur_col;
-          }
-        } else if (plan == PLAN_CR) {
-          if (noinvcurs)
-            screen_stop_highlight();
-          out_char('\r');
-          screen_cur_col = 0;
-        } else if (plan == PLAN_NL) {
-          if (noinvcurs)
-            screen_stop_highlight();
-          while (screen_cur_row < row) {
-            out_char('\n');
-            ++screen_cur_row;
-          }
-          screen_cur_col = 0;
-        }
-
-        i = col - screen_cur_col;
-        if (i > 0) {
-          /*
-           * Use cursor-right if it's one character only.  Avoids
-           * removing a line of pixels from the last bold char, when
-           * using the bold trick in the GUI.
-           */
-          if (T_ND[0] != NUL && T_ND[1] == NUL) {
-            while (i-- > 0)
-              out_char(*T_ND);
-          } else {
-            int off;
-
-            off = LineOffset[row] + screen_cur_col;
-            while (i-- > 0) {
-              if (ScreenAttrs[off] != screen_attr)
-                screen_stop_highlight();
-              out_flush_check();
-              out_char(ScreenLines[off]);
-              if (enc_dbcs == DBCS_JPNU
-                  && ScreenLines[off] == 0x8e)
-                out_char(ScreenLines2[off]);
-              ++off;
-            }
-          }
-        }
-      }
-    } else
-      cost = 999;
-
-    if (cost >= goto_cost) {
-      if (noinvcurs)
-        screen_stop_highlight();
-      if (row == screen_cur_row && (col > screen_cur_col) &&
-          *T_CRI != NUL)
-        term_cursor_right(col - screen_cur_col);
-      else
-        term_windgoto(row, col);
-    }
-    screen_cur_row = row;
-    screen_cur_col = col;
-  }
-}
-
-/*
  * Set cursor to its position in the current window.
  */
 void setcursor(void)
 {
   if (redrawing()) {
     validate_cursor();
-    windgoto(curwin->w_winrow + curwin->w_wrow,
+    ui_cursor_goto(curwin->w_winrow + curwin->w_wrow,
         curwin->w_wincol + (
           /* With 'rightleft' set and the cursor on a double-wide
            * character, position it on the leftmost column. */
@@ -6628,7 +6271,7 @@ int win_ins_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
   did_delete = FALSE;
   if (wp->w_next != NULL || wp->w_status_height) {
     if (screen_del_lines(0, wp->w_winrow + wp->w_height - line_count,
-            line_count, (int)Rows, FALSE, NULL) == OK)
+            line_count, (int)Rows, NULL) == OK)
       did_delete = TRUE;
     else if (wp->w_next)
       return FAIL;
@@ -6683,8 +6326,9 @@ int win_del_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
     return retval;
 
   if (screen_del_lines(0, wp->w_winrow + row, line_count,
-          (int)Rows, FALSE, NULL) == FAIL)
+          (int)Rows, NULL) == FAIL) {
     return FAIL;
+  }
 
   /*
    * If there are windows or status lines below, try to put them at the
@@ -6706,29 +6350,21 @@ int win_del_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
   return OK;
 }
 
-/*
- * Common code for win_ins_lines() and win_del_lines().
- * Returns OK or FAIL when the work has been done.
- * Returns MAYBE when not finished yet.
- */
+// Common code for win_ins_lines() and win_del_lines().
+// Returns OK or FAIL when the work has been done.
 static int win_do_lines(win_T *wp, int row, int line_count, int mayclear, int del)
 {
-  int retval;
-
-  if (!redrawing() || line_count <= 0)
+  if (!redrawing() || line_count <= 0) {
     return FAIL;
+  }
 
-  /* only a few lines left: redraw is faster */
-  if (mayclear && Rows - line_count < 5
-      && wp->w_width == Columns
-      ) {
+  // only a few lines left: redraw is faster
+  if (mayclear && Rows - line_count < 5 && wp->w_width == Columns) {
     screenclear();          /* will set wp->w_lines_valid to 0 */
     return FAIL;
   }
 
-  /*
-   * Delete all remaining lines
-   */
+  // Delete all remaining lines
   if (row + line_count >= wp->w_height) {
     screen_fill(wp->w_winrow + row, wp->w_winrow + wp->w_height,
                 wp->w_wincol, (int)W_ENDCOL(wp),
@@ -6736,42 +6372,20 @@ static int win_do_lines(win_T *wp, int row, int line_count, int mayclear, int de
     return OK;
   }
 
-  /*
-   * when scrolling, the message on the command line should be cleared,
-   * otherwise it will stay there forever.
-   */
+  // when scrolling, the message on the command line should be cleared,
+  // otherwise it will stay there forever.
   clear_cmdline = TRUE;
-
-  /*
-   * If the terminal can set a scroll region, use that.
-   * Always do this in a vertically split window.  This will redraw from
-   * ScreenLines[] when t_CV isn't defined.  That's faster than using
-   * win_line().
-   * Don't use a scroll region when we are going to redraw the text, writing
-   * a character in the lower right corner of the scroll region causes a
-   * scroll-up in the DJGPP version.
-   */
-  if (scroll_region
-      || wp->w_width != Columns
-      ) {
-    if (scroll_region && (wp->w_width == Columns || *T_CSV != NUL))
-      scroll_region_set(wp, row);
-    if (del)
-      retval = screen_del_lines(wp->w_winrow + row, 0, line_count,
-          wp->w_height - row, FALSE, wp);
-    else
-      retval = screen_ins_lines(wp->w_winrow + row, 0, line_count,
-          wp->w_height - row, wp);
-    if (scroll_region && (wp->w_width == Columns || *T_CSV != NUL))
-      scroll_region_reset();
-    return retval;
+  int retval;
+  ui_set_scroll_region(wp, row);
+  if (del) {
+    retval = screen_del_lines(wp->w_winrow + row, 0, line_count,
+        wp->w_height - row, wp);
+  } else {
+    retval = screen_ins_lines(wp->w_winrow + row, 0, line_count,
+        wp->w_height - row, wp);
   }
-
-  if (wp->w_next != NULL) {
-    return FAIL;
-  }
-
-  return MAYBE;
+  ui_reset_scroll_region();
+  return retval;
 }
 
 /*
@@ -6810,16 +6424,13 @@ static void win_rest_invalid(win_T *wp)
 #define USE_T_CD    8
 #define USE_REDRAW  9
 
-/*
- * insert lines on the screen and update ScreenLines[]
- * 'end' is the line after the scrolled part. Normally it is Rows.
- * When scrolling region used 'off' is the offset from the top for the region.
- * 'row' and 'end' are relative to the start of the region.
- *
- * return FAIL for failure, OK for success.
- */
-int
-screen_ins_lines (
+// insert lines on the screen and update ScreenLines[]
+// 'end' is the line after the scrolled part. Normally it is Rows.
+// When scrolling region used 'off' is the offset from the top for the region.
+// 'row' and 'end' are relative to the start of the region.
+//
+// return FAIL for failure, OK for success.
+int screen_ins_lines (
     int off,
     int row,
     int line_count,
@@ -6830,101 +6441,27 @@ screen_ins_lines (
   int i;
   int j;
   unsigned temp;
-  int cursor_row;
-  int type;
-  int result_empty;
-  int can_ce = true;
 
-  /*
-   * FAIL if
-   * - there is no valid screen
-   * - the screen has to be redrawn completely
-   * - the line count is less than one
-   * - the line count is more than 'ttyscroll'
-   */
-  if (!screen_valid(TRUE) || line_count <= 0 || line_count > p_ttyscroll)
+  // FAIL if
+  // - there is no valid screen
+  // - the screen has to be redrawn completely
+  // - the line count is less than one
+  // - the line count is more than 'ttyscroll'
+  if (!screen_valid(TRUE) || line_count <= 0) {
     return FAIL;
+  }
 
-  /*
-   * There are seven ways to insert lines:
-   * 0. When in a vertically split window and t_CV isn't set, redraw the
-   *    characters from ScreenLines[].
-   * 1. Use T_CD (clear to end of display) if it exists and the result of
-   *	  the insert is just empty lines
-   * 2. Use T_CAL (insert multiple lines) if it exists and T_AL is not
-   *	  present or line_count > 1. It looks better if we do all the inserts
-   *	  at once.
-   * 3. Use T_CDL (delete multiple lines) if it exists and the result of the
-   *	  insert is just empty lines and T_CE is not present or line_count >
-   *	  1.
-   * 4. Use T_AL (insert line) if it exists.
-   * 5. Use T_CE (erase line) if it exists and the result of the insert is
-   *	  just empty lines.
-   * 6. Use T_DL (delete line) if it exists and the result of the insert is
-   *	  just empty lines.
-   * 7. Use T_SR (scroll reverse) if it exists and inserting at row 0 and
-   *	  the 'da' flag is not set or we have clear line capability.
-   * 8. redraw the characters from ScreenLines[].
-   *
-   * Careful: In a hpterm scroll reverse doesn't work as expected, it moves
-   * the scrollbar for the window. It does have insert line, use that if it
-   * exists.
-   */
-  result_empty = (row + line_count >= end);
-  if (wp != NULL && wp->w_width != Columns && *T_CSV == NUL)
-    type = USE_REDRAW;
-  else if (result_empty)
-    type = USE_T_CD;
-  else if (*T_CAL != NUL && (line_count > 1 || *T_AL == NUL))
-    type = USE_T_CAL;
-  else if (*T_CDL != NUL && result_empty && (line_count > 1 || !can_ce))
-    type = USE_T_CDL;
-  else if (*T_AL != NUL)
-    type = USE_T_AL;
-  else if (can_ce && result_empty)
-    type = USE_T_CE;
-  else if (*T_DL != NUL && result_empty)
-    type = USE_T_DL;
-  else if (*T_SR != NUL && row == 0 && (*T_DA == NUL || can_ce))
-    type = USE_T_SR;
-  else
-    return FAIL;
-
-  /*
-   * For clearing the lines screen_del_lines() is used. This will also take
-   * care of t_db if necessary.
-   */
-  if (type == USE_T_CD || type == USE_T_CDL ||
-      type == USE_T_CE || type == USE_T_DL)
-    return screen_del_lines(off, row, line_count, end, FALSE, wp);
-
-  /*
-   * If text is retained below the screen, first clear or delete as many
-   * lines at the bottom of the window as are about to be inserted so that
-   * the deleted lines won't later surface during a screen_del_lines.
-   */
-  if (*T_DB)
-    screen_del_lines(off, end - line_count, line_count, end, FALSE, wp);
-
-
-
-  if (*T_CCS != NUL)       /* cursor relative to region */
-    cursor_row = row;
-  else
-    cursor_row = row + off;
-
-  /*
-   * Shift LineOffset[] line_count down to reflect the inserted lines.
-   * Clear the inserted lines in ScreenLines[].
-   */
+  // Shift LineOffset[] line_count down to reflect the inserted lines.
+  // Clear the inserted lines in ScreenLines[].
   row += off;
   end += off;
   for (i = 0; i < line_count; ++i) {
     if (wp != NULL && wp->w_width != Columns) {
-      /* need to copy part of a line */
+      // need to copy part of a line
       j = end - 1 - i;
-      while ((j -= line_count) >= row)
+      while ((j -= line_count) >= row) {
         linecopy(j + line_count, j, wp);
+      }
       j += line_count;
       lineclear(LineOffset[j] + wp->w_wincol, wp->w_width);
       LineWraps[j] = FALSE;
@@ -6941,151 +6478,54 @@ screen_ins_lines (
     }
   }
 
-  screen_stop_highlight();
-  windgoto(cursor_row, 0);
-
-  /* redraw the characters */
-  if (type == USE_REDRAW)
-    redraw_block(row, end, wp);
-  else if (type == USE_T_CAL)  {
-    term_append_lines(line_count);
-    screen_start();             /* don't know where cursor is now */
-  } else {
-    for (i = 0; i < line_count; i++) {
-      if (type == USE_T_AL) {
-        if (i && cursor_row != 0)
-          windgoto(cursor_row, 0);
-        out_str(T_AL);
-      } else      /* type == USE_T_SR */
-        out_str(T_SR);
-      screen_start();               /* don't know where cursor is now */
-    }
-  }
-
-  /*
-   * With scroll-reverse and 'da' flag set we need to clear the lines that
-   * have been scrolled down into the region.
-   */
-  if (type == USE_T_SR && *T_DA) {
-    for (i = 0; i < line_count; ++i) {
-      windgoto(off + i, 0);
-      out_str(T_CE);
-      screen_start();               /* don't know where cursor is now */
-    }
-  }
+  ui_append_lines(line_count);
 
   return OK;
 }
 
-/*
- * delete lines on the screen and update ScreenLines[]
- * 'end' is the line after the scrolled part. Normally it is Rows.
- * When scrolling region used 'off' is the offset from the top for the region.
- * 'row' and 'end' are relative to the start of the region.
- *
- * Return OK for success, FAIL if the lines are not deleted.
- */
-int
-screen_del_lines (
+// delete lines on the screen and update ScreenLines[]
+// 'end' is the line after the scrolled part. Normally it is Rows.
+// When scrolling region used 'off' is the offset from the top for the region.
+// 'row' and 'end' are relative to the start of the region.
+//
+// Return OK for success, FAIL if the lines are not deleted.
+int screen_del_lines (
     int off,
     int row,
     int line_count,
     int end,
-    int force,                      /* even when line_count > p_ttyscroll */
     win_T *wp         /* NULL or window to use width from */
 )
 {
   int j;
   int i;
   unsigned temp;
-  int cursor_row;
-  int cursor_end;
-  int result_empty;             /* result is empty until end of region */
-  int can_delete;               /* deleting line codes can be used */
-  int type;
 
-  /*
-   * FAIL if
-   * - there is no valid screen
-   * - the screen has to be redrawn completely
-   * - the line count is less than one
-   * - the line count is more than 'ttyscroll'
-   */
-  if (!screen_valid(TRUE) || line_count <= 0 ||
-      (!force && line_count > p_ttyscroll))
+  // FAIL if
+  // - there is no valid screen
+  // - the screen has to be redrawn completely
+  // - the line count is less than one
+  // - the line count is more than 'ttyscroll'
+  if (!screen_valid(TRUE) || line_count <= 0) {
     return FAIL;
-
-  /*
-   * Check if the rest of the current region will become empty.
-   */
-  result_empty = row + line_count >= end;
-
-  /*
-   * We can delete lines only when 'db' flag not set or when 'ce' option
-   * available.
-   */
-  can_delete = true;
-
-  /*
-   * There are six ways to delete lines:
-   * 0. When in a vertically split window and t_CV isn't set, redraw the
-   *    characters from ScreenLines[].
-   * 1. Use T_CD if it exists and the result is empty.
-   * 2. Use newlines if row == 0 and count == 1 or T_CDL does not exist.
-   * 3. Use T_CDL (delete multiple lines) if it exists and line_count > 1 or
-   *	  none of the other ways work.
-   * 4. Use T_CE (erase line) if the result is empty.
-   * 5. Use T_DL (delete line) if it exists.
-   * 6. redraw the characters from ScreenLines[].
-   */
-  if (wp != NULL && wp->w_width != Columns && *T_CSV == NUL)
-    type = USE_REDRAW;
-  else if (result_empty)
-    type = USE_T_CD;
-  else if (row == 0 && (
-             /* On the Amiga, somehow '\n' on the last line doesn't always scroll
-              * up, so use delete-line command */
-             line_count == 1 ||
-             *T_CDL == NUL))
-    type = USE_NL;
-  else if (*T_CDL != NUL && line_count > 1 && can_delete)
-    type = USE_T_CDL;
-  else if (result_empty && (wp == NULL || wp->w_width == Columns))
-    type = USE_T_CE;
-  else if (*T_DL != NUL && can_delete)
-    type = USE_T_DL;
-  else if (*T_CDL != NUL && can_delete)
-    type = USE_T_CDL;
-  else
-    return FAIL;
-
-
-
-  if (*T_CCS != NUL) {      /* cursor relative to region */
-    cursor_row = row;
-    cursor_end = end;
-  } else {
-    cursor_row = row + off;
-    cursor_end = end + off;
   }
 
-  /*
-   * Now shift LineOffset[] line_count up to reflect the deleted lines.
-   * Clear the inserted lines in ScreenLines[].
-   */
+  // Now shift LineOffset[] line_count up to reflect the deleted lines.
+  // Clear the inserted lines in ScreenLines[].
   row += off;
   end += off;
   for (i = 0; i < line_count; ++i) {
     if (wp != NULL && wp->w_width != Columns) {
-      /* need to copy part of a line */
+      // need to copy part of a line
       j = row + i;
-      while ((j += line_count) <= end - 1)
+      while ((j += line_count) <= end - 1) {
         linecopy(j - line_count, j, wp);
+      }
       j -= line_count;
       lineclear(LineOffset[j] + wp->w_wincol, wp->w_width);
       LineWraps[j] = FALSE;
     } else {
-      /* whole width, moving the line pointers is faster */
+      // whole width, moving the line pointers is faster
       j = row + i;
       temp = LineOffset[j];
       while ((j += line_count) <= end - 1) {
@@ -7098,54 +6538,7 @@ screen_del_lines (
     }
   }
 
-  screen_stop_highlight();
-
-  /* redraw the characters */
-  if (type == USE_REDRAW)
-    redraw_block(row, end, wp);
-  else if (type == USE_T_CD) { /* delete the lines */
-    windgoto(cursor_row, 0);
-    out_str(T_CD);
-    screen_start();                     /* don't know where cursor is now */
-  } else if (type == USE_T_CDL) {
-    windgoto(cursor_row, 0);
-    term_delete_lines(line_count);
-    screen_start();                     /* don't know where cursor is now */
-  }
-  /*
-   * Deleting lines at top of the screen or scroll region: Just scroll
-   * the whole screen (scroll region) up by outputting newlines on the
-   * last line.
-   */
-  else if (type == USE_NL) {
-    windgoto(cursor_end - 1, 0);
-    for (i = line_count; --i >= 0; )
-      out_char('\n');                   /* cursor will remain on same line */
-  } else {
-    for (i = line_count; --i >= 0; ) {
-      if (type == USE_T_DL) {
-        windgoto(cursor_row, 0);
-        out_str(T_DL);                  /* delete a line */
-      } else { /* type == USE_T_CE */
-        windgoto(cursor_row + i, 0);
-        out_str(T_CE);                  /* erase a line */
-      }
-      screen_start();                   /* don't know where cursor is now */
-    }
-  }
-
-  /*
-   * If the 'db' flag is set, we need to clear the lines that have been
-   * scrolled up at the bottom of the region.
-   */
-  if (*T_DB && (type == USE_T_DL || type == USE_T_CDL)) {
-    for (i = line_count; i > 0; --i) {
-      windgoto(cursor_end - i, 0);
-      out_str(T_CE);                    /* erase a line */
-      screen_start();                   /* don't know where cursor is now */
-    }
-  }
-
+  ui_delete_lines(line_count);
 
   return OK;
 }
@@ -7195,7 +6588,7 @@ int showmode(void)
 
     /* Position on the last line in the window, column 0 */
     msg_pos_mode();
-    cursor_off();
+    ui_cursor_off();
     attr = hl_attr(HLF_CM);                     /* Highlight mode */
     if (do_mode) {
       MSG_PUTS_ATTR("--", attr);
@@ -7644,7 +7037,7 @@ static void win_redr_ruler(win_T *wp, int always)
              || wp->w_buffer->b_ml.ml_line_count != wp->w_ru_line_count
              || wp->w_topfill != wp->w_ru_topfill
              || empty_line != wp->w_ru_empty) {
-    cursor_off();
+    ui_cursor_off();
 
     int width;
     int row;
@@ -7781,24 +7174,6 @@ int number_width(win_T *wp)
 }
 
 /*
- * Return the current cursor column. This is the actual position on the
- * screen. First column is 0.
- */
-int screen_screencol(void)
-{
-  return screen_cur_col;
-}
-
-/*
- * Return the current cursor row. This is the actual position on the screen.
- * First row is 0.
- */
-int screen_screenrow(void)
-{
-  return screen_cur_row;
-}
-
-/*
  * Set size of the Vim shell.
  * If 'mustset' is TRUE, we must set Rows and Columns, do not get the real
  * window size (this is used for the :win command).
@@ -7839,19 +7214,15 @@ void screen_resize(int width, int height)
   check_shellsize();
   height = Rows;
   width = Columns;
-  // Clear the output buffer to ensure UIs don't receive redraw command meant
-  // for invalid screen sizes.
-  out_buf_clear();
   ui_resize(width, height);
 
   /* The window layout used to be adjusted here, but it now happens in
    * screenalloc() (also invoked from screenclear()).  That is because the
    * "busy" check above may skip this, but not screenalloc(). */
 
-  if (State != ASKMORE && State != EXTERNCMD && State != CONFIRM)
+  if (State != ASKMORE && State != EXTERNCMD && State != CONFIRM) {
     screenclear();
-  else
-    screen_start();         /* don't know where cursor is now */
+  }
 
   if (starting != NO_SCREEN) {
     maketitle();
@@ -7889,8 +7260,52 @@ void screen_resize(int width, int height)
           setcursor();
       }
     }
-    cursor_on();            /* redrawing may have switched it off */
+    ui_cursor_on();            /* redrawing may have switched it off */
   }
-  out_flush();
+  ui_flush();
   --busy;
+}
+
+// Check if the new shell size is valid, correct it if it's too small or way
+// too big.
+void check_shellsize(void)
+{
+  if (Rows < min_rows()) {
+    // need room for one window and command line
+    Rows = min_rows();
+  }
+  limit_screen_size();
+}
+
+// Limit Rows and Columns to avoid an overflow in Rows * Columns.
+void limit_screen_size(void)
+{
+  if (Columns < MIN_COLUMNS) {
+    Columns = MIN_COLUMNS;
+  } else if (Columns > 10000) {
+    Columns = 10000;
+  }
+
+  if (Rows > 1000) {
+    Rows = 1000;
+  }
+}
+
+void win_new_shellsize(void)
+{
+  static long old_Rows = 0;
+  static long old_Columns = 0;
+
+  if (old_Rows != Rows) {
+    // if 'window' uses the whole screen, keep it using that */
+    if (p_window == old_Rows - 1 || old_Rows == 0) {
+      p_window = Rows - 1;
+    }
+    old_Rows = Rows;
+    shell_new_rows();  // update window sizes
+  }
+  if (old_Columns != Columns) {
+    old_Columns = Columns;
+    shell_new_columns();  // update window sizes
+  }
 }

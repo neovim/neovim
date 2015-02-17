@@ -13,7 +13,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
-#include "nvim/term.h"
+#include "nvim/ui.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "memory.c.generated.h"
@@ -86,8 +86,8 @@ void *xmalloc(size_t size)
 {
   void *ret = try_malloc(size);
   if (!ret) {
-    OUT_STR(e_outofmem);
-    out_char('\n');
+    mch_errmsg(e_outofmem);
+    mch_errmsg("\n");
     preserve_exit();
   }
   return ret;
@@ -109,8 +109,8 @@ void *xcalloc(size_t count, size_t size)
     try_to_free_memory();
     ret = calloc(allocated_count, allocated_size);
     if (!ret) {
-      OUT_STR(e_outofmem);
-      out_char('\n');
+      mch_errmsg(e_outofmem);
+      mch_errmsg("\n");
       preserve_exit();
     }
   }
@@ -131,8 +131,8 @@ void *xrealloc(void *ptr, size_t size)
     try_to_free_memory();
     ret = realloc(ptr, allocated_size);
     if (!ret) {
-      OUT_STR(e_outofmem);
-      out_char('\n');
+      mch_errmsg(e_outofmem);
+      mch_errmsg("\n");
       preserve_exit();
     }
   }
@@ -149,7 +149,7 @@ void *xmallocz(size_t size)
 {
   size_t total_size = size + 1;
   if (total_size < size) {
-    OUT_STR(_("Vim: Data too large to fit into virtual memory space\n"));
+    mch_errmsg(_("Vim: Data too large to fit into virtual memory space\n"));
     preserve_exit();
   }
 
@@ -369,8 +369,8 @@ char *xstrdup(const char *str)
     try_to_free_memory();
     ret = strdup(str);
     if (!ret) {
-      OUT_STR(e_outofmem);
-      out_char('\n');
+      mch_errmsg(e_outofmem);
+      mch_errmsg("\n");
       preserve_exit();
     }
   }
@@ -524,7 +524,6 @@ void free_all_mem(void)
 
   /* Obviously named calls. */
   free_all_autocmds();
-  clear_termcodes();
   free_all_options();
   free_all_marks();
   alist_clear(&global_alist);
@@ -591,19 +590,12 @@ void free_all_mem(void)
   free_tabpage(first_tabpage);
   first_tabpage = NULL;
 
-# ifdef UNIX
-  /* Machine-specific free. */
-  mch_free_mem();
-# endif
-
   /* message history */
   for (;; )
     if (delete_first_msg() == FAIL)
       break;
 
   eval_clear();
-
-  free_termoptions();
 
   /* screenlines (can't display anything now!) */
   free_screenlines();

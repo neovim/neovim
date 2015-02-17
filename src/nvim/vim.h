@@ -53,7 +53,6 @@ Error: configure did not run properly.Check auto/config.log.
 # define MAX_TYPENR 65535
 
 #include "nvim/keymap.h"
-#include "nvim/term_defs.h"
 #include "nvim/macros.h"
 
 

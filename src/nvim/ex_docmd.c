@@ -62,7 +62,6 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
-#include "nvim/term.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
@@ -4333,7 +4332,7 @@ static void uc_list(char_u *name, size_t name_len)
       msg_outtrans_special(cmd->uc_rep, FALSE);
       if (p_verbose > 0)
         last_set_msg(cmd->uc_scriptID);
-      out_flush();
+      ui_flush();
       os_breakcheck();
       if (got_int)
         break;
@@ -5389,21 +5388,18 @@ static void ex_stop(exarg_T *eap)
   /*
    * Disallow suspending for "rvim".
    */
-  if (!check_restricted()
-      ) {
-    if (!eap->forceit)
+  if (!check_restricted()) {
+    if (!eap->forceit) {
       autowrite_all();
-    windgoto((int)Rows - 1, 0);
-    out_char('\n');
-    out_flush();
-    out_flush();                /* needed for SUN to restore xterm buffer */
-    mch_restore_title(3);       /* restore window titles */
+    }
+    ui_cursor_goto((int)Rows - 1, 0);
+    ui_putc('\n');
+    ui_flush();
     ui_suspend();               /* call machine specific function */
     maketitle();
     resettitle();               /* force updating the title */
-    scroll_start();             /* scroll screen before redrawing */
     redraw_later_clear();
-    shell_resized();            /* may have resized window */
+    ui_refresh();            /* may have resized window */
   }
 }
 
@@ -5461,7 +5457,7 @@ static void ex_print(exarg_T *eap)
           eap->cmdidx == CMD_list || (eap->flags & EXFLAG_LIST));
       if (++eap->line1 > eap->line2)
         break;
-      out_flush();                  /* show one line at a time */
+      ui_flush();                  /* show one line at a time */
     }
     setpcmark();
     /* put cursor at last line */
@@ -5837,7 +5833,7 @@ static void ex_tabs(exarg_T *eap)
     msg_putchar('\n');
     vim_snprintf((char *)IObuff, IOSIZE, _("Tab page %d"), tabcount++);
     msg_outtrans_attr(IObuff, hl_attr(HLF_T));
-    out_flush();            /* output one line at a time */
+    ui_flush();            /* output one line at a time */
     os_breakcheck();
 
     FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
@@ -5856,7 +5852,7 @@ static void ex_tabs(exarg_T *eap)
         home_replace(wp->w_buffer, wp->w_buffer->b_fname,
             IObuff, IOSIZE, TRUE);
       msg_outtrans(IObuff);
-      out_flush();                  /* output one line at a time */
+      ui_flush();                  /* output one line at a time */
       os_breakcheck();
     }
   }
@@ -5870,7 +5866,7 @@ static void ex_tabs(exarg_T *eap)
 static void ex_mode(exarg_T *eap)
 {
   if (*eap->arg == NUL) {
-    shell_resized();
+    ui_refresh();
   } else {
     EMSG(_(e_screenmode));
   }
@@ -6379,7 +6375,7 @@ static void ex_sleep(exarg_T *eap)
   if (cursor_valid()) {
     n = curwin->w_winrow + curwin->w_wrow - msg_scrolled;
     if (n >= 0)
-      windgoto((int)n, curwin->w_wincol + curwin->w_wcol);
+      ui_cursor_goto((int)n, curwin->w_wincol + curwin->w_wcol);
   }
 
   len = eap->line2;
@@ -6398,8 +6394,8 @@ void do_sleep(long msec)
 {
   long done;
 
-  cursor_on();
-  out_flush();
+  ui_cursor_on();
+  ui_flush();
   for (done = 0; !got_int && done < msec; done += 1000L) {
     os_delay(msec - done > 1000L ? 1000L : msec - done, true);
     os_breakcheck();
@@ -6831,7 +6827,7 @@ static void ex_redraw(exarg_T *eap)
   /* No need to wait after an intentional redraw. */
   need_wait_return = FALSE;
 
-  out_flush();
+  ui_flush();
 }
 
 /*
@@ -6853,7 +6849,7 @@ static void ex_redrawstatus(exarg_T *eap)
       0);
   RedrawingDisabled = r;
   p_lz = p;
-  out_flush();
+  ui_flush();
 }
 
 static void close_redir(void)

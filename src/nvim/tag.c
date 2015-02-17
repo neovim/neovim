@@ -48,7 +48,7 @@
 #include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"
-#include "nvim/term.h"
+#include "nvim/ui.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
@@ -881,7 +881,7 @@ do_tag (
         } else
           give_warning(IObuff, ic);
         if (ic && !msg_scrolled && msg_silent == 0) {
-          out_flush();
+          ui_flush();
           os_delay(1000L, true);
         }
       }
@@ -985,7 +985,7 @@ void do_tags(exarg_T *eap)
           ? hl_attr(HLF_D) : 0);
       free(name);
     }
-    out_flush();                    /* show one line at a time */
+    ui_flush();                    /* show one line at a time */
   }
   if (tagstackidx == tagstacklen)       /* idx at top of stack */
     MSG_PUTS("\n>");
@@ -2497,7 +2497,7 @@ jumpto_tag (
           if (found == 2 || !save_p_ic) {
             MSG(_("E435: Couldn't find tag, just guessing!"));
             if (!msg_scrolled && msg_silent == 0) {
-              out_flush();
+              ui_flush();
               os_delay(1000L, true);
             }
           }

@@ -39,7 +39,6 @@
 #include "nvim/normal.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
-#include "nvim/term.h"
 #include "nvim/ui.h"
 #include "nvim/mouse.h"
 #include "nvim/os/os.h"
@@ -928,7 +927,7 @@ void wait_return(int redraw)
   }
 
   if (tmpState == SETWSIZE) {       /* got resize event while in vgetc() */
-    shell_resized();
+    ui_refresh();
   } else if (!skip_redraw
              && (redraw == TRUE || (msg_scrolled != 0 && redraw != -1))) {
     redraw_later(VALID);
@@ -1002,7 +1001,7 @@ void msg_start(void)
     msg_starthere();
   if (msg_silent == 0) {
     msg_didout = FALSE;                     /* no output on current line yet */
-    cursor_off();
+    ui_cursor_off();
   }
 
   /* when redirecting, may need to start a new line. */
@@ -1758,7 +1757,7 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
 static void msg_scroll_up(void)
 {
   /* scrolling up always works */
-  screen_del_lines(0, 0, 1, (int)Rows, TRUE, NULL);
+  screen_del_lines(0, 0, 1, (int)Rows, NULL);
 }
 
 /*
@@ -2321,7 +2320,7 @@ void repeat_message(void)
     display_confirm_msg();      /* display ":confirm" message again */
     msg_row = Rows - 1;
   } else if (State == EXTERNCMD) {
-    windgoto(msg_row, msg_col);     /* put cursor back */
+    ui_cursor_goto(msg_row, msg_col);     /* put cursor back */
   } else if (State == HITRETURN || State == SETWSIZE) {
     if (msg_row == Rows - 1) {
       /* Avoid drawing the "hit-enter" prompt below the previous one,
@@ -2353,22 +2352,12 @@ void msg_clr_eos(void)
  */
 void msg_clr_eos_force(void)
 {
-  if (msg_use_printf()) {
-    if (full_screen) {          /* only when termcap codes are valid */
-      if (*T_CD)
-        out_str(T_CD);          /* clear to end of display */
-      else if (*T_CE)
-        out_str(T_CE);          /* clear to end of line */
-    }
+  if (cmdmsg_rl) {
+    screen_fill(msg_row, msg_row + 1, 0, msg_col + 1, ' ', ' ', 0);
+    screen_fill(msg_row + 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
   } else {
-    if (cmdmsg_rl) {
-      screen_fill(msg_row, msg_row + 1, 0, msg_col + 1, ' ', ' ', 0);
-      screen_fill(msg_row + 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
-    } else {
-      screen_fill(msg_row, msg_row + 1, msg_col, (int)Columns,
-          ' ', ' ', 0);
-      screen_fill(msg_row + 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
-    }
+    screen_fill(msg_row, msg_row + 1, msg_col, (int)Columns, ' ', ' ', 0);
+    screen_fill(msg_row + 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
   }
 }
 
@@ -2399,7 +2388,7 @@ int msg_end(void)
     wait_return(FALSE);
     return FALSE;
   }
-  out_flush();
+  ui_flush();
   return TRUE;
 }
 

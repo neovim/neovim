@@ -69,7 +69,7 @@
 #include "nvim/sha256.h"
 #include "nvim/spell.h"
 #include "nvim/strings.h"
-#include "nvim/term.h"
+#include "nvim/ui.h"
 #include "nvim/tempfile.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
@@ -969,7 +969,7 @@ void ml_recover(void)
           || org_file_info.stat.st_mtim.tv_sec != mtime)) {
     EMSG(_("E308: Warning: Original file may have been changed"));
   }
-  out_flush();
+  ui_flush();
 
   /* Get the 'fileformat' and 'fileencoding' from block zero. */
   b0_ff = (b0p->b0_flags & B0_FF_MASK);
@@ -1436,7 +1436,7 @@ recover_names (
         }
       } else
         MSG_PUTS(_("      -- none --\n"));
-      out_flush();
+      ui_flush();
     } else
       file_count += num_files;
 

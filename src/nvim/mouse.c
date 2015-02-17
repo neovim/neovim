@@ -8,7 +8,6 @@
 #include "nvim/screen.h"
 #include "nvim/ui.h"
 #include "nvim/os_unix.h"
-#include "nvim/term.h"
 #include "nvim/fold.h"
 #include "nvim/diff.h"
 #include "nvim/move.h"
@@ -19,6 +18,9 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mouse.c.generated.h"
 #endif
+
+static linenr_T orig_topline = 0;
+static int orig_topfill = 0;
 
 // Move the cursor to the specified row and column on the screen.
 // Change current window if necessary. Returns an integer with the
@@ -492,3 +494,12 @@ int mouse_has(int c)
     }
   return false;
 }
+
+// Set orig_topline.  Used when jumping to another window, so that a double
+// click still works.
+void set_mouse_topline(win_T *wp)
+{
+  orig_topline = wp->w_topline;
+  orig_topfill = wp->w_topfill;
+}
+

@@ -47,7 +47,6 @@
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
-#include "nvim/term.h"
 #include "nvim/ui.h"
 #include "nvim/window.h"
 #include "nvim/os/time.h"
@@ -1089,7 +1088,7 @@ int do_search(
         free(msgbuf);
 
         gotocmdline(FALSE);
-        out_flush();
+        ui_flush();
         msg_nowait = TRUE;                  /* don't wait for this message */
       }
     }
@@ -2045,8 +2044,8 @@ showmatch (
       p_siso = 0;                       /* don't use 'sidescrolloff' here */
       showruler(FALSE);
       setcursor();
-      cursor_on();                      /* make sure that the cursor is shown */
-      out_flush();
+      ui_cursor_on();                      /* make sure that the cursor is shown */
+      ui_flush();
       /* Restore dollar_vcol(), because setcursor() may call curs_rows()
        * which resets it if the matching position is in a previous line
        * and has a higher column number. */
@@ -4156,7 +4155,7 @@ find_pattern_in_path (
               MSG_PUTS(_("  NOT FOUND"));
           }
         }
-        out_flush();                /* output each line directly */
+        ui_flush();                /* output each line directly */
       }
 
       if (new_fname != NULL) {
@@ -4555,7 +4554,7 @@ static void show_pat_in_path(char_u *line, int type, int did_show, int action, F
       MSG_PUTS(" ");
     }
     msg_prt_line(line, FALSE);
-    out_flush();                        /* show one line at a time */
+    ui_flush();                        /* show one line at a time */
 
     /* Definition continues until line that doesn't end with '\' */
     if (got_int || type != FIND_DEFINE || p < line || *p != '\\')

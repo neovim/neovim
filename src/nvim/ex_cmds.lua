@@ -766,11 +766,6 @@ return {
     func='ex_rewind',
   },
   {
-    command='fixdel',
-    flags=bit.bor(TRLBAR, CMDWIN),
-    func='do_fixdel',
-  },
-  {
     command='fold',
     flags=bit.bor(RANGE, WHOLEFOLD, TRLBAR, SBOXOK, CMDWIN),
     func='ex_fold',

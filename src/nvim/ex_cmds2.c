@@ -48,7 +48,6 @@
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
-#include "nvim/term.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/profile.h"

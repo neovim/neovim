@@ -49,7 +49,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
-#include "nvim/term.h"
+#include "nvim/ui.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
@@ -296,8 +296,8 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
     verbose_enter();
     smsg((char_u *)_("Calling shell to execute: \"%s\""),
         cmd == NULL ? p_sh : cmd);
-    out_char('\n');
-    cursor_on();
+    ui_putc('\n');
+    ui_cursor_on();
     verbose_leave();
   }
 
@@ -333,11 +333,6 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
       if (ecmd != cmd)
         free(ecmd);
     }
-    /*
-     * Check the window size, in case it changed while executing the
-     * external command.
-     */
-    shell_resized_check();
   }
 
   set_vim_var_nr(VV_SHELL_ERROR, (long)retval);

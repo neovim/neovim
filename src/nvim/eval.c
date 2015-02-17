@@ -75,7 +75,6 @@
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
 #include "nvim/tempfile.h"
-#include "nvim/term.h"
 #include "nvim/ui.h"
 #include "nvim/mouse.h"
 #include "nvim/undo.h"
@@ -9099,7 +9098,7 @@ static void f_getchar(typval_T *argvars, typval_T *rettv)
   int error = FALSE;
 
   /* Position the cursor.  Needed after a message that ends in a space. */
-  windgoto(msg_row, msg_col);
+  ui_cursor_goto(msg_row, msg_col);
 
   ++no_mapping;
   ++allow_keys;
@@ -12740,7 +12739,7 @@ static void f_screenchar(typval_T *argvars, typval_T *rettv)
  */
 static void f_screencol(typval_T *argvars, typval_T *rettv)
 {
-  rettv->vval.v_number = screen_screencol() + 1;
+  rettv->vval.v_number = ui_current_col() + 1;
 }
 
 /*
@@ -12748,7 +12747,7 @@ static void f_screencol(typval_T *argvars, typval_T *rettv)
  */
 static void f_screenrow(typval_T *argvars, typval_T *rettv)
 {
-  rettv->vval.v_number = screen_screenrow() + 1;
+  rettv->vval.v_number = ui_current_row() + 1;
 }
 
 /*
@@ -17148,7 +17147,7 @@ void ex_execute(exarg_T *eap)
   if (ret != FAIL && ga.ga_data != NULL) {
     if (eap->cmdidx == CMD_echomsg) {
       MSG_ATTR(ga.ga_data, echo_attr);
-      out_flush();
+      ui_flush();
     } else if (eap->cmdidx == CMD_echoerr) {
       /* We don't want to abort following commands, restore did_emsg. */
       save_did_emsg = did_emsg;
@@ -17346,7 +17345,7 @@ void ex_function(exarg_T *eap)
           if (j < 99)
             msg_putchar(' ');
           msg_prt_line(FUNCLINE(fp, j), FALSE);
-          out_flush();                  /* show a line at a time */
+          ui_flush();                  /* show a line at a time */
           os_breakcheck();
         }
         if (!got_int) {
@@ -19354,7 +19353,7 @@ void ex_oldfiles(exarg_T *eap)
       MSG_PUTS(": ");
       msg_outtrans(get_tv_string(&li->li_tv));
       msg_putchar('\n');
-      out_flush();                  /* output one line at a time */
+      ui_flush();                  /* output one line at a time */
       os_breakcheck();
     }
     /* Assume "got_int" was set to truncate the listing. */

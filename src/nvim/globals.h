@@ -376,7 +376,6 @@ EXTERN int provider_call_nesting INIT(= 0);
 EXTERN char_u hash_removed;
 
 
-EXTERN int scroll_region INIT(= FALSE);      /* term supports scroll region */
 EXTERN int t_colors INIT(= 0);              /* int value of T_CCO */
 
 /*

@@ -45,7 +45,7 @@
 #include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"
-#include "nvim/term.h"
+#include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/input.h"
@@ -3243,7 +3243,7 @@ void ex_display(exarg_T *eap)
       }
       if (n > 1 && yb->y_type == MLINE)
         MSG_PUTS_ATTR("^J", attr);
-      out_flush();                          /* show one line at a time */
+      ui_flush();                          /* show one line at a time */
     }
     os_breakcheck();
   }
