@@ -27,6 +27,11 @@ describe('vim_* functions', function()
       nvim('command', 'let g:v2 = [1, 2, {"v3": 3}]')
       eq({v1 = 'a', v2 = {1, 2, {v3 = 3}}}, nvim('eval', 'g:'))
     end)
+
+    it('handles NULL-initialized strings correctly', function()
+      eq(1, nvim('eval',"matcharg(1) == ['', '']"))
+      eq({'', ''}, nvim('eval','matcharg(1)'))
+    end)
   end)
 
   describe('strwidth', function()
