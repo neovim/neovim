@@ -671,6 +671,9 @@ static void fix_terminfo(TUIData *data)
     unibi_set_if_empty(ut, unibi_exit_attribute_mode, "\x1b[m\x1b(B");
     unibi_set_if_empty(ut, unibi_flash_screen, "\x1b[?5h$<20/>\x1b[?5l");
     unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
+    unibi_set_if_empty(ut, unibi_to_status_line, "\x1b]2");
+  } else if (STARTS_WITH(term, "xterm")) {
+    unibi_set_if_empty(ut, unibi_to_status_line, "\x1b]0;");
   } else if (STARTS_WITH(term, "screen")) {
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
@@ -683,7 +686,6 @@ static void fix_terminfo(TUIData *data)
     unibi_set_if_empty(ut, unibi_exit_attribute_mode, "\x1b(B\x1b[m");
     unibi_set_if_empty(ut, unibi_change_scroll_region, "\x1b[%i%p1%d;%p2%dr");
     unibi_set_if_empty(ut, unibi_clear_screen, "\x1b[H\x1b[2J");
-    unibi_set_if_empty(ut, unibi_to_status_line, "\x1b]2");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x07");
   }
 
