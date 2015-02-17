@@ -5328,10 +5328,12 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
   int done = 0;
   win_T       *wp;
   int h = tabline_height();
+  char_u prev_idx[NUMBUFLEN];
 
   /* Limit to 1000 windows, autocommands may add a window while we close
    * one.  OK, so I'm paranoid... */
   while (++done < 1000) {
+    sprintf((char *)prev_idx, "%i", tabpage_index(tp));
     wp = tp->tp_firstwin;
     ex_win_close(forceit, wp, tp);
 
@@ -5340,6 +5342,7 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
     if (!valid_tabpage(tp) || tp->tp_firstwin == wp)
       break;
   }
+  apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, FALSE, curbuf);
 
   redraw_tabline = TRUE;
   if (h != tabline_height())
@@ -5715,7 +5718,9 @@ void ex_splitview(exarg_T *eap)
     if (win_new_tabpage(cmdmod.tab != 0 ? cmdmod.tab
             : eap->addr_count == 0 ? 0
             : (int)eap->line2 + 1) != FAIL) {
+      apply_autocmds(EVENT_TABNEW, eap->arg, eap->arg,  FALSE, curbuf); 
       do_exedit(eap, old_curwin);
+      apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, FALSE, curbuf);
 
       /* set the alternate buffer for the window we came from */
       if (curwin != old_curwin
