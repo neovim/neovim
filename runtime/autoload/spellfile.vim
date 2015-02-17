@@ -197,7 +197,7 @@ endfunc
 
 function! spellfile#WritableSpellDir()
   if has("unix")
-    " For Unix always use the $HOME/.vim directory
+    " For Unix always use the $HOME/.nvim directory
     return $HOME . "/.nvim/spell"
   endif
   for dir in split(&rtp, ',')
