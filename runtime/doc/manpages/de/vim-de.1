@@ -17,15 +17,6 @@ vim \- Vi IMproved, ein Text\-Editor für Programmierer
 \fBvim\fP [Optionen] \-t Tag
 .br
 \fBvim\fP [Optionen] \-q [Fehlerdatei]
-.PP
-.br
-\fBex\fP
-.br
-\fBview\fP
-.br
-\fBgvim\fP \fBgview\fP
-.br
-\fBrvim\fP \fBrview\fP \fBrgvim\fP \fBrgview\fP
 .SH BESCHREIBUNG
 \fBVim\fP ist ein Text\-Editor, der aufwärtskompatibel zu Vi ist. Er kann
 verwendet werden, um alle Arten von Klartext zu bearbeiten. Er ist besonders
@@ -82,29 +73,6 @@ erste Fehler wird angezeigt. Falls [Fehlerdatei] ausgelassen wird, wird der
 Dateiname aus der Option 'errorfile' verwendet (bei AmigaOS ist dies
 vorgabemäßig »AztecC.Err«, sowie „errors.err« bei anderen). Weitere Fehler
 können mit dem »:cn«\-Befehl angesprungen werden. Siehe „:help quickfix«.
-.PP
-\fBVim\fP reagiert unterschiedlich auf den Namen, der verwendet wird, um Vim zu
-starten (die ausführbare Datei kann dieselbe sein).
-.TP  10
-vim
-der »normale« Weg, alles ist standardmäßig
-.TP 
-ex
-Startet im Ex\-Modus. Mit dem Befehl »:vi« gelangt man in den normalen
-Modus. Funktioniert auch mit dem Argument »\-e«.
-.TP 
-view
-Startet im Nur\-Lesen\-Modus. Die Datei wird vor dem Überschreiben
-geschützt. Dasselbe wird mit dem Parameter »\-R« erreicht.
-.TP 
-gvim gview
-Die grafische Version: Öffnet ein neues Fenster. Dasselbe wird mit dem
-Parameter »\-g« erreicht.
-.TP 
-rvim rview rgvim rgview
-Wie die obigen, aber mit Beschränkungen: Es ist nicht möglich, Shell\-Befehle
-aufzurufen oder mit Unterbrechung in eine Shell zurückzuspringen. Dasselbe
-wird mit dem Parameter »\-Z« erreicht.
 .SH OPTIONEN
 Die Optionen können in beliebiger Reihenfolge vor oder nach den Dateinamen
 angegeben werden. Optionen ohne Parameter können hinter einem einzigen
@@ -304,11 +272,6 @@ wird. Siehe »:help gui\-init« innerhalb von Vim für weitere Einzelheiten.
 Ausführlich (verbose): Gibt Meldungen darüber, welche Befehlsdateien
 eingelesen werden, und über das Lesen und Schreiben einer VimInfo\-Datei. Die
 optionale Zahl N ist der Wert für 'verbose'. Vorgabe ist 10.
-.TP 
-\-v
-Startet \fBVim\fP im Vi\-Modus, so als würde die ausführbare Datei mit »vi«
-aufgerufen. Dies wirkt sich nur aus, wenn die ausführbare Datei als »ex«
-aufgerufen wird.
 .TP 
 \-w {Ausgabeskript}
 Alle Zeichen, die eingetippt werden, werden in der Datei {Ausgabeskript}

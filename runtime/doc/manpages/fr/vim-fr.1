@@ -21,19 +21,6 @@ vim \- Vi IMproved, éditeur de texte pour programmeurs
 .br
 .B vim
 [options] \-q [fichiererreurs]
-.PP
-.br
-.B ex
-.br
-.B view
-.br
-.B gvim
-.B gview
-.br
-.B rvim
-.B rview
-.B rgvim
-.B rgview
 .SH DESCRIPTION
 .B Vim
 est un éditeur de texte proposant une compatibilité ascendante
@@ -101,33 +88,6 @@ l'option 'errorfile' ("AztecC.Err" par défaut sur Amiga, "errors.err" sur les
 autres systèmes).
 La commande ":cn" permet de sauter aux erreurs suivantes.
 Voir ":help quickfix".
-.PP
-.B Vim
-se comporte différemment selon le nom de la commande (l'exécutable peut
-cependant être le même fichier).
-.TP 10
-vim
-La façon "normale", le comportement par défaut.
-.TP
-ex
-Démarre en mode Ex.
-La commande ":vi" permet de passer en mode Normal.
-Ce mode est également accessible avec l'argument "\-e".
-.TP
-view
-Démarre en mode Lecture-Seule. Vous êtes protégé de l'écriture accidentelle
-des fichiers. Ce mode est également accessible avec l'argument "\-R".
-.TP
-gvim gview
-La version graphique.
-Ouvre une nouvelle fenêtre.
-Également accessible avec l'argument "\-g".
-.TP
-rvim rview rgvim rgview
-Comme ci-dessus, mais avec des restrictions. Il vous sera impossible de
-lancer des commandes du shell, ou de suspendre
-.B Vim.
-Également accessible avec l'argument "\-Z".
 .SH OPTIONS
 Les options peuvent être spécifiées dans n'importe quel ordre,
 avant ou après les noms de fichiers. Les options sans arguments
@@ -388,12 +348,6 @@ Mode Verbeux.
 Donne des messages à propos des fichiers sourcés, ainsi que sur la lecture
 et les écritures dans le fichier viminfo. le nombre optionnel N précise la
 valeur de l'option 'verbose' (10 par défaut).
-.TP
-\-v
-Démarre
-.B Vim
-en mode Vi, comme si l'exécutable s'appelait "vi". Cela n'a d'effet que si
-l'exécutable invoqué est "ex".
 .TP
 \-w {scriptSortie}
 Tous les caractères que vous tapez sont enregistrés dans le fichier

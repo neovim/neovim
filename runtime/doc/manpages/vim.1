@@ -14,19 +14,6 @@ vim \- Vi IMproved, a programmers text editor
 .br
 .B vim
 [options] \-q [errorfile]
-.PP
-.br
-.B ex
-.br
-.B view
-.br
-.B gvim
-.B gview
-.br
-.B rvim
-.B rview
-.B rgvim
-.B rgview
 .SH DESCRIPTION
 .B Vim
 is a text editor that is upwards compatible to Vi.
@@ -91,33 +78,6 @@ If [errorfile] is omitted, the filename is obtained from the 'errorfile'
 option (defaults to "errors.err").
 Further errors can be jumped to with the ":cn" command.
 See ":help quickfix".
-.PP
-.B Vim
-behaves differently, depending on the name of the command (the executable may
-still be the same file).
-.TP 10
-vim
-The "normal" way, everything is default.
-.TP
-ex
-Start in Ex mode.
-Go to Normal mode with the ":vi" command.
-Can also be done with the "\-e" argument.
-.TP
-view
-Start in read-only mode.  You will be protected from writing the files.  Can
-also be done with the "\-R" argument.
-.TP
-gvim gview
-The GUI version.
-Starts a new window.
-Can also be done with the "\-g" argument.
-.TP
-rvim rview rgvim rgview
-Like the above, but with restrictions.  It will not be possible to start shell
-commands, or suspend
-.B Vim.
-Can also be done with the "\-Z" argument.
 .SH OPTIONS
 The options may be given in any order, before or after filenames.
 Options without an argument can be combined after a single dash.
@@ -188,12 +148,12 @@ script.
 \-e
 Start
 .B Vim
-in Ex mode, just like the executable was called "ex".
+in Ex mode.
 .TP
 \-E
 Start
 .B Vim
-in improved Ex mode, just like the executable was called "exim".
+in improved Ex mode.
 .TP
 \-f
 Foreground.  For the GUI version,
@@ -319,8 +279,7 @@ appended.
 See ":help recovery".
 .TP
 \-s
-Silent mode.  Only when started as "Ex" or when the "\-e" option was given
-before the "\-s" option.
+Silent mode.  Only when the "\-e" option was given before the "\-s" option.
 .TP
 \-s {scriptin}
 The script file {scriptin} is read.
@@ -357,12 +316,6 @@ Verbose.  Give messages about which files are sourced and for reading and
 writing a viminfo file.  The optional number N is the value for 'verbose'.
 Default is 10.
 .TP
-\-v
-Start
-.B Vim
-in Vi mode, just like the executable was called "vi".  This only has effect
-when the executable is called "ex".
-.TP
 \-w {scriptout}
 All the characters that you type are recorded in the file
 {scriptout}, until you exit
@@ -379,7 +332,7 @@ Don't connect to the X server.  Shortens startup time in a terminal, but the
 window title and clipboard will not be used.
 .TP
 \-Z
-Restricted mode.  Works like the executable starts with "r".
+Restricted mode.
 .TP
 \-\-
 Denotes the end of the options.
