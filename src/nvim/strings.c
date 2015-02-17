@@ -301,17 +301,6 @@ void del_trailing_spaces(char_u *ptr)
 }
 
 /*
- * Like strncpy(), but always terminate the result with one NUL.
- * "to" must be "len + 1" long!
- */
-void vim_strncpy(char_u *restrict to, const char_u *restrict from, size_t len)
-  FUNC_ATTR_NONNULL_ALL
-{
-  STRNCPY(to, from, len);
-  to[len] = NUL;
-}
-
-/*
  * Like strcat(), but make sure the result fits in "tosize" bytes and is
  * always NUL terminated.
  */

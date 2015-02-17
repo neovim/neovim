@@ -40,6 +40,7 @@
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/term.h"
+#include "nvim/ui.h"
 #include "nvim/mouse.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
@@ -915,15 +916,6 @@ void wait_return(int redraw)
   State = oldState;                 /* restore State before set_shellsize */
   setmouse();
   msg_check();
-
-#if defined(UNIX)
-  /*
-   * When switching screens, we need to output an extra newline on exit.
-   */
-  if (swapping_screen() && !termcap_active)
-    newline_on_exit = TRUE;
-#endif
-
   need_wait_return = FALSE;
   did_wait_return = TRUE;
   emsg_on_display = FALSE;      /* can delete error message now */
@@ -936,11 +928,9 @@ void wait_return(int redraw)
   }
 
   if (tmpState == SETWSIZE) {       /* got resize event while in vgetc() */
-    starttermcap();                 /* start termcap before redrawing */
     shell_resized();
   } else if (!skip_redraw
              && (redraw == TRUE || (msg_scrolled != 0 && redraw != -1))) {
-    starttermcap();                 /* start termcap before redrawing */
     redraw_later(VALID);
   }
 }
@@ -976,17 +966,6 @@ void set_keep_msg(char_u *s, int attr)
     keep_msg = NULL;
   keep_msg_more = FALSE;
   keep_msg_attr = attr;
-}
-
-/*
- * If there currently is a message being displayed, set "keep_msg" to it, so
- * that it will be displayed again after redraw.
- */
-void set_keep_msg_from_hist(void)
-{
-  if (keep_msg == NULL && last_msg_hist != NULL && msg_scrolled == 0
-      && (State & NORMAL))
-    set_keep_msg(last_msg_hist->msg, last_msg_hist->attr);
 }
 
 /*
@@ -1780,19 +1759,6 @@ static void msg_scroll_up(void)
 {
   /* scrolling up always works */
   screen_del_lines(0, 0, 1, (int)Rows, TRUE, NULL);
-
-  if (!can_clear((char_u *)" ")) {
-    /* Scrolling up doesn't result in the right background.  Set the
-     * background here.  It's not efficient, but avoids that we have to do
-     * it all over the code. */
-    screen_fill((int)Rows - 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
-
-    /* Also clear the last char of the last but one line if it was not
-     * cleared before to avoid a scroll-up. */
-    if (ScreenAttrs[LineOffset[Rows - 2] + Columns - 1] == (sattr_T)-1)
-      screen_fill((int)Rows - 2, (int)Rows - 1,
-          (int)Columns - 1, (int)Columns, ' ', ' ', 0);
-  }
 }
 
 /*
@@ -1975,19 +1941,11 @@ static void t_puts(int *t_col, char_u *t_s, char_u *s, int attr)
   }
 }
 
-/*
- * Returns TRUE when messages should be printed with mch_errmsg().
- * This is used when there is no valid screen, so we can see error messages.
- * If termcap is not active, we may be writing in an alternate console
- * window, cursor positioning may not work correctly (window size may be
- * different, e.g. for Win32 console) or we just don't know where the
- * cursor is.
- */
+// Returns TRUE when messages should be printed to stdout/stderr, which
+// happens when no UIs are attached and nvim is not being embedded
 int msg_use_printf(void)
 {
-  return !msg_check_screen()
-         || (swapping_screen() && !termcap_active)
-  ;
+  return !embedded_mode && !ui_active();
 }
 
 /*
@@ -2376,24 +2334,6 @@ void repeat_message(void)
     hit_return_msg();
     msg_row = Rows - 1;
   }
-}
-
-/*
- * msg_check_screen - check if the screen is initialized.
- * Also check msg_row and msg_col, if they are too big it may cause a crash.
- * While starting the GUI the terminal codes will be set for the GUI, but the
- * output goes to the terminal.  Don't use the terminal codes then.
- */
-static int msg_check_screen(void)
-{
-  if (!full_screen || !screen_valid(FALSE))
-    return FALSE;
-
-  if (msg_row >= Rows)
-    msg_row = Rows - 1;
-  if (msg_col >= Columns)
-    msg_col = Columns - 1;
-  return TRUE;
 }
 
 /*

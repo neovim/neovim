@@ -26,13 +26,16 @@ file(MAKE_DIRECTORY ${GENERATED_DIR}/os)
 file(MAKE_DIRECTORY ${GENERATED_DIR}/api)
 file(MAKE_DIRECTORY ${GENERATED_DIR}/api/private)
 file(MAKE_DIRECTORY ${GENERATED_DIR}/msgpack_rpc)
+file(MAKE_DIRECTORY ${GENERATED_DIR}/tui)
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR})
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/os)
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/api)
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/api/private)
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/msgpack_rpc)
+file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/tui)
 
-file(GLOB NEOVIM_SOURCES *.c os/*.c api/*.c api/private/*.c msgpack_rpc/*.c)
+file(GLOB NEOVIM_SOURCES *.c os/*.c api/*.c api/private/*.c msgpack_rpc/*.c
+  tui/*.c)
 file(GLOB_RECURSE NEOVIM_HEADERS *.h)
 
 foreach(sfile ${NEOVIM_SOURCES})
@@ -164,19 +167,6 @@ if (LibIntl_FOUND)
   list(APPEND NVIM_LINK_LIBRARIES ${LibIntl_LIBRARY})
 endif()
 
-check_library_exists(curses tgetent "" HAVE_LIBCURSES)
-if (HAVE_LIBCURSES)
-  list(APPEND NVIM_LINK_LIBRARIES curses)
-else()
-  check_library_exists(tinfo tgetent "" HAVE_LIBTINFO)
-  if (HAVE_LIBTINFO)
-    list(APPEND NVIM_LINK_LIBRARIES tinfo)
-  else()
-    find_package(Curses REQUIRED)
-    list(APPEND NVIM_LINK_LIBRARIES ${CURSES_LIBRARY})
-  endif()
-endif()
-
 if(Iconv_LIBRARIES)
   list(APPEND NVIM_LINK_LIBRARIES ${Iconv_LIBRARIES})
 endif()
@@ -186,8 +176,12 @@ list(APPEND NVIM_LINK_LIBRARIES
     ${LIBUV_LIBRARIES}
     ${MSGPACK_LIBRARIES}
     ${LUAJIT_LIBRARIES}
+    ${LIBTICKIT_LIBRARIES}
+    ${LIBTERMKEY_LIBRARIES}
+    ${LIBUNIBILIUM_LIBRARIES}
     m
-    ${CMAKE_THREAD_LIBS_INIT})
+    ${CMAKE_THREAD_LIBS_INIT}
+    )
 
 add_executable(nvim ${NEOVIM_GENERATED_SOURCES} ${NEOVIM_SOURCES}
   ${NEOVIM_HEADERS})

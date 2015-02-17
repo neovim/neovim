@@ -904,13 +904,10 @@ EXTERN char_u   *use_viminfo INIT(= NULL);  /* name of viminfo file to use */
 EXTERN FILE     *scriptin[NSCRIPT];         /* streams to read script from */
 EXTERN int curscript INIT(= 0);             /* index in scriptin[] */
 EXTERN FILE     *scriptout INIT(= NULL);    /* stream to write script to */
-EXTERN int read_cmd_fd INIT(= 0);           /* fd to read commands from */
 
 /* volatile because it is used in signal handler catch_sigint(). */
 EXTERN volatile int got_int INIT(= FALSE);    /* set to TRUE when interrupt
                                                  signal occurred */
-EXTERN int termcap_active INIT(= FALSE);        /* set by starttermcap() */
-EXTERN int cur_tmode INIT(= TMODE_COOK);        /* input terminal mode */
 EXTERN int bangredo INIT(= FALSE);          /* set to TRUE with ! command */
 EXTERN int searchcmdlen;                    /* length of previous search cmd */
 EXTERN int reg_do_extmatch INIT(= 0);       /* Used when compiling regexp:
@@ -1237,14 +1234,8 @@ EXTERN FILE *time_fd INIT(= NULL);  /* where to write startup timing */
 EXTERN int ignored;
 EXTERN char *ignoredp;
 
-/* Temporarily moved these static variables to assist in migrating from
- * os_unix.c */
-EXTERN int curr_tmode INIT(= TMODE_COOK); /* contains current terminal mode */
-
 // If a msgpack-rpc channel should be started over stdin/stdout
 EXTERN bool embedded_mode INIT(= false);
-// Using the "abstract_ui" termcap
-EXTERN bool abstract_ui INIT(= false);
 
 /// Used to track the status of external functions.
 /// Currently only used for iconv().

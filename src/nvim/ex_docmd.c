@@ -146,10 +146,6 @@ struct dbg_stuff {
 # define gui_mch_find_dialog    ex_ni
 # define gui_mch_replace_dialog ex_ni
 # define ex_helpfind            ex_ni
-#if defined(FEAT_GUI) || defined(UNIX) || defined(MSWIN)
-#else
-# define ex_winpos          ex_ni
-#endif
 static int did_lcd;             /* whether ":lcd" was produced for a session */
 #ifndef HAVE_WORKING_LIBINTL
 # define ex_language            ex_ni
@@ -5397,13 +5393,11 @@ static void ex_stop(exarg_T *eap)
     windgoto((int)Rows - 1, 0);
     out_char('\n');
     out_flush();
-    stoptermcap();
     out_flush();                /* needed for SUN to restore xterm buffer */
     mch_restore_title(3);       /* restore window titles */
     ui_suspend();               /* call machine specific function */
     maketitle();
     resettitle();               /* force updating the title */
-    starttermcap();
     scroll_start();             /* scroll screen before redrawing */
     redraw_later_clear();
     shell_resized();            /* may have resized window */
@@ -6438,7 +6432,7 @@ static void ex_winsize(exarg_T *eap)
   p = arg;
   h = getdigits_int(&arg);
   if (*p != NUL && *arg == NUL)
-    screen_resize(w, h, TRUE);
+    screen_resize(w, h);
   else
     EMSG(_("E465: :winsize requires two number arguments"));
 }
@@ -6472,35 +6466,6 @@ static void ex_wincmd(exarg_T *eap)
     postponed_split_tab = 0;
   }
 }
-
-#if defined(FEAT_GUI) || defined(UNIX) || defined(MSWIN)
-/*
- * ":winpos".
- */
-static void ex_winpos(exarg_T *eap)
-{
-  int x, y;
-  char_u      *arg = eap->arg;
-  char_u      *p;
-
-  if (*arg == NUL) {
-    EMSG(_("E188: Obtaining window position not implemented for this platform"));
-  } else {
-    x = getdigits_int(&arg);
-    arg = skipwhite(arg);
-    p = arg;
-    y = getdigits_int(&arg);
-    if (*p == NUL || *arg != NUL) {
-      EMSG(_("E466: :winpos requires two number arguments"));
-      return;
-    }
-# ifdef HAVE_TGETENT
-    if (*T_CWP)
-      term_set_winpos(x, y);
-# endif
-  }
-}
-#endif
 
 /*
  * Handle command that work like operators: ":delete", ":yank", ":>" and ":<".

@@ -295,22 +295,6 @@ void msgpack_rpc_from_dictionary(Dictionary result, msgpack_packer *res)
   }
 }
 
-/// Finishes the msgpack-rpc call with an error message.
-///
-/// @param msg The error message
-/// @param res A packer that contains the response
-void msgpack_rpc_error(char *msg, msgpack_packer *res)
-  FUNC_ATTR_NONNULL_ALL
-{
-  size_t len = strlen(msg);
-
-  // error message
-  msgpack_pack_bin(res, len);
-  msgpack_pack_bin_body(res, msg, len);
-  // Nil result
-  msgpack_pack_nil(res);
-}
-
 /// Handler executed when an invalid method name is passed
 Object msgpack_rpc_handle_missing_method(uint64_t channel_id,
                                          uint64_t request_id,

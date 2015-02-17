@@ -155,10 +155,6 @@ void do_debug(char_u *cmd)
 #define CMD_INTERRUPT   6
 
 
-  /* Make sure we are in raw mode and start termcap mode.  Might have side
-   * effects... */
-  starttermcap();
-
   ++RedrawingDisabled;          /* don't redisplay the window */
   ++no_wait_return;             /* don't wait for return */
   did_emsg = FALSE;             /* don't use error from debugged stuff */

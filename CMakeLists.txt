@@ -182,6 +182,14 @@ include_directories(SYSTEM ${MSGPACK_INCLUDE_DIRS})
 find_package(LuaJit REQUIRED)
 include_directories(SYSTEM ${LUAJIT_INCLUDE_DIRS})
 
+set(LIBUNIBILIUM_USE_STATIC ON)
+find_package(LibUnibilium REQUIRED)
+include_directories(SYSTEM ${LIBUNIBILIUM_INCLUDE_DIRS})
+
+set(LIBTERMKEY_USE_STATIC ON)
+find_package(LibTermkey REQUIRED)
+include_directories(SYSTEM ${LIBTERMEY_INCLUDE_DIRS})
+
 find_package(LibIntl)
 if(LibIntl_FOUND)
   include_directories(SYSTEM ${LibIntl_INCLUDE_DIRS})

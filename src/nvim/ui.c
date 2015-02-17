@@ -46,6 +46,7 @@
 #include "nvim/syntax.h"
 #include "nvim/term.h"
 #include "nvim/window.h"
+#include "nvim/tui/tui.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui.c.generated.h"
@@ -59,8 +60,8 @@ static int row, col;
 static struct {
   int top, bot, left, right;
 } sr;
-static int current_highlight_mask = 0;
-static bool cursor_enabled = true;
+static int current_attr_code = 0;
+static bool cursor_enabled = true, pending_cursor_update = false;
 static int height, width;
 
 // This set of macros allow us to use UI_CALL to invoke any function on
@@ -71,6 +72,7 @@ static int height, width;
 // works.
 #define UI_CALL(...)                                              \
   do {                                                            \
+    flush_cursor_update();                                        \
     for (size_t i = 0; i < ui_count; i++) {                       \
       UI *ui = uis[i];                                            \
       UI_CALL_HELPER(CNT(__VA_ARGS__), __VA_ARGS__);              \
@@ -80,8 +82,18 @@ static int height, width;
 #define SELECT_NTH(a1, a2, a3, a4, a5, a6, ...) a6
 #define UI_CALL_HELPER(c, ...) UI_CALL_HELPER2(c, __VA_ARGS__)
 #define UI_CALL_HELPER2(c, ...) UI_CALL_##c(__VA_ARGS__)
-#define UI_CALL_MORE(method, ...) ui->method(ui, __VA_ARGS__)
-#define UI_CALL_ZERO(method) ui->method(ui)
+#define UI_CALL_MORE(method, ...) if (ui->method) ui->method(ui, __VA_ARGS__)
+#define UI_CALL_ZERO(method) if (ui->method) ui->method(ui)
+
+void ui_builtin_start(void)
+{
+  tui_start();
+}
+
+void ui_builtin_stop(void)
+{
+  UI_CALL(stop);
+}
 
 void ui_write(uint8_t *s, int len)
 {
@@ -90,28 +102,7 @@ void ui_write(uint8_t *s, int len)
     return;
   }
 
-  if (abstract_ui) {
-    parse_abstract_ui_codes(s, len);
-    return;
-  }
-
-  if (!len) {
-    return;
-  }
-
-  char_u  *tofree = NULL;
-
-  if (output_conv.vc_type != CONV_NONE) {
-    /* Convert characters from 'encoding' to 'termencoding'. */
-    tofree = string_convert(&output_conv, s, &len);
-    if (tofree != NULL)
-      s = tofree;
-  }
-
-  term_write(s, len);
-
-  if (output_conv.vc_type != CONV_NONE)
-    free(tofree);
+  parse_abstract_ui_codes(s, len);
 }
 
 bool ui_rgb_attached(void)
@@ -124,6 +115,11 @@ bool ui_rgb_attached(void)
   return false;
 }
 
+bool ui_active(void)
+{
+  return ui_count != 0;
+}
+
 /*
  * If the machine has job control, use it to suspend the program,
  * otherwise fake it by starting a new shell.
@@ -131,12 +127,8 @@ bool ui_rgb_attached(void)
  */
 void ui_suspend(void)
 {
-  if (abstract_ui) {
-    UI_CALL(suspend);
-    UI_CALL(flush);
-  } else {
-    mch_suspend();
-  }
+  UI_CALL(suspend);
+  UI_CALL(flush);
 }
 
 void ui_set_title(char *title)
@@ -152,46 +144,16 @@ void ui_set_icon(char *icon)
 }
 
 /*
- * Try to get the current Vim shell size.  Put the result in Rows and Columns.
- * Use the new sizes as defaults for 'columns' and 'lines'.
- * Return OK when size could be determined, FAIL otherwise.
- */
-int ui_get_shellsize(void)
-{
-  if (abstract_ui) {
-    return FAIL;
-  }
-
-  int retval;
-
-  retval = mch_get_shellsize();
-
-  check_shellsize();
-
-  /* adjust the default for 'lines' and 'columns' */
-  if (retval == OK) {
-    set_number_default("lines", Rows);
-    set_number_default("columns", Columns);
-  }
-  return retval;
-}
-
-/*
  * May update the shape of the cursor.
  */
 void ui_cursor_shape(void)
 {
-  if (abstract_ui) {
-    ui_change_mode();
-  } else {
-    term_cursor_shape();
-    conceal_check_cursur_line();
-  }
+  ui_change_mode();
 }
 
 void ui_refresh(void)
 {
-  if (!ui_count) {
+  if (!ui_active()) {
     return;
   }
 
@@ -203,7 +165,7 @@ void ui_refresh(void)
     height = ui->height < height ? ui->height : height;
   }
 
-  screen_resize(width, height, true);
+  screen_resize(width, height);
 }
 
 void ui_resize(int new_width, int new_height)
@@ -241,20 +203,12 @@ void ui_cursor_off(void)
 
 void ui_mouse_on(void)
 {
-  if (abstract_ui) {
-    UI_CALL(mouse_on);
-  } else {
-    mch_setmouse(true);
-  }
+  UI_CALL(mouse_on);
 }
 
 void ui_mouse_off(void)
 {
-  if (abstract_ui) {
-    UI_CALL(mouse_off);
-  } else {
-    mch_setmouse(false);
-  }
+  UI_CALL(mouse_off);
 }
 
 // Notify that the current mode has changed. Can be used to change cursor
@@ -319,77 +273,82 @@ void ui_detach(UI *ui)
   }
 }
 
-static void highlight_start(int mask)
+static void highlight_start(int attr_code)
 {
-  if (mask > HL_ALL) {
-    // attribute code
-    current_highlight_mask = mask;
-  } else {
-    // attribute mask
-    current_highlight_mask |= mask;
-  }
+  current_attr_code = attr_code;
 
   if (!ui_count) {
     return;
   }
 
-  set_highlight_args(current_highlight_mask);
+  set_highlight_args(current_attr_code);
 }
 
 static void highlight_stop(int mask)
 {
-  if (mask > HL_ALL) {
-    // attribute code
-    current_highlight_mask = HL_NORMAL;
-  } else {
-    // attribute mask
-    current_highlight_mask &= ~mask;
+  current_attr_code = HL_NORMAL;
+
+  if (!ui_count) {
+    return;
   }
 
-  set_highlight_args(current_highlight_mask);
+  set_highlight_args(current_attr_code);
 }
 
-static void set_highlight_args(int mask)
+static void set_highlight_args(int attr_code)
 {
   HlAttrs rgb_attrs = { false, false, false, false, false, -1, -1 };
-  attrentry_T *aep = NULL;
-
-  if (mask > HL_ALL) {
-    aep = syn_cterm_attr2entry(mask);
-    mask = aep ? aep->ae_attr : 0;
-  }
-
-  rgb_attrs.bold = mask & HL_BOLD;
-  rgb_attrs.underline = mask & HL_UNDERLINE;
-  rgb_attrs.undercurl = mask & HL_UNDERCURL;
-  rgb_attrs.italic = mask & HL_ITALIC;
-  rgb_attrs.reverse = mask & (HL_INVERSE | HL_STANDOUT);
   HlAttrs cterm_attrs = rgb_attrs;
 
-  if (aep) {
-    if (aep->fg_color != normal_fg) {
-      rgb_attrs.foreground = aep->fg_color;
-    }
-
-    if (aep->bg_color != normal_bg) {
-      rgb_attrs.background = aep->bg_color;
-    }
-
-    if (cterm_normal_fg_color != aep->ae_u.cterm.fg_color) {
-      cterm_attrs.foreground = aep->ae_u.cterm.fg_color - 1;
-    }
-
-    if (cterm_normal_bg_color != aep->ae_u.cterm.bg_color) {
-      cterm_attrs.background = aep->ae_u.cterm.bg_color - 1;
-    }
+  if (attr_code == HL_NORMAL) {
+    goto end;
   }
 
+  int rgb_mask = 0;
+  int cterm_mask = 0;
+  attrentry_T *aep = syn_cterm_attr2entry(attr_code);
+
+  if (!aep) {
+    goto end;
+  }
+
+  rgb_mask = aep->rgb_ae_attr;
+  cterm_mask = aep->cterm_ae_attr;
+
+  rgb_attrs.bold = rgb_mask & HL_BOLD;
+  rgb_attrs.underline = rgb_mask & HL_UNDERLINE;
+  rgb_attrs.undercurl = rgb_mask & HL_UNDERCURL;
+  rgb_attrs.italic = rgb_mask & HL_ITALIC;
+  rgb_attrs.reverse = rgb_mask & (HL_INVERSE | HL_STANDOUT);
+  cterm_attrs.bold = cterm_mask & HL_BOLD;
+  cterm_attrs.underline = cterm_mask & HL_UNDERLINE;
+  cterm_attrs.undercurl = cterm_mask & HL_UNDERCURL;
+  cterm_attrs.italic = cterm_mask & HL_ITALIC;
+  cterm_attrs.reverse = cterm_mask & (HL_INVERSE | HL_STANDOUT);
+
+  if (aep->rgb_fg_color != normal_fg) {
+    rgb_attrs.foreground = aep->rgb_fg_color;
+  }
+
+  if (aep->rgb_bg_color != normal_bg) {
+    rgb_attrs.background = aep->rgb_bg_color;
+  }
+
+  if (cterm_normal_fg_color != aep->cterm_fg_color) {
+    cterm_attrs.foreground = aep->cterm_fg_color - 1;
+  }
+
+  if (cterm_normal_bg_color != aep->cterm_bg_color) {
+    cterm_attrs.background = aep->cterm_bg_color - 1;
+  }
+
+end:
   UI_CALL(highlight_set, (ui->rgb ? rgb_attrs : cterm_attrs));
 }
 
 static void parse_abstract_ui_codes(uint8_t *ptr, int len)
 {
-  if (!ui_count) {
+  if (!ui_active()) {
     return;
   }
 
@@ -558,5 +517,13 @@ static void ui_cursor_goto(int new_row, int new_col)
   }
   row = new_row;
   col = new_col;
-  UI_CALL(cursor_goto, row, col);
+  pending_cursor_update = true;
+}
+
+static void flush_cursor_update(void)
+{
+  if (pending_cursor_update) {
+    pending_cursor_update = false;
+    UI_CALL(cursor_goto, row, col);
+  }
 }

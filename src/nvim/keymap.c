@@ -752,26 +752,3 @@ int get_mouse_button(int code, bool *is_click, bool *is_drag)
     }
   return 0;         /* Shouldn't get here */
 }
-
-/*
- * Return the appropriate pseudo mouse event token (KE_LEFTMOUSE etc) based on
- * the given information about which mouse button is down, and whether the
- * mouse was clicked, dragged or released.
- */
-int 
-get_pseudo_mouse_code (
-    int button,             /* eg MOUSE_LEFT */
-    int is_click,
-    int is_drag
-)
-{
-  int i;
-
-  for (i = 0; mouse_table[i].pseudo_code; i++)
-    if (button == mouse_table[i].button
-        && is_click == mouse_table[i].is_click
-        && is_drag == mouse_table[i].is_drag) {
-      return mouse_table[i].pseudo_code;
-    }
-  return (int)KE_IGNORE;            /* not recognized, ignore it */
-}

@@ -287,7 +287,7 @@ MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *name,
 {
   String m = {
     .data=(char *)name,
-    .size=min(name_len, ]]..max_fname_len..[[)
+    .size=MIN(name_len, ]]..max_fname_len..[[)
   };
   MsgpackRpcRequestHandler rv =
     map_get(String, MsgpackRpcRequestHandler)(methods, m);

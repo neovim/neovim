@@ -1232,9 +1232,6 @@ do_shell (
    * avoid having to type return below.
    */
   msg_putchar('\r');                    /* put cursor at start of line */
-  if (!autocmd_busy) {
-    stoptermcap();
-  }
   msg_putchar('\n');                    /* may shift screen one line up */
 
   /* warning message before calling the shell */
@@ -1292,8 +1289,6 @@ do_shell (
       wait_return(msg_silent == 0);
       no_wait_return = save_nwr;
     }
-
-    starttermcap();             /* start termcap if not done by wait_return() */
   }
 
   /* display any error messages now */
