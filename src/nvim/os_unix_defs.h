@@ -101,9 +101,6 @@
 #ifndef SYS_VIMRC_FILE
 # define SYS_VIMRC_FILE "$VIM/nvimrc"
 #endif
-#ifndef SYS_GVIMRC_FILE
-# define SYS_GVIMRC_FILE "$VIM/ngvimrc"
-#endif
 #ifndef DFLT_HELPFILE
 # define DFLT_HELPFILE  "$VIMRUNTIME/doc/help.txt"
 #endif
@@ -130,12 +127,12 @@
 #endif
 
 #ifndef USR_EXRC_FILE
-#  define USR_EXRC_FILE "$HOME/.exrc"
+#  define USR_EXRC_FILE "~/.exrc"
 #endif
 
 
 #ifndef USR_VIMRC_FILE
-#  define USR_VIMRC_FILE "$HOME/.nvimrc"
+#  define USR_VIMRC_FILE "~/.nvimrc"
 #endif
 
 
@@ -143,18 +140,8 @@
 #    define USR_VIMRC_FILE2     "~/.nvim/nvimrc"
 #endif
 
-
-#ifndef USR_GVIMRC_FILE
-#  define USR_GVIMRC_FILE "$HOME/.ngvimrc"
-#endif
-
-#ifndef USR_GVIMRC_FILE2
-#   define USR_GVIMRC_FILE2     "~/.nvim/ngvimrc"
-#endif
-
-
 # ifndef VIMINFO_FILE
-#   define VIMINFO_FILE "$HOME/.nviminfo"
+#   define VIMINFO_FILE "~/.nviminfo"
 # endif
 
 #ifndef EXRC_FILE
@@ -179,7 +166,7 @@
 #endif
 
 #ifndef DFLT_VDIR
-#   define DFLT_VDIR    "$HOME/.nvim/view"       /* default for 'viewdir' */
+#   define DFLT_VDIR    "~/.nvim/view"       // default for 'viewdir'
 #endif
 
 #define DFLT_ERRORFILE          "errors.err"
