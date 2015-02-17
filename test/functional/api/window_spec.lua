@@ -4,6 +4,7 @@ local clear, nvim, buffer, curbuf, curbuf_contents, window, curwin, eq, neq,
   ok, feed, rawfeed, insert, eval = helpers.clear, helpers.nvim, helpers.buffer, helpers.curbuf,
   helpers.curbuf_contents, helpers.window, helpers.curwin, helpers.eq,
   helpers.neq, helpers.ok, helpers.feed, helpers.rawfeed, helpers.insert, helpers.eval
+local wait = helpers.wait
 
 -- check if str is visible at the beginning of some line
 local function is_visible(str)
@@ -55,6 +56,7 @@ describe('window_* functions', function()
       insert("epilogue")
       win = curwin()
       feed('gg')
+      wait() -- let nvim process the 'gg' command
 
       -- cursor position is at beginning
       eq({1, 0}, window('get_cursor', win))

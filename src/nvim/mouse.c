@@ -451,12 +451,6 @@ void setmouse(void)
   if (*p_mouse == NUL)
     return;
 
-  /* don't switch mouse on when not in raw mode (Ex mode) */
-  if (!abstract_ui && cur_tmode != TMODE_RAW) {
-    mch_setmouse(false);
-    return;
-  }
-
   if (VIsual_active)
     checkfor = MOUSE_VISUAL;
   else if (State == HITRETURN || State == ASKMORE || State == SETWSIZE)

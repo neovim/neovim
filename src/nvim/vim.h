@@ -8,7 +8,8 @@
 #ifndef NVIM_VIM_H
 # define NVIM_VIM_H
 
-#define min(X, Y) (X < Y ? X : Y)
+#define MIN(X, Y) (X < Y ? X : Y)
+#define MAX(X, Y) (X > Y ? X : Y)
 
 #include "nvim/types.h"
 #include "nvim/pos.h"  // for linenr_T, MAXCOL, etc...

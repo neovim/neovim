@@ -251,6 +251,9 @@ When switching to another tab page the order is:
 	WinEnter
 	BufEnter
 
+When entering a new tab page (|:tabnew|), TabNew is triggered before TabEnter
+and after WinEnter.
+
 ==============================================================================
 4. Setting 'tabline'					*setting-tabline*
 

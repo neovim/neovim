@@ -1813,7 +1813,6 @@ failed:
      * Switch on raw mode now and clear the screen.
      */
     if (read_stdin) {
-      starttermcap();
       screenclear();
     }
 
@@ -5246,8 +5245,11 @@ static struct event_name {
   {"StdinReadPre",    EVENT_STDINREADPRE},
   {"SwapExists",      EVENT_SWAPEXISTS},
   {"Syntax",          EVENT_SYNTAX},
+  {"TabClosed",       EVENT_TABCLOSED},
   {"TabEnter",        EVENT_TABENTER},
   {"TabLeave",        EVENT_TABLEAVE},
+  {"TabNew",          EVENT_TABNEW},
+  {"TabNewEntered",   EVENT_TABNEWENTERED},
   {"TermChanged",     EVENT_TERMCHANGED},
   {"TermResponse",    EVENT_TERMRESPONSE},
   {"TextChanged",     EVENT_TEXTCHANGED},
@@ -6471,12 +6473,6 @@ int has_cmdundefined(void)
   return first_autopat[(int)EVENT_CMDUNDEFINED] != NULL;
 }
 
-/// @returns true when there is an FuncUndefined autocommand defined.
-int has_funcundefined(void)
-{
-  return first_autopat[(int)EVENT_FUNCUNDEFINED] != NULL;
-}
-
 static int 
 apply_autocmds_group (
     event_T event,
@@ -6639,7 +6635,8 @@ apply_autocmds_group (
         || event == EVENT_QUICKFIXCMDPRE
         || event == EVENT_COLORSCHEME
         || event == EVENT_QUICKFIXCMDPOST
-        || event == EVENT_JOBACTIVITY)
+        || event == EVENT_JOBACTIVITY
+        || event == EVENT_TABCLOSED)
       fname = vim_strsave(fname);
     else
       fname = FullName_save(fname, FALSE);

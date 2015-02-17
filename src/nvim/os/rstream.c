@@ -271,15 +271,6 @@ void rstream_set_file(RStream *rstream, uv_file file)
   rstream->free_handle = true;
 }
 
-/// Tests if the stream is backed by a regular file
-///
-/// @param rstream The `RStream` instance
-/// @return True if the underlying file descriptor represents a regular file
-bool rstream_is_regular_file(RStream *rstream)
-{
-  return rstream->file_type == UV_FILE;
-}
-
 /// Starts watching for events from a `RStream` instance.
 ///
 /// @param rstream The `RStream` instance

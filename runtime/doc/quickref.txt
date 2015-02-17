@@ -674,7 +674,6 @@ Short explanation of each option:		*option-list*
 'directory'	  'dir'     list of directory names for the swap file
 'display'	  'dy'	    list of flags for how to display text
 'eadirection'	  'ead'     in which direction 'equalalways' works
-'edcompatible'	  'ed'	    toggle flags of ":substitute" command
 'encoding'	  'enc'     encoding used internally
 'endofline'	  'eol'     write <EOL> for last line in file
 'equalalways'	  'ea'	    windows are automatically made the same size

@@ -198,23 +198,3 @@ void ga_append(garray_T *gap, char c)
 {
   GA_APPEND(char, gap, c);
 }
-
-#if defined(UNIX) || defined(WIN3264)
-
-/// Append the text in "gap" below the cursor line and clear "gap".
-///
-/// @param gap
-void append_ga_line(garray_T *gap)
-{
-  // Remove trailing CR.
-  if (!GA_EMPTY(gap)
-      && !curbuf->b_p_bin
-      && (((char_u *)gap->ga_data)[gap->ga_len - 1] == CAR)) {
-    gap->ga_len--;
-  }
-  ga_append(gap, NUL);
-  ml_append(curwin->w_cursor.lnum++, gap->ga_data, 0, FALSE);
-  gap->ga_len = 0;
-}
-
-#endif  // if defined(UNIX) || defined(WIN3264)

@@ -4226,23 +4226,6 @@ did_set_string_option (
 
   }
 
-
-
-#if defined(FEAT_MOUSE_TTY) && defined(UNIX)
-  /* 'ttymouse' */
-  else if (varp == &p_ttym) {
-    /* Switch the mouse off before changing the escape sequences used for
-     * that. */
-    mch_setmouse(FALSE);
-    if (opt_strings_flags(p_ttym, p_ttym_values, &ttym_flags, FALSE) != OK)
-      errmsg = e_invarg;
-    else
-      check_mouse_termcode();
-    if (termcap_active)
-      setmouse();               /* may switch it on again */
-  }
-#endif
-
   /* 'selection' */
   else if (varp == &p_sel) {
     if (*p_sel == NUL
@@ -4945,9 +4928,14 @@ set_bool_option (
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0)
     *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = value;
 
+  // Ensure that compatible can not be enabled
   if ((int *)varp == &p_cp && p_cp == TRUE) {
-    /* Ensure that compatible can not be enabled */
     p_cp = FALSE;
+    return e_unsupportedoption;
+  }
+  // Ensure that edcompatible can not be enabled
+  else if ((int *)varp == &p_ed && p_ed == TRUE) {
+    p_ed = FALSE;
     return e_unsupportedoption;
   }
   /* 'undofile' */
@@ -5434,8 +5422,7 @@ set_num_option (
       curbuf->b_p_iminsert = B_IMODE_NONE;
     }
     p_iminsert = curbuf->b_p_iminsert;
-    if (termcap_active)         /* don't do this in the alternate screen */
-      showmode();
+    showmode();
     /* Show/unshow value of 'keymap' in status lines. */
     status_redraw_curbuf();
   } else if (pp == &p_window) {
@@ -5554,12 +5541,11 @@ set_num_option (
    */
   if (old_Rows != Rows || old_Columns != Columns) {
     /* Changing the screen size is not allowed while updating the screen. */
-    if (updating_screen)
+    if (updating_screen) {
       *pp = old_value;
-    else if (full_screen
-             )
-      screen_resize((int)Columns, (int)Rows, TRUE);
-    else {
+    } else if (full_screen) {
+      screen_resize((int)Columns, (int)Rows);
+    } else {
       /* Postpone the resizing; check the size and cmdline position for
        * messages. */
       check_shellsize();
@@ -5963,27 +5949,6 @@ set_option_value (
     }
   }
   return NULL;
-}
-
-/*
- * Get the terminal code for a terminal option.
- * Returns NULL when not found.
- */
-char_u *get_term_code(char_u *tname)
-{
-  int opt_idx;
-  char_u  *varp;
-
-  if (tname[0] != 't' || tname[1] != '_' ||
-      tname[2] == NUL || tname[3] == NUL)
-    return NULL;
-  if ((opt_idx = findoption(tname)) >= 0) {
-    varp = get_varp(&(options[opt_idx]));
-    if (varp != NULL)
-      varp = *(char_u **)(varp);
-    return varp;
-  }
-  return find_termcode(tname + 2);
 }
 
 char_u *get_highlight_default(void)
@@ -6409,7 +6374,6 @@ void clear_termoptions(void)
    */
   mch_setmouse(FALSE);              /* switch mouse off */
   mch_restore_title(3);             /* restore window titles */
-  stoptermcap();                        /* stop termcap mode */
 
   free_termoptions();
 }
@@ -7824,17 +7788,6 @@ int option_was_set(char_u *name)
   if (options[idx].flags & P_WAS_SET)
     return TRUE;
   return FALSE;
-}
-
-/*
- * Reset the flag indicating option "name" was set.
- */
-void reset_option_was_set(char_u *name)
-{
-  int idx = findoption(name);
-
-  if (idx >= 0)
-    options[idx].flags &= ~P_WAS_SET;
 }
 
 /*

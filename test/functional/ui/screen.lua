@@ -116,7 +116,11 @@ local debug_screen
 
 local default_screen_timeout = 2500
 if os.getenv('VALGRIND') then
-  default_screen_timeout = 7500
+  default_screen_timeout = default_screen_timeout * 3
+end
+
+if os.getenv('CI_TARGET') then
+  default_screen_timeout = default_screen_timeout * 3
 end
 
 local colors = request('vim_get_color_map')

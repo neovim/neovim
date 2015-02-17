@@ -1232,9 +1232,6 @@ do_shell (
    * avoid having to type return below.
    */
   msg_putchar('\r');                    /* put cursor at start of line */
-  if (!autocmd_busy) {
-    stoptermcap();
-  }
   msg_putchar('\n');                    /* may shift screen one line up */
 
   /* warning message before calling the shell */
@@ -1292,8 +1289,6 @@ do_shell (
       wait_return(msg_silent == 0);
       no_wait_return = save_nwr;
     }
-
-    starttermcap();             /* start termcap if not done by wait_return() */
   }
 
   /* display any error messages now */
@@ -3615,16 +3610,13 @@ void do_sub(exarg_T *eap)
   /*
    * Find trailing options.  When '&' is used, keep old options.
    */
-  if (*cmd == '&')
+  if (*cmd == '&') {
     ++cmd;
-  else {
-    if (!p_ed) {
-      if (p_gd)                 /* default is global on */
-        do_all = TRUE;
-      else
-        do_all = FALSE;
-      do_ask = FALSE;
-    }
+  } else {
+    // default is global on
+    do_all = p_gd ? TRUE : FALSE;
+
+    do_ask = FALSE;
     do_error = TRUE;
     do_print = FALSE;
     do_count = false;
@@ -3632,10 +3624,8 @@ void do_sub(exarg_T *eap)
     do_ic = 0;
   }
   while (*cmd) {
-    /*
-     * Note that 'g' and 'c' are always inverted, also when p_ed is off.
-     * 'r' is never inverted.
-     */
+    // Note that 'g' and 'c' are always inverted.
+    // 'r' is never inverted.
     if (*cmd == 'g')
       do_all = !do_all;
     else if (*cmd == 'c')

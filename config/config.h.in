@@ -53,15 +53,10 @@
 #cmakedefine HAVE_STRINGS_H
 #cmakedefine HAVE_STRNCASECMP
 #cmakedefine HAVE_STROPTS_H
-#cmakedefine HAVE_SYS_IOCTL_H
 #cmakedefine HAVE_SYS_PARAM_H
 #cmakedefine HAVE_SYS_TIME_H
 #cmakedefine HAVE_SYS_UTSNAME_H
 #cmakedefine HAVE_SYS_WAIT_H
-#cmakedefine HAVE_TERMCAP_H
-#cmakedefine HAVE_TERMIOS_H
-#cmakedefine HAVE_TERMIO_H
-#define HAVE_TGETENT 1
 #cmakedefine HAVE_UNISTD_H
 #define HAVE_UP_BC_PC 1
 #cmakedefine HAVE_UTIME
@@ -70,8 +65,6 @@
 #cmakedefine HAVE_WORKING_LIBINTL
 #define RETSIGTYPE void
 #define SIGRETURN return
-#define TERMINFO 1
-#define TGETENT_ZERO_ERR 0
 #define TIME_WITH_SYS_TIME 1
 #cmakedefine UNIX
 #define USEMAN_S 1
@@ -79,9 +72,3 @@
 #define FEAT_BROWSE
 #define FEAT_CSCOPE
 #define FEAT_MOUSE
-#define FEAT_MOUSE_NET
-#define FEAT_MOUSE_SGR
-#define FEAT_MOUSE_TTY
-#define FEAT_MOUSE_URXVT
-#define FEAT_MOUSE_XTERM
-#define FEAT_TERMRESPONSE
