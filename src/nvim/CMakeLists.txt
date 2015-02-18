@@ -76,7 +76,6 @@ set(CONV_SOURCES
   ops.c
   os_unix.c
   path.c
-  popupmnu.c
   quickfix.c
   regexp.c
   screen.c

@@ -72,7 +72,7 @@ EXTERN long Rows                        /* nr of rows in the screen */
   = 24L
 #endif
 ;
-EXTERN long Columns INIT(= 80);         /* nr of columns in the screen */
+EXTERN int Columns INIT(= 80);         /* nr of columns in the screen */
 
 /*
  * The characters and attributes cached for the screen.
@@ -364,7 +364,7 @@ EXTERN scid_T current_SID INIT(= 0);
 // provider function call
 EXTERN struct caller_scope {
   scid_T SID;
-  uint8_t *sourcing_name, *autocmd_fname, *autocmd_match; 
+  uint8_t *sourcing_name, *autocmd_fname, *autocmd_match;
   linenr_T sourcing_lnum;
   int autocmd_fname_full, autocmd_bufnr;
   void *funccalp;

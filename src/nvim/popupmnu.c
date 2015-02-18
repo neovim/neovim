@@ -43,6 +43,7 @@ static int pum_do_redraw = FALSE;   // do redraw anyway
 #define PUM_DEF_HEIGHT 10
 #define PUM_DEF_WIDTH  15
 
+
 /// Show the popup menu with items "array[size]".
 /// "array" must remain valid until pum_undisplay() is called!
 /// When possible the leftmost character is aligned with screen column "col".
@@ -345,7 +346,7 @@ void pum_redraw(void)
             // Display the text that fits or comes before a Tab.
             // First convert it to printable characters.
             char_u *st;
-            int saved = *p;
+            char_u saved = *p;
 
             *p = NUL;
             st = transstr(s);
@@ -364,7 +365,7 @@ void pum_redraw(void)
 
                 if (size < pum_width) {
                   // Most left character requires 2-cells but only 1 cell
-                  // is available on screen.  Put a '<' on the left of the 
+                  // is available on screen.  Put a '<' on the left of the
                   // pum item
                   *(--rt) = '<';
                   size++;
