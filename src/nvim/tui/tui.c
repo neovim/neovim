@@ -50,6 +50,7 @@ typedef struct {
   Cell **screen;
   struct {
     size_t enable_mouse, disable_mouse;
+    size_t enable_bracketed_paste, disable_bracketed_paste;
   } unibi_ext;
 } TUIData;
 
@@ -103,6 +104,8 @@ void tui_start(void)
   // Enter alternate screen and clear
   unibi_out(ui, unibi_enter_ca_mode, NULL);
   unibi_out(ui, unibi_clear_screen, NULL);
+  // Enable bracketed paste
+  unibi_out(ui, (int)data->unibi_ext.enable_bracketed_paste, NULL);
 
   // setup output handle in a separate event loop(we wanna do synchronous
   // write to the tty)
@@ -162,6 +165,8 @@ static void tui_stop(UI *ui)
   unibi_out(ui, unibi_exit_attribute_mode, NULL);
   unibi_out(ui, unibi_cursor_normal, NULL);
   unibi_out(ui, unibi_exit_ca_mode, NULL);
+  // Disable bracketed paste
+  unibi_out(ui, (int)data->unibi_ext.disable_bracketed_paste, NULL);
   flush_buf(ui);
   uv_close((uv_handle_t *)&data->output_handle, NULL);
   uv_run(data->write_loop, UV_RUN_DEFAULT);
@@ -665,6 +670,8 @@ static void fix_terminfo(TUIData *data)
     goto end;
   }
 
+  bool inside_tmux = os_getenv("TMUX") != NULL;
+
 #define STARTS_WITH(str, prefix) (!memcmp(str, prefix, sizeof(prefix) - 1))
 
   if (STARTS_WITH(term, "rxvt")) {
@@ -689,13 +696,19 @@ static void fix_terminfo(TUIData *data)
     unibi_set_if_empty(ut, unibi_from_status_line, "\x07");
   }
 
+  if (STARTS_WITH(term, "xterm") || STARTS_WITH(term, "rxvt") || inside_tmux) {
+    data->unibi_ext.enable_bracketed_paste = unibi_add_ext_str(ut, NULL,
+        "\x1b[?2004h");
+    data->unibi_ext.disable_bracketed_paste = unibi_add_ext_str(ut, NULL,
+        "\x1b[?2004l");
+  }
+
 end:
   // Fill some empty slots with common terminal strings
   data->unibi_ext.enable_mouse = unibi_add_ext_str(ut, NULL,
       "\x1b[?1002h\x1b[?1006h");
   data->unibi_ext.disable_mouse = unibi_add_ext_str(ut, NULL,
       "\x1b[?1002l\x1b[?1006l");
-
   unibi_set_if_empty(ut, unibi_cursor_address, "\x1b[%i%p1%d;%p2%dH");
   unibi_set_if_empty(ut, unibi_exit_attribute_mode, "\x1b[0;10m");
   unibi_set_if_empty(ut, unibi_set_a_foreground,
@@ -735,7 +748,7 @@ static char *get_term_option(UI *ui, char *option)
 
   char *rv = pmap_get(cstr_t)(data->option_cache, option);
   if (!rv) {
-    Error err;
+    Error err = ERROR_INIT;
     Object val = vim_get_option(cstr_as_string(option), &err);
     if (val.type == kObjectTypeString) {
       rv = val.data.string.data;
