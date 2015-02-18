@@ -148,22 +148,34 @@ size_t input_enqueue(String keys)
     uint8_t buf[6] = {0};
     unsigned int new_size = trans_special((uint8_t **)&ptr, buf, true);
 
-    if (!new_size) {
-      if (*ptr == '<') {
-        // Invalid key sequence, skip until the next '>' or until *end
-        do {
-          ptr++;
-        } while (ptr < end && *ptr != '>');
-        ptr++;
-        continue;
-      }
-      // copy the character unmodified
-      *buf = (uint8_t)*ptr++;
-      new_size = 1;
+    if (new_size) {
+      new_size = handle_mouse_event(&ptr, buf, new_size);
+      rbuffer_write(input_buffer, (char *)buf, new_size);
+      continue;
     }
 
-    new_size = handle_mouse_event(&ptr, buf, new_size);
-    rbuffer_write(input_buffer, (char *)buf, new_size);
+    if (*ptr == '<') {
+      // Invalid key sequence, skip until the next '>' or until *end
+      do {
+        ptr++;
+      } while (ptr < end && *ptr != '>');
+      ptr++;
+      continue;
+    }
+
+    // copy the character, escaping CSI and K_SPECIAL
+    if ((uint8_t)*ptr == CSI) {
+      rbuffer_write(input_buffer, (char *)&(uint8_t){K_SPECIAL}, 1);
+      rbuffer_write(input_buffer, (char *)&(uint8_t){KS_EXTRA}, 1);
+      rbuffer_write(input_buffer, (char *)&(uint8_t){KE_CSI}, 1);
+    } else if ((uint8_t)*ptr == K_SPECIAL) {
+      rbuffer_write(input_buffer, (char *)&(uint8_t){K_SPECIAL}, 1);
+      rbuffer_write(input_buffer, (char *)&(uint8_t){KS_SPECIAL}, 1);
+      rbuffer_write(input_buffer, (char *)&(uint8_t){KE_FILLER}, 1);
+    } else {
+      rbuffer_write(input_buffer, ptr, 1);
+    }
+    ptr++;
   }
 
   size_t rv = (size_t)(ptr - keys.data);

@@ -16,7 +16,7 @@ describe('mapping', function()
 
     -- Abbreviations with р (0x80) should work.
     execute('inoreab чкпр   vim')
-    feed('GAчкпр <cr><esc>')
+    feed('GAчкпр <esc>')
 
     -- langmap should not get remapped in insert mode.
     execute('inoremap { FAIL_ilangmap')
@@ -27,10 +27,11 @@ describe('mapping', function()
     execute('inoremap <expr> { "FAIL_iexplangmap"')
     feed('o+<esc>')
 
+
     -- Assert buffer contents.
     expect([[
       test starts here:
-      vim
+      vim 
       +
       +]])
   end)
