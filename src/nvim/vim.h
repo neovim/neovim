@@ -185,13 +185,6 @@ enum {
 };
 
 
-#ifdef NO_EXPANDPATH
-# define gen_expand_wildcards mch_expand_wildcards
-#endif
-
-
-
-
 
 
 
