@@ -182,8 +182,8 @@ static void tui_stop(UI *ui)
   pmap_free(cstr_t)(data->option_cache);
   destroy_screen(data);
   free(data);
-  free(ui);
   ui_detach(ui);
+  free(ui);
 }
 
 static void try_resize(Event ev)
