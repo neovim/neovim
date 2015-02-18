@@ -582,9 +582,6 @@ edit (
     old_topline = curwin->w_topline;
     old_topfill = curwin->w_topfill;
 
-#ifdef USE_ON_FLY_SCROLL
-    dont_scroll = FALSE;                /* allow scrolling here */
-#endif
 
     /*
      * Get a character for Insert mode.  Ignore K_IGNORE.
@@ -4701,9 +4698,6 @@ int get_literal(void)
   if (got_int)
     return Ctrl_C;
 
-#ifdef USE_ON_FLY_SCROLL
-  dont_scroll = TRUE;           /* disallow scrolling here */
-#endif
   ++no_mapping;                 /* don't map the next key hits */
   cc = 0;
   i = 0;
@@ -4962,9 +4956,6 @@ insertchar (
    * Don't do this when there an InsertCharPre autocommand is defined,
    * because we need to fire the event for every character.
    */
-#ifdef USE_ON_FLY_SCROLL
-  dont_scroll = FALSE;                  /* allow scrolling here */
-#endif
 
   if (       !ISSPECIAL(c)
              && (!has_mbyte || (*mb_char2len)(c) == 1)
@@ -6729,9 +6720,6 @@ static void ins_reg(void)
     add_to_showcmd_c(Ctrl_R);
   }
 
-#ifdef USE_ON_FLY_SCROLL
-  dont_scroll = TRUE;           /* disallow scrolling here */
-#endif
 
   /*
    * Don't map the register name. This also prevents the mode message to be
@@ -8056,9 +8044,6 @@ static int ins_digraph(void)
     add_to_showcmd_c(Ctrl_K);
   }
 
-#ifdef USE_ON_FLY_SCROLL
-  dont_scroll = TRUE;           /* disallow scrolling here */
-#endif
 
   /* don't map the digraph chars. This also prevents the
    * mode message to be deleted when ESC is hit */
