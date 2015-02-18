@@ -401,8 +401,6 @@ char_u *save_absolute_path(const char_u *name)
 }
 
 
-#if !defined(NO_EXPANDPATH)
-
 #if defined(UNIX)
 /*
  * Unix style wildcard expansion code.
@@ -1234,7 +1232,6 @@ addfile (
     add_pathsep(p);
   GA_APPEND(char_u *, gap, p);
 }
-#endif /* !NO_EXPANDPATH */
 
 /*
  * Converts a file name into a canonical form. It simplifies a file name into
@@ -1608,7 +1605,6 @@ int same_directory(char_u *f1, char_u *f2)
          && pathcmp((char *)ffname, (char *)f2, (int)(t1 - ffname)) == 0;
 }
 
-#if !defined(NO_EXPANDPATH)
 /*
  * Compare path "p[]" to "q[]".
  * If "maxlen" >= 0 compare "p[maxlen]" to "q[maxlen]"
@@ -1673,9 +1669,7 @@ int pathcmp(const char *p, const char *q, int maxlen)
     return -1;              /* no match */
   return 1;
 }
-#endif
 
-#ifndef NO_EXPANDPATH
 /*
  * Expand a path into all matching files and/or directories.  Handles "*",
  * "?", "[a-z]", "**", etc.
@@ -1688,7 +1682,6 @@ int mch_expandpath(garray_T *gap, char_u *path, int flags)
 {
   return unix_expandpath(gap, path, 0, flags, FALSE);
 }
-#endif
 
 /// Try to find a shortname by comparing the fullname with the current
 /// directory.

@@ -182,10 +182,6 @@
 /* Special wildcards that need to be handled by the shell */
 #define SPECIAL_WILDCHAR    "`'{"
 
-#ifndef HAVE_OPENDIR
-# define NO_EXPANDPATH
-#endif
-
 /*
  * Unix has plenty of memory, use large buffers
  */
