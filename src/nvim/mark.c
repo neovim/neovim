@@ -604,7 +604,7 @@ static char_u *mark_line(pos_T *mp, int lead_len)
 
   if (mp->lnum == 0 || mp->lnum > curbuf->b_ml.ml_line_count)
     return vim_strsave((char_u *)"-invalid-");
-  s = vim_strnsave(skipwhite(ml_get(mp->lnum)), (int)Columns);
+  s = vim_strnsave(skipwhite(ml_get(mp->lnum)), Columns);
 
   /* Truncate the line to fit it in the window */
   len = 0;
@@ -655,7 +655,7 @@ void do_marks(exarg_T *eap)
   show_one_mark(-1, arg, NULL, NULL, FALSE);
 }
 
-static void 
+static void
 show_one_mark (
     int c,
     char_u *arg,
@@ -1502,7 +1502,7 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
           unsigned u;
           sscanf((char *)line + 2, "%" SCNd64 "%u", &lnum_64, &u);
           // safely downcast to linenr_T (long); remove when linenr_T refactored
-          assert(lnum_64 <= LONG_MAX); 
+          assert(lnum_64 <= LONG_MAX);
           pos.lnum = (linenr_T)lnum_64;
           pos.col = u;
           switch (line[1]) {

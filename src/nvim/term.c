@@ -911,7 +911,7 @@ void scroll_region_reset(void)
 
   snprintf(buf, sizeof(buf), "\033|%d;%dR", (int)Rows - 1, 0);
   OUT_STR(buf);
-  snprintf(buf, sizeof(buf), "\033|%d;%dV", (int)Columns - 1, 0);
+  snprintf(buf, sizeof(buf), "\033|%d;%dV", Columns - 1, 0);
   OUT_STR(buf);
 
   screen_start();                   /* don't know where cursor is now */

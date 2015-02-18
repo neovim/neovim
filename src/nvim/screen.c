@@ -4088,7 +4088,7 @@ win_line (
                                      LineOffset[screen_row] + screen_Columns)
                      == 2
                      || (*mb_off2cells)(LineOffset[screen_row - 1]
-                                        + (int)Columns - 2,
+                                        + Columns - 2,
                                         LineOffset[screen_row] + screen_Columns)
                      == 2))
             ) {
@@ -4099,7 +4099,7 @@ win_line (
           if (screen_cur_col != wp->w_width)
             screen_char(LineOffset[screen_row - 1]
                 + (unsigned)Columns - 1,
-                screen_row - 1, (int)(Columns - 1));
+                screen_row - 1, (Columns - 1));
 
           /* When there is a multi-byte character, just output a
            * space to keep it simple. */
@@ -4748,7 +4748,7 @@ win_redr_status_matches (
       screen_puts(selstart, row, selstart_col, hl_attr(HLF_WM));
     }
 
-    screen_fill(row, row + 1, clen, (int)Columns, fillchar, fillchar, attr);
+    screen_fill(row, row + 1, clen, Columns, fillchar, fillchar, attr);
   }
 
   win_redraw_last_status(topframe);
@@ -6286,7 +6286,7 @@ static void screenclear2(void)
 
   /* blank out ScreenLines */
   for (i = 0; i < Rows; ++i) {
-    lineclear(LineOffset[i], (int)Columns);
+    lineclear(LineOffset[i], Columns);
     LineWraps[i] = FALSE;
   }
 
@@ -7094,7 +7094,7 @@ screen_del_lines (
       }
       LineOffset[j - line_count] = temp;
       LineWraps[j - line_count] = FALSE;
-      lineclear(temp, (int)Columns);
+      lineclear(temp, Columns);
     }
   }
 
@@ -7478,11 +7478,11 @@ static void draw_tabline(void)
       c = '_';
     else
       c = ' ';
-    screen_fill(0, 1, col, (int)Columns, c, c, attr_fill);
+    screen_fill(0, 1, col, Columns, c, c, attr_fill);
 
     /* Put an "X" for closing the current tab if there are several. */
     if (first_tabpage->tp_next != NULL) {
-      screen_putchar('X', 0, (int)Columns - 1, attr_nosel);
+      screen_putchar('X', 0, Columns - 1, attr_nosel);
       TabPageIdxs[Columns - 1] = -999;
     }
   }
