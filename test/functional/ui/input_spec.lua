@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')
 local clear, execute, nvim = helpers.clear, helpers.execute, helpers.nvim
 local feed, next_message, eq = helpers.feed, helpers.next_message, helpers.eq
+local expect = helpers.expect
 
 describe('mappings', function()
   local cid
@@ -36,5 +37,12 @@ describe('mappings', function()
     check_mapping('<s-a-c-up>', '<c-s-a-up>')
     check_mapping('<a-c-s-up>', '<c-s-a-up>')
     check_mapping('<a-s-c-up>', '<c-s-a-up>')
+  end)
+end)
+
+describe('input utf sequences that contain CSI/K_SPECIAL', function()
+  it('ok', function()
+    feed('i…<esc>')
+    expect('…')
   end)
 end)
