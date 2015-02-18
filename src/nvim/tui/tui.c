@@ -51,6 +51,7 @@ typedef struct {
   struct {
     size_t enable_mouse, disable_mouse;
     size_t enable_bracketed_paste, disable_bracketed_paste;
+    size_t enter_insert_mode, exit_insert_mode;
   } unibi_ext;
 } TUIData;
 
@@ -102,10 +103,10 @@ void tui_start(void)
   }
   fix_terminfo(data);
   // Enter alternate screen and clear
-  unibi_out(ui, unibi_enter_ca_mode, NULL);
-  unibi_out(ui, unibi_clear_screen, NULL);
+  unibi_out(ui, unibi_enter_ca_mode);
+  unibi_out(ui, unibi_clear_screen);
   // Enable bracketed paste
-  unibi_out(ui, (int)data->unibi_ext.enable_bracketed_paste, NULL);
+  unibi_out(ui, (int)data->unibi_ext.enable_bracketed_paste);
 
   // setup output handle in a separate event loop(we wanna do synchronous
   // write to the tty)
@@ -162,11 +163,11 @@ static void tui_stop(UI *ui)
   // Destroy output stuff
   tui_normal_mode(ui);
   tui_mouse_off(ui);
-  unibi_out(ui, unibi_exit_attribute_mode, NULL);
-  unibi_out(ui, unibi_cursor_normal, NULL);
-  unibi_out(ui, unibi_exit_ca_mode, NULL);
+  unibi_out(ui, unibi_exit_attribute_mode);
+  unibi_out(ui, unibi_cursor_normal);
+  unibi_out(ui, unibi_exit_ca_mode);
   // Disable bracketed paste
-  unibi_out(ui, (int)data->unibi_ext.disable_bracketed_paste, NULL);
+  unibi_out(ui, (int)data->unibi_ext.disable_bracketed_paste);
   flush_buf(ui);
   uv_close((uv_handle_t *)&data->output_handle, NULL);
   uv_run(data->write_loop, UV_RUN_DEFAULT);
@@ -219,29 +220,29 @@ static void update_attrs(UI *ui, HlAttrs attrs)
   }
 
   data->print_attrs = attrs;
-  unibi_out(ui, unibi_exit_attribute_mode, NULL);
+  unibi_out(ui, unibi_exit_attribute_mode);
 
   data->params[0].i = attrs.foreground != -1 ? attrs.foreground : data->fg;
   if (data->params[0].i != -1) {
-    unibi_out(ui, unibi_set_a_foreground, NULL);
+    unibi_out(ui, unibi_set_a_foreground);
   }
 
   data->params[0].i = attrs.background != -1 ? attrs.background : data->bg;
   if (data->params[0].i != -1) {
-    unibi_out(ui, unibi_set_a_background, NULL);
+    unibi_out(ui, unibi_set_a_background);
   }
 
   if (attrs.bold) {
-    unibi_out(ui, unibi_enter_bold_mode, NULL);
+    unibi_out(ui, unibi_enter_bold_mode);
   }
   if (attrs.italic) {
-    unibi_out(ui, unibi_enter_italics_mode, NULL);
+    unibi_out(ui, unibi_enter_italics_mode);
   }
   if (attrs.underline) {
-    unibi_out(ui, unibi_enter_underline_mode, NULL);
+    unibi_out(ui, unibi_enter_underline_mode);
   }
   if (attrs.reverse) {
-    unibi_out(ui, unibi_enter_reverse_mode, NULL);
+    unibi_out(ui, unibi_enter_reverse_mode);
   }
 }
 
@@ -267,10 +268,10 @@ static void clear_region(UI *ui, int top, int bot, int left, int right,
     if (left == 0) {
       if (bot == ui->height - 1) {
         if (top == 0) {
-          unibi_out(ui, unibi_clear_screen, NULL);
+          unibi_out(ui, unibi_clear_screen);
         } else {
           unibi_goto(ui, top, 0);
-          unibi_out(ui, unibi_clr_eos, NULL);
+          unibi_out(ui, unibi_clr_eos);
         }
         cleared = true;
       }
@@ -280,7 +281,7 @@ static void clear_region(UI *ui, int top, int bot, int left, int right,
       // iterate through each line and clear with clr_eol
       for (int row = top; row <= bot; ++row) {
         unibi_goto(ui, row, left);
-        unibi_out(ui, unibi_clr_eol, NULL);
+        unibi_out(ui, unibi_clr_eol);
       }
       cleared = true;
     }
@@ -342,34 +343,36 @@ static void tui_cursor_goto(UI *ui, int row, int col)
 
 static void tui_cursor_on(UI *ui)
 {
-  unibi_out(ui, unibi_cursor_normal, NULL);
+  unibi_out(ui, unibi_cursor_normal);
 }
 
 static void tui_cursor_off(UI *ui)
 {
-  unibi_out(ui, unibi_cursor_invisible, NULL);
+  unibi_out(ui, unibi_cursor_invisible);
 }
 
 static void tui_mouse_on(UI *ui)
 {
   TUIData *data = ui->data;
-  unibi_out(ui, (int)data->unibi_ext.enable_mouse, NULL);
+  unibi_out(ui, (int)data->unibi_ext.enable_mouse);
 }
 
 static void tui_mouse_off(UI *ui)
 {
   TUIData *data = ui->data;
-  unibi_out(ui, (int)data->unibi_ext.disable_mouse, NULL);
+  unibi_out(ui, (int)data->unibi_ext.disable_mouse);
 }
 
 static void tui_insert_mode(UI *ui)
 {
-  unibi_out(ui, -1, "t_SI");
+  TUIData *data = ui->data;
+  unibi_out(ui, (int)data->unibi_ext.enter_insert_mode);
 }
 
 static void tui_normal_mode(UI *ui)
 {
-  unibi_out(ui, -1, "t_EI");
+  TUIData *data = ui->data;
+  unibi_out(ui, (int)data->unibi_ext.exit_insert_mode);
 }
 
 static void tui_set_scroll_region(UI *ui, int top, int bot, int left,
@@ -399,7 +402,7 @@ static void tui_scroll(UI *ui, int count)
     // Change terminal scroll region and move cursor to the top
     data->params[0].i = top;
     data->params[1].i = bot;
-    unibi_out(ui, unibi_change_scroll_region, NULL);
+    unibi_out(ui, unibi_change_scroll_region);
     unibi_goto(ui, top, left);
   }
 
@@ -412,10 +415,10 @@ static void tui_scroll(UI *ui, int count)
     step = 1;
     if (data->can_use_terminal_scroll) {
       if (count == 1) {
-        unibi_out(ui, unibi_delete_line, NULL);
+        unibi_out(ui, unibi_delete_line);
       } else {
         data->params[0].i = count;
-        unibi_out(ui, unibi_parm_delete_line, NULL);
+        unibi_out(ui, unibi_parm_delete_line);
       }
     }
 
@@ -425,10 +428,10 @@ static void tui_scroll(UI *ui, int count)
     step = -1;
     if (data->can_use_terminal_scroll) {
       if (count == -1) {
-        unibi_out(ui, unibi_insert_line, NULL);
+        unibi_out(ui, unibi_insert_line);
       } else {
         data->params[0].i = -count;
-        unibi_out(ui, unibi_parm_insert_line, NULL);
+        unibi_out(ui, unibi_parm_insert_line);
       }
     }
   }
@@ -437,7 +440,7 @@ static void tui_scroll(UI *ui, int count)
     // Restore terminal scroll region and cursor
     data->params[0].i = 0;
     data->params[1].i = ui->height - 1;
-    unibi_out(ui, unibi_change_scroll_region, NULL);
+    unibi_out(ui, unibi_change_scroll_region);
     unibi_goto(ui, data->row, data->col);
   }
 
@@ -488,12 +491,12 @@ static void tui_put(UI *ui, uint8_t *text, size_t size)
 
 static void tui_bell(UI *ui)
 {
-  unibi_out(ui, unibi_bell, NULL);
+  unibi_out(ui, unibi_bell);
 }
 
 static void tui_visual_bell(UI *ui)
 {
-  unibi_out(ui, unibi_flash_screen, NULL);
+  unibi_out(ui, unibi_flash_screen);
 }
 
 static void tui_update_fg(UI *ui, int fg)
@@ -535,9 +538,9 @@ static void tui_set_title(UI *ui, char *title)
      && unibi_get_str(data->ut, unibi_from_status_line))) {
     return;
   }
-  unibi_out(ui, unibi_to_status_line, NULL);
+  unibi_out(ui, unibi_to_status_line);
   out(ui, title);
-  unibi_out(ui, unibi_from_status_line, NULL);
+  unibi_out(ui, unibi_from_status_line);
 }
 
 static void tui_set_icon(UI *ui, char *icon)
@@ -621,23 +624,19 @@ static void unibi_goto(UI *ui, int row, int col)
   TUIData *data = ui->data;
   data->params[0].i = row;
   data->params[1].i = col;
-  unibi_out(ui, unibi_cursor_address, NULL);
+  unibi_out(ui, unibi_cursor_address);
 }
 
-static void unibi_out(UI *ui, int unibi_index, char *nvim_override)
+static void unibi_out(UI *ui, int unibi_index)
 {
   TUIData *data = ui->data;
 
   const char *str = NULL;
 
-  if (nvim_override) {
-    str = get_term_option(ui, nvim_override);
-  } else if (unibi_index >= 0) {
-    if (unibi_index < unibi_string_begin_) {
-      str = unibi_get_ext_str(data->ut, (unsigned)unibi_index);
-    } else {
-      str = unibi_get_str(data->ut, (unsigned)unibi_index);
-    }
+  if (unibi_index < unibi_string_begin_) {
+    str = unibi_get_ext_str(data->ut, (unsigned)unibi_index);
+  } else {
+    str = unibi_get_str(data->ut, (unsigned)unibi_index);
   }
 
   if (str) {
@@ -703,6 +702,29 @@ static void fix_terminfo(TUIData *data)
         "\x1b[?2004l");
   }
 
+  if (os_getenv("NVIM_TUI_ENABLE_CURSOR_SHAPE") == NULL) {
+    goto end;
+  }
+
+#define TMUX_WRAP(seq) (inside_tmux ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
+  // Support changing cursor shape on some popular terminals.
+  const char *term_prog = os_getenv("TERM_PROGRAM");
+
+  if ((term_prog && !strcmp(term_prog, "iTerm.app"))
+      || os_getenv("ITERM_SESSION_ID") != NULL) {
+    // iterm
+    data->unibi_ext.enter_insert_mode = unibi_add_ext_str(ut, NULL,
+        TMUX_WRAP("\x1b]50;CursorShape=1;BlinkingCursorEnabled=1\x07"));
+    data->unibi_ext.exit_insert_mode = unibi_add_ext_str(ut, NULL,
+        TMUX_WRAP("\x1b]50;CursorShape=0;BlinkingCursorEnabled=0\x07"));
+  } else {
+    // xterm-like sequences for blinking bar and solid block
+    data->unibi_ext.enter_insert_mode = unibi_add_ext_str(ut, NULL,
+        TMUX_WRAP("\x1b[5 q"));
+    data->unibi_ext.exit_insert_mode = unibi_add_ext_str(ut, NULL,
+        TMUX_WRAP("\x1b[2 q"));
+  }
+
 end:
   // Fill some empty slots with common terminal strings
   data->unibi_ext.enable_mouse = unibi_add_ext_str(ut, NULL,
@@ -740,23 +762,6 @@ static void flush_buf(UI *ui)
   uv_write(&req, (uv_stream_t *)&data->output_handle, &buf, 1, NULL);
   uv_run(data->write_loop, UV_RUN_DEFAULT);
   data->bufpos = 0;
-}
-
-static char *get_term_option(UI *ui, char *option)
-{
-  TUIData *data = ui->data;
-
-  char *rv = pmap_get(cstr_t)(data->option_cache, option);
-  if (!rv) {
-    Error err = ERROR_INIT;
-    Object val = vim_get_option(cstr_as_string(option), &err);
-    if (val.type == kObjectTypeString) {
-      rv = val.data.string.data;
-      pmap_put(cstr_t)(data->option_cache, option, rv);
-    }
-  }
-
-  return rv;
 }
 
 static void destroy_screen(TUIData *data)
