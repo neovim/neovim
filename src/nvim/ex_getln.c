@@ -291,9 +291,6 @@ getcmdline (
     redir_off = TRUE;           /* Don't redirect the typed command.
                                    Repeated, because a ":redir" inside
                                    completion may switch it on. */
-#ifdef USE_ON_FLY_SCROLL
-    dont_scroll = FALSE;        /* allow scrolling here */
-#endif
     quit_more = FALSE;          /* reset after CTRL-D which had a more-prompt */
 
     cursorcmd();                /* set the cursor on the right spot */
@@ -904,9 +901,6 @@ getcmdline (
       goto returncmd;                   /* back to cmd mode */
 
     case Ctrl_R:                        /* insert register */
-#ifdef USE_ON_FLY_SCROLL
-      dont_scroll = TRUE;               /* disallow scrolling here */
-#endif
       putcmdline('"', TRUE);
       ++no_mapping;
       i = c = plain_vgetc();            /* CTRL-R <char> */
@@ -1270,9 +1264,6 @@ getcmdline (
     case Ctrl_K:
       ignore_drag_release = TRUE;
       putcmdline('?', TRUE);
-#ifdef USE_ON_FLY_SCROLL
-      dont_scroll = TRUE;                   /* disallow scrolling here */
-#endif
       c = get_digraph(TRUE);
       if (c != NUL)
         break;

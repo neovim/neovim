@@ -441,9 +441,6 @@ wingotofile:
   case 'g':
   case Ctrl_G:
     CHECK_CMDWIN
-#ifdef USE_ON_FLY_SCROLL
-    dont_scroll = TRUE;                         /* disallow scrolling here */
-#endif
     ++ no_mapping;
     ++allow_keys;               /* no mapping for xchar, but allow key codes */
     if (xchar == NUL)

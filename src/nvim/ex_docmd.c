@@ -6607,9 +6607,6 @@ static void ex_at(exarg_T *eap)
 
   curwin->w_cursor.lnum = eap->line2;
 
-#ifdef USE_ON_FLY_SCROLL
-  dont_scroll = TRUE;           /* disallow scrolling here */
-#endif
 
   /* get the register name.  No name means to use the previous one */
   c = *eap->arg;
