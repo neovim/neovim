@@ -6,9 +6,8 @@ local insert = _h.insert
 describe('echomsg', function()
   local screen
 
-  -- Gets the Vim :messages history.
+  -- Gathers the :messages lines.
   local function get_messages()
-    -- Gather the :messages lines.
     -- Cannot use vim_command_output('messages') because of
     --    https://github.com/neovim/neovim/pull/1959
     execute('redir => g:foo | silent messages | redir END')
@@ -38,6 +37,32 @@ describe('echomsg', function()
   local function assert_messages_empty()
     local messages = get_messages()
     assert(messages == '', ':messages should be empty, but it contains: '..messages)
+  end
+
+  local function assert_verrmsg(msg)
+    assert(msg ~= nil and msg ~= "", "'msg' should not be empty")
+    --This has the side effect of clearing the "Press ENTER" prompt.
+    local e = _h.eval('v:errmsg')
+    assert(msg == e, "v:errmsg expected: '"..msg.."', actual: "..(e and "'"..e.."'" or tostring(e)))
+  end
+
+  local function assert_verrmsg_empty()
+    --Curiously, if this is nil this does _not_ clear the "Press ENTER" prompt.
+    local e = _h.eval('v:errmsg')
+    assert(e == nil or e == '', "v:errmsg expected: nil, actual: '"..tostring(e).."'")
+  end
+
+  local function assert_statusmsg(msg)
+    assert(msg ~= nil and msg ~= "", "'msg' should not be empty")
+    --This has the side effect of clearing the "Press ENTER" prompt.
+    local e = _h.eval('v:statusmsg')
+    assert(msg == e, "v:statusmsg expected: '"..msg.."', actual: "..(e and "'"..e.."'" or tostring(e)))
+  end
+
+  local function assert_statusmsg_empty()
+    --Curiously, if this is nil this does _not_ clear the "Press ENTER" prompt.
+    local e = _h.eval('v:statusmsg')
+    assert(e == nil or e == '', "v:statusmsg expected: nil, actual: '"..tostring(e).."'")
   end
 
   before_each(function()
@@ -77,6 +102,9 @@ describe('echomsg', function()
       ~                                                    |
       line1, normal message                                |
       ]])
+      assert_statusmsg("line1, normal message")
+      assert_verrmsg_empty()
+      assert_msg("line1, normal message")
     end)
 
     it('2x causes 1-line scroll', function()
@@ -97,6 +125,9 @@ describe('echomsg', function()
       line2 line2 line2 line2                              |
       Press ENTER or type command to continue^             |
       ]])
+      feed('<cr>')
+      assert_statusmsg("line2 line2 line2 line2")
+      assert_verrmsg_empty()
     end)
 
     it('one very long line causes a scroll', function()
@@ -118,7 +149,10 @@ describe('echomsg', function()
       ne1.o line1.p line1.q line1.r line1.s                |
       Press ENTER or type command to continue^             |
       ]])
+      feed('<cr>')
+      assert_statusmsg(fullmsg)
       assert_msg(fullmsg)
+      assert_verrmsg_empty()
     end)
 
     it(':silent, :silent!', function()
@@ -143,7 +177,9 @@ describe('echomsg', function()
                                                            |
                                                            |
       ]])
+      assert_statusmsg(fullmsg)
       assert_messages_empty()
+      assert_verrmsg_empty()
     end)
   end)
 
@@ -177,6 +213,8 @@ describe('echomsg', function()
       ~                                                    |
       {2:line1, normal message}                                |
       ]])
+      assert_statusmsg_empty()
+      assert_verrmsg("line1, normal message")
     end)
 
     it('2x causes 1-line scroll', function()
@@ -197,11 +235,14 @@ describe('echomsg', function()
       {2:line2 line2 line2 line2}                              |
       {3:Press ENTER or type command to continue}^             |
       ]])
+      feed('<cr>')
+      assert_statusmsg_empty()
+      assert_verrmsg("line2 line2 line2 line2")
     end)
 
     it('one very long line causes a scroll', function()
       local fullmsg = 'line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s'
-      execute('echom "'..fullmsg..'"')
+      execute('echoerr "'..fullmsg..'"')
       screen:expect([[
       ~                                                    |
       ~                                                    |
@@ -213,12 +254,14 @@ describe('echomsg', function()
       ~                                                    |
       ~                                                    |
       ~                                                    |
-      line1.a line1.b line1.c line1.d line1.e line1.f line1|
-      .g line1.h line1.i line1.j line1.k line1.l line1.m li|
-      ne1.o line1.p line1.q line1.r line1.s                |
+      {2:line1.a line1.b line1.c line1.d line1.e line1.f line1}|
+      {2:.g line1.h line1.i line1.j line1.k line1.l line1.m li}|
+      {2:ne1.o line1.p line1.q line1.r line1.s}                |
       {3:Press ENTER or type command to continue}^             |
       ]])
       assert_msg(fullmsg)
+      assert_statusmsg_empty()
+      assert_verrmsg(fullmsg)
     end)
   end)
 
@@ -244,6 +287,8 @@ describe('echomsg', function()
       line1, normal message                                |
       ]])
       assert_msg(fullmsg)
+      assert_statusmsg(fullmsg)
+      assert_verrmsg_empty()
     end)
 
     it('overwrites previous :echom (does NOT cause a scroll)', function()
@@ -264,6 +309,9 @@ describe('echomsg', function()
       ~                                                    |
       line2                                                |
       ]])
+      assert_msg('line2')
+      assert_statusmsg('line2')
+      assert_verrmsg_empty()
     end)
 
     it('followed by :echom causes a scroll', function()
@@ -286,6 +334,8 @@ describe('echomsg', function()
       ]])
       assert_msg('line1')
       assert_msg('line2')
+      assert_statusmsg('line2')
+      assert_verrmsg_empty()
     end)
 
     it('2x does NOT cause a scroll', function()
@@ -306,6 +356,9 @@ describe('echomsg', function()
       ~                                                    |
       line2 line2 line2 line2                              |
       ]])
+      assert_msg('line2 line2 line2 line2')
+      assert_statusmsg('line2 line2 line2 line2')
+      assert_verrmsg_empty()
     end)
 
     it('very long line does NOT cause a scroll', function()
@@ -328,6 +381,8 @@ describe('echomsg', function()
       line1.a line1.b line1.c....p line1.q line1.r line1.s |
       ]])
       assert_msg(fullmsg)
+      assert_statusmsg(fullmsg)
+      assert_verrmsg_empty()
     end)
 
     it('very long line fills available cmdline space', function()
@@ -351,6 +406,8 @@ describe('echomsg', function()
       e1.l line1.m line1.o line1.p line1.q line1.r line1.s |
       ]])
       assert_msg(fullmsg)
+      assert_statusmsg(fullmsg)
+      assert_verrmsg_empty()
     end)
 
     it('called from a function', function()
@@ -378,6 +435,8 @@ describe('echomsg', function()
       e1.l line1.m line1.o line1.p line1.q line1.r line1.s |
       ]])
       assert_msg(fullmsg)
+      assert_statusmsg(fullmsg)
+      assert_verrmsg_empty()
     end)
 
     it('in a mapping', function()
@@ -402,6 +461,8 @@ describe('echomsg', function()
       e1.l line1.m line1.o line1.p line1.q line1.r line1.s |
       ]])
       assert_msg(fullmsg)
+      assert_statusmsg(fullmsg)
+      assert_verrmsg_empty()
     end)
 
     it(':silent, :silent!', function()
@@ -427,6 +488,8 @@ describe('echomsg', function()
       ]])
       assert_msg(fullmsg)
       assert_msg("line2 for silent!")
+      assert_statusmsg("line2 for silent!")
+      assert_verrmsg_empty()
     end)
 
     it('in a <silent> (not :silent) mapping', function()
@@ -451,6 +514,8 @@ describe('echomsg', function()
       e1.l line1.m line1.o line1.p line1.q line1.r line1.s |
       ]])
       assert_msg(fullmsg)
+      assert_statusmsg(fullmsg)
+      assert_verrmsg_empty()
     end)
 
     it('in a <silent> :silent mapping', function()
@@ -475,6 +540,8 @@ describe('echomsg', function()
                                                            |
       ]])
       assert_msg(fullmsg)
+      assert_statusmsg(fullmsg)
+      assert_verrmsg_empty()
     end)
   end
 

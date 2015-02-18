@@ -212,7 +212,7 @@ int msg_attr_keep(char_u *s, int attr, bool keep, bool truncate)
 {
   static int entered = 0;
 
-  if (attr == 0)
+  if (attr == 0 || MSG_HIST == (attr|MSG_HIST))
     set_vim_var_string(VV_STATUSMSG, s, -1);
 
   // Displaying a message may cause a problem (e.g., when redrawing the
