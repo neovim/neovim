@@ -855,7 +855,7 @@ static void list_features(void)
 
   // The rightmost column doesn't need a separator.
   // Sacrifice it to fit in one more column if possible.
-  int ncol = (int)(Columns + 1) / width;
+  int ncol = (Columns + 1) / width;
   int nrow = nfeat / ncol + (nfeat % ncol ? 1 : 0);
 
   // i counts columns then rows.  idx counts rows then columns.
@@ -979,8 +979,8 @@ static void version_msg(char *s)
   int len = (int)STRLEN(s);
 
   if (!got_int
-      && (len < (int)Columns)
-      && (msg_col + len >= (int)Columns)
+      && (len < Columns)
+      && (msg_col + len >= Columns)
       && (*s != '\n')) {
     msg_putchar('\n');
   }

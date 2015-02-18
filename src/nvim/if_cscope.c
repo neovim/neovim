@@ -177,7 +177,7 @@ void set_context_in_cscope_cmd(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
  * Find the command, print help if invalid, and then call the corresponding
  * command function.
  */
-static void 
+static void
 do_cscope_general (
     exarg_T *eap,
     int make_split             /* whether to split window */
@@ -445,7 +445,7 @@ static void cs_stat_emsg(char *fname)
  * cs_add() and cs_reset().  i really don't like to do this, but this
  * routine uses a number of goto statements.
  */
-static int 
+static int
 cs_add_common (
     char *arg1,         /* filename - may contain environment variables */
     char *arg2,         /* prepend path - may contain environment variables */
@@ -579,7 +579,7 @@ static int cs_cnt_connections(void)
   return cnt;
 } /* cs_cnt_connections */
 
-static void 
+static void
 cs_reading_emsg (
     int idx        /* connection index */
 )
@@ -1310,7 +1310,7 @@ static int cs_kill(exarg_T *eap)
  *
  * Actually kills a specific cscope connection.
  */
-static void 
+static void
 cs_kill_execute (
     int i,              /* cscope table index */
     char *cname        /* cscope database name */
@@ -1718,7 +1718,7 @@ static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
     (void)sprintf(buf, cntxformat, context);
 
     /* print the context only if it fits on the same line */
-    if (msg_col + (int)strlen(buf) >= (int)Columns)
+    if (msg_col + (int)strlen(buf) >= Columns)
       msg_putchar('\n');
     msg_advance(12);
     MSG_PUTS_LONG(buf);

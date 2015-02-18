@@ -571,7 +571,7 @@ static void prt_header(prt_settings_T *psettings, int pagenum, linenr_T lnum)
  */
 static void prt_message(char_u *s)
 {
-  screen_fill((int)Rows - 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
+  screen_fill((int)Rows - 1, (int)Rows, 0, Columns, ' ', ' ', 0);
   screen_puts(s, (int)Rows - 1, 0, hl_attr(HLF_R));
   out_flush();
 }
@@ -1831,7 +1831,7 @@ static void prt_dsc_ints(char *comment, int count, int *ints)
   prt_write_string("\n");
 }
 
-static void 
+static void
 prt_dsc_resources (
     char *comment,           /* if NULL add to previous */
     char *type,

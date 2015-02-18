@@ -2299,7 +2299,7 @@ void restore_cmdline_alloc(char_u *p)
  *
  * return FAIL for failure, OK otherwise
  */
-static int 
+static int
 cmdline_paste (
     int regname,
     int literally,          /* Insert text literally instead of "as typed" */
@@ -2501,13 +2501,13 @@ static void cursorcmd(void)
     return;
 
   if (cmdmsg_rl) {
-    msg_row = cmdline_row  + (ccline.cmdspos / (int)(Columns - 1));
-    msg_col = (int)Columns - (ccline.cmdspos % (int)(Columns - 1)) - 1;
+    msg_row = cmdline_row  + (ccline.cmdspos / (Columns - 1));
+    msg_col = Columns - (ccline.cmdspos % (Columns - 1)) - 1;
     if (msg_row <= 0)
       msg_row = Rows - 1;
   } else {
-    msg_row = cmdline_row + (ccline.cmdspos / (int)Columns);
-    msg_col = ccline.cmdspos % (int)Columns;
+    msg_row = cmdline_row + (ccline.cmdspos / Columns);
+    msg_col = ccline.cmdspos % Columns;
     if (msg_row >= Rows)
       msg_row = Rows - 1;
   }
@@ -2557,7 +2557,7 @@ static int sort_func_compare(const void *s1, const void *s2)
  * For the caller, this means that the character is just passed through like a
  * normal character (instead of being expanded).  This allows :s/^I^D etc.
  */
-static int 
+static int
 nextwild (
     expand_T *xp,
     int type,
@@ -3429,7 +3429,7 @@ static void set_expand_context(expand_T *xp)
   set_cmd_context(xp, ccline.cmdbuff, ccline.cmdlen, ccline.cmdpos);
 }
 
-void 
+void
 set_cmd_context (
     expand_T *xp,
     char_u *str,           /* start of command line */
@@ -3479,7 +3479,7 @@ set_cmd_context (
  * key that triggered expansion literally.
  * Returns EXPAND_OK otherwise.
  */
-int 
+int
 expand_cmdline (
     expand_T *xp,
     char_u *str,               /* start of command line */
@@ -3545,7 +3545,7 @@ static void cleanup_help_tags(int num_file, char_u **file)
 /*
  * Do the expansion based on xp->xp_context and "pat".
  */
-static int 
+static int
 ExpandFromContext (
     expand_T *xp,
     char_u *pat,
@@ -4234,7 +4234,7 @@ static void clear_hist_entry(histentry_T *hisptr)
  * Check if command line 'str' is already in history.
  * If 'move_to_front' is TRUE, matching entry is moved to end of history.
  */
-static int 
+static int
 in_history (
     int type,
     char_u *str,
@@ -4316,7 +4316,7 @@ static int last_maptick = -1;           /* last seen maptick */
  * history then it is moved to the front.  "histype" may be one of he HIST_
  * values.
  */
-void 
+void
 add_to_history (
     int histype,
     char_u *new_entry,
@@ -4718,9 +4718,9 @@ void ex_history(exarg_T *eap)
           msg_putchar('\n');
           sprintf((char *)IObuff, "%c%6d  ", i == idx ? '>' : ' ',
               hist[i].hisnum);
-          if (vim_strsize(hist[i].hisstr) > (int)Columns - 10)
+          if (vim_strsize(hist[i].hisstr) > Columns - 10)
             trunc_string(hist[i].hisstr, IObuff + STRLEN(IObuff),
-                (int)Columns - 10, IOSIZE - (int)STRLEN(IObuff));
+                Columns - 10, IOSIZE - STRLEN(IObuff));
           else
             STRCAT(IObuff, hist[i].hisstr);
           msg_outtrans(IObuff);
@@ -4744,7 +4744,7 @@ static int viminfo_add_at_front = FALSE;
 /*
  * Translate a history type number to the associated character.
  */
-static int 
+static int
 hist_type2char (
     int type,
     int use_question                   /* use '?' instead of '/' */
