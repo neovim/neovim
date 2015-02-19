@@ -33,7 +33,7 @@ typedef enum {
 
 static RStream *read_stream = NULL;
 static RBuffer *read_buffer = NULL, *input_buffer = NULL;
-static bool eof = false;
+static bool input_eof = false;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/input.c.generated.h"
@@ -278,7 +278,7 @@ static bool input_poll(int ms)
     prof_inchar_enter();
   }
 
-  event_poll_until(ms, input_ready() || eof);
+  event_poll_until(ms, input_ready() || input_eof);
 
   if (do_profiling == PROF_YES && ms) {
     prof_inchar_exit();
@@ -289,7 +289,7 @@ static bool input_poll(int ms)
 
 void input_done(void)
 {
-  eof = true;
+  input_eof = true;
 }
 
 // This is a replacement for the old `WaitForChar` function in os_unix.c
@@ -299,13 +299,13 @@ static InbufPollResult inbuf_poll(int ms)
     return kInputAvail;
   }
 
-  return eof ? kInputEof : kInputNone;
+  return input_eof ? kInputEof : kInputNone;
 }
 
 static void read_cb(RStream *rstream, void *data, bool at_eof)
 {
   if (at_eof) {
-    eof = true;
+    input_eof = true;
   }
 
   char *buf = rbuffer_read_ptr(read_buffer);
