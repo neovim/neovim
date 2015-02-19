@@ -500,8 +500,7 @@ the ":map" command.  The rules are:
 	   <t_kd>		"kd" termcap entry (cursor down key)
 
 If you want to use the full <> notation in Vim, you have to make sure the '<'
-flag is excluded from 'cpoptions' (when 'compatible' is not set, it already is
-by default). >
+flag is excluded from 'cpoptions'. >
 	:set cpo-=<
 The <> notation uses <lt> to escape the special meaning of key names.  Using a
 backslash also works, but only when 'cpoptions' does not include the 'B' flag.

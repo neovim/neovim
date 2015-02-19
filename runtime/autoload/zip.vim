@@ -17,7 +17,7 @@
 
 " ---------------------------------------------------------------------
 " Load Once: {{{1
-if &cp || exists("g:loaded_zip")
+if exists("g:loaded_zip")
  finish
 endif
 let g:loaded_zip= "v27"

@@ -238,9 +238,8 @@ buffer basis, at any time.  The ftplugin/sql.vim file defines this function: >
     SQLSetType
 
 Executing this function without any parameters will set the indent and syntax
-scripts back to their defaults, see |sql-type-default|.  If you have turned
-off Vi's compatibility mode, |'compatible'|, you can use the <Tab> key to
-complete the optional parameter.
+scripts back to their defaults, see |sql-type-default|.  You can use the <Tab>
+key to complete the optional parameter.
 
 After typing the function name and a space, you can use the completion to
 supply a parameter.  The function takes the name of the Vim script you want to

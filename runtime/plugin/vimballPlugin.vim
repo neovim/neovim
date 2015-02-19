@@ -13,7 +13,7 @@
 
 " ---------------------------------------------------------------------
 "  Load Once: {{{1
-if &cp || exists("g:loaded_vimballPlugin")
+if exists("g:loaded_vimballPlugin")
  finish
 endif
 let g:loaded_vimballPlugin = "v35"

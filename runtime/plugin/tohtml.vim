@@ -168,10 +168,9 @@ let g:loaded_2html_plugin = 'vim7.4_v1'
 "}}}
 
 " Define the :TOhtml command when:
-" - 'compatible' is not set
 " - this plugin was not already loaded
 " - user commands are available. {{{
-if !&cp && !exists(":TOhtml") && has("user_commands")
+if !exists(":TOhtml") && has("user_commands")
   command -range=% -bar TOhtml :call tohtml#Convert2HTML(<line1>, <line2>)
 endif "}}}
 

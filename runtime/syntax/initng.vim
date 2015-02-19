@@ -9,7 +9,7 @@
 " Syntax highlighting for initng .i files. Inherits from sh.vim and adds
 " in the hiliting to start/stop {} blocks. Requires vim 6.3 or later.
 
-if &compatible || v:version < 603
+if v:version < 603
 	finish
 endif
 

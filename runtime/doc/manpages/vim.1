@@ -171,12 +171,6 @@ Binary mode.
 A few options will be set that makes it possible to edit a binary or
 executable file.
 .TP
-\-C
-Compatible.  Set the 'compatible' option.
-This will make
-.B Vim
-behave mostly like Vi, even though a .vimrc file exists.
-.TP
 \-d
 Start in diff mode.
 There should be two, three, or four file name arguments.
@@ -267,13 +261,6 @@ You can still modify the buffer, but writing a file is not possible.
 Modifications not allowed.  The 'modifiable' and 'write' options will be unset,
 so that changes are not allowed and files can not be written.  Note that these
 options can be set to enable making modifications.
-.TP
-\-N
-No-compatible mode.  Reset the 'compatible' option.
-This will make
-.B Vim
-behave a bit better, but less Vi compatible, even though a .vimrc file does
-not exist.
 .TP
 \-n
 No swap file will be used.

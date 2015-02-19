@@ -4,9 +4,8 @@
 
 " Exit quickly when:
 " - this plugin was already loaded
-" - when 'compatible' is set
 " - some autocommands are already taking care of spell files
-if exists("loaded_spellfile_plugin") || &cp || exists("#SpellFileMissing")
+if exists("loaded_spellfile_plugin") || exists("#SpellFileMissing")
   finish
 endif
 let loaded_spellfile_plugin = 1

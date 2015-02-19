@@ -19,7 +19,7 @@
 "     call inputsave()|call input("Press <cr> to continue")|call inputrestore()
 " ---------------------------------------------------------------------
 " Load Once: {{{1
-if &cp || exists("g:loaded_tar")
+if exists("g:loaded_tar")
  finish
 endif
 let g:loaded_tar= "v29"

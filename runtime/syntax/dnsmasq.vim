@@ -23,7 +23,7 @@
 " For version 5.x: Clear all syntax items
 if v:version < 600
     syntax clear
-elseif exists("b:current_syntax") || &compatible
+elseif exists("b:current_syntax")
     finish
 endif
 

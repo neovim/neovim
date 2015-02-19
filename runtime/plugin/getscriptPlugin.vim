@@ -11,15 +11,7 @@
 " all the peoples praise Him."
 " ---------------------------------------------------------------------
 " Initialization:	{{{1
-" if you're sourcing this file, surely you can't be
-" expecting vim to be in its vi-compatible mode
 if exists("g:loaded_getscriptPlugin")
- finish
-endif
-if &cp
- if &verbose
-  echo "GetLatestVimScripts is not vi-compatible; not loaded (you need to set nocp)"
- endif
  finish
 endif
 let g:loaded_getscriptPlugin = "v36"

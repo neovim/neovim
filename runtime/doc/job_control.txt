@@ -41,7 +41,6 @@ Job control is achieved by calling a combination of the |jobstart()|,
 |jobsend()| and |jobstop()| functions, and by listening to the |JobActivity|
 event. The best way to understand is with a complete example:
 >
-    set nocp
     let job1 = jobstart('shell1', 'bash')
     let job2 = jobstart('shell2', 'bash', ['-c', 'for ((i = 0; i < 10; i++)); do echo hello $i!; sleep 1; done'])
 

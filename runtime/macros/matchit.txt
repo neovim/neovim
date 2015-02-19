@@ -18,7 +18,6 @@ For Vim version 6.3.  Last change:  2007 Aug 29
 5. Known Bugs and Limitations				|matchit-bugs|
 
 The functionality mentioned here is a plugin, see |add-plugin|.
-This plugin is only available if 'compatible' is not set.
 You can avoid loading this plugin by setting the "loaded_matchit" variable
 in your |vimrc| file: >
 	:let loaded_matchit = 1

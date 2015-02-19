@@ -212,8 +212,6 @@ let &cpo = s:cpo_save
 " The text should be sufficient to know what the option is used for.
 
 call <SID>Header("important")
-call append("$", "compatible\tbehave very Vi compatible (not advisable)")
-call <SID>BinOptionG("cp", &cp)
 call append("$", "cpoptions\tlist of flags to specify Vi compatibility")
 call <SID>OptionG("cpo", &cpo)
 call append("$", "insertmode\tuse Insert mode as the default mode")

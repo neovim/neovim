@@ -644,7 +644,6 @@ Short explanation of each option:		*option-list*
 'columns'	  'co'	    number of columns in the display
 'comments'	  'com'     patterns that can start a comment line
 'commentstring'   'cms'     template for comments; used for fold marker
-'compatible'	  'cp'	    behave Vi-compatible as much as possible
 'complete'	  'cpt'     specify how Insert mode completion works
 'completefunc'	  'cfu'     function to be used for Insert mode completion
 'completeopt'	  'cot'     options for Insert mode completion
@@ -1139,8 +1138,6 @@ Context-sensitive completion on the command-line:
 |-F|	-F		    Farsi mode ('fkmap' and 'rightleft' are set)
 |-H|	-H		    Hebrew mode ('hkmap' and 'rightleft' are set)
 |-V|	-V		    Verbose, give informative messages
-|-C|	-C		    Compatible, set the 'compatible' option
-|-N|	-N		    Nocompatible, reset the 'compatible' option
 |-r|	-r		    give list of swap files
 |-r|	-r {file} ..	    recover aborted edit session
 |-n|	-n		    do not create a swap file

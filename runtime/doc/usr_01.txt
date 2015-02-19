@@ -61,38 +61,6 @@ Most of the manuals assume that Vim has been properly installed.  If you
 didn't do that yet, or if Vim doesn't run properly (e.g., files can't be found
 or in the GUI the menus do not show up) first read the chapter on
 installation: |usr_90.txt|.
-							*not-compatible*
-The manuals often assume you are using Vim with Vi-compatibility switched
-off.  For most commands this doesn't matter, but sometimes it is important,
-e.g., for multi-level undo.  An easy way to make sure you are using a nice
-setup is to copy the example vimrc file.  By doing this inside Vim you don't
-have to check out where it is located.  How to do this depends on the system
-you are using:
-
-Unix: >
-	:!cp -i $VIMRUNTIME/vimrc_example.vim ~/.vimrc
-MS-DOS, MS-Windows: >
-	:!copy $VIMRUNTIME/vimrc_example.vim $VIM/_vimrc
-
-If the file already exists you probably want to keep it.
-
-If you start Vim now, the 'compatible' option should be off.  You can check it
-with this command: >
-
-	:set compatible?
-
-If it responds with "nocompatible" you are doing well.  If the response is
-"compatible" you are in trouble.  You will have to find out why the option is
-still set.  Perhaps the file you wrote above is not found.  Use this command
-to find out: >
-
-	:scriptnames
-
-If your file is not in the list, check its location and name.  If it is in the
-list, there must be some other place where the 'compatible' option is switched
-back on.
-
-For more info see |vimrc| and |compatible-default|.
 
 ==============================================================================
 *01.3*	Using the Vim tutor				*tutor* *vimtutor*
@@ -133,7 +101,7 @@ filename.  For French:
 <
 2. Edit the copied file with Vim:
 >
-	vim -u NONE -c "set nocp" TUTORCOPY
+	vim -u NONE TUTORCOPY
 <
    The extra arguments make sure Vim is started in a good mood.
 

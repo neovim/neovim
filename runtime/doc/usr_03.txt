@@ -468,8 +468,7 @@ INTERMEZZO
 
 If you like one of the options mentioned before, and set it each time you use
 Vim, you can put the command in your Vim startup file.
-   Edit the file, as mentioned at |not-compatible|.  Or use this command to
-find out where it is: >
+Use this command to find out where it is: >
 
 	:scriptnames
 

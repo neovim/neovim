@@ -134,8 +134,7 @@ q			Stops recording.  (Implementation note: The 'q' that
 			not have a <CR> it will be added automatically when
 			the 'e' flag is present in 'cpoptions'.
 			Note that the ":*" command is only recognized when the
-			'*' flag is present in 'cpoptions'.  This is NOT the
-			default when 'nocompatible' is used.
+			'*' flag is present in 'cpoptions'.
 			For ":@=" the last used expression is used.  The
 			result of evaluating the expression is executed as an
 			Ex command.
