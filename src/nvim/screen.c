@@ -279,7 +279,6 @@ void update_curbuf(int type)
 void update_screen(int type)
 {
   static int did_intro = FALSE;
-  int did_one;
 
   /* Don't do anything if the screen structures are (not yet) valid. */
   if (!screen_valid(TRUE))
@@ -418,15 +417,9 @@ void update_screen(int type)
    * Go from top to bottom through the windows, redrawing the ones that need
    * it.
    */
-  did_one = FALSE;
-  search_hl.rm.regprog = NULL;
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_redr_type != 0) {
       cursor_off();
-      if (!did_one) {
-        did_one = TRUE;
-        start_search_hl();
-      }
       win_update(wp);
     }
 
@@ -436,7 +429,6 @@ void update_screen(int type)
       win_redr_status(wp);
     }
   }
-  end_search_hl();
   /* May need to redraw the popup menu. */
   if (pum_visible())
     pum_redraw();
@@ -508,11 +500,8 @@ void update_single_line(win_T *wp, linenr_T lnum)
     for (j = 0; j < wp->w_lines_valid; ++j) {
       if (lnum == wp->w_lines[j].wl_lnum) {
         screen_start();         /* not sure of screen cursor */
-        init_search_hl(wp);
-        start_search_hl();
-        prepare_search_hl(wp, lnum);
+        init_search_hl_window(wp);
         win_line(wp, lnum, row, row + wp->w_lines[j].wl_size, false);
-        end_search_hl();
         break;
       }
       row += wp->w_lines[j].wl_size;
@@ -530,7 +519,6 @@ static void update_prepare(void)
 {
     cursor_off();
     updating_screen = TRUE;
-    start_search_hl();
 }
 
 /*
@@ -542,7 +530,6 @@ static void update_finish(void)
         showmode();
     }
 
-    end_search_hl();
     updating_screen = FALSE;
 }
 
@@ -601,6 +588,29 @@ static int draw_signcolumn(win_T *wp)
     return (wp->w_buffer->b_signlist != NULL);
 }
 
+static void iter_matches_start(win_T*wp, iter_matches_T* state) {
+  state->next = wp->w_match_head;
+  state->did_hlsearch = false;
+}
+
+// or always use prioritize, but it's nice to document when it makes a difference
+static bool iter_matches_next(bool prioritize, iter_matches_T *state, matchitem_T **cur, match_T **hl) {
+  if (!state->did_hlsearch) {
+    if (!prioritize || state->next == NULL || state->next->priority > SEARCH_HL_PRIORITY) {
+      state->did_hlsearch = true;
+      *hl = &search_hl;
+      *cur = NULL;
+      return true;
+    }
+  }
+  if( state->next == NULL) {
+    return false;
+  }
+  *cur = state->next;
+  *hl = &state->next->hl;
+  state->next = state->next->next;
+  return true;
+}
 
 /*
  * Update a single window.
@@ -644,6 +654,8 @@ static void win_update(win_T *wp)
   int scrolled_down = FALSE;            /* TRUE when scrolled down when
                                            w_topline got smaller a bit */
   matchitem_T *cur;             /* points to the match list */
+  match_T     *shl;                     /* points to search_hl or a match */
+  iter_matches_T istate;         /* points to the state of match iteration */
   int top_to_mod = FALSE;              /* redraw above mod_top */
 
   int row;                      /* current window row to display */
@@ -690,7 +702,7 @@ static void win_update(win_T *wp)
     return;
   }
 
-  init_search_hl(wp);
+  init_search_hl_window(wp);
 
   /* Force redraw when width of 'number' or 'relativenumber' column
    * changes. */
@@ -737,18 +749,12 @@ static void win_update(win_T *wp)
        * lines above the change.
        * Same for a match pattern.
        */
-      if (search_hl.rm.regprog != NULL
-          && re_multiline(search_hl.rm.regprog))
-        top_to_mod = TRUE;
-      else {
-        cur = wp->w_match_head;
-        while (cur != NULL) {
-          if (cur->match.regprog != NULL
-              && re_multiline(cur->match.regprog)) {
-            top_to_mod = TRUE;
-            break;
-          }
-          cur = cur->next;
+      iter_matches_start(wp, &istate);
+      while (iter_matches_next(false, &istate, &cur, &shl)) {
+        if (shl->use_regexp
+            && re_multiline(shl->rm.regprog)) {
+          top_to_mod = TRUE;
+          break;
         }
       }
     }
@@ -1426,7 +1432,6 @@ static void win_update(win_T *wp)
          * will draw "@  " lines below. */
         row = wp->w_height + 1;
       } else {
-        prepare_search_hl(wp, lnum);
         /* Let the syntax stuff know we skipped a few lines. */
         if (syntax_last_parsed != 0 && syntax_last_parsed + 1 < lnum
             && syntax_present(wp))
@@ -2159,8 +2164,7 @@ win_line (
   int line_attr = 0;                    /* attribute for the whole line */
   matchitem_T *cur;                     /* points to the match list */
   match_T     *shl;                     /* points to search_hl or a match */
-  int shl_flag;                         /* flag to indicate whether search_hl
-                                           has been processed or not */
+  iter_matches_T istate;         /* points to the state of match iteration */
   int prevcol_hl_flag;                  /* flag to indicate whether prevcol
                                            equals startcol of search_hl or one
                                            of the matches */
@@ -2203,6 +2207,8 @@ win_line (
 
   row = startrow;
   screen_row = row + wp->w_winrow;
+
+  init_search_hl_line(wp, lnum);
 
   /*
    * To speed up the loop below, set extra_check when there is linebreak,
@@ -2536,14 +2542,8 @@ win_line (
    * Handle highlighting the last used search pattern and matches.
    * Do this for both search_hl and the match list.
    */
-  cur = wp->w_match_head;
-  shl_flag = FALSE;
-  while (cur != NULL || shl_flag == FALSE) {
-    if (shl_flag == FALSE) {
-      shl = &search_hl;
-      shl_flag = TRUE;
-    } else
-      shl = &cur->hl;
+  iter_matches_start(wp, &istate);
+  while (iter_matches_next(false, &istate, &cur, &shl)) {
     shl->startcol = MAXCOL;
     shl->endcol = MAXCOL;
     shl->attr_cur = 0;
@@ -2584,8 +2584,6 @@ win_line (
       }
       area_highlighting = true;
     }
-    if (shl != &search_hl && cur != NULL)
-      cur = cur->next;
   }
 
   /* Cursor line highlighting for 'cursorline' in the current window.  Not
@@ -2828,23 +2826,14 @@ win_line (
          * priority).
          */
         v = (long)(ptr - line);
-        cur = wp->w_match_head;
-        shl_flag = FALSE;
-        while (cur != NULL || shl_flag == FALSE) {
-          if (shl_flag == FALSE
-              && ((cur != NULL
-                   && cur->priority > SEARCH_HL_PRIORITY)
-                  || cur == NULL)) {
-            shl = &search_hl;
-            shl_flag = TRUE;
-          } else
-            shl = &cur->hl;
+        iter_matches_start(wp, &istate);
+        while (iter_matches_next(true, &istate, &cur, &shl)) {
           if (cur != NULL) {
             cur->pos.cur = 0;
           }
           bool pos_inprogress = true; // mark that a position match search is
                                       // in progress
-          while (shl->rm.regprog != NULL
+          while (shl->use_regexp
                                  || (cur != NULL && pos_inprogress)) {
             if (shl->startcol != MAXCOL
                 && v >= (long)shl->startcol
@@ -2890,28 +2879,15 @@ win_line (
             }
             break;
           }
-          if (shl != &search_hl && cur != NULL)
-            cur = cur->next;
         }
 
         /* Use attributes from match with highest priority among
          * 'search_hl' and the match list. */
         search_attr = search_hl.attr_cur;
-        cur = wp->w_match_head;
-        shl_flag = FALSE;
-        while (cur != NULL || shl_flag == FALSE) {
-          if (shl_flag == FALSE
-              && ((cur != NULL
-                   && cur->priority > SEARCH_HL_PRIORITY)
-                  || cur == NULL)) {
-            shl = &search_hl;
-            shl_flag = TRUE;
-          } else
-            shl = &cur->hl;
+        iter_matches_start(wp, &istate);
+        while (iter_matches_next(true, &istate, &cur, &shl)) {
           if (shl->attr_cur != 0)
             search_attr = shl->attr_cur;
-          if (shl != &search_hl && cur != NULL)
-            cur = cur->next;
         }
       }
 
@@ -3673,16 +3649,11 @@ win_line (
        * char on the screen, just overwrite that one (tricky!)  Not
        * needed when a '$' was displayed for 'list'. */
       prevcol_hl_flag = FALSE;
-      if (prevcol == (long)search_hl.startcol)
-        prevcol_hl_flag = TRUE;
-      else {
-        cur = wp->w_match_head;
-        while (cur != NULL) {
-          if (prevcol == (long)cur->hl.startcol) {
-            prevcol_hl_flag = TRUE;
-            break;
-          }
-          cur = cur->next;
+      iter_matches_start(wp, &istate);
+      while (iter_matches_next(false, &istate, &cur, &shl)) {
+        if (prevcol == (long)shl->startcol) {
+          prevcol_hl_flag = TRUE;
+          break;
         }
       }
       if (lcs_eol == lcs_eol_one
@@ -3718,21 +3689,10 @@ win_line (
           /* Use attributes from match with highest priority among
            * 'search_hl' and the match list. */
           char_attr = search_hl.attr;
-          cur = wp->w_match_head;
-          shl_flag = FALSE;
-          while (cur != NULL || shl_flag == FALSE) {
-            if (shl_flag == FALSE
-                && ((cur != NULL
-                     && cur->priority > SEARCH_HL_PRIORITY)
-                    || cur == NULL)) {
-              shl = &search_hl;
-              shl_flag = TRUE;
-            } else
-              shl = &cur->hl;
+          iter_matches_start(wp, &istate);
+          while (iter_matches_next(true, &istate, &cur, &shl)) {
             if ((ptr - line) - 1 == (long)shl->startcol)
               char_attr = shl->attr;
-            if (shl != &search_hl && cur != NULL)
-              cur = cur->next;
           }
         }
         ScreenAttrs[off] = char_attr;
@@ -5406,68 +5366,57 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
   }
 }
 
-/*
- * Prepare for 'hlsearch' highlighting.
- */
-static void start_search_hl(void)
-{
-  if (p_hls && !no_hlsearch) {
-    last_pat_prog(&search_hl.rm);
-    search_hl.attr = hl_attr(HLF_L);
-    /* Set the time limit to 'redrawtime'. */
-    search_hl.tm = profile_setlimit(p_rdt);
-  }
+/// Should be called when the pattern used for search highlighting is changed,
+/// regardless of search highlighting is active right now, or not.
+void invalidate_search_hl(void) {
+  vim_regfree(search_hl.rm.regprog);
+  search_hl.rm.regprog = NULL;
 }
 
-/*
- * Clean up for 'hlsearch' highlighting.
- */
-static void end_search_hl(void)
-{
-  if (search_hl.rm.regprog != NULL) {
-    vim_regfree(search_hl.rm.regprog);
-    search_hl.rm.regprog = NULL;
-  }
-}
-
-/*
- * Init for calling prepare_search_hl().
- */
-static void init_search_hl(win_T *wp)
+/// Prepare for search highlighting in window.
+static void init_search_hl_window(win_T *wp)
 {
   matchitem_T *cur;
+  match_T* shl;
+  iter_matches_T istate;
+
+  if (p_hls && !no_hlsearch) {
+    if (search_hl.rm.regprog == NULL) {
+      last_pat_prog(&search_hl.rm);
+    }
+    // last_pat_prog might fail to compile pattern
+    search_hl.use_regexp = (search_hl.rm.regprog != NULL);
+    search_hl.attr = hl_attr(HLF_L);
+  } else {
+    search_hl.use_regexp = false;
+  }
 
   /* Setup for match and 'hlsearch' highlighting.  Disable any previous
    * match */
-  cur = wp->w_match_head;
-  while (cur != NULL) {
-    cur->hl.rm = cur->match;
-    if (cur->hlg_id == 0)
-      cur->hl.attr = 0;
-    else
-      cur->hl.attr = syn_id2attr(cur->hlg_id);
-    cur->hl.buf = wp->w_buffer;
-    cur->hl.lnum = 0;
-    cur->hl.first_lnum = 0;
+  iter_matches_start(wp, &istate);
+  while (iter_matches_next(false, &istate, &cur, &shl)) {
+    if( cur != NULL) {
+      if (cur->hlg_id == 0)
+        cur->hl.attr = 0;
+      else
+        cur->hl.attr = syn_id2attr(cur->hlg_id);
+      cur->hl.use_regexp = (cur->hl.rm.regprog != NULL);
+    }
     /* Set the time limit to 'redrawtime'. */
-    cur->hl.tm = profile_setlimit(p_rdt);
-    cur = cur->next;
+    shl->tm = profile_setlimit(p_rdt);
+    shl->buf = wp->w_buffer;
+    shl->lnum = 0;
+    shl->first_lnum = 0;
   }
-  search_hl.buf = wp->w_buffer;
-  search_hl.lnum = 0;
-  search_hl.first_lnum = 0;
-  /* time limit is set at the toplevel, for all windows */
 }
 
-/*
- * Advance to the match in window "wp" line "lnum" or past it.
- */
-static void prepare_search_hl(win_T *wp, linenr_T lnum)
+/// Prepare for search highlighting at line "lnum" in window "wp".
+/// Advances to the match in window "wp" line "lnum" or past it.
+static void init_search_hl_line(win_T *wp, linenr_T lnum)
 {
   matchitem_T *cur;             /* points to the match list */
   match_T     *shl;             /* points to search_hl or a match */
-  int shl_flag;                 /* flag to indicate whether search_hl
-                                   has been processed or not */
+  iter_matches_T istate;        /* points to the state of match iteration */
   int n;
 
   /*
@@ -5475,15 +5424,9 @@ static void prepare_search_hl(win_T *wp, linenr_T lnum)
    * of the window or just after a closed fold.
    * Do this both for search_hl and the match list.
    */
-  cur = wp->w_match_head;
-  shl_flag = FALSE;
-  while (cur != NULL || shl_flag == FALSE) {
-    if (shl_flag == FALSE) {
-      shl = &search_hl;
-      shl_flag = TRUE;
-    } else
-      shl = &cur->hl;
-    if (shl->rm.regprog != NULL
+    iter_matches_start(wp, &istate);
+    while (iter_matches_next(false, &istate, &cur, &shl)) {
+    if (shl->use_regexp
         && shl->lnum == 0
         && re_multiline(shl->rm.regprog)) {
       if (shl->first_lnum == 0) {
@@ -5499,7 +5442,7 @@ static void prepare_search_hl(win_T *wp, linenr_T lnum)
       bool pos_inprogress = true; // mark that a position match search is
                                   // in progress
       n = 0;
-      while (shl->first_lnum < lnum && (shl->rm.regprog != NULL
+      while (shl->first_lnum < lnum && (shl->use_regexp
                                     || (cur != NULL && pos_inprogress))) {
         next_search_hl(wp, shl, shl->first_lnum, (colnr_T)n, cur);
         pos_inprogress = !(cur == NULL ||  cur->pos.cur == 0);
@@ -5514,8 +5457,6 @@ static void prepare_search_hl(win_T *wp, linenr_T lnum)
         }
       }
     }
-    if (shl != &search_hl && cur != NULL)
-      cur = cur->next;
   }
 }
 
@@ -5592,27 +5533,14 @@ next_search_hl (
       matchcol = shl->rm.endpos[0].col;
 
     shl->lnum = lnum;
-    if (shl->rm.regprog != NULL) {
-      /* Remember whether shl->rm is using a copy of the regprog in
-       * cur->match. */
-      bool regprog_is_copy = (shl != &search_hl
-                              && cur != NULL
-                              && shl == &cur->hl
-                              && cur->match.regprog == cur->hl.rm.regprog);
-
+    if (shl->use_regexp) {
       nmatched = vim_regexec_multi(&shl->rm, win, shl->buf, lnum, matchcol, &(shl->tm));
-      /* Copy the regprog, in case it got freed and recompiled. */
-      if (regprog_is_copy) {
-        cur->match.regprog = cur->hl.rm.regprog;
-      }
       if (called_emsg || got_int) {
         // Error while handling regexp: stop using this regexp.
         if (shl == &search_hl) {
-          // don't free regprog in the match list, it's a copy
-          vim_regfree(shl->rm.regprog);
           SET_NO_HLSEARCH(TRUE);
         }
-        shl->rm.regprog = NULL;
+        shl->use_regexp = false;
         shl->lnum = 0;
         got_int = FALSE; // avoid the "Type :quit to exit Vim" message
         break;

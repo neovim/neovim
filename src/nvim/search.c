@@ -259,6 +259,7 @@ void save_re_pat(int idx, char_u *pat, int magic)
     if (p_hls)
       redraw_all_later(SOME_VALID);
     SET_NO_HLSEARCH(FALSE);
+    invalidate_search_hl();
   }
 }
 
@@ -291,6 +292,7 @@ void restore_search_patterns(void)
     free(spats[1].pat);
     spats[1] = saved_spats[1];
     last_idx = saved_last_idx;
+    invalidate_search_hl();
     SET_NO_HLSEARCH(saved_no_hlsearch);
   }
 }
@@ -402,9 +404,13 @@ void set_last_search_pat(const char_u *s, int idx, int magic, int setlast)
       saved_spats[idx].pat = vim_strsave(spats[idx].pat);
     saved_last_idx = last_idx;
   }
-  /* If 'hlsearch' set and search pat changed: need redraw. */
-  if (p_hls && idx == last_idx && !no_hlsearch)
-    redraw_all_later(SOME_VALID);
+  if (idx == last_idx) {
+    invalidate_search_hl();
+    /* If 'hlsearch' set and search pat changed: need redraw. */
+    if (p_hls && !no_hlsearch) {
+      redraw_all_later(SOME_VALID);
+    }
+  }
 }
 
 /*

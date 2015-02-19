@@ -9418,7 +9418,7 @@ static void f_getmatches(typval_T *argvars, typval_T *rettv)
   rettv_list_alloc(rettv);
   while (cur != NULL) {
     dict_T *dict = dict_alloc();
-    if (cur->match.regprog == NULL) {
+    if (cur->pattern == NULL) {
       // match added with matchaddpos() 
       for (i = 0; i < MAXPOSMATCH; ++i) {
         llpos_T   *llpos;

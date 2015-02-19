@@ -861,6 +861,7 @@ struct frame_S {
 typedef struct {
   regmmatch_T rm;       /* points to the regexp program; contains last found
                            match (may continue in next line) */
+  bool use_regexp;      /* if the regexp should be used (set to false on error) */
   buf_T       *buf;     /* the buffer to search for a match */
   linenr_T lnum;        /* the line to search for a match */
   int attr;             /* attributes to be used for a match */
@@ -904,7 +905,6 @@ struct matchitem {
   int priority;             /* match priority */
   char_u      *pattern;     /* pattern to highlight */
   int hlg_id;               /* highlight group ID */
-  regmmatch_T match;        /* regexp program for pattern */
   posmatch_T pos;           // position matches
   match_T hl;               /* struct for doing the actual highlighting */
 };
