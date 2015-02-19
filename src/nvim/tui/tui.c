@@ -113,6 +113,7 @@ void tui_start(void)
   data->write_loop = xmalloc(sizeof(uv_loop_t));
   uv_loop_init(data->write_loop);
   uv_tty_init(data->write_loop, &data->output_handle, data->out_fd, 0);
+  uv_tty_set_mode(&data->output_handle, UV_TTY_MODE_RAW);
 
   // Obtain screen dimensions
   update_size(ui);
@@ -169,6 +170,7 @@ static void tui_stop(UI *ui)
   // Disable bracketed paste
   unibi_out(ui, (int)data->unibi_ext.disable_bracketed_paste);
   flush_buf(ui);
+  uv_tty_reset_mode();
   uv_close((uv_handle_t *)&data->output_handle, NULL);
   uv_run(data->write_loop, UV_RUN_DEFAULT);
   if (uv_loop_close(data->write_loop)) {

@@ -12,7 +12,7 @@ struct term_input {
   int in_fd;
   bool paste_enabled;
   TermKey *tk;
-  uv_tty_t input_handle;
+  uv_pipe_t input_handle;
   uv_timer_t timer_handle;
   RBuffer *read_buffer;
   RStream *read_stream;
@@ -265,8 +265,8 @@ static TermInput *term_input_new(void)
   int curflags = termkey_get_canonflags(rv->tk);
   termkey_set_canonflags(rv->tk, curflags | TERMKEY_CANON_DELBS);
   // setup input handle
-  uv_tty_init(uv_default_loop(), &rv->input_handle, rv->in_fd, 1);
-  uv_tty_set_mode(&rv->input_handle, UV_TTY_MODE_RAW);
+  uv_pipe_init(uv_default_loop(), &rv->input_handle, 0);
+  uv_pipe_open(&rv->input_handle, rv->in_fd);
   rv->input_handle.data = NULL;
   rv->read_buffer = rbuffer_new(0xfff);
   rv->read_stream = rstream_new(read_cb, rv->read_buffer, rv);
@@ -285,7 +285,6 @@ static TermInput *term_input_new(void)
 
 static void term_input_destroy(TermInput *input)
 {
-  uv_tty_reset_mode();
   uv_timer_stop(&input->timer_handle);
   rstream_stop(input->read_stream);
   rstream_free(input->read_stream);
