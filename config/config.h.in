@@ -73,4 +73,8 @@
 #cmakedefine HAVE_JEMALLOC
 #endif
 
+#ifdef UNIX
+# define FEAT_TERMINAL_UI
+#endif
+
 #endif  // AUTO_CONFIG_H

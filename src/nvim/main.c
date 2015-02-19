@@ -390,7 +390,13 @@ int main(int argc, char **argv)
   if (!params.headless) {
     // Stop reading from stdin, the UI layer will take over now
     input_stop_stdin();
+#ifdef FEAT_TERMINAL_UI
     ui_builtin_start();
+#else
+    if (os_isatty(fileno(stdin))) {
+	mch_msg("Terminal UI was disabled at compile time, Neovim will not accept input from the console");
+    }
+#endif
   }
 
   setmouse();  // may start using the mouse
