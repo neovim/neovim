@@ -143,6 +143,7 @@ if(USE_BUNDLED_MSGPACK)
       -DEXPECTED_SHA1=${MSGPACK_SHA1}
       -DTARGET=msgpack
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
+    PATCH_COMMAND patch -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/msgpack-byteswap.patch
     CONFIGURE_COMMAND cmake ${DEPS_BUILD_DIR}/src/msgpack
        -DMSGPACK_ENABLE_CXX=OFF
        -DMSGPACK_BUILD_TESTS=OFF

@@ -1,0 +1,13 @@
+Allow msgpack to compile correctly on FreeBSD and OpenBSD.
+
+--- a/include/msgpack/sysdep.h
++++ b/include/msgpack/sysdep.h
+@@ -76,7 +76,7 @@ typedef unsigned int _msgpack_atomic_cou
+ #else
+ 
+ #include <arpa/inet.h>  /* __BYTE_ORDER */
+-#  if !defined(__APPLE__) && !(defined(__sun) && defined(__SVR4))
++#  if !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__OpenBSD__) && !(defined(__sun) && defined(__SVR4))
+ #    include <byteswap.h>
+ #  endif
+ 
