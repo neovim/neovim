@@ -63,9 +63,6 @@ set(CONV_SOURCES
   fold.c
   getchar.c
   if_cscope.c
-  indent.c
-  keymap.c
-  mark.c
   mbyte.c
   memline.c
   menu.c
@@ -74,7 +71,6 @@ set(CONV_SOURCES
   move.c
   normal.c
   ops.c
-  os_unix.c
   path.c
   popupmnu.c
   quickfix.c
@@ -84,7 +80,6 @@ set(CONV_SOURCES
   spell.c
   syntax.c
   tag.c
-  ui.c
   window.c)
 
 foreach(sfile ${CONV_SOURCES})

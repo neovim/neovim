@@ -2059,12 +2059,6 @@ void set_init_1(void)
   /* Parse default for 'fillchars'. */
   (void)set_chars_option(&p_fcs);
 
-
-#  ifdef MACOS_CONVERT
-  /* Moved to os_mac_conv.c to avoid dependency problems. */
-  mac_lang_init();
-#  endif
-
   /* enc_locale() will try to find the encoding of the current locale. */
   p = enc_locale();
   if (p != NULL) {

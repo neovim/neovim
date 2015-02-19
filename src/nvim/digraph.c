@@ -1532,7 +1532,9 @@ static int getexactdigraph(int char1, int char2, int meta_char)
 
     if (convert_setup(&vc, (char_u *)"utf-8", p_enc) == OK) {
       vc.vc_fail = true;
-      to = string_convert(&vc, buf, &i);
+      assert(i >= 0);
+      size_t len = (size_t)i;
+      to = string_convert(&vc, buf, &len);
 
       if (to != NULL) {
         retval = (*mb_ptr2char)(to);

@@ -9,6 +9,7 @@
  * search.c: code for normal mode searching commands
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -1258,11 +1259,12 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, int dir, char_u *pat)
      * ignored because we are interested in the next line -- Acevedo */
     if ((compl_cont_status & CONT_ADDING)
         && !(compl_cont_status & CONT_SOL)) {
-      if ((p_ic ? MB_STRICMP(p, pat) : STRCMP(p, pat)) == 0)
+      if ((p_ic ? mb_stricmp(p, pat) : STRCMP(p, pat)) == 0)
         return OK;
     } else if (*p != NUL) {   /* ignore empty lines */
       /* expanding lines or words */
-      if ((p_ic ? MB_STRNICMP(p, pat, compl_length)
+      assert(compl_length >= 0);
+      if ((p_ic ? mb_strnicmp(p, pat, (size_t)compl_length)
            : STRNCMP(p, pat, compl_length)) == 0)
         return OK;
     }
@@ -4234,8 +4236,10 @@ search_line:
             ) {
           /* compare the first "len" chars from "ptr" */
           startp = skipwhite(p);
-          if (p_ic)
-            matched = !MB_STRNICMP(startp, ptr, len);
+          if (p_ic) {
+            assert(len >= 0);
+            matched = !mb_strnicmp(startp, ptr, (size_t)len);
+          }
           else
             matched = !STRNCMP(startp, ptr, len);
           if (matched && define_matched && whole

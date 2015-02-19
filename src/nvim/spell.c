@@ -13082,8 +13082,9 @@ spell_dump_compl (
             // proper case later.  This isn't exactly right when
             // length changes for multi-byte characters with
             // ignore case...
+            assert(depth >= 0);
             if (depth <= patlen
-                && MB_STRNICMP(word, pat, depth) != 0)
+                && mb_strnicmp(word, pat, (size_t)depth) != 0)
               --depth;
           }
         }
@@ -13154,7 +13155,7 @@ static void dump_word(slang_T *slang, char_u *word, char_u *pat, int *dir, int d
 
     ml_append(lnum, p, (colnr_T)0, FALSE);
   } else if (((dumpflags & DUMPFLAG_ICASE)
-              ? MB_STRNICMP(p, pat, STRLEN(pat)) == 0
+              ? mb_strnicmp(p, pat, STRLEN(pat)) == 0
               : STRNCMP(p, pat, STRLEN(pat)) == 0)
              && ins_compl_add_infercase(p, (int)STRLEN(p),
                  p_ic, NULL, *dir, 0) == OK)

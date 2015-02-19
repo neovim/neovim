@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
 
@@ -198,7 +199,8 @@ int set_indent(int size, int flags)
   // characters and allocate accordingly.  We will fill the rest with spaces
   // after the if (!curbuf->b_p_et) below.
   if (orig_char_len != -1) {
-    newline = xmalloc(orig_char_len + size - ind_done + line_len);
+    assert(orig_char_len + size - ind_done + line_len >= 0);
+    newline = xmalloc((size_t)(orig_char_len + size - ind_done + line_len));
     todo = size - ind_done;
 
     // Set total length of indent in characters, which may have been
@@ -219,7 +221,8 @@ int set_indent(int size, int flags)
     }
   } else {
     todo = size;
-    newline = xmalloc(ind_len + line_len);
+    assert(ind_len + line_len >= 0);
+    newline = xmalloc((size_t)(ind_len + line_len));
     s = newline;
   }
 
@@ -384,7 +387,8 @@ int copy_indent(int size, char_u *src)
       // Allocate memory for the result: the copied indent, new indent
       // and the rest of the line.
       line_len = (int)STRLEN(get_cursor_line_ptr()) + 1;
-      line = xmalloc(ind_len + line_len);
+      assert(ind_len + line_len >= 0);
+      line = xmalloc((size_t)(ind_len + line_len));
       p = line;
     }
   }
@@ -449,7 +453,7 @@ int get_number_indent(linenr_T lnum)
  */
 int get_breakindent_win(win_T *wp, char_u *line) {
   static int prev_indent = 0;  /* cached indent value */
-  static int prev_ts     = 0L; /* cached tabstop value */
+  static long prev_ts = 0; /* cached tabstop value */
   static char_u *prev_line = NULL; /* cached pointer to line */
   static int prev_tick = 0;  // changedtick of cached value
   int bri = 0;
