@@ -47,7 +47,7 @@
 #  define S_ISREG(mode) (((mode) & S_IFMT) == S_IFREG)
 # endif
 # ifndef S_IXUSR
-//#  define S_IXUSR(mode) (((mode) & S_IFMT) == S_IEXEC)
+// #  define S_IXUSR(mode) (((mode) & S_IFMT) == S_IEXEC)
 #   define S_IXUSR S_IEXEC
 # endif
 
