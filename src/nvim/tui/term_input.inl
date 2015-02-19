@@ -10,6 +10,7 @@
 
 struct term_input {
   int in_fd;
+  bool paste_enabled;
   TermKey *tk;
   uv_tty_t input_handle;
   uv_timer_t timer_handle;
@@ -175,6 +176,9 @@ static bool handle_bracketed_paste(TermInput *input)
     bool enable = ptr[4] == '0';
     // Advance past the sequence
     rbuffer_consumed(input->read_buffer, 6);
+    if (input->paste_enabled == enable) {
+      return true;
+    }
     if (enable) {
       // Get the current mode
       int state = get_real_state();
@@ -190,6 +194,7 @@ static bool handle_bracketed_paste(TermInput *input)
       }
     }
     input_enqueue(cstr_as_string(PASTETOGGLE_KEY));
+    input->paste_enabled = enable;
     return true;
   }
   return false;
@@ -240,6 +245,7 @@ static void read_cb(RStream *rstream, void *rstream_data, bool eof)
 static TermInput *term_input_new(void)
 {
   TermInput *rv = xmalloc(sizeof(TermInput));
+  rv->paste_enabled = false;
   // read input from stderr if stdin is not a tty
   rv->in_fd = os_isatty(0) ? 0 : (os_isatty(2) ? 2 : 0);
 
