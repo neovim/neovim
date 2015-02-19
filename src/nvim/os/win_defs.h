@@ -3,6 +3,12 @@
 
 #include "auto/config.h"
 
+#ifndef LC_MESSAGES
+// FIXME: this is a hack - also used in ex_cmds2.c
+// to build in windows without libintl
+# define LC_MESSAGES LC_COLLATE
+#endif
+
 // winsock2.h must be before windows.h - or so says Mingw
 #include <winsock2.h>
 #include <windows.h>
