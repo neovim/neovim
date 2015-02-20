@@ -79,6 +79,22 @@ describe('system()', function()
 
     it('`yes` and is interrupted with CTRL-C', function()
       feed(':call system("yes")<cr>')
+      screen:expect([[
+                                                             |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ^call system("yes")                                  |
+      ]])
       feed('<c-c>')
       screen:expect([[
         ^                                                    |
@@ -227,8 +243,24 @@ describe('systemlist()', function()
       ]])
     end)
 
-    it('`yes` and is a little bit later interrupted with CTRL-C', function()
+    it('`yes` and is interrupted with CTRL-C', function()
       feed(':call systemlist("yes | xargs")<cr>')
+      screen:expect([[
+                                                             |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ^call systemlist("yes | xargs")                      |
+      ]])
       feed('<c-c>')
       screen:expect([[
         ^                                                    |
