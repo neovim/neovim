@@ -10,8 +10,9 @@
 
 struct term_input {
   int in_fd;
+  bool paste_enabled;
   TermKey *tk;
-  uv_tty_t input_handle;
+  uv_pipe_t input_handle;
   uv_timer_t timer_handle;
   RBuffer *read_buffer;
   RStream *read_stream;
@@ -111,17 +112,11 @@ static void timer_cb(uv_timer_t *handle);
 
 static int get_key_code_timeout(void)
 {
-  Integer ms = 0;
-  bool timeout = false;
-  // Check 'timeout' and 'ttimeout' to determine if we should send ESC
-  // after 'ttimeoutlen'. See :help 'ttimeout' for more information
+  Integer ms = -1;
+  // Check 'ttimeout' to determine if we should send ESC after 'ttimeoutlen'.
+  // See :help 'ttimeout' for more information
   Error err = ERROR_INIT;
-  timeout = vim_get_option(cstr_as_string("timeout"), &err).data.boolean;
-  if (!timeout) {
-    timeout = vim_get_option(cstr_as_string("ttimeout"), &err).data.boolean;
-  }
-
-  if (timeout) {
+  if (vim_get_option(cstr_as_string("ttimeout"), &err).data.boolean) {
     ms = vim_get_option(cstr_as_string("ttimeoutlen"), &err).data.integer;
   }
 
@@ -175,6 +170,9 @@ static bool handle_bracketed_paste(TermInput *input)
     bool enable = ptr[4] == '0';
     // Advance past the sequence
     rbuffer_consumed(input->read_buffer, 6);
+    if (input->paste_enabled == enable) {
+      return true;
+    }
     if (enable) {
       // Get the current mode
       int state = get_real_state();
@@ -190,6 +188,7 @@ static bool handle_bracketed_paste(TermInput *input)
       }
     }
     input_enqueue(cstr_as_string(PASTETOGGLE_KEY));
+    input->paste_enabled = enable;
     return true;
   }
   return false;
@@ -240,6 +239,7 @@ static void read_cb(RStream *rstream, void *rstream_data, bool eof)
 static TermInput *term_input_new(void)
 {
   TermInput *rv = xmalloc(sizeof(TermInput));
+  rv->paste_enabled = false;
   // read input from stderr if stdin is not a tty
   rv->in_fd = os_isatty(0) ? 0 : (os_isatty(2) ? 2 : 0);
 
@@ -259,8 +259,8 @@ static TermInput *term_input_new(void)
   int curflags = termkey_get_canonflags(rv->tk);
   termkey_set_canonflags(rv->tk, curflags | TERMKEY_CANON_DELBS);
   // setup input handle
-  uv_tty_init(uv_default_loop(), &rv->input_handle, rv->in_fd, 1);
-  uv_tty_set_mode(&rv->input_handle, UV_TTY_MODE_RAW);
+  uv_pipe_init(uv_default_loop(), &rv->input_handle, 0);
+  uv_pipe_open(&rv->input_handle, rv->in_fd);
   rv->input_handle.data = NULL;
   rv->read_buffer = rbuffer_new(0xfff);
   rv->read_stream = rstream_new(read_cb, rv->read_buffer, rv);
@@ -279,7 +279,6 @@ static TermInput *term_input_new(void)
 
 static void term_input_destroy(TermInput *input)
 {
-  uv_tty_reset_mode();
   uv_timer_stop(&input->timer_handle);
   rstream_stop(input->read_stream);
   rstream_free(input->read_stream);

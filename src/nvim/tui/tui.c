@@ -49,9 +49,9 @@ typedef struct {
   HlAttrs attrs, print_attrs;
   Cell **screen;
   struct {
-    size_t enable_mouse, disable_mouse;
-    size_t enable_bracketed_paste, disable_bracketed_paste;
-    size_t enter_insert_mode, exit_insert_mode;
+    int enable_mouse, disable_mouse;
+    int enable_bracketed_paste, disable_bracketed_paste;
+    int enter_insert_mode, exit_insert_mode;
   } unibi_ext;
 } TUIData;
 
@@ -88,6 +88,12 @@ void tui_start(void)
   data->can_use_terminal_scroll = true;
   data->bufpos = 0;
   data->option_cache = pmap_new(cstr_t)();
+  data->unibi_ext.enable_mouse = -1;
+  data->unibi_ext.disable_mouse = -1;
+  data->unibi_ext.enable_bracketed_paste = -1;
+  data->unibi_ext.disable_bracketed_paste = -1;
+  data->unibi_ext.enter_insert_mode = -1;
+  data->unibi_ext.exit_insert_mode = -1;
 
   // write output to stderr if stdout is not a tty
   data->out_fd = os_isatty(1) ? 1 : (os_isatty(2) ? 2 : 1);
@@ -113,6 +119,7 @@ void tui_start(void)
   data->write_loop = xmalloc(sizeof(uv_loop_t));
   uv_loop_init(data->write_loop);
   uv_tty_init(data->write_loop, &data->output_handle, data->out_fd, 0);
+  uv_tty_set_mode(&data->output_handle, UV_TTY_MODE_RAW);
 
   // Obtain screen dimensions
   update_size(ui);
@@ -169,6 +176,7 @@ static void tui_stop(UI *ui)
   // Disable bracketed paste
   unibi_out(ui, (int)data->unibi_ext.disable_bracketed_paste);
   flush_buf(ui);
+  uv_tty_reset_mode();
   uv_close((uv_handle_t *)&data->output_handle, NULL);
   uv_run(data->write_loop, UV_RUN_DEFAULT);
   if (uv_loop_close(data->write_loop)) {
@@ -404,6 +412,11 @@ static void tui_scroll(UI *ui, int count)
     data->params[1].i = bot;
     unibi_out(ui, unibi_change_scroll_region);
     unibi_goto(ui, top, left);
+    // also set default color attributes or some terminals can become funny
+    HlAttrs clear_attrs = EMPTY_ATTRS;
+    clear_attrs.foreground = data->fg;
+    clear_attrs.background = data->bg;
+    update_attrs(ui, clear_attrs);
   }
 
   // Compute start/stop/step for the loop below, also use terminal scroll
@@ -633,10 +646,12 @@ static void unibi_out(UI *ui, int unibi_index)
 
   const char *str = NULL;
 
-  if (unibi_index < unibi_string_begin_) {
-    str = unibi_get_ext_str(data->ut, (unsigned)unibi_index);
-  } else {
-    str = unibi_get_str(data->ut, (unsigned)unibi_index);
+  if (unibi_index >= 0) {
+    if (unibi_index < unibi_string_begin_) {
+      str = unibi_get_ext_str(data->ut, (unsigned)unibi_index);
+    } else {
+      str = unibi_get_str(data->ut, (unsigned)unibi_index);
+    }
   }
 
   if (str) {
@@ -696,9 +711,9 @@ static void fix_terminfo(TUIData *data)
   }
 
   if (STARTS_WITH(term, "xterm") || STARTS_WITH(term, "rxvt") || inside_tmux) {
-    data->unibi_ext.enable_bracketed_paste = unibi_add_ext_str(ut, NULL,
+    data->unibi_ext.enable_bracketed_paste = (int)unibi_add_ext_str(ut, NULL,
         "\x1b[?2004h");
-    data->unibi_ext.disable_bracketed_paste = unibi_add_ext_str(ut, NULL,
+    data->unibi_ext.disable_bracketed_paste = (int)unibi_add_ext_str(ut, NULL,
         "\x1b[?2004l");
   }
 
@@ -713,23 +728,23 @@ static void fix_terminfo(TUIData *data)
   if ((term_prog && !strcmp(term_prog, "iTerm.app"))
       || os_getenv("ITERM_SESSION_ID") != NULL) {
     // iterm
-    data->unibi_ext.enter_insert_mode = unibi_add_ext_str(ut, NULL,
+    data->unibi_ext.enter_insert_mode = (int)unibi_add_ext_str(ut, NULL,
         TMUX_WRAP("\x1b]50;CursorShape=1;BlinkingCursorEnabled=1\x07"));
-    data->unibi_ext.exit_insert_mode = unibi_add_ext_str(ut, NULL,
+    data->unibi_ext.exit_insert_mode = (int)unibi_add_ext_str(ut, NULL,
         TMUX_WRAP("\x1b]50;CursorShape=0;BlinkingCursorEnabled=0\x07"));
   } else {
     // xterm-like sequences for blinking bar and solid block
-    data->unibi_ext.enter_insert_mode = unibi_add_ext_str(ut, NULL,
+    data->unibi_ext.enter_insert_mode = (int)unibi_add_ext_str(ut, NULL,
         TMUX_WRAP("\x1b[5 q"));
-    data->unibi_ext.exit_insert_mode = unibi_add_ext_str(ut, NULL,
+    data->unibi_ext.exit_insert_mode = (int)unibi_add_ext_str(ut, NULL,
         TMUX_WRAP("\x1b[2 q"));
   }
 
 end:
   // Fill some empty slots with common terminal strings
-  data->unibi_ext.enable_mouse = unibi_add_ext_str(ut, NULL,
+  data->unibi_ext.enable_mouse = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[?1002h\x1b[?1006h");
-  data->unibi_ext.disable_mouse = unibi_add_ext_str(ut, NULL,
+  data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[?1002l\x1b[?1006l");
   unibi_set_if_empty(ut, unibi_cursor_address, "\x1b[%i%p1%d;%p2%dH");
   unibi_set_if_empty(ut, unibi_exit_attribute_mode, "\x1b[0;10m");
