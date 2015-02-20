@@ -2776,7 +2776,7 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension,
     # TODO(unknown): figure out if they're using default arguments in fn proto.
 
     # Check if people are using the verboten C basic types.
-    match = Search(r'\b(short|long(?! +double)|long long)\b', line)
+    match = Search(r'\b(short|long long)\b', line)
     if match:
         error(filename, linenum, 'runtime/int', 4,
               'Use int16_t/int64_t/etc, rather than the C type %s'

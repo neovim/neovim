@@ -6226,8 +6226,10 @@ static int cstrncmp(char_u *s1, char_u *s2, int *n)
 
   if (!ireg_ic)
     result = STRNCMP(s1, s2, *n);
-  else
-    result = MB_STRNICMP(s1, s2, *n);
+  else {
+    assert(*n >= 0);
+    result = mb_strnicmp(s1, s2, (size_t)*n);
+  }
 
   /* if it failed and it's utf8 and we want to combineignore: */
   if (result != 0 && enc_utf8 && ireg_icombine) {

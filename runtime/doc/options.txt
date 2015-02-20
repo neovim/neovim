@@ -6988,59 +6988,35 @@ A jump table for the options with a short description can be found at |Q_op|.
 				*'timeout'* *'to'* *'notimeout'* *'noto'*
 'timeout' 'to'		boolean (default on)
 			global
+	This option and 'timeoutlen' determine the behavior when part of a
+	mapped key sequence has been received. For example, if <c-f> is
+	pressed and 'timeout' is set, Nvim will wait 'timeoutlen' milliseconds
+	for any key that can follow <c-f> in a mapping.
+
 						*'ttimeout'* *'nottimeout'*
 'ttimeout'		boolean (default off)
 			global
 			{not in Vi}
-	These two options together determine the behavior when part of a
-	mapped key sequence or keyboard code has been received:
-
-	'timeout'    'ttimeout'		action	~
-	   off		off		do not time out
-	   on		on or off	time out on :mappings and key codes
-	   off		on		time out on key codes
-
-	If both options are off, Vim will wait until either the complete
-	mapping or key sequence has been received, or it is clear that there
-	is no mapping or key sequence for the received characters.  For
-	example: if you have mapped "vl" and Vim has received 'v', the next
-	character is needed to see if the 'v' is followed by an 'l'.
-	When one of the options is on, Vim will wait for about 1 second for
-	the next character to arrive.  After that the already received
-	characters are interpreted as single characters.  The waiting time can
-	be changed with the 'timeoutlen' option.
-	On slow terminals or very busy systems timing out may cause
-	malfunctioning cursor keys.  If both options are off, Vim waits
-	forever after an entered <Esc> if there are key codes that start
-	with <Esc>.  You will have to type <Esc> twice.  If you do not have
-	problems with key codes, but would like to have :mapped key
-	sequences not timing out in 1 second, set the 'ttimeout' option and
-	reset the 'timeout' option.
+	This option and 'ttimeoutlen' determine the behavior when part of a
+	key code sequence has been received by the terminal UI. For example,
+	if the \x1b byte is received and 'ttimeout' is set, Nvim will wait
+	'ttimeoutlen' milliseconds for the terminal to complete a byte
+	sequence that represents a key that starts with \x1b.
 
 						*'timeoutlen'* *'tm'*
 'timeoutlen' 'tm'	number	(default 1000)
 			global
+	The time in milliseconds that is waited for a mapped sequence to
+	complete.
 			{not in all versions of Vi}
+
 						*'ttimeoutlen'* *'ttm'*
 'ttimeoutlen' 'ttm'	number	(default -1)
 			global
 			{not in Vi}
-	The time in milliseconds that is waited for a key code or mapped key
-	sequence to complete.  Also used for CTRL-\ CTRL-N and CTRL-\ CTRL-G
+	The time in milliseconds that is waited for a key code 
+	sequence to complete. Also used for CTRL-\ CTRL-N and CTRL-\ CTRL-G
 	when part of a command has been typed.
-	Normally only 'timeoutlen' is used and 'ttimeoutlen' is -1.  When a
-	different timeout value for key codes is desired set 'ttimeoutlen' to
-	a non-negative number.
-
-		ttimeoutlen	mapping delay	   key code delay	~
-		   < 0		'timeoutlen'	   'timeoutlen'
-		  >= 0		'timeoutlen'	   'ttimeoutlen'
-
-	The timeout only happens when the 'timeout' and 'ttimeout' options
-	tell so.  A useful setting would be >
-		:set timeout timeoutlen=3000 ttimeoutlen=100
-<	(time out on mapping after three seconds, time out on key codes after
-	a tenth of a second).
 
 						*'title'* *'notitle'*
 'title'			boolean	(default off, on when title can be restored)

@@ -1391,7 +1391,7 @@ static int syn_stack_equal(synstate_T *sp)
             || six->matches[j] == NULL)
           break;
         if ((SYN_ITEMS(syn_block)[CUR_STATE(i).si_idx]).sp_ic
-            ? MB_STRICMP(bsx->matches[j],
+            ? mb_stricmp(bsx->matches[j],
                 six->matches[j]) != 0
             : STRCMP(bsx->matches[j], six->matches[j]) != 0)
           break;

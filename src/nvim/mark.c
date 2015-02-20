@@ -604,7 +604,8 @@ static char_u *mark_line(pos_T *mp, int lead_len)
 
   if (mp->lnum == 0 || mp->lnum > curbuf->b_ml.ml_line_count)
     return vim_strsave((char_u *)"-invalid-");
-  s = vim_strnsave(skipwhite(ml_get(mp->lnum)), (int)Columns);
+  assert(Columns >= 0 && (size_t)Columns <= SIZE_MAX);
+  s = vim_strnsave(skipwhite(ml_get(mp->lnum)), (size_t)Columns);
 
   /* Truncate the line to fit it in the window */
   len = 0;
@@ -1033,10 +1034,11 @@ void mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after)
     if (posp->lnum == lnum && posp->col >= mincol) \
     { \
       posp->lnum += lnum_amount; \
+      assert(col_amount > INT_MIN && col_amount <= INT_MAX); \
       if (col_amount < 0 && posp->col <= (colnr_T)-col_amount) \
         posp->col = 0; \
       else \
-        posp->col += col_amount; \
+        posp->col += (colnr_T)col_amount; \
     } \
   }
 
@@ -1329,7 +1331,7 @@ int removable(char_u *name)
     copy_option_part(&p, part, 51, ", ");
     if (part[0] == 'r') {
       n = STRLEN(part + 1);
-      if (MB_STRNICMP(part + 1, name, n) == 0) {
+      if (mb_strnicmp(part + 1, name, n) == 0) {
         retval = TRUE;
         break;
       }
@@ -1499,12 +1501,13 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
       if (load_marks) {
         if (line[1] != NUL) {
           int64_t lnum_64;
-          unsigned u;
+          unsigned int u;
           sscanf((char *)line + 2, "%" SCNd64 "%u", &lnum_64, &u);
           // safely downcast to linenr_T (long); remove when linenr_T refactored
           assert(lnum_64 <= LONG_MAX); 
           pos.lnum = (linenr_T)lnum_64;
-          pos.col = u;
+          assert(u <= INT_MAX);
+          pos.col = (colnr_T)u;
           switch (line[1]) {
           case '"': curbuf->b_last_cursor = pos; break;
           case '^': curbuf->b_last_insert = pos; break;

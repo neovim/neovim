@@ -297,7 +297,7 @@ int vim_fnamecmp(char_u *x, char_u *y)
   return vim_fnamencmp(x, y, MAXPATHL);
 #else
   if (p_fic)
-    return MB_STRICMP(x, y);
+    return mb_stricmp(x, y);
   return STRCMP(x, y);
 #endif
 }
@@ -327,7 +327,7 @@ int vim_fnamencmp(char_u *x, char_u *y, size_t len)
   return cx - cy;
 #else
   if (p_fic)
-    return MB_STRNICMP(x, y, len);
+    return mb_strnicmp(x, y, len);
   return STRNCMP(x, y, len);
 #endif
 }
@@ -578,16 +578,6 @@ unix_expandpath (
           if (*path_end != NUL)
             backslash_halve(buf + len + 1);
           if (os_file_exists(buf)) {          /* add existing file */
-#ifdef MACOS_CONVERT
-            size_t precomp_len = STRLEN(buf)+1;
-            char_u *precomp_buf =
-              mac_precompose_path(buf, precomp_len, &precomp_len);
-
-            if (precomp_buf) {
-              memmove(buf, precomp_buf, precomp_len);
-              free(precomp_buf);
-            }
-#endif
             addfile(gap, buf, flags);
           }
         }

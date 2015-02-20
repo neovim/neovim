@@ -578,7 +578,7 @@ Array vim_get_api_info(uint64_t channel_id)
 ///        `emsg` instead of `msg` to print each line)
 static void write_msg(String message, bool to_err)
 {
-  static int out_pos = 0, err_pos = 0;
+  static size_t out_pos = 0, err_pos = 0;
   static char out_line_buf[LINE_BUFFER_SIZE], err_line_buf[LINE_BUFFER_SIZE];
 
 #define PUSH_CHAR(i, pos, line_buf, msg)                                      \

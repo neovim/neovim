@@ -95,7 +95,7 @@ void ui_builtin_stop(void)
   UI_CALL(stop);
 }
 
-void ui_write(uint8_t *s, int len)
+void ui_write(uint8_t *s, size_t len)
 {
   if (silent_mode && !p_verbose) {
     // Don't output anything in silent mode ("ex -s") unless 'verbose' set
@@ -346,7 +346,7 @@ end:
   UI_CALL(highlight_set, (ui->rgb ? rgb_attrs : cterm_attrs));
 }
 
-static void parse_abstract_ui_codes(uint8_t *ptr, int len)
+static void parse_abstract_ui_codes(uint8_t *ptr, size_t len)
 {
   if (!ui_active()) {
     return;

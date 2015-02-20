@@ -415,10 +415,6 @@ void mch_exit(int r)
   out_flush();
   ml_close_all(TRUE);           /* remove all memfiles */
 
-#ifdef MACOS_CONVERT
-  mac_conv_cleanup();
-#endif
-
   event_teardown();
 
 #ifdef EXITFREE
@@ -734,7 +730,10 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     {
       redraw_later_clear();             /* probably messed up screen */
       msg_putchar('\n');                /* clear bottom line quickly */
-      cmdline_row = Rows - 1;           /* continue on last line */
+#if SIZEOF_LONG > SIZEOF_INT
+      assert(Rows <= (long)INT_MAX + 1);
+#endif
+      cmdline_row = (int)(Rows - 1);           /* continue on last line */
       MSG(_(e_wildexpand));
       msg_start();                    /* don't overwrite this message */
     }
@@ -862,7 +861,7 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     goto notfound;
   }
   *num_file = i;
-  *file = (char_u **)xmalloc(sizeof(char_u *) * i);
+  *file = xmalloc(sizeof(char_u *) * (size_t)i);
 
   /*
    * Isolate the individual file names.
