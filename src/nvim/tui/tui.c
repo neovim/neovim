@@ -412,6 +412,11 @@ static void tui_scroll(UI *ui, int count)
     data->params[1].i = bot;
     unibi_out(ui, unibi_change_scroll_region);
     unibi_goto(ui, top, left);
+    // also set default color attributes or some terminals can become funny
+    HlAttrs clear_attrs = EMPTY_ATTRS;
+    clear_attrs.foreground = data->fg;
+    clear_attrs.background = data->bg;
+    update_attrs(ui, clear_attrs);
   }
 
   // Compute start/stop/step for the loop below, also use terminal scroll
