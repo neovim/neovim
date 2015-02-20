@@ -6934,7 +6934,7 @@ static void nv_esc(cmdarg_T *cap)
         && cmdwin_type == 0
         && !VIsual_active
         && no_reason)
-      MSG(_("Type  :quit<Enter>  to exit Vim"));
+      MSG(_("Type  :quit<Enter>  to exit Nvim"));
 
     /* Don't reset "restart_edit" when 'insertmode' is set, it won't be
      * set again below when halfway through a mapping. */

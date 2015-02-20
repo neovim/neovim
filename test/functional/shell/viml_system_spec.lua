@@ -110,7 +110,7 @@ describe('system()', function()
         ~                                                    |
         ~                                                    |
         ~                                                    |
-        Type  :quit<Enter>  to exit Vim                      |
+        Type  :quit<Enter>  to exit Nvim                     |
       ]])
     end)
   end)
@@ -276,7 +276,7 @@ describe('systemlist()', function()
         ~                                                    |
         ~                                                    |
         ~                                                    |
-        Type  :quit<Enter>  to exit Vim                      |
+        Type  :quit<Enter>  to exit Nvim                     |
       ]])
     end)
   end)

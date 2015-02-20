@@ -2064,7 +2064,7 @@ msgid "E201: *ReadPre autocommands must not change current buffer"
 msgstr "E201: Gli autocomandi *ReadPre non devono modificare il buffer in uso"
 
 #: ../fileio.c:672
-msgid "Vim: Reading from stdin...\n"
+msgid "Nvim: Reading from stdin...\n"
 msgstr "Vim: Leggo da 'stdin'...\n"
 
 #. Re-opening the original file failed!
@@ -4409,7 +4409,7 @@ msgid "E663: At end of changelist"
 msgstr "E663: Alla fine della lista modifiche"
 
 #: ../normal.c:7053
-msgid "Type  :quit<Enter>  to exit Vim"
+msgid "Type  :quit<Enter>  to exit Nvim"
 msgstr "Batti :quit<Invio>  per uscire da Vim"
 
 #: ../ops.c:248
