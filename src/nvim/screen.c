@@ -86,6 +86,7 @@
  *   update_screen() called to redraw.
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -5176,17 +5177,24 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
   int force_redraw_next = FALSE;
   int need_redraw;
 
+  const int l_has_mbyte = has_mbyte;
+  const bool l_enc_utf8 = enc_utf8;
+  const int l_enc_dbcs = enc_dbcs;
+
+  assert((l_has_mbyte == (l_enc_utf8 || l_enc_dbcs))
+         && !(l_enc_utf8 && l_enc_dbcs));
+
   if (ScreenLines == NULL || row >= screen_Rows)        /* safety check */
     return;
   off = LineOffset[row] + col;
 
   /* When drawing over the right halve of a double-wide char clear out the
    * left halve.  Only needed in a terminal. */
-  if (has_mbyte && col > 0 && col < screen_Columns
+  if (l_has_mbyte && col > 0 && col < screen_Columns
       && mb_fix_col(col, row) != col) {
     ScreenLines[off - 1] = ' ';
     ScreenAttrs[off - 1] = 0;
-    if (enc_utf8) {
+    if (l_enc_utf8) {
       ScreenLinesUC[off - 1] = 0;
       ScreenLinesC[0][off - 1] = 0;
     }
@@ -5202,14 +5210,14 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
          && *ptr != NUL) {
     c = *ptr;
     /* check if this is the first byte of a multibyte */
-    if (has_mbyte) {
-      if (enc_utf8 && len > 0)
+    if (l_has_mbyte) {
+      if (l_enc_utf8 && len > 0)
         mbyte_blen = utfc_ptr2len_len(ptr, (int)((text + len) - ptr));
       else
         mbyte_blen = (*mb_ptr2len)(ptr);
-      if (enc_dbcs == DBCS_JPNU && c == 0x8e)
+      if (l_enc_dbcs == DBCS_JPNU && c == 0x8e)
         mbyte_cells = 1;
-      else if (enc_dbcs != 0)
+      else if (l_enc_dbcs != 0)
         mbyte_cells = mbyte_blen;
       else {            /* enc_utf8 */
         if (len >= 0)
@@ -5256,11 +5264,11 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
 
     need_redraw = ScreenLines[off] != c
                   || (mbyte_cells == 2
-                      && ScreenLines[off + 1] != (enc_dbcs ? ptr[1] : 0))
-                  || (enc_dbcs == DBCS_JPNU
+                      && ScreenLines[off + 1] != (l_enc_dbcs ? ptr[1] : 0))
+                  || (l_enc_dbcs == DBCS_JPNU
                       && c == 0x8e
                       && ScreenLines2[off] != ptr[1])
-                  || (enc_utf8
+                  || (l_enc_utf8
                       && (ScreenLinesUC[off] !=
                           (u8char_T)(c < 0x80 && u8cc[0] == 0 ? 0 : u8c)
                           || (ScreenLinesUC[off] != 0
@@ -5278,7 +5286,7 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
        * (mb_off2cells() may return 2 on the right halve). */
       if (clear_next_cell)
         clear_next_cell = FALSE;
-      else if (has_mbyte
+      else if (l_has_mbyte
                && (len < 0 ? ptr[mbyte_blen] == NUL
                    : ptr + mbyte_blen >= text + len)
                && ((mbyte_cells == 1 && (*mb_off2cells)(off, max_off) > 1)
@@ -5289,7 +5297,7 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
 
       /* Make sure we never leave a second byte of a double-byte behind,
        * it confuses mb_off2cells(). */
-      if (enc_dbcs
+      if (l_enc_dbcs
           && ((mbyte_cells == 1 && (*mb_off2cells)(off, max_off) > 1)
               || (mbyte_cells == 2
                   && (*mb_off2cells)(off, max_off) == 1
@@ -5297,7 +5305,7 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
         ScreenLines[off + mbyte_blen] = 0;
       ScreenLines[off] = c;
       ScreenAttrs[off] = attr;
-      if (enc_utf8) {
+      if (l_enc_utf8) {
         if (c < 0x80 && u8cc[0] == 0)
           ScreenLinesUC[off] = 0;
         else {
@@ -5319,13 +5327,13 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
         ScreenLines[off + 1] = ptr[1];
         ScreenAttrs[off + 1] = attr;
         screen_char_2(off, row, col);
-      } else if (enc_dbcs == DBCS_JPNU && c == 0x8e) {
+      } else if (l_enc_dbcs == DBCS_JPNU && c == 0x8e) {
         ScreenLines2[off] = ptr[1];
         screen_char(off, row, col);
       } else
         screen_char(off, row, col);
     }
-    if (has_mbyte) {
+    if (l_has_mbyte) {
       off += mbyte_cells;
       col += mbyte_cells;
       ptr += mbyte_blen;
@@ -5344,7 +5352,7 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
   /* If we detected the next character needs to be redrawn, but the text
    * doesn't extend up to there, update the character here. */
   if (force_redraw_next && col < screen_Columns) {
-    if (enc_dbcs != 0 && dbcs_off2cells(off, max_off) > 1)
+    if (l_enc_dbcs != 0 && dbcs_off2cells(off, max_off) > 1)
       screen_char_2(off, row, col);
     else
       screen_char(off, row, col);
