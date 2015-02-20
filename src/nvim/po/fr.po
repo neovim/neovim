@@ -2252,7 +2252,7 @@ msgstr ""
 "courant"
 
 #: ../fileio.c:672
-msgid "Vim: Reading from stdin...\n"
+msgid "Nvim: Reading from stdin...\n"
 msgstr "Vim : Lecture de stdin...\n"
 
 #. Re-opening the original file failed!
@@ -4616,7 +4616,7 @@ msgid "E663: At end of changelist"
 msgstr "E663: À la fin de la liste des modifications"
 
 #: ../normal.c:7053
-msgid "Type  :quit<Enter>  to exit Vim"
+msgid "Type  :quit<Enter>  to exit Nvim"
 msgstr "tapez  :q<Entrée>  pour quitter Vim"
 
 #: ../ops.c:248

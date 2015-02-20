@@ -724,7 +724,7 @@ readfile (
      * always using the GUI.
      */
     if (read_stdin) {
-      mch_msg(_("Vim: Reading from stdin...\n"));
+      mch_msg(_("Nvim: Reading from stdin...\n"));
     } else if (!read_buffer)
       filemess(curbuf, sfname, (char_u *)"", 0);
   }

@@ -2099,7 +2099,7 @@ msgstr "E201: Автокоманди *ReadPre не повинні змінюва
 
 # msgstr "E201: "
 #: ../fileio.c:672
-msgid "Vim: Reading from stdin...\n"
+msgid "Nvim: Reading from stdin...\n"
 msgstr "Vim: Читається з stdin...\n"
 
 #. Re-opening the original file failed!
@@ -4514,7 +4514,7 @@ msgid "E663: At end of changelist"
 msgstr "E663: Кінець списку змін"
 
 #: ../normal.c:7053
-msgid "Type  :quit<Enter>  to exit Vim"
+msgid "Type  :quit<Enter>  to exit Nvim"
 msgstr "Уведіть :quit<Enter>  щоб вийти з Vim"
 
 #: ../ops.c:248
