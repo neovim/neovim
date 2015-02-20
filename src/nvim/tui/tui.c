@@ -30,7 +30,6 @@ typedef struct {
 } Cell;
 
 typedef struct {
-  PMap(cstr_t) *option_cache;
   unibi_var_t params[9];
   char buf[0xffff];
   size_t bufpos;
@@ -87,7 +86,6 @@ void tui_start(void)
   data->fg = data->bg = -1;
   data->can_use_terminal_scroll = true;
   data->bufpos = 0;
-  data->option_cache = pmap_new(cstr_t)();
   data->unibi_ext.enable_mouse = -1;
   data->unibi_ext.disable_mouse = -1;
   data->unibi_ext.enable_bracketed_paste = -1;
@@ -184,11 +182,6 @@ static void tui_stop(UI *ui)
   }
   free(data->write_loop);
   unibi_destroy(data->ut);
-  char *opt_value;
-  map_foreach_value(data->option_cache, opt_value, {
-    free(opt_value);
-  });
-  pmap_free(cstr_t)(data->option_cache);
   destroy_screen(data);
   free(data);
   ui_detach(ui);
