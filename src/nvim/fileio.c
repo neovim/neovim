@@ -7416,7 +7416,7 @@ long read_eintr(int fd, void *buf, size_t bufsize)
   long ret;
 
   for (;; ) {
-    ret = vim_read(fd, buf, bufsize);
+    ret = read(fd, buf, bufsize);
     if (ret >= 0 || errno != EINTR)
       break;
   }
@@ -7435,7 +7435,7 @@ long write_eintr(int fd, void *buf, size_t bufsize)
   /* Repeat the write() so long it didn't fail, other than being interrupted
    * by a signal. */
   while (ret < (long)bufsize) {
-    wlen = vim_write(fd, (char *)buf + ret, bufsize - ret);
+    wlen = write(fd, (char *)buf + ret, bufsize - ret);
     if (wlen < 0) {
       if (errno != EINTR)
         break;
