@@ -1028,7 +1028,8 @@ void ex_continue(exarg_T *eap)
      * next).  Therefor, inactivate all conditionals except the ":while"
      * itself (if reached). */
     idx = cleanup_conditionals(cstack, CSF_WHILE | CSF_FOR, FALSE);
-    if (idx >= 0 && (cstack->cs_flags[idx] & (CSF_WHILE | CSF_FOR))) {
+    assert(idx >= 0);
+    if (cstack->cs_flags[idx] & (CSF_WHILE | CSF_FOR)) {
       rewind_conditionals(cstack, idx, CSF_TRY, &cstack->cs_trylevel);
 
       /*

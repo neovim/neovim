@@ -5654,7 +5654,7 @@ next_search_hl_pos(
       continue;
     }
     if (posmatch->pos[i].lnum == lnum) {
-      if (shl->lnum == lnum) {
+      if (bot != -1) {
         // partially sort positions by column numbers
         // on the same line
         if (posmatch->pos[i].col < posmatch->pos[bot].col) {
@@ -5670,7 +5670,7 @@ next_search_hl_pos(
     }
   }
   posmatch->cur = 0;
-  if (shl->lnum == lnum) {
+  if (bot != -1) {
     colnr_T start = posmatch->pos[bot].col == 0
                     ? 0: posmatch->pos[bot].col - 1;
     colnr_T end = posmatch->pos[bot].col == 0
