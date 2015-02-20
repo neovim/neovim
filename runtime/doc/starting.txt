@@ -545,13 +545,13 @@ accordingly.  Vim proceeds in this order:
 	":version" command.  Mostly it's "$VIM/vimrc".
 	For the Macintosh the $VIMRUNTIME/macmap.vim is read.
 
-	  *VIMINIT* *.vimrc* *_vimrc* *EXINIT* *.exrc* *_exrc* *$MYVIMRC*
+	  *NVIMINIT* *.vimrc* *_vimrc* *EXINIT* *.exrc* *_exrc* *$MYVIMRC*
      b. Four places are searched for initializations.  The first that exists
 	is used, the others are ignored.  The $MYVIMRC environment variable is
 	set to the file that was first found, unless $MYVIMRC was already set
-	and when using VIMINIT.
-	-  The environment variable VIMINIT
-	   The value of $VIMINIT is used as an Ex command line.
+	and when using NVIMINIT.
+	-  The environment variable NVIMINIT
+	   The value of $NVIMINIT is used as an Ex command line.
 	-  The user vimrc file(s):
 		    "$HOME/.vimrc"	   (for Unix)
 		    "$HOME/.vim/vimrc"	   (for Unix)
@@ -684,7 +684,7 @@ else created and contains nasty commands.  The disabled commands are the ones
 that start a shell, the ones that write to a file, and ":autocmd".  The ":map"
 commands are echoed, so you can see which keys are being mapped.
 	If you want Vim to execute all commands in a local vimrc file, you
-can reset the 'secure' option in the EXINIT or VIMINIT environment variable or
+can reset the 'secure' option in the EXINIT or NVIMINIT environment variable or
 in the global "exrc" or "vimrc" file.  This is not possible in "vimrc" or
 "exrc" in the current directory, for obvious reasons.
 	On Unix systems, this only happens if you are not the owner of the
