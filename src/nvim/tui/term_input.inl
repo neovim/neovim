@@ -112,17 +112,11 @@ static void timer_cb(uv_timer_t *handle);
 
 static int get_key_code_timeout(void)
 {
-  Integer ms = 0;
-  bool timeout = false;
-  // Check 'timeout' and 'ttimeout' to determine if we should send ESC
-  // after 'ttimeoutlen'. See :help 'ttimeout' for more information
+  Integer ms = -1;
+  // Check 'ttimeout' to determine if we should send ESC after 'ttimeoutlen'.
+  // See :help 'ttimeout' for more information
   Error err = ERROR_INIT;
-  timeout = vim_get_option(cstr_as_string("timeout"), &err).data.boolean;
-  if (!timeout) {
-    timeout = vim_get_option(cstr_as_string("ttimeout"), &err).data.boolean;
-  }
-
-  if (timeout) {
+  if (vim_get_option(cstr_as_string("ttimeout"), &err).data.boolean) {
     ms = vim_get_option(cstr_as_string("ttimeoutlen"), &err).data.integer;
   }
 
