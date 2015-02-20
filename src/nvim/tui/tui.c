@@ -717,6 +717,19 @@ static void fix_terminfo(TUIData *data)
         "\x1b[?2004l");
   }
 
+#define XTERM_SETAF \
+  "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38;5;%p1%d%;m"
+#define XTERM_SETAB \
+  "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48;5;%p1%d%;m"
+
+  if (!strcmp(term, "xterm") && os_getenv("COLORTERM") != NULL) {
+    // probably every modern terminal that sets TERM=xterm supports 256
+    // colors(eg: gnome-terminal).
+    unibi_set_num(ut, unibi_max_colors, 256);
+    unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF);
+    unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB);
+  }
+
   if (os_getenv("NVIM_TUI_ENABLE_CURSOR_SHAPE") == NULL) {
     goto end;
   }
@@ -748,10 +761,8 @@ end:
       "\x1b[?1002l\x1b[?1006l");
   unibi_set_if_empty(ut, unibi_cursor_address, "\x1b[%i%p1%d;%p2%dH");
   unibi_set_if_empty(ut, unibi_exit_attribute_mode, "\x1b[0;10m");
-  unibi_set_if_empty(ut, unibi_set_a_foreground,
-      "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38;5;%p1%d%;m");
-  unibi_set_if_empty(ut, unibi_set_a_background,
-      "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48;5;%p1%d%;m");
+  unibi_set_if_empty(ut, unibi_set_a_foreground, XTERM_SETAF);
+  unibi_set_if_empty(ut, unibi_set_a_background, XTERM_SETAB);
   unibi_set_if_empty(ut, unibi_enter_bold_mode, "\x1b[1m");
   unibi_set_if_empty(ut, unibi_enter_underline_mode, "\x1b[4m");
   unibi_set_if_empty(ut, unibi_enter_reverse_mode, "\x1b[7m");
