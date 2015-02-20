@@ -250,7 +250,7 @@ static void update_attrs(UI *ui, HlAttrs attrs)
 static void print_cell(UI *ui, Cell *ptr)
 {
   update_attrs(ui, ptr->attrs);
-  out(ui, ptr->data);
+  out(ui, ptr->data, strlen(ptr->data));
 }
 
 static void clear_region(UI *ui, int top, int bot, int left, int right,
@@ -540,12 +540,12 @@ static void tui_suspend(UI *ui)
 static void tui_set_title(UI *ui, char *title)
 {
   TUIData *data = ui->data;
-  if (!(unibi_get_str(data->ut, unibi_to_status_line)
-     && unibi_get_str(data->ut, unibi_from_status_line))) {
+  if (!(title && unibi_get_str(data->ut, unibi_to_status_line) &&
+        unibi_get_str(data->ut, unibi_from_status_line))) {
     return;
   }
   unibi_out(ui, unibi_to_status_line);
-  out(ui, title);
+  out(ui, title, strlen(title));
   unibi_out(ui, unibi_from_status_line);
 }
 
@@ -648,16 +648,23 @@ static void unibi_out(UI *ui, int unibi_index)
   }
 
   if (str) {
-    data->bufpos += unibi_run(str, data->params, data->buf + data->bufpos,
-        sizeof(data->buf) - data->bufpos);
+    unibi_var_t vars[26 + 26] = {{0}};
+    unibi_format(vars, vars + 26, str, data->params, out, ui, NULL, NULL);
   }
 }
 
-static void out(UI *ui, const char *str)
+static void out(void *ctx, const char *str, size_t len)
 {
+  UI *ui = ctx;
   TUIData *data = ui->data;
-  data->bufpos += (size_t)snprintf(data->buf + data->bufpos,
-      sizeof(data->buf) - data->bufpos, "%s", str);
+  size_t available = sizeof(data->buf) - data->bufpos;
+
+  if (len > available) {
+    flush_buf(ui);
+  }
+
+  memcpy(data->buf + data->bufpos, str, len);
+  data->bufpos += len;
 }
 
 static void unibi_set_if_empty(unibi_term *ut, enum unibi_string str,
