@@ -1779,6 +1779,10 @@ static int close_last_window_tabpage(win_T *win, int free_buf, tabpage_T *prev_c
   goto_tabpage_tp(alt_tabpage(), FALSE, TRUE);
   redraw_tabline = TRUE;
 
+  // save index for tabclosed event
+  char_u prev_idx[NUMBUFLEN];
+  sprintf((char *)prev_idx, "%i", tabpage_index(prev_curtab));
+
   /* Safety check: Autocommands may have closed the window when jumping
    * to the other tab page. */
   if (valid_tabpage(prev_curtab) && prev_curtab->tp_firstwin == win) {
@@ -1790,8 +1794,6 @@ static int close_last_window_tabpage(win_T *win, int free_buf, tabpage_T *prev_c
   }
   /* Since goto_tabpage_tp above did not trigger *Enter autocommands, do
    * that now. */
-  char_u prev_idx[NUMBUFLEN];
-  sprintf((char *)prev_idx, "%i", tabpage_index(prev_curtab));
   apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, FALSE, curbuf);
   apply_autocmds(EVENT_WINENTER, NULL, NULL, FALSE, curbuf);
   apply_autocmds(EVENT_TABENTER, NULL, NULL, FALSE, curbuf);
