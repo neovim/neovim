@@ -403,7 +403,7 @@ char_u *save_absolute_path(const char_u *name)
 
 #if !defined(NO_EXPANDPATH)
 
-#if defined(UNIX) || defined(USE_UNIXFILENAME)
+#if defined(UNIX)
 /*
  * Unix style wildcard expansion code.
  * It's here because it's used both for Unix and Mac.
