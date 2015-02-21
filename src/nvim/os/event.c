@@ -18,7 +18,7 @@
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 #include "nvim/misc2.h"
-#include "nvim/term.h"
+#include "nvim/ui.h"
 #include "nvim/screen.h"
 
 #include "nvim/lib/klist.h"
@@ -162,7 +162,7 @@ void event_process(void)
 
   if (must_redraw) {
     update_screen(0);
-    out_flush();
+    ui_flush();
   }
 }
 

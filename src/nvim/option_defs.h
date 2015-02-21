@@ -568,7 +568,6 @@ EXTERN char_u   *p_titlestring; /* 'titlestring' */
 EXTERN char_u   *p_tsr;         /* 'thesaurus' */
 EXTERN int p_ttimeout;          /* 'ttimeout' */
 EXTERN long p_ttm;              /* 'ttimeoutlen' */
-EXTERN int p_tbi;               /* 'ttybuiltin' */
 EXTERN long p_ttyscroll;        /* 'ttyscroll' */
 #if defined(FEAT_MOUSE) && defined(UNIX)
 EXTERN char_u   *p_ttym;        /* 'ttymouse' */
@@ -615,7 +614,6 @@ EXTERN char_u   *p_wop;         /* 'wildoptions' */
 EXTERN long p_window;           /* 'window' */
 EXTERN char_u   *p_wak;         /* 'winaltkeys' */
 EXTERN char_u   *p_wig;         /* 'wildignore' */
-EXTERN int p_wiv;               /* 'weirdinvert' */
 EXTERN char_u   *p_ww;          /* 'whichwrap' */
 EXTERN long p_wc;               /* 'wildchar' */
 EXTERN long p_wcm;              /* 'wildcharm' */

@@ -325,7 +325,7 @@
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
-#include "nvim/term.h"
+#include "nvim/ui.h"
 #include "nvim/tempfile.h"
 #include "nvim/undo.h"
 #include "nvim/os/os.h"
@@ -5476,7 +5476,7 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
       msg_clr_eos();
       msg_didout = FALSE;
       msg_col = 0;
-      out_flush();
+      ui_flush();
     }
 
     // Store the word in the hashtable to be able to find duplicates.
@@ -6327,7 +6327,7 @@ static int tree_add_word(spellinfo_T *spin, char_u *word, wordnode_T *root, int 
       msg_clr_eos();
       msg_didout = FALSE;
       msg_col = 0;
-      out_flush();
+      ui_flush();
     }
 
     // Compress both trees.  Either they both have many nodes, which makes
@@ -7749,7 +7749,7 @@ static void spell_message(spellinfo_T *spin, char_u *str)
     if (!spin->si_verbose)
       verbose_enter();
     MSG(str);
-    out_flush();
+    ui_flush();
     if (!spin->si_verbose)
       verbose_leave();
   }

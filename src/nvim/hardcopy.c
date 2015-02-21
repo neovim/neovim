@@ -41,7 +41,7 @@
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
-#include "nvim/term.h"
+#include "nvim/ui.h"
 #include "nvim/tempfile.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
@@ -572,7 +572,7 @@ static void prt_message(char_u *s)
 {
   screen_fill((int)Rows - 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
   screen_puts(s, (int)Rows - 1, 0, hl_attr(HLF_R));
-  out_flush();
+  ui_flush();
 }
 
 void ex_hardcopy(exarg_T *eap)

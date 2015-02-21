@@ -57,7 +57,6 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
-#include "nvim/term.h"
 #include "nvim/ui.h"
 #include "nvim/mouse.h"
 #include "nvim/undo.h"
@@ -427,7 +426,7 @@ normal_cmd (
   int c;
   bool ctrl_w = false;                  /* got CTRL-W command */
   int old_col = curwin->w_curswant;
-  bool need_flushbuf;                   /* need to call out_flush() */
+  bool need_flushbuf;                   /* need to call ui_flush() */
   pos_T old_pos;                        /* cursor position before command */
   int mapped_len;
   static int old_mapped_len = 0;
@@ -869,7 +868,7 @@ getcount:
    * mappings.
    */
   if (need_flushbuf)
-    out_flush();
+    ui_flush();
   if (ca.cmdchar != K_IGNORE)
     did_cursorhold = false;
 
@@ -987,8 +986,8 @@ getcount:
       free(kmsg);
     }
     setcursor();
-    cursor_on();
-    out_flush();
+    ui_cursor_on();
+    ui_flush();
     if (msg_scroll || emsg_on_display)
       os_delay(1000L, true);            /* wait at least one second */
     os_delay(3000L, false);             /* wait up to three seconds */
@@ -3002,7 +3001,7 @@ static void display_showcmd(void)
 {
   int len;
 
-  cursor_off();
+  ui_cursor_off();
 
   len = (int)STRLEN(showcmd_buf);
   if (len == 0)

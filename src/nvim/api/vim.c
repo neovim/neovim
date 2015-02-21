@@ -22,7 +22,6 @@
 #include "nvim/eval.h"
 #include "nvim/misc2.h"
 #include "nvim/syntax.h"
-#include "nvim/term.h"
 #include "nvim/getchar.h"
 #include "nvim/os/input.h"
 

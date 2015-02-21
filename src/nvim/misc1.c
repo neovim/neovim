@@ -53,7 +53,6 @@
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/tag.h"
-#include "nvim/term.h"
 #include "nvim/tempfile.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
@@ -1844,7 +1843,7 @@ void changed(void)
        * message.  Since we could be anywhere, call wait_return() now,
        * and don't let the emsg() set msg_scroll. */
       if (need_wait_return && emsg_silent == 0) {
-        out_flush();
+        ui_flush();
         os_delay(2000L, true);
         wait_return(TRUE);
         msg_scroll = save_msg_scroll;
@@ -2265,7 +2264,7 @@ change_warning (
     msg_clr_eos();
     (void)msg_end();
     if (msg_silent == 0 && !silent_mode) {
-      out_flush();
+      ui_flush();
       os_delay(1000L, true);       /* give the user time to think about it */
     }
     curbuf->b_did_warn = true;
@@ -2308,7 +2307,7 @@ int ask_yesno(char_u *str, int direct)
     if (r == Ctrl_C || r == ESC)
       r = 'n';
     msg_putchar(r);         /* show what you typed */
-    out_flush();
+    ui_flush();
   }
   --no_wait_return;
   State = save_State;
@@ -2367,8 +2366,8 @@ int get_keystroke(void)
 
   mapped_ctrl_c = FALSE;        /* mappings are not used here */
   for (;; ) {
-    cursor_on();
-    out_flush();
+    ui_cursor_on();
+    ui_flush();
 
     /* Leave some room for check_termcode() to insert a key code into (max
      * 5 chars plus NUL).  And fix_input_buffer() can triple the number of
@@ -2471,7 +2470,7 @@ get_number (
   ++no_mapping;
   ++allow_keys;                 /* no mapping here, but recognize keys */
   for (;; ) {
-    windgoto(msg_row, msg_col);
+    ui_cursor_goto(msg_row, msg_col);
     c = safe_vgetc();
     if (VIM_ISDIGIT(c)) {
       n = n * 10 + c - '0';
@@ -2600,11 +2599,10 @@ void beep_flush(void)
 void vim_beep(void)
 {
   if (emsg_silent == 0) {
-    if (p_vb
-        ) {
-      out_str(T_VB);
+    if (p_vb) {
+      ui_visual_bell();
     } else {
-      out_char(BELL);
+      ui_putc(BELL);
     }
 
     /* When 'verbose' is set and we are sourcing a script or executing a
@@ -3313,17 +3311,16 @@ void preserve_exit(void)
   }
 
   really_exiting = true;
-  out_str(IObuff);
-  screen_start();                   // don't know where cursor is now
-  out_flush();
+  mch_errmsg(IObuff);
+  mch_errmsg("\n");
+  ui_flush();
 
   ml_close_notmod();                // close all not-modified buffers
 
   FOR_ALL_BUFFERS(buf) {
     if (buf->b_ml.ml_mfp != NULL && buf->b_ml.ml_mfp->mf_fname != NULL) {
-      OUT_STR("Vim: preserving files...\n");
-      screen_start();               // don't know where cursor is now
-      out_flush();
+      mch_errmsg((uint8_t *)"Vim: preserving files...\n");
+      ui_flush();
       ml_sync_all(false, false);    // preserve all swap files
       break;
     }
@@ -3331,7 +3328,7 @@ void preserve_exit(void)
 
   ml_close_all(false);              // close all memfiles, without deleting
 
-  OUT_STR("Vim: Finished.\n");
+  mch_errmsg("Vim: Finished.\n");
 
   getout(1);
 }

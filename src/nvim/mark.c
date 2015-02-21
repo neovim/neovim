@@ -37,7 +37,7 @@
 #include "nvim/quickfix.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"
-#include "nvim/term.h"
+#include "nvim/ui.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 
@@ -701,7 +701,7 @@ show_one_mark (
           free(name);
       }
     }
-    out_flush();                    /* show one line at a time */
+    ui_flush();                    /* show one line at a time */
   }
 }
 
@@ -813,7 +813,7 @@ void ex_jumps(exarg_T *eap)
       free(name);
       os_breakcheck();
     }
-    out_flush();
+    ui_flush();
   }
   if (curwin->w_jumplistidx == curwin->w_jumplistlen)
     MSG_PUTS("\n>");
@@ -847,7 +847,7 @@ void ex_changes(exarg_T *eap)
       free(name);
       os_breakcheck();
     }
-    out_flush();
+    ui_flush();
   }
   if (curwin->w_changelistidx == curbuf->b_changelistlen)
     MSG_PUTS("\n>");

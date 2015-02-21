@@ -25,6 +25,16 @@
 #define MOUSE_MAY_STOP_VIS     0x10    // may stop Visual mode
 #define MOUSE_RELEASED         0x20    // button was released
 
+// Codes for mouse button events in lower three bits:
+#define MOUSE_LEFT     0x00
+#define MOUSE_MIDDLE   0x01
+#define MOUSE_RIGHT    0x02
+#define MOUSE_RELEASE  0x03
+
+#define MOUSE_X1       0x300  // Mouse-button X1 (6th)
+#define MOUSE_X2       0x400  // Mouse-button X2
+
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mouse.h.generated.h"
 #endif

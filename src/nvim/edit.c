@@ -54,7 +54,6 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
-#include "nvim/term.h"
 #include "nvim/ui.h"
 #include "nvim/mouse.h"
 #include "nvim/undo.h"
@@ -1406,7 +1405,7 @@ void display_dollar(colnr_T col)
   if (!redrawing())
     return;
 
-  cursor_off();
+  ui_cursor_off();
   save_col = curwin->w_cursor.col;
   curwin->w_cursor.col = col;
   if (has_mbyte) {
@@ -1755,7 +1754,7 @@ static int has_compl_option(int dict_opt)
     if (emsg_silent == 0) {
       vim_beep();
       setcursor();
-      out_flush();
+      ui_flush();
       os_delay(2000L, false);
     }
     return FALSE;
@@ -2243,7 +2242,7 @@ void set_completion(colnr_T startcol, list_T *list)
 
   compl_curr_match = compl_first_match;
   ins_complete(Ctrl_N);
-  out_flush();
+  ui_flush();
 }
 
 
@@ -4469,7 +4468,7 @@ static int ins_complete(int c)
     edit_submode_highl = HLF_COUNT;
     showmode();
     edit_submode_extra = NULL;
-    out_flush();
+    ui_flush();
   }
 
   compl_shown_match = compl_curr_match;

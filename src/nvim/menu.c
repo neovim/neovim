@@ -29,7 +29,6 @@
 #include "nvim/keymap.h"
 #include "nvim/garray.h"
 #include "nvim/strings.h"
-#include "nvim/term.h"
 
 
 #define MENUDEPTH   10          /* maximum depth of menus */

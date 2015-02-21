@@ -30,7 +30,6 @@ typedef struct {
 } Cell;
 
 typedef struct {
-  PMap(cstr_t) *option_cache;
   unibi_var_t params[9];
   char buf[0xffff];
   size_t bufpos;
@@ -87,7 +86,6 @@ void tui_start(void)
   data->fg = data->bg = -1;
   data->can_use_terminal_scroll = true;
   data->bufpos = 0;
-  data->option_cache = pmap_new(cstr_t)();
   data->unibi_ext.enable_mouse = -1;
   data->unibi_ext.disable_mouse = -1;
   data->unibi_ext.enable_bracketed_paste = -1;
@@ -184,11 +182,6 @@ static void tui_stop(UI *ui)
   }
   free(data->write_loop);
   unibi_destroy(data->ut);
-  char *opt_value;
-  map_foreach_value(data->option_cache, opt_value, {
-    free(opt_value);
-  });
-  pmap_free(cstr_t)(data->option_cache);
   destroy_screen(data);
   free(data);
   ui_detach(ui);
@@ -257,7 +250,7 @@ static void update_attrs(UI *ui, HlAttrs attrs)
 static void print_cell(UI *ui, Cell *ptr)
 {
   update_attrs(ui, ptr->attrs);
-  out(ui, ptr->data);
+  out(ui, ptr->data, strlen(ptr->data));
 }
 
 static void clear_region(UI *ui, int top, int bot, int left, int right,
@@ -547,12 +540,12 @@ static void tui_suspend(UI *ui)
 static void tui_set_title(UI *ui, char *title)
 {
   TUIData *data = ui->data;
-  if (!(unibi_get_str(data->ut, unibi_to_status_line)
-     && unibi_get_str(data->ut, unibi_from_status_line))) {
+  if (!(title && unibi_get_str(data->ut, unibi_to_status_line) &&
+        unibi_get_str(data->ut, unibi_from_status_line))) {
     return;
   }
   unibi_out(ui, unibi_to_status_line);
-  out(ui, title);
+  out(ui, title, strlen(title));
   unibi_out(ui, unibi_from_status_line);
 }
 
@@ -655,16 +648,23 @@ static void unibi_out(UI *ui, int unibi_index)
   }
 
   if (str) {
-    data->bufpos += unibi_run(str, data->params, data->buf + data->bufpos,
-        sizeof(data->buf) - data->bufpos);
+    unibi_var_t vars[26 + 26] = {{0}};
+    unibi_format(vars, vars + 26, str, data->params, out, ui, NULL, NULL);
   }
 }
 
-static void out(UI *ui, const char *str)
+static void out(void *ctx, const char *str, size_t len)
 {
+  UI *ui = ctx;
   TUIData *data = ui->data;
-  data->bufpos += (size_t)snprintf(data->buf + data->bufpos,
-      sizeof(data->buf) - data->bufpos, "%s", str);
+  size_t available = sizeof(data->buf) - data->bufpos;
+
+  if (len > available) {
+    flush_buf(ui);
+  }
+
+  memcpy(data->buf + data->bufpos, str, len);
+  data->bufpos += len;
 }
 
 static void unibi_set_if_empty(unibi_term *ut, enum unibi_string str,
@@ -717,6 +717,19 @@ static void fix_terminfo(TUIData *data)
         "\x1b[?2004l");
   }
 
+#define XTERM_SETAF \
+  "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38;5;%p1%d%;m"
+#define XTERM_SETAB \
+  "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48;5;%p1%d%;m"
+
+  if (!strcmp(term, "xterm") && os_getenv("COLORTERM") != NULL) {
+    // probably every modern terminal that sets TERM=xterm supports 256
+    // colors(eg: gnome-terminal).
+    unibi_set_num(ut, unibi_max_colors, 256);
+    unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF);
+    unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB);
+  }
+
   if (os_getenv("NVIM_TUI_ENABLE_CURSOR_SHAPE") == NULL) {
     goto end;
   }
@@ -748,10 +761,8 @@ end:
       "\x1b[?1002l\x1b[?1006l");
   unibi_set_if_empty(ut, unibi_cursor_address, "\x1b[%i%p1%d;%p2%dH");
   unibi_set_if_empty(ut, unibi_exit_attribute_mode, "\x1b[0;10m");
-  unibi_set_if_empty(ut, unibi_set_a_foreground,
-      "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38;5;%p1%d%;m");
-  unibi_set_if_empty(ut, unibi_set_a_background,
-      "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48;5;%p1%d%;m");
+  unibi_set_if_empty(ut, unibi_set_a_foreground, XTERM_SETAF);
+  unibi_set_if_empty(ut, unibi_set_a_background, XTERM_SETAB);
   unibi_set_if_empty(ut, unibi_enter_bold_mode, "\x1b[1m");
   unibi_set_if_empty(ut, unibi_enter_underline_mode, "\x1b[4m");
   unibi_set_if_empty(ut, unibi_enter_reverse_mode, "\x1b[7m");

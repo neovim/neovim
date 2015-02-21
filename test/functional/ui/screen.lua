@@ -114,7 +114,7 @@ Screen.__index = Screen
 
 local debug_screen
 
-local default_screen_timeout = 2500
+local default_screen_timeout = 3500
 if os.getenv('VALGRIND') then
   default_screen_timeout = default_screen_timeout * 3
 end
@@ -257,6 +257,8 @@ function Screen:_handle_resize(width, height)
     end
     table.insert(rows, cols)
   end
+  self._cursor.row = 1
+  self._cursor.col = 1
   self._rows = rows
   self._width = width
   self._height = height

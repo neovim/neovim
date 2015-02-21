@@ -59,7 +59,6 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
-#include "nvim/term.h"
 #include "nvim/window.h"
 #include "nvim/ui.h"
 #include "nvim/os/os.h"
@@ -656,8 +655,8 @@ getcmdline (
         if (ccheck_abbr(c + ABBR_OFF))
           goto cmdline_changed;
         if (!cmd_silent) {
-          windgoto(msg_row, 0);
-          out_flush();
+          ui_cursor_goto(msg_row, 0);
+          ui_flush();
         }
         break;
       }
@@ -1374,8 +1373,8 @@ cmdline_changed:
       if (ccline.cmdlen == 0)
         i = 0;
       else {
-        cursor_off();                   /* so the user knows we're busy */
-        out_flush();
+        ui_cursor_off();                   /* so the user knows we're busy */
+        ui_flush();
         ++emsg_off;            /* So it doesn't beep if bad expr */
         /* Set the time limit to half a second. */
         tm = profile_setlimit(500L);
@@ -1713,7 +1712,7 @@ getexmodeline (
 
   /* Switch cursor on now.  This avoids that it happens after the "\n", which
    * confuses the system function that computes tabstops. */
-  cursor_on();
+  ui_cursor_on();
 
   /* always start in column 0; write a newline if necessary */
   compute_cmdrow();
@@ -1821,7 +1820,7 @@ redraw:
           }
         }
         msg_clr_eos();
-        windgoto(msg_row, msg_col);
+        ui_cursor_goto(msg_row, msg_col);
         continue;
       }
 
@@ -1877,7 +1876,7 @@ redraw:
     ++line_ga.ga_len;
     escaped = FALSE;
 
-    windgoto(msg_row, msg_col);
+    ui_cursor_goto(msg_row, msg_col);
     pend = (char_u *)(line_ga.ga_data) + line_ga.ga_len;
 
     /* We are done when a NL is entered, but not when it comes after an
@@ -2459,7 +2458,7 @@ void redrawcmd(void)
 
   /* when 'incsearch' is set there may be no command line while redrawing */
   if (ccline.cmdbuff == NULL) {
-    windgoto(cmdline_row, 0);
+    ui_cursor_goto(cmdline_row, 0);
     msg_clr_eos();
     return;
   }
@@ -2512,7 +2511,7 @@ static void cursorcmd(void)
       msg_row = Rows - 1;
   }
 
-  windgoto(msg_row, msg_col);
+  ui_cursor_goto(msg_row, msg_col);
 }
 
 void gotocmdline(int clr)
@@ -2524,7 +2523,7 @@ void gotocmdline(int clr)
     msg_col = 0;            /* always start in column 0 */
   if (clr)                  /* clear the bottom line(s) */
     msg_clr_eos();          /* will reset clear_cmdline */
-  windgoto(cmdline_row, 0);
+  ui_cursor_goto(cmdline_row, 0);
 }
 
 /*
@@ -2585,7 +2584,7 @@ nextwild (
   }
 
   MSG_PUTS("...");          /* show that we are busy */
-  out_flush();
+  ui_flush();
 
   i = (int)(xp->xp_pattern - ccline.cmdbuff);
   xp->xp_pattern_len = ccline.cmdpos - i;
@@ -3076,7 +3075,7 @@ static int showmatches(expand_T *xp, int wildmenu)
     msg_didany = FALSE;                 /* lines_left will be set */
     msg_start();                        /* prepare for paging */
     msg_putchar('\n');
-    out_flush();
+    ui_flush();
     cmdline_row = msg_row;
     msg_didany = FALSE;                 /* lines_left will be set again */
     msg_start();                        /* prepare for paging */
@@ -3173,7 +3172,7 @@ static int showmatches(expand_T *xp, int wildmenu)
         msg_clr_eos();
         msg_putchar('\n');
       }
-      out_flush();                          /* show one line at a time */
+      ui_flush();                          /* show one line at a time */
       if (got_int) {
         got_int = FALSE;
         break;
@@ -4724,7 +4723,7 @@ void ex_history(exarg_T *eap)
           else
             STRCAT(IObuff, hist[i].hisstr);
           msg_outtrans(IObuff);
-          out_flush();
+          ui_flush();
         }
         if (i == idx)
           break;

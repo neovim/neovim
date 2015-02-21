@@ -43,7 +43,6 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tempfile.h"
-#include "nvim/term.h"
 #include "nvim/ui.h"
 #include "nvim/types.h"
 #include "nvim/os/os.h"
@@ -69,119 +68,6 @@ static int selinux_enabled = -1;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os_unix.c.generated.h"
 #endif
-static char_u   *oldtitle = NULL;
-static int did_set_title = FALSE;
-static char_u   *oldicon = NULL;
-static int did_set_icon = FALSE;
-
-static int get_x11_title(int test_only)
-{
-  return FALSE;
-}
-
-static int get_x11_icon(int test_only)
-{
-  if (!test_only) {
-    if (STRNCMP(T_NAME, "builtin_", 8) == 0)
-      oldicon = vim_strsave(T_NAME + 8);
-    else
-      oldicon = vim_strsave(T_NAME);
-  }
-  return FALSE;
-}
-
-
-int mch_can_restore_title(void)
-{
-  return get_x11_title(TRUE);
-}
-
-int mch_can_restore_icon(void)
-{
-  return get_x11_icon(TRUE);
-}
-
-/*
- * Set the window title and icon.
- */
-void mch_settitle(char_u *title, char_u *icon)
-{
-  static int recursive = 0;
-
-  if (T_NAME == NULL)       /* no terminal name (yet) */
-    return;
-  if (title == NULL && icon == NULL)        /* nothing to do */
-    return;
-
-  /* When one of the X11 functions causes a deadly signal, we get here again
-   * recursively.  Avoid hanging then (something is probably locked). */
-  if (recursive)
-    return;
-  ++recursive;
-
-  if (title != NULL) {
-    ui_set_title((char *)title);
-    did_set_title = TRUE;
-  }
-
-  if (icon != NULL) {
-    ui_set_icon((char *)icon);
-    did_set_icon = TRUE;
-  }
-  --recursive;
-}
-
-/*
- * Restore the window/icon title.
- * "which" is one of:
- *  1  only restore title
- *  2  only restore icon
- *  3  restore title and icon
- */
-void mch_restore_title(int which)
-{
-  /* only restore the title or icon when it has been set */
-  mch_settitle(((which & 1) && did_set_title) ?
-      (oldtitle ? oldtitle : p_titleold) : NULL,
-      ((which & 2) && did_set_icon) ? oldicon : NULL);
-}
-
-
-/*
- * Return TRUE if "name" looks like some xterm name.
- * Seiichi Sato mentioned that "mlterm" works like xterm.
- */
-int vim_is_xterm(char_u *name)
-{
-  if (name == NULL)
-    return FALSE;
-  return STRNICMP(name, "xterm", 5) == 0
-         || STRNICMP(name, "nxterm", 6) == 0
-         || STRNICMP(name, "kterm", 5) == 0
-         || STRNICMP(name, "mlterm", 6) == 0
-         || STRNICMP(name, "rxvt", 4) == 0
-         || STRCMP(name, "builtin_xterm") == 0;
-}
-
-/*
- * Return non-zero when using an xterm mouse, according to 'ttymouse'.
- * Return 1 for "xterm".
- * Return 2 for "xterm2".
- * Return 3 for "urxvt".
- * Return 4 for "sgr".
- */
-int use_xterm_mouse(void)
-{
-  if (ttym_flags == TTYM_SGR)
-    return 4;
-  if (ttym_flags == TTYM_URXVT)
-    return 3;
-  if (ttym_flags == TTYM_XTERM2)
-    return 2;
-  if (ttym_flags == TTYM_XTERM)
-    return 1;
-  return 0;
-}
 
 #if defined(USE_FNAME_CASE)
 /*
@@ -323,14 +209,6 @@ void mch_free_acl(vim_acl_T aclent)
 #endif
 
 /*
- * Set hidden flag for "name".
- */
-void mch_hide(char_u *name)
-{
-  /* can't hide a file */
-}
-
-/*
  * Check what "name" is:
  * NODE_NORMAL: file or directory (or doesn't exist)
  * NODE_WRITABLE: writable device, socket, fifo, etc.
@@ -350,69 +228,20 @@ int mch_nodetype(char_u *name)
   return NODE_WRITABLE;
 }
 
-#if defined(EXITFREE)
-void mch_free_mem(void)
-{
-  free(oldtitle);
-  free(oldicon);
-}
-
-#endif
-
-
-/*
- * Output a newline when exiting.
- * Make sure the newline goes to the same stream as the text.
- */
-static void exit_scroll(void)
-{
-  if (silent_mode)
-    return;
-  if (newline_on_exit || msg_didout) {
-    if (msg_use_printf()) {
-      if (info_message)
-        mch_msg("\n");
-      else
-        mch_errmsg("\r\n");
-    } else
-      out_char('\n');
-  } else {
-    restore_cterm_colors();             /* get original colors back */
-    msg_clr_eos_force();                /* clear the rest of the display */
-    windgoto((int)Rows - 1, 0);         /* may have moved the cursor */
-  }
-}
-
 void mch_exit(int r)
 {
   exiting = TRUE;
 
   {
-    mch_restore_title(3);       /* restore xterm title and icon name */
-    /*
-     * When t_ti is not empty but it doesn't cause swapping terminal
-     * pages, need to output a newline when msg_didout is set.  But when
-     * t_ti does swap pages it should not go to the shell page.  Do this
-     * before stoptermcap().
-     */
-    if (swapping_screen() && !newline_on_exit)
-      exit_scroll();
-
     ui_builtin_stop();
 
-    /*
-     * A newline is only required after a message in the alternate screen.
-     * This is set to TRUE by wait_return().
-     */
-    if (!swapping_screen() || newline_on_exit)
-      exit_scroll();
-
-    /* Cursor may have been switched off without calling starttermcap()
-     * when doing "vim -u vimrc" and vimrc contains ":q". */
-    if (full_screen)
-      cursor_on();
+    // Cursor may have been switched off without calling starttermcap()
+    // when doing "vim -u vimrc" and vimrc contains ":q". */
+    if (full_screen) {
+      ui_cursor_on();
+    }
   }
-  out_flush();
+  ui_flush();
   ml_close_all(TRUE);           /* remove all memfiles */
 
   event_teardown();
@@ -422,57 +251,6 @@ void mch_exit(int r)
 #endif
 
   exit(r);
-}
-
-/*
- * Set mouse clicks on or off.
- */
-void mch_setmouse(int on)
-{
-  static int ison = FALSE;
-  int xterm_mouse_vers;
-
-  if (on == ison)       /* return quickly if nothing to do */
-    return;
-
-  xterm_mouse_vers = use_xterm_mouse();
-
-  if (ttym_flags == TTYM_URXVT) {
-    out_str_nf((char_u *)
-        (on
-         ? "\033[?1015h"
-         : "\033[?1015l"));
-    ison = on;
-  }
-
-  if (ttym_flags == TTYM_SGR) {
-    out_str_nf((char_u *)
-        (on
-         ? "\033[?1006h"
-         : "\033[?1006l"));
-    ison = on;
-  }
-
-  if (xterm_mouse_vers > 0) {
-    if (on)     /* enable mouse events, use mouse tracking if available */
-      out_str_nf((char_u *)
-          (xterm_mouse_vers > 1
-           ? "\033[?1002h"
-           : "\033[?1000h"));
-    else        /* disable mouse events, could probably always send the same */
-      out_str_nf((char_u *)
-          (xterm_mouse_vers > 1
-           ? "\033[?1002l"
-           : "\033[?1000l"));
-    ison = on;
-  } else if (ttym_flags == TTYM_DEC) {
-    if (on)     /* enable mouse events */
-      out_str_nf((char_u *)"\033[1;2'z\033[1;3'{");
-    else        /* disable mouse events */
-      out_str_nf((char_u *)"\033['z");
-    ison = on;
-  }
-
 }
 
 /*
