@@ -2,6 +2,7 @@
 ///
 /// Functions for Farsi language
 
+#include <assert.h>
 #include <stdbool.h>
 
 #include "nvim/cursor.h"
@@ -65,91 +66,117 @@ const char_u farsi_text_5[] = {
 /// @param c The character to convert.
 ///
 /// @return Farsi character converted to a _X or _X_ type.
-static int toF_Xor_X_(int c)
+static char_u toF_Xor_X_(int c)
 {
-  int tempc;
+  char_u tempc;
 
   switch (c) {
     case BE:
-      return _BE;
+      tempc = _BE;
+      break;
 
     case PE:
-      return _PE;
+      tempc = _PE;
+      break;
 
     case TE:
-      return _TE;
+      tempc = _TE;
+      break;
 
     case SE:
-      return _SE;
+      tempc = _SE;
+      break;
 
     case JIM:
-      return _JIM;
+      tempc = _JIM;
+      break;
 
     case CHE:
-      return _CHE;
+      tempc = _CHE;
+      break;
 
     case HE_J:
-      return _HE_J;
+      tempc = _HE_J;
+      break;
 
     case XE:
-      return _XE;
+      tempc = _XE;
+      break;
 
     case SIN:
-      return _SIN;
+      tempc = _SIN;
+      break;
 
     case SHIN:
-      return _SHIN;
+      tempc = _SHIN;
+      break;
 
     case SAD:
-      return _SAD;
+      tempc = _SAD;
+      break;
 
     case ZAD:
-      return _ZAD;
+      tempc = _ZAD;
+      break;
 
     case AYN:
-      return _AYN;
+      tempc = _AYN;
+      break;
 
     case AYN_:
-      return _AYN_;
+      tempc = _AYN_;
+      break;
 
     case GHAYN:
-      return _GHAYN;
+      tempc = _GHAYN;
+      break;
 
     case GHAYN_:
-      return _GHAYN_;
+      tempc = _GHAYN_;
+      break;
 
     case FE:
-      return _FE;
+      tempc = _FE;
+      break;
 
     case GHAF:
-      return _GHAF;
+      tempc = _GHAF;
+      break;
 
     case KAF:
-      return _KAF;
+      tempc = _KAF;
+      break;
 
     case GAF:
-      return _GAF;
+      tempc = _GAF;
+      break;
 
     case LAM:
-      return _LAM;
+      tempc = _LAM;
+      break;
 
     case MIM:
-      return _MIM;
+      tempc = _MIM;
+      break;
 
     case NOON:
-      return _NOON;
+      tempc = _NOON;
+      break;
 
     case YE:
     case YE_:
-      return _YE;
+      tempc = _YE;
+      break;
 
     case YEE:
     case YEE_:
-      return _YEE;
+      tempc = _YEE;
+      break;
 
     case IE:
     case IE_:
-      return _IE;
+      tempc = _IE;
+      break;
 
     case F_HE:
       tempc = _HE;
@@ -170,10 +197,13 @@ static int toF_Xor_X_(int c)
         }
         inc_cursor();
       }
+      break;
 
-      return tempc;
+    default:
+      tempc = 0;
   }
-  return 0;
+
+  return tempc;
 }
 
 /// Convert the given Farsi character into Farsi capital character.
@@ -181,104 +211,138 @@ static int toF_Xor_X_(int c)
 /// @param c The character to convert.
 ///
 /// @return Character converted to the Farsi capital leter.
-int toF_TyA(int c)
+char_u toF_TyA(char_u c)
 {
+  char_u tempc;
+
   switch (c) {
     case ALEF_:
-      return ALEF;
+      tempc = ALEF;
+      break;
 
     case ALEF_U_H_:
-      return ALEF_U_H;
+      tempc = ALEF_U_H;
+      break;
 
     case _BE:
-      return BE;
+      tempc = BE;
+      break;
 
     case _PE:
-      return PE;
+      tempc = PE;
+      break;
 
     case _TE:
-      return TE;
+      tempc = TE;
+      break;
 
     case _SE:
-      return SE;
+      tempc = SE;
+      break;
 
     case _JIM:
-      return JIM;
+      tempc = JIM;
+      break;
 
     case _CHE:
-      return CHE;
+      tempc = CHE;
+      break;
 
     case _HE_J:
-      return HE_J;
+      tempc = HE_J;
+      break;
 
     case _XE:
-      return XE;
+      tempc = XE;
+      break;
 
     case _SIN:
-      return SIN;
+      tempc = SIN;
+      break;
 
     case _SHIN:
-      return SHIN;
+      tempc = SHIN;
+      break;
 
     case _SAD:
-      return SAD;
+      tempc = SAD;
+      break;
 
     case _ZAD:
-      return ZAD;
+      tempc = ZAD;
+      break;
 
     case _AYN:
     case AYN_:
     case _AYN_:
-      return AYN;
+      tempc = AYN;
+      break;
 
     case _GHAYN:
     case GHAYN_:
     case _GHAYN_:
-      return GHAYN;
+      tempc = GHAYN;
+      break;
 
     case _FE:
-      return FE;
+      tempc = FE;
+      break;
 
     case _GHAF:
-      return GHAF;
+      tempc = GHAF;
+      break;
 
     // I am not sure what it is !!!
     // case _KAF_H:
     case _KAF:
-      return KAF;
+      tempc = KAF;
+      break;
 
     case _GAF:
-      return GAF;
+      tempc = GAF;
+      break;
 
     case _LAM:
-      return LAM;
+      tempc = LAM;
+      break;
 
     case _MIM:
-      return MIM;
+      tempc = MIM;
+      break;
 
     case _NOON:
-      return NOON;
+      tempc = NOON;
+      break;
 
     case _YE:
     case YE_:
-      return YE;
+      tempc = YE;
+      break;
 
     case _YEE:
     case YEE_:
-      return YEE;
+      tempc = YEE;
+      break;
 
     case TEE_:
-      return TEE;
+      tempc = TEE;
+      break;
 
     case _IE:
     case IE_:
-      return IE;
+      tempc = IE;
+      break;
 
     case _HE:
     case _HE_:
-      return F_HE;
+      tempc = F_HE;
+      break;
+
+    default:
+      tempc = c;
   }
-  return c;
+
+  return tempc;
 }
 
 /// Is the character under the cursor+offset in the given buffer a join type.
@@ -388,51 +452,69 @@ static bool F_is_TyC_TyD(int c)
 /// @param c The character to convert.
 ///
 /// @return The character converted into a leading type.
-static int toF_TyB(int c)
+static char_u toF_TyB(int c)
 {
+  char_u tempc;
+
   switch (c) {
     case ALEF_:
-      return ALEF;
+      tempc = ALEF;
+      break;
 
     case ALEF_U_H_:
-      return ALEF_U_H;
+      tempc = ALEF_U_H;
+      break;
 
     case _AYN_:
-      return _AYN;
+      tempc = _AYN;
+      break;
 
     case AYN_:
       // exception - there are many of them
-      return AYN;
+      tempc = AYN;
+      break;
 
     case _GHAYN_:
-      return _GHAYN;
+      tempc = _GHAYN;
+      break;
 
     case GHAYN_:
       // exception - there are many of them
-      return GHAYN;
+      tempc = GHAYN;
+      break;
 
     case _HE_:
-      return _HE;
+      tempc = _HE;
+      break;
 
     case YE_:
-      return YE;
+      tempc = YE;
+      break;
 
     case IE_:
-      return IE;
+      tempc = IE;
+      break;
 
     case TEE_:
-      return TEE;
+      tempc = TEE;
+      break;
 
     case YEE_:
-      return YEE;
+      tempc = YEE;
+      break;
+
+    default:
+      assert(c >= 0 && c <= UCHAR_MAX);
+      tempc = (char_u)c;
   }
-  return c;
+
+  return tempc;
 }
 
 /// Overwrite the current redo and cursor characters + left adjust
 ///
 /// @param c
-static void put_curr_and_l_to_X(int c)
+static void put_curr_and_l_to_X(char_u c)
 {
   int tempc;
 
@@ -465,7 +547,7 @@ static void put_curr_and_l_to_X(int c)
   put_and_redo(c);
 }
 
-static void put_and_redo(int c)
+static void put_and_redo(char_u c)
 {
   pchar_cursor(c);
   AppendCharToRedobuff(K_BS);
@@ -475,7 +557,8 @@ static void put_and_redo(int c)
 /// Change the char. under the cursor to a X_ or X type
 static void chg_c_toX_orX(void)
 {
-  int tempc, curc;
+  int curc;
+  char_u tempc;
 
   switch ((curc = gchar_cursor())) {
     case _BE:
@@ -621,7 +704,7 @@ static void chg_c_toX_orX(void)
 /// Change the char. under the cursor to a _X_ or X_ type
 static void chg_c_to_X_orX_(void)
 {
-  int tempc;
+  char_u tempc;
 
   switch (gchar_cursor()) {
     case ALEF:
@@ -689,7 +772,7 @@ static void chg_c_to_X_or_X(void)
     if ((tempc == F_HE) && (F_is_TyB_TyC_TyD(SRC_EDT, AT_CURSOR))) {
       tempc = _HE_;
       dec_cursor();
-      put_and_redo(tempc);
+      put_and_redo((char_u)tempc);
       return;
     }
 
@@ -697,7 +780,7 @@ static void chg_c_to_X_or_X(void)
   }
 
   if ((tempc = toF_Xor_X_(tempc)) != 0) {
-    put_and_redo(tempc);
+    put_and_redo((char_u)tempc);
   }
 }
 
@@ -771,7 +854,7 @@ static void chg_l_to_X_orX_(void)
   }
 
   if (tempc) {
-    put_and_redo(tempc);
+    put_and_redo((char_u)tempc);
   }
 
   if (p_ri) {
@@ -784,7 +867,7 @@ static void chg_l_to_X_orX_(void)
 /// Change the character left to the cursor to a X or _X type
 static void chg_l_toXor_X(void)
 {
-  int tempc;
+  char_u tempc;
 
   if ((curwin->w_cursor.col != 0) &&
       (curwin->w_cursor.col + 1 == (colnr_T)STRLEN(get_cursor_line_ptr()))) {
@@ -864,7 +947,8 @@ static void chg_l_toXor_X(void)
 /// Change the character right to the cursor to a _X or _X_ type
 static void chg_r_to_Xor_X_(void)
 {
-  int tempc, c;
+  int tempc;
+  char_u c;
 
   if (curwin->w_cursor.col) {
     if (!p_ri) {
@@ -1246,7 +1330,7 @@ int fkmap(int c)
         case _HE_:
         case _TA:
         case _ZA:
-          put_curr_and_l_to_X(toF_TyA(tempc));
+          put_curr_and_l_to_X(toF_TyA((char_u)tempc));
           break;
 
         case _AYN:
@@ -1276,7 +1360,7 @@ int fkmap(int c)
             inc_cursor();
           }
 
-          put_curr_and_l_to_X(tempc);
+          put_curr_and_l_to_X((char_u)tempc);
           break;
 
         case _GHAYN:
@@ -1307,7 +1391,7 @@ int fkmap(int c)
             inc_cursor();
           }
 
-          put_curr_and_l_to_X(tempc);
+          put_curr_and_l_to_X((char_u)tempc);
           break;
 
         case _YE:
@@ -1316,8 +1400,8 @@ int fkmap(int c)
 
           if (!p_ri) {
             if (!curwin->w_cursor.col) {
-              put_curr_and_l_to_X((tempc == _YE ? YE :
-                                   (tempc == _IE ? IE : YEE)));
+              put_curr_and_l_to_X(
+                  (tempc == _YE ? YE : tempc == _IE ? IE : YEE));
               break;
             }
           }
@@ -1329,11 +1413,9 @@ int fkmap(int c)
           }
 
           if (F_is_TyB_TyC_TyD(SRC_EDT, AT_CURSOR)) {
-            tempc = (tempc == _YE ? YE_ :
-                     (tempc == _IE ? IE_ : YEE_));
+            tempc = (tempc == _YE ? YE_ : tempc == _IE ? IE_ : YEE_);
           } else {
-            tempc = (tempc == _YE ? YE :
-                     (tempc == _IE ? IE : YEE));
+            tempc = (tempc == _YE ? YE : tempc == _IE ? IE : YEE);
           }
 
           if (p_ri) {
@@ -1342,7 +1424,7 @@ int fkmap(int c)
             inc_cursor();
           }
 
-          put_curr_and_l_to_X(tempc);
+          put_curr_and_l_to_X((char_u)tempc);
           break;
       }
 
@@ -1871,99 +1953,132 @@ int fkmap(int c)
 /// @param c The character to convert.
 ///
 /// @return The non-leading Farsi character converted to a leading type.
-static int toF_leading(int c)
+static char_u toF_leading(char_u c)
 {
+  char_u tempc;
+
   switch (c) {
     case ALEF_:
-      return ALEF;
+      tempc = ALEF;
+      break;
 
     case ALEF_U_H_:
-      return ALEF_U_H;
+      tempc = ALEF_U_H;
+      break;
 
     case BE:
-      return _BE;
+      tempc = _BE;
+      break;
 
     case PE:
-      return _PE;
+      tempc = _PE;
+      break;
 
     case TE:
-      return _TE;
+      tempc = _TE;
+      break;
 
     case SE:
-      return _SE;
+      tempc = _SE;
+      break;
 
     case JIM:
-      return _JIM;
+      tempc = _JIM;
+      break;
 
     case CHE:
-      return _CHE;
+      tempc = _CHE;
+      break;
 
     case HE_J:
-      return _HE_J;
+      tempc = _HE_J;
+      break;
 
     case XE:
-      return _XE;
+      tempc = _XE;
+      break;
 
     case SIN:
-      return _SIN;
+      tempc = _SIN;
+      break;
 
     case SHIN:
-      return _SHIN;
+      tempc = _SHIN;
+      break;
 
     case SAD:
-      return _SAD;
+      tempc = _SAD;
+      break;
 
     case ZAD:
-      return _ZAD;
+      tempc = _ZAD;
+      break;
 
     case AYN:
     case AYN_:
     case _AYN_:
-      return _AYN;
+      tempc = _AYN;
+      break;
 
     case GHAYN:
     case GHAYN_:
     case _GHAYN_:
-      return _GHAYN;
+      tempc = _GHAYN;
+      break;
 
     case FE:
-      return _FE;
+      tempc = _FE;
+      break;
 
     case GHAF:
-      return _GHAF;
+      tempc = _GHAF;
+      break;
 
     case KAF:
-      return _KAF;
+      tempc = _KAF;
+      break;
 
     case GAF:
-      return _GAF;
+      tempc = _GAF;
+      break;
 
     case LAM:
-      return _LAM;
+      tempc = _LAM;
+      break;
 
     case MIM:
-      return _MIM;
+      tempc = _MIM;
+      break;
 
     case NOON:
-      return _NOON;
+      tempc = _NOON;
+      break;
 
     case _HE_:
     case F_HE:
-      return _HE;
+      tempc = _HE;
+      break;
 
     case YE:
     case YE_:
-      return _YE;
+      tempc = _YE;
+      break;
 
     case IE_:
     case IE:
-      return _IE;
+      tempc = _IE;
+      break;
 
     case YEE:
     case YEE_:
-      return _YEE;
+      tempc = _YEE;
+      break;
+
+    default:
+      tempc = c;
   }
-  return c;
+
+  return tempc;
 }
 
 /// Convert a given Farsi char into right joining type.
@@ -1971,102 +2086,136 @@ static int toF_leading(int c)
 /// @param c The character to convert.
 ///
 /// @return The Farsi character converted into a right joining type
-static int toF_Rjoin(int c)
+static char_u toF_Rjoin(char_u c)
 {
+  char_u tempc;
+
   switch (c) {
     case ALEF:
-      return ALEF_;
+      tempc = ALEF_;
+      break;
 
     case ALEF_U_H:
-      return ALEF_U_H_;
+      tempc = ALEF_U_H_;
+      break;
 
     case BE:
-      return _BE;
+      tempc = _BE;
+      break;
 
     case PE:
-      return _PE;
+      tempc = _PE;
+      break;
 
     case TE:
-      return _TE;
+      tempc = _TE;
+      break;
 
     case SE:
-      return _SE;
+      tempc = _SE;
+      break;
 
     case JIM:
-      return _JIM;
+      tempc = _JIM;
+      break;
 
     case CHE:
-      return _CHE;
+      tempc = _CHE;
+      break;
 
     case HE_J:
-      return _HE_J;
+      tempc = _HE_J;
+      break;
 
     case XE:
-      return _XE;
+      tempc = _XE;
+      break;
 
     case SIN:
-      return _SIN;
+      tempc = _SIN;
+      break;
 
     case SHIN:
-      return _SHIN;
+      tempc = _SHIN;
+      break;
 
     case SAD:
-      return _SAD;
+      tempc = _SAD;
+      break;
 
     case ZAD:
-      return _ZAD;
+      tempc = _ZAD;
+      break;
 
     case AYN:
     case AYN_:
     case _AYN:
-      return _AYN_;
+      tempc = _AYN_;
+      break;
 
     case GHAYN:
     case GHAYN_:
     case _GHAYN_:
-      return _GHAYN_;
+      tempc = _GHAYN_;
+      break;
 
     case FE:
-      return _FE;
+      tempc = _FE;
+      break;
 
     case GHAF:
-      return _GHAF;
+      tempc = _GHAF;
+      break;
 
     case KAF:
-      return _KAF;
+      tempc = _KAF;
+      break;
 
     case GAF:
-      return _GAF;
+      tempc = _GAF;
+      break;
 
     case LAM:
-      return _LAM;
+      tempc = _LAM;
+      break;
 
     case MIM:
-      return _MIM;
+      tempc = _MIM;
+      break;
 
     case NOON:
-      return _NOON;
+      tempc = _NOON;
+      break;
 
     case _HE:
     case F_HE:
-      return _HE_;
+      tempc = _HE_;
+      break;
 
     case YE:
     case YE_:
-      return _YE;
+      tempc = _YE;
+      break;
 
     case IE_:
     case IE:
-      return _IE;
+      tempc = _IE;
+      break;
 
     case TEE:
-      return TEE_;
+      tempc = TEE_;
+      break;
 
     case YEE:
     case YEE_:
-      return _YEE;
+      tempc = _YEE;
+      break;
+
+    default:
+      tempc = c;
   }
-  return c;
+
+  return tempc;
 }
 
 /// Can a given Farsi character join via its left edj.
@@ -2074,7 +2223,7 @@ static int toF_Rjoin(int c)
 /// @param c The character to check.
 ///
 /// @return true if the character can join via its left edj.
-static bool canF_Ljoin(int c)
+static bool canF_Ljoin(char_u c)
 {
   switch (c) {
     case _BE:
@@ -2148,7 +2297,7 @@ static bool canF_Ljoin(int c)
 /// @param c
 ///
 /// @return true if the character can join via its right edj.
-static bool canF_Rjoin(int c)
+static bool canF_Rjoin(char_u c)
 {
   switch (c) {
     case ALEF:
@@ -2174,7 +2323,7 @@ static bool canF_Rjoin(int c)
 /// @param c
 ///
 /// @return true if the character is a terminating type.
-static bool F_isterm(int c)
+static bool F_isterm(char_u c)
 {
   switch (c) {
     case ALEF:
@@ -2200,105 +2349,142 @@ static bool F_isterm(int c)
 /// @param c The character to convert.
 ///
 /// @return The character converted into an ending type.
-static int toF_ending(int c)
+static char_u toF_ending(char_u c)
 {
+  char_u tempc;
+
   switch (c) {
     case _BE:
-      return BE;
+      tempc = BE;
+      break;
 
     case _PE:
-      return PE;
+      tempc = PE;
+      break;
 
     case _TE:
-      return TE;
+      tempc = TE;
+      break;
 
     case _SE:
-      return SE;
+      tempc = SE;
+      break;
 
     case _JIM:
-      return JIM;
+      tempc = JIM;
+      break;
 
     case _CHE:
-      return CHE;
+      tempc = CHE;
+      break;
 
     case _HE_J:
-      return HE_J;
+      tempc = HE_J;
+      break;
 
     case _XE:
-      return XE;
+      tempc = XE;
+      break;
 
     case _SIN:
-      return SIN;
+      tempc = SIN;
+      break;
 
     case _SHIN:
-      return SHIN;
+      tempc = SHIN;
+      break;
 
     case _SAD:
-      return SAD;
+      tempc = SAD;
+      break;
 
     case _ZAD:
-      return ZAD;
+      tempc = ZAD;
+      break;
 
     case _AYN:
-      return AYN;
+      tempc = AYN;
+      break;
 
     case _AYN_:
-      return AYN_;
+      tempc = AYN_;
+      break;
 
     case _GHAYN:
-      return GHAYN;
+      tempc = GHAYN;
+      break;
 
     case _GHAYN_:
-      return GHAYN_;
+      tempc = GHAYN_;
+      break;
 
     case _FE:
-      return FE;
+      tempc = FE;
+      break;
 
     case _GHAF:
-      return GHAF;
+      tempc = GHAF;
+      break;
 
     case _KAF_H:
     case _KAF:
-      return KAF;
+      tempc = KAF;
+      break;
 
     case _GAF:
-      return GAF;
+      tempc = GAF;
+      break;
 
     case _LAM:
-      return LAM;
+      tempc = LAM;
+      break;
 
     case _MIM:
-      return MIM;
+      tempc = MIM;
+      break;
 
     case _NOON:
-      return NOON;
+      tempc = NOON;
+      break;
 
     case _YE:
-      return YE_;
+      tempc = YE_;
+      break;
 
     case YE_:
-      return YE;
+      tempc = YE;
+      break;
 
     case _YEE:
-      return YEE_;
+      tempc = YEE_;
+      break;
 
     case YEE_:
-      return YEE;
+      tempc = YEE;
+      break;
 
     case TEE:
-      return TEE_;
+      tempc = TEE_;
+      break;
 
     case _IE:
-      return IE_;
+      tempc = IE_;
+      break;
 
     case IE_:
-      return IE;
+      tempc = IE;
+      break;
 
     case _HE:
     case _HE_:
-      return F_HE;
+      tempc = F_HE;
+      break;
+
+    default:
+      tempc = c;
   }
-  return c;
+
+  return tempc;
 }
 
 /// Convert the Farsi 3342 standard into Farsi VIM.
@@ -2369,7 +2555,7 @@ void conv_to_pstd(void)
 static void lrswapbuf(char_u *buf, int len)
 {
   char_u *s, *e;
-  int c;
+  char_u c;
 
   s = buf;
   e = buf + len - 1;
@@ -2560,7 +2746,7 @@ int cmdl_fkmap(int c)
         case _NOON:
         case _HE:
         case _HE_:
-            cmd_pchar(toF_TyA(tempc), AT_CURSOR);
+            cmd_pchar(toF_TyA((char_u)tempc), AT_CURSOR);
           break;
 
         case _AYN_:
