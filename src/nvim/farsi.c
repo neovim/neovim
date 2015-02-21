@@ -30,26 +30,23 @@
 // Special Farsi text messages
 
 const char_u farsi_text_1[] = {
-  YE_, _SIN, RE, ALEF_, _FE, ' ', 'V', 'I', 'M',
-  ' ', F_HE, _BE, ' ', SHIN, RE, _GAF, DAL, ' ', NOON,
-  ALEF_, _YE, ALEF_, _PE, '\0'
+  YE_, _SIN, RE, ALEF_, _FE, ' ', 'V', 'I', 'M', ' ', F_HE, _BE, ' ', SHIN, RE,
+  _GAF, DAL, ' ', NOON, ALEF_, _YE, ALEF_, _PE, '\0'
 };
 
 const char_u farsi_text_2[] = {
-  YE_, _SIN, RE, ALEF_, _FE, ' ', FARSI_3, FARSI_3,
-  FARSI_4, FARSI_2, ' ', DAL, RE, ALEF, DAL, _NOON,
-  ALEF_, _TE, _SIN, ALEF, ' ', F_HE, _BE, ' ', SHIN,
-  RE,  _GAF, DAL, ' ', NOON, ALEF_, _YE, ALEF_, _PE, '\0'
+  YE_, _SIN, RE, ALEF_, _FE, ' ', FARSI_3, FARSI_3, FARSI_4, FARSI_2, ' ', DAL,
+  RE, ALEF, DAL, _NOON, ALEF_, _TE, _SIN, ALEF, ' ', F_HE, _BE, ' ', SHIN, RE,
+  _GAF, DAL, ' ', NOON, ALEF_, _YE, ALEF_, _PE, '\0'
 };
 
 const char_u farsi_text_3[] = {
-  DAL, WAW, _SHIN, _YE, _MIM, _NOON, ' ', YE_, _NOON,
-  ALEF_, _BE, _YE, _TE, _SHIN, _PE, ' ', 'R', 'E', 'P', 'L',
-  'A', 'C', 'E', ' ', NOON, ALEF_, _MIM, RE, _FE, ZE, ALEF,
-  ' ', 'R', 'E', 'V', 'E', 'R', 'S', 'E', ' ', 'I', 'N',
-  'S', 'E', 'R', 'T', ' ', SHIN, WAW, RE, ' ', ALEF_, _BE,
-  ' ', YE_, _SIN, RE, ALEF_, _FE, ' ', RE, DAL, ' ', RE,
-  ALEF_, _KAF, ' ', MIM, ALEF_, _GAF, _NOON, _HE, '\0'
+  DAL, WAW, _SHIN, _YE, _MIM, _NOON, ' ', YE_, _NOON, ALEF_, _BE, _YE, _TE,
+  _SHIN, _PE, ' ', 'R', 'E', 'P', 'L', 'A', 'C', 'E', ' ', NOON, ALEF_, _MIM,
+  RE, _FE, ZE, ALEF, ' ', 'R', 'E', 'V', 'E', 'R', 'S', 'E', ' ', 'I', 'N', 'S',
+  'E', 'R', 'T', ' ', SHIN, WAW, RE, ' ', ALEF_, _BE, ' ', YE_, _SIN, RE, ALEF_,
+  _FE, ' ', RE, DAL, ' ', RE, ALEF_, _KAF, ' ', MIM, ALEF_, _GAF, _NOON, _HE,
+  '\0'
 };
 
 const char_u farsi_text_5[] = {
@@ -71,114 +68,36 @@ static char_u toF_Xor_X_(int c)
   char_u tempc;
 
   switch (c) {
-    case BE:
-      tempc = _BE;
-      break;
-
-    case PE:
-      tempc = _PE;
-      break;
-
-    case TE:
-      tempc = _TE;
-      break;
-
-    case SE:
-      tempc = _SE;
-      break;
-
-    case JIM:
-      tempc = _JIM;
-      break;
-
-    case CHE:
-      tempc = _CHE;
-      break;
-
-    case HE_J:
-      tempc = _HE_J;
-      break;
-
-    case XE:
-      tempc = _XE;
-      break;
-
-    case SIN:
-      tempc = _SIN;
-      break;
-
-    case SHIN:
-      tempc = _SHIN;
-      break;
-
-    case SAD:
-      tempc = _SAD;
-      break;
-
-    case ZAD:
-      tempc = _ZAD;
-      break;
-
-    case AYN:
-      tempc = _AYN;
-      break;
-
-    case AYN_:
-      tempc = _AYN_;
-      break;
-
-    case GHAYN:
-      tempc = _GHAYN;
-      break;
-
-    case GHAYN_:
-      tempc = _GHAYN_;
-      break;
-
-    case FE:
-      tempc = _FE;
-      break;
-
-    case GHAF:
-      tempc = _GHAF;
-      break;
-
-    case KAF:
-      tempc = _KAF;
-      break;
-
-    case GAF:
-      tempc = _GAF;
-      break;
-
-    case LAM:
-      tempc = _LAM;
-      break;
-
-    case MIM:
-      tempc = _MIM;
-      break;
-
-    case NOON:
-      tempc = _NOON;
-      break;
-
-    case YE:
-    case YE_:
-      tempc = _YE;
-      break;
-
-    case YEE:
-    case YEE_:
-      tempc = _YEE;
-      break;
-
-    case IE:
-    case IE_:
-      tempc = _IE;
-      break;
-
-    case F_HE:
+    case BE     : tempc = _BE     ; break;
+    case PE     : tempc = _PE     ; break;
+    case TE     : tempc = _TE     ; break;
+    case SE     : tempc = _SE     ; break;
+    case JIM    : tempc = _JIM    ; break;
+    case CHE    : tempc = _CHE    ; break;
+    case HE_J   : tempc = _HE_J   ; break;
+    case XE     : tempc = _XE     ; break;
+    case SIN    : tempc = _SIN    ; break;
+    case SHIN   : tempc = _SHIN   ; break;
+    case SAD    : tempc = _SAD    ; break;
+    case ZAD    : tempc = _ZAD    ; break;
+    case AYN    : tempc = _AYN    ; break;
+    case AYN_   : tempc = _AYN_   ; break;
+    case GHAYN  : tempc = _GHAYN  ; break;
+    case GHAYN_ : tempc = _GHAYN_ ; break;
+    case FE     : tempc = _FE     ; break;
+    case GHAF   : tempc = _GHAF   ; break;
+    case KAF    : tempc = _KAF    ; break;
+    case GAF    : tempc = _GAF    ; break;
+    case LAM    : tempc = _LAM    ; break;
+    case MIM    : tempc = _MIM    ; break;
+    case NOON   : tempc = _NOON   ; break;
+    case YE     :
+    case YE_    : tempc = _YE     ; break;
+    case YEE    :
+    case YEE_   : tempc = _YEE    ; break;
+    case IE     :
+    case IE_    : tempc = _IE     ; break;
+    case F_HE   :
       tempc = _HE;
 
       if (p_ri &&
@@ -197,6 +116,7 @@ static char_u toF_Xor_X_(int c)
         }
         inc_cursor();
       }
+
       break;
 
     default:
@@ -216,130 +136,43 @@ char_u toF_TyA(char_u c)
   char_u tempc;
 
   switch (c) {
-    case ALEF_:
-      tempc = ALEF;
-      break;
-
-    case ALEF_U_H_:
-      tempc = ALEF_U_H;
-      break;
-
-    case _BE:
-      tempc = BE;
-      break;
-
-    case _PE:
-      tempc = PE;
-      break;
-
-    case _TE:
-      tempc = TE;
-      break;
-
-    case _SE:
-      tempc = SE;
-      break;
-
-    case _JIM:
-      tempc = JIM;
-      break;
-
-    case _CHE:
-      tempc = CHE;
-      break;
-
-    case _HE_J:
-      tempc = HE_J;
-      break;
-
-    case _XE:
-      tempc = XE;
-      break;
-
-    case _SIN:
-      tempc = SIN;
-      break;
-
-    case _SHIN:
-      tempc = SHIN;
-      break;
-
-    case _SAD:
-      tempc = SAD;
-      break;
-
-    case _ZAD:
-      tempc = ZAD;
-      break;
-
-    case _AYN:
-    case AYN_:
-    case _AYN_:
-      tempc = AYN;
-      break;
-
-    case _GHAYN:
-    case GHAYN_:
-    case _GHAYN_:
-      tempc = GHAYN;
-      break;
-
-    case _FE:
-      tempc = FE;
-      break;
-
-    case _GHAF:
-      tempc = GHAF;
-      break;
-
-    // I am not sure what it is !!!
-    // case _KAF_H:
-    case _KAF:
-      tempc = KAF;
-      break;
-
-    case _GAF:
-      tempc = GAF;
-      break;
-
-    case _LAM:
-      tempc = LAM;
-      break;
-
-    case _MIM:
-      tempc = MIM;
-      break;
-
-    case _NOON:
-      tempc = NOON;
-      break;
-
-    case _YE:
-    case YE_:
-      tempc = YE;
-      break;
-
-    case _YEE:
-    case YEE_:
-      tempc = YEE;
-      break;
-
-    case TEE_:
-      tempc = TEE;
-      break;
-
-    case _IE:
-    case IE_:
-      tempc = IE;
-      break;
-
-    case _HE:
-    case _HE_:
-      tempc = F_HE;
-      break;
-
-    default:
-      tempc = c;
+    case ALEF_     : tempc = ALEF     ; break;
+    case ALEF_U_H_ : tempc = ALEF_U_H ; break;
+    case _BE       : tempc = BE       ; break;
+    case _PE       : tempc = PE       ; break;
+    case _TE       : tempc = TE       ; break;
+    case _SE       : tempc = SE       ; break;
+    case _JIM      : tempc = JIM      ; break;
+    case _CHE      : tempc = CHE      ; break;
+    case _HE_J     : tempc = HE_J     ; break;
+    case _XE       : tempc = XE       ; break;
+    case _SIN      : tempc = SIN      ; break;
+    case _SHIN     : tempc = SHIN     ; break;
+    case _SAD      : tempc = SAD      ; break;
+    case _ZAD      : tempc = ZAD      ; break;
+    case _AYN      :
+    case AYN_      :
+    case _AYN_     : tempc = AYN      ; break;
+    case _GHAYN    :
+    case GHAYN_    :
+    case _GHAYN_   : tempc = GHAYN    ; break;
+    case _FE       : tempc = FE       ; break;
+    case _GHAF     : tempc = GHAF     ; break;
+    case _KAF      : tempc = KAF      ; break;
+    case _GAF      : tempc = GAF      ; break;
+    case _LAM      : tempc = LAM      ; break;
+    case _MIM      : tempc = MIM      ; break;
+    case _NOON     : tempc = NOON     ; break;
+    case _YE       :
+    case YE_       : tempc = YE       ; break;
+    case _YEE      :
+    case YEE_      : tempc = YEE      ; break;
+    case TEE_      : tempc = TEE      ; break;
+    case _IE       :
+    case IE_       : tempc = IE       ; break;
+    case _HE       :
+    case _HE_      : tempc = F_HE     ; break;
+    default        : tempc = c        ;
   }
 
   return tempc;
@@ -457,52 +290,17 @@ static char_u toF_TyB(int c)
   char_u tempc;
 
   switch (c) {
-    case ALEF_:
-      tempc = ALEF;
-      break;
-
-    case ALEF_U_H_:
-      tempc = ALEF_U_H;
-      break;
-
-    case _AYN_:
-      tempc = _AYN;
-      break;
-
-    case AYN_:
-      // exception - there are many of them
-      tempc = AYN;
-      break;
-
-    case _GHAYN_:
-      tempc = _GHAYN;
-      break;
-
-    case GHAYN_:
-      // exception - there are many of them
-      tempc = GHAYN;
-      break;
-
-    case _HE_:
-      tempc = _HE;
-      break;
-
-    case YE_:
-      tempc = YE;
-      break;
-
-    case IE_:
-      tempc = IE;
-      break;
-
-    case TEE_:
-      tempc = TEE;
-      break;
-
-    case YEE_:
-      tempc = YEE;
-      break;
-
+    case ALEF_     : tempc = ALEF     ; break;
+    case ALEF_U_H_ : tempc = ALEF_U_H ; break;
+    case _AYN_     : tempc = _AYN     ; break;
+    case AYN_      : tempc = AYN      ; break; // exception - there are many
+    case _GHAYN_   : tempc = _GHAYN   ; break;
+    case GHAYN_    : tempc = GHAYN    ; break; // exception - there are many
+    case _HE_      : tempc = _HE      ; break;
+    case YE_       : tempc = YE       ; break;
+    case IE_       : tempc = IE       ; break;
+    case TEE_      : tempc = TEE      ; break;
+    case YEE_      : tempc = YEE      ; break;
     default:
       assert(c >= 0 && c <= UCHAR_MAX);
       tempc = (char_u)c;
@@ -561,107 +359,35 @@ static void chg_c_toX_orX(void)
   char_u tempc;
 
   switch ((curc = gchar_cursor())) {
-    case _BE:
-      tempc = BE;
-      break;
-
-    case _PE:
-      tempc = PE;
-      break;
-
-    case _TE:
-      tempc = TE;
-      break;
-
-    case _SE:
-      tempc = SE;
-      break;
-
-    case _JIM:
-      tempc = JIM;
-      break;
-
-    case _CHE:
-      tempc = CHE;
-      break;
-
-    case _HE_J:
-      tempc = HE_J;
-      break;
-
-    case _XE:
-      tempc = XE;
-      break;
-
-    case _SIN:
-      tempc = SIN;
-      break;
-
-    case _SHIN:
-      tempc = SHIN;
-      break;
-
-    case _SAD:
-      tempc = SAD;
-      break;
-
-    case _ZAD:
-      tempc = ZAD;
-      break;
-
-    case _FE:
-      tempc = FE;
-      break;
-
-    case _GHAF:
-      tempc = GHAF;
-      break;
-
-    case _KAF_H:
-    case _KAF:
-      tempc = KAF;
-      break;
-
-    case _GAF:
-      tempc = GAF;
-      break;
-
-    case _AYN:
-      tempc = AYN;
-      break;
-
-    case _AYN_:
-      tempc = AYN_;
-      break;
-
-    case _GHAYN:
-      tempc = GHAYN;
-      break;
-
-    case _GHAYN_:
-      tempc = GHAYN_;
-      break;
-
-    case _LAM:
-      tempc = LAM;
-      break;
-
-    case _MIM:
-      tempc = MIM;
-      break;
-
-    case _NOON:
-      tempc = NOON;
-      break;
-
-    case _HE:
-    case _HE_:
-      tempc = F_HE;
-      break;
-
-    case _YE:
-    case _IE:
-    case _YEE:
+    case _BE     : tempc = BE     ; break ;
+    case _PE     : tempc = PE     ; break ;
+    case _TE     : tempc = TE     ; break ;
+    case _SE     : tempc = SE     ; break ;
+    case _JIM    : tempc = JIM    ; break ;
+    case _CHE    : tempc = CHE    ; break ;
+    case _HE_J   : tempc = HE_J   ; break ;
+    case _XE     : tempc = XE     ; break ;
+    case _SIN    : tempc = SIN    ; break ;
+    case _SHIN   : tempc = SHIN   ; break ;
+    case _SAD    : tempc = SAD    ; break ;
+    case _ZAD    : tempc = ZAD    ; break ;
+    case _FE     : tempc = FE     ; break ;
+    case _GHAF   : tempc = GHAF   ; break ;
+    case _KAF_H  :
+    case _KAF    : tempc = KAF    ; break ;
+    case _GAF    : tempc = GAF    ; break ;
+    case _AYN    : tempc = AYN    ; break ;
+    case _AYN_   : tempc = AYN_   ; break ;
+    case _GHAYN  : tempc = GHAYN  ; break ;
+    case _GHAYN_ : tempc = GHAYN_ ; break ;
+    case _LAM    : tempc = LAM    ; break ;
+    case _MIM    : tempc = MIM    ; break ;
+    case _NOON   : tempc = NOON   ; break ;
+    case _HE     :
+    case _HE_    : tempc = F_HE   ; break;
+    case _YE     :
+    case _IE     :
+    case _YEE    :
       if (p_ri) {
         inc_cursor();
 
@@ -707,52 +433,18 @@ static void chg_c_to_X_orX_(void)
   char_u tempc;
 
   switch (gchar_cursor()) {
-    case ALEF:
-      tempc = ALEF_;
-      break;
-
-    case ALEF_U_H:
-      tempc = ALEF_U_H_;
-      break;
-
-    case _AYN:
-      tempc = _AYN_;
-      break;
-
-    case AYN:
-      tempc = AYN_;
-      break;
-
-    case _GHAYN:
-      tempc = _GHAYN_;
-      break;
-
-    case GHAYN:
-      tempc = GHAYN_;
-      break;
-
-    case _HE:
-      tempc = _HE_;
-      break;
-
-    case YE:
-      tempc = YE_;
-      break;
-
-    case IE:
-      tempc = IE_;
-      break;
-
-    case TEE:
-      tempc = TEE_;
-      break;
-
-    case YEE:
-      tempc = YEE_;
-      break;
-
-    default:
-      tempc = 0;
+    case ALEF     : tempc = ALEF_     ; break;
+    case ALEF_U_H : tempc = ALEF_U_H_ ; break;
+    case _AYN     : tempc = _AYN_     ; break;
+    case AYN      : tempc = AYN_      ; break;
+    case _GHAYN   : tempc = _GHAYN_   ; break;
+    case GHAYN    : tempc = GHAYN_    ; break;
+    case _HE      : tempc = _HE_      ; break;
+    case YE       : tempc = YE_       ; break;
+    case IE       : tempc = IE_       ; break;
+    case TEE      : tempc = TEE_      ; break;
+    case YEE      : tempc = YEE_      ; break;
+    default       : tempc = 0         ;
   }
 
   if (tempc) {
@@ -775,7 +467,6 @@ static void chg_c_to_X_or_X(void)
       put_and_redo((char_u)tempc);
       return;
     }
-
     dec_cursor();
   }
 
@@ -805,52 +496,18 @@ static void chg_l_to_X_orX_(void)
   }
 
   switch (gchar_cursor()) {
-    case ALEF:
-      tempc = ALEF_;
-      break;
-
-    case ALEF_U_H:
-      tempc = ALEF_U_H_;
-      break;
-
-    case _AYN:
-      tempc = _AYN_;
-      break;
-
-    case AYN:
-      tempc = AYN_;
-      break;
-
-    case _GHAYN:
-      tempc = _GHAYN_;
-      break;
-
-    case GHAYN:
-      tempc = GHAYN_;
-      break;
-
-    case _HE:
-      tempc = _HE_;
-      break;
-
-    case YE:
-      tempc = YE_;
-      break;
-
-    case IE:
-      tempc = IE_;
-      break;
-
-    case TEE:
-      tempc = TEE_;
-      break;
-
-    case YEE:
-      tempc = YEE_;
-      break;
-
-    default:
-      tempc = 0;
+    case ALEF     : tempc = ALEF_     ; break;
+    case ALEF_U_H : tempc = ALEF_U_H_ ; break;
+    case _AYN     : tempc = _AYN_     ; break;
+    case AYN      : tempc = AYN_      ; break;
+    case _GHAYN   : tempc = _GHAYN_   ; break;
+    case GHAYN    : tempc = GHAYN_    ; break;
+    case _HE      : tempc = _HE_      ; break;
+    case YE       : tempc = YE_       ; break;
+    case IE       : tempc = IE_       ; break;
+    case TEE      : tempc = TEE_      ; break;
+    case YEE      : tempc = YEE_      ; break;
+    default       : tempc = 0         ;
   }
 
   if (tempc) {
@@ -885,52 +542,18 @@ static void chg_l_toXor_X(void)
   }
 
   switch (gchar_cursor()) {
-    case ALEF_:
-      tempc = ALEF;
-      break;
-
-    case ALEF_U_H_:
-      tempc = ALEF_U_H;
-      break;
-
-    case _AYN_:
-      tempc = _AYN;
-      break;
-
-    case AYN_:
-      tempc = AYN;
-      break;
-
-    case _GHAYN_:
-      tempc = _GHAYN;
-      break;
-
-    case GHAYN_:
-      tempc = GHAYN;
-      break;
-
-    case _HE_:
-      tempc = _HE;
-      break;
-
-    case YE_:
-      tempc = YE;
-      break;
-
-    case IE_:
-      tempc = IE;
-      break;
-
-    case TEE_:
-      tempc = TEE;
-      break;
-
-    case YEE_:
-      tempc = YEE;
-      break;
-
-    default:
-      tempc = 0;
+    case ALEF_     : tempc = ALEF     ; break;
+    case ALEF_U_H_ : tempc = ALEF_U_H ; break;
+    case _AYN_     : tempc = _AYN     ; break;
+    case AYN_      : tempc = AYN      ; break;
+    case _GHAYN_   : tempc = _GHAYN   ; break;
+    case GHAYN_    : tempc = GHAYN    ; break;
+    case _HE_      : tempc = _HE      ; break;
+    case YE_       : tempc = YE       ; break;
+    case IE_       : tempc = IE       ; break;
+    case TEE_      : tempc = TEE      ; break;
+    case YEE_      : tempc = YEE      ; break;
+    default        : tempc = 0        ;
   }
 
   if (tempc) {
@@ -977,13 +600,13 @@ int fkmap(int c)
   }
 
   if (VIM_ISDIGIT(c)
-      || (((c == '.')
-           || (c == '+')
-           || (c == '-')
-           || (c == '^')
-           || (c == '%')
-           || (c == '#')
-           || (c == '='))
+      || ((c == '.'
+           || c == '+'
+           || c == '-'
+           || c == '^'
+           || c == '%'
+           || c == '#'
+           || c == '=')
           && revins)) {
     if (!revins) {
       if (curwin->w_cursor.col) {
@@ -1144,158 +767,57 @@ int fkmap(int c)
       if (!p_ri) {
         if (!curwin->w_cursor.col) {
           switch (c) {
-            case '0':
-              return FARSI_0;
-
-            case '1':
-              return FARSI_1;
-
-            case '2':
-              return FARSI_2;
-
-            case '3':
-              return FARSI_3;
-
-            case '4':
-              return FARSI_4;
-
-            case '5':
-              return FARSI_5;
-
-            case '6':
-              return FARSI_6;
-
-            case '7':
-              return FARSI_7;
-
-            case '8':
-              return FARSI_8;
-
-            case '9':
-              return FARSI_9;
-
-            case 'B':
-              return F_PSP;
-
-            case 'E':
-              return JAZR_N;
-
-            case 'F':
-              return ALEF_D_H;
-
-            case 'H':
-              return ALEF_A;
-
-            case 'I':
-              return TASH;
-
-            case 'K':
-              return F_LQUOT;
-
-            case 'L':
-              return F_RQUOT;
-
-            case 'M':
-              return HAMZE;
-
-            case 'O':
-              return '[';
-
-            case 'P':
-              return ']';
-
-            case 'Q':
-              return OO;
-
-            case 'R':
-              return MAD_N;
-
-            case 'T':
-              return OW;
-
-            case 'U':
-              return MAD;
-
-            case 'W':
-              return OW_OW;
-
-            case 'Y':
-              return JAZR;
-
-            case '`':
-              return F_PCN;
-
-            case '!':
-              return F_EXCL;
-
-            case '@':
-              return F_COMMA;
-
-            case '#':
-              return F_DIVIDE;
-
-            case '$':
-              return F_CURRENCY;
-
-            case '%':
-              return F_PERCENT;
-
-            case '^':
-              return F_MUL;
-
-            case '&':
-              return F_BCOMMA;
-
-            case '*':
-              return F_STAR;
-
-            case '(':
-              return F_LPARENT;
-
-            case ')':
-              return F_RPARENT;
-
-            case '-':
-              return F_MINUS;
-
-            case '_':
-              return F_UNDERLINE;
-
-            case '=':
-              return F_EQUALS;
-
-            case '+':
-              return F_PLUS;
-
-            case '\\':
-              return F_BSLASH;
-
-            case '|':
-              return F_PIPE;
-
-            case ':':
-              return F_DCOLON;
-
-            case '"':
-              return F_SEMICOLON;
-
-            case '.':
-              return F_PERIOD;
-
-            case '/':
-              return F_SLASH;
-
-            case '<':
-              return F_LESS;
-
-            case '>':
-              return F_GREATER;
-
-            case '?':
-              return F_QUESTION;
-
-            case ' ':
-              return F_BLANK;
+            case '0'  : return FARSI_0     ;
+            case '1'  : return FARSI_1     ;
+            case '2'  : return FARSI_2     ;
+            case '3'  : return FARSI_3     ;
+            case '4'  : return FARSI_4     ;
+            case '5'  : return FARSI_5     ;
+            case '6'  : return FARSI_6     ;
+            case '7'  : return FARSI_7     ;
+            case '8'  : return FARSI_8     ;
+            case '9'  : return FARSI_9     ;
+            case 'B'  : return F_PSP       ;
+            case 'E'  : return JAZR_N      ;
+            case 'F'  : return ALEF_D_H    ;
+            case 'H'  : return ALEF_A      ;
+            case 'I'  : return TASH        ;
+            case 'K'  : return F_LQUOT     ;
+            case 'L'  : return F_RQUOT     ;
+            case 'M'  : return HAMZE       ;
+            case 'O'  : return '['         ;
+            case 'P'  : return ']'         ;
+            case 'Q'  : return OO          ;
+            case 'R'  : return MAD_N       ;
+            case 'T'  : return OW          ;
+            case 'U'  : return MAD         ;
+            case 'W'  : return OW_OW       ;
+            case 'Y'  : return JAZR        ;
+            case '`'  : return F_PCN       ;
+            case '!'  : return F_EXCL      ;
+            case '@'  : return F_COMMA     ;
+            case '#'  : return F_DIVIDE    ;
+            case '$'  : return F_CURRENCY  ;
+            case '%'  : return F_PERCENT   ;
+            case '^'  : return F_MUL       ;
+            case '&'  : return F_BCOMMA    ;
+            case '*'  : return F_STAR      ;
+            case '('  : return F_LPARENT   ;
+            case ')'  : return F_RPARENT   ;
+            case '-'  : return F_MINUS     ;
+            case '_'  : return F_UNDERLINE ;
+            case '='  : return F_EQUALS    ;
+            case '+'  : return F_PLUS      ;
+            case '\\' : return F_BSLASH    ;
+            case '|'  : return F_PIPE      ;
+            case ':'  : return F_DCOLON    ;
+            case '"'  : return F_SEMICOLON ;
+            case '.'  : return F_PERIOD    ;
+            case '/'  : return F_SLASH     ;
+            case '<'  : return F_LESS      ;
+            case '>'  : return F_GREATER   ;
+            case '?'  : return F_QUESTION  ;
+            case ' '  : return F_BLANK     ;
           }
           break;
         }
@@ -1435,200 +957,70 @@ int fkmap(int c)
       tempc = 0;
 
       switch (c) {
-        case '0':
-          return FARSI_0;
-
-        case '1':
-          return FARSI_1;
-
-        case '2':
-          return FARSI_2;
-
-        case '3':
-          return FARSI_3;
-
-        case '4':
-          return FARSI_4;
-
-        case '5':
-          return FARSI_5;
-
-        case '6':
-          return FARSI_6;
-
-        case '7':
-          return FARSI_7;
-
-        case '8':
-          return FARSI_8;
-
-        case '9':
-          return FARSI_9;
-
-        case 'B':
-          return F_PSP;
-
-        case 'E':
-          return JAZR_N;
-
-        case 'F':
-          return ALEF_D_H;
-
-        case 'H':
-          return ALEF_A;
-
-        case 'I':
-          return TASH;
-
-        case 'K':
-          return F_LQUOT;
-
-        case 'L':
-          return F_RQUOT;
-
-        case 'M':
-          return HAMZE;
-
-        case 'O':
-          return '[';
-
-        case 'P':
-          return ']';
-
-        case 'Q':
-          return OO;
-
-        case 'R':
-          return MAD_N;
-
-        case 'T':
-          return OW;
-
-        case 'U':
-          return MAD;
-
-        case 'W':
-          return OW_OW;
-
-        case 'Y':
-          return JAZR;
-
-        case '`':
-          return F_PCN;
-
-        case '!':
-          return F_EXCL;
-
-        case '@':
-          return F_COMMA;
-
-        case '#':
-          return F_DIVIDE;
-
-        case '$':
-          return F_CURRENCY;
-
-        case '%':
-          return F_PERCENT;
-
-        case '^':
-          return F_MUL;
-
-        case '&':
-          return F_BCOMMA;
-
-        case '*':
-          return F_STAR;
-
-        case '(':
-          return F_LPARENT;
-
-        case ')':
-          return F_RPARENT;
-
-        case '-':
-          return F_MINUS;
-
-        case '_':
-          return F_UNDERLINE;
-
-        case '=':
-          return F_EQUALS;
-
-        case '+':
-          return F_PLUS;
-
-        case '\\':
-          return F_BSLASH;
-
-        case '|':
-          return F_PIPE;
-
-        case ':':
-          return F_DCOLON;
-
-        case '"':
-          return F_SEMICOLON;
-
-        case '.':
-          return F_PERIOD;
-
-        case '/':
-          return F_SLASH;
-
-        case '<':
-          return F_LESS;
-
-        case '>':
-          return F_GREATER;
-
-        case '?':
-          return F_QUESTION;
-
-        case ' ':
-          return F_BLANK;
+        case '0'  : return FARSI_0     ;
+        case '1'  : return FARSI_1     ;
+        case '2'  : return FARSI_2     ;
+        case '3'  : return FARSI_3     ;
+        case '4'  : return FARSI_4     ;
+        case '5'  : return FARSI_5     ;
+        case '6'  : return FARSI_6     ;
+        case '7'  : return FARSI_7     ;
+        case '8'  : return FARSI_8     ;
+        case '9'  : return FARSI_9     ;
+        case 'B'  : return F_PSP       ;
+        case 'E'  : return JAZR_N      ;
+        case 'F'  : return ALEF_D_H    ;
+        case 'H'  : return ALEF_A      ;
+        case 'I'  : return TASH        ;
+        case 'K'  : return F_LQUOT     ;
+        case 'L'  : return F_RQUOT     ;
+        case 'M'  : return HAMZE       ;
+        case 'O'  : return '['         ;
+        case 'P'  : return ']'         ;
+        case 'Q'  : return OO          ;
+        case 'R'  : return MAD_N       ;
+        case 'T'  : return OW          ;
+        case 'U'  : return MAD         ;
+        case 'W'  : return OW_OW       ;
+        case 'Y'  : return JAZR        ;
+        case '`'  : return F_PCN       ;
+        case '!'  : return F_EXCL      ;
+        case '@'  : return F_COMMA     ;
+        case '#'  : return F_DIVIDE    ;
+        case '$'  : return F_CURRENCY  ;
+        case '%'  : return F_PERCENT   ;
+        case '^'  : return F_MUL       ;
+        case '&'  : return F_BCOMMA    ;
+        case '*'  : return F_STAR      ;
+        case '('  : return F_LPARENT   ;
+        case ')'  : return F_RPARENT   ;
+        case '-'  : return F_MINUS     ;
+        case '_'  : return F_UNDERLINE ;
+        case '='  : return F_EQUALS    ;
+        case '+'  : return F_PLUS      ;
+        case '\\' : return F_BSLASH    ;
+        case '|'  : return F_PIPE      ;
+        case ':'  : return F_DCOLON    ;
+        case '"'  : return F_SEMICOLON ;
+        case '.'  : return F_PERIOD    ;
+        case '/'  : return F_SLASH     ;
+        case '<'  : return F_LESS      ;
+        case '>'  : return F_GREATER   ;
+        case '?'  : return F_QUESTION  ;
+        case ' '  : return F_BLANK     ;
       }
       break;
 
-    case 'a':
-      tempc = _SHIN;
-      break;
-
-    case 'A':
-      tempc = WAW_H;
-      break;
-
-    case 'b':
-      tempc = ZAL;
-      break;
-
-    case 'c':
-      tempc = ZE;
-      break;
-
-    case 'C':
-      tempc = JE;
-      break;
-
-    case 'd':
-      tempc = _YE;
-      break;
-
-    case 'D':
-      tempc = _YEE;
-      break;
-
-    case 'e':
-      tempc = _SE;
-      break;
-
-    case 'f':
-      tempc = _BE;
-      break;
-
-    case 'g':
-      tempc = _LAM;
-      break;
+    case 'a' : tempc = _SHIN ; break;
+    case 'A' : tempc = WAW_H ; break;
+    case 'b' : tempc = ZAL   ; break;
+    case 'c' : tempc = ZE    ; break;
+    case 'C' : tempc = JE    ; break;
+    case 'd' : tempc = _YE   ; break;
+    case 'D' : tempc = _YEE  ; break;
+    case 'e' : tempc = _SE   ; break;
+    case 'f' : tempc = _BE   ; break;
+    case 'g' : tempc = _LAM  ; break;
 
     case 'G':
       if (!curwin->w_cursor.col && STRLEN(get_cursor_line_ptr())) {
@@ -1703,7 +1095,6 @@ int fkmap(int c)
       return tempc;
 
     case 'i':
-
       if (!curwin->w_cursor.col && STRLEN(get_cursor_line_ptr())) {
         if (!p_ri && !F_is_TyE(tempc)) {
           chg_c_to_X_orX_();
@@ -1738,7 +1129,6 @@ int fkmap(int c)
       break;
 
     case 'J':
-
       if (!curwin->w_cursor.col && STRLEN(get_cursor_line_ptr())) {
         if (p_ri) {
           chg_c_to_X_or_X();
@@ -1765,50 +1155,18 @@ int fkmap(int c)
 
       return tempc;
 
-    case 'k':
-      tempc = _NOON;
-      break;
-
-    case 'l':
-      tempc = _MIM;
-      break;
-
-    case 'm':
-      tempc = _PE;
-      break;
-
-    case 'n':
-    case 'N':
-      tempc = DAL;
-      break;
-
-    case 'o':
-      tempc = _XE;
-      break;
-
-    case 'p':
-      tempc = _HE_J;
-      break;
-
-    case 'q':
-      tempc = _ZAD;
-      break;
-
-    case 'r':
-      tempc = _GHAF;
-      break;
-
-    case 's':
-      tempc = _SIN;
-      break;
-
-    case 'S':
-      tempc = _IE;
-      break;
-
-    case 't':
-      tempc = _FE;
-      break;
+    case 'k' : tempc = _NOON ; break;
+    case 'l' : tempc = _MIM  ; break;
+    case 'm' : tempc = _PE   ; break;
+    case 'n' :
+    case 'N' : tempc = DAL   ; break;
+    case 'o' : tempc = _XE   ; break;
+    case 'p' : tempc = _HE_J ; break;
+    case 'q' : tempc = _ZAD  ; break;
+    case 'r' : tempc = _GHAF ; break;
+    case 's' : tempc = _SIN  ; break;
+    case 'S' : tempc = _IE   ; break;
+    case 't' : tempc = _FE   ; break;
 
     case 'u':
       if (!curwin->w_cursor.col && STRLEN(get_cursor_line_ptr())) {
@@ -1840,19 +1198,11 @@ int fkmap(int c)
       }
       break;
 
-    case 'v':
-    case 'V':
-      tempc = RE;
-      break;
-
-    case 'w':
-      tempc = _SAD;
-      break;
-
-    case 'x':
-    case 'X':
-      tempc = _TA;
-      break;
+    case 'v' :
+    case 'V' : tempc = RE   ; break;
+    case 'w' : tempc = _SAD ; break;
+    case 'x' :
+    case 'X' : tempc = _TA  ; break;
 
     case 'y':
       if (!curwin->w_cursor.col && STRLEN(get_cursor_line_ptr())) {
@@ -1885,33 +1235,13 @@ int fkmap(int c)
 
       break;
 
-    case 'z':
-      tempc = _ZA;
-      break;
-
-    case 'Z':
-      tempc = _KAF_H;
-      break;
-
-    case ';':
-      tempc = _KAF;
-      break;
-
-    case '\'':
-      tempc = _GAF;
-      break;
-
-    case ',':
-      tempc = WAW;
-      break;
-
-    case '[':
-      tempc = _JIM;
-      break;
-
-    case ']':
-      tempc = _CHE;
-      break;
+    case 'z'  : tempc = _ZA    ; break;
+    case 'Z'  : tempc = _KAF_H ; break;
+    case ';'  : tempc = _KAF   ; break;
+    case '\'' : tempc = _GAF   ; break;
+    case ','  : tempc = WAW    ; break;
+    case '['  : tempc = _JIM   ; break;
+    case ']'  : tempc = _CHE   ; break;
   }
 
   if ((F_isalpha(tempc) || F_isdigit(tempc))) {
@@ -1958,124 +1288,42 @@ static char_u toF_leading(char_u c)
   char_u tempc;
 
   switch (c) {
-    case ALEF_:
-      tempc = ALEF;
-      break;
-
-    case ALEF_U_H_:
-      tempc = ALEF_U_H;
-      break;
-
-    case BE:
-      tempc = _BE;
-      break;
-
-    case PE:
-      tempc = _PE;
-      break;
-
-    case TE:
-      tempc = _TE;
-      break;
-
-    case SE:
-      tempc = _SE;
-      break;
-
-    case JIM:
-      tempc = _JIM;
-      break;
-
-    case CHE:
-      tempc = _CHE;
-      break;
-
-    case HE_J:
-      tempc = _HE_J;
-      break;
-
-    case XE:
-      tempc = _XE;
-      break;
-
-    case SIN:
-      tempc = _SIN;
-      break;
-
-    case SHIN:
-      tempc = _SHIN;
-      break;
-
-    case SAD:
-      tempc = _SAD;
-      break;
-
-    case ZAD:
-      tempc = _ZAD;
-      break;
-
-    case AYN:
-    case AYN_:
-    case _AYN_:
-      tempc = _AYN;
-      break;
-
-    case GHAYN:
-    case GHAYN_:
-    case _GHAYN_:
-      tempc = _GHAYN;
-      break;
-
-    case FE:
-      tempc = _FE;
-      break;
-
-    case GHAF:
-      tempc = _GHAF;
-      break;
-
-    case KAF:
-      tempc = _KAF;
-      break;
-
-    case GAF:
-      tempc = _GAF;
-      break;
-
-    case LAM:
-      tempc = _LAM;
-      break;
-
-    case MIM:
-      tempc = _MIM;
-      break;
-
-    case NOON:
-      tempc = _NOON;
-      break;
-
-    case _HE_:
-    case F_HE:
-      tempc = _HE;
-      break;
-
-    case YE:
-    case YE_:
-      tempc = _YE;
-      break;
-
-    case IE_:
-    case IE:
-      tempc = _IE;
-      break;
-
-    case YEE:
-    case YEE_:
-      tempc = _YEE;
-      break;
-
-    default:
-      tempc = c;
+    case ALEF_     : tempc = ALEF     ; break;
+    case ALEF_U_H_ : tempc = ALEF_U_H ; break;
+    case BE        : tempc = _BE      ; break;
+    case PE        : tempc = _PE      ; break;
+    case TE        : tempc = _TE      ; break;
+    case SE        : tempc = _SE      ; break;
+    case JIM       : tempc = _JIM     ; break;
+    case CHE       : tempc = _CHE     ; break;
+    case HE_J      : tempc = _HE_J    ; break;
+    case XE        : tempc = _XE      ; break;
+    case SIN       : tempc = _SIN     ; break;
+    case SHIN      : tempc = _SHIN    ; break;
+    case SAD       : tempc = _SAD     ; break;
+    case ZAD       : tempc = _ZAD     ; break;
+    case AYN       :
+    case AYN_      :
+    case _AYN_     : tempc = _AYN     ; break;
+    case GHAYN     :
+    case GHAYN_    :
+    case _GHAYN_   : tempc = _GHAYN   ; break;
+    case FE        : tempc = _FE      ; break;
+    case GHAF      : tempc = _GHAF    ; break;
+    case KAF       : tempc = _KAF     ; break;
+    case GAF       : tempc = _GAF     ; break;
+    case LAM       : tempc = _LAM     ; break;
+    case MIM       : tempc = _MIM     ; break;
+    case NOON      : tempc = _NOON    ; break;
+    case _HE_      :
+    case F_HE      : tempc = _HE      ; break;
+    case YE        :
+    case YE_       : tempc = _YE      ; break;
+    case IE_       :
+    case IE        : tempc = _IE      ; break;
+    case YEE       :
+    case YEE_      : tempc = _YEE     ; break;
+    default        : tempc = c;
   }
 
   return tempc;
@@ -2091,128 +1339,43 @@ static char_u toF_Rjoin(char_u c)
   char_u tempc;
 
   switch (c) {
-    case ALEF:
-      tempc = ALEF_;
-      break;
-
-    case ALEF_U_H:
-      tempc = ALEF_U_H_;
-      break;
-
-    case BE:
-      tempc = _BE;
-      break;
-
-    case PE:
-      tempc = _PE;
-      break;
-
-    case TE:
-      tempc = _TE;
-      break;
-
-    case SE:
-      tempc = _SE;
-      break;
-
-    case JIM:
-      tempc = _JIM;
-      break;
-
-    case CHE:
-      tempc = _CHE;
-      break;
-
-    case HE_J:
-      tempc = _HE_J;
-      break;
-
-    case XE:
-      tempc = _XE;
-      break;
-
-    case SIN:
-      tempc = _SIN;
-      break;
-
-    case SHIN:
-      tempc = _SHIN;
-      break;
-
-    case SAD:
-      tempc = _SAD;
-      break;
-
-    case ZAD:
-      tempc = _ZAD;
-      break;
-
-    case AYN:
-    case AYN_:
-    case _AYN:
-      tempc = _AYN_;
-      break;
-
-    case GHAYN:
-    case GHAYN_:
-    case _GHAYN_:
-      tempc = _GHAYN_;
-      break;
-
-    case FE:
-      tempc = _FE;
-      break;
-
-    case GHAF:
-      tempc = _GHAF;
-      break;
-
-    case KAF:
-      tempc = _KAF;
-      break;
-
-    case GAF:
-      tempc = _GAF;
-      break;
-
-    case LAM:
-      tempc = _LAM;
-      break;
-
-    case MIM:
-      tempc = _MIM;
-      break;
-
-    case NOON:
-      tempc = _NOON;
-      break;
-
-    case _HE:
-    case F_HE:
-      tempc = _HE_;
-      break;
-
-    case YE:
-    case YE_:
-      tempc = _YE;
-      break;
-
-    case IE_:
-    case IE:
-      tempc = _IE;
-      break;
-
-    case TEE:
-      tempc = TEE_;
-      break;
-
-    case YEE:
-    case YEE_:
-      tempc = _YEE;
-      break;
-
-    default:
-      tempc = c;
+    case ALEF     : tempc = ALEF_     ; break;
+    case ALEF_U_H : tempc = ALEF_U_H_ ; break;
+    case BE       : tempc = _BE       ; break;
+    case PE       : tempc = _PE       ; break;
+    case TE       : tempc = _TE       ; break;
+    case SE       : tempc = _SE       ; break;
+    case JIM      : tempc = _JIM      ; break;
+    case CHE      : tempc = _CHE      ; break;
+    case HE_J     : tempc = _HE_J     ; break;
+    case XE       : tempc = _XE       ; break;
+    case SIN      : tempc = _SIN      ; break;
+    case SHIN     : tempc = _SHIN     ; break;
+    case SAD      : tempc = _SAD      ; break;
+    case ZAD      : tempc = _ZAD      ; break;
+    case AYN      :
+    case AYN_     :
+    case _AYN     : tempc = _AYN_     ; break;
+    case GHAYN    :
+    case GHAYN_   :
+    case _GHAYN_  : tempc = _GHAYN_   ; break;
+    case FE       : tempc = _FE       ; break;
+    case GHAF     : tempc = _GHAF     ; break;
+    case KAF      : tempc = _KAF      ; break;
+    case GAF      : tempc = _GAF      ; break;
+    case LAM      : tempc = _LAM      ; break;
+    case MIM      : tempc = _MIM      ; break;
+    case NOON     : tempc = _NOON     ; break;
+    case _HE      :
+    case F_HE     : tempc = _HE_      ; break;
+    case YE       :
+    case YE_      : tempc = _YE       ; break;
+    case IE_      :
+    case IE       : tempc = _IE       ; break;
+    case TEE      : tempc = TEE_      ; break;
+    case YEE      :
+    case YEE_     : tempc = _YEE      ; break;
+    default       : tempc = c         ;
   }
 
   return tempc;
@@ -2354,134 +1517,40 @@ static char_u toF_ending(char_u c)
   char_u tempc;
 
   switch (c) {
-    case _BE:
-      tempc = BE;
-      break;
-
-    case _PE:
-      tempc = PE;
-      break;
-
-    case _TE:
-      tempc = TE;
-      break;
-
-    case _SE:
-      tempc = SE;
-      break;
-
-    case _JIM:
-      tempc = JIM;
-      break;
-
-    case _CHE:
-      tempc = CHE;
-      break;
-
-    case _HE_J:
-      tempc = HE_J;
-      break;
-
-    case _XE:
-      tempc = XE;
-      break;
-
-    case _SIN:
-      tempc = SIN;
-      break;
-
-    case _SHIN:
-      tempc = SHIN;
-      break;
-
-    case _SAD:
-      tempc = SAD;
-      break;
-
-    case _ZAD:
-      tempc = ZAD;
-      break;
-
-    case _AYN:
-      tempc = AYN;
-      break;
-
-    case _AYN_:
-      tempc = AYN_;
-      break;
-
-    case _GHAYN:
-      tempc = GHAYN;
-      break;
-
-    case _GHAYN_:
-      tempc = GHAYN_;
-      break;
-
-    case _FE:
-      tempc = FE;
-      break;
-
-    case _GHAF:
-      tempc = GHAF;
-      break;
-
-    case _KAF_H:
-    case _KAF:
-      tempc = KAF;
-      break;
-
-    case _GAF:
-      tempc = GAF;
-      break;
-
-    case _LAM:
-      tempc = LAM;
-      break;
-
-    case _MIM:
-      tempc = MIM;
-      break;
-
-    case _NOON:
-      tempc = NOON;
-      break;
-
-    case _YE:
-      tempc = YE_;
-      break;
-
-    case YE_:
-      tempc = YE;
-      break;
-
-    case _YEE:
-      tempc = YEE_;
-      break;
-
-    case YEE_:
-      tempc = YEE;
-      break;
-
-    case TEE:
-      tempc = TEE_;
-      break;
-
-    case _IE:
-      tempc = IE_;
-      break;
-
-    case IE_:
-      tempc = IE;
-      break;
-
-    case _HE:
-    case _HE_:
-      tempc = F_HE;
-      break;
-
-    default:
-      tempc = c;
+    case _BE     : tempc = BE     ; break;
+    case _PE     : tempc = PE     ; break;
+    case _TE     : tempc = TE     ; break;
+    case _SE     : tempc = SE     ; break;
+    case _JIM    : tempc = JIM    ; break;
+    case _CHE    : tempc = CHE    ; break;
+    case _HE_J   : tempc = HE_J   ; break;
+    case _XE     : tempc = XE     ; break;
+    case _SIN    : tempc = SIN    ; break;
+    case _SHIN   : tempc = SHIN   ; break;
+    case _SAD    : tempc = SAD    ; break;
+    case _ZAD    : tempc = ZAD    ; break;
+    case _AYN    : tempc = AYN    ; break;
+    case _AYN_   : tempc = AYN_   ; break;
+    case _GHAYN  : tempc = GHAYN  ; break;
+    case _GHAYN_ : tempc = GHAYN_ ; break;
+    case _FE     : tempc = FE     ; break;
+    case _GHAF   : tempc = GHAF   ; break;
+    case _KAF_H  :
+    case _KAF    : tempc = KAF    ; break;
+    case _GAF    : tempc = GAF    ; break;
+    case _LAM    : tempc = LAM    ; break;
+    case _MIM    : tempc = MIM    ; break;
+    case _NOON   : tempc = NOON   ; break;
+    case _YE     : tempc = YE_    ; break;
+    case YE_     : tempc = YE     ; break;
+    case _YEE    : tempc = YEE_   ; break;
+    case YEE_    : tempc = YEE    ; break;
+    case TEE     : tempc = TEE_   ; break;
+    case _IE     : tempc = IE_    ; break;
+    case IE_     : tempc = IE     ; break;
+    case _HE     :
+    case _HE_    : tempc = F_HE   ; break;
+    default      : tempc = c      ;
   }
 
   return tempc;
@@ -2628,6 +1697,7 @@ char_u* lrF_sub(char_u *ibuf)
 
   // Find the boundary of the search path
   while (((p = vim_strchr(p + 1, '/')) != NULL) && p[-1] == '\\') {
+    // empty
   }
 
   if (p == NULL) {
@@ -2746,15 +1816,15 @@ int cmdl_fkmap(int c)
         case _NOON:
         case _HE:
         case _HE_:
-            cmd_pchar(toF_TyA((char_u)tempc), AT_CURSOR);
+          cmd_pchar(toF_TyA((char_u)tempc), AT_CURSOR);
           break;
 
         case _AYN_:
-            cmd_pchar(AYN_, AT_CURSOR);
+          cmd_pchar(AYN_, AT_CURSOR);
           break;
 
         case _GHAYN_:
-            cmd_pchar(GHAYN_, AT_CURSOR);
+          cmd_pchar(GHAYN_, AT_CURSOR);
           break;
 
         case _IE:
@@ -2782,190 +1852,70 @@ int cmdl_fkmap(int c)
       }
 
       switch (c) {
-        case '0':
-          return FARSI_0;
-
-        case '1':
-          return FARSI_1;
-
-        case '2':
-          return FARSI_2;
-
-        case '3':
-          return FARSI_3;
-
-        case '4':
-          return FARSI_4;
-
-        case '5':
-          return FARSI_5;
-
-        case '6':
-          return FARSI_6;
-
-        case '7':
-          return FARSI_7;
-
-        case '8':
-          return FARSI_8;
-
-        case '9':
-          return FARSI_9;
-
-        case 'B':
-          return F_PSP;
-
-        case 'E':
-          return JAZR_N;
-
-        case 'F':
-          return ALEF_D_H;
-
-        case 'H':
-          return ALEF_A;
-
-        case 'I':
-          return TASH;
-
-        case 'K':
-          return F_LQUOT;
-
-        case 'L':
-          return F_RQUOT;
-
-        case 'M':
-          return HAMZE;
-
-        case 'O':
-          return '[';
-
-        case 'P':
-          return ']';
-
-        case 'Q':
-          return OO;
-
-        case 'R':
-          return MAD_N;
-
-        case 'T':
-          return OW;
-
-        case 'U':
-          return MAD;
-
-        case 'W':
-          return OW_OW;
-
-        case 'Y':
-          return JAZR;
-
-        case '`':
-          return F_PCN;
-
-        case '!':
-          return F_EXCL;
-
-        case '@':
-          return F_COMMA;
-
-        case '#':
-          return F_DIVIDE;
-
-        case '$':
-          return F_CURRENCY;
-
-        case '%':
-          return F_PERCENT;
-
-        case '^':
-          return F_MUL;
-
-        case '&':
-          return F_BCOMMA;
-
-        case '*':
-          return F_STAR;
-
-        case '(':
-          return F_LPARENT;
-
-        case ')':
-          return F_RPARENT;
-
-        case '-':
-          return F_MINUS;
-
-        case '_':
-          return F_UNDERLINE;
-
-        case '=':
-          return F_EQUALS;
-
-        case '+':
-          return F_PLUS;
-
-        case '\\':
-          return F_BSLASH;
-
-        case '|':
-          return F_PIPE;
-
-        case ':':
-          return F_DCOLON;
-
-        case '"':
-          return F_SEMICOLON;
-
-        case '.':
-          return F_PERIOD;
-
-        case '/':
-          return F_SLASH;
-
-        case '<':
-          return F_LESS;
-
-        case '>':
-          return F_GREATER;
-
-        case '?':
-          return F_QUESTION;
-
-        case ' ':
-          return F_BLANK;
+        case '0'  : return FARSI_0     ;
+        case '1'  : return FARSI_1     ;
+        case '2'  : return FARSI_2     ;
+        case '3'  : return FARSI_3     ;
+        case '4'  : return FARSI_4     ;
+        case '5'  : return FARSI_5     ;
+        case '6'  : return FARSI_6     ;
+        case '7'  : return FARSI_7     ;
+        case '8'  : return FARSI_8     ;
+        case '9'  : return FARSI_9     ;
+        case 'B'  : return F_PSP       ;
+        case 'E'  : return JAZR_N      ;
+        case 'F'  : return ALEF_D_H    ;
+        case 'H'  : return ALEF_A      ;
+        case 'I'  : return TASH        ;
+        case 'K'  : return F_LQUOT     ;
+        case 'L'  : return F_RQUOT     ;
+        case 'M'  : return HAMZE       ;
+        case 'O'  : return '['         ;
+        case 'P'  : return ']'         ;
+        case 'Q'  : return OO          ;
+        case 'R'  : return MAD_N       ;
+        case 'T'  : return OW          ;
+        case 'U'  : return MAD         ;
+        case 'W'  : return OW_OW       ;
+        case 'Y'  : return JAZR        ;
+        case '`'  : return F_PCN       ;
+        case '!'  : return F_EXCL      ;
+        case '@'  : return F_COMMA     ;
+        case '#'  : return F_DIVIDE    ;
+        case '$'  : return F_CURRENCY  ;
+        case '%'  : return F_PERCENT   ;
+        case '^'  : return F_MUL       ;
+        case '&'  : return F_BCOMMA    ;
+        case '*'  : return F_STAR      ;
+        case '('  : return F_LPARENT   ;
+        case ')'  : return F_RPARENT   ;
+        case '-'  : return F_MINUS     ;
+        case '_'  : return F_UNDERLINE ;
+        case '='  : return F_EQUALS    ;
+        case '+'  : return F_PLUS      ;
+        case '\\' : return F_BSLASH    ;
+        case '|'  : return F_PIPE      ;
+        case ':'  : return F_DCOLON    ;
+        case '"'  : return F_SEMICOLON ;
+        case '.'  : return F_PERIOD    ;
+        case '/'  : return F_SLASH     ;
+        case '<'  : return F_LESS      ;
+        case '>'  : return F_GREATER   ;
+        case '?'  : return F_QUESTION  ;
+        case ' '  : return F_BLANK     ;
       }
       break;
 
-    case 'a':
-      return _SHIN;
-
-    case 'A':
-      return WAW_H;
-
-    case 'b':
-      return ZAL;
-
-    case 'c':
-      return ZE;
-
-    case 'C':
-      return JE;
-
-    case 'd':
-      return _YE;
-
-    case 'D':
-      return _YEE;
-
-    case 'e':
-      return _SE;
-
-    case 'f':
-      return _BE;
-
-    case 'g':
-      return _LAM;
+    case 'a' : return _SHIN ;
+    case 'A' : return WAW_H ;
+    case 'b' : return ZAL   ;
+    case 'c' : return ZE    ;
+    case 'C' : return JE    ;
+    case 'd' : return _YE   ;
+    case 'D' : return _YEE  ;
+    case 'e' : return _SE   ;
+    case 'f' : return _BE   ;
+    case 'g' : return _LAM  ;
 
     case 'G':
       if (cmd_gchar(AT_CURSOR) == _LAM) {
@@ -3009,39 +1959,18 @@ int cmdl_fkmap(int c)
         return TEE;
       }
 
-    case 'k':
-      return _NOON;
-
-    case 'l':
-      return _MIM;
-
-    case 'm':
-      return _PE;
-
-    case 'n':
-    case 'N':
-      return DAL;
-
-    case 'o':
-      return _XE;
-
-    case 'p':
-      return _HE_J;
-
-    case 'q':
-      return _ZAD;
-
-    case 'r':
-      return _GHAF;
-
-    case 's':
-      return _SIN;
-
-    case 'S':
-      return _IE;
-
-    case 't':
-      return _FE;
+    case 'k' : return _NOON ;
+    case 'l' : return _MIM  ;
+    case 'm' : return _PE   ;
+    case 'n' :
+    case 'N' : return DAL   ;
+    case 'o' : return _XE   ;
+    case 'p' : return _HE_J ;
+    case 'q' : return _ZAD  ;
+    case 'r' : return _GHAF ;
+    case 's' : return _SIN  ;
+    case 'S' : return _IE   ;
+    case 't' : return _FE   ;
 
     case 'u':
       if (F_is_TyB_TyC_TyD(SRC_CMD, AT_CURSOR)) {
@@ -3050,16 +1979,11 @@ int cmdl_fkmap(int c)
         return _AYN;
       }
 
-    case 'v':
-    case 'V':
-      return RE;
-
-    case 'w':
-      return _SAD;
-
-    case 'x':
-    case 'X':
-      return _TA;
+    case 'v' :
+    case 'V' : return RE   ;
+    case 'w' : return _SAD ;
+    case 'x' :
+    case 'X' : return _TA  ;
 
     case 'y':
       if (F_is_TyB_TyC_TyD(SRC_CMD, AT_CURSOR)) {
@@ -3068,24 +1992,13 @@ int cmdl_fkmap(int c)
         return _GHAYN;
       }
 
-    case 'z':
-    case 'Z':
-      return _ZA;
-
-    case ';':
-      return _KAF;
-
-    case '\'':
-      return _GAF;
-
-    case ',':
-      return WAW;
-
-    case '[':
-      return _JIM;
-
-    case ']':
-      return _CHE;
+    case 'z'  :
+    case 'Z'  : return _ZA  ;
+    case ';'  : return _KAF ;
+    case '\'' : return _GAF ;
+    case ','  : return WAW  ;
+    case '['  : return _JIM ;
+    case ']'  : return _CHE ;
   }
 
   return c;
