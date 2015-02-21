@@ -135,7 +135,7 @@ Screen.colors = colors
 
 function Screen.debug(command)
   if not command then
-    command = 'pynvim -n -g -c '
+    command = 'pynvim -n -c '
   end
   command = command .. request('vim_eval', '$NVIM_LISTEN_ADDRESS')
   if debug_screen then
