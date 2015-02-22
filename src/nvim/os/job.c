@@ -383,6 +383,15 @@ int job_id(Job *job)
   return job->id;
 }
 
+/// Get the job status
+///
+/// @param job A pointer to the job
+/// @return The job status
+int job_status(Job *job)
+{
+  return job->status;
+}
+
 /// Get data associated with a job
 ///
 /// @param job A pointer to the job

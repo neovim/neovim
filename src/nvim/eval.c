@@ -453,7 +453,7 @@ static dictitem_T vimvars_var;                  /* variable used for v: */
 
 // Memory pool for reusing JobEvent structures
 typedef struct {
-  int id;
+  int id, status;
   char *name, *type, *received;
   size_t received_len;
 } JobEvent;
@@ -19734,6 +19734,7 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
       rstream_read(r, event_data->received, read_count);             \
     }                                                                \
     event_data->id = job_id(j);                                      \
+    event_data->status = job_status(j);                              \
     event_data->name = job_data(j);                                  \
     event_data->type = t;                                            \
     event_push((Event) {                                             \
@@ -19765,12 +19766,14 @@ static void on_job_event(Event event)
 {
   JobEvent *data = event.data;
   apply_job_autocmds(data->id, data->name, data->type,
-                     data->received, data->received_len);
+                     data->received, data->received_len,
+                     data->status);
   kmp_free(JobEventPool, job_event_pool, data);
 }
 
 static void apply_job_autocmds(int id, char *name, char *type,
-                               char *received, size_t received_len)
+                               char *received, size_t received_len,
+                               int status)
 {
   // Create the list which will be set to v:job_data
   list_T *list = list_alloc();
@@ -19787,6 +19790,8 @@ static void apply_job_autocmds(int id, char *name, char *type,
     list_append(list, str_slot);
 
     free(received);
+  } else {
+    list_append_number(list, status);
   }
 
   // Update v:job_data for the autocommands
