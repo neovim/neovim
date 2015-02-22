@@ -454,8 +454,8 @@ static dictitem_T vimvars_var;                  /* variable used for v: */
 // Memory pool for reusing JobEvent structures
 typedef struct {
   int id;
-  char *name, *type, *received;
-  size_t received_len;
+  char *name, *type;
+  list_T *received;
 } JobEvent;
 #define JobEventFreer(x)
 KMEMPOOL_INIT(JobEventPool, JobEvent, JobEventFreer)
@@ -19705,72 +19705,73 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
 
 // JobActivity autocommands will execute vimscript code, so it must be executed
 // on Nvim main loop
-#define push_job_event(j, r, t, eof)                                 \
-  do {                                                               \
-    JobEvent *event_data = kmp_alloc(JobEventPool, job_event_pool);  \
-    event_data->received = NULL;                                     \
-    size_t read_count = 0;                                           \
-    if (r) {                                                         \
-      if (eof) {                                                     \
-        read_count = rstream_pending(r);                             \
-      } else {                                                       \
-        char *read = rstream_read_ptr(r);                            \
-        char *lastnl = xmemrchr(read, NL, rstream_pending(r));       \
-        if (lastnl) {                                                \
-          read_count = (size_t) (lastnl - read) + 1;                 \
-        } else if (rstream_available(r) == 0) {                      \
-          /* No newline or room to grow; flush everything. */        \
-          read_count = rstream_pending(r);                           \
-        }                                                            \
-      }                                                              \
-      if (read_count == 0) {                                         \
-        /* Either we're at EOF or we need to wait until next time */ \
-        /* to receive a '\n. */                                      \
-        kmp_free(JobEventPool, job_event_pool, event_data);          \
-        return;                                                      \
-      }                                                              \
-      event_data->received_len = read_count;                         \
-      event_data->received = xmallocz(read_count);                   \
-      rstream_read(r, event_data->received, read_count);             \
-    }                                                                \
-    event_data->id = job_id(j);                                      \
-    event_data->name = job_data(j);                                  \
-    event_data->type = t;                                            \
-    event_push((Event) {                                             \
-      .handler = on_job_event,                                       \
-      .data = event_data                                             \
-    }, true);                                                        \
-  } while(0)
+static inline void push_job_event(Job *job, RStream *rstream, char *type)
+{
+  JobEvent *event_data = kmp_alloc(JobEventPool, job_event_pool);
+  event_data->received = NULL;
+  if (rstream) {
+    event_data->received = list_alloc();
+    char *ptr = rstream_read_ptr(rstream);
+    size_t count = rstream_pending(rstream);
+    size_t remaining = count;
+    size_t off = 0;
+
+    while (off < remaining) {
+      // append the line
+      if (ptr[off] == NL) {
+        list_append_string(event_data->received, (uint8_t *)ptr, off);
+        size_t skip = off + 1;
+        ptr += skip;
+        remaining -= skip;
+        off = 0;
+        continue;
+      }
+      if (ptr[off] == NUL) {
+        // Translate NUL to NL
+        ptr[off] = NL;
+      }
+      off++;
+    }
+    list_append_string(event_data->received, (uint8_t *)ptr, off);
+    rbuffer_consumed(rstream_buffer(rstream), count);
+  }
+  event_data->id = job_id(job);
+  event_data->name = job_data(job);
+  event_data->type = type;
+  event_push((Event) {
+    .handler = on_job_event,
+    .data = event_data
+  }, true);
+}
 
 static void on_job_stdout(RStream *rstream, void *data, bool eof)
 {
-  if (rstream_pending(rstream)) {
-    push_job_event(data, rstream, "stdout", eof);
+  if (!eof) {
+    push_job_event(data, rstream, "stdout");
   }
 }
 
 static void on_job_stderr(RStream *rstream, void *data, bool eof)
 {
-  if (rstream_pending(rstream)) {
-    push_job_event(data, rstream, "stderr", eof);
+  if (!eof) {
+    push_job_event(data, rstream, "stderr");
   }
 }
 
 static void on_job_exit(Job *job, void *data)
 {
-  push_job_event(job, NULL, "exit", true);
+  push_job_event(job, NULL, "exit");
 }
 
 static void on_job_event(Event event)
 {
   JobEvent *data = event.data;
-  apply_job_autocmds(data->id, data->name, data->type,
-                     data->received, data->received_len);
+  apply_job_autocmds(data->id, data->name, data->type, data->received);
   kmp_free(JobEventPool, job_event_pool, data);
 }
 
 static void apply_job_autocmds(int id, char *name, char *type,
-                               char *received, size_t received_len)
+                               list_T *received)
 {
   // Create the list which will be set to v:job_data
   list_T *list = list_alloc();
@@ -19781,12 +19782,9 @@ static void apply_job_autocmds(int id, char *name, char *type,
     listitem_T *str_slot = listitem_alloc();
     str_slot->li_tv.v_type = VAR_LIST;
     str_slot->li_tv.v_lock = 0;
-    str_slot->li_tv.vval.v_list =
-      string_to_list((char_u *) received, received_len, false);
+    str_slot->li_tv.vval.v_list = received;
     str_slot->li_tv.vval.v_list->lv_refcount++;
     list_append(list, str_slot);
-
-    free(received);
   }
 
   // Update v:job_data for the autocommands
