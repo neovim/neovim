@@ -1262,7 +1262,6 @@ find_file_in_path_option (
 )
 {
   static char_u       *dir;
-  static int did_findfile_init = FALSE;
   char_u save_char;
   char_u              *file_name = NULL;
   char_u              *buf = NULL;
@@ -1346,39 +1345,34 @@ find_file_in_path_option (
       /* vim_findfile_free_visited can handle a possible NULL pointer */
       vim_findfile_free_visited(fdip_search_ctx);
       dir = path_option;
-      did_findfile_init = FALSE;
     }
 
-    for (;; ) {
-      if (did_findfile_init) {
+    while (dir != NULL && *dir != NUL) {
+      buf = xmalloc(MAXPATHL);
+
+      /* copy next path */
+      buf[0] = 0;
+      copy_option_part(&dir, buf, MAXPATHL, " ,");
+
+      fdip_search_ctx = vim_findfile_init(buf, ff_file_to_find,
+          find_what, fdip_search_ctx, FALSE, rel_fname);
+
+      if (fdip_search_ctx != NULL) {
         file_name = vim_findfile(fdip_search_ctx);
-        if (file_name != NULL)
-          break;
-
-        did_findfile_init = FALSE;
-      } else {
-        if (dir == NULL || *dir == NUL) {
-          /* We searched all paths of the option, now we can
-           * free the search context. */
-          vim_findfile_cleanup(fdip_search_ctx);
-          fdip_search_ctx = NULL;
-          break;
+        if (file_name != NULL) {
+          xfree(buf);
+          return file_name;
         }
-
-        buf = xmalloc(MAXPATHL);
-
-        /* copy next path */
-        buf[0] = 0;
-        copy_option_part(&dir, buf, MAXPATHL, " ,");
-
-        fdip_search_ctx = vim_findfile_init(buf, ff_file_to_find,
-            find_what, fdip_search_ctx, FALSE, rel_fname);
-        if (fdip_search_ctx != NULL)
-          did_findfile_init = TRUE;
-        xfree(buf);
       }
+
+      free(buf);
     }
   }
+  /* We searched all paths of the option, now we can
+   * free the search context. */
+  vim_findfile_cleanup(fdip_search_ctx);
+  fdip_search_ctx = NULL;
+
   if (file_name == NULL && (options & FNAME_MESS)) {
     if (first == TRUE) {
       if (find_what == FINDFILE_DIR)
@@ -1397,7 +1391,6 @@ find_file_in_path_option (
     }
   }
 
-theend:
-  return file_name;
+  return NULL;
 }
 
