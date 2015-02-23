@@ -80,8 +80,8 @@ Here's what is happening:
   following elements:
   0: The job id
   1: The kind of activity: one of "stdout", "stderr" or "exit"
-  2: When "activity" is "stdout" or "stderr", this will contain a list of
-     lines read from stdout or stderr
+  2: When "activity" is "stdout" or "stderr", this contains the job's output.
+     (See: |jobstart()|)
 
 To send data to the job's stdin, one can use the |jobsend()| function, like
 this:

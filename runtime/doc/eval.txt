@@ -4023,7 +4023,7 @@ jobsend({job}, {data})					{Nvim} *jobsend()*
 			:call jobsend(j, ["abc", "123\n456"])
 < 		will send "abc<NL>123<NUL>456<NL>".
 
-jobstart({name}, {prog}[, {argv}])			{Nvim} *jobstart()*
+jobstart({name}, {prog}[, {argv}[, {flags}]])		{Nvim} *jobstart()*
 		Spawns {prog} as a job and associate it with the {name} string,
 		which will be used to match the "filename pattern" in
 		|JobActivity| events. It returns:
@@ -4031,6 +4031,24 @@ jobstart({name}, {prog}[, {argv}])			{Nvim} *jobstart()*
 		    |jobstop()|
 		  - 0 when the job table is full or on invalid arguments
 		  - -1 when {prog} is not executable
+		
+		Output will be buffered until a newline character is read and
+		returned as a list unless supplied {flags}. If {flags} is a
+		string, it may contain 'u' or 'b', meaning (u)nbuffered and
+		(b)uffered, respectively, or 's' or 'l', meaning to set
+		v:job_data[2] as a string or list. If {flags} is a number,
+		being larger than zero implies "unbuffered string". A buffered
+		list is the default.
+
+		Flags may be duplicate ('uu' just implies "unbuffered") or
+		override each other ('lsl' implies "list").
+
+		With the 'l' flag (default), if the data ends in a newline, an
+		empty string ("") will be appended. Absence of this when
+		buffering ('b') may indicate an internal buffer overflow. When
+		not buffering ('u'), it may indicate buffer overflow or
+		absence of a terminating character.
+
 		See |job-control| for more information.
 
 jobstop({job})						{Nvim} *jobstop()*

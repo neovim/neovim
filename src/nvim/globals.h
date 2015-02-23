@@ -1127,6 +1127,7 @@ EXTERN char_u e_isadir2[] INIT(= N_("E17: \"%s\" is a directory"));
 EXTERN char_u e_invjob[] INIT(= N_("E900: Invalid job id"));
 EXTERN char_u e_jobtblfull[] INIT(= N_("E901: Job table is full"));
 EXTERN char_u e_jobexe[] INIT(= N_("E902: \"%s\" is not an executable"));
+EXTERN char_u e_jobinvflag[] INIT(= N_("E903: Unrecognized flag: '%s'"));
 EXTERN char_u e_libcall[] INIT(= N_("E364: Library call failed for \"%s()\""));
 EXTERN char_u e_markinval[] INIT(= N_("E19: Mark has invalid line number"));
 EXTERN char_u e_marknotset[] INIT(= N_("E20: Mark not set"));
