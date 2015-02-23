@@ -18,16 +18,13 @@ end
 describe('vim_findfile functions', function()
   local vim_findfile_init = function(path, filename, find_what, tagfile)
     local find_file = 0
-    local r_ptr = file_search.vim_findfile_stopdir(to_cstr(path))
     local res = file_search.vim_findfile_init(to_cstr(path),
-    to_cstr(filename), r_ptr, 100, false, find_file, NULL, false,
-    NULL)
+        to_cstr(filename), find_file, NULL, false, NULL)
     return res
   end
 
   describe('vim_findfile_init', function()
     it('returns a ff_seach_ctx_T with correct values', function()
-      local r_ptr = file_search.vim_findfile_stopdir(to_cstr('test'))
       local ctx = vim_findfile_init('test', 'file_search_spec.lua', 0, false)
       neq(NULL, ctx)
 

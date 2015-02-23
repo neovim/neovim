@@ -91,9 +91,10 @@ static char_u e_pathtoolong[] = N_("E854: path too long for completion");
  *
  * Find the file 'filename' in the directory 'path'.
  * The parameter 'path' may contain wildcards. If so only search 'level'
- * directories deep. The parameter 'level' is the absolute maximum and is
- * not related to restricts given to the '**' wildcard. If 'level' is 100
- * and you use '**200' vim_findfile() will stop after 100 levels.
+ * directories deep. This function will search 100 levels deep, and is
+ * not related to restricts given to the '**' wildcard. If you use '**200'
+ * vim_findfile() will stop after 100 levels. If this turns out to be a bad
+ * default, it can be changed in file_search.h
  *
  * 'filename' cannot contain wildcards!  It is used as-is, no backslashes to
  * escape special characters.
@@ -137,9 +138,6 @@ ff_search_ctx_T *
 vim_findfile_init (
     char_u *path,
     char_u *filename,
-    char_u *stopdirs,
-    int level,
-    int free_visited,
     int find_what,
     ff_search_ctx_T *search_ctx,
     int tagfile,                    /* expanding names of tags files */
@@ -161,22 +159,17 @@ vim_findfile_init (
   /* clear the search context, but NOT the visited lists */
   ff_clear(search_ctx);
 
-  /* clear visited list if wanted */
-  if (free_visited == TRUE)
-    vim_findfile_free_visited(search_ctx);
-  else {
-    /* Reuse old visited lists. Get the visited list for the given
-     * filename. If no list for the current filename exists, creates a new
-     * one. */
-    search_ctx->ffsc_visited_list = ff_get_visited_list(filename,
-        &search_ctx->ffsc_visited_lists_list);
-    if (search_ctx->ffsc_visited_list == NULL)
-      goto error_return;
-    search_ctx->ffsc_dir_visited_list = ff_get_visited_list(filename,
-        &search_ctx->ffsc_dir_visited_lists_list);
-    if (search_ctx->ffsc_dir_visited_list == NULL)
-      goto error_return;
-  }
+  /* Reuse old visited lists. Get the visited list for the given
+   * filename. If no list for the current filename exists, creates a new
+   * one. */
+  search_ctx->ffsc_visited_list = ff_get_visited_list(filename,
+      &search_ctx->ffsc_visited_lists_list);
+  if (search_ctx->ffsc_visited_list == NULL)
+    goto error_return;
+  search_ctx->ffsc_dir_visited_list = ff_get_visited_list(filename,
+      &search_ctx->ffsc_dir_visited_lists_list);
+  if (search_ctx->ffsc_dir_visited_list == NULL)
+    goto error_return;
 
   if (ff_expand_buffer == NULL) {
     ff_expand_buffer = xmalloc(MAXPATHL);
@@ -236,6 +229,7 @@ vim_findfile_init (
    * is handled as unlimited upward search.  See function
    * ff_path_in_stoplist() for details.
    */
+  char_u *stopdirs = vim_findfile_stopdir(path);
   if (stopdirs != NULL) {
     char_u  *walker = stopdirs;
 
@@ -272,7 +266,7 @@ vim_findfile_init (
     search_ctx->ffsc_stopdirs_v[dircount-1] = NULL;
   }
 
-  search_ctx->ffsc_level = level;
+  search_ctx->ffsc_level = LEVELS;
 
   /* split into:
    *  -fix path
@@ -393,7 +387,7 @@ vim_findfile_init (
 
   sptr = ff_create_stack_element(ff_expand_buffer,
       search_ctx->ffsc_wc_path,
-      level, 0);
+      LEVELS, 0);
 
   ff_push(search_ctx, sptr);
   search_ctx->ffsc_file_to_search = vim_strsave(filename);
@@ -1343,8 +1337,6 @@ find_file_in_path_option (
 
         did_findfile_init = FALSE;
       } else {
-        char_u  *r_ptr;
-
         if (dir == NULL || *dir == NUL) {
           /* We searched all paths of the option, now we can
            * free the search context. */
@@ -1359,11 +1351,8 @@ find_file_in_path_option (
         buf[0] = 0;
         copy_option_part(&dir, buf, MAXPATHL, " ,");
 
-        /* get the stopdir string */
-        r_ptr = vim_findfile_stopdir(buf);
         fdip_search_ctx = vim_findfile_init(buf, ff_file_to_find,
-            r_ptr, 100, FALSE, find_what,
-            fdip_search_ctx, FALSE, rel_fname);
+            find_what, fdip_search_ctx, FALSE, rel_fname);
         if (fdip_search_ctx != NULL)
           did_findfile_init = TRUE;
         xfree(buf);

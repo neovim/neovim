@@ -8,6 +8,9 @@
 #define FINDFILE_DIR    1       /* only directories */
 #define FINDFILE_BOTH   2       /* files and directories */
 
+/* Number of levels to descend into the directory tree */
+#define LEVELS 100
+
 /*
  * type for the directory search stack
  */
