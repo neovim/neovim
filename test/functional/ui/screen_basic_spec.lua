@@ -287,6 +287,99 @@ describe('Screen', function()
       feed('<cr>') --  skip the "Press ENTER..." state or tests will hang
     end)
   end)
+  
+  describe('searching and highlighting', function()
+    before_each(function()
+      insert([[
+        a
+        word
+        to
+        the wise
+        avoid
+        thinking
+        about
+        recursive
+        thinking
+        ]])
+    end)
+
+    it('find the words "thinking"', function()
+      feed('/thinking<cr>')
+      screen:expect([[
+        a                                                    |
+        word                                                 |
+        to                                                   |
+        the wise                                             |
+        avoid                                                |
+        ^hinking                                             |
+        about                                                |
+        recursive                                            |
+        thinking                                             |
+                                                             |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        {1:search hit BOTTOM, continuing at TOP}                 |
+      ]], {[1] = {foreground = Screen.colors.Red}})
+      feed('/thinking<cr>')
+      screen:expect([[
+        a                                                    |
+        word                                                 |
+        to                                                   |
+        the wise                                             |
+        avoid                                                |
+        thinking                                             |
+        about                                                |
+        recursive                                            |
+        ^hinking                                             |
+                                                             |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        /thinking                                            |
+                                                             |
+      ]])
+    end)
+
+      it('highlight instances of "thinking"', function()
+        execute("set hlsearch")
+        execute("/thinking")
+        screen:expect([[
+          a                                                    |
+          word                                                 |
+          to                                                   |
+          the wise                                             |
+          avoid                                                |
+          {1:^hinking}                                             |
+          about                                                |
+          recursive                                            |
+          {1:thinking}                                             |
+                                                               |
+          ~                                                    |
+          ~                                                    |
+          ~                                                    |
+          {2:search hit BOTTOM, continuing at TOP}                 |
+        ]], {[1] = {background = Screen.colors.Yellow}, [2] = {foreground = Screen.colors.Red}})
+        execute("set hlsearch!")
+        screen:expect([[
+          a                                                    |
+          word                                                 |
+          to                                                   |
+          the wise                                             |
+          avoid                                                |
+          ^hinking                                             |
+          about                                                |
+          recursive                                            |
+          thinking                                             |
+                                                               |
+          ~                                                    |
+          ~                                                    |
+          ~                                                    |
+          :set hlsearch!                                       |
+        ]])
+    end)
+  end)
+
 
   describe('scrolling and clearing', function()
     before_each(function()
