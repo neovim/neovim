@@ -1295,44 +1295,33 @@ find_file_in_path_option (
      */
     if (first == TRUE) {
       if (path_with_url((char *)ff_file_to_find)) {
-        file_name = vim_strsave(ff_file_to_find);
-        goto theend;
+        return vim_strsave(ff_file_to_find);
       }
 
       /* When FNAME_REL flag given first use the directory of the file.
        * Otherwise or when this fails use the current directory. */
-      for (int run = 1; run <= 2; ++run) {
-        size_t l = STRLEN(ff_file_to_find);
-        if (run == 1
-            && rel_to_curdir
-            && (options & FNAME_REL)
-            && rel_fname != NULL
-            && STRLEN(rel_fname) + l < MAXPATHL) {
-          STRCPY(NameBuff, rel_fname);
-          STRCPY(path_tail(NameBuff), ff_file_to_find);
-          l = STRLEN(NameBuff);
-        } else {
-          STRCPY(NameBuff, ff_file_to_find);
-          run = 2;
-        }
+      size_t len = STRLEN(ff_file_to_find);
+      if (rel_to_curdir
+          && (options & FNAME_REL)
+          && rel_fname != NULL
+          && STRLEN(rel_fname) + len < MAXPATHL) {
 
-        /* When the file doesn't exist, try adding parts of
-         * 'suffixesadd'. */
-        buf = suffixes;
-        for (;; ) {
-          if (
-            (os_file_exists(NameBuff)
-             && (find_what == FINDFILE_BOTH
-                 || ((find_what == FINDFILE_DIR)
-                     == os_isdir(NameBuff))))) {
-            file_name = vim_strsave(NameBuff);
-            goto theend;
-          }
-          if (*buf == NUL)
-            break;
-          assert(MAXPATHL >= l);
-          copy_option_part(&buf, NameBuff + l, MAXPATHL - l, ",");
+        STRCPY(NameBuff, rel_fname);
+        STRCPY(path_tail(NameBuff), ff_file_to_find);
+        len = STRLEN(NameBuff);
+
+        file_name = search_with_suffixes(suffixes, len, find_what);
+        if (file_name != NULL) {
+          return file_name;
         }
+      }
+
+      /* With current directory (see above comment) */
+      len = STRLEN(ff_file_to_find);
+      STRCPY(NameBuff, ff_file_to_find);
+      file_name = search_with_suffixes(suffixes, len, find_what);
+      if (file_name != NULL) {
+        return file_name;
       }
     }
   } else {
@@ -1373,7 +1362,7 @@ find_file_in_path_option (
   vim_findfile_cleanup(fdip_search_ctx);
   fdip_search_ctx = NULL;
 
-  if (file_name == NULL && (options & FNAME_MESS)) {
+  if (options & FNAME_MESS) {
     if (first == TRUE) {
       if (find_what == FINDFILE_DIR)
         EMSG2(_("E344: Can't find directory \"%s\" in cdpath"),
@@ -1394,3 +1383,28 @@ find_file_in_path_option (
   return NULL;
 }
 
+/* When the file doesn't exist, try adding parts of
+ * 'suffixesadd'. */
+char_u *search_with_suffixes(char_u *suffixes, size_t len, int find_what) {
+  // Check without suffixes first
+  if (file_of_type_exists(NameBuff, find_what)) {
+    return vim_strsave(NameBuff);
+  }
+
+  char_u *buf = suffixes;
+  while (*buf != NUL) {
+    assert(MAXPATHL >= len);
+    copy_option_part(&buf, NameBuff + len, MAXPATHL - len, ",");
+    if (file_of_type_exists(NameBuff, find_what)) {
+      return vim_strsave(NameBuff);
+    }
+  }
+  return NULL;
+}
+
+bool file_of_type_exists(char_u *buf, int find_what) {
+  return (os_file_exists(buf)
+          && (find_what == FINDFILE_BOTH
+              || ((find_what == FINDFILE_DIR)
+                   == os_isdir(buf))));
+}
