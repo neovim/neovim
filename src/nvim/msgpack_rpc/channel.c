@@ -132,14 +132,13 @@ uint64_t channel_from_job(char **argv)
   incref(channel);  // job channels are only closed by the exit_cb
 
   int status;
-  channel->data.job = job_start(argv,
-                                channel,
-                                true,
-                                job_out,
-                                job_err,
-                                job_exit,
-                                0,
-                                &status);
+  JobOptions opts = JOB_OPTIONS_INIT;
+  opts.argv = argv;
+  opts.data = channel;
+  opts.stdout_cb = job_out;
+  opts.stderr_cb = job_err;
+  opts.exit_cb = job_exit;
+  channel->data.job = job_start(opts, &status);
 
   if (status <= 0) {
     if (status == 0) {  // Two decrefs needed if status == 0.

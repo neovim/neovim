@@ -10725,15 +10725,13 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
 
   // The last item of argv must be NULL
   argv[i] = NULL;
-
-  job_start(argv,
-            xstrdup((char *)argvars[0].vval.v_string),
-            true,
-            on_job_stdout,
-            on_job_stderr,
-            on_job_exit,
-            0,
-            &rettv->vval.v_number);
+  JobOptions opts = JOB_OPTIONS_INIT;
+  opts.argv = argv;
+  opts.data = xstrdup((char *)argvars[0].vval.v_string);
+  opts.stdout_cb = on_job_stdout;
+  opts.stderr_cb = on_job_stderr;
+  opts.exit_cb = on_job_exit;
+  job_start(opts, &rettv->vval.v_number);
 
   if (rettv->vval.v_number <= 0) {
     if (rettv->vval.v_number == 0) {
