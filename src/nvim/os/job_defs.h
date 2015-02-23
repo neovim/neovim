@@ -37,6 +37,13 @@ typedef struct {
   job_exit_cb exit_cb;
   // Maximum memory used by the job's WStream
   size_t maxmem;
+  // Connect the job to a pseudo terminal
+  bool pty;
+  // Initial window dimensions if the job is connected to a pseudo terminal
+  uint16_t width, height;
+  // Value for the $TERM environment variable. A default value of "ansi" is
+  // assumed if NULL
+  char *term_name;
 } JobOptions;
 
 #define JOB_OPTIONS_INIT ((JobOptions) {                     \
@@ -46,6 +53,10 @@ typedef struct {
     .stdout_cb = NULL,                                       \
     .stderr_cb = NULL,                                       \
     .exit_cb = NULL,                                         \
-    .maxmem = 0                                              \
+    .maxmem = 0,                                             \
+    .pty = false,                                            \
+    .width = 80,                                             \
+    .height = 24,                                            \
+    .term_name = NULL                                        \
     })
 #endif  // NVIM_OS_JOB_DEFS_H

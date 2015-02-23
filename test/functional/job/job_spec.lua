@@ -4,6 +4,7 @@ local clear, nvim, eq, neq, ok, expect, eval, next_message, run, stop, session
   = helpers.clear, helpers.nvim, helpers.eq, helpers.neq, helpers.ok,
   helpers.expect, helpers.eval, helpers.next_message, helpers.run,
   helpers.stop, helpers.session
+local insert = helpers.insert
 
 local channel = nvim('get_api_info')[1]
 
@@ -123,5 +124,58 @@ describe('jobs', function()
     nvim('eval', 'jobstop(j)')
     eq({'notification', 'j', {{jobid, 'stdout', {'abcdef'}}}}, next_message())
     eq({'notification', 'j', {{jobid, 'exit'}}}, next_message())
+  end)
+
+  describe('running tty-test program', function()
+    local function next_chunk()
+      local rv = ''
+      while true do
+        local msg = next_message()
+        local data = msg[3][1]
+        for i = 1, #data do
+          data[i] = data[i]:gsub('\n', '\000')
+        end
+        rv = table.concat(data, '\n')
+        rv = rv:gsub('\r\n$', '')
+        if rv ~= '' then
+          break
+        end
+      end
+      return rv
+    end
+
+    local function send(str)
+      nvim('command', 'call jobsend(j, "'..str..'")')
+    end
+
+    before_each(function() 
+      -- the full path to tty-test seems to be required when running on travis.
+      insert('build/bin/tty-test')
+      nvim('command', 'let exec = expand("<cfile>:p")')
+      nvim('command', notify_str('v:job_data[1]', 'get(v:job_data, 2)'))
+      nvim('command', "let j = jobstart('xxx', exec, [], {})")
+      eq('tty ready', next_chunk())
+    end)
+
+    it('echoing input', function()
+      send('test')
+      -- the tty driver will echo input by default
+      eq('test', next_chunk())
+    end)
+
+    it('resizing window', function()
+      nvim('command', 'call jobresize(j, 40, 10)')
+      eq('screen resized. rows: 10, columns: 40', next_chunk())
+      nvim('command', 'call jobresize(j, 10, 40)')
+      eq('screen resized. rows: 40, columns: 10', next_chunk())
+    end)
+
+    it('preprocessing ctrl+c with terminal driver', function()
+      send('\\<c-c>')
+      eq('^Cinterrupt received, press again to exit', next_chunk())
+      send('\\<c-c>')
+      eq('^Ctty done', next_chunk())
+      eq({'notification', 'exit', {0}}, next_message())
+    end)
   end)
 end)

@@ -7,6 +7,7 @@
 #include "nvim/os/job.h"
 #include "nvim/os/job_defs.h"
 #include "nvim/os/job_private.h"
+#include "nvim/os/pty_process.h"
 #include "nvim/os/rstream.h"
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/wstream.h"
@@ -318,6 +319,16 @@ int job_id(Job *job)
 void *job_data(Job *job)
 {
   return job->opts.data;
+}
+
+/// Resize the window for a pty job
+bool job_resize(Job *job, uint16_t width, uint16_t height)
+{
+  if (!job->opts.pty) {
+    return false;
+  }
+  pty_process_resize(job, width, height);
+  return true;
 }
 
 /// Iterates the table, sending SIGTERM to stopped jobs and SIGKILL to those

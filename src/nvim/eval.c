@@ -6488,8 +6488,9 @@ static struct fst {
   {"isdirectory",     1, 1, f_isdirectory},
   {"islocked",        1, 1, f_islocked},
   {"items",           1, 1, f_items},
+  {"jobresize",       3, 3, f_jobresize},
   {"jobsend",         2, 2, f_jobsend},
-  {"jobstart",        2, 3, f_jobstart},
+  {"jobstart",        2, 4, f_jobstart},
   {"jobstop",         1, 1, f_jobstop},
   {"join",            1, 2, f_join},
   {"keys",            1, 1, f_keys},
@@ -10665,6 +10666,39 @@ static void f_jobsend(typval_T *argvars, typval_T *rettv)
   rettv->vval.v_number = job_write(job, buf);
 }
 
+// "jobresize()" function
+static void f_jobresize(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_NUMBER || argvars[1].v_type != VAR_NUMBER
+      || argvars[2].v_type != VAR_NUMBER) {
+    // job id, width, height
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  Job *job = job_find(argvars[0].vval.v_number);
+
+  if (!job) {
+    // Probably an invalid job id
+    EMSG(_(e_invjob));
+    return;
+  }
+
+  if (!job_resize(job, argvars[1].vval.v_number, argvars[2].vval.v_number)) {
+    EMSG(_(e_jobnotpty));
+    return;
+  }
+
+  rettv->vval.v_number = 1;
+}
+
 // "jobstart()" function
 static void f_jobstart(typval_T *argvars, typval_T *rettv)
 {
@@ -10682,8 +10716,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
 
   if (argvars[0].v_type != VAR_STRING
       || argvars[1].v_type != VAR_STRING
-      || (argvars[2].v_type != VAR_LIST
-      && argvars[2].v_type != VAR_UNKNOWN)) {
+      || (argvars[2].v_type != VAR_LIST && argvars[2].v_type != VAR_UNKNOWN)) {
     // Wrong argument types
     EMSG(_(e_invarg));
     return;
@@ -10731,6 +10764,24 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
   opts.stdout_cb = on_job_stdout;
   opts.stderr_cb = on_job_stderr;
   opts.exit_cb = on_job_exit;
+
+  if (args && argvars[3].v_type == VAR_DICT) {
+    dict_T *job_opts = argvars[3].vval.v_dict;
+    opts.pty = true;
+    uint16_t width = get_dict_number(job_opts, (uint8_t *)"width");
+    if (width > 0) {
+      opts.width = width;
+    }
+    uint16_t height = get_dict_number(job_opts, (uint8_t *)"height");
+    if (height > 0) {
+      opts.height = height;
+    }
+    char *term = (char *)get_dict_string(job_opts, (uint8_t *)"TERM", true);
+    if (term) {
+      opts.term_name = term;
+    }
+  }
+
   job_start(opts, &rettv->vval.v_number);
 
   if (rettv->vval.v_number <= 0) {

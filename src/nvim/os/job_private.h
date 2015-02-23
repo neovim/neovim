@@ -8,6 +8,7 @@
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/wstream_defs.h"
 #include "nvim/os/pipe_process.h"
+#include "nvim/os/pty_process.h"
 #include "nvim/os/shell.h"
 #include "nvim/log.h"
 
@@ -45,12 +46,16 @@ extern uv_timer_t job_stop_timer;
 
 static inline bool process_spawn(Job *job)
 {
-  return pipe_process_spawn(job);
+  return job->opts.pty ? pty_process_spawn(job) : pipe_process_spawn(job);
 }
 
 static inline void process_init(Job *job)
 {
-  pipe_process_init(job);
+  if (job->opts.pty) {
+    pty_process_init(job);
+  } else {
+    pipe_process_init(job);
+  }
 }
 
 static inline void process_close(Job *job)
@@ -59,12 +64,20 @@ static inline void process_close(Job *job)
     return;
   }
   job->closed = true;
-  pipe_process_close(job);
+  if (job->opts.pty) {
+    pty_process_close(job);
+  } else {
+    pipe_process_close(job);
+  }
 }
 
 static inline void process_destroy(Job *job)
 {
-  pipe_process_destroy(job);
+  if (job->opts.pty) {
+    pty_process_destroy(job);
+  } else {
+    pipe_process_destroy(job);
+  }
 }
 
 static inline void job_exit_callback(Job *job)
