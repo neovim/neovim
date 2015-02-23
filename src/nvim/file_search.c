@@ -242,53 +242,13 @@ vim_findfile_init (
    */
   wc_part = vim_strchr(path, '*');
   if (wc_part != NULL) {
-    int64_t llevel;
-    int len;
-    char    *errpt;
-
     /* save the fix part of the path */
     assert(wc_part - path >= 0);
     search_ctx->ffsc_fix_path = vim_strnsave(path, (size_t)(wc_part - path));
-
-    /*
-     * copy wc_path and add restricts to the '**' wildcard.
-     * The octet after a '**' is used as a (binary) counter.
-     * So '**3' is transposed to '**^C' ('^C' is ASCII value 3)
-     * or '**76' is transposed to '**N'( 'N' is ASCII value 76).
-     * If no restrict is given after '**' the default is used.
-     * Due to this technique the path looks awful if you print it as a
-     * string.
-     */
-    len = 0;
-    while (*wc_part != NUL) {
-      if (len + 5 >= MAXPATHL) {
-        EMSG(_(e_pathtoolong));
-        break;
-      }
-      if (STRNCMP(wc_part, "**", 2) == 0) {
-        ff_expand_buffer[len++] = *wc_part++;
-        ff_expand_buffer[len++] = *wc_part++;
-
-        llevel = strtol((char *)wc_part, &errpt, 10);
-        if ((char_u *)errpt != wc_part && llevel > 0 && llevel < 255)
-          ff_expand_buffer[len++] = (char_u)llevel;
-        else if ((char_u *)errpt != wc_part && llevel == 0)
-          /* restrict is 0 -> remove already added '**' */
-          len -= 2;
-        else
-          ff_expand_buffer[len++] = FF_MAX_STAR_STAR_EXPAND;
-        wc_part = (char_u *)errpt;
-        if (*wc_part != NUL && !vim_ispathsep(*wc_part)) {
-          EMSG2(_(
-                  "E343: Invalid path: '**[number]' must be at the end of the path or be followed by '%s'."),
-              PATHSEPSTR);
-          goto error_return;
-        }
-      } else
-        ff_expand_buffer[len++] = *wc_part++;
+    search_ctx = populate_wc_path(wc_part, search_ctx);
+    if (search_ctx == NULL) {
+      goto error_return;
     }
-    ff_expand_buffer[len] = NUL;
-    search_ctx->ffsc_wc_path = vim_strsave(ff_expand_buffer);
   } else
     search_ctx->ffsc_fix_path = vim_strsave(path);
 
@@ -440,6 +400,53 @@ char_u **vim_create_stopdirs(char_u *path)
   return stopdirs;
 }
 
+ff_search_ctx_T *populate_wc_path(char_u *wc_part, ff_search_ctx_T *ctx)
+{
+  int64_t llevel;
+  int len;
+  char    *errpt;
+
+  /*
+   * copy wc_path and add restricts to the '**' wildcard.
+   * The octet after a '**' is used as a (binary) counter.
+   * So '**3' is transposed to '**^C' ('^C' is ASCII value 3)
+   * or '**76' is transposed to '**N'( 'N' is ASCII value 76).
+   * If no restrict is given after '**' the default is used.
+   * Due to this technique the path looks awful if you print it as a
+   * string.
+   */
+  len = 0;
+  while (*wc_part != NUL) {
+    if (len + 5 >= MAXPATHL) {
+      EMSG(_(e_pathtoolong));
+      break;
+    }
+    if (STRNCMP(wc_part, "**", 2) == 0) {
+      ff_expand_buffer[len++] = *wc_part++;
+      ff_expand_buffer[len++] = *wc_part++;
+
+      llevel = strtol((char *)wc_part, &errpt, 10);
+      if ((char_u *)errpt != wc_part && llevel > 0 && llevel < 255)
+        ff_expand_buffer[len++] = (char_u)llevel;
+      else if ((char_u *)errpt != wc_part && llevel == 0)
+        /* restrict is 0 -> remove already added '**' */
+        len -= 2;
+      else
+        ff_expand_buffer[len++] = FF_MAX_STAR_STAR_EXPAND;
+      wc_part = (char_u *)errpt;
+      if (*wc_part != NUL && !vim_ispathsep(*wc_part)) {
+        EMSG2(_(
+              "E343: Invalid path: '**[number]' must be at the end of the path or be followed by '%s'."),
+            PATHSEPSTR);
+        return NULL;
+      }
+    } else
+      ff_expand_buffer[len++] = *wc_part++;
+  }
+  ff_expand_buffer[len] = NUL;
+  ctx->ffsc_wc_path = vim_strsave(ff_expand_buffer);
+  return ctx;
+}
 /*
  * Clean up the given search context. Can handle a NULL pointer.
  */
