@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "nvim/api/buffer.h"
 #include "nvim/api/private/helpers.h"

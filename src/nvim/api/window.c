@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "nvim/api/window.h"
 #include "nvim/api/private/defs.h"
