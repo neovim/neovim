@@ -92,6 +92,8 @@ void job_teardown(void)
   for (int i = 0; i < MAX_RUNNING_JOBS; i++) {
     Job *job;
     if ((job = table[i]) != NULL) {
+      uv_kill(job->pid, SIGTERM);
+      job->term_sent = true;
       job_stop(job);
     }
   }
