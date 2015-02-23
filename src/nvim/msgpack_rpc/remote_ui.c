@@ -66,8 +66,8 @@ static Object remote_ui_attach(uint64_t channel_id, uint64_t request_id,
       || args.items[2].type != kObjectTypeBoolean
       || args.items[0].data.integer <= 0 || args.items[1].data.integer <= 0) {
     api_set_error(error, Validation,
-                  _("Arguments must be a pair of positive integers "
-                    "representing the remote screen width/height"));
+                  _("Invalid arguments. Expected: "
+                    "(uint width > 0, uint height > 0, bool enable_rgb)"));
     return NIL;
   }
   UIData *data = xmalloc(sizeof(UIData));
@@ -127,8 +127,8 @@ static Object remote_ui_try_resize(uint64_t channel_id, uint64_t request_id,
       || args.items[1].type != kObjectTypeInteger
       || args.items[0].data.integer <= 0 || args.items[1].data.integer <= 0) {
     api_set_error(error, Validation,
-                  _("Arguments must be a pair of positive integers "
-                    "representing the remote screen width/height"));
+                  _("Invalid arguments. Expected: "
+                    "(uint width > 0, uint height > 0)"));
     return NIL;
   }
 
