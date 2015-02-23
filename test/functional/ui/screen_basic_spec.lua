@@ -301,22 +301,6 @@ describe('Screen', function()
         recursive
         thinking
         ]])
-        screen:expect([[
-          a                                                    |
-          word                                                 |
-          to                                                   |
-          the wise                                             |
-          avoid                                                |
-          thinking                                             |
-          about                                                |
-          recursive                                            |
-          thinking                                             |
-          ^                                                    |
-          ~                                                    |
-          ~                                                    |
-          ~                                                    |
-                                                               |
-        ]])
     end)
 
     it('find the words "thinking"', function()
