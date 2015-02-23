@@ -229,43 +229,8 @@ vim_findfile_init (
    * is handled as unlimited upward search.  See function
    * ff_path_in_stoplist() for details.
    */
-  char_u *stopdirs = vim_findfile_stopdir(path);
-  if (stopdirs != NULL) {
-    char_u  *walker = stopdirs;
 
-    while (*walker == ';')
-      walker++;
-
-    size_t dircount = 1;
-    search_ctx->ffsc_stopdirs_v = xmalloc(sizeof(char_u *));
-
-    do {
-      char_u  *helper;
-      void    *ptr;
-
-      helper = walker;
-      ptr = xrealloc(search_ctx->ffsc_stopdirs_v,
-          (dircount + 1) * sizeof(char_u *));
-      search_ctx->ffsc_stopdirs_v = ptr;
-      walker = vim_strchr(walker, ';');
-      if (walker) {
-        assert(walker - helper >= 0);
-        search_ctx->ffsc_stopdirs_v[dircount-1] =
-          vim_strnsave(helper, (size_t)(walker - helper));
-        walker++;
-      } else
-        /* this might be "", which means ascent till top
-         * of directory tree.
-         */
-        search_ctx->ffsc_stopdirs_v[dircount-1] =
-          vim_strsave(helper);
-
-      dircount++;
-
-    } while (walker != NULL);
-    search_ctx->ffsc_stopdirs_v[dircount-1] = NULL;
-  }
-
+  search_ctx->ffsc_stopdirs_v = vim_create_stopdirs(path);
   search_ctx->ffsc_level = LEVELS;
 
   /* split into:
@@ -425,6 +390,51 @@ char_u *vim_findfile_stopdir(char_u *buf)
   } else if (*r_ptr == NUL)
     r_ptr = NULL;
   return r_ptr;
+}
+
+/*
+ * Create the stopdirs to populate the search context in vim_findfile_init.
+ */
+char_u **vim_create_stopdirs(char_u *path)
+{
+  char_u *stopdirs_str = vim_findfile_stopdir(path);
+  char_u **stopdirs = NULL;
+
+  if (stopdirs_str != NULL) {
+    char_u  *walker = stopdirs_str;
+
+    while (*walker == ';')
+      walker++;
+
+    size_t dircount = 1;
+    stopdirs = xmalloc(sizeof(char_u *));
+
+    do {
+      char_u  *helper;
+      void    *ptr;
+
+      helper = walker;
+      ptr = xrealloc(stopdirs,
+          (dircount + 1) * sizeof(char_u *));
+      stopdirs = ptr;
+      walker = vim_strchr(walker, ';');
+      if (walker) {
+        assert(walker - helper >= 0);
+        stopdirs[dircount-1] =
+          vim_strnsave(helper, (size_t)(walker - helper));
+        walker++;
+      } else
+        /* this might be "", which means ascent till top
+         * of directory tree.
+         */
+        stopdirs[dircount-1] = vim_strsave(helper);
+
+      dircount++;
+
+    } while (walker != NULL);
+    stopdirs[dircount-1] = NULL;
+  }
+  return stopdirs;
 }
 
 /*
