@@ -153,6 +153,9 @@ vim_findfile_init (
   if (search_ctx == NULL) {
     search_ctx = xcalloc(1, sizeof(ff_search_ctx_T));
   }
+  assert((find_what == FINDFILE_DIR)
+      || (find_what == FINDFILE_FILE)
+      || (find_what == FINDFILE_BOTH));
   search_ctx->ffsc_find_what = find_what;
   search_ctx->ffsc_tagfile = tagfile;
 
