@@ -42,7 +42,7 @@ startup as fast as possible if many plugins/hosts are installed.
 3. Example					    *remote-plugin-example*
 
 The best way to learn about remote plugins is with an example, so let's see
-what a python plugin looks like. This plugin exports a command, a function and
+what a Python plugin looks like. This plugin exports a command, a function and
 an autocmd. The plugin is called 'Limit', and all it does is limit the number
 of requests made to it. Here's the plugin source code:
 >
@@ -81,7 +81,7 @@ of requests made to it. Here's the plugin source code:
             self.calls += 1
 <
 
-As can be seen, the plugin is implemented using pure python idioms (classes,
+As can be seen, the plugin is implemented using pure Python idioms (classes,
 methods, and decorators), the translation between these language-specific
 idioms to vimscript occurs while the plugin manifest is being generated (see
 below).
@@ -117,7 +117,7 @@ declared command, autocommand, or function is used for the first time.
 
 The manifest generation step is necessary to keep Nvim's startup fast in
 situations where a user has remote plugins with different hosts. For example,
-say a user has three plugins, for python, java and .NET hosts respectively. If
+say a user has three plugins, for Python, java and .NET hosts respectively. If
 we were to load all three plugins at startup, then three language runtimes
 would also be spawned which could take seconds!
 

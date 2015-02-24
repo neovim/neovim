@@ -10,10 +10,10 @@ First of all, this document is meant to be read by developers interested in
 contributing to the refactoring effort. If you are a normal user or plugin
 developer looking to learn about Nvim |msgpack-rpc| infrastructure for
 implementing plugins in other programming languages, see |external-plugin|.
-For instructions on how to enable python plugins, see |nvim-python|. For
+For instructions on how to enable Python plugins, see |nvim-python|. For
 clipboard, see |nvim-clipboard|.
 
-Instead of doing everything by itself, Nvim aims to simplify it's own
+Instead of doing everything by itself, Nvim aims to simplify its own
 maintenance by delegating as much work as possible to external systems. But
 some Vim components are too tightly coupled and in some cases the refactoring
 work necessary to swap in-house implementations by code that integrates to
@@ -24,18 +24,18 @@ To understand why the provider infrastructure is useful, let us consider two
 examples of integration with external systems that are implemented in Vim and
 are now decoupled from Nvim core as providers:
 
-The first example is clipboard integration: On the original Vim source code,
+The first example is clipboard integration: in the original Vim source code,
 clipboard functions account for more than 1k lines of C source code (and that
-is just on ui.c). All to peform two tasks that are now accomplished with
+is just on ui.c), all to peform two tasks that are now accomplished with
 simple shell commands such as xclip or pbcopy/pbpaste.
 
-The other example is python scripting support: Vim has three files dedicated
-to embed the python interpreter: if_python.c, if_python3.c and if_py_both.h.
-Together these files sum about 9.5k lines of C source code. On Nvim, python
+The other example is Python scripting support: Vim has three files dedicated
+to embed the Python interpreter: if_python.c, if_python3.c and if_py_both.h.
+Together these files sum about 9.5k lines of C source code. On Nvim, Python
 scripting is performed by an external host process that is running 2k sloc
-python program.
+Python program.
 
-In a perfect world, we would implement python and clipboard integration in
+In a perfect world, we would implement Python and clipboard integration in
 pure vimscript and without touching the C code. Unfortunately we can't achieve
 these goals without severly compromising backwards compatibility with Vim.
 Thats where providers comes to rescue.
@@ -61,15 +61,15 @@ The basic idea is that the provider#(name)#Call function should implement
 integration with an external system, because calling shell commands and
 |msgpack-rpc| clients (Nvim only) is easier to do in vimscript.
 
-Now, back to the python example. Instead of modifying vimscript to allow for
+Now, back to the Python example. Instead of modifying vimscript to allow for
 the definition of lowercase functions and commands (for the |:python|,
 |:pyfile|, and |:pydo| commands, and the |pyeval()| function), which would
 break backwards compatibility with Vim, we implemented the
 autoload/provider/python.vim script and the provider#python#Call function
-that is only defined if an external python host is started successfully.
+that is only defined if an external Python host is started successfully.
 
-That works well with the `has('python')` expression (normally used by python
-plugins) because if the python host isn't installed then the plugin will
+That works well with the `has('python')` expression (normally used by Python
+plugins) because if the Python host isn't installed then the plugin will
 "think" it is running in a Vim compiled without |+python| feature.
 
 ==============================================================================
