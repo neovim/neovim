@@ -60,7 +60,7 @@ There are two ways to obtain API metadata:
    separate compilation step.
 
 Here's a simple way to get human-readable description of the API (requires
-python and the `pyyaml`/`msgpack-python` pip packages):
+Python and the `pyyaml`/`msgpack-python` pip packages):
 >
     nvim --api-info | python -c 'import msgpack, sys, yaml; print yaml.dump(msgpack.unpackb(sys.stdin.read()))' > api.yaml
 
@@ -108,7 +108,7 @@ string 'hello world!' on the current nvim instance:
     nvim = MessagePack::RPC::Client.new(MessagePack::RPC::UNIXTransport.new, ENV['NVIM_LISTEN_ADDRESS'])
     result = nvim.call(:vim_command, 'echo "hello world!"')
 <
-A better way is to use the python REPL with the `neovim` package, where API
+A better way is to use the Python REPL with the `neovim` package, where API
 functions can be called interactively:
 >
     >>> from neovim import attach
@@ -119,7 +119,7 @@ functions can be called interactively:
 4. Implementing new clients				  *msgpack-rpc-clients*
 
 Nvim is still in alpha, so there's no in-depth documentation explaining how to
-properly implement a client library yet. The python client (the pip package
+properly implement a client library yet. The Python client (the pip package
 "neovim") will always be up-to-date with the latest API changes, so its source
 code is the best documentation currently available. There are some guidelines
 however:
