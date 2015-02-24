@@ -276,6 +276,8 @@ get_compile_flags(NVIM_VERSION_CFLAGS)
 
 add_subdirectory(test/includes)
 add_subdirectory(config)
+add_subdirectory(test/functional/job) # compile pty test program
+
 
 # Setup some test-related bits.  We do this after going down the tree because we
 # need some of the targets.
@@ -316,5 +318,5 @@ if(BUSTED_PRG)
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -DTEST_TYPE=functional
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-    DEPENDS nvim)
+    DEPENDS nvim tty-test)
 endif()

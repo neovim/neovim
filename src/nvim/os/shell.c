@@ -201,14 +201,14 @@ static int shell(const char *cmd,
   char **argv = shell_build_argv(cmd, extra_args);
 
   int status;
-  Job *job = job_start(argv,
-                       &buf,
-                       input != NULL,
-                       data_cb,
-                       data_cb,
-                       NULL,
-                       0,
-                       &status);
+  JobOptions opts = JOB_OPTIONS_INIT;
+  opts.argv = argv;
+  opts.data = &buf;
+  opts.writable = input != NULL;
+  opts.stdout_cb = data_cb;
+  opts.stderr_cb = data_cb;
+  opts.exit_cb = NULL;
+  Job *job = job_start(opts, &status);
 
   if (status <= 0) {
     // Failed, probably due to `sh` not being executable
