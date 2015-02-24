@@ -39,7 +39,11 @@ find_library(LIBUV_LIBRARY NAMES ${LIBUV_NAMES}
 
 mark_as_advanced(LIBUV_INCLUDE_DIR LIBUV_LIBRARY)
 
-set(LIBUV_LIBRARIES ${LIBUV_LIBRARY})
+if(PC_LIBUV_LIBRARIES)
+    list(REMOVE_ITEM PC_LIBUV_LIBRARIES uv)
+endif()
+
+set(LIBUV_LIBRARIES ${LIBUV_LIBRARY} ${PC_LIBUV_LIBRARIES})
 set(LIBUV_INCLUDE_DIRS ${LIBUV_INCLUDE_DIR})
 
 # Deal with the fact that libuv.pc is missing important dependency information.
