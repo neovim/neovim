@@ -2809,7 +2809,7 @@ static char_u * console_dialog_alloc(const char_u *message,
 static char_u *msg_show_console_dialog(char_u *message, char_u *buttons, int dfltbutton)
   FUNC_ATTR_NONNULL_RET
 {
-  bool has_hotkey[HAS_HOTKEY_LEN];
+  bool has_hotkey[HAS_HOTKEY_LEN] = {false};
   char_u *hotk = console_dialog_alloc(message, buttons, has_hotkey);
 
   copy_hotkeys_and_msg(message, buttons, dfltbutton, has_hotkey, hotk);
