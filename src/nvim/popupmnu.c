@@ -2,6 +2,7 @@
 ///
 /// Popup menu (PUM)
 //
+#include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
 
@@ -101,7 +102,7 @@ redo:
   }
 
   if ((p_ph > 0) && (pum_height > p_ph)) {
-    pum_height = p_ph;
+    pum_height = (int)p_ph;
   }
 
   // Put the pum below "row" if possible.  If there are few lines decide on
@@ -126,8 +127,8 @@ redo:
     }
 
     if ((p_ph > 0) && (pum_height > p_ph)) {
-      pum_row += pum_height - p_ph;
-      pum_height = p_ph;
+      pum_row += pum_height - (int)p_ph;
+      pum_height = (int)p_ph;
     }
   } else {
     // pum below "row"
@@ -148,7 +149,7 @@ redo:
     }
 
     if ((p_ph > 0) && (pum_height > p_ph)) {
-      pum_height = p_ph;
+      pum_height = (int)p_ph;
     }
   }
 
@@ -219,7 +220,9 @@ redo:
     if (curwin->w_p_rl) {
       pum_width = pum_col - pum_scrollbar + 1;
     } else {
-      pum_width = Columns - pum_col - pum_scrollbar;
+      assert(Columns - pum_col - pum_scrollbar >= INT_MIN
+             && Columns - pum_col - pum_scrollbar <= INT_MAX);
+      pum_width = (int)(Columns - pum_col - pum_scrollbar);
     }
 
     if ((pum_width > max_width + kind_width + extra_width + 1)
@@ -233,11 +236,13 @@ redo:
   } else if (Columns < def_width) {
     // not enough room, will use what we have
     if (curwin->w_p_rl) {
-      pum_col = Columns - 1;
+      assert(Columns - 1 >= INT_MIN);
+      pum_col = (int)(Columns - 1);
     } else {
       pum_col = 0;
     }
-    pum_width = Columns - 1;
+    assert(Columns - 1 >= INT_MIN);
+    pum_width = (int)(Columns - 1);
   } else {
     if (max_width > PUM_DEF_WIDTH) {
       // truncate
@@ -247,7 +252,8 @@ redo:
     if (curwin->w_p_rl) {
       pum_col = max_width - 1;
     } else {
-      pum_col = Columns - max_width;
+      assert(Columns - max_width >= INT_MIN && Columns - max_width <= INT_MAX);
+      pum_col = (int)(Columns - max_width);
     }
     pum_width = max_width - pum_scrollbar;
   }
@@ -345,7 +351,7 @@ void pum_redraw(void)
             // Display the text that fits or comes before a Tab.
             // First convert it to printable characters.
             char_u *st;
-            int saved = *p;
+            char_u saved = *p;
 
             *p = NUL;
             st = transstr(s);
@@ -535,7 +541,7 @@ static int pum_set_selected(int n, int repeat)
       g_do_tagpreview = 3;
 
       if ((p_pvh > 0) && (p_pvh < g_do_tagpreview)) {
-        g_do_tagpreview = p_pvh;
+        g_do_tagpreview = (int)p_pvh;
       }
       RedrawingDisabled++;
       resized = prepare_tagpreview(false);
