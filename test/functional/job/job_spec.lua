@@ -170,7 +170,8 @@ describe('jobs', function()
       eq('screen resized. rows: 40, columns: 10', next_chunk())
     end)
 
-    it('preprocessing ctrl+c with terminal driver', function()
+    -- FIXME This test is flawed because there is no telling when the OS will send chunks of data.
+    pending('preprocessing ctrl+c with terminal driver', function()
       send('\\<c-c>')
       eq('^Cinterrupt received, press again to exit', next_chunk())
       send('\\<c-c>')
