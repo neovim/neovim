@@ -1,6 +1,0 @@
-start:
-test for empty string: ok
-test for 1 char: ok
-test for 3 chars: ok
-test for contains meta char: ok
-test for contains non-ascii char: ok
