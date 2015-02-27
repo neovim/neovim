@@ -6723,6 +6723,10 @@ int hl_combine_attr(int char_attr, int prim_attr)
     return prim_attr;
   }
 
+  if (prim_attr == 0) {
+    return char_attr;
+  }
+
   // Find the entry for char_attr
   char_aep = syn_cterm_attr2entry(char_attr);
 
