@@ -87,6 +87,11 @@
     }                                                                         \
                                                                               \
     return rv;                                                                \
+  }                                                                           \
+                                                                              \
+  void map_##T##_##U##_clear(Map(T, U) *map)                                  \
+  {                                                                           \
+    kh_clear(T##_##U##_map, map->table);                                      \
   }
 
 static inline khint_t String_hash(String s)
