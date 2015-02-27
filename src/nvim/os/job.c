@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include <sys/wait.h>
+
 #include <uv.h>
 
 #include "nvim/os/uv_helpers.h"
@@ -43,6 +45,7 @@
 Job *table[MAX_RUNNING_JOBS] = {NULL};
 size_t stop_requests = 0;
 uv_timer_t job_stop_timer;
+uv_signal_t schld;
 
 // Some helpers shared in this module
 
@@ -56,6 +59,8 @@ void job_init(void)
 {
   uv_disable_stdio_inheritance();
   uv_timer_init(uv_default_loop(), &job_stop_timer);
+  uv_signal_init(uv_default_loop(), &schld);
+  uv_signal_start(&schld, chld_handler, SIGCHLD);
 }
 
 /// Releases job control resources and terminates running jobs
@@ -73,6 +78,8 @@ void job_teardown(void)
 
   // Wait until all jobs are closed
   event_poll_until(-1, !stop_requests);
+  uv_signal_stop(&schld);
+  uv_close((uv_handle_t *)&schld, NULL);
   // Close the timer
   uv_close((uv_handle_t *)&job_stop_timer, NULL);
 }
@@ -200,10 +207,16 @@ void job_stop(Job *job)
   }
 
   job->stopped_time = os_hrtime();
-  // Close the job's stdin. If the job doesn't close it's own stdout/stderr,
-  // they will be closed when the job exits(possibly due to being terminated
-  // after a timeout)
-  close_job_in(job);
+  if (job->opts.pty) {
+    // close all streams for pty jobs to send SIGHUP to the process
+    job_close_streams(job);
+    pty_process_close_master(job);
+  } else {
+    // Close the job's stdin. If the job doesn't close its own stdout/stderr,
+    // they will be closed when the job exits(possibly due to being terminated
+    // after a timeout)
+    close_job_in(job);
+  }
 
   if (!stop_requests++) {
     // When there's at least one stop request pending, start a timer that
@@ -312,6 +325,12 @@ int job_id(Job *job)
   return job->id;
 }
 
+// Get the job pid
+int job_pid(Job *job)
+{
+  return job->pid;
+}
+
 /// Get data associated with a job
 ///
 /// @param job A pointer to the job
@@ -329,6 +348,13 @@ bool job_resize(Job *job, uint16_t width, uint16_t height)
   }
   pty_process_resize(job, width, height);
   return true;
+}
+
+void job_close_streams(Job *job)
+{
+  close_job_in(job);
+  close_job_out(job);
+  close_job_err(job);
 }
 
 /// Iterates the table, sending SIGTERM to stopped jobs and SIGKILL to those
@@ -375,14 +401,41 @@ static void read_cb(RStream *rstream, void *data, bool eof)
   }
 }
 
-void job_close_streams(Job *job)
-{
-  close_job_in(job);
-  close_job_out(job);
-  close_job_err(job);
-}
-
 static void close_cb(uv_handle_t *handle)
 {
   job_decref(handle_get_job(handle));
 }
+
+static void chld_handler(uv_signal_t *handle, int signum)
+{
+  int stat = 0;
+  int pid;
+
+  do {
+    pid = waitpid(-1, &stat, WNOHANG);
+  } while (pid < 0 && errno == EINTR);
+
+  if (pid <= 0) {
+    return;
+  }
+
+  if (WIFSTOPPED(stat) || WIFCONTINUED(stat)) {
+    // Only care for processes that exited
+    return;
+  }
+
+  Job *job = NULL;
+  // find the job corresponding to the exited pid
+  for (int i = 0; i < MAX_RUNNING_JOBS; i++) {
+    if ((job = table[i]) != NULL && job->pid == pid) {
+      if (WIFEXITED(stat)) {
+        job->status = WEXITSTATUS(stat);
+      } else if (WIFSIGNALED(stat)) {
+        job->status = WTERMSIG(stat);
+      }
+      process_close(job);
+      break;
+    }
+  }
+}
+
