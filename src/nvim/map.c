@@ -16,6 +16,8 @@
 #define uint64_t_eq kh_int64_hash_equal
 #define uint32_t_hash kh_int_hash_func
 #define uint32_t_eq kh_int_hash_equal
+#define int_hash kh_int_hash_func
+#define int_eq kh_int_hash_equal
 
 #if defined(ARCH_64)
 #define ptr_t_hash(key) uint64_t_hash((uint64_t)key)
@@ -109,6 +111,7 @@ static inline bool String_eq(String a, String b)
 }
 
 
+MAP_IMPL(int, int, DEFAULT_INITIALIZER)
 MAP_IMPL(cstr_t, uint64_t, DEFAULT_INITIALIZER)
 MAP_IMPL(cstr_t, ptr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(ptr_t, ptr_t, DEFAULT_INITIALIZER)
