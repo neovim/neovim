@@ -2416,6 +2416,8 @@ do_set (
 
       if (vim_strchr((char_u *)"?=:!&<", nextchar) != NULL) {
         arg += len;
+        /* These suffixes do nothing in Nvim, but we keep them for
+         * backwards compatibility for now. */
         if (nextchar == '&' && arg[1] == 'v' && arg[2] == 'i') {
           if (arg[3] == 'm') {          /* "opt&vim": set to Vim default */
             arg += 3;

@@ -45,9 +45,9 @@ achieve special effects.  These options come in three forms:
 :se[t] inv{option}	Toggle option: Invert value. {not in Vi}
 
 				*:set-default* *:set-&* *:set-&vi* *:set-&vim*
-:se[t] {option}&	Reset option to its default value. {not in Vi}
-:se[t] {option}&vi	Reset option to its Vi default value. {not in Vi}
-:se[t] {option}&vim	Reset option to its Vim default value. {not in Vi}
+:se[t] {option}&	Reset option to its default value.
+:se[t] {option}&vi	Reset option to its default value.
+:se[t] {option}&vim	Reset option to its default value.
 
 :se[t] all&		Set all options, except terminal options, to their
 			default value.  The values of 'term', 'lines' and
