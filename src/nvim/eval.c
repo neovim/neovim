@@ -10656,7 +10656,7 @@ static void f_jobsend(typval_T *argvars, typval_T *rettv)
   }
 
   ssize_t input_len;
-  char *input = (char *) save_tv_as_string(&argvars[1], &input_len, true);
+  char *input = (char *) save_tv_as_string(&argvars[1], &input_len, false);
   if (!input) {
     // Either the error has been handled by save_tv_as_string(), or there is no
     // input to send.

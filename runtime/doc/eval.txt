@@ -4019,8 +4019,9 @@ jobsend({job}, {data})					{Nvim} *jobsend()*
 
 		{data} may be a string, string convertible, or a list.  If
 		{data} is a list, the items will be separated by newlines and
-		any newlines in an item will be sent as a NUL.  For example: >
-			:call jobsend(j, ["abc", "123\n456"])
+		any newlines in an item will be sent as a NUL. A final newline
+		can be sent by adding a final empty string. For example: >
+			:call jobsend(j, ["abc", "123\n456", ""])
 < 		will send "abc<NL>123<NUL>456<NL>".
 
 jobstart({name}, {prog}[, {argv}])			{Nvim} *jobstart()*
