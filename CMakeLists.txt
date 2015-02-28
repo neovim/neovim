@@ -195,6 +195,10 @@ set(LIBTERMKEY_USE_STATIC ON)
 find_package(LibTermkey REQUIRED)
 include_directories(SYSTEM ${LIBTERMEY_INCLUDE_DIRS})
 
+set(LIBVTERM_USE_STATIC ON)
+find_package(LibVterm REQUIRED)
+include_directories(SYSTEM ${LIBVTERM_INCLUDE_DIRS})
+
 find_package(LibIntl)
 if(LibIntl_FOUND)
   include_directories(SYSTEM ${LibIntl_INCLUDE_DIRS})
