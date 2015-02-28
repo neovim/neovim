@@ -38,12 +38,10 @@
 
 #ifdef USE_CRNL
 # define DFLT_FF        "dos"
-# define DFLT_FFS_VIM   "dos,unix"
-# define DFLT_FFS_VI    "dos,unix"      /* also autodetect in compatible mode */
+# define DFLT_FFS_VIM   "dos,unix,mac"
 #else
 #  define DFLT_FF       "unix"
-#  define DFLT_FFS_VIM  "unix,dos"
-#   define DFLT_FFS_VI  ""
+#  define DFLT_FFS_VIM  "unix,dos,mac"
 #endif
 
 
@@ -78,8 +76,7 @@
 #define FO_AUTO         'a'     /* automatic formatting */
 #define FO_REMOVE_COMS  'j'     /* remove comment leaders when joining lines */
 
-#define DFLT_FO_VI      "vt"
-#define DFLT_FO_VIM     "tcq"
+#define DFLT_FO_VIM     "tcqj"
 #define FO_ALL          "tcroq2vlb1mMBn,awj"    /* for do_set() */
 
 /* characters for the p_cpo option: */
@@ -146,7 +143,6 @@
                                  * cursor would not move */
 /* default values for Vim, Vi and POSIX */
 #define CPO_VIM         "aABceFs"
-#define CPO_VI          "aAbBcCdDeEfFgHiIjJkKlLmMnoOpPqrRsStuvwWxXyZ$!%*-+<>;"
 #define CPO_ALL \
   "aAbBcCdDeEfFgHiIjJkKlLmMnoOpPqrRsStuvwWxXyZ$!%*-+<>#{|&/\\.;"
 
