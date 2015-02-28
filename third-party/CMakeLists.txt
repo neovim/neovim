@@ -211,10 +211,24 @@ if(USE_BUNDLED_LUAROCKS)
     add_dependencies(luarocks luajit)
   endif()
 
+  add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps
+    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install lua_cliargs 2.3-3
+    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install luafilesystem 1.5.0
+    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install dkjson 2.5-1
+    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install say 1.2-1
+    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install luassert 1.7.2-0
+    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install ansicolors 1.0.2-3
+    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install penlight 1.0.0-1
+    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install mediator_lua 1.1-3
+    COMMAND touch ${DEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps
+    DEPENDS luarocks)
+  add_custom_target(stable-busted-deps
+    DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps)
+
   add_custom_command(OUTPUT ${DEPS_BIN_DIR}/busted
     COMMAND ${DEPS_BIN_DIR}/luarocks
     ARGS build busted 2.0.rc4 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-    DEPENDS luarocks)
+    DEPENDS stable-busted-deps)
   add_custom_target(busted
     DEPENDS ${DEPS_BIN_DIR}/busted)
 
@@ -244,7 +258,7 @@ if(USE_BUNDLED_LUAROCKS)
   add_custom_target(nvim-client
     DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/nvim-client)
 
-  list(APPEND THIRD_PARTY_DEPS busted lua-messagepack lpeg nvim-client)
+  list(APPEND THIRD_PARTY_DEPS stable-busted-deps busted lua-messagepack lpeg nvim-client)
 endif()
 
 add_custom_target(third-party ALL
