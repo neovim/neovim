@@ -67,8 +67,8 @@ set(LIBUNIBILIUM_SHA1 32c07797f298e5bc722ce14b6b9a2cae68e3c018)
 set(LIBTERMKEY_URL https://github.com/neovim/libtermkey/archive/8c0cb7108cc63218ea19aa898968eede19e19603.tar.gz)
 set(LIBTERMKEY_SHA1 54e8b6914dab10d4467d2a563f80053a99849fcb)
 
-set(LIBVTERM_URL https://github.com/neovim/libvterm/archive/ec80d6cc2f331263b76ec40acb4e6b2184a969d9.tar.gz)
-set(LIBVTERM_SHA1 4e3cf232977bb829baa1746c20e846dd054981c0)
+set(LIBVTERM_URL https://github.com/neovim/libvterm/archive/dd92e5ba5b0907571df938ac7601b1641f05ed16.tar.gz)
+set(LIBVTERM_SHA1 9e4c4cdfc4925f1882b704e84c7360e70aeb3d31)
 
 
 if(USE_BUNDLED_LIBUNIBILIUM)
@@ -241,7 +241,7 @@ if(USE_BUNDLED_LUAROCKS)
 
   add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps
     COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install lua_cliargs 2.3-3
-    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install luafilesystem 1.5.0
+    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install luafilesystem 1.6.3-1
     COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install dkjson 2.5-1
     COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install say 1.2-1
     COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install luassert 1.7.2-0
