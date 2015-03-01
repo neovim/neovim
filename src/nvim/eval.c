@@ -351,7 +351,6 @@ typedef enum {
  * The reason to use this table anyway is for very quick access to the
  * variables with the VV_ defines.
  */
-#include "nvim/version_defs.h"
 
 /* values for vv_flags: */
 #define VV_COMPAT       1       /* compatible, also used without "v:" */

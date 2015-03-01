@@ -4033,7 +4033,7 @@ void do_modelines(int flags)
   --entered;
 }
 
-#include "nvim/version_defs.h"            /* for version number */
+#include "nvim/version.h"            /* for version number */
 
 /*
  * chk_modeline() - check a single line for a mode string

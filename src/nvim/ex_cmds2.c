@@ -21,7 +21,7 @@
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
 #endif
-#include "nvim/version_defs.h"
+#include "nvim/version.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
