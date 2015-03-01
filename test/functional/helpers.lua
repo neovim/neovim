@@ -9,6 +9,15 @@ local nvim_prog = os.getenv('NVIM_PROG') or 'build/bin/nvim'
 local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
                    '--cmd', 'set shortmess+=I background=light noswapfile',
                    '--embed'}
+
+-- Formulate a path to the directory containing nvim.  We use this to
+-- help run test executables.  It helps to keep the tests working, even
+-- when the build is not in the default location.
+local nvim_dir = nvim_prog:gsub("[/\\][^/\\]+$", "")
+if nvim_dir == nvim_prog then
+    nvim_dir = "."
+end
+
 local prepend_argv
 
 if os.getenv('VALGRIND') then
@@ -283,6 +292,7 @@ return {
   expect = expect,
   ok = ok,
   nvim = nvim,
+  nvim_dir = nvim_dir,
   buffer = buffer,
   window = window,
   tabpage = tabpage,

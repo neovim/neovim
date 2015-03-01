@@ -4,7 +4,7 @@ local clear, nvim, eq, neq, ok, expect, eval, next_message, run, stop, session
   = helpers.clear, helpers.nvim, helpers.eq, helpers.neq, helpers.ok,
   helpers.expect, helpers.eval, helpers.next_message, helpers.run,
   helpers.stop, helpers.session
-local insert = helpers.insert
+local nvim_dir, insert = helpers.nvim_dir, helpers.insert
 
 local channel = nvim('get_api_info')[1]
 
@@ -150,7 +150,7 @@ describe('jobs', function()
 
     before_each(function() 
       -- the full path to tty-test seems to be required when running on travis.
-      insert('build/bin/tty-test')
+      insert(nvim_dir .. '/tty-test')
       nvim('command', 'let exec = expand("<cfile>:p")')
       nvim('command', notify_str('v:job_data[1]', 'get(v:job_data, 2)'))
       nvim('command', "let j = jobstart('xxx', exec, [], {})")
