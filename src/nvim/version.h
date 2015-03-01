@@ -1,6 +1,11 @@
 #ifndef NVIM_VERSION_H
 #define NVIM_VERSION_H
 
+// defined in version.c
+extern char* Version;
+extern char* mediumVersion;
+extern char* longVersion;
+
 //
 // Vim version number, name, etc. Patchlevel is defined in version.c.
 //
