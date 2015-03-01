@@ -1,3 +1,4 @@
+local assert = require('luassert')
 local ffi = require('ffi')
 local formatc = require('test.unit.formatc')
 local Set = require('test.unit.set')
