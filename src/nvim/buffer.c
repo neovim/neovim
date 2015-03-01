@@ -70,6 +70,7 @@
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
+#include "nvim/version.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
@@ -4032,8 +4033,6 @@ void do_modelines(int flags)
       nmlines = 0;
   --entered;
 }
-
-#include "nvim/version.h"            /* for version number */
 
 /*
  * chk_modeline() - check a single line for a mode string

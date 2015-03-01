@@ -21,7 +21,6 @@
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
 #endif
-#include "nvim/version_defs.h"
 #include "nvim/hardcopy.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
@@ -42,6 +41,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
+#include "nvim/version.h"
 #include "nvim/tempfile.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
@@ -2440,7 +2440,7 @@ int mch_print_begin(prt_settings_T *psettings)
     STRCPY(buffer, "Unknown");
   }
   prt_dsc_textline("For", buffer);
-  prt_dsc_textline("Creator", NVIM_VERSION_LONG);
+  prt_dsc_textline("Creator", longVersion);
   /* Note: to ensure Clean8bit I don't think we can use LC_TIME */
   now = time(NULL);
   p_time = ctime(&now);

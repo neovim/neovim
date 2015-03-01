@@ -126,7 +126,6 @@ src/nvim/undo.h
 src/nvim/undo_defs.h
 src/nvim/version.c
 src/nvim/version.h
-src/nvim/version_defs.h
 src/nvim/vim.h
 src/nvim/window.c
 src/nvim/window.h
