@@ -1,4 +1,5 @@
 require('coxpcall')
+local assert = require('luassert')
 local Loop = require('nvim.loop')
 local MsgpackStream = require('nvim.msgpack_stream')
 local AsyncSession = require('nvim.async_session')
