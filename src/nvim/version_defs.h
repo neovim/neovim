@@ -9,6 +9,8 @@
 #define STR_(x) #x
 #define STR(x) STR_(x)
 
+#include "auto/versiondef.h"
+
 //
 // Nvim version identifiers
 //
