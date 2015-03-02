@@ -240,14 +240,22 @@ if(USE_BUNDLED_LUAROCKS)
   endif()
 
   add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps
-    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install lua_cliargs 2.3-3
-    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install luafilesystem 1.6.3-1
-    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install dkjson 2.5-1
-    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install say 1.2-1
-    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install luassert 1.7.2-0
-    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install ansicolors 1.0.2-3
-    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install penlight 1.0.0-1
-    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install mediator_lua 1.1-3
+    COMMAND ${DEPS_BIN_DIR}/luarocks
+    ARGS build lua_cliargs 2.3-3 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
+    COMMAND ${DEPS_BIN_DIR}/luarocks
+    ARGS build luafilesystem 1.6.3-1 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
+    COMMAND ${DEPS_BIN_DIR}/luarocks
+    ARGS build dkjson 2.5-1 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
+    COMMAND ${DEPS_BIN_DIR}/luarocks
+    ARGS build say 1.2-1 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
+    COMMAND ${DEPS_BIN_DIR}/luarocks
+    ARGS build luassert 1.7.2-0 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
+    COMMAND ${DEPS_BIN_DIR}/luarocks
+    ARGS build ansicolors 1.0.2-3 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
+    COMMAND ${DEPS_BIN_DIR}/luarocks
+    ARGS build penlight 1.0.0-1 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
+    COMMAND ${DEPS_BIN_DIR}/luarocks
+    ARGS build mediator_lua 1.1-3 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
     COMMAND touch ${DEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps
     DEPENDS luarocks)
   add_custom_target(stable-busted-deps
