@@ -9479,7 +9479,9 @@ static void getpos_both(typval_T *argvars, typval_T *rettv, bool getcurpos)
   list_append_number(l,
                      (fp != NULL) ? (varnumber_T)fp->coladd : (varnumber_T)0);
   if (getcurpos) {
-    list_append_number(l, (varnumber_T) curwin->w_curswant + 1);
+    list_append_number(l, curwin->w_curswant == MAXCOL
+                              ? (varnumber_T)MAXCOL
+                              : (varnumber_T)curwin->w_curswant + 1);
   }
 }
 
