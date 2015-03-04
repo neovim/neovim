@@ -83,15 +83,12 @@ FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname)
   return kDifferentFiles;
 }
 
-/// Get the tail of a path: the file name.
+/// Gets the tail (i.e., the filename segment) of a path `fname`.
 ///
-/// @param fname A file path.
-/// @return
-///   - Empty string, if fname is NULL.
-///   - The position of the last path separator + 1. (i.e. empty string, if
-///   fname ends in a slash).
-///   - Never NULL.
+/// @return pointer just past the last path separator (empty string, if fname
+///         ends in a slash), or empty string if fname is NULL.
 char_u *path_tail(char_u *fname)
+  FUNC_ATTR_NONNULL_RET
 {
   if (fname == NULL) {
     return (char_u *)"";
