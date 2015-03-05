@@ -1341,9 +1341,10 @@ recover_names (
         if (after_pathsep(dir_name, p) && p[-1] == p[-2]) {
           /* Ends with '//', Use Full path for swap name */
           tail = make_percent_swname(dir_name, fname_res);
-        } else
-        tail = path_tail(fname_res);
-        tail = concat_fnames(dir_name, tail, TRUE);
+        } else {
+          tail = path_tail(fname_res);
+          tail = concat_fnames(dir_name, tail, TRUE);
+        }
         num_names = recov_file_names(names, tail, FALSE);
         free(tail);
       }
