@@ -3656,7 +3656,7 @@ void do_sub(exarg_T *eap)
   if (eap->skip)            /* not executing commands, only parsing */
     return;
 
-  if (!do_count && !curbuf->b_p_ma) {
+  if (!do_count && !MODIFIABLE(curbuf)) {
     /* Substitution is not allowed in non-'modifiable' buffer */
     EMSG(_(e_modifiable));
     return;

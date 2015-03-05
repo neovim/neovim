@@ -1563,7 +1563,7 @@ static void setSmallMaybe(garray_T *gap)
  */
 static void foldCreateMarkers(linenr_T start, linenr_T end)
 {
-  if (!curbuf->b_p_ma) {
+  if (!MODIFIABLE(curbuf)) {
     EMSG(_(e_modifiable));
     return;
   }

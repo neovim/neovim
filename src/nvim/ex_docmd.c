@@ -1510,7 +1510,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       errormsg = (char_u *)_(e_sandbox);
       goto doend;
     }
-    if (!curbuf->b_p_ma && (ea.argt & MODIFY)) {
+    if (!MODIFIABLE(curbuf) && (ea.argt & MODIFY)) {
       /* Command not allowed in non-'modifiable' buffer */
       errormsg = (char_u *)_(e_modifiable);
       goto doend;

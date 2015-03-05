@@ -1465,7 +1465,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
 
     /* Force a redraw when operating on an empty Visual region, when
      * 'modifiable is off or creating a fold. */
-    if (oap->is_VIsual && (oap->empty || !curbuf->b_p_ma
+    if (oap->is_VIsual && (oap->empty || !MODIFIABLE(curbuf)
                            || oap->op_type == OP_FOLD
                            ))
       redraw_curbuf_later(INVERTED);
@@ -5513,9 +5513,9 @@ static void nv_Replace(cmdarg_T *cap)
     VIsual_mode = 'V';
     nv_operator(cap);
   } else if (!checkclearopq(cap->oap)) {
-    if (!curbuf->b_p_ma)
+    if (!MODIFIABLE(curbuf)) {
       EMSG(_(e_modifiable));
-    else {
+    } else {
       if (virtual_active())
         coladvance(getviscol());
       invoke_edit(cap, false, cap->arg ? 'V' : 'R', false);
@@ -5533,9 +5533,9 @@ static void nv_vreplace(cmdarg_T *cap)
     cap->nchar = cap->extra_char;
     nv_replace(cap);            /* Do same as "r" in Visual mode for now */
   } else if (!checkclearopq(cap->oap)) {
-    if (!curbuf->b_p_ma)
+    if (!MODIFIABLE(curbuf)) {
       EMSG(_(e_modifiable));
-    else {
+    } else {
       if (cap->extra_char == Ctrl_V)            /* get another character */
         cap->extra_char = get_literal();
       stuffcharReadbuff(cap->extra_char);

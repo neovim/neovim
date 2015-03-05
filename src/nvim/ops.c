@@ -583,7 +583,7 @@ void op_reindent(oparg_T *oap, Indenter how)
   linenr_T start_lnum = curwin->w_cursor.lnum;
 
   /* Don't even try when 'modifiable' is off. */
-  if (!curbuf->b_p_ma) {
+  if (!MODIFIABLE(curbuf)) {
     EMSG(_(e_modifiable));
     return;
   }
@@ -1329,7 +1329,7 @@ int op_delete(oparg_T *oap)
   if (oap->empty)
     return u_save_cursor();
 
-  if (!curbuf->b_p_ma) {
+  if (!MODIFIABLE(curbuf)) {
     EMSG(_(e_modifiable));
     return FAIL;
   }

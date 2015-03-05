@@ -2145,7 +2145,7 @@ void buflist_list(exarg_T *eap)
         (curwin->w_alt_fnum == buf->b_fnum ? '#' : ' '),
         buf->b_ml.ml_mfp == NULL ? ' ' :
         (buf->b_nwindows == 0 ? 'h' : 'a'),
-        !buf->b_p_ma ? '-' : (buf->b_p_ro ? '=' : ' '),
+        !MODIFIABLE(buf) ? '-' : (buf->b_p_ro ? '=' : ' '),
         (buf->b_flags & BF_READERR) ? 'x'
         : (bufIsChanged(buf) ? '+' : ' '),
         NameBuff);
@@ -2623,7 +2623,7 @@ void maketitle(void)
 
       switch (bufIsChanged(curbuf)
               + (curbuf->b_p_ro * 2)
-              + (!curbuf->b_p_ma * 4)) {
+              + (!MODIFIABLE(curbuf) * 4)) {
       case 1: STRCAT(buf, " +"); break;
       case 2: STRCAT(buf, " ="); break;
       case 3: STRCAT(buf, " =+"); break;
@@ -3250,7 +3250,7 @@ build_stl_str_hl (
       itemisflag = TRUE;
       switch ((opt == STL_MODIFIED_ALT)
               + bufIsChanged(wp->w_buffer) * 2
-              + (!wp->w_buffer->b_p_ma) * 4) {
+              + (!MODIFIABLE(wp->w_buffer)) * 4) {
       case 2: str = (char_u *)"[+]"; break;
       case 3: str = (char_u *)",+"; break;
       case 4: str = (char_u *)"[-]"; break;

@@ -3748,7 +3748,7 @@ did_set_string_option (
   /* 'encoding' and 'fileencoding' */
   else if (varp == &p_enc || gvarp == &p_fenc || varp == &p_tenc) {
     if (gvarp == &p_fenc) {
-      if (!curbuf->b_p_ma && opt_flags != OPT_GLOBAL)
+      if (!MODIFIABLE(curbuf) && opt_flags != OPT_GLOBAL)
         errmsg = e_modifiable;
       else if (vim_strchr(*varp, ',') != NULL)
         /* No comma allowed in 'fileencoding'; catches confusing it
@@ -3819,7 +3819,7 @@ did_set_string_option (
   }
   /* 'fileformat' */
   else if (gvarp == &p_ff) {
-    if (!curbuf->b_p_ma && !(opt_flags & OPT_GLOBAL))
+    if (!MODIFIABLE(curbuf) && !(opt_flags & OPT_GLOBAL))
       errmsg = e_modifiable;
     else if (check_opt_strings(*varp, p_ff_values, FALSE) != OK)
       errmsg = e_invarg;

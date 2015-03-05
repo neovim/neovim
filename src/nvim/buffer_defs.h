@@ -27,6 +27,8 @@
 // for String
 #include "nvim/api/private/defs.h"
 
+#define MODIFIABLE(buf) (buf->b_p_ma)
+
 /*
  * Flags for w_valid.
  * These are set when something in a window structure becomes invalid, except

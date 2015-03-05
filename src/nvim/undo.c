@@ -289,7 +289,7 @@ int u_savedel(linenr_T lnum, long nlines)
 int undo_allowed(void)
 {
   /* Don't allow changes when 'modifiable' is off.  */
-  if (!curbuf->b_p_ma) {
+  if (!MODIFIABLE(curbuf)) {
     EMSG(_(e_modifiable));
     return FALSE;
   }
