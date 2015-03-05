@@ -321,11 +321,6 @@ enum {
 #define fnamencmp(x, y, n) vim_fnamencmp((char_u *)(x), (char_u *)(y), \
     (size_t)(n))
 
-#ifndef EINTR
-# define read_eintr(fd, buf, count) read((fd), (buf), (count))
-# define write_eintr(fd, buf, count) write((fd), (buf), (count))
-#endif
-
 /*
  * Enums need a typecast to be used as array index (for Ultrix).
  */
