@@ -85,7 +85,7 @@ describe('Screen', function()
       it('horizontal', function()
         execute('sp')
         screen:expect([[
-          ^                                                    |
+          ^                                                     |
           ~                                                    |
           ~                                                    |
           ~                                                    |
@@ -106,7 +106,7 @@ describe('Screen', function()
         execute('sp')
         execute('resize 8')
         screen:expect([[
-          ^                                                    |
+          ^                                                     |
           ~                                                    |
           ~                                                    |
           ~                                                    |
@@ -126,7 +126,7 @@ describe('Screen', function()
       it('horizontal and vertical', function()
         execute('sp', 'vsp', 'vsp')
         screen:expect([[
-          ^                   |                |               |
+          ^                    |                |               |
           ~                   |~               |~              |
           ~                   |~               |~              |
           ~                   |~               |~              |
@@ -143,7 +143,7 @@ describe('Screen', function()
         ]])
         insert('hello')
         screen:expect([[
-          hell^               |hello           |hello          |
+          hell^o               |hello           |hello          |
           ~                   |~               |~              |
           ~                   |~               |~              |
           ~                   |~               |~              |
@@ -169,7 +169,7 @@ describe('Screen', function()
       execute('sp', 'vsp', 'vsp')
       insert('hello')
       screen:expect([[
-        hell^               |hello           |hello          |
+        hell^o               |hello           |hello          |
         ~                   |~               |~              |
         ~                   |~               |~              |
         ~                   |~               |~              |
@@ -189,7 +189,7 @@ describe('Screen', function()
       feed('h')
       screen:expect([[
          4+ [No Name]  + [No Name]                          X|
-        hell^2                                               |
+        hell^o2                                               |
         ~                                                    |
         ~                                                    |
         ~                                                    |
@@ -206,7 +206,7 @@ describe('Screen', function()
       execute('tabprevious')
       screen:expect([[
          4+ [No Name]  + [No Name]                          X|
-        hell^               |hello           |hello          |
+        hell^o               |hello           |hello          |
         ~                   |~               |~              |
         ~                   |~               |~              |
         ~                   |~               |~              |
@@ -229,7 +229,7 @@ describe('Screen', function()
       screen:expect([[
         line 1                                               |
         line 2                                               |
-        ^                                                    |
+        ^                                                     |
         ~                                                    |
         ~                                                    |
         ~                                                    |
@@ -262,7 +262,7 @@ describe('Screen', function()
         ~                                                    |
         ~                                                    |
         ~                                                    |
-        :ls^                                                 |
+        :ls^                                                  |
       ]])
     end)
 
@@ -282,7 +282,7 @@ describe('Screen', function()
         ~                                                    |
         :ls                                                  |
           1 %a   "[No Name]"                    line 1       |
-        Press ENTER or type command to continue^             |
+        Press ENTER or type command to continue^              |
       ]])
       feed('<cr>') --  skip the "Press ENTER..." state or tests will hang
     end)
@@ -312,7 +312,7 @@ describe('Screen', function()
         in                  |in              |in             |
         split               |split           |split          |
         windows             |windows         |windows        |
-        ^                   |                |               |
+        ^                    |                |               |
         [No Name] [+]        [No Name] [+]    [No Name] [+]  |
         clearing                                             |
         in                                                   |
@@ -327,7 +327,7 @@ describe('Screen', function()
     it('only affects the current scroll region', function()
       feed('6k')
       screen:expect([[
-        ^crolling           |and             |and            |
+        ^scrolling           |and             |and            |
         and                 |clearing        |clearing       |
         clearing            |in              |in             |
         in                  |split           |split          |
@@ -349,7 +349,7 @@ describe('Screen', function()
         clearing            |in                  |in         |
         in                  |split               |split      |
         split               |windows             |windows    |
-        windows             |^                   |           |
+        windows             |^                    |           |
         [No Name] [+]        [No Name] [+]        <Name] [+] |
         clearing                                             |
         in                                                   |
@@ -361,7 +361,7 @@ describe('Screen', function()
       ]])
       feed('gg')
       screen:expect([[
-        scrolling           |^nserting           |and        |
+        scrolling           |^Inserting           |and        |
         and                 |text                |clearing   |
         clearing            |with                |in         |
         in                  |many                |split      |
@@ -383,7 +383,7 @@ describe('Screen', function()
         clearing            |lines               |in         |
         in                  |to                  |split      |
         split               |test                |windows    |
-        windows             |^crolling           |           |
+        windows             |^scrolling           |           |
         [No Name] [+]        [No Name] [+]        <Name] [+] |
         clearing                                             |
         in                                                   |
@@ -400,7 +400,7 @@ describe('Screen', function()
         clearing            |test                |in         |
         in                  |scrolling           |split      |
         split               |and                 |windows    |
-        windows             |^learing            |           |
+        windows             |^clearing            |           |
         [No Name] [+]        [No Name] [+]        <Name] [+] |
         clearing                                             |
         in                                                   |
@@ -412,7 +412,7 @@ describe('Screen', function()
       ]])
       feed('5k')
       screen:expect([[
-        scrolling           |^ines               |and        |
+        scrolling           |^lines               |and        |
         and                 |to                  |clearing   |
         clearing            |test                |in         |
         in                  |scrolling           |split      |
@@ -429,7 +429,7 @@ describe('Screen', function()
       ]])
       feed('k')
       screen:expect([[
-        scrolling           |^any                |and        |
+        scrolling           |^many                |and        |
         and                 |lines               |clearing   |
         clearing            |to                  |in         |
         in                  |test                |split      |
@@ -455,7 +455,7 @@ describe('Screen', function()
 
     it('rebuilds the whole screen', function()
       screen:expect([[
-        resize^                  |
+        resize^                   |
         ~                        |
         ~                        |
         ~                        |
@@ -466,13 +466,13 @@ describe('Screen', function()
     it('has minimum width/height values', function()
       screen:try_resize(1, 1)
       screen:expect([[
-        -- INS^RT --|
+        -- INS^ERT --|
                     |
       ]])
       feed('<esc>:ls')
       screen:expect([[
         resize      |
-        :ls^        |
+        :ls^         |
       ]])
     end)
   end)

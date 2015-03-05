@@ -28,7 +28,7 @@ describe('Mouse input', function()
     screen:expect([[
       testing                  |
       mouse                    |
-      support and selectio^    |
+      support and selectio^n    |
       ~                        |
                                |
     ]])
@@ -42,14 +42,14 @@ describe('Mouse input', function()
     feed('<LeftMouse><2,1>')
     screen:expect([[
       testing                  |
-      mo^se                    |
+      mo^use                    |
       support and selection    |
       ~                        |
                                |
     ]])
     feed('<LeftMouse><0,0>')
     screen:expect([[
-      ^esting                  |
+      ^testing                  |
       mouse                    |
       support and selection    |
       ~                        |
@@ -62,7 +62,7 @@ describe('Mouse input', function()
     feed('<LeftMouse><2,1>')
     screen:expect([[
       testing                  |
-      mo^se                    |
+      mo^use                    |
       support and selection    |
       ~                        |
                                |
@@ -70,7 +70,7 @@ describe('Mouse input', function()
     feed('<LeftDrag><4,1>')
     screen:expect([[
       testing                  |
-      mo{1:us}^                    |
+      mo{1:us}^e                    |
       support and selection    |
       ~                        |
       {2:-- VISUAL --}             |
@@ -79,13 +79,13 @@ describe('Mouse input', function()
     screen:expect([[
       testing                  |
       mo{1:use }                   |
-      {1:su}^port and selection    |
+      {1:su}^pport and selection    |
       ~                        |
       {2:-- VISUAL --}             |
     ]])
     feed('<LeftDrag><0,0>')
     screen:expect([[
-      ^{1:esting }                 |
+      ^t{1:esting }                 |
       {1:mou}se                    |
       support and selection    |
       ~                        |
@@ -98,7 +98,7 @@ describe('Mouse input', function()
     screen:expect([[
       testing                  |
       mouse                    |
-      {1:suppor}^ and selection    |
+      {1:suppor}^t and selection    |
       ~                        |
       {2:-- VISUAL --}             |
     ]])
@@ -109,7 +109,7 @@ describe('Mouse input', function()
     screen:expect([[
       testing                  |
       mouse                    |
-      {1:su}^{1:port and selection }   |
+      {1:su}^p{1:port and selection }   |
       ~                        |
       {2:-- VISUAL LINE --}        |
     ]])
@@ -120,7 +120,7 @@ describe('Mouse input', function()
     screen:expect([[
       testing                  |
       mouse                    |
-      su^port and selection    |
+      su^pport and selection    |
       ~                        |
       {2:-- VISUAL BLOCK --}       |
     ]])
@@ -129,7 +129,7 @@ describe('Mouse input', function()
   it('right click extends visual selection to the clicked location', function()
     feed('<LeftMouse><0,0>')
     screen:expect([[
-      ^esting                  |
+      ^testing                  |
       mouse                    |
       support and selection    |
       ~                        |
@@ -139,7 +139,7 @@ describe('Mouse input', function()
     screen:expect([[
       {1:testing }                 |
       {1:mouse }                   |
-      {1:su}^port and selection    |
+      {1:su}^pport and selection    |
       ~                        |
       {2:-- VISUAL --}             |
     ]])
@@ -153,7 +153,7 @@ describe('Mouse input', function()
       E426: tag not found: test|
       ing                      |
       Press ENTER or type comma|
-      nd to continue^          |
+      nd to continue^           |
     ]],nil,true)
     feed('<cr>')
   end)
@@ -179,7 +179,7 @@ describe('Mouse input', function()
       to                        |to                        |
       test                      |test                      |
       mouse scrolling           |mouse scrolling           |
-      ^                         |                          |
+      ^                          |                          |
       ~                         |~                         |
       [No Name] [+]              [No Name] [+]             |
       to                                                   |
@@ -193,7 +193,7 @@ describe('Mouse input', function()
     feed('<MouseUp><0,0>')
     screen:expect([[
       mouse scrolling           |lines                     |
-      ^                         |to                        |
+      ^                          |to                        |
       ~                         |test                      |
       ~                         |mouse scrolling           |
       ~                         |                          |
@@ -210,7 +210,7 @@ describe('Mouse input', function()
     feed('<MouseDown><27,0>')
     screen:expect([[
       mouse scrolling           |text                      |
-      ^                         |with                      |
+      ^                          |with                      |
       ~                         |many                      |
       ~                         |lines                     |
       ~                         |to                        |
@@ -227,7 +227,7 @@ describe('Mouse input', function()
     feed('<MouseDown><27,7><MouseDown>')
     screen:expect([[
       mouse scrolling           |text                      |
-      ^                         |with                      |
+      ^                          |with                      |
       ~                         |many                      |
       ~                         |lines                     |
       ~                         |to                        |

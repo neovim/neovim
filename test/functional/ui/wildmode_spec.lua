@@ -25,7 +25,7 @@ describe("'wildmode'", function()
         ~                        |
         ~                        |
         define  jump  list  >    |
-        :sign define^            |
+        :sign define^             |
       ]])
     end)
   end)
