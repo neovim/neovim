@@ -28,7 +28,7 @@ describe(':highlight', function()
                          gui=bold        |
                          guifg=Blue      |
       Directory      xxx ctermfg=4       |
-      -- More --^                        |
+      -- More --^                         |
     ]])
     feed('q')
     wait() -- wait until we're back to normal

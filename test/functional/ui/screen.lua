@@ -418,9 +418,8 @@ function Screen:_row_repr(row, attr_ids, attr_ignore)
     end
     if self._rows[self._cursor.row] == row and self._cursor.col == i then
       table.insert(rv, '^')
-    else
-      table.insert(rv, row[i].text)
     end
+    table.insert(rv, row[i].text)
   end
   if current_attr_id then
     table.insert(rv, '}')

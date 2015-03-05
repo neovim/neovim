@@ -28,7 +28,7 @@ describe('Signs', function()
         >!a                                                  |
           b                                                  |
         >>c                                                  |
-          ^                                                  |
+          ^                                                   |
           ~                                                  |
           ~                                                  |
           ~                                                  |

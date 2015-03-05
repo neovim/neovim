@@ -54,7 +54,7 @@ describe('Default highlight groups', function()
     })
     execute('sp', 'vsp', 'vsp')
     screen:expect([[
-      ^                   {2:|}                {2:|}               |
+      ^                    {2:|}                {2:|}               |
       ~                   {2:|}~               {2:|}~              |
       ~                   {2:|}~               {2:|}~              |
       ~                   {2:|}~               {2:|}~              |
@@ -79,7 +79,7 @@ describe('Default highlight groups', function()
       ~                   {2:|}~               {2:|}~              |
       ~                   {2:|}~               {2:|}~              |
       {2:[No Name]            [No Name]        [No Name]      }|
-      ^                                                    |
+      ^                                                     |
       ~                                                    |
       ~                                                    |
       ~                                                    |
@@ -92,7 +92,7 @@ describe('Default highlight groups', function()
     -- (upstream vim has the same behavior)
     feed('<c-w>k<c-w>l')
     screen:expect([[
-                          {2:|}^                   {2:|}           |
+                          {2:|}^                    {2:|}           |
       ~                   {2:|}~                   {2:|}~          |
       ~                   {2:|}~                   {2:|}~          |
       ~                   {2:|}~                   {2:|}~          |
@@ -109,7 +109,7 @@ describe('Default highlight groups', function()
     ]])
     feed('<c-w>l')
     screen:expect([[
-                          {2:|}           {2:|}^                   |
+                          {2:|}           {2:|}^                    |
       ~                   {2:|}~          {2:|}~                   |
       ~                   {2:|}~          {2:|}~                   |
       ~                   {2:|}~          {2:|}~                   |
@@ -126,7 +126,7 @@ describe('Default highlight groups', function()
     ]])
     feed('<c-w>h<c-w>h')
     screen:expect([[
-      ^                   {2:|}                    {2:|}           |
+      ^                    {2:|}                    {2:|}           |
       ~                   {2:|}~                   {2:|}~          |
       ~                   {2:|}~                   {2:|}~          |
       ~                   {2:|}~                   {2:|}~          |
@@ -146,7 +146,7 @@ describe('Default highlight groups', function()
   it('insert mode text', function()
     feed('i')
     screen:expect([[
-      ^                                                    |
+      ^                                                     |
       ~                                                    |
       ~                                                    |
       ~                                                    |
@@ -165,7 +165,7 @@ describe('Default highlight groups', function()
 
   it('end of file markers', function()
     screen:expect([[
-      ^                                                    |
+      ^                                                     |
       {1:~                                                    }|
       {1:~                                                    }|
       {1:~                                                    }|
@@ -198,7 +198,7 @@ describe('Default highlight groups', function()
       ~                                                    |
       :ls                                                  |
         1 %a   "[No Name]"                    line 1       |
-      {1:Press ENTER or type command to continue}^             |
+      {1:Press ENTER or type command to continue}^              |
     ]], {[1] = {bold = true, foreground = hlgroup_colors.Question}})
     feed('<cr>') --  skip the "Press ENTER..." state or tests will hang
   end)
