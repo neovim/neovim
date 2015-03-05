@@ -2030,7 +2030,13 @@ void set_init_1(void)
     } else {
       free(p_enc);
       p_enc = save_enc;
+      /* mb_init() failed. Call it again for the saved encoding */
+      mb_init();
     }
+  } else {
+    /* enc_locale() didn't find a useful locale. Call mb_init() with
+     * the default utf-8 encoding */
+    mb_init();
   }
 
   /* Set the default for 'helplang'. */
