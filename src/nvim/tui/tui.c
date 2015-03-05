@@ -239,7 +239,7 @@ static void update_attrs(UI *ui, HlAttrs attrs)
   if (attrs.italic) {
     unibi_out(ui, unibi_enter_italics_mode);
   }
-  if (attrs.underline) {
+  if (attrs.underline || attrs.undercurl) {
     unibi_out(ui, unibi_enter_underline_mode);
   }
   if (attrs.reverse) {
