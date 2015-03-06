@@ -10,8 +10,8 @@ if(NOT DEFINED DOWNLOAD_DIR)
   message(FATAL_ERROR "DOWNLOAD_DIR must be defined.")
 endif()
 
-if(NOT DEFINED EXPECTED_SHA1)
-  message(FATAL_ERROR "EXPECTED_SHA1 must be defined.")
+if(NOT DEFINED EXPECTED_SHA256)
+  message(FATAL_ERROR "EXPECTED_SHA256 must be defined.")
 endif()
 
 if(NOT DEFINED TARGET)
@@ -75,18 +75,18 @@ if(NOT status_code EQUAL 0)
 ")
 endif()
 
-set(NULL_SHA1 "0000000000000000000000000000000000000000")
+set(NULL_SHA256 "0000000000000000000000000000000000000000000000000000000000000000")
 
-# Allow users to use "SKIP" or "skip" as the sha1 to skip checking the hash.
+# Allow users to use "SKIP" or "skip" as the sha256 to skip checking the hash.
 # You can still use the all zeros hash too.
-if((EXPECTED_SHA1 STREQUAL "SKIP") OR (EXPECTED_SHA1 STREQUAL "skip"))
-  set(EXPECTED_SHA1 ${NULL_SHA1})
+if((EXPECTED_SHA256 STREQUAL "SKIP") OR (EXPECTED_SHA256 STREQUAL "skip"))
+  set(EXPECTED_SHA256 ${NULL_SHA256})
 endif()
 
-# We could avoid computing the SHA1 entirely if a NULL_SHA1 was given,
+# We could avoid computing the SHA256 entirely if a NULL_SHA256 was given,
 # but we want to warn users of an empty file.
-file(SHA1 ${file} ACTUAL_SHA1)
-if(ACTUAL_SHA1 STREQUAL "da39a3ee5e6b4b0d3255bfef95601890afd80709")
+file(SHA256 ${file} ACTUAL_SHA256)
+if(ACTUAL_SHA256 STREQUAL "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
   # File was empty.  It's likely due to lack of SSL support.
   message(FATAL_ERROR
     "Failed to download ${URL}.  The file is empty and likely means CMake "
@@ -94,12 +94,12 @@ if(ACTUAL_SHA1 STREQUAL "da39a3ee5e6b4b0d3255bfef95601890afd80709")
     "proper SSL support.  See "
     "https://github.com/neovim/neovim/wiki/Building-Neovim#build-prerequisites "
     "for more information.")
-elseif((NOT EXPECTED_SHA1 STREQUAL NULL_SHA1) AND
-       (NOT EXPECTED_SHA1 STREQUAL ACTUAL_SHA1))
-  # Wasn't a NULL SHA1 and we didn't match, so we fail.
+elseif((NOT EXPECTED_SHA256 STREQUAL NULL_SHA256) AND
+       (NOT EXPECTED_SHA256 STREQUAL ACTUAL_SHA256))
+  # Wasn't a NULL SHA256 and we didn't match, so we fail.
   message(FATAL_ERROR
-    "Failed to download ${URL}.  Expected a SHA1 of "
-    "${EXPECTED_SHA1} but got ${ACTUAL_SHA1} instead.")
+    "Failed to download ${URL}.  Expected a SHA256 of "
+    "${EXPECTED_SHA256} but got ${ACTUAL_SHA256} instead.")
 endif()
 
 message(STATUS "downloading... done")
