@@ -2290,9 +2290,6 @@ int ask_yesno(char_u *str, int direct)
   int save_State = State;
 
   ++no_wait_return;
-#ifdef USE_ON_FLY_SCROLL
-  dont_scroll = TRUE;           /* disallow scrolling here */
-#endif
   State = CONFIRM;              /* mouse behaves like with :confirm */
   setmouse();                   /* disables mouse for xterm */
   ++no_mapping;
@@ -2465,9 +2462,6 @@ get_number (
   if (msg_silent != 0)
     return 0;
 
-#ifdef USE_ON_FLY_SCROLL
-  dont_scroll = TRUE;           /* disallow scrolling here */
-#endif
   ++no_mapping;
   ++allow_keys;                 /* no mapping here, but recognize keys */
   for (;; ) {
@@ -2955,13 +2949,6 @@ char_u *vim_getenv(char_u *name, int *mustfree)
   if (p == NULL) {
     if (p_hf != NULL && vim_strchr(p_hf, '$') == NULL)
       p = p_hf;
-#ifdef USE_EXE_NAME
-    /*
-     * Use the name of the executable, obtained from argv[0].
-     */
-    else
-      p = exe_name;
-#endif
     if (p != NULL) {
       /* remove the file name */
       pend = path_tail(p);
@@ -2969,12 +2956,6 @@ char_u *vim_getenv(char_u *name, int *mustfree)
       /* remove "doc/" from 'helpfile', if present */
       if (p == p_hf)
         pend = remove_tail(p, pend, (char_u *)"doc");
-
-#ifdef USE_EXE_NAME
-      /* remove "src/" from exe_name, if present */
-      if (p == exe_name)
-        pend = remove_tail(p, pend, (char_u *)"src");
-#endif
 
       /* for $VIM, remove "runtime/" or "vim54/", if present */
       if (!vimruntime) {
@@ -2995,13 +2976,6 @@ char_u *vim_getenv(char_u *name, int *mustfree)
         free(p);
         p = NULL;
       } else {
-#ifdef USE_EXE_NAME
-        /* may add "/vim54" or "/runtime" if it exists */
-        if (vimruntime && (pend = vim_version_dir(p)) != NULL) {
-          free(p);
-          p = pend;
-        }
-#endif
         *mustfree = TRUE;
       }
     }

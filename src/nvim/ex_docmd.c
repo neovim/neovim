@@ -1093,9 +1093,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   int save_msg_scroll = msg_scroll;
   int save_msg_silent = -1;
   int did_esilent = 0;
-#ifdef HAVE_SANDBOX
   int did_sandbox = FALSE;
-#endif
   cmdmod_T save_cmdmod;
   int ni;                                       /* set when Not Implemented */
 
@@ -1240,11 +1238,9 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       continue;
 
     case 's':   if (checkforcmd(&ea.cmd, "sandbox", 3)) {
-#ifdef HAVE_SANDBOX
         if (!did_sandbox)
           ++sandbox;
         did_sandbox = TRUE;
-#endif
         continue;
     }
       if (!checkforcmd(&ea.cmd, "silent", 3))
@@ -1509,13 +1505,11 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   }
 
   if (!ea.skip) {
-#ifdef HAVE_SANDBOX
     if (sandbox != 0 && !(ea.argt & SBOXOK)) {
       /* Command not allowed in sandbox. */
       errormsg = (char_u *)_(e_sandbox);
       goto doend;
     }
-#endif
     if (!curbuf->b_p_ma && (ea.argt & MODIFY)) {
       /* Command not allowed in non-'modifiable' buffer */
       errormsg = (char_u *)_(e_modifiable);
@@ -1983,10 +1977,8 @@ doend:
       msg_col = 0;
   }
 
-#ifdef HAVE_SANDBOX
   if (did_sandbox)
     --sandbox;
-#endif
 
   if (ea.nextcmd && *ea.nextcmd == NUL)         /* not really a next command */
     ea.nextcmd = NULL;
@@ -2582,12 +2574,10 @@ set_one_cmd_context (
       }
       /* An argument can contain just about everything, except
        * characters that end the command and white space. */
-      else if (c == '|' || c == '\n' || c == '"' || (vim_iswhite(c)
-#ifdef SPACE_IN_FILENAME
-                                                     && (!(ea.argt & NOSPC) ||
-                                                         usefilter)
-#endif
-                                                     )) {
+      else if (c == '|'
+            || c == '\n'
+            || c == '"'
+            || vim_iswhite(c)) {
         len = 0;          /* avoid getting stuck when space is in 'isfname' */
         while (*p != NUL) {
           if (has_mbyte)
@@ -6617,9 +6607,6 @@ static void ex_at(exarg_T *eap)
 
   curwin->w_cursor.lnum = eap->line2;
 
-#ifdef USE_ON_FLY_SCROLL
-  dont_scroll = TRUE;           /* disallow scrolling here */
-#endif
 
   /* get the register name.  No name means to use the previous one */
   c = *eap->arg;

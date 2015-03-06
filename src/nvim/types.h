@@ -13,19 +13,11 @@
 // dummy to pass an ACL to a function
 typedef void *vim_acl_T;
 
-/*
- * Shorthand for unsigned variables. Many systems, but not all, have u_char
- * already defined, so we use char_u to avoid trouble.
- */
+// Shorthand for unsigned variables. Many systems, but not all, have u_char
+// already defined, so we use char_u to avoid trouble.
 typedef unsigned char char_u;
 
-// The u8char_T can hold one decoded UTF-8 character. We normally use 32
-// bits now, since some Asian characters don't fit in 16 bits. u8char_T is
-// only used for displaying, it could be 16 bits to save memory.
-#ifdef UNICODE16
-typedef uint16_t u8char_T;
-#else
+// Can hold one decoded UTF-8 character.
 typedef uint32_t u8char_T;
-#endif
 
-#endif /* NVIM_TYPES_H */
+#endif  // NVIM_TYPES_H

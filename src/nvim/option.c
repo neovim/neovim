@@ -2525,13 +2525,11 @@ do_set (
           goto skip;
       }
 
-#ifdef HAVE_SANDBOX
       /* Disallow changing some options in the sandbox */
       if (sandbox != 0 && (flags & P_SECURE)) {
         errmsg = (char_u *)_(e_sandbox);
         goto skip;
       }
-#endif
 
       if (vim_strchr((char_u *)"?=:!&<", nextchar) != NULL) {
         arg += len;
@@ -3066,9 +3064,7 @@ did_set_option (
    * flag. */
   uint32_t *p = insecure_flag(opt_idx, opt_flags);
   if (secure
-#ifdef HAVE_SANDBOX
       || sandbox != 0
-#endif
       || (opt_flags & OPT_MODELINE))
     *p = *p | P_INSECURE;
   else if (new_value)
@@ -3577,11 +3573,8 @@ did_set_string_option (
   gvarp = (char_u **)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
 
   /* Disallow changing some options from secure mode */
-  if ((secure
-#ifdef HAVE_SANDBOX
-       || sandbox != 0
-#endif
-       ) && (options[opt_idx].flags & P_SECURE)) {
+  if ((secure || sandbox != 0)
+      && (options[opt_idx].flags & P_SECURE)) {
     errmsg = e_secure;
   }
   /* Check for a "normal" file name in some options.  Disallow a path
@@ -4697,12 +4690,10 @@ set_bool_option (
   int old_value = *(int *)varp;
 
   /* Disallow changing some options from secure mode */
-  if ((secure
-#ifdef HAVE_SANDBOX
-       || sandbox != 0
-#endif
-       ) && (options[opt_idx].flags & P_SECURE))
+  if ((secure || sandbox != 0)
+      && (options[opt_idx].flags & P_SECURE)) {
     return e_secure;
+  }
 
   *(int *)varp = value;             /* set the new value */
   /* Remember where the option was set. */
@@ -5064,12 +5055,10 @@ set_num_option (
   long        *pp = (long *)varp;
 
   /* Disallow changing some options from secure mode. */
-  if ((secure
-#ifdef HAVE_SANDBOX
-       || sandbox != 0
-#endif
-       ) && (options[opt_idx].flags & P_SECURE))
+  if ((secure || sandbox != 0)
+      && (options[opt_idx].flags & P_SECURE)) {
     return e_secure;
+  }
 
   *pp = value;
   /* Remember where the option was set. */
@@ -5755,13 +5744,11 @@ set_option_value (
     EMSG2(_("E355: Unknown option: %s"), name);
   else {
     uint32_t flags = options[opt_idx].flags;
-#ifdef HAVE_SANDBOX
-    /* Disallow changing some options in the sandbox */
+    // Disallow changing some options in the sandbox
     if (sandbox > 0 && (flags & P_SECURE)) {
       EMSG(_(e_sandbox));
       return NULL;
     }
-#endif
     if (flags & P_STRING)
       return set_string_option(opt_idx, string, opt_flags);
     else {

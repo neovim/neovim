@@ -7174,12 +7174,10 @@ int highlight_changed(void)
   int attr;
   char_u      *end;
   int id;
-#ifdef USER_HIGHLIGHT
   char_u userhl[10];
   int id_SNC = -1;
   int id_S = -1;
   int hlcnt;
-#endif
   static int hl_flags[HLF_COUNT] = HL_FLAGS;
 
   need_highlight_changed = FALSE;
@@ -7251,12 +7249,10 @@ int highlight_changed(void)
             return FAIL;
           attr = syn_id2attr(id);
           p = end - 1;
-#ifdef USER_HIGHLIGHT
           if (hlf == (int)HLF_SNC)
             id_SNC = syn_get_final_id(id);
           else if (hlf == (int)HLF_S)
             id_S = syn_get_final_id(id);
-#endif
           break;
         default:    return FAIL;
         }
@@ -7267,7 +7263,6 @@ int highlight_changed(void)
     }
   }
 
-#ifdef USER_HIGHLIGHT
   /* Setup the user highlights
    *
    * Temporarily  utilize 10 more hl entries.  Have to be in there
@@ -7326,8 +7321,6 @@ int highlight_changed(void)
     }
   }
   highlight_ga.ga_len = hlcnt;
-
-#endif /* USER_HIGHLIGHT */
 
   return OK;
 }

@@ -473,9 +473,6 @@ normal_cmd (
   mapped_len = typebuf_maplen();
 
   State = NORMAL_BUSY;
-#ifdef USE_ON_FLY_SCROLL
-  dont_scroll = false;          /* allow scrolling here */
-#endif
 
   /* Set v:count here, when called from main() and not a stuffed
    * command, so that v:count can be used in an expression mapping
@@ -3607,9 +3604,6 @@ static void nv_zet(cmdarg_T *cap)
       return;
     n = nchar - '0';
     for (;; ) {
-#ifdef USE_ON_FLY_SCROLL
-      dont_scroll = true;               /* disallow scrolling here */
-#endif
       ++no_mapping;
       ++allow_keys;         /* no mapping for nchar, but allow key codes */
       nchar = plain_vgetc();

@@ -3396,16 +3396,13 @@ int check_secure(void)
     EMSG(_(e_curdir));
     return TRUE;
   }
-#ifdef HAVE_SANDBOX
-  /*
-   * In the sandbox more things are not allowed, including the things
-   * disallowed in secure mode.
-   */
+
+  // In the sandbox more things are not allowed, including the things
+  // disallowed in secure mode.
   if (sandbox != 0) {
     EMSG(_(e_sandbox));
     return TRUE;
   }
-#endif
   return FALSE;
 }
 
@@ -3952,9 +3949,6 @@ void do_sub(exarg_T *eap)
               ui_cursor_goto(msg_row, msg_col);
               RedrawingDisabled = temp;
 
-#ifdef USE_ON_FLY_SCROLL
-              dont_scroll = FALSE;               /* allow scrolling here */
-#endif
               ++no_mapping;                     /* don't map this key */
               ++allow_keys;                     /* allow special keys */
               typed = plain_vgetc();

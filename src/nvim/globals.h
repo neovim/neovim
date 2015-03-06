@@ -457,11 +457,8 @@ typedef enum {
                   '*', '#', '_', '!', '.', 'o'}
 
 EXTERN int highlight_attr[HLF_COUNT];       /* Highl. attr for each context. */
-# define USER_HIGHLIGHT
-#ifdef USER_HIGHLIGHT
 EXTERN int highlight_user[9];                   /* User[1-9] attributes */
 EXTERN int highlight_stlnc[9];                  /* On top of user */
-#endif
 EXTERN int cterm_normal_fg_color INIT(= 0);
 EXTERN int cterm_normal_fg_bold INIT(= 0);
 EXTERN int cterm_normal_bg_color INIT(= 0);
@@ -622,7 +619,6 @@ EXTERN int allbuf_lock INIT(= 0);
  * changed, no buffer can be deleted and
  * current directory can't be changed.
  * Used for SwapExists et al. */
-# define HAVE_SANDBOX
 EXTERN int sandbox INIT(= 0);
 /* Non-zero when evaluating an expression in a
  * "sandbox".  Several things are not allowed
@@ -838,13 +834,6 @@ EXTERN int ctrl_x_mode INIT(= 0);       /* Which Ctrl-X mode are we in? */
 
 EXTERN int no_abbr INIT(= TRUE);        /* TRUE when no abbreviations loaded */
 
-#ifdef USE_EXE_NAME
-EXTERN char_u   *exe_name;              /* the name of the executable */
-#endif
-
-#ifdef USE_ON_FLY_SCROLL
-EXTERN int dont_scroll INIT(= FALSE);     /* don't use scrollbars when TRUE */
-#endif
 EXTERN int mapped_ctrl_c INIT(= FALSE);      /* CTRL-C is mapped */
 
 EXTERN cmdmod_T cmdmod;                 /* Ex command modifiers */
@@ -1180,9 +1169,7 @@ EXTERN char_u e_readonlyvar[] INIT(= N_(
 EXTERN char_u e_readonlysbx[] INIT(= N_(
         "E794: Cannot set variable in the sandbox: \"%s\""));
 EXTERN char_u e_readerrf[] INIT(= N_("E47: Error while reading errorfile"));
-#ifdef HAVE_SANDBOX
 EXTERN char_u e_sandbox[] INIT(= N_("E48: Not allowed in sandbox"));
-#endif
 EXTERN char_u e_secure[] INIT(= N_("E523: Not allowed here"));
 EXTERN char_u e_screenmode[] INIT(= N_(
         "E359: Screen mode setting not supported"));

@@ -794,9 +794,6 @@ void wait_return(int redraw)
 
     State = HITRETURN;
     setmouse();
-#ifdef USE_ON_FLY_SCROLL
-    dont_scroll = TRUE;                 /* disallow scrolling here */
-#endif
     /* Avoid the sequence that the user types ":" at the hit-return prompt
      * to start an Ex command, but the file-changed dialog gets in the
      * way. */
