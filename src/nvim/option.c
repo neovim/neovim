@@ -1989,7 +1989,7 @@ void set_init_1(void)
     char_u *save_enc;
 
     /* Try setting 'encoding' and check if the value is valid.
-     * If not, go back to the default "latin1". */
+     * If not, go back to the default "utf-8". */
     save_enc = p_enc;
     p_enc = p;
     if (STRCMP(p_enc, "gb18030") == 0) {
@@ -2029,8 +2029,13 @@ void set_init_1(void)
 
     } else {
       free(p_enc);
+      // mb_init() failed; fallback to utf8 and try again.
       p_enc = save_enc;
+      mb_init();
     }
+  } else {
+    // enc_locale() failed; initialize the default (utf8).
+    mb_init();
   }
 
   /* Set the default for 'helplang'. */
