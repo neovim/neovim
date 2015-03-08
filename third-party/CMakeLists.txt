@@ -67,8 +67,8 @@ set(LIBUNIBILIUM_SHA256 bec06ea90128b46f28b91b8b52b861dede5f4ede0a92f05178b3c7bc
 set(LIBTERMKEY_URL https://github.com/neovim/libtermkey/archive/8c0cb7108cc63218ea19aa898968eede19e19603.tar.gz)
 set(LIBTERMKEY_SHA256 21846369081e6c9a0b615f4b3889c4cb809321c5ccc6e6c1640eb138f1590072)
 
-set(LIBVTERM_URL https://github.com/neovim/libvterm/archive/dd92e5ba5b0907571df938ac7601b1641f05ed16.tar.gz)
-set(LIBVTERM_SHA256 850780dfef9e576c06b0e31ea1356da17da2bb4fd9e065a23ac50c88db2b0630)
+set(LIBVTERM_URL https://github.com/neovim/libvterm/archive/1b745d29d45623aa8d22a7b9288c7b0e331c7088.tar.gz)
+set(LIBVTERM_SHA256 3fc75908256c0d158d6c2a32d39f34e86bfd26364f5404b7d9c03bb70cdc3611)
 
 
 if(USE_BUNDLED_LIBUNIBILIUM)
