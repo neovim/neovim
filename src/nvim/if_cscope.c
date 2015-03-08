@@ -772,7 +772,7 @@ err_closing:
 #endif
     /* expand the cscope exec for env var's */
     prog = xmalloc(MAXPATHL + 1);
-    expand_env((char_u *)p_csprg, (char_u *)prog, MAXPATHL);
+    expand_env(p_csprg, (char_u *)prog, MAXPATHL);
 
     /* alloc space to hold the cscope command */
     len = (int)(strlen(prog) + strlen(csinfo[i].fname) + 32);

@@ -1727,7 +1727,7 @@ static void op_colon(oparg_T *oap)
         stuffcharReadbuff('$');
       else if (oap->start.lnum == curwin->w_cursor.lnum) {
         stuffReadbuff((char_u *)".+");
-        stuffnumReadbuff((long)oap->line_count - 1);
+        stuffnumReadbuff(oap->line_count - 1);
       } else
         stuffnumReadbuff((long)oap->end.lnum);
     }
@@ -3192,7 +3192,7 @@ static void nv_help(cmdarg_T *cap)
 static void nv_addsub(cmdarg_T *cap)
 {
   if (!checkclearopq(cap->oap)
-      && do_addsub((int)cap->cmdchar, cap->count1))
+      && do_addsub(cap->cmdchar, cap->count1))
     prep_redo_cmd(cap);
 }
 
@@ -4038,7 +4038,7 @@ static void nv_colon(cmdarg_T *cap)
       stuffcharReadbuff('.');
       if (cap->count0 > 1) {
         stuffReadbuff((char_u *)",.+");
-        stuffnumReadbuff((long)cap->count0 - 1L);
+        stuffnumReadbuff(cap->count0 - 1L);
       }
     }
 
@@ -4758,7 +4758,7 @@ static void nv_dollar(cmdarg_T *cap)
   if (!virtual_active() || gchar_cursor() != NUL
       || cap->oap->op_type == OP_NOP)
     curwin->w_curswant = MAXCOL;        /* so we stay at the end */
-  if (cursor_down((long)(cap->count1 - 1),
+  if (cursor_down(cap->count1 - 1,
           cap->oap->op_type == OP_NOP) == false)
     clearopbeep(cap->oap);
   else if ((fdo_flags & FDO_HOR) && KeyTyped && cap->oap->op_type == OP_NOP)
@@ -6180,7 +6180,7 @@ static void nv_g_cmd(cmdarg_T *cap)
     cap->oap->motion_type = MCHAR;
     cap->oap->inclusive = true;
     curwin->w_curswant = MAXCOL;
-    if (cursor_down((long)(cap->count1 - 1),
+    if (cursor_down(cap->count1 - 1,
             cap->oap->op_type == OP_NOP) == false)
       clearopbeep(cap->oap);
     else {

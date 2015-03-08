@@ -1103,7 +1103,7 @@ static int win_nolbr_chartabsize(win_T *wp, char_u *s, colnr_T col, int *headp)
 
   if ((*s == TAB) && (!wp->w_p_list || lcs_tab1)) {
     n = wp->w_buffer->b_p_ts;
-    return (int)(n - (col % n));
+    return n - (col % n);
   }
   n = ptr2cells(s);
 

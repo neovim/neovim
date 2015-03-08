@@ -110,7 +110,7 @@ void tui_start(void)
   unibi_out(ui, unibi_enter_ca_mode);
   unibi_out(ui, unibi_clear_screen);
   // Enable bracketed paste
-  unibi_out(ui, (int)data->unibi_ext.enable_bracketed_paste);
+  unibi_out(ui, data->unibi_ext.enable_bracketed_paste);
 
   // setup output handle in a separate event loop(we wanna do synchronous
   // write to the tty)
@@ -172,7 +172,7 @@ static void tui_stop(UI *ui)
   unibi_out(ui, unibi_cursor_normal);
   unibi_out(ui, unibi_exit_ca_mode);
   // Disable bracketed paste
-  unibi_out(ui, (int)data->unibi_ext.disable_bracketed_paste);
+  unibi_out(ui, data->unibi_ext.disable_bracketed_paste);
   flush_buf(ui);
   uv_tty_reset_mode();
   uv_close((uv_handle_t *)&data->output_handle, NULL);
@@ -355,25 +355,25 @@ static void tui_cursor_off(UI *ui)
 static void tui_mouse_on(UI *ui)
 {
   TUIData *data = ui->data;
-  unibi_out(ui, (int)data->unibi_ext.enable_mouse);
+  unibi_out(ui, data->unibi_ext.enable_mouse);
 }
 
 static void tui_mouse_off(UI *ui)
 {
   TUIData *data = ui->data;
-  unibi_out(ui, (int)data->unibi_ext.disable_mouse);
+  unibi_out(ui, data->unibi_ext.disable_mouse);
 }
 
 static void tui_insert_mode(UI *ui)
 {
   TUIData *data = ui->data;
-  unibi_out(ui, (int)data->unibi_ext.enter_insert_mode);
+  unibi_out(ui, data->unibi_ext.enter_insert_mode);
 }
 
 static void tui_normal_mode(UI *ui)
 {
   TUIData *data = ui->data;
-  unibi_out(ui, (int)data->unibi_ext.exit_insert_mode);
+  unibi_out(ui, data->unibi_ext.exit_insert_mode);
 }
 
 static void tui_set_scroll_region(UI *ui, int top, int bot, int left,

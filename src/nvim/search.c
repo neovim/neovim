@@ -986,7 +986,7 @@ int do_search(
        * If there is a matching '/' or '?', toss it.
        */
       ps = strcopy;
-      p = skip_regexp(pat, dirc, (int)p_magic, &strcopy);
+      p = skip_regexp(pat, dirc, p_magic, &strcopy);
       if (strcopy != ps) {
         /* made a copy of "pat" to change "\?" to "?" */
         searchcmdlen += (int)(STRLEN(pat) - STRLEN(strcopy));
@@ -3811,7 +3811,7 @@ current_search (
       flags = SEARCH_END;
 
     int result = searchit(curwin, curbuf, &pos, (dir ? FORWARD : BACKWARD),
-        spats[last_idx].pat, (long) (i ? count : 1),
+        spats[last_idx].pat, i ? count : 1,
         SEARCH_KEEP | flags, RE_SEARCH, 0, NULL);
 
     /* First search may fail, but then start searching from the

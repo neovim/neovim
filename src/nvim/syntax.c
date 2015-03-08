@@ -3223,8 +3223,8 @@ static void syn_clear_one(int id, int syncing)
 
   /* Clear keywords only when not ":syn sync clear group-name" */
   if (!syncing) {
-    (void)syn_clear_keyword(id, &curwin->w_s->b_keywtab);
-    (void)syn_clear_keyword(id, &curwin->w_s->b_keywtab_ic);
+    syn_clear_keyword(id, &curwin->w_s->b_keywtab);
+    syn_clear_keyword(id, &curwin->w_s->b_keywtab_ic);
   }
 
   /* clear the patterns for "id" */
@@ -6068,7 +6068,7 @@ do_highlight (
   if (ends_excmd(*line)) {
     for (int i = 1; i <= highlight_ga.ga_len && !got_int; ++i)
       /* TODO: only call when the group has attributes set */
-      highlight_list_one((int)i);
+      highlight_list_one(i);
     return;
   }
 

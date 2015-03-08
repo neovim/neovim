@@ -1349,7 +1349,7 @@ retry:
          * conv_rest[]. */
         if (tail != NULL) {
           conv_restlen = (int)((ptr + size) - tail);
-          memmove(conv_rest, (char_u *)tail, conv_restlen);
+          memmove(conv_rest, tail, conv_restlen);
           size -= conv_restlen;
         }
 
@@ -3882,7 +3882,7 @@ static void msg_add_eol(void)
 static int check_mtime(buf_T *buf, FileInfo *file_info)
 {
   if (buf->b_mtime_read != 0
-      && time_differs((long)file_info->stat.st_mtim.tv_sec,
+      && time_differs(file_info->stat.st_mtim.tv_sec,
                       buf->b_mtime_read)) {
     msg_scroll = TRUE;              /* don't overwrite messages here */
     msg_silent = 0;                 /* must give this prompt */
@@ -4772,7 +4772,7 @@ buf_check_timestamp (
   if (!(buf->b_flags & BF_NOTEDITED)
       && buf->b_mtime != 0
       && (!(file_info_ok = os_fileinfo((char *)buf->b_ffname, &file_info))
-          || time_differs((long)file_info.stat.st_mtim.tv_sec, buf->b_mtime)
+          || time_differs(file_info.stat.st_mtim.tv_sec, buf->b_mtime)
           || (int)file_info.stat.st_mode != buf->b_orig_mode
           )) {
     retval = 1;
@@ -5084,7 +5084,7 @@ void buf_reload(buf_T *buf, int orig_mode)
 void buf_store_file_info(buf_T *buf, FileInfo *file_info)
   FUNC_ATTR_NONNULL_ALL
 {
-  buf->b_mtime = (long)file_info->stat.st_mtim.tv_sec;
+  buf->b_mtime = file_info->stat.st_mtim.tv_sec;
   buf->b_orig_size = os_fileinfo_size(file_info);
   buf->b_orig_mode = (int)file_info->stat.st_mode;
 }

@@ -1494,7 +1494,7 @@ int op_delete(oparg_T *oap)
       if (oap->line_count > 1) {
         lnum = curwin->w_cursor.lnum;
         ++curwin->w_cursor.lnum;
-        del_lines((long)(oap->line_count - 1), TRUE);
+        del_lines(oap->line_count - 1, TRUE);
         curwin->w_cursor.lnum = lnum;
       }
       if (u_save_cursor() == FAIL)
@@ -1607,7 +1607,7 @@ int op_delete(oparg_T *oap)
 
       curpos = curwin->w_cursor;        /* remember curwin->w_cursor */
       ++curwin->w_cursor.lnum;
-      del_lines((long)(oap->line_count - 2), FALSE);
+      del_lines(oap->line_count - 2, FALSE);
 
       if (delete_last_line)
         oap->end.lnum = curbuf->b_ml.ml_line_count;

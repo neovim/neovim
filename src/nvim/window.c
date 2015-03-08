@@ -4764,7 +4764,7 @@ void command_height(void)
 
       /* clear the lines added to cmdline */
       if (full_screen)
-        screen_fill((int)(cmdline_row), (int)Rows, 0,
+        screen_fill(cmdline_row, (int)Rows, 0,
             (int)Columns, ' ', ' ', 0);
       msg_row = cmdline_row;
       redraw_cmdline = TRUE;

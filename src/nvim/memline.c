@@ -688,7 +688,7 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
     }
     FileInfo file_info;
     if (os_fileinfo((char *)buf->b_ffname, &file_info)) {
-      long_to_char((long)file_info.stat.st_mtim.tv_sec, b0p->b0_mtime);
+      long_to_char(file_info.stat.st_mtim.tv_sec, b0p->b0_mtime);
       long_to_char((long)os_fileinfo_inode(&file_info), b0p->b0_ino);
       buf_store_file_info(buf, &file_info);
       buf->b_mtime_read = buf->b_mtime;
