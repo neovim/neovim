@@ -1,0 +1,30 @@
+# Copy this to 'local.mk' in the repository root to take effect.
+# Individual entries must be uncommented to take effect.
+
+# By default, the installation prefix is '/usr/local'.
+# CMAKE_EXTRA_FLAGS += -DCMAKE_INSTALL_PREFIX=/usr/local/neovim-latest
+
+# Sets the build type; defaults to Debug. Valid values:
+#
+# - Debug:          Disables optimizations (-O0), enables debug information.
+#
+# - RelWithDebInfo: Enables optimizations that do not interfere with debugging
+#                   (-O2) which do, enables debug information.
+#
+# - MinSizeRel:     Enables all -O2 optimization that do not typically
+#                   increase code size, and performs further optimizations
+#                   designed to reduce code size. Disables debug information.
+#
+# - Release:        Same as RelWithDebInfo, but disables debug information.
+#
+# CMAKE_BUILD_TYPE := Debug
+
+# By default, all libraries are statically linked to nvim. Uncomment these
+# entries to use dynamic linking instead.
+#
+# CMAKE_EXTRA_FLAGS += -DLIBTERMKEY_USE_STATIC=OFF
+# CMAKE_EXTRA_FLAGS += -DLIBUNIBILIUM_USE_STATIC=OFF
+# CMAKE_EXTRA_FLAGS += -DLIBUV_USE_STATIC=OFF
+# CMAKE_EXTRA_FLAGS += -DLIBVTERM_USE_STATIC=OFF
+# CMAKE_EXTRA_FLAGS += -DLUAJIT_USE_STATIC=OFF
+# CMAKE_EXTRA_FLAGS += -DMSGPACK_USE_STATIC=OFF
