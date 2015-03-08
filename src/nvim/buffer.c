@@ -68,6 +68,7 @@
 #include "nvim/spell.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
+#include "nvim/terminal.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
@@ -307,20 +308,28 @@ close_buffer (
   bool del_buf = (action == DOBUF_DEL || action == DOBUF_WIPE);
   bool wipe_buf = (action == DOBUF_WIPE);
 
-  /*
-   * Force unloading or deleting when 'bufhidden' says so.
-   * The caller must take care of NOT deleting/freeing when 'bufhidden' is
-   * "hide" (otherwise we could never free or delete a buffer).
-   */
-  if (buf->b_p_bh[0] == 'd') {          /* 'bufhidden' == "delete" */
-    del_buf = true;
+  // Force unloading or deleting when 'bufhidden' says so, but not for terminal
+  // buffers.
+  // The caller must take care of NOT deleting/freeing when 'bufhidden' is
+  // "hide" (otherwise we could never free or delete a buffer).
+  if (!buf->terminal) {
+    if (buf->b_p_bh[0] == 'd') {         // 'bufhidden' == "delete"
+      del_buf = true;
+      unload_buf = true;
+    } else if (buf->b_p_bh[0] == 'w') {  // 'bufhidden' == "wipe"
+      del_buf = true;
+      unload_buf = true;
+      wipe_buf = true;
+    } else if (buf->b_p_bh[0] == 'u')    // 'bufhidden' == "unload"
+      unload_buf = true;
+  }
+
+  if (buf->terminal && (unload_buf || del_buf || wipe_buf)) {
+    // terminal buffers can only be wiped
     unload_buf = true;
-  } else if (buf->b_p_bh[0] == 'w') { /* 'bufhidden' == "wipe" */
     del_buf = true;
-    unload_buf = true;
     wipe_buf = true;
-  } else if (buf->b_p_bh[0] == 'u')     /* 'bufhidden' == "unload" */
-    unload_buf = true;
+  }
 
   if (win_valid(win)) {
     /* Set b_last_cursor when closing the last window for the buffer.
@@ -382,6 +391,10 @@ close_buffer (
    * unloaded. */
   if (buf->b_nwindows > 0 || !unload_buf)
     return;
+
+  if (buf->terminal) {
+    terminal_close(buf->terminal, NULL);
+  } 
 
   /* Always remove the buffer when there is no file name. */
   if (buf->b_ffname == NULL)
@@ -925,8 +938,8 @@ do_buffer (
     if (action != DOBUF_WIPE && buf->b_ml.ml_mfp == NULL && !buf->b_p_bl)
       return FAIL;
 
-    if (!forceit && bufIsChanged(buf)) {
-      if ((p_confirm || cmdmod.confirm) && p_write) {
+    if (!forceit && (buf->terminal || bufIsChanged(buf))) {
+      if ((p_confirm || cmdmod.confirm) && p_write && !buf->terminal) {
         dialog_changed(buf, FALSE);
         if (!buf_valid(buf))
           /* Autocommand deleted buffer, oops!  It's not changed
@@ -937,9 +950,14 @@ do_buffer (
         if (bufIsChanged(buf))
           return FAIL;
       } else {
-        EMSGN(_("E89: No write since last change for buffer %" PRId64
-                " (add ! to override)"),
-              buf->b_fnum);
+        if (buf->terminal) {
+          EMSG2(_("E89: %s will be killed(add ! to override)"),
+              (char *)buf->b_fname);
+        } else {
+          EMSGN(_("E89: No write since last change for buffer %" PRId64
+                  " (add ! to override)"),
+                buf->b_fnum);
+        }
         return FAIL;
       }
     }

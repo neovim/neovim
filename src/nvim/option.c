@@ -1746,7 +1746,7 @@ static char *(p_scbopt_values[]) = {"ver", "hor", "jump", NULL};
 static char *(p_debug_values[]) = {"msg", "throw", "beep", NULL};
 static char *(p_ead_values[]) = {"both", "ver", "hor", NULL};
 static char *(p_buftype_values[]) =
-{"nofile", "nowrite", "quickfix", "help", "acwrite", NULL};
+{"nofile", "nowrite", "quickfix", "help", "acwrite", "terminal", NULL};
 static char *(p_bufhidden_values[]) = {"hide", "unload", "delete", "wipe", NULL};
 static char *(p_bs_values[]) = {"indent", "eol", "start", NULL};
 static char *(p_fdm_values[]) = {"manual", "expr", "marker", "indent", "syntax",
@@ -4097,9 +4097,11 @@ did_set_string_option (
   }
   /* When 'buftype' is set, check for valid value. */
   else if (gvarp == &p_bt) {
-    if (check_opt_strings(curbuf->b_p_bt, p_buftype_values, FALSE) != OK)
+    if ((curbuf->terminal && curbuf->b_p_bt[0] != 't')
+        || (!curbuf->terminal && curbuf->b_p_bt[0] == 't')
+        || check_opt_strings(curbuf->b_p_bt, p_buftype_values, FALSE) != OK) {
       errmsg = e_invarg;
-    else {
+    } else {
       if (curwin->w_status_height) {
         curwin->w_redr_status = TRUE;
         redraw_later(VALID);

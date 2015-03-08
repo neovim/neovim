@@ -4756,10 +4756,11 @@ buf_check_timestamp (
   char_u      *s;
   char        *reason;
 
-  /* If there is no file name, the buffer is not loaded, 'buftype' is
-   * set, we are in the middle of a save or being called recursively: ignore
-   * this buffer. */
-  if (buf->b_ffname == NULL
+  // If its a terminal, there is no file name, the buffer is not loaded,
+  // 'buftype' is set, we are in the middle of a save or being called
+  // recursively: ignore this buffer.
+  if (buf->terminal
+      || buf->b_ffname == NULL
       || buf->b_ml.ml_mfp == NULL
       || *buf->b_p_bt != NUL
       || buf->b_saving
@@ -5208,6 +5209,7 @@ static struct event_name {
   {"TabNew",          EVENT_TABNEW},
   {"TabNewEntered",   EVENT_TABNEWENTERED},
   {"TermChanged",     EVENT_TERMCHANGED},
+  {"TermOpen",        EVENT_TERMOPEN},
   {"TermResponse",    EVENT_TERMRESPONSE},
   {"TextChanged",     EVENT_TEXTCHANGED},
   {"TextChangedI",    EVENT_TEXTCHANGEDI},

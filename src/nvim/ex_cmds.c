@@ -2724,7 +2724,7 @@ do_ecmd (
         /* close the link to the current buffer */
         u_sync(FALSE);
         close_buffer(oldwin, curbuf,
-            (flags & ECMD_HIDE) ? 0 : DOBUF_UNLOAD, FALSE);
+            (flags & ECMD_HIDE) || curbuf->terminal ? 0 : DOBUF_UNLOAD, FALSE);
 
         /* Autocommands may open a new window and leave oldwin open
          * which leads to crashes since the above call sets

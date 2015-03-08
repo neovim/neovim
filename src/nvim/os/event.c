@@ -20,6 +20,7 @@
 #include "nvim/misc2.h"
 #include "nvim/ui.h"
 #include "nvim/screen.h"
+#include "nvim/terminal.h"
 
 #include "nvim/lib/klist.h"
 
@@ -63,6 +64,7 @@ void event_init(void)
   // finish mspgack-rpc initialization
   channel_init();
   server_init();
+  terminal_init();
 }
 
 void event_teardown(void)
@@ -83,6 +85,7 @@ void event_teardown(void)
   job_teardown();
   server_teardown();
   signal_teardown();
+  terminal_teardown();
   // this last `uv_run` will return after all handles are stopped, it will
   // also take care of finishing any uv_close calls made by other *_teardown
   // functions.
@@ -169,11 +172,6 @@ void event_push(Event event, bool deferred)
 void event_process(void)
 {
   process_events_from(deferred_events);
-
-  if (must_redraw) {
-    update_screen(0);
-    ui_flush();
-  }
 }
 
 static void process_events_from(klist_t(Event) *queue)

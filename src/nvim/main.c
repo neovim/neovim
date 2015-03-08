@@ -285,6 +285,17 @@ int main(int argc, char **argv)
     input_start_stdin(fd);
   }
 
+  // open terminals when opening files that start with term://
+  do_cmdline_cmd((uint8_t *)
+      "autocmd BufReadCmd term://* "
+      ":call termopen( "
+      // Capture the command string 
+      "matchstr(expand(\"<amatch>\"), "
+      "'\\c\\mterm://\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), "
+      // capture the working directory
+      "get(matchlist(expand(\"<amatch>\"), "
+      "'\\c\\mterm://\\(.\\{-}\\)//'), 1, ''))");
+
   /* Execute --cmd arguments. */
   exe_pre_commands(&params);
 
