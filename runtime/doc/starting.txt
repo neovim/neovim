@@ -359,24 +359,7 @@ argument.
 							*-d*
 -d		Start in |diff-mode|.
 
-							*-f*
--f		GUI: Do not disconnect from the program that started Vim.
-		'f' stands for "foreground".  If omitted, the GUI forks a new
-		process and exits the current one.  "-f" should be used when
-		gvim is started by a program that will wait for the edit
-		session to finish (e.g., mail or readnews).  If you want gvim
-		never to fork, include 'f' in 'guioptions' in your |gvimrc|.
-		Careful: You can use "-gf" to start the GUI in the foreground,
-		but "-fg" is used to specify the foreground color.  |gui-fork|
 
-		MS-Windows: This option is not supported.  However, when
-		running Vim with an installed vim.bat or gvim.bat file it
-		works.
-		{not in Vi}
-
-
-							*--nofork*
---nofork	GUI: Do not fork.  Same as |-f|.
 							*-u* *E282*
 -u {vimrc}	The file {vimrc} is read for initializations.  Most other
 		initializations are skipped; see |initialization|.  This can
@@ -529,8 +512,7 @@ X11 GUI support.  See |gui-resources|.
 ==============================================================================
 3. Initialization				*initialization* *startup*
 
-This section is about the non-GUI version of Vim.  See |gui-fork| for
-additional initialization when starting the GUI.
+This section is about the non-GUI version of Vim.
 
 At startup, Vim checks environment variables and files and sets values
 accordingly.  Vim proceeds in this order:

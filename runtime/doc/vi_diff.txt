@@ -782,7 +782,7 @@ Only Vim is able to accept options in between and after the file names.
 
 --literal	Vim: take file names literally, don't expand wildcards.
 
---nofork	Vim: same as |-f|
+--nofork	Vim: same as -f
 
 --noplugin[s]	Vim: Skip loading plugins.
 

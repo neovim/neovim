@@ -1143,7 +1143,6 @@ Context-sensitive completion on the command-line:
 |-r|	-r {file} ..	    recover aborted edit session
 |-n|	-n		    do not create a swap file
 |-o|	-o [num]	    open [num] windows (default: one for each file)
-|-f|	-f		    GUI: foreground process, don't fork
 |-s|	-s {scriptin}	    first read commands from the file {scriptin}
 |-w|	-w {scriptout}	    write typed chars to file {scriptout} (append)
 |-W|	-W {scriptout}	    write typed chars to file {scriptout} (overwrite)

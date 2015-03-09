@@ -891,7 +891,6 @@ static void command_line_scan(mparm_T *parmp)
           /* "--help" give help message */
           /* "--version" give version message */
           /* "--literal" take files literally */
-          /* "--nofork" don't fork */
           /* "--noplugin[s]" skip plugins */
           /* "--cmd <cmd>" execute cmd before vimrc */
           if (STRICMP(argv[0] + argv_idx, "help") == 0)
@@ -923,7 +922,6 @@ static void command_line_scan(mparm_T *parmp)
 #if !defined(UNIX)
             parmp->literal = TRUE;
 #endif
-          } else if (STRNICMP(argv[0] + argv_idx, "nofork", 6) == 0) {
           } else if (STRNICMP(argv[0] + argv_idx, "noplugin", 8) == 0)
             p_lpl = FALSE;
           else if (STRNICMP(argv[0] + argv_idx, "cmd", 3) == 0) {
