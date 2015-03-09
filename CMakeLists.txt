@@ -187,15 +187,15 @@ include_directories(SYSTEM ${MSGPACK_INCLUDE_DIRS})
 find_package(LuaJit REQUIRED)
 include_directories(SYSTEM ${LUAJIT_INCLUDE_DIRS})
 
-set(LIBUNIBILIUM_USE_STATIC ON)
+option(LIBUNIBILIUM_USE_STATIC "Use static libunibilium" ON)
 find_package(LibUnibilium REQUIRED)
 include_directories(SYSTEM ${LIBUNIBILIUM_INCLUDE_DIRS})
 
-set(LIBTERMKEY_USE_STATIC ON)
+option(LIBTERMKEY_USE_STATIC "Use static libtermkey" ON)
 find_package(LibTermkey REQUIRED)
 include_directories(SYSTEM ${LIBTERMEY_INCLUDE_DIRS})
 
-set(LIBVTERM_USE_STATIC ON)
+option(LIBVTERM_USE_STATIC "Use static libvterm" ON)
 find_package(LibVterm REQUIRED)
 include_directories(SYSTEM ${LIBVTERM_INCLUDE_DIRS})
 
