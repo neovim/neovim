@@ -5,7 +5,7 @@
 
 #include <stdbool.h>
 
-#include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 
 typedef struct _watcher Watcher;
 

@@ -5,14 +5,14 @@
 #include <uv.h>
 
 #include "nvim/vim.h"
-#include "nvim/memory.h"
-#include "nvim/buffer_defs.h"
-#include "nvim/fileio.h"
-#include "nvim/fswatch.h"
-#include "nvim/lib/klist.h"
+#include "nvim/buffer.h"
 #include "nvim/lib/khash.h"
+#include "nvim/lib/klist.h"
+#include "nvim/fileio.h"
 #include "nvim/os/fs_defs.h"
+#include "nvim/os/fsnotification.h"
 #include "nvim/os/event.h"
+
 
 // Apparentely, the destruction mechanism is not very well implemented in klist.
 // Proper resource handling will be done manually

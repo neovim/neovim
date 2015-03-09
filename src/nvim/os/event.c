@@ -15,12 +15,12 @@
 #include "nvim/os/rstream.h"
 #include "nvim/os/wstream.h"
 #include "nvim/os/job.h"
-#include "nvim/fswatch.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 #include "nvim/misc2.h"
 #include "nvim/ui.h"
 #include "nvim/screen.h"
+#include "nvim/os/fsnotification.h"
 
 #include "nvim/lib/klist.h"
 
