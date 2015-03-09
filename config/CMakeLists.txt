@@ -79,6 +79,12 @@ configure_file (
   "${PROJECT_BINARY_DIR}/config/auto/config.h"
   )
 
+# generate version definitions
+configure_file (
+  "${PROJECT_SOURCE_DIR}/config/versiondef.h.in"
+  "${PROJECT_BINARY_DIR}/config/auto/versiondef.h"
+  )
+
 # generate pathdef.c
 find_program(WHOAMI_PROG whoami)
 find_program(HOSTNAME_PROG hostname)
