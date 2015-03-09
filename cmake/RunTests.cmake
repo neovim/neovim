@@ -15,6 +15,7 @@ endif()
 
 execute_process(
   COMMAND ${BUSTED_PRG} -v -o ${BUSTED_OUTPUT_TYPE}
+    --helper=${TEST_DIR}/${TEST_TYPE}/preload.lua
     --lpath=${BUILD_DIR}/?.lua ${TEST_PATH}
   WORKING_DIRECTORY ${WORKING_DIR}
   ERROR_VARIABLE err
