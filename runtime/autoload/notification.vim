@@ -1,6 +1,6 @@
 let s:fs_notify_on = 0
 
-function! fs#notify_turn_on()
+function! notification#turn_on()
     if s:fs_notify_on == 1
     	return
     endif
@@ -12,7 +12,9 @@ function! fs#notify_turn_on()
     endfor
 
     let s:fs_notify_on = 1
-endfunction fs#notify_turn_on
+endfunction notification#turn_on
+
+" TODO: write turn_off
 
 augroup fs_notification
     autocmd BufRead        * call notify_register(expand('<afile>'))
@@ -25,5 +27,5 @@ augroup fs_notification
     autocmd FileAppendPost * call notify_register(expand('<afile>'))
 
     autocmd BufFilePre     * call notify_unregister(expand('<afile>'))
-    autocmd BufFilePost    * call notify_unregister(expand('<afile>'))
+    autocmd BufFilePost    * call notify_register(expand('<afile>'))
 augroup END
