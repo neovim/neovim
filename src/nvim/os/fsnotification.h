@@ -16,7 +16,7 @@ struct _watcher {
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "fsnotification.h.generated.h"
+# include "os/fsnotification.h.generated.h"
 #endif
 
 #endif  // NVIM_FSWATCH_H

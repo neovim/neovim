@@ -8911,7 +8911,7 @@ static void f_notify_set(typval_T *argvars, typval_T *rettv)
       return;
     }
 
-    fswatch_enable_watcher_on(buffer, (bool)bvalue);
+    fsnotification_enable_watcher_on(buffer, (bool)bvalue);
   }
 }
 
@@ -8920,7 +8920,7 @@ static void f_notify_register(typval_T *argvars, typval_T *rettv)
   buf_T* buffer = find_buffer(&argvars[0]);
 
   if (buffer != NULL && buffer->file_id_valid && !os_isdir(buffer->b_ffname)) {
-    fswatch_add_buffer(buffer);
+    fsnotification_add_buffer(buffer);
   }
 }
 
@@ -8930,7 +8930,7 @@ static void f_notify_unregister(typval_T *argvars, typval_T *rettv)
 
   // the second check is only to avoid an useless function invocation
   if (buffer != NULL && buffer->file_id_valid) {
-    fswatch_delete_buffer(buffer);
+    fsnotification_delete_buffer(buffer);
   }
 }
 

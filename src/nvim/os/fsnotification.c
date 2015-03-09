@@ -26,7 +26,7 @@ KHASH_MAP_INIT_STR(EventTable, int)
 khash_t(EventTable)* event_lookup = NULL;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "fswatch.c.generated.h"
+# include "os/fsnotification.c.generated.h"
 #endif
 
 typedef struct {
@@ -42,8 +42,8 @@ static void check_callback(Event evt)
 
   if ((kh_value(event_lookup, data->lookup_iter) & UV_RENAME) &&
       os_file_exists(data->buffer->b_ffname)) {
-    fswatch_delete_buffer(data->buffer);
-    fswatch_add_buffer(data->buffer);
+    fsnotification_delete_buffer(data->buffer);
+    fsnotification_add_buffer(data->buffer);
   }
 
   kh_value(event_lookup, data->lookup_iter) = 0;
@@ -111,7 +111,7 @@ static bool find_node_before(klist_t(Watcher)* kl,
   return false;
 }
 
-static bool find_associated_watcher(buf_T* buffer, Watcher* w)
+static bool find_watcher(buf_T* buffer, Watcher* w)
 {
   assert(watchers_list != NULL);
 
@@ -130,7 +130,7 @@ static bool find_associated_watcher(buf_T* buffer, Watcher* w)
   return false;
 }
 
-static bool remove_associated_watcher(buf_T* buffer, Watcher* w)
+static bool remove_watcher(buf_T* buffer, Watcher* w)
 {
   assert(watchers_list != NULL);
 
@@ -148,13 +148,13 @@ static bool remove_associated_watcher(buf_T* buffer, Watcher* w)
   return false;
 }
 
-void fswatch_init(void) {
+void fsnotification_init(void) {
   watchers_list = kl_init(Watcher);
   event_lookup = kh_init(EventTable);
 }
 
 // called on application exiting
-void fswatch_teardown(void) {
+void fsnotification_teardown(void) {
   Watcher w;
 
   while (kl_shift(Watcher, watchers_list, &w) == 0) {
@@ -165,13 +165,13 @@ void fswatch_teardown(void) {
   kh_destroy(EventTable, event_lookup);
 }
 
-bool fswatch_add_buffer(buf_T *buffer) {
+bool fsnotification_add_buffer(buf_T *buffer) {
   // We check first if the buffer is already register
   // In that case, we just enable its watcher
   {
     Watcher w;
-    if (find_associated_watcher(buffer, &w)) {
-     return fswatch_enable_watcher(&w, true);
+    if (find_watcher(buffer, &w)) {
+     return fsnotification_enable_watcher(&w, true);
     }
   }
 
@@ -194,10 +194,10 @@ bool fswatch_add_buffer(buf_T *buffer) {
   Watcher* new_element = kl_pushp(Watcher, watchers_list);
   *new_element = w;
 
-  return fswatch_enable_watcher(new_element, true);
+  return fsnotification_enable_watcher(new_element, true);
 }
 
-static bool fswatch_enable_watcher(Watcher* watcher, bool state)
+static bool fsnotification_enable_watcher(Watcher* watcher, bool state)
 {
   if (uv_is_active((uv_handle_t*) watcher->handle) != state) {
     int res;
@@ -219,9 +219,9 @@ static bool fswatch_enable_watcher(Watcher* watcher, bool state)
   return true;
 }
 
-void fswatch_delete_buffer(buf_T* buffer) {
+void fsnotification_delete_buffer(buf_T* buffer) {
   Watcher w;
-  if (remove_associated_watcher(buffer, &w)) {
+  if (remove_watcher(buffer, &w)) {
     free_watcher(&w);
   }
 
@@ -232,10 +232,10 @@ void fswatch_delete_buffer(buf_T* buffer) {
   }
 }
 
-bool fswatch_enable_watcher_on(buf_T* buffer, bool state) {
+bool fsnotification_enable_watcher_on(buf_T* buffer, bool state) {
   Watcher w;
-  if (find_associated_watcher(buffer, &w)) {
-    return fswatch_enable_watcher(&w, state);
+  if (find_watcher(buffer, &w)) {
+    return fsnotification_enable_watcher(&w, state);
   }
 
   return false;
