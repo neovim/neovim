@@ -5878,19 +5878,20 @@ static int do_autocmd_event(event_T event, char_u *pat, int nested, char_u *cmd,
     is_buflocal = FALSE;
     buflocal_nr = 0;
 
-    if (patlen >= 7 && STRNCMP(pat, "<buffer", 7) == 0
+    if (patlen >= 8 && STRNCMP(pat, "<buffer", 7) == 0
         && pat[patlen - 1] == '>') {
-      /* Error will be printed only for addition. printing and removing
-       * will proceed silently. */
+      /* "<buffer...>": Error will be printed only for addition.
+       * printing and removing will proceed silently. */
       is_buflocal = TRUE;
       if (patlen == 8)
+        /* "<buffer>" */
         buflocal_nr = curbuf->b_fnum;
       else if (patlen > 9 && pat[7] == '=') {
-        /* <buffer=abuf> */
-        if (patlen == 13 && STRNICMP(pat, "<buffer=abuf>", 13))
+        if (patlen == 13 && STRNICMP(pat, "<buffer=abuf>", 13) == 0)
+          /* "<buffer=abuf>" */
           buflocal_nr = autocmd_bufnr;
-        /* <buffer=123> */
         else if (skipdigits(pat + 8) == pat + patlen - 1)
+          /* "<buffer=123>" */
           buflocal_nr = atoi((char *)pat + 8);
       }
     }
