@@ -3308,38 +3308,6 @@ void preserve_exit(void)
   getout(1);
 }
 
-/*
- * Check for CTRL-C pressed, but only once in a while.
- * Should be used instead of os_breakcheck() for functions that check for
- * each line in the file.  Calling os_breakcheck() each time takes too much
- * time, because it can be a system call.
- */
-
-#ifndef BREAKCHECK_SKIP
-#  define BREAKCHECK_SKIP 32
-#endif
-
-static int breakcheck_count = 0;
-
-void line_breakcheck(void)
-{
-  if (++breakcheck_count >= BREAKCHECK_SKIP) {
-    breakcheck_count = 0;
-    os_breakcheck();
-  }
-}
-
-/*
- * Like line_breakcheck() but check 10 times less often.
- */
-void fast_breakcheck(void)
-{
-  if (++breakcheck_count >= BREAKCHECK_SKIP * 10) {
-    breakcheck_count = 0;
-    os_breakcheck();
-  }
-}
-
 #ifndef SEEK_SET
 # define SEEK_SET 0
 #endif
