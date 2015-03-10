@@ -277,8 +277,6 @@ add_menu_path (
   char_u      *dname;
   char_u      *next_name;
   int i;
-  char_u c;
-  char_u d;
   int pri_idx = 0;
   int old_modes = 0;
   int amenu;
@@ -422,8 +420,8 @@ add_menu_path (
         /* For "amenu", may insert an extra character.
          * Don't do this if adding a tearbar (addtearoff == FALSE).
          * Don't do this for "<Nop>". */
-        c = 0;
-        d = 0;
+        char_u c = 0;
+        char_u d = 0;
         if (amenu && call_data != NULL && *call_data != NUL
             ) {
           switch (1 << i) {
