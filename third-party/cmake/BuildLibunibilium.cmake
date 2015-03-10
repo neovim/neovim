@@ -1,4 +1,3 @@
-
 ExternalProject_Add(libunibilium
   PREFIX ${DEPS_BUILD_DIR}
   URL ${LIBUNIBILIUM_URL}
@@ -16,5 +15,5 @@ ExternalProject_Add(libunibilium
                             PREFIX=${DEPS_INSTALL_DIR}
                             CFLAGS=-fPIC
   INSTALL_COMMAND ${MAKE_PRG} PREFIX=${DEPS_INSTALL_DIR} install)
-list(APPEND THIRD_PARTY_DEPS libunibilium)
 
+list(APPEND THIRD_PARTY_DEPS libunibilium)

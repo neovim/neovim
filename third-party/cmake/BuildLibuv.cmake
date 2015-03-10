@@ -1,4 +1,3 @@
-
 ExternalProject_Add(libuv
   PREFIX ${DEPS_BUILD_DIR}
   URL ${LIBUV_URL}
@@ -15,5 +14,5 @@ ExternalProject_Add(libuv
       --prefix=${DEPS_INSTALL_DIR} --libdir=${DEPS_INSTALL_DIR}/lib
       CC=${DEPS_C_COMPILER}
   INSTALL_COMMAND ${MAKE_PRG} install)
-list(APPEND THIRD_PARTY_DEPS libuv)
 
+list(APPEND THIRD_PARTY_DEPS libuv)

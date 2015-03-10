@@ -1,4 +1,3 @@
-
 ExternalProject_Add(libtermkey
   PREFIX ${DEPS_BUILD_DIR}
   URL ${LIBTERMKEY_URL}
@@ -18,5 +17,6 @@ ExternalProject_Add(libtermkey
                               PKG_CONFIG_PATH=${DEPS_LIB_DIR}/pkgconfig
                               CFLAGS=-fPIC
                               install)
+
 list(APPEND THIRD_PARTY_DEPS libtermkey)
 add_dependencies(libtermkey libunibilium)

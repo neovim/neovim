@@ -1,4 +1,3 @@
-
 ExternalProject_Add(libvterm
   PREFIX ${DEPS_BUILD_DIR}
   URL ${LIBVTERM_URL}
@@ -17,5 +16,5 @@ ExternalProject_Add(libvterm
                               PREFIX=${DEPS_INSTALL_DIR}
                               CFLAGS=-fPIC
                               install)
-list(APPEND THIRD_PARTY_DEPS libvterm)
 
+list(APPEND THIRD_PARTY_DEPS libvterm)
