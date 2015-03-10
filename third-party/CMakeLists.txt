@@ -1,6 +1,9 @@
 # This is not meant to be included by the top-level.
 cmake_minimum_required (VERSION 2.8.7)
 project(NEOVIM_DEPS)
+ 
+# Point CMake at any custom modules we may ship
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 set(DEPS_INSTALL_DIR "${CMAKE_BINARY_DIR}/usr")
 set(DEPS_BIN_DIR "${CMAKE_BINARY_DIR}/usr/bin")
@@ -72,229 +75,31 @@ set(LIBVTERM_SHA256 3fc75908256c0d158d6c2a32d39f34e86bfd26364f5404b7d9c03bb70cdc
 
 
 if(USE_BUNDLED_LIBUNIBILIUM)
-  ExternalProject_Add(libunibilium
-    PREFIX ${DEPS_BUILD_DIR}
-    URL ${LIBUNIBILIUM_URL}
-    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/libunibilium
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
-      -DPREFIX=${DEPS_BUILD_DIR}
-      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/libunibilium
-      -DURL=${LIBUNIBILIUM_URL}
-      -DEXPECTED_SHA256=${LIBUNIBILIUM_SHA256}
-      -DTARGET=libunibilium
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
-    CONFIGURE_COMMAND ""
-    BUILD_IN_SOURCE 1
-    BUILD_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
-                              PREFIX=${DEPS_INSTALL_DIR}
-                              CFLAGS=-fPIC
-    INSTALL_COMMAND ${MAKE_PRG} PREFIX=${DEPS_INSTALL_DIR} install)
-  list(APPEND THIRD_PARTY_DEPS libunibilium)
+  include(BuildLibunibilium)
 endif()
 
 if(USE_BUNDLED_LIBTERMKEY)
-  ExternalProject_Add(libtermkey
-    PREFIX ${DEPS_BUILD_DIR}
-    URL ${LIBTERMKEY_URL}
-    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/libtermkey
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
-      -DPREFIX=${DEPS_BUILD_DIR}
-      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/libtermkey
-      -DURL=${LIBTERMKEY_URL}
-      -DEXPECTED_SHA256=${LIBTERMKEY_SHA256}
-      -DTARGET=libtermkey
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
-    CONFIGURE_COMMAND ""
-    BUILD_IN_SOURCE 1
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
-                                PREFIX=${DEPS_INSTALL_DIR}
-                                PKG_CONFIG_PATH=${DEPS_LIB_DIR}/pkgconfig
-                                CFLAGS=-fPIC
-                                install)
-  list(APPEND THIRD_PARTY_DEPS libtermkey)
-  add_dependencies(libtermkey libunibilium)
+  include(BuildLibtermkey)
 endif()
 
 if(USE_BUNDLED_LIBVTERM)
-  ExternalProject_Add(libvterm
-    PREFIX ${DEPS_BUILD_DIR}
-    URL ${LIBVTERM_URL}
-    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/libvterm
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
-      -DPREFIX=${DEPS_BUILD_DIR}
-      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/libvterm
-      -DURL=${LIBVTERM_URL}
-      -DEXPECTED_SHA256=${LIBVTERM_SHA256}
-      -DTARGET=libvterm
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
-    CONFIGURE_COMMAND ""
-    BUILD_IN_SOURCE 1
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
-                                PREFIX=${DEPS_INSTALL_DIR}
-                                CFLAGS=-fPIC
-                                install)
-  list(APPEND THIRD_PARTY_DEPS libvterm)
+  include(BuildLibvterm)
 endif()
 
-
 if(USE_BUNDLED_LIBUV)
-  ExternalProject_Add(libuv
-    PREFIX ${DEPS_BUILD_DIR}
-    URL ${LIBUV_URL}
-    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/libuv
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
-      -DPREFIX=${DEPS_BUILD_DIR}
-      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/libuv
-      -DURL=${LIBUV_URL}
-      -DEXPECTED_SHA256=${LIBUV_SHA256}
-      -DTARGET=libuv
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
-    CONFIGURE_COMMAND sh ${DEPS_BUILD_DIR}/src/libuv/autogen.sh &&
-      ${DEPS_BUILD_DIR}/src/libuv/configure --with-pic --disable-shared
-        --prefix=${DEPS_INSTALL_DIR} --libdir=${DEPS_INSTALL_DIR}/lib
-        CC=${DEPS_C_COMPILER}
-    INSTALL_COMMAND ${MAKE_PRG} install)
-  list(APPEND THIRD_PARTY_DEPS libuv)
+  include(BuildLibuv)
 endif()
 
 if(USE_BUNDLED_MSGPACK)
-  ExternalProject_Add(msgpack
-    PREFIX ${DEPS_BUILD_DIR}
-    URL ${MSGPACK_URL}
-    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/msgpack
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
-      -DPREFIX=${DEPS_BUILD_DIR}
-      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/msgpack
-      -DURL=${MSGPACK_URL}
-      -DEXPECTED_SHA256=${MSGPACK_SHA256}
-      -DTARGET=msgpack
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
-    CONFIGURE_COMMAND cmake ${DEPS_BUILD_DIR}/src/msgpack
-       -DMSGPACK_ENABLE_CXX=OFF
-       -DMSGPACK_BUILD_TESTS=OFF
-       -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR}
-       -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-       "-DCMAKE_C_FLAGS:STRING=${CMAKE_C_COMPILER_ARG1} -fPIC"
-    BUILD_COMMAND ${CMAKE_COMMAND} --build .
-    INSTALL_COMMAND ${CMAKE_COMMAND}
-      -DREMOVE_FILE_GLOB=${DEPS_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}msgpack*${CMAKE_SHARED_LIBRARY_SUFFIX}*
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/InstallMsgpack.cmake)
-  list(APPEND THIRD_PARTY_DEPS msgpack)
+  include(BuildMsgpack)
 endif()
 
 if(USE_BUNDLED_LUAJIT)
-  ExternalProject_Add(luajit
-    PREFIX ${DEPS_BUILD_DIR}
-    URL ${LUAJIT_URL}
-    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/luajit
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
-      -DPREFIX=${DEPS_BUILD_DIR}
-      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/luajit
-      -DURL=${LUAJIT_URL}
-      -DEXPECTED_SHA256=${LUAJIT_SHA256}
-      -DTARGET=luajit
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
-    CONFIGURE_COMMAND ""
-    BUILD_IN_SOURCE 1
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
-                                PREFIX=${DEPS_INSTALL_DIR}
-                                CFLAGS=-fPIC
-                                CFLAGS+=-DLUAJIT_DISABLE_JIT
-                                CFLAGS+=-DLUA_USE_APICHECK
-                                CFLAGS+=-DLUA_USE_ASSERT
-                                CCDEBUG+=-g
-                                BUILDMODE=static
-                                install)
-  list(APPEND THIRD_PARTY_DEPS luajit)
+  include(BuildLuajit)
 endif()
 
 if(USE_BUNDLED_LUAROCKS)
-  if(USE_BUNDLED_LUAJIT)
-    list(APPEND LUAROCKS_OPTS
-      --with-lua=${DEPS_INSTALL_DIR}
-      --with-lua-include=${DEPS_INSTALL_DIR}/include/luajit-2.0)
-  endif()
-  ExternalProject_Add(luarocks
-    PREFIX ${DEPS_BUILD_DIR}
-    URL ${LUAROCKS_URL}
-    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/luarocks
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
-      -DPREFIX=${DEPS_BUILD_DIR}
-      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/luarocks
-      -DURL=${LUAROCKS_URL}
-      -DEXPECTED_SHA256=${LUAROCKS_SHA256}
-      -DTARGET=luarocks
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
-    BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND ${DEPS_BUILD_DIR}/src/luarocks/configure
-      --prefix=${DEPS_INSTALL_DIR} --force-config ${LUAROCKS_OPTS}
-      --lua-suffix=jit
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ${MAKE_PRG} bootstrap)
-  list(APPEND THIRD_PARTY_DEPS luarocks)
-  if(USE_BUNDLED_LUAJIT)
-    add_dependencies(luarocks luajit)
-  endif()
-
-  add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build lua_cliargs 2.3-3 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build luafilesystem 1.6.3-1 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build dkjson 2.5-1 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build say 1.2-1 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build luassert 1.7.2-0 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build ansicolors 1.0.2-3 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build penlight 1.0.0-1 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build mediator_lua 1.1-3 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-    COMMAND touch ${DEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps
-    DEPENDS luarocks)
-  add_custom_target(stable-busted-deps
-    DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps)
-
-  add_custom_command(OUTPUT ${DEPS_BIN_DIR}/busted
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build busted 2.0.rc4 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-    DEPENDS stable-busted-deps)
-  add_custom_target(busted
-    DEPENDS ${DEPS_BIN_DIR}/busted)
-
-  # lua-messagepack doesn't depend on busted, but luarocks is unhappy to have
-  # two instances running in parallel.  So we depend on busted to force it to
-  # be serialized.
-  add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/lua-messagepack
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build lua-messagepack CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-    DEPENDS busted)
-  add_custom_target(lua-messagepack
-    DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/lua-messagepack)
-
-  # Like before, depend on lua-messagepack to ensure serialization of install
-  # commands
-  add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/lpeg
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build lpeg CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-    DEPENDS lua-messagepack)
-  add_custom_target(lpeg
-    DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/lpeg)
-
-  add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/nvim-client
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build https://raw.githubusercontent.com/neovim/lua-client/8cc5b6090ac61cd0bba53ba984f15792fbb64573/nvim-client-0.0.1-11.rockspec CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER} LIBUV_DIR=${DEPS_INSTALL_DIR}
-    DEPENDS lpeg libuv)
-  add_custom_target(nvim-client
-    DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/nvim-client)
-
-  list(APPEND THIRD_PARTY_DEPS stable-busted-deps busted lua-messagepack lpeg nvim-client)
+  include(BuildLuarocks)
 endif()
 
 add_custom_target(third-party ALL
