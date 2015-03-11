@@ -173,8 +173,9 @@ void early_init(void)
   // NOTE: Non-latin1 translated messages are working only after this,
   // because this is where "has_mbyte" will be set, which is used by
   // msg_outtrans_len_attr().
-  // First find out the home directory, needed to expand "~" in options.
-  init_homedir();               // find real value of $HOME
+  init_homedir();               // find real value of "~"
+                                // Usually equivalent to "$HOME" on UNIX
+                                // systems (depends on the shell)
   set_init_1();
   TIME_MSG("inits 1");
 
