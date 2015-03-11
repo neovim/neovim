@@ -38,18 +38,15 @@ describe('test5', function()
     -- Write current file contents.
     execute('?start?,$yank A')
 
-    -- Delete alternate buffer.
-    execute('bwipe test.out')
-    execute('au bufleave test5.in bwipe')
-
     -- Delete current buffer, get an empty one.
     execute('bwipe!')
+    -- Append an extra line to the output register.
     feed('ithis is another test line<esc>:yank A<cr>')
 
     -- Output results
     execute('%d')
     execute('0put a')
-    execute('1d | $d')
+    execute('$d')
 
     -- Assert buffer contents.
     expect([[
