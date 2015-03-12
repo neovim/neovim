@@ -145,7 +145,7 @@ String vim_command_output(String str, Error *err)
 Object vim_eval(String str, Error *err)
   FUNC_ATTR_DEFERRED
 {
-  Object rv;
+  Object rv = OBJECT_INIT;
   // Evaluate the expression
   try_start();
   typval_T *expr_result = eval_expr((char_u *) str.data, NULL);

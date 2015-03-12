@@ -42,8 +42,6 @@ int os_chdir(const char *path)
 int os_dirname(char_u *buf, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
-  assert(buf && len);
-
   int error_number;
   if ((error_number = uv_cwd((char *)buf, &len)) != kLibuvSuccess) {
     STRLCPY(buf, uv_strerror(error_number), len);
