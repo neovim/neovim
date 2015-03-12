@@ -19831,17 +19831,18 @@ static inline JobOptions common_job_options(char **argv, char *autocmd_file)
 
 static inline Job *common_job_start(JobOptions opts, typval_T *rettv)
 {
-  Job *job = job_start(opts, &rettv->vval.v_number);
   TerminalJobData *data = opts.data;
   data->refcount++;
+  Job *job = job_start(opts, &rettv->vval.v_number);
 
   if (rettv->vval.v_number <= 0) {
     if (rettv->vval.v_number == 0) {
       EMSG(_(e_jobtblfull));
+      free(opts.term_name);
       free(data->autocmd_file);
+      free(data);
     } else {
       EMSG(_(e_jobexe));
-      free(opts.data);
     }
     return NULL;
   }
