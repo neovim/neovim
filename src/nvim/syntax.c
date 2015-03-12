@@ -5938,15 +5938,22 @@ init_highlight (
   int i;
   char        **pp;
   static int had_both = FALSE;
-  char_u      *p;
 
   /*
    * Try finding the color scheme file.  Used when a color file was loaded
    * and 'background' or 't_Co' is changed.
    */
-  p = get_var_value((char_u *)"g:colors_name");
-  if (p != NULL && load_colors(p) == OK)
-    return;
+  char_u *p = get_var_value((char_u *)"g:colors_name");
+  if (p != NULL) {
+    // Value of g:colors_name could be freed in load_colors() and make
+    // p invalid, so copy it.
+    char_u *copy_p = vim_strsave(p);
+    bool okay = load_colors(copy_p);
+    free(copy_p);
+    if (okay) {
+        return;
+    }
+  }
 
   /*
    * Didn't use a color file, use the compiled-in colors.
