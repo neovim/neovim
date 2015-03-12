@@ -172,6 +172,9 @@ local function rawfeed(...)
 end
 
 local function spawn(argv)
+  if argv == nil then
+    argv = nvim_argv
+  end
   local loop = Loop.new()
   local msgpack_stream = MsgpackStream.new(loop)
   local async_session = AsyncSession.new(msgpack_stream)
