@@ -142,13 +142,13 @@ Job *job_start(JobOptions opts, int *status)
   // Spawn the job
   if (!process_spawn(job)) {
     if (opts.writable) {
-      uv_close((uv_handle_t *)&job->proc_stdin, close_cb);
+      uv_close((uv_handle_t *)job->proc_stdin, close_cb);
     }
     if (opts.stdout_cb) {
-      uv_close((uv_handle_t *)&job->proc_stdout, close_cb);
+      uv_close((uv_handle_t *)job->proc_stdout, close_cb);
     }
     if (opts.stderr_cb) {
-      uv_close((uv_handle_t *)&job->proc_stderr, close_cb);
+      uv_close((uv_handle_t *)job->proc_stderr, close_cb);
     }
     process_close(job);
     event_poll(0);
