@@ -434,27 +434,9 @@ someone supplied, you can't do this.  Do delete the files manually, here is an
 example for when "/usr/local" was used as the root: >
 
 	rm -rf /usr/local/share/vim/vim61
-	rm /usr/local/bin/ex
-	rm /usr/local/bin/gview
-	rm /usr/local/bin/gvim
-	rm /usr/local/bin/gvim
-	rm /usr/local/bin/rgview
-	rm /usr/local/bin/rgvim
-	rm /usr/local/bin/rview
-	rm /usr/local/bin/rvim
-	rm /usr/local/bin/rvim
-	rm /usr/local/bin/view
 	rm /usr/local/bin/vim
 	rm /usr/local/bin/vimtutor
 	rm /usr/local/bin/xxd
-	rm /usr/local/man/man1/ex.1
-	rm /usr/local/man/man1/gview.1
-	rm /usr/local/man/man1/gvim.1
-	rm /usr/local/man/man1/rgview.1
-	rm /usr/local/man/man1/rgvim.1
-	rm /usr/local/man/man1/rview.1
-	rm /usr/local/man/man1/rvim.1
-	rm /usr/local/man/man1/view.1
 	rm /usr/local/man/man1/vim.1
 	rm /usr/local/man/man1/vimtutor.1
 	rm /usr/local/man/man1/xxd.1

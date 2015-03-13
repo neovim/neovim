@@ -14,19 +14,6 @@ vim \- Vi rozbudowany, edytor tekstu dla programisty
 .br
 .B vim
 [opcje] \-q [plik_błędu]
-.PP
-.br
-.B ex
-.br
-.B view
-.br
-.B gvim
-.B gview
-.br
-.B rvim
-.B rview
-.B rgvim
-.B rgview
 .SH OPIS
 .B Vim
 jest edytorem tekstu kompatybilnym z Vi. Może być
@@ -93,35 +80,6 @@ Jeśli brak opcji [plik_błędów] nazwa pliku zostanie pobrana z opcji
 systemów.
 Do kolejnych błędów można przeskoczyć dzięki poleceniu ":cn".
 Zobacz ":help quickfix".
-.PP
-W zależności od wywołania
-.B Vim
-zachowuje się inaczej (program może być cały czas tym samym
-plikiem).
-.TP 10
-vim
-"Normalny" sposób, wszystko jest domyślne.
-.TP
-ex
-Zacznij w trybie Ex.
-Przejdź do trybu Normalnego poleceniem ":vi".
-Można także uruchomić poprzez argument "\-e".
-.TP
-view
-Zacznij w trybie tylko do odczytu. W ten sposób będziesz chroniony
-przed zapisywaniem pliku. Można także uruchomić poprzez argument
-"\-R".
-.TP
-gvim gview
-Wersja GUI.
-Uruchamia nowe okno.
-Można także uruchomić poprzez argument "\-g".
-.TP
-rvim rview rgvim rgview
-Podobnie jak powyżej, ale z ograniczeniami. Nie będzie można uruchomić
-poleceń powłoki lub zawiesić
-.B Vima.
-Można także uruchomić poprzez argument "\-Z".
 .SH OPCJE
 Opcje można podać w dowolnej kolejności, przed lub po nazwach plików.
 Opcje bez argumentów można łączyć po pojedynczym myślniku.
@@ -370,12 +328,6 @@ Zobacz ":help gui-init" by poznać więcej szczegółów.
 Tryb gadatliwy. Wypisz wiadomości o tym jaki pliki są wczytywane
 i o informacjach pobieranych i dodawanych do pliku viminfo. Opcjonalny
 argument N jest wartością 'verbose'. Domyślnie 10.
-.TP
-\-v
-Uruchom
-.B Vima
-w trybie Vi, tak jakby program był nazwany "vi". Ma znaczenie
-tylko wtedy jeśli program nazwany jest "ex".
 .TP
 \-w {plik}
 Wszystkie wciśnięcia klawiszy, aż do zakończenia działania programu,

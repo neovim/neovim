@@ -14,19 +14,6 @@ vim \- VI Migliorato, un editor di testi per programmatori
 .br
 .B vim
 [opzioni] \-q [file_errori]
-.PP
-.br
-.B ex
-.br
-.B view
-.br
-.B gvim
-.B gview
-.br
-.B rvim
-.B rview
-.B rgvim
-.B rgview
 .SH DESCRIZIONE
 .B Vim
 Un editore di testi, compatibile con, e migliore di, Vi.
@@ -94,33 +81,6 @@ dell'opzione 'errorfile' (che, se non specificata, vale "AztecC.Err"
 per l'Amiga, "errors.err" su altri sistemi).
 Si può saltare all'errore successivo col comando ":cn".
 Vedere ":help quickfix".
-.PP
-.B Vim
-si comporta in modo diverso se invocato con nomi differenti (il programma
-eseguibile "sottostante" può essere sempre lo stesso).
-.TP 10
-vim
-Modo Normal, comportamento normale.
-.TP
-ex
-Inizia in Modo "Ex".
-Si può passare in Modo Normal col comando ":vi".
-Si può invocare il Modo "Ex" anche con l'argomento "\-e".
-.TP
-view
-Inizia in Modo Read-only (Sola Lettura).  Non potete modificare i file.
-Si può invocare il Modo Read-only anche con l'argomento "\-R".
-.TP
-gvim gview
-La versione GUI [Graphical User Interface].
-Apre una nuova finestra.
-Si può invocare il Modo GUI anche con l'argomento "\-g".
-.TP
-rvim rview rgvim rgview
-Come sopra, ma con restrizioni ai comandi.  Non si potranno eseguire comandi
-della shell o sospendere
-.B Vim.
-Si può chiedere la stessa cosa anche con l'argomento "\-Z".
 .SH OPZIONI
 Le opzioni possono essere in un ordine qualsiasi, prima o dopo i nomi di
 file.  Opzioni che non necessitano un argomento possono essere specificate
@@ -371,12 +331,6 @@ Verboso.  Vim manda messaggi relativi agli script file che esegue
 e quando legge o scrive un file viminfo.  Il numero opzionale N è il valore
 dell'opzione 'verbose'.
 Il valore predefinito è 10.
-.TP
-\-v
-Inizia
-.B Vim
-in Modo Vi, come se il programma eseguibile fosse "vi".  Questo ha
-effetto solo quando Vim viene invocato con il nome "ex".
 .TP
 \-w {scriptout}
 Ogni carattere immesso viene registrato nel file {scriptout},

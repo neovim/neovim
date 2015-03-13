@@ -14,7 +14,7 @@
 " License:	  VIM License
 "		  Vim is Charityware, see ":help Uganda"
 "
-" Usage:	  $ ls -la | view -c "set ft=dirpager" -
+" Usage:	  $ ls -la | nvim -R -c "set ft=dirpager" -
 "
 "
 ",----[ ls(1posix) ]--------------------------------------------------
