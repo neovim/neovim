@@ -19,4 +19,4 @@ ExternalProject_Add(libtermkey
                               install)
 
 list(APPEND THIRD_PARTY_DEPS libtermkey)
-add_dependencies(libtermkey libunibilium)
+add_dependencies(libtermkey unibilium)
