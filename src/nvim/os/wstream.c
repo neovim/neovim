@@ -116,9 +116,8 @@ void wstream_set_stream(WStream *wstream, uv_stream_t *stream)
 /// @param file The file descriptor
 void wstream_set_file(WStream *wstream, uv_file file)
 {
-  uv_handle_type type = uv_guess_handle(file);
-
-  assert(type == UV_NAMED_PIPE || type == UV_TTY);
+  assert(uv_guess_handle(file) == UV_NAMED_PIPE ||
+         uv_guess_handle(file) == UV_TTY);
   wstream->stream = xmalloc(sizeof(uv_pipe_t));
   uv_pipe_init(uv_default_loop(), (uv_pipe_t *)wstream->stream, 0);
   uv_pipe_open((uv_pipe_t *)wstream->stream, file);
