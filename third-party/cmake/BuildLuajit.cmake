@@ -1,4 +1,3 @@
-
 ExternalProject_Add(luajit
   PREFIX ${DEPS_BUILD_DIR}
   URL ${LUAJIT_URL}
@@ -22,5 +21,5 @@ ExternalProject_Add(luajit
                               CCDEBUG+=-g
                               BUILDMODE=static
                               install)
-list(APPEND THIRD_PARTY_DEPS luajit)
 
+list(APPEND THIRD_PARTY_DEPS luajit)

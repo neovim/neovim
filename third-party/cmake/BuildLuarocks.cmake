@@ -1,9 +1,9 @@
-
 if(USE_BUNDLED_LUAJIT)
   list(APPEND LUAROCKS_OPTS
     --with-lua=${DEPS_INSTALL_DIR}
     --with-lua-include=${DEPS_INSTALL_DIR}/include/luajit-2.0)
 endif()
+
 ExternalProject_Add(luarocks
   PREFIX ${DEPS_BUILD_DIR}
   URL ${LUAROCKS_URL}
@@ -21,7 +21,9 @@ ExternalProject_Add(luarocks
     --lua-suffix=jit
   BUILD_COMMAND ""
   INSTALL_COMMAND ${MAKE_PRG} bootstrap)
+
 list(APPEND THIRD_PARTY_DEPS luarocks)
+
 if(USE_BUNDLED_LUAJIT)
   add_dependencies(luarocks luajit)
 endif()
@@ -82,5 +84,3 @@ add_custom_target(nvim-client
   DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/nvim-client)
 
 list(APPEND THIRD_PARTY_DEPS stable-busted-deps busted lua-messagepack lpeg nvim-client)
-
-
