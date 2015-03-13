@@ -3155,7 +3155,7 @@ get_address (
     case '?':                           /* '/' or '?' - search */
       c = *cmd++;
       if (skip) {                       /* skip "/pat/" */
-        cmd = skip_regexp(cmd, c, (int)p_magic, NULL);
+        cmd = skip_regexp(cmd, c, p_magic, NULL);
         if (*cmd == c)
           ++cmd;
       } else {
@@ -5881,13 +5881,13 @@ static void ex_resize(exarg_T *eap)
       n += curwin->w_width;
     else if (n == 0 && eap->arg[0] == NUL)      /* default is very wide */
       n = 9999;
-    win_setwidth_win((int)n, wp);
+    win_setwidth_win(n, wp);
   } else {
     if (*eap->arg == '-' || *eap->arg == '+')
       n += curwin->w_height;
     else if (n == 0 && eap->arg[0] == NUL)      /* default is very wide */
       n = 9999;
-    win_setheight_win((int)n, wp);
+    win_setheight_win(n, wp);
   }
 }
 
@@ -6363,7 +6363,7 @@ static void ex_sleep(exarg_T *eap)
   if (cursor_valid()) {
     n = curwin->w_winrow + curwin->w_wrow - msg_scrolled;
     if (n >= 0)
-      ui_cursor_goto((int)n, curwin->w_wincol + curwin->w_wcol);
+      ui_cursor_goto(n, curwin->w_wincol + curwin->w_wcol);
   }
 
   len = eap->line2;

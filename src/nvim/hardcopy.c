@@ -1988,7 +1988,7 @@ static void prt_page_margins(double width, double height, double *left, double *
 static void prt_font_metrics(int font_scale)
 {
   prt_line_height = (double)font_scale;
-  prt_char_width = (double)PRT_PS_FONT_TO_USER(font_scale, prt_ps_font->wx);
+  prt_char_width = PRT_PS_FONT_TO_USER(font_scale, prt_ps_font->wx);
 }
 
 
@@ -2027,10 +2027,10 @@ static int prt_get_lpp(void)
    * font height (based on its bounding box) and the line height, handling the
    * case where the font height can exceed the line height.
    */
-  prt_bgcol_offset = (double)PRT_PS_FONT_TO_USER(prt_line_height,
+  prt_bgcol_offset = PRT_PS_FONT_TO_USER(prt_line_height,
       prt_ps_font->bbox_min_y);
   if ((prt_ps_font->bbox_max_y - prt_ps_font->bbox_min_y) < 1000.0) {
-    prt_bgcol_offset -= (double)PRT_PS_FONT_TO_USER(prt_line_height,
+    prt_bgcol_offset -= PRT_PS_FONT_TO_USER(prt_line_height,
         (1000.0 - (prt_ps_font->bbox_max_y -
                    prt_ps_font->bbox_min_y)) / 2);
   }

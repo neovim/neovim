@@ -2541,7 +2541,7 @@ spell_load_file (
       EMSG2(_(e_notopen), fname);
     else if (p_verbose > 2) {
       verbose_enter();
-      smsg((char_u *)e_notopen, fname);
+      smsg(e_notopen, fname);
       verbose_leave();
     }
     goto endFAIL;
@@ -5480,7 +5480,7 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
     }
 
     // Store the word in the hashtable to be able to find duplicates.
-    dw = (char_u *)getroom_save(spin, w);
+    dw = getroom_save(spin, w);
     if (dw == NULL) {
       retval = FAIL;
       free(pc);
@@ -10904,7 +10904,7 @@ stp_sal_score (
   char_u goodword[MAXWLEN];
   int lendiff;
 
-  lendiff = (int)(su->su_badlen - stp->st_orglen);
+  lendiff = su->su_badlen - stp->st_orglen;
   if (lendiff >= 0)
     pbad = badsound;
   else {

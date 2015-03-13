@@ -545,7 +545,7 @@ edit (
       mincol = curwin->w_wcol;
       validate_cursor_col();
 
-      if ((int)curwin->w_wcol < mincol - curbuf->b_p_ts
+      if (curwin->w_wcol < mincol - curbuf->b_p_ts
           && curwin->w_wrow == curwin->w_winrow
           + curwin->w_height - 1 - p_so
           && (curwin->w_cursor.lnum != curwin->w_topline
@@ -4893,7 +4893,7 @@ insertchar (
     return;
 
   /* Check whether this character should end a comment. */
-  if (did_ai && (int)c == end_comment_pending) {
+  if (did_ai && c == end_comment_pending) {
     char_u  *line;
     char_u lead_end[COM_MAX_LEN];           /* end-comment string */
     int middle_len, end_len;

@@ -1003,7 +1003,7 @@ static int tag_strnicmp(char_u *s1, char_u *s2, size_t len)
   int i;
 
   while (len > 0) {
-    i = (int)TOUPPER_ASC(*s1) - (int)TOUPPER_ASC(*s2);
+    i = TOUPPER_ASC(*s1) - TOUPPER_ASC(*s2);
     if (i != 0)
       return i;                         /* this character different */
     if (*s1 == NUL)
@@ -1583,7 +1583,7 @@ parse_line:
              */
             i = (int)tagp.tagname[0];
             if (sortic)
-              i = (int)TOUPPER_ASC(tagp.tagname[0]);
+              i = TOUPPER_ASC(tagp.tagname[0]);
             if (i < search_info.low_char || i > search_info.high_char)
               sort_error = TRUE;
 
@@ -2590,7 +2590,7 @@ static char_u *expand_tag_fname(char_u *fname, char_u *tag_fname, int expand)
   if (expand && mch_has_wildcard(fname)) {
     ExpandInit(&xpc);
     xpc.xp_context = EXPAND_FILES;
-    expanded_fname = ExpandOne(&xpc, (char_u *)fname, NULL,
+    expanded_fname = ExpandOne(&xpc, fname, NULL,
         WILD_LIST_NOTFOUND|WILD_SILENT, WILD_EXPAND_FREE);
     if (expanded_fname != NULL)
       fname = expanded_fname;

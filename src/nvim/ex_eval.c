@@ -1815,7 +1815,7 @@ void leave_cleanup(cleanup_T *csp)
   if (aborting() || need_rethrow) {
     if (pending & CSTP_THROW)
       /* Cancel the pending exception (includes report). */
-      discard_exception((except_T *)csp->exception, FALSE);
+      discard_exception(csp->exception, FALSE);
     else
       report_discard_pending(pending, NULL);
 

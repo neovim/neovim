@@ -5136,7 +5136,7 @@ void fix_help_buffer(void)
 
           // Note: We cannot just do `&NameBuff` because it is a statically sized array
           //       so `NameBuff == &NameBuff` according to C semantics.
-          char_u *buff_list[1] = {(char_u*) NameBuff};
+          char_u *buff_list[1] = {NameBuff};
           if (gen_expand_wildcards(1, buff_list, &fcount,
                   &fnames, EW_FILE|EW_SILENT) == OK
               && fcount > 0) {
@@ -5308,7 +5308,7 @@ void ex_helptags(exarg_T *eap)
 
   // Note: We cannot just do `&NameBuff` because it is a statically sized array
   //       so `NameBuff == &NameBuff` according to C semantics.
-  char_u *buff_list[1] = {(char_u*) NameBuff};
+  char_u *buff_list[1] = {NameBuff};
   if (gen_expand_wildcards(1, buff_list, &filecount, &files,
           EW_FILE|EW_SILENT) == FAIL
       || filecount == 0) {
@@ -5411,7 +5411,7 @@ helptags_one (
 
   // Note: We cannot just do `&NameBuff` because it is a statically sized array
   //       so `NameBuff == &NameBuff` according to C semantics.
-  char_u *buff_list[1] = {(char_u*) NameBuff};
+  char_u *buff_list[1] = {NameBuff};
   if (gen_expand_wildcards(1, buff_list, &filecount, &files,
           EW_FILE|EW_SILENT) == FAIL
       || filecount == 0) {

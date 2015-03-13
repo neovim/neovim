@@ -1500,7 +1500,7 @@ static void win_update(win_T *wp)
        */
       screen_fill(wp->w_winrow + wp->w_height - 1,
                   wp->w_winrow + wp->w_height,
-                  (int)W_ENDCOL(wp) - 3, (int)W_ENDCOL(wp),
+                  W_ENDCOL(wp) - 3, W_ENDCOL(wp),
                   '@', '@', hl_attr(HLF_AT));
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
@@ -1593,7 +1593,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
       if (n > wp->w_width)
         n = wp->w_width;
       screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
-                  W_ENDCOL(wp) - n, (int)W_ENDCOL(wp),
+                  W_ENDCOL(wp) - n, W_ENDCOL(wp),
                   ' ', ' ', hl_attr(HLF_FC));
     }
 
@@ -1605,7 +1605,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
             nn = wp->w_width;
         }
         screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
-                    W_ENDCOL(wp) - nn, (int)W_ENDCOL(wp) - n,
+                    W_ENDCOL(wp) - nn, W_ENDCOL(wp) - n,
                     ' ', ' ', hl_attr(HLF_SC));
         n = nn;
     }
@@ -1653,7 +1653,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
     }
 
     screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
-                wp->w_wincol + FDC_OFF, (int)W_ENDCOL(wp),
+                wp->w_wincol + FDC_OFF, W_ENDCOL(wp),
                 c1, c2, hl_attr(hl));
   }
   set_empty_rows(wp, row);
@@ -4779,7 +4779,7 @@ void win_redr_status(win_T *wp)
         this_ru_col + wp->w_wincol, fillchar, fillchar, attr);
 
     if (get_keymap_str(wp, NameBuff, MAXPATHL)
-        && (int)(this_ru_col - len) > (int)(STRLEN(NameBuff) + 1))
+        && this_ru_col - len > (int)(STRLEN(NameBuff) + 1))
       screen_puts(NameBuff, row, (int)(this_ru_col - STRLEN(NameBuff)
                                        - 1 + wp->w_wincol), attr);
 
@@ -6204,7 +6204,7 @@ void setcursor(void)
         curwin->w_wincol + (
           /* With 'rightleft' set and the cursor on a double-wide
            * character, position it on the leftmost column. */
-          curwin->w_p_rl ? ((int)curwin->w_width - curwin->w_wcol - (
+          curwin->w_p_rl ? (curwin->w_width - curwin->w_wcol - (
                               (has_mbyte
                                && (*mb_ptr2cells)(get_cursor_pos_ptr()) == 2
                                && vim_isprintc(gchar_cursor())) ? 2 :
@@ -6265,7 +6265,7 @@ int win_ins_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
     if (lastrow > Rows)
       lastrow = Rows;
     screen_fill(nextrow - line_count, lastrow - line_count,
-                wp->w_wincol, (int)W_ENDCOL(wp),
+                wp->w_wincol, W_ENDCOL(wp),
                 ' ', ' ', 0);
   }
 
@@ -6345,7 +6345,7 @@ static int win_do_lines(win_T *wp, int row, int line_count, int mayclear, int de
   // Delete all remaining lines
   if (row + line_count >= wp->w_height) {
     screen_fill(wp->w_winrow + row, wp->w_winrow + wp->w_height,
-                wp->w_wincol, (int)W_ENDCOL(wp),
+                wp->w_wincol, W_ENDCOL(wp),
                 ' ', ' ', 0);
     return OK;
   }
@@ -7103,7 +7103,7 @@ static void win_redr_ruler(win_T *wp, int always)
     i = redraw_cmdline;
     screen_fill(row, row + 1,
         this_ru_col + off + (int)STRLEN(buffer),
-        (int)(off + width),
+        off + width,
         fillchar, fillchar, attr);
     /* don't redraw the cmdline because of showing the ruler */
     redraw_cmdline = i;

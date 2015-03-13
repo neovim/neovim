@@ -66,7 +66,7 @@ void vim_deltempdir(void)
 
     // Note: We cannot just do `&NameBuff` because it is a statically
     //       sized array so `NameBuff == &NameBuff` according to C semantics.
-    char_u *buff_list[1] = {(char_u*) NameBuff};
+    char_u *buff_list[1] = {NameBuff};
     if (gen_expand_wildcards(1, buff_list, &file_count, &files,
         EW_DIR|EW_FILE|EW_SILENT) == OK) {
       for (int i = 0; i < file_count; ++i) {

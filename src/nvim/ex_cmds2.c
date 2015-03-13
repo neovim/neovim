@@ -387,7 +387,7 @@ int dbg_check_skipped(exarg_T *eap)
     debug_breakpoint_name = debug_skipped_name;
     /* eap->skip is TRUE */
     eap->skip = FALSE;
-    (void)dbg_check_breakpoint(eap);
+    dbg_check_breakpoint(eap);
     eap->skip = TRUE;
     got_int |= prev_got_int;
     return TRUE;

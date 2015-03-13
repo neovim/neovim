@@ -725,7 +725,7 @@ do_bufdel (
        */
       if (bnr == curbuf->b_fnum)
         do_current = bnr;
-      else if (do_buffer(command, DOBUF_FIRST, FORWARD, (int)bnr,
+      else if (do_buffer(command, DOBUF_FIRST, FORWARD, bnr,
                    forceit) == OK)
         ++deleted;
 

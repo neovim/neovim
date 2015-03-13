@@ -1261,7 +1261,7 @@ plines_win_nofill (
 
   lines = plines_win_nofold(wp, lnum);
   if (winheight > 0 && lines > wp->w_height)
-    return (int)wp->w_height;
+    return wp->w_height;
   return lines;
 }
 

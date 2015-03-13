@@ -333,7 +333,7 @@ bool sha256_self_test(void)
       memset(buf, 'a', 1000);
 
       for (size_t j = 0; j < 1000; j++) {
-        sha256_update(&ctx, (char_u *) buf, 1000);
+        sha256_update(&ctx, buf, 1000);
       }
       sha256_finish(&ctx, sha256sum);
 
