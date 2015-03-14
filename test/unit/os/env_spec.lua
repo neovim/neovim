@@ -11,6 +11,9 @@ local NULL = helpers.NULL
 
 require('lfs')
 
+-- Needed because expand_env_esc uses the char table
+helpers.vim_init()
+
 local env = cimport('./src/nvim/os/os.h')
 
 describe('env function', function()
@@ -125,6 +128,81 @@ describe('env function', function()
       local hostname_buf = cstr(255, '')
       env.os_get_hostname(hostname_buf, 255)
       eq(hostname, (ffi.string(hostname_buf)))
+    end)
+  end)
+
+  describe('expand_env_esc', function()
+    it('expands environment variables', function()
+      local name = 'NEOVIM_UNIT_TEST_EXPAND_ENV_ESCN'
+      local value = 'NEOVIM_UNIT_TEST_EXPAND_ENV_ESCV'
+      os_setenv(name, value, 1)
+      -- TODO(bobtwinkles) This only tests UNIX expansions. There should be a
+      -- test for windows as well
+      local input1 = to_cstr('$NEOVIM_UNIT_TEST_EXPAND_ENV_ESCN/test')
+      local input2 = to_cstr('${NEOVIM_UNIT_TEST_EXPAND_ENV_ESCN}/test')
+      local output_buff1 = cstr(255, '')
+      local output_buff2 = cstr(255, '')
+      local output_expected = 'NEOVIM_UNIT_TEST_EXPAND_ENV_ESCV/test'
+      env.expand_env_esc(input1, output_buff1, 255, false, true, NULL)
+      env.expand_env_esc(input2, output_buff2, 255, false, true, NULL)
+      eq(output_expected, ffi.string(output_buff1))
+      eq(output_expected, ffi.string(output_buff2))
+    end)
+
+    it('expands ~ once when one is true', function()
+      local input = '~/foo ~ foo'
+      local homedir = cstr(255, '')
+      env.expand_env_esc(to_cstr('~'), homedir, 255, false, true, NULL)
+      local output_expected = ffi.string(homedir) .. "/foo ~ foo"
+      local output = cstr(255, '')
+      env.expand_env_esc(to_cstr(input), output, 255, false, true, NULL)
+      eq(ffi.string(output), ffi.string(output_expected))
+    end)
+
+    it('expands ~ every time when one is false', function()
+      local input = to_cstr('~/foo ~ foo')
+      local homedir = cstr(255, '')
+      env.expand_env_esc(to_cstr('~'), homedir, 255, false, true, NULL)
+      homedir = ffi.string(homedir)
+      local output_expected = homedir .. "/foo " .. homedir .. " foo"
+      local output = cstr(255, '')
+      env.expand_env_esc(input, output, 255, false, false, NULL)
+      eq(output_expected, ffi.string(output))
+    end)
+
+    it('respects the dstlen parameter without expansion', function()
+      local input = to_cstr('this is a very long thing that will not fit')
+      -- The buffer is long enough to actually contain the full input in case the
+      -- test fails, but we don't tell expand_env_esc that
+      local output = cstr(255, '')
+      env.expand_env_esc(input, output, 5, false, true, NULL)
+      -- Make sure the first few characters are copied properly and that there is a
+      -- terminating null character
+      for i=0,3 do
+        eq(input[i], output[i])
+      end
+      eq(0, output[4])
+    end)
+
+    it('respects the dstlen parameter with expansion', function()
+      local varname = to_cstr('NVIM_UNIT_TEST_EXPAND_ENV_ESC_DSTLENN')
+      local varval = to_cstr('NVIM_UNIT_TEST_EXPAND_ENV_ESC_DSTLENV')
+      env.os_setenv(varname, varval, 1)
+      -- TODO(bobtwinkles) This test uses unix-specific environment variable accessing,
+      -- should have some alternative for windows
+      local input = to_cstr('$NVIM_UNIT_TEST_EXPAND_ENV_ESC_DSTLENN/even more stuff')
+      -- The buffer is long enough to actually contain the full input in case the
+      -- test fails, but we don't tell expand_env_esc that
+      local output = cstr(255, '')
+      env.expand_env_esc(input, output, 5, false, true, NULL)
+      -- Make sure the first few characters are copied properly and that there is a
+      -- terminating null character
+      -- expand_env_esc SHOULD NOT expand the variable if there is not enough space to
+      -- contain the result
+      for i=0,3 do
+        eq(output[i], input[i])
+      end
+      eq(output[4], 0)
     end)
   end)
 end)
