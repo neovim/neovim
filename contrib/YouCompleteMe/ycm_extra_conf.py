@@ -29,7 +29,7 @@ def GetCompilationInfoForFile(filename):
         c_file = basename + '.c'
         # for pure headers (no c file), default to main.c
         if not os.path.exists(c_file):
-            c_file = os.path.join(DirectoryOfThisScript(), 'main.c')
+            c_file = os.path.join(DirectoryOfThisScript(), 'nvim', 'main.c')
         if os.path.exists(c_file):
             compilation_info = database.GetCompilationInfoForFile(c_file)
             if compilation_info.compiler_flags_:
