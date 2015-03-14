@@ -1729,14 +1729,14 @@ failed:
     }
   }
 
-  if (set_options)
-    save_file_ff(curbuf);               /* remember the current file format */
-
-  /* If editing a new file: set 'fenc' for the current buffer.
-   * Also for ":read ++edit file". */
-  if (set_options)
+  if (set_options) {
+    // Remember the current file format.
+    save_file_ff(curbuf);
+    // If editing a new file: set 'fenc' for the current buffer.
+    // Also for ":read ++edit file". 
     set_string_option_direct((char_u *)"fenc", -1, fenc,
-        OPT_FREE|OPT_LOCAL, 0);
+        OPT_FREE | OPT_LOCAL, 0);
+  }
   if (fenc_alloced)
     free(fenc);
 # ifdef USE_ICONV

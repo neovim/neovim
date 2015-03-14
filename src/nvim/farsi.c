@@ -1561,9 +1561,6 @@ int fkmap(int c)
         if (!curwin->w_cursor.col) {
           return ALEF_U_H;
         }
-      }
-
-      if (!p_ri) {
         dec_cursor();
       }
 
@@ -1595,9 +1592,6 @@ int fkmap(int c)
         if (!curwin->w_cursor.col) {
           return ALEF;
         }
-      }
-
-      if (!p_ri) {
         dec_cursor();
       }
 
@@ -1673,9 +1667,6 @@ int fkmap(int c)
         if (!curwin->w_cursor.col) {
           return TEE;
         }
-      }
-
-      if (!p_ri) {
         dec_cursor();
       }
 
