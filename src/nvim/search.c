@@ -4253,7 +4253,7 @@ search_line:
            * looking for a define).  A line starting with "# define"
            * is not considered to be a comment line.
            */
-          if (!define_matched && skip_comments) {
+          if (skip_comments) {
             if ((*line != '#' ||
                  STRNCMP(skipwhite(line + 1), "define", 6) != 0)
                 && get_leader_len(line, NULL, FALSE, TRUE))
