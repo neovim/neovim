@@ -5064,7 +5064,7 @@ void fix_help_buffer(void)
   char_u      *fname;
   char_u      *p;
   char_u      *rt;
-  int mustfree;
+  bool mustfree;
 
   /* set filetype to "help". */
   set_option_value((char_u *)"ft", 0L, (char_u *)"help", OPT_LOCAL);

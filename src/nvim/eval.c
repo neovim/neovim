@@ -1744,7 +1744,7 @@ ex_let_one (
         name[len] = NUL;
         p = get_tv_string_chk(tv);
         if (p != NULL && op != NULL && *op == '.') {
-          int mustfree = FALSE;
+          bool mustfree = false;
           char_u  *s = vim_getenv(name, &mustfree);
 
           if (s != NULL) {
@@ -6300,7 +6300,7 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
 {
   char_u *name;
   char_u *string = NULL;
-  int     mustfree = FALSE;
+  bool    mustfree = false;
   int     len;
   int     cc;
 

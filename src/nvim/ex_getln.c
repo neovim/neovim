@@ -3810,7 +3810,7 @@ expand_shellcmd (
   char_u      *pat;
   int i;
   char_u      *path;
-  int mustfree = FALSE;
+  bool mustfree = false;
   garray_T ga;
   char_u *buf = xmalloc(MAXPATHL);
   size_t l;
