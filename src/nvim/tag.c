@@ -223,7 +223,7 @@ do_tag (
   /*
    * Don't add a tag to the tagstack if 'tagstack' has been reset.
    */
-  if ((!p_tgst && *tag != NUL)) {
+  if (!p_tgst && *tag != NUL) {
     use_tagstack = FALSE;
     new_tag = TRUE;
   } else {
