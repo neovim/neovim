@@ -7,7 +7,6 @@
 #include <stdbool.h>
 
 #include "nvim/vim.h"
-#include "nvim/misc2.h"
 #include "nvim/eval.h"
 #include "nvim/memfile.h"
 #include "nvim/memory.h"

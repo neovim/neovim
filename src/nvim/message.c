@@ -325,7 +325,6 @@ void trunc_string(char_u *s, char_u *buf, int room, int buflen)
 }
 
 /*
- * Automatic prototype generation does not understand this function.
  * Note: Caller of smgs() and smsg_attr() must check the resulting string is
  * shorter than IOSIZE!!!
  */
@@ -581,11 +580,42 @@ int emsg2(char_u *s, char_u *a1)
   return emsg3(s, a1, NULL);
 }
 
-/* emsg3() and emsgn() are in misc2.c to avoid warnings for the prototypes. */
-
 void emsg_invreg(int name)
 {
   EMSG2(_("E354: Invalid register name: '%s'"), transchar(name));
+}
+
+/// Print an error message with one or two "%s" and one or two string arguments.
+int emsg3(char_u *s, char_u *a1, char_u *a2)
+{
+  if (emsg_not_now()) {
+    return TRUE;                // no error messages at the moment
+  }
+
+  vim_snprintf((char *)IObuff, IOSIZE, (char *)s, a1, a2);
+  return emsg(IObuff);
+}
+
+/// Print an error message with one "%" PRId64 and one (int64_t) argument.
+int emsgn(char_u *s, int64_t n)
+{
+  if (emsg_not_now()) {
+    return TRUE;                // no error messages at the moment
+  }
+
+  vim_snprintf((char *)IObuff, IOSIZE, (char *)s, n);
+  return emsg(IObuff);
+}
+
+/// Print an error message with one "%" PRIu64 and one (uint64_t) argument.
+int emsgu(char_u *s, uint64_t n)
+{
+  if (emsg_not_now()) {
+    return TRUE;                // no error messages at the moment
+  }
+
+  vim_snprintf((char *)IObuff, IOSIZE, (char *)s, n);
+  return emsg(IObuff);
 }
 
 /*
@@ -3050,9 +3080,6 @@ static double tv_float(typval_T *tvs, int *idxp)
  * vim_vsnprintf() can be invoked with either "va_list" or a list of
  * "typval_T".  When the latter is not used it must be NULL.
  */
-
-/* When generating prototypes all of this is skipped, cproto doesn't
- * understand this. */
 
 /* Like vim_vsnprintf() but append to the string. */
 int vim_snprintf_add(char *str, size_t str_m, char *fmt, ...)
