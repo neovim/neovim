@@ -193,7 +193,7 @@ include_directories(SYSTEM ${LIBUNIBILIUM_INCLUDE_DIRS})
 
 option(LIBTERMKEY_USE_STATIC "Use static libtermkey" ON)
 find_package(LibTermkey REQUIRED)
-include_directories(SYSTEM ${LIBTERMEY_INCLUDE_DIRS})
+include_directories(SYSTEM ${LIBTERMKEY_INCLUDE_DIRS})
 
 option(LIBVTERM_USE_STATIC "Use static libvterm" ON)
 find_package(LibVterm REQUIRED)
