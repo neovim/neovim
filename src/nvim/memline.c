@@ -1277,7 +1277,6 @@ recover_names (
   int num_files;
   int file_count = 0;
   char_u      **files;
-  int i;
   char_u      *dirp;
   char_u      *dir_name;
   char_u      *fname_res = NULL;
@@ -1357,12 +1356,13 @@ recover_names (
       }
     }
 
-    /* check for out-of-memory */
-    for (i = 0; i < num_names; ++i) {
+    // check for out-of-memory
+    for (int i = 0; i < num_names; ++i) {
       if (names[i] == NULL) {
-        for (i = 0; i < num_names; ++i)
-          free(names[i]);
+        for (int j = 0; j < num_names; ++j)
+          free(names[j]);
         num_names = 0;
+        break;
       }
     }
     if (num_names == 0)
@@ -1394,7 +1394,7 @@ recover_names (
      */
     if (curbuf->b_ml.ml_mfp != NULL
         && (p = curbuf->b_ml.ml_mfp->mf_fname) != NULL) {
-      for (i = 0; i < num_files; ++i)
+      for (int i = 0; i < num_files; ++i)
         if (path_full_compare(p, files[i], TRUE) & kEqualFiles) {
           /* Remove the name from files[i].  Move further entries
            * down.  When the array becomes empty free it here, since
@@ -1427,7 +1427,7 @@ recover_names (
       }
 
       if (num_files) {
-        for (i = 0; i < num_files; ++i) {
+        for (int i = 0; i < num_files; ++i) {
           /* print the swap file name */
           msg_outnum((long)++file_count);
           MSG_PUTS(".    ");
@@ -1441,7 +1441,7 @@ recover_names (
     } else
       file_count += num_files;
 
-    for (i = 0; i < num_names; ++i)
+    for (int i = 0; i < num_names; ++i)
       free(names[i]);
     if (num_files > 0)
       FreeWild(num_files, files);
