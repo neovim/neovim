@@ -53,7 +53,7 @@ add_custom_target(stable-busted-deps
 add_custom_command(OUTPUT ${DEPS_BIN_DIR}/busted
   COMMAND ${DEPS_BIN_DIR}/luarocks
   ARGS build busted 2.0.rc4 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-  COMMAND cp ${PROJECT_SOURCE_DIR}/utfTerminalDetailed.lua
+  COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/utfTerminalDetailed.lua
   ${DEPS_INSTALL_DIR}/share/lua/5.1/busted/outputHandlers
   DEPENDS stable-busted-deps)
 add_custom_target(busted
