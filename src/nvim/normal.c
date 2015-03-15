@@ -983,7 +983,6 @@ getcount:
       free(kmsg);
     }
     setcursor();
-    ui_cursor_on();
     ui_flush();
     if (msg_scroll || emsg_on_display)
       os_delay(1000L, true);            /* wait at least one second */
@@ -2997,8 +2996,6 @@ void pop_showcmd(void)
 static void display_showcmd(void)
 {
   int len;
-
-  ui_cursor_off();
 
   len = (int)STRLEN(showcmd_buf);
   if (len == 0)

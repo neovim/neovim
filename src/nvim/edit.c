@@ -1400,7 +1400,6 @@ void display_dollar(colnr_T col)
   if (!redrawing())
     return;
 
-  ui_cursor_off();
   save_col = curwin->w_cursor.col;
   curwin->w_cursor.col = col;
   if (has_mbyte) {

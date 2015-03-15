@@ -232,15 +232,7 @@ void mch_exit(int r)
 {
   exiting = TRUE;
 
-  {
-    ui_builtin_stop();
-
-    // Cursor may have been switched off without calling starttermcap()
-    // when doing "vim -u vimrc" and vimrc contains ":q". */
-    if (full_screen) {
-      ui_cursor_on();
-    }
-  }
+  ui_builtin_stop();
   ui_flush();
   ml_close_all(TRUE);           /* remove all memfiles */
 

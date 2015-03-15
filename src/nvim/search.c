@@ -2044,7 +2044,6 @@ showmatch (
       p_siso = 0;                       /* don't use 'sidescrolloff' here */
       showruler(FALSE);
       setcursor();
-      ui_cursor_on();                      /* make sure that the cursor is shown */
       ui_flush();
       /* Restore dollar_vcol(), because setcursor() may call curs_rows()
        * which resets it if the matching position is in a previous line

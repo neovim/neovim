@@ -6381,9 +6381,7 @@ static void ex_sleep(exarg_T *eap)
 void do_sleep(long msec)
 {
   long done;
-
-  ui_cursor_on();
-  ui_flush();
+  ui_flush();  // flush before waiting
   for (done = 0; !got_int && done < msec; done += 1000L) {
     os_delay(msec - done > 1000L ? 1000L : msec - done, true);
     os_breakcheck();

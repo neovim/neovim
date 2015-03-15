@@ -3042,7 +3042,6 @@ theend:
     silent_mode = FALSE;
     info_message = TRUE;        /* use mch_msg(), not mch_errmsg() */
     msg_putchar('\n');
-    ui_cursor_on();                /* msg_start() switches it off */
     ui_flush();
     silent_mode = TRUE;
     info_message = FALSE;       /* use mch_msg(), not mch_errmsg() */

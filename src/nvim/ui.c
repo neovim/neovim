@@ -44,7 +44,8 @@ static struct {
   int top, bot, left, right;
 } sr;
 static int current_attr_code = 0;
-static bool cursor_enabled = true, pending_cursor_update = false;
+static bool pending_cursor_update = false;
+static int busy = 1;
 static int height, width;
 
 // This set of macros allow us to use UI_CALL to invoke any function on
@@ -150,23 +151,22 @@ void ui_resize(int new_width, int new_height)
   UI_CALL(resize, width, height);
 }
 
-void ui_cursor_on(void)
+void ui_busy_start(void)
 {
-  if (!cursor_enabled) {
-    UI_CALL(cursor_on);
-    cursor_enabled = true;
+  if (!(busy++)) {
+    UI_CALL(busy_start);
   }
+  ui_flush();
 }
 
-void ui_cursor_off(void)
+void ui_busy_stop(void)
 {
-  if (full_screen) {
-    if (cursor_enabled) {
-      UI_CALL(cursor_off);
-    }
-    cursor_enabled = false;
+  if (!(--busy)) {
+    UI_CALL(busy_stop);
   }
+  ui_flush();
 }
+
 
 void ui_mouse_on(void)
 {

@@ -1063,9 +1063,7 @@ do_filter (
 
   /* Create the shell command in allocated memory. */
   cmd_buf = make_filter_cmd(cmd, itmp, otmp);
-
   ui_cursor_goto((int)Rows - 1, 0);
-  ui_cursor_on();
 
   /*
    * When not redirecting the output the command can write anything to the
@@ -1248,7 +1246,6 @@ do_shell (
   // This ui_cursor_goto is required for when the '\n' resulted in a "delete line
   // 1" command to the terminal.
   ui_cursor_goto(msg_row, msg_col);
-  ui_cursor_on();
   (void)call_shell(cmd, flags, NULL);
   did_check_timestamps = FALSE;
   need_check_timestamps = TRUE;
@@ -1963,7 +1960,6 @@ void print_line(linenr_T lnum, int use_number, int list)
   print_line_no_prefix(lnum, use_number, list);
   if (save_silent) {
     msg_putchar('\n');
-    ui_cursor_on();                /* msg_start() switches it off */
     ui_flush();
     silent_mode = save_silent;
   }

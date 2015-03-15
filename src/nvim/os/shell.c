@@ -99,7 +99,6 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
   char *output = NULL, **output_ptr = NULL;
   int current_state = State;
   bool forward_output = true;
-  ui_flush();
 
   // While the child is running, ignore terminating signals
   signal_reject_deadly();
@@ -239,7 +238,11 @@ static int shell(const char *cmd,
     job_close_in(job);
   }
 
+  // invoke busy_start here so event_poll_until wont change the busy state for
+  // the UI
+  ui_busy_start();
   status = job_wait(job, -1);
+  ui_busy_stop();
 
   // prepare the out parameters if requested
   if (output) {

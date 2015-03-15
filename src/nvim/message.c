@@ -998,7 +998,6 @@ void msg_start(void)
     msg_starthere();
   if (msg_silent == 0) {
     msg_didout = FALSE;                     /* no output on current line yet */
-    ui_cursor_off();
   }
 
   /* when redirecting, may need to start a new line. */

@@ -2364,8 +2364,6 @@ int get_keystroke(void)
 
   mapped_ctrl_c = FALSE;        /* mappings are not used here */
   for (;; ) {
-    ui_cursor_on();
-    ui_flush();
 
     /* Leave some room for check_termcode() to insert a key code into (max
      * 5 chars plus NUL).  And fix_input_buffer() can triple the number of

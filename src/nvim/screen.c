@@ -416,7 +416,6 @@ void update_screen(int type)
   search_hl.rm.regprog = NULL;
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_redr_type != 0) {
-      ui_cursor_off();
       if (!did_one) {
         did_one = TRUE;
         start_search_hl();
@@ -426,7 +425,6 @@ void update_screen(int type)
 
     /* redraw status line after the window to minimize cursor movement */
     if (wp->w_redr_status) {
-      ui_cursor_off();
       win_redr_status(wp);
     }
   }
@@ -521,7 +519,6 @@ void update_single_line(win_T *wp, linenr_T lnum)
  */
 static void update_prepare(void)
 {
-    ui_cursor_off();
     updating_screen = TRUE;
     start_search_hl();
 }
@@ -6566,7 +6563,6 @@ int showmode(void)
 
     /* Position on the last line in the window, column 0 */
     msg_pos_mode();
-    ui_cursor_off();
     attr = hl_attr(HLF_CM);                     /* Highlight mode */
     if (do_mode) {
       MSG_PUTS_ATTR("--", attr);
@@ -7015,7 +7011,6 @@ static void win_redr_ruler(win_T *wp, int always)
              || wp->w_buffer->b_ml.ml_line_count != wp->w_ru_line_count
              || wp->w_topfill != wp->w_ru_topfill
              || empty_line != wp->w_ru_empty) {
-    ui_cursor_off();
 
     int width;
     int row;
@@ -7238,7 +7233,6 @@ void screen_resize(int width, int height)
           setcursor();
       }
     }
-    ui_cursor_on();            /* redrawing may have switched it off */
   }
   ui_flush();
   --busy;

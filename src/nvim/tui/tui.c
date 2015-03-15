@@ -45,6 +45,7 @@ typedef struct {
   int out_fd;
   int old_height;
   bool can_use_terminal_scroll;
+  bool busy;
   HlAttrs attrs, print_attrs;
   Cell **screen;
   struct {
@@ -80,6 +81,7 @@ typedef struct {
 void tui_start(void)
 {
   TUIData *data = xcalloc(1, sizeof(TUIData));
+  data->busy = true;
   UI *ui = xcalloc(1, sizeof(UI));
   ui->data = data;
   data->attrs = data->print_attrs = EMPTY_ATTRS;
@@ -134,8 +136,8 @@ void tui_start(void)
   ui->clear = tui_clear;
   ui->eol_clear = tui_eol_clear;
   ui->cursor_goto = tui_cursor_goto;
-  ui->cursor_on = tui_cursor_on;
-  ui->cursor_off = tui_cursor_off;
+  ui->busy_start = tui_busy_start;
+  ui->busy_stop = tui_busy_stop;
   ui->mouse_on = tui_mouse_on;
   ui->mouse_off = tui_mouse_off;
   ui->insert_mode = tui_insert_mode;
@@ -342,14 +344,14 @@ static void tui_cursor_goto(UI *ui, int row, int col)
   unibi_goto(ui, row, col);
 }
 
-static void tui_cursor_on(UI *ui)
+static void tui_busy_start(UI *ui)
 {
-  unibi_out(ui, unibi_cursor_normal);
+  ((TUIData *)ui->data)->busy = true;
 }
 
-static void tui_cursor_off(UI *ui)
+static void tui_busy_stop(UI *ui)
 {
-  unibi_out(ui, unibi_cursor_invisible);
+  ((TUIData *)ui->data)->busy = false;
 }
 
 static void tui_mouse_on(UI *ui)
@@ -527,7 +529,13 @@ static void tui_flush(UI *ui)
   }
 
   unibi_goto(ui, data->row, data->col);
+
+  if (!data->busy) {
+    unibi_out(ui, unibi_cursor_normal);
+  }
+
   flush_buf(ui);
+  unibi_out(ui, unibi_cursor_invisible);
 }
 
 static void tui_suspend(UI *ui)

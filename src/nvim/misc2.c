@@ -297,7 +297,6 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
     smsg((char_u *)_("Calling shell to execute: \"%s\""),
         cmd == NULL ? p_sh : cmd);
     ui_putc('\n');
-    ui_cursor_on();
     verbose_leave();
   }
 

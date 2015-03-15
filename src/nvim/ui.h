@@ -20,8 +20,8 @@ struct ui_t {
   void (*clear)(UI *ui);
   void (*eol_clear)(UI *ui);
   void (*cursor_goto)(UI *ui, int row, int col);
-  void (*cursor_on)(UI *ui);
-  void (*cursor_off)(UI *ui);
+  void (*busy_start)(UI *ui);
+  void (*busy_stop)(UI *ui);
   void (*mouse_on)(UI *ui);
   void (*mouse_off)(UI *ui);
   void (*insert_mode)(UI *ui);

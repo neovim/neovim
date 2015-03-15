@@ -82,8 +82,8 @@ static Object remote_ui_attach(uint64_t channel_id, uint64_t request_id,
   ui->clear = remote_ui_clear;
   ui->eol_clear = remote_ui_eol_clear;
   ui->cursor_goto = remote_ui_cursor_goto;
-  ui->cursor_on = remote_ui_cursor_on;
-  ui->cursor_off = remote_ui_cursor_off;
+  ui->busy_start = remote_ui_busy_start;
+  ui->busy_stop = remote_ui_busy_stop;
   ui->mouse_on = remote_ui_mouse_on;
   ui->mouse_off = remote_ui_mouse_off;
   ui->insert_mode = remote_ui_insert_mode;
@@ -190,16 +190,16 @@ static void remote_ui_cursor_goto(UI *ui, int row, int col)
   push_call(ui, "cursor_goto", args);
 }
 
-static void remote_ui_cursor_on(UI *ui)
+static void remote_ui_busy_start(UI *ui)
 {
   Array args = ARRAY_DICT_INIT;
-  push_call(ui, "cursor_on", args);
+  push_call(ui, "busy_start", args);
 }
 
-static void remote_ui_cursor_off(UI *ui)
+static void remote_ui_busy_stop(UI *ui)
 {
   Array args = ARRAY_DICT_INIT;
-  push_call(ui, "cursor_off", args);
+  push_call(ui, "busy_stop", args);
 }
 
 static void remote_ui_mouse_on(UI *ui)

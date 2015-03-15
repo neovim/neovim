@@ -641,7 +641,6 @@ main_loop (
         curwin->w_valid &= ~VALID_CROW;
       }
       setcursor();
-      ui_cursor_on();
 
       do_redraw = FALSE;
 

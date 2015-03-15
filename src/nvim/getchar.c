@@ -2379,11 +2379,6 @@ inchar (
   int retesc = FALSE;               /* return ESC with gotint */
   int script_char;
 
-  if (wait_time == -1L || wait_time > 100L) {  /* flush output before waiting */
-    ui_cursor_on();
-    ui_flush();
-  }
-
   /*
    * Don't reset these when at the hit-return prompt, otherwise an endless
    * recursive loop may result (write error in swapfile, hit-return, timeout

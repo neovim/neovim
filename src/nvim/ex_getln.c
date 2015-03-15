@@ -1364,7 +1364,6 @@ cmdline_changed:
       if (ccline.cmdlen == 0)
         i = 0;
       else {
-        ui_cursor_off();                   /* so the user knows we're busy */
         ui_flush();
         ++emsg_off;            /* So it doesn't beep if bad expr */
         /* Set the time limit to half a second. */
@@ -1700,10 +1699,6 @@ getexmodeline (
   int vcol = 0;
   char_u      *p;
   int prev_char;
-
-  /* Switch cursor on now.  This avoids that it happens after the "\n", which
-   * confuses the system function that computes tabstops. */
-  ui_cursor_on();
 
   /* always start in column 0; write a newline if necessary */
   compute_cmdrow();

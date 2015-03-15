@@ -164,8 +164,9 @@ function Screen.new(width, height)
     _mouse_enabled = true,
     _attrs = {},
     _cursor = {
-      enabled = true, row = 1, col = 1
-    }
+      row = 1, col = 1
+    },
+    _busy = true
   }, Screen)
   self:_handle_resize(width, height)
   return self
@@ -282,12 +283,12 @@ function Screen:_handle_cursor_goto(row, col)
   self._cursor.col = col + 1
 end
 
-function Screen:_handle_cursor_on()
-  self._cursor.enabled = true
+function Screen:_handle_busy_start()
+  self._busy = true
 end
 
-function Screen:_handle_cursor_off()
-  self._cursor.enabled = false
+function Screen:_handle_busy_stop()
+  self._busy = false
 end
 
 function Screen:_handle_mouse_on()
