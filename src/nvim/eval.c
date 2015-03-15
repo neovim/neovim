@@ -7287,8 +7287,7 @@ static void f_browse(typval_T *argvars, typval_T *rettv)
  */
 static void f_browsedir(typval_T *argvars, typval_T *rettv)
 {
-  rettv->vval.v_string = NULL;
-  rettv->v_type = VAR_STRING;
+  f_browse(argvars, rettv);
 }
 
 
