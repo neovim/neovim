@@ -1474,7 +1474,6 @@ void ex_menutranslate(exarg_T *eap)
         tp->to = to;
       } else {
         free(from);
-        free(from_noamp);
         free(to);
       }
     }
