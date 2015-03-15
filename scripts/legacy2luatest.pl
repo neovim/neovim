@@ -54,9 +54,9 @@ sub read_in_file {
     if (@{$input_lines}) {
       my $last_input_line = pop @{$input_lines};
       unshift @{$command_lines}, '';
-      unshift @{$command_lines}, $last_input_line . ']])';
+      unshift @{$command_lines}, $last_input_line . ']=])';
       unshift @{$command_lines}, @{$input_lines};
-      unshift @{$command_lines}, "insert([[";
+      unshift @{$command_lines}, "insert([=[";
 
       @{$input_lines} = ();
     }
@@ -133,8 +133,15 @@ sub read_in_file {
         # If line contains single quotes or backslashes, use double
         # square brackets to wrap string.
         if (/'/ || /\\/) {
-          $startstr = '[[';
-          $endstr = ']]';
+            # If the line contains a closing square bracket,
+            # wrap it with [=[...]=].
+            if (/\]/) {
+              $startstr = '[=[';
+              $endstr = ']=]';
+            } else {
+              $startstr = '[[';
+              $endstr = ']]';
+            }
         }
 
         # Emit 'feed' if not a search ('/') or ex (':') command.
@@ -190,7 +197,7 @@ sub read_ok_file {
   if (-f $ok_file) {
     push @assertions, '';
     push @assertions, "-- Assert buffer contents.";
-    push @assertions, "expect([[";
+    push @assertions, "expect([=[";
 
     open my $ok_file_handle, '<', $ok_file;
 
@@ -202,7 +209,7 @@ sub read_ok_file {
 
     close $ok_file_handle;
 
-    $assertions[-1] .= "]])";
+    $assertions[-1] .= "]=])";
   }
 
   return \@assertions;
