@@ -2756,7 +2756,7 @@ msgstr "E37: 마지막으로 고친 뒤 저장되지 않았습니다 (무시하�
 
 #: ../globals.h:1055
 msgid "E37: No write since last change"
-msgstr "E37: [마지막으로 고친 뒤 저장 안 함]\n"
+msgstr "E37: [마지막으로 고친 뒤 저장 안 함]"
 
 #: ../globals.h:1056
 msgid "E38: Null argument"
@@ -3722,7 +3722,7 @@ msgstr ""
 
 #: ../memline.c:945
 msgid " has been damaged (page size is smaller than minimum value).\n"
-msgstr " 손상되었습니다 (페이지 크기가 최소 크기보다 작습니다) "
+msgstr " 손상되었습니다 (페이지 크기가 최소 크기보다 작습니다)\n"
 
 #: ../memline.c:974
 #, c-format
@@ -4050,9 +4050,7 @@ msgstr "    끝내거나 조심스럽게 계속하십시오.\n"
 
 #: ../memline.c:3246
 msgid "(2) An edit session for this file crashed.\n"
-msgstr ""
-"\n"
-"(2) 이 파일의 편집 세션이 충돌했습니다.\n"
+msgstr "(2) 이 파일의 편집 세션이 충돌했습니다.\n"
 
 #: ../memline.c:3247
 msgid "    If this is the case, use \":recover\" or \"vim -r "
