@@ -3,7 +3,7 @@
 # FIRST AUTHOR SungHyun Nam <goweol@gmail.com>, 2000-2011
 # SECOND AUTHOR Sung-il Kim <sungilkim84@gmail.com>, 2015
 #
-# Original translations.
+# Generated from ko.UTF-8, DO NOT EDIT.
 #
 msgid ""
 msgstr ""
@@ -11,11 +11,12 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-05-26 14:21+0200\n"
 "PO-Revision-Date: 2010-02-18 09:49+0900\n"
-"Last-Translator: SungHyun Nam <goweol@gmail.com>\n"
+"First-Translator: SungHyun Nam <goweol@gmail.com>\n"
+"Last-Translator: Sung-Il Kim <sungilkim84@gmail.com>\n"
 "Language-Team: GTP Korean <gnome-kr-translation@gnome.or.kr>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=euc_kr\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: ../api/private/helpers.c:201
