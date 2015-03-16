@@ -93,7 +93,7 @@ describe('system()', function()
         ~                                                    |
         ~                                                    |
         ~                                                    |
-        ^:call system("yes")                                  |
+        :call system("yes")                                  |
       ]])
       feed('<c-c>')
       screen:expect([[
@@ -259,7 +259,7 @@ describe('systemlist()', function()
         ~                                                    |
         ~                                                    |
         ~                                                    |
-        ^:call systemlist("yes | xargs")                      |
+        :call systemlist("yes | xargs")                      |
       ]])
       feed('<c-c>')
       screen:expect([[
