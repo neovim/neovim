@@ -13,6 +13,7 @@
 [![Coverage Status](https://img.shields.io/coveralls/neovim/neovim.svg)](https://coveralls.io/r/neovim/neovim)
 [![Coverity Scan Build](https://scan.coverity.com/projects/2227/badge.svg)](https://scan.coverity.com/projects/2227)
 [![Clang Scan Build](http://neovim.org/doc/reports/clang/badge.svg)](http://neovim.org/doc/reports/clang)
+[![Join the chat at https://gitter.im/neovim/neovim](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/neovim/neovim?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Neovim is a project that seeks to aggressively refactor Vim in order to:
 
@@ -26,8 +27,6 @@ For lots more details, see
 [the wiki](https://github.com/neovim/neovim/wiki/Introduction)!
 
 ### What's been done so far
-
-[![Join the chat at https://gitter.im/neovim/neovim](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/neovim/neovim?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 - [Job control](https://github.com/neovim/neovim/pull/475) (work with processes asynchronously)
 - msgpack remote API
