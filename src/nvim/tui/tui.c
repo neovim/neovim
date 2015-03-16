@@ -108,6 +108,7 @@ void tui_start(void)
     data->ut = unibi_dummy();
   }
   fix_terminfo(data);
+  unibi_out(ui, unibi_cursor_invisible);
   // Enter alternate screen and clear
   unibi_out(ui, unibi_enter_ca_mode);
   unibi_out(ui, unibi_clear_screen);
@@ -530,12 +531,7 @@ static void tui_flush(UI *ui)
 
   unibi_goto(ui, data->row, data->col);
 
-  if (!data->busy) {
-    unibi_out(ui, unibi_cursor_normal);
-  }
-
   flush_buf(ui);
-  unibi_out(ui, unibi_cursor_invisible);
 }
 
 static void tui_suspend(UI *ui)
@@ -789,14 +785,32 @@ end:
 
 static void flush_buf(UI *ui)
 {
-  static uv_write_t req;
-  static uv_buf_t buf;
+  uv_write_t req;
+  uv_buf_t buf[2];
+  unsigned int buf_count = 1;
+
   TUIData *data = ui->data;
-  buf.base = data->buf;
-  buf.len = data->bufpos;
-  uv_write(&req, (uv_stream_t *)&data->output_handle, &buf, 1, NULL);
+
+  buf[0].base = data->buf;
+  buf[0].len = data->bufpos;
+
+  char normal_buf[64];
+  if (!data->busy) {
+    // Cannot use unibi_out(ui, unibi_cursor_normal), in case there is not
+    // enough remaining space in data->buf.
+    const char *str = unibi_get_str(data->ut, unibi_cursor_normal);
+    buf[1].base = normal_buf;
+    buf[1].len = unibi_run(str, data->params, normal_buf, sizeof(normal_buf));
+    buf_count++;
+  }
+
+  uv_write(&req, (uv_stream_t *)&data->output_handle, buf, buf_count, NULL);
   uv_run(data->write_loop, UV_RUN_DEFAULT);
   data->bufpos = 0;
+
+  if (!data->busy) {
+    unibi_out(ui, unibi_cursor_invisible);
+  }
 }
 
 static void destroy_screen(TUIData *data)
