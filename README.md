@@ -1,11 +1,11 @@
 ![Neovim](https://raw.githubusercontent.com/neovim/neovim.github.io/master/logos/neovim-logo.png)
 
 [Website](http://neovim.org) |
+[Community](http://neovim.org/community/) |
 [Wiki](https://github.com/neovim/neovim/wiki) |
 [Documentation](http://neovim.org/doc) |
 [Mailing List](https://groups.google.com/forum/#!forum/neovim) |
 [Twitter](http://twitter.com/Neovim) |
-[Reddit](http://www.reddit.com/r/neovim) |
 [Bountysource](https://www.bountysource.com/teams/neovim)
 
 [![Build Status](https://travis-ci.org/neovim/neovim.svg?branch=master)](https://travis-ci.org/neovim/neovim)
@@ -46,10 +46,6 @@ For lots more details, see
 There is a formula for OSX/homebrew, a PKGBUILD for Arch Linux, RPM, deb, and
 more. See [the wiki](https://github.com/neovim/neovim/wiki/Installing-Neovim)!
 
-### Community
-
-Join the community on IRC in #neovim on Freenode or the [mailing list](https://groups.google.com/forum/#!forum/neovim)
-
 ### Contributing
 
 ...would be awesome! See [the wiki](https://github.com/neovim/neovim/wiki/Contributing) for more details.
@@ -63,7 +59,7 @@ parts that were contributed under the Vim license.
   not sign the Contributor License Agreement (CLA) remain under the Vim license.
 
 - Contributions committed after [b17d96][license-commit] are licensed under
-  Apache 2.0 unless those contributions were copied from Vim (identified in 
+  Apache 2.0 unless those contributions were copied from Vim (identified in
   the commit logs by the `vim-patch` token).
 
 See `LICENSE` for details.
