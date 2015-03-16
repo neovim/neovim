@@ -27,6 +27,8 @@ For lots more details, see
 
 ### What's been done so far
 
+[![Join the chat at https://gitter.im/neovim/neovim](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/neovim/neovim?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 - [Job control](https://github.com/neovim/neovim/pull/475) (work with processes asynchronously)
 - msgpack remote API
 - Performance, reliability, and portability improvements
