@@ -155,16 +155,16 @@ void ui_busy_start(void)
 {
   if (!(busy++)) {
     UI_CALL(busy_start);
+    ui_flush();
   }
-  ui_flush();
 }
 
 void ui_busy_stop(void)
 {
   if (!(--busy)) {
     UI_CALL(busy_stop);
+    ui_flush();
   }
-  ui_flush();
 }
 
 

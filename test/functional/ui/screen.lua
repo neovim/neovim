@@ -417,7 +417,7 @@ function Screen:_row_repr(row, attr_ids, attr_ignore)
       table.insert(rv, '{' .. attr_id .. ':')
       current_attr_id = attr_id
     end
-    if self._rows[self._cursor.row] == row and self._cursor.col == i then
+    if not self._busy and self._rows[self._cursor.row] == row and self._cursor.col == i then
       table.insert(rv, '^')
     end
     table.insert(rv, row[i].text)
