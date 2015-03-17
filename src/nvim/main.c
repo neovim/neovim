@@ -271,6 +271,13 @@ int main(int argc, char **argv)
   /* Execute --cmd arguments. */
   exe_pre_commands(&params);
 
+  if (!params.headless && params.input_isatty) {
+    // Its possible that one of the scripts sourced at startup will prompt the
+    // user, so start stdin now.  TODO(tarruda): This is only for compatibility.
+    // Startup user prompting should be done in the VimEnter autocmd
+    input_start_stdin();
+  }
+
   /* Source startup scripts. */
   source_startup_scripts(&params);
 
@@ -351,16 +358,19 @@ int main(int argc, char **argv)
   if (params.edit_type == EDIT_STDIN && !recoverymode)
     read_stdin();
 
-  if (!params.headless && (params.output_isatty || params.err_isatty)) {
-    if (params.input_isatty && (need_wait_return || msg_didany)) {
+  if (!params.headless) {
+    if ((params.output_isatty || params.err_isatty)
+        && (need_wait_return || msg_didany)) {
       // Since at this point there's no UI instance running yet, error messages
-      // would have been printed to stdout. Before starting (which can result
-      // in a alternate screen buffer being shown) we need confirmation that
-      // the user has seen the messages and that is done with a call to
-      // wait_return. For that to work, stdin must be openend temporarily.
-      input_start_stdin();
-      wait_return(TRUE);
+      // would have been printed to stdout. Before starting (which can result in
+      // a alternate screen buffer being shown) we need confirmation that the
+      // user has seen the messages and that is done with a call to wait_return.
       TIME_MSG("waiting for return");
+      wait_return(TRUE);
+    }
+
+    if (params.input_isatty) {
+      // Stop reading from stdin, the UI module will take over now.
       input_stop_stdin();
     }
 
