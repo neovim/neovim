@@ -6,10 +6,14 @@ local clear, nvim, eq, neq, ok, expect, eval, next_message, run, stop, session
   helpers.stop, helpers.session
 local nvim_dir, insert = helpers.nvim_dir, helpers.insert
 
-local channel = nvim('get_api_info')[1]
 
 describe('jobs', function()
-  before_each(clear)
+  local channel
+
+  before_each(function()
+    clear()
+    channel = nvim('get_api_info')[1]
+  end)
 
   -- Creates the string to make an autocmd to notify us.
   local notify_str = function(expr1, expr2)

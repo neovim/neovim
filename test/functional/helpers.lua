@@ -276,8 +276,6 @@ local function expect(contents)
   return eq(dedent(contents), curbuf_contents())
 end
 
-clear()
-
 return {
   clear = clear,
   spawn = spawn,
