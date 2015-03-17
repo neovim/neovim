@@ -62,3 +62,7 @@ script:
   # as $USER, while retaining the environment variables defined and belonging
   # to secondary groups given above in usermod.
   - sudo -E su $USER -c "sh -e \"$CI_SCRIPTS/$CI_TARGET.sh\""
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/b5c38c99f9677aa3d031
