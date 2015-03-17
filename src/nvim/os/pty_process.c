@@ -40,6 +40,7 @@ typedef struct {
 void pty_process_init(Job *job)
 {
   PtyProcess *ptyproc = xmalloc(sizeof(PtyProcess));
+  ptyproc->tty_fd = -1;
 
   if (job->opts.writable) {
     uv_pipe_init(uv_default_loop(), &ptyproc->proc_stdin, 0);
@@ -69,6 +70,9 @@ void pty_process_destroy(Job *job)
   job->process = NULL;
 }
 
+static const unsigned int KILL_RETRIES = 5;
+static const unsigned int KILL_TIMEOUT = 2;  // seconds
+
 bool pty_process_spawn(Job *job)
 {
   int master;
@@ -88,7 +92,15 @@ bool pty_process_spawn(Job *job)
   }
 
   // make sure the master file descriptor is non blocking
-  fcntl(master, F_SETFL, fcntl(master, F_GETFL) | O_NONBLOCK);
+  int master_status_flags = fcntl(master, F_GETFL);
+  if (master_status_flags == -1) {
+    ELOG("Failed to get master descriptor status flags: %s", strerror(errno));
+    goto error;
+  }
+  if (fcntl(master, F_SETFL, master_status_flags | O_NONBLOCK) == -1) {
+    ELOG("Failed to make master descriptor non-blocking: %s", strerror(errno));
+    goto error;
+  }
 
   if (job->opts.writable) {
     uv_pipe_open(&ptyproc->proc_stdin, dup(master));
@@ -108,6 +120,22 @@ bool pty_process_spawn(Job *job)
   ptyproc->tty_fd = master;
   job->pid = pid;
   return true;
+
+error:
+  close(master);
+
+  // terminate spawned process
+  kill(pid, SIGTERM);
+  int status, child;
+  unsigned int try = 0;
+  while (try++ < KILL_RETRIES && !(child = waitpid(pid, &status, WNOHANG))) {
+    sleep(KILL_TIMEOUT);
+  }
+  if (child != pid) {
+    kill(pid, SIGKILL);
+  }
+
+  return false;
 }
 
 void pty_process_close(Job *job)
@@ -115,8 +143,18 @@ void pty_process_close(Job *job)
   PtyProcess *ptyproc = job->process;
   uv_signal_stop(&ptyproc->schld);
   uv_close((uv_handle_t *)&ptyproc->schld, NULL);
+  pty_process_close_master(job);
   job_close_streams(job);
   job_decref(job);
+}
+
+void pty_process_close_master(Job *job)
+{
+  PtyProcess *ptyproc = job->process;
+  if (ptyproc->tty_fd >= 0) {
+    close(ptyproc->tty_fd);
+    ptyproc->tty_fd = -1;
+  }
 }
 
 void pty_process_resize(Job *job, uint16_t width, uint16_t height)
