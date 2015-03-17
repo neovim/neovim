@@ -70,6 +70,23 @@ void pty_process_destroy(Job *job)
   job->process = NULL;
 }
 
+static bool set_pipe_duplicating_descriptor(int fd, uv_pipe_t *pipe)
+{
+  int fd_dup = dup(fd);
+  if (fd_dup < 0) {
+    ELOG("Failed to dup descriptor %d: %s", fd, strerror(errno));
+    return false;
+  }
+  int uv_result = uv_pipe_open(pipe, fd_dup);
+  if (uv_result) {
+    ELOG("Failed to set pipe to descriptor %d: %s",
+         fd_dup, uv_strerror(uv_result));
+    close(fd_dup);
+    return false;
+  }
+  return true;
+}
+
 static const unsigned int KILL_RETRIES = 5;
 static const unsigned int KILL_TIMEOUT = 2;  // seconds
 
@@ -102,16 +119,19 @@ bool pty_process_spawn(Job *job)
     goto error;
   }
 
-  if (job->opts.writable) {
-    uv_pipe_open(&ptyproc->proc_stdin, dup(master));
+  if (job->opts.writable
+      && !set_pipe_duplicating_descriptor(master, &ptyproc->proc_stdin)) {
+    goto error;
   }
 
-  if (job->opts.stdout_cb) {
-    uv_pipe_open(&ptyproc->proc_stdout, dup(master));
+  if (job->opts.stdout_cb
+      && !set_pipe_duplicating_descriptor(master, &ptyproc->proc_stdout)) {
+    goto error;
   }
 
-  if (job->opts.stderr_cb) {
-    uv_pipe_open(&ptyproc->proc_stderr, dup(master));
+  if (job->opts.stderr_cb
+      && !set_pipe_duplicating_descriptor(master, &ptyproc->proc_stderr)) {
+    goto error;
   }
 
   uv_signal_init(uv_default_loop(), &ptyproc->schld);
