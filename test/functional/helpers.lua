@@ -162,15 +162,20 @@ local function rawfeed(...)
   end
 end
 
+local function spawn(argv)
+  local loop = Loop.new()
+  local msgpack_stream = MsgpackStream.new(loop)
+  local async_session = AsyncSession.new(msgpack_stream)
+  local session = Session.new(async_session)
+  loop:spawn(argv)
+  return session
+end
+
 local function clear()
   if session then
     session:exit(0)
   end
-  local loop = Loop.new()
-  local msgpack_stream = MsgpackStream.new(loop)
-  local async_session = AsyncSession.new(msgpack_stream)
-  session = Session.new(async_session)
-  loop:spawn(nvim_argv)
+  session = spawn(nvim_argv)
 end
 
 local function insert(...)
@@ -275,6 +280,7 @@ clear()
 
 return {
   clear = clear,
+  spawn = spawn,
   dedent = dedent,
   source = source,
   rawfeed = rawfeed,
@@ -292,6 +298,7 @@ return {
   expect = expect,
   ok = ok,
   nvim = nvim,
+  nvim_prog = nvim_prog,
   nvim_dir = nvim_dir,
   buffer = buffer,
   window = window,
