@@ -1,6 +1,7 @@
 -- Test clipboard provider support
 
 local helpers = require('test.functional.helpers')
+local Screen = require('test.functional.ui.screen')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local execute, expect, eq, eval = helpers.execute, helpers.expect, helpers.eq, helpers.eval
 local nvim, run, stop, restart = helpers.nvim, helpers.run, helpers.stop, helpers.restart
@@ -159,4 +160,27 @@ describe('clipboard usage', function()
       linewise stuff]])
   end)
 
+  it('supports "+ and "* in registers', function()
+    local screen = Screen.new(60, 10)
+    screen:attach()
+    execute("let g:test_clip['*'] = ['some', 'star data','']")
+    execute("let g:test_clip['+'] = ['such', 'plus', 'stuff']")
+    execute("registers")
+    screen:expect([[
+      ~                                                           |
+      ~                                                           |
+      ~                                                           |
+      ~                                                           |
+      :registers                                                  |
+      {1:--- Registers ---}                                           |
+      "*   some{2:^J}star data{2:^J}                                      |
+      "+   such{2:^J}plus{2:^J}stuff                                      |
+      ":   let g:test_clip['+'] = ['such', 'plus', 'stuff']       |
+      {3:Press ENTER or type command to continue}^                     |
+    ]], {
+      [1] = {bold = true, foreground = Screen.colors.Fuchsia},
+      [2] = {foreground = Screen.colors.Blue},
+      [3] = {bold = true, foreground = Screen.colors.SeaGreen}},
+      {{bold = true, foreground = Screen.colors.Blue}})
+  end)
 end)

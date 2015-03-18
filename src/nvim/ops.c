@@ -57,10 +57,15 @@
  *   1..9 = registers '1' to '9', for deletes
  * 10..35 = registers 'a' to 'z'
  *     36 = delete register '-'
+ *     37 = selection register '*'
+ *     38 = clipboard register '+'
  */
-#define NUM_REGISTERS 38
 #define DELETION_REGISTER 36
-#define CLIP_REGISTER 37
+#define NUM_SAVED_REGISTERS 37
+// The following registers should not be saved in viminfo:
+#define STAR_REGISTER 37
+#define PLUS_REGISTER 38
+#define NUM_REGISTERS 39
 
 #define CB_UNNAMEDMASK (CB_UNNAMED | CB_UNNAMEDPLUS)
 #define CB_LATEST (-1)
@@ -771,8 +776,10 @@ void get_yank_register(int regname, int writing)
     y_append = TRUE;
   } else if (regname == '-')
     i = DELETION_REGISTER;
-  else if (regname == '*' || regname == '+')
-    i = CLIP_REGISTER;
+  else if (regname == '*')
+    i = STAR_REGISTER;
+  else if (regname == '+')
+    i = PLUS_REGISTER;
   else                  /* not 0-9, a-z, A-Z or '-': use register 0 */
     i = 0;
   y_current = &(y_regs[i]);
@@ -792,7 +799,7 @@ get_register (
 ) FUNC_ATTR_NONNULL_RET
 {
   get_yank_register(name, 0);
-  get_clipboard(name);
+  get_clipboard(name, false);
 
   struct yankreg *reg = xmalloc(sizeof(struct yankreg));
   *reg = *y_current;
@@ -960,7 +967,7 @@ do_execreg (
   }
   execreg_lastc = regname;
 
-  get_clipboard(regname);
+  get_clipboard(regname, false);
 
   if (regname == '_')                   /* black hole: don't stuff anything */
     return OK;
@@ -1125,7 +1132,7 @@ insert_reg (
   if (regname != NUL && !valid_yank_reg(regname, FALSE))
     return FAIL;
 
-  get_clipboard(regname);
+  get_clipboard(regname, false);
 
   if (regname == '.')                   /* insert last inserted text */
     retval = stuff_inserted(NUL, 1L, TRUE);
@@ -2613,7 +2620,7 @@ do_put (
   int allocated = FALSE;
   long cnt;
 
-  get_clipboard(regname);
+  get_clipboard(regname, false);
 
   if (flags & PUT_FIXINDENT)
     orig_indent = get_indent();
@@ -3190,6 +3197,10 @@ int get_register_name(int num)
     return num + '0';
   else if (num == DELETION_REGISTER)
     return '-';
+  else if (num == STAR_REGISTER)
+    return '*';
+  else if (num == PLUS_REGISTER)
+    return '+';
   else {
     return num + 'a' - 10;
   }
@@ -3222,7 +3233,7 @@ void ex_display(exarg_T *eap)
       continue;             /* did not ask for this register */
     }
 
-    get_clipboard(name);
+    get_clipboard(name, true);
 
     if (i == -1) {
       if (y_previous != NULL)
@@ -4566,12 +4577,11 @@ void write_viminfo_registers(FILE *fp)
   if (max_kbyte == 0)
     return;
 
-  for (i = 0; i < NUM_REGISTERS; i++) {
+  // don't include clipboard registers '*'/'+'
+  for (i = 0; i < NUM_SAVED_REGISTERS; i++) {
     if (y_regs[i].y_array == NULL)
       continue;
-    // Skip '*'/'+' register, we don't want them back next time
-    if (i == CLIP_REGISTER)
-      continue;
+
     /* Skip empty registers. */
     num_lines = y_regs[i].y_size;
     if (num_lines == 0
@@ -4651,7 +4661,7 @@ char_u get_reg_type(int regname, long *reglen)
     return MCHAR;
   }
 
-  get_clipboard(regname);
+  get_clipboard(regname, false);
 
   if (regname != NUL && !valid_yank_reg(regname, FALSE))
     return MAUTO;
@@ -4712,7 +4722,7 @@ void *get_reg_contents(int regname, int flags)
   if (regname != NUL && !valid_yank_reg(regname, FALSE))
     return NULL;
 
-  get_clipboard(regname);
+  get_clipboard(regname, false);
 
   char_u *retval;
   int allocated;
@@ -5292,16 +5302,17 @@ static void free_register(struct yankreg *reg)
 }
 
 // return target register
-static struct yankreg* adjust_clipboard_name(int *name) {
+static struct yankreg* adjust_clipboard_name(int *name, bool quiet) {
   if (*name == '*' || *name == '+') {
     if(!eval_has_provider("clipboard")) {
-      EMSG("clipboard: provider is not available");
-      return NULL;
+      if (!quiet) {
+        EMSG("clipboard: provider is not available");
+      }
     }
-    return &y_regs[CLIP_REGISTER];
+    return &y_regs[*name == '*' ? STAR_REGISTER : PLUS_REGISTER];
   } else if ((*name == NUL || *name == CB_LATEST) && (cb_flags & CB_UNNAMEDMASK)) {
     if(!eval_has_provider("clipboard")) {
-      if (!clipboard_didwarn_unnamed) {
+      if (!quiet && !clipboard_didwarn_unnamed) {
         msg((char_u*)"clipboard: provider not available, ignoring clipboard=unnamed[plus]");
         clipboard_didwarn_unnamed = true;
       }
@@ -5324,9 +5335,9 @@ static struct yankreg* adjust_clipboard_name(int *name) {
   return NULL;
 }
 
-static void get_clipboard(int name)
+static void get_clipboard(int name, bool quiet)
 {
-  struct yankreg* reg = adjust_clipboard_name(&name);
+  struct yankreg* reg = adjust_clipboard_name(&name, quiet);
   if (reg == NULL) {
     return;
   }
@@ -5417,7 +5428,7 @@ err:
 
 static void set_clipboard(int name)
 {
-  struct yankreg* reg = adjust_clipboard_name(&name);
+  struct yankreg* reg = adjust_clipboard_name(&name, false);
   if (reg == NULL) {
     return;
   }
