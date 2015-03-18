@@ -160,6 +160,22 @@ describe('clipboard usage', function()
       linewise stuff]])
   end)
 
+  it('supports :put', function()
+    insert("a line")
+    execute("let g:test_clip['*'] = ['some text']")
+    execute("let g:test_clip['+'] = ['more', 'text', '']")
+    execute(":put *")
+    expect([[
+    a line
+    some text]])
+    execute(":put +")
+    expect([[
+    a line
+    some text
+    more
+    text]])
+  end)
+
   it('supports "+ and "* in registers', function()
     local screen = Screen.new(60, 10)
     screen:attach()

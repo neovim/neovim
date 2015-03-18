@@ -1699,16 +1699,11 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   }
 
   /* accept numbered register only when no count allowed (:put) */
-  if (       (ea.argt & REGSTR)
-             && *ea.arg != NUL
-             /* Do not allow register = for user commands */
-             && (!IS_USER_CMDIDX(ea.cmdidx) || *ea.arg != '=')
-             && !((ea.argt & COUNT) && VIM_ISDIGIT(*ea.arg))) {
-    /* check these explicitly for a more specific error message */
-    if (*ea.arg == '*' || *ea.arg == '+') {
-      errormsg = (char_u *)_(e_invalidreg);
-      goto doend;
-    }
+  if ((ea.argt & REGSTR)
+      && *ea.arg != NUL
+      /* Do not allow register = for user commands */
+      && (!IS_USER_CMDIDX(ea.cmdidx) || *ea.arg != '=')
+      && !((ea.argt & COUNT) && VIM_ISDIGIT(*ea.arg))) {
     if (valid_yank_reg(*ea.arg, (ea.cmdidx != CMD_put
                                  && !IS_USER_CMDIDX(ea.cmdidx)))) {
       ea.regname = *ea.arg++;
