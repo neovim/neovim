@@ -46,7 +46,7 @@ void input_init(void)
   input_buffer = rbuffer_new(INPUT_BUFFER_SIZE + MAX_KEY_CODE_LEN);
 }
 
-void input_start_stdin(void)
+void input_start_stdin(int fd)
 {
   if (read_stream) {
     return;
@@ -54,7 +54,7 @@ void input_start_stdin(void)
 
   read_buffer = rbuffer_new(READ_BUFFER_SIZE);
   read_stream = rstream_new(read_cb, read_buffer, NULL);
-  rstream_set_file(read_stream, fileno(stdin));
+  rstream_set_file(read_stream, fd);
   rstream_start(read_stream);
 }
 
@@ -69,7 +69,7 @@ void input_stop_stdin(void)
   read_stream = NULL;
 }
 
-// Low level input function.
+// Low level input function
 int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
 {
   if (rbuffer_pending(input_buffer)) {
