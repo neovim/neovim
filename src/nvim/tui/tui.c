@@ -16,6 +16,11 @@
 #include "nvim/os/event.h"
 #include "nvim/tui/tui.h"
 
+// Space reserved in the output buffer to restore the cursor to normal when
+// flushing. No existing terminal will require 32 bytes to do that.
+#define CNORM_COMMAND_MAX_SIZE 32
+#define OUTBUF_SIZE 0xffff
+
 typedef struct term_input TermInput;
 
 #include "term_input.inl"
@@ -31,8 +36,8 @@ typedef struct {
 
 typedef struct {
   unibi_var_t params[9];
-  char buf[0xffff];
-  size_t bufpos;
+  char buf[OUTBUF_SIZE];
+  size_t bufpos, bufsize;
   TermInput *input;
   uv_loop_t *write_loop;
   unibi_term *ut;
@@ -81,13 +86,13 @@ typedef struct {
 void tui_start(void)
 {
   TUIData *data = xcalloc(1, sizeof(TUIData));
-  data->busy = true;
   UI *ui = xcalloc(1, sizeof(UI));
   ui->data = data;
   data->attrs = data->print_attrs = EMPTY_ATTRS;
   data->fg = data->bg = -1;
   data->can_use_terminal_scroll = true;
   data->bufpos = 0;
+  data->bufsize = sizeof(data->buf) - CNORM_COMMAND_MAX_SIZE;
   data->unibi_ext.enable_mouse = -1;
   data->unibi_ext.disable_mouse = -1;
   data->unibi_ext.enable_bracketed_paste = -1;
@@ -108,7 +113,6 @@ void tui_start(void)
     data->ut = unibi_dummy();
   }
   fix_terminfo(data);
-  unibi_out(ui, unibi_cursor_invisible);
   // Enter alternate screen and clear
   unibi_out(ui, unibi_enter_ca_mode);
   unibi_out(ui, unibi_clear_screen);
@@ -172,6 +176,7 @@ static void tui_stop(UI *ui)
   tui_normal_mode(ui);
   tui_mouse_off(ui);
   unibi_out(ui, unibi_exit_attribute_mode);
+  // cursor should be set to normal before exiting alternate screen
   unibi_out(ui, unibi_cursor_normal);
   unibi_out(ui, unibi_exit_ca_mode);
   // Disable bracketed paste
@@ -661,7 +666,7 @@ static void out(void *ctx, const char *str, size_t len)
 {
   UI *ui = ctx;
   TUIData *data = ui->data;
-  size_t available = sizeof(data->buf) - data->bufpos;
+  size_t available = data->bufsize - data->bufpos;
 
   if (len > available) {
     flush_buf(ui);
@@ -786,29 +791,26 @@ end:
 static void flush_buf(UI *ui)
 {
   uv_write_t req;
-  uv_buf_t buf[2];
-  unsigned int buf_count = 1;
-
+  uv_buf_t buf;
   TUIData *data = ui->data;
 
-  buf[0].base = data->buf;
-  buf[0].len = data->bufpos;
-
-  char normal_buf[64];
   if (!data->busy) {
-    // Cannot use unibi_out(ui, unibi_cursor_normal), in case there is not
-    // enough remaining space in data->buf.
-    const char *str = unibi_get_str(data->ut, unibi_cursor_normal);
-    buf[1].base = normal_buf;
-    buf[1].len = unibi_run(str, data->params, normal_buf, sizeof(normal_buf));
-    buf_count++;
+    // not busy and the cursor is invisible(see below). Append a "cursor
+    // normal" command to the end of the buffer.
+    data->bufsize += CNORM_COMMAND_MAX_SIZE;
+    unibi_out(ui, unibi_cursor_normal);
+    data->bufsize -= CNORM_COMMAND_MAX_SIZE;
   }
 
-  uv_write(&req, (uv_stream_t *)&data->output_handle, buf, buf_count, NULL);
+  buf.base = data->buf;
+  buf.len = data->bufpos;
+  uv_write(&req, (uv_stream_t *)&data->output_handle, &buf, 1, NULL);
   uv_run(data->write_loop, UV_RUN_DEFAULT);
   data->bufpos = 0;
 
   if (!data->busy) {
+    // not busy and cursor is visible(see above), append a "cursor invisible"
+    // command to the beginning of the buffer for the next flush
     unibi_out(ui, unibi_cursor_invisible);
   }
 }

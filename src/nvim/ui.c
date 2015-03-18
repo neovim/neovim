@@ -45,7 +45,7 @@ static struct {
 } sr;
 static int current_attr_code = 0;
 static bool pending_cursor_update = false;
-static int busy = 1;
+static int busy = 0;
 static int height, width;
 
 // This set of macros allow us to use UI_CALL to invoke any function on
@@ -155,7 +155,6 @@ void ui_busy_start(void)
 {
   if (!(busy++)) {
     UI_CALL(busy_start);
-    ui_flush();
   }
 }
 
@@ -163,10 +162,8 @@ void ui_busy_stop(void)
 {
   if (!(--busy)) {
     UI_CALL(busy_stop);
-    ui_flush();
   }
 }
-
 
 void ui_mouse_on(void)
 {
