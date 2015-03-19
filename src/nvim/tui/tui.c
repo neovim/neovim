@@ -57,6 +57,7 @@ typedef struct {
     int enable_mouse, disable_mouse;
     int enable_bracketed_paste, disable_bracketed_paste;
     int enter_insert_mode, exit_insert_mode;
+    int set_rgb_foreground, set_rgb_background;
   } unibi_ext;
 } TUIData;
 
@@ -135,7 +136,7 @@ void tui_start(void)
   data->winch_handle.data = ui;
 
   ui->stop = tui_stop;
-  ui->rgb = false;
+  ui->rgb = os_getenv("NVIM_TUI_ENABLE_TRUE_COLOR") != NULL;
   ui->data = data;
   ui->resize = tui_resize;
   ui->clear = tui_clear;
@@ -231,14 +232,33 @@ static void update_attrs(UI *ui, HlAttrs attrs)
   data->print_attrs = attrs;
   unibi_out(ui, unibi_exit_attribute_mode);
 
-  data->params[0].i = attrs.foreground != -1 ? attrs.foreground : data->fg;
-  if (data->params[0].i != -1) {
-    unibi_out(ui, unibi_set_a_foreground);
-  }
+  int fg = attrs.foreground != -1 ? attrs.foreground : data->fg;
+  int bg = attrs.background != -1 ? attrs.background : data->bg;
 
-  data->params[0].i = attrs.background != -1 ? attrs.background : data->bg;
-  if (data->params[0].i != -1) {
-    unibi_out(ui, unibi_set_a_background);
+  if (ui->rgb) {
+    if (fg != -1) {
+      data->params[0].i = (fg >> 16) & 0xff;  // red
+      data->params[1].i = (fg >> 8) & 0xff;   // green
+      data->params[2].i = fg & 0xff;          // blue
+      unibi_out(ui, data->unibi_ext.set_rgb_foreground);
+    }
+
+    if (bg != -1) {
+      data->params[0].i = (bg >> 16) & 0xff;  // red
+      data->params[1].i = (bg >> 8) & 0xff;   // green
+      data->params[2].i = bg & 0xff;          // blue
+      unibi_out(ui, data->unibi_ext.set_rgb_background);
+    }
+  } else {
+    if (fg != -1) {
+      data->params[0].i = fg;
+      unibi_out(ui, unibi_set_a_foreground);
+    }
+
+    if (bg != -1) {
+      data->params[0].i = bg;
+      unibi_out(ui, unibi_set_a_background);
+    }
   }
 
   if (attrs.bold) {
@@ -769,6 +789,10 @@ end:
       "\x1b[?1002h\x1b[?1006h");
   data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[?1002l\x1b[?1006l");
+  data->unibi_ext.set_rgb_foreground = (int)unibi_add_ext_str(ut, NULL,
+      "\x1b[38;2;%p1%d;%p2%d;%p3%dm");
+  data->unibi_ext.set_rgb_background = (int)unibi_add_ext_str(ut, NULL,
+      "\x1b[48;2;%p1%d;%p2%d;%p3%dm");
   unibi_set_if_empty(ut, unibi_cursor_address, "\x1b[%i%p1%d;%p2%dH");
   unibi_set_if_empty(ut, unibi_exit_attribute_mode, "\x1b[0;10m");
   unibi_set_if_empty(ut, unibi_set_a_foreground, XTERM_SETAF);
