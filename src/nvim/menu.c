@@ -300,8 +300,6 @@ add_menu_path (
     } else
       en_name = NULL;
     dname = menu_text(name, NULL, NULL);
-    if (dname == NULL)
-      goto erret;
     if (*dname == NUL) {
       /* Only a mnemonic or accelerator is not valid. */
       EMSG(_("E792: Empty menu name"));
@@ -1156,14 +1154,20 @@ static char_u *popup_mode_name(char_u *name, int idx)
 }
 
 
-/*
- * Duplicate the menu item text and then process to see if a mnemonic key
- * and/or accelerator text has been identified.
- * Returns a pointer to allocated memory, or NULL for failure.
- * If mnemonic != NULL, *mnemonic is set to the character after the first '&'.
- * If actext != NULL, *actext is set to the text after the first TAB.
- */
-static char_u *menu_text(char_u *str, int *mnemonic, char_u **actext)
+/// Duplicate the menu item text and then process to see if a mnemonic key
+/// and/or accelerator text has been identified.
+///
+/// @param str The menu item text.
+/// @param[out] mnemonic If non-NULL, *mnemonic is set to the character after
+///             the first '&'.
+/// @param[out] actext If non-NULL, *actext is set to the text after the first
+///             TAB, but only if a TAB was found. Memory pointed to is newly
+///             allocated.
+///
+/// @return a pointer to allocated memory.
+static char_u *menu_text(const char_u *str, int *mnemonic, char_u **actext)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   char_u      *p;
   char_u      *text;
@@ -1463,19 +1467,14 @@ void ex_menutranslate(exarg_T *eap)
       from = vim_strsave(from);
       from_noamp = menu_text(from, NULL, NULL);
       to = vim_strnsave(to, (int)(arg - to));
-      if (from_noamp != NULL) {
-        menu_translate_tab_and_shift(from);
-        menu_translate_tab_and_shift(to);
-        menu_unescape_name(from);
-        menu_unescape_name(to);
-        menutrans_T* tp = GA_APPEND_VIA_PTR(menutrans_T, &menutrans_ga);
-        tp->from = from;
-        tp->from_noamp = from_noamp;
-        tp->to = to;
-      } else {
-        free(from);
-        free(to);
-      }
+      menu_translate_tab_and_shift(from);
+      menu_translate_tab_and_shift(to);
+      menu_unescape_name(from);
+      menu_unescape_name(to);
+      menutrans_T* tp = GA_APPEND_VIA_PTR(menutrans_T, &menutrans_ga);
+      tp->from = from;
+      tp->from_noamp = from_noamp;
+      tp->to = to;
     }
   }
 }
@@ -1502,7 +1501,7 @@ static char_u *menutrans_lookup(char_u *name, int len)
   menutrans_T         *tp = (menutrans_T *)menutrans_ga.ga_data;
   char_u              *dname;
 
-  for (int i = 0; i < menutrans_ga.ga_len; ++i) {
+  for (int i = 0; i < menutrans_ga.ga_len; i++) {
     if (STRNCMP(name, tp[i].from, len) == 0 && tp[i].from[len] == NUL) {
       return tp[i].to;
     }
@@ -1513,15 +1512,13 @@ static char_u *menutrans_lookup(char_u *name, int len)
   name[len] = NUL;
   dname = menu_text(name, NULL, NULL);
   name[len] = c;
-  if (dname != NULL) {
-    for (int i = 0; i < menutrans_ga.ga_len; ++i) {
-      if (STRCMP(dname, tp[i].from_noamp) == 0) {
-        free(dname);
-        return tp[i].to;
-      }
+  for (int i = 0; i < menutrans_ga.ga_len; i++) {
+    if (STRCMP(dname, tp[i].from_noamp) == 0) {
+      free(dname);
+      return tp[i].to;
     }
-    free(dname);
   }
+  free(dname);
 
   return NULL;
 }
