@@ -15453,16 +15453,22 @@ static void f_writefile(typval_T *argvars, typval_T *rettv)
   }
 
   bool binary = false;
-  if (argvars[2].v_type != VAR_UNKNOWN
-      && STRCMP(get_tv_string(&argvars[2]), "b") == 0) {
-    binary = true;
+  bool append = false;
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    if (vim_strchr(get_tv_string(&argvars[2]), 'b')) {
+      binary = true;
+    }
+    if (vim_strchr(get_tv_string(&argvars[2]), 'a')) {
+      append = true;
+    }
   }
 
   // Always open the file in binary mode, library functions have a mind of
   // their own about CR-LF conversion.
   char_u *fname = get_tv_string(&argvars[1]);
   FILE *fd;
-  if (*fname == NUL || (fd = mch_fopen((char *)fname, WRITEBIN)) == NULL) {
+  if (*fname == NUL || (fd = mch_fopen((char *)fname,
+       append ? APPENDBIN : WRITEBIN)) == NULL) {
     EMSG2(_(e_notcreate), *fname == NUL ? (char_u *)_("<empty>") : fname);
     rettv->vval.v_number = -1;
   } else {
