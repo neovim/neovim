@@ -133,8 +133,8 @@ sub read_in_file {
         # If line contains single quotes or backslashes, use double
         # square brackets to wrap string.
         if (/'/ || /\\/) {
-            # If line contains ending square bracket, use square brackets
-            # with an equal sign to wrap string.
+            # If the line contains a closing square bracket,
+            # wrap it with [=[...]=].
             if (/\]/) {
               $startstr = '[=[';
               $endstr = ']=]';
