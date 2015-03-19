@@ -268,15 +268,25 @@ int main(int argc, char **argv)
   /* Set the break level after the terminal is initialized. */
   debug_break_level = params.use_debug_break_level;
 
+  bool reading_input = !params.headless && (params.input_isatty
+      || params.output_isatty || params.err_isatty);
+
+  if (reading_input) {
+    // Its possible that one of the startup commands(arguments, sourced scripts
+    // or plugins) will prompt the user, so start reading from a tty stream
+    // now. 
+    int fd = fileno(stdin);
+    if (!params.input_isatty || params.edit_type == EDIT_STDIN) {
+      // use stderr or stdout since stdin is not a tty and/or could be used to
+      // read the file we'll edit when the "-" argument is given(eg: cat file |
+      // nvim -)
+      fd = params.err_isatty ? fileno(stderr) : fileno(stdout);
+    }
+    input_start_stdin(fd);
+  }
+
   /* Execute --cmd arguments. */
   exe_pre_commands(&params);
-
-  if (!params.headless && params.input_isatty) {
-    // Its possible that one of the scripts sourced at startup will prompt the
-    // user, so start stdin now.  TODO(tarruda): This is only for compatibility.
-    // Startup user prompting should be done in the VimEnter autocmd
-    input_start_stdin();
-  }
 
   /* Source startup scripts. */
   source_startup_scripts(&params);
@@ -358,22 +368,19 @@ int main(int argc, char **argv)
   if (params.edit_type == EDIT_STDIN && !recoverymode)
     read_stdin();
 
+
+  if (reading_input && (need_wait_return || msg_didany)) {
+    // Since at this point there's no UI instance running yet, error messages
+    // would have been printed to stdout. Before starting (which can result in
+    // a alternate screen buffer being shown) we need confirmation that the
+    // user has seen the messages and that is done with a call to wait_return.
+    TIME_MSG("waiting for return");
+    wait_return(TRUE);
+  }
+
   if (!params.headless) {
-    if ((params.output_isatty || params.err_isatty)
-        && (need_wait_return || msg_didany)) {
-      // Since at this point there's no UI instance running yet, error messages
-      // would have been printed to stdout. Before starting (which can result in
-      // a alternate screen buffer being shown) we need confirmation that the
-      // user has seen the messages and that is done with a call to wait_return.
-      TIME_MSG("waiting for return");
-      wait_return(TRUE);
-    }
-
-    if (params.input_isatty) {
-      // Stop reading from stdin, the UI module will take over now.
-      input_stop_stdin();
-    }
-
+    // Stop reading from stdin, the UI layer will take over now
+    input_stop_stdin();
     ui_builtin_start();
   }
 
@@ -1464,11 +1471,6 @@ static void check_tty(mparm_T *parmp)
     }
 
     TIME_MSG("Warning delay");
-  }
-
-  if (parmp->edit_type != EDIT_STDIN && !parmp->input_isatty) {
-    // read commands from directly from stdin
-    input_start_stdin();
   }
 }
 

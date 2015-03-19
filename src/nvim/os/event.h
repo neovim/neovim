@@ -8,15 +8,9 @@
 #include "nvim/os/job_defs.h"
 #include "nvim/os/time.h"
 
-void ui_busy_start(void);
-void ui_busy_stop(void);
-
 // Poll for events until a condition or timeout
 #define event_poll_until(timeout, condition)                                 \
   do {                                                                       \
-    if (timeout < 0 || timeout > 100) {                                      \
-      ui_busy_stop();                                                        \
-    }                                                                        \
     int remaining = timeout;                                                 \
     uint64_t before = (remaining > 0) ? os_hrtime() : 0;                     \
     while (!(condition)) {                                                   \
@@ -31,9 +25,6 @@ void ui_busy_stop(void);
           break;                                                             \
         }                                                                    \
       }                                                                      \
-    }                                                                        \
-    if (timeout < 0 || timeout > 100) {                                      \
-      ui_busy_start();                                                       \
     }                                                                        \
   } while (0)
 

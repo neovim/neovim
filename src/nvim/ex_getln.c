@@ -1364,6 +1364,7 @@ cmdline_changed:
       if (ccline.cmdlen == 0)
         i = 0;
       else {
+        ui_busy_start();
         ui_flush();
         ++emsg_off;            /* So it doesn't beep if bad expr */
         /* Set the time limit to half a second. */
@@ -1381,6 +1382,7 @@ cmdline_changed:
         } else if (char_avail())
           /* cancelled searching because a char was typed */
           incsearch_postponed = TRUE;
+        ui_busy_stop();
       }
       if (i != 0)
         highlight_match = TRUE;                 /* highlight position */

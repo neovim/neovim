@@ -166,7 +166,7 @@ function Screen.new(width, height)
     _cursor = {
       row = 1, col = 1
     },
-    _busy = true
+    _busy = false
   }, Screen)
   self:_handle_resize(width, height)
   return self

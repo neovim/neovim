@@ -241,6 +241,7 @@ static int shell(const char *cmd,
   // invoke busy_start here so event_poll_until wont change the busy state for
   // the UI
   ui_busy_start();
+  ui_flush();
   status = job_wait(job, -1);
   ui_busy_stop();
 
