@@ -1,7 +1,7 @@
 # This is not meant to be included by the top-level.
 cmake_minimum_required (VERSION 2.8.7)
 project(NEOVIM_DEPS)
- 
+
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
@@ -52,8 +52,8 @@ endif()
 
 include(ExternalProject)
 
-set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.2.0.tar.gz)
-set(LIBUV_SHA256 bebf424bb239867bbf609abad09a256cae7808c9d5cb346b779acd4b97a56693)
+set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.4.2.tar.gz)
+set(LIBUV_SHA256 b9e424f69db0d1c3035c5f871cd9d7a3f4bace0a4db3e974bdbfa0cf95f6b741)
 
 set(MSGPACK_URL https://github.com/msgpack/msgpack-c/archive/cpp-1.0.0.tar.gz)
 set(MSGPACK_SHA256 afda64ca445203bb7092372b822bae8b2539fdcebbfc3f753f393628c2bcfe7d)
