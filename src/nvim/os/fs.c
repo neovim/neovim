@@ -503,3 +503,35 @@ bool os_fileid_equal_fileinfo(const FileID *file_id,
          && file_id->device_id == file_info->stat.st_dev;
 }
 
+
+/// List contents of directory
+///
+/// @param scandir_req os_scandir request
+/// @param directory_path Directory path to be listed
+/// @return The number of directory entries
+int os_scandir(uv_fs_t *scandir_req, const char *directory_path)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return uv_fs_scandir(uv_default_loop(), scandir_req, directory_path, 0, NULL);
+}
+
+/// Fetch next directory entry
+///
+/// @param scandir_req os_scandir request
+/// @param directory_path Directory path to be listed
+/// @return True if entry fetched
+bool os_scandir_next(uv_fs_t* scandir_req, char** directory_entry)
+  FUNC_ATTR_NONNULL_ALL
+{
+  uv_dirent_t dent;
+  if (UV_EOF !=  uv_fs_scandir_next(scandir_req, &dent)){
+    *directory_entry = dent.name;
+    return true;
+  }
+  else{
+    *directory_entry = NULL;
+    return false;
+  }
+}
+
+
