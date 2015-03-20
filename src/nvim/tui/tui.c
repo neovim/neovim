@@ -56,7 +56,7 @@ typedef struct {
   struct {
     int enable_mouse, disable_mouse;
     int enable_bracketed_paste, disable_bracketed_paste;
-    int enter_insert_mode, exit_insert_mode;
+    int enter_replace_mode, enter_insert_mode, exit_insert_mode;
   } unibi_ext;
 } TUIData;
 
@@ -97,6 +97,7 @@ void tui_start(void)
   data->unibi_ext.disable_mouse = -1;
   data->unibi_ext.enable_bracketed_paste = -1;
   data->unibi_ext.disable_bracketed_paste = -1;
+  data->unibi_ext.enter_replace_mode = -1;
   data->unibi_ext.enter_insert_mode = -1;
   data->unibi_ext.exit_insert_mode = -1;
 
@@ -146,6 +147,7 @@ void tui_start(void)
   ui->mouse_on = tui_mouse_on;
   ui->mouse_off = tui_mouse_off;
   ui->insert_mode = tui_insert_mode;
+  ui->replace_mode = tui_replace_mode;
   ui->normal_mode = tui_normal_mode;
   ui->set_scroll_region = tui_set_scroll_region;
   ui->scroll = tui_scroll;
@@ -370,6 +372,12 @@ static void tui_mouse_off(UI *ui)
 {
   TUIData *data = ui->data;
   unibi_out(ui, data->unibi_ext.disable_mouse);
+}
+
+static void tui_replace_mode(UI *ui)
+{
+  TUIData *data = ui->data;
+  unibi_out(ui, (int)data->unibi_ext.enter_replace_mode);
 }
 
 static void tui_insert_mode(UI *ui)
@@ -751,12 +759,16 @@ static void fix_terminfo(TUIData *data)
   if ((term_prog && !strcmp(term_prog, "iTerm.app"))
       || os_getenv("ITERM_SESSION_ID") != NULL) {
     // iterm
+    data->unibi_ext.enter_replace_mode = (int)unibi_add_ext_str(ut, NULL,
+        TMUX_WRAP("\x1b]50;CursorShape=2;BlinkingCursorEnabled=1\x07"));
     data->unibi_ext.enter_insert_mode = (int)unibi_add_ext_str(ut, NULL,
         TMUX_WRAP("\x1b]50;CursorShape=1;BlinkingCursorEnabled=1\x07"));
     data->unibi_ext.exit_insert_mode = (int)unibi_add_ext_str(ut, NULL,
         TMUX_WRAP("\x1b]50;CursorShape=0;BlinkingCursorEnabled=0\x07"));
   } else {
     // xterm-like sequences for blinking bar and solid block
+    data->unibi_ext.enter_replace_mode = (int)unibi_add_ext_str(ut, NULL,
+        TMUX_WRAP("\x1b[3 q"));
     data->unibi_ext.enter_insert_mode = (int)unibi_add_ext_str(ut, NULL,
         TMUX_WRAP("\x1b[5 q"));
     data->unibi_ext.exit_insert_mode = (int)unibi_add_ext_str(ut, NULL,

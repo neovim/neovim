@@ -87,6 +87,7 @@ static Object remote_ui_attach(uint64_t channel_id, uint64_t request_id,
   ui->mouse_on = remote_ui_mouse_on;
   ui->mouse_off = remote_ui_mouse_off;
   ui->insert_mode = remote_ui_insert_mode;
+  ui->replace_mode = remote_ui_insert_mode;
   ui->normal_mode = remote_ui_normal_mode;
   ui->set_scroll_region = remote_ui_set_scroll_region;
   ui->scroll = remote_ui_scroll;

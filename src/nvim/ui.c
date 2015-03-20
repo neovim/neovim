@@ -467,21 +467,29 @@ static void flush_cursor_update(void)
 static void ui_change_mode(void)
 {
   static int showing_insert_mode = MAYBE;
+  static int showing_replace_mode = MAYBE;
 
   if (!full_screen) {
     return;
   }
 
   if (State & INSERT) {
-    if (showing_insert_mode != TRUE) {
-      UI_CALL(insert_mode);
+	if (showing_replace_mode != TRUE && State & REPLACE_FLAG) {
+	  UI_CALL(replace_mode);
+	  showing_replace_mode = TRUE;
+	  showing_insert_mode = FALSE;
+	}
+    else if (showing_insert_mode != TRUE) {
+	  UI_CALL(insert_mode);
+	  showing_replace_mode = FALSE;
+	  showing_insert_mode = TRUE;
     }
-    showing_insert_mode = TRUE;
   } else {
-    if (showing_insert_mode != FALSE) {
+    if (showing_insert_mode != FALSE || showing_replace_mode != FALSE) {
       UI_CALL(normal_mode);
     }
     showing_insert_mode = FALSE;
+	showing_replace_mode = FALSE;
   }
   conceal_check_cursur_line();
 }
