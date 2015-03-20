@@ -1668,22 +1668,22 @@ return {
   {
     command='py3',
     flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN),
-    func='ex_script_ni',
+    func='ex_python3',
   },
   {
     command='py3do',
     flags=bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, CMDWIN),
-    func='ex_ni',
+    func='ex_pydo3',
   },
   {
     command='python3',
     flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN),
-    func='ex_script_ni',
+    func='ex_python3',
   },
   {
     command='py3file',
     flags=bit.bor(RANGE, FILE1, NEEDARG, CMDWIN),
-    func='ex_ni',
+    func='ex_py3file',
   },
   {
     command='quit',

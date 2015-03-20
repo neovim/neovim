@@ -6577,6 +6577,7 @@ static struct fst {
   {"prevnonblank",    1, 1, f_prevnonblank},
   {"printf",          2, 19, f_printf},
   {"pumvisible",      0, 0, f_pumvisible},
+  {"py3eval",         1, 1, f_py3eval},
   {"pyeval",          1, 1, f_pyeval},
   {"range",           1, 3, f_range},
   {"readfile",        1, 3, f_readfile},
@@ -11943,6 +11944,14 @@ static void f_pumvisible(typval_T *argvars, typval_T *rettv)
 static void f_pyeval(typval_T *argvars, typval_T *rettv)
 {
   script_host_eval("python", argvars, rettv);
+}
+
+/*
+ * "py3eval()" function
+ */
+static void f_py3eval(typval_T *argvars, typval_T *rettv)
+{
+  script_host_eval("python3", argvars, rettv);
 }
 
 /*
@@ -20458,11 +20467,14 @@ bool eval_has_provider(char *name)
     }                                                                     \
   }
 
-  static int has_clipboard = -1, has_python = -1;
+  static int has_clipboard = -1, has_python = -1, has_python3 = -1;
 
   if (!strcmp(name, "clipboard")) {
     check_provider(clipboard);
     return has_clipboard;
+  } else if (!strcmp(name, "python3")) {
+    check_provider(python3);
+    return has_python3;
   } else if (!strcmp(name, "python")) {
     check_provider(python);
     return has_python;
