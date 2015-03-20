@@ -39,7 +39,7 @@ For lots more details, see
 
 - Port all IO to [libuv](https://github.com/libuv/libuv/blob/master/README.md)
 - Lots of refactoring
-- A VimL => Lua transpiler
+- A VimL => Lua translator
 
 ### How do I get it?
 
