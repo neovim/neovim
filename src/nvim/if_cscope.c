@@ -707,7 +707,7 @@ static int cs_create_connection(int i)
 #ifdef UNIX
   int to_cs[2], from_cs[2];
 #endif
-  int len;
+  size_t len;
   char        *prog, *cmd, *ppath = NULL;
 
 #if defined(UNIX)
@@ -772,17 +772,17 @@ err_closing:
     expand_env(p_csprg, (char_u *)prog, MAXPATHL);
 
     /* alloc space to hold the cscope command */
-    len = (int)(strlen(prog) + strlen(csinfo[i].fname) + 32);
+    len = (strlen(prog) + strlen(csinfo[i].fname) + 32);
     if (csinfo[i].ppath) {
       /* expand the prepend path for env var's */
       ppath = xmalloc(MAXPATHL + 1);
       expand_env((char_u *)csinfo[i].ppath, (char_u *)ppath, MAXPATHL);
 
-      len += (int)strlen(ppath);
+      len += strlen(ppath);
     }
 
     if (csinfo[i].flags)
-      len += (int)strlen(csinfo[i].flags);
+      len += strlen(csinfo[i].flags);
 
     cmd = xmalloc(len);
 
@@ -998,7 +998,8 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
   if (cmd == NULL)
     return FALSE;
 
-  nummatches = xmalloc(sizeof(int) * csinfo_size);
+  assert(csinfo_size >= 0);
+  nummatches = xmalloc(sizeof(int) * (size_t)csinfo_size);
 
   /* Send query to all open connections, then count the total number
    * of matches so we can alloc all in one swell foop. */
@@ -1174,7 +1175,7 @@ static char *GetWin32Error(void)
 static int cs_insert_filelist(char *fname, char *ppath, char *flags,
                               FileInfo *file_info)
 {
-  short i, j;
+  int i, j;
 
   i = -1;   /* can be set to the index of an empty item in csinfo */
   for (j = 0; j < csinfo_size; j++) {
@@ -1200,7 +1201,8 @@ static int cs_insert_filelist(char *fname, char *ppath, char *flags,
     } else {
       /* Reallocate space for more connections. */
       csinfo_size *= 2;
-      csinfo = xrealloc(csinfo, sizeof(csinfo_T)*csinfo_size);
+      assert(csinfo_size >= 0);
+      csinfo = xrealloc(csinfo, sizeof(csinfo_T)*(size_t)csinfo_size);
     }
     for (j = csinfo_size/2; j < csinfo_size; j++)
       clear_csinfo(j);
@@ -1264,7 +1266,7 @@ static cscmd_T * cs_lookup_cmd(exarg_T *eap)
 static int cs_kill(exarg_T *eap)
 {
   char *stok;
-  short i;
+  int i;
 
   if ((stok = strtok((char *)NULL, (const char *)" ")) == NULL) {
     cs_usage_msg(Kill);
@@ -1567,8 +1569,8 @@ static void cs_fill_results(char *tagstr, int totmatches, int *nummatches_a, cha
   assert(totmatches > 0);
 
   buf = xmalloc(CSREAD_BUFSIZE);
-  matches = xmalloc(sizeof(char *) * totmatches);
-  cntxts = xmalloc(sizeof(char *) * totmatches);
+  matches = xmalloc(sizeof(char *) * (size_t)totmatches);
+  cntxts = xmalloc(sizeof(char *) * (size_t)totmatches);
 
   for (i = 0; i < csinfo_size; i++) {
     if (nummatches_a[i] < 1)
@@ -1770,11 +1772,14 @@ static int cs_read_prompt(int i)
       if (bufpos < maxlen - 1 && vim_isprintc(ch)) {
         // lazy buffer allocation
         if (buf == NULL) {
-          buf = xmalloc(maxlen);
+          assert(maxlen >= 0);
+          buf = xmalloc((size_t)maxlen);
         }
         {
           /* append character to the message */
-          buf[bufpos++] = ch;
+          assert(ch >= 0);
+          assert(ch <= CHAR_MAX);
+          buf[bufpos++] = (char)ch;
           buf[bufpos] = NUL;
           if (bufpos >= epromptlen
               && strcmp(&buf[bufpos - epromptlen], eprompt) == 0) {
@@ -1970,9 +1975,10 @@ static int cs_reset(exarg_T *eap)
     return CSCOPE_SUCCESS;
 
   /* malloc our db and ppath list */
-  dblist = xmalloc(csinfo_size * sizeof(char *));
-  pplist = xmalloc(csinfo_size * sizeof(char *));
-  fllist = xmalloc(csinfo_size * sizeof(char *));
+  assert(csinfo_size >= 0);
+  dblist = xmalloc((size_t)csinfo_size * sizeof(char *));
+  pplist = xmalloc((size_t)csinfo_size * sizeof(char *));
+  fllist = xmalloc((size_t)csinfo_size * sizeof(char *));
 
   for (i = 0; i < csinfo_size; i++) {
     dblist[i] = csinfo[i].fname;
