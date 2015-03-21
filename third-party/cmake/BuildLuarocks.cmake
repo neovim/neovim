@@ -45,6 +45,10 @@ add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps
   ARGS build penlight 1.0.0-1 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
   COMMAND ${DEPS_BIN_DIR}/luarocks
   ARGS build mediator_lua 1.1-3 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
+  COMMAND ${DEPS_BIN_DIR}/luarocks
+  ARGS build luasocket 3.0rc1-2 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
+  COMMAND ${DEPS_BIN_DIR}/luarocks
+  ARGS build xml 1.1.1-1 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
   COMMAND touch ${DEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps
   DEPENDS luarocks)
 add_custom_target(stable-busted-deps
