@@ -6654,7 +6654,6 @@ There are four types of features:
     included.
 
 acl			Compiled with |ACL| support.
-all_builtin_terms	Compiled with all builtin terminals enabled.
 arabic			Compiled with Arabic support |Arabic|.
 autocmd			Compiled with autocommand support. |autocommand|
 balloon_eval		Compiled with |balloon-eval| support.
@@ -6662,7 +6661,6 @@ balloon_multiline	GUI supports multiline balloons.
 browse			Compiled with |:browse| support, and browse() will
 			work.
 browsefilter		Compiled with support for |browsefilter|.
-builtin_terms		Compiled with some builtin terminals.
 byte_offset		Compiled with support for 'o' in 'statusline'
 cindent			Compiled with 'cindent' support.
 clientserver		Compiled with remote invocation support |clientserver|.

@@ -38,35 +38,6 @@ the choice whether to use terminfo or termcap is done automatically.  When
 running Vim the output of ":version" will show |+terminfo| if terminfo is
 used.  Also see |xterm-screens|.
 
-On non-Unix systems a termcap is only available if Vim was compiled with
-TERMCAP defined.
-
-					*builtin-terms* *builtin_terms*
-Which builtin terminals are available depends on a few defines in feature.h,
-which need to be set at compile time:
-    define		output of ":version"	terminals builtin	~
-NO_BUILTIN_TCAPS	-builtin_terms		none
-SOME_BUILTIN_TCAPS	+builtin_terms		most common ones (default)
-ALL_BUILTIN_TCAPS	++builtin_terms		all available
-
-You can see a list of available builtin terminals with ":set term=xxx" (when
-not running the GUI).  Also see |+builtin_terms|.
-
-If the termcap code is included Vim will try to get the strings for the
-terminal you are using from the termcap file and the builtin termcaps.  Both
-are always used, if an entry for the terminal you are using is present.  Which
-one is used first depends on the 'ttybuiltin' option:
-
-'ttybuiltin' on		1: builtin termcap	2: external termcap
-'ttybuiltin' off	1: external termcap	2: builtin termcap
-
-If an option is missing in one of them, it will be obtained from the other
-one.  If an option is present in both, the one first encountered is used.
-
-Which external termcap file is used varies from system to system and may
-depend on the environment variables "TERMCAP" and "TERMPATH".  See "man
-tgetent".
-
 Settings depending on terminal			*term-dependent-settings*
 
 If you want to set options or mappings, depending on the terminal name, you

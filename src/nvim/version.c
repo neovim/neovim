@@ -52,15 +52,6 @@ static char *(features[]) = {
   "+arabic",
   "+autocmd",
   "-browse",
-#ifdef NO_BUILTIN_TCAPS
-  "-builtin_terms",
-#endif  // ifdef NO_BUILTIN_TCAPS
-#ifdef SOME_BUILTIN_TCAPS
-  "+builtin_terms",
-#endif  // ifdef SOME_BUILTIN_TCAPS
-#ifdef ALL_BUILTIN_TCAPS
-  "++builtin_terms",
-#endif  // ifdef ALL_BUILTIN_TCAPS
   "+byte_offset",
   "+cindent",
   "-clipboard",
