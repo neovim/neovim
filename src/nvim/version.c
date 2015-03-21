@@ -43,45 +43,14 @@ char *version_cflags = "Compilation: " NVIM_VERSION_CFLAGS;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "version.c.generated.h"
 #endif
-static char *(features[]) = {
+
+static char *features[] = {
 #ifdef HAVE_ACL
   "+acl",
 #else  // ifdef HAVE_ACL
   "-acl",
 #endif  // ifdef HAVE_ACL
-  "+arabic",
-  "+autocmd",
-  "-browse",
-  "+byte_offset",
-  "+cindent",
-  "-clipboard",
-  "+cmdline_compl",
-  "+cmdline_hist",
-  "+cmdline_info",
-  "+comments",
-  "+conceal",
-  "+cscope",
-  "+cursorbind",
-  "+cursorshape",
-  "+dialog_con",
-  "+digraphs",
-  "-dnd",
-  "-ebcdic",
-  "-emacs_tags",
-  "+eval",
-  "+ex_extra",
-  "+extra_search",
-  "+farsi",
-  "+file_in_path",
-  "+find_in_path",
-  "+folding",
-  "-footer",
 
-  // only interesting on Unix systems
-#if defined(UNIX)
-  "+fork()",
-#endif  // if defined(UNIX)
-  "+gettext",
 #if (defined(HAVE_ICONV_H) && defined(USE_ICONV)) || defined(DYNAMIC_ICONV)
 # ifdef DYNAMIC_ICONV
   "+iconv/dyn",
@@ -93,77 +62,6 @@ static char *(features[]) = {
   "-iconv",
 #endif  // if (defined(HAVE_ICONV_H) && defined(USE_ICONV))
         //    || defined(DYNAMIC_ICONV)
-  "+insert_expand",
-  "+jumplist",
-  "+keymap",
-  "+langmap",
-  "+libcall",
-  "+linebreak",
-  "+lispindent",
-  "+listcmds",
-  "+localmap",
-  "+menu",
-  "+mksession",
-  "+modify_fname",
-  "+mouse",
-  "-mouseshape",
-
-#if defined(UNIX)
-  "+mouse_dec",
-  "-mouse_gpm",
-  "+mouse_netterm",
-#endif  // if defined(UNIX)
-
-
-#if defined(UNIX)
-  "+mouse_sgr",
-  "-mouse_sysmouse",
-  "+mouse_urxvt",
-  "+mouse_xterm",
-#endif  // if defined(UNIX)
-
-  "+multi_byte",
-  "+multi_lang",
-  "+path_extra",
-  "+persistent_undo",
-  "+postscript",
-  "+printer",
-  "+profile",
-  "+quickfix",
-  "+reltime",
-  "+rightleft",
-  "+scrollbind",
-  "+signs",
-  "+smartindent",
-  "+startuptime",
-  "+statusline",
-  "+syntax",
-  "+tag_binary",
-  "+tag_old_static",
-  "-tag_any_white",
-  "+termresponse",
-  "+textobjects",
-  "+title",
-  "-toolbar",
-  "+user_commands",
-  "+vertsplit",
-  "+virtualedit",
-  "+visual",
-  "+visualextra",
-  "+viminfo",
-  "+vreplace",
-  "+wildignore",
-  "+wildmenu",
-  "+windows",
-  "+writebackup",
-#if defined(UNIX)
-  "-X11",
-#endif  // if defined(UNIX)
-  "-xfontset",
-#if defined(UNIX)
-  "-xsmp",
-  "-xterm_clipboard",
-#endif  // if defined(UNIX)
   NULL
 };
 
@@ -926,6 +824,7 @@ static void list_features(void)
       }
     }
   }
+  MSG_PUTS("For differences from Vim, see :help vim-differences\n\n");
 }
 
 void list_version(void)
@@ -967,7 +866,7 @@ void list_version(void)
   }
 #endif  // ifdef HAVE_PATHDEF
 
-  version_msg(_("  Features included (+) or not (-):\n"));
+  version_msg(_("\n\nOptional features included (+) or not (-): "));
 
   list_features();
 
