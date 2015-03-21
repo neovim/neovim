@@ -504,12 +504,12 @@ bool os_fileid_equal_fileinfo(const FileID *file_id,
 }
 
 
-/// List contents of directory
+/// Open directory for listing contents
 ///
-/// @param scandir_req os_scandir request
+/// @param scandir_req scandir request
 /// @param directory_path Directory path to be listed
 /// @return The number of directory entries
-int os_scandir(uv_fs_t *scandir_req, const char *directory_path)
+int os_scandir_open(uv_fs_t *scandir_req, const char *directory_path)
   FUNC_ATTR_NONNULL_ALL
 {
   return uv_fs_scandir(uv_default_loop(), scandir_req, directory_path, 0, NULL);
@@ -524,14 +524,21 @@ bool os_scandir_next(uv_fs_t* scandir_req, char** directory_entry)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_dirent_t dent;
-  if (UV_EOF !=  uv_fs_scandir_next(scandir_req, &dent)){
-    *directory_entry = dent.name;
+  if (UV_EOF !=  uv_fs_scandir_next(scandir_req, &dent)) {
+    *directory_entry = (char*)dent.name;
     return true;
-  }
-  else{
+  } else {
     *directory_entry = NULL;
     return false;
   }
 }
 
-
+/// Free allocated memory. From libuv docs:
+/// "Must be called after a request is finished to deallocate
+///  any memory libuv might have allocated"
+///
+/// @param scandir_req scandir request to be freed
+void os_scandir_close(uv_fs_t *scandir_req)
+{
+  uv_fs_req_cleanup(scandir_req);
+}

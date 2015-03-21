@@ -539,7 +539,7 @@ unix_expandpath (
   *s = NUL;
   
   uv_fs_t scandir_req;
-  int number_of_results = os_scandir(&scandir_req, *buf == NUL ? "." : (char *)buf);
+  int number_of_results = os_scandir_open(&scandir_req, *buf == NUL ? "." : (char *)buf);
 
   /* Find all matching entries, if any results found */
   if (number_of_results > 0) {
@@ -582,7 +582,7 @@ unix_expandpath (
 
   }
 
-  uv_fs_req_cleanup(&scandir_req);
+  os_scandir_close(&scandir_req);
   free(buf);
   vim_regfree(regmatch.regprog);
 
