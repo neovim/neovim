@@ -319,7 +319,7 @@ static char msg_no_items[] = N_("No Syntax items defined for this buffer");
 #define ID_LIST_ALL     (short *)-1 /* valid of si_cont_list for containing all
                                        but contained groups */
 
-static int next_seqnr = 0;              /* value to use for si_seqnr */
+static int next_seqnr = 1;              /* value to use for si_seqnr */
 
 /*
  * The next possible match in the current line for any pattern is remembered,
