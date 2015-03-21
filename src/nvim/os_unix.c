@@ -82,7 +82,6 @@ int len               /* buffer size, only used when name gets longer */
 {
   char_u      *slash, *tail;
   DIR         *dirp;
-  struct dirent *dp;
 
   FileInfo file_info;
   if (os_fileinfo_link((char *)name, &file_info)) {
