@@ -59,7 +59,6 @@ set(CONV_SOURCES
   ex_docmd.c
   ex_getln.c
   fileio.c
-  fold.c
   getchar.c
   if_cscope.c
   mbyte.c

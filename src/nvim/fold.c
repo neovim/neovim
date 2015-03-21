@@ -114,9 +114,9 @@ static int prev_lnum_lvl = -1;
 #define DONE_ACTION     1       /* did close or open a fold */
 #define DONE_FOLD       2       /* did find a fold */
 
-static int foldstartmarkerlen;
+static size_t foldstartmarkerlen;
 static char_u *foldendmarker;
-static int foldendmarkerlen;
+static size_t foldendmarkerlen;
 
 /* Exported folding functions. {{{1 */
 /* copyFoldingState() {{{2 */
@@ -622,7 +622,7 @@ void foldCreate(linenr_T start, linenr_T end)
       if (end_rel < fp[cont - 1].fd_top + fp[cont - 1].fd_len - 1)
         end_rel = fp[cont - 1].fd_top + fp[cont - 1].fd_len - 1;
       /* Move contained folds to inside new fold. */
-      memmove(fold_ga.ga_data, fp, sizeof(fold_T) * cont);
+      memmove(fold_ga.ga_data, fp, sizeof(fold_T) * (size_t)cont);
       fold_ga.ga_len += cont;
       i += cont;
 
@@ -634,7 +634,7 @@ void foldCreate(linenr_T start, linenr_T end)
     /* Move remaining entries to after the new fold. */
     if (i < gap->ga_len)
       memmove(fp + 1, (fold_T *)gap->ga_data + i,
-          sizeof(fold_T) * (gap->ga_len - i));
+              sizeof(fold_T) * (size_t)(gap->ga_len - i));
     gap->ga_len = gap->ga_len + 1 - cont;
 
     /* insert new fold */
@@ -1051,7 +1051,7 @@ static int foldFind(garray_T *gap, linenr_T lnum, fold_T **fpp)
   low = 0;
   high = gap->ga_len - 1;
   while (low <= high) {
-    int i = (low + high) / 2;
+    linenr_T i = (low + high) / 2;
     if (fp[i].fd_top > lnum)
       /* fold below lnum, adjust high */
       high = i - 1;
@@ -1292,7 +1292,6 @@ static void deleteFoldEntry(garray_T *gap, int idx, int recursive)
 {
   fold_T      *fp;
   int i;
-  long moved;
   fold_T      *nfp;
 
   fp = (fold_T *)gap->ga_data + idx;
@@ -1301,12 +1300,12 @@ static void deleteFoldEntry(garray_T *gap, int idx, int recursive)
     deleteFoldRecurse(&fp->fd_nested);
     --gap->ga_len;
     if (idx < gap->ga_len)
-      memmove(fp, fp + 1, sizeof(fold_T) * (gap->ga_len - idx));
+      memmove(fp, fp + 1, sizeof(fold_T) * (size_t)(gap->ga_len - idx));
   } else {
     /* Move nested folds one level up, to overwrite the fold that is
      * deleted. */
-    moved = fp->fd_nested.ga_len;
-    ga_grow(gap, (int)(moved - 1));
+    int moved = fp->fd_nested.ga_len;
+    ga_grow(gap, moved - 1);
     {
       /* Get "fp" again, the array may have been reallocated. */
       fp = (fold_T *)gap->ga_data + idx;
@@ -1324,9 +1323,9 @@ static void deleteFoldEntry(garray_T *gap, int idx, int recursive)
       /* move the existing folds down to make room */
       if (idx + 1 < gap->ga_len)
         memmove(fp + moved, fp + 1,
-            sizeof(fold_T) * (gap->ga_len - (idx + 1)));
+                sizeof(fold_T) * (size_t)(gap->ga_len - (idx + 1)));
       /* move the contained folds one level up */
-      memmove(fp, nfp, (size_t)(sizeof(fold_T) * moved));
+      memmove(fp, nfp, sizeof(fold_T) * (size_t)moved);
       free(nfp);
       gap->ga_len += moved - 1;
     }
@@ -1584,17 +1583,16 @@ static void foldCreateMarkers(linenr_T start, linenr_T end)
 /*
  * Add "marker[markerlen]" in 'commentstring' to line "lnum".
  */
-static void foldAddMarker(linenr_T lnum, char_u *marker, int markerlen)
+static void foldAddMarker(linenr_T lnum, char_u *marker, size_t markerlen)
 {
   char_u      *cms = curbuf->b_p_cms;
   char_u      *line;
-  int line_len;
   char_u      *newline;
   char_u      *p = (char_u *)strstr((char *)curbuf->b_p_cms, "%s");
 
   /* Allocate a new line: old-line + 'cms'-start + marker + 'cms'-end */
   line = ml_get(lnum);
-  line_len = (int)STRLEN(line);
+  size_t line_len = STRLEN(line);
 
   if (u_save(lnum - 1, lnum + 1) == OK) {
     newline = xmalloc(line_len + markerlen + STRLEN(cms) + 1);
@@ -1629,8 +1627,8 @@ deleteFoldMarkers (
     }
   }
   foldDelMarker(fp->fd_top + lnum_off, curwin->w_p_fmr, foldstartmarkerlen);
-  foldDelMarker(fp->fd_top + lnum_off + fp->fd_len - 1,
-      foldendmarker, foldendmarkerlen);
+  foldDelMarker(fp->fd_top + lnum_off + fp->fd_len - 1, foldendmarker,
+                foldendmarkerlen);
 }
 
 /* foldDelMarker() {{{2 */
@@ -1640,7 +1638,7 @@ deleteFoldMarkers (
  * If the marker is not found, there is no error message.  Could a missing
  * close-marker.
  */
-static void foldDelMarker(linenr_T lnum, char_u *marker, int markerlen)
+static void foldDelMarker(linenr_T lnum, char_u *marker, size_t markerlen)
 {
   char_u      *newline;
   char_u      *cms = curbuf->b_p_cms;
@@ -1652,7 +1650,7 @@ static void foldDelMarker(linenr_T lnum, char_u *marker, int markerlen)
       continue;
     }
     /* Found the marker, include a digit if it's there. */
-    int len = markerlen;
+    size_t len = markerlen;
     if (VIM_ISDIGIT(p[len]))
       ++len;
     if (*cms != NUL) {
@@ -1662,7 +1660,7 @@ static void foldDelMarker(linenr_T lnum, char_u *marker, int markerlen)
           && STRNCMP(p - (cms2 - cms), cms, cms2 - cms) == 0
           && STRNCMP(p + len, cms2 + 2, STRLEN(cms2 + 2)) == 0) {
         p -= cms2 - cms;
-        len += (int)STRLEN(cms) - 2;
+        len += STRLEN(cms) - 2;
       }
     }
     if (u_save(lnum - 1, lnum + 1) == OK) {
@@ -1781,27 +1779,23 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
  */
 void foldtext_cleanup(char_u *str)
 {
-  char_u      *cms_start;       /* first part or the whole comment */
-  int cms_slen = 0;             /* length of cms_start */
-  char_u      *cms_end;         /* last part of the comment or NULL */
-  int cms_elen = 0;             /* length of cms_end */
   char_u      *s;
   char_u      *p;
-  int len;
   int did1 = FALSE;
   int did2 = FALSE;
 
   /* Ignore leading and trailing white space in 'commentstring'. */
-  cms_start = skipwhite(curbuf->b_p_cms);
-  cms_slen = (int)STRLEN(cms_start);
+  char_u *cms_start = skipwhite(curbuf->b_p_cms);
+  size_t cms_slen = STRLEN(cms_start);
   while (cms_slen > 0 && vim_iswhite(cms_start[cms_slen - 1]))
     --cms_slen;
 
   /* locate "%s" in 'commentstring', use the part before and after it. */
-  cms_end = (char_u *)strstr((char *)cms_start, "%s");
+  char_u *cms_end = (char_u *)strstr((char *)cms_start, "%s");
+  size_t cms_elen = 0;
   if (cms_end != NULL) {
-    cms_elen = cms_slen - (int)(cms_end - cms_start);
-    cms_slen = (int)(cms_end - cms_start);
+    cms_elen = cms_slen - (size_t)(cms_end - cms_start);
+    cms_slen = (size_t)(cms_end - cms_start);
 
     /* exclude white space before "%s" */
     while (cms_slen > 0 && vim_iswhite(cms_start[cms_slen - 1]))
@@ -1809,13 +1803,13 @@ void foldtext_cleanup(char_u *str)
 
     /* skip "%s" and white space after it */
     s = skipwhite(cms_end + 2);
-    cms_elen -= (int)(s - cms_end);
+    cms_elen -= (size_t)(s - cms_end);
     cms_end = s;
   }
   parseMarker(curwin);
 
   for (s = str; *s != NUL; ) {
-    len = 0;
+    size_t len = 0;
     if (STRNCMP(s, curwin->w_p_fmr, foldstartmarkerlen) == 0)
       len = foldstartmarkerlen;
     else if (STRNCMP(s, foldendmarker, foldendmarkerlen) == 0)
@@ -1830,7 +1824,7 @@ void foldtext_cleanup(char_u *str)
         ;
       if (p >= str + cms_slen
           && STRNCMP(p - cms_slen, cms_start, cms_slen) == 0) {
-        len += (int)(s - p) + cms_slen;
+        len += (size_t)(s - p) + cms_slen;
         s = p - cms_slen;
       }
     } else if (cms_end != NULL) {
@@ -2035,8 +2029,8 @@ static void foldUpdateIEMS(win_T *wp, linenr_T top, linenr_T bot)
     if (fline.lvl > 0) {
       invalid_top = fline.lnum;
       invalid_bot = end;
-      end = foldUpdateIEMSRecurse(&wp->w_folds,
-          1, start, &fline, getlevel, end, FD_LEVEL);
+      end = foldUpdateIEMSRecurse(&wp->w_folds, 1, start, &fline, getlevel, end,
+                                  FD_LEVEL);
       start = fline.lnum;
     } else {
       if (fline.lnum == wp->w_buffer->b_ml.ml_line_count)
@@ -2095,7 +2089,7 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
                                       linenr_T startlnum, fline_T *flp,
                                       LevelGetter getlevel,
                                       linenr_T bot,
-                                      int topflags /* flags used by containing fold */
+                                      char topflags /* containing fold flags */
                                       )
 {
   linenr_T ll;
@@ -2333,8 +2327,8 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
       flp->off += fp->fd_top;
       i = (int)(fp - (fold_T *)gap->ga_data);
       bot = foldUpdateIEMSRecurse(&fp->fd_nested, level + 1,
-          startlnum2 - fp->fd_top, flp, getlevel,
-          bot - fp->fd_top, fp->fd_flags);
+                                  startlnum2 - fp->fd_top, flp, getlevel,
+                                  bot - fp->fd_top, fp->fd_flags);
       fp = (fold_T *)gap->ga_data + i;
       flp->lnum += fp->fd_top;
       flp->lnum_save += fp->fd_top;
@@ -2468,7 +2462,7 @@ static void foldInsert(garray_T *gap, int i)
 
   fp = (fold_T *)gap->ga_data + i;
   if (i < gap->ga_len)
-    memmove(fp + 1, fp, sizeof(fold_T) * (gap->ga_len - i));
+    memmove(fp + 1, fp, sizeof(fold_T) * (size_t)(gap->ga_len - i));
   ++gap->ga_len;
   ga_init(&fp->fd_nested, (int)sizeof(fold_T), 10);
 }
@@ -2649,9 +2643,7 @@ static void foldlevelIndent(fline_T *flp)
   } else
     flp->lvl = get_indent_buf(buf, lnum) / get_sw_value(curbuf);
   if (flp->lvl > flp->wp->w_p_fdn) {
-    flp->lvl = flp->wp->w_p_fdn;
-    if (flp->lvl < 0)
-      flp->lvl = 0;
+    flp->lvl = (int) MAX(0, flp->wp->w_p_fdn);
   }
 }
 
@@ -2768,8 +2760,8 @@ static void foldlevelExpr(fline_T *flp)
 static void parseMarker(win_T *wp)
 {
   foldendmarker = vim_strchr(wp->w_p_fmr, ',');
-  foldstartmarkerlen = (int)(foldendmarker++ - wp->w_p_fmr);
-  foldendmarkerlen = (int)STRLEN(foldendmarker);
+  foldstartmarkerlen = (size_t)(foldendmarker++ - wp->w_p_fmr);
+  foldendmarkerlen = STRLEN(foldendmarker);
 }
 
 /* foldlevelMarker() {{{2 */
@@ -2822,9 +2814,8 @@ static void foldlevelMarker(fline_T *flp)
         ++flp->lvl_next;
         ++flp->start;
       }
-    } else if (*s == cend
-               && STRNCMP(s + 1, foldendmarker + 1,
-                   foldendmarkerlen - 1) == 0) {
+    } else if (*s == cend && STRNCMP(s + 1, foldendmarker + 1,
+                                     foldendmarkerlen - 1) == 0) {
       /* found endmarker: set flp->lvl_next */
       s += foldendmarkerlen;
       if (VIM_ISDIGIT(*s)) {

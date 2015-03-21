@@ -796,7 +796,7 @@ open_line (
       ) {
     ++curwin->w_cursor.lnum;
     if (did_si) {
-      int sw = (int)get_sw_value(curbuf);
+      int sw = get_sw_value(curbuf);
 
       if (p_sr)
         newindent -= newindent % sw;

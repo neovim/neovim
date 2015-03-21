@@ -1784,7 +1784,7 @@ getexmodeline (
       }
 
       if (c1 == Ctrl_T) {
-        long sw = get_sw_value(curbuf);
+        int sw = get_sw_value(curbuf);
 
         p = (char_u *)line_ga.ga_data;
         p[line_ga.ga_len] = NUL;

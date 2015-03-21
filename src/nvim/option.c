@@ -7653,18 +7653,22 @@ int check_ff_value(char_u *p)
  * Return the effective shiftwidth value for current buffer, using the
  * 'tabstop' value when 'shiftwidth' is zero.
  */
-long get_sw_value(buf_T *buf)
+int get_sw_value(buf_T *buf)
 {
-  return buf->b_p_sw ? buf->b_p_sw : buf->b_p_ts;
+  long result = buf->b_p_sw ? buf->b_p_sw : buf->b_p_ts;
+  assert(result >= 0 && result <= INT_MAX);
+  return (int)result;
 }
 
 /*
  * Return the effective softtabstop value for the current buffer, using the
  * 'tabstop' value when 'softtabstop' is negative.
  */
-long get_sts_value(void)
+int get_sts_value(void)
 {
-  return curbuf->b_p_sts < 0 ? get_sw_value(curbuf) : curbuf->b_p_sts;
+  long result = curbuf->b_p_sts < 0 ? get_sw_value(curbuf) : curbuf->b_p_sts;
+  assert(result >= 0 && result <= INT_MAX);
+  return (int)result;
 }
 
 /*
