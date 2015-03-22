@@ -20,6 +20,7 @@
 
 #include <uv.h>
 
+#include "nvim/func_attr.h"
 #include "nvim/os/job.h"
 #include "nvim/os/job_defs.h"
 #include "nvim/os/job_private.h"
@@ -37,9 +38,10 @@ typedef struct {
   int tty_fd;
 } PtyProcess;
 
-void pty_process_init(Job *job)
+void pty_process_init(Job *job) FUNC_ATTR_NONNULL_ALL
 {
   PtyProcess *ptyproc = xmalloc(sizeof(PtyProcess));
+  ptyproc->tty_fd = -1;
 
   if (job->opts.writable) {
     uv_pipe_init(uv_default_loop(), &ptyproc->proc_stdin, 0);
@@ -62,14 +64,35 @@ void pty_process_init(Job *job)
   job->process = ptyproc;
 }
 
-void pty_process_destroy(Job *job)
+void pty_process_destroy(Job *job) FUNC_ATTR_NONNULL_ALL
 {
   free(job->opts.term_name);
   free(job->process);
   job->process = NULL;
 }
 
-bool pty_process_spawn(Job *job)
+static bool set_pipe_duplicating_descriptor(int fd, uv_pipe_t *pipe)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int fd_dup = dup(fd);
+  if (fd_dup < 0) {
+    ELOG("Failed to dup descriptor %d: %s", fd, strerror(errno));
+    return false;
+  }
+  int uv_result = uv_pipe_open(pipe, fd_dup);
+  if (uv_result) {
+    ELOG("Failed to set pipe to descriptor %d: %s",
+         fd_dup, uv_strerror(uv_result));
+    close(fd_dup);
+    return false;
+  }
+  return true;
+}
+
+static const unsigned int KILL_RETRIES = 5;
+static const unsigned int KILL_TIMEOUT = 2;  // seconds
+
+bool pty_process_spawn(Job *job) FUNC_ATTR_NONNULL_ALL
 {
   int master;
   PtyProcess *ptyproc = job->process;
@@ -88,18 +111,29 @@ bool pty_process_spawn(Job *job)
   }
 
   // make sure the master file descriptor is non blocking
-  fcntl(master, F_SETFL, fcntl(master, F_GETFL) | O_NONBLOCK);
-
-  if (job->opts.writable) {
-    uv_pipe_open(&ptyproc->proc_stdin, dup(master));
+  int master_status_flags = fcntl(master, F_GETFL);
+  if (master_status_flags == -1) {
+    ELOG("Failed to get master descriptor status flags: %s", strerror(errno));
+    goto error;
+  }
+  if (fcntl(master, F_SETFL, master_status_flags | O_NONBLOCK) == -1) {
+    ELOG("Failed to make master descriptor non-blocking: %s", strerror(errno));
+    goto error;
   }
 
-  if (job->opts.stdout_cb) {
-    uv_pipe_open(&ptyproc->proc_stdout, dup(master));
+  if (job->opts.writable
+      && !set_pipe_duplicating_descriptor(master, &ptyproc->proc_stdin)) {
+    goto error;
   }
 
-  if (job->opts.stderr_cb) {
-    uv_pipe_open(&ptyproc->proc_stderr, dup(master));
+  if (job->opts.stdout_cb
+      && !set_pipe_duplicating_descriptor(master, &ptyproc->proc_stdout)) {
+    goto error;
+  }
+
+  if (job->opts.stderr_cb
+      && !set_pipe_duplicating_descriptor(master, &ptyproc->proc_stderr)) {
+    goto error;
   }
 
   uv_signal_init(uv_default_loop(), &ptyproc->schld);
@@ -108,25 +142,52 @@ bool pty_process_spawn(Job *job)
   ptyproc->tty_fd = master;
   job->pid = pid;
   return true;
+
+error:
+  close(master);
+
+  // terminate spawned process
+  kill(pid, SIGTERM);
+  int status, child;
+  unsigned int try = 0;
+  while (try++ < KILL_RETRIES && !(child = waitpid(pid, &status, WNOHANG))) {
+    sleep(KILL_TIMEOUT);
+  }
+  if (child != pid) {
+    kill(pid, SIGKILL);
+  }
+
+  return false;
 }
 
-void pty_process_close(Job *job)
+void pty_process_close(Job *job) FUNC_ATTR_NONNULL_ALL
 {
   PtyProcess *ptyproc = job->process;
   uv_signal_stop(&ptyproc->schld);
   uv_close((uv_handle_t *)&ptyproc->schld, NULL);
+  pty_process_close_master(job);
   job_close_streams(job);
   job_decref(job);
 }
 
+void pty_process_close_master(Job *job) FUNC_ATTR_NONNULL_ALL
+{
+  PtyProcess *ptyproc = job->process;
+  if (ptyproc->tty_fd >= 0) {
+    close(ptyproc->tty_fd);
+    ptyproc->tty_fd = -1;
+  }
+}
+
 void pty_process_resize(Job *job, uint16_t width, uint16_t height)
+  FUNC_ATTR_NONNULL_ALL
 {
   PtyProcess *ptyproc = job->process;
   ptyproc->winsize = (struct winsize){height, width, 0, 0};
   ioctl(ptyproc->tty_fd, TIOCSWINSZ, &ptyproc->winsize);
 }
 
-static void init_child(Job *job)
+static void init_child(Job *job) FUNC_ATTR_NONNULL_ALL
 {
   unsetenv("COLUMNS");
   unsetenv("LINES");
@@ -146,7 +207,7 @@ static void init_child(Job *job)
   fprintf(stderr, "execvp failed: %s\n", strerror(errno));
 }
 
-static void chld_handler(uv_signal_t *handle, int signum)
+static void chld_handler(uv_signal_t *handle, int signum) FUNC_ATTR_NONNULL_ALL
 {
   Job *job = handle->data;
   int stat = 0;
@@ -171,7 +232,7 @@ static void chld_handler(uv_signal_t *handle, int signum)
   pty_process_close(job);
 }
 
-static void init_termios(struct termios *termios)
+static void init_termios(struct termios *termios) FUNC_ATTR_NONNULL_ALL
 {
   memset(termios, 0, sizeof(struct termios));
   // Taken from pangoterm

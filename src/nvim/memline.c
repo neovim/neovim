@@ -54,6 +54,7 @@
 #include "nvim/cursor.h"
 #include "nvim/eval.h"
 #include "nvim/fileio.h"
+#include "nvim/func_attr.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
@@ -628,6 +629,15 @@ static int ml_check_b0_id(ZERO_BL *b0p)
       )
     return FAIL;
   return OK;
+}
+
+/// Return true if all strings in b0 are correct (nul-terminated).
+static bool ml_check_b0_strings(ZERO_BL *b0p) FUNC_ATTR_NONNULL_ALL
+{
+  return (memchr(b0p->b0_version, NUL, 10)
+          && memchr(b0p->b0_uname, NUL, B0_UNAME_SIZE)
+          && memchr(b0p->b0_hname, NUL, B0_HNAME_SIZE)
+          && memchr(b0p->b0_fname, NUL, B0_FNAME_SIZE_CRYPT));
 }
 
 /*
@@ -1522,6 +1532,8 @@ static time_t swapfile_info(char_u *fname)
         MSG_PUTS(_("         [from Vim version 3.0]"));
       } else if (ml_check_b0_id(&b0) == FAIL) {
         MSG_PUTS(_("         [does not look like a Vim swap file]"));
+      } else if (!ml_check_b0_strings(&b0)) {
+        MSG_PUTS(_("         [garbled strings (not nul terminated)]"));
       } else {
         MSG_PUTS(_("         file name: "));
         if (b0.b0_fname[0] == NUL)
