@@ -20,6 +20,7 @@
 
 #include <uv.h>
 
+#include "nvim/func_attr.h"
 #include "nvim/os/job.h"
 #include "nvim/os/job_defs.h"
 #include "nvim/os/job_private.h"
@@ -37,7 +38,7 @@ typedef struct {
   int tty_fd;
 } PtyProcess;
 
-void pty_process_init(Job *job)
+void pty_process_init(Job *job) FUNC_ATTR_NONNULL_ALL
 {
   PtyProcess *ptyproc = xmalloc(sizeof(PtyProcess));
   ptyproc->tty_fd = -1;
@@ -63,7 +64,7 @@ void pty_process_init(Job *job)
   job->process = ptyproc;
 }
 
-void pty_process_destroy(Job *job)
+void pty_process_destroy(Job *job) FUNC_ATTR_NONNULL_ALL
 {
   free(job->opts.term_name);
   free(job->process);
@@ -71,6 +72,7 @@ void pty_process_destroy(Job *job)
 }
 
 static bool set_pipe_duplicating_descriptor(int fd, uv_pipe_t *pipe)
+  FUNC_ATTR_NONNULL_ALL
 {
   int fd_dup = dup(fd);
   if (fd_dup < 0) {
@@ -90,7 +92,7 @@ static bool set_pipe_duplicating_descriptor(int fd, uv_pipe_t *pipe)
 static const unsigned int KILL_RETRIES = 5;
 static const unsigned int KILL_TIMEOUT = 2;  // seconds
 
-bool pty_process_spawn(Job *job)
+bool pty_process_spawn(Job *job) FUNC_ATTR_NONNULL_ALL
 {
   int master;
   PtyProcess *ptyproc = job->process;
@@ -158,7 +160,7 @@ error:
   return false;
 }
 
-void pty_process_close(Job *job)
+void pty_process_close(Job *job) FUNC_ATTR_NONNULL_ALL
 {
   PtyProcess *ptyproc = job->process;
   uv_signal_stop(&ptyproc->schld);
@@ -168,7 +170,7 @@ void pty_process_close(Job *job)
   job_decref(job);
 }
 
-void pty_process_close_master(Job *job)
+void pty_process_close_master(Job *job) FUNC_ATTR_NONNULL_ALL
 {
   PtyProcess *ptyproc = job->process;
   if (ptyproc->tty_fd >= 0) {
@@ -178,13 +180,14 @@ void pty_process_close_master(Job *job)
 }
 
 void pty_process_resize(Job *job, uint16_t width, uint16_t height)
+  FUNC_ATTR_NONNULL_ALL
 {
   PtyProcess *ptyproc = job->process;
   ptyproc->winsize = (struct winsize){height, width, 0, 0};
   ioctl(ptyproc->tty_fd, TIOCSWINSZ, &ptyproc->winsize);
 }
 
-static void init_child(Job *job)
+static void init_child(Job *job) FUNC_ATTR_NONNULL_ALL
 {
   unsetenv("COLUMNS");
   unsetenv("LINES");
@@ -204,7 +207,7 @@ static void init_child(Job *job)
   fprintf(stderr, "execvp failed: %s\n", strerror(errno));
 }
 
-static void chld_handler(uv_signal_t *handle, int signum)
+static void chld_handler(uv_signal_t *handle, int signum) FUNC_ATTR_NONNULL_ALL
 {
   Job *job = handle->data;
   int stat = 0;
@@ -229,7 +232,7 @@ static void chld_handler(uv_signal_t *handle, int signum)
   pty_process_close(job);
 }
 
-static void init_termios(struct termios *termios)
+static void init_termios(struct termios *termios) FUNC_ATTR_NONNULL_ALL
 {
   memset(termios, 0, sizeof(struct termios));
   // Taken from pangoterm
