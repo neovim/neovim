@@ -456,6 +456,24 @@ end
 function Screen:snapshot_util(attrs, ignore)
   -- util to generate screen test
   pcall(function() self:wait(function() return "error" end, 250) end)
+  self:print_snapshot(attrs, ignore)
+end
+
+function Screen:redraw_debug(attrs, ignore)
+  self:print_snapshot(attrs, ignore)
+  local function notification_cb(method, args)
+    assert(method == 'redraw')
+    for _, update in ipairs(args) do
+      print(require('inspect')(update))
+    end
+    self:_redraw(args)
+    self:print_snapshot(attrs, ignore)
+    return true
+  end
+  run(nil, notification_cb, nil, 250)
+end
+
+function Screen:print_snapshot(attrs, ignore)
   if ignore == nil then
     ignore = self._default_attr_ignore
   end
