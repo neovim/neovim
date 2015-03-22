@@ -27,7 +27,6 @@ SCRIPTS := test_autoformat_join.out                                    \
            test76.out              test78.out  test79.out  test80.out  \
                        test82.out  test83.out                          \
            test86.out  test87.out  test88.out                          \
-           test96.out                                                  \
            test_listlbr.out                                            \
            test_breakindent.out
 
