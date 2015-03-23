@@ -450,16 +450,6 @@ char_u *vim_strrchr(const char_u *string, int c)
 }
 
 /*
- * Vim has its own isspace() function, because on some machines isspace()
- * can't handle characters above 128.
- */
-bool vim_isspace(int x)
-  FUNC_ATTR_CONST
-{
-  return (x >= 9 && x <= 13) || x == ' ';
-}
-
-/*
  * Sort an array of strings.
  */
 

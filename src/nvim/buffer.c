@@ -4075,7 +4075,7 @@ chk_modeline (
 
   prev = -1;
   for (s = ml_get(lnum); *s != NUL; ++s) {
-    if (prev == -1 || vim_isspace(prev)) {
+    if (prev == -1 || isspace(prev)) {
       if ((prev != -1 && STRNCMP(s, "ex:", (size_t)3) == 0)
           || STRNCMP(s, "vi:", (size_t)3) == 0)
         break;
