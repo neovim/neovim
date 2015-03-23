@@ -4620,7 +4620,7 @@ int get_list_range(char_u **str, int *num1, int *num2)
   long num;
 
   *str = skipwhite(*str);
-  if (**str == '-' || vim_isdigit(**str)) {  /* parse "from" part of range */
+  if (**str == '-' || isdigit(**str)) {  /* parse "from" part of range */
     vim_str2nr(*str, NULL, &len, FALSE, FALSE, &num, NULL);
     *str += len;
     *num1 = (int)num;

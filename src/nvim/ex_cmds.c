@@ -1858,7 +1858,7 @@ viminfo_readstring (
   char_u      *retval;
   char_u      *s, *d;
 
-  if (virp->vir_line[off] == Ctrl_V && vim_isdigit(virp->vir_line[off + 1])) {
+  if (virp->vir_line[off] == Ctrl_V && isdigit(virp->vir_line[off + 1])) {
     ssize_t len = atol((char *)virp->vir_line + off + 1);
     retval = xmalloc(len);
     // TODO(philix): change type of vim_fgets() size argument to size_t

@@ -1474,19 +1474,6 @@ char_u* skiptohex(char_u *q)
   return p;
 }
 
-/// Variant of isdigit() that can handle characters > 0x100.
-/// We don't use isdigit() here, because on some systems it also considers
-/// superscript 1 to be a digit.
-/// Use the isdigit() macro for simple arguments.
-///
-/// @param c
-///
-/// @return TRUE if the character is a digit.
-int vim_isdigit(int c)
-{
-  return c >= '0' && c <= '9';
-}
-
 /// Variant of isxdigit() that can handle characters > 0x100.
 /// We don't use isxdigit() here, because on some systems it also considers
 /// superscript 1 to be a digit.

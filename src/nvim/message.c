@@ -3643,8 +3643,8 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
                 fmt_spec == 'e' ? 'e' : 'E');
             if (tp != NULL && (tp[1] == '+' || tp[1] == '-')
                 && tp[2] == '0'
-                && vim_isdigit(tp[3])
-                && vim_isdigit(tp[4])) {
+                && isdigit(tp[3])
+                && isdigit(tp[4])) {
               STRMOVE(tp + 2, tp + 3);
               --str_arg_l;
             }

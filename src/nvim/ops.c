@@ -4291,12 +4291,12 @@ int do_addsub(int command, linenr_T Prenum1)
     col = curwin->w_cursor.col;
 
     while (ptr[col] != NUL
-           && !vim_isdigit(ptr[col])
+           && !isdigit(ptr[col])
            && !(doalp && ASCII_ISALPHA(ptr[col])))
       ++col;
 
     while (col > 0
-           && vim_isdigit(ptr[col - 1])
+           && isdigit(ptr[col - 1])
            && !(doalp && ASCII_ISALPHA(ptr[col])))
       --col;
   }

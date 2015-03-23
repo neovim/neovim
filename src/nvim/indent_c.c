@@ -82,7 +82,7 @@ static char_u *skip_string(char_u *p)
       i = 2;
       if (p[1] == '\\') {                   /* '\n' or '\000' */
         ++i;
-        while (vim_isdigit(p[i - 1]))           /* '\000' */
+        while (isdigit(p[i - 1]))           /* '\000' */
           ++i;
       }
       if (p[i] == '\'') {                   /* check for trailing ' */

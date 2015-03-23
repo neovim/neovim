@@ -570,7 +570,7 @@ void ex_breakdel(exarg_T *eap)
     gap = &prof_ga;
   }
 
-  if (vim_isdigit(*eap->arg)) {
+  if (isdigit(*eap->arg)) {
     /* ":breakdel {nr}" */
     nr = atol((char *)eap->arg);
     for (int i = 0; i < gap->ga_len; ++i)

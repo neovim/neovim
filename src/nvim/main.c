@@ -806,9 +806,9 @@ void getout(int exitval)
 /// @return argument's numeric value otherwise
 static int get_number_arg(const char *p, int *idx, int def)
 {
-  if (vim_isdigit(p[*idx])) {
+  if (isdigit(p[*idx])) {
     def = atoi(&(p[*idx]));
-    while (vim_isdigit(p[*idx])) {
+    while (isdigit(p[*idx])) {
       *idx = *idx + 1;
     }
   }
@@ -1098,7 +1098,7 @@ static void command_line_scan(mparm_T *parmp)
 
         case 'w':                 /* "-w{number}"	set window height */
           /* "-w {scriptout}"	write to script */
-          if (vim_isdigit(((char_u *)argv[0])[argv_idx])) {
+          if (isdigit(((char_u *)argv[0])[argv_idx])) {
             n = get_number_arg(argv[0], &argv_idx, 10);
             set_option_value((char_u *)"window", n, NULL, 0);
             break;
@@ -1242,7 +1242,7 @@ scripterror:
 
           case 'w':               /* "-w {nr}" 'window' value */
             /* "-w {scriptout}" append to script file */
-            if (vim_isdigit(*((char_u *)argv[0]))) {
+            if (isdigit(*((char_u *)argv[0]))) {
               argv_idx = 0;
               n = get_number_arg(argv[0], &argv_idx, 10);
               set_option_value((char_u *)"window", n, NULL, 0);
