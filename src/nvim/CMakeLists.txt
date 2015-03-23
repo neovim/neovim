@@ -66,7 +66,6 @@ set(CONV_SOURCES
   menu.c
   message.c
   misc1.c
-  move.c
   normal.c
   ops.c
   path.c

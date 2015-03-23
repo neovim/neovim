@@ -16,6 +16,7 @@
  * The 'scrolloff' option makes this a bit complicated.
  */
 
+#include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
 
@@ -135,13 +136,13 @@ void update_topline(void)
 {
   long line_count;
   int halfheight;
-  int n;
+  long n;
   linenr_T old_topline;
   int old_topfill;
   linenr_T lnum;
   int check_topline = FALSE;
   int check_botline = FALSE;
-  int save_so = p_so;
+  long save_so = p_so;
 
   if (!screen_valid(TRUE))
     return;
@@ -342,9 +343,9 @@ void update_topline_win(win_T* win)
  */
 static int scrolljump_value(void)
 {
-  if (p_sj >= 0)
-    return (int)p_sj;
-  return (curwin->w_height * -p_sj) / 100;
+  long result = p_sj >= 0 ? p_sj : (curwin->w_height * -p_sj) / 100;
+  assert(result <= INT_MAX);
+  return (int)result;
 }
 
 /*
@@ -711,7 +712,7 @@ int win_col_off(win_T *wp)
 {
   return ((wp->w_p_nu || wp->w_p_rnu) ? number_width(wp) + 1 : 0)
          + (cmdwin_type == 0 || wp != curwin ? 0 : 1)
-         + wp->w_p_fdc
+         + (int)wp->w_p_fdc
          + (wp->w_buffer->b_signlist != NULL ? 2 : 0)
   ;
 }
@@ -831,9 +832,9 @@ curs_columns (
      * If we get closer to the edge than 'sidescrolloff', scroll a little
      * extra
      */
-    off_left = (int)startcol - (int)curwin->w_leftcol - p_siso;
-    off_right = (int)endcol - (int)(curwin->w_leftcol + curwin->w_width
-                                    - p_siso) + 1;
+    assert(p_siso <= INT_MAX);
+    off_left = startcol - curwin->w_leftcol - (int)p_siso;
+    off_right = endcol - curwin->w_leftcol - curwin->w_width + (int)p_siso + 1;
     if (off_left < 0 || off_right > 0) {
       if (off_left < 0)
         diff = -off_left;
@@ -845,8 +846,10 @@ curs_columns (
       if (p_ss == 0 || diff >= textwidth / 2 || off_right >= off_left)
         new_leftcol = curwin->w_wcol - extra - textwidth / 2;
       else {
-        if (diff < p_ss)
-          diff = p_ss;
+        if (diff < p_ss) {
+          assert(p_ss <= INT_MAX);
+          diff = (int)p_ss;
+        }
         if (off_left < 0)
           new_leftcol = curwin->w_leftcol - diff;
         else
@@ -902,8 +905,10 @@ curs_columns (
     if (p_lines == 0)
       p_lines = plines_win(curwin, curwin->w_cursor.lnum, FALSE);
     --p_lines;
-    if (p_lines > curwin->w_wrow + p_so)
-      n = curwin->w_wrow + p_so;
+    if (p_lines > curwin->w_wrow + p_so) {
+      assert(p_so <= INT_MAX);
+      n = curwin->w_wrow + (int)p_so;
+    }
     else
       n = p_lines;
     if ((colnr_T)n >= curwin->w_height + curwin->w_skipcol / width)
@@ -922,7 +927,8 @@ curs_columns (
       curwin->w_skipcol = n * width;
     } else if (extra == 1) {
       /* less then 'scrolloff' lines above, decrease skipcol */
-      extra = (curwin->w_skipcol + p_so * width - curwin->w_virtcol
+      assert(p_so <= INT_MAX);
+      extra = (curwin->w_skipcol + (int)p_so * width - curwin->w_virtcol
                + width - 1) / width;
       if (extra > 0) {
         if ((colnr_T)(extra * width) > curwin->w_skipcol)
@@ -974,7 +980,7 @@ scrolldown (
     int byfold              /* TRUE: count a closed fold as one line */
 )
 {
-  long done = 0;                /* total # of physical lines done */
+  int done = 0;                /* total # of physical lines done */
   int wrow;
   int moved = FALSE;
 
@@ -1331,7 +1337,8 @@ void scroll_cursor_top(int min_scroll, int always)
   linenr_T old_topline = curwin->w_topline;
   linenr_T old_topfill = curwin->w_topfill;
   linenr_T new_topline;
-  int off = p_so;
+  assert(p_so <= INT_MAX);
+  int off = (int)p_so;
 
   if (mouse_dragging > 0)
     off = mouse_dragging - 1;
@@ -1472,7 +1479,7 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
   int old_topfill = curwin->w_topfill;
   int fill_below_window;
   linenr_T old_botline = curwin->w_botline;
-  linenr_T old_valid = curwin->w_valid;
+  int old_valid = curwin->w_valid;
   int old_empty_rows = curwin->w_empty_rows;
   linenr_T cln;                     /* Cursor Line Number */
 
@@ -1708,8 +1715,9 @@ void cursor_correct(void)
    * How many lines we would like to have above/below the cursor depends on
    * whether the first/last line of the file is on screen.
    */
-  above_wanted = p_so;
-  below_wanted = p_so;
+  assert(p_so <= INT_MAX);
+  above_wanted = (int)p_so;
+  below_wanted = (int)p_so;
   if (mouse_dragging > 0) {
     above_wanted = mouse_dragging - 1;
     below_wanted = mouse_dragging - 1;
@@ -2040,14 +2048,14 @@ void halfpage(bool flag, linenr_T Prenum)
 {
   long scrolled = 0;
   int i;
-  int n;
   int room;
 
   if (Prenum)
     curwin->w_p_scr = (Prenum > curwin->w_height) ?
                       curwin->w_height : Prenum;
-  n = (curwin->w_p_scr <= curwin->w_height) ?
-      curwin->w_p_scr : curwin->w_height;
+  assert(curwin->w_p_scr <= INT_MAX);
+  int n = curwin->w_p_scr <= curwin->w_height ? (int)curwin->w_p_scr
+                                              : curwin->w_height;
 
   validate_botline();
   room = curwin->w_empty_rows;
