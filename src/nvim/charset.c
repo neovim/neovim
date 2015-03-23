@@ -1437,7 +1437,7 @@ char_u* skipdigits(char_u *q)
 char_u* skiphex(char_u *q)
 {
   char_u *p = q;
-  while (vim_isxdigit(*p)) {
+  while (isxdigit(*p)) {
     // skip to next non-digit
     p++;
   }
@@ -1467,25 +1467,11 @@ char_u* skiptodigit(char_u *q)
 char_u* skiptohex(char_u *q)
 {
   char_u *p = q;
-  while (*p != NUL && !vim_isxdigit(*p)) {
+  while (*p != NUL && !isxdigit(*p)) {
     // skip to next digit
     p++;
   }
   return p;
-}
-
-/// Variant of isxdigit() that can handle characters > 0x100.
-/// We don't use isxdigit() here, because on some systems it also considers
-/// superscript 1 to be a digit.
-///
-/// @param c
-///
-/// @return TRUE if the character is a digit.
-int vim_isxdigit(int c)
-{
-  return (c >= '0' && c <= '9')
-         || (c >= 'a' && c <= 'f')
-         || (c >= 'A' && c <= 'F');
 }
 
 // Vim's own character class functions.  These exist because many library
@@ -1750,7 +1736,7 @@ void vim_str2nr(char_u *start, int *hexp, int *len, int dooct, int dohex,
 
     if (dohex
         && ((hex == 'X') || (hex == 'x'))
-        && vim_isxdigit(ptr[2])) {
+        && isxdigit(ptr[2])) {
       // hexadecimal
       ptr += 2;
     } else {
@@ -1784,7 +1770,7 @@ void vim_str2nr(char_u *start, int *hexp, int *len, int dooct, int dohex,
     }
   } else if ((hex != 0) || (dohex > 1)) {
     // hex
-    while (vim_isxdigit(*ptr)) {
+    while (isxdigit(*ptr)) {
       un = 16 * un + (unsigned long)hex2nr(*ptr);
       ptr++;
     }
