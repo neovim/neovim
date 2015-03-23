@@ -4559,7 +4559,7 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
       case 'x':
       case 'u':           /* Unicode: "\u0023" */
       case 'U':
-        if (vim_isxdigit(p[1])) {
+        if (isxdigit(p[1])) {
           int n, nr;
           int c = toupper(*p);
 
@@ -4568,7 +4568,7 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
           else
             n = 4;
           nr = 0;
-          while (--n >= 0 && vim_isxdigit(p[1])) {
+          while (--n >= 0 && isxdigit(p[1])) {
             ++p;
             nr = (nr << 4) + hex2nr(*p);
           }
