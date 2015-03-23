@@ -524,7 +524,7 @@ open_line (
         for (p = lead_flags; *p != NUL && *p != ':'; ) {
           if (*p == COM_RIGHT || *p == COM_LEFT)
             c = *p++;
-          else if (VIM_ISDIGIT(*p) || *p == '-')
+          else if (isdigit(*p) || *p == '-')
             off = getdigits_int(&p);
           else
             ++p;
@@ -2465,7 +2465,7 @@ get_number (
   for (;; ) {
     ui_cursor_goto(msg_row, msg_col);
     c = safe_vgetc();
-    if (VIM_ISDIGIT(c)) {
+    if (isdigit(c)) {
       n = n * 10 + c - '0';
       msg_putchar(c);
       ++typed;

@@ -601,7 +601,7 @@ find_special_key (
      */
     if (bp >= last_dash) {
       if (STRNICMP(last_dash + 1, "char-", 5) == 0
-          && VIM_ISDIGIT(last_dash[6])) {
+          && isdigit(last_dash[6])) {
         /* <Char-123> or <Char-033> or <Char-0x33> */
         vim_str2nr(last_dash + 6, NULL, NULL, TRUE, TRUE, NULL, &n);
         key = (int)n;
@@ -788,7 +788,7 @@ char_u * replace_termcodes (
   src = from;
 
   // Check for #n at start only: function key n
-  if (from_part && src[0] == '#' && VIM_ISDIGIT(src[1])) {  // function key
+  if (from_part && src[0] == '#' && isdigit(src[1])) {  // function key
     result[dlen++] = K_SPECIAL;
     result[dlen++] = 'k';
     if (src[1] == '0') {

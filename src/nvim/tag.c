@@ -2652,7 +2652,7 @@ static int find_extra(char_u **pp)
 
   /* Repeat for addresses separated with ';' */
   for (;; ) {
-    if (VIM_ISDIGIT(*str))
+    if (isdigit(*str))
       str = skipdigits(str);
     else if (*str == '/' || *str == '?') {
       str = skip_regexp(str + 1, *str, FALSE, NULL);
@@ -2663,7 +2663,7 @@ static int find_extra(char_u **pp)
     } else
       str = NULL;
     if (str == NULL || *str != ';'
-        || !(VIM_ISDIGIT(str[1]) || str[1] == '/' || str[1] == '?'))
+        || !(isdigit(str[1]) || str[1] == '/' || str[1] == '?'))
       break;
     ++str;      /* skip ';' */
   }

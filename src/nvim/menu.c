@@ -115,7 +115,7 @@ ex_menu (
    * Fill in the priority table.
    */
   for (p = arg; *p; ++p)
-    if (!VIM_ISDIGIT(*p) && *p != '.')
+    if (!isdigit(*p) && *p != '.')
       break;
   if (isblank(*p)) {
     for (i = 0; i < MENUDEPTH && !isblank(*arg); ++i) {
@@ -837,7 +837,7 @@ char_u *set_context_in_menu_cmd(expand_T *xp, char_u *cmd, char_u *arg, int forc
 
   /* Check for priority numbers, enable and disable */
   for (p = arg; *p; ++p)
-    if (!VIM_ISDIGIT(*p) && *p != '.')
+    if (!isdigit(*p) && *p != '.')
       break;
 
   if (!isblank(*p)) {

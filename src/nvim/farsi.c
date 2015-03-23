@@ -892,7 +892,7 @@ int fkmap(int c)
     return c;
   }
 
-  if (VIM_ISDIGIT(c)
+  if (isdigit(c)
       || (((c == '.')
            || (c == '+')
            || (c == '-')

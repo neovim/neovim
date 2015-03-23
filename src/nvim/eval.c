@@ -1305,7 +1305,7 @@ int eval_foldexpr(char_u *arg, int *cp)
       /* If the result is a string, check if there is a non-digit before
        * the number. */
       s = tv.vval.v_string;
-      if (!VIM_ISDIGIT(*s) && *s != '-')
+      if (!isdigit(*s) && *s != '-')
         *cp = *s++;
       retval = atol((char *)s);
     }
@@ -8939,7 +8939,7 @@ static void f_function(typval_T *argvars, typval_T *rettv)
   char_u      *s;
 
   s = get_tv_string(&argvars[0]);
-  if (s == NULL || *s == NUL || VIM_ISDIGIT(*s))
+  if (s == NULL || *s == NUL || isdigit(*s))
     EMSG2(_(e_invarg2), s);
   /* Don't check an autoload name for existence here. */
   else if (vim_strchr(s, AUTOLOAD_CHAR) == NULL && !function_exists(s))
@@ -13577,7 +13577,7 @@ static void f_setreg(typval_T *argvars, typval_T *rettv)
         break;
       case 'b': case Ctrl_V:            /* block-wise selection */
         yank_type = MBLOCK;
-        if (VIM_ISDIGIT(stropt[1])) {
+        if (isdigit(stropt[1])) {
           ++stropt;
           block_len = getdigits_long(&stropt) - 1;
           --stropt;
@@ -17160,7 +17160,7 @@ static int valid_varname(char_u *varname)
   char_u *p;
 
   for (p = varname; *p != NUL; ++p)
-    if (!eval_isnamec1(*p) && (p == varname || !VIM_ISDIGIT(*p))
+    if (!eval_isnamec1(*p) && (p == varname || !isdigit(*p))
         && *p != AUTOLOAD_CHAR) {
       EMSG2(_(e_illvar), varname);
       return FALSE;

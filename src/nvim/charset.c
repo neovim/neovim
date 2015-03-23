@@ -177,7 +177,7 @@ int buf_init_chartab(buf_T *buf, int global)
         ++p;
       }
 
-      if (VIM_ISDIGIT(*p)) {
+      if (isdigit(*p)) {
         c = getdigits_int(&p);
       } else if (has_mbyte) {
         c = mb_ptr2char_adv(&p);
@@ -189,7 +189,7 @@ int buf_init_chartab(buf_T *buf, int global)
       if ((*p == '-') && (p[1] != NUL)) {
         ++p;
 
-        if (VIM_ISDIGIT(*p)) {
+        if (isdigit(*p)) {
           c2 = getdigits_int(&p);
         } else if (has_mbyte) {
           c2 = mb_ptr2char_adv(&p);
@@ -1422,7 +1422,7 @@ char_u* skipwhite(char_u *q)
 char_u* skipdigits(char_u *q)
 {
   char_u *p = q;
-  while (VIM_ISDIGIT(*p)) {
+  while (isdigit(*p)) {
     // skip to next non-digit
     p++;
   }
@@ -1453,7 +1453,7 @@ char_u* skiphex(char_u *q)
 char_u* skiptodigit(char_u *q)
 {
   char_u *p = q;
-  while (*p != NUL && !VIM_ISDIGIT(*p)) {
+  while (*p != NUL && !isdigit(*p)) {
     // skip to next digit
     p++;
   }
@@ -1478,7 +1478,7 @@ char_u* skiptohex(char_u *q)
 /// Variant of isdigit() that can handle characters > 0x100.
 /// We don't use isdigit() here, because on some systems it also considers
 /// superscript 1 to be a digit.
-/// Use the VIM_ISDIGIT() macro for simple arguments.
+/// Use the isdigit() macro for simple arguments.
 ///
 /// @param c
 ///
@@ -1773,7 +1773,7 @@ void vim_str2nr(char_u *start, int *hexp, int *len, int dooct, int dohex,
 
       if (dooct) {
         // Don't interpret "0", "08" or "0129" as octal.
-        for (n = 1; VIM_ISDIGIT(ptr[n]); ++n) {
+        for (n = 1; isdigit(ptr[n]); ++n) {
           if (ptr[n] > '7') {
             // can't be octal
             hex = 0;
@@ -1804,7 +1804,7 @@ void vim_str2nr(char_u *start, int *hexp, int *len, int dooct, int dohex,
     }
   } else {
     // decimal
-    while (VIM_ISDIGIT(*ptr)) {
+    while (isdigit(*ptr)) {
       un = 10 * un + (unsigned long)(*ptr - '0');
       ptr++;
     }
