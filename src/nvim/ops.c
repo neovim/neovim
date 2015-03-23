@@ -3935,7 +3935,7 @@ format_lines (
         /* put cursor on last non-space */
         State = NORMAL;         /* don't go past end-of-line */
         coladvance((colnr_T)MAXCOL);
-        while (curwin->w_cursor.col && vim_isspace(gchar_cursor()))
+        while (curwin->w_cursor.col && isspace(gchar_cursor()))
           dec_cursor();
 
         /* do the formatting, without 'showmode' */
@@ -5044,11 +5044,11 @@ static long line_count_info(char_u *line, long *wc, long *cc, long limit, int eo
 
   for (i = 0; i < limit && line[i] != NUL; ) {
     if (is_word) {
-      if (vim_isspace(line[i])) {
+      if (isspace(line[i])) {
         words++;
         is_word = 0;
       }
-    } else if (!vim_isspace(line[i]))
+    } else if (!isspace(line[i]))
       is_word = 1;
     ++chars;
     i += (*mb_ptr2len)(line + i);

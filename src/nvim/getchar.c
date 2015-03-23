@@ -3568,7 +3568,7 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
     clen = 1;
     while (p > ptr + mincol) {
       p = mb_prevptr(ptr, p);
-      if (vim_isspace(*p) || (!vim_abbr && is_id != vim_iswordp(p))) {
+      if (isspace(*p) || (!vim_abbr && is_id != vim_iswordp(p))) {
         p += (*mb_ptr2len)(p);
         break;
       }
@@ -3583,7 +3583,7 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
       if (col > 1)
         is_id = vim_iswordc(ptr[col - 2]);
     }
-    for (scol = col - 1; scol > 0 && !vim_isspace(ptr[scol - 1])
+    for (scol = col - 1; scol > 0 && !isspace(ptr[scol - 1])
          && (vim_abbr || is_id == vim_iswordc(ptr[scol - 1])); --scol)
       ;
   }
