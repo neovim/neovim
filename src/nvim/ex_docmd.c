@@ -1260,7 +1260,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       continue;
 
     case 't':   if (checkforcmd(&p, "tab", 3)) {
-        if (vim_isdigit(*ea.cmd))
+        if (isdigit(*ea.cmd))
           cmdmod.tab = atoi((char *)ea.cmd) + 1;
         else
           cmdmod.tab = tabpage_index(curtab) + 1;
@@ -1287,7 +1287,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
         break;
       if (verbose_save < 0)
         verbose_save = p_verbose;
-      if (vim_isdigit(*ea.cmd))
+      if (isdigit(*ea.cmd))
         p_verbose = atoi((char *)ea.cmd);
       else
         p_verbose = 1;
@@ -2173,7 +2173,7 @@ find_ucmd (
       k = 0;
       while (k < len && *np != NUL && *cp++ == *np++)
         k++;
-      if (k == len || (*np == NUL && vim_isdigit(eap->cmd[k]))) {
+      if (k == len || (*np == NUL && isdigit(eap->cmd[k]))) {
         /* If finding a second match, the command is ambiguous.  But
          * not if a buffer-local command wasn't a full match and a
          * global command is a full match. */
@@ -2319,7 +2319,7 @@ int cmd_exists(char_u *name)
   p = find_command(&ea, &full);
   if (p == NULL)
     return 3;
-  if (vim_isdigit(*name) && ea.cmdidx != CMD_match)
+  if (isdigit(*name) && ea.cmdidx != CMD_match)
     return 0;
   if (*skipwhite(p) != NUL)
     return 0;           /* trailing garbage */
@@ -6884,7 +6884,7 @@ static void ex_mkrc(exarg_T *eap)
   /* ":mkview" or ":mkview 9": generate file name with 'viewdir' */
   if (eap->cmdidx == CMD_mkview
       && (*eap->arg == NUL
-          || (vim_isdigit(*eap->arg) && eap->arg[1] == NUL))) {
+          || (isdigit(*eap->arg) && eap->arg[1] == NUL))) {
     eap->forceit = TRUE;
     fname = get_view_file(*eap->arg);
     if (fname == NULL)
@@ -7301,7 +7301,7 @@ static void ex_findpat(exarg_T *eap)
   }
 
   n = 1;
-  if (vim_isdigit(*eap->arg)) { /* get count */
+  if (isdigit(*eap->arg)) { /* get count */
     n = getdigits_long(&eap->arg);
     eap->arg = skipwhite(eap->arg);
   }

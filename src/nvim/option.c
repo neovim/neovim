@@ -3935,12 +3935,12 @@ did_set_string_option (
           ;
       } else if (*s == '%') {
         /* optional number */
-        while (vim_isdigit(*++s))
+        while (isdigit(*++s))
           ;
       } else if (*s == '!' || *s == 'h' || *s == 'c')
         ++s;                    /* no extra chars */
       else {                    /* must have a number */
-        while (vim_isdigit(*++s))
+        while (isdigit(*++s))
           ;
 
         if (!isdigit(*(s - 1))) {

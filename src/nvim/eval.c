@@ -2762,7 +2762,7 @@ void ex_lockvar(exarg_T *eap)
 
   if (eap->forceit)
     deep = -1;
-  else if (vim_isdigit(*arg)) {
+  else if (isdigit(*arg)) {
     deep = getdigits_int(&arg);
     arg = skipwhite(arg);
   }
@@ -4013,14 +4013,14 @@ eval7 (
      * strict to avoid backwards compatibility problems.
      * Don't look for a float after the "." operator, so that
      * ":let vers = 1.2.3" doesn't fail. */
-    if (!want_string && p[0] == '.' && vim_isdigit(p[1])) {
+    if (!want_string && p[0] == '.' && isdigit(p[1])) {
       get_float = TRUE;
       p = skipdigits(p + 2);
       if (*p == 'e' || *p == 'E') {
         ++p;
         if (*p == '-' || *p == '+')
           ++p;
-        if (!vim_isdigit(*p))
+        if (!isdigit(*p))
           get_float = FALSE;
         else
           p = skipdigits(p + 1);
@@ -10019,9 +10019,9 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     if (STRNICMP(name, "patch", 5) == 0) {
       if (name[5] == '-'
           && STRLEN(name) > 11
-          && vim_isdigit(name[6])
-          && vim_isdigit(name[8])
-          && vim_isdigit(name[10])) {
+          && isdigit(name[6])
+          && isdigit(name[8])
+          && isdigit(name[10])) {
         int major = atoi((char *)name + 6);
         int minor = atoi((char *)name + 8);
 

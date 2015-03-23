@@ -3087,7 +3087,7 @@ static int read_limits(long *minval, long *maxval)
   first_char = regparse;
   *minval = getdigits_long(&regparse);
   if (*regparse == ',') {           /* There is a comma */
-    if (vim_isdigit(*++regparse))
+    if (isdigit(*++regparse))
       *maxval = getdigits_long(&regparse);
     else
       *maxval = MAX_LIMIT;
