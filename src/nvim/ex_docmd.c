@@ -1251,7 +1251,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       if (save_msg_silent == -1)
         save_msg_silent = msg_silent;
       ++msg_silent;
-      if (*ea.cmd == '!' && !vim_iswhite(ea.cmd[-1])) {
+      if (*ea.cmd == '!' && !isblank(ea.cmd[-1])) {
         /* ":silent!", but not "silent !cmd" */
         ea.cmd = skipwhite(ea.cmd + 1);
         ++emsg_silent;
@@ -1727,7 +1727,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
    */
   if ((ea.argt & COUNT) && VIM_ISDIGIT(*ea.arg)
       && (!(ea.argt & BUFNAME) || *(p = skipdigits(ea.arg)) == NUL
-          || vim_iswhite(*p))) {
+          || isblank(*p))) {
     n = getdigits_long(&ea.arg);
     ea.arg = skipwhite(ea.arg);
     if (n <= 0 && !ni && (ea.argt & ZEROR) == 0) {
@@ -1880,7 +1880,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       p = skiptowhite_esc(ea.arg);
     else {
       p = ea.arg + STRLEN(ea.arg);
-      while (p > ea.arg && vim_iswhite(p[-1]))
+      while (p > ea.arg && isblank(p[-1]))
         --p;
     }
     ea.line2 = buflist_findpat(ea.arg, p, (ea.argt & BUFUNL) != 0,
@@ -2582,7 +2582,7 @@ set_one_cmd_context (
       else if (c == '|'
             || c == '\n'
             || c == '"'
-            || vim_iswhite(c)) {
+            || isblank(c)) {
         len = 0;          /* avoid getting stuck when space is in 'isfname' */
         while (*p != NUL) {
           if (has_mbyte)
@@ -3568,7 +3568,7 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
         /* skip escaped characters */
         if (p[1] && (*p == '\\' || *p == Ctrl_V))
           ++p;
-        else if (vim_iswhite(*p)) {
+        else if (isblank(*p)) {
           *errormsgp = (char_u *)_("E172: Only one file name allowed");
           return FAIL;
         }
@@ -4499,7 +4499,7 @@ static void ex_command(exarg_T *eap)
   if (ASCII_ISALPHA(*p))
     while (ASCII_ISALNUM(*p))
       ++p;
-  if (!ends_excmd(*p) && !vim_iswhite(*p)) {
+  if (!ends_excmd(*p) && !isblank(*p)) {
     EMSG(_("E182: Invalid command name"));
     return;
   }
@@ -4602,13 +4602,13 @@ static char_u *uc_split_args(char_u *arg, size_t *lenp)
     if (p[0] == '\\' && p[1] == '\\') {
       len += 2;
       p += 2;
-    } else if (p[0] == '\\' && vim_iswhite(p[1])) {
+    } else if (p[0] == '\\' && isblank(p[1])) {
       len += 1;
       p += 2;
     } else if (*p == '\\' || *p == '"') {
       len += 2;
       p += 1;
-    } else if (vim_iswhite(*p)) {
+    } else if (isblank(*p)) {
       p = skipwhite(p);
       if (*p == NUL)
         break;
@@ -4630,13 +4630,13 @@ static char_u *uc_split_args(char_u *arg, size_t *lenp)
       *q++ = '\\';
       *q++ = '\\';
       p += 2;
-    } else if (p[0] == '\\' && vim_iswhite(p[1])) {
+    } else if (p[0] == '\\' && isblank(p[1])) {
       *q++ = p[1];
       p += 2;
     } else if (*p == '\\' || *p == '"') {
       *q++ = '\\';
       *q++ = *p++;
-    } else if (vim_iswhite(*p)) {
+    } else if (isblank(*p)) {
       p = skipwhite(p);
       if (*p == NUL)
         break;
@@ -8808,7 +8808,7 @@ static void ex_match(exarg_T *eap)
   if (ends_excmd(*eap->arg))
     end = eap->arg;
   else if ((STRNICMP(eap->arg, "none", 4) == 0
-            && (vim_iswhite(eap->arg[4]) || ends_excmd(eap->arg[4]))))
+            && (isblank(eap->arg[4]) || ends_excmd(eap->arg[4]))))
     end = eap->arg + 4;
   else {
     p = skiptowhite(eap->arg);

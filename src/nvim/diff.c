@@ -1590,7 +1590,7 @@ static int diff_cmp(char_u *s1, char_u *s2)
   char_u *p2 = s2;
 
   while (*p1 != NUL && *p2 != NUL) {
-    if (vim_iswhite(*p1) && vim_iswhite(*p2)) {
+    if (isblank(*p1) && isblank(*p2)) {
       p1 = skipwhite(p1);
       p2 = skipwhite(p2);
     } else {
@@ -1897,8 +1897,8 @@ int diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
 
       while (line_org[si_org] != NUL) {
         if ((diff_flags & DIFF_IWHITE)
-            && vim_iswhite(line_org[si_org])
-            && vim_iswhite(line_new[si_new])) {
+            && isblank(line_org[si_org])
+            && isblank(line_new[si_new])) {
           si_org = (int)(skipwhite(line_org + si_org) - line_org);
           si_new = (int)(skipwhite(line_new + si_new) - line_new);
         } else {
@@ -1931,13 +1931,13 @@ int diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
                && ei_org >= 0
                && ei_new >= 0) {
           if ((diff_flags & DIFF_IWHITE)
-              && vim_iswhite(line_org[ei_org])
-              && vim_iswhite(line_new[ei_new])) {
-            while (ei_org >= *startp && vim_iswhite(line_org[ei_org])) {
+              && isblank(line_org[ei_org])
+              && isblank(line_new[ei_new])) {
+            while (ei_org >= *startp && isblank(line_org[ei_org])) {
               ei_org--;
             }
 
-            while (ei_new >= si_new && vim_iswhite(line_new[ei_new])) {
+            while (ei_new >= si_new && isblank(line_new[ei_new])) {
               ei_new--;
             }
           } else {
@@ -2108,7 +2108,7 @@ void ex_diffgetput(exarg_T *eap)
   } else {
     // Buffer number or pattern given. Ignore trailing white space.
     p = eap->arg + STRLEN(eap->arg);
-    while (p > eap->arg && vim_iswhite(p[-1])) {
+    while (p > eap->arg && isblank(p[-1])) {
       p--;
     }
 

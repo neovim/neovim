@@ -5512,12 +5512,12 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_WHITE:           /*  \s	*/
-        result = vim_iswhite(curc);
+        result = isblank(curc);
         ADD_STATE_IF_MATCH(t->state);
         break;
 
       case NFA_NWHITE:          /*  \S	*/
-        result = curc != NUL && !vim_iswhite(curc);
+        result = curc != NUL && !isblank(curc);
         ADD_STATE_IF_MATCH(t->state);
         break;
 

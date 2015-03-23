@@ -2457,7 +2457,7 @@ do_set (
       afterchar = arg[len];
 
       /* skip white space, allow ":set ai  ?" */
-      while (vim_iswhite(arg[len]))
+      while (isblank(arg[len]))
         ++len;
 
       adding = FALSE;
@@ -2545,7 +2545,7 @@ do_set (
           }
         }
         if (vim_strchr((char_u *)"?!&<", nextchar) != NULL
-            && arg[1] != NUL && !vim_iswhite(arg[1])) {
+            && arg[1] != NUL && !isblank(arg[1])) {
           errmsg = e_trailing;
           goto skip;
         }
@@ -2586,7 +2586,7 @@ do_set (
           goto skip;
         }
         if (nextchar != '?'
-            && nextchar != NUL && !vim_iswhite(afterchar))
+            && nextchar != NUL && !isblank(afterchar))
           errmsg = e_trailing;
       } else {
         if (flags & P_BOOL) {                       /* boolean */
@@ -2619,7 +2619,7 @@ do_set (
              * ":set invopt": invert
              * ":set opt" or ":set noopt": set or reset
              */
-            if (nextchar != NUL && !vim_iswhite(afterchar)) {
+            if (nextchar != NUL && !isblank(afterchar)) {
               errmsg = e_trailing;
               goto skip;
             }
@@ -2666,7 +2666,7 @@ do_set (
                         || (long *)varp == &p_wcm)
                        && (*arg == '<'
                            || *arg == '^'
-                           || ((!arg[1] || vim_iswhite(arg[1]))
+                           || ((!arg[1] || isblank(arg[1]))
                                && !VIM_ISDIGIT(*arg)))) {
               value = string_to_key(arg);
               if (value == 0 && (long *)varp != &p_wcm) {
@@ -2684,7 +2684,7 @@ do_set (
                 i += 2;
               while (VIM_ISDIGIT(arg[i]))
                 ++i;
-              if (arg[i] != NUL && !vim_iswhite(arg[i])) {
+              if (arg[i] != NUL && !isblank(arg[i])) {
                 errmsg = e_invarg;
                 goto skip;
               }
@@ -2844,7 +2844,7 @@ do_set (
                * do remove it for "\\\\machine\\path".
                * The reverse is found in ExpandOldSetting().
                */
-              while (*arg && !vim_iswhite(*arg)) {
+              while (*arg && !isblank(*arg)) {
                 if (*arg == '\\' && arg[1] != NUL
 #ifdef BACKSLASH_IN_FILENAME
                     && !((flags & P_EXPAND)
@@ -3000,7 +3000,7 @@ skip:
        * - skip one "=val" argument (for hidden options ":set gfn =xx")
        */
       for (i = 0; i < 2; ++i) {
-        while (*arg != NUL && !vim_iswhite(*arg))
+        while (*arg != NUL && !isblank(*arg))
           if (*arg++ == '\\' && *arg != NUL)
             ++arg;
         arg = skipwhite(arg);
