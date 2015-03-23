@@ -1642,7 +1642,7 @@ static char_u *list_arg_vars(exarg_T *eap, char_u *arg, int *first)
   while (!ends_excmd(*arg) && !got_int) {
     if (error || eap->skip) {
       arg = find_name_end(arg, NULL, NULL, FNE_INCL_BR | FNE_CHECK_START);
-      if (!vim_iswhite(*arg) && !ends_excmd(*arg)) {
+      if (!isblank(*arg) && !ends_excmd(*arg)) {
         emsg_severe = TRUE;
         EMSG(_(e_trailing));
         break;
@@ -1951,7 +1951,7 @@ get_lval (
   p = find_name_end(name, &expr_start, &expr_end, fne_flags);
   if (expr_start != NULL) {
     /* Don't expand the name when we already know there is an error. */
-    if (unlet && !vim_iswhite(*p) && !ends_excmd(*p)
+    if (unlet && !isblank(*p) && !ends_excmd(*p)
         && *p != '[' && *p != '.') {
       EMSG(_(e_trailing));
       return NULL;
@@ -2484,7 +2484,7 @@ void *eval_for_line(char_u *arg, int *errp, char_u **nextcmdp, int skip)
     return fi;
 
   expr = skipwhite(expr);
-  if (expr[0] != 'i' || expr[1] != 'n' || !vim_iswhite(expr[2])) {
+  if (expr[0] != 'i' || expr[1] != 'n' || !isblank(expr[2])) {
     EMSG(_("E690: Missing \"in\" after :for"));
     return fi;
   }
@@ -2564,7 +2564,7 @@ void set_context_for_expression(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
       for (p = arg + STRLEN(arg); p >= arg; ) {
         xp->xp_pattern = p;
         mb_ptr_back(arg, p);
-        if (vim_iswhite(*p))
+        if (isblank(*p))
           break;
       }
       return;
@@ -2786,7 +2786,7 @@ static void ex_unletlock(exarg_T *eap, char_u *argstart, int deep)
         FNE_CHECK_START);
     if (lv.ll_name == NULL)
       error = TRUE;                 /* error but continue parsing */
-    if (name_end == NULL || (!vim_iswhite(*name_end)
+    if (name_end == NULL || (!isblank(*name_end)
                              && !ends_excmd(*name_end))) {
       if (name_end != NULL) {
         emsg_severe = TRUE;
@@ -16415,7 +16415,7 @@ handle_subscript (
          && (**arg == '['
              || (**arg == '.' && rettv->v_type == VAR_DICT)
              || (**arg == '(' && (!evaluate || rettv->v_type == VAR_FUNC)))
-         && !vim_iswhite(*(*arg - 1))) {
+         && !isblank(*(*arg - 1))) {
     if (**arg == '(') {
       /* need to copy the funcref so that we can clear rettv */
       if (evaluate) {
@@ -17842,7 +17842,7 @@ void ex_function(exarg_T *eap)
       }
     } else {
       /* skip ':' and blanks*/
-      for (p = theline; vim_iswhite(*p) || *p == ':'; ++p)
+      for (p = theline; isblank(*p) || *p == ':'; ++p)
         ;
 
       /* Check for "endfunction". */

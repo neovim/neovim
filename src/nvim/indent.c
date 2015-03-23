@@ -118,7 +118,7 @@ int set_indent(int size, int flags)
       ind_done = 0;
 
       // Count as many characters as we can use.
-      while (todo > 0 && vim_iswhite(*p)) {
+      while (todo > 0 && isblank(*p)) {
         if (*p == TAB) {
           tab_pad = (int)curbuf->b_p_ts - (ind_done % (int)curbuf->b_p_ts);
 
@@ -183,7 +183,7 @@ int set_indent(int size, int flags)
   }
 
   // Return if the indent is OK already.
-  if (!doit && !vim_iswhite(*p) && !(flags & SIN_INSERT)) {
+  if (!doit && !isblank(*p) && !(flags & SIN_INSERT)) {
     return false;
   }
 
@@ -216,7 +216,7 @@ int set_indent(int size, int flags)
 
     // Skip over any additional white space (useful when newindent is less
     // than old).
-    while (vim_iswhite(*p)) {
+    while (isblank(*p)) {
       p++;
     }
   } else {
@@ -235,7 +235,7 @@ int set_indent(int size, int flags)
       p = oldline;
       ind_done = 0;
 
-      while (todo > 0 && vim_iswhite(*p)) {
+      while (todo > 0 && isblank(*p)) {
         if (*p == TAB) {
           tab_pad = (int)curbuf->b_p_ts - (ind_done % (int)curbuf->b_p_ts);
 
@@ -328,7 +328,7 @@ int copy_indent(int size, char_u *src)
     s = src;
 
     // Count/copy the usable portion of the source line.
-    while (todo > 0 && vim_iswhite(*s)) {
+    while (todo > 0 && isblank(*s)) {
       if (*s == TAB) {
         tab_pad = (int)curbuf->b_p_ts
                   - (ind_done % (int)curbuf->b_p_ts);
@@ -502,7 +502,7 @@ int inindent(int extra)
   char_u      *ptr;
   colnr_T col;
 
-  for (col = 0, ptr = get_cursor_line_ptr(); vim_iswhite(*ptr); ++col) {
+  for (col = 0, ptr = get_cursor_line_ptr(); isblank(*ptr); ++col) {
     ptr++;
   }
 
@@ -688,7 +688,7 @@ int get_lisp_indent(void)
           amount++;
           firsttry = amount;
 
-          while (vim_iswhite(*that)) {
+          while (isblank(*that)) {
             amount += lbr_chartabsize(line, that, (colnr_T)amount);
             that++;
           }
@@ -706,7 +706,7 @@ int get_lisp_indent(void)
 
             if (vi_lisp || ((*that != '"') && (*that != '\'')
                 && (*that != '#') && ((*that < '0') || (*that > '9')))) {
-              while (*that && (!vim_iswhite(*that) || quotecount || parencount)
+              while (*that && (!isblank(*that) || quotecount || parencount)
                      && (!((*that == '(' || *that == '[')
                      && !quotecount && !parencount && vi_lisp))) {
                 if (*that == '"') {
@@ -726,7 +726,7 @@ int get_lisp_indent(void)
               }
             }
 
-            while (vim_iswhite(*that)) {
+            while (isblank(*that)) {
               amount += lbr_chartabsize(line, that, (colnr_T)amount);
               that++;
             }

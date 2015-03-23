@@ -2401,7 +2401,7 @@ win_line (
   /* find start of trailing whitespace */
   if (wp->w_p_list && lcs_trail) {
     trailcol = (colnr_T)STRLEN(ptr);
-    while (trailcol > (colnr_T)0 && vim_iswhite(ptr[trailcol - 1]))
+    while (trailcol > (colnr_T)0 && isblank(ptr[trailcol - 1]))
       --trailcol;
     trailcol += (colnr_T) (ptr - line);
     extra_check = TRUE;
@@ -3319,7 +3319,7 @@ win_line (
                       - vcol % (int)wp->w_buffer->b_p_ts - 1;
           }
           c_extra = ' ';
-          if (vim_iswhite(c)) {
+          if (isblank(c)) {
             if (c == TAB)
               /* See "Tab alignment" below. */
               FIX_FOR_BOGUSCOLS;

@@ -352,7 +352,7 @@ static void shift_block(oparg_T *oap, int amount)
       else
         ++bd.textstart;
     }
-    for (; vim_iswhite(*bd.textstart); ) {
+    for (; isblank(*bd.textstart); ) {
       // TODO: is passing bd.textstart for start of the line OK?
       incr = lbr_chartabsize_adv(bd.textstart, &bd.textstart, (colnr_T)(bd.start_vcol));
       total += incr;
@@ -408,7 +408,7 @@ static void shift_block(oparg_T *oap, int amount)
     /* The character's column is in "bd.start_vcol".  */
     non_white_col = bd.start_vcol;
 
-    while (vim_iswhite(*non_white)) {
+    while (isblank(*non_white)) {
       incr = lbr_chartabsize_adv(bd.textstart, &non_white, non_white_col);
       non_white_col += incr;
     }
@@ -3647,15 +3647,15 @@ static int same_leader(linenr_T lnum, int leader1_len, char_u *leader1_flags, in
    * The first line has to be saved, only one line can be locked at a time.
    */
   line1 = vim_strsave(ml_get(lnum));
-  for (idx1 = 0; vim_iswhite(line1[idx1]); ++idx1)
+  for (idx1 = 0; isblank(line1[idx1]); ++idx1)
     ;
   line2 = ml_get(lnum + 1);
   for (idx2 = 0; idx2 < leader2_len; ++idx2) {
-    if (!vim_iswhite(line2[idx2])) {
+    if (!isblank(line2[idx2])) {
       if (line1[idx1++] != line2[idx2])
         break;
     } else
-      while (vim_iswhite(line1[idx1]))
+      while (isblank(line1[idx1]))
         ++idx1;
   }
   free(line1);
@@ -4009,14 +4009,11 @@ format_lines (
 static int ends_in_white(linenr_T lnum)
 {
   char_u      *s = ml_get(lnum);
-  size_t l;
 
   if (*s == NUL)
     return FALSE;
-  /* Don't use STRLEN() inside vim_iswhite(), SAS/C complains: "macro
-   * invocation may call function multiple times". */
-  l = STRLEN(s) - 1;
-  return vim_iswhite(s[l]);
+  size_t len = STRLEN(s) - 1;
+  return isblank(s[len]);
 }
 
 /*
@@ -4137,7 +4134,7 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, int i
     /* Count a tab for what it's worth (if list mode not on) */
     incr = lbr_chartabsize(line, pstart, (colnr_T)bdp->start_vcol);
     bdp->start_vcol += incr;
-    if (vim_iswhite(*pstart)) {
+    if (isblank(*pstart)) {
       bdp->pre_whitesp += incr;
       bdp->pre_whitesp_c++;
     } else {

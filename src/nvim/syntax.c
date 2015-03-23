@@ -1973,7 +1973,7 @@ syn_current_attr (
       if (!found_match) {
         line = syn_getcurline();
         if (((current_next_flags & HL_SKIPWHITE)
-             && vim_iswhite(line[current_col]))
+             && isblank(line[current_col]))
             || ((current_next_flags & HL_SKIPEMPTY)
                 && *line == NUL))
           break;
@@ -3941,7 +3941,7 @@ get_syn_options (
       for (i = 0, len = 0; p[i] != NUL; i += 2, ++len)
         if (arg[len] != p[i] && arg[len] != p[i + 1])
           break;
-      if (p[i] == NUL && (vim_iswhite(arg[len])
+      if (p[i] == NUL && (isblank(arg[len])
                           || (flagtab[fidx].argtype > 0
                               ? arg[len] == '='
                               : ends_excmd(arg[len])))) {
@@ -4161,7 +4161,7 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
       if (rest == NULL || ends_excmd(*rest))
         break;
       /* Copy the keyword, removing backslashes, and add a NUL. */
-      while (*rest != NUL && !vim_iswhite(*rest)) {
+      while (*rest != NUL && !isblank(*rest)) {
         if (*rest == '\\' && rest[1] != NUL)
           ++rest;
         *p++ = *rest++;
@@ -4386,7 +4386,7 @@ syn_cmd_region (
 
     /* must be a pattern or matchgroup then */
     key_end = rest;
-    while (*key_end && !vim_iswhite(*key_end) && *key_end != '=')
+    while (*key_end && !isblank(*key_end) && *key_end != '=')
       ++key_end;
     free(key);
     key = vim_strnsave_up(rest, (int)(key_end - rest));
@@ -4791,15 +4791,15 @@ static void syn_cmd_cluster(exarg_T *eap, int syncing)
 
     for (;; ) {
       if (STRNICMP(rest, "add", 3) == 0
-          && (vim_iswhite(rest[3]) || rest[3] == '=')) {
+          && (isblank(rest[3]) || rest[3] == '=')) {
         opt_len = 3;
         list_op = CLUSTER_ADD;
       } else if (STRNICMP(rest, "remove", 6) == 0
-                 && (vim_iswhite(rest[6]) || rest[6] == '=')) {
+                 && (isblank(rest[6]) || rest[6] == '=')) {
         opt_len = 6;
         list_op = CLUSTER_SUBTRACT;
       } else if (STRNICMP(rest, "contains", 8) == 0
-                 && (vim_iswhite(rest[8]) || rest[8] == '=')) {
+                 && (isblank(rest[8]) || rest[8] == '=')) {
         opt_len = 8;
         list_op = CLUSTER_REPLACE;
       } else
@@ -4916,7 +4916,7 @@ static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
     }
   } while (idx >= 0);
 
-  if (!ends_excmd(*end) && !vim_iswhite(*end)) {
+  if (!ends_excmd(*end) && !isblank(*end)) {
     EMSG2(_("E402: Garbage after pattern: %s"), arg);
     return NULL;
   }
@@ -5098,7 +5098,7 @@ get_id_list (
      */
     count = 0;
     do {
-      for (end = p; *end && !vim_iswhite(*end) && *end != ','; ++end)
+      for (end = p; *end && !isblank(*end) && *end != ','; ++end)
         ;
       name = xmalloc((int)(end - p + 3));             /* leave room for "^$" */
       STRLCPY(name + 1, p, end - p + 1);
@@ -6232,7 +6232,7 @@ do_highlight (
        * Isolate the key ("term", "ctermfg", "ctermbg", "font", "guifg" or
        * "guibg").
        */
-      while (*linep && !vim_iswhite(*linep) && *linep != '=')
+      while (*linep && !isblank(*linep) && *linep != '=')
         ++linep;
       free(key);
       key = vim_strnsave_up(key_start, (int)(linep - key_start));
@@ -7228,7 +7228,7 @@ int highlight_changed(void)
       attr = 0;
       bool colon = false;
       for (; *p && *p != ','; ++p) {                /* parse upto comma */
-        if (vim_iswhite(*p))                        /* ignore white space */
+        if (isblank(*p))                        /* ignore white space */
           continue;
 
         if (colon)          /* Combination with ':' is not allowed. */

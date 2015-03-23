@@ -2816,7 +2816,7 @@ int get_tags(list_T *list, char_u *pat)
           else if (STRNCMP(p, "file:", 5) == 0)
             /* skip "file:" (static tag) */
             p += 4;
-          else if (!vim_iswhite(*p)) {
+          else if (!isblank(*p)) {
             char_u  *s, *n;
             int len;
 

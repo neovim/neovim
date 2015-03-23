@@ -1407,7 +1407,7 @@ void getvcols(win_T *wp, pos_T *pos1, pos_T *pos2, colnr_T *left,
 char_u* skipwhite(char_u *q)
 {
   char_u *p = q;
-  while (vim_iswhite(*p)) {
+  while (isblank(*p)) {
     // skip to next non-white
     p++;
   }

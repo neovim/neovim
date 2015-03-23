@@ -1808,7 +1808,7 @@ static void qf_fmt_text(char_u *text, char_u *buf, int bufsize)
     if (*p == '\n') {
       buf[i] = ' ';
       while (*++p != NUL)
-        if (!vim_iswhite(*p) && *p != '\n')
+        if (!isblank(*p) && *p != '\n')
           break;
     } else
       buf[i] = *p++;
