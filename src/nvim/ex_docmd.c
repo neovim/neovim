@@ -1157,7 +1157,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
      * 2. handle command modifiers.
      */
     p = ea.cmd;
-    if (VIM_ISDIGIT(*ea.cmd))
+    if (isdigit(*ea.cmd))
       p = skipwhite(skipdigits(ea.cmd));
     switch (*p) {
     /* When adding an entry, also modify cmd_exists(). */
@@ -1703,7 +1703,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
              && *ea.arg != NUL
              /* Do not allow register = for user commands */
              && (!IS_USER_CMDIDX(ea.cmdidx) || *ea.arg != '=')
-             && !((ea.argt & COUNT) && VIM_ISDIGIT(*ea.arg))) {
+             && !((ea.argt & COUNT) && isdigit(*ea.arg))) {
     /* check these explicitly for a more specific error message */
     if (*ea.arg == '*' || *ea.arg == '+') {
       errormsg = (char_u *)_(e_invalidreg);
@@ -1725,7 +1725,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
    * Check for a count.  When accepting a BUFNAME, don't use "123foo" as a
    * count, it's a buffer name.
    */
-  if ((ea.argt & COUNT) && VIM_ISDIGIT(*ea.arg)
+  if ((ea.argt & COUNT) && isdigit(*ea.arg)
       && (!(ea.argt & BUFNAME) || *(p = skipdigits(ea.arg)) == NUL
           || isblank(*p))) {
     n = getdigits_long(&ea.arg);
@@ -2277,7 +2277,7 @@ int modifier_len(char_u *cmd)
   int i, j;
   char_u      *p = cmd;
 
-  if (VIM_ISDIGIT(*cmd))
+  if (isdigit(*cmd))
     p = skipwhite(skipdigits(cmd));
   for (i = 0; i < (int)ARRAY_SIZE(cmdmods); ++i) {
     for (j = 0; p[j] != NUL; ++j)
@@ -3228,22 +3228,22 @@ get_address (
       break;
 
     default:
-      if (VIM_ISDIGIT(*cmd))                    /* absolute line number */
+      if (isdigit(*cmd))                    /* absolute line number */
         lnum = getdigits_long(&cmd);
     }
 
     for (;; ) {
       cmd = skipwhite(cmd);
-      if (*cmd != '-' && *cmd != '+' && !VIM_ISDIGIT(*cmd))
+      if (*cmd != '-' && *cmd != '+' && !isdigit(*cmd))
         break;
 
       if (lnum == MAXLNUM)
         lnum = curwin->w_cursor.lnum;           /* "+1" is same as ".+1" */
-      if (VIM_ISDIGIT(*cmd))
+      if (isdigit(*cmd))
         i = '+';                        /* "number" is same as "+number" */
       else
         i = *cmd++;
-      if (!VIM_ISDIGIT(*cmd))           /* '+' is '+1', but '+0' is not '+1' */
+      if (!isdigit(*cmd))           /* '+' is '+1', but '+0' is not '+1' */
         n = 1;
       else
         n = getdigits_long(&cmd);

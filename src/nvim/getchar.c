@@ -771,7 +771,7 @@ int start_redo(long count, int old_redo)
 
   /* try to enter the count (in place of a previous count) */
   if (count) {
-    while (VIM_ISDIGIT(c))      /* skip "old" count */
+    while (isdigit(c))      /* skip "old" count */
       c = read_redo(FALSE, old_redo);
     add_num_buff(&readbuf2, count);
   }

@@ -1781,7 +1781,7 @@ int diffopt_changed(void)
     if (STRNCMP(p, "filler", 6) == 0) {
       p += 6;
       diff_flags_new |= DIFF_FILLER;
-    } else if ((STRNCMP(p, "context:", 8) == 0) && VIM_ISDIGIT(p[8])) {
+    } else if ((STRNCMP(p, "context:", 8) == 0) && isdigit(p[8])) {
       p += 8;
       diff_context_new = getdigits_int(&p);
     } else if (STRNCMP(p, "icase", 5) == 0) {
@@ -1796,7 +1796,7 @@ int diffopt_changed(void)
     } else if (STRNCMP(p, "vertical", 8) == 0) {
       p += 8;
       diff_flags_new |= DIFF_VERTICAL;
-    } else if ((STRNCMP(p, "foldcolumn:", 11) == 0) && VIM_ISDIGIT(p[11])) {
+    } else if ((STRNCMP(p, "foldcolumn:", 11) == 0) && isdigit(p[11])) {
       p += 11;
       diff_foldcolumn_new = getdigits_int(&p);
     }

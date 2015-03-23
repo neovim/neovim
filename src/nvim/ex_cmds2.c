@@ -465,7 +465,7 @@ dbg_parsearg (
     bp->dbg_lnum = curwin->w_cursor.lnum;
   else if (
     gap != &prof_ga &&
-    VIM_ISDIGIT(*p)) {
+    isdigit(*p)) {
     bp->dbg_lnum = getdigits_long(&p);
     p = skipwhite(p);
   } else
@@ -3009,7 +3009,7 @@ static char_u *get_mess_env(void)
     p = (char_u *)os_getenv("LC_MESSAGES");
     if (p == NULL || *p == NUL) {
       p = (char_u *)os_getenv("LANG");
-      if (p != NULL && VIM_ISDIGIT(*p))
+      if (p != NULL && isdigit(*p))
         p = NULL;                       /* ignore something like "1043" */
 # ifdef HAVE_GET_LOCALE_VAL
       if (p == NULL || *p == NUL)

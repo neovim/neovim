@@ -1467,7 +1467,7 @@ void parse_cino(buf_T *buf)
     divider = 0;
     if (*p == '.') {        /* ".5s" means a fraction */
       fraction = atoi((char *)++p);
-      while (VIM_ISDIGIT(*p)) {
+      while (isdigit(*p)) {
         ++p;
         if (divider)
           divider *= 10;
@@ -1673,7 +1673,7 @@ int get_c_indent(void)
           what = *p++;
         else if (*p == COM_LEFT || *p == COM_RIGHT)
           align = *p++;
-        else if (VIM_ISDIGIT(*p) || *p == '-') {
+        else if (isdigit(*p) || *p == '-') {
           off = getdigits_int(&p);
         }
         else

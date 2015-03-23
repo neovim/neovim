@@ -4977,7 +4977,7 @@ win_redr_custom (
         if (*++stl == '-')
           stl++;
         if (atoi((char *)stl))
-          while (VIM_ISDIGIT(*stl))
+          while (isdigit(*stl))
             stl++;
         if (*stl++ != '(')
           stl = p_ruf;

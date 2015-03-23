@@ -3282,7 +3282,7 @@ void ex_z(exarg_T *eap)
     ++x;
 
   if (*x != 0) {
-    if (!VIM_ISDIGIT(*x)) {
+    if (!isdigit(*x)) {
       EMSG(_("E144: non-numeric argument to :z"));
       return;
     }
@@ -3629,7 +3629,7 @@ void do_sub(exarg_T *eap)
    * check for a trailing count
    */
   cmd = skipwhite(cmd);
-  if (VIM_ISDIGIT(*cmd)) {
+  if (isdigit(*cmd)) {
     i = getdigits_long(&cmd);
     if (i <= 0 && !eap->skip && do_error) {
       EMSG(_(e_zerocount));
@@ -5868,7 +5868,7 @@ void ex_sign(exarg_T *eap)
 
 	/* first arg could be placed sign id */
 	arg1 = arg;
-	if (VIM_ISDIGIT(*arg))
+	if (isdigit(*arg))
 	{
 	    id = getdigits_int(&arg);
 	    if (!isblank(*arg) && *arg != NUL)

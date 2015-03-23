@@ -762,7 +762,7 @@ void get_yank_register(int regname, int writing)
     return;
   }
   i = regname;
-  if (VIM_ISDIGIT(i))
+  if (isdigit(i))
     i -= '0';
   else if (ASCII_ISLOWER(i))
     i = CharOrdLow(i) + 10;
@@ -4306,7 +4306,7 @@ int do_addsub(int command, linenr_T Prenum1)
    */
   firstdigit = ptr[col];
   RLADDSUBFIX(ptr);
-  if ((!VIM_ISDIGIT(firstdigit) && !(doalp && ASCII_ISALPHA(firstdigit)))
+  if ((!isdigit(firstdigit) && !(doalp && ASCII_ISALPHA(firstdigit)))
       || u_save_cursor() != OK) {
     beep_flush();
     return FAIL;
