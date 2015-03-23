@@ -306,8 +306,6 @@ m  *+balloon_eval*	|balloon-eval| support. Included when compiling with
 			supported GUI (Motif, GTK, GUI) and either
 			Netbeans/Sun Workshop integration or |+eval| feature.
 N  *+browse*		|:browse| command
-N  *+builtin_terms*	some terminals builtin |builtin-terms|
-B  *++builtin_terms*	maximal terminals builtin |builtin-terms|
 N  *+byte_offset*	support for 'o' flag in 'statusline' option, "go"
 			and ":goto" commands.
 N  *+cindent*		|'cindent'|, C indenting

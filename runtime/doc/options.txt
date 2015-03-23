@@ -7153,18 +7153,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	by user preferences or the current theme is used.
 
 			     *'ttybuiltin'* *'tbi'* *'nottybuiltin'* *'notbi'*
-'ttybuiltin' 'tbi'	boolean	(default on)
-			global
-			{not in Vi}
-	When on, the builtin termcaps are searched before the external ones.
-	When off the builtin termcaps are searched after the external ones.
-	When this option is changed, you should set the 'term' option next for
-	the change to take effect, for example: >
-		:set notbi term=$TERM
-<	See also |termcap|.
-	Rationale: The default for this option is "on", because the builtin
-	termcap entries are generally better (many systems contain faulty
-	xterm entries...).
+'ttybuiltin' 'tbi'	Removed. {Nvim}
 
 				     *'ttyfast'* *'tf'* *'nottyfast'* *'notf'*
 'ttyfast' 'tf'		Removed. {Nvim}

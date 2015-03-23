@@ -9867,12 +9867,6 @@ static void f_has(typval_T *argvars, typval_T *rettv)
 #endif
     "arabic",
     "autocmd",
-#if defined(SOME_BUILTIN_TCAPS) || defined(ALL_BUILTIN_TCAPS)
-    "builtin_terms",
-# ifdef ALL_BUILTIN_TCAPS
-    "all_builtin_terms",
-# endif
-#endif
 #if defined(FEAT_BROWSE) && (defined(USE_FILE_CHOOSER) \
     || defined(FEAT_GUI_W32) \
     || defined(FEAT_GUI_MOTIF))
