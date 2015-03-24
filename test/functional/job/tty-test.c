@@ -80,6 +80,12 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
   free(buf->base);
 }
 
+static void prepare_cb(uv_prepare_t *handle)
+{
+  fprintf(stderr, "tty ready\n");
+  uv_prepare_stop(handle);
+}
+
 int main(int argc, char **argv)
 {
   if (!is_terminal(stdin)) {
@@ -98,7 +104,9 @@ int main(int argc, char **argv)
   }
 
   bool interrupted = false;
-  fprintf(stderr, "tty ready\n");
+  uv_prepare_t prepare;
+  uv_prepare_init(uv_default_loop(), &prepare);
+  uv_prepare_start(&prepare, prepare_cb);
   uv_tty_t tty;
   uv_tty_init(uv_default_loop(), &tty, fileno(stderr), 1);
   uv_read_start((uv_stream_t *)&tty, alloc_cb, read_cb);
