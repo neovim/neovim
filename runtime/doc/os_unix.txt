@@ -26,7 +26,6 @@ For executing external commands fork()/exec() is used when possible, otherwise
 system() is used, which is a bit slower.  The output of ":version" includes
 |+fork| when fork()/exec() is used, |+system()| when system() is used.  This
 can be changed at compile time.
-(For forking of the GUI version see |gui-fork|.)
 
 Because terminal updating under Unix is often slow (e.g. serial line
 terminal, shell window in suntools), the 'showcmd' and 'ruler' options

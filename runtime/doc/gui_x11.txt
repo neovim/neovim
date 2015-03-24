@@ -40,25 +40,6 @@ The "-f" option runs Vim in the foreground.
 The "-b" option runs Vim in the background (this is the default).
 Also see |++opt| and |+cmd|.
 
-							*gui-fork*
-When the GUI is started, it does a fork() and exits the current process.
-When gvim was started from a shell this makes the shell accept further
-commands.  If you don't want this (e.g. when using gvim for a mail program
-that waits for gvim to exit), start gvim with "gvim -f", "vim -gf" or use
-":gui -f".  Don't use "vim -fg", because "-fg" specifies the foreground
-color.
-
-When using "gvim -f" and then ":gui", Vim will run in the foreground.  The
-"-f" argument will be remembered.  To force running Vim in the background use
-":gui -b".
-
-"gvim --nofork" does the same as "gvim -f".
-								*E851* *E852*
-When starting the GUI fails Vim will try to continue running in the terminal.
-
-If you want the GUI to run in the foreground always, include the 'f'
-flag in 'guioptions'.  |-f|.
-
 ==============================================================================
 2. GUI Resources			*gui-resources* *.Xdefaults*
 

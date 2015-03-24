@@ -28,10 +28,6 @@ Each time a new or existing file is edited, Vim will try to recognize the type
 of the file and set the 'filetype' option.  This will trigger the FileType
 event, which can be used to set the syntax highlighting, set options, etc.
 
-NOTE: Filetypes and 'compatible' don't work together well, since being Vi
-compatible means options are global.  Resetting 'compatible' is recommended,
-if you didn't do that already.
-
 Detail: The ":filetype on" command will load one of these files:
 		Mac	    $VIMRUNTIME/filetype.vim
 		MS-DOS	    $VIMRUNTIME\filetype.vim

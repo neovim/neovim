@@ -9,7 +9,7 @@ Nvim provider infrastructure			       *nvim-provider*
 First of all, this document is meant to be read by developers interested in
 contributing to the refactoring effort. If you are a normal user or plugin
 developer looking to learn about Nvim |msgpack-rpc| infrastructure for
-implementing plugins in other programming languages, see |external-plugin|.
+implementing plugins in other programming languages, see |remote-plugin|.
 For instructions on how to enable Python plugins, see |nvim-python|. For
 clipboard, see |nvim-clipboard|.
 

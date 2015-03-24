@@ -467,13 +467,8 @@ thus searching wraps around the end of the file.
 INTERMEZZO
 
 If you like one of the options mentioned before, and set it each time you use
-Vim, you can put the command in your Vim startup file.
-   Edit the file, as mentioned at |not-compatible|.  Or use this command to
-find out where it is: >
-
-	:scriptnames
-
-Edit the file, for example with: >
+Vim, you can put the command in your Vim startup file.  Edit the file, for
+example with: >
 
 	:edit ~/.vimrc
 

@@ -1624,9 +1624,6 @@ Can this be avoided? (Thomas Waba, 2008 Aug 24)
 Also for ":w" without a file name.
 The buffer has the full path in ffname, should pass this to the autocommand.
 
-"vim -C" often has 'nocompatible', because it's set in some startup script.
-Set 'compatible' after startup is done?  Patch by James Vega, 2008 Feb 7.
-
 input() completion should not insert a backslash to escape a space in a file
 name?
 
@@ -1820,9 +1817,6 @@ differently and unexpectedly.  Caused by patch 7.2.398?
 
 The magic clipboard format "VimClipboard2" appears in several places.  Should
 be only one.
-
-"vim -C" often has 'nocompatible', because it's set somewhere in a startup
-script.  Do "set compatible" after startup?
 
 It's difficult to debug numbered functions (function in a Dictionary).  Print
 the function name before resolving it to a number?

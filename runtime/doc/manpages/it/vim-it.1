@@ -136,13 +136,6 @@ Modo Binary (binario).
 Vengono impostate alcune opzioni che permettono di modificare un file
 binario o un programma eseguibile.
 .TP
-\-C
-Compatibile.  Imposta l'opzione 'compatible'.
-In questo modo
-.B Vim
-ha quasi lo stesso comportamento di Vi, anche in presenza di un file
-di configurazione .vimrc [proprio di Vim, vi usa .exrc \- Ndt].
-.TP
 \-d
 Inizia in Modo Diff [differenze].
 Dovrebbero esserci come argomenti due o tre o quattro nomi di file.
@@ -181,11 +174,6 @@ Opzione da usare quando
 è eseguito da un programma che attende la fine della
 sessione di edit (ad es. mail).
 Sull'Amiga i comandi ":sh" e ":!" non sono disponibili.
-.TP
-\-\-nofork
-Direttamente [Foreground].  Per la versione GUI,
-.B Vim
-non crea [fork] una nuova finestra, indipendente dalla shell di invocazione.
 .TP
 \-F
 Se
@@ -244,13 +232,6 @@ Annulla l'opzione 'write'.
 Modifiche non permesse.  Le opzioni 'modifiable' e 'write' sono annullate,
 in modo da impedire sia modifiche che riscritture.  Da notare che queste
 opzioni possono essere abilitate in seguito, permettendo così modifiche.
-.TP
-\-N
-Modo "Non-compatibile".  Annulla l'opzione 'compatible'.
-Così
-.B Vim
-va un po' meglio, ma è meno compatibile con Vi, anche in assenza di un
-file .vimrc.
 .TP
 \-n
 Inibisce l'uso di un file di swap.

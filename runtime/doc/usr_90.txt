@@ -167,10 +167,6 @@ startup: >
 
 	vim -V
 
-Don't forget that the user manual assumes you Vim in a certain way.  After
-installing Vim, follow the instructions at |not-compatible| to make Vim work
-as assumed in this manual.
-
 
 SELECTING FEATURES
 
@@ -393,7 +389,7 @@ for something named "Vim-enhanced-version.rpm" and install that.
 Q: How Do I Turn Syntax Coloring On?  How do I make plugins work?
 
 Use the example vimrc script.  You can find an explanation on how to use it
-here: |not-compatible|.
+here: |setup-vimrc_example|.
 
 See chapter 6 for information about syntax highlighting: |usr_06.txt|.
 

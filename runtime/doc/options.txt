@@ -3491,14 +3491,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 		When 'e' is missing a non-GUI tab pages line may be used.
 		The GUI tabs are only supported on some systems, currently
 		GTK, Motif, Mac OS/X and MS-Windows.
-								*'go-f'*
-	  'f'	Foreground: Don't use fork() to detach the GUI from the shell
-		where it was started.  Use this for programs that wait for the
-		editor to finish (e.g., an e-mail program).  Alternatively you
-		can use "gvim -f" or ":gui -f" to start the GUI in the
-		foreground.  |gui-fork|
-		Note: Set this option in the vimrc file.  The forking may have
-		happened already when the |gvimrc| file is read.
 								*'go-i'*
 	  'i'	Use a Vim icon.  For GTK with KDE it is used in the left-upper
 		corner of the window.  It's black&white on non-GTK, because of
@@ -5530,7 +5522,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						$HOME/.vim/after"
 					Macintosh: "$VIM:vimfiles,
 						$VIMRUNTIME,
-						$VIM:vimfiles:after"
+						$VIM:vimfiles:after")
 			global
 			{not in Vi}
 	This is a list of directories which will be searched for runtime

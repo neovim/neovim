@@ -25,8 +25,7 @@ NOTE: Most of this is not used when running the |GUI|.
 1. Startup						*startup-terminal*
 
 When Vim is started a default terminal type is assumed.  for MS-DOS this is
-the pc terminal, for Unix an ansi terminal.  A few other terminal types are
-always available, see below |builtin-terms|.
+the pc terminal, for Unix an ansi terminal.
 
 You can give the terminal name with the '-T' Vim argument.  If it is not given
 Vim will try to get the name from the TERM environment variable.

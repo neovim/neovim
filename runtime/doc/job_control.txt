@@ -37,11 +37,21 @@ for details
 ==============================================================================
 2. Usage						*job-control-usage*
 
+Here's a quick one-liner that creates a job which invokes the "ls" shell
+command and prints the result:
+>
+    call jobstart('', 'ls', ['-a'])|au JobActivity * echo v:job_data|au!
+    JobActivity
+
+In the one-liner above, creating the JobActivity event handler immediately
+after the call to jobstart() is not a race because the Nvim job system will
+not publish the job result (even though it may receive it) until evaluation of
+the chained user commands (`expr1|expr2|...|exprN`) has completed.
+
 Job control is achieved by calling a combination of the |jobstart()|,
 |jobsend()| and |jobstop()| functions, and by listening to the |JobActivity|
 event. The best way to understand is with a complete example:
 >
-    set nocp
     let job1 = jobstart('shell1', 'bash')
     let job2 = jobstart('shell2', 'bash', ['-c', 'for ((i = 0; i < 10; i++)); do echo hello $i!; sleep 1; done'])
 
@@ -72,7 +82,7 @@ Here's what is happening:
 - The second shell is started with the -c argument, causing it to execute a
   command then exit. In this case, the command is a for loop that will print 0
   through 9 then exit.
-- The |JobHandler()| function is called by the `JobActivity` autocommand (notice
+- The `JobHandler()` function is called by the `JobActivity` autocommand (notice
   how the shell* pattern matches the names `shell1` and `shell2` passed to
   |jobstart()|), and it takes care of displaying stdout/stderr received from
   the shells.

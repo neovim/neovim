@@ -158,9 +158,6 @@ framework, most notably iBus, have been known to produce undesirable results
 in gVim. These may include an inability to enter spaces, or long delays
 between typing a character and it being recognized by the application.
 
-One workaround that has been successful, for unknown reasons, is to prevent
-gvim from forking into the background by starting it with the |-f| argument.
-
 ==============================================================================
 2. Scrollbars						*gui-scrollbars*
 

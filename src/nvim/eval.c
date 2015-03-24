@@ -345,13 +345,6 @@ typedef enum {
   VAR_FLAVOUR_VIMINFO           /* all uppercase */
 } var_flavour_T;
 
-/*
- * Array to hold the value of v: variables.
- * The value is in a dictitem, so that it can also be used in the v: scope.
- * The reason to use this table anyway is for very quick access to the
- * variables with the VV_ defines.
- */
-
 /* values for vv_flags: */
 #define VV_COMPAT       1       /* compatible, also used without "v:" */
 #define VV_RO           2       /* read-only */
@@ -359,6 +352,10 @@ typedef enum {
 
 #define VV_NAME(s, t)   s, {{t, 0, {0}}, 0, {0}}, {0}
 
+// Array to hold the value of v: variables.
+// The value is in a dictitem, so that it can also be used in the v: scope.
+// The reason to use this table anyway is for very quick access to the
+// variables with the VV_ defines.
 static struct vimvar {
   char        *vv_name;         /* name of variable, without v: */
   dictitem_T vv_di;             /* value and name for key */

@@ -3960,7 +3960,7 @@ See |pattern| for the explanation of what a pattern is.  Syntax patterns are
 always interpreted like the 'magic' option is set, no matter what the actual
 value of 'magic' is.  And the patterns are interpreted like the 'l' flag is
 not included in 'cpoptions'.  This was done to make syntax files portable and
-independent of 'compatible' and 'magic' settings.
+independent of the 'magic' setting.
 
 Try to avoid patterns that can match an empty string, such as "[a-z]*".
 This slows down the highlighting a lot, because it matches everywhere.
@@ -4527,7 +4527,7 @@ term={attr-list}			*attr-list* *highlight-term* *E418*
 	following items (in any order):
 		bold
 		underline
-		undercurl	not always available
+		undercurl	a curly underline
 		reverse
 		inverse		same as reverse
 		italic
@@ -4536,9 +4536,8 @@ term={attr-list}			*attr-list* *highlight-term* *E418*
 
 	Note that "bold" can be used here and by using a bold font.  They
 	have the same effect.
-	"undercurl" is a curly underline.  When "undercurl" is not possible
-	then "underline" is used.  In general "undercurl" is only available in
-	the GUI.  The color is set with |highlight-guisp|.
+	If running in a terminal, "undercurl" acts as an alias for "underline".
+	It is set using |highlight-guisp|.
 
 start={term-list}				*highlight-start* *E422*
 stop={term-list}				*term-list* *highlight-stop*

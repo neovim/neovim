@@ -117,10 +117,6 @@ b
 Binärer Modus: Es werden einige Variablen gesetzt, sodass es möglich ist,
 eine binäre oder ausführbare Datei zu bearbeiten.
 .TP 
-\-C
-Kompatibel: Setzt die Option 'compatible'. Das macht \fBVim\fP im Verhalten
-sehr ähnlich zu Vi, selbst wenn eine VimRC\-Datei existiert.
-.TP 
 \-d
 Startet im diff\-Modus. Es sollten zwei, drei oder vier Dateinamen als
 Parameter übergeben werden. \fBVim\fP öffnet sie alle und zeigt die
@@ -147,10 +143,6 @@ löst sich nicht von der Shell, in der er aufgerufen wurde. Bei AmigaOS wird
 kein neues Fenster geöffnet. Dieser Parameter wird benutzt, damit das
 aufrufende Programm auf das Beenden des Bearbeitungssitzung wartet (z.B.:
 mail). Bei AmigaOS funktionieren die Befehle »:sh« und „:!« nicht.
-.TP 
-\-\-nofork
-Vordergrund: Bei der GUI\-Version erzeugt \fBVim\fP keinen neuen Prozess und
-löst sich nicht von der Shell, in der er aufgerufen wurde.
 .TP 
 \-F
 Wenn \fBVim\fP mit FKMAP\-Unterstützung für das Schreiben von rechts nach links
@@ -195,11 +187,6 @@ gelöscht, so dass Änderungen nicht erlaubt sind und Dateien nicht
 geschrieben werden können. Man beachte, dass diese Optionen ('modifiable',
 \&'write') dennnoch nachträglich zum Erlauben von Änderungen gesetzt werden
 können.
-.TP 
-\-N
-Nicht\-kompatibler Modus: Löscht die Option 'compatible'. Dies veranlasst
-\fBVim\fP, sich ein wenig besser, aber weniger Vi\-kompatibel zu verhalten,
-selbst wenn es keine VimRC\-Datei gibt.
 .TP 
 \-n
 Verwendet keine Auslagerungsdatei: Eine Wiederherstellung nach einem Absturz
