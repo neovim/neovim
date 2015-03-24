@@ -56,6 +56,7 @@
  *   1..9 = registers '1' to '9', for deletes
  * 10..35 = registers 'a' to 'z'
  *     36 = delete register '-'
+ *     37 = clip register '+'
  */
 #define NUM_REGISTERS 38
 #define DELETION_REGISTER 36
@@ -3173,6 +3174,8 @@ int get_register_name(int num)
     return num + '0';
   else if (num == DELETION_REGISTER)
     return '-';
+  else if (num == CLIP_REGISTER)
+    return '+';
   else {
     return num + 'a' - 10;
   }
