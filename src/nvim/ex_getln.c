@@ -10,7 +10,6 @@
  * ex_getln.c: Functions for entering and editing an Ex command line.
  */
 
-#include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <string.h>
@@ -3629,6 +3628,7 @@ ExpandFromContext (
   }
 
   if (xp->xp_context == EXPAND_SHELLCMD) {
+    *file = NULL;
     expand_shellcmd(pat, num_file, file, flags);
     return OK;
   }
@@ -3876,10 +3876,8 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
     STRLCPY(buf + l, pat, MAXPATHL - l);
 
     /* Expand matches in one directory of $PATH. */
-    char_u **prev_file = *file;
     ret = expand_wildcards(1, &buf, num_file, file, flags);
     if (ret == OK) {
-      assert(*file != prev_file);
       ga_grow(&ga, *num_file);
       {
         for (i = 0; i < *num_file; ++i) {
