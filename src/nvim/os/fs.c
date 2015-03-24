@@ -133,8 +133,7 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
     return false;
   }
 
-  size_t buf_len = STRLEN(name) + STRLEN(path) + 2;
-  char_u *buf = xmalloc(buf_len);
+  char_u *buf = xmalloc(MAXPATHL);
 
   // Walk through all entries in $PATH to check if "name" exists there and
   // is an executable file.
@@ -144,7 +143,9 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
     // Glue together the given directory from $PATH with name and save into
     // buf.
     STRLCPY(buf, path, e - path + 1);
-    append_path((char *) buf, (const char *) name, (int)buf_len);
+    if (!path_append(buf, name)) {
+      continue;
+    }
 
     if (is_executable(buf)) {
       // Check if the caller asked for a copy of the path.

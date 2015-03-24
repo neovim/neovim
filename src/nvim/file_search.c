@@ -458,23 +458,22 @@ vim_findfile_init (
     search_ctx->ffsc_fix_path[0] = NUL;
   }
 
-  /* create an absolute path */
-  if (STRLEN(search_ctx->ffsc_start_dir)
-      + STRLEN(search_ctx->ffsc_fix_path) + 3 >= MAXPATHL) {
+  // create an absolute path
+  size_t eb_len = path_copy(ff_expand_buffer, search_ctx->ffsc_start_dir);
+
+  if (eb_len == 0 ||
+      eb_len + STRLEN(search_ctx->ffsc_fix_path) + 1 >= MAXPATHL) {
     EMSG(_(e_pathtoolong));
     goto error_return;
   }
-  STRCPY(ff_expand_buffer, search_ctx->ffsc_start_dir);
-  add_pathsep(ff_expand_buffer);
+
   {
-    size_t eb_len = STRLEN(ff_expand_buffer);
     char_u *buf = xmalloc(eb_len + STRLEN(search_ctx->ffsc_fix_path) + 1);
 
     STRCPY(buf, ff_expand_buffer);
     STRCPY(buf + eb_len, search_ctx->ffsc_fix_path);
     if (os_isdir(buf)) {
-      STRCAT(ff_expand_buffer, search_ctx->ffsc_fix_path);
-      add_pathsep(ff_expand_buffer);
+      path_append_with_sep(ff_expand_buffer, search_ctx->ffsc_fix_path);
     } else {
       char_u *p =  path_tail(search_ctx->ffsc_fix_path);
       char_u *wc_path = NULL;
@@ -484,7 +483,7 @@ vim_findfile_init (
       if (p > search_ctx->ffsc_fix_path) {
         len = (int)(p - search_ctx->ffsc_fix_path) - 1;
         STRNCAT(ff_expand_buffer, search_ctx->ffsc_fix_path, len);
-        add_pathsep(ff_expand_buffer);
+        path_add_sep(ff_expand_buffer);
       } else
         len = (int)STRLEN(search_ctx->ffsc_fix_path);
 
@@ -694,13 +693,11 @@ char_u *vim_findfile(void *search_ctx_arg)
         /* if we have a start dir copy it in */
         if (!vim_isAbsName(stackp->ffs_fix_path)
             && search_ctx->ffsc_start_dir) {
-          STRCPY(file_path, search_ctx->ffsc_start_dir);
-          add_pathsep(file_path);
+          path_copy(file_path, search_ctx->ffsc_start_dir);
         }
 
-        /* append the fix part of the search path */
-        STRCAT(file_path, stackp->ffs_fix_path);
-        add_pathsep(file_path);
+        // append the fix part of the search path
+        path_append_with_sep(file_path, stackp->ffs_fix_path);
 
         rest_of_wildcards = stackp->ffs_wc_path;
         if (*rest_of_wildcards != NUL) {
@@ -783,15 +780,18 @@ char_u *vim_findfile(void *search_ctx_arg)
 
             /* prepare the filename to be checked for existence
              * below */
-            STRCPY(file_path, stackp->ffs_filearray[i]);
-            add_pathsep(file_path);
-            STRCAT(file_path, search_ctx->ffsc_file_to_search);
+            len = path_buf_join(file_path, stackp->ffs_filearray[i],
+                                           search_ctx->ffsc_file_to_search);
+
+            if (len == 0) {
+              // Path too long.
+              continue;
+            }
 
             /*
              * Try without extra suffix and then with suffixes
              * from 'suffixesadd'.
              */
-            len = STRLEN(file_path);
             if (search_ctx->ffsc_tagfile)
               suf = (char_u *)"";
             else
@@ -935,9 +935,8 @@ char_u *vim_findfile(void *search_ctx_arg)
       if (*search_ctx->ffsc_start_dir == 0)
         break;
 
-      STRCPY(file_path, search_ctx->ffsc_start_dir);
-      add_pathsep(file_path);
-      STRCAT(file_path, search_ctx->ffsc_fix_path);
+      path_buf_join(file_path, search_ctx->ffsc_start_dir, 
+                               search_ctx->ffsc_fix_path);
 
       /* create a new stack entry */
       sptr = ff_create_stack_element(file_path,

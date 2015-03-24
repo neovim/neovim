@@ -12250,7 +12250,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
         /* Ensure that the result will have a trailing path separator
          * if the argument has one. */
         if (remain == NULL && has_trailing_pathsep)
-          add_pathsep(buf);
+          path_add_sep(buf);
 
         /* Separate the first path component in the link value and
          * concatenate the remainders. */
@@ -19488,12 +19488,11 @@ repeat:
     /* Append a path separator to a directory. */
     if (os_isdir(*fnamep)) {
       /* Make room for one or two extra characters. */
-      *fnamep = vim_strnsave(*fnamep, (int)STRLEN(*fnamep) + 2);
-      free(*bufp);          /* free any allocated file name */
+      *fnamep = path_save(*fnamep);
+      free(*bufp);          // free any allocated file name
       *bufp = *fnamep;
       if (*fnamep == NULL)
         return -1;
-      add_pathsep(*fnamep);
     }
   }
 

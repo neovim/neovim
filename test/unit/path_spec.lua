@@ -418,46 +418,67 @@ describe('more path function', function()
     end)
   end)
 
-  describe('append_path', function()
+  describe('concat_fnames', function()
+    function path_join(fname1, fname2)
+      return internalize(path.path_join(to_cstr(fname1), to_cstr(fname2)))
+    end
+
+    it('correctly concats two strings with a path separator', function()
+      eq('f1/f2', path_join('f1', 'f2'))
+    end)
+
+    it('does not add an extraneous separator', function()
+      eq('f1/f2', path_join('f1/', 'f2'))
+    end)
+
+    it('deals with empty strings', function()
+      eq('f2', path_join('', 'f2'))
+      eq('f1/', path_join('f1', ''))
+    end)
+  end)
+
+  describe('path_append', function()
+    function check(expected, buf, result)
+      eq(expected, ffi.string(buf))
+      eq(string.len(expected), result)
+    end
+
     it('joins given paths with a slash', function()
       local path1 = cstr(100, 'path1')
       local to_append = to_cstr('path2')
-      eq(OK, (path.append_path(path1, to_append, 100)))
-      eq("path1/path2", (ffi.string(path1)))
+      check("path1/path2", path1, path.path_append(path1, to_append))
     end)
 
     it('joins given paths without adding an unnecessary slash', function()
       local path1 = cstr(100, 'path1/')
       local to_append = to_cstr('path2')
-      eq(OK, path.append_path(path1, to_append, 100))
-      eq("path1/path2", (ffi.string(path1)))
+      check("path1/path2", path1, path.path_append(path1, to_append))
     end)
 
-    it('fails and uses filename if there is not enough space left for to_append', function()
-      local path1 = cstr(11, 'path1/')
-      local to_append = to_cstr('path2')
-      eq(FAIL, (path.append_path(path1, to_append, 11)))
-    end)
+    -- TODO (SplinterOfChaos): This test must use MAXPATHL to work properly,
+    -- but how can we obtain this value from inside lua?
+    --it('returns zero and uses filename if there is not enough space left for to_append', function()
+    --  local path1 = cstr(MAXPATHL, string.rep("x",MAXPATHL-1))
+    --  local to_append = to_cstr('path2')
+    --  eq(0, path.path_append(path1, to_append))
+    --end)
 
     it('does not append a slash if to_append is empty', function()
       local path1 = cstr(6, 'path1')
       local to_append = to_cstr('')
-      eq(OK, (path.append_path(path1, to_append, 6)))
-      eq('path1', (ffi.string(path1)))
+      check('path1', path1, path.path_append(path1, to_append))
     end)
 
     it('does not append unnecessary dots', function()
       local path1 = cstr(6, 'path1')
       local to_append = to_cstr('.')
-      eq(OK, (path.append_path(path1, to_append, 6)))
-      eq('path1', (ffi.string(path1)))
+      check('path1', path1, path.path_append(path1, to_append))
     end)
 
     it('copies to_append to path, if path is empty', function()
       local path1 = cstr(7, '')
       local to_append = to_cstr('/path2')
-      eq(OK, (path.append_path(path1, to_append, 7)))
-      eq('/path2', (ffi.string(path1)))
+      check('/path2', path1, path.path_append(path1, to_append))
     end)
   end)
 

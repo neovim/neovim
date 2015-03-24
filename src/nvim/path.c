@@ -332,32 +332,154 @@ int vim_fnamencmp(char_u *x, char_u *y, size_t len)
 #endif
 }
 
-/*
- * Concatenate file names fname1 and fname2 into allocated memory.
- * Only add a '/' or '\\' when 'sep' is TRUE and it is necessary.
- */
-char_u *concat_fnames(char_u *fname1, char_u *fname2, int sep)
-  FUNC_ATTR_NONNULL_RET
+/// Copies `path` into allocated memory, adding a path separator at the end.
+///
+/// @remark If you don't need a trailing path separator, use {xstrdup}.
+///
+/// @returns `xstrdup(path + PATHSEPSTR)` on success.
+/// @returns `NULL` if the new string would exceed `MAXPATHL`.
+char_u *path_save(const char_u *path)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  char_u *dest = xmalloc(STRLEN(fname1) + STRLEN(fname2) + 3);
-
-  STRCPY(dest, fname1);
-  if (sep) {
-    add_pathsep(dest);
+  size_t new_len = STRLEN(path) + STRLEN(PATHSEPSTR);
+  if (!path_len_check(new_len)) {
+    return NULL;
   }
-  STRCAT(dest, fname2);
+  char_u *ret = xmalloc(new_len + 1);
+  path_copy(ret, path);
+  return ret;
+}
 
+/// Copies `path` into `buf`, adding a path separator at the end.
+///
+/// @param[out] buf  A buffer, assumed to be of size MAXPATHL.
+/// @param[in]  path The path to copy.
+///
+/// @returns The new length of `buf` on success.
+/// @returns Zero if truncation occurred.
+///
+/// @remark If you don't need a trailing path separator, use {STRCPY}.
+/// @remark buf may be smaller than MAXPATHL only if
+///         `strlen(path + PATHSEPSTR)` is known to be smaller.
+size_t path_copy(char_u * restrict buf, const char_u *path)
+  FUNC_ATTR_NONNULL_ALL
+{
+  size_t len = STRLCPY(buf, path, MAXPATHL);
+  len = path_add_sep_impl(buf, buf + len, MAXPATHL);
+  return path_len_check(len);
+}
+
+/// Concatenates file names p1 and p2, separated by PATHSEPSTR, into allocated
+/// memory.
+char_u *path_join(const char_u *p1, const char_u *p2)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  char_u *dest = xmalloc(STRLEN(p1) + STRLEN(p2) + STRLEN(PATHSEPSTR) + 1);
+  path_buf_join(dest, p1, p2);
   return dest;
 }
 
-/*
- * Add a path separator to a file name, unless it already ends in a path
- * separator.
- */
-void add_pathsep(char_u *p)
+/// Concatenates file names base and ext into buf.
+///
+/// @param[out] buf  A buffer, assumed to be of size MAXPATHL.
+/// @param[in]  base The path appended to.
+/// @param[in]  ext  The path to append.
+///
+/// @returns The number of bytes written to buf on success.
+/// @returns Zero if truncation occurred.
+///
+/// @remark buf may be smaller than MAXPATHL only if 
+///         `strlen(base + ext + PATHSEPSTR)` is known to be smaller.
+size_t path_buf_join(char_u * restrict buf,
+                     const char_u *base,
+                     const char_u *ext)
+  FUNC_ATTR_NONNULL_ALL
 {
-  if (*p != NUL && !after_pathsep(p, p + STRLEN(p)))
-    STRCAT(p, PATHSEPSTR);
+  size_t len = path_copy(buf, base);
+  // If path_copy returned 0, either `base = ""` (OK) or truncation occurred.
+  if (len == 0 && *base != NUL) {
+    return 0;
+  }
+  len += STRLCPY(buf + len, ext, MAXPATHL - len);
+  return path_len_check(len);
+}
+
+/// Appends buf with a path separator (if needed) followed by path.
+///
+/// @param[out] buf  A buffer, assumed to be of size MAXPATHL or smaller.
+/// @param[in]  path The path to append.
+///
+/// @returns The new length of buf on success.
+/// @returns Zero if truncation occurred.
+///
+/// @remark buf may be smaller than MAXPATHL only if 
+///         `strlen(buf + PATHSEPSTR + path)` is known to be smaller.
+size_t path_append(char_u * restrict buf, const char_u *path)
+  FUNC_ATTR_NONNULL_ALL
+{
+  size_t len = path_append_impl(buf, path, MAXPATHL);
+  return path_len_check(len);
+}
+
+/// Appends buf with a path separator (if needed) followed by path and
+/// another separator.
+///
+/// @param[out] buf  A buffer, assumed to be of size MAXPATHL or smaller.
+/// @param[in]  path The path to append.
+///
+/// @returns The new length of buf on success.
+/// @returns Zero if truncation occurred.
+///
+/// @remark buf may be smaller than MAXPATHL only if 
+///         `strlen(buf + PATHSEPSTR + path + PATHSEP)` is known to be smaller.
+size_t path_append_with_sep(char_u * restrict buf, const char_u *path)
+  FUNC_ATTR_NONNULL_ALL
+{
+  size_t len = path_append_impl(buf, path, MAXPATHL);
+  len = path_add_sep_impl(buf, buf + len, MAXPATHL);
+  return path_len_check(len);
+}
+
+// Returns zero if len equals or exceeds MAXPATHL.
+static size_t path_len_check(size_t len)
+{
+  return len < MAXPATHL ? len : 0;
+}
+
+static size_t path_append_impl(char_u * restrict buf, const char_u *path,
+                               size_t buf_size)
+{
+  if (*path == NUL || STRCMP(path, ".") == 0) {
+    // Don't append the dot or add a path separator if `path` is empty.
+    return STRLEN(buf);
+  }
+  size_t len = path_add_sep_impl(buf, buf + STRLEN(buf), buf_size);
+  len += STRLCPY(buf + len, path, buf_size - len);
+  return len;
+}
+
+/// Adds a path separator to a file name, unless it already ends in a path
+/// separator.
+///
+/// @param p The path of a directory.
+/// @returns The new length of p.
+size_t path_add_sep(char_u *p)
+  FUNC_ATTR_NONNULL_ALL 
+{
+  return path_add_sep_impl(p, p + STRLEN(p), MAXPATHL);
+}
+
+static size_t path_add_sep_impl(char_u *p, char_u *end, size_t p_size)
+{
+  size_t len = end - p;
+  size_t new_len = len + STRLEN(PATHSEPSTR);
+  if (*p == NUL || new_len >= p_size || after_pathsep(p, end)) {
+    return len;
+  }
+  STRCPY(end, PATHSEPSTR);
+  return new_len;
 }
 
 /*
@@ -832,7 +954,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
       if (short_name != NULL && short_name > path + 1
           ) {
         STRCPY(path, ".");
-        add_pathsep(path);
+        path_add_sep(path);
         STRMOVE(path + STRLEN(path), short_name);
       }
     }
@@ -857,10 +979,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
       continue;
     }
 
-    rel_path = xmalloc(STRLEN(short_name) + STRLEN(PATHSEPSTR) + 2);
-    STRCPY(rel_path, ".");
-    add_pathsep(rel_path);
-    STRCAT(rel_path, short_name);
+    rel_path = path_join((char_u *) ".", short_name);
 
     free(fnames[i]);
     fnames[i] = rel_path;
@@ -1229,7 +1348,7 @@ addfile (
    * Append a slash or backslash after directory names if none is present.
    */
   if (isdir && (flags & EW_ADDSLASH))
-    add_pathsep(p);
+    path_add_sep(p);
   GA_APPEND(char_u *, gap, p);
 }
 
@@ -1917,44 +2036,6 @@ int path_full_dir_name(char *directory, char *buffer, int len)
   return retval;
 }
 
-// Append to_append to path with a slash in between.
-// Append to_append to path with a slash in between.
-int append_path(char *path, const char *to_append, int max_len)
-{
-  int current_length = STRLEN(path);
-  int to_append_length = STRLEN(to_append);
-
-  // Do not append empty strings.
-  if (to_append_length == 0) {
-    return OK;
-  }
-
-  // Do not append a dot.
-  if (STRCMP(to_append, ".") == 0) {
-    return OK;
-  }
-
-  // Glue both paths with a slash.
-  if (current_length > 0 && path[current_length-1] != '/') {
-    current_length += 1;  // Count the trailing slash.
-
-    // +1 for the NUL at the end.
-    if (current_length + 1 > max_len) {
-      return FAIL;
-    }
-
-    STRCAT(path, "/");
-  }
-
-  // +1 for the NUL at the end.
-  if (current_length + to_append_length + 1 > max_len) {
-    return FAIL;
-  }
-
-  STRCAT(path, to_append);
-  return OK;
-}
-
 /// Expand a given file to its absolute path.
 ///
 /// @param fname The filename which should be expanded.
@@ -1968,24 +2049,24 @@ static int path_get_absolute_path(char_u *fname, char_u *buf, int len, int force
   *buf = NUL;
 
   char relative_directory[len];
-  char *end_of_path = (char *) fname;
+  char_u *end_of_path = fname;
 
   // expand it if forced or not an absolute path
   if (force || !path_is_absolute_path(fname)) {
     if ((p = vim_strrchr(fname, '/')) != NULL) {
       STRNCPY(relative_directory, fname, p-fname);
       relative_directory[p-fname] = NUL;
-      end_of_path = (char *) (p + 1);
+      end_of_path = p + 1;
     } else {
       relative_directory[0] = NUL;
-      end_of_path = (char *) fname;
+      end_of_path = fname;
     }
 
     if (FAIL == path_full_dir_name(relative_directory, (char *) buf, len)) {
       return FAIL;
     }
   }
-  return append_path((char *) buf, (char *) end_of_path, len);
+  return path_append_impl(buf, (char_u *) end_of_path, len) > 0;
 }
 
 /// Check if the given file is absolute.
