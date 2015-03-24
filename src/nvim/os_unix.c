@@ -245,19 +245,6 @@ void mch_exit(int r)
   exit(r);
 }
 
-/*
- * mch_expand_wildcards() - this code does wild-card pattern matching using
- * the shell
- *
- * return OK for success, FAIL for error (you may lose some memory) and put
- * an error message in *file.
- *
- * num_pat is number of input patterns
- * pat is array of pointers to input patterns
- * num_file is pointer to number of matched file names
- * file is pointer to array of pointers to matched file names
- */
-
 #ifndef SEEK_SET
 # define SEEK_SET 0
 #endif
@@ -267,10 +254,27 @@ void mch_exit(int r)
 
 #define SHELL_SPECIAL (char_u *)"\t \"&'$;<>()\\|"
 
+/// Does wildcard pattern matching using the shell.
+///
+/// @param      num_pat  is the number of input patterns.
+/// @param      pat      is an array of pointers to input patterns.
+/// @param[out] num_file is pointer to number of matched file names.
+///                      Set to the number of pointers in *file.
+/// @param[out] file     is pointer to array of pointers to matched file names.
+///                      Memory pointed to by the initial value of *file will
+///                      not be freed.
+///                      Set to NULL if FAIL is returned. Otherwise points to
+///                      allocated memory.
+/// @param      flags    is a combination of EW_* flags used in
+///                      expand_wildcards().
+///                      If matching fails but EW_NOTFOUND is set in flags or
+///                      there are no wildcards, the patterns from pat are
+///                      copied into *file.
+///
+/// @returns             OK for success or FAIL for error.
 int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
-                         char_u ***file,
-                         int flags /* EW_* flags */
-                         )
+                         char_u ***file, int flags) FUNC_ATTR_NONNULL_ARG(3)
+    FUNC_ATTR_NONNULL_ARG(4)
 {
   int i;
   size_t len;

@@ -978,25 +978,26 @@ static int has_special_wildchar(char_u *p)
 }
 #endif
 
-/*
- * Generic wildcard expansion code.
- *
- * Characters in "pat" that should not be expanded must be preceded with a
- * backslash. E.g., "/path\ with\ spaces/my\*star*"
- *
- * Return FAIL when no single file was found.  In this case "num_file" is not
- * set, and "file" may contain an error message.
- * Return OK when some files found.  "num_file" is set to the number of
- * matches, "file" to the array of matches.  Call FreeWild() later.
- */
-int 
-gen_expand_wildcards (
-    int num_pat,                    /* number of input patterns */
-    char_u **pat,              /* array of input patterns */
-    int *num_file,          /* resulting number of files */
-    char_u ***file,            /* array of resulting files */
-    int flags                      /* EW_* flags */
-)
+/// Generic wildcard expansion code.
+///
+/// Characters in pat that should not be expanded must be preceded with a
+/// backslash. E.g., "/path\ with\ spaces/my\*star*".
+///
+/// @param      num_pat  is number of input patterns.
+/// @param      pat      is an array of pointers to input patterns.
+/// @param[out] num_file is pointer to number of matched file names.
+/// @param[out] file     is pointer to array of pointers to matched file names.
+/// @param      flags    is a combination of EW_* flags used in
+///                      expand_wildcards().
+///
+/// @returns             OK when some files were found. *num_file is set to the
+///                      number of matches, *file to the allocated array of
+///                      matches. Call FreeWild() later.
+///                      If FAIL is returned, *num_file and *file are either
+///                      unchanged or *num_file is set to 0 and *file is set
+///                      to NULL or points to "".
+int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
+                         char_u ***file, int flags)
 {
   int i;
   garray_T ga;
@@ -1770,19 +1771,23 @@ int expand_wildcards_eval(char_u **pat, int *num_file, char_u ***file,
   return ret;
 }
 
-/*
- * Expand wildcards.  Calls gen_expand_wildcards() and removes files matching
- * 'wildignore'.
- * Returns OK or FAIL.  When FAIL then "num_file" won't be set.
- */
-int 
-expand_wildcards (
-    int num_pat,                    /* number of input patterns */
-    char_u **pat,             /* array of input patterns */
-    int *num_file,        /* resulting number of files */
-    char_u ***file,            /* array of resulting files */
-    int flags                      /* EW_DIR, etc. */
-)
+/// Expand wildcards. Calls gen_expand_wildcards() and removes files matching
+/// 'wildignore'.
+///
+/// @param      num_pat  is number of input patterns.
+/// @param      pat      is an array of pointers to input patterns.
+/// @param[out] num_file is pointer to number of matched file names.
+/// @param[out] file     is pointer to array of pointers to matched file names.
+/// @param      flags    is a combination of EW_* flags.
+///
+/// @returns             OK when some files were found. *num_file is set to the
+///                      number of matches, *file to the allocated array of
+///                      matches.
+///                      If FAIL is returned, *num_file and *file are either
+///                      unchanged or *num_file is set to 0 and *file is set to
+///                      NULL or points to "".
+int expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file,
+                     int flags)
 {
   int retval;
   int i, j;
