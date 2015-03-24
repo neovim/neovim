@@ -135,10 +135,9 @@ VIM IS... FLEXIBLE					*design-flexible*
 
 Vim should make it easy for users to work in their preferred styles rather
 than coercing its users into particular patterns of work.  This can be for
-items with a large impact (e.g., the 'compatible' option) or for details.  The
-defaults are carefully chosen such that most users will enjoy using Vim as it
-is.  Commands and options can be used to adjust Vim to the desire of the user
-and its environment.
+items with a large impact or for details.  The defaults are carefully chosen
+such that most users will enjoy using Vim as it is.  Commands and options can
+be used to adjust Vim to the desire of the user and its environment.
 
 
 VIM IS... NOT						*design-not*

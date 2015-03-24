@@ -195,7 +195,7 @@ characters are hidden.  That makes it easier to read a command.
 
 Anyway, you can use CTRL-] on any word, also when it is not within |, and Vim
 will try to find help for it.  Especially for options in single quotes, e.g.
-'compatible'.
+'hlsearch'.
 
 ------------------------------------------------------------------------------
  vim:tw=78:fo=tcq2:isk=!-~,^*,^\|,^\":ts=8:ft=help:norl:

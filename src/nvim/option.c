@@ -26,8 +26,6 @@
  * - Add an entry in runtime/optwin.vim.
  * When making changes:
  * - Adjust the help for the option in doc/option.txt.
- * - When an entry has the P_VIM flag, or is lacking the P_VI_DEF flag, add a
- *   comment at the help for the 'compatible' option.
  */
 
 #define IN_OPTION_C
@@ -334,7 +332,7 @@ typedef struct vimoption {
 #define P_WAS_SET       0x100U   /* option has been set/reset */
 #define P_NO_MKRC       0x200U   /* don't include in :mkvimrc output */
 #define P_VI_DEF        0x400U   /* Use Vi default for Vim */
-#define P_VIM           0x800U   /* Vim option, reset when 'cp' set */
+#define P_VIM           0x800U   /* Vim option */
 
 /* when option changed, what to display: */
 #define P_RSTAT         0x1000U  /* redraw status lines */
@@ -2010,8 +2008,7 @@ void set_init_1(void)
           || enc_utf8
           ) {
         /* Adjust the default for 'isprint' and 'iskeyword' to match
-         * latin1.  Also set the defaults for when 'nocompatible' is
-         * set. */
+         * latin1. */
         set_string_option_direct((char_u *)"isp", -1,
             ISP_LATIN1, OPT_FREE, SID_NONE);
         set_string_option_direct((char_u *)"isk", -1,
@@ -7416,14 +7413,10 @@ static void paste_option_changed(void)
   old_p_paste = p_paste;
 }
 
-/*
- * vimrc_found() - Called when a ".vimrc" or "VIMINIT" has been found.
- *
- * Reset 'compatible' and set the values for options that didn't get set yet
- * to the Vim defaults.
- * Don't do this if the 'compatible' option has been set or reset before.
- * When "fname" is not NULL, use it to set $"envname" when it wasn't set yet.
- */
+/// vimrc_found() - Called when a ".vimrc" or "VIMINIT" has been found.
+///
+/// Set the values for options that didn't get set yet to the Vim defaults.
+/// When "fname" is not NULL, use it to set $"envname" when it wasn't set yet.
 void vimrc_found(char_u *fname, char_u *envname)
 {
   bool dofree = false;

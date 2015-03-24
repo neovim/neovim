@@ -62,22 +62,14 @@ to write a Vim script file: |usr_41.txt|.
 ==============================================================================
 *05.2*	The example vimrc file explained		*vimrc_example.vim*
 
-In the first chapter was explained how the example vimrc (included in the
-Vim distribution) file can be used to make Vim startup in not-compatible mode
-(see |not-compatible|).  The file can be found here:
+In the first chapter was explained how the example vimrc file can be used.
+The file can be found here:
 
 	$VIMRUNTIME/vimrc_example.vim ~
 
 In this section we will explain the various commands used in this file.  This
 will give you hints about how to set up your own preferences.  Not everything
 will be explained though.  Use the ":help" command to find out more.
-
->
-	set nocompatible
-
-As mentioned in the first chapter, these manuals explain Vim working in an
-improved way, thus not completely Vi compatible.  Setting the 'compatible'
-option off, thus 'nocompatible' takes care of this.
 
 >
 	set backspace=indent,eol,start

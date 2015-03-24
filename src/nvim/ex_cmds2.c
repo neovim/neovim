@@ -2335,7 +2335,7 @@ do_source (
   /*
    * The file exists.
    * - In verbose mode, give a message.
-   * - For a vimrc file, may want to set 'compatible', call vimrc_found().
+   * - For a vimrc file, may want to call vimrc_found().
    */
   if (p_verbose > 1) {
     verbose_enter();

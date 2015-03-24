@@ -292,24 +292,6 @@ argument.
 		{not available when compiled without the |+eval| feature}
 		{not in Vi}
 
-							*-C*
--C		Compatible mode.  Sets the 'compatible' option.  You can use
-		this to get 'compatible', even though a .vimrc file exists.
-		Keep in mind that the command ":set nocompatible" in some
-		plugin or startup script overrules this, so you may end up
-		with 'nocompatible' anyway.  To find out, use: >
-			:verbose set compatible?
-<		Several plugins won't work with 'compatible' set.  You may
-		want to set it after startup this way: >
-			vim "+set cp" filename
-<		Also see |compatible-default|.  {not in Vi}
-
-							*-N*
--N		Not compatible mode.  Resets the 'compatible' option.  You can
-		use this to get 'nocompatible', when there is no .vimrc file
-		or when using "-u NONE".
-		Also see |compatible-default|.  {not in Vi}
-
 							*-n*
 -n		No swap file will be used.  Recovery after a crash will be
 		impossible.  Handy if you want to view or edit a file on a
@@ -374,9 +356,6 @@ argument.
 		starts.  Loading plugins is also skipped.
 		When {vimrc} is equal to "NORC" (all uppercase), this has the
 		same effect as "NONE", but loading plugins is not skipped.
-		Using the "-u" argument has the side effect that the
-		'compatible' option will be on by default.  This can have
-		unexpected effects.  See |'compatible'|.
 		{not in Vi}
 
 							*-U* *E230*
@@ -512,8 +491,6 @@ X11 GUI support.  See |gui-resources|.
 ==============================================================================
 3. Initialization				*initialization* *startup*
 
-This section is about the non-GUI version of Vim.
-
 At startup, Vim checks environment variables and files and sets values
 accordingly.  Vim proceeds in this order:
 
@@ -566,9 +543,6 @@ accordingly.  Vim proceeds in this order:
      a. For Unix, MS-DOS, MS-Windows, and Macintosh, the system vimrc file is
 	read for initializations.  The path of this file is shown with the
 	":version" command.  Mostly it's "$VIM/vimrc".
-	Note that this file is ALWAYS read in 'compatible' mode, since the
-	automatic resetting of 'compatible' is only done later.  Add a ":set
-	nocp" command if you like.
 	For the Macintosh the $VIMRUNTIME/macmap.vim is read.
 
 	  *VIMINIT* *.vimrc* *_vimrc* *EXINIT* *.exrc* *_exrc* *$MYVIMRC*
@@ -576,14 +550,14 @@ accordingly.  Vim proceeds in this order:
 	is used, the others are ignored.  The $MYVIMRC environment variable is
 	set to the file that was first found, unless $MYVIMRC was already set
 	and when using VIMINIT.
-	-  The environment variable VIMINIT (see also |compatible-default|) (*)
+	-  The environment variable VIMINIT
 	   The value of $VIMINIT is used as an Ex command line.
 	-  The user vimrc file(s):
-		    "$HOME/.vimrc"	   (for Unix) (*)
-		    "$HOME/.vim/vimrc"	   (for Unix) (*)
-		    "$HOME/_vimrc"	   (for MS-DOS and Win32) (*)
-		    "$HOME/vimfiles/vimrc" (for MS-DOS and Win32) (*)
-		    "$VIM/_vimrc"	   (for MS-DOS and Win32) (*)
+		    "$HOME/.vimrc"	   (for Unix)
+		    "$HOME/.vim/vimrc"	   (for Unix)
+		    "$HOME/_vimrc"	   (for Win32)
+		    "$HOME/vimfiles/vimrc" (for Win32)
+		    "$VIM/_vimrc"	   (for Win32)
 		Note: For Unix, when ".vimrc" does not exist,
 		"_vimrc" is also tried, in case an MS-DOS compatible file
 		system is used.  For MS-DOS and Win32 ".vimrc" is checked
@@ -595,20 +569,17 @@ accordingly.  Vim proceeds in this order:
 	   The value of $EXINIT is used as an Ex command line.
 	-  The user exrc file(s).  Same as for the user vimrc file, but with
 	   "vimrc" replaced by "exrc".  But only one of ".exrc" and "_exrc" is
-	   used, depending on the system.  And without the (*)!
+	   used, depending on the system.
 
      c. If the 'exrc' option is on (which is not the default), the current
 	directory is searched for three files.  The first that exists is used,
 	the others are ignored.
-	-  The file ".vimrc" (for Unix) (*)
-		    "_vimrc" (for MS-DOS and Win32) (*)
-	-  The file "_vimrc" (for Unix) (*)
-		    ".vimrc" (for MS-DOS and Win32) (*)
+	-  The file ".vimrc" (for Unix)
+		    "_vimrc" (for Win32)
+	-  The file "_vimrc" (for Unix)
+		    ".vimrc" (for Win32)
 	-  The file ".exrc"  (for Unix)
-		    "_exrc"  (for MS-DOS and Win32)
-
-     (*) Using this file or environment variable will cause 'compatible' to be
-	 off by default.  See |compatible-default|.
+		    "_exrc"  (for Win32)
 
 4. Load the plugin scripts.					*load-plugins*
 	This does the same as the command: >
@@ -673,8 +644,6 @@ Create a vimrc file to set the default settings and mappings for all your edit
 sessions.  Put it in a place so that it will be found by 3b:
 	~/.vimrc	(Unix)
 	$VIM\_vimrc	(MS-DOS and Win32)
-Note that creating a vimrc file will cause the 'compatible' option to be off
-by default.  See |compatible-default|.
 
 Local setup:
 Put all commands that you need for editing a specific directory only into a
@@ -703,35 +672,8 @@ the vimrc files have <CR> <NL> pairs as line separators.  This will give
 problems if you have a file with only <NL>s and have a line like
 ":map xx yy^M".  The trailing ^M will be ignored.
 
-						     *compatible-default*
-When Vim starts, the 'compatible' option is on.  This will be used when Vim
-starts its initializations.  But as soon as a user vimrc file is found, or a
-vimrc file in the current directory, or the "VIMINIT" environment variable is
-set, it will be set to 'nocompatible'.  This has the side effect of setting or
-resetting other options (see 'compatible').  But only the options that have
-not been set or reset will be changed.  This has the same effect like the
-value of 'compatible' had this value when starting Vim.  Note that this
-doesn't happen for the system-wide vimrc file nor when Vim was started with
-the |-u| command line argument.  It does also happen for gvimrc files.  The
-$MYVIMRC or $MYGVIMRC file will be set to the first found vimrc and/or gvimrc
-file.
-
-But there is a side effect of setting or resetting 'compatible' at the moment
-a .vimrc file is found: Mappings are interpreted the moment they are
-encountered.  This makes a difference when using things like "<CR>".  If the
-mappings depend on a certain value of 'compatible', set or reset it before
-giving the mapping.
-
-The above behavior can be overridden in these ways:
-- If the "-N" command line argument is given, 'nocompatible' will be used,
-  even when no vimrc file exists.
-- If the "-C" command line argument is given, 'compatible' will be used, even
-  when a vimrc file exists.
-- If the "-u {vimrc}" argument is used, 'compatible' will be used.
-- When the name of the executable ends in "ex", then this works like the "-C"
-  argument was given: 'compatible' will be used, even when a vimrc file
-  exists.  This has been done to make Vim behave like "ex", when it is started
-  as "ex".
+The $MYVIMRC or $MYGVIMRC file will be set to the first found vimrc and/or
+gvimrc file.
 
 Avoiding trojan horses:					*trojan-horse*
 While reading the "vimrc" or the "exrc" file in the current directory, some
@@ -951,11 +893,6 @@ these steps:
    o:set guifont=<C-R>=&guifont<CR><Esc>
 <  [<C-R> is a CTRL-R, <CR> is a return, <Esc> is the escape key]
    You need to escape special characters, esp. spaces.
-
-Note that when you create a .vimrc file, this can influence the 'compatible'
-option, which has several side effects.  See |'compatible'|.
-":mkvimrc", ":mkexrc" and ":mksession" write the command to set or reset the
-'compatible' option to the output file first, because of these side effects.
 
 ==============================================================================
 7. Views and Sessions					*views-sessions*

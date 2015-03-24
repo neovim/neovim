@@ -687,7 +687,6 @@ and |+X11| features.
 A command line started with a backslash or the range of a command contained a
 backslash in a wrong place.  This is often caused by command-line continuation
 being disabled.  Remove the 'C' flag from the 'cpoptions' option to enable it.
-Or use ":set nocp".
 
 							*E471*  >
   Argument required
@@ -770,11 +769,10 @@ and the screen is about to be redrawn:
    key being used otherwise.
 -> Press ':' or any other Normal mode command character to start that command.
 -> Press 'k', <Up>, 'u', 'b' or 'g' to scroll back in the messages.  This
-   works the same way as at the |more-prompt|.  Only works when 'compatible'
-   is off and 'more' is on.
+   works the same way as at the |more-prompt|.  Only works when 'more' is on.
 -> Pressing 'j', 'f', 'd' or <Down> is ignored when messages scrolled off the
-   top of the screen, 'compatible' is off and 'more' is on, to avoid that
-   typing one 'j' or 'f' too many causes the messages to disappear.
+   top of the screen and 'more' is on, to avoid that typing one 'j' or 'f' too
+   many causes the messages to disappear.
 -> Press <C-Y> to copy (yank) a modeless selection to the clipboard register.
 -> Use a menu.  The characters defined for Cmdline-mode are used.
 -> When 'mouse' contains the 'r' flag, clicking the left mouse button works
