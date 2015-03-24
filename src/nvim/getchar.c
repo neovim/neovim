@@ -51,6 +51,7 @@
 #include "nvim/undo.h"
 #include "nvim/os/event.h"
 #include "nvim/os/input.h"
+#include "nvim/os/os.h"
 
 /*
  * These buffers are used for storing:
