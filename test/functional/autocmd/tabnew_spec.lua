@@ -4,8 +4,8 @@ local clear, nvim, buffer, curbuf, curwin, eq, neq, ok =
   helpers.eq, helpers.neq, helpers.ok
 
 describe('TabNew', function()
+    setup(clear)
     describe('au TabNew', function()
-        clear()
         describe('with * as <afile>', function()
             it('matches when opening any new tab', function()
                 nvim('command', 'au! TabNew * echom "tabnew:".tabpagenr().":".bufnr("")')

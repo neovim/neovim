@@ -17,9 +17,17 @@ if(BUSTED_OUTPUT_TYPE STREQUAL junit)
   set(EXTRA_ARGS OUTPUT_FILE ${BUILD_DIR}/${TEST_TYPE}test-junit.xml)
 endif()
 
+if(DEFINED ENV{TEST_TAG})
+  set(TEST_TAG "--tags=$ENV{TEST_TAG}")
+endif()
+
+if(DEFINED ENV{TEST_FILTER})
+  set(TEST_TAG "--filter=$ENV{TEST_FILTER}")
+endif()
+
 execute_process(
-  COMMAND ${BUSTED_PRG} -v -o ${BUSTED_OUTPUT_TYPE}
-    --helper=${TEST_DIR}/${TEST_TYPE}/preload.lua
+  COMMAND ${BUSTED_PRG} ${TEST_TAG} ${TEST_FILTER} -v -o ${BUSTED_OUTPUT_TYPE}
+    --lazy --helper=${TEST_DIR}/${TEST_TYPE}/preload.lua
     --lpath=${BUILD_DIR}/?.lua ${TEST_PATH}
   WORKING_DIRECTORY ${WORKING_DIR}
   ERROR_VARIABLE err

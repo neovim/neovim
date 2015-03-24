@@ -36,11 +36,11 @@ add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps
   COMMAND ${DEPS_BIN_DIR}/luarocks
   ARGS build dkjson 2.5-1 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
   COMMAND ${DEPS_BIN_DIR}/luarocks
-  ARGS build say 1.2-1 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
+  ARGS build say 1.3-0 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
   COMMAND ${DEPS_BIN_DIR}/luarocks
-  ARGS build luassert 1.7.2-0 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
+  ARGS build luassert 1.7.4-0 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
   COMMAND ${DEPS_BIN_DIR}/luarocks
-  ARGS build ansicolors 1.0.2-3 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
+  ARGS build lua-term 0.1-1 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
   COMMAND ${DEPS_BIN_DIR}/luarocks
   ARGS build penlight 1.0.0-1 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
   COMMAND ${DEPS_BIN_DIR}/luarocks
@@ -56,7 +56,7 @@ add_custom_target(stable-busted-deps
 
 add_custom_command(OUTPUT ${DEPS_BIN_DIR}/busted
   COMMAND ${DEPS_BIN_DIR}/luarocks
-  ARGS build busted 2.0.rc4 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
+  ARGS build https://raw.githubusercontent.com/Olivine-Labs/busted/master/busted-scm-0.rockspec CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
   COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/utfTerminalDetailed.lua
   ${DEPS_INSTALL_DIR}/share/lua/5.1/busted/outputHandlers
   DEPENDS stable-busted-deps)
