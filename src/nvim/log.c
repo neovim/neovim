@@ -8,7 +8,6 @@
 #include <unistd.h>
 
 #include "nvim/log.h"
-#include "nvim/misc1.h"
 #include "nvim/types.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"

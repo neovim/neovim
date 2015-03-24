@@ -818,7 +818,7 @@ static void init_locale(void)
 # endif
 
   {
-    int mustfree = FALSE;
+    bool mustfree = false;
     char_u  *p;
 
     /* expand_env() doesn't work yet, because chartab[] is not initialized
