@@ -385,7 +385,7 @@ close_buffer (
 
   /* Always remove the buffer when there is no file name. */
   if (buf->b_ffname == NULL)
-    del_buf = TRUE;
+    del_buf = true;
 
   /*
    * Free all things allocated for this buffer.
@@ -544,6 +544,7 @@ static void free_buffer(buf_T *buf)
   free_buffer_stuff(buf, TRUE);
   unref_var_dict(buf->b_vars);
   aubuflocal_remove(buf);
+
   if (autocmd_busy) {
     // Do not free the buffer structure while autocommands are executing,
     // it's still needed. Free it when autocmd_busy is reset.
@@ -1329,6 +1330,7 @@ buflist_new (
         }
       }
     }
+
     return buf;
   }
 

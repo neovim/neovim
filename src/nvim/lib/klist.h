@@ -111,7 +111,17 @@
         if (d) *d = p->data;                                            \
         kmp_free(name, kl->mp, p);                                      \
         return 0;                                                       \
+    }                                                                   \
+    static inline void kl1_remove_next_##name(kl_##name##_t *kl, kl1_##name *iter, kltype_t *d) \
+        REAL_FATTR_UNUSED;                                              \
+    static inline void kl1_remove_next_##name(kl_##name##_t *kl, kl1_##name *iter, kltype_t *d) { \
+        kl1_##name *to_remove = iter->next;                             \
+        iter->next = iter->next->next;                                  \
+        if (d) *d = to_remove->data;                                    \
+        kmp_free(name, kl->mp, to_remove);                              \
+        kl->size--;                                                     \
     }
+
 
 #define kliter_t(name) kl1_##name
 #define klist_t(name) kl_##name##_t
@@ -125,4 +135,6 @@
 #define kl_pushp(name, kl) kl_pushp_##name(kl)
 #define kl_shift(name, kl, d) kl_shift_##name(kl, d)
 #define kl_empty(kl) ((kl)->size == 0)
+
+#define kl_iter_remove_next(name, kl, iter, d) kl1_remove_next_##name(kl, iter, d)
 #endif

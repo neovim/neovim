@@ -20,6 +20,7 @@
 #include "nvim/misc2.h"
 #include "nvim/ui.h"
 #include "nvim/screen.h"
+#include "nvim/os/fsnotification.h"
 
 #include "nvim/lib/klist.h"
 
@@ -63,6 +64,9 @@ void event_init(void)
   // finish mspgack-rpc initialization
   channel_init();
   server_init();
+
+  // init filesystem watcher
+  fsnotification_init();
 }
 
 void event_teardown(void)
@@ -79,6 +83,7 @@ void event_teardown(void)
   job_teardown();
   server_teardown();
   signal_teardown();
+  fsnotification_teardown();
   // this last `uv_run` will return after all handles are stopped, it will
   // also take care of finishing any uv_close calls made by other *_teardown
   // functions.
