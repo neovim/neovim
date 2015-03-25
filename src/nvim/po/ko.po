@@ -1577,7 +1577,7 @@ msgid "E494: Use w or w>>"
 msgstr "E494: w나 w>>를 사용하십시오"
 
 #: ../ex_docmd.c:3454
-msgid "E319: Sorry, the command is not available in this version"
+msgid "E319: The command is not available in this version"
 msgstr "E319: 미안합니다, 그 명령은 현재 판에서 사용할 수 없습니다"
 
 #: ../ex_docmd.c:3752
