@@ -1630,7 +1630,7 @@ msgid "E494: Use w or w>>"
 msgstr "E494: 請使用 w 或 w>>"
 
 #: ../ex_docmd.c:3454
-msgid "E319: Sorry, the command is not available in this version"
+msgid "E319: The command is not available in this version"
 msgstr "E319: 抱歉, 本命令在此版本中沒有實作"
 
 #: ../ex_docmd.c:3752

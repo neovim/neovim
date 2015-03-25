@@ -3275,7 +3275,7 @@ void ex_ni(exarg_T *eap)
 {
   if (!eap->skip)
     eap->errmsg = (char_u *)N_(
-        "E319: Sorry, the command is not available in this version");
+        "E319: The command is not available in this version");
 }
 
 /// Stub function for script command which is Not Implemented. NI!

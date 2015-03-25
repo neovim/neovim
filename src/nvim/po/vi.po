@@ -1608,7 +1608,7 @@ msgid "E494: Use w or w>>"
 msgstr "E494: Hãy sử dụng w hoặc w>>"
 
 #: ../ex_docmd.c:3454
-msgid "E319: Sorry, the command is not available in this version"
+msgid "E319: The command is not available in this version"
 msgstr "E319: Xin lỗi, câu lệnh này không có trong phiên bản này"
 
 #: ../ex_docmd.c:3752

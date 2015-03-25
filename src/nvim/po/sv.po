@@ -5380,7 +5380,7 @@ msgid "E494: Use w or w>>"
 msgstr "E494: Använd w eller w>>"
 
 #: ../ex_docmd.c:3318
-msgid "E319: Sorry, the command is not available in this version"
+msgid "E319: The command is not available in this version"
 msgstr "E319: Tyvärr, kommandot är inte tillgängligt i den här versionen"
 
 #: ../ex_docmd.c:3611

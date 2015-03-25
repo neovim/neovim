@@ -521,7 +521,7 @@ for about 14 levels.  When more nesting is done, Vim assumes that there is a
 recursive loop somewhere and stops with this error message.
 
 							*E319*  >
-  Sorry, the command is not available in this version
+  The command is not available in this version
 
 You have used a command that is not present in the version of Vim you are
 using.  When compiling Vim, many different features can be enabled or
