@@ -2689,7 +2689,7 @@ msgid "E477: No ! allowed"
 msgstr "E477: ! は許可されていません"
 
 #: ../globals.h:1035
-msgid "E25: GUI cannot be used: Not enabled at compile time"
+msgid "E25: Nvim does not have a built-in GUI"
 msgstr "E25: GUIは使用不可能\です: コンパイル時に無効にされています"
 
 #: ../globals.h:1036

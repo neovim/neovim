@@ -315,10 +315,9 @@ generate this message.  This could be caused by a |-m| commandline argument.
 You can switch the 'write' option on with ":set write".
 
 							*E25*  >
-  GUI cannot be used: Not enabled at compile time
+  Nvim does not have a built-in GUI
 
-You are running a version of Vim that doesn't include the GUI code.  Therefore
-"gvim" and ":gui" don't work.
+Neovim does not have a built in GUI, so |:gvim| and |:gui| don't work.
 
 							*E49*  >
   Invalid scroll size
