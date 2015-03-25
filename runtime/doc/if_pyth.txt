@@ -107,6 +107,29 @@ Here are some examples					*python-examples*  >
 (Note that changes - like the imports - persist from one command to the next,
 just like in the Python interpreter.)
 
+							*script-here*
+When using a script language in-line, you might want to skip this when the
+language isn't supported.  Note that this mechanism doesn't work:
+>
+   if has('python')
+     python << EOF
+       this will NOT work!
+   EOF
+   endif
+
+Instead, put the Python command in a function and call that function:
+>
+    if has('python')
+      function DefPython()
+        python << EOF
+          this works
+    EOF
+      endfunction
+      call DefPython()
+    endif
+
+Note that "EOF" must be at the start of the line.
+
 ==============================================================================
 2. The vim module					*python-vim*
 

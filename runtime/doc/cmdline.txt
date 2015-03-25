@@ -522,8 +522,6 @@ followed by another Vim command:
     :lcscope
     :make
     :normal
-    :perl
-    :perldo
     :promptfind
     :promptrepl
     :pyfile
@@ -532,9 +530,6 @@ followed by another Vim command:
     :read !
     :scscope
     :sign
-    :tcl
-    :tcldo
-    :tclfile
     :vglobal
     :windo
     :write !

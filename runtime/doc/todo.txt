@@ -849,8 +849,6 @@ Results in E670. (Tony Mechelynck, 2010 May 2)
 
 'beval' option should be global-local.
 
-Ruby: ":ruby print $buffer.number" returns zero.
-
 setpos() does not restore cursor position after :normal. (Tyru, 2010 Aug 11)
 
 7   The 'directory' option supports changing path separators to "%" to make
@@ -1185,8 +1183,6 @@ still delete them.  Also convert all buffer file names?
 (Raul Coronado, 2009 Nov 2)
 
 Update src/testdir/main.aap.
-
-"vim -c 'sniff connect'" hangs Vim. (Dominique Pelle, 2008 Dec 7)
 
 Something wrong with session that has "cd" commands and "badd", in such a way
 that Vim doesn't find the edited file in the buffer list, causing the
@@ -1603,9 +1599,6 @@ error.  without --remote-silent it works fine. (Ben Fritz, 2008 Jun 20)
 
 Gvim: dialog for closing Vim should check if Vim is busy writing a file.  Then
 use a different dialog: "busy saving, really quit? yes / no".
-
-Check other interfaces for changing curbuf in a wrong way.  Patch like for
-if_ruby.c.
 
 ":helpgrep" should use the directory from 'helpfile'.
 
@@ -2689,7 +2682,6 @@ Problems that will (probably) not be solved:
     XtOpenDisplay() prints this directly, there is no way to avoid it.
 -   X windows: Setting 'guifontset' to an illegal value sometimes crashes Vim.
     This is caused by a fault in a X library function, can't be solved in Vim.
--   Win32 tcl: has("tcl") hangs when the tcl84.dll is from cygwin.
 -   Motif: When adding a menu item "Find this &Symbol", the "s" in "this" will
     be underlined, instead of in "Symbol".  Motif doesn't let us specify which
     character gets the highlighting.

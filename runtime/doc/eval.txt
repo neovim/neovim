@@ -1879,7 +1879,6 @@ lispindent( {lnum})		Number	Lisp indent for line {lnum}
 localtime()			Number	current time
 log( {expr})			Float	natural logarithm (base e) of {expr}
 log10( {expr})			Float	logarithm of Float {expr} to base 10
-luaeval( {expr}[, {expr}])	any	evaluate |Lua| expression
 map( {expr}, {string})		List/Dict  change each item in {expr} to {expr}
 maparg( {name}[, {mode} [, {abbr} [, {dict}]]])
 				String or Dict
@@ -1905,7 +1904,6 @@ min( {list})			Number	minimum value of items in {list}
 mkdir( {name} [, {path} [, {prot}]])
 				Number	create directory {name}
 mode( [expr])			String	current editing mode
-mzeval( {expr})			any	evaluate |MzScheme| expression
 nextnonblank( {lnum})		Number	line nr of non-blank line >= {lnum}
 nr2char( {expr}[, {utf8}])	String	single char with ASCII/UTF8 value {expr}
 or( {expr}, {expr})		Number  bitwise OR
@@ -4239,19 +4237,6 @@ log10({expr})						*log10()*
 <			-2.0
 
 
-luaeval({expr}[, {expr}])					*luaeval()*
-		Evaluate Lua expression {expr} and return its result converted 
-		to Vim data structures. Second {expr} may hold additional 
-		argument accessible as _A inside first {expr}.
-		Strings are returned as they are.
-		Boolean objects are converted to numbers.
-		Numbers are converted to |Float| values.
-		Dictionaries and lists obtained by vim.eval() are returned 
-		as-is.
-		Other objects are returned as zero without any errors.
-		See |lua-luaeval| for more details.
-		{only available when compiled with the |+lua| feature}
-
 map({expr}, {string})					*map()*
 		{expr} must be a |List| or a |Dictionary|.
 		Replace each item in {expr} with the result of evaluating
@@ -4614,23 +4599,6 @@ mode([expr])	Return a string that indicates the current mode.
 		with |remote_expr()| In most other places it always returns
 		"c" or "n".
 		Also see |visualmode()|.
-
-mzeval({expr})							*mzeval()*
-		Evaluate MzScheme expression {expr} and return its result
-		converted to Vim data structures.
-		Numbers and strings are returned as they are.
-		Pairs (including lists and improper lists) and vectors are
-		returned as Vim |Lists|.
-		Hash tables are represented as Vim |Dictionary| type with keys
-		converted to strings.
-		All other types are converted to string with display function.
-		Examples: >
-		    :mz (define l (list 1 2 3))
-		    :mz (define h (make-hash)) (hash-set! h "list" l)
-		    :echo mzeval("l")
-		    :echo mzeval("h")
-<
-		{only available when compiled with the |+mzscheme| feature}
 
 nextnonblank({lnum})					*nextnonblank()*
 		Return the line number of the first line at or below {lnum}
@@ -6773,7 +6741,6 @@ lispindent		Compiled with support for lisp indenting.
 listcmds		Compiled with commands for the buffer list |:files|
 			and the argument list |arglist|.
 localmap		Compiled with local mappings and abbr. |:map-local|
-lua			Compiled with Lua interface |Lua|.
 mac			Macintosh version of Vim.
 macunix			Macintosh version of Vim, using Unix files (OS-X).
 menu			Compiled with support for |:menu|.
@@ -6792,10 +6759,8 @@ multi_byte		Compiled with support for 'encoding'
 multi_byte_encoding	'encoding' is set to a multi-byte encoding.
 multi_byte_ime		Compiled with support for IME input method.
 multi_lang		Compiled with support for multiple languages.
-mzscheme		Compiled with MzScheme interface |mzscheme|.
 ole			Compiled with OLE automation support for Win32.
 path_extra		Compiled with up/downwards search in 'path' and 'tags'
-perl			Compiled with Perl interface.
 persistent_undo		Compiled with support for persistent undo history.
 postscript		Compiled with PostScript file printing.
 printer			Compiled with |:hardcopy| support.
@@ -6805,12 +6770,10 @@ python3			Compiled with Python 3.x interface. |has-python|
 quickfix		Compiled with |quickfix| support.
 reltime			Compiled with |reltime()| support.
 rightleft		Compiled with 'rightleft' support.
-ruby			Compiled with Ruby interface |ruby|.
 scrollbind		Compiled with 'scrollbind' support.
 showcmd			Compiled with 'showcmd' support.
 signs			Compiled with |:sign| support.
 smartindent		Compiled with 'smartindent' support.
-sniff			Compiled with SNiFF interface support.
 spell			Compiled with spell checking support |spell|.
 startuptime		Compiled with |--startuptime| support.
 statusline		Compiled with support for 'statusline', 'rulerformat'
@@ -6825,7 +6788,6 @@ tag_old_static		Compiled with support for old static tags
 			|tag-old-static|.
 tag_any_white		Compiled with support for any white characters in tags
 			files |tag-any-white|.
-tcl			Compiled with Tcl interface.
 terminfo		Compiled with terminfo instead of termcap.
 termresponse		Compiled with support for |t_RV| and |v:termresponse|.
 textobjects		Compiled with support for |text-objects|.

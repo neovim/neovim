@@ -4953,15 +4953,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	time in msec between two mouse clicks for the second click to be
 	recognized as a multi click.
 
-						    *'mzquantum'* *'mzq'*
-'mzquantum' 'mzq'	number	(default 100)
-			global
-			{not in Vi}
-			{not available when compiled without the |+mzscheme|
-			feature}
-	The number of milliseconds between polls for MzScheme threads.
-	Negative or zero value means no thread scheduling.
-
 							*'nrformats'* *'nf'*
 'nrformats' 'nf'	string	(default "octal,hex")
 			local to buffer

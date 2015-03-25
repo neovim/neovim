@@ -793,7 +793,6 @@ Short explanation of each option:		*option-list*
 'mousemodel'	  'mousem'  changes meaning of mouse buttons
 'mouseshape'	  'mouses'  shape of the mouse pointer in different modes
 'mousetime'	  'mouset'  max time between mouse double-click
-'mzquantum'	  'mzq'     the interval between polls for MzScheme threads
 'nrformats'	  'nf'	    number formats recognized for CTRL-A command
 'number'	  'nu'	    print the line number in front of each line
 'numberwidth'	  'nuw'     number of columns used for the line number

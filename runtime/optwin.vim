@@ -1251,10 +1251,6 @@ call append("$", "\t(local to buffer)")
 call <SID>BinOptionL("bl")
 call append("$", "debug\tset to \"msg\" to see all error messages")
 call append("$", " \tset debug=" . &debug)
-if has("mzscheme")
-  call append("$", "mzquantum\tinterval in milliseconds between polls for MzScheme threads")
-  call append("$", " \tset mzq=" . &mzq)
-endif
 
 set cpo&vim
 
