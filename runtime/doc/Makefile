@@ -34,12 +34,7 @@ DOCS = \
 	helphelp.txt \
 	howto.txt \
 	if_cscop.txt \
-	if_lua.txt \
-	if_mzsch.txt \
-	if_perl.txt \
 	if_pyth.txt \
-	if_ruby.txt \
-	if_tcl.txt \
 	indent.txt \
 	index.txt \
 	insert.txt \
@@ -156,12 +151,7 @@ HTMLS = \
 	helphelp.html \
 	howto.html \
 	if_cscop.html \
-	if_lua.html \
-	if_mzsch.html \
-	if_perl.html \
 	if_pyth.html \
-	if_ruby.html \
-	if_tcl.html \
 	indent.html \
 	index.html \
 	insert.html \

@@ -401,8 +401,7 @@ Scripts and Expressions.				|expression|
 	|:try|		Catch exceptions.
 	etc., etc.  See |eval|.
 	Debugging and profiling are supported. |debug-scripts| |profile|
-	If this is not enough, an interface is provided to |Python|, |Ruby|,
-	|Tcl|, |Lua|, |Perl| and |MzScheme|.
+	If this is not enough, an interface is provided to |Python|.
 
 Viminfo.						|viminfo-file|
 	The command-line history, marks and registers can be stored in a file

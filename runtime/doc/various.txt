@@ -364,8 +364,6 @@ N  *+lispindent*	|'lisp'|
 N  *+listcmds*		Vim commands for the list of buffers |buffer-hidden|
 			and argument list |:argdelete|
 N  *+localmap*		Support for mappings local to a buffer |:map-local|
-m  *+lua*		|Lua| interface
-m  *+lua/dyn*		|Lua| interface |/dyn|
 N  *+menu*		|:menu|
 N  *+mksession*		|:mksession|
 N  *+modify_fname*	|filename-modifiers|
@@ -381,11 +379,7 @@ N  *+mouse_xterm*	Unix only: xterm mouse handling |xterm-mouse|
 N  *+multi_byte*	16 and 32 bit characters |multibyte|
    *+multi_byte_ime*	Win32 input method for multibyte chars |multibyte-ime|
 N  *+multi_lang*	non-English language support |multi-lang|
-m  *+mzscheme*		Mzscheme interface |mzscheme|
-m  *+mzscheme/dyn*	Mzscheme interface |mzscheme-dynamic| |/dyn|
 N  *+path_extra*	Up/downwards search in 'path' and 'tags'
-m  *+perl*		Perl interface |perl|
-m  *+perl/dyn*		Perl interface |perl-dynamic| |/dyn|
 N  *+persistent_undo*	Persistent undo |undo-persistence|
    *+postscript*	|:hardcopy| writes a PostScript file
 N  *+printer*		|:hardcopy| command
@@ -398,8 +392,6 @@ N  *+quickfix*		|:make| and |quickfix| commands
 N  *+reltime*		|reltime()| function, 'hlsearch'/'incsearch' timeout,
 			'redrawtime' option
 B  *+rightleft*		Right to left typing |'rightleft'|
-m  *+ruby*		Ruby interface |ruby|
-m  *+ruby/dyn*		Ruby interface |ruby-dynamic| |/dyn|
 N  *+scrollbind*	|'scrollbind'|
 B  *+signs*		|:sign|
 N  *+smartindent*	|'smartindent'|
@@ -411,8 +403,6 @@ N  *+syntax*		Syntax highlighting |syntax|
 N  *+tag_binary*	binary searching in tags file |tag-binary-search|
 N  *+tag_old_static*	old method for static tags |tag-old-static|
 m  *+tag_any_white*	any white space allowed in tags file |tag-any-white|
-m  *+tcl*		Tcl interface |tcl|
-m  *+tcl/dyn*		Tcl interface |tcl-dynamic| |/dyn|
    *+terminfo*		uses |terminfo| instead of termcap
 N  *+termresponse*	support for |t_RV| and |v:termresponse|
 N  *+textobjects*	|text-objects| selection

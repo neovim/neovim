@@ -1325,9 +1325,6 @@ tag	      command	      action ~
 |:ltag|		:lt[ag]		jump to tag and add matching tags to the
 				location list
 |:lunmap|	:lu[nmap]	like ":unmap!" but includes Lang-Arg mode
-|:lua|		:lua		execute |Lua| command
-|:luado|	:luad[o]	execute Lua command for each line
-|:luafile|	:luaf[ile]	execute |Lua| script file
 |:lvimgrep|	:lv[imgrep]	search for pattern in files
 |:lvimgrepadd|	:lvimgrepa[dd]	like :vimgrep, but append to current list
 |:lwindow|	:lw[indow]	open or close location window
@@ -1348,8 +1345,6 @@ tag	      command	      action ~
 |:mkvimrc|	:mkv[imrc]	write current mappings and settings to a file
 |:mkview|	:mkvie[w]	write view of current window to a file
 |:mode|		:mod[e]		show or change the screen mode
-|:mzscheme|	:mz[scheme]	execute MzScheme command
-|:mzfile|	:mzf[ile]	execute MzScheme script file
 |:next|		:n[ext]		go to next file in the argument list
 |:new|		:new		create a new empty window
 |:nmap|		:nm[ap]		like ":map" but for Normal mode
@@ -1382,13 +1377,11 @@ tag	      command	      action ~
 |:ownsyntax|	:ow[nsyntax]	set new local syntax highlight for this window
 |:pclose|	:pc[lose]	close preview window
 |:pedit|	:ped[it]	edit file in the preview window
-|:perl|		:pe[rl]		execute Perl command
 |:print|	:p[rint]	print lines
 |:profdel|	:profd[el]	stop profiling a function or script
 |:profile|	:prof[ile]	profiling functions and scripts
 |:promptfind|	:pro[mptfind]	open GUI dialog for searching
 |:promptrepl|	:promptr[epl]	open GUI dialog for search/replace
-|:perldo|	:perld[o]	execute Perl command for each line
 |:pop|		:po[p]		jump to older entry in tag stack
 |:popup|	:popu[p]	popup a menu by name
 |:ppop|		:pp[op]		":pop" in preview window
@@ -1429,9 +1422,6 @@ tag	      command	      action ~
 |:rewind|	:rew[ind]	go to the first file in the argument list
 |:right|	:ri[ght]	right align text
 |:rightbelow|	:rightb[elow]	make split window appear right or below
-|:ruby|		:rub[y]		execute Ruby command
-|:rubydo|	:rubyd[o]	execute Ruby command for each line
-|:rubyfile|	:rubyf[ile]	execute Ruby script file
 |:rundo|	:rund[o]	read undo information from a file
 |:runtime|	:ru[ntime]	source vim scripts in 'runtimepath'
 |:rviminfo|	:rv[iminfo]	read from viminfo file
@@ -1534,9 +1524,6 @@ tag	      command	      action ~
 |:tab|		:tab		create new tab when opening new window
 |:tag|		:ta[g]		jump to tag
 |:tags|		:tags		show the contents of the tag stack
-|:tcl|		:tc[l]		execute Tcl command
-|:tcldo|	:tcld[o]	execute Tcl command for each line
-|:tclfile|	:tclf[ile]	execute Tcl script file
 |:tearoff|	:te[aroff]	tear-off a menu
 |:tfirst|	:tf[irst]	jump to first matching tag
 |:throw|	:th[row]	throw an exception
