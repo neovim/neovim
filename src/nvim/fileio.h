@@ -100,6 +100,7 @@ typedef enum auto_event {
   EVENT_TABNEWENTERED,          /* after entering a new tab */
   EVENT_SHELLCMDPOST,           /* after ":!cmd" */
   EVENT_SHELLFILTERPOST,        /* after ":1,2!cmd", ":w !cmd", ":r !cmd". */
+  EVENT_TERMOPEN,               // after opening a terminal buffer
   EVENT_TEXTCHANGED,            /* text was modified */
   EVENT_TEXTCHANGEDI,           /* text was modified in Insert mode*/
   EVENT_CMDUNDEFINED,           ///< command undefined

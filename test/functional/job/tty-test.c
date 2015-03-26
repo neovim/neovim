@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <uv.h>
 
+uv_tty_t tty;
+
 #ifdef _WIN32
 #include <windows.h>
 bool owns_tty(void)
@@ -13,10 +15,10 @@ bool owns_tty(void)
   return GetCurrentProcessId() == dwProcessId;
 }
 #else
+#include <unistd.h>
 bool owns_tty(void)
 {
-  // TODO: Check if the process is the session leader
-  return true;
+  return getsid(0) == getpid();
 }
 #endif
 
@@ -29,26 +31,20 @@ static void walk_cb(uv_handle_t *handle, void *arg) {
   }
 }
 
-static void sigwinch_cb(uv_signal_t *handle, int signum)
+static void sigwinch_handler(int signum)
 {
   int width, height;
-  uv_tty_t *tty = handle->data;
-  uv_tty_get_winsize(tty, &width, &height);
-  fprintf(stderr, "screen resized. rows: %d, columns: %d\n", height, width);
+  uv_tty_get_winsize(&tty, &width, &height);
+  fprintf(stderr, "rows: %d, cols: %d\n", height, width);
 }
 
-static void sigint_cb(uv_signal_t *handle, int signum)
-{
-  bool *interrupted = handle->data;
-
-  if (*interrupted) {
-    uv_walk(uv_default_loop(), walk_cb, NULL);
-    return;
-  }
-
-  *interrupted = true;
-  fprintf(stderr, "interrupt received, press again to exit\n");
-}
+// static void sigwinch_cb(uv_signal_t *handle, int signum)
+// {
+//   int width, height;
+//   uv_tty_t *tty = handle->data;
+//   uv_tty_get_winsize(tty, &width, &height);
+//   fprintf(stderr, "rows: %d, cols: %d\n", height, width);
+// }
 
 static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
 {
@@ -63,13 +59,20 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
     return;
   }
 
-  fprintf(stderr, "received data: ");
+  int *interrupted = stream->data;
+
+  for (int i = 0; i < cnt; i++) {
+    if (buf->base[i] == 3) {
+      (*interrupted)++;
+    }
+  }
+
   uv_loop_t write_loop;
   uv_loop_init(&write_loop);
   uv_tty_t out;
   uv_tty_init(&write_loop, &out, 1, 0);
   uv_write_t req;
-  uv_buf_t b = {.base = buf->base, .len = buf->len};
+  uv_buf_t b = {.base = buf->base, .len = (size_t)cnt};
   uv_write(&req, (uv_stream_t *)&out, &b, 1, NULL);
   uv_run(&write_loop, UV_RUN_DEFAULT);
   uv_close((uv_handle_t *)&out, NULL);
@@ -78,6 +81,12 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
     abort();
   }
   free(buf->base);
+
+  if (*interrupted >= 2) {
+    uv_walk(uv_default_loop(), walk_cb, NULL);
+  } else if (*interrupted == 1) {
+    fprintf(stderr, "interrupt received, press again to exit\n");
+  }
 }
 
 static void prepare_cb(uv_prepare_t *handle)
@@ -88,6 +97,11 @@ static void prepare_cb(uv_prepare_t *handle)
 
 int main(int argc, char **argv)
 {
+  if (!owns_tty()) {
+    fprintf(stderr, "process does not own the terminal\n");
+    exit(2);
+  }
+
   if (!is_terminal(stdin)) {
     fprintf(stderr, "stdin is not a terminal\n");
     exit(2);
@@ -103,20 +117,34 @@ int main(int argc, char **argv)
     exit(2);
   }
 
-  bool interrupted = false;
+  if (argc > 1) {
+    int count = atoi(argv[1]);
+    for (int i = 0; i < count; ++i) {
+      printf("line%d\n", i);
+    }
+    fflush(stdout);
+    return 0;
+  }
+
+  int interrupted = 0;
   uv_prepare_t prepare;
   uv_prepare_init(uv_default_loop(), &prepare);
   uv_prepare_start(&prepare, prepare_cb);
-  uv_tty_t tty;
+  // uv_tty_t tty;
   uv_tty_init(uv_default_loop(), &tty, fileno(stderr), 1);
+  uv_tty_set_mode(&tty, UV_TTY_MODE_RAW);
+  tty.data = &interrupted;
   uv_read_start((uv_stream_t *)&tty, alloc_cb, read_cb);
-  uv_signal_t sigwinch_watcher, sigint_watcher;
-  uv_signal_init(uv_default_loop(), &sigwinch_watcher);
-  sigwinch_watcher.data = &tty;
-  uv_signal_start(&sigwinch_watcher, sigwinch_cb, SIGWINCH);
-  uv_signal_init(uv_default_loop(), &sigint_watcher);
-  sigint_watcher.data = &interrupted;
-  uv_signal_start(&sigint_watcher, sigint_cb, SIGINT);
+  struct sigaction sa;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  sa.sa_handler = sigwinch_handler;
+  sigaction(SIGWINCH, &sa, NULL);
+  // uv_signal_t sigwinch_watcher;
+  // uv_signal_init(uv_default_loop(), &sigwinch_watcher);
+  // sigwinch_watcher.data = &tty;
+  // uv_signal_start(&sigwinch_watcher, sigwinch_cb, SIGWINCH);
   uv_run(uv_default_loop(), UV_RUN_DEFAULT);
-  fprintf(stderr, "tty done\n");
+
+  return 0;
 }

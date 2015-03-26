@@ -40,10 +40,12 @@
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
+#include "nvim/macros.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/syntax_defs.h"
+#include "nvim/terminal.h"
 #include "nvim/ui.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
@@ -6636,7 +6638,7 @@ static garray_T attr_table = GA_EMPTY_INIT_VALUE;
  * if the combination is new.
  * Return 0 for error.
  */
-static int get_attr_entry(attrentry_T *aep)
+int get_attr_entry(attrentry_T *aep)
 {
   garray_T *table = &attr_table;
   attrentry_T *taep;
@@ -6721,6 +6723,10 @@ int hl_combine_attr(int char_attr, int prim_attr)
 
   if (char_attr == 0) {
     return prim_attr;
+  }
+
+  if (prim_attr == 0) {
+    return char_attr;
   }
 
   // Find the entry for char_attr
@@ -7420,7 +7426,6 @@ char_u *get_highlight_name(expand_T *xp, int idx)
   return HL_TABLE()[idx].sg_name;
 }
 
-#define RGB(r, g, b) ((r << 16) | (g << 8) | b)
 color_name_table_T color_name_table[] = {
   // Color names taken from
   // http://www.rapidtables.com/web/color/RGB_Color.htm

@@ -2538,6 +2538,7 @@ fix_input_buffer (
  * for :xmap  mode is VISUAL
  * for :smap  mode is SELECTMODE
  * for :omap  mode is OP_PENDING
+ * for :tmap  mode is TERM_FOCUS
  *
  * for :abbr  mode is INSERT + CMDLINE
  * for :iabbr mode is INSERT
@@ -3056,6 +3057,8 @@ int get_map_mode(char_u **cmdp, int forceit)
     mode = SELECTMODE;                          /* :smap */
   else if (modec == 'o')
     mode = OP_PENDING;                          /* :omap */
+  else if (modec == 't')
+    mode = TERM_FOCUS;                            // :tmap
   else {
     --p;
     if (forceit)
@@ -3922,6 +3925,9 @@ makemap (
           break;
         case LANGMAP:
           c1 = 'l';
+          break;
+        case TERM_FOCUS:
+          c1 = 't';
           break;
         default:
           EMSG(_("E228: makemap: Illegal mode"));

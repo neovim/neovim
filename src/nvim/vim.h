@@ -112,9 +112,10 @@ Error: configure did not run properly.Check auto/config.log.
 #define SHOWMATCH       (0x700 + INSERT) /* show matching paren */
 #define CONFIRM         0x800   /* ":confirm" prompt */
 #define SELECTMODE      0x1000  /* Select mode, only for mappings */
+#define TERM_FOCUS      0x2000  // Terminal focus mode
 
-#define MAP_ALL_MODES   (0x3f | SELECTMODE)     /* all mode bits used for
-                                                 * mapping */
+// all mode bits used for mapping
+#define MAP_ALL_MODES   (0x3f | SELECTMODE | TERM_FOCUS)
 
 /* directions */
 #define FORWARD                 1
@@ -320,11 +321,6 @@ enum {
 #define fnamecmp(x, y) vim_fnamecmp((char_u *)(x), (char_u *)(y))
 #define fnamencmp(x, y, n) vim_fnamencmp((char_u *)(x), (char_u *)(y), \
     (size_t)(n))
-
-#ifndef EINTR
-# define read_eintr(fd, buf, count) read((fd), (buf), (count))
-# define write_eintr(fd, buf, count) write((fd), (buf), (count))
-#endif
 
 /*
  * Enums need a typecast to be used as array index (for Ultrix).

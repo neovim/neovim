@@ -2078,7 +2078,7 @@ void ex_diffgetput(exarg_T *eap)
       if ((curtab->tp_diffbuf[idx_other] != curbuf)
           && (curtab->tp_diffbuf[idx_other] != NULL)) {
         if ((eap->cmdidx != CMD_diffput)
-            || curtab->tp_diffbuf[idx_other]->b_p_ma) {
+            || MODIFIABLE(curtab->tp_diffbuf[idx_other])) {
           break;
         }
         found_not_ma = TRUE;
@@ -2098,7 +2098,8 @@ void ex_diffgetput(exarg_T *eap)
     for (i = idx_other + 1; i < DB_COUNT; ++i) {
       if ((curtab->tp_diffbuf[i] != curbuf)
           && (curtab->tp_diffbuf[i] != NULL)
-          && ((eap->cmdidx != CMD_diffput) || curtab->tp_diffbuf[i]->b_p_ma)) {
+          && ((eap->cmdidx != CMD_diffput)
+            || MODIFIABLE(curtab->tp_diffbuf[i]))) {
         EMSG(_("E101: More than two buffers in diff mode, don't know "
                "which one to use"));
         return;

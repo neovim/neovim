@@ -56,6 +56,7 @@
 #include "nvim/tag.h"
 #include "nvim/ui.h"
 #include "nvim/mouse.h"
+#include "nvim/terminal.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/event.h"
@@ -244,6 +245,11 @@ edit (
     long count
 )
 {
+  if (curbuf->terminal) {
+    terminal_enter(curbuf->terminal, true);
+    return false;
+  }
+
   int c = 0;
   char_u      *ptr;
   int lastc;

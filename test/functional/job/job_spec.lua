@@ -174,24 +174,14 @@ describe('jobs', function()
 
     it('echoing input', function()
       send('test')
-      -- the tty driver will echo input by default
       eq('test', next_chunk())
     end)
 
     it('resizing window', function()
       nvim('command', 'call jobresize(j, 40, 10)')
-      eq('screen resized. rows: 10, columns: 40', next_chunk())
+      eq('rows: 10, cols: 40', next_chunk())
       nvim('command', 'call jobresize(j, 10, 40)')
-      eq('screen resized. rows: 40, columns: 10', next_chunk())
-    end)
-
-    -- FIXME This test is flawed because there is no telling when the OS will send chunks of data.
-    pending('preprocessing ctrl+c with terminal driver', function()
-      send('\\<c-c>')
-      eq('^Cinterrupt received, press again to exit', next_chunk())
-      send('\\<c-c>')
-      eq('^Ctty done', next_chunk())
-      eq({'notification', 'exit', {0}}, next_message())
+      eq('rows: 40, cols: 10', next_chunk())
     end)
   end)
 end)

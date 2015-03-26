@@ -45,6 +45,7 @@
 #include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"
+#include "nvim/terminal.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
@@ -583,7 +584,7 @@ void op_reindent(oparg_T *oap, Indenter how)
   linenr_T start_lnum = curwin->w_cursor.lnum;
 
   /* Don't even try when 'modifiable' is off. */
-  if (!curbuf->b_p_ma) {
+  if (!MODIFIABLE(curbuf)) {
     EMSG(_(e_modifiable));
     return;
   }
@@ -1329,7 +1330,7 @@ int op_delete(oparg_T *oap)
   if (oap->empty)
     return u_save_cursor();
 
-  if (!curbuf->b_p_ma) {
+  if (!MODIFIABLE(curbuf)) {
     EMSG(_(e_modifiable));
     return FAIL;
   }
@@ -2643,11 +2644,13 @@ do_put (
       return;
   }
 
-  /* Autocommands may be executed when saving lines for undo, which may make
-   * y_array invalid.  Start undo now to avoid that. */
-  if (u_save(curwin->w_cursor.lnum, curwin->w_cursor.lnum + 1) == FAIL) {
-    ELOG(_("Failed to save undo information"));
-    return;
+  if (!curbuf->terminal) {
+    // Autocommands may be executed when saving lines for undo, which may make
+    // y_array invalid.  Start undo now to avoid that.
+    if (u_save(curwin->w_cursor.lnum, curwin->w_cursor.lnum + 1) == FAIL) {
+      ELOG(_("Failed to save undo information"));
+      return;
+    }
   }
 
   if (insert_string != NULL) {
@@ -2690,6 +2693,20 @@ do_put (
     y_width = y_current->y_width;
     y_size = y_current->y_size;
     y_array = y_current->y_array;
+  }
+
+  if (curbuf->terminal) {
+    for (int i = 0; i < count; i++) {
+      // feed the lines to the terminal
+      for (int j = 0; j < y_size; j++) {
+        if (j) {
+          // terminate the previous line
+          terminal_send(curbuf->terminal, "\n", 1);
+        }
+        terminal_send(curbuf->terminal, (char *)y_array[j], STRLEN(y_array[j]));
+      }
+    }
+    return;
   }
 
   if (y_type == MLINE) {

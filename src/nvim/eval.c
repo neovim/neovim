@@ -1,4 +1,5 @@
 /*
+ *
  * VIM - Vi IMproved	by Bram Moolenaar
  *
  * Do ":help uganda"  in Vim to read copying and usage conditions.
@@ -78,6 +79,7 @@
 #include "nvim/tempfile.h"
 #include "nvim/ui.h"
 #include "nvim/mouse.h"
+#include "nvim/terminal.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/window.h"
@@ -440,6 +442,15 @@ static struct vimvar {
 static dictitem_T vimvars_var;                  /* variable used for v: */
 #define vimvarht  vimvardict.dv_hashtab
 
+typedef struct {
+  Job *job;
+  Terminal *term;
+  bool exited;
+  int refcount;
+  char *autocmd_file;
+} TerminalJobData;
+
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval.c.generated.h"
 #endif
@@ -447,7 +458,6 @@ static dictitem_T vimvars_var;                  /* variable used for v: */
 #define FNE_INCL_BR     1       /* find_name_end(): include [] in name */
 #define FNE_CHECK_START 2       /* find_name_end(): check name starts with
                                    valid character */
-
 // Memory pool for reusing JobEvent structures
 typedef struct {
   int id;
@@ -6600,6 +6610,7 @@ static struct fst {
   {"tan",             1, 1, f_tan},
   {"tanh",            1, 1, f_tanh},
   {"tempname",        0, 0, f_tempname},
+  {"termopen",        1, 2, f_termopen},
   {"test",            1, 1, f_test},
   {"tolower",         1, 1, f_tolower},
   {"toupper",         1, 1, f_toupper},
@@ -10750,12 +10761,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
 
   // The last item of argv must be NULL
   argv[i] = NULL;
-  JobOptions opts = JOB_OPTIONS_INIT;
-  opts.argv = argv;
-  opts.data = xstrdup((char *)argvars[0].vval.v_string);
-  opts.stdout_cb = on_job_stdout;
-  opts.stderr_cb = on_job_stderr;
-  opts.exit_cb = on_job_exit;
+  JobOptions opts = common_job_options(argv, (char *)argvars[0].vval.v_string);
 
   if (args && argvars[3].v_type == VAR_DICT) {
     dict_T *job_opts = argvars[3].vval.v_dict;
@@ -10774,15 +10780,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
     }
   }
 
-  job_start(opts, &rettv->vval.v_number);
-
-  if (rettv->vval.v_number <= 0) {
-    if (rettv->vval.v_number == 0) {
-      EMSG(_(e_jobtblfull));
-    } else {
-      EMSG(_(e_jobexe));
-    }
-  }
+  common_job_start(opts, rettv);
 }
 
 // "jobstop()" function
@@ -14868,6 +14866,72 @@ static void f_tempname(typval_T *argvars, typval_T *rettv)
 {
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = vim_tempname();
+}
+
+// "termopen(cmd[, cwd])" function
+static void f_termopen(typval_T *argvars, typval_T *rettv)
+{
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (curbuf->b_changed) {
+    EMSG(_("Can only call this function in an unmodified buffer"));
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_STRING
+      || (argvars[1].v_type != VAR_STRING
+        && argvars[1].v_type != VAR_UNKNOWN)) {
+    // Wrong argument types
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  char **argv = shell_build_argv((char *)argvars[0].vval.v_string, NULL);
+  JobOptions opts = common_job_options(argv, NULL);
+  opts.pty = true;
+  opts.width = curwin->w_width;
+  opts.height = curwin->w_height;
+  opts.term_name = xstrdup("xterm-256color");
+  Job *job = common_job_start(opts, rettv);
+  if (!job) {
+    return;
+  }
+  TerminalJobData *data = opts.data;
+  TerminalOptions topts = TERMINAL_OPTIONS_INIT;
+  topts.data = data;
+  topts.width = curwin->w_width;
+  topts.height = curwin->w_height;
+  topts.write_cb = term_write;
+  topts.resize_cb = term_resize;
+  topts.close_cb = term_close;
+
+  char *cwd = ".";
+  if (argvars[1].v_type == VAR_STRING
+      && os_isdir(argvars[1].vval.v_string)) {
+    cwd = (char *)argvars[1].vval.v_string;
+  }
+  int pid = job_pid(job);
+  char buf[1024];
+  // format the title with the pid to conform with the term:// URI 
+  snprintf(buf, sizeof(buf), "term://%s//%d:%s", cwd, pid,
+      (char *)argvars[0].vval.v_string);
+  // at this point the buffer has no terminal instance associated yet, so unset
+  // the 'swapfile' option to ensure no swap file will be created
+  curbuf->b_p_swf = false;
+  (void)setfname(curbuf, (uint8_t *)buf, NULL, true);
+  data->autocmd_file = xstrdup(buf);
+  // Save the job id and pid in b:terminal_job_{id,pid}
+  Error err;
+  dict_set_value(curbuf->b_vars, cstr_as_string("terminal_job_id"),
+      INTEGER_OBJ(rettv->vval.v_number), &err);
+  dict_set_value(curbuf->b_vars, cstr_as_string("terminal_job_pid"),
+      INTEGER_OBJ(pid), &err);
+
+  Terminal *term = terminal_open(topts);
+  data->term = term;
+  data->refcount++;
 }
 
 /*
@@ -19750,16 +19814,52 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
   return ret;
 }
 
+static inline JobOptions common_job_options(char **argv, char *autocmd_file)
+{
+  TerminalJobData *data = xcalloc(1, sizeof(TerminalJobData));
+  if (autocmd_file) {
+    data->autocmd_file = xstrdup(autocmd_file);
+  }
+  JobOptions opts = JOB_OPTIONS_INIT;
+  opts.argv = argv;
+  opts.data = data;
+  opts.stdout_cb = on_job_stdout;
+  opts.stderr_cb = on_job_stderr;
+  opts.exit_cb = on_job_exit;
+  return opts;
+}
+
+static inline Job *common_job_start(JobOptions opts, typval_T *rettv)
+{
+  TerminalJobData *data = opts.data;
+  data->refcount++;
+  Job *job = job_start(opts, &rettv->vval.v_number);
+
+  if (rettv->vval.v_number <= 0) {
+    if (rettv->vval.v_number == 0) {
+      EMSG(_(e_jobtblfull));
+      free(opts.term_name);
+      free(data->autocmd_file);
+      free(data);
+    } else {
+      EMSG(_(e_jobexe));
+    }
+    return NULL;
+  }
+  data->job = job;
+  return job;
+}
+
 // JobActivity autocommands will execute vimscript code, so it must be executed
 // on Nvim main loop
-static inline void push_job_event(Job *job, RStream *rstream, char *type)
+static inline void push_job_event(Job *job, char *type, char *data,
+    size_t count)
 {
   JobEvent *event_data = kmp_alloc(JobEventPool, job_event_pool);
   event_data->received = NULL;
-  if (rstream) {
+  if (data) {
     event_data->received = list_alloc();
-    char *ptr = rstream_read_ptr(rstream);
-    size_t count = rstream_pending(rstream);
+    char *ptr = data;
     size_t remaining = count;
     size_t off = 0;
 
@@ -19780,10 +19880,10 @@ static inline void push_job_event(Job *job, RStream *rstream, char *type)
       off++;
     }
     list_append_string(event_data->received, (uint8_t *)ptr, off);
-    rbuffer_consumed(rstream_buffer(rstream), count);
   }
+  TerminalJobData *d = job_data(job);
   event_data->id = job_id(job);
-  event_data->name = job_data(job);
+  event_data->name = d->autocmd_file;
   event_data->type = type;
   event_push((Event) {
     .handler = on_job_event,
@@ -19793,21 +19893,75 @@ static inline void push_job_event(Job *job, RStream *rstream, char *type)
 
 static void on_job_stdout(RStream *rstream, void *data, bool eof)
 {
-  if (!eof) {
-    push_job_event(data, rstream, "stdout");
-  }
+  on_job_output(rstream, data, eof, "stdout");
 }
 
 static void on_job_stderr(RStream *rstream, void *data, bool eof)
 {
-  if (!eof) {
-    push_job_event(data, rstream, "stderr");
-  }
+  on_job_output(rstream, data, eof, "stderr");
 }
 
-static void on_job_exit(Job *job, void *data)
+static void on_job_output(RStream *rstream, Job *job, bool eof, char *type)
 {
-  push_job_event(job, NULL, "exit");
+  if (eof) {
+    return;
+  }
+
+  TerminalJobData *data = job_data(job);
+  char *ptr = rstream_read_ptr(rstream);
+  size_t len = rstream_pending(rstream);
+
+  // The order here matters, the terminal must receive the data first because
+  // push_job_event will modify the read buffer(convert NULs into NLs)
+  if (data->term) {
+    terminal_receive(data->term, ptr, len);
+  }
+
+  push_job_event(job, type, ptr, len);
+  rbuffer_consumed(rstream_buffer(rstream), len);
+}
+
+static void on_job_exit(Job *job, void *d)
+{
+  TerminalJobData *data = d;
+  push_job_event(job, "exit", NULL, 0);
+
+  if (data->term && !data->exited) {
+    data->exited = true;
+    terminal_close(data->term,
+        _("\r\n[Program exited, press any key to close]"));
+  }
+  term_job_data_decref(data);
+}
+
+static void term_write(char *buf, size_t size, void *data)
+{
+  Job *job = ((TerminalJobData *)data)->job;
+  WBuffer *wbuf = wstream_new_buffer(xmemdup(buf, size), size, 1, free);
+  job_write(job, wbuf);
+}
+
+static void term_resize(uint16_t width, uint16_t height, void *data)
+{
+  job_resize(((TerminalJobData *)data)->job, width, height);
+}
+
+static void term_close(void *d)
+{
+  TerminalJobData *data = d;
+  if (!data->exited) {
+    data->exited = true;
+    job_stop(data->job);
+  }
+  terminal_destroy(data->term);
+  term_job_data_decref(d);
+}
+
+static void term_job_data_decref(TerminalJobData *data)
+{
+  if (!(--data->refcount)) {
+    free(data);
+  }
 }
 
 static void on_job_event(Event event)

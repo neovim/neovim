@@ -516,33 +516,6 @@ ArrayOf(Integer, 2) buffer_get_mark(Buffer buffer, String name, Error *err)
   return rv;
 }
 
-// Find a window that contains "buf" and switch to it.
-// If there is no such window, use the current window and change "curbuf".
-// Caller must initialize save_curbuf to NULL.
-// restore_win_for_buf() MUST be called later!
-static void switch_to_win_for_buf(buf_T *buf,
-                                  win_T **save_curwinp,
-                                  tabpage_T **save_curtabp,
-                                  buf_T **save_curbufp)
-{
-  win_T *wp;
-  tabpage_T *tp;
-
-  if (!find_win_for_buf(buf, &wp, &tp)
-      || switch_win(save_curwinp, save_curtabp, wp, tp, true) == FAIL)
-    switch_buffer(save_curbufp, buf);
-}
-
-static void restore_win_for_buf(win_T *save_curwin,
-                                tabpage_T *save_curtab,
-                                buf_T *save_curbuf)
-{
-  if (save_curbuf == NULL) {
-    restore_win(save_curwin, save_curtab, true);
-  } else {
-    restore_buffer(save_curbuf);
-  }
-}
 
 // Check if deleting lines made the cursor position invalid.
 // Changed the lines from "lo" to "hi" and added "extra" lines (negative if

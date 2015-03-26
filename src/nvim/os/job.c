@@ -406,6 +406,12 @@ static void close_cb(uv_handle_t *handle)
   job_decref(handle_get_job(handle));
 }
 
+static void job_exited(Event event)
+{
+  Job *job = event.data;
+  process_close(job);
+}
+
 static void chld_handler(uv_signal_t *handle, int signum)
 {
   int stat = 0;
@@ -433,7 +439,12 @@ static void chld_handler(uv_signal_t *handle, int signum)
       } else if (WIFSIGNALED(stat)) {
         job->status = WTERMSIG(stat);
       }
-      process_close(job);
+      if (exiting) {
+        // don't enqueue more events when exiting
+        process_close(job);
+      } else {
+        event_push((Event) {.handler = job_exited, .data = job}, false);
+      }
       break;
     }
   }

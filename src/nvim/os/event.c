@@ -20,6 +20,7 @@
 #include "nvim/misc2.h"
 #include "nvim/ui.h"
 #include "nvim/screen.h"
+#include "nvim/terminal.h"
 
 #include "nvim/lib/klist.h"
 
@@ -63,6 +64,7 @@ void event_init(void)
   // finish mspgack-rpc initialization
   channel_init();
   server_init();
+  terminal_init();
 }
 
 void event_teardown(void)
@@ -74,11 +76,16 @@ void event_teardown(void)
 
   process_events_from(immediate_events);
   process_events_from(deferred_events);
+  // reset the stop_flag to ensure `uv_run` below won't exit early. This hack
+  // is required because the `process_events_from` above may call `event_push`
+  // which will set the stop_flag to 1(uv_stop)
+  uv_default_loop()->stop_flag = 0;
   input_stop_stdin();
   channel_teardown();
   job_teardown();
   server_teardown();
   signal_teardown();
+  terminal_teardown();
   // this last `uv_run` will return after all handles are stopped, it will
   // also take care of finishing any uv_close calls made by other *_teardown
   // functions.
@@ -153,17 +160,18 @@ void event_disable_deferred(void)
 // Queue an event
 void event_push(Event event, bool deferred)
 {
+  // Sometimes libuv will run pending callbacks(timer for example) before
+  // blocking for a poll. If this happens and the callback pushes a event to one
+  // of the queues, the event would only be processed after the poll
+  // returns(user hits a key for example). To avoid this scenario, we call
+  // uv_stop when a event is enqueued.
+  uv_stop(uv_default_loop());
   *kl_pushp(Event, deferred ? deferred_events : immediate_events) = event;
 }
 
 void event_process(void)
 {
   process_events_from(deferred_events);
-
-  if (must_redraw) {
-    update_screen(0);
-    ui_flush();
-  }
 }
 
 static void process_events_from(klist_t(Event) *queue)

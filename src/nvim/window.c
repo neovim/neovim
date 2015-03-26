@@ -52,6 +52,7 @@
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
+#include "nvim/terminal.h"
 #include "nvim/undo.h"
 #include "nvim/os/os.h"
 
@@ -1765,6 +1766,12 @@ static int close_last_window_tabpage(win_T *win, int free_buf, tabpage_T *prev_c
   }
   buf_T   *old_curbuf = curbuf;
 
+  Terminal *term = win->w_buffer->terminal;
+  if (term) {
+    // Don't free terminal buffers
+    free_buf = false;
+  }
+
   /*
    * Closing the last window in a tab page.  First go to another tab
    * page and then close the window and the tab page.  This avoids that
@@ -1789,6 +1796,13 @@ static int close_last_window_tabpage(win_T *win, int free_buf, tabpage_T *prev_c
     if (h != tabline_height())
       shell_new_rows();
   }
+
+  if (term) {
+    // When a window containing a terminal buffer is closed, recalculate its
+    // size
+    terminal_resize(term, 0, 0);
+  }
+
   /* Since goto_tabpage_tp above did not trigger *Enter autocommands, do
    * that now. */
   apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, FALSE, curbuf);
@@ -1907,6 +1921,8 @@ int win_close(win_T *win, int free_buf)
            || close_last_window_tabpage(win, free_buf, prev_curtab))
     return FAIL;
 
+  // let terminal buffers know that this window dimensions may be ignored
+  win->w_closing = true;
   /* Free the memory used for the window and get the window that received
    * the screen space. */
   wp = win_free_mem(win, &dir, NULL);
@@ -1962,7 +1978,6 @@ int win_close(win_T *win, int free_buf)
    * before it was opened. */
   if (help_window)
     restore_snapshot(SNAP_HELP_IDX, close_curwin);
-
 
   redraw_all_later(NOT_VALID);
   return OK;
@@ -4689,6 +4704,11 @@ void win_new_height(win_T *wp, int height)
   redraw_win_later(wp, SOME_VALID);
   wp->w_redr_status = TRUE;
   invalidate_botline_win(wp);
+
+  if (wp->w_buffer->terminal) {
+    terminal_resize(wp->w_buffer->terminal, 0, wp->w_height);
+    redraw_win_later(wp, CLEAR);
+  }
 }
 
 /*
@@ -4706,6 +4726,11 @@ void win_new_width(win_T *wp, int width)
   }
   redraw_win_later(wp, NOT_VALID);
   wp->w_redr_status = TRUE;
+
+  if (wp->w_buffer->terminal) {
+    terminal_resize(wp->w_buffer->terminal, wp->w_width, 0);
+    redraw_win_later(wp, CLEAR);
+  }
 }
 
 void win_comp_scroll(win_T *wp)
@@ -5570,4 +5595,3 @@ static int frame_check_width(frame_T *topfrp, int width)
 
   return TRUE;
 }
-

@@ -62,6 +62,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
+#include "nvim/terminal.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
@@ -71,6 +72,8 @@
 #include "nvim/os/time.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/mouse.h"
+#include "nvim/os/rstream.h"
+#include "nvim/os/wstream.h"
 
 static int quitmore = 0;
 static int ex_pressedreturn = FALSE;
@@ -1510,7 +1513,9 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       errormsg = (char_u *)_(e_sandbox);
       goto doend;
     }
-    if (!curbuf->b_p_ma && (ea.argt & MODIFY)) {
+    if (!MODIFIABLE(curbuf) && (ea.argt & MODIFY)
+        // allow :put in terminals
+        && (!curbuf->terminal || ea.cmdidx != CMD_put)) {
       /* Command not allowed in non-'modifiable' buffer */
       errormsg = (char_u *)_(e_modifiable);
       goto doend;
@@ -2610,7 +2615,7 @@ set_one_cmd_context (
     xp->xp_context = EXPAND_FILES;
 
     /* For a shell command more chars need to be escaped. */
-    if (usefilter || ea.cmdidx == CMD_bang) {
+    if (usefilter || ea.cmdidx == CMD_bang || ea.cmdidx == CMD_terminal) {
 #ifndef BACKSLASH_IN_FILENAME
       xp->xp_shell = TRUE;
 #endif
@@ -5126,8 +5131,10 @@ static void ex_quit(exarg_T *eap)
       || (only_one_window() && check_changed_any(eap->forceit))) {
     not_exiting();
   } else {
-    if (only_one_window())          /* quit last window */
+    if (only_one_window()) {
+      // quit last window
       getout(0);
+    }
     /* close window; may free buffer */
     win_close(curwin, !P_HID(curwin->w_buffer) || eap->forceit);
   }
@@ -8060,7 +8067,9 @@ makeopens (
   /*
    * Wipe out an empty unnamed buffer we started in.
    */
-  if (put_line(fd, "if exists('s:wipebuf')") == FAIL)
+  if (put_line(fd, "if exists('s:wipebuf') "
+                      "&& getbufvar(s:wipebuf, '&buftype') isnot# 'terminal'")
+      == FAIL)
     return FAIL;
   if (put_line(fd, "  silent exe 'bwipe ' . s:wipebuf") == FAIL)
     return FAIL;
@@ -8269,7 +8278,7 @@ put_view (
      * Load the file.
      */
     if (wp->w_buffer->b_ffname != NULL
-        && !bt_nofile(wp->w_buffer)
+        && (!bt_nofile(wp->w_buffer) || wp->w_buffer->terminal)
         ) {
       /*
        * Editing a file in this buffer: use ":edit file".
@@ -8856,4 +8865,13 @@ static void ex_folddo(exarg_T *eap)
   /* Execute the command on the marked lines. */
   global_exe(eap->arg);
   ml_clearmarked();        /* clear rest of the marks */
+}
+
+static void ex_terminal(exarg_T *eap)
+{
+  char cmd[512];
+  snprintf(cmd, sizeof(cmd), ":enew%s | call termopen('%s') | startinsert",
+      eap->forceit==TRUE ? "!" : "",
+      strcmp((char *)eap->arg, "") ? (char *)eap->arg : (char *)p_sh);
+  do_cmdline_cmd((uint8_t *)cmd);
 }
