@@ -6917,24 +6917,9 @@ call_func (
         else if ((fp->uf_flags & FC_DICT) && selfdict == NULL)
           error = ERROR_DICT;
         else {
-          /*
-           * Call the user function.
-           * Save and restore search patterns, script variables and
-           * redo buffer.
-           */
-          save_search_patterns();
-          saveRedobuff();
-          ++fp->uf_calls;
-          call_user_func(fp, argcount, argvars, rettv,
-              firstline, lastline,
+          // Call the user function.
+          call_user_func(fp, argcount, argvars, rettv, firstline, lastline,
               (fp->uf_flags & FC_DICT) ? selfdict : NULL);
-          if (--fp->uf_calls <= 0 && isdigit(*fp->uf_name)
-              && fp->uf_refcount <= 0)
-            /* Function was unreferenced while being used, free it
-             * now. */
-            func_free(fp);
-          restoreRedobuff();
-          restore_search_patterns();
           error = ERROR_NONE;
         }
       }
@@ -17836,7 +17821,6 @@ void ex_function(exarg_T *eap)
       fudi.fd_di->di_tv.v_type = VAR_FUNC;
       fudi.fd_di->di_tv.v_lock = 0;
       fudi.fd_di->di_tv.vval.v_string = vim_strsave(name);
-      fp->uf_refcount = 1;
 
       /* behave like "dict" was used */
       flags |= FC_DICT;
@@ -17846,6 +17830,7 @@ void ex_function(exarg_T *eap)
     STRCPY(fp->uf_name, name);
     hash_add(&func_hashtab, UF2HIKEY(fp));
   }
+  fp->uf_refcount = 1;
   fp->uf_args = newargs;
   fp->uf_lines = newlines;
   fp->uf_tml_count = NULL;
@@ -18519,6 +18504,11 @@ void ex_delfunction(exarg_T *eap)
       EMSG2(_("E131: Cannot delete function %s: It is in use"), eap->arg);
       return;
     }
+    if (fp->uf_refcount > 1) {
+      EMSG2(_("Cannot delete function %s: It is being used internally"),
+          eap->arg);
+      return;
+    }
 
     if (fudi.fd_dict != NULL) {
       /* Delete the dict item that refers to the function, it will
@@ -18563,13 +18553,21 @@ void func_unref(char_u *name)
 
   if (name != NULL && isdigit(*name)) {
     fp = find_func(name);
-    if (fp == NULL)
+    if (fp == NULL) {
       EMSG2(_(e_intern2), "func_unref()");
-    else if (--fp->uf_refcount <= 0) {
-      /* Only delete it when it's not being used.  Otherwise it's done
-       * when "uf_calls" becomes zero. */
-      if (fp->uf_calls == 0)
-        func_free(fp);
+    } else {
+      user_func_unref(fp);
+    }
+  }
+}
+
+static void user_func_unref(ufunc_T *fp)
+{
+  if (--fp->uf_refcount <= 0) {
+    // Only delete it when it's not being used.  Otherwise it's done
+    // when "uf_calls" becomes zero.
+    if (fp->uf_calls == 0) {
+      func_free(fp);
     }
   }
 }
@@ -18626,9 +18624,13 @@ call_user_func (
     return;
   }
   ++depth;
-
-  line_breakcheck();            /* check for CTRL-C hit */
-
+  // Save search patterns and redo buffer.
+  save_search_patterns();
+  saveRedobuff();
+  ++fp->uf_calls;
+  // check for CTRL-C hit
+  line_breakcheck();
+  // prepare the funccall_T structure
   fc = xmalloc(sizeof(funccall_T));
   fc->caller = current_funccal;
   current_funccal = fc;
@@ -18924,6 +18926,14 @@ call_user_func (
     for (li = fc->l_varlist.lv_first; li != NULL; li = li->li_next)
       copy_tv(&li->li_tv, &li->li_tv);
   }
+
+  if (--fp->uf_calls <= 0 && isdigit(*fp->uf_name) && fp->uf_refcount <= 0) {
+    // Function was unreferenced while being used, free it now.
+    func_free(fp);
+  }
+  // restore search patterns and redo buffer
+  restoreRedobuff();
+  restore_search_patterns();
 }
 
 /*
