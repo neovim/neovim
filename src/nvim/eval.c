@@ -427,7 +427,6 @@ static struct vimvar {
   {VV_NAME("oldfiles",         VAR_LIST), 0},
   {VV_NAME("windowid",         VAR_NUMBER), VV_RO},
   {VV_NAME("progpath",         VAR_STRING), VV_RO},
-  {VV_NAME("job_data",         VAR_LIST), 0},
   {VV_NAME("command_output",   VAR_STRING), 0}
 };
 
@@ -447,7 +446,8 @@ typedef struct {
   Terminal *term;
   bool exited;
   int refcount;
-  char *autocmd_file;
+  ufunc_T *on_stdout, *on_stderr, *on_exit;
+  dict_T *self;
 } TerminalJobData;
 
 
@@ -460,9 +460,12 @@ typedef struct {
                                    valid character */
 // Memory pool for reusing JobEvent structures
 typedef struct {
-  int id;
-  char *name, *type;
+  int job_id;
+  TerminalJobData *data;
+  ufunc_T *callback;
+  const char *type;
   list_T *received;
+  int status;
 } JobEvent;
 #define JobEventFreer(x)
 KMEMPOOL_INIT(JobEventPool, JobEvent, JobEventFreer)
@@ -5933,6 +5936,41 @@ dictitem_T *dict_find(dict_T *d, char_u *key, int len)
   return HI2DI(hi);
 }
 
+// Get a function from a dictionary
+static ufunc_T *get_dict_callback(dict_T *d, char *key)
+{
+  dictitem_T *di = dict_find(d, (uint8_t *)key, -1);
+
+  if (di == NULL) {
+    return NULL;
+  }
+  
+  if (di->di_tv.v_type != VAR_FUNC && di->di_tv.v_type != VAR_STRING) {
+    EMSG(_("Argument is not a function or function name"));
+    return NULL;
+  }
+
+  uint8_t *name = di->di_tv.vval.v_string;
+  uint8_t *n = name;
+  ufunc_T *rv;
+  if (*n > '9' || *n < '0') {
+    n = trans_function_name(&n, false, TFN_INT|TFN_QUIET, NULL);
+    rv = find_func(n);
+    free(n);
+  } else {
+    // dict function, name is already translated
+    rv = find_func(n);
+  }
+
+  if (!rv) {
+    EMSG2(_("Function %s doesn't exist"), name);
+    return NULL;
+  }
+  rv->uf_refcount++;
+
+  return rv;
+}
+
 /*
  * Get a string item from a dictionary.
  * When "save" is TRUE allocate memory for it.
@@ -6497,7 +6535,7 @@ static struct fst {
   {"items",           1, 1, f_items},
   {"jobresize",       3, 3, f_jobresize},
   {"jobsend",         2, 2, f_jobsend},
-  {"jobstart",        2, 4, f_jobstart},
+  {"jobstart",        1, 2, f_jobstart},
   {"jobstop",         1, 1, f_jobstop},
   {"join",            1, 2, f_join},
   {"keys",            1, 1, f_keys},
@@ -10654,7 +10692,7 @@ static void f_jobsend(typval_T *argvars, typval_T *rettv)
   rettv->vval.v_number = job_write(job, buf);
 }
 
-// "jobresize()" function
+// "jobresize(job, width, height)" function
 static void f_jobresize(typval_T *argvars, typval_T *rettv)
 {
   rettv->v_type = VAR_NUMBER;
@@ -10690,11 +10728,6 @@ static void f_jobresize(typval_T *argvars, typval_T *rettv)
 // "jobstart()" function
 static void f_jobstart(typval_T *argvars, typval_T *rettv)
 {
-  list_T *args = NULL;
-  listitem_T *arg;
-  int i, argvl, argsl;
-  char **argv = NULL;
-
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
@@ -10702,55 +10735,60 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
     return;
   }
 
-  if (argvars[0].v_type != VAR_STRING
-      || argvars[1].v_type != VAR_STRING
-      || (argvars[2].v_type != VAR_LIST && argvars[2].v_type != VAR_UNKNOWN)) {
+  if (argvars[0].v_type != VAR_LIST
+      || (argvars[1].v_type != VAR_DICT && argvars[1].v_type != VAR_UNKNOWN)) {
     // Wrong argument types
     EMSG(_(e_invarg));
     return;
   }
 
-  argsl = 0;
-  if (argvars[2].v_type == VAR_LIST) {
-    args = argvars[2].vval.v_list;
-    argsl = args->lv_len;
-    // Assert that all list items are strings
-    for (arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-      if (arg->li_tv.v_type != VAR_STRING) {
-        EMSG(_(e_invarg));
-        return;
-      }
+  list_T *args = argvars[0].vval.v_list;
+  // Assert that all list items are strings
+  for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
+    if (arg->li_tv.v_type != VAR_STRING) {
+      EMSG(_(e_invarg));
+      return;
     }
   }
 
-  if (!os_can_exe(get_tv_string(&argvars[1]), NULL)) {
-    // String is not executable
-    EMSG2(e_jobexe, get_tv_string(&argvars[1]));
+  int argc = args->lv_len;
+  if (!argc) {
+    EMSG(_("Argument vector must have at least one item"));
     return;
   }
 
-  // Allocate extra memory for the argument vector and the NULL pointer
-  argvl = argsl + 2;
-  argv = xmalloc(sizeof(char_u *) * argvl);
+  if (!os_can_exe(args->lv_first->li_tv.vval.v_string, NULL)) {
+    // String is not executable
+    EMSG2(e_jobexe, args->lv_first->li_tv.vval.v_string);
+    return;
+  }
 
-  // Copy program name
-  argv[0] = xstrdup((char *)get_tv_string(&argvars[1]));
-
-  i = 1;
-  // Copy arguments to the vector
-  if (argsl > 0) {
-    for (arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-      argv[i++] = xstrdup((char *)get_tv_string(&arg->li_tv));
+  dict_T *job_opts = NULL;
+  ufunc_T *on_stdout = NULL, *on_stderr = NULL, *on_exit = NULL;
+  if (argvars[1].v_type == VAR_DICT) {
+    job_opts = argvars[1].vval.v_dict;
+    common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit);
+    if (did_emsg) {
+      return;
     }
   }
 
-  // The last item of argv must be NULL
-  argv[i] = NULL;
-  JobOptions opts = common_job_options(argv, (char *)argvars[0].vval.v_string);
+  // Build the argument vector
+  int i = 0;
+  char **argv = xcalloc(argc + 1, sizeof(char *));
+  for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
+    argv[i++] = xstrdup((char *)arg->li_tv.vval.v_string);
+  }
 
-  if (args && argvars[3].v_type == VAR_DICT) {
-    dict_T *job_opts = argvars[3].vval.v_dict;
-    opts.pty = true;
+  JobOptions opts = common_job_options(argv, on_stdout, on_stderr, on_exit,
+      job_opts);
+
+  if (!job_opts) {
+    goto start;
+  }
+
+  opts.pty = get_dict_number(job_opts, (uint8_t *)"pty");
+  if (opts.pty) {
     uint16_t width = get_dict_number(job_opts, (uint8_t *)"width");
     if (width > 0) {
       opts.width = width;
@@ -10765,6 +10803,13 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
     }
   }
 
+start:
+  if (!on_stdout) {
+    opts.stdout_cb = NULL;
+  }
+  if (!on_stderr) {
+    opts.stderr_cb = NULL;
+  }
   common_job_start(opts, rettv);
 }
 
@@ -14866,15 +14911,25 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
   }
 
   if (argvars[0].v_type != VAR_STRING
-      || (argvars[1].v_type != VAR_STRING
-        && argvars[1].v_type != VAR_UNKNOWN)) {
+      || (argvars[1].v_type != VAR_DICT && argvars[1].v_type != VAR_UNKNOWN)) {
     // Wrong argument types
     EMSG(_(e_invarg));
     return;
   }
 
+  ufunc_T *on_stdout = NULL, *on_stderr = NULL, *on_exit = NULL;
+  dict_T *job_opts = NULL;
+  if (argvars[1].v_type == VAR_DICT) {
+    job_opts = argvars[1].vval.v_dict;
+    common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit);
+    if (did_emsg) {
+      return;
+    }
+  }
+
   char **argv = shell_build_argv((char *)argvars[0].vval.v_string, NULL);
-  JobOptions opts = common_job_options(argv, NULL);
+  JobOptions opts = common_job_options(argv, on_stdout, on_stderr, on_exit,
+      job_opts);
   opts.pty = true;
   opts.width = curwin->w_width;
   opts.height = curwin->w_height;
@@ -14906,7 +14961,6 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
   // the 'swapfile' option to ensure no swap file will be created
   curbuf->b_p_swf = false;
   (void)setfname(curbuf, (uint8_t *)buf, NULL, true);
-  data->autocmd_file = xstrdup(buf);
   // Save the job id and pid in b:terminal_job_{id,pid}
   Error err;
   dict_set_value(curbuf->b_vars, cstr_as_string("terminal_job_id"),
@@ -19824,12 +19878,14 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
   return ret;
 }
 
-static inline JobOptions common_job_options(char **argv, char *autocmd_file)
+static inline JobOptions common_job_options(char **argv, ufunc_T *on_stdout,
+    ufunc_T *on_stderr, ufunc_T *on_exit, dict_T *self)
 {
   TerminalJobData *data = xcalloc(1, sizeof(TerminalJobData));
-  if (autocmd_file) {
-    data->autocmd_file = xstrdup(autocmd_file);
-  }
+  data->on_stdout = on_stdout;
+  data->on_stderr = on_stderr;
+  data->on_exit = on_exit;
+  data->self = self;
   JobOptions opts = JOB_OPTIONS_INIT;
   opts.argv = argv;
   opts.data = data;
@@ -19837,6 +19893,28 @@ static inline JobOptions common_job_options(char **argv, char *autocmd_file)
   opts.stderr_cb = on_job_stderr;
   opts.exit_cb = on_job_exit;
   return opts;
+}
+
+static inline void common_job_callbacks(dict_T *vopts, ufunc_T **on_stdout,
+    ufunc_T **on_stderr, ufunc_T **on_exit)
+{
+  *on_stdout = get_dict_callback(vopts, "on_stdout");
+  *on_stderr = get_dict_callback(vopts, "on_stderr");
+  *on_exit = get_dict_callback(vopts, "on_exit");
+  if (did_emsg) {
+    if (*on_stdout) {
+      user_func_unref(*on_stdout);
+    }
+    if (*on_stderr) {
+      user_func_unref(*on_stderr);
+    }
+    if (*on_exit) {
+      user_func_unref(*on_exit);
+    }
+    return;
+  }
+
+  vopts->dv_refcount++;
 }
 
 static inline Job *common_job_start(JobOptions opts, typval_T *rettv)
@@ -19849,8 +19927,7 @@ static inline Job *common_job_start(JobOptions opts, typval_T *rettv)
     if (rettv->vval.v_number == 0) {
       EMSG(_(e_jobtblfull));
       free(opts.term_name);
-      free(data->autocmd_file);
-      free(data);
+      free_term_job_data(data);
     } else {
       EMSG(_(e_jobexe));
     }
@@ -19860,10 +19937,23 @@ static inline Job *common_job_start(JobOptions opts, typval_T *rettv)
   return job;
 }
 
-// JobActivity autocommands will execute vimscript code, so it must be executed
-// on Nvim main loop
-static inline void push_job_event(Job *job, char *type, char *data,
-    size_t count)
+static inline void free_term_job_data(TerminalJobData *data) {
+  if (data->on_stdout) {
+    user_func_unref(data->on_stdout);
+  }
+  if (data->on_stderr) {
+    user_func_unref(data->on_stderr);
+  }
+  if (data->on_exit) {
+    user_func_unref(data->on_exit);
+  }
+  dict_unref(data->self);
+  free(data);
+}
+
+// vimscript job callbacks must be executed on Nvim main loop
+static inline void push_job_event(Job *job, ufunc_T *callback,
+    const char *type, char *data, size_t count, int status)
 {
   JobEvent *event_data = kmp_alloc(JobEventPool, job_event_pool);
   event_data->received = NULL;
@@ -19890,10 +19980,12 @@ static inline void push_job_event(Job *job, char *type, char *data,
       off++;
     }
     list_append_string(event_data->received, (uint8_t *)ptr, off);
+  } else {
+    event_data->status = status;
   }
-  TerminalJobData *d = job_data(job);
-  event_data->id = job_id(job);
-  event_data->name = d->autocmd_file;
+  event_data->job_id = job_id(job);
+  event_data->data = job_data(job);
+  event_data->callback = callback;
   event_data->type = type;
   event_push((Event) {
     .handler = on_job_event,
@@ -19901,17 +19993,20 @@ static inline void push_job_event(Job *job, char *type, char *data,
   }, true);
 }
 
-static void on_job_stdout(RStream *rstream, void *data, bool eof)
+static void on_job_stdout(RStream *rstream, void *job, bool eof)
 {
-  on_job_output(rstream, data, eof, "stdout");
+  TerminalJobData *data = job_data(job);
+  on_job_output(rstream, job, eof, data->on_stdout, "stdout");
 }
 
-static void on_job_stderr(RStream *rstream, void *data, bool eof)
+static void on_job_stderr(RStream *rstream, void *job, bool eof)
 {
-  on_job_output(rstream, data, eof, "stderr");
+  TerminalJobData *data = job_data(job);
+  on_job_output(rstream, job, eof, data->on_stderr, "stderr");
 }
 
-static void on_job_output(RStream *rstream, Job *job, bool eof, char *type)
+static void on_job_output(RStream *rstream, Job *job, bool eof,
+    ufunc_T *callback, const char *type)
 {
   if (eof) {
     return;
@@ -19927,21 +20022,24 @@ static void on_job_output(RStream *rstream, Job *job, bool eof, char *type)
     terminal_receive(data->term, ptr, len);
   }
 
-  push_job_event(job, type, ptr, len);
+  if (callback) {
+    push_job_event(job, callback, type, ptr, len, 0);
+  }
+
   rbuffer_consumed(rstream_buffer(rstream), len);
 }
 
-static void on_job_exit(Job *job, void *d)
+static void on_job_exit(Job *job, int status, void *d)
 {
   TerminalJobData *data = d;
-  push_job_event(job, "exit", NULL, 0);
 
   if (data->term && !data->exited) {
     data->exited = true;
     terminal_close(data->term,
         _("\r\n[Program exited, press any key to close]"));
   }
-  term_job_data_decref(data);
+
+  push_job_event(job, data->on_exit, "exit", NULL, 0, status);
 }
 
 static void term_write(char *buf, size_t size, void *data)
@@ -19970,42 +20068,57 @@ static void term_close(void *d)
 static void term_job_data_decref(TerminalJobData *data)
 {
   if (!(--data->refcount)) {
-    free(data);
+    free_term_job_data(data);
   }
 }
 
 static void on_job_event(Event event)
 {
-  JobEvent *data = event.data;
-  apply_job_autocmds(data->id, data->name, data->type, data->received);
-  kmp_free(JobEventPool, job_event_pool, data);
-}
+  JobEvent *ev = event.data;
 
-static void apply_job_autocmds(int id, char *name, char *type,
-                               list_T *received)
-{
-  // Create the list which will be set to v:job_data
-  list_T *list = list_alloc();
-  list_append_number(list, id);
-  list_append_string(list, (uint8_t *)type, -1);
-
-  if (received) {
-    listitem_T *str_slot = listitem_alloc();
-    str_slot->li_tv.v_type = VAR_LIST;
-    str_slot->li_tv.v_lock = 0;
-    str_slot->li_tv.vval.v_list = received;
-    str_slot->li_tv.vval.v_list->lv_refcount++;
-    list_append(list, str_slot);
+  if (!ev->callback) {
+    goto end;
   }
 
-  // Update v:job_data for the autocommands
-  set_vim_var_list(VV_JOB_DATA, list);
-  // Call JobActivity autocommands
-  apply_autocmds(EVENT_JOBACTIVITY, (uint8_t *)name, NULL, TRUE, NULL);
+  typval_T argv[3];
+  int argc = ev->callback->uf_args.ga_len;
 
-  if (!received) {
-    // This must be the exit event. Free the name.
-    free(name);
+  if (argc > 0) {
+    argv[0].v_type = VAR_NUMBER;
+    argv[0].v_lock = 0;
+    argv[0].vval.v_number = ev->job_id;
+  }
+
+  if (argc > 1) {
+    if (ev->received) {
+      argv[1].v_type = VAR_LIST;
+      argv[1].v_lock = 0;
+      argv[1].vval.v_list = ev->received;
+      argv[1].vval.v_list->lv_refcount++;
+    } else {
+      argv[1].v_type = VAR_NUMBER;
+      argv[1].v_lock = 0;
+      argv[1].vval.v_number = ev->status;
+    }
+  }
+
+  if (argc > 2) {
+    argv[2].v_type = VAR_STRING;
+    argv[2].v_lock = 0;
+    argv[2].vval.v_string = (uint8_t *)ev->type;
+  }
+
+  typval_T rettv;
+  init_tv(&rettv);
+  call_user_func(ev->callback, argc, argv, &rettv, curwin->w_cursor.lnum,
+      curwin->w_cursor.lnum, ev->data->self);
+  clear_tv(&rettv);
+
+end:
+  kmp_free(JobEventPool, job_event_pool, ev);
+  if (!ev->received) {
+    // exit event, safe to free job data now
+    term_job_data_decref(ev->data);
   }
 }
 

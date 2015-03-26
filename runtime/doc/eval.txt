@@ -4012,6 +4012,11 @@ items({dict})						*items()*
 		entry and the value of this entry.  The |List| is in arbitrary
 		order.
 
+jobresize({job}, {width}, {height})			{Nvim} *jobresize()*
+		Resize {job}'s pseudo terminal window to {width} and {height}.
+		This function will fail if used on jobs started without the
+		"pty" option.
+
 jobsend({job}, {data})					{Nvim} *jobsend()*
 		Send data to {job} by writing it to the stdin of the process.
 		Returns 1 if the write succeeded, 0 otherwise.
@@ -4024,14 +4029,28 @@ jobsend({job}, {data})					{Nvim} *jobsend()*
 			:call jobsend(j, ["abc", "123\n456", ""])
 < 		will send "abc<NL>123<NUL>456<NL>".
 
-jobstart({name}, {prog}[, {argv}])			{Nvim} *jobstart()*
-		Spawns {prog} as a job and associate it with the {name} string,
-		which will be used to match the "filename pattern" in
-		|JobActivity| events. It returns:
-		  - The job id on success, which is used by |jobsend()| and
+jobstart({argv}[, {opts}])			{Nvim} *jobstart()*
+		Spawns {argv}(list) as a job. If passed, {opts} must be a
+		dictionary with any of the following keys:
+		  - on_stdout: stdout event handler
+		  - on_stderr: stderr event handler
+		  - on_exit: exit event handler
+		  - pty: If set, the job will be connected to a new pseudo
+		    terminal, and the job streams are connected to the master
+		    file descriptor.
+		  - width: Width of the terminal screen(only if pty is set)
+		  - height: Height of the terminal screen(only if pty is set)
+		  - TERM: $TERM environment variable(only if pty is set)
+		Either funcrefs or function names can be passed as event
+		handlers. The {opts} object is also used as the "self"
+		argument for the callback, so the caller may pass arbitrary
+		data by setting other key.(see |Dictionary-function| for more
+		information).
+		Returns:
+		  - The job ID on success, which is used by |jobsend()| and
 		    |jobstop()|
 		  - 0 when the job table is full or on invalid arguments
-		  - -1 when {prog} is not executable
+		  - -1 when {argv}[0] is not executable
 		See |job-control| for more information.
 
 jobstop({job})						{Nvim} *jobstop()*

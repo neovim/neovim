@@ -11,7 +11,7 @@ typedef struct job Job;
 ///
 /// @param id The job id
 /// @param data Some data associated with the job by the caller
-typedef void (*job_exit_cb)(Job *job, void *data);
+typedef void (*job_exit_cb)(Job *job, int status, void *data);
 
 // Job startup options
 // job_exit_cb Callback that will be invoked when the job exits

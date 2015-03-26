@@ -293,8 +293,8 @@ int main(int argc, char **argv)
       "matchstr(expand(\"<amatch>\"), "
       "'\\c\\mterm://\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), "
       // capture the working directory
-      "get(matchlist(expand(\"<amatch>\"), "
-      "'\\c\\mterm://\\(.\\{-}\\)//'), 1, ''))");
+      "{'cwd': get(matchlist(expand(\"<amatch>\"), "
+      "'\\c\\mterm://\\(.\\{-}\\)//'), 1, '')})");
 
   /* Execute --cmd arguments. */
   exe_pre_commands(&params);
