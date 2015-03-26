@@ -7228,7 +7228,7 @@ int highlight_changed(void)
       attr = 0;
       bool colon = false;
       for (; *p && *p != ','; ++p) {                /* parse upto comma */
-        if (isblank(*p))                        /* ignore white space */
+        if (isblank(*p))                            /* ignore white space */
           continue;
 
         if (colon)          /* Combination with ':' is not allowed. */

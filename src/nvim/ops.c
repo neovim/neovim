@@ -352,7 +352,7 @@ static void shift_block(oparg_T *oap, int amount)
       else
         ++bd.textstart;
     }
-    for (; isblank(*bd.textstart); ) {
+    while (isblank(*bd.textstart)) {
       // TODO: is passing bd.textstart for start of the line OK?
       incr = lbr_chartabsize_adv(bd.textstart, &bd.textstart, (colnr_T)(bd.start_vcol));
       total += incr;
