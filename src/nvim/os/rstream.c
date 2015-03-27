@@ -243,8 +243,10 @@ void rstream_set_file(RStream *rstream, uv_file file)
     // previously allocated memory
     if (rstream->fread_idle != NULL) {
       uv_close((uv_handle_t *)rstream->fread_idle, close_cb);
+      rstream->fread_idle = NULL;
     } else {
       uv_close((uv_handle_t *)rstream->stream, close_cb);
+      rstream->stream = NULL;
     }
   }
 
@@ -387,6 +389,7 @@ static void fread_idle_cb(uv_idle_t *handle)
 
   if (req.result <= 0) {
     uv_idle_stop(rstream->fread_idle);
+    rstream->cb(rstream, rstream->data, true);
     return;
   }
 

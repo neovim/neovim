@@ -12,7 +12,6 @@ struct term_input {
   int in_fd;
   bool paste_enabled;
   TermKey *tk;
-  uv_pipe_t input_handle;
   uv_timer_t timer_handle;
   RBuffer *read_buffer;
   RStream *read_stream;
@@ -210,12 +209,28 @@ static bool handle_forced_escape(TermInput *input)
 
 static void read_cb(RStream *rstream, void *rstream_data, bool eof)
 {
+  TermInput *input = rstream_data;
+
   if (eof) {
-    input_done();
+    if (input->in_fd == 0 && !os_isatty(0) && os_isatty(2)) {
+      // Started reading from stdin which is not a pty but failed. Switch to
+      // stderr since it is a pty.
+      //
+      // This is how we support commands like:
+      //
+      // echo q | nvim -es
+      //
+      // and
+      //
+      // ls *.md | xargs nvim
+      input->in_fd = 2;
+      rstream_set_file(input->read_stream, input->in_fd);
+      rstream_start(input->read_stream);
+    } else {
+      input_done();
+    }
     return;
   }
-
-  TermInput *input = rstream_data;
 
   do {
     if (handle_bracketed_paste(input) || handle_forced_escape(input)) {
@@ -240,8 +255,7 @@ static TermInput *term_input_new(void)
 {
   TermInput *rv = xmalloc(sizeof(TermInput));
   rv->paste_enabled = false;
-  // read input from stderr if stdin is not a tty
-  rv->in_fd = os_isatty(0) ? 0 : (os_isatty(2) ? 2 : 0);
+  rv->in_fd = 0;
 
   // Set terminal encoding based on environment(taken from libtermkey source
   // code)
@@ -259,12 +273,9 @@ static TermInput *term_input_new(void)
   int curflags = termkey_get_canonflags(rv->tk);
   termkey_set_canonflags(rv->tk, curflags | TERMKEY_CANON_DELBS);
   // setup input handle
-  uv_pipe_init(uv_default_loop(), &rv->input_handle, 0);
-  uv_pipe_open(&rv->input_handle, rv->in_fd);
-  rv->input_handle.data = NULL;
   rv->read_buffer = rbuffer_new(0xfff);
   rv->read_stream = rstream_new(read_cb, rv->read_buffer, rv);
-  rstream_set_stream(rv->read_stream, (uv_stream_t *)&rv->input_handle);
+  rstream_set_file(rv->read_stream, rv->in_fd);
   rstream_start(rv->read_stream);
   // initialize a timer handle for handling ESC with libtermkey
   uv_timer_init(uv_default_loop(), &rv->timer_handle);
@@ -282,10 +293,8 @@ static void term_input_destroy(TermInput *input)
   uv_timer_stop(&input->timer_handle);
   rstream_stop(input->read_stream);
   rstream_free(input->read_stream);
-  uv_close((uv_handle_t *)&input->input_handle, NULL);
   uv_close((uv_handle_t *)&input->timer_handle, NULL);
   termkey_destroy(input->tk);
   event_poll(0);  // Run once to remove references to input/timer handles
-  free(input->input_handle.data);
   free(input);
 }
