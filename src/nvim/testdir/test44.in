@@ -42,6 +42,12 @@ G:put =matchstr(\"אבגד\", \".\", 0, 2) " ב
 :put =matchstr(\"אבגד\", \"..\", 0, 2) " בג
 :put =matchstr(\"אבגד\", \".\", 0, 0) " א
 :put =matchstr(\"אבגד\", \".\", 4, -1) " ג
+:new
+:$put =['dog(a', 'cat(']
+/(/e+
+"ayn:bd!
+:$put =''
+G"ap
 :w!
 :qa!
 ENDTEST
