@@ -440,8 +440,6 @@ unix_expandpath (
   int starstar = FALSE;
   static int stardepth = 0;         /* depth for "**" expansion */
 
-  DIR         *dirp;
-  struct dirent *dp;
 
   /* Expanding "**" may take a long time, check for CTRL-C. */
   if (stardepth > 0) {
@@ -539,20 +537,20 @@ unix_expandpath (
 
   /* open the directory for scanning */
   *s = NUL;
-  dirp = opendir(*buf == NUL ? "." : (char *)buf);
+  
+  uv_fs_t scandir_req;
+  int number_of_results = os_scandir_open(&scandir_req, *buf == NUL ? "." : (char *)buf);
 
-  /* Find all matching entries */
-  if (dirp != NULL) {
-    for (;; ) {
-      dp = readdir(dirp);
-      if (dp == NULL)
-        break;
-      if ((dp->d_name[0] != '.' || starts_with_dot)
+  /* Find all matching entries, if any results found */
+  if (number_of_results > 0) {
+    char *entry_name;
+    while( os_scandir_next(&scandir_req, &entry_name) ){   
+      if ((entry_name[0] != '.' || starts_with_dot)
           && ((regmatch.regprog != NULL && vim_regexec(&regmatch,
-                   (char_u *)dp->d_name, (colnr_T)0))
+                   (char_u *)entry_name, (colnr_T)0))
               || ((flags & EW_NOTWILD)
-                  && fnamencmp(path + (s - buf), dp->d_name, e - s) == 0))) {
-        STRCPY(s, dp->d_name);
+                  && fnamencmp(path + (s - buf), entry_name, e - s) == 0))) {
+        STRCPY(s, entry_name);
         len = STRLEN(buf);
 
         if (starstar && stardepth < 100) {
@@ -582,9 +580,9 @@ unix_expandpath (
       }
     }
 
-    closedir(dirp);
   }
 
+  os_scandir_close(&scandir_req);
   free(buf);
   vim_regfree(regmatch.regprog);
 
