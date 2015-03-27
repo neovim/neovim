@@ -145,6 +145,21 @@ void early_init(void)
 {
   handle_init();
 
+  // Use $NVIM and $NVIMRUNTIME as $VIM and $VIMRUNTIME
+  // or unset them to avoid accidentaly using the Vim runtime
+  const char *env_nvimruntime = os_getenv("NVIMRUNTIME");
+  if (env_nvimruntime) {
+    os_setenv("VIMRUNTIME", env_nvimruntime, true);
+  } else {
+    os_unsetenv("VIMRUNTIME");
+  }
+  const char *env_nvim = os_getenv("NVIM");
+  if (env_nvim) {
+    os_setenv("VIM", env_nvim, true);
+  } else {
+    os_unsetenv("VIM");
+  }
+
   (void)mb_init();      // init mb_bytelen_tab[] to ones
   eval_init();          // init global variables
 

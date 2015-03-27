@@ -86,7 +86,7 @@ $(SCRIPTS) $(SCRIPTS_GUI): $(VIMPROG) test1.out
 
 RM_ON_RUN   := test.out X* viminfo
 RM_ON_START := tiny.vim small.vim mbyte.vim test.ok
-RUN_VIM     := VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(TOOL) $(VIMPROG) -u unix.vim -U NONE -i viminfo --noplugin -s dotest.in
+RUN_VIM     := NVIMRUNTIME=$(SCRIPTSOURCE); export NVIMRUNTIME; $(TOOL) $(VIMPROG) -u unix.vim -U NONE -i viminfo --noplugin -s dotest.in
 
 clean:
 	-rm -rf *.out          \
