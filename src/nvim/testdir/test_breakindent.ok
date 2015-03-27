@@ -53,6 +53,12 @@ Test 4: Simple breakindent + min width: 18
 
  Test 11: strdisplaywidth when breakindent is on
 strdisplaywidth: 46 == calculated: 64
-Test 12: breakindent with wrapping Tab
+					{
+
+ Test 12: breakindent + long indent
+56        
+          
+~         
+Test 13: breakindent with wrapping Tab
 d
 w
