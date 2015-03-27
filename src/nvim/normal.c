@@ -4361,7 +4361,7 @@ static void nv_ident(cmdarg_T *cap)
     /* put pattern in search history */
     init_history();
     add_to_history(HIST_SEARCH, buf, true, NUL);
-    normal_search(cap, cmdchar == '*' ? '/' : '?', buf, 0);
+    (void)normal_search(cap, cmdchar == '*' ? '/' : '?', buf, 0);
   } else
     do_cmdline_cmd(buf);
 
@@ -4785,7 +4785,7 @@ static void nv_search(cmdarg_T *cap)
     return;
   }
 
-  normal_search(cap, cap->cmdchar, cap->searchbuf,
+  (void)normal_search(cap, cap->cmdchar, cap->searchbuf,
       (cap->arg ? 0 : SEARCH_MARK));
 }
 
@@ -4795,15 +4795,25 @@ static void nv_search(cmdarg_T *cap)
  */
 static void nv_next(cmdarg_T *cap)
 {
-  normal_search(cap, 0, NULL, SEARCH_MARK | cap->arg);
+  pos_T old = curwin->w_cursor;
+  int i = normal_search(cap, 0, NULL, SEARCH_MARK | cap->arg);
+
+  if (i == 1 && equalpos(old, curwin->w_cursor)) {
+    // Avoid getting stuck on the current cursor position, which can happen when
+    // an offset is given and the cursor is on the last char in the buffer:
+    // Repeat with count + 1.
+    cap->count1 += 1;
+    (void)normal_search(cap, 0, NULL, SEARCH_MARK | cap->arg);
+    cap->count1 -= 1;
+  }
 }
 
 /*
  * Search for "pat" in direction "dir" ('/' or '?', 0 for repeat).
  * Uses only cap->count1 and cap->oap from "cap".
+ * Return 0 for failure, 1 for found, 2 for found and line offset added.
  */
-static void
-normal_search (
+static int normal_search(
     cmdarg_T *cap,
     int dir,
     char_u *pat,
@@ -4832,6 +4842,7 @@ normal_search (
   /* "/$" will put the cursor after the end of the line, may need to
    * correct that here */
   check_cursor();
+  return i;
 }
 
 /*
