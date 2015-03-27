@@ -27,6 +27,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   if(CMAKE_COMPILER_IS_GNUCXX)
     set(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "-isystem ")
   endif()
+
+  # Enable fixing case-insensitive filenames for Mac.
+  set(USE_FNAME_CASE TRUE)
 endif()
 
 # Set available build types for CMake GUIs.

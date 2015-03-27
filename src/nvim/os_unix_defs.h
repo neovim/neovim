@@ -44,25 +44,6 @@
 # define SIGDUMMYARG
 #endif
 
-#ifdef HAVE_DIRENT_H
-# include <dirent.h>
-# ifndef NAMLEN
-#  define NAMLEN(dirent) strlen((dirent)->d_name)
-# endif
-#else
-# define dirent direct
-# define NAMLEN(dirent) (dirent)->d_namlen
-# if HAVE_SYS_NDIR_H
-#  include <sys/ndir.h>
-# endif
-# if HAVE_SYS_DIR_H
-#  include <sys/dir.h>
-# endif
-# if HAVE_NDIR_H
-#  include <ndir.h>
-# endif
-#endif
-
 #if !defined(HAVE_SYS_TIME_H) || defined(TIME_WITH_SYS_TIME)
 # include <time.h>          /* on some systems time.h should not be
                                included together with sys/time.h */
