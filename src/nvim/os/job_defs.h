@@ -5,6 +5,7 @@
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/wstream_defs.h"
 
+#define MAX_RUNNING_JOBS 100
 typedef struct job Job;
 
 /// Function called when the job reads data

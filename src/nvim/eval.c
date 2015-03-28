@@ -448,6 +448,7 @@ typedef struct {
   int refcount;
   ufunc_T *on_stdout, *on_stderr, *on_exit;
   dict_T *self;
+  int *status_ptr;
 } TerminalJobData;
 
 
@@ -470,6 +471,7 @@ typedef struct {
 #define JobEventFreer(x)
 KMEMPOOL_INIT(JobEventPool, JobEvent, JobEventFreer)
 static kmempool_t(JobEventPool) *job_event_pool = NULL;
+static bool defer_job_callbacks = true;
 
 /*
  * Initialize the global and v: variables.
@@ -6537,6 +6539,7 @@ static struct fst {
   {"jobsend",         2, 2, f_jobsend},
   {"jobstart",        1, 2, f_jobstart},
   {"jobstop",         1, 1, f_jobstop},
+  {"jobwait",         1, 2, f_jobwait},
   {"join",            1, 2, f_join},
   {"keys",            1, 1, f_keys},
   {"last_buffer_nr",  0, 0, f_last_buffer_nr},  /* obsolete */
@@ -10839,6 +10842,105 @@ static void f_jobstop(typval_T *argvars, typval_T *rettv)
 
   job_stop(job);
   rettv->vval.v_number = 1;
+}
+
+// "jobwait(ids[, timeout])" function
+static void f_jobwait(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_LIST || (argvars[1].v_type != VAR_NUMBER
+        && argvars[1].v_type != VAR_UNKNOWN)) {
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  list_T *args = argvars[0].vval.v_list;
+  list_T *rv = list_alloc();
+
+  // must temporarily disable job event deferring so the callbacks are
+  // processed while waiting.
+  defer_job_callbacks = false;
+  // For each item in the input list append an integer to the output list. -3
+  // is used to represent an invalid job id, -2 is for a interrupted job and
+  // -1 for jobs that were skipped or timed out.
+  for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
+    Job *job = NULL;
+    if (arg->li_tv.v_type != VAR_NUMBER
+        || !(job = job_find(arg->li_tv.vval.v_number))
+        || !is_user_job(job)) {
+      list_append_number(rv, -3);
+    } else {
+      TerminalJobData *data = job_data(job);
+      // append the list item and set the status pointer so we'll collect the
+      // status code when the job exits
+      list_append_number(rv, -1);
+      data->status_ptr = &rv->lv_last->li_tv.vval.v_number;
+    }
+  }
+
+  int remaining = -1;
+  uint64_t before = 0;
+  if (argvars[1].v_type == VAR_NUMBER && argvars[1].vval.v_number >= 0) {
+    remaining = argvars[1].vval.v_number;
+    before = os_hrtime();
+  }
+
+  for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
+    Job *job = NULL;
+    if (remaining == 0) {
+      // timed out
+      break;
+    }
+    if (arg->li_tv.v_type != VAR_NUMBER
+        || !(job = job_find(arg->li_tv.vval.v_number))
+        || !is_user_job(job)) {
+      continue;
+    }
+    TerminalJobData *data = job_data(job);
+    int status = job_wait(job, remaining);
+    if (status < 0) {
+      // interrupted or timed out, skip remaining jobs.
+      if (status == -2) {
+        // set the status so the user can distinguish between interrupted and
+        // skipped/timeout jobs.
+        *data->status_ptr = -2;
+      }
+      break;
+    }
+    if (remaining > 0) {
+      uint64_t now = os_hrtime();
+      remaining -= (int) ((now - before) / 1000000);
+      before = now;
+      if (remaining <= 0) {
+        break;
+      }
+    }
+  }
+
+  for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
+    Job *job = NULL;
+    if (arg->li_tv.v_type != VAR_NUMBER
+        || !(job = job_find(arg->li_tv.vval.v_number))
+        || !is_user_job(job)) {
+      continue;
+    }
+    TerminalJobData *data = job_data(job);
+    // remove the status pointer because the list may be freed before the
+    // job exits
+    data->status_ptr = NULL;
+  }
+  // restore defer flag
+  defer_job_callbacks = true;
+
+  rv->lv_refcount++;
+  rettv->v_type = VAR_LIST;
+  rettv->vval.v_list = rv;
 }
 
 /*
@@ -19951,6 +20053,16 @@ static inline void free_term_job_data(TerminalJobData *data) {
   free(data);
 }
 
+static inline bool is_user_job(Job *job)
+{
+  if (!job) {
+    return false;
+  }
+
+  JobOptions *opts = job_opts(job);
+  return opts->exit_cb == on_job_exit;
+}
+
 // vimscript job callbacks must be executed on Nvim main loop
 static inline void push_job_event(Job *job, ufunc_T *callback,
     const char *type, char *data, size_t count, int status)
@@ -19990,7 +20102,7 @@ static inline void push_job_event(Job *job, ufunc_T *callback,
   event_push((Event) {
     .handler = on_job_event,
     .data = event_data
-  }, true);
+  }, defer_job_callbacks);
 }
 
 static void on_job_stdout(RStream *rstream, void *job, bool eof)
@@ -20037,6 +20149,10 @@ static void on_job_exit(Job *job, int status, void *d)
     data->exited = true;
     terminal_close(data->term,
         _("\r\n[Program exited, press any key to close]"));
+  }
+
+  if (data->status_ptr) {
+    *data->status_ptr = status;
   }
 
   push_job_event(job, data->on_exit, "exit", NULL, 0, status);

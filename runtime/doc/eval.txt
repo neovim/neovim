@@ -4061,6 +4061,24 @@ jobstop({job})						{Nvim} *jobstop()*
 		`v:job_data[0]` set to `exited`.  See |job-control| for more
 		information.
 
+jobwait({ids}[, {timeout}])				{Nvim} *jobwait()*
+		Wait for a set of jobs to finish. The {ids} argument is a list
+		of ids for jobs that will be waited for. If passed, {timeout}
+		is the maximum number of milliseconds to wait. While this
+		function is executing, callbacks for jobs not in the {ids}
+		list can be executed. Also, the screen wont be updated unless
+		|:redraw| is invoked by one of the callbacks.
+
+		Returns a list of integers with the same length as {ids}, with
+		each integer representing the wait result for the
+		corresponding job id. The possible values for the resulting
+		integers are:
+
+		* the job return code if the job exited
+		* -1 if the wait timed out for the job
+		* -2 if the job was interrupted
+		* -3 if the job id is invalid.
+
 join({list} [, {sep}])					*join()*
 		Join the items in {list} together into one String.
 		When {sep} is specified it is put in between the items.  If

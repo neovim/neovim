@@ -24,7 +24,6 @@
 // before we send SIGNAL to it
 #define TERM_TIMEOUT 1000000000
 #define KILL_TIMEOUT (TERM_TIMEOUT * 2)
-#define MAX_RUNNING_JOBS 100
 #define JOB_BUFFER_SIZE 0xFFFF
 
 #define close_job_stream(job, stream, type)                                \
@@ -234,11 +233,12 @@ void job_stop(Job *job)
 /// @return returns the status code of the exited job. -1 if the job is
 ///         still running and the `timeout` has expired. Note that this is
 ///         indistinguishable from the process returning -1 by itself. Which
-///         is possible on some OS.
+///         is possible on some OS. Returns -2 if the job was interrupted.
 int job_wait(Job *job, int ms) FUNC_ATTR_NONNULL_ALL
 {
   // The default status is -1, which represents a timeout
   int status = -1;
+  bool interrupted = false;
 
   // Increase refcount to stop the job from being freed before we have a
   // chance to get the status.
@@ -251,6 +251,7 @@ int job_wait(Job *job, int ms) FUNC_ATTR_NONNULL_ALL
   // we'll assume that a user frantically hitting interrupt doesn't like
   // the current job. Signal that it has to be killed.
   if (got_int) {
+    interrupted = true;
     got_int = false;
     job_stop(job);
     if (ms == -1) {
@@ -265,7 +266,7 @@ int job_wait(Job *job, int ms) FUNC_ATTR_NONNULL_ALL
   if (job->refcount == 1) {
     // Job exited, collect status and manually invoke close_cb to free the job
     // resources
-    status = job->status;
+    status = interrupted ? -2 : job->status;
     job_close_streams(job);
     job_decref(job);
   } else {
@@ -355,6 +356,11 @@ void job_close_streams(Job *job)
   close_job_in(job);
   close_job_out(job);
   close_job_err(job);
+}
+
+JobOptions *job_opts(Job *job)
+{
+  return &job->opts;
 }
 
 /// Iterates the table, sending SIGTERM to stopped jobs and SIGKILL to those

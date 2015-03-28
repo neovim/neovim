@@ -4,8 +4,8 @@ local clear, nvim, eq, neq, ok, expect, eval, next_msg, run, stop, session
   = helpers.clear, helpers.nvim, helpers.eq, helpers.neq, helpers.ok,
   helpers.expect, helpers.eval, helpers.next_message, helpers.run,
   helpers.stop, helpers.session
-local nvim_dir, insert = helpers.nvim_dir, helpers.insert
-local source = helpers.source
+local nvim_dir, insert, feed = helpers.nvim_dir, helpers.insert, helpers.feed
+local source, execute, wait = helpers.source, helpers.execute, helpers.wait
 
 
 describe('jobs', function()
@@ -168,6 +168,91 @@ describe('jobs', function()
     call jobstart([&sh, '-c', 'exit 45'], g:dict)
     ]])
     eq({'notification', 'exit', {45, 10}}, next_msg())
+  end)
+
+  describe('jobwait', function()
+    it('returns a list of status codes', function()
+      source([[
+      call rpcnotify(g:channel, 'wait', jobwait([
+      \  jobstart([&sh, '-c', 'sleep 0.10; exit 4']),
+      \  jobstart([&sh, '-c', 'sleep 0.110; exit 5']),
+      \  jobstart([&sh, '-c', 'sleep 0.210; exit 6']),
+      \  jobstart([&sh, '-c', 'sleep 0.310; exit 7'])
+      \  ]))
+      ]])
+      eq({'notification', 'wait', {{4, 5, 6, 7}}}, next_msg())
+    end)
+
+    it('will run callbacks while waiting', function()
+      source([[
+      let g:dict = {'id': 10}
+      let g:l = []
+      function g:dict.on_stdout(id, data)
+        call add(g:l, a:data[0])
+      endfunction
+      call jobwait([
+      \  jobstart([&sh, '-c', 'sleep 0.010; echo 4'], g:dict),
+      \  jobstart([&sh, '-c', 'sleep 0.030; echo 5'], g:dict),
+      \  jobstart([&sh, '-c', 'sleep 0.050; echo 6'], g:dict),
+      \  jobstart([&sh, '-c', 'sleep 0.070; echo 7'], g:dict)
+      \  ])
+      call rpcnotify(g:channel, 'wait', g:l)
+      ]])
+      eq({'notification', 'wait', {{'4', '5', '6', '7'}}}, next_msg())
+    end)
+
+    it('will return status codes in the order of passed ids', function()
+      source([[
+      call rpcnotify(g:channel, 'wait', jobwait([
+      \  jobstart([&sh, '-c', 'sleep 0.070; exit 4']),
+      \  jobstart([&sh, '-c', 'sleep 0.050; exit 5']),
+      \  jobstart([&sh, '-c', 'sleep 0.030; exit 6']),
+      \  jobstart([&sh, '-c', 'sleep 0.010; exit 7'])
+      \  ]))
+      ]])
+      eq({'notification', 'wait', {{4, 5, 6, 7}}}, next_msg())
+    end)
+
+    it('will return -3 for invalid job ids', function()
+      source([[
+      call rpcnotify(g:channel, 'wait', jobwait([
+      \  -10,
+      \  jobstart([&sh, '-c', 'sleep 0.01; exit 5']),
+      \  ]))
+      ]])
+      eq({'notification', 'wait', {{-3, 5}}}, next_msg())
+    end)
+
+    it('will return -2 when interrupted', function()
+      execute('call rpcnotify(g:channel, "ready") | '..
+              'call rpcnotify(g:channel, "wait", '..
+              'jobwait([jobstart([&sh, "-c", "sleep 10; exit 55"])]))')
+      eq({'notification', 'ready', {}}, next_msg())
+      feed('<c-c>')
+      eq({'notification', 'wait', {{-2}}}, next_msg())
+    end)
+
+    describe('with timeout argument', function()
+      it('will return -1 if the wait timed out', function()
+        source([[
+        call rpcnotify(g:channel, 'wait', jobwait([
+        \  jobstart([&sh, '-c', 'sleep 0.05; exit 4']),
+        \  jobstart([&sh, '-c', 'sleep 0.3; exit 5']),
+        \  ], 100))
+        ]])
+        eq({'notification', 'wait', {{4, -1}}}, next_msg())
+      end)
+
+      it('can pass 0 to check if a job exists', function()
+        source([[
+        call rpcnotify(g:channel, 'wait', jobwait([
+        \  jobstart([&sh, '-c', 'sleep 0.05; exit 4']),
+        \  jobstart([&sh, '-c', 'sleep 0.3; exit 5']),
+        \  ], 0))
+        ]])
+        eq({'notification', 'wait', {{-1, -1}}}, next_msg())
+      end)
+    end)
   end)
 
   -- FIXME need to wait until jobsend succeeds before calling jobstop
