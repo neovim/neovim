@@ -432,6 +432,7 @@ EXTERN int p_js;                /* 'joinspaces' */
 EXTERN char_u   *p_kp;          /* 'keywordprg' */
 EXTERN char_u   *p_km;          /* 'keymodel' */
 EXTERN char_u   *p_langmap;     /* 'langmap'*/
+EXTERN int p_lnr;               /* 'langnoremap'*/
 EXTERN char_u   *p_lm;          /* 'langmenu' */
 EXTERN char_u   *p_lispwords;   /* 'lispwords' */
 EXTERN long p_ls;               /* 'laststatus' */
