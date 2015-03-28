@@ -89,12 +89,12 @@ static char_u e_pathtoolong[] = N_("E854: path too long for completion");
  * Don't forget to clean up by calling vim_findfile_cleanup() if you are done
  * with the search context.
  *
- * Find the file 'filename' in the directory 'path'.
- * The parameter 'path' may contain wildcards. If so only search 'level'
- * directories deep. This function will search 100 levels deep, and is
- * not related to restricts given to the '**' wildcard. If you use '**200'
- * vim_findfile() will stop after 100 levels. If this turns out to be a bad
- * default, it can be changed in file_search.h
+ * Find the file 'filename' in the directory 'path'. The parameter 'path' may
+ * contain wildcards. If so only search 100 directories deep. This function
+ * will search 100 levels deep, and is not related to restricts given to the
+ * '**' wildcard. If you use '**200' vim_findfile() will stop after 100 levels.
+ * If 100 levels turns out to be a bad default, it can be changed in
+ * file_search.h
  *
  * 'filename' cannot contain wildcards!  It is used as-is, no backslashes to
  * escape special characters.
@@ -400,21 +400,24 @@ char_u **vim_create_stopdirs(char_u *path)
   return stopdirs;
 }
 
+/* Helper function used in vim_findfile_init. Populates ffsc_wc_path.
+ *
+ * Copy wc_path and add restricts to the '**' wildcard.
+ * The octet after a '**' is used as a (binary) counter.
+ * So '**3' is transposed to '**^C' ('^C' is ASCII value 3)
+ * or '**76' is transposed to '**N'( 'N' is ASCII value 76).
+ * If no restrict is given after '**' the default is used.
+ * Due to this technique the path looks awful if you print it as a
+ * string.
+ *
+ * Returns NULL if the wildcard string is populated incorrectly
+ */
 ff_search_ctx_T *populate_wc_path(char_u *wc_part, ff_search_ctx_T *ctx)
 {
   int64_t llevel;
   int len;
   char    *errpt;
 
-  /*
-   * copy wc_path and add restricts to the '**' wildcard.
-   * The octet after a '**' is used as a (binary) counter.
-   * So '**3' is transposed to '**^C' ('^C' is ASCII value 3)
-   * or '**76' is transposed to '**N'( 'N' is ASCII value 76).
-   * If no restrict is given after '**' the default is used.
-   * Due to this technique the path looks awful if you print it as a
-   * string.
-   */
   len = 0;
   while (*wc_part != NUL) {
     if (len + 5 >= MAXPATHL) {
@@ -1383,8 +1386,14 @@ find_file_in_path_option (
   return NULL;
 }
 
-/* When the file doesn't exist, try adding parts of
- * 'suffixesadd'. */
+/* Helper function for find_file_in_path_option.
+ *
+ * Look for the file in NameBuff, first by searching for the file. If the
+ * file doesn't exist, try adding parts of 'suffixesadd'.
+ *
+ * Uses NameBuff[] (reads, not writes)
+ */
+
 char_u *search_with_suffixes(char_u *suffixes, size_t len, int find_what) {
   // Check without suffixes first
   if (file_of_type_exists(NameBuff, find_what)) {
@@ -1401,6 +1410,11 @@ char_u *search_with_suffixes(char_u *suffixes, size_t len, int find_what) {
   }
   return NULL;
 }
+
+/* Helper function for find_file_in_path_option.
+ *
+ * Looks to see if the file exists and has the type desired
+ */
 
 bool file_of_type_exists(char_u *buf, int find_what) {
   return (os_file_exists(buf)
