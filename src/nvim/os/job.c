@@ -290,6 +290,18 @@ void job_close_in(Job *job) FUNC_ATTR_NONNULL_ALL
   close_job_in(job);
 }
 
+// Close the job stdout stream.
+void job_close_out(Job *job) FUNC_ATTR_NONNULL_ALL
+{
+  close_job_out(job);
+}
+
+// Close the job stderr stream.
+void job_close_err(Job *job) FUNC_ATTR_NONNULL_ALL
+{
+  close_job_out(job);
+}
+
 /// All writes that complete after calling this function will be reported
 /// to `cb`.
 ///

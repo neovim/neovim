@@ -4012,6 +4012,10 @@ items({dict})						*items()*
 		entry and the value of this entry.  The |List| is in arbitrary
 		order.
 
+jobclose({job}[, {stream}])				{Nvim} *jobclose()*
+		Close {job}'s {stream}, which can be one "stdin", "stdout" or
+		"stderr". If {stream} is omitted, all streams are closed.
+
 jobresize({job}, {width}, {height})			{Nvim} *jobresize()*
 		Resize {job}'s pseudo terminal window to {width} and {height}.
 		This function will fail if used on jobs started without the

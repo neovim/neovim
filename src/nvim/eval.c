@@ -445,6 +445,7 @@ typedef struct {
   Job *job;
   Terminal *term;
   bool exited;
+  bool stdin_closed;
   int refcount;
   ufunc_T *on_stdout, *on_stderr, *on_exit;
   dict_T *self;
@@ -6535,6 +6536,7 @@ static struct fst {
   {"isdirectory",     1, 1, f_isdirectory},
   {"islocked",        1, 1, f_islocked},
   {"items",           1, 1, f_items},
+  {"jobclose",        1, 2, f_jobclose},
   {"jobresize",       3, 3, f_jobresize},
   {"jobsend",         2, 2, f_jobsend},
   {"jobstart",        1, 2, f_jobstart},
@@ -10658,6 +10660,48 @@ static void f_items(typval_T *argvars, typval_T *rettv)
   dict_list(argvars, rettv, 2);
 }
 
+// "jobclose(id[, stream])" function
+static void f_jobclose(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_NUMBER || (argvars[1].v_type != VAR_STRING
+        && argvars[1].v_type != VAR_UNKNOWN)) {
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  Job *job = job_find(argvars[0].vval.v_number);
+
+  if (!is_user_job(job)) {
+    // Invalid job id
+    EMSG(_(e_invjob));
+    return;
+  }
+
+  if (argvars[1].v_type == VAR_STRING) {
+    char *stream = (char *)argvars[1].vval.v_string;
+    if (!strcmp(stream, "stdin")) {
+      job_close_in(job);
+      ((TerminalJobData *)job_data(job))->stdin_closed = true;
+    } else if (!strcmp(stream, "stdout")) {
+      job_close_out(job);
+    } else if (!strcmp(stream, "stderr")) {
+      job_close_err(job);
+    } else {
+      EMSG2(_("Invalid job stream \"%s\""), stream);
+    }
+  } else {
+    ((TerminalJobData *)job_data(job))->stdin_closed = true;
+    job_close_streams(job);
+  }
+}
+
 // "jobsend()" function
 static void f_jobsend(typval_T *argvars, typval_T *rettv)
 {
@@ -10680,6 +10724,11 @@ static void f_jobsend(typval_T *argvars, typval_T *rettv)
   if (!job) {
     // Invalid job id
     EMSG(_(e_invjob));
+    return;
+  }
+
+  if (((TerminalJobData *)job_data(job))->stdin_closed) {
+    EMSG(_("Can't send data to the job: stdin is closed"));
     return;
   }
 
