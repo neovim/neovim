@@ -4602,6 +4602,7 @@ mode([expr])	Return a string that indicates the current mode.
 			i	Insert
 			R	Replace |R|
 			Rv	Virtual Replace |gR|
+			t	Terminal {Nvim}
 			c	Command-line
 			cv	Vim Ex mode |gQ|
 			ce	Normal Ex mode |Q|
