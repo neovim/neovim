@@ -7,7 +7,7 @@ function! s:methods.get(reg)
 endfunction
 
 function! s:methods.set(lines, regtype, reg)
-  let g:test_clip[a:reg] = a:lines
+  let g:test_clip[a:reg] = [a:lines, a:regtype]
 endfunction
 
 

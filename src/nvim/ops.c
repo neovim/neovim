@@ -5360,10 +5360,13 @@ static void get_clipboard(int name, bool quiet)
       goto err;
     }
     char_u* regtype = res->lv_last->li_tv.vval.v_string;
-    if (regtype == NULL || strlen((char*)regtype) != 1) {
+    if (regtype == NULL || strlen((char*)regtype) > 1) {
       goto err;
     }
     switch (regtype[0]) {
+    case 0:
+      reg->y_type = MAUTO;
+      break;
     case 'v': case 'c':
       reg->y_type = MCHAR;
       break;
@@ -5393,15 +5396,23 @@ static void get_clipboard(int name, bool quiet)
     reg->y_array[i++] = (uint8_t *)xstrdup((char *)li->li_tv.vval.v_string);
   }
 
-  if (reg->y_type == MAUTO) {
-    if (reg->y_size > 0 && strlen((char*)reg->y_array[reg->y_size-1]) == 0) {
-      reg->y_type = MLINE;
+  if (reg->y_size > 0 && strlen((char*)reg->y_array[reg->y_size-1]) == 0) {
+    // a known-to-be charwise yank might have a final linebreak
+    // but otherwise there is no line after the final newline
+    if (reg->y_type != MCHAR) {
       free(reg->y_array[reg->y_size-1]);
       reg->y_size--;
-    } else {
+      if (reg->y_type == MAUTO) {
+        reg->y_type = MLINE;
+      }
+    }
+  } else {
+    if (reg->y_type == MAUTO) {
       reg->y_type = MCHAR;
     }
-  } else if (reg->y_type == MBLOCK) {
+  }
+
+  if (reg->y_type == MBLOCK) {
     int maxlen = 0;
     for (int i = 0; i < reg->y_size; i++) {
       int rowlen = STRLEN(reg->y_array[i]);
@@ -5453,6 +5464,7 @@ static void set_clipboard(int name)
     break;
   case MBLOCK:
     regtype = 'b';
+    list_append_string(lines, (char_u*)"", 0);
     break;
   }
   list_append_string(args, &regtype, 1);

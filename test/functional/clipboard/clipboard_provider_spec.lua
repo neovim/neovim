@@ -73,7 +73,7 @@ describe('clipboard usage', function()
     insert("some words")
     feed('^"*dwdw"*P')
     expect('some ')
-    eq({'some '}, eval("g:test_clip['*']"))
+    eq({{'some '}, 'v'}, eval("g:test_clip['*']"))
   end)
 
   it('supports separate "* and "+ when the provider supports it', function()
@@ -90,19 +90,36 @@ describe('clipboard usage', function()
       secound line
       first line]])
     -- linewise selection should be encoded as an extra newline
-    eq({'third line', ''}, eval("g:test_clip['+']"))
-    eq({'secound line', ''}, eval("g:test_clip['*']"))
+    eq({{'third line', ''}, 'V'}, eval("g:test_clip['+']"))
+    eq({{'secound line', ''}, 'V'}, eval("g:test_clip['*']"))
   end)
 
-  it('handles null bytes', function()
+  it('handles null bytes when pasting and in getreg', function()
     insert("some\022000text\n\022000very binary\022000")
     feed('"*y-+"*p')
-    eq({'some\ntext', '\nvery binary\n',''}, eval("g:test_clip['*']"))
+    eq({{'some\ntext', '\nvery binary\n',''}, 'V'}, eval("g:test_clip['*']"))
     expect("some\00text\n\00very binary\00\nsome\00text\n\00very binary\00")
 
     -- test getreg/getregtype
     eq('some\ntext\n\nvery binary\n\n', eval("getreg('*', 1)"))
     eq("V", eval("getregtype('*')"))
+
+    -- getreg supports three arguments
+    eq('some\ntext\n\nvery binary\n\n', eval("getreg('*', 1, 0)"))
+    eq({'some\ntext', '\nvery binary\n'}, eval("getreg('*', 1, 1)"))
+  end)
+
+  it('support autodectection of regtype', function()
+    execute("let g:test_clip['*'] = ['linewise stuff','']")
+    execute("let g:test_clip['+'] = ['charwise','stuff']")
+    eq("V", eval("getregtype('*')"))
+    eq("v", eval("getregtype('+')"))
+    insert("just some text")
+    feed('"*p"+p')
+    expect([[
+      just some text
+      lcharwise
+      stuffinewise stuff]])
   end)
 
   it('support blockwise operations', function()
@@ -115,6 +132,11 @@ describe('clipboard usage', function()
       very much
       blocktext]])
     eq("\0225", eval("getregtype('*')"))
+    feed('gg4l<c-v>j4l"+ygg"+P')
+    expect([[
+       muchvery much
+      ktextblocktext]])
+    eq({{' much', 'ktext', ''}, 'b'}, eval("g:test_clip['+']"))
   end)
 
   it('supports setreg', function()
@@ -126,13 +148,20 @@ describe('clipboard usage', function()
         textxplicitly
         lines
         ]])
+    execute('call setreg("+", "blocky\\nindeed", "b")')
+    feed('"+p')
+    expect([[
+        esblockyetted
+        teindeedxtxplicitly
+        lines
+        ]])
   end)
 
   it('supports let @+ (issue #1427)', function()
     execute("let @+ = 'some'")
     execute("let @* = ' other stuff'")
-    eq({'some'}, eval("g:test_clip['+']"))
-    eq({' other stuff'}, eval("g:test_clip['*']"))
+    eq({{'some'}, 'v'}, eval("g:test_clip['+']"))
+    eq({{' other stuff'}, 'v'}, eval("g:test_clip['*']"))
     feed('"+p"*p')
     expect('some other stuff')
     execute("let @+ .= ' more'")
@@ -151,7 +180,7 @@ describe('clipboard usage', function()
     insert("some words")
     feed('^"*dwdw"*P')
     expect('words')
-    eq({'words'}, eval("g:test_clip['*']"))
+    eq({{'words'}, 'v'}, eval("g:test_clip['*']"))
 
     execute("let g:test_clip['*'] = ['linewise stuff','']")
     feed('p')
