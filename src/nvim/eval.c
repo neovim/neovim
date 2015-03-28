@@ -10721,7 +10721,7 @@ static void f_jobsend(typval_T *argvars, typval_T *rettv)
 
   Job *job = job_find(argvars[0].vval.v_number);
 
-  if (!job) {
+  if (!is_user_job(job)) {
     // Invalid job id
     EMSG(_(e_invjob));
     return;
@@ -10763,7 +10763,7 @@ static void f_jobresize(typval_T *argvars, typval_T *rettv)
 
   Job *job = job_find(argvars[0].vval.v_number);
 
-  if (!job) {
+  if (!is_user_job(job)) {
     // Probably an invalid job id
     EMSG(_(e_invjob));
     return;
@@ -10883,8 +10883,7 @@ static void f_jobstop(typval_T *argvars, typval_T *rettv)
 
   Job *job = job_find(argvars[0].vval.v_number);
 
-  if (!job) {
-    // Probably an invalid job id
+  if (!is_user_job(job)) {
     EMSG(_(e_invjob));
     return;
   }
