@@ -12,7 +12,7 @@ local event = helpers.cimport("./src/nvim/os/event.h")
 
 local string_eq = function(lua_str, c_str)
   neq(NULL, c_str)
-  eq(lua_str, helpers.ffi.string(c_str))
+  eq(lua_str, ffi.string(c_str))
 end
 
 describe('vim_findfile functions', function()
@@ -51,6 +51,31 @@ describe('vim_findfile functions', function()
       string_eq(lfs.currentdir(), ctx["ffsc_start_dir"])
       string_eq('test', ctx["ffsc_fix_path"])
       string_eq('**A', ctx["ffsc_wc_path"])
+    end)
+  end)
+
+  describe('vim_create_stopdirs', function()
+    local create_stopdirs = function(path)
+      return file_search.vim_create_stopdirs(path)
+    end
+
+    it('returns NULL if there is no comma', function()
+      res = create_stopdirs(to_cstr("asdfh32#$%#&*"))
+      eq(NULL, res)
+    end)
+
+    it('strips leading comma', function()
+      res = create_stopdirs(to_cstr(";dir1"))
+      string_eq("dir1", res[0])
+      eq(NULL, res[1])
+    end)
+
+    it('splits the remaining par', function()
+      res = create_stopdirs(to_cstr(";dir1;dir2;dir3"))
+      string_eq("dir1", res[0])
+      string_eq("dir2", res[1])
+      string_eq("dir3", res[2])
+      eq(NULL, res[3])
     end)
   end)
 
