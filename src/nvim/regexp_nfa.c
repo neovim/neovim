@@ -2347,7 +2347,6 @@ static void nfa_set_code(int c)
 
 }
 
-#ifdef REGEXP_DEBUG
 static FILE *log_fd;
 
 /*
@@ -2467,7 +2466,6 @@ static void nfa_dump(nfa_regprog_T *prog)
     fclose(debugf);
   }
 }
-#endif      /* REGEXP_DEBUG */
 #endif      /* REGEXP_DEBUG */
 
 /*
@@ -4908,6 +4906,12 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
     nextlist->n = 0;                /* clear nextlist */
     nextlist->has_pim = FALSE;
     ++nfa_listid;
+    if (prog->re_engine == AUTOMATIC_ENGINE && nfa_listid >= NFA_MAX_STATES) {
+      // Too many states, retry with old engine.
+      nfa_match = NFA_TOO_EXPENSIVE;
+      goto theend;
+    }
+
     thislist->id = nfa_listid;
     nextlist->id = nfa_listid + 1;
 
@@ -5082,6 +5086,10 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
            */
           result = recursive_regmatch(t->state, NULL, prog,
               submatch, m, &listids);
+          if (result == NFA_TOO_EXPENSIVE) {
+            nfa_match = result;
+            goto theend;
+          }
 
           /* for \@! and \@<! it is a match when the result is
            * FALSE */
@@ -5180,6 +5188,10 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         /* First try matching the pattern. */
         result = recursive_regmatch(t->state, NULL, prog,
             submatch, m, &listids);
+        if (result == NFA_TOO_EXPENSIVE) {
+          nfa_match = result;
+          goto theend;
+        }
         if (result) {
           int bytelen;
 
@@ -6019,6 +6031,7 @@ nextchar:
   log_fd = NULL;
 #endif
 
+theend:
   /* Free memory */
   free(list[0].t);
   free(list[1].t);
@@ -6040,6 +6053,7 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col)
   int i;
   regsubs_T subs, m;
   nfa_state_T *start = prog->start;
+  int result;
 #ifdef REGEXP_DEBUG
   FILE        *f;
 #endif
@@ -6068,8 +6082,12 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col)
   clear_sub(&subs.synt);
   clear_sub(&m.synt);
 
-  if (nfa_regmatch(prog, start, &subs, &m) == FALSE)
+  result = nfa_regmatch(prog, start, &subs, &m);
+  if (result == FALSE) {
     return 0;
+  } else if (result == NFA_TOO_EXPENSIVE) {
+    return result;
+  }
 
   cleanup_subexpr();
   if (REG_MULTI) {
@@ -6186,9 +6204,7 @@ nfa_regexec_both (
   nfa_nsubexpr = prog->nsubexp;
   nfa_listid = 1;
   nfa_alt_listid = 2;
-#ifdef REGEXP_DEBUG
   nfa_regengine.expr = prog->pattern;
-#endif
 
   if (prog->reganch && col > 0)
     return 0L;
@@ -6228,9 +6244,7 @@ nfa_regexec_both (
 
   retval = nfa_regtry(prog, col);
 
-#ifdef REGEXP_DEBUG
   nfa_regengine.expr = NULL;
-#endif
 
 theend:
   return retval;
@@ -6248,9 +6262,7 @@ static regprog_T *nfa_regcomp(char_u *expr, int re_flags)
   if (expr == NULL)
     return NULL;
 
-#ifdef REGEXP_DEBUG
   nfa_regengine.expr = expr;
-#endif
 
   init_class_tab();
 
@@ -6325,10 +6337,8 @@ static regprog_T *nfa_regcomp(char_u *expr, int re_flags)
 #endif
   /* Remember whether this pattern has any \z specials in it. */
   prog->reghasz = re_has_z;
-#ifdef REGEXP_DEBUG
   prog->pattern = vim_strsave(expr);
   nfa_regengine.expr = NULL;
-#endif
 
 out:
   free(post_start);
@@ -6342,9 +6352,7 @@ fail:
 #ifdef REGEXP_DEBUG
   nfa_postfix_dump(expr, FAIL);
 #endif
-#ifdef REGEXP_DEBUG
   nfa_regengine.expr = NULL;
-#endif
   goto out;
 }
 
@@ -6355,9 +6363,7 @@ static void nfa_regfree(regprog_T *prog)
 {
   if (prog != NULL) {
     free(((nfa_regprog_T *)prog)->match_text);
-#ifdef REGEXP_DEBUG
     free(((nfa_regprog_T *)prog)->pattern);
-#endif
     free(prog);
   }
 }
