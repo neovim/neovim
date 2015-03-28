@@ -11769,6 +11769,8 @@ static void f_mode(typval_T *argvars, typval_T *rettv)
   } else if (exmode_active) {
     buf[0] = 'c';
     buf[1] = 'e';
+  } else if (State & TERM_FOCUS) {
+    buf[0] = 't';
   } else {
     buf[0] = 'n';
     if (finish_op)
