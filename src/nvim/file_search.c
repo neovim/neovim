@@ -412,7 +412,7 @@ char_u **vim_create_stopdirs(char_u *path)
  *
  * Returns NULL if the wildcard string is populated incorrectly
  */
-ff_search_ctx_T *populate_wc_path(char_u *wc_part, ff_search_ctx_T *ctx)
+static ff_search_ctx_T *populate_wc_path(char_u *wc_part, ff_search_ctx_T *ctx)
 {
   int64_t llevel;
   int len;
@@ -1394,7 +1394,7 @@ find_file_in_path_option (
  * Uses NameBuff[] (reads, not writes)
  */
 
-char_u *search_with_suffixes(char_u *suffixes, size_t len, int find_what) {
+static char_u *search_with_suffixes(char_u *suffixes, size_t len, int find_what) {
   // Check without suffixes first
   if (file_of_type_exists(NameBuff, find_what)) {
     return vim_strsave(NameBuff);
@@ -1416,7 +1416,7 @@ char_u *search_with_suffixes(char_u *suffixes, size_t len, int find_what) {
  * Looks to see if the file exists and has the type desired
  */
 
-bool file_of_type_exists(char_u *buf, int find_what) {
+static bool file_of_type_exists(char_u *buf, int find_what) {
   return (os_file_exists(buf)
           && (find_what == FINDFILE_BOTH
               || ((find_what == FINDFILE_DIR)
