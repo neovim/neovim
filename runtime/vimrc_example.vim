@@ -1,7 +1,7 @@
 " An example for a vimrc file.
 "
 " Maintainer:   Bram Moolenaar <Bram@vim.org>
-" Last change:  2014 Feb 05
+" Last change:  2014 Nov 05
 "
 " To use it, copy it to
 "     for Unix:  ~/.vimrc
@@ -80,3 +80,8 @@ if !exists(":DiffOrig")
   command DiffOrig vert new | set bt=nofile | r ++edit # | 0d_ | diffthis
                  \ | wincmd p | diffthis
 endif
+
+" Prevent that the langmap option applies to characters that result from a
+" mapping.  If unset (default), this may break plugins (but it's backward
+" compatible).
+set langnoremap
