@@ -6316,5 +6316,3 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
     }
   }
 }
-
-// vim: tabstop=8
