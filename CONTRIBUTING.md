@@ -129,20 +129,21 @@ The purpose of these guidelines is to *make reviews easier* and make the
 [VCS][vcs] logs more valuable.
 
 - Try to keep the first line under 72 characters.
-- If necessary, Include further description after a blank line.
+- If necessary, include further description after a blank line.
     - Don't make the description too verbose by including obvious things, but
       don't spare clarifications for anything that may be not so obvious.
       Some commit messages are pages long, and that's fine if there's no
       better place for those comments to live.
     - **Recommended:** Prefix logically-related commits with a consistent
-      identifier in each commit message.
+      identifier in each commit message. For already used identifiers, see the
+      commit history for the respective file(s) you're editing.
       [For example](https://github.com/neovim/neovim/commits?author=elmart),
       the following commits are related by task (*Introduce nvim namespace*) and
-      scope (*Contrib YCM*).
+      sub-task (*Contrib YCM*).
       <br/> `Introduce nvim namespace: Contrib YCM: Fix style issues`
       <br/> `Introduce nvim namespace: Contrib YCM: Fix build dir calculation`
-        - Subtasks can be *activity-oriented* (doing different things on the same area)
-          or *scope-oriented* (doing the same thing on different areas).
+        - Sub-tasks can be *activity-oriented* (doing different things on the same area)
+          or *scope-oriented* (doing the same thing in different areas).
     - Granularity helps, but it's conceptual size that matters, not extent size.
 - Use the [imperative voice][imperative]: "Fix bug" rather than "Fixed bug" or "Fixes bug."
 
@@ -186,7 +187,7 @@ such as [`tig`][tig].
 [vcs]: https://en.wikipedia.org/wiki/Revision_control
 [waffle]: https://waffle.io/neovim/neovim
 [wiki-building-testing]: https://github.com/neovim/neovim/wiki/Building-Neovim#testing
-[wiki-building-troubleshooting]: https://github.com/neovim/neovim/wiki/Building-Neovim#troubleshootingfaq
+[wiki-building-troubleshooting]: https://github.com/neovim/neovim/wiki/Building-Neovim#troubleshooting
 [wiki-contributing]: https://github.com/neovim/neovim/wiki/Contributing
 [wiki-install-troubleshooting]: https://github.com/neovim/neovim/wiki/Installing-Neovim#troubleshooting
 [wiki-review-checklist]: https://github.com/neovim/neovim/wiki/Code-review-checklist
