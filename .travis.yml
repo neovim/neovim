@@ -5,6 +5,8 @@ os:
 branches:
   except:
     - nightly
+python:
+  - "2.7"
 env:
   global:
     - CI_SCRIPTS=$TRAVIS_BUILD_DIR/.ci
@@ -32,6 +34,13 @@ matrix:
     - os: osx
       env: CI_TARGET=gcc
       compiler: gcc-4.9
+    # Python 3
+    - os: osx
+      env: CI_TARGET=clang
+      python: "3.4"
+    - os: linux
+      env: CI_TARGET=clang
+      python: "3.4"
   fast_finish: true
 before_install:
   # Pins the version of the java package installed on the Travis VMs
