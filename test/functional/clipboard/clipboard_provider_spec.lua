@@ -203,7 +203,6 @@ describe('clipboard usage', function()
 
     it('links the "* and unnamed registers', function()
       -- with cb=unnamed, "* and unnamed will be the same register
-      execute('set clipboard=unnamed')
       insert("some words")
       feed('^"*dwdw"*P')
       expect('words')
@@ -215,6 +214,19 @@ describe('clipboard usage', function()
         words
         linewise stuff]])
       end)
+
+    it('does not clobber "0 when pasting', function()
+      insert('a line')
+      feed('yy')
+      execute("let g:test_clip['*'] = ['b line','']")
+      feed('"0pp"0p')
+      expect([[
+        a line
+        a line
+        b line
+        a line]])
+    end)
+
   end)
 
   it('supports :put', function()
@@ -255,5 +267,14 @@ describe('clipboard usage', function()
       [2] = {foreground = Screen.colors.Blue},
       [3] = {bold = true, foreground = Screen.colors.SeaGreen}},
       {{bold = true, foreground = Screen.colors.Blue}})
+  end)
+
+  it('can paste "* to the commandline', function()
+    insert('s/s/t/')
+    feed('gg"*y$:<c-r>*<cr>')
+    expect('t/s/t/')
+    execute("let g:test_clip['*'] = ['s/s/u']")
+    feed(':<c-r>*<cr>')
+    expect('t/u/t/')
   end)
 end)
