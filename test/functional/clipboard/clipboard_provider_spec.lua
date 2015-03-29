@@ -6,13 +6,7 @@ local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local execute, expect, eq, eval = helpers.execute, helpers.expect, helpers.eq, helpers.eval
 local nvim, run, stop, restart = helpers.nvim, helpers.run, helpers.stop, helpers.restart
 
-local function reset()
-  clear()
-  execute('let &rtp = "test/functional/clipboard,".&rtp')
-  execute('call getreg("*")') -- force load of provider
-end
-
-local function basic_register_test()
+local function basic_register_test(noblock)
   insert("some words")
 
   feed('^dwP')
@@ -60,20 +54,41 @@ local function basic_register_test()
   expect([[
     , stuff and some more
     some textsome some text, stuff and some more]])
-  reset()
+
+  feed('ggw<c-v>jwyggP')
+  if noblock then
+    expect([[
+      stuf
+      me t
+      , stuff and some more
+      some textsome some text, stuff and some more]])
+  else
+    expect([[
+      stuf, stuff and some more
+      me tsome textsome some text, stuff and some more]])
+  end
 end
 
-describe('clipboard usage', function()
-  before_each(reset)
-
-  it("works", function()
+describe('the unnamed register', function()
+  before_each(clear)
+  it('works without provider', function()
     basic_register_test()
+  end)
+end)
 
-    -- "* and unnamed should function as independent registers
+describe('clipboard usage', function()
+  before_each(function()
+    clear()
+    execute('let &rtp = "test/functional/clipboard,".&rtp')
+    execute('call getreg("*")') -- force load of provider
+  end)
+
+   it('has independent "* and unnamed registers per default', function()
     insert("some words")
     feed('^"*dwdw"*P')
     expect('some ')
     eq({{'some '}, 'v'}, eval("g:test_clip['*']"))
+    eq('words', eval("getreg('\"', 1)"))
   end)
 
   it('supports separate "* and "+ when the provider supports it', function()
@@ -169,24 +184,37 @@ describe('clipboard usage', function()
     expect('some more')
   end)
 
-  it('supports clipboard=unnamed', function()
+  describe('with clipboard=unnamed', function()
     -- the basic behavior of unnamed register should be the same
     -- even when handled by clipboard provider
-    execute('set clipboard=unnamed')
-    basic_register_test()
+    before_each(function()
+      execute('set clipboard=unnamed')
+    end)
 
-    -- with cb=unnamed, "* and unnamed will be the same register
-    execute('set clipboard=unnamed')
-    insert("some words")
-    feed('^"*dwdw"*P')
-    expect('words')
-    eq({{'words'}, 'v'}, eval("g:test_clip['*']"))
+    it('works', function()
+      basic_register_test()
+    end)
 
-    execute("let g:test_clip['*'] = ['linewise stuff','']")
-    feed('p')
-    expect([[
-      words
-      linewise stuff]])
+    it('works with pure text clipboard', function()
+      execute("let g:cliplossy = 1")
+      -- expect failure for block mode
+      basic_register_test(true)
+    end)
+
+    it('links the "* and unnamed registers', function()
+      -- with cb=unnamed, "* and unnamed will be the same register
+      execute('set clipboard=unnamed')
+      insert("some words")
+      feed('^"*dwdw"*P')
+      expect('words')
+      eq({{'words'}, 'v'}, eval("g:test_clip['*']"))
+
+      execute("let g:test_clip['*'] = ['linewise stuff','']")
+      feed('p')
+      expect([[
+        words
+        linewise stuff]])
+      end)
   end)
 
   it('supports :put', function()
