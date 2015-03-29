@@ -47,15 +47,16 @@ before_install:
   # and avoids a lengthy upgrade process for them.
   - if [ $TRAVIS_OS_NAME = linux ]; then
       sudo apt-mark hold oracle-java7-installer oracle-java8-installer;
-      sudo apt-get update;
+      travis_retry sudo apt-get update;
     elif [ $TRAVIS_OS_NAME = osx ]; then
-      brew update;
+      travis_retry brew update;
     fi
+  - python --version
 install:
   - if [ $TRAVIS_OS_NAME = linux ]; then
-      sudo apt-get install xclip gdb;
+      travis_retry sudo apt-get install xclip gdb;
     elif [ $TRAVIS_OS_NAME = osx ]; then
-      brew install gettext;
+      travis_retry brew install gettext;
     fi
 before_script:
   # Adds user to a dummy group.
