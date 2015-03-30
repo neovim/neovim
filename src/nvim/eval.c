@@ -10810,6 +10810,8 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
     return;
   }
 
+  assert(args->lv_first);
+ 
   if (!os_can_exe(args->lv_first->li_tv.vval.v_string, NULL)) {
     // String is not executable
     EMSG2(e_jobexe, args->lv_first->li_tv.vval.v_string);
