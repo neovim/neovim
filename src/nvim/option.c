@@ -5354,6 +5354,9 @@ set_num_option (
   if (p_hi < 0) {
     errmsg = e_positive;
     p_hi = 0;
+  } else if (p_hi > 10000) {
+    errmsg = e_invarg;
+    p_hi = 10000;
   }
   if (p_re < 0 || p_re > 2) {
     errmsg = e_invarg;
