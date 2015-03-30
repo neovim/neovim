@@ -4012,6 +4012,15 @@ items({dict})						*items()*
 		entry and the value of this entry.  The |List| is in arbitrary
 		order.
 
+jobclose({job}[, {stream}])				{Nvim} *jobclose()*
+		Close {job}'s {stream}, which can be one "stdin", "stdout" or
+		"stderr". If {stream} is omitted, all streams are closed.
+
+jobresize({job}, {width}, {height})			{Nvim} *jobresize()*
+		Resize {job}'s pseudo terminal window to {width} and {height}.
+		This function will fail if used on jobs started without the
+		"pty" option.
+
 jobsend({job}, {data})					{Nvim} *jobsend()*
 		Send data to {job} by writing it to the stdin of the process.
 		Returns 1 if the write succeeded, 0 otherwise.
@@ -4024,14 +4033,28 @@ jobsend({job}, {data})					{Nvim} *jobsend()*
 			:call jobsend(j, ["abc", "123\n456", ""])
 < 		will send "abc<NL>123<NUL>456<NL>".
 
-jobstart({name}, {prog}[, {argv}])			{Nvim} *jobstart()*
-		Spawns {prog} as a job and associate it with the {name} string,
-		which will be used to match the "filename pattern" in
-		|JobActivity| events. It returns:
-		  - The job id on success, which is used by |jobsend()| and
+jobstart({argv}[, {opts}])			{Nvim} *jobstart()*
+		Spawns {argv}(list) as a job. If passed, {opts} must be a
+		dictionary with any of the following keys:
+		  - on_stdout: stdout event handler
+		  - on_stderr: stderr event handler
+		  - on_exit: exit event handler
+		  - pty: If set, the job will be connected to a new pseudo
+		    terminal, and the job streams are connected to the master
+		    file descriptor.
+		  - width: Width of the terminal screen(only if pty is set)
+		  - height: Height of the terminal screen(only if pty is set)
+		  - TERM: $TERM environment variable(only if pty is set)
+		Either funcrefs or function names can be passed as event
+		handlers. The {opts} object is also used as the "self"
+		argument for the callback, so the caller may pass arbitrary
+		data by setting other key.(see |Dictionary-function| for more
+		information).
+		Returns:
+		  - The job ID on success, which is used by |jobsend()| and
 		    |jobstop()|
 		  - 0 when the job table is full or on invalid arguments
-		  - -1 when {prog} is not executable
+		  - -1 when {argv}[0] is not executable
 		See |job-control| for more information.
 
 jobstop({job})						{Nvim} *jobstop()*
@@ -4041,6 +4064,24 @@ jobstop({job})						{Nvim} *jobstop()*
 		finally closed, a |JobActivity| event will trigger with
 		`v:job_data[0]` set to `exited`.  See |job-control| for more
 		information.
+
+jobwait({ids}[, {timeout}])				{Nvim} *jobwait()*
+		Wait for a set of jobs to finish. The {ids} argument is a list
+		of ids for jobs that will be waited for. If passed, {timeout}
+		is the maximum number of milliseconds to wait. While this
+		function is executing, callbacks for jobs not in the {ids}
+		list can be executed. Also, the screen wont be updated unless
+		|:redraw| is invoked by one of the callbacks.
+
+		Returns a list of integers with the same length as {ids}, with
+		each integer representing the wait result for the
+		corresponding job id. The possible values for the resulting
+		integers are:
+
+		* the job return code if the job exited
+		* -1 if the wait timed out for the job
+		* -2 if the job was interrupted
+		* -3 if the job id is invalid.
 
 join({list} [, {sep}])					*join()*
 		Join the items in {list} together into one String.
@@ -6277,6 +6318,17 @@ tempname()					*tempname()* *temp-file-name*
 		For MS-Windows forward slashes are used when the 'shellslash'
 		option is set or when 'shellcmdflag' starts with '-'.
 
+termopen({command}[, {opts}])			{Nvim} *termopen()*
+		Spawns {command} using the shell in a new pseudo-terminal
+		session connected to the current buffer.  This function fails
+		if the current buffer is modified (all buffer contents are
+		destroyed).  The {opts} dict is similar to the one passed to
+		|jobstart()|, but the `pty`, `width`, `height`, and `TERM` fields are
+		ignored: `height`/`width` are taken from the current window and
+		$TERM is set to "xterm-256color".  Returns the same values as
+		|jobstart()|.
+
+		See |nvim-terminal-emulator| for more information.
 
 tan({expr})						*tan()*
 		Return the tangent of {expr}, measured in radians, as a |Float|

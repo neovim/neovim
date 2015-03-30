@@ -347,7 +347,7 @@ static void job_err(RStream *rstream, void *data, bool eof)
   }
 }
 
-static void job_exit(Job *job, void *data)
+static void job_exit(Job *job, int status, void *data)
 {
   decref(data);
 }

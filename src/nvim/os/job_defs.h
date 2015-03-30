@@ -5,13 +5,14 @@
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/wstream_defs.h"
 
+#define MAX_RUNNING_JOBS 100
 typedef struct job Job;
 
 /// Function called when the job reads data
 ///
 /// @param id The job id
 /// @param data Some data associated with the job by the caller
-typedef void (*job_exit_cb)(Job *job, void *data);
+typedef void (*job_exit_cb)(Job *job, int status, void *data);
 
 // Job startup options
 // job_exit_cb Callback that will be invoked when the job exits

@@ -55,6 +55,7 @@ DOCS = \
 	nvim_intro.txt \
 	nvim_provider.txt \
 	nvim_python.txt \
+	nvim_terminal_emulator.txt \
 	options.txt \
 	os_dos.txt \
 	os_mac.txt \
@@ -176,6 +177,7 @@ HTMLS = \
 	nvim_intro.html \
 	nvim_provider.html \
 	nvim_python.html \
+	nvim_terminal_emulator.html \
 	options.html \
 	os_dos.html \
 	os_mac.html \

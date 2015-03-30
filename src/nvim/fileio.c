@@ -5187,7 +5187,6 @@ static struct event_name {
   {"InsertEnter",     EVENT_INSERTENTER},
   {"InsertLeave",     EVENT_INSERTLEAVE},
   {"InsertCharPre",   EVENT_INSERTCHARPRE},
-  {"JobActivity",     EVENT_JOBACTIVITY},
   {"MenuPopup",       EVENT_MENUPOPUP},
   {"QuickFixCmdPost", EVENT_QUICKFIXCMDPOST},
   {"QuickFixCmdPre",  EVENT_QUICKFIXCMDPRE},
@@ -6595,7 +6594,6 @@ apply_autocmds_group (
         || event == EVENT_QUICKFIXCMDPRE
         || event == EVENT_COLORSCHEME
         || event == EVENT_QUICKFIXCMDPOST
-        || event == EVENT_JOBACTIVITY
         || event == EVENT_TABCLOSED)
       fname = vim_strsave(fname);
     else

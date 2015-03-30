@@ -88,7 +88,7 @@ static inline void job_exit_callback(Job *job)
 
   if (job->opts.exit_cb) {
     // Invoke the exit callback
-    job->opts.exit_cb(job, job->opts.data);
+    job->opts.exit_cb(job, job->status, job->opts.data);
   }
 
   if (stop_requests && !--stop_requests) {

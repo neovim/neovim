@@ -63,7 +63,6 @@ enum {
     VV_OLDFILES,
     VV_WINDOWID,
     VV_PROGPATH,
-    VV_JOB_DATA,
     VV_COMMAND_OUTPUT,
     VV_LEN, /* number of v: vars */
 };

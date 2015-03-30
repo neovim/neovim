@@ -1,0 +1,114 @@
+*nvim_terminal_emulator.txt*    For Nvim.				{Nvim}
+
+
+		 NVIM REFERENCE MANUAL    by Thiago de Arruda
+
+
+Nvim integrated terminal emulator		     *nvim-terminal-emulator*
+
+1. Introduction			|nvim-terminal-emulator-introduction|
+2. Spawning			|nvim-terminal-emulator-spawning|
+3. Input			|nvim-terminal-emulator-input|
+4. Configuration		|nvim-terminal-emulator-configuration|
+
+==============================================================================
+1. Introduction			      *nvim-terminal-emulator-introduction*
+
+One feature that distinguishes Nvim from Vim is that it implements a mostly
+complete VT220/xterm-like terminal emulator. The terminal is presented to the
+user as a special buffer type, one that is asynchronously updated to mirror
+the virtual terminal display as data is received from the program connected
+to it. For most purposes, terminal buffers behave a lot like normal buffers
+with 'nomodifiable' set.
+
+
+The implementation is powered by libvterm[1], a powerful abstract terminal
+emulation library.
+
+[1]: http://www.leonerd.org.uk/code/libvterm/
+
+==============================================================================
+2. Spawning			      *nvim-terminal-emulator-spawning*
+
+There are 3 ways to create a terminal buffer:
+
+- By invoking the |:terminal| ex command.
+- By calling the |termopen()| function.
+- By editing a file with a name matching `term://(.{-}//(\d+:)?)?\zs.*`.
+  For example:
+>
+    :e term://bash
+    :vsp term://top
+<
+When the terminal spawns the program, the buffer will start to mirror the
+terminal display and change its name to `term://$CWD//$PID:$COMMAND`.
+Note that |:mksession| will "save" the terminal buffers by restarting all
+programs when the session is restored.
+
+==============================================================================
+3. Input			      *nvim-terminal-emulator-input*
+
+Sending input is possible by entering terminal mode, which is achieved by
+pressing any key that would enter insert mode in a normal buffer (|i| or |a|
+for example). The |:terminal| ex command will automatically enter terminal
+mode once it's spawned. While in terminal mode, Nvim will forward all keys to
+the underlying program. The only exception is the <C-\><C-n> key combo,
+which will exit back to normal mode.
+
+Terminal mode has its own namespace for mappings, which is accessed with the
+"t" prefix. It's possible to use terminal mappings to customize interaction
+with the terminal. For example, here's how to map <Esc> to exit terminal mode:
+>
+    :tnoremap <Esc> <C-\><C-n>
+<
+Navigating to other windows is only possible by exiting to normal mode, which
+can be cumbersome with <C-\><C-n> keys. Here are some mappings to improve
+the navigation experience:
+>
+    :tnoremap <A-h> <C-\><C-n><C-w>h
+    :tnoremap <A-j> <C-\><C-n><C-w>j
+    :tnoremap <A-k> <C-\><C-n><C-w>k
+    :tnoremap <A-l> <C-\><C-n><C-w>l
+    :nnoremap <A-h> <C-w>h
+    :nnoremap <A-j> <C-w>j
+    :nnoremap <A-k> <C-w>k
+    :nnoremap <A-l> <C-w>l
+<
+This allows using `Alt+{h,j,k,l}` to navigate between windows no matter if
+they are displaying a normal buffer or a terminal buffer in terminal mode.
+
+Mouse input is also fully supported, and has the following behavior:
+
+- If the program has enabled mouse events, the corresponding events will be
+  forwarded to the program.
+- If mouse events are disabled (the default), terminal focus will be lost and
+  the event will be processed as in a normal buffer.
+- If another window is clicked, terminal focus will be lost and nvim will jump
+  to the clicked window
+- If the mouse wheel is used while the mouse is positioned in another window,
+  the terminal wont lose focus and the hovered window will be scrolled.
+
+==============================================================================
+4. Configuration		     *nvim-terminal-emulator-configuration*
+
+Terminal buffers can be customized through the following global/buffer-local
+variables (set via the |TermOpen| autocmd):
+
+- `{g,b}:terminal_scrollback_buffer_size`: Scrollback buffer size, between 1
+  and 100000 inclusive. The default is 1000.
+- `{g,b}:terminal_color_$NUM`: The terminal color palette, where `$NUM` is the
+  color index, between 0 and 255 inclusive. This only affects UIs with RGB
+  capabilities; for normal terminals the color index is simply forwarded.
+- `{g,b}:terminal_focused_cursor_highlight`: Highlight group applied to the
+  cursor in a focused terminal. The default equivalent to having a group with
+  `cterm=reverse` `gui=reverse``.
+- `{g,b}:terminal_unfocused_cursor_highlight`: Highlight group applied to the
+  cursor in an unfocused terminal. The default equivalent to having a group with
+  `ctermbg=11` `guibg=#fce94f``.
+
+The configuration variables are only processed when the terminal starts, which
+is why it needs to be done with the |TermOpen| autocmd or setting global
+variables before the terminal is started.
+
+==============================================================================
+ vim:tw=78:ts=8:noet:ft=help:norl:
