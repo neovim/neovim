@@ -1781,24 +1781,29 @@ getexmodeline (
         msg_col = startcol;
         msg_clr_eos();
         line_ga.ga_len = 0;
-        continue;
+        goto redraw;
       }
 
+      int num_spaces;
       if (c1 == Ctrl_T) {
         int sw = get_sw_value(curbuf);
 
         p = (char_u *)line_ga.ga_data;
         p[line_ga.ga_len] = NUL;
         indent = get_indent_str(p, 8, FALSE);
-        indent += sw - indent % sw;
+        num_spaces = sw - indent % sw;
+        indent += num_spaces;
 add_indent:
-        while (get_indent_str(p, 8, FALSE) < indent) {
+        if (num_spaces > 0) {
+          ga_grow(&line_ga, num_spaces + 1);
+          p = (char_u *)line_ga.ga_data;
           char_u *s = skipwhite(p);
 
-          ga_grow(&line_ga, 1);
-          memmove(s + 1, s, line_ga.ga_len - (s - p) + 1);
-          *s = ' ';
-          ++line_ga.ga_len;
+          // Insert spaces after leading whitespaces.
+          memmove(s + num_spaces, s, line_ga.ga_len - (s - p) + 1);
+          memset(s, ' ', num_spaces);
+
+          line_ga.ga_len += num_spaces;
         }
 redraw:
         /* redraw the line */
@@ -1835,15 +1840,25 @@ redraw:
         } else {
           p[line_ga.ga_len] = NUL;
           indent = get_indent_str(p, 8, FALSE);
+          if (indent == 0) {
+            continue;
+          }
           --indent;
           indent -= indent % get_sw_value(curbuf);
         }
-        while (get_indent_str(p, 8, FALSE) > indent) {
-          char_u *s = skipwhite(p);
 
-          memmove(s - 1, s, line_ga.ga_len - (s - p) + 1);
-          --line_ga.ga_len;
+        // reduce the line's indentation
+        char_u *from = skipwhite(p);
+        char_u *to = from;
+        int old_indent;
+        while ((old_indent = get_indent_str(p, 8, FALSE)) > indent) {
+          *--to = NUL;
         }
+        memmove(to, from, line_ga.ga_len - (from - p) + 1);
+        line_ga.ga_len -= from - to;
+
+        // Removed to much indentation, fix it before redrawing.
+        num_spaces = indent - old_indent;
         goto add_indent;
       }
 
