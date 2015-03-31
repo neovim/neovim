@@ -1099,18 +1099,19 @@ static bool is_focused(Terminal *term)
   do {                                                                   \
     Error err;                                                           \
     o = dict_get_value(t->buf->b_vars, cstr_as_string(k), &err);         \
-    if (obj.type == kObjectTypeNil) {                                    \
+    if (o.type == kObjectTypeNil) {                                      \
       o = dict_get_value(&globvardict, cstr_as_string(k), &err);         \
     }                                                                    \
   } while (0)
 
 static char *get_config_string(Terminal *term, char *key)
 {
-  Object obj = OBJECT_INIT;
+  Object obj;
   GET_CONFIG_VALUE(term, key, obj);
   if (obj.type == kObjectTypeString) {
     return obj.data.string.data;
   }
+  api_free_object(obj);
   return NULL;
 }
 
