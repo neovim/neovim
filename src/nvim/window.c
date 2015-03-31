@@ -1766,7 +1766,7 @@ static int close_last_window_tabpage(win_T *win, int free_buf, tabpage_T *prev_c
   }
   buf_T   *old_curbuf = curbuf;
 
-  Terminal *term = win->w_buffer->terminal;
+  Terminal *term = win->w_buffer ? win->w_buffer->terminal : NULL;
   if (term) {
     // Don't free terminal buffers
     free_buf = false;
