@@ -1290,8 +1290,8 @@ scripterror:
       }
 
 #ifdef USE_FNAME_CASE
-      /* Make the case of the file name match the actual file. */
-      fname_case(p, 0);
+      // Make the case of the file name match the actual file.
+      path_fix_case(p);
 #endif
 
       alist_add(&global_alist, p,

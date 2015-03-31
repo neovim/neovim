@@ -2563,7 +2563,7 @@ do_ecmd (
       sfname = ffname;
 #ifdef USE_FNAME_CASE
     if (sfname != NULL)
-      fname_case(sfname, 0);             /* set correct case for sfname */
+      path_fix_case(sfname);             // set correct case for sfname
 #endif
 
     if ((flags & ECMD_ADDBUF) && (ffname == NULL || *ffname == NUL))

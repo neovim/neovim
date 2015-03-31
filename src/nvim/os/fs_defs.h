@@ -16,4 +16,9 @@ typedef struct {
 
 #define FILE_ID_EMPTY (FileID) {.inode = 0, .device_id = 0}
 
+typedef struct {
+  uv_fs_t request;  ///< @private The request to uv for the directory.
+  uv_dirent_t ent;  ///< @private The entry information.
+} Directory;
+
 #endif  // NVIM_OS_FS_DEFS_H

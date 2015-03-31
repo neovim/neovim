@@ -69,62 +69,6 @@ static int selinux_enabled = -1;
 # include "os_unix.c.generated.h"
 #endif
 
-#if defined(USE_FNAME_CASE)
-/*
- * Set the case of the file name, if it already exists.  This will cause the
- * file name to remain exactly the same.
- * Only required for file systems where case is ignored and preserved.
- */
-void fname_case(
-char_u      *name,
-int len               /* buffer size, only used when name gets longer */
-)
-{
-  char_u      *slash, *tail;
-  DIR         *dirp;
-  struct dirent *dp;
-
-  FileInfo file_info;
-  if (os_fileinfo_link((char *)name, &file_info)) {
-    /* Open the directory where the file is located. */
-    slash = vim_strrchr(name, '/');
-    if (slash == NULL) {
-      dirp = opendir(".");
-      tail = name;
-    } else {
-      *slash = NUL;
-      dirp = opendir((char *)name);
-      *slash = '/';
-      tail = slash + 1;
-    }
-
-    if (dirp != NULL) {
-      while ((dp = readdir(dirp)) != NULL) {
-        /* Only accept names that differ in case and are the same byte
-         * length. TODO: accept different length name. */
-        if (STRICMP(tail, dp->d_name) == 0
-            && STRLEN(tail) == STRLEN(dp->d_name)) {
-          char_u newname[MAXPATHL + 1];
-
-          /* Verify the inode is equal. */
-          STRLCPY(newname, name, MAXPATHL + 1);
-          STRLCPY(newname + (tail - name), dp->d_name,
-              MAXPATHL - (tail - name) + 1);
-          FileInfo file_info_new;
-          if (os_fileinfo_link((char *)newname, &file_info_new)
-              && os_fileinfo_id_equal(&file_info, &file_info_new)) {
-            STRCPY(tail, dp->d_name);
-            break;
-          }
-        }
-      }
-
-      closedir(dirp);
-    }
-  }
-}
-#endif
-
 #if defined(HAVE_ACL)
 # ifdef HAVE_SYS_ACL_H
 #  include <sys/acl.h>
@@ -719,47 +663,12 @@ static void save_patterns(int num_pat, char_u **pat, int *num_file,
   *num_file = num_pat;
 }
 
-/*
- * Return TRUE if the string "p" contains a wildcard that mch_expandpath() can
- * expand.
- */
-int mch_has_exp_wildcard(char_u *p)
-{
-  for (; *p; mb_ptr_adv(p)) {
-    if (*p == '\\' && p[1] != NUL)
-      ++p;
-    else if (vim_strchr((char_u *)
-                 "*?[{'"
-                 , *p) != NULL)
-      return TRUE;
-  }
-  return FALSE;
-}
-
-/*
- * Return TRUE if the string "p" contains a wildcard.
- * Don't recognize '~' at the end as a wildcard.
- */
-int mch_has_wildcard(char_u *p)
-{
-  for (; *p; mb_ptr_adv(p)) {
-    if (*p == '\\' && p[1] != NUL)
-      ++p;
-    else if (vim_strchr((char_u *)
-                 "*?[{`'$"
-                 , *p) != NULL
-             || (*p == '~' && p[1] != NUL))
-      return TRUE;
-  }
-  return FALSE;
-}
-
 static int have_wildcard(int num, char_u **file)
 {
   int i;
 
   for (i = 0; i < num; i++)
-    if (mch_has_wildcard(file[i]))
+    if (path_has_wildcard(file[i]))
       return 1;
   return 0;
 }
