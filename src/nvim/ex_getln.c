@@ -1702,6 +1702,7 @@ getexmodeline (
   int vcol = 0;
   char_u      *p;
   int prev_char;
+  int len;
 
   /* always start in column 0; write a newline if necessary */
   compute_cmdrow();
@@ -1761,10 +1762,16 @@ getexmodeline (
       if (c1 == '\r')
         c1 = '\n';
 
-      if (c1 == BS || c1 == K_BS
-          || c1 == DEL || c1 == K_DEL || c1 == K_KDEL) {
+      if (c1 == BS || c1 == K_BS || c1 == DEL || c1 == K_DEL || c1 == K_KDEL) {
         if (!GA_EMPTY(&line_ga)) {
-          --line_ga.ga_len;
+          if (has_mbyte) {
+            p = (char_u *)line_ga.ga_data;
+            p[line_ga.ga_len] = NUL;
+            len = (*mb_head_off)(p, p + line_ga.ga_len - 1) + 1;
+            line_ga.ga_len -= len;
+          } else {
+            line_ga.ga_len--;
+          }
           goto redraw;
         }
         continue;
@@ -1797,15 +1804,19 @@ redraw:
         /* redraw the line */
         msg_col = startcol;
         vcol = 0;
-        for (p = (char_u *)line_ga.ga_data;
-             p < (char_u *)line_ga.ga_data + line_ga.ga_len; ++p) {
+        p = (char_u *)line_ga.ga_data;
+        p[line_ga.ga_len] = NUL;
+        while (p < (char_u *)line_ga.ga_data + line_ga.ga_len) {
           if (*p == TAB) {
             do {
               msg_putchar(' ');
             } while (++vcol % 8);
+            p++;
           } else {
-            msg_outtrans_len(p, 1);
-            vcol += char2cells(*p);
+            len = MB_PTR2LEN(p);
+            msg_outtrans_len(p, len);
+            vcol += ptr2cells(p);
+            p += len;
           }
         }
         msg_clr_eos();
@@ -1847,9 +1858,15 @@ redraw:
       }
     }
 
-    if (IS_SPECIAL(c1))
+    if (IS_SPECIAL(c1)) {
       c1 = '?';
-    ((char_u *)line_ga.ga_data)[line_ga.ga_len] = c1;
+    }
+    if (has_mbyte) {
+      len = (*mb_char2bytes)(c1, (char_u *)line_ga.ga_data + line_ga.ga_len);
+    } else {
+      len = 1;
+      ((char_u *)line_ga.ga_data)[line_ga.ga_len] = c1;
+    }
     if (c1 == '\n')
       msg_putchar('\n');
     else if (c1 == TAB) {
@@ -1858,11 +1875,10 @@ redraw:
         msg_putchar(' ');
       } while (++vcol % 8);
     } else {
-      msg_outtrans_len(
-          ((char_u *)line_ga.ga_data) + line_ga.ga_len, 1);
+      msg_outtrans_len(((char_u *)line_ga.ga_data) + line_ga.ga_len, len);
       vcol += char2cells(c1);
     }
-    ++line_ga.ga_len;
+    line_ga.ga_len += len;
     escaped = FALSE;
 
     ui_cursor_goto(msg_row, msg_col);
