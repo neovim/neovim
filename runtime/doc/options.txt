@@ -129,7 +129,7 @@ A few special texts:
 		|-q|.
 	Last set from environment variable ~
 		Option was set from an environment variable, $NVIMINIT,
-		$GVIMINIT or $EXINIT.
+		or $EXINIT.
 	Last set from error handler ~
 		Option was cleared when evaluating it resulted in an error.
 
