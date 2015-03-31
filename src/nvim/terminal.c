@@ -1117,11 +1117,12 @@ static char *get_config_string(Terminal *term, char *key)
 
 static int get_config_int(Terminal *term, char *key)
 {
-  Object obj = OBJECT_INIT;
+  Object obj;
   GET_CONFIG_VALUE(term, key, obj);
   if (obj.type == kObjectTypeInteger) {
     return (int)obj.data.integer;
   }
+  api_free_object(obj);
   return 0;
 }
 
