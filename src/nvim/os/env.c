@@ -243,19 +243,16 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
         // Verify that we have found the end of a UNIX ${VAR} style variable
         if (src[1] == '{' && *tail != '}') {
           var = NULL;
-        } else if (src[1] == '{') {
-          ++tail;
-        }
-#elif defined(MSWIN)
-        // Verify that we have found the end of a Windows %VAR% style variable
-        if (src[0] == '%' && *tail != '%') {
-          var = NULL;
-        } else if (src[0] == '%') {
-          ++tail;
-        }
+        } else {
+          if (src[1] == '{') {
+            ++tail;
+          }
 #endif
         *var = NUL;
         var = vim_getenv(dst, &mustfree);
+#if defined(UNIX)
+        }
+#endif
       } else if (  src[1] == NUL /* home directory */
                  || vim_ispathsep(src[1])
                  || vim_strchr((char_u *)" ,\t\n", src[1]) != NULL) {
