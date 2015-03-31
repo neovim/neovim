@@ -1047,7 +1047,7 @@ static void redraw(bool restore_cursor)
     setcursor();
   } else if (restore_cursor) {
     ui_cursor_goto(save_row, save_col);
-  } else {
+  } else if (term) {
     // exiting terminal focus, put the window cursor in a valid position
     int height, width;
     vterm_get_size(term->vt, &height, &width);
