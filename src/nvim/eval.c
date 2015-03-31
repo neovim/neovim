@@ -14863,6 +14863,8 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
     if (retlist) {
       // return an empty list when there's no output
       rettv_list_alloc(rettv);
+    } else {
+      rettv->vval.v_string = (char_u *) xstrdup("");
     }
     return;
   }
