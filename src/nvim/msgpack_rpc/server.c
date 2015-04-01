@@ -9,11 +9,11 @@
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/os.h"
 #include "nvim/ascii.h"
+#include "nvim/garray.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 #include "nvim/log.h"
 #include "nvim/tempfile.h"
-#include "nvim/map.h"
 #include "nvim/path.h"
 
 #define MAX_CONNECTIONS 32
@@ -27,6 +27,9 @@ typedef enum {
 } ServerType;
 
 typedef struct {
+  // The address of a pipe, or string value of a tcp address.
+  char addr[ADDRESS_MAX_SIZE];
+
   // Type of the union below
   ServerType type;
 
@@ -38,12 +41,11 @@ typedef struct {
     } tcp;
     struct {
       uv_pipe_t handle;
-      char addr[ADDRESS_MAX_SIZE];
     } pipe;
   } socket;
 } Server;
 
-static PMap(cstr_t) *servers = NULL;
+static garray_T servers = GA_EMPTY_INIT_VALUE;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "msgpack_rpc/server.c.generated.h"
@@ -52,7 +54,7 @@ static PMap(cstr_t) *servers = NULL;
 /// Initializes the module
 bool server_init(void)
 {
-  servers = pmap_new(cstr_t)();
+  ga_init(&servers, sizeof(Server *), 1);
 
   if (!os_getenv(LISTEN_ADDRESS_ENV_VAR)) {
     char *listen_address = (char *)vim_tempname();
@@ -63,22 +65,24 @@ bool server_init(void)
   return server_start((char *)os_getenv(LISTEN_ADDRESS_ENV_VAR)) == 0;
 }
 
+/// Retrieve the file handle from a server.
+static uv_handle_t *server_handle(Server *server)
+{
+  return server->type == kServerTypeTcp
+    ? (uv_handle_t *)&server->socket.tcp.handle
+    : (uv_handle_t *) &server->socket.pipe.handle;
+}
+
+/// Teardown a single server
+static void server_close_cb(Server **server)
+{
+  uv_close(server_handle(*server), free_server);
+}
+
 /// Teardown the server module
 void server_teardown(void)
 {
-  if (!servers) {
-    return;
-  }
-
-  Server *server;
-
-  map_foreach_value(servers, server, {
-    if (server->type == kServerTypeTcp) {
-      uv_close((uv_handle_t *)&server->socket.tcp.handle, free_server);
-    } else {
-      uv_close((uv_handle_t *)&server->socket.pipe.handle, free_server);
-    }
-  });
+  GA_DEEP_CLEAR(&servers, Server *, server_close_cb);
 }
 
 /// Starts listening on arbitrary tcp/unix addresses specified by
@@ -106,9 +110,11 @@ int server_start(const char *endpoint)
   }
 
   // Check if the server already exists
-  if (pmap_has(cstr_t)(servers, addr)) {
-    ELOG("Already listening on %s", addr);
-    return 1;
+  for (int i = 0; i < servers.ga_len; i++) {
+    if (strcmp(addr, ((Server **)servers.ga_data)[i]->addr) == 0) {
+      ELOG("Already listening on %s", addr);
+      return 1;
+    }
   }
 
   ServerType server_type = kServerTypeTcp;
@@ -154,6 +160,8 @@ int server_start(const char *endpoint)
   int result;
   uv_stream_t *stream = NULL;
 
+  xstrlcpy(server->addr, addr, sizeof(server->addr));
+
   if (server_type == kServerTypeTcp) {
     // Listen on tcp address/port
     uv_tcp_init(uv_default_loop(), &server->socket.tcp.handle);
@@ -163,10 +171,8 @@ int server_start(const char *endpoint)
     stream = (uv_stream_t *)&server->socket.tcp.handle;
   } else {
     // Listen on named pipe or unix socket
-    xstrlcpy(server->socket.pipe.addr, addr, sizeof(server->socket.pipe.addr));
     uv_pipe_init(uv_default_loop(), &server->socket.pipe.handle, 0);
-    result = uv_pipe_bind(&server->socket.pipe.handle,
-                          server->socket.pipe.addr);
+    result = uv_pipe_bind(&server->socket.pipe.handle, server->addr);
     stream = (uv_stream_t *)&server->socket.pipe.handle;
   }
 
@@ -194,8 +200,10 @@ int server_start(const char *endpoint)
   }
 
   server->type = server_type;
-  // Add the server to the hash table
-  pmap_put(cstr_t)(servers, addr, server);
+
+  // Add the server to the list.
+  ga_grow(&servers, 1);
+  ((Server **)servers.ga_data)[servers.ga_len++] = server;
 
   return 0;
 }
@@ -211,18 +219,27 @@ void server_stop(char *endpoint)
   // Trim to `ADDRESS_MAX_SIZE`
   xstrlcpy(addr, endpoint, sizeof(addr));
 
-  if ((server = pmap_get(cstr_t)(servers, addr)) == NULL) {
+  int i = 0;  // The index of the server whose address equals addr.
+  for (; i < servers.ga_len; i++) {
+    server = ((Server **)servers.ga_data)[i];
+    if (strcmp(addr, server->addr) == 0) {
+      break;
+    }
+  }
+
+  if (i == servers.ga_len) {
     ELOG("Not listening on %s", addr);
     return;
   }
 
-  if (server->type == kServerTypeTcp) {
-    uv_close((uv_handle_t *)&server->socket.tcp.handle, free_server);
-  } else {
-    uv_close((uv_handle_t *)&server->socket.pipe.handle, free_server);
-  }
+  uv_close(server_handle(server), free_server);
 
-  pmap_del(cstr_t)(servers, addr);
+  // Remove this server from the list by swapping it with the last item.
+  if (i != servers.ga_len - 1) {
+    ((Server **)servers.ga_data)[i] =
+      ((Server **)servers.ga_data)[servers.ga_len - 1];
+  }
+  servers.ga_len--;
 }
 
 static void connection_cb(uv_stream_t *server, int status)
