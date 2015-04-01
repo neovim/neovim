@@ -929,10 +929,8 @@ static int cs_find(exarg_T *eap)
  *
  * common code for cscope find, shared by cs_find() and do_cstag()
  */
-static int cs_find_common(
-  char *opt, char *pat, int forceit,
-  int verbose, int use_ll, char_u *cmdline
-)
+static int cs_find_common(char *opt, char *pat, int forceit, int verbose,
+                          int use_ll, char_u *cmdline)
 {
   char *cmd;
   int *nummatches;
@@ -1277,26 +1275,24 @@ static int cs_kill(exarg_T *eap)
     return CSCOPE_FAILURE;
   }
 
-  /* Check if string is a number, only single digit
-   * positive and negative integers are allowed
-   */
+  // Check if string is a number, only single digit
+  // positive and negative integers are allowed
   if ((strlen(stok) < 2 && ascii_isdigit((int)(stok[0])))
       || (strlen(stok) < 3 && stok[0] == '-'
           && ascii_isdigit((int)(stok[1])))) {
     num = atoi(stok);
-    if( num == -1 )
+    if (num == -1)
       killall = true;
-    else if(num >= 0) {
+    else if (num >= 0) {
       i = (size_t)num;
-    } else { /* All negative values besides -1 are invalid. */
+    } else { // All negative values besides -1 are invalid.
       if (p_csverbose)
         (void)EMSG2(_("E261: cscope connection %s not found"), stok);
       return CSCOPE_FAILURE;
     }
   } else {
-    /* Else it must be part of a name.  We will try to find a match
-     * within all the names in the csinfo data structure
-     */
+    // Else it must be part of a name.  We will try to find a match
+    // within all the names in the csinfo data structure
     for (i = 0; i < csinfo_size; i++) {
       if (csinfo[i].fname != NULL && strstr(csinfo[i].fname, stok))
         break;
@@ -1361,10 +1357,8 @@ cs_kill_execute (
  * would still have to be modified to escape all the special regular expression
  * characters to comply with ctags formatting.
  */
-static char *cs_make_vim_style_matches(
-  char *fname, char *slno,
-  char *search, char *tagstr
-)
+static char *cs_make_vim_style_matches(char *fname, char *slno, char *search,
+                                       char *tagstr)
 {
   /* vim style is ctags:
    *
@@ -1414,10 +1408,8 @@ static char *cs_make_vim_style_matches(
  *
  * Print: prints the tags
  */
-static char *cs_manage_matches(
-  char **matches, char **contexts,
-  size_t totmatches, mcmd_e cmd
-)
+static char *cs_manage_matches(char **matches, char **contexts,
+                               size_t totmatches, mcmd_e cmd)
 {
   static char **mp = NULL;
   static char **cp = NULL;
@@ -1476,10 +1468,8 @@ static char *cs_manage_matches(
  *
  * parse cscope output
  */
-static char *cs_parse_results(
-  size_t cnumber, char *buf, int bufsize,
-  char **context, char **linenumber, char **search
-)
+static char *cs_parse_results(size_t cnumber, char *buf, int bufsize,
+                              char **context, char **linenumber, char **search)
 {
   int ch;
   char *p;
@@ -1579,10 +1569,9 @@ static void cs_file_results(FILE *f, int *nummatches_a)
  * into ctags format
  * When there are no matches sets "*matches_p" to NULL.
  */
-static void cs_fill_results(
-  char *tagstr, size_t totmatches, int *nummatches_a,
-  char ***matches_p, char ***cntxts_p, size_t *matched
-)
+static void cs_fill_results(char *tagstr, size_t totmatches, int *nummatches_a,
+                            char ***matches_p, char ***cntxts_p,
+                            size_t *matched)
 {
   char *buf;
   char *search, *slno;
