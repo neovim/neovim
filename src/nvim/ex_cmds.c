@@ -280,8 +280,8 @@ static int linelen(int *has_tab)
 
 /* Buffer for two lines used during sorting.  They are allocated to
  * contain the longest line being sorted. */
-static char_u   *sortbuf1;
-static char_u   *sortbuf2;
+static char *sortbuf1;
+static char *sortbuf2;
 
 static int sort_ic;                     /* ignore case */
 static int sort_nr;                     /* sort on number */
@@ -321,12 +321,10 @@ static int sort_compare(const void *s1, const void *s2)
     /* We need to copy one line into "sortbuf1", because there is no
      * guarantee that the first pointer becomes invalid when obtaining the
      * second one. */
-    STRNCPY(sortbuf1, ml_get(l1.lnum) + l1.start_col_nr,
+    xstrlcpy(sortbuf1, (char *)ml_get(l1.lnum) + l1.start_col_nr,
         l1.end_col_nr - l1.start_col_nr + 1);
-    sortbuf1[l1.end_col_nr - l1.start_col_nr] = 0;
-    STRNCPY(sortbuf2, ml_get(l2.lnum) + l2.start_col_nr,
+    xstrlcpy(sortbuf2, (char *)ml_get(l2.lnum) + l2.start_col_nr,
         l2.end_col_nr - l2.start_col_nr + 1);
-    sortbuf2[l2.end_col_nr - l2.start_col_nr] = 0;
 
     result = sort_ic ? STRICMP(sortbuf1, sortbuf2)
              : STRCMP(sortbuf1, sortbuf2);

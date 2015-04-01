@@ -232,8 +232,7 @@ void vim_change_directory(String dir, Error *err)
   }
 
   char string[MAXPATHL];
-  strncpy(string, dir.data, dir.size);
-  string[dir.size] = NUL;
+  xstrlcpy(string, dir.data, dir.size+1);
 
   try_start();
 

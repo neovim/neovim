@@ -88,8 +88,7 @@ void os_get_hostname(char *hostname, size_t len)
   if (uname(&vutsname) < 0) {
     *hostname = '\0';
   } else {
-    strncpy(hostname, vutsname.nodename, len - 1);
-    hostname[len - 1] = '\0';
+    xstrlcpy(hostname, vutsname.nodename, len);
   }
 #else
   // TODO(unknown): Implement this for windows.

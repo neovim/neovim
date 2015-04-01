@@ -2066,8 +2066,7 @@ static int path_get_absolute_path(char_u *fname, char_u *buf, int len, int force
   // expand it if forced or not an absolute path
   if (force || !path_is_absolute_path(fname)) {
     if ((p = vim_strrchr(fname, '/')) != NULL) {
-      STRNCPY(relative_directory, fname, p-fname);
-      relative_directory[p-fname] = NUL;
+      xstrlcpy(relative_directory, (char *)fname, p-fname+1);
       end_of_path = (char *) (p + 1);
     } else {
       relative_directory[0] = NUL;
