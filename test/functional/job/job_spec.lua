@@ -200,19 +200,22 @@ describe('jobs', function()
     it('will run callbacks while waiting', function()
       source([[
       let g:dict = {'id': 10}
-      let g:l = []
-      function g:dict.on_stdout(id, data)
-        call add(g:l, a:data[0])
+      let g:exits = 0
+      function g:dict.on_exit(id, code)
+        if a:code != 5
+          throw 'Error!'
+        endif
+        let g:exits += 1
       endfunction
       call jobwait([
-      \  jobstart([&sh, '-c', 'sleep 0.010; echo 4'], g:dict),
-      \  jobstart([&sh, '-c', 'sleep 0.030; echo 5'], g:dict),
-      \  jobstart([&sh, '-c', 'sleep 0.050; echo 6'], g:dict),
-      \  jobstart([&sh, '-c', 'sleep 0.070; echo 7'], g:dict)
+      \  jobstart([&sh, '-c', 'sleep 0.010; exit 5'], g:dict),
+      \  jobstart([&sh, '-c', 'sleep 0.030; exit 5'], g:dict),
+      \  jobstart([&sh, '-c', 'sleep 0.050; exit 5'], g:dict),
+      \  jobstart([&sh, '-c', 'sleep 0.070; exit 5'], g:dict)
       \  ])
-      call rpcnotify(g:channel, 'wait', g:l)
+      call rpcnotify(g:channel, 'wait', g:exits)
       ]])
-      eq({'notification', 'wait', {{'4', '5', '6', '7'}}}, next_msg())
+      eq({'notification', 'wait', {4}}, next_msg())
     end)
 
     it('will return status codes in the order of passed ids', function()
@@ -250,8 +253,8 @@ describe('jobs', function()
       it('will return -1 if the wait timed out', function()
         source([[
         call rpcnotify(g:channel, 'wait', jobwait([
-        \  jobstart([&sh, '-c', 'sleep 0.05; exit 4']),
-        \  jobstart([&sh, '-c', 'sleep 0.3; exit 5']),
+        \  jobstart([&sh, '-c', 'exit 4']),
+        \  jobstart([&sh, '-c', 'sleep 10000; exit 5']),
         \  ], 100))
         ]])
         eq({'notification', 'wait', {{4, -1}}}, next_msg())

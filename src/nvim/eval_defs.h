@@ -111,6 +111,8 @@ struct dictvar_S {
   dict_T      *dv_copydict;     /* copied dict used by deepcopy() */
   dict_T      *dv_used_next;    /* next dict in used dicts list */
   dict_T      *dv_used_prev;    /* previous dict in used dicts list */
+  int internal_refcount;        // number of internal references to
+                                // prevent garbage collection
 };
 
 #endif // NVIM_EVAL_DEFS_H
