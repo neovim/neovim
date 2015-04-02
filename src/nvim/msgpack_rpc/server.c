@@ -56,13 +56,18 @@ bool server_init(void)
 {
   ga_init(&servers, sizeof(Server *), 1);
 
-  if (!os_getenv(LISTEN_ADDRESS_ENV_VAR)) {
-    char *listen_address = (char *)vim_tempname();
-    os_setenv(LISTEN_ADDRESS_ENV_VAR, listen_address, 1);
-    xfree(listen_address);
+  bool must_free = false;
+  const char *listen_address = os_getenv(LISTEN_ADDRESS_ENV_VAR);
+  if (listen_address == NULL || *listen_address == NUL) {
+    must_free = true;
+    listen_address = (char *)vim_tempname();
   }
 
-  return server_start((char *)os_getenv(LISTEN_ADDRESS_ENV_VAR)) == 0;
+  bool ok = (server_start(listen_address) == 0);
+  if (must_free) {
+    xfree((char *) listen_address);
+  }
+  return ok;
 }
 
 /// Retrieve the file handle from a server.
@@ -199,6 +204,12 @@ int server_start(const char *endpoint)
     return result;
   }
 
+  // Update $NVIM_LISTEN_ADDRESS, if not set.
+  const char *listen_address = os_getenv(LISTEN_ADDRESS_ENV_VAR);
+  if (listen_address == NULL || *listen_address == NUL) {
+    os_setenv(LISTEN_ADDRESS_ENV_VAR, addr, 1);
+  }
+
   server->type = server_type;
 
   // Add the server to the list.
@@ -232,6 +243,12 @@ void server_stop(char *endpoint)
     return;
   }
 
+  // If we are invalidating the listen address, unset it.
+  const char *listen_address = os_getenv(LISTEN_ADDRESS_ENV_VAR);
+  if (listen_address && strcmp(addr, listen_address) == 0) {
+    os_unsetenv(LISTEN_ADDRESS_ENV_VAR);
+  }
+
   uv_close(server_handle(server), free_server);
 
   // Remove this server from the list by swapping it with the last item.
@@ -240,6 +257,22 @@ void server_stop(char *endpoint)
       ((Server **)servers.ga_data)[servers.ga_len - 1];
   }
   servers.ga_len--;
+}
+
+/// Returns an allocated array of server addresses.
+/// @param[out] size The size of the returned array.
+char **server_address_list(size_t *size)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if ((*size = (size_t) servers.ga_len) == 0) {
+    return NULL;
+  }
+
+  char **addrs = xcalloc((size_t) servers.ga_len, sizeof(const char **));
+  for (int i = 0; i < servers.ga_len; i++) {
+    addrs[i] = xstrdup(((Server **)servers.ga_data)[i]->addr);
+  }
+  return addrs;
 }
 
 static void connection_cb(uv_stream_t *server, int status)

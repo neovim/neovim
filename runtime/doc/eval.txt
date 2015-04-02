@@ -5373,13 +5373,25 @@ server2client( {clientid}, {string})			*server2client()*
 			:echo server2client(expand("<client>"), "HELLO")
 <
 serverlist()					*serverlist()*
-		Return a list of available server names, one per line.
-		When there are no servers or the information is not available
-		an empty string is returned.  See also |clientserver|.
-		{only available when compiled with the |+clientserver| feature}
+		Returns a list of available server names in a list.
+		When there are no servers an empty string is returned.
 		Example: >
 			:echo serverlist()
 <
+serverlisten([{address}])				*serverlisten()*
+		Opens a Unix or TCP socket at {address} for clients to connect
+		to and returns {address}. If no address is given, it is
+		equivalent to >
+			:call serverlisten(tempname())
+< 		If |$NVIM_LISTEN_ADDRESS| is not set, it will be set to
+		{address}.
+
+serverstop({address})					*serverstop()*
+		Closes the Unix or TCP socket at {address}. Does nothing if
+		{address} is empty, or does not refer to a server. If
+		{address} equals |$NVIM_LISTEN_ADDRESS|, the listen address
+		will be unset.
+
 setbufvar({expr}, {varname}, {val})			*setbufvar()*
 		Set option or local variable {varname} in buffer {expr} to
 		{val}.
