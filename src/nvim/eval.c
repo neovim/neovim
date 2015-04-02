@@ -10972,6 +10972,9 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv)
     }
   }
 
+  // poll to ensure any pending callbacks from the last job are invoked
+  event_poll(0);
+
   for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
     Job *job = NULL;
     if (arg->li_tv.v_type != VAR_NUMBER
