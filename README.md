@@ -44,7 +44,7 @@ For lots more details, see
 ### How do I get it?
 
 There is a formula for OSX/homebrew, a PKGBUILD for Arch Linux, RPM, deb, and
-more. See [the wiki](https://github.com/neovim/neovim/wiki/Installing)!
+more. See [the wiki](https://github.com/neovim/neovim/wiki/Installing-Neovim)!
 
 ### Community
 
