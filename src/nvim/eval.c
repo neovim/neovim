@@ -5560,8 +5560,10 @@ static int free_unref_items(int copyID)
   bool did_free = false;
 
   // Go through the list of dicts and free items without the copyID.
+  // Don't free dicts that are referenced internally.
   for (dict_T *dd = first_dict; dd != NULL; ) {
-    if ((dd->dv_copyID & COPYID_MASK) != (copyID & COPYID_MASK)) {
+    if ((dd->dv_copyID & COPYID_MASK) != (copyID & COPYID_MASK)
+        && !dd->internal_refcount) {
       // Free the Dictionary and ordinary items it contains, but don't
       // recurse into Lists and Dictionaries, they will be in the list
       // of dicts or list of lists. */
@@ -5671,6 +5673,7 @@ dict_T *dict_alloc(void) FUNC_ATTR_NONNULL_RET
   d->dv_scope = 0;
   d->dv_refcount = 0;
   d->dv_copyID = 0;
+  d->internal_refcount = 0;
 
   return d;
 }
@@ -20064,6 +20067,7 @@ static inline void common_job_callbacks(dict_T *vopts, ufunc_T **on_stdout,
     return;
   }
 
+  vopts->internal_refcount++;
   vopts->dv_refcount++;
 }
 
@@ -20097,7 +20101,11 @@ static inline void free_term_job_data(TerminalJobData *data) {
   if (data->on_exit) {
     user_func_unref(data->on_exit);
   }
-  dict_unref(data->self);
+
+  if (data->self) {
+    data->self->internal_refcount--;
+    dict_unref(data->self);
+  }
   free(data);
 }
 
