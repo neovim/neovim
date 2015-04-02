@@ -2587,7 +2587,7 @@ static char_u *expand_tag_fname(char_u *fname, char_u *tag_fname, int expand)
   /*
    * Expand file name (for environment variables) when needed.
    */
-  if (expand && mch_has_wildcard(fname)) {
+  if (expand && path_has_wildcard(fname)) {
     ExpandInit(&xpc);
     xpc.xp_context = EXPAND_FILES;
     expanded_fname = ExpandOne(&xpc, fname, NULL,

@@ -15,7 +15,6 @@
 
 #cmakedefine HAVE__NSGETENVIRON
 #cmakedefine HAVE_CRT_EXTERNS_H
-#cmakedefine HAVE_DIRENT_H
 #cmakedefine HAVE_FCNTL_H
 #cmakedefine HAVE_FD_CLOEXEC
 #cmakedefine HAVE_FSEEKO
@@ -60,6 +59,7 @@
 #define SIGRETURN return
 #define TIME_WITH_SYS_TIME 1
 #cmakedefine UNIX
+#cmakedefine USE_FNAME_CASE
 #define USEMAN_S 1
 
 #define FEAT_BROWSE

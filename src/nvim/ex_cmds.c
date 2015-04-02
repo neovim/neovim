@@ -2563,7 +2563,7 @@ do_ecmd (
       sfname = ffname;
 #ifdef USE_FNAME_CASE
     if (sfname != NULL)
-      fname_case(sfname, 0);             /* set correct case for sfname */
+      path_fix_case(sfname);             // set correct case for sfname
 #endif
 
     if ((flags & ECMD_ADDBUF) && (ffname == NULL || *ffname == NUL))
@@ -2790,51 +2790,13 @@ do_ecmd (
     oldbuf = (flags & ECMD_OLDBUF);
   }
 
+  buf = curbuf;
   if ((flags & ECMD_SET_HELP) || keep_help_flag) {
-    char_u  *p;
-
-    curbuf->b_help = true;
-    set_string_option_direct((char_u *)"buftype", -1,
-        (char_u *)"help", OPT_FREE|OPT_LOCAL, 0);
-
-    /*
-     * Always set these options after jumping to a help tag, because the
-     * user may have an autocommand that gets in the way.
-     * Accept all ASCII chars for keywords, except ' ', '*', '"', '|', and
-     * latin1 word characters (for translated help files).
-     * Only set it when needed, buf_init_chartab() is some work.
-     */
-    p =
-      (char_u *)"!-~,^*,^|,^\",192-255";
-    if (STRCMP(curbuf->b_p_isk, p) != 0) {
-      set_string_option_direct((char_u *)"isk", -1, p,
-          OPT_FREE|OPT_LOCAL, 0);
-      check_buf_options(curbuf);
-      (void)buf_init_chartab(curbuf, FALSE);
-    }
-
-    curbuf->b_p_ts = 8;                 /* 'tabstop' is 8 */
-    curwin->w_p_list = FALSE;           /* no list mode */
-
-    curbuf->b_p_ma = FALSE;             /* not modifiable */
-    curbuf->b_p_bin = FALSE;            /* reset 'bin' before reading file */
-    curwin->w_p_nu = 0;                 /* no line numbers */
-    curwin->w_p_rnu = 0;                /* no relative line numbers */
-    RESET_BINDING(curwin);              /* no scroll or cursor binding */
-    curwin->w_p_arab = FALSE;           /* no arabic mode */
-    curwin->w_p_rl  = FALSE;            /* help window is left-to-right */
-    curwin->w_p_fen = FALSE;            /* No folding in the help window */
-    curwin->w_p_diff = FALSE;           /* No 'diff' */
-    curwin->w_p_spell = FALSE;          /* No spell checking */
-
-    buf = curbuf;
-    set_buflisted(FALSE);
-  } else {
-    buf = curbuf;
-    /* Don't make a buffer listed if it's a help buffer.  Useful when
-     * using CTRL-O to go back to a help file. */
-    if (!curbuf->b_help)
-      set_buflisted(TRUE);
+    prepare_help_buffer();
+  } else if (!curbuf->b_help) {
+    // Don't make a buffer listed if it's a help buffer.  Useful when using
+    // CTRL-O to go back to a help file.
+    set_buflisted(TRUE);
   }
 
   /* If autocommands change buffers under our fingers, forget about
@@ -5046,6 +5008,46 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
   return OK;
 }
 
+/// Called when starting to edit a buffer for a help file.
+static void prepare_help_buffer(void)
+{
+  curbuf->b_help = true;
+  set_string_option_direct((char_u *)"buftype", -1, (char_u *)"help",
+                           OPT_FREE|OPT_LOCAL, 0);
+
+  // Always set these options after jumping to a help tag, because the
+  // user may have an autocommand that gets in the way.
+  // Accept all ASCII chars for keywords, except ' ', '*', '"', '|', and
+  // latin1 word characters (for translated help files).
+  // Only set it when needed, buf_init_chartab() is some work.
+  char_u *p = (char_u *)"!-~,^*,^|,^\",192-255";
+  if (STRCMP(curbuf->b_p_isk, p) != 0) {
+    set_string_option_direct((char_u *)"isk", -1, p, OPT_FREE|OPT_LOCAL, 0);
+    check_buf_options(curbuf);
+    (void)buf_init_chartab(curbuf, FALSE);
+  }
+
+  // Don't use the global foldmethod.
+  set_string_option_direct((char_u *)"fdm", -1, (char_u *)"manual",
+                           OPT_FREE|OPT_LOCAL, 0);
+
+  curbuf->b_p_ts = 8;         // 'tabstop' is 8.
+  curwin->w_p_list = FALSE;   // No list mode.
+
+  curbuf->b_p_ma = FALSE;     // Not modifiable.
+  curbuf->b_p_bin = FALSE;    // Reset 'bin' before reading file.
+  curwin->w_p_nu = 0;         // No line numbers.
+  curwin->w_p_rnu = 0;        // No relative line numbers.
+  RESET_BINDING(curwin);      // No scroll or cursor binding.
+  curwin->w_p_arab = FALSE;   // No arabic mode.
+  curwin->w_p_rl  = FALSE;    // Help window is left-to-right.
+  curwin->w_p_fen = FALSE;    // No folding in the help window.
+  curwin->w_p_diff = FALSE;   // No 'diff'.
+  curwin->w_p_spell = FALSE;  // No spell checking.
+
+  set_buflisted(FALSE);
+}
+
 /*
  * After reading a help file: May cleanup a help buffer when syntax
  * highlighting is not used.
@@ -6316,5 +6318,3 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
     }
   }
 }
-
-// vim: tabstop=8

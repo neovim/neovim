@@ -348,6 +348,39 @@ int os_rmdir(const char *path)
   return result;
 }
 
+/// Opens a directory.
+/// @param[out] dir   The Directory object.
+/// @param      path  Path to the directory.
+/// @returns true if dir contains one or more items, false if not or an error
+///          occurred.
+bool os_scandir(Directory *dir, const char *path)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int r = uv_fs_scandir(uv_default_loop(), &dir->request, path, 0, NULL);
+  if (r <= 0) {
+    os_closedir(dir);
+  }
+  return r > 0;
+}
+
+/// Increments the directory pointer.
+/// @param dir  The Directory object.
+/// @returns a pointer to the next path in `dir` or `NULL`.
+const char *os_scandir_next(Directory *dir)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int err = uv_fs_scandir_next(&dir->request, &dir->ent);
+  return err != UV_EOF ? dir->ent.name : NULL;
+}
+
+/// Frees memory associated with `os_scandir()`.
+/// @param dir  The directory.
+void os_closedir(Directory *dir)
+  FUNC_ATTR_NONNULL_ALL
+{
+  uv_fs_req_cleanup(&dir->request);
+}
+
 /// Remove a file.
 ///
 /// @return `0` for success, non-zero for failure.

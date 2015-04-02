@@ -1126,4 +1126,4 @@ static int get_config_int(Terminal *term, char *key)
 
 // }}}
 
-// vim: foldmethod=marker foldenable
+// vim: foldmethod=marker

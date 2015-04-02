@@ -418,6 +418,30 @@ describe('more path function', function()
     end)
   end)
 
+  describe('path_fix_case', function()
+    function fix_case(file)
+      c_file = to_cstr(file)
+      path.path_fix_case(c_file)
+      return ffi.string(c_file)
+    end
+
+    if ffi.os == 'Windows' or ffi.os == 'OSX' then
+      it('Corrects the case of file names in Mac and Windows', function()
+        lfs.mkdir('CamelCase')
+        eq('CamelCase', fix_case('camelcase'))
+        eq('CamelCase', fix_case('cAMELcASE'))
+        lfs.rmdir('CamelCase')
+      end)
+    else
+      it('does nothing on Linux', function()
+        lfs.mkdir('CamelCase')
+        eq('camelcase', fix_case('camelcase'))
+        eq('cAMELcASE', fix_case('cAMELcASE'))
+        lfs.mkdir('CamelCase')
+      end)
+    end
+  end)
+
   describe('append_path', function()
     it('joins given paths with a slash', function()
       local path1 = cstr(100, 'path1')
