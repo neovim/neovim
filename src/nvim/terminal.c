@@ -353,8 +353,11 @@ void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
   invalidate_terminal(term, -1, -1);
 }
 
-void terminal_enter(Terminal *term, bool process_deferred)
+void terminal_enter(bool process_deferred)
 {
+  Terminal *term = curbuf->terminal;
+  assert(term && "should only be called when curbuf has a terminal");
+
   checkpcmark();
   setpcmark();
   int save_state = State;
@@ -373,7 +376,7 @@ void terminal_enter(Terminal *term, bool process_deferred)
   int c;
   bool close = false;
 
-  for (;;) {
+  while (term->buf == curbuf) {
     if (process_deferred) {
       event_enable_deferred();
     }
@@ -431,7 +434,7 @@ end:
   invalidate_terminal(term, term->cursor.row, term->cursor.row + 1);
   mapped_ctrl_c = save_mapped_ctrl_c;
   unshowmode(true);
-  redraw(false);
+  redraw(term->buf != curbuf);
   ui_busy_stop();
   if (close) {
     term->opts.close_cb(term->opts.data);
@@ -1018,6 +1021,11 @@ static void refresh_screen(Terminal *term)
 
 static void redraw(bool restore_cursor)
 {
+  Terminal *term = curbuf->terminal;
+  if (!term) {
+    restore_cursor = true;
+  }
+
   int save_row, save_col;
   if (restore_cursor) {
     // save the current row/col to restore after updating screen when not
@@ -1040,7 +1048,6 @@ static void redraw(bool restore_cursor)
 
   showruler(false);
 
-  Terminal *term = curbuf->terminal;
   if (term && is_focused(term)) {
     curwin->w_wrow = term->cursor.row;
     curwin->w_wcol = term->cursor.col + win_col_off(curwin);

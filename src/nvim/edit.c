@@ -246,7 +246,7 @@ edit (
 )
 {
   if (curbuf->terminal) {
-    terminal_enter(curbuf->terminal, true);
+    terminal_enter(true);
     return false;
   }
 

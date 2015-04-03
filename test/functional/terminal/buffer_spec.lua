@@ -2,7 +2,9 @@ local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
 local thelpers = require('test.functional.terminal.helpers')
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
-local wait, execute, eq = helpers.wait, helpers.execute, helpers.eq
+local wait = helpers.wait
+local eval, execute, source = helpers.eval, helpers.execute, helpers.source
+local eq, neq = helpers.eq, helpers.neq
 
 
 describe('terminal buffer', function()
@@ -154,6 +156,42 @@ describe('terminal buffer', function()
       ~                                                 |
       :bnext                                            |
     ]])
+  end)
+
+  it('handles loss of focus gracefully', function()
+    -- Temporarily change the statusline to avoid printing the file name, which
+    -- varies be where the test is run.
+    nvim('set_option', 'statusline', '==========')
+    execute('set laststatus=0')
+
+    -- Save the buffer number of the terminal for later testing.
+    local tbuf = eval('bufnr("%")')
+
+    source([[
+    function! SplitWindow()
+      new
+    endfunction
+
+    startinsert
+    call jobstart(['sh', '-c', 'exit'], {'on_exit': function("SplitWindow")})
+    ]])
+
+    -- We should be in a new buffer now.
+    screen:expect([[
+      ^                                                  |
+      ~                                                 |
+      ==========                                        |
+      rows: 2, cols: 50                                 |
+      {2: }                                                 |
+      {1:==========                                        }|
+                                                        |
+    ]])
+
+    neq(tbuf, eval('bufnr("%")'))
+    execute('quit')  -- Should exit the new window, not the terminal.
+    eq(tbuf, eval('bufnr("%")'))
+
+    execute('set laststatus=1')  -- Restore laststatus to the default.
   end)
 end)
 
