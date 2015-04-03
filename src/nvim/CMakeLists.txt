@@ -106,7 +106,9 @@ foreach(gen_include ${gen_includes})
   list(APPEND gen_cflags "-I${gen_include}")
 endforeach()
 string(TOUPPER "${CMAKE_BUILD_TYPE}" build_type)
-set(gen_cflags "${gen_cflags} ${CMAKE_C_FLAGS_${build_type}} ${CMAKE_C_FLAGS}")
+separate_arguments(C_FLAGS_ARRAY UNIX_COMMAND ${CMAKE_C_FLAGS})
+separate_arguments(C_FLAGS_${build_type}_ARRAY UNIX_COMMAND ${CMAKE_C_FLAGS_${build_type}})
+set(gen_cflags ${gen_cflags} ${C_FLAGS_${build_type}_ARRAY} ${C_FLAGS_ARRAY})
 
 foreach(sfile ${NEOVIM_SOURCES}
               "${PROJECT_SOURCE_DIR}/src/nvim/regexp_nfa.c")
@@ -121,7 +123,6 @@ foreach(sfile ${NEOVIM_SOURCES}
   set(gf1 "${GENERATED_DIR}/${r}.c.generated.h")
   set(gf2 "${GENERATED_INCLUDES_DIR}/${r}.h.generated.h")
   set(gf3 "${GENERATED_DIR}/${r}.i")
-  separate_arguments(C_FLAGS_ARRAY UNIX_COMMAND ${CMAKE_C_FLAGS})
   add_custom_command(
     OUTPUT "${gf1}" "${gf2}"
     COMMAND ${CMAKE_C_COMPILER} ${sfile} -o ${gf3} ${gen_cflags} -E ${C_FLAGS_ARRAY}
