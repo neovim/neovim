@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
 local clear, feed, execute = helpers.clear, helpers.feed, helpers.execute
-local insert = helpers.insert
+local insert, wait = helpers.insert, helpers.wait
 
 describe('Screen', function()
   local screen
@@ -464,6 +464,7 @@ describe('Screen', function()
     end)
 
     it('has minimum width/height values', function()
+      wait()
       screen:try_resize(1, 1)
       screen:expect([[
         -- INS^ERT --|

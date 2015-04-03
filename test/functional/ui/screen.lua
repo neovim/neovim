@@ -230,20 +230,41 @@ end
 
 function Screen:wait(check, timeout)
   local err, checked = false
+  local success_seen = false
+  local failure_after_success = false
   local function notification_cb(method, args)
     assert(method == 'redraw')
     self:_redraw(args)
     err = check()
     checked = true
     if not err then
+      success_seen = true
       stop()
+    elseif success_seen and #args > 0 then
+      failure_after_success = true
+      --print(require('inspect')(args))
     end
+
     return true
   end
   run(nil, notification_cb, nil, timeout or default_screen_timeout)
   if not checked then
     err = check()
   end
+
+  if failure_after_success then
+    print([[
+Warning: Screen changes have been received after the expected state was seen.
+This is probably due to an indeterminism in the test. Try adding
+`wait()` (or even a separate `screen:expect(...)`) at a point of possible
+indeterminism, typically in between a `feed()` or `execute()` which is non-
+synchronous, and a synchronous api call.
+      ]])
+    local tb = debug.traceback()
+    local index = string.find(tb, '\n%s*%[C]')
+    print(string.sub(tb,1,index))
+  end
+
   if err then
     assert(false, err)
   end
@@ -456,6 +477,24 @@ end
 function Screen:snapshot_util(attrs, ignore)
   -- util to generate screen test
   pcall(function() self:wait(function() return "error" end, 250) end)
+  self:print_snapshot(attrs, ignore)
+end
+
+function Screen:redraw_debug(attrs, ignore)
+  self:print_snapshot(attrs, ignore)
+  local function notification_cb(method, args)
+    assert(method == 'redraw')
+    for _, update in ipairs(args) do
+      print(require('inspect')(update))
+    end
+    self:_redraw(args)
+    self:print_snapshot(attrs, ignore)
+    return true
+  end
+  run(nil, notification_cb, nil, 250)
+end
+
+function Screen:print_snapshot(attrs, ignore)
   if ignore == nil then
     ignore = self._default_attr_ignore
   end
