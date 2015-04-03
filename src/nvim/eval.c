@@ -5963,11 +5963,12 @@ static bool get_dict_callback(dict_T *d, char *key, ufunc_T **result)
 
   uint8_t *name = di->di_tv.vval.v_string;
   uint8_t *n = name;
-  ufunc_T *rv;
+  ufunc_T *rv = NULL;
   if (*n > '9' || *n < '0') {
-    n = trans_function_name(&n, false, TFN_INT|TFN_QUIET, NULL);
-    rv = find_func(n);
-    free(n);
+    if ((n = trans_function_name(&n, false, TFN_INT|TFN_QUIET, NULL))) {
+      rv = find_func(n);
+      free(n);
+    }
   } else {
     // dict function, name is already translated
     rv = find_func(n);
