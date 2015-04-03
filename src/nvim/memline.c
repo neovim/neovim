@@ -1244,8 +1244,10 @@ theend:
       mf_put(mfp, hp, false, false);
     mf_close(mfp, false);           /* will also free(mfp->mf_fname) */
   }
-  free(buf->b_ml.ml_stack);
-  free(buf);
+  if (buf != NULL) {  //may be NULL if swap file not found.
+    free(buf->b_ml.ml_stack);
+    free(buf);
+  }
   if (serious_error && called_from_main)
     ml_close(curbuf, TRUE);
   else {
