@@ -687,7 +687,6 @@ debuggy_find (
 {
   struct debuggy *bp;
   linenr_T lnum = 0;
-  regmatch_T regmatch;
   char_u      *name = fname;
   int prev_got_int;
 
@@ -709,8 +708,6 @@ debuggy_find (
     if (((bp->dbg_type == DBG_FILE) == file && (
            gap == &prof_ga ||
            (bp->dbg_lnum > after && (lnum == 0 || bp->dbg_lnum < lnum))))) {
-      regmatch.regprog = bp->dbg_prog;
-      regmatch.rm_ic = FALSE;
       /*
        * Save the value of got_int and reset it.  We don't want a
        * previous interruption cancel matching, only hitting CTRL-C
@@ -718,7 +715,7 @@ debuggy_find (
        */
       prev_got_int = got_int;
       got_int = FALSE;
-      if (vim_regexec(&regmatch, name, (colnr_T)0)) {
+      if (vim_regexec_prog(&bp->dbg_prog, false, name, (colnr_T)0)) {
         lnum = bp->dbg_lnum;
         if (fp != NULL)
           *fp = bp->dbg_forceit;

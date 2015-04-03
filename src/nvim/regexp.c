@@ -7045,6 +7045,7 @@ static void report_re_switch(char_u *pat)
 
 /// Matches a regexp against a string.
 /// "rmp->regprog" is a compiled regexp as returned by vim_regcomp().
+/// Note: "rmp->regprog" may be freed and changed.
 /// Uses curbuf for line count and 'iskeyword'.
 /// When "nl" is true consider a "\n" in "line" to be a line break.
 ///
@@ -7080,12 +7081,24 @@ static int vim_regexec_both(regmatch_T *rmp, char_u *line, colnr_T col, bool nl)
   return result;
 }
 
+// Note: "*prog" may be freed and changed.
+int vim_regexec_prog(regprog_T **prog, bool ignore_case, char_u *line,
+                      colnr_T col)
+{
+  regmatch_T regmatch = {.regprog = *prog, .rm_ic = ignore_case};
+  int r = vim_regexec_both(&regmatch, line, col, false);
+  *prog = regmatch.regprog;
+  return r;
+}
+
+// Note: "rmp->regprog" may be freed and changed.
 int vim_regexec(regmatch_T *rmp, char_u *line, colnr_T col)
 {
   return vim_regexec_both(rmp, line, col, false);
 }
 
 // Like vim_regexec(), but consider a "\n" in "line" to be a line break.
+// Note: "rmp->regprog" may be freed and changed.
 int vim_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col)
 {
   return vim_regexec_both(rmp, line, col, true);
@@ -7094,6 +7107,7 @@ int vim_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col)
 /*
  * Match a regexp against multiple lines.
  * "rmp->regprog" is a compiled regexp as returned by vim_regcomp().
+ * Note: "rmp->regprog" may be freed and changed.
  * Uses curbuf for line count and 'iskeyword'.
  *
  * Return zero if there is no match.  Return number of lines contained in the
