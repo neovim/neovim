@@ -827,8 +827,10 @@ static int syn_match_linecont(linenr_T lnum)
   if (syn_block->b_syn_linecont_prog != NULL) {
     regmatch.rmm_ic = syn_block->b_syn_linecont_ic;
     regmatch.regprog = syn_block->b_syn_linecont_prog;
-    return syn_regexec(&regmatch, lnum, (colnr_T)0,
-        IF_SYN_TIME(&syn_block->b_syn_linecont_time));
+    int r = syn_regexec(&regmatch, lnum, (colnr_T)0,
+                        IF_SYN_TIME(&syn_block->b_syn_linecont_time));
+    syn_block->b_syn_linecont_prog = regmatch.regprog;
+    return r;
   }
   return FALSE;
 }
@@ -1798,10 +1800,10 @@ syn_current_attr (
 
               regmatch.rmm_ic = spp->sp_ic;
               regmatch.regprog = spp->sp_prog;
-              if (!syn_regexec(&regmatch,
-                      current_lnum,
-                      (colnr_T)lc_col,
-                      IF_SYN_TIME(&spp->sp_time))) {
+              int r = syn_regexec(&regmatch, current_lnum, (colnr_T)lc_col,
+                                  IF_SYN_TIME(&spp->sp_time));
+              spp->sp_prog = regmatch.regprog;
+              if (!r) {
                 /* no match in this line, try another one */
                 spp->sp_startcol = MAXCOL;
                 continue;
@@ -2585,8 +2587,10 @@ find_endpos (
 
       regmatch.rmm_ic = spp->sp_ic;
       regmatch.regprog = spp->sp_prog;
-      if (syn_regexec(&regmatch, startpos->lnum, lc_col,
-              IF_SYN_TIME(&spp->sp_time))) {
+      int r = syn_regexec(&regmatch, startpos->lnum, lc_col,
+                          IF_SYN_TIME(&spp->sp_time));
+      spp->sp_prog = regmatch.regprog;
+      if (r) {
         if (best_idx == -1 || regmatch.startpos[0].col
             < best_regmatch.startpos[0].col) {
           best_idx = idx;
@@ -2614,10 +2618,10 @@ find_endpos (
         lc_col = 0;
       regmatch.rmm_ic = spp_skip->sp_ic;
       regmatch.regprog = spp_skip->sp_prog;
-      if (syn_regexec(&regmatch, startpos->lnum, lc_col,
-              IF_SYN_TIME(&spp_skip->sp_time))
-          && regmatch.startpos[0].col
-          <= best_regmatch.startpos[0].col) {
+      int r = syn_regexec(&regmatch, startpos->lnum, lc_col,
+                          IF_SYN_TIME(&spp_skip->sp_time));
+      spp_skip->sp_prog = regmatch.regprog;
+      if (r && regmatch.startpos[0].col <= best_regmatch.startpos[0].col) {
         /* Add offset to skip pattern match */
         syn_add_end_off(&pos, &regmatch, spp_skip, SPO_ME_OFF, 1);
 
