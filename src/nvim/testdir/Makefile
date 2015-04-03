@@ -34,7 +34,6 @@ SCRIPTS := test_autoformat_join.out                                    \
 
 SCRIPTS_GUI := test16.out
 
-SCRIPTS_BENCH = bench_re_freeze.out
 
 ifdef VALGRIND_GDB
 	VGDB := --vgdb=yes     \
@@ -68,8 +67,6 @@ nongui: nolog $(SCRIPTS) report
 
 gui:    nolog $(SCRIPTS) $(SCRIPTS_GUI) report
 
-benchmark: $(SCRIPTS_BENCH)
-
 .gdbinit:
 	echo 'set $$_exitcode = -1\nrun\nif $$_exitcode != -1\n  quit\nend' > .gdbinit
 
@@ -89,7 +86,7 @@ test1.out: $(VIMPROG)
 $(SCRIPTS) $(SCRIPTS_GUI): $(VIMPROG) test1.out
 
 RM_ON_RUN   := test.out X* viminfo
-RM_ON_START := tiny.vim small.vim mbyte.vim mzscheme.vim lua.vim test.ok benchmark.out
+RM_ON_START := tiny.vim small.vim mbyte.vim mzscheme.vim lua.vim test.ok
 RUN_VIM     := VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(TOOL) $(VIMPROG) -u unix.vim -U NONE -i viminfo --noplugin -s dotest.in
 
 clean:
@@ -159,15 +156,6 @@ test1.out: .gdbinit test1.in
 test49.out: test49.vim
 
 test60.out: test60.vim
-
-bench_re_freeze.out: bench_re_freeze.vim
-	-rm -rf benchmark.out $(RM_ON_RUN)
-	# Sleep a moment to avoid that the xterm title is messed up.
-	# 200 msec is sufficient, but only modern sleep supports a fraction of
-	# a second, fall back to a second if it fails.
-	@-/bin/sh -c "sleep .2 > /dev/null 2>&1 || sleep 1"
-	-$(RUN_VIM) $*.in
-	@/bin/sh -c "if test -f benchmark.out; then cat benchmark.out; fi"
 
 nolog:
 	-rm -f test.log

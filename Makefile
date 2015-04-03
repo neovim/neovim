@@ -89,6 +89,9 @@ test: functionaltest
 unittest: | nvim
 	+$(BUILD_CMD) -C build unittest
 
+benchmark: | nvim
+	+$(BUILD_CMD) -C build benchmark
+
 clean:
 	+test -d build && $(BUILD_CMD) -C build clean || true
 	$(MAKE) -C src/nvim/testdir clean

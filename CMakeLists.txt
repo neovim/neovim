@@ -331,4 +331,16 @@ if(BUSTED_PRG)
       -DTEST_TYPE=functional
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS nvim tty-test)
+
+  add_custom_target(benchmark
+    COMMAND ${CMAKE_COMMAND}
+      -DBUSTED_PRG=${BUSTED_PRG}
+      -DNVIM_PRG=$<TARGET_FILE:nvim>
+      -DWORKING_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+      -DBUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
+      -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
+      -DBUILD_DIR=${CMAKE_BINARY_DIR}
+      -DTEST_TYPE=benchmark
+      -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
+    DEPENDS nvim tty-test)
 endif()
