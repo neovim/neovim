@@ -28,12 +28,6 @@
 #define _destroy_event(x)  // do nothing
 KLIST_INIT(Event, Event, _destroy_event)
 
-typedef struct {
-  bool timed_out;
-  int ms;
-  uv_timer_t *timer;
-} TimerData;
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/event.c.generated.h"
 #endif
@@ -107,19 +101,12 @@ void event_poll(int ms)
 
   uv_run_mode run_mode = UV_RUN_ONCE;
   uv_timer_t timer;
-  uv_prepare_t timer_prepare;
-  TimerData timer_data = {.ms = ms, .timed_out = false, .timer = &timer};
 
   if (ms > 0) {
     uv_timer_init(uv_default_loop(), &timer);
-    // This prepare handle that actually starts the timer
-    uv_prepare_init(uv_default_loop(), &timer_prepare);
-    // Timeout passed as argument to the timer
-    timer.data = &timer_data;
-    // We only start the timer after the loop is running, for that we
-    // use a prepare handle(pass the interval as data to it)
-    timer_prepare.data = &timer_data;
-    uv_prepare_start(&timer_prepare, timer_prepare_cb);
+    // Use a repeating timeout of ms milliseconds to make sure
+    // we do not block indefinitely for I/O.
+    uv_timer_start(&timer, timer_cb, (uint64_t)ms, (uint64_t)ms);
   } else if (ms == 0) {
     // For ms == 0, we need to do a non-blocking event poll by
     // setting the run mode to UV_RUN_NOWAIT.
@@ -129,12 +116,10 @@ void event_poll(int ms)
   loop(run_mode);
 
   if (ms > 0) {
-    // Ensure the timer-related handles are closed and run the event loop
+    // Ensure the timer handle is closed and run the event loop
     // once more to let libuv perform it's cleanup
     uv_timer_stop(&timer);
-    uv_prepare_stop(&timer_prepare);
     uv_close((uv_handle_t *)&timer, NULL);
-    uv_close((uv_handle_t *)&timer_prepare, NULL);
     loop(UV_RUN_NOWAIT);
   }
 
@@ -183,19 +168,8 @@ static void process_events_from(klist_t(Event) *queue)
   }
 }
 
-// Set a flag in the `event_poll` loop for signaling of a timeout
 static void timer_cb(uv_timer_t *handle)
 {
-  TimerData *data = handle->data;
-  data->timed_out = true;
-}
-
-static void timer_prepare_cb(uv_prepare_t *handle)
-{
-  TimerData *data = handle->data;
-  assert(data->ms > 0);
-  uv_timer_start(data->timer, timer_cb, (uint32_t)data->ms, 0);
-  uv_prepare_stop(handle);
 }
 
 static void loop(uv_run_mode run_mode)
