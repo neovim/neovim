@@ -3,12 +3,11 @@
 " Maintainer:	      Jakson Aquino <jalvesaq@gmail.com>
 " Former Maintainers: Vaidotas Zemlys <zemlys@gmail.com>
 " 		      Tom Payne <tom@tompayne.org>
-" Last Change:	      Wed Jul 09, 2014  10:29PM
+" Last Change:	      Wed Dec 31, 2014  12:36AM
 " Filenames:	      *.R *.r *.Rhistory *.Rt
-" 
-" NOTE: The highlighting of R functions is defined in the
-" r-plugin/functions.vim, which is part of vim-r-plugin2:
-" http://www.vim.org/scripts/script.php?script_id=2628
+"
+" NOTE: The highlighting of R functions is defined in
+" runtime files created by a filetype plugin, if installed.
 "
 " CONFIGURATION:
 "   syntax folding can be turned on by
@@ -37,9 +36,9 @@ syn match rComment contains=@Spell,rCommentTodo "#.*"
 syn match rOKeyword contained "@\(param\|return\|name\|rdname\|examples\|include\|docType\)"
 syn match rOKeyword contained "@\(S3method\|TODO\|aliases\|alias\|assignee\|author\|callGraphDepth\|callGraph\)"
 syn match rOKeyword contained "@\(callGraphPrimitives\|concept\|exportClass\|exportMethod\|exportPattern\|export\|formals\)"
-syn match rOKeyword contained "@\(format\|importClassesFrom\|importFrom\|importMethodsFrom\|import\|keywords\)"
+syn match rOKeyword contained "@\(format\|importClassesFrom\|importFrom\|importMethodsFrom\|import\|keywords\|useDynLib\)"
 syn match rOKeyword contained "@\(method\|noRd\|note\|references\|seealso\|setClass\|slot\|source\|title\|usage\)"
-syn match rOKeyword contained "@\(family\|template\|templateVar\|description\|details\|inheritsParams\)"
+syn match rOKeyword contained "@\(family\|template\|templateVar\|description\|details\|inheritParams\)"
 syn match rOComment contains=@Spell,rOKeyword "#'.*"
 
 
@@ -79,12 +78,12 @@ syn keyword rRepeat      for in repeat while
 syn keyword rConstant T F LETTERS letters month.abb month.name pi
 syn keyword rConstant R.version.string
 
-syn keyword rNumber   NA_integer_ NA_real_ NA_complex_ NA_character_ 
+syn keyword rNumber   NA_integer_ NA_real_ NA_complex_ NA_character_
 
 " Constants
 syn keyword rConstant NULL
 syn keyword rBoolean  FALSE TRUE
-syn keyword rNumber   NA Inf NaN 
+syn keyword rNumber   NA Inf NaN
 
 " integer
 syn match rInteger "\<\d\+L"
@@ -93,7 +92,7 @@ syn match rInteger "\<\d\+[Ee]+\=\d\+L"
 
 " number with no fractional part or exponent
 syn match rNumber "\<\d\+\>"
-" hexadecimal number 
+" hexadecimal number
 syn match rNumber "\<0x\([0-9]\|[a-f]\|[A-F]\)\+"
 
 " floating point number with integer and fractional parts and optional exponent
@@ -111,17 +110,19 @@ syn match rComplex "\<\d\+\.\d*\([Ee][-+]\=\d\+\)\=i"
 syn match rComplex "\<\.\d\+\([Ee][-+]\=\d\+\)\=i"
 syn match rComplex "\<\d\+[Ee][-+]\=\d\+i"
 
+syn match rAssign    '='
 syn match rOperator    "&"
 syn match rOperator    '-'
 syn match rOperator    '\*'
 syn match rOperator    '+'
-syn match rOperator    '='
 if &filetype != "rmd" && &filetype != "rrst"
   syn match rOperator    "[|!<>^~/:]"
 else
   syn match rOperator    "[|!<>^~`/:]"
 endif
 syn match rOperator    "%\{2}\|%\S\{-}%"
+syn match rOperator '\([!><]\)\@<=='
+syn match rOperator '=='
 syn match rOpError  '\*\{3}'
 syn match rOpError  '//'
 syn match rOpError  '&&&'
@@ -129,8 +130,8 @@ syn match rOpError  '|||'
 syn match rOpError  '<<'
 syn match rOpError  '>>'
 
-syn match rArrow "<\{1,2}-"
-syn match rArrow "->\{1,2}"
+syn match rAssign "<\{1,2}-"
+syn match rAssign "->\{1,2}"
 
 " Special
 syn match rDelimiter "[,;:]"
@@ -151,9 +152,14 @@ syn match rBraceError "[)}]" contained
 syn match rCurlyError "[)\]]" contained
 syn match rParenError "[\]}]" contained
 
-" Source list of R functions. The list is produced by the Vim-R-plugin
-" http://www.vim.org/scripts/script.php?script_id=2628
-runtime r-plugin/functions.vim
+" Source list of R functions produced by a filetype plugin (if installed)
+if has("nvim")
+  " Nvim-R
+  runtime R/functions.vim
+else
+  " Vim-R-plugin
+  runtime r-plugin/functions.vim
+endif
 
 syn match rDollar display contained "\$"
 syn match rDollar display contained "@"
@@ -171,7 +177,7 @@ if &filetype == "rhelp"
 endif
 
 " Type
-syn keyword rType array category character complex double function integer list logical matrix numeric vector data.frame 
+syn keyword rType array category character complex double function integer list logical matrix numeric vector data.frame
 
 " Name of object with spaces
 if &filetype != "rmd" && &filetype != "rrst"
@@ -179,13 +185,19 @@ if &filetype != "rmd" && &filetype != "rrst"
 endif
 
 if &filetype == "rhelp"
-  syn match rhPreProc "^#ifdef.*" 
-  syn match rhPreProc "^#endif.*" 
+  syn match rhPreProc "^#ifdef.*"
+  syn match rhPreProc "^#endif.*"
   syn match rhSection "\\dontrun\>"
 endif
 
+if exists("r_syn_minlines")
+  exe "syn sync minlines=" . r_syn_minlines
+else
+  syn sync minlines=40
+endif
+
 " Define the default highlighting.
-hi def link rArrow       Statement	
+hi def link rAssign      Statement
 hi def link rBoolean     Boolean
 hi def link rBraceError  Error
 hi def link rComment     Comment
@@ -204,7 +216,7 @@ hi def link rHelpIdent   Identifier
 hi def link rhPreProc    PreProc
 hi def link rhSection    PreCondit
 hi def link rInteger     Number
-hi def link rLstElmt	 Normal
+hi def link rLstElmt     Normal
 hi def link rNameWSpace  Normal
 hi def link rNumber      Number
 hi def link rOperator    Operator
