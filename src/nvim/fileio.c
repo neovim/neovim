@@ -2006,7 +2006,7 @@ failed:
 static int is_dev_fd_file(char_u *fname)
 {
   return STRNCMP(fname, "/dev/fd/", 8) == 0
-         && VIM_ISDIGIT(fname[8])
+         && isdigit(fname[8])
          && *skipdigits(fname + 9) == NUL
          && (fname[9] != NUL
              || (fname[8] != '0' && fname[8] != '1' && fname[8] != '2'));
@@ -5524,7 +5524,7 @@ static event_T event_name2nr(char_u *start, char_u **end)
   int len;
 
   /* the event name ends with end of line, a blank or a comma */
-  for (p = start; *p && !vim_iswhite(*p) && *p != ','; ++p)
+  for (p = start; *p && !isblank(*p) && *p != ','; ++p)
     ;
   for (i = 0; event_names[i].name != NULL; ++i) {
     len = (int)STRLEN(event_names[i].name);
@@ -5565,13 +5565,13 @@ find_end_event (
   char_u  *p;
 
   if (*arg == '*') {
-    if (arg[1] && !vim_iswhite(arg[1])) {
+    if (arg[1] && !isblank(arg[1])) {
       EMSG2(_("E215: Illegal character after *: %s"), arg);
       return NULL;
     }
     pat = arg + 1;
   } else {
-    for (pat = arg; *pat && !vim_iswhite(*pat); pat = p) {
+    for (pat = arg; *pat && !isblank(*pat); pat = p) {
       if ((int)event_name2nr(pat, &p) >= (int)NUM_EVENTS) {
         if (have_group)
           EMSG2(_("E216: No such event: %s"), pat);
@@ -5711,7 +5711,7 @@ void do_autocmd(char_u *arg, int forceit)
    */
   pat = skipwhite(pat);
   cmd = pat;
-  while (*cmd && (!vim_iswhite(*cmd) || cmd[-1] == '\\'))
+  while (*cmd && (!isblank(*cmd) || cmd[-1] == '\\'))
     cmd++;
   if (*cmd)
     *cmd++ = NUL;
@@ -5736,7 +5736,7 @@ void do_autocmd(char_u *arg, int forceit)
    * Check for "nested" flag.
    */
   cmd = skipwhite(cmd);
-  if (*cmd != NUL && STRNCMP(cmd, "nested", 6) == 0 && vim_iswhite(cmd[6])) {
+  if (*cmd != NUL && STRNCMP(cmd, "nested", 6) == 0 && isblank(cmd[6])) {
     nested = TRUE;
     cmd = skipwhite(cmd + 6);
   }
@@ -5772,7 +5772,7 @@ void do_autocmd(char_u *arg, int forceit)
               nested, cmd, forceit, group) == FAIL)
         break;
   } else {
-    while (*arg && !vim_iswhite(*arg)) {
+    while (*arg && !isblank(*arg)) {
       event_T event = event_name2nr(arg, &arg);
       assert(event < NUM_EVENTS);
       if (do_autocmd_event(event, pat, nested, cmd, forceit, group) == FAIL) {
@@ -6056,7 +6056,7 @@ do_doautocmd (
   /*
    * Loop over the events.
    */
-  while (*arg && !vim_iswhite(*arg))
+  while (*arg && !isblank(*arg))
     if (apply_autocmds_group(event_name2nr(arg, &arg),
             fname, NULL, TRUE, group, curbuf, NULL))
       nothing_done = FALSE;
@@ -6984,13 +6984,13 @@ set_context_in_autocmd (
   group = au_get_grouparg(&arg);
 
   /* If there only is a group name that's what we expand. */
-  if (*arg == NUL && group != AUGROUP_ALL && !vim_iswhite(arg[-1])) {
+  if (*arg == NUL && group != AUGROUP_ALL && !isblank(arg[-1])) {
     arg = p;
     group = AUGROUP_ALL;
   }
 
   /* skip over event name */
-  for (p = arg; *p != NUL && !vim_iswhite(*p); ++p)
+  for (p = arg; *p != NUL && !isblank(*p); ++p)
     if (*p == ',')
       arg = p + 1;
   if (*p == NUL) {
@@ -7003,7 +7003,7 @@ set_context_in_autocmd (
 
   /* skip over pattern */
   arg = skipwhite(p);
-  while (*arg && (!vim_iswhite(*arg) || arg[-1] == '\\'))
+  while (*arg && (!isblank(*arg) || arg[-1] == '\\'))
     arg++;
   if (*arg)
     return arg;                             /* expand (next) command */

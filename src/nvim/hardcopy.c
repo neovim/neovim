@@ -317,7 +317,7 @@ static char_u *parse_list_options(char_u *option_str, option_table_T *table, int
     table[idx].present = TRUE;
 
     if (table[idx].hasnum) {
-      if (!VIM_ISDIGIT(*p))
+      if (!isdigit(*p))
         return (char_u *)N_("E552: digit expected");
 
       table[idx].number = getdigits_int(&p);
@@ -2272,7 +2272,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
    */
   fontsize = PRT_PS_DEFAULT_FONTSIZE;
   for (p = p_pfn; (p = vim_strchr(p, ':')) != NULL; ++p)
-    if (p[1] == 'h' && VIM_ISDIGIT(p[2]))
+    if (p[1] == 'h' && isdigit(p[2]))
       fontsize = atoi((char *)p + 2);
   prt_font_metrics(fontsize);
 

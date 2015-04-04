@@ -1387,7 +1387,7 @@ void msg_prt_line(char_u *s, int list)
   /* find start of trailing whitespace */
   if (list && lcs_trail) {
     trail = s + STRLEN(s);
-    while (trail > s && vim_iswhite(trail[-1]))
+    while (trail > s && isblank(trail[-1]))
       --trail;
   }
 
@@ -3204,12 +3204,12 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
           min_field_width = -j;
           justify_left = 1;
         }
-      } else if (VIM_ISDIGIT((int)(*p))) {
+      } else if (isdigit((int)(*p))) {
         /* size_t could be wider than unsigned int; make sure we treat
          * argument like common implementations do */
         unsigned int uj = *p++ - '0';
 
-        while (VIM_ISDIGIT((int)(*p)))
+        while (isdigit((int)(*p)))
           uj = 10 * uj + (unsigned int)(*p++ - '0');
         min_field_width = uj;
       }
@@ -3229,12 +3229,12 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
             precision_specified = 0;
             precision = 0;
           }
-        } else if (VIM_ISDIGIT((int)(*p))) {
+        } else if (isdigit((int)(*p))) {
           /* size_t could be wider than unsigned int; make sure we
            * treat argument like common implementations do */
           unsigned int uj = *p++ - '0';
 
-          while (VIM_ISDIGIT((int)(*p)))
+          while (isdigit((int)(*p)))
             uj = 10 * uj + (unsigned int)(*p++ - '0');
           precision = uj;
         }
@@ -3643,8 +3643,8 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
                 fmt_spec == 'e' ? 'e' : 'E');
             if (tp != NULL && (tp[1] == '+' || tp[1] == '-')
                 && tp[2] == '0'
-                && vim_isdigit(tp[3])
-                && vim_isdigit(tp[4])) {
+                && isdigit(tp[3])
+                && isdigit(tp[4])) {
               STRMOVE(tp + 2, tp + 3);
               --str_arg_l;
             }

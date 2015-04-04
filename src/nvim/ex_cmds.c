@@ -266,7 +266,7 @@ static int linelen(int *has_tab)
 
   /* find the character after the last non-blank character */
   for (last = first + STRLEN(first);
-       last > first && vim_iswhite(last[-1]); --last)
+       last > first && isblank(last[-1]); --last)
     ;
   save = *last;
   *last = NUL;
@@ -374,7 +374,7 @@ void ex_sort(exarg_T *eap)
   sort_abort = sort_ic = sort_rx = sort_nr = sort_oct = sort_hex = 0;
 
   for (p = eap->arg; *p != NUL; ++p) {
-    if (vim_iswhite(*p))
+    if (isblank(*p))
       ;
     else if (*p == 'i')
       sort_ic = TRUE;
@@ -581,7 +581,7 @@ void ex_retab(exarg_T *eap)
     vcol = 0;
     did_undo = FALSE;
     for (;; ) {
-      if (vim_iswhite(ptr[col])) {
+      if (isblank(ptr[col])) {
         if (!got_tab && num_spaces == 0) {
           /* First consecutive white-space */
           start_vcol = vcol;
@@ -1858,7 +1858,7 @@ viminfo_readstring (
   char_u      *retval;
   char_u      *s, *d;
 
-  if (virp->vir_line[off] == Ctrl_V && vim_isdigit(virp->vir_line[off + 1])) {
+  if (virp->vir_line[off] == Ctrl_V && isdigit(virp->vir_line[off + 1])) {
     ssize_t len = atol((char *)virp->vir_line + off + 1);
     retval = xmalloc(len);
     // TODO(philix): change type of vim_fgets() size argument to size_t
@@ -3244,7 +3244,7 @@ void ex_z(exarg_T *eap)
     ++x;
 
   if (*x != 0) {
-    if (!VIM_ISDIGIT(*x)) {
+    if (!isdigit(*x)) {
       EMSG(_("E144: non-numeric argument to :z"));
       return;
     }
@@ -3422,7 +3422,7 @@ void do_sub(exarg_T *eap)
     which_pat = RE_SUBST;       /* use last substitute regexp */
 
   /* new pattern and substitution */
-  if (eap->cmd[0] == 's' && *cmd != NUL && !vim_iswhite(*cmd)
+  if (eap->cmd[0] == 's' && *cmd != NUL && !isblank(*cmd)
       && vim_strchr((char_u *)"0123456789cegriIp|\"", *cmd) == NULL) {
     /* don't accept alphanumeric for separator */
     if (isalpha(*cmd)) {
@@ -3591,7 +3591,7 @@ void do_sub(exarg_T *eap)
    * check for a trailing count
    */
   cmd = skipwhite(cmd);
-  if (VIM_ISDIGIT(*cmd)) {
+  if (isdigit(*cmd)) {
     i = getdigits_long(&cmd);
     if (i <= 0 && !eap->skip && do_error) {
       EMSG(_(e_zerocount));
@@ -4622,7 +4622,7 @@ void ex_help(exarg_T *eap)
 
   /* remove trailing blanks */
   p = arg + STRLEN(arg) - 1;
-  while (p > arg && vim_iswhite(*p) && p[-1] != '\\')
+  while (p > arg && isblank(*p) && p[-1] != '\\')
     *p-- = NUL;
 
   /* Check for a specified language */
@@ -5070,7 +5070,7 @@ void fix_help_buffer(void)
     for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; ++lnum) {
       line = ml_get_buf(curbuf, lnum, FALSE);
       len = (int)STRLEN(line);
-      if (in_example && len > 0 && !vim_iswhite(line[0])) {
+      if (in_example && len > 0 && !isblank(line[0])) {
         /* End of example: non-white or '<' in first column. */
         if (line[0] == '<') {
           /* blank-out a '<' in the first column */
@@ -5284,7 +5284,7 @@ void ex_helptags(exarg_T *eap)
   int add_help_tags = FALSE;
 
   /* Check for ":helptags ++t {dir}". */
-  if (STRNCMP(eap->arg, "++t", 3) == 0 && vim_iswhite(eap->arg[3])) {
+  if (STRNCMP(eap->arg, "++t", 3) == 0 && isblank(eap->arg[3])) {
     add_help_tags = TRUE;
     eap->arg = skipwhite(eap->arg + 3);
   }
@@ -5870,10 +5870,10 @@ void ex_sign(exarg_T *eap)
 
 	/* first arg could be placed sign id */
 	arg1 = arg;
-	if (VIM_ISDIGIT(*arg))
+	if (isdigit(*arg))
 	{
 	    id = getdigits_int(&arg);
-	    if (!vim_iswhite(*arg) && *arg != NUL)
+	    if (!isblank(*arg) && *arg != NUL)
 	    {
 		id = -1;
 		arg = arg1;

@@ -378,8 +378,8 @@ pos_T *getmark_buf_fnum(buf_T *buf, int c, int changefile, int *fnum)
     }
   } else if (ASCII_ISLOWER(c)) {      /* normal named mark */
     posp = &(buf->b_namedm[c - 'a']);
-  } else if (ASCII_ISUPPER(c) || VIM_ISDIGIT(c)) {    /* named file mark */
-    if (VIM_ISDIGIT(c))
+  } else if (ASCII_ISUPPER(c) || isdigit(c)) {    /* named file mark */
+    if (isdigit(c))
       c = c - '0' + NMARKS;
     else
       c -= 'A';
@@ -728,14 +728,14 @@ void ex_delmarks(exarg_T *eap)
     /* clear specified marks only */
     for (p = eap->arg; *p != NUL; ++p) {
       lower = ASCII_ISLOWER(*p);
-      digit = VIM_ISDIGIT(*p);
+      digit = isdigit(*p);
       if (lower || digit || ASCII_ISUPPER(*p)) {
         if (p[1] == '-') {
           /* clear range of marks */
           from = *p;
           to = p[2];
           if (!(lower ? ASCII_ISLOWER(p[2])
-                : (digit ? VIM_ISDIGIT(p[2])
+                : (digit ? isdigit(p[2])
                    : ASCII_ISUPPER(p[2])))
               || to < from) {
             EMSG2(_(e_invarg2), p);
@@ -1203,7 +1203,7 @@ int read_viminfo_filemark(vir_T *virp, int force)
   str = virp->vir_line + 1;
   if (
     *str <= 127 &&
-    ((*virp->vir_line == '\'' && (VIM_ISDIGIT(*str) || isupper(*str)))
+    ((*virp->vir_line == '\'' && (isdigit(*str) || isupper(*str)))
      || (*virp->vir_line == '-' && *str == '\''))) {
     if (*str == '\'') {
       /* If the jumplist isn't full insert fmark as oldest entry */
@@ -1218,7 +1218,7 @@ int read_viminfo_filemark(vir_T *virp, int force)
         fm->fmark.mark.lnum = 0;
         fm->fname = NULL;
       }
-    } else if (VIM_ISDIGIT(*str))
+    } else if (isdigit(*str))
       fm = &namedfm[*str - '0' + NMARKS];
     else {  // is uppercase
       assert(*str >= 'A' && *str <= 'Z');
@@ -1450,7 +1450,7 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
     str = skipwhite(line + 1);
     str = viminfo_readstring(virp, (int)(str - virp->vir_line), FALSE);
     p = str + STRLEN(str);
-    while (p != str && (*p == NUL || vim_isspace(*p)))
+    while (p != str && (*p == NUL || isspace(*p)))
       p--;
     if (*p)
       p++;

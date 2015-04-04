@@ -133,7 +133,7 @@ char_u *parse_shape_opt(int what)
               len = 8;
             if (len != 0) {
               p += len;
-              if (!VIM_ISDIGIT(*p))
+              if (!isdigit(*p))
                 return (char_u *)N_("E548: digit expected");
               int n = getdigits_int(&p);
               if (len == 3) {               /* "ver" or "hor" */

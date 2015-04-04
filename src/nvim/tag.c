@@ -587,7 +587,7 @@ do_tag (
 
               /* skip "file:" without a value (static tag) */
               if (STRNCMP(p, "file:", 5) == 0
-                  && vim_isspace(p[5])) {
+                  && isspace(p[5])) {
                 p += 5;
                 continue;
               }
@@ -640,7 +640,7 @@ do_tag (
               ++p;
           }
           /* Remove leading whitespace from pattern */
-          while (p != command_end && vim_isspace(*p))
+          while (p != command_end && isspace(*p))
             ++p;
 
           while (p != command_end) {
@@ -2652,7 +2652,7 @@ static int find_extra(char_u **pp)
 
   /* Repeat for addresses separated with ';' */
   for (;; ) {
-    if (VIM_ISDIGIT(*str))
+    if (isdigit(*str))
       str = skipdigits(str);
     else if (*str == '/' || *str == '?') {
       str = skip_regexp(str + 1, *str, FALSE, NULL);
@@ -2663,7 +2663,7 @@ static int find_extra(char_u **pp)
     } else
       str = NULL;
     if (str == NULL || *str != ';'
-        || !(VIM_ISDIGIT(str[1]) || str[1] == '/' || str[1] == '?'))
+        || !(isdigit(str[1]) || str[1] == '/' || str[1] == '?'))
       break;
     ++str;      /* skip ';' */
   }
@@ -2816,7 +2816,7 @@ int get_tags(list_T *list, char_u *pat)
           else if (STRNCMP(p, "file:", 5) == 0)
             /* skip "file:" (static tag) */
             p += 4;
-          else if (!vim_iswhite(*p)) {
+          else if (!isblank(*p)) {
             char_u  *s, *n;
             int len;
 

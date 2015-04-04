@@ -1653,7 +1653,7 @@ static void foldDelMarker(linenr_T lnum, char_u *marker, int markerlen)
     }
     /* Found the marker, include a digit if it's there. */
     int len = markerlen;
-    if (VIM_ISDIGIT(p[len]))
+    if (isdigit(p[len]))
       ++len;
     if (*cms != NUL) {
       /* Also delete 'commentstring' if it matches. */
@@ -1794,7 +1794,7 @@ void foldtext_cleanup(char_u *str)
   /* Ignore leading and trailing white space in 'commentstring'. */
   cms_start = skipwhite(curbuf->b_p_cms);
   cms_slen = (int)STRLEN(cms_start);
-  while (cms_slen > 0 && vim_iswhite(cms_start[cms_slen - 1]))
+  while (cms_slen > 0 && isblank(cms_start[cms_slen - 1]))
     --cms_slen;
 
   /* locate "%s" in 'commentstring', use the part before and after it. */
@@ -1804,7 +1804,7 @@ void foldtext_cleanup(char_u *str)
     cms_slen = (int)(cms_end - cms_start);
 
     /* exclude white space before "%s" */
-    while (cms_slen > 0 && vim_iswhite(cms_start[cms_slen - 1]))
+    while (cms_slen > 0 && isblank(cms_start[cms_slen - 1]))
       --cms_slen;
 
     /* skip "%s" and white space after it */
@@ -1821,12 +1821,12 @@ void foldtext_cleanup(char_u *str)
     else if (STRNCMP(s, foldendmarker, foldendmarkerlen) == 0)
       len = foldendmarkerlen;
     if (len > 0) {
-      if (VIM_ISDIGIT(s[len]))
+      if (isdigit(s[len]))
         ++len;
 
       /* May remove 'commentstring' start.  Useful when it's a double
        * quote and we already removed a double quote. */
-      for (p = s; p > str && vim_iswhite(p[-1]); --p)
+      for (p = s; p > str && isblank(p[-1]); --p)
         ;
       if (p >= str + cms_slen
           && STRNCMP(p - cms_slen, cms_start, cms_slen) == 0) {
@@ -1844,7 +1844,7 @@ void foldtext_cleanup(char_u *str)
       }
     }
     if (len != 0) {
-      while (vim_iswhite(s[len]))
+      while (isblank(s[len]))
         ++len;
       STRMOVE(s, s + len);
     } else {
@@ -2807,7 +2807,7 @@ static void foldlevelMarker(fline_T *flp)
         && STRNCMP(s + 1, startmarker, foldstartmarkerlen - 1) == 0) {
       /* found startmarker: set flp->lvl */
       s += foldstartmarkerlen;
-      if (VIM_ISDIGIT(*s)) {
+      if (isdigit(*s)) {
         n = atoi((char *)s);
         if (n > 0) {
           flp->lvl = n;
@@ -2827,7 +2827,7 @@ static void foldlevelMarker(fline_T *flp)
                    foldendmarkerlen - 1) == 0) {
       /* found endmarker: set flp->lvl_next */
       s += foldendmarkerlen;
-      if (VIM_ISDIGIT(*s)) {
+      if (isdigit(*s)) {
         n = atoi((char *)s);
         if (n > 0) {
           flp->lvl = n;

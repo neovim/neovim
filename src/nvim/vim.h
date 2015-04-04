@@ -328,12 +328,6 @@ enum {
 #define hl_attr(n)      highlight_attr[(int)(n)]
 #define term_str(n)     term_strings[(int)(n)]
 
-/*
- * vim_iswhite() is used for "^" and the like. It differs from isspace()
- * because it doesn't include <CR> and <LF> and the like.
- */
-#define vim_iswhite(x)  ((x) == ' ' || (x) == '\t')
-
 /* Maximum number of bytes in a multi-byte character.  It can be one 32-bit
  * character of up to 6 bytes, or one 16-bit character of up to three bytes
  * plus six following composing characters of three bytes each. */

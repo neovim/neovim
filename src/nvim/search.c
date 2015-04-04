@@ -1006,7 +1006,7 @@ int do_search(
        * offset, because it is meaningless and the 's' could be a
        * substitute command.
        */
-      if (*p == '+' || *p == '-' || VIM_ISDIGIT(*p))
+      if (*p == '+' || *p == '-' || isdigit(*p))
         spats[0].off.line = TRUE;
       else if ((options & SEARCH_OPT) &&
                (*p == 'e' || *p == 's' || *p == 'b')) {
@@ -1014,16 +1014,16 @@ int do_search(
           spats[0].off.end = SEARCH_END;
         ++p;
       }
-      if (VIM_ISDIGIT(*p) || *p == '+' || *p == '-') {      /* got an offset */
+      if (isdigit(*p) || *p == '+' || *p == '-') {      /* got an offset */
         /* 'nr' or '+nr' or '-nr' */
-        if (VIM_ISDIGIT(*p) || VIM_ISDIGIT(*(p + 1)))
+        if (isdigit(*p) || isdigit(*(p + 1)))
           spats[0].off.off = atol((char *)p);
         else if (*p == '-')                 /* single '-' */
           spats[0].off.off = -1;
         else                                /* single '+' */
           spats[0].off.off = 1;
         ++p;
-        while (VIM_ISDIGIT(*p))             /* skip number */
+        while (isdigit(*p))             /* skip number */
           ++p;
       }
 
@@ -2616,7 +2616,7 @@ static void find_first_blank(pos_T *posp)
 
   while (decl(posp) != -1) {
     c = gchar_pos(posp);
-    if (!vim_iswhite(c)) {
+    if (!isblank(c)) {
       incl(posp);
       break;
     }
@@ -2828,7 +2828,7 @@ extend:
       decl(&pos);
       while (lt(pos, curwin->w_cursor)) {
         c = gchar_pos(&pos);
-        if (!vim_iswhite(c)) {
+        if (!isblank(c)) {
           at_start_sent = FALSE;
           break;
         }
@@ -2848,7 +2848,7 @@ extend:
         if (at_start_sent)
           find_first_blank(&curwin->w_cursor);
         c = gchar_cursor();
-        if (!at_start_sent || (!include && !vim_iswhite(c)))
+        if (!at_start_sent || (!include && !isblank(c)))
           findsent(BACKWARD, 1L);
         at_start_sent = !at_start_sent;
       }
@@ -2866,7 +2866,7 @@ extend:
         at_start_sent = FALSE;
         while (lt(pos, curwin->w_cursor)) {
           c = gchar_pos(&pos);
-          if (!vim_iswhite(c)) {
+          if (!isblank(c)) {
             at_start_sent = TRUE;
             break;
           }
@@ -2891,7 +2891,7 @@ extend:
    * If the cursor started on a blank, check if it is just before the start
    * of the next sentence.
    */
-  while (c = gchar_pos(&pos), vim_iswhite(c))   /* vim_iswhite() is a macro */
+  while (c = gchar_pos(&pos), isblank(c))
     incl(&pos);
   if (equalpos(pos, curwin->w_cursor)) {
     start_blank = TRUE;
@@ -2921,10 +2921,10 @@ extend:
      */
     if (start_blank) {
       find_first_blank(&curwin->w_cursor);
-      c = gchar_pos(&curwin->w_cursor);         /* vim_iswhite() is a macro */
-      if (vim_iswhite(c))
+      c = gchar_pos(&curwin->w_cursor);
+      if (isblank(c))
         decl(&curwin->w_cursor);
-    } else if (c = gchar_cursor(), !vim_iswhite(c))
+    } else if (c = gchar_cursor(), !isblank(c))
       find_first_blank(&start_pos);
   }
 
@@ -3231,7 +3231,7 @@ again:
    */
   inc_cursor();
   p = get_cursor_pos_ptr();
-  for (cp = p; *cp != NUL && *cp != '>' && !vim_iswhite(*cp); mb_ptr_adv(cp))
+  for (cp = p; *cp != NUL && *cp != '>' && !isblank(*cp); mb_ptr_adv(cp))
     ;
   len = (int)(cp - p);
   if (len == 0) {
@@ -3679,11 +3679,11 @@ current_quote (
   /* When "include" is TRUE, include spaces after closing quote or before
    * the starting quote. */
   if (include) {
-    if (vim_iswhite(line[col_end + 1]))
-      while (vim_iswhite(line[col_end + 1]))
+    if (isblank(line[col_end + 1]))
+      while (isblank(line[col_end + 1]))
         ++col_end;
     else
-      while (col_start > 0 && vim_iswhite(line[col_start - 1]))
+      while (col_start > 0 && isblank(line[col_start - 1]))
         --col_start;
   }
 

@@ -792,7 +792,7 @@ getcmdline (
         if (has_mbyte) {
           p = mb_prevptr(ccline.cmdbuff, p);
           if (c == Ctrl_W) {
-            while (p > ccline.cmdbuff && vim_isspace(*p))
+            while (p > ccline.cmdbuff && isspace(*p))
               p = mb_prevptr(ccline.cmdbuff, p);
             i = mb_get_class(p);
             while (p > ccline.cmdbuff && mb_get_class(p) == i)
@@ -801,10 +801,10 @@ getcmdline (
               p += (*mb_ptr2len)(p);
           }
         } else if (c == Ctrl_W)  {
-          while (p > ccline.cmdbuff && vim_isspace(p[-1]))
+          while (p > ccline.cmdbuff && isspace(p[-1]))
             --p;
           i = vim_iswordc(p[-1]);
-          while (p > ccline.cmdbuff && !vim_isspace(p[-1])
+          while (p > ccline.cmdbuff && !isspace(p[-1])
                  && vim_iswordc(p[-1]) == i)
             --p;
         } else
@@ -4636,7 +4636,7 @@ int get_list_range(char_u **str, int *num1, int *num2)
   long num;
 
   *str = skipwhite(*str);
-  if (**str == '-' || vim_isdigit(**str)) {  /* parse "from" part of range */
+  if (**str == '-' || isdigit(**str)) {  /* parse "from" part of range */
     vim_str2nr(*str, NULL, &len, FALSE, FALSE, &num, NULL);
     *str += len;
     *num1 = (int)num;
@@ -4676,7 +4676,7 @@ void ex_history(exarg_T *eap)
     return;
   }
 
-  if (!(VIM_ISDIGIT(*arg) || *arg == '-' || *arg == ',')) {
+  if (!(isdigit(*arg) || *arg == '-' || *arg == ',')) {
     end = arg;
     while (ASCII_ISALPHA(*end)
            || vim_strchr((char_u *)":=@>/?", *end) != NULL)
