@@ -2677,7 +2677,10 @@ void u_undoline(void)
 void u_blockfree(buf_T *buf)
 {
   while (buf->b_u_oldhead != NULL) {
+#ifndef NDEBUG
     u_header_T *previous_oldhead = buf->b_u_oldhead;
+#endif
+
     u_freeheader(buf, buf->b_u_oldhead, NULL);
     assert(buf->b_u_oldhead != previous_oldhead);
   }

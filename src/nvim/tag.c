@@ -2783,7 +2783,11 @@ int get_tags(list_T *list, char_u *pat)
   if (ret == OK && num_matches > 0) {
     for (i = 0; i < num_matches; ++i) {
       int parse_result = parse_match(matches[i], &tp);
+
+      // Avoid an unused variable warning in release builds.
+      (void) parse_result;
       assert(parse_result == OK);
+
       is_static = test_for_static(&tp);
 
       /* Skip pseudo-tag lines. */
