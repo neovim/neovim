@@ -22,7 +22,7 @@ SCRIPTS := test_autoformat_join.out                                    \
                        test52.out  test53.out              test55.out  \
                        test57.out  test58.out  test59.out  test60.out  \
            test61.out  test62.out  test63.out  test64.out  test65.out  \
-                                   test68.out  test69.out  test70.out  \
+                                   test68.out  test69.out              \
            test71.out              test73.out  test74.out              \
            test76.out              test78.out  test79.out  test80.out  \
                        test82.out  test83.out              test85.out  \
@@ -86,7 +86,7 @@ test1.out: $(VIMPROG)
 $(SCRIPTS) $(SCRIPTS_GUI): $(VIMPROG) test1.out
 
 RM_ON_RUN   := test.out X* viminfo
-RM_ON_START := tiny.vim small.vim mbyte.vim mzscheme.vim lua.vim test.ok
+RM_ON_START := tiny.vim small.vim mbyte.vim lua.vim test.ok
 RUN_VIM     := VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(TOOL) $(VIMPROG) -u unix.vim -U NONE -i viminfo --noplugin -s dotest.in
 
 clean:
