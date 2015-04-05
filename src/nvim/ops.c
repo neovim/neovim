@@ -5317,6 +5317,7 @@ static struct yankreg* adjust_clipboard_name(int *name, bool quiet, bool writing
       if (!quiet) {
         EMSG("clipboard: provider is not available");
       }
+      return NULL;
     }
     return &y_regs[*name == '*' ? STAR_REGISTER : PLUS_REGISTER];
   } else if ((*name == NUL) && (cb_flags & CB_UNNAMEDMASK)) {
