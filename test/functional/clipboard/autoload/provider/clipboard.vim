@@ -2,12 +2,20 @@ let g:test_clip = { '+': [''], '*': [''], }
 
 let s:methods = {}
 
+let g:cliplossy = 0
+
 function! s:methods.get(reg)
-  return g:test_clip[a:reg]
+  if g:cliplossy
+    " behave like pure text clipboard
+    return g:test_clip[a:reg][0]
+  else
+    "behave like VIMENC clipboard
+    return g:test_clip[a:reg]
+  end
 endfunction
 
 function! s:methods.set(lines, regtype, reg)
-  let g:test_clip[a:reg] = a:lines
+  let g:test_clip[a:reg] = [a:lines, a:regtype]
 endfunction
 
 
