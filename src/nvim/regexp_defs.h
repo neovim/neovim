@@ -50,8 +50,8 @@ typedef struct regengine regengine_T;
 typedef struct regprog {
   regengine_T *engine;
   unsigned regflags;
-  unsigned re_engine;  // Automatic, backtracking or NFA engine.
-  unsigned re_flags;   // Second argument for vim_regcomp().
+  unsigned re_engine;  ///< Automatic, backtracking or NFA engine.
+  unsigned re_flags;   ///< Second argument for vim_regcomp().
 } regprog_T;
 
 /*
@@ -64,7 +64,7 @@ typedef struct {
   regengine_T *engine;
   unsigned regflags;
   unsigned re_engine;
-  unsigned re_flags;  // Second argument for vim_regcomp().
+  unsigned re_flags;  ///< Second argument for vim_regcomp().
 
   int regstart;
   char_u reganch;
@@ -96,7 +96,7 @@ typedef struct {
   regengine_T *engine;
   unsigned regflags;
   unsigned re_engine;
-  unsigned re_flags;  // Second argument for vim_regcomp().
+  unsigned re_flags;  ///< Second argument for vim_regcomp().
 
   nfa_state_T         *start;           /* points into state[] */
 

@@ -6053,7 +6053,6 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col)
   int i;
   regsubs_T subs, m;
   nfa_state_T *start = prog->start;
-  int result;
 #ifdef REGEXP_DEBUG
   FILE        *f;
 #endif
@@ -6082,7 +6081,7 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col)
   clear_sub(&subs.synt);
   clear_sub(&m.synt);
 
-  result = nfa_regmatch(prog, start, &subs, &m);
+  int result = nfa_regmatch(prog, start, &subs, &m);
   if (result == FALSE) {
     return 0;
   } else if (result == NFA_TOO_EXPENSIVE) {

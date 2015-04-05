@@ -7043,22 +7043,22 @@ static void report_re_switch(char_u *pat)
   }
 }
 
-/// Match a regexp against a string.
+/// Matches a regexp against a string.
 /// "rmp->regprog" is a compiled regexp as returned by vim_regcomp().
 /// Uses curbuf for line count and 'iskeyword'.
-/// When "nl" is TRUE consider a "\n" in "line" to be a line break.
-///
-/// Return TRUE if there is a match, FALSE if not.
+/// When "nl" is true consider a "\n" in "line" to be a line break.
 ///
 /// @param rmp
-/// @param line string to match against
-/// @param col column to start looking for match
+/// @param line the string to match against
+/// @param col  the column to start looking for match
 /// @param nl
-static int vim_regexec_both(regmatch_T *rmp, char_u *line, colnr_T col, int nl)
+///
+/// @return TRUE if there is a match, FALSE if not.
+static int vim_regexec_both(regmatch_T *rmp, char_u *line, colnr_T col, bool nl)
 {
   int result = rmp->regprog->engine->regexec_nl(rmp, line, col, nl);
 
-  // NFA engine aborted because it's very slow.
+  // NFA engine aborted because it's very slow, use backtracking engine instead.
   if (rmp->regprog->re_engine == AUTOMATIC_ENGINE
       && result == NFA_TOO_EXPENSIVE) {
     int save_p_re = p_re;
@@ -7067,29 +7067,28 @@ static int vim_regexec_both(regmatch_T *rmp, char_u *line, colnr_T col, int nl)
 
     p_re = BACKTRACKING_ENGINE;
     vim_regfree(rmp->regprog);
-    if (pat != NULL) {
-      report_re_switch(pat);
-      rmp->regprog = vim_regcomp(pat, re_flags);
-      if (rmp->regprog != NULL) {
-        result = rmp->regprog->engine->regexec_nl(rmp, line, col, nl);
-      }
-      free(pat);
+    report_re_switch(pat);
+    rmp->regprog = vim_regcomp(pat, re_flags);
+    if (rmp->regprog != NULL) {
+      result = rmp->regprog->engine->regexec_nl(rmp, line, col, nl);
     }
 
+    free(pat);
     p_re = save_p_re;
   }
+
   return result;
 }
 
 int vim_regexec(regmatch_T *rmp, char_u *line, colnr_T col)
 {
-  return vim_regexec_both(rmp, line, col, FALSE);
+  return vim_regexec_both(rmp, line, col, false);
 }
 
 // Like vim_regexec(), but consider a "\n" in "line" to be a line break.
 int vim_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col)
 {
-  return vim_regexec_both(rmp, line, col, TRUE);
+  return vim_regexec_both(rmp, line, col, true);
 }
 
 /*
@@ -7109,10 +7108,10 @@ long vim_regexec_multi(
   proftime_T  *tm                 /* timeout limit or NULL */
 )
 {
-  int result = rmp->regprog->engine->regexec_multi(
-      rmp, win, buf, lnum, col, tm);
+  int result = rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, col,
+                                                   tm);
 
-  // NFA engine aborted because it's very slow.
+  // NFA engine aborted because it's very slow, use backtracking engine instead.
   if (rmp->regprog->re_engine == AUTOMATIC_ENGINE
       && result == NFA_TOO_EXPENSIVE) {
     int save_p_re = p_re;
@@ -7121,15 +7120,14 @@ long vim_regexec_multi(
 
     p_re = BACKTRACKING_ENGINE;
     vim_regfree(rmp->regprog);
-    if (pat != NULL) {
-      report_re_switch(pat);
-      rmp->regprog = vim_regcomp(pat, re_flags);
-      if (rmp->regprog != NULL) {
-        result = rmp->regprog->engine->regexec_multi(
-            rmp, win, buf, lnum, col, tm);
-      }
-      free(pat);
+    report_re_switch(pat);
+    rmp->regprog = vim_regcomp(pat, re_flags);
+    if (rmp->regprog != NULL) {
+      result = rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, col,
+                                                   tm);
     }
+
+    free(pat);
     p_re = save_p_re;
   }
 
