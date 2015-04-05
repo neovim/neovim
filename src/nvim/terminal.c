@@ -338,7 +338,7 @@ void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
   // terminal in the current tab.
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (!wp->w_closing && wp->w_buffer == term->buf) {
-      width = (uint16_t)MIN(width, (uint16_t)wp->w_width);
+      width = (uint16_t)MIN(width, (uint16_t)(wp->w_width - win_col_off(wp)));
       height = (uint16_t)MIN(height, (uint16_t)wp->w_height);
     }
   }
@@ -357,6 +357,9 @@ void terminal_enter(bool process_deferred)
 {
   Terminal *term = curbuf->terminal;
   assert(term && "should only be called when curbuf has a terminal");
+
+  // Ensure the terminal is properly sized.
+  terminal_resize(term, 0, 0);
 
   checkpcmark();
   setpcmark();
