@@ -376,6 +376,8 @@ void terminal_enter(bool process_deferred)
   int c;
   bool close = false;
 
+  bool got_bs = false;  // True if the last input was <C-\>
+
   while (term->buf == curbuf) {
     if (process_deferred) {
       event_enable_deferred();
@@ -388,14 +390,6 @@ void terminal_enter(bool process_deferred)
     }
 
     switch (c) {
-      case Ctrl_BSL:
-        c = safe_vgetc();
-        if (c == Ctrl_N) {
-          goto end;
-        }
-        terminal_send_key(term, c);
-        break;
-
       case K_LEFTMOUSE:
       case K_LEFTDRAG:
       case K_LEFTRELEASE:
@@ -416,12 +410,22 @@ void terminal_enter(bool process_deferred)
         event_process();
         break;
 
+      case Ctrl_N:
+        if (got_bs) {
+          goto end;
+        }
+
       default:
+        if (c == Ctrl_BSL && !got_bs) {
+          got_bs = true;
+          break;
+        }
         if (term->closed) {
           close = true;
           goto end;
         }
 
+        got_bs = false;
         terminal_send_key(term, c);
     }
   }

@@ -170,15 +170,18 @@ describe('terminal buffer', function()
     source([[
     function! SplitWindow()
       new
+      call feedkeys("iabc\<Esc>")
     endfunction
 
     startinsert
     call jobstart(['sh', '-c', 'exit'], {'on_exit': function("SplitWindow")})
+    call feedkeys("\<C-\>", 't')  " vim will expect <C-n>, but be exited out of
+                                  " the terminal before it can be entered.
     ]])
 
     -- We should be in a new buffer now.
     screen:expect([[
-      ^                                                  |
+      ab^c                                               |
       ~                                                 |
       ==========                                        |
       rows: 2, cols: 50                                 |
@@ -188,7 +191,7 @@ describe('terminal buffer', function()
     ]])
 
     neq(tbuf, eval('bufnr("%")'))
-    execute('quit')  -- Should exit the new window, not the terminal.
+    execute('quit!')  -- Should exit the new window, not the terminal.
     eq(tbuf, eval('bufnr("%")'))
 
     execute('set laststatus=1')  -- Restore laststatus to the default.

@@ -50,6 +50,20 @@ describe('terminal mouse', function()
       ]])
     end)
 
+    it('will exit focus after <C-\\>, then scrolled', function()
+      feed('<C-\\>')
+      feed('<MouseDown><0,0>')
+      screen:expect([[
+        line23                                            |
+        line24                                            |
+        line25                                            |
+        line26                                            |
+        line27                                            |
+        ^line28                                            |
+                                                          |
+      ]])
+    end)
+
     describe('with mouse events enabled by the program', function()
       before_each(function()
         thelpers.enable_mouse()
