@@ -7,7 +7,7 @@
 *.rej
 *.orig
 *.mo
-*.swp
+.*.sw?
 *~
 *.pyc
 *.o
