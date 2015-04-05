@@ -1,7 +1,0 @@
-1 changed line 1
-scalar test OK
-2 line 2
-dictionary with list OK
-circular test OK
-[123.0, 'abc', [1, 2, 3], {'a': 1, 'b': 2, 'c': 3}]
-{'4': 123.0, '5': 'abc', '6': [1, 2, 3], '7': {'a': 1, 'b': 2, 'c': 3}}
