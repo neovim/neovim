@@ -550,14 +550,9 @@ syn region	vimGlobal	matchgroup=Statement start='\<v\%[global]!\=/' skip='\\.' e
 " Allows users to specify the type of embedded script highlighting
 " they want:  (perl/python/ruby/tcl support)
 "   g:vimsyn_embed == 0   : don't embed any scripts
-"   g:vimsyn_embed ~= 'l' : embed lua      (but only if vim supports it)
-"   g:vimsyn_embed ~= 'm' : embed mzscheme (but only if vim supports it)
-"   g:vimsyn_embed ~= 'p' : embed perl     (but only if vim supports it)
 "   g:vimsyn_embed ~= 'P' : embed python   (but only if vim supports it)
-"   g:vimsyn_embed ~= 'r' : embed ruby     (but only if vim supports it)
-"   g:vimsyn_embed ~= 't' : embed tcl      (but only if vim supports it)
 if !exists("g:vimsyn_embed")
- let g:vimsyn_embed= "lmpPr"
+ let g:vimsyn_embed= "P"
 endif
 
 " [-- lua --] {{{3

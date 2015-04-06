@@ -3221,16 +3221,10 @@ The g:vimsyn_embed option allows users to select what, if any, types of
 embedded script highlighting they wish to have. >
 
    g:vimsyn_embed == 0   : don't embed any scripts
-   g:vimsyn_embed =~ 'm' : support embedded mzscheme
-   g:vimsyn_embed =~ 'p' : support embedded perl
    g:vimsyn_embed =~ 'P' : support embedded python
-   g:vimsyn_embed =~ 'r' : support embedded ruby
-   g:vimsyn_embed =~ 't' : support embedded tcl
 <
 By default, g:vimsyn_embed is a string supporting interpreters that your vim
-itself supports.  Concatenate multiple characters to support multiple types
-of embedded interpreters; ie. g:vimsyn_embed= "mp" supports embedded mzscheme
-and embedded perl.
+itself supports.
 						*g:vimsyn_folding*
 
 Some folding is now supported with syntax/vim.vim: >
@@ -3238,11 +3232,7 @@ Some folding is now supported with syntax/vim.vim: >
    g:vimsyn_folding == 0 or doesn't exist: no syntax-based folding
    g:vimsyn_folding =~ 'a' : augroups
    g:vimsyn_folding =~ 'f' : fold functions
-   g:vimsyn_folding =~ 'm' : fold mzscheme script
-   g:vimsyn_folding =~ 'p' : fold perl     script
    g:vimsyn_folding =~ 'P' : fold python   script
-   g:vimsyn_folding =~ 'r' : fold ruby     script
-   g:vimsyn_folding =~ 't' : fold tcl      script
 <
 							*g:vimsyn_noerror*
 Not all error highlighting that syntax/vim.vim does may be correct; VimL is a

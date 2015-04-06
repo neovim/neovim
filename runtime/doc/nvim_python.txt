@@ -35,7 +35,7 @@ Most Python plugins created for Vim 7.3 should work after these steps.
 
 							   *g:python_host_prog*
 
-To point Nvim to a specific Python interpreter, set `g:python_host_prog`:
+To point Nvim to a specific Python interpreter, set |g:python_host_prog|:
 >
     let g:python_host_prog='/path/to/python'
 <
