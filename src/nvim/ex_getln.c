@@ -10,7 +10,6 @@
  * ex_getln.c: Functions for entering and editing an Ex command line.
  */
 
-#include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <string.h>
@@ -3629,6 +3628,7 @@ ExpandFromContext (
   }
 
   if (xp->xp_context == EXPAND_SHELLCMD) {
+    *file = NULL;
     expand_shellcmd(pat, num_file, file, flags);
     return OK;
   }
@@ -3810,16 +3810,17 @@ void ExpandGeneric(
   reset_expand_highlight();
 }
 
-/*
- * Complete a shell command.
- */
-static void
-expand_shellcmd (
-    char_u *filepat,           /* pattern to match with command names */
-    int *num_file,          /* return: number of matches */
-    char_u ***file,            /* return: array with matches */
-    int flagsarg                   /* EW_ flags */
-)
+/// Complete a shell command.
+///
+/// @param      filepat  is a pattern to match with command names.
+/// @param[out] num_file is pointer to number of matches.
+/// @param[out] file     is pointer to array of pointers to matches.
+///                      *file will either be set to NULL or point to
+///                      allocated memory.
+/// @param      flagsarg is a combination of EW_* flags.
+static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
+                            int flagsarg)
+    FUNC_ATTR_NONNULL_ALL
 {
   char_u      *pat;
   int i;
@@ -3875,10 +3876,8 @@ expand_shellcmd (
     STRLCPY(buf + l, pat, MAXPATHL - l);
 
     /* Expand matches in one directory of $PATH. */
-    char_u **prev_file = *file;
     ret = expand_wildcards(1, &buf, num_file, file, flags);
     if (ret == OK) {
-      assert(*file != prev_file);
       ga_grow(&ga, *num_file);
       {
         for (i = 0; i < *num_file; ++i) {
