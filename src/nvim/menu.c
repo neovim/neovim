@@ -11,6 +11,7 @@
  * Code for menus.  Used for the GUI and 'wildmenu'.
  */
 
+#include <assert.h>
 #include <inttypes.h>
 #include <string.h>
 
@@ -62,8 +63,8 @@ ex_menu (
   int modes;
   char_u      *map_to;
   int noremap;
-  int silent = FALSE;
-  int special = FALSE;
+  bool silent = false;
+  bool special = false;
   int unmenu;
   char_u      *map_buf;
   char_u      *arg;
@@ -84,12 +85,12 @@ ex_menu (
       continue;
     }
     if (STRNCMP(arg, "<silent>", 8) == 0) {
-      silent = TRUE;
+      silent = true;
       arg = skipwhite(arg + 8);
       continue;
     }
     if (STRNCMP(arg, "<special>", 9) == 0) {
-      special = TRUE;
+      special = true;
       arg = skipwhite(arg + 9);
       continue;
     }
@@ -127,7 +128,7 @@ ex_menu (
     }
     arg = skipwhite(arg);
   } else if (eap->addr_count && eap->line2 != 0) {
-    pri_tab[0] = eap->line2;
+    pri_tab[0] = (int) eap->line2;
     i = 1;
   } else
     i = 0;
@@ -276,8 +277,6 @@ add_menu_path (
   char_u      *dname;
   char_u      *next_name;
   int i;
-  int c;
-  int d;
   int pri_idx = 0;
   int old_modes = 0;
   int amenu;
@@ -421,8 +420,8 @@ add_menu_path (
         /* For "amenu", may insert an extra character.
          * Don't do this if adding a tearbar (addtearoff == FALSE).
          * Don't do this for "<Nop>". */
-        c = 0;
-        d = 0;
+        char_u c = 0;
+        char_u d = 0;
         if (amenu && call_data != NULL && *call_data != NUL
             ) {
           switch (1 << i) {
@@ -880,7 +879,8 @@ char_u *set_context_in_menu_cmd(expand_T *xp, char_u *cmd, char_u *arg, int forc
 
     menu = root_menu;
     if (after_dot != arg) {
-      path_name = xmalloc(after_dot - arg);
+      assert(after_dot >= arg);
+      path_name = xmalloc((size_t)(after_dot - arg));
       STRLCPY(path_name, arg, after_dot - arg);
     }
     name = path_name;
@@ -1146,7 +1146,7 @@ get_menu_cmd_modes (
  */
 static char_u *popup_mode_name(char_u *name, int idx)
 {
-  int len = (int)STRLEN(name);
+  size_t len = STRLEN(name);
 
   char_u *p = vim_strnsave(name, len + 1);
   memmove(p + 6, p + 5, (size_t)(len - 4));
@@ -1173,7 +1173,8 @@ static char_u *menu_text(char_u *str, int *mnemonic, char_u **actext)
   if (p != NULL) {
     if (actext != NULL)
       *actext = vim_strsave(p + 1);
-    text = vim_strnsave(str, (int)(p - str));
+    assert(p >= str);
+    text = vim_strnsave(str, (size_t)(p - str));
   } else
     text = vim_strsave(str);
 
@@ -1462,7 +1463,8 @@ void ex_menutranslate(exarg_T *eap)
     else {
       from = vim_strsave(from);
       from_noamp = menu_text(from, NULL, NULL);
-      to = vim_strnsave(to, (int)(arg - to));
+      assert(arg >= to);
+      to = vim_strnsave(to, (size_t)(arg - to));
       if (from_noamp != NULL) {
         menu_translate_tab_and_shift(from);
         menu_translate_tab_and_shift(to);
@@ -1509,7 +1511,7 @@ static char_u *menutrans_lookup(char_u *name, int len)
   }
 
   /* Now try again while ignoring '&' characters. */
-  char c = name[len];
+  char_u c = name[len];
   name[len] = NUL;
   dname = menu_text(name, NULL, NULL);
   name[len] = c;
