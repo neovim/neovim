@@ -225,7 +225,25 @@ Object channel_send_call(uint64_t id,
   channel->pending_requests--;
 
   if (frame.errored) {
-    api_set_error(err, Exception, "%s", frame.result.data.string.data);
+    if (frame.result.type == kObjectTypeString) {
+      api_set_error(err, Exception, "%s", frame.result.data.string.data);
+    } else if (frame.result.type == kObjectTypeArray) {
+      // Should be an error in the form [type, message]
+      Array array = frame.result.data.array;
+      if (array.size == 2 && array.items[0].type == kObjectTypeInteger
+          && (array.items[0].data.integer == kErrorTypeException
+              || array.items[0].data.integer == kErrorTypeValidation)
+          && array.items[1].type == kObjectTypeString) {
+        err->type = (ErrorType) array.items[0].data.integer;
+        xstrlcpy(err->msg, array.items[1].data.string.data, sizeof(err->msg));
+        err->set = true;
+      } else {
+        api_set_error(err, Exception, "%s", "unknown error");
+      }
+    } else {
+      api_set_error(err, Exception, "%s", "unknown error");
+    }
+
     api_free_object(frame.result);
   }
 
