@@ -307,9 +307,12 @@ void terminal_close(Terminal *term, char *msg)
   term->forward_mouse = false;
   term->closed = true;
   if (!msg || exiting) {
-    // If no msg was given, this was called by close_buffer(buffer.c) so we
-    // should not wait for the user to press a key. Also cannot wait if
-    // `exiting == true`
+    // If no msg was given, this was called by close_buffer(buffer.c).  Or if
+    // exiting, we must inform the buffer the terminal no longer exists so that
+    // close_buffer() doesn't call this again.
+    term->buf->terminal = NULL;
+    term->buf = NULL;
+    // We should not wait for the user to press a key.
     term->opts.close_cb(term->opts.data);
   } else {
     terminal_receive(term, msg, strlen(msg));
@@ -451,7 +454,9 @@ end:
 
 void terminal_destroy(Terminal *term)
 {
-  term->buf->terminal = NULL;
+  if (term->buf) {
+    term->buf->terminal = NULL;
+  }
   term->buf = NULL;
   pmap_del(ptr_t)(invalidated_terminals, term);
   for (size_t i = 0 ; i < term->sb_current; i++) {
@@ -930,8 +935,13 @@ static void on_refresh(Event event)
   // be used act on terminal output.
   block_autocmds();
   map_foreach(invalidated_terminals, term, stub, {
-    if (!term->buf) {
+    // TODO(SplinterOfChaos): Find the condition that makes term->buf invalid.
+    bool valid = true;
+    if (!term->buf || !(valid = buf_valid(term->buf))) {
       // destroyed by `close_buffer`. Dont do anything else
+      if (!valid) {
+        term->buf = NULL;
+      }
       continue;
     }
     bool pending_resize = term->pending_resize;
