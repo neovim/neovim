@@ -783,11 +783,11 @@ static bool send_mouse_event(Terminal *term, int c)
     bool drag = false;
 
     switch (c) {
-      case K_LEFTDRAG: drag = true;
+      case K_LEFTDRAG: drag = true;  // FALLTHROUGH
       case K_LEFTMOUSE: button = 1; break;
-      case K_MIDDLEDRAG: drag = true;
+      case K_MIDDLEDRAG: drag = true;  // FALLTHROUGH
       case K_MIDDLEMOUSE: button = 2; break;
-      case K_RIGHTDRAG: drag = true;
+      case K_RIGHTDRAG: drag = true;  // FALLTHROUGH
       case K_RIGHTMOUSE: button = 3; break;
       case K_MOUSEDOWN: button = 4; break;
       case K_MOUSEUP: button = 5; break;
