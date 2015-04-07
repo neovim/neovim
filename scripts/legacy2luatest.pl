@@ -42,15 +42,8 @@ sub read_in_file {
     my $command_lines = $_[1];
     my $test_body_lines = $_[2];
 
-    # Only keep first input line if it is not empty.
-    my $first_input_line = shift @{$input_lines};
-    if ($first_input_line =~ /^$/) {
-      unshift @{$input_lines}, $first_input_line;
-    }
-
-    # If there are input lines left, wrap them with
-    # `insert` command and add before the previous command
-    # block.
+    # If there are input lines, wrap with an `insert`
+    # command and add before the previous command block.
     if (@{$input_lines}) {
       my $last_input_line = pop @{$input_lines};
       unshift @{$command_lines}, '';
@@ -168,7 +161,10 @@ sub read_in_file {
         return EMIT_COMMAND;
       }
 
-      push @input_lines, '  ' . $_;
+      # Skip initial lines if they are empty.
+      if (@input_lines or !/^$/) {
+        push @input_lines, '  ' . $_;
+      }
       return EMIT_INPUT;
     },
   );
