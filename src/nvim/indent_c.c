@@ -1332,7 +1332,7 @@ void parse_cino(buf_T *buf)
   char_u      *l;
   int divider;
   int fraction = 0;
-  int sw = (int)get_sw_value(buf);
+  int sw = get_sw_value(buf);
 
   /*
    * Set the default values.

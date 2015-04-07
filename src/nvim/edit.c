@@ -7354,9 +7354,9 @@ static int ins_bs(int c, int mode, int *inserted_space_p)
 
       *inserted_space_p = FALSE;
       if (p_sta && in_indent)
-        ts = (int)get_sw_value(curbuf);
+        ts = get_sw_value(curbuf);
       else
-        ts = (int)get_sts_value();
+        ts = get_sts_value();
       /* Compute the virtual column where we want to be.  Since
        * 'showbreak' may get in the way, need to get the last column of
        * the previous character. */
@@ -7826,9 +7826,9 @@ static int ins_tab(void)
   AppendToRedobuff((char_u *)"\t");
 
   if (p_sta && ind)             /* insert tab in indent, use 'shiftwidth' */
-    temp = (int)get_sw_value(curbuf);
+    temp = get_sw_value(curbuf);
   else if (curbuf->b_p_sts != 0)   /* use 'softtabstop' when set */
-    temp = (int)get_sts_value();
+    temp = get_sts_value();
   else                          /* otherwise use 'tabstop' */
     temp = (int)curbuf->b_p_ts;
   temp -= get_nolist_virtcol() % temp;

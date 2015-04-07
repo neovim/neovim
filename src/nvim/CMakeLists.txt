@@ -58,9 +58,7 @@ set(CONV_SOURCES
   ex_cmds.c
   ex_docmd.c
   ex_getln.c
-  farsi.c
   fileio.c
-  fold.c
   getchar.c
   if_cscope.c
   mbyte.c
@@ -68,11 +66,9 @@ set(CONV_SOURCES
   menu.c
   message.c
   misc1.c
-  move.c
   normal.c
   ops.c
   path.c
-  popupmnu.c
   quickfix.c
   regexp.c
   screen.c
