@@ -50,6 +50,7 @@ typedef struct {
   int out_fd;
   int old_height;
   bool can_use_terminal_scroll;
+  bool mouse_enabled;
   bool busy;
   HlAttrs attrs, print_attrs;
   Cell **screen;
@@ -84,7 +85,7 @@ typedef struct {
   } while (0)
 
 
-void tui_start(void)
+UI *tui_start(void)
 {
   TUIData *data = xcalloc(1, sizeof(TUIData));
   UI *ui = xcalloc(1, sizeof(UI));
@@ -119,7 +120,6 @@ void tui_start(void)
   unibi_out(ui, unibi_clear_screen);
   // Enable bracketed paste
   unibi_out(ui, data->unibi_ext.enable_bracketed_paste);
-
   // setup output handle in a separate event loop(we wanna do synchronous
   // write to the tty)
   data->write_loop = xmalloc(sizeof(uv_loop_t));
@@ -162,6 +162,7 @@ void tui_start(void)
   ui->set_icon = tui_set_icon;
   // Attach
   ui_attach(ui);
+  return ui;
 }
 
 static void tui_stop(UI *ui)
@@ -384,12 +385,14 @@ static void tui_mouse_on(UI *ui)
 {
   TUIData *data = ui->data;
   unibi_out(ui, data->unibi_ext.enable_mouse);
+  data->mouse_enabled = true;
 }
 
 static void tui_mouse_off(UI *ui)
 {
   TUIData *data = ui->data;
   unibi_out(ui, data->unibi_ext.disable_mouse);
+  data->mouse_enabled = false;
 }
 
 static void tui_insert_mode(UI *ui)
@@ -561,9 +564,14 @@ static void tui_flush(UI *ui)
 
 static void tui_suspend(UI *ui)
 {
+  TUIData *data = ui->data;
+  bool enable_mouse = data->mouse_enabled;
   tui_stop(ui);
   kill(0, SIGTSTP);
-  tui_start();
+  ui = tui_start();
+  if (enable_mouse) {
+    tui_mouse_on(ui);
+  }
 }
 
 static void tui_set_title(UI *ui, char *title)
