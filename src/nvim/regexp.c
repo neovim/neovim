@@ -3274,7 +3274,7 @@ static lpos_T reg_endzpos[NSUBEXP];     /* idem, end pos */
  * Uses curbuf for line count and 'iskeyword'.
  * If "line_lbr" is true, consider a "\n" in "line" to be a line break.
  *
- * Return TRUE if there is a match, FALSE if not.
+ * Returns 0 for failure, number of lines contained in the match otherwise.
  */
 static int 
 bt_regexec_nl (
@@ -3293,7 +3293,10 @@ bt_regexec_nl (
   ireg_ic = rmp->rm_ic;
   ireg_icombine = FALSE;
   ireg_maxcol = 0;
-  return bt_regexec_both(line, col, NULL) != 0;
+
+  long r = bt_regexec_both(line, col, NULL);
+  assert(r <= INT_MAX);
+  return (int)r;
 }
 
 
@@ -3312,8 +3315,6 @@ bt_regexec_nl (
 static long bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
                              linenr_T lnum, colnr_T col, proftime_T *tm)
 {
-  long r;
-
   reg_match = NULL;
   reg_mmatch = rmp;
   reg_buf = buf;
@@ -3325,14 +3326,13 @@ static long bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
   ireg_icombine = FALSE;
   ireg_maxcol = rmp->rmm_maxcol;
 
-  r = bt_regexec_both(NULL, col, tm);
-
-  return r;
+  return bt_regexec_both(NULL, col, tm);
 }
 
 /*
  * Match a regexp against a string ("line" points to the string) or multiple
  * lines ("line" is NULL, use reg_getline()).
+ * Returns 0 for failure, number of lines contained in the match otherwise.
  */
 static long bt_regexec_both(char_u *line,
                             colnr_T col, /* column to start looking for match */
@@ -7078,10 +7078,11 @@ static int vim_regexec_both(regmatch_T *rmp, char_u *line, colnr_T col, bool nl)
     p_re = save_p_re;
   }
 
-  return result;
+  return result > 0;
 }
 
 // Note: "*prog" may be freed and changed.
+// Return TRUE if there is a match, FALSE if not.
 int vim_regexec_prog(regprog_T **prog, bool ignore_case, char_u *line,
                       colnr_T col)
 {
@@ -7092,6 +7093,7 @@ int vim_regexec_prog(regprog_T **prog, bool ignore_case, char_u *line,
 }
 
 // Note: "rmp->regprog" may be freed and changed.
+// Return TRUE if there is a match, FALSE if not.
 int vim_regexec(regmatch_T *rmp, char_u *line, colnr_T col)
 {
   return vim_regexec_both(rmp, line, col, false);
@@ -7099,6 +7101,7 @@ int vim_regexec(regmatch_T *rmp, char_u *line, colnr_T col)
 
 // Like vim_regexec(), but consider a "\n" in "line" to be a line break.
 // Note: "rmp->regprog" may be freed and changed.
+// Return TRUE if there is a match, FALSE if not.
 int vim_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col)
 {
   return vim_regexec_both(rmp, line, col, true);
@@ -7145,5 +7148,5 @@ long vim_regexec_multi(
     p_re = save_p_re;
   }
 
-  return result;
+  return result <= 0 ? 0 : result;
 }
