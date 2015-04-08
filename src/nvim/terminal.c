@@ -307,9 +307,12 @@ void terminal_close(Terminal *term, char *msg)
   term->forward_mouse = false;
   term->closed = true;
   if (!msg || exiting) {
-    // If no msg was given, this was called by close_buffer(buffer.c) so we
-    // should not wait for the user to press a key. Also cannot wait if
-    // `exiting == true`
+    // If no msg was given, this was called by close_buffer(buffer.c).  Or if
+    // exiting, we must inform the buffer the terminal no longer exists so that
+    // close_buffer() doesn't call this again.
+    term->buf->terminal = NULL;
+    term->buf = NULL;
+    // We should not wait for the user to press a key.
     term->opts.close_cb(term->opts.data);
   } else {
     terminal_receive(term, msg, strlen(msg));
@@ -338,7 +341,7 @@ void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
   // terminal in the current tab.
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (!wp->w_closing && wp->w_buffer == term->buf) {
-      width = (uint16_t)MIN(width, (uint16_t)wp->w_width);
+      width = (uint16_t)MIN(width, (uint16_t)(wp->w_width - win_col_off(wp)));
       height = (uint16_t)MIN(height, (uint16_t)wp->w_height);
     }
   }
@@ -353,8 +356,14 @@ void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
   invalidate_terminal(term, -1, -1);
 }
 
-void terminal_enter(Terminal *term, bool process_deferred)
+void terminal_enter(bool process_deferred)
 {
+  Terminal *term = curbuf->terminal;
+  assert(term && "should only be called when curbuf has a terminal");
+
+  // Ensure the terminal is properly sized.
+  terminal_resize(term, 0, 0);
+
   checkpcmark();
   setpcmark();
   int save_state = State;
@@ -373,7 +382,9 @@ void terminal_enter(Terminal *term, bool process_deferred)
   int c;
   bool close = false;
 
-  for (;;) {
+  bool got_bs = false;  // True if the last input was <C-\>
+
+  while (term->buf == curbuf) {
     if (process_deferred) {
       event_enable_deferred();
     }
@@ -385,14 +396,6 @@ void terminal_enter(Terminal *term, bool process_deferred)
     }
 
     switch (c) {
-      case Ctrl_BSL:
-        c = safe_vgetc();
-        if (c == Ctrl_N) {
-          goto end;
-        }
-        terminal_send_key(term, c);
-        break;
-
       case K_LEFTMOUSE:
       case K_LEFTDRAG:
       case K_LEFTRELEASE:
@@ -413,12 +416,22 @@ void terminal_enter(Terminal *term, bool process_deferred)
         event_process();
         break;
 
+      case Ctrl_N:
+        if (got_bs) {
+          goto end;
+        }
+
       default:
+        if (c == Ctrl_BSL && !got_bs) {
+          got_bs = true;
+          break;
+        }
         if (term->closed) {
           close = true;
           goto end;
         }
 
+        got_bs = false;
         terminal_send_key(term, c);
     }
   }
@@ -431,7 +444,7 @@ end:
   invalidate_terminal(term, term->cursor.row, term->cursor.row + 1);
   mapped_ctrl_c = save_mapped_ctrl_c;
   unshowmode(true);
-  redraw(false);
+  redraw(term->buf != curbuf);
   ui_busy_stop();
   if (close) {
     term->opts.close_cb(term->opts.data);
@@ -441,7 +454,9 @@ end:
 
 void terminal_destroy(Terminal *term)
 {
-  term->buf->terminal = NULL;
+  if (term->buf) {
+    term->buf->terminal = NULL;
+  }
   term->buf = NULL;
   pmap_del(ptr_t)(invalidated_terminals, term);
   for (size_t i = 0 ; i < term->sb_current; i++) {
@@ -920,8 +935,13 @@ static void on_refresh(Event event)
   // be used act on terminal output.
   block_autocmds();
   map_foreach(invalidated_terminals, term, stub, {
-    if (!term->buf) {
+    // TODO(SplinterOfChaos): Find the condition that makes term->buf invalid.
+    bool valid = true;
+    if (!term->buf || !(valid = buf_valid(term->buf))) {
       // destroyed by `close_buffer`. Dont do anything else
+      if (!valid) {
+        term->buf = NULL;
+      }
       continue;
     }
     bool pending_resize = term->pending_resize;
@@ -1018,6 +1038,11 @@ static void refresh_screen(Terminal *term)
 
 static void redraw(bool restore_cursor)
 {
+  Terminal *term = curbuf->terminal;
+  if (!term) {
+    restore_cursor = true;
+  }
+
   int save_row, save_col;
   if (restore_cursor) {
     // save the current row/col to restore after updating screen when not
@@ -1040,7 +1065,6 @@ static void redraw(bool restore_cursor)
 
   showruler(false);
 
-  Terminal *term = curbuf->terminal;
   if (term && is_focused(term)) {
     curwin->w_wrow = term->cursor.row;
     curwin->w_wcol = term->cursor.col + win_col_off(curwin);
