@@ -982,8 +982,8 @@ EXTERN char breakat_flags[256];         /* which characters are in 'breakat' */
  * Makefile to make their value depend on the Makefile.
  */
 #ifdef HAVE_PATHDEF
-extern char_u *default_vim_dir;
-extern char_u *default_vimruntime_dir;
+extern char *default_vim_dir;
+extern char *default_vimruntime_dir;
 extern char_u *compiled_user;
 extern char_u *compiled_sys;
 #endif
