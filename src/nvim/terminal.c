@@ -130,8 +130,6 @@ struct terminal {
   // the default values are used to obtain the color numbers passed to cterm
   // colors
   RgbValue colors[256];
-  // attributes for focused/unfocused cursor cells
-  int focused_cursor_attr_id, unfocused_cursor_attr_id;
 };
 
 static VTermScreenCallbacks vterm_screen_callbacks = {
@@ -258,41 +256,6 @@ Terminal *terminal_open(TerminalOptions opts)
       vterm_state_get_palette_color(state, i, &color);
       rv->colors[i] = RGB(color.red, color.green, color.blue);
     }
-  }
-
-  // Configure cursor highlighting when focused/unfocused
-  char *group = get_config_string(rv, "terminal_focused_cursor_highlight");
-  if (group) {
-    int group_id = syn_name2id((uint8_t *)group);
-    free(group);
-
-    if (group_id) {
-      rv->focused_cursor_attr_id = syn_id2attr(group_id);
-    }
-  }
-  if (!rv->focused_cursor_attr_id) {
-    rv->focused_cursor_attr_id = get_attr_entry(&(attrentry_T) {
-      .rgb_ae_attr = HL_INVERSE, .rgb_fg_color = -1, .rgb_bg_color = -1,
-      .cterm_ae_attr = HL_INVERSE, .cterm_fg_color = 0, .cterm_bg_color = 0
-    });
-  }
-
-  group = get_config_string(rv, "terminal_unfocused_cursor_highlight");
-  if (group) {
-    int group_id = syn_name2id((uint8_t *)group);
-    free(group);
-
-    if (group_id) {
-      rv->unfocused_cursor_attr_id = syn_id2attr(group_id);
-    }
-  }
-  if (!rv->unfocused_cursor_attr_id) {
-    int yellow_rgb = RGB(0xfc, 0xe9, 0x4f);
-    int yellow_term = 12;
-    rv->unfocused_cursor_attr_id = get_attr_entry(&(attrentry_T) {
-      .rgb_ae_attr = 0, .rgb_fg_color = -1, .rgb_bg_color = yellow_rgb,
-      .cterm_ae_attr = 0, .cterm_fg_color = 0, .cterm_bg_color = yellow_term,
-    });
   }
 
   return rv;
@@ -555,7 +518,7 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
     if (term->cursor.visible && term->cursor.row == row
         && term->cursor.col == col) {
       attr_id = hl_combine_attr(attr_id, is_focused(term) && wp == curwin ?
-          term->focused_cursor_attr_id : term->unfocused_cursor_attr_id);
+          hl_attr(HLF_TERM) : hl_attr(HLF_TERMNC));
     }
 
     term_attrs[col] = attr_id;

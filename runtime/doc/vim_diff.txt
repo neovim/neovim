@@ -68,6 +68,8 @@ Events:
 
 Highlight groups:
 - |hl-EndOfBuffer|
+- |hl-TermCursor|
+- |hl-TermCursorNC|
 
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*

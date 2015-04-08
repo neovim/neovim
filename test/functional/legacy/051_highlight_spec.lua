@@ -24,10 +24,10 @@ describe(':highlight', function()
                          guifg=Blue      |
       EndOfBuffer    xxx links to NonText|
                                          |
+      TermCursor     xxx cterm=reverse   |
+                         gui=reverse     |
+      TermCursorNC   xxx cleared         |
       NonText        xxx ctermfg=12      |
-                         gui=bold        |
-                         guifg=Blue      |
-      Directory      xxx ctermfg=4       |
       -- More --^                         |
     ]])
     feed('q')

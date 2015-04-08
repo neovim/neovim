@@ -34,6 +34,8 @@ local function disable_mouse() feed_termcode('[?1002l') end
 
 
 local function screen_setup(extra_height)
+  nvim('command', 'highlight TermCursor cterm=reverse')
+  nvim('command', 'highlight TermCursorNC ctermbg=11')
   nvim('set_var', 'terminal_scrollback_buffer_size', 10)
   if not extra_height then extra_height = 0 end
   local screen = Screen.new(50, 7 + extra_height)

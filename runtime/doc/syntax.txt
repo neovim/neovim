@@ -4763,6 +4763,10 @@ DiffText	diff mode: Changed text within a changed line |diff.txt|
 						 {Nvim} *hl-EndOfBuffer*
 EndOfBuffer	filler lines (~) after the end of the buffer.
 		By default, this is highlighted like |hl-NonText|.
+						 {Nvim} *hl-TermCursor*
+TermCursor	cursor in a focused terminal
+						 {Nvim} *hl-TermCursorNC*
+TermCursorNC	cursor in an unfocused terminal
 							*hl-ErrorMsg*
 ErrorMsg	error messages on the command line
 							*hl-VertSplit*
