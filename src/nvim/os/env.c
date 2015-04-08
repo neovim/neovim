@@ -495,13 +495,14 @@ char_u *vim_getenv(char_u *name, bool *mustfree)
   if (p == NULL) {
     /* Only use default_vimruntime_dir when it is not empty */
     if (vimruntime && *default_vimruntime_dir != NUL) {
-      p = default_vimruntime_dir;
+      p = (char_u *)default_vimruntime_dir;
       *mustfree = false;
     } else if (*default_vim_dir != NUL) {
-      if (vimruntime && (p = vim_version_dir(default_vim_dir)) != NULL) {
+      if (vimruntime
+          && (p = vim_version_dir((char_u *)default_vim_dir)) != NULL) {
         *mustfree = true;
       } else {
-        p = default_vim_dir;
+        p = (char_u *)default_vim_dir;
         *mustfree = false;
       }
     }
