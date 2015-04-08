@@ -1047,7 +1047,7 @@ static void redraw(bool restore_cursor)
     setcursor();
   } else if (restore_cursor) {
     ui_cursor_goto(save_row, save_col);
-  } else {
+  } else if (term) {
     // exiting terminal focus, put the window cursor in a valid position
     int height, width;
     vterm_get_size(term->vt, &height, &width);
@@ -1099,28 +1099,30 @@ static bool is_focused(Terminal *term)
   do {                                                                   \
     Error err;                                                           \
     o = dict_get_value(t->buf->b_vars, cstr_as_string(k), &err);         \
-    if (obj.type == kObjectTypeNil) {                                    \
+    if (o.type == kObjectTypeNil) {                                      \
       o = dict_get_value(&globvardict, cstr_as_string(k), &err);         \
     }                                                                    \
   } while (0)
 
 static char *get_config_string(Terminal *term, char *key)
 {
-  Object obj = OBJECT_INIT;
+  Object obj;
   GET_CONFIG_VALUE(term, key, obj);
   if (obj.type == kObjectTypeString) {
     return obj.data.string.data;
   }
+  api_free_object(obj);
   return NULL;
 }
 
 static int get_config_int(Terminal *term, char *key)
 {
-  Object obj = OBJECT_INIT;
+  Object obj;
   GET_CONFIG_VALUE(term, key, obj);
   if (obj.type == kObjectTypeInteger) {
     return (int)obj.data.integer;
   }
+  api_free_object(obj);
   return 0;
 }
 

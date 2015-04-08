@@ -5942,18 +5942,23 @@ dictitem_T *dict_find(dict_T *d, char_u *key, int len)
   return HI2DI(hi);
 }
 
-// Get a function from a dictionary
-static ufunc_T *get_dict_callback(dict_T *d, char *key)
+/// Get a function from a dictionary
+/// @param[out] result The address where a pointer to the wanted callback
+///                    will be left.
+/// @return true/false on success/failure.
+static bool get_dict_callback(dict_T *d, char *key, ufunc_T **result)
 {
   dictitem_T *di = dict_find(d, (uint8_t *)key, -1);
 
   if (di == NULL) {
-    return NULL;
+    *result = NULL;
+    return true;
   }
   
   if (di->di_tv.v_type != VAR_FUNC && di->di_tv.v_type != VAR_STRING) {
     EMSG(_("Argument is not a function or function name"));
-    return NULL;
+    *result = NULL;
+    return false;
   }
 
   uint8_t *name = di->di_tv.vval.v_string;
@@ -5970,11 +5975,13 @@ static ufunc_T *get_dict_callback(dict_T *d, char *key)
 
   if (!rv) {
     EMSG2(_("Function %s doesn't exist"), name);
-    return NULL;
+    *result = NULL;
+    return false;
   }
   rv->uf_refcount++;
 
-  return rv;
+  *result = rv;
+  return true;
 }
 
 /*
@@ -10810,6 +10817,8 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
     return;
   }
 
+  assert(args->lv_first);
+ 
   if (!os_can_exe(args->lv_first->li_tv.vval.v_string, NULL)) {
     // String is not executable
     EMSG2(e_jobexe, args->lv_first->li_tv.vval.v_string);
@@ -10820,8 +10829,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
   ufunc_T *on_stdout = NULL, *on_stderr = NULL, *on_exit = NULL;
   if (argvars[1].v_type == VAR_DICT) {
     job_opts = argvars[1].vval.v_dict;
-    common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit);
-    if (did_emsg) {
+    if (!common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit)) {
       return;
     }
   }
@@ -15077,8 +15085,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
   dict_T *job_opts = NULL;
   if (argvars[1].v_type == VAR_DICT) {
     job_opts = argvars[1].vval.v_dict;
-    common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit);
-    if (did_emsg) {
+    if (!common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit)) {
       return;
     }
   }
@@ -20051,27 +20058,27 @@ static inline JobOptions common_job_options(char **argv, ufunc_T *on_stdout,
   return opts;
 }
 
-static inline void common_job_callbacks(dict_T *vopts, ufunc_T **on_stdout,
-    ufunc_T **on_stderr, ufunc_T **on_exit)
+/// Return true/false on success/failure.
+static inline bool common_job_callbacks(dict_T *vopts, ufunc_T **on_stdout,
+                                        ufunc_T **on_stderr, ufunc_T **on_exit)
 {
-  *on_stdout = get_dict_callback(vopts, "on_stdout");
-  *on_stderr = get_dict_callback(vopts, "on_stderr");
-  *on_exit = get_dict_callback(vopts, "on_exit");
-  if (did_emsg) {
-    if (*on_stdout) {
-      user_func_unref(*on_stdout);
-    }
-    if (*on_stderr) {
-      user_func_unref(*on_stderr);
-    }
-    if (*on_exit) {
-      user_func_unref(*on_exit);
-    }
-    return;
+  if (get_dict_callback(vopts, "on_stdout", on_stdout)
+      && get_dict_callback(vopts, "on_stderr", on_stderr)
+      && get_dict_callback(vopts, "on_exit", on_exit)) {
+    vopts->internal_refcount++;
+    vopts->dv_refcount++;
+    return true;
   }
-
-  vopts->internal_refcount++;
-  vopts->dv_refcount++;
+  if (*on_stdout) {
+    user_func_unref(*on_stdout);
+  }
+  if (*on_stderr) {
+    user_func_unref(*on_stderr);
+  }
+  if (*on_exit) {
+    user_func_unref(*on_exit);
+  }
+  return false;
 }
 
 static inline Job *common_job_start(JobOptions opts, typval_T *rettv)
