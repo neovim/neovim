@@ -146,9 +146,6 @@ void setpcmark(void)
 {
   int i;
   xfmark_T    *fm;
-#ifdef JUMPLIST_ROTATE
-  xfmark_T tempmark;
-#endif
 
   /* for :global the mark is set only once */
   if (global_busy || listcmd_busy || cmdmod.keepjumps)
@@ -156,23 +153,6 @@ void setpcmark(void)
 
   curwin->w_prev_pcmark = curwin->w_pcmark;
   curwin->w_pcmark = curwin->w_cursor;
-
-# ifdef JUMPLIST_ROTATE
-  /*
-   * If last used entry is not at the top, put it at the top by rotating
-   * the stack until it is (the newer entries will be at the bottom).
-   * Keep one entry (the last used one) at the top.
-   */
-  if (curwin->w_jumplistidx < curwin->w_jumplistlen)
-    ++curwin->w_jumplistidx;
-  while (curwin->w_jumplistidx < curwin->w_jumplistlen) {
-    tempmark = curwin->w_jumplist[curwin->w_jumplistlen - 1];
-    for (i = curwin->w_jumplistlen - 1; i > 0; --i)
-      curwin->w_jumplist[i] = curwin->w_jumplist[i - 1];
-    curwin->w_jumplist[0] = tempmark;
-    ++curwin->w_jumplistidx;
-  }
-# endif
 
   /* If jumplist is full: remove oldest entry */
   if (++curwin->w_jumplistlen > JUMPLISTSIZE) {
