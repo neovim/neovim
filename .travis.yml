@@ -1,6 +1,9 @@
 language: c
 os:
   - linux
+branches:
+  except:
+    - nightly
 env:
   global:
     - CI_SCRIPTS=$TRAVIS_BUILD_DIR/.ci
