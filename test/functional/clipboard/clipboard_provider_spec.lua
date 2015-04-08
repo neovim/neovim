@@ -55,6 +55,12 @@ local function basic_register_test(noblock)
     , stuff and some more
     some textsome some text, stuff and some more]])
 
+  -- deleting a line does update ""
+  feed('ggdd""P')
+  expect([[
+    , stuff and some more
+    some textsome some text, stuff and some more]])
+
   feed('ggw<c-v>jwyggP')
   if noblock then
     expect([[

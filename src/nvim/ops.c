@@ -775,9 +775,12 @@ void get_yank_register(int regname, int mode)
 {
   int i;
 
+  if (mode == YREG_PASTE && get_clipboard(regname, &y_current, false)) {
+    // y_current is set to clipboard contents.
+    return;
+  }
   y_append = FALSE;
-  int unnamedclip = cb_flags & CB_UNNAMEDMASK;
-  if ((regname == 0 || regname == '"') && !unnamedclip && mode != YREG_YANK && y_previous != NULL) {
+  if ((regname == 0 || regname == '"') && mode != YREG_YANK && y_previous != NULL) {
     y_current = y_previous;
     return;
   }
@@ -801,8 +804,6 @@ void get_yank_register(int regname, int mode)
   if (mode == YREG_YANK) {
     // remember the written register for unnamed paste
     y_previous = y_current;
-  } else if (mode == YREG_PASTE) {
-    get_clipboard(regname, &y_current, false);
   }
 }
 
@@ -5366,11 +5367,11 @@ static struct yankreg* adjust_clipboard_name(int *name, bool quiet, bool writing
   return NULL;
 }
 
-static void get_clipboard(int name, struct yankreg** target, bool quiet)
+static bool get_clipboard(int name, struct yankreg** target, bool quiet)
 {
   struct yankreg* reg = adjust_clipboard_name(&name, quiet, false);
   if (reg == NULL) {
-    return;
+    return false;
   }
   free_register(reg);
 
@@ -5455,7 +5456,7 @@ static void get_clipboard(int name, struct yankreg** target, bool quiet)
   }
 
   *target = reg;
-  return;
+  return true;
 
 err:
   if (reg->y_array) {
@@ -5467,6 +5468,8 @@ err:
   reg->y_array = NULL;
   reg->y_size = 0;
   EMSG("clipboard: provider returned invalid data");
+  *target = reg;
+  return false;
 }
 
 static void set_clipboard(int name)
