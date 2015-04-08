@@ -5310,7 +5310,28 @@ static void free_register(struct yankreg *reg)
   y_current = curr;
 }
 
-// return target register
+/// Check if the default register (used in an unnamed paste) should be a
+/// clipboard register. This happens when `clipboard=unnamed[plus]` is set
+/// and a provider is available.
+///
+/// @returns the name of of a clipboard register that should be used, or `NUL` if none.
+int get_default_register_name(void)
+{
+  int name = NUL;
+  adjust_clipboard_name(&name, true, false);
+  return name;
+}
+
+/// Determine if register `*name` should be used as a clipboard.
+/// In an unnammed operation, `*name` is `NUL` and will be adjusted to `'*'/'+'` if
+/// `clipboard=unnamed[plus]` is set.
+///
+/// @param name The name of register, or `NUL` if unnamed.
+/// @param quiet Suppress error messages
+/// @param writing if we're setting the contents of the clipboard
+///
+/// @returns the yankreg that should be used, or `NULL`
+/// if the register isn't a clipboard or provider isn't available.
 static struct yankreg* adjust_clipboard_name(int *name, bool quiet, bool writing) {
   if (*name == '*' || *name == '+') {
     if(!eval_has_provider("clipboard")) {

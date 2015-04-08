@@ -914,7 +914,7 @@ getcount:
       && !oap->op_type
       && (idx < 0 || !(nv_cmds[idx].cmd_flags & NV_KEEPREG))) {
     clearop(oap);
-    set_reg_var(0);
+    set_reg_var(get_default_register_name());
   }
 
   /* Get the length of mapped chars again after typing a count, second
