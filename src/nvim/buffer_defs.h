@@ -6,6 +6,8 @@
 // for FILE
 #include <stdio.h>
 
+typedef struct file_buffer buf_T; // Forward declaration
+
 // for garray_T
 #include "nvim/garray.h"
 // for pos_T, lpos_T and linenr_T
@@ -16,7 +18,7 @@
 #include "nvim/iconv.h"
 // for jump list and tag stack sizes in a buffer and mark types
 #include "nvim/mark_defs.h"
-// for u_header_T
+// for u_header_T; needs buf_T.
 #include "nvim/undo_defs.h"
 // for hashtab_T
 #include "nvim/hashtab.h"
@@ -80,7 +82,6 @@ typedef struct window_S win_T;
 typedef struct wininfo_S wininfo_T;
 typedef struct frame_S frame_T;
 typedef int scid_T;                     /* script ID */
-typedef struct file_buffer buf_T;       /* forward declaration */
 
 // for struct memline (it needs memfile_T)
 #include "nvim/memline_defs.h"

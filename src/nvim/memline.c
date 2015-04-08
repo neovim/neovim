@@ -91,8 +91,6 @@ typedef struct pointer_entry PTR_EN;        /* block/line-count pair */
 #define PTR_ID         (('p' << 8) + 't')   /* pointer block id */
 #define BLOCK0_ID0     'b'                  /* block 0 id 0 */
 #define BLOCK0_ID1     '0'                  /* block 0 id 1 */
-#define BLOCK0_ID1_C0  'c'                  /* block 0 id 1 'cm' 0 */
-#define BLOCK0_ID1_C1  'C'                  /* block 0 id 1 'cm' 1 */
 
 /*
  * pointer to a block, used in a pointer block
@@ -176,8 +174,7 @@ struct data_block {
  * variables, because the rest of the swap file is not portable.
  */
 struct block0 {
-  char_u b0_id[2];              /* id for block 0: BLOCK0_ID0 and BLOCK0_ID1,
-                                 * BLOCK0_ID1_C0, BLOCK0_ID1_C1 */
+  char_u b0_id[2];              ///< ID for block 0: BLOCK0_ID0 and BLOCK0_ID1.
   char_u b0_version[10];        /* Vim version string */
   char_u b0_page_size[4];       /* number of bytes per page */
   char_u b0_mtime[4];           /* last modification time of file */
@@ -619,22 +616,16 @@ void ml_timestamp(buf_T *buf)
   ml_upd_block0(buf, UB_FNAME);
 }
 
-/*
- * Return FAIL when the ID of "b0p" is wrong.
- */
-static int ml_check_b0_id(ZERO_BL *b0p)
+/// Checks whether the IDs in b0 are valid.
+static bool ml_check_b0_id(ZERO_BL *b0p)
+  FUNC_ATTR_NONNULL_ALL
 {
-  if (b0p->b0_id[0] != BLOCK0_ID0
-      || (b0p->b0_id[1] != BLOCK0_ID1
-          && b0p->b0_id[1] != BLOCK0_ID1_C0
-          && b0p->b0_id[1] != BLOCK0_ID1_C1)
-      )
-    return FAIL;
-  return OK;
+  return b0p->b0_id[0] == BLOCK0_ID0 && b0p->b0_id[1] == BLOCK0_ID1;
 }
 
-/// Return true if all strings in b0 are correct (nul-terminated).
-static bool ml_check_b0_strings(ZERO_BL *b0p) FUNC_ATTR_NONNULL_ALL
+/// Checks whether all strings in b0 are valid (i.e. nul-terminated).
+static bool ml_check_b0_strings(ZERO_BL *b0p)
+  FUNC_ATTR_NONNULL_ALL
 {
   return (memchr(b0p->b0_version, NUL, 10)
           && memchr(b0p->b0_uname, NUL, B0_UNAME_SIZE)

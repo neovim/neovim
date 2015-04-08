@@ -4,6 +4,7 @@
 #include <time.h>  // for time_t
 
 #include "nvim/pos.h"
+#include "nvim/buffer_defs.h"
 
 /* Structure to store info about the Visual area. */
 typedef struct {
@@ -66,5 +67,11 @@ struct u_header {
 /* values for uh_flags */
 #define UH_CHANGED  0x01        /* b_changed flag before undo/after redo */
 #define UH_EMPTYBUF 0x02        /* buffer was empty */
+
+/// Structure passed around between undofile functions.
+typedef struct {
+  buf_T *bi_buf;
+  FILE *bi_fp;
+} bufinfo_T;
 
 #endif // NVIM_UNDO_DEFS_H

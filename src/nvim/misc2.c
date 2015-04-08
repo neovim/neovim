@@ -9,6 +9,7 @@
 /*
  * misc2.c: Various functions.
  */
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <string.h>
@@ -29,6 +30,7 @@
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
+#include "nvim/macros.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memfile.h"
@@ -459,22 +461,33 @@ char *read_string(FILE *fd, size_t cnt)
   return (char *)str;
 }
 
-/// Write a number to file "fd", MSB first, in "len" bytes.
-/// @return OK/FAIL.
-int put_bytes(FILE *fd, uintmax_t number, unsigned int len)
+/// Writes a number to file "fd", most significant bit first, in "len" bytes.
+/// @returns false in case of an error.
+bool put_bytes(FILE *fd, uintmax_t number, size_t len)
 {
-  for (unsigned int i = len - 1; i < len; --i)
-    if (putc((int)(number >> (i * 8)), fd) == EOF)
-      return FAIL;
-  return OK;
+  assert(len > 0);
+  for (size_t i = len - 1; i < len; i--) {
+    if (putc((int)(number >> (i * 8)), fd) == EOF) {
+      return false;
+    }
+  }
+  return true;
 }
 
-/// Write time_t to file "fd" in 8 bytes.
+/// Writes time_t to file "fd" in 8 bytes.
 void put_time(FILE *fd, time_t time_)
+{
+  uint8_t buf[8];
+  time_to_bytes(time_, buf);
+  fwrite(buf, sizeof(uint8_t), ARRAY_SIZE(buf), fd);
+}
+
+/// Writes time_t to "buf[8]".
+void time_to_bytes(time_t time_, uint8_t buf[8])
 {
   // time_t can be up to 8 bytes in size, more than uintmax_t in 32 bits
   // systems, thus we can't use put_bytes() here.
-  for (unsigned int i = 7; i < 8; --i) {
-    putc((int)((uint64_t)time_ >> (i * 8)), fd);
+  for (size_t i = 7, bufi = 0; bufi < 8; i--, bufi++) {
+    buf[bufi] = (uint8_t)((uint64_t)time_ >> (i * 8));
   }
 }
