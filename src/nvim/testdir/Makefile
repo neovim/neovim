@@ -11,7 +11,7 @@ SCRIPTS := test_autoformat_join.out                                    \
            test_eval.out                                               \
                                    test3.out                           \
                                    test8.out               test10.out  \
-           test11.out  test12.out  test13.out  test14.out              \
+           test11.out  test12.out              test14.out              \
                        test17.out                                      \
                                                test24.out              \
            test26.out  test27.out              test29.out  test30.out  \
