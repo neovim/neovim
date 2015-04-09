@@ -99,16 +99,13 @@ variables (set via the |TermOpen| autocmd):
 - `{g,b}:terminal_color_$NUM`: The terminal color palette, where `$NUM` is the
   color index, between 0 and 255 inclusive. This only affects UIs with RGB
   capabilities; for normal terminals the color index is simply forwarded.
-- `{g,b}:terminal_focused_cursor_highlight`: Highlight group applied to the
-  cursor in a focused terminal. The default equivalent to having a group with
-  `cterm=reverse` `gui=reverse``.
-- `{g,b}:terminal_unfocused_cursor_highlight`: Highlight group applied to the
-  cursor in an unfocused terminal. The default equivalent to having a group with
-  `ctermbg=11` `guibg=#fce94f``.
 
 The configuration variables are only processed when the terminal starts, which
 is why it needs to be done with the |TermOpen| autocmd or setting global
 variables before the terminal is started.
+
+The terminal cursor can be highlighted via |hl-TermCursor| and
+|hl-TermCursorNC|.
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

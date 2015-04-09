@@ -129,10 +129,8 @@ describe('cursor with customized highlighting', function()
 
   before_each(function()
     clear()
-    nvim('set_var', 'terminal_focused_cursor_highlight', 'CursorFocused')
-    nvim('set_var', 'terminal_unfocused_cursor_highlight', 'CursorUnfocused')
-    nvim('command', 'highlight CursorFocused ctermfg=45 ctermbg=46')
-    nvim('command', 'highlight CursorUnfocused ctermfg=55 ctermbg=56')
+    nvim('command', 'highlight TermCursor ctermfg=45 ctermbg=46 cterm=NONE')
+    nvim('command', 'highlight TermCursorNC ctermfg=55 ctermbg=56 cterm=NONE')
     screen = Screen.new(50, 7)
     screen:set_default_attr_ids({
       [1] = {foreground = 45, background = 46},

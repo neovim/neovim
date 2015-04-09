@@ -3651,17 +3651,19 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'highlight'* *'hl'*
 'highlight' 'hl'	string	(default (as a single string):
-				     "8:SpecialKey,~:EndOfBuffer,@:NonText,i
-				     d:Directory,e:ErrorMsg,i:IncSearch,
-				     l:Search,m:MoreMsg,M:ModeMsg,n:LineNr,
+				     "8:SpecialKey,~:EndOfBuffer,z:TermCursor,
+				     Z:TermCursorNC,@:NonText,d:Directory,
+				     e:ErrorMsg,i:IncSearch,l:Search,
+				     m:MoreMsg,M:ModeMsg,n:LineNr,
 				     N:CursorLineNr,r:Question,s:StatusLine,
 				     S:StatusLineNC,c:VertSplit,t:Title,
-				     v:Visual,w:WarningMsg,W:WildMenu,f:Folded,
-				     F:FoldColumn,A:DiffAdd,C:DiffChange,
-				     D:DiffDelete,T:DiffText,>:SignColumn,
-				     B:SpellBad,P:SpellCap,R:SpellRare,
-				     L:SpellLocal,-:Conceal,+:Pmenu,=:PmenuSel,
-				     x:PmenuSbar,X:PmenuThumb")
+				     v:Visual,w:WarningMsg,W:WildMenu,
+				     f:Folded,F:FoldColumn,A:DiffAdd,
+				     C:DiffChange,D:DiffDelete,T:DiffText,
+				     >:SignColumn,B:SpellBad,P:SpellCap,
+				     R:SpellRare,L:SpellLocal,-:Conceal,
+				     +:Pmenu,=:PmenuSel,x:PmenuSbar,
+				     X:PmenuThumb")
 			global
 			{not in Vi}
 	This option can be used to set highlighting mode for various
@@ -3670,6 +3672,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	use for that occasion.  The occasions are:
 	|hl-SpecialKey|	 8  Meta and special keys listed with ":map"
 	|hl-EndOfBuffer|      ~ lines after the last line in the buffer
+	|hl-TermCursor|	 z  Cursor in a focused terminal
+	|hl-TermCursorNC| Z Cursor in an unfocused terminal
 	|hl-NonText|	 @  '@' at the end of the window and
 			    characters from 'showbreak'
 	|hl-Directory|	 d  directories in CTRL-D listing and other special
@@ -3681,7 +3685,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|hl-ModeMsg|	 M  Mode (e.g., "-- INSERT --")
 	|hl-LineNr|	 n  line number for ":number" and ":#" commands, and
 			    when 'number' or 'relativenumber' option is set.
-	|hl-CursorLineNr|  N like n for when 'cursorline' or 'relativenumber' is
+	|hl-CursorLineNr| N like n for when 'cursorline' or 'relativenumber' is
 			    set.
 	|hl-Question|	 r  |hit-enter| prompt and yes/no questions
 	|hl-StatusLine|	 s  status line of current window |status-line|

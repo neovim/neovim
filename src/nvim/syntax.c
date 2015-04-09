@@ -5785,6 +5785,8 @@ static char *(highlight_init_both[]) =
       "TabLineSel term=bold cterm=bold gui=bold"),
   CENT("TabLineFill term=reverse cterm=reverse",
       "TabLineFill term=reverse cterm=reverse gui=reverse"),
+  CENT("TermCursor cterm=reverse",
+      "TermCursor cterm=reverse gui=reverse"),
   NULL
 };
 
