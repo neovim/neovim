@@ -60,6 +60,9 @@ typedef struct {
     int enter_insert_mode, exit_insert_mode;
     int set_rgb_foreground, set_rgb_background;
   } unibi_ext;
+
+  char *enter_insert_code;
+  char *leave_insert_code;
 } TUIData;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -181,6 +184,8 @@ static void tui_stop(UI *ui)
   // cursor should be set to normal before exiting alternate screen
   unibi_out(ui, unibi_cursor_normal);
   unibi_out(ui, unibi_exit_ca_mode);
+  free(data->enter_insert_code);
+  free(data->leave_insert_code);
   // Disable bracketed paste
   unibi_out(ui, data->unibi_ext.disable_bracketed_paste);
   flush_buf(ui);
@@ -772,23 +777,24 @@ static void fix_terminfo(TUIData *data)
     goto end;
   }
 
-#define TMUX_WRAP(seq) (inside_tmux ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
   // Support changing cursor shape on some popular terminals.
-  const char *term_prog = os_getenv("TERM_PROGRAM");
+  //const char *term_prog = os_getenv("TERM_PROGRAM");
 
-  if ((term_prog && !strcmp(term_prog, "iTerm.app"))
-      || os_getenv("ITERM_SESSION_ID") != NULL) {
-    // iterm
-    data->unibi_ext.enter_insert_mode = (int)unibi_add_ext_str(ut, NULL,
-        TMUX_WRAP("\x1b]50;CursorShape=1;BlinkingCursorEnabled=1\x07"));
-    data->unibi_ext.exit_insert_mode = (int)unibi_add_ext_str(ut, NULL,
-        TMUX_WRAP("\x1b]50;CursorShape=0;BlinkingCursorEnabled=0\x07"));
-  } else {
-    // xterm-like sequences for blinking bar and solid block
-    data->unibi_ext.enter_insert_mode = (int)unibi_add_ext_str(ut, NULL,
-        TMUX_WRAP("\x1b[5 q"));
-    data->unibi_ext.exit_insert_mode = (int)unibi_add_ext_str(ut, NULL,
-        TMUX_WRAP("\x1b[2 q"));
+  const char *enter_env = os_getenv("NVIM_TUI_ENTER_INSERT");
+  const char *leave_env = os_getenv("NVIM_TUI_LEAVE_INSERT");
+  if (enter_env && leave_env && *enter_env && *leave_env) {
+    const char *fmt = inside_tmux ? "\x1bPtmux;\x1b%s\x1b\\" : "%s";
+    size_t extra = strlen(fmt) - 2;  // Subtract the %s part.
+
+    data->enter_insert_code = xmallocz(strlen(enter_env) + extra);
+    data->leave_insert_code = xmallocz(strlen(leave_env) + extra);
+    sprintf(data->enter_insert_code, fmt, enter_env);
+    sprintf(data->leave_insert_code, fmt, leave_env);
+
+    data->unibi_ext.enter_insert_mode =
+      (int)unibi_add_ext_str(ut, NULL, data->enter_insert_code);
+    data->unibi_ext.exit_insert_mode =
+      (int)unibi_add_ext_str(ut, NULL, data->leave_insert_code);
   }
 
 end:
