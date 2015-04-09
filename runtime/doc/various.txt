@@ -279,7 +279,6 @@ g8			Print the hex values of the bytes used in the
 <			The screen is not redrawn then, thus you have to use
 			CTRL-L or ":redraw!" if the command did display
 			something.
-			Also see |shell-window|.
 
 							*:!!*
 :!!			Repeat last ":!{cmd}".
