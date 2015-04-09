@@ -124,7 +124,11 @@ void event_poll(int ms)
   }
 
   recursive--;  // Can re-enter uv_run now
-  process_events_from(immediate_events);
+
+  // In case this is run before event_init, don't process any events.
+  if (immediate_events) {
+    process_events_from(immediate_events);
+  }
 }
 
 bool event_has_deferred(void)

@@ -10819,9 +10819,10 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
 
   assert(args->lv_first);
  
-  if (!os_can_exe(args->lv_first->li_tv.vval.v_string, NULL)) {
+  const char_u *exe = get_tv_string(&args->lv_first->li_tv);
+  if (!os_can_exe(exe, NULL)) {
     // String is not executable
-    EMSG2(e_jobexe, args->lv_first->li_tv.vval.v_string);
+    EMSG2(e_jobexe, exe);
     return;
   }
 
@@ -10838,7 +10839,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
   int i = 0;
   char **argv = xcalloc(argc + 1, sizeof(char *));
   for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-    argv[i++] = xstrdup((char *)arg->li_tv.vval.v_string);
+    argv[i++] = xstrdup((char *) get_tv_string(&arg->li_tv));
   }
 
   JobOptions opts = common_job_options(argv, on_stdout, on_stderr, on_exit,
@@ -12750,7 +12751,7 @@ static void f_rpcnotify(typval_T *argvars, typval_T *rettv)
   }
 
   if (!channel_send_event((uint64_t)argvars[0].vval.v_number,
-                          (char *)argvars[1].vval.v_string,
+                          (char *)get_tv_string(&argvars[1]),
                           args)) {
     EMSG2(_(e_invarg2), "Channel doesn't exist");
     return;
@@ -12817,7 +12818,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv)
 
   Error err = ERROR_INIT;
   Object result = channel_send_call((uint64_t)argvars[0].vval.v_number,
-                                    (char *)argvars[1].vval.v_string,
+                                    (char *)get_tv_string(&argvars[1]),
                                     args,
                                     &err);
 
@@ -12881,13 +12882,17 @@ static void f_rpcstart(typval_T *argvars, typval_T *rettv)
   char **argv = xmalloc(sizeof(char_u *) * argvl);
 
   // Copy program name
+  if (argvars[0].vval.v_string == NULL || argvars[0].vval.v_string[0] == NUL) {
+    EMSG(_(e_api_spawn_failed));
+    return;
+  }
   argv[0] = xstrdup((char *)argvars[0].vval.v_string);
 
   int i = 1;
   // Copy arguments to the vector
   if (argsl > 0) {
     for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-      argv[i++] = xstrdup((char *)arg->li_tv.vval.v_string);
+      argv[i++] = xstrdup((char *) get_tv_string(&arg->li_tv));
     }
   }
 
@@ -14863,6 +14868,8 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
     if (retlist) {
       // return an empty list when there's no output
       rettv_list_alloc(rettv);
+    } else {
+      rettv->vval.v_string = (char_u *) xstrdup("");
     }
     return;
   }
