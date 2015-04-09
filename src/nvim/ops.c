@@ -79,7 +79,7 @@ static struct yankreg {
 } y_regs[NUM_REGISTERS];
 
 static struct yankreg   *y_current;         /* ptr to current yankreg */
-static int y_append;                        /* TRUE when appending */
+static bool y_append;                        /* true when appending */
 static struct yankreg   *y_previous = NULL; /* ptr to last written yankreg */
 
 static bool clipboard_didwarn_unnamed = false;
@@ -773,34 +773,32 @@ typedef enum {
 /// Obtain the location that would be read when pasting `regname`.
 void get_yank_register(int regname, int mode)
 {
-  int i;
+  y_append = false;
 
   if (mode == YREG_PASTE && get_clipboard(regname, &y_current, false)) {
     // y_current is set to clipboard contents.
     return;
-  }
-  y_append = FALSE;
-  if ((regname == 0 || regname == '"') && mode != YREG_YANK && y_previous != NULL) {
+  } else if (mode != YREG_YANK && (regname == 0 || regname == '"') && y_previous != NULL) {
     y_current = y_previous;
     return;
   }
-  i = regname;
-  if (VIM_ISDIGIT(i))
-    i -= '0';
-  else if (ASCII_ISLOWER(i))
-    i = CharOrdLow(i) + 10;
-  else if (ASCII_ISUPPER(i)) {
-    i = CharOrdUp(i) + 10;
-    y_append = TRUE;
+
+  int i = 0; // when not 0-9, a-z, A-Z or '-'/'+'/'*': use register 0
+  if (VIM_ISDIGIT(regname))
+    i = regname - '0';
+  else if (ASCII_ISLOWER(regname))
+    i = CharOrdLow(regname) + 10;
+  else if (ASCII_ISUPPER(regname)) {
+    i = CharOrdUp(regname) + 10;
+    y_append = true;
   } else if (regname == '-')
     i = DELETION_REGISTER;
   else if (regname == '*')
     i = STAR_REGISTER;
   else if (regname == '+')
     i = PLUS_REGISTER;
-  else                  /* not 0-9, a-z, A-Z or '-': use register 0 */
-    i = 0;
   y_current = &(y_regs[i]);
+
   if (mode == YREG_YANK) {
     // remember the written register for unnamed paste
     y_previous = y_current;
