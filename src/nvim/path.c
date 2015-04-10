@@ -428,7 +428,6 @@ bool path_has_wildcard(const char_u *p)
   return false;
 }
 
-#if defined(UNIX)
 /*
  * Unix style wildcard expansion code.
  * It's here because it's used both for Unix and Mac.
@@ -437,7 +436,6 @@ static int pstrcmp(const void *a, const void *b)
 {
   return pathcmp(*(char **)a, *(char **)b, -1);
 }
-#endif
 
 /// Checks if a path has a character path_expand can expand.
 /// @param p  The path to expand.
