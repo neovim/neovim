@@ -322,7 +322,9 @@ get_compile_flags(NVIM_VERSION_CFLAGS)
 
 add_subdirectory(test/includes)
 add_subdirectory(config)
-add_subdirectory(test/functional/fixtures) # compile pty/shell test programs
+if (NOT WIN32)
+  add_subdirectory(test/functional/fixtures) # compile pty/shell test programs
+endif()
 
 
 # Setup some test-related bits.  We do this after going down the tree because we
