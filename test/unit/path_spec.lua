@@ -425,19 +425,18 @@ describe('more path function', function()
       return ffi.string(c_file)
     end
 
+    before_each(function() lfs.mkdir('CamelCase') end)
+    after_each(function() lfs.rmdir('CamelCase') end)
+
     if ffi.os == 'Windows' or ffi.os == 'OSX' then
       it('Corrects the case of file names in Mac and Windows', function()
-        lfs.mkdir('CamelCase')
         eq('CamelCase', fix_case('camelcase'))
         eq('CamelCase', fix_case('cAMELcASE'))
-        lfs.rmdir('CamelCase')
       end)
     else
       it('does nothing on Linux', function()
-        lfs.mkdir('CamelCase')
         eq('camelcase', fix_case('camelcase'))
         eq('cAMELcASE', fix_case('cAMELcASE'))
-        lfs.mkdir('CamelCase')
       end)
     end
   end)
