@@ -894,8 +894,7 @@ static void on_refresh(Event event)
   }
   Terminal *term;
   void *stub; (void)(stub);
-  // dont process autocommands while updating terminal buffers. JobActivity can
-  // be used act on terminal output.
+  // don't process autocommands while updating terminal buffers
   block_autocmds();
   map_foreach(invalidated_terminals, term, stub, {
     // TODO(SplinterOfChaos): Find the condition that makes term->buf invalid.

@@ -6584,16 +6584,15 @@ apply_autocmds_group (
     fname = vim_strsave(fname);         /* make a copy, so we can change it */
   } else {
     sfname = vim_strsave(fname);
-    /* Don't try expanding FileType, Syntax, FuncUndefined, WindowID,
-     * ColorScheme, QuickFixCmd or JobActivity */
-    if (event == EVENT_FILETYPE
-        || event == EVENT_SYNTAX
+    // don't try expanding the following events
+    if (event == EVENT_COLORSCHEME
+        || event == EVENT_FILETYPE
         || event == EVENT_FUNCUNDEFINED
+        || event == EVENT_QUICKFIXCMDPOST
+        || event == EVENT_QUICKFIXCMDPRE
         || event == EVENT_REMOTEREPLY
         || event == EVENT_SPELLFILEMISSING
-        || event == EVENT_QUICKFIXCMDPRE
-        || event == EVENT_COLORSCHEME
-        || event == EVENT_QUICKFIXCMDPOST
+        || event == EVENT_SYNTAX
         || event == EVENT_TABCLOSED)
       fname = vim_strsave(fname);
     else
