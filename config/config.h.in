@@ -75,6 +75,7 @@
 
 #ifdef UNIX
 # define FEAT_TERMINAL_UI
+# define FEAT_PTY_PROCESS
 #endif
 
 #endif  // AUTO_CONFIG_H

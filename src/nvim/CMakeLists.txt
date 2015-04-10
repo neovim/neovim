@@ -44,6 +44,13 @@ foreach(sfile ${NEOVIM_SOURCES})
   if(${f} MATCHES "^(regexp_nfa.c)$")
     list(APPEND to_remove ${sfile})
   endif()
+  # Disable unsupported files pty/terminal in WIN32
+  if(WIN32 AND ${f} MATCHES "^(pty_process.c)$")
+    list(APPEND to_remove ${sfile})
+  endif()
+  if(WIN32 AND ${f} MATCHES "^(terminal.c)$")
+    list(APPEND to_remove ${sfile})
+  endif()
 endforeach()
 
 list(REMOVE_ITEM NEOVIM_SOURCES ${to_remove})

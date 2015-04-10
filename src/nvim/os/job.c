@@ -62,7 +62,9 @@ void job_init(void)
   uv_disable_stdio_inheritance();
   uv_timer_init(uv_default_loop(), &job_stop_timer);
   uv_signal_init(uv_default_loop(), &schld);
+#ifdef FEAT_PTY_PROCESS
   uv_signal_start(&schld, chld_handler, SIGCHLD);
+#endif
 }
 
 /// Releases job control resources and terminates running jobs
@@ -427,6 +429,7 @@ static void close_cb(uv_handle_t *handle)
   job_decref(handle_get_job(handle));
 }
 
+#ifdef FEAT_PTY_PROCESS
 static void job_exited(Event event)
 {
   Job *job = event.data;
@@ -470,4 +473,5 @@ static void chld_handler(uv_signal_t *handle, int signum)
     }
   }
 }
+#endif
 
