@@ -1,8 +1,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include <sys/wait.h>
-
 #include <uv.h>
 
 #include "nvim/os/uv_helpers.h"
@@ -19,6 +17,11 @@
 #include "nvim/os/time.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
+
+#ifdef HAVE_SYS_WAIT_H
+# include <sys/wait.h>
+#endif
+
 
 // {SIGNAL}_TIMEOUT is the time (in nanoseconds) that a job has to cleanly exit
 // before we send SIGNAL to it
