@@ -472,7 +472,7 @@ typedef struct {
 #define JobEventFreer(x)
 KMEMPOOL_INIT(JobEventPool, JobEvent, JobEventFreer)
 static kmempool_t(JobEventPool) *job_event_pool = NULL;
-static bool defer_job_callbacks = true;
+static int disable_job_defer = 0;
 
 /*
  * Initialize the global and v: variables.
@@ -10922,9 +10922,16 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv)
   list_T *args = argvars[0].vval.v_list;
   list_T *rv = list_alloc();
 
-  // must temporarily disable job event deferring so the callbacks are
-  // processed while waiting.
-  defer_job_callbacks = false;
+  ui_busy_start();
+  // disable breakchecks, which could result in job callbacks being executed
+  // at unexpected places
+  disable_breakcheck++;
+  // disable job event deferring so the callbacks are processed while waiting.
+  if (!disable_job_defer++) {
+    // process any pending job events in the deferred queue, but only do this if
+    // deferred is not disabled(at the top-level `jobwait()` call)
+    event_process();
+  }
   // For each item in the input list append an integer to the output list. -3
   // is used to represent an invalid job id, -2 is for a interrupted job and
   // -1 for jobs that were skipped or timed out.
@@ -10997,8 +11004,9 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv)
     // job exits
     data->status_ptr = NULL;
   }
-  // restore defer flag
-  defer_job_callbacks = true;
+  disable_job_defer--;
+  disable_breakcheck--;
+  ui_busy_stop();
 
   rv->lv_refcount++;
   rettv->v_type = VAR_LIST;
@@ -20176,7 +20184,7 @@ static inline void push_job_event(Job *job, ufunc_T *callback,
   event_push((Event) {
     .handler = on_job_event,
     .data = event_data
-  }, defer_job_callbacks);
+  }, !disable_job_defer);
 }
 
 static void on_job_stdout(RStream *rstream, void *job, bool eof)
