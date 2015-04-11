@@ -79,7 +79,7 @@ static struct yankreg {
 } y_regs[NUM_REGISTERS];
 
 static struct yankreg   *y_current;         /* ptr to current yankreg */
-static int y_append;                        /* TRUE when appending */
+static bool y_append;                        /* true when appending */
 static struct yankreg   *y_previous = NULL; /* ptr to last written yankreg */
 
 static bool clipboard_didwarn_unnamed = false;
@@ -773,36 +773,35 @@ typedef enum {
 /// Obtain the location that would be read when pasting `regname`.
 void get_yank_register(int regname, int mode)
 {
-  int i;
+  y_append = false;
 
-  y_append = FALSE;
-  int unnamedclip = cb_flags & CB_UNNAMEDMASK;
-  if ((regname == 0 || regname == '"') && !unnamedclip && mode != YREG_YANK && y_previous != NULL) {
+  if (mode == YREG_PASTE && get_clipboard(regname, &y_current, false)) {
+    // y_current is set to clipboard contents.
+    return;
+  } else if (mode != YREG_YANK && (regname == 0 || regname == '"') && y_previous != NULL) {
     y_current = y_previous;
     return;
   }
-  i = regname;
-  if (VIM_ISDIGIT(i))
-    i -= '0';
-  else if (ASCII_ISLOWER(i))
-    i = CharOrdLow(i) + 10;
-  else if (ASCII_ISUPPER(i)) {
-    i = CharOrdUp(i) + 10;
-    y_append = TRUE;
+
+  int i = 0; // when not 0-9, a-z, A-Z or '-'/'+'/'*': use register 0
+  if (VIM_ISDIGIT(regname))
+    i = regname - '0';
+  else if (ASCII_ISLOWER(regname))
+    i = CharOrdLow(regname) + 10;
+  else if (ASCII_ISUPPER(regname)) {
+    i = CharOrdUp(regname) + 10;
+    y_append = true;
   } else if (regname == '-')
     i = DELETION_REGISTER;
   else if (regname == '*')
     i = STAR_REGISTER;
   else if (regname == '+')
     i = PLUS_REGISTER;
-  else                  /* not 0-9, a-z, A-Z or '-': use register 0 */
-    i = 0;
   y_current = &(y_regs[i]);
+
   if (mode == YREG_YANK) {
     // remember the written register for unnamed paste
     y_previous = y_current;
-  } else if (mode == YREG_PASTE) {
-    get_clipboard(regname, &y_current, false);
   }
 }
 
@@ -5310,7 +5309,28 @@ static void free_register(struct yankreg *reg)
   y_current = curr;
 }
 
-// return target register
+/// Check if the default register (used in an unnamed paste) should be a
+/// clipboard register. This happens when `clipboard=unnamed[plus]` is set
+/// and a provider is available.
+///
+/// @returns the name of of a clipboard register that should be used, or `NUL` if none.
+int get_default_register_name(void)
+{
+  int name = NUL;
+  adjust_clipboard_name(&name, true, false);
+  return name;
+}
+
+/// Determine if register `*name` should be used as a clipboard.
+/// In an unnammed operation, `*name` is `NUL` and will be adjusted to `'*'/'+'` if
+/// `clipboard=unnamed[plus]` is set.
+///
+/// @param name The name of register, or `NUL` if unnamed.
+/// @param quiet Suppress error messages
+/// @param writing if we're setting the contents of the clipboard
+///
+/// @returns the yankreg that should be used, or `NULL`
+/// if the register isn't a clipboard or provider isn't available.
 static struct yankreg* adjust_clipboard_name(int *name, bool quiet, bool writing) {
   if (*name == '*' || *name == '+') {
     if(!eval_has_provider("clipboard")) {
@@ -5345,11 +5365,11 @@ static struct yankreg* adjust_clipboard_name(int *name, bool quiet, bool writing
   return NULL;
 }
 
-static void get_clipboard(int name, struct yankreg** target, bool quiet)
+static bool get_clipboard(int name, struct yankreg** target, bool quiet)
 {
   struct yankreg* reg = adjust_clipboard_name(&name, quiet, false);
   if (reg == NULL) {
-    return;
+    return false;
   }
   free_register(reg);
 
@@ -5434,7 +5454,7 @@ static void get_clipboard(int name, struct yankreg** target, bool quiet)
   }
 
   *target = reg;
-  return;
+  return true;
 
 err:
   if (reg->y_array) {
@@ -5446,6 +5466,8 @@ err:
   reg->y_array = NULL;
   reg->y_size = 0;
   EMSG("clipboard: provider returned invalid data");
+  *target = reg;
+  return false;
 }
 
 static void set_clipboard(int name)

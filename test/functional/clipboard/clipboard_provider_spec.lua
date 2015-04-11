@@ -55,6 +55,12 @@ local function basic_register_test(noblock)
     , stuff and some more
     some textsome some text, stuff and some more]])
 
+  -- deleting a line does update ""
+  feed('ggdd""P')
+  expect([[
+    , stuff and some more
+    some textsome some text, stuff and some more]])
+
   feed('ggw<c-v>jwyggP')
   if noblock then
     expect([[
@@ -72,6 +78,7 @@ end
 describe('the unnamed register', function()
   before_each(clear)
   it('works without provider', function()
+    eq('"', eval('v:register'))
     basic_register_test()
   end)
 end)
@@ -225,6 +232,13 @@ describe('clipboard usage', function()
         a line
         b line
         a line]])
+    end)
+
+    it('supports v:register and getreg() without parameters', function()
+      eq('*', eval('v:register'))
+      execute("let g:test_clip['*'] = [['some block',''], 'b']")
+      eq('some block', eval('getreg()'))
+      eq('\02210', eval('getregtype()'))
     end)
 
   end)
