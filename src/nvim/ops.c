@@ -800,46 +800,25 @@ static bool is_append_register(int regname)
   return ASCII_ISUPPER(regname);
 }
 
-/*
- * Obtain the contents of a "normal" register. The register is made empty.
- * The returned pointer has allocated memory, use put_register() later.
- */
-void *
-get_register (
-    int name,
-    int copy               /* make a copy, if FALSE make register empty. */
-) FUNC_ATTR_NONNULL_RET
+/// Returns a copy of contents in register `name`
+/// for use in do_put. Should be freed by caller.
+yankreg_T *copy_register(int name)
+  FUNC_ATTR_MALLOC
+  FUNC_ATTR_NONNULL_RET
 {
   yankreg_T *reg = get_yank_register(name, YREG_PASTE);
 
-  yankreg_T *tmpreg = xmalloc(sizeof(yankreg_T));
-  *tmpreg = *reg;
-  if (copy) {
-    if (tmpreg->y_size == 0) {
-      tmpreg->y_array = NULL;
-    } else {
-      tmpreg->y_array = xmalloc(tmpreg->y_size * sizeof(char_u *));
-      for (linenr_T i = 0; i < tmpreg->y_size; i++) {
-        tmpreg->y_array[i] = vim_strsave(reg->y_array[i]);
-      }
-    }
+  yankreg_T *copy = xmalloc(sizeof(yankreg_T));
+  *copy = *reg;
+  if (copy->y_size == 0) {
+    copy->y_array = NULL;
   } else {
-    reg->y_array = NULL;
+    copy->y_array = xcalloc(copy->y_size, sizeof(char_u *));
+    for (linenr_T i = 0; i < copy->y_size; i++) {
+      copy->y_array[i] = vim_strsave(reg->y_array[i]);
+    }
   }
-
-  return (void *)tmpreg;
-}
-
-/*
- * Put "tmpreg" into register "name".  Free any previous contents and "tmpreg".
- */
-void put_register(int name, void *tmpreg)
-{
-  yankreg_T *reg = get_yank_register(name, YREG_PUT);
-  free_register(reg);
-  *reg = *(yankreg_T *)tmpreg;
-  xfree(tmpreg);
-  set_clipboard(name, reg);
+  return copy;
 }
 
 /*
@@ -2299,11 +2278,12 @@ void clear_registers(void)
 
 #endif
 
-/*
- * Free contents of yankreg reg.
- * Called for normal freeing and in case of error.
- */
-static void free_register(yankreg_T *reg)
+
+ /// Free contents of yankreg `reg`.
+ /// Called for normal freeing and in case of error.
+ /// `reg` must not be NULL (but `reg->y_array` might be)
+void free_register(yankreg_T *reg)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (reg->y_array != NULL) {
     long i;
@@ -2562,14 +2542,8 @@ static void yank_copy_line(yankreg_T *reg, struct block_def *bd, long y_idx)
  * "flags": PUT_FIXINDENT	make indent look nice
  *	    PUT_CURSEND		leave cursor after end of new text
  *	    PUT_LINE		force linewise put (":put")
- */
-void 
-do_put (
-    int regname,
-    int dir,                        /* BACKWARD for 'P', FORWARD for 'p' */
-    long count,
-    int flags
-)
+    dir: BACKWARD for 'P', FORWARD for 'p' */
+void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
 {
   char_u      *ptr;
   char_u      *newp, *oldp;
@@ -2672,7 +2646,12 @@ do_put (
       y_array = &insert_string;
     }
   } else {
-    yankreg_T *reg = get_yank_register(regname, YREG_PASTE);
+    // in case of replacing visually selected text
+    // the yankreg might already have been saved to avoid
+    // just restoring the deleted text.
+    if (reg == NULL) {
+      reg = get_yank_register(regname, YREG_PASTE);
+    }
 
     y_type = reg->y_type;
     y_width = reg->y_width;

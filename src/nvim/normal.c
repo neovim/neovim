@@ -1995,7 +1995,7 @@ do_mouse (
         if ((State & REPLACE_FLAG) && !yank_register_mline(regname))
           insert_reg(regname, true);
         else {
-          do_put(regname, BACKWARD, 1L, fixindent | PUT_CURSEND);
+          do_put(regname, NULL, BACKWARD, 1L, fixindent | PUT_CURSEND);
 
           /* Repeat it with CTRL-R CTRL-O r or CTRL-R CTRL-P r */
           AppendCharToRedobuff(Ctrl_R);
@@ -2280,7 +2280,7 @@ do_mouse (
      */
     if (restart_edit != 0)
       where_paste_started = curwin->w_cursor;
-    do_put(regname, dir, count, fixindent | PUT_CURSEND);
+    do_put(regname, NULL, dir, count, fixindent | PUT_CURSEND);
   }
   /*
    * Ctrl-Mouse click or double click in a quickfix window jumps to the
@@ -5085,7 +5085,7 @@ static void nv_brackets(cmdarg_T *cap)
         curwin->w_cursor = (dir == BACKWARD ? start : end);
       }
       prep_redo_cmd(cap);
-      do_put(regname, dir, cap->count1, PUT_FIXINDENT);
+      do_put(regname, NULL, dir, cap->count1, PUT_FIXINDENT);
       if (was_visual) {
         VIsual = start;
         curwin->w_cursor = end;
@@ -7221,7 +7221,7 @@ static void nv_join(cmdarg_T *cap)
 static void nv_put(cmdarg_T *cap)
 {
   int regname = 0;
-  void        *reg1 = NULL, *reg2 = NULL;
+  yankreg_T *savereg = NULL;
   bool empty = false;
   bool was_visual = false;
   int dir;
@@ -7252,11 +7252,9 @@ static void nv_put(cmdarg_T *cap)
       was_visual = true;
       regname = cap->oap->regname;
       if (regname == 0 || regname == '"'
-          || VIM_ISDIGIT(regname) || regname == '-'
-          ) {
-        /* The delete is going to overwrite the register we want to
-         * put, save it first. */
-        reg1 = get_register(regname, true);
+          || VIM_ISDIGIT(regname) || regname == '-') {
+        // The delete might overwrite the register we want to put, save it first
+        savereg = copy_register(regname);
       }
 
       /* Now delete the selected text. */
@@ -7269,13 +7267,6 @@ static void nv_put(cmdarg_T *cap)
 
       /* delete PUT_LINE_BACKWARD; */
       cap->oap->regname = regname;
-
-      if (reg1 != NULL) {
-        /* Delete probably changed the register we want to put, save
-         * it first. Then put back what was there before the delete. */
-        reg2 = get_register(regname, false);
-        put_register(regname, reg1);
-      }
 
       /* When deleted a linewise Visual area, put the register as
        * lines to avoid it joined with the next line.  When deletion was
@@ -7297,11 +7288,13 @@ static void nv_put(cmdarg_T *cap)
       /* May have been reset in do_put(). */
       VIsual_active = true;
     }
-    do_put(cap->oap->regname, dir, cap->count1, flags);
+    do_put(cap->oap->regname, savereg, dir, cap->count1, flags);
 
-    /* If a register was saved, put it back now. */
-    if (reg2 != NULL)
-      put_register(regname, reg2);
+    // If a register was saved, free it
+    if (savereg != NULL) {
+      free_register(savereg);
+      xfree(savereg);
+    }
 
     /* What to reselect with "gv"?  Selecting the just put text seems to
      * be the most useful, since the original text was removed. */

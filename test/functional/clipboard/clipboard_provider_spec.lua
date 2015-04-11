@@ -73,6 +73,12 @@ local function basic_register_test(noblock)
       stuf, stuff and some more
       me tsome textsome some text, stuff and some more]])
   end
+
+  -- pasting in visual does unnamed delete of visual selection
+  feed('ggdG')
+  insert("one and two and three")
+  feed('"ayiwbbviw"ap^viwp$viw"-p')
+  expect("two and three and one")
 end
 
 describe('the unnamed register', function()
@@ -239,6 +245,14 @@ describe('clipboard usage', function()
       execute("let g:test_clip['*'] = [['some block',''], 'b']")
       eq('some block', eval('getreg()'))
       eq('\02210', eval('getregtype()'))
+    end)
+
+    it('yanks visual selection when pasting', function()
+      insert("indeed visual")
+      execute("let g:test_clip['*'] = [['clipboard'], 'c']")
+      feed("viwp")
+      eq({{'visual'}, 'v'}, eval("g:test_clip['*']"))
+      expect("indeed clipboard")
     end)
 
   end)

@@ -6762,7 +6762,7 @@ static void ins_reg(void)
       AppendCharToRedobuff(literally);
       AppendCharToRedobuff(regname);
 
-      do_put(regname, BACKWARD, 1L,
+      do_put(regname, NULL, BACKWARD, 1L,
           (literally == Ctrl_P ? PUT_FIXINDENT : 0) | PUT_CURSEND);
     } else if (insert_reg(regname, literally) == FAIL) {
       vim_beep();
