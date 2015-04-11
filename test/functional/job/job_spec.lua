@@ -338,7 +338,7 @@ describe('jobs', function()
           data[i] = data[i]:gsub('\n', '\000')
         end
         rv = table.concat(data, '\n')
-        rv = rv:gsub('\r\n$', '')
+        rv = rv:gsub('\r\n$', ''):gsub('^\r\n', '')
         if rv ~= '' then
           break
         end
