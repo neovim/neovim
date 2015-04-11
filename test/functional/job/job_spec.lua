@@ -249,6 +249,52 @@ describe('jobs', function()
       eq({'notification', 'wait', {{-2}}}, next_msg())
     end)
 
+    it('can be called recursively', function()
+      source([[
+      let g:opts = {}
+      let g:counter = 0
+      function g:opts.on_stdout(id, msg)
+        if self.state == 0
+          if self.counter < 10
+            call Run()
+          endif
+          let self.state = 1
+          call jobsend(a:id, "line1\n")
+        elseif self.state == 1
+          let self.state = 2
+          call jobsend(a:id, "line2\n")
+        elseif self.state == 2
+          let self.state = 3
+          call jobsend(a:id, "line3\n")
+        else
+          call rpcnotify(g:channel, 'w', printf('job %d closed', self.counter))
+          call jobclose(a:id, 'stdin')
+        endif
+      endfunction
+      function g:opts.on_exit()
+        call rpcnotify(g:channel, 'w', printf('job %d exited', self.counter))
+      endfunction
+      function Run()
+        let g:counter += 1
+        let j = copy(g:opts)
+        let j.state = 0
+        let j.counter = g:counter
+        call jobwait([
+        \   jobstart([&sh, '-c', 'echo ready; cat -'], j),
+        \ ])
+      endfunction
+      ]])
+      execute('call Run()')
+      local r
+      for i = 10, 1, -1 do
+        r = next_msg()
+        eq('job '..i..' closed', r[3][1])
+        r = next_msg()
+        eq('job '..i..' exited', r[3][1])
+      end
+      eq(10, nvim('eval', 'g:counter'))
+    end)
+
     describe('with timeout argument', function()
       it('will return -1 if the wait timed out', function()
         source([[
@@ -292,7 +338,7 @@ describe('jobs', function()
           data[i] = data[i]:gsub('\n', '\000')
         end
         rv = table.concat(data, '\n')
-        rv = rv:gsub('\r\n$', '')
+        rv = rv:gsub('\r\n$', ''):gsub('^\r\n', '')
         if rv ~= '' then
           break
         end

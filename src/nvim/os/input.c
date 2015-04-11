@@ -128,7 +128,9 @@ bool os_char_avail(void)
 // Check for CTRL-C typed by reading all available characters.
 void os_breakcheck(void)
 {
-  event_poll(0);
+  if (!disable_breakcheck && !got_int) {
+    event_poll(0);
+  }
 }
 
 /// Test whether a file descriptor refers to a terminal.

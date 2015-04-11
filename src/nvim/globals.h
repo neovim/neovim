@@ -898,6 +898,14 @@ EXTERN FILE     *scriptout INIT(= NULL);    /* stream to write script to */
 /* volatile because it is used in signal handler catch_sigint(). */
 EXTERN volatile int got_int INIT(= FALSE);    /* set to TRUE when interrupt
                                                  signal occurred */
+EXTERN int disable_breakcheck INIT(= 0);    // > 0 if breakchecks should be 
+                                            // ignored. FIXME(tarruda): Hacky
+                                            // way to run functions that would
+                                            // result in *_breakcheck calls
+                                            // while events that would normally
+                                            // be deferred are being processed
+                                            // immediately. Ref:
+                                            // neovim/neovim#2371
 EXTERN int bangredo INIT(= FALSE);          /* set to TRUE with ! command */
 EXTERN int searchcmdlen;                    /* length of previous search cmd */
 EXTERN int reg_do_extmatch INIT(= 0);       /* Used when compiling regexp:
