@@ -116,6 +116,12 @@ functions can be called interactively:
     >>> nvim = attach('socket', path='[address]')
     >>> nvim.command('echo "hello world!"')
 <
+One can also spawn and connect to an embedded nvim instance via |rpcstart()|
+>
+    let vim = rpcstart('nvim', ['--embed'])
+    echo rpcrequest(vim, 'vim_eval', '"Hello " . "world!"')
+    call rpcstop(vim)
+<
 ==============================================================================
 4. Implementing new clients				  *msgpack-rpc-clients*
 
@@ -177,6 +183,10 @@ Buffer				  -> enum value kObjectTypeBuffer
 Window				  -> enum value kObjectTypeWindow
 Tabpage				  -> enum value kObjectTypeTabpage
 
+An API method expecting one of these types may be passed an integer instead,
+although they are not interchangeable. For example, a Buffer may be passed as
+an integer, but not a Window or Tabpage.
+
 The most reliable way of determining the type codes for the special nvim types
 is at runtime by inspecting the `types` key of metadata dictionary returned by
 `vim_get_api_info` method. Here's an example json representation of the
@@ -216,7 +226,7 @@ that makes this task easier:
 - Methods that operate instances of Nvim's types are prefixed with the type
   name in lower case, e.g. `buffer_get_line` represents the `get_line` method
   of a Buffer instance.
-- Global methods are prefixed with `vim`, e.g. `vim_list_buffers`.
+- Global methods are prefixed with `vim`, e.g. `vim_get_buffers`.
 
 So, for an object-oriented language, a client library would have the classes
 that represent Nvim's types, and the methods of each class could be defined
