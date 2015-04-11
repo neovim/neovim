@@ -383,6 +383,7 @@ void terminal_enter(bool process_deferred)
         if (got_bs) {
           goto end;
         }
+        // FALLTHROUGH
 
       default:
         if (c == Ctrl_BSL && !got_bs) {
