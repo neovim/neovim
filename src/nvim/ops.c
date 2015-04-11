@@ -71,7 +71,6 @@
 
 static yankreg_T y_regs[NUM_REGISTERS];
 
-static bool y_append;                        /* true when appending */
 static yankreg_T   *y_previous = NULL; /* ptr to last written yankreg */
 
 static bool clipboard_didwarn_unnamed = false;
@@ -766,7 +765,6 @@ typedef enum {
 yankreg_T *get_yank_register(int regname, int mode)
 {
   yankreg_T *reg;
-  y_append = false;
 
   if (mode == YREG_PASTE && get_clipboard(regname, &reg, false)) {
     // reg is set to clipboard contents.
@@ -782,7 +780,6 @@ yankreg_T *get_yank_register(int regname, int mode)
     i = CharOrdLow(regname) + 10;
   else if (ASCII_ISUPPER(regname)) {
     i = CharOrdUp(regname) + 10;
-    y_append = true;
   } else if (regname == '-')
     i = DELETION_REGISTER;
   else if (regname == '*')
@@ -798,6 +795,10 @@ yankreg_T *get_yank_register(int regname, int mode)
   return reg;
 }
 
+static bool is_append_register(int regname)
+{
+  return ASCII_ISUPPER(regname);
+}
 
 /*
  * Obtain the contents of a "normal" register. The register is made empty.
@@ -923,7 +924,7 @@ static int stuff_yank(int regname, char_u *p)
     return OK;
   }
   yankreg_T *reg = get_yank_register(regname, YREG_YANK);
-  if (y_append && reg->y_array != NULL) {
+  if (is_append_register(regname) && reg->y_array != NULL) {
     char_u **pp = &(reg->y_array[reg->y_size - 1]);
     char_u *lp = xmalloc(STRLEN(*pp) + STRLEN(p) + 1);
     STRCPY(lp, *pp);
@@ -1416,7 +1417,7 @@ int op_delete(oparg_T *oap)
       y_previous = &y_regs[1];
       y_regs[1].y_array = NULL;                 /* set register "1 to empty */
       reg = &y_regs[1];
-      op_yank_reg(oap, false, reg);
+      op_yank_reg(oap, false, reg, false);
     }
 
     /* Yank into small delete register when no named register specified
@@ -1424,7 +1425,7 @@ int op_delete(oparg_T *oap)
     if (oap->regname == 0 && oap->motion_type != MLINE
         && oap->line_count == 1) {
       reg = get_yank_register('-', YREG_YANK);
-      op_yank_reg(oap, false, reg);
+      op_yank_reg(oap, false, reg, false);
     }
 
     if(oap->regname == 0) {
@@ -2335,12 +2336,12 @@ bool op_yank(oparg_T *oap, bool message)
   }
 
   yankreg_T *reg = get_yank_register(oap->regname, YREG_YANK);
-  op_yank_reg(oap, message, reg);
+  op_yank_reg(oap, message, reg, is_append_register(oap->regname));
   set_clipboard(oap->regname, reg);
   return true;
 }
 
-static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg)
+static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
 {
   long y_idx;                           /* index in y_array[] */
   yankreg_T      *curr;            /* copy of current register */
@@ -2357,7 +2358,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg)
 
   curr = reg;
   /* append to existing contents */
-  if (y_append && reg->y_array != NULL)
+  if (append && reg->y_array != NULL)
     reg = &newreg;
   else
     free_register(reg);                /* free previously yanked lines */
@@ -4761,7 +4762,7 @@ void *get_reg_contents(int regname, int flags)
 }
 
 
-static yankreg_T *init_write_reg(int name, yankreg_T **old_y_previous, int must_append)
+static yankreg_T *init_write_reg(int name, yankreg_T **old_y_previous, bool must_append)
 {
   if (!valid_yank_reg(name, true)) {  // check for valid reg name
     emsg_invreg(name);
@@ -4772,7 +4773,7 @@ static yankreg_T *init_write_reg(int name, yankreg_T **old_y_previous, int must_
   *old_y_previous = y_previous;
 
   yankreg_T *reg = get_yank_register(name, YREG_YANK);
-  if (!y_append && !must_append) {
+  if (!is_append_register(name) && !must_append) {
       free_register(reg);
   }
   return reg;
@@ -4799,7 +4800,7 @@ void write_reg_contents(int name, const char_u *str, ssize_t len,
 }
 
 void write_reg_contents_lst(int name, char_u **strings, int maxlen,
-                            int must_append, int yank_type, long block_len)
+                            bool must_append, int yank_type, long block_len)
 {
   if (name == '/' || name == '=') {
     char_u  *s = strings[0];
@@ -4850,7 +4851,7 @@ void write_reg_contents_lst(int name, char_u **strings, int maxlen,
 void write_reg_contents_ex(int name,
                            const char_u *str,
                            ssize_t len,
-                           int must_append,
+                           bool must_append,
                            int yank_type,
                            long block_len)
 {
