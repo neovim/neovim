@@ -61,7 +61,6 @@ describe('jobs', function()
     file:write("abc\0def\n")
     file:close()
 
-    -- v:job_data preserves NULs.
     nvim('command', "let j = jobstart(['cat', '"..filename.."'], g:job_opts)")
     eq({'notification', 'stdout', {0, {'abc\ndef', ''}}}, next_msg())
     eq({'notification', 'exit', {0, 0}}, next_msg())

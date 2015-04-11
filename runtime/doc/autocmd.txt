@@ -791,7 +791,7 @@ ShellCmdPost			After executing a shell command with |:!cmd|,
 				|:make| and |:grep|.  Can be used to check for
 				any changed files.
 				For non-blocking shell commands, see
-				|JobActivity|.
+				|job-control|.
 							*ShellFilterPost*
 ShellFilterPost			After executing a shell command with
 				":{range}!cmd", ":w !cmd" or ":r !cmd".

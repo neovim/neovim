@@ -4059,9 +4059,9 @@ jobstop({job})						{Nvim} *jobstop()*
 		Stop a job created with |jobstart()| by sending a `SIGTERM`
 		to the corresponding process. If the process doesn't exit
 		cleanly soon, a `SIGKILL` will be sent. When the job is
-		finally closed, a |JobActivity| event will trigger with
-		`v:job_data[0]` set to `exited`.  See |job-control| for more
-		information.
+		finally closed, the exit handler provided to |jobstart()| or
+		|termopen()| will be run.
+		See |job-control| for more information.
 
 jobwait({ids}[, {timeout}])				{Nvim} *jobwait()*
 		Wait for a set of jobs to finish. The {ids} argument is a list
