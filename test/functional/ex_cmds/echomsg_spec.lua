@@ -460,6 +460,32 @@ describe('echomsg', function()
       assert_verrmsg_empty()
     end)
 
+    it('cmdheight=4', function()
+      local fullmsg = 'line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s'
+      _h.nvim('set_option', 'cmdheight', 4)
+      execute(cmd_under_test..' "'..fullmsg..'"')
+      screen:expect([[
+      ^                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      line1.a line1.b line1.c line1.d line1.e line1.f line1|
+      .g line1.h line1.i line1.j line1.k line1.l line1.m li|
+      ne1.o line1.p line1.q line1.r line1.s                |
+                                                           |
+      ]])
+      assert_msg(fullmsg)
+      assert_statusmsg(fullmsg)
+      assert_verrmsg_empty()
+    end)
+
+
     it('called from a function', function()
       local fullmsg = 'line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s'
       _h.nvim('set_option', 'cmdheight', 2)
