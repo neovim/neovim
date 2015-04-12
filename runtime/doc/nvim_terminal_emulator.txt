@@ -19,7 +19,7 @@ complete VT220/xterm-like terminal emulator. The terminal is presented to the
 user as a special buffer type, one that is asynchronously updated to mirror
 the virtual terminal display as data is received from the program connected
 to it. For most purposes, terminal buffers behave a lot like normal buffers
-with 'nomodifiable' set.
+with 'nomodifiable' set and no syntax highlighting.
 
 
 The implementation is powered by libvterm[1], a powerful abstract terminal
