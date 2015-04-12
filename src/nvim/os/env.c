@@ -343,7 +343,7 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
         c = (int)STRLEN(var);
         /* if var[] ends in a path separator and tail[] starts
          * with it, skip a character */
-        if (*var != NUL && after_pathsep(dst, dst + c)
+        if (*var != NUL && after_pathsep((char *)dst, (char *)dst + c)
 #if defined(BACKSLASH_IN_FILENAME)
             && dst[-1] != ':'
 #endif
@@ -410,7 +410,7 @@ static char *remove_tail(char *p, char *pend, char *name)
 
   if (newend >= p
       && fnamencmp((char_u *)newend, (char_u *)name, len - 1) == 0
-      && (newend == p || after_pathsep((char_u *)p, (char_u *)newend)))
+      && (newend == p || after_pathsep(p, newend)))
     return newend;
   return pend;
 }
@@ -488,7 +488,7 @@ char_u *vim_getenv(char_u *name, bool *mustfree)
       }
 
       /* remove trailing path separator */
-      if (pend > p && after_pathsep(p, pend))
+      if (pend > p && after_pathsep((char *)p, (char *)pend))
         --pend;
 
       // check that the result is a directory name

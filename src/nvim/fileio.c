@@ -422,7 +422,7 @@ readfile (
    */
   if (fname != NULL && *fname != NUL) {
     p = fname + STRLEN(fname);
-    if (after_pathsep(fname, p) || STRLEN(fname) >= MAXPATHL) {
+    if (after_pathsep((char *)fname, (char *)p) || STRLEN(fname) >= MAXPATHL) {
       filemess(curbuf, fname, (char_u *)_("Illegal file name"), 0);
       msg_end();
       msg_scroll = msg_save;
@@ -4369,7 +4369,7 @@ modname (
       xfree(retval);
       return NULL;
     }
-    if (!after_pathsep(retval, retval + fnamelen)) {
+    if (!after_pathsep((char *)retval, (char *)retval + fnamelen)) {
       retval[fnamelen++] = PATHSEP;
       retval[fnamelen] = NUL;
     }
