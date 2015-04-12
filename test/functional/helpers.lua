@@ -18,6 +18,10 @@ if nvim_dir == nvim_prog then
     nvim_dir = "."
 end
 
+-- Nvim "Unit Under Test" http://en.wikipedia.org/wiki/Device_under_test
+local NvimUUT = {}
+NvimUUT.__index = NvimUUT
+
 local prepend_argv
 
 if os.getenv('VALGRIND') then
@@ -48,6 +52,10 @@ if prepend_argv then
 end
 
 local session, loop_running, loop_stopped, last_error
+
+local function set_session(s)
+  session = s
+end
 
 local function request(method, ...)
   local status, rv = session:request(method, ...)
@@ -305,5 +313,6 @@ return {
   curwin = curwin,
   curtab = curtab,
   curbuf_contents = curbuf_contents,
-  wait = wait
+  wait = wait,
+  set_session = set_session
 }

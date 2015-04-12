@@ -824,7 +824,7 @@ void ml_recover(void)
     (void)recover_names(fname, FALSE, i, &fname_used);
   }
   if (fname_used == NULL)
-    goto theend;                        /* out of memory */
+    goto theend;  // user chose invalid number.
 
   /* When called from main() still need to initialize storage structure */
   if (called_from_main && ml_open(curbuf) == FAIL)
@@ -1244,8 +1244,10 @@ theend:
       mf_put(mfp, hp, false, false);
     mf_close(mfp, false);           /* will also free(mfp->mf_fname) */
   }
-  free(buf->b_ml.ml_stack);
-  free(buf);
+  if (buf != NULL) {  //may be NULL if swap file not found.
+    free(buf->b_ml.ml_stack);
+    free(buf);
+  }
   if (serious_error && called_from_main)
     ml_close(curbuf, TRUE);
   else {
@@ -1321,53 +1323,35 @@ recover_names (
     if (dir_name[0] == '.' && dir_name[1] == NUL) {     /* check current dir */
       if (fname == NULL) {
         names[0] = vim_strsave((char_u *)"*.sw?");
-#if defined(UNIX) || defined(WIN3264)
         /* For Unix names starting with a dot are special.  MS-Windows
          * supports this too, on some file systems. */
         names[1] = vim_strsave((char_u *)".*.sw?");
         names[2] = vim_strsave((char_u *)".sw?");
         num_names = 3;
-#else
-        num_names = 1;
-#endif
       } else
         num_names = recov_file_names(names, fname_res, TRUE);
     } else {                      /* check directory dir_name */
       if (fname == NULL) {
         names[0] = concat_fnames(dir_name, (char_u *)"*.sw?", TRUE);
-#if defined(UNIX) || defined(WIN3264)
         /* For Unix names starting with a dot are special.  MS-Windows
          * supports this too, on some file systems. */
         names[1] = concat_fnames(dir_name, (char_u *)".*.sw?", TRUE);
         names[2] = concat_fnames(dir_name, (char_u *)".sw?", TRUE);
         num_names = 3;
-#else
-        num_names = 1;
-#endif
       } else {
-#if defined(UNIX) || defined(WIN3264)
         p = dir_name + STRLEN(dir_name);
         if (after_pathsep(dir_name, p) && p[-1] == p[-2]) {
           /* Ends with '//', Use Full path for swap name */
           tail = make_percent_swname(dir_name, fname_res);
-        } else
-#endif
-        tail = path_tail(fname_res);
-        tail = concat_fnames(dir_name, tail, TRUE);
+        } else {
+          tail = path_tail(fname_res);
+          tail = concat_fnames(dir_name, tail, TRUE);
+        }
         num_names = recov_file_names(names, tail, FALSE);
         free(tail);
       }
     }
 
-    // check for out-of-memory
-    for (int i = 0; i < num_names; ++i) {
-      if (names[i] == NULL) {
-        for (int j = 0; j < num_names; ++j)
-          free(names[j]);
-        num_names = 0;
-        break;
-      }
-    }
     if (num_names == 0)
       num_files = 0;
     else if (expand_wildcards(num_names, names, &num_files, &files,
@@ -1453,7 +1437,6 @@ recover_names (
   return file_count;
 }
 
-#if defined(UNIX) || defined(WIN3264)  /* Need _very_ long file names */
 /*
  * Append the full path to name with path separators made into percent
  * signs, to dir. An unnamed buffer is handled as "" (<currentdir>/"")
@@ -1475,7 +1458,6 @@ static char_u *make_percent_swname(char_u *dir, char_u *name)
   }
   return d;
 }
-#endif
 
 #ifdef UNIX
 static int process_still_running;
@@ -1576,17 +1558,12 @@ static time_t swapfile_info(char_u *fname)
 }
 
 static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
+  FUNC_ATTR_NONNULL_ALL
 {
-  int num_names;
-  char_u      *p;
-  int i;
+  int num_names = 0;
 
-  num_names = 0;
-
-  /*
-   * May also add the file name with a dot prepended, for swap file in same
-   * dir as original file.
-   */
+  // May also add the file name with a dot prepended, for swap file in same
+  // dir as original file.
   if (prepend_dot) {
     names[num_names] = modname(path, (char_u *)".sw?", TRUE);
     if (names[num_names] == NULL)
@@ -1597,8 +1574,8 @@ static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
   // Form the normal swap file name pattern by appending ".sw?".
   names[num_names] = concat_fnames(path, (char_u *)".sw?", FALSE);
   if (num_names >= 1) {     /* check if we have the same name twice */
-    p = names[num_names - 1];
-    i = (int)STRLEN(names[num_names - 1]) - (int)STRLEN(names[num_names]);
+    char_u *p = names[num_names - 1];
+    int i = (int)STRLEN(names[num_names - 1]) - (int)STRLEN(names[num_names]);
     if (i > 0)
       p += i;               /* file name has been expanded to full path */
 
@@ -3088,7 +3065,6 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
   char_u fname_buf[MAXPATHL];
 #endif
 
-#if defined(UNIX) || defined(WIN3264)  /* Need _very_ long file names */
   s = dir_name + STRLEN(dir_name);
   if (after_pathsep(dir_name, s) && s[-1] == s[-2]) { /* Ends with '//', Use Full path */
     r = NULL;
@@ -3098,7 +3074,6 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
     }
     return r;
   }
-#endif
 
 #ifdef HAVE_READLINK
   /* Expand symlink in the file name, so that we put the swap file with the
