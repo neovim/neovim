@@ -17,7 +17,7 @@ describe('echomsg', function()
   -- Asserts that:
   --    - :messages contains `msg` exactly once
   --    - no truncated ("...") text was written to :messages
-  local function assert_msg(msg)
+  local function assert_msghist(msg)
     assert(msg ~= nil and msg ~= "", "'msg' should not be empty")
     local messages = get_messages()
     --Should not have truncated "..." messages.
@@ -104,7 +104,7 @@ describe('echomsg', function()
       ]])
       assert_statusmsg("line1, normal message")
       assert_verrmsg_empty()
-      assert_msg("line1, normal message")
+      assert_msghist("line1, normal message")
     end)
 
     it('2x causes 1-line scroll', function()
@@ -151,7 +151,7 @@ describe('echomsg', function()
       ]])
       feed('<cr>')
       assert_statusmsg(fullmsg)
-      assert_msg(fullmsg)
+      assert_msghist(fullmsg)
       assert_verrmsg_empty()
     end)
 
@@ -160,7 +160,7 @@ describe('echomsg', function()
       _h.nvim('set_option', 'cmdheight', 2)
       execute('silent  echom "'..fullmsg..'"')
       execute('silent! echom "'..fullmsg..'"')
-      _h.eval('1') --wait()
+      _h.wait()
       screen:expect([[
       ^                                                    |
       ~                                                    |
@@ -259,7 +259,7 @@ describe('echomsg', function()
       {2:ne1.o line1.p line1.q line1.r line1.s}                |
       {3:Press ENTER or type command to continue}^             |
       ]])
-      assert_msg(fullmsg)
+      assert_msghist(fullmsg)
       assert_statusmsg_empty()
       assert_verrmsg(fullmsg)
     end)
@@ -286,7 +286,7 @@ describe('echomsg', function()
       ~                                                    |
       line1, normal message                                |
       ]])
-      assert_msg(fullmsg)
+      assert_msghist(fullmsg)
       assert_statusmsg(fullmsg)
       assert_verrmsg_empty()
     end)
@@ -309,12 +309,12 @@ describe('echomsg', function()
       ~                                                    |
       line2                                                |
       ]])
-      assert_msg('line2')
+      assert_msghist('line2')
       assert_statusmsg('line2')
       assert_verrmsg_empty()
     end)
 
-    it('followed by :echom causes a scroll', function()
+    it('(cmdheight=1) followed by :echom causes a scroll', function()
       execute(cmd_under_test..' "line1" | echom  "line2"')
       screen:expect([[
       ~                                                    |
@@ -332,8 +332,58 @@ describe('echomsg', function()
       line2                                                |
       Press ENTER or type command to continue^             |
       ]])
-      assert_msg('line1')
-      assert_msg('line2')
+      assert_msghist('line1')
+      assert_msghist('line2')
+      assert_statusmsg('line2')
+      assert_verrmsg_empty()
+    end)
+
+    it('(cmdheight=2) followed by :echom', function()
+      _h.nvim('set_option', 'cmdheight', 2)
+      execute('echom  "line1" | '..cmd_under_test..' "line2"')
+      screen:expect([[
+      ^                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      line1                                                |
+      line2                                                |
+      ]])
+      assert_msghist('line1')
+      assert_msghist('line2')
+      assert_statusmsg('line2')
+      assert_verrmsg_empty()
+    end)
+
+    it('(cmdheight=2) followed by :echom', function()
+      _h.nvim('set_option', 'cmdheight', 2)
+      execute(cmd_under_test..' "line1" | echom  "line2"')
+      screen:expect([[
+      ^                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      line1                                                |
+      line2                                                |
+      ]])
+      assert_msghist('line1')
+      assert_msghist('line2')
       assert_statusmsg('line2')
       assert_verrmsg_empty()
     end)
@@ -356,7 +406,7 @@ describe('echomsg', function()
       ~                                                    |
       line2 line2 line2 line2                              |
       ]])
-      assert_msg('line2 line2 line2 line2')
+      assert_msghist('line2 line2 line2 line2')
       assert_statusmsg('line2 line2 line2 line2')
       assert_verrmsg_empty()
     end)
@@ -380,7 +430,7 @@ describe('echomsg', function()
       ~                                                    |
       line1.a line1.b line1.c....p line1.q line1.r line1.s |
       ]])
-      assert_msg(fullmsg)
+      assert_msghist(fullmsg)
       assert_statusmsg(fullmsg)
       assert_verrmsg_empty()
     end)
@@ -405,7 +455,7 @@ describe('echomsg', function()
       line1.a line1.b line1.c line1.d line1.e line1.f li...|
       e1.l line1.m line1.o line1.p line1.q line1.r line1.s |
       ]])
-      assert_msg(fullmsg)
+      assert_msghist(fullmsg)
       assert_statusmsg(fullmsg)
       assert_verrmsg_empty()
     end)
@@ -434,7 +484,7 @@ describe('echomsg', function()
       line1.a line1.b line1.c line1.d line1.e line1.f li...|
       e1.l line1.m line1.o line1.p line1.q line1.r line1.s |
       ]])
-      assert_msg(fullmsg)
+      assert_msghist(fullmsg)
       assert_statusmsg(fullmsg)
       assert_verrmsg_empty()
     end)
@@ -460,7 +510,7 @@ describe('echomsg', function()
       line1.a line1.b line1.c line1.d line1.e line1.f li...|
       e1.l line1.m line1.o line1.p line1.q line1.r line1.s |
       ]])
-      assert_msg(fullmsg)
+      assert_msghist(fullmsg)
       assert_statusmsg(fullmsg)
       assert_verrmsg_empty()
     end)
@@ -486,8 +536,8 @@ describe('echomsg', function()
       :silent! echom! "line2 for silent!"                  |
                                                            |
       ]])
-      assert_msg(fullmsg)
-      assert_msg("line2 for silent!")
+      assert_msghist(fullmsg)
+      assert_msghist("line2 for silent!")
       assert_statusmsg("line2 for silent!")
       assert_verrmsg_empty()
     end)
@@ -513,7 +563,7 @@ describe('echomsg', function()
       line1.a line1.b line1.c line1.d line1.e line1.f li...|
       e1.l line1.m line1.o line1.p line1.q line1.r line1.s |
       ]])
-      assert_msg(fullmsg)
+      assert_msghist(fullmsg)
       assert_statusmsg(fullmsg)
       assert_verrmsg_empty()
     end)
@@ -523,6 +573,7 @@ describe('echomsg', function()
       _h.nvim('set_option', 'cmdheight', 2)
       execute('nnoremap <silent> foo :silent '..cmd_under_test..' "'..fullmsg..'"<cr>')
       _h.feed('foo')
+      _h.wait()
       screen:expect([[
       ^                                                    |
       ~                                                    |
@@ -539,8 +590,34 @@ describe('echomsg', function()
                                                            |
                                                            |
       ]])
-      assert_msg(fullmsg)
+      assert_msghist(fullmsg)
       assert_statusmsg(fullmsg)
+      assert_verrmsg_empty()
+    end)
+
+    it(':echom followed by :silent echom! should not clear message', function()
+      _h.nvim('set_option', 'cmdheight', 2)
+      execute('echom "foo" | silent echom! "bar"')
+      _h.wait()
+      screen:expect([[
+      ^                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      foo                                                  |
+                                                           |
+      ]])
+      assert_msghist("foo")
+      assert_msghist("bar")
+      assert_statusmsg("bar")
       assert_verrmsg_empty()
     end)
   end
