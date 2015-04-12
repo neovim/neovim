@@ -371,19 +371,19 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
 /// Check if the directory "vimdir/<version>" or "vimdir/runtime" exists.
 /// Return NULL if not, return its name in allocated memory otherwise.
 /// @param vimdir directory to test
-static char_u *vim_version_dir(char_u *vimdir)
+static char *vim_version_dir(char *vimdir)
 {
   char_u      *p;
 
   if (vimdir == NULL || *vimdir == NUL)
     return NULL;
-  p = concat_fnames(vimdir, (char_u *)VIM_VERSION_NODOT, true);
+  p = concat_fnames((char_u *)vimdir, (char_u *)VIM_VERSION_NODOT, true);
   if (os_isdir(p))
-    return p;
+    return (char *)p;
   free(p);
-  p = concat_fnames(vimdir, (char_u *)RUNTIME_DIRNAME, true);
+  p = concat_fnames((char_u *)vimdir, (char_u *)RUNTIME_DIRNAME, true);
   if (os_isdir(p))
-    return p;
+    return (char *)p;
   free(p);
   return NULL;
 }
@@ -442,7 +442,7 @@ char_u *vim_getenv(char_u *name, bool *mustfree)
     if (p != NULL && *p == NUL)             /* empty is the same as not set */
       p = NULL;
     if (p != NULL) {
-      p = vim_version_dir(p);
+      p = (char_u *)vim_version_dir((char *)p);
       if (p != NULL)
         *mustfree = true;
       else
@@ -499,7 +499,7 @@ char_u *vim_getenv(char_u *name, bool *mustfree)
       *mustfree = false;
     } else if (*default_vim_dir != NUL) {
       if (vimruntime
-          && (p = vim_version_dir((char_u *)default_vim_dir)) != NULL) {
+          && (p = (char_u *)vim_version_dir(default_vim_dir)) != NULL) {
         *mustfree = true;
       } else {
         p = (char_u *)default_vim_dir;
