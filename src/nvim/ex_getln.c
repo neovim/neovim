@@ -3825,7 +3825,6 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
   char_u      *pat;
   int i;
   char_u      *path;
-  bool mustfree = false;
   garray_T ga;
   char_u *buf = xmalloc(MAXPATHL);
   size_t l;
@@ -3849,7 +3848,7 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
                               || (pat[1] == '.' && vim_ispathsep(pat[2])))))
     path = (char_u *)".";
   else {
-    path = (char_u *)vim_getenv("PATH", &mustfree);
+    path = (char_u *)vim_getenv("PATH");
     if (path == NULL)
       path = (char_u *)"";
   }
@@ -3900,8 +3899,7 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
 
   xfree(buf);
   xfree(pat);
-  if (mustfree)
-    xfree(path);
+  xfree(path);
 }
 
 /*

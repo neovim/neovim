@@ -1804,19 +1804,20 @@ void set_init_1(void)
 # endif
     int len;
     garray_T ga;
-    bool mustfree;
 
     ga_init(&ga, 1, 100);
     for (size_t n = 0; n < ARRAY_SIZE(names); ++n) {
-      mustfree = FALSE;
+      bool mustfree = true;
 # ifdef UNIX
-      if (*names[n] == NUL)
+      if (*names[n] == NUL) {
         p = (char_u *)"/tmp";
+        mustfree = false;
+      }
       else
 # endif
-      p = (char_u *)vim_getenv(names[n], &mustfree);
+      p = (char_u *)vim_getenv(names[n]);
       if (p != NULL && *p != NUL) {
-        /* First time count the NUL, otherwise count the ','. */
+        // First time count the NUL, otherwise count the ','.
         len = (int)STRLEN(p) + 3;
         ga_grow(&ga, len);
         if (!GA_EMPTY(&ga))
@@ -1826,8 +1827,9 @@ void set_init_1(void)
         STRCAT(ga.ga_data, "*");
         ga.ga_len += len;
       }
-      if (mustfree)
+      if(mustfree) {
         xfree(p);
+      }
     }
     if (ga.ga_data != NULL) {
       set_string_default("bsk", ga.ga_data);
@@ -1861,10 +1863,9 @@ void set_init_1(void)
     char_u  *buf;
     int i;
     int j;
-    bool mustfree = false;
 
     /* Initialize the 'cdpath' option's default value. */
-    cdpath = (char_u *)vim_getenv("CDPATH", &mustfree);
+    cdpath = (char_u *)vim_getenv("CDPATH");
     if (cdpath != NULL) {
       buf = xmalloc(2 * STRLEN(cdpath) + 2);
       {
@@ -1887,8 +1888,7 @@ void set_init_1(void)
         } else
           xfree(buf);           /* cannot happen */
       }
-      if (mustfree)
-        xfree(cdpath);
+      xfree(cdpath);
     }
   }
 
@@ -7428,11 +7428,10 @@ static void paste_option_changed(void)
 /// When "fname" is not NULL, use it to set $"envname" when it wasn't set yet.
 void vimrc_found(char_u *fname, char_u *envname)
 {
-  bool dofree = false;
   char_u      *p;
 
   if (fname != NULL) {
-    p = (char_u *)vim_getenv((char *)envname, &dofree);
+    p = (char_u *)vim_getenv((char *)envname);
     if (p == NULL) {
       /* Set $MYVIMRC to the first vimrc file found. */
       p = FullName_save(fname, FALSE);
@@ -7440,8 +7439,9 @@ void vimrc_found(char_u *fname, char_u *envname)
         vim_setenv((char *)envname, (char *)p);
         xfree(p);
       }
-    } else if (dofree)
+    } else {
       xfree(p);
+    }
   }
 }
 

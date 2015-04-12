@@ -1751,13 +1751,11 @@ ex_let_one (
         name[len] = NUL;
         p = get_tv_string_chk(tv);
         if (p != NULL && op != NULL && *op == '.') {
-          bool mustfree = false;
-          char *s = vim_getenv((char *)name, &mustfree);
+          char *s = vim_getenv((char *)name);
 
           if (s != NULL) {
             p = tofree = concat_str((char_u *)s, p);
-            if (mustfree)
-              xfree(s);
+            xfree(s);
           }
         }
         if (p != NULL) {
@@ -6357,7 +6355,6 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
 {
   char_u *name;
   char_u *string = NULL;
-  bool    mustfree = false;
   int     len;
   int     cc;
 
@@ -6372,15 +6369,9 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
     cc = name[len];
     name[len] = NUL;
     // First try vim_getenv(), fast for normal environment vars.
-    string = (char_u *)vim_getenv((char *)name, &mustfree);
-    if (string != NULL && *string != NUL) {
-      if (!mustfree) {
-        string = vim_strsave(string);
-      }
-    } else {
-      if (mustfree) {
-        xfree(string);
-      }
+    string = (char_u *)vim_getenv((char *)name);
+    if (string == NULL || *string == NUL) {
+      xfree(string);
 
       // Next try expanding things like $VIM and ${HOME}.
       string = expand_env_save(name - 1);
