@@ -1274,6 +1274,39 @@ def CheckPosixThreading(filename, clean_lines, linenum, error):
                   ' see os_localtime_r for an example.')
 
 
+memory_functions = (
+    ('malloc(', 'xmalloc('),
+    ('calloc(', 'xcalloc('),
+    ('realloc(', 'xrealloc('),
+    ('strdup(', 'xstrdup('),
+    ('free(', 'xfree('),
+)
+memory_ignore_pattern = re.compile(r'src/nvim/memory.c$')
+
+
+def CheckMemoryFunctions(filename, clean_lines, linenum, error):
+    """Checks for calls to invalid functions.
+
+    Args:
+      filename: The name of the current file.
+      clean_lines: A CleansedLines instance containing the file.
+      linenum: The number of the line to check.
+      error: The function to call with any errors found.
+    """
+    if memory_ignore_pattern.search(filename):
+        return
+    line = clean_lines.elided[linenum]
+    for function, suggested_function in memory_functions:
+        ix = line.find(function)
+        # Comparisons made explicit for clarity -- pylint:
+        # disable=g-explicit-bool-comparison
+        if ix >= 0 and (ix == 0 or (not line[ix - 1].isalnum() and
+                                    line[ix - 1] not in ('_', '.', '>'))):
+            error(filename, linenum, 'runtime/memory_fn', 2,
+                  'Use ' + suggested_function +
+                  '...) instead of ' + function + '...).')
+
+
 # Matches invalid increment: *count++, which moves pointer instead of
 # incrementing a value.
 _RE_PATTERN_INVALID_INCREMENT = re.compile(
@@ -2925,6 +2958,7 @@ def ProcessLine(filename, file_extension, clean_lines, line,
     CheckForNonStandardConstructs(filename, clean_lines, line,
                                   nesting_state, error)
     CheckPosixThreading(filename, clean_lines, line, error)
+    CheckMemoryFunctions(filename, clean_lines, line, error)
     for check_fn in extra_check_functions:
         check_fn(filename, clean_lines, line, error)
 
