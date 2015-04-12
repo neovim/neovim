@@ -1761,7 +1761,7 @@ ex_let_one (
           }
         }
         if (p != NULL) {
-          vim_setenv(name, p);
+          vim_setenv((char *)name, (char *)p);
           if (STRICMP(name, "HOME") == 0)
             init_homedir();
           else if (didset_vim && STRICMP(name, "VIM") == 0)

@@ -2288,7 +2288,7 @@ void set_init_3(void)
  * When 'helplang' is still at its default value, set it to "lang".
  * Only the first two characters of "lang" are used.
  */
-void set_helplang_default(char_u *lang)
+void set_helplang_default(const char *lang)
 {
   int idx;
 
@@ -3644,11 +3644,11 @@ did_set_string_option (
   else if (varp == &p_hf) {
     /* May compute new values for $VIM and $VIMRUNTIME */
     if (didset_vim) {
-      vim_setenv((char_u *)"VIM", (char_u *)"");
+      vim_setenv("VIM", "");
       didset_vim = FALSE;
     }
     if (didset_vimruntime) {
-      vim_setenv((char_u *)"VIMRUNTIME", (char_u *)"");
+      vim_setenv("VIMRUNTIME", "");
       didset_vimruntime = FALSE;
     }
   }
@@ -7437,7 +7437,7 @@ void vimrc_found(char_u *fname, char_u *envname)
       /* Set $MYVIMRC to the first vimrc file found. */
       p = FullName_save(fname, FALSE);
       if (p != NULL) {
-        vim_setenv(envname, p);
+        vim_setenv((char *)envname, (char *)p);
         xfree(p);
       }
     } else if (dofree)

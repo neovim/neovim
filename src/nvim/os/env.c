@@ -528,10 +528,10 @@ char *vim_getenv(const char *name, bool *mustfree)
    */
   if (p != NULL) {
     if (vimruntime) {
-      vim_setenv((char_u *)"VIMRUNTIME", (char_u *)p);
+      vim_setenv("VIMRUNTIME", p);
       didset_vimruntime = true;
     } else {
-      vim_setenv((char_u *)"VIM", (char_u *)p);
+      vim_setenv("VIM", p);
       didset_vim = true;
     }
   }
@@ -664,16 +664,16 @@ char_u * home_replace_save(buf_T *buf, char_u *src) FUNC_ATTR_NONNULL_RET
 /// Our portable version of setenv.
 /// Has special handling for $VIMRUNTIME to keep the localization machinery
 /// sane.
-void vim_setenv(char_u *name, char_u *val)
+void vim_setenv(const char *name, const char *val)
 {
-  os_setenv((char *)name, (char *)val, 1);
+  os_setenv(name, val, 1);
   /*
    * When setting $VIMRUNTIME adjust the directory to find message
    * translations to $VIMRUNTIME/lang.
    */
   if (*val != NUL && STRICMP(name, "VIMRUNTIME") == 0) {
-    char_u  *buf = concat_str(val, (char_u *)"/lang");
-    bindtextdomain(VIMPACKAGE, (char *)buf);
+    char *buf = (char *)concat_str((char_u *)val, (char_u *)"/lang");
+    bindtextdomain(VIMPACKAGE, buf);
     xfree(buf);
   }
 }

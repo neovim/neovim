@@ -3127,22 +3127,20 @@ void ex_language(exarg_T *eap)
       ++_nl_msg_cat_cntr;
 #endif
       /* Reset $LC_ALL, otherwise it would overrule everything. */
-      vim_setenv((char_u *)"LC_ALL", (char_u *)"");
+      vim_setenv("LC_ALL", "");
 
       if (what != LC_TIME) {
         /* Tell gettext() what to translate to.  It apparently doesn't
          * use the currently effective locale. */
         if (what == LC_ALL) {
-          vim_setenv((char_u *)"LANG", name);
+          vim_setenv("LANG", (char *)name);
 
           /* Clear $LANGUAGE because GNU gettext uses it. */
-          vim_setenv((char_u *)"LANGUAGE", (char_u *)"");
+          vim_setenv("LANGUAGE", "");
         }
         if (what != LC_CTYPE) {
-          char_u      *mname;
-          mname = name;
-          vim_setenv((char_u *)"LC_MESSAGES", mname);
-          set_helplang_default(mname);
+          vim_setenv("LC_MESSAGES", (char *)name);
+          set_helplang_default((char *)name);
         }
       }
 
