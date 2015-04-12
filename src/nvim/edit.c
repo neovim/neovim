@@ -6752,7 +6752,7 @@ static void ins_reg(void)
 
     regname = get_expr_register();
   }
-  if (regname == NUL || !valid_yank_reg(regname, FALSE)) {
+  if (regname == NUL || !valid_yank_reg(regname, false)) {
     vim_beep();
     need_redraw = TRUE;         /* remove the '"' */
   } else {

@@ -714,15 +714,13 @@ char_u *get_expr_line_src(void)
   return vim_strsave(expr_line);
 }
 
-/*
- * Check if 'regname' is a valid name of a yank register.
- * Note: There is no check for 0 (default register), caller should do this
- */
-int 
-valid_yank_reg (
-    int regname,
-    int writing                /* if TRUE check for writable registers */
-)
+/// Returns whether `regname` is a valid name of a yank register.
+/// Note: There is no check for 0 (default register), caller should do this.
+/// The black hole register '_' is regarded as valid.
+///
+/// @param regname name of register
+/// @param writing allow only writable registers
+bool valid_yank_reg(int regname, bool writing)
 {
   if (       (regname > 0 && ASCII_ISALNUM(regname))
              || (!writing && vim_strchr((char_u *)
@@ -734,8 +732,8 @@ valid_yank_reg (
              || regname == '*'
              || regname == '+'
              )
-    return TRUE;
-  return FALSE;
+    return true;
+  return false;
 }
 
 typedef enum {
@@ -826,7 +824,7 @@ yankreg_T *copy_register(int name)
  */
 int yank_register_mline(int regname)
 {
-  if (regname != 0 && !valid_yank_reg(regname, FALSE))
+  if (regname != 0 && !valid_yank_reg(regname, false))
     return FALSE;
   if (regname == '_')           /* black hole is always empty */
     return FALSE;
@@ -894,7 +892,7 @@ int do_record(int c)
 static int stuff_yank(int regname, char_u *p)
 {
   /* check for read-only register */
-  if (regname != 0 && !valid_yank_reg(regname, TRUE)) {
+  if (regname != 0 && !valid_yank_reg(regname, true)) {
     xfree(p);
     return FAIL;
   }
@@ -950,7 +948,7 @@ do_execreg (
     regname = execreg_lastc;
   }
   /* check for valid regname */
-  if (regname == '%' || regname == '#' || !valid_yank_reg(regname, FALSE)) {
+  if (regname == '%' || regname == '#' || !valid_yank_reg(regname, false)) {
     emsg_invreg(regname);
     return FAIL;
   }
@@ -1116,7 +1114,7 @@ insert_reg (
     return FAIL;
 
   /* check for valid regname */
-  if (regname != NUL && !valid_yank_reg(regname, FALSE))
+  if (regname != NUL && !valid_yank_reg(regname, false))
     return FAIL;
 
   if (regname == '.')                   /* insert last inserted text */
@@ -2307,7 +2305,7 @@ bool op_yank(oparg_T *oap, bool message)
   FUNC_ATTR_NONNULL_ALL
 {
   // check for read-only register
-  if (oap->regname != 0 && !valid_yank_reg(oap->regname, TRUE)) {
+  if (oap->regname != 0 && !valid_yank_reg(oap->regname, true)) {
     beep_flush();
     return false;
   }
@@ -4621,7 +4619,7 @@ char_u get_reg_type(int regname, long *reglen)
     return MCHAR;
   }
 
-  if (regname != NUL && !valid_yank_reg(regname, FALSE))
+  if (regname != NUL && !valid_yank_reg(regname, false))
     return MAUTO;
 
   yankreg_T *reg = get_yank_register(regname, YREG_PASTE);
@@ -4677,7 +4675,7 @@ void *get_reg_contents(int regname, int flags)
     regname = '"';
 
   /* check for valid regname */
-  if (regname != NUL && !valid_yank_reg(regname, FALSE))
+  if (regname != NUL && !valid_yank_reg(regname, false))
     return NULL;
 
   char_u *retval;

@@ -2318,7 +2318,7 @@ cmdline_paste (
   /* check for valid regname; also accept special characters for CTRL-R in
    * the command line */
   if (regname != Ctrl_F && regname != Ctrl_P && regname != Ctrl_W
-      && regname != Ctrl_A && !valid_yank_reg(regname, FALSE))
+      && regname != Ctrl_A && !valid_yank_reg(regname, false))
     return FAIL;
 
   /* A register containing CTRL-R can cause an endless loop.  Allow using

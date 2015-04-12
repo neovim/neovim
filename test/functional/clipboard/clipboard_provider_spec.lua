@@ -305,4 +305,28 @@ describe('clipboard usage', function()
     feed(':<c-r>*<cr>')
     expect('t/u/t/')
   end)
+
+  it('supports :redir @*>', function()
+    execute("let g:test_clip['*'] = ['stuff']")
+    execute('redir @*>')
+    -- it is made empty
+    eq({{''}, 'v'}, eval("g:test_clip['*']"))
+    execute('let g:test = doesnotexist')
+    feed('<cr>')
+    eq({{
+      '',
+      '',
+      'E121: Undefined variable: doesnotexist',
+      'E15: Invalid expression: doesnotexist',
+    }, 'v'}, eval("g:test_clip['*']"))
+    execute(':echo "Howdy!"')
+    eq({{
+      '',
+      '',
+      'E121: Undefined variable: doesnotexist',
+      'E15: Invalid expression: doesnotexist',
+      '',
+      'Howdy!',
+    }, 'v'}, eval("g:test_clip['*']"))
+  end)
 end)
