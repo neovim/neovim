@@ -20313,11 +20313,11 @@ static void on_job_event(Event event)
   clear_tv(&rettv);
 
 end:
-  kmp_free(JobEventPool, job_event_pool, ev);
   if (!ev->received) {
     // exit event, safe to free job data now
     term_job_data_decref(ev->data);
   }
+  kmp_free(JobEventPool, job_event_pool, ev);
 }
 
 static void script_host_eval(char *name, typval_T *argvars, typval_T *rettv)
