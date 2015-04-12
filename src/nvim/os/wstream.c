@@ -5,8 +5,6 @@
 
 #include <uv.h>
 
-#include "nvim/lib/klist.h"
-
 #include "nvim/os/uv_helpers.h"
 #include "nvim/os/wstream.h"
 #include "nvim/os/wstream_defs.h"
@@ -41,23 +39,9 @@ typedef struct {
   uv_write_t uv_req;
 } WRequest;
 
-#define WRequestFreer(x)
-KMEMPOOL_INIT(WRequestPool, WRequest, WRequestFreer)
-kmempool_t(WRequestPool) *wrequest_pool = NULL;
-#define WBufferFreer(x)
-KMEMPOOL_INIT(WBufferPool, WBuffer, WBufferFreer)
-kmempool_t(WBufferPool) *wbuffer_pool = NULL;
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/wstream.c.generated.h"
 #endif
-
-/// Initialize pools for reusing commonly created objects
-void wstream_init(void)
-{
-  wrequest_pool = kmp_init(WRequestPool);
-  wbuffer_pool = kmp_init(WBufferPool);
-}
 
 /// Creates a new WStream instance. A WStream encapsulates all the boilerplate
 /// necessary for writing to a libuv stream.
@@ -163,7 +147,7 @@ bool wstream_write(WStream *wstream, WBuffer *buffer)
 
   wstream->curmem += buffer->size;
 
-  WRequest *data = kmp_alloc(WRequestPool, wrequest_pool);
+  WRequest *data = xmalloc(sizeof(WRequest));
   data->wstream = wstream;
   data->buffer = buffer;
   data->uv_req.data = data;
@@ -173,7 +157,7 @@ bool wstream_write(WStream *wstream, WBuffer *buffer)
   uvbuf.len = buffer->size;
 
   if (uv_write(&data->uv_req, wstream->stream, &uvbuf, 1, write_cb)) {
-    kmp_free(WRequestPool, wrequest_pool, data);
+    free(data);
     goto err;
   }
 
@@ -202,7 +186,7 @@ WBuffer *wstream_new_buffer(char *data,
                             size_t refcount,
                             wbuffer_data_finalizer cb)
 {
-  WBuffer *rv = kmp_alloc(WBufferPool, wbuffer_pool);
+  WBuffer *rv = xmalloc(sizeof(WBuffer));
   rv->size = size;
   rv->refcount = refcount;
   rv->cb = cb;
@@ -236,7 +220,7 @@ static void write_cb(uv_write_t *req, int status)
     }
   }
 
-  kmp_free(WRequestPool, wrequest_pool, data);
+  free(data);
 }
 
 void wstream_release_wbuffer(WBuffer *buffer)
@@ -246,7 +230,7 @@ void wstream_release_wbuffer(WBuffer *buffer)
       buffer->cb(buffer->data);
     }
 
-    kmp_free(WBufferPool, wbuffer_pool, buffer);
+    free(buffer);
   }
 }
 

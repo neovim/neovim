@@ -21,8 +21,6 @@
 #include <math.h>
 #include <limits.h>
 
-#include "nvim/lib/klist.h"
-
 #include "nvim/assert.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
@@ -469,9 +467,6 @@ typedef struct {
   list_T *received;
   int status;
 } JobEvent;
-#define JobEventFreer(x)
-KMEMPOOL_INIT(JobEventPool, JobEvent, JobEventFreer)
-static kmempool_t(JobEventPool) *job_event_pool = NULL;
 static int disable_job_defer = 0;
 
 /*
@@ -508,8 +503,6 @@ void eval_init(void)
   set_vim_var_nr(VV_SEARCHFORWARD, 1L);
   set_vim_var_nr(VV_HLSEARCH, 1L);
   set_reg_var(0);    /* default for v:register is not 0 but '"' */
-
-  job_event_pool = kmp_init(JobEventPool);
 }
 
 #if defined(EXITFREE)
@@ -20149,7 +20142,7 @@ static inline bool is_user_job(Job *job)
 static inline void push_job_event(Job *job, ufunc_T *callback,
     const char *type, char *data, size_t count, int status)
 {
-  JobEvent *event_data = kmp_alloc(JobEventPool, job_event_pool);
+  JobEvent *event_data = xmalloc(sizeof(JobEvent));
   event_data->received = NULL;
   if (data) {
     event_data->received = list_alloc();
@@ -20317,7 +20310,7 @@ end:
     // exit event, safe to free job data now
     term_job_data_decref(ev->data);
   }
-  kmp_free(JobEventPool, job_event_pool, ev);
+  free(ev);
 }
 
 static void script_host_eval(char *name, typval_T *argvars, typval_T *rettv)

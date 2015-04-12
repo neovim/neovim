@@ -5,8 +5,6 @@
 #include <uv.h>
 #include <msgpack.h>
 
-#include "nvim/lib/klist.h"
-
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
 #include "nvim/msgpack_rpc/channel.h"
@@ -69,10 +67,6 @@ typedef struct {
   uint64_t request_id;
 } RequestEvent;
 
-#define _noop(x)
-KMEMPOOL_INIT(RequestEventPool, RequestEvent, _noop)
-static kmempool_t(RequestEventPool) *request_event_pool = NULL;
-
 static uint64_t next_id = 1;
 static PMap(uint64_t) *channels = NULL;
 static PMap(cstr_t) *event_strings = NULL;
@@ -85,7 +79,6 @@ static msgpack_sbuffer out_buffer;
 /// Initializes the module
 void channel_init(void)
 {
-  request_event_pool = kmp_init(RequestEventPool);
   channels = pmap_new(uint64_t)();
   event_strings = pmap_new(cstr_t)();
   msgpack_sbuffer_init(&out_buffer);
@@ -455,7 +448,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
   Array args = ARRAY_DICT_INIT;
   msgpack_rpc_to_array(request->via.array.ptr + 3, &args);
   bool defer = (!kv_size(channel->call_stack) && handler.defer);
-  RequestEvent *event_data = kmp_alloc(RequestEventPool, request_event_pool);
+  RequestEvent *event_data = xmalloc(sizeof(RequestEvent));
   event_data->channel = channel;
   event_data->handler = handler;
   event_data->args = args;
@@ -487,7 +480,7 @@ static void on_request_event(Event event)
   // All arguments were freed already, but we still need to free the array
   free(args.items);
   decref(channel);
-  kmp_free(RequestEventPool, request_event_pool, e);
+  free(e);
 }
 
 static bool channel_write(Channel *channel, WBuffer *buffer)

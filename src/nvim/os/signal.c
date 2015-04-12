@@ -1,8 +1,7 @@
+#include <assert.h>
 #include <stdbool.h>
 
 #include <uv.h>
-
-#include "nvim/lib/klist.h"
 
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
@@ -14,10 +13,6 @@
 #include "nvim/misc2.h"
 #include "nvim/os/signal.h"
 #include "nvim/os/event.h"
-
-#define SignalEventFreer(x)
-KMEMPOOL_INIT(SignalEventPool, int, SignalEventFreer)
-kmempool_t(SignalEventPool) *signal_event_pool = NULL;
 
 static uv_signal_t spipe, shup, squit, sterm;
 #ifdef SIGPWR
@@ -32,7 +27,6 @@ static bool rejecting_deadly;
 
 void signal_init(void)
 {
-  signal_event_pool = kmp_init(SignalEventPool);
   uv_signal_init(uv_default_loop(), &spipe);
   uv_signal_init(uv_default_loop(), &shup);
   uv_signal_init(uv_default_loop(), &squit);
@@ -119,18 +113,16 @@ static void deadly_signal(int signum)
 
 static void signal_cb(uv_signal_t *handle, int signum)
 {
-  int *n = kmp_alloc(SignalEventPool, signal_event_pool);
-  *n = signum;
+  assert(signum >= 0);
   event_push((Event) {
     .handler = on_signal_event,
-    .data = n
+    .data = (void *)(uintptr_t)signum
   }, false);
 }
 
 static void on_signal_event(Event event)
 {
-  int signum = *((int *)event.data);
-  kmp_free(SignalEventPool, signal_event_pool, event.data);
+  int signum = (int)(uintptr_t)event.data;
 
   switch (signum) {
 #ifdef SIGPWR
