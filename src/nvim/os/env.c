@@ -390,14 +390,14 @@ static char_u *vim_version_dir(char_u *vimdir)
 
 /// If the string between "p" and "pend" ends in "name/", return "pend" minus
 /// the length of "name/".  Otherwise return "pend".
-static char_u *remove_tail(char_u *p, char_u *pend, char_u *name)
+static char *remove_tail(char *p, char *pend, char *name)
 {
-  int len = (int)STRLEN(name) + 1;
-  char_u      *newend = pend - len;
+  size_t len = STRLEN(name) + 1;
+  char *newend = pend - len;
 
   if (newend >= p
-      && fnamencmp(newend, name, len - 1) == 0
-      && (newend == p || after_pathsep(p, newend)))
+      && fnamencmp((char_u *)newend, (char_u *)name, len - 1) == 0
+      && (newend == p || after_pathsep((char_u *)p, (char_u *)newend)))
     return newend;
   return pend;
 }
@@ -464,12 +464,14 @@ char_u *vim_getenv(char_u *name, bool *mustfree)
 
       /* remove "doc/" from 'helpfile', if present */
       if (p == p_hf)
-        pend = remove_tail(p, pend, (char_u *)"doc");
+        pend = (char_u *)remove_tail((char *)p, (char *)pend, "doc");
 
       /* for $VIM, remove "runtime/" or "vim54/", if present */
       if (!vimruntime) {
-        pend = remove_tail(p, pend, (char_u *)RUNTIME_DIRNAME);
-        pend = remove_tail(p, pend, (char_u *)VIM_VERSION_NODOT);
+        pend = (char_u *)remove_tail((char *)p, (char *)pend,
+                                     RUNTIME_DIRNAME);
+        pend = (char_u *)remove_tail((char *)p, (char *)pend,
+                                     VIM_VERSION_NODOT);
       }
 
       /* remove trailing path separator */
