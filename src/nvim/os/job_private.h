@@ -11,6 +11,7 @@
 #include "nvim/os/pty_process.h"
 #include "nvim/os/shell.h"
 #include "nvim/log.h"
+#include "nvim/memory.h"
 
 struct job {
   // Job id the index in the job table plus one.
@@ -104,12 +105,12 @@ static inline void job_decref(Job *job)
     // Invoke the exit_cb
     job_exit_callback(job);
     // Free all memory allocated for the job
-    free(job->proc_stdin->data);
-    free(job->proc_stdout->data);
-    free(job->proc_stderr->data);
+    xfree(job->proc_stdin->data);
+    xfree(job->proc_stdout->data);
+    xfree(job->proc_stderr->data);
     shell_free_argv(job->opts.argv);
     process_destroy(job);
-    free(job);
+    xfree(job);
   }
 }
 

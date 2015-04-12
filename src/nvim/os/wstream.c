@@ -76,7 +76,7 @@ void wstream_free(WStream *wstream) {
       uv_close((uv_handle_t *)wstream->stream, close_cb);
     } else {
       handle_set_wstream((uv_handle_t *)wstream->stream, NULL);
-      free(wstream);
+      xfree(wstream);
     }
   } else {
     wstream->freed = true;
@@ -157,7 +157,7 @@ bool wstream_write(WStream *wstream, WBuffer *buffer)
   uvbuf.len = buffer->size;
 
   if (uv_write(&data->uv_req, wstream->stream, &uvbuf, 1, write_cb)) {
-    free(data);
+    xfree(data);
     goto err;
   }
 
@@ -216,11 +216,11 @@ static void write_cb(uv_write_t *req, int status)
     if (data->wstream->free_handle) {
       uv_close((uv_handle_t *)data->wstream->stream, close_cb);
     } else {
-      free(data->wstream);
+      xfree(data->wstream);
     }
   }
 
-  free(data);
+  xfree(data);
 }
 
 void wstream_release_wbuffer(WBuffer *buffer)
@@ -230,14 +230,14 @@ void wstream_release_wbuffer(WBuffer *buffer)
       buffer->cb(buffer->data);
     }
 
-    free(buffer);
+    xfree(buffer);
   }
 }
 
 static void close_cb(uv_handle_t *handle)
 {
-  free(handle_get_wstream(handle));
-  free(handle->data);
-  free(handle);
+  xfree(handle_get_wstream(handle));
+  xfree(handle->data);
+  xfree(handle);
 }
 

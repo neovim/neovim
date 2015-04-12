@@ -18,6 +18,7 @@
 #include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"
+#include "nvim/memory.h"
 #include "nvim/window.h"
 #include "nvim/edit.h"
 
@@ -377,12 +378,12 @@ void pum_redraw(void)
                 }
               }
               screen_puts_len(rt, (int)STRLEN(rt), row, col - size + 1, attr);
-              free(rt_start);
-              free(st);
+              xfree(rt_start);
+              xfree(st);
               col -= width;
             } else {
               screen_puts_len(st, (int)STRLEN(st), row, col, attr);
-              free(st);
+              xfree(st);
               col += width;
             }
 

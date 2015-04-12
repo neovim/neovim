@@ -443,8 +443,8 @@ close_buffer (
    * Remove the buffer from the list.
    */
   if (wipe_buf) {
-    free(buf->b_ffname);
-    free(buf->b_sfname);
+    xfree(buf->b_ffname);
+    xfree(buf->b_sfname);
     if (buf->b_prev == NULL)
       firstbuf = buf->b_next;
     else
@@ -563,7 +563,7 @@ static void free_buffer(buf_T *buf)
     buf->b_next = au_pending_free_buf;
     au_pending_free_buf = buf;
   } else {
-    free(buf);
+    xfree(buf);
   }
 }
 
@@ -587,7 +587,7 @@ free_buffer_stuff (
   buf_delete_signs(buf);                /* delete any signs */
   map_clear_int(buf, MAP_ALL_MODES, TRUE, FALSE);    /* clear local mappings */
   map_clear_int(buf, MAP_ALL_MODES, TRUE, TRUE);     /* clear local abbrevs */
-  free(buf->b_start_fenc);
+  xfree(buf->b_start_fenc);
   buf->b_start_fenc = NULL;
 }
 
@@ -605,7 +605,7 @@ static void clear_wininfo(buf_T *buf)
       clear_winopt(&wip->wi_opt);
       deleteFoldRecurse(&wip->wi_folds);
     }
-    free(wip);
+    xfree(wip);
   }
 }
 
@@ -1332,7 +1332,7 @@ buflist_new (
   if (ffname != NULL && !(flags & BLN_DUMMY)
       && (buf = buflist_findname_file_id(ffname, &file_id,
                                          file_id_valid)) != NULL) {
-    free(ffname);
+    xfree(ffname);
     if (lnum != 0)
       buflist_setfpos(buf, curwin, lnum, (colnr_T)0, FALSE);
     /* copy the options now, if 'cpo' doesn't have 's' and not done
@@ -1396,9 +1396,9 @@ buflist_new (
   buf->b_wininfo = xcalloc(1, sizeof(wininfo_T));
 
   if (ffname != NULL && (buf->b_ffname == NULL || buf->b_sfname == NULL)) {
-    free(buf->b_ffname);
+    xfree(buf->b_ffname);
     buf->b_ffname = NULL;
-    free(buf->b_sfname);
+    xfree(buf->b_sfname);
     buf->b_sfname = NULL;
     if (buf != curbuf)
       free_buffer(buf);
@@ -1672,7 +1672,7 @@ buf_T *buflist_findname_exp(char_u *fname)
       );
   if (ffname != NULL) {
     buf = buflist_findname(ffname);
-    free(ffname);
+    xfree(ffname);
   }
   return buf;
 }
@@ -1767,7 +1767,7 @@ buflist_findpat (
           ++p;
         prog = vim_regcomp(p, p_magic ? RE_MAGIC : 0);
         if (prog == NULL) {
-          free(pat);
+          xfree(pat);
           return -1;
         }
 
@@ -1809,7 +1809,7 @@ buflist_findpat (
       find_listed = FALSE;
     }
 
-    free(pat);
+    xfree(pat);
   }
 
   if (match == -2)
@@ -1855,7 +1855,7 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
     prog = vim_regcomp(patc + attempt * 11, RE_MAGIC);
     if (prog == NULL) {
       if (patc != pat)
-        free(patc);
+        xfree(patc);
       return FAIL;
     }
 
@@ -1893,7 +1893,7 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
   }
 
   if (patc != pat)
-    free(patc);
+    xfree(patc);
 
   *num_file = count;
   return count == 0 ? FAIL : OK;
@@ -1938,7 +1938,7 @@ static char_u *fname_match(regprog_T *prog, char_u *name, bool ignore_case)
       p = home_replace_save(NULL, name);
       if (vim_regexec(&regmatch, p, (colnr_T)0))
         match = name;
-      free(p);
+      xfree(p);
     }
   }
 
@@ -2223,8 +2223,8 @@ setfname (
 
   if (ffname == NULL || *ffname == NUL) {
     /* Removing the name. */
-    free(buf->b_ffname);
-    free(buf->b_sfname);
+    xfree(buf->b_ffname);
+    xfree(buf->b_sfname);
     buf->b_ffname = NULL;
     buf->b_sfname = NULL;
   } else {
@@ -2245,7 +2245,7 @@ setfname (
       if (obuf->b_ml.ml_mfp != NULL) {          /* it's loaded, fail */
         if (message)
           EMSG(_("E95: Buffer with this name already exists"));
-        free(ffname);
+        xfree(ffname);
         return FAIL;
       }
       /* delete from the list */
@@ -2255,8 +2255,8 @@ setfname (
 #ifdef USE_FNAME_CASE
     path_fix_case(sfname);            /* set correct case for short file name */
 #endif
-    free(buf->b_ffname);
-    free(buf->b_sfname);
+    xfree(buf->b_ffname);
+    xfree(buf->b_sfname);
     buf->b_ffname = ffname;
     buf->b_sfname = sfname;
   }
@@ -2282,8 +2282,8 @@ void buf_set_name(int fnum, char_u *name)
 
   buf = buflist_findnr(fnum);
   if (buf != NULL) {
-    free(buf->b_sfname);
-    free(buf->b_ffname);
+    xfree(buf->b_sfname);
+    xfree(buf->b_ffname);
     buf->b_ffname = vim_strsave(name);
     buf->b_sfname = NULL;
     /* Allocate ffname and expand into full path.  Also resolves .lnk
@@ -2561,7 +2561,7 @@ fileinfo (
       set_keep_msg(p, 0);
   }
 
-  free(buffer);
+  xfree(buffer);
 }
 
 void col_print(char_u *buf, size_t buflen, int col, int vcol)
@@ -2636,7 +2636,7 @@ void maketitle(void)
       else {
         p = transstr(path_tail(curbuf->b_fname));
         STRLCPY(buf, p, SPACE_FOR_FNAME + 1);
-        free(p);
+        xfree(p);
       }
 
       switch (bufIsChanged(curbuf)
@@ -2677,7 +2677,7 @@ void maketitle(void)
         if (off < SPACE_FOR_DIR) {
           p = transstr(buf + off);
           STRLCPY(buf + off, p, SPACE_FOR_DIR - off + 1);
-          free(p);
+          xfree(p);
         } else {
           STRLCPY(buf + off, "...", SPACE_FOR_ARGNR - off + 1);
         }
@@ -2749,7 +2749,7 @@ static int ti_change(char_u *str, char_u **last)
 {
   if ((str == NULL) != (*last == NULL)
       || (str != NULL && *last != NULL && STRCMP(str, *last) != 0)) {
-    free(*last);
+    xfree(*last);
     if (str == NULL)
       *last = NULL;
     else
@@ -2771,8 +2771,8 @@ void resettitle(void)
 # if defined(EXITFREE)
 void free_titles(void)
 {
-  free(lasttitle);
-  free(lasticon);
+  xfree(lasttitle);
+  xfree(lasticon);
 }
 
 # endif
@@ -3124,7 +3124,7 @@ build_stl_str_hl (
       if (str != NULL && *str != 0) {
         if (*skipdigits(str) == NUL) {
           num = atoi((char *)str);
-          free(str);
+          xfree(str);
           str = NULL;
           itemisflag = FALSE;
         }
@@ -3381,7 +3381,7 @@ build_stl_str_hl (
       item[curitem].type = Empty;
 
     if (opt == STL_VIM_EXPR)
-      free(str);
+      xfree(str);
 
     if (num >= 0 || (!itemisflag && str && *str))
       prevchar_isflag = FALSE;              /* Item not NULL, but not a flag */
@@ -3391,7 +3391,7 @@ build_stl_str_hl (
   itemcnt = curitem;
 
   if (usefmt != fmt)
-    free(usefmt);
+    xfree(usefmt);
 
   width = vim_strsize(out);
   if (maxwidth > 0 && width > maxwidth) {
@@ -3585,7 +3585,7 @@ void fname_expand(buf_T *buf, char_u **ffname, char_u **sfname)
     /* If the file name is a shortcut file, use the file it links to. */
     rfname = mch_resolve_shortcut(*ffname);
     if (rfname != NULL) {
-      free(*ffname);
+      xfree(*ffname);
       *ffname = rfname;
       *sfname = rfname;
     }
@@ -3844,7 +3844,7 @@ do_arg_all (
     win_enter(new_curwin, false);
 
   --autocmd_no_leave;
-  free(opened);
+  xfree(opened);
 }
 
 /*
@@ -4161,7 +4161,7 @@ chk_modeline (
   sourcing_lnum = save_sourcing_lnum;
   sourcing_name = save_sourcing_name;
 
-  free(linecopy);
+  xfree(linecopy);
 
   return retval;
 }
@@ -4208,7 +4208,7 @@ int read_viminfo_bufferlist(vir_T *virp, int writing)
       buflist_setfpos(buf, curwin, lnum, col, FALSE);
     }
   }
-  free(xline);
+  xfree(xline);
 
   return viminfo_readline(virp);
 }
@@ -4249,7 +4249,7 @@ void write_viminfo_bufferlist(FILE *fp)
         buf->b_last_cursor.col);
     viminfo_writestring(fp, line);
   }
-  free(line);
+  xfree(line);
 }
 
 
@@ -4426,7 +4426,7 @@ linenr_T buf_delsign(
         if (sign->id == id) {
             *lastp = next;
             lnum = sign->lnum;
-            free(sign);
+            xfree(sign);
             break;
         } else {
             lastp = &sign->next;
@@ -4498,7 +4498,7 @@ void buf_delete_signs(buf_T *buf)
 
     while (buf->b_signlist != NULL) {
         next = buf->b_signlist->next;
-        free(buf->b_signlist);
+        xfree(buf->b_signlist);
         buf->b_signlist = next;
     }
 }
@@ -4621,7 +4621,7 @@ int buf_contents_changed(buf_T *buf)
         }
     }
   }
-  free(ea.cmd);
+  xfree(ea.cmd);
 
   /* restore curwin/curbuf and a few other things */
   aucmd_restbuf(&aco);

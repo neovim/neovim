@@ -24,7 +24,7 @@
 /// Clear an allocated growing array.
 void ga_clear(garray_T *gap)
 {
-  free(gap->ga_data);
+  xfree(gap->ga_data);
 
   // Initialize growing array without resetting itemsize or growsize
   gap->ga_data = NULL;
@@ -114,7 +114,7 @@ void ga_remove_duplicate_strings(garray_T *gap)
   // loop over the growing array in reverse
   for (int i = gap->ga_len - 1; i > 0; i--) {
     if (fnamecmp(fnames[i - 1], fnames[i]) == 0) {
-      free(fnames[i]);
+      xfree(fnames[i]);
 
       // close the gap (move all strings one slot lower)
       for (int j = i + 1; j < gap->ga_len; j++) {

@@ -58,7 +58,7 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
     rv = slice.items[0].data.string;
   }
 
-  free(slice.items);
+  xfree(slice.items);
 
   return rv;
 }
@@ -144,10 +144,10 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
 end:
   if (err->set) {
     for (size_t i = 0; i < rv.size; i++) {
-      free(rv.items[i].data.string.data);
+      xfree(rv.items[i].data.string.data);
     }
 
-    free(rv.items);
+    xfree(rv.items);
     rv.items = NULL;
   }
 
@@ -280,7 +280,7 @@ void buffer_set_line_slice(Buffer buffer,
     }
 
     // Same as with replacing, but we also need to free lines
-    free(lines[i]);
+    xfree(lines[i]);
     lines[i] = NULL;
     extra++;
   }
@@ -301,10 +301,10 @@ void buffer_set_line_slice(Buffer buffer,
 
 end:
   for (size_t i = 0; i < new_len; i++) {
-    free(lines[i]);
+    xfree(lines[i]);
   }
 
-  free(lines);
+  xfree(lines);
   restore_win_for_buf(save_curwin, save_curtab, save_curbuf);
   try_end(err);
 }

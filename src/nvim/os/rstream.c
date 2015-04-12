@@ -162,8 +162,8 @@ size_t rbuffer_available(RBuffer *rbuffer)
 
 void rbuffer_free(RBuffer *rbuffer)
 {
-  free(rbuffer->data);
-  free(rbuffer);
+  xfree(rbuffer->data);
+  xfree(rbuffer);
 }
 
 /// Creates a new RStream instance. A RStream encapsulates all the boilerplate
@@ -216,7 +216,7 @@ void rstream_free(RStream *rstream)
   }
 
   rbuffer_free(rstream->buffer);
-  free(rstream);
+  xfree(rstream);
 }
 
 /// Sets the underlying `uv_stream_t` instance
@@ -401,8 +401,8 @@ static void fread_idle_cb(uv_idle_t *handle)
 
 static void close_cb(uv_handle_t *handle)
 {
-  free(handle->data);
-  free(handle);
+  xfree(handle->data);
+  xfree(handle);
 }
 
 static void rbuffer_relocate(RBuffer *rbuffer)

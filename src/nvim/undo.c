@@ -686,11 +686,11 @@ char_u *u_get_undo_file_name(char_u *buf_ffname, int reading)
         (!reading || os_file_exists(undo_file_name))) {
       break;
     }
-    free(undo_file_name);
+    xfree(undo_file_name);
     undo_file_name = NULL;
   }
 
-  free(munged_name);
+  xfree(munged_name);
   return undo_file_name;
 }
 
@@ -710,7 +710,7 @@ static void u_free_uhp(u_header_T *uhp)
     u_freeentry(uep, uep->ue_size);
     uep = nuep;
   }
-  free(uhp);
+  xfree(uhp);
 }
 
 /// Writes the header.
@@ -823,7 +823,7 @@ static u_header_T *unserialize_uhp(bufinfo_T *bi, char_u *file_name)
   uhp->uh_seq = undo_read_4c(bi);
   if (uhp->uh_seq <= 0) {
     corruption_error("uh_seq", file_name);
-    free(uhp);
+    xfree(uhp);
     return NULL;
   }
   unserialize_pos(bi, &uhp->uh_cursor);
@@ -1204,7 +1204,7 @@ write_error:
 
 theend:
   if (file_name != name)
-    free(file_name);
+    xfree(file_name);
 }
 
 /// Loads the undo tree from an undo file.
@@ -1470,7 +1470,7 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
   curbuf->b_u_save_nr_cur = last_save_nr;
 
   curbuf->b_u_synced = true;
-  free(uhp_table);
+  xfree(uhp_table);
 
 #ifdef U_DEBUG
   for (int i = 0; i < num_head; i++) {
@@ -1478,7 +1478,7 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
       EMSGN("uhp_table entry %" PRId64 " not used, leaking memory", i);
     }
   }
-  free(uhp_table_used);
+  xfree(uhp_table_used);
   u_check(TRUE);
 #endif
 
@@ -1488,13 +1488,13 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
   goto theend;
 
 error:
-  free(line_ptr);
+  xfree(line_ptr);
   if (uhp_table != NULL) {
     for (long i = 0; i < num_read_uhps; i++)
       if (uhp_table[i] != NULL) {
         u_free_uhp(uhp_table[i]);
       }
-    free(uhp_table);
+    xfree(uhp_table);
   }
 
 theend:
@@ -1502,7 +1502,7 @@ theend:
     fclose(fp);
   }
   if (file_name != name) {
-    free(file_name);
+    xfree(file_name);
   }
 }
 
@@ -1579,7 +1579,7 @@ static uint8_t *undo_read_string(bufinfo_T *bi, size_t len)
 {
   uint8_t *ptr = xmallocz(len);
   if (len > 0 && !undo_read(bi, ptr, len)) {
-    free(ptr);
+    xfree(ptr);
     return NULL;
   }
   return ptr;
@@ -2107,9 +2107,9 @@ static void u_undoredo(int undo)
           ml_replace((linenr_T)1, uep->ue_array[i], TRUE);
         else
           ml_append(lnum, uep->ue_array[i], (colnr_T)0, FALSE);
-        free(uep->ue_array[i]);
+        xfree(uep->ue_array[i]);
       }
-      free((char_u *)uep->ue_array);
+      xfree((char_u *)uep->ue_array);
     }
 
     /* adjust marks */
@@ -2668,7 +2668,7 @@ u_freeentries (
 #ifdef U_DEBUG
   uhp->uh_magic = 0;
 #endif
-  free((char_u *)uhp);
+  xfree((char_u *)uhp);
   --buf->b_u_numhead;
 }
 
@@ -2678,12 +2678,12 @@ u_freeentries (
 static void u_freeentry(u_entry_T *uep, long n)
 {
   while (n > 0)
-    free(uep->ue_array[--n]);
-  free((char_u *)uep->ue_array);
+    xfree(uep->ue_array[--n]);
+  xfree((char_u *)uep->ue_array);
 #ifdef U_DEBUG
   uep->ue_magic = 0;
 #endif
-  free((char_u *)uep);
+  xfree((char_u *)uep);
 }
 
 /*
@@ -2723,7 +2723,7 @@ void u_saveline(linenr_T lnum)
 void u_clearline(void)
 {
   if (curbuf->b_u_line_ptr != NULL) {
-    free(curbuf->b_u_line_ptr);
+    xfree(curbuf->b_u_line_ptr);
     curbuf->b_u_line_ptr = NULL;
     curbuf->b_u_line_lnum = 0;
   }
@@ -2756,7 +2756,7 @@ void u_undoline(void)
   oldp = u_save_line(curbuf->b_u_line_lnum);
   ml_replace(curbuf->b_u_line_lnum, curbuf->b_u_line_ptr, TRUE);
   changed_bytes(curbuf->b_u_line_lnum, 0);
-  free(curbuf->b_u_line_ptr);
+  xfree(curbuf->b_u_line_ptr);
   curbuf->b_u_line_ptr = oldp;
 
   t = curbuf->b_u_line_colnr;
@@ -2777,7 +2777,7 @@ void u_blockfree(buf_T *buf)
     u_freeheader(buf, buf->b_u_oldhead, NULL);
     assert(buf->b_u_oldhead != previous_oldhead);
   }
-  free(buf->b_u_line_ptr);
+  xfree(buf->b_u_line_ptr);
 }
 
 /*

@@ -45,7 +45,7 @@
   void map_##T##_##U##_free(Map(T, U) *map)                                   \
   {                                                                           \
     kh_destroy(T##_##U##_map, map->table);                                    \
-    free(map);                                                                \
+    xfree(map);                                                               \
   }                                                                           \
                                                                               \
   U map_##T##_##U##_get(Map(T, U) *map, T key)                                \

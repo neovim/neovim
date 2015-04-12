@@ -269,7 +269,7 @@ char_u *strup_save(const char_u *orig)
         memcpy(s, res, (size_t)(p - res));
         STRCPY(s + (p - res) + newl, p + l);
         p = s + (p - res);
-        free(res);
+        xfree(res);
         res = s;
       }
 

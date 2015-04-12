@@ -136,7 +136,7 @@ bool cin_is_cinword(char_u *line)
     }
   }
 
-  free(cinw_buf);
+  xfree(cinw_buf);
 
   return retval;
 }
@@ -3280,7 +3280,7 @@ theend:
   /* put the cursor back where it belongs */
   curwin->w_cursor = cur_curpos;
 
-  free(linecopy);
+  xfree(linecopy);
 
   if (amount < 0)
     return 0;

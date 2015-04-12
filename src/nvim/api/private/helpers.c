@@ -61,7 +61,7 @@ bool try_end(Error *err)
     free_global_msglist();
 
     if (should_free) {
-      free(msg);
+      xfree(msg);
     }
   } else if (did_throw) {
     api_set_error(err, Exception, "%s", current_exception->value);
@@ -489,7 +489,7 @@ void api_free_string(String value)
     return;
   }
 
-  free(value.data);
+  xfree(value.data);
 }
 
 void api_free_object(Object value)
@@ -527,7 +527,7 @@ void api_free_array(Array value)
     api_free_object(value.items[i]);
   }
 
-  free(value.items);
+  xfree(value.items);
 }
 
 void api_free_dictionary(Dictionary value)
@@ -537,7 +537,7 @@ void api_free_dictionary(Dictionary value)
     api_free_object(value.items[i].value);
   }
 
-  free(value.items);
+  xfree(value.items);
 }
 
 Dictionary api_metadata(void)

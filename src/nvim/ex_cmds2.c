@@ -278,11 +278,11 @@ void do_debug(char_u *cmd)
           DOCMD_VERBOSE|DOCMD_EXCRESET);
       debug_break_level = n;
 
-      free(cmdline);
+      xfree(cmdline);
     }
     lines_left = Rows - 1;
   }
-  free(cmdline);
+  xfree(cmdline);
 
   --RedrawingDisabled;
   --no_wait_return;
@@ -491,12 +491,12 @@ dbg_parsearg (
     if (q == NULL)
       return FAIL;
     p = expand_env_save(q);
-    free(q);
+    xfree(q);
     if (p == NULL)
       return FAIL;
     if (*p != '*') {
       bp->dbg_name = fix_fname(p);
-      free(p);
+      xfree(p);
     } else
       bp->dbg_name = p;
   }
@@ -526,10 +526,10 @@ void ex_breakadd(exarg_T *eap)
     pat = file_pat_to_reg_pat(bp->dbg_name, NULL, NULL, FALSE);
     if (pat != NULL) {
       bp->dbg_prog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
-      free(pat);
+      xfree(pat);
     }
     if (pat == NULL || bp->dbg_prog == NULL)
-      free(bp->dbg_name);
+      xfree(bp->dbg_name);
     else {
       if (bp->dbg_lnum == 0)            /* default line number is 1 */
         bp->dbg_lnum = 1;
@@ -598,14 +598,14 @@ void ex_breakdel(exarg_T *eap)
         best_lnum = bpi->dbg_lnum;
       }
     }
-    free(bp->dbg_name);
+    xfree(bp->dbg_name);
   }
 
   if (todel < 0)
     EMSG2(_("E161: Breakpoint not found: %s"), eap->arg);
   else {
     while (!GA_EMPTY(gap)) {
-      free(DEBUGGY(gap, todel).dbg_name);
+      xfree(DEBUGGY(gap, todel).dbg_name);
       vim_regfree(DEBUGGY(gap, todel).dbg_prog);
       --gap->ga_len;
       if (todel < gap->ga_len)
@@ -727,7 +727,7 @@ debuggy_find (
     }
   }
   if (name != fname)
-    free(name);
+    xfree(name);
 
   return lnum;
 }
@@ -759,7 +759,7 @@ void ex_profile(exarg_T *eap)
   e = skipwhite(e);
 
   if (len == 5 && STRNCMP(eap->arg, "start", 5) == 0 && *e != NUL) {
-    free(profile_fname);
+    xfree(profile_fname);
     profile_fname = expand_env_save_opt(e, true);
     do_profiling = PROF_YES;
     profile_set_wait(profile_zero());
@@ -1293,7 +1293,7 @@ buf_found:
     set_curbuf(buf, DOBUF_GOTO);
 
 theend:
-  free(bufnrs);
+  xfree(bufnrs);
   return ret;
 }
 
@@ -1450,7 +1450,7 @@ do_arglist (
         break;
       regmatch.regprog = vim_regcomp(p, p_magic ? RE_MAGIC : 0);
       if (regmatch.regprog == NULL) {
-        free(p);
+        xfree(p);
         break;
       }
 
@@ -1459,7 +1459,7 @@ do_arglist (
         if (vim_regexec(&regmatch, alist_name(&ARGLIST[match]),
                 (colnr_T)0)) {
           didone = TRUE;
-          free(ARGLIST[match].ae_fname);
+          xfree(ARGLIST[match].ae_fname);
           memmove(ARGLIST + match, ARGLIST + match + 1,
               (ARGCOUNT - match - 1) * sizeof(aentry_T));
           --ALIST(curwin)->al_ga.ga_len;
@@ -1469,7 +1469,7 @@ do_arglist (
         }
 
       vim_regfree(regmatch.regprog);
-      free(p);
+      xfree(p);
       if (!didone)
         EMSG2(_(e_nomatch2), ((char_u **)new_ga.ga_data)[i]);
     }
@@ -1487,7 +1487,7 @@ do_arglist (
 
     if (what == AL_ADD) {
       (void)alist_add_list(exp_count, exp_files, after);
-      free(exp_files);
+      xfree(exp_files);
     } else   /* what == AL_SET */
       alist_set(ALIST(curwin), exp_count, exp_files, FALSE, NULL, 0);
   }
@@ -1683,7 +1683,7 @@ void do_argfile(exarg_T *eap, int argn)
       if (P_HID(curbuf)) {
         p = fix_fname(alist_name(&ARGLIST[argn]));
         other = otherfile(p);
-        free(p);
+        xfree(p);
       }
       if ((!P_HID(curbuf) || !other)
           && check_changed(curbuf, CCGD_AW
@@ -1793,7 +1793,7 @@ void ex_argdelete(exarg_T *eap)
       EMSG(_(e_invarg));
     else {
       for (int i = eap->line1; i <= eap->line2; ++i)
-        free(ARGLIST[i - 1].ae_fname);
+        xfree(ARGLIST[i - 1].ae_fname);
       memmove(ARGLIST + eap->line1 - 1, ARGLIST + eap->line2,
           (size_t)((ARGCOUNT - eap->line2) * sizeof(aentry_T)));
       ALIST(curwin)->al_ga.ga_len -= n;
@@ -1858,7 +1858,7 @@ void ex_listdo(exarg_T *eap)
           set_option_value((char_u *)"shm", 0L, (char_u *)"", 0);
           do_argfile(eap, i);
           set_option_value((char_u *)"shm", 0L, p_shm_save, 0);
-          free(p_shm_save);
+          xfree(p_shm_save);
         }
         if (curwin->w_arg_idx != i)
           break;
@@ -1915,7 +1915,7 @@ void ex_listdo(exarg_T *eap)
         set_option_value((char_u *)"shm", 0L, (char_u *)"", 0);
         goto_buffer(eap, DOBUF_FIRST, FORWARD, next_fnum);
         set_option_value((char_u *)"shm", 0L, p_shm_save, 0);
-        free(p_shm_save);
+        xfree(p_shm_save);
 
         /* If autocommands took us elsewhere, quit here */
         if (curbuf->b_fnum != next_fnum)
@@ -2011,7 +2011,7 @@ void ex_compiler(exarg_T *eap)
     sprintf((char *)buf, "compiler/%s.vim", eap->arg);
     if (source_runtime(buf, TRUE) == FAIL)
       EMSG2(_("E666: compiler not supported: %s"), eap->arg);
-    free(buf);
+    xfree(buf);
 
     do_cmdline_cmd((char_u *)":delcommand CompilerSet");
 
@@ -2025,7 +2025,7 @@ void ex_compiler(exarg_T *eap)
       if (old_cur_comp != NULL) {
         set_internal_string_var((char_u *)"g:current_compiler",
             old_cur_comp);
-        free(old_cur_comp);
+        xfree(old_cur_comp);
       } else
         do_unlet((char_u *)"g:current_compiler", TRUE);
     }
@@ -2135,8 +2135,8 @@ int do_in_runtimepath(char_u *name, int all, DoInRuntimepathCB callback,
       }
     }
   }
-  free(buf);
-  free(rtp_copy);
+  xfree(buf);
+  xfree(rtp_copy);
   if (p_verbose > 0 && !did_one && name != NULL) {
     verbose_enter();
     smsg((char_u *)_("not found in 'runtimepath': \"%s\""), name);
@@ -2273,7 +2273,7 @@ do_source (
   if (p == NULL)
     return retval;
   fname_exp = fix_fname(p);
-  free(p);
+  xfree(p);
   if (fname_exp == NULL)
     return retval;
   if (os_isdir(fname_exp)) {
@@ -2391,7 +2391,7 @@ do_source (
     p = string_convert(&cookie.conv, firstline + 3, NULL);
     if (p == NULL)
       p = vim_strsave(firstline + 3);
-    free(firstline);
+    xfree(firstline);
     firstline = p;
   }
 
@@ -2518,12 +2518,12 @@ do_source (
   if (l_do_profiling == PROF_YES)
     prof_child_exit(&wait_start);               /* leaving a child now */
   fclose(cookie.fp);
-  free(cookie.nextline);
-  free(firstline);
+  xfree(cookie.nextline);
+  xfree(firstline);
   convert_setup(&cookie.conv, NULL, NULL);
 
 theend:
-  free(fname_exp);
+  xfree(fname_exp);
   return retval;
 }
 
@@ -2577,7 +2577,7 @@ char_u *get_scriptname(scid_T id)
 # if defined(EXITFREE)
 void free_scriptnames()
 {
-# define FREE_SCRIPTNAME(item) free((item)->sn_name)
+# define FREE_SCRIPTNAME(item) xfree((item)->sn_name)
   GA_DEEP_CLEAR(&script_items, scriptitem_T, FREE_SCRIPTNAME);
 }
 # endif
@@ -2636,7 +2636,7 @@ char_u *getsourceline(int c, void *cookie, int indent)
       ga_concat(&ga, line);
       ga_concat(&ga, p + 1);
       for (;; ) {
-        free(sp->nextline);
+        xfree(sp->nextline);
         sp->nextline = get_one_sourceline(sp);
         if (sp->nextline == NULL)
           break;
@@ -2651,7 +2651,7 @@ char_u *getsourceline(int c, void *cookie, int indent)
         ga_concat(&ga, p + 1);
       }
       ga_append(&ga, NUL);
-      free(line);
+      xfree(line);
       line = ga.ga_data;
     }
   }
@@ -2662,7 +2662,7 @@ char_u *getsourceline(int c, void *cookie, int indent)
     /* Convert the encoding of the script line. */
     s = string_convert(&sp->conv, line, NULL);
     if (s != NULL) {
-      free(line);
+      xfree(line);
       line = s;
     }
   }
@@ -2771,7 +2771,7 @@ static char_u *get_one_sourceline(struct source_cookie *sp)
   if (have_read)
     return (char_u *)ga.ga_data;
 
-  free(ga.ga_data);
+  xfree(ga.ga_data);
   return NULL;
 }
 
@@ -2874,7 +2874,7 @@ void ex_scriptencoding(exarg_T *eap)
   convert_setup(&sp->conv, name, p_enc);
 
   if (name != eap->arg)
-    free(name);
+    xfree(name);
 }
 
 /*
@@ -3192,7 +3192,7 @@ static char_u **find_locales(void)
     GA_APPEND(char_u *, &locales_ga, loc);
     loc = (char_u *)strtok(NULL, "\n");
   }
-  free(locale_a);
+  xfree(locale_a);
   // Guarantee that .ga_data is NULL terminated
   ga_grow(&locales_ga, 1);
   ((char_u **)locales_ga.ga_data)[locales_ga.ga_len] = NULL;
@@ -3205,8 +3205,8 @@ void free_locales(void)
   int i;
   if (locales != NULL) {
     for (i = 0; locales[i] != NULL; i++)
-      free(locales[i]);
-    free(locales);
+      xfree(locales[i]);
+    xfree(locales);
     locales = NULL;
   }
 }
@@ -3260,7 +3260,7 @@ static void script_host_execute(char *name, exarg_T *eap)
     (void)eval_call_provider(name, "execute", args);
   }
 
-  free(script);
+  xfree(script);
 }
 
 static void script_host_execute_file(char *name, exarg_T *eap)

@@ -99,7 +99,7 @@ memfile_T *mf_open(char_u *fname, int flags)
     mf_do_open(mfp, fname, flags);
 
     if (mfp->mf_fd < 0) {            // fail if file could not be opened
-      free(mfp);
+      xfree(mfp);
       return NULL;
     }
   }
@@ -210,12 +210,12 @@ void mf_close(memfile_T *mfp, bool del_file)
     mf_free_bhdr(hp);
   }
   while (mfp->mf_free_first != NULL)    // free entries in free list
-    free(mf_rem_free(mfp));
+    xfree(mf_rem_free(mfp));
   mf_hash_free(&mfp->mf_hash);
   mf_hash_free_all(&mfp->mf_trans);     // free hashtable and its items
-  free(mfp->mf_fname);
-  free(mfp->mf_ffname);
-  free(mfp);
+  xfree(mfp->mf_fname);
+  xfree(mfp->mf_ffname);
+  xfree(mfp);
 }
 
 /// Close the swap file for a memfile. Used when 'swapfile' is reset.
@@ -242,8 +242,8 @@ void mf_close_file(buf_T *buf, bool getlines)
 
   if (mfp->mf_fname != NULL) {
     os_remove((char *)mfp->mf_fname);    // delete the swap file
-    free(mfp->mf_fname);
-    free(mfp->mf_ffname);
+    xfree(mfp->mf_fname);
+    xfree(mfp->mf_ffname);
     mfp->mf_fname = NULL;
     mfp->mf_ffname = NULL;
   }
@@ -302,7 +302,7 @@ bhdr_T *mf_new(memfile_T *mfp, bool negative, unsigned page_count)
     } else {                    // use the number, remove entry from free list
       freep = mf_rem_free(mfp);
       hp->bh_bnum = freep->bh_bnum;
-      free(freep);
+      xfree(freep);
     }
   } else {                      // get a new number
     if (hp == NULL) {
@@ -398,11 +398,11 @@ void mf_put(memfile_T *mfp, bhdr_T *hp, bool dirty, bool infile)
 /// Signal block as no longer used (may put it in the free list).
 void mf_free(memfile_T *mfp, bhdr_T *hp)
 {
-  free(hp->bh_data);            // free data
+  xfree(hp->bh_data);            // free data
   mf_rem_hash(mfp, hp);         // get *hp out of the hash list
   mf_rem_used(mfp, hp);         // get *hp out of the used list
   if (hp->bh_bnum < 0) {
-    free(hp);                   // don't want negative numbers in free list
+    xfree(hp);                   // don't want negative numbers in free list
     mfp->mf_neg_count--;
   } else {
     mf_ins_free(mfp, hp);       // put *hp in the free list
@@ -627,7 +627,7 @@ static bhdr_T *mf_release(memfile_T *mfp, unsigned page_count)
 
   /// Make sure page_count of bh_data is right.
   if (hp->bh_page_count != page_count) {
-    free(hp->bh_data);
+    xfree(hp->bh_data);
     hp->bh_data = xmalloc(mfp->mf_page_size * page_count);
     hp->bh_page_count = page_count;
   }
@@ -682,8 +682,8 @@ static bhdr_T *mf_alloc_bhdr(memfile_T *mfp, unsigned page_count)
 /// Free a block header and its block memory.
 static void mf_free_bhdr(bhdr_T *hp)
 {
-  free(hp->bh_data);
-  free(hp);
+  xfree(hp->bh_data);
+  xfree(hp);
 }
 
 /// Insert a block in the free list.
@@ -843,7 +843,7 @@ static int mf_trans_add(memfile_T *mfp, bhdr_T *hp)
       freep->bh_page_count -= page_count;
     } else {
       freep = mf_rem_free(mfp);
-      free(freep);
+      xfree(freep);
     }
   } else {
     new_bnum = mfp->mf_blocknr_max;
@@ -881,7 +881,7 @@ blocknr_T mf_trans_del(memfile_T *mfp, blocknr_T old_nr)
   // remove entry from the trans list
   mf_hash_rem_item(&mfp->mf_trans, (mf_hashitem_T *)np);
 
-  free(np);
+  xfree(np);
 
   return new_bnum;
 }
@@ -902,7 +902,7 @@ void mf_set_ffname(memfile_T *mfp)
 void mf_fullname(memfile_T *mfp)
 {
   if (mfp != NULL && mfp->mf_fname != NULL && mfp->mf_ffname != NULL) {
-    free(mfp->mf_fname);
+    xfree(mfp->mf_fname);
     mfp->mf_fname = mfp->mf_ffname;
     mfp->mf_ffname = NULL;
   }
@@ -940,8 +940,8 @@ static void mf_do_open(memfile_T *mfp, char_u *fname, int flags)
 
   // If the file cannot be opened, use memory only
   if (mfp->mf_fd < 0) {
-    free(mfp->mf_fname);
-    free(mfp->mf_ffname);
+    xfree(mfp->mf_fname);
+    xfree(mfp->mf_ffname);
     mfp->mf_fname = NULL;
     mfp->mf_ffname = NULL;
   } else {
@@ -979,7 +979,7 @@ static void mf_hash_init(mf_hashtab_T *mht)
 static void mf_hash_free(mf_hashtab_T *mht)
 {
   if (mht->mht_buckets != mht->mht_small_buckets)
-    free(mht->mht_buckets);
+    xfree(mht->mht_buckets);
 }
 
 /// Free the array of a hash table and all the items it contains.
@@ -990,7 +990,7 @@ static void mf_hash_free_all(mf_hashtab_T *mht)
   for (size_t idx = 0; idx <= mht->mht_mask; idx++)
     for (mf_hashitem_T *mhi = mht->mht_buckets[idx]; mhi != NULL; mhi = next) {
       next = mhi->mhi_next;
-      free(mhi);
+      xfree(mhi);
     }
 
   mf_hash_free(mht);
@@ -1088,7 +1088,7 @@ static void mf_hash_grow(mf_hashtab_T *mht)
   }
 
   if (mht->mht_buckets != mht->mht_small_buckets)
-    free(mht->mht_buckets);
+    xfree(mht->mht_buckets);
 
   mht->mht_buckets = buckets;
   mht->mht_mask = (mht->mht_mask + 1) * MHT_GROWTH_FACTOR - 1;

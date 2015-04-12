@@ -980,7 +980,7 @@ getcount:
       /* now reset it, otherwise it's put in the history again */
       keep_msg = kmsg;
       msg_attr(kmsg, keep_msg_attr);
-      free(kmsg);
+      xfree(kmsg);
     }
     setcursor();
     ui_flush();
@@ -1015,7 +1015,7 @@ normal_end:
     clear_showcmd();
 
   checkpcmark();                /* check if we moved since setting pcmark */
-  free(ca.searchbuf);
+  xfree(ca.searchbuf);
 
   if (has_mbyte)
     mb_adjust_cursor();
@@ -1160,7 +1160,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         else {
           AppendToRedobuffLit(repeat_cmdline, -1);
           AppendToRedobuff(NL_STR);
-          free(repeat_cmdline);
+          xfree(repeat_cmdline);
           repeat_cmdline = NULL;
         }
       }
@@ -3342,7 +3342,7 @@ find_decl (
     reset_search_dir();
   }
 
-  free(pat);
+  xfree(pat);
   p_ws = save_p_ws;
   p_scs = save_p_scs;
 
@@ -4261,7 +4261,7 @@ static void nv_ident(cmdarg_T *cap)
       }
       if (n == 0) {
         EMSG(_(e_noident));              /* found dashes only */
-        free(buf);
+        xfree(buf);
         return;
       }
 
@@ -4312,11 +4312,11 @@ static void nv_ident(cmdarg_T *cap)
     /* Escape the argument properly for a shell command */
     ptr = vim_strnsave(ptr, n);
     p = vim_strsave_shellescape(ptr, true, true);
-    free(ptr);
+    xfree(ptr);
     newbuf = (char_u *)xrealloc(buf, STRLEN(buf) + STRLEN(p) + 1);
     buf = newbuf;
     STRCAT(buf, p);
-    free(p);
+    xfree(p);
   } else {
     if (cmdchar == '*')
       aux_ptr = (char_u *)(p_magic ? "/.*~[^$\\" : "/^$\\");
@@ -4365,7 +4365,7 @@ static void nv_ident(cmdarg_T *cap)
   } else
     do_cmdline_cmd(buf);
 
-  free(buf);
+  xfree(buf);
 }
 
 /*
@@ -4724,7 +4724,7 @@ static void nv_gotofile(cmdarg_T *cap)
       check_cursor_lnum();
       beginline(BL_SOL | BL_FIX);
     }
-    free(ptr);
+    xfree(ptr);
   } else
     clearop(cap->oap);
 }

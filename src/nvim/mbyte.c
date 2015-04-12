@@ -523,7 +523,7 @@ char_u * mb_init(void)
       convert_setup(&vimconv, p_enc, (char_u *)"utf-8");
       vimconv.vc_fail = true;
     }
-    free(p);
+    xfree(p);
   }
 #endif
 
@@ -549,7 +549,7 @@ char_u * mb_init(void)
            */
           p = string_convert(&vimconv, (char_u *)buf, NULL);
           if (p != NULL) {
-            free(p);
+            xfree(p);
             n = 1;
           } else
             n = 2;
@@ -3103,7 +3103,7 @@ void utf_find_illegal(void)
   for (;; ) {
     p = get_cursor_pos_ptr();
     if (vimconv.vc_type != CONV_NONE) {
-      free(tofree);
+      xfree(tofree);
       tofree = string_convert(&vimconv, p, NULL);
       if (tofree == NULL)
         break;
@@ -3142,7 +3142,7 @@ void utf_find_illegal(void)
   beep_flush();
 
 theend:
-  free(tofree);
+  xfree(tofree);
   convert_setup(&vimconv, NULL, NULL);
 }
 
@@ -3375,7 +3375,7 @@ char_u *enc_canonize(char_u *enc) FUNC_ATTR_NONNULL_RET
       STRMOVE(r, p);
   } else if ((i = enc_alias_search(p)) >= 0) {
     /* alias recognized, get canonical name */
-    free(r);
+    xfree(r);
     r = vim_strsave((char_u *)enc_canon_table[i].name);
   }
   return r;
@@ -3537,7 +3537,7 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, size_t slen,
       p = xmalloc(len);
       if (done > 0)
         memmove(p, result, done);
-      free(result);
+      xfree(result);
       result = p;
     }
 
@@ -3582,7 +3582,7 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, size_t slen,
       fromlen -= l;
     } else if (ICONV_ERRNO != ICONV_E2BIG) {
       /* conversion failed */
-      free(result);
+      xfree(result);
       result = NULL;
       break;
     }
@@ -3891,7 +3891,7 @@ char_u * string_convert_ext(vimconv_T *vcp, char_u *ptr,
 
           if (l_w == 0) {
             /* Illegal utf-8 byte cannot be converted */
-            free(retval);
+            xfree(retval);
             return NULL;
           }
           if (unconvlenp != NULL && l_w > len - i) {
@@ -3925,7 +3925,7 @@ char_u * string_convert_ext(vimconv_T *vcp, char_u *ptr,
             if (c < 0x100)
               *d++ = c;
             else if (vcp->vc_fail) {
-              free(retval);
+              xfree(retval);
               return NULL;
             } else {
               *d++ = 0xbf;

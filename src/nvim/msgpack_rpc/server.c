@@ -57,7 +57,7 @@ bool server_init(void)
   if (!os_getenv(LISTEN_ADDRESS_ENV_VAR)) {
     char *listen_address = (char *)vim_tempname();
     os_setenv(LISTEN_ADDRESS_ENV_VAR, listen_address, 1);
-    free(listen_address);
+    xfree(listen_address);
   }
 
   return server_start((char *)os_getenv(LISTEN_ADDRESS_ENV_VAR)) == 0;
@@ -256,10 +256,10 @@ static void connection_cb(uv_stream_t *server, int status)
 
 static void free_client(uv_handle_t *handle)
 {
-  free(handle);
+  xfree(handle);
 }
 
 static void free_server(uv_handle_t *handle)
 {
-  free(handle->data);
+  xfree(handle->data);
 }

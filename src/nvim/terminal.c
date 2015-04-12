@@ -243,7 +243,7 @@ Terminal *terminal_open(TerminalOptions opts)
     char *name = get_config_string(rv, var);
     if (name) {
       color_val = name_to_color((uint8_t *)name);
-      free(name);
+      xfree(name);
 
       if (color_val != -1) {
         rv->colors[i] = color_val;
@@ -424,11 +424,11 @@ void terminal_destroy(Terminal *term)
   term->buf = NULL;
   pmap_del(ptr_t)(invalidated_terminals, term);
   for (size_t i = 0 ; i < term->sb_current; i++) {
-    free(term->sb_buffer[i]);
+    xfree(term->sb_buffer[i]);
   }
-  free(term->sb_buffer);
+  xfree(term->sb_buffer);
   vterm_free(term->vt);
-  free(term);
+  xfree(term);
 }
 
 void terminal_send(Terminal *term, char *data, size_t size)
@@ -603,7 +603,7 @@ static int term_sb_push(int cols, const VTermScreenCell *cells, void *data)
       // Recycle old row if it's the right size
       sbrow = term->sb_buffer[term->sb_current - 1];
     } else {
-      free(term->sb_buffer[term->sb_current - 1]);
+      xfree(term->sb_buffer[term->sb_current - 1]);
     }
 
     memmove(term->sb_buffer + 1, term->sb_buffer,
@@ -664,7 +664,7 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data)
     cells[col].chars[0] = 0;
     cells[col].width = 1;
   }
-  free(sbrow);
+  xfree(sbrow);
   pmap_put(ptr_t)(invalidated_terminals, term, NULL);
 
   return 1;

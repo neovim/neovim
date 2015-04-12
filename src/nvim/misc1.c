@@ -929,16 +929,16 @@ open_line (
     curwin->w_cursor.col = 0;
     curwin->w_cursor.coladd = 0;
     ins_bytes(p_extra);         /* will call changed_bytes() */
-    free(p_extra);
+    xfree(p_extra);
     next_line = NULL;
   }
 
   retval = TRUE;                /* success! */
 theend:
   curbuf->b_p_pi = saved_pi;
-  free(saved_line);
-  free(next_line);
-  free(allocated);
+  xfree(saved_line);
+  xfree(next_line);
+  xfree(allocated);
   return retval;
 }
 
@@ -2432,7 +2432,7 @@ int get_keystroke(void)
 #endif
     break;
   }
-  free(buf);
+  xfree(buf);
 
   mapped_ctrl_c = save_mapped_ctrl_c;
   return n;
@@ -2784,7 +2784,7 @@ get_cmd_output (
   call_shell(command, kShellOptDoOut | kShellOptExpand | flags, NULL);
   --no_check_timestamps;
 
-  free(command);
+  xfree(command);
 
   /*
    * read the names from the file into memory
@@ -2806,7 +2806,7 @@ get_cmd_output (
   os_remove((char *)tempname);
   if (i != len) {
     EMSG2(_(e_notread), tempname);
-    free(buffer);
+    xfree(buffer);
     buffer = NULL;
   } else if (ret_len == NULL) {
     /* Change NUL into SOH, otherwise the string is truncated. */
@@ -2820,7 +2820,7 @@ get_cmd_output (
   }
 
 done:
-  free(tempname);
+  xfree(tempname);
   return buffer;
 }
 
@@ -2833,8 +2833,8 @@ void FreeWild(int count, char_u **files)
   if (count <= 0 || files == NULL)
     return;
   while (count--)
-    free(files[count]);
-  free(files);
+    xfree(files[count]);
+  xfree(files);
 }
 
 /*

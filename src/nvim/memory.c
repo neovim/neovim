@@ -92,6 +92,12 @@ void *xmalloc(size_t size)
   return ret;
 }
 
+/// free wrapper that returns delegates to the backing memory manager
+void xfree(void *ptr)
+{
+  free(ptr);
+}
+
 /// calloc() wrapper
 ///
 /// @see {xmalloc}
@@ -541,8 +547,8 @@ void free_all_mem(void)
   clear_sb_text();            /* free any scrollback text */
 
   /* Free some global vars. */
-  free(last_cmdline);
-  free(new_last_cmdline);
+  xfree(last_cmdline);
+  xfree(new_last_cmdline);
   set_keep_msg(NULL, 0);
 
   /* Clear cmdline history. */

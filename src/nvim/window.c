@@ -401,7 +401,7 @@ wingotofile:
           beginline(BL_SOL | BL_FIX);
         }
       }
-      free(ptr);
+      xfree(ptr);
     }
     break;
 
@@ -2065,7 +2065,7 @@ win_free_mem (
   /* Remove the window and its frame from the tree of frames. */
   frp = win->w_frame;
   wp = winframe_remove(win, dirp, tp);
-  free(frp);
+  xfree(frp);
   win_free(win, tp);
 
   /* When deleting the current window of another tab page select a new
@@ -2209,7 +2209,7 @@ winframe_remove (
     if (frp2->fr_win != NULL)
       frp2->fr_win->w_frame = frp2->fr_parent;
     frp = frp2->fr_parent;
-    free(frp2);
+    xfree(frp2);
 
     frp2 = frp->fr_parent;
     if (frp2 != NULL && frp2->fr_layout == frp->fr_layout) {
@@ -2230,7 +2230,7 @@ winframe_remove (
           break;
         }
       }
-      free(frp);
+      xfree(frp);
     }
   }
 
@@ -2914,7 +2914,7 @@ void free_tabpage(tabpage_T *tp)
 
 
 
-  free(tp);
+  xfree(tp);
 }
 
 /*
@@ -2934,7 +2934,7 @@ int win_new_tabpage(int after)
 
   /* Remember the current windows in this Tab page. */
   if (leave_tabpage(curbuf, TRUE) == FAIL) {
-    free(newtp);
+    xfree(newtp);
     return FAIL;
   }
   curtab = newtp;
@@ -3528,7 +3528,7 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid, int tri
     /* Window doesn't have a local directory and we are not in the global
      * directory: Change to the global directory. */
     ignored = os_chdir((char *)globaldir);
-    free(globaldir);
+    xfree(globaldir);
     globaldir = NULL;
     shorten_fnames(TRUE);
   }
@@ -3702,9 +3702,9 @@ win_free (
   win_free_lsize(wp);
 
   for (i = 0; i < wp->w_tagstacklen; ++i)
-    free(wp->w_tagstack[i].tagname);
+    xfree(wp->w_tagstack[i].tagname);
 
-  free(wp->w_localdir);
+  xfree(wp->w_localdir);
 
   /* Remove the window from the b_wininfo lists, it may happen that the
    * freed memory is re-used for another window. */
@@ -3721,7 +3721,7 @@ win_free (
   qf_free_all(wp);
 
 
-  free(wp->w_p_cc_cols);
+  xfree(wp->w_p_cc_cols);
 
   if (wp != aucmd_win)
     win_remove(wp, tp);
@@ -3729,7 +3729,7 @@ win_free (
     wp->w_next = au_pending_free_win;
     au_pending_free_win = wp;
   } else {
-    free(wp);
+    xfree(wp);
   }
 
   unblock_autocmds();
@@ -3839,7 +3839,7 @@ void win_free_lsize(win_T *wp)
 {
   // TODO: why would wp be NULL here?
   if (wp != NULL) {
-    free(wp->w_lines);
+    xfree(wp->w_lines);
     wp->w_lines = NULL;
   }
 }
@@ -5136,7 +5136,7 @@ static void clear_snapshot_rec(frame_T *fr)
   if (fr != NULL) {
     clear_snapshot_rec(fr->fr_next);
     clear_snapshot_rec(fr->fr_child);
-    free(fr);
+    xfree(fr);
   }
 }
 
@@ -5472,7 +5472,7 @@ int match_add(win_T *wp, char_u *grp, char_u *pat, int prio, int id, list_T *pos
   return id;
 
 fail:
-  free(m);
+  xfree(m);
   return -1;
 }
 
@@ -5507,7 +5507,7 @@ int match_delete(win_T *wp, int id, int perr)
   else
     prev->next = cur->next;
   vim_regfree(cur->match.regprog);
-  free(cur->pattern);
+  xfree(cur->pattern);
   if (cur->pos.toplnum != 0) {
     if (wp->w_buffer->b_mod_set) {
       if (wp->w_buffer->b_mod_top > cur->pos.toplnum) {
@@ -5524,7 +5524,7 @@ int match_delete(win_T *wp, int id, int perr)
     }
     rtype = VALID;
   }
-  free(cur);
+  xfree(cur);
   redraw_later(rtype);
   return 0;
 }
@@ -5539,8 +5539,8 @@ void clear_matches(win_T *wp)
   while (wp->w_match_head != NULL) {
     m = wp->w_match_head->next;
     vim_regfree(wp->w_match_head->match.regprog);
-    free(wp->w_match_head->pattern);
-    free(wp->w_match_head);
+    xfree(wp->w_match_head->pattern);
+    xfree(wp->w_match_head);
     wp->w_match_head = m;
   }
   redraw_later(SOME_VALID);

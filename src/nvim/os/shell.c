@@ -80,11 +80,11 @@ void shell_free_argv(char **argv)
 
   while (*p != NULL) {
     // Free each argument
-    free(*p);
+    xfree(*p);
     p++;
   }
 
-  free(argv);
+  xfree(argv);
 }
 
 /// Calls the user-configured 'shell' (p_sh) for running a command or wildcard
@@ -128,11 +128,11 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
                      emsg_silent,
                      forward_output);
 
-  free(input.data);
+  xfree(input.data);
 
   if (output) {
     (void)write_output(output, nread, true, true);
-    free(output);
+    xfree(output);
   }
 
   if (!emsg_silent && status != 0 && !(opts & kShellOptSilent)) {
@@ -250,7 +250,7 @@ static int shell(const char *cmd,
     if (buf.len == 0) {
       // no data received from the process, return NULL
       *output = NULL;
-      free(buf.data);
+      xfree(buf.data);
     } else {
       // NUL-terminate to make the output directly usable as a C string
       buf.data[buf.len] = NUL;

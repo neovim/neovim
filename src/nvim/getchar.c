@@ -167,7 +167,7 @@ void free_buff(buffheader_T *buf)
 
   for (p = buf->bh_first.b_next; p != NULL; p = np) {
     np = p->b_next;
-    free(p);
+    xfree(p);
   }
   buf->bh_first.b_next = NULL;
 }
@@ -365,7 +365,7 @@ static int read_readbuf(buffheader_T *buf, int advance)
   if (advance) {
     if (curr->b_str[++buf->bh_index] == NUL) {
       buf->bh_first.b_next = curr->b_next;
-      free(curr);
+      xfree(curr);
       buf->bh_index = 0;
     }
   }
@@ -495,7 +495,7 @@ void saveRedobuff(void)
     s = get_buffcont(&save_redobuff, FALSE);
     if (s != NULL) {
       add_buff(&redobuff, s, -1L);
-      free(s);
+      xfree(s);
     }
   }
 }
@@ -904,7 +904,7 @@ int ins_typebuf(char_u *str, int noremap, int offset, int nottyped, int silent)
         typebuf.tb_buf + typebuf.tb_off + offset,
         (size_t)(typebuf.tb_len - offset + 1));
     if (typebuf.tb_buf != typebuf_init)
-      free(typebuf.tb_buf);
+      xfree(typebuf.tb_buf);
     typebuf.tb_buf = s1;
 
     memmove(s2 + newoff, typebuf.tb_noremap + typebuf.tb_off,
@@ -913,7 +913,7 @@ int ins_typebuf(char_u *str, int noremap, int offset, int nottyped, int silent)
         typebuf.tb_noremap + typebuf.tb_off + offset,
         (size_t)(typebuf.tb_len - offset));
     if (typebuf.tb_noremap != noremapbuf_init)
-      free(typebuf.tb_noremap);
+      xfree(typebuf.tb_noremap);
     typebuf.tb_noremap = s2;
 
     typebuf.tb_off = newoff;
@@ -1162,11 +1162,11 @@ void free_typebuf(void)
   if (typebuf.tb_buf == typebuf_init)
     EMSG2(_(e_intern2), "Free typebuf 1");
   else
-    free(typebuf.tb_buf);
+    xfree(typebuf.tb_buf);
   if (typebuf.tb_noremap == noremapbuf_init)
     EMSG2(_(e_intern2), "Free typebuf 2");
   else
-    free(typebuf.tb_noremap);
+    xfree(typebuf.tb_noremap);
 }
 
 /*
@@ -2068,10 +2068,10 @@ static int vgetorpeek(int advance)
               i = ins_typebuf(s, noremap,
                   0, TRUE, cmd_silent || save_m_silent);
               if (save_m_expr)
-                free(s);
+                xfree(s);
             }
-            free(save_m_keys);
-            free(save_m_str);
+            xfree(save_m_keys);
+            xfree(save_m_str);
             if (i == FAIL) {
               c = -1;
               break;
@@ -2906,9 +2906,9 @@ do_map (
             } else {                          /* new rhs for existing entry */
               mp->m_mode &= ~mode;                      /* remove mode bits */
               if (mp->m_mode == 0 && !did_it) {             /* reuse entry */
-                free(mp->m_str);
+                xfree(mp->m_str);
                 mp->m_str = vim_strsave(rhs);
-                free(mp->m_orig_str);
+                xfree(mp->m_orig_str);
                 mp->m_orig_str = vim_strsave(orig_rhs);
                 mp->m_noremap = noremap;
                 mp->m_nowait = nowait;
@@ -2998,8 +2998,8 @@ do_map (
   }
 
 theend:
-  free(keys_buf);
-  free(arg_buf);
+  xfree(keys_buf);
+  xfree(arg_buf);
   return retval;
 }
 
@@ -3012,11 +3012,11 @@ static void map_free(mapblock_T **mpp)
   mapblock_T  *mp;
 
   mp = *mpp;
-  free(mp->m_keys);
-  free(mp->m_str);
-  free(mp->m_orig_str);
+  xfree(mp->m_keys);
+  xfree(mp->m_str);
+  xfree(mp->m_orig_str);
   *mpp = mp->m_next;
-  free(mp);
+  xfree(mp);
 }
 
 /*
@@ -3211,7 +3211,7 @@ showmap (
   if (mapchars != NULL) {
     msg_puts(mapchars);
     len = (int)STRLEN(mapchars);
-    free(mapchars);
+    xfree(mapchars);
   }
 
   while (++len <= 3)
@@ -3246,7 +3246,7 @@ showmap (
     char_u *s = vim_strsave(mp->m_str);
     vim_unescape_csi(s);
     msg_outtrans_special(s, FALSE);
-    free(s);
+    xfree(s);
   }
   if (p_verbose > 0)
     last_set_msg(mp->m_script_ID);
@@ -3285,7 +3285,7 @@ int map_to_exists(char_u *str, char_u *modechars, int abbr)
     mode |= CMDLINE;
 
   retval = map_to_exists_mode(rhs, mode, abbr);
-  free(buf);
+  xfree(buf);
 
   return retval;
 }
@@ -3469,7 +3469,7 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
               p = NULL;
             }
           }
-          free(p);
+          xfree(p);
         }
       }       /* for (mp) */
     }     /* for (hash) */
@@ -3499,7 +3499,7 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
       if (STRCMP(*ptr1, *ptr2))
         *++ptr1 = *ptr2++;
       else {
-        free(*ptr2++);
+        xfree(*ptr2++);
         count--;
       }
     }
@@ -3617,7 +3617,7 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
               && qlen == len
               && !STRNCMP(q, ptr, (size_t)len);
       if (q != mp->m_keys) {
-        free(q);
+        xfree(q);
       }
       if (match) {
         break;
@@ -3669,7 +3669,7 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
         /* no abbrev. for these chars */
         typebuf.tb_no_abbr_cnt += (int)STRLEN(s) + j + 1;
         if (mp->m_expr)
-          free(s);
+          xfree(s);
       }
 
       tb[0] = Ctrl_H;
@@ -3725,13 +3725,13 @@ eval_map_expr (
   msg_row = save_msg_row;
 
   restore_cmdline_alloc(save_cmd);
-  free(expr);
+  xfree(expr);
 
   if (p == NULL)
     return NULL;
   /* Escape CSI in the result to be able to use the string as typeahead. */
   res = vim_strsave_escape_csi(p);
-  free(p);
+  xfree(p);
 
   return res;
 }
@@ -4171,7 +4171,7 @@ void add_map(char_u *map, int mode)
   p_cpo = (char_u *)"";         /* Allow <> notation */
   s = vim_strsave(map);
   (void)do_map(0, s, mode, FALSE);
-  free(s);
+  xfree(s);
   p_cpo = cpo_save;
 }
 
