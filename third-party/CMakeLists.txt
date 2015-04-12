@@ -13,6 +13,7 @@ set(DEPS_DOWNLOAD_DIR "${DEPS_BUILD_DIR}/downloads")
 
 option(USE_BUNDLED "Use bundled dependencies." ON)
 
+option(USE_BUNDLED_JEMALLOC "Use the bundled jemalloc." ${USE_BUNDLED})
 option(USE_BUNDLED_UNIBILIUM "Use the bundled unibilium." ${USE_BUNDLED})
 option(USE_BUNDLED_LIBTERMKEY "Use the bundled libtermkey." ${USE_BUNDLED})
 option(USE_BUNDLED_LIBVTERM "Use the bundled libvterm." ${USE_BUNDLED})
@@ -73,6 +74,8 @@ set(LIBTERMKEY_SHA256 21846369081e6c9a0b615f4b3889c4cb809321c5ccc6e6c1640eb138f1
 set(LIBVTERM_URL https://github.com/neovim/libvterm/archive/1b745d29d45623aa8d22a7b9288c7b0e331c7088.tar.gz)
 set(LIBVTERM_SHA256 3fc75908256c0d158d6c2a32d39f34e86bfd26364f5404b7d9c03bb70cdc3611)
 
+set(JEMALLOC_URL https://github.com/jemalloc/jemalloc/archive/3.6.0.tar.gz)
+set(JEMALLOC_SHA256 68175f729423305dc8573cb093025a8db525e1956583c7c5924416a9abaaacb6)
 
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)
@@ -100,6 +103,10 @@ endif()
 
 if(USE_BUNDLED_LUAROCKS)
   include(BuildLuarocks)
+endif()
+
+if(USE_BUNDLED_JEMALLOC)
+  include(BuildJeMalloc)
 endif()
 
 add_custom_target(third-party ALL

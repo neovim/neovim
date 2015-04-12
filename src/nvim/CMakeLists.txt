@@ -1,11 +1,5 @@
 include(CheckLibraryExists)
 
-option(SANITIZE "Enable Clang sanitizers for nvim binary" OFF)
-if(SANITIZE AND NOT CMAKE_C_COMPILER_ID MATCHES "Clang")
-  message(WARNING "SANITIZE is only supported for Clang ... disabling")
-  set(SANITIZE OFF)
-endif()
-
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
 set(DISPATCH_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/msgpack-gen.lua)
 file(GLOB API_HEADERS api/*.h)
@@ -176,9 +170,16 @@ list(APPEND NVIM_LINK_LIBRARIES
     ${CMAKE_THREAD_LIBS_INIT}
     )
 
+set(NVIM_EXEC_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES})
+
+if(USE_JEMALLOC)
+  # dont use jemalloc in the unit test library
+  list(APPEND NVIM_EXEC_LINK_LIBRARIES ${JEMALLOC_LIBRARIES})
+endif()
+
 add_executable(nvim ${NEOVIM_GENERATED_SOURCES} ${NEOVIM_SOURCES}
   ${NEOVIM_HEADERS})
-target_link_libraries(nvim ${NVIM_LINK_LIBRARIES})
+target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
 
 if(SANITIZE)
@@ -199,5 +200,6 @@ set_property(TARGET libnvim APPEND_STRING PROPERTY COMPILE_FLAGS " -DMAKE_LIB ")
 add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
     ${NEOVIM_SOURCES} ${NEOVIM_HEADERS})
 target_link_libraries(nvim-test ${NVIM_LINK_LIBRARIES})
+set_target_properties(nvim-test PROPERTIES COMPILE_FLAGS -DUNIT_TESTING)
 
 add_subdirectory(po)

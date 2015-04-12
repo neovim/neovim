@@ -18,6 +18,14 @@
 # include "memory.c.generated.h"
 #endif
 
+#if defined(USE_JEMALLOC) && !defined(UNIT_TESTING)
+#include "jemalloc/jemalloc.h"
+#define malloc(size) je_malloc(size)
+#define calloc(count, size) je_calloc(count, size)
+#define realloc(ptr, size) je_realloc(ptr, size)
+#define free(ptr) je_free(ptr)
+#endif
+
 /// Try to free memory. Used when trying to recover from out of memory errors.
 /// @see {xmalloc}
 static void try_to_free_memory(void)
@@ -368,19 +376,7 @@ size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
 char *xstrdup(const char *str)
   FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
-  char *ret = strdup(str);
-
-  if (!ret) {
-    try_to_free_memory();
-    ret = strdup(str);
-    if (!ret) {
-      mch_errmsg(e_outofmem);
-      mch_errmsg("\n");
-      preserve_exit();
-    }
-  }
-
-  return ret;
+  return xmemdupz(str, strlen(str));
 }
 
 /// A version of memchr that starts the search at `src + len`.
