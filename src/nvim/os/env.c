@@ -262,7 +262,7 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
           }
 #endif
         *var = NUL;
-        var = vim_getenv(dst, &mustfree);
+        var = (char_u *)vim_getenv((char *)dst, &mustfree);
 #if defined(UNIX)
         }
 #endif
@@ -423,14 +423,14 @@ static char *remove_tail(char *p, char *pend, char *name)
 /// @param[out] mustfree Ouput parameter for the caller to determine if they are
 ///           responsible for releasing memory. Must be initialized to false
 ///           by the caller.
-char_u *vim_getenv(char_u *name, bool *mustfree)
+char *vim_getenv(const char *name, bool *mustfree)
 {
-  char_u      *p;
-  char_u      *pend;
+  char *p;
+  char *pend;
   int vimruntime;
 
 
-  p = (char_u *)os_getenv((char *)name);
+  p = (char *)os_getenv(name);
   if (p != NULL && *p == NUL)       /* empty is the same as not set */
     p = NULL;
 
@@ -451,15 +451,15 @@ char_u *vim_getenv(char_u *name, bool *mustfree)
       && *default_vimruntime_dir == NUL
 #endif
       ) {
-    p = (char_u *)os_getenv("VIM");
+    p = (char *)os_getenv("VIM");
     if (p != NULL && *p == NUL)             /* empty is the same as not set */
       p = NULL;
     if (p != NULL) {
-      p = (char_u *)vim_version_dir((char *)p);
+      p = vim_version_dir(p);
       if (p != NULL)
         *mustfree = true;
       else
-        p = (char_u *)os_getenv("VIM");
+        p = (char *)os_getenv("VIM");
     }
   }
 
@@ -470,32 +470,30 @@ char_u *vim_getenv(char_u *name, bool *mustfree)
    */
   if (p == NULL) {
     if (p_hf != NULL && vim_strchr(p_hf, '$') == NULL)
-      p = p_hf;
+      p = (char *)p_hf;
     if (p != NULL) {
       /* remove the file name */
-      pend = path_tail(p);
+      pend = (char *)path_tail((char_u *)p);
 
       /* remove "doc/" from 'helpfile', if present */
-      if (p == p_hf)
-        pend = (char_u *)remove_tail((char *)p, (char *)pend, "doc");
+      if (p == (char *)p_hf)
+        pend = remove_tail(p, pend, "doc");
 
       /* for $VIM, remove "runtime/" or "vim54/", if present */
       if (!vimruntime) {
-        pend = (char_u *)remove_tail((char *)p, (char *)pend,
-                                     RUNTIME_DIRNAME);
-        pend = (char_u *)remove_tail((char *)p, (char *)pend,
-                                     VIM_VERSION_NODOT);
+        pend = remove_tail(p, pend, RUNTIME_DIRNAME);
+        pend = remove_tail(p, pend, VIM_VERSION_NODOT);
       }
 
       /* remove trailing path separator */
-      if (pend > p && after_pathsep((char *)p, (char *)pend))
+      if (pend > p && after_pathsep(p, pend))
         --pend;
 
       // check that the result is a directory name
       assert(pend >= p);
-      p = vim_strnsave(p, (size_t)(pend - p));
+      p = xstrndup(p, (size_t)(pend - p));
 
-      if (!os_isdir(p)) {
+      if (!os_isdir((char_u *)p)) {
         xfree(p);
         p = NULL;
       } else {
@@ -510,14 +508,14 @@ char_u *vim_getenv(char_u *name, bool *mustfree)
   if (p == NULL) {
     /* Only use default_vimruntime_dir when it is not empty */
     if (vimruntime && *default_vimruntime_dir != NUL) {
-      p = (char_u *)default_vimruntime_dir;
+      p = default_vimruntime_dir;
       *mustfree = false;
     } else if (*default_vim_dir != NUL) {
       if (vimruntime
-          && (p = (char_u *)vim_version_dir(default_vim_dir)) != NULL) {
+          && (p = vim_version_dir(default_vim_dir)) != NULL) {
         *mustfree = true;
       } else {
-        p = (char_u *)default_vim_dir;
+        p = default_vim_dir;
         *mustfree = false;
       }
     }
@@ -530,10 +528,10 @@ char_u *vim_getenv(char_u *name, bool *mustfree)
    */
   if (p != NULL) {
     if (vimruntime) {
-      vim_setenv((char_u *)"VIMRUNTIME", p);
+      vim_setenv((char_u *)"VIMRUNTIME", (char_u *)p);
       didset_vimruntime = true;
     } else {
-      vim_setenv((char_u *)"VIM", p);
+      vim_setenv((char_u *)"VIM", (char_u *)p);
       didset_vim = true;
     }
   }

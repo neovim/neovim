@@ -5117,7 +5117,7 @@ void fix_help_buffer(void)
       while (*p != NUL) {
         copy_option_part(&p, NameBuff, MAXPATHL, ",");
         mustfree = FALSE;
-        rt = vim_getenv((char_u *)"VIMRUNTIME", &mustfree);
+        rt = (char_u *)vim_getenv("VIMRUNTIME", &mustfree);
         if (path_full_compare(rt, NameBuff, FALSE) != kEqualFiles) {
           int fcount;
           char_u      **fnames;

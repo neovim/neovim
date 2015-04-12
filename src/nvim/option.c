@@ -1814,7 +1814,7 @@ void set_init_1(void)
         p = (char_u *)"/tmp";
       else
 # endif
-      p = vim_getenv((char_u *)names[n], &mustfree);
+      p = (char_u *)vim_getenv(names[n], &mustfree);
       if (p != NULL && *p != NUL) {
         /* First time count the NUL, otherwise count the ','. */
         len = (int)STRLEN(p) + 3;
@@ -1864,7 +1864,7 @@ void set_init_1(void)
     bool mustfree = false;
 
     /* Initialize the 'cdpath' option's default value. */
-    cdpath = vim_getenv((char_u *)"CDPATH", &mustfree);
+    cdpath = (char_u *)vim_getenv("CDPATH", &mustfree);
     if (cdpath != NULL) {
       buf = xmalloc(2 * STRLEN(cdpath) + 2);
       {
@@ -7432,7 +7432,7 @@ void vimrc_found(char_u *fname, char_u *envname)
   char_u      *p;
 
   if (fname != NULL) {
-    p = vim_getenv(envname, &dofree);
+    p = (char_u *)vim_getenv((char *)envname, &dofree);
     if (p == NULL) {
       /* Set $MYVIMRC to the first vimrc file found. */
       p = FullName_save(fname, FALSE);

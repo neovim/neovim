@@ -1752,10 +1752,10 @@ ex_let_one (
         p = get_tv_string_chk(tv);
         if (p != NULL && op != NULL && *op == '.') {
           bool mustfree = false;
-          char_u  *s = vim_getenv(name, &mustfree);
+          char *s = vim_getenv((char *)name, &mustfree);
 
           if (s != NULL) {
-            p = tofree = concat_str(s, p);
+            p = tofree = concat_str((char_u *)s, p);
             if (mustfree)
               xfree(s);
           }
@@ -6372,7 +6372,7 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
     cc = name[len];
     name[len] = NUL;
     // First try vim_getenv(), fast for normal environment vars.
-    string = vim_getenv(name, &mustfree);
+    string = (char_u *)vim_getenv((char *)name, &mustfree);
     if (string != NULL && *string != NUL) {
       if (!mustfree) {
         string = vim_strsave(string);

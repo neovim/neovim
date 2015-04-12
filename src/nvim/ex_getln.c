@@ -3849,7 +3849,7 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
                               || (pat[1] == '.' && vim_ispathsep(pat[2])))))
     path = (char_u *)".";
   else {
-    path = vim_getenv((char_u *)"PATH", &mustfree);
+    path = (char_u *)vim_getenv("PATH", &mustfree);
     if (path == NULL)
       path = (char_u *)"";
   }
