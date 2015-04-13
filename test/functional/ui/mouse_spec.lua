@@ -61,7 +61,7 @@ describe('Mouse input', function()
     local tab_attrs = {
       tab  = { background=Screen.colors.LightGrey, underline=true },
       sel  = { bold=true },
-      fill = { reverse = true }
+      fill = { reverse=true }
     }
     execute('%delete')
     insert('this is foo')
@@ -118,6 +118,43 @@ describe('Mouse input', function()
       ~                        |
       {2:-- VISUAL --}             |
     ]])
+  end)
+
+  it('left drag changes visual selection after tab click', function()
+    local tab_attrs = {
+      tab  = { background=Screen.colors.LightGrey, underline=true },
+      sel  = { bold=true },
+      fill = { reverse=true },
+      vis  = { background=Screen.colors.LightGrey }
+    }
+    execute('silent file foo | tabnew | file bar')
+    insert('this is bar')
+    execute('tabprevious')  -- go to first tab
+    screen:expect([[
+      {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
+      mouse                    |
+      support and selectio^n    |
+      ~                        |
+                               |
+    ]], tab_attrs)
+    feed('<LeftMouse><10,0><LeftRelease>')  -- go to second tab
+    helpers.wait()
+    feed('<LeftMouse><0,1>')
+    screen:expect([[
+      {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+      ^this is bar              |
+      ~                        |
+      ~                        |
+                               |
+    ]], tab_attrs)
+    feed('<LeftDrag><4,1>')
+    screen:expect([[
+      {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+      {vis:this}^ is bar              |
+      ~                        |
+      ~                        |
+      {sel:-- VISUAL --}             |
+    ]], tab_attrs)
   end)
 
   it('two clicks will select the word and enter VISUAL', function()
