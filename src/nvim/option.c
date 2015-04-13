@@ -2039,7 +2039,7 @@ void set_init_1(void)
   }
 
   /* Set the default for 'helplang'. */
-  set_helplang_default((char *)get_mess_lang());
+  set_helplang_default(get_mess_lang());
 }
 
 /*
