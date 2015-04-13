@@ -48,9 +48,9 @@ void remote_ui_disconnect(uint64_t channel_id)
   // destroy pending screen updates
   api_free_array(data->buffer);
   pmap_del(uint64_t)(connected_uis, channel_id);
-  free(ui->data);
+  xfree(ui->data);
   ui_detach(ui);
-  free(ui);
+  xfree(ui);
 }
 
 static Object remote_ui_attach(uint64_t channel_id, uint64_t request_id,

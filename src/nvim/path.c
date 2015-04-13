@@ -380,7 +380,7 @@ FullName_save (
   } else {
     new_fname = vim_strsave(fname);
   }
-  free(buf);
+  xfree(buf);
 
   return new_fname;
 }
@@ -557,7 +557,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
   starts_with_dot = (*s == '.');
   pat = file_pat_to_reg_pat(s, e, NULL, FALSE);
   if (pat == NULL) {
-    free(buf);
+    xfree(buf);
     return 0;
   }
 
@@ -574,10 +574,10 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
   regmatch.regprog = vim_regcomp(pat, RE_MAGIC);
   if (flags & (EW_NOERROR | EW_NOTWILD))
     --emsg_silent;
-  free(pat);
+  xfree(pat);
 
   if (regmatch.regprog == NULL && (flags & EW_NOTWILD) == 0) {
-    free(buf);
+    xfree(buf);
     return 0;
   }
 
@@ -634,7 +634,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
     os_closedir(&dir);
   }
 
-  free(buf);
+  xfree(buf);
   vim_regfree(regmatch.regprog);
 
   matches = gap->ga_len - start_len;
@@ -750,7 +750,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
     GA_APPEND(char_u *, gap, vim_strsave(buf));
   }
 
-  free(buf);
+  xfree(buf);
 }
 
 /*
@@ -819,13 +819,13 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
   file_pattern[1] = NUL;
   STRCAT(file_pattern, pattern);
   pat = file_pat_to_reg_pat(file_pattern, NULL, NULL, TRUE);
-  free(file_pattern);
+  xfree(file_pattern);
   if (pat == NULL)
     return;
 
   regmatch.rm_ic = TRUE;                /* always ignore case */
   regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
-  free(pat);
+  xfree(pat);
   if (regmatch.regprog == NULL)
     return;
 
@@ -910,16 +910,16 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
     add_pathsep(rel_path);
     STRCAT(rel_path, short_name);
 
-    free(fnames[i]);
+    xfree(fnames[i]);
     fnames[i] = rel_path;
     sort_again = TRUE;
     os_breakcheck();
   }
 
-  free(curdir);
+  xfree(curdir);
   for (int i = 0; i < gap->ga_len; i++)
-    free(in_curdir[i]);
-  free(in_curdir);
+    xfree(in_curdir[i]);
+  xfree(in_curdir);
   ga_clear_strings(&path_ga);
   vim_regfree(regmatch.regprog);
 
@@ -978,7 +978,7 @@ expand_in_path (
 
   ga_init(&path_ga, (int)sizeof(char_u *), 1);
   expand_path_option(curdir, &path_ga);
-  free(curdir);
+  xfree(curdir);
   if (GA_EMPTY(&path_ga))
     return 0;
 
@@ -986,7 +986,7 @@ expand_in_path (
   ga_clear_strings(&path_ga);
 
   globpath(paths, pattern, gap, (flags & EW_ICASE) ? WILD_ICASE : 0);
-  free(paths);
+  xfree(paths);
 
   return gap->ga_len;
 }
@@ -1110,7 +1110,7 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
          * found file names and start all over again.
          */
         else if (has_env_var(p) || *p == '~') {
-          free(p);
+          xfree(p);
           ga_clear_strings(&ga);
           i = mch_expand_wildcards(num_pat, pat, num_file, file,
               flags | EW_KEEPDOLLAR);
@@ -1154,13 +1154,13 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
         addfile(&ga, t, flags | EW_DIR | EW_FILE);
       else if (os_file_exists(t))
         addfile(&ga, t, flags);
-      free(t);
+      xfree(t);
     }
 
     if (did_expand_in_path && !GA_EMPTY(&ga) && (flags & EW_PATH))
       uniquefy_paths(&ga, p);
     if (p != pat[i])
-      free(p);
+      xfree(p);
   }
 
   *num_file = ga.ga_len;
@@ -1206,7 +1206,7 @@ expand_backtick (
   else
     buffer = get_cmd_output(cmd, NULL,
         (flags & EW_SILENT) ? kShellOptSilent : 0, NULL);
-  free(cmd);
+  xfree(cmd);
   if (buffer == NULL)
     return 0;
 
@@ -1229,7 +1229,7 @@ expand_backtick (
       ++cmd;
   }
 
-  free(buffer);
+  xfree(buffer);
   return cnt;
 }
 
@@ -1509,13 +1509,13 @@ find_file_name_in_path (
     /* Repeat finding the file "count" times.  This matters when it
      * appears several times in the path. */
     while (file_name != NULL && --count > 0) {
-      free(file_name);
+      xfree(file_name);
       file_name = find_file_in_path(ptr, len, options, FALSE, rel_fname);
     }
   } else
     file_name = vim_strnsave(ptr, len);
 
-  free(tofree);
+  xfree(tofree);
 
   return file_name;
 }
@@ -1793,7 +1793,7 @@ char_u *path_shorten_fname_if_possible(char_u *full_path)
       p = full_path;
     }
   }
-  free(dirname);
+  xfree(dirname);
   return p;
 }
 
@@ -1854,8 +1854,8 @@ int expand_wildcards_eval(char_u **pat, int *num_file, char_u ***file,
     ret = expand_wildcards(1, &exp_pat, num_file, file, flags);
 
   if (eval_pat != NULL) {
-    free(exp_pat);
-    free(eval_pat);
+    xfree(exp_pat);
+    xfree(eval_pat);
   }
 
   return ret;
@@ -1903,13 +1903,13 @@ int expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file,
         break;
       if (match_file_list(p_wig, (*file)[i], ffname)) {
         /* remove this matching file from the list */
-        free((*file)[i]);
+        xfree((*file)[i]);
         for (j = i; j + 1 < *num_file; ++j)
           (*file)[j] = (*file)[j + 1];
         --*num_file;
         --i;
       }
-      free(ffname);
+      xfree(ffname);
     }
   }
 

@@ -281,8 +281,8 @@ static void free_msglist(struct msglist *l)
   messages = l;
   while (messages != NULL) {
     next = messages->next;
-    free(messages->msg);
-    free(messages);
+    xfree(messages->msg);
+    xfree(messages);
     messages = next;
   }
 }
@@ -505,7 +505,7 @@ static int throw_exception(void *value, int type, char_u *cmdname)
   return OK;
 
 nomem:
-  free(excp);
+  xfree(excp);
   suppress_errthrow = TRUE;
   EMSG(_(e_outofmem));
 fail:
@@ -550,14 +550,14 @@ static void discard_exception(except_T *excp, int was_finished)
     else
       verbose_leave();
     STRCPY(IObuff, saved_IObuff);
-    free(saved_IObuff);
+    xfree(saved_IObuff);
   }
   if (excp->type != ET_INTERRUPT)
-    free(excp->value);
+    xfree(excp->value);
   if (excp->type == ET_ERROR)
     free_msglist(excp->messages);
-  free(excp->throw_name);
-  free(excp);
+  xfree(excp->throw_name);
+  xfree(excp);
 }
 
 /*
@@ -727,9 +727,9 @@ static void report_pending(int action, int pending, void *value)
     msg_silent = save_msg_silent;
 
   if (pending == CSTP_RETURN)
-    free(s);
+    xfree(s);
   else if (pending & CSTP_THROW)
-    free(mesg);
+    xfree(mesg);
 }
 
 /*
@@ -1165,7 +1165,7 @@ void ex_throw(exarg_T *eap)
    * not throw. */
   if (!eap->skip && value != NULL) {
     if (throw_exception(value, ET_USER, NULL) == FAIL)
-      free(value);
+      xfree(value);
     else
       do_throw(eap->cstack);
   }
@@ -1977,7 +1977,7 @@ int cleanup_conditionals(struct condstack *cstack, int searched_cond, int inclus
       elem = cstack->cs_emsg_silent_list;
       cstack->cs_emsg_silent_list = elem->next;
       emsg_silent = elem->saved_emsg_silent;
-      free(elem);
+      xfree(elem);
       cstack->cs_flags[idx] &= ~CSF_SILENT;
     }
     if (stop)

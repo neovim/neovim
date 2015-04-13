@@ -181,7 +181,7 @@ typedef khint_t khiter_t;
 #define krealloc(P,Z) xrealloc(P,Z)
 #endif
 #ifndef kfree
-#define kfree(P) free(P)
+#define kfree(P) xfree(P)
 #endif
 
 static const double __ac_HASH_UPPER = 0.77;

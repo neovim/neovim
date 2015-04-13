@@ -2097,7 +2097,7 @@ spell_move_to (
 
     len = (int)STRLEN(line);
     if (buflen < len + MAXWLEN + 2) {
-      free(buf);
+      xfree(buf);
       buflen = len + MAXWLEN + 2;
       buf = xmalloc(buflen);
     }
@@ -2172,7 +2172,7 @@ spell_move_to (
               if (dir == FORWARD) {
                 // No need to search further.
                 wp->w_cursor = found_pos;
-                free(buf);
+                xfree(buf);
                 if (attrp != NULL)
                   *attrp = attr;
                 return len;
@@ -2195,7 +2195,7 @@ spell_move_to (
     if (dir == BACKWARD && found_pos.lnum != 0) {
       // Use the last match in the line (before the cursor).
       wp->w_cursor = found_pos;
-      free(buf);
+      xfree(buf);
       return found_len;
     }
 
@@ -2259,7 +2259,7 @@ spell_move_to (
     line_breakcheck();
   }
 
-  free(buf);
+  xfree(buf);
   return 0;
 }
 
@@ -2376,26 +2376,26 @@ static slang_T *slang_alloc(char_u *lang)
 // Free the contents of an slang_T and the structure itself.
 static void slang_free(slang_T *lp)
 {
-  free(lp->sl_name);
-  free(lp->sl_fname);
+  xfree(lp->sl_name);
+  xfree(lp->sl_fname);
   slang_clear(lp);
-  free(lp);
+  xfree(lp);
 }
 
 /// Frees a salitem_T
 static void free_salitem(salitem_T *smp) {
-  free(smp->sm_lead);
+  xfree(smp->sm_lead);
   // Don't free sm_oneof and sm_rules, they point into sm_lead.
-  free(smp->sm_to);
-  free(smp->sm_lead_w);
-  free(smp->sm_oneof_w);
-  free(smp->sm_to_w);
+  xfree(smp->sm_to);
+  xfree(smp->sm_lead_w);
+  xfree(smp->sm_oneof_w);
+  xfree(smp->sm_to_w);
 }
 
 /// Frees a fromto_T
 static void free_fromto(fromto_T *ftp) {
-  free(ftp->ft_from);
-  free(ftp->ft_to);
+  xfree(ftp->ft_from);
+  xfree(ftp->ft_to);
 }
 
 // Clear an slang_T so that the file can be reloaded.
@@ -2403,18 +2403,18 @@ static void slang_clear(slang_T *lp)
 {
   garray_T    *gap;
 
-  free(lp->sl_fbyts);
+  xfree(lp->sl_fbyts);
   lp->sl_fbyts = NULL;
-  free(lp->sl_kbyts);
+  xfree(lp->sl_kbyts);
   lp->sl_kbyts = NULL;
-  free(lp->sl_pbyts);
+  xfree(lp->sl_pbyts);
   lp->sl_pbyts = NULL;
 
-  free(lp->sl_fidxs);
+  xfree(lp->sl_fidxs);
   lp->sl_fidxs = NULL;
-  free(lp->sl_kidxs);
+  xfree(lp->sl_kidxs);
   lp->sl_kidxs = NULL;
-  free(lp->sl_pidxs);
+  xfree(lp->sl_pidxs);
   lp->sl_pidxs = NULL;
 
   GA_DEEP_CLEAR(&lp->sl_rep, fromto_T, free_fromto);
@@ -2433,25 +2433,25 @@ static void slang_clear(slang_T *lp)
     vim_regfree(lp->sl_prefprog[i]);
   }
   lp->sl_prefixcnt = 0;
-  free(lp->sl_prefprog);
+  xfree(lp->sl_prefprog);
   lp->sl_prefprog = NULL;
 
-  free(lp->sl_info);
+  xfree(lp->sl_info);
   lp->sl_info = NULL;
 
-  free(lp->sl_midword);
+  xfree(lp->sl_midword);
   lp->sl_midword = NULL;
 
   vim_regfree(lp->sl_compprog);
-  free(lp->sl_comprules);
-  free(lp->sl_compstartflags);
-  free(lp->sl_compallflags);
+  xfree(lp->sl_comprules);
+  xfree(lp->sl_compstartflags);
+  xfree(lp->sl_compallflags);
   lp->sl_compprog = NULL;
   lp->sl_comprules = NULL;
   lp->sl_compstartflags = NULL;
   lp->sl_compallflags = NULL;
 
-  free(lp->sl_syllable);
+  xfree(lp->sl_syllable);
   lp->sl_syllable = NULL;
   ga_clear(&lp->sl_syl_items);
 
@@ -2474,9 +2474,9 @@ static void slang_clear(slang_T *lp)
 // Clear the info from the .sug file in "lp".
 static void slang_clear_sug(slang_T *lp)
 {
-  free(lp->sl_sbyts);
+  xfree(lp->sl_sbyts);
   lp->sl_sbyts = NULL;
-  free(lp->sl_sidxs);
+  xfree(lp->sl_sidxs);
   lp->sl_sidxs = NULL;
   close_spellbuf(lp->sl_sugbuf);
   lp->sl_sugbuf = NULL;
@@ -2642,7 +2642,7 @@ spell_load_file (
       if (p == NULL)
         goto endFAIL;
       set_map_str(lp, p);
-      free(p);
+      xfree(p);
       break;
 
     case SN_WORDS:
@@ -2799,7 +2799,7 @@ static int read_charflags_section(FILE *fd)
   // <folcharslen> <folchars>
   fol = read_cnt_string(fd, 2, &follen);
   if (follen < 0) {
-    free(flags);
+    xfree(flags);
     return follen;
   }
 
@@ -2807,8 +2807,8 @@ static int read_charflags_section(FILE *fd)
   if (flags != NULL && fol != NULL)
     set_spell_charflags(flags, flagslen, fol);
 
-  free(flags);
-  free(fol);
+  xfree(flags);
+  xfree(fol);
 
   // When <charflagslen> is zero then <fcharlen> must also be zero.
   if ((flags == NULL) != (fol == NULL))
@@ -2878,7 +2878,7 @@ static int read_rep_section(FILE *fd, garray_T *gap, short *first)
       return SP_FORMERROR;
     ftp->ft_to = read_cnt_string(fd, 1, &c);
     if (c <= 0) {
-      free(ftp->ft_from);
+      xfree(ftp->ft_from);
       if (c < 0)
         return c;
       return SP_FORMERROR;
@@ -2973,7 +2973,7 @@ static int read_sal_section(FILE *fd, slang_T *slang)
     // <saltolen> <salto>
     smp->sm_to = read_cnt_string(fd, 1, &ccnt);
     if (ccnt < 0) {
-      free(smp->sm_lead);
+      xfree(smp->sm_lead);
       return ccnt;
     }
 
@@ -3136,7 +3136,7 @@ static int read_sofo_section(FILE *fd, slang_T *slang)
   // <sofotolen> <sofoto>
   to = read_cnt_string(fd, 2, &cnt);
   if (cnt < 0) {
-    free(from);
+    xfree(from);
     return cnt;
   }
 
@@ -3148,8 +3148,8 @@ static int read_sofo_section(FILE *fd, slang_T *slang)
   else
     res = 0;
 
-  free(from);
-  free(to);
+  xfree(from);
+  xfree(to);
   return res;
 }
 
@@ -3250,7 +3250,7 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
   while (todo-- > 0) {
     c = getc(fd);                                       // <compflags>
     if (c == EOF) {
-      free(pat);
+      xfree(pat);
       return SP_TRUNCERROR;
     }
 
@@ -3281,7 +3281,7 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
     // Copy flag to "sl_comprules", unless we run into a wildcard.
     if (crp != NULL) {
       if (c == '?' || c == '+' || c == '*') {
-        free(slang->sl_comprules);
+        xfree(slang->sl_comprules);
         slang->sl_comprules = NULL;
         crp = NULL;
       } else
@@ -3311,7 +3311,7 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
     *crp = NUL;
 
   slang->sl_compprog = vim_regcomp(pat, RE_MAGIC + RE_STRING + RE_STRICT);
-  free(pat);
+  xfree(pat);
   if (slang->sl_compprog == NULL)
     return SP_FORMERROR;
 
@@ -3961,7 +3961,7 @@ char_u *did_set_spelllang(win_T *wp)
   }
 
 theend:
-  free(spl_copy);
+  xfree(spl_copy);
   recursive = false;
   redraw_win_later(wp, NOT_VALID);
   return ret_msg;
@@ -3971,7 +3971,7 @@ theend:
 static void clear_midword(win_T *wp)
 {
   memset(wp->w_s->b_spell_ismw, 0, 256);
-  free(wp->w_s->b_spell_ismw_mb);
+  xfree(wp->w_s->b_spell_ismw_mb);
   wp->w_s->b_spell_ismw_mb = NULL;
 }
 
@@ -4000,7 +4000,7 @@ static void use_midword(slang_T *lp, win_T *wp)
         // Append multi-byte chars to "b_spell_ismw_mb".
         n = (int)STRLEN(wp->w_s->b_spell_ismw_mb);
         bp = vim_strnsave(wp->w_s->b_spell_ismw_mb, n + l);
-        free(wp->w_s->b_spell_ismw_mb);
+        xfree(wp->w_s->b_spell_ismw_mb);
         wp->w_s->b_spell_ismw_mb = bp;
         STRLCPY(bp + n, p, l + 1);
       }
@@ -4124,7 +4124,7 @@ void spell_delete_wordlist(void)
     os_remove((char *)int_wordlist);
     int_wordlist_spl(fname);
     os_remove((char *)fname);
-    free(int_wordlist);
+    xfree(int_wordlist);
     int_wordlist = NULL;
   }
 }
@@ -4147,9 +4147,9 @@ void spell_free_all(void)
 
   spell_delete_wordlist();
 
-  free(repl_to);
+  xfree(repl_to);
   repl_to = NULL;
-  free(repl_from);
+  xfree(repl_from);
   repl_from = NULL;
 }
 
@@ -4392,7 +4392,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
       continue;
 
     // Convert from "SET" to 'encoding' when needed.
-    free(pc);
+    xfree(pc);
     if (spin->si_conv.vc_type != CONV_NONE) {
       pc = string_convert(&spin->si_conv, rline, NULL);
       if (pc == NULL) {
@@ -5005,9 +5005,9 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         (void)set_spell_chartab(fol, low, upp);
     }
 
-    free(fol);
-    free(low);
-    free(upp);
+    xfree(fol);
+    xfree(low);
+    xfree(upp);
   }
 
   // Use compound specifications of the .aff file for the spell info.
@@ -5070,7 +5070,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
     spin->si_midword = midword;
   }
 
-  free(pc);
+  xfree(pc);
   fclose(fd);
   return aff;
 }
@@ -5344,7 +5344,7 @@ static void spell_free_aff(afffile_T *aff)
   affheader_T *ah;
   affentry_T  *ae;
 
-  free(aff->af_enc);
+  xfree(aff->af_enc);
 
   // All this trouble to free the "ae_prog" items...
   for (ht = &aff->af_pref;; ht = &aff->af_suff) {
@@ -5461,7 +5461,7 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
     // Skip non-ASCII words when "spin->si_ascii" is true.
     if (spin->si_ascii && has_non_ascii(w)) {
       ++non_ascii;
-      free(pc);
+      xfree(pc);
       continue;
     }
 
@@ -5483,7 +5483,7 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
     dw = getroom_save(spin, w);
     if (dw == NULL) {
       retval = FAIL;
-      free(pc);
+      xfree(pc);
       break;
     }
 
@@ -5542,7 +5542,7 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
         retval = FAIL;
     }
 
-    free(pc);
+    xfree(pc);
   }
 
   if (duplicate > 0)
@@ -5938,7 +5938,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
     rline[l] = NUL;
 
     // Convert from "/encoding={encoding}" to 'encoding' when needed.
-    free(pc);
+    xfree(pc);
     if (spin->si_conv.vc_type != CONV_NONE) {
       pc = string_convert(&spin->si_conv, rline, NULL);
       if (pc == NULL) {
@@ -5974,7 +5974,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
                   p_enc) == FAIL)
             smsg((char_u *)_("Conversion in %s not supported: from %s to %s"),
                 fname, line, p_enc);
-          free(enc);
+          xfree(enc);
           spin->si_conv.vc_fail = true;
         }
         continue;
@@ -6054,7 +6054,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
     did_word = true;
   }
 
-  free(pc);
+  xfree(pc);
   fclose(fd);
 
   if (spin->si_ascii && non_ascii > 0) {
@@ -6123,7 +6123,7 @@ static void free_blocks(sblock_T *bl)
 
   while (bl != NULL) {
     next = bl->sb_next;
-    free(bl);
+    xfree(bl);
     bl = next;
   }
 }
@@ -7167,7 +7167,7 @@ static void spell_make_sugfile(spellinfo_T *spin, char_u *wfname)
   sug_write(spin, fname);
 
 theend:
-  free(fname);
+  xfree(fname);
   if (free_slang)
     slang_free(slang);
   free_blocks(spin->si_blocks);
@@ -7514,7 +7514,7 @@ static void close_spellbuf(buf_T *buf)
 {
   if (buf != NULL) {
     ml_close(buf, TRUE);
-    free(buf);
+    xfree(buf);
   }
 }
 
@@ -7737,8 +7737,8 @@ mkspell (
   }
 
 theend:
-  free(fname);
-  free(wfname);
+  xfree(fname);
+  xfree(wfname);
 }
 
 // Display a message for spell file processing when 'verbose' is set or using
@@ -7812,7 +7812,7 @@ spell_add_word (
         break;
       if (*spf == NUL) {
         EMSGN(_("E765: 'spellfile' does not have %" PRId64 " entries"), idx);
-        free(fnamebuf);
+        xfree(fnamebuf);
         return;
       }
     }
@@ -7823,7 +7823,7 @@ spell_add_word (
       buf = NULL;
     if (buf != NULL && bufIsChanged(buf)) {
       EMSG(_(e_bufloaded));
-      free(fnamebuf);
+      xfree(fnamebuf);
       return;
     }
 
@@ -7908,7 +7908,7 @@ spell_add_word (
 
     redraw_all_later(SOME_VALID);
   }
-  free(fnamebuf);
+  xfree(fnamebuf);
 }
 
 // Initialize 'spellfile' for the current buffer.
@@ -7977,7 +7977,7 @@ static void init_spellfile(void)
       aspath = false;
     }
 
-    free(buf);
+    xfree(buf);
   }
 }
 
@@ -8464,9 +8464,9 @@ void spell_suggest(int count)
       smsg((char_u *)_("Sorry, only %" PRId64 " suggestions"),
           (int64_t)sug.su_ga.ga_len);
   } else {
-    free(repl_from);
+    xfree(repl_from);
     repl_from = NULL;
-    free(repl_to);
+    xfree(repl_to);
     repl_to = NULL;
 
     // When 'rightleft' is set the list is drawn right-left.
@@ -8638,7 +8638,7 @@ static bool check_need_cap(linenr_T lnum, colnr_T col)
     }
   }
 
-  free(line_copy);
+  xfree(line_copy);
 
   return need_cap;
 }
@@ -8696,7 +8696,7 @@ void ex_spellrepall(exarg_T *eap)
 
   p_ws = save_ws;
   curwin->w_cursor = pos;
-  free(frompat);
+  xfree(frompat);
 
   if (sub_nsubs == 0)
     EMSG2(_("E753: Not found: %s"), repl_from);
@@ -8849,7 +8849,7 @@ spell_find_suggest (
     }
   }
 
-  free(sps_copy);
+  xfree(sps_copy);
 
   if (do_combine)
     // Combine the two list of suggestions.  This must be done last,
@@ -9181,7 +9181,7 @@ static void tree_count_words(char_u *byts, idx_T *idxs)
 // Free the info put in "*su" by spell_find_suggest().
 static void spell_find_cleanup(suginfo_T *su)
 {
-# define FREE_SUG_WORD(sug) free(sug->st_word)
+# define FREE_SUG_WORD(sug) xfree(sug->st_word)
   // Free the suggestions.
   GA_DEEP_CLEAR(&su->su_ga, suggest_T, FREE_SUG_WORD);
   GA_DEEP_CLEAR(&su->su_sga, suggest_T, FREE_SUG_WORD);
@@ -10866,7 +10866,7 @@ static void score_combine(suginfo_T *su)
         if (j == ga.ga_len)
           stp[ga.ga_len++] = SUG(*gap, i);
         else
-          free(p);
+          xfree(p);
       }
     }
   }
@@ -10877,7 +10877,7 @@ static void score_combine(suginfo_T *su)
   // Truncate the list to the number of suggestions that will be displayed.
   if (ga.ga_len > su->su_maxcount) {
     for (int i = su->su_maxcount; i < ga.ga_len; ++i) {
-      free(stp[i].st_word);
+      xfree(stp[i].st_word);
     }
     ga.ga_len = su->su_maxcount;
   }
@@ -11004,7 +11004,7 @@ static void suggest_try_soundalike_finish(void)
       todo = (int)slang->sl_sounddone.ht_used;
       for (hi = slang->sl_sounddone.ht_array; todo > 0; ++hi)
         if (!HASHITEM_EMPTY(hi)) {
-          free(HI2SFT(hi));
+          xfree(HI2SFT(hi));
           --todo;
         }
 
@@ -11328,7 +11328,7 @@ static void set_map_str(slang_T *lp, char_u *map)
           // This should have been checked when generating the .spl
           // file.
           EMSG(_("E783: duplicate char in MAP entry"));
-          free(b);
+          xfree(b);
         }
       } else
         lp->sl_map_array[c] = headc;
@@ -11511,7 +11511,7 @@ check_suggestions (
     (void)spell_check(curwin, longword, &attr, NULL, false);
     if (attr != HLF_COUNT) {
       // Remove this entry.
-      free(stp[i].st_word);
+      xfree(stp[i].st_word);
       --gap->ga_len;
       if (i < gap->ga_len)
         memmove(stp + i, stp + i + 1,
@@ -11608,7 +11608,7 @@ cleanup_suggestions (
   // Truncate the list to the number of suggestions that will be displayed.
   if (gap->ga_len > keep) {
     for (int i = keep; i < gap->ga_len; ++i) {
-      free(stp[i].st_word);
+      xfree(stp[i].st_word);
     }
     gap->ga_len = keep;
     return stp[keep - 1].st_score;
@@ -12548,7 +12548,7 @@ static int spell_edit_score(slang_T *slang, char_u *badword, char_u *goodword)
   }
 
   i = CNT(badlen - 1, goodlen - 1);
-  free(cnt);
+  xfree(cnt);
   return i;
 }
 
@@ -12906,7 +12906,7 @@ void ex_spelldump(exarg_T *eap)
   // enable spelling locally in the new window
   set_option_value((char_u*)"spell", TRUE, (char_u*)"", OPT_LOCAL);
   set_option_value((char_u*)"spl",  dummy,         spl, OPT_LOCAL);
-  free(spl);
+  xfree(spl);
 
   if (!bufempty() || !buf_valid(curbuf))
     return;

@@ -61,7 +61,7 @@ static inline void *ga_append_via_ptr(garray_T *gap, size_t item_size)
     ga_clear(_gap);                                             \
   } while (false)
 
-#define FREE_PTR_PTR(ptr) free(*(ptr))
+#define FREE_PTR_PTR(ptr) xfree(*(ptr))
 
 /// Call `free` for every pointer stored in the garray and then frees the
 /// garray.

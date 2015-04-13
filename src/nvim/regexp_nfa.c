@@ -2886,7 +2886,7 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
   if (stackp < stack)                 \
   {                                   \
     st_error(postfix, end, p);      \
-    free(stack);                    \
+    xfree(stack);                    \
     return NULL;                    \
   }
 
@@ -3317,13 +3317,13 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
 
   e = POP();
   if (stackp != stack) {
-    free(stack);
+    xfree(stack);
     EMSG_RET_NULL(_("E875: (NFA regexp) (While converting from postfix to NFA),"
                     "too many states left on stack"));
   }
 
   if (istate >= nstate) {
-    free(stack);
+    xfree(stack);
     EMSG_RET_NULL(_("E876: (NFA regexp) "
                     "Not enough space to store the whole NFA "));
   }
@@ -3337,7 +3337,7 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
   ret = e.start;
 
 theend:
-  free(stack);
+  xfree(stack);
   return ret;
 
 #undef POP1
@@ -4195,7 +4195,7 @@ addstate_here (
       memmove(&(newl[listidx + count]),
           &(l->t[listidx + 1]),
           sizeof(nfa_thread_T) * (l->n - count - listidx - 1));
-      free(l->t);
+      xfree(l->t);
       l->t = newl;
     } else {
       /* make space for new states, then move them from the
@@ -6033,9 +6033,9 @@ nextchar:
 
 theend:
   /* Free memory */
-  free(list[0].t);
-  free(list[1].t);
-  free(listids);
+  xfree(list[0].t);
+  xfree(list[1].t);
+  xfree(listids);
 #undef ADD_STATE_IF_MATCH
 #ifdef NFA_REGEXP_DEBUG_LOG
   fclose(debug);
@@ -6340,13 +6340,13 @@ static regprog_T *nfa_regcomp(char_u *expr, int re_flags)
   nfa_regengine.expr = NULL;
 
 out:
-  free(post_start);
+  xfree(post_start);
   post_start = post_ptr = post_end = NULL;
   state_ptr = NULL;
   return (regprog_T *)prog;
 
 fail:
-  free(prog);
+  xfree(prog);
   prog = NULL;
 #ifdef REGEXP_DEBUG
   nfa_postfix_dump(expr, FAIL);
@@ -6361,9 +6361,9 @@ fail:
 static void nfa_regfree(regprog_T *prog)
 {
   if (prog != NULL) {
-    free(((nfa_regprog_T *)prog)->match_text);
-    free(((nfa_regprog_T *)prog)->pattern);
-    free(prog);
+    xfree(((nfa_regprog_T *)prog)->match_text);
+    xfree(((nfa_regprog_T *)prog)->pattern);
+    xfree(prog);
   }
 }
 

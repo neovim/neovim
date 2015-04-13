@@ -1265,7 +1265,7 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
   regcode = r->program;
   regc(REGMAGIC);
   if (reg(REG_NOPAREN, &flags) == NULL || reg_toolong) {
-    free(r);
+    xfree(r);
     if (reg_toolong)
       EMSG_RET_NULL(_("E339: Pattern too long"));
     return NULL;
@@ -1349,7 +1349,7 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
  */
 static void bt_regfree(regprog_T *prog)
 {
-  free(prog);
+  xfree(prog);
 }
 
 /*
@@ -3236,8 +3236,8 @@ void free_regexp_stuff(void)
 {
   ga_clear(&regstack);
   ga_clear(&backpos);
-  free(reg_tofree);
-  free(reg_prev_sub);
+  xfree(reg_tofree);
+  xfree(reg_prev_sub);
 }
 
 #endif
@@ -3509,7 +3509,7 @@ theend:
   /* Free "reg_tofree" when it's a bit big.
    * Free regstack and backpos if they are bigger than their initial size. */
   if (reg_tofreelen > 400) {
-    free(reg_tofree);
+    xfree(reg_tofree);
     reg_tofree = NULL;
   }
   if (regstack.ga_maxlen > REGSTACK_INITIAL)
@@ -3551,8 +3551,8 @@ void unref_extmatch(reg_extmatch_T *em)
 
   if (em != NULL && --em->refcnt <= 0) {
     for (i = 0; i < NSUBEXP; ++i)
-      free(em->matches[i]);
-    free(em);
+      xfree(em->matches[i]);
+    xfree(em);
   }
 }
 
@@ -5642,7 +5642,7 @@ static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T e
       len = (int)STRLEN(regline);
       if (reg_tofree == NULL || len >= (int)reg_tofreelen) {
         len += 50;              /* get some extra */
-        free(reg_tofree);
+        xfree(reg_tofree);
         reg_tofree = xmalloc(len);
         reg_tofreelen = len;
       }
@@ -6382,7 +6382,7 @@ char_u *regtilde(char_u *source, int magic)
         STRCPY(tmpsub + len + prevlen, p + 1);
 
         if (newsub != source)                 /* already allocated newsub */
-          free(newsub);
+          xfree(newsub);
         newsub = tmpsub;
         p = newsub + len + prevlen;
       } else if (magic)
@@ -6398,7 +6398,7 @@ char_u *regtilde(char_u *source, int magic)
     }
   }
 
-  free(reg_prev_sub);
+  xfree(reg_prev_sub);
   if (newsub != source)         /* newsub was allocated, just keep it */
     reg_prev_sub = newsub;
   else                          /* no ~ found, need to save newsub  */
@@ -6494,14 +6494,14 @@ static int vim_regsub_both(char_u *source, char_u *dest, int copy, int magic, in
       if (eval_result != NULL) {
         STRCPY(dest, eval_result);
         dst += STRLEN(eval_result);
-        free(eval_result);
+        xfree(eval_result);
         eval_result = NULL;
       }
     } else {
       win_T       *save_reg_win;
       int save_ireg_ic;
 
-      free(eval_result);
+      xfree(eval_result);
 
       /* The expression may contain substitute(), which calls us
        * recursively.  Make sure submatch() gets the text from the first
@@ -6542,7 +6542,7 @@ static int vim_regsub_both(char_u *source, char_u *dest, int copy, int magic, in
         if (had_backslash && backslash) {
           /* Backslashes will be consumed, need to double them. */
           s = vim_strsave_escaped(eval_result, (char_u *)"\\");
-          free(eval_result);
+          xfree(eval_result);
           eval_result = s;
         }
 
@@ -7073,7 +7073,7 @@ static int vim_regexec_both(regmatch_T *rmp, char_u *line, colnr_T col, bool nl)
       result = rmp->regprog->engine->regexec_nl(rmp, line, col, nl);
     }
 
-    free(pat);
+    xfree(pat);
     p_re = save_p_re;
   }
 
@@ -7127,7 +7127,7 @@ long vim_regexec_multi(
                                                    tm);
     }
 
-    free(pat);
+    xfree(pat);
     p_re = save_p_re;
   }
 

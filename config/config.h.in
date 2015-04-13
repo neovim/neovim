@@ -65,5 +65,6 @@
 #define FEAT_BROWSE
 #define FEAT_CSCOPE
 #define FEAT_MOUSE
+#cmakedefine USE_JEMALLOC
 
 #endif  // AUTO_CONFIG_H

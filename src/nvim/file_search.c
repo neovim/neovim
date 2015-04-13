@@ -496,19 +496,19 @@ vim_findfile_init (
       }
 
       if (temp == NULL || wc_path == NULL) {
-        free(buf);
-        free(temp);
-        free(wc_path);
+        xfree(buf);
+        xfree(temp);
+        xfree(wc_path);
         goto error_return;
       }
 
       STRCPY(temp, search_ctx->ffsc_fix_path + len);
       STRCAT(temp, search_ctx->ffsc_wc_path);
-      free(search_ctx->ffsc_wc_path);
-      free(wc_path);
+      xfree(search_ctx->ffsc_wc_path);
+      xfree(wc_path);
       search_ctx->ffsc_wc_path = temp;
     }
-    free(buf);
+    xfree(buf);
   }
 
   sptr = ff_create_stack_element(ff_expand_buffer,
@@ -563,7 +563,7 @@ void vim_findfile_cleanup(void *ctx)
 
   vim_findfile_free_visited(ctx);
   ff_clear(ctx);
-  free(ctx);
+  xfree(ctx);
 }
 
 /*
@@ -947,7 +947,7 @@ char_u *vim_findfile(void *search_ctx_arg)
       break;
   }
 
-  free(file_path);
+  xfree(file_path);
   return NULL;
 }
 
@@ -975,8 +975,8 @@ static void vim_findfile_free_visited_list(ff_visited_list_hdr_T **list_headp)
     vp = (*list_headp)->ffvl_next;
     ff_free_visited_list((*list_headp)->ffvl_visited_list);
 
-    free((*list_headp)->ffvl_filename);
-    free(*list_headp);
+    xfree((*list_headp)->ffvl_filename);
+    xfree(*list_headp);
     *list_headp = vp;
   }
   *list_headp = NULL;
@@ -988,8 +988,8 @@ static void ff_free_visited_list(ff_visited_T *vl)
 
   while (vl != NULL) {
     vp = vl->ffv_next;
-    free(vl->ffv_wc_path);
-    free(vl);
+    xfree(vl->ffv_wc_path);
+    xfree(vl);
     vl = vp;
   }
   vl = NULL;
@@ -1205,13 +1205,13 @@ static ff_stack_T *ff_pop(ff_search_ctx_T *search_ctx)
 static void ff_free_stack_element(ff_stack_T *stack_ptr)
 {
   /* free handles possible NULL pointers */
-  free(stack_ptr->ffs_fix_path);
-  free(stack_ptr->ffs_wc_path);
+  xfree(stack_ptr->ffs_fix_path);
+  xfree(stack_ptr->ffs_wc_path);
 
   if (stack_ptr->ffs_filearray != NULL)
     FreeWild(stack_ptr->ffs_filearray_size, stack_ptr->ffs_filearray);
 
-  free(stack_ptr);
+  xfree(stack_ptr);
 }
 
 /*
@@ -1225,19 +1225,19 @@ static void ff_clear(ff_search_ctx_T *search_ctx)
   while ((sptr = ff_pop(search_ctx)) != NULL)
     ff_free_stack_element(sptr);
 
-  free(search_ctx->ffsc_file_to_search);
-  free(search_ctx->ffsc_start_dir);
-  free(search_ctx->ffsc_fix_path);
-  free(search_ctx->ffsc_wc_path);
+  xfree(search_ctx->ffsc_file_to_search);
+  xfree(search_ctx->ffsc_start_dir);
+  xfree(search_ctx->ffsc_fix_path);
+  xfree(search_ctx->ffsc_wc_path);
 
   if (search_ctx->ffsc_stopdirs_v != NULL) {
     int i = 0;
 
     while (search_ctx->ffsc_stopdirs_v[i] != NULL) {
-      free(search_ctx->ffsc_stopdirs_v[i]);
+      xfree(search_ctx->ffsc_stopdirs_v[i]);
       i++;
     }
-    free(search_ctx->ffsc_stopdirs_v);
+    xfree(search_ctx->ffsc_stopdirs_v);
   }
   search_ctx->ffsc_stopdirs_v = NULL;
 
@@ -1327,9 +1327,9 @@ static void     *fdip_search_ctx = NULL;
 #if defined(EXITFREE)
 void free_findfile(void)
 {
-  free(ff_file_to_find);
+  xfree(ff_file_to_find);
   vim_findfile_cleanup(fdip_search_ctx);
-  free(ff_expand_buffer);
+  xfree(ff_expand_buffer);
 }
 
 #endif
@@ -1382,7 +1382,7 @@ find_file_in_path_option (
     expand_env(ptr, NameBuff, MAXPATHL);
     ptr[len] = save_char;
 
-    free(ff_file_to_find);
+    xfree(ff_file_to_find);
     ff_file_to_find = vim_strsave(NameBuff);
   }
 
@@ -1487,7 +1487,7 @@ find_file_in_path_option (
             fdip_search_ctx, FALSE, rel_fname);
         if (fdip_search_ctx != NULL)
           did_findfile_init = TRUE;
-        free(buf);
+        xfree(buf);
       }
     }
   }

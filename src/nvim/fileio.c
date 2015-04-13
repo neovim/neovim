@@ -881,12 +881,12 @@ retry:
       notconverted = TRUE;
       conv_error = 0;
       if (fenc_alloced)
-        free(fenc);
+        xfree(fenc);
       fenc = (char_u *)"";
       fenc_alloced = FALSE;
     } else {
       if (fenc_alloced)
-        free(fenc);
+        xfree(fenc);
       if (fenc_next != NULL) {
         fenc = next_fenc(&fenc_next);
         fenc_alloced = (fenc_next != NULL);
@@ -897,7 +897,7 @@ retry:
     }
     if (tmpname != NULL) {
       os_remove((char *)tmpname);  // delete converted file
-      free(tmpname);
+      xfree(tmpname);
       tmpname = NULL;
     }
   }
@@ -1026,7 +1026,7 @@ retry:
         }
         if (linerest)           /* copy characters from the previous buffer */
           memmove(new_buffer, ptr - linerest, (size_t)linerest);
-        free(buffer);
+        xfree(buffer);
         buffer = new_buffer;
         ptr = buffer + linerest;
         line_start = buffer;
@@ -1215,7 +1215,7 @@ retry:
           } else {
             /* BOM detected: set "fenc" and jump back */
             if (fenc_alloced)
-              free(fenc);
+              xfree(fenc);
             fenc = ccname;
             fenc_alloced = FALSE;
           }
@@ -1738,7 +1738,7 @@ failed:
         OPT_FREE | OPT_LOCAL, 0);
   }
   if (fenc_alloced)
-    free(fenc);
+    xfree(fenc);
 # ifdef USE_ICONV
   if (iconv_fd != (iconv_t)-1) {
     iconv_close(iconv_fd);
@@ -1757,7 +1757,7 @@ failed:
       fcntl(fd, F_SETFD, fdflags | FD_CLOEXEC);
   }
 #endif
-  free(buffer);
+  xfree(buffer);
 
 #ifdef HAVE_DUP
   if (read_stdin) {
@@ -1769,7 +1769,7 @@ failed:
 
   if (tmpname != NULL) {
     os_remove((char *)tmpname);  // delete converted file
-    free(tmpname);
+    xfree(tmpname);
   }
   --no_wait_return;                     /* may wait for return now */
 
@@ -1886,7 +1886,7 @@ failed:
         c = TRUE;
         msg_add_lines(c, (long)linecnt, filesize);
 
-      free(keep_msg);
+      xfree(keep_msg);
       keep_msg = NULL;
       msg_scrolled_ign = TRUE;
       p = msg_trunc_attr(IObuff, FALSE, 0);
@@ -2084,7 +2084,7 @@ void set_forced_fenc(exarg_T *eap)
   if (eap->force_enc != 0) {
     char_u *fenc = enc_canonize(eap->cmd + eap->force_enc);
     set_string_option_direct((char_u *)"fenc", -1, fenc, OPT_FREE|OPT_LOCAL, 0);
-    free(fenc);
+    xfree(fenc);
   }
 }
 
@@ -2113,7 +2113,7 @@ static char_u *next_fenc(char_u **pp)
     r = vim_strnsave(*pp, (int)(p - *pp));
     *pp = p + 1;
     p = enc_canonize(r);
-    free(r);
+    xfree(r);
     r = p;
   }
   return r;
@@ -2157,7 +2157,7 @@ readfile_charconvert (
     MSG(errmsg);
     if (tmpname != NULL) {
       os_remove((char *)tmpname);  // delete converted file
-      free(tmpname);
+      xfree(tmpname);
       tmpname = NULL;
     }
   }
@@ -2816,7 +2816,7 @@ buf_write (
            */
           backup = modname(rootname, backup_ext, FALSE);
           if (backup == NULL) {
-            free(rootname);
+            xfree(rootname);
             some_error = TRUE;                          /* out of memory */
             goto nobackup;
           }
@@ -2832,7 +2832,7 @@ buf_write (
                * link). If we don't check here, we either ruin the file when
                * copying or erase it after writing.
                */
-              free(backup);
+              xfree(backup);
               backup = NULL;                    /* no backup file to delete */
             } else if (!p_bk) {
               /*
@@ -2851,13 +2851,13 @@ buf_write (
               }
               /* They all exist??? Must be something wrong. */
               if (*wp == 'a') {
-                free(backup);
+                xfree(backup);
                 backup = NULL;
               }
             }
           }
         }
-        free(rootname);
+        xfree(rootname);
 
         /*
          * Try to create the backup file
@@ -2871,7 +2871,7 @@ buf_write (
               O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,
               perm & 0777);
           if (bfd < 0) {
-            free(backup);
+            xfree(backup);
             backup = NULL;
           } else {
             /* set file protection same as original file, but
@@ -2939,7 +2939,7 @@ buf_write (
       }
 nobackup:
       close(fd);                /* ignore errors for closing read file */
-      free(copybuf);
+      xfree(copybuf);
 
       if (backup == NULL && errmsg == NULL)
         errmsg = (char_u *)_(
@@ -2986,7 +2986,7 @@ nobackup:
           backup = NULL;
         else {
           backup = modname(rootname, backup_ext, FALSE);
-          free(rootname);
+          xfree(rootname);
         }
 
         if (backup != NULL) {
@@ -3004,7 +3004,7 @@ nobackup:
               --*p;
             /* They all exist??? Must be something wrong! */
             if (*p == 'a') {
-              free(backup);
+              xfree(backup);
               backup = NULL;
             }
           }
@@ -3023,7 +3023,7 @@ nobackup:
           if (vim_rename(fname, backup) == 0)
             break;
 
-          free(backup);             /* don't do the rename below */
+          xfree(backup);             /* don't do the rename below */
           backup = NULL;
         }
       }
@@ -3250,7 +3250,7 @@ restore_backup:
     }
 
     if (wfname != fname)
-      free(wfname);
+      xfree(wfname);
     goto fail;
   }
   errmsg = NULL;
@@ -3446,7 +3446,7 @@ restore_backup:
       }
     }
     os_remove((char *)wfname);
-    free(wfname);
+    xfree(wfname);
   }
 
   if (end == 0) {
@@ -3606,7 +3606,7 @@ restore_backup:
         EMSG(_("E205: Patchmode: can't save original file"));
       else if (!os_file_exists((char_u *)org)) {
         vim_rename(backup, (char_u *)org);
-        free(backup);                   /* don't delete the file */
+        xfree(backup);                   /* don't delete the file */
         backup = NULL;
 #ifdef UNIX
         set_file_time((char_u *)org,
@@ -3632,7 +3632,7 @@ restore_backup:
     }
     if (org != NULL) {
       os_setperm((char_u *)org, os_getperm(fname) & 0777);
-      free(org);
+      xfree(org);
     }
   }
 
@@ -3655,11 +3655,11 @@ nofail:
   /* Done saving, we accept changed buffer warnings again */
   buf->b_saving = false;
 
-  free(backup);
+  xfree(backup);
   if (buffer != smallbuf)
-    free(buffer);
-  free(fenc_tofree);
-  free(write_info.bw_conv_buf);
+    xfree(buffer);
+  xfree(fenc_tofree);
+  xfree(write_info.bw_conv_buf);
 # ifdef USE_ICONV
   if (write_info.bw_iconv_fd != (iconv_t)-1) {
     iconv_close(write_info.bw_iconv_fd);
@@ -3692,7 +3692,7 @@ nofail:
     STRCAT(IObuff, errmsg);
     emsg(IObuff);
     if (errmsg_allocated)
-      free(errmsg);
+      xfree(errmsg);
 
     retval = FAIL;
     if (end == 0) {
@@ -4314,7 +4314,7 @@ void shorten_fnames(int force)
         && (force
             || buf->b_sfname == NULL
             || path_is_absolute_path(buf->b_sfname))) {
-      free(buf->b_sfname);
+      xfree(buf->b_sfname);
       buf->b_sfname = NULL;
       p = path_shorten_fname(buf->b_ffname, dirname);
       if (p != NULL) {
@@ -4366,7 +4366,7 @@ modname (
     retval = xmalloc(MAXPATHL + extlen + 3);
     if (os_dirname(retval, MAXPATHL) == FAIL ||
         (fnamelen = (int)STRLEN(retval)) == 0) {
-      free(retval);
+      xfree(retval);
       return NULL;
     }
     if (!after_pathsep(retval, retval + fnamelen)) {
@@ -4596,7 +4596,7 @@ int vim_rename(char_u *from, char_u *to)
       break;
     }
 
-  free(buffer);
+  xfree(buffer);
   close(fd_in);
   if (close(fd_out) < 0)
     errmsg = _("E209: Error closing \"%s\"");
@@ -4705,11 +4705,11 @@ static int move_lines(buf_T *frombuf, buf_T *tobuf)
   for (lnum = 1; lnum <= frombuf->b_ml.ml_line_count; ++lnum) {
     p = vim_strsave(ml_get_buf(frombuf, lnum, FALSE));
     if (ml_append(lnum - 1, p, 0, FALSE) == FAIL) {
-      free(p);
+      xfree(p);
       retval = FAIL;
       break;
     }
-    free(p);
+    xfree(p);
   }
 
   /* Delete all the lines in "frombuf". */
@@ -4922,8 +4922,8 @@ buf_check_timestamp (
       already_warned = TRUE;
     }
 
-    free(path);
-    free(tbuf);
+    xfree(path);
+    xfree(tbuf);
   }
 
   if (reload) {
@@ -5041,7 +5041,7 @@ void buf_reload(buf_T *buf, int orig_mode)
       }
     }
   }
-  free(ea.cmd);
+  xfree(ea.cmd);
 
   if (savebuf != NULL && buf_valid(savebuf))
     wipe_buffer(savebuf, FALSE);
@@ -5315,7 +5315,7 @@ static void show_autocmd(AutoPat *ap, event_T event)
  */
 static void au_remove_pat(AutoPat *ap)
 {
-  free(ap->pat);
+  xfree(ap->pat);
   ap->pat = NULL;
   ap->buflocal_nr = -1;
   au_need_clean = TRUE;
@@ -5329,7 +5329,7 @@ static void au_remove_cmds(AutoPat *ap)
   AutoCmd *ac;
 
   for (ac = ap->cmds; ac != NULL; ac = ac->next) {
-    free(ac->cmd);
+    xfree(ac->cmd);
     ac->cmd = NULL;
   }
   au_need_clean = TRUE;
@@ -5361,8 +5361,8 @@ static void au_cleanup(void)
          * the command has been marked for deletion */
         if (ap->pat == NULL || ac->cmd == NULL) {
           *prev_ac = ac->next;
-          free(ac->cmd);
-          free(ac);
+          xfree(ac->cmd);
+          xfree(ac);
         } else
           prev_ac = &(ac->next);
       }
@@ -5371,7 +5371,7 @@ static void au_cleanup(void)
       if (ap->pat == NULL) {
         *prev_ap = ap->next;
         vim_regfree(ap->reg_prog);
-        free(ap);
+        xfree(ap);
       } else
         prev_ap = &(ap->next);
     }
@@ -5445,7 +5445,7 @@ static void au_del_group(char_u *name)
   if (i == AUGROUP_ERROR)       /* the group doesn't exist */
     EMSG2(_("E367: No such group: \"%s\""), name);
   else {
-    free(AUGROUP_NAME(i));
+    xfree(AUGROUP_NAME(i));
     AUGROUP_NAME(i) = NULL;
   }
 }
@@ -5637,7 +5637,7 @@ char_u *au_event_disable(char *what)
   else
     STRCAT(new_ei, what);
   set_string_option_direct((char_u *)"ei", -1, new_ei, OPT_FREE, SID_NONE);
-  free(new_ei);
+  xfree(new_ei);
 
   return save_ei;
 }
@@ -5647,7 +5647,7 @@ void au_event_restore(char_u *old_ei)
   if (old_ei != NULL) {
     set_string_option_direct((char_u *)"ei", -1, old_ei,
         OPT_FREE, SID_NONE);
-    free(old_ei);
+    xfree(old_ei);
   }
 }
 
@@ -5782,8 +5782,8 @@ void do_autocmd(char_u *arg, int forceit)
   }
 
   if (need_free)
-    free(cmd);
-  free(envpat);
+    xfree(cmd);
+  xfree(envpat);
 }
 
 /*
@@ -5807,7 +5807,7 @@ static int au_get_grouparg(char_u **argp)
       group = AUGROUP_ALL;              /* no match, use all groups */
     else
       *argp = skipwhite(p);             /* match, skip over group name */
-    free(group_name);
+    xfree(group_name);
   }
   return group;
 }
@@ -5984,10 +5984,10 @@ static int do_autocmd_event(event_T event, char_u *pat, int nested, char_u *cmd,
               &ap->allow_dirs, TRUE);
           if (reg_pat != NULL)
             ap->reg_prog = vim_regcomp(reg_pat, RE_MAGIC);
-          free(reg_pat);
+          xfree(reg_pat);
           if (reg_pat == NULL || ap->reg_prog == NULL) {
-            free(ap->pat);
-            free(ap);
+            xfree(ap->pat);
+            xfree(ap);
             return FAIL;
           }
         }
@@ -6186,7 +6186,7 @@ aucmd_prepbuf (
 
     /* Make sure w_localdir and globaldir are NULL to avoid a chdir() in
      * win_enter_ext(). */
-    free(aucmd_win->w_localdir);
+    xfree(aucmd_win->w_localdir);
     aucmd_win->w_localdir = NULL;
     aco->globaldir = globaldir;
     globaldir = NULL;
@@ -6262,7 +6262,7 @@ win_found:
     hash_init(&aucmd_win->w_vars->dv_hashtab);       /* re-use the hashtab */
     curbuf = curwin->w_buffer;
 
-    free(globaldir);
+    xfree(globaldir);
     globaldir = aco->globaldir;
 
     /* the buffer contents may have changed */
@@ -6599,7 +6599,7 @@ apply_autocmds_group (
       fname = FullName_save(fname, FALSE);
   }
   if (fname == NULL) {      /* out of memory */
-    free(sfname);
+    xfree(sfname);
     retval = FALSE;
     goto BYPASS_AU;
   }
@@ -6705,10 +6705,10 @@ apply_autocmds_group (
   autocmd_busy = save_autocmd_busy;
   filechangeshell_busy = FALSE;
   autocmd_nested = save_autocmd_nested;
-  free(sourcing_name);
+  xfree(sourcing_name);
   sourcing_name = save_sourcing_name;
   sourcing_lnum = save_sourcing_lnum;
-  free(autocmd_fname);
+  xfree(autocmd_fname);
   autocmd_fname = save_autocmd_fname;
   autocmd_fname_full = save_autocmd_fname_full;
   autocmd_bufnr = save_autocmd_bufnr;
@@ -6717,8 +6717,8 @@ apply_autocmds_group (
   restore_funccal(save_funccalp);
   if (do_profiling == PROF_YES)
     prof_child_exit(&wait_time);
-  free(fname);
-  free(sfname);
+  xfree(fname);
+  xfree(sfname);
   --nesting;            /* see matching increment above */
 
   // When stopping to execute autocommands, restore the search patterns and
@@ -6730,12 +6730,12 @@ apply_autocmds_group (
     did_filetype = FALSE;
     while (au_pending_free_buf != NULL) {
       buf_T *b = au_pending_free_buf->b_next;
-      free(au_pending_free_buf);
+      xfree(au_pending_free_buf);
       au_pending_free_buf = b;
     }
     while (au_pending_free_win != NULL) {
       win_T *w = au_pending_free_win->w_next;
-      free(au_pending_free_win);
+      xfree(au_pending_free_win);
       au_pending_free_win = w;
     }
   }
@@ -6806,7 +6806,7 @@ auto_next_pat (
   char_u      *name;
   char        *s;
 
-  free(sourcing_name);
+  xfree(sourcing_name);
   sourcing_name = NULL;
 
   for (ap = apc->curpat; ap != NULL && !got_int; ap = ap->next) {
@@ -6942,9 +6942,9 @@ int has_autocmd(event_T event, char_u *sfname, buf_T *buf)
       break;
     }
 
-  free(fname);
+  xfree(fname);
 #ifdef BACKSLASH_IN_FILENAME
-  free(sfname);
+  xfree(sfname);
 #endif
 
   return retval;
@@ -7124,7 +7124,7 @@ int au_exists(char_u *arg)
     }
 
 theend:
-  free(arg_save);
+  xfree(arg_save);
   return retval;
 }
 
@@ -7203,7 +7203,7 @@ int match_file_list(char_u *list, char_u *sfname, char_u *ffname)
       break;
     match = match_file_pat(regpat, NULL, ffname, sfname,
         tail, (int)allow_dirs);
-    free(regpat);
+    xfree(regpat);
     if (match)
       return TRUE;
   }
@@ -7399,7 +7399,7 @@ file_pat_to_reg_pat (
       EMSG(_("E219: Missing {."));
     else
       EMSG(_("E220: Missing }."));
-    free(reg_pat);
+    xfree(reg_pat);
     reg_pat = NULL;
   }
   return reg_pat;

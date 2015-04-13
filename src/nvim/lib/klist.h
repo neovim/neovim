@@ -44,9 +44,9 @@
     static inline void kmp_destroy_##name(kmp_##name##_t *mp) {         \
         size_t k;                                                       \
         for (k = 0; k < mp->n; ++k) {                                   \
-            kmpfree_f(mp->buf[k]); free(mp->buf[k]);                    \
+            kmpfree_f(mp->buf[k]); xfree(mp->buf[k]);                   \
         }                                                               \
-        free(mp->buf); free(mp);                                        \
+        xfree(mp->buf); xfree(mp);                                      \
     }                                                                   \
     static inline kmptype_t *kmp_alloc_##name(kmp_##name##_t *mp) {     \
         ++mp->cnt;                                                      \
@@ -95,7 +95,7 @@
             kmp_free(name, kl->mp, p);                                  \
         kmp_free(name, kl->mp, p);                                      \
         kmp_destroy(name, kl->mp);                                      \
-        free(kl);                                                       \
+        xfree(kl);                                                       \
     }                                                                   \
     static inline kltype_t *kl_pushp_##name(kl_##name##_t *kl) {        \
         kl1_##name *q, *p = kmp_alloc(name, kl->mp);                    \

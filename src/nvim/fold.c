@@ -1326,7 +1326,7 @@ static void deleteFoldEntry(garray_T *gap, int idx, int recursive)
                 sizeof(fold_T) * (size_t)(gap->ga_len - (idx + 1)));
       /* move the contained folds one level up */
       memmove(fp, nfp, sizeof(fold_T) * (size_t)moved);
-      free(nfp);
+      xfree(nfp);
       gap->ga_len += moved - 1;
     }
   }
@@ -1760,7 +1760,7 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
       }
       if (*p != NUL) {
         p = transstr(text);
-        free(text);
+        xfree(text);
         text = p;
       }
     }

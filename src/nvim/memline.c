@@ -373,7 +373,7 @@ error:
   if (mfp != NULL) {
     if (hp)
       mf_put(mfp, hp, false, false);
-    mf_close(mfp, true);            /* will also free(mfp->mf_fname) */
+    mf_close(mfp, true);            /* will also xfree(mfp->mf_fname) */
   }
   buf->b_ml.ml_mfp = NULL;
   return FAIL;
@@ -418,7 +418,7 @@ void ml_setname(buf_T *buf)
 
     /* if the file name is the same we don't have to do anything */
     if (fnamecmp(fname, mfp->mf_fname) == 0) {
-      free(fname);
+      xfree(fname);
       success = TRUE;
       break;
     }
@@ -431,14 +431,14 @@ void ml_setname(buf_T *buf)
     /* try to rename the swap file */
     if (vim_rename(mfp->mf_fname, fname) == 0) {
       success = TRUE;
-      free(mfp->mf_fname);
+      xfree(mfp->mf_fname);
       mfp->mf_fname = fname;
-      free(mfp->mf_ffname);
+      xfree(mfp->mf_ffname);
       mf_set_ffname(mfp);
       ml_upd_block0(buf, UB_SAME_DIR);
       break;
     }
-    free(fname);                /* this fname didn't work, try another */
+    xfree(fname);                /* this fname didn't work, try another */
   }
 
   if (mfp->mf_fd == -1) {           /* need to (re)open the swap file */
@@ -567,9 +567,9 @@ void ml_close(buf_T *buf, int del_file)
     return;
   mf_close(buf->b_ml.ml_mfp, del_file);       /* close the .swp file */
   if (buf->b_ml.ml_line_lnum != 0 && (buf->b_ml.ml_flags & ML_LINE_DIRTY))
-    free(buf->b_ml.ml_line_ptr);
-  free(buf->b_ml.ml_stack);
-  free(buf->b_ml.ml_chunksize);
+    xfree(buf->b_ml.ml_line_ptr);
+  xfree(buf->b_ml.ml_stack);
+  xfree(buf->b_ml.ml_chunksize);
   buf->b_ml.ml_chunksize = NULL;
   buf->b_ml.ml_mfp = NULL;
 
@@ -935,7 +935,7 @@ void ml_recover(void)
     /* need to reallocate the memory used to store the data */
     p = xmalloc(mfp->mf_page_size);
     memmove(p, hp->bh_data, previous_page_size);
-    free(hp->bh_data);
+    xfree(hp->bh_data);
     hp->bh_data = p;
     b0p = hp->bh_data;
   }
@@ -1008,7 +1008,7 @@ void ml_recover(void)
     set_fileformat(b0_ff - 1, OPT_LOCAL);
   if (b0_fenc != NULL) {
     set_option_value((char_u *)"fenc", 0L, b0_fenc, OPT_LOCAL);
-    free(b0_fenc);
+    xfree(b0_fenc);
   }
   unchanged(curbuf, TRUE);
 
@@ -1194,7 +1194,7 @@ void ml_recover(void)
       /* Need to copy one line, fetching the other one may flush it. */
       p = vim_strsave(ml_get(idx));
       i = STRCMP(p, ml_get(idx + lnum));
-      free(p);
+      xfree(p);
       if (i != 0) {
         changed_int();
         ++curbuf->b_changedtick;
@@ -1237,16 +1237,16 @@ void ml_recover(void)
   redraw_curbuf_later(NOT_VALID);
 
 theend:
-  free(fname_used);
+  xfree(fname_used);
   recoverymode = FALSE;
   if (mfp != NULL) {
     if (hp != NULL)
       mf_put(mfp, hp, false, false);
-    mf_close(mfp, false);           /* will also free(mfp->mf_fname) */
+    mf_close(mfp, false);           /* will also xfree(mfp->mf_fname) */
   }
   if (buf != NULL) {  //may be NULL if swap file not found.
-    free(buf->b_ml.ml_stack);
-    free(buf);
+    xfree(buf->b_ml.ml_stack);
+    xfree(buf);
   }
   if (serious_error && called_from_main)
     ml_close(curbuf, TRUE);
@@ -1348,7 +1348,7 @@ recover_names (
           tail = concat_fnames(dir_name, tail, TRUE);
         }
         num_names = recov_file_names(names, tail, FALSE);
-        free(tail);
+        xfree(tail);
       }
     }
 
@@ -1372,7 +1372,7 @@ recover_names (
           swapname = NULL;
           num_files = 1;
         }
-        free(swapname);
+        xfree(swapname);
       }
     }
 
@@ -1386,9 +1386,9 @@ recover_names (
           /* Remove the name from files[i].  Move further entries
            * down.  When the array becomes empty free it here, since
            * FreeWild() won't be called below. */
-          free(files[i]);
+          xfree(files[i]);
           if (--num_files == 0)
-            free(files);
+            xfree(files);
           else
             for (; i < num_files; ++i)
               files[i] = files[i + 1];
@@ -1429,11 +1429,11 @@ recover_names (
       file_count += num_files;
 
     for (int i = 0; i < num_names; ++i)
-      free(names[i]);
+      xfree(names[i]);
     if (num_files > 0)
       FreeWild(num_files, files);
   }
-  free(dir_name);
+  xfree(dir_name);
   return file_count;
 }
 
@@ -1453,8 +1453,8 @@ static char_u *make_percent_swname(char_u *dir, char_u *name)
       if (vim_ispathsep(*d))
         *d = '%';
     d = concat_fnames(dir, s, TRUE);
-    free(s);
-    free(f);
+    xfree(s);
+    xfree(f);
   }
   return d;
 }
@@ -1582,7 +1582,7 @@ static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
     if (STRCMP(p, names[num_names]) != 0)
       ++num_names;
     else
-      free(names[num_names]);
+      xfree(names[num_names]);
   } else
     ++num_names;
 
@@ -2339,7 +2339,7 @@ int ml_replace(linenr_T lnum, char_u *line, int copy)
   if (curbuf->b_ml.ml_line_lnum != lnum)            /* other line buffered */
     ml_flush_line(curbuf);                          /* flush it */
   else if (curbuf->b_ml.ml_flags & ML_LINE_DIRTY)   /* same line allocated */
-    free(curbuf->b_ml.ml_line_ptr);             /* free it */
+    xfree(curbuf->b_ml.ml_line_ptr);             /* free it */
   curbuf->b_ml.ml_line_ptr = line;
   curbuf->b_ml.ml_line_lnum = lnum;
   curbuf->b_ml.ml_flags = (curbuf->b_ml.ml_flags | ML_LINE_DIRTY) & ~ML_EMPTY;
@@ -2694,7 +2694,7 @@ static void ml_flush_line(buf_T *buf)
         (void)ml_delete_int(buf, lnum, FALSE);
       }
     }
-    free(new_line);
+    xfree(new_line);
 
     entered = FALSE;
   }
@@ -2938,7 +2938,7 @@ static int ml_add_stack(buf_T *buf)
     infoptr_T *newstack = xmalloc(sizeof(infoptr_T) *
                                     (buf->b_ml.ml_stack_size + STACK_INCR));
     memmove(newstack, buf->b_ml.ml_stack, (size_t)top * sizeof(infoptr_T));
-    free(buf->b_ml.ml_stack);
+    xfree(buf->b_ml.ml_stack);
     buf->b_ml.ml_stack = newstack;
     buf->b_ml.ml_stack_size += STACK_INCR;
   }
@@ -3070,7 +3070,7 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
     r = NULL;
     if ((s = make_percent_swname(dir_name, fname)) != NULL) {
       r = modname(s, (char_u *)".swp", FALSE);
-      free(s);
+      xfree(s);
     }
     return r;
   }
@@ -3089,7 +3089,7 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
     return NULL;
 
   s = get_file_in_dir(r, dir_name);
-  free(r);
+  xfree(r);
   return s;
 }
 
@@ -3129,7 +3129,7 @@ get_file_in_dir (
       t = concat_fnames(fname, dname + 2, TRUE);
       *tail = save_char;
       retval = concat_fnames(t, tail, TRUE);
-      free(t);
+      xfree(t);
     }
   } else {
     retval = concat_fnames(dname, tail, TRUE);
@@ -3264,7 +3264,7 @@ findswapname (
     if (fname == NULL)          /* must be out of memory */
       break;
     if ((n = (int)STRLEN(fname)) == 0) {        /* safety check */
-      free(fname);
+      xfree(fname);
       fname = NULL;
       break;
     }
@@ -3394,7 +3394,7 @@ findswapname (
             if (process_still_running && choice >= 4)
               choice++;                 /* Skip missing "Delete it" button */
 # endif
-            free(name);
+            xfree(name);
 
             /* pretend screen didn't scroll, need redraw anyway */
             msg_scrolled = 0;
@@ -3447,7 +3447,7 @@ findswapname (
     if (fname[n - 1] == 'a') {          /* ".s?a" */
       if (fname[n - 2] == 'a') {        /* ".saa": tried enough, give up */
         EMSG(_("E326: Too many swap files found"));
-        free(fname);
+        xfree(fname);
         fname = NULL;
         break;
       }
@@ -3457,7 +3457,7 @@ findswapname (
     --fname[n - 1];                     /* ".swo", ".swn", etc. */
   }
 
-  free(dir_name);
+  xfree(dir_name);
   return fname;
 }
 

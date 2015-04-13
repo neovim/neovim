@@ -296,5 +296,5 @@ static void term_input_destroy(TermInput *input)
   uv_close((uv_handle_t *)&input->timer_handle, NULL);
   termkey_destroy(input->tk);
   event_poll(0);  // Run once to remove references to input/timer handles
-  free(input);
+  xfree(input);
 }

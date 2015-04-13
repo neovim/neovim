@@ -190,12 +190,12 @@ static void tui_stop(UI *ui)
   if (uv_loop_close(data->write_loop)) {
     abort();
   }
-  free(data->write_loop);
+  xfree(data->write_loop);
   unibi_destroy(data->ut);
   destroy_screen(data);
-  free(data);
+  xfree(data);
   ui_detach(ui);
-  free(ui);
+  xfree(ui);
 }
 
 static void try_resize(Event ev)
@@ -851,8 +851,8 @@ static void destroy_screen(TUIData *data)
 {
   if (data->screen) {
     for (int i = 0; i < data->old_height; i++) {
-      free(data->screen[i]);
+      xfree(data->screen[i]);
     }
-    free(data->screen);
+    xfree(data->screen);
   }
 }

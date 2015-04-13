@@ -65,8 +65,8 @@ void pty_process_init(Job *job) FUNC_ATTR_NONNULL_ALL
 
 void pty_process_destroy(Job *job) FUNC_ATTR_NONNULL_ALL
 {
-  free(job->opts.term_name);
-  free(job->process);
+  xfree(job->opts.term_name);
+  xfree(job->process);
   job->process = NULL;
 }
 

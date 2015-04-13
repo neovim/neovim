@@ -435,11 +435,11 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   if (ampersent)
     os_delay(10L, true);
 
-  free(command);
+  xfree(command);
 
   if (i) {                         /* os_call_shell() failed */
     os_remove((char *)tempname);
-    free(tempname);
+    xfree(tempname);
     /*
      * With interactive completion, the error message is not printed.
      */
@@ -472,18 +472,18 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
       MSG(_(e_wildexpand));
       msg_start();                      /* don't overwrite this message */
     }
-    free(tempname);
+    xfree(tempname);
     goto notfound;
   }
   int fseek_res = fseek(fd, 0L, SEEK_END);
   if (fseek_res < 0) {
-    free(tempname);
+    xfree(tempname);
     fclose(fd);
     return FAIL;
   }
   long long templen = ftell(fd);        /* get size of temp file */
   if (templen < 0) {
-    free(tempname);
+    xfree(tempname);
     fclose(fd);
     return FAIL;
   }
@@ -501,11 +501,11 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   if (readlen != len) {
     /* unexpected read error */
     EMSG2(_(e_notread), tempname);
-    free(tempname);
-    free(buffer);
+    xfree(tempname);
+    xfree(buffer);
     return FAIL;
   }
-  free(tempname);
+  xfree(tempname);
 
   /* file names are separated with Space */
   if (shell_style == STYLE_ECHO) {
@@ -574,7 +574,7 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
      * /bin/sh will happily expand it to nothing rather than returning an
      * error; and hey, it's good to check anyway -- webb.
      */
-    free(buffer);
+    xfree(buffer);
     goto notfound;
   }
   *num_file = i;
@@ -628,11 +628,11 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
       add_pathsep(p);             /* add '/' to a directory name */
     (*file)[j++] = p;
   }
-  free(buffer);
+  xfree(buffer);
   *num_file = j;
 
   if (*num_file == 0) {     /* rejected all entries */
-    free(*file);
+    xfree(*file);
     *file = NULL;
     goto notfound;
   }

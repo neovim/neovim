@@ -188,7 +188,7 @@ ex_menu (
         if (modes & (1 << i)) {
           p = popup_mode_name(menu_path, i);
           menu_nable_recurse(root_menu, p, MENU_ALL_MODES, enable);
-          free(p);
+          xfree(p);
         }
     }
     menu_nable_recurse(root_menu, menu_path, modes, enable);
@@ -207,7 +207,7 @@ ex_menu (
         if (modes & (1 << i)) {
           p = popup_mode_name(menu_path, i);
           remove_menu(&root_menu, p, MENU_ALL_MODES, TRUE);
-          free(p);
+          xfree(p);
         }
     }
 
@@ -241,11 +241,11 @@ ex_menu (
           // Include all modes, to make ":amenu" work
           menuarg.modes = modes;
           add_menu_path(p, &menuarg, pri_tab, map_to);
-          free(p);
+          xfree(p);
         }
     }
 
-    free(map_buf);
+    xfree(map_buf);
   }
 
 
@@ -391,12 +391,12 @@ add_menu_path (
     menup = &menu->children;
     parent = menu;
     name = next_name;
-    free(dname);
+    xfree(dname);
     dname = NULL;
     if (pri_tab[pri_idx + 1] != -1)
       ++pri_idx;
   }
-  free(path_name);
+  xfree(path_name);
 
   /*
    * Only add system menu items which have not been defined yet.
@@ -470,8 +470,8 @@ add_menu_path (
   return OK;
 
 erret:
-  free(path_name);
-  free(dname);
+  xfree(path_name);
+  xfree(dname);
 
   /* Delete any empty submenu we added before discovering the error.  Repeat
    * for higher levels. */
@@ -663,14 +663,14 @@ static void free_menu(vimmenu_T **menup)
   /* Don't change *menup until after calling gui_mch_destroy_menu(). The
    * MacOS code needs the original structure to properly delete the menu. */
   *menup = menu->next;
-  free(menu->name);
-  free(menu->dname);
-  free(menu->en_name);
-  free(menu->en_dname);
-  free(menu->actext);
+  xfree(menu->name);
+  xfree(menu->dname);
+  xfree(menu->en_name);
+  xfree(menu->en_dname);
+  xfree(menu->actext);
   for (i = 0; i < MENU_MODES; i++)
     free_menu_string(menu, i);
-  free(menu);
+  xfree(menu);
 
 }
 
@@ -686,7 +686,7 @@ static void free_menu_string(vimmenu_T *menu, int idx)
     if (menu->strings[i] == menu->strings[idx])
       count++;
   if (count == 1)
-    free(menu->strings[idx]);
+    xfree(menu->strings[idx]);
   menu->strings[idx] = NULL;
 }
 
@@ -711,11 +711,11 @@ static int show_menus(char_u *path_name, int modes)
         /* Found menu */
         if (*p != NUL && menu->children == NULL) {
           EMSG(_(e_notsubmenu));
-          free(path_name);
+          xfree(path_name);
           return FAIL;
         } else if ((menu->modes & modes) == 0x0) {
           EMSG(_(e_othermode));
-          free(path_name);
+          xfree(path_name);
           return FAIL;
         }
         break;
@@ -724,14 +724,14 @@ static int show_menus(char_u *path_name, int modes)
     }
     if (menu == NULL) {
       EMSG2(_(e_nomenu), name);
-      free(path_name);
+      xfree(path_name);
       return FAIL;
     }
     name = p;
     parent = menu;
     menu = menu->children;
   }
-  free(path_name);
+  xfree(path_name);
 
   /* Now we have found the matching menu, and we list the mappings */
   /* Highlight title */
@@ -893,7 +893,7 @@ char_u *set_context_in_menu_cmd(expand_T *xp, char_u *cmd, char_u *arg, int forc
              * Menu path continues, but we have reached a leaf.
              * Or menu exists only in another mode.
              */
-            free(path_name);
+            xfree(path_name);
             return NULL;
           }
           break;
@@ -902,13 +902,13 @@ char_u *set_context_in_menu_cmd(expand_T *xp, char_u *cmd, char_u *arg, int forc
       }
       if (menu == NULL) {
         /* No menu found with the name we were looking for */
-        free(path_name);
+        xfree(path_name);
         return NULL;
       }
       name = p;
       menu = menu->children;
     }
-    free(path_name);
+    xfree(path_name);
 
     xp->xp_context = expand_menus ? EXPAND_MENUNAMES : EXPAND_MENUS;
     xp->xp_pattern = after_dot;
@@ -1289,7 +1289,7 @@ void ex_emenu(exarg_T *eap)
     menu = menu->children;
     name = p;
   }
-  free(saved_name);
+  xfree(saved_name);
   if (menu == NULL) {
     EMSG2(_("E334: Menu not found: %s"), eap->arg);
     return;
@@ -1410,7 +1410,7 @@ vimmenu_T *gui_find_menu(char_u *path_name)
   if (menu == NULL)
     EMSG(_("E337: Menu not found - check menu names"));
 theend:
-  free(saved_name);
+  xfree(saved_name);
   return menu;
 }
 #endif
@@ -1429,9 +1429,9 @@ static garray_T menutrans_ga = GA_EMPTY_INIT_VALUE;
 
 #define FREE_MENUTRANS(mt) \
   menutrans_T* _mt = (mt); \
-  free(_mt->from); \
-  free(_mt->from_noamp); \
-  free(_mt->to)
+  xfree(_mt->from); \
+  xfree(_mt->from_noamp); \
+  xfree(_mt->to)
 
 /*
  * ":menutrans".
@@ -1514,11 +1514,11 @@ static char_u *menutrans_lookup(char_u *name, int len)
   name[len] = c;
   for (int i = 0; i < menutrans_ga.ga_len; i++) {
     if (STRCMP(dname, tp[i].from_noamp) == 0) {
-      free(dname);
+      xfree(dname);
       return tp[i].to;
     }
   }
-  free(dname);
+  xfree(dname);
 
   return NULL;
 }

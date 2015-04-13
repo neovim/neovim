@@ -77,7 +77,7 @@ void vim_deltempdir(void)
     path_tail(NameBuff)[-1] = NUL;
     os_rmdir((char *)NameBuff);
 
-    free(vim_tempdir);
+    xfree(vim_tempdir);
     vim_tempdir = NULL;
   }
 }
@@ -109,7 +109,7 @@ static bool vim_settempdir(char_u *tempdir)
   vim_FullName(tempdir, buf, MAXPATHL, false);
   add_pathsep(buf);
   vim_tempdir = vim_strsave(buf);
-  free(buf);
+  xfree(buf);
   return true;
 }
 

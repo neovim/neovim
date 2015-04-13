@@ -113,7 +113,7 @@ void init_homedir(void)
   char_u  *var;
 
   /* In case we are called a second time (when 'encoding' changes). */
-  free(homedir);
+  xfree(homedir);
   homedir = NULL;
 
   var = (char_u *)os_getenv("HOME");
@@ -144,7 +144,7 @@ void init_homedir(void)
 
 void free_homedir(void)
 {
-  free(homedir);
+  xfree(homedir);
 }
 
 #endif
@@ -304,7 +304,7 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
         char_u  *p = vim_strsave(var);
 
         if (mustfree) {
-          free(var);
+          xfree(var);
         }
         var = p;
         mustfree = true;
@@ -318,7 +318,7 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
         char_u  *p = vim_strsave_escaped(var, (char_u *)" \t");
 
         if (mustfree)
-          free(var);
+          xfree(var);
         var = p;
         mustfree = true;
       }
@@ -341,7 +341,7 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
         copy_char = false;
       }
       if (mustfree)
-        free(var);
+        xfree(var);
     }
 
     if (copy_char) {        /* copy at least one char */
@@ -380,11 +380,11 @@ static char *vim_version_dir(char *vimdir)
   p = concat_fnames((char_u *)vimdir, (char_u *)VIM_VERSION_NODOT, true);
   if (os_isdir(p))
     return (char *)p;
-  free(p);
+  xfree(p);
   p = concat_fnames((char_u *)vimdir, (char_u *)RUNTIME_DIRNAME, true);
   if (os_isdir(p))
     return (char *)p;
-  free(p);
+  xfree(p);
   return NULL;
 }
 
@@ -483,7 +483,7 @@ char_u *vim_getenv(char_u *name, bool *mustfree)
       p = vim_strnsave(p, (size_t)(pend - p));
 
       if (!os_isdir(p)) {
-        free(p);
+        xfree(p);
         p = NULL;
       } else {
         *mustfree = true;
@@ -634,7 +634,7 @@ void home_replace(buf_T *buf, char_u *src, char_u *dst, int dstlen, bool one)
   *dst = NUL;
 
   if (homedir_env != homedir_env_orig)
-    free(homedir_env);
+    xfree(homedir_env);
 }
 
 /// Like home_replace, store the replaced string in allocated memory.
@@ -663,7 +663,7 @@ void vim_setenv(char_u *name, char_u *val)
   if (*val != NUL && STRICMP(name, "VIMRUNTIME") == 0) {
     char_u  *buf = concat_str(val, (char_u *)"/lang");
     bindtextdomain(VIMPACKAGE, (char *)buf);
-    free(buf);
+    xfree(buf);
   }
 }
 
@@ -678,7 +678,7 @@ char_u *get_env_name(expand_T *xp, int idx)
   char *envname = os_getenvname_at_index((size_t)idx);
   if (envname) {
     STRLCPY(name, envname, ENVNAMELEN);
-    free(envname);
+    xfree(envname);
     return name;
   } else {
     return NULL;

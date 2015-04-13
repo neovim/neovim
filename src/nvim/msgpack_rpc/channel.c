@@ -5,8 +5,6 @@
 #include <uv.h>
 #include <msgpack.h>
 
-#include "nvim/lib/klist.h"
-
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
 #include "nvim/msgpack_rpc/channel.h"
@@ -69,10 +67,6 @@ typedef struct {
   uint64_t request_id;
 } RequestEvent;
 
-#define _noop(x)
-KMEMPOOL_INIT(RequestEventPool, RequestEvent, _noop)
-static kmempool_t(RequestEventPool) *request_event_pool = NULL;
-
 static uint64_t next_id = 1;
 static PMap(uint64_t) *channels = NULL;
 static PMap(cstr_t) *event_strings = NULL;
@@ -85,7 +79,6 @@ static msgpack_sbuffer out_buffer;
 /// Initializes the module
 void channel_init(void)
 {
-  request_event_pool = kmp_init(RequestEventPool);
   channels = pmap_new(uint64_t)();
   event_strings = pmap_new(cstr_t)();
   msgpack_sbuffer_init(&out_buffer);
@@ -455,7 +448,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
   Array args = ARRAY_DICT_INIT;
   msgpack_rpc_to_array(request->via.array.ptr + 3, &args);
   bool defer = (!kv_size(channel->call_stack) && handler.defer);
-  RequestEvent *event_data = kmp_alloc(RequestEventPool, request_event_pool);
+  RequestEvent *event_data = xmalloc(sizeof(RequestEvent));
   event_data->channel = channel;
   event_data->handler = handler;
   event_data->args = args;
@@ -485,9 +478,9 @@ static void on_request_event(Event event)
                                             result,
                                             &out_buffer));
   // All arguments were freed already, but we still need to free the array
-  free(args.items);
+  xfree(args.items);
   decref(channel);
-  kmp_free(RequestEventPool, request_event_pool, e);
+  xfree(e);
 }
 
 static bool channel_write(Channel *channel, WBuffer *buffer)
@@ -608,7 +601,7 @@ static void unsubscribe(Channel *channel, char *event)
 
   // Since the string is no longer used by other channels, release it's memory
   pmap_del(cstr_t)(event_strings, event_string);
-  free(event_string);
+  xfree(event_string);
 }
 
 /// Close the channel streams/job and free the channel resources.
@@ -662,13 +655,13 @@ static void free_channel(Channel *channel)
   pmap_free(cstr_t)(channel->subscribed_events);
   kv_destroy(channel->call_stack);
   kv_destroy(channel->delayed_notifications);
-  free(channel);
+  xfree(channel);
 }
 
 static void close_cb(uv_handle_t *handle)
 {
-  free(handle->data);
-  free(handle);
+  xfree(handle->data);
+  xfree(handle);
 }
 
 static Channel *register_channel(void)
@@ -745,7 +738,7 @@ static WBuffer *serialize_request(uint64_t channel_id,
   WBuffer *rv = wstream_new_buffer(xmemdup(sbuffer->data, sbuffer->size),
                                    sbuffer->size,
                                    refcount,
-                                   free);
+                                   xfree);
   msgpack_sbuffer_clear(sbuffer);
   api_free_array(args);
   return rv;
@@ -764,7 +757,7 @@ static WBuffer *serialize_response(uint64_t channel_id,
   WBuffer *rv = wstream_new_buffer(xmemdup(sbuffer->data, sbuffer->size),
                                    sbuffer->size,
                                    1,  // responses only go though 1 channel
-                                   free);
+                                   xfree);
   msgpack_sbuffer_clear(sbuffer);
   api_free_object(arg);
   return rv;

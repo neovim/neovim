@@ -297,7 +297,7 @@ int set_indent(int size, int flags)
     }
     retval = true;
   } else {
-    free(newline);
+    xfree(newline);
   }
   curwin->w_cursor.col = ind_len;
   return retval;

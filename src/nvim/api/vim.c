@@ -85,7 +85,7 @@ void vim_feedkeys(String keys, String mode, Boolean escape_csi)
       insert ? 0 : typebuf.tb_len, !typed, false);
 
   if (escape_csi) {
-      free(keys_esc);
+      xfree(keys_esc);
   }
 
   if (vgetc_busy)

@@ -55,7 +55,7 @@ int main() {
 
 #define kvec_t(type) struct { size_t size, capacity; type *items; }
 #define kv_init(v) ((v).size = (v).capacity = 0, (v).items = 0)
-#define kv_destroy(v) free((v).items)
+#define kv_destroy(v) xfree((v).items)
 #define kv_A(v, i) ((v).items[(i)])
 #define kv_pop(v) ((v).items[--(v).size])
 #define kv_size(v) ((v).size)

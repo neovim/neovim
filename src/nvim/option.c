@@ -1827,11 +1827,11 @@ void set_init_1(void)
         ga.ga_len += len;
       }
       if (mustfree)
-        free(p);
+        xfree(p);
     }
     if (ga.ga_data != NULL) {
       set_string_default("bsk", ga.ga_data);
-      free(ga.ga_data);
+      xfree(ga.ga_data);
     }
   }
 
@@ -1885,10 +1885,10 @@ void set_init_1(void)
           options[opt_idx].def_val[VI_DEFAULT] = buf;
           options[opt_idx].flags |= P_DEF_ALLOCED;
         } else
-          free(buf);           /* cannot happen */
+          xfree(buf);           /* cannot happen */
       }
       if (mustfree)
-        free(cdpath);
+        xfree(cdpath);
     }
   }
 
@@ -1958,7 +1958,7 @@ void set_init_1(void)
        * split P_DEF_ALLOCED in two.
        */
       if (options[opt_idx].flags & P_DEF_ALLOCED)
-        free(options[opt_idx].def_val[VI_DEFAULT]);
+        xfree(options[opt_idx].def_val[VI_DEFAULT]);
       options[opt_idx].def_val[VI_DEFAULT] = p;
       options[opt_idx].flags |= P_DEF_ALLOCED;
     }
@@ -1998,7 +1998,7 @@ void set_init_1(void)
        * for practical purposes, thus use that.  It's not an alias to
        * still support conversion between gb18030 and utf-8. */
       p_enc = vim_strsave((char_u *)"cp936");
-      free(p);
+      xfree(p);
     }
     if (mb_init() == NULL) {
       opt_idx = findoption((char_u *)"encoding");
@@ -2028,7 +2028,7 @@ void set_init_1(void)
 #endif
 
     } else {
-      free(p_enc);
+      xfree(p_enc);
       // mb_init() failed; fallback to utf8 and try again.
       p_enc = save_enc;
       mb_init();
@@ -2136,7 +2136,7 @@ void set_string_default(const char *name, const char_u *val)
   int opt_idx = findoption((char_u *)name);
   if (opt_idx >= 0) {
     if (options[opt_idx].flags & P_DEF_ALLOCED) {
-      free(options[opt_idx].def_val[VI_DEFAULT]);
+      xfree(options[opt_idx].def_val[VI_DEFAULT]);
     }
 
     options[opt_idx].def_val[VI_DEFAULT] = (char_u *) xstrdup((char *) val);
@@ -2276,7 +2276,7 @@ void set_init_3(void)
         options[idx_srr].def_val[VI_DEFAULT] = p_srr;
       }
     }
-    free(p);
+    xfree(p);
   }
 #endif
 
@@ -2782,7 +2782,7 @@ do_set (
                       (char_u *)"indent,eol,start");
                   break;
                 }
-                free(oldval);
+                xfree(oldval);
                 oldval = *(char_u **)varp;
               }
               /*
@@ -2879,7 +2879,7 @@ do_set (
                   || (flags & P_COMMA)) {
                 s = option_expand(opt_idx, newval);
                 if (s != NULL) {
-                  free(newval);
+                  xfree(newval);
                   newlen = (unsigned)STRLEN(s) + 1;
                   if (adding || prepending || removing)
                     newlen += (unsigned)STRLEN(origval) + 1;
@@ -3373,13 +3373,13 @@ void check_buf_options(buf_T *buf)
 void free_string_option(char_u *p)
 {
   if (p != empty_option)
-    free(p);
+    xfree(p);
 }
 
 void clear_string_option(char_u **pp)
 {
   if (*pp != empty_option)
-    free(*pp);
+    xfree(*pp);
   *pp = empty_option;
 }
 
@@ -3768,7 +3768,7 @@ did_set_string_option (
     if (errmsg == NULL) {
       /* canonize the value, so that STRCMP() can be used on it */
       p = enc_canonize(*varp);
-      free(*varp);
+      xfree(*varp);
       *varp = p;
       if (varp == &p_enc) {
         errmsg = mb_init();
@@ -3795,7 +3795,7 @@ did_set_string_option (
   } else if (varp == &p_penc) {
     /* Canonize printencoding if VIM standard one */
     p = enc_canonize(p_penc);
-    free(p_penc);
+    xfree(p_penc);
     p_penc = p;
   } else if (varp == &curbuf->b_p_keymap) {
     /* load or unload key mapping tables */
@@ -4456,7 +4456,7 @@ skip:
       return e_invarg;        /* illegal trailing comma as in "set cc=80," */
   }
 
-  free(wp->w_p_cc_cols);
+  xfree(wp->w_p_cc_cols);
   if (count == 0)
     wp->w_p_cc_cols = NULL;
   else {
@@ -4649,7 +4649,7 @@ static char_u *compile_cap_prog(synblock_T *synblock)
     /* Prepend a ^ so that we only match at one column */
     re = concat_str((char_u *)"^", synblock->b_p_spc);
     synblock->b_cap_prog = vim_regcomp(re, RE_MAGIC);
-    free(re);
+    xfree(re);
     if (synblock->b_cap_prog == NULL) {
       synblock->b_cap_prog = rp;         /* restore the previous program */
       return e_invarg;
@@ -5930,7 +5930,7 @@ showoptions (
       os_breakcheck();
     }
   }
-  free(items);
+  xfree(items);
 }
 
 /*
@@ -6157,10 +6157,10 @@ static int put_setstring(FILE *fd, char *cmd, char *name, char_u **valuep, int e
       buf = xmalloc(MAXPATHL);
       home_replace(NULL, *valuep, buf, MAXPATHL, FALSE);
       if (put_escstr(fd, buf, 2) == FAIL) {
-        free(buf);
+        xfree(buf);
         return FAIL;
       }
-      free(buf);
+      xfree(buf);
     } else if (put_escstr(fd, *valuep, 2) == FAIL)
       return FAIL;
   }
@@ -7438,10 +7438,10 @@ void vimrc_found(char_u *fname, char_u *envname)
       p = FullName_save(fname, FALSE);
       if (p != NULL) {
         vim_setenv(envname, p);
-        free(p);
+        xfree(p);
       }
     } else if (dofree)
-      free(p);
+      xfree(p);
   }
 }
 
@@ -7608,7 +7608,7 @@ void save_file_ff(buf_T *buf)
   /* Only use free/alloc when necessary, they take time. */
   if (buf->b_start_fenc == NULL
       || STRCMP(buf->b_start_fenc, buf->b_p_fenc) != 0) {
-    free(buf->b_start_fenc);
+    xfree(buf->b_start_fenc);
     buf->b_start_fenc = vim_strsave(buf->b_p_fenc);
   }
 }

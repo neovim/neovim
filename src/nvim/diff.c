@@ -393,7 +393,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
         }
       }
       dprev->df_next = dp->df_next;
-      free(dp);
+      xfree(dp);
       dp = dprev->df_next;
     } else {
       // Advance to next entry.
@@ -416,7 +416,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
 
     if (i == DB_COUNT) {
       diff_T *dnext = dp->df_next;
-      free(dp);
+      xfree(dp);
       dp = dnext;
 
       if (dprev == NULL) {
@@ -527,7 +527,7 @@ static void diff_check_unchanged(tabpage_T *tp, diff_T *dp)
           break;
         }
       }
-      free(line_org);
+      xfree(line_org);
 
       // Stop when a line isn't equal in all diff buffers.
       if (i_new != DB_COUNT) {
@@ -786,9 +786,9 @@ void ex_diffupdate(exarg_T *eap)
   diff_redraw(TRUE);
 
 theend:
-  free(tmp_orig);
-  free(tmp_new);
-  free(tmp_diff);
+  xfree(tmp_orig);
+  xfree(tmp_new);
+  xfree(tmp_diff);
 }
 
 /// Make a diff between files "tmp_orig" and "tmp_new", results in "tmp_diff".
@@ -828,7 +828,7 @@ static void diff_file(char_u *tmp_orig, char_u *tmp_new, char_u *tmp_diff)
         NULL
         );
     unblock_autocmds();
-    free(cmd);
+    xfree(cmd);
   }
 }
 
@@ -989,16 +989,16 @@ theend:
   if (tmp_orig != NULL) {
     os_remove((char *)tmp_orig);
   }
-  free(tmp_orig);
+  xfree(tmp_orig);
 
   if (tmp_new != NULL) {
     os_remove((char *)tmp_new);
   }
-  free(tmp_new);
-  free(newname);
-  free(buf);
+  xfree(tmp_new);
+  xfree(newname);
+  xfree(buf);
 #ifdef UNIX
-  free(fullname);
+  xfree(fullname);
 #endif  // ifdef UNIX
 }
 
@@ -1340,7 +1340,7 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
 
       while (dn != dp->df_next) {
         dpl = dn->df_next;
-        free(dn);
+        xfree(dn);
         dn = dpl;
       }
     } else {
@@ -1407,7 +1407,7 @@ void diff_clear(tabpage_T *tp)
   diff_T *next_p;
   for (p = tp->tp_first_diff; p != NULL; p = next_p) {
     next_p = p->df_next;
-    free(p);
+    xfree(p);
   }
   tp->tp_first_diff = NULL;
 }
@@ -1559,7 +1559,7 @@ static int diff_equal_entry(diff_T *dp, int idx1, int idx2)
 
     int cmp = diff_cmp(line, ml_get_buf(curtab->tp_diffbuf[idx2],
                                         dp->df_lnum[idx2] + i, FALSE));
-    free(line);
+    xfree(line);
 
     if (cmp != 0) {
       return FALSE;
@@ -1863,7 +1863,7 @@ int diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
   int idx = diff_buf_idx(wp->w_buffer);
   if (idx == DB_COUNT) {
     // cannot happen
-    free(line_org);
+    xfree(line_org);
     return FALSE;
   }
 
@@ -1876,7 +1876,7 @@ int diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
   }
 
   if ((dp == NULL) || (diff_check_sanity(curtab, dp) == FAIL)) {
-    free(line_org);
+    xfree(line_org);
     return FALSE;
   }
 
@@ -1956,7 +1956,7 @@ int diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
     }
   }
 
-  free(line_org);
+  xfree(line_org);
   return added;
 }
 
@@ -2262,7 +2262,7 @@ void ex_diffgetput(exarg_T *eap)
         }
         p = vim_strsave(ml_get_buf(curtab->tp_diffbuf[idx_from], nr, FALSE));
         ml_append(lnum + i - 1, p, 0, FALSE);
-        free(p);
+        xfree(p);
         added++;
         if (buf_empty && (curbuf->b_ml.ml_line_count == 2)) {
           // Added the first line into an empty buffer, need to
@@ -2317,7 +2317,7 @@ void ex_diffgetput(exarg_T *eap)
       if (dfree != NULL) {
         // Diff is deleted, update folds in other windows.
         diff_fold_update(dfree, idx_to);
-        free(dfree);
+        xfree(dfree);
       } else {
         // mark_adjust() may have changed the count in a wrong way
         dp->df_count[idx_to] = new_count;

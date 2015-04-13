@@ -72,8 +72,8 @@ void pipe_process_init(Job *job)
 void pipe_process_destroy(Job *job)
 {
   UvProcess *pipeproc = job->process;
-  free(pipeproc->proc.data);
-  free(pipeproc);
+  xfree(pipeproc->proc.data);
+  xfree(pipeproc);
   job->process = NULL;
 }
 

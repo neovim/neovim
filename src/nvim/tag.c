@@ -246,7 +246,7 @@ do_tag (
           cur_match = ptag_entry.cur_match;
           cur_fnum = ptag_entry.cur_fnum;
         } else {
-          free(ptag_entry.tagname);
+          xfree(ptag_entry.tagname);
           ptag_entry.tagname = vim_strsave(tag);
         }
       } else {
@@ -255,12 +255,12 @@ do_tag (
          * stack entries above it.
          */
         while (tagstackidx < tagstacklen)
-          free(tagstack[--tagstacklen].tagname);
+          xfree(tagstack[--tagstacklen].tagname);
 
         /* if the tagstack is full: remove oldest entry */
         if (++tagstacklen > TAGSTACKSIZE) {
           tagstacklen = TAGSTACKSIZE;
-          free(tagstack[0].tagname);
+          xfree(tagstack[0].tagname);
           for (i = 1; i < tagstacklen; ++i)
             tagstack[i - 1] = tagstack[i];
           --tagstackidx;
@@ -450,7 +450,7 @@ do_tag (
         || (cur_match >= num_matches && max_num_matches != MAXCOL)
         || other_name) {
       if (other_name) {
-        free(tagmatchname);
+        xfree(tagmatchname);
         tagmatchname = vim_strsave(name);
       }
 
@@ -569,7 +569,7 @@ do_tag (
            * it and put "..." in the middle */
           p = tag_full_fname(&tagp);
           msg_puts_long_attr(p, hl_attr(HLF_D));
-          free(p);
+          xfree(p);
 
           if (msg_col > 0)
             msg_putchar('\n');
@@ -709,7 +709,7 @@ do_tag (
           /* Save the tag file name */
           p = tag_full_fname(&tagp);
           STRLCPY(fname, p, MAXPATHL + 1);
-          free(p);
+          xfree(p);
 
           /*
            * Get the line number or the search pattern used to locate
@@ -804,8 +804,8 @@ do_tag (
         set_errorlist(curwin, list, ' ', IObuff);
 
         list_free(list, TRUE);
-        free(fname);
-        free(cmd);
+        xfree(fname);
+        xfree(cmd);
 
         cur_match = 0;                  /* Jump to the first tag */
       }
@@ -941,7 +941,7 @@ end_do_tag:
  */
 void tag_freematch(void)
 {
-  free(tagmatchname);
+  xfree(tagmatchname);
   tagmatchname = NULL;
 }
 
@@ -983,7 +983,7 @@ void do_tags(exarg_T *eap)
       msg_outtrans(IObuff);
       msg_outtrans_attr(name, tagstack[i].fmark.fnum == curbuf->b_fnum
           ? hl_attr(HLF_D) : 0);
-      free(name);
+      xfree(name);
     }
     ui_flush();                    /* show one line at a time */
   }
@@ -1411,12 +1411,12 @@ line_read_in:
             /* Copy or swap lbuf and conv_line. */
             len = (int)STRLEN(conv_line) + 1;
             if (len > lbuf_size) {
-              free(lbuf);
+              xfree(lbuf);
               lbuf = conv_line;
               lbuf_size = len;
             } else {
               STRCPY(lbuf, conv_line);
-              free(conv_line);
+              xfree(conv_line);
             }
           }
         }
@@ -1873,7 +1873,7 @@ parse_line:
                 [ga_match[mtt].ga_len++] = mfp;
                 ++match_count;
               } else
-                free(mfp);
+                xfree(mfp);
             }
           }
         }
@@ -1932,9 +1932,9 @@ parse_line:
   }
 
 findtag_end:
-  free(lbuf);
+  xfree(lbuf);
   vim_regfree(orgpat.regmatch.regprog);
-  free(tag_fname);
+  xfree(tag_fname);
 
   /*
    * Move the matches from the ga_match[] arrays into one list of
@@ -1952,7 +1952,7 @@ findtag_end:
     for (int i = 0; i < ga_match[mtt].ga_len; ++i) {
       mfp = ((struct match_found **)(ga_match[mtt].ga_data))[i];
       if (matches == NULL)
-        free(mfp);
+        xfree(mfp);
       else {
         /* To avoid allocating memory again we turn the struct
          * match_found into a string.  For help the priority was not
@@ -1969,7 +1969,7 @@ findtag_end:
   *num_matches = match_count;
 
   curbuf->b_help = help_save;
-  free(saved_pat);
+  xfree(saved_pat);
 
   return retval;
 }
@@ -1993,7 +1993,7 @@ void free_tag_stuff(void)
   tag_freematch();
 
   if (ptag_entry.tagname) {
-    free(ptag_entry.tagname);
+    xfree(ptag_entry.tagname);
     ptag_entry.tagname = NULL;
   }
 }
@@ -2102,7 +2102,7 @@ get_tagfname (
   }
 
   STRCPY(buf, fname);
-  free(fname);
+  xfree(fname);
   return OK;
 }
 
@@ -2111,7 +2111,7 @@ get_tagfname (
  */
 void tagname_free(tagname_T *tnp)
 {
-  free(tnp->tn_tags);
+  xfree(tnp->tn_tags);
   vim_findfile_cleanup(tnp->tn_search_ctx);
   tnp->tn_search_ctx = NULL;
   ga_clear_strings(&tag_fnames);
@@ -2362,7 +2362,7 @@ jumpto_tag (
       && !has_autocmd(EVENT_BUFREADCMD, fname, NULL)
       ) {
     retval = NOTAGFILE;
-    free(nofile_fname);
+    xfree(nofile_fname);
     nofile_fname = vim_strsave(fname);
     goto erret;
   }
@@ -2565,9 +2565,9 @@ erret:
   g_do_tagpreview = 0;   /* For next time */
   if (tagp.fname_end != NULL)
     *tagp.fname_end = csave;
-  free(pbuf);
-  free(tofree_fname);
-  free(full_fname);
+  xfree(pbuf);
+  xfree(tofree_fname);
+  xfree(full_fname);
 
   return retval;
 }
@@ -2611,7 +2611,7 @@ static char_u *expand_tag_fname(char_u *fname, char_u *tag_fname, int expand)
   } else
     retval = vim_strsave(fname);
 
-  free(expanded_fname);
+  xfree(expanded_fname);
 
   return retval;
 }
@@ -2635,7 +2635,7 @@ static int test_for_current(char_u *fname, char_u *fname_end, char_u *tag_fname,
     }
     fullname = expand_tag_fname(fname, tag_fname, TRUE);
     retval = (path_full_compare(fullname, buf_ffname, TRUE) & kEqualFiles);
-    free(fullname);
+    xfree(fullname);
     *fname_end = c;
   }
 
@@ -2761,7 +2761,7 @@ add_tag_field (
   }
   buf[len] = NUL;
   retval = dict_add_nr_str(dict, field_name, 0L, buf);
-  free(buf);
+  xfree(buf);
   return retval;
 }
 
@@ -2804,7 +2804,7 @@ int get_tags(list_T *list, char_u *pat)
           || dict_add_nr_str(dict, "static", is_static, NULL) == FAIL)
         ret = FAIL;
 
-      free(full_fname);
+      xfree(full_fname);
 
       if (tp.command_end != NULL) {
         for (p = tp.command_end + 3;
@@ -2844,9 +2844,9 @@ int get_tags(list_T *list, char_u *pat)
         }
       }
 
-      free(matches[i]);
+      xfree(matches[i]);
     }
-    free(matches);
+    xfree(matches);
   }
   return ret;
 }

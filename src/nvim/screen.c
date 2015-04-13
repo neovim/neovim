@@ -1905,7 +1905,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
   }
 
   if (text != buf)
-    free(text);
+    xfree(text);
 
   /*
    * 6. set highlighting for the Visual area an other text.
@@ -3015,7 +3015,7 @@ win_line (
       --n_extra;
     } else {
       if (p_extra_free != NULL) {
-        free(p_extra_free);
+        xfree(p_extra_free);
         p_extra_free = NULL;
       }
       /*
@@ -4700,7 +4700,7 @@ win_redr_status_matches (
   }
 
   win_redraw_last_status(topframe);
-  free(buf);
+  xfree(buf);
 }
 
 /*
@@ -4915,7 +4915,7 @@ get_keymap_str (
       sprintf((char *)buf, "<%s>", p);
     else
       buf[0] = NUL;
-    free(s);
+    xfree(s);
   }
   return buf[0] != NUL;
 }
@@ -5021,14 +5021,14 @@ win_redr_custom (
   width = build_stl_str_hl(ewp, buf, sizeof(buf),
       stl, use_sandbox,
       fillchar, maxwidth, hltab, tabtab);
-  free(stl);
+  xfree(stl);
   ewp->w_p_crb = p_crb_save;
 
   /* Make all characters printable. */
   p = transstr(buf);
   len = STRLCPY(buf, p, sizeof(buf));
   len = (size_t)len < sizeof(buf) ? len : (int)sizeof(buf) - 1;
-  free(p);
+  xfree(p);
 
   /* fill up with "fillchar" */
   while (width < maxwidth && len < (int)sizeof(buf) - 1) {
@@ -5999,23 +5999,23 @@ retry:
        * and over again. */
       done_outofmem_msg = TRUE;
     }
-    free(new_ScreenLines);
+    xfree(new_ScreenLines);
     new_ScreenLines = NULL;
-    free(new_ScreenLinesUC);
+    xfree(new_ScreenLinesUC);
     new_ScreenLinesUC = NULL;
     for (i = 0; i < p_mco; ++i) {
-      free(new_ScreenLinesC[i]);
+      xfree(new_ScreenLinesC[i]);
       new_ScreenLinesC[i] = NULL;
     }
-    free(new_ScreenLines2);
+    xfree(new_ScreenLines2);
     new_ScreenLines2 = NULL;
-    free(new_ScreenAttrs);
+    xfree(new_ScreenAttrs);
     new_ScreenAttrs = NULL;
-    free(new_LineOffset);
+    xfree(new_LineOffset);
     new_LineOffset = NULL;
-    free(new_LineWraps);
+    xfree(new_LineWraps);
     new_LineWraps = NULL;
-    free(new_TabPageIdxs);
+    xfree(new_TabPageIdxs);
     new_TabPageIdxs = NULL;
   } else {
     done_outofmem_msg = FALSE;
@@ -6126,15 +6126,15 @@ void free_screenlines(void)
 {
   int i;
 
-  free(ScreenLinesUC);
+  xfree(ScreenLinesUC);
   for (i = 0; i < Screen_mco; ++i)
-    free(ScreenLinesC[i]);
-  free(ScreenLines2);
-  free(ScreenLines);
-  free(ScreenAttrs);
-  free(LineOffset);
-  free(LineWraps);
-  free(TabPageIdxs);
+    xfree(ScreenLinesC[i]);
+  xfree(ScreenLines2);
+  xfree(ScreenLines);
+  xfree(ScreenAttrs);
+  xfree(LineOffset);
+  xfree(LineWraps);
+  xfree(TabPageIdxs);
 }
 
 void screenclear(void)

@@ -152,14 +152,14 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
         *abspath = save_absolute_path(buf);
       }
 
-      free(buf);
+      xfree(buf);
 
       return true;
     }
 
     if (*e != ':') {
       // End of $PATH without finding any executable called name.
-      free(buf);
+      xfree(buf);
       return false;
     }
 

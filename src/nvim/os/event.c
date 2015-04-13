@@ -46,7 +46,6 @@ void event_init(void)
   // early msgpack-rpc initialization
   msgpack_rpc_init_method_table();
   msgpack_rpc_helpers_init();
-  wstream_init();
   // Initialize input events
   input_init();
   // Timer to wake the event loop if a timeout argument is passed to
