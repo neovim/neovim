@@ -133,6 +133,11 @@ function! s:RegistrationCommands(host)
   let lines = []
   for path in paths
     let specs = rpcrequest(channel, 'specs', path)
+    if type(specs) != type([])
+      " host didn't return a spec list, indicates a failure while loading a
+      " plugin
+      continue
+    endif
     call add(lines, "call remote#host#RegisterPlugin('".a:host
           \ ."', '".path."', [")
     for spec in specs
@@ -244,9 +249,10 @@ function! s:RequirePythonHost(name)
     endif
   catch
   endtry
-  throw 'Failed to load python host.' .
-    \ " Try upgrading the Neovim python module with 'pip install --upgrade neovim'" .
-    \ " or see ':help nvim-python'."
+  throw 'Failed to load python host. You can try to see what happened ' .
+    \ 'by starting Neovim with $NVIM_PYTHON_PYTHON_LOG and opening '.
+    \ 'the generated log file. Also, the host stderr will be available '.
+    \ 'in Neovim log, so it may contain useful information.'
 endfunction
 
 call remote#host#Register('python', function('s:RequirePythonHost'))
