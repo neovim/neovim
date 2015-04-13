@@ -1541,7 +1541,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           CancelRedo();
         }
       } else
-        (void)op_yank(oap, false, !gui_yank);
+        (void)op_yank(oap, !gui_yank);
       check_cursor_col();
       break;
 

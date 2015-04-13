@@ -6487,7 +6487,7 @@ static void ex_operators(exarg_T *eap)
 
   case CMD_yank:
     oa.op_type = OP_YANK;
-    (void)op_yank(&oa, FALSE, TRUE);
+    (void)op_yank(&oa, true);
     break;
 
   default:          /* CMD_rshift or CMD_lshift */

@@ -47,6 +47,14 @@ typedef int (*Indenter)(void);
 #define OP_FORMAT2      26      /* "gw" format operator, keeps cursor pos */
 #define OP_FUNCTION     27      /* "g@" call 'operatorfunc' */
 
+/// Contents of a yank (read-write) register
+typedef struct yankreg {
+  char_u      **y_array;        ///< pointer to array of line pointers
+  linenr_T y_size;              ///< number of lines in y_array
+  char_u y_type;                ///< MLINE, MCHAR or MBLOCK
+  colnr_T y_width;              ///< only set if y_type == MBLOCK
+} yankreg_T;
+
 /// Flags for get_reg_contents().
 enum GRegFlags {
   kGRegNoExpr  = 1,  ///< Do not allow expression register.
