@@ -68,6 +68,7 @@
 #endif
 
 #define FNAME_ILLEGAL "\"*?><|" /* illegal characters in a file name */
+#define BACKSLASH_IN_FILENAME
 
 #define TEMP_DIR_NAMES {"$TMP", "$TEMP", "$USERPROFILE", ""}
 #define TEMP_FILE_PATH_MAXLEN _MAX_PATH
