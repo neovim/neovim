@@ -315,7 +315,7 @@ int undo_allowed(void)
  */
 static long get_undolevel(void)
 {
-  if (curbuf->terminal) {
+  if (BUF_ISTERMINAL(curbuf)) {
     return -1;
   }
   if (curbuf->b_p_ul == NO_LOCAL_UNDOLEVEL)

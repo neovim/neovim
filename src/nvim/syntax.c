@@ -45,7 +45,9 @@
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/syntax_defs.h"
-#include "nvim/terminal.h"
+#ifdef FEAT_TERMINAL
+# include "nvim/terminal.h"
+#endif
 #include "nvim/ui.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"

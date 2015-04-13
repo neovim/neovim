@@ -62,7 +62,9 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
-#include "nvim/terminal.h"
+#ifdef FEAT_TERMINAL
+# include "nvim/terminal.h"
+#endif
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
@@ -1771,7 +1773,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     }
     if (!MODIFIABLE(curbuf) && (ea.argt & MODIFY)
         // allow :put in terminals
-        && (!curbuf->terminal || ea.cmdidx != CMD_put)) {
+        && (!BUF_ISTERMINAL(curbuf) || ea.cmdidx != CMD_put)) {
       /* Command not allowed in non-'modifiable' buffer */
       errormsg = (char_u *)_(e_modifiable);
       goto doend;
@@ -8808,7 +8810,7 @@ put_view (
      * Load the file.
      */
     if (wp->w_buffer->b_ffname != NULL
-        && (!bt_nofile(wp->w_buffer) || wp->w_buffer->terminal)
+        && (!bt_nofile(wp->w_buffer) || BUF_ISTERMINAL(wp->w_buffer))
         ) {
       /*
        * Editing a file in this buffer: use ":edit file".

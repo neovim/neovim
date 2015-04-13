@@ -131,7 +131,9 @@
 #include "nvim/spell.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
-#include "nvim/terminal.h"
+#ifdef FEAT_TERMINAL
+# include "nvim/terminal.h"
+#endif
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
@@ -2213,7 +2215,7 @@ win_line (
   }
 
   /* Check for columns to display for 'colorcolumn'. */
-  color_cols = wp->w_buffer->terminal ? NULL : wp->w_p_cc_cols;
+  color_cols = BUF_ISTERMINAL(wp->w_buffer) ? NULL : wp->w_p_cc_cols;
   if (color_cols != NULL)
     draw_color_col = advance_color_col(VCOL_HLC, &color_cols);
 
@@ -2598,10 +2600,12 @@ win_line (
 
   // wont highlight after 1024 columns
   int term_attrs[1024] = {0};
-  if (wp->w_buffer->terminal) {
+#ifdef FEAT_TERMINAL
+  if (BUF_ISTERMINAL(wp->w_buffer)) {
     terminal_get_line_attributes(wp->w_buffer->terminal, wp, lnum, term_attrs);
     extra_check = true;
   }
+#endif
 
   /*
    * Repeat for the whole displayed line.
@@ -3305,7 +3309,7 @@ win_line (
             char_attr = hl_combine_attr(spell_attr, char_attr);
         }
 
-        if (wp->w_buffer->terminal) {
+        if (BUF_ISTERMINAL(wp->w_buffer)) {
           char_attr = hl_combine_attr(char_attr, term_attrs[vcol]);
         }
 
@@ -3818,7 +3822,7 @@ win_line (
         }
       }
 
-      if (wp->w_buffer->terminal) {
+      if (BUF_ISTERMINAL(wp->w_buffer)) {
         // terminal buffers may need to highlight beyond the end of the
         // logical line
         while (col < wp->w_width) {

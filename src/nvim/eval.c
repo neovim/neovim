@@ -76,7 +76,9 @@
 #include "nvim/tempfile.h"
 #include "nvim/ui.h"
 #include "nvim/mouse.h"
-#include "nvim/terminal.h"
+#ifdef FEAT_TERMINAL
+# include "nvim/terminal.h"
+#endif
 #include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/window.h"
@@ -441,7 +443,9 @@ static dictitem_T vimvars_var;                  /* variable used for v: */
 
 typedef struct {
   Job *job;
+#ifdef FEAT_TERMINAL
   Terminal *term;
+#endif
   bool exited;
   bool stdin_closed;
   int refcount;
@@ -6655,7 +6659,9 @@ static struct fst {
   {"tan",             1, 1, f_tan},
   {"tanh",            1, 1, f_tanh},
   {"tempname",        0, 0, f_tempname},
+#ifdef FEAT_TERMINAL
   {"termopen",        1, 2, f_termopen},
+#endif
   {"test",            1, 1, f_test},
   {"tolower",         1, 1, f_tolower},
   {"toupper",         1, 1, f_toupper},
@@ -15155,6 +15161,7 @@ static void f_tempname(typval_T *argvars, typval_T *rettv)
   rettv->vval.v_string = vim_tempname();
 }
 
+#ifdef FEAT_TERMINAL
 // "termopen(cmd[, cwd])" function
 static void f_termopen(typval_T *argvars, typval_T *rettv)
 {
@@ -15240,6 +15247,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
 
   return;
 }
+#endif
 
 /*
  * "test(list)" function: Just checking the walls...
@@ -20314,11 +20322,13 @@ static void on_job_output(RStream *rstream, Job *job, bool eof,
   char *ptr = rstream_read_ptr(rstream);
   size_t len = rstream_pending(rstream);
 
+#ifdef FEAT_TERMINAL
   // The order here matters, the terminal must receive the data first because
   // push_job_event will modify the read buffer(convert NULs into NLs)
   if (data->term) {
     terminal_receive(data->term, ptr, len);
   }
+#endif
 
   if (callback) {
     push_job_event(job, callback, type, ptr, len, 0);
@@ -20331,11 +20341,13 @@ static void on_job_exit(Job *job, int status, void *d)
 {
   TerminalJobData *data = d;
 
+#ifdef FEAT_TERMINAL
   if (data->term && !data->exited) {
     data->exited = true;
     terminal_close(data->term,
         _("\r\n[Program exited, press any key to close]"));
   }
+#endif
 
   if (data->status_ptr) {
     *data->status_ptr = status;
@@ -20344,6 +20356,7 @@ static void on_job_exit(Job *job, int status, void *d)
   push_job_event(job, data->on_exit, "exit", NULL, 0, status);
 }
 
+#ifdef FEAT_TERMINAL
 static void term_write(char *buf, size_t size, void *data)
 {
   Job *job = ((TerminalJobData *)data)->job;
@@ -20366,6 +20379,7 @@ static void term_close(void *d)
   terminal_destroy(data->term);
   term_job_data_decref(d);
 }
+#endif
 
 static void term_job_data_decref(TerminalJobData *data)
 {

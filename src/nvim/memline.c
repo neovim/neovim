@@ -275,7 +275,7 @@ int ml_open(buf_T *buf)
   /*
    * When 'updatecount' is non-zero swap file may be opened later.
    */
-  if (!buf->terminal && p_uc && buf->b_p_swf) {
+  if (!BUF_ISTERMINAL(buf) && p_uc && buf->b_p_swf) {
     buf->b_may_swap = true;
   } else {
     buf->b_may_swap = false;
@@ -487,7 +487,7 @@ void ml_open_file(buf_T *buf)
 
   mfp = buf->b_ml.ml_mfp;
   if (mfp == NULL || mfp->mf_fd >= 0 || !buf->b_p_swf || cmdmod.noswapfile
-      || buf->terminal) {
+      || BUF_ISTERMINAL(buf)) {
     return; /* nothing to do */
   }
 

@@ -20,7 +20,9 @@
 #include "nvim/misc2.h"
 #include "nvim/ui.h"
 #include "nvim/screen.h"
-#include "nvim/terminal.h"
+#ifdef FEAT_TERMINAL
+# include "nvim/terminal.h"
+#endif
 
 #include "nvim/lib/klist.h"
 
@@ -57,7 +59,9 @@ void event_init(void)
   // finish mspgack-rpc initialization
   channel_init();
   server_init();
+#ifdef FEAT_TERMINAL
   terminal_init();
+#endif
 }
 
 void event_teardown(void)
@@ -78,7 +82,9 @@ void event_teardown(void)
   job_teardown();
   server_teardown();
   signal_teardown();
+#ifdef FEAT_TERMINAL
   terminal_teardown();
+#endif
   // this last `uv_run` will return after all handles are stopped, it will
   // also take care of finishing any uv_close calls made by other *_teardown
   // functions.

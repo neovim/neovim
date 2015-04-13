@@ -2392,13 +2392,13 @@ int bt_quickfix(buf_T *buf)
 int bt_nofile(buf_T *buf)
 {
   return buf != NULL && ((buf->b_p_bt[0] == 'n' && buf->b_p_bt[2] == 'f')
-                         || buf->b_p_bt[0] == 'a' || buf->terminal);
+                         || buf->b_p_bt[0] == 'a' || BUF_ISTERMINAL(buf));
 }
 
 // Return TRUE if "buf" is a "nowrite", "nofile" or "terminal" buffer.
 int bt_dontwrite(buf_T *buf)
 {
-  return buf != NULL && (buf->b_p_bt[0] == 'n' || buf->terminal);
+  return buf != NULL && (buf->b_p_bt[0] == 'n' || BUF_ISTERMINAL(buf));
 }
 
 int bt_dontwrite_msg(buf_T *buf)

@@ -52,7 +52,9 @@
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
-#include "nvim/terminal.h"
+#ifdef FEAT_TERMINAL
+# include "nvim/terminal.h"
+#endif
 #include "nvim/undo.h"
 #include "nvim/os/os.h"
 
@@ -1783,11 +1785,13 @@ static int close_last_window_tabpage(win_T *win, int free_buf, tabpage_T *prev_c
   }
   buf_T   *old_curbuf = curbuf;
 
+#ifdef FEAT_TERMINAL
   Terminal *term = win->w_buffer ? win->w_buffer->terminal : NULL;
   if (term) {
     // Don't free terminal buffers
     free_buf = false;
   }
+#endif
 
   /*
    * Closing the last window in a tab page.  First go to another tab
@@ -1814,11 +1818,13 @@ static int close_last_window_tabpage(win_T *win, int free_buf, tabpage_T *prev_c
       shell_new_rows();
   }
 
+#ifdef FEAT_TERMINAL
   if (term) {
     // When a window containing a terminal buffer is closed, recalculate its
     // size
     terminal_resize(term, 0, 0);
   }
+#endif
 
   /* Since goto_tabpage_tp above did not trigger *Enter autocommands, do
    * that now. */
@@ -4722,10 +4728,12 @@ void win_new_height(win_T *wp, int height)
   wp->w_redr_status = TRUE;
   invalidate_botline_win(wp);
 
-  if (wp->w_buffer->terminal) {
+#ifdef FEAT_TERMINAL
+  if (BUF_ISTERMINAL(wp->w_buffer)) {
     terminal_resize(wp->w_buffer->terminal, 0, wp->w_height);
     redraw_win_later(wp, CLEAR);
   }
+#endif
 }
 
 /*
@@ -4744,10 +4752,12 @@ void win_new_width(win_T *wp, int width)
   redraw_win_later(wp, NOT_VALID);
   wp->w_redr_status = TRUE;
 
+#ifdef FEAT_TERMINAL
   if (wp->w_buffer->terminal) {
     terminal_resize(wp->w_buffer->terminal, wp->w_width, 0);
     redraw_win_later(wp, CLEAR);
   }
+#endif
 }
 
 void win_comp_scroll(win_T *wp)

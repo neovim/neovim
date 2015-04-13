@@ -68,7 +68,9 @@
 #include "nvim/spell.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
-#include "nvim/terminal.h"
+#ifdef FEAT_TERMINAL
+# include "nvim/terminal.h"
+#endif
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
@@ -310,7 +312,7 @@ close_buffer (
   // buffers.
   // The caller must take care of NOT deleting/freeing when 'bufhidden' is
   // "hide" (otherwise we could never free or delete a buffer).
-  if (!buf->terminal) {
+  if (!BUF_ISTERMINAL(buf)) {
     if (buf->b_p_bh[0] == 'd') {         // 'bufhidden' == "delete"
       del_buf = true;
       unload_buf = true;
@@ -322,7 +324,7 @@ close_buffer (
       unload_buf = true;
   }
 
-  if (buf->terminal && (unload_buf || del_buf || wipe_buf)) {
+  if (BUF_ISTERMINAL(buf) && (unload_buf || del_buf || wipe_buf)) {
     // terminal buffers can only be wiped
     unload_buf = true;
     del_buf = true;
@@ -390,9 +392,11 @@ close_buffer (
   if (buf->b_nwindows > 0 || !unload_buf)
     return;
 
-  if (buf->terminal) {
+#ifdef FEAT_TERMINAL
+  if (BUF_ISTERMINAL(buf)) {
     terminal_close(buf->terminal, NULL);
   } 
+#endif
 
   /* Always remove the buffer when there is no file name. */
   if (buf->b_ffname == NULL)
@@ -936,8 +940,8 @@ do_buffer (
     if (action != DOBUF_WIPE && buf->b_ml.ml_mfp == NULL && !buf->b_p_bl)
       return FAIL;
 
-    if (!forceit && (buf->terminal || bufIsChanged(buf))) {
-      if ((p_confirm || cmdmod.confirm) && p_write && !buf->terminal) {
+    if (!forceit && (BUF_ISTERMINAL(buf) || bufIsChanged(buf))) {
+      if ((p_confirm || cmdmod.confirm) && p_write && !BUF_ISTERMINAL(buf)) {
         dialog_changed(buf, FALSE);
         if (!buf_valid(buf))
           /* Autocommand deleted buffer, oops!  It's not changed
@@ -948,7 +952,7 @@ do_buffer (
         if (bufIsChanged(buf))
           return FAIL;
       } else {
-        if (buf->terminal) {
+        if (BUF_ISTERMINAL(buf)) {
           EMSG2(_("E89: %s will be killed(add ! to override)"),
               (char *)buf->b_fname);
         } else {

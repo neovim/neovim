@@ -56,7 +56,9 @@
 #include "nvim/tag.h"
 #include "nvim/ui.h"
 #include "nvim/mouse.h"
-#include "nvim/terminal.h"
+#ifdef FEAT_TERMINAL
+# include "nvim/terminal.h"
+#endif
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/event.h"
@@ -248,10 +250,12 @@ edit (
     long count
 )
 {
-  if (curbuf->terminal) {
+#ifdef FEAT_TERMINAL
+  if (BUF_ISTERMINAL(curbuf)) {
     terminal_enter(true);
     return false;
   }
+#endif
 
   int c = 0;
   char_u      *ptr;

@@ -29,7 +29,7 @@ typedef struct file_buffer buf_T; // Forward declaration
 // for String
 #include "nvim/api/private/defs.h"
 
-#define MODIFIABLE(buf) (!buf->terminal && buf->b_p_ma)
+#define MODIFIABLE(buf) (!BUF_ISTERMINAL(buf) && buf->b_p_ma)
 
 /*
  * Flags for w_valid.
@@ -105,7 +105,9 @@ typedef int scid_T;                     /* script ID */
 #include "nvim/os/fs_defs.h"
 
 // for Terminal
-#include "nvim/terminal.h"
+#ifdef FEAT_TERMINAL
+# include "nvim/terminal.h"
+#endif
 
 /*
  * The taggy struct is used to store the information about a :tag command.
@@ -756,8 +758,16 @@ struct file_buffer {
 
   signlist_T *b_signlist;       /* list of signs to draw */
 
+#ifdef FEAT_TERMINAL
   Terminal *terminal;           // Terminal instance associated with the buffer
+#endif
 };
+
+#ifdef FEAT_TERMINAL
+# define BUF_ISTERMINAL(buf) (buf->terminal != NULL)
+#else
+# define BUF_ISTERMINAL(buf) (false)
+#endif
 
 /*
  * Stuff for diff mode.

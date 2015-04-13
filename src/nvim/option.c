@@ -4055,8 +4055,8 @@ did_set_string_option (
   }
   /* When 'buftype' is set, check for valid value. */
   else if (gvarp == &p_bt) {
-    if ((curbuf->terminal && curbuf->b_p_bt[0] != 't')
-        || (!curbuf->terminal && curbuf->b_p_bt[0] == 't')
+    if ((BUF_ISTERMINAL(curbuf) && curbuf->b_p_bt[0] != 't')
+        || (!BUF_ISTERMINAL(curbuf) && curbuf->b_p_bt[0] == 't')
         || check_opt_strings(curbuf->b_p_bt, p_buftype_values, FALSE) != OK) {
       errmsg = e_invarg;
     } else {
