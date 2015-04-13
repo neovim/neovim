@@ -57,6 +57,33 @@ describe('Mouse input', function()
     ]])
   end)
 
+  it('left click in tabline switches to tab', function()
+    local tab_attrs = {
+      tab  = { background=Screen.colors.LightGrey, underline=true },
+      sel  = { bold=true },
+      fill = { reverse = true }
+    }
+    execute('%delete')
+    insert('this is foo')
+    execute('silent file foo | tabnew | file bar')
+    insert('this is bar')
+    screen:expect([[
+      {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+      this is ba^r              |
+      ~                        |
+      ~                        |
+                               |
+    ]], tab_attrs)
+    feed('<LeftMouse><4,0>')
+    screen:expect([[
+      {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
+      this is fo^o              |
+      ~                        |
+      ~                        |
+                               |
+    ]], tab_attrs)
+  end)
+
   it('left drag changes visual selection', function()
     -- drag events must be preceded by a click
     feed('<LeftMouse><2,1>')
