@@ -225,7 +225,25 @@ Object channel_send_call(uint64_t id,
   channel->pending_requests--;
 
   if (frame.errored) {
-    api_set_error(err, Exception, "%s", frame.result.data.string.data);
+    if (frame.result.type == kObjectTypeString) {
+      api_set_error(err, Exception, "%s", frame.result.data.string.data);
+    } else if (frame.result.type == kObjectTypeArray) {
+      // Should be an error in the form [type, message]
+      Array array = frame.result.data.array;
+      if (array.size == 2 && array.items[0].type == kObjectTypeInteger
+          && (array.items[0].data.integer == kErrorTypeException
+              || array.items[0].data.integer == kErrorTypeValidation)
+          && array.items[1].type == kObjectTypeString) {
+        err->type = (ErrorType) array.items[0].data.integer;
+        xstrlcpy(err->msg, array.items[1].data.string.data, sizeof(err->msg));
+        err->set = true;
+      } else {
+        api_set_error(err, Exception, "%s", "unknown error");
+      }
+    } else {
+      api_set_error(err, Exception, "%s", "unknown error");
+    }
+
     api_free_object(frame.result);
   }
 
@@ -435,18 +453,18 @@ static void handle_request(Channel *channel, msgpack_object *request)
 
   // Retrieve the request handler
   MsgpackRpcRequestHandler handler;
-  msgpack_object method = request->via.array.ptr[2];
+  msgpack_object *method = msgpack_rpc_method(request);
 
-  if (method.type == MSGPACK_OBJECT_BIN || method.type == MSGPACK_OBJECT_STR) {
-    handler = msgpack_rpc_get_handler_for(method.via.bin.ptr,
-                                          method.via.bin.size);
+  if (method) {
+    handler = msgpack_rpc_get_handler_for(method->via.bin.ptr,
+                                          method->via.bin.size);
   } else {
     handler.fn = msgpack_rpc_handle_missing_method;
     handler.defer = false;
   }
 
   Array args = ARRAY_DICT_INIT;
-  msgpack_rpc_to_array(request->via.array.ptr + 3, &args);
+  msgpack_rpc_to_array(msgpack_rpc_args(request), &args);
   bool defer = (!kv_size(channel->call_stack) && handler.defer);
   RequestEvent *event_data = xmalloc(sizeof(RequestEvent));
   event_data->channel = channel;
@@ -469,14 +487,18 @@ static void on_request_event(Event event)
   uint64_t request_id = e->request_id;
   Error error = ERROR_INIT;
   Object result = handler.fn(channel->id, request_id, args, &error);
-  // send the response
-  msgpack_packer response;
-  msgpack_packer_init(&response, &out_buffer, msgpack_sbuffer_write);
-  channel_write(channel, serialize_response(channel->id,
-                                            request_id,
-                                            &error,
-                                            result,
-                                            &out_buffer));
+  if (request_id != NO_RESPONSE) {
+    // send the response
+    msgpack_packer response;
+    msgpack_packer_init(&response, &out_buffer, msgpack_sbuffer_write);
+    channel_write(channel, serialize_response(channel->id,
+                                              request_id,
+                                              &error,
+                                              result,
+                                              &out_buffer));
+  } else {
+    api_free_object(result);
+  }
   // All arguments were freed already, but we still need to free the array
   xfree(args.items);
   decref(channel);

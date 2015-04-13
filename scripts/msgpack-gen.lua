@@ -183,13 +183,20 @@ for i = 1, #functions do
     local converted, convert_arg, param, arg
     param = fn.parameters[j]
     converted = 'arg_'..j
-    if real_type(param[1]) ~= 'Object' then
-      output:write('\n  if (args.items['..(j - 1)..'].type != kObjectType'..real_type(param[1])..') {')
+    local rt = real_type(param[1])
+    if rt ~= 'Object' then
+      output:write('\n  if (args.items['..(j - 1)..'].type == kObjectType'..rt..') {')
+      output:write('\n    '..converted..' = args.items['..(j - 1)..'].data.'..rt:lower()..';')
+      if rt:match('^Buffer$') or rt:match('^Window$') or rt:match('^Tabpage$') or rt:match('^Boolean$') then
+        -- accept positive integers for Buffers, Windows and Tabpages
+        output:write('\n  } else if (args.items['..(j - 1)..'].type == kObjectTypeInteger && args.items['..(j - 1)..'].data.integer > 0) {')
+        output:write('\n    '..converted..' = (unsigned)args.items['..(j - 1)..'].data.integer;')
+      end
+      output:write('\n  } else {')
       output:write('\n    snprintf(error->msg, sizeof(error->msg), "Wrong type for argument '..j..', expecting '..param[1]..'");')
       output:write('\n    error->set = true;')
       output:write('\n    goto cleanup;')
-      output:write('\n  }')
-      output:write('\n  '..converted..' = args.items['..(j - 1)..'].data.'..real_type(param[1]):lower()..';\n')
+      output:write('\n  }\n')
     else
       output:write('\n  '..converted..' = args.items['..(j - 1)..'];\n')
     end

@@ -405,6 +405,9 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
       tv->vval.v_number = obj.data.boolean;
       break;
 
+    case kObjectTypeBuffer:
+    case kObjectTypeWindow:
+    case kObjectTypeTabpage:
     case kObjectTypeInteger:
       if (obj.data.integer > INT_MAX || obj.data.integer < INT_MIN) {
         api_set_error(err, Validation, _("Integer value outside range"));
