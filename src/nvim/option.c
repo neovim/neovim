@@ -2039,7 +2039,7 @@ void set_init_1(void)
   }
 
   /* Set the default for 'helplang'. */
-  set_helplang_default(get_mess_lang());
+  set_helplang_default((char *)get_mess_lang());
 }
 
 /*
@@ -2298,7 +2298,7 @@ void set_helplang_default(const char *lang)
   if (idx >= 0 && !(options[idx].flags & P_WAS_SET)) {
     if (options[idx].flags & P_ALLOCED)
       free_string_option(p_hlg);
-    p_hlg = vim_strsave(lang);
+    p_hlg = (char_u *)xstrdup(lang);
     /* zh_CN becomes "cn", zh_TW becomes "tw". */
     if (STRNICMP(p_hlg, "zh_", 3) == 0 && STRLEN(p_hlg) >= 5) {
       p_hlg[0] = (char_u)TOLOWER_ASC(p_hlg[3]);
