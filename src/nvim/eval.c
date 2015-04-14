@@ -10779,6 +10779,40 @@ static void f_jobresize(typval_T *argvars, typval_T *rettv)
   rettv->vval.v_number = 1;
 }
 
+static char **list_to_argv(list_T *args)
+{
+  for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
+    if (arg->li_tv.v_type != VAR_STRING) {
+      EMSG(_(e_invarg));
+      return NULL;
+    }
+  }
+
+  int argc = args->lv_len;
+  if (!argc) {
+    EMSG(_("Argument vector must have at least one item"));
+    return NULL;
+  }
+
+  assert(args->lv_first);
+
+  const char_u *exe = get_tv_string(&args->lv_first->li_tv);
+  if (!os_can_exe(exe, NULL)) {
+    // String is not executable
+    EMSG2(e_jobexe, exe);
+    return NULL;
+  }
+  
+  // Build the argument vector
+  int i = 0;
+  char **argv = xcalloc(argc + 1, sizeof(char *));
+  for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
+    argv[i++] = xstrdup((char *) get_tv_string(&arg->li_tv));
+  }
+
+  return argv;
+}
+
 // "jobstart()" function
 static void f_jobstart(typval_T *argvars, typval_T *rettv)
 {
@@ -10796,28 +10830,9 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
     return;
   }
 
-  list_T *args = argvars[0].vval.v_list;
-  // Assert that all list items are strings
-  for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-    if (arg->li_tv.v_type != VAR_STRING) {
-      EMSG(_(e_invarg));
-      return;
-    }
-  }
-
-  int argc = args->lv_len;
-  if (!argc) {
-    EMSG(_("Argument vector must have at least one item"));
-    return;
-  }
-
-  assert(args->lv_first);
- 
-  const char_u *exe = get_tv_string(&args->lv_first->li_tv);
-  if (!os_can_exe(exe, NULL)) {
-    // String is not executable
-    EMSG2(e_jobexe, exe);
-    return;
+  char **argv = list_to_argv(argvars[0].vval.v_list);
+  if (!argv) {
+    return;  // Did error message in list_to_argv.
   }
 
   dict_T *job_opts = NULL;
@@ -10827,13 +10842,6 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
     if (!common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit)) {
       return;
     }
-  }
-
-  // Build the argument vector
-  int i = 0;
-  char **argv = xcalloc(argc + 1, sizeof(char *));
-  for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-    argv[i++] = xstrdup((char *) get_tv_string(&arg->li_tv));
   }
 
   JobOptions opts = common_job_options(argv, on_stdout, on_stderr, on_exit,
@@ -15155,11 +15163,16 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
     return;
   }
 
-  if (argvars[0].v_type != VAR_STRING
+  if (argvars[0].v_type != VAR_LIST
       || (argvars[1].v_type != VAR_DICT && argvars[1].v_type != VAR_UNKNOWN)) {
     // Wrong argument types
     EMSG(_(e_invarg));
     return;
+  }
+
+  char **argv = list_to_argv(argvars[0].vval.v_list);
+  if (!argv) {
+    return;  // Did error message in list_to_argv.
   }
 
   ufunc_T *on_stdout = NULL, *on_stderr = NULL, *on_exit = NULL;
@@ -15171,7 +15184,6 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
     }
   }
 
-  char **argv = shell_build_argv((char *)argvars[0].vval.v_string, NULL);
   JobOptions opts = common_job_options(argv, on_stdout, on_stderr, on_exit,
       job_opts);
   opts.pty = true;
@@ -15197,10 +15209,16 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
     cwd = (char *)argvars[1].vval.v_string;
   }
   int pid = job_pid(job);
+
+  // Get the desired name of the buffer.
+  char *name = job_opts ?
+    (char *)get_dict_string(job_opts, (char_u *)"name", false) : NULL;
+  if (!name) {
+    name = argv[0];
+  }
   char buf[1024];
   // format the title with the pid to conform with the term:// URI 
-  snprintf(buf, sizeof(buf), "term://%s//%d:%s", cwd, pid,
-      (char *)argvars[0].vval.v_string);
+  snprintf(buf, sizeof(buf), "term://%s//%d:%s", cwd, pid, name);
   // at this point the buffer has no terminal instance associated yet, so unset
   // the 'swapfile' option to ensure no swap file will be created
   curbuf->b_p_swf = false;

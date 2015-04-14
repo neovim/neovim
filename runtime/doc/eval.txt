@@ -6299,15 +6299,17 @@ tempname()					*tempname()* *temp-file-name*
 		For MS-Windows forward slashes are used when the 'shellslash'
 		option is set or when 'shellcmdflag' starts with '-'.
 
-termopen({command}[, {opts}])			{Nvim} *termopen()*
-		Spawns {command} using the shell in a new pseudo-terminal
-		session connected to the current buffer.  This function fails
-		if the current buffer is modified (all buffer contents are
-		destroyed).  The {opts} dict is similar to the one passed to
-		|jobstart()|, but the `pty`, `width`, `height`, and `TERM` fields are
-		ignored: `height`/`width` are taken from the current window and
-		$TERM is set to "xterm-256color".  Returns the same values as
-		|jobstart()|.
+termopen({argv}[, {opts}])			{Nvim} *termopen()*
+		Spawns {argv}(list) in a new pseudo-terminal session connected
+		to the current buffer.  This function fails if the current
+		buffer is modified (all buffer contents are destroyed).
+
+		The {opts} dict is similar to the one passed to |jobstart()|,
+		but the `pty`, `width`, `height`, and `TERM` fields are
+		ignored: `height`/`width` are taken from the current window
+		and `$TERM` is set to "xterm-256color".  An additional option,
+		`name`, can be used to give the terminal a specific name.
+		Returns the same values as |jobstart()|.
 
 		See |nvim-terminal-emulator| for more information.
 

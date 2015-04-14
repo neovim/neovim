@@ -9410,9 +9410,26 @@ static void ex_folddo(exarg_T *eap)
 
 static void ex_terminal(exarg_T *eap)
 {
+  char *name = NULL;
   char cmd[512];
-  snprintf(cmd, sizeof(cmd), ":enew%s | call termopen('%s') | startinsert",
-      eap->forceit==TRUE ? "!" : "",
-      strcmp((char *)eap->arg, "") ? (char *)eap->arg : (char *)p_sh);
-  do_cmdline_cmd((uint8_t *)cmd);
+  if (strcmp((char *)eap->arg, "") == 0) {
+    snprintf(cmd, sizeof(cmd), "['%s']", (char *)p_sh);
+    name = (char *)p_sh;
+  } else {
+    // Escape quotes and slashes so they get sent literally.
+    name = (char *)vim_strsave_escaped(eap->arg, (char_u *)"\"\\");
+    snprintf(cmd, sizeof(cmd), "['%s','%s',\"%s\"]",
+             (char *)p_sh, (char *)p_shcf, name);
+  }
+
+  char ex_cmd[512];
+  snprintf(ex_cmd, sizeof(ex_cmd),
+           ":enew%s | call termopen(%s, {'name':\"%s\"}) | startinsert",
+           eap->forceit==TRUE ? "!" : "", cmd, name);
+
+  do_cmdline_cmd((uint8_t *)ex_cmd);
+
+  if (name != (char *)p_sh) {
+    xfree(name);
+  }
 }

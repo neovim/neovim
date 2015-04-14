@@ -332,7 +332,7 @@ describe('terminal prints more lines than the screen height and exits', function
     clear()
     local screen = Screen.new(50, 7)
     screen:attach(false)
-    execute('term ' ..nvim_dir.. '/tty-test 10')
+    execute('call termopen(["'..nvim_dir..'/tty-test", "10"]) | startinsert')
     wait()
     screen:expect([[
       line6                                             |
