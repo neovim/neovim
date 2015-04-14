@@ -761,9 +761,14 @@ void ex_profile(exarg_T *eap)
     do_profiling = PROF_YES;
     profile_set_wait(profile_zero());
     set_vim_var_nr(VV_PROFILING, 1L);
-  } else if (do_profiling == PROF_NONE)
+  } else if (do_profiling == PROF_NONE) {
     EMSG(_("E750: First use \":profile start {fname}\""));
-  else if (STRCMP(eap->arg, "pause") == 0) {
+  } else if (STRCMP(eap->arg, "stop") == 0) {
+    profile_dump();
+    do_profiling = PROF_NONE;
+    set_vim_var_nr(VV_PROFILING, 0L);
+    profile_reset();
+  } else if (STRCMP(eap->arg, "pause") == 0) {
     if (do_profiling == PROF_YES)
       pause_time = profile_start();
     do_profiling = PROF_PAUSED;
@@ -818,12 +823,13 @@ static enum {
 } pexpand_what;
 
 static char *pexpand_cmds[] = {
-  "start",
-  "pause",
   "continue",
-  "func",
-  "file",
   "dump",
+  "file",
+  "func",
+  "pause",
+  "start",
+  "stop",
   NULL
 };
 
@@ -887,10 +893,63 @@ void profile_dump(void)
   }
 }
 
-/*
- * Start profiling script "fp".
- */
-static void script_do_profile(scriptitem_T *si)
+/// Reset all profiling information.
+static void profile_reset(void)
+{
+  // Reset sourced files.
+  for (int id = 1; id <= script_items.ga_len; id++) {
+    scriptitem_T *si = &SCRIPT_ITEM(id);
+    if (si->sn_prof_on) {
+      si->sn_prof_on      = 0;
+      si->sn_pr_force     = 0;
+      si->sn_pr_child     = profile_zero();
+      si->sn_pr_nest      = 0;
+      si->sn_pr_count     = 0;
+      si->sn_pr_total     = profile_zero();
+      si->sn_pr_self      = profile_zero();
+      si->sn_pr_start     = profile_zero();
+      si->sn_pr_children  = profile_zero();
+      ga_clear(&si->sn_prl_ga);
+      si->sn_prl_start    = profile_zero();
+      si->sn_prl_children = profile_zero();
+      si->sn_prl_wait     = profile_zero();
+      si->sn_prl_idx      = -1;
+      si->sn_prl_execed   = 0;
+    }
+  }
+
+  // Reset functions.
+  size_t      n  = func_hashtab.ht_used;
+  hashitem_T *hi = func_hashtab.ht_array;
+
+  for (; n > (size_t)0; hi++) {
+    if (!HASHITEM_EMPTY(hi)) {
+      n--;
+      ufunc_T *uf = HI2UF(hi);
+      if (uf->uf_profiling) {
+        uf->uf_profiling    = 0;
+        uf->uf_tm_count     = 0;
+        uf->uf_tm_total     = profile_zero();
+        uf->uf_tm_self      = profile_zero();
+        uf->uf_tm_children  = profile_zero();
+        uf->uf_tml_count    = NULL;
+        uf->uf_tml_total    = NULL;
+        uf->uf_tml_self     = NULL;
+        uf->uf_tml_start    = profile_zero();
+        uf->uf_tml_children = profile_zero();
+        uf->uf_tml_wait     = profile_zero();
+        uf->uf_tml_idx      = -1;
+        uf->uf_tml_execed   = 0;
+      }
+    }
+  }
+
+  xfree(profile_fname);
+  profile_fname = NULL;
+}
+
+/// Start profiling a script.
+static void profile_init(scriptitem_T *si)
 {
   si->sn_pr_count = 0;
   si->sn_pr_total = profile_zero();
@@ -2506,8 +2565,8 @@ do_source (
     int forceit;
 
     /* Check if we do profiling for this script. */
-    if (!si->sn_prof_on && has_profiling(TRUE, si->sn_name, &forceit)) {
-      script_do_profile(si);
+    if (!si->sn_prof_on && has_profiling(true, si->sn_name, &forceit)) {
+      profile_init(si);
       si->sn_pr_force = forceit;
     }
     if (si->sn_prof_on) {

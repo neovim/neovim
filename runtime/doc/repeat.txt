@@ -586,6 +586,9 @@ For example, to profile the one_script.vim script file: >
 		If {fname} already exists it will be silently overwritten.
 		The variable |v:profiling| is set to one.
 
+:prof[ile] stop
+		Write the logfile and stop profiling.
+
 :prof[ile] pause
 		Don't profile until the following ":profile continue".  Can be
 		used when doing something that should not be counted (e.g., an
