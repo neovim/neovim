@@ -290,9 +290,7 @@ install_helper(
 
 file(GLOB_RECURSE RUNTIME_PROGRAMS
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-  runtime/*.pl runtime/*.awk runtime/*.sh
-  runtime/tools/ref
-  runtime/tools/vimm)
+  runtime/*.awk runtime/*.sh)
 
 foreach(PROG ${RUNTIME_PROGRAMS})
   get_filename_component(BASEDIR ${PROG} PATH)
