@@ -773,6 +773,8 @@ void ex_profile(exarg_T *eap)
       profile_set_wait(profile_add(profile_get_wait(), pause_time));
     }
     do_profiling = PROF_YES;
+  } else if (STRCMP(eap->arg, "dump") == 0) {
+    profile_dump();
   } else {
     /* The rest is similar to ":breakadd". */
     ex_breakadd(eap);
@@ -821,6 +823,7 @@ static char *pexpand_cmds[] = {
   "continue",
   "func",
   "file",
+  "dump",
   NULL
 };
 

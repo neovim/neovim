@@ -609,6 +609,9 @@ For example, to profile the one_script.vim script file: >
 		after this command.  A :profile command in the script itself
 		won't work.
 
+:prof[ile] dump
+		Don't wait until exiting Vim and write the current state of
+		profiling to the log immediately.
 
 :profd[el] ...						*:profd* *:profdel*
 		Stop profiling for the arguments specified. See |:breakdel|
