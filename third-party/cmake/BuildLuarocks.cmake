@@ -56,7 +56,10 @@ add_custom_target(stable-busted-deps
 
 add_custom_command(OUTPUT ${DEPS_BIN_DIR}/busted
   COMMAND ${DEPS_BIN_DIR}/luarocks
-  ARGS build https://raw.githubusercontent.com/Olivine-Labs/busted/master/busted-scm-0.rockspec CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
+  ## Drop back to:
+  ##    https://raw.githubusercontent.com/Olivine-Labs/busted/master/busted-scm-0.rockspec
+  ## once the spec file is fixed in busted.
+  ARGS build https://raw.githubusercontent.com/Olivine-Labs/busted/f803173cc136f7370f7416254eaf3bada01b04a9/busted-scm-0.rockspec CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
   DEPENDS stable-busted-deps)
 add_custom_target(busted
   DEPENDS ${DEPS_BIN_DIR}/busted)
