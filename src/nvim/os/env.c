@@ -37,6 +37,19 @@ int os_setenv(const char *name, const char *value, int overwrite)
   return setenv(name, value, overwrite);
 }
 
+/// Unset environment variable
+///
+/// For systems where unsetenv() is not available the value will be set as an
+/// empty string
+int os_unsetenv(const char *name)
+{
+#ifdef HAVE_UNSETENV
+  return unsetenv(name);
+#else
+  return os_setenv(name, "", 1);
+#endif
+}
+
 char *os_getenvname_at_index(size_t index)
 {
 # if defined(HAVE__NSGETENVIRON)

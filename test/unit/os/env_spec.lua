@@ -3,6 +3,7 @@ local helpers = require('test.unit.helpers')
 local cimport = helpers.cimport
 local internalize = helpers.internalize
 local eq = helpers.eq
+local neq = helpers.neq
 local ffi = helpers.ffi
 local lib = helpers.lib
 local cstr = helpers.cstr
@@ -19,6 +20,10 @@ local env = cimport('./src/nvim/os/os.h')
 describe('env function', function()
   function os_setenv(name, value, override)
     return env.os_setenv((to_cstr(name)), (to_cstr(value)), override)
+  end
+
+  function os_unsetenv(name, value, override)
+    return env.os_unsetenv((to_cstr(name)))
   end
 
   function os_getenv(name)
@@ -65,6 +70,18 @@ describe('env function', function()
     it('returns NULL if the env variable is not found', function()
       local name = 'NEOVIM_UNIT_TEST_GETENV_NOTFOUND'
       return eq(NULL, os_getenv(name))
+    end)
+  end)
+
+  describe('os_unsetenv', function()
+    it('unsets environment variable', function()
+      local name = 'TEST_UNSETENV'
+      local value = 'TESTVALUE'
+      os_setenv(name, value, 1)
+      os_unsetenv(name)
+      neq(os_getenv(name), value)
+      -- Depending on the platform the var might be unset or set as ''
+      assert.True(os_getenv(name) == nil or os_getenv(name) == '')
     end)
   end)
 

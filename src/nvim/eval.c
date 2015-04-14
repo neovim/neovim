@@ -87,6 +87,7 @@
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/time.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/msgpack_rpc/server.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
 #include "nvim/os/dl.h"
@@ -6605,6 +6606,9 @@ static struct fst {
   {"searchpair",      3, 7, f_searchpair},
   {"searchpairpos",   3, 7, f_searchpairpos},
   {"searchpos",       1, 4, f_searchpos},
+  {"serverlist",      0, 0, f_serverlist},
+  {"serverstart",     0, 1, f_serverstart},
+  {"serverstop",      1, 1, f_serverstop},
   {"setbufvar",       3, 3, f_setbufvar},
   {"setcmdpos",       1, 1, f_setcmdpos},
   {"setline",         2, 2, f_setline},
@@ -13290,6 +13294,69 @@ static void f_searchpos(typval_T *argvars, typval_T *rettv)
   list_append_number(rettv->vval.v_list, (varnumber_T)col);
   if (flags & SP_SUBPAT)
     list_append_number(rettv->vval.v_list, (varnumber_T)n);
+}
+
+/// "serverlist()" function
+static void f_serverlist(typval_T *argvars, typval_T *rettv)
+{
+  size_t n;
+  char **addrs = server_address_list(&n);
+
+  // Copy addrs into a linked list.
+  list_T *l = rettv_list_alloc(rettv);
+  for (size_t i = 0; i < n; i++) {
+    listitem_T *li = listitem_alloc();
+    li->li_tv.v_type = VAR_STRING;
+    li->li_tv.v_lock = 0;
+    li->li_tv.vval.v_string = (char_u *) addrs[i];
+    list_append(l, li);
+  }
+  xfree(addrs);
+}
+
+/// "serverstart()" function
+static void f_serverstart(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;  // Will hold the address of the new server.
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  // If the user supplied an address, use it, otherwise use a temp.
+  if (argvars[0].v_type != VAR_UNKNOWN) {
+    if (argvars[0].v_type != VAR_STRING) {
+      EMSG(_(e_invarg));
+      return;
+    } else {
+      rettv->vval.v_string = vim_strsave(get_tv_string(argvars));
+    }
+  } else {
+    rettv->vval.v_string = vim_tempname();
+  }
+
+  int result = server_start((char *) rettv->vval.v_string);
+  if (result != 0) {
+    EMSG2("Failed to start server: %s", uv_strerror(result));
+  }
+}
+
+/// "serverstop()" function
+static void f_serverstop(typval_T *argvars, typval_T *rettv)
+{
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type == VAR_UNKNOWN || argvars[0].v_type != VAR_STRING) {
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  if (argvars[0].vval.v_string) {
+    server_stop((char *) argvars[0].vval.v_string);
+  }
 }
 
 /*

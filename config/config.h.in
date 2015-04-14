@@ -37,6 +37,7 @@
 // TODO: add proper cmake check
 // #define HAVE_SELINUX 1
 #cmakedefine HAVE_SETENV
+#cmakedefine HAVE_UNSETENV
 #cmakedefine HAVE_SETPGID
 #cmakedefine HAVE_SETSID
 #cmakedefine HAVE_SIGACTION
