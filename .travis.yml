@@ -1,5 +1,5 @@
 sudo: required
-language: c
+language: python
 os:
   - linux
 branches:
@@ -30,10 +30,8 @@ matrix:
   include:
     - os: osx
       env: CI_TARGET=clang
-      compiler: clang
     - os: osx
       env: CI_TARGET=gcc
-      compiler: gcc-4.9
     # Python 3
     - os: osx
       env: CI_TARGET=clang
@@ -51,7 +49,6 @@ before_install:
     elif [ $TRAVIS_OS_NAME = osx ]; then
       travis_retry brew update;
     fi
-  - python --version
 install:
   - if [ $TRAVIS_OS_NAME = linux ]; then
       travis_retry sudo apt-get install xclip gdb;
@@ -72,6 +69,8 @@ before_script:
       sudo dscl . -append /Groups/chown_test GroupMembership $USER;
     fi
 script:
+  - python --version
+  - python3 --version
   # This will pass the environment variables down to a bash process which runs
   # as $USER, while retaining the environment variables defined and belonging
   # to secondary groups given above in usermod.
