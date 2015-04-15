@@ -10779,35 +10779,54 @@ static void f_jobresize(typval_T *argvars, typval_T *rettv)
   rettv->vval.v_number = 1;
 }
 
-static char **list_to_argv(list_T *args)
+static char **tv_to_argv(typval_T *cmd_tv, char **cmd)
 {
-  for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-    if (arg->li_tv.v_type != VAR_STRING) {
-      EMSG(_(e_invarg));
-      return NULL;
+  if (cmd_tv->v_type == VAR_STRING) {
+    char *cmd_str = (char *)get_tv_string(cmd_tv);
+    if (cmd) {
+      *cmd = cmd_str;
     }
+    return shell_build_argv(cmd_str, NULL);
   }
 
-  int argc = args->lv_len;
+  if (cmd_tv->v_type != VAR_LIST) {
+    EMSG2(_(e_invarg2), "expected String or List");
+    return NULL;
+  }
+
+  list_T *argl = cmd_tv->vval.v_list;
+  int argc = argl->lv_len;
   if (!argc) {
     EMSG(_("Argument vector must have at least one item"));
     return NULL;
   }
 
-  assert(args->lv_first);
+  assert(argl->lv_first);
 
-  const char_u *exe = get_tv_string(&args->lv_first->li_tv);
-  if (!os_can_exe(exe, NULL)) {
+  const char_u *exe = get_tv_string_chk(&argl->lv_first->li_tv);
+  if (!exe || !os_can_exe(exe, NULL)) {
     // String is not executable
-    EMSG2(e_jobexe, exe);
+    if (exe) {
+      EMSG2(e_jobexe, exe);
+    }
     return NULL;
+  }
+
+  if (cmd) {
+    *cmd = (char *)exe;
   }
   
   // Build the argument vector
   int i = 0;
   char **argv = xcalloc(argc + 1, sizeof(char *));
-  for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-    argv[i++] = xstrdup((char *) get_tv_string(&arg->li_tv));
+  for (listitem_T *arg = argl->lv_first; arg != NULL; arg = arg->li_next) {
+    char *a = (char *)get_tv_string_chk(&arg->li_tv);
+    if (!a) {
+      // Did emsg in get_tv_string; just deallocate argv.
+      shell_free_argv(argv);
+      return NULL;
+    }
+    argv[i++] = xstrdup(a);
   }
 
   return argv;
@@ -10823,16 +10842,16 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
     return;
   }
 
-  if (argvars[0].v_type != VAR_LIST
-      || (argvars[1].v_type != VAR_DICT && argvars[1].v_type != VAR_UNKNOWN)) {
-    // Wrong argument types
-    EMSG(_(e_invarg));
-    return;
+  char **argv = tv_to_argv(&argvars[0], NULL);
+  if (!argv) {
+    return;  // Did error message in tv_to_argv.
   }
 
-  char **argv = list_to_argv(argvars[0].vval.v_list);
-  if (!argv) {
-    return;  // Did error message in list_to_argv.
+  if (argvars[1].v_type != VAR_DICT && argvars[1].v_type != VAR_UNKNOWN) {
+    // Wrong argument types
+    EMSG2(_(e_invarg2), "expected dictionary");
+    shell_free_argv(argv);
+    return;
   }
 
   dict_T *job_opts = NULL;
@@ -10840,6 +10859,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
   if (argvars[1].v_type == VAR_DICT) {
     job_opts = argvars[1].vval.v_dict;
     if (!common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit)) {
+      shell_free_argv(argv);
       return;
     }
   }
@@ -14935,12 +14955,16 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
   }
 
   // get shell command to execute
-  const char *cmd = (char *) get_tv_string(&argvars[0]);
+  char **argv = tv_to_argv(&argvars[0], NULL);
+  if (!argv) {
+    xfree(input);
+    return;  // Already did emsg.
+  }
 
   // execute the command
   size_t nread = 0;
   char *res = NULL;
-  int status = os_system(cmd, input, input_len, &res, &nread);
+  int status = os_system(argv, input, input_len, &res, &nread);
 
   xfree(input);
 
@@ -15163,16 +15187,17 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
     return;
   }
 
-  if (argvars[0].v_type != VAR_LIST
-      || (argvars[1].v_type != VAR_DICT && argvars[1].v_type != VAR_UNKNOWN)) {
-    // Wrong argument types
-    EMSG(_(e_invarg));
-    return;
+  char *cmd;
+  char **argv = tv_to_argv(&argvars[0], &cmd);
+  if (!argv) {
+    return;  // Did error message in tv_to_argv.
   }
 
-  char **argv = list_to_argv(argvars[0].vval.v_list);
-  if (!argv) {
-    return;  // Did error message in list_to_argv.
+  if (argvars[1].v_type != VAR_DICT && argvars[1].v_type != VAR_UNKNOWN) {
+    // Wrong argument type
+    EMSG2(_(e_invarg2), "expected dictionary");
+    shell_free_argv(argv);
+    return;
   }
 
   ufunc_T *on_stdout = NULL, *on_stderr = NULL, *on_exit = NULL;
@@ -15180,6 +15205,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
   if (argvars[1].v_type == VAR_DICT) {
     job_opts = argvars[1].vval.v_dict;
     if (!common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit)) {
+      shell_free_argv(argv);
       return;
     }
   }
@@ -15192,6 +15218,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
   opts.term_name = xstrdup("xterm-256color");
   Job *job = common_job_start(opts, rettv);
   if (!job) {
+    shell_free_argv(argv);
     return;
   }
   TerminalJobData *data = opts.data;
@@ -15212,10 +15239,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
 
   // Get the desired name of the buffer.
   char *name = job_opts ?
-    (char *)get_dict_string(job_opts, (char_u *)"name", false) : NULL;
-  if (!name) {
-    name = argv[0];
-  }
+    (char *)get_dict_string(job_opts, (char_u *)"name", false) : cmd;
   char buf[1024];
   // format the title with the pid to conform with the term:// URI 
   snprintf(buf, sizeof(buf), "term://%s//%d:%s", cwd, pid, name);
@@ -15233,6 +15257,8 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
   Terminal *term = terminal_open(topts);
   data->term = term;
   data->refcount++;
+
+  return;
 }
 
 /*

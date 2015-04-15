@@ -44,7 +44,7 @@ describe('system()', function()
     eq(127, eval('v:shell_error'))
   end)
 
-  describe('executes shell function', function()
+  describe('executes shell function if passed a string', function()
     local screen
 
     before_each(function()
@@ -192,6 +192,13 @@ describe('system()', function()
       end)
     end)
   end
+
+  describe('command passed as a list', function()
+    it('does not execute &shell', function()
+      eq('* $NOTHING ~/file',
+         eval("system(['echo', '-n', '*', '$NOTHING', '~/file'])"))
+    end)
+  end)
 end)
 
 describe('systemlist()', function()
