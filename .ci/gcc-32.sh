@@ -1,16 +1,6 @@
 . "$CI_SCRIPTS/common.sh"
 
-# Need this to keep apt-get from removing gcc when installing libncurses
-# below.
-sudo apt-get install libc6-dev libc6-dev:i386
-
-# Do this separately so that things get configured correctly, otherwise
-# libncurses fails to install.
-sudo apt-get install gcc-multilib g++-multilib
-
-# Install the dev version to get the pkg-config and symlinks installed
-# correctly.
-sudo apt-get install libncurses5-dev:i386
+sudo apt-get install gcc-multilib
 
 setup_deps x86
 

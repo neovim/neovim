@@ -1,3 +1,4 @@
+sudo: required
 language: c
 os:
   - linux
