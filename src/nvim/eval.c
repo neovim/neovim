@@ -5418,6 +5418,10 @@ list_join_inner (
  */
 static int list_join(garray_T *gap, list_T *l, char_u *sep, int echo_style, int copyID)
 {
+  if (l->lv_len < 1) {
+    return OK;
+  }
+
   garray_T join_ga;
   int retval;
 
