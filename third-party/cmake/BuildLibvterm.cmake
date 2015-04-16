@@ -1,3 +1,8 @@
+if(WIN32)
+  message(STATUS "Building libvterm in Windows is not supported (skipping)")
+  return()
+endif()
+
 ExternalProject_Add(libvterm
   PREFIX ${DEPS_BUILD_DIR}
   URL ${LIBVTERM_URL}
