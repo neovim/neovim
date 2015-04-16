@@ -51,6 +51,22 @@ else()
   set(DEPS_C_COMPILER "${CMAKE_C_COMPILER}")
 endif()
 
+# Cross compiling: use these for dependencies built for the
+# HOST system, when not crosscompiling these should be the
+# same as DEPS_*. Except when targeting UNIX in which case
+# want all the dependencies to use the same compiler.
+if(CMAKE_CROSSCOMPILING AND NOT UNIX)
+  set(HOSTDEPS_INSTALL_DIR "${CMAKE_BINARY_DIR}/host")
+  set(HOSTDEPS_BIN_DIR "${HOSTDEPS_INSTALL_DIR}/bin")
+  set(HOSTDEPS_LIB_DIR "${HOSTDEPS_INSTALL_DIR}/lib")
+  set(HOSTDEPS_C_COMPILER "${HOST_C_COMPILER}")
+else()
+  set(HOSTDEPS_INSTALL_DIR "${DEPS_INSTALL_DIR}")
+  set(HOSTDEPS_BIN_DIR "${DEPS_BIN_DIR}")
+  set(HOSTDEPS_LIB_DIR "${DEPS_LIB_DIR}")
+  set(HOSTDEPS_C_COMPILER "${DEPS_C_COMPILER}")
+endif()
+
 include(ExternalProject)
 
 set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.5.0.tar.gz)

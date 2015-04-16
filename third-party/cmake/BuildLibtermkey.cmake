@@ -1,3 +1,7 @@
+if(WIN32)
+  message(STATUS "Building libtermkey in Windows is not supported (skipping)")
+  return()
+endif()
 find_package(PkgConfig REQUIRED)
 
 ExternalProject_Add(libtermkey
