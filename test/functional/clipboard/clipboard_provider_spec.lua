@@ -73,6 +73,12 @@ local function basic_register_test(noblock)
       stuf, stuff and some more
       me tsome textsome some text, stuff and some more]])
   end
+
+  -- pasting in visual does unnamed delete of visual selection
+  feed('ggdG')
+  insert("one and two and three")
+  feed('"ayiwbbviw"ap^viwp$viw"-p')
+  expect("two and three and one")
 end
 
 describe('the unnamed register', function()
@@ -241,6 +247,14 @@ describe('clipboard usage', function()
       eq('\02210', eval('getregtype()'))
     end)
 
+    it('yanks visual selection when pasting', function()
+      insert("indeed visual")
+      execute("let g:test_clip['*'] = [['clipboard'], 'c']")
+      feed("viwp")
+      eq({{'visual'}, 'v'}, eval("g:test_clip['*']"))
+      expect("indeed clipboard")
+    end)
+
   end)
 
   it('supports :put', function()
@@ -290,5 +304,29 @@ describe('clipboard usage', function()
     execute("let g:test_clip['*'] = ['s/s/u']")
     feed(':<c-r>*<cr>')
     expect('t/u/t/')
+  end)
+
+  it('supports :redir @*>', function()
+    execute("let g:test_clip['*'] = ['stuff']")
+    execute('redir @*>')
+    -- it is made empty
+    eq({{''}, 'v'}, eval("g:test_clip['*']"))
+    execute('let g:test = doesnotexist')
+    feed('<cr>')
+    eq({{
+      '',
+      '',
+      'E121: Undefined variable: doesnotexist',
+      'E15: Invalid expression: doesnotexist',
+    }, 'v'}, eval("g:test_clip['*']"))
+    execute(':echo "Howdy!"')
+    eq({{
+      '',
+      '',
+      'E121: Undefined variable: doesnotexist',
+      'E15: Invalid expression: doesnotexist',
+      '',
+      'Howdy!',
+    }, 'v'}, eval("g:test_clip['*']"))
   end)
 end)

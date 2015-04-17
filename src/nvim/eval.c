@@ -13629,13 +13629,12 @@ static void f_setreg(typval_T *argvars, typval_T *rettv)
   int regname;
   char_u      *strregname;
   char_u      *stropt;
-  int append;
+  bool append = false;
   char_u yank_type;
   long block_len;
 
   block_len = -1;
   yank_type = MAUTO;
-  append = FALSE;
 
   strregname = get_tv_string_chk(argvars);
   rettv->vval.v_number = 1;             /* FAIL is default */
@@ -13653,7 +13652,7 @@ static void f_setreg(typval_T *argvars, typval_T *rettv)
     for (; *stropt != NUL; ++stropt)
       switch (*stropt) {
       case 'a': case 'A':               /* append */
-        append = TRUE;
+        append = true;
         break;
       case 'v': case 'c':               /* character-wise selection */
         yank_type = MCHAR;

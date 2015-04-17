@@ -6487,7 +6487,7 @@ static void ex_operators(exarg_T *eap)
 
   case CMD_yank:
     oa.op_type = OP_YANK;
-    (void)op_yank(&oa, FALSE, TRUE);
+    (void)op_yank(&oa, true);
     break;
 
   default:          /* CMD_rshift or CMD_lshift */
@@ -6515,7 +6515,7 @@ static void ex_put(exarg_T *eap)
     eap->forceit = TRUE;
   }
   curwin->w_cursor.lnum = eap->line2;
-  do_put(eap->regname, eap->forceit ? BACKWARD : FORWARD, 1L,
+  do_put(eap->regname, NULL, eap->forceit ? BACKWARD : FORWARD, 1L,
       PUT_LINE|PUT_CURSLINE);
 }
 
@@ -6738,8 +6738,7 @@ static void ex_redir(exarg_T *eap)
       /* redirect to a register a-z (resp. A-Z for appending) */
       close_redir();
       ++arg;
-      if (ASCII_ISALPHA(*arg)
-          || *arg == '"') {
+      if (valid_yank_reg(*arg, true) && *arg != '_') {
         redir_reg = *arg++;
         if (*arg == '>' && arg[1] == '>')          /* append */
           arg += 2;
