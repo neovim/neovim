@@ -25,7 +25,6 @@
 #include "nvim/os_unix.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
-#include "nvim/eval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"

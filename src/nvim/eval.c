@@ -64,7 +64,6 @@
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
 #include "nvim/popupmnu.h"
-#include "nvim/profile.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
@@ -75,6 +74,7 @@
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
 #include "nvim/tempfile.h"
+#include "nvim/typval.h"
 #include "nvim/ui.h"
 #include "nvim/mouse.h"
 #include "nvim/terminal.h"
@@ -93,26 +93,6 @@
 #include "nvim/os/dl.h"
 #include "nvim/os/event.h"
 #include "nvim/os/input.h"
-
-#define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
-
-#define DO_NOT_FREE_CNT 99999   /* refcount for dict or list that should not
-                                   be freed. */
-
-#define AUTOLOAD_CHAR '#'       /* Character used as separator in autoload 
-                                   function/variable names. */
-
-/*
- * In a hashtab item "hi_key" points to "di_key" in a dictitem.
- * This avoids adding a pointer to the hashtab item.
- * DI2HIKEY() converts a dictitem pointer to a hashitem key pointer.
- * HIKEY2DI() converts a hashitem key pointer to a dictitem pointer.
- * HI2DI() converts a hashitem pointer to a dictitem pointer.
- */
-static dictitem_T dumdi;
-#define DI2HIKEY(di) ((di)->di_key)
-#define HIKEY2DI(p)  ((dictitem_T *)(p - (dumdi.di_key - (char_u *)&dumdi)))
-#define HI2DI(hi)     HIKEY2DI((hi)->hi_key)
 
 /*
  * Structure returned by get_lval() and used by set_var_lval().
@@ -158,9 +138,7 @@ typedef struct lval_S {
   char_u      *ll_newkey;       /* New key for Dict in alloc. mem or NULL. */
 } lval_T;
 
-
 static char *e_letunexp = N_("E18: Unexpected characters in :let");
-static char *e_listidx = N_("E684: list index out of range: %" PRId64);
 static char *e_undefvar = N_("E121: Undefined variable: %s");
 static char *e_missbrac = N_("E111: Missing ']'");
 static char *e_listarg = N_("E686: Argument of %s must be a List");
@@ -179,9 +157,6 @@ static char *e_dictrange = N_("E719: Cannot use [:] with a Dictionary");
 static char *e_letwrong = N_("E734: Wrong variable type for %s=");
 static char *e_nofunc = N_("E130: Unknown function: %s");
 static char *e_illvar = N_("E461: Illegal variable name: %s");
-static char *e_float_as_string = N_("E806: using Float as a String");
-
-static char_u * const empty_string = (char_u *)"";
 
 static dictitem_T globvars_var;                 /* variable used for g: */
 #define globvarht globvardict.dv_hashtab
@@ -228,65 +203,8 @@ static int echo_attr = 0;   /* attributes used for ":echo" */
 #define GLV_QUIET       TFN_QUIET       /* no error messages */
 #define GLV_NO_AUTOLOAD TFN_NO_AUTOLOAD /* do not use script autoloading */
 
-/*
- * Structure to hold info for a user function.
- */
-typedef struct ufunc ufunc_T;
-
-struct ufunc {
-  int uf_varargs;               /* variable nr of arguments */
-  int uf_flags;
-  int uf_calls;                 /* nr of active calls */
-  garray_T uf_args;             /* arguments */
-  garray_T uf_lines;            /* function lines */
-  int uf_profiling;             /* TRUE when func is being profiled */
-  /* profiling the function as a whole */
-  int uf_tm_count;              /* nr of calls */
-  proftime_T uf_tm_total;       /* time spent in function + children */
-  proftime_T uf_tm_self;        /* time spent in function itself */
-  proftime_T uf_tm_children;    /* time spent in children this call */
-  /* profiling the function per line */
-  int         *uf_tml_count;    /* nr of times line was executed */
-  proftime_T  *uf_tml_total;    /* time spent in a line + children */
-  proftime_T  *uf_tml_self;     /* time spent in a line itself */
-  proftime_T uf_tml_start;      /* start time for current line */
-  proftime_T uf_tml_children;    /* time spent in children for this line */
-  proftime_T uf_tml_wait;       /* start wait time for current line */
-  int uf_tml_idx;               /* index of line being timed; -1 if none */
-  int uf_tml_execed;            /* line being timed was executed */
-  scid_T uf_script_ID;          /* ID of script where function was defined,
-                                   used for s: variables */
-  int uf_refcount;              /* for numbered function: reference count */
-  char_u uf_name[1];            /* name of function (actually longer); can
-                                   start with <SNR>123_ (<SNR> is K_SPECIAL
-                                   KS_EXTRA KE_SNR) */
-};
-
-/* function flags */
-#define FC_ABORT    1           /* abort function on error */
-#define FC_RANGE    2           /* function accepts range */
-#define FC_DICT     4           /* Dict function, uses "self" */
-
-/*
- * All user-defined functions are found in this hashtable.
- */
-static hashtab_T func_hashtab;
-
 /* The names of packages that once were loaded are remembered. */
 static garray_T ga_loaded = {0, 0, sizeof(char_u *), 4, NULL};
-
-/* list heads for garbage collection */
-static dict_T           *first_dict = NULL;     /* list of all dicts */
-static list_T           *first_list = NULL;     /* list of all lists */
-
-/* From user function to hashitem and back. */
-static ufunc_T dumuf;
-#define UF2HIKEY(fp) ((fp)->uf_name)
-#define HIKEY2UF(p)  ((ufunc_T *)(p - (dumuf.uf_name - (char_u *)&dumuf)))
-#define HI2UF(hi)     HIKEY2UF((hi)->hi_key)
-
-#define FUNCARG(fp, j)  ((char_u **)(fp->uf_args.ga_data))[j]
-#define FUNCLINE(fp, j) ((char_u **)(fp->uf_lines.ga_data))[j]
 
 #define MAX_FUNC_ARGS   20      /* maximum number of function arguments */
 #define VAR_SHORT_LEN   20      /* short variable name length */
@@ -2416,46 +2334,6 @@ static int tv_op(typval_T *tv1, typval_T *tv2, char_u *op)
 
   EMSG2(_(e_letwrong), op);
   return FAIL;
-}
-
-/*
- * Add a watcher to a list.
- */
-void list_add_watch(list_T *l, listwatch_T *lw)
-{
-  lw->lw_next = l->lv_watch;
-  l->lv_watch = lw;
-}
-
-/*
- * Remove a watcher from a list.
- * No warning when it isn't found...
- */
-void list_rem_watch(list_T *l, listwatch_T *lwrem)
-{
-  listwatch_T *lw, **lwp;
-
-  lwp = &l->lv_watch;
-  for (lw = l->lv_watch; lw != NULL; lw = lw->lw_next) {
-    if (lw == lwrem) {
-      *lwp = lw->lw_next;
-      break;
-    }
-    lwp = &lw->lw_next;
-  }
-}
-
-/*
- * Just before removing an item from a list: advance watchers to the next
- * item.
- */
-static void list_fix_watch(list_T *l, listitem_T *item)
-{
-  listwatch_T *lw;
-
-  for (lw = l->lv_watch; lw != NULL; lw = lw->lw_next)
-    if (lw->lw_item == item)
-      lw->lw_item = item->li_next;
 }
 
 /*
@@ -4721,23 +4599,6 @@ failret:
 }
 
 /*
- * Allocate an empty header for a list.
- * Caller should take care of the reference count.
- */
-list_T *list_alloc(void) FUNC_ATTR_NONNULL_RET
-{
-  list_T *list = xcalloc(1, sizeof(list_T));
-
-  /* Prepend the list to the list of lists for garbage collection. */
-  if (first_list != NULL)
-    first_list->lv_used_prev = list;
-  list->lv_used_prev = NULL;
-  list->lv_used_next = first_list;
-  first_list = list;
-  return list;
-}
-
-/*
  * Allocate an empty list for a return value.
  */
 static list_T *rettv_list_alloc(typval_T *rettv)
@@ -4747,575 +4608,6 @@ static list_T *rettv_list_alloc(typval_T *rettv)
   rettv->v_type = VAR_LIST;
   ++l->lv_refcount;
   return l;
-}
-
-/*
- * Unreference a list: decrement the reference count and free it when it
- * becomes zero.
- */
-void list_unref(list_T *l)
-{
-  if (l != NULL && --l->lv_refcount <= 0)
-    list_free(l, TRUE);
-}
-
-/*
- * Free a list, including all items it points to.
- * Ignores the reference count.
- */
-void 
-list_free (
-    list_T *l,
-    int recurse            /* Free Lists and Dictionaries recursively. */
-)
-{
-  listitem_T *item;
-
-  /* Remove the list from the list of lists for garbage collection. */
-  if (l->lv_used_prev == NULL)
-    first_list = l->lv_used_next;
-  else
-    l->lv_used_prev->lv_used_next = l->lv_used_next;
-  if (l->lv_used_next != NULL)
-    l->lv_used_next->lv_used_prev = l->lv_used_prev;
-
-  for (item = l->lv_first; item != NULL; item = l->lv_first) {
-    /* Remove the item before deleting it. */
-    l->lv_first = item->li_next;
-    if (recurse || (item->li_tv.v_type != VAR_LIST
-                    && item->li_tv.v_type != VAR_DICT))
-      clear_tv(&item->li_tv);
-    xfree(item);
-  }
-  xfree(l);
-}
-
-/*
- * Allocate a list item.
- */
-listitem_T *listitem_alloc(void) FUNC_ATTR_NONNULL_RET
-{
-  return xmalloc(sizeof(listitem_T));
-}
-
-/*
- * Free a list item.  Also clears the value.  Does not notify watchers.
- */
-void listitem_free(listitem_T *item)
-{
-  clear_tv(&item->li_tv);
-  xfree(item);
-}
-
-/*
- * Remove a list item from a List and free it.  Also clears the value.
- */
-void listitem_remove(list_T *l, listitem_T *item)
-{
-  vim_list_remove(l, item, item);
-  listitem_free(item);
-}
-
-/*
- * Get the number of items in a list.
- */
-static long list_len(list_T *l)
-{
-  if (l == NULL)
-    return 0L;
-  return l->lv_len;
-}
-
-/*
- * Return TRUE when two lists have exactly the same values.
- */
-static int 
-list_equal (
-    list_T *l1,
-    list_T *l2,
-    int ic,                 /* ignore case for strings */
-    int recursive              /* TRUE when used recursively */
-)
-{
-  listitem_T  *item1, *item2;
-
-  if (l1 == NULL || l2 == NULL)
-    return FALSE;
-  if (l1 == l2)
-    return TRUE;
-  if (list_len(l1) != list_len(l2))
-    return FALSE;
-
-  for (item1 = l1->lv_first, item2 = l2->lv_first;
-       item1 != NULL && item2 != NULL;
-       item1 = item1->li_next, item2 = item2->li_next)
-    if (!tv_equal(&item1->li_tv, &item2->li_tv, ic, recursive))
-      return FALSE;
-  return item1 == NULL && item2 == NULL;
-}
-
-/*
- * Return the dictitem that an entry in a hashtable points to.
- */
-dictitem_T *dict_lookup(hashitem_T *hi)
-{
-  return HI2DI(hi);
-}
-
-/*
- * Return TRUE when two dictionaries have exactly the same key/values.
- */
-static int 
-dict_equal (
-    dict_T *d1,
-    dict_T *d2,
-    int ic,                 /* ignore case for strings */
-    int recursive             /* TRUE when used recursively */
-)
-{
-  hashitem_T  *hi;
-  dictitem_T  *item2;
-  int todo;
-
-  if (d1 == NULL || d2 == NULL)
-    return FALSE;
-  if (d1 == d2)
-    return TRUE;
-  if (dict_len(d1) != dict_len(d2))
-    return FALSE;
-
-  todo = (int)d1->dv_hashtab.ht_used;
-  for (hi = d1->dv_hashtab.ht_array; todo > 0; ++hi) {
-    if (!HASHITEM_EMPTY(hi)) {
-      item2 = dict_find(d2, hi->hi_key, -1);
-      if (item2 == NULL)
-        return FALSE;
-      if (!tv_equal(&HI2DI(hi)->di_tv, &item2->di_tv, ic, recursive))
-        return FALSE;
-      --todo;
-    }
-  }
-  return TRUE;
-}
-
-static int tv_equal_recurse_limit;
-
-/*
- * Return TRUE if "tv1" and "tv2" have the same value.
- * Compares the items just like "==" would compare them, but strings and
- * numbers are different.  Floats and numbers are also different.
- */
-static int 
-tv_equal (
-    typval_T *tv1,
-    typval_T *tv2,
-    int ic,                     /* ignore case */
-    int recursive              /* TRUE when used recursively */
-)
-{
-  char_u buf1[NUMBUFLEN], buf2[NUMBUFLEN];
-  char_u      *s1, *s2;
-  static int recursive_cnt = 0;             /* catch recursive loops */
-  int r;
-
-  if (tv1->v_type != tv2->v_type)
-    return FALSE;
-
-  /* Catch lists and dicts that have an endless loop by limiting
-   * recursiveness to a limit.  We guess they are equal then.
-   * A fixed limit has the problem of still taking an awful long time.
-   * Reduce the limit every time running into it. That should work fine for
-   * deeply linked structures that are not recursively linked and catch
-   * recursiveness quickly. */
-  if (!recursive)
-    tv_equal_recurse_limit = 1000;
-  if (recursive_cnt >= tv_equal_recurse_limit) {
-    --tv_equal_recurse_limit;
-    return TRUE;
-  }
-
-  switch (tv1->v_type) {
-  case VAR_LIST:
-    ++recursive_cnt;
-    r = list_equal(tv1->vval.v_list, tv2->vval.v_list, ic, TRUE);
-    --recursive_cnt;
-    return r;
-
-  case VAR_DICT:
-    ++recursive_cnt;
-    r = dict_equal(tv1->vval.v_dict, tv2->vval.v_dict, ic, TRUE);
-    --recursive_cnt;
-    return r;
-
-  case VAR_FUNC:
-    return tv1->vval.v_string != NULL
-           && tv2->vval.v_string != NULL
-           && STRCMP(tv1->vval.v_string, tv2->vval.v_string) == 0;
-
-  case VAR_NUMBER:
-    return tv1->vval.v_number == tv2->vval.v_number;
-
-  case VAR_FLOAT:
-    return tv1->vval.v_float == tv2->vval.v_float;
-
-  case VAR_STRING:
-    s1 = get_tv_string_buf(tv1, buf1);
-    s2 = get_tv_string_buf(tv2, buf2);
-    return (ic ? mb_stricmp(s1, s2) : STRCMP(s1, s2)) == 0;
-  }
-
-  EMSG2(_(e_intern2), "tv_equal()");
-  return TRUE;
-}
-
-/*
- * Locate item with index "n" in list "l" and return it.
- * A negative index is counted from the end; -1 is the last item.
- * Returns NULL when "n" is out of range.
- */
-listitem_T *list_find(list_T *l, long n)
-{
-  listitem_T  *item;
-  long idx;
-
-  if (l == NULL)
-    return NULL;
-
-  /* Negative index is relative to the end. */
-  if (n < 0)
-    n = l->lv_len + n;
-
-  /* Check for index out of range. */
-  if (n < 0 || n >= l->lv_len)
-    return NULL;
-
-  /* When there is a cached index may start search from there. */
-  if (l->lv_idx_item != NULL) {
-    if (n < l->lv_idx / 2) {
-      /* closest to the start of the list */
-      item = l->lv_first;
-      idx = 0;
-    } else if (n > (l->lv_idx + l->lv_len) / 2) {
-      /* closest to the end of the list */
-      item = l->lv_last;
-      idx = l->lv_len - 1;
-    } else {
-      /* closest to the cached index */
-      item = l->lv_idx_item;
-      idx = l->lv_idx;
-    }
-  } else {
-    if (n < l->lv_len / 2) {
-      /* closest to the start of the list */
-      item = l->lv_first;
-      idx = 0;
-    } else {
-      /* closest to the end of the list */
-      item = l->lv_last;
-      idx = l->lv_len - 1;
-    }
-  }
-
-  while (n > idx) {
-    /* search forward */
-    item = item->li_next;
-    ++idx;
-  }
-  while (n < idx) {
-    /* search backward */
-    item = item->li_prev;
-    --idx;
-  }
-
-  /* cache the used index */
-  l->lv_idx = idx;
-  l->lv_idx_item = item;
-
-  return item;
-}
-
-/*
- * Get list item "l[idx]" as a number.
- */
-static long 
-list_find_nr (
-    list_T *l,
-    long idx,
-    int *errorp            /* set to TRUE when something wrong */
-)
-{
-  listitem_T  *li;
-
-  li = list_find(l, idx);
-  if (li == NULL) {
-    if (errorp != NULL)
-      *errorp = TRUE;
-    return -1L;
-  }
-  return get_tv_number_chk(&li->li_tv, errorp);
-}
-
-/*
- * Get list item "l[idx - 1]" as a string.  Returns NULL for failure.
- */
-char_u *list_find_str(list_T *l, long idx)
-{
-  listitem_T  *li;
-
-  li = list_find(l, idx - 1);
-  if (li == NULL) {
-    EMSGN(_(e_listidx), idx);
-    return NULL;
-  }
-  return get_tv_string(&li->li_tv);
-}
-
-/*
- * Locate "item" list "l" and return its index.
- * Returns -1 when "item" is not in the list.
- */
-static long list_idx_of_item(list_T *l, listitem_T *item)
-{
-  long idx = 0;
-  listitem_T  *li;
-
-  if (l == NULL)
-    return -1;
-  idx = 0;
-  for (li = l->lv_first; li != NULL && li != item; li = li->li_next)
-    ++idx;
-  if (li == NULL)
-    return -1;
-  return idx;
-}
-
-/*
- * Append item "item" to the end of list "l".
- */
-void list_append(list_T *l, listitem_T *item)
-{
-  if (l->lv_last == NULL) {
-    /* empty list */
-    l->lv_first = item;
-    l->lv_last = item;
-    item->li_prev = NULL;
-  } else {
-    l->lv_last->li_next = item;
-    item->li_prev = l->lv_last;
-    l->lv_last = item;
-  }
-  ++l->lv_len;
-  item->li_next = NULL;
-}
-
-/*
- * Append typval_T "tv" to the end of list "l".
- */
-void list_append_tv(list_T *l, typval_T *tv)
-{
-  listitem_T  *li = listitem_alloc();
-  copy_tv(tv, &li->li_tv);
-  list_append(l, li);
-}
-
-/*
- * Add a list to a list.
- */
-void list_append_list(list_T *list, list_T *itemlist)
-{
-  listitem_T  *li = listitem_alloc();
-
-  li->li_tv.v_type = VAR_LIST;
-  li->li_tv.v_lock = 0;
-  li->li_tv.vval.v_list = itemlist;
-  list_append(list, li);
-  ++itemlist->lv_refcount;
-}
-
-/*
- * Add a dictionary to a list.  Used by getqflist().
- */
-void list_append_dict(list_T *list, dict_T *dict)
-{
-  listitem_T  *li = listitem_alloc();
-
-  li->li_tv.v_type = VAR_DICT;
-  li->li_tv.v_lock = 0;
-  li->li_tv.vval.v_dict = dict;
-  list_append(list, li);
-  ++dict->dv_refcount;
-}
-
-/*
- * Make a copy of "str" and append it as an item to list "l".
- * When "len" >= 0 use "str[len]".
- */
-void list_append_string(list_T *l, char_u *str, int len)
-{
-  listitem_T *li = listitem_alloc();
-
-  list_append(l, li);
-  li->li_tv.v_type = VAR_STRING;
-  li->li_tv.v_lock = 0;
-
-  if (str == NULL) {
-    li->li_tv.vval.v_string = NULL;
-  } else {
-    li->li_tv.vval.v_string = (len >= 0) ? vim_strnsave(str, len)
-                                         : vim_strsave(str);
-  }
-}
-
-/*
- * Append "n" to list "l".
- */
-void list_append_number(list_T *l, varnumber_T n)
-{
-  listitem_T *li = listitem_alloc();
-  li->li_tv.v_type = VAR_NUMBER;
-  li->li_tv.v_lock = 0;
-  li->li_tv.vval.v_number = n;
-  list_append(l, li);
-}
-
-/*
- * Insert typval_T "tv" in list "l" before "item".
- * If "item" is NULL append at the end.
- */
-void list_insert_tv(list_T *l, typval_T *tv, listitem_T *item)
-{
-  listitem_T  *ni = listitem_alloc();
-
-  copy_tv(tv, &ni->li_tv);
-  list_insert(l, ni, item);
-}
-
-void list_insert(list_T *l, listitem_T *ni, listitem_T *item)
-{
-  if (item == NULL)
-    /* Append new item at end of list. */
-    list_append(l, ni);
-  else {
-    /* Insert new item before existing item. */
-    ni->li_prev = item->li_prev;
-    ni->li_next = item;
-    if (item->li_prev == NULL) {
-      l->lv_first = ni;
-      ++l->lv_idx;
-    } else {
-      item->li_prev->li_next = ni;
-      l->lv_idx_item = NULL;
-    }
-    item->li_prev = ni;
-    ++l->lv_len;
-  }
-}
-
-/*
- * Extend "l1" with "l2".
- * If "bef" is NULL append at the end, otherwise insert before this item.
- */
-static void list_extend(list_T *l1, list_T *l2, listitem_T *bef)
-{
-  listitem_T  *item;
-  int todo = l2->lv_len;
-
-  /* We also quit the loop when we have inserted the original item count of
-   * the list, avoid a hang when we extend a list with itself. */
-  for (item = l2->lv_first; item != NULL && --todo >= 0; item = item->li_next) {
-    list_insert_tv(l1, &item->li_tv, bef);
-  }
-}
-
-/*
- * Concatenate lists "l1" and "l2" into a new list, stored in "tv".
- * Return FAIL on failure to copy.
- */
-static int list_concat(list_T *l1, list_T *l2, typval_T *tv)
-{
-  list_T      *l;
-
-  if (l1 == NULL || l2 == NULL)
-    return FAIL;
-
-  /* make a copy of the first list. */
-  l = list_copy(l1, FALSE, 0);
-  if (l == NULL)
-    return FAIL;
-  tv->v_type = VAR_LIST;
-  tv->vval.v_list = l;
-
-  /* append all items from the second list */
-  list_extend(l, l2, NULL);
-  return OK;
-}
-
-/*
- * Make a copy of list "orig".  Shallow if "deep" is FALSE.
- * The refcount of the new list is set to 1.
- * See item_copy() for "copyID".
- * Returns NULL if orig is NULL or some failure happens.
- */
-static list_T *list_copy(list_T *orig, int deep, int copyID)
-{
-  listitem_T  *item;
-  listitem_T  *ni;
-
-  if (orig == NULL)
-    return NULL;
-
-  list_T *copy = list_alloc();
-  if (copyID != 0) {
-    /* Do this before adding the items, because one of the items may
-     * refer back to this list. */
-    orig->lv_copyID = copyID;
-    orig->lv_copylist = copy;
-  }
-  for (item = orig->lv_first; item != NULL && !got_int;
-       item = item->li_next) {
-    ni = listitem_alloc();
-    if (deep) {
-      if (item_copy(&item->li_tv, &ni->li_tv, deep, copyID) == FAIL) {
-        xfree(ni);
-        break;
-      }
-    } else
-      copy_tv(&item->li_tv, &ni->li_tv);
-    list_append(copy, ni);
-  }
-  ++copy->lv_refcount;
-  if (item != NULL) {
-    list_unref(copy);
-    copy = NULL;
-  }
-
-  return copy;
-}
-
-/// Remove items "item" to "item2" from list "l".
-/// @warning Does not free the listitem or the value!
-void vim_list_remove(list_T *l, listitem_T *item, listitem_T *item2)
-{
-  // notify watchers
-  for (listitem_T *ip = item; ip != NULL; ip = ip->li_next) {
-    --l->lv_len;
-    list_fix_watch(l, ip);
-    if (ip == item2) {
-      break;
-    }
-  }
-
-  if (item2->li_next == NULL) {
-    l->lv_last = item->li_prev;
-  } else {
-    item2->li_next->li_prev = item->li_prev;
-  }
-  if (item->li_prev == NULL) {
-    l->lv_first = item2->li_next;
-  } else {
-    item->li_prev->li_next = item2->li_next;
-  }
-  l->lv_idx_item = NULL;
 }
 
 /*
@@ -5653,30 +4945,6 @@ void set_ref_in_item(typval_T *tv, int copyID)
 }
 
 /*
- * Allocate an empty header for a dictionary.
- */
-dict_T *dict_alloc(void) FUNC_ATTR_NONNULL_RET
-{
-  dict_T *d = xmalloc(sizeof(dict_T));
-
-  /* Add the dict to the list of dicts for garbage collection. */
-  if (first_dict != NULL)
-    first_dict->dv_used_prev = d;
-  d->dv_used_next = first_dict;
-  d->dv_used_prev = NULL;
-  first_dict = d;
-
-  hash_init(&d->dv_hashtab);
-  d->dv_lock = 0;
-  d->dv_scope = 0;
-  d->dv_refcount = 0;
-  d->dv_copyID = 0;
-  d->internal_refcount = 0;
-
-  return d;
-}
-
-/*
  * Allocate an empty dict for a return value.
  */
 static void rettv_dict_alloc(typval_T *rettv)
@@ -5686,258 +4954,6 @@ static void rettv_dict_alloc(typval_T *rettv)
   rettv->vval.v_dict = d;
   rettv->v_type = VAR_DICT;
   ++d->dv_refcount;
-}
-
-
-/*
- * Unreference a Dictionary: decrement the reference count and free it when it
- * becomes zero.
- */
-void dict_unref(dict_T *d)
-{
-  if (d != NULL && --d->dv_refcount <= 0)
-    dict_free(d, TRUE);
-}
-
-/*
- * Free a Dictionary, including all items it contains.
- * Ignores the reference count.
- */
-void 
-dict_free (
-    dict_T *d,
-    int recurse            /* Free Lists and Dictionaries recursively. */
-)
-{
-  int todo;
-  hashitem_T  *hi;
-  dictitem_T  *di;
-
-  /* Remove the dict from the list of dicts for garbage collection. */
-  if (d->dv_used_prev == NULL)
-    first_dict = d->dv_used_next;
-  else
-    d->dv_used_prev->dv_used_next = d->dv_used_next;
-  if (d->dv_used_next != NULL)
-    d->dv_used_next->dv_used_prev = d->dv_used_prev;
-
-  /* Lock the hashtab, we don't want it to resize while freeing items. */
-  hash_lock(&d->dv_hashtab);
-  assert(d->dv_hashtab.ht_locked > 0);
-  todo = (int)d->dv_hashtab.ht_used;
-  for (hi = d->dv_hashtab.ht_array; todo > 0; ++hi) {
-    if (!HASHITEM_EMPTY(hi)) {
-      /* Remove the item before deleting it, just in case there is
-       * something recursive causing trouble. */
-      di = HI2DI(hi);
-      hash_remove(&d->dv_hashtab, hi);
-      if (recurse || (di->di_tv.v_type != VAR_LIST
-                      && di->di_tv.v_type != VAR_DICT))
-        clear_tv(&di->di_tv);
-      xfree(di);
-      --todo;
-    }
-  }
-  hash_clear(&d->dv_hashtab);
-  xfree(d);
-}
-
-/*
- * Allocate a Dictionary item.
- * The "key" is copied to the new item.
- * Note that the value of the item "di_tv" still needs to be initialized!
- */
-dictitem_T *dictitem_alloc(char_u *key) FUNC_ATTR_NONNULL_RET
-{
-  dictitem_T *di = xmalloc(sizeof(dictitem_T) + STRLEN(key));
-#ifndef __clang_analyzer__
-  STRCPY(di->di_key, key);
-#endif
-  di->di_flags = 0;
-  return di;
-}
-
-/*
- * Make a copy of a Dictionary item.
- */
-static dictitem_T *dictitem_copy(dictitem_T *org) FUNC_ATTR_NONNULL_RET
-{
-  dictitem_T *di = xmalloc(sizeof(dictitem_T) + STRLEN(org->di_key));
-
-  STRCPY(di->di_key, org->di_key);
-  di->di_flags = 0;
-  copy_tv(&org->di_tv, &di->di_tv);
-
-  return di;
-}
-
-/*
- * Remove item "item" from Dictionary "dict" and free it.
- */
-static void dictitem_remove(dict_T *dict, dictitem_T *item)
-{
-  hashitem_T  *hi;
-
-  hi = hash_find(&dict->dv_hashtab, item->di_key);
-  if (HASHITEM_EMPTY(hi))
-    EMSG2(_(e_intern2), "dictitem_remove()");
-  else
-    hash_remove(&dict->dv_hashtab, hi);
-  dictitem_free(item);
-}
-
-/*
- * Free a dict item.  Also clears the value.
- */
-void dictitem_free(dictitem_T *item)
-{
-  clear_tv(&item->di_tv);
-  xfree(item);
-}
-
-/*
- * Make a copy of dict "d".  Shallow if "deep" is FALSE.
- * The refcount of the new dict is set to 1.
- * See item_copy() for "copyID".
- * Returns NULL if orig is NULL or some other failure.
- */
-static dict_T *dict_copy(dict_T *orig, int deep, int copyID)
-{
-  dictitem_T  *di;
-  int todo;
-  hashitem_T  *hi;
-
-  if (orig == NULL)
-    return NULL;
-
-  dict_T *copy = dict_alloc();
-  {
-    if (copyID != 0) {
-      orig->dv_copyID = copyID;
-      orig->dv_copydict = copy;
-    }
-    todo = (int)orig->dv_hashtab.ht_used;
-    for (hi = orig->dv_hashtab.ht_array; todo > 0 && !got_int; ++hi) {
-      if (!HASHITEM_EMPTY(hi)) {
-        --todo;
-
-        di = dictitem_alloc(hi->hi_key);
-        if (deep) {
-          if (item_copy(&HI2DI(hi)->di_tv, &di->di_tv, deep,
-                  copyID) == FAIL) {
-            xfree(di);
-            break;
-          }
-        } else
-          copy_tv(&HI2DI(hi)->di_tv, &di->di_tv);
-        if (dict_add(copy, di) == FAIL) {
-          dictitem_free(di);
-          break;
-        }
-      }
-    }
-
-    ++copy->dv_refcount;
-    if (todo > 0) {
-      dict_unref(copy);
-      copy = NULL;
-    }
-  }
-
-  return copy;
-}
-
-/*
- * Add item "item" to Dictionary "d".
- * Returns FAIL when key already exists.
- */
-int dict_add(dict_T *d, dictitem_T *item)
-{
-  return hash_add(&d->dv_hashtab, item->di_key);
-}
-
-/*
- * Add a number or string entry to dictionary "d".
- * When "str" is NULL use number "nr", otherwise use "str".
- * Returns FAIL when key already exists.
- */
-int dict_add_nr_str(dict_T *d, char *key, long nr, char_u *str)
-{
-  dictitem_T  *item;
-
-  item = dictitem_alloc((char_u *)key);
-  item->di_tv.v_lock = 0;
-  if (str == NULL) {
-    item->di_tv.v_type = VAR_NUMBER;
-    item->di_tv.vval.v_number = nr;
-  } else {
-    item->di_tv.v_type = VAR_STRING;
-    item->di_tv.vval.v_string = vim_strsave(str);
-  }
-  if (dict_add(d, item) == FAIL) {
-    dictitem_free(item);
-    return FAIL;
-  }
-  return OK;
-}
-
-/*
- * Add a list entry to dictionary "d".
- * Returns FAIL when key already exists.
- */
-int dict_add_list(dict_T *d, char *key, list_T *list)
-{
-  dictitem_T *item = dictitem_alloc((char_u *)key);
-
-  item->di_tv.v_lock = 0;
-  item->di_tv.v_type = VAR_LIST;
-  item->di_tv.vval.v_list = list;
-  if (dict_add(d, item) == FAIL) {
-    dictitem_free(item);
-    return FAIL;
-  }
-  ++list->lv_refcount;
-  return OK;
-}
-
-/*
- * Get the number of items in a Dictionary.
- */
-static long dict_len(dict_T *d)
-{
-  if (d == NULL)
-    return 0L;
-  return (long)d->dv_hashtab.ht_used;
-}
-
-/*
- * Find item "key[len]" in Dictionary "d".
- * If "len" is negative use strlen(key).
- * Returns NULL when not found.
- */
-dictitem_T *dict_find(dict_T *d, char_u *key, int len)
-{
-#define AKEYLEN 200
-  char_u buf[AKEYLEN];
-  char_u      *akey;
-  char_u      *tofree = NULL;
-  hashitem_T  *hi;
-
-  if (len < 0)
-    akey = key;
-  else if (len >= AKEYLEN) {
-    tofree = akey = vim_strnsave(key, len);
-  } else {
-    /* Avoid a malloc/free by using buf[]. */
-    STRLCPY(buf, key, len + 1);
-    akey = buf;
-  }
-
-  hi = hash_find(&d->dv_hashtab, akey);
-  xfree(tofree);
-  if (HASHITEM_EMPTY(hi))
-    return NULL;
-  return HI2DI(hi);
 }
 
 /// Get a function from a dictionary
@@ -5981,38 +4997,6 @@ static bool get_dict_callback(dict_T *d, char *key, ufunc_T **result)
 
   *result = rv;
   return true;
-}
-
-/*
- * Get a string item from a dictionary.
- * When "save" is TRUE allocate memory for it.
- * Returns NULL if the entry doesn't exist.
- */
-char_u *get_dict_string(dict_T *d, char_u *key, int save)
-{
-  dictitem_T  *di;
-  char_u      *s;
-
-  di = dict_find(d, key, -1);
-  if (di == NULL)
-    return NULL;
-  s = get_tv_string(&di->di_tv);
-  if (save) {
-    s = vim_strsave(s);
-  }
-  return s;
-}
-
-/*
- * Get a number item from a dictionary.
- * Returns 0 if the entry doesn't exist.
- */
-long get_dict_number(dict_T *d, char_u *key)
-{
-  dictitem_T *di = dict_find(d, key, -1);
-  if (di == NULL)
-    return 0;
-  return get_tv_number(&di->di_tv);
 }
 
 /*
@@ -6692,7 +5676,6 @@ static struct fst {
   {"xor",             2, 2, f_xor},
 };
 
-
 /*
  * Function given to ExpandGeneric() to obtain the list of internal
  * or user defined function names.
@@ -6739,49 +5722,46 @@ char_u *get_expr_name(expand_T *xp, int idx)
   return get_user_var_name(xp, ++intidx);
 }
 
+int translated_function_exists(char_u *name)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (builtin_function(name, -1)) {
+    return find_internal_func(name) >= 0;
+  }
+  return find_func(name) != NULL;
+}
 
-
-
-/*
- * Find internal function in table above.
- * Return index, or -1 if not found
- */
-static int 
-find_internal_func (
-    char_u *name              /* name of the function */
-)
+/// Finds internal function in table above.
+/// Return index, or -1 if not found
+int find_internal_func(char_u *name)
+  FUNC_ATTR_NONNULL_ALL
 {
   int first = 0;
   int last = (int)ARRAY_SIZE(functions) - 1;
 
-  /*
-   * Find the function name in the table. Binary search.
-   */
+  // Find the function name in the table. Binary search.
   while (first <= last) {
     int x = first + ((unsigned)(last - first)) / 2;
     int cmp = STRCMP(name, functions[x].f_name);
-    if (cmp < 0)
+    if (cmp < 0) {
       last = x - 1;
-    else if (cmp > 0)
+    } else if (cmp > 0) {
       first = x + 1;
-    else
+    } else {
       return x;
+    }
   }
   return -1;
 }
 
-/*
- * Check if "name" is a variable of type VAR_FUNC.  If so, return the function
- * name it contains, otherwise return "name".
- */
-static char_u *deref_func_name(char_u *name, int *lenp, int no_autoload)
+/// Checks if "name" is a variable of type VAR_FUNC.  If so, return the
+/// function name it contains, otherwise return "name".
+char_u *deref_func_name(char_u *name, int *lenp, int no_autoload)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
-  dictitem_T  *v;
-  int cc;
-
-  cc = name[*lenp];
+  int cc = name[*lenp];
   name[*lenp] = NUL;
-  v = find_var(name, NULL, no_autoload);
+  dictitem_T *v = find_var(name, NULL, no_autoload);
   name[*lenp] = cc;
   if (v != NULL && v->di_tv.v_type == VAR_FUNC) {
     if (v->di_tv.vval.v_string == NULL) {
@@ -16550,137 +15530,6 @@ handle_subscript (
 }
 
 /*
- * Free the memory for a variable type-value.
- */
-void free_tv(typval_T *varp)
-{
-  if (varp != NULL) {
-    switch (varp->v_type) {
-    case VAR_FUNC:
-      func_unref(varp->vval.v_string);
-    /*FALLTHROUGH*/
-    case VAR_STRING:
-      xfree(varp->vval.v_string);
-      break;
-    case VAR_LIST:
-      list_unref(varp->vval.v_list);
-      break;
-    case VAR_DICT:
-      dict_unref(varp->vval.v_dict);
-      break;
-    case VAR_NUMBER:
-    case VAR_FLOAT:
-    case VAR_UNKNOWN:
-      break;
-    default:
-      EMSG2(_(e_intern2), "free_tv()");
-      break;
-    }
-    xfree(varp);
-  }
-}
-
-/*
- * Free the memory for a variable value and set the value to NULL or 0.
- */
-void clear_tv(typval_T *varp)
-{
-  if (varp != NULL) {
-    switch (varp->v_type) {
-    case VAR_FUNC:
-      func_unref(varp->vval.v_string);
-      if (varp->vval.v_string != empty_string) {
-        xfree(varp->vval.v_string);
-      }
-      varp->vval.v_string = NULL;
-      break;
-    case VAR_STRING:
-      xfree(varp->vval.v_string);
-      varp->vval.v_string = NULL;
-      break;
-    case VAR_LIST:
-      list_unref(varp->vval.v_list);
-      varp->vval.v_list = NULL;
-      break;
-    case VAR_DICT:
-      dict_unref(varp->vval.v_dict);
-      varp->vval.v_dict = NULL;
-      break;
-    case VAR_NUMBER:
-      varp->vval.v_number = 0;
-      break;
-    case VAR_FLOAT:
-      varp->vval.v_float = 0.0;
-      break;
-    case VAR_UNKNOWN:
-      break;
-    default:
-      EMSG2(_(e_intern2), "clear_tv()");
-    }
-    varp->v_lock = 0;
-  }
-}
-
-/*
- * Set the value of a variable to NULL without freeing items.
- */
-static void init_tv(typval_T *varp)
-{
-  if (varp != NULL)
-    memset(varp, 0, sizeof(typval_T));
-}
-
-/*
- * Get the number value of a variable.
- * If it is a String variable, uses vim_str2nr().
- * For incompatible types, return 0.
- * get_tv_number_chk() is similar to get_tv_number(), but informs the
- * caller of incompatible types: it sets *denote to TRUE if "denote"
- * is not NULL or returns -1 otherwise.
- */
-static long get_tv_number(typval_T *varp)
-{
-  int error = FALSE;
-
-  return get_tv_number_chk(varp, &error);       /* return 0L on error */
-}
-
-long get_tv_number_chk(typval_T *varp, int *denote)
-{
-  long n = 0L;
-
-  switch (varp->v_type) {
-  case VAR_NUMBER:
-    return (long)(varp->vval.v_number);
-  case VAR_FLOAT:
-    EMSG(_("E805: Using a Float as a Number"));
-    break;
-  case VAR_FUNC:
-    EMSG(_("E703: Using a Funcref as a Number"));
-    break;
-  case VAR_STRING:
-    if (varp->vval.v_string != NULL)
-      vim_str2nr(varp->vval.v_string, NULL, NULL,
-          TRUE, TRUE, &n, NULL);
-    return n;
-  case VAR_LIST:
-    EMSG(_("E745: Using a List as a Number"));
-    break;
-  case VAR_DICT:
-    EMSG(_("E728: Using a Dictionary as a Number"));
-    break;
-  default:
-    EMSG2(_(e_intern2), "get_tv_number()");
-    break;
-  }
-  if (denote == NULL)           /* useful for values that must be unsigned */
-    n = -1;
-  else
-    *denote = TRUE;
-  return n;
-}
-
-/*
  * Get the lnum from the first argument.
  * Also accepts ".", "$", etc., but that only works for the current buffer.
  * Returns -1 on error.
@@ -16713,71 +15562,6 @@ static linenr_T get_tv_lnum_buf(typval_T *argvars, buf_T *buf)
       && buf != NULL)
     return buf->b_ml.ml_line_count;
   return get_tv_number_chk(&argvars[0], NULL);
-}
-
-/*
- * Get the string value of a variable.
- * If it is a Number variable, the number is converted into a string.
- * get_tv_string() uses a single, static buffer.  YOU CAN ONLY USE IT ONCE!
- * get_tv_string_buf() uses a given buffer.
- * If the String variable has never been set, return an empty string.
- * Never returns NULL;
- * get_tv_string_chk() and get_tv_string_buf_chk() are similar, but return
- * NULL on error.
- */
-static char_u *get_tv_string(const typval_T *varp)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
-{
-  static char_u mybuf[NUMBUFLEN];
-
-  return get_tv_string_buf(varp, mybuf);
-}
-
-static char_u *get_tv_string_buf(const typval_T *varp, char_u *buf)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
-{
-  char_u      *res =  get_tv_string_buf_chk(varp, buf);
-
-  return res != NULL ? res : (char_u *)"";
-}
-
-/// Careful: This uses a single, static buffer.  YOU CAN ONLY USE IT ONCE!
-char_u *get_tv_string_chk(const typval_T *varp)
-  FUNC_ATTR_NONNULL_ALL
-{
-  static char_u mybuf[NUMBUFLEN];
-
-  return get_tv_string_buf_chk(varp, mybuf);
-}
-
-static char_u *get_tv_string_buf_chk(const typval_T *varp, char_u *buf)
-  FUNC_ATTR_NONNULL_ALL
-{
-  switch (varp->v_type) {
-  case VAR_NUMBER:
-    sprintf((char *)buf, "%" PRId64, (int64_t)varp->vval.v_number);
-    return buf;
-  case VAR_FUNC:
-    EMSG(_("E729: using Funcref as a String"));
-    break;
-  case VAR_LIST:
-    EMSG(_("E730: using List as a String"));
-    break;
-  case VAR_DICT:
-    EMSG(_("E731: using Dictionary as a String"));
-    break;
-  case VAR_FLOAT:
-    EMSG(_(e_float_as_string));
-    break;
-  case VAR_STRING:
-    if (varp->vval.v_string != NULL)
-      return varp->vval.v_string;
-    return (char_u *)"";
-  default:
-    EMSG2(_(e_intern2), "get_tv_string_buf()");
-    break;
-  }
-  return NULL;
 }
 
 /*
@@ -16936,87 +15720,6 @@ void new_script_vars(scid_T id)
       ++ga_scripts.ga_len;
     }
   }
-}
-
-/*
- * Initialize dictionary "dict" as a scope and set variable "dict_var" to
- * point to it.
- */
-void init_var_dict(dict_T *dict, dictitem_T *dict_var, int scope)
-{
-  hash_init(&dict->dv_hashtab);
-  dict->dv_lock = 0;
-  dict->dv_scope = scope;
-  dict->dv_refcount = DO_NOT_FREE_CNT;
-  dict->dv_copyID = 0;
-  dict_var->di_tv.vval.v_dict = dict;
-  dict_var->di_tv.v_type = VAR_DICT;
-  dict_var->di_tv.v_lock = VAR_FIXED;
-  dict_var->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
-  dict_var->di_key[0] = NUL;
-}
-
-/*
- * Unreference a dictionary initialized by init_var_dict().
- */
-void unref_var_dict(dict_T *dict)
-{
-  /* Now the dict needs to be freed if no one else is using it, go back to
-   * normal reference counting. */
-  dict->dv_refcount -= DO_NOT_FREE_CNT - 1;
-  dict_unref(dict);
-}
-
-/*
- * Clean up a list of internal variables.
- * Frees all allocated variables and the value they contain.
- * Clears hashtab "ht", does not free it.
- */
-void vars_clear(hashtab_T *ht)
-{
-  vars_clear_ext(ht, TRUE);
-}
-
-/*
- * Like vars_clear(), but only free the value if "free_val" is TRUE.
- */
-static void vars_clear_ext(hashtab_T *ht, int free_val)
-{
-  int todo;
-  hashitem_T  *hi;
-  dictitem_T  *v;
-
-  hash_lock(ht);
-  todo = (int)ht->ht_used;
-  for (hi = ht->ht_array; todo > 0; ++hi) {
-    if (!HASHITEM_EMPTY(hi)) {
-      --todo;
-
-      /* Free the variable.  Don't remove it from the hashtab,
-       * ht_array might change then.  hash_clear() takes care of it
-       * later. */
-      v = HI2DI(hi);
-      if (free_val)
-        clear_tv(&v->di_tv);
-      if ((v->di_flags & DI_FLAGS_FIX) == 0)
-        xfree(v);
-    }
-  }
-  hash_clear(ht);
-  ht->ht_used = 0;
-}
-
-/*
- * Delete a variable from hashtab "ht" at item "hi".
- * Clear the variable value and free the dictitem.
- */
-static void delete_var(hashtab_T *ht, hashitem_T *hi)
-{
-  dictitem_T  *di = HI2DI(hi);
-
-  hash_remove(ht, hi);
-  clear_tv(&di->di_tv);
-  xfree(di);
 }
 
 /*
@@ -17252,136 +15955,6 @@ static int valid_varname(char_u *varname)
       return FALSE;
     }
   return TRUE;
-}
-
-/*
- * Return TRUE if typeval "tv" is set to be locked (immutable).
- * Also give an error message, using "name".
- */
-static int tv_check_lock(int lock, char_u *name)
-{
-  if (lock & VAR_LOCKED) {
-    EMSG2(_("E741: Value is locked: %s"),
-        name == NULL ? (char_u *)_("Unknown") : name);
-    return TRUE;
-  }
-  if (lock & VAR_FIXED) {
-    EMSG2(_("E742: Cannot change value of %s"),
-        name == NULL ? (char_u *)_("Unknown") : name);
-    return TRUE;
-  }
-  return FALSE;
-}
-
-/*
- * Copy the values from typval_T "from" to typval_T "to".
- * When needed allocates string or increases reference count.
- * Does not make a copy of a list or dict but copies the reference!
- * It is OK for "from" and "to" to point to the same item.  This is used to
- * make a copy later.
- */
-void copy_tv(typval_T *from, typval_T *to)
-{
-  to->v_type = from->v_type;
-  to->v_lock = 0;
-  switch (from->v_type) {
-  case VAR_NUMBER:
-    to->vval.v_number = from->vval.v_number;
-    break;
-  case VAR_FLOAT:
-    to->vval.v_float = from->vval.v_float;
-    break;
-  case VAR_STRING:
-  case VAR_FUNC:
-    if (from->vval.v_string == NULL)
-      to->vval.v_string = NULL;
-    else {
-      to->vval.v_string = vim_strsave(from->vval.v_string);
-      if (from->v_type == VAR_FUNC)
-        func_ref(to->vval.v_string);
-    }
-    break;
-  case VAR_LIST:
-    if (from->vval.v_list == NULL)
-      to->vval.v_list = NULL;
-    else {
-      to->vval.v_list = from->vval.v_list;
-      ++to->vval.v_list->lv_refcount;
-    }
-    break;
-  case VAR_DICT:
-    if (from->vval.v_dict == NULL)
-      to->vval.v_dict = NULL;
-    else {
-      to->vval.v_dict = from->vval.v_dict;
-      ++to->vval.v_dict->dv_refcount;
-    }
-    break;
-  default:
-    EMSG2(_(e_intern2), "copy_tv()");
-    break;
-  }
-}
-
-/*
- * Make a copy of an item.
- * Lists and Dictionaries are also copied.  A deep copy if "deep" is set.
- * For deepcopy() "copyID" is zero for a full copy or the ID for when a
- * reference to an already copied list/dict can be used.
- * Returns FAIL or OK.
- */
-static int item_copy(typval_T *from, typval_T *to, int deep, int copyID)
-{
-  static int recurse = 0;
-  int ret = OK;
-
-  if (recurse >= DICT_MAXNEST) {
-    EMSG(_("E698: variable nested too deep for making a copy"));
-    return FAIL;
-  }
-  ++recurse;
-
-  switch (from->v_type) {
-  case VAR_NUMBER:
-  case VAR_FLOAT:
-  case VAR_STRING:
-  case VAR_FUNC:
-    copy_tv(from, to);
-    break;
-  case VAR_LIST:
-    to->v_type = VAR_LIST;
-    to->v_lock = 0;
-    if (from->vval.v_list == NULL)
-      to->vval.v_list = NULL;
-    else if (copyID != 0 && from->vval.v_list->lv_copyID == copyID) {
-      /* use the copy made earlier */
-      to->vval.v_list = from->vval.v_list->lv_copylist;
-      ++to->vval.v_list->lv_refcount;
-    } else
-      to->vval.v_list = list_copy(from->vval.v_list, deep, copyID);
-    if (to->vval.v_list == NULL)
-      ret = FAIL;
-    break;
-  case VAR_DICT:
-    to->v_type = VAR_DICT;
-    to->v_lock = 0;
-    if (from->vval.v_dict == NULL)
-      to->vval.v_dict = NULL;
-    else if (copyID != 0 && from->vval.v_dict->dv_copyID == copyID) {
-      /* use the copy made earlier */
-      to->vval.v_dict = from->vval.v_dict->dv_copydict;
-      ++to->vval.v_dict->dv_refcount;
-    } else
-      to->vval.v_dict = dict_copy(from->vval.v_dict, deep, copyID);
-    if (to->vval.v_dict == NULL)
-      ret = FAIL;
-    break;
-  default:
-    EMSG2(_(e_intern2), "item_copy()");
-    ret = FAIL;
-  }
-  --recurse;
-  return ret;
 }
 
 /*
@@ -18404,45 +16977,6 @@ static void list_func_head(ufunc_T *fp, int indent)
 }
 
 /*
- * Find a function by name, return pointer to it in ufuncs.
- * Return NULL for unknown function.
- */
-static ufunc_T *find_func(char_u *name)
-{
-  hashitem_T  *hi;
-
-  hi = hash_find(&func_hashtab, name);
-  if (!HASHITEM_EMPTY(hi))
-    return HI2UF(hi);
-  return NULL;
-}
-
-#if defined(EXITFREE)
-void free_all_functions(void)
-{
-  hashitem_T  *hi;
-
-  /* Need to start all over every time, because func_free() may change the
-   * hash table. */
-  while (func_hashtab.ht_used > 0)
-    for (hi = func_hashtab.ht_array;; ++hi)
-      if (!HASHITEM_EMPTY(hi)) {
-        func_free(HI2UF(hi));
-        break;
-      }
-}
-
-#endif
-
-int translated_function_exists(char_u *name)
-{
-  if (builtin_function(name, -1)) {
-    return find_internal_func(name) >= 0;
-  }
-  return find_func(name) != NULL;
-}
-
-/*
  * Return TRUE if a function "name" exists.
  */
 static int function_exists(char_u *name)
@@ -18461,21 +16995,6 @@ static int function_exists(char_u *name)
     n = translated_function_exists(p);
   xfree(p);
   return n;
-}
-
-/// Return TRUE if "name" looks like a builtin function name: starts with a
-/// lower case letter and doesn't contain AUTOLOAD_CHAR.
-/// "len" is the length of "name", or -1 for NUL terminated.
-static bool builtin_function(char_u *name, int len)
-{
-  if (!ASCII_ISLOWER(name[0])) {
-    return FALSE;
-  }
-
-  char_u *p = vim_strchr(name, AUTOLOAD_CHAR);
-
-  return p == NULL
-         || (len > 0 && p > name + len);
 }
 
 /*
@@ -18815,74 +17334,6 @@ void ex_delfunction(exarg_T *eap)
   }
 }
 
-/*
- * Free a function and remove it from the list of functions.
- */
-static void func_free(ufunc_T *fp)
-{
-  hashitem_T  *hi;
-
-  /* clear this function */
-  ga_clear_strings(&(fp->uf_args));
-  ga_clear_strings(&(fp->uf_lines));
-  xfree(fp->uf_tml_count);
-  xfree(fp->uf_tml_total);
-  xfree(fp->uf_tml_self);
-
-  /* remove the function from the function hashtable */
-  hi = hash_find(&func_hashtab, UF2HIKEY(fp));
-  if (HASHITEM_EMPTY(hi))
-    EMSG2(_(e_intern2), "func_free()");
-  else
-    hash_remove(&func_hashtab, hi);
-
-  xfree(fp);
-}
-
-/*
- * Unreference a Function: decrement the reference count and free it when it
- * becomes zero.  Only for numbered functions.
- */
-void func_unref(char_u *name)
-{
-  ufunc_T *fp;
-
-  if (name != NULL && isdigit(*name)) {
-    fp = find_func(name);
-    if (fp == NULL) {
-      EMSG2(_(e_intern2), "func_unref()");
-    } else {
-      user_func_unref(fp);
-    }
-  }
-}
-
-static void user_func_unref(ufunc_T *fp)
-{
-  if (--fp->uf_refcount <= 0) {
-    // Only delete it when it's not being used.  Otherwise it's done
-    // when "uf_calls" becomes zero.
-    if (fp->uf_calls == 0) {
-      func_free(fp);
-    }
-  }
-}
-
-/*
- * Count a reference to a Function.
- */
-void func_ref(char_u *name)
-{
-  ufunc_T *fp;
-
-  if (name != NULL && isdigit(*name)) {
-    fp = find_func(name);
-    if (fp == NULL)
-      EMSG2(_(e_intern2), "func_ref()");
-    else
-      ++fp->uf_refcount;
-  }
-}
 
 /*
  * Call a user function.

@@ -169,10 +169,12 @@
 #define CMDBUFFSIZE 1024        /* size of the command processing buffer */
 
 /* Use the system path length if it makes sense. */
-#if defined(PATH_MAX) && (PATH_MAX > 1000)
-# define MAXPATHL       PATH_MAX
-#else
-# define MAXPATHL       1024
+#ifndef MAXPATHL
+# if defined(PATH_MAX) && (PATH_MAX > 1000)
+#  define MAXPATHL       PATH_MAX
+# else
+#  define MAXPATHL       1024
+# endif
 #endif
 
 # ifndef DFLT_MAXMEM
