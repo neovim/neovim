@@ -18911,7 +18911,7 @@ call_user_func (
   char_u numbuf[NUMBUFLEN];
   char_u      *name;
   proftime_T wait_start;
-  proftime_T call_start;
+  proftime_T call_start = NULL;
 
   /* If depth of calling is getting too high, don't execute the function */
   if (depth >= p_mfd) {
