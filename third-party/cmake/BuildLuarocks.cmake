@@ -26,6 +26,11 @@ ExternalProject_Add(luarocks
 
 list(APPEND THIRD_PARTY_DEPS luarocks)
 
+# The path to the luarocks executable
+set(LUAROCKS_BINARY ${DEPS_BIN_DIR}/luarocks)
+# Common build arguments for luarocks build
+set(LUAROCKS_BUILDARGS CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER})
+
 if(USE_BUNDLED_LUAJIT)
   add_dependencies(luarocks luajit)
 endif()
@@ -33,8 +38,8 @@ endif()
 # Each target depends on the previous module, this serializes all calls to
 # luarocks since it is unhappy to be called in parallel.
 add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/lua-messagepack
-  COMMAND ${DEPS_BIN_DIR}/luarocks
-  ARGS build lua-messagepack CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
+  COMMAND ${LUAROCKS_BINARY}
+  ARGS build lua-messagepack ${LUAROCKS_BUILDARGS}
   DEPENDS luarocks)
 add_custom_target(lua-messagepack
   DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/lua-messagepack)
@@ -42,8 +47,8 @@ add_custom_target(lua-messagepack
 # Like before, depend on lua-messagepack to ensure serialization of install
 # commands
 add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/lpeg
-  COMMAND ${DEPS_BIN_DIR}/luarocks
-  ARGS build lpeg CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
+  COMMAND ${LUAROCKS_BINARY}
+  ARGS build lpeg ${LUAROCKS_BUILDARGS}
   DEPENDS lua-messagepack)
 add_custom_target(lpeg
   DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/lpeg)
@@ -55,41 +60,41 @@ if(USE_BUNDLED_BUSTED)
   # with busted
   
   add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build lua_cliargs 2.3-3 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build luafilesystem 1.6.3-1 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build dkjson 2.5-1 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build say 1.3-0 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build luassert 1.7.4-0 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build lua-term 0.1-1 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build penlight 1.0.0-1 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build mediator_lua 1.1-3 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build luasocket 3.0rc1-2 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build xml 1.1.1-1 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
+    COMMAND ${LUAROCKS_BINARY}
+    ARGS build lua_cliargs 2.3-3 ${LUAROCKS_BUILDARGS}
+    COMMAND ${LUAROCKS_BINARY}
+    ARGS build luafilesystem 1.6.3-1 ${LUAROCKS_BUILDARGS}
+    COMMAND ${LUAROCKS_BINARY}
+    ARGS build dkjson 2.5-1 ${LUAROCKS_BUILDARGS}
+    COMMAND ${LUAROCKS_BINARY}
+    ARGS build say 1.3-0 ${LUAROCKS_BUILDARGS}
+    COMMAND ${LUAROCKS_BINARY}
+    ARGS build luassert 1.7.4-0 ${LUAROCKS_BUILDARGS}
+    COMMAND ${LUAROCKS_BINARY}
+    ARGS build lua-term 0.1-1 ${LUAROCKS_BUILDARGS}
+    COMMAND ${LUAROCKS_BINARY}
+    ARGS build penlight 1.0.0-1 ${LUAROCKS_BUILDARGS}
+    COMMAND ${LUAROCKS_BINARY}
+    ARGS build mediator_lua 1.1-3 ${LUAROCKS_BUILDARGS}
+    COMMAND ${LUAROCKS_BINARY}
+    ARGS build luasocket 3.0rc1-2 ${LUAROCKS_BUILDARGS}
+    COMMAND ${LUAROCKS_BINARY}
+    ARGS build xml 1.1.1-1 ${LUAROCKS_BUILDARGS}
     COMMAND touch ${DEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps
     DEPENDS lpeg)
   add_custom_target(stable-busted-deps
     DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps)
   
   add_custom_command(OUTPUT ${DEPS_BIN_DIR}/busted
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build https://raw.githubusercontent.com/Olivine-Labs/busted/master/busted-scm-0.rockspec CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
+    COMMAND ${LUAROCKS_BINARY}
+    ARGS build https://raw.githubusercontent.com/Olivine-Labs/busted/master/busted-scm-0.rockspec ${LUAROCKS_BUILDARGS}
     DEPENDS stable-busted-deps)
   add_custom_target(busted
     DEPENDS ${DEPS_BIN_DIR}/busted)
   
   add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/nvim-client
-    COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build https://raw.githubusercontent.com/neovim/lua-client/8cc5b6090ac61cd0bba53ba984f15792fbb64573/nvim-client-0.0.1-11.rockspec CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER} LIBUV_DIR=${DEPS_INSTALL_DIR}
+    COMMAND ${LUAROCKS_BINARY}
+    ARGS build https://raw.githubusercontent.com/neovim/lua-client/8cc5b6090ac61cd0bba53ba984f15792fbb64573/nvim-client-0.0.1-11.rockspec ${LUAROCKS_BUILDARGS} LIBUV_DIR=${DEPS_INSTALL_DIR}
     DEPENDS busted libuv)
   add_custom_target(nvim-client
     DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/nvim-client)
