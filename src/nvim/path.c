@@ -1682,7 +1682,7 @@ void path_fix_case(char_u *name)
  * Takes care of multi-byte characters.
  * "b" must point to the start of the file name
  */
-int after_pathsep(char *b, char *p)
+int after_pathsep(const char *b, const char *p)
 {
   return p > b && vim_ispathsep(p[-1])
          && (!has_mbyte || (*mb_head_off)((char_u *)b, (char_u *)p - 1) == 0);
@@ -1761,7 +1761,7 @@ int pathcmp(const char *p, const char *q, int maxlen)
   /* ignore a trailing slash, but not "//" or ":/" */
   if (c2 == NUL
       && i > 0
-      && !after_pathsep((char *)s, (char *)s + i)
+      && !after_pathsep(s, s + i)
 #ifdef BACKSLASH_IN_FILENAME
       && (c1 == '/' || c1 == '\\')
 #else
