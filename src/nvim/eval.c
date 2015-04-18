@@ -19086,15 +19086,26 @@ call_user_func (
       --no_wait_return;
     }
   }
+
+  bool func_not_yet_profiling_but_should =
+    do_profiling == PROF_YES
+    && !fp->uf_profiling && has_profiling(FALSE, fp->uf_name, NULL);
+
+  if (func_not_yet_profiling_but_should)
+    func_do_profile(fp);
+
+  bool func_or_func_caller_profiling =
+    do_profiling == PROF_YES
+    && (fp->uf_profiling
+        || (fc->caller != NULL && fc->caller->func->uf_profiling));
+
+  if (func_or_func_caller_profiling) {
+    ++fp->uf_tm_count;
+    call_start = profile_start();
+    fp->uf_tm_children = profile_zero();
+  }
+
   if (do_profiling == PROF_YES) {
-    if (!fp->uf_profiling && has_profiling(FALSE, fp->uf_name, NULL))
-      func_do_profile(fp);
-    if (fp->uf_profiling
-        || (fc->caller != NULL && fc->caller->func->uf_profiling)) {
-      ++fp->uf_tm_count;
-      call_start = profile_start();
-      fp->uf_tm_children = profile_zero();
-    }
     script_prof_save(&wait_start);
   }
 
@@ -19117,9 +19128,7 @@ call_user_func (
     rettv->vval.v_number = -1;
   }
 
-  if (do_profiling == PROF_YES && (fp->uf_profiling
-                                   || (fc->caller != NULL &&
-                                       fc->caller->func->uf_profiling))) {
+  if (func_or_func_caller_profiling) {
     call_start = profile_end(call_start);
     call_start = profile_sub_wait(wait_start, call_start);
     fp->uf_tm_total = profile_add(fp->uf_tm_total, call_start);
