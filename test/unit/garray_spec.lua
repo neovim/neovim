@@ -11,6 +11,7 @@ local to_cstr = helpers.to_cstr
 local NULL = helpers.NULL
 
 local garray = cimport('stdlib.h', './src/nvim/garray.h')
+local memory = cimport('./src/nvim/memory.h')
 
 local itemsize = 14
 local growsize = 95
@@ -131,7 +132,7 @@ local ga_append_string = function(garr, it)
   -- make a non-garbage collected string and copy the lua string into it,
   -- TODO(aktau): we should probably call xmalloc here, though as long as
   -- xmalloc is based on malloc it should work.
-  local mem = ffi.C.malloc(string.len(it) + 1)
+  local mem = memory.xmalloc(string.len(it) + 1)
   ffi.copy(mem, it)
   ga_grow(garr, 1)
   local data = ga_data_as_strings(garr)
