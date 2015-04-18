@@ -238,7 +238,7 @@ void server_stop(char *endpoint)
     }
   }
 
-  if (i == servers.ga_len) {
+  if (i >= servers.ga_len) {
     ELOG("Not listening on %s", addr);
     return;
   }

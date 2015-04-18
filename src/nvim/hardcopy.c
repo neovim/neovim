@@ -2130,7 +2130,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
       }
 
     /* Use first encoding matched if no charset matched */
-    if (p_mbchar == NULL && p_mbenc_first != NULL) {
+    if (p_mbenc_first != NULL && p_mbchar == NULL) {
       p_mbenc = p_mbenc_first;
       cmap = effective_cmap;
     }
