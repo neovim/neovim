@@ -6,8 +6,13 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 # Prefer our bundled versions of dependencies.
 set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/usr" CACHE PATH "Path prefix for finding dependencies")
-list(INSERT CMAKE_PREFIX_PATH 0 ${DEPS_PREFIX})
-set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${DEPS_PREFIX}/lib/pkgconfig")
+if (CMAKE_CROSSCOMPILING)
+  list(INSERT CMAKE_FIND_ROOT_PATH 0 ${DEPS_PREFIX})
+  list(INSERT CMAKE_PREFIX_PATH 0 ${DEPS_PREFIX}/../host/bin)
+else()
+  list(INSERT CMAKE_PREFIX_PATH 0 ${DEPS_PREFIX})
+  set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${DEPS_PREFIX}/lib/pkgconfig")
+endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   # CMake tries to treat /sw and /opt/local as extension of the system path, but
