@@ -1181,8 +1181,7 @@ rare words.  Example:
 
 Rare words are highlighted differently from bad words.  This is to be used for
 words that are correct for the language, but are hardly ever used and could be
-a typing mistake anyway.  When the same word is found as good it won't be
-highlighted as rare.
+a typing mistake anyway.
 
 This flag can also be used on an affix, so that a basic word is not rare but
 the basic word plus affix is rare |spell-affix-flags|.  However, if the word
