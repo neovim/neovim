@@ -9089,7 +9089,7 @@ static char_u *get_view_file(int c)
       ++len;
   retval = xmalloc(STRLEN(sname) + len + STRLEN(p_vdir) + 9);
   STRCPY(retval, p_vdir);
-  add_pathsep(retval);
+  add_pathsep((char *)retval);
   s = retval + STRLEN(retval);
   for (p = sname; *p; ++p) {
     if (*p == '=') {

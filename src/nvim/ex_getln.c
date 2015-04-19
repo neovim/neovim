@@ -3890,7 +3890,7 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
     if (l > MAXPATHL - 5)
       break;
     STRLCPY(buf, s, l + 1);
-    add_pathsep(buf);
+    add_pathsep((char *)buf);
     l = STRLEN(buf);
     STRLCPY(buf + l, pat, MAXPATHL - l);
 
@@ -4107,7 +4107,7 @@ void globpath(char_u *path, char_u *file, garray_T *ga, int expand_options)
     // Copy one item of the path to buf[] and concatenate the file name.
     copy_option_part(&path, buf, MAXPATHL, ",");
     if (STRLEN(buf) + STRLEN(file) + 2 < MAXPATHL) {
-      add_pathsep(buf);
+      add_pathsep((char *)buf);
       STRCAT(buf, file);  // NOLINT
 
       char_u **p;

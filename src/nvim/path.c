@@ -340,7 +340,7 @@ char_u *concat_fnames(char_u *fname1, char_u *fname2, int sep)
 
   STRCPY(dest, fname1);
   if (sep) {
-    add_pathsep(dest);
+    add_pathsep((char *)dest);
   }
   STRCAT(dest, fname2);
 
@@ -351,10 +351,11 @@ char_u *concat_fnames(char_u *fname1, char_u *fname2, int sep)
  * Add a path separator to a file name, unless it already ends in a path
  * separator.
  */
-void add_pathsep(char_u *p)
+void add_pathsep(char *p)
+  FUNC_ATTR_NONNULL_ALL
 {
-  if (*p != NUL && !after_pathsep((char *)p, (char *)p + STRLEN(p)))
-    STRCAT(p, PATHSEPSTR);
+  if (*p != NUL && !after_pathsep(p, p + strlen(p)))
+    strcat(p, PATHSEPSTR);
 }
 
 /*
@@ -880,7 +881,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
       if (short_name != NULL && short_name > path + 1
           ) {
         STRCPY(path, ".");
-        add_pathsep(path);
+        add_pathsep((char *)path);
         STRMOVE(path + STRLEN(path), short_name);
       }
     }
@@ -907,7 +908,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
 
     rel_path = xmalloc(STRLEN(short_name) + STRLEN(PATHSEPSTR) + 2);
     STRCPY(rel_path, ".");
-    add_pathsep(rel_path);
+    add_pathsep((char *)rel_path);
     STRCAT(rel_path, short_name);
 
     xfree(fnames[i]);
@@ -1278,7 +1279,7 @@ addfile (
    * Append a slash or backslash after directory names if none is present.
    */
   if (isdir && (flags & EW_ADDSLASH))
-    add_pathsep(p);
+    add_pathsep((char *)p);
   GA_APPEND(char_u *, gap, p);
 }
 
@@ -1761,7 +1762,7 @@ int pathcmp(const char *p, const char *q, int maxlen)
   /* ignore a trailing slash, but not "//" or ":/" */
   if (c2 == NUL
       && i > 0
-      && !after_pathsep(s, s + i)
+      && !after_pathsep((char *)s, (char *)s + i)
 #ifdef BACKSLASH_IN_FILENAME
       && (c1 == '/' || c1 == '\\')
 #else

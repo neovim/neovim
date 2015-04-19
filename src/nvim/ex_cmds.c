@@ -5126,7 +5126,7 @@ void fix_help_buffer(void)
           char_u      *cp;
 
           /* Find all "doc/ *.txt" files in this directory. */
-          add_pathsep(NameBuff);
+          add_pathsep((char *)NameBuff);
           STRCAT(NameBuff, "doc/*.??[tx]");
 
           // Note: We cannot just do `&NameBuff` because it is a statically sized array
@@ -5297,7 +5297,7 @@ void ex_helptags(exarg_T *eap)
 
   /* Get a list of all files in the help directory and in subdirectories. */
   STRCPY(NameBuff, dirname);
-  add_pathsep(NameBuff);
+  add_pathsep((char *)NameBuff);
   STRCAT(NameBuff, "**");
 
   // Note: We cannot just do `&NameBuff` because it is a statically sized array
@@ -5419,7 +5419,7 @@ helptags_one (
    * Do this before scanning through all the files.
    */
   STRCPY(NameBuff, dir);
-  add_pathsep(NameBuff);
+  add_pathsep((char *)NameBuff);
   STRCAT(NameBuff, tagfname);
   fd_tags = mch_fopen((char *)NameBuff, "w");
   if (fd_tags == NULL) {

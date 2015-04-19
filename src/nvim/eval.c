@@ -12478,7 +12478,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
         /* Ensure that the result will have a trailing path separator
          * if the argument has one. */
         if (remain == NULL && has_trailing_pathsep)
-          add_pathsep(buf);
+          add_pathsep((char *)buf);
 
         /* Separate the first path component in the link value and
          * concatenate the remainders. */
@@ -19921,7 +19921,7 @@ repeat:
       *bufp = *fnamep;
       if (*fnamep == NULL)
         return -1;
-      add_pathsep(*fnamep);
+      add_pathsep((char *)*fnamep);
     }
   }
 

@@ -465,7 +465,7 @@ vim_findfile_init (
     goto error_return;
   }
   STRCPY(ff_expand_buffer, search_ctx->ffsc_start_dir);
-  add_pathsep(ff_expand_buffer);
+  add_pathsep((char *)ff_expand_buffer);
   {
     size_t eb_len = STRLEN(ff_expand_buffer);
     char_u *buf = xmalloc(eb_len + STRLEN(search_ctx->ffsc_fix_path) + 1);
@@ -474,7 +474,7 @@ vim_findfile_init (
     STRCPY(buf + eb_len, search_ctx->ffsc_fix_path);
     if (os_isdir(buf)) {
       STRCAT(ff_expand_buffer, search_ctx->ffsc_fix_path);
-      add_pathsep(ff_expand_buffer);
+      add_pathsep((char *)ff_expand_buffer);
     } else {
       char_u *p =  path_tail(search_ctx->ffsc_fix_path);
       char_u *wc_path = NULL;
@@ -484,7 +484,7 @@ vim_findfile_init (
       if (p > search_ctx->ffsc_fix_path) {
         len = (int)(p - search_ctx->ffsc_fix_path) - 1;
         STRNCAT(ff_expand_buffer, search_ctx->ffsc_fix_path, len);
-        add_pathsep(ff_expand_buffer);
+        add_pathsep((char *)ff_expand_buffer);
       } else
         len = (int)STRLEN(search_ctx->ffsc_fix_path);
 
@@ -695,12 +695,12 @@ char_u *vim_findfile(void *search_ctx_arg)
         if (!vim_isAbsName(stackp->ffs_fix_path)
             && search_ctx->ffsc_start_dir) {
           STRCPY(file_path, search_ctx->ffsc_start_dir);
-          add_pathsep(file_path);
+          add_pathsep((char *)file_path);
         }
 
         /* append the fix part of the search path */
         STRCAT(file_path, stackp->ffs_fix_path);
-        add_pathsep(file_path);
+        add_pathsep((char *)file_path);
 
         rest_of_wildcards = stackp->ffs_wc_path;
         if (*rest_of_wildcards != NUL) {
@@ -784,7 +784,7 @@ char_u *vim_findfile(void *search_ctx_arg)
             /* prepare the filename to be checked for existence
              * below */
             STRCPY(file_path, stackp->ffs_filearray[i]);
-            add_pathsep(file_path);
+            add_pathsep((char *)file_path);
             STRCAT(file_path, search_ctx->ffsc_file_to_search);
 
             /*
@@ -936,7 +936,7 @@ char_u *vim_findfile(void *search_ctx_arg)
         break;
 
       STRCPY(file_path, search_ctx->ffsc_start_dir);
-      add_pathsep(file_path);
+      add_pathsep((char *)file_path);
       STRCAT(file_path, search_ctx->ffsc_fix_path);
 
       /* create a new stack entry */

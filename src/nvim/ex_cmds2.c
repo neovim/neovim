@@ -2144,7 +2144,7 @@ int do_in_runtimepath(char_u *name, int all, DoInRuntimepathCB callback,
         if (!did_one)
           did_one = (cookie == NULL);
       } else if (STRLEN(buf) + STRLEN(name) + 2 < MAXPATHL) {
-        add_pathsep(buf);
+        add_pathsep((char *)buf);
         tail = buf + STRLEN(buf);
 
         /* Loop over all patterns in "name" */
