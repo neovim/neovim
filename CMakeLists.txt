@@ -190,9 +190,9 @@ include_directories(SYSTEM ${MSGPACK_INCLUDE_DIRS})
 find_package(LuaJit REQUIRED)
 include_directories(SYSTEM ${LUAJIT_INCLUDE_DIRS})
 
-option(LIBUNIBILIUM_USE_STATIC "Use static libunibilium" ON)
-find_package(LibUnibilium REQUIRED)
-include_directories(SYSTEM ${LIBUNIBILIUM_INCLUDE_DIRS})
+option(UNIBILIUM_USE_STATIC "Use static unibilium" ON)
+find_package(Unibilium REQUIRED)
+include_directories(SYSTEM ${UNIBILIUM_INCLUDE_DIRS})
 
 option(LIBTERMKEY_USE_STATIC "Use static libtermkey" ON)
 find_package(LibTermkey REQUIRED)
