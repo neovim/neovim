@@ -12887,15 +12887,16 @@ static void f_rpcstart(typval_T *argvars, typval_T *rettv)
     }
   }
 
+  if (argvars[0].vval.v_string == NULL || argvars[0].vval.v_string[0] == NUL) {
+    EMSG(_(e_api_spawn_failed));
+    return;
+  }
+
   // Allocate extra memory for the argument vector and the NULL pointer
   int argvl = argsl + 2;
   char **argv = xmalloc(sizeof(char_u *) * argvl);
 
   // Copy program name
-  if (argvars[0].vval.v_string == NULL || argvars[0].vval.v_string[0] == NUL) {
-    EMSG(_(e_api_spawn_failed));
-    return;
-  }
   argv[0] = xstrdup((char *)argvars[0].vval.v_string);
 
   int i = 1;
