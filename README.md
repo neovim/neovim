@@ -1,9 +1,9 @@
 ![Neovim](https://raw.githubusercontent.com/neovim/neovim.github.io/master/logos/neovim-logo.png)
 
-[Website](http://neovim.org) |
-[Community](http://neovim.org/community/) |
+[Website](http://neovim.io) |
+[Community](http://neovim.io/community/) |
 [Wiki](https://github.com/neovim/neovim/wiki) |
-[Documentation](http://neovim.org/doc) |
+[Documentation](http://neovim.io/doc) |
 [Mailing List](https://groups.google.com/forum/#!forum/neovim) |
 [Twitter](http://twitter.com/Neovim) |
 [Bountysource](https://www.bountysource.com/teams/neovim)
@@ -12,7 +12,7 @@
 [![Pull requests waiting for review](https://badge.waffle.io/neovim/neovim.svg?label=RFC&title=RFCs)](https://waffle.io/neovim/neovim)
 [![Coverage Status](https://img.shields.io/coveralls/neovim/neovim.svg)](https://coveralls.io/r/neovim/neovim)
 [![Coverity Scan Build](https://scan.coverity.com/projects/2227/badge.svg)](https://scan.coverity.com/projects/2227)
-[![Clang Scan Build](http://neovim.org/doc/reports/clang/badge.svg)](http://neovim.org/doc/reports/clang)
+[![Clang Scan Build](http://neovim.io/doc/reports/clang/badge.svg)](http://neovim.io/doc/reports/clang)
 [![Join the chat at https://gitter.im/neovim/neovim](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/neovim/neovim?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Neovim is a project that seeks to aggressively refactor Vim in order to:

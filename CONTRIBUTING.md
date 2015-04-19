@@ -181,7 +181,7 @@ such as [`tig`][tig].
 [github-pr-1820]: https://github.com/neovim/neovim/pull/1820
 [hub]: https://hub.github.com/
 [imperative]: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
-[style-guide]: http://neovim.org/develop/style-guide.xml
+[style-guide]: http://neovim.io/develop/style-guide.xml
 [tig]: https://github.com/jonas/tig
 [valgrind]: http://valgrind.org/
 [vcs]: https://en.wikipedia.org/wiki/Revision_control
