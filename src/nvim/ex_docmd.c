@@ -1518,8 +1518,8 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       ea.addr_type = ADDR_LINES;
     }
     // :wincmd range depends on the argument
-    if (ea.cmdidx == CMD_wincmd) {
-      get_wincmd_addr_type(p, &ea);
+    if (ea.cmdidx == CMD_wincmd && p != NULL) {
+      get_wincmd_addr_type(skipwhite(p), &ea);
     }
   }
 
