@@ -47,21 +47,25 @@ char *version_cflags = "Compilation: " NVIM_VERSION_CFLAGS;
 static char *features[] = {
 #ifdef HAVE_ACL
   "+acl",
-#else  // ifdef HAVE_ACL
+#else
   "-acl",
-#endif  // ifdef HAVE_ACL
+#endif
 
 #if (defined(HAVE_ICONV_H) && defined(USE_ICONV)) || defined(DYNAMIC_ICONV)
 # ifdef DYNAMIC_ICONV
   "+iconv/dyn",
-# else  // ifdef DYNAMIC_ICONV
+# else
   "+iconv",
-# endif  // ifdef DYNAMIC_ICONV
-#else  // if (defined(HAVE_ICONV_H) && defined(USE_ICONV))
-       //    ||defined(DYNAMIC_ICONV)
+# endif
+#else
   "-iconv",
-#endif  // if (defined(HAVE_ICONV_H) && defined(USE_ICONV))
-        //    || defined(DYNAMIC_ICONV)
+#endif
+
+#ifdef HAVE_JEMALLOC
+  "+jemalloc",
+#else
+  "-jemalloc",
+#endif
   NULL
 };
 
