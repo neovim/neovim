@@ -5061,7 +5061,6 @@ void fix_help_buffer(void)
   char_u      *fname;
   char_u      *p;
   char_u      *rt;
-  bool mustfree;
 
   /* set filetype to "help". */
   set_option_value((char_u *)"ft", 0L, (char_u *)"help", OPT_LOCAL);
@@ -5116,8 +5115,7 @@ void fix_help_buffer(void)
       p = p_rtp;
       while (*p != NUL) {
         copy_option_part(&p, NameBuff, MAXPATHL, ",");
-        mustfree = FALSE;
-        rt = vim_getenv((char_u *)"VIMRUNTIME", &mustfree);
+        rt = (char_u *)vim_getenv("VIMRUNTIME");
         if (path_full_compare(rt, NameBuff, FALSE) != kEqualFiles) {
           int fcount;
           char_u      **fnames;
@@ -5242,8 +5240,7 @@ void fix_help_buffer(void)
             FreeWild(fcount, fnames);
           }
         }
-        if (mustfree)
-          xfree(rt);
+        xfree(rt);
       }
       break;
     }

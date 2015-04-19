@@ -829,18 +829,16 @@ static void init_locale(void)
 # endif
 
   {
-    bool mustfree = false;
     char_u  *p;
 
     /* expand_env() doesn't work yet, because chartab[] is not initialized
      * yet, call vim_getenv() directly */
-    p = vim_getenv((char_u *)"VIMRUNTIME", &mustfree);
+    p = (char_u *)vim_getenv("VIMRUNTIME");
     if (p != NULL && *p != NUL) {
       vim_snprintf((char *)NameBuff, MAXPATHL, "%s/lang", p);
       bindtextdomain(VIMPACKAGE, (char *)NameBuff);
     }
-    if (mustfree)
-      xfree(p);
+    xfree(p);
     textdomain(VIMPACKAGE);
   }
   TIME_MSG("locale set");

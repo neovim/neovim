@@ -122,7 +122,7 @@ char_u *path_tail_with_sep(char_u *fname)
   // Don't remove the '/' from "c:/file".
   char_u *past_head = get_past_head(fname);
   char_u *tail = path_tail(fname);
-  while (tail > past_head && after_pathsep(fname, tail)) {
+  while (tail > past_head && after_pathsep((char *)fname, (char *)tail)) {
     tail--;
   }
   return tail;
@@ -353,7 +353,7 @@ char_u *concat_fnames(char_u *fname1, char_u *fname2, int sep)
  */
 void add_pathsep(char_u *p)
 {
-  if (*p != NUL && !after_pathsep(p, p + STRLEN(p)))
+  if (*p != NUL && !after_pathsep((char *)p, (char *)p + STRLEN(p)))
     STRCAT(p, PATHSEPSTR);
 }
 
@@ -1356,7 +1356,7 @@ void simplify_filename(char_u *filename)
 
           --p;
           /* Skip back to after previous '/'. */
-          while (p > start && !after_pathsep(start, p))
+          while (p > start && !after_pathsep((char *)start, (char *)p))
             mb_ptr_back(start, p);
 
           if (!do_strip) {
@@ -1682,10 +1682,10 @@ void path_fix_case(char_u *name)
  * Takes care of multi-byte characters.
  * "b" must point to the start of the file name
  */
-int after_pathsep(char_u *b, char_u *p)
+int after_pathsep(const char *b, const char *p)
 {
   return p > b && vim_ispathsep(p[-1])
-         && (!has_mbyte || (*mb_head_off)(b, p - 1) == 0);
+         && (!has_mbyte || (*mb_head_off)((char_u *)b, (char_u *)p - 1) == 0);
 }
 
 /*
@@ -1761,7 +1761,7 @@ int pathcmp(const char *p, const char *q, int maxlen)
   /* ignore a trailing slash, but not "//" or ":/" */
   if (c2 == NUL
       && i > 0
-      && !after_pathsep((char_u *)s, (char_u *)s + i)
+      && !after_pathsep(s, s + i)
 #ifdef BACKSLASH_IN_FILENAME
       && (c1 == '/' || c1 == '\\')
 #else

@@ -1751,17 +1751,15 @@ ex_let_one (
         name[len] = NUL;
         p = get_tv_string_chk(tv);
         if (p != NULL && op != NULL && *op == '.') {
-          bool mustfree = false;
-          char_u  *s = vim_getenv(name, &mustfree);
+          char *s = vim_getenv((char *)name);
 
           if (s != NULL) {
-            p = tofree = concat_str(s, p);
-            if (mustfree)
-              xfree(s);
+            p = tofree = concat_str((char_u *)s, p);
+            xfree(s);
           }
         }
         if (p != NULL) {
-          vim_setenv(name, p);
+          vim_setenv((char *)name, (char *)p);
           if (STRICMP(name, "HOME") == 0)
             init_homedir();
           else if (didset_vim && STRICMP(name, "VIM") == 0)
@@ -6357,7 +6355,6 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
 {
   char_u *name;
   char_u *string = NULL;
-  bool    mustfree = false;
   int     len;
   int     cc;
 
@@ -6372,15 +6369,9 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
     cc = name[len];
     name[len] = NUL;
     // First try vim_getenv(), fast for normal environment vars.
-    string = vim_getenv(name, &mustfree);
-    if (string != NULL && *string != NUL) {
-      if (!mustfree) {
-        string = vim_strsave(string);
-      }
-    } else {
-      if (mustfree) {
-        xfree(string);
-      }
+    string = (char_u *)vim_getenv((char *)name);
+    if (string == NULL || *string == NUL) {
+      xfree(string);
 
       // Next try expanding things like $VIM and ${HOME}.
       string = expand_env_save(name - 1);
@@ -12417,7 +12408,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
       is_relative_to_current = TRUE;
 
     len = STRLEN(p);
-    if (len > 0 && after_pathsep(p, p + len)) {
+    if (len > 0 && after_pathsep((char *)p, (char *)p + len)) {
       has_trailing_pathsep = TRUE;
       p[len - 1] = NUL;       /* the trailing slash breaks readlink() */
     }
@@ -12531,7 +12522,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
      * if the argument had none.  But keep "/" or "//". */
     if (!has_trailing_pathsep) {
       q = p + STRLEN(p);
-      if (after_pathsep(p, q))
+      if (after_pathsep((char *)p, (char *)q))
         *path_tail_with_sep(p) = NUL;
     }
 
@@ -19929,7 +19920,7 @@ repeat:
     valid |= VALID_HEAD;
     *usedlen += 2;
     s = get_past_head(*fnamep);
-    while (tail > s && after_pathsep(s, tail))
+    while (tail > s && after_pathsep((char *)s, (char *)tail))
       mb_ptr_back(*fnamep, tail);
     *fnamelen = (int)(tail - *fnamep);
     if (*fnamelen == 0) {
@@ -19938,7 +19929,7 @@ repeat:
       *bufp = *fnamep = tail = vim_strsave((char_u *)".");
       *fnamelen = 1;
     } else {
-      while (tail > s && !after_pathsep(s, tail))
+      while (tail > s && !after_pathsep((char *)s, (char *)tail))
         mb_ptr_back(*fnamep, tail);
     }
   }

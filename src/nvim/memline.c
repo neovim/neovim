@@ -1340,7 +1340,7 @@ recover_names (
         num_names = 3;
       } else {
         p = dir_name + STRLEN(dir_name);
-        if (after_pathsep(dir_name, p) && p[-1] == p[-2]) {
+        if (after_pathsep((char *)dir_name, (char *)p) && p[-1] == p[-2]) {
           /* Ends with '//', Use Full path for swap name */
           tail = make_percent_swname(dir_name, fname_res);
         } else {
@@ -3066,7 +3066,7 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
 #endif
 
   s = dir_name + STRLEN(dir_name);
-  if (after_pathsep(dir_name, s) && s[-1] == s[-2]) { /* Ends with '//', Use Full path */
+  if (after_pathsep((char *)dir_name, (char *)s) && s[-1] == s[-2]) { /* Ends with '//', Use Full path */
     r = NULL;
     if ((s = make_percent_swname(dir_name, fname)) != NULL) {
       r = modname(s, (char_u *)".swp", FALSE);

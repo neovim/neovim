@@ -1804,19 +1804,20 @@ void set_init_1(void)
 # endif
     int len;
     garray_T ga;
-    bool mustfree;
 
     ga_init(&ga, 1, 100);
     for (size_t n = 0; n < ARRAY_SIZE(names); ++n) {
-      mustfree = FALSE;
+      bool mustfree = true;
 # ifdef UNIX
-      if (*names[n] == NUL)
+      if (*names[n] == NUL) {
         p = (char_u *)"/tmp";
+        mustfree = false;
+      }
       else
 # endif
-      p = vim_getenv((char_u *)names[n], &mustfree);
+      p = (char_u *)vim_getenv(names[n]);
       if (p != NULL && *p != NUL) {
-        /* First time count the NUL, otherwise count the ','. */
+        // First time count the NUL, otherwise count the ','.
         len = (int)STRLEN(p) + 3;
         ga_grow(&ga, len);
         if (!GA_EMPTY(&ga))
@@ -1826,8 +1827,9 @@ void set_init_1(void)
         STRCAT(ga.ga_data, "*");
         ga.ga_len += len;
       }
-      if (mustfree)
+      if(mustfree) {
         xfree(p);
+      }
     }
     if (ga.ga_data != NULL) {
       set_string_default("bsk", ga.ga_data);
@@ -1861,10 +1863,9 @@ void set_init_1(void)
     char_u  *buf;
     int i;
     int j;
-    bool mustfree = false;
 
     /* Initialize the 'cdpath' option's default value. */
-    cdpath = vim_getenv((char_u *)"CDPATH", &mustfree);
+    cdpath = (char_u *)vim_getenv("CDPATH");
     if (cdpath != NULL) {
       buf = xmalloc(2 * STRLEN(cdpath) + 2);
       {
@@ -1887,8 +1888,7 @@ void set_init_1(void)
         } else
           xfree(buf);           /* cannot happen */
       }
-      if (mustfree)
-        xfree(cdpath);
+      xfree(cdpath);
     }
   }
 
@@ -2288,7 +2288,7 @@ void set_init_3(void)
  * When 'helplang' is still at its default value, set it to "lang".
  * Only the first two characters of "lang" are used.
  */
-void set_helplang_default(char_u *lang)
+void set_helplang_default(const char *lang)
 {
   int idx;
 
@@ -2298,7 +2298,7 @@ void set_helplang_default(char_u *lang)
   if (idx >= 0 && !(options[idx].flags & P_WAS_SET)) {
     if (options[idx].flags & P_ALLOCED)
       free_string_option(p_hlg);
-    p_hlg = vim_strsave(lang);
+    p_hlg = (char_u *)xstrdup(lang);
     /* zh_CN becomes "cn", zh_TW becomes "tw". */
     if (STRNICMP(p_hlg, "zh_", 3) == 0 && STRLEN(p_hlg) >= 5) {
       p_hlg[0] = (char_u)TOLOWER_ASC(p_hlg[3]);
@@ -3644,11 +3644,11 @@ did_set_string_option (
   else if (varp == &p_hf) {
     /* May compute new values for $VIM and $VIMRUNTIME */
     if (didset_vim) {
-      vim_setenv((char_u *)"VIM", (char_u *)"");
+      vim_setenv("VIM", "");
       didset_vim = FALSE;
     }
     if (didset_vimruntime) {
-      vim_setenv((char_u *)"VIMRUNTIME", (char_u *)"");
+      vim_setenv("VIMRUNTIME", "");
       didset_vimruntime = FALSE;
     }
   }
@@ -7428,20 +7428,20 @@ static void paste_option_changed(void)
 /// When "fname" is not NULL, use it to set $"envname" when it wasn't set yet.
 void vimrc_found(char_u *fname, char_u *envname)
 {
-  bool dofree = false;
   char_u      *p;
 
   if (fname != NULL) {
-    p = vim_getenv(envname, &dofree);
+    p = (char_u *)vim_getenv((char *)envname);
     if (p == NULL) {
       /* Set $MYVIMRC to the first vimrc file found. */
       p = FullName_save(fname, FALSE);
       if (p != NULL) {
-        vim_setenv(envname, p);
+        vim_setenv((char *)envname, (char *)p);
         xfree(p);
       }
-    } else if (dofree)
+    } else {
       xfree(p);
+    }
   }
 }
 

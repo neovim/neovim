@@ -215,31 +215,29 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
   int c;
   char_u      *var;
   bool copy_char;
-  bool mustfree;                 /* var was allocated, need to free it later */
-  bool at_start = true;           /* at start of a name */
+  bool mustfree;  // var was allocated, need to free it later
+  bool at_start = true;  // at start of a name
   int startstr_len = 0;
 
   if (startstr != NULL)
     startstr_len = (int)STRLEN(startstr);
 
   src = skipwhite(srcp);
-  --dstlen;                 /* leave one char space for "\," */
+  --dstlen;  // leave one char space for "\,"
   while (*src && dstlen > 0) {
     copy_char = true;
     if ((*src == '$') || (*src == '~' && at_start)) {
       mustfree = false;
 
-      /*
-       * The variable name is copied into dst temporarily, because it may
-       * be a string in read-only memory and a NUL needs to be appended.
-       */
-      if (*src != '~') {                                /* environment var */
+      // The variable name is copied into dst temporarily, because it may
+      // be a string in read-only memory and a NUL needs to be appended.
+      if (*src != '~') {  // environment var
         tail = src + 1;
         var = dst;
         c = dstlen - 1;
 
 #ifdef UNIX
-        /* Unix has ${var-name} type environment vars */
+        // Unix has ${var-name} type environment vars
         if (*tail == '{' && !vim_isIDc('{')) {
           tail++;               /* ignore '{' */
           while (c-- > 0 && *tail && *tail != '}')
@@ -262,7 +260,8 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
           }
 #endif
         *var = NUL;
-        var = vim_getenv(dst, &mustfree);
+        var = (char_u *)vim_getenv((char *)dst);
+        mustfree = true;
 #if defined(UNIX)
         }
 #endif
@@ -271,11 +270,9 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
                  || vim_strchr((char_u *)" ,\t\n", src[1]) != NULL) {
         var = homedir;
         tail = src + 1;
-      } else {                                        /* user directory */
+      } else {  // user directory
 #if defined(UNIX)
-        /*
-         * Copy ~user to dst[], so we can put a NUL after it.
-         */
+        // Copy ~user to dst[], so we can put a NUL after it.
         tail = src;
         var = dst;
         c = dstlen - 1;
@@ -285,12 +282,10 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
                    && !vim_ispathsep(*tail))
           *var++ = *tail++;
         *var = NUL;
-        /*
-         * Use os_get_user_directory() to get the user directory.
-         * If this function fails, the shell is used to
-         * expand ~user. This is slower and may fail if the shell
-         * does not support ~user (old versions of /bin/sh).
-         */
+        // Use os_get_user_directory() to get the user directory.
+        // If this function fails, the shell is used to
+        // expand ~user. This is slower and may fail if the shell
+        // does not support ~user (old versions of /bin/sh).
         var = (char_u *)os_get_user_directory((char *)dst + 1);
         mustfree = true;
         if (var == NULL)
@@ -304,15 +299,15 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
           mustfree = true;
         }
 #else
-        /* cannot expand user's home directory, so don't try */
+        // cannot expand user's home directory, so don't try
         var = NULL;
-        tail = (char_u *)"";            /* for gcc */
-#endif /* UNIX */
+        tail = (char_u *)"";  // for gcc
+#endif  // UNIX
       }
 
 #ifdef BACKSLASH_IN_FILENAME
-      /* If 'shellslash' is set change backslashes to forward slashes.
-       * Can't use slash_adjust(), p_ssl may be set temporarily. */
+      // If 'shellslash' is set change backslashes to forward slashes.
+      // Can't use slash_adjust(), p_ssl may be set temporarily.
       if (p_ssl && var != NULL && vim_strchr(var, '\\') != NULL) {
         char_u  *p = vim_strsave(var);
 
@@ -325,8 +320,8 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
       }
 #endif
 
-      /* If "var" contains white space, escape it with a backslash.
-       * Required for ":e ~/tt" when $HOME includes a space. */
+      // If "var" contains white space, escape it with a backslash.
+      // Required for ":e ~/tt" when $HOME includes a space.
       if (esc && var != NULL && vim_strpbrk(var, (char_u *)" \t") != NULL) {
         char_u  *p = vim_strsave_escaped(var, (char_u *)" \t");
 
@@ -341,9 +336,9 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
         STRCPY(dst, var);
         dstlen -= (int)STRLEN(var);
         c = (int)STRLEN(var);
-        /* if var[] ends in a path separator and tail[] starts
-         * with it, skip a character */
-        if (*var != NUL && after_pathsep(dst, dst + c)
+        // if var[] ends in a path separator and tail[] starts
+        // with it, skip a character
+        if (*var != NUL && after_pathsep((char *)dst, (char *)dst + c)
 #if defined(BACKSLASH_IN_FILENAME)
             && dst[-1] != ':'
 #endif
@@ -357,12 +352,10 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
         xfree(var);
     }
 
-    if (copy_char) {        /* copy at least one char */
-      /*
-       * Recognize the start of a new name, for '~'.
-       * Don't do this when "one" is true, to avoid expanding "~" in
-       * ":edit foo ~ foo".
-       */
+    if (copy_char) {  // copy at least one char
+      // Recognize the start of a new name, for '~'.
+      // Don't do this when "one" is true, to avoid expanding "~" in
+      // ":edit foo ~ foo".
       at_start = false;
       if (src[0] == '\\' && src[1] != NUL) {
         *dst++ = *src++;
@@ -384,7 +377,7 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
 /// Check if the directory "vimdir/<version>" or "vimdir/runtime" exists.
 /// Return NULL if not, return its name in allocated memory otherwise.
 /// @param vimdir directory to test
-static char *vim_version_dir(char *vimdir)
+static char *vim_version_dir(const char *vimdir)
 {
   char_u      *p;
 
@@ -410,7 +403,7 @@ static char *remove_tail(char *p, char *pend, char *name)
 
   if (newend >= p
       && fnamencmp((char_u *)newend, (char_u *)name, len - 1) == 0
-      && (newend == p || after_pathsep((char_u *)p, (char_u *)newend)))
+      && (newend == p || after_pathsep(p, newend)))
     return newend;
   return pend;
 }
@@ -418,126 +411,112 @@ static char *remove_tail(char *p, char *pend, char *name)
 /// Vim's version of getenv().
 /// Special handling of $HOME, $VIM and $VIMRUNTIME, allowing the user to
 /// override the vim runtime directory at runtime.  Also does ACP to 'enc'
-/// conversion for Win32.
+/// conversion for Win32.  Results must be freed by the calling function.
 /// @param name Name of environment variable to expand
-/// @param[out] mustfree Ouput parameter for the caller to determine if they are
-///           responsible for releasing memory. Must be initialized to false
-///           by the caller.
-char_u *vim_getenv(char_u *name, bool *mustfree)
+char *vim_getenv(const char *name)
 {
-  char_u      *p;
-  char_u      *pend;
-  int vimruntime;
-
-
-  p = (char_u *)os_getenv((char *)name);
-  if (p != NULL && *p == NUL)       /* empty is the same as not set */
-    p = NULL;
-
-  if (p != NULL) {
-    return p;
+  const char *kos_env_path = os_getenv(name);
+  if (kos_env_path != NULL
+      && *kos_env_path == NUL) {  // empty is the same as not set
+    kos_env_path = NULL;
   }
 
-  vimruntime = (STRCMP(name, "VIMRUNTIME") == 0);
-  if (!vimruntime && STRCMP(name, "VIM") != 0)
-    return NULL;
+  if (kos_env_path != NULL) {
+    return xstrdup(kos_env_path);
+  }
 
-  /*
-   * When expanding $VIMRUNTIME fails, try using $VIM/vim<version> or $VIM.
-   * Don't do this when default_vimruntime_dir is non-empty.
-   */
+  bool vimruntime = (strcmp(name, "VIMRUNTIME") == 0);
+  if (!vimruntime && strcmp(name, "VIM") != 0) {
+    return NULL;
+  }
+
+  // When expanding $VIMRUNTIME fails, try using $VIM/vim<version> or $VIM.
+  // Don't do this when default_vimruntime_dir is non-empty.
+  char *vim_path = NULL;
   if (vimruntime
 #ifdef HAVE_PATHDEF
       && *default_vimruntime_dir == NUL
 #endif
       ) {
-    p = (char_u *)os_getenv("VIM");
-    if (p != NULL && *p == NUL)             /* empty is the same as not set */
-      p = NULL;
-    if (p != NULL) {
-      p = (char_u *)vim_version_dir((char *)p);
-      if (p != NULL)
-        *mustfree = true;
-      else
-        p = (char_u *)os_getenv("VIM");
+    kos_env_path = os_getenv("VIM");
+    if (kos_env_path != NULL
+        && *kos_env_path == NUL) {  // empty is the same as not set
+      kos_env_path = NULL;
+    }
+    if (kos_env_path != NULL) {
+      vim_path = vim_version_dir(kos_env_path);
+      if (vim_path == NULL) {
+        vim_path = xstrdup(kos_env_path);
+      }
     }
   }
 
-  /*
-   * When expanding $VIM or $VIMRUNTIME fails, try using:
-   * - the directory name from 'helpfile' (unless it contains '$')
-   * - the executable name from argv[0]
-   */
-  if (p == NULL) {
-    if (p_hf != NULL && vim_strchr(p_hf, '$') == NULL)
-      p = p_hf;
-    if (p != NULL) {
-      /* remove the file name */
-      pend = path_tail(p);
+  // When expanding $VIM or $VIMRUNTIME fails, try using:
+  // - the directory name from 'helpfile' (unless it contains '$')
+  // - the executable name from argv[0]
+  if (vim_path == NULL) {
+    if (p_hf != NULL && vim_strchr(p_hf, '$') == NULL) {
+      vim_path = (char *)p_hf;
+    }
+    if (vim_path != NULL) {
+      // remove the file name
+      char *vim_path_end = (char *)path_tail((char_u *)vim_path);
 
-      /* remove "doc/" from 'helpfile', if present */
-      if (p == p_hf)
-        pend = (char_u *)remove_tail((char *)p, (char *)pend, "doc");
-
-      /* for $VIM, remove "runtime/" or "vim54/", if present */
-      if (!vimruntime) {
-        pend = (char_u *)remove_tail((char *)p, (char *)pend,
-                                     RUNTIME_DIRNAME);
-        pend = (char_u *)remove_tail((char *)p, (char *)pend,
-                                     VIM_VERSION_NODOT);
+      // remove "doc/" from 'helpfile', if present
+      if (vim_path == (char *)p_hf) {
+        vim_path_end = remove_tail(vim_path, vim_path_end, "doc");
       }
 
-      /* remove trailing path separator */
-      if (pend > p && after_pathsep(p, pend))
-        --pend;
+      // for $VIM, remove "runtime/" or "vim54/", if present
+      if (!vimruntime) {
+        vim_path_end = remove_tail(vim_path, vim_path_end, RUNTIME_DIRNAME);
+        vim_path_end = remove_tail(vim_path, vim_path_end, VIM_VERSION_NODOT);
+      }
+
+      // remove trailing path separator
+      if (vim_path_end > vim_path && after_pathsep(vim_path, vim_path_end)) {
+        vim_path_end--;
+      }
 
       // check that the result is a directory name
-      assert(pend >= p);
-      p = vim_strnsave(p, (size_t)(pend - p));
+      assert(vim_path_end >= vim_path);
+      vim_path = xstrndup(vim_path, (size_t)(vim_path_end - vim_path));
 
-      if (!os_isdir(p)) {
-        xfree(p);
-        p = NULL;
-      } else {
-        *mustfree = true;
+      if (!os_isdir((char_u *)vim_path)) {
+        xfree(vim_path);
+        vim_path = NULL;
       }
     }
   }
 
 #ifdef HAVE_PATHDEF
-  /* When there is a pathdef.c file we can use default_vim_dir and
-   * default_vimruntime_dir */
-  if (p == NULL) {
-    /* Only use default_vimruntime_dir when it is not empty */
+  // When there is a pathdef.c file we can use default_vim_dir and
+  // default_vimruntime_dir
+  if (vim_path == NULL) {
+    // Only use default_vimruntime_dir when it is not empty
     if (vimruntime && *default_vimruntime_dir != NUL) {
-      p = (char_u *)default_vimruntime_dir;
-      *mustfree = false;
+      vim_path = xstrdup(default_vimruntime_dir);
     } else if (*default_vim_dir != NUL) {
       if (vimruntime
-          && (p = (char_u *)vim_version_dir(default_vim_dir)) != NULL) {
-        *mustfree = true;
-      } else {
-        p = (char_u *)default_vim_dir;
-        *mustfree = false;
+          && (vim_path = vim_version_dir(default_vim_dir)) == NULL) {
+        vim_path = xstrdup(default_vim_dir);
       }
     }
   }
 #endif
 
-  /*
-   * Set the environment variable, so that the new value can be found fast
-   * next time, and others can also use it (e.g. Perl).
-   */
-  if (p != NULL) {
+  // Set the environment variable, so that the new value can be found fast
+  // next time, and others can also use it (e.g. Perl).
+  if (vim_path != NULL) {
     if (vimruntime) {
-      vim_setenv((char_u *)"VIMRUNTIME", p);
+      vim_setenv("VIMRUNTIME", vim_path);
       didset_vimruntime = true;
     } else {
-      vim_setenv((char_u *)"VIM", p);
+      vim_setenv("VIM", vim_path);
       didset_vim = true;
     }
   }
-  return p;
+  return vim_path;
 }
 
 /// Replace home directory by "~" in each space or comma separated file name in
@@ -666,16 +645,16 @@ char_u * home_replace_save(buf_T *buf, char_u *src) FUNC_ATTR_NONNULL_RET
 /// Our portable version of setenv.
 /// Has special handling for $VIMRUNTIME to keep the localization machinery
 /// sane.
-void vim_setenv(char_u *name, char_u *val)
+void vim_setenv(const char *name, const char *val)
 {
-  os_setenv((char *)name, (char *)val, 1);
+  os_setenv(name, val, 1);
   /*
    * When setting $VIMRUNTIME adjust the directory to find message
    * translations to $VIMRUNTIME/lang.
    */
   if (*val != NUL && STRICMP(name, "VIMRUNTIME") == 0) {
-    char_u  *buf = concat_str(val, (char_u *)"/lang");
-    bindtextdomain(VIMPACKAGE, (char *)buf);
+    char *buf = (char *)concat_str((char_u *)val, (char_u *)"/lang");
+    bindtextdomain(VIMPACKAGE, buf);
     xfree(buf);
   }
 }

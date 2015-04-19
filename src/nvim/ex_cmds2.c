@@ -2970,26 +2970,26 @@ static char *get_locale_val(int what)
  * Obtain the current messages language.  Used to set the default for
  * 'helplang'.  May return NULL or an empty string.
  */
-char_u *get_mess_lang(void)
+char *get_mess_lang(void)
 {
-  char_u *p;
+  char *p;
 
 # ifdef HAVE_GET_LOCALE_VAL
 #  if defined(LC_MESSAGES)
-  p = (char_u *)get_locale_val(LC_MESSAGES);
+  p = get_locale_val(LC_MESSAGES);
 #  else
   /* This is necessary for Win32, where LC_MESSAGES is not defined and $LANG
    * may be set to the LCID number.  LC_COLLATE is the best guess, LC_TIME
    * and LC_MONETARY may be set differently for a Japanese working in the
    * US. */
-  p = (char_u *)get_locale_val(LC_COLLATE);
+  p = get_locale_val(LC_COLLATE);
 #  endif
 # else
-  p = os_getenv((char_u *)"LC_ALL");
+  p = os_getenv("LC_ALL");
   if (p == NULL || *p == NUL) {
-    p = os_getenv((char_u *)"LC_MESSAGES");
+    p = os_getenv("LC_MESSAGES");
     if (p == NULL || *p == NUL)
-      p = os_getenv((char_u *)"LANG");
+      p = os_getenv("LANG");
   }
 # endif
   return p;
@@ -3127,22 +3127,20 @@ void ex_language(exarg_T *eap)
       ++_nl_msg_cat_cntr;
 #endif
       /* Reset $LC_ALL, otherwise it would overrule everything. */
-      vim_setenv((char_u *)"LC_ALL", (char_u *)"");
+      vim_setenv("LC_ALL", "");
 
       if (what != LC_TIME) {
         /* Tell gettext() what to translate to.  It apparently doesn't
          * use the currently effective locale. */
         if (what == LC_ALL) {
-          vim_setenv((char_u *)"LANG", name);
+          vim_setenv("LANG", (char *)name);
 
           /* Clear $LANGUAGE because GNU gettext uses it. */
-          vim_setenv((char_u *)"LANGUAGE", (char_u *)"");
+          vim_setenv("LANGUAGE", "");
         }
         if (what != LC_CTYPE) {
-          char_u      *mname;
-          mname = name;
-          vim_setenv((char_u *)"LC_MESSAGES", mname);
-          set_helplang_default(mname);
+          vim_setenv("LC_MESSAGES", (char *)name);
+          set_helplang_default((char *)name);
         }
       }
 
