@@ -4,7 +4,6 @@
 #  UNIBILIUM_INCLUDE_DIRS - The unibilium include directories
 #  UNIBILIUM_LIBRARIES - The libraries needed to use unibilium
 
-find_package(PkgConfig)
 if(NOT UNIBILIUM_USE_BUNDLED)
   find_package(PkgConfig)
   if (PKG_CONFIG_FOUND)

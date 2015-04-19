@@ -4,7 +4,6 @@
 #  JEMALLOC_INCLUDE_DIRS - The jemalloc include directories
 #  JEMALLOC_LIBRARIES - The libraries needed to use jemalloc
 
-find_package(PkgConfig)
 if(NOT JEMALLOC_USE_BUNDLED)
   find_package(PkgConfig)
   if (PKG_CONFIG_FOUND)
