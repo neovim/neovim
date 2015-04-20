@@ -1364,7 +1364,7 @@ recover_names (
      * Try finding a swap file by simply adding ".swp" to the file name.
      */
     if (*dirp == NUL && file_count + num_files == 0 && fname != NULL) {
-      char_u *swapname = modname(fname_res, (char_u *)".swp", TRUE);
+      char_u *swapname = (char_u *)modname((char *)fname_res, ".swp", TRUE);
       if (swapname != NULL) {
         if (os_file_exists(swapname)) {
           files = (char_u **)xmalloc(sizeof(char_u *));
@@ -1565,7 +1565,7 @@ static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
   // May also add the file name with a dot prepended, for swap file in same
   // dir as original file.
   if (prepend_dot) {
-    names[num_names] = modname(path, (char_u *)".sw?", TRUE);
+    names[num_names] = (char_u *)modname((char *)path, ".sw?", TRUE);
     if (names[num_names] == NULL)
       return num_names;
     ++num_names;
@@ -3069,7 +3069,7 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
   if (after_pathsep((char *)dir_name, (char *)s) && s[-1] == s[-2]) { /* Ends with '//', Use Full path */
     r = NULL;
     if ((s = make_percent_swname(dir_name, fname)) != NULL) {
-      r = modname(s, (char_u *)".swp", FALSE);
+      r = (char_u *)modname((char *)s, ".swp", FALSE);
       xfree(s);
     }
     return r;
@@ -3083,7 +3083,7 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
 #endif
 
   // Prepend a '.' to the swap file name for the current directory.
-  r = modname(fname_res, (char_u *)".swp",
+  r = (char_u *)modname((char *)fname_res, ".swp",
               dir_name[0] == '.' && dir_name[1] == NUL);
   if (r == NULL)            /* out of memory */
     return NULL;

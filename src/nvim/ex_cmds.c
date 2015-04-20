@@ -1530,7 +1530,7 @@ void write_viminfo(char_u *file, int forceit)
 #endif
 
     // Make tempname
-    tempname = modname(fname, (char_u *)".tmp", FALSE);
+    tempname = (char_u *)modname((char *)fname, ".tmp", FALSE);
     if (tempname != NULL) {
       /*
        * Check if tempfile already exists.  Never overwrite an

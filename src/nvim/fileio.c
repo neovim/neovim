@@ -2814,7 +2814,7 @@ buf_write (
           /*
            * Make backup file name.
            */
-          backup = modname(rootname, backup_ext, FALSE);
+          backup = (char_u *)modname((char *)rootname, (char *)backup_ext, FALSE);
           if (backup == NULL) {
             xfree(rootname);
             some_error = TRUE;                          /* out of memory */
@@ -2985,7 +2985,7 @@ nobackup:
         if (rootname == NULL)
           backup = NULL;
         else {
-          backup = modname(rootname, backup_ext, FALSE);
+          backup = (char_u *)modname((char *)rootname, (char *)backup_ext, FALSE);
           xfree(rootname);
         }
 
@@ -3595,7 +3595,7 @@ restore_backup:
    * the backup file our 'original' file.
    */
   if (*p_pm && dobackup) {
-    char *org = (char *)modname(fname, p_pm, FALSE);
+    char *org = modname((char *)fname, (char *)p_pm, FALSE);
 
     if (backup != NULL) {
       /*
@@ -4333,108 +4333,110 @@ void shorten_fnames(int force)
   redraw_tabline = TRUE;
 }
 
-/*
- * add extension to file name - change path/fo.o.h to path/fo.o.h.ext
- *
- * Assumed that fname is a valid name found in the filesystem we assure that
- * the return value is a different name and ends in 'ext'.
- * "ext" MUST be at most 4 characters long if it starts with a dot, 3
- * characters otherwise.
- * Space for the returned name is allocated, must be freed later.
- * Returns NULL when out of memory.
- */
-char_u *
-modname (
-    char_u *fname,
-    char_u *ext,
-    int prepend_dot                /* may prepend a '.' to file name */
-)
+/// Get new filename ended by given extension.
+///
+/// @param fname        The original filename.
+///                     If NULL, use current directory name and ext to
+///                     compute new filename.
+/// @param ext          The extension to add to the filename.
+///                     4 chars max if prefixed with a dot, 3 otherwise.
+/// @param prepend_dot  If true, prefix ext with a dot.
+///                     Does nothing if ext already starts with a dot, or
+///                     if fname is NULL.
+///
+/// @return [allocated] - A new filename, made up from:
+///                       * fname + ext, if fname not NULL.
+///                       * current dir + ext, if fname is NULL.
+///                         On Windows, and if ext starts with ".", a "_" is
+///                         preprended to ext (for filename to be valid).
+///                       Result is guaranteed to:
+///                       * be ended by <ext>.
+///                       * have a basename with at most BASENAMELEN chars:
+///                         original basename is truncated if necessary.
+///                       * be different than original: basename chars are
+///                         replaced by "_" if necessary. If that can't be done
+///                         because truncated value of original filename was
+///                         made of all underscores, replace first "_" by "v".
+///                     - NULL, if fname is NULL and there was a problem trying
+///                       to get current directory.
+char *modname(const char *fname, const char *ext, bool prepend_dot)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
-  char_u      *retval;
-  char_u      *s;
-  char_u      *e;
-  char_u      *ptr;
-  int fnamelen, extlen;
+  char *retval;
+  size_t fnamelen;
+  size_t extlen = strlen(ext);
 
-  extlen = (int)STRLEN(ext);
-
-  /*
-   * If there is no file name we must get the name of the current directory
-   * (we need the full path in case :cd is used).
-   */
+  // If there is no file name we must get the name of the current directory
+  // (we need the full path in case :cd is used).
   if (fname == NULL || *fname == NUL) {
-    retval = xmalloc(MAXPATHL + extlen + 3);
-    if (os_dirname(retval, MAXPATHL) == FAIL ||
-        (fnamelen = (int)STRLEN(retval)) == 0) {
+    retval = xmalloc(MAXPATHL + extlen + 3);  // +3 for PATHSEP, "_" (Win), NUL
+    if (os_dirname((char_u *)retval, MAXPATHL) == FAIL ||
+        (fnamelen = strlen(retval)) == 0) {
       xfree(retval);
       return NULL;
     }
-    if (!after_pathsep((char *)retval, (char *)retval + fnamelen)) {
+    if (!after_pathsep(retval, retval + fnamelen)) {
       retval[fnamelen++] = PATHSEP;
       retval[fnamelen] = NUL;
     }
-    prepend_dot = FALSE;            /* nothing to prepend a dot to */
+    prepend_dot = FALSE;  // nothing to prepend a dot to
   } else {
-    fnamelen = (int)STRLEN(fname);
+    fnamelen = strlen(fname);
     retval = xmalloc(fnamelen + extlen + 3);
-    STRCPY(retval, fname);
+    strcpy(retval, fname);
   }
 
-  /*
-   * search backwards until we hit a '/', '\' or ':'.
-   * Then truncate what is after the '/', '\' or ':' to BASENAMELEN characters.
-   */
+  // Search backwards until we hit a '/', '\' or ':'.
+  // Then truncate what is after the '/', '\' or ':' to BASENAMELEN characters.
+  char *ptr = NULL;
   for (ptr = retval + fnamelen; ptr > retval; mb_ptr_back(retval, ptr)) {
     if (vim_ispathsep(*ptr)) {
-      ++ptr;
+      ptr++;
       break;
     }
   }
 
-  /* the file name has at most BASENAMELEN characters. */
-  if (STRLEN(ptr) > BASENAMELEN)
+  // the file name has at most BASENAMELEN characters.
+  if (strlen(ptr) > BASENAMELEN) {
     ptr[BASENAMELEN] = '\0';
+  }
 
-  s = ptr + STRLEN(ptr);
+  char *s;
+  s = ptr + strlen(ptr);
 
 #if defined(WIN3264)
-  /*
-   * If there is no file name, and the extension starts with '.', put a
-   * '_' before the dot, because just ".ext" may be invalid if it's on a
-   * FAT partition, and on HPFS it doesn't matter.
-   */
-  else if ((fname == NULL || *fname == NUL) && *ext == '.')
+  // If there is no file name, and the extension starts with '.', put a
+  // '_' before the dot, because just ".ext" may be invalid if it's on a
+  // FAT partition, and on HPFS it doesn't matter.
+  else if ((fname == NULL || *fname == NUL) && *ext == '.') {
     *s++ = '_';
+  }
 #endif
 
-  /*
-   * Append the extension.
-   * ext can start with '.' and cannot exceed 3 more characters.
-   */
-  STRCPY(s, ext);
+  // Append the extension.
+  // ext can start with '.' and cannot exceed 3 more characters.
+  strcpy(s, ext);
 
-  /*
-   * Prepend the dot.
-   */
-  if (prepend_dot && *(e = path_tail(retval)) != '.') {
+  char *e;
+  // Prepend the dot if needed.
+  if (prepend_dot && *(e = (char *)path_tail((char_u *)retval)) != '.') {
     STRMOVE(e + 1, e);
     *e = '.';
   }
 
-  /*
-   * Check that, after appending the extension, the file name is really
-   * different.
-   */
-  if (fname != NULL && STRCMP(fname, retval) == 0) {
-    /* we search for a character that can be replaced by '_' */
+  // Check that, after appending the extension, the file name is really
+  // different.
+  if (fname != NULL && strcmp(fname, retval) == 0) {
+    // we search for a character that can be replaced by '_'
     while (--s >= ptr) {
       if (*s != '_') {
         *s = '_';
         break;
       }
     }
-    if (s < ptr)        /* fname was "________.<ext>", how tricky! */
+    if (s < ptr) {  // fname was "________.<ext>", how tricky!
       *ptr = 'v';
+    }
   }
   return retval;
 }
