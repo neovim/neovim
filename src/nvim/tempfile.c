@@ -45,7 +45,7 @@ static void vim_maketempdir(void)
       continue;
     }
 
-    if (vim_settempdir(path)) {
+    if (vim_settempdir((char *)path)) {
       // Successfully created and set temporary directory so stop trying.
       break;
     } else {
@@ -100,15 +100,15 @@ char_u *vim_gettempdir(void)
 /// @param tempdir must be no longer than MAXPATHL.
 ///
 /// @return false if we run out of memory.
-static bool vim_settempdir(char_u *tempdir)
+static bool vim_settempdir(char *tempdir)
 {
-  char_u *buf = verbose_try_malloc((size_t)MAXPATHL + 2);
+  char *buf = verbose_try_malloc(MAXPATHL + 2);
   if (!buf) {
     return false;
   }
-  vim_FullName((char *)tempdir, (char *)buf, MAXPATHL, false);
-  add_pathsep((char *)buf);
-  vim_tempdir = vim_strsave(buf);
+  vim_FullName(tempdir, buf, MAXPATHL, false);
+  add_pathsep(buf);
+  vim_tempdir = (char_u *)xstrdup(buf);
   xfree(buf);
   return true;
 }
