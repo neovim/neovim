@@ -190,15 +190,12 @@ include_directories(SYSTEM ${MSGPACK_INCLUDE_DIRS})
 find_package(LuaJit REQUIRED)
 include_directories(SYSTEM ${LUAJIT_INCLUDE_DIRS})
 
-option(UNIBILIUM_USE_STATIC "Use static unibilium" ON)
 find_package(Unibilium REQUIRED)
 include_directories(SYSTEM ${UNIBILIUM_INCLUDE_DIRS})
 
-option(LIBTERMKEY_USE_STATIC "Use static libtermkey" ON)
 find_package(LibTermkey REQUIRED)
 include_directories(SYSTEM ${LIBTERMKEY_INCLUDE_DIRS})
 
-option(LIBVTERM_USE_STATIC "Use static libvterm" ON)
 find_package(LibVterm REQUIRED)
 include_directories(SYSTEM ${LIBVTERM_INCLUDE_DIRS})
 
@@ -215,7 +212,6 @@ else()
 endif()
 
 if(USE_JEMALLOC)
-  option(JEMALLOC_USE_STATIC "Use static jemalloc" ON)
   find_package(JeMalloc)
   if(JEMALLOC_FOUND)
     message(STATUS "Using jemalloc instead of libc allocator")
