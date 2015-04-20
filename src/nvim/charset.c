@@ -32,7 +32,7 @@
 #endif
 
 
-static int chartab_initialized = FALSE;
+static bool chartab_initialized = false;
 
 // b_chartab[] is an array of 32 bytes, each bit representing one of the
 // characters 0-255.
@@ -69,23 +69,23 @@ static int chartab_initialized = FALSE;
 /// an error, OK otherwise.
 int init_chartab(void)
 {
-  return buf_init_chartab(curbuf, TRUE);
+  return buf_init_chartab(curbuf, true);
 }
 
 /// Helper for init_chartab
 ///
-/// @param global FALSE: only set buf->b_chartab[]
+/// @param global false: only set buf->b_chartab[]
 ///
 /// @return FAIL if 'iskeyword', 'isident', 'isfname' or 'isprint' option has
 /// an error, OK otherwise.
-int buf_init_chartab(buf_T *buf, int global)
+int buf_init_chartab(buf_T *buf, bool global)
 {
   int c;
   int c2;
   char_u *p;
   int i;
-  int tilde;
-  int do_isalpha;
+  bool tilde;
+  bool do_isalpha;
 
   if (global) {
     // Set the default size for printable characters:
@@ -169,11 +169,11 @@ int buf_init_chartab(buf_T *buf, int global)
     }
 
     while (*p) {
-      tilde = FALSE;
-      do_isalpha = FALSE;
+      tilde = false;
+      do_isalpha = false;
 
       if ((*p == '^') && (p[1] != NUL)) {
-        tilde = TRUE;
+        tilde = true;
         ++p;
       }
 
@@ -212,7 +212,7 @@ int buf_init_chartab(buf_T *buf, int global)
         // standard function isalpha(). This takes care of locale for
         // single-byte characters).
         if (c == '@') {
-          do_isalpha = TRUE;
+          do_isalpha = true;
           c = 1;
           c2 = 255;
         } else {
@@ -280,7 +280,7 @@ int buf_init_chartab(buf_T *buf, int global)
       }
     }
   }
-  chartab_initialized = TRUE;
+  chartab_initialized = true;
   return OK;
 }
 
