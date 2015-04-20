@@ -1521,16 +1521,14 @@ find_file_name_in_path (
   return file_name;
 }
 
-/*
- * Check if the "://" of a URL is at the pointer, return URL_SLASH.
- * Also check for ":\\", which MS Internet Explorer accepts, return
- * URL_BACKSLASH.
- */
-int path_is_url(char_u *p)
+// Check if the "://" of a URL is at the pointer, return URL_SLASH.
+// Also check for ":\\", which MS Internet Explorer accepts, return
+// URL_BACKSLASH.
+int path_is_url(const char *p)
 {
-  if (STRNCMP(p, "://", (size_t)3) == 0)
+  if (strncmp(p, "://", 3) == 0)
     return URL_SLASH;
-  else if (STRNCMP(p, ":\\\\", (size_t)3) == 0)
+  else if (strncmp(p, ":\\\\", 3) == 0)
     return URL_BACKSLASH;
   return 0;
 }
