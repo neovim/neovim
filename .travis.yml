@@ -51,24 +51,8 @@ install:
   - if [ $TRAVIS_OS_NAME = osx ]; then
       brew install gettext;
     fi
-before_script:
-  # Adds user to a dummy group.
-  # That allows to test changing the group of the file by `os_fchown`.
-  # Need xvfb for running some tests with xclip
-  - if [ $TRAVIS_OS_NAME = linux ]; then
-      sudo groupadd chown_test;
-      sudo usermod -a -G chown_test $USER;
-      export DISPLAY=:99.0;
-      sh -e /etc/init.d/xvfb start;
-    elif [ $TRAVIS_OS_NAME = osx ]; then
-      sudo dscl . -create /Groups/chown_test;
-      sudo dscl . -append /Groups/chown_test GroupMembership $USER;
-    fi
 script:
-  # This will pass the environment variables down to a bash process which runs
-  # as $USER, while retaining the environment variables defined and belonging
-  # to secondary groups given above in usermod.
-  - sudo -E su $USER -c "sh -e \"$CI_SCRIPTS/$CI_TARGET.sh\""
+  - sh -e $CI_SCRIPTS/$CI_TARGET.sh
 notifications:
   webhooks:
     urls:
