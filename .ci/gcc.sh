@@ -1,14 +1,9 @@
 . "$CI_SCRIPTS/common.sh"
 
-sudo pip install cpp-coveralls
-
 if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-	sudo apt-get install valgrind
 	export VALGRIND=1
 	export VALGRIND_LOG="$tmpdir/valgrind-%p.log"
 fi
-
-setup_deps x64
 
 CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON \
 	-DUSE_JEMALLOC=OFF \

@@ -12,6 +12,7 @@ addons:
         - valgrind
         - libtool
         - gcc-multilib
+        - clang-3.4
 cache:
     - apt
     - pip
@@ -47,10 +48,12 @@ before_install:
   - if [ $TRAVIS_OS_NAME = osx ]; then
       brew update;
     fi
+  - pip install --user -q --upgrade pip
 install:
   - if [ $TRAVIS_OS_NAME = osx ]; then
       brew install gettext;
     fi
+  - pip install --user -q cpp-coveralls neovim
 script:
   - sh -e $CI_SCRIPTS/$CI_TARGET.sh
 notifications:
