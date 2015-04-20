@@ -4310,7 +4310,7 @@ void shorten_fnames(int force)
   FOR_ALL_BUFFERS(buf) {
     if (buf->b_fname != NULL
         && !bt_nofile(buf)
-        && !path_with_url(buf->b_fname)
+        && !path_with_url((char *)buf->b_fname)
         && (force
             || buf->b_sfname == NULL
             || path_is_absolute_path(buf->b_sfname))) {

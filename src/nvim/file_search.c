@@ -749,7 +749,7 @@ char_u *vim_findfile(void *search_ctx_arg)
          * Expand wildcards like "*" and "$VAR".
          * If the path is a URL don't try this.
          */
-        if (path_with_url(dirptrs[0])) {
+        if (path_with_url((char *)dirptrs[0])) {
           stackp->ffs_filearray = (char_u **)xmalloc(sizeof(char *));
           stackp->ffs_filearray[0] = vim_strsave(dirptrs[0]);
           stackp->ffs_filearray_size = 1;
@@ -777,7 +777,7 @@ char_u *vim_findfile(void *search_ctx_arg)
            */
           for (int i = stackp->ffs_filearray_cur;
                i < stackp->ffs_filearray_size; ++i) {
-            if (!path_with_url(stackp->ffs_filearray[i])
+            if (!path_with_url((char *)stackp->ffs_filearray[i])
                 && !os_isdir(stackp->ffs_filearray[i]))
               continue;                 /* not a directory */
 
@@ -798,7 +798,7 @@ char_u *vim_findfile(void *search_ctx_arg)
               suf = curbuf->b_p_sua;
             for (;; ) {
               /* if file exists and we didn't already find it */
-              if ((path_with_url(file_path)
+              if ((path_with_url((char *)file_path)
                    || (os_file_exists(file_path)
                        && (search_ctx->ffsc_find_what
                            == FINDFILE_BOTH
@@ -836,7 +836,7 @@ char_u *vim_findfile(void *search_ctx_arg)
                 stackp->ffs_filearray_cur = (char_u)(i + 1);
                 ff_push(search_ctx, stackp);
 
-                if (!path_with_url(file_path))
+                if (!path_with_url((char *)file_path))
                   simplify_filename(file_path);
                 if (os_dirname(ff_expand_buffer, MAXPATHL)
                     == OK) {
@@ -1097,7 +1097,7 @@ static int ff_check_visited(ff_visited_T **visited_list, char_u *fname, char_u *
   FileID file_id;
   // For an URL we only compare the name, otherwise we compare the
   // device/inode.
-  if (path_with_url(fname)) {
+  if (path_with_url((char *)fname)) {
     STRLCPY(ff_expand_buffer, fname, MAXPATHL);
     url = true;
   } else {
@@ -1404,7 +1404,7 @@ find_file_in_path_option (
      * filename on the first call.
      */
     if (first == TRUE) {
-      if (path_with_url(ff_file_to_find)) {
+      if (path_with_url((char *)ff_file_to_find)) {
         file_name = vim_strsave(ff_file_to_find);
         goto theend;
       }

@@ -734,7 +734,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
     } else if (buf[0] == NUL)
       /* relative to current directory */
       STRCPY(buf, curdir);
-    else if (path_with_url(buf))
+    else if (path_with_url((char *)buf))
       /* URL can't be used here */
       continue;
     else if (!path_is_absolute_path(buf)) {
@@ -1533,17 +1533,14 @@ int path_is_url(const char *p)
   return 0;
 }
 
-/*
- * Check if "fname" starts with "name://".  Return URL_SLASH if it does.
- * Return URL_BACKSLASH for "name:\\".
- * Return zero otherwise.
- */
-int path_with_url(char_u *fname)
+/// Check if "fname" starts with "name://".  Return URL_SLASH if it does.
+///
+/// @param  fname         is the filename to test
+/// @return URL_BACKSLASH for "name:\\", zero otherwise.
+int path_with_url(const char *fname)
 {
-  char_u *p;
-
-  for (p = fname; isalpha(*p); ++p)
-    ;
+  const char *p;
+  for (p = fname; isalpha(*p); p++) {}
   return path_is_url(p);
 }
 
@@ -1552,7 +1549,7 @@ int path_with_url(char_u *fname)
  */
 int vim_isAbsName(char_u *name)
 {
-  return path_with_url(name) != 0 || path_is_absolute_path(name);
+  return path_with_url((char *)name) != 0 || path_is_absolute_path(name);
 }
 
 /*
@@ -1575,7 +1572,7 @@ vim_FullName (
   if (fname == NULL)
     return FAIL;
 
-  url = path_with_url(fname);
+  url = path_with_url((char *)fname);
   if (!url)
     retval = path_get_absolute_path(fname, buf, len, force);
   if (url || retval == FAIL) {
