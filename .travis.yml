@@ -1,10 +1,20 @@
-sudo: required
+sudo: false
 language: c
 os:
   - linux
 branches:
   except:
     - nightly
+addons:
+    apt_packages:
+        - xclip
+        - gdb
+        - valgrind
+        - libtool
+        - gcc-multilib
+cache:
+    - apt
+    - pip
 env:
   global:
     - CI_SCRIPTS=$TRAVIS_BUILD_DIR/.ci
@@ -34,18 +44,11 @@ matrix:
       compiler: gcc-4.9
   fast_finish: true
 before_install:
-  # Pins the version of the java package installed on the Travis VMs
-  # and avoids a lengthy upgrade process for them.
-  - if [ $TRAVIS_OS_NAME = linux ]; then
-      sudo apt-mark hold oracle-java7-installer oracle-java8-installer;
-      sudo apt-get update;
-    elif [ $TRAVIS_OS_NAME = osx ]; then
+  - if [ $TRAVIS_OS_NAME = osx ]; then
       brew update;
     fi
 install:
-  - if [ $TRAVIS_OS_NAME = linux ]; then
-      sudo apt-get install xclip gdb;
-    elif [ $TRAVIS_OS_NAME = osx ]; then
+  - if [ $TRAVIS_OS_NAME = osx ]; then
       brew install gettext;
     fi
 before_script:
