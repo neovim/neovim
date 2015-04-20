@@ -313,7 +313,7 @@ vim_findfile_init (
     if (!vim_isAbsName(rel_fname) && len + 1 < MAXPATHL) {
       /* Make the start dir an absolute path name. */
       STRLCPY(ff_expand_buffer, rel_fname, len + 1);
-      search_ctx->ffsc_start_dir = FullName_save(ff_expand_buffer, FALSE);
+      search_ctx->ffsc_start_dir = (char_u *)FullName_save((char *)ff_expand_buffer, FALSE);
     } else
       search_ctx->ffsc_start_dir = vim_strnsave(rel_fname, len);
     if (*++path != NUL)

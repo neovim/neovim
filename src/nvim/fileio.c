@@ -6599,7 +6599,7 @@ apply_autocmds_group (
         || event == EVENT_TABCLOSED)
       fname = vim_strsave(fname);
     else
-      fname = FullName_save(fname, FALSE);
+      fname = (char_u *)FullName_save((char *)fname, FALSE);
   }
   if (fname == NULL) {      /* out of memory */
     xfree(sfname);
@@ -6925,7 +6925,7 @@ int has_autocmd(event_T event, char_u *sfname, buf_T *buf)
   char_u      *tail = path_tail(sfname);
   int retval = FALSE;
 
-  fname = FullName_save(sfname, FALSE);
+  fname = (char_u *)FullName_save((char *)sfname, FALSE);
   if (fname == NULL)
     return FALSE;
 

@@ -8155,7 +8155,7 @@ eval_vars (
         /* Still need to turn the fname into a full path.  It is
          * postponed to avoid a delay when <afile> is not used. */
         autocmd_fname_full = TRUE;
-        result = FullName_save(autocmd_fname, FALSE);
+        result = (char_u *)FullName_save((char *)autocmd_fname, FALSE);
         xfree(autocmd_fname);
         autocmd_fname = result;
       }

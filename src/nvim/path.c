@@ -358,28 +358,26 @@ void add_pathsep(char *p)
     strcat(p, PATHSEPSTR);
 }
 
-/*
- * FullName_save - Make an allocated copy of a full file name.
- * Returns NULL when fname is NULL.
- */
-char_u *
-FullName_save (
-    char_u *fname,
-    int force                      /* force expansion, even when it already looks
-                                 * like a full path name */
-)
+/// Get an allocated copy of the full path to a file.
+///
+/// @param fname is the filename to save
+/// @param force is a flag to expand `fname` even if it looks absolute
+///
+/// @return [allocated] Copy of absolute path to `fname` or NULL when
+///                     `fname` is NULL.
+char *FullName_save(char *fname, bool force)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
-  char_u      *new_fname = NULL;
-
-  if (fname == NULL)
+  if (fname == NULL) {
     return NULL;
+  }
 
-  char_u *buf = xmalloc(MAXPATHL);
-
-  if (vim_FullName((char *)fname, (char *)buf, MAXPATHL, force) != FAIL) {
-    new_fname = vim_strsave(buf);
+  char *buf = xmalloc(MAXPATHL);
+  char *new_fname = NULL;
+  if (vim_FullName(fname, buf, MAXPATHL, force) != FAIL) {
+    new_fname = xstrdup(buf);
   } else {
-    new_fname = vim_strsave(fname);
+    new_fname = xstrdup(fname);
   }
   xfree(buf);
 
@@ -393,7 +391,7 @@ char_u *save_absolute_path(const char_u *name)
   FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL
 {
   if (!path_is_absolute_path(name)) {
-    return FullName_save((char_u *) name, true);
+    return (char_u *)FullName_save((char *)name, true);
   }
   return vim_strsave((char_u *) name);
 }
@@ -1595,7 +1593,7 @@ char_u *fix_fname(char_u *fname)
    * For MS-Windows also expand names like "longna~1" to "longname".
    */
 #ifdef UNIX
-  return FullName_save(fname, TRUE);
+  return (char_u *)FullName_save((char *)fname, TRUE);
 #else
   if (!vim_isAbsName(fname)
       || strstr((char *)fname, "..") != NULL
@@ -1892,7 +1890,7 @@ int expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file,
 
     /* check all files in (*file)[] */
     for (i = 0; i < *num_file; ++i) {
-      ffname = FullName_save((*file)[i], FALSE);
+      ffname = (char_u *)FullName_save((char *)(*file)[i], FALSE);
       if (ffname == NULL)               /* out of memory */
         break;
       if (match_file_list(p_wig, (*file)[i], ffname)) {

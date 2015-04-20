@@ -1661,7 +1661,7 @@ buf_T *buflist_findname_exp(char_u *fname)
   buf_T       *buf = NULL;
 
   /* First make the name into a full path name */
-  ffname = FullName_save(fname,
+  ffname = (char_u *)FullName_save((char *)fname,
 #ifdef UNIX
       TRUE                  /* force expansion, get rid of symbolic links */
 #else

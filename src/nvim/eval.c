@@ -15484,7 +15484,7 @@ static void f_undofile(typval_T *argvars, typval_T *rettv)
       /* If there is no file name there will be no undo file. */
       rettv->vval.v_string = NULL;
     } else {
-      char_u *ffname = FullName_save(fname, FALSE);
+      char_u *ffname = (char_u *)FullName_save((char *)fname, FALSE);
 
       if (ffname != NULL)
         rettv->vval.v_string = u_get_undo_file_name(ffname, FALSE);
@@ -19906,7 +19906,7 @@ repeat:
 
     /* FullName_save() is slow, don't use it when not needed. */
     if (*p != NUL || !vim_isAbsName(*fnamep)) {
-      *fnamep = FullName_save(*fnamep, *p != NUL);
+      *fnamep = (char_u *)FullName_save((char *)*fnamep, *p != NUL);
       xfree(*bufp);          /* free any allocated file name */
       *bufp = *fnamep;
       if (*fnamep == NULL)
@@ -19940,7 +19940,7 @@ repeat:
       if (c == '.' && **fnamep == '~')
         p = pbuf = expand_env_save(*fnamep);
       else
-        p = pbuf = FullName_save(*fnamep, FALSE);
+        p = pbuf = (char_u *)FullName_save((char *)*fnamep, FALSE);
     } else
       p = *fnamep;
 

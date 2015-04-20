@@ -893,7 +893,7 @@ blocknr_T mf_trans_del(memfile_T *mfp, blocknr_T old_nr)
 /// name so we must work out the full path name.
 void mf_set_ffname(memfile_T *mfp)
 {
-  mfp->mf_ffname = FullName_save(mfp->mf_fname, false);
+  mfp->mf_ffname = (char_u *)FullName_save((char *)mfp->mf_fname, false);
 }
 
 /// Make name of memfile's swapfile a full path.
