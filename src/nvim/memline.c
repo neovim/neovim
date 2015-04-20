@@ -1342,7 +1342,7 @@ recover_names (
         p = dir_name + STRLEN(dir_name);
         if (after_pathsep((char *)dir_name, (char *)p) && p[-1] == p[-2]) {
           /* Ends with '//', Use Full path for swap name */
-          tail = make_percent_swname(dir_name, fname_res);
+          tail = (char_u *)make_percent_swname((char *)dir_name, (char *)fname_res);
         } else {
           tail = path_tail(fname_res);
           tail = concat_fnames(dir_name, tail, TRUE);
@@ -1441,18 +1441,19 @@ recover_names (
  * Append the full path to name with path separators made into percent
  * signs, to dir. An unnamed buffer is handled as "" (<currentdir>/"")
  */
-static char_u *make_percent_swname(char_u *dir, char_u *name)
+static char *make_percent_swname(const char *dir, char *name)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
-  char_u *d, *s, *f;
-
-  f = (char_u *)fix_fname(name != NULL ? (char *)name : "");
-  d = NULL;
+  char *d = NULL;
+  char *f = fix_fname(name != NULL ? name : "");
   if (f != NULL) {
-    s = (char_u *)xstrdup((char *)f);
-    for (d = s; *d != NUL; mb_ptr_adv(d))
-      if (vim_ispathsep(*d))
+    char *s = xstrdup(f);
+    for (d = s; *d != NUL; mb_ptr_adv(d)) {
+      if (vim_ispathsep(*d)) {
         *d = '%';
-    d = concat_fnames(dir, s, TRUE);
+      }
+    }
+    d = (char *)concat_fnames((char_u *)dir, (char_u *)s, TRUE);
     xfree(s);
     xfree(f);
   }
@@ -3068,7 +3069,7 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
   s = dir_name + STRLEN(dir_name);
   if (after_pathsep((char *)dir_name, (char *)s) && s[-1] == s[-2]) { /* Ends with '//', Use Full path */
     r = NULL;
-    if ((s = make_percent_swname(dir_name, fname)) != NULL) {
+    if ((s = (char_u *)make_percent_swname((char *)dir_name, (char *)fname)) != NULL) {
       r = (char_u *)modname((char *)s, ".swp", FALSE);
       xfree(s);
     }

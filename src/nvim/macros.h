@@ -128,7 +128,7 @@
 /* Get the length of the character p points to */
 # define MB_PTR2LEN(p)          (has_mbyte ? (*mb_ptr2len)(p) : 1)
 /* Advance multi-byte pointer, skip over composing chars. */
-# define mb_ptr_adv(p)      p += has_mbyte ? (*mb_ptr2len)(p) : 1
+# define mb_ptr_adv(p)      p += has_mbyte ? (*mb_ptr2len)((char_u *)p) : 1
 /* Advance multi-byte pointer, do not skip over composing chars. */
 # define mb_cptr_adv(p)     p += \
   enc_utf8 ? utf_ptr2len(p) : has_mbyte ? (*mb_ptr2len)(p) : 1
