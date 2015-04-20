@@ -329,20 +329,25 @@ int vim_fnamencmp(char_u *x, char_u *y, size_t len)
 #endif
 }
 
-/*
- * Concatenate file names fname1 and fname2 into allocated memory.
- * Only add a '/' or '\\' when 'sep' is TRUE and it is necessary.
- */
-char_u *concat_fnames(char_u *fname1, char_u *fname2, int sep)
-  FUNC_ATTR_NONNULL_RET
+/// Concatenate file names fname1 and fname2 into allocated memory.
+///
+/// Only add a '/' or '\\' when 'sep' is true and it is necessary.
+///
+/// @param fname1 is the first part of the path or filename
+/// @param fname2 is the second half of the path or filename
+/// @param sep    is a flag to indicate a path separator should be added
+///               if necessary
+/// @return [allocated] Concatenation of fname1 and fname2.
+char *concat_fnames(const char *fname1, const char *fname2, bool sep)
+  FUNC_ATTR_NONNULL_ARG(1, 2) FUNC_ATTR_NONNULL_RET
 {
-  char_u *dest = xmalloc(STRLEN(fname1) + STRLEN(fname2) + 3);
+  char *dest = xmalloc(strlen(fname1) + strlen(fname2) + 3);
 
-  STRCPY(dest, fname1);
+  strcpy(dest, fname1);
   if (sep) {
-    add_pathsep((char *)dest);
+    add_pathsep(dest);
   }
-  STRCAT(dest, fname2);
+  strcat(dest, fname2);
 
   return dest;
 }

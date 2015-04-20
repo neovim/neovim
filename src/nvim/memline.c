@@ -1332,11 +1332,11 @@ recover_names (
         num_names = recov_file_names(names, fname_res, TRUE);
     } else {                      /* check directory dir_name */
       if (fname == NULL) {
-        names[0] = concat_fnames(dir_name, (char_u *)"*.sw?", TRUE);
+        names[0] = (char_u *)concat_fnames((char *)dir_name, "*.sw?", TRUE);
         /* For Unix names starting with a dot are special.  MS-Windows
          * supports this too, on some file systems. */
-        names[1] = concat_fnames(dir_name, (char_u *)".*.sw?", TRUE);
-        names[2] = concat_fnames(dir_name, (char_u *)".sw?", TRUE);
+        names[1] = (char_u *)concat_fnames((char *)dir_name, ".*.sw?", TRUE);
+        names[2] = (char_u *)concat_fnames((char *)dir_name, ".sw?", TRUE);
         num_names = 3;
       } else {
         p = dir_name + STRLEN(dir_name);
@@ -1345,7 +1345,7 @@ recover_names (
           tail = (char_u *)make_percent_swname((char *)dir_name, (char *)fname_res);
         } else {
           tail = path_tail(fname_res);
-          tail = concat_fnames(dir_name, tail, TRUE);
+          tail = (char_u *)concat_fnames((char *)dir_name, (char *)tail, TRUE);
         }
         num_names = recov_file_names(names, tail, FALSE);
         xfree(tail);
@@ -1453,7 +1453,7 @@ static char *make_percent_swname(const char *dir, char *name)
         *d = '%';
       }
     }
-    d = (char *)concat_fnames((char_u *)dir, (char_u *)s, TRUE);
+    d = concat_fnames(dir, s, TRUE);
     xfree(s);
     xfree(f);
   }
@@ -1573,7 +1573,7 @@ static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
   }
 
   // Form the normal swap file name pattern by appending ".sw?".
-  names[num_names] = concat_fnames(path, (char_u *)".sw?", FALSE);
+  names[num_names] = (char_u *)concat_fnames((char *)path, ".sw?", FALSE);
   if (num_names >= 1) {     /* check if we have the same name twice */
     char_u *p = names[num_names - 1];
     int i = (int)STRLEN(names[num_names - 1]) - (int)STRLEN(names[num_names]);
@@ -3123,17 +3123,17 @@ get_file_in_dir (
     retval = vim_strsave(fname);
   else if (dname[0] == '.' && vim_ispathsep(dname[1])) {
     if (tail == fname)              /* no path before file name */
-      retval = concat_fnames(dname + 2, tail, TRUE);
+      retval = (char_u *)concat_fnames((char *)dname + 2, (char *)tail, TRUE);
     else {
       save_char = *tail;
       *tail = NUL;
-      t = concat_fnames(fname, dname + 2, TRUE);
+      t = (char_u *)concat_fnames((char *)fname, (char *)dname + 2, TRUE);
       *tail = save_char;
-      retval = concat_fnames(t, tail, TRUE);
+      retval = (char_u *)concat_fnames((char *)t, (char *)tail, TRUE);
       xfree(t);
     }
   } else {
-    retval = concat_fnames(dname, tail, TRUE);
+    retval = (char_u *)concat_fnames((char *)dname, (char *)tail, TRUE);
   }
 
   return retval;
