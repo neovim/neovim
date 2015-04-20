@@ -1578,36 +1578,34 @@ int vim_FullName(char *fname, char *buf, int len, bool force)
   return retval;
 }
 
-/*
- * If fname is not a full path, make it a full path.
- * Returns pointer to allocated memory (NULL for failure).
- */
-char_u *fix_fname(char_u *fname)
+/// Get the full resolved path for `fname`
+///
+/// Even filenames that appear to be absolute based on starting from
+/// the root may have relative paths (like dir/../subdir) or symlinks
+/// embedded, or even extra separators (//).  This function addresses
+/// those possibilities, returning a resolved absolute path.
+/// For MS-Windows, this also expands names like "longna~1".
+///
+/// @param fname is the filename to expand
+/// @return [allocated] Full path (NULL for failure).
+char *fix_fname(char *fname)
 {
-  /*
-   * Force expanding the path always for Unix, because symbolic links may
-   * mess up the full path name, even though it starts with a '/'.
-   * Also expand when there is ".." in the file name, try to remove it,
-   * because "c:/src/../README" is equal to "c:/README".
-   * Similarly "c:/src//file" is equal to "c:/src/file".
-   * For MS-Windows also expand names like "longna~1" to "longname".
-   */
 #ifdef UNIX
-  return (char_u *)FullName_save((char *)fname, TRUE);
+  return FullName_save(fname, TRUE);
 #else
-  if (!vim_isAbsName(fname)
-      || strstr((char *)fname, "..") != NULL
-      || strstr((char *)fname, "//") != NULL
+  if (!vim_isAbsName((char_u *)fname)
+      || strstr(fname, "..") != NULL
+      || strstr(fname, "//") != NULL
 # ifdef BACKSLASH_IN_FILENAME
-      || strstr((char *)fname, "\\\\") != NULL
+      || strstr(fname, "\\\\") != NULL
 # endif
       )
     return FullName_save(fname, FALSE);
 
-  fname = vim_strsave(fname);
+  fname = xstrdup(fname);
 
 # ifdef USE_FNAME_CASE
-  path_fix_case(fname);  // set correct case for file name
+  path_fix_case((char_u *)fname);  // set correct case for file name
 # endif
 
   return fname;

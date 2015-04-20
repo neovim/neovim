@@ -3569,7 +3569,7 @@ void fname_expand(buf_T *buf, char_u **ffname, char_u **sfname)
     return;
   if (*sfname == NULL)          /* if no short file name given, use ffname */
     *sfname = *ffname;
-  *ffname = fix_fname(*ffname);     /* expand to full path */
+  *ffname = (char_u *)fix_fname((char *)*ffname);     /* expand to full path */
 
 #ifdef FEAT_SHORTCUT
   if (!buf->b_p_bin) {

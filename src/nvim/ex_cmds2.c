@@ -495,7 +495,7 @@ dbg_parsearg (
     if (p == NULL)
       return FAIL;
     if (*p != '*') {
-      bp->dbg_name = fix_fname(p);
+      bp->dbg_name = (char_u *)fix_fname((char *)p);
       xfree(p);
     } else
       bp->dbg_name = p;
@@ -1692,7 +1692,7 @@ void do_argfile(exarg_T *eap, int argn)
        */
       other = TRUE;
       if (P_HID(curbuf)) {
-        p = fix_fname(alist_name(&ARGLIST[argn]));
+        p = (char_u *)fix_fname((char *)alist_name(&ARGLIST[argn]));
         other = otherfile(p);
         xfree(p);
       }
@@ -2313,7 +2313,7 @@ do_source (
   p = expand_env_save(fname);
   if (p == NULL)
     return retval;
-  fname_exp = fix_fname(p);
+  fname_exp = (char_u *)fix_fname((char *)p);
   xfree(p);
   if (fname_exp == NULL)
     return retval;

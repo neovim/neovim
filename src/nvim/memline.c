@@ -1445,7 +1445,7 @@ static char_u *make_percent_swname(char_u *dir, char_u *name)
 {
   char_u *d, *s, *f;
 
-  f = fix_fname(name != NULL ? name : (char_u *) "");
+  f = (char_u *)fix_fname(name != NULL ? (char *)name : "");
   d = NULL;
   if (f != NULL) {
     s = (char_u *)xstrdup((char *)f);
