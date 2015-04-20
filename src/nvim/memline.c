@@ -3049,7 +3049,7 @@ int resolve_symlink(char_u *fname, char_u *buf)
    * be consistent even when opening a relative symlink from different
    * working directories.
    */
-  return vim_FullName(tmp, buf, MAXPATHL, TRUE);
+  return vim_FullName((char *)tmp, (char *)buf, MAXPATHL, TRUE);
 }
 #endif
 
@@ -3554,8 +3554,8 @@ fnamecmp_ino (
    * One of the inode numbers is unknown, try a forced vim_FullName() and
    * compare the file names.
    */
-  retval_c = vim_FullName(fname_c, buf_c, MAXPATHL, TRUE);
-  retval_s = vim_FullName(fname_s, buf_s, MAXPATHL, TRUE);
+  retval_c = vim_FullName((char *)fname_c, (char *)buf_c, MAXPATHL, TRUE);
+  retval_s = vim_FullName((char *)fname_s, (char *)buf_s, MAXPATHL, TRUE);
   if (retval_c == OK && retval_s == OK)
     return STRCMP(buf_c, buf_s) != 0;
 

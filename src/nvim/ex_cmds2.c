@@ -3305,7 +3305,7 @@ static void script_host_execute(char *name, exarg_T *eap)
 static void script_host_execute_file(char *name, exarg_T *eap)
 {
   uint8_t buffer[MAXPATHL];
-  vim_FullName(eap->arg, buffer, sizeof(buffer), false);
+  vim_FullName((char *)eap->arg, (char *)buffer, sizeof(buffer), false);
 
   list_T *args = list_alloc();
   // filename

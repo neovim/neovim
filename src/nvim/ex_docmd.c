@@ -7544,7 +7544,7 @@ static void ex_mkrc(exarg_T *eap)
       char_u      *tbuf;
 
       tbuf = xmalloc(MAXPATHL);
-      if (vim_FullName(fname, tbuf, MAXPATHL, FALSE) == OK)
+      if (vim_FullName((char *)fname, (char *)tbuf, MAXPATHL, FALSE) == OK)
         set_vim_var_string(VV_THIS_SESSION, tbuf, -1);
       xfree(tbuf);
     }
@@ -8975,7 +8975,7 @@ ses_arglist (
     if (s != NULL) {
       if (fullname) {
         buf = xmalloc(MAXPATHL);
-        (void)vim_FullName(s, buf, MAXPATHL, FALSE);
+        (void)vim_FullName((char *)s, (char *)buf, MAXPATHL, FALSE);
         s = buf;
       }
       if (fputs("argadd ", fd) < 0 || ses_put_fname(fd, s, flagp) == FAIL

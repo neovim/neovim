@@ -106,7 +106,7 @@ static bool vim_settempdir(char_u *tempdir)
   if (!buf) {
     return false;
   }
-  vim_FullName(tempdir, buf, MAXPATHL, false);
+  vim_FullName((char *)tempdir, (char *)buf, MAXPATHL, false);
   add_pathsep((char *)buf);
   vim_tempdir = vim_strsave(buf);
   xfree(buf);

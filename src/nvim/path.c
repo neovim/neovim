@@ -66,8 +66,8 @@ FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname)
   if (!id_ok_1 && !id_ok_2) {
     // If os_fileid() doesn't work, may compare the names.
     if (checkname) {
-      vim_FullName(exp1, full1, MAXPATHL, FALSE);
-      vim_FullName(s2, full2, MAXPATHL, FALSE);
+      vim_FullName((char *)exp1, (char *)full1, MAXPATHL, FALSE);
+      vim_FullName((char *)s2, (char *)full2, MAXPATHL, FALSE);
       if (fnamecmp(full1, full2) == 0) {
         return kEqualFileNames;
       }
@@ -376,7 +376,7 @@ FullName_save (
 
   char_u *buf = xmalloc(MAXPATHL);
 
-  if (vim_FullName(fname, buf, MAXPATHL, force) != FAIL) {
+  if (vim_FullName((char *)fname, (char *)buf, MAXPATHL, force) != FAIL) {
     new_fname = vim_strsave(buf);
   } else {
     new_fname = vim_strsave(fname);
@@ -1552,18 +1552,16 @@ int vim_isAbsName(char_u *name)
   return path_with_url((char *)name) != 0 || path_is_absolute_path(name);
 }
 
-/*
- * Get absolute file name into buffer "buf[len]".
- *
- * return FAIL for failure, OK otherwise
- */
-int 
-vim_FullName (
-    char_u *fname,
-    char_u *buf,
-    int len,
-    int force                  /* force expansion even when already absolute */
-)
+/// Save absolute file name to "buf[len]".
+///
+/// @param      fname is the filename to evaluate
+/// @param[out] buf   is the buffer for returning the absolute path for `fname`
+/// @param      len   is the length of `buf`
+/// @param      force is a flag to force expanding even if the path is absolute
+///
+/// @return           FAIL for failure, OK otherwise
+int vim_FullName(char *fname, char *buf, int len, bool force)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   int retval = OK;
   int url;
@@ -1572,12 +1570,12 @@ vim_FullName (
   if (fname == NULL)
     return FAIL;
 
-  url = path_with_url((char *)fname);
+  url = path_with_url(fname);
   if (!url)
-    retval = path_get_absolute_path(fname, buf, len, force);
+    retval = path_get_absolute_path((char_u *)fname, (char_u *)buf, len, force);
   if (url || retval == FAIL) {
     /* something failed; use the file name (truncate when too long) */
-    STRLCPY(buf, fname, len);
+    xstrlcpy(buf, fname, len);
   }
   return retval;
 }
@@ -1698,7 +1696,7 @@ int same_directory(char_u *f1, char_u *f2)
   if (f1 == NULL || f2 == NULL)
     return FALSE;
 
-  (void)vim_FullName(f1, ffname, MAXPATHL, FALSE);
+  (void)vim_FullName((char *)f1, (char *)ffname, MAXPATHL, FALSE);
   t1 = path_tail_with_sep(ffname);
   t2 = path_tail_with_sep(f2);
   return t1 - ffname == t2 - f2
