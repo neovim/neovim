@@ -2477,7 +2477,6 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
       curr->y_array[j++] = reg->y_array[y_idx++];
     curr->y_size = j;
     xfree(reg->y_array);
-    reg = curr;
   }
   if (curwin->w_p_rnu) {
     redraw_later(SOME_VALID);  // cursor moved to start
