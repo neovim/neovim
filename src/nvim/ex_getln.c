@@ -10,6 +10,7 @@
  * ex_getln.c: Functions for entering and editing an Ex command line.
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <string.h>
@@ -4169,58 +4170,59 @@ static char_u *get_history_arg(expand_T *xp, int idx)
   return NULL;
 }
 
-/*
- * init_history() - Initialize the command line history.
- * Also used to re-allocate the history when the size changes.
- */
+/// Initialize command line history.
+/// Also used to re-allocate history tables when size changes.
 void init_history(void)
 {
-  /*
-   * If size of history table changed, reallocate it
-   */
-  ssize_t newlen = p_hi;
-  if (newlen != hislen) {
-    histentry_T *temp;
-    ssize_t i;
-    ssize_t j;
+  assert(p_hi >= 0 && p_hi <= INT_MAX);
+  int newlen = (int)p_hi;
+  int oldlen = hislen;
 
-    // adjust the tables
-    for (int type = 0; type < HIST_COUNT; ++type) {
-      if (newlen) {
-        temp = xmalloc(newlen * sizeof(*temp));
-      } else
-        temp = NULL;
-      if (newlen == 0 || temp != NULL) {
-        if (hisidx[type] < 0) {                 /* there are no entries yet */
-          for (i = 0; i < newlen; ++i)
-            clear_hist_entry(&temp[i]);
-        } else if (newlen > hislen)   {         /* array becomes bigger */
-          for (i = 0; i <= hisidx[type]; ++i)
-            temp[i] = history[type][i];
-          j = i;
-          for (; i <= newlen - (hislen - hisidx[type]); ++i)
-            clear_hist_entry(&temp[i]);
-          for (; j < hislen; ++i, ++j)
-            temp[i] = history[type][j];
-        } else {                              /* array becomes smaller or 0 */
-          j = hisidx[type];
-          for (i = newlen - 1;; --i) {
-            if (i >= 0)                         /* copy newest entries */
-              temp[i] = history[type][j];
-            else {                              /* remove older entries */
-              xfree(history[type][j].hisstr);
-              history[type][j].hisstr = NULL;
-            }
-            if (--j < 0)
-              j = hislen - 1;
-            if (j == hisidx[type])
-              break;
-          }
-          hisidx[type] = newlen - 1;
+  // If history tables size changed, reallocate them.
+  // Tables are circular arrays (current position marked by hisidx[type]).
+  // On copying them to the new arrays, we take the chance to reorder them.
+  if (newlen != oldlen) {
+    for (int type = 0; type < HIST_COUNT; type++) {
+      histentry_T *temp = newlen ? xmalloc(newlen * sizeof(*temp)) : NULL;
+
+      int j = hisidx[type];
+      if (j >= 0) {
+        // old array gets partitioned this way:
+        // [0       , i1     ) --> newest entries to be deleted
+        // [i1      , i1 + l1) --> newest entries to be copied
+        // [i1 + l1 , i2     ) --> oldest entries to be deleted
+        // [i2      , i2 + l2) --> oldest entries to be copied
+        int l1 = MIN(j + 1, newlen);             // how many newest to copy
+        int l2 = MIN(newlen, oldlen) - l1;       // how many oldest to copy
+        int i1 = j + 1 - l1;                     // copy newest from here
+        int i2 = MAX(l1, oldlen - newlen + l1);  // copy oldest from here
+
+        // copy as much entries as they fit to new table, reordering them
+        if (newlen) {
+          // copy oldest entries
+          memcpy(&temp[0], &history[type][i2], (size_t)l2 * sizeof(*temp));
+          // copy newest entries
+          memcpy(&temp[l2], &history[type][i1], (size_t)l1 * sizeof(*temp));
         }
-        xfree(history[type]);
-        history[type] = temp;
+
+        // delete entries that don't fit in newlen, if any
+        for (int i = 0; i < i1; i++) {
+          xfree(history[type][i].hisstr);
+          history[type][i].hisstr = NULL;
+        }
+        for (int i = i1 + l1; i < i2; i++) {
+          xfree(history[type][i].hisstr);
+          history[type][i].hisstr = NULL;
+        }
       }
+
+      // clear remaining space, if any
+      int l3 = j < 0 ? 0 : MIN(newlen, oldlen);  // number of copied entries
+      memset(temp + l3, 0, (size_t)(newlen - l3) * sizeof(*temp));
+
+      hisidx[type] = l3 - 1;
+      xfree(history[type]);
+      history[type] = temp;
     }
     hislen = newlen;
   }
