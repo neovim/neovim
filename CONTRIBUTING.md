@@ -11,7 +11,12 @@
 
 ## Reporting problems
 
-Before reporting an issue:
+Before reporting an issue, see the following wiki articles:
+
+- [Troubleshooting][wiki-troubleshooting]
+- [Frequently asked questions][wiki-faq]
+
+If your issue isn't mentioned there:
 
 - Verify that it hasn't already been reported.
 - If not already running the latest version of Neovim, update to it to see if
@@ -189,5 +194,7 @@ such as [`tig`][tig].
 [wiki-building-testing]: https://github.com/neovim/neovim/wiki/Building-Neovim#testing
 [wiki-building-troubleshooting]: https://github.com/neovim/neovim/wiki/Building-Neovim#troubleshooting
 [wiki-contributing]: https://github.com/neovim/neovim/wiki/Contributing
+[wiki-faq]: https://github.com/neovim/neovim/wiki/FAQ
 [wiki-install-troubleshooting]: https://github.com/neovim/neovim/wiki/Installing-Neovim#troubleshooting
 [wiki-review-checklist]: https://github.com/neovim/neovim/wiki/Code-review-checklist
+[wiki-troubleshooting]: https://github.com/neovim/neovim/wiki/Troubleshooting
