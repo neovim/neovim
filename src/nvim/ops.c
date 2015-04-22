@@ -4241,14 +4241,14 @@ int do_addsub(int command, linenr_T Prenum1)
    */
   col = curwin->w_cursor.col;
   if (dohex)
-    while (col > 0 && vim_isxdigit(ptr[col]))
+    while (col > 0 && ascii_isxdigit(ptr[col]))
       --col;
   if (       dohex
              && col > 0
              && (ptr[col] == 'X'
                  || ptr[col] == 'x')
              && ptr[col - 1] == '0'
-             && vim_isxdigit(ptr[col + 1])) {
+             && ascii_isxdigit(ptr[col + 1])) {
     /*
      * Found hexadecimal number, move to its start.
      */

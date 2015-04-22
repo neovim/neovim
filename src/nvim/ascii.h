@@ -92,6 +92,7 @@
 
 static inline bool ascii_iswhite(int c) FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST;
 static inline bool ascii_isdigit(int c) FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST;
+static inline bool ascii_isxdigit(int c) FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST;
 
 /// ascii_iswhite() is used for "^" and the like. It differs from isspace()
 /// because it doesn't include <CR> and <LF> and the like.
@@ -106,6 +107,19 @@ static inline bool ascii_iswhite(int c)
 static inline bool ascii_isdigit(int c)
 {
   return c >= '0' && c <= '9';
+}
+
+/// Variant of isxdigit() that can handle characters > 0x100.
+/// We don't use isxdigit() here, because on some systems it also considers
+/// superscript 1 to be a digit.
+///
+/// @param c
+/// @return TRUE if the character is a hexadecimal digit.
+static inline bool ascii_isxdigit(int c)
+{
+  return (c >= '0' && c <= '9')
+         || (c >= 'a' && c <= 'f')
+         || (c >= 'A' && c <= 'F');
 }
 
 

@@ -4722,7 +4722,7 @@ int get_literal(void)
       if (hex
           || unicode != 0
           ) {
-        if (!vim_isxdigit(nc))
+        if (!ascii_isxdigit(nc))
           break;
         cc = cc * 16 + hex2nr(nc);
       } else if (octal) {

@@ -4263,7 +4263,7 @@ static int check_char_class(int class, int c)
       return OK;
     break;
   case NFA_CLASS_XDIGIT:
-    if (vim_isxdigit(c))
+    if (ascii_isxdigit(c))
       return OK;
     break;
   case NFA_CLASS_TAB:

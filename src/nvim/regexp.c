@@ -2359,7 +2359,7 @@ collection:
               break;
             case CLASS_XDIGIT:
               for (cu = 1; cu <= 255; cu++)
-                if (vim_isxdigit(cu))
+                if (ascii_isxdigit(cu))
                   regc(cu);
               break;
             case CLASS_TAB:
@@ -2978,7 +2978,7 @@ static int gethexchrs(int maxinputlen)
 
   for (i = 0; i < maxinputlen; ++i) {
     c = regparse[0];
-    if (!vim_isxdigit(c))
+    if (!ascii_isxdigit(c))
       break;
     nr <<= 4;
     nr |= hex2nr(c);
