@@ -93,6 +93,7 @@
 static inline bool ascii_iswhite(int c) FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST;
 static inline bool ascii_isdigit(int c) FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST;
 static inline bool ascii_isxdigit(int c) FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST;
+static inline bool ascii_isspace(int x) FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST;
 
 /// ascii_iswhite() is used for "^" and the like. It differs from isspace()
 /// because it doesn't include <CR> and <LF> and the like.
@@ -120,6 +121,13 @@ static inline bool ascii_isxdigit(int c)
   return (c >= '0' && c <= '9')
          || (c >= 'a' && c <= 'f')
          || (c >= 'A' && c <= 'F');
+}
+
+/// Vim has its own isspace() function, because on some machines isspace()
+/// can't handle characters above 128.
+static inline bool ascii_isspace(int x)
+{
+  return (x >= 9 && x <= 13) || x == ' ';
 }
 
 

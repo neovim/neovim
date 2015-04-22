@@ -1430,7 +1430,7 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
     str = skipwhite(line + 1);
     str = viminfo_readstring(virp, (int)(str - virp->vir_line), FALSE);
     p = str + STRLEN(str);
-    while (p != str && (*p == NUL || vim_isspace(*p)))
+    while (p != str && (*p == NUL || ascii_isspace(*p)))
       p--;
     if (*p)
       p++;

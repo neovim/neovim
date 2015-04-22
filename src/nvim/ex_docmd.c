@@ -3718,7 +3718,7 @@ static char_u *getargcmd(char_u **argp)
 
   if (*arg == '+') {        /* +[command] */
     ++arg;
-    if (vim_isspace(*arg) || *arg == '\0')
+    if (ascii_isspace(*arg) || *arg == '\0')
       command = dollar_command;
     else {
       command = arg;
@@ -3742,7 +3742,7 @@ skip_cmd_arg (
     int rembs              /* TRUE to halve the number of backslashes */
 )
 {
-  while (*p && !vim_isspace(*p)) {
+  while (*p && !ascii_isspace(*p)) {
     if (*p == '\\' && p[1] != NUL) {
       if (rembs)
         STRMOVE(p, p + 1);

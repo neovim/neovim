@@ -7403,13 +7403,13 @@ static int ins_bs(int c, int mode, int *inserted_space_p)
           dec_cursor();
 
         /* start of word? */
-        if (mode == BACKSPACE_WORD && !vim_isspace(gchar_cursor())) {
+        if (mode == BACKSPACE_WORD && !ascii_isspace(gchar_cursor())) {
           mode = BACKSPACE_WORD_NOT_SPACE;
           temp = vim_iswordc(gchar_cursor());
         }
         /* end of word? */
         else if (mode == BACKSPACE_WORD_NOT_SPACE
-                 && (vim_isspace(cc = gchar_cursor())
+                 && (ascii_isspace(cc = gchar_cursor())
                      || vim_iswordc(cc) != temp)) {
           if (!revins_on)
             inc_cursor();

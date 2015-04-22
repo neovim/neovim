@@ -1371,7 +1371,7 @@ static char_u *do_one_arg(char_u *str)
       *p++ = *str;
     } else {
       /* An item ends at a space not in backticks */
-      if (!inbacktick && vim_isspace(*str))
+      if (!inbacktick && ascii_isspace(*str))
         break;
       if (*str == '`')
         inbacktick ^= TRUE;

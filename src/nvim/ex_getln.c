@@ -792,7 +792,7 @@ getcmdline (
         if (has_mbyte) {
           p = mb_prevptr(ccline.cmdbuff, p);
           if (c == Ctrl_W) {
-            while (p > ccline.cmdbuff && vim_isspace(*p))
+            while (p > ccline.cmdbuff && ascii_isspace(*p))
               p = mb_prevptr(ccline.cmdbuff, p);
             i = mb_get_class(p);
             while (p > ccline.cmdbuff && mb_get_class(p) == i)
@@ -801,10 +801,10 @@ getcmdline (
               p += (*mb_ptr2len)(p);
           }
         } else if (c == Ctrl_W)  {
-          while (p > ccline.cmdbuff && vim_isspace(p[-1]))
+          while (p > ccline.cmdbuff && ascii_isspace(p[-1]))
             --p;
           i = vim_iswordc(p[-1]);
-          while (p > ccline.cmdbuff && !vim_isspace(p[-1])
+          while (p > ccline.cmdbuff && !ascii_isspace(p[-1])
                  && vim_iswordc(p[-1]) == i)
             --p;
         } else

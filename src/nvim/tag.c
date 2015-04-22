@@ -587,7 +587,7 @@ do_tag (
 
               /* skip "file:" without a value (static tag) */
               if (STRNCMP(p, "file:", 5) == 0
-                  && vim_isspace(p[5])) {
+                  && ascii_isspace(p[5])) {
                 p += 5;
                 continue;
               }
@@ -640,7 +640,7 @@ do_tag (
               ++p;
           }
           /* Remove leading whitespace from pattern */
-          while (p != command_end && vim_isspace(*p))
+          while (p != command_end && ascii_isspace(*p))
             ++p;
 
           while (p != command_end) {
