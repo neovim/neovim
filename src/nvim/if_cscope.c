@@ -687,7 +687,7 @@ static char *cs_create_cmd(char *csoption, char *pattern)
    * they may want to use the leading white space. */
   pat = pattern;
   if (search != 4 && search != 6)
-    while (vim_iswhite(*pat))
+    while (ascii_iswhite(*pat))
       ++pat;
 
   cmd = xmalloc(strlen(pat) + 2);

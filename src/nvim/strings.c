@@ -295,7 +295,7 @@ void del_trailing_spaces(char_u *ptr)
   char_u      *q;
 
   q = ptr + STRLEN(ptr);
-  while (--q > ptr && vim_iswhite(q[0]) && q[-1] != '\\' && q[-1] != Ctrl_V)
+  while (--q > ptr && ascii_iswhite(q[0]) && q[-1] != '\\' && q[-1] != Ctrl_V)
     *q = NUL;
 }
 

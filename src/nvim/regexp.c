@@ -3993,14 +3993,14 @@ regmatch (
           break;
 
         case WHITE:
-          if (!vim_iswhite(c))
+          if (!ascii_iswhite(c))
             status = RA_NOMATCH;
           else
             ADVANCE_REGINPUT();
           break;
 
         case NWHITE:
-          if (c == NUL || vim_iswhite(c))
+          if (c == NUL || ascii_iswhite(c))
             status = RA_NOMATCH;
           else
             ADVANCE_REGINPUT();

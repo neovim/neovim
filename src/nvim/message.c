@@ -1387,7 +1387,7 @@ void msg_prt_line(char_u *s, int list)
   /* find start of trailing whitespace */
   if (list && lcs_trail) {
     trail = s + STRLEN(s);
-    while (trail > s && vim_iswhite(trail[-1]))
+    while (trail > s && ascii_iswhite(trail[-1]))
       --trail;
   }
 

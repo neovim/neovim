@@ -266,7 +266,7 @@ open_line (
         } else {      /* Not a comment line */
           /* Find last non-blank in line */
           p = ptr + STRLEN(ptr) - 1;
-          while (p > ptr && vim_iswhite(*p))
+          while (p > ptr && ascii_iswhite(*p))
             --p;
           last_char = *p;
 
@@ -276,7 +276,7 @@ open_line (
           if (last_char == '{' || last_char == ';') {
             if (p > ptr)
               --p;
-            while (p > ptr && vim_iswhite(*p))
+            while (p > ptr && ascii_iswhite(*p))
               --p;
           }
           /*
@@ -442,7 +442,7 @@ open_line (
            * comment leader, then put a space after the middle
            * comment leader on the next line.
            */
-          if (!vim_iswhite(saved_line[lead_len - 1])
+          if (!ascii_iswhite(saved_line[lead_len - 1])
               && ((p_extra != NULL
                    && (int)curwin->w_cursor.col == lead_len)
                   || (p_extra == NULL
@@ -532,7 +532,7 @@ open_line (
         if (c == COM_RIGHT) {            /* right adjusted leader */
           /* find last non-white in the leader to line up with */
           for (p = leader + lead_len - 1; p > leader
-               && vim_iswhite(*p); --p)
+               && ascii_iswhite(*p); --p)
             ;
           ++p;
 
@@ -573,7 +573,7 @@ open_line (
                   (size_t)((leader + lead_len) - (p + l + 1)));
               lead_len -= l;
               *p = ' ';
-            } else if (!vim_iswhite(*p))
+            } else if (!ascii_iswhite(*p))
               *p = ' ';
           }
         } else {                        /* left adjusted leader */
@@ -604,7 +604,7 @@ open_line (
            * leader by spaces.  Keep Tabs, the indent must
            * remain the same. */
           for (p += lead_repl_len; p < leader + lead_len; ++p)
-            if (!vim_iswhite(*p)) {
+            if (!ascii_iswhite(*p)) {
               /* Don't put a space before a TAB. */
               if (p + 1 < leader + lead_len && p[1] == TAB) {
                 --lead_len;
@@ -656,7 +656,7 @@ open_line (
 
         /* If the leader ends in white space, don't add an
          * extra space */
-        if (lead_len > 0 && vim_iswhite(leader[lead_len - 1]))
+        if (lead_len > 0 && ascii_iswhite(leader[lead_len - 1]))
           extra_space = FALSE;
         leader[lead_len] = NUL;
       }
@@ -675,7 +675,7 @@ open_line (
       if (newindent
           || did_si
           ) {
-        while (lead_len && vim_iswhite(*leader)) {
+        while (lead_len && ascii_iswhite(*leader)) {
           --lead_len;
           --newcol;
           ++leader;
@@ -966,7 +966,7 @@ int get_leader_len(char_u *line, char_u **flags, int backward, int include_space
   char_u      *saved_flags = NULL;
 
   result = i = 0;
-  while (vim_iswhite(line[i]))      /* leading white space is ignored */
+  while (ascii_iswhite(line[i]))      /* leading white space is ignored */
     ++i;
 
   /*
@@ -1009,10 +1009,10 @@ int get_leader_len(char_u *line, char_u **flags, int backward, int include_space
        * When string starts with white space, must have some white space
        * (but the amount does not need to match, there might be a mix of
        * TABs and spaces). */
-      if (vim_iswhite(string[0])) {
-        if (i == 0 || !vim_iswhite(line[i - 1]))
+      if (ascii_iswhite(string[0])) {
+        if (i == 0 || !ascii_iswhite(line[i - 1]))
           continue;            /* missing white space */
-        while (vim_iswhite(string[0]))
+        while (ascii_iswhite(string[0]))
           ++string;
       }
       for (j = 0; string[j] != NUL && string[j] == line[i + j]; ++j)
@@ -1023,7 +1023,7 @@ int get_leader_len(char_u *line, char_u **flags, int backward, int include_space
       /* When 'b' flag used, there must be white space or an
        * end-of-line after the string in the line. */
       if (vim_strchr(part_buf, COM_BLANK) != NULL
-          && !vim_iswhite(line[i + j]) && line[i + j] != NUL)
+          && !ascii_iswhite(line[i + j]) && line[i + j] != NUL)
         continue;
 
       /* We have found a match, stop searching unless this is a middle
@@ -1065,7 +1065,7 @@ int get_leader_len(char_u *line, char_u **flags, int backward, int include_space
     result = i;
 
     /* Include any trailing white space. */
-    while (vim_iswhite(line[i]))
+    while (ascii_iswhite(line[i]))
       ++i;
 
     if (include_space)
@@ -1129,10 +1129,10 @@ int get_last_leader_offset(char_u *line, char_u **flags)
        * (but the amount does not need to match, there might be a mix of
        * TABs and spaces).
        */
-      if (vim_iswhite(string[0])) {
-        if (i == 0 || !vim_iswhite(line[i - 1]))
+      if (ascii_iswhite(string[0])) {
+        if (i == 0 || !ascii_iswhite(line[i - 1]))
           continue;
-        while (vim_iswhite(string[0]))
+        while (ascii_iswhite(string[0]))
           ++string;
       }
       for (j = 0; string[j] != NUL && string[j] == line[i + j]; ++j)
@@ -1145,7 +1145,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
        * end-of-line after the string in the line.
        */
       if (vim_strchr(part_buf, COM_BLANK) != NULL
-          && !vim_iswhite(line[i + j]) && line[i + j] != NUL) {
+          && !ascii_iswhite(line[i + j]) && line[i + j] != NUL) {
         continue;
       }
 
@@ -1180,7 +1180,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
        * the comment leader correctly.
        */
 
-      while (vim_iswhite(*com_leader))
+      while (ascii_iswhite(*com_leader))
         ++com_leader;
       len1 = (int)STRLEN(com_leader);
 
@@ -1192,7 +1192,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
           continue;
         string = vim_strchr(part_buf2, ':');
         ++string;
-        while (vim_iswhite(*string))
+        while (ascii_iswhite(*string))
           ++string;
         len2 = (int)STRLEN(string);
         if (len2 == 0)

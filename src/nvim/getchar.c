@@ -2129,7 +2129,7 @@ static int vgetorpeek(int advance)
                 col = vcol = curwin->w_wcol = 0;
                 ptr = get_cursor_line_ptr();
                 while (col < curwin->w_cursor.col) {
-                  if (!vim_iswhite(ptr[col]))
+                  if (!ascii_iswhite(ptr[col]))
                     curwin->w_wcol = vcol;
                   vcol += lbr_chartabsize(ptr, ptr + col,
                       (colnr_T)vcol);
@@ -2672,7 +2672,7 @@ do_map (
    */
   p = keys;
   do_backslash = (vim_strchr(p_cpo, CPO_BSLASH) == NULL);
-  while (*p && (maptype == 1 || !vim_iswhite(*p))) {
+  while (*p && (maptype == 1 || !ascii_iswhite(*p))) {
     if ((p[0] == Ctrl_V || (do_backslash && p[0] == '\\')) &&
         p[1] != NUL)
       ++p;                      /* skip CTRL-V or backslash */
@@ -2761,7 +2761,7 @@ do_map (
           }
       /* An abbreviation cannot contain white space. */
       for (n = 0; n < len; ++n)
-        if (vim_iswhite(keys[n])) {
+        if (ascii_iswhite(keys[n])) {
           retval = 1;
           goto theend;
         }
@@ -4074,7 +4074,7 @@ int put_escstr(FILE *fd, char_u *strstart, int what)
      * interpreted as the start of a special key name.
      * A space in the lhs of a :map needs a CTRL-V.
      */
-    if (what == 2 && (vim_iswhite(c) || c == '"' || c == '\\')) {
+    if (what == 2 && (ascii_iswhite(c) || c == '"' || c == '\\')) {
       if (putc('\\', fd) < 0)
         return FAIL;
     } else if (c < ' ' || c > '~' || c == '|'

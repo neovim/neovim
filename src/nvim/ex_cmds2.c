@@ -3091,7 +3091,7 @@ void ex_language(exarg_T *eap)
    * Allow abbreviation, but require at least 3 characters to avoid
    * confusion with a two letter language name "me" or "ct". */
   p = skiptowhite(eap->arg);
-  if ((*p == NUL || vim_iswhite(*p)) && p - eap->arg >= 3) {
+  if ((*p == NUL || ascii_iswhite(*p)) && p - eap->arg >= 3) {
     if (STRNICMP(eap->arg, "messages", p - eap->arg) == 0) {
       what = VIM_LC_MESSAGES;
       name = skipwhite(p);

@@ -8,6 +8,9 @@
 #ifndef NVIM_ASCII_H
 #define NVIM_ASCII_H
 
+#include <stdbool.h>
+#include "func_attr.h"
+
 // Definitions of various common control characters.
 
 #define CharOrd(x)      ((x) < 'a' ? (x) - 'A' : (x) - 'a')
@@ -86,5 +89,14 @@
 # define PATHSEP        '/'
 # define PATHSEPSTR     "/"
 #endif
+
+static inline bool ascii_iswhite(int c) FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST;
+
+/// ascii_iswhite() is used for "^" and the like. It differs from isspace()
+/// because it doesn't include <CR> and <LF> and the like.
+static inline bool ascii_iswhite(int c)
+{
+  return c == ' ' || c == '\t';
+}
 
 #endif /* NVIM_ASCII_H */

@@ -2365,7 +2365,7 @@ do_mouse (
          * not a word character, try finding a match and select a (),
          * {}, [], #if/#endif, etc. block. */
         end_visual = curwin->w_cursor;
-        while (gc = gchar_pos(&end_visual), vim_iswhite(gc))
+        while (gc = gchar_pos(&end_visual), ascii_iswhite(gc))
           inc(&end_visual);
         if (oap != NULL)
           oap->motion_type = MCHAR;
@@ -2627,7 +2627,7 @@ int find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char_u **strin
       }
     } else
       while (ptr[col] != NUL
-             && (i == 0 ? !vim_iswordc(ptr[col]) : vim_iswhite(ptr[col]))
+             && (i == 0 ? !vim_iswordc(ptr[col]) : ascii_iswhite(ptr[col]))
              )
         ++col;
 
@@ -2660,7 +2660,7 @@ int find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char_u **strin
       while (col > 0
              && ((i == 0
                   ? vim_iswordc(ptr[col - 1])
-                  : (!vim_iswhite(ptr[col - 1])
+                  : (!ascii_iswhite(ptr[col - 1])
                      && (!(find_type & FIND_IDENT)
                          || !vim_iswordc(ptr[col - 1]))))
                  ))
@@ -2702,7 +2702,7 @@ int find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char_u **strin
       col += (*mb_ptr2len)(ptr + col);
   } else
     while ((i == 0 ? vim_iswordc(ptr[col])
-            : (ptr[col] != NUL && !vim_iswhite(ptr[col])))
+            : (ptr[col] != NUL && !ascii_iswhite(ptr[col])))
            ) {
       ++col;
     }
@@ -6177,7 +6177,7 @@ static void nv_g_cmd(cmdarg_T *cap)
     if (flag) {
       do
         i = gchar_cursor();
-      while (vim_iswhite(i) && oneright());
+      while (ascii_iswhite(i) && oneright());
     }
     curwin->w_set_curswant = true;
     break;
@@ -6200,7 +6200,7 @@ static void nv_g_cmd(cmdarg_T *cap)
 
       /* Decrease the cursor column until it's on a non-blank. */
       while (curwin->w_cursor.col > 0
-             && vim_iswhite(ptr[curwin->w_cursor.col]))
+             && ascii_iswhite(ptr[curwin->w_cursor.col]))
         --curwin->w_cursor.col;
       curwin->w_set_curswant = true;
       adjust_for_sel(cap);
@@ -6715,7 +6715,7 @@ static void nv_wordcmd(cmdarg_T *cap)
   if (!word_end && cap->oap->op_type == OP_CHANGE) {
     n = gchar_cursor();
     if (n != NUL) {                     /* not an empty line */
-      if (vim_iswhite(n)) {
+      if (ascii_iswhite(n)) {
         /*
          * Reproduce a funny Vi behaviour: "cw" on a blank only
          * changes one character, not all blanks until the start of

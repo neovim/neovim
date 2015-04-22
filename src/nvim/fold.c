@@ -1787,7 +1787,7 @@ void foldtext_cleanup(char_u *str)
   /* Ignore leading and trailing white space in 'commentstring'. */
   char_u *cms_start = skipwhite(curbuf->b_p_cms);
   size_t cms_slen = STRLEN(cms_start);
-  while (cms_slen > 0 && vim_iswhite(cms_start[cms_slen - 1]))
+  while (cms_slen > 0 && ascii_iswhite(cms_start[cms_slen - 1]))
     --cms_slen;
 
   /* locate "%s" in 'commentstring', use the part before and after it. */
@@ -1798,7 +1798,7 @@ void foldtext_cleanup(char_u *str)
     cms_slen = (size_t)(cms_end - cms_start);
 
     /* exclude white space before "%s" */
-    while (cms_slen > 0 && vim_iswhite(cms_start[cms_slen - 1]))
+    while (cms_slen > 0 && ascii_iswhite(cms_start[cms_slen - 1]))
       --cms_slen;
 
     /* skip "%s" and white space after it */
@@ -1820,7 +1820,7 @@ void foldtext_cleanup(char_u *str)
 
       /* May remove 'commentstring' start.  Useful when it's a double
        * quote and we already removed a double quote. */
-      for (p = s; p > str && vim_iswhite(p[-1]); --p)
+      for (p = s; p > str && ascii_iswhite(p[-1]); --p)
         ;
       if (p >= str + cms_slen
           && STRNCMP(p - cms_slen, cms_start, cms_slen) == 0) {
@@ -1838,7 +1838,7 @@ void foldtext_cleanup(char_u *str)
       }
     }
     if (len != 0) {
-      while (vim_iswhite(s[len]))
+      while (ascii_iswhite(s[len]))
         ++len;
       STRMOVE(s, s + len);
     } else {
