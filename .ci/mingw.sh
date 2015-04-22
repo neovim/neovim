@@ -16,3 +16,9 @@ cd .deps
 cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/mingw32-w64-cross-travis.toolchain.cmake ../third-party/
 cmake --build .
 cd ..
+
+# Build Neovim
+mkdir build
+cd build
+cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/mingw32-w64-cross-travis.toolchain.cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS="-DMIN_LOG_LEVEL=0 -pg" ..
+cmake --build .
