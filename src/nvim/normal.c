@@ -3593,7 +3593,7 @@ static void nv_zet(cmdarg_T *cap)
   int old_fen = curwin->w_p_fen;
   bool undo = false;
 
-  if (VIM_ISDIGIT(nchar)) {
+  if (ascii_isdigit(nchar)) {
     /*
      * "z123{nchar}": edit the count before obtaining {nchar}
      */
@@ -3610,7 +3610,7 @@ static void nv_zet(cmdarg_T *cap)
       (void)add_to_showcmd(nchar);
       if (nchar == K_DEL || nchar == K_KDEL)
         n /= 10;
-      else if (VIM_ISDIGIT(nchar))
+      else if (ascii_isdigit(nchar))
         n = n * 10 + (nchar - '0');
       else if (nchar == CAR) {
         win_setheight((int)n);
@@ -7252,7 +7252,7 @@ static void nv_put(cmdarg_T *cap)
       was_visual = true;
       regname = cap->oap->regname;
       if (regname == 0 || regname == '"'
-          || VIM_ISDIGIT(regname) || regname == '-') {
+          || ascii_isdigit(regname) || regname == '-') {
         // The delete might overwrite the register we want to put, save it first
         savereg = copy_register(regname);
       }

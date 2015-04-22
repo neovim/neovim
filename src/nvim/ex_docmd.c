@@ -1157,7 +1157,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
      * 2. handle command modifiers.
      */
     p = ea.cmd;
-    if (VIM_ISDIGIT(*ea.cmd))
+    if (ascii_isdigit(*ea.cmd))
       p = skipwhite(skipdigits(ea.cmd));
     switch (*p) {
     /* When adding an entry, also modify cmd_exists(). */
@@ -1260,7 +1260,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       continue;
 
     case 't':   if (checkforcmd(&p, "tab", 3)) {
-        if (vim_isdigit(*ea.cmd))
+        if (ascii_isdigit(*ea.cmd))
           cmdmod.tab = atoi((char *)ea.cmd) + 1;
         else
           cmdmod.tab = tabpage_index(curtab) + 1;
@@ -1287,7 +1287,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
         break;
       if (verbose_save < 0)
         verbose_save = p_verbose;
-      if (vim_isdigit(*ea.cmd))
+      if (ascii_isdigit(*ea.cmd))
         p_verbose = atoi((char *)ea.cmd);
       else
         p_verbose = 1;
@@ -1703,7 +1703,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       && *ea.arg != NUL
       /* Do not allow register = for user commands */
       && (!IS_USER_CMDIDX(ea.cmdidx) || *ea.arg != '=')
-      && !((ea.argt & COUNT) && VIM_ISDIGIT(*ea.arg))) {
+      && !((ea.argt & COUNT) && ascii_isdigit(*ea.arg))) {
     if (valid_yank_reg(*ea.arg, (ea.cmdidx != CMD_put
                                  && !IS_USER_CMDIDX(ea.cmdidx)))) {
       ea.regname = *ea.arg++;
@@ -1720,7 +1720,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
    * Check for a count.  When accepting a BUFNAME, don't use "123foo" as a
    * count, it's a buffer name.
    */
-  if ((ea.argt & COUNT) && VIM_ISDIGIT(*ea.arg)
+  if ((ea.argt & COUNT) && ascii_isdigit(*ea.arg)
       && (!(ea.argt & BUFNAME) || *(p = skipdigits(ea.arg)) == NUL
           || ascii_iswhite(*p))) {
     n = getdigits_long(&ea.arg);
@@ -2168,7 +2168,7 @@ find_ucmd (
       k = 0;
       while (k < len && *np != NUL && *cp++ == *np++)
         k++;
-      if (k == len || (*np == NUL && vim_isdigit(eap->cmd[k]))) {
+      if (k == len || (*np == NUL && ascii_isdigit(eap->cmd[k]))) {
         /* If finding a second match, the command is ambiguous.  But
          * not if a buffer-local command wasn't a full match and a
          * global command is a full match. */
@@ -2272,7 +2272,7 @@ int modifier_len(char_u *cmd)
   int i, j;
   char_u      *p = cmd;
 
-  if (VIM_ISDIGIT(*cmd))
+  if (ascii_isdigit(*cmd))
     p = skipwhite(skipdigits(cmd));
   for (i = 0; i < (int)ARRAY_SIZE(cmdmods); ++i) {
     for (j = 0; p[j] != NUL; ++j)
@@ -2314,7 +2314,7 @@ int cmd_exists(char_u *name)
   p = find_command(&ea, &full);
   if (p == NULL)
     return 3;
-  if (vim_isdigit(*name) && ea.cmdidx != CMD_match)
+  if (ascii_isdigit(*name) && ea.cmdidx != CMD_match)
     return 0;
   if (*skipwhite(p) != NUL)
     return 0;           /* trailing garbage */
@@ -3223,22 +3223,22 @@ get_address (
       break;
 
     default:
-      if (VIM_ISDIGIT(*cmd))                    /* absolute line number */
+      if (ascii_isdigit(*cmd))                    /* absolute line number */
         lnum = getdigits_long(&cmd);
     }
 
     for (;; ) {
       cmd = skipwhite(cmd);
-      if (*cmd != '-' && *cmd != '+' && !VIM_ISDIGIT(*cmd))
+      if (*cmd != '-' && *cmd != '+' && !ascii_isdigit(*cmd))
         break;
 
       if (lnum == MAXLNUM)
         lnum = curwin->w_cursor.lnum;           /* "+1" is same as ".+1" */
-      if (VIM_ISDIGIT(*cmd))
+      if (ascii_isdigit(*cmd))
         i = '+';                        /* "number" is same as "+number" */
       else
         i = *cmd++;
-      if (!VIM_ISDIGIT(*cmd))           /* '+' is '+1', but '+0' is not '+1' */
+      if (!ascii_isdigit(*cmd))           /* '+' is '+1', but '+0' is not '+1' */
         n = 1;
       else
         n = getdigits_long(&cmd);
@@ -6878,7 +6878,7 @@ static void ex_mkrc(exarg_T *eap)
   /* ":mkview" or ":mkview 9": generate file name with 'viewdir' */
   if (eap->cmdidx == CMD_mkview
       && (*eap->arg == NUL
-          || (vim_isdigit(*eap->arg) && eap->arg[1] == NUL))) {
+          || (ascii_isdigit(*eap->arg) && eap->arg[1] == NUL))) {
     eap->forceit = TRUE;
     fname = get_view_file(*eap->arg);
     if (fname == NULL)
@@ -7295,7 +7295,7 @@ static void ex_findpat(exarg_T *eap)
   }
 
   n = 1;
-  if (vim_isdigit(*eap->arg)) { /* get count */
+  if (ascii_isdigit(*eap->arg)) { /* get count */
     n = getdigits_long(&eap->arg);
     eap->arg = skipwhite(eap->arg);
   }

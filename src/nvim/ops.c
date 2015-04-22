@@ -772,7 +772,7 @@ yankreg_T *get_yank_register(int regname, int mode)
   }
 
   int i = 0; // when not 0-9, a-z, A-Z or '-'/'+'/'*': use register 0
-  if (VIM_ISDIGIT(regname))
+  if (ascii_isdigit(regname))
     i = regname - '0';
   else if (ASCII_ISLOWER(regname))
     i = CharOrdLow(regname) + 10;
@@ -4260,12 +4260,12 @@ int do_addsub(int command, linenr_T Prenum1)
     col = curwin->w_cursor.col;
 
     while (ptr[col] != NUL
-           && !vim_isdigit(ptr[col])
+           && !ascii_isdigit(ptr[col])
            && !(doalp && ASCII_ISALPHA(ptr[col])))
       ++col;
 
     while (col > 0
-           && vim_isdigit(ptr[col - 1])
+           && ascii_isdigit(ptr[col - 1])
            && !(doalp && ASCII_ISALPHA(ptr[col])))
       --col;
   }
@@ -4275,7 +4275,7 @@ int do_addsub(int command, linenr_T Prenum1)
    */
   firstdigit = ptr[col];
   RLADDSUBFIX(ptr);
-  if ((!VIM_ISDIGIT(firstdigit) && !(doalp && ASCII_ISALPHA(firstdigit)))
+  if ((!ascii_isdigit(firstdigit) && !(doalp && ASCII_ISALPHA(firstdigit)))
       || u_save_cursor() != OK) {
     beep_flush();
     return FAIL;

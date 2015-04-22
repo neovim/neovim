@@ -1401,7 +1401,7 @@ static int nfa_regatom(void)
 
       if (c == '<' || c == '>')
         c = getchr();
-      while (VIM_ISDIGIT(c)) {
+      while (ascii_isdigit(c)) {
         n = n * 10 + (c - '0');
         c = getchr();
       }
@@ -4235,7 +4235,7 @@ static int check_char_class(int class, int c)
       return OK;
     break;
   case NFA_CLASS_DIGIT:
-    if (VIM_ISDIGIT(c))
+    if (ascii_isdigit(c))
       return OK;
     break;
   case NFA_CLASS_GRAPH:
@@ -5488,7 +5488,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_SIDENT:          /*  \I	*/
-        result = !VIM_ISDIGIT(curc) && vim_isIDc(curc);
+        result = !ascii_isdigit(curc) && vim_isIDc(curc);
         ADD_STATE_IF_MATCH(t->state);
         break;
 
@@ -5498,7 +5498,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_SKWORD:          /*  \K	*/
-        result = !VIM_ISDIGIT(curc)
+        result = !ascii_isdigit(curc)
                  && vim_iswordp_buf(reginput, reg_buf);
         ADD_STATE_IF_MATCH(t->state);
         break;
@@ -5509,7 +5509,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_SFNAME:          /*  \F	*/
-        result = !VIM_ISDIGIT(curc) && vim_isfilec(curc);
+        result = !ascii_isdigit(curc) && vim_isfilec(curc);
         ADD_STATE_IF_MATCH(t->state);
         break;
 
@@ -5519,7 +5519,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_SPRINT:          /*  \P	*/
-        result = !VIM_ISDIGIT(curc) && vim_isprintc(PTR2CHAR(reginput));
+        result = !ascii_isdigit(curc) && vim_isprintc(PTR2CHAR(reginput));
         ADD_STATE_IF_MATCH(t->state);
         break;
 

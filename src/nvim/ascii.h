@@ -91,6 +91,7 @@
 #endif
 
 static inline bool ascii_iswhite(int c) FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST;
+static inline bool ascii_isdigit(int c) FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST;
 
 /// ascii_iswhite() is used for "^" and the like. It differs from isspace()
 /// because it doesn't include <CR> and <LF> and the like.
@@ -98,5 +99,14 @@ static inline bool ascii_iswhite(int c)
 {
   return c == ' ' || c == '\t';
 }
+
+/// Use our own isdigit() replacement, because on MS-Windows isdigit() returns
+/// non-zero for superscript 1.  Also avoids that isdigit() crashes for numbers
+/// below 0 and above 255.
+static inline bool ascii_isdigit(int c)
+{
+  return c >= '0' && c <= '9';
+}
+
 
 #endif /* NVIM_ASCII_H */

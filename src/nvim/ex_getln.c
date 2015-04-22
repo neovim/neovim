@@ -4641,7 +4641,7 @@ int get_list_range(char_u **str, int *num1, int *num2)
   long num;
 
   *str = skipwhite(*str);
-  if (**str == '-' || vim_isdigit(**str)) {  /* parse "from" part of range */
+  if (**str == '-' || ascii_isdigit(**str)) {  /* parse "from" part of range */
     vim_str2nr(*str, NULL, &len, FALSE, FALSE, &num, NULL);
     *str += len;
     *num1 = (int)num;
@@ -4681,7 +4681,7 @@ void ex_history(exarg_T *eap)
     return;
   }
 
-  if (!(VIM_ISDIGIT(*arg) || *arg == '-' || *arg == ',')) {
+  if (!(ascii_isdigit(*arg) || *arg == '-' || *arg == ',')) {
     end = arg;
     while (ASCII_ISALPHA(*end)
            || vim_strchr((char_u *)":=@>/?", *end) != NULL)

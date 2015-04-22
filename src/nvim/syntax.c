@@ -4968,7 +4968,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
         arg_end = key + 11;
       else
         arg_end = key + 9;
-      if (arg_end[-1] != '=' || !VIM_ISDIGIT(*arg_end)) {
+      if (arg_end[-1] != '=' || !ascii_isdigit(*arg_end)) {
         illegal = TRUE;
         break;
       }
@@ -6251,7 +6251,7 @@ do_highlight (
             HL_TABLE()[idx].sg_cterm_bold = FALSE;
           }
 
-          if (VIM_ISDIGIT(*arg))
+          if (ascii_isdigit(*arg))
             color = atoi((char *)arg);
           else if (STRICMP(arg, "fg") == 0) {
             if (cterm_normal_fg_color)

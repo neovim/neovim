@@ -1609,7 +1609,7 @@ void putdigraph(char_u *str)
     }
     str = skipwhite(str);
 
-    if (!VIM_ISDIGIT(*str)) {
+    if (!ascii_isdigit(*str)) {
       EMSG(_(e_number_exp));
       return;
     }

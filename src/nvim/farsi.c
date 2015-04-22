@@ -599,7 +599,7 @@ int fkmap(int c)
     return c;
   }
 
-  if (VIM_ISDIGIT(c)
+  if (ascii_isdigit(c)
       || ((c == '.'
            || c == '+'
            || c == '-'

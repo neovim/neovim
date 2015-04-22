@@ -4730,7 +4730,7 @@ int get_literal(void)
           break;
         cc = cc * 8 + nc - '0';
       } else {
-        if (!VIM_ISDIGIT(nc))
+        if (!ascii_isdigit(nc))
           break;
         cc = cc * 10 + nc - '0';
       }
@@ -5545,7 +5545,7 @@ static void redo_literal(int c)
 
   /* Only digits need special treatment.  Translate them into a string of
    * three digits. */
-  if (VIM_ISDIGIT(c)) {
+  if (ascii_isdigit(c)) {
     vim_snprintf((char *)buf, sizeof(buf), "%03d", c);
     AppendToRedobuff(buf);
   } else

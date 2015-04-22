@@ -1858,7 +1858,7 @@ viminfo_readstring (
   char_u      *retval;
   char_u      *s, *d;
 
-  if (virp->vir_line[off] == Ctrl_V && vim_isdigit(virp->vir_line[off + 1])) {
+  if (virp->vir_line[off] == Ctrl_V && ascii_isdigit(virp->vir_line[off + 1])) {
     ssize_t len = atol((char *)virp->vir_line + off + 1);
     retval = xmalloc(len);
     // TODO(philix): change type of vim_fgets() size argument to size_t
@@ -3244,7 +3244,7 @@ void ex_z(exarg_T *eap)
     ++x;
 
   if (*x != 0) {
-    if (!VIM_ISDIGIT(*x)) {
+    if (!ascii_isdigit(*x)) {
       EMSG(_("E144: non-numeric argument to :z"));
       return;
     }
@@ -3591,7 +3591,7 @@ void do_sub(exarg_T *eap)
    * check for a trailing count
    */
   cmd = skipwhite(cmd);
-  if (VIM_ISDIGIT(*cmd)) {
+  if (ascii_isdigit(*cmd)) {
     i = getdigits_long(&cmd);
     if (i <= 0 && !eap->skip && do_error) {
       EMSG(_(e_zerocount));
@@ -5867,7 +5867,7 @@ void ex_sign(exarg_T *eap)
 
 	/* first arg could be placed sign id */
 	arg1 = arg;
-	if (VIM_ISDIGIT(*arg))
+	if (ascii_isdigit(*arg))
 	{
 	    id = getdigits_int(&arg);
 	    if (!ascii_iswhite(*arg) && *arg != NUL)

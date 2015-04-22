@@ -2120,7 +2120,7 @@ static char_u *regatom(int *flagp)
     }
 
     default:
-      if (VIM_ISDIGIT(c) || c == '<' || c == '>'
+      if (ascii_isdigit(c) || c == '<' || c == '>'
           || c == '\'') {
         uint32_t n = 0;
         int cmp;
@@ -2128,7 +2128,7 @@ static char_u *regatom(int *flagp)
         cmp = c;
         if (cmp == '<' || cmp == '>')
           c = getchr();
-        while (VIM_ISDIGIT(c)) {
+        while (ascii_isdigit(c)) {
           n = n * 10 + (uint32_t)(c - '0');
           c = getchr();
         }
@@ -2324,7 +2324,7 @@ collection:
               break;
             case CLASS_DIGIT:
               for (cu = 1; cu <= 255; cu++)
-                if (VIM_ISDIGIT(cu))
+                if (ascii_isdigit(cu))
                   regc(cu);
               break;
             case CLASS_GRAPH:
@@ -3087,11 +3087,11 @@ static int read_limits(long *minval, long *maxval)
   first_char = regparse;
   *minval = getdigits_long(&regparse);
   if (*regparse == ',') {           /* There is a comma */
-    if (vim_isdigit(*++regparse))
+    if (ascii_isdigit(*++regparse))
       *maxval = getdigits_long(&regparse);
     else
       *maxval = MAX_LIMIT;
-  } else if (VIM_ISDIGIT(*first_char))
+  } else if (ascii_isdigit(*first_char))
     *maxval = *minval;              /* It was \{n} or \{-n} */
   else
     *maxval = MAX_LIMIT;            /* It was \{} or \{-} */
@@ -3944,7 +3944,7 @@ regmatch (
           break;
 
         case SIDENT:
-          if (VIM_ISDIGIT(*reginput) || !vim_isIDc(c))
+          if (ascii_isdigit(*reginput) || !vim_isIDc(c))
             status = RA_NOMATCH;
           else
             ADVANCE_REGINPUT();
@@ -3958,7 +3958,7 @@ regmatch (
           break;
 
         case SKWORD:
-          if (VIM_ISDIGIT(*reginput) || !vim_iswordp_buf(reginput, reg_buf))
+          if (ascii_isdigit(*reginput) || !vim_iswordp_buf(reginput, reg_buf))
             status = RA_NOMATCH;
           else
             ADVANCE_REGINPUT();
@@ -3972,7 +3972,7 @@ regmatch (
           break;
 
         case SFNAME:
-          if (VIM_ISDIGIT(*reginput) || !vim_isfilec(c))
+          if (ascii_isdigit(*reginput) || !vim_isfilec(c))
             status = RA_NOMATCH;
           else
             ADVANCE_REGINPUT();
@@ -3986,7 +3986,7 @@ regmatch (
           break;
 
         case SPRINT:
-          if (VIM_ISDIGIT(*reginput) || !vim_isprintc(PTR2CHAR(reginput)))
+          if (ascii_isdigit(*reginput) || !vim_isprintc(PTR2CHAR(reginput)))
             status = RA_NOMATCH;
           else
             ADVANCE_REGINPUT();
@@ -5112,7 +5112,7 @@ regrepeat (
   case SIDENT:
   case SIDENT + ADD_NL:
     while (count < maxcount) {
-      if (vim_isIDc(PTR2CHAR(scan)) && (testval || !VIM_ISDIGIT(*scan))) {
+      if (vim_isIDc(PTR2CHAR(scan)) && (testval || !ascii_isdigit(*scan))) {
         mb_ptr_adv(scan);
       } else if (*scan == NUL) {
         if (!REG_MULTI || !WITH_NL(OP(p)) || reglnum > reg_maxline
@@ -5138,7 +5138,7 @@ regrepeat (
   case SKWORD + ADD_NL:
     while (count < maxcount) {
       if (vim_iswordp_buf(scan, reg_buf)
-          && (testval || !VIM_ISDIGIT(*scan))) {
+          && (testval || !ascii_isdigit(*scan))) {
         mb_ptr_adv(scan);
       } else if (*scan == NUL) {
         if (!REG_MULTI || !WITH_NL(OP(p)) || reglnum > reg_maxline
@@ -5163,7 +5163,7 @@ regrepeat (
   case SFNAME:
   case SFNAME + ADD_NL:
     while (count < maxcount) {
-      if (vim_isfilec(PTR2CHAR(scan)) && (testval || !VIM_ISDIGIT(*scan))) {
+      if (vim_isfilec(PTR2CHAR(scan)) && (testval || !ascii_isdigit(*scan))) {
         mb_ptr_adv(scan);
       } else if (*scan == NUL) {
         if (!REG_MULTI || !WITH_NL(OP(p)) || reglnum > reg_maxline
@@ -5197,7 +5197,7 @@ regrepeat (
         if (got_int)
           break;
       } else if (vim_isprintc(PTR2CHAR(scan)) == 1
-                 && (testval || !VIM_ISDIGIT(*scan))) {
+                 && (testval || !ascii_isdigit(*scan))) {
         mb_ptr_adv(scan);
       } else if (reg_line_lbr && *scan == '\n' && WITH_NL(OP(p)))
         ++scan;

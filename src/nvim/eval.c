@@ -1299,7 +1299,7 @@ int eval_foldexpr(char_u *arg, int *cp)
       /* If the result is a string, check if there is a non-digit before
        * the number. */
       s = tv.vval.v_string;
-      if (!VIM_ISDIGIT(*s) && *s != '-')
+      if (!ascii_isdigit(*s) && *s != '-')
         *cp = *s++;
       retval = atol((char *)s);
     }
@@ -2754,7 +2754,7 @@ void ex_lockvar(exarg_T *eap)
 
   if (eap->forceit)
     deep = -1;
-  else if (vim_isdigit(*arg)) {
+  else if (ascii_isdigit(*arg)) {
     deep = getdigits_int(&arg);
     arg = skipwhite(arg);
   }
@@ -4005,14 +4005,14 @@ eval7 (
      * strict to avoid backwards compatibility problems.
      * Don't look for a float after the "." operator, so that
      * ":let vers = 1.2.3" doesn't fail. */
-    if (!want_string && p[0] == '.' && vim_isdigit(p[1])) {
+    if (!want_string && p[0] == '.' && ascii_isdigit(p[1])) {
       get_float = TRUE;
       p = skipdigits(p + 2);
       if (*p == 'e' || *p == 'E') {
         ++p;
         if (*p == '-' || *p == '+')
           ++p;
-        if (!vim_isdigit(*p))
+        if (!ascii_isdigit(*p))
           get_float = FALSE;
         else
           p = skipdigits(p + 1);
@@ -8940,7 +8940,7 @@ static void f_function(typval_T *argvars, typval_T *rettv)
   char_u      *s;
 
   s = get_tv_string(&argvars[0]);
-  if (s == NULL || *s == NUL || VIM_ISDIGIT(*s))
+  if (s == NULL || *s == NUL || ascii_isdigit(*s))
     EMSG2(_(e_invarg2), s);
   /* Don't check an autoload name for existence here. */
   else if (vim_strchr(s, AUTOLOAD_CHAR) == NULL && !function_exists(s))
@@ -10020,9 +10020,9 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     if (STRNICMP(name, "patch", 5) == 0) {
       if (name[5] == '-'
           && STRLEN(name) > 11
-          && vim_isdigit(name[6])
-          && vim_isdigit(name[8])
-          && vim_isdigit(name[10])) {
+          && ascii_isdigit(name[6])
+          && ascii_isdigit(name[8])
+          && ascii_isdigit(name[10])) {
         int major = atoi((char *)name + 6);
         int minor = atoi((char *)name + 8);
 
@@ -13663,7 +13663,7 @@ static void f_setreg(typval_T *argvars, typval_T *rettv)
         break;
       case 'b': case Ctrl_V:            /* block-wise selection */
         yank_type = MBLOCK;
-        if (VIM_ISDIGIT(stropt[1])) {
+        if (ascii_isdigit(stropt[1])) {
           ++stropt;
           block_len = getdigits_long(&stropt) - 1;
           --stropt;
@@ -17247,7 +17247,7 @@ static int valid_varname(char_u *varname)
   char_u *p;
 
   for (p = varname; *p != NUL; ++p)
-    if (!eval_isnamec1(*p) && (p == varname || !VIM_ISDIGIT(*p))
+    if (!eval_isnamec1(*p) && (p == varname || !ascii_isdigit(*p))
         && *p != AUTOLOAD_CHAR) {
       EMSG2(_(e_illvar), varname);
       return FALSE;

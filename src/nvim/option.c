@@ -2671,7 +2671,7 @@ do_set (
                        && (*arg == '<'
                            || *arg == '^'
                            || ((!arg[1] || ascii_iswhite(arg[1]))
-                               && !VIM_ISDIGIT(*arg)))) {
+                               && !ascii_isdigit(*arg)))) {
               value = string_to_key(arg);
               if (value == 0 && (long *)varp != &p_wcm) {
                 errmsg = e_invarg;
@@ -2679,14 +2679,14 @@ do_set (
               }
             }
             /* allow negative numbers (for 'undolevels') */
-            else if (*arg == '-' || VIM_ISDIGIT(*arg)) {
+            else if (*arg == '-' || ascii_isdigit(*arg)) {
               i = 0;
               if (*arg == '-')
                 i = 1;
               value = strtol((char *)arg, NULL, 0);
               if (arg[i] == '0' && TOLOWER_ASC(arg[i + 1]) == 'x')
                 i += 2;
-              while (VIM_ISDIGIT(arg[i]))
+              while (ascii_isdigit(arg[i]))
                 ++i;
               if (arg[i] != NUL && !ascii_iswhite(arg[i])) {
                 errmsg = e_invarg;
@@ -2767,7 +2767,7 @@ do_set (
                * adding, prepending and removing string.
                */
               else if (varp == (char_u *)&p_bs
-                       && VIM_ISDIGIT(**(char_u **)varp)) {
+                       && ascii_isdigit(**(char_u **)varp)) {
                 i = getdigits_int((char_u **)varp);
                 switch (i) {
                 case 0:
@@ -2791,7 +2791,7 @@ do_set (
                * Misuse errbuf[] for the resulting string.
                */
               else if (varp == (char_u *)&p_ww
-                       && VIM_ISDIGIT(*arg)) {
+                       && ascii_isdigit(*arg)) {
                 *errbuf = NUL;
                 i = getdigits_int(&arg);
                 if (i & 1)
@@ -3212,7 +3212,7 @@ int get_viminfo_parameter(int type)
   char_u  *p;
 
   p = find_viminfo_parameter(type);
-  if (p != NULL && VIM_ISDIGIT(*p))
+  if (p != NULL && ascii_isdigit(*p))
     return atoi((char *)p);
   return -1;
 }
@@ -3883,7 +3883,7 @@ did_set_string_option (
     for (s = *varp; *s; ) {
       while (*s && *s != ':') {
         if (vim_strchr((char_u *)COM_ALL, *s) == NULL
-            && !VIM_ISDIGIT(*s) && *s != '-') {
+            && !ascii_isdigit(*s) && *s != '-') {
           errmsg = illegal_char(errbuf, *s);
           break;
         }
@@ -3936,15 +3936,15 @@ did_set_string_option (
           ;
       } else if (*s == '%') {
         /* optional number */
-        while (vim_isdigit(*++s))
+        while (ascii_isdigit(*++s))
           ;
       } else if (*s == '!' || *s == 'h' || *s == 'c')
         ++s;                    /* no extra chars */
       else {                    /* must have a number */
-        while (vim_isdigit(*++s))
+        while (ascii_isdigit(*++s))
           ;
 
-        if (!VIM_ISDIGIT(*(s - 1))) {
+        if (!ascii_isdigit(*(s - 1))) {
           if (errbuf != NULL) {
             sprintf((char *)errbuf,
                 _("E526: Missing number after <%s>"),
@@ -4188,7 +4188,7 @@ did_set_string_option (
   }
   /* 'backspace' */
   else if (varp == &p_bs) {
-    if (VIM_ISDIGIT(*p_bs)) {
+    if (ascii_isdigit(*p_bs)) {
       if (*p_bs >'2' || p_bs[1] != NUL)
         errmsg = e_invarg;
     } else if (check_opt_strings(p_bs, p_bs_values, TRUE) != OK)
@@ -4428,7 +4428,7 @@ char_u *check_colorcolumn(win_T *wp)
       /* -N and +N: add to 'textwidth' */
       col = (*s == '-') ? -1 : 1;
       ++s;
-      if (!VIM_ISDIGIT(*s))
+      if (!ascii_isdigit(*s))
         return e_invarg;
       col = col * getdigits_int(&s);
       if (wp->w_buffer->b_p_tw == 0)
@@ -4442,7 +4442,7 @@ char_u *check_colorcolumn(win_T *wp)
       col += (int)wp->w_buffer->b_p_tw;
       if (col < 0)
         goto skip;
-    } else if (VIM_ISDIGIT(*s))
+    } else if (ascii_isdigit(*s))
       col = getdigits_int(&s);
     else
       return e_invarg;
@@ -4603,13 +4603,13 @@ char_u *check_stl_option(char_u *s)
     }
     if (*s == '-')
       s++;
-    while (VIM_ISDIGIT(*s))
+    while (ascii_isdigit(*s))
       s++;
     if (*s == STL_USER_HL)
       continue;
     if (*s == '.') {
       s++;
-      while (*s && VIM_ISDIGIT(*s))
+      while (*s && ascii_isdigit(*s))
         s++;
     }
     if (*s == '(') {
@@ -7755,12 +7755,12 @@ static bool briopt_check(win_T *wp)
   while (*p != NUL)
   {
     if (STRNCMP(p, "shift:", 6) == 0
-        && ((p[6] == '-' && VIM_ISDIGIT(p[7])) || VIM_ISDIGIT(p[6])))
+        && ((p[6] == '-' && ascii_isdigit(p[7])) || ascii_isdigit(p[6])))
     {
       p += 6;
       bri_shift = getdigits_int(&p);
     }
-    else if (STRNCMP(p, "min:", 4) == 0 && VIM_ISDIGIT(p[4]))
+    else if (STRNCMP(p, "min:", 4) == 0 && ascii_isdigit(p[4]))
     {
       p += 4;
       bri_min = getdigits_int(&p);
