@@ -87,7 +87,7 @@ if(USE_BUNDLED_BUSTED)
   
   add_custom_command(OUTPUT ${DEPS_BIN_DIR}/busted
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build https://raw.githubusercontent.com/Olivine-Labs/busted/master/busted-scm-0.rockspec ${LUAROCKS_BUILDARGS}
+    ARGS build https://raw.githubusercontent.com/Olivine-Labs/busted/v2.0.rc8-0/busted-2.0.rc8-0.rockspec ${LUAROCKS_BUILDARGS}
     DEPENDS stable-busted-deps)
   add_custom_target(busted
     DEPENDS ${DEPS_BIN_DIR}/busted)
