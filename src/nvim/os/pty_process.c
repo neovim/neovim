@@ -205,7 +205,10 @@ static void init_termios(struct termios *termios) FUNC_ATTR_NONNULL_ALL
   memset(termios, 0, sizeof(struct termios));
   // Taken from pangoterm
   termios->c_iflag = ICRNL|IXON;
-  termios->c_oflag = OPOST|ONLCR|TAB0;
+  termios->c_oflag = OPOST|ONLCR;
+#ifdef TAB0
+  termios->c_oflag |= TAB0;
+#endif
   termios->c_cflag = CS8|CREAD;
   termios->c_lflag = ISIG|ICANON|IEXTEN|ECHO|ECHOE|ECHOK;
 
