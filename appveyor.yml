@@ -21,3 +21,11 @@ build_script:
 - cmake -G "%GENERATOR%" ..\third-party\
 - cmake --build .
 - cd ..
+- mkdir build
+- cd build
+- cmake -G "%GENERATOR%" -DCMAKE_BUILD_TYPE=Debug -DDEPS_PREFIX=..\%DEPS_PATH%\usr ..
+- cmake --build .
+- bin\Debug\nvim.exe --version
+artifacts:
+- path: build\bin
+  name: Neovim
