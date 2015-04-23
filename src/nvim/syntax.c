@@ -7138,9 +7138,10 @@ int highlight_changed(void)
        */
       attr = 0;
       bool colon = false;
-      for (; *p && *p != ','; ++p) {                /* parse upto comma */
-        if (ascii_iswhite(*p))                        /* ignore white space */
+      for (; *p && *p != ','; ++p) {  // parse upto comma
+        if (ascii_iswhite(*p)) {  // ignore white space
           continue;
+        }
 
         if (colon)          /* Combination with ':' is not allowed. */
           return FAIL;

@@ -3979,8 +3979,6 @@ static int ends_in_white(linenr_T lnum)
 
   if (*s == NUL)
     return FALSE;
-  /* Don't use STRLEN() inside ascii_iswhite(), SAS/C complains: "macro
-   * invocation may call function multiple times". */
   l = STRLEN(s) - 1;
   return ascii_iswhite(s[l]);
 }

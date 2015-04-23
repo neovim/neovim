@@ -9,7 +9,8 @@
 #define NVIM_ASCII_H
 
 #include <stdbool.h>
-#include "func_attr.h"
+
+#include "nvim/func_attr.h"
 
 // Definitions of various common control characters.
 
@@ -90,32 +91,36 @@
 # define PATHSEPSTR     "/"
 #endif
 
-static inline bool ascii_iswhite(int c) FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST;
-static inline bool ascii_isdigit(int c) FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST;
-static inline bool ascii_isxdigit(int c) FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST;
-static inline bool ascii_isspace(int x) FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST;
+static inline bool ascii_iswhite(int) REAL_FATTR_ALWAYS_INLINE REAL_FATTR_CONST;
+static inline bool ascii_isdigit(int) REAL_FATTR_ALWAYS_INLINE REAL_FATTR_CONST;
+static inline bool ascii_isxdigit(int) REAL_FATTR_ALWAYS_INLINE REAL_FATTR_CONST;
+static inline bool ascii_isspace(int) REAL_FATTR_ALWAYS_INLINE REAL_FATTR_CONST;
 
-/// ascii_iswhite() is used for "^" and the like. It differs from isspace()
-/// because it doesn't include <CR> and <LF> and the like.
+/// Checks if `c` is a space or tab character.
+///
+/// @see {ascii_isdigit}
 static inline bool ascii_iswhite(int c)
 {
   return c == ' ' || c == '\t';
 }
 
-/// Use our own isdigit() replacement, because on MS-Windows isdigit() returns
-/// non-zero for superscript 1.  Also avoids that isdigit() crashes for numbers
-/// below 0 and above 255.
+/// Check whether character is a decimal digit.
+///
+/// Library isdigit() function is officially locale-dependent and, for
+/// example, returns true for superscript 1 (¹) in locales where encoding
+/// contains it in lower 8 bits. Also avoids crashes in case c is below
+/// 0 or above 255: library functions are officially defined as accepting
+/// only EOF and unsigned char values (otherwise it is undefined behaviour)
+/// what may be used for some optimizations (e.g. simple `return
+/// isdigit_table[c];`).
 static inline bool ascii_isdigit(int c)
 {
   return c >= '0' && c <= '9';
 }
 
-/// Variant of isxdigit() that can handle characters > 0x100.
-/// We don't use isxdigit() here, because on some systems it also considers
-/// superscript 1 to be a digit.
+/// Checks if `c` is a hexadecimal digit, that is, one of 0-9, a-f, A-F.
 ///
-/// @param c
-/// @return TRUE if the character is a hexadecimal digit.
+/// @see {ascii_isdigit}
 static inline bool ascii_isxdigit(int c)
 {
   return (c >= '0' && c <= '9')
@@ -123,12 +128,13 @@ static inline bool ascii_isxdigit(int c)
          || (c >= 'A' && c <= 'F');
 }
 
-/// Vim has its own isspace() function, because on some machines isspace()
-/// can't handle characters above 128.
-static inline bool ascii_isspace(int x)
+/// Checks if `c` is a white-space character, that is,
+/// one of \f, \n, \r, \t, \v.
+///
+/// @see {ascii_isdigit}
+static inline bool ascii_isspace(int c)
 {
-  return (x >= 9 && x <= 13) || x == ' ';
+  return (c >= 9 && c <= 13) || c == ' ';
 }
-
 
 #endif /* NVIM_ASCII_H */

@@ -1023,7 +1023,7 @@ int do_search(
         else                                /* single '+' */
           spats[0].off.off = 1;
         ++p;
-        while (ascii_isdigit(*p))             /* skip number */
+        while (ascii_isdigit(*p))           /* skip number */
           ++p;
       }
 
@@ -2921,7 +2921,7 @@ extend:
      */
     if (start_blank) {
       find_first_blank(&curwin->w_cursor);
-      c = gchar_pos(&curwin->w_cursor);         /* ascii_iswhite() is a macro */
+      c = gchar_pos(&curwin->w_cursor);
       if (ascii_iswhite(c))
         decl(&curwin->w_cursor);
     } else if (c = gchar_cursor(), !ascii_iswhite(c))

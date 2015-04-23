@@ -706,7 +706,8 @@ int get_lisp_indent(void)
 
             if (vi_lisp || ((*that != '"') && (*that != '\'')
                 && (*that != '#') && ((*that < '0') || (*that > '9')))) {
-              while (*that && (!ascii_iswhite(*that) || quotecount || parencount)
+              while (*that
+                     && (!ascii_iswhite(*that) || quotecount || parencount)
                      && (!((*that == '(' || *that == '[')
                      && !quotecount && !parencount && vi_lisp))) {
                 if (*that == '"') {
