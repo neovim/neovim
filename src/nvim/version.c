@@ -69,7 +69,7 @@ static char *features[] = {
 static int included_patches[] = {
   //712,
   //711,
-  //710,
+  710,
   //709,
   //708,
   //707,

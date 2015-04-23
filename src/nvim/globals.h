@@ -998,6 +998,7 @@ EXTERN int lcs_eol INIT(= '$');
 EXTERN int lcs_ext INIT(= NUL);
 EXTERN int lcs_prec INIT(= NUL);
 EXTERN int lcs_nbsp INIT(= NUL);
+EXTERN int lcs_space INIT(= NUL);
 EXTERN int lcs_tab1 INIT(= NUL);
 EXTERN int lcs_tab2 INIT(= NUL);
 EXTERN int lcs_trail INIT(= NUL);
