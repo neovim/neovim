@@ -1450,6 +1450,9 @@ void msg_prt_line(char_u *s, int list)
       } else if (c == ' ' && trail != NULL && s > trail) {
         c = lcs_trail;
         attr = hl_attr(HLF_8);
+      } else if (c == ' ' && list && lcs_space != NUL) {
+        c = lcs_space;
+        attr = hl_attr(HLF_8);
       }
     }
 
