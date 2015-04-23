@@ -3841,6 +3841,7 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
 
   flags |= EW_FILE | EW_EXEC;
 
+  bool mustfree = false;  // Track memory allocation for *path.
   /* For an absolute name we don't use $PATH. */
   if (path_is_absolute_path(pat))
     path = (char_u *)" ";
@@ -3849,8 +3850,11 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
     path = (char_u *)".";
   else {
     path = (char_u *)vim_getenv("PATH");
-    if (path == NULL)
+    if (path == NULL) {
       path = (char_u *)"";
+    } else {
+      mustfree = true;
+    }
   }
 
   /*
@@ -3899,7 +3903,9 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
 
   xfree(buf);
   xfree(pat);
-  xfree(path);
+  if (mustfree) {
+    xfree(path);
+  }
 }
 
 /*
