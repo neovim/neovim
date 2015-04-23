@@ -1,4 +1,4 @@
-"""Legacy python-vim emulation."""
+"""Legacy python/python3-vim emulation."""
 import imp
 import logging
 import os
@@ -35,7 +35,7 @@ class ScriptHost(object):
         if IS_PYTHON3:
             self.legacy_vim = self.legacy_vim.with_hook(
                 neovim.DecodeHook(
-                    encoding=nvim.options['encoding'].decode('ascii')))
+                    encoding=nvim.options['encoding']))
         sys.modules['vim'] = self.legacy_vim
 
     def setup(self, nvim):
@@ -96,7 +96,7 @@ class ScriptHost(object):
         # Python3 code (exec) must be a string, mixing bytes with
         # function_def would use bytes.__repr__ instead
         if isinstance and isinstance(code, bytes):
-            code = code.decode(nvim.options['encoding'].decode('ascii'))
+            code = code.decode(nvim.options['encoding'])
         # define the function
         function_def = 'def %s(line, linenr):\n %s' % (fname, code,)
         exec(function_def, self.module.__dict__)
@@ -166,6 +166,9 @@ class RedirectStream(object):
     def writelines(self, seq):
         self.redirect_handler('\n'.join(seq))
 
+    def flush(self):
+        pass
+
 
 class LegacyEvalHook(neovim.SessionHook):
 
@@ -175,8 +178,12 @@ class LegacyEvalHook(neovim.SessionHook):
         super(LegacyEvalHook, self).__init__(from_nvim=self._string_eval)
 
     def _string_eval(self, obj, session, method, kind):
-        if method == 'vim_eval' and isinstance(obj, (int, long, float)):
-            return str(obj)
+        if method == 'vim_eval':
+            if IS_PYTHON3:
+                if isinstance(obj, (int, float)):
+                    return str(obj)
+            elif isinstance(obj, (int, long, float)):
+                return str(obj)
         return obj
 
 
@@ -231,11 +238,11 @@ def discover_runtime_directories(nvim):
     for path in nvim.list_runtime_paths():
         if not os.path.exists(path):
             continue
-        path1 = os.path.join(path, b'pythonx')
+        path1 = os.path.join(path, 'pythonx')
         if IS_PYTHON3:
-            path2 = os.path.join(path, b'python3')
+            path2 = os.path.join(path, 'python3')
         else:
-            path2 = os.path.join(path, b'python2')
+            path2 = os.path.join(path, 'python2')
         if os.path.exists(path1):
             rv.append(path1)
         if os.path.exists(path2):

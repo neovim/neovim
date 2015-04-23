@@ -797,6 +797,20 @@ void ex_pydo(exarg_T *eap)
   script_host_do_range("python", eap);
 }
 
+void ex_python3(exarg_T *eap)
+{
+  script_host_execute("python3", eap);
+}
+
+void ex_py3file(exarg_T *eap)
+{
+  script_host_execute_file("python3", eap);
+}
+
+void ex_pydo3(exarg_T *eap)
+{
+  script_host_do_range("python3", eap);
+}
 
 /* Command line expansion for :profile. */
 static enum {

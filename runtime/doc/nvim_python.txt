@@ -12,32 +12,72 @@ Python plugins and scripting in Nvim				  *nvim-python*
 ==============================================================================
 1. Introduction						    *nvim-python-intro*
 
-Through an external Python interpreter connected via |msgpack-rpc|, Nvim
-offers some support for the legacy |python-vim| interface. For now only the
-old Vim 7.3 API is supported.
+Through external Python 2/3 interpreters connected via |msgpack-rpc|, Nvim
+offers some support for the legacy |python-vim| and |python3| interfaces.
+
+Note: For now only the old Vim 7.3 API is supported.
 
 ==============================================================================
-2. Quickstart					       *nvim-python-quickstart*
+2. Quickstart						 *nvim-python-quickstart*
 
-If you just want to start using Vim Python plugins with Nvim quickly, here's a
-simple tutorial:
+To use Vim Python 2/3 plugins with Nvim, do the following:
 
-- Make sure Python 2.6 or 2.7 is available in your `$PATH`.
-- Install the `neovim` Python package systemwide:
->
-    # pip install neovim
+- For Python 2 plugins, make sure an interpreter for Python 2.6 or 2.7 is
+  available in your `$PATH`, then install the `neovim` Python package systemwide:
+  >
+    $ sudo pip install neovim
 <
   or for the current user:
 >
     $ pip install --user neovim
 <
-Most Python plugins created for Vim 7.3 should work after these steps.
-
+- For Python 3 plugins, make sure an interpreter for Python 3.3 or above is
+  available in your `$PATH`, then install the `neovim` Python package systemwide:
+  >
+    $ sudo pip3 install neovim
+<
+  or for the current user:
+>
+    $ pip3 install --user neovim
+<
+==============================================================================
 							   *g:python_host_prog*
 
-To point Nvim to a specific Python interpreter, set |g:python_host_prog|:
+To point Nvim to a specific Python 2 interpreter, set |g:python_host_prog|:
 >
-    let g:python_host_prog='/path/to/python'
+    let g:python_host_prog = '/path/to/python'
+<
+							   *g:python3_host_prog*
+
+To point Nvim to a specific Python 3 interpreter, set |g:python3_host_prog|:
+>
+    let g:python3_host_prog = '/path/to/python3'
+<
+						   *g:loaded_python_provider*
+
+To disable Python 2 interface, set `g:loaded_python_provider` to 1:
+>
+    let g:loaded_python_provider = 1
+<
+						   *g:loaded_python3_provider*
+
+To disable Python 3 interface, set `g:loaded_python3_provider` to 0:
+>
+    let g:loaded_python3_provider = 1
+<
+						   *g:python_host_skip_check*
+
+To disable Python 2 interpreter check, set `g:python_host_skip_check` to 1:
+Note: If you disable Python 2 check, you must install neovim module properly.
+>
+    let g:python_host_skip_check = 1
+<
+						   *g:python3_host_skip_check*
+
+To disable Python 3 interpreter check, set `g:python3_host_skip_check` to 1:
+Note: If you disable Python 3 check, you must install neovim module properly.
+>
+    let g:python3_host_skip_check = 1
 <
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

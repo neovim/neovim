@@ -1,28 +1,46 @@
-" The python provider uses a python host to emulate an environment for running
-" python-vim plugins(:h python-vim). See :h nvim-providers for more
-" information.
+" The Python provider uses a Python host to emulate an environment for running
+" python-vim plugins. See ":help nvim-provider" for more information.
 "
-" Associating the plugin with the python host is the first step because plugins
+" Associating the plugin with the Python host is the first step because plugins
 " will be passed as command-line arguments
-if exists('s:loaded_python_provider') || &cp
+
+if exists('g:loaded_python_provider')
   finish
 endif
-let s:loaded_python_provider = 1
+let g:loaded_python_provider = 1
+
+let [s:prog, s:err] = provider#pythonx#Detect(2)
+if s:prog == ''
+  " Detection failed
+  finish
+endif
+
+function! provider#python#Prog()
+  return s:prog
+endfunction
+
+function! provider#python#Error()
+  return s:err
+endfunction
+
 let s:plugin_path = expand('<sfile>:p:h').'/script_host.py'
-" The python provider plugin will run in a separate instance of the python
+
+" The Python provider plugin will run in a separate instance of the Python
 " host.
 call remote#host#RegisterClone('legacy-python-provider', 'python')
 call remote#host#RegisterPlugin('legacy-python-provider', s:plugin_path, [])
-" Ensure that we can load the python host before bootstrapping
-try
-  let s:host = remote#host#Require('legacy-python-provider')
-catch
-  echomsg v:exception
-  finish
-endtry
-
-let s:rpcrequest = function('rpcrequest')
 
 function! provider#python#Call(method, args)
+  if !exists('s:host')
+    let s:rpcrequest = function('rpcrequest')
+
+    " Ensure that we can load the Python host before bootstrapping
+    try
+      let s:host = remote#host#Require('legacy-python-provider')
+    catch
+      echomsg v:exception
+      finish
+    endtry
+  endif
   return call(s:rpcrequest, insert(insert(a:args, 'python_'.a:method), s:host))
 endfunction

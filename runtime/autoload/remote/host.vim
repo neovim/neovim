@@ -1,6 +1,7 @@
 let s:hosts = {}
 let s:plugin_patterns = {
-      \ 'python': '*.py'
+      \ 'python': '*.py',
+      \ 'python3': '*.py',
       \ }
 let s:remote_plugins_manifest = fnamemodify($MYVIMRC, ':p:h')
       \.'/.'.fnamemodify($MYVIMRC, ':t').'-rplugin~'
@@ -25,7 +26,12 @@ function! remote#host#RegisterClone(name, orig_name)
     throw 'No host named "'.a:orig_name.'" is registered'
   endif
   let Factory = s:hosts[a:orig_name].factory
-  let s:hosts[a:name] = {'factory': Factory, 'channel': 0, 'initialized': 0}
+  let s:hosts[a:name] = {
+        \ 'factory': Factory,
+        \ 'channel': 0,
+        \ 'initialized': 0,
+        \ 'orig_name': a:orig_name
+        \ }
 endfunction
 
 
@@ -51,8 +57,8 @@ function! remote#host#IsRunning(name)
 endfunction
 
 
-" Example of registering a python plugin with two commands(one async), one
-" autocmd(async) and one function(sync):
+" Example of registering a Python plugin with two commands (one async), one
+" autocmd (async) and one function (sync):
 "
 " let s:plugin_path = expand('<sfile>:p:h').'/nvim_plugin.py'
 " call remote#host#RegisterPlugin('python', s:plugin_path, [
@@ -182,72 +188,29 @@ endfunction
 
 " Registration of standard hosts
 
-" Python {{{
+" Python/Python3 {{{
 function! s:RequirePythonHost(name)
+  let ver_name = has_key(s:hosts[a:name], 'orig_name') ?
+        \ s:hosts[a:name].orig_name : a:name
+  let ver = (ver_name ==# 'python') ? 2 : 3
+
   " Python host arguments
   let args = ['-c', 'import neovim; neovim.start_host()']
 
-  " Collect registered python plugins into args
+  " Collect registered Python plugins into args
   let python_plugins = s:PluginsForHost(a:name)
   for plugin in python_plugins
     call add(args, plugin.path)
   endfor
 
-  " Try loading a python host using `python_host_prog` or `python`
-  let python_host_prog = get(g:, 'python_host_prog', 'python')
   try
-    let channel_id = rpcstart(python_host_prog, args)
+    let channel_id = rpcstart((ver == '2' ?
+          \ provider#python#Prog() : provider#python3#Prog()), args)
     if rpcrequest(channel_id, 'poll') == 'ok'
       return channel_id
     endif
   catch
-  endtry
-
-  " Failed, try a little harder to find the correct interpreter or 
-  " report a friendly error to user
-  let get_version =
-        \ ' -c "import sys; sys.stdout.write(str(sys.version_info[0]) + '.
-        \ '\".\" + str(sys.version_info[1]))"'
-
-  let supported = ['2.6', '2.7']
-
-  " To load the python host a python executable must be available
-  if exists('g:python_host_prog')
-        \ && executable(g:python_host_prog)
-        \ && index(supported, system(g:python_host_prog.get_version)) >= 0
-    let python_host_prog = g:python_host_prog
-  elseif executable('python')
-        \ && index(supported, system('python'.get_version)) >= 0
-    let python_host_prog = 'python'
-  elseif executable('python2')
-        \ && index(supported, system('python2'.get_version)) >= 0
-    " In some distros, python3 is the default python
-    let python_host_prog = 'python2'
-  else
-    throw 'No python interpreter found.' .
-      \ " Try setting 'let g:python_host_prog=/path/to/python' in your '.nvimrc'" .
-      \ " or see ':help nvim-python'."
-  endif
-
-  " Make sure we pick correct python version on path.
-  let python_host_prog = exepath(python_host_prog)
-  let python_version = systemlist(python_host_prog . ' --version')[0]
-
-  " Execute python, import neovim and print a string. If import_result doesn't
-  " matches the printed string, the user is missing the neovim module
-  let import_result = system(python_host_prog .
-        \ ' -c "import neovim, sys; sys.stdout.write(\"ok\")"')
-  if import_result != 'ok'
-    throw 'No neovim module found for ' . python_version . '.' .
-      \ " Try installing it with 'pip install neovim' or see ':help nvim-python'."
-  endif
-
-  try
-    let channel_id = rpcstart(python_host_prog, args)
-    if rpcrequest(channel_id, 'poll') == 'ok'
-      return channel_id
-    endif
-  catch
+    echomsg v:exception
   endtry
   throw 'Failed to load python host. You can try to see what happened ' .
     \ 'by starting Neovim with $NVIM_PYTHON_PYTHON_LOG and opening '.
@@ -256,4 +219,5 @@ function! s:RequirePythonHost(name)
 endfunction
 
 call remote#host#Register('python', function('s:RequirePythonHost'))
+call remote#host#Register('python3', function('s:RequirePythonHost'))
 " }}}
