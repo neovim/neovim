@@ -3142,7 +3142,7 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
       // if both ' ' and '+' flags appear, ' ' flag should be ignored
       int space_for_positive = 1;
 
-      // allowed values: \0, h, l, 2 (for ll), L
+      // allowed values: \0, h, l, 2 (for ll), z, L
       char length_modifier = '\0';
 
       // temporary buffer for simple numeric->string conversion
@@ -3214,7 +3214,7 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
         p++;
         precision_specified = 1;
         if (*p == '*') {
-          int j = tvs != NULL ? tv_nr(tvs, &arg_idx) : va_arg(ap, int);
+          int j = tvs ? tv_nr(tvs, &arg_idx) : va_arg(ap, int);
           p++;
           if (j >= 0)
             precision = j;
@@ -3233,8 +3233,8 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
         }
       }
 
-      // parse 'h', 'l' and 'll' length modifiers
-      if (*p == 'h' || *p == 'l') {
+      // parse 'h', 'l', 'll' and 'z' length modifiers
+      if (*p == 'h' || *p == 'l' || *p == 'z') {
         length_modifier = *p;
         p++;
         if (length_modifier == 'l' && *p == 'l') { // ll, encoded as 2
@@ -3289,8 +3289,10 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
           else {
             // memchr on HP does not like n > 2^31
             // TODO(elmart): check if this still holds / is relevant
-            char *q = memchr(str_arg, '\0', MIN(precision, 0x7fffffff));
-            str_arg_l = q ? (size_t)(q - str_arg) : precision;
+            str_arg_l = (size_t)((char *)xmemscan(str_arg,
+                                                  NUL,
+                                                  MIN(precision, 0x7fffffff))
+                                 - str_arg);
           }
           if (fmt_spec == 'S') {
             if (min_field_width != 0)
@@ -3330,6 +3332,9 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
         // only defined for length modifier ll
         long long int long_long_arg = 0;
         unsigned long long int ulong_long_arg = 0;
+
+        // only defined for length modifier z
+        size_t size_t_arg = 0;
 
         // only defined for p conversion
         void *ptr_arg = NULL;
@@ -3387,6 +3392,11 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
             ulong_long_arg = tvs ? (unsigned long long)tv_nr(tvs, &arg_idx)
                                  : va_arg(ap, unsigned long long int);
             if (ulong_long_arg) arg_sign = 1;
+            break;
+          case 'z':
+            size_t_arg = tvs ? (size_t)tv_nr(tvs, &arg_idx)
+                             : va_arg(ap, size_t);
+            if (size_t_arg) arg_sign = 1;
             break;
           }
         }
@@ -3457,6 +3467,8 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
             case 'l': str_arg_l += sprintf(tmp + str_arg_l, f, ulong_arg);
                       break;
             case '2': str_arg_l += sprintf(tmp + str_arg_l, f, ulong_long_arg);
+                      break;
+            case 'z': str_arg_l += sprintf(tmp + str_arg_l, f, size_t_arg);
                       break;
             }
           }
