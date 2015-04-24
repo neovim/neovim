@@ -590,8 +590,6 @@ In Insert or Command-line mode:
 |:setglobal|	:setg[lobal]		  like ":set" but set the global value
 					  of a local option
 
-|:fix|		:fix[del]		  set value of 't_kD' according to
-					  value of 't_kb'
 |:options|	:opt[ions]		  open a new window to view and set
 					  options, grouped by functionality,
 					  a one line explanation and links to

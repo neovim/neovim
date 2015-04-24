@@ -364,22 +364,6 @@ If the terminal type listed is not correct, fix it.  For more hints, see
 gvim.  This avoids the need for a correct terminal setup.
 
 
-Q: My Backspace And Delete Keys Don't Work Right
-
-The definition of what key sends what code is very unclear for backspace <BS>
-and Delete <Del> keys.  First of all, check your $TERM setting.  If there is
-nothing wrong with it, try this: >
-
-	:set t_kb=^V<BS>
-	:set t_kD=^V<Del>
-
-In the first line you need to press CTRL-V and then hit the backspace key.
-In the second line you need to press CTRL-V and then hit the Delete key.
-You can put these lines in your vimrc file, see |05.1|.  A disadvantage is
-that it won't work when you use another terminal some day.  Look here for
-alternate solutions: |:fixdel|.
-
-
 Q: I Am Using RedHat Linux.  Can I Use the Vim That Comes with the System?
 
 By default RedHat installs a minimal version of Vim.  Check your RPM packages

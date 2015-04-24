@@ -35,9 +35,7 @@ CTRL-L			Clear and redraw the screen.  The redraw may happen
 			Note: if you like to use <BS> for this, add this
 			mapping to your .vimrc: >
 				:map CTRL-V <BS>   CTRL-V <Del>
-<			See |:fixdel| if your <Del> key does not do what you
-			want.
-
+<
 :as[cii]	or					*ga* *:as* *:ascii*
 ga			Print the ascii value of the character under the
 			cursor in decimal, hexadecimal and octal.  For

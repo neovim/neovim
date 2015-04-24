@@ -408,40 +408,6 @@ command, not when assigning a value to an option with ":let".
 Note the maximum length of an expanded option is limited.  How much depends on
 the system, mostly it is something like 256 or 1024 characters.
 
-							*:fix* *:fixdel*
-:fix[del]		Set the value of 't_kD':
-				't_kb' is     't_kD' becomes	~
-				  CTRL-?	CTRL-H
-				not CTRL-?	CTRL-?
-
-			(CTRL-? is 0177 octal, 0x7f hex) {not in Vi}
-
-			If your delete key terminal code is wrong, but the
-			code for backspace is alright, you can put this in
-			your .vimrc: >
-				:fixdel
-<			This works no matter what the actual code for
-			backspace is.
-
-			If the backspace key terminal code is wrong you can
-			use this: >
-				:if &term == "termname"
-				:  set t_kb=^V<BS>
-				:  fixdel
-				:endif
-<			Where "^V" is CTRL-V and "<BS>" is the backspace key
-			(don't type four characters!).  Replace "termname"
-			with your terminal name.
-
-			If your <Delete> key sends a strange key sequence (not
-			CTRL-? or CTRL-H) you cannot use ":fixdel".  Then use: >
-				:if &term == "termname"
-				:  set t_kD=^V<Delete>
-				:endif
-<			Where "^V" is CTRL-V and "<Delete>" is the delete key
-			(don't type eight characters!).  Replace "termname"
-			with your terminal name.
-
 							*Linux-backspace*
 			Note about Linux: By default the backspace key
 			produces CTRL-?, which is wrong.  You can fix it by
@@ -890,8 +856,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  0	same as ":set backspace=" (Vi compatible)
 	  1	same as ":set backspace=indent,eol"
 	  2	same as ":set backspace=indent,eol,start"
-
-	See |:fixdel| if your <BS> or <Del> key does not do what you want.
 
 				*'backup'* *'bk'* *'nobackup'* *'nobk'*
 'backup' 'bk'		boolean	(default off)

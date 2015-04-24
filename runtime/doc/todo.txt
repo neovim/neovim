@@ -5132,8 +5132,6 @@ Various improvements:
     sufficient.  ":setflush" resets the option stack?
     How to handle an aborted mapping?  Remember position in tag stack when
     mapping starts, restore it when an error aborts the mapping?
--   Change ":fixdel" into option 'fixdel', t_del will be adjusted each time
-    t_bs is set? (Webb)
 -   "gc": goto character, move absolute character positions forward, also
     counting newlines.  "gC" goes backwards (Weigert).
 -   When doing CTRL-^, redraw buffer with the same topline. (Demirel)  Store
