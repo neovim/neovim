@@ -87,7 +87,7 @@ describe('echomsg', function()
     it('one line does not cause scroll', function()
       execute('echom "line1, normal message"')
       screen:expect([[
-      ^                                                    |
+      ^                                                     |
       ~                                                    |
       ~                                                    |
       ~                                                    |
@@ -123,7 +123,7 @@ describe('echomsg', function()
       ~                                                    |
       line1 line1 line1 line1                              |
       line2 line2 line2 line2                              |
-      Press ENTER or type command to continue^             |
+      Press ENTER or type command to continue^              |
       ]])
       feed('<cr>')
       assert_statusmsg("line2 line2 line2 line2")
@@ -147,7 +147,7 @@ describe('echomsg', function()
       line1.a line1.b line1.c line1.d line1.e line1.f line1|
       .g line1.h line1.i line1.j line1.k line1.l line1.m li|
       ne1.o line1.p line1.q line1.r line1.s                |
-      Press ENTER or type command to continue^             |
+      Press ENTER or type command to continue^              |
       ]])
       feed('<cr>')
       assert_statusmsg(fullmsg)
@@ -162,7 +162,7 @@ describe('echomsg', function()
       execute('silent! echom "'..fullmsg..'"')
       _h.wait()
       screen:expect([[
-      ^                                                    |
+      ^                                                     |
       ~                                                    |
       ~                                                    |
       ~                                                    |
@@ -198,7 +198,7 @@ describe('echomsg', function()
     it('one line does not cause scroll', function()
       execute('echoerr "line1, normal message"')
       screen:expect([[
-      ^                                                    |
+      ^                                                     |
       ~                                                    |
       ~                                                    |
       ~                                                    |
@@ -233,7 +233,7 @@ describe('echomsg', function()
       ~                                                    |
       {2:line1 line1 line1 line1}                              |
       {2:line2 line2 line2 line2}                              |
-      {3:Press ENTER or type command to continue}^             |
+      {3:Press ENTER or type command to continue}^              |
       ]])
       feed('<cr>')
       assert_statusmsg_empty()
@@ -257,7 +257,7 @@ describe('echomsg', function()
       {2:line1.a line1.b line1.c line1.d line1.e line1.f line1}|
       {2:.g line1.h line1.i line1.j line1.k line1.l line1.m li}|
       {2:ne1.o line1.p line1.q line1.r line1.s}                |
-      {3:Press ENTER or type command to continue}^             |
+      {3:Press ENTER or type command to continue}^              |
       ]])
       assert_msghist(fullmsg)
       assert_statusmsg_empty()
@@ -271,7 +271,7 @@ describe('echomsg', function()
       local fullmsg = 'line1, normal message'
       execute(cmd_under_test..' "'..fullmsg..'"')
       screen:expect([[
-      ^                                                    |
+      ^                                                     |
       ~                                                    |
       ~                                                    |
       ~                                                    |
@@ -294,7 +294,7 @@ describe('echomsg', function()
     it('overwrites previous :echom (does NOT cause a scroll)', function()
       execute('echom  "line1" | '..cmd_under_test..' "line2"')
       screen:expect([[
-      ^                                                    |
+      ^                                                     |
       ~                                                    |
       ~                                                    |
       ~                                                    |
@@ -330,7 +330,7 @@ describe('echomsg', function()
       ~                                                    |
       line1                                                |
       line2                                                |
-      Press ENTER or type command to continue^             |
+      Press ENTER or type command to continue^              |
       ]])
       assert_msghist('line1')
       assert_msghist('line2')
@@ -338,11 +338,11 @@ describe('echomsg', function()
       assert_verrmsg_empty()
     end)
 
-    it('(cmdheight=2) followed by :echom', function()
+    it('(cmdheight=2) after :echom', function()
       _h.nvim('set_option', 'cmdheight', 2)
       execute('echom  "line1" | '..cmd_under_test..' "line2"')
       screen:expect([[
-      ^                                                    |
+      ^                                                     |
       ~                                                    |
       ~                                                    |
       ~                                                    |
@@ -367,7 +367,7 @@ describe('echomsg', function()
       _h.nvim('set_option', 'cmdheight', 2)
       execute(cmd_under_test..' "line1" | echom  "line2"')
       screen:expect([[
-      ^                                                    |
+      ^                                                     |
       ~                                                    |
       ~                                                    |
       ~                                                    |
@@ -391,7 +391,7 @@ describe('echomsg', function()
     it('2x does NOT cause a scroll', function()
       execute(cmd_under_test..' "line1 line1 line1 line1" | '..cmd_under_test..' "line2 line2 line2 line2"')
       screen:expect([[
-      ^                                                    |
+      ^                                                     |
       ~                                                    |
       ~                                                    |
       ~                                                    |
@@ -415,7 +415,7 @@ describe('echomsg', function()
       local fullmsg = 'line1.a line1.b line1.c line1.d line1.e line1.f line1.g line1.h line1.i line1.j line1.k line1.l line1.m line1.o line1.p line1.q line1.r line1.s'
       execute(cmd_under_test..' "'..fullmsg..'"')
       screen:expect([[
-      ^                                                    |
+      ^                                                     |
       ~                                                    |
       ~                                                    |
       ~                                                    |
@@ -440,7 +440,7 @@ describe('echomsg', function()
       _h.nvim('set_option', 'cmdheight', 2)
       execute(cmd_under_test..' "'..fullmsg..'"')
       screen:expect([[
-      ^                                                    |
+      ^                                                     |
       ~                                                    |
       ~                                                    |
       ~                                                    |
@@ -465,7 +465,7 @@ describe('echomsg', function()
       _h.nvim('set_option', 'cmdheight', 4)
       execute(cmd_under_test..' "'..fullmsg..'"')
       screen:expect([[
-      ^                                                    |
+      ^                                                     |
       ~                                                    |
       ~                                                    |
       ~                                                    |
@@ -480,7 +480,7 @@ describe('echomsg', function()
       ne1.o line1.p line1.q line1.r line1.s                |
                                                            |
       ]])
-      assert_msg(fullmsg)
+      assert_msghist(fullmsg)
       assert_statusmsg(fullmsg)
       assert_verrmsg_empty()
     end)
@@ -495,7 +495,7 @@ describe('echomsg', function()
       endfunc]])
       execute('call Foo()')
       screen:expect([[
-      ^                                                    |
+      ^                                                     |
       ~                                                    |
       ~                                                    |
       ~                                                    |
@@ -521,7 +521,7 @@ describe('echomsg', function()
       execute('nnoremap foo :'..cmd_under_test..' "'..fullmsg..'"<cr>')
       _h.feed('foo')
       screen:expect([[
-      ^                                                    |
+      ^                                                     |
       ~                                                    |
       ~                                                    |
       ~                                                    |
@@ -547,7 +547,7 @@ describe('echomsg', function()
       execute('silent  '..cmd_under_test..' "'..fullmsg..'"')
       execute('silent! '..cmd_under_test..' "line2 for silent!"')
       screen:expect([[
-      ^                                                    |
+      ^                                                     |
       ~                                                    |
       ~                                                    |
       ~                                                    |
@@ -574,7 +574,7 @@ describe('echomsg', function()
       execute('nnoremap <silent> foo :'..cmd_under_test..' "'..fullmsg..'"<cr>')
       _h.feed('foo')
       screen:expect([[
-      ^                                                    |
+      ^                                                     |
       ~                                                    |
       ~                                                    |
       ~                                                    |
@@ -601,7 +601,7 @@ describe('echomsg', function()
       _h.feed('foo')
       _h.wait()
       screen:expect([[
-      ^                                                    |
+      ^                                                     |
       ~                                                    |
       ~                                                    |
       ~                                                    |
@@ -626,7 +626,7 @@ describe('echomsg', function()
       execute('echom "foo" | silent echom! "bar"')
       _h.wait()
       screen:expect([[
-      ^                                                    |
+      ^                                                     |
       ~                                                    |
       ~                                                    |
       ~                                                    |
@@ -657,7 +657,7 @@ describe('echomsg', function()
 
   describe(':echomsg! (shortmess-=T)', function()
     before_each(function()
-      execute('set shortmess-=T')
+      execute('silent set shortmess-=T')
     end)
     echomsg_bang_tests('echom!')
   end)

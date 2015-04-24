@@ -89,8 +89,10 @@ void event_teardown(void)
   }
 }
 
-// Wait for some event
-void event_poll(int ms)
+/// Wait for an event.
+///
+/// @param ms  0: non-blocking poll. >0: timeout after `ms`.
+void event_poll(size_t ms)
 {
   static int recursive = 0;
 
@@ -116,7 +118,7 @@ void event_poll(int ms)
 
   if (ms > 0) {
     // Ensure the timer handle is closed and run the event loop
-    // once more to let libuv perform it's cleanup
+    // once more to let libuv perform its cleanup.
     uv_timer_stop(&timer);
     uv_close((uv_handle_t *)&timer, NULL);
     loop(UV_RUN_NOWAIT);
@@ -124,8 +126,7 @@ void event_poll(int ms)
 
   recursive--;  // Can re-enter uv_run now
 
-  // In case this is run before event_init, don't process any events.
-  if (immediate_events) {
+  if (immediate_events) {  // May be NULL before event_init.
     process_events_from(immediate_events);
   }
 }
