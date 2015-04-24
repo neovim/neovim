@@ -6,16 +6,14 @@ branches:
   except:
     - nightly
 addons:
-    apt_packages:
-        - xclip
-        - gdb
-        - valgrind
-        - libtool
-        - gcc-multilib
-        - clang-3.4
-cache:
-    - apt
-    - pip
+  apt_packages:
+    - xclip
+    - gdb
+    - valgrind
+    - libtool
+    - clang-3.4
+    - gcc-multilib
+    - g++-multilib
 env:
   global:
     - CI_SCRIPTS=$TRAVIS_BUILD_DIR/.ci
@@ -56,6 +54,10 @@ install:
   - pip install --user -q cpp-coveralls neovim
 script:
   - sh -e $CI_SCRIPTS/$CI_TARGET.sh
+cache:
+  - build/neovim/neovim/.deps
+  - apt
+  - pip
 notifications:
   webhooks:
     urls:
