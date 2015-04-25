@@ -6714,35 +6714,18 @@ static void nv_wordcmd(cmdarg_T *cap)
    */
   if (!word_end && cap->oap->op_type == OP_CHANGE) {
     n = gchar_cursor();
-    if (n != NUL) {                     /* not an empty line */
-      if (ascii_iswhite(n)) {
-        /*
-         * Reproduce a funny Vi behaviour: "cw" on a blank only
-         * changes one character, not all blanks until the start of
-         * the next word.  Only do this when the 'w' flag is included
-         * in 'cpoptions'.
-         */
-        if (cap->count1 == 1 && vim_strchr(p_cpo, CPO_CW) != NULL) {
-          cap->oap->inclusive = true;
-          cap->oap->motion_type = MCHAR;
-          return;
-        }
-      } else {
-        /*
-         * This is a little strange. To match what the real Vi does,
-         * we effectively map 'cw' to 'ce', and 'cW' to 'cE', provided
-         * that we are not on a space or a TAB.  This seems impolite
-         * at first, but it's really more what we mean when we say
-         * 'cw'.
-         * Another strangeness: When standing on the end of a word
-         * "ce" will change until the end of the next word, but "cw"
-         * will change only one character! This is done by setting
-         * flag.
-         */
-        cap->oap->inclusive = true;
-        word_end = true;
-        flag = true;
-      }
+    if (n != NUL && !ascii_iswhite(n)) {
+      // This is a little strange.  To match what the real Vi does, we
+      // effectively map "cw" to "ce", and "cW" to "cE", provided that we are
+      // not on a space or a TAB.  This seems impolite at first, but it's
+      // really more what we mean when we say "cw".
+      //
+      // Another strangeness: When standing on the end of a word "ce" will
+      // change until the end of the next word, but "cw" will change only one
+      // character!  This is done by setting "flag".
+      cap->oap->inclusive = true;
+      word_end = true;
+      flag = true;
     }
   }
 

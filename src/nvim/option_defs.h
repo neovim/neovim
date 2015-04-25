@@ -119,7 +119,6 @@
 #define CPO_TAGPAT      't'
 #define CPO_UNDO        'u'     /* "u" undoes itself */
 #define CPO_BACKSPACE   'v'     /* "v" keep deleted text */
-#define CPO_CW          'w'     /* "cw" only changes one blank */
 #define CPO_FWRITE      'W'     /* "w!" doesn't overwrite readonly files */
 #define CPO_ESC         'x'
 #define CPO_REPLCNT     'X'     /* "R" with a count only deletes chars once */
@@ -145,9 +144,9 @@
                                  * cursor would not move */
 /* default values for Vim, Vi and POSIX */
 #define CPO_VIM         "aABceFs"
-#define CPO_VI          "aAbBcCdDeEfFHiIjJkKlLmMnoOpPqrRsStuvwWxXyZ$!%*-+<>;"
+#define CPO_VI          "aAbBcCdDeEfFHiIjJkKlLmMnoOpPqrRsStuvWxXyZ$!%*-+<>;"
 #define CPO_ALL \
-  "aAbBcCdDeEfFHiIjJkKlLmMnoOpPqrRsStuvwWxXyZ$!%*-+<>#{|&/\\.;"
+  "aAbBcCdDeEfFHiIjJkKlLmMnoOpPqrRsStuvWxXyZ$!%*-+<>#{|&/\\.;"
 
 /* characters for p_ww option: */
 #define WW_ALL          "bshl<>[],~"
