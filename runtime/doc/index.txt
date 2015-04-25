@@ -1226,7 +1226,6 @@ tag	      command	      action ~
 |:finally|	:fina[lly]	part of a :try command
 |:finish|	:fini[sh]	quit sourcing a Vim script
 |:first|	:fir[st]	go to the first file in the argument list
-|:fixdel|	:fix[del]	set key code of <Del>
 |:fold|		:fo[ld]		create a fold
 |:foldclose|	:foldc[lose]	close folds
 |:folddoopen|	:foldd[oopen]	execute command on lines not in a closed fold

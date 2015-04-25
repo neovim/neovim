@@ -67,15 +67,11 @@ CTRL-A		Insert previously inserted text.  {not in Vi}
 						*i_CTRL-H* *i_<BS>* *i_BS*
 <BS> or CTRL-H	Delete the character before the cursor (see |i_backspacing|
 		about joining lines).
-		See |:fixdel| if your <BS> key does not do what you want.
-		{Vi: does not delete autoindents}
 						*i_<Del>* *i_DEL*
 <Del>		Delete the character under the cursor.  If the cursor is at
 		the end of the line, and the 'backspace' option includes
 		"eol", delete the <EOL>; the next line is appended after the
 		current one.
-		See |:fixdel| if your <Del> key does not do what you want.
-		{not in Vi}
 						*i_CTRL-W*
 CTRL-W		Delete the word before the cursor (see |i_backspacing| about
 		joining lines).  See the section "word motions",

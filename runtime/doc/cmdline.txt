@@ -102,12 +102,10 @@ CTRL-E or <End>					*c_CTRL-E* *c_<End>* *c_End*
 <LeftMouse>	Move the cursor to the position of the mouse click.
 
 CTRL-H						*c_<BS>* *c_CTRL-H* *c_BS*
-<BS>		Delete the character in front of the cursor (see |:fixdel| if
-		your <BS> key does not do what you want).
+<BS>		Delete the character in front of the cursor.
 							*c_<Del>* *c_Del*
 <Del>		Delete the character under the cursor (at end of line:
-		character before the cursor) (see |:fixdel| if your <Del>
-		key does not do what you want).
+		character before the cursor).
 							*c_CTRL-W*
 CTRL-W		Delete the |word| before the cursor.  This depends on the
 		'iskeyword' option.

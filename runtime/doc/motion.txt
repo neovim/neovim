@@ -167,8 +167,6 @@ CTRL-H		or					*CTRL-H* *<BS>*
 				:map CTRL-V<BS>		X
 			(to enter "CTRL-V<BS>" type the CTRL-V key, followed
 			by the <BS> key)
-			See |:fixdel| if the <BS> key does not do what you
-			want.
 
 l		or					*l*
 <Right>		or					*<Right>* *<Space>*
