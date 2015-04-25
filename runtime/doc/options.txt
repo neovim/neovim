@@ -1868,8 +1868,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			argument will set the file name for the current
 			buffer, if the current buffer doesn't have a file name
 			yet.  Also see |cpo-P|.
-								*cpo-g*
-		g	Goto line 1 when using ":edit" without argument.
 								*cpo-H*
 		H	When using "I" on a line with only blanks, insert
 			before the last blank.  Without this flag insert after

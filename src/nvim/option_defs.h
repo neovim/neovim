@@ -95,7 +95,6 @@
 #define CPO_EMPTYREGION 'E'     /* operating on empty region is an error */
 #define CPO_FNAMER      'f'     /* set file name for ":r file" */
 #define CPO_FNAMEW      'F'     /* set file name for ":w file" */
-#define CPO_GOTO1       'g'     /* goto line 1 for ":edit" */
 #define CPO_INSEND      'H'     /* "I" inserts before last blank in line */
 #define CPO_INTMOD      'i'     /* interrupt a read makes buffer modified */
 #define CPO_INDENT      'I'     /* remove auto-indent more often */
@@ -146,9 +145,9 @@
                                  * cursor would not move */
 /* default values for Vim, Vi and POSIX */
 #define CPO_VIM         "aABceFs"
-#define CPO_VI          "aAbBcCdDeEfFgHiIjJkKlLmMnoOpPqrRsStuvwWxXyZ$!%*-+<>;"
+#define CPO_VI          "aAbBcCdDeEfFHiIjJkKlLmMnoOpPqrRsStuvwWxXyZ$!%*-+<>;"
 #define CPO_ALL \
-  "aAbBcCdDeEfFgHiIjJkKlLmMnoOpPqrRsStuvwWxXyZ$!%*-+<>#{|&/\\.;"
+  "aAbBcCdDeEfFHiIjJkKlLmMnoOpPqrRsStuvwWxXyZ$!%*-+<>#{|&/\\.;"
 
 /* characters for p_ww option: */
 #define WW_ALL          "bshl<>[],~"
