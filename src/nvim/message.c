@@ -3067,11 +3067,11 @@ static double tv_float(typval_T *tvs, int *idxp)
  * pointer for resulting string argument if "str_m" is zero (as per ISO C99).
  *
  * The return value is the number of characters which would be generated
- * for the given input, excluding the trailing null. If this value
+ * for the given input, excluding the trailing NUL. If this value
  * is greater or equal to "str_m", not all characters from the result
  * have been stored in str, output bytes beyond the ("str_m"-1) -th character
  * are discarded. If "str_m" is greater than zero it is guaranteed
- * the resulting string will be null-terminated.
+ * the resulting string will be NUL-terminated.
  */
 
 /*
