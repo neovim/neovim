@@ -32,6 +32,9 @@ describe('v:hlsearch', function()
     execute('AddR')
     execute('/')
     execute('AddR')
+    execute('set nohls')
+    execute('/')
+    execute('AddR')
     execute('let r1=r[0][0]')
 
     -- I guess it is not guaranteed that screenattr outputs always the same character
@@ -58,6 +61,7 @@ describe('v:hlsearch', function()
       1:highlighted
       0:not highlighted
       1:highlighted
+      0:not highlighted
       Vim(let):E706:]])
   end)
 end)
