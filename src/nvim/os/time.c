@@ -103,3 +103,12 @@ struct tm *os_get_localtime(struct tm *result) FUNC_ATTR_NONNULL_ALL
   time_t rawtime = time(NULL);
   return os_localtime_r(&rawtime, result);
 }
+
+/// Obtains the current UNIX timestamp
+///
+/// @return Seconds since epoch.
+Timestamp os_time(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return (Timestamp) time(NULL);
+}

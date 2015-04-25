@@ -6770,10 +6770,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 		e.g., for Unix: "r/tmp".  Case is ignored.  Maximum length of
 		each 'r' argument is 50 characters.
 							*viminfo-s*
-	s	Maximum size of an item in Kbyte.  If zero then registers are
-		not saved.  Currently only applies to registers.  The default
-		"s10" will exclude registers with more than 10 Kbyte of text.
-		Also see the '<' item above: line count limit.
+	s	Maximum size of an item contents in KiB.  If zero then nothing 
+		is saved.  Unlike Vim this applies to all items, except for 
+		the buffer list and header.  Full item size is off by three 
+		unsigned integers: with `s10` maximum item size may be 1 byte 
+		(type: 7-bit integer) + 9 bytes (timestamp: up to 64-bit 
+		integer) + 3 bytes (item size: up to 16-bit integer because 
+		2^8 < 10240 < 2^16) + 10240 bytes (requested maximum item 
+		contents size) = 10253 bytes.
 
 	Example: >
 	    :set viminfo='50,<1000,s100,:0,n~/vim/viminfo
@@ -6782,7 +6786,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			edited.
 	<1000		Contents of registers (up to 1000 lines each) will be
 			remembered.
-	s100		Registers with more than 100 Kbyte text are skipped.
+	s100		Items with contents occupying more then 100 KiB are 
+			skipped.
 	:0		Command-line history will not be saved.
 	n~/vim/viminfo	The name of the file to use is "~/vim/viminfo".
 	no /		Since '/' is not specified, the default will be used,

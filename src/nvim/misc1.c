@@ -2042,8 +2042,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
 
   /* set the '. mark */
   if (!cmdmod.keepjumps) {
-    curbuf->b_last_change.lnum = lnum;
-    curbuf->b_last_change.col = col;
+    RESET_FMARK(&curbuf->b_last_change, ((pos_T) {lnum, col, 0}), 0);
 
     /* Create a new entry if a new undo-able change was started or we
      * don't have an entry yet. */
@@ -2095,7 +2094,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
       }
     }
     curbuf->b_changelist[curbuf->b_changelistlen - 1] =
-      curbuf->b_last_change;
+      curbuf->b_last_change.mark;
     /* The current window is always after the last change, so that "g,"
      * takes you back to it. */
     curwin->w_changelistidx = curbuf->b_changelistlen;

@@ -354,7 +354,7 @@ typedef struct {
 typedef enum {
   VAR_FLAVOUR_DEFAULT,          /* doesn't start with uppercase */
   VAR_FLAVOUR_SESSION,          /* starts with uppercase, some lower */
-  VAR_FLAVOUR_VIMINFO           /* all uppercase */
+  VAR_FLAVOUR_SHADA             /* all uppercase */
 } var_flavour_T;
 
 /* values for vv_flags: */
@@ -10482,6 +10482,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "scrollbind",
     "showcmd",
     "cmdline_info",
+    "shada",
     "signs",
     "smartindent",
     "startuptime",
@@ -10498,7 +10499,6 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "title",
     "user-commands",        /* was accidentally included in 5.4 */
     "user_commands",
-    "viminfo",
     "vertsplit",
     "virtualedit",
     "visual",
@@ -20712,107 +20712,62 @@ static var_flavour_T var_flavour(char_u *varname)
     while (*(++p))
       if (ASCII_ISLOWER(*p))
         return VAR_FLAVOUR_SESSION;
-    return VAR_FLAVOUR_VIMINFO;
+    return VAR_FLAVOUR_SHADA;
   } else
     return VAR_FLAVOUR_DEFAULT;
 }
 
-/*
- * Restore global vars that start with a capital from the viminfo file
- */
-int read_viminfo_varlist(vir_T *virp, int writing)
+/// Iterate over global variables
+///
+/// @warning No modifications to global variable dictionary must be performed 
+///          while iteration is in progress.
+///
+/// @param[in]   iter   Iterator. Pass NULL to start iteration.
+/// @param[out]  name   Variable name.
+/// @param[out]  rettv  Variable value.
+///
+/// @return Pointer that needs to be passed to next `var_shada_iter` invocation 
+///         or NULL to indicate that iteration is over.
+const void *var_shada_iter(const void *const iter, const char **const name,
+                           typval_T *rettv)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2, 3)
 {
-  char_u      *tab;
-  int type = VAR_NUMBER;
-  typval_T tv;
-
-  if (!writing && (find_viminfo_parameter('!') != NULL)) {
-    tab = vim_strchr(virp->vir_line + 1, '\t');
-    if (tab != NULL) {
-      *tab++ = NUL;            /* isolate the variable name */
-      switch (*tab) {
-      case 'S': type = VAR_STRING; break;
-      case 'F': type = VAR_FLOAT; break;
-      case 'D': type = VAR_DICT; break;
-      case 'L': type = VAR_LIST; break;
-      }
-
-      tab = vim_strchr(tab, '\t');
-      if (tab != NULL) {
-        tv.v_type = type;
-        if (type == VAR_STRING || type == VAR_DICT || type == VAR_LIST)
-          tv.vval.v_string = viminfo_readstring(virp,
-              (int)(tab - virp->vir_line + 1), TRUE);
-        else if (type == VAR_FLOAT)
-          (void)string2float(tab + 1, &tv.vval.v_float);
-        else
-          tv.vval.v_number = atol((char *)tab + 1);
-        if (type == VAR_DICT || type == VAR_LIST) {
-          typval_T *etv = eval_expr(tv.vval.v_string, NULL);
-
-          if (etv == NULL)
-            /* Failed to parse back the dict or list, use it as a
-             * string. */
-            tv.v_type = VAR_STRING;
-          else {
-            xfree(tv.vval.v_string);
-            tv = *etv;
-            xfree(etv);
-          }
-        }
-
-        set_var(virp->vir_line + 1, &tv, FALSE);
-
-        if (tv.v_type == VAR_STRING)
-          xfree(tv.vval.v_string);
-        else if (tv.v_type == VAR_DICT || tv.v_type == VAR_LIST)
-          clear_tv(&tv);
-      }
+  const hashitem_T *hi;
+  const hashitem_T *hifirst = globvarht.ht_array;
+  const size_t hinum = (size_t) globvarht.ht_mask + 1;
+  *name = NULL;
+  if (iter == NULL) {
+    hi = globvarht.ht_array;
+    while ((HASHITEM_EMPTY(hi)
+            || var_flavour(HI2DI(hi)->di_key) != VAR_FLAVOUR_SHADA)
+           && (size_t) (hi - hifirst) < hinum) {
+      hi++;
+    }
+    if (HASHITEM_EMPTY(hi)
+        || var_flavour(HI2DI(hi)->di_key) != VAR_FLAVOUR_SHADA) {
+      *rettv = (typval_T) {.v_type = VAR_UNKNOWN};
+      return NULL;
+    }
+  } else {
+    hi = (const hashitem_T *) iter;
+  }
+  *name = (char *) HI2DI(hi)->di_key;
+  copy_tv(&(HI2DI(hi)->di_tv), rettv);
+  while ((size_t) (++hi - hifirst) < hinum) {
+    if (!HASHITEM_EMPTY(hi)
+        && var_flavour(HI2DI(hi)->di_key) == VAR_FLAVOUR_SHADA) {
+      return hi;
     }
   }
-
-  return viminfo_readline(virp);
+  return NULL;
 }
 
-/*
- * Write global vars that start with a capital to the viminfo file
- */
-void write_viminfo_varlist(FILE *fp)
+void var_set_global(const char *const name, typval_T vartv)
 {
-  hashitem_T  *hi;
-  dictitem_T  *this_var;
-  int todo;
-  char        *s;
-  char_u      *p;
-
-  if (find_viminfo_parameter('!') == NULL)
-    return;
-
-  fputs(_("\n# global variables:\n"), fp);
-
-  todo = (int)globvarht.ht_used;
-  for (hi = globvarht.ht_array; todo > 0; ++hi) {
-    if (!HASHITEM_EMPTY(hi)) {
-      --todo;
-      this_var = HI2DI(hi);
-      if (var_flavour(this_var->di_key) == VAR_FLAVOUR_VIMINFO) {
-        switch (this_var->di_tv.v_type) {
-        case VAR_STRING: s = "STR"; break;
-        case VAR_NUMBER: s = "NUM"; break;
-        case VAR_FLOAT:  s = "FLO"; break;
-        case VAR_DICT:   s = "DIC"; break;
-        case VAR_LIST:   s = "LIS"; break;
-        default: continue;
-        }
-        fprintf(fp, "!%s\t%s\t", this_var->di_key, s);
-        p = (char_u *) echo_string(&this_var->di_tv, NULL);
-        if (p != NULL) {
-          viminfo_writestring(fp, p);
-        }
-        xfree(p);
-      }
-    }
-  }
+  funccall_T *const saved_current_funccal = current_funccal;
+  current_funccal = NULL;
+  set_var((char_u *) name, &vartv, false);
+  current_funccal = saved_current_funccal;
 }
 
 int store_session_globals(FILE *fd)

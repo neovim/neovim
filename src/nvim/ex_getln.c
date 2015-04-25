@@ -65,6 +65,9 @@
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/event/loop.h"
+#include "nvim/os/time.h"
+#include "nvim/api/private/defs.h"
+#include "nvim/api/private/helpers.h"
 
 /*
  * Variables shared between getcmdline(), redrawcmdline() and others.
@@ -99,12 +102,6 @@ static struct cmdline_info ccline;
 static int cmd_showtail;                /* Only show path tail in lists ? */
 
 static int new_cmdpos;          /* position set by set_cmdline_pos() */
-
-typedef struct hist_entry {
-  int hisnum;                   /* identifying number */
-  int viminfo;                  /* when TRUE hisstr comes from viminfo */
-  char_u      *hisstr;          /* actual entry, separator char after the NUL */
-} histentry_T;
 
 /*
  * Type used by call_user_expand_func
@@ -4230,12 +4227,10 @@ void init_history(void)
 
         // delete entries that don't fit in newlen, if any
         for (int i = 0; i < i1; i++) {
-          xfree(history[type][i].hisstr);
-          history[type][i].hisstr = NULL;
+          hist_free_entry(history[type] + i);
         }
         for (int i = i1 + l1; i < i2; i++) {
-          xfree(history[type][i].hisstr);
-          history[type][i].hisstr = NULL;
+          hist_free_entry(history[type] + i);
         }
       }
 
@@ -4253,11 +4248,21 @@ void init_history(void)
   }
 }
 
-static void clear_hist_entry(histentry_T *hisptr)
+static inline void hist_free_entry(histentry_T *hisptr)
+  FUNC_ATTR_NONNULL_ALL
 {
-  hisptr->hisnum = 0;
-  hisptr->viminfo = FALSE;
-  hisptr->hisstr = NULL;
+  xfree(hisptr->hisstr);
+  if (hisptr->additional_elements != NULL) {
+    api_free_array(*hisptr->additional_elements);
+    xfree(hisptr->additional_elements);
+  }
+  clear_hist_entry(hisptr);
+}
+
+static inline void clear_hist_entry(histentry_T *hisptr)
+  FUNC_ATTR_NONNULL_ALL
+{
+  memset(hisptr, 0, sizeof(*hisptr));
 }
 
 /*
@@ -4310,6 +4315,8 @@ in_history (
     history[type][i].hisnum = ++hisnum[type];
     history[type][i].viminfo = FALSE;
     history[type][i].hisstr = str;
+    history[type][i].timestamp = os_time();
+    history[type][i].additional_elements = NULL;
     return TRUE;
   }
   return FALSE;
@@ -4372,8 +4379,7 @@ add_to_history (
     if (maptick == last_maptick) {
       /* Current line is from the same mapping, remove it */
       hisptr = &history[HIST_SEARCH][hisidx[HIST_SEARCH]];
-      xfree(hisptr->hisstr);
-      clear_hist_entry(hisptr);
+      hist_free_entry(hisptr);
       --hisnum[histype];
       if (--hisidx[HIST_SEARCH] < 0)
         hisidx[HIST_SEARCH] = hislen - 1;
@@ -4384,11 +4390,13 @@ add_to_history (
     if (++hisidx[histype] == hislen)
       hisidx[histype] = 0;
     hisptr = &history[histype][hisidx[histype]];
-    xfree(hisptr->hisstr);
+    hist_free_entry(hisptr);
 
     /* Store the separator after the NUL of the string. */
     len = (int)STRLEN(new_entry);
     hisptr->hisstr = vim_strnsave(new_entry, len + 2);
+    hisptr->timestamp = os_time();
+    hisptr->additional_elements = NULL;
     hisptr->hisstr[len + 1] = sep;
 
     hisptr->hisnum = ++hisnum[histype];
@@ -4545,23 +4553,21 @@ char_u *get_history_entry(int histype, int idx)
     return (char_u *)"";
 }
 
-/*
- * Clear all entries of a history.
- * "histype" may be one of the HIST_ values.
- */
-int clr_history(int histype)
+/// Clear all entries in a history
+///
+/// @param[in]  histype  One of the HIST_ values.
+///
+/// @return OK if there was something to clean and histype was one of HIST_ 
+///         values, FAIL otherwise.
+int clr_history(const int histype)
 {
-  int i;
-  histentry_T *hisptr;
-
   if (hislen != 0 && histype >= 0 && histype < HIST_COUNT) {
-    hisptr = history[histype];
-    for (i = hislen; i--; ) {
-      xfree(hisptr->hisstr);
-      clear_hist_entry(hisptr);
+    histentry_T *hisptr = history[histype];
+    for (int i = hislen; i--; hisptr++) {
+      hist_free_entry(hisptr);
     }
-    hisidx[histype] = -1;       /* mark history as cleared */
-    hisnum[histype] = 0;        /* reset identifier counter */
+    hisidx[histype] = -1;  // mark history as cleared
+    hisnum[histype] = 0;   // reset identifier counter
     return OK;
   }
   return FAIL;
@@ -4596,8 +4602,7 @@ int del_history_entry(int histype, char_u *str)
         break;
       if (vim_regexec(&regmatch, hisptr->hisstr, (colnr_T)0)) {
         found = TRUE;
-        xfree(hisptr->hisstr);
-        clear_hist_entry(hisptr);
+        hist_free_entry(hisptr);
       } else {
         if (i != last) {
           history[histype][last] = *hisptr;
@@ -4628,7 +4633,7 @@ int del_history_idx(int histype, int idx)
   if (i < 0)
     return FALSE;
   idx = hisidx[histype];
-  xfree(history[histype][i].hisstr);
+  hist_free_entry(&history[histype][i]);
 
   /* When deleting the last added search string in a mapping, reset
    * last_maptick, so that the last added search string isn't deleted again.
@@ -4641,9 +4646,10 @@ int del_history_idx(int histype, int idx)
     history[histype][i] = history[histype][j];
     i = j;
   }
-  clear_hist_entry(&history[histype][i]);
-  if (--i < 0)
+  clear_hist_entry(&history[histype][idx]);
+  if (--i < 0) {
     i += hislen;
+  }
   hisidx[histype] = i;
   return TRUE;
 }
@@ -4759,250 +4765,6 @@ void ex_history(exarg_T *eap)
         if (i == idx)
           break;
       }
-  }
-}
-
-/*
- * Buffers for history read from a viminfo file.  Only valid while reading.
- */
-static char_u **viminfo_history[HIST_COUNT] = {NULL, NULL, NULL, NULL};
-static int viminfo_hisidx[HIST_COUNT] = {0, 0, 0, 0};
-static int viminfo_hislen[HIST_COUNT] = {0, 0, 0, 0};
-static int viminfo_add_at_front = FALSE;
-
-
-/*
- * Translate a history type number to the associated character.
- */
-static int 
-hist_type2char (
-    int type,
-    int use_question                   /* use '?' instead of '/' */
-)
-{
-  if (type == HIST_CMD)
-    return ':';
-  if (type == HIST_SEARCH) {
-    if (use_question)
-      return '?';
-    else
-      return '/';
-  }
-  if (type == HIST_EXPR)
-    return '=';
-  return '@';
-}
-
-/*
- * Prepare for reading the history from the viminfo file.
- * This allocates history arrays to store the read history lines.
- */
-void prepare_viminfo_history(int asklen, int writing)
-{
-  int i;
-  int num;
-
-  init_history();
-  viminfo_add_at_front = (asklen != 0 && !writing);
-  if (asklen > hislen)
-    asklen = hislen;
-
-  for (int type = 0; type < HIST_COUNT; ++type) {
-    /* Count the number of empty spaces in the history list.  Entries read
-     * from viminfo previously are also considered empty.  If there are
-     * more spaces available than we request, then fill them up. */
-    for (i = 0, num = 0; i < hislen; i++)
-      if (history[type][i].hisstr == NULL || history[type][i].viminfo)
-        num++;
-    int len = asklen;
-    if (num > len)
-      len = num;
-    if (len <= 0)
-      viminfo_history[type] = NULL;
-    else
-      viminfo_history[type] = xmalloc(len * sizeof(char_u *));
-    if (viminfo_history[type] == NULL)
-      len = 0;
-    viminfo_hislen[type] = len;
-    viminfo_hisidx[type] = 0;
-  }
-}
-
-/*
- * Accept a line from the viminfo, store it in the history array when it's
- * new.
- */
-int read_viminfo_history(vir_T *virp, int writing)
-{
-  int type;
-  char_u      *val;
-
-  type = hist_char2type(virp->vir_line[0]);
-  if (viminfo_hisidx[type] < viminfo_hislen[type]) {
-    val = viminfo_readstring(virp, 1, TRUE);
-    if (val != NULL && *val != NUL) {
-      int sep = (*val == ' ' ? NUL : *val);
-
-      if (!in_history(type, val + (type == HIST_SEARCH),
-              viminfo_add_at_front, sep, writing)) {
-        /* Need to re-allocate to append the separator byte. */
-        size_t len = STRLEN(val);
-        char_u *p = xmalloc(len + 2);
-        if (type == HIST_SEARCH) {
-          /* Search entry: Move the separator from the first
-           * column to after the NUL. */
-          memmove(p, val + 1, len);
-          p[len] = sep;
-        } else {
-          /* Not a search entry: No separator in the viminfo
-           * file, add a NUL separator. */
-          memmove(p, val, len + 1);
-          p[len + 1] = NUL;
-        }
-        viminfo_history[type][viminfo_hisidx[type]++] = p;
-      }
-    }
-    xfree(val);
-  }
-  return viminfo_readline(virp);
-}
-
-/*
- * Finish reading history lines from viminfo.  Not used when writing viminfo.
- */
-void finish_viminfo_history(void)
-{
-  int idx;
-  int i;
-  int type;
-
-  for (type = 0; type < HIST_COUNT; ++type) {
-    if (history[type] == NULL)
-      continue;
-    idx = hisidx[type] + viminfo_hisidx[type];
-    if (idx >= hislen)
-      idx -= hislen;
-    else if (idx < 0)
-      idx = hislen - 1;
-    if (viminfo_add_at_front)
-      hisidx[type] = idx;
-    else {
-      if (hisidx[type] == -1)
-        hisidx[type] = hislen - 1;
-      do {
-        if (history[type][idx].hisstr != NULL
-            || history[type][idx].viminfo)
-          break;
-        if (++idx == hislen)
-          idx = 0;
-      } while (idx != hisidx[type]);
-      if (idx != hisidx[type] && --idx < 0)
-        idx = hislen - 1;
-    }
-    for (i = 0; i < viminfo_hisidx[type]; i++) {
-      xfree(history[type][idx].hisstr);
-      history[type][idx].hisstr = viminfo_history[type][i];
-      history[type][idx].viminfo = TRUE;
-      if (--idx < 0)
-        idx = hislen - 1;
-    }
-    idx += 1;
-    idx %= hislen;
-    for (i = 0; i < viminfo_hisidx[type]; i++) {
-      history[type][idx++].hisnum = ++hisnum[type];
-      idx %= hislen;
-    }
-    xfree(viminfo_history[type]);
-    viminfo_history[type] = NULL;
-    viminfo_hisidx[type] = 0;
-  }
-}
-
-/*
- * Write history to viminfo file in "fp".
- * When "merge" is TRUE merge history lines with a previously read viminfo
- * file, data is in viminfo_history[].
- * When "merge" is FALSE just write all history lines.  Used for ":wviminfo!".
- */
-void write_viminfo_history(FILE *fp, int merge)
-{
-  int i;
-  int type;
-  int num_saved;
-  char_u  *p;
-  int c;
-  int round;
-
-  init_history();
-  if (hislen == 0)
-    return;
-  for (type = 0; type < HIST_COUNT; ++type) {
-    num_saved = get_viminfo_parameter(hist_type2char(type, FALSE));
-    if (num_saved == 0)
-      continue;
-    if (num_saved < 0)      /* Use default */
-      num_saved = hislen;
-    fprintf(fp, _("\n# %s History (newest to oldest):\n"),
-        type == HIST_CMD ? _("Command Line") :
-        type == HIST_SEARCH ? _("Search String") :
-        type == HIST_EXPR ?  _("Expression") :
-        _("Input Line"));
-    if (num_saved > hislen)
-      num_saved = hislen;
-
-    /*
-     * Merge typed and viminfo history:
-     * round 1: history of typed commands.
-     * round 2: history from recently read viminfo.
-     */
-    for (round = 1; round <= 2; ++round) {
-      if (round == 1)
-        /* start at newest entry, somewhere in the list */
-        i = hisidx[type];
-      else if (viminfo_hisidx[type] > 0)
-        /* start at newest entry, first in the list */
-        i = 0;
-      else
-        /* empty list */
-        i = -1;
-      if (i >= 0)
-        while (num_saved > 0
-               && !(round == 2 && i >= viminfo_hisidx[type])) {
-          p = round == 1 ? history[type][i].hisstr
-              : viminfo_history[type] == NULL ? NULL
-              : viminfo_history[type][i];
-          if (p != NULL && (round == 2
-                            || !merge
-                            || !history[type][i].viminfo)) {
-            --num_saved;
-            fputc(hist_type2char(type, TRUE), fp);
-            /* For the search history: put the separator in the
-            * second column; use a space if there isn't one. */
-            if (type == HIST_SEARCH) {
-              c = p[STRLEN(p) + 1];
-              putc(c == NUL ? ' ' : c, fp);
-            }
-            viminfo_writestring(fp, p);
-          }
-          if (round == 1) {
-            /* Decrement index, loop around and stop when back at
-             * the start. */
-            if (--i < 0)
-              i = hislen - 1;
-            if (i == hisidx[type])
-              break;
-          } else {
-            /* Increment index. Stop at the end in the while. */
-            ++i;
-          }
-        }
-    }
-    for (i = 0; i < viminfo_hisidx[type]; ++i)
-      if (viminfo_history[type] != NULL)
-        xfree(viminfo_history[type][i]);
-    xfree(viminfo_history[type]);
-    viminfo_history[type] = NULL;
-    viminfo_hisidx[type] = 0;
   }
 }
 
@@ -5293,4 +5055,69 @@ char_u *script_get(exarg_T *eap, char_u *cmd)
   ga_append(&ga, NUL);
 
   return (char_u *)ga.ga_data;
+}
+
+/// Iterate over history items
+///
+/// @warning No history-editing functions must be run while iteration is in 
+///          progress.
+///
+/// @param[in]   iter          Pointer to the last history entry.
+/// @param[in]   history_type  Type of the history (HIST_*). Ignored if iter 
+///                            parameter is not NULL.
+/// @param[in]   zero          If true then zero (but not free) returned items.
+///
+///                            @warning When using this parameter user is 
+///                                     responsible for calling clr_history() 
+///                                     itself after iteration is over. If 
+///                                     clr_history() is not called behaviour is 
+///                                     undefined. No functions that work with 
+///                                     history must be called during iteration 
+///                                     in this case.
+/// @param[out]  hist          Next history entry.
+///
+/// @return Pointer used in next iteration or NULL to indicate that iteration 
+///         was finished.
+const void *hist_iter(const void *const iter, const size_t history_type,
+                      const bool zero, histentry_T *const hist)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(4)
+{
+  *hist = (histentry_T) {
+    .hisstr = NULL
+  };
+  if (hisidx[history_type] == -1) {
+    return NULL;
+  }
+  histentry_T *const hstart = &(history[history_type][0]);
+  histentry_T *const hlast = (
+      &(history[history_type][hisidx[history_type]]));
+  const histentry_T *const hend = &(history[history_type][hislen - 1]);
+  histentry_T *hiter;
+  if (iter == NULL) {
+    histentry_T *hfirst = hlast;
+    do {
+      hfirst++;
+      if (hfirst > hend) {
+        hfirst = hstart;
+      }
+      if (hfirst->hisstr != NULL) {
+        break;
+      }
+    } while (hfirst != hlast);
+    hiter = hfirst;
+  } else {
+    hiter = (histentry_T *) iter;
+  }
+  if (hiter == NULL) {
+    return NULL;
+  }
+  *hist = *hiter;
+  if (zero) {
+    memset(hiter, 0, sizeof(*hiter));
+  }
+  if (hiter == hlast) {
+    return NULL;
+  }
+  hiter++;
+  return (const void *) ((hiter > hend) ? hstart : hiter);
 }

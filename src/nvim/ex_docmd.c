@@ -75,6 +75,7 @@
 #include "nvim/mouse.h"
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
+#include "nvim/shada.h"
 
 static int quitmore = 0;
 static int ex_pressedreturn = FALSE;
@@ -9149,11 +9150,11 @@ static void ex_viminfo(exarg_T *eap)
   if (*p_viminfo == NUL)
     p_viminfo = (char_u *)"'100";
   if (eap->cmdidx == CMD_rviminfo) {
-    if (read_viminfo(eap->arg, VIF_WANT_INFO | VIF_WANT_MARKS
-            | (eap->forceit ? VIF_FORCEIT : 0)) == FAIL)
-      EMSG(_("E195: Cannot open viminfo file for reading"));
-  } else
-    write_viminfo(eap->arg, eap->forceit);
+    if (shada_read_everything((char *) eap->arg, eap->forceit) == FAIL)
+      EMSG(_("E195: Cannot open ShaDa file for reading"));
+  } else {
+    shada_write_file((char *) eap->arg, eap->forceit);
+  }
   p_viminfo = save_viminfo;
 }
 

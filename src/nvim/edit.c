@@ -60,6 +60,7 @@
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/event/loop.h"
+#include "nvim/mark.h"
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
 
@@ -6991,8 +6992,9 @@ ins_esc (
     curwin->w_set_curswant = TRUE;
 
   /* Remember the last Insert position in the '^ mark. */
-  if (!cmdmod.keepjumps)
-    curbuf->b_last_insert = curwin->w_cursor;
+  if (!cmdmod.keepjumps) {
+    RESET_FMARK(&curbuf->b_last_insert, curwin->w_cursor, curbuf->b_fnum);
+  }
 
   /*
    * The cursor should end up on the last inserted character.

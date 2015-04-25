@@ -9,7 +9,7 @@ def DirectoryOfThisScript():
 
 def GetDatabase():
     compilation_database_folder = os.path.join(DirectoryOfThisScript(),
-                                               '..', 'build')
+                                               '..', '..', 'build')
     if os.path.exists(compilation_database_folder):
         return ycm_core.CompilationDatabase(compilation_database_folder)
     return None

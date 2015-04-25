@@ -327,15 +327,6 @@ typedef struct {
   bool vc_fail;                 /* fail for invalid char, don't use '?' */
 } vimconv_T;
 
-/*
- * Structure used for reading from the viminfo file.
- */
-typedef struct {
-  char_u      *vir_line;        /* text of the current line */
-  FILE        *vir_fd;          /* file descriptor */
-  vimconv_T vir_conv;           /* encoding conversion */
-} vir_T;
-
 #define CONV_NONE               0
 #define CONV_TO_UTF8            1
 #define CONV_9_TO_UTF8          2
@@ -515,16 +506,16 @@ struct file_buffer {
   uint64_t b_orig_size;         /* size of original file in bytes */
   int b_orig_mode;              /* mode of original file */
 
-  pos_T b_namedm[NMARKS];         /* current named marks (mark.c) */
+  fmark_T b_namedm[NMARKS];     /* current named marks (mark.c) */
 
   /* These variables are set when VIsual_active becomes FALSE */
   visualinfo_T b_visual;
   int b_visual_mode_eval;            /* b_visual.vi_mode for visualmode() */
 
-  pos_T b_last_cursor;          /* cursor position when last unloading this
+  fmark_T b_last_cursor;        /* cursor position when last unloading this
                                    buffer */
-  pos_T b_last_insert;          /* where Insert mode was left */
-  pos_T b_last_change;          /* position of last change: '. mark */
+  fmark_T b_last_insert;        /* where Insert mode was left */
+  fmark_T b_last_change;        /* position of last change: '. mark */
 
   /*
    * the changelist contains old change positions
@@ -553,7 +544,7 @@ struct file_buffer {
   pos_T b_op_start_orig;  // used for Insstart_orig
   pos_T b_op_end;
 
-  bool b_marks_read;            /* Have we read viminfo marks yet? */
+  bool b_marks_read;            /* Have we read ShaDa marks yet? */
 
   /*
    * The following only used in undo.c.

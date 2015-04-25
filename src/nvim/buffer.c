@@ -73,6 +73,7 @@
 #include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/window.h"
+#include "nvim/shada.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
@@ -555,6 +556,12 @@ static void free_buffer(buf_T *buf)
   free_buffer_stuff(buf, TRUE);
   unref_var_dict(buf->b_vars);
   aubuflocal_remove(buf);
+  free_fmark(buf->b_last_cursor);
+  free_fmark(buf->b_last_insert);
+  free_fmark(buf->b_last_change);
+  for (size_t i = 0; i < NMARKS; i++) {
+    free_fmark(buf->b_namedm[i]);
+  }
   if (autocmd_busy) {
     // Do not free the buffer structure while autocommands are executing,
     // it's still needed. Free it when autocmd_busy is reset.
@@ -4163,93 +4170,6 @@ chk_modeline (
 
   return retval;
 }
-
-int read_viminfo_bufferlist(vir_T *virp, int writing)
-{
-  char_u      *tab;
-  linenr_T lnum;
-  colnr_T col;
-  buf_T       *buf;
-  char_u      *sfname;
-  char_u      *xline;
-
-  /* Handle long line and escaped characters. */
-  xline = viminfo_readstring(virp, 1, FALSE);
-
-  /* don't read in if there are files on the command-line or if writing: */
-  if (xline != NULL && !writing && ARGCOUNT == 0
-      && find_viminfo_parameter('%') != NULL) {
-    /* Format is: <fname> Tab <lnum> Tab <col>.
-     * Watch out for a Tab in the file name, work from the end. */
-    lnum = 0;
-    col = 0;
-    tab = vim_strrchr(xline, '\t');
-    if (tab != NULL) {
-      *tab++ = '\0';
-      col = (colnr_T)atoi((char *)tab);
-      tab = vim_strrchr(xline, '\t');
-      if (tab != NULL) {
-        *tab++ = '\0';
-        lnum = atol((char *)tab);
-      }
-    }
-
-    /* Expand "~/" in the file name at "line + 1" to a full path.
-     * Then try shortening it by comparing with the current directory */
-    expand_env(xline, NameBuff, MAXPATHL);
-    sfname = path_shorten_fname_if_possible(NameBuff);
-
-    buf = buflist_new(NameBuff, sfname, (linenr_T)0, BLN_LISTED);
-    if (buf != NULL) {          /* just in case... */
-      buf->b_last_cursor.lnum = lnum;
-      buf->b_last_cursor.col = col;
-      buflist_setfpos(buf, curwin, lnum, col, FALSE);
-    }
-  }
-  xfree(xline);
-
-  return viminfo_readline(virp);
-}
-
-void write_viminfo_bufferlist(FILE *fp)
-{
-  char_u      *line;
-  int max_buffers;
-
-  if (find_viminfo_parameter('%') == NULL)
-    return;
-
-  /* Without a number -1 is returned: do all buffers. */
-  max_buffers = get_viminfo_parameter('%');
-
-  /* Allocate room for the file name, lnum and col. */
-#define LINE_BUF_LEN (MAXPATHL + 40)
-  line = xmalloc(LINE_BUF_LEN);
-
-  FOR_ALL_TAB_WINDOWS(tp, win) {
-    set_last_cursor(win);
-  }
-
-  fputs(_("\n# Buffer list:\n"), fp);
-  FOR_ALL_BUFFERS(buf) {
-    if (buf->b_fname == NULL
-        || !buf->b_p_bl
-        || bt_quickfix(buf)
-        || removable(buf->b_ffname))
-      continue;
-
-    if (max_buffers-- == 0)
-      break;
-    putc('%', fp);
-    home_replace(NULL, buf->b_ffname, line, MAXPATHL, TRUE);
-    vim_snprintf_add((char *)line, LINE_BUF_LEN, "\t%" PRId64 "\t%d",
-        (int64_t)buf->b_last_cursor.lnum,
-        buf->b_last_cursor.col);
-    viminfo_writestring(fp, line);
-  }
-  xfree(line);
-}
-
 
 /*
  * Return special buffer name.

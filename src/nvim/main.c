@@ -49,6 +49,7 @@
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/path.h"
 #include "nvim/profile.h"
 #include "nvim/quickfix.h"
@@ -58,6 +59,7 @@
 #include "nvim/ui.h"
 #include "nvim/version.h"
 #include "nvim/window.h"
+#include "nvim/shada.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
@@ -377,12 +379,12 @@ int main(int argc, char **argv)
   }
 
   /*
-   * Read in registers, history etc, but not marks, from the viminfo file.
+   * Read in registers, history etc, but not marks, from the ShaDa file.
    * This is where v:oldfiles gets filled.
    */
   if (*p_viminfo != NUL) {
-    read_viminfo(NULL, VIF_WANT_INFO | VIF_GET_OLDFILES);
-    TIME_MSG("reading viminfo");
+    (void) shada_read_file(NULL, kShaDaWantInfo|kShaDaGetOldfiles);
+    TIME_MSG("reading ShaDa");
   }
   /* It's better to make v:oldfiles an empty list than NULL. */
   if (get_vim_var_list(VV_OLDFILES) == NULL)
@@ -803,9 +805,10 @@ void getout(int exitval)
     apply_autocmds(EVENT_VIMLEAVEPRE, NULL, NULL, FALSE, curbuf);
   }
 
-  if (p_viminfo && *p_viminfo != NUL)
-    /* Write out the registers, history, marks etc, to the viminfo file */
-    write_viminfo(NULL, FALSE);
+  if (p_viminfo && *p_viminfo != NUL) {
+    // Write out the registers, history, marks etc, to the viminfo file
+    shada_write_file(NULL, false);
+  }
 
   if (get_vim_var_nr(VV_DYING) <= 1)
     apply_autocmds(EVENT_VIMLEAVE, NULL, NULL, FALSE, curbuf);
@@ -1164,7 +1167,7 @@ static void command_line_scan(mparm_T *parmp)
           }
           /*FALLTHROUGH*/
         case 'S':                 /* "-S {file}" execute Vim script */
-        case 'i':                 /* "-i {viminfo}" use for viminfo */
+        case 'i':                 /* "-i {shada}" use for ShaDa file */
         case 'u':                 /* "-u {vimrc}" vim inits file */
         case 'U':                 /* "-U {gvimrc}" gvim inits file */
         case 'W':                 /* "-W {scriptout}" overwrite */
@@ -1235,8 +1238,8 @@ static void command_line_scan(mparm_T *parmp)
             parmp->use_ef = (char_u *)argv[0];
             break;
 
-          case 'i':               /* "-i {viminfo}" use for viminfo */
-            use_viminfo = (char_u *)argv[0];
+          case 'i':               /* "-i {shada}" use for shada */
+            used_shada_file = argv[0];
             break;
 
           case 's':               /* "-s {scriptin}" read from script file */
@@ -2039,7 +2042,7 @@ static void usage(void)
   mch_msg(_("  -r, -L                List swap files and exit\n"));
   mch_msg(_("  -r <file>             Recover crashed session\n"));
   mch_msg(_("  -u <nvimrc>           Use <nvimrc> instead of the default\n"));
-  mch_msg(_("  -i <nviminfo>         Use <nviminfo> instead of the default\n"));
+  mch_msg(_("  -i <shada>            Use <shada> instead of the default " SHADA_FILE "\n"));
   mch_msg(_("  --noplugin            Don't load plugin scripts\n"));
   mch_msg(_("  -o[N]                 Open N windows (default: one for each file)\n"));
   mch_msg(_("  -O[N]                 Like -o but split vertically\n"));

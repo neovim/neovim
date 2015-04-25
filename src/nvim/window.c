@@ -1925,7 +1925,7 @@ int win_close(win_T *win, int free_buf)
       && (last_window() || curtab != prev_curtab
           || close_last_window_tabpage(win, free_buf, prev_curtab))) {
     /* Autocommands have close all windows, quit now.  Restore
-    * curwin->w_buffer, otherwise writing viminfo may fail. */
+    * curwin->w_buffer, otherwise writing ShaDa file may fail. */
     if (curwin->w_buffer == NULL)
       curwin->w_buffer = curbuf;
     getout(0);

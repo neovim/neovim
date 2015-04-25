@@ -4,6 +4,8 @@
 #include <stdbool.h>
 
 #include "nvim/types.h"
+#include "nvim/api/private/defs.h"
+#include "nvim/os/time.h"
 
 typedef int (*Indenter)(void);
 
@@ -47,20 +49,22 @@ typedef int (*Indenter)(void);
 #define OP_FORMAT2      26      /* "gw" format operator, keeps cursor pos */
 #define OP_FUNCTION     27      /* "g@" call 'operatorfunc' */
 
-/// Contents of a yank (read-write) register
-typedef struct yankreg {
-  char_u      **y_array;        ///< pointer to array of line pointers
-  linenr_T y_size;              ///< number of lines in y_array
-  char_u y_type;                ///< MLINE, MCHAR or MBLOCK
-  colnr_T y_width;              ///< only set if y_type == MBLOCK
-} yankreg_T;
-
 /// Flags for get_reg_contents().
 enum GRegFlags {
   kGRegNoExpr  = 1,  ///< Do not allow expression register.
   kGRegExprSrc = 2,  ///< Return expression itself for "=" register.
   kGRegList    = 4   ///< Return list.
 };
+
+/// Definition of one register
+typedef struct yankreg {
+  char_u **y_array;  ///< Pointer to an array of line pointers.
+  linenr_T y_size;   ///< Number of lines in y_array.
+  char_u y_type;     ///< Register type: MLINE, MCHAR or MBLOCK.
+  colnr_T y_width;   ///< Register width (only valid for y_type == MBLOCK).
+  Timestamp timestamp;  ///< Time when register was last modified.
+  Dictionary *additional_data;  ///< Additional data from ShaDa file.
+} yankreg_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ops.h.generated.h"

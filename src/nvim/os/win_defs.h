@@ -9,7 +9,7 @@
 // Defines needed to fix the build on Windows:
 // - USR_EXRC_FILE
 // - USR_VIMRC_FILE
-// - VIMINFO_FILE
+// - SHADA_FILE
 // - DFLT_DIR
 // - DFLT_BDIR
 // - DFLT_VDIR
