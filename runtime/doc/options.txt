@@ -1981,10 +1981,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			erased from the screen right away.  With this flag the
 			screen newly typed text overwrites backspaced
 			characters.
-								*cpo-w*
-		w	When using "cw" on a blank character, only change one
-			character and not all blanks until the start of the
-			next word.
 								*cpo-W*
 		W	Don't overwrite a readonly file.  When omitted, ":w!"
 			overwrites a readonly file, if possible.
