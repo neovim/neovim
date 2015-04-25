@@ -157,6 +157,48 @@ describe('search highlighting', function()
     ]])
   end)
 
+  it('works with incsearch and offset', function()
+    execute('set hlsearch')
+    execute('set incsearch')
+    insert([[
+      not the match you're looking for
+      the match is here]])
+
+    feed("gg/mat/e")
+    screen:expect([[
+      not the {2:mat}ch you're looking for        |
+      the match is here                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      /mat/e^                                  |
+    ]])
+
+    -- Search with count and /e offset fixed in Vim patch 7.4.532.
+    feed("<esc>2/mat/e")
+    screen:expect([[
+      not the match you're looking for        |
+      the {2:mat}ch is here                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      /mat/e^                                  |
+    ]])
+
+    feed("<cr>")
+    screen:expect([[
+      not the {1:mat}ch you're looking for        |
+      the {1:ma^t}ch is here                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      /mat/e                                  |
+    ]])
+  end)
+
   it('works with multiline regexps', function()
     execute('set hlsearch')
     feed('4oa  repeated line<esc>')

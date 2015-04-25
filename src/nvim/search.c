@@ -469,6 +469,7 @@ int searchit(
   int match_ok;
   long nmatched;
   int submatch = 0;
+  bool first_match = true;
   int save_called_emsg = called_emsg;
   int break_loop = FALSE;
 
@@ -479,28 +480,26 @@ int searchit(
     return FAIL;
   }
 
-  /* When not accepting a match at the start position set "extra_col" to a
-   * non-zero value.  Don't do that when starting at MAXCOL, since MAXCOL +
-   * 1 is zero. */
-  if ((options & SEARCH_START) || pos->col == MAXCOL)
-    extra_col = 0;
-  /* Watch out for the "col" being MAXCOL - 2, used in a closed fold. */
-  else if (dir != BACKWARD && has_mbyte
-           && pos->lnum >= 1 && pos->lnum <= buf->b_ml.ml_line_count
-           && pos->col < MAXCOL - 2) {
-    ptr = ml_get_buf(buf, pos->lnum, FALSE) + pos->col;
-    if (*ptr == NUL)
-      extra_col = 1;
-    else
-      extra_col = (*mb_ptr2len)(ptr);
-  } else
-    extra_col = 1;
-
   /*
    * find the string
    */
   called_emsg = FALSE;
   do {  /* loop for count */
+    // When not accepting a match at the start position set "extra_col" to a
+    // non-zero value.  Don't do that when starting at MAXCOL, since MAXCOL + 1
+    // is zero.
+    if ((options & SEARCH_START) || pos->col == MAXCOL) {
+      extra_col = 0;
+    } else if (dir != BACKWARD && has_mbyte
+        && pos->lnum >= 1 && pos->lnum <= buf->b_ml.ml_line_count
+        && pos->col < MAXCOL - 2) {
+      // Watch out for the "col" being MAXCOL - 2, used in a closed fold.
+      ptr = ml_get_buf(buf, pos->lnum, FALSE) + pos->col;
+      extra_col = *ptr == NUL ? 1 : (*mb_ptr2len)(ptr);
+    } else {
+      extra_col = 1;
+    }
+
     start_pos = *pos;           /* remember start pos for detecting no match */
     found = 0;                  /* default: not found */
     at_first_line = TRUE;       /* default: start in first line */
@@ -571,7 +570,7 @@ int searchit(
              * otherwise "/$" will get stuck on end of line.
              */
             while (matchpos.lnum == 0
-                   && ((options & SEARCH_END)
+                   && ((options & SEARCH_END) && first_match
                        ?  (nmatched == 1
                            && (int)endpos.col - 1
                            < (int)start_pos.col + extra_col)
@@ -753,6 +752,7 @@ int searchit(
           }
           pos->coladd = 0;
           found = 1;
+          first_match = false;
 
           /* Set variables used for 'incsearch' highlighting. */
           search_match_lines = endpos.lnum - matchpos.lnum;
