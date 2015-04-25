@@ -82,7 +82,7 @@ static char_u *skip_string(char_u *p)
       i = 2;
       if (p[1] == '\\') {                   /* '\n' or '\000' */
         ++i;
-        while (vim_isdigit(p[i - 1]))           /* '\000' */
+        while (ascii_isdigit(p[i - 1]))           /* '\000' */
           ++i;
       }
       if (p[i] == '\'') {                   /* check for trailing ' */
@@ -434,7 +434,7 @@ static int cin_is_cpp_namespace(char_u *s)
   if (STRNCMP(s, "namespace", 9) == 0 && (s[9] == NUL || !vim_iswordc(s[9]))) {
     p = cin_skipcomment(skipwhite(s + 9));
     while (*p != NUL) {
-      if (vim_iswhite(*p)) {
+      if (ascii_iswhite(*p)) {
         has_name = TRUE;         /* found end of a name */
         p = cin_skipcomment(skipwhite(p));
       } else if (*p == '{') {
@@ -561,15 +561,15 @@ static int cin_first_id_amount(void)
   else if ((len == 8 && STRNCMP(p, "unsigned", 8) == 0)
            || (len == 6 && STRNCMP(p, "signed", 6) == 0)) {
     s = skipwhite(p + len);
-    if ((STRNCMP(s, "int", 3) == 0 && vim_iswhite(s[3]))
-        || (STRNCMP(s, "long", 4) == 0 && vim_iswhite(s[4]))
-        || (STRNCMP(s, "short", 5) == 0 && vim_iswhite(s[5]))
-        || (STRNCMP(s, "char", 4) == 0 && vim_iswhite(s[4])))
+    if ((STRNCMP(s, "int", 3) == 0 && ascii_iswhite(s[3]))
+        || (STRNCMP(s, "long", 4) == 0 && ascii_iswhite(s[4]))
+        || (STRNCMP(s, "short", 5) == 0 && ascii_iswhite(s[5]))
+        || (STRNCMP(s, "char", 4) == 0 && ascii_iswhite(s[4])))
       p = s;
   }
   for (len = 0; vim_isIDc(p[len]); ++len)
     ;
-  if (len == 0 || !vim_iswhite(p[len]) || cin_nocode(p))
+  if (len == 0 || !ascii_iswhite(p[len]) || cin_nocode(p))
     return 0;
 
   p = skipwhite(p + len);
@@ -889,7 +889,7 @@ static int cin_is_if_for_while_before_offset(char_u *line, int *poffset)
 
   if (offset-- < 2)
     return 0;
-  while (offset > 2 && vim_iswhite(line[offset]))
+  while (offset > 2 && ascii_iswhite(line[offset]))
     --offset;
 
   offset -= 1;
@@ -1467,7 +1467,7 @@ void parse_cino(buf_T *buf)
     divider = 0;
     if (*p == '.') {        /* ".5s" means a fraction */
       fraction = atoi((char *)++p);
-      while (VIM_ISDIGIT(*p)) {
+      while (ascii_isdigit(*p)) {
         ++p;
         if (divider)
           divider *= 10;
@@ -1673,7 +1673,7 @@ int get_c_indent(void)
           what = *p++;
         else if (*p == COM_LEFT || *p == COM_RIGHT)
           align = *p++;
-        else if (VIM_ISDIGIT(*p) || *p == '-') {
+        else if (ascii_isdigit(*p) || *p == '-') {
           off = getdigits_int(&p);
         }
         else
@@ -1942,7 +1942,7 @@ int get_c_indent(void)
               our_paren_pos.col++;
             else {
               col = our_paren_pos.col + 1;
-              while (vim_iswhite(l[col]))
+              while (ascii_iswhite(l[col]))
                 col++;
               if (l[col] != NUL)                /* In case of trailing space */
                 our_paren_pos.col = col;

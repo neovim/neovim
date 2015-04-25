@@ -340,7 +340,7 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     STRCAT(command, pat[0] + 1);                /* exclude first backtick */
     p = command + STRLEN(command) - 1;
     *p-- = ')';                                 /* remove last backtick */
-    while (p > command && vim_iswhite(*p))
+    while (p > command && ascii_iswhite(*p))
       --p;
     if (*p == '&') {                            /* remove trailing '&' */
       ampersent = TRUE;

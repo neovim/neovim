@@ -1590,7 +1590,7 @@ static int diff_cmp(char_u *s1, char_u *s2)
   char_u *p2 = s2;
 
   while (*p1 != NUL && *p2 != NUL) {
-    if (vim_iswhite(*p1) && vim_iswhite(*p2)) {
+    if (ascii_iswhite(*p1) && ascii_iswhite(*p2)) {
       p1 = skipwhite(p1);
       p2 = skipwhite(p2);
     } else {
@@ -1781,7 +1781,7 @@ int diffopt_changed(void)
     if (STRNCMP(p, "filler", 6) == 0) {
       p += 6;
       diff_flags_new |= DIFF_FILLER;
-    } else if ((STRNCMP(p, "context:", 8) == 0) && VIM_ISDIGIT(p[8])) {
+    } else if ((STRNCMP(p, "context:", 8) == 0) && ascii_isdigit(p[8])) {
       p += 8;
       diff_context_new = getdigits_int(&p);
     } else if (STRNCMP(p, "icase", 5) == 0) {
@@ -1796,7 +1796,7 @@ int diffopt_changed(void)
     } else if (STRNCMP(p, "vertical", 8) == 0) {
       p += 8;
       diff_flags_new |= DIFF_VERTICAL;
-    } else if ((STRNCMP(p, "foldcolumn:", 11) == 0) && VIM_ISDIGIT(p[11])) {
+    } else if ((STRNCMP(p, "foldcolumn:", 11) == 0) && ascii_isdigit(p[11])) {
       p += 11;
       diff_foldcolumn_new = getdigits_int(&p);
     }
@@ -1897,8 +1897,8 @@ int diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
 
       while (line_org[si_org] != NUL) {
         if ((diff_flags & DIFF_IWHITE)
-            && vim_iswhite(line_org[si_org])
-            && vim_iswhite(line_new[si_new])) {
+            && ascii_iswhite(line_org[si_org])
+            && ascii_iswhite(line_new[si_new])) {
           si_org = (int)(skipwhite(line_org + si_org) - line_org);
           si_new = (int)(skipwhite(line_new + si_new) - line_new);
         } else {
@@ -1931,13 +1931,13 @@ int diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
                && ei_org >= 0
                && ei_new >= 0) {
           if ((diff_flags & DIFF_IWHITE)
-              && vim_iswhite(line_org[ei_org])
-              && vim_iswhite(line_new[ei_new])) {
-            while (ei_org >= *startp && vim_iswhite(line_org[ei_org])) {
+              && ascii_iswhite(line_org[ei_org])
+              && ascii_iswhite(line_new[ei_new])) {
+            while (ei_org >= *startp && ascii_iswhite(line_org[ei_org])) {
               ei_org--;
             }
 
-            while (ei_new >= si_new && vim_iswhite(line_new[ei_new])) {
+            while (ei_new >= si_new && ascii_iswhite(line_new[ei_new])) {
               ei_new--;
             }
           } else {
@@ -2108,11 +2108,11 @@ void ex_diffgetput(exarg_T *eap)
   } else {
     // Buffer number or pattern given. Ignore trailing white space.
     p = eap->arg + STRLEN(eap->arg);
-    while (p > eap->arg && vim_iswhite(p[-1])) {
+    while (p > eap->arg && ascii_iswhite(p[-1])) {
       p--;
     }
 
-    for (i = 0; vim_isdigit(eap->arg[i]) && eap->arg + i < p; ++i) {
+    for (i = 0; ascii_isdigit(eap->arg[i]) && eap->arg + i < p; ++i) {
     }
 
     if (eap->arg + i == p) {

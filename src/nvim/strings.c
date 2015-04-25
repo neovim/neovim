@@ -295,7 +295,7 @@ void del_trailing_spaces(char_u *ptr)
   char_u      *q;
 
   q = ptr + STRLEN(ptr);
-  while (--q > ptr && vim_iswhite(q[0]) && q[-1] != '\\' && q[-1] != Ctrl_V)
+  while (--q > ptr && ascii_iswhite(q[0]) && q[-1] != '\\' && q[-1] != Ctrl_V)
     *q = NUL;
 }
 
@@ -447,16 +447,6 @@ char_u *vim_strrchr(const char_u *string, int c)
     mb_ptr_adv(p);
   }
   return (char_u *) retval;
-}
-
-/*
- * Vim has its own isspace() function, because on some machines isspace()
- * can't handle characters above 128.
- */
-bool vim_isspace(int x)
-  FUNC_ATTR_CONST
-{
-  return (x >= 9 && x <= 13) || x == ' ';
 }
 
 /*

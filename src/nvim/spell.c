@@ -5155,7 +5155,7 @@ static unsigned get_affitem(int flagtype, char_u **pp)
   int res;
 
   if (flagtype == AFT_NUM) {
-    if (!VIM_ISDIGIT(**pp)) {
+    if (!ascii_isdigit(**pp)) {
       ++*pp;            // always advance, avoid getting stuck
       return 0;
     }
@@ -5410,7 +5410,7 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
 
   // Read and ignore the first line: word count.
   (void)vim_fgets(line, MAXLINELEN, fd);
-  if (!vim_isdigit(*skipwhite(line)))
+  if (!ascii_isdigit(*skipwhite(line)))
     EMSG2(_("E760: No word count in %s"), fname);
 
   // Read all the lines in the file one by one.
@@ -6019,7 +6019,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
           flags |= WF_BANNED;
         else if (*p == '?')             // Rare word.
           flags |= WF_RARE;
-        else if (VIM_ISDIGIT(*p)) {       // region number(s)
+        else if (ascii_isdigit(*p)) {       // region number(s)
           if ((flags & WF_REGION) == 0)             // first one
             regionmask = 0;
           flags |= WF_REGION;
@@ -6351,20 +6351,20 @@ int spell_check_msm(void)
   long incr = 0;
   long added = 0;
 
-  if (!VIM_ISDIGIT(*p))
+  if (!ascii_isdigit(*p))
     return FAIL;
   // block count = (value * 1024) / SBLOCKSIZE (but avoid overflow)
   start = (getdigits_long(&p) * 10) / (SBLOCKSIZE / 102);
   if (*p != ',')
     return FAIL;
   ++p;
-  if (!VIM_ISDIGIT(*p))
+  if (!ascii_isdigit(*p))
     return FAIL;
   incr = (getdigits_long(&p) * 102) / (SBLOCKSIZE / 10);
   if (*p != ',')
     return FAIL;
   ++p;
-  if (!VIM_ISDIGIT(*p))
+  if (!ascii_isdigit(*p))
     return FAIL;
   added = getdigits_long(&p) * 1024;
   if (*p != NUL)
@@ -8350,10 +8350,10 @@ int spell_check_sps(void)
     copy_option_part(&p, buf, MAXPATHL, ",");
 
     f = 0;
-    if (VIM_ISDIGIT(*buf)) {
+    if (ascii_isdigit(*buf)) {
       s = buf;
       sps_limit = getdigits_int(&s);
-      if (*s != NUL && !VIM_ISDIGIT(*s))
+      if (*s != NUL && !ascii_isdigit(*s))
         f = -1;
     } else if (STRCMP(buf, "best") == 0)
       f = SPS_BEST;
@@ -9501,7 +9501,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
 
       fword_ends = (fword[sp->ts_fidx] == NUL
                     || (soundfold
-                        ? vim_iswhite(fword[sp->ts_fidx])
+                        ? ascii_iswhite(fword[sp->ts_fidx])
                         : !spell_iswordp(fword + sp->ts_fidx, curwin)));
       tword[sp->ts_twordlen] = NUL;
 
@@ -10915,7 +10915,7 @@ stp_sal_score (
     // sounds like "t h" while "the" sounds like "@".  Avoid that by
     // removing the space.  Don't do it when the good word also contains a
     // space.
-    if (vim_iswhite(su->su_badptr[su->su_badlen])
+    if (ascii_iswhite(su->su_badptr[su->su_badlen])
         && *skiptowhite(stp->st_word) == NUL)
       for (p = fword; *(p = skiptowhite(p)) != NUL; )
         STRMOVE(p, p + 1);
@@ -11695,7 +11695,7 @@ static void spell_soundfold_sofo(slang_T *slang, char_u *inword, char_u *res)
     // 255, sl_sal the rest.
     for (s = inword; *s != NUL; ) {
       c = mb_cptr2char_adv(&s);
-      if (enc_utf8 ? utf_class(c) == 0 : vim_iswhite(c))
+      if (enc_utf8 ? utf_class(c) == 0 : ascii_iswhite(c))
         c = ' ';
       else if (c < 256)
         c = slang->sl_sal_first[c];
@@ -11727,7 +11727,7 @@ static void spell_soundfold_sofo(slang_T *slang, char_u *inword, char_u *res)
   } else {
     // The sl_sal_first[] table contains the translation.
     for (s = inword; (c = *s) != NUL; ++s) {
-      if (vim_iswhite(c))
+      if (ascii_iswhite(c))
         c = ' ';
       else
         c = slang->sl_sal_first[c];
@@ -11762,7 +11762,7 @@ static void spell_soundfold_sal(slang_T *slang, char_u *inword, char_u *res)
   if (slang->sl_rem_accents) {
     t = word;
     while (*s != NUL) {
-      if (vim_iswhite(*s)) {
+      if (ascii_iswhite(*s)) {
         *t++ = ' ';
         s = skipwhite(s);
       } else {
@@ -11822,7 +11822,7 @@ static void spell_soundfold_sal(slang_T *slang, char_u *inword, char_u *res)
         }
         if (*s == '<')
           s++;
-        if (VIM_ISDIGIT(*s)) {
+        if (ascii_isdigit(*s)) {
           // determine priority
           pri = *s - '0';
           s++;
@@ -11883,7 +11883,7 @@ static void spell_soundfold_sal(slang_T *slang, char_u *inword, char_u *res)
               }
               if (*s == '<')
                 s++;
-              if (VIM_ISDIGIT(*s)) {
+              if (ascii_isdigit(*s)) {
                 p0 = *s - '0';
                 s++;
               }
@@ -11955,7 +11955,7 @@ static void spell_soundfold_sal(slang_T *slang, char_u *inword, char_u *res)
           break;
         }
       }
-    } else if (vim_iswhite(c))   {
+    } else if (ascii_iswhite(c))   {
       c = ' ';
       k = 1;
     }
@@ -12010,7 +12010,7 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
     t = s;
     c = mb_cptr2char_adv(&s);
     if (slang->sl_rem_accents) {
-      if (enc_utf8 ? utf_class(c) == 0 : vim_iswhite(c)) {
+      if (enc_utf8 ? utf_class(c) == 0 : ascii_iswhite(c)) {
         if (did_white)
           continue;
         c = ' ';
@@ -12076,7 +12076,7 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
         }
         if (*s == '<')
           s++;
-        if (VIM_ISDIGIT(*s)) {
+        if (ascii_isdigit(*s)) {
           // determine priority
           pri = *s - '0';
           s++;
@@ -12141,7 +12141,7 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
               }
               if (*s == '<')
                 s++;
-              if (VIM_ISDIGIT(*s)) {
+              if (ascii_isdigit(*s)) {
                 p0 = *s - '0';
                 s++;
               }
@@ -12221,7 +12221,7 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
           break;
         }
       }
-    } else if (vim_iswhite(c))   {
+    } else if (ascii_iswhite(c))   {
       c = ' ';
       k = 1;
     }

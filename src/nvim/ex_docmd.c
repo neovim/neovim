@@ -1157,7 +1157,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
      * 2. handle command modifiers.
      */
     p = ea.cmd;
-    if (VIM_ISDIGIT(*ea.cmd))
+    if (ascii_isdigit(*ea.cmd))
       p = skipwhite(skipdigits(ea.cmd));
     switch (*p) {
     /* When adding an entry, also modify cmd_exists(). */
@@ -1251,7 +1251,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       if (save_msg_silent == -1)
         save_msg_silent = msg_silent;
       ++msg_silent;
-      if (*ea.cmd == '!' && !vim_iswhite(ea.cmd[-1])) {
+      if (*ea.cmd == '!' && !ascii_iswhite(ea.cmd[-1])) {
         /* ":silent!", but not "silent !cmd" */
         ea.cmd = skipwhite(ea.cmd + 1);
         ++emsg_silent;
@@ -1260,7 +1260,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       continue;
 
     case 't':   if (checkforcmd(&p, "tab", 3)) {
-        if (vim_isdigit(*ea.cmd))
+        if (ascii_isdigit(*ea.cmd))
           cmdmod.tab = atoi((char *)ea.cmd) + 1;
         else
           cmdmod.tab = tabpage_index(curtab) + 1;
@@ -1287,7 +1287,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
         break;
       if (verbose_save < 0)
         verbose_save = p_verbose;
-      if (vim_isdigit(*ea.cmd))
+      if (ascii_isdigit(*ea.cmd))
         p_verbose = atoi((char *)ea.cmd);
       else
         p_verbose = 1;
@@ -1703,7 +1703,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       && *ea.arg != NUL
       /* Do not allow register = for user commands */
       && (!IS_USER_CMDIDX(ea.cmdidx) || *ea.arg != '=')
-      && !((ea.argt & COUNT) && VIM_ISDIGIT(*ea.arg))) {
+      && !((ea.argt & COUNT) && ascii_isdigit(*ea.arg))) {
     if (valid_yank_reg(*ea.arg, (ea.cmdidx != CMD_put
                                  && !IS_USER_CMDIDX(ea.cmdidx)))) {
       ea.regname = *ea.arg++;
@@ -1720,9 +1720,9 @@ static char_u * do_one_cmd(char_u **cmdlinep,
    * Check for a count.  When accepting a BUFNAME, don't use "123foo" as a
    * count, it's a buffer name.
    */
-  if ((ea.argt & COUNT) && VIM_ISDIGIT(*ea.arg)
+  if ((ea.argt & COUNT) && ascii_isdigit(*ea.arg)
       && (!(ea.argt & BUFNAME) || *(p = skipdigits(ea.arg)) == NUL
-          || vim_iswhite(*p))) {
+          || ascii_iswhite(*p))) {
     n = getdigits_long(&ea.arg);
     ea.arg = skipwhite(ea.arg);
     if (n <= 0 && !ni && (ea.argt & ZEROR) == 0) {
@@ -1875,7 +1875,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       p = skiptowhite_esc(ea.arg);
     else {
       p = ea.arg + STRLEN(ea.arg);
-      while (p > ea.arg && vim_iswhite(p[-1]))
+      while (p > ea.arg && ascii_iswhite(p[-1]))
         --p;
     }
     ea.line2 = buflist_findpat(ea.arg, p, (ea.argt & BUFUNL) != 0,
@@ -2168,7 +2168,7 @@ find_ucmd (
       k = 0;
       while (k < len && *np != NUL && *cp++ == *np++)
         k++;
-      if (k == len || (*np == NUL && vim_isdigit(eap->cmd[k]))) {
+      if (k == len || (*np == NUL && ascii_isdigit(eap->cmd[k]))) {
         /* If finding a second match, the command is ambiguous.  But
          * not if a buffer-local command wasn't a full match and a
          * global command is a full match. */
@@ -2272,7 +2272,7 @@ int modifier_len(char_u *cmd)
   int i, j;
   char_u      *p = cmd;
 
-  if (VIM_ISDIGIT(*cmd))
+  if (ascii_isdigit(*cmd))
     p = skipwhite(skipdigits(cmd));
   for (i = 0; i < (int)ARRAY_SIZE(cmdmods); ++i) {
     for (j = 0; p[j] != NUL; ++j)
@@ -2314,7 +2314,7 @@ int cmd_exists(char_u *name)
   p = find_command(&ea, &full);
   if (p == NULL)
     return 3;
-  if (vim_isdigit(*name) && ea.cmdidx != CMD_match)
+  if (ascii_isdigit(*name) && ea.cmdidx != CMD_match)
     return 0;
   if (*skipwhite(p) != NUL)
     return 0;           /* trailing garbage */
@@ -2577,7 +2577,7 @@ set_one_cmd_context (
       else if (c == '|'
             || c == '\n'
             || c == '"'
-            || vim_iswhite(c)) {
+            || ascii_iswhite(c)) {
         len = 0;          /* avoid getting stuck when space is in 'isfname' */
         while (*p != NUL) {
           if (has_mbyte)
@@ -3223,22 +3223,22 @@ get_address (
       break;
 
     default:
-      if (VIM_ISDIGIT(*cmd))                    /* absolute line number */
+      if (ascii_isdigit(*cmd))                    /* absolute line number */
         lnum = getdigits_long(&cmd);
     }
 
     for (;; ) {
       cmd = skipwhite(cmd);
-      if (*cmd != '-' && *cmd != '+' && !VIM_ISDIGIT(*cmd))
+      if (*cmd != '-' && *cmd != '+' && !ascii_isdigit(*cmd))
         break;
 
       if (lnum == MAXLNUM)
         lnum = curwin->w_cursor.lnum;           /* "+1" is same as ".+1" */
-      if (VIM_ISDIGIT(*cmd))
+      if (ascii_isdigit(*cmd))
         i = '+';                        /* "number" is same as "+number" */
       else
         i = *cmd++;
-      if (!VIM_ISDIGIT(*cmd))           /* '+' is '+1', but '+0' is not '+1' */
+      if (!ascii_isdigit(*cmd))           /* '+' is '+1', but '+0' is not '+1' */
         n = 1;
       else
         n = getdigits_long(&cmd);
@@ -3563,7 +3563,7 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
         /* skip escaped characters */
         if (p[1] && (*p == '\\' || *p == Ctrl_V))
           ++p;
-        else if (vim_iswhite(*p)) {
+        else if (ascii_iswhite(*p)) {
           *errormsgp = (char_u *)_("E172: Only one file name allowed");
           return FAIL;
         }
@@ -3718,7 +3718,7 @@ static char_u *getargcmd(char_u **argp)
 
   if (*arg == '+') {        /* +[command] */
     ++arg;
-    if (vim_isspace(*arg) || *arg == '\0')
+    if (ascii_isspace(*arg) || *arg == '\0')
       command = dollar_command;
     else {
       command = arg;
@@ -3742,7 +3742,7 @@ skip_cmd_arg (
     int rembs              /* TRUE to halve the number of backslashes */
 )
 {
-  while (*p && !vim_isspace(*p)) {
+  while (*p && !ascii_isspace(*p)) {
     if (*p == '\\' && p[1] != NUL) {
       if (rembs)
         STRMOVE(p, p + 1);
@@ -4494,7 +4494,7 @@ static void ex_command(exarg_T *eap)
   if (ASCII_ISALPHA(*p))
     while (ASCII_ISALNUM(*p))
       ++p;
-  if (!ends_excmd(*p) && !vim_iswhite(*p)) {
+  if (!ends_excmd(*p) && !ascii_iswhite(*p)) {
     EMSG(_("E182: Invalid command name"));
     return;
   }
@@ -4597,13 +4597,13 @@ static char_u *uc_split_args(char_u *arg, size_t *lenp)
     if (p[0] == '\\' && p[1] == '\\') {
       len += 2;
       p += 2;
-    } else if (p[0] == '\\' && vim_iswhite(p[1])) {
+    } else if (p[0] == '\\' && ascii_iswhite(p[1])) {
       len += 1;
       p += 2;
     } else if (*p == '\\' || *p == '"') {
       len += 2;
       p += 1;
-    } else if (vim_iswhite(*p)) {
+    } else if (ascii_iswhite(*p)) {
       p = skipwhite(p);
       if (*p == NUL)
         break;
@@ -4625,13 +4625,13 @@ static char_u *uc_split_args(char_u *arg, size_t *lenp)
       *q++ = '\\';
       *q++ = '\\';
       p += 2;
-    } else if (p[0] == '\\' && vim_iswhite(p[1])) {
+    } else if (p[0] == '\\' && ascii_iswhite(p[1])) {
       *q++ = p[1];
       p += 2;
     } else if (*p == '\\' || *p == '"') {
       *q++ = '\\';
       *q++ = *p++;
-    } else if (vim_iswhite(*p)) {
+    } else if (ascii_iswhite(*p)) {
       p = skipwhite(p);
       if (*p == NUL)
         break;
@@ -6878,7 +6878,7 @@ static void ex_mkrc(exarg_T *eap)
   /* ":mkview" or ":mkview 9": generate file name with 'viewdir' */
   if (eap->cmdidx == CMD_mkview
       && (*eap->arg == NUL
-          || (vim_isdigit(*eap->arg) && eap->arg[1] == NUL))) {
+          || (ascii_isdigit(*eap->arg) && eap->arg[1] == NUL))) {
     eap->forceit = TRUE;
     fname = get_view_file(*eap->arg);
     if (fname == NULL)
@@ -7295,7 +7295,7 @@ static void ex_findpat(exarg_T *eap)
   }
 
   n = 1;
-  if (vim_isdigit(*eap->arg)) { /* get count */
+  if (ascii_isdigit(*eap->arg)) { /* get count */
     n = getdigits_long(&eap->arg);
     eap->arg = skipwhite(eap->arg);
   }
@@ -8802,7 +8802,7 @@ static void ex_match(exarg_T *eap)
   if (ends_excmd(*eap->arg))
     end = eap->arg;
   else if ((STRNICMP(eap->arg, "none", 4) == 0
-            && (vim_iswhite(eap->arg[4]) || ends_excmd(eap->arg[4]))))
+            && (ascii_iswhite(eap->arg[4]) || ends_excmd(eap->arg[4]))))
     end = eap->arg + 4;
   else {
     p = skiptowhite(eap->arg);

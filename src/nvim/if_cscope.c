@@ -687,7 +687,7 @@ static char *cs_create_cmd(char *csoption, char *pattern)
    * they may want to use the leading white space. */
   pat = pattern;
   if (search != 4 && search != 6)
-    while (vim_iswhite(*pat))
+    while (ascii_iswhite(*pat))
       ++pat;
 
   cmd = xmalloc(strlen(pat) + 2);
@@ -1273,9 +1273,9 @@ static int cs_kill(exarg_T *eap)
   }
 
   /* only single digit positive and negative integers are allowed */
-  if ((strlen(stok) < 2 && VIM_ISDIGIT((int)(stok[0])))
+  if ((strlen(stok) < 2 && ascii_isdigit((int)(stok[0])))
       || (strlen(stok) < 3 && stok[0] == '-'
-          && VIM_ISDIGIT((int)(stok[1]))))
+          && ascii_isdigit((int)(stok[1]))))
     i = atoi(stok);
   else {
     /* It must be part of a name.  We will try to find a match

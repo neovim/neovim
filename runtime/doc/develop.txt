@@ -185,8 +185,8 @@ malloc()	lalloc()	Like alloc(), but has long argument
 strcpy()	STRCPY()	Includes cast to (char *), for char_u * args
 strchr()	vim_strchr()	Accepts special characters
 strrchr()	vim_strrchr()	Accepts special characters
-isspace()	vim_isspace()	Can handle characters > 128
-iswhite()	vim_iswhite()	Only TRUE for tab and space
+isspace()	ascii_isspace()	Can handle characters > 128
+iswhite()	ascii_iswhite()	Only true for tab and space
 memcpy()	mch_memmove()	Handles overlapped copies
 bcopy()		mch_memmove()	Handles overlapped copies
 memset()	vim_memset()	Uniform for all systems

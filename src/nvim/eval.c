@@ -1299,7 +1299,7 @@ int eval_foldexpr(char_u *arg, int *cp)
       /* If the result is a string, check if there is a non-digit before
        * the number. */
       s = tv.vval.v_string;
-      if (!VIM_ISDIGIT(*s) && *s != '-')
+      if (!ascii_isdigit(*s) && *s != '-')
         *cp = *s++;
       retval = atol((char *)s);
     }
@@ -1636,7 +1636,7 @@ static char_u *list_arg_vars(exarg_T *eap, char_u *arg, int *first)
   while (!ends_excmd(*arg) && !got_int) {
     if (error || eap->skip) {
       arg = find_name_end(arg, NULL, NULL, FNE_INCL_BR | FNE_CHECK_START);
-      if (!vim_iswhite(*arg) && !ends_excmd(*arg)) {
+      if (!ascii_iswhite(*arg) && !ends_excmd(*arg)) {
         emsg_severe = TRUE;
         EMSG(_(e_trailing));
         break;
@@ -1943,7 +1943,7 @@ get_lval (
   p = find_name_end(name, &expr_start, &expr_end, fne_flags);
   if (expr_start != NULL) {
     /* Don't expand the name when we already know there is an error. */
-    if (unlet && !vim_iswhite(*p) && !ends_excmd(*p)
+    if (unlet && !ascii_iswhite(*p) && !ends_excmd(*p)
         && *p != '[' && *p != '.') {
       EMSG(_(e_trailing));
       return NULL;
@@ -2476,7 +2476,7 @@ void *eval_for_line(char_u *arg, int *errp, char_u **nextcmdp, int skip)
     return fi;
 
   expr = skipwhite(expr);
-  if (expr[0] != 'i' || expr[1] != 'n' || !vim_iswhite(expr[2])) {
+  if (expr[0] != 'i' || expr[1] != 'n' || !ascii_iswhite(expr[2])) {
     EMSG(_("E690: Missing \"in\" after :for"));
     return fi;
   }
@@ -2556,7 +2556,7 @@ void set_context_for_expression(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
       for (p = arg + STRLEN(arg); p >= arg; ) {
         xp->xp_pattern = p;
         mb_ptr_back(arg, p);
-        if (vim_iswhite(*p))
+        if (ascii_iswhite(*p))
           break;
       }
       return;
@@ -2754,7 +2754,7 @@ void ex_lockvar(exarg_T *eap)
 
   if (eap->forceit)
     deep = -1;
-  else if (vim_isdigit(*arg)) {
+  else if (ascii_isdigit(*arg)) {
     deep = getdigits_int(&arg);
     arg = skipwhite(arg);
   }
@@ -2778,7 +2778,7 @@ static void ex_unletlock(exarg_T *eap, char_u *argstart, int deep)
         FNE_CHECK_START);
     if (lv.ll_name == NULL)
       error = TRUE;                 /* error but continue parsing */
-    if (name_end == NULL || (!vim_iswhite(*name_end)
+    if (name_end == NULL || (!ascii_iswhite(*name_end)
                              && !ends_excmd(*name_end))) {
       if (name_end != NULL) {
         emsg_severe = TRUE;
@@ -4005,14 +4005,14 @@ eval7 (
      * strict to avoid backwards compatibility problems.
      * Don't look for a float after the "." operator, so that
      * ":let vers = 1.2.3" doesn't fail. */
-    if (!want_string && p[0] == '.' && vim_isdigit(p[1])) {
+    if (!want_string && p[0] == '.' && ascii_isdigit(p[1])) {
       get_float = TRUE;
       p = skipdigits(p + 2);
       if (*p == 'e' || *p == 'E') {
         ++p;
         if (*p == '-' || *p == '+')
           ++p;
-        if (!vim_isdigit(*p))
+        if (!ascii_isdigit(*p))
           get_float = FALSE;
         else
           p = skipdigits(p + 1);
@@ -4551,7 +4551,7 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
       case 'x':
       case 'u':           /* Unicode: "\u0023" */
       case 'U':
-        if (vim_isxdigit(p[1])) {
+        if (ascii_isxdigit(p[1])) {
           int n, nr;
           int c = toupper(*p);
 
@@ -4560,7 +4560,7 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
           else
             n = 4;
           nr = 0;
-          while (--n >= 0 && vim_isxdigit(p[1])) {
+          while (--n >= 0 && ascii_isxdigit(p[1])) {
             ++p;
             nr = (nr << 4) + hex2nr(*p);
           }
@@ -8940,7 +8940,7 @@ static void f_function(typval_T *argvars, typval_T *rettv)
   char_u      *s;
 
   s = get_tv_string(&argvars[0]);
-  if (s == NULL || *s == NUL || VIM_ISDIGIT(*s))
+  if (s == NULL || *s == NUL || ascii_isdigit(*s))
     EMSG2(_(e_invarg2), s);
   /* Don't check an autoload name for existence here. */
   else if (vim_strchr(s, AUTOLOAD_CHAR) == NULL && !function_exists(s))
@@ -10020,9 +10020,9 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     if (STRNICMP(name, "patch", 5) == 0) {
       if (name[5] == '-'
           && STRLEN(name) > 11
-          && vim_isdigit(name[6])
-          && vim_isdigit(name[8])
-          && vim_isdigit(name[10])) {
+          && ascii_isdigit(name[6])
+          && ascii_isdigit(name[8])
+          && ascii_isdigit(name[10])) {
         int major = atoi((char *)name + 6);
         int minor = atoi((char *)name + 8);
 
@@ -13663,7 +13663,7 @@ static void f_setreg(typval_T *argvars, typval_T *rettv)
         break;
       case 'b': case Ctrl_V:            /* block-wise selection */
         yank_type = MBLOCK;
-        if (VIM_ISDIGIT(stropt[1])) {
+        if (ascii_isdigit(stropt[1])) {
           ++stropt;
           block_len = getdigits_long(&stropt) - 1;
           --stropt;
@@ -16502,7 +16502,7 @@ handle_subscript (
          && (**arg == '['
              || (**arg == '.' && rettv->v_type == VAR_DICT)
              || (**arg == '(' && (!evaluate || rettv->v_type == VAR_FUNC)))
-         && !vim_iswhite(*(*arg - 1))) {
+         && !ascii_iswhite(*(*arg - 1))) {
     if (**arg == '(') {
       /* need to copy the funcref so that we can clear rettv */
       if (evaluate) {
@@ -17247,7 +17247,7 @@ static int valid_varname(char_u *varname)
   char_u *p;
 
   for (p = varname; *p != NUL; ++p)
-    if (!eval_isnamec1(*p) && (p == varname || !VIM_ISDIGIT(*p))
+    if (!eval_isnamec1(*p) && (p == varname || !ascii_isdigit(*p))
         && *p != AUTOLOAD_CHAR) {
       EMSG2(_(e_illvar), varname);
       return FALSE;
@@ -17929,7 +17929,7 @@ void ex_function(exarg_T *eap)
       }
     } else {
       /* skip ':' and blanks*/
-      for (p = theline; vim_iswhite(*p) || *p == ':'; ++p)
+      for (p = theline; ascii_iswhite(*p) || *p == ':'; ++p)
         ;
 
       /* Check for "endfunction". */

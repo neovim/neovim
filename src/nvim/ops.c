@@ -347,7 +347,7 @@ static void shift_block(oparg_T *oap, int amount)
       else
         ++bd.textstart;
     }
-    for (; vim_iswhite(*bd.textstart); ) {
+    for (; ascii_iswhite(*bd.textstart); ) {
       // TODO: is passing bd.textstart for start of the line OK?
       incr = lbr_chartabsize_adv(bd.textstart, &bd.textstart, (colnr_T)(bd.start_vcol));
       total += incr;
@@ -403,7 +403,7 @@ static void shift_block(oparg_T *oap, int amount)
     /* The character's column is in "bd.start_vcol".  */
     non_white_col = bd.start_vcol;
 
-    while (vim_iswhite(*non_white)) {
+    while (ascii_iswhite(*non_white)) {
       incr = lbr_chartabsize_adv(bd.textstart, &non_white, non_white_col);
       non_white_col += incr;
     }
@@ -772,7 +772,7 @@ yankreg_T *get_yank_register(int regname, int mode)
   }
 
   int i = 0; // when not 0-9, a-z, A-Z or '-'/'+'/'*': use register 0
-  if (VIM_ISDIGIT(regname))
+  if (ascii_isdigit(regname))
     i = regname - '0';
   else if (ASCII_ISLOWER(regname))
     i = CharOrdLow(regname) + 10;
@@ -3613,15 +3613,15 @@ static int same_leader(linenr_T lnum, int leader1_len, char_u *leader1_flags, in
    * The first line has to be saved, only one line can be locked at a time.
    */
   line1 = vim_strsave(ml_get(lnum));
-  for (idx1 = 0; vim_iswhite(line1[idx1]); ++idx1)
+  for (idx1 = 0; ascii_iswhite(line1[idx1]); ++idx1)
     ;
   line2 = ml_get(lnum + 1);
   for (idx2 = 0; idx2 < leader2_len; ++idx2) {
-    if (!vim_iswhite(line2[idx2])) {
+    if (!ascii_iswhite(line2[idx2])) {
       if (line1[idx1++] != line2[idx2])
         break;
     } else
-      while (vim_iswhite(line1[idx1]))
+      while (ascii_iswhite(line1[idx1]))
         ++idx1;
   }
   xfree(line1);
@@ -3901,7 +3901,7 @@ format_lines (
         /* put cursor on last non-space */
         State = NORMAL;         /* don't go past end-of-line */
         coladvance((colnr_T)MAXCOL);
-        while (curwin->w_cursor.col && vim_isspace(gchar_cursor()))
+        while (curwin->w_cursor.col && ascii_isspace(gchar_cursor()))
           dec_cursor();
 
         /* do the formatting, without 'showmode' */
@@ -3979,10 +3979,8 @@ static int ends_in_white(linenr_T lnum)
 
   if (*s == NUL)
     return FALSE;
-  /* Don't use STRLEN() inside vim_iswhite(), SAS/C complains: "macro
-   * invocation may call function multiple times". */
   l = STRLEN(s) - 1;
-  return vim_iswhite(s[l]);
+  return ascii_iswhite(s[l]);
 }
 
 /*
@@ -4103,7 +4101,7 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, int i
     /* Count a tab for what it's worth (if list mode not on) */
     incr = lbr_chartabsize(line, pstart, (colnr_T)bdp->start_vcol);
     bdp->start_vcol += incr;
-    if (vim_iswhite(*pstart)) {
+    if (ascii_iswhite(*pstart)) {
       bdp->pre_whitesp += incr;
       bdp->pre_whitesp_c++;
     } else {
@@ -4241,14 +4239,14 @@ int do_addsub(int command, linenr_T Prenum1)
    */
   col = curwin->w_cursor.col;
   if (dohex)
-    while (col > 0 && vim_isxdigit(ptr[col]))
+    while (col > 0 && ascii_isxdigit(ptr[col]))
       --col;
   if (       dohex
              && col > 0
              && (ptr[col] == 'X'
                  || ptr[col] == 'x')
              && ptr[col - 1] == '0'
-             && vim_isxdigit(ptr[col + 1])) {
+             && ascii_isxdigit(ptr[col + 1])) {
     /*
      * Found hexadecimal number, move to its start.
      */
@@ -4260,12 +4258,12 @@ int do_addsub(int command, linenr_T Prenum1)
     col = curwin->w_cursor.col;
 
     while (ptr[col] != NUL
-           && !vim_isdigit(ptr[col])
+           && !ascii_isdigit(ptr[col])
            && !(doalp && ASCII_ISALPHA(ptr[col])))
       ++col;
 
     while (col > 0
-           && vim_isdigit(ptr[col - 1])
+           && ascii_isdigit(ptr[col - 1])
            && !(doalp && ASCII_ISALPHA(ptr[col])))
       --col;
   }
@@ -4275,7 +4273,7 @@ int do_addsub(int command, linenr_T Prenum1)
    */
   firstdigit = ptr[col];
   RLADDSUBFIX(ptr);
-  if ((!VIM_ISDIGIT(firstdigit) && !(doalp && ASCII_ISALPHA(firstdigit)))
+  if ((!ascii_isdigit(firstdigit) && !(doalp && ASCII_ISALPHA(firstdigit)))
       || u_save_cursor() != OK) {
     beep_flush();
     return FAIL;
@@ -5007,11 +5005,11 @@ static long line_count_info(char_u *line, long *wc, long *cc, long limit, int eo
 
   for (i = 0; i < limit && line[i] != NUL; ) {
     if (is_word) {
-      if (vim_isspace(line[i])) {
+      if (ascii_isspace(line[i])) {
         words++;
         is_word = 0;
       }
-    } else if (!vim_isspace(line[i]))
+    } else if (!ascii_isspace(line[i]))
       is_word = 1;
     ++chars;
     i += (*mb_ptr2len)(line + i);

@@ -115,10 +115,10 @@ ex_menu (
    * Fill in the priority table.
    */
   for (p = arg; *p; ++p)
-    if (!VIM_ISDIGIT(*p) && *p != '.')
+    if (!ascii_isdigit(*p) && *p != '.')
       break;
-  if (vim_iswhite(*p)) {
-    for (i = 0; i < MENUDEPTH && !vim_iswhite(*arg); ++i) {
+  if (ascii_iswhite(*p)) {
+    for (i = 0; i < MENUDEPTH && !ascii_iswhite(*arg); ++i) {
       pri_tab[i] = getdigits_int(&arg);
       if (pri_tab[i] == 0)
         pri_tab[i] = 500;
@@ -138,10 +138,10 @@ ex_menu (
   /*
    * Check for "disable" or "enable" argument.
    */
-  if (STRNCMP(arg, "enable", 6) == 0 && vim_iswhite(arg[6])) {
+  if (STRNCMP(arg, "enable", 6) == 0 && ascii_iswhite(arg[6])) {
     enable = TRUE;
     arg = skipwhite(arg + 6);
-  } else if (STRNCMP(arg, "disable", 7) == 0 && vim_iswhite(arg[7])) {
+  } else if (STRNCMP(arg, "disable", 7) == 0 && ascii_iswhite(arg[7])) {
     enable = FALSE;
     arg = skipwhite(arg + 7);
   }
@@ -835,26 +835,26 @@ char_u *set_context_in_menu_cmd(expand_T *xp, char_u *cmd, char_u *arg, int forc
 
   /* Check for priority numbers, enable and disable */
   for (p = arg; *p; ++p)
-    if (!VIM_ISDIGIT(*p) && *p != '.')
+    if (!ascii_isdigit(*p) && *p != '.')
       break;
 
-  if (!vim_iswhite(*p)) {
+  if (!ascii_iswhite(*p)) {
     if (STRNCMP(arg, "enable", 6) == 0
-        && (arg[6] == NUL ||  vim_iswhite(arg[6])))
+        && (arg[6] == NUL ||  ascii_iswhite(arg[6])))
       p = arg + 6;
     else if (STRNCMP(arg, "disable", 7) == 0
-             && (arg[7] == NUL || vim_iswhite(arg[7])))
+             && (arg[7] == NUL || ascii_iswhite(arg[7])))
       p = arg + 7;
     else
       p = arg;
   }
 
-  while (*p != NUL && vim_iswhite(*p))
+  while (*p != NUL && ascii_iswhite(*p))
     ++p;
 
   arg = after_dot = p;
 
-  for (; *p && !vim_iswhite(*p); ++p) {
+  for (; *p && !ascii_iswhite(*p); ++p) {
     if ((*p == '\\' || *p == Ctrl_V) && p[1] != NUL)
       p++;
     else if (*p == '.')
@@ -864,7 +864,7 @@ char_u *set_context_in_menu_cmd(expand_T *xp, char_u *cmd, char_u *arg, int forc
   /* ":tearoff" and ":popup" only use menus, not entries */
   expand_menus = !((*cmd == 't' && cmd[1] == 'e') || *cmd == 'p');
   expand_emenu = (*cmd == 'e');
-  if (expand_menus && vim_iswhite(*p))
+  if (expand_menus && ascii_iswhite(*p))
     return NULL;        /* TODO: check for next command? */
   if (*p == NUL) {              /* Complete the menu name */
     /*
@@ -1484,7 +1484,7 @@ void ex_menutranslate(exarg_T *eap)
  */
 static char_u *menu_skip_part(char_u *p)
 {
-  while (*p != NUL && *p != '.' && !vim_iswhite(*p)) {
+  while (*p != NUL && *p != '.' && !ascii_iswhite(*p)) {
     if ((*p == '\\' || *p == Ctrl_V) && p[1] != NUL)
       ++p;
     ++p;
@@ -1543,7 +1543,7 @@ static char_u *menu_translate_tab_and_shift(char_u *arg_start)
 {
   char_u      *arg = arg_start;
 
-  while (*arg && !vim_iswhite(*arg)) {
+  while (*arg && !ascii_iswhite(*arg)) {
     if ((*arg == '\\' || *arg == Ctrl_V) && arg[1] != NUL)
       arg++;
     else if (STRNICMP(arg, "<TAB>", 5) == 0) {

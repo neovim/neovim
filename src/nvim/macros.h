@@ -56,17 +56,12 @@
 # define TOUPPER_ASC(c) (((c) < 'a' || (c) > 'z') ? (c) : (c) - ('a' - 'A'))
 # define TOLOWER_ASC(c) (((c) < 'A' || (c) > 'Z') ? (c) : (c) + ('a' - 'A'))
 
-/* Use our own isdigit() replacement, because on MS-Windows isdigit() returns
- * non-zero for superscript 1.  Also avoids that isdigit() crashes for numbers
- * below 0 and above 255.  */
-#define VIM_ISDIGIT(c) ((unsigned)(c) >= '0' && (unsigned)(c) <= '9')
-
 /* Like isalpha() but reject non-ASCII characters.  Can't be used with a
  * special key (negative value). */
 # define ASCII_ISLOWER(c) ((unsigned)(c) >= 'a' && (unsigned)(c) <= 'z')
 # define ASCII_ISUPPER(c) ((unsigned)(c) >= 'A' && (unsigned)(c) <= 'Z')
 # define ASCII_ISALPHA(c) (ASCII_ISUPPER(c) || ASCII_ISLOWER(c))
-# define ASCII_ISALNUM(c) (ASCII_ISALPHA(c) || VIM_ISDIGIT(c))
+# define ASCII_ISALNUM(c) (ASCII_ISALPHA(c) || ascii_isdigit(c))
 
 /* macro version of chartab().
  * Only works with values 0-255!

@@ -465,7 +465,7 @@ dbg_parsearg (
     bp->dbg_lnum = curwin->w_cursor.lnum;
   else if (
     gap != &prof_ga &&
-    VIM_ISDIGIT(*p)) {
+    ascii_isdigit(*p)) {
     bp->dbg_lnum = getdigits_long(&p);
     p = skipwhite(p);
   } else
@@ -570,7 +570,7 @@ void ex_breakdel(exarg_T *eap)
     gap = &prof_ga;
   }
 
-  if (vim_isdigit(*eap->arg)) {
+  if (ascii_isdigit(*eap->arg)) {
     /* ":breakdel {nr}" */
     nr = atol((char *)eap->arg);
     for (int i = 0; i < gap->ga_len; ++i)
@@ -1371,7 +1371,7 @@ static char_u *do_one_arg(char_u *str)
       *p++ = *str;
     } else {
       /* An item ends at a space not in backticks */
-      if (!inbacktick && vim_isspace(*str))
+      if (!inbacktick && ascii_isspace(*str))
         break;
       if (*str == '`')
         inbacktick ^= TRUE;
@@ -3023,7 +3023,7 @@ static char_u *get_mess_env(void)
     p = (char_u *)os_getenv("LC_MESSAGES");
     if (p == NULL || *p == NUL) {
       p = (char_u *)os_getenv("LANG");
-      if (p != NULL && VIM_ISDIGIT(*p))
+      if (p != NULL && ascii_isdigit(*p))
         p = NULL;                       /* ignore something like "1043" */
 # ifdef HAVE_GET_LOCALE_VAL
       if (p == NULL || *p == NUL)
@@ -3091,7 +3091,7 @@ void ex_language(exarg_T *eap)
    * Allow abbreviation, but require at least 3 characters to avoid
    * confusion with a two letter language name "me" or "ct". */
   p = skiptowhite(eap->arg);
-  if ((*p == NUL || vim_iswhite(*p)) && p - eap->arg >= 3) {
+  if ((*p == NUL || ascii_iswhite(*p)) && p - eap->arg >= 3) {
     if (STRNICMP(eap->arg, "messages", p - eap->arg) == 0) {
       what = VIM_LC_MESSAGES;
       name = skipwhite(p);
