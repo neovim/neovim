@@ -6037,10 +6037,7 @@ do_exedit (
     setpcmark();
     if (do_ecmd(0, (eap->cmdidx == CMD_enew ? NULL : eap->arg),
             NULL, eap,
-            /* ":edit" goes to first line if Vi compatible */
-            (*eap->arg == NUL && eap->do_ecmd_lnum == 0
-             && vim_strchr(p_cpo, CPO_GOTO1) != NULL)
-            ? ECMD_ONE : eap->do_ecmd_lnum,
+            eap->do_ecmd_lnum,
             (P_HID(curbuf) ? ECMD_HIDE : 0)
             + (eap->forceit ? ECMD_FORCEIT : 0)
             // After a split we can use an existing buffer.
