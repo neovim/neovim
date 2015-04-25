@@ -351,6 +351,6 @@ enum {
 #include "nvim/ex_cmds_defs.h"        /* Ex command defines */
 
 # define SET_NO_HLSEARCH(flag) no_hlsearch = (flag); set_vim_var_nr( \
-    VV_HLSEARCH, !no_hlsearch)
+    VV_HLSEARCH, !no_hlsearch && p_hls)
 
 #endif /* NVIM_VIM_H */
