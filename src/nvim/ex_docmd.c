@@ -1138,6 +1138,96 @@ static int current_tab_nr(tabpage_T *tab)
 #define LAST_TAB_NR current_tab_nr(NULL)
 
 /*
+* Figure out the address type for ":wincmd".
+*/
+static void get_wincmd_addr_type(char_u *arg, exarg_T *eap)
+{
+  switch (*arg) {
+    case 'S':
+    case Ctrl_S:
+    case 's':
+    case Ctrl_N:
+    case 'n':
+    case 'j':
+    case Ctrl_J:
+    case 'k':
+    case Ctrl_K:
+    case 'T':
+    case Ctrl_R:
+    case 'r':
+    case 'R':
+    case 'K':
+    case 'J':
+    case '+':
+    case '-':
+    case Ctrl__:
+    case '_':
+    case '|':
+    case ']':
+    case Ctrl_RSB:
+    case 'g':
+    case Ctrl_G:
+    case Ctrl_V:
+    case 'v':
+    case 'h':
+    case Ctrl_H:
+    case 'l':
+    case Ctrl_L:
+    case 'H':
+    case 'L':
+    case '>':
+    case '<':
+    case '}':
+    case 'f':
+    case 'F':
+    case Ctrl_F:
+    case 'i':
+    case Ctrl_I:
+    case 'd':
+    case Ctrl_D:
+      /* window size or any count */
+      eap->addr_type = ADDR_LINES;
+      break;
+
+    case Ctrl_HAT:
+    case '^':
+      /* buffer number */
+      eap->addr_type = ADDR_BUFFERS;
+      break;
+
+    case Ctrl_Q:
+    case 'q':
+    case Ctrl_C:
+    case 'c':
+    case Ctrl_O:
+    case 'o':
+    case Ctrl_W:
+    case 'w':
+    case 'W':
+    case 'x':
+    case Ctrl_X:
+      /* window number */
+      eap->addr_type = ADDR_WINDOWS;
+      break;
+
+    case Ctrl_Z:
+    case 'z':
+    case 'P':
+    case 't':
+    case Ctrl_T:
+    case 'b':
+    case Ctrl_B:
+    case 'p':
+    case Ctrl_P:
+    case '=':
+    case CAR:
+      /* no count */
+      eap->addr_type = 0;
+      break;
+  }
+}
+
+/*
  * Execute one Ex command.
  *
  * If 'sourcing' is TRUE, the command will be included in the error message.
@@ -1420,19 +1510,21 @@ static char_u * do_one_cmd(char_u **cmdlinep,
    * is equal to the lower.
    */
 
-  if (ea.cmdidx != CMD_SIZE
-      && ea.cmdidx != CMD_USER
-      && ea.cmdidx != CMD_USER_BUF) {
-    ea.addr_type = cmdnames[(int)ea.cmdidx].cmd_addr_type;
-  } else {
-    if (ea.cmdidx != CMD_USER && ea.cmdidx != CMD_USER_BUF) {
+  // ea.addr_type for user commands is set by find_ucmd
+  if (!IS_USER_CMDIDX(ea.cmdidx)) {
+    if (ea.cmdidx != CMD_SIZE) {
+      ea.addr_type = cmdnames[(int)ea.cmdidx].cmd_addr_type;
+    } else {
       ea.addr_type = ADDR_LINES;
-      // ea.addr_type for user commands is set by find_ucmd
+    }
+    // :wincmd range depends on the argument
+    if (ea.cmdidx == CMD_wincmd) {
+      get_wincmd_addr_type(p, &ea);
     }
   }
-  ea.cmd = cmd;
 
   /* repeat for all ',' or ';' separated addresses */
+  ea.cmd = cmd;
   for (;; ) {
     ea.line1 = ea.line2;
     switch (ea.addr_type) {
@@ -1465,20 +1557,25 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       goto doend;
     if (lnum == MAXLNUM) {
       if (*ea.cmd == '%') {                 /* '%' - all lines */
-        buf_T *buf;
         ++ea.cmd;
         switch (ea.addr_type) {
           case ADDR_LINES:
             ea.line1 = 1;
             ea.line2 = curbuf->b_ml.ml_line_count;
             break;
-          case ADDR_LOADED_BUFFERS:
-            buf = firstbuf;
+          case ADDR_LOADED_BUFFERS: {
+            buf_T *buf = firstbuf;
             while (buf->b_next != NULL && buf->b_ml.ml_mfp == NULL) {
+              buf = buf->b_next;
+            }
+            ea.line1 = buf->b_fnum;
+            buf = lastbuf;
+            while (buf->b_prev != NULL && buf->b_ml.ml_mfp == NULL) {
               buf = buf->b_prev;
             }
             ea.line2 = buf->b_fnum;
             break;
+          }
           case ADDR_BUFFERS:
             ea.line1 = firstbuf->b_fnum;
             ea.line2 = lastbuf->b_fnum;
@@ -3616,8 +3713,7 @@ static char_u *invalid_range(exarg_T *eap)
         }
         break;
       case ADDR_WINDOWS:
-        if (eap->line1 < 1
-                || eap->line2 > LAST_WIN_NR) {
+        if (eap->line2 > LAST_WIN_NR) {
           return (char_u *)_(e_invrange);
         }
         break;
