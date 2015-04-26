@@ -1,6 +1,6 @@
 . "$CI_SCRIPTS/common.sh"
 
-sudo apt-get install gcc-multilib
+sudo apt-get install gcc-multilib g++-multilib
 
 setup_deps x86
 
