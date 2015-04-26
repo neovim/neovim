@@ -48,7 +48,7 @@ void ins_bytes_len(char_u *p, int len)
   int i;
   int n;
 
-  if (has_mbyte)
+  if (has_mbyte) {
     for (i = 0; i < len; i += n) {
       if (enc_utf8)
         /* avoid reading past p[len] */
@@ -57,9 +57,10 @@ void ins_bytes_len(char_u *p, int len)
         n = (*mb_ptr2len)(p + i);
       ins_char_bytes(p + i, n);
     }
-  else
+  } else {
     for (i = 0; i < len; ++i)
       ins_char(p[i]);
+  }
 }
 
 /*
@@ -122,7 +123,7 @@ void ins_char_bytes(char_u *buf, int charlen)
        */
       old_list = curwin->w_p_list;
       if (old_list && vim_strchr(p_cpo, CPO_LISTWM) == NULL)
-        curwin->w_p_list = FALSE;
+        curwin->w_p_list = false;
 
       /*
        * In virtual replace mode each character may replace one or more
@@ -183,7 +184,7 @@ void ins_char_bytes(char_u *buf, int charlen)
     p[i++] = ' ';
 
   /* Replace the line in the buffer. */
-  ml_replace(lnum, newp, FALSE);
+  ml_replace(lnum, newp, false);
 
   /* mark the buffer as changed and prepare for displaying */
   changed_bytes(lnum, col);
@@ -236,7 +237,7 @@ void ins_str(char_u *s)
     memmove(newp, oldp, (size_t)col);
   memmove(newp + col, s, (size_t)newlen);
   memmove(newp + col + newlen, oldp + col, (size_t)(oldlen - col + 1));
-  ml_replace(lnum, newp, FALSE);
+  ml_replace(lnum, newp, false);
   changed_bytes(lnum, col);
   curwin->w_cursor.col += newlen;
 }
@@ -257,7 +258,7 @@ int del_char(int fixpos)
       return FAIL;
     return del_chars(1L, fixpos);
   }
-  return del_bytes(1L, fixpos, TRUE);
+  return del_bytes(1L, fixpos, true);
 }
 
 /*
@@ -276,22 +277,19 @@ int del_chars(long count, int fixpos)
     bytes += l;
     p += l;
   }
-  return del_bytes(bytes, fixpos, TRUE);
+  return del_bytes(bytes, fixpos, true);
 }
 
 /*
  * Delete "count" bytes under the cursor.
  * If "fixpos" is TRUE, don't leave the cursor on the NUL after the line.
  * Caller must have prepared for undo.
+ * If 'use_delcombine' is TRUE, apply 'delcombine' option.
  *
  * return FAIL for failure, OK otherwise
  */
-int 
-del_bytes (
-    long count,
-    int fixpos_arg,
-    int use_delcombine                  /* 'delcombine' option applies */
-)
+int del_bytes(long count, int fixpos_arg,
+              int use_delcombine)
 {
   char_u      *oldp, *newp;
   colnr_T oldlen;
@@ -358,15 +356,15 @@ del_bytes (
    * existing line. Otherwise a new line has to be allocated.
    */
   was_alloced = ml_line_alloced();          /* check if oldp was allocated */
-  if (was_alloced)
+  if (was_alloced) {
     newp = oldp;                            /* use same allocated memory */
-  else {                                    /* need to allocate a new line */
+  } else {                                    /* need to allocate a new line */
     newp = xmalloc((size_t)(oldlen + 1 - count));
     memmove(newp, oldp, (size_t)col);
   }
   memmove(newp + col, oldp + col + count, (size_t)movelen);
   if (!was_alloced)
-    ml_replace(lnum, newp, FALSE);
+    ml_replace(lnum, newp, false);
 
   /* mark the buffer as changed and prepare for displaying */
   changed_bytes(lnum, curwin->w_cursor.col);
@@ -377,11 +375,9 @@ del_bytes (
 /*
  * Delete from cursor to end of line.
  * Caller must have prepared for undo.
+ * If 'fixpos' is TRUE, fix the cursor position when done.
  */
-void
-truncate_line (
-    int fixpos                 /* if TRUE fix the cursor position when done */
-)
+void truncate_line(int fixpos)
 {
   char_u      *newp;
   linenr_T lnum = curwin->w_cursor.lnum;
@@ -392,7 +388,7 @@ truncate_line (
   else
     newp = vim_strnsave(ml_get(lnum), (size_t)col);
 
-  ml_replace(lnum, newp, FALSE);
+  ml_replace(lnum, newp, false);
 
   /* mark the buffer as changed and prepare for displaying */
   changed_bytes(lnum, curwin->w_cursor.col);
@@ -408,11 +404,7 @@ truncate_line (
  * Delete "nlines" lines at the cursor.
  * Saves the lines for undo first if "undo" is TRUE.
  */
-void 
-del_lines (
-    long nlines,                    /* number of lines to delete */
-    int undo                       /* if TRUE, prepare for undo */
-)
+void del_lines(long nlines, int undo)
 {
   long n;
   linenr_T first = curwin->w_cursor.lnum;
@@ -428,7 +420,7 @@ del_lines (
     if (curbuf->b_ml.ml_flags & ML_EMPTY)           /* nothing to delete */
       break;
 
-    ml_delete(first, TRUE);
+    ml_delete(first, true);
     ++n;
 
     /* If we delete the last line in the file, stop */
