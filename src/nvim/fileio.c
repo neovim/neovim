@@ -7167,14 +7167,14 @@ static bool match_file_pat(char_u *pattern, regprog_T **prog, char_u *fname,
    * 2. the short file name, when the pattern has a '/'.
    * 3. the tail of the file name, when the pattern has no '/'.
    */
-  if (
-    (regmatch.regprog != NULL
-     && ((allow_dirs
-          && (vim_regexec(&regmatch, fname, (colnr_T)0)
-              || (sfname != NULL
-                  && vim_regexec(&regmatch, sfname, (colnr_T)0))))
-         || (!allow_dirs && vim_regexec(&regmatch, tail, (colnr_T)0)))))
+  if (regmatch.regprog != NULL
+      && ((allow_dirs
+           && (vim_regexec(&regmatch, fname, (colnr_T)0)
+               || (sfname != NULL
+                   && vim_regexec(&regmatch, sfname, (colnr_T)0))))
+          || (!allow_dirs && vim_regexec(&regmatch, tail, (colnr_T)0)))) {
     result = true;
+  }
 
   if (prog != NULL) {
     *prog = regmatch.regprog;
@@ -7233,11 +7233,9 @@ file_pat_to_reg_pat (
     int no_bslash             /* Don't use a backward slash as pathsep */
 )
 {
-  size_t size;
   char_u      *endp;
   char_u      *reg_pat;
   char_u      *p;
-  int i;
   int nested = 0;
   int add_dollar = TRUE;
 
@@ -7246,7 +7244,7 @@ file_pat_to_reg_pat (
   if (pat_end == NULL)
     pat_end = pat + STRLEN(pat);
 
-  size = 2;             /* '^' at start, '$' at end */
+  size_t size = 2;  // '^' at start, '$' at end.
 
   for (p = pat; p < pat_end; p++) {
     switch (*p) {
@@ -7275,7 +7273,7 @@ file_pat_to_reg_pat (
   }
   reg_pat = xmalloc(size + 1);
 
-  i = 0;
+  size_t i = 0;
 
   if (pat[0] == '*')
     while (pat[0] == '*' && pat < pat_end - 1)
