@@ -4239,7 +4239,9 @@ void init_history(void)
 
       // clear remaining space, if any
       int l3 = j < 0 ? 0 : MIN(newlen, oldlen);  // number of copied entries
-      memset(temp + l3, 0, (size_t)(newlen - l3) * sizeof(*temp));
+      if (newlen) {
+        memset(temp + l3, 0, (size_t)(newlen - l3) * sizeof(*temp));
+      }
 
       hisidx[type] = l3 - 1;
       xfree(history[type]);
