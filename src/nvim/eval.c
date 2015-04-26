@@ -8262,7 +8262,7 @@ static void f_exp(typval_T *argvars, typval_T *rettv)
 static void f_expand(typval_T *argvars, typval_T *rettv)
 {
   char_u      *s;
-  int len;
+  size_t len;
   char_u      *errormsg;
   int options = WILD_SILENT|WILD_USE_NL|WILD_LIST_NOTFOUND;
   expand_T xpc;
@@ -8531,12 +8531,12 @@ static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
       if (rettv->v_type == VAR_STRING || rettv->v_type == VAR_LIST)
         xfree(fresult);
       fresult = find_file_in_path_option(first ? fname : NULL,
-          first ? (int)STRLEN(fname) : 0,
-          0, first, path,
-          find_what,
-          curbuf->b_ffname,
-          find_what == FINDFILE_DIR
-          ? (char_u *)"" : curbuf->b_p_sua);
+                                         first ? STRLEN(fname) : 0,
+                                         0, first, path,
+                                         find_what, curbuf->b_ffname,
+                                         (find_what == FINDFILE_DIR
+                                          ? (char_u *)""
+                                          : curbuf->b_p_sua));
       first = FALSE;
 
       if (fresult != NULL && rettv->v_type == VAR_LIST)
@@ -8773,8 +8773,8 @@ static void f_fnamemodify(typval_T *argvars, typval_T *rettv)
 {
   char_u      *fname;
   char_u      *mods;
-  int usedlen = 0;
-  int len;
+  size_t usedlen = 0;
+  size_t len;
   char_u      *fbuf = NULL;
   char_u buf[NUMBUFLEN];
 
@@ -8783,7 +8783,7 @@ static void f_fnamemodify(typval_T *argvars, typval_T *rettv)
   if (fname == NULL || mods == NULL)
     fname = NULL;
   else {
-    len = (int)STRLEN(fname);
+    len = STRLEN(fname);
     (void)modify_fname(mods, &usedlen, &fname, &fbuf, &len);
   }
 
@@ -13017,19 +13017,18 @@ static void f_searchdecl(typval_T *argvars, typval_T *rettv)
   int locally = 1;
   int thisblock = 0;
   int error = FALSE;
-  char_u      *name;
 
   rettv->vval.v_number = 1;     /* default: FAIL */
 
-  name = get_tv_string_chk(&argvars[0]);
+  char_u *name = get_tv_string_chk(&argvars[0]);
   if (argvars[1].v_type != VAR_UNKNOWN) {
     locally = get_tv_number_chk(&argvars[1], &error) == 0;
     if (!error && argvars[2].v_type != VAR_UNKNOWN)
       thisblock = get_tv_number_chk(&argvars[2], &error) != 0;
   }
   if (!error && name != NULL)
-    rettv->vval.v_number = find_decl(name, (int)STRLEN(name),
-        locally, thisblock, SEARCH_KEEP) == FAIL;
+    rettv->vval.v_number = find_decl(name, STRLEN(name), locally,
+                                     thisblock, SEARCH_KEEP) == FAIL;
 }
 
 /*
@@ -14201,7 +14200,7 @@ static void f_spellbadword(typval_T *argvars, typval_T *rettv)
 {
   char_u      *word = (char_u *)"";
   hlf_T attr = HLF_COUNT;
-  int len = 0;
+  size_t len = 0;
 
   rettv_list_alloc(rettv);
 
@@ -14227,13 +14226,15 @@ static void f_spellbadword(typval_T *argvars, typval_T *rettv)
     }
   }
 
-  list_append_string(rettv->vval.v_list, word, len);
-  list_append_string(rettv->vval.v_list, (char_u *)(
-        attr == HLF_SPB ? "bad" :
-        attr == HLF_SPR ? "rare" :
-        attr == HLF_SPL ? "local" :
-        attr == HLF_SPC ? "caps" :
-        ""), -1);
+  assert(len <= INT_MAX);
+  list_append_string(rettv->vval.v_list, word, (int)len);
+  list_append_string(rettv->vval.v_list,
+                     (char_u *)(attr == HLF_SPB ? "bad" :
+                                attr == HLF_SPR ? "rare" :
+                                attr == HLF_SPL ? "local" :
+                                attr == HLF_SPC ? "caps" :
+                                ""),
+                     -1);
 }
 
 /*
@@ -19803,10 +19804,10 @@ void ex_oldfiles(exarg_T *eap)
 int 
 modify_fname (
     char_u *src,               /* string with modifiers */
-    int *usedlen,           /* characters after src that are used */
+    size_t *usedlen,           /* characters after src that are used */
     char_u **fnamep,           /* file name so far */
     char_u **bufp,             /* buffer for allocated file name or NULL */
-    int *fnamelen          /* length of fnamep */
+    size_t *fnamelen           /* length of fnamep */
 )
 {
   int valid = 0;
@@ -19865,7 +19866,7 @@ repeat:
     /* Append a path separator to a directory. */
     if (os_isdir(*fnamep)) {
       /* Make room for one or two extra characters. */
-      *fnamep = vim_strnsave(*fnamep, (int)STRLEN(*fnamep) + 2);
+      *fnamep = vim_strnsave(*fnamep, STRLEN(*fnamep) + 2);
       xfree(*bufp);          /* free any allocated file name */
       *bufp = *fnamep;
       if (*fnamep == NULL)
@@ -19922,7 +19923,7 @@ repeat:
   }
 
   tail = path_tail(*fnamep);
-  *fnamelen = (int)STRLEN(*fnamep);
+  *fnamelen = STRLEN(*fnamep);
 
   /* ":h" - head, remove "/file_name", can be repeated  */
   /* Don't remove the first "/" or "c:\" */
@@ -19932,7 +19933,7 @@ repeat:
     s = get_past_head(*fnamep);
     while (tail > s && after_pathsep((char *)s, (char *)tail))
       mb_ptr_back(*fnamep, tail);
-    *fnamelen = (int)(tail - *fnamep);
+    *fnamelen = (size_t)(tail - *fnamep);
     if (*fnamelen == 0) {
       /* Result is empty.  Turn it into "." to make ":cd %:h" work. */
       xfree(*bufp);
@@ -19953,7 +19954,7 @@ repeat:
   /* ":t" - tail, just the basename */
   if (src[*usedlen] == ':' && src[*usedlen + 1] == 't') {
     *usedlen += 2;
-    *fnamelen -= (int)(tail - *fnamep);
+    *fnamelen -= (size_t)(tail - *fnamep);
     *fnamep = tail;
   }
 
@@ -19974,13 +19975,13 @@ repeat:
         break;
     if (src[*usedlen + 1] == 'e') {             /* :e */
       if (s > tail) {
-        *fnamelen += (int)(*fnamep - (s + 1));
+        *fnamelen += (size_t)(*fnamep - (s + 1));
         *fnamep = s + 1;
       } else if (*fnamep <= tail)
         *fnamelen = 0;
     } else {                          /* :r */
       if (s > tail)             /* remove one extension */
-        *fnamelen = (int)(s - *fnamep);
+        *fnamelen = (size_t)(s - *fnamep);
     }
     *usedlen += 2;
   }
@@ -20016,10 +20017,10 @@ repeat:
         if (p != NULL) {
           sub = vim_strnsave(s, (int)(p - s));
           str = vim_strnsave(*fnamep, *fnamelen);
-          *usedlen = (int)(p + 1 - src);
+          *usedlen = (size_t)(p + 1 - src);
           s = do_string_sub(str, pat, sub, flags);
           *fnamep = s;
-          *fnamelen = (int)STRLEN(s);
+          *fnamelen = STRLEN(s);
           xfree(*bufp);
           *bufp = s;
           didit = TRUE;
@@ -20038,7 +20039,7 @@ repeat:
     p = vim_strsave_shellescape(*fnamep, false, false);
     xfree(*bufp);
     *bufp = *fnamep = p;
-    *fnamelen = (int)STRLEN(p);
+    *fnamelen = STRLEN(p);
     *usedlen += 2;
   }
 

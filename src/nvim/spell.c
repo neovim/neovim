@@ -1070,7 +1070,7 @@ static char_u *repl_to = NULL;
 //
 // Returns the length of the word in bytes, also when it's OK, so that the
 // caller can skip over the word.
-int
+size_t
 spell_check (
     win_T *wp,                // current window
     char_u *ptr,
@@ -1081,9 +1081,9 @@ spell_check (
 {
   matchinf_T mi;              // Most things are put in "mi" so that it can
                               // be passed to functions quickly.
-  int nrlen = 0;              // found a number first
+  size_t nrlen = 0;              // found a number first
   int c;
-  int wrongcaplen = 0;
+  size_t wrongcaplen = 0;
   int lpi;
   bool count_word = docount;
 
@@ -1106,7 +1106,7 @@ spell_check (
       mi.mi_end = skiphex(ptr + 2);
     else
       mi.mi_end = skipdigits(ptr);
-    nrlen = (int)(mi.mi_end - ptr);
+    nrlen = (size_t)(mi.mi_end - ptr);
   }
 
   // Find the normal end of the word (until the next non-word character).
@@ -1121,7 +1121,7 @@ spell_check (
       // Check word starting with capital letter.
       c = PTR2CHAR(ptr);
       if (!SPELL_ISUPPER(c))
-        wrongcaplen = (int)(mi.mi_fend - ptr);
+        wrongcaplen = (size_t)(mi.mi_fend - ptr);
     }
   }
   if (capcol != NULL)
@@ -1141,8 +1141,7 @@ spell_check (
   if (*mi.mi_fend != NUL)
     mb_ptr_adv(mi.mi_fend);
 
-  (void)spell_casefold(ptr, (int)(mi.mi_fend - ptr), mi.mi_fword,
-      MAXWLEN + 1);
+  (void)spell_casefold(ptr, (int)(mi.mi_fend - ptr), mi.mi_fword, MAXWLEN + 1);
   mi.mi_fwordlen = (int)STRLEN(mi.mi_fword);
 
   // The word is bad unless we recognize it.
@@ -1209,7 +1208,7 @@ spell_check (
       }
 
       if (has_mbyte) {
-        return (*mb_ptr2len)(ptr);
+        return (size_t)(*mb_ptr2len)(ptr);
       }
       return 1;
     } else if (mi.mi_end == ptr)
@@ -1257,7 +1256,7 @@ spell_check (
     return wrongcaplen;
   }
 
-  return (int)(mi.mi_end - ptr);
+  return (size_t)(mi.mi_end - ptr);
 }
 
 // Check if the word at "mip->mi_word" is in the tree.
@@ -2046,7 +2045,7 @@ static bool no_spell_checking(win_T *wp)
 // For Insert mode completion "dir" is BACKWARD and "curline" is true: move
 // to after badly spelled word before the cursor.
 // Return 0 if not found, length of the badly spelled word otherwise.
-int
+size_t
 spell_move_to (
     win_T *wp,
     int dir,                  // FORWARD or BACKWARD
@@ -2058,17 +2057,17 @@ spell_move_to (
 {
   linenr_T lnum;
   pos_T found_pos;
-  int found_len = 0;
+  size_t found_len = 0;
   char_u      *line;
   char_u      *p;
   char_u      *endp;
   hlf_T attr = HLF_COUNT;
-  int len;
+  size_t len;
   int has_syntax = syntax_present(wp);
   int col;
   bool can_spell;
   char_u      *buf = NULL;
-  int buflen = 0;
+  size_t buflen = 0;
   int skip = 0;
   int capcol = -1;
   bool found_one = false;
@@ -2092,7 +2091,7 @@ spell_move_to (
   while (!got_int) {
     line = ml_get_buf(wp->w_buffer, lnum, FALSE);
 
-    len = (int)STRLEN(line);
+    len = STRLEN(line);
     if (buflen < len + MAXWLEN + 2) {
       xfree(buf);
       buflen = len + MAXWLEN + 2;
@@ -2123,8 +2122,8 @@ spell_move_to (
     STRCPY(buf, line);
     if (lnum < wp->w_buffer->b_ml.ml_line_count)
       spell_cat_line(buf + STRLEN(buf),
-          ml_get_buf(wp->w_buffer, lnum + 1, FALSE), MAXWLEN);
-
+                     ml_get_buf(wp->w_buffer, lnum + 1, FALSE),
+                     MAXWLEN);
     p = buf + skip;
     endp = buf + len;
     while (p < endp) {
@@ -2149,9 +2148,10 @@ spell_move_to (
               || lnum != wp->w_cursor.lnum
               || (lnum == wp->w_cursor.lnum
                   && (wrapped
-                      || (colnr_T)(curline ? p - buf + len
-                                   : p - buf)
-                      > wp->w_cursor.col))) {
+                      || ((colnr_T)(curline
+                                    ? p - buf + (ptrdiff_t)len
+                                    : p - buf)
+                          > wp->w_cursor.col)))) {
             if (has_syntax) {
               col = (int)(p - buf);
               (void)syn_get_id(wp, lnum, (colnr_T)col,
@@ -2176,7 +2176,8 @@ spell_move_to (
               } else if (curline)
                 // Insert mode completion: put cursor after
                 // the bad word.
-                found_pos.col += len;
+                assert(len <= INT_MAX);
+                found_pos.col += (int)len;
               found_len = len;
             }
           } else
@@ -2186,7 +2187,8 @@ spell_move_to (
 
       // advance to character after the word
       p += len;
-      capcol -= len;
+      assert(len <= INT_MAX);
+      capcol -= (int)len;
     }
 
     if (dir == BACKWARD && found_pos.lnum != 0) {
@@ -8770,8 +8772,11 @@ spell_find_suggest (
   su->su_badptr = badptr;
   if (badlen != 0)
     su->su_badlen = badlen;
-  else
-    su->su_badlen = spell_check(curwin, su->su_badptr, &attr, NULL, false);
+  else {
+    size_t tmplen = spell_check(curwin, su->su_badptr, &attr, NULL, false);
+    assert(tmplen <= INT_MAX);
+    su->su_badlen = (int)tmplen;
+  }
   su->su_maxcount = maxcount;
   su->su_maxscore = SCORE_MAXINIT;
 

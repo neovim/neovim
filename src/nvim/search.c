@@ -3947,7 +3947,7 @@ void
 find_pattern_in_path (
     char_u *ptr,               /* pointer to search pattern */
     int dir,                 /* direction of expansion */
-    int len,                        /* length of search pattern */
+    size_t len,                     /* length of search pattern */
     int whole,                      /* match whole words only */
     int skip_comments,              /* don't match inside comments */
     int type,                       /* Type of search; are we looking for a type?
@@ -4002,7 +4002,8 @@ find_pattern_in_path (
       && !(compl_cont_status & CONT_SOL)
       ) {
     pat = xmalloc(len + 5);
-    sprintf((char *)pat, whole ? "\\<%.*s\\>" : "%.*s", len, ptr);
+    assert(len <= INT_MAX);
+    sprintf((char *)pat, whole ? "\\<%.*s\\>" : "%.*s", (int)len, ptr);
     /* ignore case according to p_ic, p_scs and pat */
     regmatch.rm_ic = ignorecase(pat);
     regmatch.regprog = vim_regcomp(pat, p_magic ? RE_MAGIC : 0);
@@ -4044,8 +4045,10 @@ find_pattern_in_path (
       if (inc_opt != NULL && strstr((char *)inc_opt, "\\zs") != NULL)
         /* Use text from '\zs' to '\ze' (or end) of 'include'. */
         new_fname = find_file_name_in_path(incl_regmatch.startp[0],
-            (int)(incl_regmatch.endp[0] - incl_regmatch.startp[0]),
-            FNAME_EXP|FNAME_INCL|FNAME_REL, 1L, p_fname);
+                                           (size_t)(incl_regmatch.endp[0]
+                                                    - incl_regmatch.startp[0]),
+                                           FNAME_EXP|FNAME_INCL|FNAME_REL,
+                                           1L, p_fname);
       else
         /* Use text after match with 'include'. */
         new_fname = file_name_in_line(incl_regmatch.endp[0], 0,
@@ -4235,8 +4238,7 @@ search_line:
           /* compare the first "len" chars from "ptr" */
           startp = skipwhite(p);
           if (p_ic) {
-            assert(len >= 0);
-            matched = !mb_strnicmp(startp, ptr, (size_t)len);
+            matched = !mb_strnicmp(startp, ptr, len);
           }
           else
             matched = !STRNCMP(startp, ptr, len);

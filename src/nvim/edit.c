@@ -192,7 +192,7 @@ static int compl_opt_refresh_always = FALSE;
 #define BACKSPACE_WORD_NOT_SPACE    3
 #define BACKSPACE_LINE              4
 
-static int spell_bad_len = 0;   /* length of located bad word */
+static size_t spell_bad_len = 0;   /* length of located bad word */
 
 static colnr_T Insstart_textlen;        /* length of line when insert started */
 static colnr_T Insstart_blank_vcol;     /* vcol for first inserted blank */
@@ -3539,11 +3539,12 @@ static int ins_compl_get_exp(pos_T *ini)
     case CTRL_X_PATH_PATTERNS:
     case CTRL_X_PATH_DEFINES:
       find_pattern_in_path(compl_pattern, compl_direction,
-          (int)STRLEN(compl_pattern), FALSE, FALSE,
-          (type == CTRL_X_PATH_DEFINES
-           && !(compl_cont_status & CONT_SOL))
-          ? FIND_DEFINE : FIND_ANY, 1L, ACTION_EXPAND,
-          (linenr_T)1, (linenr_T)MAXLNUM);
+                           STRLEN(compl_pattern), FALSE, FALSE,
+                           ((type == CTRL_X_PATH_DEFINES
+                             && !(compl_cont_status & CONT_SOL))
+                            ? FIND_DEFINE
+                            : FIND_ANY),
+                           1L, ACTION_EXPAND, 1, MAXLNUM);
       break;
 
     case CTRL_X_DICTIONARY:
@@ -4401,8 +4402,10 @@ static int ins_complete(int c)
       compl_length = curs_col - compl_col;
       compl_pattern = vim_strnsave(line + compl_col, compl_length);
     } else if (ctrl_x_mode == CTRL_X_SPELL) {
-      if (spell_bad_len > 0)
-        compl_col = curs_col - spell_bad_len;
+      if (spell_bad_len > 0) {
+        assert(spell_bad_len <= INT_MAX);
+        compl_col = curs_col - (int)spell_bad_len;
+      }
       else
         compl_col = spell_word_start(startcol);
       if (compl_col >= (colnr_T)startcol) {
@@ -5590,7 +5593,6 @@ static void check_spell_redraw(void)
 static void spell_back_to_badword(void)
 {
   pos_T tpos = curwin->w_cursor;
-
   spell_bad_len = spell_move_to(curwin, BACKWARD, TRUE, TRUE, NULL);
   if (curwin->w_cursor.col != tpos.col)
     start_arrow(&tpos);

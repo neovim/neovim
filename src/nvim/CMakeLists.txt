@@ -60,7 +60,6 @@ set(CONV_SOURCES
   menu.c
   message.c
   misc1.c
-  normal.c
   ops.c
   path.c
   quickfix.c

@@ -350,19 +350,23 @@ static int nv_compare(const void *s1, const void *s2)
  */
 void init_normal_cmds(void)
 {
-  int i;
+  assert(NV_CMDS_SIZE <= SHRT_MAX);
 
   /* Fill the index table with a one to one relation. */
-  for (i = 0; i < (int)NV_CMDS_SIZE; ++i)
+  for (short int i = 0; i < (short int)NV_CMDS_SIZE; ++i) {
     nv_cmd_idx[i] = i;
+  }
 
   /* Sort the commands by the command character.  */
-  qsort((void *)&nv_cmd_idx, (size_t)NV_CMDS_SIZE, sizeof(short), nv_compare);
+  qsort(&nv_cmd_idx, NV_CMDS_SIZE, sizeof(short), nv_compare);
 
   /* Find the first entry that can't be indexed by the command character. */
-  for (i = 0; i < (int)NV_CMDS_SIZE; ++i)
-    if (i != nv_cmds[nv_cmd_idx[i]].cmd_char)
+  short int i;
+  for (i = 0; i < (short int)NV_CMDS_SIZE; ++i) {
+    if (i != nv_cmds[nv_cmd_idx[i]].cmd_char) {
       break;
+    }
+  }
   nv_max_linear = i - 1;
 }
 
@@ -1846,7 +1850,7 @@ do_mouse (
   static pos_T orig_cursor;
   colnr_T leftcol, rightcol;
   pos_T end_visual;
-  int diff;
+  long diff;
   int old_active = VIsual_active;
   int old_mode = VIsual_mode;
   int regname;
@@ -2589,7 +2593,7 @@ void reset_VIsual(void)
  * If a string is found, a pointer to the string is put in "*string".  This
  * string is not always NUL terminated.
  */
-int find_ident_under_cursor(char_u **string, int find_type)
+size_t find_ident_under_cursor(char_u **string, int find_type)
 {
   return find_ident_at_pos(curwin, curwin->w_cursor.lnum,
       curwin->w_cursor.col, string, find_type);
@@ -2599,7 +2603,8 @@ int find_ident_under_cursor(char_u **string, int find_type)
  * Like find_ident_under_cursor(), but for any window and any position.
  * However: Uses 'iskeyword' from the current window!.
  */
-int find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char_u **string, int find_type)
+size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol,
+                         char_u **string, int find_type)
 {
   char_u      *ptr;
   int col = 0;                      /* init to shut up GCC */
@@ -2707,7 +2712,8 @@ int find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char_u **strin
       ++col;
     }
 
-  return col;
+  assert(col >= 0);
+  return (size_t)col;
 }
 
 /*
@@ -2899,9 +2905,6 @@ void clear_showcmd(void)
 bool add_to_showcmd(int c)
 {
   char_u      *p;
-  int old_len;
-  int extra_len;
-  int overflow;
   int i;
   static int ignore[] =
   {
@@ -2932,12 +2935,12 @@ bool add_to_showcmd(int c)
   p = transchar(c);
   if (*p == ' ')
     STRCPY(p, "<20>");
-  old_len = (int)STRLEN(showcmd_buf);
-  extra_len = (int)STRLEN(p);
-  overflow = old_len + extra_len - SHOWCMD_COLS;
-  if (overflow > 0)
-    memmove(showcmd_buf, showcmd_buf + overflow,
-        old_len - overflow + 1);
+  size_t old_len = STRLEN(showcmd_buf);
+  size_t extra_len = STRLEN(p);
+  if (old_len + extra_len > SHOWCMD_COLS) {
+    size_t overflow = old_len + extra_len - SHOWCMD_COLS;
+    memmove(showcmd_buf, showcmd_buf + overflow, old_len - overflow + 1);
+  }
   STRCAT(showcmd_buf, p);
 
   if (char_avail())
@@ -3220,11 +3223,10 @@ nv_gd (
     int thisblock                  /* 1 for "1gd" and "1gD" */
 )
 {
-  int len;
-  char_u      *ptr;
-
+  size_t len;
+  char_u *ptr;
   if ((len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0
-      || find_decl(ptr, len, nchar == 'd', thisblock, 0) == false)
+      || !find_decl(ptr, len, nchar == 'd', thisblock, 0))
     clearopbeep(oap);
   else if ((fdo_flags & FDO_SEARCH) && KeyTyped && oap->op_type == OP_NOP)
     foldOpenCursor();
@@ -3240,7 +3242,7 @@ nv_gd (
 bool
 find_decl (
     char_u *ptr,
-    int len,
+    size_t len,
     bool locally,
     bool thisblock,
     int searchflags                /* flags passed to searchit() */
@@ -3260,8 +3262,9 @@ find_decl (
 
   /* Put "\V" before the pattern to avoid that the special meaning of "."
    * and "~" causes trouble. */
+  assert(len <= INT_MAX);
   sprintf((char *)pat, vim_iswordp(ptr) ? "\\V\\<%.*s\\>" : "\\V%.*s",
-      len, ptr);
+          (int)len, ptr);
   old_pos = curwin->w_cursor;
   save_p_ws = p_ws;
   save_p_scs = p_scs;
@@ -3586,12 +3589,15 @@ void scroll_redraw(int up, long count)
  */
 static void nv_zet(cmdarg_T *cap)
 {
-  long n;
+  int n;
   colnr_T col;
   int nchar = cap->nchar;
   long old_fdl = curwin->w_p_fdl;
   int old_fen = curwin->w_p_fen;
   bool undo = false;
+
+  assert(p_siso <= INT_MAX);
+  int l_p_siso = (int)p_siso;
 
   if (ascii_isdigit(nchar)) {
     /*
@@ -3613,7 +3619,7 @@ static void nv_zet(cmdarg_T *cap)
       else if (ascii_isdigit(nchar))
         n = n * 10 + (nchar - '0');
       else if (nchar == CAR) {
-        win_setheight((int)n);
+        win_setheight(n);
         break;
       } else if (nchar == 'l'
                  || nchar == 'h'
@@ -3744,8 +3750,8 @@ dozet:
         col = 0;                        /* like the cursor is in col 0 */
       else
         getvcol(curwin, &curwin->w_cursor, &col, NULL, NULL);
-      if ((long)col > p_siso)
-        col -= p_siso;
+      if (col > l_p_siso)
+        col -= l_p_siso;
       else
         col = 0;
       if (curwin->w_leftcol != col) {
@@ -3762,10 +3768,10 @@ dozet:
       else
         getvcol(curwin, &curwin->w_cursor, NULL, NULL, &col);
       n = curwin->w_width - curwin_col_off();
-      if ((long)col + p_siso < n)
+      if (col + l_p_siso < n)
         col = 0;
       else
-        col = col + p_siso - n + 1;
+        col = col + l_p_siso - n + 1;
       if (curwin->w_leftcol != col) {
         curwin->w_leftcol = col;
         redraw_later(NOT_VALID);
@@ -3941,12 +3947,11 @@ dozet:
   case 'W':     /* "zW": add wrong word to temp word list */
   {
     char_u  *ptr = NULL;
-    int len;
+    size_t len;
 
     if (checkclearop(cap->oap))
       break;
-    if (VIsual_active && get_visual_text(cap, &ptr, &len)
-        == false)
+    if (VIsual_active && !get_visual_text(cap, &ptr, &len))
       return;
     if (ptr == NULL) {
       pos_T pos = curwin->w_cursor;
@@ -3962,13 +3967,12 @@ dozet:
       curwin->w_cursor = pos;
     }
 
-    if (ptr == NULL && (len = find_ident_under_cursor(&ptr,
-                            FIND_IDENT)) == 0)
+    if (ptr == NULL && (len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0)
       return;
-    spell_add_word(ptr, len, nchar == 'w' || nchar == 'W',
-        (nchar == 'G' || nchar == 'W')
-        ? 0 : (int)cap->count1,
-        undo);
+    assert(len <= INT_MAX);
+    spell_add_word(ptr, (int)len, nchar == 'w' || nchar == 'W',
+                   (nchar == 'G' || nchar == 'W') ? 0 : (int)cap->count1,
+                   undo);
   }
   break;
 
@@ -4187,7 +4191,7 @@ static void nv_ident(cmdarg_T *cap)
   char_u      *p;
   char_u      *kp;              /* value of 'keywordprg' */
   bool kp_help;                 /* 'keywordprg' is ":help" */
-  int n = 0;                    /* init for GCC */
+  size_t n = 0;                 /* init for GCC */
   int cmdchar;
   bool g_cmd;                   /* "g" command */
   bool tag_cmd = false;
@@ -4217,8 +4221,10 @@ static void nv_ident(cmdarg_T *cap)
   }
 
   if (ptr == NULL && (n = find_ident_under_cursor(&ptr,
-                          (cmdchar == '*' || cmdchar == '#')
-                          ? FIND_IDENT|FIND_STRING : FIND_IDENT)) == 0) {
+                                                  ((cmdchar == '*'
+                                                    || cmdchar == '#')
+                                                   ? FIND_IDENT|FIND_STRING
+                                                   : FIND_IDENT))) == 0) {
     clearop(cap->oap);
     return;
   }
@@ -4339,10 +4345,8 @@ static void nv_ident(cmdarg_T *cap)
       /* When current byte is a part of multibyte character, copy all
        * bytes of that character. */
       if (has_mbyte) {
-        int i;
-        int len = (*mb_ptr2len)(ptr) - 1;
-
-        for (i = 0; i < len && n >= 1; ++i, --n)
+        size_t len = (size_t)((*mb_ptr2len)(ptr) - 1);
+        for (size_t i = 0; i < len && n > 0; ++i, --n)
           *p++ = *ptr++;
       }
       *p++ = *ptr++;
@@ -4376,7 +4380,7 @@ bool
 get_visual_text (
     cmdarg_T *cap,
     char_u **pp,           /* return: start of selected text */
-    int *lenp          /* return: length of selected text */
+    size_t *lenp           /* return: length of selected text */
 )
 {
   if (VIsual_mode != 'V')
@@ -4388,18 +4392,18 @@ get_visual_text (
   }
   if (VIsual_mode == 'V') {
     *pp = get_cursor_line_ptr();
-    *lenp = (int)STRLEN(*pp);
+    *lenp = STRLEN(*pp);
   } else {
     if (lt(curwin->w_cursor, VIsual)) {
       *pp = ml_get_pos(&curwin->w_cursor);
-      *lenp = VIsual.col - curwin->w_cursor.col + 1;
+      *lenp = (size_t)(VIsual.col - curwin->w_cursor.col + 1);
     } else {
       *pp = ml_get_pos(&VIsual);
-      *lenp = curwin->w_cursor.col - VIsual.col + 1;
+      *lenp = (size_t)(curwin->w_cursor.col - VIsual.col + 1);
     }
     if (has_mbyte)
       /* Correct the length to include the whole last character. */
-      *lenp += (*mb_ptr2len)(*pp + (*lenp - 1)) - 1;
+      *lenp += (size_t)((*mb_ptr2len)(*pp + (*lenp - 1)) - 1);
   }
   reset_VIsual_and_resel();
   return true;
@@ -4919,19 +4923,24 @@ static void nv_brackets(cmdarg_T *cap)
           "iI\011dD\004",
           cap->nchar) != NULL) {
     char_u  *ptr;
-    int len;
+    size_t len;
 
     if ((len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0)
       clearop(cap->oap);
     else {
       find_pattern_in_path(ptr, 0, len, true,
-          cap->count0 == 0 ? !isupper(cap->nchar) : false,
-          ((cap->nchar & 0xf) == ('d' & 0xf)) ?  FIND_DEFINE : FIND_ANY,
-          cap->count1,
-          isupper(cap->nchar) ? ACTION_SHOW_ALL :
-          islower(cap->nchar) ? ACTION_SHOW : ACTION_GOTO,
-          cap->cmdchar == ']' ? curwin->w_cursor.lnum + 1 : (linenr_T)1,
-          (linenr_T)MAXLNUM);
+                           cap->count0 == 0 ? !isupper(cap->nchar) : false,
+                           (((cap->nchar & 0xf) == ('d' & 0xf))
+                            ? FIND_DEFINE
+                            : FIND_ANY),
+                           cap->count1,
+                           (isupper(cap->nchar) ? ACTION_SHOW_ALL :
+                            islower(cap->nchar) ? ACTION_SHOW :
+                            ACTION_GOTO),
+                           (cap->cmdchar == ']'
+                            ? curwin->w_cursor.lnum + 1
+                            : (linenr_T)1),
+                           MAXLNUM);
       curwin->w_set_curswant = true;
     }
   } else
@@ -5076,7 +5085,7 @@ static void nv_brackets(cmdarg_T *cap)
       int dir = (cap->cmdchar == ']' && cap->nchar == 'p') ? FORWARD : BACKWARD;
       int regname = cap->oap->regname;
       int was_visual = VIsual_active;
-      int line_count = curbuf->b_ml.ml_line_count;
+      linenr_T line_count = curbuf->b_ml.ml_line_count;
       pos_T start, end;
 
       if (VIsual_active) {
@@ -5159,7 +5168,7 @@ static void nv_brackets(cmdarg_T *cap)
     setpcmark();
     for (n = 0; n < cap->count1; ++n)
       if (spell_move_to(curwin, cap->cmdchar == ']' ? FORWARD : BACKWARD,
-              cap->nchar == 's' ? true : false, false, NULL) == 0) {
+                        cap->nchar == 's', false, NULL) == 0) {
         clearopbeep(cap->oap);
         break;
       }
@@ -5347,7 +5356,8 @@ static void nv_replace(cmdarg_T *cap)
     if (gchar_cursor() == NUL) {
       /* Add extra space and put the cursor on the first one. */
       coladvance_force((colnr_T)(getviscol() + cap->count1));
-      curwin->w_cursor.col -= cap->count1;
+      assert(cap->count1 <= INT_MAX);
+      curwin->w_cursor.col -= (colnr_T)cap->count1;
     } else if (gchar_cursor() == TAB)
       coladvance_force(getviscol());
   }
@@ -5442,11 +5452,13 @@ static void nv_replace(cmdarg_T *cap)
         ptr = ml_get_buf(curbuf, curwin->w_cursor.lnum, true);
         if (cap->nchar == Ctrl_E || cap->nchar == Ctrl_Y) {
           int c = ins_copychar(curwin->w_cursor.lnum
-              + (cap->nchar == Ctrl_Y ? -1 : 1));
+                               + (cap->nchar == Ctrl_Y ? -1 : 1));
           if (c != NUL)
-            ptr[curwin->w_cursor.col] = c;
+            assert(c >= 0 && c <= UCHAR_MAX);
+            ptr[curwin->w_cursor.col] = (char_u)c;
         } else
-          ptr[curwin->w_cursor.col] = cap->nchar;
+          assert(cap->nchar >= 0 && cap->nchar <= UCHAR_MAX);
+          ptr[curwin->w_cursor.col] = (char_u)cap->nchar;
         if (p_sm && msg_silent == 0)
           showmatch(cap->nchar);
         ++curwin->w_cursor.col;
@@ -5867,8 +5879,9 @@ static void nv_visual(cmdarg_T *cap)
       if (VIsual_mode == 'v') {
         if (resel_VIsual_line_count <= 1) {
           validate_virtcol();
-          curwin->w_curswant = curwin->w_virtcol
-                               + resel_VIsual_vcol * cap->count0 - 1;
+          assert(cap->count0 >= INT_MIN && cap->count0 <= INT_MAX);
+          curwin->w_curswant = (curwin->w_virtcol
+                                + resel_VIsual_vcol * (int)cap->count0 - 1);
         } else
           curwin->w_curswant = resel_VIsual_vcol;
         coladvance(curwin->w_curswant);
@@ -5878,8 +5891,9 @@ static void nv_visual(cmdarg_T *cap)
         coladvance((colnr_T)MAXCOL);
       } else if (VIsual_mode == Ctrl_V) {
         validate_virtcol();
-        curwin->w_curswant = curwin->w_virtcol
-                             + resel_VIsual_vcol * cap->count0 - 1;
+        assert(cap->count0 >= INT_MIN && cap->count0 <= INT_MAX);
+        curwin->w_curswant = (curwin->w_virtcol
+                              + resel_VIsual_vcol * (int)cap->count0 - 1);
         coladvance(curwin->w_curswant);
       } else
         curwin->w_set_curswant = true;
@@ -6609,8 +6623,14 @@ static void set_op_var(int optype)
   if (optype == OP_NOP)
     set_vim_var_string(VV_OP, NULL, 0);
   else {
-    opchars[0] = get_op_char(optype);
-    opchars[1] = get_extra_op_char(optype);
+    int opchar0 = get_op_char(optype);
+    assert(opchar0 >= 0 && opchar0 <= UCHAR_MAX);
+    opchars[0] = (char_u)opchar0;
+
+    int opchar1 = get_extra_op_char(optype); 
+    assert(opchar1 >= 0 && opchar1 <= UCHAR_MAX);
+    opchars[1] = (char_u)opchar1;
+
     opchars[2] = NUL;
     set_vim_var_string(VV_OP, opchars, -1);
   }

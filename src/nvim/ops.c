@@ -1189,7 +1189,7 @@ get_spec_reg (
     int errmsg                     /* give error message when failing */
 )
 {
-  int cnt;
+  size_t cnt;
 
   *argp = NULL;
   *allocated = FALSE;
@@ -1241,8 +1241,9 @@ get_spec_reg (
   case Ctrl_A:                  /* WORD (mnemonic All) under cursor */
     if (!errmsg)
       return FALSE;
-    cnt = find_ident_under_cursor(argp, regname == Ctrl_W
-        ?  (FIND_IDENT|FIND_STRING) : FIND_STRING);
+    cnt = find_ident_under_cursor(argp, (regname == Ctrl_W
+                                         ? (FIND_IDENT|FIND_STRING)
+                                         : FIND_STRING));
     *argp = cnt ? vim_strnsave(*argp, cnt) : NULL;
     *allocated = TRUE;
     return TRUE;

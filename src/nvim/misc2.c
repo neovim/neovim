@@ -382,8 +382,8 @@ int vim_chdir(char_u *new_dir)
   char_u      *dir_name;
   int r;
 
-  dir_name = find_directory_in_path(new_dir, (int)STRLEN(new_dir),
-      FNAME_MESS, curbuf->b_ffname);
+  dir_name = find_directory_in_path(new_dir, STRLEN(new_dir),
+                                    FNAME_MESS, curbuf->b_ffname);
   if (dir_name == NULL)
     return -1;
   r = os_chdir((char *)dir_name);
