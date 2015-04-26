@@ -50,16 +50,19 @@ void ins_bytes_len(char_u *p, int len)
 
   if (has_mbyte) {
     for (i = 0; i < len; i += n) {
-      if (enc_utf8)
+      if (enc_utf8) {
         /* avoid reading past p[len] */
         n = utfc_ptr2len_len(p + i, len - i);
-      else
+      } else {
         n = (*mb_ptr2len)(p + i);
+      }
+
       ins_char_bytes(p + i, n);
     }
   } else {
-    for (i = 0; i < len; ++i)
+    for (i = 0; i < len; ++i) {
       ins_char(p[i]);
+    }
   }
 }
 
@@ -137,19 +140,22 @@ void ins_char_bytes(char_u *buf, int charlen)
         vcol += chartabsize(oldp + col + oldlen, vcol);
         /* Don't need to remove a TAB that takes us to the right
          * position. */
-        if (vcol > new_vcol && oldp[col + oldlen] == TAB)
+        if (vcol > new_vcol && oldp[col + oldlen] == TAB) {
           break;
+        }
+
         oldlen += (*mb_ptr2len)(oldp + col + oldlen);
         /* Deleted a bit too much, insert spaces. */
-        if (vcol > new_vcol)
+        if (vcol > new_vcol) {
           newlen += vcol - new_vcol;
+        }
       }
+
       curwin->w_p_list = old_list;
     } else if (oldp[col] != NUL)  {
       /* normal replace */
       oldlen = (*mb_ptr2len)(oldp + col);
     }
-
 
     /* Push the replaced bytes onto the replace stack, so that they can be
      * put back when BS is used.  The bytes of a multi-byte character are
@@ -157,10 +163,11 @@ void ins_char_bytes(char_u *buf, int charlen)
      * first (it tells the byte length of the character). */
     replace_push(NUL);
     for (i = 0; i < oldlen; ++i) {
-      if (has_mbyte)
+      if (has_mbyte) {
         i += replace_push_mb(oldp + col + i) - 1;
-      else
+      } else {
         replace_push(oldp[col + i]);
+      }
     }
   }
 
@@ -256,8 +263,10 @@ int del_char(int fixpos)
     mb_adjust_cursor();
     if (*get_cursor_pos_ptr() == NUL)
       return FAIL;
+
     return del_chars(1L, fixpos);
   }
+
   return del_bytes(1L, fixpos, true);
 }
 
@@ -277,6 +286,7 @@ int del_chars(long count, int fixpos)
     bytes += l;
     p += l;
   }
+
   return del_bytes(bytes, fixpos, true);
 }
 
@@ -339,14 +349,16 @@ int del_bytes(long count, int fixpos_arg,
      * unless "restart_edit" is set or 'virtualedit' contains "onemore".
      */
     if (col > 0 && fixpos && restart_edit == 0
-        && (ve_flags & VE_ONEMORE) == 0
-        ) {
+        && (ve_flags & VE_ONEMORE) == 0) {
       --curwin->w_cursor.col;
       curwin->w_cursor.coladd = 0;
-      if (has_mbyte)
-        curwin->w_cursor.col -=
-          (*mb_head_off)(oldp, oldp + curwin->w_cursor.col);
+
+      if (has_mbyte) {
+        char_u *newp = oldp + curwin->w_cursor.col;
+        curwin->w_cursor.col -= (*mb_head_off)(oldp, newp);
+      }
     }
+
     count = oldlen - col;
     movelen = 1;
   }
@@ -362,13 +374,13 @@ int del_bytes(long count, int fixpos_arg,
     newp = xmalloc((size_t)(oldlen + 1 - count));
     memmove(newp, oldp, (size_t)col);
   }
+
   memmove(newp + col, oldp + col + count, (size_t)movelen);
   if (!was_alloced)
     ml_replace(lnum, newp, false);
 
   /* mark the buffer as changed and prepare for displaying */
   changed_bytes(lnum, curwin->w_cursor.col);
-
   return OK;
 }
 
