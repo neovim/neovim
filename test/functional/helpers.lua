@@ -44,11 +44,15 @@ elseif os.getenv('GDB') then
 end
 
 if prepend_argv then
+  local new_nvim_argv = {}
   local len = #prepend_argv
-  for i = 1, #nvim_argv do
-    prepend_argv[i + len] = nvim_argv[i]
+  for i = 1, len do
+    new_nvim_argv[i] = prepend_argv[i]
   end
-  nvim_argv = prepend_argv
+  for i = 1, #nvim_argv do
+    new_nvim_argv[i + len] = nvim_argv[i]
+  end
+  nvim_argv = new_nvim_argv
 end
 
 local session, loop_running, loop_stopped, last_error
@@ -338,6 +342,7 @@ local exc_exec = function(cmd)
 end
 
 return {
+  prepend_argv = prepend_argv,
   clear = clear,
   spawn = spawn,
   dedent = dedent,
