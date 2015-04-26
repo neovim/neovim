@@ -644,7 +644,7 @@ void remove_bom(char_u *s)
   if (enc_utf8) {
     char_u *p = s;
 
-    while ((p = vim_strbyte(p, 0xef)) != NULL) {
+    while ((p = (char_u*)strchr((char*)p, 0xef)) != NULL) {
       if (p[1] == 0xbb && p[2] == 0xbf)
         STRMOVE(p, p + 3);
       else

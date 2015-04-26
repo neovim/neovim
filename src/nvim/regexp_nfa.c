@@ -4727,7 +4727,7 @@ static int skip_to_start(int c, colnr_T *colp)
   if (!ireg_ic
       && !has_mbyte
       )
-    s = vim_strbyte(regline + *colp, c);
+    s = (char_u*)strchr((char*)(regline + *colp), c);
   else
     s = cstrchr(regline + *colp, c);
   if (s == NULL)

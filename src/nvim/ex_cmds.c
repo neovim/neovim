@@ -5484,10 +5484,10 @@ helptags_one (
       }
       p1 = vim_strchr(IObuff, '*');             /* find first '*' */
       while (p1 != NULL) {
-        /* Use vim_strbyte() instead of vim_strchr() so that when
+        /* Use strchr() instead of vim_strchr() so that when
          * 'encoding' is dbcs it still works, don't find '*' in the
          * second byte. */
-        p2 = vim_strbyte(p1 + 1, '*');          /* find second '*' */
+        p2 = (char_u*)strchr((char*)(p1 + 1), '*');          /* find second '*' */
         if (p2 != NULL && p2 > p1 + 1) {        /* skip "*" and "**" */
           for (s = p1 + 1; s < p2; ++s)
             if (*s == ' ' || *s == '\t' || *s == '|')
