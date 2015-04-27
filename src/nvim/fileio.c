@@ -6819,8 +6819,8 @@ auto_next_pat (
         && (apc->group == AUGROUP_ALL || apc->group == ap->group)) {
       /* execution-condition */
       if (ap->buflocal_nr == 0
-          ? (match_file_pat(NULL, ap->reg_prog, apc->fname,
-                 apc->sfname, apc->tail, ap->allow_dirs))
+          ? match_file_pat(NULL, &ap->reg_prog, apc->fname, apc->sfname,
+                           apc->tail, ap->allow_dirs)
           : ap->buflocal_nr == apc->arg_bufnr) {
         name = event_nr2name(apc->event);
         s = _("%s Auto commands for \"%s\"");
@@ -6934,8 +6934,8 @@ int has_autocmd(event_T event, char_u *sfname, buf_T *buf)
   for (ap = first_autopat[(int)event]; ap != NULL; ap = ap->next)
     if (ap->pat != NULL && ap->cmds != NULL
         && (ap->buflocal_nr == 0
-            ? match_file_pat(NULL, ap->reg_prog,
-                fname, sfname, tail, ap->allow_dirs)
+            ? match_file_pat(NULL, &ap->reg_prog, fname, sfname, tail,
+                             ap->allow_dirs)
             : buf != NULL && ap->buflocal_nr == buf->b_fnum
             )) {
       retval = TRUE;
@@ -7128,32 +7128,29 @@ theend:
   return retval;
 }
 
-
-
-/*
- * Try matching a filename with a "pattern" ("prog" is NULL), or use the
- * precompiled regprog "prog" ("pattern" is NULL).  That avoids calling
- * vim_regcomp() often.
- * Used for autocommands and 'wildignore'.
- * Returns TRUE if there is a match, FALSE otherwise.
- */
-int 
-match_file_pat (
-    char_u *pattern,                   /* pattern to match with */
-    regprog_T *prog,                      /* pre-compiled regprog or NULL */
-    char_u *fname,                     /* full path of file name */
-    char_u *sfname,                    /* short file name or NULL */
-    char_u *tail,                      /* tail of path */
-    int allow_dirs                         /* allow matching with dir */
-)
+/// Tries matching a filename with a "pattern" ("prog" is NULL), or use the
+/// precompiled regprog "prog" ("pattern" is NULL).  That avoids calling
+/// vim_regcomp() often.
+///
+/// Used for autocommands and 'wildignore'.
+///
+/// @param pattern    the pattern to match with
+/// @param prog       the pre-compiled regprog or NULL
+/// @param fname      the full path of the file name
+/// @param sfname     the short file name or NULL
+/// @param tail       the tail of the path
+/// @param allow_dirs allow matching with dir
+/// @return true if there is a match, false otherwise
+static bool match_file_pat(char_u *pattern, regprog_T **prog, char_u *fname,
+                           char_u *sfname, char_u *tail, int allow_dirs)
 {
   regmatch_T regmatch;
-  int result = FALSE;
+  bool result = false;
 
   regmatch.rm_ic = p_fic;   /* ignore case if 'fileignorecase' is set */
   {
     if (prog != NULL)
-      regmatch.regprog = prog;
+      regmatch.regprog = *prog;
     else
       regmatch.regprog = vim_regcomp(pattern, RE_MAGIC);
   }
@@ -7171,10 +7168,13 @@ match_file_pat (
               || (sfname != NULL
                   && vim_regexec(&regmatch, sfname, (colnr_T)0))))
          || (!allow_dirs && vim_regexec(&regmatch, tail, (colnr_T)0)))))
-    result = TRUE;
+    result = true;
 
-  if (prog == NULL)
+  if (prog != NULL) {
+    *prog = regmatch.regprog;
+  } else {
     vim_regfree(regmatch.regprog);
+  }
   return result;
 }
 
@@ -7189,7 +7189,7 @@ int match_file_list(char_u *list, char_u *sfname, char_u *ffname)
   char_u      *tail;
   char_u      *regpat;
   char allow_dirs;
-  int match;
+  bool match;
   char_u      *p;
 
   tail = path_tail(sfname);

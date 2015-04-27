@@ -561,7 +561,9 @@ restofline:
       tail = NULL;
 
       regmatch.regprog = fmt_ptr->prog;
-      if (vim_regexec(&regmatch, IObuff, (colnr_T)0)) {
+      int r = vim_regexec(&regmatch, IObuff, (colnr_T)0);
+      fmt_ptr->prog = regmatch.regprog;
+      if (r) {
         if ((idx == 'C' || idx == 'Z') && !multiline)
           continue;
         if (vim_strchr((char_u *)"EWI", idx) != NULL)

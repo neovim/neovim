@@ -77,8 +77,6 @@
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
 
-#define HAVE_BUFLIST_MATCH
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "buffer.c.generated.h"
 #endif
@@ -1721,7 +1719,6 @@ buflist_findpat (
     int curtab_only                /* find buffers in current tab only */
 )
 {
-  regprog_T   *prog;
   int match = -1;
   int find_listed;
   char_u      *pat;
@@ -1765,8 +1762,10 @@ buflist_findpat (
         p = pat;
         if (*p == '^' && !(attempt & 1))                 /* add/remove '^' */
           ++p;
-        prog = vim_regcomp(p, p_magic ? RE_MAGIC : 0);
-        if (prog == NULL) {
+
+        regmatch_T regmatch;
+        regmatch.regprog = vim_regcomp(p, p_magic ? RE_MAGIC : 0);
+        if (regmatch.regprog == NULL) {
           xfree(pat);
           return -1;
         }
@@ -1774,7 +1773,7 @@ buflist_findpat (
         FOR_ALL_BUFFERS(buf) {
           if (buf->b_p_bl == find_listed
               && (!diffmode || diff_mode_buf(buf))
-              && buflist_match(prog, buf, false) != NULL) {
+              && buflist_match(&regmatch, buf, false) != NULL) {
             if (curtab_only) {
               /* Ignore the match if the buffer is not open in
                * the current tab. */
@@ -1797,7 +1796,7 @@ buflist_findpat (
           }
         }
 
-        vim_regfree(prog);
+        vim_regfree(regmatch.regprog);
         if (match >= 0)                         /* found one match */
           break;
       }
@@ -1831,7 +1830,6 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
   int round;
   char_u      *p;
   int attempt;
-  regprog_T   *prog;
   char_u      *patc;
 
   *num_file = 0;                    /* return values in case of FAIL */
@@ -1852,8 +1850,10 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
   for (attempt = 0; attempt <= 1; ++attempt) {
     if (attempt > 0 && patc == pat)
       break;            /* there was no anchor, no need to try again */
-    prog = vim_regcomp(patc + attempt * 11, RE_MAGIC);
-    if (prog == NULL) {
+
+    regmatch_T regmatch;
+    regmatch.regprog = vim_regcomp(patc + attempt * 11, RE_MAGIC);
+    if (regmatch.regprog == NULL) {
       if (patc != pat)
         xfree(patc);
       return FAIL;
@@ -1868,7 +1868,7 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
       FOR_ALL_BUFFERS(buf) {
         if (!buf->b_p_bl)               /* skip unlisted buffers */
           continue;
-        p = buflist_match(prog, buf, p_wic);
+        p = buflist_match(&regmatch, buf, p_wic);
         if (p != NULL) {
           if (round == 1)
             ++count;
@@ -1887,7 +1887,7 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
         *file = xmalloc(count * sizeof(**file));
       }
     }
-    vim_regfree(prog);
+    vim_regfree(regmatch.regprog);
     if (count)                  /* match(es) found, break here */
       break;
   }
@@ -1900,20 +1900,16 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
 }
 
 
-#ifdef HAVE_BUFLIST_MATCH
 /// Check for a match on the file name for buffer "buf" with regprog "prog".
 ///
 /// @param ignore_case When TRUE, ignore case. Use 'fic' otherwise.
-static char_u *buflist_match(regprog_T *prog, buf_T *buf, bool ignore_case)
+static char_u *buflist_match(regmatch_T *rmp, buf_T *buf, bool ignore_case)
 {
-  char_u      *match;
-
-  /* First try the short file name, then the long file name. */
-  match = fname_match(prog, buf->b_sfname, ignore_case);
+  // First try the short file name, then the long file name.
+  char_u *match = fname_match(rmp, buf->b_sfname, ignore_case);
   if (match == NULL) {
-    match = fname_match(prog, buf->b_ffname, ignore_case);
+    match = fname_match(rmp, buf->b_ffname, ignore_case);
   }
-
   return match;
 }
 
@@ -1921,22 +1917,20 @@ static char_u *buflist_match(regprog_T *prog, buf_T *buf, bool ignore_case)
 ///
 /// @param ignore_case When TRUE, ignore case. Use 'fileignorecase' otherwise.
 /// @return "name" when there is a match, NULL when not.
-static char_u *fname_match(regprog_T *prog, char_u *name, bool ignore_case)
+static char_u *fname_match(regmatch_T *rmp, char_u *name, bool ignore_case)
 {
   char_u      *match = NULL;
   char_u      *p;
-  regmatch_T regmatch;
 
   if (name != NULL) {
-    regmatch.regprog = prog;
     // Ignore case when 'fileignorecase' or the argument is set.
-    regmatch.rm_ic = p_fic || ignore_case;
-    if (vim_regexec(&regmatch, name, (colnr_T)0))
+    rmp->rm_ic = p_fic || ignore_case;
+    if (vim_regexec(rmp, name, (colnr_T)0))
       match = name;
     else {
       /* Replace $(HOME) with '~' and try matching again. */
       p = home_replace_save(NULL, name);
-      if (vim_regexec(&regmatch, p, (colnr_T)0))
+      if (vim_regexec(rmp, p, (colnr_T)0))
         match = name;
       xfree(p);
     }
@@ -1944,7 +1938,6 @@ static char_u *fname_match(regprog_T *prog, char_u *name, bool ignore_case)
 
   return match;
 }
-#endif
 
 /*
  * find file in buffer list by number
