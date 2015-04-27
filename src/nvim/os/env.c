@@ -379,12 +379,10 @@ void expand_env_esc(char_u *srcp, char_u *dst, int dstlen, bool esc, bool one,
 /// @param vimdir directory to test
 static char *vim_version_dir(const char *vimdir)
 {
-  char      *p;
-
   if (vimdir == NULL || *vimdir == NUL) {
     return NULL;
   }
-  p = concat_fnames(vimdir, VIM_VERSION_NODOT, true);
+  char *p = concat_fnames(vimdir, VIM_VERSION_NODOT, true);
   if (os_isdir((char_u *)p)) {
     return p;
   }
