@@ -4502,6 +4502,7 @@ static char_u *set_chars_option(char_u **varp)
     {&lcs_ext,      "extends"},
     {&lcs_nbsp,     "nbsp"},
     {&lcs_prec,     "precedes"},
+    {&lcs_space,    "space"},
     {&lcs_tab2,     "tab"},
     {&lcs_trail,    "trail"},
     {&lcs_conceal,  "conceal"},

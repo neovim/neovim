@@ -4440,31 +4440,35 @@ A jump table for the options with a short description can be found at |Q_op|.
 			{not in Vi}
 	Strings to use in 'list' mode and for the |:list| command.  It is a
 	comma separated list of string settings.
-	  						*lcs-eol*
+							*lcs-eol*
 	  eol:c		Character to show at the end of each line.  When
 			omitted, there is no extra character at the end of the
 			line.
-	  						*lcs-tab*
+							*lcs-tab*
 	  tab:xy	Two characters to be used to show a tab.  The first
 			char is used once.  The second char is repeated to
 			fill the space that the tab normally occupies.
 			"tab:>-" will show a tab that takes four spaces as
 			">---".  When omitted, a tab is show as ^I.
-	  						*lcs-trail*
+							*lcs-space*
+	  space:c	Character to show for a space.  When omitted, spaces
+			are left blank.
+							*lcs-trail*
 	  trail:c	Character to show for trailing spaces.  When omitted,
-			trailing spaces are blank.
-	  						*lcs-extends*
+			trailing spaces are blank.  Overrides the "space"
+			setting for trailing spaces.
+							*lcs-extends*
 	  extends:c	Character to show in the last column, when 'wrap' is
 			off and the line continues beyond the right of the
 			screen.
-	  						*lcs-precedes*
+							*lcs-precedes*
 	  precedes:c	Character to show in the first column, when 'wrap'
 			is off and there is text preceding the character
 			visible in the first column.
-	  						*lcs-conceal*
+							*lcs-conceal*
 	  conceal:c	Character to show in place of concealed text, when
 			'conceallevel' is set to 1.
-	  						*lcs-nbsp*
+							*lcs-nbsp*
 	  nbsp:c	Character to show for a non-breakable space (character
 			0xA0, 160).  Left blank when omitted.
 
@@ -4477,7 +4481,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	    :set lcs=tab:>-,eol:<,nbsp:%
 	    :set lcs=extends:>,precedes:<
 <	The "NonText" highlighting will be used for "eol", "extends" and
-	"precedes".  "SpecialKey" for "nbsp", "tab" and "trail".
+	"precedes".  "SpecialKey" for "nbsp", "space", "tab" and "trail".
 	|hl-NonText| |hl-SpecialKey|
 
 			*'lpl'* *'nolpl'* *'loadplugins'* *'noloadplugins'*
