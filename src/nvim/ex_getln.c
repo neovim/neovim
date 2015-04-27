@@ -1792,7 +1792,6 @@ getexmodeline (
         p[line_ga.ga_len] = NUL;
         indent = get_indent_str(p, 8, FALSE);
         num_spaces = sw - indent % sw;
-        indent += num_spaces;
 add_indent:
         if (num_spaces > 0) {
           ga_grow(&line_ga, num_spaces + 1);
