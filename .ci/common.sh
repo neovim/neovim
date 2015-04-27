@@ -51,8 +51,13 @@ check_core_dumps() {
 }
 
 setup_deps() {
-	if [ "$BUILD_NVIM_DEPS" != "true" ]; then
+	if [ "$BUILD_NVIM_DEPS" != "true" ] && [ "$TRAVIS_OS_NAME" = "osx" ]; then
 		eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) deps-${1}"
+	elif [ "$TRAVIS_OS_NAME" = "linux" ]; then
+		# Make sure deps are up-to-date before proceeding
+		# Remove sources from cache to force download on dependency changes
+		rm -rf .deps/build/src
+		make deps
 	fi
 }
 

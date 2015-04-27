@@ -17,6 +17,8 @@ else
 		-DBUSTED_OUTPUT_TYPE=plainTerminal"
 fi
 
+setup_deps x64
+
 # Build and output version info.
 $MAKE_CMD CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS" nvim
 build/bin/nvim --version

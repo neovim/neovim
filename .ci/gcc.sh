@@ -5,6 +5,8 @@ if [ "$TRAVIS_OS_NAME" = "linux" ]; then
 	export VALGRIND_LOG="$tmpdir/valgrind-%p.log"
 fi
 
+setup_deps x64
+
 CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON \
 	-DUSE_JEMALLOC=OFF \
 	-DUSE_GCOV=ON \

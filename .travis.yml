@@ -47,6 +47,8 @@ before_install:
       brew update;
     fi
   - pip install --user -q --upgrade pip
+  # Add location of the pip packages to the path.
+  - PATH=$HOME/.local/bin:$PATH
 install:
   - if [ $TRAVIS_OS_NAME = osx ]; then
       brew install gettext;
@@ -55,7 +57,7 @@ install:
 script:
   - sh -e $CI_SCRIPTS/$CI_TARGET.sh
 cache:
-  - build/neovim/neovim/.deps
+  - $TRAVIS_BUILD_DIR/.deps
   - apt
   - pip
 notifications:

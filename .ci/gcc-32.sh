@@ -1,5 +1,7 @@
 . "$CI_SCRIPTS/common.sh"
 
+setup_deps x86
+
 CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON \
 	-DCMAKE_SYSTEM_PROCESSOR=i386 \
 	-DCMAKE_SYSTEM_LIBRARY_PATH=/lib32:/usr/lib32:/usr/local/lib32 \
