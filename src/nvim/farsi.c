@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 #include "nvim/cursor.h"
+#include "nvim/cursor_modify.h"
 #include "nvim/edit.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
