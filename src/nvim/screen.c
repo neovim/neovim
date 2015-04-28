@@ -6415,18 +6415,6 @@ static void win_rest_invalid(win_T *wp)
  * screen changes, and in the meantime, everything still works.
  */
 
-/*
- * types for inserting or deleting lines
- */
-#define USE_T_CAL   1
-#define USE_T_CDL   2
-#define USE_T_AL    3
-#define USE_T_CE    4
-#define USE_T_DL    5
-#define USE_T_SR    6
-#define USE_NL      7
-#define USE_T_CD    8
-#define USE_REDRAW  9
 
 // insert lines on the screen and update ScreenLines[]
 // 'end' is the line after the scrolled part. Normally it is Rows.
