@@ -159,8 +159,6 @@ describe('Screen', function()
                                                                |
         ]])
       end)
-
-      
     end)
   end)
 
@@ -241,6 +239,32 @@ describe('Screen', function()
         ~                                                    |
         ~                                                    |
         -- INSERT --                                         |
+      ]])
+    end)
+  end)
+
+  describe('normal mode', function()
+    -- https://code.google.com/p/vim/issues/detail?id=339
+    it("setting 'ruler' doesn't reset the preferred column", function()
+      execute('set virtualedit=')
+      feed('i0123456<cr>789<esc>kllj')
+      execute('set ruler')
+      feed('k')
+      screen:expect([[
+        0123^456                                              |
+        789                                                  |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        :set ruler                         1,5           All |
       ]])
     end)
   end)
