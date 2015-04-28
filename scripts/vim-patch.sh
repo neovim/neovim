@@ -47,11 +47,13 @@ get_vim_patch() {
     vim_version="${1}"
     vim_commit="v${1//./-}"
     strip_commit_line=true
+    vim_commit_url="https://github.com/vim/vim/commit/${vim_commit}"
   else
     # Interpret parameter as commit hash.
     vim_version="${1:0:7}"
     vim_commit="${1}"
     strip_commit_line=false
+    vim_commit_url="https://code.google.com/p/vim/source/detail?r=${vim_commit}"
   fi
 
   hg log --rev "${vim_commit}" >/dev/null 2>&1 || {
@@ -71,23 +73,23 @@ get_vim_patch() {
   vim_diff="$(hg diff --show-function --git --change "${vim_commit}" \
     | sed -e 's/\( [ab]\/src\)/\1\/nvim/g')" # Change directory to src/nvim.
   neovim_message="
-  vim-patch:${vim_version}
+vim-patch:${vim_version}
 
-  ${vim_message}
+${vim_message}
 
-  https://code.google.com/p/vim/source/detail?r=${vim_commit}"
+${vim_commit_url}"
   neovim_pr="
-  \`\`\`
-  ${vim_message}
-  \`\`\`
+\`\`\`
+${vim_message}
+\`\`\`
 
-  https://code.google.com/p/vim/source/detail?r=${vim_commit}
+${vim_commit_url}
 
-  Original patch:
+Original patch:
 
-  \`\`\`diff
-  ${vim_diff}
-  \`\`\`"
+\`\`\`diff
+${vim_diff}
+\`\`\`"
   neovim_branch="vim-${vim_version}"
 
   echo
