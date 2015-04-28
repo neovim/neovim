@@ -18913,6 +18913,7 @@ call_user_func (
   char_u      *name;
   proftime_T wait_start;
   proftime_T call_start;
+  bool did_save_redo = false;
 
   /* If depth of calling is getting too high, don't execute the function */
   if (depth >= p_mfd) {
@@ -18924,7 +18925,10 @@ call_user_func (
   ++depth;
   // Save search patterns and redo buffer.
   save_search_patterns();
-  saveRedobuff();
+  if (!ins_compl_active()) {
+    saveRedobuff();
+    did_save_redo = true;
+  }
   ++fp->uf_calls;
   // check for CTRL-C hit
   line_breakcheck();
@@ -19239,7 +19243,9 @@ call_user_func (
     func_free(fp);
   }
   // restore search patterns and redo buffer
-  restoreRedobuff();
+  if (did_save_redo) {
+    restoreRedobuff();
+  }
   restore_search_patterns();
 }
 
