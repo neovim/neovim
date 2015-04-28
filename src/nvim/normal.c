@@ -5454,12 +5454,14 @@ static void nv_replace(cmdarg_T *cap)
         if (cap->nchar == Ctrl_E || cap->nchar == Ctrl_Y) {
           int c = ins_copychar(curwin->w_cursor.lnum
                                + (cap->nchar == Ctrl_Y ? -1 : 1));
-          if (c != NUL)
+          if (c != NUL) {
             assert(c >= 0 && c <= UCHAR_MAX);
             ptr[curwin->w_cursor.col] = (char_u)c;
-        } else
+          }
+        } else {
           assert(cap->nchar >= 0 && cap->nchar <= UCHAR_MAX);
           ptr[curwin->w_cursor.col] = (char_u)cap->nchar;
+        }
         if (p_sm && msg_silent == 0)
           showmatch(cap->nchar);
         ++curwin->w_cursor.col;
