@@ -6466,6 +6466,7 @@ apply_autocmds_group (
   long save_cmdbang;
   static int filechangeshell_busy = FALSE;
   proftime_T wait_time;
+  bool did_save_redobuff = false;
 
   /*
    * Quickly return if there are no autocommands for this event or
@@ -6641,7 +6642,10 @@ apply_autocmds_group (
    */
   if (!autocmd_busy) {
     save_search_patterns();
-    saveRedobuff();
+    if (!ins_compl_active()) {
+      saveRedobuff();
+      did_save_redobuff = true;
+    }
     did_filetype = keep_filetype;
   }
 
@@ -6726,7 +6730,9 @@ apply_autocmds_group (
   // free any windows in the au_pending_free_win list.
   if (!autocmd_busy) {
     restore_search_patterns();
-    restoreRedobuff();
+    if (did_save_redobuff) {
+      restoreRedobuff();
+    }
     did_filetype = FALSE;
     while (au_pending_free_buf != NULL) {
       buf_T *b = au_pending_free_buf->b_next;
