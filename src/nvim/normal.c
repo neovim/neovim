@@ -2067,6 +2067,7 @@ do_mouse (
   } else if (is_drag && in_tab_line) {
     c1 = TabPageIdxs[mouse_col];
     tabpage_move(c1 <= 0 ? 9999 : c1 - 1);
+    in_tab_line = false;
     return false;
   }
 
