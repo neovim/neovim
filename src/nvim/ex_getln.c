@@ -1792,7 +1792,6 @@ getexmodeline (
         p[line_ga.ga_len] = NUL;
         indent = get_indent_str(p, 8, FALSE);
         num_spaces = sw - indent % sw;
-        indent += num_spaces;
 add_indent:
         if (num_spaces > 0) {
           ga_grow(&line_ga, num_spaces + 1);
@@ -4239,7 +4238,9 @@ void init_history(void)
 
       // clear remaining space, if any
       int l3 = j < 0 ? 0 : MIN(newlen, oldlen);  // number of copied entries
-      memset(temp + l3, 0, (size_t)(newlen - l3) * sizeof(*temp));
+      if (newlen) {
+        memset(temp + l3, 0, (size_t)(newlen - l3) * sizeof(*temp));
+      }
 
       hisidx[type] = l3 - 1;
       xfree(history[type]);
