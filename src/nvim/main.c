@@ -379,11 +379,13 @@ int main(int argc, char **argv)
   }
 
   /*
-   * Read in registers, history etc, but not marks, from the ShaDa file.
+   * Read in registers, history etc, from the ShaDa file.
    * This is where v:oldfiles gets filled.
    */
   if (*p_viminfo != NUL) {
-    (void) shada_read_file(NULL, kShaDaWantInfo|kShaDaGetOldfiles);
+    (void) shada_read_file(NULL, (kShaDaWantInfo
+                                  | kShaDaGetOldfiles
+                                  | kShaDaWantMarks));
     TIME_MSG("reading ShaDa");
   }
   /* It's better to make v:oldfiles an empty list than NULL. */
