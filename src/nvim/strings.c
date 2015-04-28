@@ -137,7 +137,7 @@ char_u *vim_strsave_shellescape(const char_u *string,
 {
   char_u      *d;
   char_u      *escaped_string;
-  int l;
+  size_t l;
   int csh_like;
 
   /* Only csh and similar shells expand '!' within single quotes.  For sh and
@@ -189,7 +189,7 @@ char_u *vim_strsave_shellescape(const char_u *string,
     }
     if (do_special && find_cmdline_var(p, &l) >= 0) {
       *d++ = '\\';                    /* insert backslash */
-      while (--l >= 0)                /* copy the var */
+      while (--l != SIZE_MAX)                /* copy the var */
         *d++ = *p++;
       continue;
     }

@@ -86,7 +86,7 @@ do_window (
   char_u      *ptr;
   linenr_T lnum = -1;
   int type = FIND_DEFINE;
-  int len;
+  size_t len;
   char_u cbuf[40];
 
   if (Prenum == 0)
@@ -418,8 +418,8 @@ wingotofile:
     if ((len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0)
       break;
     find_pattern_in_path(ptr, 0, len, TRUE,
-        Prenum == 0 ? TRUE : FALSE, type,
-        Prenum1, ACTION_SPLIT, (linenr_T)1, (linenr_T)MAXLNUM);
+                         Prenum == 0 ? TRUE : FALSE,
+                         type, Prenum1, ACTION_SPLIT, 1, MAXLNUM);
     curwin->w_set_curswant = TRUE;
     break;
 
@@ -4830,17 +4830,16 @@ static void frame_add_height(frame_T *frp, int n)
 char_u *grab_file_name(long count, linenr_T *file_lnum)
 {
   if (VIsual_active) {
-    int len;
+    size_t len;
     char_u  *ptr;
-
     if (get_visual_text(NULL, &ptr, &len) == FAIL)
       return NULL;
     return find_file_name_in_path(ptr, len,
-        FNAME_MESS|FNAME_EXP|FNAME_REL, count, curbuf->b_ffname);
+                                  FNAME_MESS|FNAME_EXP|FNAME_REL,
+                                  count, curbuf->b_ffname);
   }
   return file_name_at_cursor(FNAME_MESS|FNAME_HYP|FNAME_EXP|FNAME_REL, count,
-      file_lnum);
-
+                             file_lnum);
 }
 
 /*
@@ -4878,7 +4877,7 @@ file_name_in_line (
 )
 {
   char_u      *ptr;
-  int len;
+  size_t len;
 
   /*
    * search forward for what could be the start of a file name
@@ -4897,7 +4896,7 @@ file_name_in_line (
    * Go one char back to ":" before "//" even when ':' is not in 'isfname'.
    */
   while (ptr > line) {
-    if (has_mbyte && (len = (*mb_head_off)(line, ptr - 1)) > 0)
+    if (has_mbyte && (len = (size_t)((*mb_head_off)(line, ptr - 1))) > 0)
       ptr -= len + 1;
     else if (vim_isfilec(ptr[-1])
              || ((options & FNAME_HYP) && path_is_url(ptr - 1)))
@@ -4914,7 +4913,7 @@ file_name_in_line (
   while (vim_isfilec(ptr[len])
          || ((options & FNAME_HYP) && path_is_url(ptr + len)))
     if (has_mbyte)
-      len += (*mb_ptr2len)(ptr + len);
+      len += (size_t)(*mb_ptr2len)(ptr + len);
     else
       ++len;
 

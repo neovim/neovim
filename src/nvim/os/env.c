@@ -561,14 +561,11 @@ void home_replace(buf_T *buf, char_u *src, char_u *dst, int dstlen, bool one)
     homedir_env = NULL;
 
   if (homedir_env != NULL && vim_strchr(homedir_env, '~') != NULL) {
-    int usedlen = 0;
-    int flen;
-    char_u  *fbuf = NULL;
-
-    flen = (int)STRLEN(homedir_env);
-    (void)modify_fname((char_u *)":p", &usedlen,
-        &homedir_env, &fbuf, &flen);
-    flen = (int)STRLEN(homedir_env);
+    size_t usedlen = 0;
+    size_t flen = STRLEN(homedir_env);
+    char_u *fbuf = NULL;
+    (void)modify_fname((char_u *)":p", &usedlen, &homedir_env, &fbuf, &flen);
+    flen = STRLEN(homedir_env);
     if (flen > 0 && vim_ispathsep(homedir_env[flen - 1]))
       /* Remove the trailing / that is added to a directory. */
       homedir_env[flen - 1] = NUL;

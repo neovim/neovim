@@ -2465,7 +2465,7 @@ win_line (
     /* When spell checking a word we need to figure out the start of the
      * word and if it's badly spelled or not. */
     if (has_spell) {
-      int len;
+      size_t len;
       colnr_T linecol = (colnr_T)(ptr - line);
       hlf_T spell_hlf = HLF_COUNT;
 
@@ -2485,7 +2485,8 @@ win_line (
         word_end = (int)(spell_to_word_end(ptr, wp) - line + 1);
       } else {
         /* bad word found, use attributes until end of word */
-        word_end = wp->w_cursor.col + len + 1;
+        assert(len <= INT_MAX);
+        word_end = wp->w_cursor.col + (int)len + 1;
 
         /* Turn index into actual attributes. */
         if (spell_hlf != HLF_COUNT)
@@ -3252,8 +3253,9 @@ win_line (
             else
               p = prev_ptr;
             cap_col -= (int)(prev_ptr - line);
-            len = spell_check(wp, p, &spell_hlf, &cap_col,
-                nochange);
+            size_t tmplen = spell_check(wp, p, &spell_hlf, &cap_col, nochange);
+            assert(tmplen <= INT_MAX);
+            len = (int)tmplen;
             word_end = v + len;
 
             /* In Insert mode only highlight a word that

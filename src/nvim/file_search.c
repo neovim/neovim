@@ -1310,15 +1310,17 @@ static int ff_path_in_stoplist(char_u *path, int path_len, char_u **stopdirs_v)
 char_u *
 find_file_in_path (
     char_u *ptr,               /* file name */
-    int len,                        /* length of file name */
+    size_t len,                /* length of file name */
     int options,
     int first,                      /* use count'th matching file name */
     char_u *rel_fname         /* file name searching relative to */
 )
 {
   return find_file_in_path_option(ptr, len, options, first,
-      *curbuf->b_p_path == NUL ? p_path : curbuf->b_p_path,
-      FINDFILE_BOTH, rel_fname, curbuf->b_p_sua);
+                                  (*curbuf->b_p_path == NUL
+                                   ? p_path
+                                   : curbuf->b_p_path),
+                                  FINDFILE_BOTH, rel_fname, curbuf->b_p_sua);
 }
 
 static char_u   *ff_file_to_find = NULL;
@@ -1347,19 +1349,19 @@ void free_findfile(void)
 char_u *
 find_directory_in_path (
     char_u *ptr,               /* file name */
-    int len,                        /* length of file name */
+    size_t len,                /* length of file name */
     int options,
     char_u *rel_fname         /* file name searching relative to */
 )
 {
   return find_file_in_path_option(ptr, len, options, TRUE, p_cdpath,
-      FINDFILE_DIR, rel_fname, (char_u *)"");
+                                  FINDFILE_DIR, rel_fname, (char_u *)"");
 }
 
 char_u *
 find_file_in_path_option (
     char_u *ptr,               /* file name */
-    int len,                        /* length of file name */
+    size_t len,                /* length of file name */
     int options,
     int first,                      /* use count'th matching file name */
     char_u *path_option,       /* p_path or p_cdpath */

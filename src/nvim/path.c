@@ -1445,13 +1445,13 @@ void simplify_filename(char_u *filename)
   } while (*p != NUL);
 }
 
-static char_u *eval_includeexpr(char_u *ptr, int len)
+static char_u *eval_includeexpr(char_u *ptr, size_t len)
 {
-  char_u      *res;
-
-  set_vim_var_string(VV_FNAME, ptr, len);
-  res = eval_to_string_safe(curbuf->b_p_inex, NULL,
-      was_set_insecurely((char_u *)"includeexpr", OPT_LOCAL));
+  assert(len <= INT_MAX);
+  set_vim_var_string(VV_FNAME, ptr, (int)len);
+  char_u *res = eval_to_string_safe(curbuf->b_p_inex, NULL,
+                                    was_set_insecurely((char_u *)"includeexpr",
+                                                       OPT_LOCAL));
   set_vim_var_string(VV_FNAME, NULL, 0);
   return res;
 }
@@ -1463,7 +1463,7 @@ static char_u *eval_includeexpr(char_u *ptr, int len)
 char_u *
 find_file_name_in_path (
     char_u *ptr,
-    int len,
+    size_t len,
     int options,
     long count,
     char_u *rel_fname         /* file we are searching relative to */
@@ -1477,13 +1477,13 @@ find_file_name_in_path (
     tofree = eval_includeexpr(ptr, len);
     if (tofree != NULL) {
       ptr = tofree;
-      len = (int)STRLEN(ptr);
+      len = STRLEN(ptr);
     }
   }
 
   if (options & FNAME_EXP) {
     file_name = find_file_in_path(ptr, len, options & ~FNAME_MESS,
-        TRUE, rel_fname);
+                                  TRUE, rel_fname);
 
     /*
      * If the file could not be found in a normal way, try applying
@@ -1494,9 +1494,9 @@ find_file_name_in_path (
       tofree = eval_includeexpr(ptr, len);
       if (tofree != NULL) {
         ptr = tofree;
-        len = (int)STRLEN(ptr);
+        len = STRLEN(ptr);
         file_name = find_file_in_path(ptr, len, options & ~FNAME_MESS,
-            TRUE, rel_fname);
+                                      TRUE, rel_fname);
       }
     }
     if (file_name == NULL && (options & FNAME_MESS)) {
@@ -1839,7 +1839,7 @@ int expand_wildcards_eval(char_u **pat, int *num_file, char_u ***file,
   char_u      *eval_pat = NULL;
   char_u      *exp_pat = *pat;
   char_u      *ignored_msg;
-  int usedlen;
+  size_t usedlen;
 
   if (*exp_pat == '%' || *exp_pat == '#' || *exp_pat == '<') {
     ++emsg_off;

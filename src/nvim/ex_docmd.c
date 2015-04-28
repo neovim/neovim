@@ -10,6 +10,7 @@
  * ex_docmd.c: functions for executing an Ex command line.
  */
 
+#include <assert.h>
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -3415,7 +3416,7 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
 {
   int has_wildcards;            /* need to expand wildcards */
   char_u      *repl;
-  int srclen;
+  size_t srclen;
   char_u      *p;
   int escaped;
 
@@ -3543,8 +3544,7 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
       } else
         p = NULL;
       if (p != NULL) {
-        (void)repl_cmdline(eap, eap->arg, (int)STRLEN(eap->arg),
-            p, cmdlinep);
+        (void)repl_cmdline(eap, eap->arg, STRLEN(eap->arg), p, cmdlinep);
       }
     }
 
@@ -3593,8 +3593,7 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
       if (p == NULL)
         return FAIL;
       if (p != NULL) {
-        (void)repl_cmdline(eap, eap->arg, (int)STRLEN(eap->arg),
-            p, cmdlinep);
+        (void)repl_cmdline(eap, eap->arg, STRLEN(eap->arg), p, cmdlinep);
         xfree(p);
       }
     }
@@ -3609,22 +3608,19 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
  * "repl" is the replacement string.
  * Returns a pointer to the character after the replaced string.
  */
-static char_u *repl_cmdline(exarg_T *eap, char_u *src, int srclen, char_u *repl, char_u **cmdlinep)
+static char_u *repl_cmdline(exarg_T *eap, char_u *src, size_t srclen,
+                            char_u *repl, char_u **cmdlinep)
 {
-  int len;
-  int i;
-  char_u      *new_cmdline;
-
   /*
    * The new command line is build in new_cmdline[].
    * First allocate it.
    * Careful: a "+cmd" argument may have been NUL terminated.
    */
-  len = (int)STRLEN(repl);
-  i = (int)(src - *cmdlinep) + (int)STRLEN(src + srclen) + len + 3;
+  size_t len = STRLEN(repl);
+  size_t i = (size_t)(src - *cmdlinep) + STRLEN(src + srclen) + len + 3;
   if (eap->nextcmd != NULL)
-    i += (int)STRLEN(eap->nextcmd);    /* add space for next command */
-  new_cmdline = xmalloc(i);
+    i += STRLEN(eap->nextcmd);    /* add space for next command */
+  char_u *new_cmdline = xmalloc(i);
 
   /*
    * Copy the stuff before the expanded part.
@@ -3632,16 +3628,16 @@ static char_u *repl_cmdline(exarg_T *eap, char_u *src, int srclen, char_u *repl,
    * Copy what came after the expanded part.
    * Copy the next commands, if there are any.
    */
-  i = (int)(src - *cmdlinep);   /* length of part before match */
-  memmove(new_cmdline, *cmdlinep, (size_t)i);
+  i = (size_t)(src - *cmdlinep);   /* length of part before match */
+  memmove(new_cmdline, *cmdlinep, i);
 
-  memmove(new_cmdline + i, repl, (size_t)len);
+  memmove(new_cmdline + i, repl, len);
   i += len;                             /* remember the end of the string */
   STRCPY(new_cmdline + i, src + srclen);
   src = new_cmdline + i;                /* remember where to continue */
 
   if (eap->nextcmd != NULL) {           /* append next command */
-    i = (int)STRLEN(new_cmdline) + 1;
+    i = STRLEN(new_cmdline) + 1;
     STRCPY(new_cmdline + i, eap->nextcmd);
     eap->nextcmd = new_cmdline + i;
   }
@@ -5688,8 +5684,8 @@ void ex_splitview(exarg_T *eap)
   }
 
   if (eap->cmdidx == CMD_sfind || eap->cmdidx == CMD_tabfind) {
-    fname = find_file_in_path(eap->arg, (int)STRLEN(eap->arg),
-        FNAME_MESS, TRUE, curbuf->b_ffname);
+    fname = find_file_in_path(eap->arg, STRLEN(eap->arg),
+                              FNAME_MESS, TRUE, curbuf->b_ffname);
     if (fname == NULL)
       goto theend;
     eap->arg = fname;
@@ -5901,16 +5897,15 @@ static void ex_find(exarg_T *eap)
   char_u      *fname;
   int count;
 
-  fname = find_file_in_path(eap->arg, (int)STRLEN(eap->arg), FNAME_MESS,
-      TRUE, curbuf->b_ffname);
+  fname = find_file_in_path(eap->arg, STRLEN(eap->arg),
+                            FNAME_MESS, TRUE, curbuf->b_ffname);
   if (eap->addr_count > 0) {
     /* Repeat finding the file "count" times.  This matters when it
      * appears several times in the path. */
     count = eap->line2;
     while (fname != NULL && --count > 0) {
       xfree(fname);
-      fname = find_file_in_path(NULL, 0, FNAME_MESS,
-          FALSE, curbuf->b_ffname);
+      fname = find_file_in_path(NULL, 0, FNAME_MESS, FALSE, curbuf->b_ffname);
     }
   }
 
@@ -7090,7 +7085,7 @@ static void ex_normal(exarg_T *eap)
   tasave_T tabuf;
   int save_insertmode = p_im;
   int save_finish_op = finish_op;
-  int save_opcount = opcount;
+  long save_opcount = opcount;
   char_u      *arg = NULL;
   int l;
   char_u      *p;
@@ -7252,8 +7247,8 @@ void exec_normal_cmd(char_u *cmd, int remap, int silent)
 static void ex_checkpath(exarg_T *eap)
 {
   find_pattern_in_path(NULL, 0, 0, FALSE, FALSE, CHECK_PATH, 1L,
-      eap->forceit ? ACTION_SHOW_ALL : ACTION_SHOW,
-      (linenr_T)1, (linenr_T)MAXLNUM);
+                       eap->forceit ? ACTION_SHOW_ALL : ACTION_SHOW,
+                       (linenr_T)1, (linenr_T)MAXLNUM);
 }
 
 /*
@@ -7312,10 +7307,9 @@ static void ex_findpat(exarg_T *eap)
     }
   }
   if (!eap->skip)
-    find_pattern_in_path(eap->arg, 0, (int)STRLEN(eap->arg),
-        whole, !eap->forceit,
-        *eap->cmd == 'd' ?  FIND_DEFINE : FIND_ANY,
-        n, action, eap->line1, eap->line2);
+    find_pattern_in_path(eap->arg, 0, STRLEN(eap->arg), whole, !eap->forceit,
+                         *eap->cmd == 'd' ?  FIND_DEFINE : FIND_ANY,
+                         n, action, eap->line1, eap->line2);
 }
 
 
@@ -7414,10 +7408,10 @@ static void ex_tag_cmd(exarg_T *eap, char_u *name)
  * If found return one of the SPEC_ values and set "*usedlen" to the length of
  * the variable.  Otherwise return -1 and "*usedlen" is unchanged.
  */
-int find_cmdline_var(const char_u *src, int *usedlen) FUNC_ATTR_NONNULL_ALL
+ssize_t find_cmdline_var(const char_u *src, size_t *usedlen)
+  FUNC_ATTR_NONNULL_ALL
 {
-  int len;
-  int i;
+  size_t len;
   static char *(spec_str[]) = {
     "%",
 #define SPEC_PERC   0
@@ -7441,11 +7435,12 @@ int find_cmdline_var(const char_u *src, int *usedlen) FUNC_ATTR_NONNULL_ALL
 # define SPEC_AMATCH 9
   };
 
-  for (i = 0; i < (int)ARRAY_SIZE(spec_str); ++i) {
-    len = (int)STRLEN(spec_str[i]);
+  for (size_t i = 0; i < ARRAY_SIZE(spec_str); ++i) {
+    len = STRLEN(spec_str[i]);
     if (STRNCMP(src, spec_str[i], len) == 0) {
       *usedlen = len;
-      return i;
+      assert(i <= SSIZE_MAX);
+      return (ssize_t)i;
     }
   }
   return -1;
@@ -7475,7 +7470,7 @@ char_u *
 eval_vars (
     char_u *src,               /* pointer into commandline */
     char_u *srcstart,          /* beginning of valid memory for src */
-    int *usedlen,           /* characters after src that are used */
+    size_t *usedlen,           /* characters after src that are used */
     linenr_T *lnump,             /* line number for :e command, or NULL */
     char_u **errormsg,         /* pointer to error message */
     int *escaped           /* return value has escaped white space (can
@@ -7486,10 +7481,9 @@ eval_vars (
   char_u      *s;
   char_u      *result;
   char_u      *resultbuf = NULL;
-  int resultlen;
+  size_t resultlen;
   buf_T       *buf;
   int valid = VALID_HEAD + VALID_PATH;              /* assume valid result */
-  int spec_idx;
   int skip_mod = FALSE;
   char_u strbuf[30];
 
@@ -7500,7 +7494,7 @@ eval_vars (
   /*
    * Check if there is something to do.
    */
-  spec_idx = find_cmdline_var(src, usedlen);
+  ssize_t spec_idx = find_cmdline_var(src, usedlen);
   if (spec_idx < 0) {   /* no match */
     *usedlen = 1;
     return NULL;
@@ -7520,8 +7514,9 @@ eval_vars (
    * word or WORD under cursor
    */
   if (spec_idx == SPEC_CWORD || spec_idx == SPEC_CCWORD) {
-    resultlen = find_ident_under_cursor(&result, spec_idx == SPEC_CWORD ?
-        (FIND_IDENT|FIND_STRING) : FIND_STRING);
+    resultlen = find_ident_under_cursor(&result, (spec_idx == SPEC_CWORD
+                                                  ? (FIND_IDENT|FIND_STRING)
+                                                  : FIND_STRING));
     if (resultlen == 0) {
       *errormsg = (char_u *)"";
       return NULL;
@@ -7558,7 +7553,7 @@ eval_vars (
       if (*s == '<')                    /* "#<99" uses v:oldfiles */
         ++s;
       i = getdigits_int(&s);
-      *usedlen = (int)(s - src);           /* length of what we expand */
+      *usedlen = (size_t)(s - src);           /* length of what we expand */
 
       if (src[1] == '<') {
         if (*usedlen < 2) {
@@ -7657,14 +7652,13 @@ eval_vars (
       return NULL;
     }
 
-    resultlen = (int)STRLEN(result);            /* length of new string */
+    resultlen = STRLEN(result);         /* length of new string */
     if (src[*usedlen] == '<') {         /* remove the file name extension */
       ++*usedlen;
       if ((s = vim_strrchr(result, '.')) != NULL && s >= path_tail(result))
-        resultlen = (int)(s - result);
+        resultlen = (size_t)(s - result);
     } else if (!skip_mod) {
-      valid |= modify_fname(src, usedlen, &result, &resultbuf,
-          &resultlen);
+      valid |= modify_fname(src, usedlen, &result, &resultbuf, &resultlen);
       if (result == NULL) {
         *errormsg = (char_u *)"";
         return NULL;
@@ -7750,11 +7744,11 @@ static char_u *arg_all(void)
 char_u *expand_sfile(char_u *arg)
 {
   char_u      *errormsg;
-  int len;
+  size_t len;
   char_u      *result;
   char_u      *newres;
   char_u      *repl;
-  int srclen;
+  size_t srclen;
   char_u      *p;
 
   result = vim_strsave(arg);
@@ -7775,11 +7769,11 @@ char_u *expand_sfile(char_u *arg)
         p += srclen;
         continue;
       }
-      len = (int)STRLEN(result) - srclen + (int)STRLEN(repl) + 1;
+      len = STRLEN(result) - srclen + STRLEN(repl) + 1;
       newres = xmalloc(len);
       memmove(newres, result, (size_t)(p - result));
       STRCPY(newres + (p - result), repl);
-      len = (int)STRLEN(newres);
+      len = STRLEN(newres);
       STRCAT(newres, p + srclen);
       xfree(repl);
       xfree(result);
