@@ -385,8 +385,8 @@ position is set to keep the same Visual area selected.
 						*:winc* *:wincmd*
 These commands can also be executed with ":wincmd":
 
-:[count]winc[md] {arg}
-		Like executing CTRL-W [count] {arg}.  Example: >
+:[{count}]winc[md] {arg}
+		Like executing CTRL-W [{count}] {arg}.  Example: >
 			:wincmd j
 <		Moves to the window below the current one.
 		This command is useful when a Normal mode cannot be used (for
@@ -818,8 +818,8 @@ CTRL-W CTRL-Z					*CTRL-W_CTRL-Z* *:pc* *:pclose*
 		cannot be closed.  See also |:close|.
 
 							*:pp* *:ppop*
-:[count]pp[op][!]
-		Does ":[count]pop[!]" in the preview window.  See |:pop| and
+:[{count}]pp[op][!]
+		Does ":[{count}]pop[!]" in the preview window.  See |:pop| and
 		|:ptag|.  {not in Vi}
 
 CTRL-W }						*CTRL-W_}*
@@ -840,7 +840,7 @@ CTRL-W g }						*CTRL-W_g}*
 			:pedit +/fputc /usr/include/stdio.h
 <
 							*:ps* *:psearch*
-:[range]ps[earch][!] [count] [/]pattern[/]
+:[{range}]ps[earch][!] [{count}] [/]{pattern}[/]
 		Works like |:ijump| but shows the found match in the preview
 		window.  The preview window is opened like with |:ptag|.  The
 		current window and cursor position isn't changed.  Useful
