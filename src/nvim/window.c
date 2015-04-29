@@ -124,10 +124,7 @@ do_window (
   case Ctrl_HAT:
   case '^':
     CHECK_CMDWIN reset_VIsual_and_resel();      /* stop Visual mode */
-    STRCPY(cbuf, "split #");
-    if (Prenum)
-      vim_snprintf((char *)cbuf + 7, sizeof(cbuf) - 7,
-          "%" PRId64, (int64_t)Prenum);
+    cmd_with_count("split #", cbuf, sizeof(cbuf), Prenum);
     do_cmdline_cmd(cbuf);
     break;
 
@@ -151,14 +148,16 @@ newwindow:
   case Ctrl_Q:
   case 'q':
     reset_VIsual_and_resel();                   /* stop Visual mode */
-    do_cmdline_cmd((char_u *)"quit");
+    cmd_with_count("quit", cbuf, sizeof(cbuf), Prenum);
+    do_cmdline_cmd(cbuf);
     break;
 
   /* close current window */
   case Ctrl_C:
   case 'c':
     reset_VIsual_and_resel();                   /* stop Visual mode */
-    do_cmdline_cmd((char_u *)"close");
+    cmd_with_count("close", cbuf, sizeof(cbuf), Prenum);
+    do_cmdline_cmd(cbuf);
     break;
 
   /* close preview window */
@@ -183,7 +182,8 @@ newwindow:
   case Ctrl_O:
   case 'o':
     CHECK_CMDWIN reset_VIsual_and_resel();      /* stop Visual mode */
-    do_cmdline_cmd((char_u *)"only");
+    cmd_with_count("only", cbuf, sizeof(cbuf), Prenum);
+    do_cmdline_cmd(cbuf);
     break;
 
   /* cursor to next window with wrap around */
@@ -484,6 +484,16 @@ wingotofile:
 
   default:    beep_flush();
     break;
+  }
+}
+
+static void cmd_with_count(char *cmd, char_u *bufp, size_t bufsize,
+                           long Prenum)
+{
+  size_t len = xstrlcpy((char *)bufp, cmd, bufsize);
+
+  if (Prenum > 0 && len < bufsize) {
+    vim_snprintf((char *)bufp + len, bufsize - len, "%" PRId64, Prenum);
   }
 }
 

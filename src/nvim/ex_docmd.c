@@ -85,6 +85,7 @@ typedef struct ucmd {
   char_u      *uc_rep;          /* The command's replacement string */
   long uc_def;                  /* The default value for a range/count */
   int uc_compl;                 /* completion type */
+  int uc_addr_type;             /* The command's address type */
   scid_T uc_scriptID;           /* SID where the command was defined */
   char_u      *uc_compl_arg;    /* completion argument if any */
 } ucmd_T;
@@ -1066,16 +1067,178 @@ void * getline_cookie(LineGetter fgetline,
 }
 
 /*
+ * Helper function to apply an offset for buffer commands, i.e. ":bdelete",
+ * ":bwipeout", etc.
+ * Returns the buffer number.
+ */
+static int compute_buffer_local_count(int addr_type, int lnum, int offset)
+{
+  buf_T *buf;
+  buf_T *nextbuf;
+  int count = offset;
+
+  buf = firstbuf;
+  while (buf->b_next != NULL && buf->b_fnum < lnum)
+    buf = buf->b_next;
+  while (count != 0) {
+    count += (count < 0) ? 1 : -1;
+    nextbuf = (offset < 0) ? buf->b_prev : buf->b_next;
+    if (nextbuf == NULL)
+      break;
+    buf = nextbuf;
+    if (addr_type == ADDR_LOADED_BUFFERS)
+      /* skip over unloaded buffers */
+      while (buf->b_ml.ml_mfp == NULL) {
+        nextbuf = (offset < 0) ? buf->b_prev : buf->b_next;
+        if (nextbuf == NULL) {
+          break;
+        }
+        buf = nextbuf;
+      }
+  }
+  // we might have gone too far, last buffer is not loaded
+  if (addr_type == ADDR_LOADED_BUFFERS) {
+    while (buf->b_ml.ml_mfp == NULL) {
+      nextbuf = (offset >= 0) ? buf->b_prev : buf->b_next;
+      if (nextbuf == NULL)
+        break;
+      buf = nextbuf;
+    }
+  }
+  return buf->b_fnum;
+}
+
+static int current_win_nr(win_T *win)
+{
+  int nr = 0;
+
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    ++nr;
+    if (wp == win)
+      break;
+  }
+  return nr;
+}
+
+static int current_tab_nr(tabpage_T *tab)
+{
+  int nr = 0;
+
+  FOR_ALL_TABS(tp) {
+    ++nr;
+    if (tp == tab)
+      break;
+  }
+  return nr;
+}
+
+#define CURRENT_WIN_NR current_win_nr(curwin)
+#define LAST_WIN_NR current_win_nr(NULL)
+#define CURRENT_TAB_NR current_tab_nr(curtab)
+#define LAST_TAB_NR current_tab_nr(NULL)
+
+/*
+* Figure out the address type for ":wincmd".
+*/
+static void get_wincmd_addr_type(char_u *arg, exarg_T *eap)
+{
+  switch (*arg) {
+    case 'S':
+    case Ctrl_S:
+    case 's':
+    case Ctrl_N:
+    case 'n':
+    case 'j':
+    case Ctrl_J:
+    case 'k':
+    case Ctrl_K:
+    case 'T':
+    case Ctrl_R:
+    case 'r':
+    case 'R':
+    case 'K':
+    case 'J':
+    case '+':
+    case '-':
+    case Ctrl__:
+    case '_':
+    case '|':
+    case ']':
+    case Ctrl_RSB:
+    case 'g':
+    case Ctrl_G:
+    case Ctrl_V:
+    case 'v':
+    case 'h':
+    case Ctrl_H:
+    case 'l':
+    case Ctrl_L:
+    case 'H':
+    case 'L':
+    case '>':
+    case '<':
+    case '}':
+    case 'f':
+    case 'F':
+    case Ctrl_F:
+    case 'i':
+    case Ctrl_I:
+    case 'd':
+    case Ctrl_D:
+      /* window size or any count */
+      eap->addr_type = ADDR_LINES;
+      break;
+
+    case Ctrl_HAT:
+    case '^':
+      /* buffer number */
+      eap->addr_type = ADDR_BUFFERS;
+      break;
+
+    case Ctrl_Q:
+    case 'q':
+    case Ctrl_C:
+    case 'c':
+    case Ctrl_O:
+    case 'o':
+    case Ctrl_W:
+    case 'w':
+    case 'W':
+    case 'x':
+    case Ctrl_X:
+      /* window number */
+      eap->addr_type = ADDR_WINDOWS;
+      break;
+
+    case Ctrl_Z:
+    case 'z':
+    case 'P':
+    case 't':
+    case Ctrl_T:
+    case 'b':
+    case Ctrl_B:
+    case 'p':
+    case Ctrl_P:
+    case '=':
+    case CAR:
+      /* no count */
+      eap->addr_type = 0;
+      break;
+  }
+}
+
+/*
  * Execute one Ex command.
  *
  * If 'sourcing' is TRUE, the command will be included in the error message.
  *
  * 1. skip comment lines and leading space
  * 2. handle command modifiers
- * 3. parse range
- * 4. parse command
- * 5. parse arguments
- * 6. switch on command name
+ * 3. skip over the range to find the command
+ * 4. parse the range
+ * 5. parse the command
+ * 6. parse arguments
+ * 7. switch on command name
  *
  * Note: "fgetline" can be NULL.
  *
@@ -1100,6 +1263,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   int did_sandbox = FALSE;
   cmdmod_T save_cmdmod;
   int ni;                                       /* set when Not Implemented */
+  char_u *cmd;
 
   memset(&ea, 0, sizeof(ea));
   ea.line1 = 1;
@@ -1132,7 +1296,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   ea.cmd = *cmdlinep;
   for (;; ) {
     /*
-     * 1. skip comment lines and leading white space and colons
+     * 1. Skip comment lines and leading white space and colons.
      */
     while (*ea.cmd == ' ' || *ea.cmd == '\t' || *ea.cmd == ':')
       ++ea.cmd;
@@ -1155,7 +1319,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     }
 
     /*
-     * 2. handle command modifiers.
+     * 2. Handle command modifiers.
      */
     p = ea.cmd;
     if (ascii_isdigit(*ea.cmd))
@@ -1319,8 +1483,18 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     (void)do_intthrow(cstack);
   }
 
+  // 3. Skip over the range to find the command. Let "p" point to after it.
+  //
+  // We need the command to know what kind of range it uses.
+
+  cmd = ea.cmd;
+  ea.cmd = skip_range(ea.cmd, NULL);
+  if (*ea.cmd == '*' && vim_strchr(p_cpo, CPO_STAR) == NULL)
+    ea.cmd = skipwhite(ea.cmd + 1);
+  p = find_command(&ea, NULL);
+
   /*
-   * 3. parse a range specifier of the form: addr [,addr] [;addr] ..
+   * 4. Parse a range specifier of the form: addr [,addr] [;addr] ..
    *
    * where 'addr' is:
    *
@@ -1336,24 +1510,108 @@ static char_u * do_one_cmd(char_u **cmdlinep,
    * is equal to the lower.
    */
 
+  // ea.addr_type for user commands is set by find_ucmd
+  if (!IS_USER_CMDIDX(ea.cmdidx)) {
+    if (ea.cmdidx != CMD_SIZE) {
+      ea.addr_type = cmdnames[(int)ea.cmdidx].cmd_addr_type;
+    } else {
+      ea.addr_type = ADDR_LINES;
+    }
+    // :wincmd range depends on the argument
+    if (ea.cmdidx == CMD_wincmd && p != NULL) {
+      get_wincmd_addr_type(skipwhite(p), &ea);
+    }
+  }
+
   /* repeat for all ',' or ';' separated addresses */
+  ea.cmd = cmd;
   for (;; ) {
     ea.line1 = ea.line2;
-    ea.line2 = curwin->w_cursor.lnum;       /* default is current line number */
+    switch (ea.addr_type) {
+      case ADDR_LINES:
+        // default is current line number
+        ea.line2 = curwin->w_cursor.lnum;
+        break;
+      case ADDR_WINDOWS:
+        lnum = CURRENT_WIN_NR;
+        ea.line2 = lnum;
+        break;
+      case ADDR_ARGUMENTS:
+        ea.line2 = curwin->w_arg_idx + 1;
+        if (ea.line2 > ARGCOUNT) {
+          ea.line2 = ARGCOUNT;
+        }
+        break;
+      case ADDR_LOADED_BUFFERS:
+      case ADDR_BUFFERS:
+        ea.line2 = curbuf->b_fnum;
+        break;
+      case ADDR_TABS:
+        lnum = CURRENT_TAB_NR;
+        ea.line2 = lnum;
+        break;
+    }
     ea.cmd = skipwhite(ea.cmd);
-    lnum = get_address(&ea.cmd, ea.skip, ea.addr_count == 0);
+    lnum = get_address(&ea.cmd, ea.addr_type, ea.skip, ea.addr_count == 0);
     if (ea.cmd == NULL)                     /* error detected */
       goto doend;
     if (lnum == MAXLNUM) {
       if (*ea.cmd == '%') {                 /* '%' - all lines */
         ++ea.cmd;
-        ea.line1 = 1;
-        ea.line2 = curbuf->b_ml.ml_line_count;
+        switch (ea.addr_type) {
+          case ADDR_LINES:
+            ea.line1 = 1;
+            ea.line2 = curbuf->b_ml.ml_line_count;
+            break;
+          case ADDR_LOADED_BUFFERS: {
+            buf_T *buf = firstbuf;
+            while (buf->b_next != NULL && buf->b_ml.ml_mfp == NULL) {
+              buf = buf->b_next;
+            }
+            ea.line1 = buf->b_fnum;
+            buf = lastbuf;
+            while (buf->b_prev != NULL && buf->b_ml.ml_mfp == NULL) {
+              buf = buf->b_prev;
+            }
+            ea.line2 = buf->b_fnum;
+            break;
+          }
+          case ADDR_BUFFERS:
+            ea.line1 = firstbuf->b_fnum;
+            ea.line2 = lastbuf->b_fnum;
+            break;
+          case ADDR_WINDOWS:
+          case ADDR_TABS:
+            if (IS_USER_CMDIDX(ea.cmdidx)) {
+              ea.line1 = 1;
+              ea.line2 =
+                  ea.addr_type == ADDR_WINDOWS ? LAST_WIN_NR : LAST_TAB_NR;
+            } else {
+              // there is no Vim command which uses '%' and
+              // ADDR_WINDOWS or ADDR_TABS
+              errormsg = (char_u *)_(e_invrange);
+              goto doend;
+            }
+            break;
+          case ADDR_ARGUMENTS:
+            if (ARGCOUNT == 0) {
+              ea.line1 = ea.line2 = 0;
+            } else {
+              ea.line1 = 1;
+              ea.line2 = ARGCOUNT;
+            }
+            break;
+        }
         ++ea.addr_count;
       }
       /* '*' - visual area */
       else if (*ea.cmd == '*' && vim_strchr(p_cpo, CPO_STAR) == NULL) {
         pos_T       *fp;
+
+        if (ea.addr_type != ADDR_LINES) {
+          errormsg = (char_u *)_(e_invrange);
+          goto doend;
+        }
 
         ++ea.cmd;
         if (!ea.skip) {
@@ -1392,7 +1650,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   check_cursor_lnum();
 
   /*
-   * 4. parse command
+   * 5. Parse the command.
    */
 
   /*
@@ -1445,9 +1703,6 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     }
     goto doend;
   }
-
-  /* Find the command and let "p" point to after it. */
-  p = find_command(&ea, NULL);
 
   // If this looks like an undefined user command and there are CmdUndefined
   // autocommands defined, trigger the matching autocommands.
@@ -1502,7 +1757,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     ea.forceit = FALSE;
 
   /*
-   * 5. parse arguments
+   * 6. Parse arguments.
    */
   if (!IS_USER_CMDIDX(ea.cmdidx)) {
     ea.argt = cmdnames[(int)ea.cmdidx].cmd_argt;
@@ -1695,8 +1950,43 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   }
 
   if ((ea.argt & DFLALL) && ea.addr_count == 0) {
+    buf_T *buf;
+
     ea.line1 = 1;
-    ea.line2 = curbuf->b_ml.ml_line_count;
+    switch (ea.addr_type) {
+      case ADDR_LINES:
+        ea.line2 = curbuf->b_ml.ml_line_count;
+        break;
+      case ADDR_LOADED_BUFFERS:
+        buf = firstbuf;
+        while (buf->b_next != NULL && buf->b_ml.ml_mfp == NULL) {
+          buf = buf->b_next;
+        }
+        ea.line1 = buf->b_fnum;
+        buf = lastbuf;
+        while (buf->b_prev != NULL && buf->b_ml.ml_mfp == NULL) {
+          buf = buf->b_prev;
+        }
+        ea.line2 = buf->b_fnum;
+        break;
+      case ADDR_BUFFERS:
+        ea.line1 = firstbuf->b_fnum;
+        ea.line2 = lastbuf->b_fnum;
+        break;
+      case ADDR_WINDOWS:
+        ea.line2 = LAST_WIN_NR;
+        break;
+      case ADDR_TABS:
+        ea.line2 = LAST_TAB_NR;
+        break;
+      case ADDR_ARGUMENTS:
+        if (ARGCOUNT == 0) {
+          ea.line1 = ea.line2 = 0;
+        } else {
+          ea.line2 = ARGCOUNT;
+        }
+        break;
+    }
   }
 
   /* accept numbered register only when no count allowed (:put) */
@@ -1888,7 +2178,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   }
 
   /*
-   * 6. switch on command name
+   * 7. Switch on command name.
    *
    * The "ea" structure holds the arguments that can be used.
    */
@@ -2057,7 +2347,7 @@ static char_u *find_command(exarg_T *eap, int *full)
    * Exceptions:
    * - the 'k' command can directly be followed by any character.
    * - the 's' command can be followed directly by 'c', 'g', 'i', 'I' or 'r'
-   *	    but :sre[wind] is another command, as are :scrip[tnames],
+   *	    but :sre[wind] is another command, as are :scr[iptnames],
    *	    :scs[cope], :sim[alt], :sig[ns] and :sil[ent].
    * - the "d" command can directly be followed by 'l' or 'p' flag.
    */
@@ -2195,6 +2485,7 @@ find_ucmd (
             eap->cmdidx = CMD_USER_BUF;
           eap->argt = uc->uc_argt;
           eap->useridx = j;
+          eap->addr_type = uc->uc_addr_type;
 
           if (compl != NULL)
             *compl = uc->uc_compl;
@@ -2734,15 +3025,18 @@ set_one_cmd_context (
           return NULL;
         }
 
-        /* For the -complete and -nargs attributes, we complete
-         * their arguments as well.
-         */
+        // For the -complete, -nargs and -addr attributes, we complete
+        // their arguments as well.
         if (STRNICMP(arg, "complete", p - arg) == 0) {
           xp->xp_context = EXPAND_USER_COMPLETE;
           xp->xp_pattern = p + 1;
           return NULL;
         } else if (STRNICMP(arg, "nargs", p - arg) == 0) {
           xp->xp_context = EXPAND_USER_NARGS;
+          xp->xp_pattern = p + 1;
+          return NULL;
+        } else if (STRNICMP(arg, "addr", p - arg) == 0) {
+          xp->xp_context = EXPAND_USER_ADDR_TYPE;
           xp->xp_pattern = p + 1;
           return NULL;
         }
@@ -3098,12 +3392,11 @@ skip_range (
  *
  * Return MAXLNUM when no Ex address was found.
  */
-static linenr_T 
-get_address (
-    char_u **ptr,
-    int skip,                   /* only skip the address, don't use it */
-    int to_other_file              /* flag: may jump to other file */
-)
+static linenr_T get_address(char_u **ptr,
+                            int addr_type,  // flag: one of ADDR_LINES, ...
+                            int skip,  // only skip the address, don't use it
+                            int to_other_file  // flag: may jump to other file
+                            )
 {
   int c;
   int i;
@@ -3112,6 +3405,7 @@ get_address (
   pos_T pos;
   pos_T       *fp;
   linenr_T lnum;
+  buf_T *buf;
 
   cmd = skipwhite(*ptr);
   lnum = MAXLNUM;
@@ -3119,17 +3413,64 @@ get_address (
     switch (*cmd) {
     case '.':                               /* '.' - Cursor position */
       ++cmd;
-      lnum = curwin->w_cursor.lnum;
+      switch (addr_type) {
+        case ADDR_LINES:
+          lnum = curwin->w_cursor.lnum;
+          break;
+        case ADDR_WINDOWS:
+          lnum = CURRENT_WIN_NR;
+          break;
+        case ADDR_ARGUMENTS:
+          lnum = curwin->w_arg_idx + 1;
+          break;
+        case ADDR_LOADED_BUFFERS:
+        case ADDR_BUFFERS:
+          lnum = curbuf->b_fnum;
+          break;
+        case ADDR_TABS:
+          lnum = CURRENT_TAB_NR;
+          break;
+      }
       break;
 
     case '$':                               /* '$' - last line */
       ++cmd;
-      lnum = curbuf->b_ml.ml_line_count;
+      switch (addr_type) {
+        case ADDR_LINES:
+          lnum = curbuf->b_ml.ml_line_count;
+          break;
+        case ADDR_WINDOWS:
+          lnum = LAST_WIN_NR;
+          break;
+        case ADDR_ARGUMENTS:
+          lnum = ARGCOUNT;
+          break;
+        case ADDR_LOADED_BUFFERS:
+          buf = lastbuf;
+          while (buf->b_ml.ml_mfp == NULL) {
+            if (buf->b_prev == NULL) {
+              break;
+            }
+            buf = buf->b_prev;
+          }
+          lnum = buf->b_fnum;
+          break;
+        case ADDR_BUFFERS:
+          lnum = lastbuf->b_fnum;
+          break;
+        case ADDR_TABS:
+          lnum = LAST_TAB_NR;
+          break;
+      }
       break;
 
     case '\'':                              /* ''' - mark */
       if (*++cmd == NUL) {
         cmd = NULL;
+        goto error;
+      }
+      if (addr_type != ADDR_LINES) {
+        EMSG(_(e_invaddr));
         goto error;
       }
       if (skip)
@@ -3155,6 +3496,10 @@ get_address (
     case '/':
     case '?':                           /* '/' or '?' - search */
       c = *cmd++;
+      if (addr_type != ADDR_LINES) {
+        EMSG(_(e_invaddr));
+        goto error;
+      }
       if (skip) {                       /* skip "/pat/" */
         cmd = skip_regexp(cmd, c, p_magic, NULL);
         if (*cmd == c)
@@ -3194,6 +3539,10 @@ get_address (
 
     case '\\':                      /* "\?", "\/" or "\&", repeat search */
       ++cmd;
+      if (addr_type != ADDR_LINES) {
+        EMSG(_(e_invaddr));
+        goto error;
+      }
       if (*cmd == '&')
         i = RE_SUBST;
       else if (*cmd == '?' || *cmd == '/')
@@ -3233,8 +3582,27 @@ get_address (
       if (*cmd != '-' && *cmd != '+' && !ascii_isdigit(*cmd))
         break;
 
-      if (lnum == MAXLNUM)
-        lnum = curwin->w_cursor.lnum;           /* "+1" is same as ".+1" */
+      if (lnum == MAXLNUM) {
+        switch (addr_type) {
+          case ADDR_LINES:
+            lnum = curwin->w_cursor.lnum; /* "+1" is same as ".+1" */
+            break;
+          case ADDR_WINDOWS:
+            lnum = CURRENT_WIN_NR;
+            break;
+          case ADDR_ARGUMENTS:
+            lnum = curwin->w_arg_idx + 1;
+            break;
+          case ADDR_LOADED_BUFFERS:
+          case ADDR_BUFFERS:
+            lnum = curbuf->b_fnum;
+            break;
+          case ADDR_TABS:
+            lnum = CURRENT_TAB_NR;
+            break;
+        }
+      }
+
       if (ascii_isdigit(*cmd))
         i = '+';                        /* "number" is same as "+number" */
       else
@@ -3242,8 +3610,10 @@ get_address (
       if (!ascii_isdigit(*cmd))           /* '+' is '+1', but '+0' is not '+1' */
         n = 1;
       else
-        n = getdigits_long(&cmd);
-      if (i == '-')
+        n = getdigits(&cmd);
+      if (addr_type == ADDR_LOADED_BUFFERS || addr_type == ADDR_BUFFERS)
+        lnum = compute_buffer_local_count(addr_type, lnum, (i == '-') ? -1 * n : n);
+      else if (i == '-')
         lnum -= n;
       else
         lnum += n;
@@ -3295,15 +3665,65 @@ static void ex_script_ni(exarg_T *eap)
  */
 static char_u *invalid_range(exarg_T *eap)
 {
-  if (       eap->line1 < 0
-             || eap->line2 < 0
-             || eap->line1 > eap->line2
-             || ((eap->argt & RANGE)
-                 && !(eap->argt & NOTADR)
-                 && eap->line2 > curbuf->b_ml.ml_line_count
-                 + (eap->cmdidx == CMD_diffget)
-                 ))
+  buf_T *buf;
+  if (eap->line1 < 0 || eap->line2 < 0 || eap->line1 > eap->line2) {
     return (char_u *)_(e_invrange);
+  }
+
+  if (eap->argt & RANGE) {
+    switch(eap->addr_type) {
+      case ADDR_LINES:
+        if (!(eap->argt & NOTADR)
+            && eap->line2 > curbuf->b_ml.ml_line_count
+               + (eap->cmdidx == CMD_diffget)) {
+          return (char_u *)_(e_invrange);
+        }
+        break;
+      case ADDR_ARGUMENTS:
+        if (eap->line2 > ARGCOUNT + (!ARGCOUNT)) {  // add 1 if ARGCOUNT is 0
+          return (char_u *)_(e_invrange);
+        }
+        break;
+      case ADDR_BUFFERS:
+        if (eap->line1 < firstbuf->b_fnum
+            || eap->line2 > lastbuf->b_fnum) {
+          return (char_u *)_(e_invrange);
+        }
+        break;
+     case ADDR_LOADED_BUFFERS:
+        buf = firstbuf;
+        while (buf->b_ml.ml_mfp == NULL) {
+          if (buf->b_next == NULL) {
+            return (char_u *)_(e_invrange);
+          }
+          buf = buf->b_next;
+        }
+        if (eap->line1 < buf->b_fnum) {
+          return (char_u *)_(e_invrange);
+        }
+        buf = lastbuf;
+        while (buf->b_ml.ml_mfp == NULL) {
+          if (buf->b_prev == NULL) {
+            return (char_u *)_(e_invrange);
+          }
+          buf = buf->b_prev;
+        }
+        if (eap->line2 > buf->b_fnum) {
+          return (char_u *)_(e_invrange);
+        }
+        break;
+      case ADDR_WINDOWS:
+        if (eap->line2 > LAST_WIN_NR) {
+          return (char_u *)_(e_invrange);
+        }
+        break;
+      case ADDR_TABS:
+        if (eap->line2 > LAST_TAB_NR) {
+          return (char_u *)_(e_invrange);
+        }
+        break;
+    }
+  }
   return NULL;
 }
 
@@ -4091,10 +4511,9 @@ char_u *get_command_name(expand_T *xp, int idx)
   return cmdnames[idx].cmd_name;
 }
 
-
 static int uc_add_command(char_u *name, size_t name_len, char_u *rep,
                           uint32_t argt, long def, int flags, int compl,
-                          char_u *compl_arg, int force)
+                          char_u *compl_arg, int addr_type, int force)
 {
   ucmd_T      *cmd = NULL;
   char_u      *p;
@@ -4169,6 +4588,7 @@ static int uc_add_command(char_u *name, size_t name_len, char_u *rep,
   cmd->uc_compl = compl;
   cmd->uc_scriptID = current_SID;
   cmd->uc_compl_arg = compl_arg;
+  cmd->uc_addr_type = addr_type;
 
   return OK;
 
@@ -4177,6 +4597,21 @@ fail:
   xfree(compl_arg);
   return FAIL;
 }
+
+
+static struct {
+  int expand;
+  char *name;
+} addr_type_complete[] =
+{
+  {ADDR_ARGUMENTS, "arguments"},
+  {ADDR_LINES, "lines"},
+  {ADDR_LOADED_BUFFERS, "loaded_buffers"},
+  {ADDR_TABS, "tabs"},
+  {ADDR_BUFFERS, "buffers"},
+  {ADDR_WINDOWS, "windows"},
+  {-1, NULL}
+};
 
 /*
  * List of names for completion for ":command" with the EXPAND_ flag.
@@ -4226,6 +4661,7 @@ static struct {
 
 static void uc_list(char_u *name, size_t name_len)
 {
+  int i, j;
   int found = FALSE;
   ucmd_T      *cmd;
   int len;
@@ -4234,7 +4670,6 @@ static void uc_list(char_u *name, size_t name_len)
 
   gap = &curbuf->b_ucmds;
   for (;; ) {
-    int i;
     for (i = 0; i < gap->ga_len; ++i) {
       cmd = USER_CMD_GA(gap, i);
       a = cmd->uc_argt;
@@ -4245,7 +4680,7 @@ static void uc_list(char_u *name, size_t name_len)
 
       /* Put out the title first time */
       if (!found)
-        MSG_PUTS_TITLE(_("\n    Name        Args Range Complete  Definition"));
+        MSG_PUTS_TITLE(_("\n    Name        Args       Address   Complete  Definition"));
       found = TRUE;
       msg_putchar('\n');
       if (got_int)
@@ -4300,8 +4735,21 @@ static void uc_list(char_u *name, size_t name_len)
         IObuff[len++] = ' ';
       } while (len < 11);
 
+      /* Address Type */
+      for (j = 0; addr_type_complete[j].expand != -1; ++j)
+        if (addr_type_complete[j].expand != ADDR_LINES &&
+            addr_type_complete[j].expand == cmd->uc_addr_type) {
+          STRCPY(IObuff + len, addr_type_complete[j].name);
+          len += (int)STRLEN(IObuff + len);
+          break;
+        }
+
+      do {
+        IObuff[len++] = ' ';
+      } while (len < 21);
+
       /* Completion */
-      for (int j = 0; command_complete[j].expand != 0; ++j)
+      for (j = 0; command_complete[j].expand != 0; ++j)
         if (command_complete[j].expand == cmd->uc_compl) {
           STRCPY(IObuff + len, command_complete[j].name);
           len += (int)STRLEN(IObuff + len);
@@ -4310,7 +4758,7 @@ static void uc_list(char_u *name, size_t name_len)
 
       do {
         IObuff[len++] = ' ';
-      } while (len < 21);
+      } while (len < 35);
 
       IObuff[len] = '\0';
       msg_outtrans(IObuff);
@@ -4346,7 +4794,9 @@ static char_u *uc_fun_cmd(void)
   return IObuff;
 }
 
-static int uc_scan_attr(char_u *attr, size_t len, uint32_t *argt, long *def, int *flags, int *compl, char_u **compl_arg)
+static int uc_scan_attr(char_u *attr, size_t len, uint32_t *argt, long *def,
+                        int *flags, int * compl, char_u **compl_arg,
+                        int *addr_type_arg)
 {
   char_u      *p;
 
@@ -4445,6 +4895,18 @@ invalid_count:
       if (parse_compl_arg(val, (int)vallen, compl, argt, compl_arg)
           == FAIL)
         return FAIL;
+    } else if (STRNICMP(attr, "addr", attrlen) == 0) {
+      *argt |= RANGE;
+      if (val == NULL) {
+        EMSG(_("E179: argument required for -addr"));
+        return FAIL;
+      }
+      if (parse_addr_type_arg(val, (int)vallen, argt, addr_type_arg) == FAIL) {
+        return FAIL;
+      }
+      if (addr_type_arg != ADDR_LINES) {
+        *argt |= (ZEROR | NOTADR);
+      }
     } else {
       char_u ch = attr[len];
       attr[len] = '\0';
@@ -4470,6 +4932,7 @@ static void ex_command(exarg_T *eap)
   int flags = 0;
   int     compl = EXPAND_NOTHING;
   char_u  *compl_arg = NULL;
+  int addr_type_arg = ADDR_LINES;
   int has_attr = (eap->arg[0] == '-');
   int name_len;
 
@@ -4479,7 +4942,7 @@ static void ex_command(exarg_T *eap)
   while (*p == '-') {
     ++p;
     end = skiptowhite(p);
-    if (uc_scan_attr(p, end - p, &argt, &def, &flags, &compl, &compl_arg)
+    if (uc_scan_attr(p, end - p, &argt, &def, &flags, &compl, &compl_arg, &addr_type_arg)
         == FAIL)
       return;
     p = skipwhite(end);
@@ -4513,7 +4976,7 @@ static void ex_command(exarg_T *eap)
     return;
   } else
     uc_add_command(name, end - name, p, argt, def, flags, compl, compl_arg,
-        eap->forceit);
+                   addr_type_arg, eap->forceit);
 }
 
 /*
@@ -4941,6 +5404,13 @@ static char_u *get_user_command_name(int idx)
 {
   return get_user_commands(NULL, idx - (int)CMD_SIZE);
 }
+/*
+ * Function given to ExpandGeneric() to obtain the list of user address type names.
+ */
+char_u *get_user_cmd_addr_type(expand_T *xp, int idx)
+{
+  return (char_u *)addr_type_complete[idx].name;
+}
 
 /*
  * Function given to ExpandGeneric() to obtain the list of user command names.
@@ -4961,9 +5431,9 @@ char_u *get_user_commands(expand_T *xp, int idx)
  */
 char_u *get_user_cmd_flags(expand_T *xp, int idx)
 {
-  static char *user_cmd_flags[] =
-  {"bang", "bar", "buffer", "complete", "count",
-   "nargs", "range", "register"};
+  static char *user_cmd_flags[] = {"addr",   "bang",     "bar",
+                                   "buffer", "complete", "count",
+                                   "nargs",  "range",    "register"};
 
   if (idx >= (int)ARRAY_SIZE(user_cmd_flags))
     return NULL;
@@ -4990,6 +5460,36 @@ char_u *get_user_cmd_complete(expand_T *xp, int idx)
   return (char_u *)command_complete[idx].name;
 }
 
+/*
+ * Parse address type argument
+ */
+int parse_addr_type_arg(char_u *value, int vallen, uint32_t *argt,
+                        int *addr_type_arg)
+{
+  int i, a, b;
+  for (i = 0; addr_type_complete[i].expand != -1; ++i) {
+    a = (int)STRLEN(addr_type_complete[i].name) == vallen;
+    b = STRNCMP(value, addr_type_complete[i].name, vallen) == 0;
+    if (a && b) {
+      *addr_type_arg = addr_type_complete[i].expand;
+      break;
+    }
+  }
+
+  if (addr_type_complete[i].expand == -1) {
+    char_u *err = value;
+    for (i = 0; err[i] == NUL || !ascii_iswhite(err[i]); i++)
+      ;
+    err[i] = NUL;
+    EMSG2(_("E180: Invalid address type value: %s"), err);
+    return FAIL;
+  }
+
+  if (*addr_type_arg != ADDR_LINES)
+    *argt |= NOTADR;
+
+  return OK;
+}
 
 /*
  * Parse a completion argument "value[vallen]".
@@ -5089,7 +5589,7 @@ void not_exiting(void)
 }
 
 /*
- * ":quit": quit current window, quit Vim if closed the last window.
+ * ":quit": quit current window, quit Vim if the last window is closed.
  */
 static void ex_quit(exarg_T *eap)
 {
@@ -5102,10 +5602,25 @@ static void ex_quit(exarg_T *eap)
     text_locked_msg();
     return;
   }
+
+  win_T *wp;
+
+  if (eap->addr_count > 0) {
+    int wnr = eap->line2;
+
+    for (wp = firstwin; wp->w_next != NULL; wp = wp->w_next) {
+      if (--wnr <= 0)
+        break;
+    }
+  } else {
+    wp = curwin;
+  }
+
   apply_autocmds(EVENT_QUITPRE, NULL, NULL, FALSE, curbuf);
   /* Refuse to quit when locked or when the buffer in the last window is
    * being closed (can only happen in autocommands). */
-  if (curbuf_locked() || (curbuf->b_nwindows == 1 && curbuf->b_closing))
+  if (curbuf_locked() ||
+      (wp->w_buffer->b_nwindows == 1 && wp->w_buffer->b_closing))
     return;
 
 
@@ -5127,7 +5642,7 @@ static void ex_quit(exarg_T *eap)
       getout(0);
     }
     /* close window; may free buffer */
-    win_close(curwin, !P_HID(curwin->w_buffer) || eap->forceit);
+    win_close(wp, !P_HID(wp->w_buffer) || eap->forceit);
   }
 }
 
@@ -5174,12 +5689,24 @@ static void ex_quit_all(exarg_T *eap)
  */
 static void ex_close(exarg_T *eap)
 {
+  win_T *win;
+  int winnr = 0;
   if (cmdwin_type != 0)
     cmdwin_result = Ctrl_C;
-  else if (!text_locked()
-           && !curbuf_locked()
-           )
-    ex_win_close(eap->forceit, curwin, NULL);
+  else if (!text_locked() && !curbuf_locked()) {
+    if (eap->addr_count == 0)
+      ex_win_close(eap->forceit, curwin, NULL);
+    else {
+      for (win = firstwin; win != NULL; win = win->w_next) {
+        winnr++;
+        if (winnr == eap->line2)
+          break;
+      }
+      if (win == NULL)
+        win = lastwin;
+      ex_win_close(eap->forceit, win, NULL);
+    }
+  }
 }
 
 /*
@@ -5271,6 +5798,8 @@ static void ex_tabonly(exarg_T *eap)
   else if (first_tabpage->tp_next == NULL)
     MSG(_("Already only one tab page"));
   else {
+    if (eap->addr_count > 0)
+      goto_tabpage(eap->line2);
     /* Repeat this up to a 1000 times, because autocommands may mess
      * up the lists. */
     for (int done = 0; done < 1000; ++done) {
@@ -5341,6 +5870,18 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
  */
 static void ex_only(exarg_T *eap)
 {
+  win_T *wp;
+  int wnr;
+  if (eap->addr_count > 0) {
+    wnr = eap->line2;
+    for (wp = firstwin; --wnr > 0;) {
+      if (wp->w_next == NULL)
+        break;
+      else
+        wp = wp->w_next;
+    }
+    win_goto(wp);
+  }
   close_others(TRUE, eap->forceit);
 }
 
@@ -5363,7 +5904,21 @@ static void ex_hide(exarg_T *eap)
     /* ":hide" or ":hide | cmd": hide current window */
     eap->nextcmd = check_nextcmd(eap->arg);
     if (!eap->skip) {
-      win_close(curwin, FALSE);         /* don't free buffer */
+      if (eap->addr_count == 0)
+        win_close(curwin, FALSE); /* don't free buffer */
+      else {
+        int winnr = 0;
+        win_T *win;
+
+        for (win = firstwin; win != NULL; win = win->w_next) {
+          winnr++;
+          if (winnr == eap->line2)
+            break;
+        }
+        if (win == NULL)
+          win = lastwin;
+        win_close(win, FALSE);
+      }
     }
   }
 }
@@ -6518,7 +7073,7 @@ static void ex_copymove(exarg_T *eap)
 {
   long n;
 
-  n = get_address(&eap->arg, FALSE, FALSE);
+  n = get_address(&eap->arg, eap->addr_type, FALSE, FALSE);
   if (eap->arg == NULL) {           /* error detected */
     eap->nextcmd = NULL;
     return;
