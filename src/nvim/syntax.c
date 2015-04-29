@@ -382,6 +382,11 @@ static int syn_time_on = FALSE;
  */
 void syntax_start(win_T *wp, linenr_T lnum)
 {
+  // No syntax highlighting for terminal buffers.
+  if (wp->w_buffer->terminal) {
+    return;
+  }
+
   synstate_T  *p;
   synstate_T  *last_valid = NULL;
   synstate_T  *last_min_valid = NULL;

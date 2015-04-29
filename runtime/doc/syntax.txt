@@ -41,8 +41,8 @@ In the User Manual:
 
 {Vi does not have any of these commands}
 
-Syntax highlighting is not available when the |+syntax| feature has been
-disabled at compile time.
+Syntax highlighting is disabled in terminal buffers, but color terminals are
+supported.
 
 ==============================================================================
 1. Quick start						*:syn-qstart*
