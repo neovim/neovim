@@ -911,12 +911,19 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     } else {          /* new window below current one */
       wp->w_winrow = oldwin->w_winrow + oldwin->w_height + STATUS_HEIGHT;
       wp->w_status_height = oldwin->w_status_height;
-      oldwin->w_status_height = STATUS_HEIGHT;
+      // Don't set the status_height for oldwin yet, this might break
+      // frame_fix_height(oldwin), therefore will be set below.
     }
     if (flags & WSP_BOT)
       frame_add_statusline(curfrp);
     frame_fix_height(wp);
     frame_fix_height(oldwin);
+
+    if (!before) {
+      // New window above current one, set the status_height after
+      // frame_fix_height(oldwin)
+      oldwin->w_status_height = STATUS_HEIGHT;
+    }
   }
 
   if (flags & (WSP_TOP | WSP_BOT))
