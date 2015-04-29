@@ -17490,9 +17490,9 @@ void ex_echohl(exarg_T *eap)
 }
 
 /*
- * ":execute expr1 ..."	execute the result of an expression.
- * ":echomsg expr1 ..."	Print a message
- * ":echoerr expr1 ..."	Print an error
+ * ":execute    expr1 ..."  Execute the result of an expression.
+ * ":echomsg[!] expr1 ..."  Print a message
+ * ":echoerr[!] expr1 ..."  Print an error
  * Each gets spaces around each argument and a newline at the end for
  * echo commands
  */
@@ -17501,17 +17501,15 @@ void ex_execute(exarg_T *eap)
   char_u      *arg = eap->arg;
   typval_T rettv;
   int ret = OK;
-  char_u      *p;
   garray_T ga;
   int len;
-  int save_did_emsg;
 
   ga_init(&ga, 1, 80);
 
   if (eap->skip)
     ++emsg_skip;
   while (*arg != NUL && *arg != '|' && *arg != '\n') {
-    p = arg;
+    char_u *p = arg;
     if (eval1(&arg, &rettv, !eap->skip) == FAIL) {
       /*
        * Report the invalid expression unless the expression evaluation
@@ -17540,11 +17538,15 @@ void ex_execute(exarg_T *eap)
 
   if (ret != FAIL && ga.ga_data != NULL) {
     if (eap->cmdidx == CMD_echomsg) {
-      MSG_ATTR(ga.ga_data, echo_attr);
+      if (eap->forceit) {
+        msg_passive((char_u *)ga.ga_data, echo_attr|MSG_HIST);
+      } else {
+        msg_attr((char_u *)ga.ga_data, echo_attr);
+      }
       ui_flush();
     } else if (eap->cmdidx == CMD_echoerr) {
       /* We don't want to abort following commands, restore did_emsg. */
-      save_did_emsg = did_emsg;
+      int save_did_emsg = did_emsg;
       EMSG((char_u *)ga.ga_data);
       if (!force_abort)
         did_emsg = save_did_emsg;

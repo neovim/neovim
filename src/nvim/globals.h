@@ -198,7 +198,7 @@ EXTERN int msg_scrolled_ign INIT(= FALSE);
    msg_puts_attr() when msg_scrolled is
    non-zero */
 
-EXTERN char_u   *keep_msg INIT(= NULL);     /* msg to be shown after redraw */
+EXTERN char_u   *keep_msg INIT(= NULL);     /* msg to be shown after redraw (in main event loop) */
 EXTERN int keep_msg_attr INIT(= 0);         /* highlight attr for keep_msg */
 EXTERN int keep_msg_more INIT(= FALSE);      /* keep_msg was set by msgmore() */
 EXTERN int need_fileinfo INIT(= FALSE);     /* do fileinfo() after redraw */
@@ -1079,16 +1079,6 @@ EXTERN linenr_T spell_redraw_lnum INIT(= 0);
 
 /* Set when the cursor line needs to be redrawn. */
 EXTERN int need_cursor_line_redraw INIT(= FALSE);
-
-
-#ifdef USE_MCH_ERRMSG
-/* Grow array to collect error messages in until they can be displayed. */
-EXTERN garray_T error_ga
-# ifdef DO_INIT
-  = GA_EMPTY_INIT_VALUE
-# endif
-;
-#endif
 
 
 /*

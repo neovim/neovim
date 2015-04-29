@@ -3221,7 +3221,7 @@ void goto_tabpage(int n)
 void goto_tabpage_tp(tabpage_T *tp, int trigger_enter_autocmds, int trigger_leave_autocmds)
 {
   /* Don't repeat a message in another tab page. */
-  set_keep_msg(NULL, 0);
+  set_keep_msg(NULL, MSG_HIST);
 
   if (tp != curtab && leave_tabpage(tp->tp_curwin->w_buffer,
           trigger_leave_autocmds) == OK) {

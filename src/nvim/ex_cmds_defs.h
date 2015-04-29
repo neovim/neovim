@@ -98,7 +98,7 @@ struct exarg {
   cmdidx_T cmdidx;              ///< the index for the command
   uint32_t argt;                ///< flags for the command
   int skip;                     ///< don't execute the command, only parse it
-  int forceit;                  ///< TRUE if ! present
+  int forceit;                  ///< TRUE if ! ("bang") present
   int addr_count;               ///< the number of addresses given
   linenr_T line1;               ///< the first line number
   linenr_T line2;               ///< the second line number or count

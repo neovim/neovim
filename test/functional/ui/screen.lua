@@ -220,9 +220,11 @@ function Screen:expect(expected, attr_ids, attr_ignore)
     for i = 1, self._height do
       local expected_row = expected_rows[i]
       local actual_row = self:_row_repr(self._rows[i], ids, ignore)
-      if expected_row ~= actual_row then
-        return 'Row '..tostring(i)..' didnt match.\nExpected: "'..
-               expected_row..'"\nActual:   "'..actual_row..'"'
+      if not expected_row then
+        return 'Screen has more rows than expected.'
+      elseif expected_row ~= actual_row then
+        return 'row '..tostring(i)..':\n  expected: "'..
+               expected_row..'"\n  actual:   "'..actual_row..'"'
       end
     end
   end)

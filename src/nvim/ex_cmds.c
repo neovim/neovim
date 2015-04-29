@@ -1175,7 +1175,7 @@ do_filter (
             _("%" PRId64 " lines filtered"), (int64_t)linecount);
         if (msg(msg_buf) && !msg_scroll)
           /* save message to display it after redraw */
-          set_keep_msg(msg_buf, 0);
+          set_keep_msg(msg_buf, MSG_HIST);
       } else
         msgmore((long)linecount);
     }
@@ -1946,9 +1946,7 @@ void print_line_no_prefix(linenr_T lnum, int use_number, int list)
   msg_prt_line(ml_get(lnum), list);
 }
 
-/*
- * Print a text line.  Also in silent mode ("ex -s").
- */
+/// Prints a text line from the current buffer. Also in silent mode ("ex -s").
 void print_line(linenr_T lnum, int use_number, int list)
 {
   int save_silent = silent_mode;
@@ -4330,7 +4328,7 @@ do_sub_msg (
           _(" on %" PRId64 " lines"), (int64_t)sub_nlines);
     if (msg(msg_buf))
       /* save message to display it after redraw */
-      set_keep_msg(msg_buf, 0);
+      set_keep_msg(msg_buf, MSG_HIST);
     return true;
   }
   if (got_int) {

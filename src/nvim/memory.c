@@ -545,7 +545,7 @@ void free_all_mem(void)
   /* Free some global vars. */
   xfree(last_cmdline);
   xfree(new_last_cmdline);
-  set_keep_msg(NULL, 0);
+  set_keep_msg(NULL, MSG_HIST);
 
   /* Clear cmdline history. */
   p_hi = 0;
@@ -592,9 +592,7 @@ void free_all_mem(void)
   first_tabpage = NULL;
 
   /* message history */
-  for (;; )
-    if (delete_first_msg() == FAIL)
-      break;
+  while(msg_delete_first()) {}
 
   eval_clear();
 
