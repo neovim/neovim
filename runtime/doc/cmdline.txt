@@ -531,7 +531,7 @@ followed by another Vim command:
     :vglobal
     :windo
     :write !
-    :[range]!
+    :[{range}]!
     a user defined command without the "-bar" argument |:command|
 
 Note that this is confusing (inherited from Vi): With ":g" the '|' is included
@@ -600,10 +600,10 @@ argument for the command, which has a different meaning.  For example:
 			"name"
 
 ==============================================================================
-4. Ex command-line ranges	*cmdline-ranges* *[range]* *E16*
+4. Ex command-line ranges	*cmdline-ranges* *[range]* *[{range}]* *E16*
 
 Some Ex commands accept a line range in front of them.  This is noted as
-[range].  It consists of one or more line specifiers, separated with ',' or
+[{range}].  It consists of one or more line specifiers, separated with ',' or
 ';'.
 
 The basics are explained in section |10.3| of the user manual.
