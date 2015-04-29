@@ -6363,8 +6363,8 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
   len = get_env_len(arg);
 
   if (evaluate) {
-   if (len == 0) {
-      return FAIL;  // Can't be an environment variable.
+    if (len == 0) {
+      return FAIL;  // Invalid empty name.
     }
     cc = name[len];
     name[len] = NUL;
@@ -8145,11 +8145,17 @@ static void f_eval(typval_T *argvars, typval_T *rettv)
   if (s != NULL)
     s = skipwhite(s);
 
+  char_u *p = s;
   if (s == NULL || eval1(&s, rettv, TRUE) == FAIL) {
+    if (p != NULL && !aborting()) {
+      EMSG2(_(e_invexpr2), p);
+    }
+    need_clr_eos = FALSE;
     rettv->v_type = VAR_NUMBER;
     rettv->vval.v_number = 0;
-  } else if (*s != NUL)
+  } else if (*s != NUL) {
     EMSG(_(e_trailing));
+  }
 }
 
 /*
