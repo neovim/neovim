@@ -238,7 +238,7 @@ static void shada_read(FILE *const fp, const int flags)
   buf_T *local_mark_prev_buf = NULL;
   char *local_mark_prev_fname = NULL;
   size_t local_mark_prev_fname_len = 0;
-  while (shada_read_next_item(fp, &cur_entry) == NOTDONE) {
+  while (shada_read_next_item(fp, &cur_entry, flags) == NOTDONE) {
     switch (cur_entry.type) {
       case kSDItemMissing: {
         assert(false);
@@ -1089,6 +1089,39 @@ static inline uint64_t be64toh(uint64_t big_endian_64_bits)
 }
 #endif
 
+/// Read given number of bytes into given buffer, display error if needed
+///
+/// @param[in]   fp      File to read from.
+/// @param[out]  buffer  Where to save the results. May be NULL.
+/// @param[in]   length  How many bytes should be read.
+///
+/// @return FAIL if reading was not successfull, OK otherwise.
+static int fread_len(FILE *const fp, char *const buffer, const size_t length)
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  size_t read_bytes = 0;
+  if (buffer == NULL) {
+    do {
+      read_bytes += fread(IObuff, 1, length > IOSIZE ? IOSIZE : length, fp);
+    } while (read_bytes < length && !ferror(fp) && !feof(fp));
+  } else {
+    read_bytes = fread(buffer, 1, length, fp);
+  }
+
+  if (ferror(fp)) {
+    emsg2("System error while reading ShaDa file: %s",
+          strerror(errno));
+    return FAIL;
+  } else if (read_bytes != length) {
+    emsgn("Error while reading ShaDa file: "
+          "last entry specified that it occupies %" PRId64 " bytes, "
+          "but file ended earlier",
+          (int64_t) length);
+    return FAIL;
+  }
+  return OK;
+}
+
 /// Read next unsigned integer from file
 ///
 /// Errors out if the result is not an unsigned integer.
@@ -1108,6 +1141,9 @@ static int msgpack_read_uint64(FILE *const fp, const int first_char,
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const long fpos = ftell(fp) - 1;
+  if (fpos == -2) {
+    clearerr(fp);
+  }
 
   if (first_char == EOF) {
     if (ferror(fp)) {
@@ -1151,16 +1187,7 @@ static int msgpack_read_uint64(FILE *const fp, const int first_char,
       }
     }
     uint8_t buf[sizeof(uint64_t)] = {0, 0, 0, 0, 0, 0, 0, 0};
-    size_t read_bytes = fread((char *) &(buf[sizeof(uint64_t)-length]), 1,
-                              length, fp);
-    if (ferror(fp)) {
-      emsg2("System error while reading ShaDa file: %s",
-            strerror(errno));
-      return FAIL;
-    } else if (read_bytes != length) {
-      emsgn("Error while reading ShaDa file: "
-            "not enough bytes for positive integer at position %" PRId64,
-            (int64_t) fpos);
+    if (fread_len(fp, (char *) &(buf[sizeof(uint64_t)-length]), length) != OK) {
       return FAIL;
     }
     *result = be64toh(*((uint64_t *) &(buf[0])));
@@ -1172,12 +1199,16 @@ static int msgpack_read_uint64(FILE *const fp, const int first_char,
 ///
 /// @param[in]   fp        Pointer to the opened ShaDa file.
 /// @param[out]  entry     Address where next entry contents will be saved.
+/// @param[in]   flags     Flags, determining whether and which items should be 
+///                        skipped.
 ///
 /// @return NOTDONE if entry was read correctly, FAIL if there were errors and 
 ///         OK at EOF.
-static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
+static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry,
+                                const int flags)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
+shada_read_next_item_start:
   entry->type = kSDItemMissing;
   if (feof(fp)) {
     return OK;
@@ -1190,6 +1221,9 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
   uint64_t length_u64;
 
   const long initial_fpos = ftell(fp);
+  if (initial_fpos == -1) {
+    clearerr(fp);
+  }
   const int first_char = fgetc(fp);
   if (first_char == EOF && feof(fp)) {
     return OK;
@@ -1200,65 +1234,93 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
       || msgpack_read_uint64(fp, fgetc(fp), &length_u64) != OK) {
     return FAIL;
   }
-  if (type_u64 == 0) {
-    emsgn("Error while reading ShaDa file: "
-          "entry at position %" PRId64 "has invalid zero type",
-          (int64_t) initial_fpos);
-    return FAIL;
-  }
 
   const size_t length = (size_t) length_u64;
   entry->timestamp = (Timestamp) timestamp_u64;
-  if (type_u64 > SHADA_LAST_ENTRY) {
-    entry->data.unknown_item.size = length;
-    char *contents = xmalloc(length);
-    entry->data.unknown_item.contents = contents;
-    entry->data.unknown_item.type = type_u64;
-    size_t read_bytes = fread(contents, 1, length, fp);
-    if (ferror(fp)) {
-      free(entry->data.unknown_item.contents);
-      emsg2("System error while reading ShaDa file: %s",
-            strerror(errno));
-      return FAIL;
-    } else if (read_bytes != length) {
-      free(entry->data.unknown_item.contents);
+
+#define SKIP \
+  do { \
+    if (fread_len(fp, NULL, length) != OK) { \
+      return FAIL; \
+    } \
+    goto shada_read_next_item_start; \
+  } while (0)
+  // TODO(ZyX-I): More precise skipping: skip reading some things depending on 
+  //              'viminfo': e.g. variables if viminfo does not contain `!`.
+  //
+  //              Option value should probably be checked elsewhere.
+  switch (type_u64) {
+    case kSDItemMissing: {
       emsgn("Error while reading ShaDa file: "
-            "last entry specified that it occupies %" PRId64 " bytes, "
-            "but file ended earlier",
-            (int64_t) length);
+            "entry at position %" PRId64 "has invalid zero type",
+            (int64_t) initial_fpos);
       return FAIL;
     }
+    case kSDItemHeader: {
+      if (!(flags & kShaDaWantHeader)) {
+        SKIP;
+      }
+      break;
+    }
+    case kSDItemBufferList:
+    case kSDItemJump:
+    case kSDItemVariable:
+    case kSDItemRegister:
+    case kSDItemHistoryEntry:
+    case kSDItemSubString:
+    case kSDItemSearchPattern: {
+      if (!(flags & kShaDaWantInfo)) {
+        SKIP;
+      }
+      break;
+    }
+    case kSDItemGlobalMark:
+    case kSDItemLocalMark: {
+      if (!(flags & kShaDaWantMarks)) {
+        SKIP;
+      }
+      break;
+    }
+    default: {
+      entry->data.unknown_item.size = length;
+      char *contents = xmalloc(length);
+      entry->data.unknown_item.contents = contents;
+      entry->data.unknown_item.type = type_u64;
+      if (fread_len(fp, contents, length) != OK) {
+        return FAIL;
+      }
+      entry->type = kSDItemUnknown;
+      return NOTDONE;
+    }
+  }
+#undef SKIP
+
+  if (type_u64 > SHADA_LAST_ENTRY) {
     entry->type = kSDItemUnknown;
-    return NOTDONE;
+    entry->data.unknown_item.size = length;
+    entry->data.unknown_item.type = type_u64;
+    entry->data.unknown_item.contents = xmalloc(length);
+    return fread_len(fp, entry->data.unknown_item.contents, length);
   }
 
-  msgpack_unpacked unpacked;
-  msgpack_unpacked_init(&unpacked);
-  msgpack_unpacker *unpacker = msgpack_unpacker_new(length);
+  msgpack_unpacker *const unpacker = msgpack_unpacker_new(length);
   if (unpacker == NULL ||
       !msgpack_unpacker_reserve_buffer(unpacker, length)) {
     EMSG(e_outofmem);
     goto shada_read_next_item_error;
   }
-  msgpack_unpack_return result;
-  size_t read_bytes = 0;
 
-  const long fpos = ftell(fp);
-  read_bytes = fread(msgpack_unpacker_buffer(unpacker), 1, length, fp);
-  if (ferror(fp)) {
-    emsg2("System error while reading ShaDa file: %s",
-          strerror(errno));
-    goto shada_read_next_item_error;
-  } else if (read_bytes != length) {
-    emsgn("Error while reading ShaDa file: "
-          "last entry specified that it occupies %" PRId64 " bytes, "
-          "but file ended earlier",
-          (int64_t) fpos);
-    goto shada_read_next_item_error;
+  if (fread_len(fp, msgpack_unpacker_buffer(unpacker), length) != OK) {
+    msgpack_unpacker_free(unpacker);
+    return FAIL;
   }
-  msgpack_unpacker_buffer_consumed(unpacker, read_bytes);
+  msgpack_unpacker_buffer_consumed(unpacker, length);
 
-  result = msgpack_unpacker_next(unpacker, &unpacked);
+  msgpack_unpacked unpacked;
+  msgpack_unpacked_init(&unpacked);
+
+  const msgpack_unpack_return result =
+      msgpack_unpacker_next(unpacker, &unpacked);
   if (result != MSGPACK_UNPACK_SUCCESS) {
     if (result == MSGPACK_UNPACK_NOMEM_ERROR) {
       EMSG(e_outofmem);
@@ -1286,7 +1348,7 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
       emsgn("Error while reading ShaDa file: " \
             entry_name " entry at position %" PRId64 " " \
             error_desc, \
-            (int64_t) fpos); \
+            (int64_t) initial_fpos); \
       ga_clear(&ad_ga); \
       goto shada_read_next_item_error; \
     } \
@@ -1298,7 +1360,7 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
       emsgn("Error while reading ShaDa file: " \
             entry_name " entry at position %" PRId64 " " \
             "has key which is not a string", \
-            (int64_t) fpos); \
+            (int64_t) initial_fpos); \
       emsgn("It is %" PRId64 " instead", \
             unpacked.data.via.map.ptr[i].key.type ); \
       ga_clear(&ad_ga); \
@@ -1347,7 +1409,7 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
       if (!msgpack_rpc_to_dictionary(&(unpacked.data), &(entry->data.header))) {
         emsgn("Error while reading ShaDa file: "
               "header entry at position %" PRId64 " is not a dictionary",
-              (int64_t) fpos);
+              (int64_t) initial_fpos);
         goto shada_read_next_item_error;
       }
       break;
@@ -1357,7 +1419,7 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
         emsgn("Error while reading ShaDa file: "
               "search pattern entry at position %" PRId64 " "
               "is not a dictionary",
-              (int64_t) fpos);
+              (int64_t) initial_fpos);
         goto shada_read_next_item_error;
       }
       entry->data.search_pattern = (struct search_pattern) {
@@ -1395,7 +1457,7 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
         emsgn("Error while reading ShaDa file: "
               "search pattern entry at position %" PRId64 " "
               "has no pattern",
-              (int64_t) fpos);
+              (int64_t) initial_fpos);
         ga_clear(&ad_ga);
         goto shada_read_next_item_error;
       }
@@ -1431,7 +1493,7 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
         emsgn("Error while reading ShaDa file: "
               "mark entry at position %" PRId64 " "
               "is not a dictionary",
-              (int64_t) fpos);
+              (int64_t) initial_fpos);
         goto shada_read_next_item_error;
       }
       entry->data.filemark = (struct shada_filemark) {
@@ -1460,7 +1522,7 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
         emsgn("Error while reading ShaDa file: "
               "mark entry at position %" PRId64 " "
               "is missing line number",
-              (int64_t) fpos);
+              (int64_t) initial_fpos);
         ga_clear(&ad_ga);
         goto shada_read_next_item_error;
       }
@@ -1493,7 +1555,7 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
         emsgn("Error while reading ShaDa file: "
               "register entry at position %" PRId64 " "
               "is not a dictionary",
-              (int64_t) fpos);
+              (int64_t) initial_fpos);
         goto shada_read_next_item_error;
       }
       entry->data.reg = (struct reg) {
@@ -1519,7 +1581,7 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
             emsgn("Error while reading ShaDa file: "
                   "register entry at position %" PRId64 " "
                   "has contents key with non-array value",
-                  (int64_t) fpos);
+                  (int64_t) initial_fpos);
             ga_clear(&ad_ga);
             goto shada_read_next_item_error;
           }
@@ -1527,7 +1589,7 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
             emsgn("Error while reading ShaDa file: "
                   "register entry at position %" PRId64 " "
                   "has contents key with empty array",
-                  (int64_t) fpos);
+                  (int64_t) initial_fpos);
             ga_clear(&ad_ga);
             goto shada_read_next_item_error;
           }
@@ -1538,7 +1600,7 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
               emsgn("Error while reading ShaDa file: "
                     "register entry at position %" PRId64 " "
                     "has contents array with non-string value",
-                    (int64_t) fpos);
+                    (int64_t) initial_fpos);
               ga_clear(&ad_ga);
               goto shada_read_next_item_error;
             }
@@ -1555,7 +1617,7 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
         emsgn("Error while reading ShaDa file: "
               "register entry at position %" PRId64 " "
               "has missing contents array",
-              (int64_t) fpos);
+              (int64_t) initial_fpos);
         ga_clear(&ad_ga);
         goto shada_read_next_item_error;
       }
@@ -1588,7 +1650,7 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
         emsgn("Error while reading ShaDa file: "
               "history entry at position %" PRId64 " "
               "is not an array",
-              (int64_t) fpos);
+              (int64_t) initial_fpos);
         goto shada_read_next_item_error;
       }
       entry->data.history_item = (struct history_item) {
@@ -1600,7 +1662,7 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
         emsgn("Error while reading ShaDa file: "
               "history entry at position %" PRId64 " "
               "does not have enough elements",
-              (int64_t) fpos);
+              (int64_t) initial_fpos);
         goto shada_read_next_item_error;
       }
       if (unpacked.data.via.array.ptr[0].type
@@ -1608,7 +1670,7 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
         emsgn("Error while reading ShaDa file: "
               "history entry at position %" PRId64 " "
               "has wrong history type type",
-              (int64_t) fpos);
+              (int64_t) initial_fpos);
         goto shada_read_next_item_error;
       }
       if (unpacked.data.via.array.ptr[1].type
@@ -1616,7 +1678,7 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
         emsgn("Error while reading ShaDa file: "
               "history entry at position %" PRId64 " "
               "has wrong history string type",
-              (int64_t) fpos);
+              (int64_t) initial_fpos);
         goto shada_read_next_item_error;
       }
       entry->data.history_item.histtype =
@@ -1651,7 +1713,7 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
         emsgn("Error while reading ShaDa file: "
               "variable entry at position %" PRId64 " "
               "is not an array",
-              (int64_t) fpos);
+              (int64_t) initial_fpos);
         goto shada_read_next_item_error;
       }
       entry->data.global_var = (struct global_var) {
@@ -1665,14 +1727,14 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
         emsgn("Error while reading ShaDa file: "
               "variable entry at position %" PRId64 " "
               "does not have enough elements",
-              (int64_t) fpos);
+              (int64_t) initial_fpos);
         goto shada_read_next_item_error;
       }
       if (unpacked.data.via.array.ptr[0].type != MSGPACK_OBJECT_BIN) {
         emsgn("Error while reading ShaDa file: "
               "variable entry at position %" PRId64 " "
               "has wrong variable name type",
-              (int64_t) fpos);
+              (int64_t) initial_fpos);
         goto shada_read_next_item_error;
       }
       if (unpacked.data.via.array.ptr[1].type == MSGPACK_OBJECT_NIL
@@ -1680,7 +1742,7 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
         emsgn("Error while reading ShaDa file: "
               "variable entry at position %" PRId64 " "
               "has wrong variable value type",
-              (int64_t) fpos);
+              (int64_t) initial_fpos);
         goto shada_read_next_item_error;
       }
       entry->data.global_var.name =
@@ -1721,7 +1783,7 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
         emsgn("Error while reading ShaDa file: "
               "sub string entry at position %" PRId64 " "
               "is not an array",
-              (int64_t) fpos);
+              (int64_t) initial_fpos);
         goto shada_read_next_item_error;
       }
       entry->data.sub_string = (struct sub_string) {
@@ -1732,14 +1794,14 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
         emsgn("Error while reading ShaDa file: "
               "sub string entry at position %" PRId64 " "
               "does not have enough elements",
-              (int64_t) fpos);
+              (int64_t) initial_fpos);
         goto shada_read_next_item_error;
       }
       if (unpacked.data.via.array.ptr[0].type != MSGPACK_OBJECT_BIN) {
         emsgn("Error while reading ShaDa file: "
               "sub string entry at position %" PRId64 " "
               "has wrong sub string type",
-              (int64_t) fpos);
+              (int64_t) initial_fpos);
         goto shada_read_next_item_error;
       }
       entry->data.sub_string.sub =
@@ -1771,19 +1833,21 @@ static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry)
       if (!msgpack_rpc_to_array(&(unpacked.data), &(entry->data.buffer_list))) {
         emsgn("Error while reading ShaDa file: "
               "buffer list entry at position %" PRId64 " is not an array",
-              (int64_t) fpos);
+              (int64_t) initial_fpos);
         goto shada_read_next_item_error;
       }
       break;
     }
-    case kSDItemMissing:
-    case kSDItemUnknown: {
+    case kSDItemMissing: {
       emsgu("Error while reading ShaDa file: "
             "there is an item at position %" PRIu64 " "
-            "that must not be there: Missing and Unknown items are "
+            "that must not be there: Missing items are "
             "for internal uses only",
             (uint64_t) initial_fpos);
       goto shada_read_next_item_error;
+    }
+    case kSDItemUnknown: {
+      assert(false);
     }
   }
   entry->type = (ShadaEntryType) type_u64;

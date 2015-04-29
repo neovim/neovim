@@ -9,6 +9,7 @@ enum {
   kShaDaWantMarks = 2,    ///< Load file marks
   kShaDaForceit = 4,      ///< Overwrite info already read
   kShaDaGetOldfiles = 8,  ///< Load v:oldfiles.
+  kShaDaWantHeader = 16,  ///< Do not skip header (shada_read_next_item).
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
