@@ -64,10 +64,10 @@ syn match helpSpecial		"\s\[[-a-z^A-Z0-9_]\{2,}]"ms=s+1
 syn match helpSpecial		"<[-a-zA-Z0-9_]\+>"
 syn match helpSpecial		"<[SCM]-.>"
 syn match helpNormal		"<---*>"
-syn match helpSpecial		"\[range]"
-syn match helpSpecial		"\[line]"
-syn match helpSpecial		"\[count]"
-syn match helpSpecial		"\[offset]"
+syn match helpSpecialBad	"\[range]"
+syn match helpSpecialBad	"\[line]"
+syn match helpSpecialBad	"\[count]"
+syn match helpSpecialBad	"\[offset]"
 syn match helpSpecial		"\[cmd]"
 syn match helpSpecial		"\[num]"
 syn match helpSpecial		"\[+num]"
@@ -164,6 +164,7 @@ hi def link helpExample		Comment
 hi def link helpOption		Type
 hi def link helpNotVi		Special
 hi def link helpSpecial		Special
+hi def link helpSpecialBad      Error
 hi def link helpNote		Todo
 
 hi def link helpComment		Comment
