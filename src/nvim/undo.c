@@ -1035,8 +1035,8 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
     }
   }
 
-  /* strip any s-bit */
-  perm = perm & 0777;
+  // Strip any sticky and executable bits.
+  perm = perm & 0666;
 
   /* If the undo file already exists, verify that it actually is an undo
    * file, and delete it. */
