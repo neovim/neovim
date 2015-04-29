@@ -83,6 +83,10 @@ sub read_in_file {
 
       # If not an empty line, emit as Lua comment.
       if (!/^$/) {
+        # Remove modeline
+        s/vim:.*set f\w+=vim//g;
+        # Remove trailing ":"
+        s/\s*:\s*$//g;
         push @description_lines, '-- ' . $_;
       }
 
