@@ -58,30 +58,30 @@ clicking right of the labels.
 In the GUI tab pages line you can use the right mouse button to open menu.
 |tabline-menu|.
 
-:[count]tabe[dit]				*:tabe* *:tabedit* *:tabnew*
-:[count]tabnew
+:[{count}]tabe[dit]				*:tabe* *:tabedit* *:tabnew*
+:[{count}]tabnew
 		Open a new tab page with an empty window, after the current
-		tab page.  For [count] see |:tab| below.
+		tab page.  For {count} see |:tab| below.
 
-:[count]tabe[dit] [++opt] [+cmd] {file}
-:[count]tabnew [++opt] [+cmd] {file}
+:[{count}]tabe[dit] [++opt] [+cmd] {file}
+:[{count}]tabnew [++opt] [+cmd] {file}
 		Open a new tab page and edit {file}, like with |:edit|.
-		For [count] see |:tab| below.
+		For {count} see |:tab| below.
 
-:[count]tabf[ind] [++opt] [+cmd] {file}			*:tabf* *:tabfind*
+:[{count}]tabf[ind] [++opt] [+cmd] {file}			*:tabf* *:tabfind*
 		Open a new tab page and edit {file} in 'path', like with
-		|:find|.  For [count] see |:tab| below.
+		|:find|.  For {count} see |:tab| below.
 		{not available when the |+file_in_path| feature was disabled
 		at compile time}
 
-:[count]tab {cmd}					*:tab*
+:[{count}]tab {cmd}					*:tab*
 		Execute {cmd} and when it opens a new window open a new tab
 		page instead.  Doesn't work for |:diffsplit|, |:diffpatch|,
 		|:execute| and |:normal|.
-		When [count] is omitted the tab page appears after the current
+		When {count} is omitted the tab page appears after the current
 		one.
-		When [count] is specified the new tab page comes after tab
-		page [count].  Use ":0tab cmd" to get the new tab page as the
+		When {count} is specified the new tab page comes after tab
+		page {count}.  Use ":0tab cmd" to get the new tab page as the
 		first one.
 		Examples: >
 			:tab split	" opens current buffer in new tab page
@@ -112,7 +112,7 @@ something else.
 		Changes to the buffer are not written and won't get lost, so
 		this is a "safe" command.
 
-:tabc[lose][!] {count}
+:tabc[lose][!] [{count}]
 		Close tab page {count}.  Fails in the same way as `:tabclose`
 		above.
 
@@ -139,9 +139,9 @@ gt					*i_CTRL-<PageDown>* *i_<C-PageDown>*
 		Go to the next tab page.  Wraps around from the last to the
 		first one.
 
-:tabn[ext] {count}
-{count}<C-PageDown>
-{count}gt	Go to tab page {count}.  The first tab page has number one.
+:tabn[ext] [{count}]
+[{count}]<C-PageDown>
+[{count}]gt	Go to tab page {count}.  The first tab page has number one.
 
 
 :tabp[revious]				*:tabp* *:tabprevious* *gT* *:tabN*
@@ -150,10 +150,10 @@ gt					*i_CTRL-<PageDown>* *i_<C-PageDown>*
 gT		Go to the previous tab page.  Wraps around from the first one
 		to the last one.
 
-:tabp[revious] {count}
-:tabN[ext] {count}
-{count}<C-PageUp>
-{count}gT	Go {count} tab pages back.  Wraps around from the first one
+:tabp[revious] [{count}]
+:tabN[ext] [{count}]
+[{count}]<C-PageUp>
+[{count}]gT	Go {count} tab pages back.  Wraps around from the first one
 		to the last one.
 
 :tabr[ewind]			*:tabfir* *:tabfirst* *:tabr* *:tabrewind*
