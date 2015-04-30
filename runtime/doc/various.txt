@@ -380,9 +380,7 @@ N  *+persistent_undo*	Persistent undo |undo-persistence|
 N  *+printer*		|:hardcopy| command
 H  *+profile*		|:profile| command
 m  *+python*		Python 2 interface |python|
-m  *+python/dyn*	Python 2 interface |python-dynamic| |/dyn|
 m  *+python3*		Python 3 interface |python|
-m  *+python3/dyn*	Python 3 interface |python-dynamic| |/dyn|
 N  *+quickfix*		|:make| and |quickfix| commands
 N  *+reltime*		|reltime()| function, 'hlsearch'/'incsearch' timeout,
 			'redrawtime' option
