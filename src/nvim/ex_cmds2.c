@@ -1897,6 +1897,7 @@ void ex_listdo(exarg_T *eap)
         /* go to window "wp" */
         if (!win_valid(wp))
           break;
+        assert(wp);
         win_goto(wp);
         if (curwin != wp)
           break;            /* something must be wrong */
