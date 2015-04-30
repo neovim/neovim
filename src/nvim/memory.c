@@ -14,16 +14,18 @@
 #include "nvim/misc1.h"
 #include "nvim/ui.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "memory.c.generated.h"
+#ifdef HAVE_JEMALLOC
+// Force je_ prefix on jemalloc functions.
+# define JEMALLOC_NO_DEMANGLE
+# include <jemalloc/jemalloc.h>
+# define malloc(size) je_malloc(size)
+# define calloc(count, size) je_calloc(count, size)
+# define realloc(ptr, size) je_realloc(ptr, size)
+# define free(ptr) je_free(ptr)
 #endif
 
-#if defined(USE_JEMALLOC) && !defined(UNIT_TESTING)
-#include "jemalloc/jemalloc.h"
-#define malloc(size) je_malloc(size)
-#define calloc(count, size) je_calloc(count, size)
-#define realloc(ptr, size) je_realloc(ptr, size)
-#define free(ptr) je_free(ptr)
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "memory.c.generated.h"
 #endif
 
 /// Try to free memory. Used when trying to recover from out of memory errors.

@@ -11,8 +11,8 @@ ExternalProject_Add(jemalloc
     -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
   BUILD_IN_SOURCE 1
   CONFIGURE_COMMAND sh ${DEPS_BUILD_DIR}/src/jemalloc/autogen.sh &&
-    ${DEPS_BUILD_DIR}/src/jemalloc/configure --with-jemalloc-prefix=je_
-    --enable-cc-silence CC=${DEPS_C_COMPILER} --prefix=${DEPS_INSTALL_DIR}
+    ${DEPS_BUILD_DIR}/src/jemalloc/configure --enable-cc-silence
+    CC=${DEPS_C_COMPILER} --prefix=${DEPS_INSTALL_DIR}
   BUILD_COMMAND ""
   INSTALL_COMMAND ${MAKE_PRG} install_include install_lib)
 

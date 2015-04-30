@@ -163,7 +163,7 @@ list(APPEND NVIM_LINK_LIBRARIES
     ${LUAJIT_LIBRARIES}
     ${LIBVTERM_LIBRARIES}
     ${LIBTERMKEY_LIBRARIES}
-    ${LIBUNIBILIUM_LIBRARIES}
+    ${UNIBILIUM_LIBRARIES}
     m
     util
     ${CMAKE_THREAD_LIBS_INIT}
@@ -171,8 +171,8 @@ list(APPEND NVIM_LINK_LIBRARIES
 
 set(NVIM_EXEC_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES})
 
-if(USE_JEMALLOC)
-  # dont use jemalloc in the unit test library
+# Don't use jemalloc in the unit test library.
+if(JEMALLOC_FOUND)
   list(APPEND NVIM_EXEC_LINK_LIBRARIES ${JEMALLOC_LIBRARIES})
 endif()
 

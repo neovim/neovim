@@ -46,6 +46,10 @@ if(Iconv_FOUND)
   set(HAVE_ICONV 1)
 endif()
 
+if(JEMALLOC_FOUND)
+  set(HAVE_JEMALLOC 1)
+endif()
+
 check_function_exists(lstat HAVE_LSTAT)
 if(NOT HAVE_LSTAT)
   # os_unix.c uses lstat.c

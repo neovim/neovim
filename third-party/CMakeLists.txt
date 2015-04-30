@@ -109,6 +109,13 @@ if(USE_BUNDLED_JEMALLOC)
   include(BuildJeMalloc)
 endif()
 
+add_custom_target(clean-shared-libraries
+  COMMAND ${CMAKE_COMMAND}
+    -DREMOVE_FILE_GLOB=${DEPS_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}*${CMAKE_SHARED_LIBRARY_SUFFIX}*
+    -P ${PROJECT_SOURCE_DIR}/cmake/RemoveFiles.cmake
+  DEPENDS ${THIRD_PARTY_DEPS}
+)
+
 add_custom_target(third-party ALL
   COMMAND ${CMAKE_COMMAND} -E touch .third-party
-  DEPENDS ${THIRD_PARTY_DEPS})
+  DEPENDS clean-shared-libraries)
