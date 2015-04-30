@@ -30,8 +30,6 @@ done, the features in this document are not available.	See |+eval| and
 11. The sandbox			|eval-sandbox|
 12. Textlock			|textlock|
 
-{Vi does not have any of these commands}
-
 ==============================================================================
 1. Variables						*variables*
 

@@ -17,9 +17,6 @@ The basics are explained in the user manual: |usr_45.txt|.
 
 Also see |help-translated| for multi-language help.
 
-{Vi does not have any of these features}
-{not available when compiled without the |+multi_lang| feature}
-
 ==============================================================================
 1. Messages						*multilang-messages*
 

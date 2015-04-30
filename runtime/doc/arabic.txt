@@ -6,8 +6,6 @@
 
 Arabic Language support (options & mappings) for Vim		*Arabic*
 
-{Vi does not have any of these commands}
-
 								*E800*
 In order to use right-to-left and Arabic mapping support, it is
 necessary to compile VIM with the |+arabic| feature.

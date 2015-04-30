@@ -23,8 +23,6 @@ You can avoid loading this plugin by setting the "loaded_matchit" variable
 in your |vimrc| file: >
 	:let loaded_matchit = 1
 
-{Vi does not have any of this}
-
 ==============================================================================
 1. Extended matching with "%"				*matchit-intro*
 

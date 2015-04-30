@@ -59,10 +59,10 @@ CTRL-C		Quit insert mode, go back to Normal mode.  Do not check for
 		event.
 
 						*i_CTRL-@*
-CTRL-@		Insert previously inserted text and stop insert.  {Vi: only
-		when typed as first char, only up to 128 chars}
+CTRL-@		Insert previously inserted text and stop insert.
+
 						*i_CTRL-A*
-CTRL-A		Insert previously inserted text.  {not in Vi}
+CTRL-A		Insert previously inserted text.
 
 						*i_CTRL-H* *i_<BS>* *i_BS*
 <BS> or CTRL-H	Delete the character before the cursor (see |i_backspacing|
@@ -96,10 +96,10 @@ CTRL-K {char1} [char2]
 		key, the code for that key is inserted in <> form.  For
 		example, the string "<S-Space>" can be entered by typing
 		<C-K><S-Space> (two keys).  Neither char is considered for
-		mapping.  {not in Vi}
+		mapping.
 
-CTRL-N		Find next keyword (see |i_CTRL-N|).  {not in Vi}
-CTRL-P		Find previous keyword (see |i_CTRL-P|).  {not in Vi}
+CTRL-N		Find next keyword (see |i_CTRL-N|).
+CTRL-P		Find previous keyword (see |i_CTRL-P|).
 
 CTRL-R {0-9a-z"%#*+:.-=}					*i_CTRL-R*
 		Insert the contents of a register.  Between typing CTRL-R and
@@ -136,7 +136,7 @@ CTRL-R {0-9a-z"%#*+:.-=}					*i_CTRL-R*
 				converted to a String.
 				When append() or setline() is invoked the undo
 				sequence will be broken.
-		See |registers| about registers.  {not in Vi}
+		See |registers| about registers.
 
 CTRL-R CTRL-R {0-9a-z"%#*+/:.-=}			*i_CTRL-R_CTRL-R*
 		Insert the contents of a register.  Works like using a single
@@ -148,7 +148,7 @@ CTRL-R CTRL-R {0-9a-z"%#*+/:.-=}			*i_CTRL-R_CTRL-R*
 <		Options 'textwidth', 'formatoptions', etc. still apply.  If
 		you also want to avoid these, use "<C-R><C-O>r", see below.
 		The '.' register (last inserted text) is still inserted as
-		typed.  {not in Vi}
+		typed.
 
 CTRL-R CTRL-O {0-9a-z"%#*+/:.-=}			*i_CTRL-R_CTRL-O*
 		Insert the contents of a register literally and don't
@@ -156,31 +156,29 @@ CTRL-R CTRL-O {0-9a-z"%#*+/:.-=}			*i_CTRL-R_CTRL-O*
 		|<MiddleMouse>|.
 		Does not replace characters!
 		The '.' register (last inserted text) is still inserted as
-		typed.  {not in Vi}
+		typed.
 
 CTRL-R CTRL-P {0-9a-z"%#*+/:.-=}			*i_CTRL-R_CTRL-P*
 		Insert the contents of a register literally and fix the
 		indent, like |[<MiddleMouse>|.
 		Does not replace characters!
 		The '.' register (last inserted text) is still inserted as
-		typed.  {not in Vi}
+		typed.
 
 						*i_CTRL-T*
 CTRL-T		Insert one shiftwidth of indent at the start of the current
-		line.  The indent is always rounded to a 'shiftwidth' (this is
-		vi compatible).  {Vi: only when in indent}
+		line.  The indent is always rounded to a 'shiftwidth'.
 						*i_CTRL-D*
 CTRL-D		Delete one shiftwidth of indent at the start of the current
-		line.  The indent is always rounded to a 'shiftwidth' (this is
-		vi compatible).  {Vi: CTRL-D works only when used after
-		autoindent}
+		line.  The indent is always rounded to a 'shiftwidth'.
+
 						*i_0_CTRL-D*
-0 CTRL-D	Delete all indent in the current line.  {Vi: CTRL-D works
-		only when used after autoindent}
+0 CTRL-D	Delete all indent in the current line.
+
 						*i_^_CTRL-D*
 ^ CTRL-D	Delete all indent in the current line.  The indent is
 		restored in the next line.  This is useful when inserting a
-		label.  {Vi: CTRL-D works only when used after autoindent}
+		label.
 
 						*i_CTRL-V*
 CTRL-V		Insert next non-digit literally.  For special keys, the
@@ -188,7 +186,7 @@ CTRL-V		Insert next non-digit literally.  For special keys, the
 		decimal, octal or hexadecimal value of a character
 		|i_CTRL-V_digit|.
 		The characters typed right after CTRL-V are not considered for
-		mapping.  {Vi: no decimal byte entry}
+		mapping.
 		Note: When CTRL-V is mapped (e.g., to paste text) you can
 		often use CTRL-Q instead |i_CTRL-Q|.
 
@@ -199,12 +197,12 @@ CTRL-Q		Same as CTRL-V.
 
 CTRL-X		Enter CTRL-X mode.  This is a sub-mode where commands can
 		be given to complete words or scroll the window.  See
-		|i_CTRL-X| and |ins-completion|. {not in Vi}
+		|i_CTRL-X| and |ins-completion|.
 
 						*i_CTRL-E*
-CTRL-E		Insert the character which is below the cursor.  {not in Vi}
+CTRL-E		Insert the character which is below the cursor.
 						*i_CTRL-Y*
-CTRL-Y		Insert the character which is above the cursor.  {not in Vi}
+CTRL-Y		Insert the character which is above the cursor.
 		Note that for CTRL-E and CTRL-Y 'textwidth' is not used, to be
 		able to copy characters from a long line.
 
@@ -221,8 +219,6 @@ CTRL-_		Switch between languages, as follows:
 		is set.
 		Please refer to |rileft.txt| for more information about
 		right-to-left mode.
-		{not in Vi}
-		Only if compiled with the |+rightleft| feature.
 
 						*i_CTRL-^*
 CTRL-^		Toggle the use of typing language characters.
@@ -241,14 +237,12 @@ CTRL-^		Toggle the use of typing language characters.
 		The language mappings are normally used to type characters
 		that are different from what the keyboard produces.  The
 		'keymap' option can be used to install a whole number of them.
-		{not in Vi}
 
 						*i_CTRL-]*
-CTRL-]		Trigger abbreviation, without inserting a character.  {not in
-		Vi}
+CTRL-]		Trigger abbreviation, without inserting a character.
 
 						*i_<Insert>*
-<Insert>	Toggle between Insert and Replace mode.  {not in Vi}
+<Insert>	Toggle between Insert and Replace mode.
 -----------------------------------------------------------------------
 
 						*i_backspacing*
@@ -270,7 +264,6 @@ For backwards compatibility the values "0", "1" and "2" are also allowed, see
 If the 'backspace' option does contain "eol" and the cursor is in column 1
 when one of the three keys is used, the current line is joined with the
 previous line.  This effectively deletes the <EOL> in front of the cursor.
-{Vi: does not cross lines, does not delete past start position of insert}
 
 						*i_CTRL-V_digit*
 With CTRL-V the decimal, octal or hexadecimal value of a character can be
@@ -487,15 +480,14 @@ The 'expandtab' option is off by default.  Note that in Replace mode, a single
 character is replaced with several spaces.  The result of this is that the
 number of characters in the line increases.  Backspacing will delete one
 space at a time.  The original character will be put back for only one space
-that you backspace over (the last one).  {Vi does not have the 'expandtab'
-option}
+that you backspace over (the last one).
 
 							*ins-smarttab*
 When the 'smarttab' option is on, a <Tab> inserts 'shiftwidth' positions at
 the beginning of a line and 'tabstop' positions in other places.  This means
 that often spaces instead of a <Tab> character are inserted.  When 'smarttab'
 is off, a <Tab> always inserts 'tabstop' positions, and 'shiftwidth' is only
-used for ">>" and the like.  {not in Vi}
+used for ">>" and the like.
 
 							*ins-softtabstop*
 When the 'softtabstop' option is non-zero, a <Tab> inserts 'softtabstop'
@@ -535,14 +527,12 @@ If the 'expandtab' option is on, a <Tab> will replace one character with
 several spaces.  The result of this is that the number of characters in the
 line increases.  Backspacing will delete one space at a time.  The original
 character will be put back for only one space that you backspace over (the
-last one).  {Vi does not have the 'expandtab' option}
+last one).
 
 ==============================================================================
 6. Virtual Replace mode		*vreplace-mode* *Virtual-Replace-mode*
 
 Enter Virtual Replace mode with the "gR" command in normal mode.
-{not available when compiled without the |+vreplace| feature}
-{Vi does not have Virtual Replace mode}
 
 Virtual Replace mode is similar to Replace mode, but instead of replacing
 actual characters in the file, you are replacing screen real estate, so that
@@ -1762,7 +1752,7 @@ I			Insert text before the first non-blank in the line
 			the last blank.
 
 							*gI*
-gI			Insert text in column 1 [count] times.  {not in Vi}
+gI			Insert text in column 1 [count] times.
 
 							*gi*
 gi			Insert text in the same position as where Insert mode
@@ -1773,19 +1763,16 @@ gi			Insert text in the same position as where Insert mode
 			but NOT for inserted/deleted characters.
 			When the |:keepjumps| command modifier is used the |'^|
 			mark won't be changed.
-			{not in Vi}
 
 							*o*
 o			Begin a new line below the cursor and insert text,
-			repeat [count] times.  {Vi: blank [count] screen
-			lines}
+			repeat [count] times.
 			When the '#' flag is in 'cpoptions' the count is
 			ignored.
 
 							*O*
 O			Begin a new line above the cursor and insert text,
-			repeat [count] times.  {Vi: blank [count] screen
-			lines}
+			repeat [count] times.
 			When the '#' flag is in 'cpoptions' the count is
 			ignored.
 
@@ -1840,9 +1827,6 @@ NOTE: These commands cannot be used with |:global| or |:vglobal|.
 			script, the insertion only starts after the function
 			or script is finished.
 			This command does not work from |:normal|.
-			{not in Vi}
-			{not available when compiled without the |+ex_extra|
-			feature}
 
 							*:stopi* *:stopinsert*
 :stopi[nsert]		Stop Insert mode as soon as possible.  Works like
@@ -1859,16 +1843,10 @@ NOTE: These commands cannot be used with |:global| or |:vglobal|.
 			Note that when using this command in a function or
 			script that the replacement will only start after
 			the function or script is finished.
-			{not in Vi}
-			{not available when compiled without the |+ex_extra|
-			feature}
 
 							*:startgreplace*
 :startg[replace][!]	Just like |:startreplace|, but use Virtual Replace
 			mode, like with |gR|.
-			{not in Vi}
-			{not available when compiled without the |+ex_extra|
-			feature}
 
 ==============================================================================
 10. Inserting a file					*inserting-file*

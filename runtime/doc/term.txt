@@ -170,9 +170,6 @@ It is always possible to change individual strings by setting the
 appropriate option.  For example: >
 	:set t_ce=^V^[[K	(CTRL-V, <Esc>, [, K)
 
-{Vi: no terminal options.  You have to exit Vi, edit the termcap entry and
-try again}
-
 The options are listed below.  The associated termcap code is always equal to
 the last two characters of the option name.  Only one termcap code is
 required: Cursor motion, 't_cm'.

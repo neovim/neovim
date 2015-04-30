@@ -13,8 +13,6 @@ This plugin is only available if 'compatible' is not set.
 You can avoid loading this plugin by setting the "loaded_gzip" variable: >
 	:let loaded_gzip = 1
 
-{Vi does not have any of this}
-
 ==============================================================================
 1. Autocommands						*gzip-autocmd*
 

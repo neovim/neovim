@@ -108,8 +108,6 @@ Copyright: Copyright (C) 1999-2014 Charles E Campbell    *netrw-copyright*
 13. Todo..................................................|netrw-todo|
 14. Credits...............................................|netrw-credits|
 
-{Vi does not have any of this}
-
 ==============================================================================
 2. Starting With Netrw					*netrw-start* {{{1
 

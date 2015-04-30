@@ -10,8 +10,6 @@ Vim client-server communication				*client-server*
 2. X11 specific items		|x11-clientserver|
 3. MS-Windows specific items	|w32-clientserver|
 
-{Vi does not have any of these commands}
-
 ==============================================================================
 1. Common functionality					*clientserver*
 

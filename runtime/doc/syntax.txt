@@ -39,11 +39,6 @@ In the User Manual:
 17. Color xterms		|xterm-color|
 18. When syntax is slow		|:syntime|
 
-{Vi does not have any of these commands}
-
-Syntax highlighting is not available when the |+syntax| feature has been
-disabled at compile time.
-
 ==============================================================================
 1. Quick start						*:syn-qstart*
 

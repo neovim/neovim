@@ -17,8 +17,6 @@ The Python Interface to Vim				*python* *Python*
 9. Dynamic loading				|python-dynamic|
 10. Python 3					|python3|
 
-{Vi does not have any of these commands}
-
 The Python 2.x interface is available only when Vim was compiled with the
 |+python| feature.
 The Python 3 interface is available only when Vim was compiled with the
@@ -69,7 +67,6 @@ and "EOF" do not have any indent.
 			None. If a string is returned, it becomes the text of
 			the line in the current turn. The default for [range]
 			is the whole file: "1,$".
-			{not in Vi}
 
 Examples:
 >
@@ -79,7 +76,7 @@ Examples:
 							*:pyfile* *:pyf*
 :[range]pyf[ile] {file}
 			Execute the Python script in {file}.  The whole
-			argument is used as a single file name.  {not in Vi}
+			argument is used as a single file name.
 
 Both of these commands do essentially the same thing - they execute a piece of
 Python code, with the "current range" |python-range| set to the given line

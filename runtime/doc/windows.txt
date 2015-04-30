@@ -26,12 +26,6 @@ The basics are explained in chapter 7 and 8 of the user manual |usr_07.txt|
 11. Using hidden buffers			|buffer-hidden|
 12. Special kinds of buffers			|special-buffers|
 
-{Vi does not have any of these commands}
-{not able to use multiple windows when the |+windows| feature was disabled at
-compile time}
-{not able to use vertically split windows when the |+vertsplit| feature was
-disabled at compile time}
-
 ==============================================================================
 1. Introduction					*windows-intro* *window*
 
@@ -710,8 +704,6 @@ can also get to them with the buffer list commands, like ":bnext".
 			the current window.
 			{cmd} can contain '|' to concatenate several commands.
 			{cmd} must not open or close windows or reorder them.
-			{not in Vi} {not available when compiled without the
-			|+listcmds| feature}
 			Also see |:tabdo|, |:argdo| and |:bufdo|.
 
 							*:bufdo*
@@ -738,8 +730,6 @@ can also get to them with the buffer list commands, like ":bnext".
 			autocommand event is disabled by adding it to
 			'eventignore'.  This considerably speeds up editing
 			each buffer.
-			{not in Vi} {not available when compiled without the
-			|+listcmds| feature}
 			Also see |:tabdo|, |:argdo| and |:windo|.
 
 Examples: >
@@ -858,7 +848,7 @@ CTRL-W CTRL-Z					*CTRL-W_CTRL-Z* *:pc* *:pclose*
 							*:pp* *:ppop*
 :[count]pp[op][!]
 		Does ":[count]pop[!]" in the preview window.  See |:pop| and
-		|:ptag|.  {not in Vi}
+		|:ptag|.
 
 CTRL-W }						*CTRL-W_}*
 		Use identifier under cursor as a tag and perform a :ptag on
