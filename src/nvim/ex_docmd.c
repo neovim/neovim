@@ -5813,6 +5813,7 @@ static void ex_tabonly(exarg_T *eap)
           break;
         }
       }
+      assert(first_tabpage);
       if (first_tabpage->tp_next == NULL) {
         break;
       }
