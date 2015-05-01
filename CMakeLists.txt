@@ -9,6 +9,11 @@ set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/usr" CACHE PATH "Path prefix 
 list(INSERT CMAKE_PREFIX_PATH 0 ${DEPS_PREFIX})
 set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${DEPS_PREFIX}/lib/pkgconfig")
 
+# GCC 5 is currently not supported, see https://github.com/neovim/neovim/issues/2090.
+if(CMAKE_COMPILER_IS_GNUCC AND NOT CMAKE_C_COMPILER_VERSION VERSION_LESS "5.0")
+  message(FATAL_ERROR "GCC 5 is currently not supported. Please export CC=.. to use another compiler, for example clang.")
+endif()
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   # CMake tries to treat /sw and /opt/local as extension of the system path, but
   # that doesn't really work out very well.  Once you have a dependency that
