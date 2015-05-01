@@ -1897,6 +1897,7 @@ void ex_listdo(exarg_T *eap)
         /* go to window "wp" */
         if (!win_valid(wp))
           break;
+        assert(wp);
         win_goto(wp);
         if (curwin != wp)
           break;            /* something must be wrong */
@@ -1905,6 +1906,7 @@ void ex_listdo(exarg_T *eap)
         /* go to window "tp" */
         if (!valid_tabpage(tp))
           break;
+        assert(tp);
         goto_tabpage_tp(tp, TRUE, TRUE);
         tp = tp->tp_next;
       } else if (eap->cmdidx == CMD_bufdo) {
