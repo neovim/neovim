@@ -147,8 +147,7 @@ These commands, except "gJ", insert one space in place of the <EOL> unless
 there is trailing white space or the next line starts with a ')'.  These
 commands, except "gJ", delete any leading white space on the next line.  If
 the 'joinspaces' option is on, these commands insert two spaces after a '.',
-'!' or '?' (but if 'cpoptions' includes the 'j' flag, they insert two spaces
-only after a '.').
+'!' or '?'.
 The 'B' and 'M' flags in 'formatoptions' change the behavior for inserting
 spaces before and after a multi-byte character |fo-table|.
 

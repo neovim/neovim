@@ -3719,11 +3719,10 @@ static int ins_compl_get_exp(pos_T *ini)
                   /* IObuf =~ "\k.* ", thus len >= 2 */
                   if (p_js
                       && (IObuff[len - 2] == '.'
-                          || (vim_strchr(p_cpo, CPO_JOINSP)
-                              == NULL
-                              && (IObuff[len - 2] == '?'
-                                  || IObuff[len - 2] == '!'))))
+                          || IObuff[len - 2] == '?'
+                          || IObuff[len - 2] == '!')) {
                     IObuff[len++] = ' ';
+                  }
                 }
                 /* copy as much as possible of the new word */
                 if (tmp_ptr - ptr >= IOSIZE - len)
