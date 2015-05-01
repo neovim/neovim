@@ -703,10 +703,7 @@ Visual Mode and Range					*v_:*
 		history for repeating a command on different Visually selected
 		lines.
 		When Visual mode was already ended, a short way to use the
-		Visual area for a range is `:*`.  This requires that "*" does
-		not appear in 'cpo', see |cpo-star|.  Otherwise you will have
-		to type `:'<,'>`
-
+		Visual area for a range is `:*`.
 
 ==============================================================================
 5. Ex command-line flags				*ex-flags*
