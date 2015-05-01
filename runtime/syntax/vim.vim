@@ -57,9 +57,6 @@ syn match   vimOption contained	"t_&8"
 syn match   vimOption contained	"t_%i"
 syn match   vimOption contained	"t_k;"
 
-" unsupported settings: these are supported by vi but don't do anything in vim {{{2
-syn keyword vimErrSetting contained	hardtabs ht w1200 w300 w9600 
-
 " AutoCmd Events {{{2
 syn case ignore
 syn keyword vimAutoEvent contained	BufAdd BufCreate BufDelete BufEnter BufFilePost BufFilePre BufHidden BufLeave BufNew BufNewFile BufRead BufReadCmd BufReadPost BufReadPre BufUnload BufWinEnter BufWinLeave BufWipeout BufWrite BufWriteCmd BufWritePost BufWritePre Cmd-event CmdwinEnter CmdwinLeave ColorScheme CompleteDone CursorHold CursorHoldI CursorMoved CursorMovedI EncodingChanged FileAppendCmd FileAppendPost FileAppendPre FileChangedRO FileChangedShell FileChangedShellPost FileEncoding FileReadCmd FileReadPost FileReadPre FileType FileWriteCmd FileWritePost FileWritePre FilterReadPost FilterReadPre FilterWritePost FilterWritePre FocusGained FocusLost FuncUndefined GUIEnter GUIFailed InsertChange InsertCharPre InsertEnter InsertLeave MenuPopup QuickFixCmdPost QuickFixCmdPre QuitPre RemoteReply SessionLoadPost ShellCmdPost ShellFilterPost SourceCmd SourcePre SpellFileMissing StdinReadPost StdinReadPre SwapExists Syntax TabEnter TabLeave TabNew TabNewEntered TabClosed TermChanged TermResponse TextChanged TextChangedI User UserGettingBored VimEnter VimLeave VimLeavePre VimResized WinEnter WinLeave

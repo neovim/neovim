@@ -76,7 +76,7 @@ endfunction
     " Existing and working option (short form)
     let test_cases += [['+is', 1]]
     " Existing option that is hidden.
-    let test_cases += [['+autoprint', 0]]
+    let test_cases += [['+mouseshape', 0]]
 
     " Existing environment variable
     let $EDITOR_NAME = 'Vim Editor'

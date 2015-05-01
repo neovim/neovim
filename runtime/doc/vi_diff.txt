@@ -43,9 +43,7 @@ only one line.
 ==============================================================================
 2. Missing options					*missing-options*
 
-These options are in the Unix Vi, but not in Vim.  If you try to set one of
-them you won't get an error message, but the value is not used and cannot be
-printed.
+These options are in the Unix Vi, but not in Vim.
 
 autoprint (ap)		boolean	(default on)		*'autoprint'* *'ap'*
 beautify (bf)		boolean	(default off)		*'beautify'* *'bf'*
