@@ -1855,6 +1855,10 @@ static void source_startup_scripts(mparm_T *parmp)
           && path_full_compare((char_u *)USR_VIMRC_FILE3,
             (char_u *)VIMRC_FILE, FALSE) != kEqualFiles
 #endif
+#ifdef USR_VIMRC_FILE4
+          && path_full_compare((char_u *)USR_VIMRC_FILE4,
+            (char_u *)VIMRC_FILE, FALSE) != kEqualFiles
+#endif
 #ifdef SYS_VIMRC_FILE
           && path_full_compare((char_u *)SYS_VIMRC_FILE,
             (char_u *)VIMRC_FILE, FALSE) != kEqualFiles
