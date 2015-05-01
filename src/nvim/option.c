@@ -415,9 +415,6 @@ static vimoption_T
   {"autoindent",  "ai",   P_BOOL|P_VI_DEF,
    (char_u *)&p_ai, PV_AI,
    {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"autoprint",   "ap",   P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
   {"autoread",    "ar",   P_BOOL|P_VI_DEF,
    (char_u *)&p_ar, PV_AR,
    {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
@@ -460,9 +457,6 @@ static vimoption_T
    (char_u *)&p_bsk, PV_NONE,
    {(char_u *)"", (char_u *)0L}
    SCRIPTID_INIT},
-  {"beautify",    "bf",   P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
   {"binary",      "bin",  P_BOOL|P_VI_DEF|P_RSTAT,
    (char_u *)&p_bin, PV_BIN,
    {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
@@ -734,9 +728,6 @@ static vimoption_T
   {"fkmap",       "fk",   P_BOOL|P_VI_DEF,
    (char_u *)&p_fkmap, PV_NONE,
    {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"flash",       "fl",   P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
   {"foldclose",   "fcl",  P_STRING|P_VI_DEF|P_COMMA|P_NODUP|P_RWIN,
    (char_u *)&p_fcl, PV_NONE,
    {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
@@ -808,9 +799,6 @@ static vimoption_T
   {"gdefault",    "gd",   P_BOOL|P_VI_DEF|P_VIM,
    (char_u *)&p_gd, PV_NONE,
    {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"graphic",     "gr",   P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
   {"grepformat",  "gfm",  P_STRING|P_VI_DEF|P_COMMA|P_NODUP,
    (char_u *)&p_gefm, PV_NONE,
    {(char_u *)DFLT_GREPFORMAT, (char_u *)0L}
@@ -865,9 +853,6 @@ static vimoption_T
    (char_u *)NULL, PV_NONE,
    {(char_u *)NULL, (char_u *)0L}
    SCRIPTID_INIT},
-  {"hardtabs",    "ht",   P_NUM|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)0L, (char_u *)0L} SCRIPTID_INIT},
   {"helpfile",    "hf",   P_STRING|P_EXPAND|P_VI_DEF|P_SECURE,
    (char_u *)&p_hf, PV_NONE,
    {(char_u *)DFLT_HELPFILE, (char_u *)0L}
@@ -1107,9 +1092,6 @@ static vimoption_T
   {"menuitems",   "mis",  P_NUM|P_VI_DEF,
    (char_u *)&p_mis, PV_NONE,
    {(char_u *)25L, (char_u *)0L} SCRIPTID_INIT},
-  {"mesg",        NULL,   P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
   {"mkspellmem",  "msm",  P_STRING|P_VI_DEF|P_EXPAND|P_SECURE,
    (char_u *)&p_msm, PV_NONE,
    {(char_u *)"460000,2000,500", (char_u *)0L}
@@ -1154,9 +1136,6 @@ static vimoption_T
   {"mousetime",   "mouset",   P_NUM|P_VI_DEF,
    (char_u *)&p_mouset, PV_NONE,
    {(char_u *)500L, (char_u *)0L} SCRIPTID_INIT},
-  {"novice",      NULL,   P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
   {"nrformats",   "nf",   P_STRING|P_ALLOCED|P_VI_DEF|P_COMMA|P_NODUP,
    (char_u *)&p_nf, PV_NF,
    {(char_u *)"octal,hex", (char_u *)0L}
@@ -1171,9 +1150,6 @@ static vimoption_T
    (char_u *)&p_ofu, PV_OFU,
    {(char_u *)"", (char_u *)0L}
    SCRIPTID_INIT},
-  {"open",        NULL,   P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
   {"opendevice",  "odev", P_BOOL|P_VI_DEF,
    (char_u *)NULL, PV_NONE,
    {(char_u *)FALSE, (char_u *)FALSE}
@@ -1181,9 +1157,6 @@ static vimoption_T
   {"operatorfunc", "opfunc", P_STRING|P_VI_DEF|P_SECURE,
    (char_u *)&p_opfunc, PV_NONE,
    {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
-  {"optimize",    "opt",  P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
   {"paragraphs",  "para", P_STRING|P_VI_DEF,
    (char_u *)&p_para, PV_NONE,
    {(char_u *)"IPLPPPQPP TPHPLIPpLpItpplpipbp",
@@ -1263,9 +1236,6 @@ static vimoption_T
    SCRIPTID_INIT},
   {"readonly",    "ro",   P_BOOL|P_VI_DEF|P_RSTAT|P_NOGLOB,
    (char_u *)&p_ro, PV_RO,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"redraw",      NULL,   P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
    {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
   {"redrawtime",  "rdt",  P_NUM|P_VI_DEF,
    (char_u *)&p_rdt, PV_NONE,
@@ -1431,9 +1401,6 @@ static vimoption_T
   {"sidescrolloff", "siso", P_NUM|P_VI_DEF|P_VIM|P_RBUF,
    (char_u *)&p_siso, PV_NONE,
    {(char_u *)0L, (char_u *)0L} SCRIPTID_INIT},
-  {"slowopen",    "slow", P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
   {"smartcase",   "scs",  P_BOOL|P_VI_DEF|P_VIM,
    (char_u *)&p_scs, PV_NONE,
    {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
@@ -1446,9 +1413,6 @@ static vimoption_T
   {"softtabstop", "sts",  P_NUM|P_VI_DEF|P_VIM,
    (char_u *)&p_sts, PV_STS,
    {(char_u *)0L, (char_u *)0L} SCRIPTID_INIT},
-  {"sourceany",   NULL,   P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
   {"spell",       NULL,   P_BOOL|P_VI_DEF|P_RWIN,
    VAR_WIN, PV_SPELL,
    {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
@@ -1639,15 +1603,6 @@ static vimoption_T
   {"visualbell",  "vb",   P_BOOL|P_VI_DEF,
    (char_u *)&p_vb, PV_NONE,
    {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"w300",        NULL,   P_NUM|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)0L, (char_u *)0L} SCRIPTID_INIT},
-  {"w1200",       NULL,   P_NUM|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)0L, (char_u *)0L} SCRIPTID_INIT},
-  {"w9600",       NULL,   P_NUM|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)0L, (char_u *)0L} SCRIPTID_INIT},
   {"warn",        NULL,   P_BOOL|P_VI_DEF,
    (char_u *)&p_warn, PV_NONE,
    {(char_u *)TRUE, (char_u *)0L} SCRIPTID_INIT},
@@ -2409,7 +2364,7 @@ do_set (
       arg += 7;
     } else {
       prefix = 1;
-      if (STRNCMP(arg, "no", 2) == 0 && STRNCMP(arg, "novice", 6) != 0) {
+      if (STRNCMP(arg, "no", 2) == 0) {
         prefix = 0;
         arg += 2;
       } else if (STRNCMP(arg, "inv", 3) == 0) {
@@ -6854,7 +6809,7 @@ set_context_in_set_cmd (
     }
     --p;
   }
-  if (STRNCMP(p, "no", 2) == 0 && STRNCMP(p, "novice", 6) != 0) {
+  if (STRNCMP(p, "no", 2) == 0) {
     xp->xp_context = EXPAND_BOOL_SETTINGS;
     p += 2;
   }
