@@ -97,7 +97,6 @@
 #define CPO_FNAMEW      'F'     /* set file name for ":w file" */
 #define CPO_INTMOD      'i'     /* interrupt a read makes buffer modified */
 #define CPO_INDENT      'I'     /* remove auto-indent more often */
-#define CPO_JOINSP      'j'     /* only use two spaces for join after '.' */
 #define CPO_ENDOFSENT   'J'     /* need two spaces to detect end of sentence */
 #define CPO_KEYCODE     'k'     /* don't recognize raw key code in mappings */
 #define CPO_KOFFSET     'K'     /* don't wait for key code in mappings */
@@ -141,9 +140,9 @@
                                  * cursor would not move */
 /* default values for Vim, Vi and POSIX */
 #define CPO_VIM         "aABceFs"
-#define CPO_VI          "aAbBcCdDeEfFiIjJkKlLmMnoOpPqrRsStuvWxXyZ$!%+<>;"
+#define CPO_VI          "aAbBcCdDeEfFiIJkKlLmMnoOpPqrRsStuvWxXyZ$!%+<>;"
 #define CPO_ALL \
-  "aAbBcCdDeEfFiIjJkKlLmMnoOpPqrRsStuvWxXyZ$!%+<>#{|&/\\.;"
+  "aAbBcCdDeEfFiIJkKlLmMnoOpPqrRsStuvWxXyZ$!%+<>#{|&/\\.;"
 
 /* characters for p_ww option: */
 #define WW_ALL          "bshl<>[],~"
