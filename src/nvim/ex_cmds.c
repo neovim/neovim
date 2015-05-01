@@ -4833,18 +4833,18 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
 {
   char_u      *s, *d;
   int i;
-  static char *(mtable[]) = {"*", "g*", "[*", "]*", ":*",
+  static char *(mtable[]) = {"*", "g*", "[*", "]*",
                              "/*", "/\\*", "\"*", "**",
-                             "cpo-*", "/\\(\\)", "/\\%(\\)",
+                             "/\\(\\)", "/\\%(\\)",
                              "?", ":?", "?<CR>", "g?", "g?g?", "g??", "z?",
                              "/\\?", "/\\z(\\)", "\\=", ":s\\=",
                              "[count]", "[quotex]", "[range]",
                              "[pattern]", "\\|", "\\%$",
                              "s/\\~", "s/\\U", "s/\\L",
                              "s/\\1", "s/\\2", "s/\\3", "s/\\9"};
-  static char *(rtable[]) = {"star", "gstar", "[star", "]star", ":star",
+  static char *(rtable[]) = {"star", "gstar", "[star", "]star",
                              "/star", "/\\\\star", "quotestar", "starstar",
-                             "cpo-star", "/\\\\(\\\\)", "/\\\\%(\\\\)",
+                             "/\\\\(\\\\)", "/\\\\%(\\\\)",
                              "?", ":?", "?<CR>", "g?", "g?g?", "g??", "z?",
                              "/\\\\?", "/\\\\z(\\\\)", "\\\\=", ":s\\\\=",
                              "\\[count]", "\\[quotex]", "\\[range]",

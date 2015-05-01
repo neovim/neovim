@@ -1489,8 +1489,9 @@ static char_u * do_one_cmd(char_u **cmdlinep,
 
   cmd = ea.cmd;
   ea.cmd = skip_range(ea.cmd, NULL);
-  if (*ea.cmd == '*' && vim_strchr(p_cpo, CPO_STAR) == NULL)
+  if (*ea.cmd == '*') {
     ea.cmd = skipwhite(ea.cmd + 1);
+  }
   p = find_command(&ea, NULL);
 
   /*
@@ -1605,7 +1606,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
         ++ea.addr_count;
       }
       /* '*' - visual area */
-      else if (*ea.cmd == '*' && vim_strchr(p_cpo, CPO_STAR) == NULL) {
+      else if (*ea.cmd == '*') {
         pos_T       *fp;
 
         if (ea.addr_type != ADDR_LINES) {
@@ -2373,7 +2374,7 @@ static char_u *find_command(exarg_T *eap, int *full)
         ++p;
 
     /* check for non-alpha command */
-    if (p == eap->cmd && vim_strchr((char_u *)"@*!=><&~#", *p) != NULL)
+    if (p == eap->cmd && vim_strchr((char_u *)"@!=><&~#", *p) != NULL)
       ++p;
     len = (int)(p - eap->cmd);
     if (*eap->cmd == 'd' && (p[-1] == 'l' || p[-1] == 'p')) {
@@ -4096,11 +4097,10 @@ void separate_nextcmd(exarg_T *eap)
       (void)skip_expr(&p);
     }
     /* Check for '"': start of comment or '|': next command */
-    /* :@" and :*" do not start a comment!
+    /* :@" does not start a comment!
      * :redir @" doesn't either. */
     else if ((*p == '"' && !(eap->argt & NOTRLCOM)
-              && ((eap->cmdidx != CMD_at && eap->cmdidx != CMD_star)
-                  || p != eap->arg)
+              && (eap->cmdidx != CMD_at || p != eap->arg)
               && (eap->cmdidx != CMD_redir
                   || p != eap->arg + 1 || p[-1] != '@'))
              || *p == '|' || *p == '\n') {
@@ -7144,20 +7144,20 @@ static void ex_join(exarg_T *eap)
 }
 
 /*
- * ":[addr]@r" or ":[addr]*r": execute register
+ * ":[addr]@r": execute register
  */
 static void ex_at(exarg_T *eap)
 {
-  int c;
   int prev_len = typebuf.tb_len;
 
   curwin->w_cursor.lnum = eap->line2;
 
-
-  /* get the register name.  No name means to use the previous one */
-  c = *eap->arg;
-  if (c == NUL || (c == '*' && *eap->cmd == '*'))
+  // Get the register name. No name means use the previous one.
+  int c = *eap->arg;
+  if (c == NUL) {
     c = '@';
+  }
+
   /* Put the register in the typeahead buffer with the "silent" flag. */
   if (do_execreg(c, TRUE, vim_strchr(p_cpo, CPO_EXECBUF) != NULL, TRUE)
       == FAIL) {

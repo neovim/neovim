@@ -1936,9 +1936,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 		+	When included, a ":write file" command will reset the
 			'modified' flag of the buffer, even though the buffer
 			itself may still be different from its file.
-								*cpo-star*
-		*	Use ":*" in the same way as ":@".  When not included,
-			":*" is an alias for ":'<,'>", select the Visual area.
 								*cpo-<*
 		<	Disable the recognition of special key codes in |<>|
 			form in mappings, abbreviations, and the "to" part of

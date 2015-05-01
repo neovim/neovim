@@ -3137,13 +3137,6 @@ return {
     func='do_sub',
   },
   {
-    command='*',
-    enum='CMD_star',
-    flags=bit.bor(RANGE, WHOLEFOLD, EXTRA, TRLBAR, CMDWIN),
-    addr_type=ADDR_LINES,
-    func='ex_at',
-  },
-  {
     command='<',
     enum='CMD_lshift',
     flags=bit.bor(RANGE, WHOLEFOLD, COUNT, EXFLAGS, TRLBAR, CMDWIN, MODIFY),

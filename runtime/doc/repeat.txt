@@ -128,14 +128,12 @@ q			Stops recording.
 							*@@* *E748*
 @@			Repeat the previous @{0-9a-z":*} [count] times.
 
-:[addr]*{0-9a-z".=+}						*:@* *:star*
+							*:@*
 :[addr]@{0-9a-z".=*+}	Execute the contents of register {0-9a-z".=*+} as an Ex
 			command.  First set cursor at line [addr] (default is
 			current line).  When the last line in the register does
 			not have a <CR> it will be added automatically when
 			the 'e' flag is present in 'cpoptions'.
-			Note that the ":*" command is only recognized when the
-			'*' flag is present in 'cpoptions'.
 			For ":@=" the last used expression is used.  The
 			result of evaluating the expression is executed as an
 			Ex command.
