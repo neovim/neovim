@@ -4013,17 +4013,16 @@ did_set_string_option (
   else if (varp == &p_cb) {
     if (opt_strings_flags(p_cb, p_cb_values, &cb_flags, TRUE) != OK)
       errmsg = e_invarg;
-  }
-  /* When 'spelllang' or 'spellfile' is set and there is a window for this
-   * buffer in which 'spell' is set load the wordlists. */
-  else if (varp == &(curbuf->b_s.b_p_spl) || varp == &(curbuf->b_s.b_p_spf)) {
-    int l;
-
-    if (varp == &(curbuf->b_s.b_p_spf)) {
-      l = (int)STRLEN(curbuf->b_s.b_p_spf);
-      if (l > 0 && (l < 4 || STRCMP(curbuf->b_s.b_p_spf + l - 4,
-                        ".add") != 0))
+  } else if (varp == &(curwin->w_s->b_p_spl)
+             || varp == &(curwin->w_s->b_p_spf)) {
+    // When 'spelllang' or 'spellfile' is set and there is a window for this
+    // buffer in which 'spell' is set load the wordlists.
+    if (varp == &(curwin->w_s->b_p_spf)) {
+      int l = (int)STRLEN(curwin->w_s->b_p_spf);
+      if (l > 0
+          && (l < 4 || STRCMP(curwin->w_s->b_p_spf + l - 4, ".add") != 0)) {
         errmsg = e_invarg;
+      }
     }
 
     if (errmsg == NULL) {

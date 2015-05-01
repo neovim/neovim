@@ -5404,11 +5404,10 @@ void ex_ownsyntax(exarg_T *eap)
   if (curwin->w_s == &curwin->w_buffer->b_s) {
     curwin->w_s = xmalloc(sizeof(synblock_T));
     memset(curwin->w_s, 0, sizeof(synblock_T));
+    // TODO: Keep the spell checking as it was.
     curwin->w_p_spell = FALSE;          /* No spell checking */
     clear_string_option(&curwin->w_s->b_p_spc);
     clear_string_option(&curwin->w_s->b_p_spf);
-    vim_regfree(curwin->w_s->b_cap_prog);
-    curwin->w_s->b_cap_prog = NULL;
     clear_string_option(&curwin->w_s->b_p_spl);
   }
 
