@@ -7010,10 +7010,7 @@ static void nv_edit(cmdarg_T *cap)
       break;
 
     case 'I':           /* "I"nsert before the first non-blank */
-      if (vim_strchr(p_cpo, CPO_INSEND) == NULL)
-        beginline(BL_WHITE);
-      else
-        beginline(BL_WHITE|BL_FIX);
+      beginline(BL_WHITE);
       break;
 
     case 'a':           /* "a"ppend is like "i"nsert on the next character. */
