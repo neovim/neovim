@@ -137,7 +137,7 @@ UI *tui_start(void)
   data->winch_handle.data = ui;
 
   ui->stop = tui_stop;
-  ui->rgb = os_getenv("NVIM_TUI_ENABLE_TRUE_COLOR") != NULL;
+  ui->rgb = os_env_istruthy("NVIM_TUI_TRUE_COLOR");
   ui->data = data;
   ui->resize = tui_resize;
   ui->clear = tui_clear;
@@ -770,7 +770,7 @@ static void fix_terminfo(TUIData *data)
     unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB);
   }
 
-  if (os_getenv("NVIM_TUI_ENABLE_CURSOR_SHAPE") == NULL) {
+  if (!os_env_istruthy("NVIM_TUI_CURSOR_SHAPE")) {
     goto end;
   }
 
