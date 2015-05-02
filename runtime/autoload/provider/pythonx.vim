@@ -55,7 +55,7 @@ function! s:check_interpreter(prog, ver, skip) abort
     return [1, '', '']
   endif
 
-  " Load neovim module check
+  " Try to load neovim module, and output Python version.
   let ver = system(a:prog . ' -c ' .
         \ '''import sys; sys.stdout.write(str(sys.version_info[0]) + '.
         \ '"." + str(sys.version_info[1])); '''.
@@ -63,6 +63,9 @@ function! s:check_interpreter(prog, ver, skip) abort
         \   '''import pkgutil; exit(pkgutil.get_loader("neovim") is None)''':
         \   '''import importlib; exit(importlib.find_loader("neovim") is None)''')
         \ )
-  return [!v:shell_error, 'Python'.a:ver.' interpreter have not neovim module.', ver]
+  if v:shell_error
+    return [0, 'Python'.a:ver.' interpreter ('.a:prog.') has no neovim module installed.', ver]
+  endif
+  return [1, '', ver]
 endfunction
 
