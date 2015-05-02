@@ -426,7 +426,8 @@ static struct vimvar {
   {VV_NAME("oldfiles",         VAR_LIST), 0},
   {VV_NAME("windowid",         VAR_NUMBER), VV_RO},
   {VV_NAME("progpath",         VAR_STRING), VV_RO},
-  {VV_NAME("command_output",   VAR_STRING), 0}
+  {VV_NAME("command_output",   VAR_STRING), 0},
+  {VV_NAME("completed_item",   VAR_DICT), VV_RO},
 };
 
 /* shorthand */
@@ -435,6 +436,7 @@ static struct vimvar {
 #define vv_float        vv_di.di_tv.vval.v_float
 #define vv_str          vv_di.di_tv.vval.v_string
 #define vv_list         vv_di.di_tv.vval.v_list
+#define vv_dict         vv_di.di_tv.vval.v_dict
 #define vv_tv           vv_di.di_tv
 
 static dictitem_T vimvars_var;                  /* variable used for v: */
@@ -16281,7 +16283,7 @@ void set_vim_var_nr(int idx, long val)
 /*
  * Get number v: variable value.
  */
-long get_vim_var_nr(int idx)
+long get_vim_var_nr(int idx) FUNC_ATTR_PURE
 {
   return vimvars[idx].vv_nr;
 }
@@ -16289,7 +16291,7 @@ long get_vim_var_nr(int idx)
 /*
  * Get string v: variable value.  Uses a static buffer, can only be used once.
  */
-char_u *get_vim_var_str(int idx) FUNC_ATTR_NONNULL_RET
+char_u *get_vim_var_str(int idx) FUNC_ATTR_PURE FUNC_ATTR_NONNULL_RET
 {
   return get_tv_string(&vimvars[idx].vv_tv);
 }
@@ -16298,9 +16300,16 @@ char_u *get_vim_var_str(int idx) FUNC_ATTR_NONNULL_RET
  * Get List v: variable value.  Caller must take care of reference count when
  * needed.
  */
-list_T *get_vim_var_list(int idx)
+list_T *get_vim_var_list(int idx) FUNC_ATTR_PURE FUNC_ATTR_NONNULL_RET
 {
   return vimvars[idx].vv_list;
+}
+
+/// Get Dictionary v: variable value.  Caller must take care of reference count
+/// when needed.
+dict_T *get_vim_var_dict(int idx) FUNC_ATTR_PURE FUNC_ATTR_NONNULL_RET
+{
+  return vimvars[idx].vv_dict;
 }
 
 /*
@@ -16334,8 +16343,7 @@ void set_vcount(long count, long count1, int set_prevcount)
 /*
  * Set string v: variable to a copy of "val".
  */
-void 
-set_vim_var_string (
+void set_vim_var_string (
     int idx,
     char_u *val,
     int len                    /* length of "val" to use or -1 (whole string) */
@@ -16363,6 +16371,26 @@ void set_vim_var_list(int idx, list_T *val)
   vimvars[idx].vv_list = val;
   if (val != NULL)
     ++val->lv_refcount;
+}
+
+/// Set Dictionary v: variable to "val".
+void set_vim_var_dict(int idx, dict_T *val) FUNC_ATTR_NONNULL_ALL
+{
+  dict_unref(vimvars[idx].vv_dict);
+
+  // Set readonly
+  int todo = (int)val->dv_hashtab.ht_used;
+  for (hashitem_T *hi = val->dv_hashtab.ht_array; todo > 0 ; ++hi) {
+    if (HASHITEM_EMPTY(hi)) {
+       continue;
+    }
+
+    --todo;
+    HI2DI(hi)->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
+  }
+
+  vimvars[idx].vv_dict = val;
+  ++val->dv_refcount;
 }
 
 /*

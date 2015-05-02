@@ -506,6 +506,8 @@ ColorScheme			After loading a color scheme. |:colorscheme|
 CompleteDone			After Insert mode completion is done.  Either
 				when something was completed or abandoning
 				completion. |ins-completion|
+				The |v:completed_item| variable contains the
+				completed item.
 
 							*CursorHold*
 CursorHold			When the user doesn't press a key for the time

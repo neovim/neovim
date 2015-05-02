@@ -63,6 +63,9 @@
 # define ASCII_ISALPHA(c) (ASCII_ISUPPER(c) || ASCII_ISLOWER(c))
 # define ASCII_ISALNUM(c) (ASCII_ISALPHA(c) || ascii_isdigit(c))
 
+/* Returns empty string if it is NULL. */
+#define EMPTY_IF_NULL(x) ((x) ? (x) : (char_u *)"")
+
 /* macro version of chartab().
  * Only works with values 0-255!
  * Doesn't work for UTF-8 mode with chars >= 0x80. */

@@ -1326,6 +1326,12 @@ v:cmdbang	Set like v:cmdarg for a file read/write command.  When a "!"
 		can only be used in autocommands.  For user commands |<bang>|
 		can be used.
 
+				*v:completed_item* *completed_item-variable*
+v:completed_item
+		Dictionary containing the most recent |complete-items| after
+		|CompleteDone|.  Empty if the completion failed, or after
+		leaving and re-entering insert mode.
+
 					*v:count* *count-variable*
 v:count		The count given for the last Normal mode command.  Can be used
 		to get the count before a mapping.  Read-only.	Example: >
