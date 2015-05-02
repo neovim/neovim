@@ -2734,6 +2734,8 @@ static void ins_compl_clear(void)
   xfree(compl_orig_text);
   compl_orig_text = NULL;
   compl_enter_selects = FALSE;
+  // clear v:completed_item
+  set_vim_var_dict(VV_COMPLETED_ITEM, dict_alloc());
 }
 
 /*
@@ -3815,6 +3817,8 @@ static void ins_compl_delete(void)
   // TODO: is this sufficient for redrawing?  Redrawing everything causes
   // flicker, thus we can't do that.
   changed_cline_bef_curs();
+  // clear v:completed_item
+  set_vim_var_dict(VV_COMPLETED_ITEM, dict_alloc());
 }
 
 /* Insert the new text being completed. */
@@ -3825,6 +3829,21 @@ static void ins_compl_insert(void)
     compl_used_match = FALSE;
   else
     compl_used_match = TRUE;
+
+  // Set completed item.
+  // { word, abbr, menu, kind, info }
+  dict_T *dict = dict_alloc();
+  dict_add_nr_str(dict, "word", 0L,
+                  EMPTY_IF_NULL(compl_shown_match->cp_str));
+  dict_add_nr_str(dict, "abbr", 0L,
+                  EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_ABBR]));
+  dict_add_nr_str(dict, "menu", 0L,
+                  EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_MENU]));
+  dict_add_nr_str(dict, "kind", 0L,
+                  EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_KIND]));
+  dict_add_nr_str(dict, "info", 0L,
+                  EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_INFO]));
+  set_vim_var_dict(VV_COMPLETED_ITEM, dict);
 }
 
 /*

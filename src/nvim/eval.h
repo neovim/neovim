@@ -64,6 +64,7 @@ enum {
     VV_WINDOWID,
     VV_PROGPATH,
     VV_COMMAND_OUTPUT,
+    VV_COMPLETED_ITEM,
     VV_LEN, /* number of v: vars */
 };
 
