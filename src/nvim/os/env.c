@@ -88,6 +88,30 @@ char *os_getenvname_at_index(size_t index)
   return name;
 }
 
+/// Check if the environment variable `name` exists and has
+/// a value of either 1, "on", "yes", or "true".
+bool os_env_istruthy(const char *name) FUNC_ATTR_NONNULL_ALL
+{
+  const char *val = os_getenv(name);
+  if (val == NULL || *val == NUL) {  // TODO(Pyrohh): Remove the check for
+    return false;                    // NUL after #2574 is merged.
+  }
+
+  errno = 0;
+  long n = strtol(val, NULL, 0);
+  if (errno == ERANGE) {
+    return false;
+  }
+
+  if (n == 1
+      || strncmp(val, "on", 3) == 0
+      || strncmp(val, "yes", 4) == 0
+      || strncmp(val, "true", 5) == 0) {
+    return true;
+  }
+
+  return false;
+}
 
 /// Get the process ID of the Neovim process.
 ///
