@@ -4915,9 +4915,11 @@ readfile({fname} [, {binary} [, {max}]])
 		Also see |writefile()|.
 
 reltime([{start} [, {end}]])				*reltime()*
-		Return an item that represents a time value.  The format of
-		the item depends on the system.  It can be passed to
-		|reltimestr()| to convert it to a string.
+		Return a |List| that represents a time value that can be
+		passed to |reltimestr()| to convert it to a |String|.  In vim,
+		the result will be OS-dependent.
+		The first item represents larger increment of time and the
+		second represents a very small increment.
 		Without an argument it returns the current time.
 		With one argument is returns the time passed since the time
 		specified in the argument.
@@ -4925,7 +4927,6 @@ reltime([{start} [, {end}]])				*reltime()*
 		and {end}.
 		The {start} and {end} arguments must be values returned by
 		reltime().
-		{only available when compiled with the |+reltime| feature}
 
 reltimestr({time})				*reltimestr()*
 		Return a String that represents the time value of {time}.
@@ -4940,7 +4941,6 @@ reltimestr({time})				*reltimestr()*
 		can use split() to remove it. >
 			echo split(reltimestr(reltime(start)))[0]
 <		Also see |profiling|.
-		{only available when compiled with the |+reltime| feature}
 
 							*remote_expr()* *E449*
 remote_expr({server}, {string} [, {idvar}])
