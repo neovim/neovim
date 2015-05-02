@@ -25,7 +25,9 @@ function! provider#pythonx#Detect(ver) abort
     let [check, err, ver] = s:check_interpreter(prog, a:ver, skip)
     if check
       let [check, err] = s:check_version(prog, ver, skip)
-      return [prog, err]
+      if check
+        return [prog, err]
+      endif
     endif
   endfor
 
