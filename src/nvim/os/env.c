@@ -427,6 +427,31 @@ char *vim_getenv(const char *name)
     return xstrdup(kos_env_path);
   }
 
+  // XDG Base Directory expansion.
+  if (strncmp(name, "XDG_", 4) == 0) {
+    const char *home = vim_getenv("HOME");
+    if (!home) {
+        return NULL;
+    }
+
+    const char *home_suffix = "";
+    if (strcmp(name, "XDG_DATA_HOME") == 0) {
+      home_suffix = "/.local/share/";
+    } else if (strcmp(name, "XDG_CONFIG_HOME") == 0) {
+      home_suffix = "/.config/";
+    } else if (strcmp(name, "XDG_CACHE_HOME") == 0) {
+      home_suffix = "/.cache/";
+    } else if (strcmp(name, "XDG_RUNTIME_DIR") == 0) {
+      return xstrdup("/tmp/");  // Arbitrary value, any idea?
+    }
+
+    // We need to apprend the prefix to the HOME path.
+    char *value = vim_getenv("HOME");
+    value = xrealloc(value, strlen(value) + strlen(home_suffix) + 1);
+    strcat(value, home_suffix);
+    return value;
+  }
+
   bool vimruntime = (strcmp(name, "VIMRUNTIME") == 0);
   if (!vimruntime && strcmp(name, "VIM") != 0) {
     return NULL;
