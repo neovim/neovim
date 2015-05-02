@@ -87,6 +87,15 @@ local spaces = any_amount(branch(
       any_character
     )),
     lit('\n')
+  ),
+  -- Linemarker inserted by preprocessor
+  concat(
+    lit('# '),
+    any_amount(concat(
+      neg_look_ahead(lit('\n')),
+      any_character
+    )),
+    lit('\n')
   )
 ))
 local typ_part = concat(
@@ -206,6 +215,8 @@ while init ~= nil do
       declaration = declaration:gsub('/%*.-%*/', '')
       declaration = declaration:gsub('//.-\n', '\n')
 
+      declaration = declaration:gsub('# .-\n', '')
+
       declaration = declaration:gsub('\n', ' ')
       declaration = declaration:gsub('%s+', ' ')
       declaration = declaration:gsub(' ?%( ?', '(')
@@ -220,6 +231,7 @@ while init ~= nil do
       else
         non_static = non_static .. declaration
       end
+      init = e
     end
   end
 end
