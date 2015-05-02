@@ -3,6 +3,7 @@
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/cursor_shape.h"
+#include "nvim/memory.h"
 #include "nvim/misc2.h"
 #include "nvim/ex_getln.h"
 #include "nvim/charset.h"

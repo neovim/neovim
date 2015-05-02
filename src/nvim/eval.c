@@ -1762,12 +1762,12 @@ ex_let_one (
         }
         if (p != NULL) {
           vim_setenv((char *)name, (char *)p);
-          if (STRICMP(name, "HOME") == 0)
+          if (striequal((char *)name, "HOME"))
             init_homedir();
-          else if (didset_vim && STRICMP(name, "VIM") == 0)
+          else if (didset_vim && striequal((char *)name, "VIM"))
             didset_vim = FALSE;
           else if (didset_vimruntime
-                   && STRICMP(name, "VIMRUNTIME") == 0)
+                   && striequal((char *)name, "VIMRUNTIME"))
             didset_vimruntime = FALSE;
           arg_end = arg;
         }
@@ -1883,7 +1883,7 @@ ex_let_one (
  */
 static int check_changedtick(char_u *arg)
 {
-  if (STRNCMP(arg, "b:changedtick", 13) == 0 && !eval_isnamec(arg[13])) {
+  if (strnequal((char *)arg, "b:changedtick", 13) && !eval_isnamec(arg[13])) {
     EMSG2(_(e_readonlyvar), arg);
     return TRUE;
   }
@@ -3031,7 +3031,7 @@ void del_menutrans_vars(void)
   for (hi = globvarht.ht_array; todo > 0 && !got_int; ++hi) {
     if (!HASHITEM_EMPTY(hi)) {
       --todo;
-      if (STRNCMP(HI2DI(hi)->di_key, "menutrans_", 10) == 0)
+      if (strnequal((char *)HI2DI(hi)->di_key, "menutrans_", 10))
         delete_var(&globvarht, hi);
     }
   }
@@ -3094,7 +3094,7 @@ char_u *get_user_var_name(expand_T *xp, int idx)
       ++hi;
     while (HASHITEM_EMPTY(hi))
       ++hi;
-    if (STRNCMP("g:", xp->xp_pattern, 2) == 0)
+    if (strnequal("g:", (char *)xp->xp_pattern, 2))
       return cat_prefix_varname('g', hi->hi_key);
     return hi->hi_key;
   }
@@ -3563,8 +3563,8 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
               || var2.vval.v_string == NULL)
             n1 = FALSE;
           else
-            n1 = STRCMP(rettv->vval.v_string,
-                var2.vval.v_string) == 0;
+            n1 = strequal((char *)rettv->vval.v_string,
+                          (char *)var2.vval.v_string);
           if (type == TYPE_NEQUAL)
             n1 = !n1;
         }
@@ -4951,7 +4951,8 @@ tv_equal (
   case VAR_FUNC:
     return tv1->vval.v_string != NULL
            && tv2->vval.v_string != NULL
-           && STRCMP(tv1->vval.v_string, tv2->vval.v_string) == 0;
+           && strequal((char *)tv1->vval.v_string,
+                       (char *)tv2->vval.v_string);
 
   case VAR_NUMBER:
     return tv1->vval.v_number == tv2->vval.v_number;
@@ -6118,7 +6119,7 @@ static int get_dict_tv(char_u **arg, typval_T *rettv, int evaluate)
     }
     if (evaluate) {
       key = get_tv_string_buf_chk(&tvkey, buf);
-      if (key == NULL || *key == NUL) {
+      if (strempty((char *)key)) {
         /* "key" is NULL when get_tv_string_buf_chk() gave an errmsg */
         if (key != NULL)
           EMSG(_(e_emptykey));
@@ -6373,7 +6374,7 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
     name[len] = NUL;
     // First try vim_getenv(), fast for normal environment vars.
     string = (char_u *)vim_getenv((char *)name);
-    if (string == NULL || *string == NUL) {
+    if (strempty((char *)string)) {
       xfree(string);
 
       // Next try expanding things like $VIM and ${HOME}.
@@ -7353,7 +7354,7 @@ static buf_T *find_buffer(typval_T *avar)
             && (path_with_url((char *)bp->b_fname)
                 || bt_nofile(bp)
                 )
-            && STRCMP(bp->b_fname, avar->vval.v_string) == 0) {
+            && strequal((char *)bp->b_fname, (char *)avar->vval.v_string)) {
           buf = bp;
           break;
         }
@@ -7408,7 +7409,7 @@ static buf_T *get_buf_tv(typval_T *tv, int curtab_only)
     return buflist_findnr((int)tv->vval.v_number);
   if (tv->v_type != VAR_STRING)
     return NULL;
-  if (name == NULL || *name == NUL)
+  if (strempty((char *)name))
     return curbuf;
   if (name[0] == '$' && name[1] == NUL)
     return lastbuf;
@@ -7816,7 +7817,7 @@ static void f_confirm(typval_T *argvars, typval_T *rettv)
     }
   }
 
-  if (buttons == NULL || *buttons == NUL)
+  if (strempty((char *)buttons))
     buttons = (char_u *)_("&Ok");
 
   if (!error)
@@ -8426,7 +8427,7 @@ static void f_extend(typval_T *argvars, typval_T *rettv)
         if (action == NULL)
           return;                       /* type error; errmsg already given */
         for (i = 0; i < 3; ++i)
-          if (STRCMP(action, av[i]) == 0)
+          if (strequal((char *)action, av[i]))
             break;
         if (i == 3) {
           EMSG2(_(e_invarg2), action);
@@ -8946,16 +8947,15 @@ static void f_foreground(typval_T *argvars, typval_T *rettv)
  */
 static void f_function(typval_T *argvars, typval_T *rettv)
 {
-  char_u      *s;
-
-  s = get_tv_string(&argvars[0]);
-  if (s == NULL || *s == NUL || ascii_isdigit(*s))
+  char *s = (char *)get_tv_string(&argvars[0]);
+  if (strempty(s) || ascii_isdigit(*s))
     EMSG2(_(e_invarg2), s);
   /* Don't check an autoload name for existence here. */
-  else if (vim_strchr(s, AUTOLOAD_CHAR) == NULL && !function_exists(s))
+  else if (vim_strchr((char_u *)s, AUTOLOAD_CHAR) == NULL
+           && !function_exists((char_u *)s))
     EMSG2(_("E700: Unknown function: %s"), s);
   else {
-    if (STRNCMP(s, "s:", 2) == 0 || STRNCMP(s, "<SID>", 5) == 0) {
+    if (strnequal(s, "s:", 2) || strnequal(s, "<SID>", 5)) {
       char sid_buf[25];
       int off = *s == 's' ? 2 : 5;
 
@@ -8968,7 +8968,7 @@ static void f_function(typval_T *argvars, typval_T *rettv)
       STRCPY(rettv->vval.v_string, sid_buf);
       STRCAT(rettv->vval.v_string, s + off);
     } else
-      rettv->vval.v_string = vim_strsave(s);
+      rettv->vval.v_string = vim_strsave((char_u *)s);
     rettv->v_type = VAR_FUNC;
   }
 }
@@ -9112,7 +9112,7 @@ static void f_getbufvar(typval_T *argvars, typval_T *rettv)
     if (*varname == '&') {      /* buffer-local-option */
       if (get_option_tv(&varname, rettv, TRUE) == OK)
         done = TRUE;
-    } else if (STRCMP(varname, "changedtick") == 0) {
+    } else if (strequal((char *)varname, "changedtick")) {
       rettv->v_type = VAR_NUMBER;
       rettv->vval.v_number = curbuf->b_changedtick;
       done = TRUE;
@@ -9898,7 +9898,6 @@ static void f_globpath(typval_T *argvars, typval_T *rettv)
 static void f_has(typval_T *argvars, typval_T *rettv)
 {
   int i;
-  char_u      *name;
   int n = FALSE;
   static char *(has_list[]) =
   {
@@ -10011,48 +10010,48 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     NULL
   };
 
-  name = get_tv_string(&argvars[0]);
+  char *name = (char *)get_tv_string(&argvars[0]);
   for (i = 0; has_list[i] != NULL; ++i)
-    if (STRICMP(name, has_list[i]) == 0) {
+    if (striequal(name, has_list[i])) {
       n = TRUE;
       break;
     }
 
   if (n == FALSE) {
-    if (STRNICMP(name, "patch", 5) == 0) {
+    if (strniequal(name, "patch", 5)) {
       if (name[5] == '-'
-          && STRLEN(name) > 11
+          && strlen(name) > 11
           && ascii_isdigit(name[6])
           && ascii_isdigit(name[8])
           && ascii_isdigit(name[10])) {
-        int major = atoi((char *)name + 6);
-        int minor = atoi((char *)name + 8);
+        int major = atoi(name + 6);
+        int minor = atoi(name + 8);
 
         // Expect "patch-9.9.01234".
         n = (major < VIM_VERSION_MAJOR
              || (major == VIM_VERSION_MAJOR
                  && (minor < VIM_VERSION_MINOR
                      || (minor == VIM_VERSION_MINOR
-                         && has_patch(atoi((char *)name + 10))))));
+                         && has_patch(atoi(name + 10))))));
       } else {
-        n = has_patch(atoi((char *)name + 5));
+        n = has_patch(atoi(name + 5));
       }
-    } else if (STRICMP(name, "vim_starting") == 0) {
+    } else if (striequal(name, "vim_starting")) {
       n = (starting != 0);
-    } else if (STRICMP(name, "multi_byte_encoding") == 0) {
+    } else if (striequal(name, "multi_byte_encoding")) {
       n = has_mbyte;
 #if defined(USE_ICONV) && defined(DYNAMIC_ICONV)
-    } else if (STRICMP(name, "iconv") == 0) {
+    } else if (striequal(name, "iconv")) {
       n = iconv_enabled(false);
 #endif
-    } else if (STRICMP(name, "syntax_items") == 0) {
+    } else if (striequal(name, "syntax_items")) {
       n = syntax_present(curwin);
-    } else if (STRICMP(name, "gui_running") == 0) {
+    } else if (striequal(name, "gui_running")) {
       n = ui_rgb_attached();
     }
   }
 
-  if (n == FALSE && eval_has_provider((char *)name)) {
+  if (n == FALSE && eval_has_provider(name)) {
     n = TRUE;
   }
 
@@ -10690,12 +10689,12 @@ static void f_jobclose(typval_T *argvars, typval_T *rettv)
 
   if (argvars[1].v_type == VAR_STRING) {
     char *stream = (char *)argvars[1].vval.v_string;
-    if (!strcmp(stream, "stdin")) {
+    if (strequal(stream, "stdin")) {
       job_close_in(job);
       ((TerminalJobData *)job_data(job))->stdin_closed = true;
-    } else if (!strcmp(stream, "stdout")) {
+    } else if (strequal(stream, "stdout")) {
       job_close_out(job);
-    } else if (!strcmp(stream, "stderr")) {
+    } else if (strequal(stream, "stderr")) {
       job_close_err(job);
     } else {
       EMSG2(_("Invalid job stream \"%s\""), stream);
@@ -11768,7 +11767,7 @@ static void f_mkdir(typval_T *argvars, typval_T *rettv)
     if (argvars[1].v_type != VAR_UNKNOWN) {
       if (argvars[2].v_type != VAR_UNKNOWN)
         prot = get_tv_number_chk(&argvars[2], NULL);
-      if (prot != -1 && STRCMP(get_tv_string(&argvars[1]), "p") == 0)
+      if (prot != -1 && strequal((char *)get_tv_string(&argvars[1]), "p"))
         mkdir_recurse(dir, prot);
     }
     rettv->vval.v_number = prot == -1 ? FAIL : vim_mkdir_emsg(dir, prot);
@@ -12039,7 +12038,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
   char_u      *start;                   /* start of current line */
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
-    if (STRCMP(get_tv_string(&argvars[1]), "b") == 0)
+    if (strequal((char *)get_tv_string(&argvars[1]), "b"))
       binary = TRUE;
     if (argvars[2].v_type != VAR_UNKNOWN)
       maxline = get_tv_number(&argvars[2]);
@@ -14104,10 +14103,10 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
         else
           item_compare_func = get_tv_string(&argvars[1]);
         if (item_compare_func != NULL) {
-          if (STRCMP(item_compare_func, "n") == 0) {
+          if (strequal((char *)item_compare_func, "n")) {
             item_compare_func = NULL;
             item_compare_numeric = true;
-          } else if (STRCMP(item_compare_func, "i") == 0) {
+          } else if (strequal((char *)item_compare_func, "i")) {
             item_compare_func = NULL;
             item_compare_ic = TRUE;
           }
@@ -14335,7 +14334,7 @@ static void f_split(typval_T *argvars, typval_T *rettv)
     if (argvars[2].v_type != VAR_UNKNOWN)
       keepempty = get_tv_number_chk(&argvars[2], &typeerr);
   }
-  if (pat == NULL || *pat == NUL)
+  if (strempty((char *)pat))
     pat = (char_u *)"[\\x01- ]\\+";
 
   rettv_list_alloc(rettv);
@@ -15063,7 +15062,7 @@ static void f_tabpagenr(typval_T *argvars, typval_T *rettv)
     arg = get_tv_string_chk(&argvars[0]);
     nr = 0;
     if (arg != NULL) {
-      if (STRCMP(arg, "$") == 0)
+      if (strequal((char *)arg, "$"))
         nr = tabpage_index(NULL) - 1;
       else
         EMSG2(_(e_invexpr2), arg);
@@ -15083,16 +15082,15 @@ static int get_winnr(tabpage_T *tp, typval_T *argvar)
   win_T       *twin;
   int nr = 1;
   win_T       *wp;
-  char_u      *arg;
 
   twin = (tp == curtab) ? curwin : tp->tp_curwin;
   if (argvar->v_type != VAR_UNKNOWN) {
-    arg = get_tv_string_chk(argvar);
+    char *arg = (char *)get_tv_string_chk(argvar);
     if (arg == NULL)
       nr = 0;                   /* type error; errmsg already given */
-    else if (STRCMP(arg, "$") == 0)
+    else if (strequal(arg, "$"))
       twin = (tp == curtab) ? lastwin : tp->tp_lastwin;
-    else if (STRCMP(arg, "#") == 0) {
+    else if (strequal(arg, "#")) {
       twin = (tp == curtab) ? prevwin : tp->tp_prevwin;
       if (twin == NULL)
         nr = 0;
@@ -15389,7 +15387,7 @@ error:
       idx = 0;
       for (p = fromstr; *p != NUL; p += fromlen) {
         fromlen = (*mb_ptr2len)(p);
-        if (fromlen == inlen && STRNCMP(in_str, p, inlen) == 0) {
+        if (fromlen == inlen && strnequal((char *)in_str, (char *)p, inlen)) {
           for (p = tostr; *p != NUL; p += tolen) {
             tolen = (*mb_ptr2len)(p);
             if (idx-- == 0) {
@@ -15914,7 +15912,7 @@ var2fpos (
     li = list_find(l, 1L);
     if (li != NULL && li->li_tv.v_type == VAR_STRING
         && li->li_tv.vval.v_string != NULL
-        && STRCMP(li->li_tv.vval.v_string, "$") == 0)
+        && strequal((char *)li->li_tv.vval.v_string, "$"))
       pos.col = len + 1;
 
     /* Accept a position up to the NUL after the line. */
@@ -16527,7 +16525,7 @@ get_var_tv (
   /*
    * Check for "b:changedtick".
    */
-  if (STRCMP(name, "b:changedtick") == 0) {
+  if (strequal((char *)name, "b:changedtick")) {
     atv.v_type = VAR_NUMBER;
     atv.vval.v_number = curbuf->b_changedtick;
     tv = &atv;
@@ -17214,9 +17212,9 @@ set_var (
         EMSG2(_(e_intern2), "set_var()");
       else {
         v->di_tv.vval.v_number = get_tv_number(tv);
-        if (STRCMP(varname, "searchforward") == 0)
+        if (strequal((char *)varname, "searchforward"))
           set_search_direction(v->di_tv.vval.v_number ? '/' : '?');
-        else if (STRCMP(varname, "hlsearch") == 0) {
+        else if (strequal((char *)varname, "hlsearch")) {
           no_hlsearch = !v->di_tv.vval.v_number;
           redraw_all_later(SOME_VALID);
         }
@@ -17877,8 +17875,8 @@ void ex_function(exarg_T *eap)
       while (ASCII_ISALNUM(*p) || *p == '_')
         ++p;
       if (arg == p || isdigit(*arg)
-          || (p - arg == 9 && STRNCMP(arg, "firstline", 9) == 0)
-          || (p - arg == 8 && STRNCMP(arg, "lastline", 8) == 0)) {
+          || (p - arg == 9 && strnequal((char *)arg, "firstline", 9))
+          || (p - arg == 8 && strnequal((char *)arg, "lastline", 8))) {
         if (!eap->skip)
           EMSG2(_("E125: Illegal argument: %s"), arg);
         break;
@@ -17890,7 +17888,7 @@ void ex_function(exarg_T *eap)
 
       /* Check for duplicate argument name. */
       for (int i = 0; i < newargs.ga_len; ++i)
-        if (STRCMP(((char_u **)(newargs.ga_data))[i], arg) == 0) {
+        if (strequal(((char **)(newargs.ga_data))[i], (char *)arg)) {
           EMSG2(_("E853: Duplicate argument name: %s"), arg);
           xfree(arg);
           goto erret;
@@ -17916,13 +17914,13 @@ void ex_function(exarg_T *eap)
   /* find extra arguments "range", "dict" and "abort" */
   for (;; ) {
     p = skipwhite(p);
-    if (STRNCMP(p, "range", 5) == 0) {
+    if (strnequal((char *)p, "range", 5)) {
       flags |= FC_RANGE;
       p += 5;
-    } else if (STRNCMP(p, "dict", 4) == 0) {
+    } else if (strnequal((char *)p, "dict", 4)) {
       flags |= FC_DICT;
       p += 4;
-    } else if (STRNCMP(p, "abort", 5) == 0) {
+    } else if (strnequal((char *)p, "abort", 5)) {
       flags |= FC_ABORT;
       p += 5;
     } else
@@ -17997,7 +17995,7 @@ void ex_function(exarg_T *eap)
     if (skip_until != NULL) {
       /* between ":append" and "." and between ":python <<EOF" and "EOF"
        * don't check for ":endfunc". */
-      if (STRCMP(theline, skip_until) == 0) {
+      if (strequal((char *)theline, (char *)skip_until)) {
         xfree(skip_until);
         skip_until = NULL;
       }
@@ -18015,12 +18013,12 @@ void ex_function(exarg_T *eap)
 
       /* Increase indent inside "if", "while", "for" and "try", decrease
        * at "end". */
-      if (indent > 2 && STRNCMP(p, "end", 3) == 0)
+      if (indent > 2 && strnequal((char *)p, "end", 3))
         indent -= 2;
-      else if (STRNCMP(p, "if", 2) == 0
-               || STRNCMP(p, "wh", 2) == 0
-               || STRNCMP(p, "for", 3) == 0
-               || STRNCMP(p, "try", 3) == 0)
+      else if (strnequal((char *)p, "if", 2)
+               || strnequal((char *)p, "wh", 2)
+               || strnequal((char *)p, "for", 3)
+               || strnequal((char *)p, "try", 3))
         indent += 2;
 
       /* Check for defining a function inside this function. */
@@ -18350,7 +18348,7 @@ trans_function_name (
   if (lv.ll_exp_name != NULL) {
     len = (int)STRLEN(lv.ll_exp_name);
     if (lead <= 2 && lv.ll_name == lv.ll_exp_name
-        && STRNCMP(lv.ll_name, "s:", 2) == 0) {
+        && strnequal((char *)lv.ll_name, "s:", 2)) {
       /* When there was "s:" already or the name expanded to get a
        * leading "s:" then remove it. */
       lv.ll_name += 2;
@@ -18423,8 +18421,8 @@ theend:
  */
 static int eval_fname_script(char_u *p)
 {
-  if (p[0] == '<' && (STRNICMP(p + 1, "SID>", 4) == 0
-                      || STRNICMP(p + 1, "SNR>", 4) == 0))
+  if (p[0] == '<' && (strniequal((char *)p + 1, "SID>", 4)
+                      || strniequal((char *)p + 1, "SNR>", 4)))
     return 5;
   if (p[0] == 's' && p[1] == ':')
     return 2;
@@ -18741,7 +18739,7 @@ script_autoload (
   /* Find the name in the list of previously loaded package names.  Skip
    * "autoload/", it's always the same. */
   for (i = 0; i < ga_loaded.ga_len; ++i)
-    if (STRCMP(((char_u **)ga_loaded.ga_data)[i] + 9, scriptname + 9) == 0)
+    if (strequal(((char **)ga_loaded.ga_data)[i] + 9, (char *)scriptname + 9))
       break;
   if (!reload && i < ga_loaded.ga_len)
     ret = FALSE;            /* was loaded already */
@@ -19118,7 +19116,7 @@ call_user_func (
                           + STRLEN(fp->uf_name) + 13);
   {
     if (save_sourcing_name != NULL
-        && STRNCMP(save_sourcing_name, "function ", 9) == 0)
+        && strnequal((char *)save_sourcing_name, "function ", 9))
       sprintf((char *)sourcing_name, "%s..", save_sourcing_name);
     else
       STRCPY(sourcing_name, "function ");
@@ -20550,13 +20548,13 @@ bool eval_has_provider(char *name)
 
   static int has_clipboard = -1, has_python = -1, has_python3 = -1;
 
-  if (!strcmp(name, "clipboard")) {
+  if (strequal(name, "clipboard")) {
     check_provider(clipboard);
     return has_clipboard;
-  } else if (!strcmp(name, "python3")) {
+  } else if (strequal(name, "python3")) {
     check_provider(python3);
     return has_python3;
-  } else if (!strcmp(name, "python")) {
+  } else if (strequal(name, "python")) {
     check_provider(python);
     return has_python;
   }

@@ -20,6 +20,7 @@
 #include "nvim/getchar.h"
 #include "nvim/main.h"
 #include "nvim/misc1.h"
+#include "nvim/strings.h"
 
 #define READ_BUFFER_SIZE 0xfff
 #define INPUT_BUFFER_SIZE (READ_BUFFER_SIZE * 4)

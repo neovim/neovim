@@ -251,44 +251,6 @@ enum {
 # define O_NOFOLLOW 0
 #endif
 
-/*
- * defines to avoid typecasts from (char_u *) to (char *) and back
- * (vim_strchr() and vim_strrchr() are now in alloc.c)
- */
-#define STRLEN(s)           strlen((char *)(s))
-#define STRCPY(d, s)        strcpy((char *)(d), (char *)(s))
-#define STRNCPY(d, s, n)    strncpy((char *)(d), (char *)(s), (size_t)(n))
-#define STRLCPY(d, s, n)    xstrlcpy((char *)(d), (char *)(s), (size_t)(n))
-#define STRCMP(d, s)        strcmp((char *)(d), (char *)(s))
-#define STRNCMP(d, s, n)    strncmp((char *)(d), (char *)(s), (size_t)(n))
-#ifdef HAVE_STRCASECMP
-# define STRICMP(d, s)      strcasecmp((char *)(d), (char *)(s))
-#else
-# ifdef HAVE_STRICMP
-#  define STRICMP(d, s)     stricmp((char *)(d), (char *)(s))
-# else
-#  define STRICMP(d, s)     vim_stricmp((char *)(d), (char *)(s))
-# endif
-#endif
-
-/* Like strcpy() but allows overlapped source and destination. */
-#define STRMOVE(d, s)       memmove((d), (s), STRLEN(s) + 1)
-
-#ifdef HAVE_STRNCASECMP
-# define STRNICMP(d, s, n)  strncasecmp((char *)(d), (char *)(s), (size_t)(n))
-#else
-# ifdef HAVE_STRNICMP
-#  define STRNICMP(d, s, n) strnicmp((char *)(d), (char *)(s), (size_t)(n))
-# else
-#  define STRNICMP(d, s, n) vim_strnicmp((char *)(d), (char *)(s), (size_t)(n))
-# endif
-#endif
-
-#define STRCAT(d, s)        strcat((char *)(d), (char *)(s))
-#define STRNCAT(d, s, n)    strncat((char *)(d), (char *)(s), (size_t)(n))
-
-# define vim_strpbrk(s, cs) (char_u *)strpbrk((char *)(s), (char *)(cs))
-
 #define MSG(s)                      msg((char_u *)(s))
 #define MSG_ATTR(s, attr)           msg_attr((char_u *)(s), (attr))
 #define EMSG(s)                     emsg((char_u *)(s))

@@ -2,6 +2,7 @@
 #define NVIM_SHA256_H
 
 #include <stdint.h>      // for uint32_t
+#include <stdbool.h>     // for bool
 
 #include "nvim/types.h"  // for char_u
 

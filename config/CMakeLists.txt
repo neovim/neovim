@@ -61,8 +61,12 @@ check_function_exists(unsetenv HAVE_UNSETENV)
 check_function_exists(setpgid HAVE_SETPGID)
 check_function_exists(setsid HAVE_SETSID)
 check_function_exists(sigaction HAVE_SIGACTION)
+check_function_exists(stricmp HAVE_STRICMP)
+check_function_exists(strnicmp HAVE_STRNICMP)
 check_function_exists(strcasecmp HAVE_STRCASECMP)
 check_function_exists(strncasecmp HAVE_STRNCASECMP)
+check_function_exists(_stricmp HAVE_U_STRICMP)    # for windows
+check_function_exists(_strnicmp HAVE_U_STRNICMP)  # for windows
 check_function_exists(utime HAVE_UTIME)
 check_function_exists(utimes HAVE_UTIMES)
 

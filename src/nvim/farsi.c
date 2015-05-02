@@ -13,6 +13,7 @@
 #include "nvim/farsi.h"
 #include "nvim/getchar.h"
 #include "nvim/memline.h"
+#include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
 #include "nvim/misc2.h"

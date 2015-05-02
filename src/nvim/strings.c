@@ -317,55 +317,6 @@ void vim_strcat(char_u *restrict to, const char_u *restrict from,
     STRCPY(to + tolen, from);
 }
 
-#if (!defined(HAVE_STRCASECMP) && !defined(HAVE_STRICMP))
-/*
- * Compare two strings, ignoring case, using current locale.
- * Doesn't work for multi-byte characters.
- * return 0 for match, < 0 for smaller, > 0 for bigger
- */
-int vim_stricmp(const char *s1, const char *s2)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
-{
-  int i;
-
-  for (;; ) {
-    i = (int)TOLOWER_LOC(*s1) - (int)TOLOWER_LOC(*s2);
-    if (i != 0)
-      return i;                             /* this character different */
-    if (*s1 == NUL)
-      break;                                /* strings match until NUL */
-    ++s1;
-    ++s2;
-  }
-  return 0;                                 /* strings match */
-}
-#endif
-
-#if (!defined(HAVE_STRNCASECMP) && !defined(HAVE_STRNICMP))
-/*
- * Compare two strings, for length "len", ignoring case, using current locale.
- * Doesn't work for multi-byte characters.
- * return 0 for match, < 0 for smaller, > 0 for bigger
- */
-int vim_strnicmp(const char *s1, const char *s2, size_t len)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
-{
-  int i;
-
-  while (len > 0) {
-    i = (int)TOLOWER_LOC(*s1) - (int)TOLOWER_LOC(*s2);
-    if (i != 0)
-      return i;                             /* this character different */
-    if (*s1 == NUL)
-      break;                                /* strings match until NUL */
-    ++s1;
-    ++s2;
-    --len;
-  }
-  return 0;                                 /* strings match */
-}
-#endif
-
 /*
  * Version of strchr() and strrchr() that handle unsigned char strings
  * with characters from 128 to 255 correctly.  It also doesn't return a
