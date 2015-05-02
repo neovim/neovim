@@ -18,8 +18,8 @@ function! provider#pythonx#Detect(ver) abort
   endif
 
   let detect_versions = (a:ver == 2) ?
-        \   ['2.7', '2.6', '2', '']
-        \ : ['3.5', '3.4', '3.3', '3.2', '3', '']
+        \   ['2', '2.7', '2.6', '']
+        \ : ['3', '3.5', '3.4', '3.3', '']
 
   for prog in map(detect_versions, "'python' . v:val")
     let [check, err, ver] = s:check_interpreter(prog, a:ver, skip)
