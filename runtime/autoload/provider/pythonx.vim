@@ -64,7 +64,7 @@ function! s:check_interpreter(prog, ver, skip) abort
         \   '''import importlib; exit(importlib.find_loader("neovim") is None)''')
         \ )
   if v:shell_error
-    return [0, 'Python'.a:ver.' interpreter ('.a:prog.') has no neovim module installed.', ver]
+    return [0, 'Python'.a:ver.' interpreter ('.a:prog.') has no neovim module installed. See ":help nvim-python".', ver]
   endif
   return [1, '', ver]
 endfunction
