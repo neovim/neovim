@@ -2013,8 +2013,8 @@ synIDattr( {synID}, {what} [, {mode}])
 synIDtrans( {synID})		Number	translated syntax ID of {synID}
 synconcealed( {lnum}, {col})	List    info about concealing
 synstack( {lnum}, {col})	List	stack of syntax IDs at {lnum} and {col}
-system( {expr} [, {input}])	String	output of shell command/filter {expr}
-systemlist( {expr} [, {input}])	List	output of shell command/filter {expr}
+system( {cmd} [, {input}])	String	output of shell command/filter {cmd}
+systemlist( {cmd} [, {input}])	List	output of shell command/filter {cmd}
 tabpagebuflist( [{arg}])	List	list of buffer numbers in tab page
 tabpagenr( [{arg}])		Number	number of current or last tab page
 tabpagewinnr( {tabarg}[, {arg}])
@@ -4031,9 +4031,12 @@ jobsend({job}, {data})					{Nvim} *jobsend()*
 			:call jobsend(j, ["abc", "123\n456", ""])
 < 		will send "abc<NL>123<NUL>456<NL>".
 
-jobstart({argv}[, {opts}])			{Nvim} *jobstart()*
-		Spawns {argv}(list) as a job. If passed, {opts} must be a
-		dictionary with any of the following keys:
+jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
+		Spawns {cmd} as a job.  If {cmd} is a |List|, it will be run
+		directly.  If {cmd} is a |String|, it will be equivalent to >
+			:call jobstart([&shell, &shellcmdflag, '{cmd}'])
+<		If passed, {opts} must be a dictionary with any of the
+		following keys:
 		  - on_stdout: stdout event handler
 		  - on_stderr: stderr event handler
 		  - on_exit: exit event handler
@@ -4052,7 +4055,8 @@ jobstart({argv}[, {opts}])			{Nvim} *jobstart()*
 		  - The job ID on success, which is used by |jobsend()| and
 		    |jobstop()|
 		  - 0 when the job table is full or on invalid arguments
-		  - -1 when {argv}[0] is not executable
+		  - -1 when {cmd}[0] is not executable.  Will never fail if
+		    {cmd} is a string unless 'shell' is not executable.
 		See |job-control| for more information.
 
 jobstop({job})						{Nvim} *jobstop()*
@@ -6151,9 +6155,10 @@ synstack({lnum}, {col})					*synstack()*
 		character in a line and the first column in an empty line are
 		valid positions.
 
-system({expr} [, {input}])				*system()* *E677*
-		Get the output of the shell command {expr} as a string.  See
-		|systemlist()| to get the output as a List.
+system({cmd} [, {input}])				*system()* *E677*
+		Get the output of the shell command {cmd} as a |String|.  {cmd}
+		will be run the same as in |jobstart()|.  See |systemlist()|
+		to get the output as a |List|.
 
 		When {input} is given and is a string this string is written 
 		to a file and passed as stdin to the command.  The string is 
@@ -6167,7 +6172,7 @@ system({expr} [, {input}])				*system()* *E677*
 
 		Note: Use |shellescape()| or |::S| with |expand()| or 
 		|fnamemodify()| to escape special characters in a command 
-		argument.  Newlines in {expr} may cause the command to fail.  
+		argument.  Newlines in {cmd} may cause the command to fail.  
 		The characters in 'shellquote' and 'shellxquote' may also 
 		cause trouble.
 		This is not to be used for interactive commands.
@@ -6182,11 +6187,8 @@ system({expr} [, {input}])				*system()* *E677*
 		To avoid the string being truncated at a NUL, all NUL
 		characters are replaced with SOH (0x01).
 
-		The command executed is constructed using several options:
-	'shell' 'shellcmdflag' 'shellxquote' {expr} 'shellredir' {tmp} 'shellxquote'
-		({tmp} is an automatically generated file name).
-		For Unix braces are put around {expr} to allow for
-		concatenated commands.
+		The command executed is constructed using several options when
+		{cmd} is a string: 'shell' 'shellcmdflag' {cmd}
 
 		The command will be executed in "cooked" mode, so that a
 		CTRL-C will interrupt the command (on Unix at least).
@@ -6201,7 +6203,7 @@ system({expr} [, {input}])				*system()* *E677*
 		Use |:checktime| to force a check.
 
 
-systemlist({expr} [, {input} [, {keepempty}]])		*systemlist()*
+systemlist({cmd} [, {input} [, {keepempty}]])		*systemlist()*
 		Same as |system()|, but returns a |List| with lines (parts of 
 		output separated by NL) with NULs transformed into NLs. Output 
 		is the same as |readfile()| will output with {binary} argument 
@@ -6299,15 +6301,19 @@ tempname()					*tempname()* *temp-file-name*
 		For MS-Windows forward slashes are used when the 'shellslash'
 		option is set or when 'shellcmdflag' starts with '-'.
 
-termopen({command}[, {opts}])			{Nvim} *termopen()*
-		Spawns {command} using the shell in a new pseudo-terminal
-		session connected to the current buffer.  This function fails
-		if the current buffer is modified (all buffer contents are
-		destroyed).  The {opts} dict is similar to the one passed to
-		|jobstart()|, but the `pty`, `width`, `height`, and `TERM` fields are
-		ignored: `height`/`width` are taken from the current window and
-		$TERM is set to "xterm-256color".  Returns the same values as
-		|jobstart()|.
+termopen({cmd}[, {opts}])			{Nvim} *termopen()*
+		Spawns {cmd} in a new pseudo-terminal session connected
+		to the current buffer.  {cmd} is the same as the one passed to
+		|jobstart()|.  This function fails if the current buffer is
+		modified (all buffer contents are destroyed).
+
+		The {opts} dict is similar to the one passed to |jobstart()|,
+		but the `pty`, `width`, `height`, and `TERM` fields are
+		ignored: `height`/`width` are taken from the current window
+		and `$TERM` is set to "xterm-256color", and it may have a
+		`name` field.  `name`, if present, sets the buffer's name to
+		"term://{cwd}/{pid}:{name}".
+		Returns the same values as |jobstart()|.
 
 		See |nvim-terminal-emulator| for more information.
 

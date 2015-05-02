@@ -144,7 +144,7 @@ describe('cursor with customized highlighting', function()
       [6] = {foreground = 130},
     })
     screen:attach(false)
-    execute('term "' ..nvim_dir.. '/tty-test"')
+    execute('call termopen(["'..nvim_dir..'/tty-test"]) | startinsert')
   end)
 
   it('overrides the default highlighting', function()

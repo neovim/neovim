@@ -119,14 +119,14 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
   }
 
   size_t nread;
-  int status = shell((const char *)cmd,
-                     (const char *)extra_args,
-                     input.data,
-                     input.len,
-                     output_ptr,
-                     &nread,
-                     emsg_silent,
-                     forward_output);
+
+  int status = do_os_system(shell_build_argv((char *)cmd, (char *)extra_args),
+                            input.data,
+                            input.len,
+                            output_ptr,
+                            &nread,
+                            emsg_silent,
+                            forward_output);
 
   xfree(input.data);
 
@@ -152,9 +152,11 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
 /// example:
 ///   char *output = NULL;
 ///   size_t nread = 0;
-///   int status = os_sytem("ls -la", NULL, 0, &output, &nread);
+///   char *argv[] = {"ls", "-la", NULL};
+///   int status = os_sytem(argv, NULL, 0, &output, &nread);
 ///
-/// @param cmd The full commandline to be passed to the shell
+/// @param argv The commandline arguments to be passed to the shell. `argv`
+///             will be consumed.
 /// @param input The input to the shell (NULL for no input), passed to the
 ///              stdin of the resulting process.
 /// @param len The length of the input buffer (not used if `input` == NULL)
@@ -166,23 +168,22 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
 ///             returned buffer is not NULL)
 /// @return the return code of the process, -1 if the process couldn't be
 ///         started properly
-int os_system(const char *cmd,
+int os_system(char **argv,
               const char *input,
               size_t len,
               char **output,
               size_t *nread) FUNC_ATTR_NONNULL_ARG(1)
 {
-  return shell(cmd, NULL, input, len, output, nread, true, false);
+  return do_os_system(argv, input, len, output, nread, true, false);
 }
 
-static int shell(const char *cmd,
-                 const char *extra_args,
-                 const char *input,
-                 size_t len,
-                 char **output,
-                 size_t *nread,
-                 bool silent,
-                 bool forward_output)
+static int do_os_system(char **argv,
+                        const char *input,
+                        size_t len,
+                        char **output,
+                        size_t *nread,
+                        bool silent,
+                        bool forward_output)
 {
   // the output buffer
   DynamicBuffer buf = DYNAMIC_BUFFER_INIT;
@@ -197,7 +198,9 @@ static int shell(const char *cmd,
     data_cb = NULL;
   }
 
-  char **argv = shell_build_argv(cmd, extra_args);
+  // Copy the program name in case we need to report an error.
+  char prog[MAXPATHL];
+  xstrlcpy(prog, argv[0], MAXPATHL);
 
   int status;
   JobOptions opts = JOB_OPTIONS_INIT;
@@ -211,11 +214,9 @@ static int shell(const char *cmd,
 
   if (status <= 0) {
     // Failed, probably due to `sh` not being executable
-    ELOG("Couldn't start job, command: '%s', error code: '%d'",
-        (cmd ? cmd : (char *)p_sh), status);
     if (!silent) {
-      MSG_PUTS(_("\nCannot execute shell "));
-      msg_outtrans(p_sh);
+      MSG_PUTS(_("\nCannot execute "));
+      msg_outtrans((char_u *)prog);
       msg_putchar('\n');
     }
     return -1;

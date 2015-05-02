@@ -29,6 +29,13 @@ describe('jobs', function()
     ]])
   end)
 
+  it('uses &shell and &shellcmdflag if passed a string', function()
+    nvim('command', "let $VAR = 'abc'")
+    nvim('command', "let j = jobstart('echo $VAR', g:job_opts)")
+    eq({'notification', 'stdout', {0, {'abc', ''}}}, next_msg())
+    eq({'notification', 'exit', {0, 0}}, next_msg())
+  end)
+
   it('returns 0 when it fails to start', function()
     local status, rv = pcall(eval, "jobstart([])")
     eq(false, status)

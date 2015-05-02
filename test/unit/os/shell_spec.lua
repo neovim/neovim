@@ -40,7 +40,9 @@ describe('shell functions', function()
     local output = ffi.new('char *[1]')
     local nread = ffi.new('size_t[1]')
 
-    local status = shell.os_system(to_cstr(cmd), input_or, input_len, output, nread)
+    local argv = ffi.cast('char**',
+                          shell.shell_build_argv(to_cstr(cmd), nil))
+    local status = shell.os_system(argv, input_or, input_len, output, nread)
 
     return status, intern(output[0], nread[0])
   end

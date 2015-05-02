@@ -223,11 +223,18 @@ g8			Print the hex values of the bytes used in the
 :sh[ell]		Removed. |vim-differences| {Nvim}
 
 						  *:term* *:terminal*
-:term[inal][!] {cmd}	Spawns {command} using the current value of 'shell'
-			in a new terminal buffer.  This is equivalent to: >
+:term[inal][!] {cmd}	Spawns {cmd} using the current value of 'shell' and
+			'shellcmdflag' in a new terminal buffer.  This is
+			equivalent to: >
 
-			      :enew | call termopen('{cmd}') | startinsert
+			      :enew
+			      :call termopen([&sh, &shcf, '{cmd}'],
+			                    \{'name':'{cmd}'})
+			      :startinsert
 <
+			If no {cmd} is given, 'shellcmdflag' will not be sent
+			to |termopen()|.
+
 			Like |:enew|, it will fail if the current buffer is
 			modified, but can be forced with "!".  See |termopen()|
 			and |nvim-terminal-emulator| for more information.
