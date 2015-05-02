@@ -154,6 +154,11 @@ static char_u     *compl_leader = NULL;
 static int compl_get_longest = FALSE;           /* put longest common string
                                                    in compl_leader */
 
+static int compl_no_insert = FALSE;             /* FALSE: select & insert
+                                                   TRUE: noinsert */
+static int compl_no_select = FALSE;             /* FALSE: select & insert
+                                                   TRUE: noselect */
+
 static int compl_used_match;            /* Selected one of the matches.  When
                                            FALSE the match was edited or using
                                            the longest common string. */
@@ -2972,8 +2977,19 @@ static int ins_compl_prep(int c)
   /* Set "compl_get_longest" when finding the first matches. */
   if (ctrl_x_mode == CTRL_X_NOT_DEFINED_YET
       || (ctrl_x_mode == 0 && !compl_started)) {
-    compl_get_longest = (vim_strchr(p_cot, 'l') != NULL);
+    compl_get_longest = (strstr((char *)p_cot, "longest") != NULL);
     compl_used_match = TRUE;
+
+    if (strstr((char *)p_cot, "noselect") != NULL) {
+      compl_no_insert = FALSE;
+      compl_no_select = TRUE;
+    } else if (strstr((char *)p_cot, "noinsert") != NULL) {
+      compl_no_insert = TRUE;
+      compl_no_select = FALSE;
+    } else {
+      compl_no_insert = FALSE;
+      compl_no_select = FALSE;
+    }
   }
 
   if (ctrl_x_mode == CTRL_X_NOT_DEFINED_YET) {
@@ -3875,6 +3891,7 @@ ins_compl_next (
   compl_T *found_compl = NULL;
   int found_end = FALSE;
   int advance;
+  int started = compl_started;
 
   /* When user complete function return -1 for findstart which is next
    * time of 'always', compl_shown_match become NULL. */
@@ -3945,7 +3962,7 @@ ins_compl_next (
         return -1;
       }
 
-      if (advance) {
+      if (!compl_no_select && advance) {
         if (compl_shows_dir == BACKWARD)
           --compl_pending;
         else
@@ -3990,13 +4007,18 @@ ins_compl_next (
   }
 
   /* Insert the text of the new completion, or the compl_leader. */
-  if (insert_match) {
-    if (!compl_get_longest || compl_used_match)
-      ins_compl_insert();
-    else
-      ins_bytes(compl_leader + ins_compl_len());
-  } else
+  if (compl_no_insert && !started) {
+    ins_bytes(compl_orig_text + ins_compl_len());
     compl_used_match = FALSE;
+  } else if (insert_match) {
+    if (!compl_get_longest || compl_used_match) {
+      ins_compl_insert();
+    } else {
+      ins_bytes(compl_leader + ins_compl_len());
+    }
+  } else {
+    compl_used_match = FALSE;
+  }
 
   if (!allow_get_expansion) {
     /* may undisplay the popup menu first */
@@ -4015,7 +4037,11 @@ ins_compl_next (
 
   /* Enter will select a match when the match wasn't inserted and the popup
    * menu is visible. */
-  compl_enter_selects = !insert_match && compl_match_array != NULL;
+  if (compl_no_insert && !started) {
+    compl_enter_selects = TRUE;
+  } else {
+    compl_enter_selects = !insert_match && compl_match_array != NULL;
+  }
 
   /*
    * Show the file name for the match (if any)
@@ -4082,7 +4108,7 @@ void ins_compl_check_keys(int frequency)
       }
     }
   }
-  if (compl_pending != 0 && !got_int) {
+  if (compl_pending != 0 && !got_int && !compl_no_insert) {
     int todo = compl_pending > 0 ? compl_pending : -compl_pending;
 
     compl_pending = 0;
