@@ -27,7 +27,7 @@ describe('terminal window highlighting', function()
       [8] = {background = 11}
     })
     screen:attach(false)
-    execute('enew | call termopen(["'..nvim_dir..'/tty-test"]) | startinsert')
+    execute('call termopen(["'..nvim_dir..'/tty-test"]) | startinsert')
     screen:expect([[
       tty ready                                         |
                                                         |
@@ -133,7 +133,7 @@ describe('terminal window highlighting with custom palette', function()
     })
     screen:attach(true)
     nvim('set_var', 'terminal_color_3', '#123456')
-    execute('enew | call termopen(["'..nvim_dir..'/tty-test"]) | startinsert')
+    execute('call termopen(["'..nvim_dir..'/tty-test"]) | startinsert')
     screen:expect([[
       tty ready                                         |
                                                         |

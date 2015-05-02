@@ -15182,8 +15182,9 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
     return;
   }
 
-  if (curbuf->b_changed) {
-    EMSG(_("Can only call this function in an unmodified buffer"));
+  // Delay creating a new buffer for the terminal until we have validated the
+  // arguments, but we needn't bother if we won't be able to create it.
+  if (!P_HID(curbuf) && check_changed(curbuf, 0)) {
     return;
   }
 
@@ -15210,6 +15211,17 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
     }
   }
 
+  // Create a new buffer for the terminal.
+  // FIXME(SplinterOfChaos): Logically, this could happen after starting the
+  // job, but somehow for very fast commands nothing will appear on screen and
+  // when the user enters insert mode, the assertion "assert(!wstream->freed)"
+  // will fire.
+  if (!do_ecmd(0, NULL, NULL, NULL, 0, 
+               P_HID(curbuf) ? ECMD_HIDE : 0, NULL)) {
+    shell_free_argv(argv);
+    return;  // did emsg in do_ecmd
+  }
+
   JobOptions opts = common_job_options(argv, on_stdout, on_stderr, on_exit,
       job_opts);
   opts.pty = true;
@@ -15218,6 +15230,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
   opts.term_name = xstrdup("xterm-256color");
   Job *job = common_job_start(opts, rettv);
   if (!job) {
+    // TODO(SplinterOfChaos): Close the new terminal buffer?
     shell_free_argv(argv);
     return;
   }
@@ -15236,7 +15249,6 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
     cwd = (char *)argvars[1].vval.v_string;
   }
   int pid = job_pid(job);
-
   // Get the desired name of the buffer.
   char *name = job_opts ?
     (char *)get_dict_string(job_opts, (char_u *)"name", false) : cmd;
