@@ -7092,7 +7092,8 @@ static void win_redr_ruler(win_T *wp, int always)
     if (this_ru_col < (width + 1) / 2)
       this_ru_col = (width + 1) / 2;
     if (this_ru_col + o < width) {
-      while (this_ru_col + o < width) {
+      // Need at least 3 chars left for get_rel_pos() + NUL.
+      while (this_ru_col + o < width && RULER_BUF_LEN > i + 4) {
         if (has_mbyte)
           i += (*mb_char2bytes)(fillchar, buffer + i);
         else
