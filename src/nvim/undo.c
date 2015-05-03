@@ -273,7 +273,7 @@ int u_inssub(linenr_T lnum)
  * Careful: may trigger autocommands that reload the buffer.
  * Returns FAIL when lines could not be saved, OK otherwise.
  */
-int u_savedel(linenr_T lnum, long nlines)
+int u_savedel(linenr_T lnum, linenr_T nlines)
 {
   if (undo_off)
     return OK;
@@ -340,7 +340,7 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
   u_header_T  *old_curhead;
   u_entry_T   *uep;
   u_entry_T   *prev_uep;
-  long size;
+  linenr_T size;
 
   if (!reload) {
     /* When making changes is not allowed return FAIL.  It's a crude way
@@ -2005,7 +2005,7 @@ static void u_undoredo(int undo)
   linenr_T top, bot;
   linenr_T lnum;
   linenr_T newlnum = MAXLNUM;
-  long i;
+  linenr_T i;  // Used to iterate over lines 
   u_entry_T   *uep, *nuep;
   u_entry_T   *newlist = NULL;
   int old_flags;
@@ -2114,8 +2114,8 @@ static void u_undoredo(int undo)
 
     /* adjust marks */
     if (oldsize != newsize) {
-      mark_adjust(top + 1, top + oldsize, (long)MAXLNUM,
-          (long)newsize - (long)oldsize);
+      mark_adjust(top + 1, top + oldsize, MAXLNUM,
+          newsize - oldsize);
       if (curbuf->b_op_start.lnum > top + oldsize)
         curbuf->b_op_start.lnum += newsize - oldsize;
       if (curbuf->b_op_end.lnum > top + oldsize)

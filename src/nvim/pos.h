@@ -1,7 +1,7 @@
 #ifndef NVIM_POS_H
 #define NVIM_POS_H
 
-typedef long linenr_T;         // line number type
+typedef int linenr_T;         // line number type
 typedef int colnr_T;           // column number type
 
 #define MAXLNUM 0x7fffffff     // maximum (invalid) line number

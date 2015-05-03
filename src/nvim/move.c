@@ -536,7 +536,7 @@ static void curs_rows(win_T *wp)
   int i;
   int all_invalid;
   int valid;
-  long fold_count;
+  linenr_T fold_count;
 
   /* Check if wp->w_lines[].wl_size is invalid */
   all_invalid = (!redrawing()
@@ -1037,7 +1037,7 @@ scrolldown (
  */
 void 
 scrollup (
-    long line_count,
+    linenr_T line_count,
     int byfold              /* TRUE: count a closed fold as one line */
 )
 {
@@ -1824,7 +1824,7 @@ int onepage(int dir, long count)
         if (p_window <= 2)
           ++curwin->w_topline;
         else
-          curwin->w_topline += p_window - 2;
+          curwin->w_topline += (linenr_T)(p_window - 2);
         if (curwin->w_topline > curbuf->b_ml.ml_line_count)
           curwin->w_topline = curbuf->b_ml.ml_line_count;
         curwin->w_cursor.lnum = curwin->w_topline;
@@ -1858,10 +1858,10 @@ int onepage(int dir, long count)
         if (p_window <= 2)
           --curwin->w_topline;
         else
-          curwin->w_topline -= p_window - 2;
+          curwin->w_topline -= (linenr_T)(p_window - 2);
         if (curwin->w_topline < 1)
           curwin->w_topline = 1;
-        curwin->w_cursor.lnum = curwin->w_topline + p_window - 1;
+        curwin->w_cursor.lnum = curwin->w_topline + (linenr_T)(p_window) - 1;
         if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count)
           curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
         continue;

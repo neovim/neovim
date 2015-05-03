@@ -974,7 +974,7 @@ void do_tags(exarg_T *eap)
         continue;
 
       msg_putchar('\n');
-      sprintf((char *)IObuff, "%c%2d %2d %-15s %5ld  ",
+      sprintf((char *)IObuff, "%c%2d %2d %-15s %5d  ",
           i == tagstackidx ? '>' : ' ',
           i + 1,
           tagstack[i].cur_match + 1,

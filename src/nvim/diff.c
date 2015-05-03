@@ -191,8 +191,8 @@ void diff_invalidate(buf_T *buf)
 /// @param line2
 /// @param amount
 /// @param amount_after
-void diff_mark_adjust(linenr_T line1, linenr_T line2, long amount,
-                      long amount_after)
+void diff_mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount,
+                      linenr_T amount_after)
 {
   // Handle all tab pages that use the current buffer in a diff.
   FOR_ALL_TABS(tp) {
@@ -217,10 +217,10 @@ void diff_mark_adjust(linenr_T line1, linenr_T line2, long amount,
 /// @param amount
 /// @amount_after
 static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
-                                linenr_T line2, long amount, long amount_after)
+                                linenr_T line2, linenr_T amount, linenr_T amount_after)
 {
-  long inserted;
-  long deleted;
+  linenr_T inserted;
+  linenr_T deleted;
   if (line2 == MAXLNUM) {
     // mark_adjust(99, MAXLNUM, 9, 0): insert lines
     inserted = amount;
@@ -1188,14 +1188,14 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
   diff_T *dprev = NULL;
   diff_T *dp = curtab->tp_first_diff;
   diff_T *dn, *dpl;
-  long f1, l1, f2, l2;
+  linenr_T f1, l1, f2, l2;
   char_u linebuf[LBUFLEN]; // only need to hold the diff line
   int difftype;
   char_u *p;
-  long off;
+  linenr_T off;
   int i;
   linenr_T lnum_orig, lnum_new;
-  long count_orig, count_new;
+  linenr_T count_orig, count_new;
   int notset = TRUE; // block "*dp" not set yet
 
   fd = mch_fopen((char *)fname, "r");
@@ -1221,11 +1221,11 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
     // {first}a{first}[,{last}]
     // {first}[,{last}]d{first}
     p = linebuf;
-    f1 = getdigits_long(&p);
+    f1 = getdigits_int(&p);
 
     if (*p == ',') {
       ++p;
-      l1 = getdigits_long(&p);
+      l1 = getdigits_int(&p);
     } else {
       l1 = f1;
     }
@@ -1235,11 +1235,11 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
       continue;
     }
     difftype = *p++;
-    f2 = getdigits_long(&p);
+    f2 = getdigits_int(&p);
 
     if (*p == ',') {
       ++p;
-      l2 = getdigits_long(&p);
+      l2 = getdigits_int(&p);
     } else {
       l2 = f2;
     }
@@ -1386,7 +1386,7 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
 static void diff_copy_entry(diff_T *dprev, diff_T *dp, int idx_orig,
                             int idx_new)
 {
-  long off;
+  linenr_T off;
 
   if (dprev == NULL) {
     off = 0;

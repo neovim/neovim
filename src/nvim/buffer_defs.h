@@ -1102,7 +1102,7 @@ struct window_S {
   /* transform a pointer to a "onebuf" option into a "allbuf" option */
 #define GLOBAL_WO(p)    ((char *)p + sizeof(winopt_T))
 
-  long w_scbind_pos;
+  linenr_T w_scbind_pos;
 
   dictitem_T w_winvar;          /* variable for "w:" Dictionary */
   dict_T      *w_vars;          /* internal variables, local to window */

@@ -802,7 +802,7 @@ EXTERN int State INIT(= NORMAL);        /* This is the current state of the
                                          * command interpreter. */
 
 EXTERN int finish_op INIT(= FALSE);     /* TRUE while an operator is pending */
-EXTERN long opcount INIT(= 0);          /* count for pending operator */
+EXTERN int opcount INIT(= 0);          /* count for pending operator */
 
 /*
  * ex mode (Q) state
