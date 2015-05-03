@@ -4031,7 +4031,7 @@ jobsend({job}, {data})					{Nvim} *jobsend()*
 
 jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
 		Spawns {cmd} as a job.  If {cmd} is a |List|, it will be run
-		directly.  If {cmd} is a |String|, it will be equivalent to >
+		directly.  If {cmd} is a |string|, it will be equivalent to >
 			:call jobstart([&shell, &shellcmdflag, '{cmd}'])
 <		If passed, {opts} must be a dictionary with any of the
 		following keys:
@@ -6154,7 +6154,7 @@ synstack({lnum}, {col})					*synstack()*
 		valid positions.
 
 system({cmd} [, {input}])				*system()* *E677*
-		Get the output of the shell command {cmd} as a |String|.  {cmd}
+		Get the output of the shell command {cmd} as a |string|.  {cmd}
 		will be run the same as in |jobstart()|.  See |systemlist()|
 		to get the output as a |List|.
 
