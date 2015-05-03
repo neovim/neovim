@@ -3511,6 +3511,11 @@ build_stl_str_hl (
  */
 void get_rel_pos(win_T *wp, char_u *buf, int buflen)
 {
+  // Need at least 3 chars for writing.
+  if (buflen < 3) {
+    return;
+  }
+
   long above;          /* number of lines above window */
   long below;          /* number of lines below window */
 
