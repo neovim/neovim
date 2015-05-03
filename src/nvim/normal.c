@@ -3027,7 +3027,7 @@ void do_check_scrollbind(bool check)
 {
   static win_T        *old_curwin = NULL;
   static linenr_T old_topline = 0;
-  static int old_topfill = 0;
+  static linenr_T old_topfill = 0;
   static buf_T        *old_buf = NULL;
   static colnr_T old_leftcol = 0;
 
@@ -3494,7 +3494,8 @@ static void nv_mousescroll(cmdarg_T *cap)
   win_T *old_curwin = curwin;
 
   if (mouse_row >= 0 && mouse_col >= 0) {
-    int row, col;
+    linenr_T row;
+    colnr_T col;
 
     row = mouse_row;
     col = mouse_col;
@@ -3544,7 +3545,7 @@ static void nv_scroll_line(cmdarg_T *cap)
 void scroll_redraw(int up, long count)
 {
   linenr_T prev_topline = curwin->w_topline;
-  int prev_topfill = curwin->w_topfill;
+  linenr_T prev_topfill = curwin->w_topfill;
   linenr_T prev_lnum = curwin->w_cursor.lnum;
 
   if (up)
@@ -4452,8 +4453,9 @@ static void nv_scroll(cmdarg_T *cap)
   } else {
     if (cap->cmdchar == 'M') {
       /* Don't count filler lines above the window. */
-      used -= diff_check_fill(curwin, curwin->w_topline)
-              - curwin->w_topfill;
+      used -= (int)(diff_check_fill(curwin, curwin->w_topline)
+              - curwin->w_topfill);
+      
       validate_botline();           /* make sure w_empty_rows is valid */
       half = (curwin->w_height - curwin->w_empty_rows + 1) / 2;
       for (n = 0; curwin->w_topline + n < curbuf->b_ml.ml_line_count; ++n) {

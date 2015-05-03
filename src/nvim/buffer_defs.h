@@ -965,8 +965,8 @@ struct window_S {
                                        top of the window */
   char w_topline_was_set;           /* flag set to TRUE when topline is set,
                                        e.g. by winrestview() */
-  int w_topfill;                    /* number of filler lines above w_topline */
-  int w_old_topfill;                /* w_topfill at last redraw */
+  linenr_T w_topfill;                    /* number of filler lines above w_topline */
+  linenr_T w_old_topfill;                /* w_topfill at last redraw */
   bool w_botfill;                   /* true when filler lines are actually
                                        below w_topline (at end of file) */
   bool w_old_botfill;               /* w_botfill at last redraw */
@@ -1006,7 +1006,7 @@ struct window_S {
    * w_cline_height is the number of physical lines taken by the buffer line
    * that the cursor is on.  We use this to avoid extra calls to plines().
    */
-  int w_cline_height;               /* current size of cursor line */
+  linenr_T w_cline_height;          /* current size of cursor line */
   int w_cline_folded;               /* cursor line is folded */
 
   int w_cline_row;                  /* starting row of the cursor line */

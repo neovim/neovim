@@ -20,7 +20,7 @@
 #endif
 
 static linenr_T orig_topline = 0;
-static int orig_topfill = 0;
+static linenr_T orig_topfill = 0;
 
 // Move the cursor to the specified row and column on the screen.
 // Change current window if necessary. Returns an integer with the
@@ -61,8 +61,8 @@ int jump_to_mouse(int flags,
   pos_T old_cursor;
   int count;
   bool first;
-  int row = mouse_row;
-  int col = mouse_col;
+  linenr_T row = mouse_row;
+  colnr_T col = mouse_col;
   int mouse_char;
 
   mouse_past_bottom = false;
@@ -120,14 +120,14 @@ retnomove:
     dragwin = NULL;
     // winpos and height may change in win_enter()!
     if (row >= wp->w_height) {                  // In (or below) status line
-      on_status_line = row - wp->w_height + 1;
+      on_status_line = (int)(row - wp->w_height + 1);
       dragwin = wp;
     } else {
       on_status_line = 0;
     }
 
     if (col >= wp->w_width) {           // In separator line
-      on_sep_line = col - wp->w_width + 1;
+      on_sep_line = (int)(col - wp->w_width + 1);
       dragwin = wp;
     } else {
       on_sep_line = 0;
@@ -193,8 +193,8 @@ retnomove:
   } else if (on_status_line && which_button == MOUSE_LEFT)   {
     if (dragwin != NULL) {
       // Drag the status line
-      count = row - dragwin->w_winrow - dragwin->w_height + 1
-              - on_status_line;
+      count = (int)(row - dragwin->w_winrow - dragwin->w_height + 1
+              - on_status_line);
       win_drag_status_line(dragwin, count);
       did_drag |= count;
     }
@@ -202,8 +202,8 @@ retnomove:
   } else if (on_sep_line && which_button == MOUSE_LEFT)   {
     if (dragwin != NULL) {
       // Drag the separator column
-      count = col - dragwin->w_wincol - dragwin->w_width + 1
-              - on_sep_line;
+      count = (int)(col - dragwin->w_wincol - dragwin->w_width + 1
+              - on_sep_line);
       win_drag_vsep_line(dragwin, count);
       did_drag |= count;
     }
@@ -345,10 +345,10 @@ retnomove:
 // Compute the position in the buffer line from the posn on the screen in
 // window "win".
 // Returns true if the position is below the last line.
-bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
+bool mouse_comp_pos(win_T *win, linenr_T *rowp, colnr_T *colp, linenr_T *lnump)
 {
-  int col = *colp;
-  int row = *rowp;
+  colnr_T col = *colp;
+  linenr_T row = *rowp;
   linenr_T lnum;
   bool retval = false;
   int off;
@@ -392,7 +392,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
     off = win_col_off(win) - win_col_off2(win);
     if (col < off)
       col = off;
-    col += row * (win->w_width - off);
+    col += (int)(row * (win->w_width - off));
     // add skip column (for long wrapping line)
     col += win->w_skipcol;
   }
@@ -415,7 +415,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
 
 // Find the window at screen position "*rowp" and "*colp".  The positions are
 // updated to become relative to the top-left of the window.
-win_T *mouse_find_win(int *rowp, int *colp)
+win_T *mouse_find_win(linenr_T *rowp, colnr_T *colp)
 {
   frame_T     *fp;
 

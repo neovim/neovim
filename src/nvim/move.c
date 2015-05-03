@@ -80,7 +80,7 @@ static void comp_botline(win_T *wp)
       n = 1;
       folded = TRUE;
     } else if (lnum == wp->w_topline)
-      n = plines_win_nofill(wp, lnum, TRUE) + wp->w_topfill;
+      n = (int)(plines_win_nofill(wp, lnum, TRUE) + wp->w_topfill);
     else
       n = plines_win(wp, lnum, TRUE);
     if (
@@ -138,7 +138,7 @@ void update_topline(void)
   int halfheight;
   long n;
   linenr_T old_topline;
-  int old_topfill;
+  linenr_T old_topfill;
   linenr_T lnum;
   int check_topline = FALSE;
   int check_botline = FALSE;
@@ -355,7 +355,7 @@ static int scrolljump_value(void)
 static int check_top_offset(void)
 {
   lineoff_T loff;
-  int n;
+  long n;
 
   if (curwin->w_cursor.lnum < curwin->w_topline + p_so
       || hasAnyFolding(curwin)
@@ -591,8 +591,8 @@ static void curs_rows(win_T *wp)
             && (!wp->w_lines[i].wl_valid
                 || wp->w_lines[i].wl_lnum != wp->w_cursor.lnum))) {
       if (wp->w_cursor.lnum == wp->w_topline)
-        wp->w_cline_height = plines_win_nofill(wp, wp->w_cursor.lnum,
-            TRUE) + wp->w_topfill;
+        wp->w_cline_height = (int)(plines_win_nofill(wp, wp->w_cursor.lnum,
+              TRUE) + wp->w_topfill);
       else
         wp->w_cline_height = plines_win(wp, wp->w_cursor.lnum, TRUE);
       wp->w_cline_folded = hasFoldingWin(wp, wp->w_cursor.lnum,
@@ -1189,7 +1189,7 @@ void scrolldown_clamp(void)
  */
 void scrollup_clamp(void)
 {
-  int start_row;
+  linenr_T start_row;
 
   if (curwin->w_topline == curbuf->b_ml.ml_line_count
       && curwin->w_topfill == 0
