@@ -1889,8 +1889,8 @@ static void main_start_gui(void)
 ///         OK otherwise.
 static int process_env(char *env, bool is_viminit)
 {
-  char *initstr = (char *)os_getenv(env);
-  if (initstr != NULL && *initstr != NUL) {
+  const char *initstr = os_getenv(env);
+  if (initstr != NULL) {
     if (is_viminit) {
       vimrc_found(NULL, NULL);
     }
@@ -1900,7 +1900,7 @@ static int process_env(char *env, bool is_viminit)
     sourcing_lnum = 0;
     scid_T save_sid = current_SID;
     current_SID = SID_ENV;
-    do_cmdline_cmd(initstr);
+    do_cmdline_cmd((char *)initstr);
     sourcing_name = save_sourcing_name;
     sourcing_lnum = save_sourcing_lnum;
     current_SID = save_sid;;

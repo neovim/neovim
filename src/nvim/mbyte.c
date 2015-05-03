@@ -3398,22 +3398,29 @@ static int enc_alias_search(char_u *name)
  */
 char_u * enc_locale(void)
 {
-  char        *s;
-  char        *p;
   int i;
   char buf[50];
-# ifdef HAVE_NL_LANGINFO_CODESET
-  if ((s = nl_langinfo(CODESET)) == NULL || *s == NUL)
-# endif
-#  if defined(HAVE_LOCALE_H) || defined(X_LOCALE)
-    if ((s = setlocale(LC_CTYPE, NULL)) == NULL || *s == NUL)
-#  endif
-      if ((s = (char *)os_getenv("LC_ALL")) == NULL || *s == NUL)
-        if ((s = (char *)os_getenv("LC_CTYPE")) == NULL || *s == NUL)
-          s = (char *)os_getenv("LANG");
 
-  if (s == NULL || *s == NUL)
+  const char *s;
+# ifdef HAVE_NL_LANGINFO_CODESET
+  if (!(s = nl_langinfo(CODESET)) || *s == NUL)
+# endif
+  {
+#  if defined(HAVE_LOCALE_H) || defined(X_LOCALE)
+    if (!(s = setlocale(LC_CTYPE, NULL)) || *s == NUL)
+#  endif
+    {
+      if ((s = os_getenv("LC_ALL"))) {
+        if ((s = os_getenv("LC_CTYPE"))) {
+          s = os_getenv("LANG");
+        }
+      }
+    }
+  }
+
+  if (!s) {
     return NULL;
+  }
 
   /* The most generic locale format is:
    * language[_territory][.codeset][@modifier][+special][,[sponsor][_revision]]
@@ -3423,11 +3430,12 @@ char_u * enc_locale(void)
    * Exception: "ja_JP.EUC" == "euc-jp", "zh_CN.EUC" = "euc-cn",
    * "ko_KR.EUC" == "euc-kr"
    */
-  if ((p = (char *)vim_strchr((char_u *)s, '.')) != NULL) {
-    if (p > s + 2 && STRNICMP(p + 1, "EUC", 3) == 0
+  const char *p = (char *)vim_strchr((char_u *)s, '.');
+  if (p != NULL) {
+    if (p > s + 2 && !STRNICMP(p + 1, "EUC", 3)
         && !isalnum((int)p[4]) && p[4] != '-' && p[-3] == '_') {
       /* copy "XY.EUC" to "euc-XY" to buf[10] */
-      STRCPY(buf + 10, "euc-");
+      strcpy(buf + 10, "euc-");
       buf[14] = p[-2];
       buf[15] = p[-1];
       buf[16] = 0;

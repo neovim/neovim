@@ -1727,7 +1727,7 @@ void set_init_1(void)
   p_cp = FALSE;
 
   /* Use POSIX compatibility when $VIM_POSIX is set. */
-  if (os_getenv("VIM_POSIX") != NULL) {
+  if (os_env_exists("VIM_POSIX")) {
     set_string_default("cpo", (char_u *)CPO_ALL);
     set_string_default("shm", (char_u *)"A");
   }
@@ -1736,8 +1736,7 @@ void set_init_1(void)
    * Find default value for 'shell' option.
    * Don't use it if it is empty.
    */
-  if (((p = (char_u *)os_getenv("SHELL")) != NULL && *p != NUL)
-      )
+  if ((p = (char_u *)os_getenv("SHELL")) != NULL)
     set_string_default("sh", p);
 
   /*
@@ -1926,7 +1925,7 @@ void set_init_1(void)
    * NOTE: mlterm's author is being asked to 'set' a variable
    *       instead of an environment variable due to inheritance.
    */
-  if (os_getenv("MLTERM") != NULL)
+  if (os_env_exists("MLTERM"))
     set_option_value((char_u *)"tbidi", 1L, NULL, 0);
 
   /* Parse default for 'fillchars'. */

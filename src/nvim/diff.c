@@ -808,7 +808,7 @@ static void diff_file(char_u *tmp_orig, char_u *tmp_new, char_u *tmp_diff)
 
     /* We don't want $DIFF_OPTIONS to get in the way. */
     if (os_getenv("DIFF_OPTIONS")) {
-      vim_setenv("DIFF_OPTIONS", "");
+      os_unsetenv("DIFF_OPTIONS");
     }
 
     /* Build the diff command and execute it.  Always use -a, binary

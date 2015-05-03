@@ -743,7 +743,7 @@ void ex_messages(exarg_T *eap)
   msg_hist_off = TRUE;
 
   s = os_getenv("LANG");
-  if (s != NULL && *s != NUL)
+  if (s)
     msg_attr((char_u *)
         _("Messages maintainer: Bram Moolenaar <Bram@vim.org>"),
         hl_attr(HLF_T));

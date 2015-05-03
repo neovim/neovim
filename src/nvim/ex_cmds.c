@@ -1658,9 +1658,9 @@ static char_u *viminfo_filename(char_u *file)
       file = use_viminfo;
     else if ((file = find_viminfo_parameter('n')) == NULL || *file == NUL) {
 #ifdef VIMINFO_FILE2
-      /* don't use $HOME when not defined (turned into "c:/"!). */
-      if (os_getenv((char_u *)"HOME") == NULL) {
-        /* don't use $VIM when not available. */
+      // don't use $HOME when not defined (turned into "c:/"!).
+      if (!os_env_exists("HOME")) {
+        // don't use $VIM when not available.
         expand_env((char_u *)"$VIM", NameBuff, MAXPATHL);
         if (STRCMP("$VIM", NameBuff) != 0)          /* $VIM was expanded */
           file = (char_u *)VIMINFO_FILE2;

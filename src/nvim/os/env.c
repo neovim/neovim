@@ -27,12 +27,24 @@
 #include <sys/utsname.h>
 #endif
 
+/// Like getenv(), but returns NULL if the variable is empty.
 const char *os_getenv(const char *name)
+  FUNC_ATTR_NONNULL_ALL
 {
-  return getenv(name);
+  const char *e = getenv(name);
+  return e == NULL || *e == NUL ? NULL : e;
+}
+
+/// Returns `true` if the environment variable, `name`, has been defined
+/// (even if empty).
+bool os_env_exists(const char *name)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return getenv(name) != NULL;
 }
 
 int os_setenv(const char *name, const char *value, int overwrite)
+  FUNC_ATTR_NONNULL_ALL
 {
   return setenv(name, value, overwrite);
 }
@@ -123,17 +135,11 @@ static char_u   *homedir = NULL;
 
 void init_homedir(void)
 {
-  char_u  *var;
-
   /* In case we are called a second time (when 'encoding' changes). */
   xfree(homedir);
   homedir = NULL;
 
-  var = (char_u *)os_getenv("HOME");
-
-  if (var != NULL && *var == NUL)       /* empty is same as not set */
-    var = NULL;
-
+  char_u *var = (char_u *)os_getenv("HOME");
 
   if (var != NULL) {
 #ifdef UNIX
@@ -417,11 +423,6 @@ static char *remove_tail(char *p, char *pend, char *name)
 char *vim_getenv(const char *name)
 {
   const char *kos_env_path = os_getenv(name);
-  if (kos_env_path != NULL
-      && *kos_env_path == NUL) {  // empty is the same as not set
-    kos_env_path = NULL;
-  }
-
   if (kos_env_path != NULL) {
     return xstrdup(kos_env_path);
   }
@@ -440,10 +441,6 @@ char *vim_getenv(const char *name)
 #endif
       ) {
     kos_env_path = os_getenv("VIM");
-    if (kos_env_path != NULL
-        && *kos_env_path == NUL) {  // empty is the same as not set
-      kos_env_path = NULL;
-    }
     if (kos_env_path != NULL) {
       vim_path = vim_version_dir(kos_env_path);
       if (vim_path == NULL) {
@@ -533,8 +530,6 @@ void home_replace(buf_T *buf, char_u *src, char_u *dst, int dstlen, bool one)
 {
   size_t dirlen = 0, envlen = 0;
   size_t len;
-  char_u      *homedir_env, *homedir_env_orig;
-  char_u      *p;
 
   if (src == NULL) {
     *dst = NUL;
@@ -556,12 +551,11 @@ void home_replace(buf_T *buf, char_u *src, char_u *dst, int dstlen, bool one)
   if (homedir != NULL)
     dirlen = STRLEN(homedir);
 
-  homedir_env_orig = homedir_env = (char_u *)os_getenv("HOME");
-  /* Empty is the same as not set. */
-  if (homedir_env != NULL && *homedir_env == NUL)
-    homedir_env = NULL;
+  char_u *homedir_env = (char_u *)os_getenv("HOME");
+  bool must_free = false;
 
   if (homedir_env != NULL && vim_strchr(homedir_env, '~') != NULL) {
+    must_free = true;
     size_t usedlen = 0;
     size_t flen = STRLEN(homedir_env);
     char_u *fbuf = NULL;
@@ -587,7 +581,7 @@ void home_replace(buf_T *buf, char_u *src, char_u *dst, int dstlen, bool one)
      * as "~er/bla" (which would seem to indicate the file "bla" in user
      * er's home directory)).
      */
-    p = homedir;
+    char_u *p = homedir;
     len = dirlen;
     for (;; ) {
       if (   len
@@ -623,8 +617,9 @@ void home_replace(buf_T *buf, char_u *src, char_u *dst, int dstlen, bool one)
 
   *dst = NUL;
 
-  if (homedir_env != homedir_env_orig)
+  if (must_free) {
     xfree(homedir_env);
+  }
 }
 
 /// Like home_replace, store the replaced string in allocated memory.

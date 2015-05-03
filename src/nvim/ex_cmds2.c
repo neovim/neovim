@@ -3025,10 +3025,11 @@ char *get_mess_lang(void)
 #  endif
 # else
   p = os_getenv("LC_ALL");
-  if (p == NULL || *p == NUL) {
+  if (p == NULL) {
     p = os_getenv("LC_MESSAGES");
-    if (p == NULL || *p == NUL)
+    if (p == NULL) {
       p = os_getenv("LANG");
+    }
   }
 # endif
   return p;
@@ -3044,15 +3045,17 @@ static char_u *get_mess_env(void)
   char_u      *p;
 
   p = (char_u *)os_getenv("LC_ALL");
-  if (p == NULL || *p == NUL) {
+  if (p == NULL) {
     p = (char_u *)os_getenv("LC_MESSAGES");
-    if (p == NULL || *p == NUL) {
+    if (p == NULL) {
       p = (char_u *)os_getenv("LANG");
-      if (p != NULL && ascii_isdigit(*p))
+      if (p != NULL && ascii_isdigit(*p)) {
         p = NULL;                       /* ignore something like "1043" */
+      }
 # ifdef HAVE_GET_LOCALE_VAL
-      if (p == NULL || *p == NUL)
+      if (p == NULL) {
         p = (char_u *)get_locale_val(LC_CTYPE);
+      }
 # endif
     }
   }

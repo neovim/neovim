@@ -16,6 +16,7 @@
 #include "nvim/log.h"
 #include "nvim/tempfile.h"
 #include "nvim/path.h"
+#include "nvim/strings.h"
 
 #define MAX_CONNECTIONS 32
 #define ADDRESS_MAX_SIZE 256
@@ -59,7 +60,7 @@ bool server_init(void)
 
   bool must_free = false;
   const char *listen_address = os_getenv(LISTEN_ADDRESS_ENV_VAR);
-  if (listen_address == NULL || *listen_address == NUL) {
+  if (listen_address == NULL) {
     must_free = true;
     listen_address = (char *)vim_tempname();
   }
@@ -216,7 +217,7 @@ int server_start(const char *endpoint)
 
   // Update $NVIM_LISTEN_ADDRESS, if not set.
   const char *listen_address = os_getenv(LISTEN_ADDRESS_ENV_VAR);
-  if (listen_address == NULL || *listen_address == NUL) {
+  if (listen_address == NULL) {
     os_setenv(LISTEN_ADDRESS_ENV_VAR, addr, 1);
   }
 
