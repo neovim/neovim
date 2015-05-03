@@ -9,6 +9,7 @@
 #define NVIM_ASCII_H
 
 #include <stdbool.h>
+#include "nvim/os/os_defs.h"
 
 #include "nvim/func_attr.h"
 
