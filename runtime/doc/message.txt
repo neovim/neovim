@@ -778,7 +778,6 @@ and the screen is about to be redrawn:
    like pressing <Space>.  This makes it impossible to select text though.
 -> For the GUI clicking the left mouse button in the last line works like
    pressing <Space>.
-{Vi: only ":" commands are interpreted}
 
 If you accidentally hit <Enter> or <Space> and you want to see the displayed
 text then use |g<|.  This only works when 'more' is set.
@@ -810,10 +809,10 @@ Type					effect ~
      G					down all the way, until the hit-enter
 					prompt
 
-     <BS> or k or <Up>			one line back (*)
-     u					up a page (half a screen) (*)
-     b or <PageUp>			back a screen (*)
-     g					back to the start (*)
+     <BS> or k or <Up>			one line back
+     u					up a page (half a screen)
+     b or <PageUp>			back a screen
+     g					back to the start
 
      q, <Esc> or CTRL-C			stop the listing
      :					stop the listing and enter a
@@ -822,13 +821,11 @@ Type					effect ~
 					the clipboard ("* and "+ registers)
     {menu-entry}			what the menu is defined to in
 					Cmdline-mode.
-    <LeftMouse> (**)			next page
+    <LeftMouse> (*)			next page
 
 Any other key causes the meaning of the keys to be displayed.
 
-(*)  backwards scrolling is {not in Vi}.  Only scrolls back to where messages
-     started to scroll.
-(**) Clicking the left mouse button only works:
+(*)  Clicking the left mouse button only works:
      - For the GUI: in the last line of the screen.
      - When 'r' is included in 'mouse' (but then selecting text won't work).
 

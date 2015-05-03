@@ -10,8 +10,6 @@ Debugger Support Features				*debugger-support*
 2. Vim Compile Options		|debugger-compilation|
 3. Integrated Debuggers		|debugger-integration|
 
-{Vi does not have any of these features}
-
 ==============================================================================
 1. Debugger Features					*debugger-features*
 

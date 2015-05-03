@@ -74,7 +74,7 @@ modes.
 			Map the key sequence {lhs} to {rhs} for the modes
 			where the map command applies.  Disallow mapping of
 			{rhs}, to avoid nested and recursive mappings.  Often
-			used to redefine a command.  {not in Vi}
+			used to redefine a command.
 
 
 :unm[ap]  {lhs}			|mapmode-nvo|		*:unm*  *:unmap*
@@ -106,7 +106,7 @@ modes.
 :lmapc[lear]			|mapmode-l|		*:lmapc*  *:lmapclear*
 :cmapc[lear]			|mapmode-c|		*:cmapc*  *:cmapclear*
 			Remove ALL mappings for the modes where the map
-			command applies.  {not in Vi}
+			command applies.
 			Use the <buffer> argument to remove buffer-local
 			mappings |:map-<buffer>|
 			Warning: This also removes the default mappings.
@@ -137,7 +137,6 @@ modes.
 :cm[ap] {lhs}			|mapmode-c|		*:cmap_l*
 			List the key mappings for the key sequences starting
 			with {lhs} in the modes where the map command applies.
-			{not in Vi}
 
 These commands are used to map a key or key sequence to a string of
 characters.  You can use this to put command sequences under function keys,
@@ -154,7 +153,6 @@ decide if "aa" or "aaa" should be mapped.  This means that after typing "aa"
 that mapping won't get expanded yet, Vim is waiting for another character.
 If you type a space, then "foo" will get inserted, plus the space.  If you
 type "a", then "bar" will get inserted.
-{Vi does not allow ambiguous mappings}
 
 
 1.2 SPECIAL ARGUMENTS					*:map-arguments*
@@ -876,8 +874,7 @@ end-id	  The "end-id" type ends in a keyword character, but all the other
 	  Examples: "#i", "..f", "$/7"
 
 non-id	  The "non-id" type ends in a non-keyword character, the other
-	  characters may be of any type, excluding space and tab.  {this type
-	  is not supported by Vi}
+	  characters may be of any type, excluding space and tab.
 
 	  Examples: "def#", "4/7$"
 
@@ -995,45 +992,40 @@ See |:verbose-cmd| for more information.
 
 						*:norea* *:noreabbrev*
 :norea[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
-			same as ":ab", but no remapping for this {rhs} {not
-			in Vi}
+			same as ":ab", but no remapping for this {rhs}
 
 						*:ca* *:cabbrev*
 :ca[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
-			same as ":ab", but for Command-line mode only.  {not
-			in Vi}
+			same as ":ab", but for Command-line mode only.
 
 						*:cuna* *:cunabbrev*
-:cuna[bbrev] {lhs}	same as ":una", but for Command-line mode only.  {not
-			in Vi}
+:cuna[bbrev] {lhs}	same as ":una", but for Command-line mode only.
 
 						*:cnorea* *:cnoreabbrev*
 :cnorea[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
 			same as ":ab", but for Command-line mode only and no
-			remapping for this {rhs} {not in Vi}
+			remapping for this {rhs}
 
 						*:ia* *:iabbrev*
 :ia[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
-			same as ":ab", but for Insert mode only.  {not in Vi}
+			same as ":ab", but for Insert mode only.
 
 						*:iuna* *:iunabbrev*
-:iuna[bbrev] {lhs}	same as ":una", but for insert mode only.  {not in
-			Vi}
+:iuna[bbrev] {lhs}	same as ":una", but for insert mode only.
 
 						*:inorea* *:inoreabbrev*
 :inorea[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
 			same as ":ab", but for Insert mode only and no
-			remapping for this {rhs} {not in Vi}
+			remapping for this {rhs}
 
 							*:abc* *:abclear*
-:abc[lear] [<buffer>]	Remove all abbreviations.  {not in Vi}
+:abc[lear] [<buffer>]	Remove all abbreviations.
 
 							*:iabc* *:iabclear*
-:iabc[lear] [<buffer>]	Remove all abbreviations for Insert mode.  {not in Vi}
+:iabc[lear] [<buffer>]	Remove all abbreviations for Insert mode.
 
 							*:cabc* *:cabclear*
-:cabc[lear] [<buffer>]	Remove all abbreviations for Command-line mode.  {not
-			in Vi}
+:cabc[lear] [<buffer>]	Remove all abbreviations for Command-line mode.
 
 							*using_CTRL-V*
 It is possible to use special characters in the rhs of an abbreviation.
@@ -1125,9 +1117,6 @@ to find out what they are defined to.
 
 The |:scriptnames| command can be used to see which scripts have been sourced
 and what their <SNR> number is.
-
-This is all {not in Vi} and {not available when compiled without the |+eval|
-feature}.
 
 ==============================================================================
 4. User-defined commands				*user-commands*

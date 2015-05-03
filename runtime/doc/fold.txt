@@ -14,9 +14,6 @@ You can find an introduction on folding in chapter 28 of the user manual.
 3. Fold options		|fold-options|
 4. Behavior of folds	|fold-behavior|
 
-{Vi has no Folding}
-{not available when compiled without the |+folding| feature}
-
 ==============================================================================
 1. Fold methods					*fold-methods*
 

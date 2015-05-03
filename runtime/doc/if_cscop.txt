@@ -21,7 +21,6 @@ functions as you normally would with |tags|.
 7. Availability & Information	|cscope-info|
 
 This is currently for Unix and Win32 only.
-{Vi does not have any of these commands}
 
 ==============================================================================
 1. Cscope introduction					*cscope-intro*

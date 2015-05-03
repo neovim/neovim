@@ -44,14 +44,14 @@ An alternate file name is remembered for each window.
 :keepalt {cmd}		Execute {cmd} while keeping the current alternate file
 			name.  Note that commands invoked indirectly (e.g.,
 			with a function) may still set the alternate file
-			name.  {not in Vi}
+			name.
 
 All file names are remembered in the buffer list.  When you enter a file name,
 for editing (e.g., with ":e filename") or writing (e.g., with ":w filename"),
 the file name is added to the list.  You can use the buffer list to remember
 which files you edited and to quickly switch from one file to another (e.g.,
 to copy text) with the |CTRL-^| command.  First type the number of the file
-and then hit CTRL-^.  {Vi: only one alternate file name is remembered}
+and then hit CTRL-^.
 
 
 CTRL-G		or				*CTRL-G* *:f* *:fi* *:file*
@@ -60,14 +60,13 @@ CTRL-G		or				*CTRL-G* *:f* *:fi* *:file*
 			option is set), and the file status (readonly,
 			modified, read errors, new file).  See the 'shortmess'
 			option about how to make this message shorter.
-			{Vi does not include column number}
 
 :f[ile]!		like |:file|, but don't truncate the name even when
 			'shortmess' indicates this.
 
 {count}CTRL-G		Like CTRL-G, but prints the current file name with
 			full path.  If the count is higher than 1 the current
-			buffer number is also given.  {not in Vi}
+			buffer number is also given.
 
 					*g_CTRL-G* *word-count* *byte-count*
 g CTRL-G		Prints the current position of the cursor in five
@@ -78,7 +77,7 @@ g CTRL-G		Prints the current position of the cursor in five
 			than one position on the screen (<Tab> or special
 			character), both the "real" column and the screen
 			column are shown, separated with a dash.
-			See also 'ruler' option.  {not in Vi}
+			See also 'ruler' option.
 
 							*v_g_CTRL-G*
 {Visual}g CTRL-G	Similar to "g CTRL-G", but Word, Character, Line, and
@@ -86,7 +85,6 @@ g CTRL-G		Prints the current position of the cursor in five
 			displayed.
 			In Blockwise mode, Column count is also shown.  (For
 			{Visual} see |Visual-mode|.)
-			{not in VI}
 
 							*:file_f*
 :f[ile][!] {name}	Sets the current file name to {name}.  The optional !
@@ -96,14 +94,12 @@ g CTRL-G		Prints the current position of the cursor in five
 			to hold the old name.
 							*:0file*
 :0f[ile][!]		Remove the name of the current buffer.  The optional !
-			avoids truncating the message, as with |:file|.  {not
-			in Vi}
+			avoids truncating the message, as with |:file|.
 
 :buffers
 :files
 :ls			List all the currently known file names.  See
-			'windows.txt' |:files| |:buffers| |:ls|.  {not in
-			Vi}
+			'windows.txt' |:files| |:buffers| |:ls|.
 
 Vim will remember the full path name of a file name that you enter.  In most
 cases when the file name is displayed only the name you typed is shown, but
@@ -185,7 +181,6 @@ If you want to keep the changed buffer without saving it, switch on the
 			buffer and 'autowriteall' isn't set or the file can't
 			be written.
 			Also see |++opt| and |+cmd|.
-			{Vi: no ++opt}
 
 							*:edit!* *discard*
 :e[dit]! [++opt] [+cmd]
@@ -193,7 +188,6 @@ If you want to keep the changed buffer without saving it, switch on the
 			the current buffer.  This is useful if you want to
 			start all over again.
 			Also see |++opt| and |+cmd|.
-			{Vi: no ++opt}
 
 							*:edit_f*
 :e[dit] [++opt] [+cmd] {file}
@@ -202,14 +196,12 @@ If you want to keep the changed buffer without saving it, switch on the
 			buffer, unless 'hidden' is set or 'autowriteall' is
 			set and the file can be written.
 			Also see |++opt| and |+cmd|.
-			{Vi: no ++opt}
 
 							*:edit!_f*
 :e[dit]! [++opt] [+cmd] {file}
 			Edit {file} always.  Discard any changes to the
 			current buffer.
 			Also see |++opt| and |+cmd|.
-			{Vi: no ++opt}
 
 :e[dit] [++opt] [+cmd] #[count]
 			Edit the [count]th buffer (as shown by |:files|).
@@ -217,7 +209,6 @@ If you want to keep the changed buffer without saving it, switch on the
 			#" doesn't work if the alternate buffer doesn't have a
 			file name, while CTRL-^ still works then.
 			Also see |++opt| and |+cmd|.
-			{Vi: no ++opt}
 
 							*:ene* *:enew*
 :ene[w]			Edit a new, unnamed buffer.  This fails when changes
@@ -227,19 +218,15 @@ If you want to keep the changed buffer without saving it, switch on the
 			If 'fileformats' is not empty, the first format given
 			will be used for the new buffer.  If 'fileformats' is
 			empty, the 'fileformat' of the current buffer is used.
-			{not in Vi}
 
 							*:ene!* *:enew!*
 :ene[w]!		Edit a new, unnamed buffer.  Discard any changes to
 			the current buffer.
 			Set 'fileformat' like |:enew|.
-			{not in Vi}
 
 							*:fin* *:find*
 :fin[d][!] [++opt] [+cmd] {file}
 			Find {file} in 'path' and then |:edit| it.
-			{not in Vi} {not available when the |+file_in_path|
-			feature was disabled at compile time}
 
 :{count}fin[d][!] [++opt] [+cmd] {file}
 			Just like ":find", but use the {count} match in
@@ -261,7 +248,7 @@ If you want to keep the changed buffer without saving it, switch on the
 :vie[w][!] [++opt] [+cmd] file
 			When used in Ex mode: Leave |Ex mode|, go back to
 			Normal mode.  Otherwise same as |:edit|, but set
-			'readonly' option for this buffer.  {not in Vi}
+			'readonly' option for this buffer.
 
 							*CTRL-^* *CTRL-6*
 CTRL-^			Edit the alternate file.  Mostly the alternate file is
@@ -280,7 +267,6 @@ CTRL-^			Edit the alternate file.  Mostly the alternate file is
 			":e #[count]").  This is a quick way to switch between
 			files.
 			See |CTRL-^| above for further details.
-			{not in Vi}
 
 [count]]f						*]f* *[f*
 [count][f		Same as "gf".  Deprecated.
@@ -313,9 +299,6 @@ CTRL-^			Edit the alternate file.  Mostly the alternate file is
 			For Unix the '~' character is expanded, like in
 			"~user/file".  Environment variables are expanded too
 			|expand-env|.
-			{not in Vi}
-			{not available when the |+file_in_path| feature was
-			disabled at compile time}
 
 							*v_gf*
 {Visual}[count]gf	Same as "gf", but the highlighted text is used as the
@@ -323,7 +306,6 @@ CTRL-^			Edit the alternate file.  Mostly the alternate file is
 			Leading blanks are skipped, otherwise all blanks and
 			special characters are included in the file name.
 			(For {Visual} see |Visual-mode|.)
-			{not in VI}
 
 							*gF*
 [count]gF		Same as "gf", except if a number follows the file
@@ -567,14 +549,12 @@ list of the current window.
 			the first one.  This fails when changes have been made
 			and Vim does not want to |abandon| the current buffer.
 			Also see |++opt| and |+cmd|.
-			{Vi: no ++opt}
 
 :ar[gs]! [++opt] [+cmd] {arglist}			*:args_f!*
 			Define {arglist} as the new argument list and edit
 			the first one.  Discard any changes to the current
 			buffer.
 			Also see |++opt| and |+cmd|.
-			{Vi: no ++opt}
 
 :[count]arge[dit][!] [++opt] [+cmd] {name}		*:arge* *:argedit*
 			Add {name} to the argument list and edit it.
@@ -587,7 +567,6 @@ list of the current window.
 			[!] is required if the current file cannot be
 			|abandon|ed.
 			Also see |++opt| and |+cmd|.
-			{not in Vi}
 
 :[count]arga[dd] {name} ..			*:arga* *:argadd* *E479*
 			Add the {name}s to the argument list.
@@ -604,8 +583,6 @@ list of the current window.
 			There is no check for duplicates, it is possible to
 			add a file to the argument list twice.
 			The currently edited file is not changed.
-			{not in Vi} {not available when compiled without the
-			|+listcmds| feature}
 			Note: you can also use this method: >
 				:args ## x
 <			This will add the "x" item and sort the new list.
@@ -619,16 +596,12 @@ list of the current window.
 			when it's deleted from the argument list.
 			Example: >
 				:argdel *.obj
-<			{not in Vi} {not available when compiled without the
-			|+listcmds| feature}
 
 :{range}argd[elete]	Delete the {range} files from the argument list.
 			When the last number in the range is too high, up to
 			the last argument is deleted.  Example: >
 				:10,1000argdel
 <			Deletes arguments 10 and further, keeping 1-9.
-			{not in Vi} {not available when compiled without the
-			|+listcmds| feature}
 
 							*:argu* *:argument*
 :[count]argu[ment] [count] [++opt] [+cmd]
@@ -637,27 +610,21 @@ list of the current window.
 			when changes have been made and Vim does not want to
 			|abandon| the current buffer.
 			Also see |++opt| and |+cmd|.
-			{not in Vi} {not available when compiled without the
-			|+listcmds| feature}
 
 :[count]argu[ment]! [count] [++opt] [+cmd]
 			Edit file [count] in the argument list, discard any
 			changes to the current buffer.  When [count] is
 			omitted the current entry is used.
 			Also see |++opt| and |+cmd|.
-			{not in Vi} {not available when compiled without the
-			|+listcmds| feature}
 
 :[count]n[ext] [++opt] [+cmd]			*:n* *:ne* *:next* *E165* *E163*
 			Edit [count] next file.  This fails when changes have
 			been made and Vim does not want to |abandon| the
-			current buffer.  Also see |++opt| and |+cmd|.  {Vi: no
-			count or ++opt}.
+			current buffer.  Also see |++opt| and |+cmd|.
 
 :[count]n[ext]! [++opt] [+cmd]
 			Edit [count] next file, discard any changes to the
-			buffer.  Also see |++opt| and |+cmd|.  {Vi: no count
-			or ++opt}.
+			buffer.  Also see |++opt| and |+cmd|.
 
 :n[ext] [++opt] [+cmd] {arglist}			*:next_f*
 			Same as |:args_f|.
@@ -669,65 +636,63 @@ list of the current window.
 			Edit [count] previous file in argument list.  This
 			fails when changes have been made and Vim does not
 			want to |abandon| the current buffer.
-			Also see |++opt| and |+cmd|.  {Vi: no count or ++opt}.
+			Also see |++opt| and |+cmd|.
 
 :[count]N[ext]! [count] [++opt] [+cmd]
 			Edit [count] previous file in argument list.  Discard
 			any changes to the buffer.  Also see |++opt| and
-			|+cmd|.  {Vi: no count or ++opt}.
+			|+cmd|.
 
 :[count]prev[ious] [count] [++opt] [+cmd]		*:prev* *:previous*
-			Same as :Next.  Also see |++opt| and |+cmd|.  {Vi:
-			only in some versions}
+			Same as :Next.  Also see |++opt| and |+cmd|.
 
 							*:rew* *:rewind*
 :rew[ind] [++opt] [+cmd]
 			Start editing the first file in the argument list.
 			This fails when changes have been made and Vim does
 			not want to |abandon| the current buffer.
-			Also see |++opt| and |+cmd|. {Vi: no ++opt}
+			Also see |++opt| and |+cmd|.
 
 :rew[ind]! [++opt] [+cmd]
 			Start editing the first file in the argument list.
 			Discard any changes to the buffer.  Also see |++opt|
-			and |+cmd|. {Vi: no ++opt}
+			and |+cmd|.
 
 							*:fir* *:first*
 :fir[st][!] [++opt] [+cmd]
-			Other name for ":rewind". {not in Vi}
+			Other name for ":rewind".
 
 							*:la* *:last*
 :la[st] [++opt] [+cmd]
 			Start editing the last file in the argument list.
 			This fails when changes have been made and Vim does
 			not want to |abandon| the current buffer.
-			Also see |++opt| and |+cmd|.  {not in Vi}
+			Also see |++opt| and |+cmd|.
 
 :la[st]! [++opt] [+cmd]
 			Start editing the last file in the argument list.
 			Discard any changes to the buffer.  Also see |++opt|
-			and |+cmd|.  {not in Vi}
+			and |+cmd|.
 
 							*:wn* *:wnext*
 :[count]wn[ext] [++opt]
 			Write current file and start editing the [count]
-			next file.  Also see |++opt| and |+cmd|.  {not in Vi}
+			next file.  Also see |++opt| and |+cmd|.
 
 :[count]wn[ext] [++opt] {file}
 			Write current file to {file} and start editing the
 			[count] next file, unless {file} already exists and
 			the 'writeany' option is off.  Also see |++opt| and
-			|+cmd|.  {not in Vi}
+			|+cmd|.
 
 :[count]wn[ext]! [++opt] {file}
 			Write current file to {file} and start editing the
-			[count] next file.  Also see |++opt| and |+cmd|.  {not
-			in Vi}
+			[count] next file.  Also see |++opt| and |+cmd|.
 
 :[count]wN[ext][!] [++opt] [file]		*:wN* *:wNext*
 :[count]wp[revious][!] [++opt] [file]		*:wp* *:wprevious*
 			Same as :wnext, but go to previous file instead of
-			next.  {not in Vi}
+			next.
 
 The [count] in the commands above defaults to one.  For some commands it is
 possible to use two counts.  The last one (rightmost one) is used.
@@ -767,9 +732,6 @@ fourth file in the argument list.  This happens when you do ":e file".
 
 
 LOCAL ARGUMENT LIST
-
-{not in Vi}
-{not available when compiled without the |+windows| or |+listcmds| features}
 
 							*:arglocal*
 :argl[ocal]		Make a local copy of the global argument list.
@@ -821,8 +783,6 @@ USING THE ARGUMENT LIST
 			autocommand event is disabled by adding it to
 			'eventignore'.  This considerably speeds up editing
 			each file.
-			{not in Vi} {not available when compiled without the
-			|+listcmds| feature}
 			Also see |:windo|, |:tabdo| and |:bufdo|.
 
 Example: >
@@ -910,24 +870,22 @@ used, for example, when the write fails and you want to try again later with
 			When 'filetype' is empty filetype detection is done
 			with the new name, before the file is written.
 			When the write was successful 'readonly' is reset.
-			{not in Vi}
 
 							*:up* *:update*
 :[range]up[date][!] [++opt] [>>] [file]
 			Like ":write", but only write when the buffer has been
-			modified.  {not in Vi}
+			modified.
 
 
 WRITING WITH MULTIPLE BUFFERS				*buffer-write*
 
 							*:wa* *:wall*
 :wa[ll]			Write all changed buffers.  Buffers without a file
-			name or which are readonly are not written. {not in
-			Vi}
+			name or which are readonly are not written.
 
 :wa[ll]!		Write all changed buffers, even the ones that are
 			readonly.  Buffers without a file name are not
-			written. {not in Vi}
+			written.
 
 
 Vim will warn you if you try to overwrite a file that has been changed
@@ -1056,14 +1014,14 @@ The names can be in upper- or lowercase.
 
 :conf[irm] q[uit]	Quit, but give prompt when changes have been made, or
 			the last file in the argument list has not been
-			edited.  See |:confirm| and 'confirm'.  {not in Vi}
+			edited.  See |:confirm| and 'confirm'.
 
 :q[uit]!		Quit without writing, also when visible buffers have
 			changes.  Does not exit when there are changed hidden
 			buffers.  Use ":qall!" to exit always.
 
 :cq[uit]		Quit always, without writing, and return an error
-			code.  See |:cq|.  {not in Vi}
+			code.  See |:cq|.
 
 							*:wq*
 :wq [++opt]		Write the current file and quit.  Writing fails when
@@ -1101,7 +1059,6 @@ ZZ			Write current file, if modified, and quit (same as
 
 							*ZQ*
 ZQ			Quit without checking for changes (same as ":q!").
-			{not in Vi}
 
 MULTIPLE WINDOWS AND BUFFERS				*window-exit*
 
@@ -1109,35 +1066,34 @@ MULTIPLE WINDOWS AND BUFFERS				*window-exit*
 :qa[ll]		Exit Vim, unless there are some buffers which have been
 		changed.  (Use ":bmod" to go to the next modified buffer).
 		When 'autowriteall' is set all changed buffers will be
-		written, like |:wqall|. {not in Vi}
+		written, like |:wqall|.
 
 :conf[irm] qa[ll]
 		Exit Vim.  Bring up a prompt when some buffers have been
-		changed.  See |:confirm|. {not in Vi}
+		changed.  See |:confirm|.
 
-:qa[ll]!	Exit Vim.  Any changes to buffers are lost. {not in Vi}
+:qa[ll]!	Exit Vim.  Any changes to buffers are lost.
 		Also see |:cquit|, it does the same but exits with a non-zero
 		value.
 
 							*:quita* *:quitall*
-:quita[ll][!]	Same as ":qall". {not in Vi}
+:quita[ll][!]	Same as ":qall".
 
 :wqa[ll] [++opt]				*:wqa* *:wqall* *:xa* *:xall*
 :xa[ll]		Write all changed buffers and exit Vim.  If there are buffers
 		without a file name, which are readonly or which cannot be
-		written for another reason, Vim will not quit. {not in Vi}
+		written for another reason, Vim will not quit.
 
 :conf[irm] wqa[ll] [++opt]
 :conf[irm] xa[ll]
 		Write all changed buffers and exit Vim.  Bring up a prompt
 		when some buffers are readonly or cannot be written for
-		another reason.  See |:confirm|. {not in Vi}
+		another reason.  See |:confirm|.
 
 :wqa[ll]! [++opt]
 :xa[ll]!	Write all changed buffers, even the ones that are readonly,
 		and exit Vim.  If there are buffers without a file name or
 		which cannot be written for another reason, Vim will not quit.
-		{not in Vi}
 
 ==============================================================================
 6. Dialogs						*edit-dialogs*
@@ -1260,7 +1216,7 @@ present in 'cpoptions' and "!" is not used in the command.
 <
 							*:cd-* *E186*
 :cd[!] -		Change to the previous current directory (before the
-			previous ":cd {path}" command). {not in Vi}
+			previous ":cd {path}" command).
 
 							*:chd* *:chdir*
 :chd[ir][!] [path]	Same as |:cd|.
@@ -1268,13 +1224,13 @@ present in 'cpoptions' and "!" is not used in the command.
 							*:lc* *:lcd*
 :lc[d][!] {path}	Like |:cd|, but only set the current directory for the
 			current window.  The current directory for other
-			windows is not changed. {not in Vi}
+			windows is not changed.
 
 							*:lch* *:lchdir*
-:lch[dir][!]		Same as |:lcd|. {not in Vi}
+:lch[dir][!]		Same as |:lcd|.
 
 							*:pw* *:pwd* *E187*
-:pw[d]			Print the current directory name.  {Vi: no pwd}
+:pw[d]			Print the current directory name.
 			Also see |getcwd()|.
 
 So long as no |:lcd| command has been used, all windows share the same current
@@ -1323,8 +1279,7 @@ There are a few things to remember when editing binary files:
   file.  Otherwise both <CR> <NL> and <NL> are considered to end a line
   and when the file is written the <NL> will be replaced with <CR> <NL>.
 - <Nul> characters are shown on the screen as ^@.  You can enter them with
-  "CTRL-V CTRL-@" or "CTRL-V 000" {Vi cannot handle <Nul> characters in the
-  file}
+  "CTRL-V CTRL-@" or "CTRL-V 000".
 - To insert a <NL> character in the file split up a line.  When writing the
   buffer to a file a <NL> will be written for the <EOL>.
 - Vim normally appends an <EOL> at the end of the file if there is none.

@@ -16,10 +16,6 @@ when used in combination with more than one tab page.
 4. Setting 'tabline'		|setting-tabline|
 5. Setting 'guitablabel'	|setting-guitablabel|
 
-{Vi does not have any of these commands}
-{not able to use multiple tab pages when the |+windows| feature was disabled
-at compile time}
-
 ==============================================================================
 1. Introduction						*tab-page-intro*
 
@@ -238,8 +234,6 @@ LOOPING OVER TAB PAGES:
 		current tab page.
 		{cmd} can contain '|' to concatenate several commands.
 		{cmd} must not open or close tab pages or reorder them.
-		{not in Vi} {not available when compiled without the
-		|+listcmds| feature}
 		Also see |:windo|, |:argdo| and |:bufdo|.
 
 ==============================================================================

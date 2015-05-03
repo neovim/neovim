@@ -12,12 +12,6 @@ These functions were originally created by Avner Lottem:
    E-mail: alottem@iil.intel.com
    Phone:  +972-4-8307322
 
-{Vi does not have any of these commands}
-
-								*E26*
-{only available when compiled with the |+rightleft| feature}
-
-
 Introduction
 ------------
 Some languages such as Arabic, Farsi, Hebrew (among others) require the

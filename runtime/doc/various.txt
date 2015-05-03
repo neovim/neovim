@@ -54,7 +54,7 @@ ga			Print the ascii value of the character under the
 				<^@>  0,  Hex 00,  Octal 000 ~
 			If the character has composing characters these are
 			also shown.  The value of 'maxcombine' doesn't matter.
-			Mnemonic: Get Ascii value.  {not in Vi}
+			Mnemonic: Get ASCII value.
 
 							*g8*
 g8			Print the hex values of the bytes used in the
@@ -63,8 +63,6 @@ g8			Print the hex values of the bytes used in the
 			value of 'maxcombine' doesn't matter.
 			Example of a character with two composing characters:
 				e0 b8 81 + e0 b8 b9 + e0 b9 89 ~
-			{not in Vi} {only when compiled with the |+multi_byte|
-			feature}
 
 							*8g8*
 8g8			Find an illegal UTF-8 byte sequence at or after the
@@ -79,8 +77,6 @@ g8			Print the hex values of the bytes used in the
 			Note that when the cursor is on an illegal byte or the
 			cursor is halfway through a multi-byte character the
 			command won't move the cursor.
-			{not in Vi} {only when compiled with the |+multi_byte|
-			feature}
 
 						*:p* *:pr* *:print* *E749*
 :[range]p[rint] [flags]
@@ -205,9 +201,7 @@ g8			Print the hex values of the bytes used in the
 
 			Example: >
 				:exe "normal \<c-w>\<c-w>"
-<			{not in Vi, of course}
-			{not available when the |+ex_extra| feature was
-			disabled at compile time}
+<
 
 :{range}norm[al][!] {commands}				*:normal-range*
 			Execute Normal mode commands {commands} for each line
@@ -215,9 +209,6 @@ g8			Print the hex values of the bytes used in the
 			cursor is positioned in the first column of the range,
 			for each line.  Otherwise it's the same as the
 			":normal" command without a range.
-			{not in Vi}
-			{not available when |+ex_extra| feature was disabled
-			at compile time}
 
 						  *:sh* *:shell* *E371* *E360*
 :sh[ell]		Removed. |vim-differences| {Nvim}
@@ -389,9 +380,7 @@ N  *+persistent_undo*	Persistent undo |undo-persistence|
 N  *+printer*		|:hardcopy| command
 H  *+profile*		|:profile| command
 m  *+python*		Python 2 interface |python|
-m  *+python/dyn*	Python 2 interface |python-dynamic| |/dyn|
 m  *+python3*		Python 3 interface |python|
-m  *+python3/dyn*	Python 3 interface |python-dynamic| |/dyn|
 N  *+quickfix*		|:make| and |quickfix| commands
 N  *+reltime*		|reltime()| function, 'hlsearch'/'incsearch' timeout,
 			'redrawtime' option
@@ -442,7 +431,7 @@ N  *+X11*		Unix only: can restore window title |X11|
 :ve[rsion] {nr}		Is now ignored.  This was previously used to check the
 			version number of a .vimrc file.  It was removed,
 			because you can now use the ":if" command for
-			version-dependent behavior.  {not in Vi}
+			version-dependent behavior.
 
 							*:redi* *:redir*
 :redi[r][!] > {file}	Redirect messages to file {file}.  The messages which
@@ -459,31 +448,28 @@ N  *+X11*		Unix only: can restore window title |X11|
 			with ":silent call Function()".
 			An alternative is to use the 'verbosefile' option,
 			this can be used in combination with ":redir".
-			{not in Vi}
 
 :redi[r] >> {file}	Redirect messages to file {file}.  Append if {file}
-			already exists.  {not in Vi}
+			already exists.
 
 :redi[r] @{a-zA-Z}
 :redi[r] @{a-zA-Z}>	Redirect messages to register {a-z}.  Append to the
 			contents of the register if its name is given
 			uppercase {A-Z}.  The ">" after the register name is
-			optional. {not in Vi}
-:redi[r] @{a-z}>>	Append messages to register {a-z}. {not in Vi}
+			optional.
+:redi[r] @{a-z}>>	Append messages to register {a-z}.
 
 :redi[r] @*>		
 :redi[r] @+>		Redirect messages to the selection or clipboard. For
 			backward compatibility, the ">" after the register
 			name can be omitted. See |quotestar| and |quoteplus|.
-			{not in Vi}
 :redi[r] @*>>		
 :redi[r] @+>>		Append messages to the selection or clipboard.
-			{not in Vi}
 
 :redi[r] @">		Redirect messages to the unnamed register. For
 			backward compatibility, the ">" after the register
-			name can be omitted. {not in Vi}
-:redi[r] @">>		Append messages to the unnamed register. {not in Vi}
+			name can be omitted.
+:redi[r] @">>		Append messages to the unnamed register.
 
 :redi[r] => {var}	Redirect messages to a variable.  If the variable
 			doesn't exist, then it is created.  If the variable
@@ -492,12 +478,12 @@ N  *+X11*		Unix only: can restore window title |X11|
 			Only string variables can be used.  After the
 			redirection starts, if the variable is removed or
 			locked or the variable type is changed, then further
-			command output messages will cause errors. {not in Vi}
+			command output messages will cause errors.
 
 :redi[r] =>> {var}	Append messages to an existing variable.  Only string
-			variables can be used. {not in Vi}
+			variables can be used.
 
-:redi[r] END		End redirecting messages.  {not in Vi}
+:redi[r] END		End redirecting messages.
 
 						*:sil* *:silent*
 :sil[ent][!] {command}	Execute {command} silently.  Normal messages will not
@@ -600,12 +586,11 @@ K			Run a program to lookup the keyword under the
 <			- When 'keywordprg' is equal to "man -s", a count
 			  before "K" is inserted after the "-s".  If there is
 			  no count, the "-s" is removed.
-			{not in Vi}
 
 							*v_K*
 {Visual}K		Like "K", but use the visually highlighted text for
 			the keyword.  Only works when the highlighted text is
-			not more than one line.  {not in Vi}
+			not more than one line.
 
 [N]gs							*gs* *:sl* *:sleep*
 :[N]sl[eep] [N]	[m]	Do nothing for [N] seconds.  When [m] is included,
@@ -618,7 +603,7 @@ K			Run a program to lookup the keyword under the
 <			Can be interrupted with CTRL-C (CTRL-Break on MS-DOS).
 			"gs" stands for "goto sleep".
 			While sleeping the cursor is positioned in the text,
-			if at a visible position.  {not in Vi}
+			if at a visible position.
 
 
 							*g_CTRL-A*

@@ -24,7 +24,6 @@ Help on help files					*helphelp*
 			the very top.
 			The 'helplang' option is used to select a language, if
 			the main help file is available in several languages.
-			{not in Vi}
 
 						*{subject}* *E149* *E661*
 :h[elp] {subject}	Like ":help", additionally jump to the tag {subject}.
@@ -90,7 +89,7 @@ Help on help files					*helphelp*
 			command from a following command.  You need to type
 			CTRL-V first to insert the <LF> or <CR>.  Example: >
 				:help so<C-V><CR>only
-<			{not in Vi}
+<
 
 :h[elp]! [subject]	Like ":help", but in non-English help files prefer to
 			find a tag in a file with the same language as the
@@ -126,7 +125,6 @@ Help on help files					*helphelp*
 			|:execute| when needed.
 			Compressed help files will not be searched (Fedora
 			compresses the help files).
-			{not in Vi}
 
 							*:lh* *:lhelpgrep*
 :lh[elpgrep] {pattern}[@xx]
@@ -139,11 +137,11 @@ Help on help files					*helphelp*
 
 							*:exu* *:exusage*
 :exu[sage]		Show help on Ex commands.  Added to simulate the Nvi
-			command. {not in Vi}
+			command.
 
 							*:viu* *:viusage*
 :viu[sage]		Show help on Normal mode commands.  Added to simulate
-			the Nvi command. {not in Vi}
+			the Nvi command.
 
 When no argument is given to |:help| the file given with the 'helpfile' option
 will be opened.  Otherwise the specified tag is searched for in all "doc/tags"
@@ -191,7 +189,6 @@ command: >
 			Only for backwards compatibility.  It now executes the
 			ToolBar.FindHelp menu entry instead of using a builtin
 			dialog.  {only when compiled with |+GUI_GTK|}
-			{not in Vi}
 
 					*:helpt* *:helptags*
 				*E154* *E150* *E151* *E152* *E153* *E670*
@@ -211,7 +208,7 @@ command: >
 			To rebuild the help tags in the runtime directory
 			(requires write permission there): >
 				:helptags $VIMRUNTIME/doc
-<			{not in Vi}
+<
 
 
 ==============================================================================

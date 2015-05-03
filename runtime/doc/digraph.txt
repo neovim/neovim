@@ -18,8 +18,6 @@ An alternative is using the 'keymap' option.
 2. Using digraphs	|digraphs-use|
 3. Default digraphs	|digraphs-default|
 
-{Vi does not have any of these commands}
-
 ==============================================================================
 1. Defining digraphs					*digraphs-define*
 

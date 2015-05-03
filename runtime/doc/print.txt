@@ -15,9 +15,6 @@ Printing						*printing*
 7. PostScript Utilities			|postscript-print-util|
 8. Formfeed Characters			|printing-formfeed|
 
-{Vi has None of this}
-{only available when compiled with the |+printer| feature}
-
 ==============================================================================
 1. Introduction						*print-intro*
 

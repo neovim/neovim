@@ -20,9 +20,6 @@ For a basic explanation, see section |40.3| in the user manual.
 10. Using autocommands		|autocmd-use|
 11. Disabling autocommands	|autocmd-disable|
 
-{Vi does not have any of these commands}
-{only when the |+autocmd| feature has not been disabled at compile time}
-
 ==============================================================================
 1. Introduction						*autocmd-intro*
 

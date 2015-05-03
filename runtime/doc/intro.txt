@@ -34,10 +34,6 @@ It can be accessed from within Vim with the <Help> or <F1> key and with the
 is not located in the default place.  You can jump to subjects like with tags:
 Use CTRL-] to jump to a subject under the cursor, use CTRL-T to jump back.
 
-Throughout this manual the differences between Vi and Vim are mentioned in
-curly braces, like this: {Vi does not have on-line help}.  See |vi_diff.txt|
-for a summary of the differences between Vim and Vi.
-
 This manual refers to Vim on various machines.  There may be small differences
 between different computers and terminals.  Besides the remarks given in this
 document, there is a separate document for each supported system, see
@@ -630,11 +626,7 @@ Ex		 :vi	  --	  --	 --	    --	      --
      the command.
    In the last case <Esc> may be the character defined with the 'wildchar'
    option, in which case it will start command-line completion.  You can
-   ignore that and type <Esc> again.  {Vi: when hitting <Esc> the command-line
-   is executed.  This is unexpected for most people; therefore it was changed
-   in Vim.  But when the <Esc> is part of a mapping, the command-line is
-   executed.  If you want the Vi behaviour also when typing <Esc>, use ":cmap
-   ^V<Esc> ^V^M"}
+   ignore that and type <Esc> again.
 *4 Go from Normal to Select mode by:
    - use the mouse to select text while 'selectmode' contains "mouse"
    - use a non-printable command to move the cursor while keeping the Shift
@@ -683,7 +675,6 @@ gQ			Switch to "Ex" mode like with "Q", but really behave
 			like typing ":" commands after another.  All command
 			line editing, completion etc. is available.
 			Use the ":vi" command |:visual| to exit "Ex" mode.
-			{not in Vi}
 
 ==============================================================================
 7. The window contents					*window-contents*
@@ -696,7 +687,6 @@ exceptions:
   character.
 - When inserting text in one window, other windows on the same text are not
   updated until the insert is finished.
-{Vi: The screen is not always updated on slow terminals}
 
 Lines longer than the window width will wrap, unless the 'wrap' option is off
 (see below).  The 'linebreak' option can be set to wrap at a blank character.
@@ -742,7 +732,6 @@ If there is a single line that is too long to fit in the window, this is a
 special situation.  Vim will show only part of the line, around where the
 cursor is.  There are no special characters shown, so that you can edit all
 parts of this line.
-{Vi: gives an "internal error" on lines that do not fit in the window}
 
 The '@' occasion in the 'highlight' option can be used to set special
 highlighting for the '@' and '~' characters.  This makes it possible to
@@ -757,7 +746,7 @@ that is not shown, the screen is scrolled horizontally.  The advantage of
 this method is that columns are shown as they are and lines that cannot fit
 on the screen can be edited.  The disadvantage is that you cannot see all the
 characters of a line at once.  The 'sidescroll' option can be set to the
-minimal number of columns to scroll.  {Vi: has no 'wrap' option}
+minimal number of columns to scroll.
 
 All normal ASCII characters are displayed directly on the screen.  The <Tab>
 is replaced with the number of spaces that it represents.  Other non-printing
@@ -789,16 +778,14 @@ command characters		'showcmd'	on	    off
 cursor position			'ruler'		off	    off
 
 The current mode is "-- INSERT --" or "-- REPLACE --", see |'showmode'|.  The
-command characters are those that you typed but were not used yet.  {Vi: does
-not show the characters you typed or the cursor position}
+command characters are those that you typed but were not used yet.
 
 If you have a slow terminal you can switch off the status messages to speed
 up editing:
 	:set nosc noru nosm
 
 If there is an error, an error message will be shown for at least one second
-(in reverse video).  {Vi: error messages may be overwritten with other
-messages before you have a chance to read them}
+(in reverse video).
 
 Some commands show how many lines were affected.  Above which threshold this
 happens can be controlled with the 'report' option (default 2).
@@ -810,7 +797,7 @@ small not a single line will fit in it.  Make it at least 40 characters wide
 to be able to read most messages on the last line.
 
 On most Unix systems, resizing the window is recognized and handled correctly
-by Vim.  {Vi: not ok}
+by Vim.
 
 ==============================================================================
 8. Definitions						*definitions*

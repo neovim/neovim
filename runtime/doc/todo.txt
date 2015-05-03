@@ -5075,7 +5075,7 @@ Various improvements:
 			used, remove the <CR> at the end of lines in [range].
 			A CTRL-Z at the end of the file is removed.  If
 			[range] is omitted, or it is the whole file, and all
-			lines end in <CR> 'textmode' is set.  {not in Vi}
+			lines end in <CR> 'textmode' is set.
 -   Should integrate addstar() and file_pat_to_reg_pat().
 -   When working over a serial line with 7 bit characters, remove meta
     characters from 'isprint'.
