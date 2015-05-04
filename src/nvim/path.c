@@ -2052,7 +2052,7 @@ int append_path(char *path, const char *to_append, int max_len)
 /// @param len Length of `buf`.
 /// @param force Also expand when `fname` is already absolute.
 /// @return `FAIL` for failure, `OK` for success.
-static int path_get_absolute_path(char_u *fname, char_u *buf, int len, int force)
+static int path_get_absolute_path(const char_u *fname, char_u *buf, int len, int force)
 {
   char_u *p;
   *buf = NUL;
@@ -2075,7 +2075,7 @@ static int path_get_absolute_path(char_u *fname, char_u *buf, int len, int force
       return FAIL;
     }
   }
-  return append_path((char *) buf, (char *) end_of_path, len);
+  return append_path((char *)buf, end_of_path, len);
 }
 
 /// Check if the given file is absolute.
