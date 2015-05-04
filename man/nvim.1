@@ -41,11 +41,8 @@ To switch to the other files use the
 .Ic :next
 command.
 .It Fl
-The text to edit is read from
-.Dv stdin .
-Commands are read from
-.Dv stderr ,
-which should be a terminal.
+The text to edit is read from standard input.
+Commands are read from standard error, which should be a terminal.
 .It Fl t Ar tag
 The file to edit and the initial cursor position depends on a
 tag, a sort of goto label.
@@ -216,7 +213,7 @@ Use
 instead of the default of
 .Pa ~/.nviminfo .
 Use
-.Fl i Ar NONE
+.Sy -i NONE
 to not use an nviminfo file.
 .It Fl u Ar nvimrc
 Use
@@ -224,10 +221,10 @@ Use
 instead of the default of
 .Pa ~/.nvimrc .
 Use
-.Fl u Ar NONE
+.Sy -u NONE
 to not use an nvimrc file.
 To skip all initializations, use
-.Fl u Ar NONE .
+.Sy -u NONE .
 See
 .Ic :help initialization .
 .It Fl V Ns Op Ar N
