@@ -1563,7 +1563,7 @@ int vim_isAbsName(char_u *name)
 /// @param      force is a flag to force expanding even if the path is absolute
 ///
 /// @return           FAIL for failure, OK otherwise
-int vim_FullName(char *fname, char *buf, int len, bool force)
+int vim_FullName(const char *fname, char *buf, int len, bool force)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   int retval = OK;
