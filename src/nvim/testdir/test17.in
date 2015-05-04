@@ -112,12 +112,12 @@ i%inc      baz.c
 :e Xdir1/dir2/baz.c
 i%inc            foo.c
 :w
-:e Xdir1/dir2/FALSE.c
+:e Xdir1/dir2/false.c
 i%inc            foo.c
 :w
 :e Xbase.c
 :set path=Xdir1/dir2
-i%inc    FALSE.c foo.c
+i%inc    false.c foo.c
 :w
 :redir! >>test.out
 :checkpath!

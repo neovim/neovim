@@ -53,7 +53,7 @@ char_u *parse_shape_opt(int what)
   int all_idx;
   int len;
   int i;
-  int found_ve = FALSE;                 /* found "ve" flag */
+  int found_ve = false;                 /* found "ve" flag */
   int round;
 
   /*
@@ -96,7 +96,7 @@ char_u *parse_shape_opt(int what)
                 || (shape_table[idx].used_for & what) == 0)
               return (char_u *)N_("E546: Illegal mode");
             if (len == 2 && modep[0] == 'v' && modep[1] == 'e')
-              found_ve = TRUE;
+              found_ve = true;
           }
           modep += len + 1;
         }

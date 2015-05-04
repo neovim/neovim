@@ -32,12 +32,12 @@
 #define ltoreq(a, b) (lt(a, b) || equalpos(a, b))
 
 /*
- * lineempty() - return TRUE if the line is empty
+ * lineempty() - return true if the line is empty
  */
 #define lineempty(p) (*ml_get(p) == NUL)
 
 /*
- * bufempty() - return TRUE if the current buffer is empty
+ * bufempty() - return true if the current buffer is empty
  */
 #define bufempty() (curbuf->b_ml.ml_line_count == 1 && *ml_get((linenr_T)1) == \
                     NUL)
@@ -144,7 +144,7 @@
 # define MB_CHAR2LEN(c)     (has_mbyte ? mb_char2len(c) : 1)
 # define PTR2CHAR(p)        (has_mbyte ? mb_ptr2char(p) : (int)*(p))
 
-# define RESET_BINDING(wp)  (wp)->w_p_scb = FALSE; (wp)->w_p_crb = FALSE
+# define RESET_BINDING(wp)  (wp)->w_p_scb = false; (wp)->w_p_crb = false
 
 /// Calculate the length of a C array.
 ///

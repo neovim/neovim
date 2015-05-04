@@ -174,11 +174,11 @@ int mch_nodetype(char_u *name)
 
 void mch_exit(int r)
 {
-  exiting = TRUE;
+  exiting = true;
 
   ui_builtin_stop();
   ui_flush();
-  ml_close_all(TRUE);           /* remove all memfiles */
+  ml_close_all(true);           /* remove all memfiles */
 
   event_teardown();
 
@@ -239,8 +239,8 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
                                  * directly */
   int shell_style = STYLE_ECHO;
   int check_spaces;
-  static int did_find_nul = FALSE;
-  int ampersent = FALSE;
+  static int did_find_nul = false;
+  int ampersent = false;
   /* vimglob() function to define for Posix shell */
   static char *sh_vimglob_func =
     "vimglob() { while [ $# -ge 1 ]; do echo \"$1\"; shift; done }; vimglob >";
@@ -343,7 +343,7 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     while (p > command && ascii_iswhite(*p))
       --p;
     if (*p == '&') {                            /* remove trailing '&' */
-      ampersent = TRUE;
+      ampersent = true;
       *p = ' ';
     }
     STRCAT(command, ">");
@@ -368,7 +368,7 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     for (i = 0; i < num_pat; ++i) {
       /* Put a backslash before special
        * characters, except inside ``. */
-      int intick = FALSE;
+      int intick = false;
 
       p = command + STRLEN(command);
       *p++ = ' ';
@@ -539,14 +539,14 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
      * When we found a NUL once, we know zsh is OK, set did_find_nul and
      * don't check for spaces again.
      */
-    check_spaces = FALSE;
+    check_spaces = false;
     if (shell_style == STYLE_PRINT && !did_find_nul) {
       /* If there is a NUL, set did_find_nul, else set check_spaces */
       buffer[len] = NUL;
       if (len && (int)STRLEN(buffer) < (int)len)
-        did_find_nul = TRUE;
+        did_find_nul = true;
       else
-        check_spaces = TRUE;
+        check_spaces = true;
     }
 
     /*
@@ -683,6 +683,6 @@ static int have_dollars(int num, char_u **file)
 
   for (i = 0; i < num; i++)
     if (vim_strchr(file[i], '$') != NULL)
-      return TRUE;
-  return FALSE;
+      return true;
+  return false;
 }

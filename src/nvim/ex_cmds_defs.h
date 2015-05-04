@@ -107,7 +107,7 @@ struct exarg {
   cmdidx_T cmdidx;              ///< the index for the command
   uint32_t argt;                ///< flags for the command
   int skip;                     ///< don't execute the command, only parse it
-  int forceit;                  ///< TRUE if ! present
+  int forceit;                  ///< true if ! present
   int addr_count;               ///< the number of addresses given
   linenr_T line1;               ///< the first line number
   linenr_T line2;               ///< the second line number or count
@@ -115,8 +115,8 @@ struct exarg {
   int flags;                    ///< extra flags after count: EXFLAG_
   char_u      *do_ecmd_cmd;     ///< +command arg to be used in edited file
   linenr_T do_ecmd_lnum;        ///< the line number in an edited file
-  int append;                   ///< TRUE with ":w >>file" command
-  int usefilter;                ///< TRUE with ":w !command" and ":r!command"
+  int append;                   ///< true with ":w >>file" command
+  int usefilter;                ///< true with ":w !command" and ":r!command"
   int amount;                   ///< number of '>' or '<' for shift command
   int regname;                  ///< register name (NUL if none)
   int force_bin;                ///< 0, FORCE_BIN or FORCE_NOBIN
@@ -150,7 +150,7 @@ typedef struct expand {
   int xp_scriptID;                      /* SID for completion function */
   int xp_backslash;                     /* one of the XP_BS_ values */
 #ifndef BACKSLASH_IN_FILENAME
-  int xp_shell;                         /* TRUE for a shell command, more
+  int xp_shell;                         /* true for a shell command, more
                                            characters need to be escaped */
 #endif
   int xp_numfiles;                      /* number of files found by
@@ -171,15 +171,15 @@ typedef struct expand {
  * easy manipulation.
  */
 typedef struct {
-  int hide;                             /* TRUE when ":hide" was used */
+  int hide;                             /* true when ":hide" was used */
   int split;                            /* flags for win_split() */
   int tab;                              /* > 0 when ":tab" was used */
-  int confirm;                          /* TRUE to invoke yes/no dialog */
-  int keepalt;                          /* TRUE when ":keepalt" was used */
-  int keepmarks;                        /* TRUE when ":keepmarks" was used */
-  int keepjumps;                        /* TRUE when ":keepjumps" was used */
-  int lockmarks;                        /* TRUE when ":lockmarks" was used */
-  int keeppatterns;                     /* TRUE when ":keeppatterns" was used */
+  int confirm;                          /* true to invoke yes/no dialog */
+  int keepalt;                          /* true when ":keepalt" was used */
+  int keepmarks;                        /* true when ":keepmarks" was used */
+  int keepjumps;                        /* true when ":keepjumps" was used */
+  int lockmarks;                        /* true when ":lockmarks" was used */
+  int keeppatterns;                     /* true when ":keeppatterns" was used */
   bool noswapfile;                      /* true when ":noswapfile" was used */
   char_u      *save_ei;                 /* saved value of 'eventignore' */
 } cmdmod_T;

@@ -19,7 +19,7 @@
  *		    bytes.  (exception: DBCS_JPNU with first byte 0x8e)
  *		    Recognizing the first or second byte is difficult, it
  *		    requires checking a byte sequence from the start.
- * "enc_utf8"	    When TRUE use Unicode characters in UTF-8 encoding.
+ * "enc_utf8"	    When true use Unicode characters in UTF-8 encoding.
  *		    The cell width on the display needs to be determined from
  *		    the character value.
  *		    Recognizing bytes is easy: 0xxx.xxxx is a single-byte
@@ -33,11 +33,11 @@
  *		    When 4 use 32-but Unicode characters.
  *		    Internally characters are stored in UTF-8 encoding to
  *		    avoid NUL bytes.  Conversion happens when doing I/O.
- *		    "enc_utf8" will also be TRUE.
+ *		    "enc_utf8" will also be true.
  *
  * "has_mbyte" is set when "enc_dbcs" or "enc_utf8" is non-zero.
  *
- * If none of these is TRUE, 8-bit bytes are used for a character.  The
+ * If none of these is true, 8-bit bytes are used for a character.  The
  * encoding isn't currently specified (TODO).
  *
  * 'encoding' specifies the encoding used in the core.  This is in registers,
@@ -598,7 +598,7 @@ char_u * mb_init(void)
 
   /* Fire an autocommand to let people do custom font setup. This must be
    * after Vim has been setup for the new encoding. */
-  apply_autocmds(EVENT_ENCODINGCHANGED, NULL, (char_u *)"", FALSE, curbuf);
+  apply_autocmds(EVENT_ENCODINGCHANGED, NULL, (char_u *)"", false, curbuf);
 
   /* Need to reload spell dictionaries */
   spell_reload();
@@ -3166,7 +3166,7 @@ void mb_adjustpos(buf_T *buf, pos_T *lp)
   if (lp->col > 0
       || lp->coladd > 1
      ) {
-    p = ml_get_buf(buf, lp->lnum, FALSE);
+    p = ml_get_buf(buf, lp->lnum, false);
     lp->col -= (*mb_head_off)(p, p + lp->col);
     /* Reset "coladd" when the cursor would be on the right half of a
      * double-wide character. */
@@ -3655,7 +3655,7 @@ static void * get_iconv_import_func(HINSTANCE hInst,
 }
 
 /*
- * Try opening the iconv.dll and return TRUE if iconv() can be used.
+ * Try opening the iconv.dll and return true if iconv() can be used.
  */
 bool iconv_enabled(bool verbose)
 {
@@ -3736,7 +3736,7 @@ int convert_setup(vimconv_T *vcp, char_u *from, char_u *to)
 }
 
 /*
- * As convert_setup(), but only when from_unicode_is_utf8 is TRUE will all
+ * As convert_setup(), but only when from_unicode_is_utf8 is true will all
  * "from" unicode charsets be considered utf-8.  Same for "to".
  */
 int convert_setup_ext(vimconv_T *vcp, char_u *from, bool from_unicode_is_utf8,

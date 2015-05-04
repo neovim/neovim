@@ -801,16 +801,16 @@ static char *(extra_patches[]) = {
 ///
 /// @param n The patch number.
 ///
-/// @return TRUE if patch "n" has been included.
+/// @return true if patch "n" has been included.
 int has_patch(int n)
 {
   int i;
   for (i = 0; included_patches[i] != 0; ++i) {
     if (included_patches[i] == n) {
-      return TRUE;
+      return true;
     }
   }
-  return FALSE;
+  return false;
 }
 
 void ex_version(exarg_T *eap)
@@ -1003,7 +1003,7 @@ void maybe_intro_message(void)
       && (curbuf->b_fname == NULL)
       && (firstwin->w_next == NULL)
       && (vim_strchr(p_shm, SHM_INTRO) == NULL)) {
-    intro_message(FALSE);
+    intro_message(false);
   }
 }
 
@@ -1011,7 +1011,7 @@ void maybe_intro_message(void)
 /// Only used when starting Vim on an empty file, without a file name.
 /// Or with the ":intro" command (for Sven :-).
 ///
-/// @param colon TRUE for ":intro"
+/// @param colon true for ":intro"
 void intro_message(int colon)
 {
   int i;
@@ -1129,6 +1129,6 @@ static void do_intro_line(long row, char_u *mesg, int attr)
 void ex_intro(exarg_T *eap)
 {
   screenclear();
-  intro_message(TRUE);
-  wait_return(TRUE);
+  intro_message(true);
+  wait_return(true);
 }

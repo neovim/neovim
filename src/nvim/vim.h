@@ -198,17 +198,7 @@ enum {
 #define MIN_SWAP_PAGE_SIZE 1048
 #define MAX_SWAP_PAGE_SIZE 50000
 
-
-
-/*
- * Boolean constants
- */
-#ifndef TRUE
-# define FALSE  0           /* note: this is an int, not a long! */
-# define TRUE   1
-#endif
-
-#define MAYBE   2           /* sometimes used for a variant on TRUE */
+#define MAYBE   2           /* sometimes used for a variant on true */
 
 /*
  * Motion types, used for operators and for yank/delete registers.

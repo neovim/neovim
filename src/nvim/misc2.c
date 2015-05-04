@@ -61,7 +61,7 @@
 # include "misc2.c.generated.h"
 #endif
 /*
- * Return TRUE if in the current mode we need to use virtual.
+ * Return true if in the current mode we need to use virtual.
  */
 int virtual_active(void)
 {
@@ -155,7 +155,7 @@ int decl(pos_T *lp)
 }
 
 /*
- * Return TRUE when 'shell' has "csh" in the tail.
+ * Return true when 'shell' has "csh" in the tail.
  */
 int csh_like_shell(void)
 {
@@ -271,8 +271,8 @@ void set_fileformat(int eol_style, int opt_flags)
 
   // This may cause the buffer to become (un)modified.
   check_status(curbuf);
-  redraw_tabline = TRUE;
-  need_maketitle = TRUE;  // Set window title later.
+  redraw_tabline = true;
+  need_maketitle = true;  // Set window title later.
 }
 
 /*
@@ -318,7 +318,7 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
       char_u *ecmd = cmd;
 
       if (*p_sxe != NUL && STRCMP(p_sxq, "(") == 0) {
-        ecmd = vim_strsave_escaped_ext(cmd, p_sxe, '^', FALSE);
+        ecmd = vim_strsave_escaped_ext(cmd, p_sxe, '^', false);
       }
       ncmd = xmalloc(STRLEN(ecmd) + STRLEN(p_sxq) * 2 + 1);
       STRCPY(ncmd, p_sxq);

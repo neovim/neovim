@@ -655,8 +655,8 @@ class CAbc :
 	public BaseClass1,
 	protected BaseClass2
 {
-	int Test() { return FALSE; }
-	int Test1() { return TRUE; }
+	int Test() { return false; }
+	int Test1() { return true; }
 
 	CAbc(int a, int b )  : 
 		BaseClass(a)
@@ -1222,7 +1222,7 @@ void f()
 
 class CAbc
 {
-	int Test() { return FALSE; }
+	int Test() { return false; }
 
 public: // comment
 	void testfall();

@@ -472,15 +472,15 @@ static void ui_change_mode(void)
   }
 
   if (State & INSERT) {
-    if (showing_insert_mode != TRUE) {
+    if (showing_insert_mode != true) {
       UI_CALL(insert_mode);
     }
-    showing_insert_mode = TRUE;
+    showing_insert_mode = true;
   } else {
-    if (showing_insert_mode != FALSE) {
+    if (showing_insert_mode != false) {
       UI_CALL(normal_mode);
     }
-    showing_insert_mode = FALSE;
+    showing_insert_mode = false;
   }
   conceal_check_cursur_line();
 }

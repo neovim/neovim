@@ -62,15 +62,15 @@ ex_menu (
   int modes;
   char_u      *map_to;
   int noremap;
-  int silent = FALSE;
-  int special = FALSE;
+  int silent = false;
+  int special = false;
   int unmenu;
   char_u      *map_buf;
   char_u      *arg;
   char_u      *p;
   int i;
   int pri_tab[MENUDEPTH + 1];
-  int enable = MAYBE;               /* TRUE for "menu enable", FALSE for "menu
+  int enable = MAYBE;               /* true for "menu enable", false for "menu
                                      * disable */
   vimmenu_T menuarg;
 
@@ -84,12 +84,12 @@ ex_menu (
       continue;
     }
     if (STRNCMP(arg, "<silent>", 8) == 0) {
-      silent = TRUE;
+      silent = true;
       arg = skipwhite(arg + 8);
       continue;
     }
     if (STRNCMP(arg, "<special>", 9) == 0) {
-      special = TRUE;
+      special = true;
       arg = skipwhite(arg + 9);
       continue;
     }
@@ -139,10 +139,10 @@ ex_menu (
    * Check for "disable" or "enable" argument.
    */
   if (STRNCMP(arg, "enable", 6) == 0 && ascii_iswhite(arg[6])) {
-    enable = TRUE;
+    enable = true;
     arg = skipwhite(arg + 6);
   } else if (STRNCMP(arg, "disable", 7) == 0 && ascii_iswhite(arg[7])) {
-    enable = FALSE;
+    enable = false;
     arg = skipwhite(arg + 7);
   }
 
@@ -206,13 +206,13 @@ ex_menu (
       for (i = 0; i < MENU_INDEX_TIP; ++i)
         if (modes & (1 << i)) {
           p = popup_mode_name(menu_path, i);
-          remove_menu(&root_menu, p, MENU_ALL_MODES, TRUE);
+          remove_menu(&root_menu, p, MENU_ALL_MODES, true);
           xfree(p);
         }
     }
 
     /* Careful: remove_menu() changes menu_path */
-    remove_menu(&root_menu, menu_path, modes, FALSE);
+    remove_menu(&root_menu, menu_path, modes, false);
   } else {
     /*
      * Add menu(s).
@@ -224,7 +224,7 @@ ex_menu (
     } else if (modes & MENU_TIP_MODE)
       map_buf = NULL;           /* Menu tips are plain text. */
     else
-      map_to = replace_termcodes(map_to, &map_buf, FALSE, TRUE, special);
+      map_to = replace_termcodes(map_to, &map_buf, false, true, special);
     menuarg.modes = modes;
     menuarg.noremap[0] = noremap;
     menuarg.silent[0] = silent;
@@ -417,7 +417,7 @@ add_menu_path (
         free_menu_string(menu, i);
 
         /* For "amenu", may insert an extra character.
-         * Don't do this if adding a tearbar (addtearoff == FALSE).
+         * Don't do this if adding a tearbar (addtearoff == false).
          * Don't do this for "<Nop>". */
         c = 0;
         d = 0;
@@ -793,7 +793,7 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
         if (*menu->strings[bit] == NUL)
           msg_puts_attr((char_u *)"<Nop>", hl_attr(HLF_8));
         else
-          msg_outtrans_special(menu->strings[bit], FALSE);
+          msg_outtrans_special(menu->strings[bit], false);
       }
   } else {
     if (menu == NULL) {
@@ -815,7 +815,7 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
  */
 static vimmenu_T        *expand_menu = NULL;
 static int expand_modes = 0x0;
-static int expand_emenu;                /* TRUE for ":emenu" command */
+static int expand_emenu;                /* true for ":emenu" command */
 
 /*
  * Work out what to complete when doing command line completion of menu names.
@@ -926,11 +926,11 @@ char_u *get_menu_name(expand_T *xp, int idx)
 {
   static vimmenu_T    *menu = NULL;
   char_u              *str;
-  static int should_advance = FALSE;
+  static int should_advance = false;
 
   if (idx == 0) {           /* first call: start at first item */
     menu = expand_menu;
-    should_advance = FALSE;
+    should_advance = false;
   }
 
   /* Skip PopUp[nvoci]. */
@@ -949,7 +949,7 @@ char_u *get_menu_name(expand_T *xp, int idx)
     else {
       str = menu->dname;
       if (menu->en_dname == NULL)
-        should_advance = TRUE;
+        should_advance = true;
     }
   else
     str = (char_u *)"";
@@ -973,11 +973,11 @@ char_u *get_menu_names(expand_T *xp, int idx)
 #define TBUFFER_LEN 256
   static char_u tbuffer[TBUFFER_LEN];         /*hack*/
   char_u              *str;
-  static int should_advance = FALSE;
+  static int should_advance = false;
 
   if (idx == 0) {           /* first call: start at first item */
     menu = expand_menu;
-    should_advance = FALSE;
+    should_advance = false;
   }
 
   /* Skip Browse-style entries, popup menus and separators. */
@@ -999,7 +999,7 @@ char_u *get_menu_names(expand_T *xp, int idx)
       else {
         STRLCPY(tbuffer, menu->dname,  TBUFFER_LEN - 1);
         if (menu->en_dname == NULL)
-          should_advance = TRUE;
+          should_advance = true;
       }
       /* hack on menu separators:  use a 'magic' char for the separator
        * so that '.' in names gets escaped properly */
@@ -1011,7 +1011,7 @@ char_u *get_menu_names(expand_T *xp, int idx)
       else {
         str = menu->dname;
         if (menu->en_dname == NULL)
-          should_advance = TRUE;
+          should_advance = true;
       }
     }
   } else
@@ -1048,7 +1048,7 @@ char_u *menu_name_skip(char_u *name)
 }
 
 /*
- * Return TRUE when "name" matches with menu "menu".  The name is compared in
+ * Return true when "name" matches with menu "menu".  The name is compared in
  * two ways: raw menu name and menu name without '&'.  ignore part after a TAB.
  */
 static int menu_name_equal(char_u *name, vimmenu_T *menu)
@@ -1056,7 +1056,7 @@ static int menu_name_equal(char_u *name, vimmenu_T *menu)
   if (menu->en_name != NULL
       && (menu_namecmp(name, menu->en_name)
           || menu_namecmp(name, menu->en_dname)))
-    return TRUE;
+    return true;
   return menu_namecmp(name, menu->name) || menu_namecmp(name, menu->dname);
 }
 
@@ -1197,7 +1197,7 @@ static char_u *menu_text(const char_u *str, int *mnemonic, char_u **actext)
 }
 
 /*
- * Return TRUE if "name" can be a menu in the MenuBar.
+ * Return true if "name" can be a menu in the MenuBar.
  */
 int menu_is_menubar(char_u *name)
 {
@@ -1207,7 +1207,7 @@ int menu_is_menubar(char_u *name)
 }
 
 /*
- * Return TRUE if "name" is a popup menu name.
+ * Return true if "name" is a popup menu name.
  */
 int menu_is_popup(char_u *name)
 {
@@ -1216,7 +1216,7 @@ int menu_is_popup(char_u *name)
 
 
 /*
- * Return TRUE if "name" is a toolbar menu name.
+ * Return true if "name" is a toolbar menu name.
  */
 int menu_is_toolbar(char_u *name)
 {
@@ -1224,7 +1224,7 @@ int menu_is_toolbar(char_u *name)
 }
 
 /*
- * Return TRUE if the name is a menu separator identifier: Starts and ends
+ * Return true if the name is a menu separator identifier: Starts and ends
  * with '-'
  */
 int menu_is_separator(char_u *name)
@@ -1233,7 +1233,7 @@ int menu_is_separator(char_u *name)
 }
 
 /*
- * Return TRUE if the menu is hidden:  Starts with ']'
+ * Return true if the menu is hidden:  Starts with ']'
  */
 static int menu_is_hidden(char_u *name)
 {
@@ -1241,11 +1241,11 @@ static int menu_is_hidden(char_u *name)
 }
 
 /*
- * Return TRUE if the menu is the tearoff menu.
+ * Return true if the menu is the tearoff menu.
  */
 static int menu_is_tearoff(char_u *name)
 {
-  return FALSE;
+  return false;
 }
 
 
@@ -1330,8 +1330,8 @@ void ex_emenu(exarg_T *eap)
     }
 
     /* Activate visual mode */
-    VIsual_active = TRUE;
-    VIsual_reselect = TRUE;
+    VIsual_active = true;
+    VIsual_reselect = true;
     check_cursor();
     VIsual = curwin->w_cursor;
     curwin->w_cursor = tpos;
@@ -1355,7 +1355,7 @@ void ex_emenu(exarg_T *eap)
           menu->silent[idx]);
     else
       ins_typebuf(menu->strings[idx], menu->noremap[idx], 0,
-          TRUE, menu->silent[idx]);
+          true, menu->silent[idx]);
   } else
     EMSG2(_("E335: Menu not defined for %s mode"), mode);
 }

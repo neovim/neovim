@@ -622,7 +622,7 @@ int fkmap(int c)
       }
     }
 
-    arrow_used = TRUE;
+    arrow_used = true;
     (void)stop_arrow();
 
     if (!curwin->w_p_rl && revins) {
@@ -633,7 +633,7 @@ int fkmap(int c)
     p_ri = 1;
   } else {
     if (revins) {
-      arrow_used = TRUE;
+      arrow_used = true;
       (void)stop_arrow();
 
       revins = 0;
@@ -1071,7 +1071,7 @@ int fkmap(int c)
 
       if (gchar_cursor() == _LAM) {
         chg_l_toXor_X();
-        del_char(FALSE);
+        del_char(false);
         AppendCharToRedobuff(K_BS);
 
         if (!p_ri) {
