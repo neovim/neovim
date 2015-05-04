@@ -4375,10 +4375,8 @@ char *modname(const char *fname, const char *ext, bool prepend_dot)
       xfree(retval);
       return NULL;
     }
-    if (!after_pathsep(retval, retval + fnamelen)) {
-      retval[fnamelen++] = PATHSEP;
-      retval[fnamelen] = NUL;
-    }
+    add_pathsep(retval);
+    fnamelen = strlen(retval);
     prepend_dot = FALSE;  // nothing to prepend a dot to
   } else {
     fnamelen = strlen(fname);
