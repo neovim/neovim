@@ -67,6 +67,13 @@ check_function_exists(strcasecmp HAVE_STRCASECMP)
 check_function_exists(strncasecmp HAVE_STRNCASECMP)
 check_function_exists(_stricmp HAVE_U_STRICMP)    # for windows
 check_function_exists(_strnicmp HAVE_U_STRNICMP)  # for windows
+check_function_exists(strchrnul HAVE_STRCHRNUL)
+check_function_exists(stpcpy HAVE_STPCPY)
+check_function_exists(stpncpy HAVE_STPNCPY)
+check_function_exists(strlcpy HAVE_STRLCPY)
+check_function_exists(strdup HAVE_STRDUP)
+check_function_exists(strndup HAVE_STRNDUP)
+check_function_exists(memrchr HAVE_MEMRCHR)
 check_function_exists(utime HAVE_UTIME)
 check_function_exists(utimes HAVE_UTIMES)
 

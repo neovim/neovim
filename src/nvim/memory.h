@@ -11,7 +11,7 @@
 #include "nvim/func_attr.h"
 
 #ifdef HAVE_CONFIG_H
-# include "auto/config.h"  // for HAVE_STRCASECMP/HAVE_STRICMP
+# include "auto/config.h"  // for the HAVE_* macros
 #endif
 
 // defines to avoid typecasts from (char_u *) to (char *) and back
@@ -49,6 +49,25 @@
 #define STRNCAT(d, s, n)    strncat((char *)(d), (char *)(s), (size_t)(n))
 
 #define vim_strpbrk(s, cs) (char_u *)strpbrk((char *)(s), (char *)(cs))
+
+#ifdef HAVE_STRDUP
+# define xstrdup(s)         strdup(s)
+#endif
+#ifdef HAVE_STRNDUP
+# define xstrndup(s, size)  strndup(s, size)
+#endif
+#ifdef HAVE_STPCPY
+# define xstpcpy(d, s)      stpcpy(d, s)
+#endif
+#ifdef HAVE_STPNCPY
+# define xstpncpy(a, b, s)  stpncpy(a, b, s)
+#endif
+#ifdef HAVE_STRLCPY
+# define xstrlcpy(a, b, s)  strlcpy(a, b, s)
+#endif
+#ifdef HAVE_MEMRCHR
+# define xmemrchr(s, c)     memrchr(s, c)
+#endif
 
 /// Compares two strings for equality.
 static inline bool strequal(const char *a, const char *b)

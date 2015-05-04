@@ -286,6 +286,7 @@ size_t memcnt(const void *data, char c, size_t len)
   return cnt;
 }
 
+#ifndef HAVE_STPCPY
 /// The xstpcpy() function shall copy the string pointed to by src (including
 /// the terminating NUL character) into the array pointed to by dst.
 ///
@@ -308,7 +309,9 @@ char *xstpcpy(char *restrict dst, const char *restrict src)
   const size_t len = strlen(src);
   return (char *)memcpy(dst, src, len + 1) + len;
 }
+#endif
 
+#ifndef HAVE_STPNCPY
 /// The xstpncpy() function shall copy not more than n bytes (bytes that follow
 /// a NUL character are not copied) from the array pointed to by src to the
 /// array pointed to by dst.
@@ -344,7 +347,9 @@ char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen)
         return dst + maxlen;
     }
 }
+#endif
 
+#ifndef HAVE_STRLCPY
 /// xstrlcpy - Copy a %NUL terminated string into a sized buffer
 ///
 /// Compatible with *BSD strlcpy: the result is always a valid
@@ -369,7 +374,9 @@ size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
 
     return ret;
 }
+#endif
 
+#ifndef HAVE_STRDUP
 /// strdup() wrapper
 ///
 /// @see {xmalloc}
@@ -380,7 +387,9 @@ char *xstrdup(const char *str)
 {
   return xmemdupz(str, strlen(str));
 }
+#endif
 
+#ifndef HAVE_MEMRCHR
 /// A version of memchr that starts the search at `src + len`.
 ///
 /// Based on glibc's memrchr.
@@ -399,7 +408,9 @@ void *xmemrchr(const void *src, uint8_t c, size_t len)
   }
   return NULL;
 }
+#endif
 
+#ifndef HAVE_STRNDUP
 /// strndup() wrapper
 ///
 /// @see {xmalloc}
@@ -411,6 +422,7 @@ char *xstrndup(const char *str, size_t len)
   char *p = memchr(str, '\0', len);
   return xmemdupz(str, p ? (size_t)(p - str) : len);
 }
+#endif
 
 /// Duplicates a chunk of memory using xmalloc
 ///
