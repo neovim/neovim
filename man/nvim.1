@@ -61,12 +61,14 @@ QuickFix mode.
 is read and the first error is displayed.
 If
 .Ar errorfile
-is omitted, the filename is obtained from the 'errorfile'
+is omitted, the filename is obtained from the
+.Li 'errorfile'
 option (defaults to
 .Pa errors.err ) .
 Further errors can be jumped to with the
 .Ic :cn
-command. See
+command.
+See
 .Ic :help quickfix .
 .It There are a number of other options:
 .It Fl -
@@ -126,31 +128,47 @@ Improved Ex mode.
 Diff mode.
 Shows the difference between up to four files.
 .It Fl l
-Lisp mode; sets the options 'lisp' and 'showmatch'.
+Lisp mode; sets the options
+.Li 'lisp'
+and
+.Li 'showmatch' .
 .It Fl b
 Binary mode; sets the options that make it possible to edit binaries.
 .It Fl A
-Arabic mode; sets the option 'arabic'.
+Arabic mode; sets the option
+.Li 'arabic' .
 .It Fl F
-Farsi mode; sets the options 'fkmap' and 'rightleft'.
+Farsi mode; sets the options
+.Li 'fkmap'
+and
+.Li 'rightleft' .
 .It Fl H
-Hebrew mode; sets the options 'hkmap' and 'rightleft'.
+Hebrew mode; sets the options
+.Li 'hkmap'
+and
+.Li 'rightleft' .
 .It Fl m
-Disable file modifications; sets the option 'write'.
+Disable file modifications; sets the option
+.Li 'write' .
 Writing to a file is disabled, but buffers can still be modified.
 .It Fl M
-.\" find a macro for use with the options (probably not .Ic), so that they aren't
-.\" subject to being split by line breaks.
-Disable file and buffer modifications; sets the options 'modifiable' and 'write'.
+Disable file and buffer modifications; sets the options
+.Li 'modifiable'
+and
+.Li 'write' .
 Note that these options can be set to re-enable making modifications.
 .It Fl n
-Disable the use of swap files; sets the option 'updatecount' to 0.
+Disable the use of swap files; sets the option
+.Li 'updatecount'
+to 0.
 This can be useful for editing file(s) on a slow medium.
 .It Fl Z
 Restricted mode.
 Disable commands that make use of an external shell.
 .It Fl R
-Read-only mode; sets the option 'readonly'; implies
+Read-only mode; sets the option
+.Li 'readonly' ;
+implies
 .Fl n .
 Buffers can still be edited, but cannot be written to disk if already
 associated with a file.
