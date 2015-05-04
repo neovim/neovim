@@ -10,10 +10,6 @@ endif
 let g:loaded_python_provider = 1
 
 let [s:prog, s:err] = provider#pythonx#Detect(2)
-if s:prog == ''
-  " Detection failed
-  finish
-endif
 
 function! provider#python#Prog()
   return s:prog
@@ -22,6 +18,11 @@ endfunction
 function! provider#python#Error()
   return s:err
 endfunction
+
+if s:prog == ''
+  " Detection failed
+  finish
+endif
 
 let s:plugin_path = expand('<sfile>:p:h').'/script_host.py'
 
