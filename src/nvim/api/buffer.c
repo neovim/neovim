@@ -196,7 +196,9 @@ void buffer_set_line_slice(Buffer buffer,
   linenr_T new_len = (linenr_T)replacement.size;
   linenr_T old_len = (linenr_T)(end - start);
   linenr_T extra = 0;  // lines added to text, can be negative
-  char **lines = (new_len != 0) ? xcalloc((size_t)new_len, sizeof(char *)) : NULL;
+  char **lines = (new_len != 0) ? 
+                    xcalloc((size_t)new_len, sizeof(char *)) :
+                    NULL;
 
   for (linenr_T i = 0; i < new_len; i++) {
     if (replacement.items[i].type != kObjectTypeString) {
