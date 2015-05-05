@@ -126,7 +126,7 @@ char_u *get_cscope_name(expand_T *xp, int idx)
       if (csinfo[i].fname == NULL)
         continue;
       if (current_idx++ == idx) {
-        vim_snprintf(connection, sizeof(connection), "%lu", i);
+        vim_snprintf(connection, sizeof(connection), "%zu", i);
         return (char_u *)connection;
       }
     }
@@ -2096,10 +2096,10 @@ static int cs_show(exarg_T *eap)
         continue;
 
       if (csinfo[i].ppath != NULL)
-        (void)smsg("%2lu %-5ld  %-34s  %-32s",
+        (void)smsg("%2zu %-5ld  %-34s  %-32s",
             i, (long)csinfo[i].pid, csinfo[i].fname, csinfo[i].ppath);
       else
-        (void)smsg("%2lu %-5ld  %-34s  <none>",
+        (void)smsg("%2zu %-5ld  %-34s  <none>",
             i, (long)csinfo[i].pid, csinfo[i].fname);
     }
   }
