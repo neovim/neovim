@@ -79,7 +79,7 @@ if(USE_BUNDLED_BUSTED)
     COMMAND ${LUAROCKS_BINARY}
     ARGS build luasocket 3.0rc1-2 ${LUAROCKS_BUILDARGS}
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build xml 1.1.1-1 ${LUAROCKS_BUILDARGS}
+    ARGS build xml 1.1.2-1 ${LUAROCKS_BUILDARGS}
     COMMAND touch ${DEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps
     DEPENDS lpeg)
   add_custom_target(stable-busted-deps
