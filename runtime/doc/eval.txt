@@ -7453,7 +7453,11 @@ There are four types of features:
     Example: >
 	:if has("gui_running")
 <							*has-patch*
-3.  Included patches.  The "patch123" feature means that patch 123 has been
+3.  {Nvim} version. The "nvim-1.2.3" feature means that the Nvim version is
+    1.2.3 or later. Example: >
+	:if has("nvim-1.2.3")
+<
+4.  Included patches.  The "patch123" feature means that patch 123 has been
     included.  Note that this form does not check the version of Vim, you need
     to inspect |v:version| for that.
     Example (checking version 6.2.148 or later): >
@@ -7461,7 +7465,7 @@ There are four types of features:
 <    Note that it's possible for patch 147 to be omitted even though 148 is
     included.
 
-4.  Beyond a certain version or at a certain version and including a specific
+5.  Beyond a certain version or at a certain version and including a specific
     patch.  The "patch-7.4.237" feature means that the Vim version is 7.5 or
     later, or it is version 7.4 and patch 237 was included.
     Note that this only works for patch 7.4.237 and later, before that you
@@ -7533,6 +7537,7 @@ multi_byte		Compiled with support for 'encoding'
 multi_byte_encoding	'encoding' is set to a multi-byte encoding.
 multi_byte_ime		Compiled with support for IME input method.
 multi_lang		Compiled with support for multiple languages.
+nvim			This is Nvim. |has-patch|
 ole			Compiled with OLE automation support for Win32.
 path_extra		Compiled with up/downwards search in 'path' and 'tags'
 persistent_undo		Compiled with support for persistent undo history.

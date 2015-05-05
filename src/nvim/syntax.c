@@ -5537,7 +5537,7 @@ void ex_ownsyntax(exarg_T *eap)
   }
 }
 
-int syntax_present(win_T *win)
+bool syntax_present(win_T *win)
 {
   return win->w_s->b_syn_patterns.ga_len != 0
          || win->w_s->b_syn_clusters.ga_len != 0

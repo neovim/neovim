@@ -2457,20 +2457,61 @@ static char *(extra_patches[]) = {
   NULL
 };
 
-/// Checks whether patch `n` has been included.
+/// Compares a version string to the current Nvim version.
 ///
-/// @param n The patch number.
+/// @param version Version string like "1.3.42"
 ///
-/// @return TRUE if patch "n" has been included.
-int has_patch(int n)
+/// @return true if Nvim is at or above the version.
+bool has_nvim_version(char *version_str)
+  FUNC_ATTR_NONNULL_ALL
 {
-  int i;
-  for (i = 0; included_patches[i] != 0; ++i) {
-    if (included_patches[i] == n) {
-      return TRUE;
+  char *p   = version_str;
+  int major = 0;
+  int minor = 0;
+  int patch = 0;
+
+  if (!ascii_isdigit(*p)) {
+    return false;
+  }
+  major = atoi(p);
+  p     = strchr(p, '.');  // Find the next dot.
+
+  if (p) {
+    p++;  // Advance past the dot.
+    if (!ascii_isdigit(*p)) {
+      return false;
+    }
+    minor = atoi(p);
+    p     = strchr(p, '.');
+    if (p) {
+      p++;
+      if (!ascii_isdigit(*p)) {
+        return false;
+      }
+      patch = atoi(p);
     }
   }
-  return FALSE;
+
+  return (major < NVIM_VERSION_MAJOR
+          || (major == NVIM_VERSION_MAJOR
+              && (minor < NVIM_VERSION_MINOR
+                  || (minor == NVIM_VERSION_MINOR
+                      && patch <= NVIM_VERSION_PATCH))));
+}
+
+/// Checks whether a Vim patch has been included.
+///
+/// @param n Patch number.
+///
+/// @return true if patch `n` has been included.
+bool has_vim_patch(int n)
+{
+  for (int i = 0; included_patches[i] != 0; i++) {
+    if (included_patches[i] == n) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void ex_version(exarg_T *eap)

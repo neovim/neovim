@@ -10524,16 +10524,10 @@ static void f_glob2regpat(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     : file_pat_to_reg_pat(pat, NULL, NULL, false);
 }
 
-/*
- * "has()" function
- */
+/// "has()" function
 static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  int i;
-  char_u      *name;
-  int n = FALSE;
-  static char *(has_list[]) =
-  {
+  static char *(has_list[]) = {
 #ifdef UNIX
     "unix",
 #endif
@@ -10646,36 +10640,44 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     NULL
   };
 
-  name = get_tv_string(&argvars[0]);
-  for (i = 0; has_list[i] != NULL; ++i)
+  bool n = false;
+  char *name = (char *)get_tv_string(&argvars[0]);
+
+  for (int i = 0; has_list[i] != NULL; i++) {
     if (STRICMP(name, has_list[i]) == 0) {
-      n = TRUE;
+      n = true;
       break;
     }
+  }
 
-  if (n == FALSE) {
+  if (!n) {
     if (STRNICMP(name, "patch", 5) == 0) {
       if (name[5] == '-'
-          && STRLEN(name) > 11
+          && strlen(name) > 11
           && ascii_isdigit(name[6])
           && ascii_isdigit(name[8])
           && ascii_isdigit(name[10])) {
-        int major = atoi((char *)name + 6);
-        int minor = atoi((char *)name + 8);
+        int major = atoi(name + 6);
+        int minor = atoi(name + 8);
 
         // Expect "patch-9.9.01234".
         n = (major < VIM_VERSION_MAJOR
              || (major == VIM_VERSION_MAJOR
                  && (minor < VIM_VERSION_MINOR
                      || (minor == VIM_VERSION_MINOR
-                         && has_patch(atoi((char *)name + 10))))));
+                         && has_vim_patch(atoi(name + 10))))));
       } else {
-        n = has_patch(atoi((char *)name + 5));
+        n = has_vim_patch(atoi(name + 5));
+      }
+    } else if (STRNICMP(name, "nvim", 4) == 0) {
+      // Expect "nvim-x.y.z"
+      if (name[4] == '-' && strlen(name) >= 10) {
+        n = has_nvim_version(name + 5);
       }
     } else if (STRICMP(name, "vim_starting") == 0) {
       n = (starting != 0);
     } else if (STRICMP(name, "multi_byte_encoding") == 0) {
-      n = has_mbyte;
+      n = has_mbyte != 0;
 #if defined(USE_ICONV) && defined(DYNAMIC_ICONV)
     } else if (STRICMP(name, "iconv") == 0) {
       n = iconv_enabled(false);
@@ -10685,8 +10687,8 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
 
-  if (n == FALSE && eval_has_provider((char *)name)) {
-    n = TRUE;
+  if (!n && eval_has_provider(name)) {
+    n = true;
   }
 
   rettv->vval.v_number = n;
