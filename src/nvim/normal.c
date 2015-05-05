@@ -3379,6 +3379,11 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
   width1 = curwin->w_width - col_off1;
   width2 = curwin->w_width - col_off2;
 
+  // Avoid divide by zero.
+  if (width2 == 0) {
+      width2 = 1;
+  }
+
   if (curwin->w_width != 0) {
     /*
      * Instead of sticking at the last character of the buffer line we
