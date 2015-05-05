@@ -4451,7 +4451,7 @@ void redraw_statuslines(void)
 /*
  * Redraw all status lines at the bottom of frame "frp".
  */
-void win_redraw_last_status(frame_T *frp)
+void win_redraw_last_status(Frame *frp)
 {
   if (frp->fr_layout == FR_LEAF)
     frp->fr_win->w_redr_status = TRUE;
@@ -4862,7 +4862,7 @@ static void redraw_custom_statusline(win_T *wp)
  */
 int stl_connected(win_T *wp)
 {
-  frame_T     *fr;
+  Frame     *fr;
 
   fr = wp->w_frame;
   while (fr->fr_parent != NULL) {

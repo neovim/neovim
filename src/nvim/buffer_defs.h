@@ -80,7 +80,7 @@ typedef struct file_buffer buf_T; // Forward declaration
 
 typedef struct window_S win_T;
 typedef struct window_informations WindowInformations;
-typedef struct frame_S frame_T;
+typedef struct frame Frame;
 typedef int ScriptId;                     /* script ID */
 
 // for struct memline (it needs memfile_T)
@@ -799,7 +799,7 @@ typedef struct tabpage_S tabpage_T;
 struct tabpage_S {
   uint64_t handle;
   tabpage_T       *tp_next;         /* next tabpage or NULL */
-  frame_T         *tp_topframe;     /* topframe for the windows */
+  Frame         *tp_topframe;     /* topframe for the windows */
   win_T           *tp_curwin;       /* current window in this Tab page */
   win_T           *tp_prevwin;      /* previous window in this Tab page */
   win_T           *tp_firstwin;     /* first window in this Tab page */
@@ -811,7 +811,7 @@ struct tabpage_S {
   diff_T          *tp_first_diff;
   buf_T           *(tp_diffbuf[DB_COUNT]);
   int tp_diff_invalid;                  /* list of diffs is outdated */
-  frame_T         *(tp_snapshot[SNAP_COUNT]);    /* window layout snapshots */
+  Frame         *(tp_snapshot[SNAP_COUNT]);    /* window layout snapshots */
   dictitem_T tp_winvar;             /* variable for "t:" Dictionary */
   dict_T          *tp_vars;         /* internal variables, local to tab page */
 };
@@ -840,19 +840,19 @@ typedef struct w_line {
  * Windows are kept in a tree of frames.  Each frame has a column (FR_COL)
  * or row (FR_ROW) layout or is a leaf, which has a window.
  */
-struct frame_S {
+struct frame {
   char fr_layout;               /* FR_LEAF, FR_COL or FR_ROW */
   int fr_width;
   int fr_newwidth;              /* new width used in win_equal_rec() */
   int fr_height;
   int fr_newheight;             /* new height used in win_equal_rec() */
-  frame_T     *fr_parent;       /* containing frame or NULL */
-  frame_T     *fr_next;         /* frame right or below in same parent, NULL
+  Frame     *fr_parent;       /* containing frame or NULL */
+  Frame     *fr_next;         /* frame right or below in same parent, NULL
                                    for first */
-  frame_T     *fr_prev;         /* frame left or above in same parent, NULL
+  Frame     *fr_prev;         /* frame left or above in same parent, NULL
                                    for last */
   /* fr_child and fr_win are mutually exclusive */
-  frame_T     *fr_child;        /* first contained frame */
+  Frame     *fr_child;        /* first contained frame */
   win_T       *fr_win;          /* window that fills this frame */
 };
 
@@ -934,7 +934,7 @@ struct window_S {
   bool w_closing;                   /* window is being closed, don't let
                                        autocommands close it too. */
 
-  frame_T     *w_frame;             /* frame containing this window */
+  Frame     *w_frame;             /* frame containing this window */
 
   pos_T w_cursor;                   /* cursor position in buffer */
 
