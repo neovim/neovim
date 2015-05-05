@@ -268,7 +268,7 @@ char **server_address_list(size_t *size)
     return NULL;
   }
 
-  char **addrs = xcalloc((size_t) servers.ga_len, sizeof(const char **));
+  char **addrs = xcalloc((size_t) servers.ga_len, sizeof(const char *));
   for (int i = 0; i < servers.ga_len; i++) {
     addrs[i] = xstrdup(((Server **)servers.ga_data)[i]->addr);
   }
