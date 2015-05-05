@@ -58,7 +58,7 @@ list(APPEND THIRD_PARTY_DEPS lua-messagepack lpeg)
 if(USE_BUNDLED_BUSTED)
   # The following are only required if we want to run tests
   # with busted
-  
+
   add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps
     COMMAND ${LUAROCKS_BINARY}
     ARGS build lua_cliargs 2.3-3 ${LUAROCKS_BUILDARGS}
@@ -84,20 +84,20 @@ if(USE_BUNDLED_BUSTED)
     DEPENDS lpeg)
   add_custom_target(stable-busted-deps
     DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps)
-  
+
   add_custom_command(OUTPUT ${DEPS_BIN_DIR}/busted
     COMMAND ${LUAROCKS_BINARY}
     ARGS build https://raw.githubusercontent.com/Olivine-Labs/busted/v2.0.rc8-0/busted-2.0.rc8-0.rockspec ${LUAROCKS_BUILDARGS}
     DEPENDS stable-busted-deps)
   add_custom_target(busted
     DEPENDS ${DEPS_BIN_DIR}/busted)
-  
+
   add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/nvim-client
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build https://raw.githubusercontent.com/neovim/lua-client/8cc5b6090ac61cd0bba53ba984f15792fbb64573/nvim-client-0.0.1-11.rockspec ${LUAROCKS_BUILDARGS} LIBUV_DIR=${DEPS_INSTALL_DIR}
+    ARGS build https://raw.githubusercontent.com/neovim/lua-client/0.0.1-12/nvim-client-0.0.1-12.rockspec ${LUAROCKS_BUILDARGS} LIBUV_DIR=${DEPS_INSTALL_DIR}
     DEPENDS busted libuv)
   add_custom_target(nvim-client
     DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/nvim-client)
-  
+
   list(APPEND THIRD_PARTY_DEPS stable-busted-deps busted nvim-client)
 endif()
