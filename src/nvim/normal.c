@@ -1089,8 +1089,6 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
   int restart_edit_save;
   int lbr_saved = curwin->w_p_lbr;
 
-  curwin->w_p_lbr = false; /* avoid a problem with unwanted linebreaks in 
-                            * block mode */
 
   /* The visual area is remembered for redo */
   static int redo_VIsual_mode = NUL;        /* 'v', 'V', or Ctrl-V */
@@ -1107,6 +1105,8 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
   if ((finish_op
        || VIsual_active
        ) && oap->op_type != OP_NOP) {
+    // Avoid a problem with unwanted linebreaks in block mode
+    curwin->w_p_lbr = false;
     oap->is_VIsual = VIsual_active;
     if (oap->motion_force == 'V')
       oap->motion_type = MLINE;
@@ -1434,8 +1434,11 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
              || oap->op_type == OP_COLON
              || oap->op_type == OP_FUNCTION
              || oap->op_type == OP_FILTER)
-            && oap->motion_force == NUL)
+            && oap->motion_force == NUL) {
+          // Make sure redrawing is correct.
+          curwin->w_p_lbr = lbr_saved;
           redraw_curbuf_later(INVERTED);
+        }
       }
     }
 
@@ -1471,8 +1474,10 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
      * 'modifiable is off or creating a fold. */
     if (oap->is_VIsual && (oap->empty || !MODIFIABLE(curbuf)
                            || oap->op_type == OP_FOLD
-                           ))
+                           )) {
+      curwin->w_p_lbr = lbr_saved;
       redraw_curbuf_later(INVERTED);
+    }
 
     /*
      * If the end of an operator is in column one while oap->motion_type
@@ -1544,8 +1549,10 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           vim_beep();
           CancelRedo();
         }
-      } else
+      } else {
+        curwin->w_p_lbr = lbr_saved;
         (void)op_yank(oap, !gui_yank);
+      }
       check_cursor_col();
       break;
 
@@ -1564,6 +1571,8 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         else
           restart_edit_save = 0;
         restart_edit = 0;
+        // Restore linebreak, so that when the user edits it looks as before.
+        curwin->w_p_lbr = lbr_saved;
         /* Reset finish_op now, don't want it set inside edit(). */
         finish_op = false;
         if (op_change(oap))             /* will call edit() */
@@ -1641,7 +1650,13 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         restart_edit_save = restart_edit;
         restart_edit = 0;
 
+        // Restore linebreak, so that when the user edits it looks as before.
+        curwin->w_p_lbr = lbr_saved;
+
         op_insert(oap, cap->count1);
+
+        // Reset linebreak, so that formatting works correctly.
+        curwin->w_p_lbr = false;
 
         /* TODO: when inserting in several lines, should format all
          * the lines. */
@@ -1657,8 +1672,11 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       if (empty_region_error) {
         vim_beep();
         CancelRedo();
-      } else
+      } else {
+        // Restore linebreak, so that when the user edits it looks as before.
+        curwin->w_p_lbr = lbr_saved;
         op_replace(oap, cap->nchar);
+      }
       break;
 
     case OP_FOLD:
@@ -1695,8 +1713,10 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
        */
       if (!p_sol && oap->motion_type == MLINE && !oap->end_adjusted
           && (oap->op_type == OP_LSHIFT || oap->op_type == OP_RSHIFT
-              || oap->op_type == OP_DELETE))
+              || oap->op_type == OP_DELETE)) {
+        curwin->w_p_lbr = false;
         coladvance(curwin->w_curswant = old_col);
+      }
     } else {
       curwin->w_cursor = old_cursor;
     }
