@@ -313,7 +313,7 @@ typedef struct {
   BufferHeader save_readbuf1;
   BufferHeader save_readbuf2;
   String save_inputbuf;
-} tasave_T;
+} SavedTypeaheadBuffer;
 
 /*
  * Used for conversion of terminal I/O and script files.

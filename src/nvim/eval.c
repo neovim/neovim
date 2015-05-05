@@ -10457,7 +10457,7 @@ static void f_inputlist(typval_T *argvars, typval_T *rettv)
 }
 
 
-static garray_T ga_userinput = {0, 0, sizeof(tasave_T), 4, NULL};
+static garray_T ga_userinput = {0, 0, sizeof(SavedTypeaheadBuffer), 4, NULL};
 
 /*
  * "inputrestore()" function
@@ -10466,7 +10466,7 @@ static void f_inputrestore(typval_T *argvars, typval_T *rettv)
 {
   if (!GA_EMPTY(&ga_userinput)) {
     --ga_userinput.ga_len;
-    restore_typeahead((tasave_T *)(ga_userinput.ga_data)
+    restore_typeahead((SavedTypeaheadBuffer *)(ga_userinput.ga_data)
         + ga_userinput.ga_len);
     /* default return is zero == OK */
   } else if (p_verbose > 1) {
@@ -10481,7 +10481,7 @@ static void f_inputrestore(typval_T *argvars, typval_T *rettv)
 static void f_inputsave(typval_T *argvars, typval_T *rettv)
 {
   // Add an entry to the stack of typeahead storage.
-  tasave_T *p = GA_APPEND_VIA_PTR(tasave_T, &ga_userinput);
+  SavedTypeaheadBuffer *p = GA_APPEND_VIA_PTR(SavedTypeaheadBuffer, &ga_userinput);
   save_typeahead(p);
 }
 

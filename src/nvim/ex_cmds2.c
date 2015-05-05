@@ -137,7 +137,7 @@ void do_debug(char_u *cmd)
   int save_msg_silent = msg_silent;
   int save_emsg_silent = emsg_silent;
   int save_redir_off = redir_off;
-  tasave_T typeaheadbuf;
+  SavedTypeaheadBuffer typeaheadbuf;
   int typeahead_saved = FALSE;
   int save_ignore_script = 0;
   int save_ex_normal_busy;

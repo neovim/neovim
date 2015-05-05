@@ -7638,7 +7638,7 @@ static void ex_normal(exarg_T *eap)
   int save_restart_edit = restart_edit;
   int save_msg_didout = msg_didout;
   int save_State = State;
-  tasave_T tabuf;
+  SavedTypeaheadBuffer tabuf;
   int save_insertmode = p_im;
   int save_finish_op = finish_op;
   long save_opcount = opcount;
