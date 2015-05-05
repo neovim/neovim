@@ -1173,7 +1173,7 @@ void free_typebuf(void)
  * When doing ":so! file", the current typeahead needs to be saved, and
  * restored when "file" has been read completely.
  */
-static typebuf_T saved_typebuf[NSCRIPT];
+static TypeaheadBuffer saved_typebuf[NSCRIPT];
 
 void save_typebuf(void)
 {

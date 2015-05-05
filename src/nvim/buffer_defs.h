@@ -302,11 +302,11 @@ typedef struct {
   int tb_silent;                /* nr of silently mapped bytes in tb_buf[] */
   int tb_no_abbr_cnt;           /* nr of bytes without abbrev. in tb_buf[] */
   int tb_change_cnt;            /* nr of time tb_buf was changed; never zero */
-} typebuf_T;
+} TypeaheadBuffer;
 
 /* Struct to hold the saved typeahead for save_typeahead(). */
 typedef struct {
-  typebuf_T save_typebuf;
+  TypeaheadBuffer save_typebuf;
   int typebuf_valid;                        /* TRUE when save_typebuf valid */
   int old_char;
   int old_mod_mask;
