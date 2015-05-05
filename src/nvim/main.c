@@ -1911,7 +1911,7 @@ process_env (
   char_u      *initstr;
   char_u      *save_sourcing_name;
   linenr_T save_sourcing_lnum;
-  scid_T save_sid;
+  ScriptId save_sid;
 
   initstr = (char_u *)os_getenv((char *)env);
   if (initstr != NULL && *initstr != NUL) {

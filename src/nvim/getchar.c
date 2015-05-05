@@ -75,17 +75,17 @@
 
 #define MINIMAL_SIZE 20                 /* minimal size for b_str */
 
-static buffheader_T redobuff = {{NULL, {NUL}}, NULL, 0, 0};
-static buffheader_T old_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
-static buffheader_T save_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
-static buffheader_T save_old_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
-static buffheader_T recordbuff = {{NULL, {NUL}}, NULL, 0, 0};
+static BufferHeader redobuff = {{NULL, {NUL}}, NULL, 0, 0};
+static BufferHeader old_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
+static BufferHeader save_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
+static BufferHeader save_old_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
+static BufferHeader recordbuff = {{NULL, {NUL}}, NULL, 0, 0};
 
 // First read ahead buffer. Used for translated commands.
-static buffheader_T readbuf1 = {{NULL, {NUL}}, NULL, 0, 0};
+static BufferHeader readbuf1 = {{NULL, {NUL}}, NULL, 0, 0};
 
 // Second read ahead buffer. Used for redo.
-static buffheader_T readbuf2 = {{NULL, {NUL}}, NULL, 0, 0};
+static BufferHeader readbuf2 = {{NULL, {NUL}}, NULL, 0, 0};
 
 static int typeahead_char = 0;          /* typeahead char that's not flushed */
 
@@ -161,9 +161,9 @@ static int last_recorded_len = 0;       /* number of last recorded chars */
 /*
  * Free and clear a buffer.
  */
-void free_buff(buffheader_T *buf)
+void free_buff(BufferHeader *buf)
 {
-  buffblock_T    *p, *np;
+  BufferBlock    *p, *np;
 
   for (p = buf->bh_first.b_next; p != NULL; p = np) {
     np = p->b_next;
@@ -176,7 +176,7 @@ void free_buff(buffheader_T *buf)
  * Return the contents of a buffer as a single string.
  * K_SPECIAL and CSI in the returned string are escaped.
  */
-static char_u *get_buffcont(buffheader_T *buffer,
+static char_u *get_buffcont(BufferHeader *buffer,
                             int dozero  // count == zero is not an error
                             )
 {
@@ -186,13 +186,13 @@ static char_u *get_buffcont(buffheader_T *buffer,
   char_u          *str;
 
   /* compute the total length of the string */
-  for (buffblock_T *bp = buffer->bh_first.b_next; bp != NULL; bp = bp->b_next)
+  for (BufferBlock *bp = buffer->bh_first.b_next; bp != NULL; bp = bp->b_next)
     count += STRLEN(bp->b_str);
 
   if (count || dozero) {
     p = xmalloc(count + 1);
     p2 = p;
-    for (buffblock_T *bp = buffer->bh_first.b_next; bp != NULL; bp = bp->b_next)
+    for (BufferBlock *bp = buffer->bh_first.b_next; bp != NULL; bp = bp->b_next)
       for (str = bp->b_str; *str; )
         *p2++ = *str++;
     *p2 = NUL;
@@ -248,7 +248,7 @@ char_u *get_inserted(void)
  */
 static void 
 add_buff (
-    buffheader_T *buf,
+    BufferHeader *buf,
     char_u *s,
     long slen                      /* length of "s" or -1 */
 )
@@ -280,7 +280,7 @@ add_buff (
       len = MINIMAL_SIZE;
     else
       len = slen;
-    buffblock_T *p = xmalloc(sizeof(buffblock_T) + len);
+    BufferBlock *p = xmalloc(sizeof(BufferBlock) + len);
     buf->bh_space = (int)(len - slen);
     STRLCPY(p->b_str, s, slen + 1);
 
@@ -294,7 +294,7 @@ add_buff (
 /*
  * Add number "n" to buffer "buf".
  */
-static void add_num_buff(buffheader_T *buf, long n)
+static void add_num_buff(BufferHeader *buf, long n)
 {
   char_u number[32];
 
@@ -306,7 +306,7 @@ static void add_num_buff(buffheader_T *buf, long n)
  * Add character 'c' to buffer "buf".
  * Translates special keys, NUL, CSI, K_SPECIAL and multibyte characters.
  */
-static void add_char_buff(buffheader_T *buf, int c)
+static void add_char_buff(BufferHeader *buf, int c)
 {
   char_u bytes[MB_MAXBYTES + 1];
   int len;
@@ -351,10 +351,10 @@ static int read_readbuffers(int advance)
   return c;
 }
 
-static int read_readbuf(buffheader_T *buf, int advance)
+static int read_readbuf(BufferHeader *buf, int advance)
 {
   char_u c;
-  buffblock_T *curr;
+  BufferBlock *curr;
 
   if (buf->bh_first.b_next == NULL) /* buffer is empty */
     return NUL;
@@ -665,7 +665,7 @@ void stuffnumReadbuff(long n)
  */
 static int read_redo(int init, int old_redo)
 {
-  static buffblock_T *bp;
+  static BufferBlock *bp;
   static char_u *p;
   int c;
   int n;
@@ -1173,7 +1173,7 @@ void free_typebuf(void)
  * When doing ":so! file", the current typeahead needs to be saved, and
  * restored when "file" has been read completely.
  */
-static typebuf_T saved_typebuf[NSCRIPT];
+static TypeaheadBuffer saved_typebuf[NSCRIPT];
 
 void save_typebuf(void)
 {
@@ -1191,7 +1191,7 @@ static int old_mouse_col;       /* mouse_col related to old_char */
 /*
  * Save all three kinds of typeahead, so that the user must type at a prompt.
  */
-void save_typeahead(tasave_T *tp)
+void save_typeahead(SavedTypeaheadBuffer *tp)
 {
   tp->save_typebuf = typebuf;
   alloc_typebuf();
@@ -1210,7 +1210,7 @@ void save_typeahead(tasave_T *tp)
  * Restore the typeahead to what it was before calling save_typeahead().
  * The allocated memory is freed, can only be called once!
  */
-void restore_typeahead(tasave_T *tp)
+void restore_typeahead(SavedTypeaheadBuffer *tp)
 {
   if (tp->typebuf_valid) {
     free_typebuf();

@@ -79,9 +79,9 @@ typedef struct file_buffer buf_T; // Forward declaration
 #define BF_WRITE_MASK   (BF_NOTEDITED + BF_NEW + BF_READERR)
 
 typedef struct window_S win_T;
-typedef struct wininfo_S wininfo_T;
-typedef struct frame_S frame_T;
-typedef int scid_T;                     /* script ID */
+typedef struct window_informations WindowInformations;
+typedef struct frame Frame;
+typedef int ScriptId;                     /* script ID */
 
 // for struct memline (it needs memfile_T)
 #include "nvim/memline_defs.h"
@@ -117,23 +117,23 @@ typedef struct taggy {
   int cur_fnum;                 /* buffer number used for cur_match */
 } taggy_T;
 
-typedef struct buffblock buffblock_T;
-typedef struct buffheader buffheader_T;
+typedef struct buffer_block BufferBlock;
+typedef struct buffer_header BufferHeader;
 
 /*
  * structure used to store one block of the stuff/redo/recording buffers
  */
-struct buffblock {
-  buffblock_T *b_next;  // pointer to next buffblock
+struct buffer_block {
+  BufferBlock *b_next;  // pointer to next buffer_block
   char_u b_str[1];      // contents (actually longer)
 };
 
 /*
  * header used for the stuff buffer and the redo buffer
  */
-struct buffheader {
-  buffblock_T bh_first;  // first (dummy) block of list
-  buffblock_T *bh_curr;  // buffblock for appending
+struct buffer_header {
+  BufferBlock bh_first;  // first (dummy) block of list
+  BufferBlock *bh_curr;  // buffer_block for appending
   int bh_index;          // index for reading
   int bh_space;          // space in bh_curr for appending
 };
@@ -141,7 +141,7 @@ struct buffheader {
 /*
  * Structure that contains all options that are local to a window.
  * Used twice in a window: for the current buffer and for all buffers.
- * Also used in wininfo_T.
+ * Also used in WindowInformations.
  */
 typedef struct {
   int wo_arab;
@@ -233,7 +233,7 @@ typedef struct {
 
   int wo_scriptID[WV_COUNT];            /* SIDs for window-local options */
 # define w_p_scriptID w_onebuf_opt.wo_scriptID
-} winopt_T;
+} WindowOptions;
 
 /*
  * Window info stored with a buffer.
@@ -245,13 +245,13 @@ typedef struct {
  * The window-info is kept in a list at b_wininfo.  It is kept in
  * most-recently-used order.
  */
-struct wininfo_S {
-  wininfo_T   *wi_next;         /* next entry or NULL for last entry */
-  wininfo_T   *wi_prev;         /* previous entry or NULL for first entry */
+struct window_informations {
+  WindowInformations   *wi_next;         /* next entry or NULL for last entry */
+  WindowInformations   *wi_prev;         /* previous entry or NULL for first entry */
   win_T       *wi_win;          /* pointer to window that did set wi_fpos */
   pos_T wi_fpos;                /* last cursor position in the file */
   bool wi_optset;               /* true when wi_opt has useful values */
-  winopt_T wi_opt;              /* local window options */
+  WindowOptions wi_opt;              /* local window options */
   bool wi_fold_manual;          /* copy of w_fold_manual */
   garray_T wi_folds;            /* clone of w_folds */
 };
@@ -262,29 +262,29 @@ struct wininfo_S {
  *
  * TODO: move struct arglist to another header
  */
-typedef struct arglist {
+typedef struct {
   garray_T al_ga;               /* growarray with the array of file names */
   int al_refcount;              /* number of windows using this arglist */
   int id;                       ///< id of this arglist
-} alist_T;
+} ArgumentList;
 
 /*
  * For each argument remember the file name as it was given, and the buffer
  * number that contains the expanded file name (required for when ":cd" is
  * used.
  *
- * TODO: move aentry_T to another header
+ * TODO: move ArgumentListEntry to another header
  */
-typedef struct argentry {
+typedef struct {
   char_u      *ae_fname;        /* file name as specified */
   int ae_fnum;                  /* buffer number with expanded file name */
-} aentry_T;
+} ArgumentListEntry;
 
 # define ALIST(win) (win)->w_alist
-#define GARGLIST        ((aentry_T *)global_alist.al_ga.ga_data)
-#define ARGLIST         ((aentry_T *)ALIST(curwin)->al_ga.ga_data)
-#define WARGLIST(wp)    ((aentry_T *)ALIST(wp)->al_ga.ga_data)
-#define AARGLIST(al)    ((aentry_T *)((al)->al_ga.ga_data))
+#define GARGLIST        ((ArgumentListEntry *)global_alist.al_ga.ga_data)
+#define ARGLIST         ((ArgumentListEntry *)ALIST(curwin)->al_ga.ga_data)
+#define WARGLIST(wp)    ((ArgumentListEntry *)ALIST(wp)->al_ga.ga_data)
+#define AARGLIST(al)    ((ArgumentListEntry *)((al)->al_ga.ga_data))
 #define GARGCOUNT       (global_alist.al_ga.ga_len)
 #define ARGCOUNT        (ALIST(curwin)->al_ga.ga_len)
 #define WARGCOUNT(wp)   (ALIST(wp)->al_ga.ga_len)
@@ -302,18 +302,18 @@ typedef struct {
   int tb_silent;                /* nr of silently mapped bytes in tb_buf[] */
   int tb_no_abbr_cnt;           /* nr of bytes without abbrev. in tb_buf[] */
   int tb_change_cnt;            /* nr of time tb_buf was changed; never zero */
-} typebuf_T;
+} TypeaheadBuffer;
 
 /* Struct to hold the saved typeahead for save_typeahead(). */
 typedef struct {
-  typebuf_T save_typebuf;
+  TypeaheadBuffer save_typebuf;
   int typebuf_valid;                        /* TRUE when save_typebuf valid */
   int old_char;
   int old_mod_mask;
-  buffheader_T save_readbuf1;
-  buffheader_T save_readbuf2;
+  BufferHeader save_readbuf1;
+  BufferHeader save_readbuf2;
   String save_inputbuf;
-} tasave_T;
+} SavedTypeaheadBuffer;
 
 /*
  * Used for conversion of terminal I/O and script files.
@@ -358,7 +358,7 @@ struct mapblock {
   char m_silent;                /* <silent> used, don't echo commands */
   char m_nowait;                /* <nowait> used */
   char m_expr;                  /* <expr> used, m_str is an expression */
-  scid_T m_script_ID;           /* ID of script where map was defined */
+  ScriptId m_script_ID;           /* ID of script where map was defined */
 };
 
 /*
@@ -377,7 +377,7 @@ struct stl_hlrec {
 /* avoid #ifdefs for when b_spell is not available */
 # define B_SPELL(buf)  ((buf)->b_spell)
 
-typedef struct qf_info_S qf_info_T;
+typedef struct qf_info_S QuickfixInfos;
 
 /*
  * Used for :syntime: timing of executing a syntax pattern.
@@ -508,7 +508,7 @@ struct file_buffer {
   long b_mod_xlines;            /* number of extra buffer lines inserted;
                                    negative when lines were deleted */
 
-  wininfo_T   *b_wininfo;       /* list of last used info for each window */
+  WindowInformations   *b_wininfo;       /* list of last used info for each window */
 
   long b_mtime;                 /* last change time of original file */
   long b_mtime_read;            /* last change time when reading */
@@ -778,9 +778,9 @@ struct file_buffer {
  * This is using a linked list, because the number of differences is expected
  * to be reasonable small.  The list is sorted on lnum.
  */
-typedef struct diffblock_S diff_T;
-struct diffblock_S {
-  diff_T      *df_next;
+typedef struct diff_block DiffBlock;
+struct diff_block {
+  DiffBlock      *df_next;
   linenr_T df_lnum[DB_COUNT];           /* line number in buffer */
   linenr_T df_count[DB_COUNT];          /* nr of inserted/changed lines */
 };
@@ -799,7 +799,7 @@ typedef struct tabpage_S tabpage_T;
 struct tabpage_S {
   uint64_t handle;
   tabpage_T       *tp_next;         /* next tabpage or NULL */
-  frame_T         *tp_topframe;     /* topframe for the windows */
+  Frame         *tp_topframe;     /* topframe for the windows */
   win_T           *tp_curwin;       /* current window in this Tab page */
   win_T           *tp_prevwin;      /* previous window in this Tab page */
   win_T           *tp_firstwin;     /* first window in this Tab page */
@@ -808,10 +808,10 @@ struct tabpage_S {
   long tp_old_Columns;              /* Columns when Tab page was left */
   long tp_ch_used;                  /* value of 'cmdheight' when frame size
                                        was set */
-  diff_T          *tp_first_diff;
+  DiffBlock          *tp_first_diff;
   buf_T           *(tp_diffbuf[DB_COUNT]);
   int tp_diff_invalid;                  /* list of diffs is outdated */
-  frame_T         *(tp_snapshot[SNAP_COUNT]);    /* window layout snapshots */
+  Frame         *(tp_snapshot[SNAP_COUNT]);    /* window layout snapshots */
   dictitem_T tp_winvar;             /* variable for "t:" Dictionary */
   dict_T          *tp_vars;         /* internal variables, local to tab page */
 };
@@ -840,19 +840,19 @@ typedef struct w_line {
  * Windows are kept in a tree of frames.  Each frame has a column (FR_COL)
  * or row (FR_ROW) layout or is a leaf, which has a window.
  */
-struct frame_S {
+struct frame {
   char fr_layout;               /* FR_LEAF, FR_COL or FR_ROW */
   int fr_width;
   int fr_newwidth;              /* new width used in win_equal_rec() */
   int fr_height;
   int fr_newheight;             /* new height used in win_equal_rec() */
-  frame_T     *fr_parent;       /* containing frame or NULL */
-  frame_T     *fr_next;         /* frame right or below in same parent, NULL
+  Frame     *fr_parent;       /* containing frame or NULL */
+  Frame     *fr_next;         /* frame right or below in same parent, NULL
                                    for first */
-  frame_T     *fr_prev;         /* frame left or above in same parent, NULL
+  Frame     *fr_prev;         /* frame left or above in same parent, NULL
                                    for last */
   /* fr_child and fr_win are mutually exclusive */
-  frame_T     *fr_child;        /* first contained frame */
+  Frame     *fr_child;        /* first contained frame */
   win_T       *fr_win;          /* window that fills this frame */
 };
 
@@ -934,7 +934,7 @@ struct window_S {
   bool w_closing;                   /* window is being closed, don't let
                                        autocommands close it too. */
 
-  frame_T     *w_frame;             /* frame containing this window */
+  Frame     *w_frame;             /* frame containing this window */
 
   pos_T w_cursor;                   /* cursor position in buffer */
 
@@ -1073,7 +1073,7 @@ struct window_S {
 
   int w_alt_fnum;                   /* alternate file (for # and CTRL-^) */
 
-  alist_T     *w_alist;             /* pointer to arglist for this window */
+  ArgumentList     *w_alist;             /* pointer to arglist for this window */
   int w_arg_idx;                    /* current index in argument list (can be
                                        out of range!) */
   int w_arg_idx_invalid;            /* editing another file than w_arg_idx */
@@ -1087,8 +1087,8 @@ struct window_S {
    * There are two values: w_onebuf_opt is local to the buffer currently in
    * this window, w_allbuf_opt is for all buffers in this window.
    */
-  winopt_T w_onebuf_opt;
-  winopt_T w_allbuf_opt;
+  WindowOptions w_onebuf_opt;
+  WindowOptions w_allbuf_opt;
 
   /* A few options have local flags for P_INSECURE. */
   uint32_t w_p_stl_flags;           /* flags for 'statusline' */
@@ -1100,7 +1100,7 @@ struct window_S {
   bool        w_p_brisbr;           /* sbr in 'briopt' */
 
   /* transform a pointer to a "onebuf" option into a "allbuf" option */
-#define GLOBAL_WO(p)    ((char *)p + sizeof(winopt_T))
+#define GLOBAL_WO(p)    ((char *)p + sizeof(WindowOptions))
 
   long w_scbind_pos;
 
@@ -1152,12 +1152,12 @@ struct window_S {
                                          * was computed. */
   int w_nrwidth_width;                  /* nr of chars to print line count. */
 
-  qf_info_T   *w_llist;                 /* Location list for this window */
+  QuickfixInfos   *w_llist;                 /* Location list for this window */
   /*
    * Location list reference used in the location list window.
    * In a non-location list window, w_llist_ref is NULL.
    */
-  qf_info_T   *w_llist_ref;
+  QuickfixInfos   *w_llist_ref;
 };
 
 #endif // NVIM_BUFFER_DEFS_H

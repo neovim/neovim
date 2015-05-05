@@ -86,7 +86,7 @@ typedef struct ucmd {
   long uc_def;                  /* The default value for a range/count */
   int uc_compl;                 /* completion type */
   int uc_addr_type;             /* The command's address type */
-  scid_T uc_scriptID;           /* SID where the command was defined */
+  ScriptId uc_scriptID;           /* SID where the command was defined */
   char_u      *uc_compl_arg;    /* completion argument if any */
 } ucmd_T;
 
@@ -5310,7 +5310,7 @@ static void do_ucmd(exarg_T *eap)
   size_t split_len = 0;
   char_u      *split_buf = NULL;
   ucmd_T      *cmd;
-  scid_T save_current_SID = current_SID;
+  ScriptId save_current_SID = current_SID;
 
   if (eap->cmdidx == CMD_USER)
     cmd = USER_CMD(eap->useridx);
@@ -6018,18 +6018,18 @@ static void ex_goto(exarg_T *eap)
 /*
  * Clear an argument list: free all file names and reset it to zero entries.
  */
-void alist_clear(alist_T *al)
+void alist_clear(ArgumentList *al)
 {
 # define FREE_AENTRY_FNAME(arg) xfree(arg->ae_fname)
-  GA_DEEP_CLEAR(&al->al_ga, aentry_T, FREE_AENTRY_FNAME);
+  GA_DEEP_CLEAR(&al->al_ga, ArgumentListEntry, FREE_AENTRY_FNAME);
 }
 
 /*
  * Init an argument list.
  */
-void alist_init(alist_T *al)
+void alist_init(ArgumentList *al)
 {
-  ga_init(&al->al_ga, (int)sizeof(aentry_T), 5);
+  ga_init(&al->al_ga, (int)sizeof(ArgumentListEntry), 5);
 }
 
 
@@ -6038,7 +6038,7 @@ void alist_init(alist_T *al)
  * Ignored when the argument list is the global one.
  * If the argument list is no longer used by any window, free it.
  */
-void alist_unlink(alist_T *al)
+void alist_unlink(ArgumentList *al)
 {
   if (al != &global_alist && --al->al_refcount <= 0) {
     alist_clear(al);
@@ -6096,7 +6096,7 @@ void alist_expand(int *fnum_list, int fnum_len)
  * Set the argument list for the current window.
  * Takes over the allocated files[] and the allocated fnames in it.
  */
-void alist_set(alist_T *al, int count, char_u **files, int use_curbuf, int *fnum_list, int fnum_len)
+void alist_set(ArgumentList *al, int count, char_u **files, int use_curbuf, int *fnum_list, int fnum_len)
 {
   int i;
 
@@ -6133,7 +6133,7 @@ void alist_set(alist_T *al, int count, char_u **files, int use_curbuf, int *fnum
  */
 void 
 alist_add (
-    alist_T *al,
+    ArgumentList *al,
     char_u *fname,
     int set_fnum                   /* 1: set buffer number; 2: re-use curbuf */
 )
@@ -7638,7 +7638,7 @@ static void ex_normal(exarg_T *eap)
   int save_restart_edit = restart_edit;
   int save_msg_didout = msg_didout;
   int save_State = State;
-  tasave_T tabuf;
+  SavedTypeaheadBuffer tabuf;
   int save_insertmode = p_im;
   int save_finish_op = finish_op;
   long save_opcount = opcount;
@@ -8361,7 +8361,7 @@ makeopens (
   win_T       *edited_win = NULL;
   int tabnr;
   win_T       *tab_firstwin;
-  frame_T     *tab_topframe;
+  Frame     *tab_topframe;
   int cur_arg_idx = 0;
   int next_arg_idx = 0;
 
@@ -8681,9 +8681,9 @@ static int ses_winsizes(FILE *fd, int restore_size, win_T *tab_firstwin)
  * After the commands the last window in the frame is the current window.
  * Returns FAIL when writing the commands to "fd" fails.
  */
-static int ses_win_rec(FILE *fd, frame_T *fr)
+static int ses_win_rec(FILE *fd, Frame *fr)
 {
-  frame_T     *frc;
+  Frame     *frc;
   int count = 0;
 
   if (fr->fr_layout != FR_LEAF) {
@@ -8725,9 +8725,9 @@ static int ses_win_rec(FILE *fd, frame_T *fr)
  * Skip frames that don't contain windows we want to save in the Session.
  * Returns NULL when there none.
  */
-static frame_T *ses_skipframe(frame_T *fr)
+static Frame *ses_skipframe(Frame *fr)
 {
-  frame_T     *frc;
+  Frame     *frc;
 
   for (frc = fr; frc != NULL; frc = frc->fr_next)
     if (ses_do_frame(frc))
@@ -8739,9 +8739,9 @@ static frame_T *ses_skipframe(frame_T *fr)
  * Return TRUE if frame "fr" has a window somewhere that we want to save in
  * the Session.
  */
-static int ses_do_frame(frame_T *fr)
+static int ses_do_frame(Frame *fr)
 {
-  frame_T     *frc;
+  Frame     *frc;
 
   if (fr->fr_layout == FR_LEAF)
     return ses_do_win(fr->fr_win);
@@ -8971,7 +8971,7 @@ ses_arglist (
   }
   for (int i = 0; i < gap->ga_len; ++i) {
     /* NULL file names are skipped (only happens when out of memory). */
-    s = alist_name(&((aentry_T *)gap->ga_data)[i]);
+    s = alist_name(&((ArgumentListEntry *)gap->ga_data)[i]);
     if (s != NULL) {
       if (fullname) {
         buf = xmalloc(MAXPATHL);

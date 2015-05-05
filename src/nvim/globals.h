@@ -359,11 +359,11 @@ EXTERN int garbage_collect_at_exit INIT(= FALSE);
 #define SID_NONE        -6      /* don't set scriptID */
 
 /* ID of script being sourced or was sourced to define the current function. */
-EXTERN scid_T current_SID INIT(= 0);
+EXTERN ScriptId current_SID INIT(= 0);
 // Scope information for the code that indirectly triggered the current
 // provider function call
 EXTERN struct caller_scope {
-  scid_T SID;
+  ScriptId SID;
   uint8_t *sourcing_name, *autocmd_fname, *autocmd_match; 
   linenr_T sourcing_lnum;
   int autocmd_fname_full, autocmd_bufnr;
@@ -545,7 +545,7 @@ EXTERN int aucmd_win_used INIT(= FALSE);        /* aucmd_win is being used */
  * The window layout is kept in a tree of frames.  topframe points to the top
  * of the tree.
  */
-EXTERN frame_T  *topframe;      /* top of the window frame tree */
+EXTERN Frame  *topframe;      /* top of the window frame tree */
 
 /*
  * Tab pages are alternative topframes.  "first_tabpage" points to the first
@@ -577,7 +577,7 @@ EXTERN int mf_dont_release INIT(= FALSE);       /* don't release blocks */
  * List of files being edited (global argument list).  curwin->w_alist points
  * to this when the window is using the global argument list.
  */
-EXTERN alist_T global_alist;    /* global argument list */
+EXTERN ArgumentList global_alist;    /* global argument list */
 EXTERN int max_alist_id INIT(= 0);     ///< the previous argument list id
 EXTERN int arg_had_last INIT(= FALSE);      /* accessed last file in
                                                global_alist */
@@ -866,7 +866,7 @@ EXTERN int RedrawingDisabled INIT(= 0);
 EXTERN int readonlymode INIT(= FALSE);      /* Set to TRUE for "view" */
 EXTERN int recoverymode INIT(= FALSE);      /* Set to TRUE for "-r" option */
 
-EXTERN typebuf_T typebuf                /* typeahead buffer */
+EXTERN TypeaheadBuffer typebuf                /* typeahead buffer */
 #ifdef DO_INIT
   = {NULL, NULL, 0, 0, 0, 0, 0, 0, 0}
 #endif
