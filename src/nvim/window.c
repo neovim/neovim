@@ -3695,7 +3695,7 @@ win_free (
 )
 {
   int i;
-  wininfo_T   *wip;
+  WindowInformations   *wip;
 
   handle_unregister_window(wp);
   clearFolding(wp);

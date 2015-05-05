@@ -79,7 +79,7 @@ typedef struct file_buffer buf_T; // Forward declaration
 #define BF_WRITE_MASK   (BF_NOTEDITED + BF_NEW + BF_READERR)
 
 typedef struct window_S win_T;
-typedef struct wininfo_S wininfo_T;
+typedef struct window_informations WindowInformations;
 typedef struct frame_S frame_T;
 typedef int ScriptId;                     /* script ID */
 
@@ -141,7 +141,7 @@ struct buffer_header {
 /*
  * Structure that contains all options that are local to a window.
  * Used twice in a window: for the current buffer and for all buffers.
- * Also used in wininfo_T.
+ * Also used in WindowInformations.
  */
 typedef struct {
   int wo_arab;
@@ -245,9 +245,9 @@ typedef struct {
  * The window-info is kept in a list at b_wininfo.  It is kept in
  * most-recently-used order.
  */
-struct wininfo_S {
-  wininfo_T   *wi_next;         /* next entry or NULL for last entry */
-  wininfo_T   *wi_prev;         /* previous entry or NULL for first entry */
+struct window_informations {
+  WindowInformations   *wi_next;         /* next entry or NULL for last entry */
+  WindowInformations   *wi_prev;         /* previous entry or NULL for first entry */
   win_T       *wi_win;          /* pointer to window that did set wi_fpos */
   pos_T wi_fpos;                /* last cursor position in the file */
   bool wi_optset;               /* true when wi_opt has useful values */
@@ -508,7 +508,7 @@ struct file_buffer {
   long b_mod_xlines;            /* number of extra buffer lines inserted;
                                    negative when lines were deleted */
 
-  wininfo_T   *b_wininfo;       /* list of last used info for each window */
+  WindowInformations   *b_wininfo;       /* list of last used info for each window */
 
   long b_mtime;                 /* last change time of original file */
   long b_mtime_read;            /* last change time when reading */

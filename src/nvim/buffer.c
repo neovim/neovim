@@ -594,7 +594,7 @@ free_buffer_stuff (
  */
 static void clear_wininfo(buf_T *buf)
 {
-  wininfo_T   *wip;
+  WindowInformations   *wip;
 
   while (buf->b_wininfo != NULL) {
     wip = buf->b_wininfo;
@@ -1391,7 +1391,7 @@ buflist_new (
   }
 
   clear_wininfo(buf);
-  buf->b_wininfo = xcalloc(1, sizeof(wininfo_T));
+  buf->b_wininfo = xcalloc(1, sizeof(WindowInformations));
 
   if (ffname != NULL && (buf->b_ffname == NULL || buf->b_sfname == NULL)) {
     xfree(buf->b_ffname);
@@ -1985,14 +1985,14 @@ buflist_nr2name (
  */
 static void buflist_setfpos(buf_T *buf, win_T *win, linenr_T lnum, colnr_T col, int copy_options)
 {
-  wininfo_T   *wip;
+  WindowInformations   *wip;
 
   for (wip = buf->b_wininfo; wip != NULL; wip = wip->wi_next)
     if (wip->wi_win == win)
       break;
   if (wip == NULL) {
     /* allocate a new entry */
-    wip = xcalloc(1, sizeof(wininfo_T));
+    wip = xcalloc(1, sizeof(WindowInformations));
     wip->wi_win = win;
     if (lnum == 0)              /* set lnum even when it's 0 */
       lnum = 1;
@@ -2036,7 +2036,7 @@ static void buflist_setfpos(buf_T *buf, win_T *win, linenr_T lnum, colnr_T col, 
  * Return true when "wip" has 'diff' set and the diff is only for another tab
  * page.  That's because a diff is local to a tab page.
  */
-static bool wininfo_other_tab_diff(wininfo_T *wip)
+static bool wininfo_other_tab_diff(WindowInformations *wip)
 {
   if (wip->wi_opt.wo_diff) {
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
@@ -2058,9 +2058,9 @@ static bool wininfo_other_tab_diff(wininfo_T *wip)
  * another tab page.
  * Returns NULL when there isn't any info.
  */
-static wininfo_T *find_wininfo(buf_T *buf, int skip_diff_buffer)
+static WindowInformations *find_wininfo(buf_T *buf, int skip_diff_buffer)
 {
-  wininfo_T   *wip;
+  WindowInformations   *wip;
 
   for (wip = buf->b_wininfo; wip != NULL; wip = wip->wi_next)
     if (wip->wi_win == curwin
@@ -2089,7 +2089,7 @@ static wininfo_T *find_wininfo(buf_T *buf, int skip_diff_buffer)
  */
 void get_winopts(buf_T *buf)
 {
-  wininfo_T   *wip;
+  WindowInformations   *wip;
 
   clear_winopt(&curwin->w_onebuf_opt);
   clearFolding(curwin);
@@ -2118,7 +2118,7 @@ pos_T *buflist_findfpos(buf_T *buf)
 {
   static pos_T no_position = INIT_POS_T(1, 0, 0);
 
-  wininfo_T *wip = find_wininfo(buf, FALSE);
+  WindowInformations *wip = find_wininfo(buf, FALSE);
   return (wip == NULL) ? &no_position : &(wip->wi_fpos);
 }
 
