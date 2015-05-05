@@ -109,7 +109,7 @@ struct qf_info_S {
   qf_list_T qf_lists[LISTCOUNT];
 };
 
-static qf_info_T ql_info;       /* global quickfix list */
+static QuickfixInfos ql_info;       /* global quickfix list */
 
 #define FMT_PATTERNS 10         /* maximum number of % recognized */
 
@@ -168,7 +168,7 @@ qf_init (
     char_u *qf_title
 )
 {
-  qf_info_T       *qi = &ql_info;
+  QuickfixInfos       *qi = &ql_info;
 
   if (efile == NULL)
     return FAIL;
@@ -193,7 +193,7 @@ qf_init (
  */
 static int 
 qf_init_ext (
-    qf_info_T *qi,
+    QuickfixInfos *qi,
     char_u *efile,
     buf_T *buf,
     typval_T *tv,
@@ -801,7 +801,7 @@ qf_init_end:
   return retval;
 }
 
-static void qf_store_title(qf_info_T *qi, char_u *title)
+static void qf_store_title(QuickfixInfos *qi, char_u *title)
 {
   if (title != NULL) {
     char_u *p = xmalloc(STRLEN(title) + 2);
@@ -814,7 +814,7 @@ static void qf_store_title(qf_info_T *qi, char_u *title)
 /*
  * Prepare for adding a new quickfix list.
  */
-static void qf_new_list(qf_info_T *qi, char_u *qf_title)
+static void qf_new_list(QuickfixInfos *qi, char_u *qf_title)
 {
   int i;
 
@@ -842,10 +842,10 @@ static void qf_new_list(qf_info_T *qi, char_u *qf_title)
 /*
  * Free a location list
  */
-static void ll_free_all(qf_info_T **pqi)
+static void ll_free_all(QuickfixInfos **pqi)
 {
   int i;
-  qf_info_T   *qi;
+  QuickfixInfos   *qi;
 
   qi = *pqi;
   if (qi == NULL)
@@ -864,7 +864,7 @@ static void ll_free_all(qf_info_T **pqi)
 void qf_free_all(win_T *wp)
 {
   int i;
-  qf_info_T   *qi = &ql_info;
+  QuickfixInfos   *qi = &ql_info;
 
   if (wp != NULL) {
     /* location list */
@@ -882,7 +882,7 @@ void qf_free_all(win_T *wp)
  */
 static int 
 qf_add_entry (
-    qf_info_T *qi,                /* quickfix list */
+    QuickfixInfos *qi,                /* quickfix list */
     qfline_T **prevp,            /* nonnull pointer (to previously added entry or NULL) */
     char_u *dir,               /* optional directory name */
     char_u *fname,             /* file name or NULL */
@@ -944,9 +944,9 @@ qf_add_entry (
 /*
  * Allocate a new location list
  */
-static qf_info_T *ll_new_list(void)
+static QuickfixInfos *ll_new_list(void)
 {
-  qf_info_T *qi = xcalloc(1, sizeof(qf_info_T));
+  QuickfixInfos *qi = xcalloc(1, sizeof(QuickfixInfos));
   qi->qf_refcount++;
 
   return qi;
@@ -956,7 +956,7 @@ static qf_info_T *ll_new_list(void)
  * Return the location list for window 'wp'.
  * If not present, allocate a location list
  */
-static qf_info_T *ll_get_or_alloc_list(win_T *wp)
+static QuickfixInfos *ll_get_or_alloc_list(win_T *wp)
 {
   if (IS_LL_WINDOW(wp))
     /* For a location list window, use the referenced location list */
@@ -978,7 +978,7 @@ static qf_info_T *ll_get_or_alloc_list(win_T *wp)
  */
 void copy_loclist(win_T *from, win_T *to)
 {
-  qf_info_T   *qi;
+  QuickfixInfos   *qi;
   int idx;
   int i;
 
@@ -1273,9 +1273,9 @@ static char_u *qf_guess_filepath(char_u *filename)
  * else if "errornr" is zero, redisplay the same line
  * else go to entry "errornr"
  */
-void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
+void qf_jump(QuickfixInfos *qi, int dir, int errornr, int forceit)
 {
-  qf_info_T           *ll_ref;
+  QuickfixInfos           *ll_ref;
   qfline_T            *qf_ptr;
   qfline_T            *old_qf_ptr;
   int qf_index;
@@ -1716,7 +1716,7 @@ void qf_list(exarg_T *eap)
   char_u      *arg = eap->arg;
   int all = eap->forceit;               /* if not :cl!, only show
                                                    recognised errors */
-  qf_info_T   *qi = &ql_info;
+  QuickfixInfos   *qi = &ql_info;
 
   if (eap->cmdidx == CMD_llist) {
     qi = GET_LOC_LIST(curwin);
@@ -1826,7 +1826,7 @@ static void qf_fmt_text(char_u *text, char_u *buf, int bufsize)
  */
 void qf_age(exarg_T *eap)
 {
-  qf_info_T   *qi = &ql_info;
+  QuickfixInfos   *qi = &ql_info;
   int count;
 
   if (eap->cmdidx == CMD_lolder || eap->cmdidx == CMD_lnewer) {
@@ -1859,7 +1859,7 @@ void qf_age(exarg_T *eap)
   qf_msg(qi);
 }
 
-static void qf_msg(qf_info_T *qi)
+static void qf_msg(QuickfixInfos *qi)
 {
   smsg((char_u *)_("error list %d of %d; %d errors"),
       qi->qf_curlist + 1, qi->qf_listcount,
@@ -1870,7 +1870,7 @@ static void qf_msg(qf_info_T *qi)
 /*
  * Free error list "idx".
  */
-static void qf_free(qf_info_T *qi, int idx)
+static void qf_free(QuickfixInfos *qi, int idx)
 {
   qfline_T    *qfp;
   int stop = FALSE;
@@ -1904,7 +1904,7 @@ void qf_mark_adjust(win_T *wp, linenr_T line1, linenr_T line2, long amount, long
   int i;
   qfline_T    *qfp;
   int idx;
-  qf_info_T   *qi = &ql_info;
+  QuickfixInfos   *qi = &ql_info;
 
   if (wp != NULL) {
     if (wp->w_llist == NULL)
@@ -1978,7 +1978,7 @@ static char_u *qf_types(int c, int nr)
  */
 void ex_cwindow(exarg_T *eap)
 {
-  qf_info_T   *qi = &ql_info;
+  QuickfixInfos   *qi = &ql_info;
   win_T       *win;
 
   if (eap->cmdidx == CMD_lwindow) {
@@ -2011,7 +2011,7 @@ void ex_cwindow(exarg_T *eap)
 void ex_cclose(exarg_T *eap)
 {
   win_T       *win = NULL;
-  qf_info_T   *qi = &ql_info;
+  QuickfixInfos   *qi = &ql_info;
 
   if (eap->cmdidx == CMD_lclose || eap->cmdidx == CMD_lwindow) {
     qi = GET_LOC_LIST(curwin);
@@ -2031,7 +2031,7 @@ void ex_cclose(exarg_T *eap)
  */
 void ex_copen(exarg_T *eap)
 {
-  qf_info_T   *qi = &ql_info;
+  QuickfixInfos   *qi = &ql_info;
   int height;
   win_T       *win;
   tabpage_T   *prevtab = curtab;
@@ -2147,7 +2147,7 @@ void ex_copen(exarg_T *eap)
  */
 linenr_T qf_current_entry(win_T *wp)
 {
-  qf_info_T   *qi = &ql_info;
+  QuickfixInfos   *qi = &ql_info;
 
   if (IS_LL_WINDOW(wp))
     /* In the location list window, use the referenced location list */
@@ -2162,7 +2162,7 @@ linenr_T qf_current_entry(win_T *wp)
  */
 static int 
 qf_win_pos_update (
-    qf_info_T *qi,
+    QuickfixInfos *qi,
     int old_qf_index               /* previous qf_index or zero */
 )
 {
@@ -2203,7 +2203,7 @@ qf_win_pos_update (
  * Check whether the given window is displaying the specified quickfix/location
  * list buffer
  */
-static int is_qf_win(win_T *win, qf_info_T *qi)
+static int is_qf_win(win_T *win, QuickfixInfos *qi)
 {
   /*
    * A window displaying the quickfix buffer will have the w_llist_ref field
@@ -2223,7 +2223,7 @@ static int is_qf_win(win_T *win, qf_info_T *qi)
  * Find a window displaying the quickfix/location list 'qi'
  * Searches in only the windows opened in the current tab.
  */
-static win_T *qf_find_win(qf_info_T *qi)
+static win_T *qf_find_win(QuickfixInfos *qi)
 {
   FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
     if (is_qf_win(win, qi)) {
@@ -2238,7 +2238,7 @@ static win_T *qf_find_win(qf_info_T *qi)
  * Find a quickfix buffer.
  * Searches in windows opened in all the tabs.
  */
-static buf_T *qf_find_buf(qf_info_T *qi)
+static buf_T *qf_find_buf(QuickfixInfos *qi)
 {
   FOR_ALL_TAB_WINDOWS(tp, win) {
     if (is_qf_win(win, qi)) {
@@ -2252,7 +2252,7 @@ static buf_T *qf_find_buf(qf_info_T *qi)
 /*
  * Find the quickfix buffer.  If it exists, update the contents.
  */
-static void qf_update_buffer(qf_info_T *qi)
+static void qf_update_buffer(QuickfixInfos *qi)
 {
   buf_T       *buf;
   win_T       *win;
@@ -2283,7 +2283,7 @@ static void qf_update_buffer(qf_info_T *qi)
   }
 }
 
-static void qf_set_title_var(qf_info_T *qi)
+static void qf_set_title_var(QuickfixInfos *qi)
 {
   set_internal_string_var((char_u *)"w:quickfix_title",
       qi->qf_lists[qi->qf_curlist].qf_title);
@@ -2293,7 +2293,7 @@ static void qf_set_title_var(qf_info_T *qi)
  * Fill current buffer with quickfix errors, replacing any previous contents.
  * curbuf must be the quickfix buffer!
  */
-static void qf_fill_buffer(qf_info_T *qi)
+static void qf_fill_buffer(QuickfixInfos *qi)
 {
   linenr_T lnum;
   qfline_T    *qfp;
@@ -2448,7 +2448,7 @@ void ex_make(exarg_T *eap)
   char_u      *cmd;
   unsigned len;
   win_T       *wp = NULL;
-  qf_info_T   *qi = &ql_info;
+  QuickfixInfos   *qi = &ql_info;
   int res;
   char_u      *au_name = NULL;
 
@@ -2586,7 +2586,7 @@ static char_u *get_mef_name(void)
  */
 void ex_cc(exarg_T *eap)
 {
-  qf_info_T   *qi = &ql_info;
+  QuickfixInfos   *qi = &ql_info;
 
   if (eap->cmdidx == CMD_ll
       || eap->cmdidx == CMD_lrewind
@@ -2617,7 +2617,7 @@ void ex_cc(exarg_T *eap)
  */
 void ex_cnext(exarg_T *eap)
 {
-  qf_info_T   *qi = &ql_info;
+  QuickfixInfos   *qi = &ql_info;
 
   if (eap->cmdidx == CMD_lnext
       || eap->cmdidx == CMD_lNext
@@ -2650,7 +2650,7 @@ void ex_cnext(exarg_T *eap)
 void ex_cfile(exarg_T *eap)
 {
   win_T       *wp = NULL;
-  qf_info_T   *qi = &ql_info;
+  QuickfixInfos   *qi = &ql_info;
   char_u      *au_name = NULL;
 
   if (eap->cmdidx == CMD_lfile || eap->cmdidx == CMD_lgetfile
@@ -2712,7 +2712,7 @@ void ex_vimgrep(exarg_T *eap)
   char_u      *s;
   char_u      *p;
   int fi;
-  qf_info_T   *qi = &ql_info;
+  QuickfixInfos   *qi = &ql_info;
   qfline_T    *cur_qf_start;
   qfline_T    *prevp = NULL;
   long lnum;
@@ -3227,7 +3227,7 @@ static void unload_dummy_buffer(buf_T *buf, char_u *dirname_start)
  */
 int get_errorlist(win_T *wp, list_T *list)
 {
-  qf_info_T   *qi = &ql_info;
+  QuickfixInfos   *qi = &ql_info;
   dict_T      *dict;
   char_u buf[2];
   qfline_T    *qfp;
@@ -3290,7 +3290,7 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
   qfline_T    *prevp = NULL;
   int valid, status;
   int retval = OK;
-  qf_info_T   *qi = &ql_info;
+  QuickfixInfos   *qi = &ql_info;
   int did_bufnr_emsg = FALSE;
 
   if (wp != NULL) {
@@ -3393,7 +3393,7 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
 void ex_cbuffer(exarg_T *eap)
 {
   buf_T       *buf = NULL;
-  qf_info_T   *qi = &ql_info;
+  QuickfixInfos   *qi = &ql_info;
 
   if (eap->cmdidx == CMD_lbuffer || eap->cmdidx == CMD_lgetbuffer
       || eap->cmdidx == CMD_laddbuffer) {
@@ -3444,7 +3444,7 @@ void ex_cbuffer(exarg_T *eap)
 void ex_cexpr(exarg_T *eap)
 {
   typval_T    *tv;
-  qf_info_T   *qi = &ql_info;
+  QuickfixInfos   *qi = &ql_info;
 
   if (eap->cmdidx == CMD_lexpr || eap->cmdidx == CMD_lgetexpr
       || eap->cmdidx == CMD_laddexpr) {
@@ -3485,7 +3485,7 @@ void ex_helpgrep(exarg_T *eap)
   qfline_T    *prevp = NULL;
   long lnum;
   char_u      *lang;
-  qf_info_T   *qi = &ql_info;
+  QuickfixInfos   *qi = &ql_info;
   int new_qi = FALSE;
   char_u      *au_name =  NULL;
 

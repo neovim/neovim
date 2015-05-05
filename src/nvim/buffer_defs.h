@@ -377,7 +377,7 @@ struct stl_hlrec {
 /* avoid #ifdefs for when b_spell is not available */
 # define B_SPELL(buf)  ((buf)->b_spell)
 
-typedef struct qf_info_S qf_info_T;
+typedef struct qf_info_S QuickfixInfos;
 
 /*
  * Used for :syntime: timing of executing a syntax pattern.
@@ -1152,12 +1152,12 @@ struct window_S {
                                          * was computed. */
   int w_nrwidth_width;                  /* nr of chars to print line count. */
 
-  qf_info_T   *w_llist;                 /* Location list for this window */
+  QuickfixInfos   *w_llist;                 /* Location list for this window */
   /*
    * Location list reference used in the location list window.
    * In a non-location list window, w_llist_ref is NULL.
    */
-  qf_info_T   *w_llist_ref;
+  QuickfixInfos   *w_llist_ref;
 };
 
 #endif // NVIM_BUFFER_DEFS_H

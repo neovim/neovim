@@ -1043,7 +1043,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
     /* fill error list */
     FILE        *f;
     char_u      *tmp = vim_tempname();
-    qf_info_T   *qi = NULL;
+    QuickfixInfos   *qi = NULL;
     win_T       *wp = NULL;
 
     f = mch_fopen((char *)tmp, "w");
