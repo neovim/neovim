@@ -1472,7 +1472,7 @@ do_arglist (
           didone = TRUE;
           xfree(ARGLIST[match].ae_fname);
           memmove(ARGLIST + match, ARGLIST + match + 1,
-              (ARGCOUNT - match - 1) * sizeof(aentry_T));
+              (ARGCOUNT - match - 1) * sizeof(ArgumentListEntry));
           --ALIST(curwin)->al_ga.ga_len;
           if (curwin->w_arg_idx > match)
             --curwin->w_arg_idx;
@@ -1806,7 +1806,7 @@ void ex_argdelete(exarg_T *eap)
       for (int i = eap->line1; i <= eap->line2; ++i)
         xfree(ARGLIST[i - 1].ae_fname);
       memmove(ARGLIST + eap->line1 - 1, ARGLIST + eap->line2,
-          (size_t)((ARGCOUNT - eap->line2) * sizeof(aentry_T)));
+          (size_t)((ARGCOUNT - eap->line2) * sizeof(ArgumentListEntry)));
       ALIST(curwin)->al_ga.ga_len -= n;
       if (curwin->w_arg_idx >= eap->line2)
         curwin->w_arg_idx -= n;
@@ -2001,7 +2001,7 @@ alist_add_list (
       after = ARGCOUNT;
     if (after < ARGCOUNT)
       memmove(&(ARGLIST[after + count]), &(ARGLIST[after]),
-          (ARGCOUNT - after) * sizeof(aentry_T));
+          (ARGCOUNT - after) * sizeof(ArgumentListEntry));
     for (int i = 0; i < count; ++i) {
       ARGLIST[after + i].ae_fname = files[i];
       ARGLIST[after + i].ae_fnum = buflist_add(files[i], BLN_LISTED);

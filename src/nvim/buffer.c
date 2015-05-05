@@ -3589,7 +3589,7 @@ void fname_expand(buf_T *buf, char_u **ffname, char_u **sfname)
 /*
  * Get the file name for an argument list entry.
  */
-char_u *alist_name(aentry_T *aep)
+char_u *alist_name(ArgumentListEntry *aep)
 {
   buf_T       *bp;
 

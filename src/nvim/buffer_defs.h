@@ -273,18 +273,18 @@ typedef struct {
  * number that contains the expanded file name (required for when ":cd" is
  * used.
  *
- * TODO: move aentry_T to another header
+ * TODO: move ArgumentListEntry to another header
  */
 typedef struct {
   char_u      *ae_fname;        /* file name as specified */
   int ae_fnum;                  /* buffer number with expanded file name */
-} aentry_T;
+} ArgumentListEntry;
 
 # define ALIST(win) (win)->w_alist
-#define GARGLIST        ((aentry_T *)global_alist.al_ga.ga_data)
-#define ARGLIST         ((aentry_T *)ALIST(curwin)->al_ga.ga_data)
-#define WARGLIST(wp)    ((aentry_T *)ALIST(wp)->al_ga.ga_data)
-#define AARGLIST(al)    ((aentry_T *)((al)->al_ga.ga_data))
+#define GARGLIST        ((ArgumentListEntry *)global_alist.al_ga.ga_data)
+#define ARGLIST         ((ArgumentListEntry *)ALIST(curwin)->al_ga.ga_data)
+#define WARGLIST(wp)    ((ArgumentListEntry *)ALIST(wp)->al_ga.ga_data)
+#define AARGLIST(al)    ((ArgumentListEntry *)((al)->al_ga.ga_data))
 #define GARGCOUNT       (global_alist.al_ga.ga_len)
 #define ARGCOUNT        (ALIST(curwin)->al_ga.ga_len)
 #define WARGCOUNT(wp)   (ALIST(wp)->al_ga.ga_len)

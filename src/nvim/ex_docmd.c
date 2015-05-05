@@ -6021,7 +6021,7 @@ static void ex_goto(exarg_T *eap)
 void alist_clear(ArgumentList *al)
 {
 # define FREE_AENTRY_FNAME(arg) xfree(arg->ae_fname)
-  GA_DEEP_CLEAR(&al->al_ga, aentry_T, FREE_AENTRY_FNAME);
+  GA_DEEP_CLEAR(&al->al_ga, ArgumentListEntry, FREE_AENTRY_FNAME);
 }
 
 /*
@@ -6029,7 +6029,7 @@ void alist_clear(ArgumentList *al)
  */
 void alist_init(ArgumentList *al)
 {
-  ga_init(&al->al_ga, (int)sizeof(aentry_T), 5);
+  ga_init(&al->al_ga, (int)sizeof(ArgumentListEntry), 5);
 }
 
 
@@ -8971,7 +8971,7 @@ ses_arglist (
   }
   for (int i = 0; i < gap->ga_len; ++i) {
     /* NULL file names are skipped (only happens when out of memory). */
-    s = alist_name(&((aentry_T *)gap->ga_data)[i]);
+    s = alist_name(&((ArgumentListEntry *)gap->ga_data)[i]);
     if (s != NULL) {
       if (fullname) {
         buf = xmalloc(MAXPATHL);
