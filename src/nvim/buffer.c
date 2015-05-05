@@ -3621,7 +3621,7 @@ do_arg_all (
   int use_firstwin = FALSE;             /* use first window for arglist */
   int split_ret = OK;
   int p_ea_save;
-  alist_T     *alist;           /* argument list to be used */
+  ArgumentList     *alist;           /* argument list to be used */
   buf_T       *buf;
   tabpage_T   *tpnext;
   int had_tab = cmdmod.tab;

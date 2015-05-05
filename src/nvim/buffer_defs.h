@@ -262,11 +262,11 @@ struct window_informations {
  *
  * TODO: move struct arglist to another header
  */
-typedef struct arglist {
+typedef struct {
   garray_T al_ga;               /* growarray with the array of file names */
   int al_refcount;              /* number of windows using this arglist */
   int id;                       ///< id of this arglist
-} alist_T;
+} ArgumentList;
 
 /*
  * For each argument remember the file name as it was given, and the buffer
@@ -275,7 +275,7 @@ typedef struct arglist {
  *
  * TODO: move aentry_T to another header
  */
-typedef struct argentry {
+typedef struct {
   char_u      *ae_fname;        /* file name as specified */
   int ae_fnum;                  /* buffer number with expanded file name */
 } aentry_T;
@@ -1073,7 +1073,7 @@ struct window_S {
 
   int w_alt_fnum;                   /* alternate file (for # and CTRL-^) */
 
-  alist_T     *w_alist;             /* pointer to arglist for this window */
+  ArgumentList     *w_alist;             /* pointer to arglist for this window */
   int w_arg_idx;                    /* current index in argument list (can be
                                        out of range!) */
   int w_arg_idx_invalid;            /* editing another file than w_arg_idx */

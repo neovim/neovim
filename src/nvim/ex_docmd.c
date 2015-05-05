@@ -6018,7 +6018,7 @@ static void ex_goto(exarg_T *eap)
 /*
  * Clear an argument list: free all file names and reset it to zero entries.
  */
-void alist_clear(alist_T *al)
+void alist_clear(ArgumentList *al)
 {
 # define FREE_AENTRY_FNAME(arg) xfree(arg->ae_fname)
   GA_DEEP_CLEAR(&al->al_ga, aentry_T, FREE_AENTRY_FNAME);
@@ -6027,7 +6027,7 @@ void alist_clear(alist_T *al)
 /*
  * Init an argument list.
  */
-void alist_init(alist_T *al)
+void alist_init(ArgumentList *al)
 {
   ga_init(&al->al_ga, (int)sizeof(aentry_T), 5);
 }
@@ -6038,7 +6038,7 @@ void alist_init(alist_T *al)
  * Ignored when the argument list is the global one.
  * If the argument list is no longer used by any window, free it.
  */
-void alist_unlink(alist_T *al)
+void alist_unlink(ArgumentList *al)
 {
   if (al != &global_alist && --al->al_refcount <= 0) {
     alist_clear(al);
@@ -6096,7 +6096,7 @@ void alist_expand(int *fnum_list, int fnum_len)
  * Set the argument list for the current window.
  * Takes over the allocated files[] and the allocated fnames in it.
  */
-void alist_set(alist_T *al, int count, char_u **files, int use_curbuf, int *fnum_list, int fnum_len)
+void alist_set(ArgumentList *al, int count, char_u **files, int use_curbuf, int *fnum_list, int fnum_len)
 {
   int i;
 
@@ -6133,7 +6133,7 @@ void alist_set(alist_T *al, int count, char_u **files, int use_curbuf, int *fnum
  */
 void 
 alist_add (
-    alist_T *al,
+    ArgumentList *al,
     char_u *fname,
     int set_fnum                   /* 1: set buffer number; 2: re-use curbuf */
 )
