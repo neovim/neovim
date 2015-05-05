@@ -22,7 +22,7 @@ SCRIPTS := test_autoformat_join.out                                    \
                        test57.out  test58.out  test59.out              \
            test61.out  test62.out  test63.out  test64.out              \
                                    test68.out  test69.out              \
-           test71.out              test73.out  test74.out              \
+           test71.out              test73.out                          \
                                                test79.out  test80.out  \
                                    test83.out                          \
            test86.out  test87.out  test88.out                          \
