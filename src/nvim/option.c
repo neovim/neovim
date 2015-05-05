@@ -6460,12 +6460,12 @@ void win_copy_options(win_T *wp_from, win_T *wp_to)
 }
 
 /*
- * Copy the options from one winopt_T to another.
+ * Copy the options from one WindowOptions to another.
  * Doesn't free the old option values in "to", use clear_winopt() for that.
  * The 'scroll' option is not copied, because it depends on the window height.
  * The 'previewwindow' option is reset, there can be only one preview window.
  */
-void copy_winopt(winopt_T *from, winopt_T *to)
+void copy_winopt(WindowOptions *from, WindowOptions *to)
 {
   to->wo_arab = from->wo_arab;
   to->wo_list = from->wo_list;
@@ -6520,9 +6520,9 @@ void check_win_options(win_T *win)
 }
 
 /*
- * Check for NULL pointers in a winopt_T and replace them with empty_option.
+ * Check for NULL pointers in a WindowOptions and replace them with empty_option.
  */
-static void check_winopt(winopt_T *wop)
+static void check_winopt(WindowOptions *wop)
 {
   check_string_option(&wop->wo_fdi);
   check_string_option(&wop->wo_fdm);
@@ -6538,9 +6538,9 @@ static void check_winopt(winopt_T *wop)
 }
 
 /*
- * Free the allocated memory inside a winopt_T.
+ * Free the allocated memory inside a WindowOptions.
  */
-void clear_winopt(winopt_T *wop)
+void clear_winopt(WindowOptions *wop)
 {
   clear_string_option(&wop->wo_fdi);
   clear_string_option(&wop->wo_fdm);

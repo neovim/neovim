@@ -118,7 +118,7 @@ typedef struct taggy {
 } taggy_T;
 
 typedef struct buffer_block BufferBlock;
-typedef struct buffheader buffheader_T;
+typedef struct buffer_header BufferHeader;
 
 /*
  * structure used to store one block of the stuff/redo/recording buffers
@@ -131,7 +131,7 @@ struct buffer_block {
 /*
  * header used for the stuff buffer and the redo buffer
  */
-struct buffheader {
+struct buffer_header {
   BufferBlock bh_first;  // first (dummy) block of list
   BufferBlock *bh_curr;  // buffer_block for appending
   int bh_index;          // index for reading
@@ -233,7 +233,7 @@ typedef struct {
 
   int wo_scriptID[WV_COUNT];            /* SIDs for window-local options */
 # define w_p_scriptID w_onebuf_opt.wo_scriptID
-} winopt_T;
+} WindowOptions;
 
 /*
  * Window info stored with a buffer.
@@ -251,7 +251,7 @@ struct wininfo_S {
   win_T       *wi_win;          /* pointer to window that did set wi_fpos */
   pos_T wi_fpos;                /* last cursor position in the file */
   bool wi_optset;               /* true when wi_opt has useful values */
-  winopt_T wi_opt;              /* local window options */
+  WindowOptions wi_opt;              /* local window options */
   bool wi_fold_manual;          /* copy of w_fold_manual */
   garray_T wi_folds;            /* clone of w_folds */
 };
@@ -310,8 +310,8 @@ typedef struct {
   int typebuf_valid;                        /* TRUE when save_typebuf valid */
   int old_char;
   int old_mod_mask;
-  buffheader_T save_readbuf1;
-  buffheader_T save_readbuf2;
+  BufferHeader save_readbuf1;
+  BufferHeader save_readbuf2;
   String save_inputbuf;
 } tasave_T;
 
@@ -1087,8 +1087,8 @@ struct window_S {
    * There are two values: w_onebuf_opt is local to the buffer currently in
    * this window, w_allbuf_opt is for all buffers in this window.
    */
-  winopt_T w_onebuf_opt;
-  winopt_T w_allbuf_opt;
+  WindowOptions w_onebuf_opt;
+  WindowOptions w_allbuf_opt;
 
   /* A few options have local flags for P_INSECURE. */
   uint32_t w_p_stl_flags;           /* flags for 'statusline' */
@@ -1100,7 +1100,7 @@ struct window_S {
   bool        w_p_brisbr;           /* sbr in 'briopt' */
 
   /* transform a pointer to a "onebuf" option into a "allbuf" option */
-#define GLOBAL_WO(p)    ((char *)p + sizeof(winopt_T))
+#define GLOBAL_WO(p)    ((char *)p + sizeof(WindowOptions))
 
   long w_scbind_pos;
 

@@ -75,17 +75,17 @@
 
 #define MINIMAL_SIZE 20                 /* minimal size for b_str */
 
-static buffheader_T redobuff = {{NULL, {NUL}}, NULL, 0, 0};
-static buffheader_T old_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
-static buffheader_T save_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
-static buffheader_T save_old_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
-static buffheader_T recordbuff = {{NULL, {NUL}}, NULL, 0, 0};
+static BufferHeader redobuff = {{NULL, {NUL}}, NULL, 0, 0};
+static BufferHeader old_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
+static BufferHeader save_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
+static BufferHeader save_old_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
+static BufferHeader recordbuff = {{NULL, {NUL}}, NULL, 0, 0};
 
 // First read ahead buffer. Used for translated commands.
-static buffheader_T readbuf1 = {{NULL, {NUL}}, NULL, 0, 0};
+static BufferHeader readbuf1 = {{NULL, {NUL}}, NULL, 0, 0};
 
 // Second read ahead buffer. Used for redo.
-static buffheader_T readbuf2 = {{NULL, {NUL}}, NULL, 0, 0};
+static BufferHeader readbuf2 = {{NULL, {NUL}}, NULL, 0, 0};
 
 static int typeahead_char = 0;          /* typeahead char that's not flushed */
 
@@ -161,7 +161,7 @@ static int last_recorded_len = 0;       /* number of last recorded chars */
 /*
  * Free and clear a buffer.
  */
-void free_buff(buffheader_T *buf)
+void free_buff(BufferHeader *buf)
 {
   BufferBlock    *p, *np;
 
@@ -176,7 +176,7 @@ void free_buff(buffheader_T *buf)
  * Return the contents of a buffer as a single string.
  * K_SPECIAL and CSI in the returned string are escaped.
  */
-static char_u *get_buffcont(buffheader_T *buffer,
+static char_u *get_buffcont(BufferHeader *buffer,
                             int dozero  // count == zero is not an error
                             )
 {
@@ -248,7 +248,7 @@ char_u *get_inserted(void)
  */
 static void 
 add_buff (
-    buffheader_T *buf,
+    BufferHeader *buf,
     char_u *s,
     long slen                      /* length of "s" or -1 */
 )
@@ -294,7 +294,7 @@ add_buff (
 /*
  * Add number "n" to buffer "buf".
  */
-static void add_num_buff(buffheader_T *buf, long n)
+static void add_num_buff(BufferHeader *buf, long n)
 {
   char_u number[32];
 
@@ -306,7 +306,7 @@ static void add_num_buff(buffheader_T *buf, long n)
  * Add character 'c' to buffer "buf".
  * Translates special keys, NUL, CSI, K_SPECIAL and multibyte characters.
  */
-static void add_char_buff(buffheader_T *buf, int c)
+static void add_char_buff(BufferHeader *buf, int c)
 {
   char_u bytes[MB_MAXBYTES + 1];
   int len;
@@ -351,7 +351,7 @@ static int read_readbuffers(int advance)
   return c;
 }
 
-static int read_readbuf(buffheader_T *buf, int advance)
+static int read_readbuf(BufferHeader *buf, int advance)
 {
   char_u c;
   BufferBlock *curr;
