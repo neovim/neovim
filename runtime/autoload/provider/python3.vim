@@ -32,6 +32,9 @@ call remote#host#RegisterClone('legacy-python3-provider', 'python3')
 call remote#host#RegisterPlugin('legacy-python3-provider', s:plugin_path, [])
 
 function! provider#python3#Call(method, args)
+  if s:err != ''
+    return
+  endif
   if !exists('s:host')
     let s:rpcrequest = function('rpcrequest')
 
@@ -39,10 +42,12 @@ function! provider#python3#Call(method, args)
     try
       let s:host = remote#host#Require('legacy-python3-provider')
     catch
+      let s:err = v:exception
+      echohl WarningMsg
       echomsg v:exception
+      echohl None
       finish
     endtry
   endif
-
   return call(s:rpcrequest, insert(insert(a:args, 'python_'.a:method), s:host))
 endfunction
