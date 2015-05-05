@@ -235,8 +235,8 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
     deleted = -amount_after;
   }
 
-  diff_T *dprev = NULL;
-  diff_T *dp = tp->tp_first_diff;
+  DiffBlock *dprev = NULL;
+  DiffBlock *dp = tp->tp_first_diff;
 
   linenr_T last;
   linenr_T lnum_deleted = line1; // lnum of remaining deletion
@@ -252,7 +252,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
         && ((dprev == NULL)
             || (dprev->df_lnum[idx] + dprev->df_count[idx] < line1))
         && !diff_busy) {
-      diff_T *dnext = diff_alloc_new(tp, dprev, dp);
+      DiffBlock *dnext = diff_alloc_new(tp, dprev, dp);
 
       dnext->df_lnum[idx] = line1;
       dnext->df_count[idx] = inserted;
@@ -415,7 +415,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
     }
 
     if (i == DB_COUNT) {
-      diff_T *dnext = dp->df_next;
+      DiffBlock *dnext = dp->df_next;
       xfree(dp);
       dp = dnext;
 
@@ -448,9 +448,9 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
 /// @param dp
 ///
 /// @return The new diff block.
-static diff_T* diff_alloc_new(tabpage_T *tp, diff_T *dprev, diff_T *dp)
+static DiffBlock* diff_alloc_new(tabpage_T *tp, DiffBlock *dprev, DiffBlock *dp)
 {
-  diff_T *dnew = xmalloc(sizeof(*dnew));
+  DiffBlock *dnew = xmalloc(sizeof(*dnew));
 
   dnew->df_next = dp;
   if (dprev == NULL) {
@@ -470,7 +470,7 @@ static diff_T* diff_alloc_new(tabpage_T *tp, diff_T *dprev, diff_T *dp)
 ///
 /// @param tp
 /// @param dp
-static void diff_check_unchanged(tabpage_T *tp, diff_T *dp)
+static void diff_check_unchanged(tabpage_T *tp, DiffBlock *dp)
 {
   // Find the first buffers, use it as the original, compare the other
   // buffer lines against this one.
@@ -559,7 +559,7 @@ static void diff_check_unchanged(tabpage_T *tp, diff_T *dp)
 /// @param dp
 ///
 /// @return OK if the diff block doesn't contain invalid line numbers.
-static int diff_check_sanity(tabpage_T *tp, diff_T *dp)
+static int diff_check_sanity(tabpage_T *tp, DiffBlock *dp)
 {
   int i;
   for (i = 0; i < DB_COUNT; ++i) {
@@ -1185,9 +1185,9 @@ void ex_diffoff(exarg_T *eap)
 static void diff_read(int idx_orig, int idx_new, char_u *fname)
 {
   FILE *fd;
-  diff_T *dprev = NULL;
-  diff_T *dp = curtab->tp_first_diff;
-  diff_T *dn, *dpl;
+  DiffBlock *dprev = NULL;
+  DiffBlock *dp = curtab->tp_first_diff;
+  DiffBlock *dn, *dpl;
   long f1, l1, f2, l2;
   char_u linebuf[LBUFLEN]; // only need to hold the diff line
   int difftype;
@@ -1383,7 +1383,7 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
 /// @param dp
 /// @param idx_orig
 /// @param idx_new
-static void diff_copy_entry(diff_T *dprev, diff_T *dp, int idx_orig,
+static void diff_copy_entry(DiffBlock *dprev, DiffBlock *dp, int idx_orig,
                             int idx_new)
 {
   long off;
@@ -1403,8 +1403,8 @@ static void diff_copy_entry(diff_T *dprev, diff_T *dp, int idx_orig,
 /// @param tp
 void diff_clear(tabpage_T *tp)
 {
-  diff_T *p;
-  diff_T *next_p;
+  DiffBlock *p;
+  DiffBlock *next_p;
   for (p = tp->tp_first_diff; p != NULL; p = next_p) {
     next_p = p->df_next;
     xfree(p);
@@ -1428,7 +1428,7 @@ void diff_clear(tabpage_T *tp)
 int diff_check(win_T *wp, linenr_T lnum)
 {
   int idx; // index in tp_diffbuf[] for this buffer
-  diff_T *dp;
+  DiffBlock *dp;
   int maxcount;
   int i;
   buf_T *buf = wp->w_buffer;
@@ -1542,7 +1542,7 @@ int diff_check(win_T *wp, linenr_T lnum)
 /// @param idx2 Second entry in diff "*dp"
 ///
 /// @return return TRUE if two entires are equal.
-static int diff_equal_entry(diff_T *dp, int idx1, int idx2)
+static int diff_equal_entry(DiffBlock *dp, int idx1, int idx2)
 {
   if (dp->df_count[idx1] != dp->df_count[idx2]) {
     return FALSE;
@@ -1660,7 +1660,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
 {
   buf_T *frombuf = fromwin->w_buffer;
   linenr_T lnum = fromwin->w_topline;
-  diff_T *dp;
+  DiffBlock *dp;
   int max_count;
   int i;
 
@@ -1868,7 +1868,7 @@ int diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
   }
 
   // search for a change that includes "lnum" in the list of diffblocks.
-  diff_T *dp;
+  DiffBlock *dp;
   for (dp = curtab->tp_first_diff; dp != NULL; dp = dp->df_next) {
     if (lnum <= dp->df_lnum[idx] + dp->df_count[idx]) {
       break;
@@ -1970,7 +1970,7 @@ int diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
 int diff_infold(win_T *wp, linenr_T lnum)
 {
   int other = FALSE;
-  diff_T *dp;
+  DiffBlock *dp;
 
   // Return if 'diff' isn't set.
   if (!wp->w_p_diff) {
@@ -2049,9 +2049,9 @@ void ex_diffgetput(exarg_T *eap)
   linenr_T lnum;
   int count;
   linenr_T off = 0;
-  diff_T *dp;
-  diff_T *dprev;
-  diff_T *dfree;
+  DiffBlock *dp;
+  DiffBlock *dprev;
+  DiffBlock *dfree;
   int i;
   int added;
   char_u *p;
@@ -2365,7 +2365,7 @@ void ex_diffgetput(exarg_T *eap)
 ///
 /// @param dp
 /// @param skip_idx
-static void diff_fold_update(diff_T *dp, int skip_idx)
+static void diff_fold_update(DiffBlock *dp, int skip_idx)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     for (int i = 0; i < DB_COUNT; ++i) {
@@ -2421,7 +2421,7 @@ int diff_move_to(int dir, long count)
       break;
     }
 
-    diff_T *dp;
+    DiffBlock *dp;
     for (dp = curtab->tp_first_diff;; dp = dp->df_next) {
       if (dp == NULL) {
         break;
@@ -2467,7 +2467,7 @@ linenr_T diff_get_corresponding_line(buf_T *buf1, linenr_T lnum1, buf_T *buf2,
 {
   int idx1;
   int idx2;
-  diff_T *dp;
+  DiffBlock *dp;
   int baseline = 0;
   linenr_T lnum2;
 
@@ -2539,7 +2539,7 @@ linenr_T diff_get_corresponding_line(buf_T *buf1, linenr_T lnum1, buf_T *buf2,
 /// "wp", compensating for inserted/deleted lines.
 linenr_T diff_lnum_win(linenr_T lnum, win_T *wp)
 {
-  diff_T *dp;
+  DiffBlock *dp;
   int idx;
   int i;
   linenr_T n;

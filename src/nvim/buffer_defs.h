@@ -778,9 +778,9 @@ struct file_buffer {
  * This is using a linked list, because the number of differences is expected
  * to be reasonable small.  The list is sorted on lnum.
  */
-typedef struct diffblock_S diff_T;
-struct diffblock_S {
-  diff_T      *df_next;
+typedef struct diff_block DiffBlock;
+struct diff_block {
+  DiffBlock      *df_next;
   linenr_T df_lnum[DB_COUNT];           /* line number in buffer */
   linenr_T df_count[DB_COUNT];          /* nr of inserted/changed lines */
 };
@@ -808,7 +808,7 @@ struct tabpage_S {
   long tp_old_Columns;              /* Columns when Tab page was left */
   long tp_ch_used;                  /* value of 'cmdheight' when frame size
                                        was set */
-  diff_T          *tp_first_diff;
+  DiffBlock          *tp_first_diff;
   buf_T           *(tp_diffbuf[DB_COUNT]);
   int tp_diff_invalid;                  /* list of diffs is outdated */
   Frame         *(tp_snapshot[SNAP_COUNT]);    /* window layout snapshots */
