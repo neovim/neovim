@@ -812,8 +812,7 @@ static void decref(Channel *channel)
 #define RES "[response]     "
 #define NOT "[notification] "
 
-static void log_server_msg(uint64_t channel_id,
-                           msgpack_sbuffer *packed)
+void log_server_msg(uint64_t channel_id, msgpack_sbuffer *packed)
 {
   msgpack_unpacked unpacked;
   msgpack_unpacked_init(&unpacked);
@@ -826,7 +825,7 @@ static void log_server_msg(uint64_t channel_id,
   msgpack_unpacked_destroy(&unpacked);
 }
 
-static void log_client_msg(uint64_t channel_id,
+void log_client_msg(uint64_t channel_id,
                            bool is_request,
                            msgpack_object msg)
 {
@@ -836,7 +835,7 @@ static void log_client_msg(uint64_t channel_id,
   log_msg_close(f, msg);
 }
 
-static void log_msg_close(FILE *f, msgpack_object msg)
+void log_msg_close(FILE *f, msgpack_object msg)
 {
   msgpack_object_print(f, msg);
   fputc('\n', f);
