@@ -359,11 +359,11 @@ EXTERN int garbage_collect_at_exit INIT(= FALSE);
 #define SID_NONE        -6      /* don't set scriptID */
 
 /* ID of script being sourced or was sourced to define the current function. */
-EXTERN scid_T current_SID INIT(= 0);
+EXTERN ScriptId current_SID INIT(= 0);
 // Scope information for the code that indirectly triggered the current
 // provider function call
 EXTERN struct caller_scope {
-  scid_T SID;
+  ScriptId SID;
   uint8_t *sourcing_name, *autocmd_fname, *autocmd_match; 
   linenr_T sourcing_lnum;
   int autocmd_fname_full, autocmd_bufnr;

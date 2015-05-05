@@ -104,7 +104,7 @@ typedef struct AutoCmd {
                                            when command has been removed) */
   char nested;                          /* If autocommands nest here */
   char last;                            /* last command in list */
-  scid_T scriptID;                      /* script ID where defined */
+  ScriptId scriptID;                      /* script ID where defined */
   struct AutoCmd  *next;                /* Next AutoCmd in list */
 } AutoCmd;
 
@@ -6460,7 +6460,7 @@ apply_autocmds_group (
   static int nesting = 0;
   AutoPatCmd patcmd;
   AutoPat     *ap;
-  scid_T save_current_SID;
+  ScriptId save_current_SID;
   void        *save_funccalp;
   char_u      *save_cmdarg;
   long save_cmdbang;

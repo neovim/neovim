@@ -4064,7 +4064,7 @@ chk_modeline (
   int retval = OK;
   char_u      *save_sourcing_name;
   linenr_T save_sourcing_lnum;
-  scid_T save_SID;
+  ScriptId save_SID;
 
   prev = -1;
   for (s = ml_get(lnum); *s != NUL; ++s) {

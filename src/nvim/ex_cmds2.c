@@ -2303,8 +2303,8 @@ do_source (
   char_u                  *fname_exp;
   char_u                  *firstline = NULL;
   int retval = FAIL;
-  scid_T save_current_SID;
-  static scid_T last_current_SID = 0;
+  ScriptId save_current_SID;
+  static ScriptId last_current_SID = 0;
   void                    *save_funccalp;
   int save_debug_break_level = debug_break_level;
   scriptitem_T            *si = NULL;
@@ -2600,7 +2600,7 @@ void scriptnames_slash_adjust(void)
 /*
  * Get a pointer to a script name.  Used for ":verbose set".
  */
-char_u *get_scriptname(scid_T id)
+char_u *get_scriptname(ScriptId id)
 {
   if (id == SID_MODELINE)
     return (char_u *)_("modeline");

@@ -81,7 +81,7 @@ typedef struct file_buffer buf_T; // Forward declaration
 typedef struct window_S win_T;
 typedef struct wininfo_S wininfo_T;
 typedef struct frame_S frame_T;
-typedef int scid_T;                     /* script ID */
+typedef int ScriptId;                     /* script ID */
 
 // for struct memline (it needs memfile_T)
 #include "nvim/memline_defs.h"
@@ -358,7 +358,7 @@ struct mapblock {
   char m_silent;                /* <silent> used, don't echo commands */
   char m_nowait;                /* <nowait> used */
   char m_expr;                  /* <expr> used, m_str is an expression */
-  scid_T m_script_ID;           /* ID of script where map was defined */
+  ScriptId m_script_ID;           /* ID of script where map was defined */
 };
 
 /*

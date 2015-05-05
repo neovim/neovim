@@ -254,7 +254,7 @@ struct ufunc {
   proftime_T uf_tml_wait;       /* start wait time for current line */
   int uf_tml_idx;               /* index of line being timed; -1 if none */
   int uf_tml_execed;            /* line being timed was executed */
-  scid_T uf_script_ID;          /* ID of script where function was defined,
+  ScriptId uf_script_ID;          /* ID of script where function was defined,
                                    used for s: variables */
   int uf_refcount;              /* for numbered function: reference count */
   char_u uf_name[1];            /* name of function (actually longer); can
@@ -12831,7 +12831,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv)
     ADD(args, vim_to_object(tv));
   }
 
-  scid_T save_current_SID;
+  ScriptId save_current_SID;
   uint8_t *save_sourcing_name, *save_autocmd_fname, *save_autocmd_match;
   linenr_T save_sourcing_lnum;
   int save_autocmd_fname_full, save_autocmd_bufnr;
@@ -16964,7 +16964,7 @@ char_u *get_var_value(char_u *name)
  * Allocate a new hashtab for a sourced script.  It will be used while
  * sourcing this script and when executing functions defined in the script.
  */
-void new_script_vars(scid_T id)
+void new_script_vars(ScriptId id)
 {
   hashtab_T   *ht;
   scriptvar_T *sv;
@@ -18952,7 +18952,7 @@ call_user_func (
 {
   char_u      *save_sourcing_name;
   linenr_T save_sourcing_lnum;
-  scid_T save_current_SID;
+  ScriptId save_current_SID;
   funccall_T  *fc;
   int save_did_emsg;
   static int depth = 0;
@@ -19806,7 +19806,7 @@ int store_session_globals(FILE *fd)
  * Display script name where an item was last set.
  * Should only be invoked when 'verbose' is non-zero.
  */
-void last_set_msg(scid_T scriptID)
+void last_set_msg(ScriptId scriptID)
 {
   if (scriptID != 0) {
     char_u *p = home_replace_save(NULL, get_scriptname(scriptID));
