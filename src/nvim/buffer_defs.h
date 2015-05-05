@@ -117,14 +117,14 @@ typedef struct taggy {
   int cur_fnum;                 /* buffer number used for cur_match */
 } taggy_T;
 
-typedef struct buffblock buffblock_T;
+typedef struct buffer_block BufferBlock;
 typedef struct buffheader buffheader_T;
 
 /*
  * structure used to store one block of the stuff/redo/recording buffers
  */
-struct buffblock {
-  buffblock_T *b_next;  // pointer to next buffblock
+struct buffer_block {
+  BufferBlock *b_next;  // pointer to next buffer_block
   char_u b_str[1];      // contents (actually longer)
 };
 
@@ -132,8 +132,8 @@ struct buffblock {
  * header used for the stuff buffer and the redo buffer
  */
 struct buffheader {
-  buffblock_T bh_first;  // first (dummy) block of list
-  buffblock_T *bh_curr;  // buffblock for appending
+  BufferBlock bh_first;  // first (dummy) block of list
+  BufferBlock *bh_curr;  // buffer_block for appending
   int bh_index;          // index for reading
   int bh_space;          // space in bh_curr for appending
 };

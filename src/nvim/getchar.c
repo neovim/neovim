@@ -163,7 +163,7 @@ static int last_recorded_len = 0;       /* number of last recorded chars */
  */
 void free_buff(buffheader_T *buf)
 {
-  buffblock_T    *p, *np;
+  BufferBlock    *p, *np;
 
   for (p = buf->bh_first.b_next; p != NULL; p = np) {
     np = p->b_next;
@@ -186,13 +186,13 @@ static char_u *get_buffcont(buffheader_T *buffer,
   char_u          *str;
 
   /* compute the total length of the string */
-  for (buffblock_T *bp = buffer->bh_first.b_next; bp != NULL; bp = bp->b_next)
+  for (BufferBlock *bp = buffer->bh_first.b_next; bp != NULL; bp = bp->b_next)
     count += STRLEN(bp->b_str);
 
   if (count || dozero) {
     p = xmalloc(count + 1);
     p2 = p;
-    for (buffblock_T *bp = buffer->bh_first.b_next; bp != NULL; bp = bp->b_next)
+    for (BufferBlock *bp = buffer->bh_first.b_next; bp != NULL; bp = bp->b_next)
       for (str = bp->b_str; *str; )
         *p2++ = *str++;
     *p2 = NUL;
@@ -280,7 +280,7 @@ add_buff (
       len = MINIMAL_SIZE;
     else
       len = slen;
-    buffblock_T *p = xmalloc(sizeof(buffblock_T) + len);
+    BufferBlock *p = xmalloc(sizeof(BufferBlock) + len);
     buf->bh_space = (int)(len - slen);
     STRLCPY(p->b_str, s, slen + 1);
 
@@ -354,7 +354,7 @@ static int read_readbuffers(int advance)
 static int read_readbuf(buffheader_T *buf, int advance)
 {
   char_u c;
-  buffblock_T *curr;
+  BufferBlock *curr;
 
   if (buf->bh_first.b_next == NULL) /* buffer is empty */
     return NUL;
@@ -665,7 +665,7 @@ void stuffnumReadbuff(long n)
  */
 static int read_redo(int init, int old_redo)
 {
-  static buffblock_T *bp;
+  static BufferBlock *bp;
   static char_u *p;
   int c;
   int n;
