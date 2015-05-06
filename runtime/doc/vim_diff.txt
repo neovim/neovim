@@ -122,6 +122,7 @@ Other options:
   'textmode'
   'ttybuiltin'
   'ttymouse'
+  'weirdinvert'
 
 Other commands:
   :fixdel

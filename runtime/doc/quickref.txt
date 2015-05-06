@@ -918,7 +918,6 @@ Short explanation of each option:		*option-list*
 'virtualedit'	  've'	    when to use virtual editing
 'visualbell'	  'vb'	    use visual bell instead of beeping
 'warn'			    warn for shell command when buffer was changed
-'weirdinvert'	  'wiv'	    for terminals that have weird inversion method
 'whichwrap'	  'ww'	    allow specified keys to cross line boundaries
 'wildchar'	  'wc'	    command-line character for wildcard expansion
 'wildcharm'	  'wcm'     like 'wildchar' but also works when mapped

@@ -7104,12 +7104,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	has been changed.
 
 		     *'weirdinvert'* *'wiv'* *'noweirdinvert'* *'nowiv'*
-'weirdinvert' 'wiv'	boolean	(default off)
-			global
-	This option has the same effect as the 't_xs' terminal option.
-	It is provided for backwards compatibility with version 4.x.
-	Setting 'weirdinvert' has the effect of making 't_xs' non-empty, and
-	vice versa.  Has no effect when the GUI is running.
+'weirdinvert' 'wiv'	Removed. |vim-differences| {Nvim}
 
 						*'whichwrap'* *'ww'*
 'whichwrap' 'ww'	string	(Vim default: "b,s", Vi default: "")
