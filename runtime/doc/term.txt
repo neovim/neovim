@@ -504,10 +504,6 @@ If the characters from the terminal are arriving with more than 1 second
 between them you might want to set the 'timeout' and/or 'ttimeout' option.
 See the "Options" chapter |options|.
 
-If your terminal scrolls very slowly, but redrawing is not slow, set the
-'ttyscroll' option to a small number, e.g., 3.  This will make Vim redraw the
-screen instead of scrolling, when there are more than 3 lines to be scrolled.
-
 If you are using a color terminal that is slow, use this command: >
 	hi NonText cterm=NONE ctermfg=NONE
 This avoids that spaces are sent when they have different attributes.  On most

@@ -564,7 +564,6 @@ EXTERN char_u   *p_titlestring; /* 'titlestring' */
 EXTERN char_u   *p_tsr;         /* 'thesaurus' */
 EXTERN int p_ttimeout;          /* 'ttimeout' */
 EXTERN long p_ttm;              /* 'ttimeoutlen' */
-EXTERN long p_ttyscroll;        /* 'ttyscroll' */
 EXTERN char_u   *p_udir;        /* 'undodir' */
 EXTERN long p_ul;               /* 'undolevels' */
 EXTERN long p_ur;               /* 'undoreload' */

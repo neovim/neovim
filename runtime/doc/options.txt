@@ -6780,12 +6780,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'ttymouse' 'ttym'	Removed. |vim-differences| {Nvim}
 
 						*'ttyscroll'* *'tsl'*
-'ttyscroll' 'tsl'	number	(default 999)
-			global
-	Maximum number of lines to scroll the screen.  If there are more lines
-	to scroll the window is redrawn.  For terminals where scrolling is
-	very slow and redrawing is not slow this can be set to a small number,
-	e.g., 3, to speed up displaying.
+'ttyscroll' 'tsl'	Removed. |vim-differences| {Nvim}
 
 						*'ttytype'* *'tty'*
 'ttytype' 'tty'		string	(default from $TERM)

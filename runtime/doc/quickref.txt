@@ -902,7 +902,6 @@ Short explanation of each option:		*option-list*
 'toolbariconsize' 'tbis'    size of the toolbar icons (for GTK 2 only)
 'ttimeout'		    time out on mappings
 'ttimeoutlen'	  'ttm'     time out time for key codes in milliseconds
-'ttyscroll'	  'tsl'     maximum number of lines for a scroll
 'ttytype'	  'tty'     alias for 'term'
 'undodir'	  'udir'    where to store undo files
 'undofile'	  'udf'	    save undo information in a file
