@@ -6771,7 +6771,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	by user preferences or the current theme is used.
 
 			     *'ttybuiltin'* *'tbi'* *'nottybuiltin'* *'notbi'*
-'ttybuiltin' 'tbi'	Removed. {Nvim}
+'ttybuiltin' 'tbi'	Removed. |vim-differences| {Nvim}
 
 				     *'ttyfast'* *'tf'* *'nottyfast'* *'notf'*
 'ttyfast' 'tf'		Removed. |vim-differences| {Nvim}

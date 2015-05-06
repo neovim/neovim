@@ -231,7 +231,7 @@ g8			Print the hex values of the bytes used in the
 			and |nvim-terminal-emulator| for more information.
 
 							*:!cmd* *:!* *E34*
-:!{cmd}			Execute {cmd} with the shell. See also 'shell'.
+:!{cmd}			Execute {cmd} with 'shell'. See also |:terminal|.
 
 			Any '!' in {cmd} is replaced with the previous
 			external command (see also 'cpoptions').  But not when

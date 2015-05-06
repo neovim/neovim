@@ -6448,11 +6448,6 @@ int screen_ins_lines (
   int j;
   unsigned temp;
 
-  // FAIL if
-  // - there is no valid screen
-  // - the screen has to be redrawn completely
-  // - the line count is less than one
-  // - the line count is more than 'ttyscroll'
   if (!screen_valid(TRUE) || line_count <= 0) {
     return FAIL;
   }
@@ -6507,11 +6502,6 @@ int screen_del_lines (
   int i;
   unsigned temp;
 
-  // FAIL if
-  // - there is no valid screen
-  // - the screen has to be redrawn completely
-  // - the line count is less than one
-  // - the line count is more than 'ttyscroll'
   if (!screen_valid(TRUE) || line_count <= 0) {
     return FAIL;
   }
