@@ -3,7 +3,6 @@
 #include <inttypes.h>
 
 #include <uv.h>
-#include <msgpack.h>
 
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
@@ -18,6 +17,7 @@
 #include "nvim/os/job_defs.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/vim.h"
+#include "nvim/eval.h"
 #include "nvim/ascii.h"
 #include "nvim/memory.h"
 #include "nvim/os_unix.h"
@@ -62,6 +62,7 @@ typedef struct {
 
 typedef struct {
   Channel *channel;
+  char *method;
   MsgpackRpcRequestHandler handler;
   Array args;
   uint64_t request_id;
@@ -427,6 +428,23 @@ end:
   decref(channel);
 }
 
+static void request_set_error(Error *error, Channel *channel,
+                              uint64_t request_id)
+{
+  if (channel_write(channel,
+                    serialize_response(channel->id,
+                                       request_id,
+                                       error,
+                                       NIL,
+                                       &out_buffer))) {
+    char buf[256];
+    snprintf(buf, sizeof(buf),
+             "Channel %" PRIu64 " sent an invalid message, closed.",
+             channel->id);
+    call_set_error(channel, buf);
+  }
+}
+
 static void handle_request(Channel *channel, msgpack_object *request)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -436,47 +454,105 @@ static void handle_request(Channel *channel, msgpack_object *request)
 
   if (error.set) {
     // Validation failed, send response with error
-    if (channel_write(channel,
-                      serialize_response(channel->id,
-                                         request_id,
-                                         &error,
-                                         NIL,
-                                         &out_buffer))) {
-      char buf[256];
-      snprintf(buf, sizeof(buf),
-               "Channel %" PRIu64 " sent an invalid message, closed.",
-               channel->id);
-      call_set_error(channel, buf);
-    }
+    request_set_error(&error, channel, request_id);
     return;
   }
 
-  // Retrieve the request handler
-  MsgpackRpcRequestHandler handler;
   msgpack_object *method = msgpack_rpc_method(request);
+  Array args = ARRAY_DICT_INIT;
+  msgpack_rpc_to_array(msgpack_rpc_args(request), &args);
 
+  char *meth_str = NULL;
+
+  // Retrieve the request handler or intercept.
+  bool intercepted = false;          // A provider owns this message.
+  MsgpackRpcRequestHandler handler;  // Unused if intercepted.
   if (method) {
-    handler = msgpack_rpc_get_handler_for(method->via.bin.ptr,
-                                          method->via.bin.size);
+    meth_str = xmemdupz(method->via.bin.ptr, method->via.bin.size);
+    char func[256];
+    snprintf(func, 256, "provider#rpc#%s", meth_str);
+    if (eval_has_func(func)) {
+      intercepted = true;
+    } else {
+      handler = msgpack_rpc_get_handler_for(method->via.bin.ptr,
+                                            method->via.bin.size);
+    }
   } else {
     handler.fn = msgpack_rpc_handle_missing_method;
     handler.defer = false;
   }
 
-  Array args = ARRAY_DICT_INIT;
-  msgpack_rpc_to_array(msgpack_rpc_args(request), &args);
-  bool defer = (!kv_size(channel->call_stack) && handler.defer);
+  // Always defer intercepted messages since they run vim script.
+  bool defer = intercepted || (!kv_size(channel->call_stack) && handler.defer);
   RequestEvent *event_data = xmalloc(sizeof(RequestEvent));
   event_data->channel = channel;
+  event_data->method = meth_str;
   event_data->handler = handler;
   event_data->args = args;
   event_data->request_id = request_id;
   incref(channel);
   event_push((Event) {
-    .handler = on_request_event,
+    .handler = intercepted ? on_message_event : on_request_event,
     .data = event_data
   }, defer);
 }
+
+static void on_message_event(Event event)
+{
+  RequestEvent *data = event.data;
+  Error error = {0};
+
+  // Add two for the channel and request id.
+  size_t argc = data->args.size + 2;
+  // Allocate one more for the terminal VAR_UNKNOWN.
+  typval_T *args_tv = xcalloc(sizeof(typval_T), argc + 1);
+  args_tv[0].v_type = VAR_NUMBER;
+  args_tv[0].vval.v_number = (varnumber_T)data->channel->id;
+  args_tv[0].v_lock = 0;
+  args_tv[1].v_type = VAR_NUMBER;
+  args_tv[1].vval.v_number = (varnumber_T)data->request_id;
+  args_tv[1].v_lock = 0;
+  for (size_t i = 0; i < data->args.size; i++) {
+    if (!object_to_vim(data->args.items[i], &args_tv[i + 2], &error)) {
+      args_tv[i + 2].v_type = VAR_UNKNOWN;
+      request_set_error(&error, data->channel, data->request_id);
+      goto theend;
+    }
+  }
+  args_tv[argc].v_type = VAR_UNKNOWN;
+
+  typval_T rettv = do_eval_call_provider("rpc", data->method, args_tv, argc);
+  if (did_emsg) {
+    error.type = kErrorTypeException;
+    xstrlcpy(error.msg, (char *)get_vim_var_str(VV_ERRMSG), sizeof(error.msg));
+    request_set_error(&error, data->channel, data->request_id);
+    goto theend;
+  }
+
+  if (data->request_id != NO_RESPONSE) {
+    Object ret_obj = vim_to_object(&rettv);
+    msgpack_packer response;
+    msgpack_packer_init(&response, &out_buffer, msgpack_sbuffer_write);
+    channel_write(data->channel, serialize_response(data->channel->id,
+                                                    data->request_id,
+                                                    &error,
+                                                    ret_obj,
+                                                    &out_buffer));
+  }
+
+theend:
+  xfree(data->args.items);
+  xfree(data->method);
+  decref(data->channel);
+  xfree(data);
+  
+  clear_tv(&rettv);
+  for (size_t i = 2; args_tv[i].v_type != VAR_UNKNOWN; i++) {
+    clear_tv(&args_tv[i]);
+  }
+  xfree(args_tv);
+}
+
 
 static void on_request_event(Event event)
 {
@@ -501,6 +577,7 @@ static void on_request_event(Event event)
   }
   // All arguments were freed already, but we still need to free the array
   xfree(args.items);
+  xfree(e->method);
   decref(channel);
   xfree(e);
 }
@@ -826,8 +903,8 @@ void log_server_msg(uint64_t channel_id, msgpack_sbuffer *packed)
 }
 
 void log_client_msg(uint64_t channel_id,
-                           bool is_request,
-                           msgpack_object msg)
+                    bool is_request,
+                    msgpack_object msg)
 {
   DLOGN("[msgpack-rpc] client(%" PRIu64 ") -> nvim ", channel_id);
   FILE *f = open_log_file();

@@ -18469,6 +18469,11 @@ static ufunc_T *find_func(char_u *name)
   return NULL;
 }
 
+bool eval_has_func(const char *name)
+{
+  return find_func((char_u *)name) != NULL;
+}
+
 #if defined(EXITFREE)
 void free_all_functions(void)
 {
@@ -20467,8 +20472,25 @@ static void script_host_eval(char *name, typval_T *argvars, typval_T *rettv)
 
 typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
 {
+  typval_T argvars[3] = {
+    {.v_type = VAR_STRING, .vval.v_string = (uint8_t *)method, .v_lock = 0},
+    {.v_type = VAR_LIST, .vval.v_list = arguments, .v_lock = 0},
+    {.v_type = VAR_UNKNOWN}
+  };
+
+  arguments->lv_refcount++;
+  typval_T ret = do_eval_call_provider(provider, "Call", argvars, 2);
+  arguments->lv_refcount--;
+
+  return ret;
+}
+
+typval_T do_eval_call_provider(const char *provider, const char *method,
+                               typval_T *argvars, size_t argc)
+{
   char func[256];
-  int name_len = snprintf(func, sizeof(func), "provider#%s#Call", provider);
+  int name_len = snprintf(func, sizeof(func), "provider#%s#%s", provider,
+                          method);
 
   // Save caller scope information
   struct caller_scope saved_provider_caller_scope = provider_caller_scope;
@@ -20484,19 +20506,12 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
   };
   provider_call_nesting++;
 
-  typval_T argvars[3] = {
-    {.v_type = VAR_STRING, .vval.v_string = (uint8_t *)method, .v_lock = 0},
-    {.v_type = VAR_LIST, .vval.v_list = arguments, .v_lock = 0},
-    {.v_type = VAR_UNKNOWN}
-  };
-  typval_T rettv = {.v_type = VAR_UNKNOWN, .v_lock = 0};
-  arguments->lv_refcount++;
-
   int dummy;
+  typval_T rettv;
   (void)call_func((uint8_t *)func,
                   name_len,
                   &rettv,
-                  2,
+                  argc,
                   argvars,
                   curwin->w_cursor.lnum,
                   curwin->w_cursor.lnum,
@@ -20504,7 +20519,6 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
                   true,
                   NULL);
 
-  arguments->lv_refcount--;
   // Restore caller scope information
   restore_funccal(provider_caller_scope.funccalp);
   provider_caller_scope = saved_provider_caller_scope;
