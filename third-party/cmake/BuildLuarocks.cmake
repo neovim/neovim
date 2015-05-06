@@ -3,7 +3,7 @@
 # writing a recipe that is meant for cross-compile, use the HOSTDEPS_* variables
 # instead of DEPS_* - check the main CMakeLists.txt for a list.
 
-if(MSVC)
+if(MSVC OR (MINGW AND NOT CMAKE_CROSSCOMPILING))
   message(STATUS "Building busted in Windows is not supported (skipping)")
 else()
   option(USE_BUNDLED_BUSTED "Use the bundled version of busted to run tests." ON)
@@ -67,8 +67,12 @@ if(UNIX OR (MINGW AND CMAKE_CROSSCOMPILING))
       --prefix=${HOSTDEPS_INSTALL_DIR} --force-config ${LUAROCKS_OPTS}
       --lua-suffix=jit
     INSTALL_COMMAND ${MAKE_PRG} bootstrap)
+elseif(MSVC OR MINGW)
 
-elseif(MSVC)
+  if(MINGW)
+    set(MINGW_FLAG /MW)
+  endif()
+
   # Ignore USE_BUNDLED_LUAJIT - always ON for native Win32
   BuildLuarocks(INSTALL_COMMAND install.bat /FORCECONFIG /NOREG /NOADMIN /Q /F
     /LUA ${DEPS_INSTALL_DIR}
@@ -78,6 +82,7 @@ elseif(MSVC)
     /P ${DEPS_INSTALL_DIR} /TREE ${DEPS_INSTALL_DIR}
     /SCRIPTS ${DEPS_BIN_DIR}
     /CMOD ${DEPS_BIN_DIR}
+    ${MINGW_FLAG}
     /LUAMOD ${DEPS_BIN_DIR}/lua)
 
   set(LUAROCKS_BINARY ${DEPS_INSTALL_DIR}/2.2/luarocks.bat)
