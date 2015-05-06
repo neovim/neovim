@@ -1134,7 +1134,6 @@ Context-sensitive completion on the command-line:
 |-s|	-s {scriptin}	    first read commands from the file {scriptin}
 |-w|	-w {scriptout}	    write typed chars to file {scriptout} (append)
 |-W|	-W {scriptout}	    write typed chars to file {scriptout} (overwrite)
-|-T|	-T {terminal}	    set terminal name
 |-u|	-u {vimrc}	    read inits from {vimrc} instead of other inits
 |-U|	-U {gvimrc}	    idem, for when starting the GUI
 |-i|	-i {viminfo}	    read info from {viminfo} instead of other files

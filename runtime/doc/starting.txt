@@ -309,13 +309,6 @@ argument.
 		'tabpagemax' pages (default 10).  If there are more tab pages
 		than arguments, the last few tab pages will be editing an
 		empty file.  Also see |tabpage|.
-
-							*-T*
--T {terminal}	Set the terminal type to "terminal".  This influences the
-		codes that Vim will send to your terminal.  This is normally
-		not needed, because Vim will be able to find out what type
-		of terminal you are using.  (See |terminal-info|.)
-
 							*-d*
 -d		Start in |diff-mode|.
 
@@ -772,7 +765,7 @@ To change it later, use a ":let" command like this: >
 In case you need the value of $VIMRUNTIME in a shell (e.g., for a script that
 greps in the help files) you might be able to use this: >
 
-	VIMRUNTIME=`vim -e -T dumb --cmd 'exe "set t_cm=\<C-M>"|echo $VIMRUNTIME|quit' | tr -d '\015' `
+	VIMRUNTIME="$(nvim -e --cmd 'echo $VIMRUNTIME|quit' 2>&1)"
 
 ==============================================================================
 5. Suspending						*suspend*

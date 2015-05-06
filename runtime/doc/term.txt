@@ -27,9 +27,6 @@ NOTE: Most of this is not used when running the |GUI|.
 When Vim is started a default terminal type is assumed.  for MS-DOS this is
 the pc terminal, for Unix an ansi terminal.
 
-You can give the terminal name with the '-T' Vim argument.  If it is not given
-Vim will try to get the name from the TERM environment variable.
-
 				*termcap* *terminfo* *E557* *E558* *E559*
 On Unix the terminfo database or termcap file is used.  This is referred to as
 "termcap" in all the documentation.  At compile time, when running configure,
