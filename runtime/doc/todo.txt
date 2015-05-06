@@ -540,11 +540,6 @@ is confusing.  Should say "the argument list is empty".
 xterm supports escape sequences to mark a paste operation.  Need to be
 enabled. (Bruno Sutic, 2014 Jul 11)  How to know the terminal supports this?
 
-URXVT:
-- will get stuck if byte sequence does not contain the expected semicolon.
-- Use urxvt mouse support also in xterm.  Explanations:
-  http://www.midnight-commander.org/ticket/2662
-
 Patch to have the fold and sign column and at the last line of the buffer.
 (Marco Hinz, 2014 Sep 25)
 Alternate suggestion: let all columns continue, also the number column.

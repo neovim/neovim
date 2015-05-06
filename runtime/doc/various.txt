@@ -364,13 +364,6 @@ N  *+mksession*		|:mksession|
 N  *+modify_fname*	|filename-modifiers|
 N  *+mouse*		Mouse handling |mouse-using|
 N  *+mouseshape*	|'mouseshape'|
-B  *+mouse_dec*		Unix only: Dec terminal mouse handling |dec-mouse|
-N  *+mouse_gpm*		Unix only: Linux console mouse handling |gpm-mouse|
-B  *+mouse_netterm*	Unix only: netterm mouse handling |netterm-mouse|
-N  *+mouse_sysmouse*	Unix only: *BSD console mouse handling |sysmouse|
-B  *+mouse_sgr*		Unix only: sgr mouse handling |sgr-mouse|
-B  *+mouse_urxvt*	Unix only: urxvt mouse handling |urxvt-mouse|
-N  *+mouse_xterm*	Unix only: xterm mouse handling |xterm-mouse|
 N  *+multi_byte*	16 and 32 bit characters |multibyte|
    *+multi_byte_ime*	Win32 input method for multibyte chars |multibyte-ime|
 N  *+multi_lang*	non-English language support |multi-lang|

@@ -1545,13 +1545,6 @@ static vimoption_T
   {"ttyfast",  "tf",  P_BOOL|P_NO_MKRC|P_VI_DEF,
    (char_u *)&p_force_on, PV_NONE,
    {(char_u *)TRUE, (char_u *)0L} SCRIPTID_INIT},
-  {"ttymouse",    "ttym", P_STRING|P_NODEFAULT|P_NO_MKRC|P_VI_DEF,
-#if defined(FEAT_MOUSE) && defined(UNIX)
-   (char_u *)&p_ttym, PV_NONE,
-#else
-   (char_u *)NULL, PV_NONE,
-#endif
-   {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
   {"undodir",     "udir", P_STRING|P_EXPAND|P_COMMA|P_NODUP|P_SECURE|P_VI_DEF,
    (char_u *)&p_udir, PV_NONE,
    {(char_u *)".", (char_u *)0L}
@@ -3245,9 +3238,6 @@ static void didset_options(void)
   (void)opt_strings_flags(p_fdo, p_fdo_values, &fdo_flags, TRUE);
   (void)opt_strings_flags(p_dy, p_dy_values, &dy_flags, TRUE);
   (void)opt_strings_flags(p_ve, p_ve_values, &ve_flags, TRUE);
-#if defined(FEAT_MOUSE) && defined(UNIX)
-  (void)opt_strings_flags(p_ttym, p_ttym_values, &ttym_flags, FALSE);
-#endif
   (void)spell_check_msm();
   (void)spell_check_sps();
   (void)compile_cap_prog(curwin->w_s);

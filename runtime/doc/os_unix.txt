@@ -35,8 +35,7 @@ When using Vim in an xterm the mouse clicks can be used by Vim by setting
 'mouse' to "a".  If there is access to an X-server gui style copy/paste will
 be used and visual feedback will be provided while dragging with the mouse.
 If you then still want the xterm copy/paste with the mouse, press the shift
-key when using the mouse.  See |mouse-using|.  Visual feedback while dragging
-can also be achieved via the 'ttymouse' option if your xterm is new enough.
+key when using the mouse.  See |mouse-using|.
 
 							*terminal-colors*
 To use colors in Vim you can use the following example (if your terminal

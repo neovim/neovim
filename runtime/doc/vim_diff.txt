@@ -121,6 +121,7 @@ Other options:
   'textauto'
   'textmode'
   'ttybuiltin'
+  'ttymouse'
 
 Other commands:
   :fixdel

@@ -6771,13 +6771,6 @@ menu			Compiled with support for |:menu|.
 mksession		Compiled with support for |:mksession|.
 modify_fname		Compiled with file name modifiers. |filename-modifiers|
 mouse			Compiled with support mouse.
-mouse_dec		Compiled with support for Dec terminal mouse.
-mouse_gpm		Compiled with support for gpm (Linux console mouse)
-mouse_netterm		Compiled with support for netterm mouse.
-mouse_sysmouse		Compiled with support for sysmouse (*BSD console mouse)
-mouse_sgr		Compiled with support for sgr mouse.
-mouse_urxvt		Compiled with support for urxvt mouse.
-mouse_xterm		Compiled with support for xterm mouse.
 mouseshape		Compiled with support for 'mouseshape'.
 multi_byte		Compiled with support for 'encoding'
 multi_byte_encoding	'encoding' is set to a multi-byte encoding.
