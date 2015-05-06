@@ -7060,7 +7060,7 @@ option_value2string (
     long wc = 0;
 
     if (wc_use_keyname(varp, &wc))
-      STRCPY(NameBuff, get_special_key_name((int)wc, 0));
+      STRNCPY(NameBuff, get_special_key_name((int)wc, 0), MAXPATHL);
     else if (wc != 0)
       STRCPY(NameBuff, transchar((int)wc));
     else

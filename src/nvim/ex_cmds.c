@@ -5296,9 +5296,9 @@ void ex_helptags(exarg_T *eap)
   }
 
   /* Get a list of all files in the help directory and in subdirectories. */
-  STRCPY(NameBuff, dirname);
+  STRNCPY(NameBuff, dirname, MAXPATHL);
   add_pathsep(NameBuff);
-  STRCAT(NameBuff, "**");
+  STRNCAT(NameBuff, "**", MAXPATHL);
 
   // Note: We cannot just do `&NameBuff` because it is a statically sized array
   //       so `NameBuff == &NameBuff` according to C semantics.
@@ -5399,9 +5399,9 @@ helptags_one (
    * Find all *.txt files.
    */
   dirlen = (int)STRLEN(dir);
-  STRCPY(NameBuff, dir);
-  STRCAT(NameBuff, "/**/*");
-  STRCAT(NameBuff, ext);
+  STRNCPY(NameBuff, dir, MAXPATHL);
+  STRNCAT(NameBuff, "/**/*", MAXPATHL);
+  STRNCAT(NameBuff, ext, MAXPATHL);
 
   // Note: We cannot just do `&NameBuff` because it is a statically sized array
   //       so `NameBuff == &NameBuff` according to C semantics.
@@ -5420,7 +5420,7 @@ helptags_one (
    */
   STRCPY(NameBuff, dir);
   add_pathsep(NameBuff);
-  STRCAT(NameBuff, tagfname);
+  STRNCAT(NameBuff, tagfname, MAXPATHL);
   fd_tags = mch_fopen((char *)NameBuff, "w");
   if (fd_tags == NULL) {
     EMSG2(_("E152: Cannot open %s for writing"), NameBuff);
