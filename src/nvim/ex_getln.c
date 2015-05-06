@@ -4040,65 +4040,73 @@ static int ExpandUserList(expand_T *xp, int *num_file, char_u ***file)
   return OK;
 }
 
-/*
- * Expand color scheme, compiler or filetype names:
- * 'runtimepath'/{dirnames}/{pat}.vim
- * "dirnames" is an array with one or more directory names.
- */
-static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file, char *dirnames[])
+/// Expands color scheme, compiler or filetype names:
+/// 'runtimepath'/{dirnames}/{pat}*.vim
+///
+/// @param[in]  pat      The pattern to search for.
+/// @param[out] num_file Number of files stored in `file`.
+/// @param[out] file     List of matches.
+/// @param[in]  dirnames (see above)
+/// @returns true if any files found.
+static bool ExpandRTDir(char_u *pat, int *num_file, char_u ***file,
+                        char *dirnames[])
+  FUNC_ATTR_NONNULL_ALL
 {
-  *num_file = 0;
-  *file = NULL;
-  size_t pat_len = STRLEN(pat);
-
+  // A garray for globpath() to store results in.
   garray_T ga;
   ga_init(&ga, (int)sizeof(char *), 10);
 
+  char_u *pat_dot_vim = concat_str(pat, (char_u *)"*.vim");  // {pat}*.vim
+
   for (int i = 0; dirnames[i] != NULL; i++) {
-    size_t size = STRLEN(dirnames[i]) + pat_len + 7;
-    char_u *s = xmalloc(size);
-    snprintf((char *)s, size, "%s/%s*.vim", dirnames[i], pat);
+    // :call globpath(&rtp, 'dirname/pat*.vim')
+    char_u *s = concat_fnames((char_u *)dirnames[i], pat_dot_vim, true);
     globpath(p_rtp, s, &ga, 0);
     xfree(s);
   }
 
+  free(pat_dot_vim);
+
   for (int i = 0; i < ga.ga_len; i++) {
+    // Replace the paths with file names, minus the .vim extension.
     char_u *match = ((char_u **)ga.ga_data)[i];
-    char_u *s = match;
-    char_u *e = s + STRLEN(s);
-    if (e - s > 4 && STRNICMP(e - 4, ".vim", 4) == 0) {
-      e -= 4;
-      for (s = e; s > match; mb_ptr_back(match, s)) {
-        if (vim_ispathsep(*s)) {
-          break;
-        }
-      }
-      s++;
-      *e = NUL;
-      memmove(match, s, e - s + 1);
-    }
+    char_u *tail = path_tail(match);
+    char_u *dot = vim_strrchr(tail, '.');
+    assert(dot);  // In case globpath() returned an invalid result.
+    *(dot++) = 0;
+    memmove(match, tail, dot - tail);
   }
 
-  if (GA_EMPTY(&ga))
-    return FAIL;
-
-  /* Sort and remove duplicates which can happen when specifying multiple
-   * directories in dirnames. */
-  ga_remove_duplicate_strings(&ga);
+  if (GA_EMPTY(&ga)) {
+    ga_clear(&ga);
+  } else {
+    // Sort and remove duplicates which can happen when specifying multiple
+    // directories in dirnames.
+    ga_remove_duplicate_strings(&ga);
+  }
 
   *file = ga.ga_data;
   *num_file = ga.ga_len;
-  return OK;
+  return ga.ga_len > 0;
 }
 
 
-/// Expand `file` for all comma-separated directories in `path`.
-/// Adds matches to `ga`.
+/// Expands `file` for all comma-separated directories in `path` and appends
+/// the results to `ga`.
+///
+/// @remark May be called repeatedly on `ga`.
+///
+/// @param[in]  path String of comma-separated directories.
+/// @param[in]  file The pattern to search for in each directory.
+/// @param[out] ga   Growable array of `file`s found in `path`.
+/// @param[in]  expand_options
 void globpath(char_u *path, char_u *file, garray_T *ga, int expand_options)
+  FUNC_ATTR_NONNULL_ALL
 {
   expand_T xpc;
   ExpandInit(&xpc);
   xpc.xp_context = EXPAND_FILES;
+  expand_options |= WILD_SILENT;
 
   char_u *buf = xmalloc(MAXPATHL);
 
@@ -4106,26 +4114,29 @@ void globpath(char_u *path, char_u *file, garray_T *ga, int expand_options)
   while (*path != NUL) {
     // Copy one item of the path to buf[] and concatenate the file name.
     copy_option_part(&path, buf, MAXPATHL, ",");
-    if (STRLEN(buf) + STRLEN(file) + 2 < MAXPATHL) {
-      add_pathsep(buf);
-      STRCAT(buf, file);  // NOLINT
-
-      char_u **p;
-      int num_p;
-      if (ExpandFromContext(&xpc, buf, &num_p, &p,
-              WILD_SILENT|expand_options) != FAIL && num_p > 0) {
-        ExpandEscape(&xpc, buf, num_p, p, WILD_SILENT|expand_options);
-
-        // Concatenate new results to previous ones.
-        ga_grow(ga, num_p);
-        for (int i = 0; i < num_p; i++) {
-          ((char_u **)ga->ga_data)[ga->ga_len] = vim_strsave(p[i]);
-          ga->ga_len++;
-        }
-
-        FreeWild(num_p, p);
-      }
+    if (STRLEN(buf) + STRLEN(file) + 2 >= MAXPATHL) {
+      continue;
     }
+
+    add_pathsep(buf);
+    STRCAT(buf, file);  // NOLINT
+
+    char_u **p;
+    int num_p;
+    if (ExpandFromContext(&xpc, buf, &num_p, &p, expand_options) == FAIL
+        || num_p <= 0) {
+      continue;
+    }
+
+    ExpandEscape(&xpc, buf, num_p, p, expand_options);
+
+    // Concatenate new results to previous ones.
+    ga_grow(ga, num_p);
+    for (int i = 0; i < num_p; i++) {
+      GA_APPEND(char_u *, ga, p[i]);
+    }
+
+    free(p);
   }
 
   xfree(buf);
