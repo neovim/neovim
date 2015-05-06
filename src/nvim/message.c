@@ -32,6 +32,7 @@
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
 #include "nvim/misc2.h"
+#include "nvim/msgpack_rpc/channel.h"
 #include "nvim/keymap.h"
 #include "nvim/garray.h"
 #include "nvim/ops.h"
@@ -806,6 +807,8 @@ void wait_return(int redraw)
       cmdline_row = msg_row;
     return;
   }
+
+  channel_send_event(0, "PressEnter", (Array)ARRAY_DICT_INIT);
 
   redir_off = TRUE;             /* don't redirect this message */
   oldState = State;
@@ -2325,6 +2328,8 @@ static void msg_screen_putchar(int c, int attr)
 
 void msg_moremsg(int full)
 {
+  channel_send_event(0, "More", (Array)ARRAY_DICT_INIT);
+
   int attr;
   char_u      *s = (char_u *)_("-- More --");
 

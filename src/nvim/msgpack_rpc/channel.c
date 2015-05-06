@@ -500,7 +500,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
 static void on_message_event(Event event)
 {
   RequestEvent *data = event.data;
-  Error error = {0};
+  Error error = ERROR_INIT;
 
   // Add two for the channel and request id.
   size_t argc = data->args.size + 2;

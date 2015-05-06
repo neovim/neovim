@@ -64,6 +64,7 @@
 #include "nvim/os/event.h"
 #include "nvim/os/signal.h"
 #include "nvim/msgpack_rpc/helpers.h"
+#include "nvim/msgpack_rpc/channel.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/handle.h"
@@ -379,14 +380,18 @@ int main(int argc, char **argv)
   if (params.edit_type == EDIT_STDIN && !recoverymode)
     read_stdin();
 
-
-  if (reading_input && (need_wait_return || msg_didany)) {
-    // Since at this point there's no UI instance running yet, error messages
-    // would have been printed to stdout. Before starting (which can result in
-    // a alternate screen buffer being shown) we need confirmation that the
-    // user has seen the messages and that is done with a call to wait_return.
-    TIME_MSG("waiting for return");
-    wait_return(TRUE);
+  event_poll(0);  // A handler for PressEnter may be trying to register now.
+  if (need_wait_return || msg_didany) {
+    // We may need a client to wake us up.
+    channel_send_event(0, "PressEnter", (Array)ARRAY_DICT_INIT);
+    if (reading_input) {
+      // Since at this point there's no UI instance running yet, error messages
+      // would have been printed to stdout. Before starting (which can result in
+      // a alternate screen buffer being shown) we need confirmation that the
+      // user has seen the messages and that is done with a call to wait_return.
+      TIME_MSG("waiting for return");
+      wait_return(TRUE);
+    }
   }
 
   if (!params.headless) {
