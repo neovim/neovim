@@ -34,6 +34,8 @@ endif()
 list(APPEND LUAJIT_NAMES luajit-5.1)
 if(MSVC)
   list(APPEND LUAJIT_NAMES lua51)
+elseif(MINGW)
+  list(APPEND LUAJIT_NAMES libluajit)
 endif()
 
 find_library(LUAJIT_LIBRARY NAMES ${LUAJIT_NAMES}
