@@ -2234,15 +2234,11 @@ void mch_errmsg(char *str)
 {
   int len;
 
-#if (defined(UNIX) || defined(FEAT_GUI)) && !defined(ALWAYS_USE_GUI)
+#ifdef UNIX
   /* On Unix use stderr if it's a tty.
    * When not going to start the GUI also use stderr.
    * On Mac, when started from Finder, stderr is the console. */
-  if (
-# ifdef UNIX
-    isatty(2)
-# endif
-    ) {
+  if (os_isatty(2)) {
     fprintf(stderr, "%s", str);
     return;
   }
@@ -2284,16 +2280,12 @@ void mch_errmsg(char *str)
  */
 void mch_msg(char *str)
 {
-#if (defined(UNIX) || defined(FEAT_GUI)) && !defined(ALWAYS_USE_GUI)
+#ifdef UNIX
   /* On Unix use stdout if we have a tty.  This allows "vim -h | more" and
    * uses mch_errmsg() when started from the desktop.
    * When not going to start the GUI also use stdout.
    * On Mac, when started from Finder, stderr is the console. */
-  if (
-#  ifdef UNIX
-    isatty(2)
-#  endif
-    ) {
+  if (os_isatty(2)) {
     printf("%s", str);
     return;
   }
