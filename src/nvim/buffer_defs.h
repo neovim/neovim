@@ -81,7 +81,6 @@ typedef struct file_buffer buf_T; // Forward declaration
 typedef struct window_S win_T;
 typedef struct wininfo_S wininfo_T;
 typedef struct frame_S frame_T;
-typedef int scid_T;                     /* script ID */
 
 // for struct memline (it needs memfile_T)
 #include "nvim/memline_defs.h"

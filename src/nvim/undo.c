@@ -92,7 +92,6 @@
 #include "nvim/undo.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
-#include "nvim/eval.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/mark.h"
@@ -109,6 +108,7 @@
 #include "nvim/sha256.h"
 #include "nvim/strings.h"
 #include "nvim/types.h"
+#include "nvim/typval.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 
@@ -2821,14 +2821,14 @@ void u_eval_tree(u_header_T *first_uhp, list_T *list)
 
   while (uhp != NULL) {
     dict = dict_alloc();
-    dict_add_nr_str(dict, "seq", uhp->uh_seq, NULL);
-    dict_add_nr_str(dict, "time", (long)uhp->uh_time, NULL);
+    dict_add_nr_str(dict, "seq", (varnumber_T)uhp->uh_seq, NULL);
+    dict_add_nr_str(dict, "time", (varnumber_T)uhp->uh_time, NULL);
     if (uhp == curbuf->b_u_newhead)
       dict_add_nr_str(dict, "newhead", 1, NULL);
     if (uhp == curbuf->b_u_curhead)
       dict_add_nr_str(dict, "curhead", 1, NULL);
     if (uhp->uh_save_nr > 0)
-      dict_add_nr_str(dict, "save", uhp->uh_save_nr, NULL);
+      dict_add_nr_str(dict, "save", (varnumber_T)uhp->uh_save_nr, NULL);
 
     if (uhp->uh_alt_next.ptr != NULL) {
       list_T *alt_list = list_alloc();

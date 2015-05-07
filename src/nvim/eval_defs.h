@@ -1,13 +1,23 @@
 #ifndef NVIM_EVAL_DEFS_H
 #define NVIM_EVAL_DEFS_H
 
+#include <inttypes.h>  // for PRId64
+
+#include "nvim/garray.h"
 #include "nvim/hashtab.h"
+#include "nvim/profile.h"
 
 typedef int varnumber_T;
 typedef double float_T;
 
 typedef struct listvar_S list_T;
 typedef struct dictvar_S dict_T;
+
+/// Character used as separator in autoload function/variable names.
+#define AUTOLOAD_CHAR '#'
+
+/// refcount for dict or list that should not be freed.
+#define DO_NOT_FREE_CNT 99999
 
 /*
  * Structure to hold an internal variable without a name.
@@ -33,10 +43,10 @@ typedef struct {
 #define VAR_DICT    5   /* "v_dict" is used */
 #define VAR_FLOAT   6   /* "v_float" is used */
 
-/* Values for "dv_scope". */
-#define VAR_SCOPE     1 /* a:, v:, s:, etc. scope dictionaries */
-#define VAR_DEF_SCOPE 2 /* l:, g: scope dictionaries: here funcrefs are not
-                           allowed to mask existing functions */
+// Values for "dv_scope".
+#define VAR_SCOPE     1  ///< a:, v:, s:, etc. scope dictionaries */
+#define VAR_DEF_SCOPE 2  ///< l:, g: scope dictionaries: here funcrefs are not
+                         ///  allowed to mask existing functions
 
 /* Values for "v_lock". */
 #define VAR_LOCKED  1   /* locked with lock(), can use unlock() */
@@ -99,6 +109,8 @@ typedef struct dictitem_S dictitem_T;
 #define DI_FLAGS_FIX    4 /* "di_flags" value: fixed variable, not allocated */
 #define DI_FLAGS_LOCK   8 /* "di_flags" value: locked variable */
 
+#define DICT_MAXNEST 100        ///< maximum nesting of lists and dicts
+
 /*
  * Structure to hold info about a Dictionary.
  */
@@ -115,4 +127,77 @@ struct dictvar_S {
                                 // prevent garbage collection
 };
 
-#endif // NVIM_EVAL_DEFS_H
+/// Structure to hold info for a user function.
+typedef struct ufunc ufunc_T;
+typedef int scid_T;  ///< script ID
+
+struct ufunc {
+  int uf_varargs;               ///< variable nr of arguments
+  int uf_flags;
+  int uf_calls;                 ///< nr of active calls
+  garray_T uf_args;             ///< arguments
+  garray_T uf_lines;            ///< function lines
+  int uf_profiling;             ///< TRUE when func is being profiled
+  // profiling the function as a whole
+  int uf_tm_count;              ///< nr of calls
+  proftime_T uf_tm_total;       ///< time spent in function + children
+  proftime_T uf_tm_self;        ///< time spent in function itself
+  proftime_T uf_tm_children;    ///< time spent in children this call
+  // profiling the function per line
+  int         *uf_tml_count;    ///< nr of times line was executed
+  proftime_T  *uf_tml_total;    ///< time spent in a line + children
+  proftime_T  *uf_tml_self;     ///< time spent in a line itself
+  proftime_T uf_tml_start;      ///< start time for current line
+  proftime_T uf_tml_children;   ///< time spent in children for this line
+  proftime_T uf_tml_wait;       ///< start wait time for current line
+  int uf_tml_idx;               ///< index of line being timed; -1 if none
+  int uf_tml_execed;            ///< line being timed was executed
+  scid_T uf_script_ID;          ///< ID of script where function was defined,
+                                ///  used for s: variables
+  int uf_refcount;              ///< for numbered function: reference count
+  char_u uf_name[1];            ///< name of function (actually longer); can
+                                ///  start with <SNR>123_ (<SNR> is K_SPECIAL
+                                ///  KS_EXTRA KE_SNR)
+};
+
+// function flags
+#define FC_ABORT    1   ///< abort function on error
+#define FC_RANGE    2   ///< function accepts range
+#define FC_DICT     4   ///< Dict function, uses "self"
+
+
+#include "nvim/globals.h"  // for EXTERN/INIT
+
+/// In a hashtab item "hi_key" points to "di_key" in a dictitem.
+/// This avoids adding a pointer to the hashtab item.
+EXTERN dictitem_T dumdi;
+
+/// converts a dictitem pointer to a hashitem key pointer.
+#define DI2HIKEY(di) ((di)->di_key)
+
+/// converts a hashitem key pointer to a dictitem pointer.
+#define HIKEY2DI(p)  ((dictitem_T *)(p - (dumdi.di_key - (char_u *)&dumdi)))
+
+/// HI2DI() converts a hashitem pointer to a dictitem pointer.
+#define HI2DI(hi)     HIKEY2DI((hi)->hi_key)
+
+// list heads for garbage collection
+EXTERN dict_T *first_dict INIT(= NULL);  ///< list of all dicts
+EXTERN list_T *first_list INIT(= NULL);  ///< list of all lists
+
+EXTERN char e_listidx[] INIT(= N_("E684: list index out of range: %" PRId64));
+EXTERN char e_float_as_string[] INIT(= N_("E806: using Float as a String"));
+
+/// All user-defined functions are found in this hashtable.
+EXTERN hashtab_T func_hashtab;
+
+/// From user function to hashitem and back.
+EXTERN ufunc_T dumuf;
+#define UF2HIKEY(fp) ((fp)->uf_name)
+#define HIKEY2UF(p)  ((ufunc_T *)(p - (dumuf.uf_name - (char_u *)&dumuf)))
+#define HI2UF(hi)    HIKEY2UF((hi)->hi_key)
+
+#define FUNCARG(fp, j)  ((char_u **)(fp->uf_args.ga_data))[j]
+#define FUNCLINE(fp, j) ((char_u **)(fp->uf_lines.ga_data))[j]
+
+#endif  // NVIM_EVAL_DEFS_H

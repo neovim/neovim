@@ -12,7 +12,7 @@
 #include "nvim/buffer.h"
 #include "nvim/window.h"
 #include "nvim/memory.h"
-#include "nvim/eval.h"
+#include "nvim/typval.h"
 #include "nvim/map_defs.h"
 #include "nvim/map.h"
 #include "nvim/option.h"

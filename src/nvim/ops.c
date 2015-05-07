@@ -46,6 +46,7 @@
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/terminal.h"
+#include "nvim/typval.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"

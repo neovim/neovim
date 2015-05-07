@@ -2,6 +2,7 @@
 #define NVIM_OS_SHELL_H
 
 #include "nvim/types.h"
+#include "nvim/pos.h"
 
 // Flags for os_call_shell() second argument
 typedef enum {
