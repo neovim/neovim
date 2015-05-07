@@ -12,31 +12,10 @@ VIMEXE = vim
 DOCS = $(wildcard *.txt)
 HTMLS = $(DOCS:.txt=.html)
 
-MANPAGES = \
-	manpages/vim.man \
-	manpages/vimtutor.man \
-	manpages/xxd.man \
-	manpages/de/vim-de.man \
-	manpages/fr/vim-fr.man \
-	manpages/fr/vimtutor-fr.man \
-	manpages/fr/xxd-fr.man \
-	manpages/pl/vim-pl.man \
-	manpages/pl/vimtutor-pl.man \
-	manpages/pl/xxd-pl.man \
-	manpages/it/vim-it.man \
-	manpages/it/vimtutor-it.man \
-	manpages/it/xxd-it.man \
-	manpages/ru/vim-ru.man \
-	manpages/ru/vimtutor-ru.man \
-	manpages/ru/xxd-ru.man \
-	manpages/ja/vim-ja.man \
-	manpages/ja/vimtutor-ja.man \
-	manpages/ja/xxd-ja.man
-
 .SUFFIXES:
-.SUFFIXES: .c .o .txt .html .1 .man
+.SUFFIXES: .c .o .txt .html
 
-all: tags manpages html
+all: tags html
 
 # Use Vim to generate the tags file.  Can only be used when Vim has been
 # compiled and installed.  Supports multiple languages.
@@ -50,12 +29,6 @@ tags: doctags $(DOCS)
 
 doctags: doctags.c
 	$(CC) doctags.c -o doctags
-
-manpages: $(MANPAGES)
-
-# OSX groff doesn't support utf-8 as input encoding, so this won't work there.
-.1.man:
-	groff -k -mandoc -Tutf8 $< | sed -e s/.^H//g > $@
 
 # Awk version of .txt to .html conversion.
 html: noerrors tags $(HTMLS)
@@ -81,5 +54,5 @@ tags.ref tags.html: tags
 	$(AWK) -f maketags.awk tags >tags.html
 
 clean:
-	-rm -f doctags *.html tags.ref $(MANPAGES) $(HTMLS) errors.log
+	-rm -f doctags *.html tags.ref $(HTMLS) errors.log
 

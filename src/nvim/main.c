@@ -905,12 +905,7 @@ static void command_line_scan(mparm_T *parmp)
           if (STRICMP(argv[0] + argv_idx, "help") == 0)
             usage();
           else if (STRICMP(argv[0] + argv_idx, "version") == 0) {
-            Columns = 80;                 /* need to init Columns */
-            info_message = TRUE;           /* use mch_msg(), not mch_errmsg() */
-            list_version();
-            msg_putchar('\n');
-            msg_didout = FALSE;
-            mch_exit(0);
+            version();
           } else if (STRICMP(argv[0] + argv_idx, "api-info") == 0) {
             msgpack_sbuffer* b = msgpack_sbuffer_new();
             msgpack_packer* p = msgpack_packer_new(b, msgpack_sbuffer_write);
@@ -1084,6 +1079,9 @@ static void command_line_scan(mparm_T *parmp)
         case 'd':                 /* "-d"		'diff' */
           parmp->diff_mode = TRUE;
           break;
+        case 'v':
+          version();
+          // NOT REACHED
         case 'V':                 /* "-V{N}"	Verbose level */
           /* default is 10: a little bit verbose */
           p_verbose = get_number_arg(argv[0], &argv_idx, 10);
@@ -1969,6 +1967,15 @@ static void mainerr(int n, const char *str)
   mch_exit(1);
 }
 
+/// Prints version information for "nvim -v" or "nvim --version" and exits.
+static void version(void)
+{
+  info_message = TRUE;  // use mch_msg(), not mch_errmsg()
+  list_version();
+  msg_putchar('\n');
+  msg_didout = FALSE;
+  mch_exit(0);
+}
 
 /// Prints help message for "nvim -h" or "nvim --help" and exits.
 static void usage(void)
@@ -2023,7 +2030,7 @@ static void usage(void)
   mch_msg(_("  --embed               Use stdin/stdout as a msgpack-rpc channel\n"));
   mch_msg(_("  --headless            Don't start a user interface\n"));
   mch_msg(_("  --version             Print version information and exit\n"));
-  mch_msg(_("  -h | --help           Print this help message and exit\n"));
+  mch_msg(_("  -h, --help            Print this help message and exit\n"));
 
   mch_exit(0);
 }

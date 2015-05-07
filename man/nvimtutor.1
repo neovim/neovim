@@ -1,0 +1,43 @@
+.Dd May 5, 2015
+.Dt NVIMTUTOR 1 Neovim
+.Os
+.Sh NAME
+.Nm nvimtutor
+.Nd Neovim tutor
+.Sh SYNOPSIS
+.Nm
+.Op Ar language
+.Sh DESCRIPTION
+.Nm
+starts an interactive tutorial meant to teach the basics of Vim.
+The optional
+.Ar language
+argument is the two-letter name of a language,
+like
+.Ar it
+or
+.Ar es .
+If the
+.Ar language
+argument isn't given, the language dictated by the current
+locale will be used.
+If a tutor for
+.Ar language
+isn't available, the English version will be used.
+.Sh SEE ALSO
+.Xr nvim 1
+.Sh AUTHORS
+Vimtutor was originally written for Vi by
+.An -nosplit
+.An Michael C. Pierce
+and
+.An Robert K. Ware ,
+Colorado School of Mines using ideas supplied by
+.An Charles Smith ,
+Colorado State University.
+E-mail:
+.Mt bware@mines.colorado.edu
+.Pp
+It was modified for Vim by
+.An Bram Moolenaar .
+For the names of the translators see the tutor files.
