@@ -1,3 +1,5 @@
+find_package(PkgConfig REQUIRED)
+
 ExternalProject_Add(libtermkey
   PREFIX ${DEPS_BUILD_DIR}
   URL ${LIBTERMKEY_URL}
