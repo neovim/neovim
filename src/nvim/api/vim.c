@@ -523,7 +523,9 @@ void vim_subscribe(uint64_t channel_id, String event)
   char e[METHOD_MAXLEN + 1];
   memcpy(e, event.data, length);
   e[length] = NUL;
-  channel_subscribe(channel_id, e);
+  if (!channel_subscribe(channel_id, e)) {
+    abort();
+  }
 }
 
 /// Unsubscribes to event broadcasts
@@ -538,7 +540,9 @@ void vim_unsubscribe(uint64_t channel_id, String event)
   char e[METHOD_MAXLEN + 1];
   memcpy(e, event.data, length);
   e[length] = NUL;
-  channel_unsubscribe(channel_id, e);
+  if (!channel_unsubscribe(channel_id, e)) {
+    abort();
+  }
 }
 
 Integer vim_name_to_color(String name)

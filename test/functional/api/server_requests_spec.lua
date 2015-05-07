@@ -4,6 +4,7 @@
 local helpers = require('test.functional.helpers')
 local clear, nvim, eval = helpers.clear, helpers.nvim, helpers.eval
 local eq, neq, run, stop = helpers.eq, helpers.neq, helpers.run, helpers.stop
+local next_message = helpers.next_message
 local nvim_prog = helpers.nvim_prog
 
 
@@ -114,6 +115,21 @@ describe('server -> client', function()
       run(on_request, on_notification, on_setup)
       eq(expected, notified)
     end)
+  end)
+
+  it('can subscribe clients to events', function()
+    eval('rpcsubscribe('..cid..', "subscribe-test1")')
+    eval('rpcsubscribe('..cid..', "subscribe-test2")')
+    eval('rpcnotify(0, "subscribe-test1")')
+    eval('rpcnotify(0, "subscribe-test2")')
+    eq({'notification', 'subscribe-test1', {}}, next_message())
+    eq({'notification', 'subscribe-test2', {}}, next_message())
+
+    -- Check that rpcunsubscribe() works too.
+    eval('rpcunsubscribe('..cid..', "subscribe-test1")')
+    eval('rpcnotify(0, "subscribe-test1")')
+    eval('rpcnotify(0, "subscribe-test2")')
+    eq({'notification', 'subscribe-test2', {}}, next_message())
   end)
 
   describe('when the client is a recursive vim instance', function()

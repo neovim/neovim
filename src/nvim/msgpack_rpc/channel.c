@@ -261,12 +261,12 @@ Object channel_send_call(uint64_t id,
 ///
 /// @param id The channel id
 /// @param event The event type string
-void channel_subscribe(uint64_t id, char *event)
+bool channel_subscribe(uint64_t id, const char *event)
 {
   Channel *channel;
 
   if (!(channel = pmap_get(uint64_t)(channels, id)) || channel->closed) {
-    abort();
+    return false;
   }
 
   char *event_string = pmap_get(cstr_t)(event_strings, event);
@@ -277,21 +277,23 @@ void channel_subscribe(uint64_t id, char *event)
   }
 
   pmap_put(cstr_t)(channel->subscribed_events, event_string, event_string);
+  return true;
 }
 
 /// Unsubscribes to event broadcasts
 ///
 /// @param id The channel id
 /// @param event The event type string
-void channel_unsubscribe(uint64_t id, char *event)
+bool channel_unsubscribe(uint64_t id, const char *event)
 {
   Channel *channel;
 
   if (!(channel = pmap_get(uint64_t)(channels, id)) || channel->closed) {
-    abort();
+    return false;
   }
 
   unsubscribe(channel, event);
+  return true;
 }
 
 /// Closes a channel
@@ -687,7 +689,7 @@ end:
   kv_destroy(subscribed);
 }
 
-static void unsubscribe(Channel *channel, char *event)
+static void unsubscribe(Channel *channel, const char *event)
 {
   char *event_string = pmap_get(cstr_t)(event_strings, event);
   pmap_del(cstr_t)(channel->subscribed_events, event_string);

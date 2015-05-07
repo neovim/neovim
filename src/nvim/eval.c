@@ -6593,6 +6593,8 @@ static struct fst {
   {"rpcrequest",      2, 64, f_rpcrequest},
   {"rpcstart",        1, 2, f_rpcstart},
   {"rpcstop",         1, 1, f_rpcstop},
+  {"rpcsubscribe",    2, 2, f_rpcsubscribe},
+  {"rpcunsubscribe",    2, 2, f_rpcunsubscribe},
   {"screenattr",      2, 2, f_screenattr},
   {"screenchar",      2, 2, f_screenchar},
   {"screencol",       0, 0, f_screencol},
@@ -12969,6 +12971,59 @@ static void f_rpcstop(typval_T *argvars, typval_T *rettv)
   }
 
   rettv->vval.v_number = channel_close(argvars[0].vval.v_number);
+}
+
+// "rpcsubscribe()" function
+static void f_rpcsubscribe(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_NUMBER || argvars[0].vval.v_number <= 0) {
+    EMSG2(_(e_invarg2), "channel must be a positive integer");
+    return;
+  }
+
+  const char *method = (char *)get_tv_string_chk(&argvars[1]);
+  if (!method) {
+    return;  // did emsg in get_tv_string_chk
+  }
+
+  rettv->vval.v_number = channel_subscribe(argvars[0].vval.v_number, method);
+  if (!rettv->vval.v_number) {
+    EMSG2(_(e_invarg2), "Channel doesn't exist");
+  }
+}
+
+// "rpcunsubscribe()" function
+static void f_rpcunsubscribe(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_NUMBER || argvars[0].vval.v_number <= 0) {
+    // Wrong argument types
+    EMSG2(_(e_invarg2), "channel must be a number greater than zero");
+    return;
+  }
+
+  const char *method = (char *)get_tv_string_chk(&argvars[1]);
+  if (!method) {
+    return;  // did emsg in get_tv_string_chk
+  }
+
+  rettv->vval.v_number = channel_unsubscribe(argvars[0].vval.v_number, method);
+  if (!rettv->vval.v_number) {
+    EMSG2(_(e_invarg2), "Channel doesn't exist");
+  }
 }
 
 /*

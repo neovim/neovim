@@ -5117,6 +5117,14 @@ rpcstop({channel})					    {Nvim} *rpcstop()*
 		|rpcstart()|. Also closes channels created by connections to
 		|$NVIM_LISTEN_ADDRESS|.
 
+rpcsubscribe({channel}, {event})		    {Nvim} *rpcsubscribe()*
+		Subscribes a |msgpack-rpc| {channel} to receive {event}
+		(|String|) notifications.
+
+rpcunsubscribe({channel}, {event})		    {Nvim} *rpcsubscribe()*
+		Unsubscribes a |msgpack-rpc| {channel} to {event} (|String|)
+		notifications.
+
 screenattr(row, col)						*screenattr()*
 		Like screenchar(), but return the attribute.  This is a rather
 		arbitrary number that can only be used to compare to the
