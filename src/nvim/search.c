@@ -14,6 +14,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
+#include <limits.h>             /* for INT_MAX on MSVC */
 
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
