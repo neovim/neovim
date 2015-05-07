@@ -1951,9 +1951,6 @@ Awaiting updated patches:
     - Command-key mappings do not work. (Alan Schmitt)
     - With 'nopaste' pasting is wrong, with 'paste' Command-V doesn't work.
       (Alan Schmitt)
-    - remove 'macatsui' option when this has been fixed.
-    - when 'macatsui' is off should we always convert to "macroman" and ignore
-      'termencoding'?
 9   HTML indenting can be slow.  Caused by using searchpair().  Can search()
     be used instead?  A.Politz is looking into a solution.
 8   Win32: Add minidump generation. (George Reilly, 2006 Apr 24)

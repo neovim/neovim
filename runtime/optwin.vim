@@ -622,10 +622,6 @@ if has("gui")
       call append("$", " \tset bexpr=" . &bexpr)
     endif
   endif
-  if exists("+macatsui")
-    call append("$", "macatsui\tuse ATSUI text drawing; disable to avoid display problems")
-    call <SID>OptionG("macatsui", &macatsui)
-  endif
 endif
 
 if has("printer")
