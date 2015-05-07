@@ -341,9 +341,6 @@ buffer. (2013 Dec 9)
 Patch for drag&drop reordering of GUI tab pages reordering.
 (Ken Takata, 2013 Nov 22, second one, also by Masamichi Abe)
 
-GTK: problem with 'L' in 'guioptions' changing the window width.
-(Aaron Cornelius, 2012 Feb 6)
-
 Patch to add option that tells whether small deletes go into the numbered
 registers. (Aryeh Leib Taurog, 2013 Nov 18)
 
@@ -385,9 +382,6 @@ Patch to fix that 'cedit' is recognized after :normal. (Christian Brabandt,
 2013 Mar 19, later message)
 
 Patch to view coverage of the tests. (Nazri Ramliy, 2013 Feb 15)
-
-Patch to invert characters differently in GTK. (Yukihiro Nakadaira, 2013 May
-5)
 
 Patch to add "Q" and "A" responses to interactive :substitute. They are
 carried over when using :global. (Christian Brabandt, 2013 Jun 19)
@@ -593,9 +587,6 @@ Patch to pass list to or(), and() and xor(). (Yasuhiro Matsumoto, 2012 Feb 8)
 Patch to improve "it" and "at" text object matching. (Christian Brabandt, 2011
 Nov 20)
 
-Patch to improve GUI find/replace dialog. (Christian Brabandt, 2012 May 26)
-Update Jun 2.
-
 `] moves to character after insert, instead of the last inserted character.
 (Yukihiro Nakadaira, 2011 Dec 9)
 
@@ -768,11 +759,6 @@ Also add named groups: \%{name}(re)  and \%{name}g
 In the sandbox it's not allowed to do many things, but it's possible to change
 or set variables.  Add a way to prevent variables from being changed in the
 sandbox?  E.g.: ":protect g:restore_settings".
-
-GTK: drawing a double-width combining character over single-width characters
-doesn't look right. (Dominique Pelle, 2010 Aug 8)
-
-GTK: tear-off menu does not work. (Kurt Sonnenmoser, 2010 Oct 25)
 
 Win32: tear-off menu does not work when menu language is German. (Markus
 Bossler, 2011 Mar 2)  Fixed by 7.3.095?
@@ -1053,8 +1039,6 @@ for GTK, how about others? (Ron Aaron, 2010 Apr 10)
 
 Patch for GTK buttons X1Mouse and X2Mouse. (Christian J. Robinson, 2010 Aug 9)
 
-Motif: Build on Ubuntu can't enter any text in dialog text fields.
-
 When 'ft' changes redraw custom status line.
 
 ":tab split fname" doesn't set the alternate file in the original window,
@@ -1107,9 +1091,6 @@ Diff mode out of sync. (Gary Johnson, 2010 Aug 4)
 Support a 'systemencoding' option (for Unix).  It specifies the encoding of
 file names. (Kikuchan, 2010 Oct 5).  Useful on a latin1 or double-byte Asian
 system when 'encoding' is "utf-8".
-
-Win32 GUI: last message from startup doesn't show up when there is an echoerr
-command. (Cyril Slobin, 2009 Mar 13)
 
 Win32: completion of file name ":e c:\!test" results in ":e c:\\!test", which
 does not work. (Nieko Maatjes, 2009 Jan 8, Ingo Karkat, 2009 Jan 22)
@@ -1201,11 +1182,6 @@ probably causes this.
 
 Patch to support strikethrough next to bold and italic. (Christian Brabandt,
 2013 Jul 30)  Update from Ken Takata, 2013 Oct 12.
-
-Document that default font in Athena can be set with resources:
-   XtDefaultFont: "9x15"
-   XtDefaultFontSet: "9x15"
-(Richard Sherman, 2009 Apr 12)
 
 Having "Syntax" in 'eventignore' for :bufdo may cause problems, e.g. for
 ":bufdo e" when buffers are open in windows.  ex_listdo(eap) could set the
@@ -1329,23 +1305,14 @@ The utf class table is missing some entries:
 Visual line mode doesn't highlight properly when 'showbreak' is used and the
 line doesn't fit. (Dasn, 2008 May 1)
 
-GUI: In Normal mode can't yank the modeless selection.  Make "gy" do this?
-Works like CTRL-Y in Command line mode.
-
 Mac: Move Carbon todo items to os_mac.txt.  Note that this version is frozen,
 try the Cocoa version.
 
 Mac: After a ":vsplit" the left scrollbar doesn't appear until 'columns' is
 changed or the window is resized.
 
-GTK: when setting 'columns' in a startup script and doing ":vertical diffsplit"
-the window isn't redrawn properly, see two vertical bars.
-
 Mac: Patch for configure: remove arch from ruby link args. (Knezevic, 2008
 Mar 5)  Alternative: Kazuki Sakamoto, Mar 7.
-
-Mac: trouble compiling with Motif, requires --disable-darwin. (Raf, 2008 Aug
-1)  Reply by Ben Schmidt.
 
 C't: On utf-8 system, editing file with umlaut through Gnome results in URL
 with %nn%nn, which is taken as two characters instead of one.
@@ -1642,8 +1609,6 @@ When unloading a buffer in a BufHidden autocommand the hidden flag is reset?
 Substituting an area with a line break with almost the same area does change
 the Visual area.  Can this be fixed? (James Vega, 2006 Sept 15)
 
-GUI: When combining fg en bg make sure they are not equal.
-
 Spell checking: Add a way to specify punctuation characters.  Add the
 superscript numbers by default: 0x2070, 0xb9, 0xb2, 0xb3, 0x2074 - 0x2079.
 
@@ -1799,12 +1764,6 @@ resulting in highlighted "{" in that window, not in the other.
 In mswin.vim: Instead of mapping <C-V> for Insert mode in a complicated way,
 can it be done like ":imap <C-V> <MiddleMouse>" without negative side effects?
 
-GTK: when the Tab pages bar appears or disappears while the window is
-maximized the window is no longer maximized.  Patch that has some idea but
-doesn't work from Geoffrey Antos, 2008 May 5.
-Also: the window may no longer fit on the screen, thus the command line is not
-visible.
-
 When right after "vim file", "M" then CTRL-W v the windows are scrolled
 differently and unexpectedly.  Caused by patch 7.2.398?
 
@@ -1888,9 +1847,6 @@ this, at least for Unix (using device/inode)?
 When switching between windows the cursor is often put in the middle.
 Remember the relative position and restore that, just like lnum and col are
 restored. (Luc St-Louis)
-
-Patch to support horizontal scroll wheel in GTK. Untested. (Bjorn Winckler,
-2010 Jun 30)
 
 Add an option for a minimal text length before inserting a line break for
 'textwidth'.  Avoids very short lines when a very long word follows.
@@ -2020,8 +1976,6 @@ Awaiting updated patches:
 -   findmatch() should be adjusted for Lisp.  See remark at
     get_lisp_indent().  Esp. \( and \) should be skipped. (Dorai Sitaram,
     incomplete patch Mar 18)
--   For GUI Find/Replace dialog support using a regexp.  Patch for Motif
-    and GTK by degreneir (nov 10 and nov 18).
 -   Patch for "paranoid mode" by Kevin Collins, March 7.  Needs much more work.
 
 
@@ -2090,227 +2044,6 @@ Vi incompatibility:
     thing.  (only repeat insert for the first line).
 
 
-GTK+ GUI known bugs:
-9   Crash with X command server over ssh. (Ciaran McCreesh, 2006 Feb 6)
-8   GTK 2: Combining UTF-8 characters not displayed properly in menus (Mikolaj
-    Machowski)  They are displayed as separate characters.  Problem in
-    creating a label?
-8   GTK 2: Combining UTF-8 characters are sometimes not drawn properly.
-    Depends on the font size, "monospace 13" has the problem.  Vim seems to do
-    everything right, must be a GTK bug.  Is there a way to work around it?
-9   Can't paste a Visual selection from GTK-gvim to vim in xterm or Motif gvim
-    when it is longer than 4000 characters.  Works OK from gvim to gvim and
-    vim to vim.  Pasting through xterm (using the shift key) also works.
-    It starts working after GTK gvim loses the selection and gains it again.
--   Gnome2: When moving the toolbar out of the dock, so that it becomes
-    floating, it can no longer be moved.  Therefore making it float has been
-    blocked for now.
-
-
-Win32 GUI known bugs:
--   Win32: tearoff menu window should have a scrollbar when it's taller than
-    the screen.
-8   On Windows 98 the unicows library is needed to support functions with UCS2
-    file names.  Can we load unicows.dll dynamically?
-8   The -P argument doesn't work very well with many MDI applications.
-    The last argument of CreateWindowEx() should be used, see MSDN docs.
-    Tutorial: http://win32assembly.online.fr/tut32.html
-8   In eval.c, io.h is included when MSWIN32 is defined.  Shouldn't this be
-    WIN32?  Or can including io.h be moved to vim.h? (Dan Sharp)
-6   Win32 GUI: With "-u NONE -U NONE" and doing "CTRL-W v" "CTRL-W o", the ":"
-    of ":only" is highlighted like the cursor.  (Lipelis)
-8   When 'encoding' is "utf-8", should use 'guifont' for both normal and wide
-    characters to make Asian languages work.  Win32 fonts contain both
-    type of characters.
-7   When font smoothing is enabled, redrawing can become very slow.  The reason
-    appears to be drawing with a transparent background.  Would it be possible
-    to use an opaque background in most places?
-8   Use another default for 'termencoding': the active codepage.  Means that
-    when 'encoding' is changed typing characters still works properly.
-    Alternative: use the Unicode functions to obtain typed characters.
-7   The cursor color indicating IME mode doesn't work properly. (Shizhu Pan,
-    2004 May 9)
-8   Win32: When clicking on the gvim title bar, which gives it focus, produces
-    a file-changed dialog, after clicking on a button in that dialog the gvim
-    window follows the mouse.  The button-up event is lost.  Only with
-    MS-Windows 98?
-    Try this: ":set sw ts", get enter-prompt, then change the file in a
-    console, go back to Vim and click "reload" in the dialog for the changed
-    file: Window moves with the cursor!
-    Put focus event in input buffer and let generic Vim code handle it?
-8   Win32 GUI: With maximized window, ":set go-=r" doesn't use the space that
-    comes available. (Poucet)  It works OK on Win 98 but doesn't work on Win
-    NT 4.0.  Leaves a grey area where the scrollbar was.  ":set go+=r" also
-    doesn't work properly.
-8   When Vim is minimized and when maximizing it a file-changed dialog pops
-    up, Vim isn't maximized.  It should be done before the dialog, so that it
-    appears in the right position. (Webb)
-9   When selecting at the more-prompt or hit-enter-prompt, the right mouse
-    button doesn't give popup menu.
-    At the hit-enter prompt CTRL-Y doesn't work to copy the modeless
-    selection.
-    On the command line, don't get a popup menu for the right mouse button.
-    Let the middle button paste selected text (not the clipboard but the
-    non-Visual selection)?  Otherwise CTRL-Y has to be used to copy the text.
-8   When 'grepprg' doesn't execute, the error only flashes by, the
-    user can hardly see what is wrong. (Moore)
-    Could use vimrun with an "-nowait" argument to only wait when an error
-    occurs, but "command.com" doesn't return an error code.
-8   When the 'shell' cannot be executed, should give an appropriate error msg.
-    Esp. for a filter command, currently it only complains the file could not
-    be read.
-7   Add an option to add one pixel column to the character width?  Lucida
-    Console italic is wider than the normal font ("d" overlaps with next char).
-    Opposite of 'linespace': 'columnspace'.
-7   At the hit-enter prompt scrolling now no longer works.  Need to use the
-    keyboard to get around this.  Pretend <CR> was hit when the user tries to
-    scroll?
-7   Scrollbar width doesn't change when selecting other windows appearance.
-    Also background color of Toolbar and rectangle below vert. scrollbar.
-6   Drawing text transparently doesn't seem to work (when drawing part cursor).
-8   CTRL key doesn't always work in combination with ALT key.  It does work
-    for function keys, not for alphabetic characters.  Perhaps this is because
-    CTRL-ALT is used by Windows as AltGr?
-8   CTRL-- doesn't work for AZERTY, because it's CTRL-[ for QWERTY.  How do we
-    know which keyboard is being used?
-7   When scrolling, and a background color is dithered, the dither pattern
-    doesn't always join correctly between the scrolled area and the new drawn
-    area (Koloseike).
-8   When gui_init_font() is called with "*", p_guifont is freed while it might
-    still be used somewhere.  This is too tricky, do the font selection first,
-    then set the new font by name (requires putting all logfont parameters in
-    the font name).
-
-
-Athena and Motif:
-6   New Motif toolbar button from Marcin Dalecki:
-    - When the mouse pointer is over an Agide button the red becomes black.
-      Something with the way colors are specified in the .xpm file.
-    - The pixmap is two pixels smaller than it should be.  The gap is filled
-      with grey instead of the current toolbar background color.
-9   Can configure be changed to disable netbeans if the Xpm library is
-    required and it's missing?
-8   When using the resource "Vim*borderwidth 2" the widgets are positioned
-    wrong.
-9   XIM is disabled by default for SGI/IRIX.  Fix XIM so that 'imdisable' can
-    be off by default.
-9   XIM doesn't work properly for Athena/Motif. (Yasuhiro Matsumoto)  For now,
-    keep XIM active at all times when the input method has the preediting
-    flag.
-8   X11: A menu that contains an umlaut is truncated at that character.
-    Happens when the locale is "C", which uses ASCII instead of IS0-8859-1.
-    Is there a way to use latin1 by default?  Gnome_init() seems to do this.
-8   Perhaps use fontsets for everything?
-6   When starting in English and switching the language to Japanese, setting
-    the locale with ":lang", 'guifontset' and "hi menu font=", deleting all
-    menus and setting them again, the menus don't use the new font.  Most of
-    the tooltips work though...
-7   Motif: when using a file selection dialog, the specified file name is not
-    always used (when specifying a filter or another directory).
-8   When 'encoding' is different from the current locale (e.g., utf-8) the
-    menu strings don't work.  Requires conversion from 'encoding' to the
-    current locale.  Workaround: set 'langmenu'.
-
-
-Athena GUI:
-9   The first event for any button in the menu or toolbar appears to get lost.
-    The second click on a menu does work.
-9   When dragging the scrollbar thumb very fast, focus is only obtained in
-    the scrollbar itself.  And the thumb is no longer updated when moving
-    through files.
-7   The file selector is not resizable.  With a big font it is difficult to
-    read long file names. (Schroeder)
-4   Re-write the widget attachments and code so that we will not have to go
-    through and calculate the absolute position of every widget every time the
-    window is refreshed/changes size.  This will help the "flashing-widgets"
-    problem during a refresh.
-5   When starting gvim with all the default colors and then typing
-    ":hi Menu guibg=cyan", the menus change color but the background of the
-    pullright pixmap doesn't change colors.
-    If you type ":hi Menu guibg=cyan font=anyfont", then the pixmap changes
-    colors as it should.
-    Allocating a new pixmap and setting the resource doesn't change the
-    pullright pixmap's colors.  Why?  Possible Athena bug?
-
-
-Motif GUI:
--   gui_mch_browsedir() is missing, browsedir() doesn't work nicely.
-7   Use XmStringCreateLocalized() instead of XmStringCreateSimple()?
-    David Harrison says it's OK (it exists in Motif 1.2).
-8   Lesstif: When deleting a menu that's torn off, the torn off menu becomes
-    very small instead of disappearing.  When closing it, Vim crashes.
-    (Phillipps)
-
-
-GUI:
-9   On Solaris, creating the popup menu causes the right mouse button no
-    longer to work for extending the selection. (Halevy)
-9   When running an external program, it can't always be killed with CTRL-C.
-    e.g., on Solaris 5.5, when using "K" (Keech).  Other 'guipty' problems on
-    Solaris 2.6. (Marley)
-9   On Solaris: Using a "-geometry" argument, bigger than the window where Vim
-    is started from, causes empty lines below the cmdline. (raf)
-8   X11 GUI: When menu is disabled by excluding 'm' from 'guioptions', ALT key
-    should not be used to trigger a menu (like the Win32 version).
-8   When setting 'langmenu', it should be effective immediately.  Store both
-    the English and the translated text in the menu structure.  Re-generate
-    the translation when 'langmenu' has changed.
-8   Basic flaw in the GUI code: NextScreen is updated before calling
-    gui_write(), but the GUI code relies on NextScreen to represent the state
-    of where it is processing the output.
-    Need better separation of Vim core and GUI code.
-8   When fontset support is enabled, setting 'guifont' to a single font
-    doesn't work.
-8   When translating menus ignore the part after the Tab, the shortcut.  So
-    that the same menu item with a different shortcut (e.g., for the Mac) are
-    still translated.
-8   Add way to specify the file filter for the browse dialog.  At least for
-    browse().
-8   Add dialog for search/replace to other GUIs?  Tk has something for this,
-    use that code?  Or use console dialog.
-8   When selecting a font with the font dialog and the font is invalid, the
-    error message disappears too quick.
-7   More features in the find/replace dialog:
-    - regexp on/off
-    - search in selection/buffer/all buffers/directory
-       when all buffers/directory is used:
-	- filter for file name
-       when directory is used:
-	- subdirectory on/off
-	- top directory browser
-8   gui_check_colors() is not called at the right moment.  Do it much later,
-    to avoid problems.
-8   gui_update_cursor() is called for a cursor shape change, even when there
-    are mappings to be processed.  Only do something when going to wait for
-    input.  Or maybe every 100 ms?
-8   X11: When the window size is reduced to fit on screen, there are blank
-    lines below the text and bottom scrollbar.  "gvim -geometry 80x78+0+0".
-    When the "+0+0" is omitted it works.
-8   When starting an external command, and 'guipty' set, BS and DEL are mixed
-    up.  Set erase character somehow?
-8   A dead circumflex followed by a space should give the '^' character
-    (Rommel).  Look how xterm does this.
-    Also: Bednar has some code for dead key handling.
-    Also: Nedit 5.0.2 with USE_XMIM does it right. (Gaya)
-8   The compose key doesn't work properly (Cepas).  Both for Win32 and X11.
-7   The cursor in an inactive window should be hollow.  Currently it's not
-    visible.
-7   GUI on Solaris 2.5.1, using /usr/dt/..: When gvim starts, cursor is
-    hollow, after window lowered/raised it's OK. (Godfrey)
-7   When starting GUI with ":gui", and window is made smaller because it
-    doesn't fit on the screen, there is an extra redraw.
-8   When setting font with .Xdefaults, there is an extra empty line at the
-    bottom, which disappears when using ":set guifont=<Tab>". (Chadzelek)
-8   When font shape changes, but not the size, doing ":set font=" does not
-    redraw the screen with the new font.  Also for Win32.
-    When the size changes, on Solaris 2.5 there isn't a redraw for the
-    remaining part of the window (Phillipps).
--   Flashes really badly in certain cases when running remotely from a Sun.
-4   Re-write the code so that the highlighting isn't changed multiple times
-    when doing a ":hi clear".  The color changes happen three or more times
-    currently.  This is very obvious on a 66Mhz 486.
-
-
 MSDOS and Win32:
 8   Should $USERPROFILE be preferred above $HOMEDRIVE/$HOMEPATH?  No, but it's
     a good fallback, thus use:
@@ -2373,7 +2106,6 @@ Win32 console:
 
 
 Macintosh:
--   GUI: gui_mch_browsedir() is missing.
 7   Loading the Perl library only works on OS/X 10.2 or 10.3, never on both.
     Load the Perl library dynamically see Python sources file dynload_mac
     (Jack)
@@ -2653,16 +2385,6 @@ I can't reproduce these (if you can, let me know how!):
 
 
 Problems that will (probably) not be solved:
--   GTK: when using the popup menu with spelling suggestions and releasing the
-    right mouse button before the menu appears selecting an item with the
-    right mouse button has no effect.  GTK does not produce an event for this.
--   GTK 2: Cannot use the file selector.  When using it many things become
-    slow.  This is caused by some code in GTK that writes
-    ~/.recently-used.xbel every time an event is handled.  It assumes the main
-    loop is never quit, which is a wrong assumption.  Also, it overwrites the
-    file with different file permissions, which is a privacy issue.  This
-    needs to be fixed in GTK.  A solution in Vim would be really complicated.
-    (2008 Jul 31)  This appears to be fixed in Vim 7.3.
 -   xterm title: The following scenario may occur (esp. when running the Vim
     test script): Vim 1 sets the title to "file1", then restores the title to
     "xterm" with an ESC sequence when exiting.  Vim 2 obtains the old title
@@ -2677,11 +2399,6 @@ Problems that will (probably) not be solved:
 -   X windows: When $DISPLAY points to a X server where there is no access
     permission, trying to connect to the X server causes an error message.
     XtOpenDisplay() prints this directly, there is no way to avoid it.
--   X windows: Setting 'guifontset' to an illegal value sometimes crashes Vim.
-    This is caused by a fault in a X library function, can't be solved in Vim.
--   Motif: When adding a menu item "Find this &Symbol", the "s" in "this" will
-    be underlined, instead of in "Symbol".  Motif doesn't let us specify which
-    character gets the highlighting.
 -   Moving the cursor removes color in color-xterm.  This is a color-xterm
     problem!  color-xterm ver. 6.1 beta 3 and later work properly.
 -   In zsh, "gvim&" changes the terminal settings.  This is a zsh problem.
@@ -2701,13 +2418,6 @@ Problems that will (probably) not be solved:
     "%p1" is interpreted as "%p" and "1", causing color not to be working.
     Fix: Change the "%p1" in the "AF" and "AB" terminfo entries to "%p".
     (Benzinger).
--   When running an external command from the GUI, typeahead is going to that
-    program, not to Vim.  It looks like the shell eats the characters, Vim
-    can't get back what the external command didn't use.
--   Win32 GUI: Error code from external command not returned in shell_error.
-    It appears that cmd.exe and command.com don't return an error code.
--   Win32 GUI: The Toolbar is a bit too high when the flat style is being
-    used.  We don't have control over the height of the Toolbar.
 -   Win32: All files created on the day of switching from winter to summer
     time cause "changed since editing started" messages.  It goes away when
     the file is written again the next day, or the timezone is adjusted.
@@ -2720,26 +2430,6 @@ Problems that will (probably) not be solved:
 -   Win32, MS-Windows: expanding plugin/**/*.vim also picks up
     dir/ctags.vim,v.  This is because the short file name is something like
     "ctags~1.vim" and that matches the pattern.
--   SunOS 5.5.1 with Motif: The file open dialog does not have a horizontal
-    scroll bar for the "files" selection.  This is a problem in the Motif
-    libraries, get a patch from Sun.
--   Solaris 2.6 with GTK and Perl: gvim crashes when started.  Problem with X
-    input method called from GDK code.  Without Perl it doesn't crash.
--   Win32 GUI: mouse wheel always scrolls rightmost window.  The events arrive
-    in Vim as if the rightmost scrollbar was used.
--   GTK with Gnome: Produces an error message when starting up:
-	Gdk-WARNING **: locale not supported by C library
-    This is caused by the gnome library gnome_init() setting $LC_CTYPE to
-    "en_US".  Not all systems support this locale name, thus causing the
-    error.  Hopefully a newer version of GTK/Gnome fixes this problem.
--   GTK 2: With this mapping the hit-enter prompt is _sometimes_ below the
-    screen, at other times there is a grey area below the command line:
-	:nmap <F11> :if &guioptions=~'m' \| set guioptions-=m \| else \| set guioptions+=m \| endif<cr>
--   GTK: When pasting a selection from Vim to xclipboard gvim crashes with a
-    ABRT signal.  Probably an error in the file gdkselection.c, the assert
-    always fails when XmbTextListToTextProperty() fails. (Tom Allard)
--   GTK 2: gives an assertion error for every non-builtin icon in the toolbar.
-    This is a GTK 2.4.x bug, fixed in GTK 2.4.2. (Thomas de Grenier de Latour)
 -   When using an xterm that supports the termresponse feature, and the 't_Co'
     termcap option was wrong when Vim started, it will be corrected when the
     termresponse is received.  Since the number of colors changes, the
@@ -2783,9 +2473,6 @@ Most interesting new features to be added when all bugs have been fixed:
     scrolls back to where the cursor is.
 -   Scroll commands by screen line. g CTRL-E and g CTRL-Y ?  Requires the
     first line to be able to start halfway through.
--   Running a shell command from the GUI still has limitations.  Look into how
-    the terminal emulator of the Vim shell project can help:
-    http://vimshell.wana.at
 8   Add a command to jump to a certain kind of tag.  Allow the user to specify
     values for the optional fields.  E.g., ":tag size type=m".
     Also allow specifying the file and command, so that the result of
@@ -2797,8 +2484,6 @@ Most interesting new features to be added when all bugs have been fixed:
 Documentation:
 8   List of Vim runtime directories.  dotvim.txt from Charles Campbell, 2007
     Feb 20.
-8   The GUI help should explain the Find and Find/Replace dialogs.  Add a link
-    to it from ":promptrepl" and ":promptfind".
 8   List of options should mention whether environment variables are expanded
     or not.
 8   Extend usr_27.txt a bit. (Adam Seyfarth)
@@ -3092,10 +2777,6 @@ Multi-byte characters:
     'display' option to specify this.
 7   Use ideas for nl_langinfo() from Markus Kuhn in enc_default():
     (www.cl.cam.ac.uk/~mgk25/ucs/langinfo.c)
--   GTK and Win32: Allow selecting fonts for 'guifontset' with the
-    fontselector somehow.
--   GTK and Win32: make it possible to set the font for the menu to make it
-    possible to have 'encoding' different from the current locale.
 -   dbcs_class() only works for Japanese and Korean.  Implement this for
     other encodings.  The "euc-jp" and "euc-kr" choices might be wrong.
 -   Find some way to automatically select the right GUI font or fontset,
@@ -3702,120 +3383,6 @@ Tags:
     ":idselect", which uses an "ID" database (made by "mkid") like "tselect".
 
 
-Win32 GUI:
-8   Make debug mode work while starting up (vim -D).  Open console window for
-    the message and input?
-7   GvimExt: when there are several existing Vims, move the list to a submenu.
-    (Mike McCollister)
-8   When using "Edit with Vim" for one file it changes directory, when several
-    files are selected and using "Edit with single Vim" the directory isn't
-    changed.  At least change directory when the path is the same for all
-    files.  Perhaps just use the path of the first file or use the longest
-    common part of the path.
-8   Add font argument to set the lfCharSet. (Bobcik)
-8   Somehow automatically detect the system language and set $LANG, so that
-    gettext and menus work.
-8   Could keep console open to run multiple commands, to avoid the need to hit
-    return in every console.
-    Also: Look at how Emacs does run external commands:
-	http://www.cs.washington.edu/homes/voelker/ntemacs.html.
-8   Need a separate PopUp menu for modeless selection.  Need two new commands:
-    Copy selection to clipboard, Paste selection (as typed text).
-8   Support copy/paste for other file formats.  At least HTML, perhaps RTF.
-    Add "copy special" and "paste special" commands?
-7   Use different default colors, to match the current Windows color scheme.
-    Sys_WindowText, Sys_Window, etc. (Lionel Schaffhauser)
-7   Use <C-Tab> to cycle through open windows (e.g., the find dialog).
-7   <Esc> should close a dialog.
-7   Keep the console for external commands open.  Don't wait for a key to be
-    hit.  Re-open it when the user has closed it anyway.  Or use a prepended
-    command: ":nowait {cmd}", or ":quiet", which executes {cmd} without any
-    prompts.
-7   Should be able to set an option so that when you double click a file that
-    is associated with Vim, you can either get a new instance of Vim, or have
-    the file added into an already running Vim.
-7   The "-P" argument only works for the current codepage.  Use wide
-    functions to find the window title.
-
-
-GUI:
--   <C--> cannot be mapped.  Should be possible to recognize this as a
-    normal "-" with the Ctrl modifier.
-7   Implement ":popup" for other systems than Windows.
-8   Implement ":tearoff" for other systems than Win32 GUI.
-6   Implement ":untearoff": hide a torn-off menu.
-8   When using the scrollbar to scroll, don't move the cursor position.  When
-    moving the cursor: scroll to the cursor position.
-9   Make <S-Insert> paste from the clipboard by default. (Kunze)
-7   Menu local to a buffer, like mappings.  Or local to a filetype?
-8   In Buffers menu, add a choice whether selecting a buffer opens it in the
-    current window, splits the window or uses ":hide".
-8   Dragging the mouse pointer outside of a Vim Window should make the text
-    scroll.  Return a value from gui_send_mouse_event() to the machine
-    specific code to indicate the time in which the event should be repeated.
-8   Make it possible to ignore a mouse click when it's used to give Vim (gvim)
-    window focus.  Also when a mouse click is used to bring a window to front.
-8   Make the split into system independent code and system specific code more
-    explicit.  There are too many #ifdefs in gui.c.
-    If possible, separate the Vim code completely from the GUI code, to allow
-    running them in separate processes.
-7   X11: Support cursorColor resource and "-cr" argument.
-8   X11 (and others): CTRL-; is not different from ';'.  Set the modifier mask
-    to include CTRL for keys where CTRL produces the same ASCII code.
-7   Add some code to handle proportional fonts on more systems?  Need to draw
-    each character separately (like xterm).  Also for when a double-width font
-    is not exactly double-width. (Maeda)
-8   Should take font from xterm where gvim was started (if no other default).
-8   Selecting font names in X11 is difficult, make a script or something to
-    select one.
-8   Visual highlighting should keep the same font (bold, italic, etc.).
-8   Add flag to 'guioptions' to not put anything in the clipboard at all?
-8   Should support a way to use keys that we don't recognize yet.  Add a
-    command that adds entries to special_keys somehow.	How do we make this
-    portable (X11, Win32, ..)?
-7   Add a flag to 'guioptions' that tells not to remove inactive menu items.
-    For systems where greying-out or removing menu items is very slow.  The
-    menu items would remain visibly normally, but not do anything.
-7   Add ":minimize" and ":maximize", which iconize the window and back.
-    Useful when using gvim to run a script (e.g. 2html.vim).
-7   X11: Is it possible to free allocated colors, so that other programs can
-    use them again?  Otherwise, allow disabling allocating the default colors.
-    Or allocate an own colormap (check UAE).  With an option to use it.  For
-    the commandline, "-install" is mostly used for X11 programs.
-7   Add command line argument for "gvim" not to start the GUI.  Sort of the
-    inverse of "vim -g". (Vikas)
-7   Should support multi-column menus.
--   Should add option for where to put the "Help" menu: like Motif at the far
-    right, or with the other menus (but still at the right).
--   Add menu item to "Keep Insert mode".
-8   ":mkgvimrc" command, that includes menus.
-6   Big change: Move GUI to separate program "vimgui", to make startup of vim a
-    lot faster, but still be able to do "vim -g" or ":gui".
-7   More explicit mouse button binding instead of 'mousemodel'?
-7   Add option to set the position of the window on the screen.  'windowpos',
-    which has a value of "123,456": <x>,<y>.
-    Or add a command, like ":winsize"?
-7   Add toolbar for more GUIs.
-8   Make it possible to use "amenu icon=BuiltIn##", so that the toolbar item
-    name can be chosen free.
-7   Make it possible to put the toolbar on top, left, right and/or bottom of
-    the window?  Allows for softkey-like use.
-6   Separate the part of Vim that does the editing from the part that runs the
-    GUI.  Communicate through a pseudo-tty.  Vim starts up, creates a
-    pty that is connected to the terminal.  When the GUI starts, the pty is
-    reconnected to the GUI process.  When the GUI stops, it is connected to
-    the terminal again.  Also use the pty for external processes, it looks
-    like a vt100 terminal to them.  Vim uses extra commands to communicate GUI
-    things.
-7   Motif: For a confirm() dialog <Enter> should be ignored when no default
-    button selected, <Esc> should close the dialog.
-7   When using a pseudo-tty Vim should behave like some terminal (vt52 looks
-    simple enough).  Terminal codes to/from shell should be translated.
--   Would it be useful to be able to quit the GUI and go back to the terminal
-    where it was started from?
-7   Support "-visual <type>" command line argument.
-
-
 Autocommands:
 -   Put autocommand event names in a hashtable for faster lookup?
 8   When the SwapExists event is triggered, provide information about the
@@ -3934,7 +3501,6 @@ Omni completion:
 
 
 Insert mode completion/expansion:
--   GUI implementation of the popup menu.
 7   When searching in other files the name flash by, too fast to read.  Only
     display a name every second or so, like with ":vimgrep".
 7   When expanding file names with an environment variable, add the match with
