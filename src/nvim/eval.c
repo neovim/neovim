@@ -7347,7 +7347,7 @@ static buf_T *find_buffer(typval_T *avar)
        * buffer, these don't use the full path. */
       FOR_ALL_BUFFERS(bp) {
         if (bp->b_fname != NULL
-            && (path_with_url(bp->b_fname)
+            && (path_with_url((char *)bp->b_fname)
                 || bt_nofile(bp)
                 )
             && STRCMP(bp->b_fname, avar->vval.v_string) == 0) {
@@ -12484,7 +12484,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
         /* Ensure that the result will have a trailing path separator
          * if the argument has one. */
         if (remain == NULL && has_trailing_pathsep)
-          add_pathsep(buf);
+          add_pathsep((char *)buf);
 
         /* Separate the first path component in the link value and
          * concatenate the remainders. */
@@ -15490,7 +15490,7 @@ static void f_undofile(typval_T *argvars, typval_T *rettv)
       /* If there is no file name there will be no undo file. */
       rettv->vval.v_string = NULL;
     } else {
-      char_u *ffname = FullName_save(fname, FALSE);
+      char_u *ffname = (char_u *)FullName_save((char *)fname, FALSE);
 
       if (ffname != NULL)
         rettv->vval.v_string = u_get_undo_file_name(ffname, FALSE);
@@ -19912,7 +19912,7 @@ repeat:
 
     /* FullName_save() is slow, don't use it when not needed. */
     if (*p != NUL || !vim_isAbsName(*fnamep)) {
-      *fnamep = FullName_save(*fnamep, *p != NUL);
+      *fnamep = (char_u *)FullName_save((char *)*fnamep, *p != NUL);
       xfree(*bufp);          /* free any allocated file name */
       *bufp = *fnamep;
       if (*fnamep == NULL)
@@ -19927,7 +19927,7 @@ repeat:
       *bufp = *fnamep;
       if (*fnamep == NULL)
         return -1;
-      add_pathsep(*fnamep);
+      add_pathsep((char *)*fnamep);
     }
   }
 
@@ -19946,7 +19946,7 @@ repeat:
       if (c == '.' && **fnamep == '~')
         p = pbuf = expand_env_save(*fnamep);
       else
-        p = pbuf = FullName_save(*fnamep, FALSE);
+        p = pbuf = (char_u *)FullName_save((char *)*fnamep, FALSE);
     } else
       p = *fnamep;
 

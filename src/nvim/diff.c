@@ -867,7 +867,7 @@ void ex_diffpatch(exarg_T *eap)
 
 #ifdef UNIX
   // Get the absolute path of the patchfile, changing directory below.
-  fullname = FullName_save(eap->arg, FALSE);
+  fullname = (char_u *)FullName_save((char *)eap->arg, FALSE);
 #endif  // ifdef UNIX
 
 #ifdef UNIX

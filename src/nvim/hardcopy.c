@@ -1532,7 +1532,7 @@ static int prt_find_resource(char *name, struct prt_ps_resource_S *resource)
   STRLCPY(resource->name, name, 64);
   /* Look for named resource file in runtimepath */
   STRCPY(buffer, "print");
-  add_pathsep(buffer);
+  add_pathsep((char *)buffer);
   vim_strcat(buffer, (char_u *)name, MAXPATHL);
   vim_strcat(buffer, (char_u *)".ps", MAXPATHL);
   resource->filename[0] = NUL;

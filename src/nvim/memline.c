@@ -1332,20 +1332,20 @@ recover_names (
         num_names = recov_file_names(names, fname_res, TRUE);
     } else {                      /* check directory dir_name */
       if (fname == NULL) {
-        names[0] = concat_fnames(dir_name, (char_u *)"*.sw?", TRUE);
+        names[0] = (char_u *)concat_fnames((char *)dir_name, "*.sw?", TRUE);
         /* For Unix names starting with a dot are special.  MS-Windows
          * supports this too, on some file systems. */
-        names[1] = concat_fnames(dir_name, (char_u *)".*.sw?", TRUE);
-        names[2] = concat_fnames(dir_name, (char_u *)".sw?", TRUE);
+        names[1] = (char_u *)concat_fnames((char *)dir_name, ".*.sw?", TRUE);
+        names[2] = (char_u *)concat_fnames((char *)dir_name, ".sw?", TRUE);
         num_names = 3;
       } else {
         p = dir_name + STRLEN(dir_name);
         if (after_pathsep((char *)dir_name, (char *)p) && p[-1] == p[-2]) {
           /* Ends with '//', Use Full path for swap name */
-          tail = make_percent_swname(dir_name, fname_res);
+          tail = (char_u *)make_percent_swname((char *)dir_name, (char *)fname_res);
         } else {
           tail = path_tail(fname_res);
-          tail = concat_fnames(dir_name, tail, TRUE);
+          tail = (char_u *)concat_fnames((char *)dir_name, (char *)tail, TRUE);
         }
         num_names = recov_file_names(names, tail, FALSE);
         xfree(tail);
@@ -1364,7 +1364,7 @@ recover_names (
      * Try finding a swap file by simply adding ".swp" to the file name.
      */
     if (*dirp == NUL && file_count + num_files == 0 && fname != NULL) {
-      char_u *swapname = modname(fname_res, (char_u *)".swp", TRUE);
+      char_u *swapname = (char_u *)modname((char *)fname_res, ".swp", TRUE);
       if (swapname != NULL) {
         if (os_file_exists(swapname)) {
           files = (char_u **)xmalloc(sizeof(char_u *));
@@ -1441,17 +1441,18 @@ recover_names (
  * Append the full path to name with path separators made into percent
  * signs, to dir. An unnamed buffer is handled as "" (<currentdir>/"")
  */
-static char_u *make_percent_swname(char_u *dir, char_u *name)
+static char *make_percent_swname(const char *dir, char *name)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
-  char_u *d, *s, *f;
-
-  f = fix_fname(name != NULL ? name : (char_u *) "");
-  d = NULL;
+  char *d = NULL;
+  char *f = fix_fname(name != NULL ? name : "");
   if (f != NULL) {
-    s = (char_u *)xstrdup((char *)f);
-    for (d = s; *d != NUL; mb_ptr_adv(d))
-      if (vim_ispathsep(*d))
+    char *s = xstrdup(f);
+    for (d = s; *d != NUL; mb_ptr_adv(d)) {
+      if (vim_ispathsep(*d)) {
         *d = '%';
+      }
+    }
     d = concat_fnames(dir, s, TRUE);
     xfree(s);
     xfree(f);
@@ -1565,14 +1566,14 @@ static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
   // May also add the file name with a dot prepended, for swap file in same
   // dir as original file.
   if (prepend_dot) {
-    names[num_names] = modname(path, (char_u *)".sw?", TRUE);
+    names[num_names] = (char_u *)modname((char *)path, ".sw?", TRUE);
     if (names[num_names] == NULL)
       return num_names;
     ++num_names;
   }
 
   // Form the normal swap file name pattern by appending ".sw?".
-  names[num_names] = concat_fnames(path, (char_u *)".sw?", FALSE);
+  names[num_names] = (char_u *)concat_fnames((char *)path, ".sw?", FALSE);
   if (num_names >= 1) {     /* check if we have the same name twice */
     char_u *p = names[num_names - 1];
     int i = (int)STRLEN(names[num_names - 1]) - (int)STRLEN(names[num_names]);
@@ -3049,7 +3050,7 @@ int resolve_symlink(char_u *fname, char_u *buf)
    * be consistent even when opening a relative symlink from different
    * working directories.
    */
-  return vim_FullName(tmp, buf, MAXPATHL, TRUE);
+  return vim_FullName((char *)tmp, (char *)buf, MAXPATHL, TRUE);
 }
 #endif
 
@@ -3068,8 +3069,8 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
   s = dir_name + STRLEN(dir_name);
   if (after_pathsep((char *)dir_name, (char *)s) && s[-1] == s[-2]) { /* Ends with '//', Use Full path */
     r = NULL;
-    if ((s = make_percent_swname(dir_name, fname)) != NULL) {
-      r = modname(s, (char_u *)".swp", FALSE);
+    if ((s = (char_u *)make_percent_swname((char *)dir_name, (char *)fname)) != NULL) {
+      r = (char_u *)modname((char *)s, ".swp", FALSE);
       xfree(s);
     }
     return r;
@@ -3083,7 +3084,7 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
 #endif
 
   // Prepend a '.' to the swap file name for the current directory.
-  r = modname(fname_res, (char_u *)".swp",
+  r = (char_u *)modname((char *)fname_res, ".swp",
               dir_name[0] == '.' && dir_name[1] == NUL);
   if (r == NULL)            /* out of memory */
     return NULL;
@@ -3122,17 +3123,17 @@ get_file_in_dir (
     retval = vim_strsave(fname);
   else if (dname[0] == '.' && vim_ispathsep(dname[1])) {
     if (tail == fname)              /* no path before file name */
-      retval = concat_fnames(dname + 2, tail, TRUE);
+      retval = (char_u *)concat_fnames((char *)dname + 2, (char *)tail, TRUE);
     else {
       save_char = *tail;
       *tail = NUL;
-      t = concat_fnames(fname, dname + 2, TRUE);
+      t = (char_u *)concat_fnames((char *)fname, (char *)dname + 2, TRUE);
       *tail = save_char;
-      retval = concat_fnames(t, tail, TRUE);
+      retval = (char_u *)concat_fnames((char *)t, (char *)tail, TRUE);
       xfree(t);
     }
   } else {
-    retval = concat_fnames(dname, tail, TRUE);
+    retval = (char_u *)concat_fnames((char *)dname, (char *)tail, TRUE);
   }
 
   return retval;
@@ -3554,8 +3555,8 @@ fnamecmp_ino (
    * One of the inode numbers is unknown, try a forced vim_FullName() and
    * compare the file names.
    */
-  retval_c = vim_FullName(fname_c, buf_c, MAXPATHL, TRUE);
-  retval_s = vim_FullName(fname_s, buf_s, MAXPATHL, TRUE);
+  retval_c = vim_FullName((char *)fname_c, (char *)buf_c, MAXPATHL, TRUE);
+  retval_s = vim_FullName((char *)fname_s, (char *)buf_s, MAXPATHL, TRUE);
   if (retval_c == OK && retval_s == OK)
     return STRCMP(buf_c, buf_s) != 0;
 

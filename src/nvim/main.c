@@ -1282,7 +1282,7 @@ scripterror:
           && !os_isdir(alist_name(&GARGLIST[0]))) {
         char_u      *r;
 
-        r = concat_fnames(p, path_tail(alist_name(&GARGLIST[0])), TRUE);
+        r = (char_u *)concat_fnames((char *)p, (char *)path_tail(alist_name(&GARGLIST[0])), TRUE);
         xfree(p);
         p = r;
       }

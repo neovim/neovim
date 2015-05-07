@@ -7544,7 +7544,7 @@ static void ex_mkrc(exarg_T *eap)
       char_u      *tbuf;
 
       tbuf = xmalloc(MAXPATHL);
-      if (vim_FullName(fname, tbuf, MAXPATHL, FALSE) == OK)
+      if (vim_FullName((char *)fname, (char *)tbuf, MAXPATHL, FALSE) == OK)
         set_vim_var_string(VV_THIS_SESSION, tbuf, -1);
       xfree(tbuf);
     }
@@ -8155,7 +8155,7 @@ eval_vars (
         /* Still need to turn the fname into a full path.  It is
          * postponed to avoid a delay when <afile> is not used. */
         autocmd_fname_full = TRUE;
-        result = FullName_save(autocmd_fname, FALSE);
+        result = (char_u *)FullName_save((char *)autocmd_fname, FALSE);
         xfree(autocmd_fname);
         autocmd_fname = result;
       }
@@ -8975,7 +8975,7 @@ ses_arglist (
     if (s != NULL) {
       if (fullname) {
         buf = xmalloc(MAXPATHL);
-        (void)vim_FullName(s, buf, MAXPATHL, FALSE);
+        (void)vim_FullName((char *)s, (char *)buf, MAXPATHL, FALSE);
         s = buf;
       }
       if (fputs("argadd ", fd) < 0 || ses_put_fname(fd, s, flagp) == FAIL
@@ -9089,7 +9089,7 @@ static char_u *get_view_file(int c)
       ++len;
   retval = xmalloc(STRLEN(sname) + len + STRLEN(p_vdir) + 9);
   STRCPY(retval, p_vdir);
-  add_pathsep(retval);
+  add_pathsep((char *)retval);
   s = retval + STRLEN(retval);
   for (p = sname; *p; ++p) {
     if (*p == '=') {

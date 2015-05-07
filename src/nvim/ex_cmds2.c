@@ -495,7 +495,7 @@ dbg_parsearg (
     if (p == NULL)
       return FAIL;
     if (*p != '*') {
-      bp->dbg_name = fix_fname(p);
+      bp->dbg_name = (char_u *)fix_fname((char *)p);
       xfree(p);
     } else
       bp->dbg_name = p;
@@ -1692,7 +1692,7 @@ void do_argfile(exarg_T *eap, int argn)
        */
       other = TRUE;
       if (P_HID(curbuf)) {
-        p = fix_fname(alist_name(&ARGLIST[argn]));
+        p = (char_u *)fix_fname((char *)alist_name(&ARGLIST[argn]));
         other = otherfile(p);
         xfree(p);
       }
@@ -2144,7 +2144,7 @@ int do_in_runtimepath(char_u *name, int all, DoInRuntimepathCB callback,
         if (!did_one)
           did_one = (cookie == NULL);
       } else if (STRLEN(buf) + STRLEN(name) + 2 < MAXPATHL) {
-        add_pathsep(buf);
+        add_pathsep((char *)buf);
         tail = buf + STRLEN(buf);
 
         /* Loop over all patterns in "name" */
@@ -2313,7 +2313,7 @@ do_source (
   p = expand_env_save(fname);
   if (p == NULL)
     return retval;
-  fname_exp = fix_fname(p);
+  fname_exp = (char_u *)fix_fname((char *)p);
   xfree(p);
   if (fname_exp == NULL)
     return retval;
@@ -3305,7 +3305,7 @@ static void script_host_execute(char *name, exarg_T *eap)
 static void script_host_execute_file(char *name, exarg_T *eap)
 {
   uint8_t buffer[MAXPATHL];
-  vim_FullName(eap->arg, buffer, sizeof(buffer), false);
+  vim_FullName((char *)eap->arg, (char *)buffer, sizeof(buffer), false);
 
   list_T *args = list_alloc();
   // filename

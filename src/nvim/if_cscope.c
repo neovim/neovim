@@ -2054,7 +2054,7 @@ static char *cs_resolve_file(int i, char *name)
   } else if (csdir != NULL && csinfo[i].fname != NULL && *csdir != NUL) {
     /* Check for csdir to be non empty to avoid empty path concatenated to
      * cscope output. */
-    fullname = (char *)concat_fnames(csdir, (char_u *)name, TRUE);
+    fullname = concat_fnames((char *)csdir, name, TRUE);
   } else {
     fullname = xstrdup(name);
   }

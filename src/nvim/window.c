@@ -4916,7 +4916,7 @@ file_name_in_line (
     if (has_mbyte && (len = (size_t)((*mb_head_off)(line, ptr - 1))) > 0)
       ptr -= len + 1;
     else if (vim_isfilec(ptr[-1])
-             || ((options & FNAME_HYP) && path_is_url(ptr - 1)))
+             || ((options & FNAME_HYP) && path_is_url((char *)ptr - 1)))
       --ptr;
     else
       break;
@@ -4928,7 +4928,7 @@ file_name_in_line (
    */
   len = 0;
   while (vim_isfilec(ptr[len])
-         || ((options & FNAME_HYP) && path_is_url(ptr + len)))
+         || ((options & FNAME_HYP) && path_is_url((char *)ptr + len)))
     if (has_mbyte)
       len += (size_t)(*mb_ptr2len)(ptr + len);
     else

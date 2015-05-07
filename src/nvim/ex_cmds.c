@@ -1530,7 +1530,7 @@ void write_viminfo(char_u *file, int forceit)
 #endif
 
     // Make tempname
-    tempname = modname(fname, (char_u *)".tmp", FALSE);
+    tempname = (char_u *)modname((char *)fname, ".tmp", FALSE);
     if (tempname != NULL) {
       /*
        * Check if tempfile already exists.  Never overwrite an
@@ -2080,7 +2080,7 @@ int do_write(exarg_T *eap)
     other = FALSE;
   } else {
     fname = ffname;
-    free_fname = fix_fname(ffname);
+    free_fname = (char_u *)fix_fname((char *)ffname);
     /*
      * When out-of-memory, keep unexpanded file name, because we MUST be
      * able to write the file in this situation.
@@ -2579,7 +2579,7 @@ do_ecmd (
         ffname = curbuf->b_ffname;
         sfname = curbuf->b_fname;
       }
-      free_fname = fix_fname(ffname);       /* may expand to full path name */
+      free_fname = (char_u *)fix_fname((char *)ffname);       /* may expand to full path name */
       if (free_fname != NULL)
         ffname = free_fname;
       other_file = otherfile(ffname);
@@ -5126,7 +5126,7 @@ void fix_help_buffer(void)
           char_u      *cp;
 
           /* Find all "doc/ *.txt" files in this directory. */
-          add_pathsep(NameBuff);
+          add_pathsep((char *)NameBuff);
           STRCAT(NameBuff, "doc/*.??[tx]");
 
           // Note: We cannot just do `&NameBuff` because it is a statically sized array
@@ -5297,7 +5297,7 @@ void ex_helptags(exarg_T *eap)
 
   /* Get a list of all files in the help directory and in subdirectories. */
   STRCPY(NameBuff, dirname);
-  add_pathsep(NameBuff);
+  add_pathsep((char *)NameBuff);
   STRCAT(NameBuff, "**");
 
   // Note: We cannot just do `&NameBuff` because it is a statically sized array
@@ -5419,7 +5419,7 @@ helptags_one (
    * Do this before scanning through all the files.
    */
   STRCPY(NameBuff, dir);
-  add_pathsep(NameBuff);
+  add_pathsep((char *)NameBuff);
   STRCAT(NameBuff, tagfname);
   fd_tags = mch_fopen((char *)NameBuff, "w");
   if (fd_tags == NULL) {

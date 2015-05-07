@@ -313,7 +313,7 @@ vim_findfile_init (
     if (!vim_isAbsName(rel_fname) && len + 1 < MAXPATHL) {
       /* Make the start dir an absolute path name. */
       STRLCPY(ff_expand_buffer, rel_fname, len + 1);
-      search_ctx->ffsc_start_dir = FullName_save(ff_expand_buffer, FALSE);
+      search_ctx->ffsc_start_dir = (char_u *)FullName_save((char *)ff_expand_buffer, FALSE);
     } else
       search_ctx->ffsc_start_dir = vim_strnsave(rel_fname, len);
     if (*++path != NUL)
@@ -465,7 +465,7 @@ vim_findfile_init (
     goto error_return;
   }
   STRCPY(ff_expand_buffer, search_ctx->ffsc_start_dir);
-  add_pathsep(ff_expand_buffer);
+  add_pathsep((char *)ff_expand_buffer);
   {
     size_t eb_len = STRLEN(ff_expand_buffer);
     char_u *buf = xmalloc(eb_len + STRLEN(search_ctx->ffsc_fix_path) + 1);
@@ -474,7 +474,7 @@ vim_findfile_init (
     STRCPY(buf + eb_len, search_ctx->ffsc_fix_path);
     if (os_isdir(buf)) {
       STRCAT(ff_expand_buffer, search_ctx->ffsc_fix_path);
-      add_pathsep(ff_expand_buffer);
+      add_pathsep((char *)ff_expand_buffer);
     } else {
       char_u *p =  path_tail(search_ctx->ffsc_fix_path);
       char_u *wc_path = NULL;
@@ -484,7 +484,7 @@ vim_findfile_init (
       if (p > search_ctx->ffsc_fix_path) {
         len = (int)(p - search_ctx->ffsc_fix_path) - 1;
         STRNCAT(ff_expand_buffer, search_ctx->ffsc_fix_path, len);
-        add_pathsep(ff_expand_buffer);
+        add_pathsep((char *)ff_expand_buffer);
       } else
         len = (int)STRLEN(search_ctx->ffsc_fix_path);
 
@@ -695,12 +695,12 @@ char_u *vim_findfile(void *search_ctx_arg)
         if (!vim_isAbsName(stackp->ffs_fix_path)
             && search_ctx->ffsc_start_dir) {
           STRCPY(file_path, search_ctx->ffsc_start_dir);
-          add_pathsep(file_path);
+          add_pathsep((char *)file_path);
         }
 
         /* append the fix part of the search path */
         STRCAT(file_path, stackp->ffs_fix_path);
-        add_pathsep(file_path);
+        add_pathsep((char *)file_path);
 
         rest_of_wildcards = stackp->ffs_wc_path;
         if (*rest_of_wildcards != NUL) {
@@ -749,7 +749,7 @@ char_u *vim_findfile(void *search_ctx_arg)
          * Expand wildcards like "*" and "$VAR".
          * If the path is a URL don't try this.
          */
-        if (path_with_url(dirptrs[0])) {
+        if (path_with_url((char *)dirptrs[0])) {
           stackp->ffs_filearray = (char_u **)xmalloc(sizeof(char *));
           stackp->ffs_filearray[0] = vim_strsave(dirptrs[0]);
           stackp->ffs_filearray_size = 1;
@@ -777,14 +777,14 @@ char_u *vim_findfile(void *search_ctx_arg)
            */
           for (int i = stackp->ffs_filearray_cur;
                i < stackp->ffs_filearray_size; ++i) {
-            if (!path_with_url(stackp->ffs_filearray[i])
+            if (!path_with_url((char *)stackp->ffs_filearray[i])
                 && !os_isdir(stackp->ffs_filearray[i]))
               continue;                 /* not a directory */
 
             /* prepare the filename to be checked for existence
              * below */
             STRCPY(file_path, stackp->ffs_filearray[i]);
-            add_pathsep(file_path);
+            add_pathsep((char *)file_path);
             STRCAT(file_path, search_ctx->ffsc_file_to_search);
 
             /*
@@ -798,7 +798,7 @@ char_u *vim_findfile(void *search_ctx_arg)
               suf = curbuf->b_p_sua;
             for (;; ) {
               /* if file exists and we didn't already find it */
-              if ((path_with_url(file_path)
+              if ((path_with_url((char *)file_path)
                    || (os_file_exists(file_path)
                        && (search_ctx->ffsc_find_what
                            == FINDFILE_BOTH
@@ -836,7 +836,7 @@ char_u *vim_findfile(void *search_ctx_arg)
                 stackp->ffs_filearray_cur = (char_u)(i + 1);
                 ff_push(search_ctx, stackp);
 
-                if (!path_with_url(file_path))
+                if (!path_with_url((char *)file_path))
                   simplify_filename(file_path);
                 if (os_dirname(ff_expand_buffer, MAXPATHL)
                     == OK) {
@@ -936,7 +936,7 @@ char_u *vim_findfile(void *search_ctx_arg)
         break;
 
       STRCPY(file_path, search_ctx->ffsc_start_dir);
-      add_pathsep(file_path);
+      add_pathsep((char *)file_path);
       STRCAT(file_path, search_ctx->ffsc_fix_path);
 
       /* create a new stack entry */
@@ -1097,7 +1097,7 @@ static int ff_check_visited(ff_visited_T **visited_list, char_u *fname, char_u *
   FileID file_id;
   // For an URL we only compare the name, otherwise we compare the
   // device/inode.
-  if (path_with_url(fname)) {
+  if (path_with_url((char *)fname)) {
     STRLCPY(ff_expand_buffer, fname, MAXPATHL);
     url = true;
   } else {
@@ -1404,7 +1404,7 @@ find_file_in_path_option (
      * filename on the first call.
      */
     if (first == TRUE) {
-      if (path_with_url(ff_file_to_find)) {
+      if (path_with_url((char *)ff_file_to_find)) {
         file_name = vim_strsave(ff_file_to_find);
         goto theend;
       }

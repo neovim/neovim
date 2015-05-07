@@ -2380,7 +2380,7 @@ jumpto_tag (
      * into a fullpath
      */
     if (!curwin->w_p_pvw) {
-      full_fname = FullName_save(fname, FALSE);
+      full_fname = (char_u *)FullName_save((char *)fname, FALSE);
       fname = full_fname;
 
       /*
