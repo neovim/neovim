@@ -18575,7 +18575,7 @@ void func_dump_profile(FILE *fd)
   if (todo == 0)
     return;         /* nothing to dump */
 
-  sorttab = xmalloc(sizeof(ufunc_T) * todo);
+  sorttab = xmalloc(sizeof(ufunc_T *) * todo);
 
   for (hi = func_hashtab.ht_array; todo > 0; ++hi) {
     if (!HASHITEM_EMPTY(hi)) {
