@@ -750,7 +750,7 @@ char_u *vim_findfile(void *search_ctx_arg)
          * If the path is a URL don't try this.
          */
         if (path_with_url((char *)dirptrs[0])) {
-          stackp->ffs_filearray = (char_u **)xmalloc(sizeof(char *));
+          stackp->ffs_filearray = xmalloc(sizeof(char *));
           stackp->ffs_filearray[0] = vim_strsave(dirptrs[0]);
           stackp->ffs_filearray_size = 1;
         } else
