@@ -3174,8 +3174,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 <
 	For Mac OSX you can use something like this: >
 	    :set guifont=Monaco:h10
-<	Also see 'macatsui', it can help fix display problems.
-								*E236*
+<								*E236*
 	Note that the fonts must be mono-spaced (all characters have the same
 	width).  An exception is GTK 2: all fonts are accepted, but
 	mono-spaced fonts look best.
@@ -4320,20 +4319,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	reset this option. |-u| |--noplugin|
 
 						*'macatsui'* *'nomacatsui'*
-'macatsui'		boolean	(default on)
-			global
-			{only available in Mac GUI version}
-	This is a workaround for when drawing doesn't work properly.  When set
-	and compiled with multi-byte support ATSUI text drawing is used.  When
-	not set ATSUI text drawing is not used.  Switch this option off when
-	you experience drawing problems.  In a future version the problems may
-	be solved and this option becomes obsolete.  Therefore use this method
-	to unset it: >
-		if exists('&macatsui')
-		   set nomacatsui
-		endif
-<	Another option to check if you have drawing problems is
-	'termencoding'.
+'macatsui'		Removed. |vim-differences| {Nvim}
 
 						*'magic'* *'nomagic'*
 'magic'			boolean	(default on)
@@ -6594,8 +6580,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Encoding used for the terminal.  This specifies what character
 	encoding the keyboard produces and the display will understand.  For
 	the GUI it only applies to the keyboard ( 'encoding' is used for the
-	display).  Except for the Mac when 'macatsui' is off, then
-	'termencoding' should be "macroman".
+	display).
 	In the Win32 console version the default value is the console codepage
 	when it differs from the ANSI codepage.
 								*E617*

@@ -110,6 +110,7 @@ MS-DOS support:
   'conskey'
 
 Other options:
+  'macatsui'
   'shortname'
   'shelltype'
   'textauto'
@@ -123,6 +124,9 @@ Other commands:
 Other compile-time features:
   EBCDIC
 
+Nvim does not have a built-in GUI and hence the following aliases have been
+removed: gvim, gex, gview, rgvim, rgview
+
 "Easy mode" (eview, evim, nvim -y)
 "(g)vimdiff" (alias for "(g)nvim -d" |diff-mode|)
 "Vi mode" (nvim -v)
@@ -133,13 +137,8 @@ of just using their command line arguments:
   ex        nvim -e
   exim      nvim -E
   view      nvim -R
-  gvim      nvim -g
-  gex       nvim -eg
-  gview     nvim -Rg
   rvim      nvim -Z
   rview     nvim -RZ
-  rgvim     nvim -gZ
-  rgview    nvim -RgZ
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:
