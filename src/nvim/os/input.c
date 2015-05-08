@@ -246,7 +246,7 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf,
   orig_mouse_row = mouse_row;
   orig_mouse_time = mouse_time;
 
-  int modifiers = 0;
+  uint8_t modifiers = 0;
   if (orig_num_clicks == 2) {
     modifiers |= MOD_MASK_2CLICK;
   } else if (orig_num_clicks == 3) {
@@ -262,10 +262,10 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf,
       // add the modifier sequence
       buf[0] = K_SPECIAL;
       buf[1] = KS_MODIFIER;
-      buf[2] = (uint8_t)modifiers;
+      buf[2] = modifiers;
       bufsize += 3;
     } else {
-      buf[2] |= (uint8_t)modifiers;
+      buf[2] |= modifiers;
     }
   }
 
