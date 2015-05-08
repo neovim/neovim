@@ -333,8 +333,8 @@ void terminal_enter(bool process_deferred)
   int save_rd = RedrawingDisabled;
   State = TERM_FOCUS;
   RedrawingDisabled = false;
-  bool save_mapped_ctrl_c = mapped_ctrl_c;
-  mapped_ctrl_c = true;
+  int save_mapped_ctrl_c = mapped_ctrl_c;
+  mapped_ctrl_c = MAP_ALL_MODES;
   // go to the bottom when the terminal is focused
   adjust_topline(term, false);
   // erase the unfocused cursor

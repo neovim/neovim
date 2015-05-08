@@ -18,6 +18,15 @@ describe('mapping', function()
     execute('inoreab чкпр   vim')
     feed('GAчкпр <esc>')
 
+    -- Mapping of ctrl-c in insert mode.
+    execute('set cpo-=< cpo-=k')
+    execute('inoremap <c-c> <ctrl-c>')
+    execute('cnoremap <c-c> dummy')
+    execute('cunmap <c-c>')
+    feed('GA<cr>')
+    feed('TEST2: CTRL-C |<c-c>A|<cr><esc>')
+    execute('nunmap <c-c>')
+
     -- langmap should not get remapped in insert mode.
     execute('inoremap { FAIL_ilangmap')
     execute('set langmap=+{ langnoremap')
@@ -32,6 +41,8 @@ describe('mapping', function()
     expect([[
       test starts here:
       vim 
+      TEST2: CTRL-C |<ctrl-c>A|
+      
       +
       +]])
   end)
