@@ -9936,7 +9936,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
 #endif
     "arabic",
     "autocmd",
-#if defined(FEAT_BROWSE) && defined(USE_FILE_CHOOSER)
+#ifdef FEAT_BROWSE
     "browsefilter",
 #endif
     "byte_offset",
