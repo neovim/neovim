@@ -460,11 +460,6 @@ add_menu_path (
         menu->silent[i] = menuarg->silent[0];
       }
     }
-#if defined(FEAT_GUI_GTK)
-    /* Need to update the menu tip. */
-    if (modes & MENU_TIP_MODE)
-      gui_mch_menu_set_tip(menu);
-#endif
   }
   return OK;
 
@@ -612,11 +607,6 @@ remove_menu (
       menu->modes |= child->modes;
     if (modes & MENU_TIP_MODE) {
       free_menu_string(menu, MENU_INDEX_TIP);
-#if defined(FEAT_GUI_GTK)
-      /* Need to update the menu tip. */
-      if (gui.in_use)
-        gui_mch_menu_set_tip(menu);
-#endif
     }
     if ((menu->modes & MENU_ALL_MODES) == 0) {
       /* The menu item is no longer valid in ANY mode, so delete it */
@@ -1331,7 +1321,6 @@ void ex_emenu(exarg_T *eap)
 }
 
 #if defined(FEAT_GUI_MSWIN) \
-  || defined(FEAT_GUI_GTK) \
   || defined(FEAT_BEVAL_TIP)
 /*
  * Given a menu descriptor, e.g. "File.New", find it in the menu hierarchy.
