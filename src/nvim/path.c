@@ -1550,7 +1550,7 @@ int path_with_url(const char *fname)
 /*
  * Return TRUE if "name" is a full (absolute) path name or URL.
  */
-int vim_isAbsName(char_u *name)
+bool vim_isAbsName(char_u *name)
 {
   return path_with_url((char *)name) != 0 || path_is_absolute_path(name);
 }

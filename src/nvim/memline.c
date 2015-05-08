@@ -1367,7 +1367,7 @@ recover_names (
       char_u *swapname = (char_u *)modname((char *)fname_res, ".swp", TRUE);
       if (swapname != NULL) {
         if (os_file_exists(swapname)) {
-          files = (char_u **)xmalloc(sizeof(char_u *));
+          files = xmalloc(sizeof(char_u *));
           files[0] = swapname;
           swapname = NULL;
           num_files = 1;
