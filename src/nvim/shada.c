@@ -42,6 +42,7 @@
 #include "nvim/eval_defs.h"
 #include "nvim/version.h"
 #include "nvim/path.h"
+#include "nvim/lib/ringbuf.h"
 
 #define buflist_nr2name(...) ((char *) buflist_nr2name(__VA_ARGS__))
 #define copy_option_part(src, dest, ...) \
@@ -140,6 +141,8 @@ typedef struct {
     struct history_item {
       uint8_t histtype;
       char *string;
+      char sep;
+      bool canfree;
       Array *additional_elements;
     } history_item;
     struct reg {
@@ -168,9 +171,21 @@ typedef struct {
   } data;
 } ShadaEntry;
 
+RINGBUF_TYPEDEF(HM, ShadaEntry)
+
+typedef struct {
+  HMRingBuffer hmrb;
+  bool do_merge;
+  const void *iter;
+  ShadaEntry last_hist_entry;
+  uint8_t history_type;
+} HistoryMergerState;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "shada.c.generated.h"
 #endif
+
+RINGBUF_INIT(HM, hm, ShadaEntry, shada_free_shada_entry)
 
 /// Msgpack callback for writing to FILE*
 static int msgpack_fbuffer_write(void *data, const char *buf, size_t len)
@@ -227,6 +242,93 @@ int shada_read_file(const char *const file, const int flags)
   return OK;
 }
 
+/// Wrapper for hist_iter() function which produces ShadaEntry values
+///
+/// @warning Zeroes original items in process.
+static const void *shada_hist_iter(const void *const iter,
+                                   const uint8_t history_type,
+                                   const bool zero,
+                                   ShadaEntry *const hist)
+  FUNC_ATTR_NONNULL_ARG(4) FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  histentry_T hist_he;
+  const void *const ret = hist_iter(iter, history_type, zero, &hist_he);
+  if (hist_he.hisstr == NULL) {
+    *hist = (ShadaEntry) { .type = kSDItemMissing };
+  } else {
+    *hist = (ShadaEntry) {
+      .type = kSDItemHistoryEntry,
+      .timestamp = hist_he.timestamp,
+      .data = {
+        .history_item = {
+          .histtype = history_type,
+          .string = (char *) hist_he.hisstr,
+          .sep = (char) (history_type == HIST_SEARCH
+                        ? (char) hist_he.hisstr[STRLEN(hist_he.hisstr) + 1]
+                        : 0),
+          .additional_elements = hist_he.additional_elements,
+          .canfree = zero,
+        }
+      }
+    };
+  }
+  return ret;
+}
+
+/// Insert history entry
+///
+/// Inserts history entry at the end of the ring buffer (may insert earlier 
+/// according to the timestamp). If entry was already in the ring buffer 
+/// existing entry will be removed unless it has greater timestamp.
+///
+/// Before the new entry entries from the current NeoVim history will be 
+/// inserted unless `do_iter` argument is false.
+///
+/// @param[in,out]  hms_p    Ring buffer and associated structures.
+/// @param[in]      entry    Inserted entry.
+/// @param[in]      do_iter  Determines whether NeoVim own history should be 
+///                          used.
+static void insert_history_entry(HistoryMergerState *const hms_p,
+                                 const ShadaEntry entry,
+                                 const bool no_iter)
+{
+  HMRingBuffer *const rb = &(hms_p->hmrb);
+  RINGBUF_FORALL(rb, ShadaEntry, cur_entry) {
+    if (STRCMP(cur_entry->data.history_item.string,
+               entry.data.history_item.string) == 0) {
+      if (entry.timestamp > cur_entry->timestamp) {
+        hm_rb_remove(rb, (size_t) hm_rb_find_idx(rb, cur_entry));
+      } else {
+        return;
+      }
+    }
+  }
+  if (!no_iter) {
+    if (hms_p->iter == NULL) {
+      if (hms_p->last_hist_entry.type != kSDItemMissing
+          && hms_p->last_hist_entry.timestamp < entry.timestamp) {
+        insert_history_entry(hms_p, hms_p->last_hist_entry, false);
+        hms_p->last_hist_entry.type = kSDItemMissing;
+      }
+    } else {
+      while (hms_p->iter != NULL
+            && hms_p->last_hist_entry.type != kSDItemMissing
+            && hms_p->last_hist_entry.timestamp < entry.timestamp) {
+        insert_history_entry(hms_p, hms_p->last_hist_entry, false);
+        hms_p->iter = shada_hist_iter(hms_p->iter, hms_p->history_type, true,
+                                      &(hms_p->last_hist_entry));
+      }
+    }
+  }
+  ShadaEntry *insert_after;
+  RINGBUF_ITER_BACK(rb, ShadaEntry, insert_after) {
+    if (insert_after->timestamp <= entry.timestamp) {
+      break;
+    }
+  }
+  hm_rb_insert(rb, (size_t) (hm_rb_find_idx(rb, insert_after) + 1), entry);
+}
+
 /// Read data from ShaDa file
 ///
 /// @param[in]  fp     File to read from.
@@ -234,6 +336,15 @@ int shada_read_file(const char *const file, const int flags)
 static void shada_read(FILE *const fp, const int flags)
   FUNC_ATTR_NONNULL_ALL
 {
+  HistoryMergerState hms[HIST_COUNT];
+  if (flags & kShaDaWantInfo && p_hi) {
+    for (uint8_t i = 0; i < HIST_COUNT; i++) {
+      hms[i].hmrb = hm_rb_new((size_t) p_hi);
+      hms[i].do_merge = true;
+      hms[i].iter = shada_hist_iter(NULL, i, true, &(hms[i].last_hist_entry));
+      hms[i].history_type = i;
+    }
+  }
   ShadaEntry cur_entry;
   buf_T *local_mark_prev_buf = NULL;
   char *local_mark_prev_fname = NULL;
@@ -290,12 +401,17 @@ static void shada_read(FILE *const fp, const int flags)
         break;
       }
       case kSDItemHistoryEntry: {
-        if (!(flags & kShaDaWantInfo)) {
+        if (!(flags & kShaDaWantInfo && p_hi)) {
           shada_free_shada_entry(&cur_entry);
           break;
         }
-        // FIXME
-        shada_free_shada_entry(&cur_entry);
+        if (cur_entry.data.history_item.histtype >= HIST_COUNT) {
+          shada_free_shada_entry(&cur_entry);
+          break;
+        }
+        insert_history_entry(hms + cur_entry.data.history_item.histtype,
+                             cur_entry, true);
+        // Do not free shada entry: its allocated memory was saved above.
         break;
       }
       case kSDItemRegister: {
@@ -353,6 +469,7 @@ static void shada_read(FILE *const fp, const int flags)
             .additional_data = cur_entry.data.filemark.additional_data,
           },
         }, !(flags & kShaDaForceit));
+        // Do not free shada entry: its allocated memory was saved above.
         break;
       }
       case kSDItemJump: {
@@ -405,6 +522,43 @@ static void shada_read(FILE *const fp, const int flags)
         free(cur_entry.data.filemark.fname);
         break;
       }
+    }
+  }
+  // Warning: shada_hist_iter returns ShadaEntry elements which use strings from 
+  //          original history list. This means that once such entry is removed 
+  //          from the history NeoVim array will no longer be valid. To reduce 
+  //          amount of memory allocations ShaDa file reader allocates enough 
+  //          memory for the history string itself and separator character which 
+  //          may be assigned right away.
+  if (flags & kShaDaWantInfo && p_hi) {
+    for (uint8_t i = 0; i < HIST_COUNT; i++) {
+      if (hms[i].last_hist_entry.type != kSDItemMissing) {
+        insert_history_entry(&(hms[i]), hms[i].last_hist_entry, false);
+      }
+      while (hms[i].iter != NULL
+            && hms[i].last_hist_entry.type != kSDItemMissing) {
+        hms[i].iter = shada_hist_iter(hms[i].iter, hms[i].history_type, true,
+                                      &(hms[i].last_hist_entry));
+        insert_history_entry(&(hms[i]), hms[i].last_hist_entry, false);
+      }
+      clr_history(i);
+      int *new_hisidx;
+      int *new_hisnum;
+      histentry_T *hist = hist_get_array(i, &new_hisidx, &new_hisnum);
+      if (hist != NULL) {
+        histentry_T *const hist_init = hist;
+        RINGBUF_FORALL(&(hms[i].hmrb), ShadaEntry, cur_entry) {
+          hist->timestamp = cur_entry->timestamp;
+          hist->hisnum = (int) (hist - hist_init) + 1;
+          hist->hisstr = (char_u *) cur_entry->data.history_item.string;
+          hist->additional_elements =
+              cur_entry->data.history_item.additional_elements;
+          hist++;
+        }
+        *new_hisnum = (int) hm_rb_length(&(hms[i].hmrb));
+        *new_hisidx = *new_hisnum - 1;
+      }
+      hm_rb_dealloc(&(hms[i].hmrb));
     }
   }
   xfree(local_mark_prev_fname);
@@ -491,7 +645,9 @@ static void shada_pack_entry(msgpack_packer *const packer,
       break;
     }
     case kSDItemHistoryEntry: {
-      const size_t arr_size = 2 + (
+      const bool is_hist_search =
+          entry.data.history_item.histtype == HIST_SEARCH;
+      const size_t arr_size = 2 + (size_t) is_hist_search + (
           entry.data.history_item.additional_elements == NULL
           ? 0
           : entry.data.history_item.additional_elements->size);
@@ -499,7 +655,10 @@ static void shada_pack_entry(msgpack_packer *const packer,
       msgpack_pack_uint8(spacker, entry.data.history_item.histtype);
       msgpack_rpc_from_string(cstr_as_string(entry.data.history_item.string),
                               spacker);
-      for (size_t i = 0; i < arr_size - 2; i++) {
+      if (is_hist_search) {
+        msgpack_pack_uint8(spacker, (uint8_t) entry.data.history_item.sep);
+      }
+      for (size_t i = 0; i < arr_size - 2 - (size_t) is_hist_search; i++) {
         msgpack_rpc_from_object(
             entry.data.history_item.additional_elements->items[i], spacker);
       }
@@ -798,26 +957,35 @@ static void shada_write(FILE *const newfp, FILE *const oldfp)
   // FIXME No merging currently
 
   // 4. History
-  const void *hist_iters[HIST_COUNT] = {NULL, NULL, NULL, NULL, NULL};
+  HistoryMergerState hms[HIST_COUNT];
   for (uint8_t i = 0; i < HIST_COUNT; i++) {
-    do {
-      histentry_T cur_hist;
-      hist_iters[i] = hist_iter(hist_iters[i], i, false, &cur_hist);
-      if (cur_hist.hisstr == NULL) {
-        break;
-      }
-      shada_pack_entry(packer, (ShadaEntry) {
-        .type = kSDItemHistoryEntry,
-        .timestamp = cur_hist.timestamp,
-        .data = {
-          .history_item = {
-            .histtype = i,
-            .string = (char *) cur_hist.hisstr,
-            .additional_elements = cur_hist.additional_elements,
+    long num_saved = get_viminfo_parameter(hist_type2char(i));
+    if (num_saved == -1) {
+      num_saved = p_hi;
+    }
+    if (num_saved > 0) {
+      HistoryMergerState *hms_p = &(hms[i]);
+      hms_p->hmrb = hm_rb_new((size_t) num_saved);
+      hms_p->do_merge = false;
+      hms_p->iter = shada_hist_iter(NULL, i, false, &(hms[i].last_hist_entry));
+      hms_p->history_type = i;
+      if (hms_p->last_hist_entry.type != kSDItemMissing) {
+        hm_rb_push(&(hms_p->hmrb), hms_p->last_hist_entry);
+        while (hms_p->iter != NULL) {
+          hms_p->iter = shada_hist_iter(hms_p->iter, hms_p->history_type, false,
+                                        &(hms_p->last_hist_entry));
+          if (hms_p->last_hist_entry.type != kSDItemMissing) {
+            hm_rb_push(&(hms_p->hmrb), hms_p->last_hist_entry);
+          } else {
+            break;
           }
         }
-      }, max_kbyte);
-    } while (hist_iters[i] != NULL);
+      }
+      RINGBUF_FORALL(&(hms_p->hmrb), ShadaEntry, cur_entry) {
+        shada_pack_entry(packer, *cur_entry, max_kbyte);
+      }
+      hm_rb_dealloc(&hms_p->hmrb);
+    }
   }
 
   // 5. Search patterns
@@ -1042,11 +1210,13 @@ static void shada_free_shada_entry(ShadaEntry *const entry)
       break;
     }
     case kSDItemHistoryEntry: {
-      if (entry->data.history_item.additional_elements != NULL) {
-        api_free_array(*entry->data.history_item.additional_elements);
-        xfree(entry->data.history_item.additional_elements);
+      if (entry->data.history_item.canfree) {
+        if (entry->data.history_item.additional_elements != NULL) {
+          api_free_array(*entry->data.history_item.additional_elements);
+          xfree(entry->data.history_item.additional_elements);
+        }
+        xfree(entry->data.history_item.string);
       }
-      xfree(entry->data.history_item.string);
       break;
     }
     case kSDItemVariable: {
@@ -1656,7 +1826,8 @@ shada_read_next_item_start:
       entry->data.history_item = (struct history_item) {
         .histtype = 0,
         .string = NULL,
-        .additional_elements = NULL
+        .sep = 0,
+        .additional_elements = NULL,
       };
       if (unpacked.data.via.array.size < 2) {
         emsgn("Error while reading ShaDa file: "
@@ -1683,16 +1854,47 @@ shada_read_next_item_start:
       }
       entry->data.history_item.histtype =
           (uint8_t) unpacked.data.via.array.ptr[0].via.u64;
-      entry->data.history_item.string =
-          xmemdupz(unpacked.data.via.array.ptr[1].via.bin.ptr,
-                   unpacked.data.via.array.ptr[1].via.bin.size);
-      if (unpacked.data.via.array.size > 2) {
+      const bool is_hist_search =
+          entry->data.history_item.histtype == HIST_SEARCH;
+      if (is_hist_search) {
+        if (unpacked.data.via.array.size < 3) {
+          emsgn("Error while reading ShaDa file: "
+                "search history entry at position %" PRId64 " "
+                "does not have separator character",
+                (int64_t) initial_fpos);
+          goto shada_read_next_item_error;
+        }
+        if (unpacked.data.via.array.ptr[2].type
+            != MSGPACK_OBJECT_POSITIVE_INTEGER) {
+          emsgn("Error while reading ShaDa file: "
+                "search history entry at position %" PRId64 " "
+                "has wrong history separator type",
+                (int64_t) initial_fpos);
+          goto shada_read_next_item_error;
+        }
+        entry->data.history_item.sep =
+            (char) unpacked.data.via.array.ptr[2].via.u64;
+      }
+      const size_t strsize = (
+          unpacked.data.via.array.ptr[1].via.bin.size
+          + 1 // Zero byte
+          + 1 // Separator character
+      );
+      entry->data.history_item.string = xmalloc(strsize);
+      memcpy(entry->data.history_item.string,
+             unpacked.data.via.array.ptr[1].via.bin.ptr,
+             unpacked.data.via.array.ptr[1].via.bin.size);
+      entry->data.history_item.string[strsize - 2] = 0;
+      entry->data.history_item.string[strsize - 1] =
+          entry->data.history_item.sep;
+      if (unpacked.data.via.array.size > (size_t) (2 + is_hist_search)) {
         msgpack_object obj = {
           .type = MSGPACK_OBJECT_ARRAY,
           .via = {
             .array = {
-              .size = unpacked.data.via.array.size - 2,
-              .ptr = unpacked.data.via.array.ptr + 2,
+              .size = (unpacked.data.via.array.size
+                       - (uint32_t) (2 + is_hist_search)),
+              .ptr = unpacked.data.via.array.ptr + (2 + is_hist_search),
             }
           }
         };

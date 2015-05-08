@@ -38,7 +38,6 @@ typedef char_u *(*CompleteListItemGetter)(expand_T *, int);
 /// History entry definition
 typedef struct hist_entry {
   int hisnum;           ///< Entry identifier number.
-  bool viminfo;         ///< If true, indicates that entry comes from viminfo.
   char_u *hisstr;       ///< Actual entry, separator char after the NUL.
   Timestamp timestamp;  ///< Time when entry was added.
   Array *additional_elements;  ///< Additional entries from ShaDa file.

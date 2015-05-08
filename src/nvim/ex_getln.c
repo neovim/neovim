@@ -4274,8 +4274,7 @@ in_history (
     int type,
     char_u *str,
     int move_to_front,              /* Move the entry to the front if it exists */
-    int sep,
-    int writing                    /* ignore entries read from viminfo */
+    int sep
 )
 {
   int i;
@@ -4293,7 +4292,6 @@ in_history (
      * well. */
     p = history[type][i].hisstr;
     if (STRCMP(str, p) == 0
-        && !(writing && history[type][i].viminfo)
         && (type != HIST_SEARCH || sep == p[STRLEN(p) + 1])) {
       if (!move_to_front)
         return TRUE;
@@ -4313,7 +4311,6 @@ in_history (
       last_i = i;
     }
     history[type][i].hisnum = ++hisnum[type];
-    history[type][i].viminfo = FALSE;
     history[type][i].hisstr = str;
     history[type][i].timestamp = os_time();
     history[type][i].additional_elements = NULL;
@@ -4386,7 +4383,7 @@ add_to_history (
     }
     last_maptick = -1;
   }
-  if (!in_history(histype, new_entry, TRUE, sep, FALSE)) {
+  if (!in_history(histype, new_entry, TRUE, sep)) {
     if (++hisidx[histype] == hislen)
       hisidx[histype] = 0;
     hisptr = &history[histype][hisidx[histype]];
@@ -4400,7 +4397,6 @@ add_to_history (
     hisptr->hisstr[len + 1] = sep;
 
     hisptr->hisnum = ++hisnum[histype];
-    hisptr->viminfo = FALSE;
     if (histype == HIST_SEARCH && in_map)
       last_maptick = maptick;
   }
@@ -4768,6 +4764,32 @@ void ex_history(exarg_T *eap)
   }
 }
 
+/// Translate a history type number to the associated character
+int hist_type2char(int type)
+  FUNC_ATTR_CONST
+{
+  switch (type) {
+    case HIST_CMD: {
+      return ':';
+    }
+    case HIST_SEARCH: {
+      return '/';
+    }
+    case HIST_EXPR: {
+      return '=';
+    }
+    case HIST_INPUT: {
+      return '@';
+    }
+    case HIST_DEBUG: {
+      return '>';
+    }
+    default: {
+      assert(false);
+    }
+  }
+}
+
 /*
  * Write a character at the current cursor+offset position.
  * It is directly written into the command buffer block.
@@ -5078,7 +5100,7 @@ char_u *script_get(exarg_T *eap, char_u *cmd)
 ///
 /// @return Pointer used in next iteration or NULL to indicate that iteration 
 ///         was finished.
-const void *hist_iter(const void *const iter, const size_t history_type,
+const void *hist_iter(const void *const iter, const uint8_t history_type,
                       const bool zero, histentry_T *const hist)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(4)
 {
@@ -5120,4 +5142,23 @@ const void *hist_iter(const void *const iter, const size_t history_type,
   }
   hiter++;
   return (const void *) ((hiter > hend) ? hstart : hiter);
+}
+
+/// Get array of history items
+///
+/// @param[in]   history_type  Type of the history to get array for.
+/// @param[out]  new_hisidx    Location where last index in the new array should 
+///                            be saved.
+/// @param[out]  new_hisnum    Location where last history number in the new 
+///                            history should be saved.
+///
+/// @return Pointer to the array or NULL.
+histentry_T *hist_get_array(const uint8_t history_type, int **const new_hisidx,
+                            int **const new_hisnum)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+{
+  init_history();
+  *new_hisidx = &(hisidx[history_type]);
+  *new_hisnum = &(hisnum[history_type]);
+  return history[history_type];
 }
