@@ -338,7 +338,7 @@ enum {
  * functions of these names. The declarations would break if the defines had
  * been seen at that stage.  But it must be before globals.h, where error_ga
  * is declared. */
-#if !defined(FEAT_GUI_X11) && !defined(FEAT_GUI_MAC)
+#if !defined(FEAT_GUI_MAC)
 # define mch_errmsg(str)        fprintf(stderr, "%s", (str))
 # define display_errors()       fflush(stderr)
 # define mch_msg(str)           printf("%s", (str))
