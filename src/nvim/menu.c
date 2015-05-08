@@ -460,7 +460,7 @@ add_menu_path (
         menu->silent[i] = menuarg->silent[0];
       }
     }
-#if defined(FEAT_TOOLBAR) && !defined(FEAT_GUI_W32) \
+#if defined(FEAT_TOOLBAR) \
     && (defined(FEAT_BEVAL) || defined(FEAT_GUI_GTK))
     /* Need to update the menu tip. */
     if (modes & MENU_TIP_MODE)
@@ -570,16 +570,6 @@ remove_menu (
         return FAIL;
       }
       if ((menu->modes & modes) != 0x0) {
-#if defined(FEAT_GUI_W32) & defined(FEAT_TEAROFF)
-        /*
-         * If we are removing all entries for this menu,MENU_ALL_MODES,
-         * Then kill any tearoff before we start
-         */
-        if (*p == NUL && modes == MENU_ALL_MODES) {
-          if (IsWindow(menu->tearoff_handle))
-            DestroyWindow(menu->tearoff_handle);
-        }
-#endif
         if (remove_menu(&menu->children, p, modes, silent) == FAIL)
           return FAIL;
       } else if (*name != NUL) {
@@ -618,18 +608,13 @@ remove_menu (
 
     /* Recalculate modes for menu based on the new updated children */
     menu->modes &= ~modes;
-#if defined(FEAT_GUI_W32) & defined(FEAT_TEAROFF)
-    if ((s_tearoffs) && (menu->children != NULL))     /* there's a tear bar.. */
-      child = menu->children->next;       /* don't count tearoff bar */
-    else
-#endif
     child = menu->children;
     for (; child != NULL; child = child->next)
       menu->modes |= child->modes;
     if (modes & MENU_TIP_MODE) {
       free_menu_string(menu, MENU_INDEX_TIP);
-#if defined(FEAT_TOOLBAR) && !defined(FEAT_GUI_W32) \
-      && (defined(FEAT_BEVAL) || defined(FEAT_GUI_GTK))
+#if defined(FEAT_TOOLBAR) && \
+      (defined(FEAT_BEVAL) || defined(FEAT_GUI_GTK))
       /* Need to update the menu tip. */
       if (gui.in_use)
         gui_mch_menu_set_tip(menu);
@@ -637,10 +622,6 @@ remove_menu (
     }
     if ((menu->modes & MENU_ALL_MODES) == 0) {
       /* The menu item is no longer valid in ANY mode, so delete it */
-#if defined(FEAT_GUI_W32) & defined(FEAT_TEAROFF)
-      if (s_tearoffs && menu->children != NULL)       /* there's a tear bar.. */
-        free_menu(&menu->children);
-#endif
       *menup = menu;
       free_menu(menup);
     }
