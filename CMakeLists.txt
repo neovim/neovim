@@ -316,6 +316,20 @@ if(BUSTED_PRG)
     test/config/paths.lua.in
     ${CMAKE_BINARY_DIR}/test/config/paths.lua)
 
+  set(UNITTEST_PREREQS nvim-test unittest-headers)
+  set(FUNCTIONALTEST_PREREQS nvim tty-test shell-test)
+  set(BENCHMARK_PREREQS nvim tty-test)
+
+  # Useful for automated build systems, if they want to manually run the tests.
+  add_custom_target(unittest-prereqs
+    DEPENDS ${UNITTEST_PREREQS})
+
+  add_custom_target(functionaltest-prereqs
+    DEPENDS ${FUNCTIONALTEST_PREREQS})
+
+  add_custom_target(benchmark-prereqs
+    DEPENDS ${BENCHMARK_PREREQS})
+
   add_custom_target(unittest
     COMMAND ${CMAKE_COMMAND}
       -DBUSTED_PRG=${BUSTED_PRG}
@@ -326,7 +340,7 @@ if(BUSTED_PRG)
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -DTEST_TYPE=unit
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-    DEPENDS nvim-test unittest-headers)
+    DEPENDS ${UNITTEST_PREREQS})
 
   add_custom_target(functionaltest
     COMMAND ${CMAKE_COMMAND}
@@ -338,7 +352,7 @@ if(BUSTED_PRG)
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -DTEST_TYPE=functional
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-    DEPENDS nvim tty-test)
+    DEPENDS ${FUNCTIONALTEST_PREREQS})
 
   add_custom_target(benchmark
     COMMAND ${CMAKE_COMMAND}
@@ -350,5 +364,5 @@ if(BUSTED_PRG)
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -DTEST_TYPE=benchmark
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-    DEPENDS nvim tty-test)
+    DEPENDS ${BENCHMARK_PREREQS})
 endif()
