@@ -61,7 +61,7 @@ if(USE_BUNDLED_BUSTED)
 
   add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build lua_cliargs 2.3-3 ${LUAROCKS_BUILDARGS}
+    ARGS build lua_cliargs 2.5-1 ${LUAROCKS_BUILDARGS}
     COMMAND ${LUAROCKS_BINARY}
     ARGS build luafilesystem 1.6.3-1 ${LUAROCKS_BUILDARGS}
     COMMAND ${LUAROCKS_BINARY}
@@ -69,17 +69,19 @@ if(USE_BUNDLED_BUSTED)
     COMMAND ${LUAROCKS_BINARY}
     ARGS build say 1.3-0 ${LUAROCKS_BUILDARGS}
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build luassert 1.7.4-0 ${LUAROCKS_BUILDARGS}
+    ARGS build luassert 1.7.6-0 ${LUAROCKS_BUILDARGS}
     COMMAND ${LUAROCKS_BINARY}
     ARGS build lua-term 0.1-1 ${LUAROCKS_BUILDARGS}
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build penlight 1.0.0-1 ${LUAROCKS_BUILDARGS}
+    ARGS build penlight 1.3.2-2 ${LUAROCKS_BUILDARGS}
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build mediator_lua 1.1-3 ${LUAROCKS_BUILDARGS}
+    ARGS build mediator_lua 1.1.1-0 ${LUAROCKS_BUILDARGS}
     COMMAND ${LUAROCKS_BINARY}
     ARGS build luasocket 3.0rc1-2 ${LUAROCKS_BUILDARGS}
     COMMAND ${LUAROCKS_BINARY}
     ARGS build xml 1.1.2-1 ${LUAROCKS_BUILDARGS}
+    COMMAND ${LUAROCKS_BINARY}
+    ARGS build ansicolors 1.0.2-3 ${LUAROCKS_BUILDARGS}
     COMMAND touch ${DEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps
     DEPENDS lpeg)
   add_custom_target(stable-busted-deps
