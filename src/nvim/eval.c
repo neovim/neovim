@@ -9937,7 +9937,6 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "arabic",
     "autocmd",
 #if defined(FEAT_BROWSE) && (defined(USE_FILE_CHOOSER) \
-    || defined(FEAT_GUI_W32) \
     || defined(FEAT_GUI_MOTIF))
     "browsefilter",
 #endif
