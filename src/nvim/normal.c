@@ -2105,10 +2105,6 @@ do_mouse (
        * NOTE: Ignore right button down and drag mouse events.
        * Windows only shows the popup menu on the button up event.
        */
-#if defined(FEAT_GUI_MAC)
-      if (!is_click)
-        return false;
-#endif
       return false;
     }
     if (which_button == MOUSE_LEFT
