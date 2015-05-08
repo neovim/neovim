@@ -371,7 +371,7 @@ void add_pathsep(char *p)
 /// @return [allocated] Copy of absolute path to `fname` or NULL when
 ///                     `fname` is NULL.
 char *FullName_save(char *fname, bool force)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC
 {
   if (fname == NULL) {
     return NULL;
@@ -1564,7 +1564,7 @@ int vim_isAbsName(char_u *name)
 ///
 /// @return           FAIL for failure, OK otherwise
 int vim_FullName(const char *fname, char *buf, int len, bool force)
-  FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
   int retval = OK;
   int url;
