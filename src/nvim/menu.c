@@ -1329,59 +1329,6 @@ void ex_emenu(exarg_T *eap)
     EMSG2(_("E335: Menu not defined for %s mode"), mode);
 }
 
-#if defined(FEAT_BEVAL_TIP)
-/*
- * Given a menu descriptor, e.g. "File.New", find it in the menu hierarchy.
- */
-vimmenu_T *gui_find_menu(char_u *path_name)
-{
-  vimmenu_T   *menu = NULL;
-  char_u      *name;
-  char_u      *saved_name;
-  char_u      *p;
-
-  menu = root_menu;
-
-  saved_name = vim_strsave(path_name);
-
-  name = saved_name;
-  while (*name) {
-    /* find the end of one dot-separated name and put a NUL at the dot */
-    p = menu_name_skip(name);
-
-    while (menu != NULL) {
-      if (menu_name_equal(name, menu)) {
-        if (menu->children == NULL) {
-          /* found a menu item instead of a sub-menu */
-          if (*p == NUL)
-            EMSG(_("E336: Menu path must lead to a sub-menu"));
-          else
-            EMSG(_(e_notsubmenu));
-          menu = NULL;
-          goto theend;
-        }
-        if (*p == NUL)              /* found a full match */
-          goto theend;
-        break;
-      }
-      menu = menu->next;
-    }
-    if (menu == NULL)           /* didn't find it */
-      break;
-
-    /* Found a match, search the sub-menu. */
-    menu = menu->children;
-    name = p;
-  }
-
-  if (menu == NULL)
-    EMSG(_("E337: Menu not found - check menu names"));
-theend:
-  xfree(saved_name);
-  return menu;
-}
-#endif
-
 /*
  * Translation of menu names.  Just a simple lookup table.
  */
