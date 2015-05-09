@@ -28,13 +28,13 @@ typedef enum {
 } ServerType;
 
 typedef struct {
-  // The address of a pipe, or string value of a tcp address.
+  // Pipe/socket path, or TCP address string
   char addr[ADDRESS_MAX_SIZE];
 
   // Type of the union below
   ServerType type;
 
-  // This is either a tcp server or unix socket(named pipe on windows)
+  // TCP server or unix socket (named pipe on Windows)
   union {
     struct {
       uv_tcp_t handle;
@@ -144,7 +144,7 @@ int server_start(const char *endpoint)
   size_t addr_len = (size_t)(ip_end - addr);
 
   if (addr_len > sizeof(ip) - 1) {
-    // Maximum length of an IP address buffer is 15(eg: 255.255.255.255)
+    // Maximum length of an IPv4 address buffer is 15 (eg: 255.255.255.255)
     addr_len = sizeof(ip) - 1;
   }
 
@@ -245,7 +245,7 @@ void server_stop(char *endpoint)
   // Trim to `ADDRESS_MAX_SIZE`
   xstrlcpy(addr, endpoint, sizeof(addr));
 
-  int i = 0;  // The index of the server whose address equals addr.
+  int i = 0;  // Index of the server whose address equals addr.
   for (; i < servers.ga_len; i++) {
     server = ((Server **)servers.ga_data)[i];
     if (strcmp(addr, server->addr) == 0) {

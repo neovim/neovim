@@ -1583,7 +1583,9 @@ v:scrollstart	String describing the script or function that caused the
 		hit-enter prompt.
 
 					*v:servername* *servername-variable*
-v:servername	The resulting registered |x11-clientserver| name if any.
+v:servername	Default {Nvim} server address. Equivalent to
+		|$NVIM_LISTEN_ADDRESS| on startup, but may differ if the
+		latter is modified or unset. |serverstop()|
 		Read-only.
 
 		
@@ -2366,8 +2368,8 @@ char2nr({expr}[, {utf8}])					*char2nr()*
 			char2nr("ABC")		returns 65
 <		When {utf8} is omitted or zero, the current 'encoding' is used.
 		Example for "utf-8": >
-			char2nr("แ")		returns 225
-			char2nr("แ"[0])		returns 195
+			char2nr("รก")		returns 225
+			char2nr("รก"[0])		returns 195
 <		With {utf8} set to 1, always treat as utf-8 characters.
 		A combining character is a separate character.
 		|nr2char()| does the opposite.
@@ -5374,25 +5376,31 @@ server2client( {clientid}, {string})			*server2client()*
 		Example: >
 			:echo server2client(expand("<client>"), "HELLO")
 <
-serverlist()					*serverlist()*
+serverlist()						*serverlist()*
 		Returns a list of available server names in a list.
 		When there are no servers an empty string is returned.
 		Example: >
 			:echo serverlist()
+<							*--serverlist*
+		The Vim command-line option `--serverlist` can be imitated: >
+			nvim --cmd "echo serverlist()" --cmd "q"
 <
-serverlisten([{address}])				*serverlisten()*
-		Opens a Unix or TCP socket at {address} for clients to connect
-		to and returns {address}. If no address is given, it is
-		equivalent to >
-			:call serverlisten(tempname())
-< 		If |$NVIM_LISTEN_ADDRESS| is not set, it will be set to
-		{address}.
-
+serverstart([{address}])				*serverstart()*
+		Opens a named pipe or TCP socket at {address} for clients to
+		connect to and returns {address}. If no address is given, it
+		is equivalent to: >
+			:call serverstart(tempname())
+< 		|$NVIM_LISTEN_ADDRESS| is set to {address} if not already set.
+							*--servername*
+		The Vim command-line option `--servername` can be imitated: >
+			nvim --cmd "let g:server_addr = serverstart('foo')"
+<
 serverstop({address})					*serverstop()*
-		Closes the Unix or TCP socket at {address}. Does nothing if
-		{address} is empty, or does not refer to a server. If
-		{address} equals |$NVIM_LISTEN_ADDRESS|, the listen address
-		will be unset.
+		Closes the pipe or socket at {address}. Does nothing if
+		{address} is empty or invalid.
+		If |$NVIM_LISTEN_ADDRESS| is stopped it is unset.
+		If |v:servername| is stopped it is set to the next available
+		address returned by |serverlist()|.
 
 setbufvar({expr}, {varname}, {val})			*setbufvar()*
 		Set option or local variable {varname} in buffer {expr} to
