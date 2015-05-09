@@ -45,6 +45,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
+#include "nvim/api/private/helpers.h"
 
 /*
  * To be able to scroll back at the "more" and "hit-enter" prompts we need to
@@ -488,6 +489,17 @@ int emsg(char_u *s)
   /* Skip this if not giving error messages at the moment. */
   if (emsg_not_now())
     return TRUE;
+
+  {
+    // Inform subscribed clients about the emsg.
+    Array args = ARRAY_DICT_INIT;
+    Object message = {
+      .type = kObjectTypeString,
+      .data.string = cstr_to_string((char *)s)
+    };
+    ADD(args, message);
+    channel_send_event(0, "emsg", args);
+  }
 
   called_emsg = TRUE;
   ex_exitval = 1;
