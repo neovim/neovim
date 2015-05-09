@@ -1049,29 +1049,54 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
   added = 0;
 
   if ((*p_sbr != NUL || wp->w_p_bri) && wp->w_p_wrap && (col != 0)) {
-    numberextra = win_col_off(wp);
+    colnr_T sbrlen = 0;
+    int numberwidth = win_col_off(wp);
+
+    numberextra = numberwidth;
     col += numberextra + mb_added;
 
     if (col >= (colnr_T)wp->w_width) {
       col -= wp->w_width;
       numberextra = wp->w_width - (numberextra - win_col_off2(wp));
-      if (numberextra > 0) {
+      if (col >= numberextra && numberextra > 0) {
         col %= numberextra;
       }
       if (*p_sbr != NUL) {
-        colnr_T sbrlen = (colnr_T)MB_CHARLEN(p_sbr);
-        if (col >= sbrlen)
+        sbrlen = (colnr_T)MB_CHARLEN(p_sbr);
+        if (col >= sbrlen) {
           col -= sbrlen;
+        }
       }
-      if (numberextra > 0) {
-        col = col % numberextra;
+      if (col >= numberextra && numberextra > 0) {
+        col %= numberextra;
+      } else if (col > 0 && numberextra > 0) {
+        col += numberwidth - win_col_off2(wp);
       }
+
+      numberwidth -= win_col_off2(wp);
     }
 
-    if ((col == 0) || (col + size > (colnr_T)wp->w_width)) {
+    if (col == 0 || (col + size + sbrlen > (colnr_T)wp->w_width)) {
       added = 0;
-      if (*p_sbr != NUL)
-        added += vim_strsize(p_sbr);
+
+      if (*p_sbr != NUL) {
+        if (size + sbrlen + numberwidth > (colnr_T)wp->w_width) {
+          // Calculate effective window width.
+          int width = (colnr_T)wp->w_width - sbrlen - numberwidth;
+          int prev_width = col ? ((colnr_T)wp->w_width - (sbrlen + col)) : 0;
+          if (width == 0) {
+            width = (colnr_T)wp->w_width;
+          }
+          added += ((size - prev_width) / width) * vim_strsize(p_sbr);
+          if ((size - prev_width) % width) {
+            // Wrapped, add another length of 'sbr'.
+            added += vim_strsize(p_sbr);
+          }
+        } else {
+          added += vim_strsize(p_sbr);
+        }
+      }
+
       if (wp->w_p_bri)
         added += get_breakindent_win(wp, line);
 
