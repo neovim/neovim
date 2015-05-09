@@ -2174,6 +2174,7 @@ win_line (
                                            wrapping */
   int vcol_off        = 0;              /* offset for concealed characters */
   int did_wcol        = FALSE;
+  int old_boguscols = 0;
 # define VCOL_HLC (vcol - vcol_off)
 # define FIX_FOR_BOGUSCOLS \
   { \
@@ -2181,6 +2182,7 @@ win_line (
     vcol -= vcol_off; \
     vcol_off = 0; \
     col -= boguscols; \
+    old_boguscols = boguscols; \
     boguscols = 0; \
   }
 
@@ -3369,9 +3371,14 @@ win_line (
             int    i;
             int    saved_nextra = n_extra;
 
-            if (is_concealing && vcol_off > 0) {
+            if ((is_concealing || boguscols > 0) && vcol_off > 0) {
               // there are characters to conceal
               tab_len += vcol_off;
+            }
+            // boguscols before FIX_FOR_BOGUSCOLS macro from above.
+            if (wp->w_p_list && lcs_tab1 && old_boguscols > 0
+                && n_extra > tab_len) {
+              tab_len += n_extra - tab_len;
             }
 
             /* if n_extra > 0, it gives the number of chars to use for
@@ -3394,7 +3401,7 @@ win_line (
 
             // n_extra will be increased by FIX_FOX_BOGUSCOLS
             // macro below, so need to adjust for that here
-            if (is_concealing && vcol_off > 0) {
+            if ((is_concealing || boguscols > 0) && vcol_off > 0) {
               n_extra -= vcol_off;
             }
           }
@@ -3405,6 +3412,13 @@ win_line (
            * the tab can be longer than 'tabstop' when there
            * are concealed characters. */
           FIX_FOR_BOGUSCOLS;
+          // Make sure that the highlighting for the tab char will be correctly
+          // set further below (effectively reverts the FIX_FOR_BOGSUCOLS
+          // macro).
+          if (old_boguscols > 0 && n_extra > tab_len && wp->w_p_list
+              && lcs_tab1) {
+            tab_len += n_extra - tab_len;
+          }
           mb_utf8 = FALSE;              /* don't draw as UTF-8 */
           if (wp->w_p_list) {
             c = lcs_tab1;
