@@ -5737,12 +5737,21 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       case NFA_VCOL_GT:
       case NFA_VCOL_LT:
         {
+          int op = t->state->c - NFA_VCOL;
+          colnr_T col = (colnr_T)(reginput - regline);
+
+          // Bail out quickly when there can't be a match, avoid the overhead of
+          // win_linetabsize() on long lines.
+          if ((col > t->state->val && op != 1)
+              || (col - 1 > t->state->val && op == 1)) {
+            break;
+          }
           uintmax_t lts = win_linetabsize(reg_win == NULL ? curwin : reg_win,
                                           regline,
-                                          (colnr_T)(reginput - regline));
+                                          col);
           assert(t->state->val >= 0);
           result = nfa_re_num_cmp((uintmax_t)t->state->val,
-                                  t->state->c - NFA_VCOL,
+                                  op,
                                   lts + 1);
           if (result) {
             add_here = TRUE;
@@ -6023,6 +6032,12 @@ nextchar:
       reg_nextline();
     else
       break;
+
+    // Allow interrupting with CTRL-C.
+    fast_breakcheck();
+    if (got_int) {
+      break;
+    }
   }
 
 #ifdef REGEXP_DEBUG
