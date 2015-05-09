@@ -3710,6 +3710,7 @@ did_set_string_option (
         ml_setflags(curbuf);
       }
     }
+
     if (errmsg == NULL) {
       /* canonize the value, so that STRCMP() can be used on it */
       p = enc_canonize(*varp);
@@ -3721,13 +3722,15 @@ did_set_string_option (
       }
     }
 
-
     if (errmsg == NULL) {
       /* When 'keymap' is used and 'encoding' changes, reload the keymap
        * (with another encoding). */
       if (varp == &p_enc && *curbuf->b_p_keymap != NUL)
         (void)keymap_init();
 
+      if (varp == &p_enc) {
+        ui_update_encoding();
+      }
     }
   } else if (varp == &p_penc) {
     /* Canonize printencoding if VIM standard one */

@@ -161,6 +161,7 @@ UI *tui_start(void)
   ui->suspend = tui_suspend;
   ui->set_title = tui_set_title;
   ui->set_icon = tui_set_icon;
+  ui->set_encoding = tui_set_encoding;
   // Attach
   ui_attach(ui);
   return ui;
@@ -590,6 +591,12 @@ static void tui_set_title(UI *ui, char *title)
 
 static void tui_set_icon(UI *ui, char *icon)
 {
+}
+
+static void tui_set_encoding(UI *ui, char* enc)
+{
+  TUIData *data = ui->data;
+  term_input_set_encoding(data->input, enc);
 }
 
 static void invalidate(UI *ui, int top, int bot, int left, int right)
