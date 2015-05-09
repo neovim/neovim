@@ -365,7 +365,7 @@ static struct vimvar {
 } vimvars[VV_LEN] =
 {
   /*
-   * The order here must match the VV_ defines in vim.h!
+   * The order here must match the VV_ defines in eval.h!
    * Initializing a union does not work, leave tv.vval empty to get zero's.
    */
   {VV_NAME("count",            VAR_NUMBER), VV_COMPAT+VV_RO},
@@ -13356,7 +13356,7 @@ static void f_serverlist(typval_T *argvars, typval_T *rettv)
 static void f_serverstart(typval_T *argvars, typval_T *rettv)
 {
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;  // Will hold the address of the new server.
+  rettv->vval.v_string = NULL;  // Address of the new server
 
   if (check_restricted() || check_secure()) {
     return;

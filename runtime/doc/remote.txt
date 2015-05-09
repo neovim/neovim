@@ -56,11 +56,6 @@ The following command line arguments are available:
 						*--remote-tab-wait-silent*
    --remote-tab-wait-silent	Like --remote-wait-silent but open each file
 				in a new tabpage.
-								*--servername*
-   --servername {name}		Become the server {name}.  When used together
-				with one of the --remote commands: connect to
-				server {name} instead of the default (see
-				below).
 								*--remote-send*
    --remote-send {keys}		Send {keys} to server and exit.  The {keys}
    				are not mapped.  Special key names are
@@ -69,9 +64,6 @@ The following command line arguments are available:
 								*--remote-expr*
    --remote-expr {expr}		Evaluate {expr} in server and print the result
 				on stdout.
-								*--serverlist*
-   --serverlist			Output a list of server names.
-
 
 Examples ~
 
