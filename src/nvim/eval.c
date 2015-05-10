@@ -6589,6 +6589,7 @@ static struct fst {
   {"resolve",         1, 1, f_resolve},
   {"reverse",         1, 1, f_reverse},
   {"round",           1, 1, f_round},
+  {"rpcchannels",     0, 0, f_rpcchannels},
   {"rpcnotify",       2, 64, f_rpcnotify},
   {"rpcrequest",      2, 64, f_rpcrequest},
   {"rpcstart",        1, 2, f_rpcstart},
@@ -12768,6 +12769,13 @@ static void f_round(typval_T *argvars, typval_T *rettv)
     rettv->vval.v_float = round(f);
   else
     rettv->vval.v_float = 0.0;
+}
+
+// "rpcchannels()" function
+static void f_rpcchannels(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_LIST;
+  rettv->vval.v_list = channel_list();
 }
 
 // "rpcnotify()" function

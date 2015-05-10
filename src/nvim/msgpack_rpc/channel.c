@@ -105,6 +105,16 @@ void channel_teardown(void)
   });
 }
 
+list_T *channel_list(void)
+{
+  list_T *chans = list_alloc();
+  Channel *channel;
+  map_foreach_value(channels, channel, {
+    list_append_number(chans, (varnumber_T)channel->id);
+  });
+  return chans;
+}
+
 /// Creates an API channel by starting a job and connecting to its
 /// stdin/stdout. stderr is forwarded to the editor error stream.
 ///

@@ -7,6 +7,15 @@ local eq, neq, run, stop = helpers.eq, helpers.neq, helpers.run, helpers.stop
 local next_message = helpers.next_message
 local nvim_prog = helpers.nvim_prog
 
+describe('vimL API', function()
+  describe('rpcchannels()', function()
+    it('gives a list of all connected channels', function()
+      eq({1}, eval('rpcchannels()'))
+      eval('rpcstart("sleep", ["1"])')
+      eq({1, 2}, eval('rpcchannels()'))
+    end)
+  end)
+end)
 
 describe('server -> client', function()
   local cid
