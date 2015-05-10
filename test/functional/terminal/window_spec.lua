@@ -14,8 +14,17 @@ describe('terminal window', function()
 
   describe('with colorcolumn set', function()
     before_each(function()
-      feed('<c-\\><c-n>:set colorcolumn=20<cr>i')
-      wait()
+      feed('<c-\\><c-n>')
+      screen:expect([[
+        tty ready                                         |
+        {2: }                                                 |
+                                                          |
+                                                          |
+                                                          |
+        ^                                                  |
+                                                          |
+      ]])
+      feed(':set colorcolumn=20<cr>i')
     end)
 
     it('wont show the color column', function()
