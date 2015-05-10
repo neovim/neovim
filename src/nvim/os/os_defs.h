@@ -93,10 +93,6 @@
 # define INDOFF_FILE    "indoff.vim"
 #endif
 
-#ifndef SYS_MENU_FILE
-# define SYS_MENU_FILE  "$VIMRUNTIME/menu.vim"
-#endif
-
 #define DFLT_ERRORFILE          "errors.err"
 
 // Unix has plenty of memory, use large buffers.
