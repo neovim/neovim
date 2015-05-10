@@ -33,7 +33,7 @@ local function run_test_with_regexpengine(regexpengine)
     j 0123❤x
     k combinations]])
 
-  execute('set encoding=utf-8 termencoding=latin1')
+  execute('set encoding=utf-8')
   execute('set re=' .. regexpengine)
 
   -- Lines 1-8. Exercise regexp search with various magic settings. On each

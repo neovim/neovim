@@ -1501,7 +1501,7 @@ static vimoption_T
    (char_u *)&p_tbidi, PV_NONE,
    {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
   {"termencoding", "tenc", P_STRING|P_VI_DEF|P_RCLR,
-   (char_u *)&p_tenc, PV_NONE,
+   (char_u *)NULL, PV_NONE,
    {(char_u *)"", (char_u *)0L}
    SCRIPTID_INIT},
   {"terse",       NULL,   P_BOOL|P_VI_DEF,
@@ -3705,7 +3705,7 @@ did_set_string_option (
       errmsg = e_invarg;
   }
   /* 'encoding' and 'fileencoding' */
-  else if (varp == &p_enc || gvarp == &p_fenc || varp == &p_tenc) {
+  else if (varp == &p_enc || gvarp == &p_fenc) {
     if (gvarp == &p_fenc) {
       if (!MODIFIABLE(curbuf) && opt_flags != OPT_GLOBAL)
         errmsg = e_modifiable;
@@ -3737,14 +3737,6 @@ did_set_string_option (
        * (with another encoding). */
       if (varp == &p_enc && *curbuf->b_p_keymap != NUL)
         (void)keymap_init();
-
-      /* When 'termencoding' is not empty and 'encoding' changes or when
-       * 'termencoding' changes, need to setup for keyboard input and
-       * display output conversion. */
-      if (((varp == &p_enc && *p_tenc != NUL) || varp == &p_tenc)) {
-        convert_setup(&input_conv, p_tenc, p_enc);
-        convert_setup(&output_conv, p_enc, p_tenc);
-      }
 
     }
   } else if (varp == &p_penc) {

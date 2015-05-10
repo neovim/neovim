@@ -2323,9 +2323,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		if has("multi_byte_encoding")
 <
 	Normally 'encoding' will be equal to your current locale.  This will
-	be the default if Vim recognizes your environment settings.  If
-	'encoding' is not set to the current locale, 'termencoding' must be
-	set to convert typed and displayed text.  See |encoding-table|.
+	be the default if Vim recognizes your environment settings.
 
 	When you set this option, it fires the |EncodingChanged| autocommand
 	event so that you can set up fonts if necessary.
@@ -6569,36 +6567,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	For further details see |arabic.txt|.
 
 					*'termencoding'* *'tenc'*
-'termencoding' 'tenc'	string	(default ""; with GTK+ 2 GUI: "utf-8"; with
-						    Macintosh GUI: "macroman")
-			global
-			{only available when compiled with the |+multi_byte|
-			feature}
-	Encoding used for the terminal.  This specifies what character
-	encoding the keyboard produces and the display will understand.  For
-	the GUI it only applies to the keyboard ( 'encoding' is used for the
-	display).
-	In the Win32 console version the default value is the console codepage
-	when it differs from the ANSI codepage.
-								*E617*
-	Note: This does not apply to the GTK+ 2 GUI.  After the GUI has been
-	successfully initialized, 'termencoding' is forcibly set to "utf-8".
-	Any attempts to set a different value will be rejected, and an error
-	message is shown.
-	For the Win32 GUI 'termencoding' is not used for typed characters,
-	because the Win32 system always passes Unicode characters.
-	When empty, the same encoding is used as for the 'encoding' option.
-	This is the normal value.
-	Not all combinations for 'termencoding' and 'encoding' are valid.  See
-	|encoding-table|.
-	The value for this option must be supported by internal conversions or
-	iconv().  When this is not possible no conversion will be done and you
-	will probably experience problems with non-ASCII characters.
-	Example: You are working with the locale set to euc-jp (Japanese) and
-	want to edit a UTF-8 file: >
-		:let &termencoding = &encoding
-		:set encoding=utf-8
-<	You need to do this when your system has no locale support for UTF-8.
+'termencoding' 'tenc'	Removed. |vim-differences| {Nvim}
 
 						*'terse'* *'noterse'*
 'terse'			boolean	(default off)

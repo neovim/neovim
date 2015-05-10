@@ -198,19 +198,7 @@ you can find it here:
 	http://www.microsoft.com/typography/fonts/default.aspx ~
 
 Now you have told Vim to use Unicode internally and display text with a
-Unicode font.  Typed characters still arrive in the encoding of your original
-language.  This requires converting them to Unicode.  Tell Vim the language
-from which to convert with the 'termencoding' option.  You can do it like
-this: >
-
-	:let &termencoding = &encoding
-	:set encoding=utf-8
-
-This assigns the old value of 'encoding' to 'termencoding' before setting
-'encoding' to utf-8.  You will have to try out if this really works for your
-setup.  It should work especially well when using an input method for an Asian
-language, and you want to edit Unicode text.
-
+Unicode font.
 
 USING UNICODE IN A UNICODE TERMINAL
 
@@ -232,18 +220,9 @@ USING UNICODE IN AN ORDINARY TERMINAL
 Suppose you want to work with Unicode files, but don't have a terminal with
 Unicode support.  You can do this with Vim, although characters that are not
 supported by the terminal will not be displayed.  The layout of the text
-will be preserved.  >
+will be preserved.
 
-	:let &termencoding = &encoding
-	:set encoding=utf-8
-
-This is the same as what was used for the GUI.  But it works differently: Vim
-will convert the displayed text before sending it to the terminal.  That
-avoids that the display is messed up with strange characters.
-   For this to work the conversion between 'termencoding' and 'encoding' must
-be possible.  Vim will convert from latin1 to Unicode, thus that always works.
-For other conversions the |+iconv| feature is required.
-   Try editing a file with Unicode characters in it.  You will notice that Vim
+Try editing a file with Unicode characters in it.  You will notice that Vim
 will put a question mark (or underscore or some other character) in places
 where a character should be that the terminal can't display.  Move the cursor
 to a question mark and use this command: >
