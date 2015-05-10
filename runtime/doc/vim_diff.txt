@@ -115,6 +115,7 @@ Other options:
   'macatsui'
   'shortname'
   'shelltype'
+  'termencoding'
   'textauto'
   'textmode'
 

@@ -58,16 +58,11 @@
  *			   V
  *			 file
  *
- * (1) Typed characters arrive in the current locale.  Conversion is to be
- *     done when 'encoding' is different from 'termencoding'.
+ * (1) Typed characters arrive in the current locale.
  * (2) Text will be made available with the encoding specified with
  *     'encoding'.  If this is not sufficient, system-specific conversion
  *     might be required.
  * (3) For the GUI the correct font must be selected, no conversion done.
- *     Otherwise, conversion is to be done when 'encoding' differs from
- *     'termencoding'.  (Different in the GTK+ 2 port -- 'termencoding'
- *     is always used for both input and output and must always be set to
- *     "utf-8".  gui_mch_init() does this automatically.)
  * (4) The encoding of the file is specified with 'fileencoding'.  Conversion
  *     is to be done when it's different from 'encoding'.
  *
@@ -426,9 +421,6 @@ char_u * mb_init(void)
     /* Just starting up: set the whole table to one's. */
     for (i = 0; i < 256; ++i)
       mb_bytelen_tab[i] = 1;
-    input_conv.vc_type = CONV_NONE;
-    input_conv.vc_factor = 1;
-    output_conv.vc_type = CONV_NONE;
     return NULL;
   } else if (STRNCMP(p_enc, "8bit-", 5) == 0
       || STRNCMP(p_enc, "iso-8859-", 9) == 0) {
@@ -3701,12 +3693,6 @@ bool iconv_enabled(bool verbose)
 
 void iconv_end(void)
 {
-  /* Don't use iconv() when inputting or outputting characters. */
-  if (input_conv.vc_type == CONV_ICONV)
-    convert_setup(&input_conv, NULL, NULL);
-  if (output_conv.vc_type == CONV_ICONV)
-    convert_setup(&output_conv, NULL, NULL);
-
   if (hIconvDLL != 0)
     FreeLibrary(hIconvDLL);
   if (hMsvcrtDLL != 0)
@@ -3942,7 +3928,7 @@ char_u * string_convert_ext(vimconv_T *vcp, char_u *ptr,
       break;
 
 # ifdef USE_ICONV
-    case CONV_ICONV:              /* conversion with output_conv.vc_fd */
+    case CONV_ICONV:              /* conversion with vcp->vc_fd */
       retval = iconv_string(vcp, ptr, len, unconvlenp, lenp);
       break;
 # endif

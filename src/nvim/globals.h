@@ -753,11 +753,6 @@ EXTERN int has_mbyte INIT(= 0);                 /* any multi-byte encoding */
  */
 EXTERN char mb_bytelen_tab[256];
 
-/* Variables that tell what conversion is used for keyboard input and display
- * output. */
-EXTERN vimconv_T input_conv;                    /* type of input conversion */
-EXTERN vimconv_T output_conv;                   /* type of output conversion */
-
 /*
  * Function pointers, used to quickly get to the right function.  Each has
  * three possible values: latin_ (8-bit), utfc_ or utf_ (utf-8) and dbcs_

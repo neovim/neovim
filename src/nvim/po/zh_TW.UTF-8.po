@@ -35,7 +35,6 @@
 # A. A simple configuration: 
 #   set encoding=utf-8; let $LANG='zh_TW.UTF-8'; 
 #   (set langmenu=none or ..)
-#   set termencoding=utf-8
 #   set fileencodings=ucs-bom,utf-8,japan,taiwan,prc
 #   set fileencoding=taiwan (or utf-8)
 #
