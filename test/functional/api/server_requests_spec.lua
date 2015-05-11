@@ -8,12 +8,40 @@ local next_message = helpers.next_message
 local nvim_prog = helpers.nvim_prog
 
 describe('vimL API', function()
+  before_each(function() clear() end)
+
   describe('rpcchannels()', function()
     it('gives a list of all connected channels', function()
       eq({1}, eval('rpcchannels()'))
       eval('rpcstart("sleep", ["1"])')
       eq({1, 2}, eval('rpcchannels()'))
     end)
+  end)
+
+  describe('rpcsubscriptions()', function()
+    it('with no arguments, returns a dictionary for all channels', function()
+      eval('rpcsubscribe(1, "test")')
+      local c = eval('rpcstart("sleep", ["1"])')
+      eval('rpcsubscribe('..c..', "test")')
+      local dict = eval('rpcsubscriptions()')
+      eq({'test'}, dict['1'])
+      eq({'test'}, dict[tostring(c)])
+    end)
+
+    it('with a list of channels, returns a dictionary', function()
+      eval('rpcsubscribe(1, "test")')
+      local c = eval('rpcstart("sleep", ["1"])')
+      eval('rpcsubscribe('..c..', "test")')
+      local dict = eval('rpcsubscriptions([1, '..c..'])')
+      eq({'test'}, dict['1'])
+      eq({'test'}, dict[tostring(c)])
+    end)
+
+    it('tells what events a channel has subscribed to', function()
+      eval('rpcsubscribe(1, "test")')
+      eq({'test'}, eval('rpcsubscriptions(1)'))
+    end)
+
   end)
 end)
 

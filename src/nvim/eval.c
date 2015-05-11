@@ -6595,7 +6595,8 @@ static struct fst {
   {"rpcstart",        1, 2, f_rpcstart},
   {"rpcstop",         1, 1, f_rpcstop},
   {"rpcsubscribe",    2, 2, f_rpcsubscribe},
-  {"rpcunsubscribe",    2, 2, f_rpcunsubscribe},
+  {"rpcsubscriptions", 0, 1, f_rpcsubscriptions},
+  {"rpcunsubscribe",  2, 2, f_rpcunsubscribe},
   {"screenattr",      2, 2, f_screenattr},
   {"screenchar",      2, 2, f_screenchar},
   {"screencol",       0, 0, f_screencol},
@@ -12979,6 +12980,56 @@ static void f_rpcstop(typval_T *argvars, typval_T *rettv)
   }
 
   rettv->vval.v_number = channel_close(argvars[0].vval.v_number);
+}
+
+static list_T *do_rpcsubscriptions(typval_T *id)
+{
+  if (id->v_type != VAR_NUMBER || id->vval.v_number <= 0) {
+    EMSG2(_(e_invarg2), "channel must be a positive integer");
+    return NULL;
+  }
+
+  list_T *subs = channel_subscriptions(id->vval.v_number);
+
+  if (!subs) {
+    EMSG2(_(e_invarg2), "Channel doesn't exist");
+  }
+  return subs;
+}
+
+// "rpcsubscribe()" function
+static void f_rpcsubscriptions(typval_T *argvars, typval_T *rettv)
+{
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  switch(argvars[0].v_type) {
+    case VAR_NUMBER:
+      rettv->v_type = VAR_LIST;
+      rettv->vval.v_list = do_rpcsubscriptions(&argvars[0]);
+      break;
+    // Get all subscriptions.
+    case VAR_UNKNOWN:
+      rettv->v_type = VAR_DICT;
+      rettv->vval.v_dict = channel_all_subscriptions();
+      break;
+    case VAR_LIST:
+      rettv_dict_alloc(rettv);
+      listitem_T *li = argvars[0].vval.v_list->lv_first;
+      for (; li != NULL; li = li->li_next) {
+        list_T *l = do_rpcsubscriptions(&li->li_tv);
+        if (l == NULL) {
+          clear_tv(rettv);
+          return;  // did emsg in do_rpcsubscriptions
+        }
+        char id_buf[32];
+        snprintf(id_buf, sizeof(id_buf), "%i", li->li_tv.vval.v_number);
+        dict_add_list(rettv->vval.v_dict, id_buf, l);
+      }
+      break;
+    default: EMSG2(_(e_invarg2), "expected list, dictionary, or number");
+  }
 }
 
 // "rpcsubscribe()" function

@@ -5125,6 +5125,13 @@ rpcunsubscribe({channel}, {event})		    {Nvim} *rpcsubscribe()*
 		Unsubscribes a |msgpack-rpc| {channel} to {event} (|String|)
 		notifications.
 
+rpcunsubscribe([{expr}])			{Nvim} *rpcsubscriptions()*
+		With no arguments, returns the events that all channels
+		subscribe to. If {expr} is a |Number|, a list of events that
+		{expr} subscribes to will be returns. If {expr} is a |List|, a
+		dictionary with lists for each channel in {expr} will be
+		returned.
+
 screenattr(row, col)						*screenattr()*
 		Like screenchar(), but return the attribute.  This is a rather
 		arbitrary number that can only be used to compare to the

@@ -715,6 +715,35 @@ static void unsubscribe(Channel *channel, const char *event)
   xfree(event_string);
 }
 
+/// Returns the events that channel {id} subscribes to, or NULL if {id} does
+/// not exist.
+list_T *channel_subscriptions(uint64_t id)
+{
+  Channel *channel = pmap_get(uint64_t)(channels, id);
+  if (!channel) {
+    return NULL;
+  }
+
+  list_T *subscriptions = list_alloc();
+  const char *event;
+  map_foreach_value(channel->subscribed_events, event, {
+    list_append_string(subscriptions, (char_u *)event, -1);
+  });
+  return subscriptions;
+}
+
+dict_T *channel_all_subscriptions(void)
+{
+  dict_T *subs_dict = dict_alloc();
+  Channel *channel;
+  map_foreach_value(channels, channel, {
+    char id_buf[32];
+    snprintf(id_buf, sizeof(id_buf), "%" PRIu64, channel->id);
+    dict_add_list(subs_dict, id_buf, channel_subscriptions(channel->id));
+  });
+  return subs_dict;
+}
+
 /// Close the channel streams/job and free the channel resources.
 static void close_channel(Channel *channel)
 {
