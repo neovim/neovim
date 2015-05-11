@@ -64,12 +64,6 @@
 #endif
 
 #if defined(HAVE_ACL)
-# ifdef HAVE_SYS_ACL_H
-#  include <sys/acl.h>
-# endif
-# ifdef HAVE_SYS_ACCESS_H
-#  include <sys/access.h>
-# endif
 
 /*
  * Return a pointer to the ACL of file "fname" in allocated memory.
