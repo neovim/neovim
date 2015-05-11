@@ -1,57 +1,44 @@
-.TH VIMTUTOR 1 "2001 April 2"
-.SH NAME
-vimtutor \- the Vim tutor
-.SH SYNOPSIS
-.br
-.B vimtutor [\-g] [language]
-.SH DESCRIPTION
-.B Vimtutor
-starts the
-.B Vim
-tutor.
-It copies the tutor file first, so that it can be modified without changing
-the original file.
-.PP
-The
-.B Vimtutor
-is useful for people that want to learn their first
-.B Vim
-commands.
-.PP
-The optional argument \-g starts vimtutor with gvim rather than vim, if the
-GUI version of vim is available, or falls back to Vim if gvim is not found.
-.PP
-The optional [language] argument is the two-letter name of a language, like
-"it" or "es".
-If the [language] argument is missing, the language of the current locale will
-be used.
-If a tutor in this language is available, it will be used.
-Otherwise the English version will be used.
-.PP
-.B Vim
-is always started in Vi compatible mode.
-.SH FILES
-.TP 15
-/usr/local/lib/vim/tutor/tutor[.language]
-The
-.B Vimtutor
-text file(s).
-.TP 15
-/usr/local/lib/vim/tutor/tutor.vim
-The Vim script used to copy the
-.B Vimtutor
-text file.
-.SH AUTHOR
-The
-.B Vimtutor
-was originally written for Vi by Michael C. Pierce and Robert K. Ware,
-Colorado School of Mines using ideas supplied by Charles Smith,
-Colorado State University.
-E-mail: bware@mines.colorado.edu.
-.br
+.Dd May 13, 2015
+.Dt NVIMTUTOR 1
+.Os Neovim
+.Sh NAME
+.Nm nvimtutor
+.Nd Neovim tutor
+.Sh SYNOPSIS
+.Nm
+.Op Ar language
+.Sh DESCRIPTION
+.Nm
+starts an interactive tutorial meant to teach the basics of
+.Xr vim 1 .
+The optional
+.Ar language
+argument is the two-letter name of a language,
+such as
+.Sy it
+or
+.Sy es .
+If
+.Ar language
+is omitted, the language dictated by the current locale is used.
+If a tutorial for
+.Ar language
+isn't available, the English tutorial will be used.
+.Sh SEE ALSO
+.Xr nvim 1
+.Sh AUTHORS
+Vimtutor was originally written for
+.Xr vi 1
+by
+.An -nosplit
+.An Michael C. Pierce
+and
+.An Robert K. Ware ,
+Colorado School of Mines, using ideas supplied by
+.An Charles Smith Aq Mt bware@mines.colorado.edua .
+.Pp
 It was modified for
-.B Vim
-by Bram Moolenaar.
-For the names of the translators see the tutor files.
-.SH SEE ALSO
-vim(1)
+.Xr vim 1
+by
+.An Bram Moolenaar .
+See the tutor files for the names of the individual translators.
