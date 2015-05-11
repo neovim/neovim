@@ -991,11 +991,7 @@ static vimoption_T
   {"keywordprg",  "kp",   P_STRING|P_EXPAND|P_VI_DEF|P_SECURE,
    (char_u *)&p_kp, PV_KP,
    {
-#  ifdef USEMAN_S
      (char_u *)"man -s",
-#  else
-     (char_u *)"man",
-#  endif
      (char_u *)0L
    } SCRIPTID_INIT},
   {"langmap",     "lmap", P_STRING|P_VI_DEF|P_COMMA|P_NODUP|P_SECURE,
