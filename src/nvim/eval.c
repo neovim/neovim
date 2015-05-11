@@ -16294,7 +16294,7 @@ long get_vim_var_nr(int idx)
 /*
  * Get string v: variable value.  Uses a static buffer, can only be used once.
  */
-char_u *get_vim_var_str(int idx)
+char_u *get_vim_var_str(int idx) FUNC_ATTR_NONNULL_RET
 {
   return get_tv_string(&vimvars[idx].vv_tv);
 }
