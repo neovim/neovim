@@ -7449,12 +7449,6 @@ static void ex_mkrc(exarg_T *eap)
     else
       flagp = &ssop_flags;
 
-#ifdef MKSESSION_NL
-    /* "unix" in 'sessionoptions': use NL line separator */
-    if (view_session && (*flagp & SSOP_UNIX))
-      mksession_nl = TRUE;
-#endif
-
     /* Write the version command for :mkvimrc */
     if (eap->cmdidx == CMD_mkvimrc)
       (void)put_line(fd, "version 6.0");
@@ -7543,9 +7537,6 @@ static void ex_mkrc(exarg_T *eap)
         set_vim_var_string(VV_THIS_SESSION, tbuf, -1);
       xfree(tbuf);
     }
-#ifdef MKSESSION_NL
-    mksession_nl = FALSE;
-#endif
   }
 
   xfree(viewFile);
