@@ -36,15 +36,9 @@
 #define FF_MAC          "mac"
 #define FF_UNIX         "unix"
 
-#ifdef USE_CRNL
-# define DFLT_FF        "dos"
-# define DFLT_FFS_VIM   "dos,unix"
-# define DFLT_FFS_VI    "dos,unix"      /* also autodetect in compatible mode */
-#else
-#  define DFLT_FF       "unix"
-#  define DFLT_FFS_VIM  "unix,dos"
-#   define DFLT_FFS_VI  ""
-#endif
+#define DFLT_FF         "unix"
+#define DFLT_FFS_VIM    "unix,dos"
+#define DFLT_FFS_VI     ""
 
 
 /* Possible values for 'encoding' */

@@ -7397,11 +7397,6 @@ static void close_redir(void)
   }
 }
 
-#ifdef USE_CRNL
-# define MKSESSION_NL
-static int mksession_nl = FALSE;    /* use NL only in put_eol() */
-#endif
-
 /*
  * ":mkexrc", ":mkvimrc", ":mkview" and ":mksession".
  */
@@ -9113,15 +9108,7 @@ static char *get_view_file(int c)
  */
 int put_eol(FILE *fd)
 {
-  if (
-#ifdef USE_CRNL
-    (
-# ifdef MKSESSION_NL
-      !mksession_nl &&
-# endif
-      (putc('\r', fd) < 0)) ||
-#endif
-    (putc('\n', fd) < 0))
+  if (putc('\n', fd) < 0)
     return FAIL;
   return OK;
 }

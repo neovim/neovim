@@ -526,10 +526,6 @@ qf_init_ext (
 
     if ((efmp = vim_strrchr(IObuff, '\n')) != NULL)
       *efmp = NUL;
-#ifdef USE_CRNL
-    if ((efmp = vim_strrchr(IObuff, '\r')) != NULL)
-      *efmp = NUL;
-#endif
 
     /* If there was no %> item start at the first pattern */
     if (fmt_start == NULL)
