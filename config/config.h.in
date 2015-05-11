@@ -30,7 +30,6 @@
 #cmakedefine HAVE_LSTAT
 #cmakedefine HAVE_NL_LANGINFO_CODESET
 #cmakedefine HAVE_NL_MSG_CAT_CNTR
-#define HAVE_OSPEED 1
 #cmakedefine HAVE_PUTENV
 #cmakedefine HAVE_PWD_H
 #cmakedefine HAVE_READLINK
