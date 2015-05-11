@@ -901,14 +901,11 @@ static void command_line_scan(mparm_T *parmp)
           /* "--literal" take files literally */
           /* "--noplugin[s]" skip plugins */
           /* "--cmd <cmd>" execute cmd before vimrc */
-          if (STRICMP(argv[0] + argv_idx, "help") == 0)
+          if (STRICMP(argv[0] + argv_idx, "help") == 0) {
             usage();
-          else if (STRICMP(argv[0] + argv_idx, "version") == 0) {
-            Columns = 80;                 /* need to init Columns */
-            info_message = TRUE;           /* use mch_msg(), not mch_errmsg() */
-            list_version();
-            msg_putchar('\n');
-            msg_didout = FALSE;
+            mch_exit(0);
+          } else if (STRICMP(argv[0] + argv_idx, "version") == 0) {
+            version();
             mch_exit(0);
           } else if (STRICMP(argv[0] + argv_idx, "api-info") == 0) {
             msgpack_sbuffer* b = msgpack_sbuffer_new();
@@ -981,7 +978,7 @@ static void command_line_scan(mparm_T *parmp)
 
         case 'h':                 /* "-h" give help message */
           usage();
-          break;
+          mch_exit(0);
 
         case 'H':                 /* "-H" start in Hebrew mode: rl + hkmap set */
           p_hkmap = TRUE;
@@ -1083,6 +1080,9 @@ static void command_line_scan(mparm_T *parmp)
         case 'd':                 /* "-d"		'diff' */
           parmp->diff_mode = TRUE;
           break;
+        case 'v':
+          version();
+          mch_exit(0);
         case 'V':                 /* "-V{N}"	Verbose level */
           /* default is 10: a little bit verbose */
           p_verbose = get_number_arg(argv[0], &argv_idx, 10);
@@ -1959,8 +1959,16 @@ static void mainerr(int n, const char *str)
   mch_exit(1);
 }
 
+/// Prints version information for "nvim -v" or "nvim --version".
+static void version(void)
+{
+  info_message = TRUE;  // use mch_msg(), not mch_errmsg()
+  list_version();
+  msg_putchar('\n');
+  msg_didout = FALSE;
+}
 
-/// Prints help message for "nvim -h" or "nvim --help" and exits.
+/// Prints help message for "nvim -h" or "nvim --help".
 static void usage(void)
 {
   signal_stop();              // kill us with CTRL-C here, if you like
@@ -2012,10 +2020,8 @@ static void usage(void)
   mch_msg(_("  --api-info            Dump API metadata serialized to msgpack and exit\n"));
   mch_msg(_("  --embed               Use stdin/stdout as a msgpack-rpc channel\n"));
   mch_msg(_("  --headless            Don't start a user interface\n"));
-  mch_msg(_("  --version             Print version information and exit\n"));
+  mch_msg(_("  -v, --version         Print version information and exit\n"));
   mch_msg(_("  -h | --help           Print this help message and exit\n"));
-
-  mch_exit(0);
 }
 
 
