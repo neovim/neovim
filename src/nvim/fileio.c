@@ -2889,9 +2889,6 @@ buf_write (
                 && os_fchown(bfd, -1, file_info_old.stat.st_gid) != 0) {
               os_setperm(backup, (perm & 0707) | ((perm & 07) << 3));
             }
-# ifdef HAVE_SELINUX
-            mch_copy_sec(fname, backup);
-# endif
 #endif
 
             /*
@@ -2929,9 +2926,6 @@ buf_write (
 #endif
 #ifdef HAVE_ACL
             mch_set_acl(backup, acl);
-#endif
-#ifdef HAVE_SELINUX
-            mch_copy_sec(fname, backup);
 #endif
             break;
           }
@@ -3386,12 +3380,6 @@ restore_backup:
     errmsg = (char_u *)_("E667: Fsync failed");
     end = 0;
   }
-#endif
-
-#ifdef HAVE_SELINUX
-  /* Probably need to set the security context. */
-  if (!backup_copy)
-    mch_copy_sec(backup, wfname);
 #endif
 
 #ifdef UNIX
@@ -4610,9 +4598,6 @@ int vim_rename(char_u *from, char_u *to)
 #ifdef HAVE_ACL
   mch_set_acl(to, acl);
   mch_free_acl(acl);
-#endif
-#ifdef HAVE_SELINUX
-  mch_copy_sec(from, to);
 #endif
   if (errmsg != NULL) {
     EMSG2(errmsg, to);

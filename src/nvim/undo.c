@@ -1115,10 +1115,6 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
       && os_fchown(fd, (uv_uid_t)-1, (uv_gid_t)file_info_old.stat.st_gid)) {
     os_setperm(file_name, (perm & 0707) | ((perm & 07) << 3));
   }
-# ifdef HAVE_SELINUX
-  if (buf->b_ffname != NULL)
-    mch_copy_sec(buf->b_ffname, file_name);
-# endif
 #endif
 
   fp = fdopen(fd, "w");
