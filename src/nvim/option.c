@@ -1313,13 +1313,21 @@ static vimoption_T
   {"shell",       "sh",   P_STRING|P_EXPAND|P_VI_DEF|P_SECURE,
    (char_u *)&p_sh, PV_NONE,
    {
+#if defined(WIN32)
+     (char_u *)"cmd.exe",
+#else
      (char_u *)"sh",
+#endif
      (char_u *)0L
    } SCRIPTID_INIT},
   {"shellcmdflag","shcf", P_STRING|P_VI_DEF|P_SECURE,
    (char_u *)&p_shcf, PV_NONE,
    {
+#if defined(WIN32)
+     (char_u *)"/c",
+#else
      (char_u *)"-c",
+#endif
      (char_u *)0L
    } SCRIPTID_INIT},
   {"shellpipe",   "sp",   P_STRING|P_VI_DEF|P_SECURE,
