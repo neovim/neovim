@@ -164,5 +164,7 @@ typedef uv_uid_t uid_t;
   "~\\.nvim,$VIM\\vimfiles,$VIMRUNTIME,$VIM\\vimfiles\\after,~\\.nvim\\after"
 #endif
 
+// Separator char for environment variables
+#define ENV_SEPCHAR ';'
 
 #endif  // NVIM_OS_WIN_DEFS_H

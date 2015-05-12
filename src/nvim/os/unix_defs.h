@@ -220,4 +220,7 @@
 #define TEMP_DIR_NAMES {"$TMPDIR", "/tmp", ".", "~"}
 #define TEMP_FILE_PATH_MAXLEN 256
 
+// Separator char for environment variables
+#define ENV_SEPCHAR ':'
+
 #endif  // NVIM_OS_UNIX_DEFS_H
