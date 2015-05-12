@@ -562,11 +562,12 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
   while (*path_end != NUL) {
     /* May ignore a wildcard that has a backslash before it; it will
      * be removed by rem_backslash() or file_pat_to_reg_pat() below. */
-    if (path_end >= path + wildoff && rem_backslash(path_end))
+    if (path_end >= path + wildoff && rem_backslash(path_end)) {
       *p++ = *path_end++;
-    else if (*path_end == '/') {
-      if (e != NULL)
+    } else if (vim_ispathsep_nocolon(*path_end)) {
+      if (e != NULL) {
         break;
+      }
       s = p + 1;
     } else if (path_end >= path + wildoff
                && (vim_strchr((char_u *)"*?[{~$", *path_end) != NULL
@@ -2099,7 +2100,6 @@ int path_full_dir_name(char *directory, char *buffer, size_t len)
 }
 
 // Append to_append to path with a slash in between.
-// Append to_append to path with a slash in between.
 int append_path(char *path, const char *to_append, size_t max_len)
 {
   size_t current_length = strlen(path);
@@ -2116,7 +2116,7 @@ int append_path(char *path, const char *to_append, size_t max_len)
   }
 
   // Glue both paths with a slash.
-  if (current_length > 0 && path[current_length-1] != '/') {
+  if (current_length > 0 && !vim_ispathsep_nocolon(path[current_length-1])) {
     current_length += 1;  // Count the trailing slash.
 
     // +1 for the NUL at the end.
@@ -2124,7 +2124,7 @@ int append_path(char *path, const char *to_append, size_t max_len)
       return FAIL;
     }
 
-    STRCAT(path, "/");
+    STRCAT(path, PATHSEPSTR);
   }
 
   // +1 for the NUL at the end.
