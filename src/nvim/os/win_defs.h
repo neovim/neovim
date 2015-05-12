@@ -167,4 +167,7 @@ typedef uv_uid_t uid_t;
 // Separator char for environment variables
 #define ENV_SEPCHAR ';'
 
+// lines end in CR-NL instead of NL
+#define USE_CRNL
+
 #endif  // NVIM_OS_WIN_DEFS_H
