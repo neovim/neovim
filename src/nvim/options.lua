@@ -2000,7 +2000,11 @@ return {
       vi_def=true,
       expand=true,
       varname='p_sh',
-      defaults={if_true={vi="sh"}}
+      defaults={
+        condition='WIN32',
+        if_true={vi="cmd.exe"},
+        if_false={vi="sh"}
+      }
     },
     {
       full_name='shellcmdflag', abbreviation='shcf',
@@ -2008,7 +2012,11 @@ return {
       secure=true,
       vi_def=true,
       varname='p_shcf',
-      defaults={if_true={vi="-c"}}
+      defaults={
+        condition='WIN32',
+        if_true={vi="/c"},
+        if_false={vi="-c"}
+      }
     },
     {
       full_name='shellpipe', abbreviation='sp',
