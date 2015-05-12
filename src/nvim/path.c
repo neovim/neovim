@@ -520,7 +520,11 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
      * be removed by rem_backslash() or file_pat_to_reg_pat() below. */
     if (path_end >= path + wildoff && rem_backslash(path_end))
       *p++ = *path_end++;
-    else if (*path_end == '/') {
+#ifdef BACKSLASH_IN_FILENAME
+    else if (*path_end == psepc || *path_end == psepcN) {
+#else
+    else if (*path_end == PATHSEP) {
+#endif
       if (e != NULL)
         break;
       s = p + 1;
@@ -2043,7 +2047,7 @@ int append_path(char *path, const char *to_append, int max_len)
   }
 
   // Glue both paths with a slash.
-  if (current_length > 0 && path[current_length-1] != '/') {
+  if (current_length > 0 && path[current_length-1] != PATHSEP) {
     current_length += 1;  // Count the trailing slash.
 
     // +1 for the NUL at the end.
@@ -2051,7 +2055,7 @@ int append_path(char *path, const char *to_append, int max_len)
       return FAIL;
     }
 
-    STRCAT(path, "/");
+    STRCAT(path, PATHSEPSTR);
   }
 
   // +1 for the NUL at the end.
