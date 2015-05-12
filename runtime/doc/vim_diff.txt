@@ -28,8 +28,10 @@ these differences.
 ==============================================================================
 2. Option defaults					  *nvim-option-defaults*
 
-- 'nocompatible' is always set
+- 'backspace' defaults to "indent,eol,start"
 - 'encoding' defaults to "utf-8"
+- 'nocompatible' is always set
+- 'ttyfast' is always set
 
 ==============================================================================
 3. Changed features					 *nvim-features-changed*

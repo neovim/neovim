@@ -430,9 +430,9 @@ static vimoption_T
      (char_u *)"light",
      (char_u *)0L
    } SCRIPTID_INIT},
-  {"backspace",   "bs",   P_STRING|P_VI_DEF|P_VIM|P_COMMA|P_NODUP,
+  {"backspace",   "bs",   P_STRING|P_VIM|P_COMMA|P_NODUP,
    (char_u *)&p_bs, PV_NONE,
-   {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
+   {(char_u *)"", (char_u *)"indent,eol,start"} SCRIPTID_INIT},
   {"backup",      "bk",   P_BOOL|P_VI_DEF|P_VIM,
    (char_u *)&p_bk, PV_NONE,
    {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
