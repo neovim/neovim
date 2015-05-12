@@ -151,7 +151,7 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
   // Walk through all entries in $PATH to check if "name" exists there and
   // is an executable file.
   for (;; ) {
-    const char *e = xstrchrnul(path, ':');
+    const char *e = xstrchrnul(path, ENV_SEPCHAR);
 
     // Glue together the given directory from $PATH with name and save into
     // buf.
@@ -169,7 +169,7 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
       return true;
     }
 
-    if (*e != ':') {
+    if (*e != ENV_SEPCHAR) {
       // End of $PATH without finding any executable called name.
       xfree(buf);
       return false;
