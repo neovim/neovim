@@ -9883,6 +9883,9 @@ static void f_has(typval_T *argvars, typval_T *rettv)
 #ifdef UNIX
     "unix",
 #endif
+#if defined(WIN32)
+    "win32",
+#endif
 #if defined(WIN64) || defined(_WIN64)
     "win64",
 #endif
