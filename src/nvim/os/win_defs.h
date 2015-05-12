@@ -157,11 +157,11 @@ typedef uv_uid_t uid_t;
 #endif
 
 #ifdef RUNTIME_GLOBAL
-# define DFLT_RUNTIMEPATH     "~\\.nvim," RUNTIME_GLOBAL ",$VIMRUNTIME," \
+# define DFLT_RUNTIMEPATH     "~\\_nvim," RUNTIME_GLOBAL ",$VIMRUNTIME," \
   RUNTIME_GLOBAL "\\after,~\\_nvim/after"
 #else
 # define DFLT_RUNTIMEPATH \
-  "~\\.nvim,$VIM\\vimfiles,$VIMRUNTIME,$VIM\\vimfiles\\after,~\\.nvim\\after"
+  "~\\_nvim,$VIM\\vimfiles,$VIMRUNTIME,$VIM\\vimfiles\\after,~\\_nvim\\after"
 #endif
 
 // Separator char for environment variables
