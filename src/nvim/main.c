@@ -725,9 +725,6 @@ void getout(int exitval)
   /* Position the cursor on the last screen line, below all the text */
   ui_cursor_goto((int)Rows - 1, 0);
 
-  /* Optionally print hashtable efficiency. */
-  hash_debug_results();
-
   if (get_vim_var_nr(VV_DYING) <= 1) {
     /* Trigger BufWinLeave for all windows, but only once per buffer. */
     for (tp = first_tabpage; tp != NULL; tp = next_tp) {
