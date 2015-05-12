@@ -70,8 +70,8 @@ CTRL-A		Insert previously inserted text.
 						*i_<Del>* *i_DEL*
 <Del>		Delete the character under the cursor.  If the cursor is at
 		the end of the line, and the 'backspace' option includes
-		"eol", delete the <EOL>; the next line is appended after the
-		current one.
+		"eol" (the default), delete the <EOL>; the next line is
+		appended after the current one.
 						*i_CTRL-W*
 CTRL-W		Delete the word before the cursor (see |i_backspacing| about
 		joining lines).  See the section "word motions",
@@ -319,9 +319,8 @@ The following keys are special.  They stop the current insert, do something,
 and then restart insertion.  This means you can do something without getting
 out of Insert mode.  This is very handy if you prefer to use the Insert mode
 all the time, just like editors that don't have a separate Normal mode.  You
-may also want to set the 'backspace' option to "indent,eol,start" and set the
-'insertmode' option.  You can use CTRL-O if you want to map a function key to
-a command.
+may also want to set the 'insertmode' option.  You can use CTRL-O if you want
+to map a function key to a command.
 
 The changes (inserted or deleted characters) before and after these keys can
 be undone separately.  Only the last change can be redone and always behaves
