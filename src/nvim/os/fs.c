@@ -146,6 +146,16 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
   }
 
   size_t buf_len = STRLEN(name) + STRLEN(path) + 2;
+
+#ifdef WIN32
+  const char *pathext = os_getenv("PATHEXT");
+  if (!pathext) {
+    pathext = ".com;.exe;.bat;.cmd";
+  }
+
+  buf_len += STRLEN(pathext);
+#endif
+
   char_u *buf = xmalloc(buf_len);
 
   // Walk through all entries in $PATH to check if "name" exists there and
@@ -168,6 +178,38 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
 
       return true;
     }
+
+#ifdef WIN32
+    // Try appending file extensions from $PATHEXT to the name.
+    char *buf_end = xstrchrnul((char *)buf, '\0');
+    for (const char *ext = pathext; *ext; ext++) {
+      // Skip the extension if there is no suffix after a '.'.
+      if (ext[0] == '.' && (ext[1] == '\0' || ext[1] == ';')) {
+        *ext++;
+
+        continue;
+      }
+
+      const char *ext_end = xstrchrnul(ext, ENV_SEPCHAR);
+      STRLCPY(buf_end, ext, ext_end - ext + 1);
+
+      if (is_executable(buf)) {
+        // Check if the caller asked for a copy of the path.
+        if (abspath != NULL) {
+          *abspath = save_absolute_path(buf);
+        }
+
+        xfree(buf);
+
+        return true;
+      }
+
+      if (*ext_end != ENV_SEPCHAR) {
+        break;
+      }
+      ext = ext_end;
+    }
+#endif
 
     if (*e != ENV_SEPCHAR) {
       // End of $PATH without finding any executable called name.
