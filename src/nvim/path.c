@@ -1258,12 +1258,6 @@ addfile (
   if (!(flags & EW_NOTFOUND) && !os_file_exists(f))
     return;
 
-#ifdef FNAME_ILLEGAL
-  /* if the file/dir contains illegal characters, don't add it */
-  if (vim_strpbrk(f, (char_u *)FNAME_ILLEGAL) != NULL)
-    return;
-#endif
-
   isdir = os_isdir(f);
   if ((isdir && !(flags & EW_DIR)) || (!isdir && !(flags & EW_FILE)))
     return;
