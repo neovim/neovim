@@ -120,9 +120,13 @@ static bool is_executable(const char_u *name)
     return false;
   }
 
-  if (S_ISREG(mode) && (S_IXUSR & mode)) {
-    return true;
-  }
+#if WIN32
+  // Windows does not have exec bit; just check if the file exists and is not
+  // a directory.
+  return (S_ISREG(mode));
+#else
+  return (S_ISREG(mode) && (S_IXUSR & mode));
+#endif
 
   return false;
 }
