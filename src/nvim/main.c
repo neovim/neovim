@@ -901,14 +901,11 @@ static void command_line_scan(mparm_T *parmp)
           /* "--literal" take files literally */
           /* "--noplugin[s]" skip plugins */
           /* "--cmd <cmd>" execute cmd before vimrc */
-          if (STRICMP(argv[0] + argv_idx, "help") == 0)
+          if (STRICMP(argv[0] + argv_idx, "help") == 0) {
             usage();
-          else if (STRICMP(argv[0] + argv_idx, "version") == 0) {
-            Columns = 80;                 /* need to init Columns */
-            info_message = TRUE;           /* use mch_msg(), not mch_errmsg() */
-            list_version();
-            msg_putchar('\n');
-            msg_didout = FALSE;
+            mch_exit(0);
+          } else if (STRICMP(argv[0] + argv_idx, "version") == 0) {
+            version();
             mch_exit(0);
           } else if (STRICMP(argv[0] + argv_idx, "api-info") == 0) {
             msgpack_sbuffer* b = msgpack_sbuffer_new();
@@ -981,7 +978,7 @@ static void command_line_scan(mparm_T *parmp)
 
         case 'h':                 /* "-h" give help message */
           usage();
-          break;
+          mch_exit(0);
 
         case 'H':                 /* "-H" start in Hebrew mode: rl + hkmap set */
           p_hkmap = TRUE;
@@ -1083,6 +1080,9 @@ static void command_line_scan(mparm_T *parmp)
         case 'd':                 /* "-d"		'diff' */
           parmp->diff_mode = TRUE;
           break;
+        case 'v':
+          version();
+          mch_exit(0);
         case 'V':                 /* "-V{N}"	Verbose level */
           /* default is 10: a little bit verbose */
           p_verbose = get_number_arg(argv[0], &argv_idx, 10);
@@ -1959,8 +1959,16 @@ static void mainerr(int n, const char *str)
   mch_exit(1);
 }
 
+/// Prints version information for "nvim -v" or "nvim --version".
+static void version(void)
+{
+  info_message = TRUE;  // use mch_msg(), not mch_errmsg()
+  list_version();
+  msg_putchar('\n');
+  msg_didout = FALSE;
+}
 
-/// Prints help message for "nvim -h" or "nvim --help" and exits.
+/// Prints help message for "nvim -h" or "nvim --help".
 static void usage(void)
 {
   signal_stop();              // kill us with CTRL-C here, if you like
@@ -1979,43 +1987,42 @@ static void usage(void)
   mch_msg(_("  -E                    Improved Ex mode\n"));
   mch_msg(_("  -s                    Silent (batch) mode (only for ex mode)\n"));
   mch_msg(_("  -d                    Diff mode\n"));
-  mch_msg(_("  -R                    Readonly mode\n"));
+  mch_msg(_("  -R                    Read-only mode\n"));
   mch_msg(_("  -Z                    Restricted mode\n"));
   mch_msg(_("  -m                    Modifications (writing files) not allowed\n"));
   mch_msg(_("  -M                    Modifications in text not allowed\n"));
   mch_msg(_("  -b                    Binary mode\n"));
   mch_msg(_("  -l                    Lisp mode\n"));
+  mch_msg(_("  -A                    Arabic mode\n"));
+  mch_msg(_("  -F                    Farsi mode\n"));
+  mch_msg(_("  -H                    Hebrew mode\n"));
   mch_msg(_("  -V[N][file]           Be verbose [level N][log messages to file]\n"));
   mch_msg(_("  -D                    Debugging mode\n"));
   mch_msg(_("  -n                    No swap file, use memory only\n"));
-  mch_msg(_("  -r                    List swap files and exit\n"));
+  mch_msg(_("  -r, -L                List swap files and exit\n"));
   mch_msg(_("  -r <file>             Recover crashed session\n"));
-  mch_msg(_("  -A                    Start in Arabic mode\n"));
-  mch_msg(_("  -F                    Start in Farsi mode\n"));
-  mch_msg(_("  -H                    Start in Hebrew mode\n"));
   mch_msg(_("  -T <terminal>         Set terminal type to <terminal>\n"));
-  mch_msg(_("  -u <nvimrc>           Use <nvimrc> instead of any .nvimrc\n"));
+  mch_msg(_("  -u <nvimrc>           Use <nvimrc> instead of the default\n"));
+  mch_msg(_("  -i <nviminfo>         Use <nviminfo> instead of the default\n"));
   mch_msg(_("  --noplugin            Don't load plugin scripts\n"));
-  mch_msg(_("  -p[N]                 Open N tab pages (default: one for each file)\n"));
   mch_msg(_("  -o[N]                 Open N windows (default: one for each file)\n"));
   mch_msg(_("  -O[N]                 Like -o but split vertically\n"));
+  mch_msg(_("  -p[N]                 Open N tab pages (default: one for each file)\n"));
   mch_msg(_("  +                     Start at end of file\n"));
-  mch_msg(_("  +<lnum>               Start at line <lnum>\n"));
+  mch_msg(_("  +<linenum>            Start at line <linenum>\n"));
+  mch_msg(_("  +/<pattern>           Start at first occurrence of <pattern>\n"));
   mch_msg(_("  --cmd <command>       Execute <command> before loading any nvimrc\n"));
   mch_msg(_("  -c <command>          Execute <command> after loading the first file\n"));
-  mch_msg(_("  -S <session>          Source file <session> after loading the first file\n"));
-  mch_msg(_("  -s <scriptin>         Read Normal mode commands from file <scriptin>\n"));
-  mch_msg(_("  -w <scriptout>        Append all typed commands to file <scriptout>\n"));
-  mch_msg(_("  -W <scriptout>        Write all typed commands to file <scriptout>\n"));
+  mch_msg(_("  -S <session>          Source <session> after loading the first file\n"));
+  mch_msg(_("  -s <scriptin>         Read Normal mode commands from <scriptin>\n"));
+  mch_msg(_("  -w <scriptout>        Append all typed characters to <scriptout>\n"));
+  mch_msg(_("  -W <scriptout>        Write all typed characters to <scriptout>\n"));
   mch_msg(_("  --startuptime <file>  Write startup timing messages to <file>\n"));
-  mch_msg(_("  -i <nviminfo>         Use <nviminfo> instead of .nviminfo\n"));
   mch_msg(_("  --api-info            Dump API metadata serialized to msgpack and exit\n"));
   mch_msg(_("  --embed               Use stdin/stdout as a msgpack-rpc channel\n"));
   mch_msg(_("  --headless            Don't start a user interface\n"));
-  mch_msg(_("  --version             Print version information and exit\n"));
-  mch_msg(_("  -h | --help           Print this help message and exit\n"));
-
-  mch_exit(0);
+  mch_msg(_("  -v, --version         Print version information and exit\n"));
+  mch_msg(_("  -h, --help            Print this help message and exit\n"));
 }
 
 
