@@ -702,8 +702,7 @@ static void report_pending(int action, int pending, void *value)
     if (pending & CSTP_THROW) {
       vim_snprintf((char *)IObuff, IOSIZE,
                    mesg, _("Exception"));
-      mesg = (char *)vim_strnsave(IObuff, STRLEN(IObuff) + 4);
-      strcat(mesg, ": %s");
+      mesg = (char *)concat_str(IObuff, (char_u *)": %s");
       s = (char *)((except_T *)value)->value;
     } else if ((pending & CSTP_ERROR) && (pending & CSTP_INTERRUPT))
       s = _("Error and interrupt");

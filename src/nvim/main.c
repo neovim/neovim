@@ -1168,12 +1168,13 @@ static void command_line_scan(mparm_T *parmp)
                 a = SESSION_FILE;
                 ++argc;
                 --argv;
-              } else
+              } else {
                 a = argv[0];
-              p = xmalloc(STRLEN(a) + 4);
-              sprintf((char *)p, "so %s", a);
+              }
+              char *s = xmalloc(STRLEN(a) + 4);
+              sprintf(s, "so %s", a);
               parmp->cmds_tofree[parmp->n_commands] = TRUE;
-              parmp->commands[parmp->n_commands++] = (char *)p;
+              parmp->commands[parmp->n_commands++] = s;
             } else {
               parmp->commands[parmp->n_commands++] = argv[0];
             }
