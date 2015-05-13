@@ -2772,11 +2772,13 @@ buf_write (
       backup_ext = p_bex;
 
     if (backup_copy && (fd = os_open((char *)fname, O_RDONLY, 0)) >= 0) {
+      const bool kNoPrependDot = false;
       int bfd;
       char_u      *copybuf, *wp;
       int some_error = FALSE;
       char_u      *dirp;
       char_u      *rootname;
+      char_u      *p;
 
       copybuf = verbose_try_malloc(BUFSIZE + 1);
       if (copybuf == NULL) {
@@ -2803,6 +2805,17 @@ buf_write (
          * Isolate one directory name, using an entry in 'bdir'.
          */
         (void)copy_option_part(&dirp, copybuf, BUFSIZE, ",");
+        p = copybuf + STRLEN(copybuf);
+        if (after_pathsep((char *)copybuf, (char *)p) && p[-1] == p[-2]) {
+          // Ends with '//', Use Full path
+          if ((p = (char_u *)make_percent_swname((char *)copybuf,
+                                                 (char *)fname)) != NULL) {
+            backup = (char_u *)modname((char *)p,
+                                       (char *)backup_ext,
+                                       kNoPrependDot);
+          }
+        }
+
         rootname = get_file_in_dir(fname, copybuf);
         if (rootname == NULL) {
           some_error = TRUE;                /* out of memory */
@@ -2814,7 +2827,12 @@ buf_write (
           /*
            * Make backup file name.
            */
-          backup = (char_u *)modname((char *)rootname, (char *)backup_ext, FALSE);
+          if (backup == NULL) {
+            backup = (char_u *)modname((char *)rootname,
+                                       (char *)backup_ext,
+                                       kNoPrependDot);
+          }
+
           if (backup == NULL) {
             xfree(rootname);
             some_error = TRUE;                          /* out of memory */
@@ -2951,6 +2969,7 @@ nobackup:
       }
       errmsg = NULL;
     } else {
+      const bool kNoPrependDot = false;
       char_u      *dirp;
       char_u      *p;
       char_u      *rootname;
@@ -2981,12 +3000,27 @@ nobackup:
          * Isolate one directory name and make the backup file name.
          */
         (void)copy_option_part(&dirp, IObuff, IOSIZE, ",");
-        rootname = get_file_in_dir(fname, IObuff);
-        if (rootname == NULL)
-          backup = NULL;
-        else {
-          backup = (char_u *)modname((char *)rootname, (char *)backup_ext, FALSE);
-          xfree(rootname);
+        p = IObuff + STRLEN(IObuff);
+        if (after_pathsep((char *)IObuff, (char *)p) && p[-1] == p[-2]) {
+          // Ends with '//', Use Full path
+          if ((p = (char_u *)make_percent_swname((char *)IObuff,
+                                                 (char *)fname)) != NULL) {
+            backup = (char_u *)modname((char *)p,
+                                       (char *)backup_ext,
+                                       kNoPrependDot);
+          }
+        }
+
+        if (backup == NULL) {
+          rootname = get_file_in_dir(fname, IObuff);
+          if (rootname == NULL) {
+            backup = NULL;
+          } else {
+            backup = (char_u *)modname((char *)rootname,
+                                       (char *)backup_ext,
+                                       kNoPrependDot);
+            xfree(rootname);
+          }
         }
 
         if (backup != NULL) {

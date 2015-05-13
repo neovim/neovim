@@ -837,10 +837,6 @@ Results in E670. (Tony Mechelynck, 2010 May 2)
 
 setpos() does not restore cursor position after :normal. (Tyru, 2010 Aug 11)
 
-7   The 'directory' option supports changing path separators to "%" to make
-    file names unique, also support this for 'backupdir'. (Mikolaj Machowski)
-    Patch by Christian Brabandt, 2010 Oct 21.
-
 With "tw=55 fo+=a" typing space before ) doesn't work well. (Scott Mcdermott,
 2010 Oct 24)
 
