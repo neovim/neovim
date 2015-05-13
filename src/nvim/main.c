@@ -81,7 +81,7 @@ typedef struct {
   int argc;
   char        **argv;
 
-  char_u      *use_vimrc;               /* vimrc from -u argument */
+  char *use_vimrc;                           // vimrc from -u argument
 
   int n_commands;                            /* no. of commands from + or -c */
   char *commands[MAX_ARG_CMDS];              // commands from + or -c arg
@@ -1230,7 +1230,7 @@ scripterror:
             break;
 
           case 'u':               /* "-u {vimrc}" vim inits file */
-            parmp->use_vimrc = (char_u *)argv[0];
+            parmp->use_vimrc = argv[0];
             break;
 
           case 'U':               /* "-U {gvimrc}" gvim inits file */
@@ -1777,12 +1777,12 @@ static void source_startup_scripts(mparm_T *parmp)
    * nothing else.
    */
   if (parmp->use_vimrc != NULL) {
-    if (STRCMP(parmp->use_vimrc, "NONE") == 0
-        || STRCMP(parmp->use_vimrc, "NORC") == 0) {
+    if (strcmp(parmp->use_vimrc, "NONE") == 0
+        || strcmp(parmp->use_vimrc, "NORC") == 0) {
       if (parmp->use_vimrc[2] == 'N')
-        p_lpl = FALSE;                      /* don't load plugins either */
+        p_lpl = FALSE;                      // don't load plugins either
     } else {
-      if (do_source(parmp->use_vimrc, FALSE, DOSO_NONE) != OK)
+      if (do_source((char_u *)parmp->use_vimrc, FALSE, DOSO_NONE) != OK)
         EMSG2(_("E282: Cannot read from \"%s\""), parmp->use_vimrc);
     }
   } else if (!silent_mode) {
