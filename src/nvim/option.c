@@ -7377,7 +7377,7 @@ static void paste_option_changed(void)
   old_p_paste = p_paste;
 }
 
-/// vimrc_found() - Called when a ".vimrc" or "VIMINIT" has been found.
+/// vimrc_found() - Called when a ".vimrc" or "NVIMINIT" has been found.
 ///
 /// Set the values for options that didn't get set yet to the Vim defaults.
 /// When "fname" is not NULL, use it to set $"envname" when it wasn't set yet.

@@ -1,7 +1,7 @@
 get_filename_component(BUSTED_DIR ${BUSTED_PRG} PATH)
 set(ENV{PATH} "${BUSTED_DIR}:$ENV{PATH}")
 
-set(ENV{VIMRUNTIME} ${WORKING_DIR}/runtime)
+set(ENV{NVIMRUNTIME} ${WORKING_DIR}/runtime)
 
 if(NVIM_PRG)
   set(ENV{NVIM_PROG} "${NVIM_PRG}")

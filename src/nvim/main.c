@@ -145,6 +145,21 @@ void early_init(void)
 {
   handle_init();
 
+  // Use $NVIM and $NVIMRUNTIME as $VIM and $VIMRUNTIME
+  // or unset them to avoid accidentaly using the Vim runtime
+  const char *env_nvimruntime = os_getenv("NVIMRUNTIME");
+  if (env_nvimruntime) {
+    os_setenv("VIMRUNTIME", env_nvimruntime, true);
+  } else {
+    os_unsetenv("VIMRUNTIME");
+  }
+  const char *env_nvim = os_getenv("NVIM");
+  if (env_nvim) {
+    os_setenv("VIM", env_nvim, true);
+  } else {
+    os_unsetenv("VIM");
+  }
+
   (void)mb_init();      // init mb_bytelen_tab[] to ones
   eval_init();          // init global variables
 
@@ -1798,7 +1813,7 @@ static void source_startup_scripts(mparm_T *parmp)
 
     /*
      * Try to read initialization commands from the following places:
-     * - environment variable VIMINIT
+     * - environment variable NVIMINIT
      * - user vimrc file (~/.vimrc)
      * - second user vimrc file ($VIM/.vimrc for Dos)
      * - environment variable EXINIT
@@ -1806,7 +1821,7 @@ static void source_startup_scripts(mparm_T *parmp)
      * - second user exrc file ($VIM/.exrc for Dos)
      * The first that exists is used, the rest is ignored.
      */
-    if (process_env((char_u *)"VIMINIT", TRUE) != OK) {
+    if (process_env((char_u *)"NVIMINIT", TRUE) != OK) {
       if (do_source((char_u *)USR_VIMRC_FILE, TRUE, DOSO_VIMRC) == FAIL
 #ifdef USR_VIMRC_FILE2
           && do_source((char_u *)USR_VIMRC_FILE2, TRUE,
@@ -1901,7 +1916,7 @@ static void main_start_gui(void)
 int
 process_env (
     char_u *env,
-    int is_viminit             /* when TRUE, called for VIMINIT */
+    int is_viminit             /* when TRUE, called for NVIMINIT */
 )
 {
   char_u      *initstr;
