@@ -339,12 +339,12 @@ int smsg(char *s, ...)
   return msg(IObuff);
 }
 
-int smsg_attr(int attr, char_u *s, ...)
+int smsg_attr(int attr, char *s, ...)
 {
   va_list arglist;
 
   va_start(arglist, s);
-  vim_vsnprintf((char *)IObuff, IOSIZE, (char *)s, arglist, NULL);
+  vim_vsnprintf((char *)IObuff, IOSIZE, s, arglist, NULL);
   va_end(arglist);
   return msg_attr(IObuff, attr);
 }

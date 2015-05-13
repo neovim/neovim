@@ -531,8 +531,8 @@ staterr:
     if (p_csverbose) {
       msg_clr_eos();
       (void)smsg_attr(hl_attr(HLF_R),
-          (char_u *)_("Added cscope database %s"),
-          csinfo[i].fname);
+            _("Added cscope database %s"),
+            csinfo[i].fname);
     }
   }
 
@@ -1316,7 +1316,7 @@ cs_kill_execute (
   if (p_csverbose) {
     msg_clr_eos();
     (void)smsg_attr(hl_attr(HLF_R) | MSG_HIST,
-        (char_u *)_("cscope connection %s closed"), cname);
+          _("cscope connection %s closed"), cname);
   }
   cs_release_csp(i, TRUE);
 }
