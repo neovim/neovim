@@ -56,7 +56,7 @@ local function screen_setup(extra_height)
   -- tty-test puts the terminal into raw mode and echoes all input. tests are
   -- done by feeding it with terminfo codes to control the display and
   -- verifying output with screen:expect.
-  execute('enew | call termopen(["'..nvim_dir..'/tty-test"]) | startinsert')
+  execute('call termopen(["'..nvim_dir..'/tty-test"]) | startinsert')
   -- wait for "tty ready" to be printed before each test or the terminal may
   -- still be in canonical mode(will echo characters for example)
   --

@@ -9419,10 +9419,16 @@ static void ex_terminal(exarg_T *eap)
     lquote = rquote = "\"";
   }
 
+  if (eap->forceit) {
+    // Prevent a "buffer modified" error by creating a new buffer. termopen()
+    // will also create a new buffer, but simply wiping or deleting this one
+    // may cause the loading of an additional buffer.
+    do_ecmd(0, NULL, NULL, NULL, 0, ECMD_FORCEIT, curwin);
+  }
+
   char ex_cmd[512];
   snprintf(ex_cmd, sizeof(ex_cmd),
-           ":enew%s | call termopen(%s%s%s) | startinsert",
-           eap->forceit==TRUE ? "!" : "", lquote, name, rquote);
+           ":call termopen(%s%s%s) | startinsert", lquote, name, rquote);
   do_cmdline_cmd((uint8_t *)ex_cmd);
 
   if (name != (char *)p_sh) {
