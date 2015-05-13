@@ -69,16 +69,16 @@ void event_teardown(void)
 
   process_events_from(immediate_events);
   process_events_from(deferred_events);
-  // reset the stop_flag to ensure `uv_run` below won't exit early. This hack
-  // is required because the `process_events_from` above may call `event_push`
-  // which will set the stop_flag to 1(uv_stop)
-  uv_default_loop()->stop_flag = 0;
   input_stop();
   channel_teardown();
   job_teardown();
   server_teardown();
   signal_teardown();
   terminal_teardown();
+  // reset the stop_flag to ensure `uv_run` below won't exit early. This hack
+  // is required because the `process_events_from` above may call `event_push`
+  // which will set the stop_flag to 1(uv_stop)
+  uv_default_loop()->stop_flag = 0;
   // this last `uv_run` will return after all handles are stopped, it will
   // also take care of finishing any uv_close calls made by other *_teardown
   // functions.
