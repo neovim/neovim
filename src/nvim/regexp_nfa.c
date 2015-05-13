@@ -4809,7 +4809,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
   nfa_list_T  *nextlist;
   int         *listids = NULL;
   nfa_state_T *add_state;
-  int add_here;
+  bool add_here;
   int add_count;
   int add_off = 0;
   int toplevel = start->c == NFA_MOPEN;
@@ -4970,7 +4970,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
        * The most important is NFA_MATCH.
        */
       add_state = NULL;
-      add_here = FALSE;
+      add_here = false;
       add_count = 0;
       switch (t->state->c) {
       case NFA_MATCH:
@@ -5110,7 +5110,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
             /* t->state->out1 is the corresponding
              * END_INVISIBLE node; Add its out to the current
              * list (zero-width match). */
-            add_here = TRUE;
+            add_here = true;
             add_state = t->state->out1->out;
           }
           m->norm.in_use = in_use;
@@ -5219,7 +5219,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
             /* empty match, output of corresponding
              * NFA_END_PATTERN/NFA_SKIP to be used at current
              * position */
-            add_here = TRUE;
+            add_here = true;
             add_state = t->state->out1->out->out;
           } else if (bytelen <= clen) {
             /* match current character, output of corresponding
@@ -5239,14 +5239,14 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
 
       case NFA_BOL:
         if (reginput == regline) {
-          add_here = TRUE;
+          add_here = true;
           add_state = t->state->out;
         }
         break;
 
       case NFA_EOL:
         if (curc == NUL) {
-          add_here = TRUE;
+          add_here = true;
           add_state = t->state->out;
         }
         break;
@@ -5270,7 +5270,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
                        && vim_iswordc_buf(reginput[-1], reg_buf)))
           result = FALSE;
         if (result) {
-          add_here = TRUE;
+          add_here = true;
           add_state = t->state->out;
         }
         break;
@@ -5293,7 +5293,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
                        && vim_iswordc_buf(curc, reg_buf)))
           result = FALSE;
         if (result) {
-          add_here = TRUE;
+          add_here = true;
           add_state = t->state->out;
         }
         break;
@@ -5301,14 +5301,14 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       case NFA_BOF:
         if (reglnum == 0 && reginput == regline
             && (!REG_MULTI || reg_firstlnum == 1)) {
-          add_here = TRUE;
+          add_here = true;
           add_state = t->state->out;
         }
         break;
 
       case NFA_EOF:
         if (reglnum == reg_maxline && curc == NUL) {
-          add_here = TRUE;
+          add_here = true;
           add_state = t->state->out;
         }
         break;
@@ -5473,7 +5473,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         if (enc_utf8 && utf_iscomposing(curc)) {
           add_off = clen;
         } else {
-          add_here = TRUE;
+          add_here = true;
           add_off = 0;
         }
         add_state = t->state->out;
@@ -5670,7 +5670,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
           if (bytelen == 0) {
             /* empty match always works, output of NFA_SKIP to be
              * used next */
-            add_here = TRUE;
+            add_here = true;
             add_state = t->state->out->out;
           } else if (bytelen <= clen) {
             /* match current character, jump ahead to out of
@@ -5713,7 +5713,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
                                     t->state->c - NFA_LNUM,
                                     (uintmax_t)(reglnum + reg_firstlnum)));
         if (result) {
-          add_here = TRUE;
+          add_here = true;
           add_state = t->state->out;
         }
         break;
@@ -5728,7 +5728,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
                                 t->state->c - NFA_COL,
                                 (uintmax_t)(reginput - regline + 1));
         if (result) {
-          add_here = TRUE;
+          add_here = true;
           add_state = t->state->out;
         }
         break;
@@ -5737,15 +5737,24 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       case NFA_VCOL_GT:
       case NFA_VCOL_LT:
         {
+          int op = t->state->c - NFA_VCOL;
+          colnr_T col = (colnr_T)(reginput - regline);
+
+          // Bail out quickly when there can't be a match, avoid the overhead of
+          // win_linetabsize() on long lines.
+          if ((col > t->state->val && op != 1)
+              || (col - 1 > t->state->val && op == 1)) {
+            break;
+          }
           uintmax_t lts = win_linetabsize(reg_win == NULL ? curwin : reg_win,
                                           regline,
-                                          (colnr_T)(reginput - regline));
+                                          col);
           assert(t->state->val >= 0);
           result = nfa_re_num_cmp((uintmax_t)t->state->val,
-                                  t->state->c - NFA_VCOL,
+                                  op,
                                   lts + 1);
           if (result) {
-            add_here = TRUE;
+            add_here = true;
             add_state = t->state->out;
           }
         }
@@ -5770,7 +5779,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
                          ? t->state->c == NFA_MARK_GT
                          : t->state->c == NFA_MARK_LT)));
         if (result) {
-          add_here = TRUE;
+          add_here = true;
           add_state = t->state->out;
         }
         break;
@@ -5782,7 +5791,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
                   && ((colnr_T)(reginput - regline)
                       == reg_win->w_cursor.col));
         if (result) {
-          add_here = TRUE;
+          add_here = true;
           add_state = t->state->out;
         }
         break;
@@ -5790,7 +5799,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       case NFA_VISUAL:
         result = reg_match_visual();
         if (result) {
-          add_here = TRUE;
+          add_here = true;
           add_state = t->state->out;
         }
         break;
@@ -6023,6 +6032,12 @@ nextchar:
       reg_nextline();
     else
       break;
+
+    // Allow interrupting with CTRL-C.
+    fast_breakcheck();
+    if (got_int) {
+      break;
+    }
   }
 
 #ifdef REGEXP_DEBUG
