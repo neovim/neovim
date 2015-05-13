@@ -1804,7 +1804,7 @@ static void source_startup_scripts(mparm_T *parmp)
      * - second user exrc file ($VIM/.exrc for Dos)
      * The first that exists is used, the rest is ignored.
      */
-    if (process_env((char_u *)"VIMINIT", TRUE) != OK) {
+    if (process_env("VIMINIT", true) != OK) {
       if (do_source((char_u *)USR_VIMRC_FILE, TRUE, DOSO_VIMRC) == FAIL
 #ifdef USR_VIMRC_FILE2
           && do_source((char_u *)USR_VIMRC_FILE2, TRUE,
@@ -1814,7 +1814,7 @@ static void source_startup_scripts(mparm_T *parmp)
           && do_source((char_u *)USR_VIMRC_FILE3, TRUE,
             DOSO_VIMRC) == FAIL
 #endif
-          && process_env((char_u *)"EXINIT", FALSE) == FAIL
+          && process_env("EXINIT", FALSE) == FAIL
           && do_source((char_u *)USR_EXRC_FILE, FALSE, DOSO_NONE) == FAIL) {
 #ifdef USR_EXRC_FILE2
         (void)do_source((char_u *)USR_EXRC_FILE2, FALSE, DOSO_NONE);
@@ -1892,29 +1892,25 @@ static void main_start_gui(void)
 }
 
 
-/*
- * Get an environment variable, and execute it as Ex commands.
- * Returns FAIL if the environment variable was not executed, OK otherwise.
- */
-int
-process_env (
-    char_u *env,
-    int is_viminit             /* when TRUE, called for VIMINIT */
-)
+/// Get an environment variable, and execute it as Ex commands.
+///
+/// @param env         environment variable to execute
+/// @param is_viminit  when true, called for VIMINIT
+///
+/// @return FAIL if the environment variable was not executed,
+///         OK otherwise.
+static int process_env(char *env, bool is_viminit)
 {
-  char_u      *save_sourcing_name;
-  linenr_T save_sourcing_lnum;
-  scid_T save_sid;
-
-  char *initstr = (char *)os_getenv((char *)env);
+  char *initstr = (char *)os_getenv(env);
   if (initstr != NULL && *initstr != NUL) {
-    if (is_viminit)
+    if (is_viminit) {
       vimrc_found(NULL, NULL);
-    save_sourcing_name = sourcing_name;
-    save_sourcing_lnum = sourcing_lnum;
-    sourcing_name = env;
+    }
+    char_u *save_sourcing_name = sourcing_name;
+    linenr_T save_sourcing_lnum = sourcing_lnum;
+    sourcing_name = (char_u *)env;
     sourcing_lnum = 0;
-    save_sid = current_SID;
+    scid_T save_sid = current_SID;
     current_SID = SID_ENV;
     do_cmdline_cmd(initstr);
     sourcing_name = save_sourcing_name;
