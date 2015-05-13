@@ -647,7 +647,7 @@ char_u *vim_findfile(void *search_ctx_arg)
 #ifdef FF_VERBOSE
         if (p_verbose >= 5) {
           verbose_enter_scroll();
-          smsg((char_u *)"Already Searched: %s (%s)",
+          smsg("Already Searched: %s (%s)",
               stackp->ffs_fix_path, stackp->ffs_wc_path);
           /* don't overwrite this either */
           msg_puts((char_u *)"\n");
@@ -660,8 +660,8 @@ char_u *vim_findfile(void *search_ctx_arg)
 #ifdef FF_VERBOSE
       else if (p_verbose >= 5) {
         verbose_enter_scroll();
-        smsg((char_u *)"Searching: %s (%s)",
-            stackp->ffs_fix_path, stackp->ffs_wc_path);
+        smsg("Searching: %s (%s)",
+             stackp->ffs_fix_path, stackp->ffs_wc_path);
         /* don't overwrite this either */
         msg_puts((char_u *)"\n");
         verbose_leave_scroll();
@@ -821,7 +821,7 @@ char_u *vim_findfile(void *search_ctx_arg)
                         ) == FAIL) {
                   if (p_verbose >= 5) {
                     verbose_enter_scroll();
-                    smsg((char_u *)"Already: %s",
+                    smsg("Already: %s",
                         file_path);
                     /* don't overwrite this either */
                     msg_puts((char_u *)"\n");
@@ -848,7 +848,7 @@ char_u *vim_findfile(void *search_ctx_arg)
 #ifdef FF_VERBOSE
                 if (p_verbose >= 5) {
                   verbose_enter_scroll();
-                  smsg((char_u *)"HIT: %s", file_path);
+                  smsg("HIT: %s", file_path);
                   /* don't overwrite this either */
                   msg_puts((char_u *)"\n");
                   verbose_leave_scroll();
@@ -1011,7 +1011,7 @@ static ff_visited_list_hdr_T *ff_get_visited_list(char_u *filename, ff_visited_l
 #ifdef FF_VERBOSE
         if (p_verbose >= 5) {
           verbose_enter_scroll();
-          smsg((char_u *)"ff_get_visited_list: FOUND list for %s",
+          smsg("ff_get_visited_list: FOUND list for %s",
               filename);
           /* don't overwrite this either */
           msg_puts((char_u *)"\n");
@@ -1027,7 +1027,7 @@ static ff_visited_list_hdr_T *ff_get_visited_list(char_u *filename, ff_visited_l
 #ifdef FF_VERBOSE
   if (p_verbose >= 5) {
     verbose_enter_scroll();
-    smsg((char_u *)"ff_get_visited_list: new list for %s", filename);
+    smsg("ff_get_visited_list: new list for %s", filename);
     /* don't overwrite this either */
     msg_puts((char_u *)"\n");
     verbose_leave_scroll();

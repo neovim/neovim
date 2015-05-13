@@ -169,9 +169,9 @@ void do_debug(char_u *cmd)
   if (sourcing_name != NULL)
     msg(sourcing_name);
   if (sourcing_lnum != 0)
-    smsg((char_u *)_("line %" PRId64 ": %s"), (int64_t)sourcing_lnum, cmd);
+    smsg(_("line %" PRId64 ": %s"), (int64_t)sourcing_lnum, cmd);
   else
-    smsg((char_u *)_("cmd: %s"), cmd);
+    smsg(_("cmd: %s"), cmd);
 
   /*
    * Repeat getting a command and executing it.
@@ -348,7 +348,7 @@ void dbg_check_breakpoint(exarg_T *eap)
         p = (char_u *)"<SNR>";
       else
         p = (char_u *)"";
-      smsg((char_u *)_("Breakpoint in \"%s%s\" line %" PRId64),
+      smsg(_("Breakpoint in \"%s%s\" line %" PRId64),
           p,
           debug_breakpoint_name + (*p == NUL ? 0 : 3),
           (int64_t)debug_breakpoint_lnum);
@@ -637,7 +637,7 @@ void ex_breaklist(exarg_T *eap)
       bp = &BREAKP(i);
       if (bp->dbg_type == DBG_FILE)
         home_replace(NULL, bp->dbg_name, NameBuff, MAXPATHL, TRUE);
-      smsg((char_u *)_("%3d  %s %s  line %" PRId64),
+      smsg(_("%3d  %s %s  line %" PRId64),
           bp->dbg_nr,
           bp->dbg_type == DBG_FUNC ? "func" : "file",
           bp->dbg_type == DBG_FUNC ? bp->dbg_name : NameBuff,
@@ -2127,7 +2127,7 @@ int do_in_runtimepath(char_u *name, int all, DoInRuntimepathCB callback,
   {
     if (p_verbose > 1 && name != NULL) {
       verbose_enter();
-      smsg((char_u *)_("Searching for \"%s\" in \"%s\""),
+      smsg(_("Searching for \"%s\" in \"%s\""),
           (char *)name, (char *)p_rtp);
       verbose_leave();
     }
@@ -2155,7 +2155,7 @@ int do_in_runtimepath(char_u *name, int all, DoInRuntimepathCB callback,
 
           if (p_verbose > 2) {
             verbose_enter();
-            smsg((char_u *)_("Searching for \"%s\""), buf);
+            smsg(_("Searching for \"%s\""), buf);
             verbose_leave();
           }
 
@@ -2178,7 +2178,7 @@ int do_in_runtimepath(char_u *name, int all, DoInRuntimepathCB callback,
   xfree(rtp_copy);
   if (p_verbose > 0 && !did_one && name != NULL) {
     verbose_enter();
-    smsg((char_u *)_("not found in 'runtimepath': \"%s\""), name);
+    smsg(_("not found in 'runtimepath': \"%s\""), name);
     verbose_leave();
   }
 
@@ -2316,7 +2316,7 @@ do_source (
   if (fname_exp == NULL)
     return retval;
   if (os_isdir(fname_exp)) {
-    smsg((char_u *)_("Cannot source a directory: \"%s\""), fname);
+    smsg(_("Cannot source a directory: \"%s\""), fname);
     goto theend;
   }
 
@@ -2362,9 +2362,9 @@ do_source (
     if (p_verbose > 0) {
       verbose_enter();
       if (sourcing_name == NULL)
-        smsg((char_u *)_("could not source \"%s\""), fname);
+        smsg(_("could not source \"%s\""), fname);
       else
-        smsg((char_u *)_("line %" PRId64 ": could not source \"%s\""),
+        smsg(_("line %" PRId64 ": could not source \"%s\""),
             (int64_t)sourcing_lnum, fname);
       verbose_leave();
     }
@@ -2379,9 +2379,9 @@ do_source (
   if (p_verbose > 1) {
     verbose_enter();
     if (sourcing_name == NULL)
-      smsg((char_u *)_("sourcing \"%s\""), fname);
+      smsg(_("sourcing \"%s\""), fname);
     else
-      smsg((char_u *)_("line %" PRId64 ": sourcing \"%s\""),
+      smsg(_("line %" PRId64 ": sourcing \"%s\""),
           (int64_t)sourcing_lnum, fname);
     verbose_leave();
   }
@@ -2532,9 +2532,9 @@ do_source (
   sourcing_lnum = save_sourcing_lnum;
   if (p_verbose > 1) {
     verbose_enter();
-    smsg((char_u *)_("finished sourcing %s"), fname);
+    smsg(_("finished sourcing %s"), fname);
     if (sourcing_name != NULL)
-      smsg((char_u *)_("continuing in %s"), sourcing_name);
+      smsg(_("continuing in %s"), sourcing_name);
     verbose_leave();
   }
 
@@ -2576,7 +2576,7 @@ void ex_scriptnames(exarg_T *eap)
     if (SCRIPT_ITEM(i).sn_name != NULL) {
       home_replace(NULL, SCRIPT_ITEM(i).sn_name,
           NameBuff, MAXPATHL, TRUE);
-      smsg((char_u *)"%3d: %s", i, NameBuff);
+      smsg("%3d: %s", i, NameBuff);
     }
 }
 
@@ -3141,7 +3141,7 @@ void ex_language(exarg_T *eap)
     p = (char_u *)setlocale(what, NULL);
     if (p == NULL || *p == NUL)
       p = (char_u *)"Unknown";
-    smsg((char_u *)_("Current %slanguage: \"%s\""), whatstr, p);
+    smsg(_("Current %slanguage: \"%s\""), whatstr, p);
   } else {
 #ifndef LC_MESSAGES
     if (what == VIM_LC_MESSAGES)

@@ -591,7 +591,7 @@ void op_reindent(oparg_T *oap, Indenter how)
     if (i > 1
         && (i % 50 == 0 || i == oap->line_count - 1)
         && oap->line_count > p_report)
-      smsg((char_u *)_("%" PRId64 " lines to indent... "), (int64_t)i);
+      smsg(_("%" PRId64 " lines to indent... "), (int64_t)i);
 
     /*
      * Be vi-compatible: For lisp indenting the first line is not
@@ -635,7 +635,7 @@ void op_reindent(oparg_T *oap, Indenter how)
     if (i == 1)
       MSG(_("1 line indented "));
     else
-      smsg((char_u *)_("%" PRId64 " lines indented "), (int64_t)i);
+      smsg(_("%" PRId64 " lines indented "), (int64_t)i);
   }
   /* set '[ and '] marks */
   curbuf->b_op_start = oap->start;
@@ -1902,7 +1902,7 @@ void op_tilde(oparg_T *oap)
     if (oap->line_count == 1)
       MSG(_("1 line changed"));
     else
-      smsg((char_u *)_("%" PRId64 " lines changed"), (int64_t)oap->line_count);
+      smsg(_("%" PRId64 " lines changed"), (int64_t)oap->line_count);
   }
 }
 
@@ -2497,10 +2497,10 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
         else
           MSG(_("1 line yanked"));
       } else if (oap->block_mode)
-        smsg((char_u *)_("block of %" PRId64 " lines yanked"),
+        smsg(_("block of %" PRId64 " lines yanked"),
              (int64_t)yanklines);
       else
-        smsg((char_u *)_("%" PRId64 " lines yanked"), (int64_t)yanklines);
+        smsg(_("%" PRId64 " lines yanked"), (int64_t)yanklines);
     }
   }
 

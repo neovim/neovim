@@ -19105,7 +19105,7 @@ call_user_func (
       ++no_wait_return;
       verbose_enter_scroll();
 
-      smsg((char_u *)_("calling %s"), sourcing_name);
+      smsg(_("calling %s"), sourcing_name);
       if (p_verbose >= 14) {
         char_u buf[MSG_BUF_LEN];
         char_u numbuf2[NUMBUFLEN];
@@ -19203,9 +19203,9 @@ call_user_func (
     verbose_enter_scroll();
 
     if (aborting())
-      smsg((char_u *)_("%s aborted"), sourcing_name);
+      smsg(_("%s aborted"), sourcing_name);
     else if (fc->rettv->v_type == VAR_NUMBER)
-      smsg((char_u *)_("%s returning #%" PRId64 ""),
+      smsg(_("%s returning #%" PRId64 ""),
            sourcing_name, (int64_t)fc->rettv->vval.v_number);
     else {
       char_u buf[MSG_BUF_LEN];
@@ -19224,7 +19224,7 @@ call_user_func (
           trunc_string(s, buf, MSG_BUF_CLEN, MSG_BUF_LEN);
           s = buf;
         }
-        smsg((char_u *)_("%s returning %s"), sourcing_name, s);
+        smsg(_("%s returning %s"), sourcing_name, s);
         xfree(tofree);
       }
     }
@@ -19245,7 +19245,7 @@ call_user_func (
     ++no_wait_return;
     verbose_enter_scroll();
 
-    smsg((char_u *)_("continuing in %s"), sourcing_name);
+    smsg(_("continuing in %s"), sourcing_name);
     msg_puts((char_u *)"\n");       /* don't overwrite this either */
 
     verbose_leave_scroll();

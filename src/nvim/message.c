@@ -329,12 +329,12 @@ void trunc_string(char_u *s, char_u *buf, int room, int buflen)
  * shorter than IOSIZE!!!
  */
 
-int smsg(char_u *s, ...)
+int smsg(char *s, ...)
 {
   va_list arglist;
 
   va_start(arglist, s);
-  vim_vsnprintf((char *)IObuff, IOSIZE, (char *)s, arglist, NULL);
+  vim_vsnprintf((char *)IObuff, IOSIZE, s, arglist, NULL);
   va_end(arglist);
   return msg(IObuff);
 }

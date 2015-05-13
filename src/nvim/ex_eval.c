@@ -489,7 +489,7 @@ static int throw_exception(void *value, int type, char_u *cmdname)
     if (debug_break_level > 0 || *p_vfile == NUL)
       msg_scroll = TRUE;            /* always scroll up, don't overwrite */
 
-    smsg((char_u *)_("Exception thrown: %s"), excp->value);
+    smsg(_("Exception thrown: %s"), excp->value);
     msg_puts((char_u *)"\n");       /* don't overwrite this either */
 
     if (debug_break_level > 0 || *p_vfile == NUL)
@@ -537,10 +537,9 @@ static void discard_exception(except_T *excp, int was_finished)
     ++no_wait_return;
     if (debug_break_level > 0 || *p_vfile == NUL)
       msg_scroll = TRUE;            /* always scroll up, don't overwrite */
-    smsg(was_finished
-        ? (char_u *)_("Exception finished: %s")
-        : (char_u *)_("Exception discarded: %s"),
-        excp->value);
+    smsg(was_finished ? _("Exception finished: %s")
+                      : _("Exception discarded: %s"),
+         excp->value);
     msg_puts((char_u *)"\n");       /* don't overwrite this either */
     if (debug_break_level > 0 || *p_vfile == NUL)
       cmdline_row = msg_row;
@@ -601,7 +600,7 @@ static void catch_exception(except_T *excp)
     if (debug_break_level > 0 || *p_vfile == NUL)
       msg_scroll = TRUE;            /* always scroll up, don't overwrite */
 
-    smsg((char_u *)_("Exception caught: %s"), excp->value);
+    smsg(_("Exception caught: %s"), excp->value);
     msg_puts((char_u *)"\n");       /* don't overwrite this either */
 
     if (debug_break_level > 0 || *p_vfile == NUL)
@@ -662,22 +661,22 @@ static void finish_exception(except_T *excp)
  */
 static void report_pending(int action, int pending, void *value)
 {
-  char_u      *mesg;
-  char        *s;
+  char *mesg;
+  char *s;
   int save_msg_silent;
 
   assert(value || !(pending & CSTP_THROW));
 
   switch (action) {
   case RP_MAKE:
-    mesg = (char_u *)_("%s made pending");
+    mesg = _("%s made pending");
     break;
   case RP_RESUME:
-    mesg = (char_u *)_("%s resumed");
+    mesg = _("%s resumed");
     break;
   /* case RP_DISCARD: */
   default:
-    mesg = (char_u *)_("%s discarded");
+    mesg = _("%s discarded");
     break;
   }
 
@@ -702,9 +701,9 @@ static void report_pending(int action, int pending, void *value)
   default:
     if (pending & CSTP_THROW) {
       vim_snprintf((char *)IObuff, IOSIZE,
-          (char *)mesg, _("Exception"));
-      mesg = vim_strnsave(IObuff, STRLEN(IObuff) + 4);
-      STRCAT(mesg, ": %s");
+                   mesg, _("Exception"));
+      mesg = (char *)vim_strnsave(IObuff, STRLEN(IObuff) + 4);
+      strcat(mesg, ": %s");
       s = (char *)((except_T *)value)->value;
     } else if ((pending & CSTP_ERROR) && (pending & CSTP_INTERRUPT))
       s = _("Error and interrupt");
@@ -719,7 +718,7 @@ static void report_pending(int action, int pending, void *value)
     msg_silent = FALSE;         /* display messages */
   ++no_wait_return;
   msg_scroll = TRUE;            /* always scroll up, don't overwrite */
-  smsg(mesg, (char_u *)s);
+  smsg(mesg, s);
   msg_puts((char_u *)"\n");     /* don't overwrite this either */
   cmdline_row = msg_row;
   --no_wait_return;

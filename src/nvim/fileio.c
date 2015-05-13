@@ -5404,8 +5404,7 @@ void aubuflocal_remove(buf_T *buf)
         au_remove_pat(ap);
         if (p_verbose >= 6) {
           verbose_enter();
-          smsg((char_u *)
-              _("auto-removing autocommand: %s <buffer=%d>"),
+          smsg(_("auto-removing autocommand: %s <buffer=%d>"),
               event_nr2name(event), buf->b_fnum);
           verbose_leave();
         }
@@ -6835,7 +6834,7 @@ auto_next_pat (
             (char *)name, (char *)ap->pat);
         if (p_verbose >= 8) {
           verbose_enter();
-          smsg((char_u *)_("Executing %s"), sourcing_name);
+          smsg(_("Executing %s"), sourcing_name);
           verbose_leave();
         }
 
@@ -6897,7 +6896,7 @@ char_u *getnextac(int c, void *cookie, int indent)
 
   if (p_verbose >= 9) {
     verbose_enter_scroll();
-    smsg((char_u *)_("autocommand %s"), ac->cmd);
+    smsg(_("autocommand %s"), ac->cmd);
     msg_puts((char_u *)"\n");       /* don't overwrite this either */
     verbose_leave_scroll();
   }

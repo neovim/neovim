@@ -604,7 +604,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
       ++no_wait_return;
       verbose_enter_scroll();
 
-      smsg((char_u *)_("line %" PRId64 ": %s"),
+      smsg(_("line %" PRId64 ": %s"),
           (int64_t)sourcing_lnum, cmdline_copy);
       if (msg_silent == 0)
         msg_puts((char_u *)"\n");           /* don't overwrite this */
@@ -6901,7 +6901,7 @@ static void ex_pwd(exarg_T *eap)
  */
 static void ex_equal(exarg_T *eap)
 {
-  smsg((char_u *)"%" PRId64, (int64_t)eap->line2);
+  smsg("%" PRId64, (int64_t)eap->line2);
   ex_may_print(eap);
 }
 
@@ -9221,7 +9221,7 @@ static void ex_filetype(exarg_T *eap)
 
   if (*eap->arg == NUL) {
     /* Print current status. */
-    smsg((char_u *)"filetype detection:%s  plugin:%s  indent:%s",
+    smsg("filetype detection:%s  plugin:%s  indent:%s",
         filetype_detect ? "ON" : "OFF",
         filetype_plugin ? (filetype_detect ? "ON" : "(on)") : "OFF",
         filetype_indent ? (filetype_detect ? "ON" : "(on)") : "OFF");

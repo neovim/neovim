@@ -950,13 +950,13 @@ void ml_recover(void)
   }
 
   home_replace(NULL, mfp->mf_fname, NameBuff, MAXPATHL, TRUE);
-  smsg((char_u *)_("Using swap file \"%s\""), NameBuff);
+  smsg(_("Using swap file \"%s\""), NameBuff);
 
   if (buf_spname(curbuf) != NULL)
     STRLCPY(NameBuff, buf_spname(curbuf), MAXPATHL);
   else
     home_replace(NULL, curbuf->b_ffname, NameBuff, MAXPATHL, TRUE);
-  smsg((char_u *)_("Original file \"%s\""), NameBuff);
+  smsg(_("Original file \"%s\""), NameBuff);
   msg_putchar('\n');
 
   /*

@@ -159,12 +159,12 @@ static void u_check_tree(u_header_T *uhp,
     /* Check pointers back are correct. */
     if (uhp->uh_next.ptr != exp_uh_next) {
       EMSG("uh_next wrong");
-      smsg((char_u *)"expected: 0x%x, actual: 0x%x",
+      smsg("expected: 0x%x, actual: 0x%x",
           exp_uh_next, uhp->uh_next.ptr);
     }
     if (uhp->uh_alt_prev.ptr != exp_uh_alt_prev) {
       EMSG("uh_alt_prev wrong");
-      smsg((char_u *)"expected: 0x%x, actual: 0x%x",
+      smsg("expected: 0x%x, actual: 0x%x",
           exp_uh_alt_prev, uhp->uh_alt_prev.ptr);
     }
 
@@ -198,7 +198,7 @@ static void u_check(int newhead_may_be_NULL)                 {
     EMSGN("b_u_curhead invalid: 0x%x", curbuf->b_u_curhead);
   if (header_count != curbuf->b_u_numhead) {
     EMSG("b_u_numhead invalid");
-    smsg((char_u *)"expected: %" PRId64 ", actual: %" PRId64,
+    smsg("expected: %" PRId64 ", actual: %" PRId64,
         (int64_t)header_count, (int64_t)curbuf->b_u_numhead);
   }
 }
@@ -1013,8 +1013,7 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
     if (file_name == NULL) {
       if (p_verbose > 0) {
         verbose_enter();
-        smsg((char_u *)
-            _("Cannot write undo file in any directory in 'undodir'"));
+        smsg(_("Cannot write undo file in any directory in 'undodir'"));
         verbose_leave();
       }
       return;
@@ -1048,9 +1047,8 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
         if (name != NULL || p_verbose > 0) {
           if (name == NULL)
             verbose_enter();
-          smsg((char_u *)
-              _("Will not overwrite with undo file, cannot read: %s"),
-              file_name);
+          smsg(_("Will not overwrite with undo file, cannot read: %s"),
+               file_name);
           if (name == NULL)
             verbose_leave();
         }
@@ -1064,9 +1062,8 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
           if (name != NULL || p_verbose > 0) {
             if (name == NULL)
               verbose_enter();
-            smsg((char_u *)
-                _("Will not overwrite, this is not an undo file: %s"),
-                file_name);
+            smsg(_("Will not overwrite, this is not an undo file: %s"),
+                 file_name);
             if (name == NULL)
               verbose_leave();
           }
@@ -1094,7 +1091,7 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
   (void)os_setperm(file_name, perm);
   if (p_verbose > 0) {
     verbose_enter();
-    smsg((char_u *)_("Writing undo file: %s"), file_name);
+    smsg(_("Writing undo file: %s"), file_name);
     verbose_leave();
   }
 
@@ -1236,8 +1233,8 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
         && file_info_undo.stat.st_uid != getuid()) {
       if (p_verbose > 0) {
         verbose_enter();
-        smsg((char_u *)_("Not reading undo file, owner differs: %s"),
-            file_name);
+        smsg(_("Not reading undo file, owner differs: %s"),
+             file_name);
         verbose_leave();
       }
       return;
@@ -1249,7 +1246,7 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
 
   if (p_verbose > 0) {
     verbose_enter();
-    smsg((char_u *)_("Reading undo file: %s"), file_name);
+    smsg(_("Reading undo file: %s"), file_name);
     verbose_leave();
   }
 
@@ -1483,7 +1480,7 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
 #endif
 
   if (name != NULL) {
-    smsg((char_u *)_("Finished reading undo file %s"), file_name);
+    smsg(_("Finished reading undo file %s"), file_name);
   }
   goto theend;
 
@@ -2289,7 +2286,7 @@ u_undo_end (
     }
   }
 
-  smsg((char_u *)_("%" PRId64 " %s; %s #%" PRId64 "  %s"),
+  smsg(_("%" PRId64 " %s; %s #%" PRId64 "  %s"),
       u_oldcount < 0 ? (int64_t)-u_oldcount : (int64_t)u_oldcount,
       _(msgstr),
       did_undo ? _("before") : _("after"),

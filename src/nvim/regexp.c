@@ -6968,7 +6968,7 @@ regprog_T *vim_regcomp(char_u *expr_arg, int re_flags)
       regexp_engine = expr[4] - '0';
       expr += 5;
 #ifdef REGEXP_DEBUG
-      smsg((char_u *)"New regexp mode selected (%d): %s",
+      smsg("New regexp mode selected (%d): %s",
            regexp_engine,
            regname[newengine]);
 #endif

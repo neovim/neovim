@@ -1115,7 +1115,7 @@ static int cs_help(exarg_T *eap)
     /* Use %*s rather than %30s to ensure proper alignment in utf-8 */
     if (space_cnt < 0)
       space_cnt = 0;
-    (void)smsg((char_u *)_("%-5s: %s%*s (Usage: %s)"),
+    (void)smsg(_("%-5s: %s%*s (Usage: %s)"),
         cmdp->name,
         help, space_cnt, " ",
         cmdp->usage);
@@ -2083,10 +2083,10 @@ static int cs_show(exarg_T *eap)
         continue;
 
       if (csinfo[i].ppath != NULL)
-        (void)smsg((char_u *)"%2d %-5ld  %-34s  %-32s",
+        (void)smsg("%2d %-5ld  %-34s  %-32s",
             i, (long)csinfo[i].pid, csinfo[i].fname, csinfo[i].ppath);
       else
-        (void)smsg((char_u *)"%2d %-5ld  %-34s  <none>",
+        (void)smsg("%2d %-5ld  %-34s  <none>",
             i, (long)csinfo[i].pid, csinfo[i].fname);
     }
   }

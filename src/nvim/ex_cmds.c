@@ -748,7 +748,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     if (num_lines == 1)
       MSG(_("1 line moved"));
     else
-      smsg((char_u *)_("%" PRId64 " lines moved"), (int64_t)num_lines);
+      smsg(_("%" PRId64 " lines moved"), (int64_t)num_lines);
   }
 
   /*
@@ -1439,7 +1439,7 @@ read_viminfo (
 
   if (p_verbose > 0) {
     verbose_enter();
-    smsg((char_u *)_("Reading viminfo file \"%s\"%s%s%s"),
+    smsg(_("Reading viminfo file \"%s\"%s%s%s"),
         fname,
         (flags & VIF_WANT_INFO) ? _(" info") : "",
         (flags & VIF_WANT_MARKS) ? _(" marks") : "",
@@ -1616,7 +1616,7 @@ void write_viminfo(char_u *file, int forceit)
 
   if (p_verbose > 0) {
     verbose_enter();
-    smsg((char_u *)_("Writing viminfo file \"%s\""), fname);
+    smsg(_("Writing viminfo file \"%s\""), fname);
     verbose_leave();
   }
 
@@ -4440,9 +4440,9 @@ void ex_global(exarg_T *eap)
     MSG(_(e_interr));
   else if (ndone == 0) {
     if (type == 'v')
-      smsg((char_u *)_("Pattern found in every line: %s"), pat);
+      smsg(_("Pattern found in every line: %s"), pat);
     else
-      smsg((char_u *)_("Pattern not found: %s"), pat);
+      smsg(_("Pattern not found: %s"), pat);
   } else
     global_exe(cmd);
 
@@ -4682,7 +4682,7 @@ void ex_help(exarg_T *eap)
        * Try to open the file specified by the "helpfile" option.
        */
       if ((helpfd = mch_fopen((char *)p_hf, READBIN)) == NULL) {
-        smsg((char_u *)_("Sorry, help file \"%s\" not found"), p_hf);
+        smsg(_("Sorry, help file \"%s\" not found"), p_hf);
         goto erret;
       }
       fclose(helpfd);
@@ -6038,7 +6038,7 @@ static void sign_list_defined(sign_T *sp)
 {
   char_u  *p;
 
-  smsg((char_u *)"sign %s", sp->sn_name);
+  smsg("sign %s", sp->sn_name);
   if (sp->sn_icon != NULL) {
     MSG_PUTS(" icon=");
     msg_outtrans(sp->sn_icon);

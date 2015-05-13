@@ -4200,7 +4200,7 @@ find_pattern_in_path (
             msg_trunc_attr(IObuff, TRUE, hl_attr(HLF_R));
           } else if (p_verbose >= 5) {
             verbose_enter();
-            smsg((char_u *)_("Searching included file %s"),
+            smsg(_("Searching included file %s"),
                 (char *)new_fname);
             verbose_leave();
           }
