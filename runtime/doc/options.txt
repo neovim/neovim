@@ -1925,13 +1925,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			there is one).  This works very well for C programs.
 			This flag is also used for other features, such as
 			C-indenting.
-								*cpo--*
-		-	When included, a vertical movement command fails when
-			it would go above the first line or below the last
-			line.  Without it the cursor moves to the first or
-			last line, unless it already was in that line.
-			Applies to the commands "-", "k", CTRL-P, "+", "j",
-			CTRL-N, CTRL-J and ":1234".
 								*cpo-+*
 		+	When included, a ":write file" command will reset the
 			'modified' flag of the buffer, even though the buffer
