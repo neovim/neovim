@@ -82,6 +82,7 @@ typedef struct {
   char        **argv;
 
   char_u      *use_vimrc;               /* vimrc from -u argument */
+  bool use_defaults;                    /* use defaults.vim */
 
   int n_commands;                            /* no. of commands from + or -c */
   char_u      *commands[MAX_ARG_CMDS];       /* commands from + or -c arg. */
@@ -1233,6 +1234,11 @@ scripterror:
 
           case 'u':               /* "-u {vimrc}" vim inits file */
             parmp->use_vimrc = (char_u *)argv[0];
+            if (STRCMP(parmp->use_vimrc, "NONE") == 0) {
+                parmp->use_defaults = false;
+            } else if (STRCMP(parmp->use_vimrc, "NORC") == 0) {
+                parmp->use_defaults = true;
+            }
             break;
 
           case 'U':               /* "-U {gvimrc}" gvim inits file */
@@ -1773,6 +1779,13 @@ static void exe_commands(mparm_T *parmp)
 static void source_startup_scripts(mparm_T *parmp)
 {
   int i;
+
+  // Source defaults.vim first of all, to change some defaults 
+  // without changing the behavior of "set all&"
+  if (parmp->use_defaults != false) {
+      (void)do_source((char_u *)NVIM_DEFAULTS_FILE, FALSE, DOSO_NONE);
+      TIME_MSG("source defaults file");
+  }
 
   /*
    * If -u argument given, use only the initializations from that file and
