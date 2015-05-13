@@ -81,8 +81,8 @@ set(LUAJIT_SHA256 620fa4eb12375021bef6e4f237cbd2dd5d49e56beb414bee052c746beef180
 set(LUAROCKS_URL https://github.com/keplerproject/luarocks/archive/0587afbb5fe8ceb2f2eea16f486bd6183bf02f29.tar.gz)
 set(LUAROCKS_SHA256 c8ad50938fed66beba74a73621d14121d4a40b796e01c45238de4cdcb47d5e0b)
 
-set(UNIBILIUM_URL https://github.com/mauke/unibilium/archive/v1.1.2.tar.gz)
-set(UNIBILIUM_SHA256 bdf3750b9e6ecdb30ba42dd0ef041c34222051495ff420c8c76d391f11e149e3)
+set(UNIBILIUM_URL https://github.com/mauke/unibilium/archive/v1.1.4.tar.gz)
+set(UNIBILIUM_SHA256 8b8948266eb370eef8100f401d530451d627a17c068a3f85cd5d62a57517aaa7)
 
 set(LIBTERMKEY_URL https://github.com/neovim/libtermkey/archive/8c0cb7108cc63218ea19aa898968eede19e19603.tar.gz)
 set(LIBTERMKEY_SHA256 21846369081e6c9a0b615f4b3889c4cb809321c5ccc6e6c1640eb138f1590072)
