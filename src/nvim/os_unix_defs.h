@@ -115,9 +115,7 @@
 #endif
 
 
-#if !defined(USR_EXRC_FILE2)
-#    define USR_VIMRC_FILE2     "~/.nvim/nvimrc"
-#endif
+#define USR_VIMRC_FILE2     "~/.nvim/nvimrc"
 
 # ifndef VIMINFO_FILE
 #   define VIMINFO_FILE "~/.nviminfo"

@@ -1810,9 +1810,6 @@ static void source_startup_scripts(mparm_T *parmp)
 #endif
           && process_env("EXINIT", FALSE) == FAIL
           && do_source((char_u *)USR_EXRC_FILE, FALSE, DOSO_NONE) == FAIL) {
-#ifdef USR_EXRC_FILE2
-        (void)do_source((char_u *)USR_EXRC_FILE2, FALSE, DOSO_NONE);
-#endif
       }
     }
 
@@ -1856,10 +1853,6 @@ static void source_startup_scripts(mparm_T *parmp)
 #endif
         if (       path_full_compare((char_u *)USR_EXRC_FILE,
               (char_u *)EXRC_FILE, FALSE) != kEqualFiles
-#ifdef USR_EXRC_FILE2
-            && path_full_compare((char_u *)USR_EXRC_FILE2,
-              (char_u *)EXRC_FILE, FALSE) != kEqualFiles
-#endif
            )
           (void)do_source((char_u *)EXRC_FILE, FALSE, DOSO_NONE);
       }
