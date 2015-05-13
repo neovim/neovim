@@ -4172,11 +4172,11 @@ static void nv_Zet(cmdarg_T *cap)
   if (!checkclearopq(cap->oap)) {
     switch (cap->nchar) {
     /* "ZZ": equivalent to ":x". */
-    case 'Z':   do_cmdline_cmd((char_u *)"x");
+    case 'Z':   do_cmdline_cmd("x");
       break;
 
     /* "ZQ": equivalent to ":q!" (Elvis compatible). */
-    case 'Q':   do_cmdline_cmd((char_u *)"q!");
+    case 'Q':   do_cmdline_cmd("q!");
       break;
 
     default:    clearopbeep(cap->oap);
@@ -4392,7 +4392,7 @@ static void nv_ident(cmdarg_T *cap)
     add_to_history(HIST_SEARCH, buf, true, NUL);
     (void)normal_search(cap, cmdchar == '*' ? '/' : '?', buf, 0);
   } else
-    do_cmdline_cmd(buf);
+    do_cmdline_cmd((char *)buf);
 
   xfree(buf);
 }
@@ -4704,9 +4704,9 @@ static void nv_down(cmdarg_T *cap)
   /* In a quickfix window a <CR> jumps to the error under the cursor. */
   if (bt_quickfix(curbuf) && cap->cmdchar == CAR)
     if (curwin->w_llist_ref == NULL)
-      do_cmdline_cmd((char_u *)".cc");          /* quickfix window */
+      do_cmdline_cmd(".cc");          /* quickfix window */
     else
-      do_cmdline_cmd((char_u *)".ll");          /* location list window */
+      do_cmdline_cmd(".ll");          /* location list window */
   else {
     /* In the cmdline window a <CR> executes the command. */
     if (cmdwin_type != 0 && cap->cmdchar == CAR)
@@ -6018,7 +6018,7 @@ static void nv_suspend(cmdarg_T *cap)
   clearop(cap->oap);
   if (VIsual_active)
     end_visual_mode();                  /* stop Visual mode */
-  do_cmdline_cmd((char_u *)"st");
+  do_cmdline_cmd("st");
 }
 
 /*
@@ -6045,7 +6045,7 @@ static void nv_g_cmd(cmdarg_T *cap)
     break;
 
   case '&':
-    do_cmdline_cmd((char_u *)"%s//~/&");
+    do_cmdline_cmd("%s//~/&");
     break;
 
   /*

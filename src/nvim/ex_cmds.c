@@ -5252,7 +5252,7 @@ void fix_help_buffer(void)
  */
 void ex_exusage(exarg_T *eap)
 {
-  do_cmdline_cmd((char_u *)"help ex-cmd-index");
+  do_cmdline_cmd("help ex-cmd-index");
 }
 
 /*
@@ -5260,7 +5260,7 @@ void ex_exusage(exarg_T *eap)
  */
 void ex_viusage(exarg_T *eap)
 {
-  do_cmdline_cmd((char_u *)"help normal-index");
+  do_cmdline_cmd("help normal-index");
 }
 
 
@@ -5973,11 +5973,9 @@ void ex_sign(exarg_T *eap)
 		    beginline(BL_WHITE);
 		}
 		else
-		{			/* ... not currently in a window */
-		    char_u	*cmd;
-
-		    cmd = xmalloc(STRLEN(buf->b_fname) + 25);
-		    sprintf((char *)cmd, "e +%" PRId64 " %s",
+		{   // ... not currently in a window
+		    char *cmd = xmalloc(STRLEN(buf->b_fname) + 25);
+		    sprintf(cmd, "e +%" PRId64 " %s",
                     (int64_t)lnum, buf->b_fname);
 		    do_cmdline_cmd(cmd);
 		    xfree(cmd);

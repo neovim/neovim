@@ -1049,9 +1049,9 @@ doESCkey:
        * cursor. */
       if (bt_quickfix(curbuf) && c == CAR) {
         if (curwin->w_llist_ref == NULL)            /* quickfix window */
-          do_cmdline_cmd((char_u *)".cc");
+          do_cmdline_cmd(".cc");
         else                                        /* location list window */
-          do_cmdline_cmd((char_u *)".ll");
+          do_cmdline_cmd(".ll");
         break;
       }
       if (cmdwin_type != 0) {
@@ -2342,7 +2342,7 @@ void ins_compl_show_pum(void)
     return;
 
   /* Dirty hard-coded hack: remove any matchparen highlighting. */
-  do_cmdline_cmd((char_u *)"if exists('g:loaded_matchparen')|3match none|endif");
+  do_cmdline_cmd("if exists('g:loaded_matchparen')|3match none|endif");
 
   /* Update the screen before drawing the popup menu over it. */
   update_screen(0);

@@ -310,7 +310,7 @@ void ex_debug(exarg_T *eap)
   int debug_break_level_save = debug_break_level;
 
   debug_break_level = 9999;
-  do_cmdline_cmd(eap->arg);
+  do_cmdline_cmd((char *)eap->arg);
   debug_break_level = debug_break_level_save;
 }
 
@@ -2025,14 +2025,13 @@ void ex_compiler(exarg_T *eap)
 
   if (*eap->arg == NUL) {
     /* List all compiler scripts. */
-    do_cmdline_cmd((char_u *)"echo globpath(&rtp, 'compiler/*.vim')");
+    do_cmdline_cmd("echo globpath(&rtp, 'compiler/*.vim')");
     /* ) keep the indenter happy... */
   } else {
     buf = xmalloc(STRLEN(eap->arg) + 14);
     if (eap->forceit) {
       /* ":compiler! {name}" sets global options */
-      do_cmdline_cmd((char_u *)
-          "command -nargs=* CompilerSet set <args>");
+      do_cmdline_cmd("command -nargs=* CompilerSet set <args>");
     } else {
       /* ":compiler! {name}" sets local options.
        * To remain backwards compatible "current_compiler" is always
@@ -2043,8 +2042,7 @@ void ex_compiler(exarg_T *eap)
       old_cur_comp = get_var_value((char_u *)"g:current_compiler");
       if (old_cur_comp != NULL)
         old_cur_comp = vim_strsave(old_cur_comp);
-      do_cmdline_cmd((char_u *)
-          "command -nargs=* CompilerSet setlocal <args>");
+      do_cmdline_cmd("command -nargs=* CompilerSet setlocal <args>");
     }
     do_unlet((char_u *)"g:current_compiler", TRUE);
     do_unlet((char_u *)"b:current_compiler", TRUE);
@@ -2054,7 +2052,7 @@ void ex_compiler(exarg_T *eap)
       EMSG2(_("E666: compiler not supported: %s"), eap->arg);
     xfree(buf);
 
-    do_cmdline_cmd((char_u *)":delcommand CompilerSet");
+    do_cmdline_cmd(":delcommand CompilerSet");
 
     /* Set "b:current_compiler" from "current_compiler". */
     p = get_var_value((char_u *)"g:current_compiler");

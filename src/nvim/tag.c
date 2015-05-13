@@ -2511,7 +2511,7 @@ jumpto_tag (
       check_cursor();
     } else {
       curwin->w_cursor.lnum = 1;                /* start command in line 1 */
-      do_cmdline_cmd(pbuf);
+      do_cmdline_cmd((char *)pbuf);
       retval = OK;
     }
 

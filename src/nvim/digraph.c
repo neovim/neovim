@@ -1743,7 +1743,7 @@ char_u* keymap_init(void)
     // Stop any active keymap and clear the table.  Also remove
     // b:keymap_name, as no keymap is active now.
     keymap_unload();
-    do_cmdline_cmd((char_u *)"unlet! b:keymap_name");
+    do_cmdline_cmd("unlet! b:keymap_name");
   } else {
     char *buf;
     size_t buflen;

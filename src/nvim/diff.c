@@ -978,7 +978,7 @@ void ex_diffpatch(exarg_T *eap)
 
           // Do filetype detection with the new name.
           if (au_has_group((char_u *)"filetypedetect")) {
-            do_cmdline_cmd((char_u *)":doau filetypedetect BufRead");
+            do_cmdline_cmd(":doau filetypedetect BufRead");
           }
         }
       }
@@ -1087,7 +1087,7 @@ void diff_win_options(win_T *wp, int addbuf)
   // make sure topline is not halfway through a fold
   changed_window_setting_win(wp);
   if (vim_strchr(p_sbo, 'h') == NULL) {
-    do_cmdline_cmd((char_u *)"set sbo+=hor");
+    do_cmdline_cmd("set sbo+=hor");
   }
 
   // Saved the current values, to be restored in ex_diffoff().
@@ -1173,7 +1173,7 @@ void ex_diffoff(exarg_T *eap)
 
   // Remove "hor" from from 'scrollopt' if there are no diff windows left.
   if (!diffwin && (vim_strchr(p_sbo, 'h') != NULL)) {
-    do_cmdline_cmd((char_u *)"set sbo-=hor");
+    do_cmdline_cmd("set sbo-=hor");
   }
 }
 

@@ -12901,7 +12901,7 @@ void ex_spelldump(exarg_T *eap)
   get_option_value((char_u*)"spl", &dummy, &spl, OPT_LOCAL);
 
   // Create a new empty buffer in a new window.
-  do_cmdline_cmd((char_u *)"new");
+  do_cmdline_cmd("new");
 
   // enable spelling locally in the new window
   set_option_value((char_u*)"spell", TRUE, (char_u*)"", OPT_LOCAL);

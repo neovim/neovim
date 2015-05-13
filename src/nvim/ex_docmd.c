@@ -289,9 +289,9 @@ do_exmode (
 /*
  * Execute a simple command line.  Used for translated commands like "*".
  */
-int do_cmdline_cmd(char_u *cmd)
+int do_cmdline_cmd(char *cmd)
 {
-  return do_cmdline(cmd, NULL, NULL,
+  return do_cmdline((char_u *)cmd, NULL, NULL,
       DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_KEYTYPED);
 }
 
@@ -4357,7 +4357,7 @@ static void ex_buffer(exarg_T *eap)
       goto_buffer(eap, DOBUF_FIRST, FORWARD, (int)eap->line2);
     }
     if (eap->do_ecmd_cmd != NULL) {
-      do_cmdline_cmd(eap->do_ecmd_cmd);
+      do_cmdline_cmd((char *)eap->do_ecmd_cmd);
     }
   }
 }
@@ -4370,7 +4370,7 @@ static void ex_bmodified(exarg_T *eap)
 {
   goto_buffer(eap, DOBUF_MOD, FORWARD, (int)eap->line2);
   if (eap->do_ecmd_cmd != NULL) {
-    do_cmdline_cmd(eap->do_ecmd_cmd);
+    do_cmdline_cmd((char *)eap->do_ecmd_cmd);
   }
 }
 
@@ -4382,7 +4382,7 @@ static void ex_bnext(exarg_T *eap)
 {
   goto_buffer(eap, DOBUF_CURRENT, FORWARD, (int)eap->line2);
   if (eap->do_ecmd_cmd != NULL) {
-    do_cmdline_cmd(eap->do_ecmd_cmd);
+    do_cmdline_cmd((char *)eap->do_ecmd_cmd);
   }
 }
 
@@ -4396,7 +4396,7 @@ static void ex_bprevious(exarg_T *eap)
 {
   goto_buffer(eap, DOBUF_CURRENT, BACKWARD, (int)eap->line2);
   if (eap->do_ecmd_cmd != NULL) {
-    do_cmdline_cmd(eap->do_ecmd_cmd);
+    do_cmdline_cmd((char *)eap->do_ecmd_cmd);
   }
 }
 
@@ -4410,7 +4410,7 @@ static void ex_brewind(exarg_T *eap)
 {
   goto_buffer(eap, DOBUF_FIRST, FORWARD, 0);
   if (eap->do_ecmd_cmd != NULL) {
-    do_cmdline_cmd(eap->do_ecmd_cmd);
+    do_cmdline_cmd((char *)eap->do_ecmd_cmd);
   }
 }
 
@@ -4422,7 +4422,7 @@ static void ex_blast(exarg_T *eap)
 {
   goto_buffer(eap, DOBUF_LAST, BACKWARD, 0);
   if (eap->do_ecmd_cmd != NULL) {
-    do_cmdline_cmd(eap->do_ecmd_cmd);
+    do_cmdline_cmd((char *)eap->do_ecmd_cmd);
   }
 }
 
@@ -6622,7 +6622,7 @@ do_exedit (
     readonlymode = n;
   } else {
     if (eap->do_ecmd_cmd != NULL)
-      do_cmdline_cmd(eap->do_ecmd_cmd);
+      do_cmdline_cmd((char *)eap->do_ecmd_cmd);
     n = curwin->w_arg_idx_invalid;
     check_arg_idx(curwin);
     if (n != curwin->w_arg_idx_invalid)
@@ -9423,7 +9423,7 @@ static void ex_terminal(exarg_T *eap)
   snprintf(ex_cmd, sizeof(ex_cmd),
            ":enew%s | call termopen(%s%s%s) | startinsert",
            eap->forceit==TRUE ? "!" : "", lquote, name, rquote);
-  do_cmdline_cmd((uint8_t *)ex_cmd);
+  do_cmdline_cmd(ex_cmd);
 
   if (name != (char *)p_sh) {
     xfree(name);

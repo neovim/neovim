@@ -84,10 +84,10 @@ typedef struct {
   char_u      *use_vimrc;               /* vimrc from -u argument */
 
   int n_commands;                            /* no. of commands from + or -c */
-  char_u      *commands[MAX_ARG_CMDS];       /* commands from + or -c arg. */
+  char *commands[MAX_ARG_CMDS];              // commands from + or -c arg
   char_u cmds_tofree[MAX_ARG_CMDS];          /* commands that need free() */
   int n_pre_commands;                        /* no. of commands from --cmd */
-  char_u      *pre_commands[MAX_ARG_CMDS];   /* commands from --cmd argument */
+  char *pre_commands[MAX_ARG_CMDS];          // commands from --cmd argument
 
   int edit_type;                        /* type of editing to do */
   char_u      *tagname;                 /* tag from -t argument */
@@ -286,15 +286,14 @@ int main(int argc, char **argv)
   }
 
   // open terminals when opening files that start with term://
-  do_cmdline_cmd((uint8_t *)
-      "autocmd BufReadCmd term://* "
-      ":call termopen( "
-      // Capture the command string 
-      "matchstr(expand(\"<amatch>\"), "
-      "'\\c\\mterm://\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), "
-      // capture the working directory
-      "{'cwd': get(matchlist(expand(\"<amatch>\"), "
-      "'\\c\\mterm://\\(.\\{-}\\)//'), 1, '')})");
+  do_cmdline_cmd("autocmd BufReadCmd term://* "
+                 ":call termopen( "
+                 // Capture the command string
+                 "matchstr(expand(\"<amatch>\"), "
+                 "'\\c\\mterm://\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), "
+                 // capture the working directory
+                 "{'cwd': get(matchlist(expand(\"<amatch>\"), "
+                 "'\\c\\mterm://\\(.\\{-}\\)//'), 1, '')})");
 
   /* Execute --cmd arguments. */
   exe_pre_commands(&params);
@@ -872,9 +871,9 @@ static void command_line_scan(mparm_T *parmp)
         mainerr(ME_EXTRA_CMD, NULL);
       argv_idx = -1;                /* skip to next argument */
       if (argv[0][1] == NUL)
-        parmp->commands[parmp->n_commands++] = (char_u *)"$";
+        parmp->commands[parmp->n_commands++] = "$";
       else
-        parmp->commands[parmp->n_commands++] = (char_u *)&(argv[0][1]);
+        parmp->commands[parmp->n_commands++] = &(argv[0][1]);
     }
     /*
      * Optional argument.
@@ -1116,7 +1115,7 @@ static void command_line_scan(mparm_T *parmp)
           if (argv[0][argv_idx] != NUL) {
             if (parmp->n_commands >= MAX_ARG_CMDS)
               mainerr(ME_EXTRA_CMD, NULL);
-            parmp->commands[parmp->n_commands++] = (char_u *)argv[0]
+            parmp->commands[parmp->n_commands++] = argv[0]
               + argv_idx;
             argv_idx = -1;
             break;
@@ -1174,10 +1173,10 @@ static void command_line_scan(mparm_T *parmp)
               p = xmalloc(STRLEN(a) + 4);
               sprintf((char *)p, "so %s", a);
               parmp->cmds_tofree[parmp->n_commands] = TRUE;
-              parmp->commands[parmp->n_commands++] = p;
-            } else
-              parmp->commands[parmp->n_commands++] =
-                (char_u *)argv[0];
+              parmp->commands[parmp->n_commands++] = (char *)p;
+            } else {
+              parmp->commands[parmp->n_commands++] = argv[0];
+            }
             break;
 
           case '-':
@@ -1185,8 +1184,7 @@ static void command_line_scan(mparm_T *parmp)
               /* "--cmd {command}" execute command */
               if (parmp->n_pre_commands >= MAX_ARG_CMDS)
                 mainerr(ME_EXTRA_CMD, NULL);
-              parmp->pre_commands[parmp->n_pre_commands++] =
-                (char_u *)argv[0];
+              parmp->pre_commands[parmp->n_pre_commands++] = argv[0];
             }
             /* "--startuptime <file>" already handled */
             break;
@@ -1376,9 +1374,9 @@ static char_u *get_fname(mparm_T *parmp)
     /* Temporarily add '(' and ')' to 'isfname'.  These are valid
      * filename characters but are excluded from 'isfname' to make
      * "gf" work on a file name in parenthesis (e.g.: see vim.h). */
-    do_cmdline_cmd((char_u *)":set isf+=(,)");
+    do_cmdline_cmd(":set isf+=(,)");
     alist_expand(NULL, 0);
-    do_cmdline_cmd((char_u *)":set isf&");
+    do_cmdline_cmd(":set isf&");
   }
 #endif
   return alist_name(&GARGLIST[0]);
@@ -1438,7 +1436,7 @@ static void handle_tag(char_u *tagname)
     swap_exists_did_quit = FALSE;
 
     vim_snprintf((char *)IObuff, IOSIZE, "ta %s", tagname);
-    do_cmdline_cmd(IObuff);
+    do_cmdline_cmd((char *)IObuff);
     TIME_MSG("jumping to tag");
 
     /* If the user doesn't want to edit the file then we quit here. */
@@ -1715,7 +1713,7 @@ static void edit_buffers(mparm_T *parmp)
  */
 static void exe_pre_commands(mparm_T *parmp)
 {
-  char_u      **cmds = parmp->pre_commands;
+  char **cmds = parmp->pre_commands;
   int cnt = parmp->n_pre_commands;
   int i;
 
@@ -1904,12 +1902,11 @@ process_env (
     int is_viminit             /* when TRUE, called for VIMINIT */
 )
 {
-  char_u      *initstr;
   char_u      *save_sourcing_name;
   linenr_T save_sourcing_lnum;
   scid_T save_sid;
 
-  initstr = (char_u *)os_getenv((char *)env);
+  char *initstr = (char *)os_getenv((char *)env);
   if (initstr != NULL && *initstr != NUL) {
     if (is_viminit)
       vimrc_found(NULL, NULL);

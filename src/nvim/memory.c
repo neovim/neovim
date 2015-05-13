@@ -498,9 +498,9 @@ void free_all_mem(void)
   /* Close all tabs and windows.  Reset 'equalalways' to avoid redraws. */
   p_ea = FALSE;
   if (first_tabpage->tp_next != NULL)
-    do_cmdline_cmd((char_u *)"tabonly!");
+    do_cmdline_cmd("tabonly!");
   if (firstwin != lastwin)
-    do_cmdline_cmd((char_u *)"only!");
+    do_cmdline_cmd("only!");
 
   /* Free all spell info. */
   spell_free_all();
@@ -509,18 +509,18 @@ void free_all_mem(void)
   ex_comclear(NULL);
 
   /* Clear menus. */
-  do_cmdline_cmd((char_u *)"aunmenu *");
-  do_cmdline_cmd((char_u *)"menutranslate clear");
+  do_cmdline_cmd("aunmenu *");
+  do_cmdline_cmd("menutranslate clear");
 
   /* Clear mappings, abbreviations, breakpoints. */
-  do_cmdline_cmd((char_u *)"lmapclear");
-  do_cmdline_cmd((char_u *)"xmapclear");
-  do_cmdline_cmd((char_u *)"mapclear");
-  do_cmdline_cmd((char_u *)"mapclear!");
-  do_cmdline_cmd((char_u *)"abclear");
-  do_cmdline_cmd((char_u *)"breakdel *");
-  do_cmdline_cmd((char_u *)"profdel *");
-  do_cmdline_cmd((char_u *)"set keymap=");
+  do_cmdline_cmd("lmapclear");
+  do_cmdline_cmd("xmapclear");
+  do_cmdline_cmd("mapclear");
+  do_cmdline_cmd("mapclear!");
+  do_cmdline_cmd("abclear");
+  do_cmdline_cmd("breakdel *");
+  do_cmdline_cmd("profdel *");
+  do_cmdline_cmd("set keymap=");
 
   free_titles();
   free_findfile();

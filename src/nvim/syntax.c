@@ -3268,7 +3268,7 @@ static void syn_cmd_reset(exarg_T *eap, int syncing)
   eap->nextcmd = check_nextcmd(eap->arg);
   if (!eap->skip) {
     set_internal_string_var((char_u *)"syntax_cmd", (char_u *)"reset");
-    do_cmdline_cmd((char_u *)"runtime! syntax/syncolor.vim");
+    do_cmdline_cmd("runtime! syntax/syncolor.vim");
     do_unlet((char_u *)"g:syntax_cmd", TRUE);
   }
 }
@@ -3291,12 +3291,12 @@ static void syn_cmd_off(exarg_T *eap, int syncing)
 
 static void syn_cmd_onoff(exarg_T *eap, char *name)
 {
-  char_u buf[100];
+  char buf[100];
 
   eap->nextcmd = check_nextcmd(eap->arg);
   if (!eap->skip) {
-    STRCPY(buf, "so ");
-    vim_snprintf((char *)buf + 3, sizeof(buf) - 3, SYNTAX_FNAME, name);
+    strcpy(buf, "so ");
+    vim_snprintf(buf + 3, sizeof(buf) - 3, SYNTAX_FNAME, name);
     do_cmdline_cmd(buf);
   }
 }
