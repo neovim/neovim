@@ -1437,7 +1437,7 @@ recover_names (
  * Append the full path to name with path separators made into percent
  * signs, to dir. An unnamed buffer is handled as "" (<currentdir>/"")
  */
-static char *make_percent_swname(const char *dir, char *name)
+char *make_percent_swname(const char *dir, char *name)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   char *d = NULL;
