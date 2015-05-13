@@ -7409,7 +7409,6 @@ static void ex_mkrc(exarg_T *eap)
 {
   FILE        *fd;
   int failed = FALSE;
-  char_u      *fname;
   int view_session = FALSE;
   int using_vdir = FALSE;               /* using 'viewdir'? */
   char_u      *viewFile = NULL;
@@ -7423,12 +7422,13 @@ static void ex_mkrc(exarg_T *eap)
    * short file name when 'acd' is set, that is checked later. */
   did_lcd = FALSE;
 
+  char_u *fname;
   /* ":mkview" or ":mkview 9": generate file name with 'viewdir' */
   if (eap->cmdidx == CMD_mkview
       && (*eap->arg == NUL
           || (ascii_isdigit(*eap->arg) && eap->arg[1] == NUL))) {
     eap->forceit = TRUE;
-    fname = get_view_file(*eap->arg);
+    fname = (char_u *)get_view_file(*eap->arg);
     if (fname == NULL)
       return;
     viewFile = fname;
@@ -9050,48 +9050,40 @@ static int ses_put_fname(FILE *fd, char_u *name, unsigned *flagp)
  */
 static void ex_loadview(exarg_T *eap)
 {
-  char_u      *fname;
-
-  fname = get_view_file(*eap->arg);
+  char *fname = get_view_file(*eap->arg);
   if (fname != NULL) {
-    if (do_source(fname, FALSE, DOSO_NONE) == FAIL) {
+    if (do_source((char_u *)fname, FALSE, DOSO_NONE) == FAIL) {
       EMSG2(_(e_notopen), fname);
     }
     xfree(fname);
   }
 }
 
-/*
- * Get the name of the view file for the current buffer.
- */
-static char_u *get_view_file(int c)
+/// Get the name of the view file for the current buffer.
+static char *get_view_file(int c)
 {
-  int len = 0;
-  char_u      *p, *s;
-  char_u      *retval;
-  char_u      *sname;
-
   if (curbuf->b_ffname == NULL) {
     EMSG(_(e_noname));
     return NULL;
   }
-  sname = home_replace_save(NULL, curbuf->b_ffname);
+  char *sname = (char *)home_replace_save(NULL, curbuf->b_ffname);
 
-  /*
-   * We want a file name without separators, because we're not going to make
-   * a directory.
-   * "normal" path separator	-> "=+"
-   * "="			-> "=="
-   * ":" path separator	-> "=-"
-   */
-  for (p = sname; *p; ++p)
-    if (*p == '=' || vim_ispathsep(*p))
+  // We want a file name without separators, because we're not going to make
+  // a directory.
+  // "normal" path separator	-> "=+"
+  // "="			-> "=="
+  // ":" path separator	-> "=-"
+  size_t len = 0;
+  for (char *p = sname; *p; p++) {
+    if (*p == '=' || vim_ispathsep(*p)) {
       ++len;
-  retval = xmalloc(STRLEN(sname) + len + STRLEN(p_vdir) + 9);
+    }
+  }
+  char *retval = xmalloc(strlen(sname) + len + STRLEN(p_vdir) + 9);
   STRCPY(retval, p_vdir);
-  add_pathsep((char *)retval);
-  s = retval + STRLEN(retval);
-  for (p = sname; *p; ++p) {
+  add_pathsep(retval);
+  char *s = retval + strlen(retval);
+  for (char *p = sname; *p; p++) {
     if (*p == '=') {
       *s++ = '=';
       *s++ = '=';
@@ -9108,7 +9100,7 @@ static char_u *get_view_file(int c)
   }
   *s++ = '=';
   *s++ = c;
-  STRCPY(s, ".vim");
+  strcpy(s, ".vim");
 
   xfree(sname);
   return retval;
