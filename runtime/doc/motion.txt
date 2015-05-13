@@ -354,10 +354,6 @@ or the last line.  The first two commands put the cursor in the same column
 except after the "$" command, then the cursor will be put on the last
 character of the line.
 
-If "k", "-" or CTRL-P is used with a [count] and there are less than [count]
-lines above the cursor and the 'cpo' option includes the "-" flag it is an
-error. |cpo--|.
-
 ==============================================================================
 4. Word motions						*word-motions*
 

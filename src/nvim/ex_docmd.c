@@ -1684,12 +1684,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       }
     } else if (ea.addr_count != 0) {
       if (ea.line2 > curbuf->b_ml.ml_line_count) {
-        /* With '-' in 'cpoptions' a line number past the file is an
-         * error, otherwise put it at the end of the file. */
-        if (vim_strchr(p_cpo, CPO_MINUS) != NULL)
-          ea.line2 = -1;
-        else
-          ea.line2 = curbuf->b_ml.ml_line_count;
+        ea.line2 = curbuf->b_ml.ml_line_count;
       }
 
       if (ea.line2 < 0)
