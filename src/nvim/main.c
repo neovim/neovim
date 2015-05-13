@@ -81,13 +81,13 @@ typedef struct {
   int argc;
   char        **argv;
 
-  char_u      *use_vimrc;               /* vimrc from -u argument */
+  char *use_vimrc;                           // vimrc from -u argument
 
   int n_commands;                            /* no. of commands from + or -c */
-  char_u      *commands[MAX_ARG_CMDS];       /* commands from + or -c arg. */
+  char *commands[MAX_ARG_CMDS];              // commands from + or -c arg
   char_u cmds_tofree[MAX_ARG_CMDS];          /* commands that need free() */
   int n_pre_commands;                        /* no. of commands from --cmd */
-  char_u      *pre_commands[MAX_ARG_CMDS];   /* commands from --cmd argument */
+  char *pre_commands[MAX_ARG_CMDS];          // commands from --cmd argument
 
   int edit_type;                        /* type of editing to do */
   char_u      *tagname;                 /* tag from -t argument */
@@ -286,15 +286,14 @@ int main(int argc, char **argv)
   }
 
   // open terminals when opening files that start with term://
-  do_cmdline_cmd((uint8_t *)
-      "autocmd BufReadCmd term://* "
-      ":call termopen( "
-      // Capture the command string 
-      "matchstr(expand(\"<amatch>\"), "
-      "'\\c\\mterm://\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), "
-      // capture the working directory
-      "{'cwd': get(matchlist(expand(\"<amatch>\"), "
-      "'\\c\\mterm://\\(.\\{-}\\)//'), 1, '')})");
+  do_cmdline_cmd("autocmd BufReadCmd term://* "
+                 ":call termopen( "
+                 // Capture the command string
+                 "matchstr(expand(\"<amatch>\"), "
+                 "'\\c\\mterm://\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), "
+                 // capture the working directory
+                 "{'cwd': get(matchlist(expand(\"<amatch>\"), "
+                 "'\\c\\mterm://\\(.\\{-}\\)//'), 1, '')})");
 
   /* Execute --cmd arguments. */
   exe_pre_commands(&params);
@@ -872,9 +871,9 @@ static void command_line_scan(mparm_T *parmp)
         mainerr(ME_EXTRA_CMD, NULL);
       argv_idx = -1;                /* skip to next argument */
       if (argv[0][1] == NUL)
-        parmp->commands[parmp->n_commands++] = (char_u *)"$";
+        parmp->commands[parmp->n_commands++] = "$";
       else
-        parmp->commands[parmp->n_commands++] = (char_u *)&(argv[0][1]);
+        parmp->commands[parmp->n_commands++] = &(argv[0][1]);
     }
     /*
      * Optional argument.
@@ -1116,7 +1115,7 @@ static void command_line_scan(mparm_T *parmp)
           if (argv[0][argv_idx] != NUL) {
             if (parmp->n_commands >= MAX_ARG_CMDS)
               mainerr(ME_EXTRA_CMD, NULL);
-            parmp->commands[parmp->n_commands++] = (char_u *)argv[0]
+            parmp->commands[parmp->n_commands++] = argv[0]
               + argv_idx;
             argv_idx = -1;
             break;
@@ -1169,15 +1168,16 @@ static void command_line_scan(mparm_T *parmp)
                 a = SESSION_FILE;
                 ++argc;
                 --argv;
-              } else
+              } else {
                 a = argv[0];
-              p = xmalloc(STRLEN(a) + 4);
-              sprintf((char *)p, "so %s", a);
+              }
+              char *s = xmalloc(STRLEN(a) + 4);
+              sprintf(s, "so %s", a);
               parmp->cmds_tofree[parmp->n_commands] = TRUE;
-              parmp->commands[parmp->n_commands++] = p;
-            } else
-              parmp->commands[parmp->n_commands++] =
-                (char_u *)argv[0];
+              parmp->commands[parmp->n_commands++] = s;
+            } else {
+              parmp->commands[parmp->n_commands++] = argv[0];
+            }
             break;
 
           case '-':
@@ -1185,8 +1185,7 @@ static void command_line_scan(mparm_T *parmp)
               /* "--cmd {command}" execute command */
               if (parmp->n_pre_commands >= MAX_ARG_CMDS)
                 mainerr(ME_EXTRA_CMD, NULL);
-              parmp->pre_commands[parmp->n_pre_commands++] =
-                (char_u *)argv[0];
+              parmp->pre_commands[parmp->n_pre_commands++] = argv[0];
             }
             /* "--startuptime <file>" already handled */
             break;
@@ -1232,7 +1231,7 @@ scripterror:
             break;
 
           case 'u':               /* "-u {vimrc}" vim inits file */
-            parmp->use_vimrc = (char_u *)argv[0];
+            parmp->use_vimrc = argv[0];
             break;
 
           case 'U':               /* "-U {gvimrc}" gvim inits file */
@@ -1376,9 +1375,9 @@ static char_u *get_fname(mparm_T *parmp)
     /* Temporarily add '(' and ')' to 'isfname'.  These are valid
      * filename characters but are excluded from 'isfname' to make
      * "gf" work on a file name in parenthesis (e.g.: see vim.h). */
-    do_cmdline_cmd((char_u *)":set isf+=(,)");
+    do_cmdline_cmd(":set isf+=(,)");
     alist_expand(NULL, 0);
-    do_cmdline_cmd((char_u *)":set isf&");
+    do_cmdline_cmd(":set isf&");
   }
 #endif
   return alist_name(&GARGLIST[0]);
@@ -1438,7 +1437,7 @@ static void handle_tag(char_u *tagname)
     swap_exists_did_quit = FALSE;
 
     vim_snprintf((char *)IObuff, IOSIZE, "ta %s", tagname);
-    do_cmdline_cmd(IObuff);
+    do_cmdline_cmd((char *)IObuff);
     TIME_MSG("jumping to tag");
 
     /* If the user doesn't want to edit the file then we quit here. */
@@ -1715,7 +1714,7 @@ static void edit_buffers(mparm_T *parmp)
  */
 static void exe_pre_commands(mparm_T *parmp)
 {
-  char_u      **cmds = parmp->pre_commands;
+  char **cmds = parmp->pre_commands;
   int cnt = parmp->n_pre_commands;
   int i;
 
@@ -1779,12 +1778,12 @@ static void source_startup_scripts(mparm_T *parmp)
    * nothing else.
    */
   if (parmp->use_vimrc != NULL) {
-    if (STRCMP(parmp->use_vimrc, "NONE") == 0
-        || STRCMP(parmp->use_vimrc, "NORC") == 0) {
+    if (strcmp(parmp->use_vimrc, "NONE") == 0
+        || strcmp(parmp->use_vimrc, "NORC") == 0) {
       if (parmp->use_vimrc[2] == 'N')
-        p_lpl = FALSE;                      /* don't load plugins either */
+        p_lpl = FALSE;                      // don't load plugins either
     } else {
-      if (do_source(parmp->use_vimrc, FALSE, DOSO_NONE) != OK)
+      if (do_source((char_u *)parmp->use_vimrc, FALSE, DOSO_NONE) != OK)
         EMSG2(_("E282: Cannot read from \"%s\""), parmp->use_vimrc);
     }
   } else if (!silent_mode) {
@@ -1806,7 +1805,7 @@ static void source_startup_scripts(mparm_T *parmp)
      * - second user exrc file ($VIM/.exrc for Dos)
      * The first that exists is used, the rest is ignored.
      */
-    if (process_env((char_u *)"VIMINIT", TRUE) != OK) {
+    if (process_env("VIMINIT", true) != OK) {
       if (do_source((char_u *)USR_VIMRC_FILE, TRUE, DOSO_VIMRC) == FAIL
 #ifdef USR_VIMRC_FILE2
           && do_source((char_u *)USR_VIMRC_FILE2, TRUE,
@@ -1816,7 +1815,7 @@ static void source_startup_scripts(mparm_T *parmp)
           && do_source((char_u *)USR_VIMRC_FILE3, TRUE,
             DOSO_VIMRC) == FAIL
 #endif
-          && process_env((char_u *)"EXINIT", FALSE) == FAIL
+          && process_env("EXINIT", FALSE) == FAIL
           && do_source((char_u *)USR_EXRC_FILE, FALSE, DOSO_NONE) == FAIL) {
 #ifdef USR_EXRC_FILE2
         (void)do_source((char_u *)USR_EXRC_FILE2, FALSE, DOSO_NONE);
@@ -1894,30 +1893,25 @@ static void main_start_gui(void)
 }
 
 
-/*
- * Get an environment variable, and execute it as Ex commands.
- * Returns FAIL if the environment variable was not executed, OK otherwise.
- */
-int
-process_env (
-    char_u *env,
-    int is_viminit             /* when TRUE, called for VIMINIT */
-)
+/// Get an environment variable, and execute it as Ex commands.
+///
+/// @param env         environment variable to execute
+/// @param is_viminit  when true, called for VIMINIT
+///
+/// @return FAIL if the environment variable was not executed,
+///         OK otherwise.
+static int process_env(char *env, bool is_viminit)
 {
-  char_u      *initstr;
-  char_u      *save_sourcing_name;
-  linenr_T save_sourcing_lnum;
-  scid_T save_sid;
-
-  initstr = (char_u *)os_getenv((char *)env);
+  char *initstr = (char *)os_getenv(env);
   if (initstr != NULL && *initstr != NUL) {
-    if (is_viminit)
+    if (is_viminit) {
       vimrc_found(NULL, NULL);
-    save_sourcing_name = sourcing_name;
-    save_sourcing_lnum = sourcing_lnum;
-    sourcing_name = env;
+    }
+    char_u *save_sourcing_name = sourcing_name;
+    linenr_T save_sourcing_lnum = sourcing_lnum;
+    sourcing_name = (char_u *)env;
     sourcing_lnum = 0;
-    save_sid = current_SID;
+    scid_T save_sid = current_SID;
     current_SID = SID_ENV;
     do_cmdline_cmd(initstr);
     sourcing_name = save_sourcing_name;

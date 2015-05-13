@@ -41,7 +41,7 @@ void vim_command(String str, Error *err)
 {
   // Run the command
   try_start();
-  do_cmdline_cmd((char_u *) str.data);
+  do_cmdline_cmd(str.data);
   update_screen(VALID);
   try_end(err);
 }
@@ -124,9 +124,9 @@ String vim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
 
 String vim_command_output(String str, Error *err)
 {
-  do_cmdline_cmd((char_u *)"redir => v:command_output");
+  do_cmdline_cmd("redir => v:command_output");
   vim_command(str, err);
-  do_cmdline_cmd((char_u *)"redir END");
+  do_cmdline_cmd("redir END");
 
   if (err->set) {
     return (String) STRING_INIT;

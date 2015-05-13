@@ -289,9 +289,9 @@ do_exmode (
 /*
  * Execute a simple command line.  Used for translated commands like "*".
  */
-int do_cmdline_cmd(char_u *cmd)
+int do_cmdline_cmd(char *cmd)
 {
-  return do_cmdline(cmd, NULL, NULL,
+  return do_cmdline((char_u *)cmd, NULL, NULL,
       DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_KEYTYPED);
 }
 
@@ -604,7 +604,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
       ++no_wait_return;
       verbose_enter_scroll();
 
-      smsg((char_u *)_("line %" PRId64 ": %s"),
+      smsg(_("line %" PRId64 ": %s"),
           (int64_t)sourcing_lnum, cmdline_copy);
       if (msg_silent == 0)
         msg_puts((char_u *)"\n");           /* don't overwrite this */
@@ -4357,7 +4357,7 @@ static void ex_buffer(exarg_T *eap)
       goto_buffer(eap, DOBUF_FIRST, FORWARD, (int)eap->line2);
     }
     if (eap->do_ecmd_cmd != NULL) {
-      do_cmdline_cmd(eap->do_ecmd_cmd);
+      do_cmdline_cmd((char *)eap->do_ecmd_cmd);
     }
   }
 }
@@ -4370,7 +4370,7 @@ static void ex_bmodified(exarg_T *eap)
 {
   goto_buffer(eap, DOBUF_MOD, FORWARD, (int)eap->line2);
   if (eap->do_ecmd_cmd != NULL) {
-    do_cmdline_cmd(eap->do_ecmd_cmd);
+    do_cmdline_cmd((char *)eap->do_ecmd_cmd);
   }
 }
 
@@ -4382,7 +4382,7 @@ static void ex_bnext(exarg_T *eap)
 {
   goto_buffer(eap, DOBUF_CURRENT, FORWARD, (int)eap->line2);
   if (eap->do_ecmd_cmd != NULL) {
-    do_cmdline_cmd(eap->do_ecmd_cmd);
+    do_cmdline_cmd((char *)eap->do_ecmd_cmd);
   }
 }
 
@@ -4396,7 +4396,7 @@ static void ex_bprevious(exarg_T *eap)
 {
   goto_buffer(eap, DOBUF_CURRENT, BACKWARD, (int)eap->line2);
   if (eap->do_ecmd_cmd != NULL) {
-    do_cmdline_cmd(eap->do_ecmd_cmd);
+    do_cmdline_cmd((char *)eap->do_ecmd_cmd);
   }
 }
 
@@ -4410,7 +4410,7 @@ static void ex_brewind(exarg_T *eap)
 {
   goto_buffer(eap, DOBUF_FIRST, FORWARD, 0);
   if (eap->do_ecmd_cmd != NULL) {
-    do_cmdline_cmd(eap->do_ecmd_cmd);
+    do_cmdline_cmd((char *)eap->do_ecmd_cmd);
   }
 }
 
@@ -4422,7 +4422,7 @@ static void ex_blast(exarg_T *eap)
 {
   goto_buffer(eap, DOBUF_LAST, BACKWARD, 0);
   if (eap->do_ecmd_cmd != NULL) {
-    do_cmdline_cmd(eap->do_ecmd_cmd);
+    do_cmdline_cmd((char *)eap->do_ecmd_cmd);
   }
 }
 
@@ -6622,7 +6622,7 @@ do_exedit (
     readonlymode = n;
   } else {
     if (eap->do_ecmd_cmd != NULL)
-      do_cmdline_cmd(eap->do_ecmd_cmd);
+      do_cmdline_cmd((char *)eap->do_ecmd_cmd);
     n = curwin->w_arg_idx_invalid;
     check_arg_idx(curwin);
     if (n != curwin->w_arg_idx_invalid)
@@ -6901,7 +6901,7 @@ static void ex_pwd(exarg_T *eap)
  */
 static void ex_equal(exarg_T *eap)
 {
-  smsg((char_u *)"%" PRId64, (int64_t)eap->line2);
+  smsg("%" PRId64, (int64_t)eap->line2);
   ex_may_print(eap);
 }
 
@@ -7409,7 +7409,6 @@ static void ex_mkrc(exarg_T *eap)
 {
   FILE        *fd;
   int failed = FALSE;
-  char_u      *fname;
   int view_session = FALSE;
   int using_vdir = FALSE;               /* using 'viewdir'? */
   char_u      *viewFile = NULL;
@@ -7423,12 +7422,13 @@ static void ex_mkrc(exarg_T *eap)
    * short file name when 'acd' is set, that is checked later. */
   did_lcd = FALSE;
 
+  char_u *fname;
   /* ":mkview" or ":mkview 9": generate file name with 'viewdir' */
   if (eap->cmdidx == CMD_mkview
       && (*eap->arg == NUL
           || (ascii_isdigit(*eap->arg) && eap->arg[1] == NUL))) {
     eap->forceit = TRUE;
-    fname = get_view_file(*eap->arg);
+    fname = (char_u *)get_view_file(*eap->arg);
     if (fname == NULL)
       return;
     viewFile = fname;
@@ -9050,48 +9050,40 @@ static int ses_put_fname(FILE *fd, char_u *name, unsigned *flagp)
  */
 static void ex_loadview(exarg_T *eap)
 {
-  char_u      *fname;
-
-  fname = get_view_file(*eap->arg);
+  char *fname = get_view_file(*eap->arg);
   if (fname != NULL) {
-    if (do_source(fname, FALSE, DOSO_NONE) == FAIL) {
+    if (do_source((char_u *)fname, FALSE, DOSO_NONE) == FAIL) {
       EMSG2(_(e_notopen), fname);
     }
     xfree(fname);
   }
 }
 
-/*
- * Get the name of the view file for the current buffer.
- */
-static char_u *get_view_file(int c)
+/// Get the name of the view file for the current buffer.
+static char *get_view_file(int c)
 {
-  int len = 0;
-  char_u      *p, *s;
-  char_u      *retval;
-  char_u      *sname;
-
   if (curbuf->b_ffname == NULL) {
     EMSG(_(e_noname));
     return NULL;
   }
-  sname = home_replace_save(NULL, curbuf->b_ffname);
+  char *sname = (char *)home_replace_save(NULL, curbuf->b_ffname);
 
-  /*
-   * We want a file name without separators, because we're not going to make
-   * a directory.
-   * "normal" path separator	-> "=+"
-   * "="			-> "=="
-   * ":" path separator	-> "=-"
-   */
-  for (p = sname; *p; ++p)
-    if (*p == '=' || vim_ispathsep(*p))
+  // We want a file name without separators, because we're not going to make
+  // a directory.
+  // "normal" path separator	-> "=+"
+  // "="			-> "=="
+  // ":" path separator	-> "=-"
+  size_t len = 0;
+  for (char *p = sname; *p; p++) {
+    if (*p == '=' || vim_ispathsep(*p)) {
       ++len;
-  retval = xmalloc(STRLEN(sname) + len + STRLEN(p_vdir) + 9);
+    }
+  }
+  char *retval = xmalloc(strlen(sname) + len + STRLEN(p_vdir) + 9);
   STRCPY(retval, p_vdir);
-  add_pathsep((char *)retval);
-  s = retval + STRLEN(retval);
-  for (p = sname; *p; ++p) {
+  add_pathsep(retval);
+  char *s = retval + strlen(retval);
+  for (char *p = sname; *p; p++) {
     if (*p == '=') {
       *s++ = '=';
       *s++ = '=';
@@ -9108,7 +9100,7 @@ static char_u *get_view_file(int c)
   }
   *s++ = '=';
   *s++ = c;
-  STRCPY(s, ".vim");
+  strcpy(s, ".vim");
 
   xfree(sname);
   return retval;
@@ -9229,7 +9221,7 @@ static void ex_filetype(exarg_T *eap)
 
   if (*eap->arg == NUL) {
     /* Print current status. */
-    smsg((char_u *)"filetype detection:%s  plugin:%s  indent:%s",
+    smsg("filetype detection:%s  plugin:%s  indent:%s",
         filetype_detect ? "ON" : "OFF",
         filetype_plugin ? (filetype_detect ? "ON" : "(on)") : "OFF",
         filetype_indent ? (filetype_detect ? "ON" : "(on)") : "OFF");
@@ -9423,7 +9415,7 @@ static void ex_terminal(exarg_T *eap)
   snprintf(ex_cmd, sizeof(ex_cmd),
            ":enew%s | call termopen(%s%s%s) | startinsert",
            eap->forceit==TRUE ? "!" : "", lquote, name, rquote);
-  do_cmdline_cmd((uint8_t *)ex_cmd);
+  do_cmdline_cmd(ex_cmd);
 
   if (name != (char *)p_sh) {
     xfree(name);

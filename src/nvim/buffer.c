@@ -778,17 +778,17 @@ do_bufdel (
         if (deleted == 1)
           MSG(_("1 buffer unloaded"));
         else
-          smsg((char_u *)_("%d buffers unloaded"), deleted);
+          smsg(_("%d buffers unloaded"), deleted);
       } else if (command == DOBUF_DEL) {
         if (deleted == 1)
           MSG(_("1 buffer deleted"));
         else
-          smsg((char_u *)_("%d buffers deleted"), deleted);
+          smsg(_("%d buffers deleted"), deleted);
       } else {
         if (deleted == 1)
           MSG(_("1 buffer wiped out"));
         else
-          smsg((char_u *)_("%d buffers wiped out"), deleted);
+          smsg(_("%d buffers wiped out"), deleted);
       }
     }
   }

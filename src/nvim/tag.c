@@ -856,7 +856,7 @@ do_tag (
        * file didn't exist.  Otherwise an EMSG() is given below.
        */
       if (nofile_fname != NULL && error_cur_match != cur_match)
-        smsg((char_u *)_("File \"%s\" does not exist"), nofile_fname);
+        smsg(_("File \"%s\" does not exist"), nofile_fname);
 
 
       ic = (matches[cur_match][0] & MT_IC_OFF);
@@ -1289,7 +1289,7 @@ find_tags (
 
         if (p_verbose >= 5) {
           verbose_enter();
-          smsg((char_u *)_("Searching tags file %s"), tag_fname);
+          smsg(_("Searching tags file %s"), tag_fname);
           verbose_leave();
         }
       }
@@ -2511,7 +2511,7 @@ jumpto_tag (
       check_cursor();
     } else {
       curwin->w_cursor.lnum = 1;                /* start command in line 1 */
-      do_cmdline_cmd(pbuf);
+      do_cmdline_cmd((char *)pbuf);
       retval = OK;
     }
 
@@ -2742,7 +2742,7 @@ add_tag_field (
   if (dict_find(dict, (char_u *)field_name, -1) != NULL) {
     if (p_verbose > 0) {
       verbose_enter();
-      smsg((char_u *)_("Duplicate field name: %s"), field_name);
+      smsg(_("Duplicate field name: %s"), field_name);
       verbose_leave();
     }
     return FAIL;

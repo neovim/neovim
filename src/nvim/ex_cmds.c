@@ -748,7 +748,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     if (num_lines == 1)
       MSG(_("1 line moved"));
     else
-      smsg((char_u *)_("%" PRId64 " lines moved"), (int64_t)num_lines);
+      smsg(_("%" PRId64 " lines moved"), (int64_t)num_lines);
   }
 
   /*
@@ -1439,7 +1439,7 @@ read_viminfo (
 
   if (p_verbose > 0) {
     verbose_enter();
-    smsg((char_u *)_("Reading viminfo file \"%s\"%s%s%s"),
+    smsg(_("Reading viminfo file \"%s\"%s%s%s"),
         fname,
         (flags & VIF_WANT_INFO) ? _(" info") : "",
         (flags & VIF_WANT_MARKS) ? _(" marks") : "",
@@ -1616,7 +1616,7 @@ void write_viminfo(char_u *file, int forceit)
 
   if (p_verbose > 0) {
     verbose_enter();
-    smsg((char_u *)_("Writing viminfo file \"%s\""), fname);
+    smsg(_("Writing viminfo file \"%s\""), fname);
     verbose_leave();
   }
 
@@ -3899,7 +3899,7 @@ void do_sub(exarg_T *eap)
               /* write message same highlighting as for
                * wait_return */
               smsg_attr(hl_attr(HLF_R),
-                  (char_u *)_("replace with %s (y/n/a/q/l/^E/^Y)?"), sub);
+                        _("replace with %s (y/n/a/q/l/^E/^Y)?"), sub);
               msg_no_more = FALSE;
               msg_scroll = i;
               showruler(TRUE);
@@ -4440,9 +4440,9 @@ void ex_global(exarg_T *eap)
     MSG(_(e_interr));
   else if (ndone == 0) {
     if (type == 'v')
-      smsg((char_u *)_("Pattern found in every line: %s"), pat);
+      smsg(_("Pattern found in every line: %s"), pat);
     else
-      smsg((char_u *)_("Pattern not found: %s"), pat);
+      smsg(_("Pattern not found: %s"), pat);
   } else
     global_exe(cmd);
 
@@ -4682,7 +4682,7 @@ void ex_help(exarg_T *eap)
        * Try to open the file specified by the "helpfile" option.
        */
       if ((helpfd = mch_fopen((char *)p_hf, READBIN)) == NULL) {
-        smsg((char_u *)_("Sorry, help file \"%s\" not found"), p_hf);
+        smsg(_("Sorry, help file \"%s\" not found"), p_hf);
         goto erret;
       }
       fclose(helpfd);
@@ -5252,7 +5252,7 @@ void fix_help_buffer(void)
  */
 void ex_exusage(exarg_T *eap)
 {
-  do_cmdline_cmd((char_u *)"help ex-cmd-index");
+  do_cmdline_cmd("help ex-cmd-index");
 }
 
 /*
@@ -5260,7 +5260,7 @@ void ex_exusage(exarg_T *eap)
  */
 void ex_viusage(exarg_T *eap)
 {
-  do_cmdline_cmd((char_u *)"help normal-index");
+  do_cmdline_cmd("help normal-index");
 }
 
 
@@ -5973,11 +5973,9 @@ void ex_sign(exarg_T *eap)
 		    beginline(BL_WHITE);
 		}
 		else
-		{			/* ... not currently in a window */
-		    char_u	*cmd;
-
-		    cmd = xmalloc(STRLEN(buf->b_fname) + 25);
-		    sprintf((char *)cmd, "e +%" PRId64 " %s",
+		{   // ... not currently in a window
+		    char *cmd = xmalloc(STRLEN(buf->b_fname) + 25);
+		    sprintf(cmd, "e +%" PRId64 " %s",
                     (int64_t)lnum, buf->b_fname);
 		    do_cmdline_cmd(cmd);
 		    xfree(cmd);
@@ -6040,7 +6038,7 @@ static void sign_list_defined(sign_T *sp)
 {
   char_u  *p;
 
-  smsg((char_u *)"sign %s", sp->sn_name);
+  smsg("sign %s", sp->sn_name);
   if (sp->sn_icon != NULL) {
     MSG_PUTS(" icon=");
     msg_outtrans(sp->sn_icon);

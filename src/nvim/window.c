@@ -87,7 +87,7 @@ do_window (
   linenr_T lnum = -1;
   int type = FIND_DEFINE;
   size_t len;
-  char_u cbuf[40];
+  char cbuf[40];
 
   if (Prenum == 0)
     Prenum1 = 1;
@@ -124,7 +124,7 @@ do_window (
   case Ctrl_HAT:
   case '^':
     CHECK_CMDWIN reset_VIsual_and_resel();      /* stop Visual mode */
-    cmd_with_count("split #", cbuf, sizeof(cbuf), Prenum);
+    cmd_with_count("split #", (char_u *)cbuf, sizeof(cbuf), Prenum);
     do_cmdline_cmd(cbuf);
     break;
 
@@ -135,12 +135,12 @@ do_window (
 newwindow:
     if (Prenum)
       /* window height */
-      vim_snprintf((char *)cbuf, sizeof(cbuf) - 5, "%" PRId64, (int64_t)Prenum);
+      vim_snprintf(cbuf, sizeof(cbuf) - 5, "%" PRId64, (int64_t)Prenum);
     else
       cbuf[0] = NUL;
     if (nchar == 'v' || nchar == Ctrl_V)
-      STRCAT(cbuf, "v");
-    STRCAT(cbuf, "new");
+      strcat(cbuf, "v");
+    strcat(cbuf, "new");
     do_cmdline_cmd(cbuf);
     break;
 
@@ -148,7 +148,7 @@ newwindow:
   case Ctrl_Q:
   case 'q':
     reset_VIsual_and_resel();                   /* stop Visual mode */
-    cmd_with_count("quit", cbuf, sizeof(cbuf), Prenum);
+    cmd_with_count("quit", (char_u *)cbuf, sizeof(cbuf), Prenum);
     do_cmdline_cmd(cbuf);
     break;
 
@@ -156,7 +156,7 @@ newwindow:
   case Ctrl_C:
   case 'c':
     reset_VIsual_and_resel();                   /* stop Visual mode */
-    cmd_with_count("close", cbuf, sizeof(cbuf), Prenum);
+    cmd_with_count("close", (char_u *)cbuf, sizeof(cbuf), Prenum);
     do_cmdline_cmd(cbuf);
     break;
 
@@ -164,7 +164,7 @@ newwindow:
   case Ctrl_Z:
   case 'z':
     CHECK_CMDWIN reset_VIsual_and_resel();      /* stop Visual mode */
-    do_cmdline_cmd((char_u *)"pclose");
+    do_cmdline_cmd("pclose");
     break;
 
   /* cursor to preview window */
@@ -182,7 +182,7 @@ newwindow:
   case Ctrl_O:
   case 'o':
     CHECK_CMDWIN reset_VIsual_and_resel();      /* stop Visual mode */
-    cmd_with_count("only", cbuf, sizeof(cbuf), Prenum);
+    cmd_with_count("only", (char_u *)cbuf, sizeof(cbuf), Prenum);
     do_cmdline_cmd(cbuf);
     break;
 
@@ -430,7 +430,7 @@ wingotofile:
      * cursor in a new window.
      */
     if (bt_quickfix(curbuf)) {
-      sprintf((char *)cbuf, "split +%" PRId64 "%s",
+      sprintf(cbuf, "split +%" PRId64 "%s",
               (int64_t)curwin->w_cursor.lnum,
               (curwin->w_llist_ref == NULL) ? "cc" : "ll");
       do_cmdline_cmd(cbuf);

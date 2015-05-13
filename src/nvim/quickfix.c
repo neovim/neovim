@@ -1861,7 +1861,7 @@ void qf_age(exarg_T *eap)
 
 static void qf_msg(qf_info_T *qi)
 {
-  smsg((char_u *)_("error list %d of %d; %d errors"),
+  smsg(_("error list %d of %d; %d errors"),
       qi->qf_curlist + 1, qi->qf_listcount,
       qi->qf_lists[qi->qf_curlist].qf_count);
   qf_update_buffer(qi);
@@ -2888,7 +2888,7 @@ void ex_vimgrep(exarg_T *eap)
 
     if (buf == NULL) {
       if (!got_int)
-        smsg((char_u *)_("Cannot open file \"%s\""), fname);
+        smsg(_("Cannot open file \"%s\""), fname);
     } else {
       /* Try for a match in all lines of the buffer.
        * For ":1vimgrep" look for first match only. */

@@ -1588,8 +1588,8 @@ void conv_to_pvim(void)
   }
 
   // Following lines contains Farsi encoded character.
-  do_cmdline_cmd((char_u *)"%s/\202\231/\232/g");
-  do_cmdline_cmd((char_u *)"%s/\201\231/\370\334/g");
+  do_cmdline_cmd("%s/\202\231/\232/g");
+  do_cmdline_cmd("%s/\201\231/\370\334/g");
 
   // Assume the screen has been messed up: clear it and redraw.
   redraw_later(CLEAR);
@@ -1603,7 +1603,7 @@ void conv_to_pstd(void)
   int lnum, llen, i;
 
   // Following line contains Farsi encoded character.
-  do_cmdline_cmd((char_u *)"%s/\232/\202\231/g");
+  do_cmdline_cmd("%s/\232/\202\231/g");
   for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; ++lnum) {
     ptr = ml_get((linenr_T)lnum);
     llen = (int)STRLEN(ptr);
@@ -2044,11 +2044,11 @@ void farsi_fkey(cmdarg_T *cap)
     if (p_altkeymap) {
       if (curwin->w_farsi & W_R_L) {
         p_fkmap = 0;
-        do_cmdline_cmd((char_u *)"set norl");
+        do_cmdline_cmd("set norl");
         MSG("");
       } else {
         p_fkmap = 1;
-        do_cmdline_cmd((char_u *)"set rl");
+        do_cmdline_cmd("set rl");
         MSG("");
       }
 
