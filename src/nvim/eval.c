@@ -4790,6 +4790,7 @@ list_free (
 
 /*
  * Allocate a list item.
+ * It is not initialized, don't forget to set v_lock.
  */
 listitem_T *listitem_alloc(void) FUNC_ATTR_NONNULL_RET
 {
@@ -14930,6 +14931,7 @@ static list_T* string_to_list(char_u *str, size_t len, bool keepempty)
 
     listitem_T  *li = listitem_alloc();
     li->li_tv.v_type = VAR_STRING;
+    li->li_tv.v_lock = 0;
     li->li_tv.vval.v_string = s;
     list_append(list, li);
   }
