@@ -3,8 +3,6 @@ local helpers = require("test.unit.helpers")
 local to_cstr = helpers.to_cstr
 local eq      = helpers.eq
 
-helpers.vim_init()
-
 local buffer = helpers.cimport("./src/nvim/buffer.h")
 local window = helpers.cimport("./src/nvim/window.h")
 local option = helpers.cimport("./src/nvim/option.h")

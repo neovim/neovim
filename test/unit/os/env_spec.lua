@@ -12,9 +12,6 @@ local NULL = helpers.NULL
 
 require('lfs')
 
--- Needed because expand_env_esc uses the char table
-helpers.vim_init()
-
 local env = cimport('./src/nvim/os/os.h')
 
 describe('env function', function()

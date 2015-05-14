@@ -136,15 +136,11 @@ end
 
 -- initialize some global variables, this is still necessary to unit test
 -- functions that rely on global state.
-local function vim_init()
-  if vim_init_called ~= nil then
-    return 
-  end
+do
   local main = cimport('./src/nvim/main.h')
   local time = cimport('./src/nvim/os/time.h')
   time.time_init()
   main.early_init()
-  vim_init_called = true
 end
 
 -- C constants.
@@ -167,7 +163,6 @@ return {
   lib = libnvim,
   cstr = cstr,
   to_cstr = to_cstr,
-  vim_init = vim_init,
   NULL = NULL,
   OK = OK,
   FAIL = FAIL
