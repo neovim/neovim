@@ -12427,7 +12427,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
 #endif
 
   p = get_tv_string(&argvars[0]);
-#ifdef FEAT_SHORTCUT
+#ifdef WIN32
   {
     char_u  *v = NULL;
 
