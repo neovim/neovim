@@ -511,6 +511,15 @@ char *vim_getenv(const char *name)
     if (p_hf != NULL && vim_strchr(p_hf, '$') == NULL) {
       vim_path = (char *)p_hf;
     }
+
+#ifdef WIN32
+    char exe_name[MAXPATHL];
+    if (vim_path == NULL) {
+      GetModuleFileName(NULL, exe_name, MAXPATHL);
+      vim_path = exe_name;
+    }
+#endif
+
     if (vim_path != NULL) {
       // remove the file name
       char *vim_path_end = (char *)path_tail((char_u *)vim_path);
