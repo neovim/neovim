@@ -331,6 +331,10 @@ void terminal_enter(bool process_deferred)
   // Ensure the terminal is properly sized.
   terminal_resize(term, 0, 0);
 
+  // Disable folds to avoid confusing the user
+  int save_w_p_fen = curwin->w_p_fen;
+  curwin->w_p_fen = false;
+
   checkpcmark();
   setpcmark();
   int save_state = State;
@@ -407,6 +411,7 @@ void terminal_enter(bool process_deferred)
 end:
   restart_edit = 0;
   State = save_state;
+  curwin->w_p_fen = save_w_p_fen;
   RedrawingDisabled = save_rd;
   // draw the unfocused cursor
   invalidate_terminal(term, term->cursor.row, term->cursor.row + 1);

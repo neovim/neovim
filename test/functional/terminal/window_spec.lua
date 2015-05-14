@@ -55,19 +55,19 @@ describe('terminal window', function()
       ]])
     end)
 
-    it('wont show any folds', function()
+    it('will show folds', function()
       feed('<c-\\><c-n>ggvGzf')
       wait()
       screen:expect([[
-        ^tty ready                                         |
-        line1                                             |
-        line2                                             |
-        line3                                             |
-        line4                                             |
-        {2: }                                                 |
-                                                          |
-      ]])
-    end)
+      {3:^+--  6 lines: tty ready---------------------------}|
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+                                                        |
+      ]], {[1] = {reverse = true}, [2] = {background = 11}, [3] = {foreground = 4, background = 248}})
+  end)
   end)
 end)
 
