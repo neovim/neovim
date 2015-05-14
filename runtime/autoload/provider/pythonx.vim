@@ -12,9 +12,13 @@ function! provider#pythonx#Detect(ver) abort
         \ 'g:python_host_skip_check' : 'g:python3_host_skip_check'
   let skip = exists(skip_var) ? {skip_var} : 0
   if exists(host_var)
-    " Disable auto detection
+    " Disable auto detection.
     let [check, err, _] = s:check_interpreter({host_var}, a:ver, skip)
-    return check ? [{host_var}, err] : ['', err]
+    if check
+      return [{host_var}, err]
+    endif
+    return ['', 'provider#pythonx#Detect: could not load Python '.a:ver
+          \ .' (from '.host_var.'): '.err]
   endif
 
   let detect_versions = (a:ver == 2) ?
@@ -31,9 +35,8 @@ function! provider#pythonx#Detect(ver) abort
     endif
   endfor
 
-  " No Python interpreter
-  return ['', 'Neovim module installed Python'
-        \ .a:ver.' interpreter is not found.']
+  return ['', 'provider#pythonx#Detect: could not load Python '.a:ver
+        \ .': '.err]
 endfunction
 
 function! s:check_version(prog, ver, skip) abort
