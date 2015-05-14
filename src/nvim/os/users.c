@@ -41,7 +41,11 @@ int os_get_usernames(garray_T *users)
 // Return OK if a name found.
 int os_get_user_name(char *s, size_t len)
 {
+#ifdef UNIX
   return os_get_uname(getuid(), s, len);
+#else
+  return FAIL;
+#endif
 }
 
 // Insert user name for "uid" in s[len].
