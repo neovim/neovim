@@ -598,6 +598,25 @@ char *vim_getenv(const char *name)
     if (p_hf != NULL && vim_strchr(p_hf, '$') == NULL) {
       vim_path = (char *)p_hf;
     }
+
+#ifdef WIN32
+    // Find runtime path relative to the nvim binary i.e. ../share/runtime
+    char exe_name[MAXPATHL];
+    char abs_runtime_path[MAXPATHL];
+    if (vim_path == NULL) {
+      if (GetModuleFileName(NULL, exe_name, MAXPATHL) != 0) {
+        // Remove trailing bin/nvim.exe
+        char *path_end = (char *)path_tail_with_sep((char_u *)exe_name);
+        *path_end = '\0';
+        path_end = (char *)path_tail((char_u *)exe_name);
+        *path_end = '\0';
+        if (append_path(exe_name, "share" _PATHSEPSTR "nvim" _PATHSEPSTR "runtime" _PATHSEPSTR, MAXPATHL) == OK) {
+          vim_path = exe_name;
+        }
+      }
+    }
+#endif
+
     if (vim_path != NULL) {
       // remove the file name
       char *vim_path_end = (char *)path_tail((char_u *)vim_path);
