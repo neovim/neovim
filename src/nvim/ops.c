@@ -4149,9 +4149,7 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, int i
       while (bdp->end_vcol <= oap->end_vcol && *pend != NUL) {
         /* Count a tab for what it's worth (if list mode not on) */
         prev_pend = pend;
-        // TODO: is passing prev_pend for start of the line OK?
-        // prehaps it should be "line"
-        incr = lbr_chartabsize_adv(prev_pend, &pend, (colnr_T)bdp->end_vcol);
+        incr = lbr_chartabsize_adv(line, &pend, (colnr_T)bdp->end_vcol);
         bdp->end_vcol += incr;
       }
       if (bdp->end_vcol <= oap->end_vcol

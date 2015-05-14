@@ -100,6 +100,23 @@ fygjyl:let line2 = @0
 :$put =line1
 :$put =line2
 :"
+:let g:test="Test 14: breakindent + visual blockwise delete #1"
+:set all& breakindent
+:30vnew
+:normal! 3a1234567890
+:normal! a    abcde
+:exec "normal! 0\<C-V>tex"
+:let line1=ScreenChar(line('.'),8)
+:call DoRecordScreen()
+:"
+:let g:test="Test 15: breakindent + visual blockwise delete #2"
+:%d
+:normal! 4a1234567890
+:exec "normal! >>\<C-V>3f0x"
+:let line1=ScreenChar(line('.'),20)
+:call DoRecordScreen()
+:quit!
+:"
 :%w! test.out
 :qa!
 ENDTEST
