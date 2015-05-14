@@ -5742,17 +5742,27 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
 
           // Bail out quickly when there can't be a match, avoid the overhead of
           // win_linetabsize() on long lines.
-          if ((col > t->state->val && op != 1)
-              || (col - 1 > t->state->val && op == 1)) {
+          if (op != 1 && col > t->state->val) {
             break;
           }
-          uintmax_t lts = win_linetabsize(reg_win == NULL ? curwin : reg_win,
-                                          regline,
-                                          col);
-          assert(t->state->val >= 0);
-          result = nfa_re_num_cmp((uintmax_t)t->state->val,
-                                  op,
-                                  lts + 1);
+
+          result = FALSE;
+          win_T *wp = reg_win == NULL ? curwin : reg_win;
+          if (op == 1 && col - 1 > t->state->val && col > 100) {
+            long ts = wp->w_buffer->b_p_ts;
+
+            // Guess that a character won't use more columns than 'tabstop',
+            // with a minimum of 4.
+            if (ts < 4) {
+              ts = 4;
+            }
+            result = col > t->state->val * ts;
+          }
+          if (!result) {
+            uintmax_t lts = win_linetabsize(wp, regline, col);
+            assert(t->state->val >= 0);
+            result = nfa_re_num_cmp((uintmax_t)t->state->val, op, lts + 1);
+          }
           if (result) {
             add_here = true;
             add_state = t->state->out;

@@ -7,6 +7,7 @@ actually tried.
 STARTTEST
 :so small.vim
 :" tl is a List of Lists with:
+:"    regexp engine
 :"    regexp pattern
 :"    text to test the pattern on
 :"    expected match (optional)
@@ -450,6 +451,9 @@ STARTTEST
 :"
 :"""" Skip adding state twice
 :call add(tl, [2, '^\%(\%(^\s*#\s*if\>\|#\s*if\)\)\(\%>1c.*$\)\@=', "#if FOO", "#if", ' FOO'])
+:"
+:""" Test \%V atom
+:call add(tl, [2, '\%>70vGesamt', 'Jean-Michel Charlier & Victor Hubinon\Gesamtausgabe [Salleck]    Buck Danny {Jean-Michel Charlier & Victor Hubinon}\Gesamtausgabe', 'Gesamt'])
 :"
 :"""" Run the tests
 :"
