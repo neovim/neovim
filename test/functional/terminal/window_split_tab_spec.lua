@@ -132,6 +132,46 @@ describe('terminal', function()
             -- TERMINAL --                                    |
           ]])
         end)
+        describe('and handles splits with regular buffers as well', function()
+          before_each(function()
+            nvim('command', 'vnew')
+            feed('<c-w>l')
+          end)
+          it('will split', function()
+            screen:expect([[
+              rows: 3, cols: 50                                 |
+              rows: 3, cols: 24                                 |
+              {2: }                                                 |
+              ~                                                 |
+              ==========                                        |
+                                       |rows: 3, cols: 50       |
+              ~                        |rows: 3, cols: 24       |
+              ~                        |{2:^ }                       |
+              ==========                ==========              |
+                                                                |
+            ]])
+          end)
+          describe('and closes the split with a regular buffer', function()
+            before_each(function()
+              nvim('command','quit')
+              feed('<c-w>ki')
+            end)
+            it('will restore the width', function()
+              screen:expect([[
+                rows: 3, cols: 50                                 |
+                rows: 3, cols: 24                                 |
+                rows: 4, cols: 50                                 |
+                {1: }                                                 |
+                ==========                                        |
+                                                                  |
+                ~                                                 |
+                ~                                                 |
+                ==========                                        |
+                -- TERMINAL --                                    |
+              ]])
+            end)
+          end)
+        end)
       end)
     end)
   end)

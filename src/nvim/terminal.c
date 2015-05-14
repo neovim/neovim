@@ -293,11 +293,11 @@ void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
   vterm_get_size(term->vt, &curheight, &curwidth);
 
   if (!width) {
-    width = (uint16_t)curwidth;
+    width = UINT16_MAX;
   }
 
   if (!height) {
-    height = (uint16_t)curheight;
+    height = UINT16_MAX;
   }
 
   // The new width/height are the minimum for all windows that display the
@@ -307,6 +307,14 @@ void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
       width = (uint16_t)MIN(width, (uint16_t)(wp->w_width - win_col_off(wp)));
       height = (uint16_t)MIN(height, (uint16_t)wp->w_height);
     }
+  }
+
+  // Seems to me that these shouldn't happen, but better safe than sorry
+  if (width == UINT16_MAX) {
+    width = (uint16_t)curwidth;
+  }
+  if (height == UINT16_MAX) {
+    height = (uint16_t)curheight;
   }
 
   if (curheight == height && curwidth == width) {
