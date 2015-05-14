@@ -62,3 +62,13 @@ strdisplaywidth: 46 == calculated: 64
 Test 13: breakindent with wrapping Tab
 d
 w
+
+Test 14: breakindent + visual blockwise delete #1
+e       
+~       
+~       
+
+Test 15: breakindent + visual blockwise delete #2
+        1234567890  
+~                   
+~                   
