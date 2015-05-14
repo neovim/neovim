@@ -6984,10 +6984,12 @@ regprog_T *vim_regcomp(char_u *expr_arg, int re_flags)
   /*
    * First try the NFA engine, unless backtracking was requested.
    */
-  if (regexp_engine != BACKTRACKING_ENGINE)
-    prog = nfa_regengine.regcomp(expr, re_flags);
-  else
+  if (regexp_engine != BACKTRACKING_ENGINE) {
+    prog = nfa_regengine.regcomp(expr,
+        re_flags + (regexp_engine == AUTOMATIC_ENGINE ? RE_AUTO : 0));
+  } else {
     prog = bt_regengine.regcomp(expr, re_flags);
+  }
 
   // Check for error compiling regexp with initial engine.
   if (prog == NULL) {
@@ -7003,15 +7005,13 @@ regprog_T *vim_regcomp(char_u *expr_arg, int re_flags)
             BT_REGEXP_DEBUG_LOG_NAME);
     }
 #endif
-    // If the NFA engine failed, try the backtracking engine.
-    // Disabled for now, both engines fail on the same patterns.
-    // Re-enable when regcomp() fails when the pattern would work better
-    // with the other engine.
-    //
-    // if (regexp_engine == AUTOMATIC_ENGINE) {
-    //   prog = bt_regengine.regcomp(expr, re_flags);
-    //   regexp_engine = BACKTRACKING_ENGINE;
-    // }
+    // If the NFA engine failed, try the backtracking engine. The NFA engine
+    // also fails for patterns that it can't handle well but are still valid
+    // patterns, thus a retry should work.
+    if (regexp_engine == AUTOMATIC_ENGINE) {
+      regexp_engine = BACKTRACKING_ENGINE;
+      prog = bt_regengine.regcomp(expr, re_flags);
+    }
   }
 
   if (prog != NULL) {
