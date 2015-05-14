@@ -188,6 +188,18 @@ int os_nodetype(const char *name)
   return nodetype;
 }
 
+/// Gets the absolute path of the currently running executable.
+///
+/// @param[out] buffer The buffer to place the path in.
+/// @param[in]  size   The size of the buffer.
+///
+/// @return `0` on success a libuv error code on failure.
+int os_exepath(char *buffer, size_t *size)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return uv_exepath(buffer, size);
+}
+
 /// Checks if the given path represents an executable file.
 ///
 /// @param[in]  name     Name of the executable.
