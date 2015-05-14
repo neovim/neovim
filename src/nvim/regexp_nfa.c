@@ -315,6 +315,9 @@ typedef struct {
   int has_pim;                  /* TRUE when any state has a PIM */
 } nfa_list_T;
 
+/// re_flags passed to nfa_regcomp().
+static int nfa_re_flags;
+
 /* NFA regexp \ze operator encountered. */
 static int nfa_has_zend;
 
@@ -1892,6 +1895,12 @@ static int nfa_regpiece(void)
       /* NFA_EMPTY is 0-length and works everywhere */
       EMIT(NFA_EMPTY);
       return OK;
+    }
+
+    // The engine is very inefficient (uses too many states) when the maximum is
+    // much larger than the minimum. Bail out if we can use the other engine.
+    if ((nfa_re_flags & RE_AUTO) && maxval > minval + 200) {
+      return FAIL;
     }
 
     /* Ignore previous call to nfa_regatom() */
@@ -6277,6 +6286,7 @@ static regprog_T *nfa_regcomp(char_u *expr, int re_flags)
     return NULL;
 
   nfa_regengine.expr = expr;
+  nfa_re_flags = re_flags;
 
   init_class_tab();
 
