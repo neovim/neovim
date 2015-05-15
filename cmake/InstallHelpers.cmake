@@ -106,12 +106,18 @@ function(install_helper)
   endif()
 
   if(_install_helper_TARGETS)
-    # Ensure the bin area exists with the correct permissions.
-    create_install_dir_with_perms(DESTINATION bin)
+    if(WIN32)
+      install(
+        TARGETS ${_install_helper_TARGETS}
+        RUNTIME DESTINATION /)
+    else()
+      # Ensure the bin area exists with the correct permissions.
+      create_install_dir_with_perms(DESTINATION bin)
 
-    install(
-      TARGETS ${_install_helper_TARGETS}
-      RUNTIME DESTINATION bin)
+      install(
+        TARGETS ${_install_helper_TARGETS}
+        RUNTIME DESTINATION bin)
+    endif()
   else()
     create_install_dir_with_perms(
       DESTINATION ${_install_helper_DESTINATION}

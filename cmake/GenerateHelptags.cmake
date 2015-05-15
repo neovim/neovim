@@ -1,10 +1,16 @@
+if(WIN32)
+  set(RUNTIME_DIR "")
+else()
+  set(RUNTIME_DIR share/nvim/)
+endif()
+
 if(DEFINED ENV{DESTDIR})
   file(TO_CMAKE_PATH
-    "$ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/share/nvim/runtime/doc"
+    "$ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/${RUNTIME_DIR}/runtime/doc"
     HELPTAGS_WORKING_DIRECTORY)
 else()
   file(TO_CMAKE_PATH
-    "${CMAKE_INSTALL_PREFIX}/share/nvim/runtime/doc"
+    "${CMAKE_INSTALL_PREFIX}/${RUNTIME_DIR}/runtime/doc"
     HELPTAGS_WORKING_DIRECTORY)
 endif()
 

@@ -304,9 +304,11 @@ endif()
 # If it's preexisting, leave it alone.
 include(InstallHelpers)
 
-install_helper(
-  DIRECTORY runtime
-  DESTINATION share/nvim)
+if(WIN32)
+  install_helper(DIRECTORY runtime/ DESTINATION "/")
+else()
+  install_helper(DIRECTORY runtime DESTINATION "share/nvim")
+endif()
 
 file(GLOB_RECURSE RUNTIME_PROGRAMS
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
