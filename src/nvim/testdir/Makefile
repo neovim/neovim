@@ -19,7 +19,7 @@ SCRIPTS := test_eval.out                                               \
            test46.out  test47.out  test48.out  test49.out              \
                        test52.out  test53.out              test55.out  \
                        test57.out  test58.out  test59.out              \
-                       test62.out  test63.out  test64.out              \
+                                   test63.out  test64.out              \
                                    test68.out  test69.out              \
            test71.out              test73.out                          \
                                                test79.out  test80.out  \
