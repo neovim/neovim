@@ -1,3 +1,8 @@
+if(WIN32)
+  message(STATUS "Building Unibilium in Windows is not supported (skipping)")
+  return()
+endif()
+
 ExternalProject_Add(unibilium
   PREFIX ${DEPS_BUILD_DIR}
   URL ${UNIBILIUM_URL}

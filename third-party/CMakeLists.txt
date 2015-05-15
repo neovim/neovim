@@ -22,21 +22,21 @@ option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAJIT "Use the bundled version of luajit." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAROCKS "Use the bundled version of luarocks." ${USE_BUNDLED})
 
-# TODO: add windows support
-
-find_program(MAKE_PRG NAMES gmake make)
-if(MAKE_PRG)
-  execute_process(
-    COMMAND "${MAKE_PRG}" --version
-    OUTPUT_VARIABLE MAKE_VERSION_INFO)
-  if(NOT "${OUTPUT_VARIABLE}" MATCHES ".*GNU.*")
-    unset(MAKE_PRG)
+if(UNIX)
+  find_program(MAKE_PRG NAMES gmake make)
+  if(MAKE_PRG)
+    execute_process(
+      COMMAND "${MAKE_PRG}" --version
+      OUTPUT_VARIABLE MAKE_VERSION_INFO)
+    if(NOT "${OUTPUT_VARIABLE}" MATCHES ".*GNU.*")
+      unset(MAKE_PRG)
+    endif()
   endif()
-endif()
-if(NOT MAKE_PRG)
-  message(FATAL_ERROR "GNU Make is required to build the dependencies.")
-else()
-  message(STATUS "Found GNU Make at ${MAKE_PRG}")
+  if(NOT MAKE_PRG)
+    message(FATAL_ERROR "GNU Make is required to build the dependencies.")
+  else()
+    message(STATUS "Found GNU Make at ${MAKE_PRG}")
+  endif()
 endif()
 
 # When using make, use the $(MAKE) variable to avoid warning about the job
@@ -49,6 +49,22 @@ if(CMAKE_C_COMPILER_ARG1)
   set(DEPS_C_COMPILER "${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1}")
 else()
   set(DEPS_C_COMPILER "${CMAKE_C_COMPILER}")
+endif()
+
+# Cross compiling: use these for dependencies built for the
+# HOST system, when not crosscompiling these should be the
+# same as DEPS_*. Except when targeting UNIX in which case
+# want all the dependencies to use the same compiler.
+if(CMAKE_CROSSCOMPILING AND NOT UNIX)
+  set(HOSTDEPS_INSTALL_DIR "${CMAKE_BINARY_DIR}/host")
+  set(HOSTDEPS_BIN_DIR "${HOSTDEPS_INSTALL_DIR}/bin")
+  set(HOSTDEPS_LIB_DIR "${HOSTDEPS_INSTALL_DIR}/lib")
+  set(HOSTDEPS_C_COMPILER "${HOST_C_COMPILER}")
+else()
+  set(HOSTDEPS_INSTALL_DIR "${DEPS_INSTALL_DIR}")
+  set(HOSTDEPS_BIN_DIR "${DEPS_BIN_DIR}")
+  set(HOSTDEPS_LIB_DIR "${DEPS_LIB_DIR}")
+  set(HOSTDEPS_C_COMPILER "${DEPS_C_COMPILER}")
 endif()
 
 include(ExternalProject)

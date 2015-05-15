@@ -1,3 +1,8 @@
+if(WIN32)
+  message(STATUS "Building jemalloc in Windows is not supported (skipping)")
+  return()
+endif()
+
 ExternalProject_Add(jemalloc
   PREFIX ${DEPS_BUILD_DIR}
   URL ${JEMALLOC_URL}
