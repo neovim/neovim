@@ -464,7 +464,11 @@ static void handle_request(Channel *channel, msgpack_object *request)
   }
 
   Array args = ARRAY_DICT_INIT;
-  msgpack_rpc_to_array(msgpack_rpc_args(request), &args);
+  if (!msgpack_rpc_to_array(msgpack_rpc_args(request), &args)) {
+    handler.fn = msgpack_rpc_handle_invalid_arguments;
+    handler.defer = false;
+  }
+
   bool defer = (!kv_size(channel->call_stack) && handler.defer);
   RequestEvent *event_data = xmalloc(sizeof(RequestEvent));
   event_data->channel = channel;
