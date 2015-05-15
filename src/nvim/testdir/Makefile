@@ -32,7 +32,6 @@ SCRIPTS := \
            test69.out             \
            test73.out             \
            test79.out             \
-           test88.out             \
            test_listlbr.out       \
            test_breakindent.out   \
            test_close_count.out   \
