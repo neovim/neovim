@@ -92,6 +92,10 @@
 # define SYNTAX_FNAME   "$VIMRUNTIME" _PATHSEPSTR "syntax" _PATHSEPSTR "%s.vim"
 #endif
 
+#ifndef SYNTAX_FILE
+# define SYNTAX_FILE   "$VIMRUNTIME" _PATHSEPSTR "syntax" _PATHSEPSTR "syntax.vim"
+#endif
+
 #ifndef EXRC_FILE
 # define EXRC_FILE      ".exrc"
 #endif
