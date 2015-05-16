@@ -11,7 +11,7 @@ the "{Nvim}" tag.  This document is a complete and centralized list of all
 these differences.
 
 1. Configuration		|nvim-configuration|
-2. Option defaults		|nvim-option-defaults|
+2. Defaults			|nvim-defaults|
 3. Changed features		|nvim-features-changed|
 4. New features			|nvim-features-new|
 5. Missing legacy features	|nvim-features-missing|
@@ -28,7 +28,12 @@ these differences.
   session information.
 
 ==============================================================================
-2. Option defaults					  *nvim-option-defaults*
+2. Defaults					            *nvim-defaults*
+
+- Syntax highlighting is enabled by default
+- Filetype-related plugins and scripts are enabled by default
+  Note: these defaults can be disabled with the "-u NONE" command line
+  argument.  |-u|
 
 - 'autoindent' is set by default
 - 'autoread' is set by default
