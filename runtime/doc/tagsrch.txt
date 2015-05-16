@@ -410,15 +410,6 @@ for.  In Vim this is not done, the previous search pattern is still remembered,
 unless the 't' flag is present in 'cpoptions'.  The search pattern is always
 put in the search history, so you can modify it if searching fails.
 
-					*emacs-tags* *emacs_tags* *E430*
-Emacs style tag files are only supported if Vim was compiled with the
-|+emacs_tags| feature enabled.  Sorry, there is no explanation about Emacs tag
-files here, it is only supported for backwards compatibility :-).
-
-Lines in Emacs tags files can be very long.  Vim only deals with lines of up
-to about 510 bytes.  To see whether lines are ignored set 'verbose' to 5 or
-higher.
-
 							*tags-option*
 The 'tags' option is a list of file names.  Each of these files is searched
 for the tag.  This can be used to use a different tags file than the default
@@ -484,7 +475,6 @@ ctags			As found on most Unix systems.  Only supports C.  Only
 exuberant ctags		This a very good one.  It works for C, C++, Java,
 			Fortran, Eiffel and others.  It can generate tags for
 			many items.  See http://ctags.sourceforge.net.
-etags			Connected to Emacs.  Supports many languages.
 JTags			For Java, in Java.  It can be found at
 			http://www.fleiner.com/jtags/.
 ptags.py		For Python, in Python.  Found in your Python source
