@@ -1136,9 +1136,9 @@ static vimoption_T
   {"mousetime",   "mouset",   P_NUM|P_VI_DEF,
    (char_u *)&p_mouset, PV_NONE,
    {(char_u *)500L, (char_u *)0L} SCRIPTID_INIT},
-  {"nrformats",   "nf",   P_STRING|P_ALLOCED|P_VI_DEF|P_COMMA|P_NODUP,
+  {"nrformats",   "nf",   P_STRING|P_ALLOCED|P_VIM|P_COMMA|P_NODUP,
    (char_u *)&p_nf, PV_NF,
-   {(char_u *)"octal,hex", (char_u *)0L}
+   {(char_u *)"octal,hex", (char_u *)"hex"}
    SCRIPTID_INIT},
   {"number",      "nu",   P_BOOL|P_VI_DEF|P_RWIN,
    VAR_WIN, PV_NU,

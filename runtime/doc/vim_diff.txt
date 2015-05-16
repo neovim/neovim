@@ -32,6 +32,7 @@ these differences.
 - 'encoding' defaults to "utf-8"
 - 'formatoptions' defaults to "tcqj"
 - 'nocompatible' is always set
+- 'nrformats' defaults to "hex"
 - 'tags' defaults to "./tags;,tags"
 - 'ttyfast' is always set
 - 'wildmenu' is set by default
