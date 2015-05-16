@@ -331,6 +331,14 @@ int main(int argc, char **argv)
   /* Source startup scripts. */
   source_startup_scripts(&params);
 
+  // If using the runtime (-u is not NONE), enable syntax and filetype plugins
+  if (params.use_vimrc != NULL && strcmp(params.use_vimrc, "NONE") != 0) {
+    // Enable syntax highlighting.
+    do_source((char_u *)SYNTAX_FILE, false, DOSO_NONE);
+    // :filetype plugin indent enable
+    force_enable_filetype();
+  }
+
   /*
    * Read all the plugin files.
    * Only when compiled with +eval, since most plugins need it.
