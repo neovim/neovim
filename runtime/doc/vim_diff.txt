@@ -32,6 +32,8 @@ these differences.
 - 'encoding' defaults to "utf-8"
 - 'nocompatible' is always set
 - 'ttyfast' is always set
+- 'wildmenu' is set by default
+- 'wildmode' defaults to "list:longest,full"
 
 ==============================================================================
 3. Changed features					 *nvim-features-changed*

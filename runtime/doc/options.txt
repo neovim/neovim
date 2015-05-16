@@ -7283,7 +7283,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 
 				*'wildmenu'* *'wmnu'* *'nowildmenu'* *'nowmnu'*
-'wildmenu' 'wmnu'	boolean	(default off)
+'wildmenu' 'wmnu'	boolean	(default on)
 			global
 			{not available if compiled without the |+wildmenu|
 			feature}
@@ -7323,7 +7323,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|hl-WildMenu|.
 
 						*'wildmode'* *'wim'*
-'wildmode' 'wim'	string	(Vim default: "full")
+'wildmode' 'wim'	string	(default: "list:longest,full")
 			global
 	Completion mode that is used for the character specified with
 	'wildchar'.  It is a comma separated list of up to four parts.  Each

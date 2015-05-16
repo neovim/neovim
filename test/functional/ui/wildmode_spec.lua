@@ -17,7 +17,7 @@ describe("'wildmode'", function()
 
   describe("'wildmenu'", function()
     it(':sign <tab> shows wildmenu completions', function()
-      execute('set wildmode')
+      execute('set wildmode=full')
       execute('set wildmenu')
       feed(':sign <tab>')
       screen:expect([[
