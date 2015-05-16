@@ -330,7 +330,6 @@ N  *+dialog_con*	Support for |:confirm| with console dialog.
 N  *+dialog_con_gui*	Support for |:confirm| with GUI and console dialog.
 N  *+digraphs*		|digraphs| *E196*
    *+dnd*		Support for DnD into the "~ register |quote_~|.
-B  *+emacs_tags*	|emacs-tags| files
 N  *+eval*		expression evaluation |eval.txt|
 N  *+ex_extra*		Vim's extra Ex commands: |:center|, |:left|,
 			|:normal|, |:retab| and |:right|

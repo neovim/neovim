@@ -1491,7 +1491,7 @@ static vimoption_T
   {"tags",        "tag",  P_STRING|P_EXPAND|P_VI_DEF|P_COMMA|P_NODUP,
    (char_u *)&p_tags, PV_TAGS,
    {
-     (char_u *)"./tags,tags",
+     (char_u *)"./tags;,tags",
      (char_u *)0L
    } SCRIPTID_INIT},
   {"tagstack",    "tgst", P_BOOL|P_VI_DEF,

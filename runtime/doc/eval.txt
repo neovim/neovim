@@ -6723,7 +6723,6 @@ digraphs		Compiled with support for digraphs.
 dnd			Compiled with support for the "~ register |quote_~|.
 dos16			16 bits DOS version of Vim.
 dos32			32 bits DOS (DJGPP) version of Vim.
-emacs_tags		Compiled with support for Emacs tags.
 eval			Compiled with expression evaluation support.  Always
 			true, of course!
 ex_extra		Compiled with extra Ex commands |+ex_extra|.

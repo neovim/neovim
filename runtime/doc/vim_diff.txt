@@ -31,6 +31,7 @@ these differences.
 - 'backspace' defaults to "indent,eol,start"
 - 'encoding' defaults to "utf-8"
 - 'nocompatible' is always set
+- 'tags' defaults to "./tags;,tags"
 - 'ttyfast' is always set
 - 'wildmenu' is set by default
 - 'wildmode' defaults to "list:longest,full"
@@ -131,6 +132,7 @@ Other commands:
 
 Other compile-time features:
   EBCDIC
+  Emacs tags support
 
 Nvim does not have a built-in GUI and hence the following aliases have been
 removed: gvim, gex, gview, rgvim, rgview

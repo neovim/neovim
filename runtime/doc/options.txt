@@ -6501,8 +6501,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	tags file are relative to the directory where the tags file is.
 
 						*'tags'* *'tag'* *E433*
-'tags' 'tag'		string	(default "./tags,tags", when compiled with
-				|+emacs_tags|: "./tags,./TAGS,tags,TAGS")
+'tags' 'tag'		string	(default "./tags;,tags")
 			global or local to buffer |global-local|
 	Filenames for the tag command, separated by spaces or commas.  To
 	include a space or comma in a file name, precede it with a backslash
@@ -6519,10 +6518,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|+path_extra| feature}
 	The |tagfiles()| function can be used to get a list of the file names
 	actually used.
-	If Vim was compiled with the |+emacs_tags| feature, Emacs-style tag
-	files are also supported.  They are automatically recognized.  The
-	default value becomes "./tags,./TAGS,tags,TAGS", unless case
-	differences are ignored (MS-Windows).  |emacs-tags|
 	The use of |:set+=| and |:set-=| is preferred when adding or removing
 	file names from the list.  This avoids problems when a future version
 	uses another default.
