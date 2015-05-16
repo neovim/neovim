@@ -362,6 +362,7 @@ void terminal_enter(bool process_deferred)
   bool close = false;
 
   bool got_bs = false;  // True if the last input was <C-\>
+  bool mouse_event = false;
 
   while (term->buf == curbuf) {
     if (process_deferred) {
@@ -387,6 +388,7 @@ void terminal_enter(bool process_deferred)
       case K_MOUSEDOWN:
       case K_MOUSEUP:
         if (send_mouse_event(term, c)) {
+          mouse_event = true;
           goto end;
         }
         break;
@@ -419,14 +421,22 @@ void terminal_enter(bool process_deferred)
 end:
   restart_edit = 0;
   State = save_state;
-  curwin->w_p_fen = save_w_p_fen;
   RedrawingDisabled = save_rd;
   // draw the unfocused cursor
   invalidate_terminal(term, term->cursor.row, term->cursor.row + 1);
   mapped_ctrl_c = save_mapped_ctrl_c;
   unshowmode(true);
   redraw(term->buf != curbuf);
+  if (curbuf == term->buf) {
+    curwin->w_p_fen = save_w_p_fen;
+    if (mouse_event == false) {
+      // Upon leaving Terminal mode, keep cursor where Terminal showed it
+      curwin->w_cursor.lnum = row_to_linenr(term, term->cursor.row);
+      curwin->w_cursor.col = term->cursor.col;
+    }
+  }
   ui_busy_stop();
+  ui_refresh();
   if (close) {
     term->opts.close_cb(term->opts.data);
     do_cmdline_cmd("bwipeout!");
