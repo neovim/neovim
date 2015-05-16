@@ -122,6 +122,8 @@ struct terminal {
     int row, col;
     bool visible;
   } cursor;
+  // On the previous pass of on_refresh, where was the terminal's cursor?
+  int prev_term_cursor_linenr;
   // which mouse button is pressed
   int pressed_button;
   // pending width/height
@@ -231,6 +233,8 @@ Terminal *terminal_open(TerminalOptions opts)
   rv->sb_size = MIN(rv->sb_size, 100000);
   rv->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
 
+  rv->prev_term_cursor_linenr = 0;
+
   // Configure the color palette. Try to get the color from:
   //
   // - b:terminal_color_{NUM}
@@ -302,7 +306,7 @@ void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
 
   // The new width/height are the minimum for all windows that display the
   // terminal in the current tab.
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_TAB_WINDOWS(tab, wp) {
     if (!wp->w_closing && wp->w_buffer == term->buf) {
       width = (uint16_t)MIN(width, (uint16_t)(wp->w_width - win_col_off(wp)));
       height = (uint16_t)MIN(height, (uint16_t)wp->w_height);
@@ -351,8 +355,6 @@ void terminal_enter(bool process_deferred)
   RedrawingDisabled = false;
   bool save_mapped_ctrl_c = mapped_ctrl_c;
   mapped_ctrl_c = true;
-  // go to the bottom when the terminal is focused
-  adjust_topline(term, false);
   // erase the unfocused cursor
   invalidate_terminal(term, term->cursor.row, term->cursor.row + 1);
   showmode();
@@ -934,14 +936,20 @@ static void on_refresh(Event event)
       }
       continue;
     }
-    bool pending_resize = term->pending_resize;
+    FOR_ALL_TAB_WINDOWS(tab, wp) {
+      if (wp->w_buffer == term->buf) {
+        wp->following_terminal =
+          (wp->w_cursor.lnum >= term->prev_term_cursor_linenr);
+      }
+    }
     WITH_BUFFER(term->buf, {
       refresh_size(term);
       refresh_scrollback(term);
       refresh_screen(term);
       redraw_buf_later(term->buf, NOT_VALID);
     });
-    adjust_topline(term, pending_resize);
+    adjust_topline(term, 0);
+    term->prev_term_cursor_linenr = row_to_linenr(term, term->cursor.row);
   });
   pmap_clear(ptr_t)(invalidated_terminals);
   unblock_autocmds();
@@ -1078,15 +1086,19 @@ static void adjust_topline(Terminal *term, bool force)
 {
   int height, width;
   vterm_get_size(term->vt, &height, &width);
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_TAB_WINDOWS(tab, wp) {
     if (wp->w_buffer == term->buf) {
       // for every window that displays a terminal, ensure the cursor is in a
       // valid line
       wp->w_cursor.lnum = MIN(wp->w_cursor.lnum, term->buf->b_ml.ml_line_count);
-      if (force || curbuf != term->buf || is_focused(term)) {
-        // if the terminal is not in the current window or if it's focused,
-        // adjust topline/cursor so the window will "follow" the terminal
-        // output
+      if (force
+          || (wp->following_terminal
+              && wp->w_buffer->b_ml.ml_line_count >= wp->w_botline)
+          || (is_focused(term) && wp == curwin)) {
+        // if we're told to follow the terminal, and the window doesn't contain
+        // the new last line  of the buffer, or if it's focused and we're
+        // actually in this window, adjust topline/cursor so the window will
+        // "follow" the terminal output
         wp->w_cursor.lnum = term->buf->b_ml.ml_line_count;
         set_topline(wp, MAX(wp->w_cursor.lnum - height + 1, 1));
       }

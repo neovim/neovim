@@ -1158,6 +1158,12 @@ struct window_S {
    * In a non-location list window, w_llist_ref is NULL.
    */
   qf_info_T   *w_llist_ref;
+
+  /*
+   * Are we following the terminal? (Only valid if w_buffer is a terminal
+   * buffer.)
+   */
+  bool following_terminal;
 };
 
 #endif // NVIM_BUFFER_DEFS_H
