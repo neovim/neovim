@@ -1450,9 +1450,8 @@ By default, "b:#" is included.  This means that a line that starts with
 
 							*fo-table*
 You can use the 'formatoptions' option  to influence how Vim formats text.
-'formatoptions' is a string that can contain any of the letters below.  The
-default setting is "tcq".  You can separate the option letters with commas for
-readability.
+'formatoptions' is a string that can contain any of the letters below.  You
+can separate the option letters with commas for readability.
 
 letter	 meaning when present in 'formatoptions'    ~
 

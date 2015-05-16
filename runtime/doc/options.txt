@@ -2912,7 +2912,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	evaluating 'foldtext' |textlock|.
 
 					*'formatoptions'* *'fo'*
-'formatoptions' 'fo'	string (Vim default: "tcq", Vi default: "vt")
+'formatoptions' 'fo'	string (default: "tcqj", Vi default: "vt")
 			local to buffer
 	This is a sequence of letters which describes how automatic
 	formatting is to be done.  See |fo-table|.  When the 'paste' option is
