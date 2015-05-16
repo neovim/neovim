@@ -4695,7 +4695,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	recognized as a multi click.
 
 							*'nrformats'* *'nf'*
-'nrformats' 'nf'	string	(default "octal,hex")
+'nrformats' 'nf'	string	(default "hex")
 			local to buffer
 	This defines what bases Vim will consider for numbers when using the
 	CTRL-A and CTRL-X commands for adding to and subtracting from a number
