@@ -315,8 +315,8 @@ the cursor.  That's done with the "zz" command.
 	+------------------+		 +------------------+
 
 The "zt" command puts the cursor line at the top, "zb" at the bottom.  There
-are a few more scrolling commands, see |Q_sc|.  To always keep a few lines of
-context around the cursor, use the 'scrolloff' option.
+are a few more scrolling commands, see |Q_sc|.  To set how many lines of
+context to keep around the cursor, use the 'scrolloff' option.
 
 ==============================================================================
 *03.8*	Simple searches

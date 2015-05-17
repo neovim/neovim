@@ -5336,13 +5336,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	height.
 
 						*'scrolloff'* *'so'*
-'scrolloff' 'so'	number	(default 0)
+'scrolloff' 'so'	number	(default 1)
 			global
 	Minimal number of screen lines to keep above and below the cursor.
-	This will make some context visible around where you are working.  If
+	This makes some context visible around where you are working.  If
 	you set it to a very large value (999) the cursor line will always be
 	in the middle of the window (except at the start or end of the file or
-	when long lines wrap).
+	when long lines wrap). If you set it to 0, vim won't try to keep
+	lines above or below the cursor.
 	For scrolling horizontally see 'sidescrolloff'.
 
 						*'scrollopt'* *'sbo'*

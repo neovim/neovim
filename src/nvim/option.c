@@ -1284,9 +1284,9 @@ static vimoption_T
   {"scrolljump",  "sj",   P_NUM|P_VI_DEF|P_VIM,
    (char_u *)&p_sj, PV_NONE,
    {(char_u *)1L, (char_u *)0L} SCRIPTID_INIT},
-  {"scrolloff",   "so",   P_NUM|P_VI_DEF|P_VIM|P_RALL,
+  {"scrolloff",   "so",   P_NUM|P_VIM|P_RALL,
    (char_u *)&p_so, PV_NONE,
-   {(char_u *)0L, (char_u *)0L} SCRIPTID_INIT},
+   {(char_u *)0L, (char_u *)1L} SCRIPTID_INIT},
   {"scrollopt",   "sbo",  P_STRING|P_VI_DEF|P_COMMA|P_NODUP,
    (char_u *)&p_sbo, PV_NONE,
    {(char_u *)"ver,jump", (char_u *)0L}
