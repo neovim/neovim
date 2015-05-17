@@ -218,6 +218,8 @@ static void remote_ui_change_mode(UI *ui, int mode)
   Array args = ARRAY_DICT_INIT;
   if (mode == INSERT) {
     ADD(args, STRING_OBJ(cstr_to_string("insert")));
+  } else if (mode == REPLACE) {
+    ADD(args, STRING_OBJ(cstr_to_string("replace")));
   } else {
     assert(mode == NORMAL);
     ADD(args, STRING_OBJ(cstr_to_string("normal")));

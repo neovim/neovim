@@ -476,7 +476,9 @@ static void ui_change_mode(void)
     return;
   }
   /* Get a simple UI mode out of State. */
-  if (State & INSERT)
+  if ((State & REPLACE) == REPLACE)
+    mode = REPLACE;
+  else if (State & INSERT)
     mode = INSERT;
   else
     mode = NORMAL;
