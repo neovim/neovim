@@ -158,10 +158,10 @@ endif()
 
 # Set custom build flags for RelWithDebInfo.
 # -DNDEBUG purposely omitted because we want assertions.
-if(HAS_OG_FLAG)
+if(NOT MSVC AND HAS_OG_FLAG)
   set(CMAKE_C_FLAGS_RELWITHDEBINFO "-Og -g"
     CACHE STRING "Flags used by the compiler during release builds with debug info." FORCE)
-else()
+elseif(NOT MSVC)
   set(CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g"
     CACHE STRING "Flags used by the compiler during release builds with debug info." FORCE)
 endif()
