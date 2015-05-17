@@ -9,6 +9,8 @@ STARTTEST
    e! test.ok
    wq! test.out
 :endif
+:" Scrolloff
+:set scrolloff=0
 :" Conceal settings.
 :set conceallevel=2
 :set concealcursor=nc
