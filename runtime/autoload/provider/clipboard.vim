@@ -5,7 +5,8 @@ let s:copy = {}
 let s:paste = {}
 
 function! s:try_cmd(cmd, ...)
-  let out = a:0 ? systemlist(a:cmd, a:1, 1) : systemlist(a:cmd, [''], 1)
+  let argv = split(a:cmd, " ")
+  let out = a:0 ? systemlist(argv, a:1, 1) : systemlist(argv, [''], 1)
   if v:shell_error
     echo "clipboard: error: ".(len(out) ? out[0] : '')
     return ''
