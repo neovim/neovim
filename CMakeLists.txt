@@ -271,9 +271,17 @@ endif()
 # If it's preexisting, leave it alone.
 include(InstallHelpers)
 
+file(GLOB MANPAGES
+  RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+  man/nvim*.1)
+
+install_helper(
+  FILES ${MANPAGES}
+  DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
+
 install_helper(
   DIRECTORY runtime
-  DESTINATION share/nvim)
+  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim)
 
 file(GLOB_RECURSE RUNTIME_PROGRAMS
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -281,10 +289,11 @@ file(GLOB_RECURSE RUNTIME_PROGRAMS
 
 foreach(PROG ${RUNTIME_PROGRAMS})
   get_filename_component(BASEDIR ${PROG} PATH)
-  install_helper(PROGRAMS ${PROG} DESTINATION share/nvim/${BASEDIR})
+  install_helper(PROGRAMS ${PROG} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/${BASEDIR})
 endforeach()
 
 install(SCRIPT ${PROJECT_SOURCE_DIR}/cmake/GenerateHelptags.cmake)
+
 
 # Go down the tree.
 
