@@ -57,6 +57,9 @@
 #if !defined(S_ISREG) && defined(S_IFREG)
 # define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
 #endif
+#if !defined(S_ISLNK) && defined(S_IFLNK)
+# define S_IFLNK(m) (((m) & S_IFMT) == S_IFLNK)
+#endif
 #if !defined(S_ISBLK) && defined(S_IFBLK)
 # define S_ISBLK(m) (((m) & S_IFMT) == S_IFBLK)
 #endif
