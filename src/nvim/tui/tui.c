@@ -61,7 +61,7 @@ typedef struct {
   struct {
     int enable_mouse, disable_mouse;
     int enable_bracketed_paste, disable_bracketed_paste;
-    int enter_insert_mode, exit_insert_mode;
+    int enter_insert_mode, enter_replace_mode, exit_insert_mode;
     int set_rgb_foreground, set_rgb_background;
   } unibi_ext;
 } TUIData;
@@ -105,6 +105,7 @@ UI *tui_start(void)
   data->unibi_ext.enable_bracketed_paste = -1;
   data->unibi_ext.disable_bracketed_paste = -1;
   data->unibi_ext.enter_insert_mode = -1;
+  data->unibi_ext.enter_replace_mode = -1;
   data->unibi_ext.exit_insert_mode = -1;
 
   // write output to stderr if stdout is not a tty
@@ -412,6 +413,10 @@ static void tui_mode_change(UI *ui, int mode)
   if (mode == INSERT) {
     if (data->showing_mode != INSERT) {
       unibi_out(ui, data->unibi_ext.enter_insert_mode);
+    }
+  } else if (mode == REPLACE) {
+    if (data->showing_mode != REPLACE) {
+      unibi_out(ui, data->unibi_ext.enter_replace_mode);
     }
   } else {
     assert(mode == NORMAL);
@@ -810,12 +815,16 @@ static void fix_terminfo(TUIData *data)
     // iterm
     data->unibi_ext.enter_insert_mode = (int)unibi_add_ext_str(ut, NULL,
         TMUX_WRAP("\x1b]50;CursorShape=1;BlinkingCursorEnabled=1\x07"));
+    data->unibi_ext.enter_replace_mode = (int)unibi_add_ext_str(ut, NULL,
+        TMUX_WRAP("\x1b]50;CursorShape=2;BlinkingCursorEnabled=1\x07"));
     data->unibi_ext.exit_insert_mode = (int)unibi_add_ext_str(ut, NULL,
         TMUX_WRAP("\x1b]50;CursorShape=0;BlinkingCursorEnabled=0\x07"));
   } else {
     // xterm-like sequences for blinking bar and solid block
     data->unibi_ext.enter_insert_mode = (int)unibi_add_ext_str(ut, NULL,
         TMUX_WRAP("\x1b[5 q"));
+    data->unibi_ext.enter_replace_mode = (int)unibi_add_ext_str(ut, NULL,
+        TMUX_WRAP("\x1b[3 q"));
     data->unibi_ext.exit_insert_mode = (int)unibi_add_ext_str(ut, NULL,
         TMUX_WRAP("\x1b[2 q"));
   }
