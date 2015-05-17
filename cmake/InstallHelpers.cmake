@@ -1,3 +1,6 @@
+# For $CMAKE_INSTALL_{DATAROOT,MAN, ...}DIR
+include(GNUInstallDirs)
+
 # This will create any directories that need to be created in the destination
 # path with the typical owner, group, and user permissions--independent of the
 # umask setting.
@@ -107,11 +110,11 @@ function(install_helper)
 
   if(_install_helper_TARGETS)
     # Ensure the bin area exists with the correct permissions.
-    create_install_dir_with_perms(DESTINATION bin)
+    create_install_dir_with_perms(DESTINATION ${CMAKE_INSTALL_BINDIR})
 
     install(
       TARGETS ${_install_helper_TARGETS}
-      RUNTIME DESTINATION bin)
+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
   else()
     create_install_dir_with_perms(
       DESTINATION ${_install_helper_DESTINATION}
