@@ -12,6 +12,7 @@ describe('107', function()
     local screen = Screen.new()
     screen:attach()
 
+    execute('set scrolloff=0')
     insert('start:')
     execute('new')
     execute('call setline(1, range(1,256))')
