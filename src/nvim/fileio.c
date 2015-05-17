@@ -2563,9 +2563,9 @@ buf_write (
   /*
    * Get information about original file (if there is one).
    */
+  FileInfo file_info_old;
 #if defined(UNIX)
   perm = -1;
-  FileInfo file_info_old;
   if (!os_fileinfo((char *)fname, &file_info_old)) {
     newfile = TRUE;
   } else {
