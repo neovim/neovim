@@ -25,6 +25,7 @@ describe("'listchars'", function()
 
     execute('let g:lines = []')
 
+    execute('set scrolloff=0')
     -- Set up 'listchars', switch on 'list', and use the "GG" mapping to record
     -- what the buffer lines look like.
     execute('set listchars+=tab:>-,space:.,trail:<')

@@ -78,7 +78,7 @@ STARTTEST
 :let g:str="\t\t\t\t\t{"
 :let g:test=" Test 12: breakindent + long indent"
 :wincmd p
-:set all& breakindent linebreak briopt=min:10 nu numberwidth=3 ts=4
+:set all& breakindent linebreak briopt=min:10 nu numberwidth=3 ts=4 so=0
 :$put =g:str
 zt:let line1=ScreenChar(1,10)
 :wincmd p
@@ -89,7 +89,7 @@ zt:let line1=ScreenChar(1,10)
 :" https://groups.google.com/d/msg/vim_dev/ZOdg2mc9c9Y/TT8EhFjEy0IJ
 :only
 :vert 20new
-:set all& breakindent briopt=min:10
+:set all& breakindent briopt=min:10 so=0
 :call setline(1, ["    a\tb\tc\td\te", "    z   y       x       w       v"])
 :/^\s*a
 fbgjyl:let line1 = @0
@@ -101,7 +101,7 @@ fygjyl:let line2 = @0
 :$put =line2
 :"
 :let g:test="Test 14: breakindent + visual blockwise delete #1"
-:set all& breakindent
+:set all& breakindent so=0
 :30vnew
 :normal! 3a1234567890
 :normal! a    abcde

@@ -31,6 +31,7 @@ these differences.
 - 'backspace' defaults to "indent,eol,start"
 - 'encoding' defaults to "utf-8"
 - 'nocompatible' is always set
+- 'scrolloff' is set to 1
 - 'ttyfast' is always set
 - 'wildmenu' is set by default
 - 'wildmode' defaults to "list:longest,full"

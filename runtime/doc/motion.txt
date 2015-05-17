@@ -1278,7 +1278,8 @@ the current line is included.  You can then use "%" to go to the matching line.
 
 						*H*
 H			To line [count] from top (Home) of window (default:
-			first line on the window) on the first non-blank
+			second line on the window; the first only if
+			'scrolloff' is 0) on the first non-blank
 			character |linewise|.  See also 'startofline' option.
 			Cursor is adjusted for 'scrolloff' option.
 
@@ -1287,8 +1288,9 @@ M			To Middle line of window, on the first non-blank
 			character |linewise|.  See also 'startofline' option.
 
 						*L*
-L			To line [count] from bottom of window (default: Last
-			line on the window) on the first non-blank character
+L			To line [count] from bottom of window (default:
+			second-to-last line on the window; the last only if
+			'scrolloff' is 0) on the first non-blank character
 			|linewise|.  See also 'startofline' option.
 			Cursor is adjusted for 'scrolloff' option.
 

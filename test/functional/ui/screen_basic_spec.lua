@@ -314,6 +314,7 @@ describe('Screen', function()
 
   describe('scrolling and clearing', function()
     before_each(function()
+      execute('set scrolloff=0')
       insert([[
       Inserting
       text

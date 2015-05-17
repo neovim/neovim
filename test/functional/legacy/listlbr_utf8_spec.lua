@@ -9,6 +9,7 @@ describe('linebreak', function()
 
   it('is working', function()
     source([[
+      set scrolloff=0
       set wildchar=^E
       10new
       vsp
