@@ -9,6 +9,7 @@
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/os.h"
 #include "nvim/ascii.h"
+#include "nvim/eval.h"
 #include "nvim/garray.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
@@ -18,7 +19,7 @@
 
 #define MAX_CONNECTIONS 32
 #define ADDRESS_MAX_SIZE 256
-#define NEOVIM_DEFAULT_TCP_PORT 7450
+#define NVIM_DEFAULT_TCP_PORT 7450
 #define LISTEN_ADDRESS_ENV_VAR "NVIM_LISTEN_ADDRESS"
 
 typedef enum {
@@ -27,13 +28,13 @@ typedef enum {
 } ServerType;
 
 typedef struct {
-  // The address of a pipe, or string value of a tcp address.
+  // Pipe/socket path, or TCP address string
   char addr[ADDRESS_MAX_SIZE];
 
   // Type of the union below
   ServerType type;
 
-  // This is either a tcp server or unix socket(named pipe on windows)
+  // TCP server or unix socket (named pipe on Windows)
   union {
     struct {
       uv_tcp_t handle;
@@ -84,23 +85,32 @@ static void server_close_cb(Server **server)
   uv_close(server_handle(*server), free_server);
 }
 
+/// Set v:servername to the first server in the server list, or unset it if no
+/// servers are known.
+static void set_vservername(garray_T *srvs)
+{
+  char *default_server = (srvs->ga_len > 0)
+    ? ((Server **)srvs->ga_data)[0]->addr
+    : NULL;
+  set_vim_var_string(VV_SEND_SERVER, (char_u *)default_server, -1);
+}
+
 /// Teardown the server module
 void server_teardown(void)
 {
   GA_DEEP_CLEAR(&servers, Server *, server_close_cb);
 }
 
-/// Starts listening on arbitrary tcp/unix addresses specified by
-/// `endpoint` for API calls. The type of socket used(tcp or unix/pipe) will
-/// be determined by parsing `endpoint`: If it's a valid tcp address in the
-/// 'ip[:port]' format, then it will be tcp socket. The port is optional
-/// and if omitted will default to NEOVIM_DEFAULT_TCP_PORT. Otherwise it will
-/// be a unix socket or named pipe.
+/// Starts listening for API calls on the TCP address or pipe path `endpoint`.
+/// The socket type is determined by parsing `endpoint`: If it's a valid IPv4
+/// address in 'ip[:port]' format, then it will be TCP socket. The port is
+/// optional and if omitted defaults to NVIM_DEFAULT_TCP_PORT. Otherwise it
+/// will be a unix socket or named pipe.
 ///
 /// @param endpoint Address of the server. Either a 'ip[:port]' string or an
-///        arbitrary identifier(trimmed to 256 bytes) for the unix socket or
+///        arbitrary identifier (trimmed to 256 bytes) for the unix socket or
 ///        named pipe.
-/// @returns zero if successful, one on a regular error, and negative errno
+/// @returns 0 on success, 1 on a regular error, and negative errno
 ///          on failure to bind or connect.
 int server_start(const char *endpoint)
   FUNC_ATTR_NONNULL_ALL
@@ -134,14 +144,14 @@ int server_start(const char *endpoint)
   size_t addr_len = (size_t)(ip_end - addr);
 
   if (addr_len > sizeof(ip) - 1) {
-    // Maximum length of an IP address buffer is 15(eg: 255.255.255.255)
+    // Maximum length of an IPv4 address buffer is 15 (eg: 255.255.255.255)
     addr_len = sizeof(ip) - 1;
   }
 
   // Extract the address part
   xstrlcpy(ip, addr, addr_len + 1);
 
-  int port = NEOVIM_DEFAULT_TCP_PORT;
+  int port = NVIM_DEFAULT_TCP_PORT;
 
   if (*ip_end == ':') {
     // Extract the port
@@ -216,6 +226,11 @@ int server_start(const char *endpoint)
   ga_grow(&servers, 1);
   ((Server **)servers.ga_data)[servers.ga_len++] = server;
 
+  // Update v:servername, if not set.
+  if (STRLEN(get_vim_var_str(VV_SEND_SERVER)) == 0) {
+    set_vservername(&servers);
+  }
+
   return 0;
 }
 
@@ -230,7 +245,7 @@ void server_stop(char *endpoint)
   // Trim to `ADDRESS_MAX_SIZE`
   xstrlcpy(addr, endpoint, sizeof(addr));
 
-  int i = 0;  // The index of the server whose address equals addr.
+  int i = 0;  // Index of the server whose address equals addr.
   for (; i < servers.ga_len; i++) {
     server = ((Server **)servers.ga_data)[i];
     if (strcmp(addr, server->addr) == 0) {
@@ -243,9 +258,9 @@ void server_stop(char *endpoint)
     return;
   }
 
-  // If we are invalidating the listen address, unset it.
+  // Unset $NVIM_LISTEN_ADDRESS if it is the stopped address.
   const char *listen_address = os_getenv(LISTEN_ADDRESS_ENV_VAR);
-  if (listen_address && strcmp(addr, listen_address) == 0) {
+  if (listen_address && STRCMP(addr, listen_address) == 0) {
     os_unsetenv(LISTEN_ADDRESS_ENV_VAR);
   }
 
@@ -257,6 +272,11 @@ void server_stop(char *endpoint)
       ((Server **)servers.ga_data)[servers.ga_len - 1];
   }
   servers.ga_len--;
+
+  // If v:servername is the stopped address, re-initialize it.
+  if (STRCMP(addr, get_vim_var_str(VV_SEND_SERVER)) == 0) {
+    set_vservername(&servers);
+  }
 }
 
 /// Returns an allocated array of server addresses.

@@ -81,6 +81,8 @@ There are four ways to open msgpack-rpc streams to nvim:
 >
     :echo $NVIM_LISTEN_ADDRESS
 <
+   See also |v:servername|.
+
 4. Through a TCP/IP socket. To make nvim listen on a TCP/IP socket, set the
    |$NVIM_LISTEN_ADDRESS| environment variable in a shell before starting:
 >
