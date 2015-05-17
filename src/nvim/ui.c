@@ -121,7 +121,7 @@ void ui_update_encoding(void)
 // May update the shape of the cursor.
 void ui_cursor_shape(void)
 {
-  ui_change_mode();
+  ui_mode_change();
 }
 
 void ui_refresh(void)
@@ -469,25 +469,18 @@ static void flush_cursor_update(void)
 
 // Notify that the current mode has changed. Can be used to change cursor
 // shape, for example.
-static void ui_change_mode(void)
+static void ui_mode_change(void)
 {
-  static int showing_insert_mode = MAYBE;
-
+  int mode;
   if (!full_screen) {
     return;
   }
-
-  if (State & INSERT) {
-    if (showing_insert_mode != TRUE) {
-      UI_CALL(insert_mode);
-    }
-    showing_insert_mode = TRUE;
-  } else {
-    if (showing_insert_mode != FALSE) {
-      UI_CALL(normal_mode);
-    }
-    showing_insert_mode = FALSE;
-  }
+  /* Get a simple UI mode out of State. */
+  if (State & INSERT)
+    mode = INSERT;
+  else
+    mode = NORMAL;
+  UI_CALL(mode_change, mode);
   conceal_check_cursur_line();
 }
 

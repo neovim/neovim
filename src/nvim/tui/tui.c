@@ -57,6 +57,7 @@ typedef struct {
   bool busy;
   HlAttrs attrs, print_attrs;
   Cell **screen;
+  int showing_mode;
   struct {
     int enable_mouse, disable_mouse;
     int enable_bracketed_paste, disable_bracketed_paste;
@@ -98,6 +99,7 @@ UI *tui_start(void)
   data->can_use_terminal_scroll = true;
   data->bufpos = 0;
   data->bufsize = sizeof(data->buf) - CNORM_COMMAND_MAX_SIZE;
+  data->showing_mode = 0;
   data->unibi_ext.enable_mouse = -1;
   data->unibi_ext.disable_mouse = -1;
   data->unibi_ext.enable_bracketed_paste = -1;
@@ -148,8 +150,7 @@ UI *tui_start(void)
   ui->busy_stop = tui_busy_stop;
   ui->mouse_on = tui_mouse_on;
   ui->mouse_off = tui_mouse_off;
-  ui->insert_mode = tui_insert_mode;
-  ui->normal_mode = tui_normal_mode;
+  ui->mode_change = tui_mode_change;
   ui->set_scroll_region = tui_set_scroll_region;
   ui->scroll = tui_scroll;
   ui->highlight_set = tui_highlight_set;
@@ -178,7 +179,7 @@ static void tui_stop(UI *ui)
   // Destroy input stuff
   term_input_destroy(data->input);
   // Destroy output stuff
-  tui_normal_mode(ui);
+  tui_mode_change(ui, NORMAL);
   tui_mouse_off(ui);
   unibi_out(ui, unibi_exit_attribute_mode);
   // cursor should be set to normal before exiting alternate screen
@@ -404,16 +405,21 @@ static void tui_mouse_off(UI *ui)
   data->mouse_enabled = false;
 }
 
-static void tui_insert_mode(UI *ui)
+static void tui_mode_change(UI *ui, int mode)
 {
   TUIData *data = ui->data;
-  unibi_out(ui, data->unibi_ext.enter_insert_mode);
-}
 
-static void tui_normal_mode(UI *ui)
-{
-  TUIData *data = ui->data;
-  unibi_out(ui, data->unibi_ext.exit_insert_mode);
+  if (mode == INSERT) {
+    if (data->showing_mode != INSERT) {
+      unibi_out(ui, data->unibi_ext.enter_insert_mode);
+    }
+  } else {
+    assert(mode == NORMAL);
+    if (data->showing_mode != NORMAL) {
+      unibi_out(ui, data->unibi_ext.exit_insert_mode);
+    }
+  }
+  data->showing_mode = mode;
 }
 
 static void tui_set_scroll_region(UI *ui, int top, int bot, int left,
