@@ -1,7 +1,7 @@
 " An example for a vimrc file.
 "
 " Maintainer:   Bram Moolenaar <Bram@vim.org>
-" Last change:  2014 Nov 05
+" Last change:  2015 May 17
 "
 " To use it, copy it to
 "     for Unix:  ~/.vimrc
@@ -26,6 +26,11 @@ map Q gq
 " CTRL-U in insert mode deletes a lot.  Use CTRL-G u to first break undo,
 " so that you can undo CTRL-U after inserting a line break.
 inoremap <C-U> <C-G>u<C-U>
+
+" Make H and L jump to the first or last lines as visible before the jump,
+" and only then scroll.
+noremap <expr> H 'H' . &scrolloff . k
+noremap <expr> L 'L' . &scrolloff . 'j'
 
 " In many terminal emulators the mouse works just fine, thus enable it.
 if has('mouse')
