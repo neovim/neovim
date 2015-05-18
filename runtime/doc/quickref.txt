@@ -1,4 +1,4 @@
-*quickref.txt*  For Vim version 7.4.  Last change: 2014 Oct 22
+*quickref.txt*  For Vim version 7.4.  Last change: 2014 Nov 19
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -756,6 +756,7 @@ Short explanation of each option:		*option-list*
 'keywordprg'	  'kp'	    program to use for the "K" command
 'langmap'	  'lmap'    alphabetic characters for other language mode
 'langmenu'	  'lm'	    language to be used for the menus
+'langnoremap'	  'lnr'	    do not apply 'langmap' to mapped characters
 'laststatus'	  'ls'	    tells when last window has status lines
 'lazyredraw'	  'lz'	    don't redraw while executing macros
 'linebreak'	  'lbr'     wrap long lines at a blank
