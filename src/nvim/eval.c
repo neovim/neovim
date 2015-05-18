@@ -6590,10 +6590,14 @@ static struct fst {
   {"resolve",         1, 1, f_resolve},
   {"reverse",         1, 1, f_reverse},
   {"round",           1, 1, f_round},
+  {"rpcchannels",     0, 0, f_rpcchannels},
   {"rpcnotify",       2, 64, f_rpcnotify},
   {"rpcrequest",      2, 64, f_rpcrequest},
   {"rpcstart",        1, 2, f_rpcstart},
   {"rpcstop",         1, 1, f_rpcstop},
+  {"rpcsubscribe",    2, 2, f_rpcsubscribe},
+  {"rpcsubscriptions", 0, 1, f_rpcsubscriptions},
+  {"rpcunsubscribe",  2, 2, f_rpcunsubscribe},
   {"screenattr",      2, 2, f_screenattr},
   {"screenchar",      2, 2, f_screenchar},
   {"screencol",       0, 0, f_screencol},
@@ -12762,6 +12766,13 @@ static void f_round(typval_T *argvars, typval_T *rettv)
     rettv->vval.v_float = 0.0;
 }
 
+// "rpcchannels()" function
+static void f_rpcchannels(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_LIST;
+  rettv->vval.v_list = channel_list();
+}
+
 // "rpcnotify()" function
 static void f_rpcnotify(typval_T *argvars, typval_T *rettv)
 {
@@ -12963,6 +12974,109 @@ static void f_rpcstop(typval_T *argvars, typval_T *rettv)
   }
 
   rettv->vval.v_number = channel_close(argvars[0].vval.v_number);
+}
+
+static list_T *do_rpcsubscriptions(typval_T *id)
+{
+  if (id->v_type != VAR_NUMBER || id->vval.v_number <= 0) {
+    EMSG2(_(e_invarg2), "channel must be a positive integer");
+    return NULL;
+  }
+
+  list_T *subs = channel_subscriptions(id->vval.v_number);
+
+  if (!subs) {
+    EMSG2(_(e_invarg2), "Channel doesn't exist");
+  }
+  return subs;
+}
+
+// "rpcsubscribe()" function
+static void f_rpcsubscriptions(typval_T *argvars, typval_T *rettv)
+{
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  switch(argvars[0].v_type) {
+    case VAR_NUMBER:
+      rettv->v_type = VAR_LIST;
+      rettv->vval.v_list = do_rpcsubscriptions(&argvars[0]);
+      break;
+    // Get all subscriptions.
+    case VAR_UNKNOWN:
+      rettv->v_type = VAR_DICT;
+      rettv->vval.v_dict = channel_all_subscriptions();
+      break;
+    case VAR_LIST:
+      rettv_dict_alloc(rettv);
+      listitem_T *li = argvars[0].vval.v_list->lv_first;
+      for (; li != NULL; li = li->li_next) {
+        list_T *l = do_rpcsubscriptions(&li->li_tv);
+        if (l == NULL) {
+          clear_tv(rettv);
+          return;  // did emsg in do_rpcsubscriptions
+        }
+        char id_buf[32];
+        snprintf(id_buf, sizeof(id_buf), "%i", li->li_tv.vval.v_number);
+        dict_add_list(rettv->vval.v_dict, id_buf, l);
+      }
+      break;
+    default: EMSG2(_(e_invarg2), "expected list, dictionary, or number");
+  }
+}
+
+// "rpcsubscribe()" function
+static void f_rpcsubscribe(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_NUMBER || argvars[0].vval.v_number <= 0) {
+    EMSG2(_(e_invarg2), "channel must be a positive integer");
+    return;
+  }
+
+  const char *method = (char *)get_tv_string_chk(&argvars[1]);
+  if (!method) {
+    return;  // did emsg in get_tv_string_chk
+  }
+
+  rettv->vval.v_number = channel_subscribe(argvars[0].vval.v_number, method);
+  if (!rettv->vval.v_number) {
+    EMSG2(_(e_invarg2), "Channel doesn't exist");
+  }
+}
+
+// "rpcunsubscribe()" function
+static void f_rpcunsubscribe(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_NUMBER || argvars[0].vval.v_number <= 0) {
+    // Wrong argument types
+    EMSG2(_(e_invarg2), "channel must be a number greater than zero");
+    return;
+  }
+
+  const char *method = (char *)get_tv_string_chk(&argvars[1]);
+  if (!method) {
+    return;  // did emsg in get_tv_string_chk
+  }
+
+  rettv->vval.v_number = channel_unsubscribe(argvars[0].vval.v_number, method);
+  if (!rettv->vval.v_number) {
+    EMSG2(_(e_invarg2), "Channel doesn't exist");
+  }
 }
 
 /*
@@ -18464,6 +18578,11 @@ static ufunc_T *find_func(char_u *name)
   return NULL;
 }
 
+bool eval_has_func(const char *name)
+{
+  return find_func((char_u *)name) != NULL;
+}
+
 #if defined(EXITFREE)
 void free_all_functions(void)
 {
@@ -20462,8 +20581,25 @@ static void script_host_eval(char *name, typval_T *argvars, typval_T *rettv)
 
 typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
 {
+  typval_T argvars[3] = {
+    {.v_type = VAR_STRING, .vval.v_string = (uint8_t *)method, .v_lock = 0},
+    {.v_type = VAR_LIST, .vval.v_list = arguments, .v_lock = 0},
+    {.v_type = VAR_UNKNOWN}
+  };
+
+  arguments->lv_refcount++;
+  typval_T ret = do_eval_call_provider(provider, "Call", argvars, 2);
+  arguments->lv_refcount--;
+
+  return ret;
+}
+
+typval_T do_eval_call_provider(const char *provider, const char *method,
+                               typval_T *argvars, size_t argc)
+{
   char func[256];
-  int name_len = snprintf(func, sizeof(func), "provider#%s#Call", provider);
+  int name_len = snprintf(func, sizeof(func), "provider#%s#%s", provider,
+                          method);
 
   // Save caller scope information
   struct caller_scope saved_provider_caller_scope = provider_caller_scope;
@@ -20479,19 +20615,12 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
   };
   provider_call_nesting++;
 
-  typval_T argvars[3] = {
-    {.v_type = VAR_STRING, .vval.v_string = (uint8_t *)method, .v_lock = 0},
-    {.v_type = VAR_LIST, .vval.v_list = arguments, .v_lock = 0},
-    {.v_type = VAR_UNKNOWN}
-  };
-  typval_T rettv = {.v_type = VAR_UNKNOWN, .v_lock = 0};
-  arguments->lv_refcount++;
-
   int dummy;
+  typval_T rettv;
   (void)call_func((uint8_t *)func,
                   name_len,
                   &rettv,
-                  2,
+                  argc,
                   argvars,
                   curwin->w_cursor.lnum,
                   curwin->w_cursor.lnum,
@@ -20499,7 +20628,6 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
                   true,
                   NULL);
 
-  arguments->lv_refcount--;
   // Restore caller scope information
   restore_funccal(provider_caller_scope.funccalp);
   provider_caller_scope = saved_provider_caller_scope;

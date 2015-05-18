@@ -351,7 +351,7 @@ void msgpack_rpc_serialize_response(uint64_t response_id,
   }
 }
 
-static bool msgpack_rpc_is_notification(msgpack_object *req)
+bool msgpack_rpc_is_notification(msgpack_object *req)
 {
   return req->via.array.ptr[0].via.u64 == 2;
 }

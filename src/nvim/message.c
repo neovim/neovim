@@ -32,6 +32,7 @@
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
 #include "nvim/misc2.h"
+#include "nvim/msgpack_rpc/channel.h"
 #include "nvim/keymap.h"
 #include "nvim/garray.h"
 #include "nvim/ops.h"
@@ -44,6 +45,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
+#include "nvim/api/private/helpers.h"
 
 /*
  * To be able to scroll back at the "more" and "hit-enter" prompts we need to
@@ -488,6 +490,17 @@ int emsg(char_u *s)
   if (emsg_not_now())
     return TRUE;
 
+  {
+    // Inform subscribed clients about the emsg.
+    Array args = ARRAY_DICT_INIT;
+    Object message = {
+      .type = kObjectTypeString,
+      .data.string = cstr_to_string((char *)s)
+    };
+    ADD(args, message);
+    channel_send_event(0, "emsg", args);
+  }
+
   called_emsg = TRUE;
   ex_exitval = 1;
 
@@ -806,6 +819,8 @@ void wait_return(int redraw)
       cmdline_row = msg_row;
     return;
   }
+
+  channel_send_event(0, "PressEnter", (Array)ARRAY_DICT_INIT);
 
   redir_off = TRUE;             /* don't redirect this message */
   oldState = State;
@@ -2325,6 +2340,8 @@ static void msg_screen_putchar(int c, int attr)
 
 void msg_moremsg(int full)
 {
+  channel_send_event(0, "More", (Array)ARRAY_DICT_INIT);
+
   int attr;
   char_u      *s = (char_u *)_("-- More --");
 

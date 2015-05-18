@@ -4,8 +4,46 @@
 local helpers = require('test.functional.helpers')
 local clear, nvim, eval = helpers.clear, helpers.nvim, helpers.eval
 local eq, neq, run, stop = helpers.eq, helpers.neq, helpers.run, helpers.stop
+local next_message = helpers.next_message
 local nvim_prog = helpers.nvim_prog
 
+describe('vimL API', function()
+  before_each(function() clear() end)
+
+  describe('rpcchannels()', function()
+    it('gives a list of all connected channels', function()
+      eq({1}, eval('rpcchannels()'))
+      eval('rpcstart("sleep", ["1"])')
+      eq({1, 2}, eval('rpcchannels()'))
+    end)
+  end)
+
+  describe('rpcsubscriptions()', function()
+    it('with no arguments, returns a dictionary for all channels', function()
+      eval('rpcsubscribe(1, "test")')
+      local c = eval('rpcstart("sleep", ["1"])')
+      eval('rpcsubscribe('..c..', "test")')
+      local dict = eval('rpcsubscriptions()')
+      eq({'test'}, dict['1'])
+      eq({'test'}, dict[tostring(c)])
+    end)
+
+    it('with a list of channels, returns a dictionary', function()
+      eval('rpcsubscribe(1, "test")')
+      local c = eval('rpcstart("sleep", ["1"])')
+      eval('rpcsubscribe('..c..', "test")')
+      local dict = eval('rpcsubscriptions([1, '..c..'])')
+      eq({'test'}, dict['1'])
+      eq({'test'}, dict[tostring(c)])
+    end)
+
+    it('tells what events a channel has subscribed to', function()
+      eval('rpcsubscribe(1, "test")')
+      eq({'test'}, eval('rpcsubscriptions(1)'))
+    end)
+
+  end)
+end)
 
 describe('server -> client', function()
   local cid
@@ -114,6 +152,21 @@ describe('server -> client', function()
       run(on_request, on_notification, on_setup)
       eq(expected, notified)
     end)
+  end)
+
+  it('can subscribe clients to events', function()
+    eval('rpcsubscribe('..cid..', "subscribe-test1")')
+    eval('rpcsubscribe('..cid..', "subscribe-test2")')
+    eval('rpcnotify(0, "subscribe-test1")')
+    eval('rpcnotify(0, "subscribe-test2")')
+    eq({'notification', 'subscribe-test1', {}}, next_message())
+    eq({'notification', 'subscribe-test2', {}}, next_message())
+
+    -- Check that rpcunsubscribe() works too.
+    eval('rpcunsubscribe('..cid..', "subscribe-test1")')
+    eval('rpcnotify(0, "subscribe-test1")')
+    eval('rpcnotify(0, "subscribe-test2")')
+    eq({'notification', 'subscribe-test2', {}}, next_message())
   end)
 
   describe('when the client is a recursive vim instance', function()

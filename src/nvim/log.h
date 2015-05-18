@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <msgpack.h>
 
 #define DEBUG_LOG_LEVEL 0
 #define INFO_LOG_LEVEL 1
@@ -26,7 +27,7 @@
 // MIN_LOG_LEVEL can be defined during compilation to adjust the desired level
 // of logging. INFO_LOG_LEVEL is used by default.
 #ifndef MIN_LOG_LEVEL
-#  define MIN_LOG_LEVEL INFO_LOG_LEVEL
+#  define MIN_LOG_LEVEL DEBUG_LOG_LEVEL
 #endif
 
 #ifndef DISABLE_LOG
