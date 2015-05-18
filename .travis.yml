@@ -1,10 +1,12 @@
 sudo: required
-language: c
+language: python
 os:
   - linux
 branches:
   except:
     - nightly
+python:
+  - "2.7"
 env:
   global:
     - CI_SCRIPTS=$TRAVIS_BUILD_DIR/.ci
@@ -29,25 +31,30 @@ matrix:
   include:
     - os: osx
       env: CI_TARGET=clang
-      compiler: clang
     - os: osx
       env: CI_TARGET=gcc
-      compiler: gcc-4.9
+    # Python 3
+    - os: osx
+      env: CI_TARGET=clang
+      python: "3.4"
+    - os: linux
+      env: CI_TARGET=clang
+      python: "3.4"
   fast_finish: true
 before_install:
   # Pins the version of the java package installed on the Travis VMs
   # and avoids a lengthy upgrade process for them.
   - if [ $TRAVIS_OS_NAME = linux ]; then
       sudo apt-mark hold oracle-java7-installer oracle-java8-installer;
-      sudo apt-get update;
+      travis_retry sudo apt-get update;
     elif [ $TRAVIS_OS_NAME = osx ]; then
-      brew update;
+      travis_retry brew update;
     fi
 install:
   - if [ $TRAVIS_OS_NAME = linux ]; then
-      sudo apt-get install xclip gdb;
+      travis_retry sudo apt-get install xclip gdb;
     elif [ $TRAVIS_OS_NAME = osx ]; then
-      brew install gettext;
+      travis_retry brew install gettext;
     fi
 before_script:
   # Adds user to a dummy group.
@@ -63,6 +70,8 @@ before_script:
       sudo dscl . -append /Groups/chown_test GroupMembership $USER;
     fi
 script:
+  - python --version
+  - python3 --version
   # This will pass the environment variables down to a bash process which runs
   # as $USER, while retaining the environment variables defined and belonging
   # to secondary groups given above in usermod.

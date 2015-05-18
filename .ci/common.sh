@@ -54,13 +54,6 @@ setup_deps() {
 	sudo pip install --upgrade pip
 	sudo pip install neovim
 
-	# For pip3
-	# https://github.com/travis-ci/travis-ci/issues/1528
-	# sudo apt-get install -q python3.3-dev
-	# curl -Ss http://python-distribute.org/distribute_setup.py | sudo python3
-	# curl -Ss https://raw.github.com/pypa/pip/master/contrib/get-pip.py | sudo python3
-	# sudo pip3.3 install neovim
-
 	if [ "$BUILD_NVIM_DEPS" != "true" ]; then
 		eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) deps-${1}"
 	elif [ "$TRAVIS_OS_NAME" = "linux" ]; then
