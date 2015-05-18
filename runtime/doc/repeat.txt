@@ -1,4 +1,4 @@
-*repeat.txt*    For Vim version 7.4.  Last change: 2014 Mar 25
+*repeat.txt*    For Vim version 7.4.  Last change: 2014 Oct 29
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -63,6 +63,9 @@ This is useful if you want to include a '/' in the search pattern or
 replacement string.
 
 For the definition of a pattern, see |pattern|.
+
+NOTE [cmd] may contain a range; see |collapse| and |edit-paragraph-join| for
+examples.
 
 The global commands work by first scanning through the [range] lines and
 marking each line where a match occurs (for a multi-line pattern, only the

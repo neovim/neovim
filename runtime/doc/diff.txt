@@ -258,13 +258,17 @@ that the buffers will be equal within the specified range.
 		See below for [range].
 
 							*do*
-do		Same as ":diffget" without argument or range.  The "o" stands
-		for "obtain" ("dg" can't be used, it could be the start of
-		"dgg"!). Note: this doesn't work in Visual mode.
+[count]do	Same as ":diffget" without range.  The "o" stands for "obtain"
+		("dg" can't be used, it could be the start of "dgg"!). Note:
+		this doesn't work in Visual mode.
+		If you give a [count], it is used as the [bufspec] argument
+		for ":diffget".
 
 							*dp*
-dp		Same as ":diffput" without argument or range.
-		Note: this doesn't work in Visual mode.
+[count]dp	Same as ":diffput" without range.  Note: this doesn't work in
+		Visual mode.
+		If you give a [count], it is used as the [bufspec] argument
+		for ":diffput".
 
 
 When no [range] is given, the diff at the cursor position or just above it is

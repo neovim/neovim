@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2014 Oct 09
+" Last Change:	2014 Nov 05
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -778,6 +778,9 @@ au BufNewFile,BufRead *.git/config,.gitconfig,.gitmodules setf gitconfig
 au BufNewFile,BufRead *.git/modules/*/COMMIT_EDITMSG setf gitcommit
 au BufNewFile,BufRead *.git/modules/*/config	setf gitconfig
 au BufNewFile,BufRead */.config/git/config	setf gitconfig
+if !empty($XDG_CONFIG_HOME)
+  au BufNewFile,BufRead $XDG_CONFIG_HOME/git/config	setf gitconfig
+endif
 au BufNewFile,BufRead git-rebase-todo		setf gitrebase
 au BufNewFile,BufRead .msg.[0-9]*
       \ if getline(1) =~ '^From.*# This line is ignored.$' |

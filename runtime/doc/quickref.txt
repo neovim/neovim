@@ -1,4 +1,4 @@
-*quickref.txt*  For Vim version 7.4.  Last change: 2014 Aug 06
+*quickref.txt*  For Vim version 7.4.  Last change: 2014 Oct 22
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -1286,11 +1286,16 @@ Context-sensitive completion on the command-line:
 |CTRL-W_R|	CTRL-W R		rotate windows upwards
 |CTRL-W_x|	CTRL-W x		exchange current window with next one
 
-|CTRL-W_=|	CTRL-W =		make all windows equal height
+|CTRL-W_=|	CTRL-W =		make all windows equal height & width
 |CTRL-W_-|	CTRL-W -		decrease current window height
 |CTRL-W_+|	CTRL-W +		increase current window height
 |CTRL-W__|	CTRL-W _		set current window height (default:
 					   very high)
+
+|CTRL-W_<|	CTRL-W <		decrease current window width
+|CTRL-W_>|	CTRL-W >		increase current window width
+|CTRL-W_bar|	CTRL-W |		set current window width (default:
+					   widest possible)
 ------------------------------------------------------------------------------
 *Q_bu*		Buffer list commands
 
