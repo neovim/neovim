@@ -1,4 +1,4 @@
-*todo.txt*      For Vim version 7.4.  Last change: 2014 Nov 05
+*todo.txt*      For Vim version 7.4.  Last change: 2014 Nov 13
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -33,6 +33,8 @@ not be repeated below, unless there is extra information.
 
 							*known-bugs*
 -------------------- Known bugs and current work -----------------------
+
+Add langnoremap in quickref.txt and  optwin.vim.
 
 Regexp problems:
 - The NFA engine does not implement the time limit passed to
@@ -73,6 +75,7 @@ Patch by Marcin Szamotulski to add count to :close (2014 Aug 10, update Aug
     Make ":+1close" close the next window.
     Make ":-1close" close the previous window.
 Doesn't look right, asked for updates.
+Update 2014 Nov 8. Replied with suggestions.
 
 C macro with number highlighted wrong. (Dominique Pelle, 2014 Oct 23)
 
@@ -81,29 +84,11 @@ set with setmatches(). (lcd47, 2014 Jun 29)
 
 Gvim: when both Tab and CTRL-I are mapped, use CTRL-I not for Tab.
 
-Patch to add 'langnoremap'. (Christian Brabandt, 2014 Oct 15)
-Update Oct 20.
-
-Patch to add append mode to writefile(). (Yasuhiro Matsumoto, 2014 Nov 1)
-
-Remove restriction in NSIS installer that the end of the path must be "Vim".
-(Tim Lebedkov, 2014 Sep 24) Again Oct 12.  Now on issue 272.
-
-Fix that on MS-Windows MAX_PATH in bytes causes problems for file names
-between MAX_PATH and double that for double-byte encodings. (Ken Takata, 2014
-Oct 15)
-
-Another problem with MAX_PATH, off-by-one. (Ken Takata, 2014 Oct 21)
-
 Problem using ":try" inside ":execute". (ZyX, 2013 Sep 15)
 
 Python: ":py raw_input('prompt')" doesn't work. (Manu Hack)
 
-'foldexpr' applies to help. (Paul Marshall, 2014 Sep 24)
-
 Patch to fix issue 203. (Christian Brabandt, 2014 Oct 8)
-
-Patch to fix issue 253. (Christian Brabandt, 2014 Oct 8)
 
 Patch to fix issue 78. (Christian Brabandt, 2014 Oct 8)
 
@@ -113,8 +98,19 @@ Patch to fix incsearch for "2/pattern/e".
 
 Change behavior of v:hlsearch?  Patch from Christian, 2014 Oct 22.
 
+MS-Windows: When editing a file with a leading space, writing it uses the
+wrong name. (Aram, 2014 Nov 7)  Vim 7.4.
+
+patch to remove FEAT_OSFILETYPE from fileio.c. (Christian, 2014 Nov 12)
+
 Value returned by virtcol() changes depending on how lines wrap.  This is
 inconsistent with the documentation.
+
+Fix for wrong formatting if 'linebreak' is set. (Christian Brabandt, 2014 Nov
+12)
+
+Patch to support hex values for setting option value.
+(Zyx, 2015 Nov 6)
 
 On MS-Windows running tests with Mercurial has problems when the input files
 are changed. (Ken Takata, Taro Muraoka, 2014 Sep 25)
@@ -122,6 +118,9 @@ Update Nov 5.
 
 MS-Windows: Crash opening very long file name starting with "\\".
 (Christian Brock, 2012 Jun 29)
+
+Problem using diff syntax with cp932 encoding.  Idea from Yasuhiro Matsumoto,
+patch from Ken Takata (2014 Nov 6)
 
 ml_updatechunk() is slow when retrying for another encoding. (John Little,
 2014 Sep 11)
@@ -161,8 +160,10 @@ Patch from Jacob, Nov 2.
 "hi link" does not respect groups with GUI settings only. (Mark Lodato, 2014
 Jun 8)
 
-Patch to switch to the BT regexp engine when the NFA engine uses many states.
-(Christian Brabandt, 2014 Oct 3)
+Bug: Autocompleting ":tag/pat" replaces "/pat" with a match but does not
+insert a space. (Micha Mos, 2014 Nov 7)
+
+Patch to add the :bvimgrep command.  (Christian Brabandt, 2014 Nov 12)
 
 Patch to add argument to :cquit. (Thinca, 2014 Oct 12)
 
