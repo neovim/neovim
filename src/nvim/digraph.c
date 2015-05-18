@@ -1700,6 +1700,9 @@ static void printdigraph(digr_T *dp)
     *p++ = dp->char1;
     *p++ = dp->char2;
     *p++ = ' ';
+    *p = NUL;
+    msg_outtrans(buf);
+    p = buf;
 
     // add a space to draw a composing char on
     if (utf_iscomposing(dp->result)) {
@@ -1707,6 +1710,9 @@ static void printdigraph(digr_T *dp)
     }
     p += (*mb_char2bytes)(dp->result, p);
 
+    *p = NUL;
+    msg_outtrans_attr(buf, hl_attr(HLF_8));
+    p = buf;
     if (char2cells(dp->result) == 1) {
       *p++ = ' ';
     }
