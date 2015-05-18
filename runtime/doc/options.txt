@@ -1,4 +1,4 @@
-*options.txt*	For Vim version 7.4.  Last change: 2014 Sep 23
+*options.txt*	For Vim version 7.4.  Last change: 2014 Nov 05
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -6833,6 +6833,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	current buffer: >
 		setlocal ul=-1
 <	This helps when you run out of memory for a single change.
+
+	The local value is set to -123456 when the global value is to be used.
+
 	Also see |clear-undo|.
 
 						*'undoreload'* *'ur'*

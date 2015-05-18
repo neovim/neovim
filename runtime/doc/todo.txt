@@ -1,4 +1,4 @@
-*todo.txt*      For Vim version 7.4.  Last change: 2014 Oct 15
+*todo.txt*      For Vim version 7.4.  Last change: 2014 Nov 05
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -44,6 +44,7 @@ Regexp problems:
   2013 Dec 11)
 - Using \@> and \?. (Brett Stahlman, 2013 Dec 21) Remark from Marcin Szamotulski
   Remark from Brett 2014 Jan 6 and 7.
+- Difference in NFA and old engine. (Brett Stahlman, 2014 Nov 5)
 - Bug when using \>. (Ramel, 2014 Feb 2) (Aaron Bohannon, 2014 Feb 13)
 - NFA regexp doesn't handle \%<v correctly. (Ingo Karkat, 2014 May 12)
 - Does not work with NFA regexp engine:
@@ -63,10 +64,6 @@ Breaks test_eval.  Inefficient, can we only compute y_width when needed?
 Problem that a previous silent ":throw" causes a following try/catch not to
 work. (ZyX, 2013 Sep 28)
 
-Patch to avoid problems with encoding conversion with diff.vim.
-(Yasuhiro Matsumoto, 2014 Sep 1.
-Depends on current language, language of file can be different.
-
 ":cd C:\Windows\System32\drivers\etc*" does not work, even though the
 directory exists. (Sergio Gallelli, 2013 Dec 29)
 
@@ -77,31 +74,26 @@ Patch by Marcin Szamotulski to add count to :close (2014 Aug 10, update Aug
     Make ":-1close" close the previous window.
 Doesn't look right, asked for updates.
 
+C macro with number highlighted wrong. (Dominique Pelle, 2014 Oct 23)
+
 The entries added by matchaddpos() are returned by getmatches() but can't be
 set with setmatches(). (lcd47, 2014 Jun 29)
 
-Patch to fix that 0x80 in abbreviation isn't handled correctly.
-(Christian Brabandt, 2014 Oct 1)
-
-Check for valid yank reg seems wrong.  Patch by Zyx, 2014 Oct 12.
-
-":sign-jump" uses first window in buffer instead of current window.
-Patch by James McCoy, 2013 Nov 22.  Update 2014 Oct 5.
-
-Patch to fix issue 57, on the issue.
-
-Patch for issue 101, maintainer unreachable.
-
 Gvim: when both Tab and CTRL-I are mapped, use CTRL-I not for Tab.
 
-Patch to fix that last_changedtick is not update on saving. (Christian
-Brabandt, 2014 Oct 10, second one)
+Patch to add 'langnoremap'. (Christian Brabandt, 2014 Oct 15)
+Update Oct 20.
 
-substitute() can be slow with long strings.  Patch by Ozaki Kiichi, 2014 Oct
-12.
+Patch to add append mode to writefile(). (Yasuhiro Matsumoto, 2014 Nov 1)
 
 Remove restriction in NSIS installer that the end of the path must be "Vim".
-(Tim Lebedkov, 2014 Sep 24) Again Oct 12.
+(Tim Lebedkov, 2014 Sep 24) Again Oct 12.  Now on issue 272.
+
+Fix that on MS-Windows MAX_PATH in bytes causes problems for file names
+between MAX_PATH and double that for double-byte encodings. (Ken Takata, 2014
+Oct 15)
+
+Another problem with MAX_PATH, off-by-one. (Ken Takata, 2014 Oct 21)
 
 Problem using ":try" inside ":execute". (ZyX, 2013 Sep 15)
 
@@ -117,17 +109,25 @@ Patch to fix issue 78. (Christian Brabandt, 2014 Oct 8)
 
 Patch to fix leak in map() with error. (Christian Brabandt, 2014 Oct 11)
 
+Patch to fix incsearch for "2/pattern/e".
+
+Change behavior of v:hlsearch?  Patch from Christian, 2014 Oct 22.
+
 Value returned by virtcol() changes depending on how lines wrap.  This is
 inconsistent with the documentation.
 
 On MS-Windows running tests with Mercurial has problems when the input files
 are changed. (Ken Takata, Taro Muraoka, 2014 Sep 25)
+Update Nov 5.
 
 MS-Windows: Crash opening very long file name starting with "\\".
 (Christian Brock, 2012 Jun 29)
 
 ml_updatechunk() is slow when retrying for another encoding. (John Little,
 2014 Sep 11)
+
+When 'balloonexpr' returns a list the result has a trailing newline.
+Just remove one trailing newline. (lcd, 2014 Oct 17)
 
 Make comments in the test Makefile silent. (Kartik Agaram, 2014 Sep 24)
 
@@ -136,7 +136,15 @@ any one-character from the previous line. (Kartik Agaram, 2014 Sep 19)
 
 Syntax highlighting slow (hangs) in SASS file. (Niek Bosch, 2013 Aug 21)
 
+Patch to add the EndOfBuffer highlight group, used instead of NonText for "~"
+lines. (Marco Hinz, 2014 Nov 2)
+
 Adding "~" to 'cdpath' doesn't work for completion?  (Davido, 2013 Aug 19)
+
+Can assign to s:type when a function s:type has been defined.
+Also the other way around: define a function while a variable with that name
+was already defined.
+(Yasuhiro Matsumoto, 2014 Nov 3)
 
 Patch to make closed folds line up. (Charles Campbell, 2014 Sep 12)
 
@@ -144,6 +152,11 @@ Patch for building a 32bit Vim with 64bit MingW compiler.
 (Michael Soyka, 2014 Oct 15)
 
 Delete old code in os_msdos.c, mch_FullName().
+
+Using "." to repeat an Ex command puts that command in history.  Probably
+should not happen.  If the command is the result of a mapping it's not put in
+history either. (Jacob Niehus, 2014 Nov 2)
+Patch from Jacob, Nov 2.
 
 "hi link" does not respect groups with GUI settings only. (Mark Lodato, 2014
 Jun 8)
@@ -182,6 +195,8 @@ its height?  It's like dragging the status bar above it at the same time.
 
 Can we make ":unlet $VAR" use unsetenv() to delete the env var?
 What for systems that don't have unsetenv()?
+
+Patch to add a :domodeline command. (Christian Brabandt, 2014 Oct 21)
 
 This does not give an error: (Andre Sihera, 2014 Mar 21)
     vim -u NONE 1 2 3 -c 'bufdo if 1 | echo 1'
@@ -616,6 +631,9 @@ Syntax region with 'concealends' and a 'cchar' value, 'conceallevel' set to 2,
 only one of the two ends gets the cchar displayed. (Brett Stahlman, 2010 Aug
 21, Ben Fritz, 2010 Sep 14)
 
+The :syntax cchar value can only be a single character.  It would be useful to
+support combining characters. (Charles Campbell)
+
 'cursorline' works on a text line only.  Add 'cursorscreenline' for
 highlighting the screen line. (Christian Brabandt, 2012 Mar 31)
 
@@ -739,6 +757,10 @@ Patch by Christian Brabandt, uses ]e [e ]t and [t. 2011 Aug 9.
 Need for CursorHold that retriggers.  Use a key that doesn't do anything, or a
 function that resets did_cursorhold.
 Patch by Christian Brabandt, 2011 May 6.
+
+Add event for when the text scrolls.  A bit like CursorMoved.  Also a similar
+one for insert mode.  Use the event in matchparen to update the highlight if
+the match scrolls into view.
 
 7   Use "++--", "+++--" for different levels instead of "+---" "+----".
 Patch by Christian Brabandt, 2011 Jul 27.
