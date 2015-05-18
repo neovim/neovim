@@ -9965,13 +9965,6 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "mksession",
     "modify_fname",
     "mouse",
-#if defined(UNIX)
-    "mouse_dec",
-    "mouse_netterm",
-    "mouse_sgr",
-    "mouse_urxvt",
-    "mouse_xterm",
-#endif
     "multi_byte",
     "multi_lang",
     "path_extra",

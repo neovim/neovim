@@ -256,10 +256,6 @@ static struct key_name_entry {
   {'<',               (char_u *)"lt"},
 
   {K_MOUSE,           (char_u *)"Mouse"},
-  {K_NETTERM_MOUSE,   (char_u *)"NetMouse"},
-  {K_DEC_MOUSE,       (char_u *)"DecMouse"},
-  {K_URXVT_MOUSE,     (char_u *)"UrxvtMouse"},
-  {K_SGR_MOUSE,       (char_u *)"SgrMouse"},
   {K_LEFTMOUSE,       (char_u *)"LeftMouse"},
   {K_LEFTMOUSE_NM,    (char_u *)"LeftMouseNM"},
   {K_LEFTDRAG,        (char_u *)"LeftDrag"},

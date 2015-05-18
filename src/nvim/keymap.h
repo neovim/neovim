@@ -16,7 +16,7 @@
 
 /*
  * For MSDOS some keys produce codes larger than 0xff. They are split into two
- * chars, the first one is K_NUL (same value used in term_defs.h).
+ * chars, the first one is K_NUL.
  */
 #define K_NUL                   (0xce)  /* for MSDOS: special key follows */
 
@@ -78,12 +78,6 @@
 #define KS_HOR_SCROLLBAR        248
 
 /*
- * These are used for DEC mouse
- */
-#define KS_NETTERM_MOUSE        247
-#define KS_DEC_MOUSE            246
-
-/*
  * Used for switching Select mode back on after a mapping or menu.
  */
 #define KS_SELECT               245
@@ -102,12 +96,6 @@
 
 /* Used for menu in a tab pages line. */
 #define KS_TABMENU              239
-
-/* Used for the urxvt mouse. */
-#define KS_URXVT_MOUSE          238
-
-/* Used for the sgr mouse. */
-#define KS_SGR_MOUSE            237
 
 /*
  * Filler used after KS_SPECIAL and others
@@ -406,11 +394,6 @@ enum key_extra {
 #define K_MENU          TERMCAP2KEY(KS_MENU, KE_FILLER)
 #define K_VER_SCROLLBAR TERMCAP2KEY(KS_VER_SCROLLBAR, KE_FILLER)
 #define K_HOR_SCROLLBAR   TERMCAP2KEY(KS_HOR_SCROLLBAR, KE_FILLER)
-
-#define K_NETTERM_MOUSE TERMCAP2KEY(KS_NETTERM_MOUSE, KE_FILLER)
-#define K_DEC_MOUSE     TERMCAP2KEY(KS_DEC_MOUSE, KE_FILLER)
-#define K_URXVT_MOUSE   TERMCAP2KEY(KS_URXVT_MOUSE, KE_FILLER)
-#define K_SGR_MOUSE     TERMCAP2KEY(KS_SGR_MOUSE, KE_FILLER)
 
 #define K_SELECT        TERMCAP2KEY(KS_SELECT, KE_FILLER)
 #define K_TEAROFF       TERMCAP2KEY(KS_TEAROFF, KE_FILLER)

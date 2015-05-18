@@ -902,8 +902,6 @@ Short explanation of each option:		*option-list*
 'toolbariconsize' 'tbis'    size of the toolbar icons (for GTK 2 only)
 'ttimeout'		    time out on mappings
 'ttimeoutlen'	  'ttm'     time out time for key codes in milliseconds
-'ttymouse'	  'ttym'    type of mouse codes generated
-'ttyscroll'	  'tsl'     maximum number of lines for a scroll
 'ttytype'	  'tty'     alias for 'term'
 'undodir'	  'udir'    where to store undo files
 'undofile'	  'udf'	    save undo information in a file
@@ -919,7 +917,6 @@ Short explanation of each option:		*option-list*
 'virtualedit'	  've'	    when to use virtual editing
 'visualbell'	  'vb'	    use visual bell instead of beeping
 'warn'			    warn for shell command when buffer was changed
-'weirdinvert'	  'wiv'	    for terminals that have weird inversion method
 'whichwrap'	  'ww'	    allow specified keys to cross line boundaries
 'wildchar'	  'wc'	    command-line character for wildcard expansion
 'wildcharm'	  'wcm'     like 'wildchar' but also works when mapped
@@ -1137,7 +1134,6 @@ Context-sensitive completion on the command-line:
 |-s|	-s {scriptin}	    first read commands from the file {scriptin}
 |-w|	-w {scriptout}	    write typed chars to file {scriptout} (append)
 |-W|	-W {scriptout}	    write typed chars to file {scriptout} (overwrite)
-|-T|	-T {terminal}	    set terminal name
 |-u|	-u {vimrc}	    read inits from {vimrc} instead of other inits
 |-U|	-U {gvimrc}	    idem, for when starting the GUI
 |-i|	-i {viminfo}	    read info from {viminfo} instead of other files

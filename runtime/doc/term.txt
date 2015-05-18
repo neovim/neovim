@@ -27,9 +27,6 @@ NOTE: Most of this is not used when running the |GUI|.
 When Vim is started a default terminal type is assumed.  for MS-DOS this is
 the pc terminal, for Unix an ansi terminal.
 
-You can give the terminal name with the '-T' Vim argument.  If it is not given
-Vim will try to get the name from the TERM environment variable.
-
 				*termcap* *terminfo* *E557* *E558* *E559*
 On Unix the terminfo database or termcap file is used.  This is referred to as
 "termcap" in all the documentation.  At compile time, when running configure,
@@ -243,7 +240,7 @@ Added by Vim (there are no standard codes for these):
 	t_EI	end insert mode (block cursor shape)		*t_EI* *'t_EI'*
 		|termcap-cursor-shape|
 	t_RV	request terminal version string (for xterm)	*t_RV* *'t_RV'*
-		|xterm-8bit| |v:termresponse| |'ttymouse'| |xterm-codes|
+		|xterm-8bit| |v:termresponse| |xterm-codes|
 	t_u7	request cursor position (for xterm)		*t_u7* *'t_u7'*
 		see |'ambiwidth'|
 
@@ -504,10 +501,6 @@ If the characters from the terminal are arriving with more than 1 second
 between them you might want to set the 'timeout' and/or 'ttimeout' option.
 See the "Options" chapter |options|.
 
-If your terminal scrolls very slowly, but redrawing is not slow, set the
-'ttyscroll' option to a small number, e.g., 3.  This will make Vim redraw the
-screen instead of scrolling, when there are more than 3 lines to be scrolled.
-
 If you are using a color terminal that is slow, use this command: >
 	hi NonText cterm=NONE ctermfg=NONE
 This avoids that spaces are sent when they have different attributes.  On most
@@ -532,11 +525,6 @@ with a mouse wheel see |scroll-mouse-wheel|.
 Don't forget to enable the mouse with this command: >
 	:set mouse=a
 Otherwise Vim won't recognize the mouse in all modes (See 'mouse').
-
-Currently the mouse is supported for Unix in an xterm window, in a *BSD
-console with |sysmouse|, in a Linux console (with GPM |gpm-mouse|), for
-MS-DOS and in a Windows console.
-Mouse clicks can be used to position the cursor, select an area and paste.
 
 These characters in the 'mouse' option tell in which situations the mouse will
 be used by Vim:
@@ -600,7 +588,7 @@ When the X-server clipboard is available, the command server described in
 							*xterm-copy-paste*
 NOTE: In some (older) xterms, it's not possible to move the cursor past column
 95 or 223.  This is an xterm problem, not Vim's.  Get a newer xterm
-|color-xterm|.  Also see |'ttymouse'|.
+|color-xterm|.
 
 Copy/paste in xterm with (current mode NOT included in 'mouse'):
 1. Press left mouse button on first letter of text, move mouse pointer to last
@@ -731,20 +719,10 @@ and then drag) will result in whole words to be selected.  This continues
 until the button is released, at which point the selection is per character
 again.
 
-							*gpm-mouse*
-The GPM mouse is only supported when the |+mouse_gpm| feature was enabled at
-compile time.  The GPM mouse driver (Linux console) does not support quadruple
-clicks.
-
 In Insert mode, when a selection is started, Vim goes into Normal mode
 temporarily.  When Visual or Select mode ends, it returns to Insert mode.
 This is like using CTRL-O in Insert mode.  Select mode is used when the
 'selectmode' option contains "mouse".
-							*sysmouse*
-The sysmouse is only supported when the |+mouse_sysmouse| feature was enabled
-at compile time.  The sysmouse driver (*BSD console) does not support keyboard
-modifiers.
-
 							*drag-status-line*
 When working with several windows, the size of the windows can be changed by
 dragging the status line with the mouse.  Point the mouse at a status line,

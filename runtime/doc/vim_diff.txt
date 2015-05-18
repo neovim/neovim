@@ -115,11 +115,14 @@ MS-DOS support:
 
 Other options:
   'macatsui'
-  'shortname'
   'shelltype'
+  'shortname'
   'termencoding'
   'textauto'
   'textmode'
+  'ttybuiltin'
+  'ttymouse'
+  'weirdinvert'
 
 Other commands:
   :fixdel

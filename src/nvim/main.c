@@ -100,7 +100,6 @@ typedef struct {
   bool headless;                        // Dont try to start an user interface
                                         // or read/write to stdio(unless
                                         // embedding)
-  char_u      *term;                    /* specified terminal name */
   int no_swap_file;                     /* "-n" argument used */
   int use_debug_break_level;
   int window_count;                     /* number of windows to use */
@@ -1123,7 +1122,6 @@ static void command_line_scan(mparm_T *parmp)
           /*FALLTHROUGH*/
         case 'S':                 /* "-S {file}" execute Vim script */
         case 'i':                 /* "-i {viminfo}" use for viminfo */
-        case 'T':                 /* "-T {terminal}" terminal name */
         case 'u':                 /* "-u {vimrc}" vim inits file */
         case 'U':                 /* "-U {gvimrc}" gvim inits file */
         case 'W':                 /* "-W {scriptout}" overwrite */
@@ -1219,15 +1217,6 @@ scripterror:
 
           case 't':               /* "-t {tag}" */
             parmp->tagname = (char_u *)argv[0];
-            break;
-
-          case 'T':               /* "-T {terminal}" terminal name */
-            /*
-             * The -T term argument is always available and when
-             * HAVE_TERMLIB is supported it overrides the environment
-             * variable TERM.
-             */
-            parmp->term = (char_u *)argv[0];
             break;
 
           case 'u':               /* "-u {vimrc}" vim inits file */
@@ -2001,7 +1990,6 @@ static void usage(void)
   mch_msg(_("  -n                    No swap file, use memory only\n"));
   mch_msg(_("  -r, -L                List swap files and exit\n"));
   mch_msg(_("  -r <file>             Recover crashed session\n"));
-  mch_msg(_("  -T <terminal>         Set terminal type to <terminal>\n"));
   mch_msg(_("  -u <nvimrc>           Use <nvimrc> instead of the default\n"));
   mch_msg(_("  -i <nviminfo>         Use <nviminfo> instead of the default\n"));
   mch_msg(_("  --noplugin            Don't load plugin scripts\n"));

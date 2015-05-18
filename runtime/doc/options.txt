@@ -4552,10 +4552,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'mouse'* *E538*
 'mouse'			string	(default "", "a" for GUI, MS-DOS and Win32)
 			global
-	Enable the use of the mouse.  Only works for certain terminals
-	(xterm, Win32 |win32-mouse|, *BSD console with sysmouse and Linux
-	console with gpm).  For using the mouse in the GUI, see |gui-mouse|.
-	The mouse can be enabled for different modes:
+
+	Enable the use of the mouse.  Only works for certain terminals.
+	For using the mouse in the GUI, see |gui-mouse|.  The mouse can be
+	enabled for different modes:
 		n	Normal mode
 		v	Visual mode
 		i	Insert mode
@@ -6771,80 +6771,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 	by user preferences or the current theme is used.
 
 			     *'ttybuiltin'* *'tbi'* *'nottybuiltin'* *'notbi'*
-'ttybuiltin' 'tbi'	Removed. {Nvim}
+'ttybuiltin' 'tbi'	Removed. |vim-differences| {Nvim}
 
 				     *'ttyfast'* *'tf'* *'nottyfast'* *'notf'*
 'ttyfast' 'tf'		Removed. |vim-differences| {Nvim}
 
 						*'ttymouse'* *'ttym'*
-'ttymouse' 'ttym'	string	(default depends on 'term')
-			global
-			{only in Unix, doesn't work in the GUI; not
-			available when compiled without |+mouse|}
-	Name of the terminal type for which mouse codes are to be recognized.
-	Currently these strings are valid:
-							*xterm-mouse*
-	   xterm	xterm-like mouse handling.  The mouse generates
-			"<Esc>[Mscr", where "scr" is three bytes:
-				"s"  = button state
-				"c"  = column plus 33
-				"r"  = row plus 33
-			This only works up to 223 columns!  See "dec",
-			"urxvt", and "sgr" for solutions.
-	   xterm2	Works like "xterm", but with the xterm reporting the
-			mouse position while the mouse is dragged.  This works
-			much faster and more precise.  Your xterm must at
-			least at patchlevel 88 / XFree 3.3.3 for this to
-			work.  See below for how Vim detects this
-			automatically.
-							*netterm-mouse*
-	   netterm	NetTerm mouse handling.  The mouse generates
-			"<Esc>}r,c<CR>", where "r,c" are two decimal numbers
-			for the row and column.
-							*dec-mouse*
-	   dec		DEC terminal mouse handling.  The mouse generates a
-			rather complex sequence, starting with "<Esc>[".
-			This is also available for an Xterm, if it was
-			configured with "--enable-dec-locator".
-							*urxvt-mouse*
-	   urxvt	Mouse handling for the urxvt (rxvt-unicode) terminal.
-			The mouse works only if the terminal supports this
-			encoding style, but it does not have 223 columns limit
-			unlike "xterm" or "xterm2".
-							*sgr-mouse*
-	   sgr		Mouse handling for the terminal that emits SGR-styled
-			mouse reporting.  The mouse works even in columns
-			beyond 223.  This option is backward compatible with
-			"xterm2" because it can also decode "xterm2" style
-			mouse codes.
+'ttymouse' 'ttym'	Removed. |vim-differences| {Nvim}
 
-	The mouse handling must be enabled at compile time |+mouse_xterm|
-	|+mouse_dec| |+mouse_netterm| |+mouse_urxvt| |+mouse_sgr|.
-	Only "xterm"(2) is really recognized.  NetTerm mouse codes are always
-	recognized, if enabled at compile time.  DEC terminal mouse codes
-	are recognized if enabled at compile time, and 'ttymouse' is not
-	"xterm", "xterm2", "urxvt" or "sgr" (because dec mouse codes conflict
-	with them).
-	This option is automatically set to "xterm", when the 'term' option is
-	set to a name that starts with "xterm", "mlterm", or "screen", and
-	'ttymouse' is not set already.
-	Additionally, if vim is compiled with the |+termresponse| feature and
-	|t_RV| is set to the escape sequence to request the xterm version
-	number, more intelligent detection process runs.
-	The "xterm2" value will be set if the xterm version is reported to be
-	from 95 to 276.  The "sgr" value will be set if the xterm version is
-	277 or highter.
-	If you do not want 'ttymouse' to be set to "xterm2" or "sgr"
-	automatically, set t_RV to an empty string: >
-		:set t_RV=
-<
 						*'ttyscroll'* *'tsl'*
-'ttyscroll' 'tsl'	number	(default 999)
-			global
-	Maximum number of lines to scroll the screen.  If there are more lines
-	to scroll the window is redrawn.  For terminals where scrolling is
-	very slow and redrawing is not slow this can be set to a small number,
-	e.g., 3, to speed up displaying.
+'ttyscroll' 'tsl'	Removed. |vim-differences| {Nvim}
 
 						*'ttytype'* *'tty'*
 'ttytype' 'tty'		string	(default from $TERM)
@@ -7163,12 +7099,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	has been changed.
 
 		     *'weirdinvert'* *'wiv'* *'noweirdinvert'* *'nowiv'*
-'weirdinvert' 'wiv'	boolean	(default off)
-			global
-	This option has the same effect as the 't_xs' terminal option.
-	It is provided for backwards compatibility with version 4.x.
-	Setting 'weirdinvert' has the effect of making 't_xs' non-empty, and
-	vice versa.  Has no effect when the GUI is running.
+'weirdinvert' 'wiv'	Removed. |vim-differences| {Nvim}
 
 						*'whichwrap'* *'ww'*
 'whichwrap' 'ww'	string	(Vim default: "b,s", Vi default: "")
