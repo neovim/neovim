@@ -8,7 +8,8 @@
 [Twitter](http://twitter.com/Neovim) |
 [Bountysource](https://www.bountysource.com/teams/neovim)
 
-[![Build Status](https://travis-ci.org/neovim/neovim.svg?branch=master)](https://travis-ci.org/neovim/neovim)
+[![Travis Build Status](https://travis-ci.org/neovim/neovim.svg?branch=master)](https://travis-ci.org/neovim/neovim)
+[![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/cf1jwc29198748we/branch/master?svg=true)](https://ci.appveyor.com/project/neovim/neovim/branch/master)
 [![Pull requests waiting for review](https://badge.waffle.io/neovim/neovim.svg?label=RFC&title=RFCs)](https://waffle.io/neovim/neovim)
 [![Coverage Status](https://img.shields.io/coveralls/neovim/neovim.svg)](https://coveralls.io/r/neovim/neovim)
 [![Coverity Scan Build](https://scan.coverity.com/projects/2227/badge.svg)](https://scan.coverity.com/projects/2227)
