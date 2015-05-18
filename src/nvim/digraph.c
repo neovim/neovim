@@ -1701,6 +1701,9 @@ static void printdigraph(digr_T *dp)
     *p++ = dp->char1;
     *p++ = dp->char2;
     *p++ = ' ';
+    *p = NUL;
+    msg_outtrans(buf);
+    p = buf;
 
     if (has_mbyte) {
       // add a space to draw a composing char on
@@ -1712,6 +1715,9 @@ static void printdigraph(digr_T *dp)
       *p++ = (char_u)dp->result;
     }
 
+    *p = NUL;
+    msg_outtrans_attr(buf,  hl_attr(HLF_CONCEAL));
+    p = buf;
     if (char2cells(dp->result) == 1) {
       *p++ = ' ';
     }
