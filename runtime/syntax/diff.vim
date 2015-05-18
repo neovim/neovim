@@ -2,7 +2,7 @@
 " Language:	Diff (context or unified)
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
 "               Translations by Jakson Alves de Aquino.
-" Last Change:	2013 Oct 06
+" Last Change:	2014 Nov 12
 
 " Quit when a (custom) syntax file was already loaded
 if exists("b:current_syntax")
@@ -125,7 +125,7 @@ syn match diffIdentical	"^םיהז םניה .*-ו .* םיצבקה$"
 syn match diffDiffer	"^הזמ הז םינוש `.*'-ו `.*' םיצבקה$"
 syn match diffBDiffer	"^הזמ הז םינוש `.*'-ו `.*' םיירניב םיצבק$"
 syn match diffIsA	"^.* .*-ל .* .* תוושהל ןתינ אל$"
-syn match diffNoEOL	"^\\ ץבוקה ףוסב השדח-הרוש ות רסח"
+syn match diffNoEOL	"^\\ ץבוקה ףוסב השד.-הרוש ות רס."
 syn match diffCommon	"^.*-ו .* :תוהז תויקית-תת$"
 
 " hr
