@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	C
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2014 Sep 23
+" Last Change:	2014 Nov 13
 
 " Quit when a (custom) syntax file was already loaded
 if exists("b:current_syntax")
@@ -61,10 +61,9 @@ else
   syn region	cCppString	start=+L\="+ skip=+\\\\\|\\"\|\\$+ excludenl end=+"+ end='$' contains=cSpecial,cFormat,@Spell
 endif
 
-syn region	cCppOut2	contained start="0" end="^\s*\(%:\|#\)\s*\(endif\>\|else\>\|elif\>\)" contains=cSpaceError,cCppSkip
 syn region	cCppSkip	contained start="^\s*\(%:\|#\)\s*\(if\>\|ifdef\>\|ifndef\>\)" skip="\\$" end="^\s*\(%:\|#\)\s*endif\>" contains=cSpaceError,cCppSkip
 
-syn cluster	cStringGroup	contains=cCppString,cCppOut2,cCppSkip
+syn cluster	cStringGroup	contains=cCppString,cCppSkip
 
 syn match	cCharacter	"L\='[^\\]'"
 syn match	cCharacter	"L'[^']*'" contains=cSpecial
@@ -462,8 +461,7 @@ hi def link cTodo		Todo
 hi def link cBadContinuation	Error
 hi def link cCppOutSkip		cCppOutIf2
 hi def link cCppInElse2		cCppOutIf2
-hi def link cCppOutIf2		cCppOut2  " Old syntax group for #if 0 body
-hi def link cCppOut2		cCppOut  " Old syntax group for #if of #if 0
+hi def link cCppOutIf2		cCppOut
 hi def link cCppOut		Comment
 
 let b:current_syntax = "c"

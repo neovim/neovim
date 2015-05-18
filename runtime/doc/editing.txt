@@ -1016,9 +1016,12 @@ The names can be in upper- or lowercase.
 			the last file in the argument list has not been
 			edited.  See |:confirm| and 'confirm'.
 
-:q[uit]!		Quit without writing, also when visible buffers have
-			changes.  Does not exit when there are changed hidden
-			buffers.  Use ":qall!" to exit always.
+:q[uit]!		Quit without writing, also when currently visible
+			buffers have changes.  Does not exit when this is the
+			last window and there are is a changed hidden buffer.
+			In this case, the first changed hidden buffer becomes
+			the current buffer.
+			Use ":qall!" to exit always.
 
 :cq[uit]		Quit always, without writing, and return an error
 			code.  See |:cq|.
