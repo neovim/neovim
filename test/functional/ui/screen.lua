@@ -67,16 +67,16 @@
 --
 --     NonText = Screen.colors.Blue
 --     screen:expect([[
---       hello screen             \
---       ~                        \
---       ~                        \
---       ~                        \
---       ~                        \
---       ~                        \
---       ~                        \
---       ~                        \
---       ~                        \
---       {b:-- INSERT --}             \
+--       hello screen             |
+--       ~                        |
+--       ~                        |
+--       ~                        |
+--       ~                        |
+--       ~                        |
+--       ~                        |
+--       ~                        |
+--       ~                        |
+--       {b:-- INSERT --}             |
 --     ]], {b = {bold = true}}, {{bold = true, foreground = NonText}})
 --
 -- In this case "b" is a string associated with the set composed of one
@@ -221,7 +221,7 @@ function Screen:expect(expected, attr_ids, attr_ignore)
       local expected_row = expected_rows[i]
       local actual_row = self:_row_repr(self._rows[i], ids, ignore)
       if expected_row ~= actual_row then
-        return 'Row '..tostring(i)..' didnt match.\nExpected: "'..
+        return 'Row '..tostring(i)..' didn\'t match.\nExpected: "'..
                expected_row..'"\nActual:   "'..actual_row..'"'
       end
     end

@@ -24,8 +24,8 @@
 // that were previously invisible.
 //
 // The vterm->Neovim synchronization is performed in intervals of 10
-// milliseconds. This is done to minimize screen updates when receiving when
-// receiving large bursts of data.
+// milliseconds. This is done to minimize screen updates when receiving large
+// bursts of data.
 //
 // This module is decoupled from the processes that normally feed it data, so
 // it's possible to use it as a general purpose console buffer(possibly as a
