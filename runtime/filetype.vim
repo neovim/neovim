@@ -2259,6 +2259,9 @@ au BufNewFile,BufReadPost *.tssop		setf tssop
 " TSS - Command Line (temporary)
 au BufNewFile,BufReadPost *.tsscl		setf tsscl
 
+" Tutor mode
+au BufNewFile,BufReadPost *.tutor		setf tutor
+
 " TWIG files
 au BufNewFile,BufReadPost *.twig		setf twig
 
