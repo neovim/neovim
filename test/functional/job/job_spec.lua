@@ -80,7 +80,7 @@ describe('jobs', function()
     nvim('command', "call jobstop(j)")
   end)
 
-  it('will not buffer data if it doesnt end in newlines', function()
+  it("will not buffer data if it doesn't end in newlines", function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobsend(j, "abc\\nxyz")')
     eq({'notification', 'stdout', {0, {'abc', 'xyz'}}}, next_msg())
@@ -119,7 +119,7 @@ describe('jobs', function()
     eq({'notification', 'exit', {0, 0}}, next_msg())
   end)
 
-  it('wont allow jobsend with a job that closed stdin', function()
+  it("won't allow jobsend with a job that closed stdin", function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobclose(j, "stdin")')
     eq(false, pcall(function()
@@ -356,7 +356,7 @@ describe('jobs', function()
       nvim('command', 'call jobsend(j, "'..str..'")')
     end
 
-    before_each(function() 
+    before_each(function()
       -- the full path to tty-test seems to be required when running on travis.
       insert(nvim_dir .. '/tty-test')
       nvim('command', 'let g:job_opts.pty = 1')
