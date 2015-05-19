@@ -23,12 +23,15 @@ If your issue isn't mentioned there:
   your problem persists.
 - If you're experiencing compile or runtime warnings/failures, try searching for
   the error message(s) you received (if any) on [Neovim's issue tracker][github-issues].
-    - For installation issues, see [Installing Neovim#troubleshooting][wiki-install-troubleshooting].
-    - For build issues, see [Building Neovim#troubleshooting][wiki-building-troubleshooting].
-    - For runtime issues: try to reproduce them by running `nvim` with the
-      smallest possible `nvimrc` (or none at all via `nvim -u NONE`), to rule
-      out bugs in plugins you're using. If you're using a plugin manager,
-      comment out your plugins, then add them back in one by one.
+    - For build issues, see
+      [Troubleshooting#build-issues][wiki-troubleshooting-build-issues].
+    - For runtime issues, see
+      [Troubleshooting#runtime-issues][wiki-troubleshooting-runtime-issues].
+      If your issue isn't mentioned there, try to reproduce your it using
+      `nvim` with the smallest possible `nvimrc` (or none at all via `nvim -u
+      NONE`), to rule out bugs in plugins you're using.
+      If you're using a plugin manager, comment out your plugins, then add
+      them back in one by one.
 
 Include as much detail as possible; we generally need to know:
 
@@ -89,9 +92,10 @@ We are unlikely to merge your PR if the Travis build fails:
 
 - Travis builds are compiled with the [`-Werror`][gcc-warnings] flag, so if
   your PR introduces any compiler warnings then the Travis build will fail.
-- If any tests fail, the Travis build will fail. See [Building
-  Neovim#testing][wiki-building-testing] for information on running tests
-  locally. Tests passing locally doesn't guarantee they'll pass in the Travis
+- If any tests fail, the Travis build will fail.
+  See [Building Neovim#running-tests][wiki-building-running-tests] for
+  information on running tests locally.
+  Tests passing locally doesn't guarantee they'll pass in the Travis
   build, as different compilers and platforms will be used.
 - Travis runs [Valgrind][valgrind] for the GCC/Linux build, but you may also
   do so locally by running the following from a shell: `VALGRIND=1 make test`
@@ -191,10 +195,10 @@ such as [`tig`][tig].
 [valgrind]: http://valgrind.org/
 [vcs]: https://en.wikipedia.org/wiki/Revision_control
 [waffle]: https://waffle.io/neovim/neovim
-[wiki-building-testing]: https://github.com/neovim/neovim/wiki/Building-Neovim#testing
-[wiki-building-troubleshooting]: https://github.com/neovim/neovim/wiki/Building-Neovim#troubleshooting
+[wiki-building-running-tests]: https://github.com/neovim/neovim/wiki/Building-Neovim#running-tests
 [wiki-contributing]: https://github.com/neovim/neovim/wiki/Contributing
 [wiki-faq]: https://github.com/neovim/neovim/wiki/FAQ
-[wiki-install-troubleshooting]: https://github.com/neovim/neovim/wiki/Installing-Neovim#troubleshooting
 [wiki-review-checklist]: https://github.com/neovim/neovim/wiki/Code-review-checklist
+[wiki-troubleshooting-build-issues]: https://github.com/neovim/neovim/wiki/Troubleshooting#build-issues
+[wiki-troubleshooting-runtime-issues]: https://github.com/neovim/neovim/wiki/Troubleshooting#runtime-issues
 [wiki-troubleshooting]: https://github.com/neovim/neovim/wiki/Troubleshooting
