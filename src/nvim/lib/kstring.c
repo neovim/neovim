@@ -3,7 +3,10 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdint.h>
-#include "kstring.h"
+
+#include "nvim/lib/kstring.h"
+#include "nvim/memory.h"
+
 
 int kvsprintf(kstring_t *s, const char *fmt, va_list ap)
 {
@@ -15,7 +18,7 @@ int kvsprintf(kstring_t *s, const char *fmt, va_list ap)
 	if (l + 1 > s->m - s->l) {
 		s->m = s->l + l + 2;
 		kroundup32(s->m);
-		s->s = (char*)realloc(s->s, s->m);
+		s->s = (char*)xrealloc(s->s, s->m);
 		va_copy(args, ap);
 		l = vsnprintf(s->s + s->l, s->m - s->l, fmt, args);
 		va_end(args);
@@ -73,10 +76,10 @@ int ksplit_core(char *s, int delimiter, int *_max, int **_offsets)
 			if (n == max) {					\
 				int *tmp;				\
 				max = max? max<<1 : 2;			\
-				if ((tmp = (int*)realloc(offsets, sizeof(int) * max))) {  \
+				if ((tmp = (int*)xrealloc(offsets, sizeof(int) * max))) {  \
 					offsets = tmp;			\
 				} else	{				\
-					free(offsets);			\
+					xfree(offsets);			\
 					*_offsets = NULL;		\
 					return 0;			\
 				}					\
@@ -115,13 +118,13 @@ typedef unsigned char ubyte_t;
 static int *ksBM_prep(const ubyte_t *pat, int m)
 {
 	int i, *suff, *prep, *bmGs, *bmBc;
-	prep = (int*)calloc(m + 256, sizeof(int));
+	prep = (int*)xcalloc(m + 256, sizeof(int));
 	bmGs = prep; bmBc = prep + m;
 	{ // preBmBc()
 		for (i = 0; i < 256; ++i) bmBc[i] = m;
 		for (i = 0; i < m - 1; ++i) bmBc[pat[i]] = m - i - 1;
 	}
-	suff = (int*)calloc(m, sizeof(int));
+	suff = (int*)xcalloc(m, sizeof(int));
 	{ // suffixes()
 		int f = 0, g;
 		suff[m - 1] = m;
@@ -148,7 +151,7 @@ static int *ksBM_prep(const ubyte_t *pat, int m)
 		for (i = 0; i <= m - 2; ++i)
 			bmGs[m - 1 - suff[i]] = m - 1 - i;
 	}
-	free(suff);
+	xfree(suff);
 	return prep;
 }
 
@@ -169,7 +172,7 @@ void *kmemmem(const void *_str, int n, const void *_pat, int m, int **_prep)
 			j += max;
 		} else return (void*)(str + j);
 	}
-	if (_prep == 0) free(prep);
+	if (_prep == 0) xfree(prep);
 	return 0;
 }
 
@@ -195,7 +198,7 @@ int main()
 	int *fields, n, i;
 	ks_tokaux_t aux;
 	char *p;
-	s = (kstring_t*)calloc(1, sizeof(kstring_t));
+	s = (kstring_t*)xcalloc(1, sizeof(kstring_t));
 	// test ksprintf()
 	ksprintf(s, " abcdefg:    %d ", 100);
 	printf("'%s'\n", s->s);
@@ -211,7 +214,7 @@ int main()
 	}
 	printf("%s", s->s);
 	// free
-	free(s->s); free(s); free(fields);
+	xfree(s->s); xfree(s); xfree(fields);
 
 	{
 		static char *str = "abcdefgcdgcagtcakcdcd";
@@ -222,7 +225,7 @@ int main()
 			printf("match: %s\n", ret);
 			s = ret + prep[0];
 		}
-		free(prep);
+		xfree(prep);
 	}
 	return 0;
 }
