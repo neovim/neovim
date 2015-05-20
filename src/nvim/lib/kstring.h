@@ -98,6 +98,20 @@ static inline void ks_resize(kstring_t *s, size_t size)
 	}
 }
 
+/// Like ks_resize() but zeroes the extra space allocated.
+///
+/// @param size The minimum desired size of the s's buffer
+static inline void ks_resizez(kstring_t *s, size_t size)
+{
+	if (s->m < size) {
+		size_t old_size = s->m;
+		s->m = size;
+		kroundup32(s->m);
+		s->s = (char*)xrealloc(s->s, s->m);
+		memset(s->s + old_size, 0, s->m - old_size);
+	}
+}
+
 static inline char *ks_str(kstring_t *s)
 {
 	return s->s;
