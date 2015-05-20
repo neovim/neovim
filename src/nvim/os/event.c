@@ -149,7 +149,7 @@ void event_push(Event event, bool deferred)
   // returns(user hits a key for example). To avoid this scenario, we call
   // uv_stop when a event is enqueued.
   uv_stop(uv_default_loop());
-  *kl_pushp(Event, deferred ? deferred_events : immediate_events) = event;
+  kl_push(Event, deferred ? deferred_events : immediate_events, event);
 }
 
 void event_process(void)
@@ -159,9 +159,8 @@ void event_process(void)
 
 static void process_events_from(klist_t(Event) *queue)
 {
-  Event event;
-
-  while (kl_shift(Event, queue, &event) == 0) {
+  while (!kl_empty(queue)) {
+    Event event = kl_shift(Event, queue);
     event.handler(event);
   }
 }
