@@ -44,6 +44,8 @@
 #define KS_ATTR_PRINTF(fmt, arg)
 #endif
 
+#define KSTRING_INIT {0, 0, NULL}
+
 
 /* kstring_t is a simple non-opaque type whose fields are likely to be
  * used directly by user code (but see also ks_str() and ks_len() below).
