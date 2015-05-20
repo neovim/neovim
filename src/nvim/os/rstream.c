@@ -338,8 +338,16 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
   RStream *rstream = handle_get_rstream((uv_handle_t *)stream);
 
   if (cnt <= 0) {
-    if (cnt != UV_ENOBUFS) {
-      DLOG("Closing RStream(%p)", rstream);
+    if (cnt != UV_ENOBUFS
+        // cnt == 0 means libuv asked for a buffer and decided it wasn't needed:
+        // http://docs.libuv.org/en/latest/stream.html#c.uv_read_start.
+        // 
+        // We don't need to do anything with the RBuffer because the next call
+        // to `alloc_cb` will return the same unused pointer(`rbuffer_produced`
+        // won't be called)
+        && cnt != 0) {
+      DLOG("Closing RStream(%p) because of %s(%zd)", rstream,
+           uv_strerror((int)cnt), cnt);
       // Read error or EOF, either way stop the stream and invoke the callback
       // with eof == true
       uv_read_stop(stream);
