@@ -8,15 +8,11 @@
 /// at your choice.
 ///
 /// Vim specific notes:
-/// Functions exported by this file:
-///  2. sha2_seed() generates a random header.
 /// sha256_self_test() is implicitly called once.
 
 #include <stddef.h>        // for size_t
 #include <stdio.h>         // for snprintf().
-#include <stdlib.h>        // for rand_r().
 
-#include "nvim/os/time.h"  // for os_hrtime().
 #include "nvim/sha256.h"   // for context_sha256_T
 #include "nvim/vim.h"      // for STRCPY()/STRLEN().
 
