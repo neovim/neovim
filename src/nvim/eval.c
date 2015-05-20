@@ -12179,7 +12179,6 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
   fclose(fd);
 }
 
-
 /// list2proftime - convert a List to proftime_T
 ///
 /// @param arg The input list, must be of type VAR_LIST and have
@@ -12195,18 +12194,23 @@ static int list2proftime(typval_T *arg, proftime_T *tm) FUNC_ATTR_NONNULL_ALL
   }
 
   int error = false;
-  varnumber_T n1 = list_find_nr(arg->vval.v_list, 0L, &error);
-  varnumber_T n2 = list_find_nr(arg->vval.v_list, 1L, &error);
+  uint32_t high = list_find_nr(arg->vval.v_list, 0L, &error);
+  uint32_t low = list_find_nr(arg->vval.v_list, 1L, &error);
   if (error) {
     return FAIL;
   }
 
+  // When we converted the proftime_T to two 32-bit ints, we shifted the high
+  // part by one and made the sign bit of the low part 0. Undo these changes.
+  low |= (high & 1) << 31;
+  high = high >> 1;
+
   // in f_reltime() we split up the 64-bit proftime_T into two 32-bit
   // values, now we combine them again.
   union {
-    struct { varnumber_T low, high; } split;
+    struct { uint32_t low, high; } split;
     proftime_T prof;
-  } u = { .split.high = n1, .split.low = n2 };
+  } u = { .split.high = high, .split.low = low };
 
   *tm = u.prof;
 
@@ -12245,7 +12249,7 @@ static void f_reltime(typval_T *argvars, typval_T *rettv) FUNC_ATTR_NONNULL_ALL
   // (varnumber_T is defined as int). For all our supported platforms, int's
   // are at least 32-bits wide. So we'll use two 32-bit values to store it.
   union {
-    struct { varnumber_T low, high; } split;
+    struct { uint32_t low, high; } split;
     proftime_T prof;
   } u = { .prof = res };
 
@@ -12255,9 +12259,14 @@ static void f_reltime(typval_T *argvars, typval_T *rettv) FUNC_ATTR_NONNULL_ALL
   STATIC_ASSERT(sizeof(u.prof) == sizeof(u) && sizeof(u.split) == sizeof(u),
       "type punning will produce incorrect results on this platform");
 
+  // The low part must be greater than zero, so the high part must have room
+  // for the carry bit.
+  u.split.high = (u.split.high << 1) + (u.split.low > INT32_MAX);
+  u.split.low &= INT32_MAX;  // Truncate the low bits.
+
   rettv_list_alloc(rettv);
-  list_append_number(rettv->vval.v_list, u.split.high);
-  list_append_number(rettv->vval.v_list, u.split.low);
+  list_append_number(rettv->vval.v_list, (varnumber_T)u.split.high);
+  list_append_number(rettv->vval.v_list, (varnumber_T)u.split.low);
 }
 
 /// f_reltimestr - return a string that represents the value of {time}
