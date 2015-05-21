@@ -54,15 +54,23 @@ describe('vim_findfile functions', function()
     end)
   end)
 
-  describe('vim_create_stopdirs', function()
+  describe('init: ffsc_stopdirs_v', function()
     local create_stopdirs = function(path)
       local ctx = vim_findfile_init(path, 'file_search_spec.lua', 0, false)
+      if (ctx == NULL) then
+        return "null context"
+      end
       return ctx["ffsc_stopdirs_v"]
     end
 
     it('returns NULL if there is no comma', function()
       res = create_stopdirs("asdfh32#$%#&*")
       eq(NULL, res)
+    end)
+
+    it("returns a NULL ctx when the first character isn't a comma", function()
+      res = create_stopdirs("hello;world")
+      eq("null context", res)
     end)
 
     it('strips leading comma', function()
@@ -85,27 +93,6 @@ describe('vim_findfile functions', function()
       string_eq("in it", res[1])
       string_eq("dir1", res[2])
       eq(NULL, res[3])
-    end)
-  end)
-
-  describe('vim_findfile_stopdir', function()
-    local stopdir = function(path)
-      return file_search.vim_findfile_stopdir(path)
-    end
-
-    it('strips a leading comma', function()
-      res = stopdir(to_cstr(";dirname1\\(;"))
-      string_eq("dirname1\\(;", res)
-    end)
-
-    it('ignores everything until the first comma', function()
-      res = stopdir(to_cstr("this part is irrelevant;dir1"))
-      string_eq("dir1", res)
-    end)
-
-    it('ignores escaped commas', function()
-      res = stopdir(to_cstr("file path with a comma \\; in it;dir1"))
-      string_eq("dir1", res)
     end)
   end)
 

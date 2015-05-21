@@ -334,7 +334,7 @@ error_return:
 /*
  * Get the stopdir string.  Check that ';' is not escaped.
  */
-char_u *vim_findfile_stopdir(char_u *buf)
+static char_u *vim_findfile_stopdir(char_u *buf)
 {
   char_u      *r_ptr = buf;
 
