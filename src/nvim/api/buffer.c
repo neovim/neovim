@@ -193,12 +193,14 @@ void buffer_set_line_slice(Buffer buffer,
   buf_T *save_curbuf = NULL;
   win_T *save_curwin = NULL;
   tabpage_T *save_curtab = NULL;
-  size_t new_len = replacement.size;
-  size_t old_len = (size_t)(end - start);
-  ssize_t extra = 0;  // lines added to text, can be negative
-  char **lines = (new_len != 0) ? xcalloc(new_len, sizeof(char *)) : NULL;
+  linenr_T new_len = (linenr_T)replacement.size;
+  linenr_T old_len = (linenr_T)(end - start);
+  linenr_T extra = 0;  // lines added to text, can be negative
+  char **lines = (new_len != 0) ?
+                    xcalloc((size_t)new_len, sizeof(char *)) :
+                    NULL;
 
-  for (size_t i = 0; i < new_len; i++) {
+  for (linenr_T i = 0; i < new_len; i++) {
     if (replacement.items[i].type != kObjectTypeString) {
       api_set_error(err,
                     Validation,
@@ -232,26 +234,26 @@ void buffer_set_line_slice(Buffer buffer,
   // If the size of the range is reducing (ie, new_len < old_len) we
   // need to delete some old_len. We do this at the start, by
   // repeatedly deleting line "start".
-  size_t to_delete = (new_len < old_len) ? (size_t)(old_len - new_len) : 0;
-  for (size_t i = 0; i < to_delete; i++) {
+  linenr_T to_delete = (new_len < old_len) ? (old_len - new_len) : 0;
+  for (linenr_T i = 0; i < to_delete; i++) {
     if (ml_delete((linenr_T)start, false) == FAIL) {
       api_set_error(err, Exception, _("Failed to delete line"));
       goto end;
     }
   }
 
-  if ((ssize_t)to_delete > 0) {
-    extra -= (ssize_t)to_delete;
+  if (to_delete > 0) {
+    extra -= to_delete;
   }
 
   // For as long as possible, replace the existing old_len with the
   // new old_len. This is a more efficient operation, as it requires
   // less memory allocation and freeing.
-  size_t to_replace = old_len < new_len ? old_len : new_len;
-  for (size_t i = 0; i < to_replace; i++) {
-    int64_t lnum = start + (int64_t)i;
+  linenr_T to_replace = old_len < new_len ? old_len : new_len;
+  for (linenr_T i = 0; i < to_replace; i++) {
+    linenr_T lnum = (linenr_T)start + i;
 
-    if (lnum > LONG_MAX) {
+    if (lnum > MAXLNUM) {
       api_set_error(err, Validation, _("Index value is too high"));
       goto end;
     }
@@ -266,10 +268,10 @@ void buffer_set_line_slice(Buffer buffer,
   }
 
   // Now we may need to insert the remaining new old_len
-  for (size_t i = to_replace; i < new_len; i++) {
-    int64_t lnum = start + (int64_t)i - 1;
+  for (linenr_T i = to_replace; i < new_len; i++) {
+    linenr_T lnum = (linenr_T)start + i - 1;
 
-    if (lnum > LONG_MAX) {
+    if (lnum > MAXLNUM) {
       api_set_error(err, Validation, _("Index value is too high"));
       goto end;
     }
@@ -300,7 +302,7 @@ void buffer_set_line_slice(Buffer buffer,
   }
 
 end:
-  for (size_t i = 0; i < new_len; i++) {
+  for (linenr_T i = 0; i < new_len; i++) {
     xfree(lines[i]);
   }
 

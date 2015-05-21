@@ -4549,7 +4549,7 @@ static void show_pat_in_path(char_u *line, int type, int did_show, int action, F
     if (action == ACTION_SHOW_ALL) {
       sprintf((char *)IObuff, "%3ld: ", count);         /* show match nr */
       msg_puts(IObuff);
-      sprintf((char *)IObuff, "%4ld", *lnum);           /* show line nr */
+      sprintf((char *)IObuff, "%4d", *lnum);           /* show line nr */
       /* Highlight line numbers */
       msg_puts_attr(IObuff, hl_attr(HLF_N));
       MSG_PUTS(" ");

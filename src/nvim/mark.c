@@ -669,7 +669,7 @@ show_one_mark (
     }
     msg_putchar('\n');
     if (!got_int) {
-      sprintf((char *)IObuff, " %c %6ld %4d ", c, p->lnum, p->col);
+      sprintf((char *)IObuff, " %c %6d %4d ", c, p->lnum, p->col);
       msg_outtrans(IObuff);
       if (name == NULL && current) {
         name = mark_line(p, 15);
@@ -780,7 +780,7 @@ void ex_jumps(exarg_T *eap)
         xfree(name);
         break;
       }
-      sprintf((char *)IObuff, "%c %2d %5ld %4d ",
+      sprintf((char *)IObuff, "%c %2d %5d %4d ",
           i == curwin->w_jumplistidx ? '>' : ' ',
           i > curwin->w_jumplistidx ? i - curwin->w_jumplistidx
           : curwin->w_jumplistidx - i,
@@ -873,7 +873,7 @@ void ex_changes(exarg_T *eap)
  * Example: Insert two lines below 55: mark_adjust(56, MAXLNUM, 2, 0);
  *				   or: mark_adjust(56, 55, MAXLNUM, 2);
  */
-void mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after)
+void mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T amount_after)
 {
   int i;
   int fnum = curbuf->b_fnum;
@@ -1027,7 +1027,7 @@ void mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after)
  * "lnum_amount" to the line number and add "col_amount" to the column
  * position.
  */
-void mark_col_adjust(linenr_T lnum, colnr_T mincol, long lnum_amount, long col_amount)
+void mark_col_adjust(linenr_T lnum, colnr_T mincol, linenr_T lnum_amount, colnr_T col_amount)
 {
   int i;
   int fnum = curbuf->b_fnum;
@@ -1206,7 +1206,7 @@ int read_viminfo_filemark(vir_T *virp, int force)
     }
     if (fm != NULL && (fm->fmark.mark.lnum == 0 || force)) {
       str = skipwhite(str + 1);
-      fm->fmark.mark.lnum = getdigits_long(&str);
+      fm->fmark.mark.lnum = getdigits_int(&str);
       str = skipwhite(str);
       fm->fmark.mark.col = getdigits_int(&str);
       fm->fmark.mark.coladd = 0;

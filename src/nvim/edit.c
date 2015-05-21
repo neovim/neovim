@@ -7537,7 +7537,8 @@ static void ins_mousescroll(int dir)
   tpos = curwin->w_cursor;
 
   if (mouse_row >= 0 && mouse_col >= 0) {
-    int row, col;
+    linenr_T row;
+    colnr_T col;
 
     row = mouse_row;
     col = mouse_col;

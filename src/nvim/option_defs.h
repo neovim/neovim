@@ -467,7 +467,7 @@ EXTERN long p_rdt;              /* 'redrawtime' */
 EXTERN int p_remap;             /* 'remap' */
 EXTERN long p_re;               /* 'regexpengine' */
 EXTERN long p_report;           /* 'report' */
-EXTERN long p_pvh;              /* 'previewheight' */
+EXTERN int p_pvh;              /* 'previewheight' */
 EXTERN int p_ari;               /* 'allowrevins' */
 EXTERN int p_ri;                /* 'revins' */
 EXTERN int p_ru;                /* 'ruler' */

@@ -9198,8 +9198,8 @@ static void f_getchar(typval_T *argvars, typval_T *rettv)
     rettv->vval.v_string = vim_strsave(temp);
 
     if (is_mouse_key(n)) {
-      int row = mouse_row;
-      int col = mouse_col;
+      linenr_T row = mouse_row;
+      colnr_T col = mouse_col;
       win_T       *win;
       linenr_T lnum;
       win_T       *wp;

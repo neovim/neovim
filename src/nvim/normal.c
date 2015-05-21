@@ -1094,7 +1094,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
   static int redo_VIsual_mode = NUL;        /* 'v', 'V', or Ctrl-V */
   static linenr_T redo_VIsual_line_count;   /* number of lines */
   static colnr_T redo_VIsual_vcol;          /* number of cols or end column */
-  static long redo_VIsual_count;            /* count for Visual operator */
+  static int redo_VIsual_count;            /* count for Visual operator */
   bool include_line_break = false;
 
   old_cursor = curwin->w_cursor;
@@ -3047,7 +3047,7 @@ void do_check_scrollbind(bool check)
 {
   static win_T        *old_curwin = NULL;
   static linenr_T old_topline = 0;
-  static int old_topfill = 0;
+  static linenr_T old_topfill = 0;
   static buf_T        *old_buf = NULL;
   static colnr_T old_leftcol = 0;
 
@@ -3108,8 +3108,8 @@ void check_scrollbind(linenr_T topline_diff, long leftcol_diff)
   int old_VIsual_select = VIsual_select;
   int old_VIsual_active = VIsual_active;
   colnr_T tgt_leftcol = curwin->w_leftcol;
-  long topline;
-  long y;
+  linenr_T topline;
+  linenr_T y;
 
   /*
    * check 'scrollopt' string for vertical and horizontal scroll options
@@ -3518,7 +3518,8 @@ static void nv_mousescroll(cmdarg_T *cap)
   win_T *old_curwin = curwin;
 
   if (mouse_row >= 0 && mouse_col >= 0) {
-    int row, col;
+    linenr_T row;
+    colnr_T col;
 
     row = mouse_row;
     col = mouse_col;
@@ -3565,10 +3566,10 @@ static void nv_scroll_line(cmdarg_T *cap)
 /*
  * Scroll "count" lines up or down, and redraw.
  */
-void scroll_redraw(int up, long count)
+void scroll_redraw(int up, int count)
 {
   linenr_T prev_topline = curwin->w_topline;
-  int prev_topfill = curwin->w_topfill;
+  linenr_T prev_topfill = curwin->w_topfill;
   linenr_T prev_lnum = curwin->w_cursor.lnum;
 
   if (up)
@@ -4449,7 +4450,7 @@ static void nv_tagpop(cmdarg_T *cap)
 static void nv_scroll(cmdarg_T *cap)
 {
   int used = 0;
-  long n;
+  int n;
   linenr_T lnum;
   int half;
 
@@ -4476,8 +4477,9 @@ static void nv_scroll(cmdarg_T *cap)
   } else {
     if (cap->cmdchar == 'M') {
       /* Don't count filler lines above the window. */
-      used -= diff_check_fill(curwin, curwin->w_topline)
-              - curwin->w_topfill;
+      used -= (int)(diff_check_fill(curwin, curwin->w_topline)
+              - curwin->w_topfill);
+      
       validate_botline();           /* make sure w_empty_rows is valid */
       half = (curwin->w_height - curwin->w_empty_rows + 1) / 2;
       for (n = 0; curwin->w_topline + n < curbuf->b_ml.ml_line_count; ++n) {
@@ -5223,11 +5225,11 @@ static void nv_percent(cmdarg_T *cap)
       /* Round up, so CTRL-G will give same value.  Watch out for a
        * large line count, the line number must not go negative! */
       if (curbuf->b_ml.ml_line_count > 1000000)
-        curwin->w_cursor.lnum = (curbuf->b_ml.ml_line_count + 99L)
-                                / 100L * cap->count0;
+        curwin->w_cursor.lnum = (curbuf->b_ml.ml_line_count + 99)
+                                / 100 * cap->count0;
       else
         curwin->w_cursor.lnum = (curbuf->b_ml.ml_line_count *
-                                 cap->count0 + 99L) / 100L;
+                                 cap->count0 + 99) / 100;
       if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count)
         curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
       beginline(BL_SOL | BL_FIX);

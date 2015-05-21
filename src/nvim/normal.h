@@ -28,7 +28,7 @@ typedef struct oparg_S {
   pos_T end;                    /* end of the operator */
   pos_T cursor_start;           /* cursor position before motion for "gw" */
 
-  long line_count;              /* number of lines from op_start to op_end
+  linenr_T line_count;              /* number of lines from op_start to op_end
                                    (inclusive) */
   bool empty;                   /* op_start and op_end the same (only used by
                                    op_change()) */
@@ -36,8 +36,8 @@ typedef struct oparg_S {
   bool block_mode;              /* current operator is Visual block mode */
   colnr_T start_vcol;           /* start col for block mode operator */
   colnr_T end_vcol;             /* end col for block mode operator */
-  long prev_opcount;            /* ca.opcount saved for K_CURSORHOLD */
-  long prev_count0;             /* ca.count0 saved for K_CURSORHOLD */
+  int prev_opcount;             /* ca.opcount saved for K_CURSORHOLD */
+  int prev_count0;              /* ca.count0 saved for K_CURSORHOLD */
 } oparg_T;
 
 /*
@@ -51,9 +51,9 @@ typedef struct cmdarg_S {
   int ncharC1;                  /* first composing character (optional) */
   int ncharC2;                  /* second composing character (optional) */
   int extra_char;               /* yet another character (optional) */
-  long opcount;                 /* count before an operator */
-  long count0;                  /* count before command, default 0 */
-  long count1;                  /* count before command, default 1 */
+  int opcount;                  /* count before an operator */
+  int count0;                   /* count before command, default 0 */
+  int count1;                   /* count before command, default 1 */
   int arg;                      /* extra argument from nv_cmds[] */
   int retval;                   /* return: CA_* values */
   char_u      *searchbuf;       /* return: pointer to search pattern or NULL */

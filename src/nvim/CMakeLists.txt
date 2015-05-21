@@ -54,7 +54,6 @@ list(REMOVE_ITEM NEOVIM_SOURCES ${to_remove})
 set(CONV_SOURCES
   buffer.c
   charset.c
-  diff.c
   edit.c
   eval.c
   ex_cmds2.c
