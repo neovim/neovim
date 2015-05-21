@@ -11,8 +11,6 @@
 /* Number of levels to descend into the directory tree */
 #define LEVELS 100
 
-char_u **vim_create_stopdirs(char_u *path);
-
 /*
  * type for the directory search stack
  */

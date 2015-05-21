@@ -358,7 +358,7 @@ char_u *vim_findfile_stopdir(char_u *buf)
 /*
  * Create the stopdirs to populate the search context in vim_findfile_init.
  */
-char_u **vim_create_stopdirs(char_u *path)
+static char_u **vim_create_stopdirs(char_u *path)
 {
   char_u *stopdirs_str = vim_findfile_stopdir(path);
   char_u **stopdirs = NULL;
