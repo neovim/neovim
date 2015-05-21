@@ -48,355 +48,374 @@ describe('64', function()
     -- When there is no match use only the first two items.
     execute('let tl = []')
 
-    -- """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""".
-    -- """ Previously written tests """""""""""""""""""""""""""""""".
-    -- """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""".
+    -- 
+    --     Previously written tests 
+    --
 
-    execute([[call add(tl, [2, 'ab', 'aab', 'ab'])]])
-    execute([[call add(tl, [2, 'b', 'abcdef', 'b'])]])
-    execute([[call add(tl, [2, 'bc*', 'abccccdef', 'bcccc'])]])
-    execute([[call add(tl, [2, 'bc\{-}', 'abccccdef', 'b'])]])
-    execute([[call add(tl, [2, 'bc\{-}\(d\)', 'abccccdef', 'bccccd', 'd'])]])
-    execute([[call add(tl, [2, 'bc*', 'abbdef', 'b'])]])
-    execute([[call add(tl, [2, 'c*', 'ccc', 'ccc'])]])
-    execute([[call add(tl, [2, 'bc*', 'abdef', 'b'])]])
-    execute([[call add(tl, [2, 'c*', 'abdef', ''])]])
-    execute([[call add(tl, [2, 'bc\+', 'abccccdef', 'bcccc'])]])
-    -- No match.
-    execute([[call add(tl, [2, 'bc\+', 'abdef'])]])
+    source([[
+      call add(tl, [2, 'ab', 'aab', 'ab'])
+      call add(tl, [2, 'b', 'abcdef', 'b'])
+      call add(tl, [2, 'bc*', 'abccccdef', 'bcccc'])
+      call add(tl, [2, 'bc\{-}', 'abccccdef', 'b'])
+      call add(tl, [2, 'bc\{-}\(d\)', 'abccccdef', 'bccccd', 'd'])
+      call add(tl, [2, 'bc*', 'abbdef', 'b'])
+      call add(tl, [2, 'c*', 'ccc', 'ccc'])
+      call add(tl, [2, 'bc*', 'abdef', 'b'])
+      call add(tl, [2, 'c*', 'abdef', ''])
+      call add(tl, [2, 'bc\+', 'abccccdef', 'bcccc'])
 
-    -- Operator \|.
-    -- Alternation is ordered.
-    execute([[call add(tl, [2, 'a\|ab', 'cabd', 'a'])]])
+      " no match
+      call add(tl, [2, 'bc\+', 'abdef'])
 
-    execute([[call add(tl, [2, 'c\?', 'ccb', 'c'])]])
-    execute([[call add(tl, [2, 'bc\?', 'abd', 'b'])]])
-    execute([[call add(tl, [2, 'bc\?', 'abccd', 'bc'])]])
+      " operator \|
+      " Alternation is ordered.
+      call add(tl, [2, 'a\|ab', 'cabd', 'a'])
 
-    execute([[call add(tl, [2, '\va{1}', 'ab', 'a'])]])
+      call add(tl, [2, 'c\?', 'ccb', 'c'])
+      call add(tl, [2, 'bc\?', 'abd', 'b'])
+      call add(tl, [2, 'bc\?', 'abccd', 'bc'])
 
-    execute([[call add(tl, [2, '\va{2}', 'aa', 'aa'])]])
-    execute([[call add(tl, [2, '\va{2}', 'caad', 'aa'])]])
-    execute([[call add(tl, [2, '\va{2}', 'aba'])]])
-    execute([[call add(tl, [2, '\va{2}', 'ab'])]])
-    execute([[call add(tl, [2, '\va{2}', 'abaa', 'aa'])]])
-    execute([[call add(tl, [2, '\va{2}', 'aaa', 'aa'])]])
+      call add(tl, [2, '\va{1}', 'ab', 'a'])
 
-    execute([[call add(tl, [2, '\vb{1}', 'abca', 'b'])]])
-    execute([[call add(tl, [2, '\vba{2}', 'abaa', 'baa'])]])
-    execute([[call add(tl, [2, '\vba{3}', 'aabaac'])]])
+      call add(tl, [2, '\va{2}', 'aa', 'aa'])
+      call add(tl, [2, '\va{2}', 'caad', 'aa'])
+      call add(tl, [2, '\va{2}', 'aba'])
+      call add(tl, [2, '\va{2}', 'ab'])
+      call add(tl, [2, '\va{2}', 'abaa', 'aa'])
+      call add(tl, [2, '\va{2}', 'aaa', 'aa'])
 
-    execute([[call add(tl, [2, '\v(ab){1}', 'ab', 'ab', 'ab'])]])
-    execute([[call add(tl, [2, '\v(ab){1}', 'dabc', 'ab', 'ab'])]])
-    execute([[call add(tl, [2, '\v(ab){1}', 'acb'])]])
+      call add(tl, [2, '\vb{1}', 'abca', 'b'])
+      call add(tl, [2, '\vba{2}', 'abaa', 'baa'])
+      call add(tl, [2, '\vba{3}', 'aabaac'])
 
-    execute([[call add(tl, [2, '\v(ab){0,2}', 'acb', "", ""])]])
-    execute([[call add(tl, [2, '\v(ab){0,2}', 'ab', 'ab', 'ab'])]])
-    execute([[call add(tl, [2, '\v(ab){1,2}', 'ab', 'ab', 'ab'])]])
-    execute([[call add(tl, [2, '\v(ab){1,2}', 'ababc', 'abab', 'ab'])]])
-    execute([[call add(tl, [2, '\v(ab){2,4}', 'ababcab', 'abab', 'ab'])]])
-    execute([[call add(tl, [2, '\v(ab){2,4}', 'abcababa', 'abab', 'ab'])]])
+      call add(tl, [2, '\v(ab){1}', 'ab', 'ab', 'ab'])
+      call add(tl, [2, '\v(ab){1}', 'dabc', 'ab', 'ab'])
+      call add(tl, [2, '\v(ab){1}', 'acb'])
 
-    execute([[call add(tl, [2, '\v(ab){2}', 'abab', 'abab', 'ab'])]])
-    execute([[call add(tl, [2, '\v(ab){2}', 'cdababe', 'abab', 'ab'])]])
-    execute([[call add(tl, [2, '\v(ab){2}', 'abac'])]])
-    execute([[call add(tl, [2, '\v(ab){2}', 'abacabab', 'abab', 'ab'])]])
-    execute([[call add(tl, [2, '\v((ab){2}){2}', 'abababab', 'abababab', 'abab', 'ab'])]])
-    execute([[call add(tl, [2, '\v((ab){2}){2}', 'abacabababab', 'abababab', 'abab', 'ab'])]])
+      call add(tl, [2, '\v(ab){0,2}', 'acb', "", ""])
+      call add(tl, [2, '\v(ab){0,2}', 'ab', 'ab', 'ab'])
+      call add(tl, [2, '\v(ab){1,2}', 'ab', 'ab', 'ab'])
+      call add(tl, [2, '\v(ab){1,2}', 'ababc', 'abab', 'ab'])
+      call add(tl, [2, '\v(ab){2,4}', 'ababcab', 'abab', 'ab'])
+      call add(tl, [2, '\v(ab){2,4}', 'abcababa', 'abab', 'ab'])
 
-    execute([[call add(tl, [2, '\v(a{1}){1}', 'a', 'a', 'a'])]])
-    execute([[call add(tl, [2, '\v(a{2}){1}', 'aa', 'aa', 'aa'])]])
-    execute([[call add(tl, [2, '\v(a{2}){1}', 'aaac', 'aa', 'aa'])]])
-    execute([[call add(tl, [2, '\v(a{2}){1}', 'daaac', 'aa', 'aa'])]])
-    execute([[call add(tl, [2, '\v(a{1}){2}', 'daaac', 'aa', 'a'])]])
-    execute([[call add(tl, [2, '\v(a{1}){2}', 'aaa', 'aa', 'a'])]])
-    execute([[call add(tl, [2, '\v(a{2})+', 'adaac', 'aa', 'aa'])]])
-    execute([[call add(tl, [2, '\v(a{2})+', 'aa', 'aa', 'aa'])]])
-    execute([[call add(tl, [2, '\v(a{2}){1}', 'aa', 'aa', 'aa'])]])
-    execute([[call add(tl, [2, '\v(a{1}){2}', 'aa', 'aa', 'a'])]])
-    execute([[call add(tl, [2, '\v(a{1}){1}', 'a', 'a', 'a'])]])
-    execute([[call add(tl, [2, '\v(a{2}){2}', 'aaaa', 'aaaa', 'aa'])]])
-    execute([[call add(tl, [2, '\v(a{2}){2}', 'aaabaaaa', 'aaaa', 'aa'])]])
+      call add(tl, [2, '\v(ab){2}', 'abab', 'abab', 'ab'])
+      call add(tl, [2, '\v(ab){2}', 'cdababe', 'abab', 'ab'])
+      call add(tl, [2, '\v(ab){2}', 'abac'])
+      call add(tl, [2, '\v(ab){2}', 'abacabab', 'abab', 'ab'])
+      call add(tl, [2, '\v((ab){2}){2}', 'abababab', 'abababab', 'abab', 'ab'])
+      call add(tl, [2, '\v((ab){2}){2}', 'abacabababab', 'abababab', 'abab', 'ab'])
 
-    execute([[call add(tl, [2, '\v(a+){2}', 'dadaac', 'aa', 'a'])]])
-    execute([[call add(tl, [2, '\v(a{3}){2}', 'aaaaaaa', 'aaaaaa', 'aaa'])]])
+      call add(tl, [2, '\v(a{1}){1}', 'a', 'a', 'a'])
+      call add(tl, [2, '\v(a{2}){1}', 'aa', 'aa', 'aa'])
+      call add(tl, [2, '\v(a{2}){1}', 'aaac', 'aa', 'aa'])
+      call add(tl, [2, '\v(a{2}){1}', 'daaac', 'aa', 'aa'])
+      call add(tl, [2, '\v(a{1}){2}', 'daaac', 'aa', 'a'])
+      call add(tl, [2, '\v(a{1}){2}', 'aaa', 'aa', 'a'])
+      call add(tl, [2, '\v(a{2})+', 'adaac', 'aa', 'aa'])
+      call add(tl, [2, '\v(a{2})+', 'aa', 'aa', 'aa'])
+      call add(tl, [2, '\v(a{2}){1}', 'aa', 'aa', 'aa'])
+      call add(tl, [2, '\v(a{1}){2}', 'aa', 'aa', 'a'])
+      call add(tl, [2, '\v(a{1}){1}', 'a', 'a', 'a'])
+      call add(tl, [2, '\v(a{2}){2}', 'aaaa', 'aaaa', 'aa'])
+      call add(tl, [2, '\v(a{2}){2}', 'aaabaaaa', 'aaaa', 'aa'])
 
-    execute([[call add(tl, [2, '\v(a{1,2}){2}', 'daaac', 'aaa', 'a'])]])
-    execute([[call add(tl, [2, '\v(a{1,3}){2}', 'daaaac', 'aaaa', 'a'])]])
-    execute([[call add(tl, [2, '\v(a{1,3}){2}', 'daaaaac', 'aaaaa', 'aa'])]])
-    execute([[call add(tl, [2, '\v(a{1,3}){3}', 'daac'])]])
-    execute([[call add(tl, [2, '\v(a{1,2}){2}', 'dac'])]])
-    execute([[call add(tl, [2, '\v(a+)+', 'daac', 'aa', 'aa'])]])
-    execute([[call add(tl, [2, '\v(a+)+', 'aaa', 'aaa', 'aaa'])]])
-    execute([[call add(tl, [2, '\v(a+){1,2}', 'aaa', 'aaa', 'aaa'])]])
-    execute([[call add(tl, [2, '\v(a+)(a+)', 'aaa', 'aaa', 'aa', 'a'])]])
-    execute([[call add(tl, [2, '\v(a{3})+', 'daaaac', 'aaa', 'aaa'])]])
-    execute([[call add(tl, [2, '\v(a|b|c)+', 'aacb', 'aacb', 'b'])]])
-    execute([[call add(tl, [2, '\v(a|b|c){2}', 'abcb', 'ab', 'b'])]])
-    execute([[call add(tl, [2, '\v(abc){2}', 'abcabd', ])]])
-    execute([[call add(tl, [2, '\v(abc){2}', 'abdabcabc','abcabc', 'abc'])]])
+      call add(tl, [2, '\v(a+){2}', 'dadaac', 'aa', 'a'])
+      call add(tl, [2, '\v(a{3}){2}', 'aaaaaaa', 'aaaaaa', 'aaa'])
 
-    execute([[call add(tl, [2, 'a*', 'cc', ''])]])
-    execute([[call add(tl, [2, '\v(a*)+', 'cc', ''])]])
-    execute([[call add(tl, [2, '\v((ab)+)+', 'ab', 'ab', 'ab', 'ab'])]])
-    execute([[call add(tl, [2, '\v(((ab)+)+)+', 'ab', 'ab', 'ab', 'ab', 'ab'])]])
-    execute([[call add(tl, [2, '\v(((ab)+)+)+', 'dababc', 'abab', 'abab', 'abab', 'ab'])]])
-    execute([[call add(tl, [2, '\v(a{0,2})+', 'cc', ''])]])
-    execute([[call add(tl, [2, '\v(a*)+', '', ''])]])
-    execute([[call add(tl, [2, '\v((a*)+)+', '', ''])]])
-    execute([[call add(tl, [2, '\v((ab)*)+', '', ''])]])
-    execute([[call add(tl, [2, '\va{1,3}', 'aab', 'aa'])]])
-    execute([[call add(tl, [2, '\va{2,3}', 'abaa', 'aa'])]])
+      call add(tl, [2, '\v(a{1,2}){2}', 'daaac', 'aaa', 'a'])
+      call add(tl, [2, '\v(a{1,3}){2}', 'daaaac', 'aaaa', 'a'])
+      call add(tl, [2, '\v(a{1,3}){2}', 'daaaaac', 'aaaaa', 'aa'])
+      call add(tl, [2, '\v(a{1,3}){3}', 'daac'])
+      call add(tl, [2, '\v(a{1,2}){2}', 'dac'])
+      call add(tl, [2, '\v(a+)+', 'daac', 'aa', 'aa'])
+      call add(tl, [2, '\v(a+)+', 'aaa', 'aaa', 'aaa'])
+      call add(tl, [2, '\v(a+){1,2}', 'aaa', 'aaa', 'aaa'])
+      call add(tl, [2, '\v(a+)(a+)', 'aaa', 'aaa', 'aa', 'a'])
+      call add(tl, [2, '\v(a{3})+', 'daaaac', 'aaa', 'aaa'])
+      call add(tl, [2, '\v(a|b|c)+', 'aacb', 'aacb', 'b'])
+      call add(tl, [2, '\v(a|b|c){2}', 'abcb', 'ab', 'b'])
+      call add(tl, [2, '\v(abc){2}', 'abcabd', ])
+      call add(tl, [2, '\v(abc){2}', 'abdabcabc','abcabc', 'abc'])
 
-    execute([[call add(tl, [2, '\v((ab)+|c*)+', 'abcccaba', 'abcccab', '', 'ab'])]])
-    execute([[call add(tl, [2, '\v(a{2})|(b{3})', 'bbabbbb', 'bbb', '', 'bbb'])]])
-    execute([[call add(tl, [2, '\va{2}|b{2}', 'abab'])]])
-    execute([[call add(tl, [2, '\v(a)+|(c)+', 'bbacbaacbbb', 'a', 'a'])]])
-    execute([[call add(tl, [2, '\vab{2,3}c', 'aabbccccccccccccc', 'abbc'])]])
-    execute([[call add(tl, [2, '\vab{2,3}c', 'aabbbccccccccccccc', 'abbbc'])]])
-    execute([[call add(tl, [2, '\vab{2,3}cd{2,3}e', 'aabbbcddee', 'abbbcdde'])]])
-    execute([[call add(tl, [2, '\va(bc){2}d', 'aabcbfbc' ])]])
-    execute([[call add(tl, [2, '\va*a{2}', 'a', ])]])
-    execute([[call add(tl, [2, '\va*a{2}', 'aa', 'aa' ])]])
-    execute([[call add(tl, [2, '\va*a{2}', 'aaa', 'aaa' ])]])
-    execute([[call add(tl, [2, '\va*a{2}', 'bbbabcc', ])]])
-    execute([[call add(tl, [2, '\va*b*|a*c*', 'a', 'a'])]])
-    execute([[call add(tl, [2, '\va{1}b{1}|a{1}b{1}', ''])]])
+      call add(tl, [2, 'a*', 'cc', ''])
+      call add(tl, [2, '\v(a*)+', 'cc', ''])
+      call add(tl, [2, '\v((ab)+)+', 'ab', 'ab', 'ab', 'ab'])
+      call add(tl, [2, '\v(((ab)+)+)+', 'ab', 'ab', 'ab', 'ab', 'ab'])
+      call add(tl, [2, '\v(((ab)+)+)+', 'dababc', 'abab', 'abab', 'abab', 'ab'])
+      call add(tl, [2, '\v(a{0,2})+', 'cc', ''])
+      call add(tl, [2, '\v(a*)+', '', ''])
+      call add(tl, [2, '\v((a*)+)+', '', ''])
+      call add(tl, [2, '\v((ab)*)+', '', ''])
+      call add(tl, [2, '\va{1,3}', 'aab', 'aa'])
+      call add(tl, [2, '\va{2,3}', 'abaa', 'aa'])
 
-    -- Submatches.
-    execute([[call add(tl, [2, '\v(a)', 'ab', 'a', 'a'])]])
-    execute([[call add(tl, [2, '\v(a)(b)', 'ab', 'ab', 'a', 'b'])]])
-    execute([[call add(tl, [2, '\v(ab)(b)(c)', 'abbc', 'abbc', 'ab', 'b', 'c'])]])
-    execute([[call add(tl, [2, '\v((a)(b))', 'ab', 'ab', 'ab', 'a', 'b'])]])
-    execute([[call add(tl, [2, '\v(a)|(b)', 'ab', 'a', 'a'])]])
+      call add(tl, [2, '\v((ab)+|c*)+', 'abcccaba', 'abcccab', '', 'ab'])
+      call add(tl, [2, '\v(a{2})|(b{3})', 'bbabbbb', 'bbb', '', 'bbb'])
+      call add(tl, [2, '\va{2}|b{2}', 'abab'])
+      call add(tl, [2, '\v(a)+|(c)+', 'bbacbaacbbb', 'a', 'a'])
+      call add(tl, [2, '\vab{2,3}c', 'aabbccccccccccccc', 'abbc'])
+      call add(tl, [2, '\vab{2,3}c', 'aabbbccccccccccccc', 'abbbc'])
+      call add(tl, [2, '\vab{2,3}cd{2,3}e', 'aabbbcddee', 'abbbcdde'])
+      call add(tl, [2, '\va(bc){2}d', 'aabcbfbc' ])
+      call add(tl, [2, '\va*a{2}', 'a', ])
+      call add(tl, [2, '\va*a{2}', 'aa', 'aa' ])
+      call add(tl, [2, '\va*a{2}', 'aaa', 'aaa' ])
+      call add(tl, [2, '\va*a{2}', 'bbbabcc', ])
+      call add(tl, [2, '\va*b*|a*c*', 'a', 'a'])
+      call add(tl, [2, '\va{1}b{1}|a{1}b{1}', ''])
 
-    execute([[call add(tl, [2, '\v(a*)+', 'aaaa', 'aaaa', ''])]])
-    execute([[call add(tl, [2, 'x', 'abcdef'])]])
+      " submatches
+      call add(tl, [2, '\v(a)', 'ab', 'a', 'a'])
+      call add(tl, [2, '\v(a)(b)', 'ab', 'ab', 'a', 'b'])
+      call add(tl, [2, '\v(ab)(b)(c)', 'abbc', 'abbc', 'ab', 'b', 'c'])
+      call add(tl, [2, '\v((a)(b))', 'ab', 'ab', 'ab', 'a', 'b'])
+      call add(tl, [2, '\v(a)|(b)', 'ab', 'a', 'a'])
 
-    -- """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""".
-    -- """" Simple tests """"""""""""""""""""""""""""""""""""""""""".
-    -- """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""".
+      call add(tl, [2, '\v(a*)+', 'aaaa', 'aaaa', ''])
+      call add(tl, [2, 'x', 'abcdef'])
+    ]])
 
-    -- Search single groups.
-    execute([[call add(tl, [2, 'ab', 'aab', 'ab'])]])
-    execute([[call add(tl, [2, 'ab', 'baced'])]])
-    execute([[call add(tl, [2, 'ab', '                    ab           ', 'ab'])]])
+    -- 
+    --      Simple tests 
+    -- 
 
-    -- Search multi-modifiers.
-    execute([[call add(tl, [2, 'x*', 'xcd', 'x'])]])
-    execute([[call add(tl, [2, 'x*', 'xxxxxxxxxxxxxxxxsofijiojgf', 'xxxxxxxxxxxxxxxx'])]])
-    -- Empty match is good.
-    execute([[call add(tl, [2, 'x*', 'abcdoij', ''])]])
-    -- No match here.
-    execute([[call add(tl, [2, 'x\+', 'abcdoin'])]])
-    execute([[call add(tl, [2, 'x\+', 'abcdeoijdfxxiuhfij', 'xx'])]])
-    execute([[call add(tl, [2, 'x\+', 'xxxxx', 'xxxxx'])]])
-    execute([[call add(tl, [2, 'x\+', 'abc x siufhiush xxxxxxxxx', 'x'])]])
-    execute([[call add(tl, [2, 'x\=', 'x sdfoij', 'x'])]])
-    -- Empty match is good.
-    execute([[call add(tl, [2, 'x\=', 'abc sfoij', ''])]])
-    execute([[call add(tl, [2, 'x\=', 'xxxxxxxxx c', 'x'])]])
-    execute([[call add(tl, [2, 'x\?', 'x sdfoij', 'x'])]])
-    -- Empty match is good.
-    execute([[call add(tl, [2, 'x\?', 'abc sfoij', ''])]])
-    execute([[call add(tl, [2, 'x\?', 'xxxxxxxxxx c', 'x'])]])
+    source([[
+      " Search single groups.
+      call add(tl, [2, 'ab', 'aab', 'ab'])
+      call add(tl, [2, 'ab', 'baced'])
+      call add(tl, [2, 'ab', '                    ab           ', 'ab'])
 
-    execute([[call add(tl, [2, 'a\{0,0}', 'abcdfdoij', ''])]])
-    -- Same thing as 'a?'.
-    execute([[call add(tl, [2, 'a\{0,1}', 'asiubid axxxaaa', 'a'])]])
-    -- Same thing as 'a\{0,1}'.
-    execute([[call add(tl, [2, 'a\{1,0}', 'asiubid axxxaaa', 'a'])]])
-    execute([[call add(tl, [2, 'a\{3,6}', 'aa siofuh'])]])
-    execute([[call add(tl, [2, 'a\{3,6}', 'aaaaa asfoij afaa', 'aaaaa'])]])
-    execute([[call add(tl, [2, 'a\{3,6}', 'aaaaaaaa', 'aaaaaa'])]])
-    execute([[call add(tl, [2, 'a\{0}', 'asoiuj', ''])]])
-    execute([[call add(tl, [2, 'a\{2}', 'aaaa', 'aa'])]])
-    execute([[call add(tl, [2, 'a\{2}', 'iuash fiusahfliusah fiushfilushfi uhsaifuh askfj nasfvius afg aaaa sfiuhuhiushf', 'aa'])]])
-    execute([[call add(tl, [2, 'a\{2}', 'abcdefghijklmnopqrestuvwxyz1234567890'])]])
-    -- Same thing as 'a*'.
-    execute([[call add(tl, [2, 'a\{0,}', 'oij sdigfusnf', ''])]])
-    execute([[call add(tl, [2, 'a\{0,}', 'aaaaa aa', 'aaaaa'])]])
-    execute([[call add(tl, [2, 'a\{2,}', 'sdfiougjdsafg'])]])
-    execute([[call add(tl, [2, 'a\{2,}', 'aaaaasfoij ', 'aaaaa'])]])
-    execute([[call add(tl, [2, 'a\{5,}', 'xxaaaaxxx '])]])
-    execute([[call add(tl, [2, 'a\{5,}', 'xxaaaaaxxx ', 'aaaaa'])]])
-    execute([[call add(tl, [2, 'a\{,0}', 'oidfguih iuhi hiu aaaa', ''])]])
-    execute([[call add(tl, [2, 'a\{,5}', 'abcd', 'a'])]])
-    execute([[call add(tl, [2, 'a\{,5}', 'aaaaaaaaaa', 'aaaaa'])]])
-    -- Leading star as normal char when \{} follows.
-    execute([[call add(tl, [2, '^*\{4,}$', '***'])]])
-    execute([[call add(tl, [2, '^*\{4,}$', '****', '****'])]])
-    execute([[call add(tl, [2, '^*\{4,}$', '*****', '*****'])]])
-    -- Same thing as 'a*'.
-    execute([[call add(tl, [2, 'a\{}', 'bbbcddiuhfcd', ''])]])
-    execute([[call add(tl, [2, 'a\{}', 'aaaaioudfh coisf jda', 'aaaa'])]])
+      " Search multi-modifiers.
+      call add(tl, [2, 'x*', 'xcd', 'x'])
+      call add(tl, [2, 'x*', 'xxxxxxxxxxxxxxxxsofijiojgf', 'xxxxxxxxxxxxxxxx'])
+      " Empty match is good.
+      call add(tl, [2, 'x*', 'abcdoij', ''])
+      " No match here.
+      call add(tl, [2, 'x\+', 'abcdoin'])
+      call add(tl, [2, 'x\+', 'abcdeoijdfxxiuhfij', 'xx'])
+      call add(tl, [2, 'x\+', 'xxxxx', 'xxxxx'])
+      call add(tl, [2, 'x\+', 'abc x siufhiush xxxxxxxxx', 'x'])
+      call add(tl, [2, 'x\=', 'x sdfoij', 'x'])
+      " Empty match is good.
+      call add(tl, [2, 'x\=', 'abc sfoij', ''])
+      call add(tl, [2, 'x\=', 'xxxxxxxxx c', 'x'])
+      call add(tl, [2, 'x\?', 'x sdfoij', 'x'])
+      " Empty match is good.
+      call add(tl, [2, 'x\?', 'abc sfoij', ''])
+      call add(tl, [2, 'x\?', 'xxxxxxxxxx c', 'x'])
 
-    execute([[call add(tl, [2, 'a\{-0,0}', 'abcdfdoij', ''])]])
-    -- Anti-greedy version of 'a?'.
-    execute([[call add(tl, [2, 'a\{-0,1}', 'asiubid axxxaaa', ''])]])
-    execute([[call add(tl, [2, 'a\{-3,6}', 'aa siofuh'])]])
-    execute([[call add(tl, [2, 'a\{-3,6}', 'aaaaa asfoij afaa', 'aaa'])]])
-    execute([[call add(tl, [2, 'a\{-3,6}', 'aaaaaaaa', 'aaa'])]])
-    execute([[call add(tl, [2, 'a\{-0}', 'asoiuj', ''])]])
-    execute([[call add(tl, [2, 'a\{-2}', 'aaaa', 'aa'])]])
-    execute([[call add(tl, [2, 'a\{-2}', 'abcdefghijklmnopqrestuvwxyz1234567890'])]])
-    execute([[call add(tl, [2, 'a\{-0,}', 'oij sdigfusnf', ''])]])
-    execute([[call add(tl, [2, 'a\{-0,}', 'aaaaa aa', ''])]])
-    execute([[call add(tl, [2, 'a\{-2,}', 'sdfiougjdsafg'])]])
-    execute([[call add(tl, [2, 'a\{-2,}', 'aaaaasfoij ', 'aa'])]])
-    execute([[call add(tl, [2, 'a\{-,0}', 'oidfguih iuhi hiu aaaa', ''])]])
-    execute([[call add(tl, [2, 'a\{-,5}', 'abcd', ''])]])
-    execute([[call add(tl, [2, 'a\{-,5}', 'aaaaaaaaaa', ''])]])
-    -- Anti-greedy version of 'a*'.
-    execute([[call add(tl, [2, 'a\{-}', 'bbbcddiuhfcd', ''])]])
-    execute([[call add(tl, [2, 'a\{-}', 'aaaaioudfh coisf jda', ''])]])
+      call add(tl, [2, 'a\{0,0}', 'abcdfdoij', ''])
+      " Same thing as 'a?'.
+      call add(tl, [2, 'a\{0,1}', 'asiubid axxxaaa', 'a'])
+      " Same thing as 'a\{0,1}'.
+      call add(tl, [2, 'a\{1,0}', 'asiubid axxxaaa', 'a'])
+      call add(tl, [2, 'a\{3,6}', 'aa siofuh'])
+      call add(tl, [2, 'a\{3,6}', 'aaaaa asfoij afaa', 'aaaaa'])
+      call add(tl, [2, 'a\{3,6}', 'aaaaaaaa', 'aaaaaa'])
+      call add(tl, [2, 'a\{0}', 'asoiuj', ''])
+      call add(tl, [2, 'a\{2}', 'aaaa', 'aa'])
+      call add(tl, [2, 'a\{2}', 'iuash fiusahfliusah fiushfilushfi uhsaifuh askfj nasfvius afg aaaa sfiuhuhiushf', 'aa'])
+      call add(tl, [2, 'a\{2}', 'abcdefghijklmnopqrestuvwxyz1234567890'])
+      " Same thing as 'a*'.
+      call add(tl, [2, 'a\{0,}', 'oij sdigfusnf', ''])
+      call add(tl, [2, 'a\{0,}', 'aaaaa aa', 'aaaaa'])
+      call add(tl, [2, 'a\{2,}', 'sdfiougjdsafg'])
+      call add(tl, [2, 'a\{2,}', 'aaaaasfoij ', 'aaaaa'])
+      call add(tl, [2, 'a\{5,}', 'xxaaaaxxx '])
+      call add(tl, [2, 'a\{5,}', 'xxaaaaaxxx ', 'aaaaa'])
+      call add(tl, [2, 'a\{,0}', 'oidfguih iuhi hiu aaaa', ''])
+      call add(tl, [2, 'a\{,5}', 'abcd', 'a'])
+      call add(tl, [2, 'a\{,5}', 'aaaaaaaaaa', 'aaaaa'])
+      " Leading star as normal char when \{} follows.
+      call add(tl, [2, '^*\{4,}$', '***'])
+      call add(tl, [2, '^*\{4,}$', '****', '****'])
+      call add(tl, [2, '^*\{4,}$', '*****', '*****'])
+      " Same thing as 'a*'.
+      call add(tl, [2, 'a\{}', 'bbbcddiuhfcd', ''])
+      call add(tl, [2, 'a\{}', 'aaaaioudfh coisf jda', 'aaaa'])
+
+      call add(tl, [2, 'a\{-0,0}', 'abcdfdoij', ''])
+      " Anti-greedy version of 'a?'.
+      call add(tl, [2, 'a\{-0,1}', 'asiubid axxxaaa', ''])
+      call add(tl, [2, 'a\{-3,6}', 'aa siofuh'])
+      call add(tl, [2, 'a\{-3,6}', 'aaaaa asfoij afaa', 'aaa'])
+      call add(tl, [2, 'a\{-3,6}', 'aaaaaaaa', 'aaa'])
+      call add(tl, [2, 'a\{-0}', 'asoiuj', ''])
+      call add(tl, [2, 'a\{-2}', 'aaaa', 'aa'])
+      call add(tl, [2, 'a\{-2}', 'abcdefghijklmnopqrestuvwxyz1234567890'])
+      call add(tl, [2, 'a\{-0,}', 'oij sdigfusnf', ''])
+      call add(tl, [2, 'a\{-0,}', 'aaaaa aa', ''])
+      call add(tl, [2, 'a\{-2,}', 'sdfiougjdsafg'])
+      call add(tl, [2, 'a\{-2,}', 'aaaaasfoij ', 'aa'])
+      call add(tl, [2, 'a\{-,0}', 'oidfguih iuhi hiu aaaa', ''])
+      call add(tl, [2, 'a\{-,5}', 'abcd', ''])
+      call add(tl, [2, 'a\{-,5}', 'aaaaaaaaaa', ''])
+      " Anti-greedy version of 'a*'.
+      call add(tl, [2, 'a\{-}', 'bbbcddiuhfcd', ''])
+      call add(tl, [2, 'a\{-}', 'aaaaioudfh coisf jda', ''])
+    ]])
 
     -- Test groups of characters and submatches.
-    execute([[call add(tl, [2, '\(abc\)*', 'abcabcabc', 'abcabcabc', 'abc'])]])
-    execute([[call add(tl, [2, '\(ab\)\+', 'abababaaaaa', 'ababab', 'ab'])]])
-    execute([[call add(tl, [2, '\(abaaaaa\)*cd', 'cd', 'cd', ''])]])
-    execute([[call add(tl, [2, '\(test1\)\? \(test2\)\?', 'test1 test3', 'test1 ', 'test1', ''])]])
-    execute([[call add(tl, [2, '\(test1\)\= \(test2\) \(test4443\)\=', ' test2 test4443 yupiiiiiiiiiii', ' test2 test4443', '', 'test2', 'test4443'])]])
-    execute([[call add(tl, [2, '\(\(sub1\) hello \(sub 2\)\)', 'asterix sub1 hello sub 2 obelix', 'sub1 hello sub 2', 'sub1 hello sub 2', 'sub1', 'sub 2'])]])
-    execute([[call add(tl, [2, '\(\(\(yyxxzz\)\)\)', 'abcdddsfiusfyyzzxxyyxxzz', 'yyxxzz', 'yyxxzz', 'yyxxzz', 'yyxxzz'])]])
-    execute([[call add(tl, [2, '\v((ab)+|c+)+', 'abcccaba', 'abcccab', 'ab', 'ab'])]])
-    execute([[call add(tl, [2, '\v((ab)|c*)+', 'abcccaba', 'abcccab', '', 'ab'])]])
-    execute([[call add(tl, [2, '\v(a(c*)+b)+', 'acbababaaa', 'acbabab', 'ab', ''])]])
-    execute([[call add(tl, [2, '\v(a|b*)+', 'aaaa', 'aaaa', ''])]])
-    execute([[call add(tl, [2, '\p*', 'aá 	', 'aá '])]])
+    source([[
+      call add(tl, [2, '\(abc\)*', 'abcabcabc', 'abcabcabc', 'abc'])
+      call add(tl, [2, '\(ab\)\+', 'abababaaaaa', 'ababab', 'ab'])
+      call add(tl, [2, '\(abaaaaa\)*cd', 'cd', 'cd', ''])
+      call add(tl, [2, '\(test1\)\? \(test2\)\?', 'test1 test3', 'test1 ', 'test1', ''])
+      call add(tl, [2, '\(test1\)\= \(test2\) \(test4443\)\=', ' test2 test4443 yupiiiiiiiiiii', ' test2 test4443', '', 'test2', 'test4443'])
+      call add(tl, [2, '\(\(sub1\) hello \(sub 2\)\)', 'asterix sub1 hello sub 2 obelix', 'sub1 hello sub 2', 'sub1 hello sub 2', 'sub1', 'sub 2'])
+      call add(tl, [2, '\(\(\(yyxxzz\)\)\)', 'abcdddsfiusfyyzzxxyyxxzz', 'yyxxzz', 'yyxxzz', 'yyxxzz', 'yyxxzz'])
+      call add(tl, [2, '\v((ab)+|c+)+', 'abcccaba', 'abcccab', 'ab', 'ab'])
+      call add(tl, [2, '\v((ab)|c*)+', 'abcccaba', 'abcccab', '', 'ab'])
+      call add(tl, [2, '\v(a(c*)+b)+', 'acbababaaa', 'acbabab', 'ab', ''])
+      call add(tl, [2, '\v(a|b*)+', 'aaaa', 'aaaa', ''])
+      call add(tl, [2, '\p*', 'aá 	', 'aá '])
+    ]])
 
     -- Test greedy-ness and lazy-ness.
-    execute([[call add(tl, [2, 'a\{-2,7}','aaaaaaaaaaaaa', 'aa'])]])
-    execute([[call add(tl, [2, 'a\{-2,7}x','aaaaaaaaax', 'aaaaaaax'])]])
-    execute([[call add(tl, [2, 'a\{2,7}','aaaaaaaaaaaaaaaaaaaa', 'aaaaaaa'])]])
-    execute([[call add(tl, [2, 'a\{2,7}x','aaaaaaaaax', 'aaaaaaax'])]])
-    execute([[call add(tl, [2, '\vx(.{-,8})yz(.*)','xayxayzxayzxayz','xayxayzxayzxayz','ayxa','xayzxayz'])]])
-    execute([[call add(tl, [2, '\vx(.*)yz(.*)','xayxayzxayzxayz','xayxayzxayzxayz', 'ayxayzxayzxa',''])]])
-    execute([[call add(tl, [2, '\v(a{1,2}){-2,3}','aaaaaaa','aaaa','aa'])]])
-    execute([[call add(tl, [2, '\v(a{-1,3})+', 'aa', 'aa', 'a'])]])
-    execute([[call add(tl, [2, '^\s\{-}\zs\( x\|x$\)', ' x', ' x', ' x'])]])
-    execute([[call add(tl, [2, '^\s\{-}\zs\(x\| x$\)', ' x', ' x', ' x'])]])
-    execute([[call add(tl, [2, '^\s\{-}\ze\(x\| x$\)', ' x', '', ' x'])]])
-    execute([[call add(tl, [2, '^\(\s\{-}\)\(x\| x$\)', ' x', ' x', '', ' x'])]])
+    source([[
+      call add(tl, [2, 'a\{-2,7}','aaaaaaaaaaaaa', 'aa'])
+      call add(tl, [2, 'a\{-2,7}x','aaaaaaaaax', 'aaaaaaax'])
+      call add(tl, [2, 'a\{2,7}','aaaaaaaaaaaaaaaaaaaa', 'aaaaaaa'])
+      call add(tl, [2, 'a\{2,7}x','aaaaaaaaax', 'aaaaaaax'])
+      call add(tl, [2, '\vx(.{-,8})yz(.*)','xayxayzxayzxayz','xayxayzxayzxayz','ayxa','xayzxayz'])
+      call add(tl, [2, '\vx(.*)yz(.*)','xayxayzxayzxayz','xayxayzxayzxayz', 'ayxayzxayzxa',''])
+      call add(tl, [2, '\v(a{1,2}){-2,3}','aaaaaaa','aaaa','aa'])
+      call add(tl, [2, '\v(a{-1,3})+', 'aa', 'aa', 'a'])
+      call add(tl, [2, '^\s\{-}\zs\( x\|x$\)', ' x', ' x', ' x'])
+      call add(tl, [2, '^\s\{-}\zs\(x\| x$\)', ' x', ' x', ' x'])
+      call add(tl, [2, '^\s\{-}\ze\(x\| x$\)', ' x', '', ' x'])
+      call add(tl, [2, '^\(\s\{-}\)\(x\| x$\)', ' x', ' x', '', ' x'])
+    ]])
 
     -- Test Character classes.
     execute([[call add(tl, [2, '\d\+e\d\d','test 10e23 fd','10e23'])]])
 
     -- Test collections and character range [].
-    execute([[call add(tl, [2, '\v[a]', 'abcd', 'a'])]])
-    execute([[call add(tl, [2, 'a[bcd]', 'abcd', 'ab'])]])
-    execute([[call add(tl, [2, 'a[b-d]', 'acbd', 'ac'])]])
-    execute([[call add(tl, [2, '[a-d][e-f][x-x]d', 'cexdxx', 'cexd'])]])
-    execute([=[call add(tl, [2, '\v[[:alpha:]]+', 'abcdefghijklmnopqrstuvwxyz6','abcdefghijklmnopqrstuvwxyz'])]=])
-    execute([[call add(tl, [2, '[[:alpha:]\+]', '6x8','x'])]])
-    execute([[call add(tl, [2, '[^abc]\+','abcabcabc'])]])
-    execute([[call add(tl, [2, '[^abc]','defghiasijvoinasoiunbvb','d'])]])
-    execute([[call add(tl, [2, '[^abc]\+','ddddddda','ddddddd'])]])
-    execute([[call add(tl, [2, '[^a-d]\+','aaaAAAZIHFNCddd','AAAZIHFNC'])]])
-    execute([[call add(tl, [2, '[a-f]*','iiiiiiii',''])]])
-    execute([[call add(tl, [2, '[a-f]*','abcdefgh','abcdef'])]])
-    execute([[call add(tl, [2, '[^a-f]\+','abcdefgh','gh'])]])
-    execute([[call add(tl, [2, '[a-c]\{-3,6}','abcabc','abc'])]])
-    execute([=[call add(tl, [2, '[^[:alpha:]]\+','abcccadfoij7787ysf287yrnccdu','7787'])]=])
-    execute([[call add(tl, [2, '[-a]', '-', '-'])]])
-    execute([[call add(tl, [2, '[a-]', '-', '-'])]])
-    execute([[call add(tl, [2, '[a-f]*\c','ABCDEFGH','ABCDEF'])]])
-    execute([[call add(tl, [2, '[abc][xyz]\c','-af-AF-BY--','BY'])]])
-    -- Filename regexp.
-    execute([[call add(tl, [2, '[-./[:alnum:]_~]\+', 'log13.file', 'log13.file'])]])
-    -- Special chars.
-    execute([[call add(tl, [2, '[\]\^\-\\]\+', '\^\\\-\---^', '\^\\\-\---^'])]])
-    -- Collation elem.
-    execute([=[call add(tl, [2, '[[.a.]]\+', 'aa', 'aa'])]=])
-    -- Middle of regexp.
-    execute([[call add(tl, [2, 'abc[0-9]*ddd', 'siuhabc ii'])]])
-    execute([[call add(tl, [2, 'abc[0-9]*ddd', 'adf abc44482ddd oijs', 'abc44482ddd'])]])
-    execute([[call add(tl, [2, '\_[0-9]\+', 'asfi9888u', '9888'])]])
-    execute([[call add(tl, [2, '[0-9\n]\+', 'asfi9888u', '9888'])]])
-    execute([[call add(tl, [2, '\_[0-9]\+', "asfi\n9888u", "\n9888"])]])
-    execute([[call add(tl, [2, '\_f', "  \na ", "\n"])]])
-    execute([[call add(tl, [2, '\_f\+', "  \na ", "\na"])]])
-    execute([[call add(tl, [2, '[0-9A-Za-z-_.]\+', " @0_a.A-{ ", "0_a.A-"])]])
+    source([=[
+      call add(tl, [2, '\v[a]', 'abcd', 'a'])
+      call add(tl, [2, 'a[bcd]', 'abcd', 'ab'])
+      call add(tl, [2, 'a[b-d]', 'acbd', 'ac'])
+      call add(tl, [2, '[a-d][e-f][x-x]d', 'cexdxx', 'cexd'])
+      call add(tl, [2, '\v[[:alpha:]]+', 'abcdefghijklmnopqrstuvwxyz6','abcdefghijklmnopqrstuvwxyz'])
+      call add(tl, [2, '[[:alpha:]\+]', '6x8','x'])
+      call add(tl, [2, '[^abc]\+','abcabcabc'])
+      call add(tl, [2, '[^abc]','defghiasijvoinasoiunbvb','d'])
+      call add(tl, [2, '[^abc]\+','ddddddda','ddddddd'])
+      call add(tl, [2, '[^a-d]\+','aaaAAAZIHFNCddd','AAAZIHFNC'])
+      call add(tl, [2, '[a-f]*','iiiiiiii',''])
+      call add(tl, [2, '[a-f]*','abcdefgh','abcdef'])
+      call add(tl, [2, '[^a-f]\+','abcdefgh','gh'])
+      call add(tl, [2, '[a-c]\{-3,6}','abcabc','abc'])
+      call add(tl, [2, '[^[:alpha:]]\+','abcccadfoij7787ysf287yrnccdu','7787'])
+      call add(tl, [2, '[-a]', '-', '-'])
+      call add(tl, [2, '[a-]', '-', '-'])
+      call add(tl, [2, '[a-f]*\c','ABCDEFGH','ABCDEF'])
+      call add(tl, [2, '[abc][xyz]\c','-af-AF-BY--','BY'])
+      " Filename regexp.
+      call add(tl, [2, '[-./[:alnum:]_~]\+', 'log13.file', 'log13.file'])
+      " Special chars.
+      call add(tl, [2, '[\]\^\-\\]\+', '\^\\\-\---^', '\^\\\-\---^'])
+      " Collation elem.
+      call add(tl, [2, '[[.a.]]\+', 'aa', 'aa'])
+      " Middle of regexp.
+      call add(tl, [2, 'abc[0-9]*ddd', 'siuhabc ii'])
+      call add(tl, [2, 'abc[0-9]*ddd', 'adf abc44482ddd oijs', 'abc44482ddd'])
+      call add(tl, [2, '\_[0-9]\+', 'asfi9888u', '9888'])
+      call add(tl, [2, '[0-9\n]\+', 'asfi9888u', '9888'])
+      call add(tl, [2, '\_[0-9]\+', "asfi\n9888u", "\n9888"])
+      call add(tl, [2, '\_f', "  \na ", "\n"])
+      call add(tl, [2, '\_f\+', "  \na ", "\na"])
+      call add(tl, [2, '[0-9A-Za-z-_.]\+', " @0_a.A-{ ", "0_a.A-"])
+    ]=])
 
     -- """ Test start/end of line, start/end of file.
-    execute([[call add(tl, [2, '^a.', "a_\nb ", "a_"])]])
-    execute([[call add(tl, [2, '^a.', "b a \na_"])]])
-    execute([[call add(tl, [2, '.a$', " a\n "])]])
-    execute([[call add(tl, [2, '.a$', " a b\n_a", "_a"])]])
-    execute([[call add(tl, [2, '\%^a.', "a a\na", "a "])]])
-    execute([[call add(tl, [2, '\%^a', " a \na "])]])
-    execute([[call add(tl, [2, '.a\%$', " a\n "])]])
-    execute([[call add(tl, [2, '.a\%$', " a\n_a", "_a"])]])
+    source([[
+      call add(tl, [2, '^a.', "a_\nb ", "a_"])
+      call add(tl, [2, '^a.', "b a \na_"])
+      call add(tl, [2, '.a$', " a\n "])
+      call add(tl, [2, '.a$', " a b\n_a", "_a"])
+      call add(tl, [2, '\%^a.', "a a\na", "a "])
+      call add(tl, [2, '\%^a', " a \na "])
+      call add(tl, [2, '.a\%$', " a\n "])
+      call add(tl, [2, '.a\%$', " a\n_a", "_a"])
+    ]])
 
-    -- """ Test recognition of character classes.
-    execute([[call add(tl, [2, '[0-7]\+', 'x0123456789x', '01234567'])]])
-    execute([[call add(tl, [2, '[^0-7]\+', '0a;X+% 897', 'a;X+% 89'])]])
-    execute([[call add(tl, [2, '[0-9]\+', 'x0123456789x', '0123456789'])]])
-    execute([[call add(tl, [2, '[^0-9]\+', '0a;X+% 9', 'a;X+% '])]])
-    execute([[call add(tl, [2, '[0-9a-fA-F]\+', 'x0189abcdefg', '0189abcdef'])]])
-    execute([[call add(tl, [2, '[^0-9A-Fa-f]\+', '0189g;X+% ab', 'g;X+% '])]])
-    execute([[call add(tl, [2, '[a-z_A-Z0-9]\+', ';+aso_SfOij ', 'aso_SfOij'])]])
-    execute([[call add(tl, [2, '[^a-z_A-Z0-9]\+', 'aSo_;+% sfOij', ';+% '])]])
-    execute([[call add(tl, [2, '[a-z_A-Z]\+', '0abyz_ABYZ;', 'abyz_ABYZ'])]])
-    execute([[call add(tl, [2, '[^a-z_A-Z]\+', 'abAB_09;+% yzYZ', '09;+% '])]])
-    execute([[call add(tl, [2, '[a-z]\+', '0abcxyz1', 'abcxyz'])]])
-    execute([[call add(tl, [2, '[a-z]\+', 'AabxyzZ', 'abxyz'])]])
-    execute([[call add(tl, [2, '[^a-z]\+', 'a;X09+% x', ';X09+% '])]])
-    execute([[call add(tl, [2, '[^a-z]\+', 'abX0;%yz', 'X0;%'])]])
-    execute([[call add(tl, [2, '[a-zA-Z]\+', '0abABxzXZ9', 'abABxzXZ'])]])
-    execute([[call add(tl, [2, '[^a-zA-Z]\+', 'ab09_;+ XZ', '09_;+ '])]])
-    execute([[call add(tl, [2, '[A-Z]\+', 'aABXYZz', 'ABXYZ'])]])
-    execute([[call add(tl, [2, '[^A-Z]\+', 'ABx0;%YZ', 'x0;%'])]])
-    execute([[call add(tl, [2, '[a-z]\+\c', '0abxyzABXYZ;', 'abxyzABXYZ'])]])
-    execute([[call add(tl, [2, '[A-Z]\+\c', '0abABxzXZ9', 'abABxzXZ'])]])
-    execute([[call add(tl, [2, '\c[^a-z]\+', 'ab09_;+ XZ', '09_;+ '])]])
-    execute([[call add(tl, [2, '\c[^A-Z]\+', 'ab09_;+ XZ', '09_;+ '])]])
-    execute([[call add(tl, [2, '\C[^A-Z]\+', 'ABCOIJDEOIFNSD jsfoij sa', ' jsfoij sa'])]])
+    -- Test recognition of character classes.
+    source([[
+      call add(tl, [2, '[0-7]\+', 'x0123456789x', '01234567'])
+      call add(tl, [2, '[^0-7]\+', '0a;X+% 897', 'a;X+% 89'])
+      call add(tl, [2, '[0-9]\+', 'x0123456789x', '0123456789'])
+      call add(tl, [2, '[^0-9]\+', '0a;X+% 9', 'a;X+% '])
+      call add(tl, [2, '[0-9a-fA-F]\+', 'x0189abcdefg', '0189abcdef'])
+      call add(tl, [2, '[^0-9A-Fa-f]\+', '0189g;X+% ab', 'g;X+% '])
+      call add(tl, [2, '[a-z_A-Z0-9]\+', ';+aso_SfOij ', 'aso_SfOij'])
+      call add(tl, [2, '[^a-z_A-Z0-9]\+', 'aSo_;+% sfOij', ';+% '])
+      call add(tl, [2, '[a-z_A-Z]\+', '0abyz_ABYZ;', 'abyz_ABYZ'])
+      call add(tl, [2, '[^a-z_A-Z]\+', 'abAB_09;+% yzYZ', '09;+% '])
+      call add(tl, [2, '[a-z]\+', '0abcxyz1', 'abcxyz'])
+      call add(tl, [2, '[a-z]\+', 'AabxyzZ', 'abxyz'])
+      call add(tl, [2, '[^a-z]\+', 'a;X09+% x', ';X09+% '])
+      call add(tl, [2, '[^a-z]\+', 'abX0;%yz', 'X0;%'])
+      call add(tl, [2, '[a-zA-Z]\+', '0abABxzXZ9', 'abABxzXZ'])
+      call add(tl, [2, '[^a-zA-Z]\+', 'ab09_;+ XZ', '09_;+ '])
+      call add(tl, [2, '[A-Z]\+', 'aABXYZz', 'ABXYZ'])
+      call add(tl, [2, '[^A-Z]\+', 'ABx0;%YZ', 'x0;%'])
+      call add(tl, [2, '[a-z]\+\c', '0abxyzABXYZ;', 'abxyzABXYZ'])
+      call add(tl, [2, '[A-Z]\+\c', '0abABxzXZ9', 'abABxzXZ'])
+      call add(tl, [2, '\c[^a-z]\+', 'ab09_;+ XZ', '09_;+ '])
+      call add(tl, [2, '\c[^A-Z]\+', 'ab09_;+ XZ', '09_;+ '])
+      call add(tl, [2, '\C[^A-Z]\+', 'ABCOIJDEOIFNSD jsfoij sa', ' jsfoij sa'])
+    ]])
 
-    -- """ Tests for \z features.
-    -- Match ends at \ze.
-    execute([[call add(tl, [2, 'xx \ze test', 'xx '])]])
-    execute([[call add(tl, [2, 'abc\zeend', 'oij abcend', 'abc'])]])
-    execute([[call add(tl, [2, 'aa\zebb\|aaxx', ' aabb ', 'aa'])]])
-    execute([[call add(tl, [2, 'aa\zebb\|aaxx', ' aaxx ', 'aaxx'])]])
-    execute([[call add(tl, [2, 'aabb\|aa\zebb', ' aabb ', 'aabb'])]])
-    execute([[call add(tl, [2, 'aa\zebb\|aaebb', ' aabb ', 'aa'])]])
-    -- Match starts at \zs.
-    execute([[call add(tl, [2, 'abc\zsdd', 'ddabcddxyzt', 'dd'])]])
-    execute([[call add(tl, [2, 'aa \zsax', ' ax'])]])
-    execute([[call add(tl, [2, 'abc \zsmatch\ze abc', 'abc abc abc match abc abc', 'match'])]])
-    execute([[call add(tl, [2, '\v(a \zsif .*){2}', 'a if then a if last', 'if last', 'a if last'])]])
-    execute([[call add(tl, [2, '\>\zs.', 'aword. ', '.'])]])
-    execute([[call add(tl, [2, '\s\+\ze\[/\|\s\zs\s\+', 'is   [a t', '  '])]])
+    -- Tests for \z features.
+    source([[
+      " Match ends at \ze.
+      call add(tl, [2, 'xx \ze test', 'xx '])
+      call add(tl, [2, 'abc\zeend', 'oij abcend', 'abc'])
+      call add(tl, [2, 'aa\zebb\|aaxx', ' aabb ', 'aa'])
+      call add(tl, [2, 'aa\zebb\|aaxx', ' aaxx ', 'aaxx'])
+      call add(tl, [2, 'aabb\|aa\zebb', ' aabb ', 'aabb'])
+      call add(tl, [2, 'aa\zebb\|aaebb', ' aabb ', 'aa'])
+      " Match starts at \zs.
+      call add(tl, [2, 'abc\zsdd', 'ddabcddxyzt', 'dd'])
+      call add(tl, [2, 'aa \zsax', ' ax'])
+      call add(tl, [2, 'abc \zsmatch\ze abc', 'abc abc abc match abc abc', 'match'])
+      call add(tl, [2, '\v(a \zsif .*){2}', 'a if then a if last', 'if last', 'a if last'])
+      call add(tl, [2, '\>\zs.', 'aword. ', '.'])
+      call add(tl, [2, '\s\+\ze\[/\|\s\zs\s\+', 'is   [a t', '  '])
+    ]])
 
     -- """ Tests for \@= and \& features.
-    execute([[call add(tl, [2, 'abc\@=', 'abc', 'ab'])]])
-    execute([[call add(tl, [2, 'abc\@=cd', 'abcd', 'abcd'])]])
-    execute([[call add(tl, [2, 'abc\@=', 'ababc', 'ab'])]])
-    -- Will never match, no matter the input text.
-    execute([[call add(tl, [2, 'abcd\@=e', 'abcd'])]])
-    -- Will never match.
-    execute([[call add(tl, [2, 'abcd\@=e', 'any text in here ... '])]])
-    execute([[call add(tl, [2, '\v(abc)@=..', 'xabcd', 'ab', 'abc'])]])
-    execute([[call add(tl, [2, '\(.*John\)\@=.*Bob', 'here is John, and here is B'])]])
-    execute([[call add(tl, [2, '\(John.*\)\@=.*Bob', 'John is Bobs friend', 'John is Bob', 'John is Bobs friend'])]])
-    execute([[call add(tl, [2, '\<\S\+\())\)\@=', '$((i=i+1))', 'i=i+1', '))'])]])
-    execute([[call add(tl, [2, '.*John\&.*Bob', 'here is John, and here is B'])]])
-    execute([[call add(tl, [2, '.*John\&.*Bob', 'John is Bobs friend', 'John is Bob'])]])
-    execute([[call add(tl, [2, '\v(test1)@=.*yep', 'this is a test1, yep it is', 'test1, yep', 'test1'])]])
-    execute([[call add(tl, [2, 'foo\(bar\)\@!', 'foobar'])]])
-    execute([[call add(tl, [2, 'foo\(bar\)\@!', 'foo bar', 'foo'])]])
-    execute([[call add(tl, [2, 'if \(\(then\)\@!.\)*$', ' if then else'])]])
-    execute([[call add(tl, [2, 'if \(\(then\)\@!.\)*$', ' if else ', 'if else ', ' '])]])
-    execute([[call add(tl, [2, '\(foo\)\@!bar', 'foobar', 'bar'])]])
-    execute([[call add(tl, [2, '\(foo\)\@!...bar', 'foobar'])]])
-    execute([[call add(tl, [2, '^\%(.*bar\)\@!.*\zsfoo', ' bar foo '])]])
-    execute([[call add(tl, [2, '^\%(.*bar\)\@!.*\zsfoo', ' foo bar '])]])
-    execute([[call add(tl, [2, '^\%(.*bar\)\@!.*\zsfoo', ' foo xxx ', 'foo'])]])
-    execute([[call add(tl, [2, '[ ]\@!\p\%([ ]\@!\p\)*:', 'implicit mappings:', 'mappings:'])]])
-    execute([[call add(tl, [2, '[ ]\@!\p\([ ]\@!\p\)*:', 'implicit mappings:', 'mappings:', 's'])]])
-    execute([[call add(tl, [2, 'm\k\+_\@=\%(_\@!\k\)\@<=\k\+e', 'mx__xe', 'mx__xe'])]])
-    execute([[call add(tl, [2, '\%(\U\@<=S\k*\|S\l\)R', 'SuR', 'SuR'])]])
+    source([[
+      call add(tl, [2, 'abc\@=', 'abc', 'ab'])
+      call add(tl, [2, 'abc\@=cd', 'abcd', 'abcd'])
+      call add(tl, [2, 'abc\@=', 'ababc', 'ab'])
+      " Will never match, no matter the input text.
+      call add(tl, [2, 'abcd\@=e', 'abcd'])
+      " Will never match.
+      call add(tl, [2, 'abcd\@=e', 'any text in here ... '])
+      call add(tl, [2, '\v(abc)@=..', 'xabcd', 'ab', 'abc'])
+      call add(tl, [2, '\(.*John\)\@=.*Bob', 'here is John, and here is B'])
+      call add(tl, [2, '\(John.*\)\@=.*Bob', 'John is Bobs friend', 'John is Bob', 'John is Bobs friend'])
+      call add(tl, [2, '\<\S\+\())\)\@=', '$((i=i+1))', 'i=i+1', '))'])
+      call add(tl, [2, '.*John\&.*Bob', 'here is John, and here is B'])
+      call add(tl, [2, '.*John\&.*Bob', 'John is Bobs friend', 'John is Bob'])
+      call add(tl, [2, '\v(test1)@=.*yep', 'this is a test1, yep it is', 'test1, yep', 'test1'])
+      call add(tl, [2, 'foo\(bar\)\@!', 'foobar'])
+      call add(tl, [2, 'foo\(bar\)\@!', 'foo bar', 'foo'])
+      call add(tl, [2, 'if \(\(then\)\@!.\)*$', ' if then else'])
+      call add(tl, [2, 'if \(\(then\)\@!.\)*$', ' if else ', 'if else ', ' '])
+      call add(tl, [2, '\(foo\)\@!bar', 'foobar', 'bar'])
+      call add(tl, [2, '\(foo\)\@!...bar', 'foobar'])
+      call add(tl, [2, '^\%(.*bar\)\@!.*\zsfoo', ' bar foo '])
+      call add(tl, [2, '^\%(.*bar\)\@!.*\zsfoo', ' foo bar '])
+      call add(tl, [2, '^\%(.*bar\)\@!.*\zsfoo', ' foo xxx ', 'foo'])
+      call add(tl, [2, '[ ]\@!\p\%([ ]\@!\p\)*:', 'implicit mappings:', 'mappings:'])
+      call add(tl, [2, '[ ]\@!\p\([ ]\@!\p\)*:', 'implicit mappings:', 'mappings:', 's'])
+      call add(tl, [2, 'm\k\+_\@=\%(_\@!\k\)\@<=\k\+e', 'mx__xe', 'mx__xe'])
+      call add(tl, [2, '\%(\U\@<=S\k*\|S\l\)R', 'SuR', 'SuR'])
+    ]])
 
     -- """ Combining different tests and features.
     execute([=[call add(tl, [2, '[[:alpha:]]\{-2,6}', '787abcdiuhsasiuhb4', 'ab'])]=])
@@ -493,48 +512,50 @@ describe('64', function()
 
     -- """ Run the tests.
 
-    execute('for t in tl')
-    execute('  let re = t[0]')
-    execute('  let pat = t[1]')
-    execute('  let text = t[2]')
-    execute('  let matchidx = 3')
-    execute('  for engine in [0, 1, 2]')
-    execute('    if engine == 2 && re == 0 || engine == 1 && re == 1')
-    execute('      continue')
-    execute('    endif')
-    execute('    let &regexpengine = engine')
-    execute('    try')
-    execute('      let l = matchlist(text, pat)')
-    execute('    catch')
-    execute([[      $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", caused an exception: \"' . v:exception . '\"']])
-    execute('    endtry')
-    -- Check the match itself.
-    execute('    if len(l) == 0 && len(t) > matchidx')
-    execute([[      $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", did not match, expected: \"' . t[matchidx] . '\"']])
-    execute('    elseif len(l) > 0 && len(t) == matchidx')
-    execute([[      $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", match: \"' . l[0] . '\", expected no match']])
-    execute('    elseif len(t) > matchidx && l[0] != t[matchidx]')
-    execute([[      $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", match: \"' . l[0] . '\", expected: \"' . t[matchidx] . '\"']])
-    execute('    else')
-    execute([[      $put ='OK ' . engine . ' - ' . pat]])
-    execute('    endif')
-    execute('    if len(l) > 0')
-    -- Check all the nine submatches.
-    execute('      for i in range(1, 9)')
-    execute('        if len(t) <= matchidx + i')
-    execute([[          let e = '']])
-    execute('        else')
-    execute('          let e = t[matchidx + i]')
-    execute('        endif')
-    execute('        if l[i] != e')
-    execute([[          $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", submatch ' . i . ': \"' . l[i] . '\", expected: \"' . e . '\"']])
-    execute('        endif')
-    execute('      endfor')
-    execute('      unlet i')
-    execute('    endif')
-    execute('  endfor')
-    execute('endfor')
-    execute('unlet t tl e l')
+    source([[
+      for t in tl
+        let re = t[0]
+        let pat = t[1]
+        let text = t[2]
+        let matchidx = 3
+        for engine in [0, 1, 2]
+          if engine == 2 && re == 0 || engine == 1 && re == 1
+            continue
+          endif
+          let &regexpengine = engine
+          try
+            let l = matchlist(text, pat)
+          catch
+            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", caused an exception: \"' . v:exception . '\"'
+          endtry
+	  " Check the match itself.
+          if len(l) == 0 && len(t) > matchidx
+            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", did not match, expected: \"' . t[matchidx] . '\"'
+          elseif len(l) > 0 && len(t) == matchidx
+            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", match: \"' . l[0] . '\", expected no match'
+          elseif len(t) > matchidx && l[0] != t[matchidx]
+            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", match: \"' . l[0] . '\", expected: \"' . t[matchidx] . '\"'
+          else
+            $put ='OK ' . engine . ' - ' . pat
+          endif
+          if len(l) > 0
+	  " Check all the nine submatches.
+            for i in range(1, 9)
+              if len(t) <= matchidx + i
+                let e = ''
+              else
+                let e = t[matchidx + i]
+              endif
+              if l[i] != e
+                $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", submatch ' . i . ': \"' . l[i] . '\", expected: \"' . e . '\"'
+              endif
+            endfor
+            unlet i
+          endif
+        endfor
+      endfor
+      unlet t tl e l
+    ]])
 
     -- """"" multi-line tests """""""""""""""""""".
     execute('let tl = []')
@@ -621,6 +642,7 @@ describe('64', function()
     feed('Go<esc>p')
 
     -- Check patterns matching cursor position.
+    -- TODO: is the line cont OK?
     source([[
       func! Postest()
         new
@@ -670,18 +692,20 @@ describe('64', function()
     feed('"bybGo<esc>"apo<esc>"bp')
 
     -- Check for detecting error.
-    execute('set regexpengine=2')
-    execute([=[for pat in [' \ze*', ' \zs*']]=])
-    execute('  try')
-    execute([[    let l = matchlist('x x', pat)]])
-    execute([[    $put ='E888 NOT detected for ' . pat]])
-    execute('  catch')
-    execute([[    $put ='E888 detected for ' . pat]])
-    execute('  endtry')
-    execute('endfor')
+    source([=[
+      set regexpengine=2
+      for pat in [' \ze*', ' \zs*']
+        try
+          let l = matchlist('x x', pat)
+          $put ='E888 NOT detected for ' . pat
+        catch
+          $put ='E888 detected for ' . pat
+        endtry
+      endfor
+    ]=])
 
     -- Prepare buffer for expect()
-    execute([[0,/^\%#=1^Results/-1 delete]])
+    execute([[0,/\%#=1^Results/-1 delete]])
 
     -- Assert buffer contents.
     expect([=[
