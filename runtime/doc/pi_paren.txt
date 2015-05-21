@@ -51,10 +51,9 @@ are:
   buffer-local equivalents b:matchparen_timeout and
   b:matchparen_insert_timeout.
 
-If you would like the |%| command to work better, the matchit plugin can be
-used, see |matchit-install|.  This plugin also helps to skip matches in
-comments.  This is unrelated to the matchparen highlighting, they use a
-different mechanism.
+If you would like the |%| command to work better, the |matchit| plugin can be
+used.  This plugin also helps to skip matches in comments.  This is unrelated
+to the matchparen highlighting, they use a different mechanism.
 
 ==============================================================================
  vim:tw=78:ts=8:ft=help:norl:

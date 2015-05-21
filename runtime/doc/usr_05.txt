@@ -399,45 +399,29 @@ Further reading:
 |new-filetype|		How to detect a new file type.
 
 ==============================================================================
-*05.5*	Adding a help file		*add-local-help* *matchit-install*
+*05.5*	Adding a help file		                   *add-local-help*
 
 If you are lucky, the plugin you installed also comes with a help file.  We
 will explain how to install the help file, so that you can easily find help
 for your new plugin.
-   Let us use the "matchit.vim" plugin as an example (it is included with
-Vim).  This plugin makes the "%" command jump to matching HTML tags,
-if/else/endif in Vim scripts, etc.  Very useful, although it's not backwards
-compatible (that's why it is not enabled by default).
-   This plugin comes with documentation: "matchit.txt".  Let's first copy the
-plugin to the right directory.  This time we will do it from inside Vim, so
-that we can use $VIMRUNTIME.  (You may skip some of the "mkdir" commands if
-you already have the directory.) >
 
-	:!mkdir ~/.vim
-	:!mkdir ~/.vim/plugin
-	:!cp $VIMRUNTIME/macros/matchit.vim ~/.vim/plugin
+Let us suppose a plugin ("my-plugin"), which comes with a help file in a
+non-standard place (it usually resides in a sub-folder called `doc/`).
 
-The "cp" command is for Unix, on MS-DOS you can use "copy".
-
-Now create a "doc" directory in one of the directories in 'runtimepath'. >
+First, create a "doc" directory in one of the directories in 'runtimepath': >
 
 	:!mkdir ~/.vim/doc
 
-Copy the help file to the "doc" directory. >
+Now, copy the help file to the "doc" directory: >
 
-	:!cp $VIMRUNTIME/macros/matchit.txt ~/.vim/doc
+	:!cp my-plugin/my-plugin-doc.txt ~/.vim/doc
 
-Now comes the trick, which allows you to jump to the subjects in the new help
-file: Generate the local tags file with the |:helptags| command. >
+Here comes the trick, which allows you to jump to the subjects in the new help
+file. Generate the local tags file with the |:helptags| command: >
 
 	:helptags ~/.vim/doc
 
-Now you can use the >
-
-	:help g%
-
-command to find help for "g%" in the help file you just added.  You can see an
-entry for the local help file when you do: >
+You can see an entry for the local help file when you do: >
 
 	:help local-additions
 
