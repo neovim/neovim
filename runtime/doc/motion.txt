@@ -183,6 +183,8 @@ l		or					*l*
 			in the same SCREEN column.  <Home> works like "1|",
 			which differs from "0" when the line starts with a
 			<Tab>.
+                        {Nvim} By default, <Home> is mapped so it alternates
+			between behaving like |^| and |0| (see |smart-home|).
 
 							*^*
 ^			To the first non-blank character of the line.

@@ -1,0 +1,35 @@
+*nvim_extra_keymaps.txt*    For Nvim.                         {Nvim}
+
+EXTRA KEYMAPS FOR NVIM                                      *nvim-extra-keymaps*
+
+The `plugin/extra-keymaps.vim` script provides a few extra keymaps that might
+be useful and tries to fix some issues the community has identified with vim's
+default keymaps.
+
+This plugin can be disabled by addinf the following to your |vimrc|: >
+
+    let g:nvim#defaults#maps#use = 0
+
+Additionally, all features can be disabled separately, using the variables
+described below.
+
+The keymaps provided are:
+
+			 *t_<Esc><Esc>*  *gr:nvim#defaults#maps#leave_term_mode*
+1. <Esc><Esc> leaves terminal-mode (see |nvim-terminal-emulator|), like
+   CTRL-\ CTRL-N (see |CTRL-\_CTRL-N|).
+
+					    *Y-eol* *g:nvim#defaults#maps#Y_eol*
+2. |Y| yanks to the end of line, which is more consistent with |cc| and |C|,
+   for example.
+
+				*undo-ctrl-u* *g:nvim#defaults#maps#undo_ctrl_u*
+3. <C-u> can be undone. (see |i_CTRL-U|)
+
+				  *smart-home* *g:nvim#defaults#maps#smart_home*
+4. <Home> moves the cursor to the first non-blank character of the line on
+   first press (like |^|), and the first character of the line on second (like
+   |0|). It alternates afterwards.
+
+============================================================================
+ vim:tw=78:ts=8:noet:ft=help:norl:
