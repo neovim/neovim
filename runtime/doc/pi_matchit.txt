@@ -1,13 +1,6 @@
-*matchit.txt*   Extended "%" matching
+*pi_matchit.txt*   Extended "%" matching
 
-For instructions on installing this file, type
-	:help matchit-install
-inside Vim.
-
-For Vim version 6.3.  Last change:  2007 Aug 29
-
-
-		  VIM REFERENCE MANUAL    by Benji Fisher
+For Vim version 6.3.  Last change:  2015 May 21
 
 *matchit* *matchit.vim*
 
@@ -18,7 +11,6 @@ For Vim version 6.3.  Last change:  2007 Aug 29
 5. Known Bugs and Limitations				|matchit-bugs|
 
 The functionality mentioned here is a plugin, see |add-plugin|.
-This plugin is only available if 'compatible' is not set.
 You can avoid loading this plugin by setting the "loaded_matchit" variable
 in your |vimrc| file: >
 	:let loaded_matchit = 1
@@ -42,7 +34,7 @@ g%	Cycle backwards through matching groups, as specified by
 ]%	Go to [count] next unmatched group, as specified by
 	|b:match_words|.  Similar to |]}|.
 
-							*v_a%*
+							*a%* *v_a%*
 a%	In Visual mode, select the matching group, as specified by
 	|b:match_words|, containing the cursor.  Similar to |v_a[|.
 	A [count] is ignored, and only the first character of the closing
@@ -71,7 +63,7 @@ for how to specify matching patterns.
 MODES:			*matchit-modes* *matchit-v_%* *matchit-o_%*
 
 Mostly, % and related motions (|g%| and |[%| and |]%|) work just like built-in
-|motion| commands in |Operator-pending| and |Visual| modes.  However, you
+motion commands in |Operator-pending| and |Visual| modes.  However, you
 cannot make these motions |linewise| or |characterwise|, since the |:omap|s
 that define them start with "v" in order to make the default behavior
 inclusive.  (See |o_v|.)  In other words, "dV%" will not work.  The
@@ -89,9 +81,9 @@ To support a new language, see |matchit-newlang| below.
 DETAILS:				*matchit-details* *matchit-parse*
 
 Here is an outline of what matchit.vim does each time you hit the "%" key.  If
-there are |backref|s in |b:match_words| then the first step is to produce a
+there are backrefs in |b:match_words| then the first step is to produce a
 version in which these back references have been eliminated; if there are no
-|backref|s then this step is skipped.  This step is called parsing.  For
+backrefs then this step is skipped.  This step is called parsing.  For
 example, "\(foo\|bar\):end\1" is parsed to yield
 "\(foo\|bar\):end\(foo\|bar\)".  This can get tricky, especially if there are
 nested groups.  If debugging is turned on, the parsed version is saved as
@@ -136,9 +128,9 @@ column of the start of the match is saved as |b:match_col|.
 Next, the script looks through |b:match_words| (original and parsed versions)
 for the group and pattern that match.  If debugging is turned on, the group is
 saved as |b:match_ini| (the first pattern) and |b:match_tail| (the rest).  If
-there are |backref|s then, in addition, the matching pattern is saved as
+there are backrefs then, in addition, the matching pattern is saved as
 |b:match_word| and a table of translations is saved as |b:match_table|.  If
-there are |backref|s, these are determined from the matching pattern and
+there are backrefs, these are determined from the matching pattern and
 |b:match_match| and substituted into each pattern in the matching group.
 
 The script decides whether to search forwards or backwards and chooses
@@ -150,34 +142,10 @@ setting |b:match_skip|.
 ==============================================================================
 2. Activation						*matchit-activate*
 
-You can use this script as a plugin, by copying it to your plugin directory.
-See |add-global-plugin| for instructions.  You can also add a line to your
-|vimrc| file, such as >
-	:source $VIMRUNTIME/macros/matchit.vim
-or >
-	:runtime macros/matchit.vim
-Either way, the script should start working the next time you start up Vim.
-
-(Earlier versions of the script did nothing unless a |buffer-variable| named
-|b:match_words| was defined.  Even earlier versions contained autocommands
-that set this variable for various file types.  Now, |b:match_words| is
-defined in many of the default |filetype-plugin|s instead.)
-
-For a new language, you can add autocommands to the script or to your vimrc
-file, but the recommended method is to add a line such as >
+For a new language, you can add a line such as >
 	let b:match_words = '\<foo\>:\<bar\>'
-to the |filetype-plugin| for your language.  See |b:match_words| below for how
+to the corresponding |filetype-plugin|.  See |b:match_words| below for how
 this variable is interpreted.
-
-TROUBLESHOOTING					*matchit-troubleshoot*
-
-The script should work in most installations of Vim.  It may not work if Vim
-was compiled with a minimal feature set, for example if the |+syntax| option
-was not enabled.  If your Vim has support for syntax compiled in, but you do
-not have |syntax| highlighting turned on, matchit.vim should work, but it may
-fail to skip matching groups in comments and strings.  If the |filetype|
-mechanism is turned off, the |b:match_words| variable will probably not be
-defined automatically.
 
 ==============================================================================
 3. Configuration					*matchit-configure*
@@ -267,7 +235,7 @@ have only one group; the effect is undefined if a group has only one pattern.
 A simple example is >
 	:let b:match_words = '\<if\>:\<endif\>,'
 		\ . '\<while\>:\<continue\>:\<break\>:\<endwhile\>'
-(In Vim regular expressions, |\<| and |\>| denote word boundaries.  Thus "if"
+(In Vim regular expressions, |/\<| and |/\>| denote word boundaries.  Thus "if"
 matches the end of "endif" but "\<if\>" does not.)  Then banging on the "%"
 key will bounce the cursor between "if" and the matching "endif"; and from
 "while" to any matching "continue" or "break", then to the matching "endwhile"
@@ -288,7 +256,7 @@ definition to a |filetype-plugin| file.
 Tips: Be careful that your initial pattern does not match your final pattern.
 See the example above for the use of word-boundary expressions.  It is usually
 better to use ".\{-}" (as many as necessary) instead of ".*" (as many as
-possible).  See |\{-|.  For example, in the string "<tag>label</tag>", "<.*>"
+possible).  See |/\{-|.  For example, in the string "<tag>label</tag>", "<.*>"
 matches the whole string whereas "<.\{-}>" and "<[^>]*>" match "<tag>" and
 "</tag>".
 
@@ -307,18 +275,18 @@ if keywords are only recognized after the start of a line or after a
 semicolon (;), with optional white space.
 
 					*matchit-backref* *matchit-\1*
-In any group, the expressions |\1|, |\2|, ..., |\9| refer to parts of the
-INITIAL pattern enclosed in |\(|escaped parentheses|\)|.  These are referred
-to as back references, or backrefs.  For example, >
+In any group, the expressions `\1`, `\2`, ..., `\9` (see |/\1|) refer to parts of the
+INITIAL pattern enclosed in escaped parentheses.  These are referred to as
+back references, or backrefs.  For example, >
 	:let b:match_words = '\<b\(o\+\)\>:\(h\)\1\>'
 means that "bo" pairs with "ho" and "boo" pairs with "hoo" and so on.  Note
 that "\1" does not refer to the "\(h\)" in this example.  If you have
 "\(nested \(parentheses\)\) then "\d" refers to the d-th "\(" and everything
 up to and including the matching "\)":  in "\(nested\(parentheses\)\)", "\1"
 refers to everything and "\2" refers to "\(parentheses\)".  If you use a
-variable such as |s:notend| or |s:sol| in the previous paragraph then remember
+variable such as `s:notend` or `s:sol` in the previous paragraph then remember
 to count any "\(" patterns in this variable.  You do not have to count groups
-defined by |\%(\)|.
+defined by |/\%(\)|.
 
 It should be possible to resolve back references from any pattern in the
 group.  For example, >
@@ -329,7 +297,7 @@ cannot be determined from "andbar".  On the other hand, >
 should work (and have the same effect as "foobar:barfoo:endfoobar"), although
 this has not been thoroughly tested.
 
-You can use |zero-width| patterns such as |\@<=| and |\zs|.  (The latter has
+You can use |/zero-width| patterns such as |/\@<=| and |/\zs|.  (The latter has
 not been thouroughly tested in matchit.vim.)  For example, if the keyword "if"
 must occur at the start of the line, with optional white space, you might use
 the pattern "\(^\s*\)\@<=if" so that the cursor will end on the "i" instead of
@@ -337,7 +305,7 @@ at the start of the line.  For another example, if HTML had only one tag then
 one could >
 	:let b:match_words = '<:>,<\@<=tag>:<\@<=/tag>'
 so that "%" can bounce between matching "<" and ">" pairs or (starting on
-"tag" or "/tag") between matching tags.  Without the |\@<=|, the script would
+"tag" or "/tag") between matching tags.  Without the |/\@<=|, the script would
 bounce from "tag" to the "<" in "</tag>", and another "%" would not take you
 back to where you started.
 
@@ -354,10 +322,10 @@ the variables described below.  You will probably also want to read
 
 Defining the variable |b:match_debug| causes the script to set the following
 variables, each time you hit the "%" key.  Several of these are only defined
-if |b:match_words| includes |backref|s.
+if |b:match_words| includes backrefs.
 
 							*b:match_pat*
-The b:match_pat variable is set to |b:match_words| with |backref|s parsed.
+The b:match_pat variable is set to |b:match_words| with backrefs parsed.
 							*b:match_match*
 The b:match_match variable is set to the bit of text that is recognized as a
 match.
@@ -366,15 +334,15 @@ The b:match_col variable is set to the cursor column of the start of the
 matching text.
 							*b:match_wholeBR*
 The b:match_wholeBR variable is set to the comma-separated group of patterns
-that matches, with |backref|s unparsed.
+that matches, with backrefs unparsed.
 							*b:match_iniBR*
 The b:match_iniBR variable is set to the first pattern in |b:match_wholeBR|.
 							*b:match_ini*
 The b:match_ini variable is set to the first pattern in |b:match_wholeBR|,
-with |backref|s resolved from |b:match_match|.
+with backrefs resolved from |b:match_match|.
 							*b:match_tail*
 The b:match_tail variable is set to the remaining patterns in
-|b:match_wholeBR|, with |backref|s resolved from |b:match_match|.
+|b:match_wholeBR|, with backrefs resolved from |b:match_match|.
 							*b:match_word*
 The b:match_word variable is set to the pattern from |b:match_wholeBR| that
 matches |b:match_match|.
@@ -385,20 +353,13 @@ The back reference '\'.d refers to the same thing as '\'.b:match_table[d] in
 ==============================================================================
 5. Known Bugs and Limitations				*matchit-bugs*
 
-Just because I know about a bug does not mean that it is on my todo list.  I
-try to respond to reports of bugs that cause real problems.  If it does not
-cause serious problems, or if there is a work-around, a bug may sit there for
-a while.  Moral:  if a bug (known or not) bothers you, let me know.
-
 The various |:vmap|s defined in the script (%, |g%|, |[%|, |]%|, |a%|) may
 have undesired effects in Select mode |Select-mode-mapping|.  At least, if you
 want to replace the selection with any character in "ag%[]" there will be a
 pause of |'updatetime'| first.
 
 It would be nice if "\0" were recognized as the entire pattern.  That is, it
-would be nice if "foo:\end\0" had the same effect as "\(foo\):\end\1".  I may
-try to implement this in a future version.  (This is not so easy to arrange as
-you might think!)
+would be nice if "foo:\end\0" had the same effect as "\(foo\):\end\1".
 
 ==============================================================================
-vim:tw=78:fo=tcq2:
+ vim:tw=78:ts=8:noet:ft=help:norl:

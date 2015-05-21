@@ -1159,8 +1159,8 @@ remembered.
 					cursor is on the # or no ([{
 					following)
 			For other items the matchit plugin can be used, see
-			|matchit-install|.  This plugin also helps to skip
-			matches in comments.
+			|matchit|.  This plugin also helps to skip matches in
+			comments.
 
 			When 'cpoptions' contains "M" |cpo-M| backslashes
 			before parens and braces are ignored.  Without "M" the
@@ -1178,8 +1178,8 @@ remembered.
 			Perl, where single quotes are used for strings.
 
 			Nothing special is done for matches in comments.  You
-			can either use the matchit plugin |matchit-install| or
-			put quotes around matches.
+			can either use the |matchit| plugin or put quotes around
+			matches.
 
 			No count is allowed, {count}% jumps to a line {count}
 			percentage down the file |N%|.  Using '%' on
