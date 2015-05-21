@@ -1217,6 +1217,9 @@ EXTERN char *ignoredp;
 // If a msgpack-rpc channel should be started over stdin/stdout
 EXTERN bool embedded_mode INIT(= false);
 
+/// TTY from which input was gathered.
+EXTERN int global_input_fd INIT(= 0);
+
 /// Used to track the status of external functions.
 /// Currently only used for iconv().
 typedef enum {

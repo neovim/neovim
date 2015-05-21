@@ -8,6 +8,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/event.h"
+#include "nvim/os/os.h"
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/rstream.h"
 #include "nvim/ascii.h"
@@ -61,9 +62,14 @@ void input_start_stdin(int fd)
 void input_stop_stdin(void)
 {
   if (!read_stream) {
+    // In some cases (i.e. "nvim && read") where we do not explicitly play with
+    // std{in,out,err}, some other module/library nevertheless sets the stream
+    // to non-blocking; we still must "fix" the stream (#2598) in those cases.
+    stream_set_blocking(global_input_fd, true);  // normalize stream (#2598)
     return;
   }
 
+  rstream_set_blocking(read_stream, true);  // normalize stream (#2598)
   rstream_stop(read_stream);
   rstream_free(read_stream);
   read_stream = NULL;

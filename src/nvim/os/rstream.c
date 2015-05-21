@@ -297,6 +297,11 @@ void rstream_stop(RStream *rstream)
   }
 }
 
+int rstream_set_blocking(RStream *rstream, bool blocking)
+{
+  return uv_stream_set_blocking(rstream->stream, blocking);
+}
+
 /// Returns the number of bytes ready for consumption in `rstream`
 size_t rstream_pending(RStream *rstream)
 {
