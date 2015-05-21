@@ -271,17 +271,15 @@ int main(int argc, char **argv)
       || params.output_isatty || params.err_isatty);
 
   if (reading_input) {
-    // Its possible that one of the startup commands(arguments, sourced scripts
-    // or plugins) will prompt the user, so start reading from a tty stream
-    // now. 
-    int fd = fileno(stdin);
+    // One of the startup commands (arguments, sourced scripts or plugins) may
+    // prompt the user, so start reading from a tty now.
+    global_input_fd = fileno(stdin);
     if (!params.input_isatty || params.edit_type == EDIT_STDIN) {
-      // use stderr or stdout since stdin is not a tty and/or could be used to
-      // read the file we'll edit when the "-" argument is given(eg: cat file |
-      // nvim -)
-      fd = params.err_isatty ? fileno(stderr) : fileno(stdout);
+      // Use stderr or stdout since stdin is not a tty and/or could be used to
+      // read the "-" file (eg: cat file | nvim -)
+      global_input_fd = params.err_isatty ? fileno(stderr) : fileno(stdout);
     }
-    input_start_stdin(fd);
+    input_start_stdin(global_input_fd);
   }
 
   // open terminals when opening files that start with term://
