@@ -138,7 +138,7 @@ if(USE_BUNDLED_BUSTED)
     ARGS build xml 1.1.2-1 ${LUAROCKS_BUILDARGS}
     COMMAND ${LUAROCKS_BINARY}
     ARGS build ansicolors 1.0.2-3 ${LUAROCKS_BUILDARGS}
-    COMMAND touch ${HOSTDEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps
+    COMMAND ${CMAKE_COMMAND} -E touch ${HOSTDEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps
     DEPENDS lpeg)
   add_custom_target(stable-busted-deps
     DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps)
