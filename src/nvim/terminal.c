@@ -286,8 +286,10 @@ void terminal_close(Terminal *term, char *msg)
   }
 }
 
-void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
+void terminal_resize(Terminal *term)
 {
+  uint16_t width = UINT16_MAX;
+  uint16_t height = UINT16_MAX;
   if (term->closed) {
     // will be called after exited if two windows display the same terminal and
     // one of the is closed as a consequence of pressing a key.
@@ -295,14 +297,6 @@ void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
   }
   int curwidth, curheight;
   vterm_get_size(term->vt, &curheight, &curwidth);
-
-  if (!width) {
-    width = UINT16_MAX;
-  }
-
-  if (!height) {
-    height = UINT16_MAX;
-  }
 
   // The new width/height are the minimum for all windows that display the
   // terminal in the current tab.
@@ -341,7 +335,7 @@ void terminal_enter(bool process_deferred)
   assert(term && "should only be called when curbuf has a terminal");
 
   // Ensure the terminal is properly sized.
-  terminal_resize(term, 0, 0);
+  terminal_resize(term);
 
   // Disable folds to avoid confusing the user
   int save_w_p_fen = curwin->w_p_fen;
