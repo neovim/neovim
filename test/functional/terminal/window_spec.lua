@@ -67,7 +67,30 @@ describe('terminal window', function()
       ~                                                 |
                                                         |
       ]], {[1] = {reverse = true}, [2] = {background = 11}, [3] = {foreground = 4, background = 248}})
-  end)
+
+      feed('i')
+      screen:expect([[
+        tty ready                                         |
+        line1                                             |
+        line2                                             |
+        line3                                             |
+        line4                                             |
+        {1: }                                                 |
+        -- TERMINAL --                                    |
+      ]])
+
+      feed('abc<c-\\><c-n>')
+      screen:expect([[
+        {3:^+--  6 lines: tty ready---------------------------}|
+        ~                                                 |
+        ~                                                 |
+        ~                                                 |
+        ~                                                 |
+        ~                                                 |
+                                                          |
+      ]], {[1] = {reverse = true}, [2] = {background = 11}, [3] = {foreground = 4, background =
+      248}})
+    end)
   end)
 end)
 
