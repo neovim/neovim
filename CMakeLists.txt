@@ -283,7 +283,9 @@ foreach(PROG ${RUNTIME_PROGRAMS})
   install_helper(PROGRAMS ${PROG} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/${BASEDIR})
 endforeach()
 
-install(SCRIPT ${PROJECT_SOURCE_DIR}/cmake/GenerateHelptags.cmake)
+configure_file(${PROJECT_SOURCE_DIR}/cmake/GenerateHelptags.cmake.in
+  ${PROJECT_BINARY_DIR}/cmake/GenerateHelptags.cmake @ONLY)
+install(SCRIPT ${PROJECT_BINARY_DIR}/cmake/GenerateHelptags.cmake)
 
 
 # Go down the tree.
