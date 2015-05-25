@@ -1,6 +1,5 @@
 #include <assert.h>
 #include <string.h>
-#include <stdint.h>
 #include <stdbool.h>
 
 #include <uv.h>
@@ -8,7 +7,6 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/event.h"
-#include "nvim/os/os.h"
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/rstream.h"
 #include "nvim/ascii.h"
@@ -54,7 +52,7 @@ int input_global_fd(void)
   return global_fd;
 }
 
-void input_start_stdin(int fd)
+void input_start(int fd)
 {
   if (read_stream) {
     return;
@@ -67,7 +65,7 @@ void input_start_stdin(int fd)
   rstream_start(read_stream);
 }
 
-void input_stop_stdin(void)
+void input_stop(void)
 {
   if (!read_stream) {
     return;

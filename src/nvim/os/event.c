@@ -73,7 +73,7 @@ void event_teardown(void)
   // is required because the `process_events_from` above may call `event_push`
   // which will set the stop_flag to 1(uv_stop)
   uv_default_loop()->stop_flag = 0;
-  input_stop_stdin();
+  input_stop();
   channel_teardown();
   job_teardown();
   server_teardown();
