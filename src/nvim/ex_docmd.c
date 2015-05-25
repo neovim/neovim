@@ -1851,11 +1851,25 @@ static char_u * do_one_cmd(char_u **cmdlinep,
 
   /*
    * For the ":make" and ":grep" commands we insert the 'makeprg'/'grepprg'
-   * option here, so things like % get expanded.
+   * option here, so things like % get expanded, but don't do it when
+   * ":vimgrep" is used for ":grep".
    */
-  p = replace_makeprg(&ea, p, cmdlinep);
-  if (p == NULL)
-    goto doend;
+  if (is_makeprg_command(ea.cmdidx) && !grep_internal(ea.cmdidx)) {
+    const char_u *program;
+    if (ea.cmdidx == CMD_grep || ea.cmdidx == CMD_lgrep
+        || ea.cmdidx == CMD_grepadd || ea.cmdidx == CMD_lgrepadd) {
+      program = (*curbuf->b_p_gp ? curbuf->b_p_gp : p_gp);
+    } else {
+      program = (*curbuf->b_p_mp ? curbuf->b_p_mp : p_mp);
+    }
+
+    p = replace_makeprg(skipwhite(p), program);
+    msg_make(p);
+
+    // 'eap->cmd' is not set here, because it is not used at CMD_make
+    xfree(*cmdlinep);
+    *cmdlinep = p;
+  }
 
   /*
    * Skip to start of argument.
@@ -3761,14 +3775,24 @@ static char_u *skip_grep_pat(exarg_T *eap)
   return p;
 }
 
-/*
- * For the ":make" and ":grep" commands insert the 'makeprg'/'grepprg' option
- * in the command line, so that things like % get expanded.
- */
-static char_u *replace_makeprg(exarg_T *eap, char_u *p, char_u **cmdlinep)
+bool is_makeprg_command(cmdidx_T cmdidx) FUNC_ATTR_CONST
+{
+  return cmdidx == CMD_make || cmdidx == CMD_lmake
+    || cmdidx == CMD_grep || cmdidx == CMD_lgrep
+    || cmdidx == CMD_grepadd || cmdidx == CMD_lgrepadd;
+}
+
+/// For the ":make" and ":grep" commands, inserts the 'makeprg'/'grepprg'
+/// option in the command line, so that things like % get expanded. Should not
+/// be used for ":vimgrep".
+///
+/// @param argstr  argument string
+/// @param program program format, obtained from 'makeprg' or a similar
+///                variable.
+/// @returns the command string for executing ":make" or ":grep" externally.
+static char_u *replace_makeprg(char_u *argstr, const char_u *program)
 {
   char_u      *new_cmdline;
-  char_u      *program;
   char_u      *pos;
   char_u      *ptr;
   int len;
@@ -3777,56 +3801,30 @@ static char_u *replace_makeprg(exarg_T *eap, char_u *p, char_u **cmdlinep)
   /*
    * Don't do it when ":vimgrep" is used for ":grep".
    */
-  if ((eap->cmdidx == CMD_make || eap->cmdidx == CMD_lmake
-       || eap->cmdidx == CMD_grep || eap->cmdidx == CMD_lgrep
-       || eap->cmdidx == CMD_grepadd
-       || eap->cmdidx == CMD_lgrepadd)
-      && !grep_internal(eap->cmdidx)) {
-    if (eap->cmdidx == CMD_grep || eap->cmdidx == CMD_lgrep
-        || eap->cmdidx == CMD_grepadd || eap->cmdidx == CMD_lgrepadd) {
-      if (*curbuf->b_p_gp == NUL)
-        program = p_gp;
-      else
-        program = curbuf->b_p_gp;
-    } else {
-      if (*curbuf->b_p_mp == NUL)
-        program = p_mp;
-      else
-        program = curbuf->b_p_mp;
+  if ((pos = (char_u *)strstr((char *)program, "$*")) != NULL) {
+    /* replace $* by given arguments */
+    i = 1;
+    while ((pos = (char_u *)strstr((char *)pos + 2, "$*")) != NULL)
+      ++i;
+    len = (int)STRLEN(argstr);
+    new_cmdline = xmalloc(STRLEN(program) + i * (len - 2) + 1);
+    ptr = new_cmdline;
+    while ((pos = (char_u *)strstr((char *)program, "$*")) != NULL) {
+      i = (int)(pos - program);
+      STRNCPY(ptr, program, i);
+      STRCPY(ptr += i, argstr);
+      ptr += len;
+      program = pos + 2;
     }
-
-    p = skipwhite(p);
-
-    if ((pos = (char_u *)strstr((char *)program, "$*")) != NULL) {
-      /* replace $* by given arguments */
-      i = 1;
-      while ((pos = (char_u *)strstr((char *)pos + 2, "$*")) != NULL)
-        ++i;
-      len = (int)STRLEN(p);
-      new_cmdline = xmalloc(STRLEN(program) + i * (len - 2) + 1);
-      ptr = new_cmdline;
-      while ((pos = (char_u *)strstr((char *)program, "$*")) != NULL) {
-        i = (int)(pos - program);
-        STRNCPY(ptr, program, i);
-        STRCPY(ptr += i, p);
-        ptr += len;
-        program = pos + 2;
-      }
-      STRCPY(ptr, program);
-    } else {
-      new_cmdline = xmalloc(STRLEN(program) + STRLEN(p) + 2);
-      STRCPY(new_cmdline, program);
-      STRCAT(new_cmdline, " ");
-      STRCAT(new_cmdline, p);
-    }
-    msg_make(p);
-
-    /* 'eap->cmd' is not set here, because it is not used at CMD_make */
-    xfree(*cmdlinep);
-    *cmdlinep = new_cmdline;
-    p = new_cmdline;
+    STRCPY(ptr, program);
+  } else {
+    new_cmdline = xmalloc(STRLEN(program) + STRLEN(argstr) + 2);
+    STRCPY(new_cmdline, program);
+    STRCAT(new_cmdline, " ");
+    STRCAT(new_cmdline, argstr);
   }
-  return p;
+
+  return new_cmdline;
 }
 
 /*
