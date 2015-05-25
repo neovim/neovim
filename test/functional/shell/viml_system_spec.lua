@@ -184,14 +184,16 @@ describe('system()', function()
     end)
   end)
 
-  if xclip then
-    describe("with a program that doesn't close stdout", function()
+  describe("with a program that doesn't close stdout", function()
+    if not xclip then
+      pending('skipped (missing xclip)')
+    else
       it('will exit properly after passing input', function()
         eq('', eval([[system('xclip -i -selection clipboard', 'clip-data')]]))
         eq('clip-data', eval([[system('xclip -o -selection clipboard')]]))
       end)
-    end)
-  end
+    end
+  end)
 
   describe('command passed as a list', function()
     it('does not execute &shell', function()
@@ -361,14 +363,16 @@ describe('systemlist()', function()
     end)
   end)
 
-  if xclip then
-    describe("with a program that doesn't close stdout", function()
+  describe("with a program that doesn't close stdout", function()
+    if not xclip then
+      pending('skipped (missing xclip)')
+    else
       it('will exit properly after passing input', function()
         eq({}, eval(
           "systemlist('xclip -i -selection clipboard', ['clip', 'data'])"))
         eq({'clip', 'data'}, eval(
           "systemlist('xclip -o -selection clipboard')"))
       end)
-    end)
-  end
+    end
+  end)
 end)

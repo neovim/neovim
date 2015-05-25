@@ -268,9 +268,11 @@ describe('fs function', function()
         return eq(gid, lfs.attributes(filename, 'gid'))
       end)
 
-      it('owner of a file may change the group of the file to any group of which that owner is a member', function()
-        -- Some systems may not have `id` utility.
-        if (os.execute('id -G > /dev/null 2>&1') == 0) then
+      -- Some systems may not have `id` utility.
+      if (os.execute('id -G > /dev/null 2>&1') ~= 0) then
+        pending('skipped (missing `id` utility)')
+      else
+        it('owner of a file may change the group of the file to any group of which that owner is a member', function()
           local file_gid = lfs.attributes(filename, 'gid')
 
           -- Gets ID of any group of which current user is a member except the
@@ -288,17 +290,19 @@ describe('fs function', function()
             eq(0, (os_fchown(filename, -1, new_gid)))
             eq(new_gid, (lfs.attributes(filename, 'gid')))
           end
-        end
-      end)
+        end)
+      end
 
-      it('returns nonzero if process has not enough permissions', function()
-        -- On Windows `os_fchown` always returns 0
-        -- because `uv_fs_chown` is no-op on this platform.
-        if (ffi.os ~= 'Windows' and ffi.C.geteuid() ~= 0) then
+      -- On Windows `os_fchown` always returns 0
+      -- because `uv_fs_chown` is no-op on this platform.
+      if (ffi.os == 'Windows' or ffi.C.geteuid() == 0) then
+        pending('skipped (os_fchown is no-op on Windows)')
+      else
+        it('returns nonzero if process has not enough permissions', function()
           -- chown to root
           neq(0, os_fchown(filename, 0, 0))
-        end
-      end)
+        end)
+      end
     end)
 
     describe('os_file_is_readonly', function()
