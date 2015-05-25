@@ -1,10 +1,12 @@
+include(GNUInstallDirs)
+
 if(DEFINED ENV{DESTDIR})
   file(TO_CMAKE_PATH
-    "$ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/share/nvim/runtime/doc"
+   "$ENV{DESTDIR}/usr/share/nvim/runtime/doc"
     HELPTAGS_WORKING_DIRECTORY)
 else()
   file(TO_CMAKE_PATH
-    "${CMAKE_INSTALL_PREFIX}/share/nvim/runtime/doc"
+    "/usr/share/nvim/runtime/doc"
     HELPTAGS_WORKING_DIRECTORY)
 endif()
 
