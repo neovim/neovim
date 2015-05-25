@@ -97,7 +97,7 @@ describe('joining lines', function()
       ]])
   end)
 
-  it('removes comment leaders with formatoptions=j', function()
+  it("removes comment leaders with 'joinspaces' off", function()
     insert([[
       {
       
@@ -133,11 +133,11 @@ describe('joining lines', function()
 
     execute('/^{/+1')
     execute('set comments=s1:/*,mb:*,ex:*/,://')
-    execute('set nojoinspaces fo=j')
+    execute('set nojoinspaces')
     execute('set backspace=eol,start')
 
-    -- With the "j" flag in 'formatoptions', join lines using both "J" and :join
-    -- and verify that comment leaders are stripped or kept as appropriate.
+    -- With 'joinspaces' switched off, join lines using both "J" and :join and
+    -- verify that comment leaders are stripped or kept as appropriate.
     execute('.,+3join')
     feed('j4J<cr>')
     execute('.,+2join')
@@ -184,8 +184,7 @@ describe('joining lines', function()
     -- test by advancing one line further.
     execute([[/^\d\+ this]], '+1')
 
-    -- Test with 'backspace' set to the non-compatible setting.
-    execute('set bs=2')
+    -- Test with the default 'backspace' setting.
     feed('Avim1<c-u><esc><cr>')
     feed('Avim2<c-g>u<c-u><esc><cr>')
     execute('set cpo-=<')
@@ -195,7 +194,7 @@ describe('joining lines', function()
     feed('Avim4<c-u><c-u><esc><cr>')
 
     -- Test with 'backspace' set to the compatible setting.
-    execute('set bs=')
+    execute('set backspace=')
     feed('A vim5<esc>A<c-u><c-u><esc><cr>')
     feed('A vim6<esc>Azwei<c-g>u<c-u><esc><cr>')
     execute('inoremap <c-u> <left><c-u>')
@@ -213,7 +212,7 @@ describe('joining lines', function()
       ]])
   end)
 
-  it('removes comment leaders with formatoptions=j and joinspaces', function()
+  it("removes comment leaders with 'joinspaces' on", function()
     insert([[
       {
       
@@ -290,11 +289,10 @@ describe('joining lines', function()
     execute([[set comments=sO:*\ -,mO:*\ \ ,exO:*/]])
     execute('set comments+=s1:/*,mb:*,ex:*/,://')
     execute('set comments+=s1:>#,mb:#,ex:#<,:<')
-    execute('set joinspaces fo=j')
     execute('set backspace=eol,start')
 
-    -- With the "j" flag in 'formatoptions' and 'joinspaces' on, again join lines
-    -- and verify that comment leaders are stripped or kept as appropriate.
+    -- With 'joinspaces' on (the default setting), again join lines and verify
+    -- that comment leaders are stripped or kept as appropriate.
     execute('.,+3join')
     feed('j4J<cr>')
     execute('.,+8join')
