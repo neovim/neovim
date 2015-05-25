@@ -78,8 +78,8 @@ set(MSGPACK_SHA256 afda64ca445203bb7092372b822bae8b2539fdcebbfc3f753f393628c2bcf
 set(LUAJIT_URL http://luajit.org/download/LuaJIT-2.0.4.tar.gz)
 set(LUAJIT_SHA256 620fa4eb12375021bef6e4f237cbd2dd5d49e56beb414bee052c746beef1807d)
 
-set(LUAROCKS_URL https://github.com/keplerproject/luarocks/archive/0587afbb5fe8ceb2f2eea16f486bd6183bf02f29.tar.gz)
-set(LUAROCKS_SHA256 c8ad50938fed66beba74a73621d14121d4a40b796e01c45238de4cdcb47d5e0b)
+set(LUAROCKS_URL https://github.com/keplerproject/luarocks/archive/5d8a16526573b36d5b22aa74866120c998466697.tar.gz)
+set(LUAROCKS_SHA256 cae709111c5701235770047dfd7169f66b82ae1c7b9b79207f9df0afb722bfd9)
 
 set(UNIBILIUM_URL https://github.com/mauke/unibilium/archive/v1.1.4.tar.gz)
 set(UNIBILIUM_SHA256 8b8948266eb370eef8100f401d530451d627a17c068a3f85cd5d62a57517aaa7)
