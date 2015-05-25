@@ -4335,10 +4335,10 @@ search_line:
               /* IObuf =~ "\(\k\|\i\).* ", thus i >= 2*/
               if (p_js
                   && (IObuff[i-2] == '.'
-                      || (vim_strchr(p_cpo, CPO_JOINSP) == NULL
-                          && (IObuff[i-2] == '?'
-                              || IObuff[i-2] == '!'))))
+                      || IObuff[i-2] == '?'
+                      || IObuff[i-2] == '!')) {
                 IObuff[i++] = ' ';
+              }
             }
             /* copy as much as possible of the new word */
             if (p - aux >= IOSIZE - i)
