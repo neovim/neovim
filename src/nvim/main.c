@@ -279,7 +279,7 @@ int main(int argc, char **argv)
       // read the "-" file (eg: cat file | nvim -)
       fd = params.err_isatty ? fileno(stderr) : fileno(stdout);
     }
-    input_start_stdin(fd);
+    input_start(fd);
   }
 
   // open terminals when opening files that start with term://
@@ -386,8 +386,8 @@ int main(int argc, char **argv)
   }
 
   if (!params.headless) {
-    // Stop reading from stdin, the UI layer will take over now
-    input_stop_stdin();
+    // Stop reading from input stream, the UI layer will take over now.
+    input_stop();
     ui_builtin_start();
   }
 
