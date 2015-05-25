@@ -273,13 +273,13 @@ int main(int argc, char **argv)
   if (reading_input) {
     // One of the startup commands (arguments, sourced scripts or plugins) may
     // prompt the user, so start reading from a tty now.
-    global_input_fd = fileno(stdin);
+    int fd = fileno(stdin);
     if (!params.input_isatty || params.edit_type == EDIT_STDIN) {
       // Use stderr or stdout since stdin is not a tty and/or could be used to
       // read the "-" file (eg: cat file | nvim -)
-      global_input_fd = params.err_isatty ? fileno(stderr) : fileno(stdout);
+      fd = params.err_isatty ? fileno(stderr) : fileno(stdout);
     }
-    input_start_stdin(global_input_fd);
+    input_start_stdin(fd);
   }
 
   // open terminals when opening files that start with term://

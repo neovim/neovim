@@ -35,6 +35,7 @@ typedef enum {
 static RStream *read_stream = NULL;
 static RBuffer *read_buffer = NULL, *input_buffer = NULL;
 static bool input_eof = false;
+static int global_fd = 0;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/input.c.generated.h"
@@ -47,12 +48,19 @@ void input_init(void)
   input_buffer = rbuffer_new(INPUT_BUFFER_SIZE + MAX_KEY_CODE_LEN);
 }
 
+/// Gets the file from which input was gathered at startup.
+int input_global_fd(void)
+{
+  return global_fd;
+}
+
 void input_start_stdin(int fd)
 {
   if (read_stream) {
     return;
   }
 
+  global_fd = fd;
   read_buffer = rbuffer_new(READ_BUFFER_SIZE);
   read_stream = rstream_new(read_cb, read_buffer, NULL);
   rstream_set_file(read_stream, fd);
@@ -62,14 +70,9 @@ void input_start_stdin(int fd)
 void input_stop_stdin(void)
 {
   if (!read_stream) {
-    // In some cases (i.e. "nvim && read") where we do not explicitly play with
-    // std{in,out,err}, some other module/library nevertheless sets the stream
-    // to non-blocking; we still must "fix" the stream (#2598) in those cases.
-    stream_set_blocking(global_input_fd, true);  // normalize stream (#2598)
     return;
   }
 
-  rstream_set_blocking(read_stream, true);  // normalize stream (#2598)
   rstream_stop(read_stream);
   rstream_free(read_stream);
   read_stream = NULL;
