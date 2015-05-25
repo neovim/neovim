@@ -3460,12 +3460,10 @@ int do_join(long count,
           endcurr1 = endcurr2;
         else
           ++spaces[t];
-        /* extra space when 'joinspaces' set and line ends in '.' */
-        if (       p_js
-                   && (endcurr1 == '.'
-                       || (vim_strchr(p_cpo, CPO_JOINSP) == NULL
-                           && (endcurr1 == '?' || endcurr1 == '!'))))
+        // Extra space when 'joinspaces' set and line ends in '.', '?', or '!'.
+        if (p_js && (endcurr1 == '.' || endcurr1 == '?' || endcurr1 == '!')) {
           ++spaces[t];
+        }
       }
     }
     currsize = (int)STRLEN(curr);

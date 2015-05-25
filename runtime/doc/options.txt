@@ -1779,9 +1779,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 								*cpo-I*
 		I	When moving the cursor up or down just after inserting
 			indent for 'autoindent', do not delete the indent.
-								*cpo-j*
-		j	When joining lines, only add two spaces after a '.',
-			not after '!' or '?'.  Also see 'joinspaces'.
 								*cpo-J*
 		J	A |sentence| has to be followed by two spaces after
 			the '.', '!' or '?'.  A <Tab> is not recognized as
@@ -4024,7 +4021,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 'joinspaces' 'js'	boolean	(default on)
 			global
 	Insert two spaces after a '.', '?' and '!' with a join command.
-	When 'cpoptions' includes the 'j' flag, only do this after a '.'.
 	Otherwise only one space is inserted.
 
 					*'key'*
