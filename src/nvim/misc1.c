@@ -2679,6 +2679,7 @@ void preserve_exit(void)
 
   // Prevent repeated calls into this method.
   if (really_exiting) {
+    stream_set_blocking(input_global_fd(), true);  //normalize stream (#2598)
     exit(2);
   }
 
@@ -2699,7 +2700,6 @@ void preserve_exit(void)
   }
 
   ml_close_all(false);              // close all memfiles, without deleting
-  stream_set_blocking(global_input_fd, true);  //normalize stream (#2598)
 
   mch_errmsg("Vim: Finished.\n");
 

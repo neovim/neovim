@@ -181,6 +181,7 @@ void mch_exit(int r)
   ml_close_all(TRUE);           /* remove all memfiles */
 
   event_teardown();
+  stream_set_blocking(input_global_fd(), true);  // normalize stream (#2598)
 
 #ifdef EXITFREE
   free_all_mem();
