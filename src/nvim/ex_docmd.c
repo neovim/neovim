@@ -3790,7 +3790,7 @@ bool is_makeprg_command(cmdidx_T cmdidx) FUNC_ATTR_CONST
 /// @param program program format, obtained from 'makeprg' or a similar
 ///                variable.
 /// @returns the command string for executing ":make" or ":grep" externally.
-static char_u *replace_makeprg(char_u *argstr, const char_u *program)
+char_u *replace_makeprg(char_u *argstr, const char_u *program)
 {
   char_u      *new_cmdline;
   char_u      *pos;
