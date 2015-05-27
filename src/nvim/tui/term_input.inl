@@ -269,7 +269,11 @@ static TermInput *term_input_new(void)
     flags |= TERMKEY_FLAG_RAW;
   }
 
-  rv->tk = termkey_new_abstract(os_getenv("TERM"), flags);
+  const char *term = os_getenv("TERM");
+  if (!term) {
+    term = "";  // termkey_new_abstract assumes non-null (#2745)
+  }
+  rv->tk = termkey_new_abstract(term, flags);
   int curflags = termkey_get_canonflags(rv->tk);
   termkey_set_canonflags(rv->tk, curflags | TERMKEY_CANON_DELBS);
   // setup input handle
