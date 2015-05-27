@@ -1,6 +1,5 @@
 #include <assert.h>
 #include <string.h>
-#include <stdint.h>
 #include <stdbool.h>
 
 #include <uv.h>
@@ -34,6 +33,7 @@ typedef enum {
 static RStream *read_stream = NULL;
 static RBuffer *read_buffer = NULL, *input_buffer = NULL;
 static bool input_eof = false;
+static int global_fd = 0;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/input.c.generated.h"
@@ -46,19 +46,26 @@ void input_init(void)
   input_buffer = rbuffer_new(INPUT_BUFFER_SIZE + MAX_KEY_CODE_LEN);
 }
 
-void input_start_stdin(int fd)
+/// Gets the file from which input was gathered at startup.
+int input_global_fd(void)
+{
+  return global_fd;
+}
+
+void input_start(int fd)
 {
   if (read_stream) {
     return;
   }
 
+  global_fd = fd;
   read_buffer = rbuffer_new(READ_BUFFER_SIZE);
   read_stream = rstream_new(read_cb, read_buffer, NULL);
   rstream_set_file(read_stream, fd);
   rstream_start(read_stream);
 }
 
-void input_stop_stdin(void)
+void input_stop(void)
 {
   if (!read_stream) {
     return;
