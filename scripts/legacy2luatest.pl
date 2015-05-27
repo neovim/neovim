@@ -8,16 +8,6 @@ use autodie;
 use File::Basename;
 use File::Spec::Functions;
 
-sub replace_hex_chars {
-  # Replace non-printable hex characters
-  s/\x00/<C-V>10<CR>/g;
-  s/\x04/<C-D>/g;
-  s/\x10/<C-P>/g;
-  s/\x14/<C-T>/g;
-  s/\x16/<C-V>/g;
-  s/\x17/<C-W>/g;
-}
-
 sub read_in_file {
   my $in_file = $_[0];
 
@@ -55,6 +45,16 @@ sub read_in_file {
     # If there are input lines, wrap with an `insert`
     # command and add before the previous command block.
     if (@{$input_lines}) {
+      foreach (@{$input_lines}) {
+        # Replace non-printable hex characters
+        s/\x00/<C-V>x00/g;
+        s/\x04/<C-V><C-D>/g;
+        s/\x10/<C-V><C-P>/g;
+        s/\x14/<C-V><C-T>/g;
+        s/\x16/<C-V><C-V>/g;
+        s/\x17/<C-V><C-W>/g;
+      }
+
       my $last_input_line = pop @{$input_lines};
       unshift @{$command_lines}, '';
       unshift @{$command_lines}, $last_input_line . ']=])';
@@ -134,6 +134,14 @@ sub read_in_file {
         # Replace terminal escape characters with <esc>.
         s/\e/<esc>/g;
 
+        # Replace non-printable hex characters
+        s/\x00/<C-V>10<CR>/g;
+        s/\x04/<C-D>/g;
+        s/\x10/<C-P>/g;
+        s/\x14/<C-T>/g;
+        s/\x16/<C-V>/g;
+        s/\x17/<C-W>/g;
+
         my $startstr = "'";
         my $endstr = "'";
 
@@ -188,7 +196,6 @@ sub read_in_file {
   while (<$in_file_handle>) {
     # Remove trailing newline character and process line.
     chomp;
-    replace_hex_chars \$_;
     $state = $states{$state}->($_);
   }
 
