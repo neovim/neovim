@@ -1,10 +1,9 @@
-/*
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
- */
+// VIM - Vi IMproved	by Bram Moolenaar
+//
+// Do ":help uganda"  in Vim to read copying and usage conditions.
+// Do ":help credits" in Vim to see a list of people who contributed.
+// See README.txt for an overview of the Vim source code.
+
 
 #define EXTERN
 #include <assert.h>
@@ -32,7 +31,7 @@
 #include "nvim/iconv.h"
 #include "nvim/if_cscope.h"
 #ifdef HAVE_LOCALE_H
-# include <locale.h>
+#include <locale.h>
 #endif
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
@@ -68,124 +67,128 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/handle.h"
 
-/* Maximum number of commands from + or -c arguments. */
+// Maximum number of commands from + or -c arguments.
 #define MAX_ARG_CMDS 10
 
-/* values for "window_layout" */
-#define WIN_HOR     1       /* "-o" horizontally split windows */
-#define WIN_VER     2       /* "-O" vertically split windows */
-#define WIN_TABS    3       /* "-p" windows on tab pages */
+// values for "window_layout" 
+#define WIN_HOR     1       // "-o" horizontally split windows
+#define WIN_VER     2       // "-O" vertically split windows
+#define WIN_TABS    3       // "-p" windows on tab pages
 
-/* Struct for various parameters passed between main() and other functions. */
+// Struct for various parameters passed 
+// between main() and other functions. 
 typedef struct {
-  int argc;
-  char        **argv;
+    int argc;
+    char **argv;
 
-  char *use_vimrc;                           // vimrc from -u argument
+    char *use_vimrc;                    // vimrc from -u argument
 
-  int n_commands;                            /* no. of commands from + or -c */
-  char *commands[MAX_ARG_CMDS];              // commands from + or -c arg
-  char_u cmds_tofree[MAX_ARG_CMDS];          /* commands that need free() */
-  int n_pre_commands;                        /* no. of commands from --cmd */
-  char *pre_commands[MAX_ARG_CMDS];          // commands from --cmd argument
+    int n_commands;                     // no. of commands from + or -c
+    char *commands[MAX_ARG_CMDS];       // commands from + or -c arg
+    char_u cmds_tofree[MAX_ARG_CMDS];   // commands that need free()
+    int n_pre_commands;                 // no. of commands from --cmd
+    char *pre_commands[MAX_ARG_CMDS];   // commands from --cmd argument
+    
+    int edit_type;                      // type of editing to do 
+    char_u      *tagname;               // tag from -t argument
+    char_u      *use_ef;                // 'errorfile' from -q argument
 
-  int edit_type;                        /* type of editing to do */
-  char_u      *tagname;                 /* tag from -t argument */
-  char_u      *use_ef;                  /* 'errorfile' from -q argument */
-
-  int want_full_screen;
-  bool input_isatty;                    // stdin is a terminal
-  bool output_isatty;                   // stdout is a terminal
-  bool err_isatty;                      // stderr is a terminal
-  bool headless;                        // Dont try to start an user interface
+    int want_full_screen;
+    bool input_isatty;                  // stdin is a terminal
+    bool output_isatty;                 // stdout is a terminal
+    bool err_isatty;                    // stderr is a terminal
+    bool headless;                      // Dont try to start an user interface
                                         // or read/write to stdio(unless
                                         // embedding)
-  int no_swap_file;                     /* "-n" argument used */
-  int use_debug_break_level;
-  int window_count;                     /* number of windows to use */
-  int window_layout;                    /* 0, WIN_HOR, WIN_VER or WIN_TABS */
+    int no_swap_file;                   // "-n" argument used
+    int use_debug_break_level;
+    int window_count;                   // number of windows to use
+    int window_layout;                  // 0, WIN_HOR, WIN_VER or WIN_TABS
 
 #if !defined(UNIX)
-  int literal;                          /* don't expand file names */
+    int literal;                        // don't expand file names
 #endif
-  int diff_mode;                        /* start with 'diff' set */
+    int diff_mode;                      // start with 'diff' set
 } mparm_T;
 
-/* Values for edit_type. */
-#define EDIT_NONE   0       /* no edit type yet */
-#define EDIT_FILE   1       /* file name argument[s] given, use argument list */
-#define EDIT_STDIN  2       /* read file from stdin */
-#define EDIT_TAG    3       /* tag name argument given, use tagname */
-#define EDIT_QF     4       /* start in quickfix mode */
+
+// Values for edit_type.
+#define EDIT_NONE   0   // no edit type yet
+#define EDIT_FILE   1   // file name argument[s] given, use argument list
+#define EDIT_STDIN  2   // read file from stdin
+#define EDIT_TAG    3   // tag name argument given, use tagname
+#define EDIT_QF     4   // start in quickfix mode
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "main.c.generated.h"
+#include "main.c.generated.h"
 #endif
 
+
 // Error messages
+#define ME_UNKNOWN_OPTION 0
+#define ME_TOO_MANY_ARGS 1
+#define ME_ARG_MISSING 2
+#define ME_GARBAGE 3
+#define ME_EXTRA_CMD 4
 static const char *main_errors[] = {
-  N_("Unknown option argument"),
-#define ME_UNKNOWN_OPTION       0
-  N_("Too many edit arguments"),
-#define ME_TOO_MANY_ARGS        1
-  N_("Argument missing after"),
-#define ME_ARG_MISSING          2
-  N_("Garbage after option argument"),
-#define ME_GARBAGE              3
-  N_("Too many \"+command\", \"-c command\" or \"--cmd command\" arguments")
-#define ME_EXTRA_CMD            4
+    N_("Unknown option argument"),
+    N_("Too many edit arguments"),
+    N_("Argument missing after"),
+    N_("Garbage after option argument"),
+    N_("Too many \"+command\","
+       "\"-c command\" or \"--cmd"
+       " command\" arguments"
+    )
 };
 
 
-/// Performs early initialization.
-///
-/// Needed for unit tests. Must be called after `time_init()`.
-void early_init(void)
-{
-  handle_init();
+// Performs early initialization.
+//
+// Needed for unit tests. Must be called after `time_init()`.
+void early_init(void) {
+    handle_init();
 
-  (void)mb_init();      // init mb_bytelen_tab[] to ones
-  eval_init();          // init global variables
+    (void)mb_init();      // init mb_bytelen_tab[] to ones
+    eval_init();          // init global variables
 
-  // Init the table of Normal mode commands.
-  init_normal_cmds();
+    // Init the table of Normal mode commands.
+    init_normal_cmds();
 
 #if defined(HAVE_LOCALE_H) || defined(X_LOCALE)
-  // Setup to use the current locale (for ctype() and many other things).
-  // NOTE: Translated messages with encodings other than latin1 will not
-  // work until set_init_1() has been called!
-  init_locale();
+    // Setup to use the current locale (for ctype() and many other things).
+    // NOTE: Translated messages with encodings other than latin1 will not
+    // work until set_init_1() has been called!
+    init_locale();
 #endif
 
-  // Allocate the first window and buffer.
-  // Can't do anything without it, exit when it fails.
-  if (!win_alloc_first()) {
-    mch_exit(0);
-  }
+    // Allocate the first window and buffer.
+    // Can't do anything without it, exit when it fails.
+    if (!win_alloc_first()) {
+        mch_exit(0);
+    }
 
-  init_yank();                  // init yank buffers
+    init_yank();                  // init yank buffers
 
-  alist_init(&global_alist);    // Init the argument list to empty.
-  global_alist.id = 0;
+    alist_init(&global_alist);    // Init the argument list to empty.
+    global_alist.id = 0;
 
-  // Set the default values for the options.
-  // NOTE: Non-latin1 translated messages are working only after this,
-  // because this is where "has_mbyte" will be set, which is used by
-  // msg_outtrans_len_attr().
-  // First find out the home directory, needed to expand "~" in options.
-  init_homedir();               // find real value of $HOME
-  set_init_1();
-  TIME_MSG("inits 1");
+    // Set the default values for the options.
+    // NOTE: Non-latin1 translated messages are working only after this,
+    // because this is where "has_mbyte" will be set, which is used by
+    // msg_outtrans_len_attr().
+    // First find out the home directory, needed to expand "~" in options.
+    init_homedir();               // find real value of $HOME
+    set_init_1();
+    TIME_MSG("inits 1");
 
-  set_lang_var();               // set v:lang and v:ctype
+    set_lang_var();               // set v:lang and v:ctype
 }
 
 #ifdef MAKE_LIB
-int nvim_main(int argc, char **argv)
+int nvim_main(int argc, char **argv) {
 #else
-int main(int argc, char **argv)
+int main(int argc, char **argv) {
 #endif
-{
   char_u      *fname = NULL;            /* file name from command line */
   mparm_T params;                       /* various parameters passed between
                                          * main() and other functions. */
@@ -205,7 +208,7 @@ int main(int argc, char **argv)
 
   // Get the name with which Nvim was invoked, with and without path.
   set_vim_var_string(VV_PROGPATH, (char_u *)argv[0], -1);
-  set_vim_var_string(VV_PROGNAME, path_tail((char_u *)argv[0]), -1);
+  set_vim_var_string(VV_PROGNAME,path_tail((char_u *)argv[0]),-1);
 
   /*
    * Process the command line arguments.  File names are put in the global
@@ -218,45 +221,47 @@ int main(int argc, char **argv)
 
   TIME_MSG("expanding arguments");
 
-  if (params.diff_mode && params.window_count == -1)
+  if (params.diff_mode && params.window_count == -1) {
     params.window_count = 0;            /* open up to 3 windows */
+  }
 
   /* Don't redraw until much later. */
   ++RedrawingDisabled;
 
-  /*
-   * When listing swap file names, don't do cursor positioning et. al.
-   */
-  if (recoverymode && fname == NULL)
-    params.want_full_screen = FALSE;
+    // When listing swap file names, don't do cursor positioning et. al.
+    if (recoverymode && fname == NULL) {
+        params.want_full_screen = FALSE;
+    } 
 
-  setbuf(stdout, NULL);
+    setbuf(stdout, NULL);
 
-  /* This message comes before term inits, but after setting "silent_mode"
-   * when the input is not a tty. */
-  if (GARGCOUNT > 1 && !silent_mode)
+    // This message comes before term inits,
+    // but after setting "silent_mode"
+    // when the input is not a tty.
+  if (GARGCOUNT > 1 && !silent_mode) {
     printf(_("%d files to edit\n"), GARGCOUNT);
+  }
 
   event_init();
   full_screen = true;
   t_colors = 256;
   check_tty(&params);
 
-  /*
-   * Set the default values for the options that use Rows and Columns.
-   */
-  win_init_size();
-  /* Set the 'diff' option now, so that it can be checked for in a .vimrc
-   * file.  There is no buffer yet though. */
-  if (params.diff_mode)
-    diff_win_options(firstwin, FALSE);
+    // Set the default values for the options that use Rows and Columns.
+    win_init_size();
 
-  assert(p_ch >= 0 && Rows >= p_ch && Rows - p_ch <= INT_MAX);
-  cmdline_row = (int)(Rows - p_ch);
-  msg_row = cmdline_row;
-  screenalloc(false);           /* allocate screen buffers */
-  set_init_2();
-  TIME_MSG("inits 2");
+    // Set the 'diff' option now, so that it can be checked for in a .vimrc
+    // file.  There is no buffer yet though.
+    if (params.diff_mode) {
+        diff_win_options(firstwin, FALSE);
+    }
+
+    assert(p_ch >= 0 && Rows >= p_ch && Rows - p_ch <= INT_MAX);
+    cmdline_row = (int)(Rows - p_ch);
+    msg_row = cmdline_row;
+    screenalloc(false);           // allocate screen buffers
+    set_init_2();
+    TIME_MSG("inits 2");
 
   msg_scroll = TRUE;
   no_wait_return = TRUE;
