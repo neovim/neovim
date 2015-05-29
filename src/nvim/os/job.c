@@ -304,6 +304,11 @@ void job_close_err(Job *job) FUNC_ATTR_NONNULL_ALL
   close_job_out(job);
 }
 
+bool job_writable(Job *job) FUNC_ATTR_NONNULL_ALL
+{
+  return job->in;
+}
+
 /// All writes that complete after calling this function will be reported
 /// to `cb`.
 ///
