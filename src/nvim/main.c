@@ -656,45 +656,54 @@ void main_loop (
             update_topline();
             validate_cursor();
 
-      if (VIsual_active)
-        update_curbuf(INVERTED);        /* update inverted part */
-      else if (must_redraw)
-        update_screen(0);
-      else if (redraw_cmdline || clear_cmdline)
-        showmode();
-      redraw_statuslines();
-      if (need_maketitle)
-        maketitle();
-      /* display message after redraw */
-      if (keep_msg != NULL) {
-        char_u *p;
+            if (VIsual_active) {
+                update_curbuf(INVERTED);        /* update inverted part */
+            } else if (must_redraw) {
+                update_screen(0);
+            } else if (redraw_cmdline || clear_cmdline) {
+                showmode();
+            }
+            redraw_statuslines();
+            if (need_maketitle) {
+                maketitle();
+            }
+            // display message after redraw
+        
+            if (keep_msg != NULL) {
+                char_u *p;
 
-        // msg_attr_keep() will set keep_msg to NULL, must free the string
-        // here. Don't reset keep_msg, msg_attr_keep() uses it to check for
-        // duplicates.
-        p = keep_msg;
-        msg_attr(p, keep_msg_attr);
-        xfree(p);
-      }
-      if (need_fileinfo) {              /* show file info after redraw */
-        fileinfo(FALSE, TRUE, FALSE);
-        need_fileinfo = FALSE;
-      }
+                // msg_attr_keep() will set keep_msg to NULL, must free the 
+                // string here. Don't reset keep_msg, msg_attr_keep() uses
+                // it to check for duplicates.
+                p = keep_msg;
+                msg_attr(p, keep_msg_attr);
+                xfree(p);
+            }
+        
+            if (need_fileinfo) {        // show file info after redraw
+                fileinfo(FALSE, TRUE, FALSE);
+                need_fileinfo = FALSE;
+            }
 
-      emsg_on_display = FALSE;          /* can delete error message now */
-      did_emsg = FALSE;
-      msg_didany = FALSE;               /* reset lines_left in msg_start() */
-      may_clear_sb_text();              /* clear scroll-back text on next msg */
-      showruler(FALSE);
+            emsg_on_display = FALSE;    // can delete error message now
+            did_emsg = FALSE;
+            msg_didany = FALSE;         // reset lines_left in msg_start() 
+            may_clear_sb_text();        // clear scroll-back text on next msg
+            showruler(FALSE);
 
-      if (conceal_update_lines
-          && (conceal_old_cursor_line != conceal_new_cursor_line
-            || conceal_cursor_line(curwin)
-            || need_cursor_line_redraw)) {
-        if (conceal_old_cursor_line != conceal_new_cursor_line
-            && conceal_old_cursor_line
-                    <= curbuf->b_ml.ml_line_count)
-                update_single_line(curwin, conceal_old_cursor_line);
+            if (
+                conceal_update_lines &&
+                (
+                    conceal_old_cursor_line != conceal_new_cursor_line ||
+                    conceal_cursor_line(curwin) ||
+                    need_cursor_line_redraw
+                )
+            ) {
+                if (conceal_old_cursor_line != conceal_new_cursor_line &&
+                    conceal_old_cursor_line <= curbuf->b_ml.ml_line_count
+                ) {
+                    update_single_line(curwin, conceal_old_cursor_line);
+                }
                 update_single_line(curwin, conceal_new_cursor_line);
                 curwin->w_valid &= ~VALID_CROW;
             }
