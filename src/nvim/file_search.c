@@ -644,29 +644,9 @@ char_u *vim_findfile(void *search_ctx_arg)
               stackp->ffs_fix_path
               , stackp->ffs_wc_path
               ) == FAIL) {
-#ifdef FF_VERBOSE
-        if (p_verbose >= 5) {
-          verbose_enter_scroll();
-          smsg("Already Searched: %s (%s)",
-              stackp->ffs_fix_path, stackp->ffs_wc_path);
-          /* don't overwrite this either */
-          msg_puts((char_u *)"\n");
-          verbose_leave_scroll();
-        }
-#endif
         ff_free_stack_element(stackp);
         continue;
       }
-#ifdef FF_VERBOSE
-      else if (p_verbose >= 5) {
-        verbose_enter_scroll();
-        smsg("Searching: %s (%s)",
-             stackp->ffs_fix_path, stackp->ffs_wc_path);
-        /* don't overwrite this either */
-        msg_puts((char_u *)"\n");
-        verbose_leave_scroll();
-      }
-#endif
 
       /* check depth */
       if (stackp->ffs_level <= 0) {
@@ -805,31 +785,12 @@ char_u *vim_findfile(void *search_ctx_arg)
                            || ((search_ctx->ffsc_find_what
                                 == FINDFILE_DIR)
                                == os_isdir(file_path)))))
-#ifndef FF_VERBOSE
                   && (ff_check_visited(
                           &search_ctx->ffsc_visited_list->ffvl_visited_list,
                           file_path
                           , (char_u *)""
                           ) == OK)
-#endif
                   ) {
-#ifdef FF_VERBOSE
-                if (ff_check_visited(
-                        &search_ctx->ffsc_visited_list->ffvl_visited_list,
-                        file_path
-                        , (char_u *)""
-                        ) == FAIL) {
-                  if (p_verbose >= 5) {
-                    verbose_enter_scroll();
-                    smsg("Already: %s",
-                        file_path);
-                    /* don't overwrite this either */
-                    msg_puts((char_u *)"\n");
-                    verbose_leave_scroll();
-                  }
-                  continue;
-                }
-#endif
 
                 /* push dir to examine rest of subdirs later */
                 assert(i < UCHAR_MAX - 1);
@@ -838,22 +799,11 @@ char_u *vim_findfile(void *search_ctx_arg)
 
                 if (!path_with_url((char *)file_path))
                   simplify_filename(file_path);
-                if (os_dirname(ff_expand_buffer, MAXPATHL)
-                    == OK) {
-                  p = path_shorten_fname(file_path,
-                      ff_expand_buffer);
+                if (os_dirname(ff_expand_buffer, MAXPATHL) == OK) {
+                  p = path_shorten_fname(file_path, ff_expand_buffer);
                   if (p != NULL)
                     STRMOVE(file_path, p);
                 }
-#ifdef FF_VERBOSE
-                if (p_verbose >= 5) {
-                  verbose_enter_scroll();
-                  smsg("HIT: %s", file_path);
-                  /* don't overwrite this either */
-                  msg_puts((char_u *)"\n");
-                  verbose_leave_scroll();
-                }
-#endif
                 return file_path;
               }
 
@@ -1008,31 +958,11 @@ static ff_visited_list_hdr_T *ff_get_visited_list(char_u *filename, ff_visited_l
     retptr = *list_headp;
     while (retptr != NULL) {
       if (fnamecmp(filename, retptr->ffvl_filename) == 0) {
-#ifdef FF_VERBOSE
-        if (p_verbose >= 5) {
-          verbose_enter_scroll();
-          smsg("ff_get_visited_list: FOUND list for %s",
-              filename);
-          /* don't overwrite this either */
-          msg_puts((char_u *)"\n");
-          verbose_leave_scroll();
-        }
-#endif
         return retptr;
       }
       retptr = retptr->ffvl_next;
     }
   }
-
-#ifdef FF_VERBOSE
-  if (p_verbose >= 5) {
-    verbose_enter_scroll();
-    smsg("ff_get_visited_list: new list for %s", filename);
-    /* don't overwrite this either */
-    msg_puts((char_u *)"\n");
-    verbose_leave_scroll();
-  }
-#endif
 
   /*
    * if we reach this we didn't find a list and we have to allocate new list

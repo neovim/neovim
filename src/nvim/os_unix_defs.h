@@ -44,10 +44,8 @@
 # define SIGDUMMYARG
 #endif
 
-#if !defined(HAVE_SYS_TIME_H) || defined(TIME_WITH_SYS_TIME)
-# include <time.h>          /* on some systems time.h should not be
+#include <time.h>          /* on some systems time.h should not be
                                included together with sys/time.h */
-#endif
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
 #endif
@@ -117,9 +115,7 @@
 #endif
 
 
-#if !defined(USR_EXRC_FILE2)
-#    define USR_VIMRC_FILE2     "~/.nvim/nvimrc"
-#endif
+#define USR_VIMRC_FILE2     "~/.nvim/nvimrc"
 
 # ifndef VIMINFO_FILE
 #   define VIMINFO_FILE "~/.nviminfo"

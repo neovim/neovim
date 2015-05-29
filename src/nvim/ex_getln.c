@@ -2788,14 +2788,6 @@ ExpandOne (
      */
     if (ExpandFromContext(xp, str, &xp->xp_numfiles, &xp->xp_files,
             options) == FAIL) {
-#ifdef FNAME_ILLEGAL
-      /* Illegal file name has been silently skipped.  But when there
-       * are wildcards, the real problem is that there was no match,
-       * causing the pattern to be added, which has illegal characters.
-       */
-      if (!(options & WILD_SILENT) && (options & WILD_LIST_NOTFOUND))
-        EMSG2(_(e_nomatch2), str);
-#endif
     } else if (xp->xp_numfiles == 0) {
       if (!(options & WILD_SILENT))
         EMSG2(_(e_nomatch2), str);

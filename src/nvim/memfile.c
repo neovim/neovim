@@ -950,9 +950,6 @@ static void mf_do_open(memfile_T *mfp, char_u *fname, int flags)
     if (fdflags >= 0 && (fdflags & FD_CLOEXEC) == 0)
       fcntl(mfp->mf_fd, F_SETFD, fdflags | FD_CLOEXEC);
 #endif
-#ifdef HAVE_SELINUX
-    mch_copy_sec(fname, mfp->mf_fname);
-#endif
   }
 }
 

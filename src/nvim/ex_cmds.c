@@ -138,11 +138,7 @@ void do_ascii(exarg_T *eap)
     if (len > 0)
       IObuff[len++] = ' ';
     IObuff[len++] = '<';
-    if (l_enc_utf8 && utf_iscomposing(c)
-# ifdef USE_GUI
-        && !gui.in_use
-# endif
-        )
+    if (l_enc_utf8 && utf_iscomposing(c))
       IObuff[len++] = ' ';       /* draw composing char on top of a space */
     len += (*mb_char2bytes)(c, IObuff + len);
     vim_snprintf((char *)IObuff + len, IOSIZE - len,
@@ -1657,17 +1653,6 @@ static char_u *viminfo_filename(char_u *file)
     if (use_viminfo != NULL)
       file = use_viminfo;
     else if ((file = find_viminfo_parameter('n')) == NULL || *file == NUL) {
-#ifdef VIMINFO_FILE2
-      /* don't use $HOME when not defined (turned into "c:/"!). */
-      if (os_getenv((char_u *)"HOME") == NULL) {
-        /* don't use $VIM when not available. */
-        expand_env((char_u *)"$VIM", NameBuff, MAXPATHL);
-        if (STRCMP("$VIM", NameBuff) != 0)          /* $VIM was expanded */
-          file = (char_u *)VIMINFO_FILE2;
-        else
-          file = (char_u *)VIMINFO_FILE;
-      } else
-#endif
       file = (char_u *)VIMINFO_FILE;
     }
     expand_env(file, NameBuff, MAXPATHL);

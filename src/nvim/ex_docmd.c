@@ -7392,11 +7392,6 @@ static void close_redir(void)
   }
 }
 
-#ifdef USE_CRNL
-# define MKSESSION_NL
-static int mksession_nl = FALSE;    /* use NL only in put_eol() */
-#endif
-
 /*
  * ":mkexrc", ":mkvimrc", ":mkview" and ":mksession".
  */
@@ -7448,12 +7443,6 @@ static void ex_mkrc(exarg_T *eap)
       flagp = &vop_flags;
     else
       flagp = &ssop_flags;
-
-#ifdef MKSESSION_NL
-    /* "unix" in 'sessionoptions': use NL line separator */
-    if (view_session && (*flagp & SSOP_UNIX))
-      mksession_nl = TRUE;
-#endif
 
     /* Write the version command for :mkvimrc */
     if (eap->cmdidx == CMD_mkvimrc)
@@ -7543,9 +7532,6 @@ static void ex_mkrc(exarg_T *eap)
         set_vim_var_string(VV_THIS_SESSION, tbuf, -1);
       xfree(tbuf);
     }
-#ifdef MKSESSION_NL
-    mksession_nl = FALSE;
-#endif
   }
 
   xfree(viewFile);
@@ -9108,15 +9094,7 @@ static char *get_view_file(int c)
  */
 int put_eol(FILE *fd)
 {
-  if (
-#ifdef USE_CRNL
-    (
-# ifdef MKSESSION_NL
-      !mksession_nl &&
-# endif
-      (putc('\r', fd) < 0)) ||
-#endif
-    (putc('\n', fd) < 0))
+  if (putc('\n', fd) < 0)
     return FAIL;
   return OK;
 }

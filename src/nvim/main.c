@@ -722,9 +722,6 @@ void getout(int exitval)
   /* Position the cursor on the last screen line, below all the text */
   ui_cursor_goto((int)Rows - 1, 0);
 
-  /* Optionally print hashtable efficiency. */
-  hash_debug_results();
-
   if (get_vim_var_nr(VV_DYING) <= 1) {
     /* Trigger BufWinLeave for all windows, but only once per buffer. */
     for (tp = first_tabpage; tp != NULL; tp = next_tp) {
@@ -1798,15 +1795,8 @@ static void source_startup_scripts(mparm_T *parmp)
           && do_source((char_u *)USR_VIMRC_FILE2, TRUE,
             DOSO_VIMRC) == FAIL
 #endif
-#ifdef USR_VIMRC_FILE3
-          && do_source((char_u *)USR_VIMRC_FILE3, TRUE,
-            DOSO_VIMRC) == FAIL
-#endif
           && process_env("EXINIT", FALSE) == FAIL
           && do_source((char_u *)USR_EXRC_FILE, FALSE, DOSO_NONE) == FAIL) {
-#ifdef USR_EXRC_FILE2
-        (void)do_source((char_u *)USR_EXRC_FILE2, FALSE, DOSO_NONE);
-#endif
       }
     }
 
@@ -1833,10 +1823,6 @@ static void source_startup_scripts(mparm_T *parmp)
           && path_full_compare((char_u *)USR_VIMRC_FILE2,
             (char_u *)VIMRC_FILE, FALSE) != kEqualFiles
 #endif
-#ifdef USR_VIMRC_FILE3
-          && path_full_compare((char_u *)USR_VIMRC_FILE3,
-            (char_u *)VIMRC_FILE, FALSE) != kEqualFiles
-#endif
 #ifdef SYS_VIMRC_FILE
           && path_full_compare((char_u *)SYS_VIMRC_FILE,
             (char_u *)VIMRC_FILE, FALSE) != kEqualFiles
@@ -1854,10 +1840,6 @@ static void source_startup_scripts(mparm_T *parmp)
 #endif
         if (       path_full_compare((char_u *)USR_EXRC_FILE,
               (char_u *)EXRC_FILE, FALSE) != kEqualFiles
-#ifdef USR_EXRC_FILE2
-            && path_full_compare((char_u *)USR_EXRC_FILE2,
-              (char_u *)EXRC_FILE, FALSE) != kEqualFiles
-#endif
            )
           (void)do_source((char_u *)EXRC_FILE, FALSE, DOSO_NONE);
       }

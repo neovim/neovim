@@ -98,10 +98,6 @@ hashitem_T* hash_find(hashtab_T *ht, char_u *key)
 ///                  is changed in any way.
 hashitem_T* hash_lookup(hashtab_T *ht, char_u *key, hash_T hash)
 {
-#ifdef HT_DEBUG
-  hash_count_lookup++;
-#endif  // ifdef HT_DEBUG
-
   // Quickly handle the most common situations:
   // - return if there is no item at all
   // - skip over a removed item
@@ -128,10 +124,6 @@ hashitem_T* hash_lookup(hashtab_T *ht, char_u *key, hash_T hash)
   // Return the first available slot found (can be a slot of a removed
   // item).
   for (hash_T perturb = hash;; perturb >>= PERTURB_SHIFT) {
-#ifdef HT_DEBUG
-    // count a "miss" for hashtab lookup
-    hash_count_perturb++;
-#endif  // ifdef HT_DEBUG
     idx = 5 * idx + perturb + 1;
     hi = &ht->ht_array[idx & ht->ht_mask];
 
@@ -149,23 +141,6 @@ hashitem_T* hash_lookup(hashtab_T *ht, char_u *key, hash_T hash)
       freeitem = hi;
     }
   }
-}
-
-/// Print the efficiency of hashtable lookups.
-///
-/// Useful when trying different hash algorithms.
-/// Called when exiting.
-void hash_debug_results(void)
-{
-#ifdef HT_DEBUG
-  fprintf(stderr, "\r\n\r\n\r\n\r\n");
-  fprintf(stderr, "Number of hashtable lookups: %" PRId64 "\r\n",
-          (int64_t)hash_count_lookup);
-  fprintf(stderr, "Number of perturb loops: %" PRId64 "\r\n",
-          (int64_t)hash_count_perturb);
-  fprintf(stderr, "Percentage of perturb loops: %" PRId64 "%%\r\n",
-          (int64_t)(hash_count_perturb * 100 / hash_count_lookup));
-#endif  // ifdef HT_DEBUG
 }
 
 /// Add item for key "key" to hashtable "ht".
@@ -252,16 +227,6 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
   if (ht->ht_locked > 0) {
     return;
   }
-
-#ifdef HT_DEBUG
-  if (ht->ht_used > ht->ht_filled) {
-    EMSG("hash_may_resize(): more used than filled");
-  }
-
-  if (ht->ht_filled >= ht->ht_mask + 1) {
-    EMSG("hash_may_resize(): table completely filled");
-  }
-#endif  // ifdef HT_DEBUG
 
   size_t minsize;
   if (minitems == 0) {
@@ -359,11 +324,6 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
 }
 
 /// Get the hash number for a key.
-///
-/// If you think you know a better hash function: Compile with HT_DEBUG set and
-/// run a script that uses hashtables a lot. Vim will then print statistics
-/// when exiting. Try that with the current hash algorithm and yours. The
-/// lower the percentage the better.
 hash_T hash_hash(char_u *key)
 {
   hash_T hash = *key;

@@ -104,10 +104,6 @@ struct source_cookie {
   FILE        *fp;              /* opened file for sourcing */
   char_u      *nextline;        /* if not NULL: line that was read ahead */
   int finished;                 /* ":finish" used */
-#if defined(USE_CRNL)
-  int fileformat;               /* EOL_UNKNOWN, EOL_UNIX or EOL_DOS */
-  int error;                    /* TRUE if LF found after CR-LF */
-#endif
   linenr_T breakpoint;          /* next line with breakpoint or zero */
   char_u      *fname;           /* name of sourced file */
   int dbg_tick;                 /* debug_tick when breakpoint was set */
@@ -2390,15 +2386,6 @@ do_source (
   else if (is_vimrc == DOSO_GVIMRC)
     vimrc_found(fname_exp, (char_u *)"MYGVIMRC");
 
-#ifdef USE_CRNL
-  /* If no automatic file format: Set default to CR-NL. */
-  if (*p_ffs == NUL)
-    cookie.fileformat = EOL_DOS;
-  else
-    cookie.fileformat = EOL_UNKNOWN;
-  cookie.error = FALSE;
-#endif
-
   cookie.nextline = NULL;
   cookie.finished = FALSE;
 
@@ -2723,9 +2710,6 @@ static char_u *get_one_sourceline(struct source_cookie *sp)
   int len;
   int c;
   char_u              *buf;
-#ifdef USE_CRNL
-  int has_cr;                           /* CR-LF found */
-#endif
   int have_read = FALSE;
 
   /* use a growarray to store the sourced line */
@@ -2744,16 +2728,6 @@ static char_u *get_one_sourceline(struct source_cookie *sp)
             sp->fp) == NULL)
       break;
     len = ga.ga_len + (int)STRLEN(buf + ga.ga_len);
-#ifdef USE_CRNL
-    /* Ignore a trailing CTRL-Z, when in Dos mode.	Only recognize the
-     * CTRL-Z by its own, or after a NL. */
-    if (       (len == 1 || (len >= 2 && buf[len - 2] == '\n'))
-               && sp->fileformat == EOL_DOS
-               && buf[len - 1] == Ctrl_Z) {
-      buf[len - 1] = NUL;
-      break;
-    }
-#endif
 
     have_read = TRUE;
     ga.ga_len = len;
@@ -2763,30 +2737,6 @@ static char_u *get_one_sourceline(struct source_cookie *sp)
       continue;
 
     if (len >= 1 && buf[len - 1] == '\n') {     /* remove trailing NL */
-#ifdef USE_CRNL
-      has_cr = (len >= 2 && buf[len - 2] == '\r');
-      if (sp->fileformat == EOL_UNKNOWN) {
-        if (has_cr)
-          sp->fileformat = EOL_DOS;
-        else
-          sp->fileformat = EOL_UNIX;
-      }
-
-      if (sp->fileformat == EOL_DOS) {
-        if (has_cr) {               /* replace trailing CR */
-          buf[len - 2] = '\n';
-          --len;
-          --ga.ga_len;
-        } else {          /* lines like ":map xx yy^M" will have failed */
-          if (!sp->error) {
-            msg_source(hl_attr(HLF_W));
-            EMSG(_("W15: Warning: Wrong line separator, ^M may be missing"));
-          }
-          sp->error = TRUE;
-          sp->fileformat = EOL_UNIX;
-        }
-      }
-#endif
       /* The '\n' is escaped if there is an odd number of ^V's just
        * before it, first set "c" just before the 'V's and then check
        * len&c parities (is faster than ((len-c)%2 == 0)) -- Acevedo */
