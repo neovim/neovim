@@ -1,10 +1,9 @@
-/*
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
- */
+// VIM - Vi IMproved	by Bram Moolenaar
+//
+// Do ":help uganda"  in Vim to read copying and usage conditions.
+// Do ":help credits" in Vim to see a list of people who contributed.
+// See README.txt for an overview of the Vim source code.
+
 
 #define EXTERN
 #include <assert.h>
@@ -32,7 +31,7 @@
 #include "nvim/iconv.h"
 #include "nvim/if_cscope.h"
 #ifdef HAVE_LOCALE_H
-# include <locale.h>
+#include <locale.h>
 #endif
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
@@ -68,645 +67,687 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/handle.h"
 
-/* Maximum number of commands from + or -c arguments. */
+// Maximum number of commands from + or -c arguments.
 #define MAX_ARG_CMDS 10
 
-/* values for "window_layout" */
-#define WIN_HOR     1       /* "-o" horizontally split windows */
-#define WIN_VER     2       /* "-O" vertically split windows */
-#define WIN_TABS    3       /* "-p" windows on tab pages */
+// values for "window_layout" 
+#define WIN_HOR     1       // "-o" horizontally split windows
+#define WIN_VER     2       // "-O" vertically split windows
+#define WIN_TABS    3       // "-p" windows on tab pages
 
-/* Struct for various parameters passed between main() and other functions. */
+// Struct for various parameters passed 
+// between main() and other functions. 
 typedef struct {
-  int argc;
-  char        **argv;
+    int argc;
+    char **argv;
 
-  char *use_vimrc;                           // vimrc from -u argument
+    char *use_vimrc;                    // vimrc from -u argument
 
-  int n_commands;                            /* no. of commands from + or -c */
-  char *commands[MAX_ARG_CMDS];              // commands from + or -c arg
-  char_u cmds_tofree[MAX_ARG_CMDS];          /* commands that need free() */
-  int n_pre_commands;                        /* no. of commands from --cmd */
-  char *pre_commands[MAX_ARG_CMDS];          // commands from --cmd argument
+    int n_commands;                     // no. of commands from + or -c
+    char *commands[MAX_ARG_CMDS];       // commands from + or -c arg
+    char_u cmds_tofree[MAX_ARG_CMDS];   // commands that need free()
+    int n_pre_commands;                 // no. of commands from --cmd
+    char *pre_commands[MAX_ARG_CMDS];   // commands from --cmd argument
+    
+    int edit_type;                      // type of editing to do 
+    char_u      *tagname;               // tag from -t argument
+    char_u      *use_ef;                // 'errorfile' from -q argument
 
-  int edit_type;                        /* type of editing to do */
-  char_u      *tagname;                 /* tag from -t argument */
-  char_u      *use_ef;                  /* 'errorfile' from -q argument */
-
-  int want_full_screen;
-  bool input_isatty;                    // stdin is a terminal
-  bool output_isatty;                   // stdout is a terminal
-  bool err_isatty;                      // stderr is a terminal
-  bool headless;                        // Dont try to start an user interface
+    int want_full_screen;
+    bool input_isatty;                  // stdin is a terminal
+    bool output_isatty;                 // stdout is a terminal
+    bool err_isatty;                    // stderr is a terminal
+    bool headless;                      // Dont try to start an user interface
                                         // or read/write to stdio(unless
                                         // embedding)
-  int no_swap_file;                     /* "-n" argument used */
-  int use_debug_break_level;
-  int window_count;                     /* number of windows to use */
-  int window_layout;                    /* 0, WIN_HOR, WIN_VER or WIN_TABS */
+    int no_swap_file;                   // "-n" argument used
+    int use_debug_break_level;
+    int window_count;                   // number of windows to use
+    int window_layout;                  // 0, WIN_HOR, WIN_VER or WIN_TABS
 
 #if !defined(UNIX)
-  int literal;                          /* don't expand file names */
+    int literal;                        // don't expand file names
 #endif
-  int diff_mode;                        /* start with 'diff' set */
+    int diff_mode;                      // start with 'diff' set
 } mparm_T;
 
-/* Values for edit_type. */
-#define EDIT_NONE   0       /* no edit type yet */
-#define EDIT_FILE   1       /* file name argument[s] given, use argument list */
-#define EDIT_STDIN  2       /* read file from stdin */
-#define EDIT_TAG    3       /* tag name argument given, use tagname */
-#define EDIT_QF     4       /* start in quickfix mode */
+
+// Values for edit_type.
+#define EDIT_NONE   0   // no edit type yet
+#define EDIT_FILE   1   // file name argument[s] given, use argument list
+#define EDIT_STDIN  2   // read file from stdin
+#define EDIT_TAG    3   // tag name argument given, use tagname
+#define EDIT_QF     4   // start in quickfix mode
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "main.c.generated.h"
+#include "main.c.generated.h"
 #endif
 
+
 // Error messages
+#define ME_UNKNOWN_OPTION 0
+#define ME_TOO_MANY_ARGS 1
+#define ME_ARG_MISSING 2
+#define ME_GARBAGE 3
+#define ME_EXTRA_CMD 4
 static const char *main_errors[] = {
-  N_("Unknown option argument"),
-#define ME_UNKNOWN_OPTION       0
-  N_("Too many edit arguments"),
-#define ME_TOO_MANY_ARGS        1
-  N_("Argument missing after"),
-#define ME_ARG_MISSING          2
-  N_("Garbage after option argument"),
-#define ME_GARBAGE              3
-  N_("Too many \"+command\", \"-c command\" or \"--cmd command\" arguments")
-#define ME_EXTRA_CMD            4
+    N_("Unknown option argument"),
+    N_("Too many edit arguments"),
+    N_("Argument missing after"),
+    N_("Garbage after option argument"),
+    N_("Too many \"+command\","
+       "\"-c command\" or \"--cmd"
+       " command\" arguments"
+    )
 };
 
 
-/// Performs early initialization.
-///
-/// Needed for unit tests. Must be called after `time_init()`.
-void early_init(void)
-{
-  handle_init();
+// Performs early initialization.
+//
+// Needed for unit tests. Must be called after `time_init()`.
+void early_init(void) {
+    handle_init();
 
-  (void)mb_init();      // init mb_bytelen_tab[] to ones
-  eval_init();          // init global variables
+    (void)mb_init();      // init mb_bytelen_tab[] to ones
+    eval_init();          // init global variables
 
-  // Init the table of Normal mode commands.
-  init_normal_cmds();
+    // Init the table of Normal mode commands.
+    init_normal_cmds();
 
 #if defined(HAVE_LOCALE_H) || defined(X_LOCALE)
-  // Setup to use the current locale (for ctype() and many other things).
-  // NOTE: Translated messages with encodings other than latin1 will not
-  // work until set_init_1() has been called!
-  init_locale();
+    // Setup to use the current locale (for ctype() and many other things).
+    // NOTE: Translated messages with encodings other than latin1 will not
+    // work until set_init_1() has been called!
+    init_locale();
 #endif
 
-  // Allocate the first window and buffer.
-  // Can't do anything without it, exit when it fails.
-  if (!win_alloc_first()) {
-    mch_exit(0);
-  }
+    // Allocate the first window and buffer.
+    // Can't do anything without it, exit when it fails.
+    if (!win_alloc_first()) {
+        mch_exit(0);
+    }
 
-  init_yank();                  // init yank buffers
+    init_yank();                  // init yank buffers
 
-  alist_init(&global_alist);    // Init the argument list to empty.
-  global_alist.id = 0;
+    alist_init(&global_alist);    // Init the argument list to empty.
+    global_alist.id = 0;
 
-  // Set the default values for the options.
-  // NOTE: Non-latin1 translated messages are working only after this,
-  // because this is where "has_mbyte" will be set, which is used by
-  // msg_outtrans_len_attr().
-  // First find out the home directory, needed to expand "~" in options.
-  init_homedir();               // find real value of $HOME
-  set_init_1();
-  TIME_MSG("inits 1");
+    // Set the default values for the options.
+    // NOTE: Non-latin1 translated messages are working only after this,
+    // because this is where "has_mbyte" will be set, which is used by
+    // msg_outtrans_len_attr().
+    // First find out the home directory, needed to expand "~" in options.
+    init_homedir();               // find real value of $HOME
+    set_init_1();
+    TIME_MSG("inits 1");
 
-  set_lang_var();               // set v:lang and v:ctype
+    set_lang_var();               // set v:lang and v:ctype
 }
 
 #ifdef MAKE_LIB
-int nvim_main(int argc, char **argv)
+int nvim_main(int argc, char **argv) {
 #else
-int main(int argc, char **argv)
+int main(int argc, char **argv) {
 #endif
-{
-  char_u      *fname = NULL;            /* file name from command line */
-  mparm_T params;                       /* various parameters passed between
-                                         * main() and other functions. */
-  time_init();
+    char_u      *fname = NULL;    // file name from command line
+    mparm_T params;               // various parameters passed between
+                                // * main() and other functions.
+    time_init();
 
-  /* Many variables are in "params" so that we can pass them to invoked
-   * functions without a lot of arguments.  "argc" and "argv" are also
-   * copied, so that they can be changed. */
-  init_params(&params, argc, argv);
+    // Many variables are in "params" so that we can pass them to invoked
+    // functions without a lot of arguments.  "argc" and "argv" are also
+    // copied, so that they can be changed.
+    init_params(&params, argc, argv);
 
-  init_startuptime(&params);
+    init_startuptime(&params);
 
-  early_init();
+    early_init();
 
-  // Check if we have an interactive window.
-  check_and_set_isatty(&params);
+    // Check if we have an interactive window.
+    check_and_set_isatty(&params);
 
-  // Get the name with which Nvim was invoked, with and without path.
-  set_vim_var_string(VV_PROGPATH, (char_u *)argv[0], -1);
-  set_vim_var_string(VV_PROGNAME, path_tail((char_u *)argv[0]), -1);
+    // Get the name with which Nvim was invoked, with and without path.
+    set_vim_var_string(VV_PROGPATH, (char_u *)argv[0], -1);
+    set_vim_var_string(VV_PROGNAME,path_tail((char_u *)argv[0]),-1);
 
-  /*
-   * Process the command line arguments.  File names are put in the global
-   * argument list "global_alist".
-   */
-  command_line_scan(&params);
+    // Process the command line arguments.
+    // File names are put in the global argument list "global_alist".
+    command_line_scan(&params);
 
-  if (GARGCOUNT > 0)
-    fname = get_fname(&params);
-
-  TIME_MSG("expanding arguments");
-
-  if (params.diff_mode && params.window_count == -1)
-    params.window_count = 0;            /* open up to 3 windows */
-
-  /* Don't redraw until much later. */
-  ++RedrawingDisabled;
-
-  /*
-   * When listing swap file names, don't do cursor positioning et. al.
-   */
-  if (recoverymode && fname == NULL)
-    params.want_full_screen = FALSE;
-
-  setbuf(stdout, NULL);
-
-  /* This message comes before term inits, but after setting "silent_mode"
-   * when the input is not a tty. */
-  if (GARGCOUNT > 1 && !silent_mode)
-    printf(_("%d files to edit\n"), GARGCOUNT);
-
-  event_init();
-  full_screen = true;
-  t_colors = 256;
-  check_tty(&params);
-
-  /*
-   * Set the default values for the options that use Rows and Columns.
-   */
-  win_init_size();
-  /* Set the 'diff' option now, so that it can be checked for in a .vimrc
-   * file.  There is no buffer yet though. */
-  if (params.diff_mode)
-    diff_win_options(firstwin, FALSE);
-
-  assert(p_ch >= 0 && Rows >= p_ch && Rows - p_ch <= INT_MAX);
-  cmdline_row = (int)(Rows - p_ch);
-  msg_row = cmdline_row;
-  screenalloc(false);           /* allocate screen buffers */
-  set_init_2();
-  TIME_MSG("inits 2");
-
-  msg_scroll = TRUE;
-  no_wait_return = TRUE;
-
-  init_highlight(TRUE, FALSE);   /* set the default highlight groups */
-  TIME_MSG("init highlight");
-
-  /* Set the break level after the terminal is initialized. */
-  debug_break_level = params.use_debug_break_level;
-
-  bool reading_input = !params.headless && (params.input_isatty
-      || params.output_isatty || params.err_isatty);
-
-  if (reading_input) {
-    // One of the startup commands (arguments, sourced scripts or plugins) may
-    // prompt the user, so start reading from a tty now.
-    int fd = fileno(stdin);
-    if (!params.input_isatty || params.edit_type == EDIT_STDIN) {
-      // Use stderr or stdout since stdin is not a tty and/or could be used to
-      // read the "-" file (eg: cat file | nvim -)
-      fd = params.err_isatty ? fileno(stderr) : fileno(stdout);
-    }
-    input_start(fd);
-  }
-
-  // open terminals when opening files that start with term://
-  do_cmdline_cmd("autocmd BufReadCmd term://* "
-                 ":call termopen( "
-                 // Capture the command string
-                 "matchstr(expand(\"<amatch>\"), "
-                 "'\\c\\mterm://\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), "
-                 // capture the working directory
-                 "{'cwd': get(matchlist(expand(\"<amatch>\"), "
-                 "'\\c\\mterm://\\(.\\{-}\\)//'), 1, '')})");
-
-  /* Execute --cmd arguments. */
-  exe_pre_commands(&params);
-
-  /* Source startup scripts. */
-  source_startup_scripts(&params);
-
-  /*
-   * Read all the plugin files.
-   * Only when compiled with +eval, since most plugins need it.
-   */
-  load_plugins();
-
-  /* Decide about window layout for diff mode after reading vimrc. */
-  set_window_layout(&params);
-
-  /*
-   * Recovery mode without a file name: List swap files.
-   * This uses the 'dir' option, therefore it must be after the
-   * initializations.
-   */
-  if (recoverymode && fname == NULL) {
-    recover_names(NULL, TRUE, 0, NULL);
-    mch_exit(0);
-  }
-
-  /*
-   * Set a few option defaults after reading .vimrc files:
-   * 'title' and 'icon', Unix: 'shellpipe' and 'shellredir'.
-   */
-  set_init_3();
-  TIME_MSG("inits 3");
-
-  /*
-   * "-n" argument: Disable swap file by setting 'updatecount' to 0.
-   * Note that this overrides anything from a vimrc file.
-   */
-  if (params.no_swap_file)
-    p_uc = 0;
-
-  if (curwin->w_p_rl && p_altkeymap) {
-    p_hkmap = FALSE;              /* Reset the Hebrew keymap mode */
-    curwin->w_p_arab = FALSE;       /* Reset the Arabic keymap mode */
-    p_fkmap = TRUE;               /* Set the Farsi keymap mode */
-  }
-
-  /*
-   * Read in registers, history etc, but not marks, from the viminfo file.
-   * This is where v:oldfiles gets filled.
-   */
-  if (*p_viminfo != NUL) {
-    read_viminfo(NULL, VIF_WANT_INFO | VIF_GET_OLDFILES);
-    TIME_MSG("reading viminfo");
-  }
-  /* It's better to make v:oldfiles an empty list than NULL. */
-  if (get_vim_var_list(VV_OLDFILES) == NULL)
-    set_vim_var_list(VV_OLDFILES, list_alloc());
-
-  /*
-   * "-q errorfile": Load the error file now.
-   * If the error file can't be read, exit before doing anything else.
-   */
-  handle_quickfix(&params);
-
-  /*
-   * Start putting things on the screen.
-   * Scroll screen down before drawing over it
-   * Clear screen now, so file message will not be cleared.
-   */
-  starting = NO_BUFFERS;
-  no_wait_return = FALSE;
-  if (!exmode_active)
-    msg_scroll = FALSE;
-
-  /*
-   * If "-" argument given: Read file from stdin.
-   * Do this before starting Raw mode, because it may change things that the
-   * writing end of the pipe doesn't like, e.g., in case stdin and stderr
-   * are the same terminal: "cat | vim -".
-   * Using autocommands here may cause trouble...
-   */
-  if (params.edit_type == EDIT_STDIN && !recoverymode)
-    read_stdin();
-
-
-  if (reading_input && (need_wait_return || msg_didany)) {
-    // Since at this point there's no UI instance running yet, error messages
-    // would have been printed to stdout. Before starting (which can result in
-    // a alternate screen buffer being shown) we need confirmation that the
-    // user has seen the messages and that is done with a call to wait_return.
-    TIME_MSG("waiting for return");
-    wait_return(TRUE);
-  }
-
-  if (!params.headless) {
-    // Stop reading from input stream, the UI layer will take over now.
-    input_stop();
-    ui_builtin_start();
-  }
-
-  setmouse();  // may start using the mouse
-  ui_reset_scroll_region();  // In case Rows changed
-
-  // Don't clear the screen when starting in Ex mode, unless using the GUI.
-  if (exmode_active)
-    must_redraw = CLEAR;
-  else {
-    screenclear();                        /* clear screen */
-    TIME_MSG("clearing screen");
-  }
-
-  no_wait_return = TRUE;
-
-  /*
-   * Create the requested number of windows and edit buffers in them.
-   * Also does recovery if "recoverymode" set.
-   */
-  create_windows(&params);
-  TIME_MSG("opening buffers");
-
-  /* clear v:swapcommand */
-  set_vim_var_string(VV_SWAPCOMMAND, NULL, -1);
-
-  /* Ex starts at last line of the file */
-  if (exmode_active)
-    curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-
-  apply_autocmds(EVENT_BUFENTER, NULL, NULL, FALSE, curbuf);
-  TIME_MSG("BufEnter autocommands");
-  setpcmark();
-
-  /*
-   * When started with "-q errorfile" jump to first error now.
-   */
-  if (params.edit_type == EDIT_QF) {
-    qf_jump(NULL, 0, 0, FALSE);
-    TIME_MSG("jump to first error");
-  }
-
-  /*
-   * If opened more than one window, start editing files in the other
-   * windows.
-   */
-  edit_buffers(&params);
-
-  if (params.diff_mode) {
-    /* set options in each window for "nvim -d". */
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      diff_win_options(wp, TRUE);
-    }
-  }
-
-  /*
-   * Shorten any of the filenames, but only when absolute.
-   */
-  shorten_fnames(FALSE);
-
-  /*
-   * Need to jump to the tag before executing the '-c command'.
-   * Makes "vim -c '/return' -t main" work.
-   */
-  handle_tag(params.tagname);
-
-  /* Execute any "+", "-c" and "-S" arguments. */
-  if (params.n_commands > 0)
-    exe_commands(&params);
-
-  RedrawingDisabled = 0;
-  redraw_all_later(NOT_VALID);
-  no_wait_return = FALSE;
-  starting = 0;
-
-  /* start in insert mode */
-  if (p_im)
-    need_start_insertmode = TRUE;
-
-  apply_autocmds(EVENT_VIMENTER, NULL, NULL, FALSE, curbuf);
-  TIME_MSG("VimEnter autocommands");
-
-  /* When a startup script or session file setup for diff'ing and
-   * scrollbind, sync the scrollbind now. */
-  if (curwin->w_p_diff && curwin->w_p_scb) {
-    update_topline();
-    check_scrollbind((linenr_T)0, 0L);
-    TIME_MSG("diff scrollbinding");
-  }
-
-  /* If ":startinsert" command used, stuff a dummy command to be able to
-   * call normal_cmd(), which will then start Insert mode. */
-  if (restart_edit != 0)
-    stuffcharReadbuff(K_NOP);
-
-  TIME_MSG("before starting main loop");
-
-  /*
-   * Call the main command loop.  This never returns.
-   */
-  main_loop(FALSE, FALSE);
-
-  return 0;
-}
-
-/*
- * Main loop: Execute Normal mode commands until exiting Vim.
- * Also used to handle commands in the command-line window, until the window
- * is closed.
- * Also used to handle ":visual" command after ":global": execute Normal mode
- * commands, return when entering Ex mode.  "noexmode" is TRUE then.
- */
-void
-main_loop (
-    int cmdwin,                 /* TRUE when working in the command-line window */
-    int noexmode               /* TRUE when return on entering Ex mode */
-)
-{
-  oparg_T oa;                                   /* operator arguments */
-  int previous_got_int = FALSE;                 /* "got_int" was TRUE */
-  linenr_T conceal_old_cursor_line = 0;
-  linenr_T conceal_new_cursor_line = 0;
-  int conceal_update_lines = FALSE;
-
-  ILOG("Starting Neovim main loop.");
-
-  clear_oparg(&oa);
-  while (!cmdwin
-      || cmdwin_result == 0
-      ) {
-    if (stuff_empty()) {
-      did_check_timestamps = FALSE;
-      if (need_check_timestamps)
-        check_timestamps(FALSE);
-      if (need_wait_return)             /* if wait_return still needed ... */
-        wait_return(FALSE);             /* ... call it now */
-      if (need_start_insertmode && goto_im()
-          && !VIsual_active
-         ) {
-        need_start_insertmode = FALSE;
-        stuffReadbuff((char_u *)"i");           /* start insert mode next */
-        /* skip the fileinfo message now, because it would be shown
-         * after insert mode finishes! */
-        need_fileinfo = FALSE;
-      }
+    if (GARGCOUNT > 0) {
+        fname = get_fname(&params);
     }
 
-    /* Reset "got_int" now that we got back to the main loop.  Except when
-     * inside a ":g/pat/cmd" command, then the "got_int" needs to abort
-     * the ":g" command.
-     * For ":g/pat/vi" we reset "got_int" when used once.  When used
-     * a second time we go back to Ex mode and abort the ":g" command. */
-    if (got_int) {
-      if (noexmode && global_busy && !exmode_active && previous_got_int) {
-        /* Typed two CTRL-C in a row: go back to ex mode as if "Q" was
-         * used and keep "got_int" set, so that it aborts ":g". */
-        exmode_active = EXMODE_NORMAL;
-        State = NORMAL;
-      } else if (!global_busy || !exmode_active) {
-        if (!quit_more)
-          (void)vgetc();                        /* flush all buffers */
-        got_int = FALSE;
-      }
-      previous_got_int = TRUE;
-    } else
-      previous_got_int = FALSE;
+    TIME_MSG("expanding arguments");
 
-    if (!exmode_active)
-      msg_scroll = FALSE;
-    quit_more = FALSE;
+    if (params.diff_mode && params.window_count == -1) {
+        params.window_count = 0;      // open up to 3 windows 
+    }
 
-    /*
-     * If skip redraw is set (for ":" in wait_return()), don't redraw now.
-     * If there is nothing in the stuff_buffer or do_redraw is TRUE,
-     * update cursor and redraw.
-     */
-    if (skip_redraw || exmode_active)
-      skip_redraw = FALSE;
-    else if (do_redraw || stuff_empty()) {
-      /* Trigger CursorMoved if the cursor moved. */
-      if (!finish_op && (
-            has_cursormoved()
-            ||
-            curwin->w_p_cole > 0
-            )
-          && !equalpos(last_cursormoved, curwin->w_cursor)) {
-        if (has_cursormoved())
-          apply_autocmds(EVENT_CURSORMOVED, NULL, NULL,
-              FALSE, curbuf);
-        if (curwin->w_p_cole > 0) {
-          conceal_old_cursor_line = last_cursormoved.lnum;
-          conceal_new_cursor_line = curwin->w_cursor.lnum;
-          conceal_update_lines = TRUE;
+    // Don't redraw until much later.
+    ++RedrawingDisabled;
+
+    // When listing swap file names, don't do cursor positioning et. al.
+    if (recoverymode && fname == NULL) {
+        params.want_full_screen = FALSE;
+    } 
+
+    setbuf(stdout, NULL);
+
+    // This message comes before term inits,
+    // but after setting "silent_mode"
+    // when the input is not a tty.
+    if (GARGCOUNT > 1 && !silent_mode) {
+        printf(_("%d files to edit\n"), GARGCOUNT);
+    }
+
+    event_init();
+    full_screen = true;
+    t_colors = 256;
+    check_tty(&params);
+
+    // Set the default values for the options that use Rows and Columns.
+    win_init_size();
+
+    // Set the 'diff' option now, so that it can be checked for in a .vimrc
+    // file.  There is no buffer yet though.
+    if (params.diff_mode) {
+        diff_win_options(firstwin, FALSE);
+    }
+
+    assert(p_ch >= 0 && Rows >= p_ch && Rows - p_ch <= INT_MAX);
+    cmdline_row = (int)(Rows - p_ch);
+    msg_row = cmdline_row;
+    screenalloc(false);           // allocate screen buffers
+    set_init_2();
+    TIME_MSG("inits 2");
+
+    msg_scroll = TRUE;
+    no_wait_return = TRUE;
+
+    init_highlight(TRUE, FALSE);   // set the default highlight groups
+    TIME_MSG("init highlight");
+
+    // Set the break level after the terminal is initialized.
+    debug_break_level = params.use_debug_break_level;
+
+    bool reading_input = 
+        !params.headless && (
+            params.input_isatty ||
+            params.output_isatty ||
+            params.err_isatty
+        );
+
+    if (reading_input) {
+        // One of the startup commands (arguments, 
+        // sourced scripts or plugins) may prompt the user,
+        // so start reading from a tty now.
+    
+        int fd = fileno(stdin);
+        if (
+            !params.input_isatty ||
+            params.edit_type == EDIT_STDIN
+        ) {
+            // Use stderr or stdout since stdin is not a tty and/or 
+            // could be used to read the "-" file (eg: cat file | nvim -)
+            fd = params.err_isatty ? fileno(stderr) : fileno(stdout);
         }
-        last_cursormoved = curwin->w_cursor;
-      }
-
-      /* Trigger TextChanged if b_changedtick differs. */
-      if (!finish_op && has_textchanged()
-          && last_changedtick != curbuf->b_changedtick) {
-        if (last_changedtick_buf == curbuf)
-          apply_autocmds(EVENT_TEXTCHANGED, NULL, NULL,
-              FALSE, curbuf);
-        last_changedtick_buf = curbuf;
-        last_changedtick = curbuf->b_changedtick;
-      }
-
-      /* Scroll-binding for diff mode may have been postponed until
-       * here.  Avoids doing it for every change. */
-      if (diff_need_scrollbind) {
-        check_scrollbind((linenr_T)0, 0L);
-        diff_need_scrollbind = FALSE;
-      }
-      /* Include a closed fold completely in the Visual area. */
-      foldAdjustVisual();
-      /*
-       * When 'foldclose' is set, apply 'foldlevel' to folds that don't
-       * contain the cursor.
-       * When 'foldopen' is "all", open the fold(s) under the cursor.
-       * This may mark the window for redrawing.
-       */
-      if (hasAnyFolding(curwin) && !char_avail()) {
-        foldCheckClose();
-        if (fdo_flags & FDO_ALL)
-          foldOpenCursor();
-      }
-
-      /*
-       * Before redrawing, make sure w_topline is correct, and w_leftcol
-       * if lines don't wrap, and w_skipcol if lines wrap.
-       */
-      update_topline();
-      validate_cursor();
-
-      if (VIsual_active)
-        update_curbuf(INVERTED);        /* update inverted part */
-      else if (must_redraw)
-        update_screen(0);
-      else if (redraw_cmdline || clear_cmdline)
-        showmode();
-      redraw_statuslines();
-      if (need_maketitle)
-        maketitle();
-      /* display message after redraw */
-      if (keep_msg != NULL) {
-        char_u *p;
-
-        // msg_attr_keep() will set keep_msg to NULL, must free the string
-        // here. Don't reset keep_msg, msg_attr_keep() uses it to check for
-        // duplicates.
-        p = keep_msg;
-        msg_attr(p, keep_msg_attr);
-        xfree(p);
-      }
-      if (need_fileinfo) {              /* show file info after redraw */
-        fileinfo(FALSE, TRUE, FALSE);
-        need_fileinfo = FALSE;
-      }
-
-      emsg_on_display = FALSE;          /* can delete error message now */
-      did_emsg = FALSE;
-      msg_didany = FALSE;               /* reset lines_left in msg_start() */
-      may_clear_sb_text();              /* clear scroll-back text on next msg */
-      showruler(FALSE);
-
-      if (conceal_update_lines
-          && (conceal_old_cursor_line != conceal_new_cursor_line
-            || conceal_cursor_line(curwin)
-            || need_cursor_line_redraw)) {
-        if (conceal_old_cursor_line != conceal_new_cursor_line
-            && conceal_old_cursor_line
-            <= curbuf->b_ml.ml_line_count)
-          update_single_line(curwin, conceal_old_cursor_line);
-        update_single_line(curwin, conceal_new_cursor_line);
-        curwin->w_valid &= ~VALID_CROW;
-      }
-      setcursor();
-
-      do_redraw = FALSE;
-
-      /* Now that we have drawn the first screen all the startup stuff
-       * has been done, close any file for startup messages. */
-      if (time_fd != NULL) {
-        TIME_MSG("first screen update");
-        TIME_MSG("--- NVIM STARTED ---");
-        fclose(time_fd);
-        time_fd = NULL;
-      }
+        input_start(fd);
     }
 
-    /*
-     * Update w_curswant if w_set_curswant has been set.
-     * Postponed until here to avoid computing w_virtcol too often.
-     */
-    update_curswant();
+    // open terminals when opening files that start with term://
+    do_cmdline_cmd(
+        "autocmd BufReadCmd term://* "
+        ":call termopen( "
+        // Capture the command string
+        "matchstr(expand(\"<amatch>\"), "
+        "'\\c\\mterm://\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), "
+        // capture the working directory
+        "{'cwd': get(matchlist(expand(\"<amatch>\"), "
+        "'\\c\\mterm://\\(.\\{-}\\)//'), 1, '')})"
+    );
 
-    /*
-     * May perform garbage collection when waiting for a character, but
-     * only at the very toplevel.  Otherwise we may be using a List or
-     * Dict internally somewhere.
-     * "may_garbage_collect" is reset in vgetc() which is invoked through
-     * do_exmode() and normal_cmd().
-     */
-    may_garbage_collect = (!cmdwin && !noexmode);
-    /*
-     * If we're invoked as ex, do a round of ex commands.
-     * Otherwise, get and execute a normal mode command.
-     */
+    // Execute --cmd arguments.
+    exe_pre_commands(&params);
+
+    // Source startup scripts.
+    source_startup_scripts(&params);
+
+    
+    // Read all the plugin files.
+    // Only when compiled with +eval, since most plugins need it.
+   
+    load_plugins();
+
+    // Decide about window layout for diff mode after reading vimrc.
+    set_window_layout(&params);
+
+    // Recovery mode without a file name: List swap files.
+    // This uses the 'dir' option, therefore it must be after the
+    // initializations.
+    if (recoverymode && fname == NULL) {
+        recover_names(NULL, TRUE, 0, NULL);
+        mch_exit(0);
+    }
+
+    // Set a few option defaults after reading .vimrc files:
+    //'title' and 'icon', Unix: 'shellpipe' and 'shellredir'.
+    set_init_3();
+    TIME_MSG("inits 3");
+
+    // "-n" argument: Disable swap file by setting 'updatecount' to 0.
+    // Note that this overrides anything from a vimrc file.
+    if (params.no_swap_file) {
+        p_uc = 0;
+    }
+
+    if (curwin->w_p_rl && p_altkeymap) {
+        p_hkmap = FALSE;            // Reset the Hebrew keymap mode
+        curwin->w_p_arab = FALSE;   // Reset the Arabic keymap mode
+        p_fkmap = TRUE;             // Set the Farsi keymap mode
+    }
+
+    // Read in registers, history etc, but not marks, 
+    // from the viminfo file.
+    // This is where v:oldfiles gets filled.
+    if (*p_viminfo != NUL) {
+        read_viminfo(NULL, VIF_WANT_INFO | VIF_GET_OLDFILES);
+        TIME_MSG("reading viminfo");
+    }
+    
+    // It's better to make v:oldfiles an empty list than NULL.
+    if (get_vim_var_list(VV_OLDFILES) == NULL) {
+        set_vim_var_list(VV_OLDFILES, list_alloc());
+    }
+
+    // "-q errorfile": Load the error file now.
+    // If the error file can't be read, exit before doing anything else.
+    handle_quickfix(&params);
+
+    // Start putting things on the screen.
+    // Scroll screen down before drawing over it
+    // Clear screen now, so file message will not be cleared.
+    starting = NO_BUFFERS;
+    no_wait_return = FALSE;
+    if (!exmode_active) {
+        msg_scroll = FALSE;
+    }
+
+    // If "-" argument given: Read file from stdin.
+    // Do this before starting Raw mode; it may change things that the
+    // writing end of the pipe doesn't like, e.g., in case stdin and stderr
+    // are the same terminal: "cat | vim -".
+    // Using autocommands here may cause trouble...
+    if (
+        params.edit_type == EDIT_STDIN &&
+        !recoverymode
+    ) {
+        read_stdin();
+    }
+
+    if (reading_input && (need_wait_return || msg_didany)) {
+        // Since at this point there's no UI instance running yet,
+        // error messages would have been printed to stdout. 
+        // Before starting (which can result in a alternate 
+        // screen buffer being shown) we need confirmation that the
+        // user has seen the messages and that is done with a 
+        // call to wait_return.
+        TIME_MSG("waiting for return");
+        wait_return(TRUE);
+    }
+
+    if (!params.headless) {
+        // Stop reading from input stream, 
+        // the UI layer will take over now.
+        input_stop();
+        ui_builtin_start();
+    }
+
+    setmouse();                // may start using the mouse
+    ui_reset_scroll_region();  // In case Rows changed
+
+    // Don't clear the screen when starting in Ex mode;
+    // unless using the GUI.
     if (exmode_active) {
-      if (noexmode)         /* End of ":global/path/visual" commands */
-        return;
-      do_exmode(exmode_active == EXMODE_VIM);
-    } else
-      normal_cmd(&oa, TRUE);
-  }
+        must_redraw = CLEAR;
+    } else {
+        screenclear();         // clear screen
+        TIME_MSG("clearing screen");
+    }
+
+    no_wait_return = TRUE;
+
+    // Create the requested number of windows and edit buffers in them.
+    // Also does recovery if "recoverymode" set.
+    create_windows(&params);
+    TIME_MSG("opening buffers");
+
+    // clear v:swapcommand 
+    set_vim_var_string(VV_SWAPCOMMAND, NULL, -1);
+
+    // Ex starts at last line of the file
+    if (exmode_active) {
+        curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+    }
+    apply_autocmds(EVENT_BUFENTER, NULL, NULL, FALSE, curbuf);
+    TIME_MSG("BufEnter autocommands");
+    setpcmark();
+
+    // When started with "-q errorfile" jump to first error now.
+    if (params.edit_type == EDIT_QF) {
+        qf_jump(NULL, 0, 0, FALSE);
+        TIME_MSG("jump to first error");
+    }
+
+    // If opened more than one window, start editing files in the other
+    // windows.
+    edit_buffers(&params);
+
+    if (params.diff_mode) {
+        // set options in each window for "nvim -d".
+        FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+            diff_win_options(wp, TRUE);
+        }
+    }
+
+    // Shorten any of the filenames, but only when absolute.
+    shorten_fnames(FALSE);
+
+    // Need to jump to the tag before executing the '-c command'.
+    // Makes "vim -c '/return' -t main" work.
+    handle_tag(params.tagname);
+    
+    // Execute any "+", "-c" and "-S" arguments.
+    if (params.n_commands > 0) {
+        exe_commands(&params);
+    }
+    
+    RedrawingDisabled = 0;
+    redraw_all_later(NOT_VALID);
+    no_wait_return = FALSE;
+    starting = 0;
+
+    // start in insert mode
+    if (p_im) {
+        need_start_insertmode = TRUE;
+    }
+    apply_autocmds(EVENT_VIMENTER, NULL, NULL, FALSE, curbuf);
+    TIME_MSG("VimEnter autocommands");
+
+    // When a startup script or session file setup for diff'ing and
+    // scrollbind, sync the scrollbind now. */
+    if (curwin->w_p_diff && curwin->w_p_scb) {
+        update_topline();
+        check_scrollbind((linenr_T)0, 0L);
+        TIME_MSG("diff scrollbinding");
+    }
+
+    // If ":startinsert" command used, stuff a dummy command to be
+    // able to call normal_cmd(), which will then start Insert mode.
+    if (restart_edit != 0) {
+        stuffcharReadbuff(K_NOP);
+    }
+
+    TIME_MSG("before starting main loop");
+
+    // Call the main command loop.  This never returns.
+    main_loop(FALSE, FALSE);
+    return 0;
 }
 
 
-/* Exit properly */
+//////////////////////////////////////////////////////////////////////////
+//
+// Main loop: Execute Normal mode commands until exiting Vim.
+// Also used to handle commands in the command-line window, until
+// the window  is closed. Also used to handle ":visual" command 
+// after ":global": execute Normal mode commands, return when 
+// entering Ex mode.  "noexmode" is TRUE then.
+
+void main_loop (
+    int cmdwin,     // TRUE when working in the command-line window
+    int noexmode    // TRUE when return on entering Ex mode
+) {
+    oparg_T oa;                             // operator arguments 
+    int previous_got_int = FALSE;           // "got_int" was TRUE
+    linenr_T conceal_old_cursor_line = 0;
+    linenr_T conceal_new_cursor_line = 0;
+    int conceal_update_lines = FALSE;
+
+    ILOG("Starting Neovim main loop.");
+
+    clear_oparg(&oa);
+    while (
+        !cmdwin ||
+        cmdwin_result == 0
+    ) {
+        if (stuff_empty()) {
+            did_check_timestamps = FALSE;
+            if (need_check_timestamps)
+                check_timestamps(FALSE);
+            if (need_wait_return)        // if wait_return still needed;
+                wait_return(FALSE);      // call it now
+            if (
+                need_start_insertmode &&
+                goto_im() &&
+                !VIsual_active
+            ) {
+                need_start_insertmode = FALSE;
+                stuffReadbuff((char_u *)"i");           
+        
+                // start insert mode next
+                // skip the fileinfo message now, because it 
+                // would be shown after insert mode finishes!
+                need_fileinfo = FALSE;
+            }
+        }
+
+        // Reset "got_int" now that we got back to the main loop.  
+        // Except when inside a ":g/pat/cmd" command, then the 
+        // "got_int" needs to abort the ":g" command.
+        // For ":g/pat/vi" we reset "got_int" when used once.  When used
+        // a second time we go back to Ex mode and abort the ":g" command. 
+        if (got_int) {
+            if (
+                noexmode &&
+                global_busy &&
+                !exmode_active &&
+                previous_got_int
+            ) {
+                // Typed two CTRL-C in a row: go back to ex mode as if 
+                // "Q" was used and keep "got_int" set, so that it 
+                // aborts ":g".
+                exmode_active = EXMODE_NORMAL;
+                State = NORMAL;
+            } else if (
+                !global_busy ||
+                !exmode_active
+            ) {
+                if (!quit_more) {
+                    (void)vgetc();          // flush all buffers
+                }
+                got_int = FALSE;
+            }
+            previous_got_int = TRUE;
+        } else {
+            previous_got_int = FALSE;
+        }
+        if (!exmode_active) {
+            msg_scroll = FALSE;
+        }
+        quit_more = FALSE;
+
+        // If skip redraw is set (for ":" in wait_return()), don't 
+        // redraw now. If there is nothing in the stuff_buffer or 
+        // do_redraw is TRUE, update cursor and redraw.
+        if (skip_redraw || exmode_active) {
+            skip_redraw = FALSE;
+        } else if (
+            do_redraw ||
+            stuff_empty()
+        ) {
+            // Trigger CursorMoved if the cursor moved. */
+            if (
+                !finish_op && 
+                ( has_cursormoved() || curwin->w_p_cole > 0) &&
+                !equalpos(last_cursormoved, curwin->w_cursor)
+            ) {
+                if (has_cursormoved()) {
+                    apply_autocmds(
+                        EVENT_CURSORMOVED,
+                        NULL,
+                        NULL,
+                        FALSE,
+                        curbuf
+                    );
+                }
+                if (curwin->w_p_cole > 0) {
+                    conceal_old_cursor_line = last_cursormoved.lnum;
+                    conceal_new_cursor_line = curwin->w_cursor.lnum;
+                    conceal_update_lines = TRUE;
+                }
+                last_cursormoved = curwin->w_cursor;
+            }
+
+            // Trigger TextChanged if b_changedtick differs. */
+            if (
+                !finish_op && has_textchanged() &&
+                last_changedtick != curbuf->b_changedtick
+            ) {
+                if (last_changedtick_buf == curbuf) {
+                    apply_autocmds(
+                        EVENT_TEXTCHANGED,
+                        NULL,
+                        NULL,
+                        FALSE,
+                        curbuf
+                    );
+                }
+                last_changedtick_buf = curbuf;
+                last_changedtick = curbuf->b_changedtick;
+            }
+
+            // Scroll-binding for diff mode may have been postponed until
+            // here.  Avoids doing it for every change.
+            if (diff_need_scrollbind) {
+                check_scrollbind((linenr_T)0, 0L);
+                diff_need_scrollbind = FALSE;
+            }
+
+            // Include a closed fold completely in the Visual area.
+            foldAdjustVisual();
+            // When 'foldclose' is set, apply 'foldlevel' to folds that 
+            // don't contain the cursor. When 'foldopen' is "all", open
+            // the fold(s) under the cursor. This may mark the window 
+            // for redrawing.
+            if (
+                hasAnyFolding(curwin) &&
+                !char_avail()
+            ) {
+                foldCheckClose();
+                if (fdo_flags & FDO_ALL) {
+                    foldOpenCursor();
+                }
+            }
+
+            // Before redrawing, make sure w_topline is correct, and 
+            // w_leftcol if lines don't wrap, and w_skipcol if lines 
+            // wrap.
+            update_topline();
+            validate_cursor();
+
+            if (VIsual_active) {
+                update_curbuf(INVERTED);        /* update inverted part */
+            } else if (must_redraw) {
+                update_screen(0);
+            } else if (redraw_cmdline || clear_cmdline) {
+                showmode();
+            }
+            redraw_statuslines();
+            if (need_maketitle) {
+                maketitle();
+            }
+            // display message after redraw
+        
+            if (keep_msg != NULL) {
+                char_u *p;
+
+                // msg_attr_keep() will set keep_msg to NULL, must free the 
+                // string here. Don't reset keep_msg, msg_attr_keep() uses
+                // it to check for duplicates.
+                p = keep_msg;
+                msg_attr(p, keep_msg_attr);
+                xfree(p);
+            }
+        
+            if (need_fileinfo) {        // show file info after redraw
+                fileinfo(FALSE, TRUE, FALSE);
+                need_fileinfo = FALSE;
+            }
+
+            emsg_on_display = FALSE;    // can delete error message now
+            did_emsg = FALSE;
+            msg_didany = FALSE;         // reset lines_left in msg_start() 
+            may_clear_sb_text();        // clear scroll-back text on next msg
+            showruler(FALSE);
+
+            if (
+                conceal_update_lines &&
+                (
+                    conceal_old_cursor_line != conceal_new_cursor_line ||
+                    conceal_cursor_line(curwin) ||
+                    need_cursor_line_redraw
+                )
+            ) {
+                if (conceal_old_cursor_line != conceal_new_cursor_line &&
+                    conceal_old_cursor_line <= curbuf->b_ml.ml_line_count
+                ) {
+                    update_single_line(curwin, conceal_old_cursor_line);
+                }
+                update_single_line(curwin, conceal_new_cursor_line);
+                curwin->w_valid &= ~VALID_CROW;
+            }
+            setcursor();
+
+            do_redraw = FALSE;
+
+            // Now that we have drawn the first screen all the startup 
+            // stuff has been done, close any file for startup messages.
+            if (time_fd != NULL) {
+                TIME_MSG("first screen update");
+                TIME_MSG("--- NVIM STARTED ---");
+                fclose(time_fd);
+                time_fd = NULL;
+            }
+        }
+
+        // Update w_curswant if w_set_curswant has been set.
+        // Postponed until here to avoid computing w_virtcol too often.
+        update_curswant();
+
+        // May perform garbage collection when waiting for a character,
+        // but only at the very toplevel.  Otherwise we may be using a
+        // List or Dict internally somewhere.  "may_garbage_collect" is
+        // reset in vgetc() which is invoked through do_exmode() 
+        // and normal_cmd().
+        
+        may_garbage_collect = (!cmdwin && !noexmode);
+        // If we're invoked as ex, do a round of ex commands.
+        // Otherwise, get and execute a normal mode command.
+        if (exmode_active) {
+            if (noexmode) {   // End of ":global/path/visual" commands
+                return;
+            }
+            do_exmode(exmode_active == EXMODE_VIM);
+        } else {
+            normal_cmd(&oa, TRUE);
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////
+//
+// Exit properly
 void getout(int exitval)
 {
   tabpage_T   *tp, *next_tp;
