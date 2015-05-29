@@ -12,10 +12,11 @@ these differences.
 
 1. Configuration		|nvim-configuration|
 2. Option defaults		|nvim-option-defaults|
-3. Changed features		|nvim-features-changed|
-4. New features			|nvim-features-new|
-5. Missing legacy features	|nvim-features-missing|
-6. Removed features		|nvim-features-removed|
+3. New keymaps			|nvim-keymaps|
+4. Changed features		|nvim-features-changed|
+5. New features			|nvim-features-new|
+6. Missing legacy features	|nvim-features-missing|
+7. Removed features		|nvim-features-removed|
 
 
 ==============================================================================
@@ -38,7 +39,19 @@ these differences.
 - 'wildmode' defaults to "list:longest,full"
 
 ==============================================================================
-3. Changed features					 *nvim-features-changed*
+3. New keymaps							  *nvim-keymaps*
+
+The behavior of some mappings has changed by default:
+
+- <esc><esc> leaves terminal mode (see |nvim-terminal-emulator|)
+- |Y| yanks from the cursor to the end of the line.
+- <C-u> can be undone.
+- <Home> alternates between behaving like |0| and |$|.
+
+See |nvim-extra-keymaps|.
+
+==============================================================================
+4. Changed features					 *nvim-features-changed*
 
 Nvim always builds with all features, in contrast to Vim which may have
 certain features removed/added at compile-time.  This is like if Vim's "HUGE"
@@ -51,7 +64,7 @@ are always available and may be used simultaneously in separate plugins.  The
 |nvim-python|).
 
 ==============================================================================
-4. New Features						     *nvim-features-new*
+5. New Features						     *nvim-features-new*
 
 See |nvim-intro| for a list of Nvim's largest new features.
 
@@ -78,7 +91,7 @@ Highlight groups:
   |hl-TermCursorNC|
 
 ==============================================================================
-5. Missing legacy features				 *nvim-features-missing*
+6. Missing legacy features				 *nvim-features-missing*
 
 These legacy Vim features may be implemented in the future, but they are not
 planned for the current milestone.
@@ -91,7 +104,7 @@ planned for the current milestone.
 - if_tcl
 
 ==============================================================================
-6. Removed features					 *nvim-features-removed*
+7. Removed features					 *nvim-features-removed*
 
 These features are in Vim, but have been intentionally removed from Nvim.
 

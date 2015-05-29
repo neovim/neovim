@@ -402,7 +402,7 @@ steps to make a numbered list.
 
 1. Create the first list entry, make sure it starts with a number.
 2. qa	     - start recording into register 'a'
-3. Y	     - yank the entry
+3. yy	     - yank the entry
 4. p	     - put a copy of the entry below the first one
 5. CTRL-A    - increment the number
 6. q	     - stop recording
@@ -913,9 +913,10 @@ inside of strings can change!  Also see 'softtabstop' option. >
 
 							*Y*
 ["x]Y			yank [count] lines [into register x] (synonym for
-			yy, |linewise|).  If you like "Y" to work from the
-			cursor to the end of line (which is more logical,
-			but not Vi-compatible) use ":map Y y$".
+			yy, |linewise|).
+			{Nvim} By default, Y is mapped to yank text from the
+			cursor to the end of line, which is more consistent
+			with respect to, for example, |cc| and |C|.
 
 							*v_y*
 {Visual}["x]y		Yank the highlighted text [into register x] (for

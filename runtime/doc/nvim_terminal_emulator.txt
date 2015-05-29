@@ -52,8 +52,9 @@ Sending input is possible by entering terminal mode, which is achieved by
 pressing any key that would enter insert mode in a normal buffer (|i| or |a|
 for example). The |:terminal| ex command will automatically enter terminal
 mode once it's spawned. While in terminal mode, Nvim will forward all keys to
-the underlying program. The only exception is the <C-\><C-n> key combo,
-which will exit back to normal mode.
+the underlying program. The only exceptions are <C-\><C-n>, which will exit
+back to normal mode, and <Esc><Esc>, which maps to it by default (the latter
+can be disabled, see |t_<Esc><Esc>|).
 
 Terminal mode has its own namespace for mappings, which is accessed with the
 "t" prefix. It's possible to use terminal mappings to customize interaction
