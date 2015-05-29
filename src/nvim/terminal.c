@@ -313,6 +313,10 @@ void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
     return;
   }
 
+  if (height == 0 || width == 0) {
+    return;
+  }
+
   vterm_set_size(term->vt, height, width);
   vterm_screen_flush_damage(term->vts);
   term->pending_resize = true;
