@@ -27,6 +27,7 @@ MAP_DECLS(cstr_t, uint64_t)
 MAP_DECLS(cstr_t, ptr_t)
 MAP_DECLS(ptr_t, ptr_t)
 MAP_DECLS(uint64_t, ptr_t)
+MAP_DECLS(int, ptr_t)
 MAP_DECLS(String, MsgpackRpcRequestHandler)
 
 #define map_new(T, U) map_##T##_##U##_new
