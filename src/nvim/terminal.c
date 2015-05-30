@@ -1022,9 +1022,7 @@ static void redraw(bool restore_cursor)
 
   redraw_statuslines();
 
-  if (need_maketitle) {
-    maketitle();
-  }
+  maketitle();
 
   showruler(false);
 

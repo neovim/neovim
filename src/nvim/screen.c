@@ -6978,12 +6978,14 @@ void showruler(int always)
   } else
     win_redr_ruler(curwin, always);
 
-  if (need_maketitle
-      || (p_icon && (stl_syntax & STL_IN_ICON))
-      || (p_title && (stl_syntax & STL_IN_TITLE))
-      )
+  if (
+    (p_icon && (stl_syntax & STL_IN_ICON)) || 
+    (p_title && (stl_syntax & STL_IN_TITLE))
+  ) {
     maketitle();
-  /* Redraw the tab pages line if needed. */
+  }
+
+  // Redraw the tab pages line if needed.
   if (redraw_tabline)
     draw_tabline();
 }

@@ -629,8 +629,7 @@ main_loop (
       else if (redraw_cmdline || clear_cmdline)
         showmode();
       redraw_statuslines();
-      if (need_maketitle)
-        maketitle();
+      maketitle();
       /* display message after redraw */
       if (keep_msg != NULL) {
         char_u *p;
