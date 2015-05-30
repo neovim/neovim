@@ -2987,7 +2987,7 @@ void ex_checktime(exarg_T *eap)
   no_check_timestamps = save_no_check_timestamps;
 }
 
-#if defined(HAVE_LOCALE_H) || defined(X_LOCALE)
+#if defined(HAVE_LOCALE_H)
 # define HAVE_GET_LOCALE_VAL
 
 static char *get_locale_val(int what)
