@@ -89,8 +89,8 @@ argument.
 -h		Give usage (help) message and exit.
 		See |info-message| about capturing the text.
 
-							*--version*
---version	Print version information and exit.  Same output as for
+--version						*-v* *--version*
+-v		Print version information and exit.  Same output as for
 		|:version| command.
 		See |info-message| about capturing the text.
 
@@ -162,14 +162,11 @@ argument.
 -S		Works like "-S Session.vim".  Only when used as the last
 		argument or when another "-" option follows.
 
-							*-r*
+-L							*-L* *-r*
 -r		Recovery mode.  Without a file name argument, a list of
 		existing swap files is given.  With a file name, a swap file
 		is read to recover a crashed editing session.  See
 		|crash-recovery|.
-
-							*-L*
--L		Same as -r.
 
 							*-R*
 -R		Readonly mode.  The 'readonly' option will be set for all the
@@ -201,9 +198,6 @@ argument.
 		shell are disabled.  This includes suspending with CTRL-Z,
 		":sh", filtering, the system() function, backtick expansion,
 		delete(), rename(), mkdir(), writefile(), libcall(), etc.
-
-							*-g*
--g		Start Vim in GUI mode.  See |gui|.
 
 							*-e*
 -e		Start Vim in Ex mode |Q|.
@@ -312,7 +306,6 @@ argument.
 							*-d*
 -d		Start in |diff-mode|.
 
-
 							*-u* *E282*
 -u {vimrc}	The file {vimrc} is read for initializations.  Most other
 		initializations are skipped; see |initialization|.  This can
@@ -328,35 +321,11 @@ argument.
 		When {vimrc} is equal to "NORC" (all uppercase), this has the
 		same effect as "NONE", but loading plugins is not skipped.
 
-							*-U* *E230*
--U {gvimrc}	The file {gvimrc} is read for initializations when the GUI
-		starts.  Other GUI initializations are skipped.  When {gvimrc}
-		is equal to "NONE", no file is read for GUI initializations at
-		all.  |gui-init|
-		Exception: Reading the system-wide menu file is always done.
-
 							*-i*
 -i {viminfo}	The file "viminfo" is used instead of the default viminfo
 		file.  If the name "NONE" is used (all uppercase), no viminfo
 		file is read or written, even if 'viminfo' is set or when
 		":rv" or ":wv" are used.  See also |viminfo-file|.
-
-							*-X*
--X		Do not try connecting to the X server to get the current
-		window title and copy/paste using the X clipboard.  This
-		avoids a long startup time when running Vim in a terminal
-		emulator and the connection to the X server is slow.
-		See |--startuptime| to find out if affects you.
-		Only makes a difference on Unix when compiled with the |+X11|
-		feature.  Otherwise it's ignored.
-		To disable the connection only for specific terminals, see the
-		'clipboard' option.
-		When the X11 Session Management Protocol (XSMP) handler has
-		been built in, the -X option also disables that connection as
-		it, too, may have undesirable delays.
-		When the connection is desired later anyway (e.g., for
-		client-server messages), call the |serverlist()| function.
-		This does not enable the XSMP handler though.
 
 							*-s*
 -s {scriptin}	The script file "scriptin" is read.  The characters in the
@@ -380,76 +349,6 @@ argument.
 
 							*-W*
 -W {scriptout}	Like -w, but do not append, overwrite an existing file.
-
---remote [+{cmd}] {file} ...
-		Open the {file} in another Vim that functions as a server.
-		Any non-file arguments must come before this.
-		See |--remote|.
-
---remote-silent [+{cmd}] {file} ...
-		Like --remote, but don't complain if there is no server.
-		See |--remote-silent|.
-
---remote-wait [+{cmd}] {file} ...
-		Like --remote, but wait for the server to finish editing the
-		file(s).
-		See |--remote-wait|.
-
---remote-wait-silent [+{cmd}] {file} ...
-		Like --remote-wait, but don't complain if there is no server.
-		See |--remote-wait-silent|.
-
---servername {name}
-		Specify the name of the Vim server to send to or to become.
-		See |--servername|.
-
---remote-send {keys}
-		Send {keys} to a Vim server and exit.
-		See |--remote-send|.
-
---remote-expr {expr}
-		Evaluate {expr} in another Vim that functions as a server.
-		The result is printed on stdout.
-		See |--remote-expr|.
-
---serverlist	Output a list of Vim server names and exit.  See
-		|--serverlist|.
-
---socketid {id}						*--socketid*
-		GTK+ GUI Vim only.  Make gvim try to use GtkPlug mechanism, so
-		that it runs inside another window.  See |gui-gtk-socketid|
-		for details.
-
---windowid {id}						*--windowid*
-		Win32 GUI Vim only.  Make gvim try to use the window {id} as a
-		parent, so that it runs inside that window.  See
-		|gui-w32-windowid| for details.
-
---echo-wid						*--echo-wid*
-		GTK+ GUI Vim only.  Make gvim echo the Window ID on stdout,
-		which can be used to run gvim in a kpart widget.  The format
-		of the output is: >
-			WID: 12345\n
-<
-
---role {role}						*--role*
-		GTK+ 2 GUI only.  Set the role of the main window to {role}.
-		The window role can be used by a window manager to uniquely
-		identify a window, in order to restore window placement and
-		such.  The --role argument is passed automatically when
-		restoring the session on login.  See |gui-gnome-session|
-
--P {parent-title}				*-P* *MDI* *E671* *E672*
-		Win32 only: Specify the title of the parent application.  When
-		possible, Vim will run in an MDI window inside the
-		application.
-		{parent-title} must appear in the window title of the parent
-		application.  Make sure that it is specific enough.
-		Note that the implementation is still primitive.  It won't
-		work with all applications and the menu doesn't work.
-
-Additional arguments are available on unix like systems when compiled with
-X11 GUI support.  See |gui-resources|.
 
 ==============================================================================
 3. Initialization				*initialization* *startup*
