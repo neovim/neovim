@@ -146,7 +146,7 @@ void early_init(void)
   // Init the table of Normal mode commands.
   init_normal_cmds();
 
-#if defined(HAVE_LOCALE_H) || defined(X_LOCALE)
+#if defined(HAVE_LOCALE_H)
   // Setup to use the current locale (for ctype() and many other things).
   // NOTE: Translated messages with encodings other than latin1 will not
   // work until set_init_1() has been called!
@@ -809,7 +809,7 @@ static int get_number_arg(const char *p, int *idx, int def)
   return def;
 }
 
-#if defined(HAVE_LOCALE_H) || defined(X_LOCALE)
+#if defined(HAVE_LOCALE_H)
 /*
  * Setup to use the current locale (for ctype() and many other things).
  */

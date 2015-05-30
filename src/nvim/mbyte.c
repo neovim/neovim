@@ -3406,7 +3406,7 @@ char_u * enc_locale(void)
   if (!(s = nl_langinfo(CODESET)) || *s == NUL)
 # endif
   {
-#  if defined(HAVE_LOCALE_H) || defined(X_LOCALE)
+#  if defined(HAVE_LOCALE_H)
     if (!(s = setlocale(LC_CTYPE, NULL)) || *s == NUL)
 #  endif
     {
