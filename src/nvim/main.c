@@ -122,6 +122,8 @@ typedef struct {
 # include "main.c.generated.h"
 #endif
 
+static char *argv0;
+
 // Error messages
 static const char *err_arg_missing = N_("Argument missing after");
 static const char *err_opt_garbage = N_("Garbage after option argument");
@@ -180,6 +182,8 @@ int nvim_main(int argc, char **argv)
 int main(int argc, char **argv)
 #endif
 {
+  argv0 = (char *)path_tail((char_u *)argv[0]);
+
   char_u      *fname = NULL;            /* file name from command line */
   mparm_T params;                       /* various parameters passed between
                                          * main() and other functions. */
@@ -1929,13 +1933,17 @@ static void mainerr(const char *errstr, const char *str)
 {
   signal_stop();              // kill us with CTRL-C here, if you like
 
+  mch_errmsg(argv0);
+  mch_errmsg(": ");
   mch_errmsg(_(errstr));
   if (str != NULL) {
     mch_errmsg(": \"");
     mch_errmsg(str);
     mch_errmsg("\"");
   }
-  mch_errmsg(_("\nMore info with \"nvim -h\"\n"));
+  mch_errmsg(_("\nMore info with \""));
+  mch_errmsg(argv0);
+  mch_errmsg(" -h\"\n");
 
   mch_exit(1);
 }
