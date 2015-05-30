@@ -562,17 +562,12 @@ just like executing a command from a vimrc/exrc in the current directory.
 
 							*slow-start*
 If Vim takes a long time to start up, use the |--startuptime| argument to find
-out what happens.  There are a few common causes:
-- If the Unix version was compiled with the GUI and/or X11 (check the output
-  of ":version" for "+GUI" and "+X11"), it may need to load shared libraries
-  and connect to the X11 server.  Try compiling a version with GUI and X11
-  disabled.  This also should make the executable smaller.
-  Use the |-X| command line argument to avoid connecting to the X server when
-  running in a terminal.
-- If you have "viminfo" enabled, the loading of the viminfo file may take a
-  while.  You can find out if this is the problem by disabling viminfo for a
-  moment (use the Vim argument "-i NONE", |-i|).  Try reducing the number of
-  lines stored in a register with ":set viminfo='20,<50,s10".  |viminfo-file|.
+out what happens.
+
+If you have "viminfo" enabled, the loading of the viminfo file may take a
+while.  You can find out if this is the problem by disabling viminfo for a
+moment (use the Vim argument "-i NONE", |-i|).  Try reducing the number of
+lines stored in a register with ":set viminfo='20,<50,s10".  |viminfo-file|.
 
 							*:intro*
 When Vim starts without a file name, an introductory message is displayed (for

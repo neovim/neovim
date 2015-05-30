@@ -1562,9 +1562,7 @@ v:progname	Contains the name (with path removed) with which Nvim was
 
 					*v:progpath* *progpath-variable*
 v:progpath	Contains the command with which Vim was invoked, including the
-		path.  Useful if you want to message a Vim server using a
-		|--remote-expr|.
-		To get the full path use: >
+		path. To get the full path use: >
 			echo exepath(v:progpath)
 <		NOTE: This does not work when the command is a relative path
 		and the current directory has changed.
@@ -1694,13 +1692,8 @@ v:version	Version number of Vim: Major version number times 100 plus
 					*v:warningmsg* *warningmsg-variable*
 v:warningmsg	Last given warning message.  It's allowed to set this variable.
 
-					*v:windowid* *windowid-variable*
-v:windowid	When any X11 based GUI is running or when running in a
-		terminal and Vim connects to the X server (|-X|) this will be
-		set to the window ID.
-		When an MS-Windows GUI is running this will be set to the
-		window handle.
-		Otherwise the value is zero.
+					*v:windowid* *windowid-variable* {Nvim}
+v:windowid	Is a no-op at the moment; the value is always set to 0.
 		Note: for windows inside Vim use |winnr()|.
 
 ==============================================================================
@@ -5388,8 +5381,9 @@ serverlist()						*serverlist()*
 		When there are no servers an empty string is returned.
 		Example: >
 			:echo serverlist()
-<							*--serverlist*
-		The Vim command-line option `--serverlist` can be imitated: >
+<						{Nvim} *--serverlist*
+		The Vim command-line option `--serverlist` was removed from
+		Nvim, but it can be imitated if needed: >
 			nvim --cmd "echo serverlist()" --cmd "q"
 <
 serverstart([{address}])				*serverstart()*

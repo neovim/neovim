@@ -577,10 +577,6 @@ Shortcut: If the insert position is on the screen at the same time as the
 Visual text, you can do 2, 3 and 4 all in one: Click the middle mouse button
 at the insert position.
 
-Note: When the |-X| command line argument is used, Vim will not connect to the
-X server and copy/paste to the X clipboard (selection) will not work.  Use the
-shift key with the mouse buttons to let the xterm do the selection.
-
 							*xterm-command-server*
 When the X-server clipboard is available, the command server described in
 |x11-clientserver| can be enabled with the --servername command line argument.

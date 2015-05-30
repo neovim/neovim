@@ -51,16 +51,6 @@ vimrc or gvimrc file: >
 There is a specific version of gvim.exe that runs under the Win32s subsystem
 of Windows 3.1 or 3.11.  See |win32s|.
 
-
-Using Vim as a plugin					*gui-w32-windowid*
-
-When gvim starts up normally, it creates its own top level window.  If you
-pass Vim the command-line option |--windowid| with a decimal or hexadecimal
-value, Vim will create a window that is a child of the window with the given
-ID.  This enables Vim to act as a plugin in another application.  This really
-is a programmer's interface, and is of no use without a supporting application
-to spawn Vim correctly.
-
 ==============================================================================
 2. Vim as default editor				*vim-default-editor*
 
