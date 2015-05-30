@@ -127,11 +127,10 @@ function! s:RegistrationCommands(host)
   call remote#host#RegisterClone(host_id, a:host)
   let pattern = s:plugin_patterns[a:host]
   let paths = globpath(&rtp, 'rplugin/'.a:host.'/'.pattern, 0, 1)
-  if len(paths) < 1
-    echom "Could not find any plugins when attempting to register plugin "
-          \ ."commands. See :he remote-plugin"
+  if empty(paths)
     return []
   endif
+
   for path in paths
     call remote#host#RegisterPlugin(host_id, path, [])
   endfor
@@ -151,6 +150,9 @@ function! s:RegistrationCommands(host)
     endfor
     call add(lines, "     \\ ])")
   endfor
+  echomsg printf("remote/host: %s host registered plugins %s",
+        \ a:host, string(map(copy(paths), "fnamemodify(v:val, ':t')")))
+
   " Delete the temporary host clone
   call rpcstop(s:hosts[host_id].channel)
   call remove(s:hosts, host_id)
