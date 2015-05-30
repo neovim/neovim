@@ -123,18 +123,12 @@ typedef struct {
 #endif
 
 // Error messages
-static const char *main_errors[] = {
-  N_("Unknown option argument"),
-#define ME_UNKNOWN_OPTION       0
-  N_("Too many edit arguments"),
-#define ME_TOO_MANY_ARGS        1
-  N_("Argument missing after"),
-#define ME_ARG_MISSING          2
-  N_("Garbage after option argument"),
-#define ME_GARBAGE              3
-  N_("Too many \"+command\", \"-c command\" or \"--cmd command\" arguments")
-#define ME_EXTRA_CMD            4
-};
+static const char *err_arg_missing = N_("Argument missing after");
+static const char *err_opt_garbage = N_("Garbage after option argument");
+static const char *err_opt_unknown = N_("Unknown option argument");
+static const char *err_too_many_args = N_("Too many edit arguments");
+static const char *err_extra_cmd =
+  N_("Too many \"+command\", \"-c command\" or \"--cmd command\" arguments");
 
 
 /// Performs early initialization.
@@ -865,7 +859,7 @@ static void command_line_scan(mparm_T *parmp)
      */
     if (argv[0][0] == '+' && !had_minmin) {
       if (parmp->n_commands >= MAX_ARG_CMDS)
-        mainerr(ME_EXTRA_CMD, NULL);
+        mainerr(err_extra_cmd, NULL);
       argv_idx = -1;                /* skip to next argument */
       if (argv[0][1] == NUL)
         parmp->commands[parmp->n_commands++] = "$";
@@ -885,7 +879,7 @@ static void command_line_scan(mparm_T *parmp)
             silent_mode = TRUE;
           } else {
             if (parmp->edit_type != EDIT_NONE) {
-              mainerr(ME_TOO_MANY_ARGS, argv[0]);
+              mainerr(err_too_many_args, argv[0]);
             }
             parmp->edit_type = EDIT_STDIN;
           }
@@ -934,7 +928,7 @@ static void command_line_scan(mparm_T *parmp)
             argv_idx += 11;
           } else {
             if (argv[0][argv_idx])
-              mainerr(ME_UNKNOWN_OPTION, argv[0]);
+              mainerr(err_opt_unknown, argv[0]);
             had_minmin = TRUE;
           }
           if (!want_argument)
@@ -1033,7 +1027,7 @@ static void command_line_scan(mparm_T *parmp)
 
         case 'q':                 /* "-q" QuickFix mode */
           if (parmp->edit_type != EDIT_NONE)
-            mainerr(ME_TOO_MANY_ARGS, argv[0]);
+            mainerr(err_too_many_args, argv[0]);
           parmp->edit_type = EDIT_QF;
           if (argv[0][argv_idx]) {                /* "-q{errorfile}" */
             parmp->use_ef = (char_u *)argv[0] + argv_idx;
@@ -1062,7 +1056,7 @@ static void command_line_scan(mparm_T *parmp)
 
         case 't':                 /* "-t {tag}" or "-t{tag}" jump to tag */
           if (parmp->edit_type != EDIT_NONE)
-            mainerr(ME_TOO_MANY_ARGS, argv[0]);
+            mainerr(err_too_many_args, argv[0]);
           parmp->edit_type = EDIT_TAG;
           if (argv[0][argv_idx]) {                /* "-t{tag}" */
             parmp->tagname = (char_u *)argv[0] + argv_idx;
@@ -1111,7 +1105,7 @@ static void command_line_scan(mparm_T *parmp)
                                      command */
           if (argv[0][argv_idx] != NUL) {
             if (parmp->n_commands >= MAX_ARG_CMDS)
-              mainerr(ME_EXTRA_CMD, NULL);
+              mainerr(err_extra_cmd, NULL);
             parmp->commands[parmp->n_commands++] = argv[0]
               + argv_idx;
             argv_idx = -1;
@@ -1127,7 +1121,7 @@ static void command_line_scan(mparm_T *parmp)
           break;
 
         default:
-          mainerr(ME_UNKNOWN_OPTION, argv[0]);
+          mainerr(err_opt_unknown, argv[0]);
       }
 
       /*
@@ -1138,11 +1132,11 @@ static void command_line_scan(mparm_T *parmp)
          * Check for garbage immediately after the option letter.
          */
         if (argv[0][argv_idx] != NUL)
-          mainerr(ME_GARBAGE, argv[0]);
+          mainerr(err_opt_garbage, argv[0]);
 
         --argc;
         if (argc < 1 && c != 'S')          /* -S has an optional argument */
-          mainerr(ME_ARG_MISSING, argv[0]);
+          mainerr(err_arg_missing, argv[0]);
         ++argv;
         argv_idx = -1;
 
@@ -1150,7 +1144,7 @@ static void command_line_scan(mparm_T *parmp)
           case 'c':               /* "-c {command}" execute command */
           case 'S':               /* "-S {file}" execute Vim script */
             if (parmp->n_commands >= MAX_ARG_CMDS)
-              mainerr(ME_EXTRA_CMD, NULL);
+              mainerr(err_extra_cmd, NULL);
             if (c == 'S') {
               char    *a;
 
@@ -1180,7 +1174,7 @@ static void command_line_scan(mparm_T *parmp)
             if (argv[-1][2] == 'c') {
               /* "--cmd {command}" execute command */
               if (parmp->n_pre_commands >= MAX_ARG_CMDS)
-                mainerr(ME_EXTRA_CMD, NULL);
+                mainerr(err_extra_cmd, NULL);
               parmp->pre_commands[parmp->n_pre_commands++] = argv[0];
             }
             /* "--startuptime <file>" already handled */
@@ -1257,7 +1251,7 @@ scripterror:
 
       /* Check for only one type of editing. */
       if (parmp->edit_type != EDIT_NONE && parmp->edit_type != EDIT_FILE)
-        mainerr(ME_TOO_MANY_ARGS, argv[0]);
+        mainerr(err_too_many_args, argv[0]);
       parmp->edit_type = EDIT_FILE;
 
       /* Add the file to the global argument list. */
@@ -1926,16 +1920,16 @@ static bool file_owned(const char *fname)
 #endif
 
 /// Prints the following then exits:
-/// - An error message main_errors[n]
-/// - A string str if not null
+/// - An error message `errstr`
+/// - A string `str` if not null
 ///
-/// @param n    error number represented by an ME_* macro
-/// @param str  string to append to the primary error message, or NULL
-static void mainerr(int n, const char *str)
+/// @param errstr  string containing an error message
+/// @param str     string to append to the primary error message, or NULL
+static void mainerr(const char *errstr, const char *str)
 {
   signal_stop();              // kill us with CTRL-C here, if you like
 
-  mch_errmsg(_(main_errors[n]));
+  mch_errmsg(_(errstr));
   if (str != NULL) {
     mch_errmsg(": \"");
     mch_errmsg(str);
