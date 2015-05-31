@@ -34,6 +34,8 @@ matrix:
       env: CI_TARGET=gcc
       compiler: gcc-4.9
   fast_finish: true
+  allow_failures:
+    - os: osx
 before_install:
   # Pins the version of the java package installed on the Travis VMs
   # and avoids a lengthy upgrade process for them.
