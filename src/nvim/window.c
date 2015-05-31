@@ -4745,7 +4745,9 @@ void win_new_width(win_T *wp, int width)
   wp->w_redr_status = TRUE;
 
   if (wp->w_buffer->terminal) {
-    terminal_resize(wp->w_buffer->terminal, wp->w_width, 0);
+    if (wp->w_height != 0) {
+      terminal_resize(wp->w_buffer->terminal, wp->w_width, 0);
+    }
     redraw_win_later(wp, CLEAR);
   }
 }

@@ -110,39 +110,39 @@ describe('terminal mouse', function()
       before_each(function()
         feed('<c-\\><c-n>:vsp<cr>')
         screen:expect([[
-          line21                   |line21                  |
-          line22                   |line22                  |
-          line23                   |line23                  |
-          line24                   |line24                  |
-          ^rows: 5, cols: 24        |rows: 5, cols: 24       |
+          line28                   |line28                  |
+          line29                   |line29                  |
+          line30                   |line30                  |
+          rows: 5, cols: 24        |rows: 5, cols: 24       |
+          {2:^ }                        |{2: }                       |
           ==========                ==========              |
                                                             |
         ]])
         feed(':enew | set number<cr>')
         screen:expect([[
-            1 ^                     |line21                  |
-          ~                        |line22                  |
-          ~                        |line23                  |
-          ~                        |line24                  |
+            1 ^                     |line28                  |
+          ~                        |line29                  |
+          ~                        |line30                  |
           ~                        |rows: 5, cols: 24       |
+          ~                        |{2: }                       |
           ==========                ==========              |
           :enew | set number                                |
         ]])
         feed('30iline\n<esc>')
         screen:expect([[
-           27 line                 |line21                  |
-           28 line                 |line22                  |
-           29 line                 |line23                  |
-           30 line                 |line24                  |
-           31 ^                     |rows: 5, cols: 24       |
+           27 line                 |line28                  |
+           28 line                 |line29                  |
+           29 line                 |line30                  |
+           30 line                 |rows: 5, cols: 24       |
+           31 ^                     |{2: }                       |
           ==========                ==========              |
                                                             |
         ]])
         feed('<c-w>li')
         screen:expect([[
-           27 line                 |line22                  |
-           28 line                 |line23                  |
-           29 line                 |line24                  |
+           27 line                 |line28                  |
+           28 line                 |line29                  |
+           29 line                 |line30                  |
            30 line                 |rows: 5, cols: 24       |
            31                      |{1: }                       |
           ==========                ==========              |
@@ -152,8 +152,8 @@ describe('terminal mouse', function()
         thelpers.enable_mouse()
         thelpers.feed_data('mouse enabled\n')
         screen:expect([[
-           27 line                 |line23                  |
-           28 line                 |line24                  |
+           27 line                 |line29                  |
+           28 line                 |line30                  |
            29 line                 |rows: 5, cols: 24       |
            30 line                 |mouse enabled           |
            31                      |{1: }                       |
@@ -165,8 +165,8 @@ describe('terminal mouse', function()
       it('wont lose focus if another window is scrolled', function()
         feed('<MouseDown><0,0><MouseDown><0,0>')
         screen:expect([[
-           21 line                 |line23                  |
-           22 line                 |line24                  |
+           21 line                 |line29                  |
+           22 line                 |line30                  |
            23 line                 |rows: 5, cols: 24       |
            24 line                 |mouse enabled           |
            25 line                 |{1: }                       |
@@ -175,8 +175,8 @@ describe('terminal mouse', function()
         ]])
         feed('<S-MouseUp><0,0>')
         screen:expect([[
-           26 line                 |line23                  |
-           27 line                 |line24                  |
+           26 line                 |line29                  |
+           27 line                 |line30                  |
            28 line                 |rows: 5, cols: 24       |
            29 line                 |mouse enabled           |
            30 line                 |{1: }                       |
@@ -188,8 +188,8 @@ describe('terminal mouse', function()
       it('will lose focus if another window is clicked', function()
         feed('<LeftMouse><5,1>')
         screen:expect([[
-           27 line                 |line23                  |
-           28 l^ine                 |line24                  |
+           27 line                 |line29                  |
+           28 l^ine                 |line30                  |
            29 line                 |rows: 5, cols: 24       |
            30 line                 |mouse enabled           |
            31                      |{2: }                       |
