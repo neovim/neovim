@@ -1381,11 +1381,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	"if,If,IF".
 
 						*'clipboard'* *'cb'*
-'clipboard' 'cb'	string	(default "autoselect,exclude:cons\|linux"
-						  for X-windows, "" otherwise)
+'clipboard' 'cb'	string	(default "")
 			global
-			{only in GUI versions or when the |+xterm_clipboard|
-			feature is included}
 	This option is a list of comma separated names.
 	These names are recognized:
 
@@ -1407,10 +1404,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			register.  When "unnamed" is also included to the
 			option, yank operations (but not delete, change or
 			put) will additionally copy the text into register
-			'*'.
-			Only available with the |+X11| feature.
-			Availability can be checked with: >
-				if has('unnamedplus')
+			'*'. See |nvim-clipboard|.
 <
 						*clipboard-autoselect*
 	autoselect	Works like the 'a' flag in 'guioptions': If present,
@@ -1457,10 +1451,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			  console, but do want this in a terminal emulator.
 			To never connect to the X server use: >
 				exclude:.*
-<			This has the same effect as using the |-X| argument.
-			Note that when there is no connection to the X server
-			the window title won't be restored and the clipboard
-			cannot be accessed.
 			The value of 'magic' is ignored, {pattern} is
 			interpreted as if 'magic' was on.
 			The rest of the option value will be used for
@@ -3308,8 +3298,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		GTK, Motif, Mac OS/X and MS-Windows.
 								*'go-i'*
 	  'i'	Use a Vim icon.  For GTK with KDE it is used in the left-upper
-		corner of the window.  It's black&white on non-GTK, because of
-		limitations of X11.  For a color icon, see |X11-icon|.
+		corner of the window.
 								*'go-m'*
 	  'm'	Menu bar is present.
 								*'go-M'*
@@ -3599,13 +3588,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'iconstring' (if it is not empty), or to the name of the file
 	currently being edited.  Only the last part of the name is used.
 	Overridden by the 'iconstring' option.
-	Only works if the terminal supports setting window icons (currently
-	only X11 GUI and terminals with a non-empty 't_IS' option - this is
-	Unix xterm by default, where 't_IS' is taken from the builtin termcap).
-	When Vim was compiled with HAVE_X11 defined, the original icon will be
-	restored if possible |X11|.  See |X11-icon| for changing the icon on
-	X11.
-	For MS-Windows the icon can be changed, see |windows-icon|.
+	Only works if the terminal supports setting window icons.
 
 						*'iconstring'*
 'iconstring'		string	(default "")
@@ -3615,10 +3598,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When this option is not empty, it will be used for the icon text of
 	the window.  This happens only when the 'icon' option is on.
 	Only works if the terminal supports setting window icon text
-	(currently only X11 GUI and terminals with a non-empty 't_IS' option).
-	Does not work for MS Windows.
-	When Vim was compiled with HAVE_X11 defined, the original icon will be
-	restored if possible |X11|.
 	When this option contains printf-style '%' items, they will be
 	expanded according to the rules used for 'statusline'.  See
 	'titlestring' for example settings.
@@ -6646,20 +6625,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	(currently Win32 console, all GUI versions and terminals with a non-
 	empty 't_ts' option - this is Unix xterm by default, where 't_ts' is
 	taken from the builtin termcap).
-								*X11*
-	When Vim was compiled with HAVE_X11 defined, the original title will
-	be restored if possible.  The output of ":version" will include "+X11"
-	when HAVE_X11 was defined, otherwise it will be "-X11".  This also
-	works for the icon name |'icon'|.
-	But: When Vim was started with the |-X| argument, restoring the title
-	will not work (except in the GUI).
-	If the title cannot be restored, it is set to the value of 'titleold'.
-	You might want to restore the title outside of Vim then.
-	When using an xterm from a remote machine you can use this command:
-	    rsh machine_name xterm -display $DISPLAY &
-	then the WINDOWID environment variable should be inherited and the
-	title of the window should change back to what it should be after
-	exiting Vim.
 
 								*'titlelen'*
 'titlelen'		number	(default 85)
@@ -6696,17 +6661,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Only works if the terminal supports setting window titles (currently
 	Win32 console, all GUI versions and terminals with a non-empty 't_ts'
 	option).
-	When Vim was compiled with HAVE_X11 defined, the original title will
-	be restored if possible |X11|.
 	When this option contains printf-style '%' items, they will be
 	expanded according to the rules used for 'statusline'.
 	Example: >
-    :auto BufEnter * let &titlestring = hostname() . "/" . expand("%:p")
-    :set title titlestring=%<%F%=%l/%L-%P titlelen=70
+	    :auto BufEnter * let &titlestring = hostname() . "/" . expand("%:p")
+	    :set title titlestring=%<%F%=%l/%L-%P titlelen=70
 <	The value of 'titlelen' is used to align items in the middle or right
 	of the available space.
 	Some people prefer to have the file name first: >
-    :set titlestring=%t%(\ %M%)%(\ (%{expand(\"%:~:.:h\")})%)%(\ %a%)
+	    :set titlestring=%t%(\ %M%)%(\ (%{expand(\"%:~:.:h\")})%)%(\ %a%)
 <	Note the use of "%{ }" and an expression to get the path of the file,
 	without the file name.  The "%( %)" constructs are used to add a
 	separating space only when needed.

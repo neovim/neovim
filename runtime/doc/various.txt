@@ -413,7 +413,6 @@ m  *+xpm_w32*		Win32 GUI only: pixmap support |w32-xpm-support|
    *+xsmp_interact*	interactive XSMP (X session management) support
 N  *+xterm_clipboard*	Unix only: xterm clipboard handling
 m  *+xterm_save*	save and restore xterm screen |xterm-screens|
-N  *+X11*		Unix only: can restore window title |X11|
 
 							*/dyn* *E370* *E448*
 			To some of the features "/dyn" is added when the

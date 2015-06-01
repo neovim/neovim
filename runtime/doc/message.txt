@@ -671,15 +671,6 @@ This mostly happens when the disk is full.  Vim could not write text into the
 text may be lost without recovery being possible.  Vim might run out of memory
 when this problem persists.
 
-						*connection-refused*  >
-  Xlib: connection to "<machine-name:0.0" refused by server
-
-This happens when Vim tries to connect to the X server, but the X server does
-not allow a connection.  The connection to the X server is needed to be able
-to restore the title and for the xterm clipboard support.  Unfortunately this
-error message cannot be avoided, except by disabling the |+xterm_clipboard|
-and |+X11| features.
-
 							*E10*  >
   \\ should be followed by /, ? or &
 

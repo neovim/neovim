@@ -231,33 +231,6 @@ For example: >
   :10amenu File.Print :w !lpr -Php3
   :10vmenu File.Print :w !lpr -Php3
 <
-							*X11-icon*
-Vim uses a black&white icon by default when compiled with Motif or Athena.  A
-colored Vim icon is included as $VIMRUNTIME/vim32x32.xpm.  For GTK+, this is
-the builtin icon used.  Unfortunately, how you should install it depends on
-your window manager.  When you use this, remove the 'i' flag from
-'guioptions', to remove the black&white icon: >
-  :set guioptions-=i
-
-If you use one of the fvwm* family of window managers simply add this line to
-your .fvwm2rc configuration file: >
-
-  Style "vim"		Icon vim32x32.xpm
-
-Make sure the icon file's location is consistent with the window manager's
-ImagePath statement.  Either modify the ImagePath from within your .fvwm2rc or
-drop the icon into one the pre-defined directories: >
-
-  ImagePath /usr/X11R6/include/X11/pixmaps:/usr/X11R6/include/X11/bitmaps
-
-Note: older versions of fvwm use "IconPath" instead of "ImagePath".
-
-For CDE "dtwm" (a derivative of Motif) add this line in the .Xdefaults: >
-   Dtwm*Vim*iconImage: /usr/local/share/vim/vim32x32.xpm
-
-For "mwm" (Motif window manager) the line would be: >
-   Mwm*Vim*iconImage: /usr/local/share/vim/vim32x32.xpm
-
 Mouse Pointers Available in X11				*X11_mouse_shapes*
 
 By using the |'mouseshape'| option, the mouse pointer can be automatically
@@ -406,11 +379,6 @@ means in detail:
 	blank,curdir,folds,globals,help,options,tabpages,winsize
 - The internal variable |v:this_session| is not changed when storing the
   session.  Also, it is restored to its old value when logging in again.
-
-The position and size of the GUI window is not saved by Vim since doing so
-is the window manager's job.  But if compiled with GTK+ 2 support, Vim helps
-the WM to identify the window by restoring the window role (using the |--role|
-command line argument).
 
 ==============================================================================
 7. KDE version					*gui-kde* *kde* *KDE* *KVim*
