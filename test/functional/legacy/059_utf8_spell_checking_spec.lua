@@ -471,6 +471,10 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ]])
   end)
 
+  teardown(function()
+    -- TODO
+  end)
+
   it('is working', function()
     insert([[
       
