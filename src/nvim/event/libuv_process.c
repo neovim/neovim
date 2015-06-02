@@ -19,7 +19,8 @@ bool libuv_process_spawn(LibuvProcess *uvproc)
   Process *proc = (Process *)uvproc;
   uvproc->uvopts.file = proc->argv[0];
   uvproc->uvopts.args = proc->argv;
-  uvproc->uvopts.flags = UV_PROCESS_WINDOWS_HIDE;
+  uvproc->uvopts.flags = UV_PROCESS_WINDOWS_HIDE
+                  | UV_PROCESS_WINDOWS_VERBATIM_ARGUMENTS;
   uvproc->uvopts.exit_cb = exit_cb;
   uvproc->uvopts.cwd = NULL;
   uvproc->uvopts.env = NULL;
