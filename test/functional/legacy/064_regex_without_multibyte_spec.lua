@@ -329,7 +329,7 @@ describe('64', function()
       call add(tl, [2, '[0-9A-Za-z-_.]\+', " @0_a.A-{ ", "0_a.A-"])
     ]=])
 
-    -- """ Test start/end of line, start/end of file.
+    -- Test start/end of line, start/end of file.
     source([[
       call add(tl, [2, '^a.', "a_\nb ", "a_"])
       call add(tl, [2, '^a.', "b a \na_"])
@@ -386,7 +386,7 @@ describe('64', function()
       call add(tl, [2, '\s\+\ze\[/\|\s\zs\s\+', 'is   [a t', '  '])
     ]])
 
-    -- """ Tests for \@= and \& features.
+    -- Tests for \@= and \& features.
     source([[
       call add(tl, [2, 'abc\@=', 'abc', 'ab'])
       call add(tl, [2, 'abc\@=cd', 'abcd', 'abcd'])
@@ -417,7 +417,7 @@ describe('64', function()
       call add(tl, [2, '\%(\U\@<=S\k*\|S\l\)R', 'SuR', 'SuR'])
     ]])
 
-    -- """ Combining different tests and features.
+    -- Combining different tests and features.
     execute([=[call add(tl, [2, '[[:alpha:]]\{-2,6}', '787abcdiuhsasiuhb4', 'ab'])]=])
     execute([[call add(tl, [2, '', 'abcd', ''])]])
     execute([[call add(tl, [2, '\v(())', 'any possible text', ''])]])
@@ -425,7 +425,7 @@ describe('64', function()
     execute([[call add(tl, [2, '\v(test|)empty', 'tesempty', 'empty', ''])]])
     execute([[call add(tl, [2, '\v(a|aa)(a|aa)', 'aaa', 'aa', 'a', 'a'])]])
 
-    -- """ \%u and friends.
+    -- \%u and friends.
     execute([[call add(tl, [2, '\%d32', 'yes no', ' '])]])
     execute([[call add(tl, [2, '\%o40', 'yes no', ' '])]])
     execute([[call add(tl, [2, '\%x20', 'yes no', ' '])]])
@@ -433,7 +433,7 @@ describe('64', function()
     execute([[call add(tl, [2, '\%U00000020', 'yes no', ' '])]])
     execute([[call add(tl, [2, '\%d0', "yes\x0ano", "\x0a"])]])
 
-    -- """" \%[abc].
+    -- \%[abc].
     execute([[call add(tl, [2, 'foo\%[bar]', 'fobar'])]])
     execute([[call add(tl, [2, 'foo\%[bar]', 'foobar', 'foobar'])]])
     execute([[call add(tl, [2, 'foo\%[bar]', 'fooxx', 'foo'])]])
@@ -449,12 +449,12 @@ describe('64', function()
     execute([=[call add(tl, [2, 'b\%[[]]r]', 'b]r bor', 'b]r'])]=])
     execute([[call add(tl, [2, '@\%[\w\-]*', '<http://john.net/pandoc/>[@pandoc]', '@pandoc'])]])
 
-    -- """ Alternatives, must use first longest match.
+    -- Alternatives, must use first longest match.
     execute([[call add(tl, [2, 'goo\|go', 'google', 'goo'])]])
     execute([[call add(tl, [2, '\<goo\|\<go', 'google', 'goo'])]])
     execute([[call add(tl, [2, '\<goo\|go', 'google', 'goo'])]])
 
-    -- """ Back references.
+    -- Back references.
     execute([[call add(tl, [2, '\(\i\+\) \1', ' abc abc', 'abc abc', 'abc'])]])
     execute([[call add(tl, [2, '\(\i\+\) \1', 'xgoo goox', 'goo goo', 'goo'])]])
     execute([[call add(tl, [2, '\(a\)\(b\)\(c\)\(dd\)\(e\)\(f\)\(g\)\(h\)\(i\)\1\2\3\4\5\6\7\8\9', 'xabcddefghiabcddefghix', 'abcddefghiabcddefghi', 'a', 'b', 'c', 'dd', 'e', 'f', 'g', 'h', 'i'])]])
@@ -467,7 +467,7 @@ describe('64', function()
     execute([[call add(tl, [2, '^\(a*\)\1$', 'aaaaaaaa', 'aaaaaaaa', 'aaaa'])]])
     execute([[call add(tl, [2, '^\(a\{-2,}\)\1\+$', 'aaaaaaaaa', 'aaaaaaaaa', 'aaa'])]])
 
-    -- """ Look-behind with limit.
+    -- Look-behind with limit.
     execute([[call add(tl, [2, '<\@<=span.', 'xxspanxx<spanyyy', 'spany'])]])
     execute([[call add(tl, [2, '<\@1<=span.', 'xxspanxx<spanyyy', 'spany'])]])
     execute([[call add(tl, [2, '<\@2<=span.', 'xxspanxx<spanyyy', 'spany'])]])
@@ -526,15 +526,20 @@ describe('64', function()
           try
             let l = matchlist(text, pat)
           catch
-            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", caused an exception: \"' . v:exception . '\"'
+            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . 
+	      \ text . '\", caused an exception: \"' . v:exception . '\"'
           endtry
 	  " Check the match itself.
           if len(l) == 0 && len(t) > matchidx
-            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", did not match, expected: \"' . t[matchidx] . '\"'
+            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' .
+	      \ text . '\", did not match, expected: \"' . t[matchidx] . '\"'
           elseif len(l) > 0 && len(t) == matchidx
-            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", match: \"' . l[0] . '\", expected no match'
+            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' .
+	      \ text . '\", match: \"' . l[0] . '\", expected no match'
           elseif len(t) > matchidx && l[0] != t[matchidx]
-            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", match: \"' . l[0] . '\", expected: \"' . t[matchidx] . '\"'
+            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' .
+	      \ text . '\", match: \"' . l[0] . '\", expected: \"' .
+	      \ t[matchidx] . '\"'
           else
             $put ='OK ' . engine . ' - ' . pat
           endif
@@ -547,7 +552,9 @@ describe('64', function()
                 let e = t[matchidx + i]
               endif
               if l[i] != e
-                $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", submatch ' . i . ': \"' . l[i] . '\", expected: \"' . e . '\"'
+                $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' .
+		  \ text . '\", submatch ' . i . ': \"' . l[i] .
+		  \ '\", expected: \"' . e . '\"'
               endif
             endfor
             unlet i
@@ -557,50 +564,51 @@ describe('64', function()
       unlet t tl e l
     ]])
 
-    -- """"" multi-line tests """""""""""""""""""".
-    execute('let tl = []')
+    -- multi-line tests
+    execute(
+      'let tl = []',
+      -- back references.
+      [=[call add(tl, [2, '^.\(.\).\_..\1.', ['aaa', 'aaa', 'b'], ['XX', 'b']])]=],
+      [=[call add(tl, [2, '\v.*\/(.*)\n.*\/\1$', ['./Dir1/Dir2/zyxwvuts.txt', './Dir1/Dir2/abcdefgh.bat', '', './Dir1/Dir2/file1.txt', './OtherDir1/OtherDir2/file1.txt'], ['./Dir1/Dir2/zyxwvuts.txt', './Dir1/Dir2/abcdefgh.bat', '', 'XX']])]=],
+      -- line breaks.
+      [=[call add(tl, [2, '\S.*\nx', ['abc', 'def', 'ghi', 'xjk', 'lmn'], ['abc', 'def', 'XXjk', 'lmn']])]=],
+      -- Check that \_[0-9] matching EOL does not break a following \>.
+      [=[call add(tl, [2, '\<\(\(25\_[0-5]\|2\_[0-4]\_[0-9]\|\_[01]\?\_[0-9]\_[0-9]\?\)\.\)\{3\}\(25\_[0-5]\|2\_[0-4]\_[0-9]\|\_[01]\?\_[0-9]\_[0-9]\?\)\>', ['', 'localnet/192.168.0.1', ''], ['', 'localnet/XX', '']])]=],
+      -- Check a pattern with a line break and ^ and $.
+      [=[call add(tl, [2, 'a\n^b$\n^c', ['a', 'b', 'c'], ['XX']])]=],
+      [=[call add(tl, [2, '\(^.\+\n\)\1', [' dog', ' dog', 'asdf'], ['XXasdf']])]=]
+    )
 
-    -- """ back references.
-    execute([=[call add(tl, [2, '^.\(.\).\_..\1.', ['aaa', 'aaa', 'b'], ['XX', 'b']])]=])
-    execute([=[call add(tl, [2, '\v.*\/(.*)\n.*\/\1$', ['./Dir1/Dir2/zyxwvuts.txt', './Dir1/Dir2/abcdefgh.bat', '', './Dir1/Dir2/file1.txt', './OtherDir1/OtherDir2/file1.txt'], ['./Dir1/Dir2/zyxwvuts.txt', './Dir1/Dir2/abcdefgh.bat', '', 'XX']])]=])
+    -- Run the multi-line tests.
 
-    -- """ line breaks.
-    execute([=[call add(tl, [2, '\S.*\nx', ['abc', 'def', 'ghi', 'xjk', 'lmn'], ['abc', 'def', 'XXjk', 'lmn']])]=])
-
-    -- Check that \_[0-9] matching EOL does not break a following \>.
-    execute([=[call add(tl, [2, '\<\(\(25\_[0-5]\|2\_[0-4]\_[0-9]\|\_[01]\?\_[0-9]\_[0-9]\?\)\.\)\{3\}\(25\_[0-5]\|2\_[0-4]\_[0-9]\|\_[01]\?\_[0-9]\_[0-9]\?\)\>', ['', 'localnet/192.168.0.1', ''], ['', 'localnet/XX', '']])]=])
-
-    -- Check a pattern with a line break and ^ and $.
-    execute([=[call add(tl, [2, 'a\n^b$\n^c', ['a', 'b', 'c'], ['XX']])]=])
-
-    execute([=[call add(tl, [2, '\(^.\+\n\)\1', [' dog', ' dog', 'asdf'], ['XXasdf']])]=])
-
-    -- """ Run the multi-line tests.
-
-    execute([[$put ='multi-line tests']])
-    execute('for t in tl')
-    execute('  let re = t[0]')
-    execute('  let pat = t[1]')
-    execute('  let before = t[2]')
-    execute('  let after = t[3]')
-    execute('  for engine in [0, 1, 2]')
-    execute('    if engine == 2 && re == 0 || engine == 1 && re ==1')
-    execute('      continue')
-    execute('    endif')
-    execute('    let &regexpengine = engine')
-    execute('    new')
-    execute('    call setline(1, before)')
-    execute([[    exe '%s/' . pat . '/XX/']])
-    execute([[    let result = getline(1, '$')]])
-    execute('    q!')
-    execute('    if result != after')
-    execute([[      $put ='ERROR: pat: \"' . pat . '\", text: \"' . string(before) . '\", expected: \"' . string(after) . '\", got: \"' . string(result) . '\"']])
-    execute('    else')
-    execute([[      $put ='OK ' . engine . ' - ' . pat]])
-    execute('    endif')
-    execute('  endfor')
-    execute('endfor')
-    execute('unlet t tl')
+    source([[
+      $put ='multi-line tests'
+      for t in tl
+        let re = t[0]
+        let pat = t[1]
+        let before = t[2]
+        let after = t[3]
+        for engine in [0, 1, 2]
+          if engine == 2 && re == 0 || engine == 1 && re ==1
+            continue
+          endif
+          let &regexpengine = engine
+          new
+          call setline(1, before)
+          exe '%s/' . pat . '/XX/'
+          let result = getline(1, '$')
+          q!
+          if result != after
+            $put ='ERROR: pat: \"' . pat . '\", text: \"' . string(before) .
+	      \ '\", expected: \"' . string(after) . '\", got: \"' .
+	      \ string(result) . '\"'
+          else
+            $put ='OK ' . engine . ' - ' . pat
+          endif
+        endfor
+      endfor
+      unlet t tl
+    ]])
 
     -- Check that using a pattern on two lines doesn't get messed up by using.
     -- Matchstr() with \ze in between.
