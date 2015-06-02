@@ -589,28 +589,33 @@ describe('64', function()
     execute('/^Substitute here')
     execute('.+1,.+2yank')
 
-    feed('Go<esc>p:<cr>')
+    feed('Go<esc>p')
 
     -- Check a pattern with a look beind crossing a line boundary.
     execute('/^Behind:')
     execute([=[/\(<\_[xy]\+\)\@3<=start]=])
     execute('.yank')
 
-    feed('Go<esc>p:<cr>')
+    feed('Go<esc>p')
 
     -- Check matching Visual area.
     execute('/^Visual:')
-    feed([[jfxvfx:s/\%Ve/E/g<cr>]])
-    feed([[jV:s/\%Va/A/g<cr>]])
-    feed([[jfxfxj:s/\%Vo/O/g<cr>]])
+    feed('jfxvfx')
+    execute([[s/\%Ve/E/g]])
+    feed('jV')
+    execute([[s/\%Va/A/g]])
+    feed('jfx<C-V>fxj')
+    execute([[s/\%Vo/O/g]])
     execute('/^Visual/+1,/^Visual/+4yank')
 
     feed('Go<esc>p:<cr>')
 
     -- Check matching marks.
     execute('/^Marks:')
-    feed([[jfSmsfEme:.-4,.+6s/.\%>'s.*\%<'e../here/<cr>]])
-    feed([[jfSmsj0fEme:.-4,.+6s/.\%>'s\_.*\%<'e../again/<cr>]])
+    feed('jfSmsfEme')
+    execute([[.-4,.+6s/.\%>'s.*\%<'e../here/]])
+    feed('jfSmsj0fEme')
+    execute([[.-4,.+6s/.\%>'s\_.*\%<'e../again/]])
     execute('/^Marks:/+1,/^Marks:/+3yank')
 
     feed('Go<esc>p:<cr>')
