@@ -539,7 +539,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
     execute('e!')
     execute('set enc=utf-8')
     execute('set fenc=')
-
     -- Function to test .aff/.dic with list of good and bad words.
     source([[
       func TestOne(aff, dic)
@@ -576,6 +575,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
         endwhile
       endfunc
     ]])
+helpers.eq(1,2)
 
     execute([[call TestOne('1', '1')]])
     execute([[$put =soundfold('goobledygoook')]])
