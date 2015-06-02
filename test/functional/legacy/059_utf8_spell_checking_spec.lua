@@ -540,6 +540,8 @@ describe("spell checking with 'encoding' set to utf-8", function()
     execute('set enc=utf-8')
     execute('set fenc=')
     -- Function to test .aff/.dic with list of good and bad words.
+    os.execute('cp -f Xtest1.aff Xtest.aff')
+    os.execute('cp -f Xtest1.dic Xtest.dic')
     source([[
       func TestOne(aff, dic)
         set spellfile=
@@ -575,7 +577,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
         endwhile
       endfunc
     ]])
-helpers.eq(1,2)
 
     execute([[call TestOne('1', '1')]])
     execute([[$put =soundfold('goobledygoook')]])
@@ -632,15 +633,28 @@ helpers.eq(1,2)
     execute('let [str, a] = spellbadword()')
     execute('$put =str')
     execute('unlet str a')
+    --helpers.eq(1,2)
 
     -- Postponed prefixes.
+    os.execute('cp -f Xtest2.aff Xtest.aff')
+    os.execute('cp -f Xtest1.dic Xtest.dic')
     execute([[call TestOne('2', '1')]])
 
     -- Compound words.
+    os.execute('cp -f Xtest3.aff Xtest.aff')
+    os.execute('cp -f Xtest3.dic Xtest.dic')
     execute([[call TestOne('3', '3')]])
+    os.execute('cp -f Xtest4.aff Xtest.aff')
+    os.execute('cp -f Xtest4.dic Xtest.dic')
     execute([[call TestOne('4', '4')]])
+    os.execute('cp -f Xtest5.aff Xtest.aff')
+    os.execute('cp -f Xtest5.dic Xtest.dic')
     execute([[call TestOne('5', '5')]])
+    os.execute('cp -f Xtest6.aff Xtest.aff')
+    os.execute('cp -f Xtest6.dic Xtest.dic')
     execute([[call TestOne('6', '6')]])
+    os.execute('cp -f Xtest7.aff Xtest.aff')
+    os.execute('cp -f Xtest7.dic Xtest.dic')
     execute([[call TestOne('7', '7')]])
 
     -- Clean up for valgrind.
