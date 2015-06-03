@@ -6561,6 +6561,9 @@ do_exedit (
        || eap->cmdidx == CMD_vnew
        ) && *eap->arg == NUL) {
     /* ":new" or ":tabnew" without argument: edit an new empty buffer */
+    if (curbuf->terminal != NULL) {
+        return;
+    }
     setpcmark();
     (void)do_ecmd(0, NULL, NULL, eap, ECMD_ONE,
         ECMD_HIDE + (eap->forceit ? ECMD_FORCEIT : 0),
@@ -6570,6 +6573,10 @@ do_exedit (
               )
              || *eap->arg != NUL
              ) {
+    // :e is a no-op in terminal buffers
+    if (curbuf->terminal != NULL) {
+      return;
+    }
     /* Can't edit another file when "curbuf_lock" is set.  Only ":edit"
      * can bring us here, others are stopped earlier. */
     if (*eap->arg != NUL && curbuf_locked())
