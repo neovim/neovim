@@ -37,6 +37,51 @@ typedef struct {
 # include "os/shell.c.generated.h"
 #endif
 
+/// Process command string with 'shellxescape' (p_sxe) and 'shellxquote'
+/// (p_sxq)
+///
+/// @param cmd Command string
+/// @return NULL if `cmd` is NULL. Otherwise, a newly allocated command string.
+///         It must be freed with `xfree` when no longer needed.
+static char *shell_escape(const char *cmd)
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  char *ncmd;
+
+  if (cmd == NULL) {
+    ncmd = NULL;
+  } else if (*p_sxq == NUL) {
+    ncmd = xstrdup(cmd);
+  } else {
+    const char *ecmd;
+    size_t ncmd_size;
+
+    if (*p_sxe != NUL && STRCMP(p_sxq, "(") == 0) {
+      ecmd = (char *)vim_strsave_escaped_ext((char_u *)cmd, p_sxe, '^', false);
+    } else {
+      ecmd = cmd;
+    }
+    ncmd_size = strlen(ecmd) + STRLEN(p_sxq) * 2 + 1;
+    ncmd = xmalloc(ncmd_size);
+
+    // When 'shellxquote' is '(', append ')'.
+    // When 'shellxquote' is '"(', append ')"'.
+    if (STRCMP(p_sxq, "(") == 0) {
+      vim_snprintf(ncmd, ncmd_size, "(%s)", ecmd);
+    } else if (STRCMP(p_sxq, "\"(") == 0) {
+      vim_snprintf(ncmd, ncmd_size, "\"(%s)\"", ecmd);
+    } else {
+      vim_snprintf(ncmd, ncmd_size, "%s%s%s", p_sxq, ecmd, p_sxq);
+    }
+
+    if (ecmd != (const char *)cmd) {
+      xfree((void *)ecmd);
+    }
+  }
+
+  return ncmd;
+}
+
 /// Builds the argument vector for running the user-configured 'shell' (p_sh)
 /// with an optional command prefixed by 'shellcmdflag' (p_shcf).
 ///
@@ -59,7 +104,8 @@ char **shell_build_argv(const char *cmd, const char *extra_args)
 
   if (cmd) {
     i += tokenize(p_shcf, rv + i);   // Split 'shellcmdflag'
-    rv[i++] = xstrdup(cmd);          // Push a copy of the command.
+    rv[i++] = shell_escape(cmd);     // Process command string with
+                                     // 'shellxescape' and 'shellxquote'
   }
 
   rv[i] = NULL;
