@@ -6565,11 +6565,13 @@ do_exedit (
     (void)do_ecmd(0, NULL, NULL, eap, ECMD_ONE,
         ECMD_HIDE + (eap->forceit ? ECMD_FORCEIT : 0),
         old_curwin == NULL ? curwin : NULL);
-  } else if ((eap->cmdidx != CMD_split
-              && eap->cmdidx != CMD_vsplit
-              )
-             || *eap->arg != NUL
-             ) {
+  } else if ((eap->cmdidx != CMD_split && eap->cmdidx != CMD_vsplit)
+             || *eap->arg != NUL) {
+    // ":edit <blank>" is a no-op in terminal buffers. #2822
+    if (curbuf->terminal != NULL && eap->cmdidx == CMD_edit && *eap->arg == NUL) {
+      return;
+    }
+
     /* Can't edit another file when "curbuf_lock" is set.  Only ":edit"
      * can bring us here, others are stopped earlier. */
     if (*eap->arg != NUL && curbuf_locked())
