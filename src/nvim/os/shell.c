@@ -37,6 +37,43 @@ typedef struct {
 # include "os/shell.c.generated.h"
 #endif
 
+/// Process command string with 'shellxescape' (p_sxe) and 'shellxquote'
+/// (p_sxq)
+///
+/// @param cmd Command string
+/// @return A newly allocated command string. It must be freed with
+///         `xfree` when no longer needed.
+static char *cmd_sxe_sxq(const char *cmd)
+{
+  size_t num_xesc_chars = 0;
+  size_t ncmd_len;
+  char *ncmd;
+  size_t i, j, k;
+
+  if (cmd == NULL || *p_sxq == NUL)
+    ncmd = xstrdup(cmd);
+  else {
+    char_u *ecmd = cmd;
+
+    if (*p_sxe != NUL && STRCMP(p_sxq, "(") == 0) {
+      ecmd = vim_strsave_escaped_ext(cmd, p_sxe, '^', FALSE);
+    }
+    ncmd = xmalloc(STRLEN(ecmd) + STRLEN(p_sxq) * 2 + 1);
+    STRCPY(ncmd, p_sxq);
+    STRCAT(ncmd, ecmd);
+    /* When 'shellxquote' is ( append ).
+     * When 'shellxquote' is "( append )". */
+    STRCAT(ncmd, STRCMP(p_sxq, "(") == 0 ? (char_u *)")"
+        : STRCMP(p_sxq, "\"(") == 0 ? (char_u *)")\""
+        : p_sxq);
+
+    if (ecmd != cmd)
+      xfree(ecmd);
+  }
+
+  return ncmd;
+}
+
 /// Builds the argument vector for running the user-configured 'shell' (p_sh)
 /// with an optional command prefixed by 'shellcmdflag' (p_shcf).
 ///
@@ -59,7 +96,8 @@ char **shell_build_argv(const char *cmd, const char *extra_args)
 
   if (cmd) {
     i += tokenize(p_shcf, rv + i);   // Split 'shellcmdflag'
-    rv[i++] = xstrdup(cmd);          // Push a copy of the command.
+    rv[i++] = cmd_sxe_sxq(cmd);      // Process command string with
+                                     //'shellxescape' and 'shellxquote'
   }
 
   rv[i] = NULL;
