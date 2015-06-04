@@ -94,14 +94,15 @@ main(void)
 {
   return 0;
 }
-" _FORTIFY_SOURCE_ACCEPTABLE)
+" HAS_ACCEPTABLE_FORTIFY)
 
-if(NOT _FORTIFY_SOURCE_ACCEPTABLE)
+if(NOT HAS_ACCEPTABLE_FORTIFY)
+  message(STATUS "Unsupported _FORTIFY_SOURCE found, forcing _FORTIFY_SOURCE=1.")
   # Extract possible prefix to _FORTIFY_SOURCE (e.g. -Wp,-D_FORTIFY_SOURCE).
   STRING(REGEX MATCH "[^\ ]+-D_FORTIFY_SOURCE" _FORTIFY_SOURCE_PREFIX "${CMAKE_C_FLAGS}")
   STRING(REPLACE "-D_FORTIFY_SOURCE" "" _FORTIFY_SOURCE_PREFIX "${_FORTIFY_SOURCE_PREFIX}" )
   if (NOT _FORTIFY_SOURCE_PREFIX STREQUAL "")
-    message(STATUS "Detected _FORTIFY_SOURCE Prefix=${_FORTIFY_SOURCE_PREFIX}")
+    message(STATUS "Detected _FORTIFY_SOURCE Prefix=${_FORTIFY_SOURCE_PREFIX}.")
   endif()
   # -U in add_definitions doesn't end up in the correct spot, so we add it to
   # the flags variable instead.
