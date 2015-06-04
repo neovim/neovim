@@ -45,18 +45,15 @@ typedef struct {
 ///         `xfree` when no longer needed.
 static char *cmd_sxe_sxq(const char *cmd)
 {
-  size_t num_xesc_chars = 0;
-  size_t ncmd_len;
   char *ncmd;
-  size_t i, j, k;
 
   if (cmd == NULL || *p_sxq == NUL)
     ncmd = xstrdup(cmd);
   else {
-    char_u *ecmd = cmd;
+    char *ecmd = (char*)cmd;
 
     if (*p_sxe != NUL && STRCMP(p_sxq, "(") == 0) {
-      ecmd = vim_strsave_escaped_ext(cmd, p_sxe, '^', FALSE);
+      ecmd = (char*)vim_strsave_escaped_ext((char_u*)cmd, p_sxe, '^', FALSE);
     }
     ncmd = xmalloc(STRLEN(ecmd) + STRLEN(p_sxq) * 2 + 1);
     STRCPY(ncmd, p_sxq);
@@ -71,7 +68,7 @@ static char *cmd_sxe_sxq(const char *cmd)
       xfree(ecmd);
   }
 
-  return ncmd;
+  return (char*)ncmd;
 }
 
 /// Builds the argument vector for running the user-configured 'shell' (p_sh)
