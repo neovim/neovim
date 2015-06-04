@@ -4,7 +4,7 @@ local allowed_os = {
   OSX = true,
   BSD = true,
   POSIX = true,
-  WINDOWS = true
+  Windows = true
 }
 
 if allowed_os[jit.os] ~= true then
