@@ -1,4 +1,4 @@
--- not all operating systems support the system()-tests, as of yet.
+-- not all operating systems support the shell_build_argv tests, as of yet.
 local allowed_os = {
   Linux = true,
   OSX = true,
@@ -19,7 +19,7 @@ local shell = helpers.cimport(
 local ffi, eq, neq = helpers.ffi, helpers.eq, helpers.neq
 local to_cstr = helpers.to_cstr
 
-describe('shell functions', function()
+describe('shell_build_argv', function()
   setup(function()
     shell.p_sh = to_cstr('/bin/bash')
     shell.p_shcf = to_cstr('-c')
