@@ -13,7 +13,7 @@ function! provider#pythonx#Detect(major_ver) abort
   let skip = exists(skip_var) ? {skip_var} : 0
   if exists(host_var)
     " Disable auto detection.
-    let [result, err, _] = s:check_interpreter({host_var}, a:major_ver, skip)
+    let [result, err] = s:check_interpreter({host_var}, a:major_ver, skip)
     if result
       return [{host_var}, err]
     endif
@@ -27,12 +27,9 @@ function! provider#pythonx#Detect(major_ver) abort
 
   let errors = []
   for prog in map(prog_suffixes, "'python' . v:val")
-    let [result, err, prog_ver] = s:check_interpreter(prog, a:major_ver, skip)
+    let [result, err] = s:check_interpreter(prog, a:major_ver, skip)
     if result
-      let [result, err] = s:check_version(prog, prog_ver, a:major_ver, skip)
-      if result
-        return [prog, err]
-      endif
+      return [prog, err]
     endif
 
     " Accumulate errors in case we don't find
@@ -45,26 +42,13 @@ function! provider#pythonx#Detect(major_ver) abort
         \ . ":\n" .  join(errors, "\n")]
 endfunction
 
-function! s:check_version(prog, prog_ver, major_ver, skip) abort
-  if a:skip
-    return [1, '']
-  endif
-
-  let min_version = (a:major_ver == 2) ? '2.6' : '3.3'
-  if a:prog_ver =~ '^' . a:major_ver && a:prog_ver >= min_version
-    return [1, '']
-  endif
-  return [0, a:prog . ' is Python ' . prog_ver . ' and cannot provide Python '
-        \ . a:major_ver . '.']
-endfunction
-
 function! s:check_interpreter(prog, major_ver, skip) abort
   if !executable(a:prog)
-    return [0, a:prog . ' does not exist or is not executable.', '']
+    return [0, a:prog . ' does not exist or is not executable.']
   endif
 
   if a:skip
-    return [1, '', '']
+    return [1, '']
   endif
 
   " Try to load neovim module, and output Python version.
@@ -77,8 +61,14 @@ function! s:check_interpreter(prog, major_ver, skip) abort
         \ )
   if v:shell_error
     return [0, a:prog  . ' does have not have the neovim module installed. '
-          \ . 'See ":help nvim-python".', prog_ver]
+          \ . 'See ":help nvim-python".']
   endif
-  return [1, '', prog_ver]
-endfunction
 
+  let min_version = (a:major_ver == 2) ? '2.6' : '3.3'
+  if prog_ver =~ '^' . a:major_ver && prog_ver >= min_version
+    return [1, '']
+  endif
+
+  return [0, a:prog . ' is Python ' . prog_ver . ' and cannot provide Python '
+        \ . a:major_ver . '.']
+endfunction
