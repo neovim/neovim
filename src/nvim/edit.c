@@ -2250,7 +2250,14 @@ void set_completion(colnr_T startcol, list_T *list)
   compl_cont_status = 0;
 
   compl_curr_match = compl_first_match;
-  ins_complete(Ctrl_N);
+  if (compl_no_insert) {
+    ins_complete(K_DOWN);
+  } else {
+    ins_complete(Ctrl_N);
+    if (compl_no_select) {
+      ins_complete(Ctrl_P);
+    }
+  }
   ui_flush();
 }
 
@@ -2980,16 +2987,17 @@ static int ins_compl_prep(int c)
     compl_get_longest = (strstr((char *)p_cot, "longest") != NULL);
     compl_used_match = TRUE;
 
-    if (strstr((char *)p_cot, "noselect") != NULL) {
-      compl_no_insert = FALSE;
-      compl_no_select = TRUE;
-    } else if (strstr((char *)p_cot, "noinsert") != NULL) {
-      compl_no_insert = TRUE;
-      compl_no_select = FALSE;
-    } else {
-      compl_no_insert = FALSE;
-      compl_no_select = FALSE;
-    }
+  }
+
+  if (strstr((char *)p_cot, "noselect") != NULL) {
+    compl_no_insert = FALSE;
+    compl_no_select = TRUE;
+  } else if (strstr((char *)p_cot, "noinsert") != NULL) {
+    compl_no_insert = TRUE;
+    compl_no_select = FALSE;
+  } else {
+    compl_no_insert = FALSE;
+    compl_no_select = FALSE;
   }
 
   if (ctrl_x_mode == CTRL_X_NOT_DEFINED_YET) {
