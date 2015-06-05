@@ -122,7 +122,7 @@ describe('shell functions', function()
       shell.p_sxe = to_cstr('"&|<>()@^')
     end)
 
-    it('applies shellxescape', function()
+    it('applies shellxescape and shellxquote', function()
       local argv = ffi.cast('char**',
                         shell.shell_build_argv(to_cstr('echo &|<>()@^'), nil))
       eq(ffi.string(argv[0]), '/bin/bash')
