@@ -2574,6 +2574,9 @@ static char_u *lasticon = NULL;
 
 void maketitle(void)
 {
+  // If we don't need to make the title, then don't.
+  if (!need_maketitle) return;
+
   char_u      *p;
   char_u      *t_str = NULL;
   char_u      *i_name;

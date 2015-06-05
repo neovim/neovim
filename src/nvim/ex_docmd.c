@@ -7342,8 +7342,7 @@ static void ex_redraw(exarg_T *eap)
   update_screen(eap->forceit ? CLEAR :
       VIsual_active ? INVERTED :
       0);
-  if (need_maketitle)
-    maketitle();
+  maketitle();
   RedrawingDisabled = r;
   p_lz = p;
 
