@@ -47,17 +47,17 @@ static char *cmd_sxe_sxq(const char *cmd)
 {
   char *ncmd;
 
-  if (cmd == NULL || *p_sxq == NUL)
-    ncmd = xstrdup(cmd);
-  else {
-    char *ecmd = (char*)cmd;
+  if (cmd == NULL || *p_sxq == NUL) {
+    ncmd = (cmd == NULL) ? NULL : xstrdup(cmd);
+  } else {
+    char *ecmd = (char *)cmd;
 
     if (*p_sxe != NUL && STRCMP(p_sxq, "(") == 0) {
-      ecmd = (char*)vim_strsave_escaped_ext((char_u*)cmd, p_sxe, '^', FALSE);
+      ecmd = (char *)vim_strsave_escaped_ext((char_u *)cmd, p_sxe, '^', false);
     }
-    ncmd = xmalloc(STRLEN(ecmd) + STRLEN(p_sxq) * 2 + 1);
+    ncmd = xmalloc(strlen(ecmd) + STRLEN(p_sxq) * 2 + 1);
     STRCPY(ncmd, p_sxq);
-    STRCAT(ncmd, ecmd);
+    strcat(ncmd, ecmd);
     /* When 'shellxquote' is ( append ).
      * When 'shellxquote' is "( append )". */
     STRCAT(ncmd, STRCMP(p_sxq, "(") == 0 ? (char_u *)")"
@@ -68,7 +68,7 @@ static char *cmd_sxe_sxq(const char *cmd)
       xfree(ecmd);
   }
 
-  return (char*)ncmd;
+  return ncmd;
 }
 
 /// Builds the argument vector for running the user-configured 'shell' (p_sh)
@@ -94,7 +94,7 @@ char **shell_build_argv(const char *cmd, const char *extra_args)
   if (cmd) {
     i += tokenize(p_shcf, rv + i);   // Split 'shellcmdflag'
     rv[i++] = cmd_sxe_sxq(cmd);      // Process command string with
-                                     //'shellxescape' and 'shellxquote'
+                                     // 'shellxescape' and 'shellxquote'
   }
 
   rv[i] = NULL;
