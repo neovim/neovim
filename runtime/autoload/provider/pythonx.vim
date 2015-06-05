@@ -43,8 +43,9 @@ function! provider#pythonx#Detect(major_ver) abort
 endfunction
 
 function! s:check_interpreter(prog, major_ver, skip) abort
-  if !executable(a:prog)
-    return [0, a:prog . ' does not exist or is not executable.']
+  let prog_path = exepath(a:prog)
+  if prog_path == ''
+    return [0, a:prog . ' not found in search path or not executable.']
   endif
 
   if a:skip
@@ -60,7 +61,7 @@ function! s:check_interpreter(prog, major_ver, skip) abort
         \   '''import importlib; exit(importlib.find_loader("neovim") is None)''')
         \ )
   if v:shell_error
-    return [0, a:prog  . ' does have not have the neovim module installed. '
+    return [0, prog_path . ' does have not have the neovim module installed. '
           \ . 'See ":help nvim-python".']
   endif
 
@@ -69,6 +70,6 @@ function! s:check_interpreter(prog, major_ver, skip) abort
     return [1, '']
   endif
 
-  return [0, a:prog . ' is Python ' . prog_ver . ' and cannot provide Python '
+  return [0, prog_path . ' is Python ' . prog_ver . ' and cannot provide Python '
         \ . a:major_ver . '.']
 endfunction
