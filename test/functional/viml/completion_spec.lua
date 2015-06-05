@@ -1,3 +1,4 @@
+
 local helpers = require('test.functional.helpers')
 local clear, feed, execute = helpers.clear, helpers.feed, helpers.execute
 local eval, eq, neq = helpers.eval, helpers.eq, helpers.neq
@@ -54,25 +55,42 @@ describe('completion', function()
     end)
   end)
   describe('completeopt', function()
+    before_each(function()
+      source([[
+      function! TestComplete() abort
+        call complete(1, ['foo'])
+        return ''
+      endfunction
+      ]])
+    end)
+
     it('inserts the first candidate if default', function()
       execute('set completeopt+=menuone')
       feed('ifoo<ESC>o<C-x><C-n>bar<ESC>')
       eq('foobar', eval('getline(2)'))
+      feed('o<C-r>=TestComplete()<CR><ESC>')
+      eq('foo', eval('getline(3)'))
     end)
     it('selects the first candidate if noinsert', function()
       execute('set completeopt+=menuone,noinsert')
       feed('ifoo<ESC>o<C-x><C-n><C-y><ESC>')
       eq('foo', eval('getline(2)'))
+      feed('o<C-r>=TestComplete()<CR><C-y><ESC>')
+      eq('foo', eval('getline(3)'))
     end)
     it('does not insert the first candidate if noselect', function()
       execute('set completeopt+=menuone,noselect')
       feed('ifoo<ESC>o<C-x><C-n>bar<ESC>')
       eq('bar', eval('getline(2)'))
+      feed('o<C-r>=TestComplete()<CR>bar<ESC>')
+      eq('bar', eval('getline(3)'))
     end)
     it('does not select/insert the first candidate if noselect and noinsert', function()
       execute('set completeopt+=menuone,noselect,noinsert')
       feed('ifoo<ESC>o<C-x><C-n><ESC>')
       eq('', eval('getline(2)'))
+      feed('o<C-r>=TestComplete()<CR><ESC>')
+      eq('', eval('getline(3)'))
     end)
   end)
 end)
