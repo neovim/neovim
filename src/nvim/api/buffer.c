@@ -108,7 +108,7 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
   Array rv = ARRAY_DICT_INIT;
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
-  if (!buf) {
+  if (!buf || start >= buf->b_ml.ml_line_count) {
     return rv;
   }
 
