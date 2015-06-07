@@ -2936,12 +2936,9 @@ static int ml_add_stack(buf_T *buf)
   if (top == buf->b_ml.ml_stack_size) {
     CHECK(top > 0, _("Stack size increases"));     /* more than 5 levels??? */
 
-    infoptr_T *newstack = xmalloc(sizeof(infoptr_T) *
-                                    (buf->b_ml.ml_stack_size + STACK_INCR));
-    memmove(newstack, buf->b_ml.ml_stack, (size_t)top * sizeof(infoptr_T));
-    xfree(buf->b_ml.ml_stack);
-    buf->b_ml.ml_stack = newstack;
     buf->b_ml.ml_stack_size += STACK_INCR;
+    size_t new_size = sizeof(infoptr_T) * buf->b_ml.ml_stack_size;
+    buf->b_ml.ml_stack = xrealloc(buf->b_ml.ml_stack, new_size);
   }
 
   buf->b_ml.ml_stack_top++;
