@@ -1,9 +1,6 @@
 . "$CI_SCRIPTS/common.sh"
 
-sudo pip install cpp-coveralls
-
 if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-	sudo apt-get install valgrind
 	export VALGRIND=1
 	export VALGRIND_LOG="$tmpdir/valgrind-%p.log"
 fi

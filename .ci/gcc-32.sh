@@ -1,7 +1,5 @@
 . "$CI_SCRIPTS/common.sh"
 
-sudo apt-get install gcc-multilib g++-multilib
-
 setup_deps x86
 
 CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON \
@@ -32,6 +30,6 @@ $MAKE_CMD oldtest
 check_core_dumps
 
 # Test if correctly installed.
-sudo -E $MAKE_CMD install
-/usr/local/bin/nvim --version
-/usr/local/bin/nvim -e -c "quit"
+$MAKE_CMD DESTDIR="$HOME/neovim-install" install
+$HOME/neovim-install/usr/local/bin/nvim --version
+$HOME/neovim-install/usr/local/bin/nvim -e -c "quit"
