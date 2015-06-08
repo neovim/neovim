@@ -2,8 +2,13 @@
 
 sudo pip install cpp-coveralls
 
-# Use custom Clang and enable ASAN on Linux.
+# Use custom Clang and enable sanitizers on Linux.
 if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+	if [ -z "$CLANG_SANITIZER" ]; then
+		echo "CLANG_SANITIZER not set."
+		exit 1
+	fi
+
 	clang_version=3.4.2
 	clang_suffix=x86_64-unknown-ubuntu12.04.xz
 	if [ ! -d /usr/local/clang-$clang_version ]; then
@@ -15,13 +20,14 @@ if [ "$TRAVIS_OS_NAME" = "linux" ]; then
 	export CC=/usr/local/clang-$clang_version/bin/clang
 	symbolizer=/usr/local/clang-$clang_version/bin/llvm-symbolizer
 	export ASAN_SYMBOLIZER_PATH=$symbolizer
+	export MSAN_SYMBOLIZER_PATH=$symbolizer
 	export ASAN_OPTIONS="detect_leaks=1:log_path=$tmpdir/asan"
 	export TSAN_OPTIONS="external_symbolizer_path=$symbolizer:log_path=$tmpdir/tsan"
 	export UBSAN_OPTIONS="log_path=$tmpdir/ubsan" # not sure if this works
 	CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON \
 		-DUSE_GCOV=ON \
 		-DBUSTED_OUTPUT_TYPE=plainTerminal \
-		-DSANITIZE=ON"
+		-DCLANG_${CLANG_SANITIZER}=ON"
 else
 	CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON \
 		-DUSE_GCOV=ON \
