@@ -4433,8 +4433,11 @@ void ex_global(exarg_T *eap)
       smsg(_("Pattern found in every line: %s"), pat);
     else
       smsg(_("Pattern not found: %s"), pat);
-  } else
+  } else {
+    start_global_changes();
     global_exe(cmd);
+    end_global_changes();
+  }
 
   ml_clearmarked();        /* clear rest of the marks */
   vim_regfree(regmatch.regprog);

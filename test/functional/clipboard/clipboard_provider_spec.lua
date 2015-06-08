@@ -285,6 +285,22 @@ describe('clipboard usage', function()
         the text]])
     end)
 
+    it('is updated on global changes', function()
+      insert([[
+	text
+	match
+	match
+	text
+      ]])
+      execute('g/match/d')
+      eq('match\n', eval('getreg("*")'))
+      feed('u')
+      eval('setreg("*", "---")')
+      execute('g/test/')
+      feed('<esc>')
+      eq('---', eval('getreg("*")'))
+    end)
+
   end)
 
   describe('with clipboard=unnamedplus', function()
@@ -328,6 +344,21 @@ describe('clipboard usage', function()
         really unnamed
         really unnamed
         the plus]])
+    end)
+    it('is updated on global changes', function()
+      insert([[
+	text
+	match
+	match
+	text
+      ]])
+      execute('g/match/d')
+      eq('match\n', eval('getreg("+")'))
+      feed('u')
+      eval('setreg("+", "---")')
+      execute('g/test/')
+      feed('<esc>')
+      eq('---', eval('getreg("+")'))
     end)
   end)
 
