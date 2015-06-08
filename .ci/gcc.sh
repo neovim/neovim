@@ -2,11 +2,12 @@
 
 sudo pip install cpp-coveralls
 
-if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-	sudo apt-get install valgrind
-	export VALGRIND=1
-	export VALGRIND_LOG="$tmpdir/valgrind-%p.log"
-fi
+# FIXME: Valgrind temporarily disabled (Timeouts on Travis).
+# if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+# 	sudo apt-get install valgrind
+# 	export VALGRIND=1
+# 	export VALGRIND_LOG="$tmpdir/valgrind-%p.log"
+# fi
 
 setup_deps x64
 
