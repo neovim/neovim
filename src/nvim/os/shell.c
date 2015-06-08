@@ -41,8 +41,8 @@ typedef struct {
 /// (p_sxq)
 ///
 /// @param cmd Command string
-/// @return A newly allocated command string. It must be freed with
-///         `xfree` when no longer needed.
+/// @return NULL if `cmd` is NULL. Otherwise, a newly allocated command string.
+///         It must be freed with `xfree` when no longer needed.
 static char *shell_escape(const char *cmd)
 {
   char *ncmd;
@@ -60,17 +60,15 @@ static char *shell_escape(const char *cmd)
       ecmd = cmd;
     }
     ncmd = xmalloc(strlen(ecmd) + STRLEN(p_sxq) * 2 + 1);
-    STRCPY(ncmd, p_sxq);
-    strcat(ncmd, ecmd);
 
     // When 'shellxquote' is '(', append ')'.
     // When 'shellxquote' is '"(', append ')"'.
     if (STRCMP(p_sxq, "(") == 0) {
-      strcat(ncmd, ")");
+      sprintf(ncmd, "(%s)", ecmd);
     } else if (STRCMP(p_sxq, "\"(") == 0) {
-      strcat(ncmd, ")\"");
+      sprintf(ncmd, "\"(%s)\"", ecmd);
     } else {
-      STRCAT(ncmd, p_sxq);
+      sprintf(ncmd, "%s%s%s", p_sxq, ecmd, p_sxq);
     }
 
     if (ecmd != (const char *)cmd) {
