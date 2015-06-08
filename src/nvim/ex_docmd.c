@@ -9380,6 +9380,8 @@ static void ex_folddo(exarg_T *eap)
 {
   linenr_T lnum;
 
+  start_global_changes();
+
   /* First set the marks for all lines closed/open. */
   for (lnum = eap->line1; lnum <= eap->line2; ++lnum)
     if (hasFolding(lnum, NULL, NULL) == (eap->cmdidx == CMD_folddoclosed))
@@ -9388,6 +9390,8 @@ static void ex_folddo(exarg_T *eap)
   /* Execute the command on the marked lines. */
   global_exe(eap->arg);
   ml_clearmarked();        /* clear rest of the marks */
+
+  end_global_changes();
 }
 
 static void ex_terminal(exarg_T *eap)
