@@ -53,22 +53,24 @@ static char *shell_escape(const char *cmd)
     ncmd = xstrdup(cmd);
   } else {
     const char *ecmd;
+    size_t ncmd_size;
 
     if (*p_sxe != NUL && STRCMP(p_sxq, "(") == 0) {
       ecmd = (char *)vim_strsave_escaped_ext((char_u *)cmd, p_sxe, '^', false);
     } else {
       ecmd = cmd;
     }
-    ncmd = xmalloc(strlen(ecmd) + STRLEN(p_sxq) * 2 + 1);
+    ncmd_size = strlen(ecmd) + STRLEN(p_sxq) * 2 + 1;
+    ncmd = xmalloc(ncmd_size);
 
     // When 'shellxquote' is '(', append ')'.
     // When 'shellxquote' is '"(', append ')"'.
     if (STRCMP(p_sxq, "(") == 0) {
-      sprintf(ncmd, "(%s)", ecmd);
+      snprintf(ncmd, ncmd_size, "(%s)", ecmd);
     } else if (STRCMP(p_sxq, "\"(") == 0) {
-      sprintf(ncmd, "\"(%s)\"", ecmd);
+      snprintf(ncmd, ncmd_size, "\"(%s)\"", ecmd);
     } else {
-      sprintf(ncmd, "%s%s%s", p_sxq, ecmd, p_sxq);
+      snprintf(ncmd, ncmd_size, "%s%s%s", p_sxq, ecmd, p_sxq);
     }
 
     if (ecmd != (const char *)cmd) {
