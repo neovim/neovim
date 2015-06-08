@@ -95,7 +95,7 @@ foreach(gen_cdef ${gen_cdefs} DO_NOT_DEFINE_EMPTY_ATTRIBUTES)
     list(APPEND gen_cflags "-D${gen_cdef}")
   endif()
 endforeach()
-if (SANITIZE)
+if(CLANG_ASAN)
   list(APPEND gen_cflags "-DEXITFREE")
 endif()
 
@@ -190,11 +190,15 @@ add_executable(nvim ${NEOVIM_GENERATED_SOURCES} ${NEOVIM_SOURCES}
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
 
-if(SANITIZE)
-  message(STATUS "Enabling Clang sanitizers for nvim")
+if(CLANG_ASAN)
+  message(STATUS "Enabling Clang address sanitizer for nvim.")
   set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-DEXITFREE ")
   set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-fno-sanitize-recover -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address -fsanitize=undefined ")
   set_property(TARGET nvim APPEND_STRING PROPERTY LINK_FLAGS "-fsanitize=address -fsanitize=undefined ")
+elseif(CLANG_MSAN)
+  message(STATUS "Enabling Clang memory sanitizer for nvim.")
+  set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-fsanitize=memory -fsanitize-memory-track-origins -fno-omit-frame-pointer -fno-optimize-sibling-calls ")
+  set_property(TARGET nvim APPEND_STRING PROPERTY LINK_FLAGS "-fsanitize=memory -fsanitize-memory-track-origins ")
 endif()
 
 add_library(libnvim STATIC EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
