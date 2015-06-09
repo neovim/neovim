@@ -9,16 +9,20 @@ if [ "$TRAVIS_OS_NAME" = "linux" ]; then
 		exit 1
 	fi
 
-	clang_version=3.4.2
-	clang_suffix=x86_64-unknown-ubuntu12.04.xz
-	if [ ! -d /usr/local/clang-$clang_version ]; then
-		echo "Downloading clang $clang_version..."
-		sudo mkdir /usr/local/clang-$clang_version
-		wget -q -O - http://llvm.org/releases/$clang_version/clang+llvm-$clang_version-$clang_suffix \
-			| sudo tar xJf - --strip-components=1 -C /usr/local/clang-$clang_version
-	fi
-	export CC=/usr/local/clang-$clang_version/bin/clang
-	symbolizer=/usr/local/clang-$clang_version/bin/llvm-symbolizer
+	clang_version=3.6
+	echo "Installing Clang $clang_version..."
+
+	sudo add-apt-repository "deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu precise main"
+	sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys BA9EF27F
+
+	sudo add-apt-repository "deb http://llvm.org/apt/precise/ llvm-toolchain-precise-$clang_version main"
+	wget -q -O - http://llvm.org/apt/llvm-snapshot.gpg.key | sudo apt-key add -
+
+	sudo apt-get update -qq
+	sudo apt-get install -y -q clang-$clang_version
+
+	export CC=/usr/bin/clang-$clang_version
+	symbolizer=/usr/bin/llvm-symbolizer-$clang_version
 	export ASAN_SYMBOLIZER_PATH=$symbolizer
 	export MSAN_SYMBOLIZER_PATH=$symbolizer
 	export ASAN_OPTIONS="detect_leaks=1:log_path=$tmpdir/asan"
