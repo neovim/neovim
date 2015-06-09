@@ -22,14 +22,15 @@ function! s:try_cmd(cmd, ...)
   let argv = split(a:cmd, " ")
   let out = a:0 ? systemlist(argv, a:1, 1) : systemlist(argv, [''], 1)
   if v:shell_error
+    echohl WarningMsg
     echo "clipboard: error: ".(len(out) ? out[0] : '')
-    return ''
+    echohl None
+    return 0
   endif
   return out
 endfunction
 
 let s:cache_enabled = 1
-
 if executable('pbcopy')
   let s:copy['+'] = 'pbcopy'
   let s:paste['+'] = 'pbpaste'
@@ -47,7 +48,7 @@ elseif executable('xsel')
   let s:copy['*'] = 'xsel --nodetach -i -p'
   let s:paste['*'] = 'xsel -o -p'
 else
-  echom 'clipboard: No shell command for communicating with the clipboard found.'
+  echom 'clipboard: No clipboard tool available. See :help nvim-clipboard'
   finish
 endif
 
