@@ -214,10 +214,12 @@ function! s:RequirePythonHost(name)
   catch
     echomsg v:exception
   endtry
-  throw 'Failed to load python host. You can try to see what happened ' .
-    \ 'by starting Neovim with $NVIM_PYTHON_PYTHON_LOG and opening '.
+  throw 'Failed to load Python host. You can try to see what happened '.
+    \ 'by starting Neovim with the environment variable '.
+    \ '$NVIM_PYTHON_LOG_FILE set to a file and opening '.
     \ 'the generated log file. Also, the host stderr will be available '.
-    \ 'in Neovim log, so it may contain useful information.'
+    \ 'in Neovim log, so it may contain useful information. '.
+    \ 'See also ~/.nvimlog.'
 endfunction
 
 call remote#host#Register('python', function('s:RequirePythonHost'))
