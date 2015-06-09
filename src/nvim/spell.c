@@ -4115,7 +4115,7 @@ static int badword_captype(char_u *word, char_u *end)
 // Delete the internal wordlist and its .spl file.
 void spell_delete_wordlist(void)
 {
-  char_u fname[MAXPATHL];
+  char_u fname[MAXPATHL] = {0};
 
   if (int_wordlist != NULL) {
     os_remove((char *)int_wordlist);
