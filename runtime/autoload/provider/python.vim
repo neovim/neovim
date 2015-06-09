@@ -10,10 +10,6 @@ endif
 let g:loaded_python_provider = 1
 
 let [s:prog, s:err] = provider#pythonx#Detect(2)
-if s:prog == ''
-  " Detection failed
-  finish
-endif
 
 function! provider#python#Prog()
   return s:prog
@@ -23,6 +19,11 @@ function! provider#python#Error()
   return s:err
 endfunction
 
+if s:prog == ''
+  " Detection failed
+  finish
+endif
+
 let s:plugin_path = expand('<sfile>:p:h').'/script_host.py'
 
 " The Python provider plugin will run in a separate instance of the Python
@@ -31,6 +32,9 @@ call remote#host#RegisterClone('legacy-python-provider', 'python')
 call remote#host#RegisterPlugin('legacy-python-provider', s:plugin_path, [])
 
 function! provider#python#Call(method, args)
+  if s:err != ''
+    return
+  endif
   if !exists('s:host')
     let s:rpcrequest = function('rpcrequest')
 
@@ -38,7 +42,10 @@ function! provider#python#Call(method, args)
     try
       let s:host = remote#host#Require('legacy-python-provider')
     catch
+      let s:err = v:exception
+      echohl WarningMsg
       echomsg v:exception
+      echohl None
       finish
     endtry
   endif
