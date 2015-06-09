@@ -35,6 +35,11 @@ describe('shell functions', function()
     return ret
   end
 
+  after_each(function()
+    shell.p_sxq = to_cstr('')
+    shell.p_sxe = to_cstr('')
+  end)
+
   local function os_system(cmd, input)
     local input_or = input and to_cstr(input) or NULL
     local input_len = (input ~= nil) and string.len(input) or 0
@@ -131,9 +136,27 @@ describe('shell functions', function()
       eq(nil, argv[3])
     end)
 
-    teardown(function()
-      shell.p_sxq = to_cstr('')
+    it('applies shellxquote when shellxquote is "\"("', function()
+      shell.p_sxq = to_cstr('"(')
+
+      local argv = ffi.cast('char**', shell.shell_build_argv(
+                                          to_cstr('echo -n some text'), nil))
+      eq(ffi.string(argv[0]), '/bin/bash')
+      eq(ffi.string(argv[1]), '-c')
+      eq(ffi.string(argv[2]), '"(echo -n some text)"')
+      eq(nil, argv[3])
+    end)
+
+    it('applies shellxquote when shellxquote is "\""', function()
+      shell.p_sxq = to_cstr('"')
       shell.p_sxe = to_cstr('')
+
+      local argv = ffi.cast('char**', shell.shell_build_argv(
+                                          to_cstr('echo -n some text'), nil))
+      eq(ffi.string(argv[0]), '/bin/bash')
+      eq(ffi.string(argv[1]), '-c')
+      eq(ffi.string(argv[2]), '"echo -n some text"')
+      eq(nil, argv[3])
     end)
   end)
 end)
