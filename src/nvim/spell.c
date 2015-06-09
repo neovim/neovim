@@ -2173,11 +2173,12 @@ spell_move_to (
                 if (attrp != NULL)
                   *attrp = attr;
                 return len;
-              } else if (curline)
+              } else if (curline) {
                 // Insert mode completion: put cursor after
                 // the bad word.
                 assert(len <= INT_MAX);
                 found_pos.col += (int)len;
+              }
               found_len = len;
             }
           } else
