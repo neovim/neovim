@@ -22,7 +22,7 @@ if [ "$TRAVIS_OS_NAME" = "linux" ]; then
 	export ASAN_SYMBOLIZER_PATH=$symbolizer
 	export MSAN_SYMBOLIZER_PATH=$symbolizer
 	export ASAN_OPTIONS="detect_leaks=1:log_path=$tmpdir/asan"
-	export TSAN_OPTIONS="external_symbolizer_path=$symbolizer:log_path=$tmpdir/tsan"
+	export TSAN_OPTIONS="external_symbolizer_path=$symbolizer log_path=$tmpdir/tsan"
 	export UBSAN_OPTIONS="log_path=$tmpdir/ubsan" # not sure if this works
 	CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON \
 		-DUSE_GCOV=ON \
