@@ -13,7 +13,7 @@ setup_deps x64
 
 CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON \
 	-DUSE_GCOV=ON \
-	-DBUSTED_OUTPUT_TYPE=plainTerminal"
+	-DBUSTED_OUTPUT_TYPE=gtest"
 
 # Build and output version info.
 $MAKE_CMD CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS" nvim
