@@ -27,9 +27,11 @@ env:
 matrix:
   include:
     - os: linux
-      env: CI_TARGET=clang CLANG_SANITIZER=ASAN
+      env: CI_TARGET=clang CLANG_SANITIZER=ASAN_UBSAN
     - os: linux
       env: CI_TARGET=clang CLANG_SANITIZER=MSAN
+    - os: linux
+      env: CI_TARGET=clang CLANG_SANITIZER=TSAN
     - os: osx
       env: CI_TARGET=clang
       compiler: clang
