@@ -20,13 +20,16 @@ env:
     # Force verification of DLOG macros.
     - CFLAGS='-DMIN_LOG_LEVEL=0'
   matrix:
-    - CI_TARGET=clang
     - CI_TARGET=gcc
     - CI_TARGET=gcc-32
     - CI_TARGET=clint
     - CI_TARGET=mingw
 matrix:
   include:
+    - os: linux
+      env: CI_TARGET=clang CLANG_SANITIZER=ASAN
+    - os: linux
+      env: CI_TARGET=clang CLANG_SANITIZER=MSAN
     - os: osx
       env: CI_TARGET=clang
       compiler: clang
