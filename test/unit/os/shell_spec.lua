@@ -136,7 +136,7 @@ describe('shell functions', function()
       eq(nil, argv[3])
     end)
 
-    it('applies shellxquote when shellxquote is "\"("', function()
+    it('applies shellxquote when shellxquote is "\\"("', function()
       shell.p_sxq = to_cstr('"(')
 
       local argv = ffi.cast('char**', shell.shell_build_argv(
@@ -147,7 +147,7 @@ describe('shell functions', function()
       eq(nil, argv[3])
     end)
 
-    it('applies shellxquote when shellxquote is "\""', function()
+    it('applies shellxquote when shellxquote is "\\""', function()
       shell.p_sxq = to_cstr('"')
       shell.p_sxe = to_cstr('')
 
