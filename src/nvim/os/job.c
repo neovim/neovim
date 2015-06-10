@@ -152,7 +152,8 @@ Job *job_start(JobOptions opts, int *status)
   }
 
   // Spawn the job
-  if (!process_spawn(job)) {
+  int result = process_spawn(job);
+  if (result != 0) {
     if (opts.writable) {
       uv_close((uv_handle_t *)job->proc_stdin, close_cb);
     }

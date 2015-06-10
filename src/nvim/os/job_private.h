@@ -46,7 +46,7 @@ extern PMap(int) *job_map;
 extern size_t stop_requests;
 extern uv_timer_t job_stop_timer;
 
-static inline bool process_spawn(Job *job)
+static inline int process_spawn(Job *job)
 {
   return job->opts.pty ? pty_process_spawn(job) : pipe_process_spawn(job);
 }
