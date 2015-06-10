@@ -1,8 +1,8 @@
 -- Tests for :[count]argument! and :[count]argdelete
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local clear, execute, eq, eval =
+  helpers.clear, helpers.execute, helpers.eq, helpers.eval
 
 describe('argument_count', function()
   setup(clear)
@@ -10,6 +10,7 @@ describe('argument_count', function()
   it('is working', function()
     execute('%argd')
     execute('argadd a b c d')
+    eq({'a', 'b', 'c', 'd'}, eval('argv()'))
     execute('set hidden')
     execute('let buffers = []')
     execute('augroup TEST')
@@ -23,42 +24,24 @@ describe('argument_count', function()
     execute('augroup TEST')
     execute('au!')
     execute('augroup END')
-    execute('let arglists = []')
+    eq({'d', 'c', 'b', 'a', 'c'}, eval('buffers'))
     execute('.argd')
-    execute('call add(arglists, argv())')
+    eq({'a', 'b', 'd'}, eval('argv()'))
     execute('-argd')
-    execute('call add(arglists, argv())')
+    eq({'a', 'd'}, eval('argv()'))
     execute('$argd')
-    execute('call add(arglists, argv())')
+    eq({'a'}, eval('argv()'))
     execute('1arga c')
     execute('1arga b')
     execute('$argu')
     execute('$arga x')
-    execute('call add(arglists, argv())')
+    eq({'a', 'b', 'c', 'x'}, eval('argv()'))
     execute('0arga Y')
-    execute('call add(arglists, argv())')
+    eq({'Y', 'a', 'b', 'c', 'x'}, eval('argv()'))
     execute('%argd')
-    execute('call add(arglists, argv())')
+    eq({}, eval('argv()'))
     execute('arga a b c d e f')
     execute('2,$-argd')
-    execute('call add(arglists, argv())')
-    execute('call append(0, buffers)')
-    execute([[let lnr = line('$')]])
-    execute([[call append(lnr, map(copy(arglists), 'join(v:val, " ")'))]])
-    -- Assert buffer contents.
-    expect([=[
-      d
-      c
-      b
-      a
-      c
-      
-      a b d
-      a d
-      a
-      a b c x
-      Y a b c x
-      
-      a f]=])
+    eq({'a', 'f'}, eval('argv()'))
   end)
 end)
