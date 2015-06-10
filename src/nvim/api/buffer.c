@@ -542,11 +542,13 @@ static void fix_cursor(linenr_T lo, linenr_T hi, linenr_T extra)
 // Normalizes 0-based indexes to buffer line numbers
 static int64_t normalize_index(buf_T *buf, int64_t index)
 {
+  linenr_T nlines = buf->b_ml.ml_line_count;
+
   // Fix if < 0
-  index = index < 0 ?  buf->b_ml.ml_line_count + index : index;
+  index = index < 0 ?  nlines - (-index % nlines) : index;
   // Convert the index to a vim line number
   index++;
   // Fix if > line_count
-  index = index > buf->b_ml.ml_line_count ? buf->b_ml.ml_line_count : index;
+  index = index > nlines ? nlines : index;
   return index;
 }
