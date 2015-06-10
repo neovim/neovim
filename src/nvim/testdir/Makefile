@@ -31,7 +31,6 @@ SCRIPTS := test_autoformat_join.out                                    \
            test_argument_count.out                                     \
            test_close_count.out                                        \
            test_command_count.out                                      \
-           test_argument_0count.out
 
 SCRIPTS_GUI := test16.out
 
