@@ -1355,7 +1355,7 @@ char_u *make_filter_cmd(char_u *cmd, char_u *itmp, char_u *otmp)
   }
 #endif
   if (otmp != NULL)
-    append_redir(buf, (int)len, p_srr, otmp);
+    append_redir(buf, len, p_srr, otmp);
 
   return buf;
 }
@@ -1367,7 +1367,7 @@ char_u *make_filter_cmd(char_u *cmd, char_u *itmp, char_u *otmp)
  * The caller should make sure that there is enough room:
  *	STRLEN(opt) + STRLEN(fname) + 3
  */
-void append_redir(char_u *buf, int buflen, char_u *opt, char_u *fname)
+void append_redir(char_u *buf, size_t buflen, char_u *opt, char_u *fname)
 {
   char_u      *p;
   char_u      *end;
