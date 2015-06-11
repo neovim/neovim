@@ -34,7 +34,6 @@ SCRIPTS := \
            test79.out             \
            test88.out             \
            test_listlbr.out       \
-           test_breakindent.out   \
            test_close_count.out   \
            test_marks.out         \
            test_match_conceal.out \
