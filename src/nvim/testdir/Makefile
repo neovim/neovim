@@ -31,7 +31,6 @@ SCRIPTS := \
            test69.out             \
            test73.out             \
            test79.out             \
-           test_listlbr.out       \
            test_marks.out         \
 
 # Tests using runtest.vim.vim.
