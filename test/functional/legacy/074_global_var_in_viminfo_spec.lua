@@ -34,21 +34,20 @@ describe('storing global variables in viminfo files', function()
     )
     eq(test_dict, eval('MY_GLOBAL_DICT'))
     eq(test_list, eval('MY_GLOBAL_LIST'))
-    -- Assert that the viminfo file does not exists.
-    eq(nil, lfs.attributes('Xviminfo'))
+
     execute('wv! Xviminfo')
     wait()
+
     -- Assert that the viminfo file exists.
     neq(nil, lfs.attributes('Xviminfo'))
     execute('unlet MY_GLOBAL_DICT',
-	    'unlet MY_GLOBAL_LIST')
+            'unlet MY_GLOBAL_LIST')
     -- Assert that the variables where deleted.
     eq(0, eval('exists("MY_GLOBAL_DICT")'))
     eq(0, eval('exists("MY_GLOBAL_LIST")'))
+
     execute('rv! Xviminfo')
-    -- Assert that the variables where restored.
-    eq(1, eval('exists("MY_GLOBAL_DICT")'))
-    eq(1, eval('exists("MY_GLOBAL_LIST")'))
+
     eq(test_list, eval('MY_GLOBAL_LIST'))
     eq(test_dict, eval('MY_GLOBAL_DICT'))
   end)
