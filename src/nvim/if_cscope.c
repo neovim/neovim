@@ -1437,8 +1437,7 @@ static char *cs_manage_matches(char **matches, char **contexts,
     break;
   case Free:
     if (mp != NULL) {
-      while (cnt > 0) {
-        cnt--;
+      while (cnt--) {
         xfree(mp[cnt]);
         if (cp != NULL)
           xfree(cp[cnt]);
@@ -1633,12 +1632,10 @@ static void cs_fill_results(char *tagstr, size_t totmatches, int *nummatches_a,
 /* get the requested path components */
 static char *cs_pathcomponents(char *path)
 {
-  char *s;
-
   if (p_cspc == 0)
     return path;
 
-  s = path + strlen(path) - 1;
+  char *s = path + strlen(path) - 1;
   for (int i = 0; i < p_cspc; ++i)
     while (s > path && *--s != '/');
   if ((s > path && *s == '/'))
@@ -1767,15 +1764,14 @@ static int cs_read_prompt(size_t i)
   int ch;
   char        *buf = NULL;   /* buffer for possible error message from cscope */
   size_t bufpos = 0;
-  char        *cs_emsg;
-  size_t maxlen;
+  char   *cs_emsg = _("E609: Cscope error: %s");
+  size_t cs_emsg_len = strlen(cs_emsg);
   static char *eprompt = "Press the RETURN key to continue:";
   size_t epromptlen = strlen(eprompt);
 
-  cs_emsg = _("E609: Cscope error: %s");
   /* compute maximum allowed len for Cscope error message */
-  assert(IOSIZE > strlen(cs_emsg));
-  maxlen = IOSIZE - strlen(cs_emsg);
+  assert(IOSIZE >= cs_emsg_len);
+  size_t maxlen = IOSIZE - cs_emsg_len;
 
   for (;; ) {
     while ((ch = getc(csinfo[i].fr_fp)) != EOF && ch != CSCOPE_PROMPT[0])
