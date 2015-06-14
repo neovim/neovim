@@ -6570,6 +6570,10 @@ do_exedit (
               )
              || *eap->arg != NUL
              ) {
+    // :e is a no-op in terminal buffers
+    if (curbuf->terminal != NULL && eap->cmdidx == CMD_edit && *eap->arg == NUL) {
+      return;
+    }
     /* Can't edit another file when "curbuf_lock" is set.  Only ":edit"
      * can bring us here, others are stopped earlier. */
     if (*eap->arg != NUL && curbuf_locked())
