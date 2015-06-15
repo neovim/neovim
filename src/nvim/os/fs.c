@@ -144,7 +144,7 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
     // Glue together the given directory from $PATH with name and save into
     // buf.
     STRLCPY(buf, path, e - path + 1);
-    append_path((char *) buf, (const char *) name, (int)buf_len);
+    append_path((char *) buf, (const char *) name, buf_len);
 
     if (is_executable(buf)) {
       // Check if the caller asked for a copy of the path.
