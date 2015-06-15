@@ -205,6 +205,8 @@ int main(int argc, char **argv)
   set_vim_var_string(VV_PROGPATH, (char_u *)argv[0], -1);
   set_vim_var_string(VV_PROGNAME, path_tail((char_u *)argv[0]), -1);
 
+  set_vim_var_dict(VV_COMPLETED_ITEM, dict_alloc());
+
   /*
    * Process the command line arguments.  File names are put in the global
    * argument list "global_alist".
