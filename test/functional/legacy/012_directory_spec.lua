@@ -20,14 +20,10 @@ describe('the directory option', function()
     write_file('Xtest1', text)
     lfs.mkdir('Xtest.je')
     lfs.mkdir('Xtest2')
-    execute('/start of testfile/,/end of testfile/w! Xtest2/Xtest3')
     write_file('Xtest2/Xtest3', text)
   end)
   teardown(function()
-    os.remove('Xtest1')
-    os.remove('Xtest2/Xtest3')
-    os.remove('Xtest2')
-    os.remove('Xtest.je')
+    os.execute('rm -rf Xtest*')
     os.remove('test.out')
   end)
 
@@ -38,20 +34,22 @@ describe('the directory option', function()
       line 3 Abcdefghij
       end of testfile]])
 
+    -- First we need to set swapfile because helpers.lua unsets it on the
+    -- command line.
+    execute('set swapfile')
     execute('set dir=.,~')
     -- Assert that the swap file does not exist.
     eq(nil, lfs.attributes('.Xtest1.swp')) -- for unix
     eq(nil, lfs.attributes('Xtest1.swp'))  -- for other systems
     execute('!echo first line >test.out')
     execute('e! Xtest1')
-    helpers.wait()
-    -- Assert that the swapfile exists.
+    wait()
+    -- Assert that the swapfile does exists. (Same as the vim commands below)
     if eval('has("unix")') == 1 then
       neq(nil, lfs.attributes('.Xtest1.swp'))
     else
       neq(nil, lfs.attributes('Xtest1.swp'))
     end
-    eq(1,2)
     execute('if has("unix")')
     -- Do an ls of the current dir to find the swap file, remove the leading
     -- dot to make the result the same for all systems.
@@ -66,12 +64,22 @@ describe('the directory option', function()
 
     execute('set dir=./Xtest2,.,~')
     execute('e Xtest1')
+    -- Swapfile in the current directory should not exist any longer.
+    eq(nil, lfs.attributes('Xtest.swp'))
+    eq('', io.popen('ls X*.swp'):read('*all'))
     execute('!ls X*.swp >>test.out')
     execute('!echo under under >>test.out')
+    -- DONE
+    -- There should be only one file in the directory Xtest2.
+    eq('Xtest3\n', io.popen('ls Xtest2'):read('*all'))
     execute('!ls Xtest2 >>test.out')
+    -- DONE???????
     execute('!echo under Xtest1.swp >>test.out')
+    eq([[
+      ]], io.open('test.out'):read('*all'))
     execute('set dir=Xtest.je,~')
     execute('e Xtest2/Xtest3')
+    eq(1, eval('&swapfile'))
     execute('swap')
     execute('!ls Xtest2 >>test.out')
     execute('!echo under Xtest3 >>test.out')
