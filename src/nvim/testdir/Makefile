@@ -144,7 +144,5 @@ test1.out: .gdbinit test1.in
 
 test49.out: test49.vim
 
-test60.out: test60.vim
-
 nolog:
 	-rm -f test.log
