@@ -1172,10 +1172,9 @@ static char *GetWin32Error(void)
 static int cs_insert_filelist(char *fname, char *ppath, char *flags,
                               FileInfo *file_info)
 {
-  size_t i;
-  bool empty_found;
+  size_t i = 0;
+  bool empty_found = false;
 
-  empty_found = false;
   for (size_t j = 0; j < csinfo_size; j++) {
     if (csinfo[j].fname != NULL
         && os_fileid_equal_fileinfo(&(csinfo[j].file_id), file_info)) {
