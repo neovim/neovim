@@ -426,8 +426,12 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
 
     case kObjectTypeString:
       tv->v_type = VAR_STRING;
-      tv->vval.v_string = xmemdupz(obj.data.string.data,
-                                   obj.data.string.size);
+      if (obj.data.string.data == NULL) {
+        tv->vval.v_string = NULL;
+      } else {
+        tv->vval.v_string = xmemdupz(obj.data.string.data,
+                                     obj.data.string.size);
+      }
       break;
 
     case kObjectTypeArray:
