@@ -1,8 +1,9 @@
 -- Test for user command counts
 
 local helpers = require('test.functional.helpers')
-local source = helpers.source
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local clear, source, expect = helpers.clear, helpers.source, helpers.expect
+local execute, spawn = helpers.execute, helpers.spawn
+local nvim_prog = helpers.nvim_prog
 
 describe('command_count', function()
   setup(clear)
@@ -11,19 +12,40 @@ describe('command_count', function()
   end)
 
   it('is working', function()
-    execute('lang C')
-    execute('let g:lines = []')
-    execute([[com -range=% RangeLines :call add(g:lines, 'RangeLines '.<line1>.' '.<line2>)]])
-    execute([[com -range -addr=arguments RangeArguments :call add(g:lines, 'RangeArguments '.<line1>.' '.<line2>)]])
-    execute([[com -range=% -addr=arguments RangeArgumentsAll :call add(g:lines, 'RangeArgumentsAll '.<line1>.' '.<line2>)]])
-    execute([[com -range -addr=loaded_buffers RangeLoadedBuffers :call add(g:lines, 'RangeLoadedBuffers '.<line1>.' '.<line2>)]])
-    execute([[com -range=% -addr=loaded_buffers RangeLoadedBuffersAll :call add(g:lines, 'RangeLoadedBuffersAll '.<line1>.' '.<line2>)]])
-    execute([[com -range -addr=buffers RangeBuffers :call add(g:lines, 'RangeBuffers '.<line1>.' '.<line2>)]])
-    execute([[com -range=% -addr=buffers RangeBuffersAll :call add(g:lines, 'RangeBuffersAll '.<line1>.' '.<line2>)]])
-    execute([[com -range -addr=windows RangeWindows :call add(g:lines, 'RangeWindows '.<line1>.' '.<line2>)]])
-    execute([[com -range=% -addr=windows RangeWindowsAll :call add(g:lines, 'RangeWindowsAll '.<line1>.' '.<line2>)]])
-    execute([[com -range -addr=tabs RangeTabs :call add(g:lines, 'RangeTabs '.<line1>.' '.<line2>)]])
-    execute([[com -range=% -addr=tabs RangeTabsAll :call add(g:lines, 'RangeTabsAll '.<line1>.' '.<line2>)]])
+    -- It is relevant for the test to load a file initially.  If this is
+    -- emulated with :arg the buffer count is wrong as nvim creates an empty
+    -- buffer if it was started without a filename.
+    local nvim2 = spawn({helpers.nvim_prog, '-u', 'NONE', '-i', 'NONE',
+					    '--embed',
+					    'test_command_count.in'})
+    helpers.set_session(nvim2)
+
+    source([[
+      lang C
+      let g:lines = []
+      com -range=% RangeLines
+        \ :call add(g:lines, 'RangeLines '.<line1>.' '.<line2>)
+      com -range -addr=arguments RangeArguments
+        \ :call add(g:lines, 'RangeArguments '.<line1>.' '.<line2>)
+      com -range=% -addr=arguments RangeArgumentsAll
+        \ :call add(g:lines, 'RangeArgumentsAll '.<line1>.' '.<line2>)
+      com -range -addr=loaded_buffers RangeLoadedBuffers
+        \ :call add(g:lines, 'RangeLoadedBuffers '.<line1>.' '.<line2>)
+      com -range=% -addr=loaded_buffers RangeLoadedBuffersAll
+        \ :call add(g:lines, 'RangeLoadedBuffersAll '.<line1>.' '.<line2>)
+      com -range -addr=buffers RangeBuffers
+        \ :call add(g:lines, 'RangeBuffers '.<line1>.' '.<line2>)
+      com -range=% -addr=buffers RangeBuffersAll
+        \ :call add(g:lines, 'RangeBuffersAll '.<line1>.' '.<line2>)
+      com -range -addr=windows RangeWindows
+        \ :call add(g:lines, 'RangeWindows '.<line1>.' '.<line2>)
+      com -range=% -addr=windows RangeWindowsAll
+        \ :call add(g:lines, 'RangeWindowsAll '.<line1>.' '.<line2>)
+      com -range -addr=tabs RangeTabs
+        \ :call add(g:lines, 'RangeTabs '.<line1>.' '.<line2>)
+      com -range=% -addr=tabs RangeTabsAll
+        \ :call add(g:lines, 'RangeTabsAll '.<line1>.' '.<line2>)
+      ]])
     execute('set hidden')
     execute('arga a b c d')
     execute('argdo echo "loading buffers"')
@@ -141,6 +163,7 @@ describe('command_count', function()
     execute([[let buffers = '']])
     execute([[.,$-bufdo let buffers .= ' '.bufnr('%')]])
     execute([[call add(g:lines, 'bufdo:' . buffers)]])
+    execute('3bd') -- Added after e949c2bd62f399a04ae23570203d61344bdd69e9
     execute([[let buffers = '']])
     execute([[3,7bufdo let buffers .= ' '.bufnr('%')]])
     execute([[call add(g:lines, 'bufdo:' . buffers)]])
@@ -153,7 +176,7 @@ describe('command_count', function()
     execute([[call append('$', g:lines)]])
 
     -- Assert buffer contents.
-    expect([=[
+    expect([[
       RangeArguments 2 4
       RangeArguments 1 5
       RangeArgumentsAll 1 5
@@ -190,7 +213,7 @@ describe('command_count', function()
       argdo: c d e
       windo: 2 3 4
       bufdo: 2 3 4 5 6 7 8 9 10 15
-      bufdo: 3 4 5 6 7
-      tabdo: 2 3 4]=])
+      bufdo: 4 5 6 7
+      tabdo: 2 3 4]])
   end)
 end)
