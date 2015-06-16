@@ -9,7 +9,7 @@ local feed, insert, source, eq, neq, eval, clear, execute, expect, wait,
   helpers.neq, helpers.eval, helpers.clear, helpers.execute, helpers.expect,
   helpers.wait, helpers.write_file
 
-describe('12', function()
+describe('the directory option', function()
   setup(function()
     local text = [[
       start of testfile
