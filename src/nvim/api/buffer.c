@@ -179,6 +179,11 @@ void buffer_set_line_slice(Buffer buffer,
     return;
   }
 
+  if (!inbounds(buf, start)) {
+    api_set_error(err, Validation, _("Index out of bounds"));
+    return;
+  }
+
   start = normalize_index(buf, start) + (include_start ? 0 : 1);
   include_end = include_end || (end >= buf->b_ml.ml_line_count);
   end = normalize_index(buf, end) + (include_end ? 1 : 0);
