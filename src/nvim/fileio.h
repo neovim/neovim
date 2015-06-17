@@ -68,6 +68,7 @@ typedef enum auto_event {
   EVENT_QUICKFIXCMDPRE,         /* before :make, :grep etc. */
   EVENT_QUITPRE,                /* before :quit */
   EVENT_SESSIONLOADPOST,        /* after loading a session file */
+  EVENT_STARTUPSOURCED,         /* after sourcing the startup scripts */
   EVENT_STDINREADPOST,          /* after reading from stdin */
   EVENT_STDINREADPRE,           /* before reading from stdin */
   EVENT_SYNTAX,                 /* syntax selected */

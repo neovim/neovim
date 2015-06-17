@@ -5198,6 +5198,7 @@ static struct event_name {
   {"SourcePre",       EVENT_SOURCEPRE},
   {"SourceCmd",       EVENT_SOURCECMD},
   {"SpellFileMissing",EVENT_SPELLFILEMISSING},
+  {"StartupSourced",  EVENT_STARTUPSOURCED},
   {"StdinReadPost",   EVENT_STDINREADPOST},
   {"StdinReadPre",    EVENT_STDINREADPRE},
   {"SwapExists",      EVENT_SWAPEXISTS},
