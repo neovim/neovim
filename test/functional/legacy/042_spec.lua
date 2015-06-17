@@ -26,11 +26,11 @@ describe('reading and writing files with BOM', function()
     -- ucs-2 Little Endian
     write_file('Xtest4', 'ÿþu\x00c\x00s\x00-\x002\x00l\x00e\x00\n\x00')
     -- ucs-4
-    write_file('Xtest5', '\x00\x00þÿ\x00\x00\x00u\x00\x00\x00c\x00\x00\x00s\x00'..
-    '\x00\x00-\x00\x00\x004\x00\x00\x00\n')
+    write_file('Xtest5', '\x00\x00þÿ\x00\x00\x00u\x00\x00\x00c\x00\x00\x00s'..
+      '\x00\x00\x00-\x00\x00\x004\x00\x00\x00\n')
     -- ucs-4 Little Endian
-    write_file('Xtest6', 'ÿþ\x00\x00u\x00\x00\x00c\x00\x00\x00s\x00\x00\x00-'..
-    '\x00\x00\x004\x00\x00\x00l\x00\x00\x00e\x00\x00\x00\n\x00\x00\x00')
+    write_file('Xtest6', 'ÿþ\x00\x00u\x00\x00\x00c\x00\x00\x00s\x00\x00\x00'..
+      '-\x00\x00\x004\x00\x00\x00l\x00\x00\x00e\x00\x00\x00\n\x00\x00\x00')
   end)
   teardown(function()
     os.remove('Xtest0')
@@ -43,7 +43,6 @@ describe('reading and writing files with BOM', function()
   end)
 
   it('is working', function()
-
     execute('set encoding=utf-8')
     execute('set fileencodings=ucs-bom,latin-1')
     -- This changes the file for DOS and MAC.
@@ -69,6 +68,7 @@ describe('reading and writing files with BOM', function()
 
     -- --- Check that editing a latin-1 file doesn't see a BOM.
     execute('e! Xtest0')
+    eq('latin1', eval('&fileencoding'))
     execute('redir! >test.out')
     execute('set fileencoding bomb?')
     execute('redir END')
