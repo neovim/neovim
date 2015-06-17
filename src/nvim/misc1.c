@@ -1291,7 +1291,7 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
    * Add column offset for 'number', 'relativenumber' and 'foldcolumn'.
    */
   width = wp->w_width - win_col_off(wp);
-  if (width <= 0)
+  if (width <= 0 || col > 32000)
     return 32000;
   if (col <= (unsigned int)width)
     return 1;
