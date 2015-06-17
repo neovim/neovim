@@ -108,7 +108,7 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
   Array rv = ARRAY_DICT_INIT;
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
-  if (!buf) {
+  if (!buf || !inbounds(buf, start)) {
     return rv;
   }
 
@@ -549,4 +549,11 @@ static int64_t normalize_index(buf_T *buf, int64_t index)
   // Fix if > line_count
   index = index > buf->b_ml.ml_line_count ? buf->b_ml.ml_line_count : index;
   return index;
+}
+
+// Determines whether a 0-based index is within the bounds of the buffer
+static Boolean inbounds(buf_T *buf, int64_t index)
+{
+  linenr_T nlines = buf->b_ml.ml_line_count;
+  return index >= -nlines && index < nlines;
 }
