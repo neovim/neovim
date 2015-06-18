@@ -4123,7 +4123,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 <	Warning: This deletes all menus that you defined yourself!
 
 					*'langnoremap'* *'lnr'*
-'langnoremap' 'lnr'	boolean (default off)
+'langnoremap' 'lnr'	boolean (default on)
 			global
 	When on, setting 'langmap' does not apply to characters resulting from
 	a mapping.  This basically means, if you noticed that setting

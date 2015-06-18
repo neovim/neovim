@@ -31,6 +31,7 @@ these differences.
 - 'backspace' defaults to "indent,eol,start"
 - 'encoding' defaults to "utf-8"
 - 'formatoptions' defaults to "tcqj"
+- 'langnoremap' is set by default
 - 'nocompatible' is always set
 - 'nrformats' defaults to "hex"
 - 'tags' defaults to "./tags;,tags"
