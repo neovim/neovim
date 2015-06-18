@@ -33,6 +33,7 @@ these differences.
 - 'formatoptions' defaults to "tcqj"
 - 'nocompatible' is always set
 - 'nrformats' defaults to "hex"
+- 'smarttab' is set by default
 - 'tags' defaults to "./tags;,tags"
 - 'ttyfast' is always set
 - 'wildmenu' is set by default

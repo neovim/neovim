@@ -5862,7 +5862,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	NOTE: When 'paste' is set smart indenting is disabled.
 
 				 *'smarttab'* *'sta'* *'nosmarttab'* *'nosta'*
-'smarttab' 'sta'	boolean	(default off)
+'smarttab' 'sta'	boolean	(default on)
 			global
 	When on, a <Tab> in front of a line inserts blanks according to
 	'shiftwidth'.  'tabstop' or 'softtabstop' is used in other places.  A
