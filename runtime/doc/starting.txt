@@ -474,13 +474,13 @@ accordingly.  Vim proceeds in this order:
 3. Source early plugin files				    *early-plugins*
 	This does the same as >
 		:runtime! early/**/*.vim
-<	The result is that all directories in the default |'runtimepath'| will be
+<	The result is that all directories in the default 'runtimepath' will be
 	searched for the "early" sub-directory and all files ending in ".vim"
 	will be sourced (in alphabetical order per directory), also in
 	subdirectories.
-	Loading plugins won't be done if:
+	Loading these plugins won't be done if:
 	- The |--noplugin| command line argument is used.
-	- The "-u NONE" command line argument is used |-u|.
+	- The "-u NONE" command line argument is used. |-u|
 
 4. Execute Ex commands, from environment variables and/or files
 	An environment variable is read as one Ex command line, where multiple
