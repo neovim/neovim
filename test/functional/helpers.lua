@@ -6,8 +6,9 @@ local AsyncSession = require('nvim.async_session')
 local Session = require('nvim.session')
 
 local nvim_prog = os.getenv('NVIM_PROG') or 'build/bin/nvim'
+--- FIXME: 'autoindent' messes up the insert() function
 local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
-                   '--cmd', 'set shortmess+=I background=light noswapfile',
+                   '--cmd', 'set shortmess+=I background=light noswapfile noautoindent',
                    '--embed'}
 
 -- Formulate a path to the directory containing nvim.  We use this to
