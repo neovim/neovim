@@ -1,12 +1,15 @@
--- Tests for undo tree.
--- Since this script is sourced we need to explicitly break changes up in
--- undo-able pieces.  Do that by setting 'undolevels'.
--- Also tests :earlier and :later.
+-- Tests for undo tree and :earlier and :later.
 
 local helpers = require('test.functional.helpers')
 local feed, insert, source, eq, eval, clear, execute, expect, wait =
   helpers.feed, helpers.insert, helpers.source, helpers.eq, helpers.eval,
   helpers.clear, helpers.execute, helpers.expect, helpers.wait
+
+local expect_empty_buffer = function()
+  -- The space will be removed by helpers.dedent but is needed as dedent will
+  -- throw an error if it can not find the common indent of the given lines.
+  expect(' ')
+end
 
 describe('the undo tree', function()
   setup(clear)
@@ -30,11 +33,7 @@ describe('the undo tree', function()
     eq({}, eval('undotree().entries'))
 
     -- Delete three characters and undo.
-    feed('Gx')
-    execute('set ul=100')
-    feed('x')
-    execute('set ul=100')
-    feed('x')
+    feed('Gxxx')
     eq('456789', eval('getline(".")'))
     feed('g-')
     eq('3456789', eval('getline(".")'))
@@ -46,11 +45,7 @@ describe('the undo tree', function()
     eq('123456789', eval('getline(".")'))
 
     -- Delete three other characters and go back in time step by step.
-    feed('$x')
-    execute('set ul=100')
-    feed('x')
-    execute('set ul=100')
-    feed('x')
+    feed('$xxx')
     eq('123456', eval('getline(".")'))
     execute('sleep 1')
     wait()
@@ -77,11 +72,8 @@ describe('the undo tree', function()
     execute('sleep 2')
     wait()
     feed('Aa<esc>')
-    execute('set ul=100')
     feed('Ab<esc>')
-    execute('set ul=100')
     feed('Ac<esc>')
-    execute('set ul=100')
     eq('123456abc', eval('getline(".")'))
     execute('ear 1s')
     eq('123456', eval('getline(".")'))
@@ -92,13 +84,47 @@ describe('the undo tree', function()
     execute('later 1h')
     eq('123456abc', eval('getline(".")'))
 
+    -- Test that setting 'ul' breaks change blocks, we need to use source() in
+    -- order to test this, as interactive changes are not grouped.
+    execute('new')
+    -- First verify that scripts produce single big undo blocks.
+    source([[
+      normal Aaaaa
+      normal obbbb
+      normal occcc
+    ]])
+    expect([[
+      aaaa
+      bbbb
+      cccc]])
+    feed('u')
+    expect_empty_buffer()
+    -- Verify that undo blocks can be broken inside scripts by setting 'ul'.
+    source([[
+      normal Aaaaa
+      set ul=100
+      normal obbbb
+      set ul=100
+      normal occcc
+    ]])
+    expect([[
+      aaaa
+      bbbb
+      cccc]])
+    feed('u')
+    expect([[
+      aaaa
+      bbbb]])
+    feed('u')
+    expect('aaaa')
+    feed('u')
+    expect_empty_buffer()
+    
     -- Test undojoin.
     feed('Goaaaa<esc>')
-    execute('set ul=100')
     feed('obbbb<esc>u')
     eq('aaaa', eval('getline(".")'))
     feed('obbbb<esc>')
-    execute('set ul=100')
     execute('undojoin')
     feed('occcc<esc>u')
     -- TODO At this point the original test will write "aaaa" to test.out.
@@ -107,12 +133,9 @@ describe('the undo tree', function()
 
     execute('e! Xtest')
     feed('ione one one<esc>')
-    execute('set ul=100')
     execute('w!')
     feed('otwo<esc>')
-    execute('set ul=100')
     feed('otwo<esc>')
-    execute('set ul=100')
     execute('w')
     feed('othree<esc>')
     execute('earlier 1f')
@@ -123,9 +146,7 @@ describe('the undo tree', function()
     execute('earlier 1f')
     expect('one one one')
     execute('earlier 1f')
-    -- Expect an empty line (the space is needed for helpers.dedent but
-    -- removed).
-    expect(' ')
+    expect_empty_buffer()
     execute('later 1f')
     expect('one one one')
     execute('later 1f')
@@ -142,9 +163,7 @@ describe('the undo tree', function()
 
     execute('enew!')
     feed('oa<esc>')
-    execute('set ul=100')
     feed('ob<esc>')
-    execute('set ul=100')
     feed([[o1<esc>a2<C-R>=setline('.','1234')<cr><esc>]])
     expect([[
       
@@ -159,7 +178,6 @@ describe('the undo tree', function()
       b
       1]])
     feed('oc<esc>')
-    execute('set ul=100')
     feed([[o1<esc>a2<C-R>=setline('.','1234')<cr><esc>]])
     expect([[
       
@@ -177,7 +195,6 @@ describe('the undo tree', function()
       c
       12]])
     feed('od<esc>')
-    execute('set ul=100')
     feed('o1<esc>a2<C-R>=string(123)<cr><esc>')
     expect([[
       
