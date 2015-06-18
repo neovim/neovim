@@ -553,9 +553,9 @@ static vimoption_T
   {"compatible",  "cp",   P_BOOL|P_RALL,
    (char_u *)&p_force_off, PV_NONE,
    {(char_u *)TRUE, (char_u *)FALSE} SCRIPTID_INIT},
-  {"complete",    "cpt",  P_STRING|P_ALLOCED|P_VI_DEF|P_COMMA|P_NODUP,
+  {"complete",    "cpt",  P_STRING|P_ALLOCED|P_COMMA|P_NODUP,
    (char_u *)&p_cpt, PV_CPT,
-   {(char_u *)".,w,b,u,t,i", (char_u *)0L}
+   {(char_u *)".,w,b,u,t,i", (char_u *)".,w,b,u,t"}
    SCRIPTID_INIT},
   {"concealcursor","cocu", P_STRING|P_ALLOCED|P_RWIN|P_VI_DEF,
    VAR_WIN, PV_COCU,
