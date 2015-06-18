@@ -1529,7 +1529,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'compatible' 'cp'	Removed. |vim-differences| {Nvim}
 
 						*'complete'* *'cpt'* *E535*
-'complete' 'cpt'	string	(default: ".,w,b,u,t,i")
+'complete' 'cpt'	string	(default: ".,w,b,u,t")
 			local to buffer
 	This option specifies how keyword completion |ins-completion| works
 	when CTRL-P or CTRL-N are used.  It is also used for whole-line
