@@ -737,7 +737,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	deleted indent; Vi puts the cursor somewhere in the deleted indent}.
 
 				 *'autoread'* *'ar'* *'noautoread'* *'noar'*
-'autoread' 'ar'		boolean	(default off)
+'autoread' 'ar'		boolean	(default on)
 			global or local to buffer |global-local|
 	When a file has been detected to have been changed outside of Vim and
 	it has not been changed inside of Vim, automatically read it again.
