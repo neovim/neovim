@@ -29,6 +29,7 @@ these differences.
 2. Option defaults					  *nvim-option-defaults*
 
 - 'autoread' is set by default
+- 'autoindent' is set by default.
 - 'backspace' defaults to "indent,eol,start"
 - 'encoding' defaults to "utf-8"
 - 'formatoptions' defaults to "tcqj"
