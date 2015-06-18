@@ -10,6 +10,8 @@ describe('Virtual replace mode', function()
   it('is working', function()
     -- Make sure that backspace works, no matter what termcap is used.
     execute('set t_kD=x7f t_kb=x08')
+    -- Use vi default for 'smarttab'
+    execute('set nosmarttab')
     feed('ggdGa<cr>')
     feed('abcdefghi<cr>')
     feed('jk<tab>lmn<cr>')
