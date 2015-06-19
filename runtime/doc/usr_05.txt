@@ -49,9 +49,9 @@ For MS-DOS and MS-Windows you can use one of these:
 
 The vimrc file can contain all the commands that you type after a colon.  The
 most simple ones are for setting options.  For example, if you want Vim to
-always start with the 'incsearch' option on, add this line your vimrc file: >
+always start with the 'ignorecase' option on, add this line your vimrc file: >
 
-	set incsearch
+	set ignorecase
 
 For this new line to take effect you need to exit Vim and start it again.
 Later you will learn how to do this without exiting Vim.

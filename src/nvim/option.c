@@ -934,9 +934,9 @@ static vimoption_T
    (char_u *)&p_inex, PV_INEX,
    {(char_u *)"", (char_u *)0L}
    SCRIPTID_INIT},
-  {"incsearch",   "is",   P_BOOL|P_VI_DEF|P_VIM,
+  {"incsearch",   "is",   P_BOOL|P_VIM,
    (char_u *)&p_is, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
+   {(char_u *)FALSE, (char_u *)TRUE} SCRIPTID_INIT},
   {"indentexpr", "inde",  P_STRING|P_ALLOCED|P_VI_DEF|P_VIM,
    (char_u *)&p_inde, PV_INDE,
    {(char_u *)"", (char_u *)0L}

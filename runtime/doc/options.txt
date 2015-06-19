@@ -3785,10 +3785,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	evaluating 'includeexpr' |textlock|.
 
 				 *'incsearch'* *'is'* *'noincsearch'* *'nois'*
-'incsearch' 'is'	boolean	(default off)
+'incsearch' 'is'	boolean	(default on)
 			global
-			{not available when compiled without the
-			|+extra_search| features}
 	While typing a search command, show where the pattern, as it was typed
 	so far, matches.  The matched string is highlighted.  If the pattern
 	is invalid or not found, nothing is shown.  The screen will be updated
@@ -3797,10 +3795,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	original position when no match is found and when pressing <Esc>.  You
 	still need to finish the search command with <Enter> to move the
 	cursor to the match.
-	When compiled with the |+reltime| feature Vim only searches for about
-	half a second.  With a complicated pattern and/or a lot of text the
-	match may not be found.  This is to avoid that Vim hangs while you
-	are typing the pattern.
+	Vim only searches for about half a second.  With a complicated
+	pattern and/or a lot of text the match may not be found.  This is to
+	avoid that Vim hangs while you are typing the pattern.
 	The highlighting can be set with the 'i' flag in 'highlight'.
 	See also: 'hlsearch'.
 	CTRL-L can be used to add one character from after the current match
