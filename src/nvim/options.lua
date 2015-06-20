@@ -1360,10 +1360,10 @@ return {
     {
       full_name='laststatus', abbreviation='ls',
       type='number', scope={'global'},
-      vi_def=true,
+      vim=true,
       redraw={'all_windows'},
       varname='p_ls',
-      defaults={if_true={vi=1}}
+      defaults={if_true={vi=1,vim=2}}
     },
     {
       full_name='lazyredraw', abbreviation='lz',

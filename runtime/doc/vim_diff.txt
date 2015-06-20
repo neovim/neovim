@@ -39,6 +39,7 @@ these differences.
 - 'hlsearch' is set by default
 - 'incsearch' is set by default
 - 'langnoremap' is set by default
+- 'laststatus' defaults to 2 (statusline is always shown)
 - 'listchars' defaults to "tab:> ,trail:-,nbsp:+"
 - 'mouse' defaults to "a"
 - 'nocompatible' is always set

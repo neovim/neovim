@@ -454,6 +454,9 @@ void set_init_1(void)
   /* Set all options to their Vim default */
   set_options_default(OPT_FREE);
 
+  // set 'laststatus'
+  last_status(false);
+
   /* Must be before option_expand(), because that one needs vim_isIDc() */
   didset_options();
 
@@ -3662,10 +3665,9 @@ set_num_option (
       p_wmw = p_wiw;
     }
     win_setminheight();
-  }
-  /* (re)set last window status line */
-  else if (pp == &p_ls) {
-    last_status(FALSE);
+  } else if (pp == &p_ls) {
+    /* (re)set last window status line */
+    last_status(false);
   }
   /* (re)set tab page line */
   else if (pp == &p_stal) {
