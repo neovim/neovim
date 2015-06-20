@@ -28,8 +28,8 @@ these differences.
 ==============================================================================
 2. Option defaults					  *nvim-option-defaults*
 
-- 'autoread' is set by default
 - 'autoindent' is set by default.
+- 'autoread' is set by default
 - 'backspace' defaults to "indent,eol,start"
 - 'complete' doesn't include "i"
 - 'display' defaults to "lastline"
@@ -41,6 +41,7 @@ these differences.
 - 'mouse' defaults to "a"
 - 'nocompatible' is always set
 - 'nrformats' defaults to "hex"
+- 'sessionoptions' doesn't include "options"
 - 'smarttab' is set by default
 - 'tabpagemax' defaults to 50
 - 'tags' defaults to "./tags;,tags"

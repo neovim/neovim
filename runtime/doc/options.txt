@@ -5406,10 +5406,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'sessionoptions'* *'ssop'*
 'sessionoptions' 'ssop'	string	(default: "blank,buffers,curdir,folds,
+					       help,tabpages,winsize"
+				 Vi default: "blank,buffers,curdir,folds,
 					       help,options,tabpages,winsize")
 			global
-			{not available when compiled without the |+mksession|
-			feature}
 	Changes the effect of the |:mksession| command.  It is a comma
 	separated list of words.  Each word enables saving and restoring
 	something:
