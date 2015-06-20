@@ -2,8 +2,12 @@
 -- tabulators.
 
 local helpers = require('test.functional.helpers')
-local feed, insert, eq, eval = helpers.feed, helpers.insert, helpers.eq, helpers.eval
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local feed, insert, clear, execute =
+  helpers.feed, helpers.insert, helpers.clear, helpers.execute
+
+local expect_pos = function(row, col)
+  return helpers.eq({row, col}, helpers.eval('[screenrow(), screencol()]'))
+end
 
 describe('cursor and column position with conceal and tabulators', function()
   setup(clear)
@@ -24,94 +28,58 @@ describe('cursor and column position with conceal and tabulators', function()
     execute('set conceallevel=2')
     execute('set concealcursor=nc')
     execute('syntax match test /|/ conceal')
-    -- Save current cursor position. Only works in <expr> mode, can't be used
-    -- with :normal because it moves the cursor to the command line. Thanks to
-    -- ZyX <zyx.vim@gmail.com> for the idea to use an <expr> mapping.
-    execute('let positions = []')
-    execute([[nnoremap <expr> GG ":let positions += ['".screenrow().":".screencol()."']\n"]])
     -- Start test.
     execute('/^start:')
     feed('ztj')
-    feed('GG')
+    expect_pos(2, 1)
     -- We should end up in the same column when running these commands on the
     -- two lines.
-    execute('normal ft')
-    feed('GG')
+    feed('ft')
+    expect_pos(2, 17)
     feed('$')
-    feed('GG')
+    expect_pos(2, 20)
     feed('0j')
-    feed('GG')
-    execute('normal ft')
-    feed('GG')
+    expect_pos(3, 1)
+    feed('ft')
+    expect_pos(3, 17)
     feed('$')
-    feed('GG')
+    expect_pos(3, 20)
     feed('j0j')
-    feed('GG')
+    expect_pos(5, 8)
     -- Same for next test block.
-    execute('normal ft')
-    feed('GG')
+    feed('ft')
+    expect_pos(5, 25)
     feed('$')
-    feed('GG')
+    expect_pos(5, 28)
     feed('0j')
-    feed('GG')
-    execute('normal ft')
-    feed('GG')
+    expect_pos(6, 8)
+    feed('ft')
+    expect_pos(6, 25)
     feed('$')
-    feed('GG')
+    expect_pos(6, 28)
     feed('0j0j')
-    feed('GG')
+    expect_pos(8, 1)
     -- And check W with multiple tabs and conceals in a line.
     feed('W')
-    feed('GG')
+    expect_pos(8, 9)
     feed('W')
-    feed('GG')
+    expect_pos(8, 17)
     feed('W')
-    feed('GG')
+    expect_pos(8, 25)
     feed('$')
-    feed('GG')
+    expect_pos(8, 27)
     feed('0j')
-    feed('GG')
+    expect_pos(9, 1)
     feed('W')
-    feed('GG')
+    expect_pos(9, 9)
     feed('W')
-    feed('GG')
+    expect_pos(9, 17)
     feed('W')
-    feed('GG')
+    expect_pos(9, 25)
     feed('$')
-    feed('GG')
+    expect_pos(9, 26)
     execute('set lbr')
     feed('$')
-    feed('GG')
-    -- Display result.
-    execute([[call append('$', 'end:')]])
-    execute([[call append('$', positions)]])
-    execute('0,/^end/-1 d')
-
-    -- Assert buffer contents.
-    expect([[
-      end:
-      2:1
-      2:17
-      2:20
-      3:1
-      3:17
-      3:20
-      5:8
-      5:25
-      5:28
-      6:8
-      6:25
-      6:28
-      8:1
-      8:9
-      8:17
-      8:25
-      8:27
-      9:1
-      9:9
-      9:17
-      9:25
-      9:26
-      9:26]])
+    expect_pos(9, 26)
   end)
 end)
