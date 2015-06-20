@@ -39,6 +39,7 @@ these differences.
 - 'nocompatible' is always set
 - 'nrformats' defaults to "hex"
 - 'smarttab' is set by default
+- 'showcmd' is set by default on Unix
 - 'tags' defaults to "./tags;,tags"
 - 'ttyfast' is always set
 - 'wildmenu' is set by default

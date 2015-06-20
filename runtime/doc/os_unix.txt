@@ -27,10 +27,6 @@ system() is used, which is a bit slower.  The output of ":version" includes
 |+fork| when fork()/exec() is used, |+system()| when system() is used.  This
 can be changed at compile time.
 
-Because terminal updating under Unix is often slow (e.g. serial line
-terminal, shell window in suntools), the 'showcmd' and 'ruler' options
-are off by default.
-
 When using Vim in an xterm the mouse clicks can be used by Vim by setting
 'mouse' to "a".  If there is access to an X-server gui style copy/paste will
 be used and visual feedback will be provided while dragging with the mouse.
