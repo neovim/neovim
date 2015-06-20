@@ -33,6 +33,7 @@ these differences.
 - 'backspace' defaults to "indent,eol,start"
 - 'encoding' defaults to "utf-8"
 - 'formatoptions' defaults to "tcqj"
+- 'incsearch' is set by default
 - 'nocompatible' is always set
 - 'nrformats' defaults to "hex"
 - 'smarttab' is set by default
