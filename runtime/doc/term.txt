@@ -522,10 +522,6 @@ This section is about using the mouse on a terminal or a terminal window.  How
 to use the mouse in a GUI window is explained in |gui-mouse|.  For scrolling
 with a mouse wheel see |scroll-mouse-wheel|.
 
-Don't forget to enable the mouse with this command: >
-	:set mouse=a
-Otherwise Vim won't recognize the mouse in all modes (See 'mouse').
-
 These characters in the 'mouse' option tell in which situations the mouse will
 be used by Vim:
 		n	Normal mode
@@ -536,10 +532,6 @@ be used by Vim:
 		a	all previous modes
 		r	for |hit-enter| prompt
 
-The default for 'mouse' is empty, the mouse is not used.  Normally you would
-do: >
-	:set mouse=a
-to start using the mouse (this is equivalent to setting 'mouse' to "nvich").
 If you only want to use the mouse in a few modes or also want to use it for
 the two questions you will have to concatenate the letters for those modes.
 For example: >
@@ -559,10 +551,8 @@ pressed go to the xterm.  With the currently active mode not included in
 'mouse' all mouse clicks go to the xterm.
 
 							*xterm-clipboard*
-In the Athena and Motif GUI versions, when running in a terminal and there is
-access to the X-server (DISPLAY is set), the copy and paste will behave like
-in the GUI.  If not, the middle mouse button will insert the unnamed register.
-In that case, here is how you copy and paste a piece of text:
+The middle mouse button will insert the unnamed register.  In that case, here
+is how you copy and paste a piece of text:
 
 Copy/paste with the mouse and Visual mode ('mouse' option must be set, see
 above):
@@ -576,10 +566,6 @@ above):
 Shortcut: If the insert position is on the screen at the same time as the
 Visual text, you can do 2, 3 and 4 all in one: Click the middle mouse button
 at the insert position.
-
-							*xterm-command-server*
-When the X-server clipboard is available, the command server described in
-|x11-clientserver| can be enabled with the --servername command line argument.
 
 							*xterm-copy-paste*
 NOTE: In some (older) xterms, it's not possible to move the cursor past column

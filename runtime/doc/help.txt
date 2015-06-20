@@ -8,8 +8,7 @@ Close this window:  Use ":q<Enter>".
    Get out of Vim:  Use ":qa!<Enter>" (careful, all changes are lost!).
 
 Jump to a subject:  Position the cursor on a tag (e.g. |bars|) and hit CTRL-].
-   With the mouse:  ":set mouse=a" to enable the mouse (in xterm or GUI).
-		    Double-click the left mouse button on a tag, e.g. |bars|.
+   With the mouse:  Double-click the left mouse button on a tag, e.g. |bars|.
 	Jump back:  Type CTRL-T or CTRL-O (repeat to go further back).
 
 Get specific help:  It is possible to go directly to whatever you want help

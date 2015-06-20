@@ -1111,11 +1111,11 @@ static vimoption_T
   {"more",        NULL,   P_BOOL|P_VIM,
    (char_u *)&p_more, PV_NONE,
    {(char_u *)FALSE, (char_u *)TRUE} SCRIPTID_INIT},
-  {"mouse",       NULL,   P_STRING|P_VI_DEF|P_FLAGLIST,
+  {"mouse",       NULL,   P_STRING|P_FLAGLIST,
    (char_u *)&p_mouse, PV_NONE,
    {
      (char_u *)"",
-     (char_u *)0L
+     (char_u *)"a"
    } SCRIPTID_INIT},
   {"mousefocus",   "mousef", P_BOOL|P_VI_DEF,
    (char_u *)NULL, PV_NONE,
