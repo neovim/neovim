@@ -2253,7 +2253,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 					*'display'* *'dy'*
-'display' 'dy'		string	(default "")
+'display' 'dy'		string	(default "lastline", Vi default: "")
 			global
 	Change the way text is displayed.  This is comma separated list of
 	flags:
