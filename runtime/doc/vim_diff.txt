@@ -29,6 +29,7 @@ these differences.
 2. Option defaults					  *nvim-option-defaults*
 
 - 'backspace' defaults to "indent,eol,start"
+- 'display' defaults to "lastline"
 - 'encoding' defaults to "utf-8"
 - 'formatoptions' defaults to "tcqj"
 - 'nocompatible' is always set
