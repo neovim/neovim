@@ -5,7 +5,10 @@ local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 
 describe("'listchars'", function()
-  before_each(clear)
+  before_each(function()
+    clear()
+    execute('set listchars&vi')
+  end)
 
   it("works with 'list'", function()
     source([[

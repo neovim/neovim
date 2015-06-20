@@ -515,6 +515,9 @@ void set_init_1(void)
   /* Parse default for 'fillchars'. */
   (void)set_chars_option(&p_fcs);
 
+  /* Parse default for 'listchars'. */
+  (void)set_chars_option(&p_lcs);
+
   /* enc_locale() will try to find the encoding of the current locale. */
   p = enc_locale();
   if (p != NULL) {
