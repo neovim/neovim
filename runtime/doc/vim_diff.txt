@@ -33,6 +33,7 @@ these differences.
 - 'backspace' defaults to "indent,eol,start"
 - 'complete' doesn't include "i"
 - 'encoding' defaults to "utf-8"
+- 'fileformats' includes "mac" in every platform
 - 'formatoptions' defaults to "tcqj"
 - 'langnoremap' is set by default
 - 'mouse' defaults to "a"
