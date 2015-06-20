@@ -1587,7 +1587,7 @@ static vimoption_T
    SCRIPTID_INIT},
   {"viminfo",     "vi",   P_STRING|P_COMMA|P_NODUP|P_SECURE,
    (char_u *)&p_viminfo, PV_NONE,
-   {(char_u *)"", (char_u *)"'100,<50,s10,h"}
+   {(char_u *)"", (char_u *)"!,'100,<50,s10,h"}
    SCRIPTID_INIT},
   {"virtualedit", "ve",   P_STRING|P_COMMA|P_NODUP|P_VI_DEF|P_VIM|P_CURSWANT,
    (char_u *)&p_ve, PV_NONE,
