@@ -159,11 +159,13 @@ describe('Screen', function()
         ]])
       end)
 
-      it('initially and conceal its start tag and end tag.', function() 
-        execute("syn region rText matchgroup=rMatch start='<r>' end='</r>' concealends cchar=-")  
+      it('initially and conceal its start tag and end tag.', function()
+        -- concealends has a known bug (todo.txt) where the first match won't
+        -- be replaced with cchar.
+        execute("syn region rText matchgroup=rMatch start='<r>' end='</r>' concealends cchar=-")
         screen:expect([[
-          {1:-} a region of text {1:-}                                 |
-          {1:-} a region of text {1:-}                                 |
+          {1: } a region of text {1:-}                                 |
+          {1: } a region of text {1:-}                                 |
           ^                                                     |
           ~                                                    |
           ~                                                    |
@@ -179,9 +181,9 @@ describe('Screen', function()
         execute("syn region rText contains=rText matchgroup=rMatch start='<r>' end='</r>' concealends cchar=-")  
         insert("<r> A region with <r> a nested <r> nested region.</r> </r> </r>\n")
         screen:expect([[
-          {1:-} a region of text {1:-}                                 |
-          {1:-} a region of text {1:-}                                 |
-          {1:-} A region with {1:-} a nested {1:-} nested region.{1:-}         |
+          {1: } a region of text {1:-}                                 |
+          {1: } a region of text {1:-}                                 |
+          {1: } A region with {1: } a nested {1: } nested region.{1:-}         |
            {1:-} {1:-}                                                 |
           ^                                                     |
           ~                                                    |
@@ -281,7 +283,7 @@ describe('Screen', function()
       execute("let &conceallevel=1")
       screen:expect([[
         // No Conceal                                        |
-        {1:-}                                                    |
+        {1: }                                                    |
         {1:C}                                                    |
                                                              |
         ^                                                     |

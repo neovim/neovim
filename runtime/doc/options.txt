@@ -4154,7 +4154,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	changing the way tabs are displayed.
 
 						*'listchars'* *'lcs'*
-'listchars' 'lcs'	string	(default "eol:$")
+'listchars' 'lcs'	string	(default: "tab:> ,trail:-,nbsp:+"
+				 Vi default: "eol:$")
 			global
 	Strings to use in 'list' mode and for the |:list| command.  It is a
 	comma separated list of string settings.
