@@ -30,6 +30,7 @@ these differences.
 
 - 'backspace' defaults to "indent,eol,start"
 - 'encoding' defaults to "utf-8"
+- 'fileformats' includes "mac" in every platform
 - 'formatoptions' defaults to "tcqj"
 - 'nocompatible' is always set
 - 'nrformats' defaults to "hex"

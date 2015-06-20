@@ -2589,9 +2589,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 					*'fileformats'* *'ffs'*
 'fileformats' 'ffs'	string (default:
-				Vim+Vi	Win32: "dos,unix",
-				Vim	Unix: "unix,dos",
-				Vim	Mac: "mac,unix,dos",
+				Vim+Vi	Win32: "dos,unix,mac",
+				Vim	Unix: "unix,dos,mac",
 				Vi	others: "")
 			global
 	This gives the end-of-line (<EOL>) formats that will be tried when

@@ -38,11 +38,11 @@
 
 #ifdef USE_CRNL
 # define DFLT_FF        "dos"
-# define DFLT_FFS_VIM   "dos,unix"
+# define DFLT_FFS_VIM   "dos,unix,mac"
 # define DFLT_FFS_VI    "dos,unix"      /* also autodetect in compatible mode */
 #else
 #  define DFLT_FF       "unix"
-#  define DFLT_FFS_VIM  "unix,dos"
+#  define DFLT_FFS_VIM  "unix,dos,mac"
 #   define DFLT_FFS_VI  ""
 #endif
 
