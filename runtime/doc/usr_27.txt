@@ -34,7 +34,7 @@ only one of them.
 	:set ignorecase
 
 Search for "include" again, and now it will match "Include", "INCLUDE" and
-"InClUDe".  (Set the 'hlsearch' option to quickly see where a pattern
+"InClUDe".  (With the 'hlsearch' option set you'll quickly see where a pattern
 matches.)
    You can switch this off again with: >
 

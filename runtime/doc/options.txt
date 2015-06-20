@@ -3539,7 +3539,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See |highlight-default| for the default highlight groups.
 
 				 *'hlsearch'* *'hls'* *'nohlsearch'* *'nohls'*
-'hlsearch' 'hls'	boolean	(default off)
+'hlsearch' 'hls'	boolean	(default on)
 			global
 			{not available when compiled without the
 			|+extra_search| feature}

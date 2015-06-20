@@ -25,7 +25,8 @@ describe('search highlighting', function()
     screen:set_default_attr_ignore( {{bold=true, foreground=hl_colors.NonText}} )
   end)
 
-  it('is off by default', function()
+  it('is on by default', function()
+    execute('set nohlsearch')
     insert("some text\nmore text")
     feed("gg/text<cr>")
     screen:expect([[
