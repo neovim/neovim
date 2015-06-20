@@ -41,6 +41,7 @@ these differences.
 - 'smarttab' is set by default
 - 'tags' defaults to "./tags;,tags"
 - 'ttyfast' is always set
+- 'viminfo' includes "!"
 - 'wildmenu' is set by default
 - 'wildmode' defaults to "list:longest,full"
 
