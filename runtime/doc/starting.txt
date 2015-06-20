@@ -300,7 +300,7 @@ argument.
 							*-p*
 -p[N]		Open N tab pages.  If [N] is not given, one tab page is opened
 		for every file given as argument.  The maximum is set with
-		'tabpagemax' pages (default 10).  If there are more tab pages
+		'tabpagemax' pages (default 50).  If there are more tab pages
 		than arguments, the last few tab pages will be editing an
 		empty file.  Also see |tabpage|.
 							*-d*
