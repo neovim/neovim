@@ -6382,7 +6382,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 
 						*'tabpagemax'* *'tpm'*
-'tabpagemax' 'tpm'	number	(default 10)
+'tabpagemax' 'tpm'	number	(default 50)
 			global
 			{not available when compiled without the |+windows|
 			feature}
