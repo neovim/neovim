@@ -38,6 +38,7 @@ these differences.
 - 'mouse' defaults to "a"
 - 'nocompatible' is always set
 - 'nrformats' defaults to "hex"
+- 'ruler' is set by default
 - 'smarttab' is set by default
 - 'tags' defaults to "./tags;,tags"
 - 'ttyfast' is always set

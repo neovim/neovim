@@ -5174,7 +5174,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The 'rightleft' option must be set for 'rightleftcmd' to take effect.
 
 					 *'ruler'* *'ru'* *'noruler'* *'noru'*
-'ruler' 'ru'		boolean	(default off)
+'ruler' 'ru'		boolean	(default on, Vi default off)
 			global
 			{not available when compiled without the
 			|+cmdline_info| feature}
