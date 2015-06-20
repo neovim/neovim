@@ -426,18 +426,19 @@ HIGHLIGHTING MATCHES
 While editing a program you see a variable called "nr".  You want to check
 where it's used.  You could move the cursor to "nr" and use the "*" command
 and press "n" to go along all the matches.
-   There is another way.  Type this command: >
 
-	:set hlsearch
-
-If you now search for "nr", Vim will highlight all matches.  That is a very
-good way to see where the variable is used, without the need to type commands.
+Vim will highlight all matches. That is a very good way to see where the
+variable is used, without the need to type commands.
    To switch this off: >
 
 	:set nohlsearch
 
 Then you need to switch it on again if you want to use it for the next search
-command.  If you only want to remove the highlighting, use this command: >
+command: >
+
+	:set hlsearch
+
+If you only want to remove the highlighting, use this command: >
 
 	:nohlsearch
 

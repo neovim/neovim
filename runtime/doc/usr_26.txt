@@ -64,8 +64,6 @@ Now press CTRL-A.  The year will be increased by one:
 
 Use "n" to find the next year, and press "." to repeat the CTRL-A ("." is a
 bit quicker to type).  Repeat "n" and "." for all years that appear.
-   Hint: set the 'hlsearch' option to see the matches you are going to change,
-then you can look ahead and do it faster.
 
 Adding more than one can be done by prepending the number to CTRL-A.  Suppose
 you have this list:

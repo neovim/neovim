@@ -34,6 +34,7 @@ these differences.
 - 'complete' doesn't include "i"
 - 'encoding' defaults to "utf-8"
 - 'formatoptions' defaults to "tcqj"
+- 'hlsearch' is set by default
 - 'incsearch' is set by default
 - 'langnoremap' is set by default
 - 'mouse' defaults to "a"
