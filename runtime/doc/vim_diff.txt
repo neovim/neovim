@@ -32,6 +32,7 @@ these differences.
 - 'autoindent' is set by default.
 - 'backspace' defaults to "indent,eol,start"
 - 'complete' doesn't include "i"
+- 'display' defaults to "lastline"
 - 'encoding' defaults to "utf-8"
 - 'formatoptions' defaults to "tcqj"
 - 'hlsearch' is set by default

@@ -645,9 +645,9 @@ static vimoption_T
   {"directory",   "dir",  P_STRING|P_EXPAND|P_VI_DEF|P_COMMA|P_NODUP|P_SECURE,
    (char_u *)&p_dir, PV_NONE,
    {(char_u *)DFLT_DIR, (char_u *)0L} SCRIPTID_INIT},
-  {"display",     "dy",   P_STRING|P_VI_DEF|P_COMMA|P_RALL|P_NODUP,
+  {"display",     "dy",   P_STRING|P_VIM|P_COMMA|P_RALL|P_NODUP,
    (char_u *)&p_dy, PV_NONE,
-   {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
+   {(char_u *)"", (char_u *)"lastline"} SCRIPTID_INIT},
   {"eadirection", "ead",  P_STRING|P_VI_DEF,
    (char_u *)&p_ead, PV_NONE,
    {(char_u *)"both", (char_u *)0L}
