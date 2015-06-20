@@ -718,7 +718,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	further details see |arabic.txt|.
 
 			*'autoindent'* *'ai'* *'noautoindent'* *'noai'*
-'autoindent' 'ai'	boolean	(default off)
+'autoindent' 'ai'	boolean	(default on)
 			local to buffer
 	Copy indent from current line when starting a new line (typing <CR>
 	in Insert mode or when using the "o" or "O" command).  If you do not
