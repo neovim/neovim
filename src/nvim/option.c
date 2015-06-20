@@ -1305,10 +1305,10 @@ static vimoption_T
   {"selectmode",  "slm",  P_STRING|P_VI_DEF|P_COMMA|P_NODUP,
    (char_u *)&p_slm, PV_NONE,
    {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
-  {"sessionoptions", "ssop", P_STRING|P_VI_DEF|P_COMMA|P_NODUP,
+  {"sessionoptions", "ssop", P_STRING|P_VIM|P_COMMA|P_NODUP,
    (char_u *)&p_ssop, PV_NONE,
    {(char_u *)"blank,buffers,curdir,folds,help,options,tabpages,winsize",
-    (char_u *)0L}
+    (char_u *)"blank,buffers,curdir,folds,help,tabpages,winsize"}
    SCRIPTID_INIT},
   {"shell",       "sh",   P_STRING|P_EXPAND|P_VI_DEF|P_SECURE,
    (char_u *)&p_sh, PV_NONE,
