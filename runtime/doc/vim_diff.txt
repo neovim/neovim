@@ -41,6 +41,7 @@ these differences.
 - 'mouse' defaults to "a"
 - 'nocompatible' is always set
 - 'nrformats' defaults to "hex"
+- 'ruler' is set by default
 - 'smarttab' is set by default
 - 'tabpagemax' defaults to 50
 - 'tags' defaults to "./tags;,tags"

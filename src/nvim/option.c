@@ -1265,9 +1265,9 @@ static vimoption_T
    VAR_WIN, PV_RLC,
    {(char_u *)"search", (char_u *)NULL}
    SCRIPTID_INIT},
-  {"ruler",       "ru",   P_BOOL|P_VI_DEF|P_VIM|P_RSTAT,
+  {"ruler",       "ru",   P_BOOL|P_VIM|P_VIM|P_RSTAT,
    (char_u *)&p_ru, PV_NONE,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
+   {(char_u *)FALSE, (char_u *)TRUE} SCRIPTID_INIT},
   {"rulerformat", "ruf",  P_STRING|P_VI_DEF|P_ALLOCED|P_RSTAT,
    (char_u *)&p_ruf, PV_NONE,
    {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
