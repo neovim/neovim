@@ -1376,13 +1376,7 @@ static vimoption_T
    {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
   {"showcmd",     "sc",   P_BOOL|P_VIM,
    (char_u *)&p_sc, PV_NONE,
-   {(char_u *)FALSE,
-#ifdef UNIX
-    (char_u *)FALSE
-#else
-      (char_u *) TRUE
-#endif
-   } SCRIPTID_INIT},
+   {(char_u *)FALSE, (char_u *) TRUE} SCRIPTID_INIT},
   {"showfulltag", "sft",  P_BOOL|P_VI_DEF,
    (char_u *)&p_sft, PV_NONE,
    {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},

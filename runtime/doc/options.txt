@@ -5722,7 +5722,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	"n" flag to 'cpoptions'.
 
 				     *'showcmd'* *'sc'* *'noshowcmd'* *'nosc'*
-'showcmd' 'sc'		boolean	(Vim default: on (off for Unix),
+'showcmd' 'sc'		boolean	(Vim default: on,
 				 Vi default: off)
 			global
 			{not available when compiled without the
