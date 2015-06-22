@@ -38,60 +38,79 @@ describe('undo:', function()
       -- We write the test text to a file in order to prevent nvim to record
       -- the inserting of the text into the undo history.
       write_file('Xtest', '\n123456789\n')
-      execute('e Xtest')
-      -- Assert that no undo history is present.
-      eq({}, eval('undotree().entries'))
-      -- Delete three characters and undo.
-      feed('Gxxx')
-      expect_line('456789')
-      feed('g-')
-      expect_line('3456789')
-      feed('g-')
-      expect_line('23456789')
-      feed('g-')
-      expect_line('123456789')
-      feed('g-')
-      expect_line('123456789')
 
-      -- Delete three other characters and go back in time step by step.
-      feed('$xxx')
-      expect_line('123456')
-      execute('sleep 1')
-      wait()
-      feed('g-')
-      expect_line('1234567')
-      feed('g-')
-      expect_line('12345678')
-      feed('g-')
-      expect_line('456789')
-      feed('g-')
-      expect_line('3456789')
-      feed('g-')
-      expect_line('23456789')
-      feed('g-')
-      expect_line('123456789')
-      feed('g-')
-      expect_line('123456789')
-      feed('g-')
-      expect_line('123456789')
-      feed('10g+')
-      expect_line('123456')
 
-      -- Delay for two seconds and go some seconds forward and backward.
-      execute('sleep 2')
-      wait()
-      feed('Aa<esc>')
-      feed('Ab<esc>')
-      feed('Ac<esc>')
-      expect_line('123456abc')
-      execute('earlier 1s')
-      expect_line('123456')
-      execute('earlier 3s')
-      expect_line('123456789')
-      execute('later 1s')
-      expect_line('123456')
-      execute('later 1h')
-      expect_line('123456abc')
+      -- `:earlier` and `:later` are (obviously) time-sensitive, so this test
+      -- sometimes fails if the system is under load. It is wrapped in a local 
+      -- function to allow multiple attempts.
+      local function test_earlier_later()
+	clear()
+        execute('e Xtest')
+        -- Assert that no undo history is present.
+        eq({}, eval('undotree().entries'))
+        -- Delete three characters and undo.
+        feed('Gxxx')
+        expect_line('456789')
+        feed('g-')
+        expect_line('3456789')
+        feed('g-')
+        expect_line('23456789')
+        feed('g-')
+        expect_line('123456789')
+        feed('g-')
+        expect_line('123456789')
+
+        -- Delete three other characters and go back in time step by step.
+        feed('$xxx')
+        expect_line('123456')
+        execute('sleep 1')
+        wait()
+        feed('g-')
+        expect_line('1234567')
+        feed('g-')
+        expect_line('12345678')
+        feed('g-')
+        expect_line('456789')
+        feed('g-')
+        expect_line('3456789')
+        feed('g-')
+        expect_line('23456789')
+        feed('g-')
+        expect_line('123456789')
+        feed('g-')
+        expect_line('123456789')
+        feed('g-')
+        expect_line('123456789')
+        feed('10g+')
+        expect_line('123456')
+
+        -- Delay for two seconds and go some seconds forward and backward.
+        execute('sleep 2')
+        wait()
+        feed('Aa<esc>')
+        feed('Ab<esc>')
+        feed('Ac<esc>')
+        expect_line('123456abc')
+        execute('earlier 1s')
+        expect_line('123456')
+        execute('earlier 3s')
+        expect_line('123456789')
+        execute('later 1s')
+        expect_line('123456')
+        execute('later 1h')
+        expect_line('123456abc')
+      end
+      local success, result = false, ''
+      for i = 1, 2 do
+        success, result = pcall(test_earlier_later)
+        if success then
+          return
+        end
+      end
+      -- We did not return in the loop so there was an error or failure.
+      -- We now try to run the test again but will not catch further errors,
+      -- so the user will see them.
+      test_earlier_later()
     end)
 
     it('work with file write specifications', function()
@@ -103,9 +122,9 @@ describe('undo:', function()
       feed('othree<esc>')
       execute('earlier 1f')
       expect([[
-	one one one
-	two
-	two]])
+        one one one
+        two
+        two]])
       execute('earlier 1f')
       expect('one one one')
       execute('earlier 1f')
@@ -114,15 +133,15 @@ describe('undo:', function()
       expect('one one one')
       execute('later 1f')
       expect([[
-	one one one
-	two
-	two]])
+        one one one
+        two
+        two]])
       execute('later 1f')
       expect([[
-	one one one
-	two
-	two
-	three]])
+        one one one
+        two
+        two
+        three]])
     end)
   end)
 
