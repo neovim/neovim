@@ -891,7 +891,7 @@ static u_header_T *unserialize_uhp(bufinfo_T *bi,
   for (;; ) {
     int len = undo_read_byte(bi);
 
-    if (len == 0) {
+    if (len == 0 || len == EOF) {
       break;
     }
     int what = undo_read_byte(bi);
