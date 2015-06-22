@@ -839,7 +839,12 @@ static u_header_T *unserialize_uhp(bufinfo_T *bi, char_u *file_name)
   for (;; ) {
     int len = undo_read_byte(bi);
 
-    if (len == 0) {
+    if (len == EOF) {
+      corruption_error("undo_read_byte EOF", file_name);
+      xfree(uhp);
+      return NULL;
+    }
+    else if (len == 0) {
       break;
     }
     int what = undo_read_byte(bi);
