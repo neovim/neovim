@@ -20,79 +20,113 @@ local function write_file(name, text)
   file:close()
 end
 
-
-describe('the undo tree', function()
-  setup(function()
-    clear()
-    write_file('Xtest.source', 'o1\x1ba2\x12=string(123)\n\x1b')
-    write_file('Xtest0', '\n123456789\n')
-  end)
+describe('undo:', function()
+  before_each(clear)
   teardown(function()
-    os.remove('Xtest0')
-    os.remove('Xtest')
     os.remove('Xtest.source')
   end)
 
-  it('is working', function()
-    execute('e Xtest0')
-    -- Assert that no undo history is present.
-    eq({}, eval('undotree().entries'))
-    -- Delete three characters and undo.
-    feed('Gxxx')
-    expect_line('456789')
-    feed('g-')
-    expect_line('3456789')
-    feed('g-')
-    expect_line('23456789')
-    feed('g-')
-    expect_line('123456789')
-    feed('g-')
-    expect_line('123456789')
+  describe(':earlier and :later', function()
+    before_each(function()
+      os.remove('Xtest')
+    end)
+    teardown(function()
+      os.remove('Xtest')
+    end)
 
-    -- Delete three other characters and go back in time step by step.
-    feed('$xxx')
-    expect_line('123456')
-    execute('sleep 1')
-    wait()
-    feed('g-')
-    expect_line('1234567')
-    feed('g-')
-    expect_line('12345678')
-    feed('g-')
-    expect_line('456789')
-    feed('g-')
-    expect_line('3456789')
-    feed('g-')
-    expect_line('23456789')
-    feed('g-')
-    expect_line('123456789')
-    feed('g-')
-    expect_line('123456789')
-    feed('g-')
-    expect_line('123456789')
-    feed('10g+')
-    expect_line('123456')
+    it('work with time specifications and g- and g+', function()
+      -- We write the test text to a file in order to prevent nvim to record
+      -- the inserting of the text into the undo history.
+      write_file('Xtest', '\n123456789\n')
+      execute('e Xtest')
+      -- Assert that no undo history is present.
+      eq({}, eval('undotree().entries'))
+      -- Delete three characters and undo.
+      feed('Gxxx')
+      expect_line('456789')
+      feed('g-')
+      expect_line('3456789')
+      feed('g-')
+      expect_line('23456789')
+      feed('g-')
+      expect_line('123456789')
+      feed('g-')
+      expect_line('123456789')
 
-    -- Delay for two seconds and go some seconds forward and backward.
-    execute('sleep 2')
-    wait()
-    feed('Aa<esc>')
-    feed('Ab<esc>')
-    feed('Ac<esc>')
-    expect_line('123456abc')
-    execute('earlier 1s')
-    expect_line('123456')
-    execute('earlier 3s')
-    expect_line('123456789')
-    execute('later 1s')
-    expect_line('123456')
-    execute('later 1h')
-    expect_line('123456abc')
+      -- Delete three other characters and go back in time step by step.
+      feed('$xxx')
+      expect_line('123456')
+      execute('sleep 1')
+      wait()
+      feed('g-')
+      expect_line('1234567')
+      feed('g-')
+      expect_line('12345678')
+      feed('g-')
+      expect_line('456789')
+      feed('g-')
+      expect_line('3456789')
+      feed('g-')
+      expect_line('23456789')
+      feed('g-')
+      expect_line('123456789')
+      feed('g-')
+      expect_line('123456789')
+      feed('g-')
+      expect_line('123456789')
+      feed('10g+')
+      expect_line('123456')
 
-    -- Test that setting 'ul' breaks change blocks, we need to use source() in
-    -- order to test this, as interactive changes are not grouped.
-    execute('new')
-    -- First verify that scripts produce single big undo blocks.
+      -- Delay for two seconds and go some seconds forward and backward.
+      execute('sleep 2')
+      wait()
+      feed('Aa<esc>')
+      feed('Ab<esc>')
+      feed('Ac<esc>')
+      expect_line('123456abc')
+      execute('earlier 1s')
+      expect_line('123456')
+      execute('earlier 3s')
+      expect_line('123456789')
+      execute('later 1s')
+      expect_line('123456')
+      execute('later 1h')
+      expect_line('123456abc')
+    end)
+
+    it('work with file write specifications', function()
+      feed('ione one one<esc>')
+      execute('w Xtest')
+      feed('otwo<esc>')
+      feed('otwo<esc>')
+      execute('w')
+      feed('othree<esc>')
+      execute('earlier 1f')
+      expect([[
+	one one one
+	two
+	two]])
+      execute('earlier 1f')
+      expect('one one one')
+      execute('earlier 1f')
+      expect_empty_buffer()
+      execute('later 1f')
+      expect('one one one')
+      execute('later 1f')
+      expect([[
+	one one one
+	two
+	two]])
+      execute('later 1f')
+      expect([[
+	one one one
+	two
+	two
+	three]])
+    end)
+  end)
+
+  it('scripts produce one undo block for all changes by default', function()
     source([[
       normal Aaaaa
       normal obbbb
@@ -104,7 +138,11 @@ describe('the undo tree', function()
       cccc]])
     feed('u')
     expect_empty_buffer()
-    -- Verify that undo blocks can be broken inside scripts by setting 'ul'.
+  end)
+
+  it('setting undolevel can break change blocks (inside scripts)', function()
+    -- We need to use source() in order to test this, as interactive changes
+    -- are not grouped.
     source([[
       normal Aaaaa
       set ul=100
@@ -124,8 +162,9 @@ describe('the undo tree', function()
     expect('aaaa')
     feed('u')
     expect_empty_buffer()
-    
-    -- Test undojoin.
+  end)
+
+  it(':undojoin can join change blocks inside scripts', function()
     feed('Goaaaa<esc>')
     feed('obbbb<esc>u')
     expect_line('aaaa')
@@ -137,38 +176,12 @@ describe('the undo tree', function()
     ]])
     feed('u')
     expect_line('aaaa')
+  end)
 
-    execute('e! Xtest')
-    feed('ione one one<esc>')
-    execute('w!')
-    feed('otwo<esc>')
-    feed('otwo<esc>')
-    execute('w')
-    feed('othree<esc>')
-    execute('earlier 1f')
-    expect([[
-      one one one
-      two
-      two]])
-    execute('earlier 1f')
-    expect('one one one')
-    execute('earlier 1f')
-    expect_empty_buffer()
-    execute('later 1f')
-    expect('one one one')
-    execute('later 1f')
-    expect([[
-      one one one
-      two
-      two]])
-    execute('later 1f')
-    expect([[
-      one one one
-      two
-      two
-      three]])
+  it('undoing pastes from the expression register is working', function()
+    local normal_commands = 'o1\x1ba2\x12=string(123)\n\x1b'
+    write_file('Xtest.source', normal_commands)
 
-    execute('enew!')
     feed('oa<esc>')
     feed('ob<esc>')
     feed([[o1<esc>a2<C-R>=setline('.','1234')<cr><esc>]])
@@ -177,7 +190,6 @@ describe('the undo tree', function()
       a
       b
       12034]])
-
     feed('uu')
     expect([[
       
@@ -202,9 +214,6 @@ describe('the undo tree', function()
       c
       12]])
     feed('od<esc>')
-    -- The file Xtest.source is written during setup.  It contains this text
-    -- (nvim like escape sequences interpreted):
-    -- o1<esc>a2<C-R>=string(123)<cr><esc>
     execute('so! Xtest.source')
     expect([[
       
@@ -227,7 +236,7 @@ describe('the undo tree', function()
     -- The above behaviour was tested in the legacy vim test because the
     -- legacy tests were executed with ':so!'.  The behavior differs for
     -- interactive use (even in vim, where the result was the same):
-    feed(io.open('Xtest.source'):read('*all'))
+    feed(normal_commands)
     expect([[
       
       a
