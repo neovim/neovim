@@ -66,7 +66,6 @@ set(CONV_SOURCES
   if_cscope.c
   mbyte.c
   memline.c
-  menu.c
   message.c
   misc1.c
   ops.c

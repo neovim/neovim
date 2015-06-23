@@ -7779,7 +7779,7 @@ static void ex_stopinsert(exarg_T *eap)
  * Execute normal mode command "cmd".
  * "remap" can be REMAP_NONE or REMAP_YES.
  */
-void exec_normal_cmd(char_u *cmd, int remap, int silent)
+void exec_normal_cmd(char_u *cmd, int remap, bool silent)
 {
   oparg_T oa;
 

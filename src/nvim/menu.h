@@ -39,10 +39,10 @@ struct VimMenu {
                                      * was not translated */
   int mnemonic;                     /* mnemonic key (after '&') */
   char_u      *actext;              /* accelerator text (after TAB) */
-  int priority;                     /* Menu order priority */
+  long priority;                     /* Menu order priority */
   char_u      *strings[MENU_MODES];   /* Mapped string for each mode */
   int noremap[MENU_MODES];           /* A REMAP_ flag for each mode */
-  char silent[MENU_MODES];          /* A silent flag for each mode */
+  bool silent[MENU_MODES];          /* A silent flag for each mode */
   vimmenu_T   *children;            /* Children of sub-menu */
   vimmenu_T   *parent;              /* Parent of menu */
   vimmenu_T   *next;                /* Next item in menu */
