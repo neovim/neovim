@@ -136,11 +136,18 @@ sub read_in_file {
 
         # Replace non-printable hex characters
         s/\x00/<C-V>10<CR>/g;
+        s/\x01/<C-A>/g;
         s/\x04/<C-D>/g;
+        s/\x06/<C-F>/g;
+        s/\x08/<C-H>/g;
+        s/\x0C/<C-L>/g;
+        s/\x0E/<C-N>/g;
         s/\x10/<C-P>/g;
         s/\x14/<C-T>/g;
         s/\x16/<C-V>/g;
         s/\x17/<C-W>/g;
+        s/\x18/<C-X>/g;
+        s/\x1D/<C-]>/g;
 
         my $startstr = "'";
         my $endstr = "'";
