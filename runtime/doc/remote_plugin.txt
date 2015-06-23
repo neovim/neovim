@@ -15,12 +15,12 @@ Nvim support for remote plugins 		  *remote-plugin*
 1. Introduction					    *remote-plugin-intro*
 
 Extensibility is a primary goal of Nvim. Any programming language may be used
-to extend nvim without changes to nvim itself. This is achieved with remote
+to extend Nvim without changes to Nvim itself. This is achieved with remote
 plugins, coprocesses that have a direct communication channel (via
 |msgpack-rpc|) with the Nvim process.
 
-Even though these plugins are running in separate processes they can call, be
-called, and receive events just as if the code was being executed in the main
+Even though these plugins run in separate processes they can call, be called,
+and receive events just as if the plugin's code were executed in the main
 process.
 
 ==============================================================================
@@ -28,21 +28,20 @@ process.
 
 While plugins can be implemented as arbitrary programs that communicate
 directly with the high-level Nvim API and are called via |rpcrequest()| and
-|rpcnotify()|, that is not the best approach available. Instead, developers
-should first check if a plugin host implementation is available for their
-chosen programming language.
+|rpcnotify()|, that is not the best approach. Instead, developers should first
+check whether a plugin host is available for their chosen programming language.
 
-Plugin hosts are programs that provide a high level environment for plugins,
+Plugin hosts are programs that provide a high-level environment for plugins,
 taking care of most boilerplate involved in defining commands, autocmds, and
 functions that are implemented over |msgpack-rpc| connections. Hosts are
 loaded only when one of their registered plugins require it, keeping Nvim's
-startup as fast as possible if many plugins/hosts are installed.
+startup as fast as possible, even if many plugins/hosts are installed.
 
 ==============================================================================
 3. Example					    *remote-plugin-example*
 
 The best way to learn about remote plugins is with an example, so let's see
-what a Python plugin looks like. This plugin exports a command, a function and
+what a Python plugin looks like. This plugin exports a command, a function, and
 an autocmd. The plugin is called 'Limit', and all it does is limit the number
 of requests made to it. Here's the plugin source code:
 >
@@ -81,17 +80,17 @@ of requests made to it. Here's the plugin source code:
             self.calls += 1
 <
 
-As can be seen, the plugin is implemented using pure Python idioms (classes,
-methods, and decorators), the translation between these language-specific
-idioms to vimscript occurs while the plugin manifest is being generated (see
-below).
+As can be seen, the plugin is implemented using idomatic Python (classes,
+methods, and decorators). The translation between these language-specific
+idioms to Vimscript occurs while the plugin manifest is being generated (see
+the next section).
 
 Notice that the exported command and autocmd are defined with the "sync" flag,
 which affects how Nvim calls the plugin: with "sync" the |rpcrequest()|
 function is used, which will block Nvim until the handler function returns a
 value. Without the "sync" flag, the call is made using a fire and forget
-approach with |rpcnotify()| (return values or exceptions raised in the handler
-function are ignored).
+approach with |rpcnotify()|, meaning return values or exceptions raised in the
+handler function are ignored.
 
 To test the above plugin, it must be saved in "rplugin/python" in a
 'runtimepath' directory (~/.nvim/rplugin/python/limit.py for example). Then,
@@ -101,35 +100,34 @@ the remote plugin manifest must be generated with `:UpdateRemotePlugins`.
 4. Remote plugin manifest			    *remote-plugin-manifest*
 
 Just installing remote plugins to "rplugin/{host}" isn't enough for them to be
-automatically loaded when required. The `:UpdateRemotePlugins` command must be
-executed every time a remote plugin is installed, updated, or deleted.
+automatically loaded when required. You must execute `:UpdateRemotePlugins`
+every time a remote plugin is installed, updated, or deleted.
 
-`:UpdateRemotePlugins` will generate the remote plugin manifest, a special
-vimscript file containing declarations for all vimscript entities
+`:UpdateRemotePlugins` generates the remote plugin manifest, a special
+Vimscript file containing declarations for all Vimscript entities
 (commands/autocommands/functions) defined by all remote plugins, with each
-entity associated with the host and plugin path. The manifest can be seen as a
-generated extension to the user's vimrc (it even has the vimrc filename
-prepended).
+entity associated with the host and plugin path. The manifest is a generated
+extension to the user's vimrc (it even has the vimrc filename prepended).
 
-The manifest declarations are nothing but calls to the remote#host#RegisterPlugin
-function, which will take care of bootstrapping the host as soon as the
-declared command, autocommand, or function is used for the first time.
+Manifest declarations are just calls to the `remote#host#RegisterPlugin`
+function, which takes care of bootstrapping the host as soon as the declared
+command, autocommand, or function is used for the first time.
 
 The manifest generation step is necessary to keep Nvim's startup fast in
 situations where a user has remote plugins with different hosts. For example,
-say a user has three plugins, for Python, java and .NET hosts respectively. If
+say a user has three plugins, for Python, Java and .NET hosts respectively. If
 we were to load all three plugins at startup, then three language runtimes
-would also be spawned which could take seconds!
+would also be spawned, which could take seconds!
 
-With the manifest, each host will only be loaded when required. Continuing
-with the example, say the java plugin is a semantic completion engine for java
-source files. If it defines the autocommand "BufEnter *.java", then the java
-host will only be spawned when files ending with ".java" are loaded.
+With the manifest, each host will only be loaded when required. Continuing with
+the example, say the Java plugin is a semantic completion engine for Java code.
+If it defines the autocommand "BufEnter *.java", then the Java host is spawned
+only when Nvim loads a buffer matching "*.java".
 
-If the explicit call to `:UpdateRemotePlugins` seems incovenient, try to see
-it like this: It's a way to give IDE-like capabilities to nvim while still
-keeping it fast and lightweight for general use. It can also be seen as
-analogous to the |:helptags| facility.
+If the explicit call to `:UpdateRemotePlugins` seems incovenient, try to see it
+like this: It's a way to provide IDE capabilities in Nvim while still keeping
+it fast and lightweight for general use. It's also analogous to the |:helptags|
+command.
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:
