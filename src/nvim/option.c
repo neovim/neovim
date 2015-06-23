@@ -2312,10 +2312,6 @@ did_set_string_option (
        * (with another encoding). */
       if (varp == &p_enc && *curbuf->b_p_keymap != NUL)
         (void)keymap_init();
-
-      if (varp == &p_enc) {
-        ui_update_encoding();
-      }
     }
   } else if (varp == &p_penc) {
     /* Canonize printencoding if VIM standard one */

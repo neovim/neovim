@@ -52,7 +52,6 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   rv->bridge.suspend = ui_bridge_suspend;
   rv->bridge.set_title = ui_bridge_set_title;
   rv->bridge.set_icon = ui_bridge_set_icon;
-  rv->bridge.set_encoding = ui_bridge_set_encoding;
   rv->scheduler = scheduler;
 
   rv->ui_main = ui_main;
@@ -332,16 +331,5 @@ static void ui_bridge_set_icon_event(void **argv)
 {
   UI *ui = UI(argv[0]);
   ui->set_icon(ui, argv[1]);
-  xfree(argv[1]);
-}
-
-static void ui_bridge_set_encoding(UI *b, char* enc)
-{
-  UI_CALL(b, set_encoding, 2, b, xstrdup(enc));
-}
-static void ui_bridge_set_encoding_event(void **argv)
-{
-  UI *ui = UI(argv[0]);
-  ui->set_encoding(ui, argv[1]);
   xfree(argv[1]);
 }
