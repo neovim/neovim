@@ -848,11 +848,11 @@ static void init_typebuf(void)
  * If nottyped is TRUE, the string does not return KeyTyped (don't use when
  * offset is non-zero!).
  *
- * If silent is TRUE, cmd_silent is set when the characters are obtained.
+ * If silent is true, cmd_silent is set when the characters are obtained.
  *
  * return FAIL for failure, OK otherwise
  */
-int ins_typebuf(char_u *str, int noremap, int offset, int nottyped, int silent)
+int ins_typebuf(char_u *str, int noremap, int offset, int nottyped, bool silent)
 {
   char_u      *s1, *s2;
   int newlen;
