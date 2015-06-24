@@ -5,6 +5,7 @@
 
 // Flags for os_call_shell() second argument
 typedef enum {
+  kShellOptDefault = 0,    ///< default behavior
   kShellOptFilter = 1,     ///< filtering text
   kShellOptExpand = 2,     ///< expanding wildcards
   kShellOptDoOut = 4,      ///< redirecting output

@@ -947,7 +947,7 @@ void do_bang(int addr_count, exarg_T *eap, int forceit, int do_in, int do_out)
     msg_clr_eos();
     ui_cursor_goto(msg_row, msg_col);
 
-    do_shell(newcmd, 0);
+    do_shell(newcmd, kShellOptDefault);
   } else {                            /* :range! */
     /* Careful: This may recursively call do_bang() again! (because of
      * autocommands) */
@@ -990,7 +990,7 @@ do_filter (
   pos_T cursor_save;
   char_u      *cmd_buf;
   buf_T       *old_curbuf = curbuf;
-  int shell_flags = 0;
+  ShellOpts shell_flags = kShellOptDefault;
 
   if (*cmd == NUL)          /* no filter command */
     return;
@@ -1208,7 +1208,7 @@ filterend:
 void 
 do_shell (
     char_u *cmd,
-    int flags              /* may be SHELL_DOOUT when output is redirected */
+    ShellOpts flags              /* may be SHELL_DOOUT when output is redirected */
 )
 {
   int save_nwr;

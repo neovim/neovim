@@ -2,6 +2,7 @@
 #define NVIM_MISC1_H
 
 #include "nvim/vim.h"
+#include "nvim/os/shell.h"
 
 /* flags for open_line() */
 #define OPENLINE_DELSPACES  1   /* delete spaces after cursor */

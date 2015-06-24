@@ -2755,7 +2755,7 @@ char_u *
 get_cmd_output (
     char_u *cmd,
     char_u *infile,            /* optional input file name */
-    int flags,                 // can be kShellOptSilent
+    ShellOpts flags,           // can be kShellOptSilent
     size_t *ret_len
 )
 {

@@ -2,6 +2,7 @@
 #define NVIM_EX_CMDS_H
 
 #include <stdbool.h>
+#include "nvim/os/shell.h"
 
 /* flags for do_ecmd() */
 #define ECMD_HIDE       0x01    /* don't free the current buffer */
