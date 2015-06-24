@@ -68,14 +68,16 @@ are always available and may be used simultaneously in separate plugins.  The
 
 See |nvim-intro| for a list of Nvim's largest new features.
 
-Meta-key chords are recognized (even in the terminal).
+Meta (alt) chords are recognized (even in the terminal).
   <M-1>, <M-2>, ...
   <M-BS>, <M-Del>, <M-Ins>, ...
   <M-/>, <M-\>, ...
   <M-Space>, <M-Enter>, <M-=>, <M-->, <M-?>, <M-$>, ...
 
-`CTRL-SHIFT-...` key chords are distinguished from `CTRL-...` variants (even in
-the terminal).
+  Note: Meta chords are case-sensitive (<M-a> is distinguished from <M-A>).
+
+Some `CTRL-SHIFT-...` key chords are distinguished from `CTRL-...` variants (even in
+the terminal). Specifically, the following are known to work:
   <C-Tab>, <C-S-Tab>
   <C-BS>, <C-S-BS>
   <C-Enter>, <C-S-Enter>
