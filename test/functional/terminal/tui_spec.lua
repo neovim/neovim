@@ -134,15 +134,17 @@ describe('tui', function()
     feed_data('\022\007') -- ctrl+g
     feed_data('\022\022') -- ctrl+v
     feed_data('\022\013') -- ctrl+m
+    local attrs = screen:get_default_attr_ids()
+    attrs[11] = {foreground = 81}
     screen:expect([[
-    {9:^G^V^M}{1: }                                           |
+    {11:^G^V^M}{1: }                                           |
     {4:~                                                 }|
     {4:~                                                 }|
     {4:~                                                 }|
     {5:[No Name] [+]                                     }|
     {3:-- INSERT --}                                      |
     {3:-- TERMINAL --}                                    |
-    ]])
+    ]], attrs)
   end)
 
   it('automatically sends <Paste> for bracketed paste sequences', function()
