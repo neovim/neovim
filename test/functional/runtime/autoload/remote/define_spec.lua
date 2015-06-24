@@ -346,7 +346,7 @@ local function host()
 end
 
 local function register()
-  eval('remote#host#Register("busted", '..channel()..')')
+  eval('remote#host#Register("busted", "busted", '..channel()..')')
 end
 
 command_specs_for('remote#define#CommandOnChannel', true, channel)

@@ -1,15 +1,13 @@
 let s:hosts = {}
-let s:plugin_patterns = {
-      \ 'python': '*.py',
-      \ 'python3': '*.py',
-      \ }
+let s:plugin_patterns = {}
 let s:remote_plugins_manifest = fnamemodify($MYVIMRC, ':p:h')
       \.'/.'.fnamemodify($MYVIMRC, ':t').'-rplugin~'
 
 
 " Register a host by associating it with a factory(funcref)
-function! remote#host#Register(name, factory)
+function! remote#host#Register(name, pattern, factory)
   let s:hosts[a:name] = {'factory': a:factory, 'channel': 0, 'initialized': 0}
+  let s:plugin_patterns[a:name] = a:pattern
   if type(a:factory) == type(1) && a:factory
     " Passed a channel directly
     let s:hosts[a:name].channel = a:factory
@@ -71,7 +69,7 @@ endfunction
 " The third item in a declaration is a boolean: non zero means the command,
 " autocommand or function will be executed synchronously with rpcrequest.
 function! remote#host#RegisterPlugin(host, path, specs)
-  let plugins = s:PluginsForHost(a:host)
+  let plugins = remote#host#PluginsForHost(a:host)
 
   for plugin in plugins
     if plugin.path == a:path
@@ -180,7 +178,7 @@ command! UpdateRemotePlugins call s:UpdateRemotePlugins()
 
 
 let s:plugins_for_host = {}
-function! s:PluginsForHost(host)
+function! remote#host#PluginsForHost(host)
   if !has_key(s:plugins_for_host, a:host)
     let s:plugins_for_host[a:host] = []
   end
@@ -200,7 +198,7 @@ function! s:RequirePythonHost(name)
   let args = ['-c', 'import neovim; neovim.start_host()']
 
   " Collect registered Python plugins into args
-  let python_plugins = s:PluginsForHost(a:name)
+  let python_plugins = remote#host#PluginsForHost(a:name)
   for plugin in python_plugins
     call add(args, plugin.path)
   endfor
@@ -222,6 +220,6 @@ function! s:RequirePythonHost(name)
     \ 'See also ~/.nvimlog.'
 endfunction
 
-call remote#host#Register('python', function('s:RequirePythonHost'))
-call remote#host#Register('python3', function('s:RequirePythonHost'))
+call remote#host#Register('python', '*.py', function('s:RequirePythonHost'))
+call remote#host#Register('python3', '*.py', function('s:RequirePythonHost'))
 " }}}
