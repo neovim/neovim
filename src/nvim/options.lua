@@ -135,10 +135,10 @@ return {
     {
       full_name='background', abbreviation='bg',
       type='string', scope={'global'},
-      vi_def=true,
+      vim=true,
       redraw={'everything'},
       varname='p_bg',
-      defaults={if_true={vi="light"}}
+      defaults={if_true={vi="light",vim="dark"}}
     },
     {
       full_name='backspace', abbreviation='bs',
