@@ -12,6 +12,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <string.h>
 #include <inttypes.h>
@@ -4443,14 +4444,15 @@ char *modname(const char *fname, const char *ext, bool prepend_dot)
  * Like fgets(), but if the file line is too long, it is truncated and the
  * rest of the line is thrown away.  Returns TRUE for end-of-file.
  */
-int vim_fgets(char_u *buf, int size, FILE *fp)
+int vim_fgets(char_u *buf, size_t size, FILE *fp)
 {
   char        *eof;
 #define FGETS_SIZE 200
   char tbuf[FGETS_SIZE];
 
   buf[size - 2] = NUL;
-  eof = fgets((char *)buf, size, fp);
+  assert(size < INT_MAX);
+  eof = fgets((char *)buf, (int) size, fp);
   if (buf[size - 2] != NUL && buf[size - 2] != '\n') {
     buf[size - 1] = NUL;            /* Truncate the line */
 

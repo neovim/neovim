@@ -1859,10 +1859,9 @@ viminfo_readstring (
   char_u      *s, *d;
 
   if (virp->vir_line[off] == Ctrl_V && ascii_isdigit(virp->vir_line[off + 1])) {
-    ssize_t len = atol((char *)virp->vir_line + off + 1);
+    size_t len = (size_t) atol((char *)virp->vir_line + off + 1);
     retval = xmalloc(len);
-    // TODO(philix): change type of vim_fgets() size argument to size_t
-    (void)vim_fgets(retval, (int)len, virp->vir_fd);
+    (void)vim_fgets(retval, len, virp->vir_fd);
     s = retval + 1;         /* Skip the leading '<' */
   } else {
     retval = vim_strsave(virp->vir_line + off);
