@@ -5383,7 +5383,7 @@ serverlist()						*serverlist()*
 			:echo serverlist()
 <						{Nvim} *--serverlist*
 		The Vim command-line option `--serverlist` was removed from
-		Nvim, but it can be imitated if needed: >
+		Nvim, but it can be imitated: >
 			nvim --cmd "echo serverlist()" --cmd "q"
 <
 serverstart([{address}])				*serverstart()*

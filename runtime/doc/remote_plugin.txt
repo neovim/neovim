@@ -80,7 +80,7 @@ of requests made to it. Here's the plugin source code:
             self.calls += 1
 <
 
-As can be seen, the plugin is implemented using idomatic Python (classes,
+As can be seen, the plugin is implemented using idiomatic Python (classes,
 methods, and decorators). The translation between these language-specific
 idioms to Vimscript occurs while the plugin manifest is being generated (see
 the next section).
