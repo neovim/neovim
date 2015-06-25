@@ -4451,7 +4451,7 @@ int vim_fgets(char_u *buf, size_t size, FILE *fp)
   char tbuf[FGETS_SIZE];
 
   buf[size - 2] = NUL;
-  assert(size < INT_MAX);
+  assert(size <= INT_MAX);
   eof = fgets((char *)buf, (int) size, fp);
   if (buf[size - 2] != NUL && buf[size - 2] != '\n') {
     buf[size - 1] = NUL;            /* Truncate the line */

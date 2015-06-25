@@ -225,7 +225,7 @@ void ex_align(exarg_T *eap)
          */
         if (has_tab)
           while (new_indent > 0) {
-            assert(new_indent < INT_MAX);
+            assert(new_indent <= INT_MAX);
             (void)set_indent((int)new_indent, 0);
             if (linelen(NULL) <= width) {
               /*
@@ -233,7 +233,7 @@ void ex_align(exarg_T *eap)
                * the right.  Stop when it moves too far.
                */
               do {
-                assert(new_indent + 1 < INT_MAX);
+                assert(new_indent + 1 <= INT_MAX);
                 (void)set_indent((int)++new_indent, 0);
               } while (linelen(NULL) <= width);
               --new_indent;
@@ -245,7 +245,7 @@ void ex_align(exarg_T *eap)
     }
     if (new_indent < 0)
       new_indent = 0;
-    assert(new_indent < INT_MAX);
+    assert(new_indent <= INT_MAX);
     (void)set_indent((int)new_indent, 0);                    /* set indent */
   }
   changed_lines(eap->line1, 0, eap->line2 + 1, 0L);
@@ -4817,7 +4817,7 @@ help_heuristic (
   if (matched_string[0] == '+' && matched_string[1] != NUL)
     offset += 100;
   size_t matched_string_len = STRLEN(matched_string);
-  assert(matched_string_len < INT_MAX);
+  assert(matched_string_len <= INT_MAX);
   return (int)(100 * num_letters + (int) matched_string_len + offset);
 }
 
