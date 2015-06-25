@@ -4945,7 +4945,7 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
           STRCPY(d, "CTRL-");
           d += 5;
           if (*s < ' ') {
-            *d++ = *s + '@';
+            *d++ = (char_u)(*s + '@');
             if (d[-1] == '\\')
               *d++ = '\\';              /* double a backslash */
           } else
@@ -5340,8 +5340,8 @@ void ex_helptags(exarg_T *eap)
                && ASCII_ISALPHA(files[i][len - 2])
                && TOLOWER_ASC(files[i][len - 1]) == 'x') {
       /* ".abx" -> language "ab" */
-      lang[0] = TOLOWER_ASC(files[i][len - 3]);
-      lang[1] = TOLOWER_ASC(files[i][len - 2]);
+      lang[0] = (char_u) TOLOWER_ASC(files[i][len - 3]);
+      lang[1] = (char_u) TOLOWER_ASC(files[i][len - 2]);
     } else
       continue;
 
