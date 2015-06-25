@@ -5291,6 +5291,9 @@ static yankreg_T *adjust_clipboard_name(int *name, bool quiet)
 
 static bool get_clipboard(int name, yankreg_T **target, bool quiet)
 {
+  // show message on error
+  bool errmsg = true;
+
   yankreg_T *reg = adjust_clipboard_name(&name, quiet);
   if (reg == NULL) {
     return false;
@@ -5304,6 +5307,10 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
   typval_T result = eval_call_provider("clipboard", "get", args);
 
   if (result.v_type != VAR_LIST) {
+    if (result.v_type == VAR_NUMBER && result.vval.v_number == 0) {
+      // failure has already been indicated by provider
+      errmsg = false;
+    }
     goto err;
   }
 
@@ -5389,7 +5396,9 @@ err:
   }
   reg->y_array = NULL;
   reg->y_size = 0;
-  EMSG("clipboard: provider returned invalid data");
+  if (errmsg) {
+    EMSG("clipboard: provider returned invalid data");
+  }
   *target = reg;
   return false;
 }
