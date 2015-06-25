@@ -62,6 +62,13 @@ describe('vim_* functions', function()
       eq({1, 2, {['3'] = 1}}, nvim('eval', 'g:lua'))
     end)
 
+    it('set_var returns the old value', function()
+      local val1 = {1, 2, {['3'] = 1}}
+      local val2 = {4, 7}
+      eq(nil, nvim('set_var', 'lua', val1))
+      eq(val1, nvim('set_var', 'lua', val2))
+    end)
+
     it('truncates values with NULs in them', function()
       nvim('set_var', 'xxx', 'ab\0cd')
       eq('ab', nvim('get_var', 'xxx'))
