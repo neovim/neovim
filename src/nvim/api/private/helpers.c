@@ -146,6 +146,7 @@ Object dict_set_value(dict_T *dict, String key, Object value, Error *err)
       dict_add(dict, di);
     } else {
       // Return the old value
+      rv = vim_to_object(&di->di_tv);
       clear_tv(&di->di_tv);
     }
 
