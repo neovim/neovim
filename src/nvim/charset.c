@@ -1612,9 +1612,7 @@ bool vim_islower(int c)
       return false;
     }
 
-    if (enc_latin1like) {
-      return (latin1flags[c] & LATIN1LOWER) == LATIN1LOWER;
-    }
+    return (latin1flags[c] & LATIN1LOWER) == LATIN1LOWER;
   }
   return islower(c);
 }
@@ -1643,9 +1641,7 @@ bool vim_isupper(int c)
       return false;
     }
 
-    if (enc_latin1like) {
-      return (latin1flags[c] & LATIN1UPPER) == LATIN1UPPER;
-    }
+    return (latin1flags[c] & LATIN1UPPER) == LATIN1UPPER;
   }
   return isupper(c);
 }
@@ -1670,9 +1666,7 @@ int vim_toupper(int c)
       return c;
     }
 
-    if (enc_latin1like) {
-      return latin1upper[c];
-    }
+    return latin1upper[c];
   }
   return TOUPPER_LOC(c);
 }
@@ -1697,9 +1691,7 @@ int vim_tolower(int c)
       return c;
     }
 
-    if (enc_latin1like) {
-      return latin1lower[c];
-    }
+    return latin1lower[c];
   }
   return TOLOWER_LOC(c);
 }

@@ -5292,7 +5292,7 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
   int force_redraw_next = FALSE;
   int need_redraw;
 
-  const int l_has_mbyte = has_mbyte;
+  const bool l_has_mbyte = has_mbyte;
   const bool l_enc_utf8 = enc_utf8;
   const int l_enc_dbcs = enc_dbcs;
 

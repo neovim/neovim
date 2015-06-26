@@ -31,8 +31,8 @@ void term_input_init(TermInput *input, Loop *loop)
   if (!term) {
     term = "";  // termkey_new_abstract assumes non-null (#2745)
   }
-  int enc_flag = enc_utf8 ? TERMKEY_FLAG_UTF8 : TERMKEY_FLAG_RAW;
-  input->tk = termkey_new_abstract(term, enc_flag);
+
+  input->tk = termkey_new_abstract(term, TERMKEY_FLAG_UTF8);
 
   int curflags = termkey_get_canonflags(input->tk);
   termkey_set_canonflags(input->tk, curflags | TERMKEY_CANON_DELBS);

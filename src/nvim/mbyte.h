@@ -9,8 +9,8 @@
  * MB_BYTE2LEN_CHECK() can be used to count a special key as one byte.
  * Don't call MB_BYTE2LEN(b) with b < 0 or b > 255!
  */
-#define MB_BYTE2LEN(b)         mb_bytelen_tab[b]
-#define MB_BYTE2LEN_CHECK(b)   (((b) < 0 || (b) > 255) ? 1 : mb_bytelen_tab[b])
+#define MB_BYTE2LEN(b)         utf8len_tab[b]
+#define MB_BYTE2LEN_CHECK(b)   (((b) < 0 || (b) > 255) ? 1 : utf8len_tab[b])
 
 /* properties used in enc_canon_table[] (first three mutually exclusive) */
 #define ENC_8BIT       0x01
@@ -27,6 +27,18 @@
 #define ENC_LATIN1     0x200       /* Latin1 */
 #define ENC_LATIN9     0x400       /* Latin9 */
 #define ENC_MACROMAN   0x800       /* Mac Roman (not Macro Man! :-) */
+
+// TODO(bfredl): eventually we should keep only one of the namings
+#define mb_ptr2len utfc_ptr2len
+#define mb_ptr2len_len utfc_ptr2len_len
+#define mb_char2len utf_char2len
+#define mb_char2bytes utf_char2bytes
+#define mb_ptr2cells utf_ptr2cells
+#define mb_ptr2cells_len utf_ptr2cells_len
+#define mb_char2cells utf_char2cells
+#define mb_off2cells utf_off2cells
+#define mb_ptr2char utf_ptr2char
+#define mb_head_off utf_head_off
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mbyte.h.generated.h"

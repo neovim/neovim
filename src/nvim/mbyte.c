@@ -1,68 +1,27 @@
-/*
- * mbyte.c: Code specifically for handling multi-byte characters.
- * Multibyte extensions partly by Sung-Hoon Baek
- *
- * The encoding used in the core is set with 'encoding'.  When 'encoding' is
- * changed, the following four variables are set (for speed).
- * Currently these types of character encodings are supported:
- *
- * "enc_dbcs"	    When non-zero it tells the type of double byte character
- *		    encoding (Chinese, Korean, Japanese, etc.).
- *		    The cell width on the display is equal to the number of
- *		    bytes.  (exception: DBCS_JPNU with first byte 0x8e)
- *		    Recognizing the first or second byte is difficult, it
- *		    requires checking a byte sequence from the start.
- * "enc_utf8"	    When TRUE use Unicode characters in UTF-8 encoding.
- *		    The cell width on the display needs to be determined from
- *		    the character value.
- *		    Recognizing bytes is easy: 0xxx.xxxx is a single-byte
- *		    char, 10xx.xxxx is a trailing byte, 11xx.xxxx is a leading
- *		    byte of a multi-byte character.
- *		    To make things complicated, up to six composing characters
- *		    are allowed.  These are drawn on top of the first char.
- *		    For most editing the sequence of bytes with composing
- *		    characters included is considered to be one character.
- * "enc_unicode"    When 2 use 16-bit Unicode characters (or UTF-16).
- *		    When 4 use 32-but Unicode characters.
- *		    Internally characters are stored in UTF-8 encoding to
- *		    avoid NUL bytes.  Conversion happens when doing I/O.
- *		    "enc_utf8" will also be TRUE.
- *
- * "has_mbyte" is set when "enc_dbcs" or "enc_utf8" is non-zero.
- *
- * If none of these is TRUE, 8-bit bytes are used for a character.  The
- * encoding isn't currently specified (TODO).
- *
- * 'encoding' specifies the encoding used in the core.  This is in registers,
- * text manipulation, buffers, etc.  Conversion has to be done when characters
- * in another encoding are received or send:
- *
- *		       clipboard
- *			   ^
- *			   | (2)
- *			   V
- *		   +---------------+
- *	      (1)  |		   | (3)
- *  keyboard ----->|	 core	   |-----> display
- *		   |		   |
- *		   +---------------+
- *			   ^
- *			   | (4)
- *			   V
- *			 file
- *
- * (1) Typed characters arrive in the current locale.
- * (2) Text will be made available with the encoding specified with
- *     'encoding'.  If this is not sufficient, system-specific conversion
- *     might be required.
- * (3) For the GUI the correct font must be selected, no conversion done.
- * (4) The encoding of the file is specified with 'fileencoding'.  Conversion
- *     is to be done when it's different from 'encoding'.
- *
- * The ShaDa file is a special case: Only text is converted, not file names.
- * Vim scripts may contain an ":encoding" command.  This has an effect for
- * some commands, like ":menutrans"
- */
+/// mbyte.c: Code specifically for handling multi-byte characters.
+/// Multibyte extensions partly by Sung-Hoon Baek
+///
+/// The encoding used in nvim is always UTF-8. "enc_utf8" and "has_mbyte" is
+/// thus always true. "enc_dbcs" is always zero. The 'encoding' option is
+/// read-only and always reads "utf-8".
+///
+/// The cell width on the display needs to be determined from the character
+/// value. Recognizing UTF-8 bytes is easy: 0xxx.xxxx is a single-byte char,
+/// 10xx.xxxx is a trailing byte, 11xx.xxxx is a leading byte of a multi-byte
+/// character. To make things complicated, up to six composing characters
+/// are allowed. These are drawn on top of the first char. For most editing
+/// the sequence of bytes with composing characters included is considered to
+/// be one character.
+///
+/// UTF-8 is used everywhere in the core. This is in registers, text
+/// manipulation, buffers, etc. Nvim core communicates with external plugins
+/// and GUIs in this encoding.
+///
+/// The encoding of a file is specified with 'fileencoding'.  Conversion
+/// is to be done when it's different from "utf-8".
+///
+/// Vim scripts may contain an ":scriptencoding" command. This has an effect
+/// for some commands, like ":menutrans".
 
 #include <inttypes.h>
 #include <stdbool.h>
@@ -115,7 +74,7 @@ struct interval {
  * Bytes which are illegal when used as the first byte have a 1.
  * The NUL byte has length 1.
  */
-static char utf8len_tab[256] =
+char utf8len_tab[256] =
 {
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -385,207 +344,6 @@ int enc_canon_props(const char_u *name)
 }
 
 /*
- * Set up for using multi-byte characters.
- * Called in three cases:
- * - by main() to initialize (p_enc == NULL)
- * - by set_init_1() after 'encoding' was set to its default.
- * - by do_set() when 'encoding' has been set.
- * p_enc must have been passed through enc_canonize() already.
- * Sets the "enc_unicode", "enc_utf8", "enc_dbcs" and "has_mbyte" flags.
- * Fills mb_bytelen_tab[] and returns NULL when there are no problems.
- * When there is something wrong: Returns an error message and doesn't change
- * anything.
- */
-char_u * mb_init(void)
-{
-  int i;
-  int idx;
-  int n;
-  int enc_dbcs_new = 0;
-#if defined(USE_ICONV) && !defined(WIN3264) && !defined(WIN32UNIX) \
-  && !defined(MACOS)
-# define LEN_FROM_CONV
-  vimconv_T vimconv;
-  char_u      *p;
-#endif
-
-  if (p_enc == NULL) {
-    /* Just starting up: set the whole table to one's. */
-    for (i = 0; i < 256; ++i)
-      mb_bytelen_tab[i] = 1;
-    return NULL;
-  } else if (STRNCMP(p_enc, "8bit-", 5) == 0
-      || STRNCMP(p_enc, "iso-8859-", 9) == 0) {
-    /* Accept any "8bit-" or "iso-8859-" name. */
-    enc_unicode = 0;
-    enc_utf8 = false;
-  } else if (STRNCMP(p_enc, "2byte-", 6) == 0) {
-    /* Unix: accept any "2byte-" name, assume current locale. */
-    enc_dbcs_new = DBCS_2BYTE;
-  } else if ((idx = enc_canon_search(p_enc)) >= 0) {
-    i = enc_canon_table[idx].prop;
-    if (i & ENC_UNICODE) {
-      /* Unicode */
-      enc_utf8 = true;
-      if (i & (ENC_2BYTE | ENC_2WORD))
-        enc_unicode = 2;
-      else if (i & ENC_4BYTE)
-        enc_unicode = 4;
-      else
-        enc_unicode = 0;
-    } else if (i & ENC_DBCS) {
-      /* 2byte, handle below */
-      enc_dbcs_new = enc_canon_table[idx].codepage;
-    } else {
-      /* Must be 8-bit. */
-      enc_unicode = 0;
-      enc_utf8 = false;
-    }
-  } else    /* Don't know what encoding this is, reject it. */
-    return e_invarg;
-
-  if (enc_dbcs_new != 0) {
-    enc_unicode = 0;
-    enc_utf8 = false;
-  }
-  enc_dbcs = enc_dbcs_new;
-  has_mbyte = (enc_dbcs != 0 || enc_utf8);
-
-
-  /* Detect an encoding that uses latin1 characters. */
-  enc_latin1like = (enc_utf8 || STRCMP(p_enc, "latin1") == 0
-      || STRCMP(p_enc, "iso-8859-15") == 0);
-
-  /*
-   * Set the function pointers.
-   */
-  if (enc_utf8) {
-    mb_ptr2len = utfc_ptr2len;
-    mb_ptr2len_len = utfc_ptr2len_len;
-    mb_char2len = utf_char2len;
-    mb_char2bytes = utf_char2bytes;
-    mb_ptr2cells = utf_ptr2cells;
-    mb_ptr2cells_len = utf_ptr2cells_len;
-    mb_char2cells = utf_char2cells;
-    mb_off2cells = utf_off2cells;
-    mb_ptr2char = utf_ptr2char;
-    mb_head_off = utf_head_off;
-  } else if (enc_dbcs != 0) {
-    mb_ptr2len = dbcs_ptr2len;
-    mb_ptr2len_len = dbcs_ptr2len_len;
-    mb_char2len = dbcs_char2len;
-    mb_char2bytes = dbcs_char2bytes;
-    mb_ptr2cells = dbcs_ptr2cells;
-    mb_ptr2cells_len = dbcs_ptr2cells_len;
-    mb_char2cells = dbcs_char2cells;
-    mb_off2cells = dbcs_off2cells;
-    mb_ptr2char = dbcs_ptr2char;
-    mb_head_off = dbcs_head_off;
-  } else {
-    mb_ptr2len = latin_ptr2len;
-    mb_ptr2len_len = latin_ptr2len_len;
-    mb_char2len = latin_char2len;
-    mb_char2bytes = latin_char2bytes;
-    mb_ptr2cells = latin_ptr2cells;
-    mb_ptr2cells_len = latin_ptr2cells_len;
-    mb_char2cells = latin_char2cells;
-    mb_off2cells = latin_off2cells;
-    mb_ptr2char = latin_ptr2char;
-    mb_head_off = latin_head_off;
-  }
-
-  /*
-   * Fill the mb_bytelen_tab[] for MB_BYTE2LEN().
-   */
-#ifdef LEN_FROM_CONV
-  /* When 'encoding' is different from the current locale mblen() won't
-   * work.  Use conversion to "utf-8" instead. */
-  vimconv.vc_type = CONV_NONE;
-  if (enc_dbcs) {
-    p = enc_locale();
-    if (p == NULL || STRCMP(p, p_enc) != 0) {
-      convert_setup(&vimconv, p_enc, (char_u *)"utf-8");
-      vimconv.vc_fail = true;
-    }
-    xfree(p);
-  }
-#endif
-
-  for (i = 0; i < 256; ++i) {
-    /* Our own function to reliably check the length of UTF-8 characters,
-     * independent of mblen(). */
-    if (enc_utf8)
-      n = utf8len_tab[i];
-    else if (enc_dbcs == 0)
-      n = 1;
-    else {
-      char buf[MB_MAXBYTES + 1];
-      if (i == NUL)             /* just in case mblen() can't handle "" */
-        n = 1;
-      else {
-        buf[0] = i;
-        buf[1] = 0;
-#ifdef LEN_FROM_CONV
-        if (vimconv.vc_type != CONV_NONE) {
-          /*
-           * string_convert() should fail when converting the first
-           * byte of a double-byte character.
-           */
-          p = string_convert(&vimconv, (char_u *)buf, NULL);
-          if (p != NULL) {
-            xfree(p);
-            n = 1;
-          } else
-            n = 2;
-        } else
-#endif
-        {
-          /*
-           * mblen() should return -1 for invalid (means the leading
-           * multibyte) character.  However there are some platforms
-           * where mblen() returns 0 for invalid character.
-           * Therefore, following condition includes 0.
-           */
-          ignored = mblen(NULL, 0);             /* First reset the state. */
-          if (mblen(buf, (size_t)1) <= 0)
-            n = 2;
-          else
-            n = 1;
-        }
-      }
-    }
-    mb_bytelen_tab[i] = n;
-  }
-
-#ifdef LEN_FROM_CONV
-  convert_setup(&vimconv, NULL, NULL);
-#endif
-
-  /* The cell width depends on the type of multi-byte characters. */
-  (void)init_chartab();
-
-  /* When enc_utf8 is set or reset, (de)allocate ScreenLinesUC[] */
-  screenalloc(false);
-
-#ifdef HAVE_WORKING_LIBINTL
-  /* GNU gettext 0.10.37 supports this feature: set the codeset used for
-   * translated messages independently from the current locale. */
-  (void)bind_textdomain_codeset(PROJECT_NAME,
-                                enc_utf8 ? "utf-8" : (char *)p_enc);
-#endif
-
-
-  /* Fire an autocommand to let people do custom font setup. This must be
-   * after Vim has been setup for the new encoding. */
-  apply_autocmds(EVENT_ENCODINGCHANGED, NULL, (char_u *)"", FALSE, curbuf);
-
-  /* Need to reload spell dictionaries */
-  spell_reload();
-
-  return NULL;
-}
-
-/*
  * Return the size of the BOM for the current buffer:
  * 0 - no BOM
  * 2 - UCS-2 or UTF-16 BOM
@@ -597,20 +355,15 @@ int bomb_size(void)
   int n = 0;
 
   if (curbuf->b_p_bomb && !curbuf->b_p_bin) {
-    if (*curbuf->b_p_fenc == NUL) {
-      if (enc_utf8) {
-        if (enc_unicode != 0)
-          n = enc_unicode;
-        else
-          n = 3;
-      }
-    } else if (STRCMP(curbuf->b_p_fenc, "utf-8") == 0)
+    if (*curbuf->b_p_fenc == NUL
+        || STRCMP(curbuf->b_p_fenc, "utf-8") == 0) {
       n = 3;
-    else if (STRNCMP(curbuf->b_p_fenc, "ucs-2", 5) == 0
-        || STRNCMP(curbuf->b_p_fenc, "utf-16", 6) == 0)
+    } else if (STRNCMP(curbuf->b_p_fenc, "ucs-2", 5) == 0
+               || STRNCMP(curbuf->b_p_fenc, "utf-16", 6) == 0) {
       n = 2;
-    else if (STRNCMP(curbuf->b_p_fenc, "ucs-4", 5) == 0)
+    } else if (STRNCMP(curbuf->b_p_fenc, "ucs-4", 5) == 0) {
       n = 4;
+    }
   }
   return n;
 }
@@ -1010,7 +763,7 @@ int latin_ptr2cells_len(const char_u *p, int size)
   return 1;
 }
 
-static int utf_ptr2cells_len(const char_u *p, int size)
+int utf_ptr2cells_len(const char_u *p, int size)
 {
   int c;
 
@@ -2232,26 +1985,20 @@ int mb_tail_off(char_u *base, char_u *p)
   if (*p == NUL)
     return 0;
 
-  if (enc_utf8) {
-    /* Find the last character that is 10xx.xxxx */
-    for (i = 0; (p[i + 1] & 0xc0) == 0x80; ++i)
-      ;
-    /* Check for illegal sequence. */
-    for (j = 0; p - j > base; ++j)
-      if ((p[-j] & 0xc0) != 0x80)
-        break;
-    if (utf8len_tab[p[-j]] != i + j + 1)
-      return 0;
-    return i;
+  // Find the last character that is 10xx.xxxx
+  for (i = 0; (p[i + 1] & 0xc0) == 0x80; i++) {}
+
+  // Check for illegal sequence.
+  for (j = 0; p - j > base; j++) {
+    if ((p[-j] & 0xc0) != 0x80) {
+      break;
+    }
   }
 
-  /* It can't be the first byte if a double-byte when not using DBCS, at the
-   * end of the string or the byte can't start a double-byte. */
-  if (enc_dbcs == 0 || p[1] == NUL || MB_BYTE2LEN(*p) == 1)
+  if (utf8len_tab[p[-j]] != i + j + 1) {
     return 0;
-
-  /* Return 1 when on the lead byte, 0 when on the tail byte. */
-  return 1 - dbcs_head_off(base, p);
+  }
+  return i;
 }
 
 /*
@@ -2466,13 +2213,10 @@ int mb_fix_col(int col, int row)
 {
   col = check_col(col);
   row = check_row(row);
-  if (has_mbyte && ScreenLines != NULL && col > 0
-      && ((enc_dbcs
-          && ScreenLines[LineOffset[row] + col] != NUL
-          && dbcs_screen_head_off(ScreenLines + LineOffset[row],
-            ScreenLines + LineOffset[row] + col))
-        || (enc_utf8 && ScreenLines[LineOffset[row] + col] == 0)))
+  if (ScreenLines != NULL && col > 0
+      && ScreenLines[LineOffset[row] + col] == 0) {
     return col - 1;
+  }
   return col;
 }
 

@@ -177,7 +177,6 @@ void early_init(void)
   fs_init();
   handle_init();
 
-  (void)mb_init();      // init mb_bytelen_tab[] to ones
   eval_init();          // init global variables
 
   // Init the table of Normal mode commands.
