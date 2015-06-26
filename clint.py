@@ -3070,8 +3070,6 @@ def ProcessFile(filename, vlevel, extra_check_functions=[]):
                   'One or more unexpected \\r (^M) found;'
                   'better to use only a \\n')
 
-    sys.stderr.write('Done processing %s\n' % filename)
-
 
 def PrintUsage(message):
     """Prints a brief usage string and exits, optionally with an error message.
