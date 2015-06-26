@@ -2060,7 +2060,7 @@ MARKED FILES: DIFF						*netrw-md* {{{2
 	    (See |netrw-mf| and |netrw-mr| for how to mark files)
 		      (uses the global marked file list)
 
-Use |vimdiff| to visualize difference between selected files (two or
+Use vimdiff to visualize difference between selected files (two or
 three may be selected for this).  Uses the global marked file list.
 
 MARKED FILES: EDITING						*netrw-me* {{{2
