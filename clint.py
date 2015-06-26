@@ -3079,11 +3079,12 @@ def PrintUsage(message):
     Args:
       message: The optional error message.
     """
-    sys.stderr.write(_USAGE)
     if message:
+        sys.stderr.write(_USAGE)
         sys.exit('\nFATAL ERROR: ' + message)
     else:
-        sys.exit(1)
+        sys.stdout.write(_USAGE)
+        sys.exit(0)
 
 
 def PrintCategories():
@@ -3091,7 +3092,7 @@ def PrintCategories():
 
     These are the categories used to filter messages via --filter.
     """
-    sys.stderr.write(''.join('  %s\n' % cat for cat in _ERROR_CATEGORIES))
+    sys.stdout.write(''.join('  %s\n' % cat for cat in _ERROR_CATEGORIES))
     sys.exit(0)
 
 
