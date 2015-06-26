@@ -842,9 +842,6 @@ static vimoption_T
    (char_u *)NULL, PV_NONE,
    {(char_u *)NULL, (char_u *)0L}
    SCRIPTID_INIT},
-  {"guipty",      NULL,   P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)TRUE, (char_u *)0L} SCRIPTID_INIT},
   {"guitablabel",  "gtl", P_STRING|P_VI_DEF|P_RWIN,
    (char_u *)NULL, PV_NONE,
    {(char_u *)NULL, (char_u *)0L}

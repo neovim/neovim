@@ -3361,11 +3361,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 
 						*'guipty'* *'noguipty'*
-'guipty'		boolean	(default on)
-			global
-			{only available when compiled with GUI enabled}
-	Only in the GUI: If on, an attempt is made to open a pseudo-tty for
-	I/O to/from shell commands.  See |gui-pty|.
+'guipty'		Removed. |vim-differences| {Nvim}
 
 						*'guitablabel'* *'gtl'*
 'guitablabel' 'gtl'	string	(default empty)

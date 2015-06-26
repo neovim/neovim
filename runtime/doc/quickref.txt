@@ -717,7 +717,6 @@ Short explanation of each option:		*option-list*
 'guifontwide'	  'gfw'     list of font names for double-wide characters
 'guiheadroom'	  'ghr'     GUI: pixels room for window decorations
 'guioptions'	  'go'	    GUI: Which components and options are used
-'guipty'		    GUI: try to use a pseudo-tty for ":!" commands
 'guitablabel'	  'gtl'     GUI: custom label for a tab page
 'guitabtooltip'   'gtt'     GUI: custom tooltip for a tab page
 'helpfile'	  'hf'	    full path name of the main help file

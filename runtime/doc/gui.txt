@@ -12,7 +12,6 @@ Vim's Graphical User Interface				*gui* *GUI*
 4. Making GUI Selections	|gui-selections|
 5. Menus			|menus|
 6. Extras			|gui-extras|
-7. Shell Commands		|gui-shell|
 
 Other GUI documentation:
 |gui_w32.txt|	For specific items of the Win32 GUI.
@@ -93,7 +92,7 @@ The personal initialization files are searched in the order specified above
 and only the first one that is found is read.
 
 There are a number of options which only have meaning in the GUI version of
-Vim.  These are 'guicursor', 'guifont', 'guipty' and 'guioptions'.  They are
+Vim.  These are 'guicursor', 'guifont', and 'guioptions'.  They are
 documented in |options.txt| with all the other options.
 
 Another way to set the colors for different occasions is with highlight
@@ -975,20 +974,5 @@ This section describes other features which are related to the GUI.
 
 A recommended Japanese font is MS Mincho.  You can find info here:
 http://www.lexikan.com/mincho.htm
-
-==============================================================================
-7. Shell Commands					*gui-shell*
-
-For the X11 GUI the external commands are executed inside the gvim window.
-See |gui-pty|.
-
-WARNING: Executing an external command from the X11 GUI will not always
-work.  "normal" commands like "ls", "grep" and "make" mostly work fine.
-Commands that require an intelligent terminal like "less" and "ispell" won't
-work.  Some may even hang and need to be killed from another terminal.  So be
-careful!
-
-For the Win32 GUI the external commands are executed in a separate window.
-See |gui-shell-win32|.
 
  vim:tw=78:sw=4:ts=8:ft=help:norl:

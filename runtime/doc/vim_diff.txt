@@ -132,6 +132,7 @@ MS-DOS support:
   'conskey'
 
 Other options:
+  'guipty'
   'macatsui'
   'shelltype'
   'shortname'

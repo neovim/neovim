@@ -77,13 +77,6 @@ better at it.  You can start a new shell this way: >
 This is similar to using CTRL-Z to suspend Vim.  The difference is that a new
 shell is started.
 
-When using the GUI the shell will be using the Vim window for its input and
-output.  Since Vim is not a terminal emulator, this will not work perfectly.
-If you have trouble, try toggling the 'guipty' option.  If this still doesn't
-work well enough, start a new terminal to run the shell in.  For example with:
->
-	:!xterm&
-
 ==============================================================================
 *21.3*	Remembering information; viminfo
 
