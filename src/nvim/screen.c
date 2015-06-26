@@ -5459,9 +5459,6 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
   /* If we detected the next character needs to be redrawn, but the text
    * doesn't extend up to there, update the character here. */
   if (force_redraw_next && col < screen_Columns) {
-    if (l_enc_dbcs != 0 && dbcs_off2cells(off, max_off) > 1)
-      screen_char_2(off, row, col);
-    else
       screen_char(off, row, col);
   }
 }
