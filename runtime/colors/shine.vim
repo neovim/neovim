@@ -24,7 +24,6 @@ hi StatusLine term=reverse,bold cterm=reverse,bold gui=reverse,bold
 hi StatusLineNC term=reverse cterm=reverse gui=reverse
 hi VertSplit term=reverse cterm=reverse gui=reverse
 hi Visual term=reverse cterm=reverse gui=reverse guifg=Grey guibg=fg
-hi VisualNOS term=underline,bold cterm=underline,bold gui=underline,bold
 hi DiffText term=reverse cterm=bold ctermbg=Red gui=bold guibg=Red
 hi Cursor ctermbg=Green guibg=Green guifg=Black
 hi lCursor guibg=Cyan guifg=Black

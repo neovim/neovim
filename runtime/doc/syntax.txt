@@ -4836,8 +4836,7 @@ Title		titles for output from ":set all", ":autocmd" etc.
 							*hl-Visual*
 Visual		Visual mode selection
 							*hl-VisualNOS*
-VisualNOS	Visual mode selection when vim is "Not Owning the Selection".
-		Only X11 Gui's |gui-x11| and |xterm-clipboard| supports this.
+VisualNOS	Removed. |vim-differences| {Nvim}
 							*hl-WarningMsg*
 WarningMsg	warning messages
 							*hl-WildMenu*
