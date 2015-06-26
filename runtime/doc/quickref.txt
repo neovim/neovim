@@ -1113,8 +1113,6 @@ Context-sensitive completion on the command-line:
 
 	Most useful Vim arguments (for full list see |startup-options|)
 
-|-gui|	-g		    start GUI (also allows other options)
-
 |-+|	+[num]		    put the cursor at line [num] (default: last line)
 |-+c|	+{command}	    execute {command} after loading the file
 |-+/|	+/{pat} {file} ..   put the cursor at the first occurrence of {pat}
@@ -1341,9 +1339,6 @@ Context-sensitive completion on the command-line:
 					automatic indenting and settings
 ------------------------------------------------------------------------------
 *Q_gu*		GUI commands
-
-|:gui|		:gui			UNIX: start the GUI
-|:gui|		:gui {fname} ..		idem, and edit {fname} ..
 
 |:menu|		:menu			list all menus
 |:menu|		:menu {mpath}		list menus starting with {mpath}

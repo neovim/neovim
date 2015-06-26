@@ -317,7 +317,7 @@ You can switch the 'write' option on with ":set write".
 							*E25*  >
   Nvim does not have a built-in GUI
 
-Neovim does not have a built in GUI, so |:gvim| and |:gui| don't work.
+Neovim does not have a built in GUI, so `:gvim` and `:gui` don't work.
 
 							*E49*  >
   Invalid scroll size

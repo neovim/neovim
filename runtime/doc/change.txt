@@ -1161,10 +1161,6 @@ See |quotestar| and |quoteplus|.  When the clipboard is not available or not
 working, the unnamed register is used instead.  For Unix systems the clipboard
 is only available when the |+xterm_clipboard| feature is present.
 
-Note that there is only a distinction between "* and "+ for X11 systems.  For
-an explanation of the difference, see |x11-selection|.  Under MS-Windows, use
-of "* and "+ is actually synonymous and refers to the |gui-clipboard|.
-
 						*quote_~* *quote~* *<Drop>*
 The read-only "~ register stores the dropped text from the last drag'n'drop
 operation.  When something has been dropped onto Vim, the "~ register is
