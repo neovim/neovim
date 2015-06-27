@@ -160,13 +160,6 @@ entries similar to: >
 PS: If you find any difference, someone (your sysadmin?) should better check
     the complete termcap and terminfo database for consistency.
 
-NOTE 1: If you recompile Vim with FEAT_XTERM_SAVE defined in feature.h, the
-builtin xterm will include the mentioned "te" and "ti" entries.
-
-NOTE 2: If you want to disable the screen switching, and you don't want to
-change your termcap, you can add these lines to your .vimrc: >
-	:set t_ti= t_te=
-
 ==============================================================================
 Scrolling in Insert mode				*scroll-insert*
 

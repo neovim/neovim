@@ -6834,11 +6834,6 @@ xim			Compiled with X input method support |xim|.
 xpm			Compiled with pixmap support.
 xpm_w32			Compiled with pixmap support for Win32. (Only for
 			backward compatibility. Use "xpm" instead.)
-xsmp			Compiled with X session management support.
-xsmp_interact		Compiled with interactive X session management support.
-xterm_clipboard		Compiled with support for xterm clipboard.
-xterm_save		Compiled with support for saving and restoring the
-			xterm screen.
 x11			Compiled with X11 support.
 
 							*string-match*

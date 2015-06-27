@@ -2282,11 +2282,6 @@ Macintosh:
     Or ask for permission to overwrite it (if file can be made writable) and
     restore file to readonly afterwards.
     Overwriting a file for which a swap file exists is similar issue.
-7   When compiled with "xterm_clipboard", startup can be slower and might get
-    error message for invalid $DISPLAY.  Try connecting to the X server in the
-    background (forked), so that Vim starts up quicker?  Connect as soon as
-    the clipboard is to be used (Visual select mode starts, paste from
-    clipboard)
 7   X11: Some people prefer to use CLIPBOARD instead of PRIMARY for the normal
     selection.  Add an "xclipboard" argument to the 'clipboard' option? (Mark
     Waggoner)
