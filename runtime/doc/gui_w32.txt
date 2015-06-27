@@ -262,12 +262,6 @@ WARNING: If you close this window with the "X" button, and confirm the
 question if you really want to kill the application, Vim may be killed too!
 (This does not apply to commands run asynchronously with ":!start".)
 
-In Windows 95, the window in which the commands are executed is always 25x80
-characters, to be as DOS compatible as possible (this matters!).  The default
-system font is used.  On NT, the window will be the default you have set up for
-"Console" in Control Panel.  On Win32s, the properties of the DOS box are
-determined by _default.pif in the windows directory.
-
 							*msdos-mode*
 If you get a dialog that says "This program is set to run in MS-DOS mode..."
 when you run an external program, you can solve this by changing the

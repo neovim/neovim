@@ -360,9 +360,6 @@ cscope version for Win32 see:
 
 	http://iamphet.nm.ru/cscope/index.html
 
-The DJGPP-built version from http://cscope.sourceforge.net is known to not
-work with Vim.
-
 Hard-coded limitation: doing a |:tjump| when |:cstag| searches the tag files
 is not configurable (e.g., you can't do a tselect instead).
 
