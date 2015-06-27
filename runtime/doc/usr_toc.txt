@@ -44,9 +44,6 @@ Tuning Vim
 |usr_44.txt|  Your own syntax highlighted
 |usr_45.txt|  Select your language
 
-Making Vim Run
-|usr_90.txt|  Installing Vim
-
 
 Reference manual
 |reference_toc|     More detailed information for all commands
@@ -335,18 +332,6 @@ Make Vim work as you like it.
 		|45.3|	Using another encoding
 		|45.4|	Editing files with a different encoding
 		|45.5|	Entering language text
-
-==============================================================================
-Making Vim Run ~
-
-Before you can use Vim.
-
-|usr_90.txt|  Installing Vim
-		|90.1|	Unix
-		|90.2|	MS-Windows
-		|90.3|	Upgrading
-		|90.4|	Common installation issues
-		|90.5|	Uninstalling Vim
 
 ==============================================================================
 

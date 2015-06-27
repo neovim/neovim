@@ -81,9 +81,6 @@ Tuning Vim ~
 |usr_44.txt|  Your own syntax highlighted
 |usr_45.txt|  Select your language
 
-Making Vim Run ~
-|usr_90.txt|  Installing Vim
-
 
 REFERENCE MANUAL: These files explain every detail of Vim.	*reference_toc*
 

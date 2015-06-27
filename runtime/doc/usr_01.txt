@@ -55,14 +55,8 @@ make them visible with: >
 	:hi link HelpStar Normal
 
 ==============================================================================
-*01.2*	Vim installed
+*01.2*	Vim installed					   *setup-vimrc_example*
 
-Most of the manuals assume that Vim has been properly installed.  If you
-didn't do that yet, or if Vim doesn't run properly (e.g., files can't be found
-or in the GUI the menus do not show up) first read the chapter on
-installation: |usr_90.txt|.
-
-						    *setup-vimrc_example*
 It's not required for this tutorial, but we provide an example vimrc you may
 use:
 

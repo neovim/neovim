@@ -15,8 +15,7 @@ in various languages is explained.
 |45.4|	Editing files with a different encoding
 |45.5|	Entering language text
 
-     Next chapter: |usr_90.txt|  Installing Vim
- Previous chapter: |usr_44.txt|  Your own syntax highlighted
+Previous chapter: |usr_44.txt|  Your own syntax highlighted
 Table of contents: |usr_toc.txt|
 
 ==============================================================================
@@ -392,7 +391,5 @@ If all other methods fail, you can enter any character with CTRL-V:
 Don't type the spaces.  See |i_CTRL-V_digit| for the details.
 
 ==============================================================================
-
-Next chapter: |usr_90.txt|  Installing Vim
 
 Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
