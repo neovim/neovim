@@ -201,11 +201,10 @@ def path_hook(nvim):
             name = oldtail[:idx]
             tail = oldtail[idx+1:]
             fmr = imp.find_module(name, path)
-            module = imp.load_module(fullname[:-len(oldtail)] + name, *fmr)
+            module = imp.find_module(fullname[:-len(oldtail)] + name, *fmr)
             return _find_module(fullname, tail, module.__path__)
         else:
-            fmr = imp.find_module(fullname, path)
-            return imp.load_module(fullname, *fmr)
+            return imp.find_module(fullname, path)
 
     class VimModuleLoader(object):
         def __init__(self, module):
@@ -215,7 +214,7 @@ def path_hook(nvim):
             # Check sys.modules, required for reload (see PEP302).
             if fullname in sys.modules:
                 return sys.modules[fullname]
-            return self.module
+            return imp.load_module(fullname, *self.module)
 
     class VimPathFinder(object):
         @staticmethod
