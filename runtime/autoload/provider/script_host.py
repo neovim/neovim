@@ -226,10 +226,6 @@ def path_hook(nvim):
             except ImportError:
                 return None
 
-        @classmethod
-        def load_module(cls, fullname, path=None):
-            return _find_module(fullname, fullname, path or _get_paths())
-
         @staticmethod
         def find_spec(fullname, path=None, target=None):
             "Method for Python 3.4+."
