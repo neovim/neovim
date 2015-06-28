@@ -43,8 +43,20 @@
 #include "nvim/version.h"
 #include "nvim/path.h"
 #include "nvim/lib/ringbuf.h"
+#include "nvim/lib/khash.h"
 
-#define buflist_nr2name(...) ((char *) buflist_nr2name(__VA_ARGS__))
+// Note: when using bufset hash pointers are intentionally casted to uintptr_t 
+// and not to khint32_t or khint64_t: this way compiler must give a warning 
+// (-Wconversion) when types change.
+#ifdef ARCH_32
+KHASH_SET_INIT_INT(bufset)
+#elif defined(ARCH_64)
+KHASH_SET_INIT_INT64(bufset)
+#else
+# error Not a 64- or 32-bit architecture
+#endif
+KHASH_MAP_INIT_STR(fnamebufs, buf_T *)
+
 #define copy_option_part(src, dest, ...) \
     ((char *) copy_option_part((char_u **) src, (char_u *) dest, __VA_ARGS__))
 #define find_viminfo_parameter(...) \
@@ -112,7 +124,8 @@ typedef enum {
   kSDItemJump = 8,           ///< Item from jump list.
   kSDItemBufferList = 9,     ///< Buffer list.
   kSDItemLocalMark = 10,     ///< Buffer-local mark.
-#define SHADA_LAST_ENTRY ((uint64_t) kSDItemLocalMark)
+  kSDItemChange = 11,        ///< Item from buffer change list.
+#define SHADA_LAST_ENTRY ((uint64_t) kSDItemChange)
 } ShadaEntryType;
 
 /// Structure defining a single ShaDa file entry
@@ -329,6 +342,40 @@ static void insert_history_entry(HistoryMergerState *const hms_p,
   hm_rb_insert(rb, (size_t) (hm_rb_find_idx(rb, insert_after) + 1), entry);
 }
 
+/// Find buffer for given buffer name (cached)
+///
+/// @param[in,out]  fname_bufs  Cache containing fname to buffer mapping.
+/// @param[in]      fname       File name to find.
+///
+/// @return Pointer to the buffer or NULL.
+static buf_T *find_buffer(khash_t(fnamebufs) *const fname_bufs,
+                          const char *const fname)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+{
+  int kh_ret;
+  khint_t k = kh_put(fnamebufs, fname_bufs, fname, &kh_ret);
+  if (!kh_ret) {
+    return kh_val(fname_bufs, k);
+  }
+  kh_key(fname_bufs, k) = xstrdup(fname);
+  FOR_ALL_BUFFERS(buf) {
+    if (buf->b_ffname != NULL) {
+      if (fnamecmp(fname, buf->b_ffname) == 0) {
+        kh_val(fname_bufs, k) = buf;
+        return buf;
+      }
+    }
+  }
+  kh_val(fname_bufs, k) = NULL;
+  return NULL;
+}
+
+/// Compare two marks
+static inline bool marks_equal(const pos_T a, const pos_T b)
+{
+  return (a.lnum == b.lnum) && (a.col == b.col);
+}
+
 /// Read data from ShaDa file
 ///
 /// @param[in]  fp     File to read from.
@@ -346,9 +393,8 @@ static void shada_read(FILE *const fp, const int flags)
     }
   }
   ShadaEntry cur_entry;
-  buf_T *local_mark_prev_buf = NULL;
-  char *local_mark_prev_fname = NULL;
-  size_t local_mark_prev_fname_len = 0;
+  khash_t(bufset) *cl_bufs = kh_init(bufset);
+  khash_t(fnamebufs) *fname_bufs = kh_init(fnamebufs);
   while (shada_read_next_item(fp, &cur_entry, flags) == NOTDONE) {
     switch (cur_entry.type) {
       case kSDItemMissing: {
@@ -455,26 +501,98 @@ static void shada_read(FILE *const fp, const int flags)
         shada_free_shada_entry(&cur_entry);
         break;
       }
+      case kSDItemJump:
       case kSDItemGlobalMark: {
-        if (!(flags & kShaDaWantMarks) || get_viminfo_parameter('f') == 0) {
+        if (!(flags & kShaDaWantMarks)
+            || (cur_entry.type == kSDItemGlobalMark
+                && get_viminfo_parameter('f') == 0)) {
           shada_free_shada_entry(&cur_entry);
           break;
         }
-        mark_set_global(cur_entry.data.filemark.name, (xfmark_T) {
-          .fname = (char_u *) cur_entry.data.filemark.fname,
+        buf_T *buf = find_buffer(fname_bufs, cur_entry.data.filemark.fname);
+        if (buf != NULL) {
+          xfree(cur_entry.data.filemark.fname);
+          cur_entry.data.filemark.fname = NULL;
+        }
+        xfmark_T fm = (xfmark_T) {
+          .fname = (char_u *) (buf == NULL
+                               ? cur_entry.data.filemark.fname
+                               : NULL),
           .fmark = {
             .mark = cur_entry.data.filemark.mark,
-            .fnum = 0,
+            .fnum = (buf == NULL ? 0 : buf->b_fnum),
             .timestamp = cur_entry.timestamp,
             .additional_data = cur_entry.data.filemark.additional_data,
           },
-        }, !(flags & kShaDaForceit));
+        };
+        if (cur_entry.type == kSDItemGlobalMark) {
+          mark_set_global(cur_entry.data.filemark.name, fm,
+                          !(flags & kShaDaForceit));
+        } else {
+          if (flags & kShaDaForceit) {
+            if (curwin->w_jumplistlen == JUMPLISTSIZE) {
+              // Jump list items are ignored in this case.
+              free_xfmark(fm);
+            } else {
+              memmove(&curwin->w_jumplist[1], &curwin->w_jumplist[0],
+                      sizeof(curwin->w_jumplist[0])
+                      * (size_t) curwin->w_jumplistlen);
+              curwin->w_jumplistidx++;
+              curwin->w_jumplistlen++;
+              curwin->w_jumplist[0] = fm;
+            }
+          } else {
+            const int jl_len = curwin->w_jumplistlen;
+            int i;
+            for (i = 0; i < jl_len; i++) {
+              const xfmark_T jl_fm = curwin->w_jumplist[i];
+              if (jl_fm.fmark.timestamp >= cur_entry.timestamp) {
+                if (marks_equal(fm.fmark.mark, jl_fm.fmark.mark)
+                    && (buf == NULL
+                        ? (jl_fm.fname != NULL
+                           && STRCMP(fm.fname, jl_fm.fname) == 0)
+                        : fm.fmark.fnum == jl_fm.fmark.fnum)) {
+                  i = -1;
+                }
+                break;
+              }
+            }
+            if (i != -1) {
+              if (i < jl_len) {
+                if (jl_len == JUMPLISTSIZE) {
+                  free_xfmark(curwin->w_jumplist[0]);
+                  memmove(&curwin->w_jumplist[0], &curwin->w_jumplist[1],
+                          sizeof(curwin->w_jumplist[0]) * (size_t) i);
+                } else {
+                  memmove(&curwin->w_jumplist[i + 1], &curwin->w_jumplist[i],
+                          sizeof(curwin->w_jumplist[0])
+                          * (size_t) (jl_len - i));
+                }
+              } else if (i == jl_len) {
+                if (jl_len == JUMPLISTSIZE) {
+                  i = -1;
+                } else if (jl_len > 0) {
+                  memmove(&curwin->w_jumplist[1], &curwin->w_jumplist[0],
+                          sizeof(curwin->w_jumplist[0])
+                          * (size_t) jl_len);
+                }
+              }
+            }
+            if (i != -1) {
+              curwin->w_jumplist[i] = fm;
+              if (jl_len < JUMPLISTSIZE) {
+                curwin->w_jumplistlen++;
+              }
+              if (curwin->w_jumplistidx > i
+                  && curwin->w_jumplistidx + 1 < curwin->w_jumplistlen) {
+                curwin->w_jumplistidx++;
+              }
+            } else {
+              shada_free_shada_entry(&cur_entry);
+            }
+          }
+        }
         // Do not free shada entry: its allocated memory was saved above.
-        break;
-      }
-      case kSDItemJump: {
-        // FIXME
-        shada_free_shada_entry(&cur_entry);
         break;
       }
       case kSDItemBufferList: {
@@ -482,44 +600,83 @@ static void shada_read(FILE *const fp, const int flags)
         shada_free_shada_entry(&cur_entry);
         break;
       }
+      case kSDItemChange:
       case kSDItemLocalMark: {
         if (!(flags & kShaDaWantMarks)) {
           shada_free_shada_entry(&cur_entry);
           break;
         }
-        buf_T *buf = NULL;
-        if (local_mark_prev_fname != NULL
-            && strncmp(local_mark_prev_fname,
-                       cur_entry.data.filemark.fname,
-                       local_mark_prev_fname_len) == 0) {
-          buf = local_mark_prev_buf;
+        buf_T *buf = find_buffer(fname_bufs, cur_entry.data.filemark.fname);
+        if (buf == NULL) {
+          shada_free_shada_entry(&cur_entry);
+          break;
+        }
+        const fmark_T fm = (fmark_T) {
+          .mark = cur_entry.data.filemark.mark,
+          .fnum = 0,
+          .timestamp = cur_entry.timestamp,
+          .additional_data = cur_entry.data.filemark.additional_data,
+        };
+        if (cur_entry.type == kSDItemLocalMark) {
+          mark_set_local(cur_entry.data.filemark.name, buf, fm,
+                         !(flags & kShaDaForceit));
         } else {
-          FOR_ALL_BUFFERS(bp) {
-            if (bp->b_ffname != NULL && bp != local_mark_prev_buf) {
-              if (fnamecmp(cur_entry.data.filemark.fname, bp->b_ffname) == 0) {
-                buf = bp;
+          int kh_ret;
+          (void) kh_put(bufset, cl_bufs, (uintptr_t) buf, &kh_ret);
+          if (flags & kShaDaForceit) {
+            if (buf->b_changelistlen == JUMPLISTSIZE) {
+              free_fmark(buf->b_changelist[0]);
+              memmove(buf->b_changelist, buf->b_changelist + 1,
+                      sizeof(buf->b_changelist[0]) * (JUMPLISTSIZE - 1));
+            } else {
+              buf->b_changelistlen++;
+            }
+            buf->b_changelist[buf->b_changelistlen - 1] = fm;
+          } else {
+            const int cl_len = buf->b_changelistlen;
+            int i;
+            for (i = cl_len; i > 0; i--) {
+              const fmark_T cl_fm = buf->b_changelist[i - 1];
+              if (cl_fm.timestamp <= cur_entry.timestamp) {
+                if (marks_equal(fm.mark, cl_fm.mark)) {
+                  i = -1;
+                }
                 break;
               }
             }
+            if (i > 0) {
+              if (cl_len == JUMPLISTSIZE) {
+                free_fmark(buf->b_changelist[0]);
+                memmove(&buf->b_changelist[0], &buf->b_changelist[1],
+                        sizeof(buf->b_changelist[0]) * (size_t) i);
+              } else {
+                memmove(&buf->b_changelist[i + 1], &buf->b_changelist[i],
+                        sizeof(buf->b_changelist[0])
+                        * (size_t) (cl_len - i));
+              }
+            } else if (i == 0) {
+              if (cl_len == JUMPLISTSIZE) {
+                i = -1;
+              } else if (cl_len > 0) {
+                memmove(&buf->b_changelist[1], &buf->b_changelist[0],
+                        sizeof(buf->b_changelist[0])
+                        * (size_t) cl_len);
+              }
+            }
+            if (i != -1) {
+              buf->b_changelist[i] = fm;
+              if (cl_len < JUMPLISTSIZE) {
+                buf->b_changelistlen++;
+              }
+            } else {
+              shada_free_shada_entry(&cur_entry);
+              cur_entry.data.filemark.fname = NULL;
+            }
           }
-          xfree(local_mark_prev_fname);
-          local_mark_prev_buf = buf;
-          local_mark_prev_fname_len = strlen(cur_entry.data.filemark.fname);
-          local_mark_prev_fname = xmemdupz(cur_entry.data.filemark.fname,
-                                           local_mark_prev_fname_len);
         }
-        if (buf == NULL) {
-          break;
-        }
-        mark_set_local(
-            cur_entry.data.filemark.name, buf,
-            (fmark_T) {
-              .mark = cur_entry.data.filemark.mark,
-              .fnum = 0,
-              .timestamp = cur_entry.timestamp,
-              .additional_data = cur_entry.data.filemark.additional_data,
-            }, !(flags & kShaDaForceit));
-        free(cur_entry.data.filemark.fname);
+        // Do not free shada entry: except for fname, its allocated memory (i.e. 
+        // additional_data attribute contents if non-NULL) was saved above.
+        xfree(cur_entry.data.filemark.fname);
         break;
       }
     }
@@ -561,10 +718,18 @@ static void shada_read(FILE *const fp, const int flags)
       hm_rb_dealloc(&(hms[i].hmrb));
     }
   }
-  xfree(local_mark_prev_fname);
-  FOR_ALL_BUFFERS(buf) {
-    fmarks_check_names(buf);
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    (void) tp;
+    if (kh_get(bufset, cl_bufs, (uintptr_t) wp->w_buffer) != kh_end(cl_bufs)) {
+      wp->w_changelistidx = wp->w_buffer->b_changelistlen;
+    }
   }
+  kh_destroy(bufset, cl_bufs);
+  const char *key;
+  kh_foreach_key(fname_bufs, key, {
+    xfree((void *) key);
+  })
+  kh_destroy(fnamebufs, fname_bufs);
 }
 
 /// Get the ShaDa file name to use
@@ -745,6 +910,7 @@ static void shada_pack_entry(msgpack_packer *const packer,
       }
       break;
     }
+    case kSDItemChange:
     case kSDItemGlobalMark:
     case kSDItemLocalMark:
     case kSDItemJump: {
@@ -756,6 +922,7 @@ static void shada_pack_entry(msgpack_packer *const packer,
           + (entry.data.filemark.mark.col != 0)
           // Mark name: defaults to '"'
           + (entry.type != kSDItemJump
+             && entry.type != kSDItemChange
              && entry.data.filemark.name != '"')
           // Additional entries, if any:
           + (entry.data.filemark.additional_data == NULL
@@ -774,7 +941,8 @@ static void shada_pack_entry(msgpack_packer *const packer,
         PACK_STATIC_STR("col");
         msgpack_pack_long(spacker, entry.data.filemark.mark.col);
       }
-      if (entry.data.filemark.name != '"' && entry.type != kSDItemJump) {
+      if (entry.data.filemark.name != '"' && entry.type != kSDItemJump
+          && entry.type != kSDItemChange) {
         PACK_STATIC_STR("name");
         msgpack_pack_uint8(spacker, (uint8_t) entry.data.filemark.name);
       }
@@ -933,12 +1101,21 @@ static void shada_write(FILE *const newfp, FILE *const oldfp)
   const void *jump_iter = NULL;
   do {
     xfmark_T fm;
+    cleanup_jumplist();
     jump_iter = mark_jumplist_iter(jump_iter, curwin, &fm);
-    char *fname = (fm.fmark.fnum == 0
-                   ? (fm.fname == NULL
-                      ? NULL
-                      : xstrdup((char *) fm.fname))
-                   : buflist_nr2name(fm.fmark.fnum, true, false));
+    const buf_T *const buf = (fm.fmark.fnum == 0
+                              ? NULL
+                              : buflist_findnr(fm.fmark.fnum));
+    if (buf != NULL
+        ? shada_removable(buf->b_ffname)
+        : fm.fmark.fnum != 0) {
+      continue;
+    }
+    const char *const fname = (char *) (fm.fmark.fnum == 0
+                                        ? (fm.fname == NULL
+                                           ? NULL
+                                           : fm.fname)
+                                        : buf->b_ffname);
     shada_pack_entry(packer, (ShadaEntry) {
       .type = kSDItemJump,
       .timestamp = fm.fmark.timestamp,
@@ -946,12 +1123,11 @@ static void shada_write(FILE *const newfp, FILE *const oldfp)
         .filemark = {
           .name = NUL,
           .mark = fm.fmark.mark,
-          .fname = fname,
+          .fname = (char *) fname,
           .additional_data = fm.fmark.additional_data,
         }
       }
     }, max_kbyte);
-    xfree(fname);
   } while (jump_iter != NULL);
 
   // FIXME No merging currently
@@ -1050,7 +1226,7 @@ static void shada_write(FILE *const newfp, FILE *const oldfp)
     xfree(global_marks);
   }
 
-  // 8. Buffer marks
+  // 8. Buffer marks and buffer change list
   FOR_ALL_BUFFERS(buf) {
     if (buf->b_ffname == NULL) {
       continue;
@@ -1061,6 +1237,21 @@ static void shada_write(FILE *const newfp, FILE *const oldfp)
       shada_pack_entry(packer, *mark, max_kbyte);
     }
     xfree(buffer_marks);
+
+    for (int i = 0; i < buf->b_changelistlen; i++) {
+      const fmark_T fm = buf->b_changelist[i];
+      shada_pack_entry(packer, (ShadaEntry) {
+        .type = kSDItemChange,
+        .timestamp = fm.timestamp,
+        .data = {
+          .filemark = {
+            .mark = fm.mark,
+            .fname = (char *) buf->b_ffname,
+            .additional_data = fm.additional_data,
+          }
+        }
+      }, max_kbyte);
+    }
   }
   // FIXME: Copy previous marks, up to num_marked_files
   // size_t num_marked_files = get_viminfo_parameter('\'');
@@ -1180,6 +1371,7 @@ static void shada_free_shada_entry(ShadaEntry *const entry)
       api_free_dictionary(entry->data.header);
       break;
     }
+    case kSDItemChange:
     case kSDItemJump:
     case kSDItemGlobalMark:
     case kSDItemLocalMark: {
@@ -1433,6 +1625,7 @@ shada_read_next_item_start:
       break;
     }
     case kSDItemBufferList:
+    case kSDItemChange:
     case kSDItemJump:
     case kSDItemVariable:
     case kSDItemRegister:
@@ -1656,6 +1849,7 @@ shada_read_next_item_start:
       ga_clear(&ad_ga);
       break;
     }
+    case kSDItemChange:
     case kSDItemJump:
     case kSDItemGlobalMark:
     case kSDItemLocalMark: {
@@ -1680,6 +1874,7 @@ shada_read_next_item_start:
             "mark", "name", " which is not an unsigned integer",
             entry->data.filemark.name,
             (type_u64 != kSDItemJump
+             && type_u64 != kSDItemChange
              && unpacked.data.via.map.ptr[i].val.type
                 == MSGPACK_OBJECT_POSITIVE_INTEGER),
             u64, TOCHAR)

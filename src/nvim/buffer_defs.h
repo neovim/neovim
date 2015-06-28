@@ -520,7 +520,7 @@ struct file_buffer {
   /*
    * the changelist contains old change positions
    */
-  pos_T b_changelist[JUMPLISTSIZE];
+  fmark_T b_changelist[JUMPLISTSIZE];
   int b_changelistlen;                  /* number of active entries */
   bool b_new_change;                    /* set by u_savecommon() */
 

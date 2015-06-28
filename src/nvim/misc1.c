@@ -2053,7 +2053,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
         /* Don't create a new entry when the line number is the same
          * as the last one and the column is not too far away.  Avoids
          * creating many entries for typing "xxxxx". */
-        p = &curbuf->b_changelist[curbuf->b_changelistlen - 1];
+        p = &curbuf->b_changelist[curbuf->b_changelistlen - 1].mark;
         if (p->lnum != lnum)
           add = TRUE;
         else {
@@ -2073,7 +2073,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
           /* changelist is full: remove oldest entry */
           curbuf->b_changelistlen = JUMPLISTSIZE - 1;
           memmove(curbuf->b_changelist, curbuf->b_changelist + 1,
-              sizeof(pos_T) * (JUMPLISTSIZE - 1));
+              sizeof(curbuf->b_changelist[0]) * (JUMPLISTSIZE - 1));
           FOR_ALL_TAB_WINDOWS(tp, wp) {
             /* Correct position in changelist for other windows on
              * this buffer. */
@@ -2094,7 +2094,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
       }
     }
     curbuf->b_changelist[curbuf->b_changelistlen - 1] =
-      curbuf->b_last_change.mark;
+      curbuf->b_last_change;
     /* The current window is always after the last change, so that "g,"
      * takes you back to it. */
     curwin->w_changelistidx = curbuf->b_changelistlen;

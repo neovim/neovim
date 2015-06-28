@@ -59,14 +59,6 @@
 /// Global marks (marks with file number or name)
 static xfmark_T namedfm[NGLOBALMARKS];
 
-#define SET_XFMARK(xfmarkp_, mark_, fnum_, fname_) \
-    do { \
-      xfmark_T *const xfmarkp__ = xfmarkp_; \
-      xfmarkp__->fname = fname_; \
-      RESET_FMARK(&(xfmarkp__->fmark), mark_, fnum_); \
-    } while (0)
-
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mark.c.generated.h"
 #endif
@@ -85,11 +77,12 @@ void free_fmark(fmark_T fm)
   if (fm.additional_data != NULL) {
     api_free_dictionary(*fm.additional_data);
     free(fm.additional_data);
+    fm.additional_data = NULL;
   }
 }
 
 /// Free xfmark_T item
-static inline void free_xfmark(xfmark_T fm)
+void free_xfmark(xfmark_T fm)
 {
   xfree(fm.fname);
   fm.fname = NULL;
@@ -157,8 +150,7 @@ int setmark_pos(int c, pos_T *pos, int fnum)
   if (isupper(c)) {
     assert(c >= 'A' && c <= 'Z');
     i = c - 'A';
-    free_xfmark(namedfm[i]);
-    SET_XFMARK(namedfm + i, *pos, fnum, NULL);
+    RESET_XFMARK(namedfm + i, *pos, fnum, NULL);
     return OK;
   }
   return FAIL;
@@ -170,7 +162,6 @@ int setmark_pos(int c, pos_T *pos, int fnum)
  */
 void setpcmark(void)
 {
-  int i;
   xfmark_T    *fm;
 
   /* for :global the mark is set only once */
@@ -184,8 +175,8 @@ void setpcmark(void)
   if (++curwin->w_jumplistlen > JUMPLISTSIZE) {
     curwin->w_jumplistlen = JUMPLISTSIZE;
     free_xfmark(curwin->w_jumplist[0]);
-    for (i = 1; i < JUMPLISTSIZE; ++i)
-      curwin->w_jumplist[i - 1] = curwin->w_jumplist[i];
+    memmove(&curwin->w_jumplist[0], &curwin->w_jumplist[1],
+            (JUMPLISTSIZE - 1) * sizeof(curwin->w_jumplist[0]));
   }
   curwin->w_jumplistidx = curwin->w_jumplistlen;
   fm = &curwin->w_jumplist[curwin->w_jumplistlen - 1];
@@ -284,7 +275,7 @@ pos_T *movechangelist(int count)
   } else
     n += count;
   curwin->w_changelistidx = n;
-  return curbuf->b_changelist + n;
+  return &(curbuf->b_changelist[n].mark);
 }
 
 /*
@@ -829,7 +820,7 @@ void ex_changes(exarg_T *eap)
   MSG_PUTS_TITLE(_("\nchange line  col text"));
 
   for (i = 0; i < curbuf->b_changelistlen && !got_int; ++i) {
-    if (curbuf->b_changelist[i].lnum != 0) {
+    if (curbuf->b_changelist[i].mark.lnum != 0) {
       msg_putchar('\n');
       if (got_int)
         break;
@@ -837,10 +828,10 @@ void ex_changes(exarg_T *eap)
           i == curwin->w_changelistidx ? '>' : ' ',
           i > curwin->w_changelistidx ? i - curwin->w_changelistidx
           : curwin->w_changelistidx - i,
-          (long)curbuf->b_changelist[i].lnum,
-          curbuf->b_changelist[i].col);
+          (long)curbuf->b_changelist[i].mark.lnum,
+          curbuf->b_changelist[i].mark.col);
       msg_outtrans(IObuff);
-      name = mark_line(&curbuf->b_changelist[i], 17);
+      name = mark_line(&curbuf->b_changelist[i].mark, 17);
       msg_outtrans_attr(name, hl_attr(HLF_D));
       xfree(name);
       os_breakcheck();
@@ -926,7 +917,7 @@ void mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after)
 
     /* list of change positions */
     for (i = 0; i < curbuf->b_changelistlen; ++i)
-      one_adjust_nodel(&(curbuf->b_changelist[i].lnum));
+      one_adjust_nodel(&(curbuf->b_changelist[i].mark.lnum));
 
     /* Visual area */
     one_adjust_nodel(&(curbuf->b_visual.vi_start.lnum));
@@ -1073,7 +1064,7 @@ void mark_col_adjust(linenr_T lnum, colnr_T mincol, long lnum_amount, long col_a
 
   /* list of change positions */
   for (i = 0; i < curbuf->b_changelistlen; ++i)
-    col_adjust(&(curbuf->b_changelist[i]));
+    col_adjust(&(curbuf->b_changelist[i].mark));
 
   /* Visual area */
   col_adjust(&(curbuf->b_visual.vi_start));
@@ -1119,7 +1110,7 @@ void mark_col_adjust(linenr_T lnum, colnr_T mincol, long lnum_amount, long col_a
  * When deleting lines, this may create duplicate marks in the
  * jumplist. They will be removed here for the current window.
  */
-static void cleanup_jumplist(void)
+void cleanup_jumplist(void)
 {
   int i;
   int from, to;

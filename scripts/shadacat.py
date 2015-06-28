@@ -23,6 +23,7 @@ class EntryTypes(Enum):
   Jump = 8
   BufferList = 9
   LocalMark = 10
+  Change = 11
 
 
 def strtrans_errors(e):

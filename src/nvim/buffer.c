@@ -562,6 +562,9 @@ static void free_buffer(buf_T *buf)
   for (size_t i = 0; i < NMARKS; i++) {
     free_fmark(buf->b_namedm[i]);
   }
+  for (int i = 0; i < buf->b_changelistlen; i++) {
+    free_fmark(buf->b_changelist[i]);
+  }
   if (autocmd_busy) {
     // Do not free the buffer structure while autocommands are executing,
     // it's still needed. Free it when autocmd_busy is reset.
