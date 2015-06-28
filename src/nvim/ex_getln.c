@@ -372,6 +372,8 @@ getcmdline (
         c = Ctrl_P;
       else if (c == K_RIGHT)
         c = Ctrl_N;
+      else if (c == PATHSEP)
+        c = K_DOWN;
     }
     /* Hitting CR after "emenu Name.": complete submenu */
     if (xpc.xp_context == EXPAND_MENUNAMES && p_wmnu
