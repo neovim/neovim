@@ -63,6 +63,8 @@ char **shell_build_argv(const char *cmd, const char *extra_args)
 
   rv[i] = NULL;
 
+  assert(rv[0]);
+
   return rv;
 }
 
