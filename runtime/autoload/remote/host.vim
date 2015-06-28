@@ -40,7 +40,11 @@ function! remote#host#Require(name)
   endif
   let host = s:hosts[a:name]
   if !host.channel && !host.initialized
-    let host.channel = call(host.factory, [a:name])
+    let host_info = {
+          \ 'name': a:name,
+          \ 'orig_name': get(host, 'orig_name', a:name)
+          \ }
+    let host.channel = call(host.factory, [host_info])
     let host.initialized = 1
   endif
   return host.channel
@@ -189,16 +193,14 @@ endfunction
 " Registration of standard hosts
 
 " Python/Python3 {{{
-function! s:RequirePythonHost(name)
-  let ver_name = has_key(s:hosts[a:name], 'orig_name') ?
-        \ s:hosts[a:name].orig_name : a:name
-  let ver = (ver_name ==# 'python') ? 2 : 3
+function! s:RequirePythonHost(host)
+  let ver = (a:host.orig_name ==# 'python') ? 2 : 3
 
   " Python host arguments
   let args = ['-c', 'import neovim; neovim.start_host()']
 
   " Collect registered Python plugins into args
-  let python_plugins = remote#host#PluginsForHost(a:name)
+  let python_plugins = remote#host#PluginsForHost(a:host.name)
   for plugin in python_plugins
     call add(args, plugin.path)
   endfor
