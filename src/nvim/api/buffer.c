@@ -557,7 +557,7 @@ static int64_t normalize_index(buf_T *buf, int64_t index)
 }
 
 // Determines whether a 0-based index is within the bounds of the buffer
-static Boolean inbounds(buf_T *buf, int64_t index)
+static bool inbounds(buf_T *buf, int64_t index)
 {
   linenr_T nlines = buf->b_ml.ml_line_count;
   return index >= -nlines && index < nlines;
