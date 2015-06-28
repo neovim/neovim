@@ -1,4 +1,4 @@
-*eval.txt*	For Vim version 7.4.  Last change: 2014 Nov 15
+*eval.txt*	For Vim version 7.4.  Last change: 2014 Nov 27
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -3302,6 +3302,17 @@ getchar([expr])						*getchar()*
 			:    endif
 			:  endwhile
 			:endfunction
+<
+		You may also receive syntetic characters, such as
+		|<CursorHold>|. Often you will want to ignore this and get
+		another character: >
+			:function GetKey()
+			:  let c = getchar()
+			:  while c == "\<CursorHold>"
+			:    let c = getchar()
+			:  endwhile
+			:  return c
+			:endfunction
 
 getcharmod()						*getcharmod()*
 		The result is a Number which is the state of the modifiers for
@@ -3512,7 +3523,7 @@ getpos({expr})	Get the position for {expr}.  For possible values of {expr}
 		This can be used to save and restore the position of a mark: >
 			let save_a_mark = getpos("'a")
 			...
-			call setpos(''a', save_a_mark
+			call setpos("'a", save_a_mark)
 <		Also see |getcurpos()| and |setpos()|.
 
 
