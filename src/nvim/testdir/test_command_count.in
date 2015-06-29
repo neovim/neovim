@@ -141,6 +141,7 @@ STARTTEST
 :let buffers = ''
 :.,$-bufdo let buffers .= ' '.bufnr('%')
 :call add(g:lines, 'bufdo:' . buffers)
+:3bd
 :let buffers = ''
 :3,7bufdo let buffers .= ' '.bufnr('%')
 :call add(g:lines, 'bufdo:' . buffers)

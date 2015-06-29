@@ -1862,20 +1862,30 @@ void ex_listdo(exarg_T *eap)
       case CMD_argdo:
         i = eap->line1 - 1;
         break;
-      case CMD_bufdo:
-        i = eap->line1;
-        break;
       default:
         break;
     }
+    buf_T *buf = curbuf;
     /* set pcmark now */
-    if (eap->cmdidx == CMD_bufdo)
-      goto_buffer(eap, DOBUF_FIRST, FORWARD, i);
-    else
+    if (eap->cmdidx == CMD_bufdo) {
+      /* Advance to the first listed buffer after "eap->line1". */
+      for (buf = firstbuf;
+           buf != NULL && (buf->b_fnum < eap->line1 || !buf->b_p_bl);
+           buf = buf->b_next) {
+        if (buf->b_fnum > eap->line2) {
+          buf = NULL;
+          break;
+        }
+      }
+      if (buf != NULL) {
+        goto_buffer(eap, DOBUF_FIRST, FORWARD, buf->b_fnum);
+      }
+    } else {
       setpcmark();
+    }
     listcmd_busy = TRUE;            /* avoids setting pcmark below */
 
-    while (!got_int) {
+    while (!got_int && buf != NULL) {
       if (eap->cmdidx == CMD_argdo) {
         /* go to argument "i" */
         if (i == ARGCOUNT)
