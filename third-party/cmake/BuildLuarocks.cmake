@@ -136,8 +136,6 @@ if(USE_BUNDLED_BUSTED)
     ARGS build luasocket 3.0rc1-2 ${LUAROCKS_BUILDARGS}
     COMMAND ${LUAROCKS_BINARY}
     ARGS build xml 1.1.2-1 ${LUAROCKS_BUILDARGS}
-    COMMAND ${LUAROCKS_BINARY}
-    ARGS build ansicolors 1.0.2-3 ${LUAROCKS_BUILDARGS}
     COMMAND ${CMAKE_COMMAND} -E touch ${HOSTDEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps
     DEPENDS lpeg)
   add_custom_target(stable-busted-deps
@@ -145,7 +143,7 @@ if(USE_BUNDLED_BUSTED)
 
   add_custom_command(OUTPUT ${HOSTDEPS_BIN_DIR}/busted
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build https://raw.githubusercontent.com/Olivine-Labs/busted/v2.0.rc8-0/busted-2.0.rc8-0.rockspec ${LUAROCKS_BUILDARGS}
+    ARGS build https://raw.githubusercontent.com/Olivine-Labs/busted/v2.0.rc10-0/busted-2.0.rc10-0.rockspec ${LUAROCKS_BUILDARGS}
     DEPENDS stable-busted-deps)
   add_custom_target(busted
     DEPENDS ${HOSTDEPS_BIN_DIR}/busted)
