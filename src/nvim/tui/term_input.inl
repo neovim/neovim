@@ -162,11 +162,10 @@ static void timer_cb(uv_timer_t *handle)
 
 static bool handle_bracketed_paste(TermInput *input)
 {
-  char *ptr = rbuffer_read_ptr(input->read_buffer);
-  size_t len = rbuffer_pending(input->read_buffer);
-  if (len > 5 && (!strncmp(ptr, "\x1b[200~", 6)
-        || !strncmp(ptr, "\x1b[201~", 6))) {
-    bool enable = ptr[4] == '0';
+  if (rbuffer_size(input->read_buffer) > 5 &&
+      (!rbuffer_cmp(input->read_buffer, "\x1b[200~", 6) ||
+       !rbuffer_cmp(input->read_buffer, "\x1b[201~", 6))) {
+    bool enable = *rbuffer_get(input->read_buffer, 4) == '0';
     // Advance past the sequence
     rbuffer_consumed(input->read_buffer, 6);
     if (input->paste_enabled == enable) {
@@ -195,11 +194,11 @@ static bool handle_bracketed_paste(TermInput *input)
 
 static bool handle_forced_escape(TermInput *input)
 {
-  char *ptr = rbuffer_read_ptr(input->read_buffer);
-  size_t len = rbuffer_pending(input->read_buffer);
-  if (len > 1 && ptr[0] == ESC && ptr[1] == NUL) {
+  if (rbuffer_size(input->read_buffer) > 1
+      && !rbuffer_cmp(input->read_buffer, "\x1b\x00", 2)) {
     // skip the ESC and NUL and push one <esc> to the input buffer
-    termkey_push_bytes(input->tk, ptr, 1);
+    size_t rcnt;
+    termkey_push_bytes(input->tk, rbuffer_read_ptr(input->read_buffer, &rcnt), 1);
     rbuffer_consumed(input->read_buffer, 2);
     tk_getkeys(input, true);
     return true;
@@ -207,9 +206,9 @@ static bool handle_forced_escape(TermInput *input)
   return false;
 }
 
-static void read_cb(RStream *rstream, void *rstream_data, bool eof)
+static void read_cb(RStream *rstream, RBuffer *buf, void *data, bool eof)
 {
-  TermInput *input = rstream_data;
+  TermInput *input = data;
 
   if (eof) {
     if (input->in_fd == 0 && !os_isatty(0) && os_isatty(2)) {
@@ -236,19 +235,33 @@ static void read_cb(RStream *rstream, void *rstream_data, bool eof)
     if (handle_bracketed_paste(input) || handle_forced_escape(input)) {
       continue;
     }
-    char *ptr = rbuffer_read_ptr(input->read_buffer);
-    size_t len = rbuffer_pending(input->read_buffer);
-    // Find the next 'esc' and push everything up to it(excluding)
-    size_t i;
-    for (i = ptr[0] == ESC ? 1 : 0; i < len; i++) {
-      if (ptr[i] == '\x1b') {
+
+    // Find the next 'esc' and push everything up to it(excluding). This is done
+    // so the `handle_bracketed_paste`/`handle_forced_escape` calls above work
+    // as expected.
+    size_t count = 0;
+    RBUFFER_EACH(input->read_buffer, c, i) {
+      count = i + 1;
+      if (c == '\x1b' && count > 1) {
         break;
       }
     }
-    size_t consumed = termkey_push_bytes(input->tk, ptr, i);
-    rbuffer_consumed(input->read_buffer, consumed);
-    tk_getkeys(input, false);
-  } while (rbuffer_pending(input->read_buffer));
+
+    RBUFFER_UNTIL_EMPTY(input->read_buffer, ptr, len) {
+      size_t consumed = termkey_push_bytes(input->tk, ptr, MIN(count, len));
+      // termkey_push_bytes can return (size_t)-1, so it is possible that
+      // `consumed > input->read_buffer->size`, but since tk_getkeys is called
+      // soon, it shouldn't happen
+      assert(consumed <= input->read_buffer->size);
+      rbuffer_consumed(input->read_buffer, consumed);
+      // Need to process the keys now since there's no guarantee "count" will
+      // fit into libtermkey's input buffer.
+      tk_getkeys(input, false);
+      if (!(count -= consumed)) {
+        break;
+      }
+    }
+  } while (rbuffer_size(input->read_buffer));
 }
 
 static TermInput *term_input_new(void)

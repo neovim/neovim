@@ -20341,19 +20341,19 @@ static inline void push_job_event(Job *job, ufunc_T *callback,
   }, !disable_job_defer);
 }
 
-static void on_job_stdout(RStream *rstream, void *job, bool eof)
+static void on_job_stdout(RStream *rstream, RBuffer *buf, void *job, bool eof)
 {
   TerminalJobData *data = job_data(job);
-  on_job_output(rstream, job, eof, data->on_stdout, "stdout");
+  on_job_output(rstream, job, buf, eof, data->on_stdout, "stdout");
 }
 
-static void on_job_stderr(RStream *rstream, void *job, bool eof)
+static void on_job_stderr(RStream *rstream, RBuffer *buf, void *job, bool eof)
 {
   TerminalJobData *data = job_data(job);
-  on_job_output(rstream, job, eof, data->on_stderr, "stderr");
+  on_job_output(rstream, job, buf, eof, data->on_stderr, "stderr");
 }
 
-static void on_job_output(RStream *rstream, Job *job, bool eof,
+static void on_job_output(RStream *rstream, Job *job, RBuffer *buf, bool eof,
     ufunc_T *callback, const char *type)
 {
   if (eof) {
@@ -20361,20 +20361,19 @@ static void on_job_output(RStream *rstream, Job *job, bool eof,
   }
 
   TerminalJobData *data = job_data(job);
-  char *ptr = rstream_read_ptr(rstream);
-  size_t len = rstream_pending(rstream);
+  RBUFFER_UNTIL_EMPTY(buf, ptr, len) {
+    // The order here matters, the terminal must receive the data first because
+    // push_job_event will modify the read buffer(convert NULs into NLs)
+    if (data->term) {
+      terminal_receive(data->term, ptr, len);
+    }
 
-  // The order here matters, the terminal must receive the data first because
-  // push_job_event will modify the read buffer(convert NULs into NLs)
-  if (data->term) {
-    terminal_receive(data->term, ptr, len);
+    if (callback) {
+      push_job_event(job, callback, type, ptr, len, 0);
+    }
+
+    rbuffer_consumed(buf, len);
   }
-
-  if (callback) {
-    push_job_event(job, callback, type, ptr, len, 0);
-  }
-
-  rbuffer_consumed(rstream_buffer(rstream), len);
 }
 
 static void on_job_exit(Job *job, int status, void *d)

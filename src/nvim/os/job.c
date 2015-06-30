@@ -404,17 +404,17 @@ static void job_stop_timer_cb(uv_timer_t *handle)
 }
 
 // Wraps the call to std{out,err}_cb and emits a JobExit event if necessary.
-static void read_cb(RStream *rstream, void *data, bool eof)
+static void read_cb(RStream *rstream, RBuffer *buf, void *data, bool eof)
 {
   Job *job = data;
 
   if (rstream == job->out) {
-    job->opts.stdout_cb(rstream, data, eof);
+    job->opts.stdout_cb(rstream, buf, data, eof);
     if (eof) {
       close_job_out(job);
     }
   } else {
-    job->opts.stderr_cb(rstream, data, eof);
+    job->opts.stderr_cb(rstream, buf, data, eof);
     if (eof) {
       close_job_err(job);
     }

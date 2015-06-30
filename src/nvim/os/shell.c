@@ -283,25 +283,28 @@ static void dynamic_buffer_ensure(DynamicBuffer *buf, size_t desired)
   buf->data = xrealloc(buf->data, buf->cap);
 }
 
-static void system_data_cb(RStream *rstream, void *data, bool eof)
+static void system_data_cb(RStream *rstream, RBuffer *buf, void *data, bool eof)
 {
   Job *job = data;
-  DynamicBuffer *buf = job_data(job);
+  DynamicBuffer *dbuf = job_data(job);
 
-  size_t nread = rstream_pending(rstream);
-
-  dynamic_buffer_ensure(buf, buf->len + nread + 1);
-  rstream_read(rstream, buf->data + buf->len, nread);
-
-  buf->len += nread;
+  size_t nread = buf->size;
+  dynamic_buffer_ensure(dbuf, dbuf->len + nread + 1);
+  rbuffer_read(buf, dbuf->data + dbuf->len, nread);
+  dbuf->len += nread;
 }
 
-static void out_data_cb(RStream *rstream, void *data, bool eof)
+static void out_data_cb(RStream *rstream, RBuffer *buf, void *data, bool eof)
 {
-  RBuffer *rbuffer = rstream_buffer(rstream);
-  size_t written = write_output(rbuffer_read_ptr(rbuffer),
-                                rbuffer_pending(rbuffer), false, eof);
-  rbuffer_consumed(rbuffer, written);
+  RBUFFER_UNTIL_EMPTY(buf, ptr, len) {
+    size_t written = write_output(ptr, len, false,
+        eof && len <= rbuffer_size(buf));
+    if (written) {
+      rbuffer_consumed(buf, written);
+    } else {
+      break;
+    }
+  }
 }
 
 /// Parses a command string into a sequence of words, taking quotes into
