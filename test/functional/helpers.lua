@@ -207,6 +207,14 @@ local function execute(...)
   end
 end
 
+-- Dedent the given text and write it to the file name.
+local function write_file(name, text)
+  local file = io.open(name, 'w')
+  file:write(dedent(text))
+  file:flush()
+  file:close()
+end
+
 local function source(code)
   local tmpname = os.tmpname()
   local tmpfile = io.open(tmpname, "w")
@@ -315,5 +323,6 @@ return {
   curtab = curtab,
   curbuf_contents = curbuf_contents,
   wait = wait,
-  set_session = set_session
+  set_session = set_session,
+  write_file = write_file
 }
