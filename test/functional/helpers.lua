@@ -217,10 +217,7 @@ end
 
 local function source(code)
   local tmpname = os.tmpname()
-  local tmpfile = io.open(tmpname, "w")
-  tmpfile:write(code)
-  tmpfile:flush()
-  tmpfile:close()
+  write_file(tmpname, code)
   nvim_command('source '..tmpname)
   os.remove(tmpname)
 end
