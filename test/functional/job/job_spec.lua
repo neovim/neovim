@@ -1,11 +1,11 @@
 
 local helpers = require('test.functional.helpers')
-local clear, nvim, eq, neq, ok, expect, eval, next_msg, run, stop, session
-  = helpers.clear, helpers.nvim, helpers.eq, helpers.neq, helpers.ok,
-  helpers.expect, helpers.eval, helpers.next_message, helpers.run,
-  helpers.stop, helpers.session
-local nvim_dir, insert, feed = helpers.nvim_dir, helpers.insert, helpers.feed
-local source, execute, wait = helpers.source, helpers.execute, helpers.wait
+local clear, eq, eval, execute, expect, feed, insert, neq, next_msg, nvim,
+  nvim_dir, ok, run, session, source, stop, wait, write_file = helpers.clear,
+  helpers.eq, helpers.eval, helpers.execute, helpers.expect, helpers.feed,
+  helpers.insert, helpers.neq, helpers.next_message, helpers.nvim,
+  helpers.nvim_dir, helpers.ok, helpers.run, helpers.session, helpers.source,
+  helpers.stop, helpers.wait, helpers.write_file
 
 
 describe('jobs', function()
@@ -64,9 +64,7 @@ describe('jobs', function()
   it('preserves NULs', function()
     -- Make a file with NULs in it.
     local filename = os.tmpname()
-    local file = io.open(filename, "w")
-    file:write("abc\0def\n")
-    file:close()
+    write_file(filename, "abc\0def\n")
 
     nvim('command', "let j = jobstart(['cat', '"..filename.."'], g:job_opts)")
     eq({'notification', 'stdout', {0, {'abc\ndef', ''}}}, next_msg())

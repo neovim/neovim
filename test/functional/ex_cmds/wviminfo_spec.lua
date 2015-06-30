@@ -1,7 +1,7 @@
 local helpers, lfs = require('test.functional.helpers'), require('lfs')
-local clear, execute, eq, neq, spawn, nvim_prog, set_session, wait =
-  helpers.clear, helpers.execute, helpers.eq, helpers.neq, helpers.spawn,
-  helpers.nvim_prog, helpers.set_session, helpers.wait
+local clear, execute, eq, neq, spawn, nvim_prog, set_session, wait, write_file
+  = helpers.clear, helpers.execute, helpers.eq, helpers.neq, helpers.spawn,
+  helpers.nvim_prog, helpers.set_session, helpers.wait, helpers.write_file
 
 describe(':wviminfo', function()
   local viminfo_file = 'wviminfo_test'
@@ -33,10 +33,7 @@ describe(':wviminfo', function()
     local text = 'wviminfo test'
 
     -- Create a dummy file
-    local fp = io.open(viminfo_file, 'w')
-    fp:write(text)
-    fp:flush()
-    fp:close()
+    write_file(viminfo_file, text)
 
     -- sanity check
     eq(text, io.open(viminfo_file):read())

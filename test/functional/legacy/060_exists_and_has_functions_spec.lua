@@ -3,6 +3,7 @@
 local helpers = require('test.functional.helpers')
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local write_file = helpers.write_file
 local os = require('os')
 
 describe('exists() and has() functions', function()
@@ -11,8 +12,7 @@ describe('exists() and has() functions', function()
   it('is working', function()
 
     -- Create a temporary script needed for the test.
-    local script = io.open('test60.vim', 'w')
-    script:write(helpers.dedent([=[
+    write_file('test60.vim', [=[
       " Vim script for exists() function test
       " Script-local variables are checked here
       
@@ -110,9 +110,7 @@ describe('exists() and has() functions', function()
           echo "FAILED"
       endif
       unlet str
-      ]=]))
-    script:flush()
-    script:close()
+      ]=])
 
     source([=[
       " Add the special directory with test scripts to &rtp
