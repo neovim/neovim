@@ -4,7 +4,6 @@ STARTTEST
 :so small.vim
 :" Also test a BOM is ignored.
 :so mbyte.vim
-:set encoding=utf-8
 :7/start of errorfile/,/end of errorfile/w! Xerrorfile1
 :7/start of errorfile/,/end of errorfile/-1w! Xerrorfile2
 :/start of testfile/,/end of testfile/w! Xtestfile

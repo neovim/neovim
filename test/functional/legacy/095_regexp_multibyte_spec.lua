@@ -15,7 +15,7 @@ describe('regex with multi-byte', function()
       Results of test95:]])
 
     source([=[
-      set encoding=utf-8 nomore
+      set nomore
       let tl = []
 
       call add(tl, [2, '[[:alpha:][=a=]]\+', '879 aiaãâaiuvna ', 'aiaãâaiuvna'])

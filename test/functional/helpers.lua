@@ -7,7 +7,7 @@ local Session = require('nvim.session')
 
 local nvim_prog = os.getenv('NVIM_PROG') or 'build/bin/nvim'
 local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
-                   '--cmd', 'set shortmess+=I background=light noswapfile noautoindent laststatus=1',
+                   '--cmd', 'set shortmess+=I background=light noswapfile noautoindent laststatus=1 encoding=utf-8',
                    '--embed'}
 
 -- Formulate a path to the directory containing nvim.  We use this to
