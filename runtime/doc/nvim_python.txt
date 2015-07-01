@@ -20,16 +20,25 @@ Note: For now only the old Vim 7.3 API is supported.
 ==============================================================================
 2. Quickstart						 *nvim-python-quickstart*
 
+If you used a package manager to install Nvim, there's a good chance that
+it also provides the `neovim` Python package. If it doesn't, follow these
+steps to install the package with Python's package manager, `pip`.
+
+Note: Depending on your system, `pip` might refer to Python 2 or Python 3,
+      which is why the following instructions mention `pip2` or `pip3`
+      explicitly. If one of these is not available for you, maybe `pip`
+      is what you want.
+
 To use Vim Python 2/3 plugins with Nvim, do the following:
 
 - For Python 2 plugins, make sure an interpreter for Python 2.6 or 2.7 is
   available in your `$PATH`, then install the `neovim` Python package systemwide:
   >
-    $ sudo pip install neovim
+    $ sudo pip2 install neovim
 <
   or for the current user:
 >
-    $ pip install --user neovim
+    $ pip2 install --user neovim
 <
 - For Python 3 plugins, make sure an interpreter for Python 3.3 or above is
   available in your `$PATH`, then install the `neovim` Python package systemwide:
