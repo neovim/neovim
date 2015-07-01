@@ -1,9 +1,12 @@
 Tests for various python features.     vim: set ft=vim :
 
+This test is not run in Neovim(see the has('nvim') check below) because the
+python3 compatibility layer is not complete.
+
 STARTTEST
 :so small.vim
 :set noswapfile
-:if !has('python3') | e! test.ok | wq! test.out | endif
+:if !has('python3') || has('nvim') | e! test.ok | wq! test.out | endif
 :lang C
 :fun Test()
 :py3 import vim

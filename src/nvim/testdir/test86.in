@@ -1,5 +1,8 @@
 Tests for various python features.     vim: set ft=vim :
 
+This test is not run in Neovim(see the has('nvim') check below) because the
+python compatibility layer is not complete.
+
 NOTE: This will cause errors when run under valgrind.
 This would require recompiling Python with:
   ./configure --without-pymalloc

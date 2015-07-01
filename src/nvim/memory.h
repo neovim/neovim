@@ -1,6 +1,7 @@
 #ifndef NVIM_MEMORY_H
 #define NVIM_MEMORY_H
 
+#include <stdint.h>  // for uint8_t
 #include <stddef.h>  // for size_t
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

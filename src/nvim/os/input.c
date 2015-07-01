@@ -79,7 +79,7 @@ void input_stop(void)
 // Low level input function
 int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
 {
-  if (rbuffer_pending(input_buffer)) {
+  if (rbuffer_size(input_buffer)) {
     return (int)rbuffer_read(input_buffer, (char *)buf, (size_t)maxlen);
   }
 
@@ -108,7 +108,7 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
     return 0;
   }
 
-  if (rbuffer_pending(input_buffer)) {
+  if (rbuffer_size(input_buffer)) {
     // Safe to convert rbuffer_read to int, it will never overflow since we use
     // relatively small buffers.
     return (int)rbuffer_read(input_buffer, (char *)buf, (size_t)maxlen);
@@ -153,7 +153,7 @@ size_t input_enqueue(String keys)
 {
   char *ptr = keys.data, *end = ptr + keys.size;
 
-  while (rbuffer_available(input_buffer) >= 6 && ptr < end) {
+  while (rbuffer_space(input_buffer) >= 6 && ptr < end) {
     uint8_t buf[6] = {0};
     unsigned int new_size = trans_special((uint8_t **)&ptr, buf, true);
 
@@ -309,16 +309,17 @@ static InbufPollResult inbuf_poll(int ms)
   return input_eof ? kInputEof : kInputNone;
 }
 
-static void read_cb(RStream *rstream, void *data, bool at_eof)
+static void read_cb(RStream *rstream, RBuffer *buf, void *data, bool at_eof)
 {
   if (at_eof) {
     input_eof = true;
   }
 
-  char *buf = rbuffer_read_ptr(read_buffer);
-  size_t buf_size = rbuffer_pending(read_buffer);
-  (void)rbuffer_write(input_buffer, buf, buf_size);
-  rbuffer_consumed(read_buffer, buf_size);
+  assert(rbuffer_space(input_buffer) >= rbuffer_size(read_buffer));
+  RBUFFER_UNTIL_EMPTY(read_buffer, ptr, len) {
+    (void)rbuffer_write(input_buffer, ptr, len);
+    rbuffer_consumed(read_buffer, len);
+  }
 }
 
 static void process_interrupts(void)
@@ -327,18 +328,16 @@ static void process_interrupts(void)
     return;
   }
 
-  char *inbuf = rbuffer_read_ptr(input_buffer);
-  size_t count = rbuffer_pending(input_buffer), consume_count = 0;
-
-  for (int i = (int)count - 1; i >= 0; i--) {
-    if (inbuf[i] == 3) {
+  size_t consume_count = 0;
+  RBUFFER_EACH_REVERSE(input_buffer, c, i) {
+    if ((uint8_t)c == 3) {
       got_int = true;
-      consume_count = (size_t)i;
+      consume_count = i;
       break;
     }
   }
 
-  if (got_int) {
+  if (got_int && consume_count) {
     // Remove everything typed before the CTRL-C
     rbuffer_consumed(input_buffer, consume_count);
   }
@@ -362,7 +361,7 @@ static int push_event_key(uint8_t *buf, int maxlen)
 static bool input_ready(void)
 {
   return typebuf_was_filled ||                 // API call filled typeahead
-         rbuffer_pending(input_buffer) > 0 ||  // Input buffer filled
+         rbuffer_size(input_buffer) ||         // Input buffer filled
          event_has_deferred();                 // Events must be processed
 }
 

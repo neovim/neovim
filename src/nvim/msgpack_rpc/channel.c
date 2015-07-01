@@ -328,19 +328,17 @@ static void channel_from_stdio(void)
   channel->data.streams.uv = NULL;
 }
 
-static void job_out(RStream *rstream, void *data, bool eof)
+static void job_out(RStream *rstream, RBuffer *buf, void *data, bool eof)
 {
   Job *job = data;
-  parse_msgpack(rstream, job_data(job), eof);
+  parse_msgpack(rstream, buf, job_data(job), eof);
 }
 
-static void job_err(RStream *rstream, void *data, bool eof)
+static void job_err(RStream *rstream, RBuffer *rbuf, void *data, bool eof)
 {
-  size_t count;
-  char buf[256];
-
-  while ((count = rstream_pending(rstream))) {
-    size_t read = rstream_read(rstream, buf, sizeof(buf) - 1);
+  while (rbuffer_size(rbuf)) {
+    char buf[256];
+    size_t read = rbuffer_read(rbuf, buf, sizeof(buf) - 1);
     buf[read] = NUL;
     ELOG("Channel %" PRIu64 " stderr: %s",
          ((Channel *)job_data(data))->id, buf);
@@ -352,7 +350,7 @@ static void job_exit(Job *job, int status, void *data)
   decref(data);
 }
 
-static void parse_msgpack(RStream *rstream, void *data, bool eof)
+static void parse_msgpack(RStream *rstream, RBuffer *rbuf, void *data, bool eof)
 {
   Channel *channel = data;
   incref(channel);
@@ -363,14 +361,14 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
     goto end;
   }
 
-  size_t count = rstream_pending(rstream);
+  size_t count = rbuffer_size(rbuf);
   DLOG("Feeding the msgpack parser with %u bytes of data from RStream(%p)",
        count,
        rstream);
 
   // Feed the unpacker with data
   msgpack_unpacker_reserve_buffer(channel->unpacker, count);
-  rstream_read(rstream, msgpack_unpacker_buffer(channel->unpacker), count);
+  rbuffer_read(rbuf, msgpack_unpacker_buffer(channel->unpacker), count);
   msgpack_unpacker_buffer_consumed(channel->unpacker, count);
 
   msgpack_unpacked unpacked;

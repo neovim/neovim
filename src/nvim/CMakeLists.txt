@@ -40,6 +40,7 @@ file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/tui)
 file(GLOB NEOVIM_SOURCES *.c os/*.c api/*.c api/private/*.c msgpack_rpc/*.c
   tui/*.c)
 file(GLOB_RECURSE NEOVIM_HEADERS *.h)
+file(GLOB UNIT_TEST_FIXTURES ${PROJECT_SOURCE_DIR}/test/unit/fixtures/*.c)
 
 foreach(sfile ${NEOVIM_SOURCES})
   get_filename_component(f ${sfile} NAME)
@@ -205,7 +206,7 @@ set_target_properties(libnvim PROPERTIES
 set_property(TARGET libnvim APPEND_STRING PROPERTY COMPILE_FLAGS " -DMAKE_LIB ")
 
 add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
-    ${NEOVIM_SOURCES} ${NEOVIM_HEADERS})
+    ${NEOVIM_SOURCES} ${UNIT_TEST_FIXTURES} ${NEOVIM_HEADERS})
 target_link_libraries(nvim-test ${NVIM_LINK_LIBRARIES})
 set_property(TARGET nvim-test APPEND_STRING PROPERTY COMPILE_FLAGS -DUNIT_TESTING)
 

@@ -19,6 +19,15 @@
 
 // Many fs functions from libuv return that value on success.
 static const int kLibuvSuccess = 0;
+static uv_loop_t fs_loop;
+
+
+// Initialize the fs module
+void fs_init(void)
+{
+  uv_loop_init(&fs_loop);
+}
+
 
 /// Change to the given directory.
 ///
@@ -184,7 +193,7 @@ int os_open(const char* path, int flags, int mode)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t open_req;
-  int r = uv_fs_open(uv_default_loop(), &open_req, path, flags, mode, NULL);
+  int r = uv_fs_open(&fs_loop, &open_req, path, flags, mode, NULL);
   uv_fs_req_cleanup(&open_req);
   // r is the same as open_req.result (except for OOM: then only r is set).
   return r;
@@ -197,7 +206,7 @@ static bool os_stat(const char *name, uv_stat_t *statbuf)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
-  int result = uv_fs_stat(uv_default_loop(), &request, name, NULL);
+  int result = uv_fs_stat(&fs_loop, &request, name, NULL);
   *statbuf = request.statbuf;
   uv_fs_req_cleanup(&request);
   return (result == kLibuvSuccess);
@@ -224,7 +233,7 @@ int os_setperm(const char_u *name, int perm)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
-  int result = uv_fs_chmod(uv_default_loop(), &request,
+  int result = uv_fs_chmod(&fs_loop, &request,
                            (const char*)name, perm, NULL);
   uv_fs_req_cleanup(&request);
 
@@ -245,7 +254,7 @@ int os_fchown(int file_descriptor, uv_uid_t owner, uv_gid_t group)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
-  int result = uv_fs_fchown(uv_default_loop(), &request, file_descriptor,
+  int result = uv_fs_fchown(&fs_loop, &request, file_descriptor,
                             owner, group, NULL);
   uv_fs_req_cleanup(&request);
   return result;
@@ -294,7 +303,7 @@ int os_rename(const char_u *path, const char_u *new_path)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
-  int result = uv_fs_rename(uv_default_loop(), &request,
+  int result = uv_fs_rename(&fs_loop, &request,
                             (const char *)path, (const char *)new_path, NULL);
   uv_fs_req_cleanup(&request);
 
@@ -312,7 +321,7 @@ int os_mkdir(const char *path, int32_t mode)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
-  int result = uv_fs_mkdir(uv_default_loop(), &request, path, mode, NULL);
+  int result = uv_fs_mkdir(&fs_loop, &request, path, mode, NULL);
   uv_fs_req_cleanup(&request);
   return result;
 }
@@ -328,7 +337,7 @@ int os_mkdtemp(const char *template, char *path)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
-  int result = uv_fs_mkdtemp(uv_default_loop(), &request, template, NULL);
+  int result = uv_fs_mkdtemp(&fs_loop, &request, template, NULL);
   if (result == kLibuvSuccess) {
     STRNCPY(path, request.path, TEMP_FILE_PATH_MAXLEN);
   }
@@ -343,7 +352,7 @@ int os_rmdir(const char *path)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
-  int result = uv_fs_rmdir(uv_default_loop(), &request, path, NULL);
+  int result = uv_fs_rmdir(&fs_loop, &request, path, NULL);
   uv_fs_req_cleanup(&request);
   return result;
 }
@@ -356,7 +365,7 @@ int os_rmdir(const char *path)
 bool os_scandir(Directory *dir, const char *path)
   FUNC_ATTR_NONNULL_ALL
 {
-  int r = uv_fs_scandir(uv_default_loop(), &dir->request, path, 0, NULL);
+  int r = uv_fs_scandir(&fs_loop, &dir->request, path, 0, NULL);
   if (r <= 0) {
     os_closedir(dir);
   }
@@ -388,7 +397,7 @@ int os_remove(const char *path)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
-  int result = uv_fs_unlink(uv_default_loop(), &request, path, NULL);
+  int result = uv_fs_unlink(&fs_loop, &request, path, NULL);
   uv_fs_req_cleanup(&request);
   return result;
 }
@@ -413,7 +422,7 @@ bool os_fileinfo_link(const char *path, FileInfo *file_info)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
-  int result = uv_fs_lstat(uv_default_loop(), &request, path, NULL);
+  int result = uv_fs_lstat(&fs_loop, &request, path, NULL);
   file_info->stat = request.statbuf;
   uv_fs_req_cleanup(&request);
   return (result == kLibuvSuccess);
@@ -428,7 +437,7 @@ bool os_fileinfo_fd(int file_descriptor, FileInfo *file_info)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
-  int result = uv_fs_fstat(uv_default_loop(), &request, file_descriptor, NULL);
+  int result = uv_fs_fstat(&fs_loop, &request, file_descriptor, NULL);
   file_info->stat = request.statbuf;
   uv_fs_req_cleanup(&request);
   return (result == kLibuvSuccess);
