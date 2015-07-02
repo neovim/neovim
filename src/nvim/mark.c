@@ -1117,10 +1117,17 @@ static void cleanup_jumplist(void)
           && curwin->w_jumplist[i].fmark.mark.lnum
           == curwin->w_jumplist[from].fmark.mark.lnum)
         break;
-    if (i >= curwin->w_jumplistlen)         /* no duplicate */
-      curwin->w_jumplist[to++] = curwin->w_jumplist[from];
-    else
+    if (i >= curwin->w_jumplistlen) { // no duplicate
+      if (to != from) {
+        // Not using curwin->w_jumplist[to++] = curwin->w_jumplist[from] because 
+        // this way valgrind complains about overlapping source and destination 
+        // in memcpy() call. (clang-3.6.0, debug build with -DEXITFREE).
+        curwin->w_jumplist[to] = curwin->w_jumplist[from];
+      }
+      to++;
+    } else {
       xfree(curwin->w_jumplist[from].fname);
+    }
   }
   if (curwin->w_jumplistidx == curwin->w_jumplistlen)
     curwin->w_jumplistidx = to;
