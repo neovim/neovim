@@ -52,7 +52,7 @@ if ! $MAKE_CMD oldtest; then
 fi
 asan_check "$tmpdir"
 
-coveralls --encoding iso-8859-1 || echo 'coveralls upload failed.'
+coveralls --encoding iso-8859-1 --exclude test --exclude cmake --exclude config || echo 'coveralls upload failed.'
 
 # Test if correctly installed.
 sudo -E $MAKE_CMD install
