@@ -10,7 +10,6 @@ export NVIM_PRG := $(NVIM_PRG)
 
 SCRIPTS ?= \
            test13.out             \
-           test14.out             \
            test17.out             \
            test24.out             \
            test32.out             \
