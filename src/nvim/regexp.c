@@ -1120,12 +1120,10 @@ static int get_coll_element(char_u **pp)
 }
 
 static int reg_cpo_lit; /* 'cpoptions' contains 'l' flag */
-static int reg_cpo_bsl; /* 'cpoptions' contains '\' flag */
 
 static void get_cpo_flags(void)
 {
   reg_cpo_lit = vim_strchr(p_cpo, CPO_LITERAL) != NULL;
-  reg_cpo_bsl = vim_strchr(p_cpo, CPO_BACKSL) != NULL;
 }
 
 /*
@@ -1149,7 +1147,6 @@ static char_u *skip_anyof(char_u *p)
       if (*p != ']' && *p != NUL)
         mb_ptr_adv(p);
     } else if (*p == '\\'
-               && !reg_cpo_bsl
                && (vim_strchr(REGEXP_INRANGE, p[1]) != NULL
                    || (!reg_cpo_lit && vim_strchr(REGEXP_ABBR, p[1]) != NULL)))
       p += 2;
@@ -2222,7 +2219,7 @@ collection:
               }
 
               /* Handle \o40, \x20 and \u20AC style sequences */
-              if (endc == '\\' && !reg_cpo_lit && !reg_cpo_bsl)
+              if (endc == '\\' && !reg_cpo_lit)
                 endc = coll_get_char();
 
               if (startc > endc)
@@ -2245,10 +2242,8 @@ collection:
            * Only "\]", "\^", "\]" and "\\" are special in Vi.  Vim
            * accepts "\t", "\e", etc., but only when the 'l' flag in
            * 'cpoptions' is not included.
-           * Posix doesn't recognize backslash at all.
            */
           else if (*regparse == '\\'
-                   && !reg_cpo_bsl
                    && (vim_strchr(REGEXP_INRANGE, regparse[1]) != NULL
                        || (!reg_cpo_lit
                            && vim_strchr(REGEXP_ABBR,

@@ -1584,10 +1584,8 @@ collection:
          * Only "\]", "\^", "\]" and "\\" are special in Vi.  Vim
          * accepts "\t", "\e", etc., but only when the 'l' flag in
          * 'cpoptions' is not included.
-         * Posix doesn't recognize backslash at all.
          */
         if (*regparse == '\\'
-            && !reg_cpo_bsl
             && regparse + 1 <= endp
             && (vim_strchr(REGEXP_INRANGE, regparse[1]) != NULL
                 || (!reg_cpo_lit

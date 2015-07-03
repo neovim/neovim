@@ -1945,14 +1945,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	POSIX flags.  These are not included in the Vi default value, except
 	when $VIM_POSIX was set on startup. |posix|
 
-	    contains	behavior	~
-								*cpo-\*
-		\	Backslash in a [] range in a search pattern is taken
-			literally, only "\]" is special  See |/[]|
-			   '\' included: "/[ \-]"  finds <Space>, '\' and '-'
-			   '\' excluded: "/[ \-]"  finds <Space> and '-'
-			Also see |cpo-l|.
-
 						*'cryptmethod'* *'cm'*
 'cryptmethod'		Removed. |vim-differences| {Nvim}
 
