@@ -130,14 +130,13 @@
 #define CPO_REGAPPEND   '>'     /* insert NL when appending to a register */
 /* POSIX flags */
 #define CPO_BACKSL      '\\'    /* \ is not special in [] */
-#define CPO_CHDIR       '.'     /* don't chdir if buffer is modified */
 #define CPO_SCOLON      ';'     /* using "," and ";" will skip over char if
                                  * cursor would not move */
 /* default values for Vim, Vi and POSIX */
 #define CPO_VIM         "aABceFs"
 #define CPO_VI          "aAbBcCdDeEfFiIJkKlLmMnoOpPqrRsStuvWxXyZ$!%+<>;"
 #define CPO_ALL \
-  "aAbBcCdDeEfFiIJkKlLmMnoOpPqrRsStuvWxXyZ$!%+<>\\.;"
+  "aAbBcCdDeEfFiIJkKlLmMnoOpPqrRsStuvWxXyZ$!%+<>\\;"
 
 /* characters for p_ww option: */
 #define WW_ALL          "bshl<>[],~"

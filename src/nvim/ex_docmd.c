@@ -6834,12 +6834,6 @@ void ex_cd(exarg_T *eap)
   {
     if (allbuf_locked())
       return;
-    if (vim_strchr(p_cpo, CPO_CHDIR) != NULL && curbufIsChanged()
-        && !eap->forceit) {
-      EMSG(_(
-              "E747: Cannot change directory, buffer is modified (add ! to override)"));
-      return;
-    }
 
     /* ":cd -": Change to previous directory */
     if (STRCMP(new_dir, "-") == 0) {
