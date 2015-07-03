@@ -1946,8 +1946,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	when $VIM_POSIX was set on startup. |posix|
 
 	    contains	behavior	~
-								*cpo-#*
-		#	A count before "D", "o" and "O" has no effect.
 								*cpo-&*
 		&	When ":preserve" was used keep the swap file when
 			exiting normally while this buffer is still loaded.
