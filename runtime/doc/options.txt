@@ -1493,8 +1493,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'columns' 'co'		number	(default 80 or terminal width)
 			global
 	Number of columns of the screen.  Normally this is set by the terminal
-	initialization and does not have to be set by hand.  Also see
-	|posix-screen-size|.
+	initialization and does not have to be set by hand.
 	When Vim is running in the GUI or in a resizable window, setting this
 	option will cause the window size to be changed.  When you only want
 	to use the size for the GUI, put the command in your |gvimrc| file.
@@ -1701,10 +1700,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Commas can be added for readability.
 	To avoid problems with flags that are added in the future, use the
 	"+=" and "-=" feature of ":set" |add-option-flags|.
-	NOTE: This option is set to the POSIX default value at startup when
-	the Vi default value would be used and the $VIM_POSIX environment
-	variable exists |posix|.  This means Vim tries to behave like the
-	POSIX specification.
 
 	    contains	behavior	~
 								*cpo-a*
@@ -1802,7 +1797,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			See |/[]|
 			   'l' included: "/[ \t]"  finds <Space>, '\' and 't'
 			   'l' excluded: "/[ \t]"  finds <Space> and <Tab>
-			Also see |cpo-\|.
 								*cpo-L*
 		L	When the 'list' option is set, 'wrapmargin',
 			'textwidth', 'softtabstop' and Virtual Replace mode
@@ -1941,9 +1935,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			character, the cursor won't move. When not included,
 			the cursor would skip over it and jump to the
 			following occurrence.
-
-	POSIX flags.  These are not included in the Vi default value, except
-	when $VIM_POSIX was set on startup. |posix|
 
 						*'cryptmethod'* *'cm'*
 'cryptmethod'		Removed. |vim-differences| {Nvim}
@@ -4128,7 +4119,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	Number of lines of the Vim window.
 	Normally you don't need to set this.  It is done automatically by the
-	terminal initialization code.  Also see |posix-screen-size|.
+	terminal initialization code.
 	When Vim is running in the GUI or in a resizable window, setting this
 	option will cause the window size to be changed.  When you only want
 	to use the size for the GUI, put the command in your |gvimrc| file.
@@ -5601,8 +5592,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	function to get the effective shiftwidth value.
 
 						*'shortmess'* *'shm'*
-'shortmess' 'shm'	string	(Vim default "filnxtToO", Vi default: "",
-							POSIX default: "A")
+'shortmess' 'shm'	string	(Vim default "filnxtToO", Vi default: "")
 			global
 	This option helps to avoid all the |hit-enter| prompts caused by file
 	messages, for example  with CTRL-G, and to avoid some other messages.

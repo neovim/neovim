@@ -128,14 +128,11 @@
 #define CPO_PLUS        '+'     /* ":write file" resets 'modified' */
 #define CPO_SPECI       '<'     /* don't recognize <> in mappings */
 #define CPO_REGAPPEND   '>'     /* insert NL when appending to a register */
-/* POSIX flags */
 #define CPO_SCOLON      ';'     /* using "," and ";" will skip over char if
                                  * cursor would not move */
-/* default values for Vim, Vi and POSIX */
+/* default values for Vim and Vi */
 #define CPO_VIM         "aABceFs"
 #define CPO_VI          "aAbBcCdDeEfFiIJkKlLmMnoOpPqrRsStuvWxXyZ$!%+<>;"
-#define CPO_ALL \
-  "aAbBcCdDeEfFiIJkKlLmMnoOpPqrRsStuvWxXyZ$!%+<>;"
 
 /* characters for p_ww option: */
 #define WW_ALL          "bshl<>[],~"
