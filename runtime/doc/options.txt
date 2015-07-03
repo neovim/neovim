@@ -1952,9 +1952,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			   '\' included: "/[ \-]"  finds <Space>, '\' and '-'
 			   '\' excluded: "/[ \-]"  finds <Space> and '-'
 			Also see |cpo-l|.
-								*cpo-/*
-		/	When "%" is used as the replacement string in a |:s|
-			command, use the previous replacement string. |:s%|
 								*cpo-.*
 		.	The ":chdir" and ":cd" commands fail if the current
 			buffer is modified, unless ! is used.  Vim doesn't

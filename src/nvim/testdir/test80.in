@@ -126,10 +126,6 @@ TEST_6:
 STARTTEST
 :set magic&
 :$put =\"\n\nTEST_6:\"
-:set cpo+=/
-:$put =substitute('A', 'A', 'a', '')
-:$put =substitute('B', 'B', '%', '')
-:set cpo-=/
 :$put =substitute('C', 'C', 'c', '')
 :$put =substitute('D', 'D', '%', '')
 /^TEST_7

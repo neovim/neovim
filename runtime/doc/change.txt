@@ -714,9 +714,6 @@ When the {string} starts with "\=" it is evaluated as an expression, see
 characters.
 
 Otherwise these characters in {string} have a special meaning:
-								*:s%*
-When {string} is equal to "%" and '/' is included with the 'cpoptions' option,
-then the {string} of the previous substitute command is used, see |cpo-/|
 
 magic	nomagic	  action    ~
   &	  \&	  replaced with the whole matched pattern	     *s/\&*
