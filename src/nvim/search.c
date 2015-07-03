@@ -2199,7 +2199,6 @@ findpar (
   linenr_T curr;
   bool did_skip;            /* true after separating lines have been skipped */
   bool first;               /* true on first line */
-  int posix = (vim_strchr(p_cpo, CPO_PARA) != NULL);
   linenr_T fold_first;      /* first line of a closed fold */
   linenr_T fold_last;       /* last line of a closed fold */
   bool fold_skipped;        /* true if a closed fold was skipped this
@@ -2220,12 +2219,7 @@ findpar (
         fold_skipped = true;
       }
 
-      /* POSIX has it's own ideas of what a paragraph boundary is and it
-       * doesn't match historical Vi: It also stops at a "{" in the
-       * first column and at an empty line. */
-      if (!first && did_skip && (startPS(curr, what, both)
-                                 || (posix && what == NUL && *ml_get(curr) ==
-                                     '{')))
+      if (!first && did_skip && startPS(curr, what, both))
         break;
 
       if (fold_skipped)

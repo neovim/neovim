@@ -1959,9 +1959,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 								*cpo-/*
 		/	When "%" is used as the replacement string in a |:s|
 			command, use the previous replacement string. |:s%|
-								*cpo-{*
-		{	The |{| and |}| commands also stop at a "{" character
-			at the start of a line.
 								*cpo-.*
 		.	The ":chdir" and ":cd" commands fail if the current
 			buffer is modified, unless ! is used.  Vim doesn't
