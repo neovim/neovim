@@ -1946,10 +1946,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	when $VIM_POSIX was set on startup. |posix|
 
 	    contains	behavior	~
-								*cpo-&*
-		&	When ":preserve" was used keep the swap file when
-			exiting normally while this buffer is still loaded.
-			This flag is tested when exiting.
 								*cpo-\*
 		\	Backslash in a [] range in a search pattern is taken
 			literally, only "\]" is special  See |/[]|
