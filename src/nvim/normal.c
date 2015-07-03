@@ -7278,7 +7278,10 @@ static void nv_put(cmdarg_T *cap)
        */
       was_visual = true;
       regname = cap->oap->regname;
-      if (regname == 0 || regname == '"'
+      // '+' and '*' could be the same selection
+      bool clipoverwrite = (regname == '+' || regname == '*')
+          && (cb_flags & CB_UNNAMEDMASK);
+      if (regname == 0 || regname == '"' || clipoverwrite
           || ascii_isdigit(regname) || regname == '-') {
         // The delete might overwrite the register we want to put, save it first
         savereg = copy_register(regname);

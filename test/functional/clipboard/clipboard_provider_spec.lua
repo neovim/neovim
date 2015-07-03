@@ -253,6 +253,12 @@ describe('clipboard usage', function()
       feed("viwp")
       eq({{'visual'}, 'v'}, eval("g:test_clip['*']"))
       expect("indeed clipboard")
+
+      -- explicit "* should do the same
+      execute("let g:test_clip['*'] = [['star'], 'c']")
+      feed('viw"*p')
+      eq({{'clipboard'}, 'v'}, eval("g:test_clip['*']"))
+      expect("indeed star")
     end)
 
   end)

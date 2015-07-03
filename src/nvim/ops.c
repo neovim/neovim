@@ -67,8 +67,6 @@
 #define PLUS_REGISTER 38
 #define NUM_REGISTERS 39
 
-#define CB_UNNAMEDMASK (CB_UNNAMED | CB_UNNAMEDPLUS)
-
 static yankreg_T y_regs[NUM_REGISTERS];
 
 static yankreg_T   *y_previous = NULL; /* ptr to last written yankreg */

@@ -318,6 +318,7 @@ static char *(p_cb_values[]) = {"unnamed", "unnamedplus", NULL};
 #endif
 # define CB_UNNAMED             0x001
 # define CB_UNNAMEDPLUS         0x002
+# define CB_UNNAMEDMASK         (CB_UNNAMED | CB_UNNAMEDPLUS)
 EXTERN long p_cwh;              /* 'cmdwinheight' */
 EXTERN long p_ch;               /* 'cmdheight' */
 EXTERN int p_confirm;           /* 'confirm' */
