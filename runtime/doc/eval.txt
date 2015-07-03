@@ -1833,6 +1833,7 @@ getwinvar( {nr}, {varname} [, {def}])
 				any	variable {varname} in window {nr}
 glob( {expr} [, {nosuf} [, {list}]])
 				any	expand file wildcards in {expr}
+glob2regpat( {expr})		String  convert a glob pat into a search pat
 globpath( {path}, {expr} [, {nosuf} [, {list}]])
 				String	do glob({expr}) for all dirs in {path}
 has( {feature})			Number	TRUE if feature {feature} supported
@@ -3646,6 +3647,14 @@ glob({expr} [, {nosuf} [, {list}]])				*glob()*
 		See |expand()| for expanding special Vim variables.  See
 		|system()| for getting the raw output of an external command.
 
+glob2regpat({expr})					 *glob2regpat()*
+		Convert a file pattern, as used by glob(), into a search
+		pattern.  The result can be used to match with a string that
+		is a file name.  E.g. >
+			if filename =~ glob2regpat('Make*.mak')
+<		This is equivalent to: >
+			if filename =~ '^Make.*\.mak$'
+<
 globpath({path}, {expr} [, {nosuf} [, {list}]])			*globpath()*
 		Perform glob() on all directories in {path} and concatenate
 		the results.  Example: >

@@ -6512,6 +6512,7 @@ static struct fst {
   {"getwinposy",      0, 0, f_getwinposy},
   {"getwinvar",       2, 3, f_getwinvar},
   {"glob",            1, 3, f_glob},
+  {"glob2repath",     1, 1, f_glob2regpat},
   {"globpath",        2, 4, f_globpath},
   {"has",             1, 1, f_has},
   {"has_key",         2, 2, f_has_key},
@@ -9891,6 +9892,17 @@ static void f_globpath(typval_T *argvars, typval_T *rettv)
   } else {
     rettv->vval.v_string = NULL;
   }
+}
+
+/*
+ * "glob2regpat()" function
+ */
+static void f_glob2regpat(typval_T *argvars, typval_T *rettv)
+{
+    char_u	*pat = get_tv_string_chk(&argvars[0]);
+
+    rettv->v_type = VAR_STRING;
+    rettv->vval.v_string = file_pat_to_reg_pat(pat, NULL, NULL, FALSE);
 }
 
 /*
