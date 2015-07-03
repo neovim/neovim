@@ -1964,10 +1964,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			buffer is modified, unless ! is used.  Vim doesn't
 			need this, since it remembers the full path of an
 			opened file.
-								*cpo-bar*
-		|	The value of the $LINES and $COLUMNS environment
-			variables overrule the terminal size values obtained
-			with system specific functions.
 
 						*'cryptmethod'* *'cm'*
 'cryptmethod'		Removed. |vim-differences| {Nvim}

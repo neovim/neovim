@@ -129,7 +129,6 @@
 #define CPO_SPECI       '<'     /* don't recognize <> in mappings */
 #define CPO_REGAPPEND   '>'     /* insert NL when appending to a register */
 /* POSIX flags */
-#define CPO_TSIZE       '|'     /* $LINES and $COLUMNS overrule term size */
 #define CPO_PRESERVE    '&'     /* keep swap file after :preserve */
 #define CPO_SUBPERCENT  '/'     /* % in :s string uses previous one */
 #define CPO_BACKSL      '\\'    /* \ is not special in [] */
@@ -140,7 +139,7 @@
 #define CPO_VIM         "aABceFs"
 #define CPO_VI          "aAbBcCdDeEfFiIJkKlLmMnoOpPqrRsStuvWxXyZ$!%+<>;"
 #define CPO_ALL \
-  "aAbBcCdDeEfFiIJkKlLmMnoOpPqrRsStuvWxXyZ$!%+<>|&/\\.;"
+  "aAbBcCdDeEfFiIJkKlLmMnoOpPqrRsStuvWxXyZ$!%+<>&/\\.;"
 
 /* characters for p_ww option: */
 #define WW_ALL          "bshl<>[],~"
