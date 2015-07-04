@@ -14,7 +14,6 @@ SCRIPTS := \
            test24.out             \
            test32.out             \
            test37.out             \
-           test40.out             \
            test42.out             \
            test48.out             \
            test49.out             \
