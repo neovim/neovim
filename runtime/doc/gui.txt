@@ -12,10 +12,8 @@ Vim's Graphical User Interface				*gui* *GUI*
 4. Making GUI Selections	|gui-selections|
 5. Menus			|menus|
 6. Extras			|gui-extras|
-7. Shell Commands		|gui-shell|
 
 Other GUI documentation:
-|gui_x11.txt|	For specific items of the X11 GUI.
 |gui_w32.txt|	For specific items of the Win32 GUI.
 
 ==============================================================================
@@ -27,9 +25,6 @@ included.
 How to start the GUI depends on the system used.  Mostly you can run the
 GUI version of Vim with:
     gvim [options] [files...]
-
-The X11 version of Vim can run both in GUI and in non-GUI mode.  See
-|gui-x11-start|.
 
 			*gui-init* *gvimrc* *.gvimrc* *_gvimrc* *$MYGVIMRC*
 The gvimrc file is where GUI-specific startup commands should be placed.  It
@@ -97,11 +92,8 @@ The personal initialization files are searched in the order specified above
 and only the first one that is found is read.
 
 There are a number of options which only have meaning in the GUI version of
-Vim.  These are 'guicursor', 'guifont', 'guipty' and 'guioptions'.  They are
+Vim.  These are 'guicursor', 'guifont', and 'guioptions'.  They are
 documented in |options.txt| with all the other options.
-
-If using the Motif or Athena version of the GUI (but not for the GTK+ or
-Win32 version), a number of X resources are available.  See |gui-resources|.
 
 Another way to set the colors for different occasions is with highlight
 groups.  The "Normal" group is used to set the background and foreground
@@ -423,8 +415,7 @@ You may make selections with the mouse (see |gui-mouse-select|), or by using
 Vim's Visual mode (see |v|).  If 'a' is present in 'guioptions', then
 whenever a selection is started (Visual or Select mode), or when the selection
 is changed, Vim becomes the owner of the windowing system's primary selection
-(on MS-Windows the |gui-clipboard| is used; under X11, the |x11-selection| is
-used - you should read whichever of these is appropriate now).
+(on MS-Windows the |gui-clipboard| is used).
 
 							*clipboard*
 There is a special register for storing this selection, it is the "*
@@ -443,13 +434,9 @@ selection (contents of the clipboard): >
 
 	"*p
 
-When using this register under X11, also see |x11-selection|.  This also
-explains the related "+ register.
-
 Note that when pasting text from one Vim into another separate Vim, the type
 of selection (character, line, or block) will also be copied.  For other
-applications the type is always character.  However, if the text gets
-transferred via the |x11-cut-buffer|, the selection type is ALWAYS lost.
+applications the type is always character.
 
 When the "unnamed" string is included in the 'clipboard' option, the unnamed
 register is the same as the "* register.  Thus you can yank to and paste the
@@ -987,20 +974,5 @@ This section describes other features which are related to the GUI.
 
 A recommended Japanese font is MS Mincho.  You can find info here:
 http://www.lexikan.com/mincho.htm
-
-==============================================================================
-7. Shell Commands					*gui-shell*
-
-For the X11 GUI the external commands are executed inside the gvim window.
-See |gui-pty|.
-
-WARNING: Executing an external command from the X11 GUI will not always
-work.  "normal" commands like "ls", "grep" and "make" mostly work fine.
-Commands that require an intelligent terminal like "less" and "ispell" won't
-work.  Some may even hang and need to be killed from another terminal.  So be
-careful!
-
-For the Win32 GUI the external commands are executed in a separate window.
-See |gui-shell-win32|.
 
  vim:tw=78:sw=4:ts=8:ft=help:norl:

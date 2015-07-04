@@ -583,9 +583,6 @@ Update Vim app icon (for Gnome). (Jakub Steiner, 2013 Dec 6)
 Patch to use .png icons for the toolbar on MS-Windows. (Martin Gieseking, 2013
 Apr 18)
 
-Patch for has('unnamedplus') docs. (Tony Mechelynck, 2011 Sep 27)
-And one for gui_x11.txt.
-
 ":cd" doesn't work when current directory path contains "**".
 finddir() has the same problem.  (Yukihiro Nakadaira, 2012 Jan 10)
 Requires a rewrite of the file_file_in_path code.
@@ -2573,10 +2570,6 @@ User Friendlier:
 7   When Vim detects a file is being edited elsewhere and it's a gvim session
     of the same user it should offer a "Raise" button, so that the other gvim
     window can be displayed. (Eduard)
-8   Support saving and restoring session for X windows?  It should work to do
-    ":mksession" and use "-S fname" for the restart command.  The
-    gui_x11_wm_protocol_handler() already takes care of the rest.
-    global_event_filter() for GTK.
 
 
 Tab pages:

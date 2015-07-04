@@ -47,7 +47,6 @@ hi StatusLine	guibg=#c2bfa5 guifg=black gui=none
 hi StatusLineNC	guibg=#c2bfa5 guifg=grey50 gui=none
 hi Title	guifg=indianred
 hi Visual	gui=none guifg=khaki guibg=olivedrab
-"hi VisualNOS
 hi WarningMsg	guifg=salmon
 "hi WildMenu
 "hi Menu
@@ -83,7 +82,6 @@ hi StatusLineNC cterm=reverse
 hi VertSplit	cterm=reverse
 hi Title	ctermfg=5
 hi Visual	cterm=reverse
-hi VisualNOS	cterm=bold,underline
 hi WarningMsg	ctermfg=1
 hi WildMenu	ctermfg=0 ctermbg=3
 hi Folded	ctermfg=darkgrey ctermbg=NONE

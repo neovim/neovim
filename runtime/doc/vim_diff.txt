@@ -131,7 +131,11 @@ MS-DOS support:
   'bioskey'
   'conskey'
 
+Highlight groups:
+  |hl-VisualNOS|
+
 Other options:
+  'guipty'
   'macatsui'
   'shelltype'
   'shortname'

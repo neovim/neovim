@@ -3185,7 +3185,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	- Examples: >
 	    :set guifont=courier_new:h12:w5:b:cRUSSIAN
 	    :set guifont=Andale_Mono:h7.5:w4.5
-<	See also |font-sizes|.
+<
 
 					*'guifontset'* *'gfs'*
 					*E250* *E252* *E234* *E597* *E598*
@@ -3361,11 +3361,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 
 						*'guipty'* *'noguipty'*
-'guipty'		boolean	(default on)
-			global
-			{only available when compiled with GUI enabled}
-	Only in the GUI: If on, an attempt is made to open a pseudo-tty for
-	I/O to/from shell commands.  See |gui-pty|.
+'guipty'		Removed. |vim-differences| {Nvim}
 
 						*'guitablabel'* *'gtl'*
 'guitablabel' 'gtl'	string	(default empty)
@@ -3496,9 +3492,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|hl-Title|	 t  Titles for output from ":set all", ":autocmd" etc.
 	|hl-VertSplit|	 c  column used to separate vertically split windows
 	|hl-Visual|	 v  Visual mode
-	|hl-VisualNOS|	 V  Visual mode when Vim does is "Not Owning the
-			    Selection" Only X11 Gui's |gui-x11| and
-			    |xterm-clipboard|.
 	|hl-WarningMsg|	 w  warning messages
 	|hl-WildMenu|	 W  wildcard matches displayed for 'wildmenu'
 	|hl-Folded|	 f  line used for closed folds

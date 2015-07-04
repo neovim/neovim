@@ -592,8 +592,6 @@ if has("gui")
     call append("$", "guiheadroom\troom (in pixels) left above/below the window")
     call append("$", " \tset ghr=" . &ghr)
   endif
-  call append("$", "guipty\tuse a pseudo-tty for I/O to external commands")
-  call <SID>BinOptionG("guipty", &guipty)
   if has("browse")
     call append("$", "browsedir\t\"last\", \"buffer\" or \"current\": which directory used for the file browser")
     call <SID>OptionG("bsdir", &bsdir)

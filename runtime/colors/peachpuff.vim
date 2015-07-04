@@ -34,7 +34,6 @@ hi StatusLineNC term=reverse cterm=reverse gui=bold guifg=PeachPuff guibg=Gray45
 hi VertSplit term=reverse cterm=reverse gui=bold guifg=White guibg=Gray45
 hi Title term=bold ctermfg=5 gui=bold guifg=DeepPink3
 hi Visual term=reverse cterm=reverse gui=reverse guifg=Grey80 guibg=fg
-hi VisualNOS term=bold,underline cterm=bold,underline gui=bold,underline
 hi WarningMsg term=standout ctermfg=1 gui=bold guifg=Red
 hi WildMenu term=standout ctermfg=0 ctermbg=3 guifg=Black guibg=Yellow
 hi Folded term=standout ctermfg=4 ctermbg=7 guifg=Black guibg=#e3c1a5

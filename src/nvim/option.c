@@ -366,7 +366,7 @@ typedef struct vimoption {
   "8:SpecialKey,~:EndOfBuffer,z:TermCursor,Z:TermCursorNC,@:NonText," \
   "d:Directory,e:ErrorMsg,i:IncSearch,l:Search,m:MoreMsg,M:ModeMsg,n:LineNr," \
   "N:CursorLineNr,r:Question,s:StatusLine,S:StatusLineNC,c:VertSplit,t:Title," \
-  "v:Visual,V:VisualNOS,w:WarningMsg,W:WildMenu,f:Folded,F:FoldColumn," \
+  "v:Visual,w:WarningMsg,W:WildMenu,f:Folded,F:FoldColumn," \
   "A:DiffAdd,C:DiffChange,D:DiffDelete,T:DiffText,>:SignColumn,-:Conceal," \
   "B:SpellBad,P:SpellCap,R:SpellRare,L:SpellLocal,+:Pmenu,=:PmenuSel," \
   "x:PmenuSbar,X:PmenuThumb,*:TabLine,#:TabLineSel,_:TabLineFill," \
@@ -842,9 +842,6 @@ static vimoption_T
    (char_u *)NULL, PV_NONE,
    {(char_u *)NULL, (char_u *)0L}
    SCRIPTID_INIT},
-  {"guipty",      NULL,   P_BOOL|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)TRUE, (char_u *)0L} SCRIPTID_INIT},
   {"guitablabel",  "gtl", P_STRING|P_VI_DEF|P_RWIN,
    (char_u *)NULL, PV_NONE,
    {(char_u *)NULL, (char_u *)0L}
