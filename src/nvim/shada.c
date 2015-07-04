@@ -200,6 +200,27 @@ typedef struct {
 
 RINGBUF_INIT(HM, hm, ShadaEntry, shada_free_shada_entry)
 
+/// Check whether buffer is in the given set
+///
+/// @param[in]  set  Set to check within.
+/// @param[in]  buf  Buffer to find.
+///
+/// @return true or false.
+static inline bool in_bufset(const khash_t(bufset) *const set, const buf_T *buf)
+  FUNC_ATTR_PURE
+{
+  return kh_get(bufset, set, (uintptr_t) buf) != kh_end(set);
+}
+
+/// Check whether buffer is on removable media
+///
+/// Uses pre-populated set with buffers on removable media named removable_bufs.
+///
+/// @param[in]  buf  Buffer to check.
+///
+/// @return true or false.
+#define SHADA_REMOVABLE(buf) in_bufset(removable_bufs, buf)
+
 /// Msgpack callback for writing to FILE*
 static int msgpack_fbuffer_write(void *data, const char *buf, size_t len)
 {
@@ -720,7 +741,7 @@ static void shada_read(FILE *const fp, const int flags)
   }
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     (void) tp;
-    if (kh_get(bufset, cl_bufs, (uintptr_t) wp->w_buffer) != kh_end(cl_bufs)) {
+    if (in_bufset(cl_bufs, wp->w_buffer)) {
       wp->w_changelistidx = wp->w_buffer->b_changelistlen;
     }
   }
@@ -1031,6 +1052,7 @@ static void shada_pack_entry(msgpack_packer *const packer,
 static void shada_write(FILE *const newfp, FILE *const oldfp)
   FUNC_ATTR_NONNULL_ARG(1)
 {
+  khash_t(bufset) *const removable_bufs = kh_init(bufset);
   int max_kbyte_i = get_viminfo_parameter('s');
   if (max_kbyte_i < 0) {
     max_kbyte_i = 10;
@@ -1041,6 +1063,13 @@ static void shada_write(FILE *const newfp, FILE *const oldfp)
   const size_t max_kbyte = (size_t) max_kbyte_i;
 
   msgpack_packer *packer = msgpack_packer_new(newfp, &msgpack_fbuffer_write);
+
+  FOR_ALL_BUFFERS(buf) {
+    if (buf->b_ffname != NULL && shada_removable((char *) buf->b_ffname)) {
+      int kh_ret;
+      (void) kh_put(bufset, removable_bufs, (uintptr_t) buf, &kh_ret);
+    }
+  }
 
   // First write values that do not require merging
   // 1. Header
@@ -1074,13 +1103,13 @@ static void shada_write(FILE *const newfp, FILE *const oldfp)
 
     size_t buf_count = 0;
     FOR_ALL_BUFFERS(buf) {
-      if (buf->b_ffname != NULL && !shada_removable(buf->b_ffname)) {
+      if (buf->b_ffname != NULL && !SHADA_REMOVABLE(buf)) {
         buf_count++;
       }
     }
     msgpack_pack_array(packer, buf_count);
     FOR_ALL_BUFFERS(buf) {
-      if (buf->b_ffname == NULL || shada_removable(buf->b_ffname)) {
+      if (buf->b_ffname == NULL || SHADA_REMOVABLE(buf)) {
         continue;
       }
       msgpack_pack_map(packer, 3);
@@ -1107,7 +1136,7 @@ static void shada_write(FILE *const newfp, FILE *const oldfp)
                               ? NULL
                               : buflist_findnr(fm.fmark.fnum));
     if (buf != NULL
-        ? shada_removable(buf->b_ffname)
+        ? SHADA_REMOVABLE(buf)
         : fm.fmark.fnum != 0) {
       continue;
     }
@@ -1219,8 +1248,9 @@ static void shada_write(FILE *const newfp, FILE *const oldfp)
 
   // 7. Global marks
   if (get_viminfo_parameter('f') != 0) {
-    ShadaEntry *const global_marks = list_global_marks();
-    for (ShadaEntry *mark = global_marks; mark->type != kSDItemMissing; mark++) {
+    ShadaEntry *const global_marks = list_global_marks(removable_bufs);
+    for (ShadaEntry *mark = global_marks; mark->type != kSDItemMissing;
+         mark++) {
       shada_pack_entry(packer, *mark, max_kbyte);
     }
     xfree(global_marks);
@@ -1228,7 +1258,7 @@ static void shada_write(FILE *const newfp, FILE *const oldfp)
 
   // 8. Buffer marks and buffer change list
   FOR_ALL_BUFFERS(buf) {
-    if (buf->b_ffname == NULL || shada_removable(buf->b_ffname)) {
+    if (buf->b_ffname == NULL || SHADA_REMOVABLE(buf)) {
       continue;
     }
     ShadaEntry *const buffer_marks = list_buffer_marks(buf);
@@ -1300,6 +1330,7 @@ static void shada_write(FILE *const newfp, FILE *const oldfp)
     } while (var_iter != NULL);
   }
 
+  kh_destroy(bufset, removable_bufs);
   msgpack_packer_free(packer);
 }
 
@@ -2280,11 +2311,14 @@ shada_read_next_item_end:
 /// @warning Listed marks must be used before any buffer- or mark-editing 
 ///          function is run.
 ///
+/// @param[in]  removable_bufs  Set of buffers on removable media.
+///
 /// @return Array of ShadaEntry values, last one has type kSDItemMissing.
 ///
 ///         @warning Resulting ShadaEntry values must not be freed. Returned 
 ///                  array must be freed with `xfree()`.
-static ShadaEntry *list_global_marks(void)
+static ShadaEntry *list_global_marks(
+    const khash_t(bufset) *const removable_bufs)
 {
   const void *iter = NULL;
   const size_t nummarks = mark_global_amount();
@@ -2299,24 +2333,19 @@ static ShadaEntry *list_global_marks(void)
       cur->data.filemark.additional_data = cur_fm.fmark.additional_data;
       cur->timestamp = cur_fm.fmark.timestamp;
       if (cur_fm.fmark.fnum == 0) {
-        cur->data.filemark.fname = (char *) (cur_fm.fname == NULL
-                                             ? NULL
-                                             : cur_fm.fname);
+        if (cur_fm.fname == NULL) {
+          continue;
+        }
+        cur->data.filemark.fname = (char *) cur_fm.fname;
       } else {
         const buf_T *const buf = buflist_findnr(cur_fm.fmark.fnum);
-        if (buf == NULL) {
+        if (buf == NULL || buf->b_ffname == NULL || SHADA_REMOVABLE(buf)) {
           continue;
         } else {
           cur->data.filemark.fname = (char *) buf->b_ffname;
         }
       }
-      if (cur->data.filemark.fname != NULL) {
-        if (shada_removable(cur->data.filemark.fname)) {
-          continue;
-        } else {
-          cur++;
-        }
-      }
+      cur++;
     } while(iter != NULL);
   }
   cur->type = kSDItemMissing;
