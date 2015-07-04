@@ -536,7 +536,7 @@ static void shada_read(FILE *const fp, const int flags)
       }
       case kSDItemJump:
       case kSDItemGlobalMark: {
-        if (!(flags & kShaDaWantMarks)
+        if (!(flags & kShaDaWantInfo)
             || (cur_entry.type == kSDItemGlobalMark
                 && get_viminfo_parameter('f') == 0)) {
           shada_free_shada_entry(&cur_entry);
@@ -1734,9 +1734,9 @@ shada_read_next_item_start:
       }
       break;
     }
-    case kSDItemBufferList:
-    case kSDItemChange:
+    case kSDItemGlobalMark:
     case kSDItemJump:
+    case kSDItemBufferList:
     case kSDItemVariable:
     case kSDItemRegister:
     case kSDItemHistoryEntry:
@@ -1747,7 +1747,7 @@ shada_read_next_item_start:
       }
       break;
     }
-    case kSDItemGlobalMark:
+    case kSDItemChange:
     case kSDItemLocalMark: {
       if (!(flags & kShaDaWantMarks)) {
         SKIP;
