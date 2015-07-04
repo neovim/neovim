@@ -30,6 +30,7 @@
 #include <inttypes.h>
 
 #include "nvim/api/private/handle.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
@@ -556,6 +557,10 @@ static void free_buffer(buf_T *buf)
   free_buffer_stuff(buf, TRUE);
   unref_var_dict(buf->b_vars);
   aubuflocal_remove(buf);
+  if (buf->additional_data != NULL) {
+    api_free_dictionary(*buf->additional_data);
+    xfree(buf->additional_data);
+  }
   free_fmark(buf->b_last_cursor);
   free_fmark(buf->b_last_insert);
   free_fmark(buf->b_last_change);
@@ -1988,12 +1993,18 @@ buflist_nr2name (
       fullname ? buf->b_ffname : buf->b_fname);
 }
 
-/*
- * Set the "lnum" and "col" for the buffer "buf" and the current window.
- * When "copy_options" is TRUE save the local window option values.
- * When "lnum" is 0 only do the options.
- */
-static void buflist_setfpos(buf_T *buf, win_T *win, linenr_T lnum, colnr_T col, int copy_options)
+/// Set the line and column numbers for the given buffer and window
+///
+/// @param[in,out]  buf           Buffer for which line and column are set.
+/// @param[in,out]  win           Window for which line and column are set.
+/// @param[in]      lnum          Line number to be set. If it is zero then only 
+///                               options are touched.
+/// @param[in]      col           Column number to be set.
+/// @param[in]      copy_options  If true save the local window option values.
+void buflist_setfpos(buf_T *const buf, win_T *const win,
+                     linenr_T lnum, colnr_T col,
+                     bool copy_options)
+  FUNC_ATTR_NONNULL_ALL
 {
   wininfo_T   *wip;
 

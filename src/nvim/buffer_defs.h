@@ -26,7 +26,7 @@ typedef struct file_buffer buf_T; // Forward declaration
 #include "nvim/eval_defs.h"
 // for proftime_T
 #include "nvim/profile.h"
-// for String
+// for String and Dictionary
 #include "nvim/api/private/defs.h"
 
 #define MODIFIABLE(buf) (!buf->terminal && buf->b_p_ma)
@@ -748,6 +748,8 @@ struct file_buffer {
   signlist_T *b_signlist;       /* list of signs to draw */
 
   Terminal *terminal;           // Terminal instance associated with the buffer
+
+  Dictionary *additional_data;  // Additional data from shada file if any.
 };
 
 /*

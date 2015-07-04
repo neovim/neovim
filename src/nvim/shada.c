@@ -35,6 +35,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/globals.h"
 #include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/misc2.h"
 #include "nvim/ex_getln.h"
 #include "nvim/search.h"
@@ -66,6 +67,10 @@ KHASH_MAP_INIT_STR(fnamebufs, buf_T *)
 #define emsgn(a, ...) emsgn((char_u *) a, __VA_ARGS__)
 #define home_replace_save(a, b) \
     ((char *)home_replace_save(a, (char_u *)b))
+#define path_shorten_fname_if_possible(b) \
+    ((char *)path_shorten_fname_if_possible((char_u *)b))
+#define buflist_new(ffname, sfname, ...) \
+    (buflist_new((char_u *)ffname, (char_u *)sfname, __VA_ARGS__))
 
 // From http://www.boost.org/doc/libs/1_43_0/boost/detail/endian.hpp + some 
 // additional checks done after examining `{compiler} -dM -E - < /dev/null` 
@@ -180,7 +185,14 @@ typedef struct {
       char *sub;
       Array *additional_elements;
     } sub_string;
-    Array buffer_list;
+    struct buffer_list {
+      size_t size;
+      struct buffer_list_buffer {
+        pos_T pos;
+        char *fname;
+        Dictionary *additional_data;
+      } *buffers;
+    } buffer_list;
   } data;
 } ShadaEntry;
 
@@ -617,7 +629,24 @@ static void shada_read(FILE *const fp, const int flags)
         break;
       }
       case kSDItemBufferList: {
-        // FIXME
+        if (!(flags & kShaDaWantInfo) || find_viminfo_parameter('%') == NULL
+            || ARGCOUNT != 0) {
+          shada_free_shada_entry(&cur_entry);
+          break;
+        }
+        for (size_t i = 0; i < cur_entry.data.buffer_list.size; i++) {
+          char *const sfname = path_shorten_fname_if_possible(
+              cur_entry.data.buffer_list.buffers[i].fname);
+          buf_T *const buf = buflist_new(
+              cur_entry.data.buffer_list.buffers[i].fname, sfname, 0,
+              BLN_LISTED);
+          if (buf != NULL) {
+            RESET_FMARK(&buf->b_last_cursor,
+                        cur_entry.data.buffer_list.buffers[i].pos, 0);
+            buflist_setfpos(buf, curwin, buf->b_last_cursor.mark.lnum,
+                            buf->b_last_cursor.mark.col, false);
+          }
+        }
         shada_free_shada_entry(&cur_entry);
         break;
       }
@@ -1019,7 +1048,46 @@ static void shada_pack_entry(msgpack_packer *const packer,
       break;
     }
     case kSDItemBufferList: {
-      msgpack_rpc_from_array(entry.data.buffer_list, spacker);
+      msgpack_pack_array(spacker, entry.data.buffer_list.size);
+      for (size_t i = 0; i < entry.data.buffer_list.size; i++) {
+        const size_t map_size = (size_t) (
+            1  // Buffer name
+            // Line number: defaults to 1
+            + (entry.data.buffer_list.buffers[i].pos.lnum != 1)
+            // Column number: defaults to 0
+            + (entry.data.buffer_list.buffers[i].pos.col != 0)
+            // Additional entries, if any:
+            + (entry.data.buffer_list.buffers[i].additional_data == NULL
+               ? 0
+               : entry.data.buffer_list.buffers[i].additional_data->size)
+        );
+        msgpack_pack_map(spacker, map_size);
+        PACK_STATIC_STR("file");
+        msgpack_rpc_from_string(
+            cstr_as_string(entry.data.buffer_list.buffers[i].fname), spacker);
+        if (entry.data.buffer_list.buffers[i].pos.lnum != 1) {
+          PACK_STATIC_STR("line");
+          msgpack_pack_uint64(
+              spacker, (uint64_t) entry.data.buffer_list.buffers[i].pos.lnum);
+        }
+        if (entry.data.buffer_list.buffers[i].pos.col != 0) {
+          PACK_STATIC_STR("col");
+          msgpack_pack_uint64(
+              spacker, (uint64_t) entry.data.buffer_list.buffers[i].pos.col);
+        }
+        if (entry.data.buffer_list.buffers[i].additional_data != NULL) {
+          for (size_t j = 0;
+               j < entry.data.buffer_list.buffers[i].additional_data->size;
+               j++) {
+            msgpack_rpc_from_string(
+              entry.data.buffer_list.buffers[i].additional_data->items[j].key,
+              spacker);
+            msgpack_rpc_from_object(
+              entry.data.buffer_list.buffers[i].additional_data->items[j].value,
+              spacker);
+          }
+        }
+      }
       break;
     }
     case kSDItemHeader: {
@@ -1095,35 +1163,38 @@ static void shada_write(FILE *const newfp, FILE *const oldfp)
 
   // 2. Buffer list
   if (find_viminfo_parameter('%') != NULL) {
-    msgpack_pack_uint64(packer, (uint64_t) kSDItemBufferList);
-    msgpack_pack_uint64(packer, (uint64_t) os_time());
-    msgpack_sbuffer sbuf;
-    msgpack_sbuffer_init(&sbuf);
-    msgpack_packer *spacker = msgpack_packer_new(&sbuf, &msgpack_sbuffer_write);
-
     size_t buf_count = 0;
     FOR_ALL_BUFFERS(buf) {
       if (buf->b_ffname != NULL && !SHADA_REMOVABLE(buf)) {
         buf_count++;
       }
     }
-    msgpack_pack_array(packer, buf_count);
+
+    ShadaEntry buflist_entry = (ShadaEntry) {
+      .type = kSDItemBufferList,
+      .timestamp = os_time(),
+      .data = {
+        .buffer_list = {
+          .size = buf_count,
+          .buffers = xmalloc(buf_count
+                             * sizeof(*buflist_entry.data.buffer_list.buffers)),
+        },
+      },
+    };
+    size_t i = 0;
     FOR_ALL_BUFFERS(buf) {
       if (buf->b_ffname == NULL || SHADA_REMOVABLE(buf)) {
         continue;
       }
-      msgpack_pack_map(packer, 3);
-      PACK_STATIC_STR("fname");
-      msgpack_rpc_from_string(cstr_as_string((char *) buf->b_ffname), packer);
-      PACK_STATIC_STR("lnum");
-      msgpack_pack_uint64(packer, (uint64_t) buf->b_last_cursor.mark.lnum);
-      PACK_STATIC_STR("col");
-      msgpack_pack_uint64(packer, (uint64_t) buf->b_last_cursor.mark.col);
+      buflist_entry.data.buffer_list.buffers[i] = (struct buffer_list_buffer) {
+        .pos = buf->b_last_cursor.mark,
+        .fname = (char *) buf->b_ffname,
+        .additional_data = buf->additional_data,
+      };
+      i++;
     }
-    msgpack_pack_uint64(packer, (uint64_t) sbuf.size);
-    packer->callback(packer->data, sbuf.data, (unsigned) sbuf.size);
-    msgpack_packer_free(spacker);
-    msgpack_sbuffer_destroy(&sbuf);
+    shada_pack_entry(packer, buflist_entry, 0);
+    xfree(buflist_entry.data.buffer_list.buffers);
   }
 
   // 3. Jump list
@@ -1460,7 +1531,15 @@ static void shada_free_shada_entry(ShadaEntry *const entry)
       break;
     }
     case kSDItemBufferList: {
-      api_free_array(entry->data.buffer_list);
+      for (size_t i = 0; i < entry->data.buffer_list.size; i++) {
+        xfree(entry->data.buffer_list.buffers[i].fname);
+        if (entry->data.buffer_list.buffers[i].additional_data != NULL) {
+          api_free_dictionary(
+              *entry->data.buffer_list.buffers[i].additional_data);
+          xfree(entry->data.buffer_list.buffers[i].additional_data);
+        }
+      }
+      xfree(entry->data.buffer_list.buffers);
       break;
     }
   }
@@ -1609,7 +1688,7 @@ shada_read_next_item_start:
 
   // First: manually unpack type, timestamp and length.
   // This is needed to avoid both seeking and having to maintain a buffer.
-  uint64_t type_u64;
+  uint64_t type_u64 = (uint64_t) kSDItemMissing;
   uint64_t timestamp_u64;
   uint64_t length_u64;
 
@@ -2258,11 +2337,87 @@ shada_read_next_item_start:
       break;
     }
     case kSDItemBufferList: {
-      if (!msgpack_rpc_to_array(&(unpacked.data), &(entry->data.buffer_list))) {
+      if (unpacked.data.type != MSGPACK_OBJECT_ARRAY) {
         emsgn("Error while reading ShaDa file: "
-              "buffer list entry at position %" PRId64 " is not an array",
+              "buffer list entry at position %" PRId64 " "
+              "is not an array",
               (int64_t) initial_fpos);
         goto shada_read_next_item_error;
+      }
+      entry->data.buffer_list = (struct buffer_list) {
+        .size = 0,
+        .buffers = NULL,
+      };
+      if (unpacked.data.via.array.size == 0) {
+        break;
+      }
+      entry->data.buffer_list.buffers =
+          xcalloc(unpacked.data.via.array.size,
+                  sizeof(*entry->data.buffer_list.buffers));
+      for (size_t i = 0; i < unpacked.data.via.array.size; i++) {
+        entry->data.buffer_list.size++;
+        msgpack_unpacked unpacked_2 = (msgpack_unpacked) {
+          .data = unpacked.data.via.array.ptr[i],
+        };
+        {
+          msgpack_unpacked unpacked = unpacked_2;
+          if (unpacked.data.type != MSGPACK_OBJECT_MAP) {
+            emsgn("Error while reading ShaDa file: "
+                  "buffer list at position %" PRId64 " "
+                  "contains entry that is not a dictionary",
+                  (int64_t) initial_fpos);
+            goto shada_read_next_item_error;
+          }
+          entry->data.buffer_list.buffers[i].pos.lnum = 1;
+          garray_T ad_ga;
+          ga_init(&ad_ga, sizeof(*(unpacked.data.via.map.ptr)), 1);
+          {
+            const size_t j = i;
+            {
+              for (size_t i = 0; i < unpacked.data.via.map.size; i++) {
+                CHECK_KEY_IS_STR("buffer list entry");
+                LONG_KEY("buffer list entry", "line",
+                        entry->data.buffer_list.buffers[j].pos.lnum)
+                else INTEGER_KEY("buffer list entry", "col",
+                                entry->data.buffer_list.buffers[j].pos.col)
+                else STRING_KEY("buffer list entry", "file",
+                                entry->data.buffer_list.buffers[j].fname)
+                else ADDITIONAL_KEY
+              }
+            }
+          }
+          if (entry->data.buffer_list.buffers[i].fname == NULL) {
+            emsgn("Error while reading ShaDa file: "
+                  "buffer list at position %" PRId64 " "
+                  "contains entry that does not have a file name",
+                  (int64_t) initial_fpos);
+            ga_clear(&ad_ga);
+            goto shada_read_next_item_error;
+          }
+          if (ad_ga.ga_len) {
+            msgpack_object obj = {
+              .type = MSGPACK_OBJECT_MAP,
+              .via = {
+                .map = {
+                  .size = (uint32_t) ad_ga.ga_len,
+                  .ptr = ad_ga.ga_data,
+                }
+              }
+            };
+            entry->data.buffer_list.buffers[i].additional_data =
+                xmalloc(sizeof(Dictionary));
+            if (!msgpack_rpc_to_dictionary(
+                    &obj, entry->data.buffer_list.buffers[i].additional_data)) {
+              emsgu("Error while reading ShaDa file: "
+                    "buffer list at position %" PRIu64 " "
+                    "contains entry that cannot be converted to a Dictionary",
+                    (uint64_t) initial_fpos);
+              ga_clear(&ad_ga);
+              goto shada_read_next_item_error;
+            }
+          }
+          ga_clear(&ad_ga);
+        }
       }
       break;
     }
@@ -2297,6 +2452,9 @@ shada_read_next_item_start:
 shada_read_next_item_error:
   msgpack_unpacked_destroy(&unpacked);
   msgpack_unpacker_free(unpacker);
+  entry->type = (ShadaEntryType) type_u64;
+  shada_free_shada_entry(entry);
+  entry->type = kSDItemMissing;
   return FAIL;
 shada_read_next_item_end:
   msgpack_unpacked_destroy(&unpacked);
