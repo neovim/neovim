@@ -1074,13 +1074,13 @@ static void shada_write(FILE *const newfp, FILE *const oldfp)
 
     size_t buf_count = 0;
     FOR_ALL_BUFFERS(buf) {
-      if (buf->b_ffname != NULL) {
+      if (buf->b_ffname != NULL && !shada_removable(buf->b_ffname)) {
         buf_count++;
       }
     }
     msgpack_pack_array(packer, buf_count);
     FOR_ALL_BUFFERS(buf) {
-      if (buf->b_ffname == NULL) {
+      if (buf->b_ffname == NULL || shada_removable(buf->b_ffname)) {
         continue;
       }
       msgpack_pack_map(packer, 3);
@@ -1228,7 +1228,7 @@ static void shada_write(FILE *const newfp, FILE *const oldfp)
 
   // 8. Buffer marks and buffer change list
   FOR_ALL_BUFFERS(buf) {
-    if (buf->b_ffname == NULL) {
+    if (buf->b_ffname == NULL || shada_removable(buf->b_ffname)) {
       continue;
     }
     ShadaEntry *const buffer_marks = list_buffer_marks(buf);
