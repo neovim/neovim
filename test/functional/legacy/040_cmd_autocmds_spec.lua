@@ -1,9 +1,13 @@
 -- Test for "*Cmd" autocommands
 
-local helpers = require('test.functional.helpers')
-local clear, execute, expect, feed, write_file =
-  helpers.clear, helpers.execute, helpers.expect, helpers.feed,
+local helpers, lfs = require('test.functional.helpers'), require('lfs')
+local clear, execute, expect, feed, eq, write_file =
+  helpers.clear, helpers.execute, helpers.expect, helpers.feed, helpers.eq,
   helpers.write_file
+
+local function expect_no_file(name)
+  return eq(nil, lfs.attributes(name))
+end
 
 describe('*Cmd autocommands', function()
   setup(function()
@@ -26,8 +30,7 @@ describe('*Cmd autocommands', function()
     execute('au BufWriteCmd XtestA call append(line("$"), "write")')
     -- Will append a line to the file.
     execute('w')
-    -- Should not read anything.
-    execute('r XtestA')
+    expect_no_file('XtestA')
     execute("au FileReadCmd XtestB '[r Xxx")
     -- Will read Xxx below line 2 instead.
     execute('2r XtestB')
@@ -35,13 +38,11 @@ describe('*Cmd autocommands', function()
     feed('4GA1<esc>')
     -- Will copy lines 4 and 5 to the end.
     execute('4,5w XtestC')
-    -- Should not read anything.
-    execute('r XtestC')
+    expect_no_file('XtestC')
     execute("au FILEAppendCmd XtestD '[,']w! test.out")
     -- Will write all lines to test.out.
     execute('w >>XtestD')
-    -- Should not read anything.
-    execute('$r XtestD')
+    expect_no_file('XtestD')
     -- append "end of Xxx" to test.out
     execute('$w >>test.out')
     execute('au BufReadCmd XtestE 0r test.out|$del')
