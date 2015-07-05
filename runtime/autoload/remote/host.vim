@@ -81,7 +81,7 @@ function! remote#host#RegisterPlugin(host, path, specs)
     endif
   endfor
 
-  if remote#host#IsRunning(a:host)
+  if has_key(s:hosts, a:host) && remote#host#IsRunning(a:host)
     " For now we won't allow registration of plugins when the host is already
     " running.
     throw 'Host "'.a:host.'" is already running'
