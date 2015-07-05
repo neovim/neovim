@@ -2525,6 +2525,14 @@ shada_read_next_item_start:
               (uint64_t) initial_fpos);
         goto shada_read_next_item_error;
       }
+      if (memchr(unpacked.data.via.array.ptr[1].via.bin.ptr, 0,
+                 unpacked.data.via.array.ptr[1].via.bin.size) != NULL) {
+        emsgu("Error while reading ShaDa file: "
+              "history entry at position %" PRIu64 " "
+              "contains string with zero byte inside",
+              (uint64_t) initial_fpos);
+        goto shada_read_next_item_error;
+      }
       entry->data.history_item.histtype =
           (uint8_t) unpacked.data.via.array.ptr[0].via.u64;
       const bool is_hist_search =
