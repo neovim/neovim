@@ -7,4 +7,4 @@ if [[ -n "${CI_TARGET}" ]]; then
   exit
 fi
 
-coveralls --encoding iso-8859-1 || echo 'coveralls upload failed.'
+coveralls --gcov "$(which "${GCOV}")" --encoding iso-8859-1 || echo 'coveralls upload failed.'
