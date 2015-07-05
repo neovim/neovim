@@ -12,7 +12,7 @@ it later.
 
 |21.1|	Suspend and resume
 |21.2|	Executing shell commands
-|21.3|	Remembering information; viminfo
+|21.3|	Remembering information; ShaDa
 |21.4|	Sessions
 |21.5|	Views
 |21.6|	Modelines
@@ -78,13 +78,13 @@ This is similar to using CTRL-Z to suspend Vim.  The difference is that a new
 shell is started.
 
 ==============================================================================
-*21.3*	Remembering information; viminfo
+*21.3*	Remembering information; ShaDa
 
 After editing for a while you will have text in registers, marks in various
 files, a command line history filled with carefully crafted commands.  When
 you exit Vim all of this is lost.  But you can get it back!
 
-The viminfo file is designed to store status information:
+The ShaDa file is designed to store status information:
 
 	Command-line and Search pattern history
 	Text in registers
@@ -92,8 +92,8 @@ The viminfo file is designed to store status information:
 	The buffer list
 	Global variables
 
-Each time you exit Vim it will store this information in a file, the viminfo
-file.  When Vim starts again, the viminfo file is read and the information
+Each time you exit Vim it will store this information in a file, the ShaDa
+file.  When Vim starts again, the ShaDa file is read and the information
 restored.
 
 The 'viminfo' option is set by default to restore a limited number of items.
@@ -120,7 +120,7 @@ the marks are stored.  You want this feature, so now you have this: >
 
 The < option controls how many lines are saved for each of the registers.  By
 default, all the lines are saved.  If 0, nothing is saved.  To avoid adding
-thousands of lines to your viminfo file (which might never get used and makes
+thousands of lines to your ShaDa file (which might never get used and makes
 starting Vim slower) you use a maximum of 500 lines: >
 
 	:set viminfo='1000,f1,<500
@@ -137,9 +137,9 @@ Other options you might want to use:
 	%	the buffer list (only restored when starting Vim without file
 		arguments)
 	c	convert the text using 'encoding'
-	n	name used for the viminfo file (must be the last option)
+	n	name used for the ShaDa file (must be the last option)
 
-See the 'viminfo' option and |viminfo-file| for more information.
+See the 'viminfo' option and |shada-file| for more information.
 
 When you run Vim multiple times, the last one exiting will store its
 information.  This may cause information that previously exiting Vims stored
@@ -209,21 +209,21 @@ You can use the ":wviminfo" and ":rviminfo" commands to save and restore the
 information while still running Vim.  This is useful for exchanging register
 contents between two instances of Vim, for example.  In the first Vim do: >
 
-	:wviminfo! ~/tmp/viminfo
+	:wviminfo! ~/tmp/shada
 
 And in the second Vim do: >
 
-	:rviminfo! ~/tmp/viminfo
+	:rviminfo! ~/tmp/shada
 
 Obviously, the "w" stands for "write" and the "r" for "read".
    The ! character is used by ":wviminfo" to forcefully overwrite an existing
 file.  When it is omitted, and the file exists, the information is merged into
 the file.
-   The ! character used for ":rviminfo" means that all the information is
-used, this may overwrite existing information.  Without the ! only information
-that wasn't set is used.
+   The ! character used for ":rviminfo" means that all the information in 
+ShaDa file has priority over existing information, this may overwrite it.  
+Without the ! only information that wasn't set is used.
    These commands can also be used to store info and use it again later.  You
-could make a directory full of viminfo files, each containing info for a
+could make a directory full of ShaDa files, each containing info for a
 different purpose.
 
 ==============================================================================
@@ -355,12 +355,12 @@ Similarly, MS-Windows Vim understands file names with / to separate names, but
 Unix Vim doesn't understand \.
 
 
-SESSIONS AND VIMINFO
+SESSIONS AND SHADA
 
 Sessions store many things, but not the position of marks, contents of
-registers and the command line history.  You need to use the viminfo feature
+registers and the command line history.  You need to use the shada feature
 for these things.
-   In most situations you will want to use sessions separately from viminfo.
+   In most situations you will want to use sessions separately from shada.
 This can be used to switch to another session, but keep the command line
 history.  And yank text into registers in one session, and paste it back in
 another session.
@@ -368,12 +368,12 @@ another session.
 this yourself then.  Example: >
 
 	:mksession! ~/.vim/secret.vim
-	:wviminfo! ~/.vim/secret.viminfo
+	:wviminfo! ~/.vim/secret.shada
 
 And to restore this again: >
 
 	:source ~/.vim/secret.vim
-	:rviminfo! ~/.vim/secret.viminfo
+	:rviminfo! ~/.vim/secret.shada
 
 ==============================================================================
 *21.5*	Views

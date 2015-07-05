@@ -559,7 +559,7 @@ function.
 
 When the '!' flag is included in the 'viminfo' option, global variables that
 start with an uppercase letter, and don't contain a lowercase letter, are
-stored in the viminfo file |viminfo-file|.
+stored in the shada file |shada-file|.
 
 When the 'sessionoptions' option contains "global", global variables that
 start with an uppercase letter and contain at least one lowercase letter are
@@ -568,7 +568,7 @@ stored in the session file |session-file|.
 variable name		can be stored where ~
 my_var_6		not
 My_Var_6		session file
-MY_VAR_6		viminfo file
+MY_VAR_6		shada file
 
 
 It's possible to form a variable name with curly braces, see
@@ -1524,16 +1524,16 @@ v:msgpack_types	Dictionary containing msgpack types used by |msgpackparse()|
 		of msgpack types, use |is| operator.
 
 					*v:oldfiles* *oldfiles-variable*
-v:oldfiles	List of file names that is loaded from the |viminfo| file on
+v:oldfiles	List of file names that is loaded from the |shada| file on
 		startup.  These are the files that Vim remembers marks for.
 		The length of the List is limited by the ' argument of the
 		'viminfo' option (default is 100).
-		When the |viminfo| file is not used the List is empty.
+		When the |shada| file is not used the List is empty.
 		Also see |:oldfiles| and |c_#<|.
 		The List can be modified, but this has no effect on what is
-		stored in the |viminfo| file later.  If you use values other
+		stored in the |shada| file later.  If you use values other
 		than String this will cause trouble.
-		{only when compiled with the |+viminfo| feature}
+		{only when compiled with the |+shada| feature}
 
 					*v:operator* *operator-variable*
 v:operator	The last operator given in Normal mode.  This is a single
@@ -6936,6 +6936,7 @@ quickfix		Compiled with |quickfix| support.
 reltime			Compiled with |reltime()| support.
 rightleft		Compiled with 'rightleft' support.
 scrollbind		Compiled with 'scrollbind' support.
+shada			Compiled with shada support.
 showcmd			Compiled with 'showcmd' support.
 signs			Compiled with |:sign| support.
 smartindent		Compiled with 'smartindent' support.
@@ -6964,7 +6965,6 @@ unix			Unix version of Vim.
 user_commands		User-defined commands.
 vertsplit		Compiled with vertically split windows |:vsplit|.
 vim_starting		True while initial source'ing takes place. |startup|
-viminfo			Compiled with viminfo support.
 virtualedit		Compiled with 'virtualedit' option.
 visual			Compiled with Visual mode.
 visualextra		Compiled with extra Visual mode commands.

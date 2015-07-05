@@ -1292,8 +1292,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	used.
 	Conversion between "latin1", "unicode", "ucs-2", "ucs-4" and "utf-8"
 	is done internally by Vim, 'charconvert' is not used for this.
-	'charconvert' is also used to convert the viminfo file, if the 'c'
-	flag is present in 'viminfo'.  Also used for Unicode conversion.
+	'charconvert' is also used to convert the shada file, if 'encoding' is 
+	not "utf-8".  Also used for Unicode conversion.
 	Example: >
 		set charconvert=CharConvert()
 		fun CharConvert()
@@ -2165,7 +2165,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			feature}
 	Sets the character encoding used inside Vim.  It applies to text in
 	the buffers, registers, Strings in expressions, text stored in the
-	viminfo file, etc.  It sets the kind of characters which Vim can work
+	shada file, etc.  It sets the kind of characters which Vim can work
 	with.  See |encoding-names| for the possible values.
 
 	'encoding' cannot be changed after startup, because (1) it causes
@@ -2197,7 +2197,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	When "unicode", "ucs-2" or "ucs-4" is used, Vim internally uses utf-8.
 	You don't notice this while editing, but it does matter for the
-	|viminfo-file|.  And Vim expects the terminal to use utf-8 too.  Thus
+	|shada-file|.  And Vim expects the terminal to use utf-8 too.  Thus
 	setting 'encoding' to one of these values instead of utf-8 only has
 	effect for encoding used for files when 'fileencoding' is empty.
 
@@ -3409,7 +3409,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	line below a closed fold.  A match in a previous line which is not
 	drawn may not continue in a newly drawn line.
 	You can specify whether the highlight status is restored on startup
-	with the 'h' flag in 'viminfo' |viminfo-h|.
+	with the 'h' flag in 'viminfo' |shada-h|.
 
 						*'history'* *'hi'*
 'history' 'hi'		number	(Vim default: 10000, Vi default: 0)
@@ -3795,7 +3795,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	option.
 	Careful: If you change this option, it might break expanding
 	environment variables.  E.g., when '/' is included and Vim tries to
-	expand "$HOME/.viminfo".  Maybe you should change 'iskeyword' instead.
+	expand "$HOME/.nvim/shada/main.shada".  Maybe you should change 
+	'iskeyword' instead.
 
 						*'iskeyword'* *'isk'*
 'iskeyword' 'isk'	string (Vim default for
@@ -6622,7 +6623,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	When bigger than zero, Vim will give messages about what it is doing.
 	Currently, these messages are given:
-	>= 1	When the viminfo file is read or written.
+	>= 1	When the shada file is read or written.
 	>= 2	When a file is ":source"'ed.
 	>= 5	Every searched tags file and include file.
 	>= 8	Files for which a group of autocommands is executed.
@@ -6688,10 +6689,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 				   others: '!,100,<50,s10,h
 				 Vi default: "")
 			global
-			{not available when compiled without the |+viminfo|
+			{not available when compiled without the |+shada|
 			feature}
-	When non-empty, the viminfo file is read upon startup and written
-	when exiting Vim (see |viminfo-file|).  The string should be a comma
+	When non-empty, the shada file is read upon startup and written
+	when exiting Vim (see |shada-file|).  The string should be a comma
 	separated list of parameters, each consisting of a single character
 	identifying the particular parameter, followed by a number or string
 	which specifies the value of that parameter.  If a particular
@@ -6699,69 +6700,69 @@ A jump table for the options with a short description can be found at |Q_op|.
 	parameter.  The following is a list of the identifying characters and
 	the effect of their value.
 	CHAR	VALUE	~
-							*viminfo-!*
+							*shada-!*
 	!	When included, save and restore global variables that start
 		with an uppercase letter, and don't contain a lowercase
 		letter.  Thus "KEEPTHIS and "K_L_M" are stored, but "KeepThis"
 		and "_K_L_M" are not.  Nested List and Dict items may not be
 		read back correctly, you end up with an empty item.
-							*viminfo-quote*
+							*shada-quote*
 	"	Maximum number of lines saved for each register.  Old name of
 		the '<' item, with the disadvantage that you need to put a
 		backslash before the ", otherwise it will be recognized as the
 		start of a comment!
-							*viminfo-%*
+							*shada-%*
 	%	When included, save and restore the buffer list.  If Vim is
 		started with a file name argument, the buffer list is not
 		restored.  If Vim is started without a file name argument, the
-		buffer list is restored from the viminfo file.  Buffers
+		buffer list is restored from the shada file.  Buffers
 		without a file name and buffers for help files are not written
-		to the viminfo file.
+		to the shada file.
 		When followed by a number, the number specifies the maximum
 		number of buffers that are stored.  Without a number all
 		buffers are stored.
-							*viminfo-'*
+							*shada-'*
 	'	Maximum number of previously edited files for which the marks
 		are remembered.  This parameter must always be included when
 		'viminfo' is non-empty.
 		Including this item also means that the |jumplist| and the
-		|changelist| are stored in the viminfo file.
-							*viminfo-/*
+		|changelist| are stored in the shada file.
+							*shada-/*
 	/	Maximum number of items in the search pattern history to be
 		saved.  If non-zero, then the previous search and substitute
 		patterns are also saved.  When not included, the value of
 		'history' is used.
-							*viminfo-:*
+							*shada-:*
 	:	Maximum number of items in the command-line history to be
 		saved.  When not included, the value of 'history' is used.
-							*viminfo-<*
+							*shada-<*
 	<	Maximum number of lines saved for each register.  If zero then
 		registers are not saved.  When not included, all lines are
 		saved.  '"' is the old name for this item.
 		Also see the 's' item below: limit specified in Kbyte.
-							*viminfo-@*
+							*shada-@*
 	@	Maximum number of items in the input-line history to be
 		saved.  When not included, the value of 'history' is used.
-							*viminfo-c*
-	c	When included, convert the text in the viminfo file from the
-		'encoding' used when writing the file to the current
-		'encoding'.  See |viminfo-encoding|.
-							*viminfo-f*
+							*shada-c*
+	c	Dumb option, kept for compatibility reasons.  Has no actual 
+		effect.  Current encoding state is described in 
+		|shada-encoding|.
+							*shada-f*
 	f	Whether file marks need to be stored.  If zero, file marks ('0
 		to '9, 'A to 'Z) are not stored.  When not present or when
 		non-zero, they are all stored.  '0 is used for the current
 		cursor position (when exiting or when doing ":wviminfo").
-							*viminfo-h*
-	h	Disable the effect of 'hlsearch' when loading the viminfo
+							*shada-h*
+	h	Disable the effect of 'hlsearch' when loading the shada
 		file.  When not included, it depends on whether ":nohlsearch"
 		has been used since the last search command.
-							*viminfo-n*
-	n	Name of the viminfo file.  The name must immediately follow
+							*shada-n*
+	n	Name of the shada file.  The name must immediately follow
 		the 'n'.  Must be the last one!  If the "-i" argument was
 		given when starting Vim, that file name overrides the one
 		given here with 'viminfo'.  Environment variables are expanded
 		when opening the file, not when setting the option.
-							*viminfo-r*
+							*shada-r*
 	r	Removable media.  The argument is a string (up to the next
 		',').  This parameter can be given several times.  Each
 		specifies the start of a path for which no marks will be
@@ -6769,7 +6770,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		could use "ra:,rb:".  You can also use it for temp files,
 		e.g., for Unix: "r/tmp".  Case is ignored.  Maximum length of
 		each 'r' argument is 50 characters.
-							*viminfo-s*
+							*shada-s*
 	s	Maximum size of an item contents in KiB.  If zero then nothing 
 		is saved.  Unlike Vim this applies to all items, except for 
 		the buffer list and header.  Full item size is off by three 
@@ -6780,7 +6781,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		contents size) = 10253 bytes.
 
 	Example: >
-	    :set viminfo='50,<1000,s100,:0,n~/vim/viminfo
+	    :set viminfo='50,<1000,s100,:0,n~/nvim/shada
 <
 	'50		Marks will be remembered for the last 50 files you
 			edited.
@@ -6789,7 +6790,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	s100		Items with contents occupying more then 100 KiB are 
 			skipped.
 	:0		Command-line history will not be saved.
-	n~/vim/viminfo	The name of the file to use is "~/vim/viminfo".
+	n~/nvim/shada	The name of the file to use is "~/nvim/shada".
 	no /		Since '/' is not specified, the default will be used,
 			that is, save all of the search history, and also the
 			previous search and substitute patterns.

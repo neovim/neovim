@@ -12,7 +12,7 @@ Starting Vim						*starting*
 4. Suspending			|suspend|
 5. Saving settings		|save-settings|
 6. Views and Sessions		|views-sessions|
-7. The viminfo file		|viminfo-file|
+7. The ShaDa file		|shada-file|
 
 ==============================================================================
 1. Vim arguments					*vim-arguments*
@@ -128,7 +128,7 @@ argument.
 		"pat" in the first file being edited (see |pattern| for the
 		available search patterns).  The search starts at the cursor
 		position, which can be the first line or the cursor position
-		last used from |viminfo|. To force a search from the first
+		last used from |shada|. To force a search from the first
 		line use "+1 +/pat".
 
 +{command}						*-+c* *-c*
@@ -251,7 +251,7 @@ argument.
 							*-V* *verbose*
 -V[N]		Verbose.  Sets the 'verbose' option to [N] (default: 10).
 		Messages will be given for each file that is ":source"d and
-		for reading or writing a viminfo file.  Can be used to find
+		for reading or writing a ShaDa file.  Can be used to find
 		out what is happening upon startup and exit.
 		Example: >
 			vim -V8 foobar
@@ -322,10 +322,10 @@ argument.
 		same effect as "NONE", but loading plugins is not skipped.
 
 							*-i*
--i {viminfo}	The file "viminfo" is used instead of the default viminfo
-		file.  If the name "NONE" is used (all uppercase), no viminfo
+-i {shada}	The file {shada} is used instead of the default ShaDa
+		file.  If the name "NONE" is used (all uppercase), no ShaDa
 		file is read or written, even if 'viminfo' is set or when
-		":rv" or ":wv" are used.  See also |viminfo-file|.
+		":rv" or ":wv" are used.  See also |shada-file|.
 
 							*-s*
 -s {scriptin}	The script file "scriptin" is read.  The characters in the
@@ -475,9 +475,9 @@ accordingly.  Vim proceeds in this order:
 	Only when starting "gvim", the GUI initializations will be done.  See
 	|gui-init|.
 
-9. Read the viminfo file
+9. Read the ShaDa file
 	If the 'viminfo' option is not empty, the viminfo file is read.  See
-	|viminfo-file|.
+	|shada-file|.
 
 10. Read the quickfix file
 	If the "-q" flag was given to Vim, the quickfix file is read.  If this
@@ -564,10 +564,10 @@ just like executing a command from a vimrc/exrc in the current directory.
 If Vim takes a long time to start up, use the |--startuptime| argument to find
 out what happens.
 
-If you have "viminfo" enabled, the loading of the viminfo file may take a
+If you have "viminfo" enabled, the loading of the ShaDa file may take a
 while.  You can find out if this is the problem by disabling viminfo for a
 moment (use the Vim argument "-i NONE", |-i|).  Try reducing the number of
-lines stored in a register with ":set viminfo='20,<50,s10".  |viminfo-file|.
+lines stored in a register with ":set viminfo='20,<50,s10".  |shada-file|.
 
 							*:intro*
 When Vim starts without a file name, an introductory message is displayed (for
@@ -768,8 +768,8 @@ save a Session and when you restore it later the window layout looks the same.
 You can use a Session to quickly switch between different projects,
 automatically loading the files you were last working on in that project.
 
-Views and Sessions are a nice addition to viminfo-files, which are used to
-remember information for all Views and Sessions together |viminfo-file|.
+Views and Sessions are a nice addition to ShaDa files, which are used to
+remember information for all Views and Sessions together |shada-file|.
 
 You can quickly start editing with a previously saved View or Session with the
 |-S| argument: >
@@ -865,7 +865,7 @@ The output of ":mkview" contains these items:
 Note that Views and Sessions are not perfect:
 - They don't restore everything.  For example, defined functions, autocommands
   and ":syntax on" are not included.  Things like register contents and
-  command line history are in viminfo, not in Sessions or Views.
+  command line history are in ShaDa, not in Sessions or Views.
 - Global option values are only set when they differ from the default value.
   When the current value is not the default value, loading a Session will not
   set it back to the default value.  Local options will be set back to the
@@ -896,15 +896,15 @@ To automatically save and restore views for *.c files: >
 	au BufWinEnter *.c silent loadview
 
 ==============================================================================
-8. The viminfo file				*viminfo* *viminfo-file* *E136*
+8. The ShaDa file				*shada* *shada-file* *E136*
 						*E575* *E576* *E577*
 If you exit Vim and later start it again, you would normally lose a lot of
-information.  The viminfo file can be used to remember that information, which
+information.  The ShaDa file can be used to remember that information, which
 enables you to continue where you left off.
 
 This is introduced in section |21.3| of the user manual.
 
-The viminfo file is used to store:
+The ShaDa file is used to store:
 - The command line history.
 - The search string history.
 - The input-line history.
@@ -915,46 +915,43 @@ The viminfo file is used to store:
 - The buffer list.
 - Global variables.
 
-The viminfo file is not supported when the |+viminfo| feature has been
-disabled at compile time.
-
-You could also use a Session file.  The difference is that the viminfo file
+You could also use a Session file.  The difference is that the ShaDa file
 does not depend on what you are working on.  There normally is only one
-viminfo file.  Session files are used to save the state of a specific editing
+ShaDa file.  Session files are used to save the state of a specific editing
 Session.  You could have several Session files, one for each project you are
-working on.  Viminfo and Session files together can be used to effectively
+working on.  ShaDa and Session files together can be used to effectively
 enter Vim and directly start working in your desired setup. |session-file|
 
-							*viminfo-read*
+							*shada-read*
 When Vim is started and the 'viminfo' option is non-empty, the contents of
-the viminfo file are read and the info can be used in the appropriate places.
+the ShaDa file are read and the info can be used in the appropriate places.
 The |v:oldfiles| variable is filled.  The marks are not read in at startup
 (but file marks are).  See |initialization| for how to set the 'viminfo'
 option upon startup.
 
-							*viminfo-write*
-When Vim exits and 'viminfo' is non-empty, the info is stored in the viminfo
+							*shada-write*
+When Vim exits and 'viminfo' is non-empty, the info is stored in the ShaDa
 file (it's actually merged with the existing one, if one exists).  The
 'viminfo' option is a string containing information about what info should be
 stored, and contains limits on how much should be stored (see 'viminfo').
 
 Notes for Unix:
-- The file protection for the viminfo file will be set to prevent other users
+- The file protection for the ShaDa file will be set to prevent other users
   from being able to read it, because it may contain any text or commands that
   you have worked with.
-- If you want to share the viminfo file with other users (e.g. when you "su"
+- If you want to share the ShaDa file with other users (e.g. when you "su"
   to another user), you can make the file writable for the group or everybody.
-  Vim will preserve this when writing new viminfo files.  Be careful, don't
-  allow just anybody to read and write your viminfo file!
-- Vim will not overwrite a viminfo file that is not writable by the current
+  Vim will preserve this when writing new ShaDa files.  Be careful, don't
+  allow just anybody to read and write your ShaDa file!
+- Vim will not overwrite a ShaDa file that is not writable by the current
   "real" user.  This helps for when you did "su" to become root, but your
   $HOME is still set to a normal user's home directory.  Otherwise Vim would
-  create a viminfo file owned by root that nobody else can read.
-- The viminfo file cannot be a symbolic link.  This is to avoid security
+  create a ShaDa file owned by root that nobody else can read.
+- The ShaDa file cannot be a symbolic link.  This is to avoid security
   issues.
 
 Marks are stored for each file separately.  When a file is read and 'viminfo'
-is non-empty, the marks for that file are read from the viminfo file.  NOTE:
+is non-empty, the marks for that file are read from the ShaDa file.  NOTE:
 The marks are only written when exiting Vim, which is fine because marks are
 remembered for all the files you have opened in the current editing session,
 unless ":bdel" is used.  If you want to save the marks for a file that you are
@@ -964,12 +961,12 @@ cursor position when the file was last exited.  No marks are saved for files
 that start with any string given with the "r" flag in 'viminfo'.  This can be
 used to avoid saving marks for files on removable media (for MS-DOS you would
 use "ra:,rb:".
-The |v:oldfiles| variable is filled with the file names that the viminfo file
+The |v:oldfiles| variable is filled with the file names that the ShaDa file
 has marks for.
 
-							*viminfo-file-marks*
-Uppercase marks ('A to 'Z) are stored when writing the viminfo file.  The
-numbered marks ('0 to '9) are a bit special.  When the viminfo file is written
+							*shada-file-marks*
+Uppercase marks ('A to 'Z) are stored when writing the ShaDa file.  The
+numbered marks ('0 to '9) are a bit special.  When the ShaDa file is written
 (when exiting or with the ":wviminfo" command), '0 is set to the current cursor
 position and file.  The old '0 is moved to '1, '1 to '2, etc.  This
 resembles what happens with the "1 to "9 delete registers.  If the current
@@ -992,87 +989,89 @@ Use the "r" flag in 'viminfo' to specify for which files no marks should be
 remembered.
 
 
-VIMINFO FILE NAME					*viminfo-file-name*
+SHADA FILE NAME						*shada-file-name*
 
-- The default name of the viminfo file is "$HOME/.viminfo" for Unix,
-  "$HOME\_viminfo" for MS-DOS and Win32.  For the last two, when $HOME is not
-  set, "$VIM\_viminfo" is used.  When $VIM is also not set, "c:\_viminfo" is
-  used.
-- The 'n' flag in the 'viminfo' option can be used to specify another viminfo
+- The default name of the ShaDa file is "$HOME/.nvim/shada/main.shada" for 
+  Unix, "$HOME\_nvim\shada\main.shada" for MS-DOS and Win32.  For the last 
+  two, when $HOME is not set, "$VIM\_nvim\shada\main.shada" is used.  When 
+  $VIM is also not set, "c:\_nvim\shada\main.shada" is used.
+- The 'n' flag in the 'viminfo' option can be used to specify another ShaDa
   file name |'viminfo'|.
 - The "-i" Vim argument can be used to set another file name, |-i|.  When the
-  file name given is "NONE" (all uppercase), no viminfo file is ever read or
+  file name given is "NONE" (all uppercase), no ShaDa file is ever read or
   written.  Also not for the commands below!
 - For the commands below, another file name can be given, overriding the
   default and the name given with 'viminfo' or "-i" (unless it's NONE).
 
 
-CHARACTER ENCODING					*viminfo-encoding*
+CHARACTER ENCODING					*shada-encoding*
 
-The text in the viminfo file is encoded as specified with the 'encoding'
-option.  Normally you will always work with the same 'encoding' value, and
-this works just fine.  However, if you read the viminfo file with another
-value for 'encoding' than what it was written with, some of the text
-(non-ASCII characters) may be invalid.  If this is unacceptable, add the 'c'
-flag to the 'viminfo' option: >
-	:set viminfo+=c
-Vim will then attempt to convert the text in the viminfo file from the
-'encoding' value it was written with to the current 'encoding' value.  This
-requires Vim to be compiled with the |+iconv| feature.  Filenames are not
-converted.
+The text in the ShaDa file is UTF-8-encoded.  Normally you will always work 
+with the same 'encoding' value, and this works just fine.  However, if you 
+read the ShaDa file with value for 'encoding' different from utf-8 and 
+'encoding' used when writing ShaDa file, some of the text (non-ASCII 
+characters) may be invalid as NeoVim always attempts to convert the text in 
+the ShaDa file from the UTF-8 to the current 'encoding' value.  Filenames are 
+never converted, affected elements are:
+
+- history strings;
+- variable values;
+- register values;
+- last used search and substitute patterns;
+- last used substitute replacement string.
 
 
-MANUALLY READING AND WRITING				*viminfo-read-write*
+MANUALLY READING AND WRITING				*shada-read-write*
 
-Two commands can be used to read and write the viminfo file manually.  This
+Two commands can be used to read and write the ShaDa file manually.  This
 can be used to exchange registers between two running Vim programs: First
 type ":wv" in one and then ":rv" in the other.  Note that if the register
 already contained something, then ":rv!" would be required.  Also note
 however that this means everything will be overwritten with information from
 the first Vim, including the command line history, etc.
 
-The viminfo file itself can be edited by hand too, although we suggest you
-start with an existing one to get the format right.  It is reasonably
-self-explanatory once you're in there.  This can be useful in order to
-create a second file, say "~/.my_viminfo" which could contain certain
-settings that you always want when you first start Vim.  For example, you
-can preload registers with particular data, or put certain commands in the
-command line history.  A line in your .vimrc file like >
-	:rviminfo! ~/.my_viminfo
-can be used to load this information.  You could even have different viminfos
-for different types of files (e.g., C code) and load them based on the file
-name, using the ":autocmd" command (see |:autocmd|).
+The ShaDa file itself can be edited by hand too, although we suggest you
+start with an existing one to get the format right.  You need to understand 
+MessagePack (or, more likely, find software that is able to use it) format to 
+do this.  This can be useful in order to create a second file, say 
+"~/.my.shada" which could contain certain settings that you always want when 
+you first start NeoVim.  For example, you can preload registers with 
+particular data, or put certain commands in the command line history.  A line 
+in your .nvimrc file like >
+	:rviminfo! ~/.my.shada
+can be used to load this information.  You could even have different ShaDa 
+files for different types of files (e.g., C code) and load them based on the 
+file name, using the ":autocmd" command (see |:autocmd|).
 
-							*viminfo-errors*
-When Vim detects an error while reading a viminfo file, it will not overwrite
-that file.  If there are more than 10 errors, Vim stops reading the viminfo
-file.  This was done to avoid accidentally destroying a file when the file
-name of the viminfo file is wrong.  This could happen when accidentally typing
-"vim -i file" when you wanted "vim -R file" (yes, somebody accidentally did
-that!).  If you want to overwrite a viminfo file with an error in it, you will
-either have to fix the error, or delete the file (while Vim is running, so
-most of the information will be restored).
+							*shada-errors*
+When Vim detects an error while reading a ShaDa file, it will not overwrite
+that file.  This was done to avoid accidentally destroying a file when the 
+file name of the ShaDa file is wrong.  This could happen when accidentally 
+typing "nvim -i file" when you wanted "nvim -R file" (yes, somebody 
+accidentally did that!).  If you want to overwrite a ShaDa file with an error 
+in it, you will either have to fix the error, or delete the file (while NeoVim 
+is running, so most of the information will be restored).
 
 						   *:rv* *:rviminfo* *E195*
-:rv[iminfo][!] [file]	Read from viminfo file [file] (default: see above).
+:rv[iminfo][!] [file]	Read from ShaDa file [file] (default: see above).
 			If [!] is given, then any information that is
 			already set (registers, marks, |v:oldfiles|, etc.)
 			will be overwritten.
 
 				*:wv* *:wviminfo* *E137* *E138* *E574* *E886*
-:wv[iminfo][!] [file]	Write to viminfo file [file] (default: see above).
+:wv[iminfo][!] [file]	Write to ShaDa file [file] (default: see above).
 			The information in the file is first read in to make
 			a merge between old and new info.  When [!] is used,
 			the old information is not read first, only the
-			internal info is written.  If 'viminfo' is empty, marks
-			for up to 100 files will be written.
-			When you get error "E138: Can't write viminfo file"
-			check that no old temp files were left behind (e.g.
-			~/.viminf*) and that you can write in the directory of
-			the .viminfo file.
+			internal info is written (also disables safety checks 
+			described in |shada-errors|).  If 'viminfo' is empty, 
+			marks for up to 100 files will be written.
+			When you get error "E138: All .tmp.X files exist, 
+			cannot write ShaDa file!" check that no old temp files 
+			were left behind (e.g. ~/.nvim/shada/main.shada.tmp*).
 
 						*:ol* *:oldfiles*
-:ol[dfiles]		List the files that have marks stored in the viminfo
+:ol[dfiles]		List the files that have marks stored in the ShaDa
 			file.  This list is read on startup and only changes
 			afterwards with ":rviminfo!".  Also see |v:oldfiles|.
 			The number can be used with |c_#<|.

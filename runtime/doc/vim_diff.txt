@@ -23,7 +23,8 @@ these differences.
 
 - Use `.nvimrc` instead of `.vimrc` for storing configuration.
 - Use `.nvim` instead of `.vim` to store configuration files.
-- Use `.nviminfo` instead of `.viminfo` for persistent session information.
+- Use `.nvim/shada/main.shada` instead of `.viminfo` for persistent session 
+  information.
 
 ==============================================================================
 2. Option defaults					  *nvim-option-defaults*
@@ -92,6 +93,14 @@ are always available and may be used simultaneously in separate plugins.  The
    Same thing applies to |string()| (though it uses construct like 
    "{E724@level}"), but this is not reliable because |string()| continues to 
    error out.
+
+Viminfo text files were replaced with binary (messagepack) ShaDa files. 
+Additional differences:
+
+- |shada-c| has no effect.
+- |shada-s| now limits size of every item and not just registers.
+- When reading ShaDa files history, jump list and change list items are merged 
+  with those in currently running NeoVim instance according to the timestamp.
 
 ==============================================================================
 4. New Features						     *nvim-features-new*
