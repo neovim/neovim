@@ -64,26 +64,29 @@ matrix:
       env: CI_TARGET=clint
     - os: linux
       compiler: gcc-5
+      env: GCOV=gcov-5
     - os: linux
-      env: BUILD_32BIT=ON
       # Travis creates a cache per compiler.
       # Set a different value here to store 32-bit
       # dependencies in a separate cache.
       compiler: gcc-5 -m32
+      env: GCOV=gcov-5 BUILD_32BIT=ON
     - os: linux
-      env: CLANG_SANITIZER=ASAN_UBSAN
       compiler: clang-3.6
+      env: GCOV=llvm-cov-3.6 CLANG_SANITIZER=ASAN_UBSAN
     - os: linux
-      env: CLANG_SANITIZER=MSAN
       compiler: clang-3.6
+      env: GCOV=llvm-cov-3.6 CLANG_SANITIZER=MSAN
     # FIXME (tarruda): Uncomment when TSan tests don't hang anymore.
     #- os: linux
-    #  env: CLANG_SANITIZER=TSAN
     #  compiler: clang-3.6
+    #  env: GCOV=llvm-cov-3.6 CLANG_SANITIZER=TSAN
     - os: osx
       compiler: clang
+      env: GCOV=gcov
     - os: osx
       compiler: gcc-4.9
+      env: GCOV=gcov-4.9
     - os: linux
       env: BUILD_MINGW=ON
   fast_finish: true
