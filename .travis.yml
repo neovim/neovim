@@ -20,13 +20,19 @@ env:
     # Force verification of DLOG macros.
     - CFLAGS='-DMIN_LOG_LEVEL=0'
   matrix:
-    - CI_TARGET=clang
     - CI_TARGET=gcc
     - CI_TARGET=gcc-32
     - CI_TARGET=clint
     - CI_TARGET=mingw
 matrix:
   include:
+    - os: linux
+      env: CI_TARGET=clang CLANG_SANITIZER=ASAN_UBSAN
+    - os: linux
+      env: CI_TARGET=clang CLANG_SANITIZER=MSAN
+    # FIXME: Re-enable TSan when tests run successfully.
+    #- os: linux
+    #  env: CI_TARGET=clang CLANG_SANITIZER=TSAN
     - os: osx
       env: CI_TARGET=clang
       compiler: clang
@@ -34,6 +40,8 @@ matrix:
       env: CI_TARGET=gcc
       compiler: gcc-4.9
   fast_finish: true
+  allow_failures:
+    - env: CI_TARGET=clang CLANG_SANITIZER=MSAN
 before_install:
   # Pins the version of the java package installed on the Travis VMs
   # and avoids a lengthy upgrade process for them.
