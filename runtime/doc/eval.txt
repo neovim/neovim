@@ -6722,8 +6722,6 @@ dialog_con		Compiled with console dialog support.
 dialog_gui		Compiled with GUI dialog support.
 digraphs		Compiled with support for digraphs.
 dnd			Compiled with support for the "~ register |quote_~|.
-dos16			16 bits DOS version of Vim.
-dos32			32 bits DOS (DJGPP) version of Vim.
 eval			Compiled with expression evaluation support.  Always
 			true, of course!
 ex_extra		Compiled with extra Ex commands |+ex_extra|.
@@ -6824,12 +6822,10 @@ visualextra		Compiled with extra Visual mode commands.
 vreplace		Compiled with |gR| and |gr| commands.
 wildignore		Compiled with 'wildignore' option.
 wildmenu		Compiled with 'wildmenu' option.
-win16			Win16 version of Vim (MS-Windows 3.1).
 win32			Win32 version of Vim (MS-Windows 95 and later, 32 or
 			64 bits)
 win32unix		Win32 version of Vim, using Unix files (Cygwin)
 win64			Win64 version of Vim (MS-Windows 64 bit).
-win95			Win32 version for MS-Windows 95/98/ME.
 winaltkeys		Compiled with 'winaltkeys' option.
 windows			Compiled with support for more than one window.
 writebackup		Compiled with 'writebackup' default on.
@@ -6838,11 +6834,6 @@ xim			Compiled with X input method support |xim|.
 xpm			Compiled with pixmap support.
 xpm_w32			Compiled with pixmap support for Win32. (Only for
 			backward compatibility. Use "xpm" instead.)
-xsmp			Compiled with X session management support.
-xsmp_interact		Compiled with interactive X session management support.
-xterm_clipboard		Compiled with support for xterm clipboard.
-xterm_save		Compiled with support for saving and restoring the
-			xterm screen.
 x11			Compiled with X11 support.
 
 							*string-match*

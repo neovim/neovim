@@ -5461,17 +5461,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	"-f" is not inside the quotes, because it is not part of the command
 	name.  And Vim automagically recognizes the backslashes that are path
 	separators.
-	For Dos 32 bits (DJGPP), you can set the $DJSYSFLAGS environment
-	variable to change the way external commands are executed.  See the
-	libc.inf file of DJGPP.
-	Under MS-Windows, when the executable ends in ".com" it must be
-	included.  Thus setting the shell to "command.com" or "4dos.com"
-	works, but "command" and "4dos" do not work for all commands (e.g.,
-	filtering).
-	For unknown reasons, when using "4dos.com" the current directory is
-	changed to "C:\".  To avoid this set 'shell' like this: >
-		:set shell=command.com\ /c\ 4dos
-<	This option cannot be set from a |modeline| or in the |sandbox|, for
+	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
 						*'shellcmdflag'* *'shcf'*

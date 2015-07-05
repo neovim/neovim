@@ -2992,12 +2992,8 @@ void ex_checktime(exarg_T *eap)
 
 static char *get_locale_val(int what)
 {
-  char        *loc;
-
-  /* Obtain the locale value from the libraries.  For DJGPP this is
-   * redefined and it doesn't use the arguments. */
-  loc = setlocale(what, NULL);
-
+  // Obtain the locale value from the libraries.
+  char *loc = setlocale(what, NULL);
 
   return loc;
 }

@@ -1519,8 +1519,6 @@ patches by Mathias, see mail Feb 22)
 Win32: compiling with normal features and OLE fails.  Patch by Mathias
 Michaelis, 2006 Jun 4.
 
-Win16: include patches to make Win16 version work. (Vince Negri, 2006 May 22)
-
 Win32: after "[I" showing matches, scroll wheel messes up screen. (Tsakiridis,
 2007 Feb 18)
 Patch by Alex Dobrynin, 2007 Jun 3.  Also fixes other scroll wheel problems.
@@ -2088,14 +2086,6 @@ MSDOS and Win32:
     backslashes. (Ronald Hoellwarth)
 
 
-Windows 95:
-8   Editing a file by its short file name and writing it, makes the long file
-    name disappear.  Setting 'backupcopy' helps.
-    Use FindFirstFile()->cAlternateFileName in fname_case() (George Reilly).
-8   Doing wildcard expansion, will match the short filename, but result in the
-    long filename (both DJGPP and Win32).
-
-
 Win32 console:
 9   When editing a file by its short file name, it should be expanded into its
     long file name, to avoid problems like these: (Mccollister)
@@ -2261,9 +2251,6 @@ Macintosh:
       one for B&W printing (if that can be detected).
 8   In Visual block mode with 'lbr' set, a change command doesn't insert the
     text in following lines where the linebreak changes.
-9   dosinst.c: The DJGPP version can't uninstall the Uninstall registry key on
-    Windows NT.  How to install a .inf file on Windows NT and how to detect
-    that Windows NT is being used?
 8   When 'virtualedit' is "block,insert" and encoding is "utf-8", selecting a
     block of one double-wide character, then "d" deletes only half of it.
 8   When 'virtualedit' is set, should "I" in blockwise visual mode also insert
@@ -2295,11 +2282,6 @@ Macintosh:
     Or ask for permission to overwrite it (if file can be made writable) and
     restore file to readonly afterwards.
     Overwriting a file for which a swap file exists is similar issue.
-7   When compiled with "xterm_clipboard", startup can be slower and might get
-    error message for invalid $DISPLAY.  Try connecting to the X server in the
-    background (forked), so that Vim starts up quicker?  Connect as soon as
-    the clipboard is to be used (Visual select mode starts, paste from
-    clipboard)
 7   X11: Some people prefer to use CLIPBOARD instead of PRIMARY for the normal
     selection.  Add an "xclipboard" argument to the 'clipboard' option? (Mark
     Waggoner)
@@ -2438,7 +2420,7 @@ Problems that will (probably) not be solved:
 -   Win32: All files created on the day of switching from winter to summer
     time cause "changed since editing started" messages.  It goes away when
     the file is written again the next day, or the timezone is adjusted.
-    DJGPP version is OK. (Zaimi)  Looks like a problem with the Win32 library.
+    Looks like a problem with the Win32 library.
     Rebooting doesn't help.  Time stamps look OK in directory. (Penn)
     Is this on FAT (stores wall clock time) or NTFS (stores UTS)?
 -   Win32, MS-Windows XP: $HOME uses the wrong drive when the user profiles
@@ -3151,8 +3133,6 @@ Performance:
 8   When displaying a space with only foreground highlighting, it's the same
     as a space without attributes.  Avoid displaying spaces for the "~" lines
     when starting up in a color terminal.
-8   Avoid alloc() for scratch buffer use, esp. in syntax.c.  It's very slow on
-    Win16.
 8   Profiling shows that in_id_list() is used very often for C code.  Can this
     function be improved?
 8   For an existing file, the page size of the swap file is always the

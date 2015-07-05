@@ -409,10 +409,6 @@ m  *+xim*		X input method |xim|
    *+xfontset*		X fontset support |xfontset|
    *+xpm*		pixmap support
 m  *+xpm_w32*		Win32 GUI only: pixmap support |w32-xpm-support|
-   *+xsmp*		XSMP (X session management) support
-   *+xsmp_interact*	interactive XSMP (X session management) support
-N  *+xterm_clipboard*	Unix only: xterm clipboard handling
-m  *+xterm_save*	save and restore xterm screen |xterm-screens|
 
 							*/dyn* *E370* *E448*
 			To some of the features "/dyn" is added when the

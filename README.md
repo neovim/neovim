@@ -29,9 +29,9 @@ For lots more details, see
 
 ### What's been done so far
 
-- [Terminal emulator](http://neovim.io/doc/user/various.html#:terminal)
+- [Terminal emulator](http://neovim.io/doc/user/nvim_terminal_emulator.html)
 - [Job control](https://github.com/neovim/neovim/pull/2247)
-- msgpack remote API
+- MessagePack-based remote API
 - Performance, reliability, portability
 
 See the [progress page](https://github.com/neovim/neovim/wiki/Progress) for a comprehensive list.
