@@ -133,6 +133,43 @@ typedef enum {
 #define SHADA_LAST_ENTRY ((uint64_t) kSDItemChange)
 } ShadaEntryType;
 
+/// Flags for shada_read_next_item
+enum SRNIFlags {
+  kSDReadHeader = (1 << kSDItemHeader),  ///< Determines whether header should
+                                         ///< be read (it is usually ignored).
+  kSDReadUndisableableData = (
+    (1 << kSDItemSearchPattern)
+    | (1 << kSDItemSubString)
+    | (1 << kSDItemGlobalMark)
+    | (1 << kSDItemJump)
+  ), ///< Data reading which cannot be disabled by &viminfo or other options 
+     ///< except for disabling reading ShaDa as a whole.
+  kSDReadRegisters = (1 << kSDItemRegister),  ///< Determines whether registers 
+                                              ///< should be read (may only be 
+                                              ///< disabled when writing, but 
+                                              ///< not when reading).
+  kSDReadHistory = (1 << kSDItemHistoryEntry),  ///< Determines whether history
+                                                ///< should be read (can only be 
+                                                ///< disabled by &history).
+  kSDReadVariables = (1 << kSDItemVariable),  ///< Determines whether variables 
+                                              ///< should be read (disabled by 
+                                              ///< removing ! from &viminfo).
+  kSDReadBufferList = (1 << kSDItemBufferList),  ///< Determines whether buffer 
+                                                 ///< list should be read 
+                                                 ///< (disabled by removing 
+                                                 ///< % entry from viminfo).
+  kSDReadUnknown = (1 << (SHADA_LAST_ENTRY + 1)),  ///< Determines whether 
+                                                   ///< unknown items should be 
+                                                   ///< read (usually disabled).
+  kSDReadLocalMarks = (
+    (1 << kSDItemLocalMark)
+    | (1 << kSDItemChange)
+  ),  ///< Determines whether local marks and change list should be read. Can 
+      ///< only be disabled by disabling &viminfo or putting '0 there.
+};
+// Note: SRNIFlags enum name was created only to make it possible to reference 
+// it. This name is not actually used anywhere outside of the documentation.
+
 /// Structure defining a single ShaDa file entry
 typedef struct {
   ShadaEntryType type;
@@ -416,8 +453,31 @@ static inline bool marks_equal(const pos_T a, const pos_T b)
 static void shada_read(FILE *const fp, const int flags)
   FUNC_ATTR_NONNULL_ALL
 {
+  unsigned srni_flags = 0;
+  if (flags & kShaDaWantInfo) {
+    srni_flags |= kSDReadUndisableableData | kSDReadRegisters;
+    if (p_hi) {
+      srni_flags |= kSDReadHistory;
+    }
+    if (find_viminfo_parameter('!') != NULL) {
+      srni_flags |= kSDReadVariables;
+    }
+    if (find_viminfo_parameter('%') != NULL && ARGCOUNT == 0) {
+      srni_flags |= kSDReadBufferList;
+    }
+  }
+  if (flags & kShaDaWantMarks) {
+    if (get_viminfo_parameter('\'') > 0) {
+      srni_flags |= kSDReadLocalMarks;
+    }
+  }
+  if (srni_flags == 0) {
+    // Nothing to do.
+    return;
+  }
+  const bool force = flags & kShaDaForceit;
   HistoryMergerState hms[HIST_COUNT];
-  if (flags & kShaDaWantInfo && p_hi) {
+  if (srni_flags & kSDReadHistory) {
     for (uint8_t i = 0; i < HIST_COUNT; i++) {
       hms[i].hmrb = hm_rb_new((size_t) p_hi);
       hms[i].do_merge = true;
@@ -428,7 +488,7 @@ static void shada_read(FILE *const fp, const int flags)
   ShadaEntry cur_entry;
   khash_t(bufset) *cl_bufs = kh_init(bufset);
   khash_t(fnamebufs) *fname_bufs = kh_init(fnamebufs);
-  while (shada_read_next_item(fp, &cur_entry, flags) == NOTDONE) {
+  while (shada_read_next_item(fp, &cur_entry, srni_flags) == NOTDONE) {
     switch (cur_entry.type) {
       case kSDItemMissing: {
         assert(false);
@@ -441,10 +501,6 @@ static void shada_read(FILE *const fp, const int flags)
         break;
       }
       case kSDItemSearchPattern: {
-        if (!(flags & kShaDaWantInfo)) {
-          shada_free_shada_entry(&cur_entry);
-          break;
-        }
         (cur_entry.data.search_pattern.is_substitute_pattern
          ? &set_substitute_pattern
          : &set_search_pattern)((SearchPattern) {
@@ -467,10 +523,6 @@ static void shada_read(FILE *const fp, const int flags)
         break;
       }
       case kSDItemSubString: {
-        if (!(flags & kShaDaWantInfo)) {
-          shada_free_shada_entry(&cur_entry);
-          break;
-        }
         sub_set_replacement((SubReplacementString) {
           .sub = cur_entry.data.sub_string.sub,
           .timestamp = cur_entry.timestamp,
@@ -480,10 +532,6 @@ static void shada_read(FILE *const fp, const int flags)
         break;
       }
       case kSDItemHistoryEntry: {
-        if (!(flags & kShaDaWantInfo && p_hi)) {
-          shada_free_shada_entry(&cur_entry);
-          break;
-        }
         if (cur_entry.data.history_item.histtype >= HIST_COUNT) {
           shada_free_shada_entry(&cur_entry);
           break;
@@ -494,10 +542,6 @@ static void shada_read(FILE *const fp, const int flags)
         break;
       }
       case kSDItemRegister: {
-        if (!(flags & kShaDaWantInfo)) {
-          shada_free_shada_entry(&cur_entry);
-          break;
-        }
         if (cur_entry.data.reg.type != MCHAR
             && cur_entry.data.reg.type != MLINE
             && cur_entry.data.reg.type != MBLOCK) {
@@ -516,10 +560,6 @@ static void shada_read(FILE *const fp, const int flags)
         break;
       }
       case kSDItemVariable: {
-        if (!(flags & kShaDaWantInfo) || find_viminfo_parameter('!') == NULL) {
-          shada_free_shada_entry(&cur_entry);
-          break;
-        }
         typval_T vartv;
         Error err;
         if (!object_to_vim(cur_entry.data.global_var.value, &vartv, &err)) {
@@ -536,12 +576,6 @@ static void shada_read(FILE *const fp, const int flags)
       }
       case kSDItemJump:
       case kSDItemGlobalMark: {
-        if (!(flags & kShaDaWantInfo)
-            || (cur_entry.type == kSDItemGlobalMark
-                && get_viminfo_parameter('f') == 0)) {
-          shada_free_shada_entry(&cur_entry);
-          break;
-        }
         buf_T *buf = find_buffer(fname_bufs, cur_entry.data.filemark.fname);
         if (buf != NULL) {
           xfree(cur_entry.data.filemark.fname);
@@ -559,10 +593,9 @@ static void shada_read(FILE *const fp, const int flags)
           },
         };
         if (cur_entry.type == kSDItemGlobalMark) {
-          mark_set_global(cur_entry.data.filemark.name, fm,
-                          !(flags & kShaDaForceit));
+          mark_set_global(cur_entry.data.filemark.name, fm, !force);
         } else {
-          if (flags & kShaDaForceit) {
+          if (force) {
             if (curwin->w_jumplistlen == JUMPLISTSIZE) {
               // Jump list items are ignored in this case.
               free_xfmark(fm);
@@ -629,11 +662,6 @@ static void shada_read(FILE *const fp, const int flags)
         break;
       }
       case kSDItemBufferList: {
-        if (!(flags & kShaDaWantInfo) || find_viminfo_parameter('%') == NULL
-            || ARGCOUNT != 0) {
-          shada_free_shada_entry(&cur_entry);
-          break;
-        }
         for (size_t i = 0; i < cur_entry.data.buffer_list.size; i++) {
           char *const sfname = path_shorten_fname_if_possible(
               cur_entry.data.buffer_list.buffers[i].fname);
@@ -652,10 +680,6 @@ static void shada_read(FILE *const fp, const int flags)
       }
       case kSDItemChange:
       case kSDItemLocalMark: {
-        if (!(flags & kShaDaWantMarks)) {
-          shada_free_shada_entry(&cur_entry);
-          break;
-        }
         buf_T *buf = find_buffer(fname_bufs, cur_entry.data.filemark.fname);
         if (buf == NULL) {
           shada_free_shada_entry(&cur_entry);
@@ -668,12 +692,11 @@ static void shada_read(FILE *const fp, const int flags)
           .additional_data = cur_entry.data.filemark.additional_data,
         };
         if (cur_entry.type == kSDItemLocalMark) {
-          mark_set_local(cur_entry.data.filemark.name, buf, fm,
-                         !(flags & kShaDaForceit));
+          mark_set_local(cur_entry.data.filemark.name, buf, fm, !force);
         } else {
           int kh_ret;
           (void) kh_put(bufset, cl_bufs, (uintptr_t) buf, &kh_ret);
-          if (flags & kShaDaForceit) {
+          if (force) {
             if (buf->b_changelistlen == JUMPLISTSIZE) {
               free_fmark(buf->b_changelist[0]);
               memmove(buf->b_changelist, buf->b_changelist + 1,
@@ -737,7 +760,7 @@ static void shada_read(FILE *const fp, const int flags)
   //          amount of memory allocations ShaDa file reader allocates enough 
   //          memory for the history string itself and separator character which 
   //          may be assigned right away.
-  if (flags & kShaDaWantInfo && p_hi) {
+  if (srni_flags & kSDReadHistory) {
     for (uint8_t i = 0; i < HIST_COUNT; i++) {
       if (hms[i].last_hist_entry.type != kSDItemMissing) {
         insert_history_entry(&(hms[i]), hms[i].last_hist_entry, false);
@@ -1672,12 +1695,12 @@ static int msgpack_read_uint64(FILE *const fp, const int first_char,
 /// @param[in]   fp        Pointer to the opened ShaDa file.
 /// @param[out]  entry     Address where next entry contents will be saved.
 /// @param[in]   flags     Flags, determining whether and which items should be 
-///                        skipped.
+///                        skipped (see SRNIFlags enum).
 ///
 /// @return NOTDONE if entry was read correctly, FAIL if there were errors and 
 ///         OK at EOF.
 static int shada_read_next_item(FILE *const fp, ShadaEntry *const entry,
-                                const int flags)
+                                const unsigned flags)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
 shada_read_next_item_start:
@@ -1710,63 +1733,14 @@ shada_read_next_item_start:
   const size_t length = (size_t) length_u64;
   entry->timestamp = (Timestamp) timestamp_u64;
 
-#define SKIP \
-  do { \
-    if (fread_len(fp, NULL, length) != OK) { \
-      return FAIL; \
-    } \
-    goto shada_read_next_item_start; \
-  } while (0)
-  // TODO(ZyX-I): More precise skipping: skip reading some things depending on 
-  //              'viminfo': e.g. variables if viminfo does not contain `!`.
-  //
-  //              Option value should probably be checked elsewhere.
-  switch (type_u64) {
-    case kSDItemMissing: {
-      emsgn("Error while reading ShaDa file: "
-            "entry at position %" PRId64 "has invalid zero type",
-            (int64_t) initial_fpos);
+  if ((type_u64 > SHADA_LAST_ENTRY
+       ? !(flags & kSDReadUnknown)
+       : !((unsigned) (1 << type_u64) & flags))) {
+    if (fread_len(fp, NULL, length) != OK) {
       return FAIL;
     }
-    case kSDItemHeader: {
-      if (!(flags & kShaDaWantHeader)) {
-        SKIP;
-      }
-      break;
-    }
-    case kSDItemGlobalMark:
-    case kSDItemJump:
-    case kSDItemBufferList:
-    case kSDItemVariable:
-    case kSDItemRegister:
-    case kSDItemHistoryEntry:
-    case kSDItemSubString:
-    case kSDItemSearchPattern: {
-      if (!(flags & kShaDaWantInfo)) {
-        SKIP;
-      }
-      break;
-    }
-    case kSDItemChange:
-    case kSDItemLocalMark: {
-      if (!(flags & kShaDaWantMarks)) {
-        SKIP;
-      }
-      break;
-    }
-    default: {
-      entry->data.unknown_item.size = length;
-      char *contents = xmalloc(length);
-      entry->data.unknown_item.contents = contents;
-      entry->data.unknown_item.type = type_u64;
-      if (fread_len(fp, contents, length) != OK) {
-        return FAIL;
-      }
-      entry->type = kSDItemUnknown;
-      return NOTDONE;
-    }
+    goto shada_read_next_item_start;
   }
-#undef SKIP
 
   if (type_u64 > SHADA_LAST_ENTRY) {
     entry->type = kSDItemUnknown;
