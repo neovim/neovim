@@ -44,6 +44,7 @@
 #include "nvim/version.h"
 #include "nvim/path.h"
 #include "nvim/lib/ringbuf.h"
+#include "nvim/fileio.h"
 #include "nvim/strings.h"
 #include "nvim/lib/khash.h"
 #include "nvim/lib/kvec.h"
@@ -69,6 +70,8 @@ KHASH_MAP_INIT_STR(fnamebufs, buf_T *)
 #define emsgu(a, ...) emsgu((char_u *) a, __VA_ARGS__)
 #define home_replace_save(a, b) \
     ((char *)home_replace_save(a, (char_u *)b))
+#define vim_rename(a, b) \
+    (vim_rename((char_u *)a, (char_u *)b))
 #define has_non_ascii(a) (has_non_ascii((char_u *)a))
 #define string_convert(a, b, c) \
       ((char *)string_convert((vimconv_T *)a, (char_u *)b, c))
@@ -395,7 +398,7 @@ open_file_start:
 
   if (fd < 0) {
     if (-fd == ENOENT) {
-      return -1;
+      return fd;
     }
     if (-fd == ENOMEM && !did_try_to_free) {
       try_to_free_memory();
@@ -405,9 +408,11 @@ open_file_start:
     if (-fd == EINTR) {
       goto open_file_start;
     }
-    emsg3("System error while opening ShaDa file %s: %s",
-          fname, strerror(-fd));
-    return -1;
+    if (-fd != EEXIST) {
+      emsg3("System error while opening ShaDa file %s: %s",
+            fname, strerror(-fd));
+    }
+    return fd;
   }
   return fd;
 }
@@ -424,7 +429,7 @@ static int open_shada_file_for_reading(const char *const fname,
 {
   const intptr_t fd = (intptr_t) open_file(fname, O_RDONLY, 0);
 
-  if (fd == -1) {
+  if (fd < 0) {
     return FAIL;
   }
 
@@ -435,6 +440,8 @@ static int open_shada_file_for_reading(const char *const fname,
     .fpos = 0,
     .cookie = (void *) fd,
   };
+
+  convert_setup(&sd_reader->sd_conv, "utf-8", p_enc);
 
   return OK;
 }
@@ -530,8 +537,6 @@ int shada_read_file(const char *const file, const int flags)
   if (of_ret != OK) {
     return of_ret;
   }
-
-  convert_setup(&sd_reader.sd_conv, "utf-8", p_enc);
 
   shada_read(&sd_reader, flags);
 
@@ -1712,17 +1717,58 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
 /// @param[in]  nomerge  If true then old file is ignored.
 ///
 /// @return OK if writing was successfull, FAIL otherwise.
-int shada_write_file(const char *const file, const bool nomerge)
+int shada_write_file(const char *const file, bool nomerge)
 {
   char *const fname = shada_filename(file);
+  char *tempname = NULL;
   ShaDaWriteDef sd_writer = (ShaDaWriteDef) {
     .write = &write_file,
     .error = NULL,
   };
+  ShaDaReadDef sd_reader;
 
-  const intptr_t fd = (intptr_t) open_file(fname,
-                                           O_CREAT|O_WRONLY|O_NOFOLLOW|O_TRUNC,
-                                           0600);
+  intptr_t fd;
+
+  if (!nomerge) {
+    if (open_shada_file_for_reading(fname, &sd_reader) != OK) {
+      nomerge = true;
+      goto shada_write_file_nomerge;
+    }
+    tempname = modname(fname, ".tmp.a", false);
+    if (tempname == NULL) {
+      nomerge = true;
+      goto shada_write_file_nomerge;
+    }
+
+shada_write_file_open:
+    fd = (intptr_t) open_file(tempname, O_CREAT|O_WRONLY|O_NOFOLLOW|O_EXCL,
+                              0600);
+    if (fd < 0) {
+      if (-fd == EEXIST
+#ifdef ELOOP
+          || -fd == ELOOP
+#endif
+          ) {
+        // File already exists, try another name
+        char *const wp = tempname + strlen(tempname) - 1;
+        if (*wp == 'z') {
+          // Tried names from .tmp.a to .tmp.z, all failed. Something must be 
+          // wrong then.
+          xfree(fname);
+          xfree(tempname);
+          return FAIL;
+        } else {
+          (*wp)++;
+          goto shada_write_file_open;
+        }
+      }
+    }
+  }
+  if (nomerge) {
+shada_write_file_nomerge:
+    fd = (intptr_t) open_file(fname, O_CREAT|O_WRONLY|O_TRUNC,
+                              0600);
+  }
 
   if (p_verbose > 0) {
     verbose_enter();
@@ -1730,8 +1776,9 @@ int shada_write_file(const char *const file, const bool nomerge)
     verbose_leave();
   }
 
-  xfree(fname);
-  if (fd == -1) {
+  if (fd < 0) {
+    xfree(fname);
+    xfree(tempname);
     return FAIL;
   }
 
@@ -1742,6 +1789,19 @@ int shada_write_file(const char *const file, const bool nomerge)
   shada_write(&sd_writer, NULL);
 
   close_file((int)(intptr_t) sd_writer.cookie);
+
+  if (!nomerge) {
+    close_file((int)(intptr_t) sd_reader.cookie);
+    if (vim_rename(tempname, fname) == -1) {
+      EMSG3(_("E886: Can't rename viminfo file from %s to %s!"),
+            tempname, fname);
+    } else {
+      os_remove(tempname);
+    }
+    xfree(tempname);
+  }
+
+  xfree(fname);
   return OK;
 }
 
