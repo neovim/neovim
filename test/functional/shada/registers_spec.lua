@@ -138,4 +138,37 @@ describe('ShaDa support code', function()
     eq({{'a', 'b', 'cde'}, 'V'}, getreg('t'))
     eq({nil, ''}, getreg('h'))
   end)
+
+  it('dumps and loads register correctly when &encoding is not UTF-8',
+  function()
+    set_additional_cmd('set encoding=latin1')
+    reset()
+    -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
+    setreg('e', {'\171'}, 'c')
+    nvim_command('qall')
+    reset()
+    eq({{'\171'}, 'v'}, getreg('e'))
+  end)
+
+  it('dumps and loads history correctly when &encoding /= UTF-8 when dumping',
+  function()
+    set_additional_cmd('set encoding=latin1')
+    reset()
+    -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
+    setreg('e', {'\171'}, 'c')
+    set_additional_cmd('')
+    nvim_command('qall')
+    reset()
+    eq({{'«'}, 'v'}, getreg('e'))
+  end)
+
+  it('dumps and loads history correctly when &encoding /= UTF-8 when loading',
+  function()
+    -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
+    setreg('e', {'«'}, 'c')
+    set_additional_cmd('set encoding=latin1')
+    nvim_command('qall')
+    reset()
+    eq({{'\171'}, 'v'}, getreg('e'))
+  end)
 end)

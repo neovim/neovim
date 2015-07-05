@@ -81,4 +81,59 @@ describe('ShaDa support code', function()
     nvim_command('rviminfo')
     eq(0, nvim_eval('exists("g:str_var")'))
   end)
+
+  it('dumps and loads variables correctly when &encoding is not UTF-8',
+  function()
+    set_additional_cmd('set encoding=latin1')
+    reset()
+    -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
+    nvim('set_var', 'STRVAR', '\171')
+    nvim('set_var', 'LSTVAR', {'\171'})
+    nvim('set_var', 'DCTVAR', {['\171']='\171'})
+    nvim('set_var', 'NESTEDVAR', {['\171']={{'\171'}, {['\171']='\171'},
+                                  {a='Test'}}})
+    nvim_command('qall')
+    reset()
+    eq('\171', nvim('get_var', 'STRVAR'))
+    eq({'\171'}, nvim('get_var', 'LSTVAR'))
+    eq({['\171']='\171'}, nvim('get_var', 'DCTVAR'))
+    eq({['\171']={{'\171'}, {['\171']='\171'}, {a='Test'}}},
+       nvim('get_var', 'NESTEDVAR'))
+  end)
+
+  it('dumps and loads variables correctly when &encoding /= UTF-8 when dumping',
+  function()
+    set_additional_cmd('set encoding=latin1')
+    reset()
+    -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
+    nvim('set_var', 'STRVAR', '\171')
+    nvim('set_var', 'LSTVAR', {'\171'})
+    nvim('set_var', 'DCTVAR', {['\171']='\171'})
+    nvim('set_var', 'NESTEDVAR', {['\171']={{'\171'}, {['\171']='\171'},
+                                  {a='Test'}}})
+    set_additional_cmd('')
+    nvim_command('qall')
+    reset()
+    eq('«', nvim('get_var', 'STRVAR'))
+    eq({'«'}, nvim('get_var', 'LSTVAR'))
+    eq({['«']='«'}, nvim('get_var', 'DCTVAR'))
+    eq({['«']={{'«'}, {['«']='«'}, {a='Test'}}}, nvim('get_var', 'NESTEDVAR'))
+  end)
+
+  it('dumps and loads variables correctly when &encoding /= UTF-8 when loading',
+  function()
+    -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
+    nvim('set_var', 'STRVAR', '«')
+    nvim('set_var', 'LSTVAR', {'«'})
+    nvim('set_var', 'DCTVAR', {['«']='«'})
+    nvim('set_var', 'NESTEDVAR', {['«']={{'«'}, {['«']='«'}, {a='Test'}}})
+    set_additional_cmd('set encoding=latin1')
+    nvim_command('qall')
+    reset()
+    eq('\171', nvim('get_var', 'STRVAR'))
+    eq({'\171'}, nvim('get_var', 'LSTVAR'))
+    eq({['\171']='\171'}, nvim('get_var', 'DCTVAR'))
+    eq({['\171']={{'\171'}, {['\171']='\171'}, {a='Test'}}},
+       nvim('get_var', 'NESTEDVAR'))
+  end)
 end)
