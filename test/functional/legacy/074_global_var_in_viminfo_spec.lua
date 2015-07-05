@@ -28,7 +28,7 @@ describe('storing global variables in ShaDa files', function()
     execute(
       -- This will cause a few errors, do it silently.
       'set visualbell',
-      'set viminfo+=!',
+      'set shada+=!',
       "let MY_GLOBAL_DICT={'foo': 1, 'bar': 0, 'longvarible': 1000}",
       -- Store a really long list. Initially this was testing line wrapping in 
       -- viminfo, but shada files has no line wrapping, no matter how long the 
@@ -38,7 +38,7 @@ describe('storing global variables in ShaDa files', function()
     eq(test_dict, eval('MY_GLOBAL_DICT'))
     eq(test_list, eval('MY_GLOBAL_LIST'))
 
-    execute('wv! ' .. tempname)
+    execute('wsh! ' .. tempname)
     wait()
 
     -- Assert that the shada file exists.
@@ -49,7 +49,7 @@ describe('storing global variables in ShaDa files', function()
     eq(0, eval('exists("MY_GLOBAL_DICT")'))
     eq(0, eval('exists("MY_GLOBAL_LIST")'))
 
-    execute('rv! ' .. tempname)
+    execute('rsh! ' .. tempname)
 
     eq(test_list, eval('MY_GLOBAL_LIST'))
     eq(test_dict, eval('MY_GLOBAL_DICT'))

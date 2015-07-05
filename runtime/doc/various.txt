@@ -370,7 +370,7 @@ N  *+reltime*		|reltime()| function, 'hlsearch'/'incsearch' timeout,
 			'redrawtime' option
 B  *+rightleft*		Right to left typing |'rightleft'|
 N  *+scrollbind*	|'scrollbind'|
-N  *+shada*		|'viminfo'|
+N  *+shada*		|'shada'|
 B  *+signs*		|:sign|
 N  *+smartindent*	|'smartindent'|
 N  *+startuptime*	|--startuptime| argument

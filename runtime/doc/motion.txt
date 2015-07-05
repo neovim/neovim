@@ -820,13 +820,13 @@ Uppercase marks 'A to 'Z include the file name.
 You can use them to jump from file to file.  You can only use an uppercase
 mark with an operator if the mark is in the current file.  The line number of
 the mark remains correct, even if you insert/delete lines or edit another file
-for a moment.  When the 'viminfo' option is not empty, uppercase marks are
+for a moment.  When the 'shada' option is not empty, uppercase marks are
 kept in the .shada file.  See |shada-file-marks|.
 
 Numbered marks '0 to '9 are quite different.  They can not be set directly.
 They are only present when using a shada file |shada-file|.  Basically '0
 is the location of the cursor when you last exited Vim, '1 the last but one
-time, etc.  Use the "r" flag in 'viminfo' to specify files for which no
+time, etc.  Use the "r" flag in 'shada' to specify files for which no
 Numbered mark should be stored.  See |shada-file-marks|.
 
 
@@ -1074,7 +1074,7 @@ if you stop editing a file without writing, like with ":n!".
 
 When you split a window, the jumplist will be copied to the new window.
 
-If you have included the ' item in the 'viminfo' option the jumplist will be
+If you have included the ' item in the 'shada' option the jumplist will be
 stored in the ShaDa file and restored when starting Vim.
 
 

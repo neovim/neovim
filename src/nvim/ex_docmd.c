@@ -9140,16 +9140,16 @@ int put_line(FILE *fd, char *s)
 }
 
 /*
- * ":rviminfo" and ":wviminfo".
+ * ":rshada" and ":wshada".
  */
-static void ex_viminfo(exarg_T *eap)
+static void ex_shada(exarg_T *eap)
 {
   char_u      *save_shada;
 
   save_shada = p_shada;
   if (*p_shada == NUL)
     p_shada = (char_u *)"'100";
-  if (eap->cmdidx == CMD_rviminfo) {
+  if (eap->cmdidx == CMD_rviminfo || eap->cmdidx == CMD_rshada) {
     if (shada_read_everything((char *) eap->arg, eap->forceit) == FAIL)
       EMSG(_("E195: Cannot open ShaDa file for reading"));
   } else {

@@ -101,6 +101,10 @@ Additional differences:
 - |shada-s| now limits size of every item and not just registers.
 - When reading ShaDa files history, jump list and change list items are merged 
   with those in currently running NeoVim instance according to the timestamp.
+- 'viminfo' option got renamed to 'shada'. Old option is kept as an alias for 
+  compatibility reasons.
+- |:wviminfo| was renamed to |:wshada|, |:rviminfo| to |:rshada|. Old commands 
+  are still kept.
 
 ==============================================================================
 4. New Features						     *nvim-features-new*

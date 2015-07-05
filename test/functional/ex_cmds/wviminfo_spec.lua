@@ -3,8 +3,8 @@ local clear, execute, eq, neq, spawn, nvim_prog, set_session, wait, write_file
   = helpers.clear, helpers.execute, helpers.eq, helpers.neq, helpers.spawn,
   helpers.nvim_prog, helpers.set_session, helpers.wait, helpers.write_file
 
-describe(':wviminfo', function()
-  local shada_file = 'wviminfo_test'
+describe(':wshada', function()
+  local shada_file = 'wshada_test'
   local session
 
   before_each(function()
@@ -23,14 +23,14 @@ describe(':wviminfo', function()
   it('creates a shada file', function()
     -- file should _not_ exist
     eq(nil, lfs.attributes(shada_file))
-    execute('wv! '..shada_file)
+    execute('wsh! '..shada_file)
     wait()
     -- file _should_ exist
     neq(nil, lfs.attributes(shada_file))
   end)
 
   it('overwrites existing files', function()
-    local text = 'wviminfo test'
+    local text = 'wshada test'
 
     -- Create a dummy file
     write_file(shada_file, text)
@@ -39,7 +39,7 @@ describe(':wviminfo', function()
     eq(text, io.open(shada_file):read())
     neq(nil, lfs.attributes(shada_file))
 
-    execute('wv! '..shada_file)
+    execute('wsh! '..shada_file)
     wait()
 
     -- File should have been overwritten with a shada file.

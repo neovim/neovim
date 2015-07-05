@@ -152,7 +152,7 @@ enum SRNIFlags {
     | (1 << kSDItemSubString)
     | (1 << kSDItemGlobalMark)
     | (1 << kSDItemJump)
-  ), ///< Data reading which cannot be disabled by &viminfo or other options 
+  ), ///< Data reading which cannot be disabled by &shada or other options 
      ///< except for disabling reading ShaDa as a whole.
   kSDReadRegisters = (1 << kSDItemRegister),  ///< Determines whether registers 
                                               ///< should be read (may only be 
@@ -163,11 +163,11 @@ enum SRNIFlags {
                                                 ///< disabled by &history).
   kSDReadVariables = (1 << kSDItemVariable),  ///< Determines whether variables 
                                               ///< should be read (disabled by 
-                                              ///< removing ! from &viminfo).
+                                              ///< removing ! from &shada).
   kSDReadBufferList = (1 << kSDItemBufferList),  ///< Determines whether buffer 
                                                  ///< list should be read 
                                                  ///< (disabled by removing 
-                                                 ///< % entry from &viminfo).
+                                                 ///< % entry from &shada).
   kSDReadUnknown = (1 << (SHADA_LAST_ENTRY + 1)),  ///< Determines whether 
                                                    ///< unknown items should be 
                                                    ///< read (usually disabled).
@@ -175,7 +175,7 @@ enum SRNIFlags {
     (1 << kSDItemLocalMark)
     | (1 << kSDItemChange)
   ),  ///< Determines whether local marks and change list should be read. Can 
-      ///< only be disabled by disabling &viminfo or putting '0 there.
+      ///< only be disabled by disabling &shada or putting '0 there.
 };
 // Note: SRNIFlags enum name was created only to make it possible to reference 
 // it. This name is not actually used anywhere outside of the documentation.
@@ -1029,8 +1029,8 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
 /// Get the ShaDa file name to use
 ///
 /// If "file" is given and not empty, use it (has already been expanded by 
-/// cmdline functions). Otherwise use "-i file_name", value from 'viminfo' or 
-/// the default, and expand environment variables.
+/// cmdline functions). Otherwise use "-i file_name", value from 'shada' or the 
+/// default, and expand environment variables.
 ///
 /// @param[in]  file  Forced file name or NULL.
 ///
@@ -3013,7 +3013,7 @@ static ShadaEntry *list_buffer_marks(const buf_T *const buf)
   return ret;
 }
 
-/// Check whether "name" is on removable media (according to 'viminfo')
+/// Check whether "name" is on removable media (according to 'shada')
 ///
 /// @param[in]  name  Checked name.
 ///

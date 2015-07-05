@@ -557,7 +557,7 @@ Functions that can be used with a Dictionary: >
 If you need to know the type of a variable or expression, use the |type()|
 function.
 
-When the '!' flag is included in the 'viminfo' option, global variables that
+When the '!' flag is included in the 'shada' option, global variables that
 start with an uppercase letter, and don't contain a lowercase letter, are
 stored in the shada file |shada-file|.
 
@@ -1527,7 +1527,7 @@ v:msgpack_types	Dictionary containing msgpack types used by |msgpackparse()|
 v:oldfiles	List of file names that is loaded from the |shada| file on
 		startup.  These are the files that Vim remembers marks for.
 		The length of the List is limited by the ' argument of the
-		'viminfo' option (default is 100).
+		'shada' option (default is 100).
 		When the |shada| file is not used the List is empty.
 		Also see |:oldfiles| and |c_#<|.
 		The List can be modified, but this has no effect on what is

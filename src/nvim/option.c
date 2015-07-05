@@ -1738,7 +1738,7 @@ set_options_bin (
 
 /*
  * Find the parameter represented by the given character (eg ', :, ", or /),
- * and return its associated value in the 'viminfo' string.
+ * and return its associated value in the 'shada' string.
  * Only works for number parameters, not for 'r' or 'n'.
  * If the parameter is not specified in the string or there is no following
  * number, return -1.
@@ -1755,7 +1755,7 @@ int get_shada_parameter(int type)
 
 /*
  * Find the parameter represented by the given character (eg ''', ':', '"', or
- * '/') in the 'viminfo' option and return a pointer to the string after it.
+ * '/') in the 'shada' option and return a pointer to the string after it.
  * Return NULL if the parameter is not specified in the string.
  */
 char_u *find_shada_parameter(int type)
@@ -2442,7 +2442,7 @@ did_set_string_option (
     if (*p_vfile != NUL && verbose_open() == FAIL)
       errmsg = e_invarg;
   }
-  /* 'viminfo' */
+  /* 'shada' */
   else if (varp == &p_shada) {
     for (s = p_shada; *s; ) {
       /* Check it's a valid character */

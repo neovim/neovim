@@ -42,7 +42,7 @@ set hlsearch
 set incsearch
 nohlsearch
 " Don't remember file names and positions
-set viminfo=
+set shada=
 set nows
 " Inhibit screen updates while searching
 let s:lz = &lz

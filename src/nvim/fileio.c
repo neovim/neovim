@@ -2177,7 +2177,7 @@ static void check_marks_read(void)
     shada_read_marks();
   }
 
-  /* Always set b_marks_read; needed when 'viminfo' is changed to include
+  /* Always set b_marks_read; needed when 'shada' is changed to include
    * the ' parameter after opening a buffer. */
   curbuf->b_marks_read = true;
 }

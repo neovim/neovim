@@ -324,8 +324,8 @@ argument.
 							*-i*
 -i {shada}	The file {shada} is used instead of the default ShaDa
 		file.  If the name "NONE" is used (all uppercase), no ShaDa
-		file is read or written, even if 'viminfo' is set or when
-		":rv" or ":wv" are used.  See also |shada-file|.
+		file is read or written, even if 'shada' is set or when
+		":rsh" or ":wsh" are used.  See also |shada-file|.
 
 							*-s*
 -s {scriptin}	The script file "scriptin" is read.  The characters in the
@@ -476,7 +476,7 @@ accordingly.  Vim proceeds in this order:
 	|gui-init|.
 
 9. Read the ShaDa file
-	If the 'viminfo' option is not empty, the ShaDa file is read.  See
+	If the 'shada' option is not empty, the ShaDa file is read.  See
 	|shada-file|.
 
 10. Read the quickfix file
@@ -564,10 +564,10 @@ just like executing a command from a vimrc/exrc in the current directory.
 If Vim takes a long time to start up, use the |--startuptime| argument to find
 out what happens.
 
-If you have 'viminfo' enabled, the loading of the ShaDa file may take a
+If you have 'shada' enabled, the loading of the ShaDa file may take a
 while.  You can find out if this is the problem by disabling ShaDa for a
 moment (use the Vim argument "-i NONE", |-i|).  Try reducing the number of
-lines stored in a register with ":set viminfo='20,<50,s10".  |shada-file|.
+lines stored in a register with ":set shada='20,<50,s10".  |shada-file|.
 
 							*:intro*
 When Vim starts without a file name, an introductory message is displayed (for
@@ -923,17 +923,17 @@ working on.  ShaDa and Session files together can be used to effectively
 enter Vim and directly start working in your desired setup. |session-file|
 
 							*shada-read*
-When Vim is started and the 'viminfo' option is non-empty, the contents of
+When Vim is started and the 'shada' option is non-empty, the contents of
 the ShaDa file are read and the info can be used in the appropriate places.
 The |v:oldfiles| variable is filled.  The marks are not read in at startup
-(but file marks are).  See |initialization| for how to set the 'viminfo'
+(but file marks are).  See |initialization| for how to set the 'shada'
 option upon startup.
 
 							*shada-write*
-When Vim exits and 'viminfo' is non-empty, the info is stored in the ShaDa
+When Vim exits and 'shada' is non-empty, the info is stored in the ShaDa
 file (it's actually merged with the existing one, if one exists).  The
-'viminfo' option is a string containing information about what info should be
-stored, and contains limits on how much should be stored (see 'viminfo').
+'shada' option is a string containing information about what info should be
+stored, and contains limits on how much should be stored (see 'shada').
 
 Notes for Unix:
 - The file protection for the ShaDa file will be set to prevent other users
@@ -950,15 +950,15 @@ Notes for Unix:
 - The ShaDa file cannot be a symbolic link.  This is to avoid security
   issues.
 
-Marks are stored for each file separately.  When a file is read and 'viminfo'
+Marks are stored for each file separately.  When a file is read and 'shada'
 is non-empty, the marks for that file are read from the ShaDa file.  NOTE:
 The marks are only written when exiting Vim, which is fine because marks are
 remembered for all the files you have opened in the current editing session,
 unless ":bdel" is used.  If you want to save the marks for a file that you are
-about to abandon with ":bdel", use ":wv".  The '[' and ']' marks are not
+about to abandon with ":bdel", use ":wsh".  The '[' and ']' marks are not
 stored, but the '"' mark is.  The '"' mark is very useful for jumping to the
 cursor position when the file was last exited.  No marks are saved for files
-that start with any string given with the "r" flag in 'viminfo'.  This can be
+that start with any string given with the "r" flag in 'shada'.  This can be
 used to avoid saving marks for files on removable media (for MS-DOS you would
 use "ra:,rb:".
 The |v:oldfiles| variable is filled with the file names that the ShaDa file
@@ -967,7 +967,7 @@ has marks for.
 							*shada-file-marks*
 Uppercase marks ('A to 'Z) are stored when writing the ShaDa file.  The
 numbered marks ('0 to '9) are a bit special.  When the ShaDa file is written
-(when exiting or with the ":wviminfo" command), '0 is set to the current cursor
+(when exiting or with the |:wshada| command), '0 is set to the current cursor
 position and file.  The old '0 is moved to '1, '1 to '2, etc.  This
 resembles what happens with the "1 to "9 delete registers.  If the current
 cursor position is already present in '0 to '9, it is moved to '0, to avoid
@@ -985,7 +985,7 @@ For a bash-like shell: >
 
 	alias lvim='vim -c "normal '\''0"'
 
-Use the "r" flag in 'viminfo' to specify for which files no marks should be
+Use the "r" flag in 'shada' to specify for which files no marks should be
 remembered.
 
 
@@ -995,13 +995,13 @@ SHADA FILE NAME						*shada-file-name*
   Unix, "$HOME\_nvim\shada\main.shada" for MS-DOS and Win32.  For the last 
   two, when $HOME is not set, "$VIM\_nvim\shada\main.shada" is used.  When 
   $VIM is also not set, "c:\_nvim\shada\main.shada" is used.
-- The 'n' flag in the 'viminfo' option can be used to specify another ShaDa
-  file name |'viminfo'|.
+- The 'n' flag in the 'shada' option can be used to specify another ShaDa
+  file name |'shada'|.
 - The "-i" Vim argument can be used to set another file name, |-i|.  When the
   file name given is "NONE" (all uppercase), no ShaDa file is ever read or
   written.  Also not for the commands below!
 - For the commands below, another file name can be given, overriding the
-  default and the name given with 'viminfo' or "-i" (unless it's NONE).
+  default and the name given with 'shada' or "-i" (unless it's NONE).
 
 
 CHARACTER ENCODING					*shada-encoding*
@@ -1025,8 +1025,8 @@ MANUALLY READING AND WRITING				*shada-read-write*
 
 Two commands can be used to read and write the ShaDa file manually.  This
 can be used to exchange registers between two running Vim programs: First
-type ":wv" in one and then ":rv" in the other.  Note that if the register
-already contained something, then ":rv!" would be required.  Also note
+type ":wsh" in one and then ":rsh" in the other.  Note that if the register
+already contained something, then ":rsh!" would be required.  Also note
 however that this means everything will be overwritten with information from
 the first Vim, including the command line history, etc.
 
@@ -1038,7 +1038,7 @@ do this.  This can be useful in order to create a second file, say
 you first start NeoVim.  For example, you can preload registers with 
 particular data, or put certain commands in the command line history.  A line 
 in your .nvimrc file like >
-	:rviminfo! ~/.my.shada
+	:rshada! ~/.my.shada
 can be used to load this information.  You could even have different ShaDa 
 files for different types of files (e.g., C code) and load them based on the 
 file name, using the ":autocmd" command (see |:autocmd|).
@@ -1052,28 +1052,34 @@ accidentally did that!).  If you want to overwrite a ShaDa file with an error
 in it, you will either have to fix the error, or delete the file (while NeoVim 
 is running, so most of the information will be restored).
 
-						   *:rv* *:rviminfo* *E195*
-:rv[iminfo][!] [file]	Read from ShaDa file [file] (default: see above).
+						   *:rsh* *:rshada* *E195*
+:rsh[ada][!] [file]	Read from ShaDa file [file] (default: see above).
 			If [!] is given, then any information that is
 			already set (registers, marks, |v:oldfiles|, etc.)
 			will be overwritten.
 
-				*:wv* *:wviminfo* *E137* *E138* *E574* *E886*
-:wv[iminfo][!] [file]	Write to ShaDa file [file] (default: see above).
+						   *:rv* *:rviminfo*
+:rv[iminfo][!] [file]	Deprecated alias to |:rshada| command.
+
+				*:wsh* *:wshada* *E137* *E138* *E574* *E886*
+:wsh[ada][!] [file]	Write to ShaDa file [file] (default: see above).
 			The information in the file is first read in to make
 			a merge between old and new info.  When [!] is used,
 			the old information is not read first, only the
 			internal info is written (also disables safety checks 
-			described in |shada-errors|).  If 'viminfo' is empty, 
+			described in |shada-errors|).  If 'shada' is empty, 
 			marks for up to 100 files will be written.
 			When you get error "E138: All .tmp.X files exist, 
 			cannot write ShaDa file!" check that no old temp files 
 			were left behind (e.g. ~/.nvim/shada/main.shada.tmp*).
 
+						   *:wv* *:wviminfo*
+:wv[iminfo][!] [file]	Deprecated alias to |:wshada| command.
+
 						*:ol* *:oldfiles*
 :ol[dfiles]		List the files that have marks stored in the ShaDa
 			file.  This list is read on startup and only changes
-			afterwards with ":rviminfo!".  Also see |v:oldfiles|.
+			afterwards with ":rshada!".  Also see |v:oldfiles|.
 			The number can be used with |c_#<|.
 
 :bro[wse] ol[dfiles][!]

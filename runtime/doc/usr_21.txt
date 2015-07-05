@@ -96,34 +96,34 @@ Each time you exit Vim it will store this information in a file, the ShaDa
 file.  When Vim starts again, the ShaDa file is read and the information
 restored.
 
-The 'viminfo' option is set by default to restore a limited number of items.
+The 'shada' option is set by default to restore a limited number of items.
 You might want to set it to remember more information.  This is done through
 the following command: >
 
-	:set viminfo=string
+	:set shada=string
 
 The string specifies what to save.  The syntax of this string is an option
 character followed by an argument.  The option/argument pairs are separated by
 commas.
-   Take a look at how you can build up your own viminfo string.  First, the '
+   Take a look at how you can build up your own shada string.  First, the '
 option is used to specify how many files for which you save marks (a-z).  Pick
 a nice even number for this option (1000, for instance).  Your command now
 looks like this: >
 
-	:set viminfo='1000
+	:set shada='1000
 
 The f option controls whether global marks (A-Z and 0-9) are stored.  If this
 option is 0, none are stored.  If it is 1 or you do not specify an f option,
 the marks are stored.  You want this feature, so now you have this: >
 
-	:set viminfo='1000,f1
+	:set shada='1000,f1
 
 The < option controls how many lines are saved for each of the registers.  By
 default, all the lines are saved.  If 0, nothing is saved.  To avoid adding
 thousands of lines to your ShaDa file (which might never get used and makes
 starting Vim slower) you use a maximum of 500 lines: >
 
-	:set viminfo='1000,f1,<500
+	:set shada='1000,f1,<500
 <
 Other options you might want to use:
 	:	number of lines to save from the command line history
@@ -139,7 +139,7 @@ Other options you might want to use:
 	c	convert the text using 'encoding'
 	n	name used for the ShaDa file (must be the last option)
 
-See the 'viminfo' option and |shada-file| for more information.
+See the 'shada' option and |shada-file| for more information.
 
 When you run Vim multiple times, the last one exiting will store its
 information.  This may cause information that previously exiting Vims stored
@@ -205,23 +205,23 @@ More info at |:oldfiles|, |v:oldfiles| and |c_#<|.
 
 MOVE INFO FROM ONE VIM TO ANOTHER
 
-You can use the ":wviminfo" and ":rviminfo" commands to save and restore the
+You can use the ":wshada" and ":rshada" commands to save and restore the
 information while still running Vim.  This is useful for exchanging register
 contents between two instances of Vim, for example.  In the first Vim do: >
 
-	:wviminfo! ~/tmp/shada
+	:wshada! ~/tmp/shada
 
 And in the second Vim do: >
 
-	:rviminfo! ~/tmp/shada
+	:rshada! ~/tmp/shada
 
 Obviously, the "w" stands for "write" and the "r" for "read".
-   The ! character is used by ":wviminfo" to forcefully overwrite an existing
+   The ! character is used by ":wshada" to forcefully overwrite an existing
 file.  When it is omitted, and the file exists, the information is merged into
 the file.
-   The ! character used for ":rviminfo" means that all the information in 
-ShaDa file has priority over existing information, this may overwrite it.  
-Without the ! only information that wasn't set is used.
+   The ! character used for ":rshada" means that all the information in ShaDa 
+file has priority over existing information, this may overwrite it.  Without 
+the ! only information that wasn't set is used.
    These commands can also be used to store info and use it again later.  You
 could make a directory full of ShaDa files, each containing info for a
 different purpose.
@@ -368,12 +368,12 @@ another session.
 this yourself then.  Example: >
 
 	:mksession! ~/.vim/secret.vim
-	:wviminfo! ~/.vim/secret.shada
+	:wshada! ~/.vim/secret.shada
 
 And to restore this again: >
 
 	:source ~/.vim/secret.vim
-	:rviminfo! ~/.vim/secret.shada
+	:rshada! ~/.vim/secret.shada
 
 ==============================================================================
 *21.5*	Views

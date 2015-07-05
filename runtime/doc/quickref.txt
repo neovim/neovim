@@ -838,6 +838,7 @@ Short explanation of each option:		*option-list*
 'selection'	  'sel'     what type of selection to use
 'selectmode'	  'slm'     when to use Select mode instead of Visual mode
 'sessionoptions'  'ssop'    options for |:mksession|
+'shada'		  'sd'	    use .shada file upon startup and exiting
 'shell'		  'sh'	    name of shell to use for external commands
 'shellcmdflag'	  'shcf'    flag to shell to execute one command
 'shellpipe'	  'sp'	    string to put output of ":make" in error file
@@ -911,7 +912,6 @@ Short explanation of each option:		*option-list*
 'verbosefile'	  'vfile'   file to write messages in
 'viewdir'	  'vdir'    directory where to store files with :mkview
 'viewoptions'	  'vop'     specifies what to save for :mkview
-'viminfo'	  'vi'	    use .shada file upon startup and exiting
 'virtualedit'	  've'	    when to use virtual editing
 'visualbell'	  'vb'	    use visual bell instead of beeping
 'warn'			    warn for shell command when buffer was changed
@@ -1217,10 +1217,10 @@ Context-sensitive completion on the command-line:
 
 |shada-file|	read registers, marks, history at startup, save when exiting.
 
-|:rviminfo|	:rv[iminfo] [file]	read info from ShaDa file [file]
-|:rviminfo|	:rv[iminfo]! [file]	idem, overwrite existing info
-|:wviminfo|	:wv[iminfo] [file]	add info to ShaDa file [file]
-|:wviminfo|	:wv[iminfo]! [file]	write info to ShaDa file [file]
+|:rshada|	:rsh[ada] [file]	read info from ShaDa file [file]
+|:rshada|	:rsh[ada]! [file]	idem, overwrite existing info
+|:wshada|	:wsh[ada] [file]	add info to ShaDa file [file]
+|:wshada|	:wsh[ada]! [file]	write info to ShaDa file [file]
 
 |modeline|	Automatic option setting when editing a file
 

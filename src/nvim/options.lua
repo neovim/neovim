@@ -1992,6 +1992,14 @@ return {
       }}
     },
     {
+      full_name='shada', abbreviation='sd',
+      type='string', list='comma', scope={'global'},
+      deny_duplicates=true,
+      secure=true,
+      varname='p_shada',
+      defaults={if_true={vi="", vim="!,'100,<50,s10,h"}}
+    },
+    {
       full_name='shell', abbreviation='sh',
       type='string', scope={'global'},
       secure=true,

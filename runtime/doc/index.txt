@@ -1418,9 +1418,9 @@ tag	      command	      action ~
 |:rewind|	:rew[ind]	go to the first file in the argument list
 |:right|	:ri[ght]	right align text
 |:rightbelow|	:rightb[elow]	make split window appear right or below
+|:rshada|	:rsh[ada]	read from ShaDa file
 |:rundo|	:rund[o]	read undo information from a file
 |:runtime|	:ru[ntime]	source vim scripts in 'runtimepath'
-|:rviminfo|	:rv[iminfo]	read from ShaDa file
 |:substitute|	:s[ubstitute]	find and replace text
 |:sNext|	:sN[ext]	split window and go to previous file in
 				argument list
@@ -1579,8 +1579,8 @@ tag	      command	      action ~
 				argument list
 |:wq|		:wq		write to a file and quit window or Vim
 |:wqall|	:wqa[ll]	write all changed buffers and quit Vim
+|:wshada|	:wsh[ada]	write to ShaDa file
 |:wundo|	:wu[ndo]	write undo information to a file
-|:wviminfo|	:wv[iminfo]	write to ShaDa file
 |:xit|		:x[it]		write if buffer changed and quit window or Vim
 |:xall|		:xa[ll]		same as ":wqall"
 |:xmapclear|	:xmapc[lear]	remove all mappings for Visual mode

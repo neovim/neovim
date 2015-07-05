@@ -1375,7 +1375,7 @@ use search patterns normally, e.g., with the "n" command.
 If you want an autocommand to set the search pattern, such that it is used
 after the autocommand finishes, use the ":let @/ =" command.
 The search-highlighting cannot be switched off with ":nohlsearch" in an
-autocommand.  Use the 'h' flag in the 'viminfo' option to disable search-
+autocommand.  Use the 'h' flag in the 'shada' option to disable search-
 highlighting when starting Vim.
 
 							*Cmd-event*
