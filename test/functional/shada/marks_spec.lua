@@ -171,9 +171,15 @@ describe('ShaDa support code', function()
     reset()
     nvim_command('edit ' .. testfilename)
     -- nvim_command('rviminfo')
+    -- nvim_command('redir! >/tmp/changes | changes | redir END')
     nvim_feed('Gg;')
+    -- Note: without “sync” “commands” test has good changes to fail for unknown 
+    -- reason (in first eq expected 1 is compared with 2). Any command inserted 
+    -- causes this to work properly.
+    nvim_command('" sync')
     eq(1, nvim_current_line())
     nvim_feed('g;')
+    nvim_command('" sync 2')
     eq(2, nvim_current_line())
   end)
 end)
