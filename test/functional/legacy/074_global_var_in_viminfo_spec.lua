@@ -1,14 +1,15 @@
--- Tests for storing global variables in the .viminfo file
+-- Tests for storing global variables in the .shada file
 
 local helpers, lfs = require('test.functional.helpers'), require('lfs')
 local clear, execute, eq, neq, eval, wait, spawn =
   helpers.clear, helpers.execute, helpers.eq, helpers.neq, helpers.eval,
   helpers.wait, helpers.spawn
 
-describe('storing global variables in viminfo files', function()
+describe('storing global variables in ShaDa files', function()
+  local tempname = 'Xtest-functional-legacy-074'
   setup(function()
     clear()
-    os.remove("Xviminfo")
+    os.remove(tempname)
   end)
 
   it('is working', function()
@@ -29,31 +30,32 @@ describe('storing global variables in viminfo files', function()
       'set visualbell',
       'set viminfo+=!',
       "let MY_GLOBAL_DICT={'foo': 1, 'bar': 0, 'longvarible': 1000}",
-      -- Store a really long list, so line wrapping will occur in viminfo
-      -- file.
+      -- Store a really long list. Initially this was testing line wrapping in 
+      -- viminfo, but shada files has no line wrapping, no matter how long the 
+      -- list is.
       'let MY_GLOBAL_LIST=range(1,100)'
     )
     eq(test_dict, eval('MY_GLOBAL_DICT'))
     eq(test_list, eval('MY_GLOBAL_LIST'))
 
-    execute('wv! Xviminfo')
+    execute('wv! ' .. tempname)
     wait()
 
-    -- Assert that the viminfo file exists.
-    neq(nil, lfs.attributes('Xviminfo'))
+    -- Assert that the shada file exists.
+    neq(nil, lfs.attributes(tempname))
     execute('unlet MY_GLOBAL_DICT',
             'unlet MY_GLOBAL_LIST')
     -- Assert that the variables where deleted.
     eq(0, eval('exists("MY_GLOBAL_DICT")'))
     eq(0, eval('exists("MY_GLOBAL_LIST")'))
 
-    execute('rv! Xviminfo')
+    execute('rv! ' .. tempname)
 
     eq(test_list, eval('MY_GLOBAL_LIST'))
     eq(test_dict, eval('MY_GLOBAL_DICT'))
   end)
 
   teardown(function()
-    os.remove('Xviminfo')
+    os.remove(tempname)
   end)
 end)

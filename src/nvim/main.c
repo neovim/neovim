@@ -382,7 +382,7 @@ int main(int argc, char **argv)
    * Read in registers, history etc, from the ShaDa file.
    * This is where v:oldfiles gets filled.
    */
-  if (*p_viminfo != NUL) {
+  if (*p_shada != NUL) {
     (void) shada_read_file(NULL, (kShaDaWantInfo
                                   | kShaDaGetOldfiles
                                   | kShaDaWantMarks));
@@ -807,8 +807,8 @@ void getout(int exitval)
     apply_autocmds(EVENT_VIMLEAVEPRE, NULL, NULL, FALSE, curbuf);
   }
 
-  if (p_viminfo && *p_viminfo != NUL) {
-    // Write out the registers, history, marks etc, to the viminfo file
+  if (p_shada && *p_shada != NUL) {
+    // Write out the registers, history, marks etc, to the ShaDa file
     shada_write_file(NULL, false);
   }
 

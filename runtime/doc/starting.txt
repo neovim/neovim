@@ -476,7 +476,7 @@ accordingly.  Vim proceeds in this order:
 	|gui-init|.
 
 9. Read the ShaDa file
-	If the 'viminfo' option is not empty, the viminfo file is read.  See
+	If the 'viminfo' option is not empty, the ShaDa file is read.  See
 	|shada-file|.
 
 10. Read the quickfix file
@@ -564,8 +564,8 @@ just like executing a command from a vimrc/exrc in the current directory.
 If Vim takes a long time to start up, use the |--startuptime| argument to find
 out what happens.
 
-If you have "viminfo" enabled, the loading of the ShaDa file may take a
-while.  You can find out if this is the problem by disabling viminfo for a
+If you have 'viminfo' enabled, the loading of the ShaDa file may take a
+while.  You can find out if this is the problem by disabling ShaDa for a
 moment (use the Vim argument "-i NONE", |-i|).  Try reducing the number of
 lines stored in a register with ":set viminfo='20,<50,s10".  |shada-file|.
 

@@ -1743,11 +1743,11 @@ set_options_bin (
  * If the parameter is not specified in the string or there is no following
  * number, return -1.
  */
-int get_viminfo_parameter(int type)
+int get_shada_parameter(int type)
 {
   char_u  *p;
 
-  p = find_viminfo_parameter(type);
+  p = find_shada_parameter(type);
   if (p != NULL && ascii_isdigit(*p))
     return atoi((char *)p);
   return -1;
@@ -1758,11 +1758,11 @@ int get_viminfo_parameter(int type)
  * '/') in the 'viminfo' option and return a pointer to the string after it.
  * Return NULL if the parameter is not specified in the string.
  */
-char_u *find_viminfo_parameter(int type)
+char_u *find_shada_parameter(int type)
 {
   char_u  *p;
 
-  for (p = p_viminfo; *p; ++p) {
+  for (p = p_shada; *p; ++p) {
     if (*p == type)
       return p + 1;
     if (*p == 'n')                  /* 'n' is always the last one */
@@ -2443,8 +2443,8 @@ did_set_string_option (
       errmsg = e_invarg;
   }
   /* 'viminfo' */
-  else if (varp == &p_viminfo) {
-    for (s = p_viminfo; *s; ) {
+  else if (varp == &p_shada) {
+    for (s = p_shada; *s; ) {
       /* Check it's a valid character */
       if (vim_strchr((char_u *)"!\"%'/:<@cfhnrs", *s) == NULL) {
         errmsg = illegal_char(errbuf, *s);
@@ -2486,7 +2486,7 @@ did_set_string_option (
         break;
       }
     }
-    if (*p_viminfo && errmsg == NULL && get_viminfo_parameter('\'') < 0)
+    if (*p_shada && errmsg == NULL && get_shada_parameter('\'') < 0)
       errmsg = (char_u *)N_("E528: Must specify a ' value");
   }
   /* 'showbreak' */

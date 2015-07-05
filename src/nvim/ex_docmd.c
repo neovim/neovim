@@ -9144,18 +9144,18 @@ int put_line(FILE *fd, char *s)
  */
 static void ex_viminfo(exarg_T *eap)
 {
-  char_u      *save_viminfo;
+  char_u      *save_shada;
 
-  save_viminfo = p_viminfo;
-  if (*p_viminfo == NUL)
-    p_viminfo = (char_u *)"'100";
+  save_shada = p_shada;
+  if (*p_shada == NUL)
+    p_shada = (char_u *)"'100";
   if (eap->cmdidx == CMD_rviminfo) {
     if (shada_read_everything((char *) eap->arg, eap->forceit) == FAIL)
       EMSG(_("E195: Cannot open ShaDa file for reading"));
   } else {
     shada_write_file((char *) eap->arg, eap->forceit);
   }
-  p_viminfo = save_viminfo;
+  p_shada = save_shada;
 }
 
 /*

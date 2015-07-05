@@ -5238,7 +5238,7 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
   reg->additional_data = NULL;
   reg->timestamp = 0;
   // Timestamp is not saved for clipboard registers because clipboard registers 
-  // are not saved in the viminfo.
+  // are not saved in the ShaDa file.
 
   int i = 0;
   for (listitem_T *li = lines->lv_first; li != NULL; li = li->li_next) {

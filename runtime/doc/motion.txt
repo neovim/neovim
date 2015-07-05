@@ -1075,7 +1075,7 @@ if you stop editing a file without writing, like with ":n!".
 When you split a window, the jumplist will be copied to the new window.
 
 If you have included the ' item in the 'viminfo' option the jumplist will be
-stored in the shada file and restored when starting Vim.
+stored in the ShaDa file and restored when starting Vim.
 
 
 CHANGE LIST JUMPS			*changelist* *change-list-jumps* *E664*

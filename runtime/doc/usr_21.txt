@@ -168,7 +168,7 @@ exiting Vim, there is a slightly more complicated way.  You can see a list of
 files by typing the command: >
 
 	:oldfiles
-<	1: ~/.viminfo ~
+<	1: ~/.vimrc ~
 	2: ~/text/resume.txt ~
 	3: /tmp/draft ~
 
@@ -188,7 +188,7 @@ That #<123 thing is a bit complicated when you just want to edit a file.
 Fortunately there is a simpler way: >
 
 	:browse oldfiles
-<	1: ~/.viminfo ~
+<	1: ~/.vimrc ~
 	2: ~/text/resume.txt ~
 	3: /tmp/draft ~
 	-- More --

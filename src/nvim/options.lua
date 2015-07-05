@@ -2584,7 +2584,7 @@ return {
       type='string', list='comma', scope={'global'},
       deny_duplicates=true,
       secure=true,
-      varname='p_viminfo',
+      varname='p_shada',
       defaults={if_true={vi="", vim="!,'100,<50,s10,h"}}
     },
     {

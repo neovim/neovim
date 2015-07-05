@@ -2172,7 +2172,7 @@ readfile_charconvert (
  */
 static void check_marks_read(void)
 {
-  if (!curbuf->b_marks_read && get_viminfo_parameter('\'') > 0
+  if (!curbuf->b_marks_read && get_shada_parameter('\'') > 0
       && curbuf->b_ffname != NULL) {
     shada_read_marks();
   }

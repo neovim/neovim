@@ -63,8 +63,8 @@ KHASH_MAP_INIT_STR(fnamebufs, buf_T *)
 
 #define copy_option_part(src, dest, ...) \
     ((char *) copy_option_part((char_u **) src, (char_u *) dest, __VA_ARGS__))
-#define find_viminfo_parameter(...) \
-    ((const char *) find_viminfo_parameter(__VA_ARGS__))
+#define find_shada_parameter(...) \
+    ((const char *) find_shada_parameter(__VA_ARGS__))
 #define emsg2(a, b) emsg2((char_u *) a, (char_u *) b)
 #define emsg3(a, b, c) emsg3((char_u *) a, (char_u *) b, (char_u *) c)
 #define emsgu(a, ...) emsgu((char_u *) a, __VA_ARGS__)
@@ -167,7 +167,7 @@ enum SRNIFlags {
   kSDReadBufferList = (1 << kSDItemBufferList),  ///< Determines whether buffer 
                                                  ///< list should be read 
                                                  ///< (disabled by removing 
-                                                 ///< % entry from viminfo).
+                                                 ///< % entry from &viminfo).
   kSDReadUnknown = (1 << (SHADA_LAST_ENTRY + 1)),  ///< Determines whether 
                                                    ///< unknown items should be 
                                                    ///< read (usually disabled).
@@ -200,6 +200,7 @@ typedef struct {
       int64_t offset;
       bool is_last_used;
       bool is_substitute_pattern;
+      // TODO(ZyX-I): Also store v:hlsearch, see :h shada-h
       char *pat;
       Dictionary *additional_data;
     } search_pattern;
@@ -524,7 +525,7 @@ int shada_read_file(const char *const file, const int flags)
 
   if (p_verbose > 0) {
     verbose_enter();
-    smsg(_("Reading viminfo file \"%s\"%s%s%s"),
+    smsg(_("Reading ShaDa file \"%s\"%s%s%s"),
         fname,
         (flags & kShaDaWantInfo) ? _(" info") : "",
         (flags & kShaDaWantMarks) ? _(" marks") : "",
@@ -672,21 +673,22 @@ static inline bool marks_equal(const pos_T a, const pos_T b)
 static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
   FUNC_ATTR_NONNULL_ALL
 {
+  // TODO(ZyX-I): Also load v:oldfiles.
   unsigned srni_flags = 0;
   if (flags & kShaDaWantInfo) {
     srni_flags |= kSDReadUndisableableData | kSDReadRegisters;
     if (p_hi) {
       srni_flags |= kSDReadHistory;
     }
-    if (find_viminfo_parameter('!') != NULL) {
+    if (find_shada_parameter('!') != NULL) {
       srni_flags |= kSDReadVariables;
     }
-    if (find_viminfo_parameter('%') != NULL && ARGCOUNT == 0) {
+    if (find_shada_parameter('%') != NULL && ARGCOUNT == 0) {
       srni_flags |= kSDReadBufferList;
     }
   }
   if (flags & kShaDaWantMarks) {
-    if (get_viminfo_parameter('\'') > 0) {
+    if (get_shada_parameter('\'') > 0) {
       srni_flags |= kSDReadLocalMarks;
     }
   }
@@ -1039,7 +1041,7 @@ static char *shada_filename(const char *file)
   if (file == NULL || *file == NUL) {
     if (used_shada_file != NULL) {
       file = used_shada_file;
-    } else if ((file = find_viminfo_parameter('n')) == NULL || *file == NUL) {
+    } else if ((file = find_shada_parameter('n')) == NULL || *file == NUL) {
 #ifdef SHADA_FILE2
       // don't use $HOME when not defined (turned into "c:/"!).
       if (os_getenv((char_u *)"HOME") == NULL) {
@@ -1364,7 +1366,7 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
   FUNC_ATTR_NONNULL_ARG(1)
 {
   khash_t(bufset) *const removable_bufs = kh_init(bufset);
-  int max_kbyte_i = get_viminfo_parameter('s');
+  int max_kbyte_i = get_shada_parameter('s');
   if (max_kbyte_i < 0) {
     max_kbyte_i = 10;
   }
@@ -1409,7 +1411,7 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
   }, 0);
 
   // 2. Buffer list
-  if (find_viminfo_parameter('%') != NULL) {
+  if (find_shada_parameter('%') != NULL) {
     size_t buf_count = 0;
     FOR_ALL_BUFFERS(buf) {
       if (buf->b_ffname != NULL && !SHADA_REMOVABLE(buf)) {
@@ -1498,7 +1500,7 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
   // 4. History
   HistoryMergerState hms[HIST_COUNT];
   for (uint8_t i = 0; i < HIST_COUNT; i++) {
-    long num_saved = get_viminfo_parameter(hist_type2char(i));
+    long num_saved = get_shada_parameter(hist_type2char(i));
     if (num_saved == -1) {
       num_saved = p_hi;
     }
@@ -1599,7 +1601,7 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
   }
 
   // 7. Global marks
-  if (get_viminfo_parameter('f') != 0) {
+  if (get_shada_parameter('f') != 0) {
     ShadaEntry *const global_marks = list_global_marks(removable_bufs);
     for (ShadaEntry *mark = global_marks; mark->type != kSDItemMissing;
          mark++) {
@@ -1636,12 +1638,12 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
     }
   }
   // FIXME: Copy previous marks, up to num_marked_files
-  // size_t num_marked_files = get_viminfo_parameter('\'');
+  // size_t num_marked_files = get_shada_parameter('\'');
 
   // 9. Registers
-  int max_num_lines_i = get_viminfo_parameter('<');
+  int max_num_lines_i = get_shada_parameter('<');
   if (max_num_lines_i < 0) {
-    max_num_lines_i = get_viminfo_parameter('"');
+    max_num_lines_i = get_shada_parameter('"');
   }
   if (max_num_lines_i != 0) {
     const size_t max_num_lines = (max_num_lines_i < 0
@@ -1673,7 +1675,7 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
   }
 
   // 10. Variables
-  if (find_viminfo_parameter('!') != NULL) {
+  if (find_shada_parameter('!') != NULL) {
     const void *var_iter = NULL;
     const Timestamp cur_timestamp = os_time();
     do {
@@ -1730,6 +1732,7 @@ int shada_write_file(const char *const file, bool nomerge)
   intptr_t fd;
 
   if (!nomerge) {
+    // TODO(ZyX-I): Fail on read error.
     if (open_shada_file_for_reading(fname, &sd_reader) != OK) {
       nomerge = true;
       goto shada_write_file_nomerge;
@@ -1741,6 +1744,7 @@ int shada_write_file(const char *const file, bool nomerge)
     }
 
 shada_write_file_open:
+    // TODO(ZyX-I): Preserve existing permissions
     fd = (intptr_t) open_file(tempname, O_CREAT|O_WRONLY|O_NOFOLLOW|O_EXCL,
                               0600);
     if (fd < 0) {
@@ -1754,6 +1758,8 @@ shada_write_file_open:
         if (*wp == 'z') {
           // Tried names from .tmp.a to .tmp.z, all failed. Something must be 
           // wrong then.
+          EMSG2(_("E138: All %s.tmp.X files exist, cannot write ShaDa file!"),
+                fname);
           xfree(fname);
           xfree(tempname);
           return FAIL;
@@ -1772,7 +1778,7 @@ shada_write_file_nomerge:
 
   if (p_verbose > 0) {
     verbose_enter();
-    smsg(_("Writing viminfo file \"%s\""), fname);
+    smsg(_("Writing ShaDa file \"%s\""), fname);
     verbose_leave();
   }
 
@@ -1793,7 +1799,7 @@ shada_write_file_nomerge:
   if (!nomerge) {
     close_file((int)(intptr_t) sd_reader.cookie);
     if (vim_rename(tempname, fname) == -1) {
-      EMSG3(_("E886: Can't rename viminfo file from %s to %s!"),
+      EMSG3(_("E886: Can't rename ShaDa file from %s to %s!"),
             tempname, fname);
     } else {
       os_remove(tempname);
@@ -3021,7 +3027,7 @@ bool shada_removable(const char *name)
   size_t n;
 
   char *new_name = home_replace_save(NULL, name);
-  for (p = (char *) p_viminfo; *p; ) {
+  for (p = (char *) p_shada; *p; ) {
     (void) copy_option_part(&p, part, 51, ", ");
     if (part[0] == 'r') {
       n = STRLEN(part + 1);
