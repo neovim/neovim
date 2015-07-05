@@ -44,7 +44,9 @@
 #include "nvim/version.h"
 #include "nvim/path.h"
 #include "nvim/lib/ringbuf.h"
+#include "nvim/strings.h"
 #include "nvim/lib/khash.h"
+#include "nvim/lib/kvec.h"
 
 // Note: when using bufset hash pointers are intentionally casted to uintptr_t 
 // and not to khint32_t or khint64_t: this way compiler must give a warning 
@@ -67,6 +69,9 @@ KHASH_MAP_INIT_STR(fnamebufs, buf_T *)
 #define emsgu(a, ...) emsgu((char_u *) a, __VA_ARGS__)
 #define home_replace_save(a, b) \
     ((char *)home_replace_save(a, (char_u *)b))
+#define has_non_ascii(a) (has_non_ascii((char_u *)a))
+#define string_convert(a, b, c) \
+      ((char *)string_convert((vimconv_T *)a, (char_u *)b, c))
 #define path_shorten_fname_if_possible(b) \
     ((char *)path_shorten_fname_if_possible((char_u *)b))
 #define buflist_new(ffname, sfname, ...) \
@@ -261,6 +266,8 @@ typedef struct sd_read_def {
   char *error;           ///< Error message in case of error.
   uintmax_t fpos;        ///< Current position (amount of bytes read since 
                          ///< reader structure initialization). May overflow.
+  vimconv_T sd_conv;     ///< Structure used for converting encodings of some
+                         ///< items.
 } ShaDaReadDef;
 
 struct sd_write_def;
@@ -276,6 +283,8 @@ typedef struct sd_write_def {
   ShaDaFileWriter write;  ///< Writer function.
   void *cookie;           ///< Writer function last argument.
   char *error;            ///< Error message in case of error.
+  vimconv_T sd_conv;      ///< Structure used for converting encodings of some
+                          ///< items.
 } ShaDaWriteDef;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -521,6 +530,8 @@ int shada_read_file(const char *const file, const int flags)
   if (of_ret != OK) {
     return of_ret;
   }
+
+  convert_setup(&sd_reader.sd_conv, "utf-8", p_enc);
 
   shada_read(&sd_reader, flags);
 
@@ -1376,8 +1387,8 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
     .timestamp = os_time(),
     .data = {
       .header = {
-        .size = 3,
-        .capacity = 3,
+        .size = 4,
+        .capacity = 4,
         .items = ((KeyValuePair []) {
           { STATIC_CSTR_AS_STRING("version"),
             STRING_OBJ(cstr_as_string(longVersion)) },
@@ -1385,6 +1396,8 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
             INTEGER_OBJ((Integer) max_kbyte) },
           { STATIC_CSTR_AS_STRING("pid"),
             INTEGER_OBJ((Integer) os_get_pid()) },
+          { STATIC_CSTR_AS_STRING("encoding"),
+            STRING_OBJ(cstr_as_string((char *) p_enc)) },
         }),
       }
     }
@@ -1461,6 +1474,22 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
 
   // FIXME No merging currently
 
+#define RUN_WITH_CONVERTED_STRING(cstr, code) \
+  do { \
+    bool did_convert = false; \
+    if (sd_writer->sd_conv.vc_type != CONV_NONE && has_non_ascii((cstr))) { \
+      char *const converted_string = string_convert(&sd_writer->sd_conv, \
+                                                    (cstr), NULL); \
+      if (converted_string != NULL) { \
+        (cstr) = converted_string; \
+        did_convert = true; \
+      } \
+    } \
+    code \
+    if (did_convert) { \
+      xfree((cstr)); \
+    } \
+  } while (0)
   // 4. History
   HistoryMergerState hms[HIST_COUNT];
   for (uint8_t i = 0; i < HIST_COUNT; i++) {
@@ -1487,64 +1516,82 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
         }
       }
       RINGBUF_FORALL(&(hms_p->hmrb), ShadaEntry, cur_entry) {
-        shada_pack_entry(packer, *cur_entry, max_kbyte);
+        RUN_WITH_CONVERTED_STRING(cur_entry->data.history_item.string, {
+          shada_pack_entry(packer, *cur_entry, max_kbyte);
+        });
       }
       hm_rb_dealloc(&hms_p->hmrb);
     }
   }
 
   // 5. Search patterns
-  SearchPattern pat;
-  get_search_pattern(&pat);
-  shada_pack_entry(packer, (ShadaEntry) {
-    .type = kSDItemSearchPattern,
-    .timestamp = pat.timestamp,
-    .data = {
-      .search_pattern = {
-        .magic = pat.magic,
-        .smartcase = !pat.no_scs,
-        .has_line_offset = pat.off.line,
-        .place_cursor_at_end = pat.off.end,
-        .offset = pat.off.off,
-        .is_last_used = search_was_last_used(),
-        .is_substitute_pattern = false,
-        .pat = (char *) pat.pat,
-        .additional_data = pat.additional_data,
+  {
+    SearchPattern pat;
+    get_search_pattern(&pat);
+    ShadaEntry sp_entry = (ShadaEntry) {
+      .type = kSDItemSearchPattern,
+      .timestamp = pat.timestamp,
+      .data = {
+        .search_pattern = {
+          .magic = pat.magic,
+          .smartcase = !pat.no_scs,
+          .has_line_offset = pat.off.line,
+          .place_cursor_at_end = pat.off.end,
+          .offset = pat.off.off,
+          .is_last_used = search_was_last_used(),
+          .is_substitute_pattern = false,
+          .pat = (char *) pat.pat,
+          .additional_data = pat.additional_data,
+        }
       }
-    }
-  }, max_kbyte);
-  get_substitute_pattern(&pat);
-  shada_pack_entry(packer, (ShadaEntry) {
-    .type = kSDItemSearchPattern,
-    .timestamp = pat.timestamp,
-    .data = {
-      .search_pattern = {
-        .magic = pat.magic,
-        .smartcase = !pat.no_scs,
-        .has_line_offset = false,
-        .place_cursor_at_end = false,
-        .offset = 0,
-        .is_last_used = !search_was_last_used(),
-        .is_substitute_pattern = true,
-        .pat = (char *) pat.pat,
-        .additional_data = pat.additional_data,
+    };
+    RUN_WITH_CONVERTED_STRING(sp_entry.data.search_pattern.pat, {
+      shada_pack_entry(packer, sp_entry, max_kbyte);
+    });
+  }
+  {
+    SearchPattern pat;
+    get_substitute_pattern(&pat);
+    ShadaEntry sp_entry = (ShadaEntry) {
+      .type = kSDItemSearchPattern,
+      .timestamp = pat.timestamp,
+      .data = {
+        .search_pattern = {
+          .magic = pat.magic,
+          .smartcase = !pat.no_scs,
+          .has_line_offset = false,
+          .place_cursor_at_end = false,
+          .offset = 0,
+          .is_last_used = !search_was_last_used(),
+          .is_substitute_pattern = true,
+          .pat = (char *) pat.pat,
+          .additional_data = pat.additional_data,
+        }
       }
-    }
-  }, max_kbyte);
+    };
+    RUN_WITH_CONVERTED_STRING(sp_entry.data.search_pattern.pat, {
+      shada_pack_entry(packer, sp_entry, max_kbyte);
+    });
+  }
 
   // 6. Substitute string
-  SubReplacementString sub;
-  sub_get_replacement(&sub);
-  shada_pack_entry(packer, (ShadaEntry) {
-    .type = kSDItemSubString,
-    .timestamp = sub.timestamp,
-    .data = {
-      .sub_string = {
-        .sub = (char *) sub.sub,
-        .additional_elements = sub.additional_elements,
+  {
+    SubReplacementString sub;
+    sub_get_replacement(&sub);
+    ShadaEntry sub_entry = (ShadaEntry) {
+      .type = kSDItemSubString,
+      .timestamp = sub.timestamp,
+      .data = {
+        .sub_string = {
+          .sub = (char *) sub.sub,
+          .additional_elements = sub.additional_elements,
+        }
       }
-    }
-  }, max_kbyte);
+    };
+    RUN_WITH_CONVERTED_STRING(sub_entry.data.sub_string.sub, {
+      shada_pack_entry(packer, sub_entry, max_kbyte);
+    });
+  }
 
   // 7. Global marks
   if (get_viminfo_parameter('f') != 0) {
@@ -1597,7 +1644,25 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
                                   : (size_t) max_num_lines_i);
     ShadaEntry *const registers = list_registers(max_num_lines);
     for (ShadaEntry *reg = registers; reg->type != kSDItemMissing; reg++) {
+      bool did_convert = false;
+      if (sd_writer->sd_conv.vc_type != CONV_NONE) {
+        did_convert = true;
+        reg->data.reg.contents = xmemdup(reg->data.reg.contents,
+                                         (reg->data.reg.contents_size
+                                          * sizeof(reg->data.reg.contents)));
+        for (size_t i = 0; i < reg->data.reg.contents_size; i++) {
+          reg->data.reg.contents[i] = get_converted_string(
+              &sd_writer->sd_conv,
+              reg->data.reg.contents[i], strlen(reg->data.reg.contents[i]));
+        }
+      }
       shada_pack_entry(packer, *reg, max_kbyte);
+      if (did_convert) {
+        for (size_t i = 0; i < reg->data.reg.contents_size; i++) {
+          xfree(reg->data.reg.contents[i]);
+        }
+        xfree(reg->data.reg.contents);
+      }
     }
     xfree(registers);
   }
@@ -1614,6 +1679,9 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
         break;
       }
       Object obj = vim_to_object(&vartv);
+      if (sd_writer->sd_conv.vc_type != CONV_NONE) {
+        convert_object(&sd_writer->sd_conv, &obj);
+      }
       shada_pack_entry(packer, (ShadaEntry) {
         .type = kSDItemVariable,
         .timestamp = cur_timestamp,
@@ -1629,6 +1697,7 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
       clear_tv(&vartv);
     } while (var_iter != NULL);
   }
+#undef RUN_WITH_CONVERTED_STRING
 
   kh_destroy(bufset, removable_bufs);
   msgpack_packer_free(packer);
@@ -1652,7 +1721,7 @@ int shada_write_file(const char *const file, const bool nomerge)
   };
 
   const intptr_t fd = (intptr_t) open_file(fname,
-                                           O_CREAT|O_WRONLY|O_NOFOLLOW,
+                                           O_CREAT|O_WRONLY|O_NOFOLLOW|O_TRUNC,
                                            0600);
 
   if (p_verbose > 0) {
@@ -1667,6 +1736,8 @@ int shada_write_file(const char *const file, const bool nomerge)
   }
 
   sd_writer.cookie = (void *) fd;
+
+  convert_setup(&sd_writer.sd_conv, p_enc, "utf-8");
 
   shada_write(&sd_writer, NULL);
 
@@ -1863,7 +1934,7 @@ static int msgpack_read_uint64(ShaDaReadDef *const sd_reader,
 
   if (first_char == EOF) {
     if (sd_reader->error) {
-      emsg2("System error while reading ShaDa file: %s",
+      emsg2("System error while reading integer from ShaDa file: %s",
             sd_reader->error);
     } else if (sd_reader->eof) {
       emsgu("Error while reading ShaDa file: "
@@ -1911,6 +1982,99 @@ static int msgpack_read_uint64(ShaDaReadDef *const sd_reader,
     *result = be64toh(*((uint64_t *) &(buf[0])));
   }
   return OK;
+}
+
+/// Convert all strings in one Object instance
+///
+/// @param[in]      sd_conv  Conversion definition.
+/// @param[in,out]  obj      Object to convert.
+static void convert_object(const vimconv_T *const sd_conv, Object *const obj)
+  FUNC_ATTR_NONNULL_ALL
+{
+  kvec_t(Object *) toconv;
+  kv_init(toconv);
+  kv_push(Object *, toconv, obj);
+  while (kv_size(toconv)) {
+    Object *cur_obj = kv_pop(toconv);
+#define CONVERT_STRING(str) \
+    do { \
+      if (!has_non_ascii((str).data)) { \
+        break; \
+      } \
+      size_t len = (str).size; \
+      char *const converted_string = string_convert(sd_conv, (str).data, \
+                                                    &len); \
+      if (converted_string != NULL) { \
+        xfree((str).data); \
+        (str).data = converted_string; \
+        (str).size = len; \
+      } \
+    } while (0)
+    switch (cur_obj->type) {
+      case kObjectTypeNil:
+      case kObjectTypeInteger:
+      case kObjectTypeBoolean:
+      case kObjectTypeFloat: {
+        break;
+      }
+      case kObjectTypeString: {
+        CONVERT_STRING(cur_obj->data.string);
+        break;
+      }
+      case kObjectTypeArray: {
+        for (size_t i = 0; i < cur_obj->data.array.size; i++) {
+          Object *element = &cur_obj->data.array.items[i];
+          if (element->type == kObjectTypeDictionary
+              || element->type == kObjectTypeArray) {
+            kv_push(Object *, toconv, element);
+          } else if (element->type == kObjectTypeString) {
+            CONVERT_STRING(element->data.string);
+          }
+        }
+        break;
+      }
+      case kObjectTypeDictionary: {
+        for (size_t i = 0; i < cur_obj->data.dictionary.size; i++) {
+          CONVERT_STRING(cur_obj->data.dictionary.items[i].key);
+          Object *value = &cur_obj->data.dictionary.items[i].value;
+          if (value->type == kObjectTypeDictionary
+              || value->type == kObjectTypeArray) {
+            kv_push(Object *, toconv, value);
+          } else if (value->type == kObjectTypeString) {
+            CONVERT_STRING(value->data.string);
+          }
+        }
+        break;
+      }
+      default: {
+        assert(false);
+      }
+    }
+#undef CONVERT_STRING
+  }
+  kv_destroy(toconv);
+}
+
+/// Convert or copy and return a string
+///
+/// @param[in]  sd_conv  Conversion definition.
+/// @param[in]  str      String to convert.
+/// @param[in]  len      String length.
+///
+/// @return [allocated] converted string or copy of the original string.
+static inline char *get_converted_string(const vimconv_T *const sd_conv,
+                                         const char *const str, const size_t len)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (!has_non_ascii_len(str, len)) {
+    return xmemdupz(str, len);
+  }
+  size_t new_len = len;
+  char *const new_str = string_convert(sd_conv, str, &new_len);
+  if (new_str == NULL) {
+    return xmemdupz(str, len);
+  }
+  return new_str;
 }
 
 /// Iterate over shada file contents
@@ -2053,6 +2217,8 @@ shada_read_next_item_start:
   TYPED_KEY(entry_name, name, "a boolean", tgt, BOOLEAN, boolean, ID)
 #define STRING_KEY(entry_name, name, tgt) \
   TYPED_KEY(entry_name, name, "a binary", tgt, BIN, bin, BINDUP)
+#define CONVERTED_STRING_KEY(entry_name, name, tgt) \
+  TYPED_KEY(entry_name, name, "a binary", tgt, BIN, bin, BIN_CONVERTED)
 #define INT_KEY(entry_name, name, tgt, proc) \
   CHECKED_KEY( \
       entry_name, name, " which is not an integer", tgt, \
@@ -2074,6 +2240,11 @@ shada_read_next_item_start:
            sizeof(*unpacked.data.via.map.ptr)); \
     ad_ga.ga_len++; \
   }
+#define CONVERTED(str, len) \
+  (sd_reader->sd_conv.vc_type != CONV_NONE \
+   ? get_converted_string(&sd_reader->sd_conv, (str), (len)) \
+   : xmemdupz((str), (len)))
+#define BIN_CONVERTED(b) CONVERTED(b.ptr, b.size)
   switch ((ShadaEntryType) type_u64) {
     case kSDItemHeader: {
       if (!msgpack_rpc_to_dictionary(&(unpacked.data), &(entry->data.header))) {
@@ -2120,7 +2291,8 @@ shada_read_next_item_start:
                          entry->data.search_pattern.is_substitute_pattern)
         else INTEGER_KEY("search pattern", "off",
                          entry->data.search_pattern.offset)
-        else STRING_KEY("search pattern", "pat", entry->data.search_pattern.pat)
+        else CONVERTED_STRING_KEY("search pattern", "pat",
+                                  entry->data.search_pattern.pat)
         else ADDITIONAL_KEY
       }
       if (entry->data.search_pattern.pat == NULL) {
@@ -2280,8 +2452,7 @@ shada_read_next_item_start:
           entry->data.reg.contents_size = arr.size;
           entry->data.reg.contents = xmalloc(arr.size * sizeof(char *));
           for (size_t i = 0; i < arr.size; i++) {
-            entry->data.reg.contents[i] = xmemdupz(arr.ptr[i].via.bin.ptr,
-                                                   arr.ptr[i].via.bin.size);
+            entry->data.reg.contents[i] = BIN_CONVERTED(arr.ptr[i].via.bin);
           }
         } else ADDITIONAL_KEY
       }
@@ -2377,15 +2548,32 @@ shada_read_next_item_start:
         entry->data.history_item.sep =
             (char) unpacked.data.via.array.ptr[2].via.u64;
       }
-      const size_t strsize = (
-          unpacked.data.via.array.ptr[1].via.bin.size
-          + 1 // Zero byte
-          + 1 // Separator character
-      );
-      entry->data.history_item.string = xmalloc(strsize);
-      memcpy(entry->data.history_item.string,
-             unpacked.data.via.array.ptr[1].via.bin.ptr,
-             unpacked.data.via.array.ptr[1].via.bin.size);
+      size_t strsize;
+      if (sd_reader->sd_conv.vc_type == CONV_NONE
+          || !has_non_ascii_len(unpacked.data.via.array.ptr[1].via.bin.ptr,
+                                unpacked.data.via.array.ptr[1].via.bin.size)) {
+shada_read_next_item_hist_no_conv:
+        strsize = (
+            unpacked.data.via.array.ptr[1].via.bin.size
+            + 1 // Zero byte
+            + 1 // Separator character
+        );
+        entry->data.history_item.string = xmalloc(strsize);
+        memcpy(entry->data.history_item.string,
+              unpacked.data.via.array.ptr[1].via.bin.ptr,
+              unpacked.data.via.array.ptr[1].via.bin.size);
+      } else {
+        size_t len = unpacked.data.via.array.ptr[1].via.bin.size;
+        char *const converted = string_convert(
+            &sd_reader->sd_conv, unpacked.data.via.array.ptr[1].via.bin.ptr,
+            &len);
+        if (converted != NULL) {
+          strsize = len + 2;
+          entry->data.history_item.string = xrealloc(converted, strsize);
+        } else {
+          goto shada_read_next_item_hist_no_conv;
+        }
+      }
       entry->data.history_item.string[strsize - 2] = 0;
       entry->data.history_item.string[strsize - 1] =
           entry->data.history_item.sep;
@@ -2460,6 +2648,9 @@ shada_read_next_item_start:
               (uint64_t) initial_fpos);
         goto shada_read_next_item_error;
       }
+      if (sd_reader->sd_conv.vc_type != CONV_NONE) {
+        convert_object(&sd_reader->sd_conv, &entry->data.global_var.value);
+      }
       if (unpacked.data.via.array.size > 2) {
         msgpack_object obj = {
           .type = MSGPACK_OBJECT_ARRAY,
@@ -2509,8 +2700,7 @@ shada_read_next_item_start:
         goto shada_read_next_item_error;
       }
       entry->data.sub_string.sub =
-          xmemdupz(unpacked.data.via.array.ptr[0].via.bin.ptr,
-                   unpacked.data.via.array.ptr[0].via.bin.size);
+          BIN_CONVERTED(unpacked.data.via.array.ptr[0].via.bin);
       if (unpacked.data.via.array.size > 1) {
         msgpack_object obj = {
           .type = MSGPACK_OBJECT_ARRAY,
@@ -2632,8 +2822,12 @@ shada_read_next_item_start:
   }
   entry->type = (ShadaEntryType) type_u64;
   goto shada_read_next_item_end;
+#undef BIN_CONVERTED
+#undef CONVERTED
 #undef CHECK_KEY
 #undef BOOLEAN_KEY
+#undef CONVERTED_STRING_KEY
+#undef STRING_KEY
 #undef ADDITIONAL_KEY
 #undef ID
 #undef BINDUP
