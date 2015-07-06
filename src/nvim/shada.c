@@ -1156,19 +1156,19 @@ static void shada_pack_entry(msgpack_packer *const packer,
       const size_t map_size = (size_t) (
           1 // Search pattern is always present
           // Following items default to true:
-          + !entry.data.search_pattern.magic
-          + !entry.data.search_pattern.is_last_used
+          + (size_t) !entry.data.search_pattern.magic
+          + (size_t) !entry.data.search_pattern.is_last_used
           // Following items default to false:
-          + entry.data.search_pattern.smartcase
-          + entry.data.search_pattern.has_line_offset
-          + entry.data.search_pattern.place_cursor_at_end
-          + entry.data.search_pattern.is_substitute_pattern
+          + (size_t) entry.data.search_pattern.smartcase
+          + (size_t) entry.data.search_pattern.has_line_offset
+          + (size_t) entry.data.search_pattern.place_cursor_at_end
+          + (size_t) entry.data.search_pattern.is_substitute_pattern
           // offset defaults to zero:
-          + (entry.data.search_pattern.offset != 0)
+          + (size_t) (entry.data.search_pattern.offset != 0)
           // finally, additional data:
-          + (entry.data.search_pattern.additional_data
-             ? entry.data.search_pattern.additional_data->size
-             : 0)
+          + (size_t) (entry.data.search_pattern.additional_data
+                      ? entry.data.search_pattern.additional_data->size
+                      : 0)
       );
       msgpack_pack_map(spacker, map_size);
       PACK_STATIC_STR("pat");
@@ -1211,17 +1211,17 @@ static void shada_pack_entry(msgpack_packer *const packer,
       const size_t map_size = (size_t) (
           1  // File name
           // Line: defaults to 1
-          + (entry.data.filemark.mark.lnum != 1)
+          + (size_t) (entry.data.filemark.mark.lnum != 1)
           // Column: defaults to zero:
-          + (entry.data.filemark.mark.col != 0)
+          + (size_t) (entry.data.filemark.mark.col != 0)
           // Mark name: defaults to '"'
-          + (entry.type != kSDItemJump
-             && entry.type != kSDItemChange
-             && entry.data.filemark.name != '"')
+          + (size_t) (entry.type != kSDItemJump
+                      && entry.type != kSDItemChange
+                      && entry.data.filemark.name != '"')
           // Additional entries, if any:
-          + (entry.data.filemark.additional_data == NULL
-             ? 0
-             : entry.data.filemark.additional_data->size)
+          + (size_t) (entry.data.filemark.additional_data == NULL
+                      ? 0
+                      : entry.data.filemark.additional_data->size)
       );
       msgpack_pack_map(spacker, map_size);
       PACK_STATIC_STR("file");
@@ -1255,13 +1255,13 @@ static void shada_pack_entry(msgpack_packer *const packer,
       const size_t map_size = (size_t) (
           2  // Register contents and name
           // Register type: defaults to MCHAR
-          + (entry.data.reg.type != MCHAR)
+          + (size_t) (entry.data.reg.type != MCHAR)
           // Register width: defaults to zero
-          + (entry.data.reg.width != 0)
+          + (size_t) (entry.data.reg.width != 0)
           // Additional entries, if any:
-          + (entry.data.reg.additional_data == NULL
-             ? 0
-             : entry.data.reg.additional_data->size)
+          + (size_t) (entry.data.reg.additional_data == NULL
+                      ? 0
+                      : entry.data.reg.additional_data->size)
       );
       msgpack_pack_map(spacker, map_size);
       PACK_STATIC_STR("contents");
@@ -1297,13 +1297,14 @@ static void shada_pack_entry(msgpack_packer *const packer,
         const size_t map_size = (size_t) (
             1  // Buffer name
             // Line number: defaults to 1
-            + (entry.data.buffer_list.buffers[i].pos.lnum != 1)
+            + (size_t) (entry.data.buffer_list.buffers[i].pos.lnum != 1)
             // Column number: defaults to 0
-            + (entry.data.buffer_list.buffers[i].pos.col != 0)
+            + (size_t) (entry.data.buffer_list.buffers[i].pos.col != 0)
             // Additional entries, if any:
-            + (entry.data.buffer_list.buffers[i].additional_data == NULL
-               ? 0
-               : entry.data.buffer_list.buffers[i].additional_data->size)
+            + (size_t) (
+                entry.data.buffer_list.buffers[i].additional_data == NULL
+                ? 0
+                : entry.data.buffer_list.buffers[i].additional_data->size)
         );
         msgpack_pack_map(spacker, map_size);
         PACK_STATIC_STR("file");
