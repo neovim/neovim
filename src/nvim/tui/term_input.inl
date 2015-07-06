@@ -243,6 +243,7 @@ static void read_cb(RStream *rstream, RBuffer *buf, void *data, bool eof)
     RBUFFER_EACH(input->read_buffer, c, i) {
       count = i + 1;
       if (c == '\x1b' && count > 1) {
+        count--;
         break;
       }
     }
@@ -262,6 +263,10 @@ static void read_cb(RStream *rstream, RBuffer *buf, void *data, bool eof)
       }
     }
   } while (rbuffer_size(input->read_buffer));
+
+  // Make sure the next input escape sequence fits into the ring buffer
+  // without wrap around, otherwise it could be misinterpreted.
+  rbuffer_reset(input->read_buffer);
 }
 
 static TermInput *term_input_new(void)

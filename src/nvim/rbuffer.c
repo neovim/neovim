@@ -69,6 +69,15 @@ char *rbuffer_write_ptr(RBuffer *buf, size_t *write_count) FUNC_ATTR_NONNULL_ALL
   return buf->write_ptr;
 }
 
+// Set read and write pointer for an empty RBuffer to the beginning of the
+// buffer.
+void rbuffer_reset(RBuffer *buf) FUNC_ATTR_NONNULL_ALL
+{
+  if (buf->size == 0) {
+    buf->write_ptr = buf->read_ptr = buf->start_ptr;
+  }
+}
+
 /// Adjust `rbuffer` write pointer to reflect produced data. This is called
 /// automatically by `rbuffer_write`, but when using `rbuffer_write_ptr`
 /// directly, this needs to called after the data was copied to the internal
