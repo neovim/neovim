@@ -78,7 +78,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 
-#ifndef UNIX            /* it's in os_unix_defs.h for Unix */
+#ifndef UNIX            /* it's in os/unix_defs.h for Unix */
 # include <time.h>
 #endif
 
