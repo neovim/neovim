@@ -83,3 +83,41 @@ install_nvim() {
     exit 1
   }
 }
+
+run_integrationtests() {
+  echo "set rtp+=${PLUGIN_DIR}/junegunn/vader.vim" > "${PLUGIN_DIR}/nvimrc"
+
+  local plugin
+  local exec_plugin
+  while read line; do
+    if [[ -z "${line}" ]]; then
+      if [[ -n "${exec_plugin}" ]]; then
+        echo -n "Running Vader tests for ${exec_plugin} "
+        local log_file="${LOG_DIR}/${exec_plugin}_vader.log"
+        rm -f "${log_file}"
+        if ! "${INSTALL_PREFIX}/bin/nvim" -u "${PLUGIN_DIR}/${exec_plugin}/__nvimrc" \
+                                          -c "autocmd VimExit * windo w! >> ${log_file}"
+                                          -c "Vader! ${PLUGIN_DIR}/${exec_plugin}/test*/*.vader"; then
+          echo "failed."
+          cat "${log_file}"
+          exit 1
+        else
+          echo "succeeded."
+        fi
+      fi
+      exec_plugin=
+      continue
+    fi
+    plugin="$(cut -d ' ' -f 1 <<< "${line}")"
+
+    if [[ -z "${exec_plugin}" ]]; then
+      exec_plugin="${plugin}"
+      echo "source ${PLUGIN_DIR}/nvimrc" > "${PLUGIN_DIR}/${exec_plugin}/__nvimrc"
+    else
+      # Add $plugin as dependency of $exec_plugin.
+      echo "set rtp+=${PLUGIN_DIR}/${plugin}" >> "${PLUGIN_DIR}/${exec_plugin}/__nvimrc"
+    fi
+  done <<< "$(tail -n +2 "${CI_DIR}/common/plugins.txt")"
+
+  cd "${TRAVIS_BUILD_DIR}"
+}

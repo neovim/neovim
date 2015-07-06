@@ -23,4 +23,6 @@ run_oldtests
 
 install_nvim
 
+run_integrationtests
+
 touch "${SUCCESS_MARKER}"
