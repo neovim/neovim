@@ -1,9 +1,10 @@
 -- Tests for undo tree and :earlier and :later.
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source, eq, eval, clear, execute, expect, wait =
-  helpers.feed, helpers.insert, helpers.source, helpers.eq, helpers.eval,
-  helpers.clear, helpers.execute, helpers.expect, helpers.wait
+local feed, insert, source, eq, eval, clear, execute, expect, wait, write_file
+  = helpers.feed, helpers.insert, helpers.source, helpers.eq, helpers.eval,
+  helpers.clear, helpers.execute, helpers.expect, helpers.wait,
+  helpers.write_file
 
 local function expect_empty_buffer()
   -- The space will be removed by helpers.dedent but is needed because dedent
@@ -12,12 +13,6 @@ local function expect_empty_buffer()
 end
 local function expect_line(line)
   return eq(line, eval('getline(".")'))
-end
-local function write_file(name, text)
-  local file = io.open(name, 'w')
-  file:write(text)
-  file:flush()
-  file:close()
 end
 
 describe('undo tree:', function()
@@ -40,7 +35,7 @@ describe('undo tree:', function()
       write_file('Xtest', '\n123456789\n')
 
       -- `:earlier` and `:later` are (obviously) time-sensitive, so this test
-      -- sometimes fails if the system is under load. It is wrapped in a local 
+      -- sometimes fails if the system is under load. It is wrapped in a local
       -- function to allow multiple attempts.
       local function test_earlier_later()
         clear()

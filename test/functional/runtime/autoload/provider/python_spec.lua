@@ -11,7 +11,7 @@ end
 local helpers = require('test.functional.helpers')
 local eval, command, feed = helpers.eval, helpers.command, helpers.feed
 local eq, clear, insert = helpers.eq, helpers.clear, helpers.insert
-local expect = helpers.expect
+local expect, write_file = helpers.expect, helpers.write_file
 
 
 describe('python commands and functions', function()
@@ -46,9 +46,7 @@ describe('python commands and functions', function()
 
   it('pyfile', function()
     local fname = 'pyfile.py'
-    local F = io.open(fname, 'w')
-    F:write('vim.command("let set_by_pyfile = 123")')
-    F:close()
+    write_file(fname, 'vim.command("let set_by_pyfile = 123")')
     command('pyfile pyfile.py')
     eq(123, eval('g:set_by_pyfile'))
     os.remove(fname)
