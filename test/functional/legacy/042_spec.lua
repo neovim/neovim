@@ -66,9 +66,10 @@ describe('reading and writing files with BOM', function()
     execute('set nobin')
     --execute('e #')
 
-    -- --- Check that editing a latin-1 file doesn't see a BOM.
+    -- Check that editing a latin-1 file doesn't see a BOM.
     execute('e! Xtest0')
     eq('latin1', eval('&fileencoding'))
+    eq('nobomb', eval('&bomb'))
     execute('redir! >test.out')
     execute('set fileencoding bomb?')
     execute('redir END')
@@ -79,7 +80,7 @@ describe('reading and writing files with BOM', function()
     wait()
     helpers.neq(nil, lfs.attributes('Xtest0x'))
 
-    -- --- Check utf-8.
+    -- Check utf-8.
     execute('e! Xtest1')
     execute('redir >>test.out')
     execute('set fileencoding bomb?')
@@ -89,7 +90,7 @@ describe('reading and writing files with BOM', function()
     execute('set fenc=utf-8')
     execute('w! Xtest1x')
 
-    -- --- Check utf-8 with an error (will fall back to latin-1).
+    -- Check utf-8 with an error (will fall back to latin-1).
     execute('e! Xtest2')
     execute('redir >>test.out')
     execute('set fileencoding bomb?')
@@ -99,7 +100,7 @@ describe('reading and writing files with BOM', function()
     execute('set fenc=utf-8')
     execute('w! Xtest2x')
 
-    -- --- Check ucs-2.
+    -- Check ucs-2.
     execute('e! Xtest3')
     execute('redir >>test.out')
     execute('set fileencoding bomb?')
@@ -109,7 +110,7 @@ describe('reading and writing files with BOM', function()
     execute('set fenc=ucs-2')
     execute('w! Xtest3x')
 
-    -- --- Check ucs-2le.
+    -- Check ucs-2le.
     execute('e! Xtest4')
     execute('redir >>test.out')
     execute('set fileencoding bomb?')
@@ -119,7 +120,7 @@ describe('reading and writing files with BOM', function()
     execute('set fenc=ucs-2le')
     execute('w! Xtest4x')
 
-    -- --- Check ucs-4.
+    -- Check ucs-4.
     execute('e! Xtest5')
     execute('redir >>test.out')
     execute('set fileencoding bomb?')
@@ -129,7 +130,7 @@ describe('reading and writing files with BOM', function()
     execute('set fenc=ucs-4')
     execute('w! Xtest5x')
 
-    -- --- Check ucs-4le.
+    -- Check ucs-4le.
     execute('e! Xtest6')
     execute('redir >>test.out')
     execute('set fileencoding bomb?')
@@ -139,7 +140,7 @@ describe('reading and writing files with BOM', function()
     execute('set fenc=ucs-4le')
     execute('w! Xtest6x')
 
-    -- --- Check the files written with BOM.
+    -- Check the files written with BOM.
     source([[
       set bin
       e! test.out
