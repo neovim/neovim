@@ -2624,7 +2624,7 @@ char_u *get_scriptname(scid_T id)
 }
 
 # if defined(EXITFREE)
-void free_scriptnames()
+void free_scriptnames(void)
 {
 # define FREE_SCRIPTNAME(item) xfree((item)->sn_name)
   GA_DEEP_CLEAR(&script_items, scriptitem_T, FREE_SCRIPTNAME);
