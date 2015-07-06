@@ -20,7 +20,6 @@ SCRIPTS ?= \
            test48.out             \
            test49.out             \
            test52.out             \
-           test53.out             \
            test64.out             \
            test73.out             \
            test79.out             \
