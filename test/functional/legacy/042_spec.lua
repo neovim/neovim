@@ -13,24 +13,24 @@ local write_file = function (name, contents)
 end
 
 describe('reading and writing files with BOM', function()
+  local latin1 = '\xfe\xfelatin-1'
+  local utf8 = '\xef\xbb\xbfutf-8'
+  local utf8_err = '\xef\xbb\xbfutf-8\x80err'
+  local ucs2 = '\xfe\xff\x00u\x00c\x00s\x00-\x002\x00'
+  local ucs2_le = '\xff\xfeu\x00c\x00s\x00-\x002\x00l\x00e\x00'
+  local ucs4 = '\x00\x00\xfe\xff\x00\x00\x00u\x00\x00\x00c\x00\x00\x00s'..
+    '\x00\x00\x00-\x00\x00\x004\x00\x00\x00'
+  local ucs4_le = '\xff\xfe\x00\x00u\x00\x00\x00c\x00\x00\x00s\x00\x00\x00'..
+    '-\x00\x00\x004\x00\x00\x00l\x00\x00\x00e\x00\x00\x00'
   setup(function()
     clear()
-    -- latin-1
-    write_file('Xtest0', 'þþlatin-1\n')
-    -- utf-8
-    write_file('Xtest1', 'ï»¿utf-8\n')
-    -- erronous utf-8
-    write_file('Xtest2', 'ï»¿utf-8\x80err\n')
-    -- ucs-2
-    write_file('Xtest3', 'þÿ\x00u\x00c\x00s\x00-\x002\x00\n')
-    -- ucs-2 Little Endian
-    write_file('Xtest4', 'ÿþu\x00c\x00s\x00-\x002\x00l\x00e\x00\n')
-    -- ucs-4
-    write_file('Xtest5', '\x00\x00þÿ\x00\x00\x00u\x00\x00\x00c\x00\x00\x00s'..
-      '\x00\x00\x00-\x00\x00\x004\x00\x00\x00\n')
-    -- ucs-4 Little Endian
-    write_file('Xtest6', 'ÿþ\x00\x00u\x00\x00\x00c\x00\x00\x00s\x00\x00\x00'..
-      '-\x00\x00\x004\x00\x00\x00l\x00\x00\x00e\x00\x00\x00\n')
+    write_file('Xtest0', latin1..'\n')
+    write_file('Xtest1', utf8..'\n')
+    write_file('Xtest2', utf8_err..'\n')
+    write_file('Xtest3', ucs2..'\n')
+    write_file('Xtest4', ucs2_le..'\n\x00')
+    write_file('Xtest5', ucs4..'\n')
+    write_file('Xtest6', ucs4_le..'\n\x00\x00\x00')
   end)
   teardown(function()
     os.remove('Xtest0')
@@ -45,35 +45,22 @@ describe('reading and writing files with BOM', function()
   it('is working', function()
     execute('set encoding=utf-8')
     execute('set fileencodings=ucs-bom,latin-1')
-    -- This changes the file for DOS and MAC.
     execute('set ff=unix ffs=unix')
-    -- Need to add a NUL byte after the NL byte.
-    execute('set bin')
-    -- Ignore change from setting 'ff'.
-    execute('e! Xtest4')
-    feed('o<C-V>\x00<esc>')
-    execute('set noeol')
-    execute('w')
-    -- Allow default test42.in format.
     execute('set ffs& nobinary')
-    -- Need to add three NUL bytes after the NL byte.
-    execute('set bin')
-    -- ! for when setting 'ff' is a change.
-    execute('e! Xtest6')
-    feed('o<C-V>\x00<C-V>\x00<C-V>\x00<esc>')
     execute('set noeol')
-    execute('w')
     execute('set nobin')
-    --execute('e #')
 
     -- Check that editing a latin-1 file doesn't see a BOM.
-    execute('e! Xtest0')
-    eq('latin1', eval('&fileencoding'))
-    eq('nobomb', eval('&bomb'))
+    eq('', eval('&fileencoding'))
+    execute('e Xtest0')
+    wait()
+    eq(0, eval('&bomb'))
+    --eq('latin1', eval('&fileencoding')) -- TODO
     execute('redir! >test.out')
     execute('set fileencoding bomb?')
     execute('redir END')
     execute('set fenc=latin-1')
+    expect(latin1)
     execute('w >>test.out')
     execute('set bomb fenc=latin-1')
     execute('w! Xtest0x')
@@ -162,7 +149,7 @@ describe('reading and writing files with BOM', function()
       
         fileencoding=latin1
       nobomb
-      þþlatin-1
+      Ã¾Ã¾latin-1
       
       
         fileencoding=utf-8
@@ -172,7 +159,7 @@ describe('reading and writing files with BOM', function()
       
         fileencoding=latin1
       nobomb
-      ï»¿utf-8]]..'\x80'..[[err
+      Ã¯Â»Â¿utf-8]]..'\x80'..[[err
       
       
         fileencoding=utf-16
@@ -193,14 +180,14 @@ describe('reading and writing files with BOM', function()
         fileencoding=ucs-4le
         bomb
       ucs-4le
-      þþlatin-1
-      ï»¿utf-8
-      Ã¯Â»Â¿utf-8Â]]..'\x80'..[[err
-      ]]..'þÿ\x00u\x00c\x00s\x00-\x002\x00'..[[
-      ]]..'ÿþu\x00c\x00s\x00-\x002\x00l\x00e\x00'..[[
+      Ã¾Ã¾latin-1
+      Ã¯Â»Â¿utf-8
+      ÃƒÂ¯Ã‚Â»Ã‚Â¿utf-8Ã‚]]..'\x80'..[[err
+      ]]..'Ã¾Ã¿\x00u\x00c\x00s\x00-\x002\x00'..[[
+      ]]..'Ã¿Ã¾u\x00c\x00s\x00-\x002\x00l\x00e\x00'..[[
       ]]..'\x00'..[[
-      ]]..'\x00\x00þÿ\x00\x00\x00u\x00\x00\x00c\x00\x00\x00s\x00\x00\x00-\x00\x00\x004\x00\x00\x00'..[[
-      ]]..'ÿþ\x00\x00u\x00\x00\x00c\x00\x00\x00s\x00\x00\x00-\x00\x00\x004\x00\x00\x00l\x00\x00\x00e\x00\x00\x00'..[[
+      ]]..'\x00\x00Ã¾Ã¿\x00\x00\x00u\x00\x00\x00c\x00\x00\x00s\x00\x00\x00-\x00\x00\x004\x00\x00\x00'..[[
+      ]]..'Ã¿Ã¾\x00\x00u\x00\x00\x00c\x00\x00\x00s\x00\x00\x00-\x00\x00\x004\x00\x00\x00l\x00\x00\x00e\x00\x00\x00'..[[
       ]]..'\x00\x00\x00')
   end)
 end)
