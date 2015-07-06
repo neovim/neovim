@@ -18,38 +18,31 @@
 // Special wildcards that need to be handled by the shell.
 #define SPECIAL_WILDCHAR "`'{"
 
+// Unix system-dependent file names
 #ifndef SYS_VIMRC_FILE
 # define SYS_VIMRC_FILE "$VIM/nvimrc"
 #endif
-
 #ifndef DFLT_HELPFILE
 # define DFLT_HELPFILE  "$VIMRUNTIME/doc/help.txt"
 #endif
-
 #ifndef SYNTAX_FNAME
 # define SYNTAX_FNAME   "$VIMRUNTIME/syntax/%s.vim"
 #endif
-
 #ifndef USR_EXRC_FILE
 # define USR_EXRC_FILE "~/.exrc"
 #endif
-
 #ifndef USR_VIMRC_FILE
 # define USR_VIMRC_FILE "~/.nvimrc"
 #endif
-
 #ifndef USR_VIMRC_FILE2
 # define USR_VIMRC_FILE2     "~/.nvim/nvimrc"
 #endif
-
 #ifndef EXRC_FILE
 # define EXRC_FILE      ".exrc"
 #endif
-
 #ifndef VIMRC_FILE
 # define VIMRC_FILE     ".nvimrc"
 #endif
-
 #ifndef VIMINFO_FILE
 # define VIMINFO_FILE "~/.nviminfo"
 #endif

@@ -33,8 +33,7 @@
 # define SIGDUMMYARG
 #endif
 
-// On some systems, time.h should not be
-// included together with sys/time.h.
+// On some systems, time.h should not be included together with sys/time.h.
 #if !defined(HAVE_SYS_TIME_H) || defined(TIME_WITH_SYS_TIME)
 # include <time.h>
 #endif
@@ -52,7 +51,7 @@
 #endif
 
 #if defined(NAME_MAX) && !defined(MAXNAMLEN)
-# define MAXNAMLEN NAME_MAX
+# define MAXNAMLEN NAME_MAX         /* for Linux before .99p3 */
 #endif
 
 // Default value.
@@ -95,8 +94,7 @@
 
 #define DFLT_ERRORFILE          "errors.err"
 
-// Unix has plenty of memory, use large buffers.
-// Size of the command processing buffer.
+// Command-processing buffer. Use large buffers for all platforms.
 #define CMDBUFFSIZE 1024
 
 // Use up to 5 Mbyte for a buffer.
