@@ -17,9 +17,9 @@ describe('reading and writing files with BOM', function()
   local utf8 = '\xef\xbb\xbfutf-8'
   local utf8_err = '\xef\xbb\xbfutf-8\x80err'
   local ucs2 = '\xfe\xff\x00u\x00c\x00s\x00-\x002\x00'
-  local ucs2_le = '\xff\xfeu\x00c\x00s\x00-\x002\x00l\x00e\x00'
+  local ucs2_le = '\xff\xfeu\x00c\x00s\x00-\x002\x00l\x00e'
   local ucs4 = '\x00\x00\xfe\xff\x00\x00\x00u\x00\x00\x00c\x00\x00\x00s'..
-    '\x00\x00\x00-\x00\x00\x004\x00\x00\x00'
+    '\x00\x00\x00-\x00\x00\x004'
   local ucs4_le = '\xff\xfe\x00\x00u\x00\x00\x00c\x00\x00\x00s\x00\x00\x00'..
     '-\x00\x00\x004\x00\x00\x00l\x00\x00\x00e\x00\x00\x00'
   setup(function()
@@ -27,9 +27,9 @@ describe('reading and writing files with BOM', function()
     write_file('Xtest0', latin1..'\n')
     write_file('Xtest1', utf8..'\n')
     write_file('Xtest2', utf8_err..'\n')
-    write_file('Xtest3', ucs2..'\n')
+    write_file('Xtest3', ucs2..'\x00\n')
     write_file('Xtest4', ucs2_le..'\n\x00')
-    write_file('Xtest5', ucs4..'\n')
+    write_file('Xtest5', ucs4..'\x00\x00\x00\n')
     write_file('Xtest6', ucs4_le..'\n\x00\x00\x00')
   end)
   teardown(function()
@@ -43,19 +43,15 @@ describe('reading and writing files with BOM', function()
   end)
 
   it('is working', function()
-    execute('set encoding=utf-8')
     execute('set fileencodings=ucs-bom,latin-1')
-    execute('set ff=unix ffs=unix')
-    execute('set ffs& nobinary')
     execute('set noeol')
-    execute('set nobin')
 
     -- Check that editing a latin-1 file doesn't see a BOM.
     eq('', eval('&fileencoding'))
     execute('e Xtest0')
     wait()
     eq(0, eval('&bomb'))
-    --eq('latin1', eval('&fileencoding')) -- TODO
+    eq('latin1', eval('&fileencoding'))
     execute('redir! >test.out')
     execute('set fileencoding bomb?')
     execute('redir END')
