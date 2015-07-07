@@ -200,7 +200,7 @@ typedef struct {
       int64_t offset;
       bool is_last_used;
       bool is_substitute_pattern;
-      // TODO(ZyX-I): Also store v:hlsearch, see :h shada-h
+      bool highlighted;
       char *pat;
       Dictionary *additional_data;
     } search_pattern;
@@ -740,6 +740,9 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
           set_last_used_pattern(
               cur_entry.data.search_pattern.is_substitute_pattern);
         }
+        if (!cur_entry.data.search_pattern.is_substitute_pattern) {
+          SET_NO_HLSEARCH(!cur_entry.data.search_pattern.highlighted);
+        }
         // Do not free shada entry: its allocated memory was saved above.
         break;
       }
@@ -1163,6 +1166,7 @@ static void shada_pack_entry(msgpack_packer *const packer,
           + (size_t) entry.data.search_pattern.has_line_offset
           + (size_t) entry.data.search_pattern.place_cursor_at_end
           + (size_t) entry.data.search_pattern.is_substitute_pattern
+          + (size_t) entry.data.search_pattern.highlighted
           // offset defaults to zero:
           + (size_t) (entry.data.search_pattern.offset != 0)
           // finally, additional data:
@@ -1187,6 +1191,7 @@ static void shada_pack_entry(msgpack_packer *const packer,
       PACK_BOOL("lineoff", has_line_offset, true);
       PACK_BOOL("curatend", place_cursor_at_end, true);
       PACK_BOOL("sub", is_substitute_pattern, true);
+      PACK_BOOL("hlsearch", highlighted, true);
       if (entry.data.search_pattern.offset) {
         PACK_STATIC_STR("off");
         msgpack_pack_int64(spacker, entry.data.search_pattern.offset);
@@ -1548,6 +1553,7 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
           .offset = pat.off.off,
           .is_last_used = search_was_last_used(),
           .is_substitute_pattern = false,
+          .highlighted = (!no_hlsearch && find_shada_parameter('h') != NULL),
           .pat = (char *) pat.pat,
           .additional_data = pat.additional_data,
         }
@@ -1572,6 +1578,7 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
           .offset = 0,
           .is_last_used = !search_was_last_used(),
           .is_substitute_pattern = true,
+          .highlighted = false,
           .pat = (char *) pat.pat,
           .additional_data = pat.additional_data,
         }
@@ -2338,6 +2345,7 @@ shada_read_next_item_start:
         .offset = 0,
         .is_last_used = true,
         .is_substitute_pattern = false,
+        .highlighted = false,
         .pat = NULL,
         .additional_data = NULL,
       };
@@ -2356,6 +2364,8 @@ shada_read_next_item_start:
                          entry->data.search_pattern.is_last_used)
         else BOOLEAN_KEY("search pattern", "sub",
                          entry->data.search_pattern.is_substitute_pattern)
+        else BOOLEAN_KEY("search pattern", "hlsearch",
+                         entry->data.search_pattern.highlighted)
         else INTEGER_KEY("search pattern", "off",
                          entry->data.search_pattern.offset)
         else CONVERTED_STRING_KEY("search pattern", "pat",
