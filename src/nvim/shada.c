@@ -60,6 +60,7 @@ KHASH_SET_INIT_INT64(bufset)
 # error Not a 64- or 32-bit architecture
 #endif
 KHASH_MAP_INIT_STR(fnamebufs, buf_T *)
+KHASH_SET_INIT_STR(strset)
 
 #define copy_option_part(src, dest, ...) \
     ((char *) copy_option_part((char_u **) src, (char_u *) dest, __VA_ARGS__))
@@ -171,11 +172,16 @@ enum SRNIFlags {
   kSDReadUnknown = (1 << (SHADA_LAST_ENTRY + 1)),  ///< Determines whether 
                                                    ///< unknown items should be 
                                                    ///< read (usually disabled).
-  kSDReadLocalMarks = (
-    (1 << kSDItemLocalMark)
-    | (1 << kSDItemChange)
-  ),  ///< Determines whether local marks and change list should be read. Can 
-      ///< only be disabled by disabling &shada or putting '0 there.
+  kSDReadLocalMarks = (1 << kSDItemLocalMark),  ///< Determines whether local 
+                                                ///< marks should be read. Can 
+                                                ///< only be disabled by 
+                                                ///< disabling &shada or putting 
+                                                ///< '0 there. Is also used for 
+                                                ///< v:oldfiles.
+  kSDReadChanges = (1 << kSDItemChange),  ///< Determines whether change list 
+                                          ///< should be read. Can only be 
+                                          ///< disabled by disabling &shada or 
+                                          ///< putting '0 there.
 };
 // Note: SRNIFlags enum name was created only to make it possible to reference 
 // it. This name is not actually used anywhere outside of the documentation.
@@ -475,6 +481,18 @@ static inline bool in_bufset(const khash_t(bufset) *const set, const buf_T *buf)
   return kh_get(bufset, set, (uintptr_t) buf) != kh_end(set);
 }
 
+/// Check whether string is in the given set
+///
+/// @param[in]  set  Set to check within.
+/// @param[in]  buf  Buffer to find.
+///
+/// @return true or false.
+static inline bool in_strset(const khash_t(strset) *const set, char *str)
+  FUNC_ATTR_PURE
+{
+  return kh_get(strset, set, str) != kh_end(set);
+}
+
 /// Check whether buffer is on removable media
 ///
 /// Uses pre-populated set with buffers on removable media named removable_bufs.
@@ -673,8 +691,10 @@ static inline bool marks_equal(const pos_T a, const pos_T b)
 static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
   FUNC_ATTR_NONNULL_ALL
 {
-  // TODO(ZyX-I): Also load v:oldfiles.
   unsigned srni_flags = 0;
+  const bool force = flags & kShaDaForceit;
+  const bool get_old_files = flags & (kShaDaGetOldfiles | kShaDaForceit);
+  const bool want_marks = flags & kShaDaWantMarks;
   if (flags & kShaDaWantInfo) {
     srni_flags |= kSDReadUndisableableData | kSDReadRegisters;
     if (p_hi) {
@@ -687,16 +707,18 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
       srni_flags |= kSDReadBufferList;
     }
   }
-  if (flags & kShaDaWantMarks) {
+  if (want_marks) {
     if (get_shada_parameter('\'') > 0) {
-      srni_flags |= kSDReadLocalMarks;
+      srni_flags |= kSDReadLocalMarks | kSDReadChanges;
     }
+  }
+  if (get_old_files) {
+    srni_flags |= kSDReadLocalMarks;
   }
   if (srni_flags == 0) {
     // Nothing to do.
     return;
   }
-  const bool force = flags & kShaDaForceit;
   HistoryMergerState hms[HIST_COUNT];
   if (srni_flags & kSDReadHistory) {
     for (uint8_t i = 0; i < HIST_COUNT; i++) {
@@ -707,8 +729,23 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
     }
   }
   ShadaEntry cur_entry;
-  khash_t(bufset) *cl_bufs = kh_init(bufset);
-  khash_t(fnamebufs) *fname_bufs = kh_init(fnamebufs);
+  khash_t(bufset) *cl_bufs = NULL;
+  if (srni_flags & kSDReadChanges) {
+    cl_bufs = kh_init(bufset);
+  }
+  khash_t(fnamebufs) *fname_bufs = NULL;
+  if (srni_flags & (kSDReadUndisableableData
+                    | kSDReadChanges
+                    | kSDReadLocalMarks)) {
+    fname_bufs = kh_init(fnamebufs);
+  }
+  khash_t(strset) *oldfiles_set = NULL;
+  list_T *oldfiles_list = NULL;
+  if (get_old_files) {
+    oldfiles_set = kh_init(strset);
+    oldfiles_list = list_alloc();
+    set_vim_var_list(VV_OLDFILES, oldfiles_list);
+  }
   while (shada_read_next_item(sd_reader, &cur_entry, srni_flags) == NOTDONE) {
     switch (cur_entry.type) {
       case kSDItemMissing: {
@@ -904,6 +941,27 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
       }
       case kSDItemChange:
       case kSDItemLocalMark: {
+        if (oldfiles_set != NULL
+            && !in_strset(oldfiles_set, cur_entry.data.filemark.fname)) {
+          char *fname = cur_entry.data.filemark.fname;
+          if (want_marks) {
+            // Do not bother with allocating memory for the string if already 
+            // allocated string from cur_entry can be used. It cannot be used if 
+            // want_marks is set because this way it may be used for a mark.
+            fname = xstrdup(fname);
+          }
+          int kh_ret;
+          (void) kh_put(strset, oldfiles_set, fname, &kh_ret);
+          list_append_allocated_string(oldfiles_list, fname);
+          if (!want_marks) {
+            // Avoid free because this string was already used.
+            cur_entry.data.filemark.fname = NULL;
+          }
+        }
+        if (!want_marks) {
+          shada_free_shada_entry(&cur_entry);
+          break;
+        }
         buf_T *buf = find_buffer(fname_bufs, cur_entry.data.filemark.fname);
         if (buf == NULL) {
           shada_free_shada_entry(&cur_entry);
@@ -1015,18 +1073,25 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
       hm_rb_dealloc(&(hms[i].hmrb));
     }
   }
-  FOR_ALL_TAB_WINDOWS(tp, wp) {
-    (void) tp;
-    if (in_bufset(cl_bufs, wp->w_buffer)) {
-      wp->w_changelistidx = wp->w_buffer->b_changelistlen;
+  if (cl_bufs != NULL) {
+    FOR_ALL_TAB_WINDOWS(tp, wp) {
+      (void) tp;
+      if (in_bufset(cl_bufs, wp->w_buffer)) {
+        wp->w_changelistidx = wp->w_buffer->b_changelistlen;
+      }
     }
+    kh_destroy(bufset, cl_bufs);
   }
-  kh_destroy(bufset, cl_bufs);
-  const char *key;
-  kh_foreach_key(fname_bufs, key, {
-    xfree((void *) key);
-  })
-  kh_destroy(fnamebufs, fname_bufs);
+  if (fname_bufs != NULL) {
+    const char *key;
+    kh_foreach_key(fname_bufs, key, {
+      xfree((void *) key);
+    })
+    kh_destroy(fnamebufs, fname_bufs);
+  }
+  if (oldfiles_set != NULL) {
+    kh_destroy(strset, oldfiles_set);
+  }
 }
 
 /// Get the ShaDa file name to use
