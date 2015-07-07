@@ -82,6 +82,8 @@ KHASH_SET_INIT_STR(strset)
     (buflist_new((char_u *)ffname, (char_u *)sfname, __VA_ARGS__))
 #define convert_setup(vcp, from, to) \
     (convert_setup(vcp, (char_u *)from, (char_u *)to))
+#define os_getperm(f) \
+    (os_getperm((char_u *) f))
 
 // From http://www.boost.org/doc/libs/1_43_0/boost/detail/endian.hpp + some 
 // additional checks done after examining `{compiler} -dM -E - < /dev/null` 
@@ -1810,16 +1812,41 @@ int shada_write_file(const char *const file, bool nomerge)
       nomerge = true;
       goto shada_write_file_nomerge;
     }
+#ifdef UNIX
+    // For Unix we check the owner of the file.  It's not very nice to
+    // overwrite a user’s viminfo file after a "su root", with a
+    // viminfo file that the user can't read.
+    FileInfo old_info;
+    if (os_fileinfo((char *)fname, &old_info)
+        && getuid() != ROOT_UID
+        && !(old_info.stat.st_uid == getuid()
+             ? (old_info.stat.st_mode & 0200)
+             : (old_info.stat.st_gid == getgid()
+                ? (old_info.stat.st_mode & 0020)
+                : (old_info.stat.st_mode & 0002)))) {
+      EMSG2(_("E137: ShaDa file is not writable: %s"), fname);
+      close_file((int)(intptr_t) sd_reader.cookie);
+      xfree(fname);
+      return FAIL;
+    }
+#endif
     tempname = modname(fname, ".tmp.a", false);
     if (tempname == NULL) {
       nomerge = true;
       goto shada_write_file_nomerge;
     }
 
+    // Save permissions from the original file, with modifications:
+    int perm = (int) os_getperm(fname);
+    perm = (perm >= 0) ? ((perm & 0777) | 0600) : 0600;
+    //                 ^3         ^1       ^2      ^2,3
+    // 1: Strip SUID bit if any.
+    // 2: Make sure that user can always read and write the result.
+    // 3: If somebody happened to delete the file after it was opened for 
+    //    reading use u=rw permissions.
 shada_write_file_open:
-    // TODO(ZyX-I): Preserve existing permissions
     fd = (intptr_t) open_file(tempname, O_CREAT|O_WRONLY|O_NOFOLLOW|O_EXCL,
-                              0600);
+                              perm);
     if (fd < 0) {
       if (-fd == EEXIST
 #ifdef ELOOP
