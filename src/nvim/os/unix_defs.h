@@ -32,18 +32,22 @@
 #ifndef SYNTAX_FNAME
 # define SYNTAX_FNAME   "$VIMRUNTIME/syntax/%s.vim"
 #endif
+// Not used anymore ?
 #ifndef USR_EXRC_FILE
 # define USR_EXRC_FILE "~/.exrc"
 #endif
 #ifndef USR_VIMRC_FILE
-# define USR_VIMRC_FILE "~/.nvimrc"
+# define USR_VIMRC_FILE NVIM_CONF_DIR "/init.vim"
 #endif
+// Not used anymore ?
 #ifndef USR_VIMRC_FILE2
 # define USR_VIMRC_FILE2     "~/.nvim/nvimrc"
 #endif
+// Not used anymore ?
 #ifndef EXRC_FILE
 # define EXRC_FILE      ".exrc"
 #endif
+// Not used anymore ?
 #ifndef VIMRC_FILE
 # define VIMRC_FILE     ".nvimrc"
 #endif
