@@ -290,7 +290,6 @@ static ufunc_T dumuf;
 #define FUNCARG(fp, j)  ((char_u **)(fp->uf_args.ga_data))[j]
 #define FUNCLINE(fp, j) ((char_u **)(fp->uf_lines.ga_data))[j]
 
-#define MAX_FUNC_ARGS   20      /* maximum number of function arguments */
 #define VAR_SHORT_LEN   20      /* short variable name length */
 #define FIXVAR_CNT      12      /* number of fixed variables */
 
@@ -6867,7 +6866,7 @@ get_func_tv (
  * Return FAIL when the function can't be called,  OK otherwise.
  * Also returns OK when an error was encountered while executing the function.
  */
-static int 
+int
 call_func (
     char_u *funcname,          /* name of the function */
     int len,                        /* length of "name" */

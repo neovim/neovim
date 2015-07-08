@@ -164,6 +164,56 @@ Object vim_eval(String str, Error *err)
   return rv;
 }
 
+/// Call the given function with the given arguments stored in an array.
+///
+/// @param fname Function to call
+/// @param args Functions arguments packed in an Array
+/// @param[out] err Details of an error that may have occurred
+/// @return Result of the function call
+Object vim_call_function(String fname, Array args, Error *err)
+  FUNC_ATTR_DEFERRED
+{
+  Object rv = OBJECT_INIT;
+  if (args.size > MAX_FUNC_ARGS) {
+    api_set_error(err, Validation,
+      _("Function called with too many arguments."));
+    return rv;
+  }
+
+  // Convert the arguments in args from Object to typval_T values
+  typval_T vim_args[MAX_FUNC_ARGS + 1];
+  size_t i = 0;  // also used for freeing the variables
+  for (; i < args.size; i++) {
+    if (!object_to_vim(args.items[i], &vim_args[i], err)) {
+      goto free_vim_args;
+    }
+  }
+
+  try_start();
+  // Call the function
+  typval_T rettv;
+  int dummy;
+  int r = call_func((char_u *) fname.data, (int) fname.size,
+                    &rettv, (int) args.size, vim_args,
+                    curwin->w_cursor.lnum, curwin->w_cursor.lnum, &dummy,
+                    true,
+                    NULL);
+  if (r == FAIL) {
+    api_set_error(err, Exception, _("Error calling function."));
+  }
+  if (!try_end(err)) {
+    rv = vim_to_object(&rettv);
+  }
+  clear_tv(&rettv);
+
+free_vim_args:
+  while (i > 0) {
+    clear_tv(&vim_args[--i]);
+  }
+
+  return rv;
+}
+
 /// Calculates the number of display cells `str` occupies, tab is counted as
 /// one cell.
 ///
