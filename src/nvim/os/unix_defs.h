@@ -67,7 +67,7 @@
 
 // Default for 'viewdir'.
 #ifndef DFLT_VDIR
-# define DFLT_VDIR    "~/.nvim/view"
+# define DFLT_VDIR    "$XDG_DATA_HOME/nvim/view/"
 #endif
 
 #ifdef RUNTIME_GLOBAL
