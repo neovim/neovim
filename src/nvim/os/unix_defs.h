@@ -19,6 +19,10 @@
 #define SPECIAL_WILDCHAR "`'{"
 
 // Unix system-dependent file names
+
+#define NVIM_CONF_DIR "$XDG_CONFIG_HOME/nvim/"
+#define NVIM_DATA_DIR "$XDG_DATA_HOME/nvim/"
+
 #ifndef SYS_VIMRC_FILE
 # define SYS_VIMRC_FILE "$VIM/nvimrc"
 #endif
