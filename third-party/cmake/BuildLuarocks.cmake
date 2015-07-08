@@ -113,38 +113,10 @@ add_custom_target(lpeg
 list(APPEND THIRD_PARTY_DEPS lpeg)
 
 if(USE_BUNDLED_BUSTED)
-  # The following are only required if we want to run tests
-  # with busted
-  add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps
-    COMMAND ${LUAROCKS_BINARY}
-    ARGS build lua_cliargs 2.5-1 ${LUAROCKS_BUILDARGS}
-    COMMAND ${LUAROCKS_BINARY}
-    ARGS build luafilesystem 1.6.3-1 ${LUAROCKS_BUILDARGS}
-    COMMAND ${LUAROCKS_BINARY}
-    ARGS build dkjson 2.5-2 ${LUAROCKS_BUILDARGS}
-    COMMAND ${LUAROCKS_BINARY}
-    ARGS build say 1.3-0 ${LUAROCKS_BUILDARGS}
-    COMMAND ${LUAROCKS_BINARY}
-    ARGS build luassert 1.7.6-0 ${LUAROCKS_BUILDARGS}
-    COMMAND ${LUAROCKS_BINARY}
-    ARGS build lua-term 0.3-1 ${LUAROCKS_BUILDARGS}
-    COMMAND ${LUAROCKS_BINARY}
-    ARGS build penlight 1.3.2-2 ${LUAROCKS_BUILDARGS}
-    COMMAND ${LUAROCKS_BINARY}
-    ARGS build mediator_lua 1.1.1-0 ${LUAROCKS_BUILDARGS}
-    COMMAND ${LUAROCKS_BINARY}
-    ARGS build luasocket 3.0rc1-2 ${LUAROCKS_BUILDARGS}
-    COMMAND ${LUAROCKS_BINARY}
-    ARGS build xml 1.1.2-1 ${LUAROCKS_BUILDARGS}
-    COMMAND ${CMAKE_COMMAND} -E touch ${HOSTDEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps
-    DEPENDS lpeg)
-  add_custom_target(stable-busted-deps
-    DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/stable-busted-deps)
-
   add_custom_command(OUTPUT ${HOSTDEPS_BIN_DIR}/busted
     COMMAND ${LUAROCKS_BINARY}
     ARGS build https://raw.githubusercontent.com/Olivine-Labs/busted/v2.0.rc10-0/busted-2.0.rc10-0.rockspec ${LUAROCKS_BUILDARGS}
-    DEPENDS stable-busted-deps)
+    DEPENDS luarocks)
   add_custom_target(busted
     DEPENDS ${HOSTDEPS_BIN_DIR}/busted)
 
@@ -155,5 +127,5 @@ if(USE_BUNDLED_BUSTED)
   add_custom_target(nvim-client
     DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/nvim-client)
 
-  list(APPEND THIRD_PARTY_DEPS stable-busted-deps busted nvim-client)
+  list(APPEND THIRD_PARTY_DEPS busted nvim-client)
 endif()
