@@ -259,6 +259,13 @@ This is probably due to an indeterminism in the test. Try adding
 `wait()` (or even a separate `screen:expect(...)`) at a point of possible
 indeterminism, typically in between a `feed()` or `execute()` which is non-
 synchronous, and a synchronous api call.
+
+Note that sometimes a `wait` can trigger redraws and consequently generate more
+indeterminism. If adding `wait` calls seems to increase the frequency of these
+messages, try removing every `wait` call in the test.
+
+If everything else fails, use Screen:redraw_debug to help investigate what is
+  causing the problem.
       ]])
     local tb = debug.traceback()
     local index = string.find(tb, '\n%s*%[C]')
