@@ -222,8 +222,8 @@ if !exists("python_no_exception_highlight")
   " builtin warnings
   syn keyword pythonExceptions	BytesWarning DeprecationWarning FutureWarning
   syn keyword pythonExceptions	ImportWarning PendingDeprecationWarning
-  syn keyword pythonExceptions	RuntimeWarning SyntaxWarning UnicodeWarning
-  syn keyword pythonExceptions	UserWarning Warning
+  syn keyword pythonExceptions	ResourceWarning RuntimeWarning SyntaxWarning
+  syn keyword pythonExceptions	UnicodeWarning UserWarning Warning
 endif
 
 if exists("python_space_error_highlight")
