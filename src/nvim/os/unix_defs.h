@@ -57,7 +57,7 @@
 
 // Default for 'backupdir'.
 #ifndef DFLT_BDIR
-# define DFLT_BDIR    ".,~/tmp,~/"
+# define DFLT_BDIR    ".,$XDG_DATA_HOME/nvim/backup/"
 #endif
 
 // Default for 'directory'.
