@@ -611,9 +611,8 @@ static const void *shada_hist_iter(const void *const iter,
 /// @param[in]      entry    Inserted entry.
 /// @param[in]      do_iter  Determines whether NeoVim own history should be 
 ///                          used.
-static void insert_history_entry(HistoryMergerState *const hms_p,
-                                 const ShadaEntry entry,
-                                 const bool no_iter)
+static void hms_insert(HistoryMergerState *const hms_p, const ShadaEntry entry,
+                       const bool no_iter)
 {
   HMRingBuffer *const rb = &(hms_p->hmrb);
   RINGBUF_FORALL(rb, ShadaEntry, cur_entry) {
@@ -630,14 +629,14 @@ static void insert_history_entry(HistoryMergerState *const hms_p,
     if (hms_p->iter == NULL) {
       if (hms_p->last_hist_entry.type != kSDItemMissing
           && hms_p->last_hist_entry.timestamp < entry.timestamp) {
-        insert_history_entry(hms_p, hms_p->last_hist_entry, false);
+        hms_insert(hms_p, hms_p->last_hist_entry, false);
         hms_p->last_hist_entry.type = kSDItemMissing;
       }
     } else {
       while (hms_p->iter != NULL
             && hms_p->last_hist_entry.type != kSDItemMissing
             && hms_p->last_hist_entry.timestamp < entry.timestamp) {
-        insert_history_entry(hms_p, hms_p->last_hist_entry, false);
+        hms_insert(hms_p, hms_p->last_hist_entry, false);
         hms_p->iter = shada_hist_iter(hms_p->iter, hms_p->history_type, true,
                                       &(hms_p->last_hist_entry));
       }
@@ -651,6 +650,87 @@ static void insert_history_entry(HistoryMergerState *const hms_p,
   }
   hm_rb_insert(rb, (size_t) (hm_rb_find_idx(rb, insert_after) + 1), entry);
 }
+
+/// Initialize the history merger
+///
+/// @param[out]  hms_p         Structure to be initialized.
+/// @param[in]   history_type  History type (one of HIST_\* values).
+/// @param[in]   num_elements  Number of elements in the result.
+/// @param[in]   do_merge      Prepare structure for merging elements.
+static inline void hms_init(HistoryMergerState *const hms_p,
+                            const uint8_t history_type,
+                            const size_t num_elements,
+                            const bool do_merge)
+  FUNC_ATTR_NONNULL_ALL
+{
+  hms_p->hmrb = hm_rb_new(num_elements);
+  hms_p->do_merge = do_merge;
+  hms_p->iter = shada_hist_iter(NULL, history_type, true,
+                                &hms_p->last_hist_entry);
+  hms_p->history_type = history_type;
+}
+
+/// Merge in all remaining NeoVim own history entries
+///
+/// @param[in,out]  hms_p  Merger structure into which history should be 
+///                        inserted.
+static inline void hms_insert_whole_neovim_history(
+    HistoryMergerState *const hms_p)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (hms_p->last_hist_entry.type != kSDItemMissing) {
+    hms_insert(hms_p, hms_p->last_hist_entry, false);
+  }
+  while (hms_p->iter != NULL
+        && hms_p->last_hist_entry.type != kSDItemMissing) {
+    hms_p->iter = shada_hist_iter(hms_p->iter, hms_p->history_type, true,
+                                  &(hms_p->last_hist_entry));
+    hms_insert(hms_p, hms_p->last_hist_entry, false);
+  }
+}
+
+/// Convert merger structure to NeoVim internal structure for history
+///
+/// @param[in]   hms_p       Converted merger structure.
+/// @param[out]  hist_array  Array with the results.
+/// @param[out]  new_hisidx  New last history entry index.
+/// @param[out]  new_hisnum  Amount of history items in merger structure.
+static inline void hms_to_he_array(const HistoryMergerState *const hms_p,
+                                   histentry_T *const hist_array,
+                                   int *const new_hisidx,
+                                   int *const new_hisnum)
+  FUNC_ATTR_NONNULL_ALL
+{
+  histentry_T *hist = hist_array;
+  RINGBUF_FORALL(&hms_p->hmrb, ShadaEntry, cur_entry) {
+    hist->timestamp = cur_entry->timestamp;
+    hist->hisnum = (int) (hist - hist_array) + 1;
+    hist->hisstr = (char_u *) cur_entry->data.history_item.string;
+    hist->additional_elements =
+        cur_entry->data.history_item.additional_elements;
+    hist++;
+  }
+  *new_hisnum = (int) hm_rb_length(&hms_p->hmrb);
+  *new_hisidx = *new_hisnum - 1;
+}
+
+/// Free history merger structure
+///
+/// @param[in]  hms_p  Structure to be freed.
+static inline void hms_dealloc(HistoryMergerState *const hms_p)
+  FUNC_ATTR_NONNULL_ALL
+{
+  hm_rb_dealloc(&hms_p->hmrb);
+}
+
+/// Iterate over all history entries in history merger, in order
+///
+/// @param[in]   hms_p      Merger structure to iterate over.
+/// @param[out]  cur_entry  Name of the iterator variable.
+///
+/// @return for cycle header. Use `HMS_ITER(hms_p, cur_entry) {body}`.
+#define HMS_ITER(hms_p, cur_entry) \
+    RINGBUF_FORALL(&((hms_p)->hmrb), ShadaEntry, cur_entry)
 
 /// Find buffer for given buffer name (cached)
 ///
@@ -724,10 +804,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
   HistoryMergerState hms[HIST_COUNT];
   if (srni_flags & kSDReadHistory) {
     for (uint8_t i = 0; i < HIST_COUNT; i++) {
-      hms[i].hmrb = hm_rb_new((size_t) p_hi);
-      hms[i].do_merge = true;
-      hms[i].iter = shada_hist_iter(NULL, i, true, &(hms[i].last_hist_entry));
-      hms[i].history_type = i;
+      hms_init(&hms[i], i, (size_t) p_hi, true);
     }
   }
   ShadaEntry cur_entry;
@@ -799,8 +876,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
           shada_free_shada_entry(&cur_entry);
           break;
         }
-        insert_history_entry(hms + cur_entry.data.history_item.histtype,
-                             cur_entry, true);
+        hms_insert(hms + cur_entry.data.history_item.histtype, cur_entry, true);
         // Do not free shada entry: its allocated memory was saved above.
         break;
       }
@@ -1046,33 +1122,15 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
   //          may be assigned right away.
   if (srni_flags & kSDReadHistory) {
     for (uint8_t i = 0; i < HIST_COUNT; i++) {
-      if (hms[i].last_hist_entry.type != kSDItemMissing) {
-        insert_history_entry(&(hms[i]), hms[i].last_hist_entry, false);
-      }
-      while (hms[i].iter != NULL
-            && hms[i].last_hist_entry.type != kSDItemMissing) {
-        hms[i].iter = shada_hist_iter(hms[i].iter, hms[i].history_type, true,
-                                      &(hms[i].last_hist_entry));
-        insert_history_entry(&(hms[i]), hms[i].last_hist_entry, false);
-      }
+      hms_insert_whole_neovim_history(&hms[i]);
       clr_history(i);
       int *new_hisidx;
       int *new_hisnum;
       histentry_T *hist = hist_get_array(i, &new_hisidx, &new_hisnum);
       if (hist != NULL) {
-        histentry_T *const hist_init = hist;
-        RINGBUF_FORALL(&(hms[i].hmrb), ShadaEntry, cur_entry) {
-          hist->timestamp = cur_entry->timestamp;
-          hist->hisnum = (int) (hist - hist_init) + 1;
-          hist->hisstr = (char_u *) cur_entry->data.history_item.string;
-          hist->additional_elements =
-              cur_entry->data.history_item.additional_elements;
-          hist++;
-        }
-        *new_hisnum = (int) hm_rb_length(&(hms[i].hmrb));
-        *new_hisidx = *new_hisnum - 1;
+        hms_to_he_array(&hms[i], hist, new_hisidx, new_hisnum);
       }
-      hm_rb_dealloc(&(hms[i].hmrb));
+      hms_dealloc(&hms[i]);
     }
   }
   if (cl_bufs != NULL) {
@@ -1578,29 +1636,14 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
       num_saved = p_hi;
     }
     if (num_saved > 0) {
-      HistoryMergerState *hms_p = &(hms[i]);
-      hms_p->hmrb = hm_rb_new((size_t) num_saved);
-      hms_p->do_merge = false;
-      hms_p->iter = shada_hist_iter(NULL, i, false, &(hms[i].last_hist_entry));
-      hms_p->history_type = i;
-      if (hms_p->last_hist_entry.type != kSDItemMissing) {
-        hm_rb_push(&(hms_p->hmrb), hms_p->last_hist_entry);
-        while (hms_p->iter != NULL) {
-          hms_p->iter = shada_hist_iter(hms_p->iter, hms_p->history_type, false,
-                                        &(hms_p->last_hist_entry));
-          if (hms_p->last_hist_entry.type != kSDItemMissing) {
-            hm_rb_push(&(hms_p->hmrb), hms_p->last_hist_entry);
-          } else {
-            break;
-          }
-        }
-      }
-      RINGBUF_FORALL(&(hms_p->hmrb), ShadaEntry, cur_entry) {
+      hms_init(&hms[i], i, (size_t) num_saved, false);
+      hms_insert_whole_neovim_history(&hms[i]);
+      HMS_ITER(&hms[i], cur_entry) {
         RUN_WITH_CONVERTED_STRING(cur_entry->data.history_item.string, {
           shada_pack_entry(packer, *cur_entry, max_kbyte);
         });
       }
-      hm_rb_dealloc(&hms_p->hmrb);
+      hms_dealloc(&hms[i]);
     }
   }
 
