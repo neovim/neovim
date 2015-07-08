@@ -68,6 +68,9 @@ enum {
     VV_LEN, /* number of v: vars */
 };
 
+/// Maximum number of function arguments
+#define MAX_FUNC_ARGS   20
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval.h.generated.h"
 #endif
