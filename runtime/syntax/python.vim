@@ -219,6 +219,14 @@ if !exists("python_no_exception_highlight")
   syn keyword pythonExceptions	UnicodeDecodeError UnicodeEncodeError
   syn keyword pythonExceptions	UnicodeTranslateError ValueError VMSError
   syn keyword pythonExceptions	ZeroDivisionError
+  " builtin OS exceptions
+  syn keyword pythonExceptions	BlockingIOError BrokenPipeError
+  syn keyword pythonExceptions	ChildProcessError ConnectionAbortedError
+  syn keyword pythonExceptions	ConnectionError ConnectionRefusedError
+  syn keyword pythonExceptions	ConnectionResetError FileExistsError
+  syn keyword pythonExceptions	FileNotFoundError InterruptedError
+  syn keyword pythonExceptions	IsADirectoryError NotADirectoryError
+  syn keyword pythonExceptions	PermissionError ProcessLookupError
   " builtin warnings
   syn keyword pythonExceptions	BytesWarning DeprecationWarning FutureWarning
   syn keyword pythonExceptions	ImportWarning PendingDeprecationWarning
