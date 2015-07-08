@@ -6858,7 +6858,7 @@ get_func_tv (
  * Return FAIL when the function can't be called,  OK otherwise.
  * Also returns OK when an error was encountered while executing the function.
  */
-static int 
+int
 call_func (
     char_u *funcname,          /* name of the function */
     int len,                        /* length of "name" */
