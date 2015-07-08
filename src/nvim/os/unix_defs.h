@@ -71,11 +71,11 @@
 #endif
 
 #ifdef RUNTIME_GLOBAL
-# define DFLT_RUNTIMEPATH "~/.nvim," RUNTIME_GLOBAL ",$VIMRUNTIME," \
-  RUNTIME_GLOBAL "/after,~/.nvim/after"
+# define DFLT_RUNTIMEPATH NVIM_CONF_DIR "," RUNTIME_GLOBAL ",$VIMRUNTIME," \
+                          RUNTIME_GLOBAL "/after," NVIM_CONF_DIR "/after"
 #else
 # define DFLT_RUNTIMEPATH \
-  "~/.nvim,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,~/.nvim/after"
+  NVIM_CONF_DIR ",$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after," NVIM_CONF_DIR "/after"
 #endif
 
 #endif  // NVIM_OS_UNIX_DEFS_H
