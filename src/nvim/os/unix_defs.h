@@ -52,7 +52,7 @@
 # define VIMRC_FILE     ".nvimrc"
 #endif
 #ifndef VIMINFO_FILE
-# define VIMINFO_FILE "~/.nviminfo"
+# define VIMINFO_FILE NVIM_DATA_DIR "/viminfo"
 #endif
 
 // Default for 'backupdir'.
