@@ -572,9 +572,10 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
 
     case VTERM_PROP_TITLE: {
       Error err;
-      dict_set_value(term->buf->b_vars,
-          cstr_as_string("term_title"),
-          STRING_OBJ(cstr_as_string(val->string)), &err);
+      api_free_object(dict_set_value(term->buf->b_vars,
+                                     cstr_as_string("term_title"),
+                                     STRING_OBJ(cstr_as_string(val->string)),
+                                     &err));
       break;
     }
 
