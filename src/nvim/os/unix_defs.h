@@ -62,7 +62,7 @@
 
 // Default for 'directory'.
 #ifndef DFLT_DIR
-# define DFLT_DIR     ".,~/tmp,/var/tmp,/tmp"
+# define DFLT_DIR     "$XDG_DATA_HOME/nvim/swap//"
 #endif
 
 // Default for 'viewdir'.
