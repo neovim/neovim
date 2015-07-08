@@ -198,16 +198,16 @@ endif
 " From the 'Python Library Reference' class hierarchy at the bottom.
 " http://docs.python.org/library/exceptions.html
 if !exists("python_no_exception_highlight")
-  " builtin base exceptions (only used as base classes for other exceptions)
+  " builtin base exceptions (used mostly as base classes for other exceptions)
   syn keyword pythonExceptions	BaseException Exception
-  syn keyword pythonExceptions	ArithmeticError
+  syn keyword pythonExceptions	ArithmeticError BufferError
   syn keyword pythonExceptions	LookupError
   " builtin base exception removed in Python 3.0
   syn keyword pythonExceptions	StandardError
   " builtin exceptions deprecated since Python 3.3
   syn keyword pythonExceptions	EnvironmentError IOError WindowsError
   " builtin exceptions (actually raised)
-  syn keyword pythonExceptions	AssertionError AttributeError BufferError
+  syn keyword pythonExceptions	AssertionError AttributeError
   syn keyword pythonExceptions	EOFError FloatingPointError GeneratorExit
   syn keyword pythonExceptions	ImportError IndentationError
   syn keyword pythonExceptions	IndexError KeyError KeyboardInterrupt
