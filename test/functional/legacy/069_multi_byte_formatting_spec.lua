@@ -4,8 +4,9 @@
 -- Also test byteidx() and byteidxcomp()
 
 local helpers = require('test.functional.helpers')
-local feed, insert = helpers.feed, helpers.insert
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local feed, insert, eq, eval, clear, execute, expect = helpers.feed,
+  helpers.insert, helpers.eq, helpers.eval, helpers.clear, helpers.execute,
+  helpers.expect
 
 describe('multi byte text', function()
   before_each(clear)
@@ -306,34 +307,34 @@ describe('multi byte text', function()
   end)
 
   it('can be querried with byteidx() and byteidxcomp()', function()
-    insert([[
-      byteidx
-      byteidxcomp]])
     -- One char of two bytes.
     execute("let a = '.é.'")
     -- Normal e with composing char.
     execute("let b = '.é.'")
-    execute('/^byteidx')
-    execute('put =string([byteidx(a, 0), byteidx(a, 1), byteidx(a, 2), byteidx(a, 3), byteidx(a, 4)])')
-    execute('put =string([byteidx(b, 0), byteidx(b, 1), byteidx(b, 2), byteidx(b, 3), byteidx(b, 4)])')
-    execute('/^byteidxcomp')
-    execute('put =string([byteidxcomp(a, 0), byteidxcomp(a, 1), byteidxcomp(a, 2), byteidxcomp(a, 3), byteidxcomp(a, 4)])')
-    execute("let b = '.é.'")
-    execute('put =string([byteidxcomp(b, 0), byteidxcomp(b, 1), byteidxcomp(b, 2), byteidxcomp(b, 3), byteidxcomp(b, 4), byteidxcomp(b, 5)])')
-    expect([=[
-      byteidx
-      [0, 1, 3, 4, -1]
-      [0, 1, 4, 5, -1]
-      byteidxcomp
-      [0, 1, 3, 4, -1]
-      [0, 1, 2, 4, 5, -1]]=])
+    eq(0, eval('byteidx(a, 0)'))
+    eq(1, eval('byteidx(a, 1)'))
+    eq(3, eval('byteidx(a, 2)'))
+    eq(4, eval('byteidx(a, 3)'))
+    eq(-1, eval('byteidx(a, 4)'))
+    eq(0, eval('byteidx(b, 0)'))
+    eq(1, eval('byteidx(b, 1)'))
+    eq(4, eval('byteidx(b, 2)'))
+    eq(5, eval('byteidx(b, 3)'))
+    eq(-1, eval('byteidx(b, 4)'))
+    eq(0, eval('byteidxcomp(a, 0)'))
+    eq(1, eval('byteidxcomp(a, 1)'))
+    eq(3, eval('byteidxcomp(a, 2)'))
+    eq(4, eval('byteidxcomp(a, 3)'))
+    eq(-1, eval('byteidxcomp(a, 4)'))
+    eq(0, eval('byteidxcomp(b, 0)'))
+    eq(1, eval('byteidxcomp(b, 1)'))
+    eq(2, eval('byteidxcomp(b, 2)'))
+    eq(4, eval('byteidxcomp(b, 3)'))
+    eq(5, eval('byteidxcomp(b, 4)'))
+    eq(-1, eval('byteidxcomp(b, 5)'))
   end)
 
   it('correctly interact with the \zs pattern', function()
-    insert('substitute')
-    execute([[let y = substitute('１２３', '\zs', 'a', 'g') | put =y]])
-    expect([[
-      substitute
-      a１a２a３a]])
+    eq('a１a２a３a', eval([[substitute('１２３', '\zs', 'a', 'g')]]))
   end)
 end)
