@@ -149,6 +149,7 @@ UI *tui_start(void)
   ui->clear = tui_clear;
   ui->eol_clear = tui_eol_clear;
   ui->cursor_goto = tui_cursor_goto;
+  ui->update_menu = tui_update_menu;
   ui->busy_start = tui_busy_start;
   ui->busy_stop = tui_busy_stop;
   ui->mouse_on = tui_mouse_on;
@@ -376,6 +377,11 @@ static void tui_cursor_goto(UI *ui, int row, int col)
   data->row = row;
   data->col = col;
   unibi_goto(ui, row, col);
+}
+
+static void tui_update_menu(UI *ui)
+{
+    // Do nothing; menus are for GUI only
 }
 
 static void tui_busy_start(UI *ui)

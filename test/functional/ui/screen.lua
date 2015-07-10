@@ -166,6 +166,7 @@ function Screen.new(width, height)
     title = '',
     icon = '',
     bell = false,
+    update_menu = false,
     visual_bell = false,
     suspended = false,
     _default_attr_ids = nil,
@@ -414,6 +415,10 @@ end
 
 function Screen:_handle_suspend()
   self.suspended = true
+end
+
+function Screen:_handle_update_menu()
+  self.update_menu = true
 end
 
 function Screen:_handle_set_title(title)

@@ -82,6 +82,7 @@ static Object remote_ui_attach(uint64_t channel_id, uint64_t request_id,
   ui->clear = remote_ui_clear;
   ui->eol_clear = remote_ui_eol_clear;
   ui->cursor_goto = remote_ui_cursor_goto;
+  ui->update_menu = remote_ui_update_menu;
   ui->busy_start = remote_ui_busy_start;
   ui->busy_stop = remote_ui_busy_stop;
   ui->mouse_on = remote_ui_mouse_on;
@@ -187,6 +188,12 @@ static void remote_ui_cursor_goto(UI *ui, int row, int col)
   ADD(args, INTEGER_OBJ(row));
   ADD(args, INTEGER_OBJ(col));
   push_call(ui, "cursor_goto", args);
+}
+
+static void remote_ui_update_menu(UI *ui)
+{
+  Array args = ARRAY_DICT_INIT;
+  push_call(ui, "update_menu", args);
 }
 
 static void remote_ui_busy_start(UI *ui)
