@@ -1301,11 +1301,15 @@ void ex_emenu(exarg_T *eap)
 
   /* Found the menu, so execute.
    * Use the Insert mode entry when returning to Insert mode. */
-  if (restart_edit
-      && !current_SID
-      ) {
+  if (((State & INSERT) || restart_edit) && !current_SID) {
     mode = (char_u *)"Insert";
     idx = MENU_INDEX_INSERT;
+  } else if (get_real_state() & VISUAL) {
+    /* Detect real visual mode -- if we are really in visual mode we
+     * don't need to do any guesswork to figure out what the selection
+     * is. Just execute the visual binding for the menu. */
+    mode = (char_u *)"Visual";
+    idx = MENU_INDEX_VISUAL;
   } else if (eap->addr_count) {
     pos_T tpos;
 
