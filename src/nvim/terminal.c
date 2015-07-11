@@ -197,7 +197,6 @@ Terminal *terminal_open(TerminalOptions opts)
   vterm_set_utf8(rv->vt, 1);
   // Setup state
   VTermState *state = vterm_obtain_state(rv->vt);
-  vterm_state_set_bold_highbright(state, true);
   // Set up screen
   rv->vts = vterm_obtain_screen(rv->vt);
   vterm_screen_enable_altscreen(rv->vts, true);
@@ -257,6 +256,13 @@ Terminal *terminal_open(TerminalOptions opts)
       rv->colors[i] = RGB(color.red, color.green, color.blue);
     }
   }
+
+  // Configure whether to highlight bold text. Try to get the option from:
+  //
+  // - b:terminal_bold_highbright
+  // - g:terminal_bold_highbright
+  int bold_highbright = get_config_int(rv, "terminal_bold_highbright");
+  vterm_state_set_bold_highbright(state, bold_highbright);
 
   return rv;
 }
