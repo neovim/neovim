@@ -445,11 +445,6 @@ static void chld_handler(uv_signal_t *handle, int signum)
     return;
   }
 
-  if (WIFSTOPPED(stat) || WIFCONTINUED(stat)) {
-    // Only care for processes that exited
-    return;
-  }
-
   Job *job = NULL;
   // find the job corresponding to the exited pid
   for (int i = 0; i < MAX_RUNNING_JOBS; i++) {
