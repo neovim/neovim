@@ -83,6 +83,8 @@ KHASH_SET_INIT_STR(strset)
     (convert_setup(vcp, (char_u *)from, (char_u *)to))
 #define os_getperm(f) \
     (os_getperm((char_u *) f))
+#define os_isdir(f) (os_isdir((char_u *) f))
+#define path_tail_with_sep(f) ((char *) path_tail_with_sep((char_u *)f))
 
 // From http://www.boost.org/doc/libs/1_43_0/boost/detail/endian.hpp + some 
 // additional checks done after examining `{compiler} -dM -E - < /dev/null` 
@@ -2095,7 +2097,24 @@ shada_write_file_open:
     }
   }
   if (nomerge) {
-shada_write_file_nomerge:
+shada_write_file_nomerge: {}
+    char *const tail = path_tail_with_sep(fname);
+    if (tail != fname) {
+      const char tail_save = *tail;
+      *tail = NUL;
+      if (!os_isdir(fname)) {
+        int ret;
+        char *failed_dir;
+        if ((ret = os_mkdir_recurse(fname, 0700, &failed_dir)) != 0) {
+          EMSG3("Failed to create directory %s for writing ShaDa file: %s",
+                failed_dir, strerror(-ret));
+          xfree(fname);
+          xfree(failed_dir);
+          return FAIL;
+        }
+      }
+      *tail = tail_save;
+    }
     fd = (intptr_t) open_file(fname, O_CREAT|O_WRONLY|O_TRUNC,
                               0600);
   }
