@@ -61,9 +61,16 @@ function! netrw_gitignore#Hide(...)
   " convert gitignore patterns to Netrw/Vim regex patterns
   let escaped_lines = []
   for line in gitignore_lines
-    let escaped       = line
-    let escaped       = substitute(escaped, '\.', '\\.', 'g')
-    let escaped       = substitute(escaped, '*', '.*', 'g')
+    let escaped = line
+    let escaped = substitute(escaped, '\*\*', '*', 'g')
+    let escaped = substitute(escaped, '\.', '\\.', 'g')
+    let escaped = substitute(escaped, '\$', '\\$', 'g')
+    let escaped = substitute(escaped, '*', '.*', 'g')
+    " correction: dot, dollar and asterisks chars shouldn't be escaped when
+    " within regex matching groups.
+    let escaped = substitute(escaped, '\(\[[^]]*\)\zs\\\.', '\.', 'g')
+    let escaped = substitute(escaped, '\(\[[^]]*\)\zs\\\$', '\$', 'g')
+    let escaped = substitute(escaped, '\(\[[^]]*\)\zs\.\*', '*', 'g')
     let escaped_lines = add(escaped_lines, escaped)
   endfor
 
