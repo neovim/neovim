@@ -16,6 +16,7 @@
 #include "nvim/os/event_defs.h"
 #include "nvim/os/time.h"
 #include "nvim/vim.h"
+#include "nvim/map.h"
 #include "nvim/memory.h"
 
 #ifdef HAVE_SYS_WAIT_H
@@ -43,7 +44,7 @@
 #define close_job_out(job) close_job_stream(job, out, r)
 #define close_job_err(job) close_job_stream(job, err, r)
 
-Job *table[MAX_RUNNING_JOBS] = {NULL};
+PMap(int) *job_map = NULL;
 size_t stop_requests = 0;
 uv_timer_t job_stop_timer;
 uv_signal_t schld;
@@ -55,6 +56,26 @@ uv_signal_t schld;
 #endif
 // Callbacks for libuv
 
+static int count = 0;  // A cyclical counter used for assigning job IDs.
+
+/// Returns a new job ID within the range `[1, INT_MAX]`.
+///
+/// This number will be unique between all jobs that have not been stopped, but
+/// cycle back to one after reaching `INT_MAX`. This makes it highly unlikely
+/// for two jobs to have the same ID.
+static int new_job_id(void)
+{
+  int orig = count;  // For detecting an infinite cycle.
+  count = count < INT_MAX ? count + 1 : 1;
+  while (pmap_has(int)(job_map, count)) {
+    count = count < INT_MAX ? count + 1 : 1;
+    if (count == orig) {
+      return 0;
+    }
+  }
+  return count;
+}
+
 /// Initializes job control resources
 void job_init(void)
 {
@@ -62,20 +83,20 @@ void job_init(void)
   uv_timer_init(uv_default_loop(), &job_stop_timer);
   uv_signal_init(uv_default_loop(), &schld);
   uv_signal_start(&schld, chld_handler, SIGCHLD);
+
+  job_map = pmap_new(int)();
 }
 
 /// Releases job control resources and terminates running jobs
 void job_teardown(void)
 {
   // Stop all jobs
-  for (int i = 0; i < MAX_RUNNING_JOBS; i++) {
-    Job *job;
-    if ((job = table[i]) != NULL) {
-      uv_kill(job->pid, SIGTERM);
-      job->term_sent = true;
-      job_stop(job);
-    }
-  }
+  Job *job;
+  map_foreach_value(job_map, job, {
+    uv_kill(job->pid, SIGTERM);
+    job->term_sent = true;
+    job_stop(job);
+  });
 
   // Wait until all jobs are closed
   event_poll_until(-1, !stop_requests);
@@ -83,6 +104,8 @@ void job_teardown(void)
   uv_close((uv_handle_t *)&schld, NULL);
   // Close the timer
   uv_close((uv_handle_t *)&job_stop_timer, NULL);
+  // Free the map
+  pmap_free(int)(job_map);
 }
 
 /// Tries to start a new job.
@@ -92,27 +115,15 @@ void job_teardown(void)
 /// @return The job pointer if the job started successfully, NULL otherwise
 Job *job_start(JobOptions opts, int *status)
 {
-  int i;
-  Job *job;
-
-  // Search for a free slot in the table
-  for (i = 0; i < MAX_RUNNING_JOBS; i++) {
-    if (table[i] == NULL) {
-      break;
-    }
-  }
-
-  if (i == MAX_RUNNING_JOBS) {
-    // No free slots
+  *status = new_job_id();
+  if (*status == 0) {
     shell_free_argv(opts.argv);
-    *status = 0;
-    return NULL;
+    return NULL;  // We somehow allocated MAX_INT job IDs!
   }
 
-  job = xmalloc(sizeof(Job));
   // Initialize
-  job->id = i + 1;
-  *status = job->id;
+  Job *job = xmalloc(sizeof(Job));
+  job->id = *status;
   job->status = -1;
   job->refcount = 1;
   job->stopped_time = 0;
@@ -141,7 +152,8 @@ Job *job_start(JobOptions opts, int *status)
   }
 
   // Spawn the job
-  if (!process_spawn(job)) {
+  int result = process_spawn(job);
+  if (result != 0) {
     if (opts.writable) {
       uv_close((uv_handle_t *)job->proc_stdin, close_cb);
     }
@@ -175,8 +187,8 @@ Job *job_start(JobOptions opts, int *status)
     rstream_set_stream(job->err, job->proc_stderr);
     rstream_start(job->err);
   }
-  // Save the job to the table
-  table[i] = job;
+
+  pmap_put(int)(job_map, job->id, job);
 
   return job;
 }
@@ -187,11 +199,9 @@ Job *job_start(JobOptions opts, int *status)
 /// @return the Job instance
 Job *job_find(int id)
 {
-  Job *job;
-
-  if (id <= 0 || id > MAX_RUNNING_JOBS || !(job = table[id - 1])
-      || job->stopped_time) {
-    return NULL;
+  Job *job = pmap_get(int)(job_map, id);
+  if (job && job->stopped_time) {
+    job = NULL;
   }
 
   return job;
@@ -381,11 +391,11 @@ JobOptions *job_opts(Job *job)
 /// that didn't die from SIGTERM after a while(exit_timeout is 0).
 static void job_stop_timer_cb(uv_timer_t *handle)
 {
-  Job *job;
   uint64_t now = os_hrtime();
 
-  for (size_t i = 0; i < MAX_RUNNING_JOBS; i++) {
-    if ((job = table[i]) == NULL || !job->stopped_time) {
+  Job *job;
+  map_foreach_value(job_map, job, {
+    if (!job->stopped_time) {
       continue;
     }
 
@@ -400,7 +410,7 @@ static void job_stop_timer_cb(uv_timer_t *handle)
       uv_kill(job->pid, SIGKILL);
       process_close(job);
     }
-  }
+  });
 }
 
 // Wraps the call to std{out,err}_cb and emits a JobExit event if necessary.
@@ -450,23 +460,29 @@ static void chld_handler(uv_signal_t *handle, int signum)
     return;
   }
 
-  Job *job = NULL;
-  // find the job corresponding to the exited pid
-  for (int i = 0; i < MAX_RUNNING_JOBS; i++) {
-    if ((job = table[i]) != NULL && job->pid == pid) {
-      if (WIFEXITED(stat)) {
-        job->status = WEXITSTATUS(stat);
-      } else if (WIFSIGNALED(stat)) {
-        job->status = WTERMSIG(stat);
-      }
-      if (exiting) {
-        // don't enqueue more events when exiting
-        process_close(job);
-      } else {
-        event_push((Event) {.handler = job_exited, .data = job}, false);
-      }
+  // Find the job with the matching PID.
+  Job *job;
+  bool found = false;
+  map_foreach_value(job_map, job, {
+    if (job->pid == pid) {
+      found = true;
       break;
     }
+  });
+  if (!found) {
+    return;
+  }
+
+  if (WIFEXITED(stat)) {
+    job->status = WEXITSTATUS(stat);
+  } else if (WIFSIGNALED(stat)) {
+    job->status = WTERMSIG(stat);
+  }
+  if (exiting) {
+    // don't enqueue more events when exiting
+    process_close(job);
+  } else {
+    event_push((Event) {.handler = job_exited, .data = job}, false);
   }
 }
 

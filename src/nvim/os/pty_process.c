@@ -70,28 +70,28 @@ void pty_process_destroy(Job *job) FUNC_ATTR_NONNULL_ALL
   job->process = NULL;
 }
 
-static bool set_pipe_duplicating_descriptor(int fd, uv_pipe_t *pipe)
+static int set_pipe_duplicating_descriptor(int fd, uv_pipe_t *pipe)
   FUNC_ATTR_NONNULL_ALL
 {
   int fd_dup = dup(fd);
   if (fd_dup < 0) {
     ELOG("Failed to dup descriptor %d: %s", fd, strerror(errno));
-    return false;
+    return -errno;
   }
   int uv_result = uv_pipe_open(pipe, fd_dup);
   if (uv_result) {
     ELOG("Failed to set pipe to descriptor %d: %s",
          fd_dup, uv_strerror(uv_result));
     close(fd_dup);
-    return false;
+    return uv_result;
   }
-  return true;
+  return 0;
 }
 
 static const unsigned int KILL_RETRIES = 5;
 static const unsigned int KILL_TIMEOUT = 2;  // seconds
 
-bool pty_process_spawn(Job *job) FUNC_ATTR_NONNULL_ALL
+int pty_process_spawn(Job *job) FUNC_ATTR_NONNULL_ALL
 {
   int master;
   PtyProcess *ptyproc = job->process;
@@ -99,11 +99,12 @@ bool pty_process_spawn(Job *job) FUNC_ATTR_NONNULL_ALL
   struct termios termios;
   init_termios(&termios);
   uv_disable_stdio_inheritance();
+  int err = 0;
 
   int pid = forkpty(&master, NULL, &termios, &ptyproc->winsize);
 
   if (pid < 0) {
-    return false;
+    return pid;
   } else if (pid == 0) {
     init_child(job);
     abort();
@@ -113,31 +114,34 @@ bool pty_process_spawn(Job *job) FUNC_ATTR_NONNULL_ALL
   int master_status_flags = fcntl(master, F_GETFL);
   if (master_status_flags == -1) {
     ELOG("Failed to get master descriptor status flags: %s", strerror(errno));
+    err = -errno;
     goto error;
   }
   if (fcntl(master, F_SETFL, master_status_flags | O_NONBLOCK) == -1) {
     ELOG("Failed to make master descriptor non-blocking: %s", strerror(errno));
+    err = -errno;
     goto error;
   }
 
   if (job->opts.writable
-      && !set_pipe_duplicating_descriptor(master, &ptyproc->proc_stdin)) {
+      && (err = set_pipe_duplicating_descriptor(master, &ptyproc->proc_stdin)))
+  {
     goto error;
   }
 
-  if (job->opts.stdout_cb
-      && !set_pipe_duplicating_descriptor(master, &ptyproc->proc_stdout)) {
+  if (job->opts.stdout_cb &&
+      (err = set_pipe_duplicating_descriptor(master, &ptyproc->proc_stdout))) {
     goto error;
   }
 
-  if (job->opts.stderr_cb
-      && !set_pipe_duplicating_descriptor(master, &ptyproc->proc_stderr)) {
+  if (job->opts.stderr_cb &&
+      (err = set_pipe_duplicating_descriptor(master, &ptyproc->proc_stderr))) {
     goto error;
   }
 
   ptyproc->tty_fd = master;
   job->pid = pid;
-  return true;
+  return 0;
 
 error:
   close(master);
@@ -153,7 +157,7 @@ error:
     kill(pid, SIGKILL);
   }
 
-  return false;
+  return err;
 }
 
 void pty_process_close(Job *job) FUNC_ATTR_NONNULL_ALL

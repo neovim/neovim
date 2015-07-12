@@ -4055,8 +4055,8 @@ jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
 		  - The job ID on success, which is used by |jobsend()| and
 		    |jobstop()|
 		  - 0 when the job table is full or on invalid arguments
-		  - -1 when {cmd}[0] is not executable.  Will never fail if
-		    {cmd} is a string unless 'shell' is not executable.
+		  - < 0 for all other errors (usually the command or shell not
+		    being executable).
 		See |job-control| for more information.
 
 jobstop({job})						{Nvim} *jobstop()*

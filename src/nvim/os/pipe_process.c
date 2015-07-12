@@ -77,16 +77,17 @@ void pipe_process_destroy(Job *job)
   job->process = NULL;
 }
 
-bool pipe_process_spawn(Job *job)
+int pipe_process_spawn(Job *job)
 {
   UvProcess *pipeproc = job->process;
 
-  if (uv_spawn(uv_default_loop(), &pipeproc->proc, &pipeproc->proc_opts) != 0) {
-    return false;
+  int result = uv_spawn(uv_default_loop(), &pipeproc->proc,
+                        &pipeproc->proc_opts);
+  if (result == 0) {
+    job->pid = pipeproc->proc.pid;
   }
 
-  job->pid = pipeproc->proc.pid;
-  return true;
+  return result;
 }
 
 void pipe_process_close(Job *job)

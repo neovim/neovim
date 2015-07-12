@@ -10810,7 +10810,7 @@ static char **tv_to_argv(typval_T *cmd_tv, char **cmd)
   if (!exe || !os_can_exe(exe, NULL)) {
     // String is not executable
     if (exe) {
-      EMSG2(e_jobexe, exe);
+      EMSG3(_(e_jobexe), exe, "not executable");
     }
     return NULL;
   }
@@ -20255,6 +20255,8 @@ static inline Job *common_job_start(JobOptions opts, typval_T *rettv)
 {
   TerminalJobData *data = opts.data;
   data->refcount++;
+
+  char *progname = xstrdup(opts.argv[0]);
   Job *job = job_start(opts, &rettv->vval.v_number);
 
   if (rettv->vval.v_number <= 0) {
@@ -20263,10 +20265,12 @@ static inline Job *common_job_start(JobOptions opts, typval_T *rettv)
       xfree(opts.term_name);
       free_term_job_data(data);
     } else {
-      EMSG(_(e_jobexe));
+      EMSG3(_(e_jobexe), progname, uv_strerror(rettv->vval.v_number));
     }
+    xfree(progname);
     return NULL;
   }
+  xfree(progname);
   data->job = job;
   return job;
 }

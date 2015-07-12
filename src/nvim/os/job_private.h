@@ -11,10 +11,11 @@
 #include "nvim/os/pty_process.h"
 #include "nvim/os/shell.h"
 #include "nvim/log.h"
+#include "nvim/map.h"
 #include "nvim/memory.h"
 
 struct job {
-  // Job id the index in the job table plus one.
+  // Job id used as the key for `job_map`.
   int id;
   // Process id
   int pid;
@@ -41,11 +42,11 @@ struct job {
   JobOptions opts;
 };
 
-extern Job *table[];
+extern PMap(int) *job_map;
 extern size_t stop_requests;
 extern uv_timer_t job_stop_timer;
 
-static inline bool process_spawn(Job *job)
+static inline int process_spawn(Job *job)
 {
   return job->opts.pty ? pty_process_spawn(job) : pipe_process_spawn(job);
 }
@@ -85,7 +86,7 @@ static inline void job_exit_callback(Job *job)
 {
   // Free the slot now, 'exit_cb' may want to start another job to replace
   // this one
-  table[job->id - 1] = NULL;
+  pmap_del(int)(job_map, job->id);
 
   if (job->opts.exit_cb) {
     // Invoke the exit callback
