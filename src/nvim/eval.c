@@ -20,6 +20,7 @@
 #include <stdbool.h>
 #include <math.h>
 #include <limits.h>
+#include <msgpack.h>
 
 #include "nvim/assert.h"
 #include "nvim/vim.h"
@@ -90,6 +91,7 @@
 #include "nvim/os/time.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
+#include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
 #include "nvim/os/dl.h"
@@ -159,6 +161,13 @@ typedef struct lval_S {
   dictitem_T  *ll_di;           /* The dictitem or NULL */
   char_u      *ll_newkey;       /* New key for Dict in alloc. mem or NULL. */
 } lval_T;
+
+/// Structure defining state for read_from_list()
+typedef struct {
+  const listitem_T *li;  ///< Item currently read.
+  size_t offset;         ///< Byte offset inside the read item.
+  size_t li_length;      ///< Length of the string inside the read item.
+} ListReaderState;
 
 
 static char *e_letunexp = N_("E18: Unexpected characters in :let");
@@ -5177,6 +5186,23 @@ void list_append_string(list_T *l, char_u *str, int len)
   }
 }
 
+/// Append given string to the list
+///
+/// Unlike list_append_string this function does not copy the string.
+///
+/// @param[out]  l    List to append to.
+/// @param[in]   str  String to append.
+void list_append_allocated_string(list_T *l, char *const str)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  listitem_T *li = listitem_alloc();
+
+  list_append(l, li);
+  li->li_tv.v_type = VAR_STRING;
+  li->li_tv.v_lock = 0;
+  li->li_tv.vval.v_string = (char_u *) str;
+}
+
 /*
  * Append "n" to list "l".
  */
@@ -6583,6 +6609,8 @@ static struct fst {
   {"min",             1, 1, f_min},
   {"mkdir",           1, 3, f_mkdir},
   {"mode",            0, 1, f_mode},
+  {"msgpackdump",     1, 1, f_msgpackdump},
+  {"msgpackparse",    1, 1, f_msgpackparse},
   {"nextnonblank",    1, 1, f_nextnonblank},
   {"nr2char",         1, 2, f_nr2char},
   {"or",              2, 2, f_or},
@@ -11841,6 +11869,212 @@ static void f_mode(typval_T *argvars, typval_T *rettv)
   rettv->v_type = VAR_STRING;
 }
 
+/// Msgpack callback for writing to readfile()-style list
+static int msgpack_list_write(void *data, const char *buf, size_t len)
+{
+  if (len == 0) {
+    return 0;
+  }
+  list_T *const list = (list_T *) data;
+  const char *const end = buf + len;
+  const char *line_end = buf;
+  if (list->lv_last == NULL) {
+    list_append_string(list, NULL, 0);
+  }
+  listitem_T *li = list->lv_last;
+  do {
+    const char *line_start = line_end;
+    line_end = xmemscan(line_start, NL, end - line_start);
+    if (line_end == line_start) {
+      list_append_allocated_string(list, NULL);
+    } else {
+      const size_t line_length = line_end - line_start;
+      char *str;
+      if (li == NULL) {
+        str = xmemdupz(line_start, line_length);
+      } else {
+        const size_t li_len = (li->li_tv.vval.v_string == NULL
+                               ? 0
+                               : STRLEN(li->li_tv.vval.v_string));
+        li->li_tv.vval.v_string = xrealloc(li->li_tv.vval.v_string,
+                                           li_len + line_length + 1);
+        str = (char *) li->li_tv.vval.v_string + li_len;
+        memmove(str, line_start, line_length);
+        str[line_length] = 0;
+      }
+      for (size_t i = 0; i < line_length; i++) {
+        if (str[i] == NUL) {
+          str[i] = NL;
+        }
+      }
+      if (li == NULL) {
+        list_append_allocated_string(list, str);
+      } else {
+        li = NULL;
+      }
+      if (line_end == end - 1) {
+        list_append_allocated_string(list, NULL);
+      }
+    }
+    line_end++;
+  } while (line_end < end);
+  return 0;
+}
+
+/// "msgpackdump()" function
+static void f_msgpackdump(typval_T *argvars, typval_T *rettv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (argvars[0].v_type != VAR_LIST) {
+    EMSG2(_(e_listarg), "msgpackdump()");
+  }
+  list_T *ret_list = rettv_list_alloc(rettv);
+  const list_T *list = argvars[0].vval.v_list;
+  if (list == NULL) {
+    return;
+  }
+  msgpack_packer *lpacker = msgpack_packer_new(ret_list, &msgpack_list_write);
+  for (const listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
+    Object obj = vim_to_object((typval_T *) &li->li_tv);
+    msgpack_rpc_from_object(obj, lpacker);
+    api_free_object(obj);
+  }
+  msgpack_packer_free(lpacker);
+}
+
+/// Read bytes from list
+///
+/// @param[in,out]  state  Structure describing position in list from which
+///                        reading should start. Is updated to reflect position
+///                        at which reading ended.
+/// @param[out]  buf  Buffer to write to.
+/// @param[in]  nbuf  Buffer length.
+/// @param[out]  read_bytes  Is set to amount of bytes read.
+///
+/// @return OK when reading was finished, FAIL in case of error (i.e. list item
+///         was not a string), NOTDONE if reading was successfull, but there are
+///         more bytes to read.
+static int read_from_list(ListReaderState *const state, char *const buf,
+                          const size_t nbuf, size_t *const read_bytes)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  char *const buf_end = buf + nbuf;
+  char *p = buf;
+  while (p < buf_end) {
+    for (size_t i = state->offset; i < state->li_length && p < buf_end; i++) {
+      const char ch = state->li->li_tv.vval.v_string[state->offset++];
+      *p++ = (ch == NL ? NUL : ch);
+    }
+    if (p < buf_end) {
+      state->li = state->li->li_next;
+      if (state->li == NULL) {
+        *read_bytes = (size_t) (p - buf);
+        return OK;
+      }
+      *p++ = NL;
+      if (state->li->li_tv.v_type != VAR_STRING) {
+        *read_bytes = (size_t) (p - buf);
+        return FAIL;
+      }
+      state->offset = 0;
+      state->li_length = (state->li->li_tv.vval.v_string == NULL
+                          ? 0
+                          : STRLEN(state->li->li_tv.vval.v_string));
+    }
+  }
+  *read_bytes = nbuf;
+  return NOTDONE;
+}
+
+/// "msgpackparse" function
+static void f_msgpackparse(typval_T *argvars, typval_T *rettv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (argvars[0].v_type != VAR_LIST) {
+    EMSG2(_(e_listarg), "msgpackparse()");
+  }
+  list_T *ret_list = rettv_list_alloc(rettv);
+  const list_T *list = argvars[0].vval.v_list;
+  if (list == NULL || list->lv_first == NULL) {
+    return;
+  }
+  if (list->lv_first->li_tv.v_type != VAR_STRING) {
+    EMSG2(_(e_invarg2), "List item is not a string");
+    return;
+  }
+  ListReaderState lrstate = {
+    .li = list->lv_first,
+    .offset = 0,
+    .li_length = (list->lv_first->li_tv.vval.v_string == NULL
+                  ? 0
+                  : STRLEN(list->lv_first->li_tv.vval.v_string)),
+  };
+  msgpack_unpacker *const unpacker = msgpack_unpacker_new(IOSIZE);
+  if (unpacker == NULL) {
+    EMSG(_(e_outofmem));
+    return;
+  }
+  msgpack_unpacked unpacked;
+  msgpack_unpacked_init(&unpacked);
+  do {
+    if (!msgpack_unpacker_reserve_buffer(unpacker, IOSIZE)) {
+      EMSG(_(e_outofmem));
+      goto f_msgpackparse_exit;
+    }
+    size_t read_bytes;
+    const int rlret = read_from_list(
+        &lrstate, msgpack_unpacker_buffer(unpacker), IOSIZE, &read_bytes);
+    if (rlret == FAIL) {
+      EMSG2(_(e_invarg2), "List item is not a string");
+      goto f_msgpackparse_exit;
+    }
+    msgpack_unpacker_buffer_consumed(unpacker, read_bytes);
+    if (read_bytes == 0) {
+      break;
+    }
+    while (unpacker->off < unpacker->used) {
+      const msgpack_unpack_return result = msgpack_unpacker_next(unpacker,
+                                                                 &unpacked);
+      if (result == MSGPACK_UNPACK_PARSE_ERROR) {
+        EMSG2(_(e_invarg2), "Failed to parse msgpack string");
+        goto f_msgpackparse_exit;
+      }
+      if (result == MSGPACK_UNPACK_NOMEM_ERROR) {
+        EMSG(_(e_outofmem));
+        goto f_msgpackparse_exit;
+      }
+      if (result == MSGPACK_UNPACK_SUCCESS) {
+        Object obj;
+        if (!msgpack_rpc_to_object(&unpacked.data, &obj)) {
+          EMSG2(_(e_invarg2), "Failed to convert parsed string to Object");
+          goto f_msgpackparse_exit;
+        }
+        listitem_T *li = listitem_alloc();
+        Error err;
+        if (!object_to_vim(obj, &li->li_tv, &err)) {
+          EMSG2(_(e_invarg2), err.msg);
+          goto f_msgpackparse_exit;
+        }
+        list_append(ret_list, li);
+        api_free_object(obj);
+      }
+      if (result == MSGPACK_UNPACK_CONTINUE) {
+        if (rlret == OK) {
+          EMSG2(_(e_invarg2), "Incomplete msgpack string");
+        }
+        break;
+      }
+    }
+    if (rlret == OK) {
+      break;
+    }
+  } while (true);
+
+f_msgpackparse_exit:
+  msgpack_unpacked_destroy(&unpacked);
+  msgpack_unpacker_free(unpacker);
+  return;
+}
 
 /*
  * "nextnonblank()" function

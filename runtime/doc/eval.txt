@@ -1904,6 +1904,8 @@ min( {list})			Number	minimum value of items in {list}
 mkdir( {name} [, {path} [, {prot}]])
 				Number	create directory {name}
 mode( [expr])			String	current editing mode
+msgpackdump( {list})		List	dump a list of objects to msgpack
+msgpackparse( {list})		List	parse msgpack to a list of objects
 nextnonblank( {lnum})		Number	line nr of non-blank line >= {lnum}
 nr2char( {expr}[, {utf8}])	String	single char with ASCII/UTF8 value {expr}
 or( {expr}, {expr})		Number  bitwise OR
@@ -4612,6 +4614,40 @@ mode([expr])	Return a string that indicates the current mode.
 		with |remote_expr()| In most other places it always returns
 		"c" or "n".
 		Also see |visualmode()|.
+
+msgpackdump({list})					*msgpackdump()*
+		Convert a list of VimL objects to msgpack. Returned value is
+		|readfile()|-style list. Example: >
+			call writefile(msgpackdump([{}]), 'fname.mpack', 'b')
+<		This will write the single 0x80 byte to `fname.mpack` file
+		(dictionary with zero items is represented by 0x80 byte in
+		messagepack).
+
+		Limitations:
+		1. |Funcref|s cannot be dumped as funcrefs, they are dumped as 
+		   NIL objects instead.
+		2. NIL and BOOL objects are never dumped, as well as objects 
+		   from EXT family.
+		3. Strings are always dumped as BIN strings.
+
+msgpackparse({list})					*msgpackparse()*
+		Convert a |readfile()|-style list to a list of VimL objects. 
+		Example: >
+			let fname = expand('~/.nvim/shada/main.shada')
+			let mpack = readfile(fname, 'b')
+			let shada_objects = msgpackparse(mpack)
+<		This will read |shada-file| to `shada_objects` list.
+
+		Limitations:
+		1. Strings that contain one of EXT format family objects 
+		   cannot be parsed by msgpackparse().
+		2. It may appear that parsed integers do not fit in |Number| 
+		   range. Even if your NeoVim installation uses 64-bit 
+		   Numbers, it may appear that string contain 64-bit unsigned 
+		   number above INT64_MAX.
+		3. NIL objects are parsed as zeroes. BOOL objects are parsed 
+		   as either 1 (true) or 0 (false).
+		4. BIN and STR strings cannot be distinguished after parsing.
 
 nextnonblank({lnum})					*nextnonblank()*
 		Return the line number of the first line at or below {lnum}
