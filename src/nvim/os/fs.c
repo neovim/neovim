@@ -316,7 +316,7 @@ int os_rename(const char_u *path, const char_u *new_path)
 
 /// Make a directory.
 ///
-/// @return `0` for success, non-zero for failure.
+/// @return `0` for success, -errno for failure.
 int os_mkdir(const char *path, int32_t mode)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -324,6 +324,54 @@ int os_mkdir(const char *path, int32_t mode)
   int result = uv_fs_mkdir(&fs_loop, &request, path, mode, NULL);
   uv_fs_req_cleanup(&request);
   return result;
+}
+
+/// Make a directory, with higher levels when needed
+///
+/// @param[in]  dir  Directory to create.
+/// @param[in]  mode  Permissions for the newly-created directory.
+/// @param[out]  failed_dir  If it failed to create directory, then this
+///                          argument is set to an allocated string containing
+///                          the name of the directory which os_mkdir_recurse
+///                          failed to create. I.e. it will contain dir or any
+///                          of the higher level directories.
+///
+/// @return `0` for success, -errno for failure.
+int os_mkdir_recurse(const char *const dir, int32_t mode,
+                     char **const failed_dir)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  // Get end of directory name in "dir".
+  // We're done when it's "/" or "c:/".
+  const size_t dirlen = strlen(dir);
+  char *const curdir = xmemdupz(dir, dirlen);
+  char *const past_head = (char *) get_past_head((char_u *) curdir);
+  char *e = curdir + dirlen;
+  const char *const real_end = e;
+  const char past_head_save = *past_head;
+  while (!os_isdir((char_u *) curdir)) {
+    e = (char *) path_tail_with_sep((char_u *) curdir);
+    if (e <= past_head) {
+      *past_head = NUL;
+      break;
+    }
+    *e = NUL;
+  }
+  while (e != real_end) {
+    if (e > past_head) {
+      *e = '/';
+    } else {
+      *past_head = past_head_save;
+    }
+    e += strlen(e);
+    int ret;
+    if ((ret = os_mkdir(curdir, mode)) != 0) {
+      *failed_dir = curdir;
+      return ret;
+    }
+  }
+  xfree(curdir);
+  return 0;
 }
 
 /// Create a unique temporary directory.

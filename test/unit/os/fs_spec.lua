@@ -486,6 +486,16 @@ describe('fs function', function()
       return fs.os_rmdir(to_cstr(path))
     end
 
+    local function os_mkdir_recurse(path, mode)
+      local failed_str = ffi.new('char *[1]', {nil})
+      local ret = fs.os_mkdir_recurse(path, mode, failed_str)
+      local str = failed_str[0]
+      if str ~= nil then
+        str = ffi.string(str)
+      end
+      return ret, str
+    end
+
     describe('os_mkdir', function()
       it('returns non-zero when given an already existing directory', function()
         local mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
@@ -498,6 +508,59 @@ describe('fs function', function()
         eq(0, (os_mkdir('unit-test-directory/new-dir', mode)))
         eq(true, (os_isdir('unit-test-directory/new-dir')))
         lfs.rmdir('unit-test-directory/new-dir')
+      end)
+    end)
+
+    describe('os_mkdir_recurse', function()
+      it('returns zero when given an already existing directory', function()
+        local mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
+        local ret, failed_str = os_mkdir_recurse('unit-test-directory', mode)
+        eq(0, ret)
+        eq(nil, failed_str)
+      end)
+
+      it('fails to create a directory where there is a file', function()
+        local mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
+        local ret, failed_str = os_mkdir_recurse(
+            'unit-test-directory/test.file', mode)
+        neq(0, ret)
+        eq('unit-test-directory/test.file', failed_str)
+      end)
+
+      it('fails to create a directory where there is a file in path', function()
+        local mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
+        local ret, failed_str = os_mkdir_recurse(
+            'unit-test-directory/test.file/test', mode)
+        neq(0, ret)
+        eq('unit-test-directory/test.file', failed_str)
+      end)
+
+      it('succeeds to create a directory', function()
+        local mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
+        local ret, failed_str = os_mkdir_recurse(
+            'unit-test-directory/new-dir-recurse', mode)
+        eq(0, ret)
+        eq(nil, failed_str)
+        eq(true, os_isdir('unit-test-directory/new-dir-recurse'))
+        lfs.rmdir('unit-test-directory/new-dir-recurse')
+        eq(false, os_isdir('unit-test-directory/new-dir-recurse'))
+      end)
+
+      it('succeeds to create a directory tree', function()
+        local mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
+        local ret, failed_str = os_mkdir_recurse(
+            'unit-test-directory/new-dir-recurse/1/2/3', mode)
+        eq(0, ret)
+        eq(nil, failed_str)
+        eq(true, os_isdir('unit-test-directory/new-dir-recurse'))
+        eq(true, os_isdir('unit-test-directory/new-dir-recurse/1'))
+        eq(true, os_isdir('unit-test-directory/new-dir-recurse/1/2'))
+        eq(true, os_isdir('unit-test-directory/new-dir-recurse/1/2/3'))
+        lfs.rmdir('unit-test-directory/new-dir-recurse/1/2/3')
+        lfs.rmdir('unit-test-directory/new-dir-recurse/1/2')
+        lfs.rmdir('unit-test-directory/new-dir-recurse/1')
+        lfs.rmdir('unit-test-directory/new-dir-recurse')
+        eq(false, os_isdir('unit-test-directory/new-dir-recurse'))
       end)
     end)
 

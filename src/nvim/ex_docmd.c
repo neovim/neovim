@@ -7549,7 +7549,7 @@ int vim_mkdir_emsg(char_u *name, int prot)
 {
   int ret;
   if ((ret = os_mkdir((char *)name, prot)) != 0) {
-    EMSG3(_("E739: Cannot create directory %s: %s"), name, os_strerror(ret));
+    EMSG3(_(e_mkdir), name, os_strerror(ret));
     return FAIL;
   }
   return OK;

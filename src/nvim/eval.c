@@ -11684,33 +11684,6 @@ static void f_min(typval_T *argvars, typval_T *rettv)
   max_min(argvars, rettv, FALSE);
 }
 
-
-/*
- * Create the directory in which "dir" is located, and higher levels when
- * needed.
- */
-static int mkdir_recurse(char_u *dir, int prot)
-{
-  char_u      *p;
-  char_u      *updir;
-  int r = FAIL;
-
-  /* Get end of directory name in "dir".
-   * We're done when it's "/" or "c:/". */
-  p = path_tail_with_sep(dir);
-  if (p <= get_past_head(dir))
-    return OK;
-
-  /* If the directory exists we're done.  Otherwise: create it.*/
-  updir = vim_strnsave(dir, (int)(p - dir));
-  if (os_isdir(updir))
-    r = OK;
-  else if (mkdir_recurse(updir, prot) == OK)
-    r = vim_mkdir_emsg(updir, prot);
-  xfree(updir);
-  return r;
-}
-
 /*
  * "mkdir()" function
  */
@@ -11735,8 +11708,19 @@ static void f_mkdir(typval_T *argvars, typval_T *rettv)
     if (argvars[1].v_type != VAR_UNKNOWN) {
       if (argvars[2].v_type != VAR_UNKNOWN)
         prot = get_tv_number_chk(&argvars[2], NULL);
-      if (prot != -1 && STRCMP(get_tv_string(&argvars[1]), "p") == 0)
-        mkdir_recurse(dir, prot);
+      if (prot != -1 && STRCMP(get_tv_string(&argvars[1]), "p") == 0) {
+        char *failed_dir;
+        int ret = os_mkdir_recurse((char *) dir, prot, &failed_dir);
+        if (ret != 0) {
+          EMSG3(_(e_mkdir), failed_dir, os_strerror(ret));
+          xfree(failed_dir);
+          rettv->vval.v_number = FAIL;
+          return;
+        } else {
+          rettv->vval.v_number = OK;
+          return;
+        }
+      }
     }
     rettv->vval.v_number = prot == -1 ? FAIL : vim_mkdir_emsg(dir, prot);
   }
