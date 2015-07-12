@@ -83,13 +83,8 @@ ${vim_commit_url}"
 ${vim_message}
 \`\`\`
 
-${vim_commit_url}
+${vim_commit_url}"
 
-Original patch:
-
-\`\`\`diff
-${vim_diff}
-\`\`\`"
   neovim_branch="vim-${vim_version}"
 
   echo
