@@ -1833,12 +1833,27 @@ describe('regexp pattern without multi byte support', function() -- TODO multi b
       OK 2 - \(^.\+\n\)\1]])
   end)
 
-  it('is working', function()
+  it('matchstring and stuff', function()
     insert([[
       Substitute here:
       <T="">Ta 5</Title>
-      <T="">Ac 7</Title>
-      
+      <T="">Ac 7</Title>]])
+    -- Check that using a pattern on two lines doesn't get messed up by using.
+    -- Matchstr() with \ze in between.
+    execute('set re=0')
+    execute('/^Substitute here')
+    execute([[.+1,.+2s/""/\='"'.matchstr(getline("."), '\d\+\ze<').'"']])
+    execute('/^Substitute here')
+    ----execute('.+1,.+2yank')
+    --feed('Go<esc>p')
+    expect([[
+      Substitute here:
+      <T="5">Ta 5</Title>
+      <T="7">Ac 7</Title>]])
+  end)
+
+  it('is working', function()
+    insert([[
       Behind:
       asdfasd<yyy
       xxstart1
@@ -1859,16 +1874,6 @@ describe('regexp pattern without multi byte support', function() -- TODO multi b
       dfsadfEasdf
       
       Results of test64:]])
-
-    -- Check that using a pattern on two lines doesn't get messed up by using.
-    -- Matchstr() with \ze in between.
-    execute('set re=0')
-    execute('/^Substitute here')
-    execute([[.+1,.+2s/""/\='"'.matchstr(getline("."), '\d\+\ze<').'"']])
-    execute('/^Substitute here')
-    execute('.+1,.+2yank')
-
-    feed('Go<esc>p')
 
     -- Check a pattern with a look beind crossing a line boundary.
     execute('/^Behind:')
