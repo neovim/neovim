@@ -489,18 +489,6 @@ Pressing <F4> will start the menu.  You can now use the cursor keys to select
 a menu entry.  Hit <Enter> to execute it.  Hit <Esc> if you want to cancel.
 This does require the |+menu| feature enabled at compile time.
 
-							*tear-off-menus*
-GTK+ and Motif support Tear-off menus.  These are sort of sticky menus or
-pop-up menus that are present all the time.  If the resizing does not work
-correctly, this may be caused by using something like "Vim*geometry" in the
-defaults.  Use "Vim.geometry" instead.
-
-The Win32 GUI version emulates Motif's tear-off menus.  Actually, a Motif user
-will spot the differences easily, but hopefully they're just as useful.  You
-can also use the |:tearoff| command together with |hidden-menus| to create
-floating menus that do not appear on the main menu bar.
-
-
 5.2 Creating New Menus					*creating-menus*
 
 				*:me*  *:menu*  *:noreme*  *:noremenu*
@@ -750,8 +738,7 @@ nr  Name		Normal action  ~
 
 					*hidden-menus* *win32-hidden-menus*
 In the Win32 and GTK+ GUI, starting a menu name with ']' excludes that menu
-from the main menu bar.  You must then use the |:popup| or |:tearoff| command
-to display it.
+from the main menu bar.  You must then use the |:popup| command to display it.
 
 							*popup-menu*
 You can define the special menu "PopUp".  This is the menu that is displayed

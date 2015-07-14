@@ -417,9 +417,8 @@ add_menu_path (
         /* free any old menu */
         free_menu_string(menu, i);
 
-        /* For "amenu", may insert an extra character.
-         * Don't do this if adding a tearbar (addtearoff == FALSE).
-         * Don't do this for "<Nop>". */
+        // For "amenu", may insert an extra character.
+        // Don't do this for "<Nop>".
         c = 0;
         d = 0;
         if (amenu && call_data != NULL && *call_data != NUL
@@ -571,16 +570,6 @@ remove_menu (
         return FAIL;
       }
       if ((menu->modes & modes) != 0x0) {
-#if defined(FEAT_GUI_W32) & defined(FEAT_TEAROFF)
-        /*
-         * If we are removing all entries for this menu,MENU_ALL_MODES,
-         * Then kill any tearoff before we start
-         */
-        if (*p == NUL && modes == MENU_ALL_MODES) {
-          if (IsWindow(menu->tearoff_handle))
-            DestroyWindow(menu->tearoff_handle);
-        }
-#endif
         if (remove_menu(&menu->children, p, modes, silent) == FAIL)
           return FAIL;
       } else if (*name != NUL) {
@@ -619,11 +608,6 @@ remove_menu (
 
     /* Recalculate modes for menu based on the new updated children */
     menu->modes &= ~modes;
-#if defined(FEAT_GUI_W32) & defined(FEAT_TEAROFF)
-    if ((s_tearoffs) && (menu->children != NULL))     /* there's a tear bar.. */
-      child = menu->children->next;       /* don't count tearoff bar */
-    else
-#endif
     child = menu->children;
     for (; child != NULL; child = child->next)
       menu->modes |= child->modes;
@@ -638,10 +622,6 @@ remove_menu (
     }
     if ((menu->modes & MENU_ALL_MODES) == 0) {
       /* The menu item is no longer valid in ANY mode, so delete it */
-#if defined(FEAT_GUI_W32) & defined(FEAT_TEAROFF)
-      if (s_tearoffs && menu->children != NULL)       /* there's a tear bar.. */
-        free_menu(&menu->children);
-#endif
       *menup = menu;
       free_menu(menup);
     }
@@ -862,7 +842,7 @@ char_u *set_context_in_menu_cmd(expand_T *xp, char_u *cmd, char_u *arg, int forc
       after_dot = p + 1;
   }
 
-  /* ":tearoff" and ":popup" only use menus, not entries */
+  // ":popup" only uses menues, not entries
   expand_menus = !((*cmd == 't' && cmd[1] == 'e') || *cmd == 'p');
   expand_emenu = (*cmd == 'e');
   if (expand_menus && ascii_iswhite(*p))
@@ -938,7 +918,6 @@ char_u *get_menu_name(expand_T *xp, int idx)
   /* Skip PopUp[nvoci]. */
   while (menu != NULL && (menu_is_hidden(menu->dname)
                           || menu_is_separator(menu->dname)
-                          || menu_is_tearoff(menu->dname)
                           || menu->children == NULL))
     menu = menu->next;
 
@@ -986,7 +965,6 @@ char_u *get_menu_names(expand_T *xp, int idx)
   while (menu != NULL
          && (   menu_is_hidden(menu->dname)
                 || (expand_emenu && menu_is_separator(menu->dname))
-                || menu_is_tearoff(menu->dname)
                 || menu->dname[STRLEN(menu->dname) - 1] == '.'
                 ))
     menu = menu->next;
@@ -1243,16 +1221,6 @@ static int menu_is_hidden(char_u *name)
 {
   return (name[0] == ']') || (menu_is_popup(name) && name[5] != NUL);
 }
-
-/*
- * Return TRUE if the menu is the tearoff menu.
- */
-static int menu_is_tearoff(char_u *name)
-{
-  return FALSE;
-}
-
-
 
 /*
  * Given a menu descriptor, e.g. "File.New", find it in the menu hierarchy and

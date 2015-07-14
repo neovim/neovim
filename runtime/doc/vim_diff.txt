@@ -28,13 +28,14 @@ these differences.
 ==============================================================================
 2. Option defaults					  *nvim-option-defaults*
 
-- 'autoindent' is set by default.
+- 'autoindent' is set by default
 - 'autoread' is set by default
 - 'backspace' defaults to "indent,eol,start"
 - 'complete' doesn't include "i"
 - 'display' defaults to "lastline"
 - 'encoding' defaults to "utf-8"
 - 'formatoptions' defaults to "tcqj"
+- 'guioptions' doesn't include "t"
 - 'hlsearch' is set by default
 - 'incsearch' is set by default
 - 'langnoremap' is set by default
@@ -148,8 +149,9 @@ Other options:
 
 Other commands:
   :fixdel
-  :mode no longer accepts an argument
+  :mode (no longer accepts an argument)
   :shell
+  :tearoff
 
 Other compile-time features:
   EBCDIC

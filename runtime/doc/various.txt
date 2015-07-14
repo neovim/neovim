@@ -213,8 +213,8 @@ g8			Print the hex values of the bytes used in the
 						  *:sh* *:shell* *E371* *E360*
 :sh[ell]		Removed. |vim-differences| {Nvim}
 
-						  *:term* *:terminal*
-:term[inal][!] {cmd}	Spawns {cmd} using the current value of 'shell' and
+						  *:terminal* *:te*
+:te[rminal][!] {cmd}	Spawns {cmd} using the current value of 'shell' and
 			'shellcmdflag' in a new terminal buffer.  This is
 			equivalent to: >
 

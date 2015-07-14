@@ -3256,8 +3256,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	screen.
 
 						*'guioptions'* *'go'*
-'guioptions' 'go'	string	(default "egmrLtT"   (MS-Windows),
-					 "aegimrLtT" (GTK, Motif and Athena))
+'guioptions' 'go'	string	(default "egmrLT"   (MS-Windows),
+					 "aegimrLT" (GTK, Motif and Athena))
 			global
 			{only available when compiled with GUI enabled}
 	This option only has an effect in the GUI version of Vim.  It is a
@@ -3319,9 +3319,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  'g'	Grey menu items: Make menu items that are not active grey.  If
 		'g' is not included inactive menu items are not shown at all.
 		Exception: Athena will always use grey menu items.
-								*'go-t'*
-	  't'	Include tearoff menu items.  Currently only works for Win32,
-		GTK+, and Motif 1.2 GUI.
 								*'go-T'*
 	  'T'	Include Toolbar.  Currently only in Win32, GTK+, Motif,
 		and Athena GUIs.
