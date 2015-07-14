@@ -1939,11 +1939,11 @@ describe('regexp pattern without multi byte support', function() -- TODO multi b
     execute([[/\%^]])
 
     feed('yeGo<esc>p')
-    feed('50%')
+    feed('50%') -- TODO
     execute([[/\%^..]])
 
     feed('yeGo<esc>pA END<esc>')
-    feed('50%')
+    feed('50%') -- TODO
     execute([[/\%$]])
     feed('ayb20gg')
     execute([[/..\%$]])
