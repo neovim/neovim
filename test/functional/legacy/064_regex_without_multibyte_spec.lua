@@ -6,6 +6,116 @@
 local helpers = require('test.functional.helpers')
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local eq, eval = helpers.eq, helpers.eval
+
+local function test1(re_engine, pattern, text, ...)
+  local count = #{...}
+  for engine = 0, 2 do
+    if (engine == 2 and re_engine == 0) or (engine == 1 and re_engine == 1) then
+      -- Do nothing.  The Vim code used ":continue" here but lua doesn't
+      -- have a continue statement.
+    else
+      execute('set regexpengine='..engine)
+      -- The original test did wrap the call to matchlist() in a :try/:catch
+      -- block.  When we use source() this is not neccessary as the test will
+      -- fail when a Vim error in a source() call is encountered.
+      source("let result = matchlist('"..text.."', '"..pattern.."')")
+      -- The result should have the same number of elements that where passed
+      -- as additional arguments.
+      eq(count, eval('len(result)'))
+      for idx, val in pairs({...}) do
+	eq(val, eval('result['..(idx-1)..']'))
+      end
+    end
+  end
+end
+    source([[
+      for t in tl
+        let re = t[0]
+        let pat = t[1]
+        let text = t[2]
+        let matchidx = 3
+        for engine in [0, 1, 2]
+          if engine == 2 && re == 0 || engine == 1 && re == 1
+            continue
+          endif
+          let &regexpengine = engine
+          try
+            let l = matchlist(text, pat)
+          catch
+            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", caused an exception: \"' . v:exception . '\"'
+          endtry
+	  " Check the match itself.
+          if len(l) == 0 && len(t) > matchidx
+            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", did not match, expected: \"' . t[matchidx] . '\"'
+          elseif len(l) > 0 && len(t) == matchidx
+            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", match: \"' . l[0] . '\", expected no match'
+          elseif len(t) > matchidx && l[0] != t[matchidx]
+            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", match: \"' . l[0] . '\", expected: \"' . t[matchidx] . '\"'
+          else
+            $put ='OK ' . engine . ' - ' . pat
+          endif
+          if len(l) > 0
+	  " Check all the nine submatches.
+            for i in range(1, 9)
+              if len(t) <= matchidx + i
+                let e = ''
+              else
+                let e = t[matchidx + i]
+              endif
+              if l[i] != e
+                $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", submatch ' . i . ': \"' . l[i] . '\", expected: \"' . e . '\"'
+              endif
+            endfor
+            unlet i
+          endif
+        endfor
+      endfor
+      unlet t tl e l
+    ]])
+local function test2(re_engine, pattern, before, after,  ...)
+  for engine = 0, 2 do
+    if (engine == 2 and re_engine == 0) or (engine == 1 and re_engine == 1) then
+      -- Do nothing.  The Vim code used ":continue" here but lua doesn't
+      -- have a continue statement.
+    else
+      execute('set regexpengine='..engine)
+      execute('new')
+      insert(before)
+      execute('%s/'..pattern..'/XX/')
+      eq(after, eval('getline(1, "$")'))
+      execute('q!')
+    end
+  end
+end
+--TODO--    source([[
+--TODO--      $put ='multi-line tests'
+--TODO--      for t in tl
+--TODO--        let re = t[0]
+--TODO--        let pat = t[1]
+--TODO--        let before = t[2]
+--TODO--        let after = t[3]
+--TODO--        for engine in [0, 1, 2]
+--TODO--          if engine == 2 && re == 0 || engine == 1 && re ==1
+--TODO--            continue
+--TODO--          endif
+--TODO--          let &regexpengine = engine
+--TODO--          new
+--TODO--          call setline(1, before)
+--TODO--          exe '%s/' . pat . '/XX/'
+--TODO--          let result = getline(1, '$')
+--TODO--          q!
+--TODO--          if result != after
+--TODO--            $put ='ERROR: pat: \"' . pat . '\", text: \"' . string(before) .
+--TODO--	      \ '\", expected: \"' . string(after) . '\", got: \"' .
+--TODO--	      \ string(result) . '\"'
+--TODO--          else
+--TODO--            $put ='OK ' . engine . ' - ' . pat
+--TODO--          endif
+--TODO--        endfor
+--TODO--      endfor
+--TODO--      unlet t tl
+--TODO--    ]])
 
 describe('64', function()
   setup(clear)
@@ -37,6 +147,46 @@ describe('64', function()
       
       Results of test64:]])
 
+    source([[
+      function Test_type_1(re, pat, text, ...)
+	let matchidx = 3
+        for engine in [0, 1, 2]
+          if engine == 2 && a:re == 0 || engine == 1 && a:re == 1
+            continue
+          endif
+          let &regexpengine = engine
+          try
+            let l = matchlist(a:text, a:pat)
+          catch
+            $put ='ERROR ' . engine . ': pat: \"' . a:pat . '\", text: \"' . a:text . '\", caused an exception: \"' . v:exception . '\"'
+          endtry
+	  " Check the match itself.
+
+          if len(l) == 0 && a:0 > 0
+            $put ='ERROR ' . engine . ': pat: \"' . a:pat . '\", text: \"' . a:text . '\", did not match, expected: \"' . a:1 . '\"'
+          elseif len(l) > 0 && a:0 == 1
+            $put ='ERROR ' . engine . ': pat: \"' . a:pat . '\", text: \"' . a:text . '\", match: \"' . l[0] . '\", expected no match'
+          elseif a:0 > 0 && l[0] != a:1
+            $put ='ERROR ' . engine . ': pat: \"' . a:pat . '\", text: \"' . a:text . '\", match: \"' . l[0] . '\", expected: \"' . a:1 . '\"'
+          else
+            $put ='OK ' . engine . ' - ' . pat
+          endif
+          if len(l) > 0
+	  " Check all the nine submatches.
+            for i in range(1, 9)
+              if a:0 < i
+                let e = ''
+              else
+                let e = a:000[i]
+              endif
+              if l[i] != e
+                $put ='ERROR ' . engine . ': pat: \"' . a:pat . '\", text: \"' . a:text . '\", submatch ' . i . ': \"' . l[i] . '\", expected: \"' . e . '\"'
+              endif
+            endfor
+          endif
+        endfor
+      endfor
+      ]])
     -- tl is a List of Lists with:
     --    regexp engine
     --    regexp pattern
@@ -52,6 +202,7 @@ describe('64', function()
     --     Previously written tests 
     --
 
+    test1(2, 'ab', 'aab', 'ab')
     source([[
       call add(tl, [2, 'ab', 'aab', 'ab'])
       call add(tl, [2, 'b', 'abcdef', 'b'])
