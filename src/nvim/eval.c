@@ -6512,7 +6512,7 @@ static struct fst {
   {"getwinposy",      0, 0, f_getwinposy},
   {"getwinvar",       2, 3, f_getwinvar},
   {"glob",            1, 3, f_glob},
-  {"glob2repath",     1, 1, f_glob2regpat},
+  {"glob2regpat",     1, 1, f_glob2regpat},
   {"globpath",        2, 4, f_globpath},
   {"has",             1, 1, f_has},
   {"has_key",         2, 2, f_has_key},
