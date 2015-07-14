@@ -608,7 +608,7 @@ describe('64', function()
     execute([[s/\%Vo/O/g]])
     execute(':/^Visual/+1,/^Visual/+4yank')
 
-    feed('Go<esc>p:<cr>')
+    feed('Go<esc>p')
 
     -- Check matching marks.
     execute('/^Marks:')
