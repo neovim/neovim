@@ -9,22 +9,59 @@ local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 local eq, eval = helpers.eq, helpers.eval
 
 local function test1(re_engine, pattern, text, ...)
-  local count = #{...}
+  print('re_engine = '..re_engine)
+  print('pattern = '..pattern)
+  print('text = '..text)
+  print(' = '..'')
+  local varargs = {...}
+  local count = #varargs
+  local submatches = {}
+  if count > 0 then
+    local match = varargs[1]
+    varargs[1] = nil
+    for k, v in pairs(varargs) do
+      submatches[k - 1] = v
+    end
+  else
+    local match = ''
+  end
   for engine = 0, 2 do
     if (engine == 2 and re_engine == 0) or (engine == 1 and re_engine == 1) then
       -- Do nothing.  The Vim code used ":continue" here but lua doesn't
       -- have a continue statement.
     else
       execute('set regexpengine='..engine)
+      -- We need to get the value of pattern and text into some Vim variables.
+      -- Use single quotes in Vim to simplify quoting issues.  Single quotes
+      -- can be put inside single quoted string by doubling them (see :h
+      -- literal-string).
+      execute("let text = '" .. text:gsub("'", "''") .. "'")
+      execute("let pattern = '" .. pattern:gsub("'", "''") .. "'")
+      -- Verify the translation from lua to Vim strings.
+      eq(text, eval('text'))
+      eq(pattern, eval('pattern'))
       -- The original test did wrap the call to matchlist() in a :try/:catch
       -- block.  When we use source() this is not neccessary as the test will
       -- fail when a Vim error in a source() call is encountered.
-      source("let result = matchlist('"..text.."', '"..pattern.."')")
-      -- The result should have the same number of elements that where passed
-      -- as additional arguments.
-      eq(count, eval('len(result)'))
-      for idx, val in pairs({...}) do
-	eq(val, eval('result['..(idx-1)..']'))
+      source('let result = matchlist(text, pattern)')
+      local result_len = eval('len(result)')
+      if result_len == 0 and count > 0 then
+	error('did not match expected ...')
+      elseif result_len > 0 and count == 0 then
+	error('expected no match')
+      elseif count > 0 then
+	-- result_len == 0 has already been checked.
+	eq(match, eval('result[0]'))
+      end
+      if result_len > 0 then
+	for i = 1, 9 do
+	  if count < i then
+	    local val = ''
+	  else
+	    local val = submatches[i]
+	  end
+	  eq(val, eval('result['..i..']'))
+	end
       end
     end
   end
