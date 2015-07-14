@@ -1844,8 +1844,6 @@ describe('regexp pattern without multi byte support', function() -- TODO multi b
     execute('/^Substitute here')
     execute([[.+1,.+2s/""/\='"'.matchstr(getline("."), '\d\+\ze<').'"']])
     execute('/^Substitute here')
-    ----execute('.+1,.+2yank')
-    --feed('Go<esc>p')
     expect([[
       Substitute here:
       <T="5">Ta 5</Title>
