@@ -1850,8 +1850,21 @@ describe('regexp pattern without multi byte support', function() -- TODO multi b
       <T="7">Ac 7</Title>]])
   end)
 
-  it('is working', function()
+  it('look beind crossing a line boundary', function()
     insert([[
+      Behind:
+      asdfasd<yyy
+      xxstart1
+      asdfasd<yy
+      xxxstart2
+      asdfasd<yy
+      xxstart3]])
+    -- Check a pattern with a look beind crossing a line boundary.
+    execute('/^Behind:')
+    execute([[/\(<\_[xy]\+\)\@3<=start]])
+    execute('.yank')
+    feed('Go<esc>p')
+    expect([[
       Behind:
       asdfasd<yyy
       xxstart1
@@ -1860,6 +1873,11 @@ describe('regexp pattern without multi byte support', function() -- TODO multi b
       asdfasd<yy
       xxstart3
       
+      xxstart3]])
+  end)
+
+  it('is working', function()
+    insert([[
       Visual:
       thexe the thexethe
       andaxand andaxand
@@ -1873,12 +1891,6 @@ describe('regexp pattern without multi byte support', function() -- TODO multi b
       
       Results of test64:]])
 
-    -- Check a pattern with a look beind crossing a line boundary.
-    execute('/^Behind:')
-    execute([[/\(<\_[xy]\+\)\@3<=start]])
-    execute('.yank')
-
-    feed('Go<esc>p')
 
     -- Check matching Visual area.
     execute('/^Visual:')
@@ -1971,11 +1983,6 @@ describe('regexp pattern without multi byte support', function() -- TODO multi b
     -- Assert buffer contents.
     expect([=[
       Results of test64:
-      
-      <T="5">Ta 5</Title>
-      <T="7">Ac 7</Title>
-      
-      xxstart3
       
       thexE thE thExethe
       AndAxAnd AndAxAnd
