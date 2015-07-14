@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local thelpers = require('test.functional.terminal.helpers')
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
 local nvim_dir, execute = helpers.nvim_dir, helpers.execute
+local eq, eval = helpers.eq, helpers.eval
 
 
 describe('terminal window highlighting', function()
@@ -159,5 +160,29 @@ describe('terminal window highlighting with custom palette', function()
                                                         |
       -- TERMINAL --                                    |
     ]])
+  end)
+end)
+
+describe('synIDattr()', function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(50, 7)
+    execute('highlight Normal ctermfg=1 guifg=#ff0000')
+  end)
+
+  after_each(function()
+    screen:detach()
+  end)
+
+  it('returns RGB number if GUI', function()
+    screen:attach(true)
+    eq('#ff0000', eval('synIDattr(hlID("Normal"), "fg")'))
+  end)
+
+  it('returns color number if non-GUI', function()
+    screen:attach(false)
+    eq('1', eval('synIDattr(hlID("Normal"), "fg")'))
   end)
 end)
