@@ -1876,22 +1876,13 @@ describe('regexp pattern without multi byte support', function() -- TODO multi b
       xxstart3]])
   end)
 
-  it('is working', function()
+  it('match visual area', function()
     insert([[
       Visual:
       thexe the thexethe
       andaxand andaxand
       oooxofor foroxooo
-      oooxofor foroxooo
-      
-      Marks:
-      asdfSasdfsadfEasdf
-      asdfSas
-      dfsadfEasdf
-      
-      Results of test64:]])
-
-
+      oooxofor foroxooo]])
     -- Check matching Visual area.
     execute('/^Visual:')
     feed('jfxvfx')
@@ -1900,9 +1891,22 @@ describe('regexp pattern without multi byte support', function() -- TODO multi b
     execute([[s/\%Va/A/g]])
     feed('jfx<C-V>fxj')
     execute([[s/\%Vo/O/g]])
-    execute(':/^Visual/+1,/^Visual/+4yank')
+    expect([[
+      Visual:
+      thexE thE thExethe
+      AndAxAnd AndAxAnd
+      oooxOfOr fOrOxooo
+      oooxOfOr fOrOxooo]])
+  end)
 
-    feed('Go<esc>p')
+  it('is working', function()
+    insert([[
+      Marks:
+      asdfSasdfsadfEasdf
+      asdfSas
+      dfsadfEasdf
+      
+      Results of test64:]])
 
     -- Check matching marks.
     execute('/^Marks:')
