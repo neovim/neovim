@@ -606,7 +606,7 @@ describe('64', function()
     execute([[s/\%Va/A/g]])
     feed('jfx<C-V>fxj')
     execute([[s/\%Vo/O/g]])
-    execute('/^Visual/+1,/^Visual/+4yank')
+    execute(':/^Visual/+1,/^Visual/+4yank')
 
     feed('Go<esc>p:<cr>')
 
@@ -616,9 +616,9 @@ describe('64', function()
     execute([[.-4,.+6s/.\%>'s.*\%<'e../here/]])
     feed('jfSmsj0fEme')
     execute([[.-4,.+6s/.\%>'s\_.*\%<'e../again/]])
-    execute('/^Marks:/+1,/^Marks:/+3yank')
+    execute(':/^Marks:/+1,/^Marks:/+3yank')
 
-    feed('Go<esc>p:<cr>')
+    feed('Go<esc>p')
 
     -- Check patterns matching cursor position.
     execute('func! Postest()')
