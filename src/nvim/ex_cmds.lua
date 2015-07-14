@@ -2678,12 +2678,6 @@ return {
     func='ex_ni',
   },
   {
-    command='tearoff',
-    flags=bit.bor(NEEDARG, EXTRA, TRLBAR, NOTRLCOM, CMDWIN),
-    addr_type=ADDR_LINES,
-    func='ex_tearoff',
-  },
-  {
     command='terminal',
     flags=bit.bor(BANG, FILES, CMDWIN),
     addr_type=ADDR_LINES,

@@ -200,7 +200,6 @@
 #define GO_ASELPLUS     'P'             /* autoselectPlus */
 #define GO_RIGHT        'r'             /* use right scrollbar */
 #define GO_VRIGHT       'R'             /* right scrollbar with vert split */
-#define GO_TEAROFF      't'             /* add tear-off menu items */
 #define GO_TOOLBAR      'T'             /* add toolbar */
 #define GO_FOOTER       'F'             /* add footer */
 #define GO_VERTICAL     'v'             /* arrange dialog buttons vertically */

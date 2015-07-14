@@ -83,11 +83,6 @@
 #define KS_SELECT               245
 #define K_SELECT_STRING         (char_u *)"\200\365X"
 
-/*
- * Used for tearing off a menu.
- */
-#define KS_TEAROFF              244
-
 /* Used a termcap entry that produces a normal character. */
 #define KS_KEY                  242
 
@@ -396,7 +391,6 @@ enum key_extra {
 #define K_HOR_SCROLLBAR   TERMCAP2KEY(KS_HOR_SCROLLBAR, KE_FILLER)
 
 #define K_SELECT        TERMCAP2KEY(KS_SELECT, KE_FILLER)
-#define K_TEAROFF       TERMCAP2KEY(KS_TEAROFF, KE_FILLER)
 
 #define K_TABLINE       TERMCAP2KEY(KS_TABLINE, KE_FILLER)
 #define K_TABMENU       TERMCAP2KEY(KS_TABMENU, KE_FILLER)
