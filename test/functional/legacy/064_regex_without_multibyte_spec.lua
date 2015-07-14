@@ -11,7 +11,7 @@ describe('64', function()
   setup(clear)
 
   it('is working', function()
-    insert([=[
+    insert([[
       Substitute here:
       <T="">Ta 5</Title>
       <T="">Ac 7</Title>
@@ -35,17 +35,16 @@ describe('64', function()
       asdfSas
       dfsadfEasdf
       
-      Results of test64:]=])
+      Results of test64:]])
 
-    execute('so small.vim')
-    -- Tl is a List of Lists with:.
-    -- Regexp engine.
-    -- Regexp pattern.
-    -- Text to test the pattern on.
-    -- Expected match (optional).
-    -- Expected submatch 1 (optional).
-    -- Expected submatch 2 (optional).
-    -- Etc.
+    -- tl is a List of Lists with:
+    --    regexp engine
+    --    regexp pattern
+    --    text to test the pattern on
+    --    expected match (optional)
+    --    expected submatch 1 (optional)
+    --    expected submatch 2 (optional)
+    --    etc.
     -- When there is no match use only the first two items.
     execute('let tl = []')
 
@@ -634,26 +633,32 @@ describe('64', function()
     feed(' 1,$yank<cr>')
     feed(' quit!<cr>')
     feed('endfunc<cr>')
-    feed('Go-0-<esc>:set re=0<cr>')
+    feed('Go-0-<esc>')
+    execute('set re=0')
     execute('call Postest()')
     execute('put')
-    feed('o-1-<esc>:set re=1<cr>')
+    feed('o-1-<esc>')
+    execute('set re=1')
     execute('call Postest()')
     execute('put')
-    feed('o-2-<esc>:set re=2<cr>')
+    feed('o-2-<esc>')
+    execute('set re=2')
     execute('call Postest()')
     execute('put')
 
     -- Start and end of buffer.
     execute([[/\%^]])
 
-    feed('yeGo<esc>p:<cr>')
-    feed([[50%/\%^..<cr>]])
+    feed('yeGo<esc>p')
+    feed('50%')
+    execute([[/\%^..]])
 
-    feed('yeGo<esc>pA END<esc>:<cr>')
-    feed([[50%/\%$<cr>]])
-    -- Ayb20gg/..\%$.
-    feed('"bybGo<esc>"apo<esc>"bp:"<cr>')
+    feed('yeGo<esc>pA END<esc>')
+    feed('50%')
+    execute([[/\%$]])
+    feed('ayb20gg')
+    execute([[/..\%$]])
+    feed('"bybGo<esc>"apo<esc>"bp')
 
     -- Check for detecting error.
     execute('set regexpengine=2')
@@ -666,8 +671,8 @@ describe('64', function()
     execute('  endtry')
     execute('endfor')
 
-    -- """" Write the results """"""""""""".
-    execute([[/\%#=1^Results/,$wq! test.out]])
+    -- Prepare buffer for expect()
+    execute([[0,/^\%#=1^Results/-1 delete]])
 
     -- Assert buffer contents.
     expect([=[
