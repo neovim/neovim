@@ -621,23 +621,27 @@ describe('64', function()
     feed('Go<esc>p')
 
     -- Check patterns matching cursor position.
-    execute('func! Postest()')
-    feed(' new<cr>')
-    feed([=[ call setline(1, ['ffooooo', 'boboooo', 'zoooooo', 'koooooo', 'moooooo', "\t\t\tfoo", 'abababababababfoo', 'bababababababafoo', '********_'])<cr>]=])
-    feed([=[ call setpos('.', [0, 1, 0, 0])<cr>]=])
-    feed([[ s/\%>3c.//g<cr>]])
-    feed([=[ call setpos('.', [0, 2, 4, 0])<cr>]=])
-    feed([[ s/\%#.*$//g<cr>]])
-    feed([=[ call setpos('.', [0, 3, 0, 0])<cr>]=])
-    feed([[ s/\%<3c./_/g<cr>]])
-    feed([[ %s/\%4l\%>5c./_/g<cr>]])
-    feed([[ %s/\%6l\%>25v./_/g<cr>]])
-    feed([[ %s/\%>6l\%3c./!/g<cr>]])
-    feed([[ %s/\%>7l\%12c./?/g<cr>]])
-    feed([[ %s/\%>7l\%<9l\%>5v\%<8v./#/g<cr>]])
-    feed(' 1,$yank<cr>')
-    feed(' quit!<cr>')
-    feed('endfunc<cr>')
+    source([[
+      func! Postest()
+        new
+        call setline(1, ['ffooooo', 'boboooo', 'zoooooo', 'koooooo',
+	  \ 'moooooo', "\t\t\tfoo", 'abababababababfoo', 'bababababababafoo',
+	  \ '********_'])
+        call setpos('.', [0, 1, 0, 0])
+        s/\%>3c.//g
+        call setpos('.', [0, 2, 4, 0])
+        s/\%#.*$//g
+        call setpos('.', [0, 3, 0, 0])
+        s/\%<3c./_/g
+        %s/\%4l\%>5c./_/g
+        %s/\%6l\%>25v./_/g
+        %s/\%>6l\%3c./!/g
+        %s/\%>7l\%12c./?/g
+        %s/\%>7l\%<9l\%>5v\%<8v./#/g
+        1,$yank
+        quit!
+      endfunc
+    ]])
     feed('Go-0-<esc>')
     execute('set re=0')
     execute('call Postest()')
