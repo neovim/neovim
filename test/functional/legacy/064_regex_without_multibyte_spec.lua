@@ -66,50 +66,90 @@ local function test1(re_engine, pattern, text, ...)
     end
   end
 end
-    source([[
-      for t in tl
-        let re = t[0]
-        let pat = t[1]
-        let text = t[2]
-        let matchidx = 3
-        for engine in [0, 1, 2]
-          if engine == 2 && re == 0 || engine == 1 && re == 1
-            continue
-          endif
-          let &regexpengine = engine
-          try
-            let l = matchlist(text, pat)
-          catch
-            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", caused an exception: \"' . v:exception . '\"'
-          endtry
-	  " Check the match itself.
-          if len(l) == 0 && len(t) > matchidx
-            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", did not match, expected: \"' . t[matchidx] . '\"'
-          elseif len(l) > 0 && len(t) == matchidx
-            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", match: \"' . l[0] . '\", expected no match'
-          elseif len(t) > matchidx && l[0] != t[matchidx]
-            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", match: \"' . l[0] . '\", expected: \"' . t[matchidx] . '\"'
-          else
-            $put ='OK ' . engine . ' - ' . pat
-          endif
-          if len(l) > 0
-	  " Check all the nine submatches.
-            for i in range(1, 9)
-              if len(t) <= matchidx + i
-                let e = ''
-              else
-                let e = t[matchidx + i]
-              endif
-              if l[i] != e
-                $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", submatch ' . i . ': \"' . l[i] . '\", expected: \"' . e . '\"'
-              endif
-            endfor
-            unlet i
-          endif
-        endfor
-      endfor
-      unlet t tl e l
-    ]])
+--TODO TODO--    source([[
+--TODO TODO--      function Test_type_1(re, pat, text, ...)
+--TODO TODO--	let matchidx = 3
+--TODO TODO--        for engine in [0, 1, 2]
+--TODO TODO--          if engine == 2 && a:re == 0 || engine == 1 && a:re == 1
+--TODO TODO--            continue
+--TODO TODO--          endif
+--TODO TODO--          let &regexpengine = engine
+--TODO TODO--          try
+--TODO TODO--            let l = matchlist(a:text, a:pat)
+--TODO TODO--          catch
+--TODO TODO--            $put ='ERROR ' . engine . ': pat: \"' . a:pat . '\", text: \"' . a:text . '\", caused an exception: \"' . v:exception . '\"'
+--TODO TODO--          endtry
+--TODO TODO--	  " Check the match itself.
+--TODO TODO--
+--TODO TODO--          if len(l) == 0 && a:0 > 0
+--TODO TODO--            $put ='ERROR ' . engine . ': pat: \"' . a:pat . '\", text: \"' . a:text . '\", did not match, expected: \"' . a:1 . '\"'
+--TODO TODO--          elseif len(l) > 0 && a:0 == 1
+--TODO TODO--            $put ='ERROR ' . engine . ': pat: \"' . a:pat . '\", text: \"' . a:text . '\", match: \"' . l[0] . '\", expected no match'
+--TODO TODO--          elseif a:0 > 0 && l[0] != a:1
+--TODO TODO--            $put ='ERROR ' . engine . ': pat: \"' . a:pat . '\", text: \"' . a:text . '\", match: \"' . l[0] . '\", expected: \"' . a:1 . '\"'
+--TODO TODO--          else
+--TODO TODO--            $put ='OK ' . engine . ' - ' . pat
+--TODO TODO--          endif
+--TODO TODO--          if len(l) > 0
+--TODO TODO--	  " Check all the nine submatches.
+--TODO TODO--            for i in range(1, 9)
+--TODO TODO--              if a:0 < i
+--TODO TODO--                let e = ''
+--TODO TODO--              else
+--TODO TODO--                let e = a:000[i]
+--TODO TODO--              endif
+--TODO TODO--              if l[i] != e
+--TODO TODO--                $put ='ERROR ' . engine . ': pat: \"' . a:pat . '\", text: \"' . a:text . '\", submatch ' . i . ': \"' . l[i] . '\", expected: \"' . e . '\"'
+--TODO TODO--              endif
+--TODO TODO--            endfor
+--TODO TODO--          endif
+--TODO TODO--        endfor
+--TODO TODO--      endfor
+--TODO TODO--      ]])
+--TODO TODO--    source([[
+--TODO TODO--      for t in tl
+--TODO TODO--        let re = t[0]
+--TODO TODO--        let pat = t[1]
+--TODO TODO--        let text = t[2]
+--TODO TODO--        let matchidx = 3
+--TODO TODO--        for engine in [0, 1, 2]
+--TODO TODO--          if engine == 2 && re == 0 || engine == 1 && re == 1
+--TODO TODO--            continue
+--TODO TODO--          endif
+--TODO TODO--          let &regexpengine = engine
+--TODO TODO--          try
+--TODO TODO--            let l = matchlist(text, pat)
+--TODO TODO--          catch
+--TODO TODO--            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", caused an exception: \"' . v:exception . '\"'
+--TODO TODO--          endtry
+--TODO TODO--	  " Check the match itself.
+--TODO TODO--          if len(l) == 0 && len(t) > matchidx
+--TODO TODO--            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", did not match, expected: \"' . t[matchidx] . '\"'
+--TODO TODO--          elseif len(l) > 0 && len(t) == matchidx
+--TODO TODO--            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", match: \"' . l[0] . '\", expected no match'
+--TODO TODO--          elseif len(t) > matchidx && l[0] != t[matchidx]
+--TODO TODO--            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", match: \"' . l[0] . '\", expected: \"' . t[matchidx] . '\"'
+--TODO TODO--          else
+--TODO TODO--            $put ='OK ' . engine . ' - ' . pat
+--TODO TODO--          endif
+--TODO TODO--          if len(l) > 0
+--TODO TODO--	  " Check all the nine submatches.
+--TODO TODO--            for i in range(1, 9)
+--TODO TODO--              if len(t) <= matchidx + i
+--TODO TODO--                let e = ''
+--TODO TODO--              else
+--TODO TODO--                let e = t[matchidx + i]
+--TODO TODO--              endif
+--TODO TODO--              if l[i] != e
+--TODO TODO--                $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", submatch ' . i . ': \"' . l[i] . '\", expected: \"' . e . '\"'
+--TODO TODO--              endif
+--TODO TODO--            endfor
+--TODO TODO--            unlet i
+--TODO TODO--          endif
+--TODO TODO--        endfor
+--TODO TODO--      endfor
+--TODO TODO--      unlet t tl e l
+--TODO TODO--    ]])
 local function test2(re_engine, pattern, before, after,  ...)
   for engine = 0, 2 do
     if (engine == 2 and re_engine == 0) or (engine == 1 and re_engine == 1) then
