@@ -1763,6 +1763,76 @@ describe('regexp pattern without multi byte support', function() -- TODO multi b
       OK 2 - \%>70vGesamt]=])
   end)
 
+  it('part 2', function()
+
+    insert('multi-line tests')
+
+    execute(
+      'let tl = []',
+      -- back references.
+      [=[call add(tl, [2, '^.\(.\).\_..\1.', ['aaa', 'aaa', 'b'], ['XX', 'b']])]=],
+      [=[call add(tl, [2, '\v.*\/(.*)\n.*\/\1$', ['./Dir1/Dir2/zyxwvuts.txt', './Dir1/Dir2/abcdefgh.bat', '', './Dir1/Dir2/file1.txt', './OtherDir1/OtherDir2/file1.txt'], ['./Dir1/Dir2/zyxwvuts.txt', './Dir1/Dir2/abcdefgh.bat', '', 'XX']])]=],
+      -- line breaks.
+      [=[call add(tl, [2, '\S.*\nx', ['abc', 'def', 'ghi', 'xjk', 'lmn'], ['abc', 'def', 'XXjk', 'lmn']])]=],
+      -- Check that \_[0-9] matching EOL does not break a following \>.
+      [=[call add(tl, [2, '\<\(\(25\_[0-5]\|2\_[0-4]\_[0-9]\|\_[01]\?\_[0-9]\_[0-9]\?\)\.\)\{3\}\(25\_[0-5]\|2\_[0-4]\_[0-9]\|\_[01]\?\_[0-9]\_[0-9]\?\)\>', ['', 'localnet/192.168.0.1', ''], ['', 'localnet/XX', '']])]=],
+      -- Check a pattern with a line break and ^ and $.
+      [=[call add(tl, [2, 'a\n^b$\n^c', ['a', 'b', 'c'], ['XX']])]=],
+      [=[call add(tl, [2, '\(^.\+\n\)\1', [' dog', ' dog', 'asdf'], ['XXasdf']])]=]
+    )
+
+    -- Run the multi-line tests.
+
+    source([[
+      for t in tl
+        let re = t[0]
+        let pat = t[1]
+        let before = t[2]
+        let after = t[3]
+        for engine in [0, 1, 2]
+          if engine == 2 && re == 0 || engine == 1 && re ==1
+            continue
+          endif
+          let &regexpengine = engine
+          new
+          call setline(1, before)
+          exe '%s/' . pat . '/XX/'
+          let result = getline(1, '$')
+          q!
+          if result != after
+            $put ='ERROR: pat: \"' . pat . '\", text: \"' . string(before) .
+	      \ '\", expected: \"' . string(after) . '\", got: \"' .
+	      \ string(result) . '\"'
+          else
+            $put ='OK ' . engine . ' - ' . pat
+          endif
+        endfor
+      endfor
+      unlet t tl
+    ]])
+
+    expect([[
+      multi-line tests
+      OK 0 - ^.\(.\).\_..\1.
+      OK 1 - ^.\(.\).\_..\1.
+      OK 2 - ^.\(.\).\_..\1.
+      OK 0 - \v.*\/(.*)\n.*\/\1$
+      OK 1 - \v.*\/(.*)\n.*\/\1$
+      OK 2 - \v.*\/(.*)\n.*\/\1$
+      OK 0 - \S.*\nx
+      OK 1 - \S.*\nx
+      OK 2 - \S.*\nx
+      OK 0 - \<\(\(25\_[0-5]\|2\_[0-4]\_[0-9]\|\_[01]\?\_[0-9]\_[0-9]\?\)\.\)\{3\}\(25\_[0-5]\|2\_[0-4]\_[0-9]\|\_[01]\?\_[0-9]\_[0-9]\?\)\>
+      OK 1 - \<\(\(25\_[0-5]\|2\_[0-4]\_[0-9]\|\_[01]\?\_[0-9]\_[0-9]\?\)\.\)\{3\}\(25\_[0-5]\|2\_[0-4]\_[0-9]\|\_[01]\?\_[0-9]\_[0-9]\?\)\>
+      OK 2 - \<\(\(25\_[0-5]\|2\_[0-4]\_[0-9]\|\_[01]\?\_[0-9]\_[0-9]\?\)\.\)\{3\}\(25\_[0-5]\|2\_[0-4]\_[0-9]\|\_[01]\?\_[0-9]\_[0-9]\?\)\>
+      OK 0 - a\n^b$\n^c
+      OK 1 - a\n^b$\n^c
+      OK 2 - a\n^b$\n^c
+      OK 0 - \(^.\+\n\)\1
+      OK 1 - \(^.\+\n\)\1
+      OK 2 - \(^.\+\n\)\1]])
+  end)
+
   it('is working', function()
     insert([[
       Substitute here:
