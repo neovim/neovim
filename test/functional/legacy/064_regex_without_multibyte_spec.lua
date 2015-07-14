@@ -219,8 +219,7 @@ describe('64', function()
       call add(tl, [2, 'bc\+', 'abdef'])
 
       " operator \|
-      " Alternation is ordered.
-      call add(tl, [2, 'a\|ab', 'cabd', 'a'])
+      call add(tl, [2, 'a\|ab', 'cabd', 'a']) " Alternation is ordered.
 
       call add(tl, [2, 'c\?', 'ccb', 'c'])
       call add(tl, [2, 'bc\?', 'abd', 'b'])
@@ -628,10 +627,8 @@ describe('64', function()
     execute([[call add(tl, [2, '\(foo\)\@<!bar.', 'xx foobar1 xbar2 xx', 'bar2'])]])
 
     -- Look-behind match in front of a zero-width item.
-    -- Test header']).
-    execute([[call add(tl, [2, '\v\C%(<Last Changed:\s+)@<=.*$', ']])
-    -- Last Changed: 1970', '1970']).
-    execute([[call add(tl, [2, '\v\C%(<Last Changed:\s+)@<=.*$', ']])
+    execute([[call add(tl, [2, '\v\C%(<Last Changed:\s+)@<=.*$', '" test header'])]])
+    execute([[call add(tl, [2, '\v\C%(<Last Changed:\s+)@<=.*$', 'Last Changed: 1970', '1970'])]])
     execute([[call add(tl, [2, '\(foo\)\@<=\>', 'foobar'])]])
     execute([[call add(tl, [2, '\(foo\)\@<=\>', 'barfoo', '', 'foo'])]])
     execute([[call add(tl, [2, '\(foo\)\@<=.*', 'foobar', 'bar', 'foo'])]])
@@ -640,7 +637,7 @@ describe('64', function()
     execute([[call add(tl, [2, '\(r\@<=\|\w\@<!\)\/', 'x = /word/;', '/'])]])
     execute([[call add(tl, [2, '^[a-z]\+\ze \&\(asdf\)\@<!', 'foo bar', 'foo'])]])
 
-    -- """" \@>.
+    -- \@>.
     execute([[call add(tl, [2, '\(a*\)\@>a', 'aaaa'])]])
     execute([[call add(tl, [2, '\(a*\)\@>b', 'aaab', 'aaab', 'aaa'])]])
     execute([[call add(tl, [2, '^\(.\{-}b\)\@>.', '  abcbd', '  abc', '  ab'])]])
