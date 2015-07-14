@@ -117,7 +117,7 @@ end
 --TODO--      unlet t tl
 --TODO--    ]])
 
-describe('64', function()
+describe('regexp pattern without multi byte support', function() -- TODO multi byte?
   setup(clear)
 
   it('is working', function()
