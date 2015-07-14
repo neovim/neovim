@@ -10732,8 +10732,13 @@ static void f_jobsend(typval_T *argvars, typval_T *rettv)
     return;
   }
 
+  if (!job_writable(job)) {
+    EMSG2(_(e_jobsend), _("not writable"));
+    return;
+  }
+
   if (((TerminalJobData *)job_data(job))->stdin_closed) {
-    EMSG(_("Can't send data to the job: stdin is closed"));
+    EMSG2(_(e_jobsend), _("stdin is closed"));
     return;
   }
 
@@ -10889,6 +10894,8 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
       opts.term_name = term;
     }
   }
+
+  opts.writable = !get_dict_number(job_opts, (uint8_t *)"ignore_stdin");
 
 start:
   if (!on_stdout) {

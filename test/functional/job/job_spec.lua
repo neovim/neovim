@@ -61,6 +61,16 @@ describe('jobs', function()
     eq({'notification', 'exit', {0, 0}}, next_msg())
   end)
 
+  it('allows ignoring stdin', function()
+    nvim('command', "let j = jobstart(['sleep', '10'], extend({'ignore_stdin' : 1}, g:job_opts))")
+
+    local _, err = pcall(eval, "jobsend(j, '')")
+    neq("E905", err:sub(1,4))  -- error: not writable
+
+    eval('jobstop(j)')
+    eq({'notification', 'exit', {0, 0}}, next_msg())
+  end)
+
   it('preserves NULs', function()
     -- Make a file with NULs in it.
     local filename = os.tmpname()
