@@ -239,7 +239,6 @@ describe('regexp pattern without multi byte support', function() -- TODO multi b
     --     Previously written tests 
     --
 
-    test1(2, 'ab', 'aab', 'ab')
     source([[
       call add(tl, [2, 'ab', 'aab', 'ab'])
       call add(tl, [2, 'b', 'abcdef', 'b'])
