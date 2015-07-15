@@ -6,10 +6,15 @@ STARTTEST
 :"
 :" Don't want to depend on the locale from the environment.  The .aff and .dic
 :" text is in latin1, the test text is utf-8.
+:%w! backup.test59.in.1
 :set enc=latin1
+:%w! backup.test59.in.2
 :e!
+:%w! backup.test59.in.3
 :set enc=utf-8
+:%w! backup.test59.in.4
 :set fenc=
+:%w! backup.test59.in.5
 :"
 :" Function to test .aff/.dic with list of good and bad words.
 :func TestOne(aff, dic)
