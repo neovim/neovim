@@ -3,9 +3,13 @@
 local helpers = require('test.functional.helpers')
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local write_file = helpers.write_file
 
 describe("spell checking with 'encoding' set to utf-8", function()
-  setup(clear)
+  setup(function()
+    clear()
+    --write_file('', [[]])
+  end)
 
   it('is working', function()
     insert([[
