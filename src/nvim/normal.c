@@ -2016,6 +2016,9 @@ do_mouse (
       if (regname == '.')
         insert_reg(regname, true);
       else {
+        if (regname == 0 && eval_has_provider("clipboard")) {
+          regname = '*';
+        }
         if ((State & REPLACE_FLAG) && !yank_register_mline(regname))
           insert_reg(regname, true);
         else {
@@ -2279,6 +2282,9 @@ do_mouse (
    * Middle mouse click: Put text before cursor.
    */
   if (which_button == MOUSE_MIDDLE) {
+    if (regname == 0 && eval_has_provider("clipboard")) {
+      regname = '*';
+    }
     if (yank_register_mline(regname)) {
       if (mouse_past_bottom)
         dir = FORWARD;
