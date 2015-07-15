@@ -123,6 +123,13 @@ describe("spell checking with 'encoding' set to utf-8", function()
       'MAP c\xe7\n' ..
       'MAP y\xff\xfd\n' ..
       'MAP s\xdf\n')
+    write_file('Xtest3.aff', [[
+      SET ISO8859-1
+      
+      COMPOUNDMIN 3
+      COMPOUNDRULE m*
+      NEEDCOMPOUND x
+      ]])
   end)
 
   it('is working', function()
@@ -312,14 +319,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
       badend
       
       Test rules for compounding.
-      
-      3affstart
-      SET ISO8859-1
-      
-      COMPOUNDMIN 3
-      COMPOUNDRULE m*
-      NEEDCOMPOUND x
-      3affend
       
       3dicstart
       1234
@@ -557,7 +556,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
         $put =''
         $put ='test '. a:aff . '-' . a:dic
 	"  Generate a .spl file from a .dic and .aff file.
-	if str2nr(a:aff) <= 2
+	if str2nr(a:aff) <= 3
 	  exe '1;/^' . a:aff . 'affstart/+1,/^' . a:aff . 'affend/-1w! Xtest.aff'
 	else
 	  exe '!cp -f Xtest'.a:aff.'.aff Xtest.aff'
