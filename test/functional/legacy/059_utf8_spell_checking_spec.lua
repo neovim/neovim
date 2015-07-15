@@ -533,12 +533,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
       
       test output:]])
 
-    -- Don't want to depend on the locale from the environment.  The .aff and
-    -- .dic text is in latin1, the test text is utf-8.
-    execute('set enc=latin1')
-    execute('e!')
-    execute('set enc=utf-8')
-    execute('set fenc=')
     -- Function to test .aff/.dic with list of good and bad words.
     os.execute('cp -f Xtest1.aff Xtest.aff')
     os.execute('cp -f Xtest1.dic Xtest.dic')
