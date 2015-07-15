@@ -130,6 +130,59 @@ describe("spell checking with 'encoding' set to utf-8", function()
       COMPOUNDRULE m*
       NEEDCOMPOUND x
       ]])
+    write_file('Xtest4.aff', 
+      'SET ISO8859-1\n' ..
+      '\n' ..
+      'FOL  \xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee' ..
+      '\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xdf' ..
+      '\xff\n' ..
+      'LOW  \xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee' ..
+      '\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xdf' ..
+      '\xff\n' ..
+      'UPP  \xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce' ..
+      '\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf' ..
+      '\xff\n' ..
+      '\n' ..
+      'COMPOUNDRULE m+\n' ..
+      'COMPOUNDRULE sm*e\n' ..
+      'COMPOUNDRULE sm+\n' ..
+      'COMPOUNDMIN 3\n' ..
+      'COMPOUNDWORDMAX 3\n' ..
+      'COMPOUNDFORBIDFLAG t\n' ..
+      '\n' ..
+      'COMPOUNDSYLMAX 5\n' ..
+      'SYLLABLE a\xe1e\xe9i\xedo\xf3\xf6\xf5u\xfa\xfc\xfby/aa/au/ea/ee/ei/' ..
+      'ie/oa/oe/oo/ou/uu/ui\n' ..
+      '\n' ..
+      'MAP 9\n' ..
+      'MAP a\xe0\xe1\xe2\xe3\xe4\xe5\n' ..
+      'MAP e\xe8\xe9\xea\xeb\n' ..
+      'MAP i\xec\xed\xee\xef\n' ..
+      'MAP o\xf2\xf3\xf4\xf5\xf6\n' ..
+      'MAP u\xf9\xfa\xfb\xfc\n' ..
+      'MAP n\xf1\n' ..
+      'MAP c\xe7\n' ..
+      'MAP y\xff\xfd\n' ..
+      'MAP s\xdf\n' ..
+      '\n' ..
+      'NEEDAFFIX x\n' ..
+      '\n' ..
+      'PFXPOSTPONE\n' ..
+      '\n' ..
+      'MIDWORD \'-\n' ..
+      '\n' ..
+      'SFX q N 1\n' ..
+      'SFX q   0    -ok .\n' ..
+      '\n' ..
+      'SFX a Y 2\n' ..
+      'SFX a 0 s .\n' ..
+      'SFX a 0 ize/t .\n' ..
+      '\n' ..
+      'PFX p N 1\n' ..
+      'PFX p 0 pre .\n' ..
+      '\n' ..
+      'PFX P N 1\n' ..
+      'PFX P 0 nou .\n')
   end)
 
   it('is working', function()
@@ -335,54 +388,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
       
       Tests for compounding.
       
-      4affstart
-      SET ISO8859-1
-      
-      FOL  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
-      LOW  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
-      UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßÿ
-      
-      COMPOUNDRULE m+
-      COMPOUNDRULE sm*e
-      COMPOUNDRULE sm+
-      COMPOUNDMIN 3
-      COMPOUNDWORDMAX 3
-      COMPOUNDFORBIDFLAG t
-      
-      COMPOUNDSYLMAX 5
-      SYLLABLE aáeéiíoóöõuúüûy/aa/au/ea/ee/ei/ie/oa/oe/oo/ou/uu/ui
-      
-      MAP 9
-      MAP aàáâãäå
-      MAP eèéêë
-      MAP iìíîï
-      MAP oòóôõö
-      MAP uùúûü
-      MAP nñ
-      MAP cç
-      MAP yÿý
-      MAP sß
-      
-      NEEDAFFIX x
-      
-      PFXPOSTPONE
-      
-      MIDWORD '-
-      
-      SFX q N 1
-      SFX q   0    -ok .
-      
-      SFX a Y 2
-      SFX a 0 s .
-      SFX a 0 ize/t .
-      
-      PFX p N 1
-      PFX p 0 pre .
-      
-      PFX P N 1
-      PFX P 0 nou .
-      4affend
-      
       4dicstart
       1234
       word/mP
@@ -556,7 +561,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
         $put =''
         $put ='test '. a:aff . '-' . a:dic
 	"  Generate a .spl file from a .dic and .aff file.
-	if str2nr(a:aff) <= 3
+	if str2nr(a:aff) <= 4
 	  exe '1;/^' . a:aff . 'affstart/+1,/^' . a:aff . 'affend/-1w! Xtest.aff'
 	else
 	  exe '!cp -f Xtest'.a:aff.'.aff Xtest.aff'
