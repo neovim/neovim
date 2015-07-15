@@ -183,6 +183,32 @@ describe("spell checking with 'encoding' set to utf-8", function()
       '\n' ..
       'PFX P N 1\n' ..
       'PFX P 0 nou .\n')
+    write_file('Xtest5.aff',
+      'SET ISO8859-1\n' ..
+      '\n' ..
+      'FLAG long\n' ..
+      '\n' ..
+      'NEEDAFFIX !!\n' ..
+      '\n' ..
+      'COMPOUNDRULE ssmm*ee\n' ..
+      '\n' ..
+      'NEEDCOMPOUND xx\n' ..
+      'COMPOUNDPERMITFLAG pp\n' ..
+      '\n' ..
+      'SFX 13 Y 1\n' ..
+      'SFX 13 0 bork .\n' ..
+      '\n' ..
+      'SFX a1 Y 1\n' ..
+      'SFX a1 0 a1 .\n' ..
+      '\n' ..
+      'SFX a\xe9 Y 1\n' ..
+      'SFX a\xe9 0 a\xe9 .\n' ..
+      '\n' ..
+      'PFX zz Y 1\n' ..
+      'PFX zz 0 pre/pp .\n' ..
+      '\n' ..
+      'PFX yy Y 1\n' ..
+      'PFX yy 0 nou .\n')
   end)
 
   it('is working', function()
@@ -417,34 +443,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
       
       Test affix flags with two characters
       
-      5affstart
-      SET ISO8859-1
-      
-      FLAG long
-      
-      NEEDAFFIX !!
-      
-      COMPOUNDRULE ssmm*ee
-      
-      NEEDCOMPOUND xx
-      COMPOUNDPERMITFLAG pp
-      
-      SFX 13 Y 1
-      SFX 13 0 bork .
-      
-      SFX a1 Y 1
-      SFX a1 0 a1 .
-      
-      SFX aé Y 1
-      SFX aé 0 aé .
-      
-      PFX zz Y 1
-      PFX zz 0 pre/pp .
-      
-      PFX yy Y 1
-      PFX yy 0 nou .
-      5affend
-      
       5dicstart
       1234
       foo/a1aé!!
@@ -561,7 +559,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
         $put =''
         $put ='test '. a:aff . '-' . a:dic
 	"  Generate a .spl file from a .dic and .aff file.
-	if str2nr(a:aff) <= 4
+	if str2nr(a:aff) <= 5
 	  exe '1;/^' . a:aff . 'affstart/+1,/^' . a:aff . 'affend/-1w! Xtest.aff'
 	else
 	  exe '!cp -f Xtest'.a:aff.'.aff Xtest.aff'
