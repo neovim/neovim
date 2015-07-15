@@ -644,8 +644,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
     execute('delfunc TestOne')
     execute('set spl= enc=latin1')
 
-    feed('gg')
-    execute(':/^test output:/,$wq! test.out')
+    execute('0,/^test output:/-1 delete')
 
     -- Assert buffer contents.
     expect([=[
