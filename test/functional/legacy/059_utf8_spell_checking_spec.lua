@@ -233,6 +233,40 @@ describe("spell checking with 'encoding' set to utf-8", function()
       '\n' ..
       'PFX Zz Y 1\n' ..
       'PFX Zz 0 pre/p .\n')
+    write_file('Xtest7.aff',
+      'SET ISO8859-1\n' ..
+      '\n' ..
+      'FOL  \xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee' ..
+      '\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xdf' ..
+      '\xff\n' ..
+      'LOW  \xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee' ..
+      '\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xdf' ..
+      '\xff\n' ..
+      'UPP  \xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce' ..
+      '\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf' ..
+      '\xff\n' ..
+      '\n' ..
+      'FLAG num\n' ..
+      '\n' ..
+      'NEEDAFFIX 9999\n' ..
+      '\n' ..
+      'COMPOUNDRULE 2,77*123\n' ..
+      '\n' ..
+      'NEEDCOMPOUND 1\n' ..
+      'COMPOUNDPERMITFLAG 432\n' ..
+      '\n' ..
+      'SFX 61003 Y 1\n' ..
+      'SFX 61003 0 meat .\n' ..
+      '\n' ..
+      'SFX 391 Y 1\n' ..
+      'SFX 391 0 a1 .\n' ..
+      '\n' ..
+      'SFX 111 Y 1\n' ..
+      'SFX 111 0 a\xe9'..
+      ' .\n' ..
+      '\n' ..
+      'PFX 17 Y 1\n' ..
+      'PFX 17 0 pre/432 .\n')
   end)
 
   it('is working', function()
@@ -497,35 +531,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
       	leadprobar
       badend
       
-      7affstart
-      SET ISO8859-1
-      
-      FOL  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
-      LOW  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
-      UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßÿ
-      
-      FLAG num
-      
-      NEEDAFFIX 9999
-      
-      COMPOUNDRULE 2,77*123
-      
-      NEEDCOMPOUND 1
-      COMPOUNDPERMITFLAG 432
-      
-      SFX 61003 Y 1
-      SFX 61003 0 meat .
-      
-      SFX 391 Y 1
-      SFX 391 0 a1 .
-      
-      SFX 111 Y 1
-      SFX 111 0 aé .
-      
-      PFX 17 Y 1
-      PFX 17 0 pre/432 .
-      7affend
-      
       7dicstart
       1234
       mee/391,111,9999
@@ -557,11 +562,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
         $put =''
         $put ='test '. a:aff . '-' . a:dic
 	"  Generate a .spl file from a .dic and .aff file.
-	if str2nr(a:aff) <= 6
-	  exe '1;/^' . a:aff . 'affstart/+1,/^' . a:aff . 'affend/-1w! Xtest.aff'
-	else
-	  exe '!cp -f Xtest'.a:aff.'.aff Xtest.aff'
-	endif
+	exe '!cp -f Xtest'.a:aff.'.aff Xtest.aff'
         exe '1;/^' . a:dic . 'dicstart/+1,/^' . a:dic . 'dicend/-1w! Xtest.dic'
         mkspell! Xtest Xtest
 	"  Use that spell file.
