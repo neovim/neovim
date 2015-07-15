@@ -19,6 +19,8 @@ STARTTEST
   " Generate a .spl file from a .dic and .aff file.
   exe '1;/^' . a:aff . 'affstart/+1,/^' . a:aff . 'affend/-1w! Xtest.aff'
   exe '1;/^' . a:dic . 'dicstart/+1,/^' . a:dic . 'dicend/-1w! Xtest.dic'
+  exe '!cp -f Xtest.aff backup.Xtest'.a:aff.'.aff'
+  exe '!cp -f Xtest.dic backup.Xtest'.a:dic.'.dic'
   mkspell! Xtest Xtest
   " use that spell file
   set spl=Xtest.utf-8.spl spell
@@ -54,6 +56,7 @@ endfunc
 :"
 :" and now with SAL instead of SOFO items; test automatic reloading
 gg:/^affstart_sal/+1,/^affend_sal/-1w! Xtest.aff
+:!cp -f Xtest.aff backup.Xtest.sal.aff
 :mkspell! Xtest Xtest
 :$put =soundfold('goobledygoook')
 :$put =soundfold('kóopërÿnôven')
@@ -61,6 +64,7 @@ gg:/^affstart_sal/+1,/^affend_sal/-1w! Xtest.aff
 :"
 :" also use an addition file
 gg:/^addstart/+1,/^addend/-1w! Xtest.utf-8.add
+:!cp -f Xtest.utf-8.add backup.Xtest.utf-8.add
 :mkspell! Xtest.utf-8.add.spl Xtest.utf-8.add
 :set spellfile=Xtest.utf-8.add
 /^test2:
