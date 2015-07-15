@@ -4,7 +4,7 @@ local helpers = require('test.functional.helpers')
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 
-describe('59', function()
+describe("spell checking with 'encoding' set to utf-8", function()
   setup(clear)
 
   it('is working', function()
