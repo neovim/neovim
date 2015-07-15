@@ -8,7 +8,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
   setup(clear)
 
   it('is working', function()
-    insert([=[
+    insert([[
       1affstart
       SET ISO8859-1
       TRY esianrtolcdugmphbyfvkwjkqxz-ÎÈËÍÔÓ‰‡‚ˆ¸˚'ESIANRTOLCDUGMPHBYFVKWJKQXZ
@@ -523,10 +523,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       	leadprobar
       badend
       
-      test output:]=])
-
-    execute('so small.vim')
-    execute('so mbyte.vim')
+      test output:]])
 
     -- Don't want to depend on the locale from the environment.  The .aff and .dic.
     -- Text is in latin1, the test text is utf-8.
@@ -577,42 +574,53 @@ describe("spell checking with 'encoding' set to utf-8", function()
 
 
     -- And now with SAL instead of SOFO items; test automatic reloading.
-    feed('gg:/^affstart_sal/+1,/^affend_sal/-1w! Xtest.aff<cr>')
+    feed('gg')
+    execute(':/^affstart_sal/+1,/^affend_sal/-1w! Xtest.aff')
     execute('mkspell! Xtest Xtest')
     execute([[$put =soundfold('goobledygoook')]])
     execute([[$put =soundfold('k√≥op√´r√øn√¥ven')]])
     execute([[$put =soundfold('oeverloos gezwets edale')]])
 
     -- Also use an addition file.
-    feed('gg:/^addstart/+1,/^addend/-1w! Xtest.utf-8.add<cr>')
+    feed('gg')
+    execute(':/^addstart/+1,/^addend/-1w! Xtest.utf-8.add')
     execute('mkspell! Xtest.utf-8.add.spl Xtest.utf-8.add')
     execute('set spellfile=Xtest.utf-8.add')
     execute('/^test2:')
-    feed(']s:let [str, a] = spellbadword()<cr>')
+    feed(']s')
+    execute('let [str, a] = spellbadword()')
     execute('$put =str')
     execute('set spl=Xtest_us.utf-8.spl')
     execute('/^test2:')
-    feed(']smm:let [str, a] = spellbadword()<cr>')
+    feed(']smm')
+    execute('let [str, a] = spellbadword()')
     execute('$put =str')
-    feed('`m]s:let [str, a] = spellbadword()<cr>')
+    feed('`m]s')
+    execute('let [str, a] = spellbadword()')
     execute('$put =str')
     execute('set spl=Xtest_gb.utf-8.spl')
     execute('/^test2:')
-    feed(']smm:let [str, a] = spellbadword()<cr>')
+    feed(']smm')
+    execute('let [str, a] = spellbadword()')
     execute('$put =str')
-    feed('`m]s:let [str, a] = spellbadword()<cr>')
+    feed('`m]s')
+    execute('let [str, a] = spellbadword()')
     execute('$put =str')
     execute('set spl=Xtest_nz.utf-8.spl')
     execute('/^test2:')
-    feed(']smm:let [str, a] = spellbadword()<cr>')
+    feed(']smm')
+    execute('let [str, a] = spellbadword()')
     execute('$put =str')
-    feed('`m]s:let [str, a] = spellbadword()<cr>')
+    feed('`m]s')
+    execute('let [str, a] = spellbadword()')
     execute('$put =str')
     execute('set spl=Xtest_ca.utf-8.spl')
     execute('/^test2:')
-    feed(']smm:let [str, a] = spellbadword()<cr>')
+    feed(']smm')
+    execute('let [str, a] = spellbadword()')
     execute('$put =str')
-    feed('`m]s:let [str, a] = spellbadword()<cr>')
+    feed('`m]s')
+    execute('let [str, a] = spellbadword()')
     execute('$put =str')
     execute('unlet str a')
 
@@ -630,7 +638,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
     execute('delfunc TestOne')
     execute('set spl= enc=latin1')
 
-    feed('gg:/^test output:/,$wq! test.out<cr>')
+    execute('0,/^test output:/-1 delete')
 
     -- Assert buffer contents.
     expect([=[
