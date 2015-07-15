@@ -235,7 +235,7 @@ describe('regexp pattern without multi byte support:', function() -- TODO multi 
 
     execute('source test64_run_simple_tests.vim')
 
-    expect([=[
+    expect([[
       Results of test64:
       OK 0 - ab
       OK 1 - ab
@@ -539,7 +539,7 @@ describe('regexp pattern without multi byte support:', function() -- TODO multi 
       OK 2 - \v(a*)+
       OK 0 - x
       OK 1 - x
-      OK 2 - x]=])
+      OK 2 - x]])
   end)
 
   it('simple tests', function()
@@ -556,10 +556,6 @@ describe('regexp pattern without multi byte support:', function() -- TODO multi 
     --    etc.
     -- When there is no match use only the first two items.
     execute('let tl = []')
-
-    -- 
-    --      Simple tests 
-    -- 
 
     source([[
       " Search single groups.
