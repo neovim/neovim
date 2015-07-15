@@ -15,13 +15,13 @@ describe("spell checking with 'encoding' set to utf-8", function()
     insert([[
       1affstart
       SET ISO8859-1
-      TRY esianrtolcdugmphbyfvkwjkqxz-λιθκοξδΰβφόϋ'ESIANRTOLCDUGMPHBYFVKWJKQXZ
+      TRY esianrtolcdugmphbyfvkwjkqxz-Γ«Γ©Γ¨ΓªΓ―Γ®Γ¤Γ ΓΆΓ¶ΓΌΓ»'ESIANRTOLCDUGMPHBYFVKWJKQXZ
       
-      FOL  ΰαβγδεζηθικλμνξοπρςστυφψωϊϋόύώίÿ
-      LOW  ΰαβγδεζηθικλμνξοπρςστυφψωϊϋόύώίÿ
-      UPP  ΐΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡÒΣΤΥΦΨΩΪΫάέήίÿ
+      FOL  Γ Γ΅ΓΆΓ£Γ¤Γ¥Γ¦Γ§Γ¨Γ©ΓªΓ«Γ¬Γ­Γ®Γ―Γ°Γ±Γ²Γ³Γ΄ΓµΓ¶ΓΈΓΉΓΊΓ»ΓΌΓ½ΓΎΓΓΏ
+      LOW  Γ Γ΅ΓΆΓ£Γ¤Γ¥Γ¦Γ§Γ¨Γ©ΓªΓ«Γ¬Γ­Γ®Γ―Γ°Γ±Γ²Γ³Γ΄ΓµΓ¶ΓΈΓΉΓΊΓ»ΓΌΓ½ΓΎΓΓΏ
+      UPP  Γ€ΓΓ‚ΓƒΓ„Γ…Γ†Γ‡ΓΓ‰ΓΓ‹ΓΓΓΓΓΓ‘Γ’Γ“Γ”Γ•Γ–ΓΓ™ΓΓ›ΓΓΓΓΓΏ
       
-      SOFOFROM abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZΰαβγδεζηθικλμνξοπρςστυφψωϊϋόύώίÿΐΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡÒΣΤΥΦΨΩΪΫάέήΏ
+      SOFOFROM abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZΓ Γ΅ΓΆΓ£Γ¤Γ¥Γ¦Γ§Γ¨Γ©ΓªΓ«Γ¬Γ­Γ®Γ―Γ°Γ±Γ²Γ³Γ΄ΓµΓ¶ΓΈΓΉΓΊΓ»ΓΌΓ½ΓΎΓΓΏΓ€ΓΓ‚ΓƒΓ„Γ…Γ†Γ‡ΓΓ‰ΓΓ‹ΓΓΓΓΓΓ‘Γ’Γ“Γ”Γ•Γ–ΓΓ™ΓΓ›ΓΓΓΒΏ
       SOFOTO   ebctefghejklnnepkrstevvkesebctefghejklnnepkrstevvkeseeeeeeeceeeeeeeedneeeeeeeeeeepseeeeeeeeceeeeeeeedneeeeeeeeeeep?
       
       MIDWORD	'-
@@ -53,24 +53,24 @@ describe("spell checking with 'encoding' set to utf-8", function()
       REP svp s.v.p.
       
       MAP 9
-      MAP aΰαβγδε
-      MAP eθικλ
-      MAP iμνξο
-      MAP oςστυφ
-      MAP uωϊϋό
-      MAP nρ
-      MAP cη
-      MAP yÿύ
-      MAP sί
+      MAP aΓ Γ΅ΓΆΓ£Γ¤Γ¥
+      MAP eΓ¨Γ©ΓªΓ«
+      MAP iΓ¬Γ­Γ®Γ―
+      MAP oΓ²Γ³Γ΄ΓµΓ¶
+      MAP uΓΉΓΊΓ»ΓΌ
+      MAP nΓ±
+      MAP cΓ§
+      MAP yΓΏΓ½
+      MAP sΓ
       1affend
       
       affstart_sal
       SET ISO8859-1
-      TRY esianrtolcdugmphbyfvkwjkqxz-λιθκοξδΰβφόϋ'ESIANRTOLCDUGMPHBYFVKWJKQXZ
+      TRY esianrtolcdugmphbyfvkwjkqxz-Γ«Γ©Γ¨ΓªΓ―Γ®Γ¤Γ ΓΆΓ¶ΓΌΓ»'ESIANRTOLCDUGMPHBYFVKWJKQXZ
       
-      FOL  ΰαβγδεζηθικλμνξοπρςστυφψωϊϋόύώίÿ
-      LOW  ΰαβγδεζηθικλμνξοπρςστυφψωϊϋόύώίÿ
-      UPP  ΐΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡÒΣΤΥΦΨΩΪΫάέήίÿ
+      FOL  Γ Γ΅ΓΆΓ£Γ¤Γ¥Γ¦Γ§Γ¨Γ©ΓªΓ«Γ¬Γ­Γ®Γ―Γ°Γ±Γ²Γ³Γ΄ΓµΓ¶ΓΈΓΉΓΊΓ»ΓΌΓ½ΓΎΓΓΏ
+      LOW  Γ Γ΅ΓΆΓ£Γ¤Γ¥Γ¦Γ§Γ¨Γ©ΓªΓ«Γ¬Γ­Γ®Γ―Γ°Γ±Γ²Γ³Γ΄ΓµΓ¶ΓΈΓΉΓΊΓ»ΓΌΓ½ΓΎΓΓΏ
+      UPP  Γ€ΓΓ‚ΓƒΓ„Γ…Γ†Γ‡ΓΓ‰ΓΓ‹ΓΓΓΓΓΓ‘Γ’Γ“Γ”Γ•Γ–ΓΓ™ΓΓ›ΓΓΓΓΓΏ
       
       MIDWORD	'-
       
@@ -101,15 +101,15 @@ describe("spell checking with 'encoding' set to utf-8", function()
       REP svp s.v.p.
       
       MAP 9
-      MAP aΰαβγδε
-      MAP eθικλ
-      MAP iμνξο
-      MAP oςστυφ
-      MAP uωϊϋό
-      MAP nρ
-      MAP cη
-      MAP yÿύ
-      MAP sί
+      MAP aΓ Γ΅ΓΆΓ£Γ¤Γ¥
+      MAP eΓ¨Γ©ΓªΓ«
+      MAP iΓ¬Γ­Γ®Γ―
+      MAP oΓ²Γ³Γ΄ΓµΓ¶
+      MAP uΓΉΓΊΓ»ΓΌ
+      MAP nΓ±
+      MAP cΓ§
+      MAP yΓΏΓ½
+      MAP sΓ
       
       SAL AH(AEIOUY)-^         *H
       SAL AR(AEIOUY)-^         *R
@@ -118,8 +118,8 @@ describe("spell checking with 'encoding' set to utf-8", function()
       SAL AH(AEIOUY)-          H
       SAL AR(AEIOUY)-          R
       SAL A(HR)                _
-      SAL ΐ^                   *
-      SAL Ε^                   *
+      SAL Γ€^                   *
+      SAL Γ…^                   *
       SAL BB-                  _
       SAL B                    B
       SAL CQ-                  _
@@ -133,7 +133,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       SAL DG(EIY)              K
       SAL DD-                  _
       SAL D                    T
-      SAL Ι<                   E
+      SAL Γ‰<                   E
       SAL EH(AEIOUY)-^         *H
       SAL ER(AEIOUY)-^         *R
       SAL E(HR)^               *
@@ -223,9 +223,9 @@ describe("spell checking with 'encoding' set to utf-8", function()
       2affstart
       SET ISO8859-1
       
-      FOL  ΰαβγδεζηθικλμνξοπρςστυφψωϊϋόύώίÿ
-      LOW  ΰαβγδεζηθικλμνξοπρςστυφψωϊϋόύώίÿ
-      UPP  ΐΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡÒΣΤΥΦΨΩΪΫάέήίÿ
+      FOL  Γ Γ΅ΓΆΓ£Γ¤Γ¥Γ¦Γ§Γ¨Γ©ΓªΓ«Γ¬Γ­Γ®Γ―Γ°Γ±Γ²Γ³Γ΄ΓµΓ¶ΓΈΓΉΓΊΓ»ΓΌΓ½ΓΎΓΓΏ
+      LOW  Γ Γ΅ΓΆΓ£Γ¤Γ¥Γ¦Γ§Γ¨Γ©ΓªΓ«Γ¬Γ­Γ®Γ―Γ°Γ±Γ²Γ³Γ΄ΓµΓ¶ΓΈΓΉΓΊΓ»ΓΌΓ½ΓΎΓΓΏ
+      UPP  Γ€ΓΓ‚ΓƒΓ„Γ…Γ†Γ‡ΓΓ‰ΓΓ‹ΓΓΓΓΓΓ‘Γ’Γ“Γ”Γ•Γ–ΓΓ™ΓΓ›ΓΓΓΓΓΏ
       
       PFXPOSTPONE
       
@@ -258,15 +258,15 @@ describe("spell checking with 'encoding' set to utf-8", function()
       REP svp s.v.p.
       
       MAP 9
-      MAP aΰαβγδε
-      MAP eθικλ
-      MAP iμνξο
-      MAP oςστυφ
-      MAP uωϊϋό
-      MAP nρ
-      MAP cη
-      MAP yÿύ
-      MAP sί
+      MAP aΓ Γ΅ΓΆΓ£Γ¤Γ¥
+      MAP eΓ¨Γ©ΓªΓ«
+      MAP iΓ¬Γ­Γ®Γ―
+      MAP oΓ²Γ³Γ΄ΓµΓ¶
+      MAP uΓΉΓΊΓ»ΓΌ
+      MAP nΓ±
+      MAP cΓ§
+      MAP yΓΏΓ½
+      MAP sΓ
       2affend
       
       1dicstart
@@ -280,7 +280,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       put/ISO
       the end
       deol
-      dιτr
+      dΓ©Γ΄r
       1dicend
       
       addstart
@@ -290,11 +290,11 @@ describe("spell checking with 'encoding' set to utf-8", function()
       addend
       
       1good: wrong OK puts. Test the end
-      bad:  inputs comment ok Ok. test dΓ©Γ΄l end the
+      bad:  inputs comment ok Ok. test dΓƒΒ©ΓƒΒ΄l end the
       badend
       
       2good: puts
-      bad: inputs comment ok Ok end the. test dΓ©Γ΄l
+      bad: inputs comment ok Ok end the. test dΓƒΒ©ΓƒΒ΄l
       badend
       
       Test rules for compounding.
@@ -311,12 +311,12 @@ describe("spell checking with 'encoding' set to utf-8", function()
       1234
       foo/m
       bar/mx
-      mο/m
+      mΓ―/m
       la/mx
       3dicend
       
-      3good: foo mΓ― foobar foofoobar barfoo barbarfoo
-      bad: bar la foomΓ― barmΓ― mΓ―foo mΓ―bar mΓ―mΓ― lala mΓ―la lamΓ― foola labar
+      3good: foo mΓƒΒ― foobar foofoobar barfoo barbarfoo
+      bad: bar la foomΓƒΒ― barmΓƒΒ― mΓƒΒ―foo mΓƒΒ―bar mΓƒΒ―mΓƒΒ― lala mΓƒΒ―la lamΓƒΒ― foola labar
       badend
       
       
@@ -325,9 +325,9 @@ describe("spell checking with 'encoding' set to utf-8", function()
       4affstart
       SET ISO8859-1
       
-      FOL  ΰαβγδεζηθικλμνξοπρςστυφψωϊϋόύώίÿ
-      LOW  ΰαβγδεζηθικλμνξοπρςστυφψωϊϋόύώίÿ
-      UPP  ΐΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡÒΣΤΥΦΨΩΪΫάέήίÿ
+      FOL  Γ Γ΅ΓΆΓ£Γ¤Γ¥Γ¦Γ§Γ¨Γ©ΓªΓ«Γ¬Γ­Γ®Γ―Γ°Γ±Γ²Γ³Γ΄ΓµΓ¶ΓΈΓΉΓΊΓ»ΓΌΓ½ΓΎΓΓΏ
+      LOW  Γ Γ΅ΓΆΓ£Γ¤Γ¥Γ¦Γ§Γ¨Γ©ΓªΓ«Γ¬Γ­Γ®Γ―Γ°Γ±Γ²Γ³Γ΄ΓµΓ¶ΓΈΓΉΓΊΓ»ΓΌΓ½ΓΎΓΓΏ
+      UPP  Γ€ΓΓ‚ΓƒΓ„Γ…Γ†Γ‡ΓΓ‰ΓΓ‹ΓΓΓΓΓΓ‘Γ’Γ“Γ”Γ•Γ–ΓΓ™ΓΓ›ΓΓΓΓΓΏ
       
       COMPOUNDRULE m+
       COMPOUNDRULE sm*e
@@ -337,18 +337,18 @@ describe("spell checking with 'encoding' set to utf-8", function()
       COMPOUNDFORBIDFLAG t
       
       COMPOUNDSYLMAX 5
-      SYLLABLE aαeιiνoσφυuϊόϋy/aa/au/ea/ee/ei/ie/oa/oe/oo/ou/uu/ui
+      SYLLABLE aΓ΅eΓ©iΓ­oΓ³Γ¶ΓµuΓΊΓΌΓ»y/aa/au/ea/ee/ei/ie/oa/oe/oo/ou/uu/ui
       
       MAP 9
-      MAP aΰαβγδε
-      MAP eθικλ
-      MAP iμνξο
-      MAP oςστυφ
-      MAP uωϊϋό
-      MAP nρ
-      MAP cη
-      MAP yÿύ
-      MAP sί
+      MAP aΓ Γ΅ΓΆΓ£Γ¤Γ¥
+      MAP eΓ¨Γ©ΓªΓ«
+      MAP iΓ¬Γ­Γ®Γ―
+      MAP oΓ²Γ³Γ΄ΓµΓ¶
+      MAP uΓΉΓΊΓ»ΓΌ
+      MAP nΓ±
+      MAP cΓ§
+      MAP yΓΏΓ½
+      MAP sΓ
       
       NEEDAFFIX x
       
@@ -417,8 +417,8 @@ describe("spell checking with 'encoding' set to utf-8", function()
       SFX a1 Y 1
       SFX a1 0 a1 .
       
-      SFX aι Y 1
-      SFX aι 0 aι .
+      SFX aΓ© Y 1
+      SFX aΓ© 0 aΓ© .
       
       PFX zz Y 1
       PFX zz 0 pre/pp .
@@ -429,14 +429,14 @@ describe("spell checking with 'encoding' set to utf-8", function()
       
       5dicstart
       1234
-      foo/a1aι!!
+      foo/a1aΓ©!!
       bar/zz13ee
       start/ss
       end/eeyy
       middle/mmxx
       5dicend
       
-      5good: fooa1 fooaΓ© bar prebar barbork prebarbork  startprebar
+      5good: fooa1 fooaΓƒΒ© bar prebar barbork prebarbork  startprebar
             start end startend  startmiddleend nouend
       bad: foo fooa2 prabar probarbirk middle startmiddle middleend endstart
       	startprobar startnouend
@@ -461,8 +461,8 @@ describe("spell checking with 'encoding' set to utf-8", function()
       SFX A1 Y 1
       SFX A1 0 a1 .
       
-      SFX Aι Y 1
-      SFX Aι 0 aι .
+      SFX AΓ© Y 1
+      SFX AΓ© 0 aΓ© .
       
       PFX Zz Y 1
       PFX Zz 0 pre/p .
@@ -470,14 +470,14 @@ describe("spell checking with 'encoding' set to utf-8", function()
       
       6dicstart
       1234
-      mee/A1AιA!
+      mee/A1AΓ©A!
       bar/ZzN3Ee
       lead/s
       end/Ee
       middle/MmXx
       6dicend
       
-      6good: meea1 meeaΓ© bar prebar barbork prebarbork  leadprebar
+      6good: meea1 meeaΓƒΒ© bar prebar barbork prebarbork  leadprebar
             lead end leadend  leadmiddleend
       bad: mee meea2 prabar probarbirk middle leadmiddle middleend endlead
       	leadprobar
@@ -486,9 +486,9 @@ describe("spell checking with 'encoding' set to utf-8", function()
       7affstart
       SET ISO8859-1
       
-      FOL  ΰαβγδεζηθικλμνξοπρςστυφψωϊϋόύώίÿ
-      LOW  ΰαβγδεζηθικλμνξοπρςστυφψωϊϋόύώίÿ
-      UPP  ΐΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡÒΣΤΥΦΨΩΪΫάέήίÿ
+      FOL  Γ Γ΅ΓΆΓ£Γ¤Γ¥Γ¦Γ§Γ¨Γ©ΓªΓ«Γ¬Γ­Γ®Γ―Γ°Γ±Γ²Γ³Γ΄ΓµΓ¶ΓΈΓΉΓΊΓ»ΓΌΓ½ΓΎΓΓΏ
+      LOW  Γ Γ΅ΓΆΓ£Γ¤Γ¥Γ¦Γ§Γ¨Γ©ΓªΓ«Γ¬Γ­Γ®Γ―Γ°Γ±Γ²Γ³Γ΄ΓµΓ¶ΓΈΓΉΓΊΓ»ΓΌΓ½ΓΎΓΓΏ
+      UPP  Γ€ΓΓ‚ΓƒΓ„Γ…Γ†Γ‡ΓΓ‰ΓΓ‹ΓΓΓΓΓΓ‘Γ’Γ“Γ”Γ•Γ–ΓΓ™ΓΓ›ΓΓΓΓΓΏ
       
       FLAG num
       
@@ -506,7 +506,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       SFX 391 0 a1 .
       
       SFX 111 Y 1
-      SFX 111 0 aι .
+      SFX 111 0 aΓ© .
       
       PFX 17 Y 1
       PFX 17 0 pre/432 .
@@ -521,7 +521,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       middle/77,1
       7dicend
       
-      7good: meea1 meeaΓ© bar prebar barmeat prebarmeat  leadprebar
+      7good: meea1 meeaΓƒΒ© bar prebar barmeat prebarmeat  leadprebar
             lead tail leadtail  leadmiddletail
       bad: mee meea2 prabar probarmaat middle leadmiddle middletail taillead
       	leadprobar
@@ -575,7 +575,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
 
     execute([[call TestOne('1', '1')]])
     execute([[$put =soundfold('goobledygoook')]])
-    execute([[$put =soundfold('kΓ³opΓ«rΓΏnΓ΄ven')]])
+    execute([[$put =soundfold('kΓƒΒ³opΓƒΒ«rΓƒΒΏnΓƒΒ΄ven')]])
     execute([[$put =soundfold('oeverloos gezwets edale')]])
 
 
@@ -584,7 +584,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
     execute(':/^affstart_sal/+1,/^affend_sal/-1w! Xtest.aff')
     execute('mkspell! Xtest Xtest')
     execute([[$put =soundfold('goobledygoook')]])
-    execute([[$put =soundfold('kΓ³opΓ«rΓΏnΓ΄ven')]])
+    execute([[$put =soundfold('kΓƒΒ³opΓƒΒ«rΓƒΒΏnΓƒΒ΄ven')]])
     execute([[$put =soundfold('oeverloos gezwets edale')]])
 
     -- Also use an addition file.
@@ -654,7 +654,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       # file: Xtest.utf-8.spl
       Comment
       deol
-      dΓ©Γ΄r
+      dΓƒΒ©ΓƒΒ΄r
       input
       OK
       output
@@ -681,8 +681,8 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ['OK', 'Uk', 'Put']
       test
       ['Test', 'testn', 'testen']
-      dΓ©Γ΄l
-      ['deol', 'dΓ©Γ΄r', 'test']
+      dΓƒΒ©ΓƒΒ΄l
+      ['deol', 'dΓƒΒ©ΓƒΒ΄r', 'test']
       end
       ['put', 'uk', 'test']
       the
@@ -707,7 +707,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       # file: Xtest.utf-8.spl
       Comment
       deol
-      dΓ©Γ΄r
+      dΓƒΒ©ΓƒΒ΄r
       OK
       put
       input
@@ -738,36 +738,36 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ['put', 'uk', 'test']
       test
       ['Test', 'testn', 'testen']
-      dΓ©Γ΄l
-      ['deol', 'dΓ©Γ΄r', 'test']
+      dΓƒΒ©ΓƒΒ΄l
+      ['deol', 'dΓƒΒ©ΓƒΒ΄r', 'test']
       
       test 3-3
       # file: Xtest.utf-8.spl
       foo
-      mΓ―
+      mΓƒΒ―
       -------
       bad
-      ['foo', 'mΓ―']
+      ['foo', 'mΓƒΒ―']
       bar
       ['barfoo', 'foobar', 'foo']
       la
-      ['mΓ―', 'foo']
-      foomΓ―
-      ['foo mΓ―', 'foo', 'foofoo']
-      barmΓ―
-      ['barfoo', 'mΓ―', 'barbar']
-      mΓ―foo
-      ['mΓ― foo', 'foo', 'foofoo']
-      mΓ―bar
-      ['foobar', 'barbar', 'mΓ―']
-      mΓ―mΓ―
-      ['mΓ― mΓ―', 'mΓ―']
+      ['mΓƒΒ―', 'foo']
+      foomΓƒΒ―
+      ['foo mΓƒΒ―', 'foo', 'foofoo']
+      barmΓƒΒ―
+      ['barfoo', 'mΓƒΒ―', 'barbar']
+      mΓƒΒ―foo
+      ['mΓƒΒ― foo', 'foo', 'foofoo']
+      mΓƒΒ―bar
+      ['foobar', 'barbar', 'mΓƒΒ―']
+      mΓƒΒ―mΓƒΒ―
+      ['mΓƒΒ― mΓƒΒ―', 'mΓƒΒ―']
       lala
       []
-      mΓ―la
-      ['mΓ―', 'mΓ― mΓ―']
-      lamΓ―
-      ['mΓ―', 'mΓ― mΓ―']
+      mΓƒΒ―la
+      ['mΓƒΒ―', 'mΓƒΒ― mΓƒΒ―']
+      lamΓƒΒ―
+      ['mΓƒΒ―', 'mΓƒΒ― mΓƒΒ―']
       foola
       ['foo', 'foobar', 'foofoo']
       labar
@@ -826,7 +826,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       barbork
       end
       fooa1
-      fooaΓ©
+      fooaΓƒΒ©
       nouend
       prebar
       prebarbork
@@ -835,9 +835,9 @@ describe("spell checking with 'encoding' set to utf-8", function()
       bad
       ['bar', 'end', 'fooa1']
       foo
-      ['fooa1', 'fooaΓ©', 'bar']
+      ['fooa1', 'fooaΓƒΒ©', 'bar']
       fooa2
-      ['fooa1', 'fooaΓ©', 'bar']
+      ['fooa1', 'fooaΓƒΒ©', 'bar']
       prabar
       ['prebar', 'bar', 'bar bar']
       probarbirk
@@ -862,16 +862,16 @@ describe("spell checking with 'encoding' set to utf-8", function()
       end
       lead
       meea1
-      meeaΓ©
+      meeaΓƒΒ©
       prebar
       prebarbork
       -------
       bad
       ['bar', 'end', 'lead']
       mee
-      ['meea1', 'meeaΓ©', 'bar']
+      ['meea1', 'meeaΓƒΒ©', 'bar']
       meea2
-      ['meea1', 'meeaΓ©', 'lead']
+      ['meea1', 'meeaΓƒΒ©', 'lead']
       prabar
       ['prebar', 'bar', 'leadbar']
       probarbirk
@@ -893,7 +893,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       barmeat
       lead
       meea1
-      meeaΓ©
+      meeaΓƒΒ©
       prebar
       prebarmeat
       tail
@@ -901,9 +901,9 @@ describe("spell checking with 'encoding' set to utf-8", function()
       bad
       ['bar', 'lead', 'tail']
       mee
-      ['meea1', 'meeaΓ©', 'bar']
+      ['meea1', 'meeaΓƒΒ©', 'bar']
       meea2
-      ['meea1', 'meeaΓ©', 'lead']
+      ['meea1', 'meeaΓƒΒ©', 'lead']
       prabar
       ['prebar', 'bar', 'leadbar']
       probarmaat
