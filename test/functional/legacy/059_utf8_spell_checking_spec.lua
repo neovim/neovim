@@ -70,6 +70,18 @@ describe("spell checking with 'encoding' set to utf-8", function()
       'MAP c\xe7\n' ..
       'MAP y\xff\xfd\n' ..
       'MAP s\xdf\n')
+    write_file('Xtest1.dic',
+      '123456\n' ..
+      'test/NO\n' ..
+      '# comment\n' ..
+      'wrong\n' ..
+      'Comment\n' ..
+      'OK\n' ..
+      'uk\n' ..
+      'put/ISO\n' ..
+      'the end\n' ..
+      'deol\n' ..
+      '\x64\xe9\xf4\x72\n')
     write_file('Xtest2.aff', 
       'SET ISO8859-1\n' ..
       '\n' ..
@@ -427,20 +439,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
       SAL Z                    S
       affend_sal
       
-      1dicstart
-      123456
-      test/NO
-      # comment
-      wrong
-      Comment
-      OK
-      uk
-      put/ISO
-      the end
-      deol
-      déôr
-      1dicend
-      
       addstart
       /regions=usgbnz
       elequint/2
@@ -563,7 +561,11 @@ describe("spell checking with 'encoding' set to utf-8", function()
         $put ='test '. a:aff . '-' . a:dic
 	"  Generate a .spl file from a .dic and .aff file.
 	exe '!cp -f Xtest'.a:aff.'.aff Xtest.aff'
-        exe '1;/^' . a:dic . 'dicstart/+1,/^' . a:dic . 'dicend/-1w! Xtest.dic'
+	if str2nr(a:dic) <= 1
+	  exe '1;/^' . a:dic . 'dicstart/+1,/^' . a:dic . 'dicend/-1w! Xtest.dic'
+	else
+	  exe '!cp -f Xtest'.a:dic.'.dic Xtest.dic'
+	endif
         mkspell! Xtest Xtest
 	"  Use that spell file.
         set spl=Xtest.utf-8.spl spell
