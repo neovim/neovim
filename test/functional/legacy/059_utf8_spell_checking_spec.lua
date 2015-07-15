@@ -303,165 +303,171 @@ describe("spell checking with 'encoding' set to utf-8", function()
       tail/123
       middle/77,1
       ]])
+    write_file('Xtest-sal.aff',
+      'SET ISO8859-1\n' ..
+      'TRY esianrtolcdugmphbyfvkwjkqxz-\xeb\xe9\xe8\xea\xef\xee\xe4\xe0' ..
+      '\xe2\xf6\xfc\xfb\'ESIANRTOLCDUGMPHBYFVKWJKQXZ\n' ..
+      '\n' ..
+      'FOL  \xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee' ..
+      '\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xdf' ..
+      '\xff\n' ..
+      'LOW  \xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee' ..
+      '\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xdf' ..
+      '\xff\n' ..
+      'UPP  \xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce' ..
+      '\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf' ..
+      '\xff\n' ..
+      '\n' ..
+      'MIDWORD\t\'-\n' ..
+      '\n' ..
+      'KEP =\n' ..
+      'RAR ?\n' ..
+      'BAD !\n' ..
+      '\n' ..
+      '#NOSPLITSUGS\n' ..
+      '\n' ..
+      'PFX I N 1\n' ..
+      'PFX I 0 in .\n' ..
+      '\n' ..
+      'PFX O Y 1\n' ..
+      'PFX O 0 out .\n' ..
+      '\n' ..
+      'SFX S Y 2\n' ..
+      'SFX S 0 s [^s]\n' ..
+      'SFX S 0 es s\n' ..
+      '\n' ..
+      'SFX N N 3\n' ..
+      'SFX N 0 en [^n]\n' ..
+      'SFX N 0 nen n\n' ..
+      'SFX N 0 n .\n' ..
+      '\n' ..
+      'REP 3\n' ..
+      'REP g ch\n' ..
+      'REP ch g\n' ..
+      'REP svp s.v.p.\n' ..
+      '\n' ..
+      'MAP 9\n' ..
+      'MAP a\xe0\xe1\xe2\xe3\xe4\xe5\n' ..
+      'MAP e\xe8\xe9\xea\xeb\n' ..
+      'MAP i\xec\xed\xee\xef\n' ..
+      'MAP o\xf2\xf3\xf4\xf5\xf6\n' ..
+      'MAP u\xf9\xfa\xfb\xfc\n' ..
+      'MAP n\xf1\n' ..
+      'MAP c\xe7\n' ..
+      'MAP y\xff\xfd\n' ..
+      'MAP s\xdf\n' ..
+      '\n' ..
+      'SAL AH(AEIOUY)-^         *H\n' ..
+      'SAL AR(AEIOUY)-^         *R\n' ..
+      'SAL A(HR)^               *\n' ..
+      'SAL A^                   *\n' ..
+      'SAL AH(AEIOUY)-          H\n' ..
+      'SAL AR(AEIOUY)-          R\n' ..
+      'SAL A(HR)                _\n' ..
+      'SAL \xc0^                   *\n' ..
+      'SAL \xc5^                   *\n' ..
+      'SAL BB-                  _\n' ..
+      'SAL B                    B\n' ..
+      'SAL CQ-                  _\n' ..
+      'SAL CIA                  X\n' ..
+      'SAL CH                   X\n' ..
+      'SAL C(EIY)-              S\n' ..
+      'SAL CK                   K\n' ..
+      'SAL COUGH^               KF\n' ..
+      'SAL CC<                  C\n' ..
+      'SAL C                    K\n' ..
+      'SAL DG(EIY)              K\n' ..
+      'SAL DD-                  _\n' ..
+      'SAL D                    T\n' ..
+      'SAL \xc9<                   E\n' ..
+      'SAL EH(AEIOUY)-^         *H\n' ..
+      'SAL ER(AEIOUY)-^         *R\n' ..
+      'SAL E(HR)^               *\n' ..
+      'SAL ENOUGH^$             *NF\n' ..
+      'SAL E^                   *\n' ..
+      'SAL EH(AEIOUY)-          H\n' ..
+      'SAL ER(AEIOUY)-          R\n' ..
+      'SAL E(HR)                _\n' ..
+      'SAL FF-                  _\n' ..
+      'SAL F                    F\n' ..
+      'SAL GN^                  N\n' ..
+      'SAL GN$                  N\n' ..
+      'SAL GNS$                 NS\n' ..
+      'SAL GNED$                N\n' ..
+      'SAL GH(AEIOUY)-          K\n' ..
+      'SAL GH                   _\n' ..
+      'SAL GG9                  K\n' ..
+      'SAL G                    K\n' ..
+      'SAL H                    H\n' ..
+      'SAL IH(AEIOUY)-^         *H\n' ..
+      'SAL IR(AEIOUY)-^         *R\n' ..
+      'SAL I(HR)^               *\n' ..
+      'SAL I^                   *\n' ..
+      'SAL ING6                 N\n' ..
+      'SAL IH(AEIOUY)-          H\n' ..
+      'SAL IR(AEIOUY)-          R\n' ..
+      'SAL I(HR)                _\n' ..
+      'SAL J                    K\n' ..
+      'SAL KN^                  N\n' ..
+      'SAL KK-                  _\n' ..
+      'SAL K                    K\n' ..
+      'SAL LAUGH^               LF\n' ..
+      'SAL LL-                  _\n' ..
+      'SAL L                    L\n' ..
+      'SAL MB$                  M\n' ..
+      'SAL MM                   M\n' ..
+      'SAL M                    M\n' ..
+      'SAL NN-                  _\n' ..
+      'SAL N                    N\n' ..
+      'SAL OH(AEIOUY)-^         *H\n' ..
+      'SAL OR(AEIOUY)-^         *R\n' ..
+      'SAL O(HR)^               *\n' ..
+      'SAL O^                   *\n' ..
+      'SAL OH(AEIOUY)-          H\n' ..
+      'SAL OR(AEIOUY)-          R\n' ..
+      'SAL O(HR)                _\n' ..
+      'SAL PH                   F\n' ..
+      'SAL PN^                  N\n' ..
+      'SAL PP-                  _\n' ..
+      'SAL P                    P\n' ..
+      'SAL Q                    K\n' ..
+      'SAL RH^                  R\n' ..
+      'SAL ROUGH^               RF\n' ..
+      'SAL RR-                  _\n' ..
+      'SAL R                    R\n' ..
+      'SAL SCH(EOU)-            SK\n' ..
+      'SAL SC(IEY)-             S\n' ..
+      'SAL SH                   X\n' ..
+      'SAL SI(AO)-              X\n' ..
+      'SAL SS-                  _\n' ..
+      'SAL S                    S\n' ..
+      'SAL TI(AO)-              X\n' ..
+      'SAL TH                   @\n' ..
+      'SAL TCH--                _\n' ..
+      'SAL TOUGH^               TF\n' ..
+      'SAL TT-                  _\n' ..
+      'SAL T                    T\n' ..
+      'SAL UH(AEIOUY)-^         *H\n' ..
+      'SAL UR(AEIOUY)-^         *R\n' ..
+      'SAL U(HR)^               *\n' ..
+      'SAL U^                   *\n' ..
+      'SAL UH(AEIOUY)-          H\n' ..
+      'SAL UR(AEIOUY)-          R\n' ..
+      'SAL U(HR)                _\n' ..
+      'SAL V^                   W\n' ..
+      'SAL V                    F\n' ..
+      'SAL WR^                  R\n' ..
+      'SAL WH^                  W\n' ..
+      'SAL W(AEIOU)-            W\n' ..
+      'SAL X^                   S\n' ..
+      'SAL X                    KS\n' ..
+      'SAL Y(AEIOU)-            Y\n' ..
+      'SAL ZZ-                  _\n' ..
+      'SAL Z                    S\n')
   end)
 
   it('is working', function()
     insert([[
-      affstart_sal
-      SET ISO8859-1
-      TRY esianrtolcdugmphbyfvkwjkqxz-ëéèêïîäàâöüû'ESIANRTOLCDUGMPHBYFVKWJKQXZ
-      
-      FOL  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
-      LOW  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
-      UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßÿ
-      
-      MIDWORD	'-
-      
-      KEP =
-      RAR ?
-      BAD !
-      
-      #NOSPLITSUGS
-      
-      PFX I N 1
-      PFX I 0 in .
-      
-      PFX O Y 1
-      PFX O 0 out .
-      
-      SFX S Y 2
-      SFX S 0 s [^s]
-      SFX S 0 es s
-      
-      SFX N N 3
-      SFX N 0 en [^n]
-      SFX N 0 nen n
-      SFX N 0 n .
-      
-      REP 3
-      REP g ch
-      REP ch g
-      REP svp s.v.p.
-      
-      MAP 9
-      MAP aàáâãäå
-      MAP eèéêë
-      MAP iìíîï
-      MAP oòóôõö
-      MAP uùúûü
-      MAP nñ
-      MAP cç
-      MAP yÿý
-      MAP sß
-      
-      SAL AH(AEIOUY)-^         *H
-      SAL AR(AEIOUY)-^         *R
-      SAL A(HR)^               *
-      SAL A^                   *
-      SAL AH(AEIOUY)-          H
-      SAL AR(AEIOUY)-          R
-      SAL A(HR)                _
-      SAL À^                   *
-      SAL Å^                   *
-      SAL BB-                  _
-      SAL B                    B
-      SAL CQ-                  _
-      SAL CIA                  X
-      SAL CH                   X
-      SAL C(EIY)-              S
-      SAL CK                   K
-      SAL COUGH^               KF
-      SAL CC<                  C
-      SAL C                    K
-      SAL DG(EIY)              K
-      SAL DD-                  _
-      SAL D                    T
-      SAL É<                   E
-      SAL EH(AEIOUY)-^         *H
-      SAL ER(AEIOUY)-^         *R
-      SAL E(HR)^               *
-      SAL ENOUGH^$             *NF
-      SAL E^                   *
-      SAL EH(AEIOUY)-          H
-      SAL ER(AEIOUY)-          R
-      SAL E(HR)                _
-      SAL FF-                  _
-      SAL F                    F
-      SAL GN^                  N
-      SAL GN$                  N
-      SAL GNS$                 NS
-      SAL GNED$                N
-      SAL GH(AEIOUY)-          K
-      SAL GH                   _
-      SAL GG9                  K
-      SAL G                    K
-      SAL H                    H
-      SAL IH(AEIOUY)-^         *H
-      SAL IR(AEIOUY)-^         *R
-      SAL I(HR)^               *
-      SAL I^                   *
-      SAL ING6                 N
-      SAL IH(AEIOUY)-          H
-      SAL IR(AEIOUY)-          R
-      SAL I(HR)                _
-      SAL J                    K
-      SAL KN^                  N
-      SAL KK-                  _
-      SAL K                    K
-      SAL LAUGH^               LF
-      SAL LL-                  _
-      SAL L                    L
-      SAL MB$                  M
-      SAL MM                   M
-      SAL M                    M
-      SAL NN-                  _
-      SAL N                    N
-      SAL OH(AEIOUY)-^         *H
-      SAL OR(AEIOUY)-^         *R
-      SAL O(HR)^               *
-      SAL O^                   *
-      SAL OH(AEIOUY)-          H
-      SAL OR(AEIOUY)-          R
-      SAL O(HR)                _
-      SAL PH                   F
-      SAL PN^                  N
-      SAL PP-                  _
-      SAL P                    P
-      SAL Q                    K
-      SAL RH^                  R
-      SAL ROUGH^               RF
-      SAL RR-                  _
-      SAL R                    R
-      SAL SCH(EOU)-            SK
-      SAL SC(IEY)-             S
-      SAL SH                   X
-      SAL SI(AO)-              X
-      SAL SS-                  _
-      SAL S                    S
-      SAL TI(AO)-              X
-      SAL TH                   @
-      SAL TCH--                _
-      SAL TOUGH^               TF
-      SAL TT-                  _
-      SAL T                    T
-      SAL UH(AEIOUY)-^         *H
-      SAL UR(AEIOUY)-^         *R
-      SAL U(HR)^               *
-      SAL U^                   *
-      SAL UH(AEIOUY)-          H
-      SAL UR(AEIOUY)-          R
-      SAL U(HR)                _
-      SAL V^                   W
-      SAL V                    F
-      SAL WR^                  R
-      SAL WH^                  W
-      SAL W(AEIOU)-            W
-      SAL X^                   S
-      SAL X                    KS
-      SAL Y(AEIOU)-            Y
-      SAL ZZ-                  _
-      SAL Z                    S
-      affend_sal
       
       addstart
       /regions=usgbnz
@@ -576,7 +582,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
 
     -- And now with SAL instead of SOFO items; test automatic reloading.
     feed('gg')
-    execute(':/^affstart_sal/+1,/^affend_sal/-1w! Xtest.aff')
+    os.execute('cp -f Xtest-sal.aff Xtest.aff')
     execute('mkspell! Xtest Xtest')
     execute([[$put =soundfold('goobledygoook')]])
     execute([[$put =soundfold('kÃ³opÃ«rÃ¿nÃ´ven')]])
