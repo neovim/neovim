@@ -197,6 +197,16 @@ describe("spell checking with 'encoding' set to utf-8", function()
       '\n' ..
       'PFX P N 1\n' ..
       'PFX P 0 nou .\n')
+    write_file('Xtest4.dic', [[
+      1234
+      word/mP
+      util/am
+      pro/xq
+      tomato/m
+      bork/mp
+      start/s
+      end/e
+      ]])
     write_file('Xtest5.aff',
       'SET ISO8859-1\n' ..
       '\n' ..
@@ -464,17 +474,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
       
       Tests for compounding.
       
-      4dicstart
-      1234
-      word/mP
-      util/am
-      pro/xq
-      tomato/m
-      bork/mp
-      start/s
-      end/e
-      4dicend
-      
       4good: word util bork prebork start end wordutil wordutils pro-ok
       	bork borkbork borkborkbork borkborkborkbork borkborkborkborkbork
       	tomato tomatotomato startend startword startwordword startwordend
@@ -555,7 +554,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
         $put ='test '. a:aff . '-' . a:dic
 	"  Generate a .spl file from a .dic and .aff file.
 	exe '!cp -f Xtest'.a:aff.'.aff Xtest.aff'
-	if str2nr(a:dic) <= 3
+	if str2nr(a:dic) <= 4
 	  exe '1;/^' . a:dic . 'dicstart/+1,/^' . a:dic . 'dicend/-1w! Xtest.dic'
 	else
 	  exe '!cp -f Xtest'.a:dic.'.dic Xtest.dic'
