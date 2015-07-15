@@ -464,16 +464,15 @@ describe("spell checking with 'encoding' set to utf-8", function()
       'SAL Y(AEIOU)-            Y\n' ..
       'SAL ZZ-                  _\n' ..
       'SAL Z                    S\n')
+    write_file('Xtest.utf-8.add', [[
+      /regions=usgbnz
+      elequint/2
+      elekwint/3
+      ]])
   end)
 
   it('is working', function()
     insert([[
-      
-      addstart
-      /regions=usgbnz
-      elequint/2
-      elekwint/3
-      addend
       
       1good: wrong OK puts. Test the end
       bad:  inputs comment ok Ok. test dÃ©Ã´l end the
@@ -590,7 +589,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
 
     -- Also use an addition file.
     feed('gg')
-    execute(':/^addstart/+1,/^addend/-1w! Xtest.utf-8.add')
     execute('mkspell! Xtest.utf-8.add.spl Xtest.utf-8.add')
     execute('set spellfile=Xtest.utf-8.add')
     execute('/^test2:')
