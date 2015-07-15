@@ -3,8 +3,12 @@ let g:test_clip = { '+': [''], '*': [''], }
 let s:methods = {}
 
 let g:cliplossy = 0
+let g:cliperror = 0
 
 function! s:methods.get(reg)
+  if g:cliperror
+    return 0
+  end
   if g:cliplossy
     " behave like pure text clipboard
     return g:test_clip[a:reg][0]

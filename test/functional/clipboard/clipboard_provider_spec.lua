@@ -92,7 +92,7 @@ end)
 describe('clipboard usage', function()
   before_each(function()
     clear()
-    execute('let &rtp = "test/functional/clipboard,".&rtp')
+    execute('let &rtp = "test/functional/fixtures,".&rtp')
     execute('call getreg("*")') -- force load of provider
   end)
 
@@ -197,6 +197,17 @@ describe('clipboard usage', function()
     expect('some more')
   end)
 
+  it('pastes unnamed register if the provider fails', function()
+    insert('the text')
+    feed('yy')
+    execute("let g:cliperror = 1")
+    feed('"*p')
+    expect([[
+      the text
+      the text]])
+  end)
+
+
   describe('with clipboard=unnamed', function()
     -- the basic behavior of unnamed register should be the same
     -- even when handled by clipboard provider
@@ -259,6 +270,16 @@ describe('clipboard usage', function()
       feed('viw"*p')
       eq({{'clipboard'}, 'v'}, eval("g:test_clip['*']"))
       expect("indeed star")
+    end)
+
+    it('unamed operations work even if the provider fails', function()
+      insert('the text')
+      feed('yy')
+      execute("let g:cliperror = 1")
+      feed('p')
+      expect([[
+        the text
+        the text]])
     end)
 
   end)
@@ -335,4 +356,34 @@ describe('clipboard usage', function()
       'Howdy!',
     }, 'v'}, eval("g:test_clip['*']"))
   end)
+
+  it('handles middleclick correctly', function()
+    local screen = Screen.new(30, 5)
+    screen:attach()
+    insert([[
+      the source
+      a target]])
+    feed('gg"*ywwyw')
+    -- clicking depends on the exact visual layout, so expect it:
+    screen:expect([[
+      the ^source                    |
+      a target                      |
+      ~                             |
+      ~                             |
+                                    |
+    ]], nil, {{bold = true, foreground = Screen.colors.Blue}})
+
+    feed('<MiddleMouse><0,1>')
+    expect([[
+      the source
+      the a target]])
+
+    -- on error, fall back to unnamed register
+    execute("let g:cliperror = 1")
+    feed('<MiddleMouse><6,1>')
+    expect([[
+      the source
+      the a sourcetarget]])
+  end)
+
 end)
