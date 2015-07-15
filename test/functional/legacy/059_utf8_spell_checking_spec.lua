@@ -533,39 +533,41 @@ describe("spell checking with 'encoding' set to utf-8", function()
     execute('set fenc=')
 
     -- Function to test .aff/.dic with list of good and bad words.
-    execute('func TestOne(aff, dic)')
-    feed('  set spellfile=<cr>')
-    feed([[  $put =''<cr>]])
-    feed([[  $put ='test '. a:aff . '-' . a:dic<cr>]])
-    -- Generate a .spl file from a .dic and .aff file.
-    feed([[  exe '1;/^' . a:aff . 'affstart/+1,/^' . a:aff . 'affend/-1w! Xtest.aff'<cr>]])
-    feed([[  exe '1;/^' . a:dic . 'dicstart/+1,/^' . a:dic . 'dicend/-1w! Xtest.dic'<cr>]])
-    feed('  mkspell! Xtest Xtest<cr>')
-    -- Use that spell file.
-    feed('  set spl=Xtest.utf-8.spl spell<cr>')
-    -- List all valid words.
-    feed('  spelldump<cr>')
-    feed('  %yank<cr>')
-    feed('  quit<cr>')
-    feed('  $put<cr>')
-    feed([[  $put ='-------'<cr>]])
-    -- Find all bad words and suggestions for them.
-    feed([[  exe '1;/^' . a:aff . 'good:'<cr>]])
-    feed('  normal 0f:]s<cr>')
-    feed([[  let prevbad = ''<cr>]])
-    feed('  while 1<cr>')
-    feed('    let [bad, a] = spellbadword()<cr>')
-    feed([[    if bad == '' || bad == prevbad || bad == 'badend'<cr>]])
-    feed('      break<cr>')
-    feed('    endif<cr>')
-    feed('    let prevbad = bad<cr>')
-    feed('    let lst = spellsuggest(bad, 3)<cr>')
-    feed('    normal mm<cr>')
-    feed('    $put =bad<cr>')
-    feed('    $put =string(lst)<cr>')
-    feed('    normal `m]s<cr>')
-    feed('  endwhile<cr>')
-    feed('endfunc<cr>')
+    source([[
+      func TestOne(aff, dic)
+        set spellfile=
+        $put =''
+        $put ='test '. a:aff . '-' . a:dic
+	"  Generate a .spl file from a .dic and .aff file.
+        exe '1;/^' . a:aff . 'affstart/+1,/^' . a:aff . 'affend/-1w! Xtest.aff'
+        exe '1;/^' . a:dic . 'dicstart/+1,/^' . a:dic . 'dicend/-1w! Xtest.dic'
+        mkspell! Xtest Xtest
+	"  Use that spell file.
+        set spl=Xtest.utf-8.spl spell
+	"  List all valid words.
+        spelldump
+        %yank
+        quit
+        $put
+        $put ='-------'
+	"  Find all bad words and suggestions for them.
+        exe '1;/^' . a:aff . 'good:'
+        normal 0f:]s
+        let prevbad = ''
+        while 1
+          let [bad, a] = spellbadword()
+          if bad == '' || bad == prevbad || bad == 'badend'
+            break
+          endif
+          let prevbad = bad
+          let lst = spellsuggest(bad, 3)
+          normal mm
+          $put =bad
+          $put =string(lst)
+          normal `m]s
+        endwhile
+      endfunc
+    ]])
 
     execute([[call TestOne('1', '1')]])
     execute([[$put =soundfold('goobledygoook')]])
