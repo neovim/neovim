@@ -8,7 +8,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
   setup(clear)
 
   it('is working', function()
-    insert([=[
+    insert([[
       1affstart
       SET ISO8859-1
       TRY esianrtolcdugmphbyfvkwjkqxz-כיטךןמהאגצüû'ESIANRTOLCDUGMPHBYFVKWJKQXZ
@@ -523,10 +523,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       	leadprobar
       badend
       
-      test output:]=])
-
-    execute('so small.vim')
-    execute('so mbyte.vim')
+      test output:]])
 
     -- Don't want to depend on the locale from the environment.  The .aff and .dic.
     -- Text is in latin1, the test text is utf-8.
