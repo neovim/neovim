@@ -142,6 +142,8 @@ describe("spell checking with 'encoding' set to utf-8", function()
       COMPOUNDRULE m*
       NEEDCOMPOUND x
       ]])
+    write_file('Xtest3.dic',
+      '1234\nfoo/m\nbar/mx\n\x6d\xef\x2f\x6d\n\x6c\x61\x2f\x6d\x78\n')
     write_file('Xtest4.aff', 
       'SET ISO8859-1\n' ..
       '\n' ..
@@ -455,14 +457,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
       
       Test rules for compounding.
       
-      3dicstart
-      1234
-      foo/m
-      bar/mx
-      mï/m
-      la/mx
-      3dicend
-      
       3good: foo mÃ¯ foobar foofoobar barfoo barbarfoo
       bad: bar la foomÃ¯ barmÃ¯ mÃ¯foo mÃ¯bar mÃ¯mÃ¯ lala mÃ¯la lamÃ¯ foola labar
       badend
@@ -561,7 +555,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
         $put ='test '. a:aff . '-' . a:dic
 	"  Generate a .spl file from a .dic and .aff file.
 	exe '!cp -f Xtest'.a:aff.'.aff Xtest.aff'
-	if str2nr(a:dic) <= 1
+	if str2nr(a:dic) <= 3
 	  exe '1;/^' . a:dic . 'dicstart/+1,/^' . a:dic . 'dicend/-1w! Xtest.dic'
 	else
 	  exe '!cp -f Xtest'.a:dic.'.dic Xtest.dic'
