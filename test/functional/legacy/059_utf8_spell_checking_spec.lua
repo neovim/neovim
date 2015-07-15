@@ -576,9 +576,10 @@ describe("spell checking with 'encoding' set to utf-8", function()
           normal `m]s
         endwhile
       endfunc
-    ]])
+      ]])
 
-    execute([[call TestOne('1', '1')]])
+    execute([[call TestOne('1', '1')]]) -- TODO this hangs
+    helpers.eq(1,2)
     execute([[$put =soundfold('goobledygoook')]])
     execute([[$put =soundfold('kÃ³opÃ«rÃ¿nÃ´ven')]])
     execute([[$put =soundfold('oeverloos gezwets edale')]])
