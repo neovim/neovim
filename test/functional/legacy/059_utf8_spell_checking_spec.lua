@@ -295,6 +295,14 @@ describe("spell checking with 'encoding' set to utf-8", function()
       '\n' ..
       'PFX 17 Y 1\n' ..
       'PFX 17 0 pre/432 .\n')
+    write_file('Xtest7.dic', [[
+      1234
+      mee/391,111,9999
+      bar/17,61003,123
+      lead/2
+      tail/123
+      middle/77,1
+      ]])
   end)
 
   it('is working', function()
@@ -508,15 +516,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
       	leadprobar
       badend
       
-      7dicstart
-      1234
-      mee/391,111,9999
-      bar/17,61003,123
-      lead/2
-      tail/123
-      middle/77,1
-      7dicend
-      
       7good: meea1 meeaÃ© bar prebar barmeat prebarmeat  leadprebar
             lead tail leadtail  leadmiddletail
       bad: mee meea2 prabar probarmaat middle leadmiddle middletail taillead
@@ -540,11 +539,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
         $put ='test '. a:aff . '-' . a:dic
 	"  Generate a .spl file from a .dic and .aff file.
 	exe '!cp -f Xtest'.a:aff.'.aff Xtest.aff'
-	if str2nr(a:dic) <= 6
-	  exe '1;/^' . a:dic . 'dicstart/+1,/^' . a:dic . 'dicend/-1w! Xtest.dic'
-	else
-	  exe '!cp -f Xtest'.a:dic.'.dic Xtest.dic'
-	endif
+	exe '!cp -f Xtest'.a:dic.'.dic Xtest.dic'
         mkspell! Xtest Xtest
 	"  Use that spell file.
         set spl=Xtest.utf-8.spl spell
