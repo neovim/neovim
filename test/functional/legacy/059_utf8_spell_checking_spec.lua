@@ -233,6 +233,8 @@ describe("spell checking with 'encoding' set to utf-8", function()
       '\n' ..
       'PFX yy Y 1\n' ..
       'PFX yy 0 nou .\n')
+    write_file('Xtest5.dic',
+      '1234\nfoo/a1a\xe9!!\nbar/zz13ee\nstart/ss\nend/eeyy\nmiddle/mmxx\n')
     write_file('Xtest6.aff',
       'SET ISO8859-1\n' ..
       '\n' ..
@@ -492,15 +494,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
       
       Test affix flags with two characters
       
-      5dicstart
-      1234
-      foo/a1aé!!
-      bar/zz13ee
-      start/ss
-      end/eeyy
-      middle/mmxx
-      5dicend
-      
       5good: fooa1 fooaÃ© bar prebar barbork prebarbork  startprebar
             start end startend  startmiddleend nouend
       bad: foo fooa2 prabar probarbirk middle startmiddle middleend endstart
@@ -554,7 +547,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
         $put ='test '. a:aff . '-' . a:dic
 	"  Generate a .spl file from a .dic and .aff file.
 	exe '!cp -f Xtest'.a:aff.'.aff Xtest.aff'
-	if str2nr(a:dic) <= 4
+	if str2nr(a:dic) <= 5
 	  exe '1;/^' . a:dic . 'dicstart/+1,/^' . a:dic . 'dicend/-1w! Xtest.dic'
 	else
 	  exe '!cp -f Xtest'.a:dic.'.dic Xtest.dic'
