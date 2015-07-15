@@ -6,10 +6,94 @@
 local helpers = require('test.functional.helpers')
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
-local eq, eval = helpers.eq, helpers.eval
+local eq, eval, write_file = helpers.eq, helpers.eval, helpers.write_file
 
 describe('regexp pattern without multi byte support', function() -- TODO multi byte?
+  setup(function()
+    write_file('test64_run_simple_tests.vim', [[
+      for t in tl
+        let re = t[0]
+        let pat = t[1]
+        let text = t[2]
+        let matchidx = 3
+        for engine in [0, 1, 2]
+          if engine == 2 && re == 0 || engine == 1 && re == 1
+            continue
+          endif
+          let &regexpengine = engine
+          try
+            let l = matchlist(text, pat)
+          catch
+            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . 
+              \ text . '\", caused an exception: \"' . v:exception . '\"'
+          endtry
+          " Check the match itself.
+          if len(l) == 0 && len(t) > matchidx
+            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' .
+              \ text . '\", did not match, expected: \"' . t[matchidx] . '\"'
+          elseif len(l) > 0 && len(t) == matchidx
+            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' .
+              \ text . '\", match: \"' . l[0] . '\", expected no match'
+          elseif len(t) > matchidx && l[0] != t[matchidx]
+            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' .
+              \ text . '\", match: \"' . l[0] . '\", expected: \"' .
+              \ t[matchidx] . '\"'
+          else
+            $put ='OK ' . engine . ' - ' . pat
+          endif
+          if len(l) > 0
+          " Check all the nine submatches.
+            for i in range(1, 9)
+              if len(t) <= matchidx + i
+        	let e = ''
+              else
+        	let e = t[matchidx + i]
+              endif
+              if l[i] != e
+        	$put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' .
+        	  \ text . '\", submatch ' . i . ': \"' . l[i] .
+        	  \ '\", expected: \"' . e . '\"'
+              endif
+            endfor
+            unlet i
+          endif
+        endfor
+      endfor
+      unlet t tl e l
+      ]])
+    write_file('test64_run_multi_line_tests.vim', [[
+      for t in tl
+        let re = t[0]
+        let pat = t[1]
+        let before = t[2]
+        let after = t[3]
+        for engine in [0, 1, 2]
+          if engine == 2 && re == 0 || engine == 1 && re ==1
+            continue
+          endif
+          let &regexpengine = engine
+          new
+          call setline(1, before)
+          exe '%s/' . pat . '/XX/'
+          let result = getline(1, '$')
+          q!
+          if result != after
+            $put ='ERROR: pat: \"' . pat . '\", text: \"' . string(before) .
+              \ '\", expected: \"' . string(after) . '\", got: \"' .
+              \ string(result) . '\"'
+          else
+            $put ='OK ' . engine . ' - ' . pat
+          endif
+        endfor
+      endfor
+      unlet t tl
+      ]])
+  end)
   before_each(clear)
+  teardown(function()
+    os.remove('test64_run_simple_tests.vim')
+    os.remove('test64_run_multi_line_tests.vim')
+  end)
 
   it('part 1', function()
     insert([[
@@ -471,72 +555,21 @@ describe('regexp pattern without multi byte support', function() -- TODO multi b
     -- TODO: BT engine does not restore submatch after failure.
     execute([[call add(tl, [1, '\(a*\)\@>a\|a\+', 'aaaa', 'aaaa'])]])
 
-    -- """ "\_" prepended negated collection matches EOL.
+    -- "\_" prepended negated collection matches EOL.
     execute([[call add(tl, [2, '\_[^8-9]\+', "asfi\n9888", "asfi\n"])]])
     execute([[call add(tl, [2, '\_[^a]\+', "asfi\n9888", "sfi\n9888"])]])
 
-    -- """ Requiring lots of states.
+    -- Requiring lots of states.
     execute([[call add(tl, [2, '[0-9a-zA-Z]\{8}-\([0-9a-zA-Z]\{4}-\)\{3}[0-9a-zA-Z]\{12}', " 12345678-1234-1234-1234-123456789012 ", "12345678-1234-1234-1234-123456789012", "1234-"])]])
 
-    -- """ Skip adding state twice.
+    -- Skip adding state twice.
     execute([[call add(tl, [2, '^\%(\%(^\s*#\s*if\>\|#\s*if\)\)\(\%>1c.*$\)\@=', "#if FOO", "#if", ' FOO'])]])
 
-    -- "" Test \%V atom.
+    -- Test \%V atom.
     execute([[call add(tl, [2, '\%>70vGesamt', 'Jean-Michel Charlier & Victor Hubinon\Gesamtausgabe [Salleck]    Buck Danny {Jean-Michel Charlier & Victor Hubinon}\Gesamtausgabe', 'Gesamt'])]])
 
-    -- """ Run the tests.
-
-    source([[
-      for t in tl
-        let re = t[0]
-        let pat = t[1]
-        let text = t[2]
-        let matchidx = 3
-        for engine in [0, 1, 2]
-          if engine == 2 && re == 0 || engine == 1 && re == 1
-            continue
-          endif
-          let &regexpengine = engine
-          try
-            let l = matchlist(text, pat)
-          catch
-            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . 
-	      \ text . '\", caused an exception: \"' . v:exception . '\"'
-          endtry
-	  " Check the match itself.
-          if len(l) == 0 && len(t) > matchidx
-            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' .
-	      \ text . '\", did not match, expected: \"' . t[matchidx] . '\"'
-          elseif len(l) > 0 && len(t) == matchidx
-            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' .
-	      \ text . '\", match: \"' . l[0] . '\", expected no match'
-          elseif len(t) > matchidx && l[0] != t[matchidx]
-            $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' .
-	      \ text . '\", match: \"' . l[0] . '\", expected: \"' .
-	      \ t[matchidx] . '\"'
-          else
-            $put ='OK ' . engine . ' - ' . pat
-          endif
-          if len(l) > 0
-	  " Check all the nine submatches.
-            for i in range(1, 9)
-              if len(t) <= matchidx + i
-                let e = ''
-              else
-                let e = t[matchidx + i]
-              endif
-              if l[i] != e
-                $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' .
-		  \ text . '\", submatch ' . i . ': \"' . l[i] .
-		  \ '\", expected: \"' . e . '\"'
-              endif
-            endfor
-            unlet i
-          endif
-        endfor
-      endfor
-      unlet t tl e l
-    ]])
+    -- Run the tests.
+    execute('source test64_run_simple_tests.vim')
 
     expect([=[
       Results of test64:
@@ -1595,34 +1628,7 @@ describe('regexp pattern without multi byte support', function() -- TODO multi b
     )
 
     -- Run the multi-line tests.
-
-    source([[
-      for t in tl
-        let re = t[0]
-        let pat = t[1]
-        let before = t[2]
-        let after = t[3]
-        for engine in [0, 1, 2]
-          if engine == 2 && re == 0 || engine == 1 && re ==1
-            continue
-          endif
-          let &regexpengine = engine
-          new
-          call setline(1, before)
-          exe '%s/' . pat . '/XX/'
-          let result = getline(1, '$')
-          q!
-          if result != after
-            $put ='ERROR: pat: \"' . pat . '\", text: \"' . string(before) .
-	      \ '\", expected: \"' . string(after) . '\", got: \"' .
-	      \ string(result) . '\"'
-          else
-            $put ='OK ' . engine . ' - ' . pat
-          endif
-        endfor
-      endfor
-      unlet t tl
-    ]])
+    execute('source test64_run_multi_line_tests.vim')
 
     expect([[
       multi-line tests
