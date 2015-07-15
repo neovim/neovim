@@ -259,6 +259,8 @@ describe("spell checking with 'encoding' set to utf-8", function()
       '\n' ..
       'PFX Zz Y 1\n' ..
       'PFX Zz 0 pre/p .\n')
+    write_file('Xtest6.dic',
+      '1234\nmee/A1A\xe9A!\nbar/ZzN3Ee\nlead/s\nend/Ee\nmiddle/MmXx\n')
     write_file('Xtest7.aff',
       'SET ISO8859-1\n' ..
       '\n' ..
@@ -500,15 +502,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
       	startprobar startnouend
       badend
       
-      6dicstart
-      1234
-      mee/A1AéA!
-      bar/ZzN3Ee
-      lead/s
-      end/Ee
-      middle/MmXx
-      6dicend
-      
       6good: meea1 meeaÃ© bar prebar barbork prebarbork  leadprebar
             lead end leadend  leadmiddleend
       bad: mee meea2 prabar probarbirk middle leadmiddle middleend endlead
@@ -547,7 +540,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
         $put ='test '. a:aff . '-' . a:dic
 	"  Generate a .spl file from a .dic and .aff file.
 	exe '!cp -f Xtest'.a:aff.'.aff Xtest.aff'
-	if str2nr(a:dic) <= 5
+	if str2nr(a:dic) <= 6
 	  exe '1;/^' . a:dic . 'dicstart/+1,/^' . a:dic . 'dicend/-1w! Xtest.dic'
 	else
 	  exe '!cp -f Xtest'.a:dic.'.dic Xtest.dic'
