@@ -209,6 +209,30 @@ describe("spell checking with 'encoding' set to utf-8", function()
       '\n' ..
       'PFX yy Y 1\n' ..
       'PFX yy 0 nou .\n')
+    write_file('Xtest6.aff',
+      'SET ISO8859-1\n' ..
+      '\n' ..
+      'FLAG caplong\n' ..
+      '\n' ..
+      'NEEDAFFIX A!\n' ..
+      '\n' ..
+      'COMPOUNDRULE sMm*Ee\n' ..
+      '\n' ..
+      'NEEDCOMPOUND Xx\n' ..
+      '\n' ..
+      'COMPOUNDPERMITFLAG p\n' ..
+      '\n' ..
+      'SFX N3 Y 1\n' ..
+      'SFX N3 0 bork .\n' ..
+      '\n' ..
+      'SFX A1 Y 1\n' ..
+      'SFX A1 0 a1 .\n' ..
+      '\n' ..
+      'SFX A\xe9 Y 1\n' ..
+      'SFX A\xe9 0 a\xe9 .\n' ..
+      '\n' ..
+      'PFX Zz Y 1\n' ..
+      'PFX Zz 0 pre/p .\n')
   end)
 
   it('is working', function()
@@ -458,32 +482,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
       	startprobar startnouend
       badend
       
-      6affstart
-      SET ISO8859-1
-      
-      FLAG caplong
-      
-      NEEDAFFIX A!
-      
-      COMPOUNDRULE sMm*Ee
-      
-      NEEDCOMPOUND Xx
-      
-      COMPOUNDPERMITFLAG p
-      
-      SFX N3 Y 1
-      SFX N3 0 bork .
-      
-      SFX A1 Y 1
-      SFX A1 0 a1 .
-      
-      SFX Aé Y 1
-      SFX Aé 0 aé .
-      
-      PFX Zz Y 1
-      PFX Zz 0 pre/p .
-      6affend
-      
       6dicstart
       1234
       mee/A1AéA!
@@ -559,7 +557,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
         $put =''
         $put ='test '. a:aff . '-' . a:dic
 	"  Generate a .spl file from a .dic and .aff file.
-	if str2nr(a:aff) <= 5
+	if str2nr(a:aff) <= 6
 	  exe '1;/^' . a:aff . 'affstart/+1,/^' . a:aff . 'affend/-1w! Xtest.aff'
 	else
 	  exe '!cp -f Xtest'.a:aff.'.aff Xtest.aff'
