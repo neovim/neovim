@@ -8,62 +8,72 @@ local write_file = helpers.write_file
 describe("spell checking with 'encoding' set to utf-8", function()
   setup(function()
     clear()
-    --write_file('', [[]])
+    -- This file should be encoded in ISO8859-1.
+    write_file('Xtest1.aff', 
+      'SET ISO8859-1\n' ..
+      'TRY esianrtolcdugmphbyfvkwjkqxz-\xeb\xe9\xe8\xea\xef\xee\xe4\xe0' ..
+      '\xe2\xf6\xfc\xfb\'ESIANRTOLCDUGMPHBYFVKWJKQXZ\n' ..
+      '\n' ..
+      'FOL  \xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee' ..
+      '\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xdf' ..
+      '\xff\n' ..
+      'LOW  \xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee' ..
+      '\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xdf' ..
+      '\xff\n' ..
+      'UPP  \xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce' ..
+      '\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf' ..
+      '\xff\n' ..
+      '\n' ..
+      'SOFOFROM abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\xe0' ..
+      '\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0' ..
+      '\xf1\xf2\xf3\xf4\xf5\xf6\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xdf\xff\xc0' ..
+      '\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0' ..
+      '\xd1\xd2\xd3\xd4\xd5\xd6\xd8\xd9\xda\xdb\xdc\xdd\xde\xbf\n' ..
+      'SOFOTO   ebctefghejklnnepkrstevvkesebctefghejklnnepkrstevvkeseeeeee' ..
+      'eceeeeeeeedneeeeeeeeeeepseeeeeeeeceeeeeeeedneeeeeeeeeeep?\n' ..
+      '\n' ..
+      'MIDWORD\t\'-\n' ..
+      '\n' ..
+      'KEP =\n' ..
+      'RAR ?\n' ..
+      'BAD !\n' ..
+      '\n' ..
+      '#NOSPLITSUGS\n' ..
+      '\n' ..
+      'PFX I N 1\n' ..
+      'PFX I 0 in .\n' ..
+      '\n' ..
+      'PFX O Y 1\n' ..
+      'PFX O 0 out .\n' ..
+      '\n' ..
+      'SFX S Y 2\n' ..
+      'SFX S 0 s [^s]\n' ..
+      'SFX S 0 es s\n' ..
+      '\n' ..
+      'SFX N N 3\n' ..
+      'SFX N 0 en [^n]\n' ..
+      'SFX N 0 nen n\n' ..
+      'SFX N 0 n .\n' ..
+      '\n' ..
+      'REP 3\n' ..
+      'REP g ch\n' ..
+      'REP ch g\n' ..
+      'REP svp s.v.p.\n' ..
+      '\n' ..
+      'MAP 9\n' ..
+      'MAP a\xe0\xe1\xe2\xe3\xe4\xe5\n' ..
+      'MAP e\xe8\xe9\xea\xeb\n' ..
+      'MAP i\xec\xed\xee\xef\n' ..
+      'MAP o\xf2\xf3\xf4\xf5\xf6\n' ..
+      'MAP u\xf9\xfa\xfb\xfc\n' ..
+      'MAP n\xf1\n' ..
+      'MAP c\xe7\n' ..
+      'MAP y\xff\xfd\n' ..
+      'MAP s\xdf\n')
   end)
 
   it('is working', function()
     insert([[
-      1affstart
-      SET ISO8859-1
-      TRY esianrtolcdugmphbyfvkwjkqxz-ëéèêïîäàâöüû'ESIANRTOLCDUGMPHBYFVKWJKQXZ
-      
-      FOL  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
-      LOW  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
-      UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßÿ
-      
-      SOFOFROM abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ¿
-      SOFOTO   ebctefghejklnnepkrstevvkesebctefghejklnnepkrstevvkeseeeeeeeceeeeeeeedneeeeeeeeeeepseeeeeeeeceeeeeeeedneeeeeeeeeeep?
-      
-      MIDWORD	'-
-      
-      KEP =
-      RAR ?
-      BAD !
-      
-      #NOSPLITSUGS
-      
-      PFX I N 1
-      PFX I 0 in .
-      
-      PFX O Y 1
-      PFX O 0 out .
-      
-      SFX S Y 2
-      SFX S 0 s [^s]
-      SFX S 0 es s
-      
-      SFX N N 3
-      SFX N 0 en [^n]
-      SFX N 0 nen n
-      SFX N 0 n .
-      
-      REP 3
-      REP g ch
-      REP ch g
-      REP svp s.v.p.
-      
-      MAP 9
-      MAP aàáâãäå
-      MAP eèéêë
-      MAP iìíîï
-      MAP oòóôõö
-      MAP uùúûü
-      MAP nñ
-      MAP cç
-      MAP yÿý
-      MAP sß
-      1affend
-      
       affstart_sal
       SET ISO8859-1
       TRY esianrtolcdugmphbyfvkwjkqxz-ëéèêïîäàâöüû'ESIANRTOLCDUGMPHBYFVKWJKQXZ
@@ -543,7 +553,11 @@ describe("spell checking with 'encoding' set to utf-8", function()
         $put =''
         $put ='test '. a:aff . '-' . a:dic
 	"  Generate a .spl file from a .dic and .aff file.
-        exe '1;/^' . a:aff . 'affstart/+1,/^' . a:aff . 'affend/-1w! Xtest.aff'
+	if str2nr(a:aff) <= 1
+	  exe '1;/^' . a:aff . 'affstart/+1,/^' . a:aff . 'affend/-1w! Xtest.aff'
+	else
+	  exe '!cp -f Xtest'.a:aff.'.aff Xtest.aff'
+	endif
         exe '1;/^' . a:dic . 'dicstart/+1,/^' . a:dic . 'dicend/-1w! Xtest.dic'
         mkspell! Xtest Xtest
 	"  Use that spell file.
