@@ -808,9 +808,8 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ]])
   end)
 
-  it('is working', function()
+  it('part 5-5', function()
     insert([[
-      
       Test affix flags with two characters
       
       5good: fooa1 fooaÃ© bar prebar barbork prebarbork  startprebar
@@ -818,35 +817,9 @@ describe("spell checking with 'encoding' set to utf-8", function()
       bad: foo fooa2 prabar probarbirk middle startmiddle middleend endstart
       	startprobar startnouend
       badend
-      
-      6good: meea1 meeaÃ© bar prebar barbork prebarbork  leadprebar
-            lead end leadend  leadmiddleend
-      bad: mee meea2 prabar probarbirk middle leadmiddle middleend endlead
-      	leadprobar
-      badend
-      
-      7good: meea1 meeaÃ© bar prebar barmeat prebarmeat  leadprebar
-            lead tail leadtail  leadmiddletail
-      bad: mee meea2 prabar probarmaat middle leadmiddle middletail taillead
-      	leadprobar
-      badend
-      
-      test output:]])
-
-    -- Compound words.
+      ]])
     test_one(5, 5)
-    test_one(6, 6)
-    test_one(7, 7)
-
-    execute('set spl= enc=latin1')
-
-    execute('0,/^test output:/-1 delete')
-
-    -- Assert buffer contents.
-    expect([=[
-      test output:
-      
-      
+    execute([[
       test 5-5
       # file: Xtest.utf-8.spl
       bar
@@ -881,6 +854,40 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ['startprebar', 'start prebar', 'startbar']
       startnouend
       ['start nouend', 'startend']
+      ]])
+  end)
+
+  it('is working', function()
+    insert([[
+      
+      
+      6good: meea1 meeaÃ© bar prebar barbork prebarbork  leadprebar
+            lead end leadend  leadmiddleend
+      bad: mee meea2 prabar probarbirk middle leadmiddle middleend endlead
+      	leadprobar
+      badend
+      
+      7good: meea1 meeaÃ© bar prebar barmeat prebarmeat  leadprebar
+            lead tail leadtail  leadmiddletail
+      bad: mee meea2 prabar probarmaat middle leadmiddle middletail taillead
+      	leadprobar
+      badend
+      
+      test output:]])
+
+    -- Compound words.
+    test_one(6, 6)
+    test_one(7, 7)
+
+    execute('set spl= enc=latin1')
+
+    execute('0,/^test output:/-1 delete')
+
+    -- Assert buffer contents.
+    expect([=[
+      test output:
+      
+      
       
       test 6-6
       # file: Xtest.utf-8.spl
