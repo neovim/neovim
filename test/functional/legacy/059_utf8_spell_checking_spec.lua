@@ -536,79 +536,26 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ]])
   end
 
-  it('is working', function()
+  it('part 1-1', function()
     insert([[
-      
       1good: wrong OK puts. Test the end
       bad:  inputs comment ok Ok. test dÃ©Ã´l end the
       badend
       
-      2good: puts
-      bad: inputs comment ok Ok end the. test dÃ©Ã´l
-      badend
-      
-      Test rules for compounding.
-      
-      3good: foo mÃ¯ foobar foofoobar barfoo barbarfoo
-      bad: bar la foomÃ¯ barmÃ¯ mÃ¯foo mÃ¯bar mÃ¯mÃ¯ lala mÃ¯la lamÃ¯ foola labar
-      badend
-      
-      
-      Tests for compounding.
-      
-      4good: word util bork prebork start end wordutil wordutils pro-ok
-      	bork borkbork borkborkbork borkborkborkbork borkborkborkborkbork
-      	tomato tomatotomato startend startword startwordword startwordend
-      	startwordwordend startwordwordwordend prebork preborkbork
-      	preborkborkbork
-      	nouword
-      bad: wordutilize pro borkborkborkborkborkbork tomatotomatotomato
-      	endstart endend startstart wordend wordstart
-      	preborkprebork  preborkpreborkbork
-       	startwordwordwordwordend borkpreborkpreborkbork
-      	utilsbork  startnouword
-      badend
-      
       test2:
       elequint test elekwint test elekwent asdf
-      
-      Test affix flags with two characters
-      
-      5good: fooa1 fooaÃ© bar prebar barbork prebarbork  startprebar
-            start end startend  startmiddleend nouend
-      bad: foo fooa2 prabar probarbirk middle startmiddle middleend endstart
-      	startprobar startnouend
-      badend
-      
-      6good: meea1 meeaÃ© bar prebar barbork prebarbork  leadprebar
-            lead end leadend  leadmiddleend
-      bad: mee meea2 prabar probarbirk middle leadmiddle middleend endlead
-      	leadprobar
-      badend
-      
-      7good: meea1 meeaÃ© bar prebar barmeat prebarmeat  leadprebar
-            lead tail leadtail  leadmiddletail
-      bad: mee meea2 prabar probarmaat middle leadmiddle middletail taillead
-      	leadprobar
-      badend
-      
-      test output:]])
-
+      ]])
     test_one(1, 1)
     execute([[$put =soundfold('goobledygoook')]])
     execute([[$put =soundfold('kÃ³opÃ«rÃ¿nÃ´ven')]])
     execute([[$put =soundfold('oeverloos gezwets edale')]])
-
     -- And now with SAL instead of SOFO items; test automatic reloading.
-    feed('gg')
     os.execute('cp -f Xtest-sal.aff Xtest.aff')
     execute('mkspell! Xtest Xtest')
     execute([[$put =soundfold('goobledygoook')]])
     execute([[$put =soundfold('kÃ³opÃ«rÃ¿nÃ´ven')]])
     execute([[$put =soundfold('oeverloos gezwets edale')]])
-
     -- Also use an addition file.
-    feed('gg')
     execute('mkspell! Xtest.utf-8.add.spl Xtest.utf-8.add')
     execute('set spellfile=Xtest.utf-8.add')
     execute('/^test2:')
@@ -647,27 +594,8 @@ describe("spell checking with 'encoding' set to utf-8", function()
     feed('`m]s')
     execute('let [str, a] = spellbadword()')
     execute('$put =str')
-    execute('unlet str a')
-    --helpers.eq(1,2)
-
-    -- Postponed prefixes.
-    test_one(2, 1)
-
-    -- Compound words.
-    test_one(3, 3)
-    test_one(4, 4)
-    test_one(5, 5)
-    test_one(6, 6)
-    test_one(7, 7)
-
-    execute('set spl= enc=latin1')
-
-    execute('0,/^test output:/-1 delete')
-
-    -- Assert buffer contents.
-    expect([=[
-      test output:
-      
+    execute('1,/^test 1-1/-1d')
+    expect([[
       test 1-1
       # file: Xtest.utf-8.spl
       Comment
@@ -719,8 +647,19 @@ describe("spell checking with 'encoding' set to utf-8", function()
       elequint
       elekwent
       elequint
-      elekwint
-      
+      elekwint]])
+  end)
+
+  it('part 2-1', function()
+    insert([[
+      2good: puts
+      bad: inputs comment ok Ok end the. test dÃ©Ã´l
+      badend
+      ]])
+    -- Postponed prefixes.
+    test_one(2, 1)
+    execute('1,/^test 2-1/-1d')
+    expect([=[
       test 2-1
       # file: Xtest.utf-8.spl
       Comment
@@ -757,8 +696,20 @@ describe("spell checking with 'encoding' set to utf-8", function()
       test
       ['Test', 'testn', 'testen']
       dÃ©Ã´l
-      ['deol', 'dÃ©Ã´r', 'test']
+      ['deol', 'dÃ©Ã´r', 'test']]=])
+  end)
+
+  it('part 3-3', function()
+    insert([[
+      Test rules for compounding.
       
+      3good: foo mÃ¯ foobar foofoobar barfoo barbarfoo
+      bad: bar la foomÃ¯ barmÃ¯ mÃ¯foo mÃ¯bar mÃ¯mÃ¯ lala mÃ¯la lamÃ¯ foola labar
+      badend
+      ]])
+    test_one(3, 3)
+    execute('1,/^test 3-3/-1d')
+    expect([=[
       test 3-3
       # file: Xtest.utf-8.spl
       foo
@@ -789,8 +740,29 @@ describe("spell checking with 'encoding' set to utf-8", function()
       foola
       ['foo', 'foobar', 'foofoo']
       labar
-      ['barbar', 'foobar']
+      ['barbar', 'foobar']]=])
+  end)
+
+  it('part 4-4', function()
+    insert([[
+      Tests for compounding.
       
+      4good: word util bork prebork start end wordutil wordutils pro-ok
+        bork borkbork borkborkbork borkborkborkbork borkborkborkborkbork
+        tomato tomatotomato startend startword startwordword startwordend
+        startwordwordend startwordwordwordend prebork preborkbork
+        preborkborkbork
+        nouword
+      bad: wordutilize pro borkborkborkborkborkbork tomatotomatotomato
+        endstart endend startstart wordend wordstart
+        preborkprebork  preborkpreborkbork
+        startwordwordwordwordend borkpreborkpreborkbork
+        utilsbork  startnouword
+      badend
+      ]])
+    test_one(4, 4)
+    execute('1,/^test 4-4/-1d')
+    expect([=[
       test 4-4
       # file: Xtest.utf-8.spl
       bork
@@ -836,8 +808,22 @@ describe("spell checking with 'encoding' set to utf-8", function()
       utilsbork
       ['utilbork', 'utils bork', 'util bork']
       startnouword
-      ['start nouword', 'startword', 'startborkword']
+      ['start nouword', 'startword', 'startborkword']]=])
+  end)
+
+  it('part 5-5', function()
+    insert([[
+      Test affix flags with two characters
       
+      5good: fooa1 fooaÃ© bar prebar barbork prebarbork  startprebar
+            start end startend  startmiddleend nouend
+      bad: foo fooa2 prabar probarbirk middle startmiddle middleend endstart
+            startprobar startnouend
+      badend
+      ]])
+    test_one(5, 5)
+    execute('1,/^test 5-5/-1d')
+    expect([=[
       test 5-5
       # file: Xtest.utf-8.spl
       bar
@@ -871,8 +857,20 @@ describe("spell checking with 'encoding' set to utf-8", function()
       startprobar
       ['startprebar', 'start prebar', 'startbar']
       startnouend
-      ['start nouend', 'startend']
-      
+      ['start nouend', 'startend']]=])
+  end)
+
+  it('part 6-6', function()
+    insert([[
+      6good: meea1 meeaÃ© bar prebar barbork prebarbork  leadprebar
+            lead end leadend  leadmiddleend
+      bad: mee meea2 prabar probarbirk middle leadmiddle middleend endlead
+            leadprobar
+      badend
+      ]])
+    test_one(6, 6)
+    execute('1,/^test 6-6/-1d')
+    expect([=[
       test 6-6
       # file: Xtest.utf-8.spl
       bar
@@ -903,8 +901,22 @@ describe("spell checking with 'encoding' set to utf-8", function()
       endlead
       ['end lead', 'lead', 'end end']
       leadprobar
-      ['leadprebar', 'lead prebar', 'leadbar']
-      
+      ['leadprebar', 'lead prebar', 'leadbar']]=])
+  end)
+
+  it('part 7-7', function()
+    insert([[
+      7good: meea1 meeaÃ© bar prebar barmeat prebarmeat  leadprebar
+            lead tail leadtail  leadmiddletail
+      bad: mee meea2 prabar probarmaat middle leadmiddle middletail taillead
+            leadprobar
+      badend
+      ]])
+    -- Compound words.
+    test_one(7, 7)
+    -- Assert buffer contents.
+    execute('1,/^test 7-7/-1d')
+    expect([=[
       test 7-7
       # file: Xtest.utf-8.spl
       bar
