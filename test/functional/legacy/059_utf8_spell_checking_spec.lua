@@ -533,13 +533,62 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ]])
   end
 
-  it('is working', function()
+  it('part 1-1', function()
     insert([[
-      
       1good: wrong OK puts. Test the end
       bad:  inputs comment ok Ok. test dÃ©Ã´l end the
       badend
-      
+      ]])
+    test_one(1, 1)
+    execute([[$put =soundfold('goobledygoook')]])
+    execute([[$put =soundfold('kÃ³opÃ«rÃ¿nÃ´ven')]])
+    execute([[$put =soundfold('oeverloos gezwets edale')]])
+    expect([[
+      test 1-1
+      # file: Xtest.utf-8.spl
+      Comment
+      deol
+      dÃ©Ã´r
+      input
+      OK
+      output
+      outputs
+      outtest
+      put
+      puts
+      test
+      testen
+      testn
+      the end
+      uk
+      wrong
+      -------
+      bad
+      ['put', 'uk', 'OK']
+      inputs
+      ['input', 'puts', 'outputs']
+      comment
+      ['Comment', 'outtest', 'the end']
+      ok
+      ['OK', 'uk', 'put']
+      Ok
+      ['OK', 'Uk', 'Put']
+      test
+      ['Test', 'testn', 'testen']
+      dÃ©Ã´l
+      ['deol', 'dÃ©Ã´r', 'test']
+      end
+      ['put', 'uk', 'test']
+      the
+      ['put', 'uk', 'test']
+      gebletegek
+      kepereneven
+      everles gesvets etele
+      ]])
+  end)
+
+  it('is working', function()
+    insert([[
       2good: puts
       bad: inputs comment ok Ok end the. test dÃ©Ã´l
       badend
@@ -591,10 +640,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
       
       test output:]])
 
-    test_one(1, 1)
-    execute([[$put =soundfold('goobledygoook')]])
-    execute([[$put =soundfold('kÃ³opÃ«rÃ¿nÃ´ven')]])
-    execute([[$put =soundfold('oeverloos gezwets edale')]])
 
     -- And now with SAL instead of SOFO items; test automatic reloading.
     feed('gg')
@@ -665,46 +710,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
     expect([=[
       test output:
       
-      test 1-1
-      # file: Xtest.utf-8.spl
-      Comment
-      deol
-      dÃ©Ã´r
-      input
-      OK
-      output
-      outputs
-      outtest
-      put
-      puts
-      test
-      testen
-      testn
-      the end
-      uk
-      wrong
-      -------
-      bad
-      ['put', 'uk', 'OK']
-      inputs
-      ['input', 'puts', 'outputs']
-      comment
-      ['Comment', 'outtest', 'the end']
-      ok
-      ['OK', 'uk', 'put']
-      Ok
-      ['OK', 'Uk', 'Put']
-      test
-      ['Test', 'testn', 'testen']
-      dÃ©Ã´l
-      ['deol', 'dÃ©Ã´r', 'test']
-      end
-      ['put', 'uk', 'test']
-      the
-      ['put', 'uk', 'test']
-      gebletegek
-      kepereneven
-      everles gesvets etele
       kbltykk
       kprnfn
       *fls kswts tl
