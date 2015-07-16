@@ -3,7 +3,7 @@
 local helpers = require('test.functional.helpers')
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
-local write_file = helpers.write_file
+local write_file, eq, eval = helpers.write_file, helpers.eq, helpers.eval
 
 describe("spell checking with 'encoding' set to utf-8", function()
   setup(function()
@@ -544,7 +544,9 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ]])
     test_one(1, 1)
     execute([[$put =soundfold('goobledygoook')]])
+    eq('gebletegek', eval('soundfold("goobledygoook")'))
     execute([[$put =soundfold('kÃ³opÃ«rÃ¿nÃ´ven')]])
+    eq('kepereneven', eval('soundfold("kÃ³opÃ«rÃ¿nÃ´ven")'))
     execute([[$put =soundfold('oeverloos gezwets edale')]])
     -- And now with SAL instead of SOFO items; test automatic reloading.
     os.execute('cp -f Xtest-sal.aff Xtest.aff')
