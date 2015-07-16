@@ -696,15 +696,52 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ]])
   end)
 
-  it('is working', function()
+  it('part 3-3', function()
     insert([[
-      
       Test rules for compounding.
       
       3good: foo mÃ¯ foobar foofoobar barfoo barbarfoo
       bad: bar la foomÃ¯ barmÃ¯ mÃ¯foo mÃ¯bar mÃ¯mÃ¯ lala mÃ¯la lamÃ¯ foola labar
       badend
-      
+      ]])
+    test_one(3, 3)
+    execute([[
+      test 3-3
+      # file: Xtest.utf-8.spl
+      foo
+      mÃ¯
+      -------
+      bad
+      ['foo', 'mÃ¯']
+      bar
+      ['barfoo', 'foobar', 'foo']
+      la
+      ['mÃ¯', 'foo']
+      foomÃ¯
+      ['foo mÃ¯', 'foo', 'foofoo']
+      barmÃ¯
+      ['barfoo', 'mÃ¯', 'barbar']
+      mÃ¯foo
+      ['mÃ¯ foo', 'foo', 'foofoo']
+      mÃ¯bar
+      ['foobar', 'barbar', 'mÃ¯']
+      mÃ¯mÃ¯
+      ['mÃ¯ mÃ¯', 'mÃ¯']
+      lala
+      []
+      mÃ¯la
+      ['mÃ¯', 'mÃ¯ mÃ¯']
+      lamÃ¯
+      ['mÃ¯', 'mÃ¯ mÃ¯']
+      foola
+      ['foo', 'foobar', 'foofoo']
+      labar
+      ['barbar', 'foobar']
+      ]])
+  end)
+
+  it('is working', function()
+    insert([[
       
       Tests for compounding.
       
@@ -744,7 +781,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
       test output:]])
 
     -- Compound words.
-    test_one(3, 3)
     test_one(4, 4)
     test_one(5, 5)
     test_one(6, 6)
@@ -757,38 +793,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
     -- Assert buffer contents.
     expect([=[
       test output:
-      
-      test 3-3
-      # file: Xtest.utf-8.spl
-      foo
-      mÃ¯
-      -------
-      bad
-      ['foo', 'mÃ¯']
-      bar
-      ['barfoo', 'foobar', 'foo']
-      la
-      ['mÃ¯', 'foo']
-      foomÃ¯
-      ['foo mÃ¯', 'foo', 'foofoo']
-      barmÃ¯
-      ['barfoo', 'mÃ¯', 'barbar']
-      mÃ¯foo
-      ['mÃ¯ foo', 'foo', 'foofoo']
-      mÃ¯bar
-      ['foobar', 'barbar', 'mÃ¯']
-      mÃ¯mÃ¯
-      ['mÃ¯ mÃ¯', 'mÃ¯']
-      lala
-      []
-      mÃ¯la
-      ['mÃ¯', 'mÃ¯ mÃ¯']
-      lamÃ¯
-      ['mÃ¯', 'mÃ¯ mÃ¯']
-      foola
-      ['foo', 'foobar', 'foofoo']
-      labar
-      ['barbar', 'foobar']
       
       test 4-4
       # file: Xtest.utf-8.spl
