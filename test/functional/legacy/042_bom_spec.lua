@@ -12,7 +12,7 @@ local write_file = function (name, contents)
   file:close()
 end
 
-describe('reading and writing files with BOM', function()
+describe('reading and writing files with BOM:', function()
   local latin1 = '\xfe\xfelatin-1'
   local utf8 = '\xef\xbb\xbfutf-8'
   local utf8_err = '\xef\xbb\xbfutf-8\x80err'
@@ -23,7 +23,6 @@ describe('reading and writing files with BOM', function()
   local ucs4_le = '\xff\xfe\x00\x00u\x00\x00\x00c\x00\x00\x00s\x00\x00\x00'..
     '-\x00\x00\x004\x00\x00\x00l\x00\x00\x00e\x00\x00\x00'
   setup(function()
-    clear()
     write_file('Xtest0', latin1..'\n')
     write_file('Xtest1', utf8..'\n')
     write_file('Xtest2', utf8_err..'\n')
@@ -32,6 +31,7 @@ describe('reading and writing files with BOM', function()
     write_file('Xtest5', ucs4..'\x00\x00\x00\n')
     write_file('Xtest6', ucs4_le..'\n\x00\x00\x00')
   end)
+  before_each(clear)
   teardown(function()
     os.remove('Xtest0')
     os.remove('Xtest1')
@@ -42,10 +42,9 @@ describe('reading and writing files with BOM', function()
     os.remove('Xtest6')
   end)
 
-  it('is working', function()
+  it('no BOM in latin1 files', function()
     execute('set fileencodings=ucs-bom,latin-1')
     execute('set noeol')
-
     -- Check that editing a latin-1 file doesn't see a BOM.
     eq('', eval('&fileencoding'))
     execute('e Xtest0')
@@ -62,6 +61,25 @@ describe('reading and writing files with BOM', function()
     execute('w! Xtest0x')
     wait()
     helpers.neq(nil, lfs.attributes('Xtest0x'))
+  end)
+
+  it('utf-8', function()
+    execute('set fileencodings=ucs-bom,latin-1')
+    execute('set noeol')
+    execute('set bomb fenc=latin-1')
+    -- Check utf-8.
+    execute('e! Xtest1')
+    eq(1, eval('&bomb'))
+    eq('utf-8', eval('&fileencoding'))
+    expect('utf-8')
+  end)
+
+  it('is working', function()
+    execute('set fileencodings=ucs-bom,latin-1')
+    execute('set noeol')
+
+    execute('set fenc=latin-1')
+    execute('set bomb fenc=latin-1')
 
     -- Check utf-8.
     execute('e! Xtest1')
