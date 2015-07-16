@@ -32,10 +32,6 @@ class ScriptHost(object):
         # it seems some plugins assume 'sys' is already imported, so do it now
         exec('import sys', self.module.__dict__)
         self.legacy_vim = nvim.with_hook(LegacyEvalHook())
-        if IS_PYTHON3:
-            self.legacy_vim = self.legacy_vim.with_hook(
-                neovim.DecodeHook(
-                    encoding=nvim.options['encoding']))
         sys.modules['vim'] = self.legacy_vim
 
     def setup(self, nvim):
@@ -93,10 +89,6 @@ class ScriptHost(object):
         stop -= 1
         fname = '_vim_pydo'
 
-        # Python3 code (exec) must be a string, mixing bytes with
-        # function_def would use bytes.__repr__ instead
-        if isinstance and isinstance(code, bytes):
-            code = code.decode(nvim.options['encoding'])
         # define the function
         function_def = 'def %s(line, linenr):\n %s' % (fname, code,)
         exec(function_def, self.module.__dict__)
