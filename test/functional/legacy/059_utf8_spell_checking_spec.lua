@@ -494,6 +494,48 @@ describe("spell checking with 'encoding' set to utf-8", function()
     os.remove('Xtest7.dic')
   end)
 
+  -- Function to test .aff/.dic with list of good and bad words.  This was a
+  -- Vim function in the original legacy test.
+  local function test_one(aff, dic)
+    -- Generate a .spl file from a .dic and .aff file.
+    os.execute('cp -f Xtest'..aff..'.aff Xtest.aff')
+    os.execute('cp -f Xtest'..dic..'.dic Xtest.dic')
+    source([[
+      set spellfile=
+      function! SpellDumpNoShow()
+        " spelling scores depend on what happens to be drawn on screen
+        spelldump
+        %yank
+        quit
+      endfunction
+      $put =''
+      $put ='test ]]..aff..'-'..dic..[['
+      mkspell! Xtest Xtest
+      "  Use that spell file.
+      set spl=Xtest.utf-8.spl spell
+      "  List all valid words.
+      call SpellDumpNoShow()
+      $put
+      $put ='-------'
+      "  Find all bad words and suggestions for them.
+      1;/^]]..aff..[[good:
+      normal 0f:]s
+      let prevbad = ''
+      while 1
+        let [bad, a] = spellbadword()
+        if bad == '' || bad == prevbad || bad == 'badend'
+          break
+        endif
+        let prevbad = bad
+        let lst = spellsuggest(bad, 3)
+        normal mm
+        $put =bad
+        $put =string(lst)
+        normal `m]s
+      endwhile
+      ]])
+  end
+
   it('is working', function()
     insert([[
       
@@ -552,50 +594,10 @@ describe("spell checking with 'encoding' set to utf-8", function()
       
       test output:]])
 
-    -- Function to test .aff/.dic with list of good and bad words.
-    os.execute('cp -f Xtest1.aff Xtest.aff')
-    os.execute('cp -f Xtest1.dic Xtest.dic')
-    source([[
-      func TestOne(aff, dic)
-        set spellfile=
-        $put =''
-        $put ='test '. a:aff . '-' . a:dic
-	"  Generate a .spl file from a .dic and .aff file.
-	exe '!cp -f Xtest'.a:aff.'.aff Xtest.aff'
-	exe '!cp -f Xtest'.a:dic.'.dic Xtest.dic'
-        mkspell! Xtest Xtest
-	"  Use that spell file.
-        set spl=Xtest.utf-8.spl spell
-	"  List all valid words.
-        spelldump
-        %yank
-        quit
-        $put
-        $put ='-------'
-	"  Find all bad words and suggestions for them.
-        exe '1;/^' . a:aff . 'good:'
-        normal 0f:]s
-        let prevbad = ''
-        while 1
-          let [bad, a] = spellbadword()
-          if bad == '' || bad == prevbad || bad == 'badend'
-            break
-          endif
-          let prevbad = bad
-          let lst = spellsuggest(bad, 3)
-          normal mm
-          $put =bad
-          $put =string(lst)
-          normal `m]s
-        endwhile
-      endfunc
-    ]])
-
-    execute([[call TestOne('1', '1')]])
+    test_one(1, 1)
     execute([[$put =soundfold('goobledygoook')]])
     execute([[$put =soundfold('kÃ³opÃ«rÃ¿nÃ´ven')]])
     execute([[$put =soundfold('oeverloos gezwets edale')]])
-
 
     -- And now with SAL instead of SOFO items; test automatic reloading.
     feed('gg')
@@ -649,29 +651,15 @@ describe("spell checking with 'encoding' set to utf-8", function()
     --helpers.eq(1,2)
 
     -- Postponed prefixes.
-    os.execute('cp -f Xtest2.aff Xtest.aff')
-    os.execute('cp -f Xtest1.dic Xtest.dic')
-    execute([[call TestOne('2', '1')]])
+    test_one(2, 1)
 
     -- Compound words.
-    os.execute('cp -f Xtest3.aff Xtest.aff')
-    os.execute('cp -f Xtest3.dic Xtest.dic')
-    execute([[call TestOne('3', '3')]])
-    os.execute('cp -f Xtest4.aff Xtest.aff')
-    os.execute('cp -f Xtest4.dic Xtest.dic')
-    execute([[call TestOne('4', '4')]])
-    os.execute('cp -f Xtest5.aff Xtest.aff')
-    os.execute('cp -f Xtest5.dic Xtest.dic')
-    execute([[call TestOne('5', '5')]])
-    os.execute('cp -f Xtest6.aff Xtest.aff')
-    os.execute('cp -f Xtest6.dic Xtest.dic')
-    execute([[call TestOne('6', '6')]])
-    os.execute('cp -f Xtest7.aff Xtest.aff')
-    os.execute('cp -f Xtest7.dic Xtest.dic')
-    execute([[call TestOne('7', '7')]])
+    test_one(3, 3)
+    test_one(4, 4)
+    test_one(5, 5)
+    test_one(6, 6)
+    test_one(7, 7)
 
-    -- Clean up for valgrind.
-    execute('delfunc TestOne')
     execute('set spl= enc=latin1')
 
     execute('0,/^test output:/-1 delete')
