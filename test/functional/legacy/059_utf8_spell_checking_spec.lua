@@ -647,11 +647,57 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ]])
   end)
 
-  it('is working', function()
+  it('part 2-1', function()
     insert([[
       2good: puts
       bad: inputs comment ok Ok end the. test dÃ©Ã´l
       badend
+      ]])
+    -- Postponed prefixes.
+    test_one(2, 1)
+    expect([[
+      test 2-1
+      # file: Xtest.utf-8.spl
+      Comment
+      deol
+      dÃ©Ã´r
+      OK
+      put
+      input
+      output
+      puts
+      outputs
+      test
+      outtest
+      testen
+      testn
+      the end
+      uk
+      wrong
+      -------
+      bad
+      ['put', 'uk', 'OK']
+      inputs
+      ['input', 'puts', 'outputs']
+      comment
+      ['Comment']
+      ok
+      ['OK', 'uk', 'put']
+      Ok
+      ['OK', 'Uk', 'Put']
+      end
+      ['put', 'uk', 'deol']
+      the
+      ['put', 'uk', 'test']
+      test
+      ['Test', 'testn', 'testen']
+      dÃ©Ã´l
+      ['deol', 'dÃ©Ã´r', 'test']
+      ]])
+  end)
+
+  it('is working', function()
+    insert([[
       
       Test rules for compounding.
       
@@ -697,10 +743,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
       
       test output:]])
 
-
-    -- Postponed prefixes.
-    test_one(2, 1)
-
     -- Compound words.
     test_one(3, 3)
     test_one(4, 4)
@@ -715,45 +757,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
     -- Assert buffer contents.
     expect([=[
       test output:
-      
-      
-      test 2-1
-      # file: Xtest.utf-8.spl
-      Comment
-      deol
-      dÃ©Ã´r
-      OK
-      put
-      input
-      output
-      puts
-      outputs
-      test
-      outtest
-      testen
-      testn
-      the end
-      uk
-      wrong
-      -------
-      bad
-      ['put', 'uk', 'OK']
-      inputs
-      ['input', 'puts', 'outputs']
-      comment
-      ['Comment']
-      ok
-      ['OK', 'uk', 'put']
-      Ok
-      ['OK', 'Uk', 'Put']
-      end
-      ['put', 'uk', 'deol']
-      the
-      ['put', 'uk', 'test']
-      test
-      ['Test', 'testn', 'testen']
-      dÃ©Ã´l
-      ['deol', 'dÃ©Ã´r', 'test']
       
       test 3-3
       # file: Xtest.utf-8.spl
