@@ -97,6 +97,7 @@
 #include "nvim/os/dl.h"
 #include "nvim/os/input.h"
 #include "nvim/event/loop.h"
+#include "nvim/lib/kvec.h"
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
 
@@ -439,6 +440,7 @@ static struct vimvar {
   {VV_NAME("progpath",         VAR_STRING), VV_RO},
   {VV_NAME("command_output",   VAR_STRING), 0},
   {VV_NAME("completed_item",   VAR_DICT), VV_RO},
+  {VV_NAME("msgpack_types",    VAR_DICT), VV_RO},
 };
 
 /* shorthand */
@@ -469,6 +471,29 @@ typedef struct {
   uint64_t id;
 } TerminalJobData;
 
+/// Structure representing current VimL to messagepack conversion state
+typedef struct {
+  enum {
+    kMPConvDict,   ///< Convert dict_T *dictionary.
+    kMPConvList,   ///< Convert list_T *list.
+    kMPConvPairs,  ///< Convert mapping represented as a list_T* of pairs.
+  } type;
+  union {
+    struct {
+      const dict_T *dict;    ///< Currently converted dictionary.
+      const hashitem_T *hi;  ///< Currently converted dictionary item.
+      size_t todo;           ///< Amount of items left to process.
+    } d;  ///< State of dictionary conversion.
+    struct {
+      const list_T *list;    ///< Currently converted list.
+      const listitem_T *li;  ///< Currently converted list item.
+    } l;  ///< State of list or generic mapping conversion.
+  } data;  ///< Data to convert.
+} MPConvStackVal;
+
+/// Stack used to convert VimL values to messagepack.
+typedef kvec_t(MPConvStackVal) MPConvStack;
+
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval.c.generated.h"
@@ -488,6 +513,40 @@ typedef struct {
 static int disable_job_defer = 0;
 static uint64_t current_job_id = 1;
 static PMap(uint64_t) *jobs = NULL; 
+
+typedef enum {
+  kMPNil,
+  kMPBoolean,
+  kMPInteger,
+  kMPFloat,
+  kMPString,
+  kMPBinary,
+  kMPArray,
+  kMPMap,
+  kMPExt,
+} MessagePackType;
+static const char *const msgpack_type_names[] = {
+  [kMPNil] = "nil",
+  [kMPBoolean] = "boolean",
+  [kMPInteger] = "integer",
+  [kMPFloat] = "float",
+  [kMPString] = "string",
+  [kMPBinary] = "binary",
+  [kMPArray] = "array",
+  [kMPMap] = "map",
+  [kMPExt] = "ext",
+};
+static const list_T *msgpack_type_lists[] = {
+  [kMPNil] = NULL,
+  [kMPBoolean] = NULL,
+  [kMPInteger] = NULL,
+  [kMPFloat] = NULL,
+  [kMPString] = NULL,
+  [kMPBinary] = NULL,
+  [kMPArray] = NULL,
+  [kMPMap] = NULL,
+  [kMPExt] = NULL,
+};
 
 /*
  * Initialize the global and v: variables.
@@ -521,6 +580,26 @@ void eval_init(void)
       /* add to compat scope dict */
       hash_add(&compat_hashtab, p->vv_di.di_key);
   }
+
+  dict_T *const msgpack_types_dict = dict_alloc();
+  for (size_t i = 0; i < ARRAY_SIZE(msgpack_type_names); i++) {
+    list_T *const type_list = list_alloc();
+    type_list->lv_lock = VAR_FIXED;
+    dictitem_T *const di = dictitem_alloc((char_u *) msgpack_type_names[i]);
+    di->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
+    di->di_tv = (typval_T) {
+      .v_type = VAR_LIST,
+      .vval = { .v_list = type_list, },
+    };
+    msgpack_type_lists[i] = type_list;
+    if (dict_add(msgpack_types_dict, di) == FAIL) {
+      // There must not be duplicate items in this dictionary by definition.
+      assert(false);
+    }
+  }
+  msgpack_types_dict->dv_lock = VAR_FIXED;
+
+  set_vim_var_dict(VV_MSGPACK_TYPES, msgpack_types_dict);
   set_vim_var_dict(VV_COMPLETED_ITEM, dict_alloc());
   set_vim_var_nr(VV_SEARCHFORWARD, 1L);
   set_vim_var_nr(VV_HLSEARCH, 1L);
@@ -11921,12 +12000,389 @@ static int msgpack_list_write(void *data, const char *buf, size_t len)
   return 0;
 }
 
+/// Convert readfile()-style list to a char * buffer with length
+///
+/// @param[in]  list  Converted list.
+/// @param[out]  ret_len  Resulting buffer length.
+/// @param[out]  ret_buf  Allocated buffer with the result or NULL if ret_len is 
+///                       zero.
+///
+/// @return true in case of success, false in case of failure.
+static inline bool vim_list_to_buf(const list_T *const list,
+                                   size_t *const ret_len, char **const ret_buf)
+  FUNC_ATTR_NONNULL_ARG(2,3) FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  size_t len = 0;
+  if (list != NULL) {
+    for (const listitem_T *li = list->lv_first;
+         li != NULL;
+         li = li->li_next) {
+      if (li->li_tv.v_type != VAR_STRING) {
+        return false;
+      }
+      len++;
+      if (li->li_tv.vval.v_string != 0) {
+        len += STRLEN(li->li_tv.vval.v_string);
+      }
+    }
+    if (len) {
+      len--;
+    }
+  }
+  *ret_len = len;
+  if (len == 0) {
+    *ret_buf = NULL;
+    return true;
+  }
+  ListReaderState lrstate = init_lrstate(list);
+  char *const buf = xmalloc(len);
+  size_t read_bytes;
+  if (read_from_list(&lrstate, buf, len, &read_bytes) != OK) {
+    assert(false);
+  }
+  assert(len == read_bytes);
+  *ret_buf = buf;
+  return true;
+}
+
+/// Convert one VimL value to msgpack
+///
+/// @param       packer   Messagepack packer.
+/// @param[out]  mpstack  Stack with values to convert. Only used for pushing 
+///                       values to it.
+/// @param[in]   tv       Converted value.
+///
+/// @return OK in case of success, FAIL otherwise.
+static int convert_one_value(msgpack_packer *const packer,
+                             MPConvStack *const mpstack,
+                             const typval_T *const tv)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  switch (tv->v_type) {
+#define CHECK_SELF_REFERENCE(conv_type, vval_name, ptr) \
+    do { \
+      for (size_t i = 0; i < kv_size(*mpstack); i++) { \
+        if (kv_A(*mpstack, i).type == conv_type \
+            && kv_A(*mpstack, i).data.vval_name == ptr) { \
+          EMSG2(_(e_invarg2), "container references itself"); \
+          return FAIL; \
+        } \
+      } \
+    } while (0)
+    case VAR_STRING: {
+      if (tv->vval.v_string == NULL) {
+        msgpack_pack_bin(packer, 0);
+      } else {
+        const size_t len = STRLEN(tv->vval.v_string);
+        msgpack_pack_bin(packer, len);
+        msgpack_pack_bin_body(packer, tv->vval.v_string, len);
+      }
+      break;
+    }
+    case VAR_NUMBER: {
+      msgpack_pack_int64(packer, (int64_t) tv->vval.v_number);
+      break;
+    }
+    case VAR_FLOAT: {
+      msgpack_pack_double(packer, (double) tv->vval.v_float);
+      break;
+    }
+    case VAR_FUNC: {
+      EMSG2(_(e_invarg2), "attempt to dump function reference");
+      return FAIL;
+    }
+    case VAR_LIST: {
+      if (tv->vval.v_list == NULL) {
+        msgpack_pack_array(packer, 0);
+        break;
+      }
+      CHECK_SELF_REFERENCE(kMPConvList, l.list, tv->vval.v_list);
+      msgpack_pack_array(packer, tv->vval.v_list->lv_len);
+      kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) {
+                                           .type = kMPConvList,
+                                           .data = {
+                                             .l = {
+                                               .list = tv->vval.v_list,
+                                               .li = tv->vval.v_list->lv_first,
+                                             },
+                                           },
+                                         }));
+      break;
+    }
+    case VAR_DICT: {
+      if (tv->vval.v_dict == NULL) {
+        msgpack_pack_map(packer, 0);
+        break;
+      }
+      const dictitem_T *type_di;
+      const dictitem_T *val_di;
+      if (tv->vval.v_dict->dv_hashtab.ht_used == 2
+          && (type_di = dict_find((dict_T *) tv->vval.v_dict,
+                                  (char_u *) "_TYPE", -1)) != NULL
+          && type_di->di_tv.v_type == VAR_LIST
+          && (val_di = dict_find((dict_T *) tv->vval.v_dict,
+                                 (char_u *) "_VAL", -1)) != NULL) {
+        size_t i;
+        for (i = 0; i < ARRAY_SIZE(msgpack_type_lists); i++) {
+          if (type_di->di_tv.vval.v_list == msgpack_type_lists[i]) {
+            break;
+          }
+        }
+        if (i == ARRAY_SIZE(msgpack_type_lists)) {
+          goto vim_to_msgpack_regural_dict;
+        }
+        switch ((MessagePackType) i) {
+          case kMPNil: {
+            msgpack_pack_nil(packer);
+            break;
+          }
+          case kMPBoolean: {
+            if (val_di->di_tv.v_type != VAR_NUMBER) {
+              goto vim_to_msgpack_regural_dict;
+            }
+            if (val_di->di_tv.vval.v_number) {
+              msgpack_pack_true(packer);
+            } else {
+              msgpack_pack_false(packer);
+            }
+            break;
+          }
+          case kMPInteger: {
+            const list_T *val_list;
+            varnumber_T sign;
+            varnumber_T highest_bits;
+            varnumber_T high_bits;
+            varnumber_T low_bits;
+            // List of 4 integers; first is signed (should be 1 or -1, but this 
+            // is not checked), second is unsigned and have at most one (sign is 
+            // -1) or two (sign is 1) non-zero bits (number of bits is not 
+            // checked), other unsigned and have at most 31 non-zero bits 
+            // (number of bits is not checked).
+            if (val_di->di_tv.v_type != VAR_LIST
+                || (val_list = val_di->di_tv.vval.v_list) == NULL
+                || val_list->lv_len != 4
+                || val_list->lv_first->li_tv.v_type != VAR_NUMBER
+                || (sign = val_list->lv_first->li_tv.vval.v_number) == 0
+                || val_list->lv_first->li_next->li_tv.v_type != VAR_NUMBER
+                || (highest_bits =
+                    val_list->lv_first->li_next->li_tv.vval.v_number) < 0
+                || val_list->lv_last->li_prev->li_tv.v_type != VAR_NUMBER
+                || (high_bits =
+                    val_list->lv_last->li_prev->li_tv.vval.v_number) < 0
+                || val_list->lv_last->li_tv.v_type != VAR_NUMBER
+                || (low_bits = val_list->lv_last->li_tv.vval.v_number) < 0) {
+              goto vim_to_msgpack_regural_dict;
+            }
+            uint64_t number = ((uint64_t) (((uint64_t) highest_bits) << 62)
+                               | (uint64_t) (((uint64_t) high_bits) << 31)
+                               | (uint64_t) low_bits);
+            if (sign > 0) {
+              msgpack_pack_uint64(packer, number);
+            } else {
+              msgpack_pack_int64(packer, (int64_t) (-number));
+            }
+            break;
+          }
+          case kMPFloat: {
+            if (val_di->di_tv.v_type != VAR_FLOAT) {
+              goto vim_to_msgpack_regural_dict;
+            }
+            msgpack_pack_double(packer, val_di->di_tv.vval.v_float);
+            break;
+          }
+          case kMPString:
+          case kMPBinary: {
+            const bool is_string = ((MessagePackType) i == kMPString);
+            if (val_di->di_tv.v_type != VAR_LIST) {
+              goto vim_to_msgpack_regural_dict;
+            }
+            size_t len;
+            char *buf;
+            if (!vim_list_to_buf(val_di->di_tv.vval.v_list, &len, &buf)) {
+              goto vim_to_msgpack_regural_dict;
+            }
+            if (is_string) {
+              msgpack_pack_str(packer, len);
+            } else {
+              msgpack_pack_bin(packer, len);
+            }
+            if (len == 0) {
+              break;
+            }
+            if (is_string) {
+              msgpack_pack_str_body(packer, buf, len);
+            } else {
+              msgpack_pack_bin_body(packer, buf, len);
+            }
+            xfree(buf);
+            break;
+          }
+          case kMPArray: {
+            if (val_di->di_tv.v_type != VAR_LIST) {
+              goto vim_to_msgpack_regural_dict;
+            }
+            CHECK_SELF_REFERENCE(kMPConvList, l.list,
+                                 val_di->di_tv.vval.v_list);
+            msgpack_pack_array(packer, val_di->di_tv.vval.v_list->lv_len);
+            kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) {
+                      .type = kMPConvList,
+                      .data = {
+                        .l = {
+                          .list = val_di->di_tv.vval.v_list,
+                          .li = val_di->di_tv.vval.v_list->lv_first,
+                        },
+                      },
+                    }));
+            break;
+          }
+          case kMPMap: {
+            if (val_di->di_tv.v_type != VAR_LIST) {
+              goto vim_to_msgpack_regural_dict;
+            }
+            if (val_di->di_tv.vval.v_list == NULL) {
+              msgpack_pack_map(packer, 0);
+              break;
+            }
+            const list_T *const val_list = val_di->di_tv.vval.v_list;
+            for (const listitem_T *li = val_list->lv_first; li != NULL;
+                 li = li->li_next) {
+              if (li->li_tv.v_type != VAR_LIST
+                  || li->li_tv.vval.v_list->lv_len != 2) {
+                goto vim_to_msgpack_regural_dict;
+              }
+            }
+            CHECK_SELF_REFERENCE(kMPConvPairs, l.list, val_list);
+            msgpack_pack_map(packer, val_list->lv_len);
+            kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) {
+                      .type = kMPConvPairs,
+                      .data = {
+                        .l = {
+                          .list = val_list,
+                          .li = val_list->lv_first,
+                        },
+                      },
+                    }));
+            break;
+          }
+          case kMPExt: {
+            const list_T *val_list;
+            varnumber_T type;
+            if (val_di->di_tv.v_type != VAR_LIST
+                || (val_list = val_di->di_tv.vval.v_list) == NULL
+                || val_list->lv_len != 2
+                || (val_list->lv_first->li_tv.v_type != VAR_NUMBER)
+                || (type = val_list->lv_first->li_tv.vval.v_number) > INT8_MAX
+                || type < INT8_MIN
+                || (val_list->lv_last->li_tv.v_type != VAR_LIST)) {
+              goto vim_to_msgpack_regural_dict;
+            }
+            size_t len;
+            char *buf;
+            if (!vim_list_to_buf(val_list->lv_last->li_tv.vval.v_list,
+                                 &len, &buf)) {
+              goto vim_to_msgpack_regural_dict;
+            }
+            msgpack_pack_ext(packer, len, (int8_t) type);
+            msgpack_pack_ext_body(packer, buf, len);
+            xfree(buf);
+            break;
+          }
+        }
+        break;
+      }
+vim_to_msgpack_regural_dict:
+      CHECK_SELF_REFERENCE(kMPConvDict, d.dict, tv->vval.v_dict);
+      msgpack_pack_map(packer, tv->vval.v_dict->dv_hashtab.ht_used);
+      kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) {
+                .type = kMPConvDict,
+                .data = {
+                  .d = {
+                    .dict = tv->vval.v_dict,
+                    .hi = tv->vval.v_dict->dv_hashtab.ht_array,
+                    .todo = tv->vval.v_dict->dv_hashtab.ht_used,
+                  },
+                },
+              }));
+      break;
+    }
+  }
+#undef CHECK_SELF_REFERENCE
+  return OK;
+}
+
+/// Convert typval_T to messagepack
+static int vim_to_msgpack(msgpack_packer *const packer,
+                          const typval_T *const tv)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  MPConvStack mpstack;
+  kv_init(mpstack);
+  if (convert_one_value(packer, &mpstack, tv) == FAIL) {
+    goto vim_to_msgpack_error_ret;
+  }
+  while (kv_size(mpstack)) {
+    MPConvStackVal *cur_mpsv = &kv_A(mpstack, kv_size(mpstack) - 1);
+    const typval_T *cur_tv;
+    switch (cur_mpsv->type) {
+      case kMPConvDict: {
+        if (!cur_mpsv->data.d.todo) {
+          (void) kv_pop(mpstack);
+          continue;
+        }
+        while (HASHITEM_EMPTY(cur_mpsv->data.d.hi)) {
+          cur_mpsv->data.d.hi++;
+        }
+        const dictitem_T *const di = HI2DI(cur_mpsv->data.d.hi);
+        cur_mpsv->data.d.todo--;
+        cur_mpsv->data.d.hi++;
+        const size_t key_len = STRLEN(&di->di_key[0]);
+        msgpack_pack_str(packer, key_len);
+        msgpack_pack_str_body(packer, &di->di_key[0], key_len);
+        cur_tv = &di->di_tv;
+        break;
+      }
+      case kMPConvList: {
+        if (cur_mpsv->data.l.li == NULL) {
+          (void) kv_pop(mpstack);
+          continue;
+        }
+        cur_tv = &cur_mpsv->data.l.li->li_tv;
+        cur_mpsv->data.l.li = cur_mpsv->data.l.li->li_next;
+        break;
+      }
+      case kMPConvPairs: {
+        if (cur_mpsv->data.l.li == NULL) {
+          (void) kv_pop(mpstack);
+          continue;
+        }
+        const list_T *const kv_pair = cur_mpsv->data.l.li->li_tv.vval.v_list;
+        if (convert_one_value(packer, &mpstack, &kv_pair->lv_first->li_tv)
+            == FAIL) {
+          goto vim_to_msgpack_error_ret;
+        }
+        cur_tv = &kv_pair->lv_last->li_tv;
+        cur_mpsv->data.l.li = cur_mpsv->data.l.li->li_next;
+        break;
+      }
+    }
+    if (convert_one_value(packer, &mpstack, cur_tv) == FAIL) {
+      goto vim_to_msgpack_error_ret;
+    }
+  }
+  kv_destroy(mpstack);
+  return OK;
+vim_to_msgpack_error_ret:
+  kv_destroy(mpstack);
+  return FAIL;
+}
+
 /// "msgpackdump()" function
 static void f_msgpackdump(typval_T *argvars, typval_T *rettv)
   FUNC_ATTR_NONNULL_ALL
 {
   if (argvars[0].v_type != VAR_LIST) {
     EMSG2(_(e_listarg), "msgpackdump()");
+    return;
   }
   list_T *ret_list = rettv_list_alloc(rettv);
   const list_T *list = argvars[0].vval.v_list;
@@ -11935,9 +12391,9 @@ static void f_msgpackdump(typval_T *argvars, typval_T *rettv)
   }
   msgpack_packer *lpacker = msgpack_packer_new(ret_list, &msgpack_list_write);
   for (const listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
-    Object obj = vim_to_object((typval_T *) &li->li_tv);
-    msgpack_rpc_from_object(obj, lpacker);
-    api_free_object(obj);
+    if (vim_to_msgpack(lpacker, &li->li_tv) == FAIL) {
+      break;
+    }
   }
   msgpack_packer_free(lpacker);
 }
@@ -11983,7 +12439,257 @@ static int read_from_list(ListReaderState *const state, char *const buf,
     }
   }
   *read_bytes = nbuf;
-  return NOTDONE;
+  return (state->offset < state->li_length || state->li->li_next != NULL
+          ? NOTDONE
+          : OK);
+}
+
+/// Initialize ListReaderState structure
+static inline ListReaderState init_lrstate(const list_T *const list)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return (ListReaderState) {
+    .li = list->lv_first,
+    .offset = 0,
+    .li_length = (list->lv_first->li_tv.vval.v_string == NULL
+                  ? 0
+                  : STRLEN(list->lv_first->li_tv.vval.v_string)),
+  };
+}
+
+/// Convert msgpack object to a VimL one
+static int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+#define INIT_SPECIAL_DICT(tv, type, val) \
+  do { \
+    dict_T *const dict = dict_alloc(); \
+    dictitem_T *const type_di = dictitem_alloc((char_u *) "_TYPE"); \
+    type_di->di_tv.v_type = VAR_LIST; \
+    type_di->di_tv.v_lock = 0; \
+    type_di->di_tv.vval.v_list = (list_T *) msgpack_type_lists[type]; \
+    type_di->di_tv.vval.v_list->lv_refcount++; \
+    dict_add(dict, type_di); \
+    dictitem_T *const val_di = dictitem_alloc((char_u *) "_VAL"); \
+    val_di->di_tv = val; \
+    dict_add(dict, val_di); \
+    tv->v_type = VAR_DICT; \
+    dict->dv_refcount++; \
+    tv->vval.v_dict = dict; \
+  } while (0)
+  switch (mobj.type) {
+    case MSGPACK_OBJECT_NIL: {
+      INIT_SPECIAL_DICT(rettv, kMPNil, ((typval_T) {
+                                          .v_type = VAR_NUMBER,
+                                          .v_lock = 0,
+                                          .vval = { .v_number = 0 },
+                                        }));
+      break;
+    }
+    case MSGPACK_OBJECT_BOOLEAN: {
+      INIT_SPECIAL_DICT(rettv, kMPBoolean,
+                        ((typval_T) {
+                           .v_type = VAR_NUMBER,
+                           .v_lock = 0,
+                           .vval = {
+                             .v_number = (varnumber_T) mobj.via.boolean,
+                           },
+                         }));
+      break;
+    }
+    case MSGPACK_OBJECT_POSITIVE_INTEGER: {
+      if (mobj.via.u64 <= VARNUMBER_MAX) {
+        *rettv = (typval_T) {
+          .v_type = VAR_NUMBER,
+          .v_lock = 0,
+          .vval = { .v_number = (varnumber_T) mobj.via.u64 },
+        };
+      } else {
+        list_T *const list = list_alloc();
+        list->lv_refcount++;
+        INIT_SPECIAL_DICT(rettv, kMPInteger,
+                          ((typval_T) {
+                             .v_type = VAR_LIST,
+                             .v_lock = 0,
+                             .vval = { .v_list = list },
+                           }));
+        uint64_t n = mobj.via.u64;
+        list_append_number(list, 1);
+        list_append_number(list, (varnumber_T) ((n >> 62) & 0x3));
+        list_append_number(list, (varnumber_T) ((n >> 31) & 0x7FFFFFFF));
+        list_append_number(list, (varnumber_T) (n & 0x7FFFFFFF));
+      }
+      break;
+    }
+    case MSGPACK_OBJECT_NEGATIVE_INTEGER: {
+      if (mobj.via.i64 >= VARNUMBER_MIN) {
+        *rettv = (typval_T) {
+          .v_type = VAR_NUMBER,
+          .v_lock = 0,
+          .vval = { .v_number = (varnumber_T) mobj.via.i64 },
+        };
+      } else {
+        list_T *const list = list_alloc();
+        list->lv_refcount++;
+        INIT_SPECIAL_DICT(rettv, kMPInteger,
+                          ((typval_T) {
+                             .v_type = VAR_LIST,
+                             .v_lock = 0,
+                             .vval = { .v_list = list },
+                           }));
+        uint64_t n = -((uint64_t) mobj.via.i64);
+        list_append_number(list, -1);
+        list_append_number(list, (varnumber_T) ((n >> 62) & 0x3));
+        list_append_number(list, (varnumber_T) ((n >> 31) & 0x7FFFFFFF));
+        list_append_number(list, (varnumber_T) (n & 0x7FFFFFFF));
+      }
+      break;
+    }
+    case MSGPACK_OBJECT_FLOAT: {
+      *rettv = (typval_T) {
+        .v_type = VAR_FLOAT,
+        .v_lock = 0,
+        .vval = { .v_float = mobj.via.f64 },
+      };
+      break;
+    }
+    case MSGPACK_OBJECT_STR: {
+      list_T *const list = list_alloc();
+      list->lv_refcount++;
+      INIT_SPECIAL_DICT(rettv, kMPString,
+                        ((typval_T) {
+                           .v_type = VAR_LIST,
+                           .v_lock = 0,
+                           .vval = { .v_list = list },
+                         }));
+      if (msgpack_list_write((void *) list, mobj.via.str.ptr, mobj.via.str.size)
+          == -1) {
+        return FAIL;
+      }
+      break;
+    }
+    case MSGPACK_OBJECT_BIN: {
+      if (memchr(mobj.via.bin.ptr, NUL, mobj.via.bin.size) == NULL) {
+        *rettv = (typval_T) {
+          .v_type = VAR_STRING,
+          .v_lock = 0,
+          .vval = { .v_string = xmemdupz(mobj.via.bin.ptr, mobj.via.bin.size) },
+        };
+        break;
+      }
+      list_T *const list = list_alloc();
+      list->lv_refcount++;
+      INIT_SPECIAL_DICT(rettv, kMPBinary,
+                        ((typval_T) {
+                           .v_type = VAR_LIST,
+                           .v_lock = 0,
+                           .vval = { .v_list = list },
+                         }));
+      if (msgpack_list_write((void *) list, mobj.via.bin.ptr, mobj.via.bin.size)
+          == -1) {
+        return FAIL;
+      }
+      break;
+    }
+    case MSGPACK_OBJECT_ARRAY: {
+      list_T *const list = list_alloc();
+      list->lv_refcount++;
+      *rettv = (typval_T) {
+        .v_type = VAR_LIST,
+        .v_lock = 0,
+        .vval = { .v_list = list },
+      };
+      for (size_t i = 0; i < mobj.via.array.size; i++) {
+        listitem_T *const li = listitem_alloc();
+        li->li_tv.v_type = VAR_UNKNOWN;
+        list_append(list, li);
+        if (msgpack_to_vim(mobj.via.array.ptr[i], &li->li_tv) == FAIL) {
+          return FAIL;
+        }
+      }
+      break;
+    }
+    case MSGPACK_OBJECT_MAP: {
+      for (size_t i = 0; i < mobj.via.map.size; i++) {
+        if (mobj.via.map.ptr[i].key.type != MSGPACK_OBJECT_STR
+            || mobj.via.map.ptr[i].key.via.str.size == 0
+            || memchr(mobj.via.map.ptr[i].key.via.str.ptr, NUL,
+                      mobj.via.map.ptr[i].key.via.str.size) != NULL) {
+          goto msgpack_to_vim_generic_map;
+        }
+      }
+      dict_T *const dict = dict_alloc();
+      dict->dv_refcount++;
+      *rettv = (typval_T) {
+        .v_type = VAR_DICT,
+        .v_lock = 0,
+        .vval = { .v_dict = dict },
+      };
+      for (size_t i = 0; i < mobj.via.map.size; i++) {
+        dictitem_T *const di = xmallocz(offsetof(dictitem_T, di_key)
+                                        + mobj.via.map.ptr[i].key.via.str.size);
+        memcpy(&di->di_key[0], mobj.via.map.ptr[i].key.via.str.ptr,
+               mobj.via.map.ptr[i].key.via.str.size);
+        di->di_tv.v_type = VAR_UNKNOWN;
+        if (dict_add(dict, di) == FAIL) {
+          // Duplicate key: fallback to generic map
+          clear_tv(rettv);
+          xfree(di);
+          goto msgpack_to_vim_generic_map;
+        }
+        if (msgpack_to_vim(mobj.via.map.ptr[i].val, &di->di_tv) == FAIL) {
+          return FAIL;
+        }
+      }
+      break;
+msgpack_to_vim_generic_map: {}
+      list_T *const list = list_alloc();
+      list->lv_refcount++;
+      INIT_SPECIAL_DICT(rettv, kMPMap,
+                        ((typval_T) {
+                           .v_type = VAR_LIST,
+                           .v_lock = 0,
+                           .vval = { .v_list = list },
+                         }));
+      for (size_t i = 0; i < mobj.via.map.size; i++) {
+        list_T *const kv_pair = list_alloc();
+        list_append_list(list, kv_pair);
+        listitem_T *const key_li = listitem_alloc();
+        key_li->li_tv.v_type = VAR_UNKNOWN;
+        list_append(kv_pair, key_li);
+        listitem_T *const val_li = listitem_alloc();
+        val_li->li_tv.v_type = VAR_UNKNOWN;
+        list_append(kv_pair, val_li);
+        if (msgpack_to_vim(mobj.via.map.ptr[i].key, &key_li->li_tv) == FAIL) {
+          return FAIL;
+        }
+        if (msgpack_to_vim(mobj.via.map.ptr[i].val, &val_li->li_tv) == FAIL) {
+          return FAIL;
+        }
+      }
+      break;
+    }
+    case MSGPACK_OBJECT_EXT: {
+      list_T *const list = list_alloc();
+      list->lv_refcount++;
+      list_append_number(list, mobj.via.ext.type);
+      list_T *const ext_val_list = list_alloc();
+      list_append_list(list, ext_val_list);
+      INIT_SPECIAL_DICT(rettv, kMPExt,
+                        ((typval_T) {
+                           .v_type = VAR_LIST,
+                           .v_lock = 0,
+                           .vval = { .v_list = list },
+                         }));
+      if (msgpack_list_write((void *) ext_val_list, mobj.via.ext.ptr,
+                             mobj.via.ext.size) == -1) {
+        return FAIL;
+      }
+      break;
+    }
+  }
+#undef INIT_SPECIAL_DICT
+  return OK;
 }
 
 /// "msgpackparse" function
@@ -12002,13 +12708,7 @@ static void f_msgpackparse(typval_T *argvars, typval_T *rettv)
     EMSG2(_(e_invarg2), "List item is not a string");
     return;
   }
-  ListReaderState lrstate = {
-    .li = list->lv_first,
-    .offset = 0,
-    .li_length = (list->lv_first->li_tv.vval.v_string == NULL
-                  ? 0
-                  : STRLEN(list->lv_first->li_tv.vval.v_string)),
-  };
+  ListReaderState lrstate = init_lrstate(list);
   msgpack_unpacker *const unpacker = msgpack_unpacker_new(IOSIZE);
   if (unpacker == NULL) {
     EMSG(_(e_outofmem));
@@ -12044,19 +12744,13 @@ static void f_msgpackparse(typval_T *argvars, typval_T *rettv)
         goto f_msgpackparse_exit;
       }
       if (result == MSGPACK_UNPACK_SUCCESS) {
-        Object obj;
-        if (!msgpack_rpc_to_object(&unpacked.data, &obj)) {
-          EMSG2(_(e_invarg2), "Failed to convert parsed string to Object");
-          goto f_msgpackparse_exit;
-        }
         listitem_T *li = listitem_alloc();
-        Error err;
-        if (!object_to_vim(obj, &li->li_tv, &err)) {
-          EMSG2(_(e_invarg2), err.msg);
+        li->li_tv.v_type = VAR_UNKNOWN;
+        list_append(ret_list, li);
+        if (msgpack_to_vim(unpacked.data, &li->li_tv) == FAIL) {
+          EMSG2(_(e_invarg2), "Failed to convert msgpack string");
           goto f_msgpackparse_exit;
         }
-        list_append(ret_list, li);
-        api_free_object(obj);
       }
       if (result == MSGPACK_UNPACK_CONTINUE) {
         if (rlret == OK) {

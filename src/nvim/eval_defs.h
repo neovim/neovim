@@ -1,10 +1,15 @@
 #ifndef NVIM_EVAL_DEFS_H
 #define NVIM_EVAL_DEFS_H
 
+#include <limits.h>
+
 #include "nvim/hashtab.h"
 
 typedef int varnumber_T;
 typedef double float_T;
+
+#define VARNUMBER_MAX INT_MAX
+#define VARNUMBER_MIN INT_MIN
 
 typedef struct listvar_S list_T;
 typedef struct dictvar_S dict_T;
