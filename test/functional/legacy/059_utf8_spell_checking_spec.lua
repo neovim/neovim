@@ -538,11 +538,59 @@ describe("spell checking with 'encoding' set to utf-8", function()
       1good: wrong OK puts. Test the end
       bad:  inputs comment ok Ok. test dÃ©Ã´l end the
       badend
+      
+      test2:
+      elequint test elekwint test elekwent asdf
       ]])
     test_one(1, 1)
     execute([[$put =soundfold('goobledygoook')]])
     execute([[$put =soundfold('kÃ³opÃ«rÃ¿nÃ´ven')]])
     execute([[$put =soundfold('oeverloos gezwets edale')]])
+    -- And now with SAL instead of SOFO items; test automatic reloading.
+    os.execute('cp -f Xtest-sal.aff Xtest.aff')
+    execute('mkspell! Xtest Xtest')
+    execute([[$put =soundfold('goobledygoook')]])
+    execute([[$put =soundfold('kÃ³opÃ«rÃ¿nÃ´ven')]])
+    execute([[$put =soundfold('oeverloos gezwets edale')]])
+    -- Also use an addition file.
+    execute('mkspell! Xtest.utf-8.add.spl Xtest.utf-8.add')
+    execute('set spellfile=Xtest.utf-8.add')
+    execute('/^test2:')
+    feed(']s')
+    execute('let [str, a] = spellbadword()')
+    execute('$put =str')
+    execute('set spl=Xtest_us.utf-8.spl')
+    execute('/^test2:')
+    feed(']smm')
+    execute('let [str, a] = spellbadword()')
+    execute('$put =str')
+    feed('`m]s')
+    execute('let [str, a] = spellbadword()')
+    execute('$put =str')
+    execute('set spl=Xtest_gb.utf-8.spl')
+    execute('/^test2:')
+    feed(']smm')
+    execute('let [str, a] = spellbadword()')
+    execute('$put =str')
+    feed('`m]s')
+    execute('let [str, a] = spellbadword()')
+    execute('$put =str')
+    execute('set spl=Xtest_nz.utf-8.spl')
+    execute('/^test2:')
+    feed(']smm')
+    execute('let [str, a] = spellbadword()')
+    execute('$put =str')
+    feed('`m]s')
+    execute('let [str, a] = spellbadword()')
+    execute('$put =str')
+    execute('set spl=Xtest_ca.utf-8.spl')
+    execute('/^test2:')
+    feed(']smm')
+    execute('let [str, a] = spellbadword()')
+    execute('$put =str')
+    feed('`m]s')
+    execute('let [str, a] = spellbadword()')
+    execute('$put =str')
     expect([[
       test 1-1
       # file: Xtest.utf-8.spl
@@ -584,6 +632,18 @@ describe("spell checking with 'encoding' set to utf-8", function()
       gebletegek
       kepereneven
       everles gesvets etele
+      kbltykk
+      kprnfn
+      *fls kswts tl
+      elekwent
+      elequint
+      elekwint
+      elekwint
+      elekwent
+      elequint
+      elekwent
+      elequint
+      elekwint
       ]])
   end)
 
@@ -615,9 +675,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
       	utilsbork  startnouword
       badend
       
-      test2:
-      elequint test elekwint test elekwent asdf
-      
       Test affix flags with two characters
       
       5good: fooa1 fooaÃ© bar prebar barbork prebarbork  startprebar
@@ -641,57 +698,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
       test output:]])
 
 
-    -- And now with SAL instead of SOFO items; test automatic reloading.
-    feed('gg')
-    os.execute('cp -f Xtest-sal.aff Xtest.aff')
-    execute('mkspell! Xtest Xtest')
-    execute([[$put =soundfold('goobledygoook')]])
-    execute([[$put =soundfold('kÃ³opÃ«rÃ¿nÃ´ven')]])
-    execute([[$put =soundfold('oeverloos gezwets edale')]])
-
-    -- Also use an addition file.
-    feed('gg')
-    execute('mkspell! Xtest.utf-8.add.spl Xtest.utf-8.add')
-    execute('set spellfile=Xtest.utf-8.add')
-    execute('/^test2:')
-    feed(']s')
-    execute('let [str, a] = spellbadword()')
-    execute('$put =str')
-    execute('set spl=Xtest_us.utf-8.spl')
-    execute('/^test2:')
-    feed(']smm')
-    execute('let [str, a] = spellbadword()')
-    execute('$put =str')
-    feed('`m]s')
-    execute('let [str, a] = spellbadword()')
-    execute('$put =str')
-    execute('set spl=Xtest_gb.utf-8.spl')
-    execute('/^test2:')
-    feed(']smm')
-    execute('let [str, a] = spellbadword()')
-    execute('$put =str')
-    feed('`m]s')
-    execute('let [str, a] = spellbadword()')
-    execute('$put =str')
-    execute('set spl=Xtest_nz.utf-8.spl')
-    execute('/^test2:')
-    feed(']smm')
-    execute('let [str, a] = spellbadword()')
-    execute('$put =str')
-    feed('`m]s')
-    execute('let [str, a] = spellbadword()')
-    execute('$put =str')
-    execute('set spl=Xtest_ca.utf-8.spl')
-    execute('/^test2:')
-    feed(']smm')
-    execute('let [str, a] = spellbadword()')
-    execute('$put =str')
-    feed('`m]s')
-    execute('let [str, a] = spellbadword()')
-    execute('$put =str')
-    execute('unlet str a')
-    --helpers.eq(1,2)
-
     -- Postponed prefixes.
     test_one(2, 1)
 
@@ -710,18 +716,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
     expect([=[
       test output:
       
-      kbltykk
-      kprnfn
-      *fls kswts tl
-      elekwent
-      elequint
-      elekwint
-      elekwint
-      elekwent
-      elequint
-      elekwent
-      elequint
-      elekwint
       
       test 2-1
       # file: Xtest.utf-8.spl
