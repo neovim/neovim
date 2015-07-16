@@ -521,6 +521,11 @@ int main(int argc, char **argv)
   if (restart_edit != 0)
     stuffcharReadbuff(K_NOP);
 
+  // WORKAROUND(mhi): #3023
+  if (cb_flags & CB_UNNAMEDMASK) {
+    (void)eval_has_provider("clipboard");
+  }
+
   TIME_MSG("before starting main loop");
 
   /*
