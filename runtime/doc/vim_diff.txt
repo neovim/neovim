@@ -35,7 +35,6 @@ these differences.
 - 'display' defaults to "lastline"
 - 'encoding' defaults to "utf-8"
 - 'formatoptions' defaults to "tcqj"
-- 'guioptions' doesn't include "t"
 - 'hlsearch' is set by default
 - 'incsearch' is set by default
 - 'langnoremap' is set by default
@@ -136,6 +135,7 @@ Highlight groups:
   |hl-VisualNOS|
 
 Other options:
+  'guioptions' (only the 't' flag was removed)
   'guipty'
   'macatsui'
   'shelltype'
