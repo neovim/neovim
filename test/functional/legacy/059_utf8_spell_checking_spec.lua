@@ -705,7 +705,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       badend
       ]])
     test_one(3, 3)
-    execute([[
+    expect([[
       test 3-3
       # file: Xtest.utf-8.spl
       foo
@@ -758,7 +758,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       badend
       ]])
     test_one(4, 4)
-    execute([[
+    expect([[
       test 4-4
       # file: Xtest.utf-8.spl
       bork
@@ -819,7 +819,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       badend
       ]])
     test_one(5, 5)
-    execute([[
+    expect([[
       test 5-5
       # file: Xtest.utf-8.spl
       bar
@@ -866,7 +866,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       badend
       ]])
     test_one(6, 6)
-    execute([[
+    expect([[
       test 6-6
       # file: Xtest.utf-8.spl
       bar
@@ -901,28 +901,18 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ]])
   end)
 
-  it('is working', function()
+  it('part 7-7', function()
     insert([[
-      
       7good: meea1 meeaÃ© bar prebar barmeat prebarmeat  leadprebar
             lead tail leadtail  leadmiddletail
       bad: mee meea2 prabar probarmaat middle leadmiddle middletail taillead
       	leadprobar
       badend
-      
-      test output:]])
-
+      ]])
     -- Compound words.
     test_one(7, 7)
-
-    execute('set spl= enc=latin1')
-
-    execute('0,/^test output:/-1 delete')
-
     -- Assert buffer contents.
-    expect([=[
-      test output:
-      
+    expect([[
       test 7-7
       # file: Xtest.utf-8.spl
       bar
@@ -953,6 +943,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       taillead
       ['tail lead', 'tail']
       leadprobar
-      ['leadprebar', 'lead prebar', 'leadbar']]=])
+      ['leadprebar', 'lead prebar', 'leadbar']
+      ]])
   end)
 end)
