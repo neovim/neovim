@@ -173,6 +173,18 @@ Object vim_eval(String str, Error *err)
 Object vim_call_function(String fname, Array args, Error *err)
   FUNC_ATTR_DEFERRED
 {
+  return call_function(fname, args, NULL, err);
+}
+
+/// Call an internal or user defined function.
+///
+/// @param fname Function name
+/// @param args Function arguments
+/// @param self self dictionary (only required for dict functions)
+/// @param[out] err Details of an error that may have occurred
+/// @return Result of the function call
+static Object call_function(String fname, Array args, dict_T *self, Error *err)
+{
   Object rv = OBJECT_INIT;
   if (args.size > MAX_FUNC_ARGS) {
     api_set_error(err, Validation,
@@ -197,7 +209,7 @@ Object vim_call_function(String fname, Array args, Error *err)
                     &rettv, (int) args.size, vim_args,
                     curwin->w_cursor.lnum, curwin->w_cursor.lnum, &dummy,
                     true,
-                    NULL);
+                    self);
   if (r == FAIL) {
     api_set_error(err, Exception, _("Error calling function."));
   }
