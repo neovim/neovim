@@ -577,7 +577,7 @@ open_file_start:
     }
     if (-fd != EEXIST) {
       emsg3("System error while opening ShaDa file %s: %s",
-            fname, strerror(-fd));
+            fname, os_strerror(fd));
     }
     return fd;
   }
@@ -2107,7 +2107,7 @@ shada_write_file_nomerge: {}
         char *failed_dir;
         if ((ret = os_mkdir_recurse(fname, 0700, &failed_dir)) != 0) {
           EMSG3("Failed to create directory %s for writing ShaDa file: %s",
-                failed_dir, strerror(-ret));
+                failed_dir, os_strerror(ret));
           xfree(fname);
           xfree(failed_dir);
           return FAIL;
