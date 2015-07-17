@@ -120,7 +120,7 @@ void rstream_set_file(RStream *rstream, uv_file file)
     // in chunks of rstream->buffer_size, giving time for other events to
     // be processed between reads.
     rstream->fread_idle = xmalloc(sizeof(uv_idle_t));
-    uv_idle_init(uv_default_loop(), rstream->fread_idle);
+    uv_idle_init(&loop.uv, rstream->fread_idle);
     rstream->fread_idle->data = NULL;
     handle_set_rstream((uv_handle_t *)rstream->fread_idle, rstream);
   } else {
@@ -128,7 +128,7 @@ void rstream_set_file(RStream *rstream, uv_file file)
     assert(rstream->file_type == UV_NAMED_PIPE
         || rstream->file_type == UV_TTY);
     rstream->stream = xmalloc(sizeof(uv_pipe_t));
-    uv_pipe_init(uv_default_loop(), (uv_pipe_t *)rstream->stream, 0);
+    uv_pipe_init(&loop.uv, (uv_pipe_t *)rstream->stream, 0);
     uv_pipe_open((uv_pipe_t *)rstream->stream, file);
     rstream->stream->data = NULL;
     handle_set_rstream((uv_handle_t *)rstream->stream, rstream);
@@ -224,7 +224,7 @@ static void fread_idle_cb(uv_idle_t *handle)
 
   // Synchronous read
   uv_fs_read(
-      uv_default_loop(),
+      &loop.uv,
       &req,
       rstream->fd,
       &rstream->uvbuf,

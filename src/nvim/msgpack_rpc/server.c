@@ -180,14 +180,14 @@ int server_start(const char *endpoint)
 
   if (server_type == kServerTypeTcp) {
     // Listen on tcp address/port
-    uv_tcp_init(uv_default_loop(), &server->socket.tcp.handle);
+    uv_tcp_init(&loop.uv, &server->socket.tcp.handle);
     result = uv_tcp_bind(&server->socket.tcp.handle,
                          (const struct sockaddr *)&server->socket.tcp.addr,
                          0);
     stream = (uv_stream_t *)&server->socket.tcp.handle;
   } else {
     // Listen on named pipe or unix socket
-    uv_pipe_init(uv_default_loop(), &server->socket.pipe.handle, 0);
+    uv_pipe_init(&loop.uv, &server->socket.pipe.handle, 0);
     result = uv_pipe_bind(&server->socket.pipe.handle, server->addr);
     stream = (uv_stream_t *)&server->socket.pipe.handle;
   }
@@ -308,10 +308,10 @@ static void connection_cb(uv_stream_t *server, int status)
 
   if (srv->type == kServerTypeTcp) {
     client = xmalloc(sizeof(uv_tcp_t));
-    uv_tcp_init(uv_default_loop(), (uv_tcp_t *)client);
+    uv_tcp_init(&loop.uv, (uv_tcp_t *)client);
   } else {
     client = xmalloc(sizeof(uv_pipe_t));
-    uv_pipe_init(uv_default_loop(), (uv_pipe_t *)client, 0);
+    uv_pipe_init(&loop.uv, (uv_pipe_t *)client, 0);
   }
 
   result = uv_accept(server, client);

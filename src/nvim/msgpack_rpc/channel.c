@@ -9,7 +9,7 @@
 #include "nvim/api/vim.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/remote_ui.h"
-#include "nvim/os/event.h"
+#include "nvim/event/loop.h"
 #include "nvim/os/rstream.h"
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/wstream.h"
@@ -220,7 +220,7 @@ Object channel_send_call(uint64_t id,
   ChannelCallFrame frame = {request_id, false, false, NIL};
   kv_push(ChannelCallFrame *, channel->call_stack, &frame);
   channel->pending_requests++;
-  event_poll_until(-1, frame.returned);
+  LOOP_POLL_EVENTS_UNTIL(&loop, -1, frame.returned);
   (void)kv_pop(channel->call_stack);
   channel->pending_requests--;
 
@@ -474,7 +474,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
   event_data->args = args;
   event_data->request_id = request_id;
   incref(channel);
-  event_push((Event) {
+  loop_push_event(&loop, (Event) {
     .handler = on_request_event,
     .data = event_data
   }, defer);
@@ -648,7 +648,8 @@ static void close_channel(Channel *channel)
     if (handle) {
       uv_close(handle, close_cb);
     } else {
-      event_push((Event) { .handler = on_stdio_close, .data = channel }, false);
+      loop_push_event(&loop,
+          (Event) { .handler = on_stdio_close, .data = channel }, false);
     }
   }
 

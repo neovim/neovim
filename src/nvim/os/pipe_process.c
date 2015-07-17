@@ -9,6 +9,8 @@
 #include "nvim/os/job_private.h"
 #include "nvim/os/pipe_process.h"
 #include "nvim/memory.h"
+#include "nvim/vim.h"
+#include "nvim/globals.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/pipe_process.c.generated.h"
@@ -46,19 +48,19 @@ void pipe_process_init(Job *job)
   handle_set_job((uv_handle_t *)&pipeproc->proc, job);
 
   if (job->opts.writable) {
-    uv_pipe_init(uv_default_loop(), &pipeproc->proc_stdin, 0);
+    uv_pipe_init(&loop.uv, &pipeproc->proc_stdin, 0);
     pipeproc->stdio[0].flags = UV_CREATE_PIPE | UV_READABLE_PIPE;
     pipeproc->stdio[0].data.stream = (uv_stream_t *)&pipeproc->proc_stdin;
   }
 
   if (job->opts.stdout_cb) {
-    uv_pipe_init(uv_default_loop(), &pipeproc->proc_stdout, 0);
+    uv_pipe_init(&loop.uv, &pipeproc->proc_stdout, 0);
     pipeproc->stdio[1].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
     pipeproc->stdio[1].data.stream = (uv_stream_t *)&pipeproc->proc_stdout;
   }
 
   if (job->opts.stderr_cb) {
-    uv_pipe_init(uv_default_loop(), &pipeproc->proc_stderr, 0);
+    uv_pipe_init(&loop.uv, &pipeproc->proc_stderr, 0);
     pipeproc->stdio[2].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
     pipeproc->stdio[2].data.stream = (uv_stream_t *)&pipeproc->proc_stderr;
   }
@@ -81,7 +83,7 @@ bool pipe_process_spawn(Job *job)
 {
   UvProcess *pipeproc = job->process;
 
-  if (uv_spawn(uv_default_loop(), &pipeproc->proc, &pipeproc->proc_opts) != 0) {
+  if (uv_spawn(&loop.uv, &pipeproc->proc, &pipeproc->proc_opts) != 0) {
     return false;
   }
 

@@ -26,6 +26,8 @@
 #include "nvim/os/job_private.h"
 #include "nvim/os/pty_process.h"
 #include "nvim/memory.h"
+#include "nvim/vim.h"
+#include "nvim/globals.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/pty_process.c.generated.h"
@@ -43,17 +45,17 @@ void pty_process_init(Job *job) FUNC_ATTR_NONNULL_ALL
   ptyproc->tty_fd = -1;
 
   if (job->opts.writable) {
-    uv_pipe_init(uv_default_loop(), &ptyproc->proc_stdin, 0);
+    uv_pipe_init(&loop.uv, &ptyproc->proc_stdin, 0);
     ptyproc->proc_stdin.data = NULL;
   }
 
   if (job->opts.stdout_cb) {
-    uv_pipe_init(uv_default_loop(), &ptyproc->proc_stdout, 0);
+    uv_pipe_init(&loop.uv, &ptyproc->proc_stdout, 0);
     ptyproc->proc_stdout.data = NULL;
   }
 
   if (job->opts.stderr_cb) {
-    uv_pipe_init(uv_default_loop(), &ptyproc->proc_stderr, 0);
+    uv_pipe_init(&loop.uv, &ptyproc->proc_stderr, 0);
     ptyproc->proc_stderr.data = NULL;
   }
 

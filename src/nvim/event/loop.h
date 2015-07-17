@@ -1,20 +1,40 @@
-#ifndef NVIM_OS_EVENT_H
-#define NVIM_OS_EVENT_H
+#ifndef NVIM_EVENT_LOOP_H
+#define NVIM_EVENT_LOOP_H
 
 #include <stdint.h>
-#include <stdbool.h>
 
-#include "nvim/os/event_defs.h"
-#include "nvim/os/job_defs.h"
+#include <uv.h>
+
+#include "nvim/lib/klist.h"
 #include "nvim/os/time.h"
 
+typedef struct event Event;
+typedef void (*event_handler)(Event event);
+
+struct event {
+  void *data;
+  event_handler handler;
+};
+
+typedef void * WatcherPtr;
+
+#define _noop(x)
+KLIST_INIT(WatcherPtr, WatcherPtr, _noop)
+KLIST_INIT(Event, Event, _noop)
+
+typedef struct loop {
+  uv_loop_t uv;
+  klist_t(Event) *deferred_events, *immediate_events;
+  int deferred_events_allowed;
+} Loop;
+
 // Poll for events until a condition or timeout
-#define event_poll_until(timeout, condition)                                 \
+#define LOOP_POLL_EVENTS_UNTIL(loop, timeout, condition)                     \
   do {                                                                       \
     int remaining = timeout;                                                 \
     uint64_t before = (remaining > 0) ? os_hrtime() : 0;                     \
     while (!(condition)) {                                                   \
-      event_poll(remaining);                                                 \
+      loop_poll_events(loop, remaining);                                     \
       if (remaining == 0) {                                                  \
         break;                                                               \
       } else if (remaining > 0) {                                            \
@@ -29,7 +49,7 @@
   } while (0)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/event.h.generated.h"
+# include "event/loop.h.generated.h"
 #endif
 
-#endif  // NVIM_OS_EVENT_H
+#endif  // NVIM_EVENT_LOOP_H

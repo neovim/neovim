@@ -3,6 +3,9 @@
 
 #include <uv.h>
 
+#include "nvim/event/loop.h"
+#include "nvim/event/time.h"
+#include "nvim/event/signal.h"
 #include "nvim/os/uv_helpers.h"
 #include "nvim/os/job.h"
 #include "nvim/os/job_defs.h"
@@ -12,8 +15,6 @@
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/wstream.h"
 #include "nvim/os/wstream_defs.h"
-#include "nvim/os/event.h"
-#include "nvim/os/event_defs.h"
 #include "nvim/os/time.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
@@ -45,8 +46,8 @@
 
 Job *table[MAX_RUNNING_JOBS] = {NULL};
 size_t stop_requests = 0;
-uv_timer_t job_stop_timer;
-uv_signal_t schld;
+TimeWatcher job_stop_timer;
+SignalWatcher schld;
 
 // Some helpers shared in this module
 
@@ -59,9 +60,9 @@ uv_signal_t schld;
 void job_init(void)
 {
   uv_disable_stdio_inheritance();
-  uv_timer_init(uv_default_loop(), &job_stop_timer);
-  uv_signal_init(uv_default_loop(), &schld);
-  uv_signal_start(&schld, chld_handler, SIGCHLD);
+  time_watcher_init(&loop, &job_stop_timer, NULL);
+  signal_watcher_init(&loop, &schld, NULL);
+  signal_watcher_start(&schld, chld_handler, SIGCHLD);
 }
 
 /// Releases job control resources and terminates running jobs
@@ -78,11 +79,11 @@ void job_teardown(void)
   }
 
   // Wait until all jobs are closed
-  event_poll_until(-1, !stop_requests);
-  uv_signal_stop(&schld);
-  uv_close((uv_handle_t *)&schld, NULL);
+  LOOP_POLL_EVENTS_UNTIL(&loop, -1, !stop_requests);
+  signal_watcher_stop(&schld);
+  signal_watcher_close(&schld, NULL);
   // Close the timer
-  uv_close((uv_handle_t *)&job_stop_timer, NULL);
+  time_watcher_close(&job_stop_timer, NULL);
 }
 
 /// Tries to start a new job.
@@ -152,7 +153,7 @@ Job *job_start(JobOptions opts, int *status)
       uv_close((uv_handle_t *)job->proc_stderr, close_cb);
     }
     process_close(job);
-    event_poll(0);
+    loop_poll_events(&loop, 0);
     // Manually invoke the close_cb to free the job resources
     *status = -1;
     return NULL;
@@ -223,7 +224,7 @@ void job_stop(Job *job)
     // When there's at least one stop request pending, start a timer that
     // will periodically check if a signal should be send to a to the job
     DLOG("Starting job kill timer");
-    uv_timer_start(&job_stop_timer, job_stop_timer_cb, 100, 100);
+    time_watcher_start(&job_stop_timer, job_stop_timer_cb, 100, 100);
   }
 }
 
@@ -245,7 +246,7 @@ int job_wait(Job *job, int ms) FUNC_ATTR_NONNULL_ALL
   // Increase refcount to stop the job from being freed before we have a
   // chance to get the status.
   job->refcount++;
-  event_poll_until(ms,
+  LOOP_POLL_EVENTS_UNTIL(&loop, ms,
       // Until...
       got_int ||                // interrupted by the user
       job->refcount == 1);  // job exited
@@ -259,9 +260,9 @@ int job_wait(Job *job, int ms) FUNC_ATTR_NONNULL_ALL
     if (ms == -1) {
       // We can only return, if all streams/handles are closed and the job
       // exited.
-      event_poll_until(-1, job->refcount == 1);
+      LOOP_POLL_EVENTS_UNTIL(&loop, -1, job->refcount == 1);
     } else {
-      event_poll(0);
+      loop_poll_events(&loop, 0);
     }
   }
 
@@ -379,7 +380,7 @@ JobOptions *job_opts(Job *job)
 
 /// Iterates the table, sending SIGTERM to stopped jobs and SIGKILL to those
 /// that didn't die from SIGTERM after a while(exit_timeout is 0).
-static void job_stop_timer_cb(uv_timer_t *handle)
+static void job_stop_timer_cb(TimeWatcher *watcher, void *data)
 {
   Job *job;
   uint64_t now = os_hrtime();
@@ -432,7 +433,7 @@ static void job_exited(Event event)
   process_close(job);
 }
 
-static void chld_handler(uv_signal_t *handle, int signum)
+static void chld_handler(SignalWatcher *watcher, int signum, void *data)
 {
   int stat = 0;
   int pid;
@@ -458,7 +459,8 @@ static void chld_handler(uv_signal_t *handle, int signum)
         // don't enqueue more events when exiting
         process_close(job);
       } else {
-        event_push((Event) {.handler = job_exited, .data = job}, false);
+        loop_push_event(&loop,
+            (Event) {.handler = job_exited, .data = job}, false);
       }
       break;
     }

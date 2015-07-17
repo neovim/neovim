@@ -11,7 +11,7 @@
 #include <stdbool.h>
 
 #include "nvim/os/rstream_defs.h"
-#include "nvim/os/event_defs.h"
+#include "nvim/os/job_defs.h"
 #include "nvim/os/wstream.h"
 #include "nvim/os/wstream_defs.h"
 

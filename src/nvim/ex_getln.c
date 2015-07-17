@@ -63,7 +63,7 @@
 #include "nvim/window.h"
 #include "nvim/ui.h"
 #include "nvim/os/os.h"
-#include "nvim/os/event.h"
+#include "nvim/event/loop.h"
 
 /*
  * Variables shared between getcmdline(), redrawcmdline() and others.
@@ -298,14 +298,14 @@ getcmdline (
 
     /* Get a character.  Ignore K_IGNORE, it should not do anything, such
      * as stop completion. */
-    event_enable_deferred();
+    loop_enable_deferred_events(&loop);
     do {
       c = safe_vgetc();
     } while (c == K_IGNORE);
-    event_disable_deferred();
+    loop_disable_deferred_events(&loop);
 
     if (c == K_EVENT) {
-      event_process();
+      loop_process_event(&loop);
       continue;
     }
 

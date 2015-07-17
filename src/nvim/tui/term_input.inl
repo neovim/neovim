@@ -5,6 +5,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 #include "nvim/os/rstream.h"
+#include "nvim/event/time.h"
 
 #define PASTETOGGLE_KEY "<f37>"
 
@@ -12,7 +13,7 @@ struct term_input {
   int in_fd;
   bool paste_enabled;
   TermKey *tk;
-  uv_timer_t timer_handle;
+  TimeWatcher timer_handle;
   RBuffer *read_buffer;
   RStream *read_stream;
 };
@@ -107,7 +108,7 @@ static TermKeyResult tk_getkey(TermKey *tk, TermKeyKey *key, bool force)
   return force ? termkey_getkey_force(tk, key) : termkey_getkey(tk, key);
 }
 
-static void timer_cb(uv_timer_t *handle);
+static void timer_cb(TimeWatcher *watcher, void *data);
 
 static int get_key_code_timeout(void)
 {
@@ -147,17 +148,16 @@ static void tk_getkeys(TermInput *input, bool force)
 
   if (ms > 0) {
     // Stop the current timer if already running
-    uv_timer_stop(&input->timer_handle);
-    uv_timer_start(&input->timer_handle, timer_cb, (uint32_t)ms, 0);
+    time_watcher_stop(&input->timer_handle);
+    time_watcher_start(&input->timer_handle, timer_cb, (uint32_t)ms, 0);
   } else {
     tk_getkeys(input, true);
   }
 }
 
-
-static void timer_cb(uv_timer_t *handle)
+static void timer_cb(TimeWatcher *watcher, void *data)
 {
-  tk_getkeys(handle->data, true);
+  tk_getkeys(data, true);
 }
 
 static bool handle_bracketed_paste(TermInput *input)
@@ -288,8 +288,7 @@ static TermInput *term_input_new(void)
   rstream_set_file(rv->read_stream, rv->in_fd);
   rstream_start(rv->read_stream);
   // initialize a timer handle for handling ESC with libtermkey
-  uv_timer_init(uv_default_loop(), &rv->timer_handle);
-  rv->timer_handle.data = rv;
+  time_watcher_init(&loop, &rv->timer_handle, rv);
   // Set the pastetoggle option to a special key that will be sent when
   // \e[20{0,1}~/ are received
   Error err = ERROR_INIT;
@@ -300,12 +299,13 @@ static TermInput *term_input_new(void)
 
 static void term_input_destroy(TermInput *input)
 {
-  uv_timer_stop(&input->timer_handle);
+  time_watcher_stop(&input->timer_handle);
+  time_watcher_close(&input->timer_handle, NULL);
   rstream_stop(input->read_stream);
   rstream_free(input->read_stream);
-  uv_close((uv_handle_t *)&input->timer_handle, NULL);
   termkey_destroy(input->tk);
-  event_poll(0);  // Run once to remove references to input/timer handles
+  // Run once to remove references to input/timer handles
+  loop_poll_events(&loop, 0);
   xfree(input);
 }
 

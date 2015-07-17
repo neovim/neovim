@@ -6,7 +6,7 @@
 
 #include "nvim/api/private/defs.h"
 #include "nvim/os/input.h"
-#include "nvim/os/event.h"
+#include "nvim/event/loop.h"
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/rstream.h"
 #include "nvim/ascii.h"
@@ -115,7 +115,7 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
   }
 
   // If there are deferred events, return the keys directly
-  if (event_has_deferred()) {
+  if (loop_has_deferred_events(&loop)) {
     return push_event_key(buf, maxlen);
   }
 
@@ -136,7 +136,7 @@ bool os_char_avail(void)
 void os_breakcheck(void)
 {
   if (!disable_breakcheck && !got_int) {
-    event_poll(0);
+    loop_poll_events(&loop, 0);
   }
 }
 
@@ -285,7 +285,7 @@ static bool input_poll(int ms)
     prof_inchar_enter();
   }
 
-  event_poll_until(ms, input_ready() || input_eof);
+  LOOP_POLL_EVENTS_UNTIL(&loop, ms, input_ready() || input_eof);
 
   if (do_profiling == PROF_YES && ms) {
     prof_inchar_exit();
@@ -362,7 +362,7 @@ static bool input_ready(void)
 {
   return typebuf_was_filled ||                 // API call filled typeahead
          rbuffer_size(input_buffer) ||         // Input buffer filled
-         event_has_deferred();                 // Events must be processed
+         loop_has_deferred_events(&loop);      // Events must be processed
 }
 
 // Exit because of an input read error.

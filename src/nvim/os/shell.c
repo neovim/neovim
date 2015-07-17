@@ -8,7 +8,7 @@
 #include "nvim/ascii.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/log.h"
-#include "nvim/os/event.h"
+#include "nvim/event/loop.h"
 #include "nvim/os/job.h"
 #include "nvim/os/rstream.h"
 #include "nvim/os/shell.h"
