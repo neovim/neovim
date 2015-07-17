@@ -33,15 +33,12 @@
 # include "os/pty_process.c.generated.h"
 #endif
 
-typedef struct {
-  struct winsize winsize;
-  uv_pipe_t proc_stdin, proc_stdout, proc_stderr;
-  int tty_fd;
-} PtyProcess;
+static const unsigned int KILL_RETRIES = 5;
+static const unsigned int KILL_TIMEOUT = 2;  // seconds
 
-void pty_process_init(Job *job) FUNC_ATTR_NONNULL_ALL
+bool pty_process_spawn(Job *job) FUNC_ATTR_NONNULL_ALL
 {
-  PtyProcess *ptyproc = xmalloc(sizeof(PtyProcess));
+  PtyProcess *ptyproc = &job->process.pty;
   ptyproc->tty_fd = -1;
 
   if (job->opts.writable) {
@@ -62,41 +59,8 @@ void pty_process_init(Job *job) FUNC_ATTR_NONNULL_ALL
   job->proc_stdin = (uv_stream_t *)&ptyproc->proc_stdin;
   job->proc_stdout = (uv_stream_t *)&ptyproc->proc_stdout;
   job->proc_stderr = (uv_stream_t *)&ptyproc->proc_stderr;
-  job->process = ptyproc;
-}
 
-void pty_process_destroy(Job *job) FUNC_ATTR_NONNULL_ALL
-{
-  xfree(job->opts.term_name);
-  xfree(job->process);
-  job->process = NULL;
-}
-
-static bool set_pipe_duplicating_descriptor(int fd, uv_pipe_t *pipe)
-  FUNC_ATTR_NONNULL_ALL
-{
-  int fd_dup = dup(fd);
-  if (fd_dup < 0) {
-    ELOG("Failed to dup descriptor %d: %s", fd, strerror(errno));
-    return false;
-  }
-  int uv_result = uv_pipe_open(pipe, fd_dup);
-  if (uv_result) {
-    ELOG("Failed to set pipe to descriptor %d: %s",
-         fd_dup, uv_strerror(uv_result));
-    close(fd_dup);
-    return false;
-  }
-  return true;
-}
-
-static const unsigned int KILL_RETRIES = 5;
-static const unsigned int KILL_TIMEOUT = 2;  // seconds
-
-bool pty_process_spawn(Job *job) FUNC_ATTR_NONNULL_ALL
-{
   int master;
-  PtyProcess *ptyproc = job->process;
   ptyproc->winsize = (struct winsize){job->opts.height, job->opts.width, 0, 0};
   struct termios termios;
   init_termios(&termios);
@@ -158,6 +122,24 @@ error:
   return false;
 }
 
+static bool set_pipe_duplicating_descriptor(int fd, uv_pipe_t *pipe)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int fd_dup = dup(fd);
+  if (fd_dup < 0) {
+    ELOG("Failed to dup descriptor %d: %s", fd, strerror(errno));
+    return false;
+  }
+  int uv_result = uv_pipe_open(pipe, fd_dup);
+  if (uv_result) {
+    ELOG("Failed to set pipe to descriptor %d: %s",
+         fd_dup, uv_strerror(uv_result));
+    close(fd_dup);
+    return false;
+  }
+  return true;
+}
+
 void pty_process_close(Job *job) FUNC_ATTR_NONNULL_ALL
 {
   pty_process_close_master(job);
@@ -167,7 +149,7 @@ void pty_process_close(Job *job) FUNC_ATTR_NONNULL_ALL
 
 void pty_process_close_master(Job *job) FUNC_ATTR_NONNULL_ALL
 {
-  PtyProcess *ptyproc = job->process;
+  PtyProcess *ptyproc = &job->process.pty;
   if (ptyproc->tty_fd >= 0) {
     close(ptyproc->tty_fd);
     ptyproc->tty_fd = -1;
@@ -177,7 +159,7 @@ void pty_process_close_master(Job *job) FUNC_ATTR_NONNULL_ALL
 void pty_process_resize(Job *job, uint16_t width, uint16_t height)
   FUNC_ATTR_NONNULL_ALL
 {
-  PtyProcess *ptyproc = job->process;
+  PtyProcess *ptyproc = &job->process.pty;
   ptyproc->winsize = (struct winsize){height, width, 0, 0};
   ioctl(ptyproc->tty_fd, TIOCSWINSZ, &ptyproc->winsize);
 }

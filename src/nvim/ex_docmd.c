@@ -73,8 +73,8 @@
 #include "nvim/os/time.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/mouse.h"
-#include "nvim/os/rstream.h"
-#include "nvim/os/wstream.h"
+#include "nvim/event/rstream.h"
+#include "nvim/event/wstream.h"
 
 static int quitmore = 0;
 static int ex_pressedreturn = FALSE;

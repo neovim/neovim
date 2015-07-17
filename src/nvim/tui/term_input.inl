@@ -4,7 +4,7 @@
 #include "nvim/misc2.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
-#include "nvim/os/rstream.h"
+#include "nvim/event/rstream.h"
 #include "nvim/event/time.h"
 
 #define PASTETOGGLE_KEY "<f37>"
@@ -14,8 +14,7 @@ struct term_input {
   bool paste_enabled;
   TermKey *tk;
   TimeWatcher timer_handle;
-  RBuffer *read_buffer;
-  RStream *read_stream;
+  Stream read_stream;
 };
 
 static void forward_simple_utf8(TermKeyKey *key)
@@ -162,12 +161,12 @@ static void timer_cb(TimeWatcher *watcher, void *data)
 
 static bool handle_bracketed_paste(TermInput *input)
 {
-  if (rbuffer_size(input->read_buffer) > 5 &&
-      (!rbuffer_cmp(input->read_buffer, "\x1b[200~", 6) ||
-       !rbuffer_cmp(input->read_buffer, "\x1b[201~", 6))) {
-    bool enable = *rbuffer_get(input->read_buffer, 4) == '0';
+  if (rbuffer_size(input->read_stream.buffer) > 5 &&
+      (!rbuffer_cmp(input->read_stream.buffer, "\x1b[200~", 6) ||
+       !rbuffer_cmp(input->read_stream.buffer, "\x1b[201~", 6))) {
+    bool enable = *rbuffer_get(input->read_stream.buffer, 4) == '0';
     // Advance past the sequence
-    rbuffer_consumed(input->read_buffer, 6);
+    rbuffer_consumed(input->read_stream.buffer, 6);
     if (input->paste_enabled == enable) {
       return true;
     }
@@ -194,19 +193,22 @@ static bool handle_bracketed_paste(TermInput *input)
 
 static bool handle_forced_escape(TermInput *input)
 {
-  if (rbuffer_size(input->read_buffer) > 1
-      && !rbuffer_cmp(input->read_buffer, "\x1b\x00", 2)) {
+  if (rbuffer_size(input->read_stream.buffer) > 1
+      && !rbuffer_cmp(input->read_stream.buffer, "\x1b\x00", 2)) {
     // skip the ESC and NUL and push one <esc> to the input buffer
     size_t rcnt;
-    termkey_push_bytes(input->tk, rbuffer_read_ptr(input->read_buffer, &rcnt), 1);
-    rbuffer_consumed(input->read_buffer, 2);
+    termkey_push_bytes(input->tk, rbuffer_read_ptr(input->read_stream.buffer,
+          &rcnt), 1);
+    rbuffer_consumed(input->read_stream.buffer, 2);
     tk_getkeys(input, true);
     return true;
   }
   return false;
 }
 
-static void read_cb(RStream *rstream, RBuffer *buf, void *data, bool eof)
+static void restart_reading(Event event);
+
+static void read_cb(Stream *stream, RBuffer *buf, void *data, bool eof)
 {
   TermInput *input = data;
 
@@ -223,8 +225,9 @@ static void read_cb(RStream *rstream, RBuffer *buf, void *data, bool eof)
       //
       // ls *.md | xargs nvim
       input->in_fd = 2;
-      rstream_set_file(input->read_stream, input->in_fd);
-      rstream_start(input->read_stream);
+      stream_close(&input->read_stream, NULL);
+      loop_push_event(&loop,
+          (Event) { .data = input, .handler = restart_reading }, false);
     } else {
       input_done();
     }
@@ -240,7 +243,7 @@ static void read_cb(RStream *rstream, RBuffer *buf, void *data, bool eof)
     // so the `handle_bracketed_paste`/`handle_forced_escape` calls above work
     // as expected.
     size_t count = 0;
-    RBUFFER_EACH(input->read_buffer, c, i) {
+    RBUFFER_EACH(input->read_stream.buffer, c, i) {
       count = i + 1;
       if (c == '\x1b' && count > 1) {
         count--;
@@ -248,13 +251,13 @@ static void read_cb(RStream *rstream, RBuffer *buf, void *data, bool eof)
       }
     }
 
-    RBUFFER_UNTIL_EMPTY(input->read_buffer, ptr, len) {
+    RBUFFER_UNTIL_EMPTY(input->read_stream.buffer, ptr, len) {
       size_t consumed = termkey_push_bytes(input->tk, ptr, MIN(count, len));
       // termkey_push_bytes can return (size_t)-1, so it is possible that
-      // `consumed > input->read_buffer->size`, but since tk_getkeys is called
-      // soon, it shouldn't happen
-      assert(consumed <= input->read_buffer->size);
-      rbuffer_consumed(input->read_buffer, consumed);
+      // `consumed > input->read_stream.buffer->size`, but since tk_getkeys is
+      // called soon, it shouldn't happen
+      assert(consumed <= input->read_stream.buffer->size);
+      rbuffer_consumed(input->read_stream.buffer, consumed);
       // Need to process the keys now since there's no guarantee "count" will
       // fit into libtermkey's input buffer.
       tk_getkeys(input, false);
@@ -262,11 +265,18 @@ static void read_cb(RStream *rstream, RBuffer *buf, void *data, bool eof)
         break;
       }
     }
-  } while (rbuffer_size(input->read_buffer));
+  } while (rbuffer_size(input->read_stream.buffer));
 
   // Make sure the next input escape sequence fits into the ring buffer
   // without wrap around, otherwise it could be misinterpreted.
-  rbuffer_reset(input->read_buffer);
+  rbuffer_reset(input->read_stream.buffer);
+}
+
+static void restart_reading(Event event)
+{
+  TermInput *input = event.data;
+  rstream_init_fd(&loop, &input->read_stream, input->in_fd, 0xfff, input);
+  rstream_start(&input->read_stream, read_cb);
 }
 
 static TermInput *term_input_new(void)
@@ -283,10 +293,8 @@ static TermInput *term_input_new(void)
   int curflags = termkey_get_canonflags(rv->tk);
   termkey_set_canonflags(rv->tk, curflags | TERMKEY_CANON_DELBS);
   // setup input handle
-  rv->read_buffer = rbuffer_new(0xfff);
-  rv->read_stream = rstream_new(read_cb, rv->read_buffer, rv);
-  rstream_set_file(rv->read_stream, rv->in_fd);
-  rstream_start(rv->read_stream);
+  rstream_init_fd(&loop, &rv->read_stream, rv->in_fd, 0xfff, rv);
+  rstream_start(&rv->read_stream, read_cb);
   // initialize a timer handle for handling ESC with libtermkey
   time_watcher_init(&loop, &rv->timer_handle, rv);
   // Set the pastetoggle option to a special key that will be sent when
@@ -301,8 +309,8 @@ static void term_input_destroy(TermInput *input)
 {
   time_watcher_stop(&input->timer_handle);
   time_watcher_close(&input->timer_handle, NULL);
-  rstream_stop(input->read_stream);
-  rstream_free(input->read_stream);
+  rstream_stop(&input->read_stream);
+  stream_close(&input->read_stream, NULL);
   termkey_destroy(input->tk);
   // Run once to remove references to input/timer handles
   loop_poll_events(&loop, 0);

@@ -2,8 +2,9 @@
 #define NVIM_OS_JOB_DEFS_H
 
 #include <uv.h>
-#include "nvim/os/rstream_defs.h"
-#include "nvim/os/wstream_defs.h"
+
+#include "nvim/event/rstream.h"
+#include "nvim/event/wstream.h"
 
 #define MAX_RUNNING_JOBS 100
 typedef struct job Job;
@@ -29,10 +30,10 @@ typedef struct {
   bool writable;
   // Callback that will be invoked when data is available on stdout. If NULL
   // stdout will be redirected to /dev/null.
-  rstream_cb stdout_cb;
+  stream_read_cb stdout_cb;
   // Callback that will be invoked when data is available on stderr. If NULL
   // stderr will be redirected to /dev/null.
-  rstream_cb  stderr_cb;
+  stream_read_cb stderr_cb;
   // Callback that will be invoked when the job has exited and will not send
   // data
   job_exit_cb exit_cb;

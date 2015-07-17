@@ -7,8 +7,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/os/input.h"
 #include "nvim/event/loop.h"
-#include "nvim/os/rstream_defs.h"
-#include "nvim/os/rstream.h"
+#include "nvim/event/rstream.h"
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/ui.h"
@@ -30,8 +29,8 @@ typedef enum {
   kInputEof
 } InbufPollResult;
 
-static RStream *read_stream = NULL;
-static RBuffer *read_buffer = NULL, *input_buffer = NULL;
+static Stream read_stream = {.closed = true};
+static RBuffer *input_buffer = NULL;
 static bool input_eof = false;
 static int global_fd = 0;
 
@@ -54,26 +53,23 @@ int input_global_fd(void)
 
 void input_start(int fd)
 {
-  if (read_stream) {
+  if (!read_stream.closed) {
     return;
   }
 
   global_fd = fd;
-  read_buffer = rbuffer_new(READ_BUFFER_SIZE);
-  read_stream = rstream_new(read_cb, read_buffer, NULL);
-  rstream_set_file(read_stream, fd);
-  rstream_start(read_stream);
+  rstream_init_fd(&loop, &read_stream, fd, READ_BUFFER_SIZE, NULL);
+  rstream_start(&read_stream, read_cb);
 }
 
 void input_stop(void)
 {
-  if (!read_stream) {
+  if (read_stream.closed) {
     return;
   }
 
-  rstream_stop(read_stream);
-  rstream_free(read_stream);
-  read_stream = NULL;
+  rstream_stop(&read_stream);
+  stream_close(&read_stream, NULL);
 }
 
 // Low level input function
@@ -309,16 +305,16 @@ static InbufPollResult inbuf_poll(int ms)
   return input_eof ? kInputEof : kInputNone;
 }
 
-static void read_cb(RStream *rstream, RBuffer *buf, void *data, bool at_eof)
+static void read_cb(Stream *stream, RBuffer *buf, void *data, bool at_eof)
 {
   if (at_eof) {
     input_eof = true;
   }
 
-  assert(rbuffer_space(input_buffer) >= rbuffer_size(read_buffer));
-  RBUFFER_UNTIL_EMPTY(read_buffer, ptr, len) {
+  assert(rbuffer_space(input_buffer) >= rbuffer_size(buf));
+  RBUFFER_UNTIL_EMPTY(buf, ptr, len) {
     (void)rbuffer_write(input_buffer, ptr, len);
-    rbuffer_consumed(read_buffer, len);
+    rbuffer_consumed(buf, len);
   }
 }
 

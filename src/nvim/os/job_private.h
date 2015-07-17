@@ -6,8 +6,8 @@
 #include <uv.h>
 
 #include "nvim/event/time.h"
-#include "nvim/os/rstream_defs.h"
-#include "nvim/os/wstream_defs.h"
+#include "nvim/event/rstream.h"
+#include "nvim/event/wstream.h"
 #include "nvim/os/pipe_process.h"
 #include "nvim/os/pty_process.h"
 #include "nvim/os/shell.h"
@@ -28,14 +28,15 @@ struct job {
   uint64_t stopped_time;
   // If SIGTERM was already sent to the job(only send one before SIGKILL)
   bool term_sent;
-  // Readable streams(std{out,err})
-  RStream *out, *err;
-  // Writable stream(stdin)
-  WStream *in;
+  // stdio streams(std{in,out,err})
+  Stream in, out, err;
   // Libuv streams representing stdin/stdout/stderr
   uv_stream_t *proc_stdin, *proc_stdout, *proc_stderr;
   // Extra data set by the process spawner
-  void *process;
+  union {
+    UvProcess uv;
+    PtyProcess pty;
+  } process;
   // If process_close has been called on this job
   bool closed;
   // Startup options
@@ -51,15 +52,6 @@ static inline bool process_spawn(Job *job)
   return job->opts.pty ? pty_process_spawn(job) : pipe_process_spawn(job);
 }
 
-static inline void process_init(Job *job)
-{
-  if (job->opts.pty) {
-    pty_process_init(job);
-  } else {
-    pipe_process_init(job);
-  }
-}
-
 static inline void process_close(Job *job)
 {
   if (job->closed) {
@@ -70,15 +62,6 @@ static inline void process_close(Job *job)
     pty_process_close(job);
   } else {
     pipe_process_close(job);
-  }
-}
-
-static inline void process_destroy(Job *job)
-{
-  if (job->opts.pty) {
-    pty_process_destroy(job);
-  } else {
-    pipe_process_destroy(job);
   }
 }
 
@@ -106,11 +89,10 @@ static inline void job_decref(Job *job)
     // Invoke the exit_cb
     job_exit_callback(job);
     // Free all memory allocated for the job
-    xfree(job->proc_stdin->data);
-    xfree(job->proc_stdout->data);
-    xfree(job->proc_stderr->data);
     shell_free_argv(job->opts.argv);
-    process_destroy(job);
+    if (job->opts.pty) {
+      xfree(job->opts.term_name);
+    }
     xfree(job);
   }
 }

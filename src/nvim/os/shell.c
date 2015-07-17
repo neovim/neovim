@@ -10,7 +10,7 @@
 #include "nvim/log.h"
 #include "nvim/event/loop.h"
 #include "nvim/os/job.h"
-#include "nvim/os/rstream.h"
+#include "nvim/event/rstream.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/signal.h"
 #include "nvim/types.h"
@@ -189,7 +189,7 @@ static int do_os_system(char **argv,
 {
   // the output buffer
   DynamicBuffer buf = DYNAMIC_BUFFER_INIT;
-  rstream_cb data_cb = system_data_cb;
+  stream_read_cb data_cb = system_data_cb;
   if (nread) {
     *nread = 0;
   }
@@ -283,7 +283,7 @@ static void dynamic_buffer_ensure(DynamicBuffer *buf, size_t desired)
   buf->data = xrealloc(buf->data, buf->cap);
 }
 
-static void system_data_cb(RStream *rstream, RBuffer *buf, void *data, bool eof)
+static void system_data_cb(Stream *stream, RBuffer *buf, void *data, bool eof)
 {
   Job *job = data;
   DynamicBuffer *dbuf = job_data(job);
@@ -294,7 +294,7 @@ static void system_data_cb(RStream *rstream, RBuffer *buf, void *data, bool eof)
   dbuf->len += nread;
 }
 
-static void out_data_cb(RStream *rstream, RBuffer *buf, void *data, bool eof)
+static void out_data_cb(Stream *stream, RBuffer *buf, void *data, bool eof)
 {
   RBUFFER_UNTIL_EMPTY(buf, ptr, len) {
     size_t written = write_output(ptr, len, false,
@@ -470,7 +470,7 @@ static size_t write_output(char *output, size_t remaining, bool to_buffer,
   return (size_t)(output - start);
 }
 
-static void shell_write_cb(WStream *wstream, void *data, int status)
+static void shell_write_cb(Stream *stream, void *data, int status)
 {
   Job *job = data;
   job_close_in(job);

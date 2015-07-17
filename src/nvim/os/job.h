@@ -10,10 +10,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "nvim/os/rstream_defs.h"
 #include "nvim/os/job_defs.h"
-#include "nvim/os/wstream.h"
-#include "nvim/os/wstream_defs.h"
+#include "nvim/event/rstream.h"
+#include "nvim/event/wstream.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/job.h.generated.h"

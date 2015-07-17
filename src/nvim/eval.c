@@ -83,8 +83,7 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/job.h"
-#include "nvim/os/rstream.h"
-#include "nvim/os/rstream_defs.h"
+#include "nvim/event/rstream.h"
 #include "nvim/os/time.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
@@ -20353,19 +20352,19 @@ static inline void push_job_event(Job *job, ufunc_T *callback,
   }, !disable_job_defer);
 }
 
-static void on_job_stdout(RStream *rstream, RBuffer *buf, void *job, bool eof)
+static void on_job_stdout(Stream *stream, RBuffer *buf, void *job, bool eof)
 {
   TerminalJobData *data = job_data(job);
-  on_job_output(rstream, job, buf, eof, data->on_stdout, "stdout");
+  on_job_output(stream, job, buf, eof, data->on_stdout, "stdout");
 }
 
-static void on_job_stderr(RStream *rstream, RBuffer *buf, void *job, bool eof)
+static void on_job_stderr(Stream *stream, RBuffer *buf, void *job, bool eof)
 {
   TerminalJobData *data = job_data(job);
-  on_job_output(rstream, job, buf, eof, data->on_stderr, "stderr");
+  on_job_output(stream, job, buf, eof, data->on_stderr, "stderr");
 }
 
-static void on_job_output(RStream *rstream, Job *job, RBuffer *buf, bool eof,
+static void on_job_output(Stream *stream, Job *job, RBuffer *buf, bool eof,
     ufunc_T *callback, const char *type)
 {
   if (eof) {
