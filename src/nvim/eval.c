@@ -7088,7 +7088,7 @@ static int non_zero_arg(typval_T *argvars)
  * Get the float value of "argvars[0]" into "f".
  * Returns FAIL when the argument is not a Number or Float.
  */
-static int get_float_arg(typval_T *argvars, float_T *f)
+static inline int get_float_arg(typval_T *argvars, float_T *f)
 {
   if (argvars[0].v_type == VAR_FLOAT) {
     *f = argvars[0].vval.v_float;
@@ -7102,14 +7102,27 @@ static int get_float_arg(typval_T *argvars, float_T *f)
   return FAIL;
 }
 
+// Apply a floating point C function on a typval with one float_T.
+static inline void float_op_wrapper(typval_T *argvars, typval_T *rettv,
+                                    float_T (*function)(float_T))
+{
+  float_T f;
+
+  rettv->v_type = VAR_FLOAT;
+  if (get_float_arg(argvars, &f) == OK) {
+    rettv->vval.v_float = function(f);
+  } else {
+    rettv->vval.v_float = 0.0;
+  }
+}
+
 /*
  * "abs(expr)" function
  */
 static void f_abs(typval_T *argvars, typval_T *rettv)
 {
   if (argvars[0].v_type == VAR_FLOAT) {
-    rettv->v_type = VAR_FLOAT;
-    rettv->vval.v_float = fabs(argvars[0].vval.v_float);
+    float_op_wrapper(argvars, rettv, &fabs);
   } else {
     varnumber_T n;
     int error = FALSE;
@@ -7129,13 +7142,7 @@ static void f_abs(typval_T *argvars, typval_T *rettv)
  */
 static void f_acos(typval_T *argvars, typval_T *rettv)
 {
-  float_T f;
-
-  rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &f) == OK)
-    rettv->vval.v_float = acos(f);
-  else
-    rettv->vval.v_float = 0.0;
+  float_op_wrapper(argvars, rettv, &acos);
 }
 
 /*
@@ -7289,13 +7296,7 @@ static void f_argv(typval_T *argvars, typval_T *rettv)
  */
 static void f_asin(typval_T *argvars, typval_T *rettv)
 {
-  float_T f;
-
-  rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &f) == OK)
-    rettv->vval.v_float = asin(f);
-  else
-    rettv->vval.v_float = 0.0;
+  float_op_wrapper(argvars, rettv, &asin);
 }
 
 /*
@@ -7303,13 +7304,7 @@ static void f_asin(typval_T *argvars, typval_T *rettv)
  */
 static void f_atan(typval_T *argvars, typval_T *rettv)
 {
-  float_T f;
-
-  rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &f) == OK)
-    rettv->vval.v_float = atan(f);
-  else
-    rettv->vval.v_float = 0.0;
+  float_op_wrapper(argvars, rettv, &atan);
 }
 
 /*
@@ -7638,13 +7633,7 @@ static void f_call(typval_T *argvars, typval_T *rettv)
  */
 static void f_ceil(typval_T *argvars, typval_T *rettv)
 {
-  float_T f;
-
-  rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &f) == OK)
-    rettv->vval.v_float = ceil(f);
-  else
-    rettv->vval.v_float = 0.0;
+  float_op_wrapper(argvars, rettv, &ceil);
 }
 
 /*
@@ -7848,13 +7837,7 @@ static void f_copy(typval_T *argvars, typval_T *rettv)
  */
 static void f_cos(typval_T *argvars, typval_T *rettv)
 {
-  float_T f;
-
-  rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &f) == OK)
-    rettv->vval.v_float = cos(f);
-  else
-    rettv->vval.v_float = 0.0;
+  float_op_wrapper(argvars, rettv, &cos);
 }
 
 /*
@@ -7862,13 +7845,7 @@ static void f_cos(typval_T *argvars, typval_T *rettv)
  */
 static void f_cosh(typval_T *argvars, typval_T *rettv)
 {
-  float_T f;
-
-  rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &f) == OK)
-    rettv->vval.v_float = cosh(f);
-  else
-    rettv->vval.v_float = 0.0;
+  float_op_wrapper(argvars, rettv, &cosh);
 }
 
 /*
@@ -8267,13 +8244,7 @@ static void f_exists(typval_T *argvars, typval_T *rettv)
  */
 static void f_exp(typval_T *argvars, typval_T *rettv)
 {
-  float_T f;
-
-  rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &f) == OK)
-    rettv->vval.v_float = exp(f);
-  else
-    rettv->vval.v_float = 0.0;
+  float_op_wrapper(argvars, rettv, &exp);
 }
 
 /*
@@ -8752,13 +8723,7 @@ static void f_float2nr(typval_T *argvars, typval_T *rettv)
  */
 static void f_floor(typval_T *argvars, typval_T *rettv)
 {
-  float_T f;
-
-  rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &f) == OK)
-    rettv->vval.v_float = floor(f);
-  else
-    rettv->vval.v_float = 0.0;
+  float_op_wrapper(argvars, rettv, &floor);
 }
 
 /*
@@ -11315,13 +11280,7 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
  */
 static void f_log(typval_T *argvars, typval_T *rettv)
 {
-  float_T f;
-
-  rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &f) == OK)
-    rettv->vval.v_float = log(f);
-  else
-    rettv->vval.v_float = 0.0;
+  float_op_wrapper(argvars, rettv, &log);
 }
 
 /*
@@ -11329,13 +11288,7 @@ static void f_log(typval_T *argvars, typval_T *rettv)
  */
 static void f_log10(typval_T *argvars, typval_T *rettv)
 {
-  float_T f;
-
-  rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &f) == OK)
-    rettv->vval.v_float = log10(f);
-  else
-    rettv->vval.v_float = 0.0;
+  float_op_wrapper(argvars, rettv, &log10);
 }
 
 
@@ -12765,13 +12718,7 @@ theend:
  */
 static void f_round(typval_T *argvars, typval_T *rettv)
 {
-  float_T f;
-
-  rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &f) == OK)
-    rettv->vval.v_float = round(f);
-  else
-    rettv->vval.v_float = 0.0;
+  float_op_wrapper(argvars, rettv, &round);
 }
 
 // "rpcnotify()" function
@@ -13902,13 +13849,7 @@ static void f_simplify(typval_T *argvars, typval_T *rettv)
  */
 static void f_sin(typval_T *argvars, typval_T *rettv)
 {
-  float_T f;
-
-  rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &f) == OK)
-    rettv->vval.v_float = sin(f);
-  else
-    rettv->vval.v_float = 0.0;
+  float_op_wrapper(argvars, rettv, &sin);
 }
 
 /*
@@ -13916,13 +13857,7 @@ static void f_sin(typval_T *argvars, typval_T *rettv)
  */
 static void f_sinh(typval_T *argvars, typval_T *rettv)
 {
-  float_T f;
-
-  rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &f) == OK)
-    rettv->vval.v_float = sinh(f);
-  else
-    rettv->vval.v_float = 0.0;
+  float_op_wrapper(argvars, rettv, &sinh);
 }
 
 /// struct used in the array that's given to qsort()
@@ -14393,13 +14328,7 @@ static void f_split(typval_T *argvars, typval_T *rettv)
  */
 static void f_sqrt(typval_T *argvars, typval_T *rettv)
 {
-  float_T f;
-
-  rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &f) == OK)
-    rettv->vval.v_float = sqrt(f);
-  else
-    rettv->vval.v_float = 0.0;
+  float_op_wrapper(argvars, rettv, &sqrt);
 }
 
 /*
@@ -15283,13 +15212,7 @@ static void f_test(typval_T *argvars, typval_T *rettv)
  */
 static void f_tan(typval_T *argvars, typval_T *rettv)
 {
-  float_T f;
-
-  rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &f) == OK)
-    rettv->vval.v_float = tan(f);
-  else
-    rettv->vval.v_float = 0.0;
+  float_op_wrapper(argvars, rettv, &tan);
 }
 
 /*
@@ -15297,13 +15220,7 @@ static void f_tan(typval_T *argvars, typval_T *rettv)
  */
 static void f_tanh(typval_T *argvars, typval_T *rettv)
 {
-  float_T f;
-
-  rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &f) == OK)
-    rettv->vval.v_float = tanh(f);
-  else
-    rettv->vval.v_float = 0.0;
+  float_op_wrapper(argvars, rettv, &tanh);
 }
 
 /*
@@ -15451,14 +15368,7 @@ error:
  */
 static void f_trunc(typval_T *argvars, typval_T *rettv)
 {
-  float_T f;
-
-  rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &f) == OK)
-    /* trunc() is not in C90, use floor() or ceil() instead. */
-    rettv->vval.v_float = f > 0 ? floor(f) : ceil(f);
-  else
-    rettv->vval.v_float = 0.0;
+  float_op_wrapper(argvars, rettv, &trunc);
 }
 
 /*
