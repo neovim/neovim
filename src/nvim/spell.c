@@ -2328,8 +2328,15 @@ static void spell_load_lang(char_u *lang)
   }
 
   if (r == FAIL) {
-    smsg(_("Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""),
-          lang, spell_enc(), lang);
+    if (starting) {
+      // Some startup file sets &spell, but the necessary files don't exist:
+      // try to prompt the user at VimEnter.
+      // Also, set spell again (downloading the files resets the option)
+      do_cmdline_cmd("au VimEnter * call spellfile#LoadFile(&spelllang) | set spell");
+    } else {
+      smsg(_("Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""),
+	    lang, spell_enc(), lang);
+    }
   } else if (sl.sl_slang != NULL) {
     // At least one file was loaded, now load ALL the additions.
     STRCPY(fname_enc + STRLEN(fname_enc) - 3, "add.spl");
