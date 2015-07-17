@@ -61,9 +61,13 @@
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
-#include "nvim/os/event.h"
+#include "nvim/event/loop.h"
 #include "nvim/os/signal.h"
+#include "nvim/event/process.h"
+#include "nvim/msgpack_rpc/defs.h"
 #include "nvim/msgpack_rpc/helpers.h"
+#include "nvim/msgpack_rpc/server.h"
+#include "nvim/msgpack_rpc/channel.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/handle.h"
@@ -132,6 +136,41 @@ static const char *err_too_many_args = N_("Too many edit arguments");
 static const char *err_extra_cmd =
   N_("Too many \"+command\", \"-c command\" or \"--cmd command\" arguments");
 
+
+void event_init(void)
+{
+  loop_init(&loop, NULL);
+  // early msgpack-rpc initialization
+  msgpack_rpc_init_method_table();
+  msgpack_rpc_helpers_init();
+  // Initialize input events
+  input_init();
+  // Timer to wake the event loop if a timeout argument is passed to
+  // `event_poll`
+  // Signals
+  signal_init();
+  // finish mspgack-rpc initialization
+  channel_init();
+  server_init();
+  terminal_init();
+}
+
+void event_teardown(void)
+{
+  if (!loop.deferred_events) {
+    return;
+  }
+
+  loop_process_all_events(&loop);
+  input_stop();
+  channel_teardown();
+  process_teardown(&loop);
+  server_teardown();
+  signal_teardown();
+  terminal_teardown();
+
+  loop_close(&loop);
+}
 
 /// Performs early initialization.
 ///

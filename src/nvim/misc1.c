@@ -61,6 +61,7 @@
 #include "nvim/os/shell.h"
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
+#include "nvim/event/stream.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "misc1.c.generated.h"

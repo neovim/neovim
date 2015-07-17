@@ -23,7 +23,7 @@
 #include "nvim/normal.h"
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
-#include "nvim/os/event.h"
+#include "nvim/event/loop.h"
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
 #include "nvim/os/signal.h"
@@ -216,7 +216,7 @@ void ui_detach(UI *ui)
 
   ui_count--;
   // schedule a refresh
-  event_push((Event) { .handler = refresh }, false);
+  loop_push_event(&loop, (Event) { .handler = refresh }, false);
 }
 
 void ui_clear(void)

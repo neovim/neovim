@@ -8,9 +8,9 @@
 #include "nvim/ascii.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/log.h"
-#include "nvim/os/event.h"
-#include "nvim/os/job.h"
-#include "nvim/os/rstream.h"
+#include "nvim/event/loop.h"
+#include "nvim/event/uv_process.h"
+#include "nvim/event/rstream.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/signal.h"
 #include "nvim/types.h"
@@ -189,7 +189,7 @@ static int do_os_system(char **argv,
 {
   // the output buffer
   DynamicBuffer buf = DYNAMIC_BUFFER_INIT;
-  rstream_cb data_cb = system_data_cb;
+  stream_read_cb data_cb = system_data_cb;
   if (nread) {
     *nread = 0;
   }
@@ -204,17 +204,15 @@ static int do_os_system(char **argv,
   char prog[MAXPATHL];
   xstrlcpy(prog, argv[0], MAXPATHL);
 
-  int status;
-  JobOptions opts = JOB_OPTIONS_INIT;
-  opts.argv = argv;
-  opts.data = &buf;
-  opts.writable = input != NULL;
-  opts.stdout_cb = data_cb;
-  opts.stderr_cb = data_cb;
-  opts.exit_cb = NULL;
-  Job *job = job_start(opts, &status);
-
-  if (status <= 0) {
+  Stream in, out, err;
+  UvProcess uvproc = uv_process_init(&buf);
+  Process *proc = &uvproc.process;
+  proc->argv = argv;
+  proc->in = input != NULL ? &in : NULL;
+  proc->out = &out;
+  proc->err = &err;
+  if (!process_spawn(&loop, proc)) {
+    loop_poll_events(&loop, 0);
     // Failed, probably due to `sh` not being executable
     if (!silent) {
       MSG_PUTS(_("\nCannot execute "));
@@ -224,28 +222,32 @@ static int do_os_system(char **argv,
     return -1;
   }
 
+  if (input != NULL) {
+    wstream_init(proc->in, 0);
+  }
+  rstream_init(proc->out, 0);
+  rstream_start(proc->out, data_cb);
+  rstream_init(proc->err, 0);
+  rstream_start(proc->err, data_cb);
+
   // write the input, if any
   if (input) {
     WBuffer *input_buffer = wstream_new_buffer((char *) input, len, 1, NULL);
 
-    if (!job_write(job, input_buffer)) {
-      // couldn't write, stop the job and tell the user about it
-      job_stop(job);
+    if (!wstream_write(&in, input_buffer)) {
+      // couldn't write, stop the process and tell the user about it
+      process_stop(proc);
       return -1;
     }
     // close the input stream after everything is written
-    job_write_cb(job, shell_write_cb);
-  } else {
-    // close the input stream, let the process know that no more input is
-    // coming
-    job_close_in(job);
+    wstream_set_write_cb(&in, shell_write_cb);
   }
 
   // invoke busy_start here so event_poll_until wont change the busy state for
   // the UI
   ui_busy_start();
   ui_flush();
-  status = job_wait(job, -1);
+  int status = process_wait(proc, -1);
   ui_busy_stop();
 
   // prepare the out parameters if requested
@@ -283,10 +285,9 @@ static void dynamic_buffer_ensure(DynamicBuffer *buf, size_t desired)
   buf->data = xrealloc(buf->data, buf->cap);
 }
 
-static void system_data_cb(RStream *rstream, RBuffer *buf, void *data, bool eof)
+static void system_data_cb(Stream *stream, RBuffer *buf, void *data, bool eof)
 {
-  Job *job = data;
-  DynamicBuffer *dbuf = job_data(job);
+  DynamicBuffer *dbuf = data;
 
   size_t nread = buf->size;
   dynamic_buffer_ensure(dbuf, dbuf->len + nread + 1);
@@ -294,7 +295,7 @@ static void system_data_cb(RStream *rstream, RBuffer *buf, void *data, bool eof)
   dbuf->len += nread;
 }
 
-static void out_data_cb(RStream *rstream, RBuffer *buf, void *data, bool eof)
+static void out_data_cb(Stream *stream, RBuffer *buf, void *data, bool eof)
 {
   RBUFFER_UNTIL_EMPTY(buf, ptr, len) {
     size_t written = write_output(ptr, len, false,
@@ -470,8 +471,7 @@ static size_t write_output(char *output, size_t remaining, bool to_buffer,
   return (size_t)(output - start);
 }
 
-static void shell_write_cb(WStream *wstream, void *data, int status)
+static void shell_write_cb(Stream *stream, void *data, int status)
 {
-  Job *job = data;
-  job_close_in(job);
+  stream_close(stream, NULL);
 }

@@ -31,6 +31,7 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
+#include "nvim/event/stream.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

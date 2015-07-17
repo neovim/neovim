@@ -14,7 +14,7 @@ local helpers = require('test.unit.helpers')
 local shell = helpers.cimport(
   './src/nvim/os/shell.h',
   './src/nvim/option_defs.h',
-  './src/nvim/os/event.h',
+  './src/nvim/main.h',
   './src/nvim/misc1.h'
 )
 local ffi, eq, neq = helpers.ffi, helpers.eq, helpers.neq

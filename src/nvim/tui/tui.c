@@ -13,7 +13,8 @@
 #include "nvim/memory.h"
 #include "nvim/api/vim.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/os/event.h"
+#include "nvim/event/loop.h"
+#include "nvim/event/signal.h"
 #include "nvim/tui/tui.h"
 #include "nvim/strings.h"
 
@@ -43,7 +44,7 @@ typedef struct {
   uv_loop_t *write_loop;
   unibi_term *ut;
   uv_tty_t output_handle;
-  uv_signal_t winch_handle;
+  SignalWatcher winch_handle;
   Rect scroll_region;
   kvec_t(Rect) invalid_regions;
   int row, col;
@@ -132,9 +133,8 @@ UI *tui_start(void)
   update_size(ui);
 
   // listen for SIGWINCH
-  uv_signal_init(uv_default_loop(), &data->winch_handle);
-  uv_signal_start(&data->winch_handle, sigwinch_cb, SIGWINCH);
-  data->winch_handle.data = ui;
+  signal_watcher_init(&loop, &data->winch_handle, ui);
+  signal_watcher_start(&data->winch_handle, sigwinch_cb, SIGWINCH);
 
   ui->stop = tui_stop;
   ui->rgb = os_getenv("NVIM_TUI_ENABLE_TRUE_COLOR") != NULL;
@@ -172,8 +172,8 @@ static void tui_stop(UI *ui)
   TUIData *data = ui->data;
   // Destroy common stuff
   kv_destroy(data->invalid_regions);
-  uv_signal_stop(&data->winch_handle);
-  uv_close((uv_handle_t *)&data->winch_handle, NULL);
+  signal_watcher_stop(&data->winch_handle);
+  signal_watcher_close(&data->winch_handle, NULL);
   // Destroy input stuff
   term_input_destroy(data->input);
   // Destroy output stuff
@@ -207,12 +207,12 @@ static void try_resize(Event ev)
   ui_refresh();
 }
 
-static void sigwinch_cb(uv_signal_t *handle, int signum)
+static void sigwinch_cb(SignalWatcher *watcher, int signum, void *data)
 {
   // Queue the event because resizing can result in recursive event_poll calls
   // FIXME(blueyed): TUI does not resize properly when not deferred. Why? #2322
-  event_push((Event) {
-    .data = handle->data,
+  loop_push_event(&loop, (Event) {
+    .data = data,
     .handler = try_resize
   }, true);
 }

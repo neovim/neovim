@@ -136,6 +136,6 @@
 // `break` statement is executed before the next iteration.
 #define kl_iter(name, kl, p) kl_iter_at(name, kl, p, NULL)
 #define kl_iter_at(name, kl, p, h) \
-  for (kl1_##name *p = h ? h : kl->head; p != kl->tail; p = p->next)
+  for (kl1_##name **p = h ? h : &kl->head; *p != kl->tail; p = &(*p)->next)
 
 #endif

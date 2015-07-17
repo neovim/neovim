@@ -59,7 +59,7 @@
 #include "nvim/terminal.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
-#include "nvim/os/event.h"
+#include "nvim/event/loop.h"
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
 
@@ -601,15 +601,15 @@ edit (
      * Get a character for Insert mode.  Ignore K_IGNORE.
      */
     lastc = c;                          /* remember previous char for CTRL-D */
-    event_enable_deferred();
+    loop_enable_deferred_events(&loop);
     do {
       c = safe_vgetc();
     } while (c == K_IGNORE);
-    event_disable_deferred();
+    loop_disable_deferred_events(&loop);
 
     if (c == K_EVENT) {
       c = lastc;
-      event_process();
+      loop_process_event(&loop);
       continue;
     }
 

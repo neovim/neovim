@@ -488,7 +488,6 @@ describe('Screen', function()
     end)
 
     it('has minimum width/height values', function()
-      wait()
       screen:try_resize(1, 1)
       screen:expect([[
         -- INS^ERT --|

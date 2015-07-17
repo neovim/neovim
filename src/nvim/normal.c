@@ -61,7 +61,7 @@
 #include "nvim/mouse.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
-#include "nvim/os/event.h"
+#include "nvim/event/loop.h"
 #include "nvim/os/time.h"
 
 /*
@@ -487,12 +487,12 @@ normal_cmd (
   /*
    * Get the command character from the user.
    */
-  event_enable_deferred();
+  loop_enable_deferred_events(&loop);
   c = safe_vgetc();
-  event_disable_deferred();
+  loop_disable_deferred_events(&loop);
 
   if (c == K_EVENT) {
-    event_process();
+    loop_process_event(&loop);
     return;
   }
 
