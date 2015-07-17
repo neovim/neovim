@@ -12322,7 +12322,7 @@ static int vim_to_msgpack(msgpack_packer *const packer,
   }
   while (kv_size(mpstack)) {
     MPConvStackVal *cur_mpsv = &kv_A(mpstack, kv_size(mpstack) - 1);
-    const typval_T *cur_tv;
+    const typval_T *cur_tv = NULL;
     switch (cur_mpsv->type) {
       case kMPConvDict: {
         if (!cur_mpsv->data.d.todo) {
