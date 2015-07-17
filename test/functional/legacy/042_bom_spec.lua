@@ -12,6 +12,13 @@ local write_file = function (name, contents)
   file:close()
 end
 
+local function diff(filename, text)
+  local file = io.open(filename)
+  local filecontents = file:read('*all')
+  file:close()
+  return eq(helpers.dedent(text), filecontents)
+end
+
 describe('reading and writing files with BOM:', function()
   local latin1 = '\xfe\xfelatin-1'
   local utf8 = '\xef\xbb\xbfutf-8'
