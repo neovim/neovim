@@ -47,6 +47,7 @@ describe('reading and writing files with BOM:', function()
     os.remove('Xtest4')
     os.remove('Xtest5')
     os.remove('Xtest6')
+    os.remove('Xtest.out')
   end)
 
   it('no BOM in latin1 files', function()
@@ -57,8 +58,9 @@ describe('reading and writing files with BOM:', function()
     eq(0, eval('&bomb'))
     eq('latin1', eval('&fileencoding'))
     execute('set bomb fenc=latin-1')
-    execute('w! Xtest0x')
-    expect(latin1)
+    execute('w! Xtest.out')
+    --expect(latin1) -- TODO
+    diff('Xtest.out', latin1..'\n')
   end)
 
   it('utf-8', function()
@@ -70,8 +72,9 @@ describe('reading and writing files with BOM:', function()
     eq(1, eval('&bomb'))
     eq('utf-8', eval('&fileencoding'))
     execute('set fenc=utf-8')
-    execute('w! Xtest1x')
+    execute('w! Xtest.out')
     expect('utf-8')
+    diff('Xtest.out', utf8..'\n')
   end)
 
   it('utf-8 with erronous BOM should fall back to latin1', function()
@@ -84,8 +87,9 @@ describe('reading and writing files with BOM:', function()
     eq(0, eval('&bomb'))
     eq('latin1', eval('&fileencoding'))
     execute('set fenc=utf-8')
-    execute('w! Xtest2x')
+    execute('w! Xtest.out')
     expect('ï»¿utf-8\x80err')
+    diff('Xtest.out', utf8_err..'\n')
   end)
 
   it('ucs2', function()
@@ -99,8 +103,9 @@ describe('reading and writing files with BOM:', function()
     eq(1, eval('&bomb'))
     eq('utf-16', eval('&fileencoding'))
     execute('set fenc=ucs-2')
-    execute('w! Xtest3x')
+    execute('w! Xtest.out')
     expect('ucs-2')
+    diff('Xtest.out', ucs2..'\n')
   end)
 
   it('ucs-2le', function()
@@ -109,8 +114,9 @@ describe('reading and writing files with BOM:', function()
     eq(1, eval('&bomb'))
     eq('utf-16le', eval('&fileencoding'))
     execute('set fenc=ucs-2le')
-    execute('w! Xtest4x')
+    execute('w! Xtest.out')
     expect('ucs-2le')
+    diff('Xtest.out', utf8..'\n')
   end)
 
   it('ucs-4', function()
@@ -119,8 +125,9 @@ describe('reading and writing files with BOM:', function()
     eq(1, eval('&bomb'))
     eq('ucs-4', eval('&fileencoding'))
     execute('set fenc=ucs-4')
-    execute('w! Xtest5x')
+    execute('w! Xtest.out')
     expect('ucs-4')
+    diff('Xtest.out', utf8..'\n')
   end)
 
   it('is working', function()
@@ -129,72 +136,8 @@ describe('reading and writing files with BOM:', function()
     eq(1, eval('&bomb'))
     eq('ucs-4le', eval('&fileencoding'))
     execute('set fenc=ucs-4le')
-    execute('w! Xtest6x')
+    execute('w! Xtest.out')
     expect('ucs-4le')
-  end)
-
-  it('is working', function()
-    -- Check the files written with BOM.
-    source([[
-      set bin
-      e! test.out
-      $r Xtest0x
-      $r Xtest1x
-      $r Xtest2x
-      $r Xtest3x
-      $r Xtest4x
-      $r Xtest5x
-      $r Xtest6x
-    ]])
-    -- Write the file in default format.
-    execute('set nobin ff&')
-    execute('w! test.out')
-
-    -- Assert buffer contents.
-    expect([[
-      
-      
-        fileencoding=latin1
-      nobomb
-      þþlatin-1
-      
-      
-        fileencoding=utf-8
-        bomb
-      utf-8
-      
-      
-        fileencoding=latin1
-      nobomb
-      ï»¿utf-8]]..'\x80'..[[err
-      
-      
-        fileencoding=utf-16
-        bomb
-      ucs-2
-      
-      
-        fileencoding=utf-16le
-        bomb
-      ucs-2le
-      
-      
-        fileencoding=ucs-4
-        bomb
-      ucs-4
-      
-      
-        fileencoding=ucs-4le
-        bomb
-      ucs-4le
-      þþlatin-1
-      ï»¿utf-8
-      Ã¯Â»Â¿utf-8Â]]..'\x80'..[[err
-      ]]..'þÿ\x00u\x00c\x00s\x00-\x002\x00'..[[
-      ]]..'ÿþu\x00c\x00s\x00-\x002\x00l\x00e\x00'..[[
-      ]]..'\x00'..[[
-      ]]..'\x00\x00þÿ\x00\x00\x00u\x00\x00\x00c\x00\x00\x00s\x00\x00\x00-\x00\x00\x004\x00\x00\x00'..[[
-      ]]..'ÿþ\x00\x00u\x00\x00\x00c\x00\x00\x00s\x00\x00\x00-\x00\x00\x004\x00\x00\x00l\x00\x00\x00e\x00\x00\x00'..[[
-      ]]..'\x00\x00\x00')
+    diff('Xtest.out', utf8..'\n')
   end)
 end)
