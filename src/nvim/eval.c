@@ -9936,9 +9936,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
 #endif
     "arabic",
     "autocmd",
-#if defined(FEAT_BROWSE) && (defined(USE_FILE_CHOOSER) \
-    || defined(FEAT_GUI_W32) \
-    || defined(FEAT_GUI_MOTIF))
+#ifdef FEAT_BROWSE
     "browsefilter",
 #endif
     "byte_offset",
@@ -12429,7 +12427,9 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
 #endif
 
   p = get_tv_string(&argvars[0]);
-#ifdef FEAT_SHORTCUT
+#if 0
+// TODO(Hettomei,equalsraf): Temporary disable this block
+// because mch_resolve_shortcut has gone from source tree.
   {
     char_u  *v = NULL;
 

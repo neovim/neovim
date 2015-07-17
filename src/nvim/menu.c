@@ -460,12 +460,6 @@ add_menu_path (
         menu->silent[i] = menuarg->silent[0];
       }
     }
-#if defined(FEAT_TOOLBAR) && !defined(FEAT_GUI_W32) \
-    && (defined(FEAT_BEVAL) || defined(FEAT_GUI_GTK))
-    /* Need to update the menu tip. */
-    if (modes & MENU_TIP_MODE)
-      gui_mch_menu_set_tip(menu);
-#endif
   }
   return OK;
 
@@ -613,12 +607,6 @@ remove_menu (
       menu->modes |= child->modes;
     if (modes & MENU_TIP_MODE) {
       free_menu_string(menu, MENU_INDEX_TIP);
-#if defined(FEAT_TOOLBAR) && !defined(FEAT_GUI_W32) \
-      && (defined(FEAT_BEVAL) || defined(FEAT_GUI_GTK))
-      /* Need to update the menu tip. */
-      if (gui.in_use)
-        gui_mch_menu_set_tip(menu);
-#endif
     }
     if ((menu->modes & MENU_ALL_MODES) == 0) {
       /* The menu item is no longer valid in ANY mode, so delete it */
@@ -1331,61 +1319,6 @@ void ex_emenu(exarg_T *eap)
   } else
     EMSG2(_("E335: Menu not defined for %s mode"), mode);
 }
-
-#if defined(FEAT_GUI_MSWIN) \
-  || defined(FEAT_GUI_GTK) \
-  || defined(FEAT_BEVAL_TIP)
-/*
- * Given a menu descriptor, e.g. "File.New", find it in the menu hierarchy.
- */
-vimmenu_T *gui_find_menu(char_u *path_name)
-{
-  vimmenu_T   *menu = NULL;
-  char_u      *name;
-  char_u      *saved_name;
-  char_u      *p;
-
-  menu = root_menu;
-
-  saved_name = vim_strsave(path_name);
-
-  name = saved_name;
-  while (*name) {
-    /* find the end of one dot-separated name and put a NUL at the dot */
-    p = menu_name_skip(name);
-
-    while (menu != NULL) {
-      if (menu_name_equal(name, menu)) {
-        if (menu->children == NULL) {
-          /* found a menu item instead of a sub-menu */
-          if (*p == NUL)
-            EMSG(_("E336: Menu path must lead to a sub-menu"));
-          else
-            EMSG(_(e_notsubmenu));
-          menu = NULL;
-          goto theend;
-        }
-        if (*p == NUL)              /* found a full match */
-          goto theend;
-        break;
-      }
-      menu = menu->next;
-    }
-    if (menu == NULL)           /* didn't find it */
-      break;
-
-    /* Found a match, search the sub-menu. */
-    menu = menu->children;
-    name = p;
-  }
-
-  if (menu == NULL)
-    EMSG(_("E337: Menu not found - check menu names"));
-theend:
-  xfree(saved_name);
-  return menu;
-}
-#endif
 
 /*
  * Translation of menu names.  Just a simple lookup table.
