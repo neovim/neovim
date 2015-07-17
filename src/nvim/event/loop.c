@@ -3,6 +3,7 @@
 #include <uv.h>
 
 #include "nvim/event/loop.h"
+#include "nvim/event/process.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/loop.c.generated.h"
@@ -15,6 +16,10 @@ void loop_init(Loop *loop, void *data)
   loop->uv.data = loop;
   loop->deferred_events = kl_init(Event);
   loop->immediate_events = kl_init(Event);
+  loop->children = kl_init(WatcherPtr);
+  loop->children_stop_requests = 0;
+  uv_signal_init(&loop->uv, &loop->children_watcher);
+  uv_timer_init(&loop->uv, &loop->children_kill_timer);
 }
 
 void loop_poll_events(Loop *loop, int ms)
@@ -113,6 +118,8 @@ void loop_stop(Loop *loop)
 
 void loop_close(Loop *loop)
 {
+  uv_close((uv_handle_t *)&loop->children_watcher, NULL);
+  uv_close((uv_handle_t *)&loop->children_kill_timer, NULL);
   do {
     uv_run(&loop->uv, UV_RUN_DEFAULT);
   } while (uv_loop_close(&loop->uv));

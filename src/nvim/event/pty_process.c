@@ -20,58 +20,39 @@
 
 #include <uv.h>
 
-#include "nvim/func_attr.h"
-#include "nvim/os/job.h"
-#include "nvim/os/job_defs.h"
-#include "nvim/os/job_private.h"
-#include "nvim/os/pty_process.h"
-#include "nvim/memory.h"
-#include "nvim/vim.h"
-#include "nvim/globals.h"
+#include "nvim/lib/klist.h"
+
+#include "nvim/event/loop.h"
+#include "nvim/event/rstream.h"
+#include "nvim/event/wstream.h"
+#include "nvim/event/process.h"
+#include "nvim/event/pty_process.h"
+#include "nvim/log.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/pty_process.c.generated.h"
+# include "event/pty_process.c.generated.h"
 #endif
 
 static const unsigned int KILL_RETRIES = 5;
 static const unsigned int KILL_TIMEOUT = 2;  // seconds
 
-bool pty_process_spawn(Job *job) FUNC_ATTR_NONNULL_ALL
+bool pty_process_spawn(PtyProcess *ptyproc)
+  FUNC_ATTR_NONNULL_ALL
 {
-  PtyProcess *ptyproc = &job->process.pty;
-  ptyproc->tty_fd = -1;
-
-  if (job->opts.writable) {
-    uv_pipe_init(&loop.uv, &ptyproc->proc_stdin, 0);
-    ptyproc->proc_stdin.data = NULL;
-  }
-
-  if (job->opts.stdout_cb) {
-    uv_pipe_init(&loop.uv, &ptyproc->proc_stdout, 0);
-    ptyproc->proc_stdout.data = NULL;
-  }
-
-  if (job->opts.stderr_cb) {
-    uv_pipe_init(&loop.uv, &ptyproc->proc_stderr, 0);
-    ptyproc->proc_stderr.data = NULL;
-  }
-
-  job->proc_stdin = (uv_stream_t *)&ptyproc->proc_stdin;
-  job->proc_stdout = (uv_stream_t *)&ptyproc->proc_stdout;
-  job->proc_stderr = (uv_stream_t *)&ptyproc->proc_stderr;
-
-  int master;
-  ptyproc->winsize = (struct winsize){job->opts.height, job->opts.width, 0, 0};
+  Process *proc = (Process *)ptyproc;
+  uv_signal_start(&proc->loop->children_watcher, chld_handler, SIGCHLD);
+  ptyproc->winsize = (struct winsize){ptyproc->height, ptyproc->width, 0, 0};
   struct termios termios;
   init_termios(&termios);
   uv_disable_stdio_inheritance();
-
+  int master;
   int pid = forkpty(&master, NULL, &termios, &ptyproc->winsize);
 
   if (pid < 0) {
+    ELOG("forkpty failed: %s", strerror(errno));
     return false;
   } else if (pid == 0) {
-    init_child(job);
+    init_child(ptyproc);
     abort();
   }
 
@@ -86,23 +67,18 @@ bool pty_process_spawn(Job *job) FUNC_ATTR_NONNULL_ALL
     goto error;
   }
 
-  if (job->opts.writable
-      && !set_pipe_duplicating_descriptor(master, &ptyproc->proc_stdin)) {
+  if (proc->in && !set_duplicating_descriptor(master, &proc->in->uv.pipe)) {
     goto error;
   }
-
-  if (job->opts.stdout_cb
-      && !set_pipe_duplicating_descriptor(master, &ptyproc->proc_stdout)) {
+  if (proc->out && !set_duplicating_descriptor(master, &proc->out->uv.pipe)) {
     goto error;
   }
-
-  if (job->opts.stderr_cb
-      && !set_pipe_duplicating_descriptor(master, &ptyproc->proc_stderr)) {
+  if (proc->err && !set_duplicating_descriptor(master, &proc->err->uv.pipe)) {
     goto error;
   }
 
   ptyproc->tty_fd = master;
-  job->pid = pid;
+  proc->pid = pid;
   return true;
 
 error:
@@ -117,54 +93,44 @@ error:
   }
   if (child != pid) {
     kill(pid, SIGKILL);
+    waitpid(pid, NULL, 0);
   }
 
   return false;
 }
 
-static bool set_pipe_duplicating_descriptor(int fd, uv_pipe_t *pipe)
+void pty_process_resize(PtyProcess *ptyproc, uint16_t width,
+    uint16_t height)
   FUNC_ATTR_NONNULL_ALL
 {
-  int fd_dup = dup(fd);
-  if (fd_dup < 0) {
-    ELOG("Failed to dup descriptor %d: %s", fd, strerror(errno));
-    return false;
-  }
-  int uv_result = uv_pipe_open(pipe, fd_dup);
-  if (uv_result) {
-    ELOG("Failed to set pipe to descriptor %d: %s",
-         fd_dup, uv_strerror(uv_result));
-    close(fd_dup);
-    return false;
-  }
-  return true;
+  ptyproc->winsize = (struct winsize){height, width, 0, 0};
+  ioctl(ptyproc->tty_fd, TIOCSWINSZ, &ptyproc->winsize);
 }
 
-void pty_process_close(Job *job) FUNC_ATTR_NONNULL_ALL
+void pty_process_close(PtyProcess *ptyproc)
+  FUNC_ATTR_NONNULL_ALL
 {
-  pty_process_close_master(job);
-  job_close_streams(job);
-  job_decref(job);
+  pty_process_close_master(ptyproc);
+  Process *proc = (Process *)ptyproc;
+  if (proc->internal_close_cb) {
+    proc->internal_close_cb(proc);
+  }
 }
 
-void pty_process_close_master(Job *job) FUNC_ATTR_NONNULL_ALL
+void pty_process_close_master(PtyProcess *ptyproc) FUNC_ATTR_NONNULL_ALL
 {
-  PtyProcess *ptyproc = &job->process.pty;
   if (ptyproc->tty_fd >= 0) {
     close(ptyproc->tty_fd);
     ptyproc->tty_fd = -1;
   }
 }
 
-void pty_process_resize(Job *job, uint16_t width, uint16_t height)
-  FUNC_ATTR_NONNULL_ALL
+void pty_process_teardown(Loop *loop)
 {
-  PtyProcess *ptyproc = &job->process.pty;
-  ptyproc->winsize = (struct winsize){height, width, 0, 0};
-  ioctl(ptyproc->tty_fd, TIOCSWINSZ, &ptyproc->winsize);
+  uv_signal_stop(&loop->children_watcher);
 }
 
-static void init_child(Job *job) FUNC_ATTR_NONNULL_ALL
+static void init_child(PtyProcess *ptyproc) FUNC_ATTR_NONNULL_ALL
 {
   unsetenv("COLUMNS");
   unsetenv("LINES");
@@ -179,8 +145,8 @@ static void init_child(Job *job) FUNC_ATTR_NONNULL_ALL
   signal(SIGTERM, SIG_DFL);
   signal(SIGALRM, SIG_DFL);
 
-  setenv("TERM", job->opts.term_name ? job->opts.term_name : "ansi", 1);
-  execvp(job->opts.argv[0], job->opts.argv);
+  setenv("TERM", ptyproc->term_name ? ptyproc->term_name : "ansi", 1);
+  execvp(ptyproc->process.argv[0], ptyproc->process.argv);
   fprintf(stderr, "execvp failed: %s\n", strerror(errno));
 }
 
@@ -238,4 +204,51 @@ static void init_termios(struct termios *termios) FUNC_ATTR_NONNULL_ALL
   termios->c_cc[VLNEXT]   = 0x1f & 'V';
   termios->c_cc[VMIN]     = 1;
   termios->c_cc[VTIME]    = 0;
+}
+
+static bool set_duplicating_descriptor(int fd, uv_pipe_t *pipe)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int fd_dup = dup(fd);
+  if (fd_dup < 0) {
+    ELOG("Failed to dup descriptor %d: %s", fd, strerror(errno));
+    return false;
+  }
+  int uv_result = uv_pipe_open(pipe, fd_dup);
+  if (uv_result) {
+    ELOG("Failed to set pipe to descriptor %d: %s",
+         fd_dup, uv_strerror(uv_result));
+    close(fd_dup);
+    return false;
+  }
+  return true;
+}
+
+static void chld_handler(uv_signal_t *handle, int signum)
+{
+  int stat = 0;
+  int pid;
+
+  do {
+    pid = waitpid(-1, &stat, WNOHANG);
+  } while (pid < 0 && errno == EINTR);
+
+  if (pid <= 0) {
+    return;
+  }
+
+  Loop *loop = handle->loop->data;
+
+  kl_iter(WatcherPtr, loop->children, current) {
+    Process *proc = (*current)->data;
+    if (proc->pid == pid) {
+      if (WIFEXITED(stat)) {
+        proc->status = WEXITSTATUS(stat);
+      } else if (WIFSIGNALED(stat)) {
+        proc->status = WTERMSIG(stat);
+      }
+      proc->internal_exit_cb(proc);
+      break;
+    }
+  }
 }

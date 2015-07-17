@@ -50,7 +50,6 @@
 #include "nvim/os/input.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/signal.h"
-#include "nvim/os/job.h"
 #include "nvim/msgpack_rpc/helpers.h"
 
 #ifdef HAVE_STROPTS_H
