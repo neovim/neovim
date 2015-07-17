@@ -12,6 +12,7 @@
 #include "nvim/event/loop.h"
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
+#include "nvim/event/socket.h"
 #include "nvim/os/job.h"
 #include "nvim/os/job_defs.h"
 #include "nvim/msgpack_rpc/helpers.h"
@@ -140,17 +141,14 @@ uint64_t channel_from_job(char **argv)
   return channel->id;
 }
 
-/// Creates an API channel from a libuv stream representing a tcp or
-/// pipe/socket client connection
+/// Creates an API channel from a tcp/pipe socket connection
 ///
-/// @param stream The established connection
-void channel_from_stream(uv_stream_t *uvstream)
+/// @param watcher The SocketWatcher ready to accept the connection
+void channel_from_connection(SocketWatcher *watcher)
 {
   Channel *channel = register_channel(kChannelTypeSocket);
-  stream_init(NULL, &channel->data.stream, -1, uvstream, channel);
-  // write stream
+  socket_watcher_accept(watcher, &channel->data.stream, channel);
   wstream_init(&channel->data.stream, 0);
-  // read stream
   rstream_init(&channel->data.stream, CHANNEL_BUFFER_SIZE);
   rstream_start(&channel->data.stream, parse_msgpack);
 }
