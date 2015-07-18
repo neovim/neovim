@@ -118,6 +118,7 @@ WBuffer *wstream_new_buffer(char *data,
                             size_t size,
                             size_t refcount,
                             wbuffer_data_finalizer cb)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   WBuffer *rv = xmalloc(sizeof(WBuffer));
   rv->size = size;
@@ -151,6 +152,7 @@ static void write_cb(uv_write_t *req, int status)
 }
 
 void wstream_release_wbuffer(WBuffer *buffer)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (!--buffer->refcount) {
     if (buffer->cb) {

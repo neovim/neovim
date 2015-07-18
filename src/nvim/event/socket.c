@@ -113,6 +113,7 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
 }
 
 int socket_watcher_accept(SocketWatcher *watcher, Stream *stream, void *data)
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
 {
   uv_stream_t *client;
 

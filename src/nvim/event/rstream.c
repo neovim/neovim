@@ -49,6 +49,7 @@ void rstream_init(Stream *stream, size_t bufsize)
 ///
 /// @param stream The `Stream` instance
 void rstream_start(Stream *stream, stream_read_cb cb)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   stream->read_cb = cb;
   if (stream->uvstream) {
@@ -62,6 +63,7 @@ void rstream_start(Stream *stream, stream_read_cb cb)
 ///
 /// @param stream The `Stream` instance
 void rstream_stop(Stream *stream)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (stream->uvstream) {
     uv_read_stop(stream->uvstream);
