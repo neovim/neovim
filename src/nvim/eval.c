@@ -10778,7 +10778,7 @@ static void f_jobclose(typval_T *argvars, typval_T *rettv)
     return;
   }
 
-  TerminalJobData *data = pmap_get(uint64_t)(jobs, argvars[0].vval.v_number);
+  TerminalJobData *data = find_job(argvars[0].vval.v_number);
   if (!data) {
     EMSG(_(e_invjob));
     return;
@@ -10819,7 +10819,7 @@ static void f_jobsend(typval_T *argvars, typval_T *rettv)
     return;
   }
 
-  TerminalJobData *data = pmap_get(uint64_t)(jobs, argvars[0].vval.v_number);
+  TerminalJobData *data = find_job(argvars[0].vval.v_number);
   if (!data) {
     EMSG(_(e_invjob));
     return;
@@ -10860,7 +10860,7 @@ static void f_jobresize(typval_T *argvars, typval_T *rettv)
   }
 
 
-  TerminalJobData *data = pmap_get(uint64_t)(jobs, argvars[0].vval.v_number);
+  TerminalJobData *data = find_job(argvars[0].vval.v_number);
   if (!data) {
     EMSG(_(e_invjob));
     return;
@@ -11007,8 +11007,8 @@ static void f_jobstop(typval_T *argvars, typval_T *rettv)
   }
 
 
-  TerminalJobData *data = pmap_get(uint64_t)(jobs, argvars[0].vval.v_number);
-  if (!data || data->stopped) {
+  TerminalJobData *data = find_job(argvars[0].vval.v_number);
+  if (!data) {
     EMSG(_(e_invjob));
     return;
   }
@@ -11053,7 +11053,7 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv)
   for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
     TerminalJobData *data = NULL;
     if (arg->li_tv.v_type != VAR_NUMBER
-        || !(data = pmap_get(uint64_t)(jobs, arg->li_tv.vval.v_number))) {
+        || !(data = find_job(arg->li_tv.vval.v_number))) {
       list_append_number(rv, -3);
     } else {
       // append the list item and set the status pointer so we'll collect the
@@ -11077,7 +11077,7 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv)
       break;
     }
     if (arg->li_tv.v_type != VAR_NUMBER
-        || !(data = pmap_get(uint64_t)(jobs, arg->li_tv.vval.v_number))) {
+        || !(data = find_job(arg->li_tv.vval.v_number))) {
       continue;
     }
     int status = process_wait((Process *)&data->proc, remaining);
@@ -11106,7 +11106,7 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv)
   for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
     TerminalJobData *data = NULL;
     if (arg->li_tv.v_type != VAR_NUMBER
-        || !(data = pmap_get(uint64_t)(jobs, arg->li_tv.vval.v_number))) {
+        || !(data = find_job(arg->li_tv.vval.v_number))) {
       continue;
     }
     // remove the status pointer because the list may be freed before the
@@ -21096,6 +21096,10 @@ static inline bool common_job_start(TerminalJobData *data, typval_T *rettv)
   Process *proc = (Process *)&data->proc;
   if (!process_spawn(&loop, proc)) {
     EMSG(_(e_jobexe));
+    if (proc->type == kProcessTypePty) {
+      xfree(data->proc.pty.term_name);
+      free_term_job_data(data);
+    }
     return false;
   }
 
@@ -21303,6 +21307,15 @@ end:
     term_job_data_decref(ev->data);
   }
   xfree(ev);
+}
+
+static TerminalJobData *find_job(uint64_t id)
+{
+  TerminalJobData *data = pmap_get(uint64_t)(jobs, id);
+  if (!data || data->stopped) {
+    return NULL;
+  }
+  return data;
 }
 
 static void script_host_eval(char *name, typval_T *argvars, typval_T *rettv)
