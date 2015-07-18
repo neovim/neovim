@@ -33,9 +33,6 @@
 # include "event/pty_process.c.generated.h"
 #endif
 
-static const unsigned int KILL_RETRIES = 5;
-static const unsigned int KILL_TIMEOUT = 2;  // seconds
-
 bool pty_process_spawn(PtyProcess *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -83,19 +80,8 @@ bool pty_process_spawn(PtyProcess *ptyproc)
 
 error:
   close(master);
-
-  // terminate spawned process
-  kill(pid, SIGTERM);
-  int status, child;
-  unsigned int try = 0;
-  while (try++ < KILL_RETRIES && !(child = waitpid(pid, &status, WNOHANG))) {
-    sleep(KILL_TIMEOUT);
-  }
-  if (child != pid) {
-    kill(pid, SIGKILL);
-    waitpid(pid, NULL, 0);
-  }
-
+  kill(pid, SIGKILL);
+  waitpid(pid, NULL, 0);
   return false;
 }
 
