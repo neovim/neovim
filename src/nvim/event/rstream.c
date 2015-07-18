@@ -112,7 +112,7 @@ static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
       // Read error or EOF, either way stop the stream and invoke the callback
       // with eof == true
       uv_read_stop(uvstream);
-      stream->read_cb(stream, stream->buffer, stream->data, true);
+      invoke_read_cb(stream, true);
     }
     return;
   }
@@ -122,7 +122,7 @@ static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
   // Data was already written, so all we need is to update 'wpos' to reflect
   // the space actually used in the buffer.
   rbuffer_produced(stream->buffer, nread);
-  stream->read_cb(stream, stream->buffer, stream->data, false);
+  invoke_read_cb(stream, false);
 }
 
 // Called by the by the 'idle' handle to emulate a reading event
@@ -156,7 +156,7 @@ static void fread_idle_cb(uv_idle_t *handle)
 
   if (req.result <= 0) {
     uv_idle_stop(&stream->uv.idle);
-    stream->read_cb(stream, stream->buffer, stream->data, true);
+    invoke_read_cb(stream, true);
     return;
   }
 
@@ -164,4 +164,12 @@ static void fread_idle_cb(uv_idle_t *handle)
   size_t nread = (size_t) req.result;
   rbuffer_produced(stream->buffer, nread);
   stream->fpos += nread;
+  invoke_read_cb(stream, false);
+}
+
+static void invoke_read_cb(Stream *stream, bool eof)
+{
+  if (stream->read_cb) {
+    stream->read_cb(stream, stream->buffer, stream->data, eof);
+  }
 }
