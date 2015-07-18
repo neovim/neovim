@@ -1951,6 +1951,28 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
     }
   }
 
+  // Show colorcolumn in the fold line, but let cursorcolumn override it.
+  if (wp->w_p_cc_cols) {
+    int i = 0;
+    int j = wp->w_p_cc_cols[i];
+    int old_txtcol = txtcol;
+
+    while (j > -1) {
+      txtcol += j;
+      if (wp->w_p_wrap) {
+        txtcol -= wp->w_skipcol;
+      } else {
+        txtcol -= wp->w_leftcol;
+      }
+      if (txtcol >= 0 && txtcol < wp->w_width) {
+        ScreenAttrs[off + txtcol] =
+          hl_combine_attr(ScreenAttrs[off + txtcol], hl_attr(HLF_MC));
+      }
+      txtcol = old_txtcol;
+      j = wp->w_p_cc_cols[++i];
+    }
+  }
+
   /* Show 'cursorcolumn' in the fold line. */
   if (wp->w_p_cuc) {
     txtcol += wp->w_virtcol;
