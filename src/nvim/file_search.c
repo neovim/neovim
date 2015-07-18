@@ -191,9 +191,6 @@ typedef struct ff_search_ctx_T {
 # include "file_search.c.generated.h"
 #endif
 
-static char_u e_pathtoolong[] = N_("E854: path too long for completion");
-
-
 /*
  * Initialization routine for vim_findfile().
  *

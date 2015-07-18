@@ -4977,8 +4977,12 @@ static void helptags_one(char_u *dir, char_u *ext, char_u *tagfname,
 
   // Find all *.txt files.
   size_t dirlen = STRLCPY(NameBuff, dir, sizeof(NameBuff));
-  STRCAT(NameBuff, "/**/*");  // NOLINT
-  STRCAT(NameBuff, ext);
+  if (dirlen >= MAXPATHL
+      || STRLCAT(NameBuff, "/**/*", sizeof(NameBuff)) >= MAXPATHL  // NOLINT
+      || STRLCAT(NameBuff, ext, sizeof(NameBuff)) >= MAXPATHL) {
+    EMSG(_(e_pathtoolong));
+    return;
+  }
 
   // Note: We cannot just do `&NameBuff` because it is a statically sized array
   //       so `NameBuff == &NameBuff` according to C semantics.
@@ -4995,9 +4999,12 @@ static void helptags_one(char_u *dir, char_u *ext, char_u *tagfname,
    * Open the tags file for writing.
    * Do this before scanning through all the files.
    */
-  STRLCPY(NameBuff, dir, sizeof(NameBuff));
+  memcpy(NameBuff, dir, dirlen + 1);
   add_pathsep((char *)NameBuff);
-  STRNCAT(NameBuff, tagfname, sizeof(NameBuff) - dirlen - 2);
+  if (STRLCAT(NameBuff, tagfname, sizeof(NameBuff)) >= MAXPATHL) {
+    EMSG(_(e_pathtoolong));
+    return;
+  }
   fd_tags = mch_fopen((char *)NameBuff, "w");
   if (fd_tags == NULL) {
     EMSG2(_("E152: Cannot open %s for writing"), NameBuff);
@@ -5172,7 +5179,11 @@ static void do_helptags(char_u *dirname, bool add_help_tags)
   // Get a list of all files in the help directory and in subdirectories.
   STRLCPY(NameBuff, dirname, sizeof(NameBuff));
   add_pathsep((char *)NameBuff);
-  STRCAT(NameBuff, "**");
+  if (STRLCAT(NameBuff, "**", MAXPATHL) >= MAXPATHL) {
+    EMSG(_(e_pathtoolong));
+    xfree(dirname);
+    return;
+  }
 
   // Note: We cannot just do `&NameBuff` because it is a statically sized array
   //       so `NameBuff == &NameBuff` according to C semantics.

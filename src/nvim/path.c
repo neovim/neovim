@@ -398,8 +398,12 @@ char *concat_fnames_realloc(char *fname1, const char *fname2, bool sep)
 void add_pathsep(char *p)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (*p != NUL && !after_pathsep(p, p + strlen(p)))
-    strcat(p, PATHSEPSTR);
+  const size_t len = strlen(p);
+  const size_t pathsep_len = sizeof(PATHSEPSTR);
+  assert(len < MAXPATHL - pathsep_len);
+  if (*p != NUL && !after_pathsep(p, p + len)) {
+    memcpy(p + len, PATHSEPSTR, pathsep_len);
+  }
 }
 
 /// Get an allocated copy of the full path to a file.

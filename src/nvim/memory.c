@@ -389,6 +389,33 @@ size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
   return ret;
 }
 
+/// xstrlcat - Appends string src to the end of dst.
+///
+/// Compatible with *BSD strlcat: Appends at most (dstsize - strlen(dst) - 1)
+/// characters. dst will be NUL-terminated.
+///
+/// Note: Replaces `vim_strcat`.
+///
+/// @param dst      Where to copy the string to
+/// @param src      Where to copy the string from
+/// @param dstsize  Size of destination buffer, must be greater than 0
+/// @return         strlen(src) + MIN(dstsize, strlen(initial dst)).
+///                 If retval >= dstsize, truncation occurs.
+size_t xstrlcat(char *restrict dst, const char *restrict src, size_t dstsize)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert(dstsize > 0);
+  size_t srclen = strlen(src);
+  size_t dstlen = strlen(dst);
+  size_t ret = srclen + dstlen;  // Total string length (excludes NUL)
+  if (srclen) {
+    size_t len = (ret >= dstsize) ? dstsize - 1 : ret;
+    memcpy(dst + dstlen, src, len - dstlen);
+    dst[len] = '\0';
+  }
+  return ret;  // Does not include NUL.
+}
+
 /// strdup() wrapper
 ///
 /// @see {xmalloc}
