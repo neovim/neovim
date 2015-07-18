@@ -14699,6 +14699,8 @@ static void f_synIDattr(typval_T *argvars, typval_T *rettv)
     modec = TOLOWER_ASC(mode[0]);
     if (modec != 'c' && modec != 'g')
       modec = 0;        /* replace invalid with current */
+  } else if (ui_rgb_attached()) {
+    modec = 'g';
   } else {
     modec = 'c';
   }
