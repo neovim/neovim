@@ -645,12 +645,21 @@ static void update_size(UI *ui)
 {
   TUIData *data = ui->data;
   int width = 0, height = 0;
-  // 1 - try from a system call(ioctl/TIOCGWINSZ on unix)
+
+  // 1 - if starting and the 'columns' and 'lines' options are not
+  // the defaults, use their values
+  if (starting && (Columns != 80 || Rows != 24)) {
+    width = (int)Columns;
+    height = (int)Rows;
+    goto end;
+  }
+
+  // 2 - try from a system call(ioctl/TIOCGWINSZ on unix)
   if (!uv_tty_get_winsize(&data->output_handle, &width, &height)) {
     goto end;
   }
 
-  // 2 - use $LINES/$COLUMNS if available
+  // 3 - use $LINES/$COLUMNS if available
   const char *val;
   int advance;
   if ((val = os_getenv("LINES"))
@@ -660,7 +669,7 @@ static void update_size(UI *ui)
     goto end;
   }
 
-  // 3- read from terminfo if available
+  // 4 - read from terminfo if available
   height = unibi_get_num(data->ut, unibi_lines);
   width = unibi_get_num(data->ut, unibi_columns);
 
