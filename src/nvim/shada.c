@@ -1021,6 +1021,16 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
         break;
       }
       case kSDItemSearchPattern: {
+        if (!force) {
+          SearchPattern pat;
+          (cur_entry.data.search_pattern.is_substitute_pattern
+           ? &get_substitute_pattern
+           : &get_search_pattern)(&pat);
+          if (pat.pat != NULL && pat.timestamp >= cur_entry.timestamp) {
+            shada_free_shada_entry(&cur_entry);
+            break;
+          }
+        }
         (cur_entry.data.search_pattern.is_substitute_pattern
          ? &set_substitute_pattern
          : &set_search_pattern)((SearchPattern) {
@@ -1046,6 +1056,14 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
         break;
       }
       case kSDItemSubString: {
+        if (!force) {
+          SubReplacementString sub;
+          sub_get_replacement(&sub);
+          if (sub.sub != NULL && sub.timestamp >= cur_entry.timestamp) {
+            shada_free_shada_entry(&cur_entry);
+            break;
+          }
+        }
         sub_set_replacement((SubReplacementString) {
           .sub = cur_entry.data.sub_string.sub,
           .timestamp = cur_entry.timestamp,
@@ -1679,6 +1697,10 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
                         ShaDaReadDef *const sd_reader)
   FUNC_ATTR_NONNULL_ARG(1)
 {
+  // TODO(ZyX-I): Write only one search pattern, substitute search pattern and 
+  // substitute replacement string, which has the greatest timestamp. Make sure 
+  // that this also applies if ShaDa file contains more then one replacement 
+  // string.
   khash_t(bufset) *const removable_bufs = kh_init(bufset);
   int max_kbyte_i = get_shada_parameter('s');
   if (max_kbyte_i < 0) {
@@ -1886,13 +1908,16 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
   {
     SubReplacementString sub;
     sub_get_replacement(&sub);
-    ShadaEntry sub_entry = (ShadaEntry) {
-      .type = kSDItemSubString,
-      .timestamp = sub.timestamp,
+    wms->replacement = (PossiblyFreedShadaEntry) {
+      .can_free_entry = false,
       .data = {
-        .sub_string = {
-          .sub = (char *) sub.sub,
-          .additional_elements = sub.additional_elements,
+        .type = kSDItemSubString,
+        .timestamp = sub.timestamp,
+        .data = {
+          .sub_string = {
+            .sub = (char *) sub.sub,
+            .additional_elements = sub.additional_elements,
+          }
         }
       }
     };
