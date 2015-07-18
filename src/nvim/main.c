@@ -238,6 +238,8 @@ int main(int argc, char **argv)
 
   early_init();
 
+  event_init();
+
   // Check if we have an interactive window.
   check_and_set_isatty(&params);
 
@@ -275,7 +277,6 @@ int main(int argc, char **argv)
   if (GARGCOUNT > 1 && !silent_mode)
     printf(_("%d files to edit\n"), GARGCOUNT);
 
-  event_init();
   full_screen = true;
   t_colors = 256;
   check_tty(&params);
