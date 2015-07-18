@@ -3576,7 +3576,7 @@ void fname_expand(buf_T *buf, char_u **ffname, char_u **sfname)
     *sfname = *ffname;
   *ffname = (char_u *)fix_fname((char *)*ffname);     /* expand to full path */
 
-#ifdef FEAT_SHORTCUT
+#ifdef WIN32
   if (!buf->b_p_bin) {
     char_u  *rfname;
 
