@@ -930,10 +930,10 @@ The |v:oldfiles| variable is filled.  The marks are not read in at startup
 option upon startup.
 
 							*shada-write*
-When Vim exits and 'shada' is non-empty, the info is stored in the ShaDa
-file (it's actually merged with the existing one, if one exists).  The
-'shada' option is a string containing information about what info should be
-stored, and contains limits on how much should be stored (see 'shada').
+When Vim exits and 'shada' is non-empty, the info is stored in the ShaDa file 
+(it's actually merged with the existing one, if one exists |shada-merging|).  
+The 'shada' option is a string containing information about what info should 
+be stored, and contains limits on how much should be stored (see 'shada').
 
 Notes for Unix:
 - The file protection for the ShaDa file will be set to prevent other users
@@ -987,6 +987,35 @@ For a bash-like shell: >
 
 Use the "r" flag in 'shada' to specify for which files no marks should be
 remembered.
+
+							*shada-merging*
+When writing ShaDa files with |:wshada| without bang or at regular exit 
+information in the existing ShaDa file is merged with information from current 
+NeoVim instance.  For this purpose ShaDa files store timestamps associated 
+with ShaDa entries.  Specifically the following is being done:
+
+1. History lines are merged, ordered by timestamp.  Maximum amount of items in 
+   ShaDa file is defined by 'shada' option (|shada-/|, |shada-:|, |shada-@|, 
+   etc: one suboption for each character that represents history name 
+   (|:history|)).
+2. Local marks and changes for files that were not opened by NeoVim are copied 
+   to new ShaDa file. Marks for files that were opened by NeoVim are merged, 
+   changes to files opened by NeoVim are ignored. |shada-'|
+3. Jump list is merged: jumps are ordered by timestamp, identical jumps 
+   (identical position AND timestamp) are squashed.
+4. Search patterns and substitute strings are not merged: search pattern or 
+   substitute string which has greatest timestamp will be the only one copied 
+   to ShaDa file.
+5. For each register entity with greatest timestamp is the only saved. 
+   |shada-<|
+6. All saved variables are saved from current NeoVim instance. Additionally 
+   existing variable values are copied, meaning that the only way to remove 
+   variable from a ShaDa file is either removing it by hand or disabling 
+   writing variables completely. |shada-!|
+7. For each global mark entity with greatest timestamp is the only saved.
+8. Buffer list and header are the only entries which are not merged in any 
+   fashion: the only header and buffer list present are the ones from the 
+   NeoVim instance which was last writing the file. |shada-%|
 
 
 SHADA FILE NAME						*shada-file-name*
