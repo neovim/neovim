@@ -350,6 +350,11 @@ static void tui_resize(UI *ui, int width, int height)
   data->scroll_region.left = 0;
   data->scroll_region.right = width - 1;
   data->row = data->col = 0;
+
+  // try to resize the terminal window
+  char r[16];  // enough for 9999x9999
+  snprintf(r, sizeof(r), "\x1b[8;%d;%dt", height, width);
+  out(ui, r, strlen(r));
 }
 
 static void tui_clear(UI *ui)
