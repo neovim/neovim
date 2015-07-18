@@ -64,6 +64,14 @@ are always available and may be used simultaneously in separate plugins.  The
 `neovim` pip package must be installed to use Python plugins in Nvim (see
 |nvim-python|).
 
+|mkdir()| behaviour changed:
+1. Assuming /tmp/foo does not exist and /tmp can be written to 
+   mkdir('/tmp/foo/bar', 'p', 0700) will create both /tmp/foo and /tmp/foo/bar 
+   with 0700 permissions. Vim mkdir will create /tmp/foo with 0755.
+2. If you try to create an existing directory with `'p'` (e.g. mkdir('/', 
+   'p')) mkdir() will silently exit. In Vim this was an error.
+3. mkdir() error messages now include strerror() text when mkdir fails.
+
 ==============================================================================
 4. New Features						     *nvim-features-new*
 
