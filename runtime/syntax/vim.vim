@@ -26,8 +26,8 @@ syn keyword vimCommand contained	al[l] argg[lobal] bad[d] bm[odified] brea[k] bu
 syn keyword vimCommand contained	ar argl[ocal] ba[ll] bn[ext] breaka[dd] buf c cal[l] ce[nter] cg[etfile] cl cN cnf[ile] comp[iler] cpf[ile] cstag debugg[reedy] deletel dell diffo[ff] dig dli[st] dsp[lit] echom[sg] en endt[ry] f fina[lly] foldc[lose] fun gui helpg[rep] ia in ju[mps] keepp[atterns] laddf[ile] lb[uffer] le[ft] lgete[xpr] ll lne lnf[ile] loc[kmarks] lr[ewind] lv[imgrep] marks mk mkv[imrc] new nu[mber] opt[ions] pe[rl] pr prof[ile] ptj[ump] ptp[revious] py3 q 
 syn keyword vimCommand contained	helpc[lose] nos[wapfile]
 syn match   vimCommand contained	"\<z[-+^.=]\="
-syn keyword vimOnlyCommand contained	fix[del] sh[ell]
-syn keyword vimStdPlugin contained	DiffOrig Man N[ext] P[rint] S TOhtml XMLent XMLns 
+syn keyword vimOnlyCommand contained	fix[del] sh[ell] P[rint]
+syn keyword vimStdPlugin contained	DiffOrig Man N[ext] S TOhtml XMLent XMLns
 
 " vimOptions are caught only when contained in a vimSet {{{2
 syn keyword vimOption contained	acd ambiwidth arabicshape autowriteall backupdir bdlay binary breakat bufhidden cd ci cinw co commentstring confirm cpoptions cscoperelative csre cursorcolumn delcombine diffopt ea efm ep et fdc fdo ffs filetype fo foldlevelstart formatexpr ft gfw gtt guipty hh hkmap ic imaf iminsert includeexpr inf isident langmap lines lmap ma matchtime mco ml modeline mousefocus mousetime nrformats ofu para pdev pi previewwindow printmbfont qe relativenumber rightleftcmd ru sbr scrolloff selection shellcmdflag shellxescape showbreak si smartcase softtabstop spelllang sps sta su swb synmaxcol tagbsearch thesaurus titlestring tpm ttm ttytype undodir ut vfile vop wcm whichwrap wildignore winaltkeys winminwidth wmnu write

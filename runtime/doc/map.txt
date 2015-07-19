@@ -1132,9 +1132,7 @@ For starters: See section |40.2| in the user manual.
 All user defined commands must start with an uppercase letter, to avoid
 confusion with builtin commands.  Exceptions are these builtin commands:
 	:Next
-	:X
-They cannot be used for a user defined command.  ":Print" is also an existing
-command, but it is deprecated and can be overruled.
+They cannot be used for a user defined command.
 
 The other characters of the user command can be uppercase letters, lowercase
 letters or digits.  When using digits, note that other commands that take a
@@ -1154,7 +1152,6 @@ Example: >
 	:Renu				" Means "Renumber"
 	:Ren				" Error - ambiguous
 	:command Paste ...
-	:P				" The built-in :Print
 
 It is recommended that full names for user-defined commands are used in
 scripts.

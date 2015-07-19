@@ -91,13 +91,6 @@ g8			Print the hex values of the bytes used in the
 			current line |cmdline-ranges|).
 			See |ex-flags| for [flags].
 
-							*:P* *:Print*
-:[range]P[rint] [count] [flags]
-			Just as ":print".  Was apparently added to Vi for
-			people that keep the shift key pressed too long...
-			Note: A user command can overrule this command.
-			See |ex-flags| for [flags].
-
 							*:l* *:list*
 :[range]l[ist] [count] [flags]
 			Same as :print, but display unprintable characters

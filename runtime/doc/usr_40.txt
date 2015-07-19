@@ -290,8 +290,8 @@ deletes the first line.
 
 	Note:
 	User-defined commands must start with a capital letter.  You cannot
-	use ":X", ":Next" and ":Print".  The underscore cannot be used!  You
-	can use digits, but this is discouraged.
+	use ":Next".  The underscore cannot be used!  You can use digits, but
+	this is discouraged.
 
 To list the user-defined commands, execute the following command: >
 
