@@ -155,6 +155,7 @@ Other commands:
   :Print
   :fixdel
   :mode (no longer accepts an argument)
+  :open
   :shell
   :tearoff
 

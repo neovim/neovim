@@ -6466,40 +6466,6 @@ static void ex_find(exarg_T *eap)
 }
 
 /*
- * ":open" simulation: for now just work like ":visual".
- */
-static void ex_open(exarg_T *eap)
-{
-  regmatch_T regmatch;
-  char_u      *p;
-
-  curwin->w_cursor.lnum = eap->line2;
-  beginline(BL_SOL | BL_FIX);
-  if (*eap->arg == '/') {
-    /* ":open /pattern/": put cursor in column found with pattern */
-    ++eap->arg;
-    p = skip_regexp(eap->arg, '/', p_magic, NULL);
-    *p = NUL;
-    regmatch.regprog = vim_regcomp(eap->arg, p_magic ? RE_MAGIC : 0);
-    if (regmatch.regprog != NULL) {
-      regmatch.rm_ic = p_ic;
-      p = get_cursor_line_ptr();
-      if (vim_regexec(&regmatch, p, (colnr_T)0))
-        curwin->w_cursor.col = (colnr_T)(regmatch.startp[0] - p);
-      else
-        EMSG(_(e_nomatch));
-      vim_regfree(regmatch.regprog);
-    }
-    /* Move to the NUL, ignore any other arguments. */
-    eap->arg += STRLEN(eap->arg);
-  }
-  check_cursor();
-
-  eap->cmdidx = CMD_visual;
-  do_exedit(eap, NULL);
-}
-
-/*
  * ":edit", ":badd", ":visual".
  */
 static void ex_edit(exarg_T *eap)
