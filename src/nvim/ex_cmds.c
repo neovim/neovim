@@ -5188,7 +5188,7 @@ void fix_help_buffer(void)
               if (IObuff[0] == '*'
                   && (s = vim_strchr(IObuff + 1, '*'))
                   != NULL) {
-                int this_utf = MAYBE;
+                TriState this_utf = kTriMaybe;
                 /* Change tag definition to a
                  * reference and remove <CR>/<NL>. */
                 IObuff[0] = '|';
@@ -5203,10 +5203,10 @@ void fix_help_buffer(void)
                   if (*s >= 0x80 && this_utf != FALSE) {
                     int l;
 
-                    this_utf = TRUE;
+                    this_utf = kTriTrue;
                     l = utf_ptr2len(s);
                     if (l == 1)
-                      this_utf = FALSE;
+                      this_utf = kTriFalse;
                     s += l - 1;
                   }
                   ++s;
@@ -5390,8 +5390,8 @@ helptags_one (
   char_u      *s;
   char_u      *fname;
   int dirlen;
-  int utf8 = MAYBE;
-  int this_utf8;
+  TriState utf8 = kTriMaybe;
+  TriState this_utf8;
   int firstline;
   int mix = FALSE;              /* detected mixed encodings */
 
@@ -5455,23 +5455,23 @@ helptags_one (
     while (!vim_fgets(IObuff, IOSIZE, fd) && !got_int) {
       if (firstline) {
         /* Detect utf-8 file by a non-ASCII char in the first line. */
-        this_utf8 = MAYBE;
+        this_utf8 = kTriMaybe;
         for (s = IObuff; *s != NUL; ++s)
           if (*s >= 0x80) {
             int l;
 
-            this_utf8 = TRUE;
+            this_utf8 = kTriTrue;
             l = utf_ptr2len(s);
             if (l == 1) {
               /* Illegal UTF-8 byte sequence. */
-              this_utf8 = FALSE;
+              this_utf8 = kTriFalse;
               break;
             }
             s += l - 1;
           }
-        if (this_utf8 == MAYBE)             /* only ASCII characters found */
-          this_utf8 = FALSE;
-        if (utf8 == MAYBE)                  /* first file */
+        if (this_utf8 == kTriMaybe)         /* only ASCII characters found */
+          this_utf8 = kTriFalse;
+        if (utf8 == kTriMaybe)              /* first file */
           utf8 = this_utf8;
         else if (utf8 != this_utf8) {
           EMSG2(_(
@@ -5549,7 +5549,7 @@ helptags_one (
       }
     }
 
-    if (utf8 == TRUE)
+    if (utf8 == kTriTrue)
       fprintf(fd_tags, "!_TAG_FILE_ENCODING\tutf-8\t//\n");
 
     /*

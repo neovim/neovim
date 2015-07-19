@@ -71,7 +71,7 @@ ex_menu (
   char_u      *p;
   int i;
   long pri_tab[MENUDEPTH + 1];
-  int enable = MAYBE;               /* TRUE for "menu enable", FALSE for "menu
+  TriState enable = kTriMaybe;      /* True for "menu enable", false for "menu
                                      * disable */
   vimmenu_T menuarg;
 
@@ -140,10 +140,10 @@ ex_menu (
    * Check for "disable" or "enable" argument.
    */
   if (STRNCMP(arg, "enable", 6) == 0 && ascii_iswhite(arg[6])) {
-    enable = TRUE;
+    enable = kTriTrue;
     arg = skipwhite(arg + 6);
   } else if (STRNCMP(arg, "disable", 7) == 0 && ascii_iswhite(arg[7])) {
-    enable = FALSE;
+    enable = kTriFalse;
     arg = skipwhite(arg + 7);
   }
 
@@ -167,15 +167,15 @@ ex_menu (
   /*
    * If there is only a menu name, display menus with that name.
    */
-  if (*map_to == NUL && !unmenu && enable == MAYBE) {
+  if (*map_to == NUL && !unmenu && enable == kTriMaybe) {
     show_menus(menu_path, modes);
     goto theend;
-  } else if (*map_to != NUL && (unmenu || enable != MAYBE)) {
+  } else if (*map_to != NUL && (unmenu || enable != kTriMaybe)) {
     EMSG(_(e_trailing));
     goto theend;
   }
 
-  if (enable != MAYBE) {
+  if (enable != kTriMaybe) {
     /*
      * Change sensitivity of the menu.
      * For the PopUp menu, remove a menu for each mode separately.

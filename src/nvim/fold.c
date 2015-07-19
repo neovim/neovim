@@ -52,9 +52,9 @@ typedef struct {
   linenr_T fd_len;              /* number of lines in the fold */
   garray_T fd_nested;           /* array of nested folds */
   char fd_flags;                /* see below */
-  char fd_small;                /* TRUE, FALSE or MAYBE: fold smaller than
-                                   'foldminlines'; MAYBE applies to nested
-                                   folds too */
+  TriState fd_small;            /* kTriTrue, -False or -Maybe: fold smaller
+                                   than 'foldminlines'; kTriMaybe applies to
+                                   nested folds too */
 } fold_T;
 
 #define FD_OPEN         0       /* fold is open (nested ones can be closed) */
@@ -653,7 +653,7 @@ void foldCreate(linenr_T start, linenr_T end)
     if (!use_level)
       curwin->w_fold_manual = true;
     fp->fd_flags = FD_CLOSED;
-    fp->fd_small = MAYBE;
+    fp->fd_small = kTriMaybe;
 
     /* redraw */
     changed_window_setting();
@@ -779,7 +779,7 @@ void foldUpdate(win_T *wp, linenr_T top, linenr_T bot)
   (void)foldFind(&curwin->w_folds, top, &fp);
   while (fp < (fold_T *)curwin->w_folds.ga_data + curwin->w_folds.ga_len
          && fp->fd_top < bot) {
-    fp->fd_small = MAYBE;
+    fp->fd_small = kTriMaybe;
     ++fp;
   }
 
@@ -1319,8 +1319,8 @@ static void deleteFoldEntry(garray_T *gap, int idx, int recursive)
         nfp[i].fd_top += fp->fd_top;
         if (fp->fd_flags == FD_LEVEL)
           nfp[i].fd_flags = FD_LEVEL;
-        if (fp->fd_small == MAYBE)
-          nfp[i].fd_small = MAYBE;
+        if (fp->fd_small == kTriMaybe)
+          nfp[i].fd_small = kTriMaybe;
       }
 
       /* move the existing folds down to make room */
@@ -1487,7 +1487,7 @@ check_closed (
     fold_T *fp,
     int *use_levelp,            /* TRUE: outer fold had FD_LEVEL */
     int level,                          /* folding depth */
-    int *maybe_smallp,          /* TRUE: outer this had fd_small == MAYBE */
+    int *maybe_smallp,          /* TRUE: outer this had fd_small == kTriMaybe */
     linenr_T lnum_off                  /* line number offset for fp->fd_top */
 )
 {
@@ -1503,14 +1503,14 @@ check_closed (
     closed = TRUE;
 
   /* Small fold isn't closed anyway. */
-  if (fp->fd_small == MAYBE)
+  if (fp->fd_small == kTriMaybe)
     *maybe_smallp = TRUE;
   if (closed) {
     if (*maybe_smallp)
-      fp->fd_small = MAYBE;
+      fp->fd_small = kTriMaybe;
     checkSmall(win, fp, lnum_off);
-    if (fp->fd_small == TRUE)
-      closed = FALSE;
+    if (fp->fd_small == kTriTrue)
+      closed = kTriFalse;
   }
   return closed;
 }
@@ -1529,35 +1529,35 @@ checkSmall (
   int count;
   int n;
 
-  if (fp->fd_small == MAYBE) {
+  if (fp->fd_small == kTriMaybe) {
     /* Mark any nested folds to maybe-small */
     setSmallMaybe(&fp->fd_nested);
 
     if (fp->fd_len > curwin->w_p_fml)
-      fp->fd_small = FALSE;
+      fp->fd_small = kTriFalse;
     else {
       count = 0;
       for (n = 0; n < fp->fd_len; ++n) {
         count += plines_win_nofold(wp, fp->fd_top + lnum_off + n);
         if (count > curwin->w_p_fml) {
-          fp->fd_small = FALSE;
+          fp->fd_small = kTriFalse;
           return;
         }
       }
-      fp->fd_small = TRUE;
+      fp->fd_small = kTriTrue;
     }
   }
 }
 
 /* setSmallMaybe() {{{2 */
 /*
- * Set small flags in "gap" to MAYBE.
+ * Set small flags in "gap" to kTriMaybe.
  */
 static void setSmallMaybe(garray_T *gap)
 {
   fold_T *fp = (fold_T *)gap->ga_data;
   for (int i = 0; i < gap->ga_len; ++i) {
-    fp[i].fd_small = MAYBE;
+    fp[i].fd_small = kTriMaybe;
   }
 }
 
@@ -2291,7 +2291,7 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
               flp->wp->w_fold_manual = true;
           } else
             fp->fd_flags = (fp - 1)->fd_flags;
-          fp->fd_small = MAYBE;
+          fp->fd_small = kTriMaybe;
           /* If using the "marker", "expr" or "syntax" method, we
            * need to continue until the end of the fold is found. */
           if (getlevel == foldlevelMarker
@@ -2384,7 +2384,7 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
   /* Current fold at least extends until lnum. */
   if (fp->fd_len < flp->lnum - fp->fd_top) {
     fp->fd_len = flp->lnum - fp->fd_top;
-    fp->fd_small = MAYBE;
+    fp->fd_small = kTriMaybe;
     fold_changed = TRUE;
   }
 
@@ -2494,8 +2494,8 @@ static void foldSplit(garray_T *gap, int i, linenr_T top, linenr_T bot)
   fp[1].fd_top = bot + 1;
   fp[1].fd_len = fp->fd_len - (fp[1].fd_top - fp->fd_top);
   fp[1].fd_flags = fp->fd_flags;
-  fp[1].fd_small = MAYBE;
-  fp->fd_small = MAYBE;
+  fp[1].fd_small = kTriMaybe;
+  fp->fd_small = kTriMaybe;
 
   /* Move nested folds below bot to new fold.  There can't be
    * any between top and bot, they have been removed by the caller. */

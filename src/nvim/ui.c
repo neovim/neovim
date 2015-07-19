@@ -471,22 +471,22 @@ static void flush_cursor_update(void)
 // shape, for example.
 static void ui_change_mode(void)
 {
-  static int showing_insert_mode = MAYBE;
+  static int showing_insert_mode = kTriMaybe;
 
   if (!full_screen) {
     return;
   }
 
   if (State & INSERT) {
-    if (showing_insert_mode != TRUE) {
+    if (showing_insert_mode != kTriTrue) {
       UI_CALL(insert_mode);
     }
-    showing_insert_mode = TRUE;
+    showing_insert_mode = kTriTrue;
   } else {
-    if (showing_insert_mode != FALSE) {
+    if (showing_insert_mode != kTriFalse) {
       UI_CALL(normal_mode);
     }
-    showing_insert_mode = FALSE;
+    showing_insert_mode = kTriFalse;
   }
   conceal_check_cursur_line();
 }
