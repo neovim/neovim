@@ -9,35 +9,7 @@ local eq, eval, wait, write_file = helpers.eq, helpers.eval, helpers.wait, helpe
 
 describe('various eval features', function()
   setup(function()
-    clear()
-    write_file('test_eval_func.vim', [[
-      " Vim script used in test_eval.in.  Needed for script-local function.
-      
-      func! s:Testje()
-        return "foo"
-      endfunc
-      
-      let Bar = function('s:Testje')
-      
-      $put ='s:Testje exists: ' . exists('s:Testje')
-      $put ='func s:Testje exists: ' . exists('*s:Testje')
-      $put ='Bar exists: ' . exists('Bar')
-      $put ='func Bar exists: ' . exists('*Bar')
-      ]])
-  end)
-  teardown(function()
-    os.remove('test.out')
-    os.remove('test_eval_func.vim')
-  end)
-
-  it('are working', function()
-    insert([[
-      012345678
-      012345678
-      
-      start:]])
-
-    source([[
+    write_file('test_eval_setup.vim', [[
       set encoding=latin1
       set noswapfile
       lang C
@@ -69,51 +41,50 @@ describe('various eval features', function()
               execute "silent normal! Go==\n==\e\"".a:1."P"
           endif
       endfun
+      ]])
+    write_file('test_eval_func.vim', [[
+      " Vim script used in test_eval.in.  Needed for script-local function.
+      
+      func! s:Testje()
+        return "foo"
+      endfunc
+      
+      let Bar = function('s:Testje')
+      
+      $put ='s:Testje exists: ' . exists('s:Testje')
+      $put ='func s:Testje exists: ' . exists('*s:Testje')
+      $put ='Bar exists: ' . exists('Bar')
+      $put ='func Bar exists: ' . exists('*Bar')
+      ]])
+  end)
+  before_each(clear)
+  teardown(function()
+    os.remove('test.out')
+    os.remove('test_eval_func.vim')
+    os.remove('test_eval_setup.vim')
+  end)
 
-      fun ErrExe(str)
-	call append('$', 'Executing '.a:str)
-	try
-	  execute a:str
-	catch
-	  $put =v:exception
-	endtry
-      endfun
-    ]])
-    --execute('fun Test()')
-    execute([[$put ='{{{1 let tests']])
-    expect([[
-    012345678
-    012345678
-    
-    start:
-    {{{1 let tests]])
+  it('let tests', function()
+    execute('so test_eval_setup.vim')
     execute([[let @" = 'abc']])
-    eq({'"', 'v', 'abc', "['abc']", 'abc', "['abc']"}, eval([[RegInfo('"')]]))
     execute('AR "')
     execute([[let @" = "abc\n"]])
-    eq({'"', 'V', 'abc\n', "['abc']", 'abc\n', "['abc']"}, eval([[RegInfo('"')]]))
-    source([[call RegInfo('"')]])
-    --source([[call AppendRegContents('"')]])
     source('AR "')
     execute([[let @" = "abc\<C-m>"]])
     execute('AR "')
---    eq({'"', 'V', 'abc\n', "['abc']", 'abc\n', "['abc']"},
---      eval([[RegInfo('"')]])) -- TODO
     execute([[let @= = '"abc"']])
-    eq({'=', 'v', 'abc', "['abc']", '"abc"', [=[['"abc"']]=]}, eval([[RegInfo('=')]]))
     execute('AR =')
     expect([[
-      012345678
-      012345678
       
-      start:
-      {{{1 let tests
       ": type v; value: abc (['abc']), expr: abc (['abc'])
       ": type V; value: abc]].."\x00 (['abc']), expr: abc\x00"..[[ (['abc'])
       ": type V; value: abc]].."\r\x00 (['abc\r']), expr: abc\r\x00 (['abc\r"..[['])
       =: type v; value: abc (['abc']), expr: "abc" (['"abc"'])]])
+  end)
 
-    execute([[$put ='{{{1 Basic setreg tests']])
+  it('basic setreg() tests', function()
+    execute('so test_eval_setup.vim')
+    insert('{{{1 Basic setreg tests')
     execute([[call SetReg('a', 'abcA', 'c')]])
     execute([[call SetReg('b', 'abcB', 'v')]])
     execute([[call SetReg('c', 'abcC', 'l')]])
@@ -124,7 +95,7 @@ describe('various eval features', function()
     execute([[call SetReg('h', 'abcH', "\<C-v>10")]])
     execute([[call SetReg('I', 'abcI')]])
 
-    execute([[$put ='{{{1 Appending single lines with setreg()']])
+    feed('Go{{{1 Appending single lines with setreg()<esc>')
     execute([[call SetReg('A', 'abcAc', 'c')]])
     execute([[call SetReg('A', 'abcAl', 'l')]])
     execute([[call SetReg('A', 'abcAc2','c')]])
@@ -138,145 +109,7 @@ describe('various eval features', function()
     execute([[call SetReg('E', 'abcEb', 'b')]])
     execute([[call SetReg('E', 'abcEl', 'l')]])
     execute([[call SetReg('F', 'abcFc', 'c')]])
-
-    execute([[$put ='{{{1 Appending NL with setreg()']])
-    execute([[call setreg('a', 'abcA2', 'c')]])
-    execute([[call setreg('b', 'abcB2', 'v')]])
-    execute([[call setreg('c', 'abcC2', 'l')]])
-    execute([[call setreg('d', 'abcD2', 'V')]])
-    execute([[call setreg('e', 'abcE2', 'b')]])
-    execute([[call setreg('f', 'abcF2', "\<C-v>")]])
-    execute([[call setreg('g', 'abcG2', 'b10')]])
-    execute([[call setreg('h', 'abcH2', "\<C-v>10")]])
-    execute([[call setreg('I', 'abcI2')]])
-    execute([[call SetReg('A', "\n")]])
-    execute([[call SetReg('B', "\n", 'c')]])
-    execute([[call SetReg('C', "\n")]])
-    execute([[call SetReg('D', "\n", 'l')]])
-    execute([[call SetReg('E', "\n")]])
-    execute([[call SetReg('F', "\n", 'b')]])
-
-    execute([[$put ='{{{1 Setting lists with setreg()']])
-    execute([=[call SetReg('a', ['abcA3'], 'c')]=])
-    execute([=[call SetReg('b', ['abcB3'], 'l')]=])
-    execute([=[call SetReg('c', ['abcC3'], 'b')]=])
-    execute([=[call SetReg('d', ['abcD3'])]=])
-    execute([=[call SetReg('e', [1, 2, 'abc', 3])]=])
-    execute([=[call SetReg('f', [1, 2, 3])]=])
-
-    execute([[$put ='{{{1 Appending lists with setreg()']])
-    execute([=[call SetReg('A', ['abcA3c'], 'c')]=])
-    execute([=[call SetReg('b', ['abcB3l'], 'la')]=])
-    execute([=[call SetReg('C', ['abcC3b'], 'lb')]=])
-    execute([=[call SetReg('D', ['abcD32'])]=])
-    execute([=[call SetReg('A', ['abcA32'])]=])
-    execute([=[call SetReg('B', ['abcB3c'], 'c')]=])
-    execute([=[call SetReg('C', ['abcC3l'], 'l')]=])
-    execute([=[call SetReg('D', ['abcD3b'], 'b')]=])
-
-    execute([[$put ='{{{1 Appending lists with NL with setreg()']])
-    execute([=[call SetReg('A', ["\n", 'abcA3l2'], 'l')]=])
-    execute([=[call SetReg('B', ["\n", 'abcB3c2'], 'c')]=])
-    execute([=[call SetReg('C', ["\n", 'abcC3b2'], 'b')]=])
-    execute([=[call SetReg('D', ["\n", 'abcD3b50'],'b50')]=])
-
-    execute([[$put ='{{{1 Setting lists with NLs with setreg()']])
-    execute([=[call SetReg('a', ['abcA4-0', "\n", "abcA4-2\n", "\nabcA4-3", "abcA4-4\nabcA4-4-2"])]=])
-    execute([=[call SetReg('b', ['abcB4c-0', "\n", "abcB4c-2\n", "\nabcB4c-3", "abcB4c-4\nabcB4c-4-2"], 'c')]=])
-    execute([=[call SetReg('c', ['abcC4l-0', "\n", "abcC4l-2\n", "\nabcC4l-3", "abcC4l-4\nabcC4l-4-2"], 'l')]=])
-    execute([=[call SetReg('d', ['abcD4b-0', "\n", "abcD4b-2\n", "\nabcD4b-3", "abcD4b-4\nabcD4b-4-2"], 'b')]=])
-    execute([=[call SetReg('e', ['abcE4b10-0', "\n", "abcE4b10-2\n", "\nabcE4b10-3", "abcE4b10-4\nabcE4b10-4-2"], 'b10')]=])
-
-    execute([[$put ='{{{1 Search and expressions']])
-    execute([=[call SetReg('/', ['abc/'])]=])
-    execute([=[call SetReg('/', ["abc/\n"])]=])
-    execute([=[call SetReg('=', ['"abc/"'])]=])
-    execute([=[call SetReg('=', ["\"abc/\n\""])]=])
-
-    execute([[$put ='{{{1 Errors']])
-    execute([[call ErrExe('call setreg()')]])
-    execute([[call ErrExe('call setreg(1)')]])
-    execute([[call ErrExe('call setreg(1, 2, 3, 4)')]])
-    execute([=[call ErrExe('call setreg([], 2)')]=])
-    execute([[call ErrExe('call setreg(1, {})')]])
-    execute([=[call ErrExe('call setreg(1, 2, [])')]=])
-    execute([=[call ErrExe('call setreg("/", ["1", "2"])')]=])
-    execute([=[call ErrExe('call setreg("=", ["1", "2"])')]=])
-    execute([=[call ErrExe('call setreg(1, ["", "", [], ""])')]=])
-    --execute('endfun')
-
-    execute('delfunction SetReg')
-    execute('delfunction AppendRegContents')
-    execute('delfunction ErrExe')
-    execute('delcommand AR')
-    execute('call garbagecollect(1)')
-
-    execute('/^start:/+1,$w! test.out')
-    -- Vim: et ts=4 isk-=\: fmr=???,???. -- TODO
-    --execute('call getchar()') -- TODO
-    execute('e! test.out')
-    execute('%d')
-    -- Function name not starting with a capital.
-    execute('try')
-    execute('  func! g:test()')
-    execute('    echo "test"')
-    execute('  endfunc')
-    execute('catch')
-    execute('  $put =v:exception')
-    execute('  let tmp = v:exception')
-    execute('endtry')
-    eq('Vim(function):E128: Function name must start with a capital or "s:": g:test()', eval('tmp'))
-    -- Function name folowed by #.
-    execute('try')
-    execute('  func! test2() "#')
-    execute('    echo "test2"')
-    execute('  endfunc')
-    execute('catch')
-    execute('  $put =v:exception')
-    execute('endtry')
-    -- Function name includes a colon.
-    execute('try')
-    execute('  func! b:test()')
-    execute('    echo "test"')
-    execute('  endfunc')
-    execute('catch')
-    execute('  $put =v:exception')
-    execute('endtry')
-    -- Function name starting with/without "g:", buffer-local funcref.
-    execute('function! g:Foo(n)')
-    execute("  $put ='called Foo(' . a:n . ')'")
-    execute('endfunction')
-    execute("let b:my_func = function('Foo')")
-    execute('call b:my_func(1)')
-    execute('echo g:Foo(2)')
-    execute('echo Foo(3)')
-    -- Script-local function used in Funcref must exist.
-    execute('so test_eval_func.vim')
-    -- Using $ instead of '$' must give an error.
-    execute('try')
-    execute("  call append($, 'foobar')")
-    execute('catch')
-    execute('  $put =v:exception')
-    execute('endtry')
-    execute("$put ='{{{1 getcurpos/setpos'")
-    execute('/^012345678')
-    feed('6l')
-    execute('let sp = getcurpos()')
-    feed('0')
-    execute("call setpos('.', sp)")
-    feed('jyl')
-    execute('$put')
-    execute('0,/^start:/ delete')
-    -- Vim: et ts=4 isk-=\: fmr=???,???. TODO does this affect the test?
-    --execute('call getchar()')
-
-    -- Assert buffer contents.
     expect([[
-      {{{1 let tests
-      ": type v; value: abc (['abc']), expr: abc (['abc'])
-      ": type V; value: abc]].."\x00 (['abc']), expr: abc\x00"..[[ (['abc'])
-      ": type V; value: abc]].."\r\x00 (['abc\r']), expr: abc\r\x00 (['abc\r"..[['])
-      =: type v; value: abc (['abc']), expr: "abc" (['"abc"'])
       {{{1 Basic setreg tests
       {{{2 setreg('a', 'abcA', 'c')
       a: type v; value: abcA (['abcA']), expr: abcA (['abcA'])
@@ -382,8 +215,30 @@ describe('various eval features', function()
       F: type v; value: abcF]].."\x00abcFc (['abcF', 'abcFc']), expr: abcF\x00"..[[abcFc (['abcF', 'abcFc'])
       ==
       =abcF
-      abcFc=
-      {{{1 Appending NL with setreg()
+      abcFc=]])
+  end)
+
+  it('appending NL with setreg()', function()
+    execute('so test_eval_setup.vim')
+
+    execute([[call setreg('a', 'abcA2', 'c')]])
+    execute([[call setreg('b', 'abcB2', 'v')]])
+    execute([[call setreg('c', 'abcC2', 'l')]])
+    execute([[call setreg('d', 'abcD2', 'V')]])
+    execute([[call setreg('e', 'abcE2', 'b')]])
+    execute([[call setreg('f', 'abcF2', "\<C-v>")]])
+    --execute([[call setreg('g', 'abcG2', 'b10')]])
+    --execute([[call setreg('h', 'abcH2', "\<C-v>10")]])
+    --execute([[call setreg('I', 'abcI2')]])
+
+    execute([[call SetReg('A', "\n")]])
+    execute([[call SetReg('B', "\n", 'c')]])
+    execute([[call SetReg('C', "\n")]])
+    execute([[call SetReg('D', "\n", 'l')]])
+    execute([[call SetReg('E', "\n")]])
+    execute([[call SetReg('F', "\n", 'b')]])
+    expect([[
+      
       {{{2 setreg('A', ']]..'\x00'..[[')
       A: type V; value: abcA2]].."\x00 (['abcA2']), expr: abcA2\x00"..[[ (['abcA2'])
       ==
@@ -416,7 +271,31 @@ describe('various eval features', function()
       F: type ]].."\x160; value: abcF2\x00 (['abcF2', '']), expr: abcF2\x00"..[[ (['abcF2', ''])
       ==
       =abcF2=
-       
+       ]])
+  end)
+
+  it('setting and appending list with setreg()', function()
+    execute('so test_eval_setup.vim')
+
+    execute([[$put ='{{{1 Setting lists with setreg()']])
+    execute([=[call SetReg('a', ['abcA3'], 'c')]=])
+    execute([=[call SetReg('b', ['abcB3'], 'l')]=])
+    execute([=[call SetReg('c', ['abcC3'], 'b')]=])
+    execute([=[call SetReg('d', ['abcD3'])]=])
+    execute([=[call SetReg('e', [1, 2, 'abc', 3])]=])
+    execute([=[call SetReg('f', [1, 2, 3])]=])
+
+    execute([[$put ='{{{1 Appending lists with setreg()']])
+    execute([=[call SetReg('A', ['abcA3c'], 'c')]=])
+    execute([=[call SetReg('b', ['abcB3l'], 'la')]=])
+    execute([=[call SetReg('C', ['abcC3b'], 'lb')]=])
+    execute([=[call SetReg('D', ['abcD32'])]=])
+    execute([=[call SetReg('A', ['abcA32'])]=])
+    execute([=[call SetReg('B', ['abcB3c'], 'c')]=])
+    execute([=[call SetReg('C', ['abcC3l'], 'l')]=])
+    execute([=[call SetReg('D', ['abcD3b'], 'b')]=])
+    expect([[
+      
       {{{1 Setting lists with setreg()
       {{{2 setreg('a', ['abcA3'], 'c')
       a: type v; value: abcA3 (['abcA3']), expr: abcA3 (['abcA3'])
@@ -499,85 +378,151 @@ describe('various eval features', function()
       ==
       =abcD3 =
        abcD32
-       abcD3b
-      {{{1 Appending lists with NL with setreg()
-      {{{2 setreg('A', [']]..'\x00'..[[', 'abcA3l2'], 'l')
-      A: type V; value: abcA3]].."\x00abcA3c\x00abcA32\x00\x00\x00abcA3l2\x00 (['abcA3', 'abcA3c', 'abcA32', '\x00', 'abcA3l2']), expr: abcA3\x00abcA3c\x00abcA32\x00\x00\x00abcA3l2\x00 (['abcA3', 'abcA3c', 'abcA32', '\x00"..[[', 'abcA3l2'])
-      ==
-      abcA3
-      abcA3c
-      abcA32
-      ]]..'\x00'..[[
-      abcA3l2
-      ==
-      {{{2 setreg('B', [']]..'\x00'..[[', 'abcB3c2'], 'c')
-      B: type v; value: abcB3]].."\x00abcB3l\x00abcB3c\x00\x00\x00abcB3c2 (['abcB3', 'abcB3l', 'abcB3c', '\x00', 'abcB3c2']), expr: abcB3\x00abcB3l\x00abcB3c\x00\x00\x00abcB3c2 (['abcB3', 'abcB3l', 'abcB3c', '\x00"..[[', 'abcB3c2'])
-      ==
-      =abcB3
-      abcB3l
-      abcB3c
-      ]]..'\x00'..[[
-      abcB3c2=
-      {{{2 setreg('C', [']]..'\x00'..[[', 'abcC3b2'], 'b')
-      C: type ]].."\x167; value: abcC3\x00abcC3b\x00abcC3l\x00\x00\x00abcC3b2 (['abcC3', 'abcC3b', 'abcC3l', '\x00', 'abcC3b2']), expr: abcC3\x00abcC3b\x00abcC3l\x00\x00\x00abcC3b2 (['abcC3', 'abcC3b', 'abcC3l', '\x00"..[[', 'abcC3b2'])
-      ==
-      =abcC3  =
-       abcC3b
-       abcC3l
-       ]]..'\x00'..[[
-       abcC3b2
-      {{{2 setreg('D', [']]..'\x00'..[[', 'abcD3b50'], 'b50')
-      D: type ]].."\x1650; value: abcD3\x00abcD32\x00abcD3b\x00\x00\x00abcD3b50 (['abcD3', 'abcD32', 'abcD3b', '\x00', 'abcD3b50']), expr: abcD3\x00abcD32\x00abcD3b\x00\x00\x00abcD3b50 (['abcD3', 'abcD32', 'abcD3b', '\x00"..[[', 'abcD3b50'])
-      ==
-      =abcD3                                             =
-       abcD32
-       abcD3b
-       ]]..'\x00'..[[
-       abcD3b50
-      {{{1 Setting lists with NLs with setreg()
-      {{{2 setreg('a', ['abcA4-0', ']].."\x00', 'abcA4-2\x00', '\x00abcA4-3', 'abcA4-4\x00"..[[abcA4-4-2'])
-      a: type V; value: abcA4-0]].."\x00\x00\x00abcA4-2\x00\x00\x00abcA4-3\x00abcA4-4\x00abcA4-4-2\x00 (['abcA4-0', '\x00', 'abcA4-2\x00', '\x00abcA4-3', 'abcA4-4\x00abcA4-4-2']), expr: abcA4-0\x00\x00\x00abcA4-2\x00\x00\x00abcA4-3\x00abcA4-4\x00abcA4-4-2\x00 (['abcA4-0', '\x00', 'abcA4-2\x00', '\x00abcA4-3', 'abcA4-4\x00"..[[abcA4-4-2'])
-      ==
-      abcA4-0
-      ]]..'\x00'..[[
-      abcA4-2]]..'\x00'..[[
-      ]]..'\x00'..[[abcA4-3
-      abcA4-4]]..'\x00'..[[abcA4-4-2
-      ==
-      {{{2 setreg('b', ['abcB4c-0', ']].."\x00', 'abcB4c-2\x00', '\x00abcB4c-3', 'abcB4c-4\x00"..[[abcB4c-4-2'], 'c')
-      b: type v; value: abcB4c-0]].."\x00\x00\x00abcB4c-2\x00\x00\x00abcB4c-3\x00abcB4c-4\x00abcB4c-4-2 (['abcB4c-0', '\x00', 'abcB4c-2\x00', '\x00abcB4c-3', 'abcB4c-4\x00abcB4c-4-2']), expr: abcB4c-0\x00\x00\x00abcB4c-2\x00\x00\x00abcB4c-3\x00abcB4c-4\x00abcB4c-4-2 (['abcB4c-0', '\x00', 'abcB4c-2\x00', '\x00abcB4c-3', 'abcB4c-4\x00"..[[abcB4c-4-2'])
-      ==
-      =abcB4c-0
-      ]]..'\x00'..[[
-      abcB4c-2]]..'\x00'..[[
-      ]]..'\x00'..[[abcB4c-3
-      abcB4c-4]]..'\x00'..[[abcB4c-4-2=
-      {{{2 setreg('c', ['abcC4l-0', ']].."\x00', 'abcC4l-2\x00', '\x00abcC4l-3', 'abcC4l-4\x00"..[[abcC4l-4-2'], 'l')
-      c: type V; value: abcC4l-0]].."\x00\x00\x00abcC4l-2\x00\x00\x00abcC4l-3\x00abcC4l-4\x00abcC4l-4-2\x00 (['abcC4l-0', '\x00', 'abcC4l-2\x00', '\x00abcC4l-3', 'abcC4l-4\x00abcC4l-4-2']), expr: abcC4l-0\x00\x00\x00abcC4l-2\x00\x00\x00abcC4l-3\x00abcC4l-4\x00abcC4l-4-2\x00 (['abcC4l-0', '\x00', 'abcC4l-2\x00', '\x00abcC4l-3', 'abcC4l-4\x00"..[[abcC4l-4-2'])
-      ==
-      abcC4l-0
-      ]]..'\x00'..[[
-      abcC4l-2]]..'\x00'..[[
-      ]]..'\x00'..[[abcC4l-3
-      abcC4l-4]]..'\x00'..[[abcC4l-4-2
-      ==
-      {{{2 setreg('d', ['abcD4b-0', ']].."\x00', 'abcD4b-2\x00', '\x00abcD4b-3', 'abcD4b-4\x00"..[[abcD4b-4-2'], 'b')
-      d: type ]].."\x1619; value: abcD4b-0\x00\x00\x00abcD4b-2\x00\x00\x00abcD4b-3\x00abcD4b-4\x00abcD4b-4-2 (['abcD4b-0', '\x00', 'abcD4b-2\x00', '\x00abcD4b-3', 'abcD4b-4\x00abcD4b-4-2']), expr: abcD4b-0\x00\x00\x00abcD4b-2\x00\x00\x00abcD4b-3\x00abcD4b-4\x00abcD4b-4-2 (['abcD4b-0', '\x00', 'abcD4b-2\x00', '\x00abcD4b-3', 'abcD4b-4\x00"..[[abcD4b-4-2'])
-      ==
-      =abcD4b-0           =
-       ]]..'\x00'..[[
-       abcD4b-2]]..'\x00'..[[
-       ]]..'\x00'..[[abcD4b-3
-       abcD4b-4]]..'\x00'..[[abcD4b-4-2
-      {{{2 setreg('e', ['abcE4b10-0', ']].."\x00', 'abcE4b10-2\x00', '\x00abcE4b10-3', 'abcE4b10-4\x00"..[[abcE4b10-4-2'], 'b10')
-      e: type ]].."\x1610; value: abcE4b10-0\x00\x00\x00abcE4b10-2\x00\x00\x00abcE4b10-3\x00abcE4b10-4\x00abcE4b10-4-2 (['abcE4b10-0', '\x00', 'abcE4b10-2\x00', '\x00abcE4b10-3', 'abcE4b10-4\x00abcE4b10-4-2']), expr: abcE4b10-0\x00\x00\x00abcE4b10-2\x00\x00\x00abcE4b10-3\x00abcE4b10-4\x00abcE4b10-4-2 (['abcE4b10-0', '\x00', 'abcE4b10-2\x00', '\x00abcE4b10-3', 'abcE4b10-4\x00"..[[abcE4b10-4-2'])
-      ==
-      =abcE4b10-0=
-       ]]..'\x00'..[[
-       abcE4b10-2]]..'\x00'..[[
-       ]]..'\x00'..[[abcE4b10-3
-       abcE4b10-4]]..'\x00'..[[abcE4b10-4-2
-      {{{1 Search and expressions
+       abcD3b]])
+
+    -- From now on we delete the buffer contents after each expect() to make
+    -- the next expect() easier to write.  This is neccessary because null
+    -- bytes on a line by itself don't play well together with the dedent
+    -- function used in expect().
+    execute('%delete')
+    execute([[$put ='{{{1 Appending lists with NL with setreg()']])
+    execute([=[call SetReg('A', ["\n", 'abcA3l2'], 'l')]=])
+    expect(
+      '\n'..
+      '{{{1 Appending lists with NL with setreg()\n'..
+      "{{{2 setreg('A', ['\x00', 'abcA3l2'], 'l')\n"..
+      "A: type V; value: abcA3\x00abcA3c\x00abcA32\x00\x00\x00abcA3l2\x00 (['abcA3', 'abcA3c', 'abcA32', '\x00', 'abcA3l2']), expr: abcA3\x00abcA3c\x00abcA32\x00\x00\x00abcA3l2\x00 (['abcA3', 'abcA3c', 'abcA32', '\x00', 'abcA3l2'])\n"..
+      '==\n'..
+      'abcA3\n'..
+      'abcA3c\n'..
+      'abcA32\n'..
+      '\x00\n'..
+      'abcA3l2\n'..
+      '==')
+    execute('%delete')
+    execute([=[call SetReg('B', ["\n", 'abcB3c2'], 'c')]=])
+    expect(
+      '\n'..
+      "{{{2 setreg('B', ['\x00', 'abcB3c2'], 'c')\n"..
+      "B: type v; value: abcB3\x00abcB3l\x00abcB3c\x00\x00\x00abcB3c2 (['abcB3', 'abcB3l', 'abcB3c', '\x00', 'abcB3c2']), expr: abcB3\x00abcB3l\x00abcB3c\x00\x00\x00abcB3c2 (['abcB3', 'abcB3l', 'abcB3c', '\x00', 'abcB3c2'])\n"..
+      '==\n'..
+      '=abcB3\n'..
+      'abcB3l\n'..
+      'abcB3c\n'..
+      '\x00\n'..
+      'abcB3c2=')
+    execute('%delete')
+    execute([=[call SetReg('C', ["\n", 'abcC3b2'], 'b')]=])
+    expect(
+      '\n'..
+      "{{{2 setreg('C', ['\x00', 'abcC3b2'], 'b')\n"..
+      "C: type \x167; value: abcC3\x00abcC3b\x00abcC3l\x00\x00\x00abcC3b2 (['abcC3', 'abcC3b', 'abcC3l', '\x00', 'abcC3b2']), expr: abcC3\x00abcC3b\x00abcC3l\x00\x00\x00abcC3b2 (['abcC3', 'abcC3b', 'abcC3l', '\x00', 'abcC3b2'])\n"..
+      '==\n'..
+      '=abcC3  =\n'..
+      ' abcC3b\n'..
+      ' abcC3l\n'..
+      ' \x00\n'..
+      ' abcC3b2')
+    execute('%delete')
+    execute([=[call SetReg('D', ["\n", 'abcD3b50'],'b50')]=])
+    expect(
+      '\n'..
+      "{{{2 setreg('D', ['\x00', 'abcD3b50'], 'b50')\n"..
+      "D: type \x1650; value: abcD3\x00abcD32\x00abcD3b\x00\x00\x00abcD3b50 (['abcD3', 'abcD32', 'abcD3b', '\x00', 'abcD3b50']), expr: abcD3\x00abcD32\x00abcD3b\x00\x00\x00abcD3b50 (['abcD3', 'abcD32', 'abcD3b', '\x00', 'abcD3b50'])\n"..
+      '==\n'..
+      '=abcD3                                             =\n'..
+      ' abcD32\n'..
+      ' abcD3b\n'..
+      ' \x00\n'..
+      ' abcD3b50')
+  end)
+
+  -- The tests for setting lists with NLs are split into seperate it() blocks
+  -- to make the expect() calls easier to write.  Otherwise the null byte can
+  -- make trouble on a line on it's own.
+  it('setting lists with NLs with setreg(), part 1', function()
+    execute('so test_eval_setup.vim')
+    execute([=[call SetReg('a', ['abcA4-0', "\n", "abcA4-2\n", "\nabcA4-3", "abcA4-4\nabcA4-4-2"])]=])
+    expect(
+     '\n'..
+      "{{{2 setreg('a', ['abcA4-0', '\x00', 'abcA4-2\x00', '\x00abcA4-3', 'abcA4-4\x00abcA4-4-2'])\n"..
+      "a: type V; value: abcA4-0\x00\x00\x00abcA4-2\x00\x00\x00abcA4-3\x00abcA4-4\x00abcA4-4-2\x00 (['abcA4-0', '\x00', 'abcA4-2\x00', '\x00abcA4-3', 'abcA4-4\x00abcA4-4-2']), expr: abcA4-0\x00\x00\x00abcA4-2\x00\x00\x00abcA4-3\x00abcA4-4\x00abcA4-4-2\x00 (['abcA4-0', '\x00', 'abcA4-2\x00', '\x00abcA4-3', 'abcA4-4\x00abcA4-4-2'])\n"..
+      '==\n'..
+      'abcA4-0\n'..
+      '\x00\n'..
+      'abcA4-2\x00\n'..
+      '\x00abcA4-3\n'..
+      'abcA4-4\x00abcA4-4-2\n'..
+      '==')
+  end)
+
+  it('setting lists with NLs with setreg(), part 2', function()
+    execute('so test_eval_setup.vim')
+    execute([=[call SetReg('b', ['abcB4c-0', "\n", "abcB4c-2\n", "\nabcB4c-3", "abcB4c-4\nabcB4c-4-2"], 'c')]=])
+    expect(
+      '\n'..
+      "{{{2 setreg('b', ['abcB4c-0', '\x00', 'abcB4c-2\x00', '\x00abcB4c-3', 'abcB4c-4\x00abcB4c-4-2'], 'c')\n"..
+      "b: type v; value: abcB4c-0\x00\x00\x00abcB4c-2\x00\x00\x00abcB4c-3\x00abcB4c-4\x00abcB4c-4-2 (['abcB4c-0', '\x00', 'abcB4c-2\x00', '\x00abcB4c-3', 'abcB4c-4\x00abcB4c-4-2']), expr: abcB4c-0\x00\x00\x00abcB4c-2\x00\x00\x00abcB4c-3\x00abcB4c-4\x00abcB4c-4-2 (['abcB4c-0', '\x00', 'abcB4c-2\x00', '\x00abcB4c-3', 'abcB4c-4\x00abcB4c-4-2'])\n"..
+      '==\n'..
+      '=abcB4c-0\n'..
+      '\x00\n'..
+      'abcB4c-2\x00\n'..
+      '\x00abcB4c-3\n'..
+      'abcB4c-4\x00abcB4c-4-2=')
+  end)
+
+  it('setting lists with NLs with setreg(), part 3', function()
+    execute('so test_eval_setup.vim')
+    execute([=[call SetReg('c', ['abcC4l-0', "\n", "abcC4l-2\n", "\nabcC4l-3", "abcC4l-4\nabcC4l-4-2"], 'l')]=])
+    expect(
+      '\n'..
+      "{{{2 setreg('c', ['abcC4l-0', '\x00', 'abcC4l-2\x00', '\x00abcC4l-3', 'abcC4l-4\x00abcC4l-4-2'], 'l')\n"..
+      "c: type V; value: abcC4l-0\x00\x00\x00abcC4l-2\x00\x00\x00abcC4l-3\x00abcC4l-4\x00abcC4l-4-2\x00 (['abcC4l-0', '\x00', 'abcC4l-2\x00', '\x00abcC4l-3', 'abcC4l-4\x00abcC4l-4-2']), expr: abcC4l-0\x00\x00\x00abcC4l-2\x00\x00\x00abcC4l-3\x00abcC4l-4\x00abcC4l-4-2\x00 (['abcC4l-0', '\x00', 'abcC4l-2\x00', '\x00abcC4l-3', 'abcC4l-4\x00abcC4l-4-2'])\n"..
+      '==\n'..
+      'abcC4l-0\n'..
+      '\x00\n'..
+      'abcC4l-2\x00\n'..
+      '\x00abcC4l-3\n'..
+      'abcC4l-4\x00abcC4l-4-2\n'..
+      '==')
+  end)
+  it('setting lists with NLs with setreg(), part 4', function()
+    execute('so test_eval_setup.vim')
+    execute([=[call SetReg('d', ['abcD4b-0', "\n", "abcD4b-2\n", "\nabcD4b-3", "abcD4b-4\nabcD4b-4-2"], 'b')]=])
+    expect(
+      '\n'..
+      "{{{2 setreg('d', ['abcD4b-0', '\x00', 'abcD4b-2\x00', '\x00abcD4b-3', 'abcD4b-4\x00abcD4b-4-2'], 'b')\n"..
+      "d: type \x1619; value: abcD4b-0\x00\x00\x00abcD4b-2\x00\x00\x00abcD4b-3\x00abcD4b-4\x00abcD4b-4-2 (['abcD4b-0', '\x00', 'abcD4b-2\x00', '\x00abcD4b-3', 'abcD4b-4\x00abcD4b-4-2']), expr: abcD4b-0\x00\x00\x00abcD4b-2\x00\x00\x00abcD4b-3\x00abcD4b-4\x00abcD4b-4-2 (['abcD4b-0', '\x00', 'abcD4b-2\x00', '\x00abcD4b-3', 'abcD4b-4\x00abcD4b-4-2'])\n"..
+      '==\n'..
+      '=abcD4b-0           =\n'..
+      ' \x00\n'..
+      ' abcD4b-2\x00\n'..
+      ' \x00abcD4b-3\n'..
+      ' abcD4b-4\x00abcD4b-4-2')
+  end)
+  it('setting lists with NLs with setreg(), part 5', function()
+    execute('so test_eval_setup.vim')
+    execute([=[call SetReg('e', ['abcE4b10-0', "\n", "abcE4b10-2\n", "\nabcE4b10-3", "abcE4b10-4\nabcE4b10-4-2"], 'b10')]=])
+    expect(
+      '\n'..
+      "{{{2 setreg('e', ['abcE4b10-0', '\x00', 'abcE4b10-2\x00', '\x00abcE4b10-3', 'abcE4b10-4\x00abcE4b10-4-2'], 'b10')\n"..
+      "e: type \x1610; value: abcE4b10-0\x00\x00\x00abcE4b10-2\x00\x00\x00abcE4b10-3\x00abcE4b10-4\x00abcE4b10-4-2 (['abcE4b10-0', '\x00', 'abcE4b10-2\x00', '\x00abcE4b10-3', 'abcE4b10-4\x00abcE4b10-4-2']), expr: abcE4b10-0\x00\x00\x00abcE4b10-2\x00\x00\x00abcE4b10-3\x00abcE4b10-4\x00abcE4b10-4-2 (['abcE4b10-0', '\x00', 'abcE4b10-2\x00', '\x00abcE4b10-3', 'abcE4b10-4\x00abcE4b10-4-2'])\n"..
+      '==\n'..
+      '=abcE4b10-0=\n'..
+      ' \x00\n'..
+      ' abcE4b10-2\x00\n'..
+      ' \x00abcE4b10-3\n'..
+      ' abcE4b10-4\x00abcE4b10-4-2')
+  end)
+
+  it('search and expressions', function()
+    execute('so test_eval_setup.vim')
+    execute([=[call SetReg('/', ['abc/'])]=])
+    execute([=[call SetReg('/', ["abc/\n"])]=])
+    execute([=[call SetReg('=', ['"abc/"'])]=])
+    execute([=[call SetReg('=', ["\"abc/\n\""])]=])
+    expect([[
+      
       {{{2 setreg('/', ['abc/'])
       /: type v; value: abc/ (['abc/']), expr: abc/ (['abc/'])
       ==
@@ -589,8 +534,30 @@ describe('various eval features', function()
       {{{2 setreg('=', ['"abc/"'])
       =: type v; value: abc/ (['abc/']), expr: "abc/" (['"abc/"'])
       {{{2 setreg('=', ['"abc/]]..'\x00'..[["'])
-      =: type v; value: abc/]].."\x00 (['abc/\x00"..[[']), expr: "abc/]]..'\x00'..[[" (['"abc/]]..'\x00'..[["'])
-      {{{1 Errors
+      =: type v; value: abc/]].."\x00 (['abc/\x00"..[[']), expr: "abc/]]..'\x00'..[[" (['"abc/]]..'\x00'..[["'])]])
+  end)
+
+  it('errors', function()
+    source([[
+      fun ErrExe(str)
+	call append('$', 'Executing '.a:str)
+	try
+	  execute a:str
+	catch
+	  $put =v:exception
+	endtry
+      endfun]])
+    execute([[call ErrExe('call setreg()')]])
+    execute([[call ErrExe('call setreg(1)')]])
+    execute([[call ErrExe('call setreg(1, 2, 3, 4)')]])
+    execute([=[call ErrExe('call setreg([], 2)')]=])
+    execute([[call ErrExe('call setreg(1, {})')]])
+    execute([=[call ErrExe('call setreg(1, 2, [])')]=])
+    execute([=[call ErrExe('call setreg("/", ["1", "2"])')]=])
+    execute([=[call ErrExe('call setreg("=", ["1", "2"])')]=])
+    execute([=[call ErrExe('call setreg(1, ["", "", [], ""])')]=])
+    expect([[
+      
       Executing call setreg()
       Vim(call):E119: Not enough arguments for function: setreg
       Executing call setreg(1)
@@ -609,5 +576,86 @@ describe('various eval features', function()
       Vim(call):E883: search pattern and expression register may not contain two or more lines
       Executing call setreg(1, ["", "", [], ""])
       Vim(call):E730: using List as a String]])
+  end)
+
+  it('', function()
+    execute('so test_eval_setup.vim')
+  end)
+
+  it('are working', function()
+    insert([[
+      012345678
+      012345678
+      
+      start:]])
+
+    execute('so test_eval_setup.vim')
+
+    execute('delfunction SetReg')
+    execute('delfunction AppendRegContents')
+    execute('delfunction ErrExe')
+    execute('delcommand AR')
+    execute('call garbagecollect(1)')
+
+    execute('/^start:/+1,$w! test.out')
+    -- Vim: et ts=4 isk-=\: fmr=???,???. -- TODO
+    --execute('call getchar()') -- TODO
+    execute('e! test.out')
+    execute('%d')
+    -- Function name not starting with a capital.
+    execute('try')
+    execute('  func! g:test()')
+    execute('    echo "test"')
+    execute('  endfunc')
+    execute('catch')
+    execute('  $put =v:exception')
+    execute('  let tmp = v:exception')
+    execute('endtry')
+    eq('Vim(function):E128: Function name must start with a capital or "s:": g:test()', eval('tmp'))
+    -- Function name folowed by #.
+    execute('try')
+    execute('  func! test2() "#')
+    execute('    echo "test2"')
+    execute('  endfunc')
+    execute('catch')
+    execute('  $put =v:exception')
+    execute('endtry')
+    -- Function name includes a colon.
+    execute('try')
+    execute('  func! b:test()')
+    execute('    echo "test"')
+    execute('  endfunc')
+    execute('catch')
+    execute('  $put =v:exception')
+    execute('endtry')
+    -- Function name starting with/without "g:", buffer-local funcref.
+    execute('function! g:Foo(n)')
+    execute("  $put ='called Foo(' . a:n . ')'")
+    execute('endfunction')
+    execute("let b:my_func = function('Foo')")
+    execute('call b:my_func(1)')
+    execute('echo g:Foo(2)')
+    execute('echo Foo(3)')
+    -- Script-local function used in Funcref must exist.
+    execute('so test_eval_func.vim')
+    -- Using $ instead of '$' must give an error.
+    execute('try')
+    execute("  call append($, 'foobar')")
+    execute('catch')
+    execute('  $put =v:exception')
+    execute('endtry')
+    execute("$put ='{{{1 getcurpos/setpos'")
+    execute('/^012345678')
+    feed('6l')
+    execute('let sp = getcurpos()')
+    feed('0')
+    execute("call setpos('.', sp)")
+    feed('jyl')
+    execute('$put')
+    execute('0,/^start:/ delete')
+    -- Vim: et ts=4 isk-=\: fmr=???,???. TODO does this affect the test?
+    --execute('call getchar()')
+
+    -- Assert buffer contents.
   end)
 end)
