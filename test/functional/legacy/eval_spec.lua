@@ -1,15 +1,36 @@
 -- Test for various eval features.
--- Note: system clipboard support is not tested. I do not think anybody will thank
--- me for messing with clipboard.
+-- Note: system clipboard support is not tested. I do not think anybody will
+-- thank me for messing with clipboard.
 
 local helpers = require('test.functional.helpers')
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local eq, eval, wait, write_file = helpers.eq, helpers.eval, helpers.wait, helpers.write_file
 
-describe('eval', function()
-  setup(clear)
+describe('various eval features', function()
+  setup(function()
+    clear()
+    write_file('test_eval_func.vim', [[
+      " Vim script used in test_eval.in.  Needed for script-local function.
+      
+      func! s:Testje()
+        return "foo"
+      endfunc
+      
+      let Bar = function('s:Testje')
+      
+      $put ='s:Testje exists: ' . exists('s:Testje')
+      $put ='func s:Testje exists: ' . exists('*s:Testje')
+      $put ='Bar exists: ' . exists('Bar')
+      $put ='func Bar exists: ' . exists('*Bar')
+      ]])
+  end)
+  teardown(function()
+    os.remove('test.out')
+    os.remove('test_eval_func.vim')
+  end)
 
-  it('is working', function()
+  it('are working', function()
     insert([[
       012345678
       012345678
@@ -20,6 +41,7 @@ describe('eval', function()
       set encoding=latin1
       set noswapfile
       lang C
+
       fun RegInfo(reg)
         return [
 	  \ a:reg,
@@ -30,11 +52,15 @@ describe('eval', function()
 	  \ string(getreg(a:reg, 1, 1))
 	  \ ]
       endfun
+
       fun AppendRegContents(reg)
+      let x = RegInfo(a:reg)
 	call append('$', printf('%s: type %s; value: %s (%s), expr: %s (%s)',
-	  \ RegInfo(a:reg)))
+	  \ x[0], x[1], x[2], x[3], x[4], x[5]))
       endfun
+
       command -nargs=? AR :call AppendRegContents(<q-args>)
+
       fun SetReg(...)
           call call('setreg', a:000)
           call append('$', printf('{{{2 setreg(%s)', string(a:000)[1:-2]))
@@ -43,13 +69,14 @@ describe('eval', function()
               execute "silent normal! Go==\n==\e\"".a:1."P"
           endif
       endfun
+
       fun ErrExe(str)
-          call append('$', 'Executing '.a:str)
-          try
-              execute a:str
-          catch
-              $put =v:exception
-          endtry
+	call append('$', 'Executing '.a:str)
+	try
+	  execute a:str
+	catch
+	  $put =v:exception
+	endtry
       endfun
     ]])
     --execute('fun Test()')
@@ -65,13 +92,27 @@ describe('eval', function()
     execute('AR "')
     execute([[let @" = "abc\n"]])
     eq({'"', 'V', 'abc\n', "['abc']", 'abc\n', "['abc']"}, eval([[RegInfo('"')]]))
-    execute('AR "')
+    source([[call RegInfo('"')]])
+    --source([[call AppendRegContents('"')]])
+    source('AR "')
     execute([[let @" = "abc\<C-m>"]])
     execute('AR "')
-    -- eq({'"', 'V', 'abc\x0d\n', "['abc']", 'abc\x0d\n', "['abc']"}, eval([[RegInfo('"')]])) -- TODO
+--    eq({'"', 'V', 'abc\n', "['abc']", 'abc\n', "['abc']"},
+--      eval([[RegInfo('"')]])) -- TODO
     execute([[let @= = '"abc"']])
     eq({'=', 'v', 'abc', "['abc']", '"abc"', [=[['"abc"']]=]}, eval([[RegInfo('=')]]))
     execute('AR =')
+    expect([[
+      012345678
+      012345678
+      
+      start:
+      {{{1 let tests
+      ": type v; value: abc (['abc']), expr: abc (['abc'])
+      ": type V; value: abc]].."\x00 (['abc']), expr: abc\x00"..[[ (['abc'])
+      ": type V; value: abc]].."\r\x00 (['abc\r']), expr: abc\r\x00 (['abc\r"..[['])
+      =: type v; value: abc (['abc']), expr: "abc" (['"abc"'])]])
+
     execute([[$put ='{{{1 Basic setreg tests']])
     execute([[call SetReg('a', 'abcA', 'c')]])
     execute([[call SetReg('b', 'abcB', 'v')]])
@@ -82,6 +123,7 @@ describe('eval', function()
     execute([[call SetReg('g', 'abcG', 'b10')]])
     execute([[call SetReg('h', 'abcH', "\<C-v>10")]])
     execute([[call SetReg('I', 'abcI')]])
+
     execute([[$put ='{{{1 Appending single lines with setreg()']])
     execute([[call SetReg('A', 'abcAc', 'c')]])
     execute([[call SetReg('A', 'abcAl', 'l')]])
@@ -96,6 +138,7 @@ describe('eval', function()
     execute([[call SetReg('E', 'abcEb', 'b')]])
     execute([[call SetReg('E', 'abcEl', 'l')]])
     execute([[call SetReg('F', 'abcFc', 'c')]])
+
     execute([[$put ='{{{1 Appending NL with setreg()']])
     execute([[call setreg('a', 'abcA2', 'c')]])
     execute([[call setreg('b', 'abcB2', 'v')]])
@@ -112,6 +155,7 @@ describe('eval', function()
     execute([[call SetReg('D', "\n", 'l')]])
     execute([[call SetReg('E', "\n")]])
     execute([[call SetReg('F', "\n", 'b')]])
+
     execute([[$put ='{{{1 Setting lists with setreg()']])
     execute([=[call SetReg('a', ['abcA3'], 'c')]=])
     execute([=[call SetReg('b', ['abcB3'], 'l')]=])
@@ -119,6 +163,7 @@ describe('eval', function()
     execute([=[call SetReg('d', ['abcD3'])]=])
     execute([=[call SetReg('e', [1, 2, 'abc', 3])]=])
     execute([=[call SetReg('f', [1, 2, 3])]=])
+
     execute([[$put ='{{{1 Appending lists with setreg()']])
     execute([=[call SetReg('A', ['abcA3c'], 'c')]=])
     execute([=[call SetReg('b', ['abcB3l'], 'la')]=])
@@ -128,22 +173,26 @@ describe('eval', function()
     execute([=[call SetReg('B', ['abcB3c'], 'c')]=])
     execute([=[call SetReg('C', ['abcC3l'], 'l')]=])
     execute([=[call SetReg('D', ['abcD3b'], 'b')]=])
+
     execute([[$put ='{{{1 Appending lists with NL with setreg()']])
     execute([=[call SetReg('A', ["\n", 'abcA3l2'], 'l')]=])
     execute([=[call SetReg('B', ["\n", 'abcB3c2'], 'c')]=])
     execute([=[call SetReg('C', ["\n", 'abcC3b2'], 'b')]=])
     execute([=[call SetReg('D', ["\n", 'abcD3b50'],'b50')]=])
+
     execute([[$put ='{{{1 Setting lists with NLs with setreg()']])
     execute([=[call SetReg('a', ['abcA4-0', "\n", "abcA4-2\n", "\nabcA4-3", "abcA4-4\nabcA4-4-2"])]=])
     execute([=[call SetReg('b', ['abcB4c-0', "\n", "abcB4c-2\n", "\nabcB4c-3", "abcB4c-4\nabcB4c-4-2"], 'c')]=])
     execute([=[call SetReg('c', ['abcC4l-0', "\n", "abcC4l-2\n", "\nabcC4l-3", "abcC4l-4\nabcC4l-4-2"], 'l')]=])
     execute([=[call SetReg('d', ['abcD4b-0', "\n", "abcD4b-2\n", "\nabcD4b-3", "abcD4b-4\nabcD4b-4-2"], 'b')]=])
     execute([=[call SetReg('e', ['abcE4b10-0', "\n", "abcE4b10-2\n", "\nabcE4b10-3", "abcE4b10-4\nabcE4b10-4-2"], 'b10')]=])
+
     execute([[$put ='{{{1 Search and expressions']])
     execute([=[call SetReg('/', ['abc/'])]=])
     execute([=[call SetReg('/', ["abc/\n"])]=])
     execute([=[call SetReg('=', ['"abc/"'])]=])
     execute([=[call SetReg('=', ["\"abc/\n\""])]=])
+
     execute([[$put ='{{{1 Errors']])
     execute([[call ErrExe('call setreg()')]])
     execute([[call ErrExe('call setreg(1)')]])
@@ -162,10 +211,10 @@ describe('eval', function()
     execute('delcommand AR')
     execute('call garbagecollect(1)')
 
-    execute('/^start:/+1,$wq! test.out')
-    -- Vim: et ts=4 isk-=\: fmr=???,???.
-    execute('call getchar()')
-    execute('e test.out')
+    execute('/^start:/+1,$w! test.out')
+    -- Vim: et ts=4 isk-=\: fmr=???,???. -- TODO
+    --execute('call getchar()') -- TODO
+    execute('e! test.out')
     execute('%d')
     -- Function name not starting with a capital.
     execute('try')
@@ -174,11 +223,12 @@ describe('eval', function()
     execute('  endfunc')
     execute('catch')
     execute('  $put =v:exception')
+    execute('  let tmp = v:exception')
     execute('endtry')
+    eq('Vim(function):E128: Function name must start with a capital or "s:": g:test()', eval('tmp'))
     -- Function name folowed by #.
     execute('try')
-    -- #.
-    execute('  func! test2()')
+    execute('  func! test2() "#')
     execute('    echo "test2"')
     execute('  endfunc')
     execute('catch')
