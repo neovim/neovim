@@ -469,9 +469,7 @@ the macros ".IP", ".LP", etc.  (These are nroff macros, so the dot must be in
 the first column).  A section boundary is also a paragraph boundary.
 Note that a blank line (only containing white space) is NOT a paragraph
 boundary.
-Also note that this does not include a '{' or '}' in the first column.  When
-the '{' flag is in 'cpoptions' then '{' in the first column is used as a
-paragraph boundary |posix|.
+Note: this does not include a '{' or '}' in the first column.
 
 							*section*
 A section begins after a form-feed (<C-L>) in the first column and at each of

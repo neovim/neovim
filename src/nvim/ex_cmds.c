@@ -3472,18 +3472,8 @@ void do_sub(exarg_T *eap)
     }
 
     if (!eap->skip) {
-      /* In POSIX vi ":s/pat/%/" uses the previous subst. string. */
-      if (STRCMP(sub, "%") == 0
-          && vim_strchr(p_cpo, CPO_SUBPERCENT) != NULL) {
-        if (old_sub == NULL) {          /* there is no previous command */
-          EMSG(_(e_nopresub));
-          return;
-        }
-        sub = old_sub;
-      } else {
-        xfree(old_sub);
-        old_sub = vim_strsave(sub);
-      }
+      xfree(old_sub);
+      old_sub = vim_strsave(sub);
     }
   } else if (!eap->skip) {    /* use previous pattern and substitution */
     if (old_sub == NULL) {      /* there is no previous command */

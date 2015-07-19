@@ -587,8 +587,7 @@ void ml_close(buf_T *buf, int del_file)
 void ml_close_all(int del_file)
 {
   FOR_ALL_BUFFERS(buf) {
-    ml_close(buf, del_file && ((buf->b_flags & BF_PRESERVED) == 0
-                               || vim_strchr(p_cpo, CPO_PRESERVE) == NULL));
+    ml_close(buf, del_file && ((buf->b_flags & BF_PRESERVED) == 0));
   }
   spell_delete_wordlist();      /* delete the internal wordlist */
   vim_deltempdir();             /* delete created temp directory */

@@ -269,11 +269,6 @@ Vi	"the original".  Without further remarks this is the version
 	to.  Only runs under Unix.  Source code only available with a
 	license.  More information on Vi can be found through:
 		http://vi-editor.org	[doesn't currently work...]
-							*Posix*
-Posix	From the IEEE standard 1003.2, Part 2: Shell and utilities.
-	Generally known as "Posix".  This is a textual description of
-	how Vi is supposed to work.
-	See |posix-compliance|.
 							*Nvi*
 Nvi	The "New" Vi.  The version of Vi that comes with BSD 4.4 and FreeBSD.
 	Very good compatibility with the original Vi, with a few extensions.

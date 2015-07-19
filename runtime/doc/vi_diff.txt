@@ -10,17 +10,12 @@ Throughout the help files differences between Vim and Vi/Ex are given in
 curly braces, like "{not in Vi}".  This file only lists what has not been
 mentioned in other files and gives an overview.
 
-Vim is mostly POSIX 1003.2-1 compliant.  The only command known to be missing
-is ":open".  There are probably a lot of small differences (either because Vim
-is missing something or because Posix is beside the mark).
-
 1. Simulated command			|simulated-command|
 2. Missing options			|missing-options|
 3. Limits				|limits|
 4. The most interesting additions	|vim-additions|
 5. Other vim features			|other-features|
 6. Command-line arguments		|cmdline-arguments|
-7. POSIX compliance			|posix-compliance|
 
 ==============================================================================
 1. Simulated command					*simulated-command*
@@ -918,60 +913,6 @@ Only Vim is able to accept options in between and after the file names.
 -Z		Vim: restricted mode
 
 @{cmdfile}	Vile: use {cmdfile} as startup file.
-
-==============================================================================
-7. POSIX compliance				*posix* *posix-compliance*
-
-In 2005 the POSIX test suite was run to check the compatibility of Vim.  Most
-of the test was executed properly.  There are the few things where Vim
-is not POSIX compliant, even when run in Vi compatibility mode.
-
-Set the $VIM_POSIX environment variable to have 'cpoptions' include the POSIX
-flags when Vim starts up.  This makes Vim run as POSIX as it can.  That's
-a bit different from being Vi compatible.
-
-This is where Vim does not behave as POSIX specifies and why:
-
-							*posix-screen-size*
-	The $COLUMNS and $LINES environment variables are ignored by Vim if
-	the size can be obtained from the terminal in a more reliable way.
-	Add the '|' flag to 'cpoptions' to have $COLUMNS and $LINES overrule
-	sizes obtained in another way.
-
-	The "{" and "}" commands don't stop at a "{" in the original Vi, but
-	POSIX specifies it does.  Add the '{' flag to 'cpoptions' if you want
-	it the POSIX way.
-
-	The "D", "o" and "O" commands accept a count.  Also when repeated.
-	Add the '#' flag to 'cpoptions' if you want to ignore the count.
-
-	The ":cd" command fails if the current buffer is modified when the '.'
-	flag is present in 'cpoptions'.
-
-	There is no ATTENTION message, the "A" flag is added to 'shortmess'.
-
-These are remarks about running the POSIX test suite:
-- vi test 33 sometimes fails for unknown reasons
-- vi test 250 fails; behavior will be changed in a new revision
-    http://www.opengroup.org/austin/mailarchives/ag-review/msg01710.html
-    (link no longer works, perhaps it's now:
-    https://www.opengroup.org/sophocles/show_mail.tpl?CALLER=show_archive.tpl&source=L&listname=austin-review-l&id=1711)
-- vi test 310 fails; exit code non-zero when any error occurred?
-- ex test 24 fails because test is wrong.  Changed between SUSv2 and SUSv3.
-- ex tests 47, 48, 49, 72, 73 fail because .exrc file isn't read in silent
-  mode and $EXINIT isn't used.
-- ex tests 76, 78 fail because echo is used instead of printf. (fixed)
-    Also: problem with \s not changed to space.
-- ex test 355 fails because 'window' isn't used for "30z".
-- ex test 368 fails because shell command isn't echoed in silent mode.
-- ex test 394 fails because "=" command output isn't visible in silent mode.
-- ex test 411 fails because test file is wrong, contains stray ':'.
-- ex test 475 and 476 fail because reprint output isn't visible in silent mode.
-- ex test 480 and 481 fail because the tags file has spaces instead of a tab.
-- ex test 502 fails because .exrc isn't read in silent mode.
-- ex test 509 fails because .exrc isn't read in silent mode. and exit code is
-  1 instead of 2.
-- ex test 534 fails because .exrc isn't read in silent mode.
 
 
  vim:tw=78:ts=8:ft=help:norl:

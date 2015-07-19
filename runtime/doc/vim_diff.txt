@@ -135,6 +135,7 @@ Highlight groups:
   |hl-VisualNOS|
 
 Other options:
+  'cpoptions' ('g', 'w', 'H', '*', '-', 'j', and all POSIX flags were removed)
   'guioptions' (only the 't' flag was removed)
   'guipty'
   'macatsui'

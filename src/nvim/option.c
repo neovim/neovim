@@ -1724,12 +1724,6 @@ void set_init_1(void)
   /* Be nocompatible */
   p_cp = FALSE;
 
-  /* Use POSIX compatibility when $VIM_POSIX is set. */
-  if (os_env_exists("VIM_POSIX")) {
-    set_string_default("cpo", (char_u *)CPO_ALL);
-    set_string_default("shm", (char_u *)"A");
-  }
-
   /*
    * Find default value for 'shell' option.
    * Don't use it if it is empty.
@@ -4226,7 +4220,7 @@ did_set_string_option (
     if (varp == &p_shm)
       p = (char_u *)SHM_ALL;
     else if (varp == &(p_cpo))
-      p = (char_u *)CPO_ALL;
+      p = (char_u *)CPO_VI;
     else if (varp == &(curbuf->b_p_fo))
       p = (char_u *)FO_ALL;
     else if (varp == &curwin->w_p_cocu)

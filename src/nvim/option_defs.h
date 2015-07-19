@@ -128,21 +128,11 @@
 #define CPO_PLUS        '+'     /* ":write file" resets 'modified' */
 #define CPO_SPECI       '<'     /* don't recognize <> in mappings */
 #define CPO_REGAPPEND   '>'     /* insert NL when appending to a register */
-/* POSIX flags */
-#define CPO_HASH        '#'     /* "D", "o" and "O" do not use a count */
-#define CPO_PARA        '{'     /* "{" is also a paragraph boundary */
-#define CPO_TSIZE       '|'     /* $LINES and $COLUMNS overrule term size */
-#define CPO_PRESERVE    '&'     /* keep swap file after :preserve */
-#define CPO_SUBPERCENT  '/'     /* % in :s string uses previous one */
-#define CPO_BACKSL      '\\'    /* \ is not special in [] */
-#define CPO_CHDIR       '.'     /* don't chdir if buffer is modified */
 #define CPO_SCOLON      ';'     /* using "," and ";" will skip over char if
                                  * cursor would not move */
-/* default values for Vim, Vi and POSIX */
+/* default values for Vim and Vi */
 #define CPO_VIM         "aABceFs"
 #define CPO_VI          "aAbBcCdDeEfFiIJkKlLmMnoOpPqrRsStuvWxXyZ$!%+<>;"
-#define CPO_ALL \
-  "aAbBcCdDeEfFiIJkKlLmMnoOpPqrRsStuvWxXyZ$!%+<>#{|&/\\.;"
 
 /* characters for p_ww option: */
 #define WW_ALL          "bshl<>[],~"
