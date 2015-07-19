@@ -258,6 +258,7 @@ struct hm_llist_entry;
 /// One entry in sized linked list
 typedef struct hm_llist_entry {
   ShadaEntry data;              ///< Entry data.
+  bool can_free_entry;          ///< True if data can be freed.
   struct hm_llist_entry *next;  ///< Pointer to next entry or NULL.
   struct hm_llist_entry *prev;  ///< Pointer to previous entry or NULL.
 } HMLListEntry;
@@ -384,19 +385,23 @@ static inline void hmll_remove(HMLList *const hmll,
     hmll_entry->prev->next = hmll_entry->next;
   }
   hmll->num_entries--;
-  shada_free_shada_entry(&hmll_entry->data);
+  if (hmll_entry->can_free_entry) {
+    shada_free_shada_entry(&hmll_entry->data);
+  }
 }
 
 
 /// Insert entry to the linked list
 ///
-/// @param[out]  hmll        List to insert to.
-/// @param[in]   hmll_entry  Entry to insert after or NULL if it is needed to 
-///                          insert at the first entry.
-/// @param[in]   data        Data to insert.
+/// @param[out]  hmll            List to insert to.
+/// @param[in]   hmll_entry      Entry to insert after or NULL if it is needed 
+///                              to insert at the first entry.
+/// @param[in]   data            Data to insert.
+/// @param[in]   can_free_entry  True if data can be freed.
 static inline void hmll_insert(HMLList *const hmll,
                                HMLListEntry *hmll_entry,
-                               const ShadaEntry data)
+                               const ShadaEntry data,
+                               const bool can_free_entry)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   if (hmll->num_entries == hmll->size) {
@@ -414,6 +419,7 @@ static inline void hmll_insert(HMLList *const hmll,
     target_entry = hmll->free_entries[--hmll->free_entries_size];
   }
   target_entry->data = data;
+  target_entry->can_free_entry = can_free_entry;
   hmll->num_entries++;
   target_entry->prev = hmll_entry;
   if (hmll_entry == NULL) {
@@ -725,7 +731,13 @@ int shada_read_file(const char *const file, const int flags)
 
 /// Wrapper for hist_iter() function which produces ShadaEntry values
 ///
-/// @warning Zeroes original items in process.
+/// @param[in]   iter          Current iteration state.
+/// @param[in]   history_type  Type of the history (HIST_*).
+/// @param[in]   zero          If true, then item is removed from instance 
+///                            memory upon reading.
+/// @param[out]  hist          Location where iteration results should be saved.
+///
+/// @return Next iteration state.
 static const void *shada_hist_iter(const void *const iter,
                                    const uint8_t history_type,
                                    const bool zero,
@@ -752,18 +764,6 @@ static const void *shada_hist_iter(const void *const iter,
         }
       }
     };
-    if (!zero) {
-      hist->data.history_item.string = xstrdup(hist->data.history_item.string);
-      if (hist->data.history_item.additional_elements != NULL) {
-        Object new_array = copy_object(
-            ARRAY_OBJ(*hist->data.history_item.additional_elements));
-        hist->data.history_item.additional_elements = xmalloc(
-            sizeof(*hist->data.history_item.additional_elements));
-        memcpy(hist->data.history_item.additional_elements,
-               &new_array.data.array,
-               sizeof(*hist->data.history_item.additional_elements));
-      }
-    }
   }
   return ret;
 }
@@ -777,12 +777,13 @@ static const void *shada_hist_iter(const void *const iter,
 /// Before the new entry entries from the current NeoVim history will be 
 /// inserted unless `do_iter` argument is false.
 ///
-/// @param[in,out]  hms_p    Ring buffer and associated structures.
-/// @param[in]      entry    Inserted entry.
-/// @param[in]      do_iter  Determines whether NeoVim own history should be 
-///                          used.
+/// @param[in,out]  hms_p           Ring buffer and associated structures.
+/// @param[in]      entry           Inserted entry.
+/// @param[in]      do_iter         Determines whether NeoVim own history should 
+///                                 be used.
+/// @param[in]      can_free_entry  True if entry can be freed.
 static void hms_insert(HistoryMergerState *const hms_p, const ShadaEntry entry,
-                       const bool no_iter)
+                       const bool no_iter, const bool can_free_entry)
 {
   HMLList *const hmll = &hms_p->hmll;
   HMLL_FORALL(hmll, cur_entry) {
@@ -799,14 +800,14 @@ static void hms_insert(HistoryMergerState *const hms_p, const ShadaEntry entry,
     if (hms_p->iter == NULL) {
       if (hms_p->last_hist_entry.type != kSDItemMissing
           && hms_p->last_hist_entry.timestamp < entry.timestamp) {
-        hms_insert(hms_p, hms_p->last_hist_entry, false);
+        hms_insert(hms_p, hms_p->last_hist_entry, false, hms_p->reading);
         hms_p->last_hist_entry.type = kSDItemMissing;
       }
     } else {
       while (hms_p->iter != NULL
             && hms_p->last_hist_entry.type != kSDItemMissing
             && hms_p->last_hist_entry.timestamp < entry.timestamp) {
-        hms_insert(hms_p, hms_p->last_hist_entry, false);
+        hms_insert(hms_p, hms_p->last_hist_entry, false, hms_p->reading);
         hms_p->iter = shada_hist_iter(hms_p->iter, hms_p->history_type,
                                       hms_p->reading,
                                       &(hms_p->last_hist_entry));
@@ -819,7 +820,7 @@ static void hms_insert(HistoryMergerState *const hms_p, const ShadaEntry entry,
       break;
     }
   }
-  hmll_insert(hmll, insert_after, entry);
+  hmll_insert(hmll, insert_after, entry, can_free_entry);
 }
 
 /// Initialize the history merger
@@ -854,14 +855,14 @@ static inline void hms_insert_whole_neovim_history(
   FUNC_ATTR_NONNULL_ALL
 {
   if (hms_p->last_hist_entry.type != kSDItemMissing) {
-    hms_insert(hms_p, hms_p->last_hist_entry, false);
+    hms_insert(hms_p, hms_p->last_hist_entry, false, hms_p->reading);
   }
   while (hms_p->iter != NULL
         && hms_p->last_hist_entry.type != kSDItemMissing) {
     hms_p->iter = shada_hist_iter(hms_p->iter, hms_p->history_type,
                                   hms_p->reading,
                                   &(hms_p->last_hist_entry));
-    hms_insert(hms_p, hms_p->last_hist_entry, false);
+    hms_insert(hms_p, hms_p->last_hist_entry, false, hms_p->reading);
   }
 }
 
@@ -1077,7 +1078,8 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
           shada_free_shada_entry(&cur_entry);
           break;
         }
-        hms_insert(hms + cur_entry.data.history_item.histtype, cur_entry, true);
+        hms_insert(hms + cur_entry.data.history_item.histtype, cur_entry, true,
+                   true);
         // Do not free shada entry: its allocated memory was saved above.
         break;
       }
