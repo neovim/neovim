@@ -2401,9 +2401,8 @@ static char_u *find_command(exarg_T *eap, int *full)
         break;
       }
 
-    /* Look for a user defined command as a last resort.  Let ":Print" be
-     * overruled by a user defined command. */
-    if ((eap->cmdidx == CMD_SIZE || eap->cmdidx == CMD_Print)
+    // Look for a user defined command as a last resort.
+    if ((eap->cmdidx == CMD_SIZE)
         && *eap->cmd >= 'A' && *eap->cmd <= 'Z') {
       /* User defined commands may contain digits. */
       while (ASCII_ISALNUM(*p))

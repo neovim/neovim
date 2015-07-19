@@ -3165,12 +3165,6 @@ return {
     func='ex_previous',
   },
   {
-    command='Print',
-    flags=bit.bor(RANGE, WHOLEFOLD, COUNT, EXFLAGS, TRLBAR, CMDWIN),
-    addr_type=ADDR_LINES,
-    func='ex_print',
-  },
-  {
     command='~',
     enum='CMD_tilde',
     flags=bit.bor(RANGE, WHOLEFOLD, EXTRA, CMDWIN, MODIFY),

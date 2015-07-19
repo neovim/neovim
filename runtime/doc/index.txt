@@ -1070,7 +1070,6 @@ tag	      command	      action ~
 |:@|		:@		execute contents of a register
 |:@@|		:@@		repeat the previous ":@"
 |:Next|		:N[ext]		go to previous file in the argument list
-|:Print|	:P[rint]	print lines
 |:append|	:a[ppend]	append text
 |:abbreviate|	:ab[breviate]	enter abbreviation
 |:abclear|	:abc[lear]	remove all abbreviations
