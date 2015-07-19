@@ -19,6 +19,12 @@
 /// Total possible number of global marks
 #define NGLOBALMARKS    (NMARKS + EXTRA_MARKS)
 
+/// Total possible number of local marks
+///
+/// That are uppercase marks plus '"', '^' and '.'. There are other local marks, 
+/// but they are not saved in ShaDa files.
+#define NLOCALMARKS     (NMARKS + 3)
+
 /// Maximum number of marks in jump list
 #define JUMPLISTSIZE    100
 

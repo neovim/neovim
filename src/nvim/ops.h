@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+#include "nvim/macros.h"
+#include "nvim/ascii.h"
 #include "nvim/types.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/os/time.h"
@@ -16,6 +18,22 @@ typedef int (*Indenter)(void);
 #define PUT_LINE         8      /* put register as lines */
 #define PUT_LINE_SPLIT   16     /* split line for linewise register */
 #define PUT_LINE_FORWARD 32     /* put linewise register below Visual sel. */
+
+/*
+ * Registers:
+ *      0 = register for latest (unnamed) yank
+ *   1..9 = registers '1' to '9', for deletes
+ * 10..35 = registers 'a' to 'z'
+ *     36 = delete register '-'
+ *     37 = selection register '*'
+ *     38 = clipboard register '+'
+ */
+#define DELETION_REGISTER 36
+#define NUM_SAVED_REGISTERS 37
+// The following registers should not be saved in ShaDa file:
+#define STAR_REGISTER 37
+#define PLUS_REGISTER 38
+#define NUM_REGISTERS 39
 
 /*
  * Operator IDs; The order must correspond to opchars[] in ops.c!
@@ -65,6 +83,31 @@ typedef struct yankreg {
   Timestamp timestamp;  ///< Time when register was last modified.
   Dictionary *additional_data;  ///< Additional data from ShaDa file.
 } yankreg_T;
+
+/// Convert register name into register index
+///
+/// @param[in]  regname  Register name.
+///
+/// @return Index in y_regs array or -1 if register name was not recognized.
+static inline int op_reg_index(const int regname)
+  FUNC_ATTR_CONST
+{
+  if (ascii_isdigit(regname)) {
+    return regname - '0';
+  } else if (ASCII_ISLOWER(regname)) {
+    return CharOrdLow(regname) + 10;
+  } else if (ASCII_ISUPPER(regname)) {
+    return CharOrdUp(regname) + 10;
+  } else if (regname == '-') {
+    return DELETION_REGISTER;
+  } else if (regname == '*') {
+    return STAR_REGISTER;
+  } else if (regname == '+') {
+    return PLUS_REGISTER;
+  } else {
+    return -1;
+  }
+}
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ops.h.generated.h"

@@ -1,6 +1,8 @@
 #ifndef NVIM_MARK_H
 #define NVIM_MARK_H
 
+#include "nvim/macros.h"
+#include "nvim/ascii.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/mark_defs.h"
 #include "nvim/memory.h"
@@ -45,6 +47,32 @@
       xfmarkp__->fname = fname_; \
       SET_FMARK(&(xfmarkp__->fmark), mark_, fnum_); \
     } while (0)
+
+/// Convert mark name to the offset
+static inline int mark_global_index(const char name)
+  FUNC_ATTR_CONST
+{
+  return (ASCII_ISUPPER(name)
+          ? (name - 'A')
+          : (ascii_isdigit(name)
+             ? (NMARKS + (name - '0'))
+             : -1));
+}
+
+/// Convert local mark name to the offset
+static inline int mark_local_index(const char name)
+  FUNC_ATTR_CONST
+{
+  return (ASCII_ISLOWER(name)
+          ? (name - 'a')
+          : (name == '"'
+             ? NMARKS
+             : (name == '^'
+                ? NMARKS + 1
+                : (name == '.'
+                   ? NMARKS + 2
+                   : -1))));
+}
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mark.h.generated.h"

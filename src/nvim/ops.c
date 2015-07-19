@@ -54,22 +54,6 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 
-/*
- * Registers:
- *      0 = register for latest (unnamed) yank
- *   1..9 = registers '1' to '9', for deletes
- * 10..35 = registers 'a' to 'z'
- *     36 = delete register '-'
- *     37 = selection register '*'
- *     38 = clipboard register '+'
- */
-#define DELETION_REGISTER 36
-#define NUM_SAVED_REGISTERS 37
-// The following registers should not be saved in ShaDa file:
-#define STAR_REGISTER 37
-#define PLUS_REGISTER 38
-#define NUM_REGISTERS 39
-
 static yankreg_T y_regs[NUM_REGISTERS];
 
 static yankreg_T *y_previous = NULL; /* ptr to last written yankreg */
@@ -749,31 +733,6 @@ typedef enum {
   YREG_PUT,
 } yreg_mode_t;
 
-/// Convert register name into register index
-///
-/// @param[in]  regname  Register name.
-///
-/// @return Index in y_regs array or -1 if register name was not recognized.
-static inline int reg_index(const int regname)
-  FUNC_ATTR_CONST
-{
-  if (ascii_isdigit(regname)) {
-    return regname - '0';
-  } else if (ASCII_ISLOWER(regname)) {
-    return CharOrdLow(regname) + 10;
-  } else if (ASCII_ISUPPER(regname)) {
-    return CharOrdUp(regname) + 10;
-  } else if (regname == '-') {
-    return DELETION_REGISTER;
-  } else if (regname == '*') {
-    return STAR_REGISTER;
-  } else if (regname == '+') {
-    return PLUS_REGISTER;
-  } else {
-    return -1;
-  }
-}
-
 /// Return yankreg_T to use, according to the value of `regname`.
 /// Cannot handle the '_' (black hole) register.
 /// Must only be called with a valid register name!
@@ -806,7 +765,7 @@ yankreg_T *get_yank_register(int regname, int mode)
     return y_previous;
   }
 
-  int i = reg_index(regname);
+  int i = op_reg_index(regname);
   // when not 0-9, a-z, A-Z or '-'/'+'/'*': use register 0
   if (i == -1) {
     i = 0;
@@ -5417,7 +5376,7 @@ size_t op_register_amount(void)
 /// Set register to a given value
 void register_set(const char name, const yankreg_T reg)
 {
-  int i = reg_index(name);
+  int i = op_reg_index(name);
   if (i == -1) {
     return;
   }

@@ -1350,12 +1350,8 @@ size_t mark_buffer_amount(const buf_T *const buf)
 ///                     later then existing one.
 void mark_set_global(const char name, const xfmark_T fm, const bool update)
 {
-  xfmark_T *fm_tgt = NULL;
-  if (ASCII_ISUPPER(name)) {
-    fm_tgt = &(namedfm[name - 'A']);
-  } else if (ascii_isdigit(name)) {
-    fm_tgt = &(namedfm[NMARKS + (name - '0')]);
-  } else {
+  xfmark_T *fm_tgt = &(namedfm[mark_global_index(name)]);
+  if (fm_tgt == &namedfm[-1]) {
     return;
   }
   if (update && fm.fmark.timestamp < fm_tgt->fmark.timestamp) {

@@ -196,6 +196,7 @@ static const double __ac_HASH_UPPER = 0.77;
 
 #define __KHASH_PROTOTYPES(name, khkey_t, khval_t)	 					\
 	extern kh_##name##_t *kh_init_##name(void);							\
+	extern void kh_dealloc_##name(kh_##name##_t *h);					\
 	extern void kh_destroy_##name(kh_##name##_t *h);					\
 	extern void kh_clear_##name(kh_##name##_t *h);						\
 	extern khint_t kh_get_##name(const kh_##name##_t *h, khkey_t key); 	\
@@ -204,16 +205,24 @@ static const double __ac_HASH_UPPER = 0.77;
 	extern void kh_del_##name(kh_##name##_t *h, khint_t x);
 
 #define __KHASH_IMPL(name, SCOPE, khkey_t, khval_t, kh_is_map, __hash_func, __hash_equal) \
+	SCOPE kh_##name##_t *kh_init_##name(void) \
+		REAL_FATTR_UNUSED; \
 	SCOPE kh_##name##_t *kh_init_##name(void) {							\
 		return (kh_##name##_t*)kcalloc(1, sizeof(kh_##name##_t));		\
+	}																	\
+	SCOPE void kh_dealloc_##name(kh_##name##_t *h)						\
+		REAL_FATTR_UNUSED;                                      \
+	SCOPE void kh_dealloc_##name(kh_##name##_t *h)						\
+	{																	\
+		kfree((void *)h->keys); kfree(h->flags);					\
+		kfree((void *)h->vals);										\
 	}																	\
 	SCOPE void kh_destroy_##name(kh_##name##_t *h)						\
 		REAL_FATTR_UNUSED;                                      \
 	SCOPE void kh_destroy_##name(kh_##name##_t *h)						\
 	{																	\
 		if (h) {														\
-			kfree((void *)h->keys); kfree(h->flags);					\
-			kfree((void *)h->vals);										\
+			kh_dealloc_##name(h); \
 			kfree(h);													\
 		}																\
 	}																	\
@@ -445,6 +454,13 @@ static kh_inline khint_t __ac_Wang_hash(khint_t key)
   @param  h     Pointer to the hash table [khash_t(name)*]
  */
 #define kh_destroy(name, h) kh_destroy_##name(h)
+
+/*! @function
+  @abstract     Free memory referenced directly inside a hash table.
+  @param  name  Name of the hash table [symbol]
+  @param  h     Pointer to the hash table [khash_t(name)*]
+ */
+#define kh_dealloc(name, h) kh_dealloc_##name(h)
 
 /*! @function
   @abstract     Reset a hash table without deallocating memory.
