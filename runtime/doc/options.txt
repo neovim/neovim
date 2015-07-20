@@ -3519,7 +3519,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	A history of ":" commands, and a history of previous search patterns
 	is remembered.  This option decides how many entries may be stored in
 	each of these histories (see |cmdline-editing|).
-	The maximum value is 10000.
+	Vim's default is the maximum value.
 
 					 *'hkmap'* *'hk'* *'nohkmap'* *'nohk'*
 'hkmap' 'hk'		boolean (default off)
