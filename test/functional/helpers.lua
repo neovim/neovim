@@ -290,6 +290,28 @@ local function expect(contents)
   return eq(dedent(contents), curbuf_contents())
 end
 
+local function rmdir(path)
+  if lfs.attributes(path, 'mode') ~= 'directory' then
+    return nil
+  end
+  for file in lfs.dir(path) do
+    if file == '.' or file == '..' then
+      goto continue
+    end
+    ret, err = os.remove(path..'/'..file)
+    if not ret then
+      error('os.remove: '..err)
+      return nil
+    end
+    ::continue::
+  end
+  ret, err = os.remove(path)
+  if not ret then
+    error('os.remove: '..err)
+  end
+  return ret
+end
+
 return {
   clear = clear,
   spawn = spawn,
@@ -321,5 +343,6 @@ return {
   curbuf_contents = curbuf_contents,
   wait = wait,
   set_session = set_session,
-  write_file = write_file
+  write_file = write_file,
+  rmdir = rmdir
 }
