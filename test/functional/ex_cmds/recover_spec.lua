@@ -20,11 +20,11 @@ describe(':preserve', function()
   local swapdir = lfs.currentdir()..'/testdir_recover_spec'
   before_each(function()
     clear()
-    os.remove(swapdir)
+    helpers.rmdir(swapdir)
     lfs.mkdir(swapdir)
   end)
   after_each(function()
-    os.remove(swapdir)
+    helpers.rmdir(swapdir)
   end)
 
   it("saves to custom 'directory' and (R)ecovers (issue #1836)", function()
