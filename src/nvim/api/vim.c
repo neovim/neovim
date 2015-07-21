@@ -244,7 +244,7 @@ Object vim_call_dict_function(Object self, Boolean internal, String fname,
 
   // Assign dictionary to self_dict
   typval_T *tmp_dict = NULL;
-  typval_T rettv;
+  typval_T rettv;  // implicitly freed when tmp_dict is freed
   bool clear_after_eval = false;
   switch (self.type) {
     case kObjectTypeString:
@@ -282,26 +282,23 @@ Object vim_call_dict_function(Object self, Boolean internal, String fname,
   if (!self_dict) {
     api_set_error(err, Validation,
         _("Referenced self dictionary does not exist"));
-    free_tv(tmp_dict);
-    return rv;
+    goto cleanup_dict;
   }
 
   // Set the function to call
   String func = STRING_INIT;
-  if (internal) {
+  if (internal /* && self.type == kObjectTypeString */) {
     hashitem_T *f = hash_find(&self_dict->dv_hashtab, (char_u *) fname.data);
     if (!f || HASHITEM_EMPTY(f)) {
       api_set_error(err, Validation,
           _("Function not found in self dictionary"));
-      free_tv(tmp_dict);
-      return rv;
+      goto cleanup_dict;
     }
     dictitem_T *ifname = dict_lookup(f);
     if (ifname->di_tv.v_type != VAR_STRING) {
       api_set_error(err, Validation,
           _("Value inside self dictionary is not a valid function name"));
-      free_tv(tmp_dict);
-      return rv;
+      goto cleanup_dict;
     }
     func.data = (char *) ifname->di_tv.vval.v_string;
     func.size = STRLEN(func.data);
@@ -312,15 +309,16 @@ Object vim_call_dict_function(Object self, Boolean internal, String fname,
   if (!func.data || func.size < 1) {
     api_set_error(err, Validation,
         _("Trying to call an empty function"));
-    free_tv(tmp_dict);
-    return rv;
+    goto cleanup_dict;
   }
 
   // Finally try to call the function
   rv = call_function(func, args, self_dict, err);
+cleanup_dict:
   if (clear_after_eval) {
     free_tv(tmp_dict);
   }
+
   return rv;
 }
 
