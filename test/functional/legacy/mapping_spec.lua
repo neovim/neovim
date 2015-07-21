@@ -23,15 +23,26 @@ describe('mapping', function()
     execute('set langmap=+{ langnoremap')
     feed('o+<esc>')
 
-    -- expr mapping with langmap.
+    -- Insert mode expr mapping with langmap.
     execute('inoremap <expr> { "FAIL_iexplangmap"')
     feed('o+<esc>')
 
+    -- langmap should not get remapped in cmdline mode.
+    execute('cnoremap { FAIL_clangmap')
+    feed('o+<esc>')
+    execute('cunmap {')
+
+    -- cmdline mode expr mapping with langmap.
+    execute('cnoremap <expr> { "FAIL_cexplangmap"')
+    feed('o+<esc>')
+    execute('cunmap {')
 
     -- Assert buffer contents.
     expect([[
       test starts here:
       vim 
+      +
+      +
       +
       +]])
   end)
