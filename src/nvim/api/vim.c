@@ -246,30 +246,37 @@ Object vim_call_dict_function(Object self, Boolean internal, String fname,
   typval_T *tmp_dict = NULL;
   typval_T rettv;
   bool clear_after_eval = false;
-  if (self.type == kObjectTypeString) {
-    try_start();
-    tmp_dict = eval_expr((char_u *) self.data.string.data, NULL);
-    if (!tmp_dict) {
-      api_set_error(err, Exception, _("Failed to evaluate self expression"));
-    }
-    if (try_end(err)) {
-      return rv;
-    }
-    clear_after_eval = true;
-  } else if (self.type == kObjectTypeDictionary) {
-    if (internal) {
+  switch (self.type) {
+    case kObjectTypeString:
+      try_start();
+      tmp_dict = eval_expr((char_u *) self.data.string.data, NULL);
+      if (!tmp_dict) {
+        api_set_error(err, Exception, _("Failed to evaluate self expression"));
+      }
+      if (try_end(err)) {
+        return rv;
+      }
+      // The evaluation of the string argument either created a new dictionary or
+      // it increased the reference count of a dictionary. So we have to call
+      // free_tv on the dict in the end. This is not necessary for a dict inside a
+      // msgpack-rpc object
+      clear_after_eval = true;
+      break;
+    case kObjectTypeDictionary:
+      if (internal) {
+        api_set_error(err, Validation,
+            _("Function references are not supported for msgpack-rpc dictionaries")); // NOLINT
+        return rv;
+      } else if (!object_to_vim(self, &rettv, err)) {
+        free_tv(&rettv);
+        return rv;
+      }
+      tmp_dict = &rettv;
+      break;
+    default:
       api_set_error(err, Validation,
-          _("Function references are not supported for msgpack-rpc dictionaries")); // NOLINT
+          _("self Argument is neither a string nor a dictionary"));
       return rv;
-    } else if (!object_to_vim(self, &rettv, err)) {
-      free_tv(&rettv);
-      return rv;
-    }
-    tmp_dict = &rettv;
-  } else {
-    api_set_error(err, Validation,
-        _("self Argument is neither a string nor a dictionary"));
-    return rv;
   }
   self_dict = tmp_dict->vval.v_dict;
   if (!self_dict) {
@@ -292,7 +299,7 @@ Object vim_call_dict_function(Object self, Boolean internal, String fname,
     dictitem_T *ifname = dict_lookup(f);
     if (ifname->di_tv.v_type != VAR_STRING) {
       api_set_error(err, Validation,
-          _("Value inside self dictionary is not a name"));
+          _("Value inside self dictionary is not a valid function name"));
       free_tv(tmp_dict);
       return rv;
     }
