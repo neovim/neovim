@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <limits.h>
 
 #include <uv.h>
 #include <unibilium.h>
@@ -350,6 +351,10 @@ static void tui_resize(UI *ui, int width, int height)
   data->scroll_region.left = 0;
   data->scroll_region.right = width - 1;
   data->row = data->col = 0;
+  // try to resize the terminal window
+  char r[16];  // enough for 9999x9999
+  snprintf(r, sizeof(r), "\x1b[8;%d;%dt", height, width);
+  out(ui, r, strlen(r));
 }
 
 static void tui_clear(UI *ui)
@@ -641,12 +646,23 @@ static void update_size(UI *ui)
 {
   TUIData *data = ui->data;
   int width = 0, height = 0;
-  // 1 - try from a system call(ioctl/TIOCGWINSZ on unix)
+
+  // 1 - if starting and the 'columns' and 'lines' options are not
+  // the defaults, use their values
+  if (starting != 0 && (Columns != DFLT_COLS || Rows != DFLT_LINES)) {
+    assert(Columns >= INT_MIN && Columns <= INT_MAX);
+    assert(Rows >= INT_MIN && Rows <= INT_MAX);
+    width = (int)Columns;
+    height = (int)Rows;
+    goto end;
+  }
+
+  // 2 - try from a system call(ioctl/TIOCGWINSZ on unix)
   if (!uv_tty_get_winsize(&data->output_handle, &width, &height)) {
     goto end;
   }
 
-  // 2 - use $LINES/$COLUMNS if available
+  // 3 - use $LINES/$COLUMNS if available
   const char *val;
   int advance;
   if ((val = os_getenv("LINES"))
@@ -656,15 +672,15 @@ static void update_size(UI *ui)
     goto end;
   }
 
-  // 3- read from terminfo if available
+  // 4 - read from terminfo if available
   height = unibi_get_num(data->ut, unibi_lines);
   width = unibi_get_num(data->ut, unibi_columns);
 
 end:
   if (width <= 0 || height <= 0) {
-    // use a default of 80x24
-    width = 80;
-    height = 24;
+    // use the defaults
+    width = DFLT_COLS;
+    height = DFLT_LINES;
   }
 
   ui->width = width;
