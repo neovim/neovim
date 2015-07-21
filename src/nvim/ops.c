@@ -765,7 +765,10 @@ yankreg_T *get_yank_register(int regname, int mode)
   if (mode == YREG_PASTE && get_clipboard(regname, &reg, false)) {
     // reg is set to clipboard contents.
     return reg;
-  } else if (mode != YREG_YANK && (regname == 0 || regname == '"') && y_previous != NULL) {
+  } else if (mode != YREG_YANK
+      && (regname == 0 || regname == '"' || regname == '*' || regname == '+')
+      && y_previous != NULL) {
+    // in case clipboard not available, paste from previous used register
     return y_previous;
   }
 
