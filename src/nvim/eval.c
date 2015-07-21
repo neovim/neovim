@@ -7102,8 +7102,16 @@ static inline int get_float_arg(typval_T *argvars, float_T *f)
 }
 
 // Apply a floating point C function on a typval with one float_T.
-static inline void float_op_wrapper(typval_T *argvars, typval_T *rettv,
-                                    float_T (*function)(float_T))
+//
+// Some versions of glibc on i386 have an optimization that makes it harder to
+// call math functions indirectly from inside an inlined function, causing
+// compile-time errors with some versions of gcc. We avoid trying to inline
+// float_op_wrapper on that platform.
+#ifndef ARCH_32
+inline
+#endif
+static void float_op_wrapper(typval_T *argvars, typval_T *rettv,
+                             float_T (*function)(float_T))
 {
   float_T f;
 
