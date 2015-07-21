@@ -4415,7 +4415,9 @@ int do_addsub(int command, linenr_T Prenum1)
     ins_str(buf1);              /* insert the new number */
     xfree(buf1);
   }
-  --curwin->w_cursor.col;
+  if (curwin->w_cursor.col > 0) {
+    --curwin->w_cursor.col;
+  }
   curwin->w_set_curswant = TRUE;
   ptr = ml_get_buf(curbuf, curwin->w_cursor.lnum, TRUE);
   RLADDSUBFIX(ptr);
