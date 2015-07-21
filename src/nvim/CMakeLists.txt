@@ -82,7 +82,6 @@ set(CONV_SOURCES
   ex_getln.c
   fileio.c
   getchar.c
-  if_cscope.c
   mbyte.c
   memline.c
   message.c
