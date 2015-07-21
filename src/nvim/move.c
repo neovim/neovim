@@ -70,27 +70,29 @@ static void comp_botline(win_T *wp)
     done = 0;
   }
 
-  for (int n; lnum <= wp->w_buffer->b_ml.ml_line_count; ++lnum) {
+  for (; lnum <= wp->w_buffer->b_ml.ml_line_count; ++lnum) {
+    int n;
     linenr_T last = lnum;
     bool folded = false;
+
     if (hasFoldingWin(wp, lnum, NULL, &last, true, NULL)) {
       n = 1;
       folded = true;
-    } else if (lnum == wp->w_topline)
+    } else if (lnum == wp->w_topline) {
       n = plines_win_nofill(wp, lnum, true) + wp->w_topfill;
-    else
+    } else {
       n = plines_win(wp, lnum, true);
-    if (
-      lnum <= wp->w_cursor.lnum && last >= wp->w_cursor.lnum
-      ) {
+    }
+    if (lnum <= wp->w_cursor.lnum && last >= wp->w_cursor.lnum) {
       wp->w_cline_row = done;
       wp->w_cline_height = n;
       wp->w_cline_folded = folded;
       redraw_for_cursorline(wp);
       wp->w_valid |= (VALID_CROW|VALID_CHEIGHT);
     }
-    if (done + n > wp->w_height)
+    if (done + n > wp->w_height) {
       break;
+    }
     done += n;
     lnum = last;
   }
