@@ -1758,7 +1758,7 @@ static int vgetorpeek(int advance)
             if (c1 == K_SPECIAL)
               nolmaplen = 2;
             else {
-              LANGMAP_ADJUST(c1, (State & INSERT) == 0);
+              LANGMAP_ADJUST(c1, (State & (CMDLINE | INSERT)) == 0);
               nolmaplen = 0;
             }
             /* First try buffer-local mappings. */
