@@ -30,6 +30,7 @@
 #include "nvim/if_cscope.h"
 #include "nvim/indent.h"
 #include "nvim/main.h"
+#include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/menu.h"
