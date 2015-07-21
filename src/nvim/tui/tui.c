@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <limits.h>
 
 #include <uv.h>
 #include <unibilium.h>
@@ -648,7 +649,9 @@ static void update_size(UI *ui)
 
   // 1 - if starting and the 'columns' and 'lines' options are not
   // the defaults, use their values
-  if (starting && (Columns != 80 || Rows != 24)) {
+  if (starting != 0 && (Columns != DFLT_COLS || Rows != DFLT_LINES)) {
+    assert(Columns >= INT_MIN && Columns <= INT_MAX);
+    assert(Rows >= INT_MIN && Rows <= INT_MAX);
     width = (int)Columns;
     height = (int)Rows;
     goto end;
@@ -675,9 +678,9 @@ static void update_size(UI *ui)
 
 end:
   if (width <= 0 || height <= 0) {
-    // use a default of 80x24
-    width = 80;
-    height = 24;
+    // use the defaults
+    width = DFLT_COLS;
+    height = DFLT_LINES;
   }
 
   ui->width = width;

@@ -537,7 +537,7 @@ static vimoption_T
    {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
   {"columns",     "co",   P_NUM|P_NODEFAULT|P_NO_MKRC|P_VI_DEF|P_RCLR,
    (char_u *)&Columns, PV_NONE,
-   {(char_u *)80L, (char_u *)0L} SCRIPTID_INIT},
+   {(char_u *)DFLT_COLS, (char_u *)0L} SCRIPTID_INIT},
   {"comments",    "com",  P_STRING|P_ALLOCED|P_VI_DEF|P_COMMA|P_NODUP|
    P_CURSWANT,
    (char_u *)&p_com, PV_COM,
@@ -1025,7 +1025,7 @@ static vimoption_T
   {"lines",       NULL,   P_NUM|P_NODEFAULT|P_NO_MKRC|P_VI_DEF|P_RCLR,
    (char_u *)&Rows, PV_NONE,
    {
-     (char_u *)24L,
+     (char_u *)DFLT_LINES,
      (char_u *)0L
    } SCRIPTID_INIT},
   {"linespace",   "lsp",  P_NUM|P_VI_DEF|P_RCLR,
