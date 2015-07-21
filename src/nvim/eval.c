@@ -7102,8 +7102,11 @@ static inline int get_float_arg(typval_T *argvars, float_T *f)
 }
 
 // Apply a floating point C function on a typval with one float_T.
-static inline void float_op_wrapper(typval_T *argvars, typval_T *rettv,
-                                    float_T (*function)(float_T))
+#ifndef __i386__
+inline
+#endif
+static void float_op_wrapper(typval_T *argvars, typval_T *rettv,
+                             float_T (*function)(float_T))
 {
   float_T f;
 
