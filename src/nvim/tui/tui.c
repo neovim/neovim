@@ -756,12 +756,10 @@ static void fix_terminfo(TUIData *data)
     unibi_set_if_empty(ut, unibi_from_status_line, "\x07");
   }
 
-  if (STARTS_WITH(term, "xterm") || STARTS_WITH(term, "rxvt") || inside_tmux) {
-    data->unibi_ext.enable_bracketed_paste = (int)unibi_add_ext_str(ut, NULL,
-        "\x1b[?2004h");
-    data->unibi_ext.disable_bracketed_paste = (int)unibi_add_ext_str(ut, NULL,
-        "\x1b[?2004l");
-  }
+  data->unibi_ext.enable_bracketed_paste = (int)unibi_add_ext_str(ut, NULL,
+      "\x1b[?2004h");
+  data->unibi_ext.disable_bracketed_paste = (int)unibi_add_ext_str(ut, NULL,
+      "\x1b[?2004l");
 
 #define XTERM_SETAF \
   "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38;5;%p1%d%;m"
