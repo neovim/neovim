@@ -718,8 +718,8 @@ static int nfa_recognize_char_class(char_u *start, char_u *end, int extra_newl)
  */
 static void nfa_emit_equi_class(int c)
 {
-#define EMIT2(c)    EMIT(c); EMIT(NFA_CONCAT);
-# define EMITMBC(c) EMIT(c); EMIT(NFA_CONCAT);
+#define EMIT2(c)   EMIT(c); EMIT(NFA_CONCAT);
+#define EMITMBC(c) EMIT(c); EMIT(NFA_CONCAT);
 
   if (enc_utf8 || STRCMP(p_enc, "latin1") == 0
       || STRCMP(p_enc, "iso-8859-15") == 0) {
@@ -908,10 +908,10 @@ static void nfa_emit_equi_class(int c)
       EMITMBC(0x10b) EMITMBC(0x10d)
       return;
 
-    case 'd': CASEMBC(0x10f) CASEMBC(0x111) CASEMBC(0x1d0b)
-      CASEMBC(0x1e11)
+    case 'd': CASEMBC(0x10f) CASEMBC(0x111) CASEMBC(0x1e0b)
+      CASEMBC(0x1e0f) CASEMBC(0x1e11)
       EMIT2('d'); EMITMBC(0x10f) EMITMBC(0x111) EMITMBC(0x1e0b)
-      EMITMBC(0x01e0f) EMITMBC(0x1e11)
+      EMITMBC(0x1e0f) EMITMBC(0x1e11)
       return;
 
     case 'e': case 0350: case 0351: case 0352: case 0353:
