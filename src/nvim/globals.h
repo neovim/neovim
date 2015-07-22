@@ -59,7 +59,7 @@
 /* Values for "starting" */
 #define NO_SCREEN       2       /* no screen updating yet */
 #define NO_BUFFERS      1       /* not all buffers loaded yet */
-/*			0	   not starting anymore */
+/*                      0          not starting anymore */
 
 /*
  * Number of Rows and Columns in the screen.
@@ -68,12 +68,16 @@
  * They may have different values when the screen wasn't (re)allocated yet
  * after setting Rows or Columns (e.g., when starting up).
  */
+
+#define DFLT_COLS       80              /* default value for 'columns' */
+#define DFLT_ROWS       24              /* default value for 'lines' */
+
 EXTERN long Rows                        /* nr of rows in the screen */
 #ifdef DO_INIT
-  = 24L
+  = DFLT_ROWS
 #endif
 ;
-EXTERN long Columns INIT(= 80);         /* nr of columns in the screen */
+EXTERN long Columns INIT(= DFLT_COLS);         /* nr of columns in the screen */
 
 /*
  * The characters and attributes cached for the screen.
