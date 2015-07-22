@@ -6,10 +6,10 @@ project(NEOVIM_DEPS)
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 set(DEPS_INSTALL_DIR "${CMAKE_BINARY_DIR}/usr" CACHE PATH "Dependencies install directory.")
-set(DEPS_BIN_DIR "${DEPS_INSTALL_DIR}/bin")
-set(DEPS_LIB_DIR "${DEPS_INSTALL_DIR}/lib")
-set(DEPS_BUILD_DIR "${CMAKE_BINARY_DIR}/build")
-set(DEPS_DOWNLOAD_DIR "${DEPS_BUILD_DIR}/downloads")
+set(DEPS_BIN_DIR "${DEPS_INSTALL_DIR}/bin" CACHE PATH "Dependencies binary install directory.")
+set(DEPS_LIB_DIR "${DEPS_INSTALL_DIR}/lib" CACHE PATH "Dependencies library install directory.")
+set(DEPS_BUILD_DIR "${CMAKE_BINARY_DIR}/build" CACHE PATH "Dependencies build directory.")
+set(DEPS_DOWNLOAD_DIR "${DEPS_BUILD_DIR}/downloads" CACHE PATH "Dependencies download directory.")
 
 option(USE_BUNDLED "Use bundled dependencies." ON)
 
