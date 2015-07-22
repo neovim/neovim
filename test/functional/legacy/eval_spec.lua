@@ -42,20 +42,6 @@ describe('various eval features', function()
           endif
       endfun
       ]])
-    write_file('test_eval_func.vim', [[
-      " Vim script used in test_eval.in.  Needed for script-local function.
-      
-      func! s:Testje()
-        return "foo"
-      endfunc
-      
-      let Bar = function('s:Testje')
-      
-      $put ='s:Testje exists: ' . exists('s:Testje')
-      $put ='func s:Testje exists: ' . exists('*s:Testje')
-      $put ='Bar exists: ' . exists('Bar')
-      $put ='func Bar exists: ' . exists('*Bar')
-      ]])
   end)
   before_each(clear)
   teardown(function()
@@ -578,57 +564,40 @@ describe('various eval features', function()
       Vim(call):E730: using List as a String]])
   end)
 
-  it('', function()
-    execute('so test_eval_setup.vim')
-  end)
-
-  it('are working', function()
-    insert([[
-      012345678
-      012345678
-      
-      start:]])
-
-    execute('so test_eval_setup.vim')
-
-    execute('delfunction SetReg')
-    execute('delfunction AppendRegContents')
-    execute('delfunction ErrExe')
-    execute('delcommand AR')
-    execute('call garbagecollect(1)')
-
-    execute('/^start:/+1,$w! test.out')
-    -- Vim: et ts=4 isk-=\: fmr=???,???. -- TODO
-    --execute('call getchar()') -- TODO
-    execute('e! test.out')
-    execute('%d')
-    -- Function name not starting with a capital.
+  it('function name not starting with a capital', function()
     execute('try')
     execute('  func! g:test()')
     execute('    echo "test"')
     execute('  endfunc')
     execute('catch')
-    execute('  $put =v:exception')
     execute('  let tmp = v:exception')
     execute('endtry')
     eq('Vim(function):E128: Function name must start with a capital or "s:": g:test()', eval('tmp'))
-    -- Function name folowed by #.
+  end)
+
+  it('Function name folowed by #', function()
     execute('try')
     execute('  func! test2() "#')
     execute('    echo "test2"')
     execute('  endfunc')
     execute('catch')
-    execute('  $put =v:exception')
+    execute('  let tmp = v:exception')
     execute('endtry')
-    -- Function name includes a colon.
+    eq('Vim(function):E128: Function name must start with a capital or "s:": test2() "#', eval('tmp'))
+  end)
+
+  it('function name includes a colon', function()
     execute('try')
     execute('  func! b:test()')
     execute('    echo "test"')
     execute('  endfunc')
     execute('catch')
-    execute('  $put =v:exception')
+    execute('  let tmp = v:exception')
     execute('endtry')
-    -- Function name starting with/without "g:", buffer-local funcref.
+    eq('Vim(function):E128: Function name must start with a capital or "s:": b:test()', eval('tmp'))
+  end)
+
+  it('function name starting with/without "g:", buffer-local funcref', function()
     execute('function! g:Foo(n)')
     execute("  $put ='called Foo(' . a:n . ')'")
     execute('endfunction')
@@ -636,15 +605,51 @@ describe('various eval features', function()
     execute('call b:my_func(1)')
     execute('echo g:Foo(2)')
     execute('echo Foo(3)')
-    -- Script-local function used in Funcref must exist.
-    execute('so test_eval_func.vim')
-    -- Using $ instead of '$' must give an error.
+    expect([[
+      
+      called Foo(1)
+      called Foo(2)
+      called Foo(3)]])
+  end)
+
+  it('script-local function used in Funcref must exist', function()
+    source([[
+      " Vim script used in test_eval.in.  Needed for script-local function.
+      
+      func! s:Testje()
+        return "foo"
+      endfunc
+      
+      let Bar = function('s:Testje')
+      
+      $put ='s:Testje exists: ' . exists('s:Testje')
+      $put ='func s:Testje exists: ' . exists('*s:Testje')
+      $put ='Bar exists: ' . exists('Bar')
+      $put ='func Bar exists: ' . exists('*Bar')
+      ]])
+    expect([[
+      
+      s:Testje exists: 0
+      func s:Testje exists: 1
+      Bar exists: 1
+      func Bar exists: 1]])
+  end)
+
+  it("using $ instead of '$' must give an error", function()
     execute('try')
     execute("  call append($, 'foobar')")
     execute('catch')
-    execute('  $put =v:exception')
+    execute('  let tmp = v:exception')
     execute('endtry')
-    execute("$put ='{{{1 getcurpos/setpos'")
+    eq('Vim(call):E116: Invalid arguments for function append', eval('tmp'))
+  end)
+
+  it('getcurpos/setpos', function()
+    insert([[
+      012345678
+      012345678
+
+      start:]])
     execute('/^012345678')
     feed('6l')
     execute('let sp = getcurpos()')
@@ -652,10 +657,11 @@ describe('various eval features', function()
     execute("call setpos('.', sp)")
     feed('jyl')
     execute('$put')
-    execute('0,/^start:/ delete')
-    -- Vim: et ts=4 isk-=\: fmr=???,???. TODO does this affect the test?
-    --execute('call getchar()')
+    expect([[
+      012345678
+      012345678
 
-    -- Assert buffer contents.
+      start:
+      6]])
   end)
 end)
