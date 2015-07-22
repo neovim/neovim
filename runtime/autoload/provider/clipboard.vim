@@ -4,8 +4,8 @@
 let s:copy = {}
 let s:paste = {}
 
-" When caching is enabled, store the jobid of the xclip/xsel process keeping
-" ownership of the selection, so we know how long the cache is valid.
+" Store the jobid of the copy/paste process keeping ownership of the
+" selection, so we know how long the cache is valid.
 let s:selection = { 'owner': 0, 'data': [] }
 
 function! s:selection.on_exit(jobid, data, event)
@@ -30,13 +30,11 @@ function! s:try_cmd(cmd, ...)
   return out
 endfunction
 
-let s:cache_enabled = 1
 if executable('pbcopy')
   let s:copy['+'] = 'pbcopy'
   let s:paste['+'] = 'pbpaste'
   let s:copy['*'] = s:copy['+']
   let s:paste['*'] = s:paste['+']
-  let s:cache_enabled = 0
 elseif executable('xclip')
   let s:copy['+'] = 'xclip -quiet -i -selection clipboard'
   let s:paste['+'] = 'xclip -o -selection clipboard'
@@ -62,11 +60,6 @@ function! s:clipboard.get(reg)
 endfunction
 
 function! s:clipboard.set(lines, regtype, reg)
-  if s:cache_enabled == 0
-    call s:try_cmd(s:copy[a:reg], a:lines)
-    return 0
-  end
-
   let selection = s:selections[a:reg]
   if selection.owner > 0
     " The previous provider instance should exit when the new one takes
@@ -88,5 +81,11 @@ function! s:clipboard.set(lines, regtype, reg)
 endfunction
 
 function! provider#clipboard#Call(method, args)
-  return call(s:clipboard[a:method],a:args,s:clipboard)
+  if a:method == 'get'
+    let data = s:selections[a:args[0]].data  " empty or [lines, regtype]
+    let regtype = get(data, 1, 'v')
+    return [call(s:clipboard[a:method], a:args, s:clipboard), regtype]
+  else  " 'set'
+    return call(s:clipboard[a:method], a:args, s:clipboard)
+  endif
 endfunction

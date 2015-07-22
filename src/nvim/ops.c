@@ -5305,27 +5305,26 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
   char_u regname = name;
   list_append_string(args, &regname, 1);
 
-  typval_T result = eval_call_provider("clipboard", "get", args);
-
-  if (result.v_type != VAR_LIST) {
-    if (result.v_type == VAR_NUMBER && result.vval.v_number == 0) {
-      // failure has already been indicated by provider
-      errmsg = false;
-    }
+  typval_T eval = eval_call_provider("clipboard", "get", args);
+  list_T *result = eval.vval.v_list;
+  // result on success: [['line1', 'line2', ..], regtype]
+  // result on error:   [0, regtype]
+  if (result->lv_first->li_tv.v_type == VAR_NUMBER
+      && result->lv_first->li_tv.vval.v_number == 0) {
+    // failure has already been indicated by provider
+    errmsg = false;
     goto err;
   }
 
-  list_T *res = result.vval.v_list, *lines = NULL;
-  if (res->lv_len == 2 && res->lv_first->li_tv.v_type == VAR_LIST) {
-    lines = res->lv_first->li_tv.vval.v_list;
-    if (res->lv_last->li_tv.v_type != VAR_STRING) {
-      goto err;
-    }
-    char_u *regtype = res->lv_last->li_tv.vval.v_string;
-    if (regtype == NULL || strlen((char*)regtype) > 1) {
-      goto err;
-    }
-    switch (regtype[0]) {
+  if (result->lv_last->li_tv.v_type != VAR_STRING) {
+    goto err;
+  }
+  char_u *regtype = result->lv_last->li_tv.vval.v_string;
+  if (regtype == NULL || strlen((char *)regtype) > 1) {
+    goto err;
+  }
+
+  switch (regtype[0]) {
     case 0:
       reg->y_type = MAUTO;
       break;
@@ -5340,15 +5339,11 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
       break;
     default:
       goto err;
-    }
-  } else {
-    lines = res;
-    // provider did not specify regtype, calculate it below
-    reg->y_type = MAUTO;
   }
 
-  reg->y_array = xcalloc(lines->lv_len, sizeof(uint8_t *));
+  list_T *lines = result->lv_first->li_tv.vval.v_list;
   reg->y_size = lines->lv_len;
+  reg->y_array = xcalloc(reg->y_size, sizeof(uint8_t *));
 
   int i = 0;
   for (listitem_T *li = lines->lv_first; li != NULL; li = li->li_next) {
