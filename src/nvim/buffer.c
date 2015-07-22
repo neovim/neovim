@@ -2159,9 +2159,23 @@ void buflist_list(exarg_T *eap)
   int i;
 
   for (buf = firstbuf; buf != NULL && !got_int; buf = buf->b_next) {
-    /* skip unlisted buffers, unless ! was used */
-    if (!buf->b_p_bl && !eap->forceit)
+    // skip unspecified buffers
+    if ((!buf->b_p_bl && !eap->forceit && !strchr((char *)eap->arg, 'u'))
+        || (strchr((char *)eap->arg, 'u') && buf->b_p_bl)
+        || (strchr((char *)eap->arg, '+')
+            && ((buf->b_flags & BF_READERR) || !bufIsChanged(buf)))
+        || (strchr((char *)eap->arg, 'a')
+            && (buf->b_ml.ml_mfp == NULL || buf->b_nwindows == 0))
+        || (strchr((char *)eap->arg, 'h')
+            && (buf->b_ml.ml_mfp == NULL || buf->b_nwindows != 0))
+        || (strchr((char *)eap->arg, '-') && buf->b_p_ma)
+        || (strchr((char *)eap->arg, '=') && !buf->b_p_ro)
+        || (strchr((char *)eap->arg, 'x') && !(buf->b_flags & BF_READERR))
+        || (strchr((char *)eap->arg, '%') && buf != curbuf)
+        || (strchr((char *)eap->arg, '#')
+            && (buf == curbuf || curwin->w_alt_fnum != buf->b_fnum))) {
       continue;
+    }
     msg_putchar('\n');
     if (buf_spname(buf) != NULL)
       STRLCPY(NameBuff, buf_spname(buf), MAXPATHL);

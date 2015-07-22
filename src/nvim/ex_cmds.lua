@@ -267,7 +267,7 @@ return {
   },
   {
     command='buffers',
-    flags=bit.bor(BANG, TRLBAR, CMDWIN),
+    flags=bit.bor(BANG, EXTRA, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
     func='buflist_list',
   },
@@ -885,7 +885,7 @@ return {
   },
   {
     command='files',
-    flags=bit.bor(BANG, TRLBAR, CMDWIN),
+    flags=bit.bor(BANG, EXTRA, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
     func='buflist_list',
   },
@@ -1521,7 +1521,7 @@ return {
   },
   {
     command='ls',
-    flags=bit.bor(BANG, TRLBAR, CMDWIN),
+    flags=bit.bor(BANG, EXTRA, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
     func='buflist_list',
   },

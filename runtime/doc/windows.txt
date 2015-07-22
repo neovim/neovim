@@ -971,9 +971,10 @@ A buffer can also be unlisted.  This means it exists, but it is not in the
 list of buffers. |unlisted-buffer|
 
 
-:files[!]					*:files*
-:buffers[!]					*:buffers* *:ls*
-:ls[!]		Show all buffers.  Example:
+:files[!] [flags]				*:files*
+:buffers[!] [flags]				*:buffers* *:ls*
+:ls[!] [flags]
+		Show all buffers.  Example:
 
 			1 #h   "/test/text"		line 1 ~
 			2u     "asdf"			line 0 ~
@@ -998,6 +999,21 @@ list of buffers. |unlisted-buffer|
 		   =	a readonly buffer
 		    +	a modified buffer
 		    x   a buffer with read errors
+
+		[flags] can be a combination of the following characters,
+		which restrict the buffers to be listed:
+			+	modified buffers
+			-	buffers with 'modifiable' off
+			=	readonly buffers
+			a	active buffers
+			u	unloaded buffers (overrides the "!")
+			h	hidden buffers
+			x	buffers with a read error
+			%	current buffer
+			#	alternate buffer
+		Combining flags means they are "and"ed together, e.g.:
+			h+	hidden buffers which are modified
+			a+	active buffers which are modified
 
 						*:bad* *:badd*
 :bad[d]	[+lnum] {fname}
