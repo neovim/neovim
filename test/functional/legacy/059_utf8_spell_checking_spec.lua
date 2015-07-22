@@ -497,14 +497,13 @@ describe("spell checking with 'encoding' set to utf-8", function()
   -- Function to test .aff/.dic with list of good and bad words.  This was a
   -- Vim function in the original legacy test.
   local function test_one(aff, dic)
-    source([[
-      set spellfile=
-      $put =''
-      $put ='test ]]..aff..'-'..dic..[[']])
-      -- Generate a .spl file from a .dic and .aff file.
+    -- Generate a .spl file from a .dic and .aff file.
     os.execute('cp -f Xtest'..aff..'.aff Xtest.aff')
     os.execute('cp -f Xtest'..dic..'.dic Xtest.dic')
     source([[
+      set spellfile=
+      $put =''
+      $put ='test ]]..aff..'-'..dic..[['
       mkspell! Xtest Xtest
       "  Use that spell file.
       set spl=Xtest.utf-8.spl spell
