@@ -14,17 +14,16 @@ end
 
 describe(':substitue', function()
   setup(function()
-    write_file('test_79_7.in', 'TEST_7:\nA\rA\nB\x00B\nC\x00C\nD\x00\nD\nE'..
-      '\x00\n\x00\n\x00\n\x00\n\x00E\nQ\nQ\n')
+    write_file('test_79_7.in', 'A\rA\nB\x00B\nC\x00C\nD\x00\nD\nE\x00\n\x00'..
+      '\n\x00\n\x00\n\x00E\nQ\nQ\n')
   end)
   before_each(clear)
   teardown(function()
     os.remove('test_79_7.in')
   end)
 
-  it('with "set magic"', function()
+  it('with "set magic" (TEST_1)', function()
     insert([[
-      TEST_1:
       A
       B
       C123456789
@@ -49,33 +48,32 @@ describe(':substitue', function()
       V
       ]])
     execute('set magic')
-    execute('2s/A/&&/')
-    execute([[3s/B/\&/]])
-    execute([[4s/C\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)/\0\9\8\7\6\5\4\3\2\1/]])
-    execute('5s/D/d/')
-    execute('6s/E/~/')
-    execute([[7s/F/\~/]])
-    execute([[8s/G/\ugg/]])
-    execute([[9s/H/\Uh\Eh/]])
-    execute([[10s/I/\lII/]])
-    execute([[11s/J/\LJ\EJ/]])
-    execute([[12s/K/\Uk\ek/]])
-    execute('13s/L/\x16\r/')
-    -- The previous substitution added a new line so we continue on line 15.
-    execute([[15s/M/\r/]])
-    -- The previous substitution added a new line so we continue on line 17.
-    execute('17s/N/\\\x16\r/')
-    execute([[18s/O/\n/]])
-    execute([[19s/P/\b/]])
-    execute([[20s/Q/\t/]])
-    execute([[21s/R/\\/]])
-    execute([[22s/S/\c/]])
+    execute('1s/A/&&/')
+    execute([[2s/B/\&/]])
+    execute([[3s/C\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)/\0\9\8\7\6\5\4\3\2\1/]])
+    execute('4s/D/d/')
+    execute('5s/E/~/')
+    execute([[6s/F/\~/]])
+    execute([[7s/G/\ugg/]])
+    execute([[8s/H/\Uh\Eh/]])
+    execute([[9s/I/\lII/]])
+    execute([[10s/J/\LJ\EJ/]])
+    execute([[11s/K/\Uk\ek/]])
+    execute('12s/L/\x16\r/')
+    -- The previous substitution added a new line so we continue on line 14.
+    execute([[14s/M/\r/]])
+    -- The previous substitution added a new line so we continue on line 16.
+    execute('16s/N/\\\x16\r/')
+    execute([[17s/O/\n/]])
+    execute([[18s/P/\b/]])
+    execute([[19s/Q/\t/]])
+    execute([[20s/R/\\/]])
+    execute([[21s/S/\c/]])
     -- The null byte is troublesome in execute() calls.
-    feed(':23s/T/<C-V><C-@>/<cr>')
-    execute([[24s/U/\L\uuUu\l\EU/]])
-    execute([[25s/V/\U\lVvV\u\Ev/]])
+    feed(':22s/T/<C-V><C-@>/<cr>')
+    execute([[23s/U/\L\uuUu\l\EU/]])
+    execute([[24s/V/\U\lVvV\u\Ev/]])
     expect([[
-      TEST_1:
       AA
       &
       C123456789987654321
@@ -103,9 +101,8 @@ describe(':substitue', function()
       ]])
   end)
 
-  it('with "set nomagic"', function()
+  it('with "set nomagic" (TEST_2)', function()
     insert([[
-      TEST_2:
       A
       B
       C123456789
@@ -131,33 +128,32 @@ describe(':substitue', function()
       ]])
 
     execute('set nomagic')
-    execute('2s/A/&&/')
-    execute([[3s/B/\&/]])
-    execute([[4s/\mC\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)/\0\9\8\7\6\5\4\3\2\1/]])
-    execute('5s/D/d/')
-    execute('6s/E/~/')
-    execute([[7s/F/\~/]])
-    execute([[8s/G/\ugg/]])
-    execute([[9s/H/\Uh\Eh/]])
-    execute([[10s/I/\lII/]])
-    execute([[11s/J/\LJ\EJ/]])
-    execute([[12s/K/\Uk\ek/]])
-    execute('13s/L/\x16\r/')
-    -- The previous substitution added a new line so we continue on line 15.
-    execute([[15s/M/\r/]])
-    -- The previous substitution added a new line so we continue on line 17.
-    execute('17s/N/\\\x16\r/')
-    execute([[18s/O/\n/]])
-    execute([[19s/P/\b/]])
-    execute([[20s/Q/\t/]])
-    execute([[21s/R/\\/]])
-    execute([[22s/S/\c/]])
+    execute('1s/A/&&/')
+    execute([[2s/B/\&/]])
+    execute([[3s/\mC\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)/\0\9\8\7\6\5\4\3\2\1/]])
+    execute('4s/D/d/')
+    execute('5s/E/~/')
+    execute([[6s/F/\~/]])
+    execute([[7s/G/\ugg/]])
+    execute([[8s/H/\Uh\Eh/]])
+    execute([[9s/I/\lII/]])
+    execute([[10s/J/\LJ\EJ/]])
+    execute([[11s/K/\Uk\ek/]])
+    execute('12s/L/\x16\r/')
+    -- The previous substitution added a new line so we continue on line 14.
+    execute([[14s/M/\r/]])
+    -- The previous substitution added a new line so we continue on line 16.
+    execute('16s/N/\\\x16\r/')
+    execute([[17s/O/\n/]])
+    execute([[18s/P/\b/]])
+    execute([[19s/Q/\t/]])
+    execute([[20s/R/\\/]])
+    execute([[21s/S/\c/]])
     -- The null byte is troublesome in execute() calls.
-    feed(':23s/T/<C-V><C-@>/<cr>')
-    execute([[24s/U/\L\uuUu\l\EU/]])
-    execute([[25s/V/\U\lVvV\u\Ev/]])
+    feed(':22s/T/<C-V><C-@>/<cr>')
+    execute([[23s/U/\L\uuUu\l\EU/]])
+    execute([[24s/V/\U\lVvV\u\Ev/]])
     expect([[
-      TEST_2:
       &&
       B
       C123456789987654321
@@ -185,9 +181,8 @@ describe(':substitue', function()
       ]])
   end)
 
-  it('with sub-replace-expression', function()
+  it('with sub-replace-expression (TEST_3)', function()
     insert([[
-      TEST_3:
       aAa
       bBb
       cCc
@@ -205,21 +200,20 @@ describe(':substitue', function()
     -- Some of these substitutions add a new line to the file so we have to
     -- increase the line number for the next command.
     execute('set magic&')
-    execute([[2s/A/\='\'/]])
-    execute([[3s/B/\='\\'/]])
-    execute([[4s/C/\=']]..'\x16\r'..[['/]])
-    execute([[6s/D/\='\]]..'\x16\r'..[['/]])
-    execute([[8s/E/\='\\]]..'\x16\r'..[['/]])
-    execute([[10s/F/\='\r'/]])
+    execute([[1s/A/\='\'/]])
+    execute([[2s/B/\='\\'/]])
+    execute([[3s/C/\=']]..'\x16\r'..[['/]])
+    execute([[5s/D/\='\]]..'\x16\r'..[['/]])
+    execute([[7s/E/\='\\]]..'\x16\r'..[['/]])
+    execute([[9s/F/\='\r'/]])
     -- The null byte is troublesome in execute() calls.
-    feed([[:11s/G/\='<C-V><C-@>'/<cr>]])
-    feed([[:13s/H/\='\<C-V><C-@>'/<cr>]])
-    feed([[:15s/I/\='\\<C-V><C-@>'/<cr>]])
-    execute([[17s/J/\='\n'/]])
-    execute([[18s/K/\="\r"/]])
-    execute([[20s/L/\="\n"/]])
+    feed([[:10s/G/\='<C-V><C-@>'/<cr>]])
+    feed([[:12s/H/\='\<C-V><C-@>'/<cr>]])
+    feed([[:14s/I/\='\\<C-V><C-@>'/<cr>]])
+    execute([[16s/J/\='\n'/]])
+    execute([[17s/K/\="\r"/]])
+    execute([[19s/L/\="\n"/]])
     expect([[
-      TEST_3:
       a\a
       b\\b
       c
@@ -243,9 +237,8 @@ describe(':substitue', function()
       ]])
   end)
 
-  it('with sub-replace-expression and submatch()', function()
+  it('with sub-replace-expression and submatch() (TEST_4)', function()
     insert([[
-      TEST_4:
       aAa
       bBb
       cCc
@@ -263,21 +256,20 @@ describe(':substitue', function()
     -- Some of these substitutions add a new line to the file so we have to
     -- increase the line number for the next command.
     execute('set magic&')
-    execute([[2s/A/\=substitute(submatch(0), '.', '\', '')/]])
-    execute([[3s/B/\=substitute(submatch(0), '.', '\\', '')/]])
-    execute([[4s/C/\=substitute(submatch(0), '.', ']]..'\x16\r'..[[', '')/]])
-    execute([[6s/D/\=substitute(submatch(0), '.', '\]]..'\x16\r'..[[', '')/]])
-    execute([[8s/E/\=substitute(submatch(0), '.', '\\]]..'\x16\r'..[[', '')/]])
-    execute([[10s/F/\=substitute(submatch(0), '.', '\r', '')/]])
+    execute([[1s/A/\=substitute(submatch(0), '.', '\', '')/]])
+    execute([[2s/B/\=substitute(submatch(0), '.', '\\', '')/]])
+    execute([[3s/C/\=substitute(submatch(0), '.', ']]..'\x16\r'..[[', '')/]])
+    execute([[5s/D/\=substitute(submatch(0), '.', '\]]..'\x16\r'..[[', '')/]])
+    execute([[7s/E/\=substitute(submatch(0), '.', '\\]]..'\x16\r'..[[', '')/]])
+    execute([[9s/F/\=substitute(submatch(0), '.', '\r', '')/]])
     -- The null byte is troublesome in execute() calls.
-    feed([[:12s/G/\=substitute(submatch(0), '.', '<C-V><C-@>', '')/<cr>]])
-    feed([[:14s/H/\=substitute(submatch(0), '.', '\<C-V><C-@>', '')/<cr>]])
-    feed([[:16s/I/\=substitute(submatch(0), '.', '\\<C-V><C-@>', '')/<cr>]])
-    execute([[18s/J/\=substitute(submatch(0), '.', '\n', '')/]])
-    execute([[20s/K/\=substitute(submatch(0), '.', "\r", '')/]])
-    execute([[22s/L/\=substitute(submatch(0), '.', "\n", '')/]])
+    feed([[:11s/G/\=substitute(submatch(0), '.', '<C-V><C-@>', '')/<cr>]])
+    feed([[:13s/H/\=substitute(submatch(0), '.', '\<C-V><C-@>', '')/<cr>]])
+    feed([[:15s/I/\=substitute(submatch(0), '.', '\\<C-V><C-@>', '')/<cr>]])
+    execute([[17s/J/\=substitute(submatch(0), '.', '\n', '')/]])
+    execute([[19s/K/\=substitute(submatch(0), '.', "\r", '')/]])
+    execute([[21s/L/\=substitute(submatch(0), '.', "\n", '')/]])
     expect([[
-      TEST_4:
       a\a
       b\b
       c
@@ -303,20 +295,18 @@ describe(':substitue', function()
       ]])
   end)
 
-  it('with sub-replace-expression and submatch() (part 2)', function()
+  it('with sub-replace-expression and submatch() (TEST_5)', function()
     insert([[
-      TEST_5:
       A123456789
       B123456789
       ]])
 
     source([[
       set magic&
-      2s/A\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)/\=submatch(0) . submatch(9) . submatch(8) . submatch(7) . submatch(6) . submatch(5) . submatch(4) . submatch(3) . submatch(2) . submatch(1)/
-      3s/B\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)/\=string([submatch(0, 1), submatch(9, 1), submatch(8, 1), submatch(7, 1), submatch(6, 1), submatch(5, 1), submatch(4, 1), submatch(3, 1), submatch(2, 1), submatch(1, 1)])/
+      1s/A\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)/\=submatch(0) . submatch(9) . submatch(8) . submatch(7) . submatch(6) . submatch(5) . submatch(4) . submatch(3) . submatch(2) . submatch(1)/
+      2s/B\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)/\=string([submatch(0, 1), submatch(9, 1), submatch(8, 1), submatch(7, 1), submatch(6, 1), submatch(5, 1), submatch(4, 1), submatch(3, 1), submatch(2, 1), submatch(1, 1)])/
     ]])
     expect([=[
-      TEST_5:
       A123456789987654321
       [['B123456789'], ['9'], ['8'], ['7'], ['6'], ['5'], ['4'], ['3'], ['2'], ['1']]
       ]=])
@@ -325,20 +315,19 @@ describe(':substitue', function()
   -- TEST_6 was about the 'cpoptions' flag / which was removed in pull request
   -- #2943.
 
-  it('with submatch() and strtrans()', function()
+  it('with submatch() and strtrans() (TEST_7)', function()
     source([[
       e test_79_7.in
       set magic&
-      2s/A./\=submatch(0)/
-      4s/B./\=submatch(0)/
-      6s/C./\=strtrans(string(submatch(0, 1)))/
-      7s/D.\nD/\=strtrans(string(submatch(0, 1)))/
-      8s/E\_.\{-}E/\=strtrans(string(submatch(0, 1)))/
+      1s/A./\=submatch(0)/
+      3s/B./\=submatch(0)/
+      5s/C./\=strtrans(string(submatch(0, 1)))/
+      6s/D.\nD/\=strtrans(string(submatch(0, 1)))/
+      7s/E\_.\{-}E/\=strtrans(string(submatch(0, 1)))/
     ]])
     execute('/^Q$')
     execute([[s/Q[^\n]Q/\=submatch(0)."foobar"/]])
     expect([[
-      TEST_7:
       A
       A
       B
