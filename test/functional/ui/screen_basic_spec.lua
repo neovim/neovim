@@ -63,6 +63,29 @@ describe('Screen', function()
         end
       end)
     end)
+
+    it('has correct default title with unnamed file', function()
+      local expected = '[No Name] - NVIM'
+      execute('set title')
+      screen:wait(function()
+        local actual = screen.title
+        if actual ~= expected then
+          return 'Expected title to be "'..expected..'" but was "'..actual..'"'
+        end
+      end)
+    end)
+
+    it('has correct default title with named file', function()
+      local expected = 'myfile (/mydir) - NVIM'
+      execute('set title')
+      execute('file /mydir/myfile')
+      screen:wait(function()
+        local actual = screen.title
+        if actual ~= expected then
+          return 'Expected title to be "'..expected..'" but was "'..actual..'"'
+        end
+      end)
+    end)
   end)
 
   describe(':set icon', function()
