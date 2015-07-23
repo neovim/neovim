@@ -824,11 +824,11 @@ static void win_update(win_T *wp)
   }
 
   /* Trick: we want to avoid clearing the screen twice.  screenclear() will
-   * set "screen_cleared" to TRUE.  The special value MAYBE (which is still
-   * non-zero and thus not FALSE) will indicate that screenclear() was not
+   * set "screen_cleared" to kTriTrue. The special value kTriMaybe (which is
+   * still non-zero and thus not FALSE) will indicate that screenclear() was not
    * called. */
   if (screen_cleared)
-    screen_cleared = MAYBE;
+    screen_cleared = kTriMaybe;
 
   /*
    * If there are no changes on the screen that require a complete redraw,
@@ -990,9 +990,9 @@ static void win_update(win_T *wp)
       mid_end = wp->w_height;
       if (lastwin == firstwin) {
         /* Clear the screen when it was not done by win_del_lines() or
-         * win_ins_lines() above, "screen_cleared" is FALSE or MAYBE
+         * win_ins_lines() above, "screen_cleared" is kTriFalse or kTriMaybe
          * then. */
-        if (screen_cleared != TRUE)
+        if (screen_cleared != kTriTrue)
           screenclear();
         /* The screen was cleared, redraw the tab pages line. */
         if (redraw_tabline)
@@ -1004,7 +1004,7 @@ static void win_update(win_T *wp)
      * cleared (only happens for the first window) or when screenclear()
      * was called directly above, "must_redraw" will have been set to
      * NOT_VALID, need to reset it here to avoid redrawing twice. */
-    if (screen_cleared == TRUE)
+    if (screen_cleared == kTriTrue)
       must_redraw = 0;
   } else {
     /* Not VALID or INVERTED: redraw all lines. */
@@ -6211,7 +6211,7 @@ static void screenclear2(void)
   ui_clear();  // clear the display
   clear_cmdline = FALSE;
   mode_displayed = FALSE;
-  screen_cleared = TRUE;        /* can use contents of ScreenLines now */
+  screen_cleared = kTriTrue;    /* can use contents of ScreenLines now */
 
   win_rest_invalid(firstwin);
   redraw_cmdline = TRUE;

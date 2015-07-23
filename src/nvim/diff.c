@@ -48,9 +48,9 @@ static int diff_flags = DIFF_FILLER;
 
 #define LBUFLEN 50               // length of line in diff file
 
-// TRUE when "diff -a" works, FALSE when it doesn't work, MAYBE when not
-// checked yet
-static int diff_a_works = MAYBE;
+// kTriTrue when "diff -a" works, kTriFalse when it doesn't work, kTriMaybe
+// when not checked yet
+static TriState diff_a_works = kTriMaybe;
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -671,33 +671,33 @@ void ex_diffupdate(exarg_T *eap)
   // are no differences.  Can't use the return value, it's non-zero when
   // there are differences.
   // May try twice, first with "-a" and then without.
-  int io_error = FALSE;
-  int ok = FALSE;
+  bool io_error = false;
+  bool ok = false;
   for (;;) {
-    ok = FALSE;
+    ok = false;
     FILE *fd = mch_fopen((char *)tmp_orig, "w");
 
     if (fd == NULL) {
-      io_error = TRUE;
+      io_error = true;
     } else {
       if (fwrite("line1\n", (size_t)6, (size_t)1, fd) != 1) {
-        io_error = TRUE;
+        io_error = true;
       }
       fclose(fd);
       fd = mch_fopen((char *)tmp_new, "w");
 
       if (fd == NULL) {
-        io_error = TRUE;
+        io_error = true;
       } else {
         if (fwrite("line2\n", (size_t)6, (size_t)1, fd) != 1) {
-          io_error = TRUE;
+          io_error = true;
         }
         fclose(fd);
         diff_file(tmp_orig, tmp_new, tmp_diff);
         fd = mch_fopen((char *)tmp_diff, "r");
 
         if (fd == NULL) {
-          io_error = TRUE;
+          io_error = true;
         } else {
           char_u linebuf[LBUFLEN];
 
@@ -708,7 +708,7 @@ void ex_diffupdate(exarg_T *eap)
             }
 
             if (STRNCMP(linebuf, "1c1", 3) == 0) {
-              ok = TRUE;
+              ok = true;
             }
           }
           fclose(fd);
@@ -725,10 +725,10 @@ void ex_diffupdate(exarg_T *eap)
     }
 
     // If we checked if "-a" works already, break here.
-    if (diff_a_works != MAYBE) {
+    if (diff_a_works != kTriMaybe) {
       break;
     }
-    diff_a_works = ok;
+    diff_a_works = ok ? kTriTrue : kTriFalse;
 
     // If "-a" works break here, otherwise retry without "-a".
     if (ok) {
@@ -741,7 +741,7 @@ void ex_diffupdate(exarg_T *eap)
       EMSG(_("E810: Cannot read or write temp files"));
     }
     EMSG(_("E97: Cannot create diffs"));
-    diff_a_works = MAYBE;
+    diff_a_works = kTriMaybe;
     goto theend;
   }
 

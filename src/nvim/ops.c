@@ -5114,9 +5114,9 @@ void cursor_pos_info(void)
 
         switch (l_VIsual_mode) {
         case Ctrl_V:
-          virtual_op = virtual_active();
+          virtual_op = virtual_active() ? kTriTrue : kTriFalse;
           block_prep(&oparg, &bd, lnum, 0);
-          virtual_op = MAYBE;
+          virtual_op = kTriMaybe;
           s = bd.textstart;
           len = (long)bd.textlen;
           break;

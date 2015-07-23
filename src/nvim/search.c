@@ -1447,7 +1447,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
   int hash_dir = 0;                     /* Direction searched for # things */
   int comment_dir = 0;                  /* Direction searched for comments */
   pos_T match_pos;                      /* Where last slash-star was found */
-  int start_in_quotes;                  /* start position is in quotes */
+  TriState start_in_quotes;             /* start position is in quotes */
   int traveled = 0;                     /* how far we've searched so far */
   int ignore_cend = FALSE;              /* ignore comment end */
   int cpo_match;                        /* vi compatible matching */
@@ -1637,7 +1637,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
     backwards = !backwards;
 
   do_quotes = -1;
-  start_in_quotes = MAYBE;
+  start_in_quotes = kTriMaybe;
   clearpos(&match_pos);
 
   /* backward search: Check if this line contains a single-line comment */
@@ -1793,10 +1793,10 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
         inquote = FALSE;
         if (ptr[-1] == '\\') {
           do_quotes = 1;
-          if (start_in_quotes == MAYBE) {
+          if (start_in_quotes == kTriMaybe) {
             /* Do we need to use at_start here? */
             inquote = TRUE;
-            start_in_quotes = TRUE;
+            start_in_quotes = kTriTrue;
           } else if (backwards)
             inquote = TRUE;
         }
@@ -1804,10 +1804,10 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
           ptr = ml_get(pos.lnum - 1);
           if (*ptr && *(ptr + STRLEN(ptr) - 1) == '\\') {
             do_quotes = 1;
-            if (start_in_quotes == MAYBE) {
+            if (start_in_quotes == kTriMaybe) {
               inquote = at_start;
               if (inquote)
-                start_in_quotes = TRUE;
+                start_in_quotes = kTriTrue;
             } else if (!backwards)
               inquote = TRUE;
           }
@@ -1817,8 +1817,8 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
         }
       }
     }
-    if (start_in_quotes == MAYBE)
-      start_in_quotes = FALSE;
+    if (start_in_quotes == kTriMaybe)
+      start_in_quotes = kTriFalse;
 
     /*
      * If 'smartmatch' is set:
@@ -1837,7 +1837,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
       /* at end of line without trailing backslash, reset inquote */
       if (pos.col == 0 || linep[pos.col - 1] != '\\') {
         inquote = FALSE;
-        start_in_quotes = FALSE;
+        start_in_quotes = kTriFalse;
       }
       break;
 
@@ -1852,7 +1852,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
             break;
         if ((((int)pos.col - 1 - col) & 1) == 0) {
           inquote = !inquote;
-          start_in_quotes = FALSE;
+          start_in_quotes = kTriFalse;
         }
       }
       break;
