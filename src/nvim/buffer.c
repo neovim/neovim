@@ -2679,7 +2679,7 @@ void maketitle(void)
 
       append_arg_number(curwin, buf, SPACE_FOR_ARGNR, FALSE);
 
-      STRCAT(buf, " - VIM");
+      STRCAT(buf, " - NVIM");
 
       if (maxlen > 0) {
         /* make it shorter by removing a bit in the middle */
