@@ -28,12 +28,12 @@ struct process {
   bool closed, term_sent;
 };
 
-static inline Process process_init(ProcessType type, void *data)
+static inline Process process_init(Loop *loop, ProcessType type, void *data)
 {
   return (Process) {
     .type = type,
     .data = data,
-    .loop = NULL,
+    .loop = loop,
     .pid = 0,
     .status = 0,
     .refcount = 0,

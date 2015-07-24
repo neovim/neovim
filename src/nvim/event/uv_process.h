@@ -12,10 +12,10 @@ typedef struct uv_process {
   uv_stdio_container_t uvstdio[3];
 } UvProcess;
 
-static inline UvProcess uv_process_init(void *data)
+static inline UvProcess uv_process_init(Loop *loop, void *data)
 {
   UvProcess rv;
-  rv.process = process_init(kProcessTypeUv, data);
+  rv.process = process_init(loop, kProcessTypeUv, data);
   return rv;
 }
 

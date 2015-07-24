@@ -30,19 +30,18 @@
   } while (0)
 
 
-bool process_spawn(Loop *loop, Process *proc) FUNC_ATTR_NONNULL_ALL
+bool process_spawn(Process *proc) FUNC_ATTR_NONNULL_ALL
 {
-  proc->loop = loop;
   if (proc->in) {
-    uv_pipe_init(&loop->uv, &proc->in->uv.pipe, 0);
+    uv_pipe_init(&proc->loop->uv, &proc->in->uv.pipe, 0);
   }
 
   if (proc->out) {
-    uv_pipe_init(&loop->uv, &proc->out->uv.pipe, 0);
+    uv_pipe_init(&proc->loop->uv, &proc->out->uv.pipe, 0);
   }
 
   if (proc->err) {
-    uv_pipe_init(&loop->uv, &proc->err->uv.pipe, 0);
+    uv_pipe_init(&proc->loop->uv, &proc->err->uv.pipe, 0);
   }
 
   bool success;
@@ -99,7 +98,7 @@ bool process_spawn(Loop *loop, Process *proc) FUNC_ATTR_NONNULL_ALL
   proc->internal_exit_cb = on_process_exit;
   proc->internal_close_cb = decref;
   proc->refcount++;
-  kl_push(WatcherPtr, loop->children, proc);
+  kl_push(WatcherPtr, proc->loop->children, proc);
   return true;
 }
 

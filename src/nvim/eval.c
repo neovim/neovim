@@ -21054,9 +21054,9 @@ static inline TerminalJobData *common_job_init(char **argv, ufunc_T *on_stdout,
   data->on_exit = on_exit;
   data->self = self;
   if (pty) {
-    data->proc.pty = pty_process_init(data);
+    data->proc.pty = pty_process_init(&loop, data);
   } else {
-    data->proc.uv = uv_process_init(data);
+    data->proc.uv = uv_process_init(&loop, data);
   }
   Process *proc = (Process *)&data->proc;
   proc->argv = argv;
@@ -21094,7 +21094,7 @@ static inline bool common_job_start(TerminalJobData *data, typval_T *rettv)
 {
   data->refcount++;
   Process *proc = (Process *)&data->proc;
-  if (!process_spawn(&loop, proc)) {
+  if (!process_spawn(proc)) {
     EMSG(_(e_jobexe));
     if (proc->type == kProcessTypePty) {
       xfree(data->proc.pty.term_name);

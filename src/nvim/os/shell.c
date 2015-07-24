@@ -205,13 +205,13 @@ static int do_os_system(char **argv,
   xstrlcpy(prog, argv[0], MAXPATHL);
 
   Stream in, out, err;
-  UvProcess uvproc = uv_process_init(&buf);
+  UvProcess uvproc = uv_process_init(&loop, &buf);
   Process *proc = &uvproc.process;
   proc->argv = argv;
   proc->in = input != NULL ? &in : NULL;
   proc->out = &out;
   proc->err = &err;
-  if (!process_spawn(&loop, proc)) {
+  if (!process_spawn(proc)) {
     loop_poll_events(&loop, 0);
     // Failed, probably due to `sh` not being executable
     if (!silent) {

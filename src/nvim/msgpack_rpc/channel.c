@@ -123,14 +123,14 @@ void channel_teardown(void)
 uint64_t channel_from_process(char **argv)
 {
   Channel *channel = register_channel(kChannelTypeProc);
-  channel->data.process.uvproc = uv_process_init(channel);
+  channel->data.process.uvproc = uv_process_init(&loop, channel);
   Process *proc = &channel->data.process.uvproc.process;
   proc->argv = argv;
   proc->in = &channel->data.process.in;
   proc->out = &channel->data.process.out;
   proc->err = &channel->data.process.err;
   proc->cb = process_exit;
-  if (!process_spawn(&loop, proc)) {
+  if (!process_spawn(proc)) {
     loop_poll_events(&loop, 0);
     decref(channel);
     return 0;
