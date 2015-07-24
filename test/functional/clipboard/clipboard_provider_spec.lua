@@ -369,6 +369,7 @@ describe('clipboard usage', function()
       [2] = {foreground = Screen.colors.Blue},
       [3] = {bold = true, foreground = Screen.colors.SeaGreen}},
       {{bold = true, foreground = Screen.colors.Blue}})
+    feed('<cr>') -- clear out of Press ENTER screen
   end)
 
   it('can paste "* to the commandline', function()
