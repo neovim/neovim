@@ -335,6 +335,7 @@ int main(int argc, char **argv)
 
   /* Source startup scripts. */
   source_startup_scripts(&params);
+  apply_autocmds(EVENT_STARTUPSOURCED, NULL, NULL, FALSE, NULL);
 
   /*
    * Read all the plugin files.

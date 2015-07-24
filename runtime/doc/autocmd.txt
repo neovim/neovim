@@ -259,6 +259,7 @@ Name			triggered by ~
 |TermChanged|		after the value of 'term' has changed
 
 	Startup and exit
+|StartupSourced|	after sourcing the |vimrc| scripts
 |VimEnter|		after doing all the startup stuff
 |GUIEnter|		after starting the GUI successfully
 |GUIFailed|		after starting the GUI failed
@@ -809,6 +810,9 @@ SpellFileMissing		When trying to load a spell checking file and
 				against the language.  <amatch> is the
 				language, 'encoding' also matters.  See
 				|spell-SpellFileMissing|.
+						 	*StartupSourced*
+StartupSourced			After sourcing the |vimrc| scripts, before
+				loading the plugins.
 							*StdinReadPost*
 StdinReadPost			After reading from the stdin into the buffer,
 				before executing the modelines.  Only used
