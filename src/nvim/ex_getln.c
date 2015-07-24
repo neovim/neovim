@@ -62,6 +62,7 @@
 #include "nvim/tag.h"
 #include "nvim/window.h"
 #include "nvim/ui.h"
+#include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/event/loop.h"
 
@@ -298,11 +299,11 @@ getcmdline (
 
     /* Get a character.  Ignore K_IGNORE, it should not do anything, such
      * as stop completion. */
-    loop_enable_deferred_events(&loop);
+    input_enable_events();
     do {
       c = safe_vgetc();
     } while (c == K_IGNORE);
-    loop_disable_deferred_events(&loop);
+    input_disable_events();
 
     if (c == K_EVENT) {
       loop_process_event(&loop);

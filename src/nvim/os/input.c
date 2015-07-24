@@ -33,6 +33,7 @@ static Stream read_stream = {.closed = true};
 static RBuffer *input_buffer = NULL;
 static bool input_eof = false;
 static int global_fd = 0;
+static int events_enabled = 0;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/input.c.generated.h"
@@ -110,8 +111,8 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
     return (int)rbuffer_read(input_buffer, (char *)buf, (size_t)maxlen);
   }
 
-  // If there are deferred events, return the keys directly
-  if (loop_has_deferred_events(&loop)) {
+  // If there are events, return the keys directly
+  if (pending_events()) {
     return push_event_key(buf, maxlen);
   }
 
@@ -134,6 +135,16 @@ void os_breakcheck(void)
   if (!disable_breakcheck && !got_int) {
     loop_poll_events(&loop, 0);
   }
+}
+
+void input_enable_events(void)
+{
+  events_enabled++;
+}
+
+void input_disable_events(void)
+{
+  events_enabled--;
 }
 
 /// Test whether a file descriptor refers to a terminal.
@@ -358,7 +369,7 @@ static bool input_ready(void)
 {
   return typebuf_was_filled ||                 // API call filled typeahead
          rbuffer_size(input_buffer) ||         // Input buffer filled
-         loop_has_deferred_events(&loop);      // Events must be processed
+         pending_events();                     // Events must be processed
 }
 
 // Exit because of an input read error.
@@ -368,4 +379,9 @@ static void read_error_exit(void)
     getout(0);
   STRCPY(IObuff, _("Vim: Error reading input, exiting...\n"));
   preserve_exit();
+}
+
+static bool pending_events(void)
+{
+  return events_enabled && !kl_empty(loop.deferred_events);
 }

@@ -63,6 +63,7 @@
 #include "nvim/window.h"
 #include "nvim/event/loop.h"
 #include "nvim/os/time.h"
+#include "nvim/os/input.h"
 
 /*
  * The Visual area is remembered for reselection.
@@ -487,9 +488,9 @@ normal_cmd (
   /*
    * Get the command character from the user.
    */
-  loop_enable_deferred_events(&loop);
+  input_enable_events();
   c = safe_vgetc();
-  loop_disable_deferred_events(&loop);
+  input_disable_events();
 
   if (c == K_EVENT) {
     loop_process_event(&loop);

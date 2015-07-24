@@ -25,10 +25,9 @@ KLIST_INIT(Event, Event, _noop)
 typedef struct loop {
   uv_loop_t uv;
   klist_t(Event) *deferred_events, *immediate_events;
-  int deferred_events_allowed;
   klist_t(WatcherPtr) *children;
   uv_signal_t children_watcher;
-  uv_timer_t children_kill_timer;
+  uv_timer_t children_kill_timer, poll_timer;
   size_t children_stop_requests;
 } Loop;
 

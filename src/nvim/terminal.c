@@ -69,6 +69,7 @@
 #include "nvim/fileio.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/time.h"
+#include "nvim/os/input.h"
 #include "nvim/api/private/helpers.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -354,13 +355,13 @@ void terminal_enter(bool process_deferred)
 
   while (term->buf == curbuf) {
     if (process_deferred) {
-      loop_enable_deferred_events(&loop);
+      input_enable_events();
     }
 
     c = safe_vgetc();
 
     if (process_deferred) {
-      loop_disable_deferred_events(&loop);
+      input_disable_events();
     }
 
     switch (c) {
