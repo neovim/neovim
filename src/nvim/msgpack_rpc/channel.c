@@ -450,16 +450,16 @@ static void handle_request(Channel *channel, msgpack_object *request)
                                           method->via.bin.size);
   } else {
     handler.fn = msgpack_rpc_handle_missing_method;
-    handler.defer = false;
+    handler.async = true;
   }
 
   Array args = ARRAY_DICT_INIT;
   if (!msgpack_rpc_to_array(msgpack_rpc_args(request), &args)) {
     handler.fn = msgpack_rpc_handle_invalid_arguments;
-    handler.defer = false;
+    handler.async = true;
   }
 
-  bool defer = (!kv_size(channel->call_stack) && handler.defer);
+  bool async = kv_size(channel->call_stack) || handler.async;
   RequestEvent *event_data = xmalloc(sizeof(RequestEvent));
   event_data->channel = channel;
   event_data->handler = handler;
@@ -469,7 +469,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
   loop_push_event(&loop, (Event) {
     .handler = on_request_event,
     .data = event_data
-  }, defer);
+  }, !async);
 }
 
 static void on_request_event(Event event)
