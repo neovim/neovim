@@ -428,7 +428,13 @@ void terminal_destroy(Terminal *term)
     term->buf->terminal = NULL;
   }
   term->buf = NULL;
-  pmap_del(ptr_t)(invalidated_terminals, term);
+  if (pmap_has(ptr_t)(invalidated_terminals, term)) {
+    // flush any pending changes to the buffer
+    block_autocmds();
+    refresh_terminal(term);
+    unblock_autocmds();
+    pmap_del(ptr_t)(invalidated_terminals, term);
+  }
   for (size_t i = 0 ; i < term->sb_current; i++) {
     xfree(term->sb_buffer[i]);
   }
@@ -884,6 +890,26 @@ static void invalidate_terminal(Terminal *term, int start_row, int end_row)
   }
 }
 
+static void refresh_terminal(Terminal *term)
+{
+  // TODO(SplinterOfChaos): Find the condition that makes term->buf invalid.
+  bool valid = true;
+  if (!term->buf || !(valid = buf_valid(term->buf))) {
+    // destroyed by `close_buffer`. Dont do anything else
+    if (!valid) {
+      term->buf = NULL;
+    }
+    return;
+  }
+  bool pending_resize = term->pending_resize;
+  WITH_BUFFER(term->buf, {
+    refresh_size(term);
+    refresh_scrollback(term);
+    refresh_screen(term);
+    redraw_buf_later(term->buf, NOT_VALID);
+  });
+  adjust_topline(term, pending_resize);
+}
 // libuv timer callback. This will enqueue on_refresh to be processed as an
 // event.
 static void refresh_timer_cb(TimeWatcher *watcher, void *data)
@@ -905,23 +931,7 @@ static void on_refresh(Event event)
   // don't process autocommands while updating terminal buffers
   block_autocmds();
   map_foreach(invalidated_terminals, term, stub, {
-    // TODO(SplinterOfChaos): Find the condition that makes term->buf invalid.
-    bool valid = true;
-    if (!term->buf || !(valid = buf_valid(term->buf))) {
-      // destroyed by `close_buffer`. Dont do anything else
-      if (!valid) {
-        term->buf = NULL;
-      }
-      continue;
-    }
-    bool pending_resize = term->pending_resize;
-    WITH_BUFFER(term->buf, {
-      refresh_size(term);
-      refresh_scrollback(term);
-      refresh_screen(term);
-      redraw_buf_later(term->buf, NOT_VALID);
-    });
-    adjust_topline(term, pending_resize);
+    refresh_terminal(term);
   });
   pmap_clear(ptr_t)(invalidated_terminals);
   unblock_autocmds();
