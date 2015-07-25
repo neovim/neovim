@@ -328,6 +328,10 @@ typedef struct {
 
 struct sd_read_def;
 
+/// Function used to close files defined by ShaDaReadDef
+typedef void (*ShaDaReadCloser)(struct sd_read_def *const sd_reader)
+  REAL_FATTR_NONNULL_ALL;
+
 /// Function used to read ShaDa files
 typedef ptrdiff_t (*ShaDaFileReader)(struct sd_read_def *const sd_reader,
                                      void *const dest,
@@ -336,17 +340,22 @@ typedef ptrdiff_t (*ShaDaFileReader)(struct sd_read_def *const sd_reader,
 
 /// Structure containing necessary pointers for reading ShaDa files
 typedef struct sd_read_def {
-  ShaDaFileReader read;  ///< Reader function.
-  void *cookie;          ///< Reader function last argument.
-  bool eof;              ///< True if reader reached end of file.
-  char *error;           ///< Error message in case of error.
-  uintmax_t fpos;        ///< Current position (amount of bytes read since 
-                         ///< reader structure initialization). May overflow.
-  vimconv_T sd_conv;     ///< Structure used for converting encodings of some
-                         ///< items.
+  ShaDaFileReader read;   ///< Reader function.
+  ShaDaReadCloser close;  ///< Close function.
+  void *cookie;           ///< Reader function last argument.
+  bool eof;               ///< True if reader reached end of file.
+  char *error;            ///< Error message in case of error.
+  uintmax_t fpos;         ///< Current position (amount of bytes read since 
+                          ///< reader structure initialization). May overflow.
+  vimconv_T sd_conv;      ///< Structure used for converting encodings of some
+                          ///< items.
 } ShaDaReadDef;
 
 struct sd_write_def;
+
+/// Function used to close files defined by ShaDaWriteDef
+typedef void (*ShaDaWriteCloser)(struct sd_write_def *const sd_writer)
+  REAL_FATTR_NONNULL_ALL;
 
 /// Function used to write ShaDa files
 typedef ptrdiff_t (*ShaDaFileWriter)(struct sd_write_def *const sd_writer,
@@ -356,11 +365,12 @@ typedef ptrdiff_t (*ShaDaFileWriter)(struct sd_write_def *const sd_writer,
 
 /// Structure containing necessary pointers for writing ShaDa files
 typedef struct sd_write_def {
-  ShaDaFileWriter write;  ///< Writer function.
-  void *cookie;           ///< Writer function last argument.
-  char *error;            ///< Error message in case of error.
-  vimconv_T sd_conv;      ///< Structure used for converting encodings of some
-                          ///< items.
+  ShaDaFileWriter write;   ///< Writer function.
+  ShaDaWriteCloser close;  ///< Close function.
+  void *cookie;            ///< Writer function last argument.
+  char *error;             ///< Error message in case of error.
+  vimconv_T sd_conv;       ///< Structure used for converting encodings of some
+                           ///< items.
 } ShaDaWriteDef;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -506,9 +516,9 @@ static ptrdiff_t read_file(ShaDaReadDef *const sd_reader, void *const dest,
 {
   size_t read_bytes = 0;
   bool did_try_to_free = false;
+  const int fd = (int)(intptr_t) sd_reader->cookie;
   while (read_bytes != size) {
-    const ptrdiff_t cur_read_bytes = read((int)(intptr_t) sd_reader->cookie,
-                                          ((char *) dest) + read_bytes,
+    const ptrdiff_t cur_read_bytes = read(fd, ((char *) dest) + read_bytes,
                                           size - read_bytes);
     if (cur_read_bytes > 0) {
       read_bytes += (size_t) cur_read_bytes;
@@ -559,9 +569,9 @@ static ptrdiff_t write_file(ShaDaWriteDef *const sd_writer,
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   size_t written_bytes = 0;
+  const int fd = (int)(intptr_t) sd_writer->cookie;
   while (written_bytes != size) {
-    const ptrdiff_t cur_written_bytes = write((int)(intptr_t) sd_writer->cookie,
-                                              (char *) dest + written_bytes,
+    const ptrdiff_t cur_written_bytes = write(fd, (char *) dest + written_bytes,
                                               size - written_bytes);
     if (cur_written_bytes > 0) {
       written_bytes += (size_t) cur_written_bytes;
@@ -582,6 +592,20 @@ static ptrdiff_t write_file(ShaDaWriteDef *const sd_writer,
     }
   }
   return (ptrdiff_t) written_bytes;
+}
+
+/// Wrapper for closing file descriptors opened for reading
+static void close_sd_reader(ShaDaReadDef *const sd_reader)
+  FUNC_ATTR_NONNULL_ALL
+{
+  close_file((int)(intptr_t) sd_reader->cookie);
+}
+
+/// Wrapper for closing file descriptors opened for writing
+static void close_sd_writer(ShaDaWriteDef *const sd_writer)
+  FUNC_ATTR_NONNULL_ALL
+{
+  close_file((int)(intptr_t) sd_writer->cookie);
 }
 
 /// Wrapper for opening file descriptors
@@ -636,6 +660,7 @@ static int open_shada_file_for_reading(const char *const fname,
 
   *sd_reader = (ShaDaReadDef) {
     .read = &read_file,
+    .close = &close_sd_reader,
     .error = NULL,
     .eof = false,
     .fpos = 0,
@@ -752,8 +777,8 @@ int shada_read_file(const char *const file, const int flags)
   }
 
   shada_read(&sd_reader, flags);
+  sd_reader.close(&sd_reader);
 
-  close_file((int)(intptr_t) sd_reader.cookie);
   return OK;
 }
 
@@ -2566,6 +2591,7 @@ int shada_write_file(const char *const file, bool nomerge)
   char *tempname = NULL;
   ShaDaWriteDef sd_writer = (ShaDaWriteDef) {
     .write = &write_file,
+    .close = &close_sd_writer,
     .error = NULL,
   };
   ShaDaReadDef sd_reader;
@@ -2591,7 +2617,7 @@ int shada_write_file(const char *const file, bool nomerge)
                 ? (old_info.stat.st_mode & 0020)
                 : (old_info.stat.st_mode & 0002)))) {
       EMSG2(_("E137: ShaDa file is not writable: %s"), fname);
-      close_file((int)(intptr_t) sd_reader.cookie);
+      sd_reader.close(&sd_reader);
       xfree(fname);
       return FAIL;
     }
@@ -2676,11 +2702,10 @@ shada_write_file_nomerge: {}
   convert_setup(&sd_writer.sd_conv, p_enc, "utf-8");
 
   shada_write(&sd_writer, (nomerge ? NULL : &sd_reader));
-
-  close_file((int)(intptr_t) sd_writer.cookie);
+  sd_writer.close(&sd_writer);
 
   if (!nomerge) {
-    close_file((int)(intptr_t) sd_reader.cookie);
+    sd_reader.close(&sd_reader);
     if (vim_rename(tempname, fname) == -1) {
       EMSG3(_("E886: Can't rename ShaDa file from %s to %s!"),
             tempname, fname);
