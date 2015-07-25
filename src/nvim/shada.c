@@ -3106,15 +3106,38 @@ shada_read_next_item_start:
   msgpack_unpacked unpacked;
   msgpack_unpacked_init(&unpacked);
 
+  bool did_try_to_free = false;
+shada_read_next_item_read_next: {}
   const msgpack_unpack_return result =
       msgpack_unpacker_next(unpacker, &unpacked);
-  if (result != MSGPACK_UNPACK_SUCCESS) {
-    if (result == MSGPACK_UNPACK_NOMEM_ERROR) {
+  switch (result) {
+    case MSGPACK_UNPACK_SUCCESS: {
+      break;
+    }
+    case MSGPACK_UNPACK_PARSE_ERROR: {
+      emsgu("Failed to parse ShaDa file due to an error at position %" PRIu64,
+            (uint64_t) initial_fpos);
+      goto shada_read_next_item_error;
+    }
+    case MSGPACK_UNPACK_NOMEM_ERROR: {
+      if (!did_try_to_free) {
+        did_try_to_free = true;
+        try_to_free_memory();
+        goto shada_read_next_item_read_next;
+      }
       EMSG(e_outofmem);
       goto shada_read_next_item_error;
     }
-    if (result == MSGPACK_UNPACK_PARSE_ERROR) {
-      EMSG("Failed to parse ShaDa file");
+    case MSGPACK_UNPACK_CONTINUE: {
+      emsgu("Failed to parse ShaDa file: incomplete msgpack string "
+            "at position %" PRIu64,
+            (uint64_t) initial_fpos);
+      goto shada_read_next_item_error;
+    }
+    case MSGPACK_UNPACK_EXTRA_BYTES: {
+      emsgu("Failed to parse ShaDa file: extra bytes in msgpack string "
+            "at position %" PRIu64,
+            (uint64_t) initial_fpos);
       goto shada_read_next_item_error;
     }
   }
