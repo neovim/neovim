@@ -592,6 +592,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
     feed('`m]s')
     execute('let [str, a] = spellbadword()')
     execute('$put =str')
+    execute('1,/^test 1-1/-1d')
     expect([[
       test 1-1
       # file: Xtest.utf-8.spl
@@ -644,8 +645,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       elequint
       elekwent
       elequint
-      elekwint
-      ]])
+      elekwint]])
   end)
 
   it('part 2-1', function()
@@ -656,7 +656,8 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ]])
     -- Postponed prefixes.
     test_one(2, 1)
-    expect([[
+    execute('1,/^test 2-1/-1d')
+    expect([=[
       test 2-1
       # file: Xtest.utf-8.spl
       Comment
@@ -693,8 +694,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       test
       ['Test', 'testn', 'testen']
       déôl
-      ['deol', 'déôr', 'test']
-      ]])
+      ['deol', 'déôr', 'test']]=])
   end)
 
   it('part 3-3', function()
@@ -706,7 +706,8 @@ describe("spell checking with 'encoding' set to utf-8", function()
       badend
       ]])
     test_one(3, 3)
-    expect([[
+    execute('1,/^test 3-3/-1d')
+    expect([=[
       test 3-3
       # file: Xtest.utf-8.spl
       foo
@@ -737,8 +738,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       foola
       ['foo', 'foobar', 'foofoo']
       labar
-      ['barbar', 'foobar']
-      ]])
+      ['barbar', 'foobar']]=])
   end)
 
   it('part 4-4', function()
@@ -759,7 +759,8 @@ describe("spell checking with 'encoding' set to utf-8", function()
       badend
       ]])
     test_one(4, 4)
-    expect([[
+    execute('1,/^test 4-4/-1d')
+    expect([=[
       test 4-4
       # file: Xtest.utf-8.spl
       bork
@@ -805,8 +806,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       utilsbork
       ['utilbork', 'utils bork', 'util bork']
       startnouword
-      ['start nouword', 'startword', 'startborkword']
-      ]])
+      ['start nouword', 'startword', 'startborkword']]=])
   end)
 
   it('part 5-5', function()
@@ -820,7 +820,8 @@ describe("spell checking with 'encoding' set to utf-8", function()
       badend
       ]])
     test_one(5, 5)
-    expect([[
+    execute('1,/^test 5-5/-1d')
+    expect([=[
       test 5-5
       # file: Xtest.utf-8.spl
       bar
@@ -854,8 +855,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       startprobar
       ['startprebar', 'start prebar', 'startbar']
       startnouend
-      ['start nouend', 'startend']
-      ]])
+      ['start nouend', 'startend']]=])
   end)
 
   it('part 6-6', function()
@@ -867,7 +867,8 @@ describe("spell checking with 'encoding' set to utf-8", function()
       badend
       ]])
     test_one(6, 6)
-    expect([[
+    execute('1,/^test 6-6/-1d')
+    expect([=[
       test 6-6
       # file: Xtest.utf-8.spl
       bar
@@ -898,8 +899,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       endlead
       ['end lead', 'lead', 'end end']
       leadprobar
-      ['leadprebar', 'lead prebar', 'leadbar']
-      ]])
+      ['leadprebar', 'lead prebar', 'leadbar']]=])
   end)
 
   it('part 7-7', function()
@@ -913,7 +913,8 @@ describe("spell checking with 'encoding' set to utf-8", function()
     -- Compound words.
     test_one(7, 7)
     -- Assert buffer contents.
-    expect([[
+    execute('1,/^test 7-7/-1d')
+    expect([=[
       test 7-7
       # file: Xtest.utf-8.spl
       bar
@@ -944,7 +945,6 @@ describe("spell checking with 'encoding' set to utf-8", function()
       taillead
       ['tail lead', 'tail']
       leadprobar
-      ['leadprebar', 'lead prebar', 'leadbar']
-      ]])
+      ['leadprebar', 'lead prebar', 'leadbar']]=])
   end)
 end)
