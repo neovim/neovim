@@ -525,7 +525,7 @@ static ptrdiff_t read_file(ShaDaReadDef *const sd_reader, void *const dest,
       sd_reader->fpos += (uintmax_t) cur_read_bytes;
       assert(read_bytes <= size);
     }
-    if (errno) {
+    if (cur_read_bytes < 0) {
       if (errno == EINTR || errno == EAGAIN) {
         errno = 0;
         continue;
@@ -576,7 +576,7 @@ static ptrdiff_t write_file(ShaDaWriteDef *const sd_writer,
     if (cur_written_bytes > 0) {
       written_bytes += (size_t) cur_written_bytes;
     }
-    if (errno) {
+    if (cur_written_bytes < 0) {
       if (errno == EINTR || errno == EAGAIN) {
         errno = 0;
         continue;
