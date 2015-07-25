@@ -539,7 +539,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
   it('part 1-1', function()
     insert([[
       1good: wrong OK puts. Test the end
-      bad:  inputs comment ok Ok. test dÃ©Ã´l end the
+      bad:  inputs comment ok Ok. test déôl end the
       badend
       
       test2:
@@ -547,13 +547,13 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ]])
     test_one(1, 1)
     execute([[$put =soundfold('goobledygoook')]])
-    execute([[$put =soundfold('kÃ³opÃ«rÃ¿nÃ´ven')]])
+    execute([[$put =soundfold('kóopërÿnôven')]])
     execute([[$put =soundfold('oeverloos gezwets edale')]])
     -- And now with SAL instead of SOFO items; test automatic reloading.
     os.execute('cp -f Xtest-sal.aff Xtest.aff')
     execute('mkspell! Xtest Xtest')
     execute([[$put =soundfold('goobledygoook')]])
-    execute([[$put =soundfold('kÃ³opÃ«rÃ¿nÃ´ven')]])
+    execute([[$put =soundfold('kóopërÿnôven')]])
     execute([[$put =soundfold('oeverloos gezwets edale')]])
     -- Also use an addition file.
     execute('mkspell! Xtest.utf-8.add.spl Xtest.utf-8.add')
@@ -600,7 +600,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       # file: Xtest.utf-8.spl
       Comment
       deol
-      dÃ©Ã´r
+      déôr
       input
       OK
       output
@@ -627,8 +627,8 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ['OK', 'Uk', 'Put']
       test
       ['Test', 'testn', 'testen']
-      dÃ©Ã´l
-      ['deol', 'dÃ©Ã´r', 'test']
+      déôl
+      ['deol', 'déôr', 'test']
       end
       ['put', 'uk', 'test']
       the
@@ -653,7 +653,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
   it('part 2-1', function()
     insert([[
       2good: puts
-      bad: inputs comment ok Ok end the. test dÃ©Ã´l
+      bad: inputs comment ok Ok end the. test déôl
       badend
       ]])
     -- Postponed prefixes.
@@ -664,7 +664,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       # file: Xtest.utf-8.spl
       Comment
       deol
-      dÃ©Ã´r
+      déôr
       OK
       put
       input
@@ -695,16 +695,16 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ['put', 'uk', 'test']
       test
       ['Test', 'testn', 'testen']
-      dÃ©Ã´l
-      ['deol', 'dÃ©Ã´r', 'test']]=])
+      déôl
+      ['deol', 'déôr', 'test']]=])
   end)
 
   it('part 3-3', function()
     insert([[
       Test rules for compounding.
       
-      3good: foo mÃ¯ foobar foofoobar barfoo barbarfoo
-      bad: bar la foomÃ¯ barmÃ¯ mÃ¯foo mÃ¯bar mÃ¯mÃ¯ lala mÃ¯la lamÃ¯ foola labar
+      3good: foo mï foobar foofoobar barfoo barbarfoo
+      bad: bar la foomï barmï mïfoo mïbar mïmï lala mïla lamï foola labar
       badend
       ]])
     test_one(3, 3)
@@ -713,30 +713,30 @@ describe("spell checking with 'encoding' set to utf-8", function()
       test 3-3
       # file: Xtest.utf-8.spl
       foo
-      mÃ¯
+      mï
       -------
       bad
-      ['foo', 'mÃ¯']
+      ['foo', 'mï']
       bar
       ['barfoo', 'foobar', 'foo']
       la
-      ['mÃ¯', 'foo']
-      foomÃ¯
-      ['foo mÃ¯', 'foo', 'foofoo']
-      barmÃ¯
-      ['barfoo', 'mÃ¯', 'barbar']
-      mÃ¯foo
-      ['mÃ¯ foo', 'foo', 'foofoo']
-      mÃ¯bar
-      ['foobar', 'barbar', 'mÃ¯']
-      mÃ¯mÃ¯
-      ['mÃ¯ mÃ¯', 'mÃ¯']
+      ['mï', 'foo']
+      foomï
+      ['foo mï', 'foo', 'foofoo']
+      barmï
+      ['barfoo', 'mï', 'barbar']
+      mïfoo
+      ['mï foo', 'foo', 'foofoo']
+      mïbar
+      ['foobar', 'barbar', 'mï']
+      mïmï
+      ['mï mï', 'mï']
       lala
       []
-      mÃ¯la
-      ['mÃ¯', 'mÃ¯ mÃ¯']
-      lamÃ¯
-      ['mÃ¯', 'mÃ¯ mÃ¯']
+      mïla
+      ['mï', 'mï mï']
+      lamï
+      ['mï', 'mï mï']
       foola
       ['foo', 'foobar', 'foofoo']
       labar
@@ -815,7 +815,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
     insert([[
       Test affix flags with two characters
       
-      5good: fooa1 fooaÃ© bar prebar barbork prebarbork  startprebar
+      5good: fooa1 fooaé bar prebar barbork prebarbork  startprebar
             start end startend  startmiddleend nouend
       bad: foo fooa2 prabar probarbirk middle startmiddle middleend endstart
             startprobar startnouend
@@ -830,7 +830,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       barbork
       end
       fooa1
-      fooaÃ©
+      fooaé
       nouend
       prebar
       prebarbork
@@ -839,9 +839,9 @@ describe("spell checking with 'encoding' set to utf-8", function()
       bad
       ['bar', 'end', 'fooa1']
       foo
-      ['fooa1', 'fooaÃ©', 'bar']
+      ['fooa1', 'fooaé', 'bar']
       fooa2
-      ['fooa1', 'fooaÃ©', 'bar']
+      ['fooa1', 'fooaé', 'bar']
       prabar
       ['prebar', 'bar', 'bar bar']
       probarbirk
@@ -862,7 +862,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
 
   it('part 6-6', function()
     insert([[
-      6good: meea1 meeaÃ© bar prebar barbork prebarbork  leadprebar
+      6good: meea1 meeaé bar prebar barbork prebarbork  leadprebar
             lead end leadend  leadmiddleend
       bad: mee meea2 prabar probarbirk middle leadmiddle middleend endlead
             leadprobar
@@ -878,16 +878,16 @@ describe("spell checking with 'encoding' set to utf-8", function()
       end
       lead
       meea1
-      meeaÃ©
+      meeaé
       prebar
       prebarbork
       -------
       bad
       ['bar', 'end', 'lead']
       mee
-      ['meea1', 'meeaÃ©', 'bar']
+      ['meea1', 'meeaé', 'bar']
       meea2
-      ['meea1', 'meeaÃ©', 'lead']
+      ['meea1', 'meeaé', 'lead']
       prabar
       ['prebar', 'bar', 'leadbar']
       probarbirk
@@ -906,7 +906,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
 
   it('part 7-7', function()
     insert([[
-      7good: meea1 meeaÃ© bar prebar barmeat prebarmeat  leadprebar
+      7good: meea1 meeaé bar prebar barmeat prebarmeat  leadprebar
             lead tail leadtail  leadmiddletail
       bad: mee meea2 prabar probarmaat middle leadmiddle middletail taillead
             leadprobar
@@ -923,7 +923,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       barmeat
       lead
       meea1
-      meeaÃ©
+      meeaé
       prebar
       prebarmeat
       tail
@@ -931,9 +931,9 @@ describe("spell checking with 'encoding' set to utf-8", function()
       bad
       ['bar', 'lead', 'tail']
       mee
-      ['meea1', 'meeaÃ©', 'bar']
+      ['meea1', 'meeaé', 'bar']
       meea2
-      ['meea1', 'meeaÃ©', 'lead']
+      ['meea1', 'meeaé', 'lead']
       prabar
       ['prebar', 'bar', 'leadbar']
       probarmaat
