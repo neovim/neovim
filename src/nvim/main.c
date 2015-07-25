@@ -383,7 +383,7 @@ int main(int argc, char **argv)
    * This is where v:oldfiles gets filled.
    */
   if (*p_shada != NUL) {
-    shada_read_everything(NULL, false);
+    shada_read_everything(NULL, false, true);
     TIME_MSG("reading ShaDa");
   }
   /* It's better to make v:oldfiles an empty list than NULL. */

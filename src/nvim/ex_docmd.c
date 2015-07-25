@@ -9150,8 +9150,7 @@ static void ex_shada(exarg_T *eap)
   if (*p_shada == NUL)
     p_shada = (char_u *)"'100";
   if (eap->cmdidx == CMD_rviminfo || eap->cmdidx == CMD_rshada) {
-    if (shada_read_everything((char *) eap->arg, eap->forceit) == FAIL)
-      EMSG(_("E195: Cannot open ShaDa file for reading"));
+    (void) shada_read_everything((char *) eap->arg, eap->forceit, false);
   } else {
     shada_write_file((char *) eap->arg, eap->forceit);
   }

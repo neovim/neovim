@@ -896,8 +896,7 @@ To automatically save and restore views for *.c files: >
 	au BufWinEnter *.c silent loadview
 
 ==============================================================================
-8. The ShaDa file				*shada* *shada-file* *E136*
-						*E575* *E576* *E577*
+8. The ShaDa file				*shada* *shada-file* *E575*
 If you exit Vim and later start it again, you would normally lose a lot of
 information.  The ShaDa file can be used to remember that information, which
 enables you to continue where you left off.
@@ -1081,7 +1080,7 @@ accidentally did that!).  If you want to overwrite a ShaDa file with an error
 in it, you will either have to fix the error, or delete the file (while NeoVim 
 is running, so most of the information will be restored).
 
-						   *:rsh* *:rshada* *E195*
+						    *:rsh* *:rshada* *E886*
 :rsh[ada][!] [file]	Read from ShaDa file [file] (default: see above).
 			If [!] is given, then any information that is
 			already set (registers, marks, |v:oldfiles|, etc.)
@@ -1090,7 +1089,7 @@ is running, so most of the information will be restored).
 						   *:rv* *:rviminfo*
 :rv[iminfo][!] [file]	Deprecated alias to |:rshada| command.
 
-				*:wsh* *:wshada* *E137* *E138* *E574* *E886*
+					*:wsh* *:wshada* *E136* *E137* *E138*
 :wsh[ada][!] [file]	Write to ShaDa file [file] (default: see above).
 			The information in the file is first read in to make
 			a merge between old and new info.  When [!] is used,
