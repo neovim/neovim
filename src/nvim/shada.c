@@ -151,6 +151,15 @@ KHASH_SET_INIT_STR(strset)
 /// Common prefix for all “system” errors
 #define SERR "E886: "
 
+/// Flags for shada_read_file and children
+enum {
+  kShaDaWantInfo = 1,       ///< Load non-mark information
+  kShaDaWantMarks = 2,      ///< Load local file marks and change list
+  kShaDaForceit = 4,        ///< Overwrite info already read
+  kShaDaGetOldfiles = 8,    ///< Load v:oldfiles.
+  kShaDaMissingError = 16,  ///< Error out when os_open returns -ENOENT.
+};
+
 /// Possible ShaDa entry types
 ///
 /// @warning Enum values are part of the API and must not be altered.
@@ -776,7 +785,7 @@ static bool shada_disabled(void)
 /// @param[in]  flags  Flags, see kShaDa enum values in shada.h.
 ///
 /// @return FAIL if reading failed for some reason and OK otherwise.
-int shada_read_file(const char *const file, const int flags)
+static int shada_read_file(const char *const file, const int flags)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (shada_disabled()) {
