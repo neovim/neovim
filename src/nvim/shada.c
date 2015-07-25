@@ -1061,8 +1061,11 @@ static inline bool marks_equal(const pos_T a, const pos_T b)
 static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
   FUNC_ATTR_NONNULL_ALL
 {
+  list_T *oldfiles_list = get_vim_var_list(VV_OLDFILES);
   const bool force = flags & kShaDaForceit;
-  const bool get_old_files = flags & (kShaDaGetOldfiles | kShaDaForceit);
+  const bool get_old_files = (flags & (kShaDaGetOldfiles | kShaDaForceit)
+                              && (force || oldfiles_list == NULL
+                                  || oldfiles_list->lv_len == 0));
   const bool want_marks = flags & kShaDaWantMarks;
   const unsigned srni_flags = ((flags & kShaDaWantInfo
                                 ? (kSDReadUndisableableData
@@ -1105,11 +1108,12 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
     fname_bufs = kh_init(fnamebufs);
   }
   khash_t(strset) *oldfiles_set = NULL;
-  list_T *oldfiles_list = NULL;
   if (get_old_files) {
     oldfiles_set = kh_init(strset);
-    oldfiles_list = list_alloc();
-    set_vim_var_list(VV_OLDFILES, oldfiles_list);
+    if (oldfiles_list == NULL) {
+      oldfiles_list = list_alloc();
+      set_vim_var_list(VV_OLDFILES, oldfiles_list);
+    }
   }
   while (shada_read_next_item(sd_reader, &cur_entry, srni_flags, 0)
          == NOTDONE) {
@@ -3134,7 +3138,11 @@ static int shada_read_next_item(ShaDaReadDef *const sd_reader,
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
 shada_read_next_item_start:
-  entry->type = kSDItemMissing;
+  // Set entry type to kSDItemMissing and also make sure that all pointers in 
+  // data union are NULL so they are safe to xfree(). This is needed in case 
+  // somebody calls goto shada_read_next_item_error before anything is set in 
+  // the switch.
+  memset(entry, 0, sizeof(*entry));
   if (sd_reader->eof) {
     return OK;
   }
@@ -3162,6 +3170,18 @@ shada_read_next_item_start:
   const size_t length = (size_t) length_u64;
   entry->timestamp = (Timestamp) timestamp_u64;
 
+  if (type_u64 == 0) {
+    // kSDItemUnknown cannot possibly pass that far because it is -1 and that 
+    // will fail in msgpack_read_uint64. But kSDItemMissing may and it will 
+    // otherwise be skipped because (1 << 0) will never appear in flags.
+    emsgu(_(RERR "Error while reading ShaDa file: "
+            "there is an item at position %" PRIu64 " "
+            "that must not be there: Missing items are "
+            "for internal uses only"),
+          (uint64_t) initial_fpos);
+    return FAIL;
+  }
+
   if ((type_u64 > SHADA_LAST_ENTRY
        ? !(flags & kSDReadUnknown)
        : !((unsigned) (1 << type_u64) & flags))
@@ -3180,28 +3200,26 @@ shada_read_next_item_start:
     return fread_len(sd_reader, entry->data.unknown_item.contents, length);
   }
 
-  msgpack_unpacker *const unpacker = msgpack_unpacker_new(length);
-  if (unpacker == NULL ||
-      !msgpack_unpacker_reserve_buffer(unpacker, length)) {
-    EMSG(_(e_outofmem));
-    goto shada_read_next_item_error;
-  }
+  char *const buf = xmalloc(length);
 
-  if (fread_len(sd_reader, msgpack_unpacker_buffer(unpacker), length) != OK) {
-    msgpack_unpacker_free(unpacker);
+  if (fread_len(sd_reader, buf, length) != OK) {
+    xfree(buf);
     return FAIL;
   }
-  msgpack_unpacker_buffer_consumed(unpacker, length);
 
   msgpack_unpacked unpacked;
   msgpack_unpacked_init(&unpacked);
 
   bool did_try_to_free = false;
 shada_read_next_item_read_next: {}
+  size_t off = 0;
   const msgpack_unpack_return result =
-      msgpack_unpacker_next(unpacker, &unpacked);
+      msgpack_unpack_next(&unpacked, buf, length, &off);
   switch (result) {
     case MSGPACK_UNPACK_SUCCESS: {
+      if (off < length) {
+        goto shada_read_next_item_extra_bytes;
+      }
       break;
     }
     case MSGPACK_UNPACK_PARSE_ERROR: {
@@ -3226,6 +3244,7 @@ shada_read_next_item_read_next: {}
       goto shada_read_next_item_error;
     }
     case MSGPACK_UNPACK_EXTRA_BYTES: {
+shada_read_next_item_extra_bytes:
       emsgu(_(RERR "Failed to parse ShaDa file: extra bytes in msgpack string "
               "at position %" PRIu64),
             (uint64_t) initial_fpos);
@@ -3418,23 +3437,47 @@ shada_read_next_item_read_next: {}
       ga_init(&ad_ga, sizeof(*(unpacked.data.via.map.ptr)), 1);
       for (size_t i = 0; i < unpacked.data.via.map.size; i++) {
         CHECK_KEY_IS_STR("mark");
-        CHECKED_KEY(
-            "mark", KEY_NAME_CHAR, " which is not an unsigned integer",
-            entry->data.filemark.name,
-            (type_u64 != kSDItemJump
-             && type_u64 != kSDItemChange
-             && unpacked.data.via.map.ptr[i].val.type
-                == MSGPACK_OBJECT_POSITIVE_INTEGER),
-            u64, TOCHAR)
-        else LONG_KEY("mark", KEY_LNUM, entry->data.filemark.mark.lnum)
+        if (CHECK_KEY(unpacked.data.via.map.ptr[i].key, KEY_NAME_CHAR)) {
+          if (type_u64 == kSDItemJump || type_u64 == kSDItemChange) {
+            emsgu(_(RERR "Error while reading ShaDa file: "
+                    "mark entry at position %" PRIu64 " "
+                    "has n key which is only valid "
+                    "for local and global mark entries"),
+                  (uint64_t) initial_fpos);
+            ga_clear(&ad_ga);
+            goto shada_read_next_item_error;
+          }
+          CHECKED_ENTRY(
+              (unpacked.data.via.map.ptr[i].val.type
+               == MSGPACK_OBJECT_POSITIVE_INTEGER),
+              "has n key value which is not an unsigned integer",
+              "mark", unpacked.data.via.map.ptr[i].val,
+              entry->data.filemark.name, u64, TOCHAR);
+        } else LONG_KEY("mark", KEY_LNUM, entry->data.filemark.mark.lnum)
         else INTEGER_KEY("mark", KEY_COL, entry->data.filemark.mark.col)
         else STRING_KEY("mark", KEY_FILE, entry->data.filemark.fname)
         else ADDITIONAL_KEY
       }
-      if (entry->data.filemark.mark.lnum == 0) {
+      if (entry->data.filemark.fname == NULL) {
         emsgu(_(RERR "Error while reading ShaDa file: "
                 "mark entry at position %" PRIu64 " "
-                "is missing line number"),
+                "is missing file name"),
+              (uint64_t) initial_fpos);
+        ga_clear(&ad_ga);
+        goto shada_read_next_item_error;
+      }
+      if (entry->data.filemark.mark.lnum <= 0) {
+        emsgu(_(RERR "Error while reading ShaDa file: "
+                "mark entry at position %" PRIu64 " "
+                "has invalid line number"),
+              (uint64_t) initial_fpos);
+        ga_clear(&ad_ga);
+        goto shada_read_next_item_error;
+      }
+      if (entry->data.filemark.mark.col < 0) {
+        emsgu(_(RERR "Error while reading ShaDa file: "
+                "mark entry at position %" PRIu64 " "
+                "has invalid column number"),
               (uint64_t) initial_fpos);
         ga_clear(&ad_ga);
         goto shada_read_next_item_error;
@@ -3513,7 +3556,7 @@ shada_read_next_item_read_next: {}
             if (arr.ptr[i].type != MSGPACK_OBJECT_BIN) {
               emsgu(_(RERR "Error while reading ShaDa file: "
                       "register entry at position %" PRIu64 " "
-                      "has " REG_KEY_CONTENTS " array with non-string value"),
+                      "has " REG_KEY_CONTENTS " array with non-binary value"),
                     (uint64_t) initial_fpos);
               ga_clear(&ad_ga);
               goto shada_read_next_item_error;
@@ -3851,6 +3894,22 @@ shada_read_next_item_hist_no_conv:
               }
             }
           }
+          if (entry->data.buffer_list.buffers[i].pos.lnum <= 0) {
+            emsgu(_(RERR "Error while reading ShaDa file: "
+                    "buffer list at position %" PRIu64 " "
+                    "contains entry with invalid line number"),
+                  (uint64_t) initial_fpos);
+            ga_clear(&ad_ga);
+            goto shada_read_next_item_error;
+          }
+          if (entry->data.buffer_list.buffers[i].pos.col < 0) {
+            emsgu(_(RERR "Error while reading ShaDa file: "
+                    "buffer list at position %" PRIu64 " "
+                    "contains entry with invalid column number"),
+                  (uint64_t) initial_fpos);
+            ga_clear(&ad_ga);
+            goto shada_read_next_item_error;
+          }
           if (entry->data.buffer_list.buffers[i].fname == NULL) {
             emsgu(_(RERR "Error while reading ShaDa file: "
                     "buffer list at position %" PRIu64 " "
@@ -3887,14 +3946,7 @@ shada_read_next_item_hist_no_conv:
       }
       break;
     }
-    case kSDItemMissing: {
-      emsgu(_(RERR "Error while reading ShaDa file: "
-              "there is an item at position %" PRIu64 " "
-              "that must not be there: Missing items are "
-              "for internal uses only"),
-            (uint64_t) initial_fpos);
-      goto shada_read_next_item_error;
-    }
+    case kSDItemMissing:
     case kSDItemUnknown: {
       assert(false);
     }
@@ -3921,14 +3973,14 @@ shada_read_next_item_hist_no_conv:
 #undef TOSIZE
 shada_read_next_item_error:
   msgpack_unpacked_destroy(&unpacked);
-  msgpack_unpacker_free(unpacker);
+  xfree(buf);
   entry->type = (ShadaEntryType) type_u64;
   shada_free_shada_entry(entry);
   entry->type = kSDItemMissing;
   return FAIL;
 shada_read_next_item_end:
   msgpack_unpacked_destroy(&unpacked);
-  msgpack_unpacker_free(unpacker);
+  xfree(buf);
   return NOTDONE;
 }
 

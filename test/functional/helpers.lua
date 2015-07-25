@@ -220,9 +220,12 @@ local function execute(...)
 end
 
 -- Dedent the given text and write it to the file name.
-local function write_file(name, text)
+local function write_file(name, text, dont_dedent)
   local file = io.open(name, 'w')
-  file:write(dedent(text))
+  if not dont_dedent then
+    text = dedent(text)
+  end
+  file:write(text)
   file:flush()
   file:close()
 end

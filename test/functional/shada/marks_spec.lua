@@ -5,9 +5,9 @@ local nvim, nvim_window, nvim_curwin, nvim_command, nvim_feed, nvim_eval, eq =
   helpers.eval, helpers.eq
 
 local shada_helpers = require('test.functional.shada.helpers')
-local reset, set_additional_cmd, clear =
+local reset, set_additional_cmd, clear, exc_exec =
   shada_helpers.reset, shada_helpers.set_additional_cmd,
-  shada_helpers.clear
+  shada_helpers.clear, shada_helpers.exc_exec
 
 local nvim_current_line = function()
   return nvim_window('get_cursor', nvim_curwin())[1]
@@ -57,13 +57,7 @@ describe('ShaDa support code', function()
     nvim_command('wshada')
     reset()
     nvim_command('language C')
-    nvim_command([[
-      try
-        execute "normal! `A"
-      catch
-        let exception = v:exception
-      endtry]])
-    eq('Vim(normal):E20: Mark not set', nvim('get_var', 'exception'))
+    eq('Vim(normal):E20: Mark not set', exc_exec('normal! `A'))
   end)
 
   it('does read back global mark even with `\'0` and `f0` in shada', function()

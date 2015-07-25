@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')
-local spawn, set_session, nvim, nvim_prog =
-  helpers.spawn, helpers.set_session, helpers.nvim, helpers.nvim_prog
+local spawn, set_session, nvim, nvim_prog, nvim_command, nvim_eval =
+  helpers.spawn, helpers.set_session, helpers.nvim, helpers.nvim_prog,
+  helpers.command, helpers.eval
 
 local tmpname = os.tmpname()
 local additional_cmd = ''
@@ -46,8 +47,22 @@ local clear = function()
   set_additional_cmd('')
 end
 
+local exc_exec = function(cmd)
+  nvim_command(([[
+    try
+      execute "%s"
+    catch
+      let g:__exception = v:exception
+    endtry
+  ]]):format(cmd:gsub('\n', '\\n'):gsub('[\\"]', '\\%0')))
+  local ret = nvim_eval('get(g:, "__exception", 0)')
+  nvim_command('unlet! g:__exception')
+  return ret
+end
+
 return {
   reset=reset,
   set_additional_cmd=set_additional_cmd,
   clear=clear,
+  exc_exec=exc_exec,
 }
