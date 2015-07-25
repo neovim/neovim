@@ -666,9 +666,6 @@ open_file_start:
       did_try_to_free = true;
       goto open_file_start;
     }
-    if (-fd == EINTR) {
-      goto open_file_start;
-    }
     if (-fd != EEXIST) {
       emsg3(_(SERR "System error while opening ShaDa file %s: %s"),
             fname, os_strerror(fd));
