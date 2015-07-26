@@ -266,11 +266,6 @@ if(NOT BUSTED_OUTPUT_TYPE)
   set(BUSTED_OUTPUT_TYPE "utfTerminal")
 endif()
 
-# CMake is painful here.  It will create the destination using the user's
-# current umask, and we don't want that.  And we don't just want to install
-# the target directory, as it will mess with existing permissions.  So this
-# seems like the best compromise.  If we create it, then everyone can see it.
-# If it's preexisting, leave it alone.
 include(InstallHelpers)
 
 file(GLOB MANPAGES
@@ -280,24 +275,6 @@ file(GLOB MANPAGES
 install_helper(
   FILES ${MANPAGES}
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
-
-install_helper(
-  DIRECTORY runtime
-  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim)
-
-file(GLOB_RECURSE RUNTIME_PROGRAMS
-  RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-  runtime/*.awk runtime/*.sh)
-
-foreach(PROG ${RUNTIME_PROGRAMS})
-  get_filename_component(BASEDIR ${PROG} PATH)
-  install_helper(PROGRAMS ${PROG} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/${BASEDIR})
-endforeach()
-
-configure_file(${PROJECT_SOURCE_DIR}/cmake/GenerateHelptags.cmake.in
-  ${PROJECT_BINARY_DIR}/cmake/GenerateHelptags.cmake @ONLY)
-install(SCRIPT ${PROJECT_BINARY_DIR}/cmake/GenerateHelptags.cmake)
-
 
 # Go down the tree.
 
@@ -310,6 +287,7 @@ get_compile_flags(NVIM_VERSION_CFLAGS)
 add_subdirectory(test/includes)
 add_subdirectory(config)
 add_subdirectory(test/functional/fixtures) # compile pty/shell test programs
+add_subdirectory(runtime)
 
 
 # Setup some test-related bits.  We do this after going down the tree because we

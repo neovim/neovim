@@ -5121,116 +5121,9 @@ void forward_slash(char_u *fname)
 /*
  * Code for automatic commands.
  */
-
-
-static struct event_name {
-  char        *name;    /* event name */
-  event_T event;        /* event number */
-} event_names[] =
-{
-  {"BufAdd",          EVENT_BUFADD},
-  {"BufCreate",       EVENT_BUFADD},
-  {"BufDelete",       EVENT_BUFDELETE},
-  {"BufEnter",        EVENT_BUFENTER},
-  {"BufFilePost",     EVENT_BUFFILEPOST},
-  {"BufFilePre",      EVENT_BUFFILEPRE},
-  {"BufHidden",       EVENT_BUFHIDDEN},
-  {"BufLeave",        EVENT_BUFLEAVE},
-  {"BufNew",          EVENT_BUFNEW},
-  {"BufNewFile",      EVENT_BUFNEWFILE},
-  {"BufRead",         EVENT_BUFREADPOST},
-  {"BufReadCmd",      EVENT_BUFREADCMD},
-  {"BufReadPost",     EVENT_BUFREADPOST},
-  {"BufReadPre",      EVENT_BUFREADPRE},
-  {"BufUnload",       EVENT_BUFUNLOAD},
-  {"BufWinEnter",     EVENT_BUFWINENTER},
-  {"BufWinLeave",     EVENT_BUFWINLEAVE},
-  {"BufWipeout",      EVENT_BUFWIPEOUT},
-  {"BufWrite",        EVENT_BUFWRITEPRE},
-  {"BufWritePost",    EVENT_BUFWRITEPOST},
-  {"BufWritePre",     EVENT_BUFWRITEPRE},
-  {"BufWriteCmd",     EVENT_BUFWRITECMD},
-  {"CmdwinEnter",     EVENT_CMDWINENTER},
-  {"CmdwinLeave",     EVENT_CMDWINLEAVE},
-  {"CmdUndefined",    EVENT_CMDUNDEFINED},
-  {"ColorScheme",     EVENT_COLORSCHEME},
-  {"CompleteDone",    EVENT_COMPLETEDONE},
-  {"CursorHold",      EVENT_CURSORHOLD},
-  {"CursorHoldI",     EVENT_CURSORHOLDI},
-  {"CursorMoved",     EVENT_CURSORMOVED},
-  {"CursorMovedI",    EVENT_CURSORMOVEDI},
-  {"EncodingChanged", EVENT_ENCODINGCHANGED},
-  {"FileEncoding",    EVENT_ENCODINGCHANGED},
-  {"FileAppendPost",  EVENT_FILEAPPENDPOST},
-  {"FileAppendPre",   EVENT_FILEAPPENDPRE},
-  {"FileAppendCmd",   EVENT_FILEAPPENDCMD},
-  {"FileChangedShell",EVENT_FILECHANGEDSHELL},
-  {"FileChangedShellPost",EVENT_FILECHANGEDSHELLPOST},
-  {"FileChangedRO",   EVENT_FILECHANGEDRO},
-  {"FileReadPost",    EVENT_FILEREADPOST},
-  {"FileReadPre",     EVENT_FILEREADPRE},
-  {"FileReadCmd",     EVENT_FILEREADCMD},
-  {"FileType",        EVENT_FILETYPE},
-  {"FileWritePost",   EVENT_FILEWRITEPOST},
-  {"FileWritePre",    EVENT_FILEWRITEPRE},
-  {"FileWriteCmd",    EVENT_FILEWRITECMD},
-  {"FilterReadPost",  EVENT_FILTERREADPOST},
-  {"FilterReadPre",   EVENT_FILTERREADPRE},
-  {"FilterWritePost", EVENT_FILTERWRITEPOST},
-  {"FilterWritePre",  EVENT_FILTERWRITEPRE},
-  {"FocusGained",     EVENT_FOCUSGAINED},
-  {"FocusLost",       EVENT_FOCUSLOST},
-  {"FuncUndefined",   EVENT_FUNCUNDEFINED},
-  {"GUIEnter",        EVENT_GUIENTER},
-  {"GUIFailed",       EVENT_GUIFAILED},
-  {"InsertChange",    EVENT_INSERTCHANGE},
-  {"InsertEnter",     EVENT_INSERTENTER},
-  {"InsertLeave",     EVENT_INSERTLEAVE},
-  {"InsertCharPre",   EVENT_INSERTCHARPRE},
-  {"MenuPopup",       EVENT_MENUPOPUP},
-  {"QuickFixCmdPost", EVENT_QUICKFIXCMDPOST},
-  {"QuickFixCmdPre",  EVENT_QUICKFIXCMDPRE},
-  {"QuitPre",         EVENT_QUITPRE},
-  {"RemoteReply",     EVENT_REMOTEREPLY},
-  {"SessionLoadPost", EVENT_SESSIONLOADPOST},
-  {"ShellCmdPost",    EVENT_SHELLCMDPOST},
-  {"ShellFilterPost", EVENT_SHELLFILTERPOST},
-  {"SourcePre",       EVENT_SOURCEPRE},
-  {"SourceCmd",       EVENT_SOURCECMD},
-  {"SpellFileMissing",EVENT_SPELLFILEMISSING},
-  {"StdinReadPost",   EVENT_STDINREADPOST},
-  {"StdinReadPre",    EVENT_STDINREADPRE},
-  {"SwapExists",      EVENT_SWAPEXISTS},
-  {"Syntax",          EVENT_SYNTAX},
-  {"TabClosed",       EVENT_TABCLOSED},
-  {"TabEnter",        EVENT_TABENTER},
-  {"TabLeave",        EVENT_TABLEAVE},
-  {"TabNew",          EVENT_TABNEW},
-  {"TabNewEntered",   EVENT_TABNEWENTERED},
-  {"TermChanged",     EVENT_TERMCHANGED},
-  {"TermOpen",        EVENT_TERMOPEN},
-  {"TermResponse",    EVENT_TERMRESPONSE},
-  {"TextChanged",     EVENT_TEXTCHANGED},
-  {"TextChangedI",    EVENT_TEXTCHANGEDI},
-  {"User",            EVENT_USER},
-  {"VimEnter",        EVENT_VIMENTER},
-  {"VimLeave",        EVENT_VIMLEAVE},
-  {"VimLeavePre",     EVENT_VIMLEAVEPRE},
-  {"WinEnter",        EVENT_WINENTER},
-  {"WinLeave",        EVENT_WINLEAVE},
-  {"VimResized",      EVENT_VIMRESIZED},
-  {NULL,              (event_T)0}
-};
-
-static AutoPat *first_autopat[NUM_EVENTS] =
-{
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
-};
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "auevents_name_map.generated.h"
+#endif
 
 static AutoPatCmd *active_apc_list = NULL; /* stack of active autocommands */
 
@@ -5526,7 +5419,7 @@ static event_T event_name2nr(char_u *start, char_u **end)
   for (p = start; *p && !ascii_iswhite(*p) && *p != ','; ++p)
     ;
   for (i = 0; event_names[i].name != NULL; ++i) {
-    len = (int)STRLEN(event_names[i].name);
+    len = (int) event_names[i].len;
     if (len == p - start && STRNICMP(event_names[i].name, start, len) == 0)
       break;
   }
