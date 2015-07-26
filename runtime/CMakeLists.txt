@@ -61,18 +61,26 @@ add_custom_target(
 # If it's preexisting, leave it alone.
 
 install_helper(
-  DIRECTORY ${PROJECT_SOURCE_DIR}/runtime
-  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim)
-install_helper(
-  DIRECTORY ${GENERATED_RUNTIME_DIR}
-  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim)
+  FILES ${GENERATED_HELP_TAGS} ${BUILDDOCFILES}
+  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime/doc)
 
 file(GLOB_RECURSE RUNTIME_PROGRAMS
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-  *.awk *.sh)
+  *.awk *.sh *.bat)
 
 foreach(PROG ${RUNTIME_PROGRAMS})
   get_filename_component(BASEDIR ${PROG} PATH)
   install_helper(PROGRAMS ${PROG}
-                 DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/${BASEDIR})
+                 DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime/${BASEDIR})
+endforeach()
+
+file(GLOB_RECURSE RUNTIME_FILES
+  RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+  *.vim *.dict *.py *.ps)
+list(APPEND RUNTIME_FILES macros/dvorak)
+
+foreach(F ${RUNTIME_FILES})
+  get_filename_component(BASEDIR ${F} PATH)
+  install_helper(FILES ${F}
+                 DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime/${BASEDIR})
 endforeach()
