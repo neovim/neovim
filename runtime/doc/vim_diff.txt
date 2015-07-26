@@ -107,6 +107,8 @@ Additional differences:
   are still kept.
 - When writing (|:wshada| without bang or at exit) it merges much more data. 
   Vim merges only marks.
+- ShaDa file format was designed with forward and backward compatibility in 
+  mind. |shada-compatibility|
 
 ==============================================================================
 4. New Features						     *nvim-features-new*

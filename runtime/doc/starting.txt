@@ -987,7 +987,8 @@ For a bash-like shell: >
 Use the "r" flag in 'shada' to specify for which files no marks should be
 remembered.
 
-							*shada-merging*
+MERGING							*shada-merging*
+									{Nvim}
 When writing ShaDa files with |:wshada| without bang or at regular exit 
 information in the existing ShaDa file is merged with information from current 
 NeoVim instance.  For this purpose ShaDa files store timestamps associated 
@@ -1016,6 +1017,38 @@ with ShaDa entries.  Specifically the following is being done:
    fashion: the only header and buffer list present are the ones from the 
    NeoVim instance which was last writing the file. |shada-%|
 
+COMPATIBILITY						*shada-compatibility*
+									{Nvim}
+ShaDa files are forward and backward compatible.  This means that
+
+1. Entries which have unknown type (i.e. that hold unidentified data) are 
+   ignored when reading and blindly copied when writing.
+2. Register entries with unknown register name are ignored when reading and 
+   blindly copied when writing. |registers|
+3. Register entries with unknown register type are ignored when reading and 
+   merged as usual when writing. |getregtype()|
+4. Local and global mark entries with unknown mark names are ignored when 
+   reading. When writing global mark entries are blindly copied and local mark 
+   entries are also blindly copied, but only if file they are attached to fits 
+   in the |shada-'| limit. Unknown local mark entry's timestamp is also taken 
+   into account when calculating which files exactly should fit into this 
+   limit. |mark-motions|
+5. History entries with unknown history type are ignored when reading and 
+   blindly copied when writing. |history|
+6. Unknown keys found in register, local mark, global mark, change, jump and 
+   search pattern entries are saved internally and dumped when writing. 
+   Entries created during NeoVim session never have such additions.
+7. Additional elements found in replacement string and history entries are 
+   saved internally and dumped. Entries created during NeoVim session never 
+   have such additions.
+8. Additional elements found in variable entries are simply ignored when 
+   reading. When writing new variables they will be preserved during merging, 
+   but that's all. Variable values dumped from current NeoVim session never 
+   have additional elements, even if variables themselves were obtained by 
+   reading ShaDa files.
+
+"Blindly" here means that there will be no attempts to somehow merge them, 
+even if other entries (with known name/type/etc) are merged. |shada-merging|
 
 SHADA FILE NAME						*shada-file-name*
 
