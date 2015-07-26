@@ -58,19 +58,21 @@ local vimopt_start = 'syn keyword vimOption contained '
 w('\n\n' .. vimopt_start)
 
 for _, opt_desc in ipairs(options.options) do
-  if lld.line_length > 850 then
-    w('\n' .. vimopt_start)
-  end
-  w(' ' .. opt_desc.full_name)
-  if opt_desc.abbreviation then
-    w(' ' .. opt_desc.abbreviation)
-  end
-  if opt_desc.type == 'bool' then
-    w(' inv' .. opt_desc.full_name)
-    w(' no' .. opt_desc.full_name)
+  if not opt_desc.varname or opt_desc.varname:sub(1, 7) ~= 'p_force' then
+    if lld.line_length > 850 then
+      w('\n' .. vimopt_start)
+    end
+    w(' ' .. opt_desc.full_name)
     if opt_desc.abbreviation then
-      w(' inv' .. opt_desc.abbreviation)
-      w(' no' .. opt_desc.abbreviation)
+      w(' ' .. opt_desc.abbreviation)
+    end
+    if opt_desc.type == 'bool' then
+      w(' inv' .. opt_desc.full_name)
+      w(' no' .. opt_desc.full_name)
+      if opt_desc.abbreviation then
+        w(' inv' .. opt_desc.abbreviation)
+        w(' no' .. opt_desc.abbreviation)
+      end
     end
   end
 end
