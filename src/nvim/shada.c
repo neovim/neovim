@@ -1567,6 +1567,11 @@ static char *shada_filename(const char *file)
       msgpack_pack_str(spacker, sizeof(s) - 1); \
       msgpack_pack_str_body(spacker, s, sizeof(s) - 1); \
     } while (0)
+#define PACK_STRING(s) \
+    do { \
+      msgpack_pack_str(spacker, s.size); \
+      msgpack_pack_str_body(spacker, s.data, s.size); \
+    } while (0)
 
 /// Write single ShaDa entry
 ///
@@ -1587,7 +1592,7 @@ static bool shada_pack_entry(msgpack_packer *const packer,
     if ((src) != NULL) { \
       for (listitem_T *li = (src)->lv_first; li != NULL; li = li->li_next) { \
         if (vim_to_msgpack(spacker, &li->li_tv) == FAIL) { \
-          return false; \
+          goto shada_pack_entry_error; \
         } \
       } \
     } \
@@ -1605,7 +1610,7 @@ static bool shada_pack_entry(msgpack_packer *const packer,
           msgpack_pack_str(spacker, key_len); \
           msgpack_pack_str_body(spacker, (const char *) hi->hi_key, key_len); \
           if (vim_to_msgpack(spacker, &di->di_tv) == FAIL) { \
-            return false; \
+            goto shada_pack_entry_error; \
           } \
         } \
       } \
@@ -1616,12 +1621,9 @@ static bool shada_pack_entry(msgpack_packer *const packer,
       assert(false);
     }
     case kSDItemUnknown: {
-      if ((msgpack_pack_uint64(packer, (uint64_t) entry.data.unknown_item.size)
-           == -1)
-          || (packer->callback(packer->data, entry.data.unknown_item.contents,
-                               (unsigned) entry.data.unknown_item.size)
-              == -1)) {
-        return false;
+      if (spacker->callback(spacker->data, entry.data.unknown_item.contents,
+                            (unsigned) entry.data.unknown_item.size) == -1) {
+        goto shada_pack_entry_error;
       }
       break;
     }
@@ -1651,7 +1653,7 @@ static bool shada_pack_entry(msgpack_packer *const packer,
       msgpack_rpc_from_string(cstr_as_string(entry.data.global_var.name),
                               spacker);
       if (vim_to_msgpack(spacker, &entry.data.global_var.value) == FAIL) {
-        return false;
+        goto shada_pack_entry_error;
       }
       DUMP_ADDITIONAL_ELEMENTS(entry.data.global_var.additional_elements);
       break;
@@ -1826,30 +1828,34 @@ static bool shada_pack_entry(msgpack_packer *const packer,
   }
   if (!max_kbyte || sbuf.size <= max_kbyte * 1024) {
     if (entry.type == kSDItemUnknown) {
-      if (msgpack_pack_uint64(packer, (uint64_t) entry.data.unknown_item.type)
-          == -1) {
-        return false;
+      if (msgpack_pack_uint64(packer, entry.data.unknown_item.type) == -1) {
+        goto shada_pack_entry_error;
       }
     } else {
       if (msgpack_pack_uint64(packer, (uint64_t) entry.type) == -1) {
-        return false;
+        goto shada_pack_entry_error;
       }
     }
     if (msgpack_pack_uint64(packer, (uint64_t) entry.timestamp) == -1) {
-      return false;
+      goto shada_pack_entry_error;
     }
     if (sbuf.size > 0) {
       if ((msgpack_pack_uint64(packer, (uint64_t) sbuf.size) == -1)
           || (packer->callback(packer->data, sbuf.data,
                                (unsigned) sbuf.size) == -1)) {
-        return false;
+        goto shada_pack_entry_error;
       }
     }
   }
   msgpack_packer_free(spacker);
   msgpack_sbuffer_destroy(&sbuf);
   return true;
+shada_pack_entry_error:
+  msgpack_packer_free(spacker);
+  msgpack_sbuffer_destroy(&sbuf);
+  return false;
 }
+#undef PACK_STRING
 
 /// Write single ShaDa entry, converting it if needed
 ///
@@ -3260,7 +3266,14 @@ shada_read_next_item_start:
     entry->data.unknown_item.size = length;
     entry->data.unknown_item.type = type_u64;
     entry->data.unknown_item.contents = xmalloc(length);
-    return fread_len(sd_reader, entry->data.unknown_item.contents, length);
+    const ShaDaReadResult fl_ret = fread_len(sd_reader,
+                                             entry->data.unknown_item.contents,
+                                             length);
+    if (fl_ret != kSDReadStatusSuccess) {
+      shada_free_shada_entry(entry);
+      entry->type = kSDItemMissing;
+    }
+    return fl_ret;
   }
 
   char *const buf = xmalloc(length);

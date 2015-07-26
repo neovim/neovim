@@ -1351,7 +1351,7 @@ bool mark_set_global(const char name, const xfmark_T fm, const bool update)
   if (fm_tgt == &namedfm[0] - 1) {
     return false;
   }
-  if (update && fm.fmark.timestamp < fm_tgt->fmark.timestamp) {
+  if (update && fm.fmark.timestamp <= fm_tgt->fmark.timestamp) {
     return false;
   }
   if (fm_tgt->fmark.mark.lnum != 0) {
@@ -1386,7 +1386,7 @@ bool mark_set_local(const char name, buf_T *const buf,
   } else {
     return false;
   }
-  if (update && fm.timestamp < fm_tgt->timestamp) {
+  if (update && fm.timestamp <= fm_tgt->timestamp) {
     return false;
   }
   if (fm_tgt->mark.lnum != 0) {
