@@ -1,3 +1,17 @@
+-- Script creates the following tables in unicode_tables.generated.h:
+--
+-- 1. doublewidth and ambiguous tables: sorted list of non-overlapping closed 
+--    intervals. Codepoints in these intervals have double (W or F) or ambiguous 
+--    (A) east asian width respectively.
+-- 2. combining table: same as the above, but characters inside are combining 
+--    characters (i.e. have general categories equal to Mn, Mc or Me).
+-- 3. foldCase, toLower and toUpper tables used to convert characters to 
+--    folded/lower/upper variants. In these tables first two values are 
+--    character ranges: like in previous tables they are sorted and must be 
+--    non-overlapping. Third value means step inside the range: e.g. if it is 
+--    2 then interval applies only to first, third, fifth, … character in range. 
+--    Fourth value is number that should be added to the codepoint to yield 
+--    folded/lower/upper codepoint.
 if arg[1] == '--help' then
   print('Usage:')
   print('  genunicodetables.lua UnicodeData.txt CaseFolding.txt ' ..
