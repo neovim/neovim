@@ -59,9 +59,10 @@ def mnormalize(o):
 
 
 with open(sys.argv[1], 'rb') as fp:
-  unpacker = msgpack.Unpacker(file_like=fp)
+  unpacker = msgpack.Unpacker(file_like=fp, read_size=1)
   while True:
     try:
+      pos = fp.tell()
       typ = EntryTypes(unpacker.unpack())
     except msgpack.OutOfData:
       break
@@ -70,5 +71,5 @@ with open(sys.argv[1], 'rb') as fp:
       time = datetime.fromtimestamp(timestamp)
       length = unpacker.unpack()
       entry = unpacker.unpack()
-      print('{0:13} {1} {2:5} {3!r}'.format(
-        typ.name, time.isoformat(), length, mnormalize(entry)))
+      print('{0:4} {1:13} {2} {3:5} {4!r}'.format(
+        pos, typ.name, time.isoformat(), length, mnormalize(entry)))
