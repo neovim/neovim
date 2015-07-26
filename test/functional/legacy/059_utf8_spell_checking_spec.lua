@@ -502,15 +502,19 @@ describe("spell checking with 'encoding' set to utf-8", function()
     os.execute('cp -f Xtest'..dic..'.dic Xtest.dic')
     source([[
       set spellfile=
+      function! SpellDumpNoShow()
+        " spelling score depend on what happens to be drawn on screen
+        spelldump
+        %yank
+        quit
+      endfunction
       $put =''
       $put ='test ]]..aff..'-'..dic..[['
       mkspell! Xtest Xtest
       "  Use that spell file.
       set spl=Xtest.utf-8.spl spell
       "  List all valid words.
-      spelldump
-      %yank
-      quit
+      call SpellDumpNoShow()
       $put
       $put ='-------'
       "  Find all bad words and suggestions for them.
