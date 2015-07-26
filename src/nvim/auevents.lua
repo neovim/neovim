@@ -94,5 +94,13 @@ return {
     BufRead = 'BufReadPost',
     BufWrite = 'BufWritePre',
     FileEncoding = 'EncodingChanged',
-  }
+  },
+  -- List of neovim-specific events or aliases for the purpose of generating 
+  -- syntax file
+  neovim_specific = {
+    TabNew=true,
+    TabNewEntered=true,
+    TabClosed=true,
+    TermEnter=true,
+  },
 }

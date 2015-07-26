@@ -80,14 +80,28 @@ local vimau_start = 'syn keyword vimAutoEvent contained '
 w('\n\n' .. vimau_start)
 
 for _, au in ipairs(auevents.events) do
-  if lld.line_length > 850 then
-    w('\n' .. vimau_start)
+  if not auevents.neovim_specific[au] then
+    if lld.line_length > 850 then
+      w('\n' .. vimau_start)
+    end
+    w(' ' .. au)
   end
-  w(' ' .. au)
 end
 for au, _ in pairs(auevents.aliases) do
+  if not auevents.neovim_specific[au] then
+    if lld.line_length > 850 then
+      w('\n' .. vimau_start)
+    end
+    w(' ' .. au)
+  end
+end
+
+local nvimau_start = 'syn keyword nvimAutoEvent contained '
+w('\n\n' .. nvimau_start)
+
+for au, _ in pairs(auevents.neovim_specific) do
   if lld.line_length > 850 then
-    w('\n' .. vimau_start)
+    w('\n' .. nvimau_start)
   end
   w(' ' .. au)
 end
