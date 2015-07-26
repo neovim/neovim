@@ -7547,8 +7547,9 @@ static void ex_mkrc(exarg_T *eap)
 
 int vim_mkdir_emsg(char_u *name, int prot)
 {
-  if (os_mkdir((char *)name, prot) != 0) {
-    EMSG2(_("E739: Cannot create directory: %s"), name);
+  int ret;
+  if ((ret = os_mkdir((char *)name, prot)) != 0) {
+    EMSG3(_(e_mkdir), name, os_strerror(ret));
     return FAIL;
   }
   return OK;
