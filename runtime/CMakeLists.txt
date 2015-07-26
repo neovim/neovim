@@ -20,6 +20,18 @@ add_custom_command(OUTPUT ${GENERATED_SYN_VIM}
 
 file(GLOB DOCFILES ${PROJECT_SOURCE_DIR}/runtime/doc/*.txt)
 
+set(BUILDDOCFILES)
+foreach(DF ${DOCFILES})
+  get_filename_component(F ${DF} NAME)
+  list(APPEND BUILDDOCFILES ${GENERATED_RUNTIME_DIR}/doc/${F})
+endforeach()
+
+add_custom_command(OUTPUT ${BUILDDOCFILES}
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${PROJECT_SOURCE_DIR}/runtime/doc ${GENERATED_RUNTIME_DIR}/doc
+  DEPENDS
+    ${DOCFILES})
+
 add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
   COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${PROJECT_SOURCE_DIR}/runtime/doc ${GENERATED_RUNTIME_DIR}/doc
@@ -30,9 +42,9 @@ add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
     -c "helptags ++t ."
     -c quit
   DEPENDS
-    ${DOCFILES}
+    ${BUILDDOCFILES}
     nvim
-  WORKING_DIRECTORY "${HELPTAGS_WORKING_DIRECTORY}"
+  WORKING_DIRECTORY "${GENERATED_RUNTIME_DIR}/doc"
 )
 
 add_custom_target(
