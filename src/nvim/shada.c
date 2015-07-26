@@ -124,6 +124,25 @@ KHASH_SET_INIT_STR(strset)
 // Define nothing
 #endif
 
+#define SEARCH_KEY_MAGIC "sm"
+#define SEARCH_KEY_SMARTCASE "sc"
+#define SEARCH_KEY_HAS_LINE_OFFSET "sl"
+#define SEARCH_KEY_PLACE_CURSOR_AT_END "se"
+#define SEARCH_KEY_IS_LAST_USED "su"
+#define SEARCH_KEY_IS_SUBSTITUTE_PATTERN "ss"
+#define SEARCH_KEY_HIGHLIGHTED "sh"
+#define SEARCH_KEY_OFFSET "so"
+#define SEARCH_KEY_PAT "sp"
+
+#define REG_KEY_TYPE "rt"
+#define REG_KEY_WIDTH "rw"
+#define REG_KEY_CONTENTS "rc"
+
+#define KEY_LNUM "l"
+#define KEY_COL "c"
+#define KEY_FILE "f"
+#define KEY_NAME_CHAR "n"
+
 // Error messages formerly used by viminfo code:
 //   E136: viminfo: Too many errors, skipping rest of file
 //   E137: Viminfo file is not writable: %s
@@ -1587,7 +1606,7 @@ static void shada_pack_entry(msgpack_packer *const packer,
                       : 0)
       );
       msgpack_pack_map(spacker, map_size);
-      PACK_STATIC_STR("pat");
+      PACK_STATIC_STR(SEARCH_KEY_PAT);
       msgpack_rpc_from_string(cstr_as_string(entry.data.search_pattern.pat),
                               spacker);
 #define PACK_BOOL(name, attr, nondef_value) \
@@ -1597,15 +1616,15 @@ static void shada_pack_entry(msgpack_packer *const packer,
           msgpack_pack_##nondef_value(spacker); \
         } \
       } while (0)
-      PACK_BOOL("magic", magic, false);
-      PACK_BOOL("islast", is_last_used, false);
-      PACK_BOOL("smartcase", smartcase, true);
-      PACK_BOOL("lineoff", has_line_offset, true);
-      PACK_BOOL("curatend", place_cursor_at_end, true);
-      PACK_BOOL("sub", is_substitute_pattern, true);
-      PACK_BOOL("hlsearch", highlighted, true);
+      PACK_BOOL(SEARCH_KEY_MAGIC, magic, false);
+      PACK_BOOL(SEARCH_KEY_IS_LAST_USED, is_last_used, false);
+      PACK_BOOL(SEARCH_KEY_SMARTCASE, smartcase, true);
+      PACK_BOOL(SEARCH_KEY_HAS_LINE_OFFSET, has_line_offset, true);
+      PACK_BOOL(SEARCH_KEY_PLACE_CURSOR_AT_END, place_cursor_at_end, true);
+      PACK_BOOL(SEARCH_KEY_IS_SUBSTITUTE_PATTERN, is_substitute_pattern, true);
+      PACK_BOOL(SEARCH_KEY_HIGHLIGHTED, highlighted, true);
       if (entry.data.search_pattern.offset) {
-        PACK_STATIC_STR("off");
+        PACK_STATIC_STR(SEARCH_KEY_OFFSET);
         msgpack_pack_int64(spacker, entry.data.search_pattern.offset);
       }
 #undef PACK_BOOL
@@ -1641,20 +1660,20 @@ static void shada_pack_entry(msgpack_packer *const packer,
                       : entry.data.filemark.additional_data->size)
       );
       msgpack_pack_map(spacker, map_size);
-      PACK_STATIC_STR("file");
+      PACK_STATIC_STR(KEY_FILE);
       msgpack_rpc_from_string(cstr_as_string(entry.data.filemark.fname),
                               spacker);
       if (entry.data.filemark.mark.lnum != 1) {
-        PACK_STATIC_STR("line");
+        PACK_STATIC_STR(KEY_LNUM);
         msgpack_pack_long(spacker, entry.data.filemark.mark.lnum);
       }
       if (entry.data.filemark.mark.col != 0) {
-        PACK_STATIC_STR("col");
+        PACK_STATIC_STR(KEY_COL);
         msgpack_pack_long(spacker, entry.data.filemark.mark.col);
       }
       if (entry.data.filemark.name != '"' && entry.type != kSDItemJump
           && entry.type != kSDItemChange) {
-        PACK_STATIC_STR("name");
+        PACK_STATIC_STR(KEY_NAME_CHAR);
         msgpack_pack_uint8(spacker, (uint8_t) entry.data.filemark.name);
       }
       if (entry.data.filemark.additional_data != NULL) {
@@ -1681,20 +1700,20 @@ static void shada_pack_entry(msgpack_packer *const packer,
                       : entry.data.reg.additional_data->size)
       );
       msgpack_pack_map(spacker, map_size);
-      PACK_STATIC_STR("contents");
+      PACK_STATIC_STR(REG_KEY_CONTENTS);
       msgpack_pack_array(spacker, entry.data.reg.contents_size);
       for (size_t i = 0; i < entry.data.reg.contents_size; i++) {
         msgpack_rpc_from_string(cstr_as_string(entry.data.reg.contents[i]),
                                 spacker);
       }
-      PACK_STATIC_STR("name");
+      PACK_STATIC_STR(KEY_NAME_CHAR);
       msgpack_pack_char(spacker, entry.data.reg.name);
       if (entry.data.reg.type != MCHAR) {
-        PACK_STATIC_STR("type");
+        PACK_STATIC_STR(REG_KEY_TYPE);
         msgpack_pack_uint8(spacker, entry.data.reg.type);
       }
       if (entry.data.reg.width != 0) {
-        PACK_STATIC_STR("width");
+        PACK_STATIC_STR(REG_KEY_WIDTH);
         msgpack_pack_uint64(spacker, (uint64_t) entry.data.reg.width);
       }
       if (entry.data.reg.additional_data != NULL) {
@@ -1724,16 +1743,16 @@ static void shada_pack_entry(msgpack_packer *const packer,
                 : entry.data.buffer_list.buffers[i].additional_data->size)
         );
         msgpack_pack_map(spacker, map_size);
-        PACK_STATIC_STR("file");
+        PACK_STATIC_STR(KEY_FILE);
         msgpack_rpc_from_string(
             cstr_as_string(entry.data.buffer_list.buffers[i].fname), spacker);
         if (entry.data.buffer_list.buffers[i].pos.lnum != 1) {
-          PACK_STATIC_STR("line");
+          PACK_STATIC_STR(KEY_LNUM);
           msgpack_pack_uint64(
               spacker, (uint64_t) entry.data.buffer_list.buffers[i].pos.lnum);
         }
         if (entry.data.buffer_list.buffers[i].pos.col != 0) {
-          PACK_STATIC_STR("col");
+          PACK_STATIC_STR(KEY_COL);
           msgpack_pack_uint64(
               spacker, (uint64_t) entry.data.buffer_list.buffers[i].pos.col);
         }
@@ -3256,7 +3275,7 @@ shada_read_next_item_read_next: {}
   }
 #define TYPED_KEY(entry_name, name, type_name, tgt, objtype, attr, proc) \
   CHECKED_KEY( \
-      entry_name, name, " which is not " type_name, tgt, \
+      entry_name, name, "which is not " type_name, tgt, \
       unpacked.data.via.map.ptr[i].val.type == MSGPACK_OBJECT_##objtype, \
       attr, proc)
 #define BOOLEAN_KEY(entry_name, name, tgt) \
@@ -3267,7 +3286,7 @@ shada_read_next_item_read_next: {}
   TYPED_KEY(entry_name, name, "a binary", tgt, BIN, bin, BIN_CONVERTED)
 #define INT_KEY(entry_name, name, tgt, proc) \
   CHECKED_KEY( \
-      entry_name, name, " which is not an integer", tgt, \
+      entry_name, name, "which is not an integer", tgt, \
       (unpacked.data.via.map.ptr[i].val.type \
               == MSGPACK_OBJECT_POSITIVE_INTEGER \
        || unpacked.data.via.map.ptr[i].val.type \
@@ -3325,22 +3344,23 @@ shada_read_next_item_read_next: {}
       ga_init(&ad_ga, sizeof(*(unpacked.data.via.map.ptr)), 1);
       for (size_t i = 0; i < unpacked.data.via.map.size; i++) {
         CHECK_KEY_IS_STR("search pattern");
-        BOOLEAN_KEY("search pattern", "magic", entry->data.search_pattern.magic)
-        else BOOLEAN_KEY("search pattern", "smartcase",
+        BOOLEAN_KEY("search pattern", SEARCH_KEY_MAGIC,
+                    entry->data.search_pattern.magic)
+        else BOOLEAN_KEY("search pattern", SEARCH_KEY_SMARTCASE,
                          entry->data.search_pattern.smartcase)
-        else BOOLEAN_KEY("search pattern", "lineoff",
+        else BOOLEAN_KEY("search pattern", SEARCH_KEY_HAS_LINE_OFFSET,
                          entry->data.search_pattern.has_line_offset)
-        else BOOLEAN_KEY("search pattern", "curatend",
+        else BOOLEAN_KEY("search pattern", SEARCH_KEY_PLACE_CURSOR_AT_END,
                          entry->data.search_pattern.place_cursor_at_end)
-        else BOOLEAN_KEY("search pattern", "islast",
+        else BOOLEAN_KEY("search pattern", SEARCH_KEY_IS_LAST_USED,
                          entry->data.search_pattern.is_last_used)
-        else BOOLEAN_KEY("search pattern", "sub",
+        else BOOLEAN_KEY("search pattern", SEARCH_KEY_IS_SUBSTITUTE_PATTERN,
                          entry->data.search_pattern.is_substitute_pattern)
-        else BOOLEAN_KEY("search pattern", "hlsearch",
+        else BOOLEAN_KEY("search pattern", SEARCH_KEY_HIGHLIGHTED,
                          entry->data.search_pattern.highlighted)
-        else INTEGER_KEY("search pattern", "off",
+        else INTEGER_KEY("search pattern", SEARCH_KEY_OFFSET,
                          entry->data.search_pattern.offset)
-        else CONVERTED_STRING_KEY("search pattern", "pat",
+        else CONVERTED_STRING_KEY("search pattern", SEARCH_KEY_PAT,
                                   entry->data.search_pattern.pat)
         else ADDITIONAL_KEY
       }
@@ -3399,16 +3419,16 @@ shada_read_next_item_read_next: {}
       for (size_t i = 0; i < unpacked.data.via.map.size; i++) {
         CHECK_KEY_IS_STR("mark");
         CHECKED_KEY(
-            "mark", "name", " which is not an unsigned integer",
+            "mark", KEY_NAME_CHAR, " which is not an unsigned integer",
             entry->data.filemark.name,
             (type_u64 != kSDItemJump
              && type_u64 != kSDItemChange
              && unpacked.data.via.map.ptr[i].val.type
                 == MSGPACK_OBJECT_POSITIVE_INTEGER),
             u64, TOCHAR)
-        else LONG_KEY("mark", "line", entry->data.filemark.mark.lnum)
-        else INTEGER_KEY("mark", "col", entry->data.filemark.mark.col)
-        else STRING_KEY("mark", "file", entry->data.filemark.fname)
+        else LONG_KEY("mark", KEY_LNUM, entry->data.filemark.mark.lnum)
+        else INTEGER_KEY("mark", KEY_COL, entry->data.filemark.mark.col)
+        else STRING_KEY("mark", KEY_FILE, entry->data.filemark.fname)
         else ADDITIONAL_KEY
       }
       if (entry->data.filemark.mark.lnum == 0) {
@@ -3463,17 +3483,18 @@ shada_read_next_item_read_next: {}
       ga_init(&ad_ga, sizeof(*(unpacked.data.via.map.ptr)), 1);
       for (size_t i = 0; i < unpacked.data.via.map.size; i++) {
         CHECK_KEY_IS_STR("register");
-        TYPED_KEY("register", "type", "an unsigned integer",
+        TYPED_KEY("register", REG_KEY_TYPE, "an unsigned integer",
                   entry->data.reg.type, POSITIVE_INTEGER, u64, TOU8)
-        else TYPED_KEY("register", "name", "an unsigned integer",
+        else TYPED_KEY("register", KEY_NAME_CHAR, "an unsigned integer",
                        entry->data.reg.name, POSITIVE_INTEGER, u64, TOCHAR)
-        else TYPED_KEY("register", "width", "an unsigned integer",
+        else TYPED_KEY("register", REG_KEY_WIDTH, "an unsigned integer",
                        entry->data.reg.width, POSITIVE_INTEGER, u64, TOSIZE)
-        else if (CHECK_KEY(unpacked.data.via.map.ptr[i].key, "contents")) {
+        else if (CHECK_KEY(unpacked.data.via.map.ptr[i].key,
+                           REG_KEY_CONTENTS)) {
           if (unpacked.data.via.map.ptr[i].val.type != MSGPACK_OBJECT_ARRAY) {
             emsgu(_(RERR "Error while reading ShaDa file: "
                     "register entry at position %" PRIu64 " "
-                    "has contents key with non-array value"),
+                    "has " REG_KEY_CONTENTS " key with non-array value"),
                   (uint64_t) initial_fpos);
             ga_clear(&ad_ga);
             goto shada_read_next_item_error;
@@ -3481,7 +3502,7 @@ shada_read_next_item_read_next: {}
           if (unpacked.data.via.map.ptr[i].val.via.array.size == 0) {
             emsgu(_(RERR "Error while reading ShaDa file: "
                     "register entry at position %" PRIu64 " "
-                    "has contents key with empty array"),
+                    "has " REG_KEY_CONTENTS " key with empty array"),
                   (uint64_t) initial_fpos);
             ga_clear(&ad_ga);
             goto shada_read_next_item_error;
@@ -3492,7 +3513,7 @@ shada_read_next_item_read_next: {}
             if (arr.ptr[i].type != MSGPACK_OBJECT_BIN) {
               emsgu(_(RERR "Error while reading ShaDa file: "
                       "register entry at position %" PRIu64 " "
-                      "has contents array with non-string value"),
+                      "has " REG_KEY_CONTENTS " array with non-string value"),
                     (uint64_t) initial_fpos);
               ga_clear(&ad_ga);
               goto shada_read_next_item_error;
@@ -3508,7 +3529,7 @@ shada_read_next_item_read_next: {}
       if (entry->data.reg.contents == NULL) {
         emsgu(_(RERR "Error while reading ShaDa file: "
                 "register entry at position %" PRIu64 " "
-                "has missing contents array"),
+                "has missing " REG_KEY_CONTENTS " array"),
               (uint64_t) initial_fpos);
         ga_clear(&ad_ga);
         goto shada_read_next_item_error;
@@ -3820,11 +3841,11 @@ shada_read_next_item_hist_no_conv:
             {
               for (size_t i = 0; i < unpacked.data.via.map.size; i++) {
                 CHECK_KEY_IS_STR("buffer list entry");
-                LONG_KEY("buffer list entry", "line",
+                LONG_KEY("buffer list entry", KEY_LNUM,
                         entry->data.buffer_list.buffers[j].pos.lnum)
-                else INTEGER_KEY("buffer list entry", "col",
+                else INTEGER_KEY("buffer list entry", KEY_COL,
                                 entry->data.buffer_list.buffers[j].pos.col)
-                else STRING_KEY("buffer list entry", "file",
+                else STRING_KEY("buffer list entry", KEY_FILE,
                                 entry->data.buffer_list.buffers[j].fname)
                 else ADDITIONAL_KEY
               }
