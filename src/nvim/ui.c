@@ -471,23 +471,18 @@ static void flush_cursor_update(void)
 // shape, for example.
 static void ui_change_mode(void)
 {
-  static int showing_insert_mode = MAYBE;
-
+  int mode;
   if (!full_screen) {
     return;
   }
-
-  if (State & INSERT) {
-    if (showing_insert_mode != TRUE) {
-      UI_CALL(insert_mode);
-    }
-    showing_insert_mode = TRUE;
-  } else {
-    if (showing_insert_mode != FALSE) {
-      UI_CALL(normal_mode);
-    }
-    showing_insert_mode = FALSE;
-  }
+  /* Get a simple UI mode out of State. */
+  if ((State & REPLACE) == REPLACE)
+    mode = REPLACE;
+  else if (State & INSERT)
+    mode = INSERT;
+  else
+    mode = NORMAL;
+  UI_CALL(change_mode, mode);
   conceal_check_cursur_line();
 }
 

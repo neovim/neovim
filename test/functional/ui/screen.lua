@@ -340,12 +340,9 @@ function Screen:_handle_mouse_off()
   self._mouse_enabled = false
 end
 
-function Screen:_handle_insert_mode()
-  self._mode = 'insert'
-end
-
-function Screen:_handle_normal_mode()
-  self._mode = 'normal'
+function Screen:_handle_change_mode(mode)
+  assert(mode == 'insert' or mode == 'replace' or mode == 'normal')
+  self._mode = mode
 end
 
 function Screen:_handle_set_scroll_region(top, bot, left, right)
