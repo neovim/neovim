@@ -19,14 +19,14 @@ syn cluster vimCommentGroup	contains=vimTodo,@Spell
 
 " Special and plugin vim commands {{{2
 syn match   vimCommand contained	"\<z[-+^.=]\="
-syn keyword vimOnlyCommand contained	fix[del] sh[ell] P[rint]
+syn keyword vimOnlyCommand contained	fix[del] sh[ell] te[aroff] P[rint]
 syn keyword vimStdPlugin contained	DiffOrig Man N[ext] S TOhtml XMLent XMLns
 
 " Vim-specific options {{{2
-syn keyword vimOnlyOption contained	biosk bioskey cp compatible consk conskey cm cryptmethod edcompatible guipty key macatsui mzq mzquantum osfiletype oft renderoptions rop st shelltype sn shortname tenc termencoding ta textauto tx textmode tf ttyfast ttym ttymouse tbi ttybuiltin wiv weirdinvert
+syn keyword vimOnlyOption contained	biosk bioskey cp compatible consk conskey cm cryptmethod edcompatible guipty key macatsui mzq mzquantum osfiletype oft renderoptions rop st shelltype sn shortname tenc termencoding ta textauto tx textmode ttym ttymouse tbi ttybuiltin wiv weirdinvert
 
 " Turn-off setting variants
-syn keyword vimOnlyOption contained	nobiosk nobioskey noconsk noconskey nocp nocompatible noguipty nomacatsui nosn noshortname nota notextauto notx notextmode notf nottyfast notbi nottybuiltin nowiv noweirdinvert
+syn keyword vimOnlyOption contained	nobiosk nobioskey noconsk noconskey noguipty nomacatsui nosn noshortname nota notextauto notx notextmode notf nottyfast notbi nottybuiltin nowiv noweirdinvert
 
 " Invertible setting variants
 syn keyword vimOnlyOption contained	invbiosk invbioskey invconsk invconskey invcp invcompatible invguipty invmacatsui invsn invshortname invta invtextauto invtx invtextmode invtf invttyfast invtbi invttybuiltin invwiv invweirdinvert
