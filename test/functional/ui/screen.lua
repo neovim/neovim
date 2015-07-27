@@ -489,7 +489,7 @@ function Screen:snapshot_util(attrs, ignore)
   self:print_snapshot(attrs, ignore)
 end
 
-function Screen:redraw_debug(attrs, ignore)
+function Screen:redraw_debug(attrs, ignore, timeout)
   self:print_snapshot(attrs, ignore)
   local function notification_cb(method, args)
     assert(method == 'redraw')
@@ -500,7 +500,10 @@ function Screen:redraw_debug(attrs, ignore)
     self:print_snapshot(attrs, ignore)
     return true
   end
-  run(nil, notification_cb, nil, 250)
+  if timeout == nil then
+    timeout = 250
+  end
+  run(nil, notification_cb, nil, timeout)
 end
 
 function Screen:print_snapshot(attrs, ignore)

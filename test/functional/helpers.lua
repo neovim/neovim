@@ -246,6 +246,10 @@ local function nvim(method, ...)
   return request('vim_'..method, ...)
 end
 
+local function nvim_async(method, ...)
+  session:notify('vim_'..method, ...)
+end
+
 local function buffer(method, ...)
   return request('buffer_'..method, ...)
 end
@@ -341,6 +345,7 @@ return {
   expect = expect,
   ok = ok,
   nvim = nvim,
+  nvim_async = nvim_async,
   nvim_prog = nvim_prog,
   nvim_dir = nvim_dir,
   buffer = buffer,
