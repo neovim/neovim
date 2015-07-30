@@ -5753,16 +5753,19 @@ static int do_autocmd_event(event_T event, char_u *pat, int nested, char_u *cmd,
      * Find end of the pattern.
      * Watch out for a comma in braces, like "*.\{obj,o\}".
      */
+    endpat = pat;
+    // ignore single comma
+    if (*endpat == ',') {
+      continue;
+    }
     brace_level = 0;
-    for (endpat = pat; *endpat && (*endpat != ',' || brace_level
-                                   || endpat[-1] == '\\'); ++endpat) {
+    for (; *endpat && (*endpat != ',' || brace_level || endpat[-1] == '\\');
+         ++endpat) {
       if (*endpat == '{')
         brace_level++;
       else if (*endpat == '}')
         brace_level--;
     }
-    if (pat == endpat)                  /* ignore single comma */
-      continue;
     patlen = (int)(endpat - pat);
 
     /*
