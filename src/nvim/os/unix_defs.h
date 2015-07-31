@@ -75,7 +75,8 @@
                           RUNTIME_GLOBAL "/after," NVIM_CONF_DIR "/after"
 #else
 # define DFLT_RUNTIMEPATH \
-  NVIM_CONF_DIR ",$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after," NVIM_CONF_DIR "/after"
+  NVIM_CONF_DIR ",$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,"\
+  NVIM_CONF_DIR "/after"
 #endif
 
 #endif  // NVIM_OS_UNIX_DEFS_H
