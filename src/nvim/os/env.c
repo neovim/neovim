@@ -445,10 +445,12 @@ char *vim_getenv(const char *name)
       return xstrdup("/tmp/");  // Arbitrary value, any idea?
     }
 
-    // We need to apprend the prefix to the HOME path.
+    // We need to append the prefix to the HOME path.
     char *value = vim_getenv("HOME");
-    value = xrealloc(value, strlen(value) + strlen(home_suffix) + 1);
-    strcat(value, home_suffix);
+    const size_t value_len = strlen(value);
+    const size_t home_suffix_len = strlen(home_suffix);
+    value = xrealloc(value, value_len + home_suffix_len + 1);
+    memmove(value + value_len, home_suffix, home_suffix_len + 1);
     return value;
   }
 
