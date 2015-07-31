@@ -444,6 +444,10 @@ char *vim_getenv(const char *name)
       home_suffix = "/.cache/";
     } else if (strcmp(name, "XDG_RUNTIME_DIR") == 0) {
       return xstrdup("/tmp/");  // Arbitrary value, any idea?
+    } else if (strcmp(name, "XDG_CONFIG_DIRS") == 0) {
+      return xstrdup("/etc/xdg");
+    } else if (strcmp(name, "XDG_DATA_DIRS") == 0) {
+      return xstrdup("/usr/local/share/:/usr/share/");
     }
 
     // We need to append the prefix to the HOME path.
