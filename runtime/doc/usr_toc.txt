@@ -101,7 +101,7 @@ Read this from start to end to learn the essential commands.
 		|05.1|	The vimrc file
 		|05.2|	The example vimrc file explained
 		|05.3|	Simple mappings
-		|05.4|	Adding a plugin
+		|05.4|	Plugins
 		|05.5|	Adding a help file
 		|05.6|	The option window
 		|05.7|	Often used options
