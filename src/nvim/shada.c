@@ -156,7 +156,8 @@ KHASH_SET_INIT_STR(strset)
 // Now only five of them are used:
 //   E137: ShaDa file is not writeable (for pre-open checks)
 //   E138: All %s.tmp.X files exist, cannot write ShaDa file!
-//   E136: Can't rename ShaDa file from %s to %s!
+//   RCERR (E576) for critical read errors.
+//   RNERR (E136) for various errors when renaming.
 //   RERR (E575) for various errors inside read ShaDa file.
 //   SERR (E886) for various “system” errors (always contains output of 
 //   strerror)
@@ -167,8 +168,16 @@ KHASH_SET_INIT_STR(strset)
 /// reading.
 #define RERR "E575: "
 
+/// Common prefix for critical read errors
+///
+/// I.e. errors that make shada_read_next_item return kSDReadStatusNotShaDa.
+#define RCERR "E576: "
+
 /// Common prefix for all “system” errors
 #define SERR "E886: "
+
+/// Common prefix for all “rename” errors
+#define RNERR "E136: "
 
 /// Flags for shada_read_file and children
 enum {
@@ -202,6 +211,25 @@ typedef enum {
   kSDItemChange = 11,        ///< Item from buffer change list.
 #define SHADA_LAST_ENTRY ((uint64_t) kSDItemChange)
 } ShadaEntryType;
+
+/// Possible results when reading ShaDa file
+typedef enum {
+  kSDReadStatusSuccess,    ///< Reading was successfull.
+  kSDReadStatusFinished,   ///< Nothing more to read.
+  kSDReadStatusReadError,  ///< Failed to read from file.
+  kSDReadStatusNotShaDa,   ///< Input is most likely not a ShaDa file.
+  kSDReadStatusMalformed,  ///< Error in the currently read item.
+} ShaDaReadResult;
+
+/// Possible results of shada_write function.
+typedef enum {
+  kSDWriteSuccessfull,   ///< Writing was successfull.
+  kSDWriteReadNotShada,  ///< Writing was successfull, but when reading it 
+                         ///< attempted to read file that did not look like 
+                         ///< a ShaDa file.
+  kSDWriteFailed,        ///< Writing was not successfull (e.g. because there 
+                         ///< was no space left on device).
+} ShaDaWriteResult;
 
 /// Flags for shada_read_next_item
 enum SRNIFlags {
@@ -1115,8 +1143,25 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
       set_vim_var_list(VV_OLDFILES, oldfiles_list);
     }
   }
-  while (shada_read_next_item(sd_reader, &cur_entry, srni_flags, 0)
-         == NOTDONE) {
+  ShaDaReadResult srni_ret;
+  while ((srni_ret = shada_read_next_item(sd_reader, &cur_entry, srni_flags, 0))
+         != kSDReadStatusFinished) {
+    switch (srni_ret) {
+      case kSDReadStatusSuccess: {
+        break;
+      }
+      case kSDReadStatusFinished: {
+        // Should be handled by the while condition.
+        assert(false);
+      }
+      case kSDReadStatusNotShaDa:
+      case kSDReadStatusReadError: {
+        goto shada_read_main_cycle_end;
+      }
+      case kSDReadStatusMalformed: {
+        continue;
+      }
+    }
     switch (cur_entry.type) {
       case kSDItemMissing: {
         assert(false);
@@ -1424,6 +1469,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
       }
     }
   }
+shada_read_main_cycle_end:
   // Warning: shada_hist_iter returns ShadaEntry elements which use strings from 
   //          original history list. This means that once such entry is removed 
   //          from the history NeoVim array will no longer be valid. To reduce 
@@ -1520,14 +1566,11 @@ static char *shada_filename(const char *file)
 /// @param[in]  entry      Entry written.
 /// @param[in]  max_kbyte  Maximum size of an item in KiB. Zero means no 
 ///                        restrictions.
-static void shada_pack_entry(msgpack_packer *const packer,
+static bool shada_pack_entry(msgpack_packer *const packer,
                              const ShadaEntry entry,
                              const size_t max_kbyte)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (entry.type == kSDItemMissing) {
-    return;
-  }
   msgpack_sbuffer sbuf;
   msgpack_sbuffer_init(&sbuf);
   msgpack_packer *spacker = msgpack_packer_new(&sbuf, &msgpack_sbuffer_write);
@@ -1536,9 +1579,13 @@ static void shada_pack_entry(msgpack_packer *const packer,
       assert(false);
     }
     case kSDItemUnknown: {
-      msgpack_pack_uint64(packer, (uint64_t) entry.data.unknown_item.size);
-      packer->callback(packer->data, entry.data.unknown_item.contents,
-                       (unsigned) entry.data.unknown_item.size);
+      if ((msgpack_pack_uint64(packer, (uint64_t) entry.data.unknown_item.size)
+           == -1)
+          || (packer->callback(packer->data, entry.data.unknown_item.contents,
+                               (unsigned) entry.data.unknown_item.size)
+              == -1)) {
+        return false;
+      }
       break;
     }
     case kSDItemHistoryEntry: {
@@ -1782,18 +1829,29 @@ static void shada_pack_entry(msgpack_packer *const packer,
   }
   if (!max_kbyte || sbuf.size <= max_kbyte * 1024) {
     if (entry.type == kSDItemUnknown) {
-      msgpack_pack_uint64(packer, (uint64_t) entry.data.unknown_item.type);
+      if (msgpack_pack_uint64(packer, (uint64_t) entry.data.unknown_item.type)
+          == -1) {
+        return false;
+      }
     } else {
-      msgpack_pack_uint64(packer, (uint64_t) entry.type);
+      if (msgpack_pack_uint64(packer, (uint64_t) entry.type) == -1) {
+        return false;
+      }
     }
-    msgpack_pack_uint64(packer, (uint64_t) entry.timestamp);
+    if (msgpack_pack_uint64(packer, (uint64_t) entry.timestamp) == -1) {
+      return false;
+    }
     if (sbuf.size > 0) {
-      msgpack_pack_uint64(packer, (uint64_t) sbuf.size);
-      packer->callback(packer->data, sbuf.data, (unsigned) sbuf.size);
+      if ((msgpack_pack_uint64(packer, (uint64_t) sbuf.size) == -1)
+          || (packer->callback(packer->data, sbuf.data,
+                               (unsigned) sbuf.size) == -1)) {
+        return false;
+      }
     }
   }
   msgpack_packer_free(spacker);
   msgpack_sbuffer_destroy(&sbuf);
+  return true;
 }
 
 /// Write single ShaDa entry, converting it if needed
@@ -1807,16 +1865,17 @@ static void shada_pack_entry(msgpack_packer *const packer,
 ///                        is assumed that entry was already converted.
 /// @param[in]  max_kbyte  Maximum size of an item in KiB. Zero means no 
 ///                        restrictions.
-static void shada_pack_encoded_entry(msgpack_packer *const packer,
+static bool shada_pack_encoded_entry(msgpack_packer *const packer,
                                      const vimconv_T *const sd_conv,
                                      PossiblyFreedShadaEntry entry,
                                      const size_t max_kbyte)
   FUNC_ATTR_NONNULL_ALL
 {
+  bool ret = true;
   if (entry.can_free_entry) {
-    shada_pack_entry(packer, entry.data, max_kbyte);
+    ret = shada_pack_entry(packer, entry.data, max_kbyte);
     shada_free_shada_entry(&entry.data);
-    return;
+    return ret;
   }
 #define RUN_WITH_CONVERTED_STRING(cstr, code) \
   do { \
@@ -1840,19 +1899,19 @@ static void shada_pack_encoded_entry(msgpack_packer *const packer,
     }
     case kSDItemSearchPattern: {
       RUN_WITH_CONVERTED_STRING(entry.data.data.search_pattern.pat, {
-        shada_pack_entry(packer, entry.data, max_kbyte);
+        ret = shada_pack_entry(packer, entry.data, max_kbyte);
       });
       break;
     }
     case kSDItemHistoryEntry: {
       RUN_WITH_CONVERTED_STRING(entry.data.data.history_item.string, {
-        shada_pack_entry(packer, entry.data, max_kbyte);
+        ret = shada_pack_entry(packer, entry.data, max_kbyte);
       });
       break;
     }
     case kSDItemSubString: {
       RUN_WITH_CONVERTED_STRING(entry.data.data.sub_string.sub, {
-        shada_pack_entry(packer, entry.data, max_kbyte);
+        ret = shada_pack_entry(packer, entry.data, max_kbyte);
       });
       break;
     }
@@ -1860,7 +1919,7 @@ static void shada_pack_encoded_entry(msgpack_packer *const packer,
       if (sd_conv->vc_type != CONV_NONE) {
         convert_object(sd_conv, &entry.data.data.global_var.value);
       }
-      shada_pack_entry(packer, entry.data, max_kbyte);
+      ret = shada_pack_entry(packer, entry.data, max_kbyte);
       break;
     }
     case kSDItemRegister: {
@@ -1892,7 +1951,7 @@ static void shada_pack_encoded_entry(msgpack_packer *const packer,
           }
         }
       }
-      shada_pack_entry(packer, entry.data, max_kbyte);
+      ret = shada_pack_entry(packer, entry.data, max_kbyte);
       if (did_convert) {
         for (size_t i = 0; i < entry.data.data.reg.contents_size; i++) {
           xfree(entry.data.data.reg.contents[i]);
@@ -1907,11 +1966,12 @@ static void shada_pack_encoded_entry(msgpack_packer *const packer,
     case kSDItemBufferList:
     case kSDItemLocalMark:
     case kSDItemChange: {
-      shada_pack_entry(packer, entry.data, max_kbyte);
+      ret = shada_pack_entry(packer, entry.data, max_kbyte);
       break;
     }
   }
 #undef RUN_WITH_CONVERTED_STRING
+  return ret;
 }
 
 /// Compare two FileMarks structure to order them by greatest_timestamp
@@ -1936,16 +1996,17 @@ static int compare_file_marks(const void *a, const void *b)
 /// @param[in]  sd_reader  Structure containing file reader definition. If it is 
 ///                        not NULL then contents of this file will be merged 
 ///                        with current NeoVim runtime.
-static void shada_write(ShaDaWriteDef *const sd_writer,
-                        ShaDaReadDef *const sd_reader)
+static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
+                                    ShaDaReadDef *const sd_reader)
   FUNC_ATTR_NONNULL_ARG(1)
 {
+  ShaDaWriteResult ret = kSDWriteSuccessfull;
   int max_kbyte_i = get_shada_parameter('s');
   if (max_kbyte_i < 0) {
     max_kbyte_i = 10;
   }
   if (max_kbyte_i == 0) {
-    return;
+    return ret;
   }
 
   WriteMergerState *const wms = xcalloc(1, sizeof(*wms));
@@ -1999,7 +2060,7 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
   }
 
   // Write header
-  shada_pack_entry(packer, (ShadaEntry) {
+  if (!shada_pack_entry(packer, (ShadaEntry) {
     .type = kSDItemHeader,
     .timestamp = os_time(),
     .data = {
@@ -2018,7 +2079,10 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
         }),
       }
     }
-  }, 0);
+  }, 0)) {
+    ret = kSDWriteFailed;
+    goto shada_write_exit;
+  }
 
   // Write buffer list
   if (find_shada_parameter('%') != NULL) {
@@ -2052,7 +2116,11 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
       };
       i++;
     }
-    shada_pack_entry(packer, buflist_entry, 0);
+    if (!shada_pack_entry(packer, buflist_entry, 0)) {
+      xfree(buflist_entry.data.buffer_list.buffers);
+      ret = kSDWriteFailed;
+      goto shada_write_exit;
+    }
     xfree(buflist_entry.data.buffer_list.buffers);
   }
 
@@ -2071,7 +2139,7 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
       if (sd_writer->sd_conv.vc_type != CONV_NONE) {
         convert_object(&sd_writer->sd_conv, &obj);
       }
-      shada_pack_entry(packer, (ShadaEntry) {
+      if (!shada_pack_entry(packer, (ShadaEntry) {
         .type = kSDItemVariable,
         .timestamp = cur_timestamp,
         .data = {
@@ -2081,7 +2149,12 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
             .additional_elements = NULL,
           }
         }
-      }, max_kbyte);
+      }, max_kbyte)) {
+        api_free_object(obj);
+        clear_tv(&vartv);
+        ret = kSDWriteFailed;
+        goto shada_write_exit;
+      }
       api_free_object(obj);
       clear_tv(&vartv);
       int kh_ret;
@@ -2344,12 +2417,33 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
   }
 
   if (sd_reader == NULL) {
-    goto shada_write_remaining;
+    goto shada_write_main_cycle_end;
   }
 
   ShadaEntry entry;
-  while (shada_read_next_item(sd_reader, &entry, srni_flags, max_kbyte)
-         == NOTDONE) {
+  ShaDaReadResult srni_ret;
+  while ((srni_ret = shada_read_next_item(sd_reader, &entry, srni_flags,
+                                          max_kbyte))
+         != kSDReadStatusFinished) {
+    switch (srni_ret) {
+      case kSDReadStatusSuccess: {
+        break;
+      }
+      case kSDReadStatusFinished: {
+        // Should be handled by the while condition.
+        assert(false);
+      }
+      case kSDReadStatusNotShaDa: {
+        ret = kSDWriteReadNotShada;
+        // fallthrough
+      }
+      case kSDReadStatusReadError: {
+        goto shada_write_main_cycle_end;
+      }
+      case kSDReadStatusMalformed: {
+        continue;
+      }
+    }
 #define COMPARE_WITH_ENTRY(wms_entry_, entry) \
     do { \
       PossiblyFreedShadaEntry *const wms_entry = (wms_entry_); \
@@ -2374,7 +2468,9 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
         assert(false);
       }
       case kSDItemUnknown: {
-        shada_pack_entry(packer, entry, 0);
+        if (!shada_pack_entry(packer, entry, 0)) {
+          ret = kSDWriteFailed;
+        }
         shada_free_shada_entry(&entry);
         break;
       }
@@ -2390,7 +2486,9 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
       }
       case kSDItemHistoryEntry: {
         if (entry.data.history_item.histtype >= HIST_COUNT) {
-          shada_pack_entry(packer, entry, 0);
+          if (!shada_pack_entry(packer, entry, 0)) {
+            ret = kSDWriteFailed;
+          }
           shada_free_shada_entry(&entry);
           break;
         }
@@ -2401,7 +2499,9 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
       case kSDItemRegister: {
         const int idx = op_reg_index(entry.data.reg.name);
         if (idx < 0) {
-          shada_pack_entry(packer, entry, 0);
+          if (!shada_pack_entry(packer, entry, 0)) {
+            ret = kSDWriteFailed;
+          }
           shada_free_shada_entry(&entry);
           break;
         }
@@ -2410,7 +2510,9 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
       }
       case kSDItemVariable: {
         if (!in_strset(&wms->dumped_variables, entry.data.global_var.name)) {
-          shada_pack_entry(packer, entry, 0);
+          if (!shada_pack_entry(packer, entry, 0)) {
+            ret = kSDWriteFailed;
+          }
         }
         shada_free_shada_entry(&entry);
         break;
@@ -2418,7 +2520,9 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
       case kSDItemGlobalMark: {
         const int idx = mark_global_index(entry.data.filemark.name);
         if (idx < 0) {
-          shada_pack_entry(packer, entry, 0);
+          if (!shada_pack_entry(packer, entry, 0)) {
+            ret = kSDWriteFailed;
+          }
           shada_free_shada_entry(&entry);
           break;
         }
@@ -2556,27 +2660,37 @@ static void shada_write(ShaDaWriteDef *const sd_writer,
 #undef COMPARE_WITH_ENTRY
 
   // Write the rest
-shada_write_remaining:
+shada_write_main_cycle_end:
 #define PACK_WMS_ARRAY(wms_array) \
   do { \
     for (size_t i_ = 0; i_ < ARRAY_SIZE(wms_array); i_++) { \
       if (wms_array[i_].data.type != kSDItemMissing) { \
-        shada_pack_encoded_entry(packer, &sd_writer->sd_conv, wms_array[i_], \
-                                 max_kbyte); \
+        if (!shada_pack_encoded_entry(packer, &sd_writer->sd_conv, \
+                                      wms_array[i_], \
+                                      max_kbyte)) { \
+          ret = kSDWriteFailed; \
+          goto shada_write_exit; \
+        } \
       } \
     } \
   } while (0)
   PACK_WMS_ARRAY(wms->global_marks);
   PACK_WMS_ARRAY(wms->registers);
   for (size_t i = 0; i < wms->jumps_size; i++) {
-    shada_pack_encoded_entry(packer, &sd_writer->sd_conv, wms->jumps[i],
-                             max_kbyte);
+    if (!shada_pack_encoded_entry(packer, &sd_writer->sd_conv, wms->jumps[i],
+                                  max_kbyte)) {
+      ret = kSDWriteFailed;
+      goto shada_write_exit;
+    }
   }
 #define PACK_WMS_ENTRY(wms_entry) \
   do { \
     if (wms_entry.data.type != kSDItemMissing) { \
-      shada_pack_encoded_entry(packer, &sd_writer->sd_conv, wms_entry, \
-                               max_kbyte); \
+      if (!shada_pack_encoded_entry(packer, &sd_writer->sd_conv, wms_entry, \
+                                    max_kbyte)) { \
+        ret = kSDWriteFailed; \
+        goto shada_write_exit; \
+      } \
     } \
   } while (0)
   PACK_WMS_ENTRY(wms->search_pattern);
@@ -2602,11 +2716,20 @@ shada_write_remaining:
   for (size_t i = 0; i < file_markss_to_dump; i++) {
     PACK_WMS_ARRAY(all_file_markss[i]->marks);
     for (size_t j = 0; j < all_file_markss[i]->changes_size; j++) {
-      shada_pack_encoded_entry(packer, &sd_writer->sd_conv,
-                               all_file_markss[i]->changes[j], max_kbyte);
+      if (!shada_pack_encoded_entry(packer, &sd_writer->sd_conv,
+                                    all_file_markss[i]->changes[j],
+                                    max_kbyte)) {
+        ret = kSDWriteFailed;
+        goto shada_write_exit;
+      }
     }
     for (size_t j = 0; j < all_file_markss[i]->additional_marks_size; j++) {
-      shada_pack_entry(packer, all_file_markss[i]->additional_marks[j], 0);
+      if (!shada_pack_entry(packer, all_file_markss[i]->additional_marks[j],
+                            0)) {
+        shada_free_shada_entry(&all_file_markss[i]->additional_marks[j]);
+        ret = kSDWriteFailed;
+        goto shada_write_exit;
+      }
       shada_free_shada_entry(&all_file_markss[i]->additional_marks[j]);
     }
     xfree(all_file_markss[i]->additional_marks);
@@ -2619,23 +2742,31 @@ shada_write_remaining:
       if (dump_one_history[i]) {
         hms_insert_whole_neovim_history(&wms->hms[i]);
         HMS_ITER(&wms->hms[i], cur_entry) {
-          shada_pack_encoded_entry(packer, &sd_writer->sd_conv,
-                                   (PossiblyFreedShadaEntry) {
-                                     .data = cur_entry->data,
-                                     .can_free_entry =
-                                        cur_entry->can_free_entry,
-                                   }, max_kbyte);
+          if (!shada_pack_encoded_entry(packer, &sd_writer->sd_conv,
+                                        (PossiblyFreedShadaEntry) {
+                                          .data = cur_entry->data,
+                                          .can_free_entry =
+                                             cur_entry->can_free_entry,
+                                        }, max_kbyte)) {
+            ret = kSDWriteFailed;
+            break;
+          }
         }
         hms_dealloc(&wms->hms[i]);
+        if (ret == kSDWriteFailed) {
+          goto shada_write_exit;
+        }
       }
     }
   }
 
+shada_write_exit:
   kh_dealloc(file_marks, &wms->file_marks);
   kh_destroy(bufset, removable_bufs);
   msgpack_packer_free(packer);
   kh_dealloc(strset, &wms->dumped_variables);
   xfree(wms);
+  return ret;
 }
 
 #undef PACK_STATIC_STR
@@ -2661,7 +2792,6 @@ int shada_write_file(const char *const file, bool nomerge)
   intptr_t fd;
 
   if (!nomerge) {
-    // TODO(ZyX-I): Fail on read error.
     if (open_shada_file_for_reading(fname, &sd_reader) != 0) {
       nomerge = true;
       goto shada_write_file_nomerge;
@@ -2764,16 +2894,28 @@ shada_write_file_nomerge: {}
 
   convert_setup(&sd_writer.sd_conv, p_enc, "utf-8");
 
-  shada_write(&sd_writer, (nomerge ? NULL : &sd_reader));
+  const ShaDaWriteResult sw_ret = shada_write(&sd_writer, (nomerge
+                                                           ? NULL
+                                                           : &sd_reader));
   sd_writer.close(&sd_writer);
 
   if (!nomerge) {
     sd_reader.close(&sd_reader);
-    if (vim_rename(tempname, fname) == -1) {
-      EMSG3(_("E136: Can't rename ShaDa file from %s to %s!"),
-            tempname, fname);
+    if (sw_ret == kSDWriteSuccessfull) {
+      if (vim_rename(tempname, fname) == -1) {
+        EMSG3(_(RNERR "Can't rename ShaDa file from %s to %s!"),
+              tempname, fname);
+      } else {
+        os_remove(tempname);
+      }
     } else {
-      os_remove(tempname);
+      if (sw_ret == kSDWriteReadNotShada) {
+        EMSG3(_(RNERR "Did not rename %s because %s "
+                "does not looks like a ShaDa file"), tempname, fname);
+      } else {
+        EMSG3(_(RNERR "Did not rename %s to %s because there were errors "
+                "during writing it"), tempname, fname);
+      }
     }
     xfree(tempname);
   }
@@ -2918,9 +3060,12 @@ static inline uint64_t be64toh(uint64_t big_endian_64_bits)
 /// @param[out]  buffer     Where to save the results. May be NULL.
 /// @param[in]   length     How many bytes should be read.
 ///
-/// @return FAIL if reading was not successfull, OK otherwise.
-static int fread_len(ShaDaReadDef *const sd_reader, char *const buffer,
-                     const size_t length)
+/// @return kSDReadStatusSuccess if everything was OK, kSDReadStatusNotShaDa if 
+///         there were not enough bytes to read or kSDReadStatusReadError if 
+///         there was some error while reading.
+static ShaDaReadResult fread_len(ShaDaReadDef *const sd_reader,
+                                 char *const buffer,
+                                 const size_t length)
   FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   ptrdiff_t read_bytes = 0;
@@ -2942,16 +3087,16 @@ static int fread_len(ShaDaReadDef *const sd_reader, char *const buffer,
   if (sd_reader->error != NULL) {
     emsg2(_(SERR "System error while reading ShaDa file: %s"),
           sd_reader->error);
-    return FAIL;
+    return kSDReadStatusReadError;
   } else if (sd_reader->eof) {
-    emsgu(_(RERR "Error while reading ShaDa file: "
+    emsgu(_(RCERR "Error while reading ShaDa file: "
             "last entry specified that it occupies %" PRIu64 " bytes, "
             "but file ended earlier"),
           (uint64_t) length);
-    return FAIL;
+    return kSDReadStatusNotShaDa;
   }
   assert(read_bytes >= 0 && (size_t) read_bytes == length);
-  return OK;
+  return kSDReadStatusSuccess;
 }
 
 /// Read next unsigned integer from file
@@ -2967,10 +3112,12 @@ static int fread_len(ShaDaReadDef *const sd_reader, char *const buffer,
 /// @param[in]   sd_reader  Structure containing file reader definition.
 /// @param[out]  result     Location where result is saved.
 ///
-/// @return OK if read was successfull, FAIL if it was not.
-static int msgpack_read_uint64(ShaDaReadDef *const sd_reader,
-                               const int first_char,
-                               uint64_t *const result)
+/// @return kSDReadStatusSuccess if reading was successfull, 
+///         kSDReadStatusNotShaDa if there were not enough bytes to read or 
+///         kSDReadStatusReadError if reading failed for whatever reason.
+static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader,
+                                           const int first_char,
+                                           uint64_t *const result)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const uintmax_t fpos = sd_reader->fpos - 1;
@@ -2979,13 +3126,14 @@ static int msgpack_read_uint64(ShaDaReadDef *const sd_reader,
     if (sd_reader->error) {
       emsg2(_(SERR "System error while reading integer from ShaDa file: %s"),
             sd_reader->error);
+      return kSDReadStatusReadError;
     } else if (sd_reader->eof) {
-      emsgu(_(RERR "Error while reading ShaDa file: "
+      emsgu(_(RCERR "Error while reading ShaDa file: "
               "expected positive integer at position %" PRIu64
               ", but got nothing"),
             (uint64_t) fpos);
+      return kSDReadStatusNotShaDa;
     }
-    return FAIL;
   }
 
   if (~first_char & 0x80) {
@@ -3011,20 +3159,22 @@ static int msgpack_read_uint64(ShaDaReadDef *const sd_reader,
         break;
       }
       default: {
-        emsgu(_(RERR "Error while reading ShaDa file: "
+        emsgu(_(RCERR "Error while reading ShaDa file: "
                 "expected positive integer at position %" PRIu64),
               (uint64_t) fpos);
-        return FAIL;
+        return kSDReadStatusNotShaDa;
       }
     }
     uint8_t buf[sizeof(uint64_t)] = {0, 0, 0, 0, 0, 0, 0, 0};
-    if (fread_len(sd_reader, (char *) &(buf[sizeof(uint64_t)-length]), length)
-        != OK) {
-      return FAIL;
+    ShaDaReadResult fl_ret;
+    if ((fl_ret = fread_len(sd_reader, (char *) &(buf[sizeof(uint64_t)-length]),
+                            length))
+        != kSDReadStatusSuccess) {
+      return fl_ret;
     }
     *result = be64toh(*((uint64_t *) &(buf[0])));
   }
-  return OK;
+  return kSDReadStatusSuccess;
 }
 
 /// Convert all strings in one Object instance
@@ -3129,14 +3279,14 @@ static inline char *get_converted_string(const vimconv_T *const sd_conv,
 /// @param[in]   max_kbyte  If non-zero, skip reading entries which have length 
 ///                         greater then given.
 ///
-/// @return NOTDONE if entry was read correctly, FAIL if there were errors and 
-///         OK at EOF.
-static int shada_read_next_item(ShaDaReadDef *const sd_reader,
-                                ShadaEntry *const entry,
-                                const unsigned flags,
-                                const size_t max_kbyte)
+/// @return Any value from ShaDaReadResult enum.
+static ShaDaReadResult shada_read_next_item(ShaDaReadDef *const sd_reader,
+                                            ShadaEntry *const entry,
+                                            const unsigned flags,
+                                            const size_t max_kbyte)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  ShaDaReadResult ret = kSDReadStatusMalformed;
 shada_read_next_item_start:
   // Set entry type to kSDItemMissing and also make sure that all pointers in 
   // data union are NULL so they are safe to xfree(). This is needed in case 
@@ -3144,7 +3294,7 @@ shada_read_next_item_start:
   // the switch.
   memset(entry, 0, sizeof(*entry));
   if (sd_reader->eof) {
-    return OK;
+    return kSDReadStatusFinished;
   }
 
   // First: manually unpack type, timestamp and length.
@@ -3156,15 +3306,19 @@ shada_read_next_item_start:
   const uintmax_t initial_fpos = sd_reader->fpos;
   const int first_char = read_char(sd_reader);
   if (first_char == EOF && sd_reader->eof) {
-    return OK;
+    return kSDReadStatusFinished;
   }
 
-  if (msgpack_read_uint64(sd_reader, first_char, &type_u64) != OK
-      || (msgpack_read_uint64(sd_reader, read_char(sd_reader), &timestamp_u64)
-          != OK)
-      || (msgpack_read_uint64(sd_reader, read_char(sd_reader), &length_u64)
-          != OK)) {
-    return FAIL;
+  ShaDaReadResult mru_ret;
+  if (((mru_ret = msgpack_read_uint64(sd_reader, first_char, &type_u64))
+       != kSDReadStatusSuccess)
+      || ((mru_ret = msgpack_read_uint64(sd_reader, read_char(sd_reader),
+                                         &timestamp_u64))
+          != kSDReadStatusSuccess)
+      || ((mru_ret = msgpack_read_uint64(sd_reader, read_char(sd_reader),
+                                         &length_u64))
+          != kSDReadStatusSuccess)) {
+    return mru_ret;
   }
 
   const size_t length = (size_t) length_u64;
@@ -3174,20 +3328,21 @@ shada_read_next_item_start:
     // kSDItemUnknown cannot possibly pass that far because it is -1 and that 
     // will fail in msgpack_read_uint64. But kSDItemMissing may and it will 
     // otherwise be skipped because (1 << 0) will never appear in flags.
-    emsgu(_(RERR "Error while reading ShaDa file: "
+    emsgu(_(RCERR "Error while reading ShaDa file: "
             "there is an item at position %" PRIu64 " "
             "that must not be there: Missing items are "
             "for internal uses only"),
           (uint64_t) initial_fpos);
-    return FAIL;
+    return kSDReadStatusNotShaDa;
   }
 
   if ((type_u64 > SHADA_LAST_ENTRY
        ? !(flags & kSDReadUnknown)
        : !((unsigned) (1 << type_u64) & flags))
       || (max_kbyte && length > max_kbyte * 1024)) {
-    if (fread_len(sd_reader, NULL, length) != OK) {
-      return FAIL;
+    const ShaDaReadResult fl_ret = fread_len(sd_reader, NULL, length);
+    if (fl_ret != kSDReadStatusSuccess) {
+      return fl_ret;
     }
     goto shada_read_next_item_start;
   }
@@ -3202,9 +3357,12 @@ shada_read_next_item_start:
 
   char *const buf = xmalloc(length);
 
-  if (fread_len(sd_reader, buf, length) != OK) {
-    xfree(buf);
-    return FAIL;
+  {
+    const ShaDaReadResult fl_ret = fread_len(sd_reader, buf, length);
+    if (fl_ret != kSDReadStatusSuccess) {
+      xfree(buf);
+      return fl_ret;
+    }
   }
 
   msgpack_unpacked unpacked;
@@ -3215,6 +3373,7 @@ shada_read_next_item_read_next: {}
   size_t off = 0;
   const msgpack_unpack_return result =
       msgpack_unpack_next(&unpacked, buf, length, &off);
+  ret = kSDReadStatusNotShaDa;
   switch (result) {
     case MSGPACK_UNPACK_SUCCESS: {
       if (off < length) {
@@ -3223,7 +3382,7 @@ shada_read_next_item_read_next: {}
       break;
     }
     case MSGPACK_UNPACK_PARSE_ERROR: {
-      emsgu(_(RERR "Failed to parse ShaDa file due to a msgpack parser error "
+      emsgu(_(RCERR "Failed to parse ShaDa file due to a msgpack parser error "
               "at position %" PRIu64),
             (uint64_t) initial_fpos);
       goto shada_read_next_item_error;
@@ -3235,22 +3394,24 @@ shada_read_next_item_read_next: {}
         goto shada_read_next_item_read_next;
       }
       EMSG(_(e_outofmem));
+      ret = kSDReadStatusReadError;
       goto shada_read_next_item_error;
     }
     case MSGPACK_UNPACK_CONTINUE: {
-      emsgu(_(RERR "Failed to parse ShaDa file: incomplete msgpack string "
+      emsgu(_(RCERR "Failed to parse ShaDa file: incomplete msgpack string "
               "at position %" PRIu64),
             (uint64_t) initial_fpos);
       goto shada_read_next_item_error;
     }
     case MSGPACK_UNPACK_EXTRA_BYTES: {
 shada_read_next_item_extra_bytes:
-      emsgu(_(RERR "Failed to parse ShaDa file: extra bytes in msgpack string "
+      emsgu(_(RCERR "Failed to parse ShaDa file: extra bytes in msgpack string "
               "at position %" PRIu64),
             (uint64_t) initial_fpos);
       goto shada_read_next_item_error;
     }
   }
+  ret = kSDReadStatusMalformed;
 #define CHECK_KEY(key, expected) \
   (key.via.str.size == sizeof(expected) - 1 \
    && STRNCMP(key.via.str.ptr, expected, sizeof(expected) - 1) == 0)
@@ -3977,11 +4138,11 @@ shada_read_next_item_error:
   entry->type = (ShadaEntryType) type_u64;
   shada_free_shada_entry(entry);
   entry->type = kSDItemMissing;
-  return FAIL;
+  return ret;
 shada_read_next_item_end:
   msgpack_unpacked_destroy(&unpacked);
   xfree(buf);
-  return NOTDONE;
+  return kSDReadStatusSuccess;
 }
 
 /// Check whether "name" is on removable media (according to 'shada')

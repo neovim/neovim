@@ -44,17 +44,17 @@ describe('ShaDa error handling', function()
 
   it('fails on zero', function()
     wshada('\000')
-    eq('Vim(rshada):E575: Error while reading ShaDa file: expected positive integer at position 0, but got nothing', exc_exec(sdrcmd()))
+    eq('Vim(rshada):E576: Error while reading ShaDa file: expected positive integer at position 0, but got nothing', exc_exec(sdrcmd()))
   end)
 
   it('fails on missing item', function()
     wshada('\000\000\000')
-    eq('Vim(rshada):E575: Error while reading ShaDa file: there is an item at position 0 that must not be there: Missing items are for internal uses only', exc_exec(sdrcmd()))
+    eq('Vim(rshada):E576: Error while reading ShaDa file: there is an item at position 0 that must not be there: Missing items are for internal uses only', exc_exec(sdrcmd()))
   end)
 
   it('fails on -2 type', function()
     wshada('\254\000\000')
-    eq('Vim(rshada):E575: Error while reading ShaDa file: expected positive integer at position 0', exc_exec(sdrcmd()))
+    eq('Vim(rshada):E576: Error while reading ShaDa file: expected positive integer at position 0', exc_exec(sdrcmd()))
   end)
 
   it('does not fail on header with zero length', function()
@@ -65,22 +65,22 @@ describe('ShaDa error handling', function()
 
   it('fails on search pattern item with zero length', function()
     wshada('\002\000\000')
-    eq('Vim(rshada):E575: Failed to parse ShaDa file: incomplete msgpack string at position 0', exc_exec(sdrcmd()))
+    eq('Vim(rshada):E576: Failed to parse ShaDa file: incomplete msgpack string at position 0', exc_exec(sdrcmd()))
   end)
 
   it('fails on search pattern item with -2 timestamp', function()
     wshada('\002\254\000')
-    eq('Vim(rshada):E575: Error while reading ShaDa file: expected positive integer at position 1', exc_exec(sdrcmd()))
+    eq('Vim(rshada):E576: Error while reading ShaDa file: expected positive integer at position 1', exc_exec(sdrcmd()))
   end)
 
   it('fails on search pattern item with -2 length', function()
     wshada('\002\000\254')
-    eq('Vim(rshada):E575: Error while reading ShaDa file: expected positive integer at position 2', exc_exec(sdrcmd()))
+    eq('Vim(rshada):E576: Error while reading ShaDa file: expected positive integer at position 2', exc_exec(sdrcmd()))
   end)
 
   it('fails on search pattern item with length greater then file length', function()
     wshada('\002\000\002\000')
-    eq('Vim(rshada):E575: Error while reading ShaDa file: last entry specified that it occupies 2 bytes, but file ended earlier', exc_exec(sdrcmd()))
+    eq('Vim(rshada):E576: Error while reading ShaDa file: last entry specified that it occupies 2 bytes, but file ended earlier', exc_exec(sdrcmd()))
   end)
 
   it('fails on search pattern item with invalid byte', function()
@@ -95,12 +95,12 @@ describe('ShaDa error handling', function()
     -- get MSGPACK_UNPACK_PARSE_ERROR and not MSGPACK_UNPACK_CONTINUE or 
     -- MSGPACK_UNPACK_EXTRA_BYTES.
     wshada('\002\000\001\193')
-    eq('Vim(rshada):E575: Failed to parse ShaDa file due to a msgpack parser error at position 0', exc_exec(sdrcmd()))
+    eq('Vim(rshada):E576: Failed to parse ShaDa file due to a msgpack parser error at position 0', exc_exec(sdrcmd()))
   end)
 
   it('fails on search pattern item with incomplete map', function()
     wshada('\002\000\001\129')
-    eq('Vim(rshada):E575: Failed to parse ShaDa file: incomplete msgpack string at position 0', exc_exec(sdrcmd()))
+    eq('Vim(rshada):E576: Failed to parse ShaDa file: incomplete msgpack string at position 0', exc_exec(sdrcmd()))
   end)
 
   it('fails on search pattern item without a pattern', function()
@@ -110,7 +110,7 @@ describe('ShaDa error handling', function()
 
   it('fails on search pattern with extra bytes', function()
     wshada('\002\000\002\128\000')
-    eq('Vim(rshada):E575: Failed to parse ShaDa file: extra bytes in msgpack string at position 0', exc_exec(sdrcmd()))
+    eq('Vim(rshada):E576: Failed to parse ShaDa file: extra bytes in msgpack string at position 0', exc_exec(sdrcmd()))
   end)
 
   it('fails on search pattern item with NIL value', function()

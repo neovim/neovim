@@ -896,7 +896,7 @@ To automatically save and restore views for *.c files: >
 	au BufWinEnter *.c silent loadview
 
 ==============================================================================
-8. The ShaDa file				*shada* *shada-file* *E575*
+8. The ShaDa file			    *shada* *shada-file* *E575* *E576*
 If you exit Vim and later start it again, you would normally lose a lot of
 information.  The ShaDa file can be used to remember that information, which
 enables you to continue where you left off.
@@ -1110,8 +1110,19 @@ that file.  This was done to avoid accidentally destroying a file when the
 file name of the ShaDa file is wrong.  This could happen when accidentally 
 typing "nvim -i file" when you wanted "nvim -R file" (yes, somebody 
 accidentally did that!).  If you want to overwrite a ShaDa file with an error 
-in it, you will either have to fix the error, or delete the file (while NeoVim 
-is running, so most of the information will be restored).
+in it, you will either have to fix the error, delete the file (while NeoVim is 
+running, so most of the information will be restored) or write it explicitly 
+with |:wshada| and a bang.
+							*E136* *E138*
+Note: when NeoVim finds out that it failed to write part of the ShaDa file 
+(e.g. because there is no space left to write the file) or when it appears 
+that already present ShaDa file contains errors that indicate that this file 
+is likely not a ShaDa file then ShaDa file with `.tmp.X` suffix is left on the 
+file system (where X is any latin small letter: from U+0061 to U+007A). You 
+may use such file to recover the data if you want, but in any case it needs to 
+be cleaned up after you resolve the issue that prevented old ShaDa file from 
+being overwritten. If NeoVim fails to find unexisting `.tmp.X` file it will 
+not write ShaDa file at all.
 
 						    *:rsh* *:rshada* *E886*
 :rsh[ada][!] [file]	Read from ShaDa file [file] (default: see above).
@@ -1122,7 +1133,7 @@ is running, so most of the information will be restored).
 						   *:rv* *:rviminfo*
 :rv[iminfo][!] [file]	Deprecated alias to |:rshada| command.
 
-					*:wsh* *:wshada* *E136* *E137* *E138*
+						    *:wsh* *:wshada* *E137*
 :wsh[ada][!] [file]	Write to ShaDa file [file] (default: see above).
 			The information in the file is first read in to make
 			a merge between old and new info.  When [!] is used,
