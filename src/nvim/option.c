@@ -361,16 +361,16 @@ static void set_runtimepath_default(void)
   } while (0)
   ADD_STRING(rtp_cur, config_home, config_len);
   ADD_STATIC_STRING(rtp_cur, "/nvim,");
+  ADD_COLON_DIRS(rtp_cur, config_dirs, "", );
   ADD_STRING(rtp_cur, data_home, data_len);
   ADD_STATIC_STRING(rtp_cur, "/nvim/site,");
-  ADD_COLON_DIRS(rtp_cur, config_dirs, "", );
   ADD_COLON_DIRS(rtp_cur, data_dirs, "/site", );
   ADD_STRING(rtp_cur, vimruntime, vimruntime_len);
   *rtp_cur++ = ',';
   ADD_COLON_DIRS(rtp_cur, data_dirs, "/site/after", _rev);
-  ADD_COLON_DIRS(rtp_cur, config_dirs, "/after", _rev);
   ADD_STRING(rtp_cur, data_home, data_len);
   ADD_STATIC_STRING(rtp_cur, "/nvim/site/after,");
+  ADD_COLON_DIRS(rtp_cur, config_dirs, "/after", _rev);
   ADD_STRING(rtp_cur, config_home, config_len);
   ADD_STATIC_STRING(rtp_cur, "/nvim/after");
 #undef ADD_COLON_DIRS
