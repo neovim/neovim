@@ -1705,6 +1705,13 @@ return {
       defaults={if_true={vi=".,/usr/include,,"}}
     },
     {
+      full_name='plugindir', abbreviation='pidir',
+      type='string', scope={'global'},
+      vim=true,
+      varname='p_plugindir',
+      defaults={if_true={vi="",vim="bundle"}}
+    },
+    {
       full_name='preserveindent', abbreviation='pi',
       type='bool', scope={'buffer'},
       vi_def=true,

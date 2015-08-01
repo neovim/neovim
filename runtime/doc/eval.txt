@@ -1548,6 +1548,11 @@ v:operator	The last operator given in Normal mode.  This is a single
 		commands.
 		Read-only.
 
+					*v:plugins*
+v:plugins	Dictionary containing information about plugins registered
+		using the |:plug| command. Each entry is a dictionary, with
+		the 'path' key being the only guaranteed existing key.
+
 					*v:prevcount* *prevcount-variable*
 v:prevcount	The count given for the last but one Normal mode command.
 		This is the v:count value of the previous command.  Useful if

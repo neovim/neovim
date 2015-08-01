@@ -80,6 +80,9 @@ are always available and may be used simultaneously in separate plugins.  The
 
 See |nvim-intro| for a list of Nvim's largest new features.
 
+The |:plug| command provides basic facilities for using pathogen-style plugin
+bundles.
+
 |bracketed-paste-mode| is built-in and enabled by default.
 
 Meta (alt) chords are recognized (even in the terminal).

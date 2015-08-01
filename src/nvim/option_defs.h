@@ -452,6 +452,7 @@ EXTERN char_u   *p_pex;         /* 'patchexpr' */
 EXTERN char_u   *p_pm;          /* 'patchmode' */
 EXTERN char_u   *p_path;        /* 'path' */
 EXTERN char_u   *p_cdpath;      /* 'cdpath' */
+EXTERN char_u   *p_plugindir;   /* 'plugindir' */
 EXTERN long p_rdt;              /* 'redrawtime' */
 EXTERN int p_remap;             /* 'remap' */
 EXTERN long p_re;               /* 'regexpengine' */

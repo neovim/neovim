@@ -2951,6 +2951,9 @@ set_one_cmd_context (
     if (xp->xp_context == EXPAND_FILES)
       xp->xp_context = EXPAND_DIRECTORIES;
     break;
+  case CMD_plug:
+    xp->xp_context = EXPAND_DIRECTORIES;
+    break;
   case CMD_help:
     xp->xp_context = EXPAND_HELP;
     xp->xp_pattern = arg;
@@ -9424,5 +9427,90 @@ static void ex_terminal(exarg_T *eap)
 
   if (name != (char *)p_sh) {
     xfree(name);
+  }
+}
+
+static void ex_plug(exarg_T *eap)
+{
+  char *path = NULL;
+  char_u *rtp_copy = vim_strsave(p_rtp);
+
+  if (*eap->arg != NUL) {
+    if (path_is_absolute_path(eap->arg)) {
+      // full path: plug ~/.config/nvim/bundle/coolplugin
+      path = (char *)vim_strsave_fnameescape(eap->arg, false);
+    } else {  // spec: plug neovim/coolplugin
+      // 'neovim/coolplugin' -> 'coolplugin'
+      char_u *basename = vim_strsave(path_tail((char_u *)eap->arg));
+      if (STRNCMP(basename, "", 1) != 0 && STRNCMP(p_plugindir, "", 1) != 0) {
+        if (!path_is_absolute_path(p_plugindir)) {
+          // we build a path using the first item in 'runtimepath'
+          // this is usually '~/.config/nvim'
+          char_u *user_vim = xmallocz(MAXPATHL);
+          copy_option_part(&rtp_copy, user_vim, MAXPATHL, ",");
+          if (STRNCMP(user_vim, "", 1) != 0) {
+            path = concat_fnames(concat_fnames((char *)user_vim,
+                                               (char *)p_plugindir, true),
+                                 (char *)basename, true);
+          }
+          xfree(user_vim);
+        }
+        // either the path is not an absolute path, or &rtp is empty
+        if (path == NULL) {
+          path = concat_fnames((char *)p_plugindir, (char *)basename, true);
+        }
+      xfree(basename);
+      }
+    }
+
+    if (path != NUL) {
+      // 1. rebuild rtp
+      if (STRNCMP(p_rtp, "", 1) == 0) {  // "" -> "path"
+        p_rtp = xrealloc(p_rtp, STRLEN(path) + 1);
+        snprintf((char *)p_rtp, STRLEN(path) + 1, "%s", path);
+      } else {
+        int new_rtp_size;
+        int match = 0;
+        regmatch_T regmatch;
+        regmatch.regprog = vim_regcomp((char_u *)",[^,]\\+/after,",
+                                        RE_MAGIC | RE_STRING);
+        regmatch.rm_ic = p_ic;
+        if (regmatch.regprog != NULL) {
+          match = vim_regexec(&regmatch, p_rtp, 0);
+        }
+        if (match) {
+          // insert after the comma, "p1,p1/after" -> "p1,p2,p1/after"
+          int pos = (int)(regmatch.startp[0] - p_rtp + 1);
+          char_u *head = xmallocz(pos);
+          memcpy(head, p_rtp, pos);
+          char_u *tail;
+          tail = vim_strsave(p_rtp + pos);
+          new_rtp_size = STRLEN(head) + STRLEN(path) + STRLEN(tail) + 3;
+          p_rtp = xrealloc(p_rtp, new_rtp_size);
+          snprintf((char *)p_rtp, new_rtp_size, "%s%s,%s", head, path, tail);
+        } else {  // append, "path1" -> "path1,path2"
+          new_rtp_size = STRLEN(p_rtp) + STRLEN(path) + 2;
+          p_rtp = xrealloc(p_rtp, new_rtp_size);
+          snprintf((char *)p_rtp, new_rtp_size, "%s,%s", rtp_copy, path);
+        }
+        vim_regfree(regmatch.regprog);
+      }
+
+      // 2. source .vim files in the plugin/ folder of the bundle
+      if (eap->forceit == true) {
+        char_u *save_rtp = vim_strsave(p_rtp);
+        p_rtp = (char_u *)path;
+        source_runtime((char_u *)"plugin/**/*.vim", true);
+        p_rtp = save_rtp;
+      }
+
+      // 3. update v:plugins
+      char ex_cmd[MAXPATHL * 2];
+      snprintf(ex_cmd, sizeof(ex_cmd),
+               ":let v:plugins['%s'] = { 'path': '%s' }", eap->arg, path);
+      do_cmdline_cmd(ex_cmd);
+    }
+  xfree(path);
+  xfree(rtp_copy);
   }
 }

@@ -254,8 +254,8 @@ least the ones for Normal mode.  More about mappings in section |40.1|.
 
 Vim's functionality can be extended by adding plugins.  A plugin is nothing
 more than a Vim script file that is loaded automatically when Vim starts.  You
-can add a plugin very easily by dropping it in your plugin directory.
-{not available when Vim was compiled without the |+eval| feature}
+can add a plugin very easily by dropping it in your plugin directory.  You can
+also declare where to load plugins from using the |:plug| command.
 
 There are two types of plugins:
 
@@ -386,6 +386,27 @@ The <filetype> part is the name of the filetype the plugin is to be used for.
 Only files of this filetype will use the settings from the plugin.  The <name>
 part of the plugin file doesn't matter, you can use it to have several plugins
 for the same filetype.  Note that it must end in ".vim".
+
+THE PLUG COMMAND                                                    *:plug*
+                                                                    {Nvim}
+:plug[!] {spec}	        Add the plugin bundle defined by {spec} to 'runtimepath'.
+			{spec} can be a full path, the name of a directory in
+			the plugins folder (defined as `~/.config/nvim/bundle/` by
+			default, see 'plugindir'), or it can have the form
+			`PREFIX/DIRNAME`.
+			If [!] is given, source the *.vim files in the plugin/
+			folder within {spec} (this can be used, for example, to
+			load plugins early during initiallization, while the
+			|vimrc| file is sourced).
+
+You can declare which paths to load plugins from using |:plug| from your
+|vimrc| file: >
+
+	plug ~/.config/nvim/bundle/nvim-plugin
+	plug neovim/nvim-plugin
+	plug nvim-plugin
+
+Note: All these commands are equivalent on a default setup.
 
 
 Further reading:

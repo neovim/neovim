@@ -66,6 +66,7 @@ enum {
     VV_COMMAND_OUTPUT,
     VV_COMPLETED_ITEM,
     VV_MSGPACK_TYPES,
+    VV_PLUGINS,
     VV_LEN, /* number of v: vars */
 };
 
