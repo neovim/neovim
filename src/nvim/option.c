@@ -316,14 +316,15 @@ static void set_runtimepath_default(void)
   assert(data_dirs != NULL);
   assert(config_dirs != NULL);
 #define NVIM_SIZE (sizeof("/nvim") - 1)
+#define SITE_SIZE (sizeof("/site") - 1)
 #define AFTER_SIZE (sizeof("/after") - 1)
   const size_t data_len = strlen(data_home);
   const size_t config_len = strlen(config_home);
   const size_t vimruntime_len = strlen(vimruntime);
-  rtp_size += ((data_len + NVIM_SIZE) * 2 + AFTER_SIZE) + 2;
+  rtp_size += ((data_len + NVIM_SIZE + SITE_SIZE) * 2 + AFTER_SIZE) + 2;
   rtp_size += ((config_len + NVIM_SIZE) * 2 + AFTER_SIZE) + 2;
   rtp_size += vimruntime_len;
-#define COMPUTE_COLON_LEN(rtp_size, val) \
+#define COMPUTE_COLON_LEN(rtp_size, additional_size, val) \
   do { \
     const void *iter = NULL; \
     do { \
@@ -331,12 +332,13 @@ static void set_runtimepath_default(void)
       const char *dir; \
       iter = vim_colon_env_iter(val, iter, &dir, &dir_len); \
       if (dir != NULL && dir_len > 0) { \
-        rtp_size += ((dir_len + NVIM_SIZE) * 2 + AFTER_SIZE) + 2; \
+        rtp_size += ((dir_len + NVIM_SIZE + additional_size) * 2 \
+                     + AFTER_SIZE) + 2; \
       } \
     } while (iter != NULL); \
   } while (0)
-  COMPUTE_COLON_LEN(rtp_size, data_dirs);
-  COMPUTE_COLON_LEN(rtp_size, config_dirs);
+  COMPUTE_COLON_LEN(rtp_size, SITE_SIZE, data_dirs);
+  COMPUTE_COLON_LEN(rtp_size, 0, config_dirs);
 #undef COMPUTE_COLON_LEN
   char *const rtp = xmallocz(rtp_size);
   char *rtp_cur = rtp;
@@ -360,21 +362,22 @@ static void set_runtimepath_default(void)
   ADD_STRING(rtp_cur, config_home, config_len);
   ADD_STATIC_STRING(rtp_cur, "/nvim,");
   ADD_STRING(rtp_cur, data_home, data_len);
-  ADD_STATIC_STRING(rtp_cur, "/nvim,");
+  ADD_STATIC_STRING(rtp_cur, "/nvim/site,");
   ADD_COLON_DIRS(rtp_cur, config_dirs, "", );
-  ADD_COLON_DIRS(rtp_cur, data_dirs, "", );
+  ADD_COLON_DIRS(rtp_cur, data_dirs, "/site", );
   ADD_STRING(rtp_cur, vimruntime, vimruntime_len);
   *rtp_cur++ = ',';
-  ADD_COLON_DIRS(rtp_cur, data_dirs, "/after", _rev);
+  ADD_COLON_DIRS(rtp_cur, data_dirs, "/site/after", _rev);
   ADD_COLON_DIRS(rtp_cur, config_dirs, "/after", _rev);
   ADD_STRING(rtp_cur, data_home, data_len);
-  ADD_STATIC_STRING(rtp_cur, "/nvim/after,");
+  ADD_STATIC_STRING(rtp_cur, "/nvim/site/after,");
   ADD_STRING(rtp_cur, config_home, config_len);
   ADD_STATIC_STRING(rtp_cur, "/nvim/after");
 #undef ADD_COLON_DIRS
 #undef ADD_STATIC_STRING
 #undef ADD_STRING
 #undef NVIM_SIZE
+#undef SITE_SIZE
 #undef AFTER_SIZE
   set_string_default("runtimepath", (char_u *)rtp);
   xfree(data_dirs);
