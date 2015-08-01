@@ -301,13 +301,87 @@ static char *(p_cot_values[]) = {"menu", "menuone", "longest", "preview",
 # include "option.c.generated.h"
 #endif
 
+/// Set &runtimepath to default value
 static void set_runtimepath_default(void)
 {
-  garray_T rtp_ga;
-  ga_init(&rtp_ga, (int)sizeof(const char *), 1);
-  GA_APPEND(const char *, &rtp_ga, get_user_conf_dir());
-  GA_APPEND(const char *, &rtp_ga, concat_fnames(get_user_conf_dir(), "after", true));
-  set_string_default("runtimepath", ga_concat_strings(&rtp_ga));
+  size_t rtp_size = 0;
+  char *const data_home = vim_getenv("XDG_DATA_HOME");
+  char *const config_home = vim_getenv("XDG_CONFIG_HOME");
+  char *const vimruntime = vim_getenv("VIMRUNTIME");
+  char *const data_dirs = vim_getenv("XDG_DATA_DIRS");
+  char *const config_dirs = vim_getenv("XDG_CONFIG_DIRS");
+  assert(data_home != NULL);
+  assert(config_home != NULL);
+  assert(vimruntime != NULL);
+  assert(data_dirs != NULL);
+  assert(config_dirs != NULL);
+#define NVIM_SIZE (sizeof("/nvim") - 1)
+#define AFTER_SIZE (sizeof("/after") - 1)
+  const size_t data_len = strlen(data_home);
+  const size_t config_len = strlen(config_home);
+  const size_t vimruntime_len = strlen(vimruntime);
+  rtp_size += ((data_len + NVIM_SIZE) * 2 + AFTER_SIZE) + 2;
+  rtp_size += ((config_len + NVIM_SIZE) * 2 + AFTER_SIZE) + 2;
+  rtp_size += vimruntime_len;
+#define COMPUTE_COLON_LEN(rtp_size, val) \
+  do { \
+    const void *iter = NULL; \
+    do { \
+      size_t dir_len; \
+      const char *dir; \
+      iter = vim_colon_env_iter(val, iter, &dir, &dir_len); \
+      if (dir != NULL && dir_len > 0) { \
+        rtp_size += ((dir_len + NVIM_SIZE) * 2 + AFTER_SIZE) + 2; \
+      } \
+    } while (iter != NULL); \
+  } while (0)
+  COMPUTE_COLON_LEN(rtp_size, data_dirs);
+  COMPUTE_COLON_LEN(rtp_size, config_dirs);
+#undef COMPUTE_COLON_LEN
+  char *const rtp = xmallocz(rtp_size);
+  char *rtp_cur = rtp;
+#define ADD_STRING(tgt, src, len) \
+  do { memmove(tgt, src, len); tgt += len; } while (0)
+#define ADD_STATIC_STRING(tgt, str) \
+  ADD_STRING(tgt, str, sizeof(str) - 1)
+#define ADD_COLON_DIRS(tgt, val, suffix, revsuffix) \
+  do { \
+    const void *iter = NULL; \
+    do { \
+      size_t dir_len; \
+      const char *dir; \
+      iter = vim_colon_env_iter##revsuffix(val, iter, &dir, &dir_len); \
+      if (dir != NULL && dir_len > 0) { \
+        ADD_STRING(rtp_cur, dir, dir_len); \
+        ADD_STATIC_STRING(rtp_cur, "/nvim" suffix ","); \
+      } \
+    } while (iter != NULL); \
+  } while (0)
+  ADD_STRING(rtp_cur, config_home, config_len);
+  ADD_STATIC_STRING(rtp_cur, "/nvim,");
+  ADD_STRING(rtp_cur, data_home, data_len);
+  ADD_STATIC_STRING(rtp_cur, "/nvim,");
+  ADD_COLON_DIRS(rtp_cur, config_dirs, "", );
+  ADD_COLON_DIRS(rtp_cur, data_dirs, "", );
+  ADD_STRING(rtp_cur, vimruntime, vimruntime_len);
+  *rtp_cur++ = ',';
+  ADD_COLON_DIRS(rtp_cur, data_dirs, "/after", _rev);
+  ADD_COLON_DIRS(rtp_cur, config_dirs, "/after", _rev);
+  ADD_STRING(rtp_cur, data_home, data_len);
+  ADD_STATIC_STRING(rtp_cur, "/nvim/after,");
+  ADD_STRING(rtp_cur, config_home, config_len);
+  ADD_STATIC_STRING(rtp_cur, "/nvim/after");
+#undef ADD_COLON_DIRS
+#undef ADD_STATIC_STRING
+#undef ADD_STRING
+#undef NVIM_SIZE
+#undef AFTER_SIZE
+  set_string_default("runtimepath", (char_u *)rtp);
+  xfree(data_dirs);
+  xfree(config_dirs);
+  xfree(data_home);
+  xfree(config_home);
+  xfree(vimruntime);
 }
 
 /*
@@ -450,6 +524,8 @@ void set_init_1(void)
   set_string_default("backupdir", (char_u *)get_from_user_data("backup"));
   set_string_default("directory", (char_u *)get_from_user_data("swap"));
   set_string_default("undodir", (char_u *)get_from_user_data("undo"));
+  // Set default for &runtimepath. All necessary expansions are performed in 
+  // this function.
   set_runtimepath_default();
 
   /*
