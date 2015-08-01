@@ -57,17 +57,17 @@
 
 // Default for 'backupdir'.
 #ifndef DFLT_BDIR
-# define DFLT_BDIR    ".,$XDG_DATA_HOME/nvim/backup/"
+# define DFLT_BDIR    ".," NVIM_DATA_DIR "/backup/"
 #endif
 
 // Default for 'directory'.
 #ifndef DFLT_DIR
-# define DFLT_DIR     "$XDG_DATA_HOME/nvim/swap//"
+# define DFLT_DIR     NVIM_DATA_DIR "/swap//"
 #endif
 
 // Default for 'viewdir'.
 #ifndef DFLT_VDIR
-# define DFLT_VDIR    "$XDG_DATA_HOME/nvim/view/"
+# define DFLT_VDIR    NVIM_CONF_DIR "/view/"
 #endif
 
 #ifdef RUNTIME_GLOBAL
