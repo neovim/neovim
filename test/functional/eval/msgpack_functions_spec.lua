@@ -603,4 +603,13 @@ describe('msgpack*() functions', function()
     eq('Vim(let):E475: Invalid argument: container references itself',
        eval('exception'))
   end)
+
+  it('msgpackparse(systemlist(...)) does not segfault. #3135', function()
+    local cmd = "msgpackparse(systemlist('"
+      ..helpers.nvim_prog.." --api-info'))['_TYPE']['_VAL'][0][0]"
+    local api_info = eval(cmd)
+    api_info = eval(cmd) -- do it again (try to force segfault)
+    api_info = eval(cmd) -- do it again
+    eq('functions', api_info)
+  end)
 end)
