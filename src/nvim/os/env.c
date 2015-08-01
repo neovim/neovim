@@ -417,8 +417,9 @@ static char *remove_tail(char *p, char *pend, char *name)
 
 /// Vim's version of getenv().
 /// Special handling of $HOME, $VIM and $VIMRUNTIME, allowing the user to
-/// override the vim runtime directory at runtime.  Also does ACP to 'enc'
-/// conversion for Win32.  Results must be freed by the calling function.
+/// override the vim runtime directory at runtime. $XDG_* env variables are
+/// expanded conforming to the XDG specification. Also does ACP to 'enc'
+/// conversion for Win32. Results must be freed by the calling function.
 /// @param name Name of environment variable to expand
 char *vim_getenv(const char *name)
 {
