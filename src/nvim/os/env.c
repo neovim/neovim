@@ -432,7 +432,7 @@ char *vim_getenv(const char *name)
   if (strncmp(name, "XDG_", 4) == 0) {
     const char *home = vim_getenv("HOME");
     if (!home) {
-        return NULL;
+      return NULL;
     }
 
     const char *home_suffix = "";
