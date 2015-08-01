@@ -310,36 +310,47 @@ static void set_runtimepath_default(void)
   char *const vimruntime = vim_getenv("VIMRUNTIME");
   char *const data_dirs = vim_getenv("XDG_DATA_DIRS");
   char *const config_dirs = vim_getenv("XDG_CONFIG_DIRS");
-  assert(data_home != NULL);
-  assert(config_home != NULL);
-  assert(vimruntime != NULL);
-  assert(data_dirs != NULL);
-  assert(config_dirs != NULL);
 #define NVIM_SIZE (sizeof("/nvim") - 1)
 #define SITE_SIZE (sizeof("/site") - 1)
 #define AFTER_SIZE (sizeof("/after") - 1)
-  const size_t data_len = strlen(data_home);
-  const size_t config_len = strlen(config_home);
-  const size_t vimruntime_len = strlen(vimruntime);
-  rtp_size += ((data_len + NVIM_SIZE + SITE_SIZE) * 2 + AFTER_SIZE) + 2;
-  rtp_size += ((config_len + NVIM_SIZE) * 2 + AFTER_SIZE) + 2;
-  rtp_size += vimruntime_len;
+  size_t data_len;
+  size_t config_len;
+  size_t vimruntime_len;
+  if (data_home != NULL) {
+    data_len = strlen(data_home);
+    rtp_size += ((data_len + NVIM_SIZE + SITE_SIZE) * 2 + AFTER_SIZE) + 2;
+  }
+  if (config_home != NULL) {
+    config_len = strlen(config_home);
+    rtp_size += ((config_len + NVIM_SIZE) * 2 + AFTER_SIZE) + 2;
+  }
+  if (vimruntime != NULL) {
+    vimruntime_len = strlen(vimruntime);
+    rtp_size += vimruntime_len + 1;
+  }
 #define COMPUTE_COLON_LEN(rtp_size, additional_size, val) \
   do { \
-    const void *iter = NULL; \
-    do { \
-      size_t dir_len; \
-      const char *dir; \
-      iter = vim_colon_env_iter(val, iter, &dir, &dir_len); \
-      if (dir != NULL && dir_len > 0) { \
-        rtp_size += ((dir_len + NVIM_SIZE + additional_size) * 2 \
-                     + AFTER_SIZE) + 2; \
-      } \
-    } while (iter != NULL); \
+    if (val != NULL) { \
+      const void *iter = NULL; \
+      do { \
+        size_t dir_len; \
+        const char *dir; \
+        iter = vim_colon_env_iter(val, iter, &dir, &dir_len); \
+        if (dir != NULL && dir_len > 0) { \
+          rtp_size += ((dir_len + NVIM_SIZE + additional_size) * 2 \
+                       + AFTER_SIZE) + 2; \
+        } \
+      } while (iter != NULL); \
+    } \
   } while (0)
   COMPUTE_COLON_LEN(rtp_size, SITE_SIZE, data_dirs);
   COMPUTE_COLON_LEN(rtp_size, 0, config_dirs);
 #undef COMPUTE_COLON_LEN
+  if (rtp_size == 0) {
+    return;
+  }
+  // All additions were including comma.
+  rtp_size--;
   char *const rtp = xmallocz(rtp_size);
   char *rtp_cur = rtp;
 #define ADD_STRING(tgt, src, len) \
@@ -348,31 +359,46 @@ static void set_runtimepath_default(void)
   ADD_STRING(tgt, str, sizeof(str) - 1)
 #define ADD_COLON_DIRS(tgt, val, suffix, revsuffix) \
   do { \
-    const void *iter = NULL; \
-    do { \
-      size_t dir_len; \
-      const char *dir; \
-      iter = vim_colon_env_iter##revsuffix(val, iter, &dir, &dir_len); \
-      if (dir != NULL && dir_len > 0) { \
-        ADD_STRING(rtp_cur, dir, dir_len); \
-        ADD_STATIC_STRING(rtp_cur, "/nvim" suffix ","); \
-      } \
-    } while (iter != NULL); \
+    if (val != NULL) { \
+      const void *iter = NULL; \
+      do { \
+        size_t dir_len; \
+        const char *dir; \
+        iter = vim_colon_env_iter##revsuffix(val, iter, &dir, &dir_len); \
+        if (dir != NULL && dir_len > 0) { \
+          ADD_STRING(rtp_cur, dir, dir_len); \
+          ADD_STATIC_STRING(rtp_cur, "/nvim" suffix ","); \
+        } \
+      } while (iter != NULL); \
+    } \
   } while (0)
-  ADD_STRING(rtp_cur, config_home, config_len);
-  ADD_STATIC_STRING(rtp_cur, "/nvim,");
+  if (config_home != NULL) {
+    ADD_STRING(rtp_cur, config_home, config_len);
+    ADD_STATIC_STRING(rtp_cur, "/nvim,");
+  }
   ADD_COLON_DIRS(rtp_cur, config_dirs, "", );
-  ADD_STRING(rtp_cur, data_home, data_len);
-  ADD_STATIC_STRING(rtp_cur, "/nvim/site,");
+  if (data_home != NULL) {
+    ADD_STRING(rtp_cur, data_home, data_len);
+    ADD_STATIC_STRING(rtp_cur, "/nvim/site,");
+  }
   ADD_COLON_DIRS(rtp_cur, data_dirs, "/site", );
-  ADD_STRING(rtp_cur, vimruntime, vimruntime_len);
-  *rtp_cur++ = ',';
+  if (vimruntime != NULL) {
+    ADD_STRING(rtp_cur, vimruntime, vimruntime_len);
+    *rtp_cur++ = ',';
+  }
   ADD_COLON_DIRS(rtp_cur, data_dirs, "/site/after", _rev);
-  ADD_STRING(rtp_cur, data_home, data_len);
-  ADD_STATIC_STRING(rtp_cur, "/nvim/site/after,");
+  if (data_home != NULL) {
+    ADD_STRING(rtp_cur, data_home, data_len);
+    ADD_STATIC_STRING(rtp_cur, "/nvim/site/after,");
+  }
   ADD_COLON_DIRS(rtp_cur, config_dirs, "/after", _rev);
-  ADD_STRING(rtp_cur, config_home, config_len);
-  ADD_STATIC_STRING(rtp_cur, "/nvim/after");
+  if (config_home != NULL) {
+    ADD_STRING(rtp_cur, config_home, config_len);
+    ADD_STATIC_STRING(rtp_cur, "/nvim/after");
+  } else {
+    // Strip trailing comma.
+    rtp[rtp_size - 1] = NUL;
+  }
 #undef ADD_COLON_DIRS
 #undef ADD_STATIC_STRING
 #undef ADD_STRING
