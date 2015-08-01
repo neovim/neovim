@@ -430,11 +430,6 @@ char *vim_getenv(const char *name)
 
   // XDG Base Directory expansion.
   if (strncmp(name, "XDG_", 4) == 0) {
-    const char *home = vim_getenv("HOME");
-    if (!home) {
-      return NULL;
-    }
-
     const char *home_suffix = "";
     if (strcmp(name, "XDG_DATA_HOME") == 0) {
       home_suffix = "/.local/share/";
@@ -452,6 +447,9 @@ char *vim_getenv(const char *name)
 
     // We need to append the prefix to the HOME path.
     char *value = vim_getenv("HOME");
+    if (!value) {
+      return NULL;
+    }
     const size_t value_len = strlen(value);
     const size_t home_suffix_len = strlen(home_suffix);
     value = xrealloc(value, value_len + home_suffix_len + 1);
