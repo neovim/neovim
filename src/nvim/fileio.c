@@ -415,14 +415,11 @@ readfile (
     msg_scroll = TRUE;          /* don't overwrite previous file message */
 
   /*
-   * If the name ends in a path separator, we can't open it.  Check here,
-   * because reading the file may actually work, but then creating the swap
-   * file may destroy it!  Reported on MS-DOS and Win 95.
    * If the name is too long we might crash further on, quit here.
    */
   if (fname != NULL && *fname != NUL) {
     p = fname + STRLEN(fname);
-    if (after_pathsep((char *)fname, (char *)p) || STRLEN(fname) >= MAXPATHL) {
+    if (STRLEN(fname) >= MAXPATHL) {
       filemess(curbuf, fname, (char_u *)_("Illegal file name"), 0);
       msg_end();
       msg_scroll = msg_save;
