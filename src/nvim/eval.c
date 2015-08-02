@@ -5245,23 +5245,22 @@ void list_append_dict(list_T *list, dict_T *dict)
   ++dict->dv_refcount;
 }
 
-/*
- * Make a copy of "str" and append it as an item to list "l".
- * When "len" >= 0 use "str[len]".
- */
-void list_append_string(list_T *l, char_u *str, int len)
+/// Make a copy of "str" and append it as an item to list "l"
+///
+/// @param[out]  l    List to append to.
+/// @param[in]   str  String to append.
+/// @param[in]   len  Length of the appended string. May be negative, in this
+///                   case string is considered to be usual zero-terminated
+///                   string.
+void list_append_string(list_T *l, const char_u *str, int len)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
-  listitem_T *li = listitem_alloc();
-
-  list_append(l, li);
-  li->li_tv.v_type = VAR_STRING;
-  li->li_tv.v_lock = 0;
-
   if (str == NULL) {
-    li->li_tv.vval.v_string = NULL;
+    list_append_allocated_string(l, NULL);
   } else {
-    li->li_tv.vval.v_string = (len >= 0) ? vim_strnsave(str, len)
-                                         : vim_strsave(str);
+    list_append_allocated_string(l, (len >= 0
+                                     ? xmemdupz((char *) str, len)
+                                     : xstrdup((char *) str)));
   }
 }
 
