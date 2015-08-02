@@ -4621,7 +4621,7 @@ mode([expr])	Return a string that indicates the current mode.
 		"c" or "n".
 		Also see |visualmode()|.
 
-msgpackdump({list})					*msgpackdump()*
+msgpackdump({list})				   {Nvim} *msgpackdump()*
 		Convert a list of VimL objects to msgpack. Returned value is
 		|readfile()|-style list. Example: >
 			call writefile(msgpackdump([{}]), 'fname.mpack', 'b')
@@ -4636,7 +4636,7 @@ msgpackdump({list})					*msgpackdump()*
 		4. Other strings are always dumped as BIN strings.
 		5. Points 3. and 4. do not apply to |msgpack-special-dict|s.
 
-msgpackparse({list})					*msgpackparse()*
+msgpackparse({list})				   {Nvim} *msgpackparse()*
 		Convert a |readfile()|-style list to a list of VimL objects. 
 		Example: >
 			let fname = expand('~/.nvim/shada/main.shada')
