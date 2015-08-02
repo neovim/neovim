@@ -301,6 +301,33 @@ static char *(p_cot_values[]) = {"menu", "menuone", "longest", "preview",
 # include "option.c.generated.h"
 #endif
 
+/// Count commas in the given string
+static size_t count_commas(const char *const s, size_t len)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  size_t ret = 0;
+  for (size_t i = 0; i < len; i++) {
+    if (s[i] == ',') {
+      ret++;
+    }
+  }
+  return ret;
+}
+
+/// Append string with escaped commas
+static char *strcpy_comma_escaped(char *dest, const char *src, const size_t len)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  size_t shift = 0;
+  for (size_t i = 0; i < len; i++) {
+    if (src[i] == ',') {
+      dest[i + shift++] = '\\';
+    }
+    dest[i + shift] = src[i];
+  }
+  return &dest[len + shift];
+}
+
 /// Set &runtimepath to default value
 static void set_runtimepath_default(void)
 {
@@ -318,15 +345,17 @@ static void set_runtimepath_default(void)
   size_t vimruntime_len;
   if (data_home != NULL) {
     data_len = strlen(data_home);
-    rtp_size += ((data_len + NVIM_SIZE + SITE_SIZE) * 2 + AFTER_SIZE) + 2;
+    rtp_size += ((data_len + count_commas(data_home, data_len)
+                  + NVIM_SIZE + SITE_SIZE) * 2 + AFTER_SIZE) + 2;
   }
   if (config_home != NULL) {
     config_len = strlen(config_home);
-    rtp_size += ((config_len + NVIM_SIZE) * 2 + AFTER_SIZE) + 2;
+    rtp_size += ((config_len + count_commas(config_home, config_len)
+                  + NVIM_SIZE) * 2 + AFTER_SIZE) + 2;
   }
   if (vimruntime != NULL) {
     vimruntime_len = strlen(vimruntime);
-    rtp_size += vimruntime_len + 1;
+    rtp_size += vimruntime_len + count_commas(vimruntime, vimruntime_len) + 1;
   }
 #define COMPUTE_COLON_LEN(rtp_size, additional_size, val) \
   do { \
@@ -337,7 +366,8 @@ static void set_runtimepath_default(void)
         const char *dir; \
         iter = vim_colon_env_iter(val, iter, &dir, &dir_len); \
         if (dir != NULL && dir_len > 0) { \
-          rtp_size += ((dir_len + NVIM_SIZE + additional_size) * 2 \
+          rtp_size += ((dir_len + count_commas(dir, dir_len) \
+                        + NVIM_SIZE + additional_size) * 2 \
                        + AFTER_SIZE) + 2; \
         } \
       } while (iter != NULL); \
@@ -354,9 +384,9 @@ static void set_runtimepath_default(void)
   char *const rtp = xmallocz(rtp_size);
   char *rtp_cur = rtp;
 #define ADD_STRING(tgt, src, len) \
-  do { memmove(tgt, src, len); tgt += len; } while (0)
-#define ADD_STATIC_STRING(tgt, str) \
-  ADD_STRING(tgt, str, sizeof(str) - 1)
+  tgt = strcpy_comma_escaped(tgt, src, len)
+#define ADD_STATIC_STRING(tgt, src) \
+  do { memmove(tgt, src, sizeof(src) - 1); tgt += sizeof(src) - 1; } while (0)
 #define ADD_COLON_DIRS(tgt, val, suffix, revsuffix) \
   do { \
     if (val != NULL) { \
@@ -397,7 +427,7 @@ static void set_runtimepath_default(void)
     ADD_STATIC_STRING(rtp_cur, "/nvim/after");
   } else {
     // Strip trailing comma.
-    rtp[rtp_size - 1] = NUL;
+    rtp[rtp_size] = NUL;
   }
 #undef ADD_COLON_DIRS
 #undef ADD_STATIC_STRING
