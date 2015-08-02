@@ -5183,6 +5183,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  colors/	color scheme files |:colorscheme|
 	  compiler/	compiler files |:compiler|
 	  doc/		documentation |write-local-help|
+	  early/	early plugins |early-plugins|
 	  ftplugin/	filetype plugins |write-filetype-plugin|
 	  indent/	indent scripts |indent-expression|
 	  keymap/	key mapping files |mbyte-keymap|

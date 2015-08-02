@@ -370,7 +370,18 @@ accordingly.  Vim proceeds in this order:
 	The |-V| argument can be used to display or log what happens next,
 	useful for debugging the initializations.
 
-3. Execute Ex commands, from environment variables and/or files
+3. Source early plugin files				    *early-plugins*
+	This does the same as >
+		:runtime! early/**/*.vim
+<	The result is that all directories in the default 'runtimepath' will be
+	searched for the "early" sub-directory and all files ending in ".vim"
+	will be sourced (in alphabetical order per directory), also in
+	subdirectories.
+	Loading these plugins won't be done if:
+	- The |--noplugin| command line argument is used.
+	- The "-u NONE" command line argument is used. |-u|
+
+4. Execute Ex commands, from environment variables and/or files
 	An environment variable is read as one Ex command line, where multiple
 	commands must be separated with '|' or "<NL>".
 								*vimrc* *exrc*
@@ -443,7 +454,7 @@ accordingly.  Vim proceeds in this order:
 	-  The file ".exrc"  (for Unix)
 		    "_exrc"  (for Win32)
 
-4. Load the plugin scripts.					*load-plugins*
+5. Load the plugin scripts.					*load-plugins*
 	This does the same as the command: >
 		:runtime! plugin/**/*.vim
 <	The result is that all directories in the 'runtimepath' option will be
@@ -459,31 +470,31 @@ accordingly.  Vim proceeds in this order:
 	commands from the command line have not been executed yet.  You can
 	use "--cmd 'set noloadplugins'" |--cmd|.
 
-5. Set 'shellpipe' and 'shellredir'
+6. Set 'shellpipe' and 'shellredir'
 	The 'shellpipe' and 'shellredir' options are set according to the
 	value of the 'shell' option, unless they have been set before.
 	This means that Vim will figure out the values of 'shellpipe' and
 	'shellredir' for you, unless you have set them yourself.
 
-6. Set 'updatecount' to zero, if "-n" command argument used
+7. Set 'updatecount' to zero, if "-n" command argument used
 
-7. Set binary options
+8. Set binary options
 	If the "-b" flag was given to Vim, the options for binary editing will
 	be set now.  See |-b|.
 
-8. Perform GUI initializations
+9. Perform GUI initializations
 	Only when starting "gvim", the GUI initializations will be done.  See
 	|gui-init|.
 
-9. Read the viminfo file
+10. Read the viminfo file
 	If the 'viminfo' option is not empty, the viminfo file is read.  See
 	|viminfo-file|.
 
-10. Read the quickfix file
+11. Read the quickfix file
 	If the "-q" flag was given to Vim, the quickfix file is read.  If this
 	fails, Vim exits.
 
-11. Open all windows
+12. Open all windows
 	When the |-o| flag was given, windows will be opened (but not
 	displayed yet).
 	When the |-p| flag was given, tab pages will be created (but not
@@ -492,7 +503,7 @@ accordingly.  Vim proceeds in this order:
 	If the "-q" flag was given to Vim, the first error is jumped to.
 	Buffers for all windows will be loaded.
 
-12. Execute startup commands
+13. Execute startup commands
 	If a "-t" flag was given to Vim, the tag is jumped to.
 	The commands given with the |-c| and |+cmd| arguments are executed.
 	The starting flag is reset, has("vim_starting") will now return zero.

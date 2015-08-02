@@ -330,19 +330,25 @@ int main(int argc, char **argv)
                  "{'cwd': get(matchlist(expand(\"<amatch>\"), "
                  "'\\c\\mterm://\\(.\\{-}\\)//'), 1, '')})");
 
-  /* Execute --cmd arguments. */
+  // Execute --cmd arguments.
   exe_pre_commands(&params);
 
-  /* Source startup scripts. */
+  if (params.use_vimrc != NULL) {
+    if (strcmp(params.use_vimrc, "NONE") == 0) {
+      p_lpl = FALSE; // don't load plugins
+    }
+  }
+
+  // Source early plugin files.
+  load_early_plugins();
+
+  // Source startup scripts.
   source_startup_scripts(&params);
 
-  /*
-   * Read all the plugin files.
-   * Only when compiled with +eval, since most plugins need it.
-   */
+   // Read all the plugin files.
   load_plugins();
 
-  /* Decide about window layout for diff mode after reading vimrc. */
+  // Decide about window layout for diff mode after reading vimrc.
   set_window_layout(&params);
 
   /*
@@ -1439,6 +1445,17 @@ static void load_plugins(void)
 }
 
 /*
+ * Read all the early plugin files (those are sourced before the vimrc)
+ */
+static void load_early_plugins(void)
+{
+  if (p_lpl) {
+    source_runtime((char_u *)"early/**/*.vim", TRUE);
+    TIME_MSG("loading early plugins");
+  }
+}
+
+/*
  * "-q errorfile": Load the error file now.
  * If the error file can't be read, exit before doing anything else.
  */
@@ -1808,13 +1825,11 @@ static void source_startup_scripts(mparm_T *parmp)
    * nothing else.
    */
   if (parmp->use_vimrc != NULL) {
-    if (strcmp(parmp->use_vimrc, "NONE") == 0
-        || strcmp(parmp->use_vimrc, "NORC") == 0) {
-      if (parmp->use_vimrc[2] == 'N')
-        p_lpl = FALSE;                      // don't load plugins either
-    } else {
-      if (do_source((char_u *)parmp->use_vimrc, FALSE, DOSO_NONE) != OK)
+    if (!(strcmp(parmp->use_vimrc, "NONE") == 0
+        || strcmp(parmp->use_vimrc, "NORC") == 0)) {
+      if (do_source((char_u *)parmp->use_vimrc, FALSE, DOSO_NONE) != OK) {
         EMSG2(_("E282: Cannot read from \"%s\""), parmp->use_vimrc);
+      }
     }
   } else if (!silent_mode) {
 
