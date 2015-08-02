@@ -484,23 +484,16 @@ static size_t path_expand(garray_T *gap, const char_u *path, int flags)
 static const char *scandir_next_with_dots(Directory *dir)
 {
   static int count = 0;
-  const char *entry = NULL;
-  if (dir == NULL) {
+  if (dir == NULL) {  // initialize
     count = 0;
-  } else {
-    count += 1;
-    if (count == 1) {
-      entry = ".";
-    } else if (count == 2) {
-      entry = "..";
-    } else {
-      entry = os_scandir_next(dir);
-      if (entry == NULL) {
-        count = 0;
-      }
-    }
+    return NULL;
   }
-  return entry;
+
+  count += 1;
+  if (count == 1 || count == 2) {
+    return (count == 1) ? "." : "..";
+  }
+  return os_scandir_next(dir);
 }
 
 /// Implementation of path_expand().
@@ -623,7 +616,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
       || os_isdir(*buf == NUL ? (char_u *)"." : (char_u *)buf)) {
     // Find all matching entries.
     char_u *name;
-    scandir_next_with_dots(NULL);
+    scandir_next_with_dots(NULL /* initialize */);
     while((name = (char_u *) scandir_next_with_dots(&dir)) && name != NULL) {
       if ((name[0] != '.' || starts_with_dot)
           && ((regmatch.regprog != NULL && vim_regexec(&regmatch, name, 0))

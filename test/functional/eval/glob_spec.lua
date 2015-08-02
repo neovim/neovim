@@ -14,8 +14,12 @@ end)
 describe('glob()', function()
   it("glob('.*') returns . and .. ", function()
     eq({'.', '..'}, eval("glob('.*', 0, 1)"))
+    -- Do it again to verify scandir_next_with_dots() internal state.
+    eq({'.', '..'}, eval("glob('.*', 0, 1)"))
   end)
   it("glob('*') returns an empty list ", function()
+    eq({}, eval("glob('*', 0, 1)"))
+    -- Do it again to verify scandir_next_with_dots() internal state.
     eq({}, eval("glob('*', 0, 1)"))
   end)
 end)
