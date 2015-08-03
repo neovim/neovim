@@ -68,8 +68,6 @@
 #include "nvim/os/shell.h"
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
-#include "nvim/api/private/defs.h"
-#include "nvim/api/private/helpers.h"
 
 /*
  * Struct to hold the sign properties.
@@ -2846,10 +2844,7 @@ void sub_set_replacement(SubReplacementString sub)
 {
   xfree(old_sub.sub);
   if (sub.additional_elements != old_sub.additional_elements) {
-    if (old_sub.additional_elements != NULL) {
-      api_free_array(*old_sub.additional_elements);
-      xfree(old_sub.additional_elements);
-    }
+    list_unref(old_sub.additional_elements);
   }
   old_sub = sub;
 }

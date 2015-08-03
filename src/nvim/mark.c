@@ -41,8 +41,6 @@
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
-#include "nvim/api/private/defs.h"
-#include "nvim/api/private/helpers.h"
 
 /*
  * This file contains routines to maintain and manipulate marks.
@@ -74,11 +72,8 @@ int setmark(int c)
 /// Free fmark_T item
 void free_fmark(fmark_T fm)
 {
-  if (fm.additional_data != NULL) {
-    api_free_dictionary(*fm.additional_data);
-    free(fm.additional_data);
-    fm.additional_data = NULL;
-  }
+  dict_unref(fm.additional_data);
+  fm.additional_data = NULL;
 }
 
 /// Free xfmark_T item

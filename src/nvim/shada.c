@@ -287,7 +287,7 @@ typedef struct {
       char name;
       pos_T mark;
       char *fname;
-      Dictionary *additional_data;
+      dict_T *additional_data;
     } filemark;
     struct search_pattern {
       bool magic;
@@ -299,14 +299,13 @@ typedef struct {
       bool is_substitute_pattern;
       bool highlighted;
       char *pat;
-      Dictionary *additional_data;
+      dict_T *additional_data;
     } search_pattern;
     struct history_item {
       uint8_t histtype;
       char *string;
       char sep;
-      bool canfree;
-      Array *additional_elements;
+      list_T *additional_elements;
     } history_item;
     struct reg {
       char name;
@@ -314,12 +313,12 @@ typedef struct {
       char **contents;
       size_t contents_size;
       size_t width;
-      Dictionary *additional_data;
+      dict_T *additional_data;
     } reg;
     struct global_var {
       char *name;
-      Object value;
-      Array *additional_elements;
+      typval_T value;
+      list_T *additional_elements;
     } global_var;
     struct {
       uint64_t type;
@@ -328,14 +327,14 @@ typedef struct {
     } unknown_item;
     struct sub_string {
       char *sub;
-      Array *additional_elements;
+      list_T *additional_elements;
     } sub_string;
     struct buffer_list {
       size_t size;
       struct buffer_list_buffer {
         pos_T pos;
         char *fname;
-        Dictionary *additional_data;
+        dict_T *additional_data;
       } *buffers;
     } buffer_list;
   } data;
@@ -899,7 +898,6 @@ static const void *shada_hist_iter(const void *const iter,
                         ? (char) hist_he.hisstr[STRLEN(hist_he.hisstr) + 1]
                         : 0),
           .additional_elements = hist_he.additional_elements,
-          .canfree = zero,
         }
       }
     };
@@ -1254,17 +1252,9 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
         break;
       }
       case kSDItemVariable: {
-        typval_T vartv;
-        Error err;
-        if (!object_to_vim(cur_entry.data.global_var.value, &vartv, &err)) {
-          if (err.set) {
-            emsg3(_(RERR "Error while reading ShaDa file: "
-                    "failed to read value for variable %s: %s"),
-                  cur_entry.data.global_var.name, err.msg);
-          }
-          break;
-        }
-        var_set_global(cur_entry.data.global_var.name, vartv);
+        var_set_global(cur_entry.data.global_var.name,
+                       cur_entry.data.global_var.value);
+        cur_entry.data.global_var.value.v_type = VAR_UNKNOWN;
         shada_free_shada_entry(&cur_entry);
         break;
       }
@@ -1367,6 +1357,9 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
                         cur_entry.data.buffer_list.buffers[i].pos, 0);
             buflist_setfpos(buf, curwin, buf->b_last_cursor.mark.lnum,
                             buf->b_last_cursor.mark.col, false);
+            buf->additional_data =
+                cur_entry.data.buffer_list.buffers[i].additional_data;
+            cur_entry.data.buffer_list.buffers[i].additional_data = NULL;
           }
         }
         shada_free_shada_entry(&cur_entry);
@@ -1567,13 +1560,42 @@ static char *shada_filename(const char *file)
 /// @param[in]  max_kbyte  Maximum size of an item in KiB. Zero means no 
 ///                        restrictions.
 static bool shada_pack_entry(msgpack_packer *const packer,
-                             const ShadaEntry entry,
+                             ShadaEntry entry,
                              const size_t max_kbyte)
   FUNC_ATTR_NONNULL_ALL
 {
   msgpack_sbuffer sbuf;
   msgpack_sbuffer_init(&sbuf);
   msgpack_packer *spacker = msgpack_packer_new(&sbuf, &msgpack_sbuffer_write);
+#define DUMP_ADDITIONAL_ELEMENTS(src) \
+  do { \
+    if ((src) != NULL) { \
+      for (listitem_T *li = (src)->lv_first; li != NULL; li = li->li_next) { \
+        if (vim_to_msgpack(spacker, &li->li_tv) == FAIL) { \
+          return false; \
+        } \
+      } \
+    } \
+  } while (0)
+#define DUMP_ADDITIONAL_DATA(src) \
+  do { \
+    dict_T *const d = (src); \
+    if (d != NULL) { \
+      size_t todo = d->dv_hashtab.ht_used; \
+      for (const hashitem_T *hi= d->dv_hashtab.ht_array; todo; hi++) { \
+        if (!HASHITEM_EMPTY(hi)) { \
+          todo--; \
+          dictitem_T *const di = HI2DI(hi); \
+          const size_t key_len = strlen((const char *) hi->hi_key); \
+          msgpack_pack_str(spacker, key_len); \
+          msgpack_pack_str_body(spacker, (const char *) hi->hi_key, key_len); \
+          if (vim_to_msgpack(spacker, &di->di_tv) == FAIL) { \
+            return false; \
+          } \
+        } \
+      } \
+    } \
+  } while (0)
   switch (entry.type) {
     case kSDItemMissing: {
       assert(false);
@@ -1591,10 +1613,10 @@ static bool shada_pack_entry(msgpack_packer *const packer,
     case kSDItemHistoryEntry: {
       const bool is_hist_search =
           entry.data.history_item.histtype == HIST_SEARCH;
-      const size_t arr_size = 2 + (size_t) is_hist_search + (
+      const size_t arr_size = 2 + (size_t) is_hist_search + (size_t) (
           entry.data.history_item.additional_elements == NULL
           ? 0
-          : entry.data.history_item.additional_elements->size);
+          : entry.data.history_item.additional_elements->lv_len);
       msgpack_pack_array(spacker, arr_size);
       msgpack_pack_uint8(spacker, entry.data.history_item.histtype);
       msgpack_rpc_from_string(cstr_as_string(entry.data.history_item.string),
@@ -1602,39 +1624,32 @@ static bool shada_pack_entry(msgpack_packer *const packer,
       if (is_hist_search) {
         msgpack_pack_uint8(spacker, (uint8_t) entry.data.history_item.sep);
       }
-      for (size_t i = 0; i < arr_size - 2 - (size_t) is_hist_search; i++) {
-        msgpack_rpc_from_object(
-            entry.data.history_item.additional_elements->items[i], spacker);
-      }
+      DUMP_ADDITIONAL_ELEMENTS(entry.data.history_item.additional_elements);
       break;
     }
     case kSDItemVariable: {
-      const size_t arr_size = 2 + (
+      const size_t arr_size = 2 + (size_t) (
           entry.data.global_var.additional_elements == NULL
           ? 0
-          : entry.data.global_var.additional_elements->size);
+          : entry.data.global_var.additional_elements->lv_len);
       msgpack_pack_array(spacker, arr_size);
       msgpack_rpc_from_string(cstr_as_string(entry.data.global_var.name),
                               spacker);
-      msgpack_rpc_from_object(entry.data.global_var.value, spacker);
-      for (size_t i = 0; i < arr_size - 2; i++) {
-        msgpack_rpc_from_object(
-            entry.data.global_var.additional_elements->items[i], spacker);
+      if (vim_to_msgpack(spacker, &entry.data.global_var.value) == FAIL) {
+        return false;
       }
+      DUMP_ADDITIONAL_ELEMENTS(entry.data.global_var.additional_elements);
       break;
     }
     case kSDItemSubString: {
-      const size_t arr_size = 1 + (
+      const size_t arr_size = 1 + (size_t) (
           entry.data.sub_string.additional_elements == NULL
           ? 0
-          : entry.data.sub_string.additional_elements->size);
+          : entry.data.sub_string.additional_elements->lv_len);
       msgpack_pack_array(spacker, arr_size);
       msgpack_rpc_from_string(cstr_as_string(entry.data.sub_string.sub),
                               spacker);
-      for (size_t i = 0; i < arr_size - 1; i++) {
-        msgpack_rpc_from_object(
-            entry.data.sub_string.additional_elements->items[i], spacker);
-      }
+      DUMP_ADDITIONAL_ELEMENTS(entry.data.sub_string.additional_elements);
       break;
     }
     case kSDItemSearchPattern: {
@@ -1652,9 +1667,10 @@ static bool shada_pack_entry(msgpack_packer *const packer,
           // offset defaults to zero:
           + (size_t) (entry.data.search_pattern.offset != 0)
           // finally, additional data:
-          + (size_t) (entry.data.search_pattern.additional_data
-                      ? entry.data.search_pattern.additional_data->size
-                      : 0)
+          + (size_t) (
+              entry.data.search_pattern.additional_data
+              ? entry.data.search_pattern.additional_data->dv_hashtab.ht_used
+              : 0)
       );
       msgpack_pack_map(spacker, map_size);
       PACK_STATIC_STR(SEARCH_KEY_PAT);
@@ -1679,16 +1695,7 @@ static bool shada_pack_entry(msgpack_packer *const packer,
         msgpack_pack_int64(spacker, entry.data.search_pattern.offset);
       }
 #undef PACK_BOOL
-      if (entry.data.search_pattern.additional_data != NULL) {
-        for (size_t i = 0; i < entry.data.search_pattern.additional_data->size;
-            i++) {
-          msgpack_rpc_from_string(
-              entry.data.search_pattern.additional_data->items[i].key, spacker);
-          msgpack_rpc_from_object(
-              entry.data.search_pattern.additional_data->items[i].value,
-              spacker);
-        }
-      }
+      DUMP_ADDITIONAL_DATA(entry.data.search_pattern.additional_data);
       break;
     }
     case kSDItemChange:
@@ -1706,9 +1713,10 @@ static bool shada_pack_entry(msgpack_packer *const packer,
                       && entry.type != kSDItemChange
                       && entry.data.filemark.name != '"')
           // Additional entries, if any:
-          + (size_t) (entry.data.filemark.additional_data == NULL
-                      ? 0
-                      : entry.data.filemark.additional_data->size)
+          + (size_t) (
+              entry.data.filemark.additional_data == NULL
+              ? 0
+              : entry.data.filemark.additional_data->dv_hashtab.ht_used)
       );
       msgpack_pack_map(spacker, map_size);
       PACK_STATIC_STR(KEY_FILE);
@@ -1727,15 +1735,7 @@ static bool shada_pack_entry(msgpack_packer *const packer,
         PACK_STATIC_STR(KEY_NAME_CHAR);
         msgpack_pack_uint8(spacker, (uint8_t) entry.data.filemark.name);
       }
-      if (entry.data.filemark.additional_data != NULL) {
-        for (size_t i = 0; i < entry.data.filemark.additional_data->size;
-            i++) {
-          msgpack_rpc_from_string(
-              entry.data.filemark.additional_data->items[i].key, spacker);
-          msgpack_rpc_from_object(
-              entry.data.filemark.additional_data->items[i].value, spacker);
-        }
-      }
+      DUMP_ADDITIONAL_DATA(entry.data.filemark.additional_data);
       break;
     }
     case kSDItemRegister: {
@@ -1748,7 +1748,7 @@ static bool shada_pack_entry(msgpack_packer *const packer,
           // Additional entries, if any:
           + (size_t) (entry.data.reg.additional_data == NULL
                       ? 0
-                      : entry.data.reg.additional_data->size)
+                      : entry.data.reg.additional_data->dv_hashtab.ht_used)
       );
       msgpack_pack_map(spacker, map_size);
       PACK_STATIC_STR(REG_KEY_CONTENTS);
@@ -1767,15 +1767,7 @@ static bool shada_pack_entry(msgpack_packer *const packer,
         PACK_STATIC_STR(REG_KEY_WIDTH);
         msgpack_pack_uint64(spacker, (uint64_t) entry.data.reg.width);
       }
-      if (entry.data.reg.additional_data != NULL) {
-        for (size_t i = 0; i < entry.data.reg.additional_data->size;
-            i++) {
-          msgpack_rpc_from_string(entry.data.reg.additional_data->items[i].key,
-                                  spacker);
-          msgpack_rpc_from_object(
-              entry.data.reg.additional_data->items[i].value, spacker);
-        }
-      }
+      DUMP_ADDITIONAL_DATA(entry.data.reg.additional_data);
       break;
     }
     case kSDItemBufferList: {
@@ -1791,7 +1783,8 @@ static bool shada_pack_entry(msgpack_packer *const packer,
             + (size_t) (
                 entry.data.buffer_list.buffers[i].additional_data == NULL
                 ? 0
-                : entry.data.buffer_list.buffers[i].additional_data->size)
+                : (entry.data.buffer_list.buffers[i].additional_data
+                   ->dv_hashtab.ht_used))
         );
         msgpack_pack_map(spacker, map_size);
         PACK_STATIC_STR(KEY_FILE);
@@ -1807,18 +1800,7 @@ static bool shada_pack_entry(msgpack_packer *const packer,
           msgpack_pack_uint64(
               spacker, (uint64_t) entry.data.buffer_list.buffers[i].pos.col);
         }
-        if (entry.data.buffer_list.buffers[i].additional_data != NULL) {
-          for (size_t j = 0;
-               j < entry.data.buffer_list.buffers[i].additional_data->size;
-               j++) {
-            msgpack_rpc_from_string(
-              entry.data.buffer_list.buffers[i].additional_data->items[j].key,
-              spacker);
-            msgpack_rpc_from_object(
-              entry.data.buffer_list.buffers[i].additional_data->items[j].value,
-              spacker);
-          }
-        }
+        DUMP_ADDITIONAL_DATA(entry.data.buffer_list.buffers[i].additional_data);
       }
       break;
     }
@@ -1917,7 +1899,11 @@ static bool shada_pack_encoded_entry(msgpack_packer *const packer,
     }
     case kSDItemVariable: {
       if (sd_conv->vc_type != CONV_NONE) {
-        convert_object(sd_conv, &entry.data.data.global_var.value);
+        typval_T tgttv;
+        var_item_copy(sd_conv, &entry.data.data.global_var.value, &tgttv,
+                      true, 0);
+        clear_tv(&entry.data.data.global_var.value);
+        entry.data.data.global_var.value = tgttv;
       }
       ret = shada_pack_entry(packer, entry.data, max_kbyte);
       break;
@@ -2135,9 +2121,11 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
       if (var_iter == NULL && vartv.v_type == VAR_UNKNOWN) {
         break;
       }
-      Object obj = vim_to_object(&vartv);
+      typval_T tgttv;
       if (sd_writer->sd_conv.vc_type != CONV_NONE) {
-        convert_object(&sd_writer->sd_conv, &obj);
+        var_item_copy(&sd_writer->sd_conv, &vartv, &tgttv, true, 0);
+      } else {
+        copy_tv(&vartv, &tgttv);
       }
       if (!shada_pack_entry(packer, (ShadaEntry) {
         .type = kSDItemVariable,
@@ -2145,18 +2133,18 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
         .data = {
           .global_var = {
             .name = (char *) name,
-            .value = obj,
+            .value = tgttv,
             .additional_elements = NULL,
           }
         }
       }, max_kbyte)) {
-        api_free_object(obj);
         clear_tv(&vartv);
+        clear_tv(&tgttv);
         ret = kSDWriteFailed;
         goto shada_write_exit;
       }
-      api_free_object(obj);
       clear_tv(&vartv);
+      clear_tv(&tgttv);
       int kh_ret;
       (void) kh_put(strset, &wms->dumped_variables, name, &kh_ret);
     } while (var_iter != NULL);
@@ -2970,26 +2958,17 @@ static void shada_free_shada_entry(ShadaEntry *const entry)
     case kSDItemJump:
     case kSDItemGlobalMark:
     case kSDItemLocalMark: {
-      if (entry->data.filemark.additional_data != NULL) {
-        api_free_dictionary(*entry->data.filemark.additional_data);
-        xfree(entry->data.filemark.additional_data);
-      }
+      dict_unref(entry->data.filemark.additional_data);
       xfree(entry->data.filemark.fname);
       break;
     }
     case kSDItemSearchPattern: {
-      if (entry->data.search_pattern.additional_data != NULL) {
-        api_free_dictionary(*entry->data.search_pattern.additional_data);
-        xfree(entry->data.search_pattern.additional_data);
-      }
+      dict_unref(entry->data.search_pattern.additional_data);
       xfree(entry->data.search_pattern.pat);
       break;
     }
     case kSDItemRegister: {
-      if (entry->data.reg.additional_data != NULL) {
-        api_free_dictionary(*entry->data.reg.additional_data);
-        xfree(entry->data.reg.additional_data);
-      }
+      dict_unref(entry->data.reg.additional_data);
       for (size_t i = 0; i < entry->data.reg.contents_size; i++) {
         xfree(entry->data.reg.contents[i]);
       }
@@ -2997,40 +2976,25 @@ static void shada_free_shada_entry(ShadaEntry *const entry)
       break;
     }
     case kSDItemHistoryEntry: {
-      if (entry->data.history_item.canfree) {
-        if (entry->data.history_item.additional_elements != NULL) {
-          api_free_array(*entry->data.history_item.additional_elements);
-          xfree(entry->data.history_item.additional_elements);
-        }
-        xfree(entry->data.history_item.string);
-      }
+      list_unref(entry->data.history_item.additional_elements);
+      xfree(entry->data.history_item.string);
       break;
     }
     case kSDItemVariable: {
-      if (entry->data.global_var.additional_elements != NULL) {
-        api_free_array(*entry->data.global_var.additional_elements);
-        xfree(entry->data.global_var.additional_elements);
-      }
+      list_unref(entry->data.global_var.additional_elements);
       xfree(entry->data.global_var.name);
-      api_free_object(entry->data.global_var.value);
+      clear_tv(&entry->data.global_var.value);
       break;
     }
     case kSDItemSubString: {
-      if (entry->data.sub_string.additional_elements != NULL) {
-        api_free_array(*entry->data.sub_string.additional_elements);
-        xfree(entry->data.sub_string.additional_elements);
-      }
+      list_unref(entry->data.sub_string.additional_elements);
       xfree(entry->data.sub_string.sub);
       break;
     }
     case kSDItemBufferList: {
       for (size_t i = 0; i < entry->data.buffer_list.size; i++) {
         xfree(entry->data.buffer_list.buffers[i].fname);
-        if (entry->data.buffer_list.buffers[i].additional_data != NULL) {
-          api_free_dictionary(
-              *entry->data.buffer_list.buffers[i].additional_data);
-          xfree(entry->data.buffer_list.buffers[i].additional_data);
-        }
+        dict_unref(entry->data.buffer_list.buffers[i].additional_data);
       }
       xfree(entry->data.buffer_list.buffers);
       break;
@@ -3175,77 +3139,6 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader,
     *result = be64toh(*((uint64_t *) &(buf[0])));
   }
   return kSDReadStatusSuccess;
-}
-
-/// Convert all strings in one Object instance
-///
-/// @param[in]      sd_conv  Conversion definition.
-/// @param[in,out]  obj      Object to convert.
-static void convert_object(const vimconv_T *const sd_conv, Object *const obj)
-  FUNC_ATTR_NONNULL_ALL
-{
-  kvec_t(Object *) toconv;
-  kv_init(toconv);
-  kv_push(Object *, toconv, obj);
-  while (kv_size(toconv)) {
-    Object *cur_obj = kv_pop(toconv);
-#define CONVERT_STRING(str) \
-    do { \
-      if (!has_non_ascii((str).data)) { \
-        break; \
-      } \
-      size_t len = (str).size; \
-      char *const converted_string = string_convert(sd_conv, (str).data, \
-                                                    &len); \
-      if (converted_string != NULL) { \
-        xfree((str).data); \
-        (str).data = converted_string; \
-        (str).size = len; \
-      } \
-    } while (0)
-    switch (cur_obj->type) {
-      case kObjectTypeNil:
-      case kObjectTypeInteger:
-      case kObjectTypeBoolean:
-      case kObjectTypeFloat: {
-        break;
-      }
-      case kObjectTypeString: {
-        CONVERT_STRING(cur_obj->data.string);
-        break;
-      }
-      case kObjectTypeArray: {
-        for (size_t i = 0; i < cur_obj->data.array.size; i++) {
-          Object *element = &cur_obj->data.array.items[i];
-          if (element->type == kObjectTypeDictionary
-              || element->type == kObjectTypeArray) {
-            kv_push(Object *, toconv, element);
-          } else if (element->type == kObjectTypeString) {
-            CONVERT_STRING(element->data.string);
-          }
-        }
-        break;
-      }
-      case kObjectTypeDictionary: {
-        for (size_t i = 0; i < cur_obj->data.dictionary.size; i++) {
-          CONVERT_STRING(cur_obj->data.dictionary.items[i].key);
-          Object *value = &cur_obj->data.dictionary.items[i].value;
-          if (value->type == kObjectTypeDictionary
-              || value->type == kObjectTypeArray) {
-            kv_push(Object *, toconv, value);
-          } else if (value->type == kObjectTypeString) {
-            CONVERT_STRING(value->data.string);
-          }
-        }
-        break;
-      }
-      default: {
-        assert(false);
-      }
-    }
-#undef CONVERT_STRING
-  }
-  kv_destroy(toconv);
 }
 
 /// Convert or copy and return a string
@@ -3490,6 +3383,58 @@ shada_read_next_item_extra_bytes:
    ? get_converted_string(&sd_reader->sd_conv, (str), (len)) \
    : xmemdupz((str), (len)))
 #define BIN_CONVERTED(b) CONVERTED(b.ptr, b.size)
+#define SET_ADDITIONAL_DATA(tgt, name) \
+      do { \
+        if (ad_ga.ga_len) { \
+          msgpack_object obj = { \
+            .type = MSGPACK_OBJECT_MAP, \
+            .via = { \
+              .map = { \
+                .size = (uint32_t) ad_ga.ga_len, \
+                .ptr = ad_ga.ga_data, \
+              } \
+            } \
+          }; \
+          typval_T adtv; \
+          if (msgpack_to_vim(obj, &adtv) == FAIL \
+              || adtv.v_type != VAR_DICT) { \
+            emsgu(_(RERR "Error while reading ShaDa file: " \
+                    name " entry at position %" PRIu64 " " \
+                    "cannot be converted to a VimL dictionary"), \
+                  (uint64_t) initial_fpos); \
+            ga_clear(&ad_ga); \
+            clear_tv(&adtv); \
+            goto shada_read_next_item_error; \
+          } \
+          tgt = adtv.vval.v_dict; \
+        } \
+        ga_clear(&ad_ga); \
+      } while (0)
+#define SET_ADDITIONAL_ELEMENTS(src, src_maxsize, tgt, name) \
+      do { \
+        if ((src).size > (size_t) (src_maxsize)) { \
+          msgpack_object obj = { \
+            .type = MSGPACK_OBJECT_ARRAY, \
+            .via = { \
+              .array = { \
+                .size = ((src).size - (uint32_t) (src_maxsize)), \
+                .ptr = (src).ptr + (src_maxsize), \
+              } \
+            } \
+          }; \
+          typval_T aetv; \
+          if (msgpack_to_vim(obj, &aetv) == FAIL) { \
+            emsgu(_(RERR "Error while reading ShaDa file: " \
+                    name " entry at position %" PRIu64 " " \
+                    "cannot be converted to a VimL list"), \
+                  (uint64_t) initial_fpos); \
+            clear_tv(&aetv); \
+            goto shada_read_next_item_error; \
+          } \
+          assert(aetv.v_type == VAR_LIST); \
+          (tgt) = aetv.vval.v_list; \
+        } \
+      } while (0)
   switch ((ShadaEntryType) type_u64) {
     case kSDItemHeader: {
       if (!msgpack_rpc_to_dictionary(&(unpacked.data), &(entry->data.header))) {
@@ -3552,29 +3497,8 @@ shada_read_next_item_extra_bytes:
         ga_clear(&ad_ga);
         goto shada_read_next_item_error;
       }
-      if (ad_ga.ga_len) {
-        msgpack_object obj = {
-          .type = MSGPACK_OBJECT_MAP,
-          .via = {
-            .map = {
-              .size = (uint32_t) ad_ga.ga_len,
-              .ptr = ad_ga.ga_data,
-            }
-          }
-        };
-        entry->data.search_pattern.additional_data =
-            xmalloc(sizeof(Dictionary));
-        if (!msgpack_rpc_to_dictionary(
-                &obj, entry->data.search_pattern.additional_data)) {
-          emsgu(_(RERR "Error while reading ShaDa file: "
-                  "search pattern entry at position %" PRIu64 " "
-                  "cannot be converted to a Dictionary"),
-                (uint64_t) initial_fpos);
-          ga_clear(&ad_ga);
-          goto shada_read_next_item_error;
-        }
-      }
-      ga_clear(&ad_ga);
+      SET_ADDITIONAL_DATA(entry->data.search_pattern.additional_data,
+                          "search pattern");
       break;
     }
     case kSDItemChange:
@@ -3643,28 +3567,7 @@ shada_read_next_item_extra_bytes:
         ga_clear(&ad_ga);
         goto shada_read_next_item_error;
       }
-      if (ad_ga.ga_len) {
-        msgpack_object obj = {
-          .type = MSGPACK_OBJECT_MAP,
-          .via = {
-            .map = {
-              .size = (uint32_t) ad_ga.ga_len,
-              .ptr = ad_ga.ga_data,
-            }
-          }
-        };
-        entry->data.filemark.additional_data = xmalloc(sizeof(Dictionary));
-        if (!msgpack_rpc_to_dictionary(
-                &obj, entry->data.filemark.additional_data)) {
-          emsgu(_(RERR "Error while reading ShaDa file: "
-                  "mark entry at position %" PRIu64 " "
-                  "cannot be converted to a Dictionary"),
-                (uint64_t) initial_fpos);
-          ga_clear(&ad_ga);
-          goto shada_read_next_item_error;
-        }
-      }
-      ga_clear(&ad_ga);
+      SET_ADDITIONAL_DATA(entry->data.filemark.additional_data, "mark");
       break;
     }
     case kSDItemRegister: {
@@ -3738,28 +3641,7 @@ shada_read_next_item_extra_bytes:
         ga_clear(&ad_ga);
         goto shada_read_next_item_error;
       }
-      if (ad_ga.ga_len) {
-        msgpack_object obj = {
-          .type = MSGPACK_OBJECT_MAP,
-          .via = {
-            .map = {
-              .size = (uint32_t) ad_ga.ga_len,
-              .ptr = ad_ga.ga_data,
-            }
-          }
-        };
-        entry->data.reg.additional_data = xmalloc(sizeof(Dictionary));
-        if (!msgpack_rpc_to_dictionary(
-                &obj, entry->data.reg.additional_data)) {
-          emsgu(_(RERR "Error while reading ShaDa file: "
-                  "register entry at position %" PRIu64 " "
-                  "cannot be converted to a Dictionary"),
-                (uint64_t) initial_fpos);
-          ga_clear(&ad_ga);
-          goto shada_read_next_item_error;
-        }
-      }
-      ga_clear(&ad_ga);
+      SET_ADDITIONAL_DATA(entry->data.reg.additional_data, "register");
       break;
     }
     case kSDItemHistoryEntry: {
@@ -3859,27 +3741,9 @@ shada_read_next_item_hist_no_conv:
       entry->data.history_item.string[strsize - 2] = 0;
       entry->data.history_item.string[strsize - 1] =
           entry->data.history_item.sep;
-      if (unpacked.data.via.array.size > (size_t) (2 + is_hist_search)) {
-        msgpack_object obj = {
-          .type = MSGPACK_OBJECT_ARRAY,
-          .via = {
-            .array = {
-              .size = (unpacked.data.via.array.size
-                       - (uint32_t) (2 + is_hist_search)),
-              .ptr = unpacked.data.via.array.ptr + (2 + is_hist_search),
-            }
-          }
-        };
-        entry->data.history_item.additional_elements = xmalloc(sizeof(Array));
-        if (!msgpack_rpc_to_array(
-                &obj, entry->data.history_item.additional_elements)) {
-          emsgu(_(RERR "Error while reading ShaDa file: "
-                  "history entry at position %" PRIu64 " "
-                  "cannot be converted to an Array"),
-                (uint64_t) initial_fpos);
-          goto shada_read_next_item_error;
-        }
-      }
+      SET_ADDITIONAL_ELEMENTS(unpacked.data.via.array, (2 + is_hist_search),
+                              entry->data.history_item.additional_elements,
+                              "history");
       break;
     }
     case kSDItemVariable: {
@@ -3893,7 +3757,7 @@ shada_read_next_item_hist_no_conv:
       entry->data.global_var = (struct global_var) {
         .name = NULL,
         .value = {
-          .type = kObjectTypeNil,
+          .v_type = VAR_UNKNOWN,
         },
         .additional_elements = NULL
       };
@@ -3922,37 +3786,27 @@ shada_read_next_item_hist_no_conv:
       entry->data.global_var.name =
           xmemdupz(unpacked.data.via.array.ptr[0].via.bin.ptr,
                    unpacked.data.via.array.ptr[0].via.bin.size);
-      if (!msgpack_rpc_to_object(&(unpacked.data.via.array.ptr[1]),
-                                 &(entry->data.global_var.value))) {
+      if (msgpack_to_vim(unpacked.data.via.array.ptr[1],
+                         &(entry->data.global_var.value)) == FAIL) {
         emsgu(_(RERR "Error while reading ShaDa file: "
                 "variable entry at position %" PRIu64 " "
-                "has value that cannot be converted to the object"),
+                "has value that cannot be converted to the VimL value"),
               (uint64_t) initial_fpos);
         goto shada_read_next_item_error;
       }
       if (sd_reader->sd_conv.vc_type != CONV_NONE) {
-        convert_object(&sd_reader->sd_conv, &entry->data.global_var.value);
+        typval_T tgttv;
+        var_item_copy(&sd_reader->sd_conv,
+                      &entry->data.global_var.value,
+                      &tgttv,
+                      true,
+                      0);
+        clear_tv(&entry->data.global_var.value);
+        entry->data.global_var.value = tgttv;
       }
-      if (unpacked.data.via.array.size > 2) {
-        msgpack_object obj = {
-          .type = MSGPACK_OBJECT_ARRAY,
-          .via = {
-            .array = {
-              .size = unpacked.data.via.array.size - 2,
-              .ptr = unpacked.data.via.array.ptr + 2,
-            }
-          }
-        };
-        entry->data.global_var.additional_elements = xmalloc(sizeof(Array));
-        if (!msgpack_rpc_to_array(
-                &obj, entry->data.global_var.additional_elements)) {
-          emsgu(_(RERR "Error while reading ShaDa file: "
-                  "variable entry at position %" PRIu64 " "
-                  "cannot be converted to an Array"),
-                (uint64_t) initial_fpos);
-          goto shada_read_next_item_error;
-        }
-      }
+      SET_ADDITIONAL_ELEMENTS(unpacked.data.via.array, 2,
+                              entry->data.global_var.additional_elements,
+                              "variable");
       break;
     }
     case kSDItemSubString: {
@@ -3983,26 +3837,9 @@ shada_read_next_item_hist_no_conv:
       }
       entry->data.sub_string.sub =
           BIN_CONVERTED(unpacked.data.via.array.ptr[0].via.bin);
-      if (unpacked.data.via.array.size > 1) {
-        msgpack_object obj = {
-          .type = MSGPACK_OBJECT_ARRAY,
-          .via = {
-            .array = {
-              .size = unpacked.data.via.array.size - 1,
-              .ptr = unpacked.data.via.array.ptr + 1,
-            }
-          }
-        };
-        entry->data.sub_string.additional_elements = xmalloc(sizeof(Array));
-        if (!msgpack_rpc_to_array(
-                &obj, entry->data.sub_string.additional_elements)) {
-          emsgu(_(RERR "Error while reading ShaDa file: "
-                  "sub string entry at position %" PRIu64 " "
-                  "cannot be converted to an Array"),
-                (uint64_t) initial_fpos);
-          goto shada_read_next_item_error;
-        }
-      }
+      SET_ADDITIONAL_ELEMENTS(unpacked.data.via.array, 1,
+                              entry->data.sub_string.additional_elements,
+                              "sub string");
       break;
     }
     case kSDItemBufferList: {
@@ -4079,30 +3916,9 @@ shada_read_next_item_hist_no_conv:
             ga_clear(&ad_ga);
             goto shada_read_next_item_error;
           }
-          if (ad_ga.ga_len) {
-            msgpack_object obj = {
-              .type = MSGPACK_OBJECT_MAP,
-              .via = {
-                .map = {
-                  .size = (uint32_t) ad_ga.ga_len,
-                  .ptr = ad_ga.ga_data,
-                }
-              }
-            };
-            entry->data.buffer_list.buffers[i].additional_data =
-                xmalloc(sizeof(Dictionary));
-            if (!msgpack_rpc_to_dictionary(
-                    &obj, entry->data.buffer_list.buffers[i].additional_data)) {
-              emsgu(_(RERR "Error while reading ShaDa file: "
-                      "buffer list at position %" PRIu64 " "
-                      "contains entry that cannot be converted "
-                      "to a Dictionary"),
-                    (uint64_t) initial_fpos);
-              ga_clear(&ad_ga);
-              goto shada_read_next_item_error;
-            }
-          }
-          ga_clear(&ad_ga);
+          SET_ADDITIONAL_DATA(
+              entry->data.buffer_list.buffers[i].additional_data,
+              "buffer list entry");
         }
       }
       break;
@@ -4132,6 +3948,8 @@ shada_read_next_item_hist_no_conv:
 #undef LONG_KEY
 #undef TOU8
 #undef TOSIZE
+#undef SET_ADDITIONAL_DATA
+#undef SET_ADDITIONAL_ELEMENTS
 shada_read_next_item_error:
   msgpack_unpacked_destroy(&unpacked);
   xfree(buf);

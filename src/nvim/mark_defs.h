@@ -3,7 +3,7 @@
 
 #include "nvim/pos.h"
 #include "nvim/os/time.h"
-#include "nvim/api/private/defs.h"
+#include "nvim/eval_defs.h"
 
 /*
  * marks: positions in a file
@@ -36,7 +36,7 @@ typedef struct filemark {
   pos_T mark;           ///< Cursor position.
   int fnum;             ///< File number.
   Timestamp timestamp;  ///< Time when this mark was last set.
-  Dictionary *additional_data;  ///< Additional data from ShaDa file.
+  dict_T *additional_data;  ///< Additional data from ShaDa file.
 } fmark_T;
 
 /// Structure defining extended mark (mark with file name attached)

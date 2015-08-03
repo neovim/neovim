@@ -60,7 +60,7 @@ typedef struct spat {
   bool no_scs;          ///< No smartcase for this pattern.
   Timestamp timestamp;  ///< Time of the last change.
   SearchOffset off;     ///< Pattern offset.
-  Dictionary *additional_data;  ///< Additional data from ShaDa file.
+  dict_T *additional_data;  ///< Additional data from ShaDa file.
 } SearchPattern;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

@@ -51,8 +51,6 @@
 #include "nvim/window.h"
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
-#include "nvim/api/private/defs.h"
-#include "nvim/api/private/helpers.h"
 
 static yankreg_T y_regs[NUM_REGISTERS];
 
@@ -869,17 +867,13 @@ int do_record(int c)
   return retval;
 }
 
-static void set_yreg_additional_data(yankreg_T *reg,
-                                     Dictionary *additional_data)
+static void set_yreg_additional_data(yankreg_T *reg, dict_T *additional_data)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   if (reg->additional_data == additional_data) {
     return;
   }
-  if (reg->additional_data != NULL) {
-    api_free_dictionary(*reg->additional_data);
-    free(reg->additional_data);
-  }
+  dict_unref(reg->additional_data);
   reg->additional_data = additional_data;
 }
 

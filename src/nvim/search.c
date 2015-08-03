@@ -51,7 +51,6 @@
 #include "nvim/ui.h"
 #include "nvim/window.h"
 #include "nvim/os/time.h"
-#include "nvim/api/private/helpers.h"
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -292,10 +291,7 @@ void restore_search_patterns(void)
 static inline void free_spat(struct spat *const spat)
 {
   xfree(spat->pat);
-  if (spat->additional_data != NULL) {
-    api_free_dictionary(*spat->additional_data);
-    xfree(spat->additional_data);
-  }
+  dict_unref(spat->additional_data);
 }
 
 #if defined(EXITFREE)

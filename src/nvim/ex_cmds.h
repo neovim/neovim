@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #include "nvim/os/time.h"
-#include "nvim/api/private/defs.h"
+#include "nvim/eval_defs.h"
 
 /* flags for do_ecmd() */
 #define ECMD_HIDE       0x01    /* don't free the current buffer */
@@ -23,7 +23,7 @@
 typedef struct {
   char *sub;            ///< Previous replacement string.
   Timestamp timestamp;  ///< Time when it was last set.
-  Array *additional_elements;  ///< Additional data left from ShaDa file.
+  list_T *additional_elements;  ///< Additional data left from ShaDa file.
 } SubReplacementString;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

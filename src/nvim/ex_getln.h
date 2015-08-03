@@ -1,6 +1,7 @@
 #ifndef NVIM_EX_GETLN_H
 #define NVIM_EX_GETLN_H
 
+#include "nvim/eval_defs.h"
 #include "nvim/ex_cmds.h"
 
 /* Values for nextwild() and ExpandOne().  See ExpandOne() for meaning. */
@@ -40,7 +41,7 @@ typedef struct hist_entry {
   int hisnum;           ///< Entry identifier number.
   char_u *hisstr;       ///< Actual entry, separator char after the NUL.
   Timestamp timestamp;  ///< Time when entry was added.
-  Array *additional_elements;  ///< Additional entries from ShaDa file.
+  list_T *additional_elements;  ///< Additional entries from ShaDa file.
 } histentry_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

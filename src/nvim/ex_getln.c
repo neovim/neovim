@@ -66,8 +66,6 @@
 #include "nvim/os/os.h"
 #include "nvim/event/loop.h"
 #include "nvim/os/time.h"
-#include "nvim/api/private/defs.h"
-#include "nvim/api/private/helpers.h"
 
 /*
  * Variables shared between getcmdline(), redrawcmdline() and others.
@@ -4252,10 +4250,7 @@ static inline void hist_free_entry(histentry_T *hisptr)
   FUNC_ATTR_NONNULL_ALL
 {
   xfree(hisptr->hisstr);
-  if (hisptr->additional_elements != NULL) {
-    api_free_array(*hisptr->additional_elements);
-    xfree(hisptr->additional_elements);
-  }
+  list_unref(hisptr->additional_elements);
   clear_hist_entry(hisptr);
 }
 

@@ -108,18 +108,6 @@
                                    function/variable names. */
 
 /*
- * In a hashtab item "hi_key" points to "di_key" in a dictitem.
- * This avoids adding a pointer to the hashtab item.
- * DI2HIKEY() converts a dictitem pointer to a hashitem key pointer.
- * HIKEY2DI() converts a hashitem key pointer to a dictitem pointer.
- * HI2DI() converts a hashitem pointer to a dictitem pointer.
- */
-static dictitem_T dumdi;
-#define DI2HIKEY(di) ((di)->di_key)
-#define HIKEY2DI(p)  ((dictitem_T *)(p - (dumdi.di_key - (char_u *)&dumdi)))
-#define HI2DI(hi)     HIKEY2DI((hi)->hi_key)
-
-/*
  * Structure returned by get_lval() and used by set_var_lval().
  * For a plain name:
  *	"name"	    points to the variable name.
@@ -5352,7 +5340,7 @@ static int list_concat(list_T *l1, list_T *l2, typval_T *tv)
     return FAIL;
 
   /* make a copy of the first list. */
-  l = list_copy(l1, FALSE, 0);
+  l = list_copy(NULL, l1, FALSE, 0);
   if (l == NULL)
     return FAIL;
   tv->v_type = VAR_LIST;
@@ -5363,13 +5351,20 @@ static int list_concat(list_T *l1, list_T *l2, typval_T *tv)
   return OK;
 }
 
-/*
- * Make a copy of list "orig".  Shallow if "deep" is FALSE.
- * The refcount of the new list is set to 1.
- * See item_copy() for "copyID".
- * Returns NULL if orig is NULL or some failure happens.
- */
-static list_T *list_copy(list_T *orig, int deep, int copyID)
+/// Make a copy of list
+///
+/// @param[in]  conv  If non-NULL, then all internal strings will be converted.
+/// @param[in]  orig  Original list to copy.
+/// @param[in]  deep  If false, then shallow copy will be done.
+/// @param[in]  copyID  See var_item_copy().
+///
+/// @return Copied list. May be NULL in case original list is NULL or some 
+///         failure happens. The refcount of the new list is set to 1.
+static list_T *list_copy(const vimconv_T *const conv,
+                         list_T *const orig,
+                         const bool deep,
+                         const int copyID)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   listitem_T  *item;
   listitem_T  *ni;
@@ -5388,7 +5383,7 @@ static list_T *list_copy(list_T *orig, int deep, int copyID)
        item = item->li_next) {
     ni = listitem_alloc();
     if (deep) {
-      if (item_copy(&item->li_tv, &ni->li_tv, deep, copyID) == FAIL) {
+      if (var_item_copy(conv, &item->li_tv, &ni->li_tv, deep, copyID) == FAIL) {
         xfree(ni);
         break;
       }
@@ -5964,13 +5959,20 @@ void dictitem_free(dictitem_T *item)
   xfree(item);
 }
 
-/*
- * Make a copy of dict "d".  Shallow if "deep" is FALSE.
- * The refcount of the new dict is set to 1.
- * See item_copy() for "copyID".
- * Returns NULL if orig is NULL or some other failure.
- */
-static dict_T *dict_copy(dict_T *orig, int deep, int copyID)
+/// Make a copy of dictionary
+///
+/// @param[in]  conv  If non-NULL, then all internal strings will be converted.
+/// @param[in]  orig  Original dictionary to copy.
+/// @param[in]  deep  If false, then shallow copy will be done.
+/// @param[in]  copyID  See var_item_copy().
+///
+/// @return Copied dictionary. May be NULL in case original dictionary is NULL 
+///         or some failure happens. The refcount of the new dictionary is set 
+///         to 1.
+static dict_T *dict_copy(const vimconv_T *const conv,
+                         dict_T *const orig,
+                         const bool deep,
+                         const int copyID)
 {
   dictitem_T  *di;
   int todo;
@@ -5990,10 +5992,21 @@ static dict_T *dict_copy(dict_T *orig, int deep, int copyID)
       if (!HASHITEM_EMPTY(hi)) {
         --todo;
 
-        di = dictitem_alloc(hi->hi_key);
+        if (conv == NULL || conv->vc_type == CONV_NONE) {
+          di = dictitem_alloc(hi->hi_key);
+        } else {
+          char *const key = (char *) string_convert((vimconv_T *) conv,
+                                                    hi->hi_key, NULL);
+          if (key == NULL) {
+            di = dictitem_alloc(hi->hi_key);
+          } else {
+            di = dictitem_alloc((char_u *) key);
+            xfree(key);
+          }
+        }
         if (deep) {
-          if (item_copy(&HI2DI(hi)->di_tv, &di->di_tv, deep,
-                  copyID) == FAIL) {
+          if (var_item_copy(conv, &HI2DI(hi)->di_tv, &di->di_tv, deep,
+                            copyID) == FAIL) {
             xfree(di);
             break;
           }
@@ -6305,7 +6318,7 @@ failret:
 ///                       the results.
 /// @param  firstargname  Name of the first argument.
 /// @param  name  Name of the target converter.
-#define DEFINE_VIML_CONV_FUNCTIONS(name, firstargtype, firstargname) \
+#define DEFINE_VIML_CONV_FUNCTIONS(scope, name, firstargtype, firstargname) \
 static int name##_convert_one_value(firstargtype firstargname, \
                                     MPConvStack *const mpstack, \
                                     typval_T *const tv, \
@@ -6543,7 +6556,7 @@ name##_convert_one_value_regular_dict: \
   return OK; \
 } \
 \
-static int vim_to_##name(firstargtype firstargname, typval_T *const tv) \
+scope int vim_to_##name(firstargtype firstargname, typval_T *const tv) \
   FUNC_ATTR_WARN_UNUSED_RESULT \
 { \
   current_copyID += COPYID_INC; \
@@ -6739,7 +6752,7 @@ vim_to_msgpack_error_ret: \
 
 #define CONV_ALLOW_SPECIAL false
 
-DEFINE_VIML_CONV_FUNCTIONS(string, garray_T *const, gap)
+DEFINE_VIML_CONV_FUNCTIONS(static, string, garray_T *const, gap)
 
 #undef CONV_RECURSE
 #define CONV_RECURSE(val, conv_type) \
@@ -6769,7 +6782,7 @@ DEFINE_VIML_CONV_FUNCTIONS(string, garray_T *const, gap)
       return OK; \
     } while (0)
 
-DEFINE_VIML_CONV_FUNCTIONS(echo, garray_T *const, gap)
+DEFINE_VIML_CONV_FUNCTIONS(static, echo, garray_T *const, gap)
 
 #undef CONV_STRING
 #undef CONV_STR_STRING
@@ -8344,7 +8357,7 @@ static void f_confirm(typval_T *argvars, typval_T *rettv)
  */
 static void f_copy(typval_T *argvars, typval_T *rettv)
 {
-  item_copy(&argvars[0], rettv, FALSE, 0);
+  var_item_copy(NULL, &argvars[0], rettv, false, 0);
 }
 
 /*
@@ -8513,7 +8526,9 @@ static void f_deepcopy(typval_T *argvars, typval_T *rettv)
     EMSG(_(e_invarg));
   else {
     current_copyID += COPYID_INC;
-    item_copy(&argvars[0], rettv, TRUE, noref == 0 ? current_copyID : 0);
+    var_item_copy(NULL, &argvars[0], rettv, true, (noref == 0
+                                                   ? current_copyID
+                                                   : 0));
   }
 }
 
@@ -12486,7 +12501,7 @@ static inline bool vim_list_to_buf(const list_T *const list,
 
 #define CONV_ALLOW_SPECIAL true
 
-DEFINE_VIML_CONV_FUNCTIONS(msgpack, msgpack_packer *const, packer)
+DEFINE_VIML_CONV_FUNCTIONS(, msgpack, msgpack_packer *const, packer)
 
 #undef CONV_STRING
 #undef CONV_STR_STRING
@@ -12592,7 +12607,7 @@ static inline ListReaderState init_lrstate(const list_T *const list)
 }
 
 /// Convert msgpack object to a VimL one
-static int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
+int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
 #define INIT_SPECIAL_DICT(tv, type, val) \
@@ -18446,14 +18461,28 @@ void copy_tv(typval_T *from, typval_T *to)
   }
 }
 
-/*
- * Make a copy of an item.
- * Lists and Dictionaries are also copied.  A deep copy if "deep" is set.
- * For deepcopy() "copyID" is zero for a full copy or the ID for when a
- * reference to an already copied list/dict can be used.
- * Returns FAIL or OK.
- */
-static int item_copy(typval_T *from, typval_T *to, int deep, int copyID)
+/// Make a copy of an item
+///
+/// Lists and Dictionaries are also copied.
+///
+/// @param[in]  conv  If not NULL, convert all copied strings.
+/// @param[in]  from  Value to copy.
+/// @param[out]  to  Location where to copy to.
+/// @param[in]  deep  If true, use copy the container and all of the contained 
+///                   containers (nested).
+/// @param[in]  copyID  If non-zero then when container is referenced more then 
+///                     once then copy of it that was already done is used. E.g. 
+///                     when copying list `list = [list2, list2]` (`list[0] is 
+///                     list[1]`) var_item_copy with zero copyID will emit 
+///                     a copy with (`copy[0] isnot copy[1]`), with non-zero it 
+///                     will emit a copy with (`copy[0] is copy[1]`) like in the 
+///                     original list. Not use when deep is false.
+int var_item_copy(const vimconv_T *const conv,
+                  typval_T *const from,
+                  typval_T *const to,
+                  const bool deep,
+                  const int copyID)
+  FUNC_ATTR_NONNULL_ARG(2,3)
 {
   static int recurse = 0;
   int ret = OK;
@@ -18467,9 +18496,22 @@ static int item_copy(typval_T *from, typval_T *to, int deep, int copyID)
   switch (from->v_type) {
   case VAR_NUMBER:
   case VAR_FLOAT:
-  case VAR_STRING:
   case VAR_FUNC:
     copy_tv(from, to);
+    break;
+  case VAR_STRING:
+    if (conv == NULL || conv->vc_type == CONV_NONE) {
+      copy_tv(from, to);
+    } else {
+      to->v_type = VAR_STRING;
+      to->v_lock = 0;
+      if ((to->vval.v_string = string_convert((vimconv_T *)conv,
+                                              from->vval.v_string,
+                                              NULL))
+          == NULL) {
+        to->vval.v_string = (char_u *) xstrdup((char *) from->vval.v_string);
+      }
+    }
     break;
   case VAR_LIST:
     to->v_type = VAR_LIST;
@@ -18481,7 +18523,7 @@ static int item_copy(typval_T *from, typval_T *to, int deep, int copyID)
       to->vval.v_list = from->vval.v_list->lv_copylist;
       ++to->vval.v_list->lv_refcount;
     } else
-      to->vval.v_list = list_copy(from->vval.v_list, deep, copyID);
+      to->vval.v_list = list_copy(conv, from->vval.v_list, deep, copyID);
     if (to->vval.v_list == NULL)
       ret = FAIL;
     break;
@@ -18495,12 +18537,12 @@ static int item_copy(typval_T *from, typval_T *to, int deep, int copyID)
       to->vval.v_dict = from->vval.v_dict->dv_copydict;
       ++to->vval.v_dict->dv_refcount;
     } else
-      to->vval.v_dict = dict_copy(from->vval.v_dict, deep, copyID);
+      to->vval.v_dict = dict_copy(conv, from->vval.v_dict, deep, copyID);
     if (to->vval.v_dict == NULL)
       ret = FAIL;
     break;
   default:
-    EMSG2(_(e_intern2), "item_copy()");
+    EMSG2(_(e_intern2), "var_item_copy()");
     ret = FAIL;
   }
   --recurse;

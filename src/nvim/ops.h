@@ -6,7 +6,7 @@
 #include "nvim/macros.h"
 #include "nvim/ascii.h"
 #include "nvim/types.h"
-#include "nvim/api/private/defs.h"
+#include "nvim/eval_defs.h"
 #include "nvim/os/time.h"
 
 typedef int (*Indenter)(void);
@@ -81,7 +81,7 @@ typedef struct yankreg {
   char_u y_type;     ///< Register type: MLINE, MCHAR or MBLOCK.
   colnr_T y_width;   ///< Register width (only valid for y_type == MBLOCK).
   Timestamp timestamp;  ///< Time when register was last modified.
-  Dictionary *additional_data;  ///< Additional data from ShaDa file.
+  dict_T *additional_data;  ///< Additional data from ShaDa file.
 } yankreg_T;
 
 /// Convert register name into register index

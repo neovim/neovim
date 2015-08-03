@@ -30,7 +30,6 @@
 #include <inttypes.h>
 
 #include "nvim/api/private/handle.h"
-#include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
@@ -557,10 +556,7 @@ static void free_buffer(buf_T *buf)
   free_buffer_stuff(buf, TRUE);
   unref_var_dict(buf->b_vars);
   aubuflocal_remove(buf);
-  if (buf->additional_data != NULL) {
-    api_free_dictionary(*buf->additional_data);
-    xfree(buf->additional_data);
-  }
+  dict_unref(buf->additional_data);
   free_fmark(buf->b_last_cursor);
   free_fmark(buf->b_last_insert);
   free_fmark(buf->b_last_change);

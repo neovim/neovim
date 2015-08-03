@@ -111,7 +111,6 @@
 #include "nvim/types.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
-#include "nvim/api/private/helpers.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "undo.c.generated.h"
@@ -329,11 +328,8 @@ static long get_undolevel(void)
 static inline void zero_fmark_additional_data(fmark_T *fmarks)
 {
   for (size_t i = 0; i < NMARKS; i++) {
-    if (fmarks[i].additional_data != NULL) {
-      api_free_dictionary(*fmarks[i].additional_data);
-      free(fmarks[i].additional_data);
-      fmarks[i].additional_data = NULL;
-    }
+    dict_unref(fmarks[i].additional_data);
+    fmarks[i].additional_data = NULL;
   }
 }
 
