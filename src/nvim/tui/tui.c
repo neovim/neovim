@@ -809,18 +809,21 @@ static void fix_terminfo(TUIData *data)
 #define TMUX_WRAP(seq) (inside_tmux ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
   // Support changing cursor shape on some popular terminals.
   const char *term_prog = os_getenv("TERM_PROGRAM");
+  const char *vte_version = os_getenv("VTE_VERSION");
 
-  if ((term_prog && !strcmp(term_prog, "iTerm.app"))
-      || os_getenv("ITERM_SESSION_ID") != NULL) {
-    // iterm
+  if ((term_prog && !strcmp(term_prog, "Konsole"))
+      || os_getenv("KONSOLE_DBUS_SESSION") != NULL) {
+    // Konsole uses a proprietary escape code to set the cursor shape
+    // and does not suppport DECSCUSR.
     data->unibi_ext.enter_insert_mode = (int)unibi_add_ext_str(ut, NULL,
         TMUX_WRAP("\x1b]50;CursorShape=1;BlinkingCursorEnabled=1\x07"));
     data->unibi_ext.enter_replace_mode = (int)unibi_add_ext_str(ut, NULL,
         TMUX_WRAP("\x1b]50;CursorShape=2;BlinkingCursorEnabled=1\x07"));
     data->unibi_ext.exit_insert_mode = (int)unibi_add_ext_str(ut, NULL,
         TMUX_WRAP("\x1b]50;CursorShape=0;BlinkingCursorEnabled=0\x07"));
-  } else {
-    // xterm-like sequences for blinking bar and solid block
+  } else if (!vte_version || atoi(vte_version) >= 3900) {
+    // Assume that the terminal supports DECSCUSR unless it is an
+    // old VTE based terminal
     data->unibi_ext.enter_insert_mode = (int)unibi_add_ext_str(ut, NULL,
         TMUX_WRAP("\x1b[5 q"));
     data->unibi_ext.enter_replace_mode = (int)unibi_add_ext_str(ut, NULL,
