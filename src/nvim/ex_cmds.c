@@ -6125,7 +6125,7 @@ char_u * sign_typenr2name(int typenr)
 /*
  * Undefine/free all signs.
  */
-void free_signs()
+void free_signs(void)
 {
   while (first_sign != NULL)
     sign_undefine(first_sign, NULL);

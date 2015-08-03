@@ -1517,6 +1517,12 @@ v:mouse_col	Column number for a mouse click obtained with |getchar()|.
 		This is the screen column number, like with |virtcol()|.  The
 		value is zero when there was no mouse button click.
 
+				*v:msgpack_types* *msgpack_types-variable*
+v:msgpack_types	Dictionary containing msgpack types used by |msgpackparse()| 
+		and |msgpackdump()|. All types inside dictionary are fixed 
+		(not editable) empty lists. To check whether some list is one 
+		of msgpack types, use |is| operator.
+
 					*v:oldfiles* *oldfiles-variable*
 v:oldfiles	List of file names that is loaded from the |viminfo| file on
 		startup.  These are the files that Vim remembers marks for.
@@ -1904,6 +1910,8 @@ min( {list})			Number	minimum value of items in {list}
 mkdir( {name} [, {path} [, {prot}]])
 				Number	create directory {name}
 mode( [expr])			String	current editing mode
+msgpackdump( {list})		List	dump a list of objects to msgpack
+msgpackparse( {list})		List	parse msgpack to a list of objects
 nextnonblank( {lnum})		Number	line nr of non-blank line >= {lnum}
 nr2char( {expr}[, {utf8}])	String	single char with ASCII/UTF8 value {expr}
 or( {expr}, {expr})		Number  bitwise OR
@@ -4624,6 +4632,91 @@ mode([expr])	Return a string that indicates the current mode.
 		with |remote_expr()| In most other places it always returns
 		"c" or "n".
 		Also see |visualmode()|.
+
+msgpackdump({list})				   {Nvim} *msgpackdump()*
+		Convert a list of VimL objects to msgpack. Returned value is
+		|readfile()|-style list. Example: >
+			call writefile(msgpackdump([{}]), 'fname.mpack', 'b')
+<		This will write the single 0x80 byte to `fname.mpack` file
+		(dictionary with zero items is represented by 0x80 byte in
+		messagepack).
+
+		Limitations:
+		1. |Funcref|s cannot be dumped.
+		2. Containers that reference themselves cannot be dumped.
+		3. Dictionary keys are always dumped as STR strings.
+		4. Other strings are always dumped as BIN strings.
+		5. Points 3. and 4. do not apply to |msgpack-special-dict|s.
+
+msgpackparse({list})				   {Nvim} *msgpackparse()*
+		Convert a |readfile()|-style list to a list of VimL objects. 
+		Example: >
+			let fname = expand('~/.nvim/shada/main.shada')
+			let mpack = readfile(fname, 'b')
+			let shada_objects = msgpackparse(mpack)
+<		This will read |shada-file| to `shada_objects` list.
+
+		Limitations:
+		1. Mapping ordering is not preserved unless messagepack 
+		   mapping is dumped using generic  mapping 
+		   (|msgpack-special-map|).
+		2. Since the parser aims to preserve all data untouched 
+		   (except for 1.) some strings are parsed to 
+		   |msgpack-special-dict| format which is not convenient to 
+		   use.
+							*msgpack-special-dict*
+		Some messagepack strings may be parsed to special 
+		dictionaries. Special dictionaries are dictionaries which
+
+		1. Contain exactly two keys: `_TYPE` and `_VALUE`.
+		2. `_TYPE` key is one of the types found in |v:msgpack_types| 
+		   variable.
+		3. Value for `_VALUE` has the following format (Key column 
+		   contains name of the key from |v:msgpack_types|):
+
+		Key	Value ~
+		nil	Zero, ignored when dumping.
+		boolean	One or zero. When dumping it is only checked that 
+			value is a |Number|.
+		integer	|List| with four numbers: sign (-1 or 1), highest two 
+			bits, number with bits from 62nd to 31st, lowest 31 
+			bits. I.e. to get actual number one will need to use 
+			code like >
+				_VALUE[0] * ((_VALUE[1] << 62)
+				             & (_VALUE[2] << 31)
+				             & _VALUE[3])
+<			Special dictionary with this type will appear in 
+			|msgpackparse()| output under one of the following 
+			circumstances:
+			1. |Number| is 32-bit and value is either above 
+			   INT32_MAX or below INT32_MIN.
+			2. |Number| is 64-bit and value is above INT64_MAX. It 
+			   cannot possibly be below INT64_MIN because msgpack 
+			   C parser does not support such values.
+		float	|Float|. This value cannot possibly appear in 
+			|msgpackparse()| output.
+		string	|readfile()|-style list of strings. This value will 
+			appear in |msgpackparse()| output if string contains 
+			zero byte or if string is a mapping key and mapping is 
+			being represented as special dictionary for other 
+			reasons.
+		binary	|readfile()|-style list of strings. This value will 
+			appear in |msgpackparse()| output if binary string 
+			contains zero byte.
+		array	|List|. This value cannot appear in |msgpackparse()| 
+			output.
+							*msgpack-special-map*
+		map	|List| of |List|s with two items (key and value) each. 
+			This value will appear in |msgpackparse()| output if 
+			parsed mapping contains one of the following keys:
+			1. Any key that is not a string (including keys which 
+			   are binary strings).
+			2. String with NUL byte inside.
+			3. Duplicate key.
+			4. Empty key.
+		ext	|List| with two values: first is a signed integer 
+			representing extension type. Second is 
+			|readfile()|-style list of strings.
 
 nextnonblank({lnum})					*nextnonblank()*
 		Return the line number of the first line at or below {lnum}
