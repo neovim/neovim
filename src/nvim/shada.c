@@ -3345,6 +3345,13 @@ shada_read_next_item_extra_bytes:
             (uint64_t) initial_fpos); \
       ga_clear(&ad_ga); \
       goto shada_read_next_item_error; \
+    } else if (unpacked.data.via.map.ptr[i].key.via.str.size == 0) { \
+      emsgu(_(RERR "Error while reading ShaDa file: " \
+              entry_name " entry at position %" PRIu64 " " \
+              "has empty key"), \
+            (uint64_t) initial_fpos); \
+      ga_clear(&ad_ga); \
+      goto shada_read_next_item_error; \
     } \
   } while (0)
 #define CHECKED_KEY(entry_name, name, error_desc, tgt, condition, attr, proc) \

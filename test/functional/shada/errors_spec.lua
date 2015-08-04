@@ -124,6 +124,12 @@ describe('ShaDa error handling', function()
     eq('Vim(rshada):E575: Error while reading ShaDa file: search pattern entry at position 0 has key which is not a string', exc_exec(sdrcmd()))
   end)
 
+  -- sp entry is here because it causes an allocation.
+  it('fails on search pattern item with empty key', function()
+    wshada('\002\000\013\131\162sp\196\001a\162sX\192\160\000')
+    eq('Vim(rshada):E575: Error while reading ShaDa file: search pattern entry at position 0 has empty key', exc_exec(sdrcmd()))
+  end)
+
   it('fails on search pattern item with NIL magic key value', function()
     wshada('\002\000\009\130\162sX\192\162sm\192')
     eq('Vim(rshada):E575: Error while reading ShaDa file: search pattern entry at position 0 has sm key value which is not a boolean', exc_exec(sdrcmd()))
@@ -192,6 +198,12 @@ describe('ShaDa error handling', function()
       eq('Vim(rshada):E575: Error while reading ShaDa file: mark entry at position 0 has key which is not a string', exc_exec(sdrcmd()))
     end)
 
+    -- f entry is here because it causes an allocation.
+    it('fails on ' .. v.name .. ' item with empty key', function()
+      wshada(v.mpack .. '\000\012\131\161f\196\001/\162mX\192\160\000')
+      eq('Vim(rshada):E575: Error while reading ShaDa file: mark entry at position 0 has empty key', exc_exec(sdrcmd()))
+    end)
+
     it('fails on ' .. v.name .. ' item without f key', function()
       wshada(v.mpack .. '\000\008\130\162mX\192\161l\001')
       eq('Vim(rshada):E575: Error while reading ShaDa file: mark entry at position 0 is missing file name', exc_exec(sdrcmd()))
@@ -242,6 +254,12 @@ describe('ShaDa error handling', function()
   it('fails on register item with BIN key', function()
     wshada('\005\000\015\131\162rc\145\196\001a\162rX\192\196\000\000')
     eq('Vim(rshada):E575: Error while reading ShaDa file: register entry at position 0 has key which is not a string', exc_exec(sdrcmd()))
+  end)
+
+  -- rc entry is here because it causes an allocation
+  it('fails on register item with BIN key', function()
+    wshada('\005\000\014\131\162rc\145\196\001a\162rX\192\160\000')
+    eq('Vim(rshada):E575: Error while reading ShaDa file: register entry at position 0 has empty key', exc_exec(sdrcmd()))
   end)
 
   it('fails on register item with NIL rt key value', function()
