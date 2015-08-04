@@ -5368,11 +5368,17 @@ size_t op_register_amount(void)
 }
 
 /// Set register to a given value
-void register_set(const char name, const yankreg_T reg)
+///
+/// @param[in]  name  Register name.
+/// @param[in]  reg   Register value.
+///
+/// @return true on success, false on failure.
+bool register_set(const char name, const yankreg_T reg)
 {
   int i = op_reg_index(name);
   if (i == -1) {
-    return;
+    return false;
   }
   y_regs[i] = reg;
+  return true;
 }

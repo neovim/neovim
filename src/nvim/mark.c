@@ -1343,19 +1343,22 @@ size_t mark_buffer_amount(const buf_T *const buf)
 /// @param[in]  fm      Mark to be set.
 /// @param[in]  update  If true then only set global mark if it was created 
 ///                     later then existing one.
-void mark_set_global(const char name, const xfmark_T fm, const bool update)
+///
+/// @return true on success, false on failure.
+bool mark_set_global(const char name, const xfmark_T fm, const bool update)
 {
   xfmark_T *fm_tgt = &(namedfm[mark_global_index(name)]);
   if (fm_tgt == &namedfm[0] - 1) {
-    return;
+    return false;
   }
   if (update && fm.fmark.timestamp < fm_tgt->fmark.timestamp) {
-    return;
+    return false;
   }
   if (fm_tgt->fmark.mark.lnum != 0) {
     free_xfmark(*fm_tgt);
   }
   *fm_tgt = fm;
+  return true;
 }
 
 /// Set local mark
@@ -1365,7 +1368,9 @@ void mark_set_global(const char name, const xfmark_T fm, const bool update)
 /// @param[in]  fm      Mark to be set.
 /// @param[in]  update  If true then only set global mark if it was created 
 ///                     later then existing one.
-void mark_set_local(const char name, buf_T *const buf,
+///
+/// @return true on success, false on failure.
+bool mark_set_local(const char name, buf_T *const buf,
                     const fmark_T fm, const bool update)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1379,15 +1384,16 @@ void mark_set_local(const char name, buf_T *const buf,
   } else if (name == '.') {
     fm_tgt = &(buf->b_last_change);
   } else {
-    return;
+    return false;
   }
   if (update && fm.timestamp < fm_tgt->timestamp) {
-    return;
+    return false;
   }
   if (fm_tgt->mark.lnum != 0) {
     free_fmark(*fm_tgt);
   }
   *fm_tgt = fm;
+  return true;
 }
 
 /*

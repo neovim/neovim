@@ -1240,14 +1240,16 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
           shada_free_shada_entry(&cur_entry);
           break;
         }
-        register_set(cur_entry.data.reg.name, (yankreg_T) {
+        if (!register_set(cur_entry.data.reg.name, (yankreg_T) {
           .y_array = (char_u **) cur_entry.data.reg.contents,
           .y_size = (linenr_T) cur_entry.data.reg.contents_size,
           .y_type = cur_entry.data.reg.type,
           .y_width = (colnr_T) cur_entry.data.reg.width,
           .timestamp = cur_entry.timestamp,
           .additional_data = cur_entry.data.reg.additional_data,
-        });
+        })) {
+          shada_free_shada_entry(&cur_entry);
+        }
         // Do not free shada entry: its allocated memory was saved above.
         break;
       }
@@ -1277,7 +1279,10 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
           },
         };
         if (cur_entry.type == kSDItemGlobalMark) {
-          mark_set_global(cur_entry.data.filemark.name, fm, !force);
+          if (!mark_set_global(cur_entry.data.filemark.name, fm, !force)) {
+            shada_free_shada_entry(&cur_entry);
+            break;
+          }
         } else {
           if (force) {
             if (curwin->w_jumplistlen == JUMPLISTSIZE) {
@@ -1400,7 +1405,10 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
           .additional_data = cur_entry.data.filemark.additional_data,
         };
         if (cur_entry.type == kSDItemLocalMark) {
-          mark_set_local(cur_entry.data.filemark.name, buf, fm, !force);
+          if (!mark_set_local(cur_entry.data.filemark.name, buf, fm, !force)) {
+            shada_free_shada_entry(&cur_entry);
+            break;
+          }
         } else {
           int kh_ret;
           (void) kh_put(bufset, cl_bufs, (uintptr_t) buf, &kh_ret);
