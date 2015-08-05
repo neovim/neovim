@@ -1402,8 +1402,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			register '*' for all yank, delete, change and put
 			operations which would normally go to the unnamed
 			register.  When "unnamed" is also included to the
-			option, yank operations (but not delete, change or
-			put) will additionally copy the text into register
+			option, yank and delete operations (but not put)
+			will additionally copy the text into register
 			'*'. See |nvim-clipboard|.
 <
 						*clipboard-autoselect*

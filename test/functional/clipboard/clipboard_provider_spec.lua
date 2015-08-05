@@ -232,12 +232,15 @@ describe('clipboard usage', function()
       expect('words')
       eq({{'words'}, 'v'}, eval("g:test_clip['*']"))
 
+      -- "+ shouldn't have changed
+      eq({''}, eval("g:test_clip['+']"))
+
       execute("let g:test_clip['*'] = ['linewise stuff','']")
       feed('p')
       expect([[
         words
         linewise stuff]])
-      end)
+    end)
 
     it('does not clobber "0 when pasting', function()
       insert('a line')
@@ -282,6 +285,50 @@ describe('clipboard usage', function()
         the text]])
     end)
 
+  end)
+
+  describe('with clipboard=unnamedplus', function()
+    before_each(function()
+      execute('set clipboard=unnamedplus')
+    end)
+
+    it('links the "+ and unnamed registers', function()
+      insert("one two")
+      feed('^"+dwdw"+P')
+      expect('two')
+      eq({{'two'}, 'v'}, eval("g:test_clip['+']"))
+
+      -- "* shouldn't have changed
+      eq({''}, eval("g:test_clip['*']"))
+
+      execute("let g:test_clip['+'] = ['three']")
+      feed('p')
+      expect('twothree')
+    end)
+
+    it('and unnamed, yanks to both', function()
+      execute('set clipboard=unnamedplus,unnamed')
+      insert([[
+        really unnamed
+        text]])
+      feed('ggdd"*p"+p')
+      expect([[
+        text
+        really unnamed
+        really unnamed]])
+      eq({{'really unnamed', ''}, 'V'}, eval("g:test_clip['+']"))
+      eq({{'really unnamed', ''}, 'V'}, eval("g:test_clip['*']"))
+
+      -- unnamedplus takes predecence when pasting
+      execute("let g:test_clip['+'] = ['the plus','']")
+      execute("let g:test_clip['*'] = ['the star','']")
+      feed("p")
+      expect([[
+        text
+        really unnamed
+        really unnamed
+        the plus]])
+    end)
   end)
 
   it('supports :put', function()

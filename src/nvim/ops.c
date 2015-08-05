@@ -5278,7 +5278,7 @@ static yankreg_T *adjust_clipboard_name(int *name, bool quiet)
     }
     yankreg_T *target;
     if (cb_flags & CB_UNNAMEDPLUS) {
-      *name = '+';
+      *name = cb_flags & CB_UNNAMED ? '"': '+';
       target = &y_regs[PLUS_REGISTER];
     } else {
       *name = '*';
