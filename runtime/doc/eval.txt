@@ -4654,7 +4654,8 @@ msgpackparse({list})				   {Nvim} *msgpackparse()*
 			let fname = expand('~/.nvim/shada/main.shada')
 			let mpack = readfile(fname, 'b')
 			let shada_objects = msgpackparse(mpack)
-<		This will read |shada-file| to `shada_objects` list.
+<		This will read ~/.nvim/shada/main.shada file to 
+		`shada_objects` list.
 
 		Limitations:
 		1. Mapping ordering is not preserved unless messagepack 
