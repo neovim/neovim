@@ -12,6 +12,7 @@
 # include "os/mem.h.generated.h"
 # include "os/env.h.generated.h"
 # include "os/users.h.generated.h"
+# include "os/stdpaths.h.generated.h"
 #endif
 
 #endif  // NVIM_OS_OS_H

@@ -176,7 +176,7 @@ return {
       vi_def=true,
       expand=true,
       varname='p_bdir',
-      defaults={if_true={vi=macros('DFLT_BDIR')}}
+      defaults={if_true={vi=''}}
     },
     {
       full_name='backupext', abbreviation='bex',
@@ -627,7 +627,7 @@ return {
       vi_def=true,
       expand=true,
       varname='p_dir',
-      defaults={if_true={vi=macros('DFLT_DIR')}}
+      defaults={if_true={vi=''}}
     },
     {
       full_name='display', abbreviation='dy',
@@ -1916,7 +1916,7 @@ return {
       vi_def=true,
       expand=true,
       varname='p_rtp',
-      defaults={if_true={vi=macros('DFLT_RUNTIMEPATH')}}
+      defaults={if_true={vi=''}}
     },
     {
       full_name='scroll', abbreviation='scr',
@@ -2524,7 +2524,7 @@ return {
       vi_def=true,
       expand=true,
       varname='p_udir',
-      defaults={if_true={vi="."}}
+      defaults={if_true={vi=''}}
     },
     {
       full_name='undofile', abbreviation='udf',
@@ -2585,7 +2585,7 @@ return {
       vi_def=true,
       expand=true,
       varname='p_vdir',
-      defaults={if_true={vi=macros('DFLT_VDIR')}}
+      defaults={if_true={vi=''}}
     },
     {
       full_name='viewoptions', abbreviation='vop',

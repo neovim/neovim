@@ -301,6 +301,15 @@ static char *(p_cot_values[]) = {"menu", "menuone", "longest", "preview",
 # include "option.c.generated.h"
 #endif
 
+static void set_runtimepath_default(void)
+{
+  garray_T rtp_ga;
+  ga_init(&rtp_ga, (int)sizeof(const char *), 1);
+  GA_APPEND(const char *, &rtp_ga, get_user_conf_dir());
+  GA_APPEND(const char *, &rtp_ga, concat_fnames(get_user_conf_dir(), "after", true));
+  set_string_default("runtimepath", ga_concat_strings(&rtp_ga));
+}
+
 /*
  * Initialize the options, first part.
  *
@@ -436,6 +445,12 @@ void set_init_1(void)
       (char_u *)
       "system('lpr' . (&printdevice == '' ? '' : ' -P' . &printdevice) . ' ' . v:fname_in) . delete(v:fname_in) + v:shell_error"
       );
+
+  set_string_default("viewdir", (char_u *)get_from_user_data("view"));
+  set_string_default("backupdir", (char_u *)get_from_user_data("backup"));
+  set_string_default("directory", (char_u *)get_from_user_data("swap"));
+  set_string_default("undodir", (char_u *)get_from_user_data("undo"));
+  set_runtimepath_default();
 
   /*
    * Set all the options (except the terminal options) to their default
