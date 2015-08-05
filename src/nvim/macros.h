@@ -73,11 +73,6 @@
 /* Returns empty string if it is NULL. */
 #define EMPTY_IF_NULL(x) ((x) ? (x) : (char_u *)"")
 
-/* macro version of chartab().
- * Only works with values 0-255!
- * Doesn't work for UTF-8 mode with chars >= 0x80. */
-#define CHARSIZE(c)     (chartab[c] & CT_CELL_MASK)
-
 /*
  * Adjust chars in a language according to 'langmap' option.
  * NOTE that there is no noticeable overhead if 'langmap' is not set.

@@ -3372,7 +3372,7 @@ win_line (
       /*
        * Handling of non-printable characters.
        */
-      if (!(chartab[c & 0xff] & CT_PRINT_CHAR)) {
+      if (!vim_isprintc(c & 0xff)) {
         /*
          * when getting a character from the file, we may have to
          * turn it into something else on the way to putting it

@@ -34,6 +34,22 @@
 
 static int chartab_initialized = FALSE;
 
+/// See init_chartab() for explanation.
+static uint8_t chartab[256];
+
+/// See init_chartab() for explanation of c.
+/// Only works with values 0-255!
+/// Doesn't work for UTF-8 mode with chars >= 0x80.
+///
+/// @param c The first byte of the character.
+///
+/// @return The number of display cells the character occupies (1 or 2).
+static uint8_t char_size(uint8_t c) FUNC_ATTR_PURE
+{
+  assert(!(enc_utf8 && c >= 0x80));
+  return chartab[c] & CT_CELL_MASK;
+}
+
 // b_chartab[] is an array of 32 bytes, each bit representing one of the
 // characters 0-255.
 #define SET_CHARTAB(buf, c) \
@@ -892,8 +908,8 @@ int vim_isfilec_or_wc(int c)
 ///
 /// @param c
 ///
-/// @return TRUE if 'c' a printable character.
-int vim_isprintc(int c)
+/// @return true if 'c' a printable character.
+bool vim_isprintc(int c) FUNC_ATTR_PURE
 {
   if (enc_utf8 && (c >= 0x100)) {
     return utf_printable(c);
@@ -906,8 +922,8 @@ int vim_isprintc(int c)
 ///
 /// @param c
 ///
-/// @return TRUE if 'c' is a printable character.
-int vim_isprintc_strict(int c)
+/// @return true if 'c' is a printable character.
+bool vim_isprintc_strict(int c) FUNC_ATTR_PURE
 {
   if ((enc_dbcs != 0) && (c < 0x100) && (MB_BYTE2LEN(c) > 1)) {
     return FALSE;
@@ -1240,7 +1256,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
           if (enc_utf8 && (c >= 0x80)) {
             incr = utf_ptr2cells(ptr);
           } else {
-            incr = CHARSIZE(c);
+            incr = char_size(c);
           }
 
           // If a double-cell char doesn't fit at the end of a line
@@ -1254,7 +1270,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
             head = 1;
           }
         } else {
-          incr = CHARSIZE(c);
+          incr = char_size(c);
         }
       }
 
