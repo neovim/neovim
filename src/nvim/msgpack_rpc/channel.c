@@ -153,6 +153,9 @@ void channel_from_connection(SocketWatcher *watcher)
 {
   Channel *channel = register_channel(kChannelTypeSocket);
   socket_watcher_accept(watcher, &channel->data.stream, channel);
+  incref(channel);  // close channel only after the stream is closed
+  channel->data.stream.internal_close_cb = close_cb;
+  channel->data.stream.internal_data = channel;
   wstream_init(&channel->data.stream, 0);
   rstream_init(&channel->data.stream, CHANNEL_BUFFER_SIZE);
   rstream_start(&channel->data.stream, parse_msgpack);
@@ -636,7 +639,7 @@ static void close_channel(Channel *channel)
 
   switch (channel->type) {
     case kChannelTypeSocket:
-      stream_close(&channel->data.stream, close_cb);
+      stream_close(&channel->data.stream, NULL);
       break;
     case kChannelTypeProc:
       if (!channel->data.process.uvproc.process.closed) {
@@ -685,7 +688,7 @@ static void free_channel(Channel *channel)
 
 static void close_cb(Stream *stream, void *data)
 {
-  xfree(data);
+  decref(data);
 }
 
 static Channel *register_channel(ChannelType type)
