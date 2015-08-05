@@ -4654,7 +4654,8 @@ msgpackparse({list})				   {Nvim} *msgpackparse()*
 			let fname = expand('~/.nvim/shada/main.shada')
 			let mpack = readfile(fname, 'b')
 			let shada_objects = msgpackparse(mpack)
-<		This will read |shada-file| to `shada_objects` list.
+<		This will read ~/.nvim/shada/main.shada file to 
+		`shada_objects` list.
 
 		Limitations:
 		1. Mapping ordering is not preserved unless messagepack 
@@ -4668,10 +4669,10 @@ msgpackparse({list})				   {Nvim} *msgpackparse()*
 		Some messagepack strings may be parsed to special 
 		dictionaries. Special dictionaries are dictionaries which
 
-		1. Contain exactly two keys: `_TYPE` and `_VALUE`.
+		1. Contain exactly two keys: `_TYPE` and `_VAL`.
 		2. `_TYPE` key is one of the types found in |v:msgpack_types| 
 		   variable.
-		3. Value for `_VALUE` has the following format (Key column 
+		3. Value for `_VAL` has the following format (Key column 
 		   contains name of the key from |v:msgpack_types|):
 
 		Key	Value ~
@@ -4682,9 +4683,9 @@ msgpackparse({list})				   {Nvim} *msgpackparse()*
 			bits, number with bits from 62nd to 31st, lowest 31 
 			bits. I.e. to get actual number one will need to use 
 			code like >
-				_VALUE[0] * ((_VALUE[1] << 62)
-				             & (_VALUE[2] << 31)
-				             & _VALUE[3])
+				_VAL[0] * ((_VAL[1] << 62)
+				           & (_VAL[2] << 31)
+				           & _VAL[3])
 <			Special dictionary with this type will appear in 
 			|msgpackparse()| output under one of the following 
 			circumstances:
