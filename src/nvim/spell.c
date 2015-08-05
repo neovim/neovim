@@ -8023,7 +8023,7 @@ void init_spell_chartab(void)
   if (enc_dbcs) {
     // DBCS: assume double-wide characters are word characters.
     for (i = 128; i <= 255; ++i)
-      if (MB_BYTE2LEN(i) == 2)
+      if (mb_byte2len(i) == 2)
         spelltab.st_isw[i] = true;
   } else if (enc_utf8)   {
     for (i = 128; i < 256; ++i) {
@@ -8183,7 +8183,7 @@ static bool spell_iswordp(char_u *p, win_T *wp)
   int c;
 
   if (has_mbyte) {
-    l = MB_BYTE2LEN(*p);
+    l = mb_byte2len(*p);
     s = p;
     if (l == 1) {
       // be quick for ASCII
@@ -9866,7 +9866,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
               int l;
 
               if (has_mbyte)
-                l = MB_BYTE2LEN(fword[sp->ts_fidx]);
+                l = mb_byte2len(fword[sp->ts_fidx]);
               else
                 l = 1;
               if (fword_ends) {
@@ -9994,7 +9994,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
             if (sp->ts_tcharlen == 0) {
               // First byte.
               sp->ts_tcharidx = 0;
-              sp->ts_tcharlen = MB_BYTE2LEN(c);
+              sp->ts_tcharlen = mb_byte2len(c);
               sp->ts_fcharstart = sp->ts_fidx - 1;
               sp->ts_isdiff = (newscore != 0)
                               ? DIFF_YES : DIFF_NONE;
@@ -10008,7 +10008,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
                 // Correct ts_fidx for the byte length of the
                 // character (we didn't check that before).
                 sp->ts_fidx = sp->ts_fcharstart
-                              + MB_BYTE2LEN(
+                              + mb_byte2len(
                     fword[sp->ts_fcharstart]);
 
                 // For changing a composing character adjust
@@ -10113,7 +10113,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         // results.
         if (has_mbyte) {
           c = mb_ptr2char(fword + sp->ts_fidx);
-          stack[depth].ts_fidx += MB_BYTE2LEN(fword[sp->ts_fidx]);
+          stack[depth].ts_fidx += mb_byte2len(fword[sp->ts_fidx]);
           if (enc_utf8 && utf_iscomposing(c))
             stack[depth].ts_score -= SCORE_DEL - SCORE_DELCOMP;
           else if (c == mb_ptr2char(fword + stack[depth].ts_fidx))
@@ -10189,7 +10189,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         tword[sp->ts_twordlen++] = c;
         sp->ts_arridx = idxs[n];
         if (has_mbyte) {
-          fl = MB_BYTE2LEN(c);
+          fl = mb_byte2len(c);
           if (fl > 1) {
             // There are following bytes for the same character.
             // We must find all bytes before trying
@@ -10289,9 +10289,9 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       // Undo the STATE_SWAP swap: "21" -> "12".
       p = fword + sp->ts_fidx;
       if (has_mbyte) {
-        n = MB_BYTE2LEN(*p);
+        n = mb_byte2len(*p);
         c = mb_ptr2char(p + n);
-        memmove(p + MB_BYTE2LEN(p[n]), p, n);
+        memmove(p + mb_byte2len(p[n]), p, n);
         mb_char2bytes(c, p);
       } else {
         c = *p;
@@ -10360,11 +10360,11 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       // Undo STATE_SWAP3: "321" -> "123"
       p = fword + sp->ts_fidx;
       if (has_mbyte) {
-        n = MB_BYTE2LEN(*p);
+        n = mb_byte2len(*p);
         c2 = mb_ptr2char(p + n);
-        fl = MB_BYTE2LEN(p[n]);
+        fl = mb_byte2len(p[n]);
         c = mb_ptr2char(p + n + fl);
-        tl = MB_BYTE2LEN(p[n + fl]);
+        tl = mb_byte2len(p[n + fl]);
         memmove(p + fl + tl, p, n);
         mb_char2bytes(c, p);
         mb_char2bytes(c2, p + tl);
@@ -10419,10 +10419,10 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       // Undo ROT3L: "231" -> "123"
       p = fword + sp->ts_fidx;
       if (has_mbyte) {
-        n = MB_BYTE2LEN(*p);
-        n += MB_BYTE2LEN(p[n]);
+        n = mb_byte2len(*p);
+        n += mb_byte2len(p[n]);
         c = mb_ptr2char(p + n);
-        tl = MB_BYTE2LEN(p[n]);
+        tl = mb_byte2len(p[n]);
         memmove(p + tl, p, n);
         mb_char2bytes(c, p);
       } else {
@@ -10469,9 +10469,9 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       p = fword + sp->ts_fidx;
       if (has_mbyte) {
         c = mb_ptr2char(p);
-        tl = MB_BYTE2LEN(*p);
-        n = MB_BYTE2LEN(p[tl]);
-        n += MB_BYTE2LEN(p[tl + n]);
+        tl = mb_byte2len(*p);
+        n = mb_byte2len(p[tl]);
+        n += mb_byte2len(p[tl + n]);
         memmove(p, p + tl, n);
         mb_char2bytes(c, p + n);
       } else {

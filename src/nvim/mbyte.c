@@ -71,6 +71,7 @@
  * some commands, like ":menutrans"
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -116,6 +117,32 @@ struct interval {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mbyte.c.generated.h"
 #endif
+
+/*
+ * To speed up BYTELEN() we fill a table with the byte lengths whenever
+ * enc_utf8 or enc_dbcs changes.
+ */
+static char mb_bytelen_tab[256];
+
+/*
+ * Return byte length of character that starts with byte "b".
+ * Returns 1 for a single-byte character.
+ * mb_byte2len_check() can be used to count a special key as one byte.
+ * Don't call mb_byte2len(b) with b < 0 or b > 255!
+ */
+char mb_byte2len(int b) {
+    assert(b >= 0);
+    assert(b <= 255);
+    return mb_bytelen_tab[b];
+}
+
+char mb_byte2len_check(int b) {
+    if (b < 0 || b > 255) {
+        return 1;
+    } else {
+        return mb_bytelen_tab[b];
+    }
+}
 
 /*
  * Lookup table to quickly get the length in bytes of a UTF-8 character from
@@ -503,7 +530,7 @@ char_u * mb_init(void)
   }
 
   /*
-   * Fill the mb_bytelen_tab[] for MB_BYTE2LEN().
+   * Fill the mb_bytelen_tab[] for mb_byte2len().
    */
 #ifdef LEN_FROM_CONV
   /* When 'encoding' is different from the current locale mblen() won't
@@ -659,7 +686,7 @@ int mb_get_class(const char_u *p)
 
 int mb_get_class_buf(const char_u *p, buf_T *buf)
 {
-  if (MB_BYTE2LEN(p[0]) == 1) {
+  if (mb_byte2len(p[0]) == 1) {
     if (p[0] == NUL || ascii_iswhite(p[0]))
       return 0;
     if (vim_iswordc_buf(p[0], buf))
@@ -867,7 +894,7 @@ static int dbcs_char2bytes(int c, char_u *buf)
  */
 int latin_ptr2len(const char_u *p)
 {
-  return MB_BYTE2LEN(*p);
+  return mb_byte2len(*p);
 }
 
 static int dbcs_ptr2len(const char_u *p)
@@ -875,7 +902,7 @@ static int dbcs_ptr2len(const char_u *p)
   int len;
 
   /* Check if second byte is not missing. */
-  len = MB_BYTE2LEN(*p);
+  len = mb_byte2len(*p);
   if (len == 2 && p[1] == NUL)
     len = 1;
   return len;
@@ -903,7 +930,7 @@ static int dbcs_ptr2len_len(const char_u *p, int size)
   if (size == 1)
     return 1;
   /* Check that second byte is not missing. */
-  len = MB_BYTE2LEN(*p);
+  len = mb_byte2len(*p);
   if (len == 2 && p[1] == NUL)
     len = 1;
   return len;
@@ -1226,7 +1253,7 @@ int dbcs_ptr2cells(const char_u *p)
    * the first byte is 0x8e. */
   if (enc_dbcs == DBCS_JPNU && *p == 0x8e)
     return 1;
-  return MB_BYTE2LEN(*p);
+  return mb_byte2len(*p);
 }
 
 /*
@@ -1265,7 +1292,7 @@ static int dbcs_ptr2cells_len(const char_u *p, int size)
    * the first byte is 0x8e. */
   if (size <= 1 || (enc_dbcs == DBCS_JPNU && *p == 0x8e))
     return 1;
-  return MB_BYTE2LEN(*p);
+  return mb_byte2len(*p);
 }
 
 /*
@@ -1285,7 +1312,7 @@ static int dbcs_char2cells(int c)
   if (enc_dbcs == DBCS_JPNU && ((unsigned)c >> 8) == 0x8e)
     return 1;
   /* use the first byte */
-  return MB_BYTE2LEN((unsigned)c >> 8);
+  return mb_byte2len((unsigned)c >> 8);
 }
 
 /// Calculate the number of cells occupied by string `str`.
@@ -1324,7 +1351,7 @@ int dbcs_off2cells(unsigned off, unsigned max_off)
    * the first byte is 0x8e. */
   if (enc_dbcs == DBCS_JPNU && ScreenLines[off] == 0x8e)
     return 1;
-  return MB_BYTE2LEN(ScreenLines[off]);
+  return mb_byte2len(ScreenLines[off]);
 }
 
 int utf_off2cells(unsigned off, unsigned max_off)
@@ -1343,7 +1370,7 @@ int latin_ptr2char(const char_u *p)
 
 static int dbcs_ptr2char(const char_u *p)
 {
-  if (MB_BYTE2LEN(*p) > 1 && p[1] != NUL)
+  if (mb_byte2len(*p) > 1 && p[1] != NUL)
     return (p[0] << 8) + p[1];
   return *p;
 }
@@ -2964,7 +2991,7 @@ int dbcs_head_off(const char_u *base, const char_u *p)
 {
   /* It can't be a trailing byte when not using DBCS, at the start of the
    * string or the previous byte can't start a double-byte. */
-  if (p <= base || MB_BYTE2LEN(p[-1]) == 1 || *p == NUL) {
+  if (p <= base || mb_byte2len(p[-1]) == 1 || *p == NUL) {
     return 0;
   }
 
@@ -2990,7 +3017,7 @@ int dbcs_screen_head_off(const char_u *base, const char_u *p)
    * lead byte in the current cell. */
   if (p <= base
       || (enc_dbcs == DBCS_JPNU && p[-1] == 0x8e)
-      || MB_BYTE2LEN(p[-1]) == 1
+      || mb_byte2len(p[-1]) == 1
       || *p == NUL)
     return 0;
 
@@ -3131,7 +3158,7 @@ int mb_tail_off(char_u *base, char_u *p)
 
   /* It can't be the first byte if a double-byte when not using DBCS, at the
    * end of the string or the byte can't start a double-byte. */
-  if (enc_dbcs == 0 || p[1] == NUL || MB_BYTE2LEN(*p) == 1)
+  if (enc_dbcs == 0 || p[1] == NUL || mb_byte2len(*p) == 1)
     return 0;
 
   /* Return 1 when on the lead byte, 0 when on the tail byte. */

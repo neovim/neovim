@@ -2423,7 +2423,7 @@ int get_keystroke(void)
       break;
     }
     if (has_mbyte) {
-      if (MB_BYTE2LEN(n) > len)
+      if (mb_byte2len(n) > len)
         continue;               /* more bytes to get */
       buf[len >= buflen ? buflen - 1 : len] = NUL;
       n = (*mb_ptr2char)(buf);

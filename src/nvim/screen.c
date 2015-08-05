@@ -3008,7 +3008,7 @@ win_line (
             }
           } else {
             /* if this is a DBCS character, put it in "mb_c" */
-            mb_l = MB_BYTE2LEN(c);
+            mb_l = mb_byte2len(c);
             if (mb_l >= n_extra)
               mb_l = 1;
             else if (mb_l > 1)
@@ -3122,7 +3122,7 @@ win_line (
           } else
             prev_c = mb_c;
         } else {      /* enc_dbcs */
-          mb_l = MB_BYTE2LEN(c);
+          mb_l = mb_byte2len(c);
           if (mb_l == 0)            /* at the NUL at end-of-line */
             mb_l = 1;
           else if (mb_l > 1) {
@@ -4145,7 +4145,7 @@ win_line (
 
           /* When there is a multi-byte character, just output a
            * space to keep it simple. */
-          if (has_mbyte && MB_BYTE2LEN(ScreenLines[LineOffset[
+          if (has_mbyte && mb_byte2len(ScreenLines[LineOffset[
                                                      screen_row -
                                                      1] + (Columns - 1)]) > 1) {
             ui_putc(' ');
@@ -4224,7 +4224,7 @@ static int char_needs_redraw(int off_from, int off_to, int cols)
            || ScreenAttrs[off_from] != ScreenAttrs[off_to])
 
           || (enc_dbcs != 0
-              && MB_BYTE2LEN(ScreenLines[off_from]) > 1
+              && mb_byte2len(ScreenLines[off_from]) > 1
               && (enc_dbcs == DBCS_JPNU && ScreenLines[off_from] == 0x8e
                   ? ScreenLines2[off_from] != ScreenLines2[off_to]
                   : (cols > 1 && ScreenLines[off_from + 1]
@@ -5166,7 +5166,7 @@ void screen_getbytes(int row, int col, char_u *bytes, int *attrp)
       bytes[0] = ScreenLines[off];
       bytes[1] = ScreenLines2[off];
       bytes[2] = NUL;
-    } else if (enc_dbcs && MB_BYTE2LEN(bytes[0]) > 1) {
+    } else if (enc_dbcs && mb_byte2len(bytes[0]) > 1) {
       bytes[1] = ScreenLines[off + 1];
       bytes[2] = NUL;
     }

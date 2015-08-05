@@ -4235,7 +4235,7 @@ static int getargopt(exarg_T *eap)
       eap->bad_char = BAD_KEEP;
     else if (STRICMP(p, "drop") == 0)
       eap->bad_char = BAD_DROP;
-    else if (MB_BYTE2LEN(*p) == 1 && p[1] == NUL)
+    else if (mb_byte2len(*p) == 1 && p[1] == NUL)
       eap->bad_char = *p;
     else
       return FAIL;

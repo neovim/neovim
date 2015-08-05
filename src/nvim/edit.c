@@ -4773,7 +4773,7 @@ int get_literal(void)
   for (;; ) {
     nc = plain_vgetc();
     if (!(State & CMDLINE)
-        && MB_BYTE2LEN_CHECK(nc) == 1
+        && mb_byte2len_check(nc) == 1
         )
       add_to_showcmd(nc);
     if (nc == 'x' || nc == 'X')
@@ -5053,7 +5053,7 @@ insertchar (
      */
     while (    (c = vpeekc()) != NUL
                && !ISSPECIAL(c)
-               && (!has_mbyte || MB_BYTE2LEN_CHECK(c) == 1)
+               && (!has_mbyte || mb_byte2len_check(c) == 1)
                && i < INPUT_BUFLEN
                && (textwidth == 0
                    || (virtcol += byte2cells(buf[i - 1])) < (colnr_T)textwidth)
@@ -6329,7 +6329,7 @@ static void mb_replace_pop_ins(int cc)
   int i;
   int c;
 
-  if (has_mbyte && (n = MB_BYTE2LEN(cc)) > 1) {
+  if (has_mbyte && (n = mb_byte2len(cc)) > 1) {
     buf[0] = cc;
     for (i = 1; i < n; ++i)
       buf[i] = replace_pop();
@@ -6343,7 +6343,7 @@ static void mb_replace_pop_ins(int cc)
       c = replace_pop();
       if (c == -1)                  /* stack empty */
         break;
-      if ((n = MB_BYTE2LEN(c)) == 1) {
+      if ((n = mb_byte2len(c)) == 1) {
         /* Not a multi-byte char, put it back. */
         replace_push(c);
         break;

@@ -751,13 +751,6 @@ EXTERN bool enc_utf8 INIT(= false);             /* UTF-8 encoded Unicode */
 EXTERN int enc_latin1like INIT(= TRUE);         /* 'encoding' is latin1 comp. */
 EXTERN int has_mbyte INIT(= 0);                 /* any multi-byte encoding */
 
-
-/*
- * To speed up BYTELEN() we fill a table with the byte lengths whenever
- * enc_utf8 or enc_dbcs changes.
- */
-EXTERN char mb_bytelen_tab[256];
-
 /*
  * Function pointers, used to quickly get to the right function.  Each has
  * three possible values: latin_ (8-bit), utfc_ or utf_ (utf-8) and dbcs_

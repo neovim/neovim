@@ -846,7 +846,7 @@ getcount:
        * mapping. */
       no_mapping--;
       while (enc_utf8 && lang && (c = vpeekc()) > 0
-             && (c >= 0x100 || MB_BYTE2LEN(vpeekc()) > 1)) {
+             && (c >= 0x100 || mb_byte2len(vpeekc()) > 1)) {
         c = plain_vgetc();
         if (!utf_iscomposing(c)) {
           vungetc(c);                   /* it wasn't, put it back */
@@ -2505,7 +2505,7 @@ static int get_mouse_class(char_u *p)
 {
   int c;
 
-  if (has_mbyte && MB_BYTE2LEN(p[0]) > 1)
+  if (has_mbyte && mb_byte2len(p[0]) > 1)
     return mb_get_class(p);
 
   c = *p;

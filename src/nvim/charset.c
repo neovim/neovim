@@ -114,7 +114,7 @@ int buf_init_chartab(buf_T *buf, int global)
       } else if ((enc_dbcs == DBCS_JPNU) && (c == 0x8e)) {
         // euc-jp characters starting with 0x8e are single width
         chartab[c++] = CT_PRINT_CHAR + 1;
-      } else if ((enc_dbcs != 0) && (MB_BYTE2LEN(c) == 2)) {
+      } else if ((enc_dbcs != 0) && (mb_byte2len(c) == 2)) {
         // other double-byte chars can be printable AND double-width
         chartab[c++] = CT_PRINT_CHAR + 2;
       } else {
@@ -125,7 +125,7 @@ int buf_init_chartab(buf_T *buf, int global)
 
     // Assume that every multi-byte char is a filename character.
     for (c = 1; c < 256; ++c) {
-      if (((enc_dbcs != 0) && (MB_BYTE2LEN(c) > 1))
+      if (((enc_dbcs != 0) && (mb_byte2len(c) > 1))
           || ((enc_dbcs == DBCS_JPNU) && (c == 0x8e))
           || (enc_utf8 && (c >= 0xa0))) {
         chartab[c] |= CT_FNAME_CHAR;
@@ -139,7 +139,7 @@ int buf_init_chartab(buf_T *buf, int global)
   if (enc_dbcs != 0) {
     for (c = 0; c < 256; ++c) {
       // double-byte characters are probably word characters
-      if (MB_BYTE2LEN(c) == 2) {
+      if (mb_byte2len(c) == 2) {
         SET_CHARTAB(buf, c);
       }
     }
@@ -242,7 +242,7 @@ int buf_init_chartab(buf_T *buf, int global)
             if (((c < ' ')
                  || (c > '~')
                  || (p_altkeymap && (F_isalpha(c) || F_isdigit(c))))
-                && !(enc_dbcs && (MB_BYTE2LEN(c) == 2))) {
+                && !(enc_dbcs && (mb_byte2len(c) == 2))) {
               if (tilde) {
                 chartab[c] = (chartab[c] & ~CT_CELL_MASK)
                              + ((dy_flags & DY_UHEX) ? 4 : 2);
@@ -432,7 +432,7 @@ char_u* str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
   // Make each character lower case.
   i = 0;
   while (STR_CHAR(i) != NUL) {
-    if (enc_utf8 || (has_mbyte && (MB_BYTE2LEN(STR_CHAR(i)) > 1))) {
+    if (enc_utf8 || (has_mbyte && (mb_byte2len(STR_CHAR(i)) > 1))) {
       if (enc_utf8) {
         int c = utf_ptr2char(STR_PTR(i));
         int olen = utf_ptr2len(STR_PTR(i));
@@ -845,7 +845,7 @@ int vim_iswordc_buf(int c, buf_T *buf)
 /// @return TRUE if 'p' points to a keyword character.
 int vim_iswordp(char_u *p)
 {
-  if (has_mbyte && (MB_BYTE2LEN(*p) > 1)) {
+  if (has_mbyte && (mb_byte2len(*p) > 1)) {
     return mb_get_class(p) >= 2;
   }
   return GET_CHARTAB(curbuf, *p) != 0;
@@ -853,7 +853,7 @@ int vim_iswordp(char_u *p)
 
 int vim_iswordp_buf(char_u *p, buf_T *buf)
 {
-  if (has_mbyte && (MB_BYTE2LEN(*p) > 1)) {
+  if (has_mbyte && (mb_byte2len(*p) > 1)) {
     return mb_get_class(p) >= 2;
   }
   return GET_CHARTAB(buf, *p) != 0;
@@ -909,7 +909,7 @@ int vim_isprintc(int c)
 /// @return TRUE if 'c' is a printable character.
 int vim_isprintc_strict(int c)
 {
-  if ((enc_dbcs != 0) && (c < 0x100) && (MB_BYTE2LEN(c) > 1)) {
+  if ((enc_dbcs != 0) && (c < 0x100) && (mb_byte2len(c) > 1)) {
     return FALSE;
   }
 
@@ -1035,7 +1035,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
     }
   } else if (has_mbyte
              && (size == 2)
-             && (MB_BYTE2LEN(*s) > 1)
+             && (mb_byte2len(*s) > 1)
              && wp->w_p_wrap
              && in_win_border(wp, col)) {
     // Count the ">" in the last column.
@@ -1135,7 +1135,7 @@ static int win_nolbr_chartabsize(win_T *wp, char_u *s, colnr_T col, int *headp)
 
   // Add one cell for a double-width character in the last column of the
   // window, displayed with a ">".
-  if ((n == 2) && (MB_BYTE2LEN(*s) > 1) && in_win_border(wp, col)) {
+  if ((n == 2) && (mb_byte2len(*s) > 1) && in_win_border(wp, col)) {
     if (headp != NULL) {
       *headp = 1;
     }
@@ -1248,7 +1248,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
           // cells wide.
           if ((incr == 2)
               && wp->w_p_wrap
-              && (MB_BYTE2LEN(*ptr) > 1)
+              && (mb_byte2len(*ptr) > 1)
               && in_win_border(wp, vcol)) {
             ++incr;
             head = 1;

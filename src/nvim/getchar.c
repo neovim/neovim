@@ -689,7 +689,7 @@ static int read_redo(int init, int old_redo)
   /* For a multi-byte character get all the bytes and return the
    * converted character. */
   if (has_mbyte && (c != K_SPECIAL || p[1] == KS_SPECIAL))
-    n = MB_BYTE2LEN_CHECK(c);
+    n = mb_byte2len_check(c);
   else
     n = 1;
   for (i = 0;; ++i) {
@@ -1469,7 +1469,7 @@ int vgetc(void)
        * converted character.
        * Note: This will loop until enough bytes are received!
        */
-      if (has_mbyte && (n = MB_BYTE2LEN_CHECK(c)) > 1) {
+      if (has_mbyte && (n = mb_byte2len_check(c)) > 1) {
         ++no_mapping;
         buf[0] = c;
         for (i = 1; i < n; ++i) {
@@ -1812,7 +1812,7 @@ static int vgetorpeek(int advance)
                 char_u *p1 = mp->m_keys;
                 char_u *p2 = mb_unescape(&p1);
 
-                if (has_mbyte && p2 != NULL && MB_BYTE2LEN(c1) > MB_PTR2LEN(p2))
+                if (has_mbyte && p2 != NULL && mb_byte2len(c1) > MB_PTR2LEN(p2))
                   mlen = 0;
                 /*
                  * Check an entry whether it matches.

@@ -1,17 +1,6 @@
 #ifndef NVIM_MBYTE_H
 #define NVIM_MBYTE_H
 
-#include <stdbool.h>
-
-/*
- * Return byte length of character that starts with byte "b".
- * Returns 1 for a single-byte character.
- * MB_BYTE2LEN_CHECK() can be used to count a special key as one byte.
- * Don't call MB_BYTE2LEN(b) with b < 0 or b > 255!
- */
-#define MB_BYTE2LEN(b)         mb_bytelen_tab[b]
-#define MB_BYTE2LEN_CHECK(b)   (((b) < 0 || (b) > 255) ? 1 : mb_bytelen_tab[b])
-
 /* properties used in enc_canon_table[] (first three mutually exclusive) */
 #define ENC_8BIT       0x01
 #define ENC_DBCS       0x02

@@ -1329,7 +1329,7 @@ str2special (
     int len = (*mb_ptr2len)(str);
 
     /* For multi-byte characters check for an illegal byte. */
-    if (has_mbyte && MB_BYTE2LEN(*str) > len) {
+    if (has_mbyte && mb_byte2len(*str) > len) {
       transchar_nonprint(buf, c);
       *sp = str + 1;
       return buf;
