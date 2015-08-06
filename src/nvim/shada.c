@@ -687,7 +687,13 @@ static void close_sd_reader(ShaDaReadDef *const sd_reader)
 static void close_sd_writer(ShaDaWriteDef *const sd_writer)
   FUNC_ATTR_NONNULL_ALL
 {
-  close_file((int)(intptr_t) sd_writer->cookie);
+  const int fd = (int)(intptr_t) sd_writer->cookie;
+  if (fsync(fd) < 0) {
+    emsg2(_(SERR "System error while synchronizing ShaDa file: %s"),
+          strerror(errno));
+    errno = 0;
+  }
+  close_file(fd);
 }
 
 /// Wrapper for opening file descriptors
