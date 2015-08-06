@@ -132,6 +132,8 @@ struct terminal {
   // the default values are used to obtain the color numbers passed to cterm
   // colors
   RgbValue colors[256];
+  // With a reference count of 0 the terminal can be freed.
+  size_t refcount;
 };
 
 static VTermScreenCallbacks vterm_screen_callbacks = {
@@ -277,8 +279,10 @@ void terminal_close(Terminal *term, char *msg)
     // close_buffer() doesn't call this again.
     term->buf->terminal = NULL;
     term->buf = NULL;
-    // We should not wait for the user to press a key.
-    term->opts.close_cb(term->opts.data);
+    if (!term->refcount) {
+      // We should not wait for the user to press a key.
+      term->opts.close_cb(term->opts.data);
+    }
   } else {
     terminal_receive(term, msg, strlen(msg));
   }
@@ -376,7 +380,14 @@ void terminal_enter(void)
         break;
 
       case K_EVENT:
+        // We cannot let an event free the terminal yet. It is still needed.
+        term->refcount++;
         queue_process_events(loop.events);
+        term->refcount--;
+        if (term->buf == NULL) {
+          close = true;
+          goto end;
+        }
         break;
 
       case Ctrl_N:
@@ -422,19 +433,22 @@ void terminal_destroy(Terminal *term)
     term->buf->terminal = NULL;
   }
   term->buf = NULL;
-  if (pmap_has(ptr_t)(invalidated_terminals, term)) {
-    // flush any pending changes to the buffer
-    block_autocmds();
-    refresh_terminal(term);
-    unblock_autocmds();
-    pmap_del(ptr_t)(invalidated_terminals, term);
+
+  if (!term->refcount) {
+    if (pmap_has(ptr_t)(invalidated_terminals, term)) {
+      // flush any pending changes to the buffer
+      block_autocmds();
+      refresh_terminal(term);
+      unblock_autocmds();
+      pmap_del(ptr_t)(invalidated_terminals, term);
+    }
+    for (size_t i = 0; i < term->sb_current; i++) {
+      xfree(term->sb_buffer[i]);
+    }
+    xfree(term->sb_buffer);
+    vterm_free(term->vt);
+    xfree(term);
   }
-  for (size_t i = 0 ; i < term->sb_current; i++) {
-    xfree(term->sb_buffer[i]);
-  }
-  xfree(term->sb_buffer);
-  vterm_free(term->vt);
-  xfree(term);
 }
 
 void terminal_send(Terminal *term, char *data, size_t size)
