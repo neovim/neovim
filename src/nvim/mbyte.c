@@ -118,30 +118,25 @@ struct interval {
 # include "mbyte.c.generated.h"
 #endif
 
-/*
- * To speed up BYTELEN() we fill a table with the byte lengths whenever
- * enc_utf8 or enc_dbcs changes.
- */
-static char mb_bytelen_tab[256];
+/// To speed up BYTELEN() we fill a table with the byte lengths whenever
+/// enc_utf8 or enc_dbcs changes.
+static uint8_t mb_bytelen_tab[256];
 
-/*
- * Return byte length of character that starts with byte "b".
- * Returns 1 for a single-byte character.
- * mb_byte2len_check() can be used to count a special key as one byte.
- * Don't call mb_byte2len(b) with b < 0 or b > 255!
- */
-char mb_byte2len(int b) {
-    assert(b >= 0);
-    assert(b <= 255);
-    return mb_bytelen_tab[b];
+/// @return byte length of character that starts with byte "b".
+/// Returns 1 for a single-byte character.
+/// mb_byte2len_check() can be used to count a special key as one byte.
+uint8_t mb_byte2len(uint8_t b)
+{
+  return mb_bytelen_tab[b];
 }
 
-char mb_byte2len_check(int b) {
-    if (b < 0 || b > 255) {
-        return 1;
-    } else {
-        return mb_bytelen_tab[b];
-    }
+uint8_t mb_byte2len_check(int b)
+{
+  if (b < 0 || b > 255) {
+    return 1;
+  } else {
+    return mb_byte2len(b);
+  }
 }
 
 /*

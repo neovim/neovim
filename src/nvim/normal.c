@@ -846,7 +846,7 @@ getcount:
        * mapping. */
       no_mapping--;
       while (enc_utf8 && lang && (c = vpeekc()) > 0
-             && (c >= 0x100 || mb_byte2len(vpeekc()) > 1)) {
+             && (c >= 0x100 || mb_byte2len(c) > 1)) {
         c = plain_vgetc();
         if (!utf_iscomposing(c)) {
           vungetc(c);                   /* it wasn't, put it back */
