@@ -1099,25 +1099,26 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
                               && (force || oldfiles_list == NULL
                                   || oldfiles_list->lv_len == 0));
   const bool want_marks = flags & kShaDaWantMarks;
-  const unsigned srni_flags = ((flags & kShaDaWantInfo
-                                ? (kSDReadUndisableableData
-                                   | kSDReadRegisters
-                                   | kSDReadGlobalMarks
-                                   | (p_hi ? kSDReadHistory : 0)
-                                   | (find_shada_parameter('!') != NULL
-                                      ? kSDReadVariables
-                                      : 0)
-                                   | (find_shada_parameter('%') != NULL
-                                      && ARGCOUNT == 0
-                                      ? kSDReadBufferList
-                                      : 0))
-                                : 0)
-                               | (want_marks && get_shada_parameter('\'') > 0
-                                  ? kSDReadLocalMarks | kSDReadChanges
-                                  : 0)
-                               | (get_old_files
-                                  ? kSDReadLocalMarks
-                                  : 0));
+  const unsigned srni_flags = (unsigned) (
+      (flags & kShaDaWantInfo
+       ? (kSDReadUndisableableData
+          | kSDReadRegisters
+          | kSDReadGlobalMarks
+          | (p_hi ? kSDReadHistory : 0)
+          | (find_shada_parameter('!') != NULL
+             ? kSDReadVariables
+             : 0)
+          | (find_shada_parameter('%') != NULL
+             && ARGCOUNT == 0
+             ? kSDReadBufferList
+             : 0))
+       : 0)
+      | (want_marks && get_shada_parameter('\'') > 0
+         ? kSDReadLocalMarks | kSDReadChanges
+         : 0)
+      | (get_old_files
+         ? kSDReadLocalMarks
+         : 0));
   if (srni_flags == 0) {
     // Nothing to do.
     return;
@@ -2039,7 +2040,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
     }
   }
 
-  const unsigned srni_flags = (
+  const unsigned srni_flags = (unsigned) (
     kSDReadUndisableableData
     | kSDReadUnknown
     | (dump_history ? kSDReadHistory : 0)
