@@ -902,7 +902,7 @@ int vim_isfilec_or_wc(int c)
   return vim_isfilec(c) || c == ']' || path_has_wildcard(buf);
 }
 
-/// return TRUE if 'c' is a printable character
+/// return true if 'c' is a printable character
 /// Assume characters above 0x100 are printable (multi-byte), except for
 /// Unicode.
 ///
@@ -917,7 +917,7 @@ bool vim_isprintc(int c) FUNC_ATTR_PURE
   return c >= 0x100 || (c > 0 && (chartab[c] & CT_PRINT_CHAR));
 }
 
-/// Strict version of vim_isprintc(c), don't return TRUE if "c" is the head
+/// Strict version of vim_isprintc(c), don't return true if "c" is the head
 /// byte of a double-byte character.
 ///
 /// @param c
@@ -926,13 +926,10 @@ bool vim_isprintc(int c) FUNC_ATTR_PURE
 bool vim_isprintc_strict(int c) FUNC_ATTR_PURE
 {
   if ((enc_dbcs != 0) && (c < 0x100) && (MB_BYTE2LEN(c) > 1)) {
-    return FALSE;
+    return false;
   }
 
-  if (enc_utf8 && (c >= 0x100)) {
-    return utf_printable(c);
-  }
-  return c >= 0x100 || (c > 0 && (chartab[c] & CT_PRINT_CHAR));
+  return vim_isprintc(c);
 }
 
 /// like chartabsize(), but also check for line breaks on the screen
