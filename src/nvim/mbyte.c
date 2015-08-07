@@ -121,15 +121,15 @@ struct interval {
 /// enc_utf8 or enc_dbcs changes.
 static uint8_t mb_bytelen_tab[256];
 
-/// @return byte length of character that starts with byte "b".
 /// Returns 1 for a single-byte character.
-/// mb_byte2len_check() can be used to count a special key as one byte.
-uint8_t mb_byte2len(uint8_t b)
+/// @return byte length of character that starts with byte "b".
+uint8_t mb_byte2len(uint8_t b) FUNC_ATTR_PURE
 {
   return mb_bytelen_tab[b];
 }
 
-uint8_t mb_byte2len_check(int b)
+/// mb_byte2len_check() can be used to count a special key as one byte.
+uint8_t mb_byte2len_check(int b) FUNC_ATTR_PURE
 {
   if (b < 0 || b > 255) {
     return 1;
