@@ -1,18 +1,18 @@
 do
-  local proc =
-    io.popen([[python3 -c 'import neovim, sys; sys.stdout.write("ok")' 2> /dev/null]])
+  local proc = io.popen(
+    [[python3 -c 'import neovim, sys; sys.stdout.write("ok")' 2> /dev/null]])
   if proc:read() ~= 'ok' then
-    -- Don't run these tests if python3 is not available
+    pending(
+      'python3 (or the python3 neovim module) is broken or missing',
+      function() end)
     return
   end
 end
-
 
 local helpers = require('test.functional.helpers')
 local eval, command, feed = helpers.eval, helpers.command, helpers.feed
 local eq, clear, insert = helpers.eq, helpers.clear, helpers.insert
 local expect, write_file = helpers.expect, helpers.write_file
-
 
 describe('python3 commands and functions', function()
   before_each(function()
