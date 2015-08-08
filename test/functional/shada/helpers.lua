@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')
 local spawn, set_session, nvim, nvim_prog, nvim_command, nvim_eval =
   helpers.spawn, helpers.set_session, helpers.nvim, helpers.nvim_prog,
   helpers.command, helpers.eval
+local write_file = helpers.write_file
 
 local tmpname = os.tmpname()
 local additional_cmd = ''
@@ -60,9 +61,20 @@ local exc_exec = function(cmd)
   return ret
 end
 
+local get_shada_rw = function(fname)
+  local wshada = function(text)
+    write_file(fname, text, true)
+  end
+  local sdrcmd = function(bang)
+    return 'rshada' .. (bang and '!' or '') .. ' ' .. fname
+  end
+  return wshada, sdrcmd, fname
+end
+
 return {
   reset=reset,
   set_additional_cmd=set_additional_cmd,
   clear=clear,
   exc_exec=exc_exec,
+  get_shada_rw=get_shada_rw,
 }
