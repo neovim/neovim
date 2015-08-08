@@ -21051,7 +21051,9 @@ static inline TerminalJobData *common_job_init(char **argv, ufunc_T *on_stdout,
   proc->argv = argv;
   proc->in = &data->in;
   proc->out = &data->out;
-  proc->err = &data->err;
+  if (!pty) {
+    proc->err = &data->err;
+  }
   proc->cb = on_process_exit;
   proc->events = data->events;
   return data;

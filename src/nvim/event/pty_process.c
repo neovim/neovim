@@ -37,6 +37,7 @@ bool pty_process_spawn(PtyProcess *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
   Process *proc = (Process *)ptyproc;
+  assert(!proc->err);
   uv_signal_start(&proc->loop->children_watcher, chld_handler, SIGCHLD);
   ptyproc->winsize = (struct winsize){ptyproc->height, ptyproc->width, 0, 0};
   struct termios termios;
@@ -68,9 +69,6 @@ bool pty_process_spawn(PtyProcess *ptyproc)
     goto error;
   }
   if (proc->out && !set_duplicating_descriptor(master, &proc->out->uv.pipe)) {
-    goto error;
-  }
-  if (proc->err && !set_duplicating_descriptor(master, &proc->err->uv.pipe)) {
     goto error;
   }
 
