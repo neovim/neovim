@@ -490,4 +490,11 @@ $
     eq('Vim(wshada):E576: Failed to parse ShaDa file: extra bytes in msgpack string at position 3', exc_exec('wshada ' .. shada_fname))
     eq(0, exc_exec('wshada! ' .. shada_fname))
   end)
+
+  it('fails on invalid ShaDa file (failing skip in second item)', function()
+    wshada('\001\000\001\128#!/')
+    eq('Vim(rshada):E576: Error while reading ShaDa file: last entry specified that it occupies 47 bytes, but file ended earlier', exc_exec(sdrcmd()))
+    eq('Vim(wshada):E576: Error while reading ShaDa file: last entry specified that it occupies 47 bytes, but file ended earlier', exc_exec('wshada ' .. shada_fname))
+    eq(0, exc_exec('wshada! ' .. shada_fname))
+  end)
 end)
