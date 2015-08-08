@@ -2001,6 +2001,93 @@ static int compare_file_marks(const void *a, const void *b)
              : 1));
 }
 
+/// Parse msgpack object that has given length
+///
+/// @param[in]   sd_reader     Structure containing file reader definition.
+/// @param[in]   length        Object length.
+/// @param[out]  ret_unpacked  Location where read result should be saved. If 
+///                            NULL then unpacked data will be freed. Must be 
+///                            NULL if `ret_buf` is NULL.
+/// @param[out]  ret_buf       Buffer containing parsed string.
+///
+/// @return kSDReadStatusNotShaDa, kSDReadStatusReadError or 
+///         kSDReadStatusSuccess.
+static inline ShaDaReadResult shada_parse_msgpack(
+    ShaDaReadDef *const sd_reader, const size_t length,
+    msgpack_unpacked *ret_unpacked, char **const ret_buf)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
+{
+  const uintmax_t initial_fpos = sd_reader->fpos;
+  char *const buf = xmalloc(length);
+
+  const ShaDaReadResult fl_ret = fread_len(sd_reader, buf, length);
+  if (fl_ret != kSDReadStatusSuccess) {
+    xfree(buf);
+    return fl_ret;
+  }
+  bool did_try_to_free = false;
+shada_parse_msgpack_read_next: {}
+  size_t off = 0;
+  msgpack_unpacked unpacked;
+  msgpack_unpacked_init(&unpacked);
+  const msgpack_unpack_return result =
+      msgpack_unpack_next(&unpacked, buf, length, &off);
+  ShaDaReadResult ret = kSDReadStatusSuccess;
+  switch (result) {
+    case MSGPACK_UNPACK_SUCCESS: {
+      if (off < length) {
+        goto shada_parse_msgpack_extra_bytes;
+      }
+      break;
+    }
+    case MSGPACK_UNPACK_PARSE_ERROR: {
+      emsgu(_(RCERR "Failed to parse ShaDa file due to a msgpack parser error "
+              "at position %" PRIu64),
+            (uint64_t) initial_fpos);
+      ret = kSDReadStatusNotShaDa;
+      break;
+    }
+    case MSGPACK_UNPACK_NOMEM_ERROR: {
+      if (!did_try_to_free) {
+        did_try_to_free = true;
+        try_to_free_memory();
+        goto shada_parse_msgpack_read_next;
+      }
+      EMSG(_(e_outofmem));
+      ret = kSDReadStatusReadError;
+      break;
+    }
+    case MSGPACK_UNPACK_CONTINUE: {
+      emsgu(_(RCERR "Failed to parse ShaDa file: incomplete msgpack string "
+              "at position %" PRIu64),
+            (uint64_t) initial_fpos);
+      ret = kSDReadStatusNotShaDa;
+      break;
+    }
+    case MSGPACK_UNPACK_EXTRA_BYTES: {
+shada_parse_msgpack_extra_bytes:
+      emsgu(_(RCERR "Failed to parse ShaDa file: extra bytes in msgpack string "
+              "at position %" PRIu64),
+            (uint64_t) initial_fpos);
+      ret = kSDReadStatusNotShaDa;
+      break;
+    }
+  }
+  if (ret_buf != NULL && ret == kSDReadStatusSuccess) {
+    if (ret_unpacked == NULL) {
+      msgpack_unpacked_destroy(&unpacked);
+    } else {
+      *ret_unpacked = unpacked;
+    }
+    *ret_buf = buf;
+  } else {
+    assert(ret_buf == NULL || ret != kSDReadStatusSuccess);
+    msgpack_unpacked_destroy(&unpacked);
+    xfree(buf);
+  }
+  return ret;
+}
+
 /// Write ShaDa file
 ///
 /// @param[in]  sd_writer  Structure containing file writer definition.
@@ -3258,9 +3345,23 @@ shada_read_next_item_start:
        ? !(flags & kSDReadUnknown)
        : !((unsigned) (1 << type_u64) & flags))
       || (max_kbyte && length > max_kbyte * 1024)) {
-    const ShaDaReadResult fl_ret = fread_len(sd_reader, NULL, length);
-    if (fl_ret != kSDReadStatusSuccess) {
-      return fl_ret;
+    // First entry is unknown or equal to "\n" (10)? Most likely this means that 
+    // current file is not a ShaDa file because first item should normally be 
+    // a header (excluding tests where first item is tested item). Check this by 
+    // parsing entry contents: in non-ShaDa files this will most likely result 
+    // in incomplete MessagePack string.
+    if (initial_fpos == 0
+        && (type_u64 == '\n' || type_u64 > SHADA_LAST_ENTRY)) {
+      const ShaDaReadResult spm_ret = shada_parse_msgpack(sd_reader, length,
+                                                          NULL, NULL);
+      if (spm_ret != kSDReadStatusSuccess) {
+        return spm_ret;
+      }
+    } else {
+      const ShaDaReadResult fl_ret = fread_len(sd_reader, NULL, length);
+      if (fl_ret != kSDReadStatusSuccess) {
+        return fl_ret;
+      }
     }
     goto shada_read_next_item_start;
   }
@@ -3269,72 +3370,33 @@ shada_read_next_item_start:
     entry->type = kSDItemUnknown;
     entry->data.unknown_item.size = length;
     entry->data.unknown_item.type = type_u64;
-    entry->data.unknown_item.contents = xmalloc(length);
-    const ShaDaReadResult fl_ret = fread_len(sd_reader,
-                                             entry->data.unknown_item.contents,
-                                             length);
-    if (fl_ret != kSDReadStatusSuccess) {
-      shada_free_shada_entry(entry);
-      entry->type = kSDItemMissing;
-    }
-    return fl_ret;
-  }
-
-  char *const buf = xmalloc(length);
-
-  {
-    const ShaDaReadResult fl_ret = fread_len(sd_reader, buf, length);
-    if (fl_ret != kSDReadStatusSuccess) {
-      xfree(buf);
+    if (initial_fpos == 0) {
+      const ShaDaReadResult spm_ret = shada_parse_msgpack(
+          sd_reader, length, NULL, &entry->data.unknown_item.contents);
+      if (spm_ret != kSDReadStatusSuccess) {
+        entry->type = kSDItemMissing;
+      }
+      return spm_ret;
+    } else {
+      entry->data.unknown_item.contents = xmalloc(length);
+      const ShaDaReadResult fl_ret = fread_len(
+          sd_reader, entry->data.unknown_item.contents, length);
+      if (fl_ret != kSDReadStatusSuccess) {
+        shada_free_shada_entry(entry);
+        entry->type = kSDItemMissing;
+      }
       return fl_ret;
     }
   }
 
   msgpack_unpacked unpacked;
-  msgpack_unpacked_init(&unpacked);
+  char *buf = NULL;
 
-  bool did_try_to_free = false;
-shada_read_next_item_read_next: {}
-  size_t off = 0;
-  const msgpack_unpack_return result =
-      msgpack_unpack_next(&unpacked, buf, length, &off);
-  ret = kSDReadStatusNotShaDa;
-  switch (result) {
-    case MSGPACK_UNPACK_SUCCESS: {
-      if (off < length) {
-        goto shada_read_next_item_extra_bytes;
-      }
-      break;
-    }
-    case MSGPACK_UNPACK_PARSE_ERROR: {
-      emsgu(_(RCERR "Failed to parse ShaDa file due to a msgpack parser error "
-              "at position %" PRIu64),
-            (uint64_t) initial_fpos);
-      goto shada_read_next_item_error;
-    }
-    case MSGPACK_UNPACK_NOMEM_ERROR: {
-      if (!did_try_to_free) {
-        did_try_to_free = true;
-        try_to_free_memory();
-        goto shada_read_next_item_read_next;
-      }
-      EMSG(_(e_outofmem));
-      ret = kSDReadStatusReadError;
-      goto shada_read_next_item_error;
-    }
-    case MSGPACK_UNPACK_CONTINUE: {
-      emsgu(_(RCERR "Failed to parse ShaDa file: incomplete msgpack string "
-              "at position %" PRIu64),
-            (uint64_t) initial_fpos);
-      goto shada_read_next_item_error;
-    }
-    case MSGPACK_UNPACK_EXTRA_BYTES: {
-shada_read_next_item_extra_bytes:
-      emsgu(_(RCERR "Failed to parse ShaDa file: extra bytes in msgpack string "
-              "at position %" PRIu64),
-            (uint64_t) initial_fpos);
-      goto shada_read_next_item_error;
-    }
+  const ShaDaReadResult spm_ret = shada_parse_msgpack(sd_reader, length,
+                                                      &unpacked, &buf);
+  if (spm_ret != kSDReadStatusSuccess) {
+    ret = spm_ret;
+    goto shada_read_next_item_error;
   }
   ret = kSDReadStatusMalformed;
 #define CHECK_KEY(key, expected) \
@@ -3968,7 +4030,6 @@ shada_read_next_item_hist_no_conv:
     }
   }
   entry->type = (ShadaEntryType) type_u64;
-  goto shada_read_next_item_end;
 #undef BIN_CONVERTED
 #undef CONVERTED
 #undef CHECK_KEY
@@ -3989,17 +4050,16 @@ shada_read_next_item_hist_no_conv:
 #undef TOSIZE
 #undef SET_ADDITIONAL_DATA
 #undef SET_ADDITIONAL_ELEMENTS
-shada_read_next_item_error:
-  msgpack_unpacked_destroy(&unpacked);
-  xfree(buf);
-  entry->type = (ShadaEntryType) type_u64;
-  shada_free_shada_entry(entry);
-  entry->type = kSDItemMissing;
-  return ret;
+  ret = kSDReadStatusSuccess;
 shada_read_next_item_end:
   msgpack_unpacked_destroy(&unpacked);
   xfree(buf);
-  return kSDReadStatusSuccess;
+  return ret;
+shada_read_next_item_error:
+  entry->type = (ShadaEntryType) type_u64;
+  shada_free_shada_entry(entry);
+  entry->type = kSDItemMissing;
+  goto shada_read_next_item_end;
 }
 
 /// Check whether "name" is on removable media (according to 'shada')
