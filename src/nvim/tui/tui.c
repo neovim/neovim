@@ -66,6 +66,8 @@ typedef struct {
   } unibi_ext;
 } TUIData;
 
+static bool volatile got_winch = false;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/tui.c.generated.h"
 #endif
@@ -212,6 +214,7 @@ static void try_resize(Event ev)
 
 static void sigwinch_cb(SignalWatcher *watcher, int signum, void *data)
 {
+  got_winch = true;
   // Queue the event because resizing can result in recursive event_poll calls
   // FIXME(blueyed): TUI does not resize properly when not deferred. Why? #2322
   loop_push_event(&loop, (Event) {
@@ -354,10 +357,13 @@ static void tui_resize(UI *ui, int width, int height)
   data->scroll_region.right = width - 1;
   data->row = data->col = 0;
 
-  // try to resize the terminal window
-  char r[16];  // enough for 9999x9999
-  snprintf(r, sizeof(r), "\x1b[8;%d;%dt", height, width);
-  out(ui, r, strlen(r));
+  if (!got_winch) {  // Try to resize the terminal window.
+    char r[16];  // enough for 9999x9999
+    snprintf(r, sizeof(r), "\x1b[8;%d;%dt", height, width);
+    out(ui, r, strlen(r));
+  } else {  // Already handled the SIGWINCH signal; avoid double-resize.
+    got_winch = false;
+  }
 }
 
 static void tui_clear(UI *ui)
