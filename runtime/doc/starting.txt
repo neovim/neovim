@@ -896,7 +896,7 @@ To automatically save and restore views for *.c files: >
 	au BufWinEnter *.c silent loadview
 
 ==============================================================================
-8. The ShaDa file			    *shada* *shada-file* *E575* *E576*
+8. The ShaDa file				*shada* *shada-file*
 If you exit Vim and later start it again, you would normally lose a lot of
 information.  The ShaDa file can be used to remember that information, which
 enables you to continue where you left off.
@@ -1105,7 +1105,8 @@ in your .nvimrc file like >
 	:rshada! ~/.my.shada
 can be used to load this information.  You could even have different ShaDa 
 files for different types of files (e.g., C code) and load them based on the 
-file name, using the ":autocmd" command (see |:autocmd|).
+file name, using the ":autocmd" command (see |:autocmd|).  More information on 
+ShaDa file format is contained in |shada-format| section.
 
 							*shada-errors*
 When Vim detects an error while reading a ShaDa file, it will not overwrite
@@ -1116,7 +1117,7 @@ accidentally did that!).  If you want to overwrite a ShaDa file with an error
 in it, you will either have to fix the error, delete the file (while NeoVim is 
 running, so most of the information will be restored) or write it explicitly 
 with |:wshada| and a bang.
-							*E136* *E138*
+					  *E136* *E138* *shada-error-handling*
 Note: when NeoVim finds out that it failed to write part of the ShaDa file 
 (e.g. because there is no space left to write the file) or when it appears 
 that already present ShaDa file contains errors that indicate that this file 
@@ -1164,5 +1165,155 @@ not write ShaDa file at all.
 			If you get the |press-enter| prompt you can press "q"
 			and still get the prompt to enter a file number.
 			Use ! to abandon a modified buffer. |abandon|
+
+SHADA FILE FORMAT						*shada-format*
+
+ShaDa files are concats of MessagePack entries.  Each entry is a concat of 
+exactly four MessagePack objects:
+
+1. First goes type of the entry.  Object type must be an unsigned integer.  
+   Object type must not be equal to zero.
+2. Second goes entry timestamp.  It must also be an unsigned integer.
+3. Third goes the length of the fourth entry.  Unsigned integer as well, used 
+   for fast skipping without parsing.
+4. Fourth is actual entry data.  All currently used ShaDa entries use 
+   containers to hold data: either map or array.  Exact format depends on the 
+   entry type:
+
+   Entry type (name)   Entry data ~
+   1 (Header)          Map containing data that describes the NeoVim instance 
+                       that written this ShaDa file.  It is ignored when 
+                       reading ShaDa files.  Contains the following data:
+                       Key        Data ~
+                       version    Binary, NeoVim version.
+                       encoding   Binary, effective 'encoding' value.
+                       max_kbyte  Integer, effective |shada-s| limit value.
+                       pid        Integer, instance process ID.
+   2 (SearchPattern)   Map containing data describing last used search or 
+                       substitute pattern.  Normally ShaDa file contains two 
+                       such entries: one with "ss" key set to true (describes 
+                       substitute pattern, see |:substitute|), and one set to 
+                       false (describes search pattern, see 
+                       |search-commands|). "su" key should be true on one of 
+                       the entries.  If key value is equal to default then it 
+                       is normally not present.  Keys:
+                       Key  Type     Default  Description ~
+                       sm   Boolean  true     Effective 'magic' value.
+                       sc   Boolean  false    Effective 'smartcase' value.
+                       sl   Boolean  true     True if search pattern comes 
+                                              with a line offset.  See 
+                                              |search-offset|.
+                       se   Boolean  false    True if |search-offset| 
+                                              requested to place cursor at 
+                                              (relative to) the end of the 
+                                              pattern.
+                       so   Integer  0        Offset value. |search-offset|
+                       su   Boolean  false    True if current entry was the 
+                                              last used search pattern.
+                       ss   Boolean  false    True if current entry describes 
+                                              |:substitute| pattern.
+                       sh   Boolean  false    True if |v:hlsearch| is on.
+                                              With |shada-h| or 'nohlsearch' 
+                                              this key is always false.
+                       sp   Binary   N/A      Actual pattern.  Required.
+                       *    any      none     Other keys are allowed for 
+                                              compatibility reasons, see 
+                                              |shada-compatibility|.
+   3 (SubString)       Array containing last |:substitute| replacement string.  
+                       Contains single entry: binary, replacement string used.  
+                       More entries are allowed for compatibility reasons, see 
+                       |shada-compatibility|.
+   4 (HistoryEntry)    Array containing one entry from history.  Should have 
+                       two or three entries.  First one is history type 
+                       (unsigned integer), second is history line (binary), 
+                       third is the separator character (unsigned integer, 
+                       must be in interval [0, 255]).  Third item is only 
+                       valid for search history.  Possible history types are 
+                       listed in |hist-names|, here are the corresponding 
+                       numbers: 0 - cmd, 1 - search, 2 - expr, 3 - input, 
+                       4 - debug.
+   5 (Register)        Map describing one register (|registers|).  If key 
+                       value is equal to default then it is normally not 
+                       present.  Keys:
+                       Key  Type             Def  Description ~
+                       rt   UInteger         0    Register type:
+                                                  No  Description ~
+                                                  0   |characterwise-register|
+                                                  1   |linewise-register|
+                                                  2   |blockwise-register|
+                       rw   UInteger         0    Register width. Only valid 
+                                                  for |blockwise-register|s.
+                       rc   Array of binary  N/A  Register contents.  Each 
+                                                  entry in the array 
+                                                  represents its own line.  
+                                                  NUL characters inside the 
+                                                  line should be represented 
+                                                  as NL according to 
+                                                  |NL-used-for-Nul|.
+                       n    UInteger         N/A  Register name: character 
+                                                  code in range [1, 255].  
+                                                  Example: |quote0| register 
+                                                  has name 48 (ASCII code for 
+                                                  zero character).
+                       *    any              none Other keys are allowed 
+                                                  for compatibility reasons, 
+                                                  see |shada-compatibility|.
+   6 (Variable)        Array containing two items: variable name (binary) and 
+                       variable value (any object).  Values are converted 
+                       using the same code |msgpackparse()| uses when reading, 
+                       |msgpackdump()| when writing, so there may appear 
+                       |msgpack-special-dict|s.  If there are more then two 
+                       entries then the rest are ignored 
+                       (|shada-compatibility|).
+   7 (GlobalMark)
+   8 (Jump)
+   10 (LocalMark)
+   11 (Change)         Map containing some position description:
+                       Entry      Position ~
+                       GlobaMark  Global mark position. |'A|
+                       LocalMark  Local mark position. |'a|
+                       Jump       One position from the |jumplist|.
+                       Change     One position from the |changelist|.
+
+                       Data contained in the map:
+                       Key  Type      Default  Description ~
+                       l    UInteger  1        Position line number.  Must be 
+                                               greater then zero.
+                       c    UInteger  0        Position column number.
+                       n    UInteger  34 ('"') Mark name.  Only valid for 
+                                               GlobalMark and LocalMark 
+                                               entries.
+                       f    Binary    N/A      File name.  Required.
+                       *    any       none     Other keys are allowed for 
+                                               compatibility reasons, see 
+                                               |shada-compatibility|.
+   9 (BufferList)      Array containing maps.  Each map in the array 
+                       represents one buffer.  Possible keys:
+                       Key  Type      Default  Description ~
+                       l    UInteger  1        Position line number.  Must be 
+                                               greater then zero.
+                       c    UInteger  0        Position column number.
+                       f    Binary    N/A      File name.  Required.
+                       *    any       none     Other keys are allowed for 
+                                               compatibility reasons, see 
+                                               |shada-compatibility|.
+   * (Unknown)         Any other entry type is allowed for compatibility 
+                       reasons, see |shada-compatibility|.
+
+								*E575* *E576*
+Errors in ShaDa file may have two types: E575 used for all “logical” errors 
+and E576 used for all “critical” errors.  Critical errors trigger behaviour 
+described in |shada-error-handling| when writing and skipping the rest of the 
+file when reading and include:
+
+- Any of first three MessagePack objects being not an unsigned integer.
+- Third object requesting amount of bytes greater then bytes left in the ShaDa 
+  file.
+- Entry with zero type.  I.e. first object being equal to zero.
+- MessagePack parser failing to parse the entry data.
+- MessagePack parser consuming less or requesting greater bytes then described 
+  in the third object for parsing fourth object.  I.e. when fourth object 
+  either contains more then one MessagePack object or it does not contain 
+  complete MessagePack object.
 
  vim:tw=78:ts=8:ft=help:norl:
