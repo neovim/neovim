@@ -862,15 +862,6 @@ static inline bool in_strset(const khash_t(strset) *const set, char *str)
   return kh_get(strset, set, str) != kh_end(set);
 }
 
-/// Check whether buffer is on removable media
-///
-/// Uses pre-populated set with buffers on removable media named removable_bufs.
-///
-/// @param[in]  buf  Buffer to check.
-///
-/// @return true or false.
-#define SHADA_REMOVABLE(buf) in_bufset(removable_bufs, buf)
-
 /// Msgpack callback for writing to ShaDaWriteDef*
 static int msgpack_sd_writer_write(void *data, const char *buf, size_t len)
 {
@@ -1195,23 +1186,12 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
     }
   }
   ShadaEntry cur_entry;
-  khash_t(bufset) *cl_bufs = NULL;
-  if (srni_flags & kSDReadChanges) {
-    cl_bufs = kh_init(bufset);
-  }
-  khash_t(fnamebufs) *fname_bufs = NULL;
-  if (srni_flags & (kSDReadUndisableableData
-                    | kSDReadChanges
-                    | kSDReadLocalMarks)) {
-    fname_bufs = kh_init(fnamebufs);
-  }
-  khash_t(strset) *oldfiles_set = NULL;
-  if (get_old_files) {
-    oldfiles_set = kh_init(strset);
-    if (oldfiles_list == NULL) {
-      oldfiles_list = list_alloc();
-      set_vim_var_list(VV_OLDFILES, oldfiles_list);
-    }
+  khash_t(bufset) cl_bufs = KHASH_EMPTY_TABLE(bufset);
+  khash_t(fnamebufs) fname_bufs = KHASH_EMPTY_TABLE(fnamebufs);
+  khash_t(strset) oldfiles_set = KHASH_EMPTY_TABLE(strset);
+  if (get_old_files && oldfiles_list == NULL) {
+    oldfiles_list = list_alloc();
+    set_vim_var_list(VV_OLDFILES, oldfiles_list);
   }
   ShaDaReadResult srni_ret;
   while ((srni_ret = shada_read_next_item(sd_reader, &cur_entry, srni_flags, 0))
@@ -1334,7 +1314,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
       }
       case kSDItemJump:
       case kSDItemGlobalMark: {
-        buf_T *buf = find_buffer(fname_bufs, cur_entry.data.filemark.fname);
+        buf_T *buf = find_buffer(&fname_bufs, cur_entry.data.filemark.fname);
         if (buf != NULL) {
           xfree(cur_entry.data.filemark.fname);
           cur_entry.data.filemark.fname = NULL;
@@ -1444,8 +1424,8 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
       }
       case kSDItemChange:
       case kSDItemLocalMark: {
-        if (oldfiles_set != NULL
-            && !in_strset(oldfiles_set, cur_entry.data.filemark.fname)) {
+        if (get_old_files && !in_strset(&oldfiles_set,
+                                        cur_entry.data.filemark.fname)) {
           char *fname = cur_entry.data.filemark.fname;
           if (want_marks) {
             // Do not bother with allocating memory for the string if already 
@@ -1454,7 +1434,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
             fname = xstrdup(fname);
           }
           int kh_ret;
-          (void) kh_put(strset, oldfiles_set, fname, &kh_ret);
+          (void) kh_put(strset, &oldfiles_set, fname, &kh_ret);
           list_append_allocated_string(oldfiles_list, fname);
           if (!want_marks) {
             // Avoid free because this string was already used.
@@ -1465,7 +1445,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
           shada_free_shada_entry(&cur_entry);
           break;
         }
-        buf_T *buf = find_buffer(fname_bufs, cur_entry.data.filemark.fname);
+        buf_T *buf = find_buffer(&fname_bufs, cur_entry.data.filemark.fname);
         if (buf == NULL) {
           shada_free_shada_entry(&cur_entry);
           break;
@@ -1483,7 +1463,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
           }
         } else {
           int kh_ret;
-          (void) kh_put(bufset, cl_bufs, (uintptr_t) buf, &kh_ret);
+          (void) kh_put(bufset, &cl_bufs, (uintptr_t) buf, &kh_ret);
           if (force) {
             if (buf->b_changelistlen == JUMPLISTSIZE) {
               free_fmark(buf->b_changelist[0]);
@@ -1562,25 +1542,21 @@ shada_read_main_cycle_end:
       hms_dealloc(&hms[i]);
     }
   }
-  if (cl_bufs != NULL) {
+  if (cl_bufs.n_occupied) {
     FOR_ALL_TAB_WINDOWS(tp, wp) {
       (void) tp;
-      if (in_bufset(cl_bufs, wp->w_buffer)) {
+      if (in_bufset(&cl_bufs, wp->w_buffer)) {
         wp->w_changelistidx = wp->w_buffer->b_changelistlen;
       }
     }
-    kh_destroy(bufset, cl_bufs);
   }
-  if (fname_bufs != NULL) {
-    const char *key;
-    kh_foreach_key(fname_bufs, key, {
-      xfree((void *) key);
-    })
-    kh_destroy(fnamebufs, fname_bufs);
-  }
-  if (oldfiles_set != NULL) {
-    kh_destroy(strset, oldfiles_set);
-  }
+  kh_dealloc(bufset, &cl_bufs);
+  const char *key;
+  kh_foreach_key(&fname_bufs, key, {
+    xfree((void *) key);
+  })
+  kh_dealloc(fnamebufs, &fname_bufs);
+  kh_dealloc(strset, &oldfiles_set);
 }
 
 /// Get the ShaDa file name to use
@@ -2181,7 +2157,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   }
   const bool limit_reg_lines = max_reg_lines >= 0;
   const bool dump_registers = (max_reg_lines != 0);
-  khash_t(bufset) *const removable_bufs = kh_init(bufset);
+  khash_t(bufset) removable_bufs = KHASH_EMPTY_TABLE(bufset);
   const size_t max_kbyte = (size_t) max_kbyte_i;
   const size_t num_marked_files = (size_t) get_shada_parameter('\'');
   const bool dump_global_marks = get_shada_parameter('f') != 0;
@@ -2218,7 +2194,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   FOR_ALL_BUFFERS(buf) {
     if (buf->b_ffname != NULL && shada_removable((char *) buf->b_ffname)) {
       int kh_ret;
-      (void) kh_put(bufset, removable_bufs, (uintptr_t) buf, &kh_ret);
+      (void) kh_put(bufset, &removable_bufs, (uintptr_t) buf, &kh_ret);
     }
   }
 
@@ -2251,7 +2227,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   if (find_shada_parameter('%') != NULL) {
     size_t buf_count = 0;
     FOR_ALL_BUFFERS(buf) {
-      if (buf->b_ffname != NULL && !SHADA_REMOVABLE(buf)) {
+      if (buf->b_ffname != NULL && !in_bufset(&removable_bufs, buf)) {
         buf_count++;
       }
     }
@@ -2269,7 +2245,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
     };
     size_t i = 0;
     FOR_ALL_BUFFERS(buf) {
-      if (buf->b_ffname == NULL || SHADA_REMOVABLE(buf)) {
+      if (buf->b_ffname == NULL || in_bufset(&removable_bufs, buf)) {
         continue;
       }
       buflist_entry.data.buffer_list.buffers[i] = (struct buffer_list_buffer) {
@@ -2410,7 +2386,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
                               ? NULL
                               : buflist_findnr(fm.fmark.fnum));
     if (buf != NULL
-        ? SHADA_REMOVABLE(buf)
+        ? in_bufset(&removable_bufs, buf)
         : fm.fmark.fnum != 0) {
       continue;
     }
@@ -2458,7 +2434,8 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
         fname = (const char *) fm.fname;
       } else {
         const buf_T *const buf = buflist_findnr(fm.fmark.fnum);
-        if (buf == NULL || buf->b_ffname == NULL || SHADA_REMOVABLE(buf)) {
+        if (buf == NULL || buf->b_ffname == NULL
+            || in_bufset(&removable_bufs, buf)) {
           continue;
         }
         fname = (const char *) buf->b_ffname;
@@ -2517,7 +2494,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   // Initialize buffers
   if (num_marked_files > 0) {
     FOR_ALL_BUFFERS(buf) {
-      if (buf->b_ffname == NULL || SHADA_REMOVABLE(buf)) {
+      if (buf->b_ffname == NULL || in_bufset(&removable_bufs, buf)) {
         continue;
       }
       const void *local_marks_iter = NULL;
@@ -2927,7 +2904,7 @@ shada_write_main_cycle_end:
 
 shada_write_exit:
   kh_dealloc(file_marks, &wms->file_marks);
-  kh_destroy(bufset, removable_bufs);
+  kh_dealloc(bufset, &removable_bufs);
   msgpack_packer_free(packer);
   kh_dealloc(strset, &wms->dumped_variables);
   xfree(wms);

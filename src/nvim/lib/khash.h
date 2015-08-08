@@ -653,4 +653,19 @@ typedef const char *kh_cstr_t;
  */
 #define KHASH_MAP_INIT_STR(name, khval_t)								\
 	KHASH_INIT(name, kh_cstr_t, khval_t, 1, kh_str_hash_func, kh_str_hash_equal)
+
+/*! @function
+  @abstract     Return a literal for an empty hash table.
+  @param  name  Name of the hash table [symbol]
+ */
+#define KHASH_EMPTY_TABLE(name) \
+	((kh_##name##_t) { \
+		.n_buckets = 0, \
+		.size = 0, \
+		.n_occupied = 0, \
+		.upper_bound = 0, \
+		.flags = NULL, \
+		.keys = NULL, \
+		.vals = NULL, \
+	})
 #endif /* __AC_KHASH_H */
