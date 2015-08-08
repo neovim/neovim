@@ -15,6 +15,7 @@ void signal_watcher_init(Loop *loop, SignalWatcher *watcher, void *data)
   watcher->uv.data = watcher;
   watcher->data = data;
   watcher->cb = NULL;
+  watcher->events = loop->fast_events;
 }
 
 void signal_watcher_start(SignalWatcher *watcher, signal_cb cb, int signum)
@@ -37,10 +38,16 @@ void signal_watcher_close(SignalWatcher *watcher, signal_close_cb cb)
   uv_close((uv_handle_t *)&watcher->uv, close_cb);
 }
 
+static void signal_event(void **argv)
+{
+  SignalWatcher *watcher = argv[0];
+  watcher->cb(watcher, watcher->uv.signum, watcher->data);
+}
+
 static void signal_watcher_cb(uv_signal_t *handle, int signum)
 {
   SignalWatcher *watcher = handle->data;
-  watcher->cb(watcher, signum, watcher->data);
+  CREATE_EVENT(watcher->events, signal_event, 1, watcher);
 }
 
 static void close_cb(uv_handle_t *handle)

@@ -115,16 +115,6 @@ static void deadly_signal(int signum)
 static void on_signal(SignalWatcher *handle, int signum, void *data)
 {
   assert(signum >= 0);
-  loop_push_event(&loop, (Event) {
-    .handler = on_signal_event,
-    .data = (void *)(uintptr_t)signum
-  }, false);
-}
-
-static void on_signal_event(Event event)
-{
-  int signum = (int)(uintptr_t)event.data;
-
   switch (signum) {
 #ifdef SIGPWR
     case SIGPWR:
@@ -148,4 +138,3 @@ static void on_signal_event(Event event)
       break;
   }
 }
-

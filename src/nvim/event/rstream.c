@@ -169,9 +169,16 @@ static void fread_idle_cb(uv_idle_t *handle)
   invoke_read_cb(stream, false);
 }
 
-static void invoke_read_cb(Stream *stream, bool eof)
+static void read_event(void **argv)
 {
+  Stream *stream = argv[0];
   if (stream->read_cb) {
+    bool eof = (uintptr_t)argv[1];
     stream->read_cb(stream, stream->buffer, stream->data, eof);
   }
+}
+
+static void invoke_read_cb(Stream *stream, bool eof)
+{
+  CREATE_EVENT(stream->events, read_event, 2, stream, (void *)(uintptr_t)eof);
 }

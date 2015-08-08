@@ -132,7 +132,7 @@ bool os_char_avail(void)
 // Check for CTRL-C typed by reading all available characters.
 void os_breakcheck(void)
 {
-  if (!disable_breakcheck && !got_int) {
+  if (!got_int) {
     loop_poll_events(&loop, 0);
   }
 }
@@ -292,7 +292,7 @@ static bool input_poll(int ms)
     prof_inchar_enter();
   }
 
-  LOOP_POLL_EVENTS_UNTIL(&loop, ms, input_ready() || input_eof);
+  LOOP_PROCESS_EVENTS_UNTIL(&loop, NULL, ms, input_ready() || input_eof);
 
   if (do_profiling == PROF_YES && ms) {
     prof_inchar_exit();
@@ -383,5 +383,5 @@ static void read_error_exit(void)
 
 static bool pending_events(void)
 {
-  return events_enabled && !kl_empty(loop.deferred_events);
+  return events_enabled && !queue_empty(loop.events);
 }

@@ -157,11 +157,11 @@ void event_init(void)
 
 void event_teardown(void)
 {
-  if (!loop.deferred_events) {
+  if (!loop.events) {
     return;
   }
 
-  loop_process_all_events(&loop);
+  queue_process_events(loop.events);
   input_stop();
   channel_teardown();
   process_teardown(&loop);

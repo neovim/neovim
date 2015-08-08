@@ -325,7 +325,7 @@ void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
   invalidate_terminal(term, -1, -1);
 }
 
-void terminal_enter(bool process_deferred)
+void terminal_enter(void)
 {
   Terminal *term = curbuf->terminal;
   assert(term && "should only be called when curbuf has a terminal");
@@ -354,15 +354,9 @@ void terminal_enter(bool process_deferred)
   bool got_bs = false;  // True if the last input was <C-\>
 
   while (term->buf == curbuf) {
-    if (process_deferred) {
-      input_enable_events();
-    }
-
+    input_enable_events();
     c = safe_vgetc();
-
-    if (process_deferred) {
-      input_disable_events();
-    }
+    input_disable_events();
 
     switch (c) {
       case K_LEFTMOUSE:
@@ -382,7 +376,7 @@ void terminal_enter(bool process_deferred)
         break;
 
       case K_EVENT:
-        loop_process_event(&loop);
+        queue_process_events(loop.events);
         break;
 
       case Ctrl_N:
@@ -914,17 +908,10 @@ static void refresh_terminal(Terminal *term)
 // event.
 static void refresh_timer_cb(TimeWatcher *watcher, void *data)
 {
-  loop_push_event(&loop, (Event) {.handler = on_refresh}, false);
-  refresh_pending = false;
-}
-
-// Refresh all invalidated terminals
-static void on_refresh(Event event)
-{
   if (exiting) {
     // bad things can happen if we redraw when exiting, and there's no need to
     // update the buffer.
-    return;
+    goto end;
   }
   Terminal *term;
   void *stub; (void)(stub);
@@ -936,6 +923,8 @@ static void on_refresh(Event event)
   pmap_clear(ptr_t)(invalidated_terminals);
   unblock_autocmds();
   redraw(true);
+end:
+  refresh_pending = false;
 }
 
 static void refresh_size(Terminal *term)

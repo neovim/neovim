@@ -254,7 +254,7 @@ edit (
 )
 {
   if (curbuf->terminal) {
-    terminal_enter(true);
+    terminal_enter();
     return false;
   }
 
@@ -609,7 +609,7 @@ edit (
 
     if (c == K_EVENT) {
       c = lastc;
-      loop_process_event(&loop);
+      queue_process_events(loop.events);
       continue;
     }
 

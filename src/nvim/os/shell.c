@@ -207,6 +207,8 @@ static int do_os_system(char **argv,
   Stream in, out, err;
   UvProcess uvproc = uv_process_init(&loop, &buf);
   Process *proc = &uvproc.process;
+  Queue *events = queue_new_child(loop.events);
+  proc->events = events;
   proc->argv = argv;
   proc->in = input != NULL ? &in : NULL;
   proc->out = &out;
@@ -219,14 +221,22 @@ static int do_os_system(char **argv,
       msg_outtrans((char_u *)prog);
       msg_putchar('\n');
     }
+    queue_free(events);
     return -1;
   }
 
+  // We want to deal with stream events as fast a possible while queueing
+  // process events, so reset everything to NULL. It prevents closing the
+  // streams while there's still data in the OS buffer(due to the process
+  // exiting before all data is read).
   if (input != NULL) {
+    proc->in->events = NULL;
     wstream_init(proc->in, 0);
   }
+  proc->out->events = NULL;
   rstream_init(proc->out, 0);
   rstream_start(proc->out, data_cb);
+  proc->err->events = NULL;
   rstream_init(proc->err, 0);
   rstream_start(proc->err, data_cb);
 
@@ -266,6 +276,9 @@ static int do_os_system(char **argv,
       *nread = buf.len;
     }
   }
+
+  assert(queue_empty(events));
+  queue_free(events);
 
   return status;
 }

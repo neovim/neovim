@@ -214,9 +214,9 @@ void ui_detach(UI *ui)
     shift_index++;
   }
 
-  ui_count--;
-  // schedule a refresh
-  loop_push_event(&loop, (Event) { .handler = refresh }, false);
+  if (--ui_count) {
+    ui_refresh();
+  }
 }
 
 void ui_clear(void)
@@ -485,11 +485,3 @@ static void ui_mode_change(void)
   UI_CALL(mode_change, mode);
   conceal_check_cursur_line();
 }
-
-static void refresh(Event event)
-{
-  if (ui_count) {
-    ui_refresh();
-  }
-}
-

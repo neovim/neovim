@@ -306,7 +306,7 @@ getcmdline (
     input_disable_events();
 
     if (c == K_EVENT) {
-      loop_process_event(&loop);
+      queue_process_events(loop.events);
       continue;
     }
 

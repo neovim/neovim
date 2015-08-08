@@ -56,6 +56,7 @@ void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream,
 
   if (stream->uvstream) {
     stream->uvstream->data = stream;
+    loop = stream->uvstream->loop->data;
   }
 
   stream->data = data;
@@ -70,17 +71,13 @@ void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream,
   stream->internal_close_cb = NULL;
   stream->closed = false;
   stream->buffer = NULL;
+  stream->events = NULL;
 }
 
 void stream_close(Stream *stream, stream_close_cb on_stream_close)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   assert(!stream->closed);
-
-  if (stream->buffer) {
-    rbuffer_free(stream->buffer);
-  }
-
   stream->closed = true;
   stream->close_cb = on_stream_close;
 
@@ -102,6 +99,9 @@ void stream_close_handle(Stream *stream)
 static void close_cb(uv_handle_t *handle)
 {
   Stream *stream = handle->data;
+  if (stream->buffer) {
+    rbuffer_free(stream->buffer);
+  }
   if (stream->close_cb) {
     stream->close_cb(stream, stream->data);
   }

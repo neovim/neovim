@@ -206,7 +206,7 @@ static bool handle_forced_escape(TermInput *input)
   return false;
 }
 
-static void restart_reading(Event event);
+static void restart_reading(void **argv);
 
 static void read_cb(Stream *stream, RBuffer *buf, void *data, bool eof)
 {
@@ -226,8 +226,7 @@ static void read_cb(Stream *stream, RBuffer *buf, void *data, bool eof)
       // ls *.md | xargs nvim
       input->in_fd = 2;
       stream_close(&input->read_stream, NULL);
-      loop_push_event(&loop,
-          (Event) { .data = input, .handler = restart_reading }, false);
+      queue_put(loop.fast_events, restart_reading, 1, input);
     } else {
       input_done();
     }
@@ -272,9 +271,9 @@ static void read_cb(Stream *stream, RBuffer *buf, void *data, bool eof)
   rbuffer_reset(input->read_stream.buffer);
 }
 
-static void restart_reading(Event event)
+static void restart_reading(void **argv)
 {
-  TermInput *input = event.data;
+  TermInput *input = argv[0];
   rstream_init_fd(&loop, &input->read_stream, input->in_fd, 0xfff, input);
   rstream_start(&input->read_stream, read_cb);
 }

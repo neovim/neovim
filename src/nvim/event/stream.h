@@ -47,6 +47,7 @@ struct stream {
   size_t pending_reqs;
   void *data, *internal_data;
   bool closed;
+  Queue *events;
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
