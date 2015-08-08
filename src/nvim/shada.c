@@ -1822,7 +1822,11 @@ static bool shada_pack_entry(msgpack_packer *const packer,
       break;
     }
     case kSDItemHeader: {
-      msgpack_rpc_from_dictionary(entry.data.header, spacker);
+      msgpack_pack_map(spacker, entry.data.header.size);
+      for (size_t i = 0; i < entry.data.header.size; i++) {
+        PACK_STRING(entry.data.header.items[i].key);
+        msgpack_rpc_from_object(entry.data.header.items[i].value, spacker);
+      }
       break;
     }
   }
