@@ -1,5 +1,6 @@
 #!/usr/bin/env python3.4
 
+import os
 import sys
 import codecs
 
@@ -58,18 +59,28 @@ def mnormalize(o):
   return ctable.get(type(o), idfunc)(o)
 
 
-with open(sys.argv[1], 'rb') as fp:
+fname = sys.argv[1]
+poswidth = len(str(os.stat(fname).st_size or 1000))
+
+
+with open(fname, 'rb') as fp:
   unpacker = msgpack.Unpacker(file_like=fp, read_size=1)
+  max_type = max(typ.value for typ in EntryTypes)
   while True:
     try:
       pos = fp.tell()
-      typ = EntryTypes(unpacker.unpack())
+      typ = unpacker.unpack()
     except msgpack.OutOfData:
       break
     else:
       timestamp = unpacker.unpack()
       time = datetime.fromtimestamp(timestamp)
       length = unpacker.unpack()
-      entry = unpacker.unpack()
-      print('{0:4} {1:13} {2} {3:5} {4!r}'.format(
-        pos, typ.name, time.isoformat(), length, mnormalize(entry)))
+      if typ > max_type:
+        entry = fp.read(length)
+        typ = EntryTypes.Unknown
+      else:
+        entry = unpacker.unpack()
+        typ = EntryTypes(typ)
+      print('%*u %13s %s %5u %r' % (
+        poswidth, pos, typ.name, time.isoformat(), length, mnormalize(entry)))
