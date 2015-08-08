@@ -997,23 +997,13 @@ static const void *shada_hist_iter(const void *const iter,
 /// @param[in,out]  hms_p           Ring buffer and associated structures.
 /// @param[in]      entry           Inserted entry.
 /// @param[in]      do_iter         Determines whether NeoVim own history should 
-///                                 be used.
+///                                 be used. Must be true only if inserting 
+///                                 entry from current NeoVim history.
 /// @param[in]      can_free_entry  True if entry can be freed.
 static void hms_insert(HistoryMergerState *const hms_p, const ShadaEntry entry,
-                       const bool no_iter, const bool can_free_entry)
+                       const bool do_iter, const bool can_free_entry)
 {
-  HMLList *const hmll = &hms_p->hmll;
-  const khiter_t k = kh_get(hmll_entries, &hms_p->hmll.contained_entries,
-                            entry.data.history_item.string);
-  if (k != kh_end(&hmll->contained_entries)) {
-    HMLListEntry *const cur_entry = kh_val(&hmll->contained_entries, k);
-    if (entry.timestamp > cur_entry->data.timestamp) {
-      hmll_remove(hmll, cur_entry);
-    } else {
-      return;
-    }
-  }
-  if (!no_iter) {
+  if (do_iter) {
     if (hms_p->iter == NULL) {
       if (hms_p->last_hist_entry.type != kSDItemMissing
           && hms_p->last_hist_entry.timestamp < entry.timestamp) {
@@ -1029,6 +1019,27 @@ static void hms_insert(HistoryMergerState *const hms_p, const ShadaEntry entry,
                                       hms_p->reading,
                                       &(hms_p->last_hist_entry));
       }
+    }
+  }
+  HMLList *const hmll = &hms_p->hmll;
+  const khiter_t k = kh_get(hmll_entries, &hms_p->hmll.contained_entries,
+                            entry.data.history_item.string);
+  if (k != kh_end(&hmll->contained_entries)) {
+    HMLListEntry *const existing_entry = kh_val(&hmll->contained_entries, k);
+    if (entry.timestamp > existing_entry->data.timestamp) {
+      hmll_remove(hmll, existing_entry);
+    } else if (!do_iter && entry.timestamp == existing_entry->data.timestamp) {
+      // Prefer entry from the current NeoVim instance.
+      if (existing_entry->can_free_entry) {
+        shada_free_shada_entry(&existing_entry->data);
+      }
+      existing_entry->data = entry;
+      existing_entry->can_free_entry = can_free_entry;
+      // Previous key was freed above, as part of freeing the ShaDa entry.
+      kh_key(&hmll->contained_entries, k) = entry.data.history_item.string;
+      return;
+    } else {
+      return;
     }
   }
   HMLListEntry *insert_after;
@@ -1315,7 +1326,14 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
           shada_free_shada_entry(&cur_entry);
           break;
         }
-        if (!register_set(cur_entry.data.reg.name, (yankreg_T) {
+        if (!force) {
+          const yankreg_T *const reg = op_register_get(cur_entry.data.reg.name);
+          if (reg == NULL || reg->timestamp >= cur_entry.timestamp) {
+            shada_free_shada_entry(&cur_entry);
+            break;
+          }
+        }
+        if (!op_register_set(cur_entry.data.reg.name, (yankreg_T) {
           .y_array = (char_u **) cur_entry.data.reg.contents,
           .y_size = (linenr_T) cur_entry.data.reg.contents_size,
           .y_type = cur_entry.data.reg.type,
@@ -1400,7 +1418,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
             if (jl_len < JUMPLISTSIZE) {
               curwin->w_jumplistlen++;
             }
-            if (curwin->w_jumplistidx > i
+            if (curwin->w_jumplistidx >= i
                 && curwin->w_jumplistidx + 1 < curwin->w_jumplistlen) {
               curwin->w_jumplistidx++;
             }
@@ -1491,16 +1509,14 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
                       sizeof(buf->b_changelist[0]) * (size_t) i);
             } else {
               memmove(&buf->b_changelist[i + 1], &buf->b_changelist[i],
-                      sizeof(buf->b_changelist[0])
-                      * (size_t) (cl_len - i));
+                      sizeof(buf->b_changelist[0]) * (size_t) (cl_len - i));
             }
           } else if (i == 0) {
             if (cl_len == JUMPLISTSIZE) {
               i = -1;
             } else if (cl_len > 0) {
               memmove(&buf->b_changelist[1], &buf->b_changelist[0],
-                      sizeof(buf->b_changelist[0])
-                      * (size_t) cl_len);
+                      sizeof(buf->b_changelist[0]) * (size_t) cl_len);
             }
           }
           if (i != -1) {

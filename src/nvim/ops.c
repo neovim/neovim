@@ -5373,7 +5373,7 @@ size_t op_register_amount(void)
 /// @param[in]  reg   Register value.
 ///
 /// @return true on success, false on failure.
-bool register_set(const char name, const yankreg_T reg)
+bool op_register_set(const char name, const yankreg_T reg)
 {
   int i = op_reg_index(name);
   if (i == -1) {
@@ -5381,4 +5381,18 @@ bool register_set(const char name, const yankreg_T reg)
   }
   y_regs[i] = reg;
   return true;
+}
+
+/// Get register with the given name
+///
+/// @param[in]  name  Register name.
+///
+/// @return Pointer to the register contents or NULL.
+const yankreg_T *op_register_get(const char name)
+{
+  int i = op_reg_index(name);
+  if (i == -1) {
+    return NULL;
+  }
+  return &y_regs[i];
 }
