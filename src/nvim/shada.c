@@ -3001,11 +3001,13 @@ shada_write_file_nomerge: {}
 
   if (!nomerge) {
     sd_reader.close(&sd_reader);
+    bool did_remove = false;
     if (sw_ret == kSDWriteSuccessfull) {
       if (vim_rename(tempname, fname) == -1) {
         EMSG3(_(RNERR "Can't rename ShaDa file from %s to %s!"),
               tempname, fname);
       } else {
+        did_remove = true;
         os_remove(tempname);
       }
     } else {
@@ -3016,6 +3018,10 @@ shada_write_file_nomerge: {}
         EMSG3(_(RNERR "Did not rename %s to %s because there were errors "
                 "during writing it"), tempname, fname);
       }
+    }
+    if (!did_remove) {
+      EMSG3(_(RNERR "Do not forget to remove %s or rename it manually to %s."),
+            tempname, fname);
     }
     xfree(tempname);
   }
