@@ -25,8 +25,6 @@ syn keyword csStorage			class delegate enum interface namespace struct
 syn keyword csRepeat			break continue do for foreach goto return while
 syn keyword csConditional		else if switch
 syn keyword csLabel			case default
-" there's no :: operator in C#
-syn match csOperatorError		display +::+
 " user labels (see [1] 8.6 Statements)
 syn match   csLabel			display +^\s*\I\i*\s*:\([^:]\)\@=+
 " modifier
