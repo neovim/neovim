@@ -1360,67 +1360,53 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
             break;
           }
         } else {
-          if (force) {
-            if (curwin->w_jumplistlen == JUMPLISTSIZE) {
-              // Jump list items are ignored in this case.
-              free_xfmark(fm);
-            } else {
-              memmove(&curwin->w_jumplist[1], &curwin->w_jumplist[0],
-                      sizeof(curwin->w_jumplist[0])
-                      * (size_t) curwin->w_jumplistlen);
-              curwin->w_jumplistidx++;
+          const int jl_len = curwin->w_jumplistlen;
+          int i;
+          for (i = 0; i < jl_len; i++) {
+            const xfmark_T jl_fm = curwin->w_jumplist[i];
+            if (jl_fm.fmark.timestamp >= cur_entry.timestamp) {
+              if (marks_equal(fm.fmark.mark, jl_fm.fmark.mark)
+                  && (buf == NULL
+                      ? (jl_fm.fname != NULL
+                         && STRCMP(fm.fname, jl_fm.fname) == 0)
+                      : fm.fmark.fnum == jl_fm.fmark.fnum)) {
+                i = -1;
+              }
+              break;
+            }
+          }
+          if (i != -1) {
+            if (i < jl_len) {
+              if (jl_len == JUMPLISTSIZE) {
+                free_xfmark(curwin->w_jumplist[0]);
+                memmove(&curwin->w_jumplist[0], &curwin->w_jumplist[1],
+                        sizeof(curwin->w_jumplist[0]) * (size_t) i);
+              } else {
+                memmove(&curwin->w_jumplist[i + 1], &curwin->w_jumplist[i],
+                        sizeof(curwin->w_jumplist[0])
+                        * (size_t) (jl_len - i));
+              }
+            } else if (i == jl_len) {
+              if (jl_len == JUMPLISTSIZE) {
+                i = -1;
+              } else if (jl_len > 0) {
+                memmove(&curwin->w_jumplist[1], &curwin->w_jumplist[0],
+                        sizeof(curwin->w_jumplist[0])
+                        * (size_t) jl_len);
+              }
+            }
+          }
+          if (i != -1) {
+            curwin->w_jumplist[i] = fm;
+            if (jl_len < JUMPLISTSIZE) {
               curwin->w_jumplistlen++;
-              curwin->w_jumplist[0] = fm;
+            }
+            if (curwin->w_jumplistidx > i
+                && curwin->w_jumplistidx + 1 < curwin->w_jumplistlen) {
+              curwin->w_jumplistidx++;
             }
           } else {
-            const int jl_len = curwin->w_jumplistlen;
-            int i;
-            for (i = 0; i < jl_len; i++) {
-              const xfmark_T jl_fm = curwin->w_jumplist[i];
-              if (jl_fm.fmark.timestamp >= cur_entry.timestamp) {
-                if (marks_equal(fm.fmark.mark, jl_fm.fmark.mark)
-                    && (buf == NULL
-                        ? (jl_fm.fname != NULL
-                           && STRCMP(fm.fname, jl_fm.fname) == 0)
-                        : fm.fmark.fnum == jl_fm.fmark.fnum)) {
-                  i = -1;
-                }
-                break;
-              }
-            }
-            if (i != -1) {
-              if (i < jl_len) {
-                if (jl_len == JUMPLISTSIZE) {
-                  free_xfmark(curwin->w_jumplist[0]);
-                  memmove(&curwin->w_jumplist[0], &curwin->w_jumplist[1],
-                          sizeof(curwin->w_jumplist[0]) * (size_t) i);
-                } else {
-                  memmove(&curwin->w_jumplist[i + 1], &curwin->w_jumplist[i],
-                          sizeof(curwin->w_jumplist[0])
-                          * (size_t) (jl_len - i));
-                }
-              } else if (i == jl_len) {
-                if (jl_len == JUMPLISTSIZE) {
-                  i = -1;
-                } else if (jl_len > 0) {
-                  memmove(&curwin->w_jumplist[1], &curwin->w_jumplist[0],
-                          sizeof(curwin->w_jumplist[0])
-                          * (size_t) jl_len);
-                }
-              }
-            }
-            if (i != -1) {
-              curwin->w_jumplist[i] = fm;
-              if (jl_len < JUMPLISTSIZE) {
-                curwin->w_jumplistlen++;
-              }
-              if (curwin->w_jumplistidx > i
-                  && curwin->w_jumplistidx + 1 < curwin->w_jumplistlen) {
-                curwin->w_jumplistidx++;
-              }
-            } else {
-              shada_free_shada_entry(&cur_entry);
-            }
+            shada_free_shada_entry(&cur_entry);
           }
         }
         // Do not free shada entry: its allocated memory was saved above.
@@ -1488,55 +1474,44 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
         } else {
           int kh_ret;
           (void) kh_put(bufset, &cl_bufs, (uintptr_t) buf, &kh_ret);
-          if (force) {
-            if (buf->b_changelistlen == JUMPLISTSIZE) {
+          const int cl_len = buf->b_changelistlen;
+          int i;
+          for (i = cl_len; i > 0; i--) {
+            const fmark_T cl_fm = buf->b_changelist[i - 1];
+            if (cl_fm.timestamp <= cur_entry.timestamp) {
+              if (marks_equal(fm.mark, cl_fm.mark)) {
+                i = -1;
+              }
+              break;
+            }
+          }
+          if (i > 0) {
+            if (cl_len == JUMPLISTSIZE) {
               free_fmark(buf->b_changelist[0]);
-              memmove(buf->b_changelist, buf->b_changelist + 1,
-                      sizeof(buf->b_changelist[0]) * (JUMPLISTSIZE - 1));
+              memmove(&buf->b_changelist[0], &buf->b_changelist[1],
+                      sizeof(buf->b_changelist[0]) * (size_t) i);
             } else {
+              memmove(&buf->b_changelist[i + 1], &buf->b_changelist[i],
+                      sizeof(buf->b_changelist[0])
+                      * (size_t) (cl_len - i));
+            }
+          } else if (i == 0) {
+            if (cl_len == JUMPLISTSIZE) {
+              i = -1;
+            } else if (cl_len > 0) {
+              memmove(&buf->b_changelist[1], &buf->b_changelist[0],
+                      sizeof(buf->b_changelist[0])
+                      * (size_t) cl_len);
+            }
+          }
+          if (i != -1) {
+            buf->b_changelist[i] = fm;
+            if (cl_len < JUMPLISTSIZE) {
               buf->b_changelistlen++;
             }
-            buf->b_changelist[buf->b_changelistlen - 1] = fm;
           } else {
-            const int cl_len = buf->b_changelistlen;
-            int i;
-            for (i = cl_len; i > 0; i--) {
-              const fmark_T cl_fm = buf->b_changelist[i - 1];
-              if (cl_fm.timestamp <= cur_entry.timestamp) {
-                if (marks_equal(fm.mark, cl_fm.mark)) {
-                  i = -1;
-                }
-                break;
-              }
-            }
-            if (i > 0) {
-              if (cl_len == JUMPLISTSIZE) {
-                free_fmark(buf->b_changelist[0]);
-                memmove(&buf->b_changelist[0], &buf->b_changelist[1],
-                        sizeof(buf->b_changelist[0]) * (size_t) i);
-              } else {
-                memmove(&buf->b_changelist[i + 1], &buf->b_changelist[i],
-                        sizeof(buf->b_changelist[0])
-                        * (size_t) (cl_len - i));
-              }
-            } else if (i == 0) {
-              if (cl_len == JUMPLISTSIZE) {
-                i = -1;
-              } else if (cl_len > 0) {
-                memmove(&buf->b_changelist[1], &buf->b_changelist[0],
-                        sizeof(buf->b_changelist[0])
-                        * (size_t) cl_len);
-              }
-            }
-            if (i != -1) {
-              buf->b_changelist[i] = fm;
-              if (cl_len < JUMPLISTSIZE) {
-                buf->b_changelistlen++;
-              }
-            } else {
-              shada_free_shada_entry(&cur_entry);
-              cur_entry.data.filemark.fname = NULL;
-            }
+            shada_free_shada_entry(&cur_entry);
+            cur_entry.data.filemark.fname = NULL;
           }
         }
         // Do not free shada entry: except for fname, its allocated memory (i.e. 
