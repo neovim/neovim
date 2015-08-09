@@ -350,6 +350,8 @@ typedef struct hm_llist_entry {
   struct hm_llist_entry *prev;  ///< Pointer to previous entry or NULL.
 } HMLListEntry;
 
+KHASH_MAP_INIT_STR(hmll_entries, HMLListEntry *)
+
 /// Sized linked list structure for history merger
 typedef struct {
   HMLListEntry *entries;  ///< Pointer to the start of the allocated array of 
@@ -362,6 +364,9 @@ typedef struct {
   size_t size;            ///< Number of allocated entries.
   size_t free_entries_size;  ///< Number of non-NULL entries in free_entries.
   size_t num_entries;     ///< Number of entries already used.
+  khash_t(hmll_entries) contained_entries;  ///< Hash mapping all history entry 
+                                            ///< strings to corresponding entry 
+                                            ///< pointers.
 } HMLList;
 
 typedef struct {
@@ -480,6 +485,7 @@ static inline void hmll_init(HMLList *const hmll, const size_t size)
     .size = size,
     .free_entries_size = 0,
     .num_entries = 0,
+    .contained_entries = KHASH_EMPTY_TABLE(hmll_entries),
   };
   hmll->last_free_element = hmll->entries;
 }
@@ -512,6 +518,10 @@ static inline void hmll_remove(HMLList *const hmll,
   } else {
     hmll->free_entries[hmll->free_entries_size++] = hmll_entry;
   }
+  const khiter_t k = kh_get(hmll_entries, &hmll->contained_entries,
+                            hmll_entry->data.data.history_item.string);
+  assert(k != kh_end(&hmll->contained_entries));
+  kh_del(hmll_entries, &hmll->contained_entries, k);
   if (hmll_entry->next == NULL) {
     hmll->last = hmll_entry->prev;
   } else {
@@ -558,6 +568,12 @@ static inline void hmll_insert(HMLList *const hmll,
   }
   target_entry->data = data;
   target_entry->can_free_entry = can_free_entry;
+  int kh_ret;
+  const khiter_t k = kh_put(hmll_entries, &hmll->contained_entries,
+                            data.data.history_item.string, &kh_ret);
+  if (kh_ret > 0) {
+    kh_val(&hmll->contained_entries, k) = target_entry;
+  }
   hmll->num_entries++;
   target_entry->prev = hmll_entry;
   if (hmll_entry == NULL) {
@@ -591,6 +607,7 @@ static inline void hmll_insert(HMLList *const hmll,
 static inline void hmll_dealloc(HMLList *const hmll)
   FUNC_ATTR_NONNULL_ALL
 {
+  kh_dealloc(hmll_entries, &hmll->contained_entries);
   xfree(hmll->entries);
   xfree(hmll->free_entries);
 }
@@ -985,14 +1002,14 @@ static void hms_insert(HistoryMergerState *const hms_p, const ShadaEntry entry,
                        const bool no_iter, const bool can_free_entry)
 {
   HMLList *const hmll = &hms_p->hmll;
-  HMLL_FORALL(hmll, cur_entry) {
-    if (STRCMP(cur_entry->data.data.history_item.string,
-               entry.data.history_item.string) == 0) {
-      if (entry.timestamp > cur_entry->data.timestamp) {
-        hmll_remove(hmll, cur_entry);
-      } else {
-        return;
-      }
+  const khiter_t k = kh_get(hmll_entries, &hms_p->hmll.contained_entries,
+                            entry.data.history_item.string);
+  if (k != kh_end(&hmll->contained_entries)) {
+    HMLListEntry *const cur_entry = kh_val(&hmll->contained_entries, k);
+    if (entry.timestamp > cur_entry->data.timestamp) {
+      hmll_remove(hmll, cur_entry);
+    } else {
+      return;
     }
   }
   if (!no_iter) {
