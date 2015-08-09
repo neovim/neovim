@@ -9,31 +9,9 @@ local reset, set_additional_cmd, clear, exc_exec, get_shada_rw =
   shada_helpers.reset, shada_helpers.set_additional_cmd,
   shada_helpers.clear, shada_helpers.exc_exec,
   shada_helpers.get_shada_rw
+local read_shada_file = shada_helpers.read_shada_file
 
 local wshada, sdrcmd, shada_fname = get_shada_rw('Xtest-functional-shada-compatibility.shada')
-
-local msgpack = require('MessagePack')
-local mpack_keys = {'type', 'timestamp', 'length', 'value'}
-local read_shada_file = function(fname)
-  local fd = io.open(fname, 'r')
-  local mstring = fd:read('*a')
-  fd:close()
-  local unpacker = msgpack.unpacker(mstring)
-  local ret = {}
-  local cur
-  local i = 0
-  while true do
-    local off, val = unpacker()
-    if not off then break end
-    if i % 4 == 0 then
-      cur = {}
-      ret[#ret + 1] = cur
-    end
-    cur[mpack_keys[(i % 4) + 1]] = val
-    i = i + 1
-  end
-  return ret
-end
 
 describe('ShaDa forward compatibility support code', function()
   before_each(reset)

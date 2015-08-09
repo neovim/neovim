@@ -4,6 +4,8 @@ local spawn, set_session, nvim, nvim_prog, nvim_command, nvim_eval =
   helpers.command, helpers.eval
 local write_file = helpers.write_file
 
+local msgpack = require('MessagePack')
+
 local tmpname = os.tmpname()
 local additional_cmd = ''
 
@@ -68,7 +70,40 @@ local get_shada_rw = function(fname)
   local sdrcmd = function(bang)
     return 'rshada' .. (bang and '!' or '') .. ' ' .. fname
   end
-  return wshada, sdrcmd, fname
+  local clean = function()
+    os.remove(fname)
+    local i = ('a'):byte()
+    while i <= ('z'):byte() do
+      if not os.remove(fname .. ('.tmp.%c'):format(i)) then
+        break
+      end
+      i = i + 1
+    end
+  end
+  return wshada, sdrcmd, fname, clean
+end
+
+local mpack_keys = {'type', 'timestamp', 'length', 'value'}
+
+local read_shada_file = function(fname)
+  local fd = io.open(fname, 'r')
+  local mstring = fd:read('*a')
+  fd:close()
+  local unpacker = msgpack.unpacker(mstring)
+  local ret = {}
+  local cur
+  local i = 0
+  while true do
+    local off, val = unpacker()
+    if not off then break end
+    if i % 4 == 0 then
+      cur = {}
+      ret[#ret + 1] = cur
+    end
+    cur[mpack_keys[(i % 4) + 1]] = val
+    i = i + 1
+  end
+  return ret
 end
 
 return {
@@ -77,4 +112,5 @@ return {
   clear=clear,
   exc_exec=exc_exec,
   get_shada_rw=get_shada_rw,
+  read_shada_file=read_shada_file,
 }

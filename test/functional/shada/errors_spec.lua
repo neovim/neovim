@@ -10,20 +10,14 @@ local reset, set_additional_cmd, clear, exc_exec, get_shada_rw =
   shada_helpers.clear, shada_helpers.exc_exec,
   shada_helpers.get_shada_rw
 
-local wshada, sdrcmd, shada_fname = get_shada_rw('Xtest-functional-shada-errors.shada')
+local wshada, sdrcmd, shada_fname, clean =
+  get_shada_rw('Xtest-functional-shada-errors.shada')
 
 describe('ShaDa error handling', function()
   before_each(reset)
   after_each(function()
     clear()
-    os.remove(shada_fname)
-    local i = ('a'):byte()
-    while i < ('z'):byte() do
-      if not os.remove(shada_fname .. ('.tmp.%c'):format(i)) then
-        break
-      end
-      i = i + 1
-    end
+    clean()
   end)
 
   -- Note: most of tests have additional items like sX, mX, rX. These are for 
