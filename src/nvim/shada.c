@@ -41,6 +41,7 @@
 #include "nvim/ex_getln.h"
 #include "nvim/search.h"
 #include "nvim/eval.h"
+#include "nvim/regexp.h"
 #include "nvim/eval_defs.h"
 #include "nvim/version.h"
 #include "nvim/path.h"
@@ -85,6 +86,7 @@ KHASH_SET_INIT_STR(strset)
 #define os_getperm(f) \
     (os_getperm((char_u *) f))
 #define os_isdir(f) (os_isdir((char_u *) f))
+#define regtilde(s, m) ((char *) regtilde((char_u *) s, m))
 #define path_tail_with_sep(f) ((char *) path_tail_with_sep((char_u *)f))
 
 // From http://www.boost.org/doc/libs/1_43_0/boost/detail/endian.hpp + some 
@@ -1289,6 +1291,11 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
           .timestamp = cur_entry.timestamp,
           .additional_elements = cur_entry.data.sub_string.additional_elements,
         });
+        // Without using regtilde and without / &cpo flag previous substitute 
+        // string is close to useless: you can only use it with :& or :~ and 
+        // that’s all because s//~ is not available until the first call to 
+        // regtilde. Vim was not calling this for some reason.
+        (void) regtilde(cur_entry.data.sub_string.sub, p_magic);
         // Do not free shada entry: its allocated memory was saved above.
         break;
       }
