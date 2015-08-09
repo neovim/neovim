@@ -1208,7 +1208,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
   khash_t(bufset) cl_bufs = KHASH_EMPTY_TABLE(bufset);
   khash_t(fnamebufs) fname_bufs = KHASH_EMPTY_TABLE(fnamebufs);
   khash_t(strset) oldfiles_set = KHASH_EMPTY_TABLE(strset);
-  if (get_old_files && oldfiles_list == NULL) {
+  if (get_old_files && (oldfiles_list == NULL || force)) {
     oldfiles_list = list_alloc();
     set_vim_var_list(VV_OLDFILES, oldfiles_list);
   }
