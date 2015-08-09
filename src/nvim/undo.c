@@ -841,9 +841,10 @@ static u_header_T *unserialize_uhp(bufinfo_T *bi, char_u *file_name)
   unserialize_pos(bi, &uhp->uh_cursor);
   uhp->uh_cursor_vcol = undo_read_4c(bi);
   uhp->uh_flags = undo_read_2c(bi);
+  const Timestamp cur_timestamp = os_time();
   for (size_t i = 0; i < (size_t)NMARKS; i++) {
     unserialize_pos(bi, &uhp->uh_namedm[i].mark);
-    uhp->uh_namedm[i].timestamp = 0;
+    uhp->uh_namedm[i].timestamp = cur_timestamp;
     uhp->uh_namedm[i].fnum = 0;
   }
   unserialize_visualinfo(bi, &uhp->uh_visual);
