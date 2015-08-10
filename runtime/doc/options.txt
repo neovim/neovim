@@ -1402,8 +1402,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			register '*' for all yank, delete, change and put
 			operations which would normally go to the unnamed
 			register.  When "unnamed" is also included to the
-			option, yank operations (but not delete, change or
-			put) will additionally copy the text into register
+			option, yank and delete operations (but not put)
+			will additionally copy the text into register
 			'*'. See |nvim-clipboard|.
 <
 						*clipboard-autoselect*
@@ -1426,35 +1426,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*clipboard-autoselectml*
 	autoselectml	Like "autoselect", but for the modeless selection
 			only.  Compare to the 'A' flag in 'guioptions'.
-
-						*clipboard-html*
-	html		When the clipboard contains HTML, use this when
-			pasting.  When putting text on the clipboard, mark it
-			as HTML.  This works to copy rendered HTML from
-			Firefox, paste it as raw HTML in Vim, select the HTML
-			in Vim and paste it in a rich edit box in Firefox.
-			You probably want to add this only temporarily,
-			possibly use BufEnter autocommands.
-			Only supported for GTK version 2 and later.
-			Only available with the |+multi_byte| feature.
-
-						*clipboard-exclude*
-	exclude:{pattern}
-			Defines a pattern that is matched against the name of
-			the terminal 'term'.  If there is a match, no
-			connection will be made to the X server.  This is
-			useful in this situation:
-			- Running Vim in a console.
-			- $DISPLAY is set to start applications on another
-			  display.
-			- You do not want to connect to the X server in the
-			  console, but do want this in a terminal emulator.
-			To never connect to the X server use: >
-				exclude:.*
-			The value of 'magic' is ignored, {pattern} is
-			interpreted as if 'magic' was on.
-			The rest of the option value will be used for
-			{pattern}, this must be the last entry.
 
 						*'cmdheight'* *'ch'*
 'cmdheight' 'ch'	number	(default 1)
