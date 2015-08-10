@@ -394,7 +394,6 @@ typedef struct {
   ShadaEntry *additional_marks;  ///< All marks with unknown names.
   size_t additional_marks_size;  ///< Size of the additional_marks array.
   Timestamp greatest_timestamp;  ///< Greatest timestamp among marks.
-  bool is_local_entry;  ///< True if structure comes from the current session.
 } FileMarks;
 
 KHASH_MAP_INIT_STR(file_marks, FileMarks)
@@ -2506,7 +2505,6 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
         kh_key(&wms->file_marks, k) = xstrdup(fname);
         memset(filemarks, 0, sizeof(*filemarks));
       }
-      filemarks->is_local_entry = true;
       do {
         fmark_T fm;
         char name;
@@ -2701,48 +2699,47 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
             COMPARE_WITH_ENTRY(&filemarks->marks[idx], entry);
           }
         } else {
-          if (filemarks->is_local_entry) {
-            shada_free_shada_entry(&entry);
-          } else {
-            const int cl_len = (int) filemarks->changes_size;
-            int i;
-            for (i = cl_len; i > 0; i--) {
-              const ShadaEntry old_entry = filemarks->changes[i - 1].data;
-              if (old_entry.timestamp <= entry.timestamp) {
-                if (marks_equal(old_entry.data.filemark.mark,
-                                entry.data.filemark.mark)) {
-                  i = -1;
-                }
-                break;
+          const int cl_len = (int) filemarks->changes_size;
+          int i;
+          for (i = cl_len; i > 0; i--) {
+            const ShadaEntry old_entry = filemarks->changes[i - 1].data;
+            if (old_entry.timestamp <= entry.timestamp) {
+              if (marks_equal(old_entry.data.filemark.mark,
+                              entry.data.filemark.mark)) {
+                i = -1;
               }
+              break;
             }
-            if (i > 0) {
-              if (cl_len == JUMPLISTSIZE) {
-                if (filemarks->changes[0].can_free_entry) {
-                  shada_free_shada_entry(&filemarks->changes[0].data);
-                }
-                memmove(&filemarks->changes[0], &filemarks->changes[1],
-                        sizeof(filemarks->changes[0]) * (size_t) i);
-              } else if (i == 0) {
-                if (cl_len == JUMPLISTSIZE) {
-                  i = -1;
-                } else {
-                  memmove(&filemarks->changes[1], &filemarks->changes[0],
-                          sizeof(filemarks->changes[0]) * (size_t) cl_len);
-                }
+          }
+          if (i > 0) {
+            if (cl_len == JUMPLISTSIZE) {
+              if (filemarks->changes[0].can_free_entry) {
+                shada_free_shada_entry(&filemarks->changes[0].data);
               }
-            }
-            if (i != -1) {
-              filemarks->changes[i] = (PossiblyFreedShadaEntry) {
-                .can_free_entry = true,
-                .data = entry
-              };
-              if (cl_len < JUMPLISTSIZE) {
-                filemarks->changes_size++;
-              }
+              memmove(&filemarks->changes[0], &filemarks->changes[1],
+                      sizeof(filemarks->changes[0]) * (size_t) i);
             } else {
-              shada_free_shada_entry(&entry);
+              memmove(&filemarks->changes[i + 1], &filemarks->changes[i],
+                      sizeof(filemarks->changes[0]) * (size_t) (cl_len - i));
             }
+          } else if (i == 0) {
+            if (cl_len == JUMPLISTSIZE) {
+              i = -1;
+            } else if (cl_len > 0) {
+              memmove(&filemarks->changes[1], &filemarks->changes[0],
+                      sizeof(filemarks->changes[0]) * (size_t) cl_len);
+            }
+          }
+          if (i != -1) {
+            filemarks->changes[i] = (PossiblyFreedShadaEntry) {
+              .can_free_entry = true,
+                  .data = entry
+            };
+            if (cl_len < JUMPLISTSIZE) {
+              filemarks->changes_size++;
+            }
+          } else {
+            shada_free_shada_entry(&entry);
           }
         }
         break;
