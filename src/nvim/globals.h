@@ -836,7 +836,7 @@ EXTERN int ctrl_x_mode INIT(= 0);       /* Which Ctrl-X mode are we in? */
 
 EXTERN int no_abbr INIT(= TRUE);        /* TRUE when no abbreviations loaded */
 
-EXTERN int mapped_ctrl_c INIT(= FALSE);      /* CTRL-C is mapped */
+EXTERN int mapped_ctrl_c INIT(= 0);  ///< Modes where CTRL-C is mapped.
 
 EXTERN cmdmod_T cmdmod;                 /* Ex command modifiers */
 

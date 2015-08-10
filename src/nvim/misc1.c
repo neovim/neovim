@@ -2363,7 +2363,7 @@ int get_keystroke(void)
   int save_mapped_ctrl_c = mapped_ctrl_c;
   int waited = 0;
 
-  mapped_ctrl_c = FALSE;        /* mappings are not used here */
+  mapped_ctrl_c = 0;        /* mappings are not used here */
   for (;; ) {
     // flush output before waiting
     ui_flush();

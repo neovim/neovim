@@ -756,6 +756,8 @@ struct file_buffer {
 
   signlist_T *b_signlist;       /* list of signs to draw */
 
+  int b_mapped_ctrl_c;          ///< Modes where CTRL-C is mapped.
+
   Terminal *terminal;           // Terminal instance associated with the buffer
 };
 
