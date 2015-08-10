@@ -58,6 +58,10 @@ env:
     # available in before_cache (which is run before after_success).
     - SUCCESS_MARKER="$BUILD_DIR/.tests_successful"
 
+python:
+  - "2.7"
+  - "3.3"
+
 matrix:
   include:
     - os: linux
