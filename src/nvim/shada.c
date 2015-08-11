@@ -1465,22 +1465,13 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
           if (i != -1) {
             if (i < jl_len) {
               if (jl_len == JUMPLISTSIZE) {
-                free_xfmark(curwin->w_jumplist[0]);
-                memmove(&curwin->w_jumplist[0], &curwin->w_jumplist[1],
-                        sizeof(curwin->w_jumplist[0]) * (size_t) i);
-              } else {
-                memmove(&curwin->w_jumplist[i + 1], &curwin->w_jumplist[i],
-                        sizeof(curwin->w_jumplist[0])
-                        * (size_t) (jl_len - i));
+                free_xfmark(curwin->w_jumplist[curwin->w_jumplistlen - 1]);
               }
-            } else if (i == jl_len) {
-              if (jl_len == JUMPLISTSIZE) {
-                i = -1;
-              } else if (jl_len > 0) {
-                memmove(&curwin->w_jumplist[1], &curwin->w_jumplist[0],
-                        sizeof(curwin->w_jumplist[0])
-                        * (size_t) jl_len);
-              }
+              memmove(&curwin->w_jumplist[i + 1], &curwin->w_jumplist[i],
+                      sizeof(curwin->w_jumplist[0])
+                      * (size_t) (jl_len - i));
+            } else if (i == jl_len && jl_len == JUMPLISTSIZE) {
+              i = -1;
             }
           }
           if (i != -1) {
@@ -2428,23 +2419,13 @@ static inline ShaDaWriteResult shada_read_when_writing(
         }
         if (i != -1) {
           if (i < jl_len) {
-            if (jl_len == JUMPLISTSIZE) {
-              if (wms->jumps[0].can_free_entry) {
-                shada_free_shada_entry(&wms->jumps[0].data);
-              }
-              memmove(&wms->jumps[0], &wms->jumps[1],
-                      sizeof(wms->jumps[0]) * (size_t) i);
-            } else {
-              memmove(&wms->jumps[i + 1], &wms->jumps[i],
-                      sizeof(wms->jumps[0]) * (size_t) (jl_len - i));
+            if (jl_len == JUMPLISTSIZE && wms->jumps[0].can_free_entry) {
+              shada_free_shada_entry(&wms->jumps[wms->jumps_size - 1].data);
             }
-          } else if (i == jl_len) {
-            if (jl_len == JUMPLISTSIZE) {
-              i = -1;
-            } else if (jl_len > 0) {
-              memmove(&wms->jumps[1], &wms->jumps[0],
-                      sizeof(wms->jumps[0]) * (size_t) jl_len);
-            }
+            memmove(&wms->jumps[i + 1], &wms->jumps[i],
+                    sizeof(wms->jumps[0]) * (size_t) (jl_len - i));
+          } else if (i == jl_len && jl_len == JUMPLISTSIZE) {
+            i = -1;
           }
         }
         if (i != -1) {
