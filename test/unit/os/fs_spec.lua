@@ -32,6 +32,14 @@ local directory = nil
 local absolute_executable = nil
 local executable_name = nil
 
+local function set_bit(number, to_set)
+  return bit.bor(number, to_set)
+end
+
+local function unset_bit(number, to_unset)
+  return bit.band(number, (bit.bnot(to_unset)))
+end
+
 local function assert_file_exists(filepath)
   neq(nil, lfs.attributes(filepath))
 end
@@ -40,11 +48,24 @@ local function assert_file_does_not_exist(filepath)
   eq(nil, lfs.attributes(filepath))
 end
 
+local function os_setperm(filename, perm)
+  return fs.os_setperm((to_cstr(filename)), perm)
+end
+
+local function os_getperm(filename)
+  local perm = fs.os_getperm((to_cstr(filename)))
+  return tonumber(perm)
+end
+
 describe('fs function', function()
+  local orig_test_file_perm
 
   setup(function()
     lfs.mkdir('unit-test-directory');
+
     io.open('unit-test-directory/test.file', 'w').close()
+    orig_test_file_perm = os_getperm('unit-test-directory/test.file')
+
     io.open('unit-test-directory/test_2.file', 'w').close()
     lfs.link('test.file', 'unit-test-directory/test_link.file', true)
     -- Since the tests are executed, they are called by an executable. We use
@@ -188,6 +209,10 @@ describe('fs function', function()
   end)
 
   describe('file permissions', function()
+    before_each(function()
+      os_setperm('unit-test-directory/test.file', orig_test_file_perm)
+    end)
+
     local function os_getperm(filename)
       local perm = fs.os_getperm((to_cstr(filename)))
       return tonumber(perm)
@@ -208,20 +233,16 @@ describe('fs function', function()
       return fs.os_file_is_readonly((to_cstr(filename)))
     end
 
+    local function os_file_is_readable(filename)
+      return fs.os_file_is_readable((to_cstr(filename)))
+    end
+
     local function os_file_is_writable(filename)
       return fs.os_file_is_writable((to_cstr(filename)))
     end
 
     local function bit_set(number, check_bit)
       return 0 ~= (bit.band(number, check_bit))
-    end
-
-    local function set_bit(number, to_set)
-      return bit.bor(number, to_set)
-    end
-
-    local function unset_bit(number, to_unset)
-      return bit.band(number, (bit.bnot(to_unset)))
     end
 
     describe('os_getperm', function()
@@ -322,16 +343,35 @@ describe('fs function', function()
       end)
     end)
 
+    describe('os_file_is_readable', function()
+      it('returns false if the file is not readable', function()
+        local perm = os_getperm('unit-test-directory/test.file')
+        perm = unset_bit(perm, ffi.C.kS_IRUSR)
+        perm = unset_bit(perm, ffi.C.kS_IRGRP)
+        perm = unset_bit(perm, ffi.C.kS_IROTH)
+        eq(OK, (os_setperm('unit-test-directory/test.file', perm)))
+        eq(false, os_file_is_readable('unit-test-directory/test.file'))
+      end)
+
+      it('returns false if the file does not exist', function()
+        eq(false, os_file_is_readable(
+          'unit-test-directory/what_are_you_smoking.gif'))
+      end)
+
+      it('returns true if the file is readable', function()
+        eq(true, os_file_is_readable(
+          'unit-test-directory/test.file'))
+      end)
+    end)
+
     describe('os_file_is_writable', function()
       it('returns 0 if the file is readonly', function()
         local perm = os_getperm('unit-test-directory/test.file')
-        local perm_orig = perm
         perm = unset_bit(perm, ffi.C.kS_IWUSR)
         perm = unset_bit(perm, ffi.C.kS_IWGRP)
         perm = unset_bit(perm, ffi.C.kS_IWOTH)
         eq(OK, (os_setperm('unit-test-directory/test.file', perm)))
         eq(0, os_file_is_writable('unit-test-directory/test.file'))
-        eq(OK, (os_setperm('unit-test-directory/test.file', perm_orig)))
       end)
 
       it('returns 1 if the file is writable', function()
