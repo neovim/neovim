@@ -297,14 +297,22 @@ static void system_data_cb(Stream *stream, RBuffer *buf, void *data, bool eof)
 
 static void out_data_cb(Stream *stream, RBuffer *buf, void *data, bool eof)
 {
-  RBUFFER_UNTIL_EMPTY(buf, ptr, len) {
-    size_t written = write_output(ptr, len, false,
-        eof && len <= rbuffer_size(buf));
-    if (written) {
-      rbuffer_consumed(buf, written);
-    } else {
-      break;
-    }
+  size_t cnt;
+  char *ptr = rbuffer_read_ptr(buf, &cnt);
+
+  if (!cnt) {
+    return;
+  }
+
+  size_t written = write_output(ptr, cnt, false, eof);
+  // No output written, force emptying the Rbuffer if it is full.
+  if (!written && rbuffer_size(buf) == rbuffer_capacity(buf)) {
+    screen_del_lines(0, 0, 1, (int)Rows, NULL);
+    screen_puts_len((char_u *)ptr, (int)cnt, (int)Rows - 1, 0, 0);
+    written = cnt;
+  }
+  if (written) {
+    rbuffer_consumed(buf, written);
   }
 }
 
@@ -421,6 +429,7 @@ static size_t write_output(char *output, size_t remaining, bool to_buffer,
   if (!output) {
     return 0;
   }
+  char replacement_NUL = to_buffer ? NL : 1;
 
   char *start = output;
   size_t off = 0;
@@ -428,9 +437,10 @@ static size_t write_output(char *output, size_t remaining, bool to_buffer,
   while (off < remaining) {
     if (output[off] == NL) {
       // Insert the line
-      output[off] = NUL;
       if (to_buffer) {
-        ml_append(curwin->w_cursor.lnum++, (char_u *)output, 0, false);
+        output[off] = NUL;
+        ml_append(curwin->w_cursor.lnum++, (char_u *)output, (int)off + 1,
+                  false);
       } else {
         screen_del_lines(0, 0, 1, (int)Rows, NULL);
         screen_puts_len((char_u *)output, (int)off, lastrow, 0, 0);
@@ -444,7 +454,7 @@ static size_t write_output(char *output, size_t remaining, bool to_buffer,
 
     if (output[off] == NUL) {
       // Translate NUL to NL
-      output[off] = NL;
+      output[off] = replacement_NUL;
     }
     off++;
   }
