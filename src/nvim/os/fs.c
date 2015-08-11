@@ -279,13 +279,22 @@ bool os_file_is_readonly(const char *name)
   return access(name, W_OK) != 0;
 }
 
+/// Check if a file is readable.
+///
+/// @return true if `name` is readable, otherwise false.
+bool os_file_is_readable(const char *name)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return (access(name, R_OK) == 0);
+}
+
 /// Check if a file is writable.
 ///
 /// @return `0` if `name` is not writable,
 /// @return `1` if `name` is writable,
 /// @return `2` for a directory which we have rights to write into.
 int os_file_is_writable(const char *name)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (access(name, W_OK) == 0) {
     if (os_isdir((char_u *)name)) {
