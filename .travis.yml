@@ -121,6 +121,9 @@ addons:
       - pkg-config
       - unzip
       - xclip
+      # TODO(justinmk): use pip instead after travis upgrades ubuntu.
+      - python3-setuptools
+      - python3-dev
       # Additional compilers/tools.
       - clang-3.6
       - g++-5-multilib
