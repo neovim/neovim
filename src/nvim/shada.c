@@ -470,6 +470,77 @@ typedef struct sd_write_def {
 # include "shada.c.generated.h"
 #endif
 
+#define DEF_SDE(name, attr, ...) \
+    [kSDItem##name] = { \
+      .timestamp = 0, \
+      .type = kSDItem##name, \
+      .data = { \
+        .attr = { __VA_ARGS__ } \
+      } \
+    }
+#define DEFAULT_POS {1, 0, 0}
+static const pos_T default_pos = DEFAULT_POS;
+static const ShadaEntry sd_default_values[] = {
+  [kSDItemMissing] = { .type = kSDItemMissing, .timestamp = 0 },
+  DEF_SDE(Header, header, .size = 0),
+  DEF_SDE(SearchPattern, search_pattern,
+          .magic = true,
+          .smartcase = false,
+          .has_line_offset = false,
+          .place_cursor_at_end = false,
+          .offset = 0,
+          .is_last_used = true,
+          .is_substitute_pattern = false,
+          .highlighted = false,
+          .pat = NULL,
+          .additional_data = NULL),
+  DEF_SDE(SubString, sub_string, .sub = NULL, .additional_elements = NULL),
+  DEF_SDE(HistoryEntry, history_item,
+          .histtype = HIST_CMD,
+          .string = NULL,
+          .sep = NUL,
+          .additional_elements = NULL),
+  DEF_SDE(Register, reg,
+          .name = NUL,
+          .type = MCHAR,
+          .contents = NULL,
+          .contents_size = 0,
+          .width = 0,
+          .additional_data = NULL),
+  DEF_SDE(Variable, global_var,
+          .name = NULL,
+          .value = {
+            .v_type = VAR_UNKNOWN,
+            .vval = { .v_string = NULL }
+          },
+          .additional_elements = NULL),
+  DEF_SDE(GlobalMark, filemark,
+          .name = '"',
+          .mark = DEFAULT_POS,
+          .fname = NULL,
+          .additional_data = NULL),
+  DEF_SDE(Jump, filemark,
+          .name = NUL,
+          .mark = DEFAULT_POS,
+          .fname = NULL,
+          .additional_data = NULL),
+  DEF_SDE(BufferList, buffer_list,
+          .size = 0,
+          .buffers = NULL),
+  DEF_SDE(LocalMark, filemark,
+          .name = '"',
+          .mark = DEFAULT_POS,
+          .fname = NULL,
+          .additional_data = NULL),
+  DEF_SDE(Change, filemark,
+          .name = NUL,
+          .mark = DEFAULT_POS,
+          .fname = NULL,
+          .additional_data = NULL),
+};
+#undef DEFAULT_POS
+#undef DEF_SDE
+
 /// Initialize new linked list
 ///
 /// @param[out]  hmll       List to initialize.
@@ -1670,6 +1741,10 @@ static bool shada_pack_entry(msgpack_packer *const packer,
       } \
     } \
   } while (0)
+#define CHECK_DEFAULT(entry, attr) \
+  (sd_default_values[entry.type].data.attr == entry.data.attr)
+#define ONE_IF_NOT_DEFAULT(entry, attr) \
+  ((size_t) (!CHECK_DEFAULT(entry, attr)))
   switch (entry.type) {
     case kSDItemMissing: {
       assert(false);
@@ -1726,17 +1801,14 @@ static bool shada_pack_entry(msgpack_packer *const packer,
     case kSDItemSearchPattern: {
       const size_t map_size = (size_t) (
           1  // Search pattern is always present
-          // Following items default to true:
-          + (size_t) !entry.data.search_pattern.magic
-          + (size_t) !entry.data.search_pattern.is_last_used
-          // Following items default to false:
-          + (size_t) entry.data.search_pattern.smartcase
-          + (size_t) entry.data.search_pattern.has_line_offset
-          + (size_t) entry.data.search_pattern.place_cursor_at_end
-          + (size_t) entry.data.search_pattern.is_substitute_pattern
-          + (size_t) entry.data.search_pattern.highlighted
-          // offset defaults to zero:
-          + (size_t) (entry.data.search_pattern.offset != 0)
+          + ONE_IF_NOT_DEFAULT(entry, search_pattern.magic)
+          + ONE_IF_NOT_DEFAULT(entry, search_pattern.is_last_used)
+          + ONE_IF_NOT_DEFAULT(entry, search_pattern.smartcase)
+          + ONE_IF_NOT_DEFAULT(entry, search_pattern.has_line_offset)
+          + ONE_IF_NOT_DEFAULT(entry, search_pattern.place_cursor_at_end)
+          + ONE_IF_NOT_DEFAULT(entry, search_pattern.is_substitute_pattern)
+          + ONE_IF_NOT_DEFAULT(entry, search_pattern.highlighted)
+          + ONE_IF_NOT_DEFAULT(entry, search_pattern.offset)
           // finally, additional data:
           + (size_t) (
               entry.data.search_pattern.additional_data
@@ -1746,21 +1818,25 @@ static bool shada_pack_entry(msgpack_packer *const packer,
       PACK_STATIC_STR(SEARCH_KEY_PAT);
       msgpack_rpc_from_string(cstr_as_string(entry.data.search_pattern.pat),
                               spacker);
-#define PACK_BOOL(name, attr, nondef_value) \
+#define PACK_BOOL(entry, name, attr) \
       do { \
-        if (entry.data.search_pattern.attr == nondef_value) { \
+        if (!CHECK_DEFAULT(entry, search_pattern.attr)) { \
           PACK_STATIC_STR(name); \
-          msgpack_pack_##nondef_value(spacker); \
+          if (sd_default_values[entry.type].data.search_pattern.attr) { \
+            msgpack_pack_false(spacker); \
+          } else { \
+            msgpack_pack_true(spacker); \
+          } \
         } \
       } while (0)
-      PACK_BOOL(SEARCH_KEY_MAGIC, magic, false);
-      PACK_BOOL(SEARCH_KEY_IS_LAST_USED, is_last_used, false);
-      PACK_BOOL(SEARCH_KEY_SMARTCASE, smartcase, true);
-      PACK_BOOL(SEARCH_KEY_HAS_LINE_OFFSET, has_line_offset, true);
-      PACK_BOOL(SEARCH_KEY_PLACE_CURSOR_AT_END, place_cursor_at_end, true);
-      PACK_BOOL(SEARCH_KEY_IS_SUBSTITUTE_PATTERN, is_substitute_pattern, true);
-      PACK_BOOL(SEARCH_KEY_HIGHLIGHTED, highlighted, true);
-      if (entry.data.search_pattern.offset) {
+      PACK_BOOL(entry, SEARCH_KEY_MAGIC, magic);
+      PACK_BOOL(entry, SEARCH_KEY_IS_LAST_USED, is_last_used);
+      PACK_BOOL(entry, SEARCH_KEY_SMARTCASE, smartcase);
+      PACK_BOOL(entry, SEARCH_KEY_HAS_LINE_OFFSET, has_line_offset);
+      PACK_BOOL(entry, SEARCH_KEY_PLACE_CURSOR_AT_END, place_cursor_at_end);
+      PACK_BOOL(entry, SEARCH_KEY_IS_SUBSTITUTE_PATTERN, is_substitute_pattern);
+      PACK_BOOL(entry, SEARCH_KEY_HIGHLIGHTED, highlighted);
+      if (!CHECK_DEFAULT(entry, search_pattern.offset)) {
         PACK_STATIC_STR(SEARCH_KEY_OFFSET);
         msgpack_pack_int64(spacker, entry.data.search_pattern.offset);
       }
@@ -1774,14 +1850,9 @@ static bool shada_pack_entry(msgpack_packer *const packer,
     case kSDItemJump: {
       const size_t map_size = (size_t) (
           1  // File name
-          // Line: defaults to 1
-          + (size_t) (entry.data.filemark.mark.lnum != 1)
-          // Column: defaults to zero:
-          + (size_t) (entry.data.filemark.mark.col != 0)
-          // Mark name: defaults to '"'
-          + (size_t) (entry.type != kSDItemJump
-                      && entry.type != kSDItemChange
-                      && entry.data.filemark.name != '"')
+          + ONE_IF_NOT_DEFAULT(entry, filemark.mark.lnum)
+          + ONE_IF_NOT_DEFAULT(entry, filemark.mark.col)
+          + ONE_IF_NOT_DEFAULT(entry, filemark.name)
           // Additional entries, if any:
           + (size_t) (
               entry.data.filemark.additional_data == NULL
@@ -1791,16 +1862,18 @@ static bool shada_pack_entry(msgpack_packer *const packer,
       PACK_STATIC_STR(KEY_FILE);
       msgpack_rpc_from_string(cstr_as_string(entry.data.filemark.fname),
                               spacker);
-      if (entry.data.filemark.mark.lnum != 1) {
+      if (!CHECK_DEFAULT(entry, filemark.mark.lnum)) {
         PACK_STATIC_STR(KEY_LNUM);
         msgpack_pack_long(spacker, entry.data.filemark.mark.lnum);
       }
-      if (entry.data.filemark.mark.col != 0) {
+      if (!CHECK_DEFAULT(entry, filemark.mark.col)) {
         PACK_STATIC_STR(KEY_COL);
         msgpack_pack_long(spacker, entry.data.filemark.mark.col);
       }
-      if (entry.data.filemark.name != '"' && entry.type != kSDItemJump
-          && entry.type != kSDItemChange) {
+      assert(entry.type == kSDItemJump || entry.type == kSDItemChange
+             ? CHECK_DEFAULT(entry, filemark.name)
+             : true);
+      if (!CHECK_DEFAULT(entry, filemark.name)) {
         PACK_STATIC_STR(KEY_NAME_CHAR);
         msgpack_pack_uint8(spacker, (uint8_t) entry.data.filemark.name);
       }
@@ -1810,10 +1883,8 @@ static bool shada_pack_entry(msgpack_packer *const packer,
     case kSDItemRegister: {
       const size_t map_size = (size_t) (
           2  // Register contents and name
-          // Register type: defaults to MCHAR
-          + (size_t) (entry.data.reg.type != MCHAR)
-          // Register width: defaults to zero
-          + (size_t) (entry.data.reg.width != 0)
+          + ONE_IF_NOT_DEFAULT(entry, reg.type)
+          + ONE_IF_NOT_DEFAULT(entry, reg.width)
           // Additional entries, if any:
           + (size_t) (entry.data.reg.additional_data == NULL
                       ? 0
@@ -1827,11 +1898,11 @@ static bool shada_pack_entry(msgpack_packer *const packer,
       }
       PACK_STATIC_STR(KEY_NAME_CHAR);
       msgpack_pack_char(spacker, entry.data.reg.name);
-      if (entry.data.reg.type != MCHAR) {
+      if (!CHECK_DEFAULT(entry, reg.type)) {
         PACK_STATIC_STR(REG_KEY_TYPE);
         msgpack_pack_uint8(spacker, entry.data.reg.type);
       }
-      if (entry.data.reg.width != 0) {
+      if (!CHECK_DEFAULT(entry, reg.width)) {
         PACK_STATIC_STR(REG_KEY_WIDTH);
         msgpack_pack_uint64(spacker, (uint64_t) entry.data.reg.width);
       }
@@ -1843,10 +1914,10 @@ static bool shada_pack_entry(msgpack_packer *const packer,
       for (size_t i = 0; i < entry.data.buffer_list.size; i++) {
         const size_t map_size = (size_t) (
             1  // Buffer name
-            // Line number: defaults to 1
-            + (size_t) (entry.data.buffer_list.buffers[i].pos.lnum != 1)
-            // Column number: defaults to 0
-            + (size_t) (entry.data.buffer_list.buffers[i].pos.col != 0)
+            + (size_t) (entry.data.buffer_list.buffers[i].pos.lnum
+                        != default_pos.lnum)
+            + (size_t) (entry.data.buffer_list.buffers[i].pos.col
+                        != default_pos.col)
             // Additional entries, if any:
             + (size_t) (
                 entry.data.buffer_list.buffers[i].additional_data == NULL
@@ -1880,6 +1951,8 @@ static bool shada_pack_entry(msgpack_packer *const packer,
       break;
     }
   }
+#undef CHECK_DEFAULT
+#undef ONE_IF_NOT_DEFAULT
   if (!max_kbyte || sbuf.size <= max_kbyte * 1024) {
     if (entry.type == kSDItemUnknown) {
       if (msgpack_pack_uint64(packer, entry.data.unknown_item.type) == -1) {
@@ -3591,6 +3664,7 @@ shada_read_next_item_start:
     goto shada_read_next_item_error;
   }
   ret = kSDReadStatusMalformed;
+  entry->data = sd_default_values[type_u64].data;
   switch ((ShadaEntryType) type_u64) {
     case kSDItemHeader: {
       if (!msgpack_rpc_to_dictionary(&(unpacked.data), &(entry->data.header))) {
@@ -3605,18 +3679,6 @@ shada_read_next_item_start:
               initial_fpos);
         goto shada_read_next_item_error;
       }
-      entry->data.search_pattern = (struct search_pattern) {
-        .magic = true,
-        .smartcase = false,
-        .has_line_offset = false,
-        .place_cursor_at_end = false,
-        .offset = 0,
-        .is_last_used = true,
-        .is_substitute_pattern = false,
-        .highlighted = false,
-        .pat = NULL,
-        .additional_data = NULL,
-      };
       garray_T ad_ga;
       ga_init(&ad_ga, sizeof(*(unpacked.data.via.map.ptr)), 1);
       for (size_t i = 0; i < unpacked.data.via.map.size; i++) {
@@ -3666,12 +3728,6 @@ shada_read_next_item_start:
         emsgu(_(READERR("mark", "is not a dictionary")), initial_fpos);
         goto shada_read_next_item_error;
       }
-      entry->data.filemark = (struct shada_filemark) {
-        .name = '"',
-        .mark = (pos_T) {1, 0, 0},
-        .fname = NULL,
-        .additional_data = NULL,
-      };
       garray_T ad_ga;
       ga_init(&ad_ga, sizeof(*(unpacked.data.via.map.ptr)), 1);
       for (size_t i = 0; i < unpacked.data.via.map.size; i++) {
@@ -3718,14 +3774,6 @@ shada_read_next_item_start:
         emsgu(_(READERR("register", "is not a dictionary")), initial_fpos);
         goto shada_read_next_item_error;
       }
-      entry->data.reg = (struct reg) {
-        .name = NUL,
-        .type = MCHAR,
-        .contents = NULL,
-        .contents_size = 0,
-        .width = 0,
-        .additional_data = NULL,
-      };
       garray_T ad_ga;
       ga_init(&ad_ga, sizeof(*(unpacked.data.via.map.ptr)), 1);
       for (size_t i = 0; i < unpacked.data.via.map.size; i++) {
@@ -3785,12 +3833,6 @@ shada_read_next_item_start:
         emsgu(_(READERR("history", "is not an array")), initial_fpos);
         goto shada_read_next_item_error;
       }
-      entry->data.history_item = (struct history_item) {
-        .histtype = 0,
-        .string = NULL,
-        .sep = 0,
-        .additional_elements = NULL,
-      };
       if (unpacked.data.via.array.size < 2) {
         emsgu(_(READERR("history", "does not have enough elements")),
               initial_fpos);
@@ -3871,11 +3913,6 @@ shada_read_next_item_hist_no_conv:
         emsgu(_(READERR("variable", "is not an array")), initial_fpos);
         goto shada_read_next_item_error;
       }
-      entry->data.global_var = (struct global_var) {
-        .name = NULL,
-        .value = { .v_type = VAR_UNKNOWN },
-        .additional_elements = NULL
-      };
       if (unpacked.data.via.array.size < 2) {
         emsgu(_(READERR("variable", "does not have enough elements")),
               initial_fpos);
@@ -3921,10 +3958,6 @@ shada_read_next_item_hist_no_conv:
         emsgu(_(READERR("sub string", "is not an array")), initial_fpos);
         goto shada_read_next_item_error;
       }
-      entry->data.sub_string = (struct sub_string) {
-        .sub = NULL,
-        .additional_elements = NULL
-      };
       if (unpacked.data.via.array.size < 1) {
         emsgu(_(READERR("sub string", "does not have enough elements")),
               initial_fpos);
@@ -3947,10 +3980,6 @@ shada_read_next_item_hist_no_conv:
         emsgu(_(READERR("buffer list", "is not an array")), initial_fpos);
         goto shada_read_next_item_error;
       }
-      entry->data.buffer_list = (struct buffer_list) {
-        .size = 0,
-        .buffers = NULL,
-      };
       if (unpacked.data.via.array.size == 0) {
         break;
       }
@@ -3971,7 +4000,7 @@ shada_read_next_item_hist_no_conv:
                   initial_fpos);
             goto shada_read_next_item_error;
           }
-          entry->data.buffer_list.buffers[i].pos.lnum = 1;
+          entry->data.buffer_list.buffers[i].pos = default_pos;
           garray_T ad_ga;
           ga_init(&ad_ga, sizeof(*(unpacked.data.via.map.ptr)), 1);
           {
