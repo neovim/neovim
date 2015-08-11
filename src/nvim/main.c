@@ -72,6 +72,10 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/handle.h"
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "mbyte/latin.h.generated.h"
+#endif
+
 /* Maximum number of commands from + or -c arguments. */
 #define MAX_ARG_CMDS 10
 

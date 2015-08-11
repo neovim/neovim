@@ -30,5 +30,9 @@
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mbyte.h.generated.h"
+# include "mbyte/dbcs.h.generated.h"
+# include "mbyte/latin.h.generated.h"
+# include "mbyte/utf8.h.generated.h"
 #endif
+
 #endif  // NVIM_MBYTE_H
