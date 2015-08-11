@@ -492,6 +492,9 @@ int main(int argc, char **argv)
    */
   handle_tag(params.tagname);
 
+
+  check_vimruntime();
+
   /* Execute any "+", "-c" and "-S" arguments. */
   if (params.n_commands > 0)
     exe_commands(&params);
@@ -2070,4 +2073,36 @@ static void check_swap_exists_action(void)
   if (swap_exists_action == SEA_QUIT)
     getout(1);
   handle_swap_exists(NULL);
+}
+
+
+/// Callback used by `check_vimruntime`
+static void check_vimruntime_callback(char_u *fname, void *cookie)
+{
+  STRNCPY(NameBuff, fname, MAXPATHL);
+}
+
+/// Check if `runtimepath` points to a valid Neovim runtime path, look for
+/// runtime/autoload/provider/clipboard.vim, which is a Neovim-specific
+/// file. Print a warning if the file is not found or not readable.
+static void check_vimruntime(void)
+{
+  int result = do_in_runtimepath((char_u*) "autoload/provider/clipboard.vim",
+                                 false, check_vimruntime_callback, NULL);
+
+  if (result == FAIL) {
+    const char *runtime = os_getenv("VIMRUNTIME");
+    if (runtime) {
+      vim_snprintf((char*) IObuff, IOSIZE,
+                   _("W51: Invalid VIMRUNTIME: \"%s\""), runtime);
+      EMSG(IObuff);
+    } else {
+      EMSG(_("W50: Neovim's runtime couldn't be found."));
+    }
+  } else if (!os_file_is_readable((char*) NameBuff)) {
+    vim_snprintf((char*) IObuff, IOSIZE,
+                 _("W52: Neovim's runtime was found but is not readable. "
+                 "Couldn't read \"%s\""), NameBuff);
+    EMSG(IObuff);
+  }
 }
