@@ -99,7 +99,7 @@ syn region  pythonString
       \ start=+[uU]\=\z(['"]\)+ end="\z1" skip="\\\\\|\\\z1"
       \ contains=pythonEscape,@Spell
 syn region  pythonString
-      \ start=+[uU]\=\z('''\|"""\)+ end="\z1" keepend
+      \ start=+[uU]\=\z('''\|"""\)+ skip=+\\["']+ end="\z1" keepend
       \ contains=pythonEscape,pythonSpaceError,pythonDoctest,@Spell
 syn region  pythonRawString
       \ start=+[uU]\=[rR]\z(['"]\)+ end="\z1" skip="\\\\\|\\\z1"
