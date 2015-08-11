@@ -62,7 +62,7 @@
 
 /// Define a ring buffer structure
 ///
-/// @param TypeName    Ring buffer type name. Actual type name will be 
+/// @param TypeName    Ring buffer type name. Actual type name will be
 ///                    `{TypeName}RingBuffer`.
 /// @param RBType      Type of the single ring buffer element.
 #define RINGBUF_TYPEDEF(TypeName, RBType)                                      \
@@ -75,12 +75,12 @@ typedef struct {                                                               \
 
 /// Initialize a new ring buffer
 ///
-/// @param TypeName    Ring buffer type name. Actual type name will be 
+/// @param TypeName    Ring buffer type name. Actual type name will be
 ///                    `{TypeName}RingBuffer`.
-/// @param funcprefix  Prefix for all ring buffer functions. Function name will 
+/// @param funcprefix  Prefix for all ring buffer functions. Function name will
 ///                    look like `{funcprefix}_rb_{function_name}`.
 /// @param RBType      Type of the single ring buffer element.
-/// @param rbfree      Function used to free ring buffer element. May be 
+/// @param rbfree      Function used to free ring buffer element. May be
 ///                    a macros like `#define RBFREE(item)` (to skip freeing).
 ///
 ///                    Intended function signature: `void *rbfree(RBType *)`;
