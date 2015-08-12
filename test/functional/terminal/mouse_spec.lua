@@ -110,31 +110,31 @@ describe('terminal mouse', function()
       before_each(function()
         feed('<c-\\><c-n>:vsp<cr>')
         screen:expect([[
-          line28                   |line28                  |
           line29                   |line29                  |
           line30                   |line30                  |
           rows: 5, cols: 24        |rows: 5, cols: 24       |
-          {2:^ }                        |{2: }                       |
+          {2: }                        |{2: }                       |
+          ^~                        |~                       |
           ==========                ==========              |
                                                             |
         ]])
         feed(':enew | set number<cr>')
         screen:expect([[
-            1 ^                     |line28                  |
-          ~                        |line29                  |
+            1 ^                     |line29                  |
           ~                        |line30                  |
           ~                        |rows: 5, cols: 24       |
           ~                        |{2: }                       |
+          ~                        |~                       |
           ==========                ==========              |
           :enew | set number                                |
         ]])
         feed('30iline\n<esc>')
         screen:expect([[
-           27 line                 |line28                  |
-           28 line                 |line29                  |
-           29 line                 |line30                  |
-           30 line                 |rows: 5, cols: 24       |
-           31 ^                     |{2: }                       |
+           27 line                 |line29                  |
+           28 line                 |line30                  |
+           29 line                 |rows: 5, cols: 24       |
+           30 line                 |{2: }                       |
+           31 ^                     |~                       |
           ==========                ==========              |
                                                             |
         ]])

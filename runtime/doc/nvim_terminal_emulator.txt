@@ -108,4 +108,16 @@ The terminal cursor can be highlighted via |hl-TermCursor| and
 |hl-TermCursorNC|.
 
 ==============================================================================
+5. Security		     *nvim-terminal-emulator-security*
+
+Neovim is not designed for security, and great care should be taken when
+performing security-sensitive operations via neovim terminal-mode.
+
+As a simple example of what can happen : When issuing a sudo command while a
+macro is being recorded, your password will be included in the macro.
+Furthermore, plugins also have extensive access to everything that's going on.
+The fact that neovim was never designed with security in mind should be enough
+to stop you from ever entering a password or doing something security-related.
+
+==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

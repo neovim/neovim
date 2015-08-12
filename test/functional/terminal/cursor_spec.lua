@@ -35,11 +35,11 @@ describe('terminal cursor', function()
     feed('<c-\\><c-n>')
     screen:expect([[
       tty ready                                         |
-      {2: }                                                 |
+      {2:^ }                                                 |
                                                         |
                                                         |
                                                         |
-      ^                                                  |
+                                                        |
                                                         |
     ]])
   end)
@@ -52,11 +52,11 @@ describe('terminal cursor', function()
     it('is positioned correctly when unfocused', function()
       screen:expect([[
           1 tty ready                                     |
-          2 {2: }                                             |
+          2 {2:^ }                                             |
           3                                               |
           4                                               |
           5                                               |
-          6 ^                                              |
+          6                                               |
         :set number                                       |
       ]])
     end)
@@ -102,21 +102,21 @@ describe('terminal cursor', function()
       hide_cursor()
       screen:expect([[
         tty ready                                         |
-                                                          |
-                                                          |
-                                                          |
-                                                          |
         ^                                                  |
+                                                          |
+                                                          |
+                                                          |
+                                                          |
                                                           |
       ]])
       show_cursor()
       screen:expect([[
         tty ready                                         |
-        {2: }                                                 |
+        {2:^ }                                                 |
                                                           |
                                                           |
                                                           |
-        ^                                                  |
+                                                          |
                                                           |
       ]])
     end)
@@ -160,11 +160,11 @@ describe('cursor with customized highlighting', function()
     feed('<c-\\><c-n>')
     screen:expect([[
       tty ready                                         |
-      {2: }                                                 |
+      {2:^ }                                                 |
                                                         |
                                                         |
                                                         |
-      ^                                                  |
+                                                        |
                                                         |
     ]])
   end)

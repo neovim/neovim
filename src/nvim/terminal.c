@@ -123,6 +123,8 @@ struct terminal {
     int row, col;
     bool visible;
   } cursor;
+  // On the previous pass of on_refresh, where was the terminal's cursor?
+  int prev_term_cursor_linenr;
   // which mouse button is pressed
   int pressed_button;
   // pending width/height
@@ -232,6 +234,8 @@ Terminal *terminal_open(TerminalOptions opts)
   rv->sb_size = MIN(rv->sb_size, 100000);
   rv->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
 
+  rv->prev_term_cursor_linenr = 0;
+
   // Configure the color palette. Try to get the color from:
   //
   // - b:terminal_color_{NUM}
@@ -283,8 +287,10 @@ void terminal_close(Terminal *term, char *msg)
   }
 }
 
-void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
+void terminal_resize(Terminal *term)
 {
+  uint16_t width = UINT16_MAX;
+  uint16_t height = UINT16_MAX;
   if (term->closed) {
     // will be called after exited if two windows display the same terminal and
     // one of the is closed as a consequence of pressing a key.
@@ -293,21 +299,21 @@ void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
   int curwidth, curheight;
   vterm_get_size(term->vt, &curheight, &curwidth);
 
-  if (!width) {
-    width = (uint16_t)curwidth;
-  }
-
-  if (!height) {
-    height = (uint16_t)curheight;
-  }
-
   // The new width/height are the minimum for all windows that display the
   // terminal in the current tab.
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_TAB_WINDOWS(tab, wp) {
     if (!wp->w_closing && wp->w_buffer == term->buf) {
       width = (uint16_t)MIN(width, (uint16_t)(wp->w_width - win_col_off(wp)));
       height = (uint16_t)MIN(height, (uint16_t)wp->w_height);
     }
+  }
+
+  // Seems to me that these shouldn't happen, but better safe than sorry
+  if (width == UINT16_MAX) {
+    width = (uint16_t)curwidth;
+  }
+  if (height == UINT16_MAX) {
+    height = (uint16_t)curheight;
   }
 
   if (curheight == height && curwidth == width) {
@@ -330,7 +336,11 @@ void terminal_enter(bool process_deferred)
   assert(term && "should only be called when curbuf has a terminal");
 
   // Ensure the terminal is properly sized.
-  terminal_resize(term, 0, 0);
+  terminal_resize(term);
+
+  // Disable folds to avoid confusing the user
+  int save_w_p_fen = curwin->w_p_fen;
+  curwin->w_p_fen = false;
 
   checkpcmark();
   setpcmark();
@@ -340,8 +350,6 @@ void terminal_enter(bool process_deferred)
   RedrawingDisabled = false;
   bool save_mapped_ctrl_c = mapped_ctrl_c;
   mapped_ctrl_c = true;
-  // go to the bottom when the terminal is focused
-  adjust_topline(term, false);
   // erase the unfocused cursor
   invalidate_terminal(term, term->cursor.row, term->cursor.row + 1);
   showmode();
@@ -351,6 +359,7 @@ void terminal_enter(bool process_deferred)
   bool close = false;
 
   bool got_bs = false;  // True if the last input was <C-\>
+  bool mouse_event = false;
 
   while (term->buf == curbuf) {
     if (process_deferred) {
@@ -376,6 +385,7 @@ void terminal_enter(bool process_deferred)
       case K_MOUSEDOWN:
       case K_MOUSEUP:
         if (send_mouse_event(term, c)) {
+          mouse_event = true;
           goto end;
         }
         break;
@@ -414,7 +424,16 @@ end:
   mapped_ctrl_c = save_mapped_ctrl_c;
   unshowmode(true);
   redraw(term->buf != curbuf);
+  if (curbuf == term->buf) {
+    curwin->w_p_fen = save_w_p_fen;
+    if (mouse_event == false) {
+      // Upon leaving Terminal mode, keep cursor where Terminal showed it
+      curwin->w_cursor.lnum = row_to_linenr(term, term->cursor.row);
+      curwin->w_cursor.col = term->cursor.col;
+    }
+  }
   ui_busy_stop();
+  ui_refresh();
   if (close) {
     term->opts.close_cb(term->opts.data);
     do_cmdline_cmd("bwipeout!");
@@ -913,14 +932,20 @@ static void on_refresh(Event event)
       }
       continue;
     }
-    bool pending_resize = term->pending_resize;
+    FOR_ALL_TAB_WINDOWS(tab, wp) {
+      if (wp->w_buffer == term->buf) {
+        wp->following_terminal =
+          (wp->w_cursor.lnum >= term->prev_term_cursor_linenr);
+      }
+    }
     WITH_BUFFER(term->buf, {
       refresh_size(term);
       refresh_scrollback(term);
       refresh_screen(term);
       redraw_buf_later(term->buf, NOT_VALID);
     });
-    adjust_topline(term, pending_resize);
+    adjust_topline(term, 0);
+    term->prev_term_cursor_linenr = row_to_linenr(term, term->cursor.row);
   });
   pmap_clear(ptr_t)(invalidated_terminals);
   unblock_autocmds();
@@ -1057,15 +1082,19 @@ static void adjust_topline(Terminal *term, bool force)
 {
   int height, width;
   vterm_get_size(term->vt, &height, &width);
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_TAB_WINDOWS(tab, wp) {
     if (wp->w_buffer == term->buf) {
       // for every window that displays a terminal, ensure the cursor is in a
       // valid line
       wp->w_cursor.lnum = MIN(wp->w_cursor.lnum, term->buf->b_ml.ml_line_count);
-      if (force || curbuf != term->buf || is_focused(term)) {
-        // if the terminal is not in the current window or if it's focused,
-        // adjust topline/cursor so the window will "follow" the terminal
-        // output
+      if (force
+          || (wp->following_terminal
+              && wp->w_buffer->b_ml.ml_line_count >= wp->w_botline)
+          || (is_focused(term) && wp == curwin)) {
+        // if we're told to follow the terminal, and the window doesn't contain
+        // the new last line  of the buffer, or if it's focused and we're
+        // actually in this window, adjust topline/cursor so the window will
+        // "follow" the terminal output
         wp->w_cursor.lnum = term->buf->b_ml.ml_line_count;
         set_topline(wp, MAX(wp->w_cursor.lnum - height + 1, 1));
       }

@@ -97,7 +97,7 @@ describe('terminal scrollback', function()
 
           feed('<c-\\><c-n>6k')
           screen:expect([[
-            ^line2                                             |
+            line^2                                             |
             line3                                             |
             line4                                             |
             line5                                             |

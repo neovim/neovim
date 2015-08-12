@@ -1817,7 +1817,7 @@ static int close_last_window_tabpage(win_T *win, int free_buf, tabpage_T *prev_c
   if (term) {
     // When a window containing a terminal buffer is closed, recalculate its
     // size
-    terminal_resize(term, 0, 0);
+    terminal_resize(term);
   }
 
   /* Since goto_tabpage_tp above did not trigger *Enter autocommands, do
@@ -4723,7 +4723,7 @@ void win_new_height(win_T *wp, int height)
   invalidate_botline_win(wp);
 
   if (wp->w_buffer->terminal) {
-    terminal_resize(wp->w_buffer->terminal, 0, wp->w_height);
+    terminal_resize(wp->w_buffer->terminal);
     redraw_win_later(wp, CLEAR);
   }
 }
@@ -4746,7 +4746,7 @@ void win_new_width(win_T *wp, int width)
 
   if (wp->w_buffer->terminal) {
     if (wp->w_height != 0) {
-      terminal_resize(wp->w_buffer->terminal, wp->w_width, 0);
+      terminal_resize(wp->w_buffer->terminal);
     }
     redraw_win_later(wp, CLEAR);
   }
