@@ -772,12 +772,13 @@ describe('ShaDa jumps support code', function()
     eq('', nvim_eval('bufname("%")'))
     eq('\n'
        .. ' jump line  col file/text\n'
-       .. '   5     2    0 /a/b/c\n'
+       .. '   6     2    0 /a/b/c\n'
+       .. '   5     2    0 /a/b/d\n'
        .. '   4     3    0 /a/b/d\n'
-       .. '   3     2    0 /a/b/d\n'
+       .. '   3     2    0 /a/b/e\n'
        .. '   2     2    0 /a/b/f\n'
-       .. '   1     2    0 /a/b/e\n'
-       .. '>  0     1    0 ', nvim_eval('g:jumps'))
+       .. '   1     1    0 \n'
+       .. '>', nvim_eval('g:jumps'))
   end)
 
   it('merges jumps when writing', function()
@@ -791,10 +792,10 @@ describe('ShaDa jumps support code', function()
     eq(0, exc_exec('wshada ' .. shada_fname))
     local jumps = {
       {file='/a/b/c', line=2},
-      {file='/a/b/d', line=3},
       {file='/a/b/d', line=2},
-      {file='/a/b/f', line=2},
+      {file='/a/b/d', line=3},
       {file='/a/b/e', line=2},
+      {file='/a/b/f', line=2},
     }
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
