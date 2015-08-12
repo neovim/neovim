@@ -208,7 +208,8 @@ static bool handle_forced_escape(TermInput *input)
 
 static void restart_reading(void **argv);
 
-static void read_cb(Stream *stream, RBuffer *buf, void *data, bool eof)
+static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
+    bool eof)
 {
   TermInput *input = data;
 

@@ -21176,38 +21176,43 @@ static inline void process_job_event(TerminalJobData *data, ufunc_T *callback,
   on_job_event(&event_data);
 }
 
-static void on_job_stdout(Stream *stream, RBuffer *buf, void *job, bool eof)
+static void on_job_stdout(Stream *stream, RBuffer *buf, size_t count,
+    void *job, bool eof)
 {
   TerminalJobData *data = job;
-  on_job_output(stream, job, buf, eof, data->on_stdout, "stdout");
+  on_job_output(stream, job, buf, count, eof, data->on_stdout, "stdout");
 }
 
-static void on_job_stderr(Stream *stream, RBuffer *buf, void *job, bool eof)
+static void on_job_stderr(Stream *stream, RBuffer *buf, size_t count,
+    void *job, bool eof)
 {
   TerminalJobData *data = job;
-  on_job_output(stream, job, buf, eof, data->on_stderr, "stderr");
+  on_job_output(stream, job, buf, count, eof, data->on_stderr, "stderr");
 }
 
 static void on_job_output(Stream *stream, TerminalJobData *data, RBuffer *buf,
-    bool eof, ufunc_T *callback, const char *type)
+    size_t count, bool eof, ufunc_T *callback, const char *type)
 {
   if (eof) {
     return;
   }
 
-  RBUFFER_UNTIL_EMPTY(buf, ptr, len) {
-    // The order here matters, the terminal must receive the data first because
-    // process_job_event will modify the read buffer(convert NULs into NLs)
-    if (data->term) {
-      terminal_receive(data->term, ptr, len);
-    }
+  // stub variable, to keep reading consistent with the order of events, only
+  // consider the count parameter.
+  size_t r;
+  char *ptr = rbuffer_read_ptr(buf, &r);
 
-    if (callback) {
-      process_job_event(data, callback, type, ptr, len, 0);
-    }
-
-    rbuffer_consumed(buf, len);
+  // The order here matters, the terminal must receive the data first because
+  // process_job_event will modify the read buffer(convert NULs into NLs)
+  if (data->term) {
+    terminal_receive(data->term, ptr, count);
   }
+
+  if (callback) {
+    process_job_event(data, callback, type, ptr, count, 0);
+  }
+
+  rbuffer_consumed(buf, count);
 }
 
 static void on_process_exit(Process *proc, int status, void *d)

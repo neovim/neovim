@@ -328,7 +328,8 @@ static void channel_from_stdio(void)
   wstream_init_fd(&loop, &channel->data.std.out, 1, 0, NULL);
 }
 
-static void forward_stderr(Stream *stream, RBuffer *rbuf, void *data, bool eof)
+static void forward_stderr(Stream *stream, RBuffer *rbuf, size_t count,
+    void *data, bool eof)
 {
   while (rbuffer_size(rbuf)) {
     char buf[256];
@@ -343,7 +344,8 @@ static void process_exit(Process *proc, int status, void *data)
   decref(data);
 }
 
-static void parse_msgpack(Stream *stream, RBuffer *rbuf, void *data, bool eof)
+static void parse_msgpack(Stream *stream, RBuffer *rbuf, size_t c, void *data,
+    bool eof)
 {
   Channel *channel = data;
   incref(channel);

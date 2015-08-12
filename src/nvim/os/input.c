@@ -316,7 +316,8 @@ static InbufPollResult inbuf_poll(int ms)
   return input_eof ? kInputEof : kInputNone;
 }
 
-static void read_cb(Stream *stream, RBuffer *buf, void *data, bool at_eof)
+static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
+    bool at_eof)
 {
   if (at_eof) {
     input_eof = true;

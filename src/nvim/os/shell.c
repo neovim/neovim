@@ -298,7 +298,8 @@ static void dynamic_buffer_ensure(DynamicBuffer *buf, size_t desired)
   buf->data = xrealloc(buf->data, buf->cap);
 }
 
-static void system_data_cb(Stream *stream, RBuffer *buf, void *data, bool eof)
+static void system_data_cb(Stream *stream, RBuffer *buf, size_t count,
+    void *data, bool eof)
 {
   DynamicBuffer *dbuf = data;
 
@@ -308,7 +309,8 @@ static void system_data_cb(Stream *stream, RBuffer *buf, void *data, bool eof)
   dbuf->len += nread;
 }
 
-static void out_data_cb(Stream *stream, RBuffer *buf, void *data, bool eof)
+static void out_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data,
+    bool eof)
 {
   size_t cnt;
   char *ptr = rbuffer_read_ptr(buf, &cnt);
