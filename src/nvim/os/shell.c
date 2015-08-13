@@ -257,7 +257,7 @@ static int do_os_system(char **argv,
   // the UI
   ui_busy_start();
   ui_flush();
-  int status = process_wait(proc, -1);
+  int status = process_wait(proc, -1, NULL);
   ui_busy_stop();
 
   // prepare the out parameters if requested

@@ -11037,6 +11037,7 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv)
   list_T *rv = list_alloc();
 
   ui_busy_start();
+  Queue *waiting_jobs = queue_new_parent(loop_on_put, &loop);
   // For each item in the input list append an integer to the output list. -3
   // is used to represent an invalid job id, -2 is for a interrupted job and
   // -1 for jobs that were skipped or timed out.
@@ -11050,6 +11051,10 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv)
       // status code when the job exits
       list_append_number(rv, -1);
       data->status_ptr = &rv->lv_last->li_tv.vval.v_number;
+      // Process any pending events for the job because we'll temporarily
+      // replace the parent queue
+      queue_process_events(data->events);
+      queue_replace_parent(data->events, waiting_jobs);
     }
   }
 
@@ -11070,7 +11075,7 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv)
         || !(data = find_job(arg->li_tv.vval.v_number))) {
       continue;
     }
-    int status = process_wait((Process *)&data->proc, remaining);
+    int status = process_wait((Process *)&data->proc, remaining, waiting_jobs);
     if (status < 0) {
       // interrupted or timed out, skip remaining jobs.
       if (status == -2) {
@@ -11090,9 +11095,6 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv)
     }
   }
 
-  // poll to ensure any pending callbacks from the last job are invoked
-  loop_poll_events(&loop, 0);
-
   for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
     TerminalJobData *data = NULL;
     if (arg->li_tv.v_type != VAR_NUMBER
@@ -11103,8 +11105,21 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv)
     // job exits
     data->status_ptr = NULL;
   }
-  ui_busy_stop();
 
+  // restore the parent queue for any jobs still alive
+  for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
+    TerminalJobData *data = NULL;
+    if (arg->li_tv.v_type != VAR_NUMBER
+        || !(data = pmap_get(uint64_t)(jobs, arg->li_tv.vval.v_number))) {
+      continue;
+    }
+    // restore the parent queue for the job
+    queue_process_events(data->events);
+    queue_replace_parent(data->events, loop.events);
+  }
+
+  queue_free(waiting_jobs);
+  ui_busy_stop();
   rv->lv_refcount++;
   rettv->v_type = VAR_LIST;
   rettv->vval.v_list = rv;

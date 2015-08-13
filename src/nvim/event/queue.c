@@ -152,6 +152,12 @@ bool queue_empty(Queue *queue)
   return QUEUE_EMPTY(&queue->headtail);
 }
 
+void queue_replace_parent(Queue *queue, Queue *new_parent)
+{
+  assert(queue_empty(queue));
+  queue->parent = new_parent;
+}
+
 static Event queue_remove(Queue *queue)
 {
   assert(!queue_empty(queue));

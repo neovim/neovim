@@ -152,7 +152,7 @@ void process_close_err(Process *proc) FUNC_ATTR_NONNULL_ALL
 ///         indistinguishable from the process returning -1 by itself. Which
 ///         is possible on some OS. Returns -2 if an user has interruped the
 ///         wait.
-int process_wait(Process *proc, int ms) FUNC_ATTR_NONNULL_ALL
+int process_wait(Process *proc, int ms, Queue *events) FUNC_ATTR_NONNULL_ARG(1)
 {
   // The default status is -1, which represents a timeout
   int status = -1;
@@ -162,10 +162,14 @@ int process_wait(Process *proc, int ms) FUNC_ATTR_NONNULL_ALL
     return proc->status;
   }
 
+  if (!events) {
+    events = proc->events;
+  }
+
   // Increase refcount to stop the exit callback from being called(and possibly
   // being freed) before we have a chance to get the status.
   proc->refcount++;
-  LOOP_PROCESS_EVENTS_UNTIL(proc->loop, proc->events, ms,
+  LOOP_PROCESS_EVENTS_UNTIL(proc->loop, events, ms,
       // Until...
       got_int ||             // interrupted by the user
       proc->refcount == 1);  // job exited
@@ -179,10 +183,10 @@ int process_wait(Process *proc, int ms) FUNC_ATTR_NONNULL_ALL
     if (ms == -1) {
       // We can only return if all streams/handles are closed and the job
       // exited.
-      LOOP_PROCESS_EVENTS_UNTIL(proc->loop, proc->events, -1,
+      LOOP_PROCESS_EVENTS_UNTIL(proc->loop, events, -1,
           proc->refcount == 1);
     } else {
-      LOOP_PROCESS_EVENTS(proc->loop, proc->events, 0);
+      LOOP_PROCESS_EVENTS(proc->loop, events, 0);
     }
   }
 
@@ -191,9 +195,9 @@ int process_wait(Process *proc, int ms) FUNC_ATTR_NONNULL_ALL
     // resources
     status = interrupted ? -2 : proc->status;
     decref(proc);
-    if (proc->events) {
+    if (events) {
       // the decref call created an exit event, process it now
-      queue_process_events(proc->events);
+      queue_process_events(events);
     }
   } else {
     proc->refcount--;

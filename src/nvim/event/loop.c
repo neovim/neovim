@@ -22,7 +22,7 @@ void loop_init(Loop *loop, void *data)
   loop->uv.data = loop;
   loop->children = kl_init(WatcherPtr);
   loop->children_stop_requests = 0;
-  loop->events = queue_new_parent(on_put, loop);
+  loop->events = queue_new_parent(loop_on_put, loop);
   loop->fast_events = queue_new_child(loop->events);
   uv_signal_init(&loop->uv, &loop->children_watcher);
   uv_timer_init(&loop->uv, &loop->children_kill_timer);
@@ -59,7 +59,7 @@ void loop_poll_events(Loop *loop, int ms)
   queue_process_events(loop->fast_events);
 }
 
-static void on_put(Queue *queue, void *data)
+void loop_on_put(Queue *queue, void *data)
 {
   Loop *loop = data;
   // Sometimes libuv will run pending callbacks(timer for example) before
