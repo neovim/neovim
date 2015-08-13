@@ -3978,8 +3978,10 @@ shada_read_next_item_hist_no_conv:
   entry->type = (ShadaEntryType) type_u64;
   ret = kSDReadStatusSuccess;
 shada_read_next_item_end:
-  msgpack_unpacked_destroy(&unpacked);
-  xfree(buf);
+  if (buf != NULL) {
+    msgpack_unpacked_destroy(&unpacked);
+    xfree(buf);
+  }
   return ret;
 shada_read_next_item_error:
   entry->type = (ShadaEntryType) type_u64;
