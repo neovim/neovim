@@ -3186,7 +3186,7 @@ static inline uint64_t be64toh(uint64_t big_endian_64_bits)
 #ifdef SHADA_BIG_ENDIAN
   return big_endian_64_bits;
 #else
-  uint8_t *buf = &big_endian_64_bits;
+  uint8_t *buf = (uint8_t *) &big_endian_64_bits;
   uint64_t ret = 0;
   for (size_t i = 8; i; i--) {
     ret |= ((uint64_t) buf[i - 1]) << ((8 - i) * 8);
