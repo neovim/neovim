@@ -1203,12 +1203,14 @@ const void *mark_global_iter(const void *const iter, char *const name,
   const xfmark_T *iter_mark = (iter == NULL
                                ? &(namedfm[0])
                                : (const xfmark_T *const) iter);
-  while (!iter_mark->fmark.mark.lnum
-         && (size_t) (iter_mark - &(namedfm[0])) < ARRAY_SIZE(namedfm)) {
+  while ((size_t) (iter_mark - &(namedfm[0])) < ARRAY_SIZE(namedfm)
+         && !iter_mark->fmark.mark.lnum) {
     iter_mark++;
   }
-  if (!iter_mark->fmark.mark.lnum) {
-    *fm = (xfmark_T) {.fmark = {.mark = {.lnum = 0}}};
+  if ((size_t) (iter_mark - &(namedfm[0])) == ARRAY_SIZE(namedfm)
+      || !iter_mark->fmark.mark.lnum) {
+    *fm = (xfmark_T) { .fmark = { .mark = { .lnum = 0 } } };
+    return NULL;
   }
   size_t iter_off = (size_t) (iter_mark - &(namedfm[0]));
   *name = (char) (iter_off < NMARKS
