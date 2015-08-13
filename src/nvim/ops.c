@@ -5379,6 +5379,7 @@ bool op_register_set(const char name, const yankreg_T reg)
   if (i == -1) {
     return false;
   }
+  free_register(&y_regs[i]);
   y_regs[i] = reg;
   return true;
 }
