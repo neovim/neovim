@@ -3210,7 +3210,8 @@ static ShaDaReadResult fread_len(ShaDaReadDef *const sd_reader,
                                  const size_t length)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  const ptrdiff_t read_bytes =  sd_reader->read(sd_reader, buffer, length);
+  const ptrdiff_t read_bytes = sd_reader->read(sd_reader, buffer, length);
+  (void) read_bytes;
 
   if (sd_reader->error != NULL) {
     emsg2(_(SERR "System error while reading ShaDa file: %s"),
