@@ -57,6 +57,7 @@ src/nvim/keymap.h
 src/nvim/lib/khash.h
 src/nvim/lib/klist.h
 src/nvim/lib/kvec.h
+src/nvim/lib/queue.h
 src/nvim/macros.h
 src/nvim/main.c
 src/nvim/main.h

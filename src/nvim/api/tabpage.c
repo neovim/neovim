@@ -62,7 +62,6 @@ Object tabpage_get_var(Tabpage tabpage, String name, Error *err)
 /// @param[out] err Details of an error that may have occurred
 /// @return The tab page handle
 Object tabpage_set_var(Tabpage tabpage, String name, Object value, Error *err)
-  FUNC_ATTR_DEFERRED
 {
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
 

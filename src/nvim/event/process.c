@@ -22,7 +22,7 @@
 #define TERM_TIMEOUT 1000000000
 #define KILL_TIMEOUT (TERM_TIMEOUT * 2)
 
-#define CLOSE_PROC_STREAM(proc, stream)                          \
+#define CLOSE_PROC_STREAM(proc, stream)                             \
   do {                                                              \
     if (proc->stream && !proc->stream->closed) {                    \
       stream_close(proc->stream, NULL);                             \
@@ -30,19 +30,18 @@
   } while (0)
 
 
-bool process_spawn(Loop *loop, Process *proc) FUNC_ATTR_NONNULL_ALL
+bool process_spawn(Process *proc) FUNC_ATTR_NONNULL_ALL
 {
-  proc->loop = loop;
   if (proc->in) {
-    uv_pipe_init(&loop->uv, &proc->in->uv.pipe, 0);
+    uv_pipe_init(&proc->loop->uv, &proc->in->uv.pipe, 0);
   }
 
   if (proc->out) {
-    uv_pipe_init(&loop->uv, &proc->out->uv.pipe, 0);
+    uv_pipe_init(&proc->loop->uv, &proc->out->uv.pipe, 0);
   }
 
   if (proc->err) {
-    uv_pipe_init(&loop->uv, &proc->err->uv.pipe, 0);
+    uv_pipe_init(&proc->loop->uv, &proc->err->uv.pipe, 0);
   }
 
   bool success;
@@ -77,6 +76,7 @@ bool process_spawn(Loop *loop, Process *proc) FUNC_ATTR_NONNULL_ALL
 
   if (proc->in) {
     stream_init(NULL, proc->in, -1, (uv_stream_t *)&proc->in->uv.pipe, data);
+    proc->in->events = proc->events;
     proc->in->internal_data = proc;
     proc->in->internal_close_cb = on_process_stream_close;
     proc->refcount++;
@@ -84,6 +84,7 @@ bool process_spawn(Loop *loop, Process *proc) FUNC_ATTR_NONNULL_ALL
 
   if (proc->out) {
     stream_init(NULL, proc->out, -1, (uv_stream_t *)&proc->out->uv.pipe, data);
+    proc->out->events = proc->events;
     proc->out->internal_data = proc;
     proc->out->internal_close_cb = on_process_stream_close;
     proc->refcount++;
@@ -91,6 +92,7 @@ bool process_spawn(Loop *loop, Process *proc) FUNC_ATTR_NONNULL_ALL
 
   if (proc->err) {
     stream_init(NULL, proc->err, -1, (uv_stream_t *)&proc->err->uv.pipe, data);
+    proc->err->events = proc->events;
     proc->err->internal_data = proc;
     proc->err->internal_close_cb = on_process_stream_close;
     proc->refcount++;
@@ -99,7 +101,7 @@ bool process_spawn(Loop *loop, Process *proc) FUNC_ATTR_NONNULL_ALL
   proc->internal_exit_cb = on_process_exit;
   proc->internal_close_cb = decref;
   proc->refcount++;
-  kl_push(WatcherPtr, loop->children, proc);
+  kl_push(WatcherPtr, proc->loop->children, proc);
   return true;
 }
 
@@ -113,7 +115,7 @@ void process_teardown(Loop *loop) FUNC_ATTR_NONNULL_ALL
   }
 
   // Wait until all children exit
-  LOOP_POLL_EVENTS_UNTIL(loop, -1, kl_empty(loop->children));
+  LOOP_PROCESS_EVENTS_UNTIL(loop, loop->events, -1, kl_empty(loop->children));
   pty_process_teardown(loop);
 }
 
@@ -150,16 +152,24 @@ void process_close_err(Process *proc) FUNC_ATTR_NONNULL_ALL
 ///         indistinguishable from the process returning -1 by itself. Which
 ///         is possible on some OS. Returns -2 if an user has interruped the
 ///         wait.
-int process_wait(Process *proc, int ms) FUNC_ATTR_NONNULL_ALL
+int process_wait(Process *proc, int ms, Queue *events) FUNC_ATTR_NONNULL_ARG(1)
 {
   // The default status is -1, which represents a timeout
   int status = -1;
   bool interrupted = false;
+  if (!proc->refcount) {
+    LOOP_PROCESS_EVENTS(proc->loop, proc->events, 0);
+    return proc->status;
+  }
+
+  if (!events) {
+    events = proc->events;
+  }
 
   // Increase refcount to stop the exit callback from being called(and possibly
   // being freed) before we have a chance to get the status.
   proc->refcount++;
-  LOOP_POLL_EVENTS_UNTIL(proc->loop, ms,
+  LOOP_PROCESS_EVENTS_UNTIL(proc->loop, events, ms,
       // Until...
       got_int ||             // interrupted by the user
       proc->refcount == 1);  // job exited
@@ -171,12 +181,12 @@ int process_wait(Process *proc, int ms) FUNC_ATTR_NONNULL_ALL
     got_int = false;
     process_stop(proc);
     if (ms == -1) {
-      // We can only return, if all streams/handles are closed and the job
-
+      // We can only return if all streams/handles are closed and the job
       // exited.
-      LOOP_POLL_EVENTS_UNTIL(proc->loop, -1, proc->refcount == 1);
+      LOOP_PROCESS_EVENTS_UNTIL(proc->loop, events, -1,
+          proc->refcount == 1);
     } else {
-      loop_poll_events(proc->loop, 0);
+      LOOP_PROCESS_EVENTS(proc->loop, events, 0);
     }
   }
 
@@ -185,6 +195,10 @@ int process_wait(Process *proc, int ms) FUNC_ATTR_NONNULL_ALL
     // resources
     status = interrupted ? -2 : proc->status;
     decref(proc);
+    if (events) {
+      // the decref call created an exit event, process it now
+      queue_process_events(events);
+    }
   } else {
     proc->refcount--;
   }
@@ -250,6 +264,18 @@ static void children_kill_cb(uv_timer_t *handle)
   }
 }
 
+static void process_close_event(void **argv)
+{
+  Process *proc = argv[0];
+  shell_free_argv(proc->argv);
+  if (proc->type == kProcessTypePty) {
+    xfree(((PtyProcess *)proc)->term_name);
+  }
+  if (proc->cb) {
+    proc->cb(proc, proc->status, proc->data);
+  }
+}
+
 static void decref(Process *proc)
 {
   if (--proc->refcount != 0) {
@@ -264,16 +290,9 @@ static void decref(Process *proc)
       break;
     }
   }
-
   assert(node);
   kl_shift_at(WatcherPtr, loop->children, node);
-  shell_free_argv(proc->argv);
-  if (proc->type == kProcessTypePty) {
-    xfree(((PtyProcess *)proc)->term_name);
-  }
-  if (proc->cb) {
-    proc->cb(proc, proc->status, proc->data);
-  }
+  CREATE_EVENT(proc->events, process_close_event, 1, proc);
 }
 
 static void process_close(Process *proc)
@@ -293,28 +312,27 @@ static void process_close(Process *proc)
   }
 }
 
+static void process_close_handles(void **argv)
+{
+  Process *proc = argv[0];
+  process_close_streams(proc);
+  process_close(proc);
+}
+
 static void on_process_exit(Process *proc)
 {
-  if (exiting) {
-    on_process_exit_event((Event) {.data = proc});
-  } else {
-    loop_push_event(proc->loop,
-        (Event) {.handler = on_process_exit_event, .data = proc}, false);
-  }
-
   Loop *loop = proc->loop;
-  if (loop->children_stop_requests && !--loop->children_stop_requests) {
+  if (proc->stopped_time && loop->children_stop_requests
+      && !--loop->children_stop_requests) {
     // Stop the timer if no more stop requests are pending
     DLOG("Stopping process kill timer");
     uv_timer_stop(&loop->children_kill_timer);
   }
-}
-
-static void on_process_exit_event(Event event)
-{
-  Process *proc = event.data;
-  process_close_streams(proc);
-  process_close(proc);
+  // Process handles are closed in the next event loop tick. This is done to
+  // give libuv more time to read data from the OS after the process exits(If
+  // process_close_streams is called with data still in the OS buffer, we lose
+  // it)
+  CREATE_EVENT(proc->events, process_close_handles, 1, proc);
 }
 
 static void on_process_stream_close(Stream *stream, void *data)

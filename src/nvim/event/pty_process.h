@@ -13,10 +13,10 @@ typedef struct pty_process {
   int tty_fd;
 } PtyProcess;
 
-static inline PtyProcess pty_process_init(void *data)
+static inline PtyProcess pty_process_init(Loop *loop, void *data)
 {
   PtyProcess rv;
-  rv.process = process_init(kProcessTypePty, data);
+  rv.process = process_init(loop, kProcessTypePty, data);
   rv.term_name = NULL;
   rv.width = 80;
   rv.height = 24;

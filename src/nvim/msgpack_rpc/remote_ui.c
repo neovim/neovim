@@ -28,7 +28,7 @@ void remote_ui_init(void)
   connected_uis = pmap_new(uint64_t)();
   // Add handler for "attach_ui"
   String method = cstr_as_string("ui_attach");
-  MsgpackRpcRequestHandler handler = {.fn = remote_ui_attach, .defer = false};
+  MsgpackRpcRequestHandler handler = {.fn = remote_ui_attach, .async = true};
   msgpack_rpc_add_method_handler(method, handler);
   method = cstr_as_string("ui_detach");
   handler.fn = remote_ui_detach;

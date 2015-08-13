@@ -33,6 +33,7 @@ static Stream read_stream = {.closed = true};
 static RBuffer *input_buffer = NULL;
 static bool input_eof = false;
 static int global_fd = 0;
+static int events_enabled = 0;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/input.c.generated.h"
@@ -110,8 +111,8 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
     return (int)rbuffer_read(input_buffer, (char *)buf, (size_t)maxlen);
   }
 
-  // If there are deferred events, return the keys directly
-  if (loop_has_deferred_events(&loop)) {
+  // If there are events, return the keys directly
+  if (pending_events()) {
     return push_event_key(buf, maxlen);
   }
 
@@ -131,9 +132,19 @@ bool os_char_avail(void)
 // Check for CTRL-C typed by reading all available characters.
 void os_breakcheck(void)
 {
-  if (!disable_breakcheck && !got_int) {
+  if (!got_int) {
     loop_poll_events(&loop, 0);
   }
+}
+
+void input_enable_events(void)
+{
+  events_enabled++;
+}
+
+void input_disable_events(void)
+{
+  events_enabled--;
 }
 
 /// Test whether a file descriptor refers to a terminal.
@@ -281,7 +292,7 @@ static bool input_poll(int ms)
     prof_inchar_enter();
   }
 
-  LOOP_POLL_EVENTS_UNTIL(&loop, ms, input_ready() || input_eof);
+  LOOP_PROCESS_EVENTS_UNTIL(&loop, NULL, ms, input_ready() || input_eof);
 
   if (do_profiling == PROF_YES && ms) {
     prof_inchar_exit();
@@ -305,7 +316,8 @@ static InbufPollResult inbuf_poll(int ms)
   return input_eof ? kInputEof : kInputNone;
 }
 
-static void read_cb(Stream *stream, RBuffer *buf, void *data, bool at_eof)
+static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
+    bool at_eof)
 {
   if (at_eof) {
     input_eof = true;
@@ -358,7 +370,7 @@ static bool input_ready(void)
 {
   return typebuf_was_filled ||                 // API call filled typeahead
          rbuffer_size(input_buffer) ||         // Input buffer filled
-         loop_has_deferred_events(&loop);      // Events must be processed
+         pending_events();                     // Events must be processed
 }
 
 // Exit because of an input read error.
@@ -368,4 +380,9 @@ static void read_error_exit(void)
     getout(0);
   STRCPY(IObuff, _("Vim: Error reading input, exiting...\n"));
   preserve_exit();
+}
+
+static bool pending_events(void)
+{
+  return events_enabled && !queue_empty(loop.events);
 }

@@ -16,6 +16,7 @@ void time_watcher_init(Loop *loop, TimeWatcher *watcher, void *data)
   uv_timer_init(&loop->uv, &watcher->uv);
   watcher->uv.data = watcher;
   watcher->data = data;
+  watcher->events = loop->fast_events;
 }
 
 void time_watcher_start(TimeWatcher *watcher, time_cb cb, uint64_t timeout,
@@ -39,11 +40,17 @@ void time_watcher_close(TimeWatcher *watcher, time_cb cb)
   uv_close((uv_handle_t *)&watcher->uv, close_cb);
 }
 
+static void time_event(void **argv)
+{
+  TimeWatcher *watcher = argv[0];
+  watcher->cb(watcher, watcher->data);
+}
+
 static void time_watcher_cb(uv_timer_t *handle)
   FUNC_ATTR_NONNULL_ALL
 {
   TimeWatcher *watcher = handle->data;
-  watcher->cb(watcher, watcher->data);
+  CREATE_EVENT(watcher->events, time_event, 1, watcher);
 }
 
 static void close_cb(uv_handle_t *handle)

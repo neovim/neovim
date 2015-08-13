@@ -26,14 +26,16 @@ struct process {
   process_exit_cb cb;
   internal_process_cb internal_exit_cb, internal_close_cb;
   bool closed, term_sent;
+  Queue *events;
 };
 
-static inline Process process_init(ProcessType type, void *data)
+static inline Process process_init(Loop *loop, ProcessType type, void *data)
 {
   return (Process) {
     .type = type,
     .data = data,
-    .loop = NULL,
+    .loop = loop,
+    .events = NULL,
     .pid = 0,
     .status = 0,
     .refcount = 0,
