@@ -4783,6 +4783,7 @@ int hist_type2char(int type)
       assert(false);
     }
   }
+  return NUL;
 }
 
 /*
