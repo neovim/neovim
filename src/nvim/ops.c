@@ -5336,11 +5336,11 @@ const void *op_register_iter(const void *const iter, char *const name,
   const yankreg_T *iter_reg = (iter == NULL
                                ? &(y_regs[0])
                                : (const yankreg_T *const) iter);
-  while (reg_empty(iter_reg) && iter_reg - &(y_regs[0]) < NUM_SAVED_REGISTERS) {
+  while (iter_reg - &(y_regs[0]) < NUM_SAVED_REGISTERS && reg_empty(iter_reg)) {
     iter_reg++;
   }
-  if (reg_empty(iter_reg)) {
-    *reg = (yankreg_T) {.y_array = NULL};
+  if (iter_reg - &(y_regs[0]) == NUM_SAVED_REGISTERS || reg_empty(iter_reg)) {
+    *reg = (yankreg_T) { .y_array = NULL };
     return NULL;
   }
   size_t iter_off = iter_reg - &(y_regs[0]);
