@@ -1493,7 +1493,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
 #define SDE_TO_XFMARK(entry) fm
 #define ADJUST_IDX(i) \
           if (curwin->w_jumplistidx >= i \
-              && curwin->w_jumplistidx + 1 < curwin->w_jumplistlen) { \
+              && curwin->w_jumplistidx + 1 <= curwin->w_jumplistlen) { \
             curwin->w_jumplistidx++; \
           }
 #define DUMMY_AFTERFREE(entry)
