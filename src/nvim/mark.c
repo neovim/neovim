@@ -1349,10 +1349,11 @@ size_t mark_buffer_amount(const buf_T *const buf)
 /// @return true on success, false on failure.
 bool mark_set_global(const char name, const xfmark_T fm, const bool update)
 {
-  xfmark_T *fm_tgt = &(namedfm[mark_global_index(name)]);
-  if (fm_tgt == &namedfm[0] - 1) {
+  const int idx = mark_global_index(name);
+  if (idx == -1) {
     return false;
   }
+  xfmark_T *const fm_tgt = &(namedfm[idx]);
   if (update && fm.fmark.timestamp <= fm_tgt->fmark.timestamp) {
     return false;
   }
