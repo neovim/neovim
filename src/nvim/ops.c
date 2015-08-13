@@ -2356,7 +2356,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
   reg->y_type = yanktype;     /* set the yank register type */
   reg->y_width = 0;
   reg->y_array = xcalloc(yanklines, sizeof(char_u *));
-  set_yreg_additional_data(reg, NULL);
+  reg->additional_data = NULL;
   reg->timestamp = os_time();
 
   y_idx = 0;
