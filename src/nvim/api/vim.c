@@ -578,6 +578,17 @@ void vim_unsubscribe(uint64_t channel_id, String event)
   channel_unsubscribe(channel_id, e);
 }
 
+
+/// Ask neovim for the internal channel id of the current connection.
+///
+/// @param channel_id The channel id (passed automatically by the dispatcher)
+/// @return The channel id
+Integer vim_get_channel_id_for_current_connection(uint64_t channel_id)
+{
+  return channel_id;
+}
+
+
 Integer vim_name_to_color(String name)
 {
   return name_to_color((uint8_t *)name.data);
