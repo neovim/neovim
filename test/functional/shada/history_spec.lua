@@ -12,6 +12,16 @@ describe('ShaDa support code', function()
   before_each(reset)
   after_each(clear)
 
+  local clang_sanitizer = os.getenv('CLANG_SANITIZER')
+  local it_noasan
+  if clang_sanitizer and clang_sanitizer:match('ASAN') then
+    it_noasan = function(name, test)
+      pending(name, function() end)
+    end
+  else
+    it_noasan = it
+  end
+
   it('is able to dump and read back command-line history', function()
     nvim_command('set shada=\'0')
     nvim_feed(':" Test\n')
@@ -237,7 +247,7 @@ describe('ShaDa support code', function()
     eq('.«', nvim_eval('getline(".")'))
   end)
 
-  it('dumps&loads s/pattern correctly when &encoding /= UTF-8 when dumping',
+  it_noasan('dumps&loads s/pattern correctly when &encoding /= UTF-8 when dumping',
   function()
     set_additional_cmd('set encoding=latin1')
     reset()
@@ -278,7 +288,7 @@ describe('ShaDa support code', function()
     eq('', nvim_eval('histget("/", -1)'))
   end)
 
-  it('dumps&loads /pattern correctly when &encoding /= UTF-8 when dumping',
+  it_noasan('dumps&loads /pattern correctly when &encoding /= UTF-8 when dumping',
   function()
     set_additional_cmd('set encoding=latin1')
     reset()
