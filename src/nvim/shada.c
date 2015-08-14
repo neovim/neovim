@@ -3294,14 +3294,14 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader,
         return kSDReadStatusNotShaDa;
       }
     }
-    uint8_t buf[sizeof(uint64_t)] = {0, 0, 0, 0, 0, 0, 0, 0};
+    uint64_t buf = 0;
+    char *buf_u8 = (char *) &buf;
     ShaDaReadResult fl_ret;
-    if ((fl_ret = fread_len(sd_reader, (char *) &(buf[sizeof(uint64_t)-length]),
-                            length))
+    if ((fl_ret = fread_len(sd_reader, &(buf_u8[sizeof(buf)-length]), length))
         != kSDReadStatusSuccess) {
       return fl_ret;
     }
-    *result = be64toh(*((uint64_t *) &(buf[0])));
+    *result = be64toh(buf);
   }
   return kSDReadStatusSuccess;
 }
