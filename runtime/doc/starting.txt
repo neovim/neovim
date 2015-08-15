@@ -1122,11 +1122,12 @@ Note: when NeoVim finds out that it failed to write part of the ShaDa file
 (e.g. because there is no space left to write the file) or when it appears 
 that already present ShaDa file contains errors that indicate that this file 
 is likely not a ShaDa file then ShaDa file with `.tmp.X` suffix is left on the 
-file system (where X is any latin small letter: from U+0061 to U+007A). You 
+file system (where X is any latin small letter: from U+0061 to U+007A).  You 
 may use such file to recover the data if you want, but in any case it needs to 
 be cleaned up after you resolve the issue that prevented old ShaDa file from 
-being overwritten. If NeoVim fails to find unexisting `.tmp.X` file it will 
-not write ShaDa file at all.
+being overwritten.  If NeoVim fails to find unexisting `.tmp.X` file it will 
+not write ShaDa file at all.  Errors which trigger this behaviour are listed 
+at |shada-keeping-tmpfile|.
 
 						    *:rsh* *:rshada* *E886*
 :rsh[ada][!] [file]	Read from ShaDa file [file] (default: see above).
@@ -1305,7 +1306,7 @@ Errors in ShaDa file may have two types: E575 used for all “logical” errors
 and E576 used for all “critical” errors.  Critical errors trigger behaviour 
 described in |shada-error-handling| when writing and skipping the rest of the 
 file when reading and include:
-
+						    *shada-keeping-tmpfile*
 - Any of first three MessagePack objects being not an unsigned integer.
 - Third object requesting amount of bytes greater then bytes left in the ShaDa 
   file.
