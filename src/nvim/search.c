@@ -300,6 +300,8 @@ void free_search_patterns(void)
   free_spat(&spats[0]);
   free_spat(&spats[1]);
 
+  memset(spats, 0, sizeof(spats));
+
   if (mr_pattern_alloced) {
     xfree(mr_pattern);
     mr_pattern_alloced = FALSE;
