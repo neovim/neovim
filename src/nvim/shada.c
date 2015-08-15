@@ -2895,6 +2895,10 @@ shada_write_exit:
 /// @return OK if writing was successfull, FAIL otherwise.
 int shada_write_file(const char *const file, bool nomerge)
 {
+  if (shada_disabled()) {
+    return FAIL;
+  }
+
   char *const fname = shada_filename(file);
   char *tempname = NULL;
   ShaDaWriteDef sd_writer = (ShaDaWriteDef) {

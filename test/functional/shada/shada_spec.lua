@@ -3,7 +3,8 @@ local helpers = require('test.functional.helpers')
 local nvim, nvim_window, nvim_curwin, nvim_command, nvim_feed, nvim_eval, eq =
   helpers.nvim, helpers.window, helpers.curwin, helpers.command, helpers.feed,
   helpers.eval, helpers.eq
-local write_file = helpers.write_file
+local write_file, spawn, set_session, nvim_prog =
+  helpers.write_file, helpers.spawn, helpers.set_session, helpers.nvim_prog
 local lfs = require('lfs')
 
 local msgpack = require('MessagePack')
@@ -126,5 +127,23 @@ describe('ShaDa support code', function()
       end
     end
     eq(#mpack, found)
+  end)
+
+  it('does not write NONE file', function()
+    local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed',
+                           '--cmd', 'qall'}, true)
+    session:exit(0)
+    eq(nil, lfs.attributes('NONE'))
+    eq(nil, lfs.attributes('NONE.tmp.a'))
+  end)
+
+  it('does not read NONE file', function()
+    write_file('NONE', '\005\001\015\131\161na\162rX\194\162rc\145\196\001-')
+    local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed'},
+                          true)
+    set_session(session)
+    eq('', nvim_eval('@a'))
+    session:exit(0)
+    os.remove('NONE')
   end)
 end)
