@@ -418,7 +418,6 @@ readfile (
    * If the name is too long we might crash further on, quit here.
    */
   if (fname != NULL && *fname != NUL) {
-    p = fname + STRLEN(fname);
     if (STRLEN(fname) >= MAXPATHL) {
       filemess(curbuf, fname, (char_u *)_("Illegal file name"), 0);
       msg_end();
