@@ -207,6 +207,7 @@ static void tui_stop(UI *ui)
 
 static void sigwinch_cb(SignalWatcher *watcher, int signum, void *data)
 {
+  got_winch = true;
   UI *ui = data;
   update_size(ui);
   ui_refresh();
