@@ -76,6 +76,16 @@
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
 
+/// The scope of a command.
+///
+/// The higher a number, the deeper a scope.
+enum {
+  SCOPE_EDITOR,     ///< Affects the entire instance of NeoVim.
+  SCOPE_TABPAGE,    ///< Affects on tab page.
+  SCOPE_WINDOW,     ///< Affects one window.
+  NUMBER_OF_SCOPES  ///< Total number of scoped defined.
+};
+
 static int quitmore = 0;
 static int ex_pressedreturn = FALSE;
 
@@ -6790,27 +6800,59 @@ void free_cd_dir(void)
 
 #endif
 
-/*
- * Deal with the side effects of changing the current directory.
- * When "local" is TRUE then this was after an ":lcd" command.
- */
-void post_chdir(int local)
+/// Deal with the side effects of changing the current directory.
+///
+/// The value of `scope` reflects the name under which the command was invoked:
+///   - `SCOPE_EDITOR` for `:cd` and `chdir`
+///   - `SCOPE_TABPAGE` for `:tcd` and `tchdir`
+///   - `SCOPE_WINDOW` for `:lcd` and `lchdir`
+///
+/// @param scope  Scope of the function call (editor, tab or window).
+///
+/// @pre  The value of `scope` must be less than the number of scopes
+///       (`NUMBER_OF_SCOPES`) and higher than zero.
+void post_chdir(int scope)
 {
+  assert(scope >= 0 && scope < NUMBER_OF_SCOPES);
+
+  // The local directory of the current window is always overwritten.
   xfree(curwin->w_localdir);
   curwin->w_localdir = NULL;
-  if (local) {
-    /* If still in global directory, need to remember current
-     * directory as global directory. */
-    if (globaldir == NULL && prev_dir != NULL)
+
+  // Overwrite the local directory of current the tab page for `cd` and `tcd`
+  if (scope <= SCOPE_TABPAGE) {
+    xfree(curtab->tp_localdir);
+    curtab->tp_localdir = NULL;
+  }
+
+  if (scope > SCOPE_EDITOR) {
+    // If still in global directory, need to remember current directory as
+    // global directory.
+    if (globaldir == NULL && prev_dir != NULL) {
       globaldir = vim_strsave(prev_dir);
-    /* Remember this local directory for the window. */
-    if (os_dirname(NameBuff, MAXPATHL) == OK)
-      curwin->w_localdir = vim_strsave(NameBuff);
-  } else {
-    /* We are now in the global directory, no need to remember its
-     * name. */
+    }
+  }
+
+  switch (scope) {
+  case SCOPE_EDITOR:
+    // We are now in the global directory, no need to remember its name.
     xfree(globaldir);
     globaldir = NULL;
+  	break;
+  case SCOPE_TABPAGE:
+    // Remember this local directory for the tab page.
+    if (os_dirname(NameBuff, MAXPATHL) == OK) {
+      curtab->tp_localdir = vim_strsave(NameBuff);
+    }
+  	break;
+  case SCOPE_WINDOW:
+    // Remember this local directory for the window.
+    if (os_dirname(NameBuff, MAXPATHL) == OK) {
+      curwin->w_localdir = vim_strsave(NameBuff);
+    }
+  	break;
+  default:
+  	assert(0);
   }
 
   shorten_fnames(TRUE);
@@ -6863,7 +6905,26 @@ void ex_cd(exarg_T *eap)
     if (new_dir == NULL || vim_chdir(new_dir))
       EMSG(_(e_failed));
     else {
-      post_chdir(eap->cmdidx == CMD_lcd || eap->cmdidx == CMD_lchdir);
+      int scope = 0; // Depends on what command was invoked
+
+      switch (eap->cmdidx) {
+      case CMD_cd:
+      case CMD_chdir:
+      	scope = SCOPE_EDITOR;
+      	break;
+      case CMD_tcd:
+      case CMD_tchdir:
+      	scope = SCOPE_TABPAGE;
+      	break;
+      case CMD_lcd:
+      case CMD_lchdir:
+      	scope = SCOPE_WINDOW;
+      	break;
+      default:
+        assert(0);
+      }
+
+      post_chdir(scope);
 
       /* Echo the new current directory if the command was typed. */
       if (KeyTyped || p_verbose >= 5)
