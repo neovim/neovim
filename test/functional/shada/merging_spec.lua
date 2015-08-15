@@ -175,6 +175,60 @@ describe('ShaDa history merging code', function()
     end
     eq(#items, found)
   end)
+
+  it('correctly merges history items with duplicate mid entry when writing',
+  function()
+    -- Regression test: ShaDa code used to crash here.
+    -- Conditions:
+    -- 1. Entry which is duplicate to non-last entry.
+    -- 2. At least one more non-duplicate entry.
+    wshada('\004\000\009\147\000\196\002ab\196\001a'
+           .. '\004\001\009\147\000\196\002ac\196\001a'
+           .. '\004\002\009\147\000\196\002ad\196\001a'
+           .. '\004\003\009\147\000\196\002ac\196\001a'
+           .. '\004\004\009\147\000\196\002af\196\001a'
+           .. '\004\005\009\147\000\196\002ae\196\001a'
+           .. '\004\006\009\147\000\196\002ag\196\001a'
+           .. '\004\007\009\147\000\196\002ah\196\001a'
+           .. '\004\008\009\147\000\196\002ai\196\001a'
+          )
+    eq(0, exc_exec('wshada ' .. shada_fname))
+    local items = {'ab', 'ad', 'ac', 'af', 'ae', 'ag', 'ah', 'ai'}
+    local found = 0
+    for _, v in ipairs(read_shada_file(shada_fname)) do
+      if v.type == 4 and v.value[1] == 0 then
+        found = found + 1
+        eq(items[found], v.value[2])
+        eq('a', v.value[3])
+      end
+    end
+    eq(#items, found)
+  end)
+
+  it('correctly merges history items with duplicate adj entry when writing',
+  function()
+    wshada('\004\000\009\147\000\196\002ab\196\001a'
+           .. '\004\001\009\147\000\196\002ac\196\001a'
+           .. '\004\002\009\147\000\196\002ad\196\001a'
+           .. '\004\003\009\147\000\196\002ad\196\001a'
+           .. '\004\004\009\147\000\196\002af\196\001a'
+           .. '\004\005\009\147\000\196\002ae\196\001a'
+           .. '\004\006\009\147\000\196\002ag\196\001a'
+           .. '\004\007\009\147\000\196\002ah\196\001a'
+           .. '\004\008\009\147\000\196\002ai\196\001a'
+          )
+    eq(0, exc_exec('wshada ' .. shada_fname))
+    local items = {'ab', 'ac', 'ad', 'af', 'ae', 'ag', 'ah', 'ai'}
+    local found = 0
+    for _, v in ipairs(read_shada_file(shada_fname)) do
+      if v.type == 4 and v.value[1] == 0 then
+        found = found + 1
+        eq(items[found], v.value[2])
+        eq('a', v.value[3])
+      end
+    end
+    eq(#items, found)
+  end)
 end)
 
 describe('ShaDa search pattern support code', function()

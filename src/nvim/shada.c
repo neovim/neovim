@@ -360,10 +360,9 @@ typedef struct {
   HMLListEntry *first;    ///< First entry in the list (is not necessary start
                           ///< of the array) or NULL.
   HMLListEntry *last;     ///< Last entry in the list or NULL.
-  HMLListEntry **free_entries;  ///< Free array entries.
-  HMLListEntry *last_free_element;  ///< Last free array element.
+  HMLListEntry *free_entry;  ///< Last free entry removed by hmll_remove.
+  HMLListEntry *last_free_entry;  ///< Last unused element in entries array.
   size_t size;            ///< Number of allocated entries.
-  size_t free_entries_size;  ///< Number of non-NULL entries in free_entries.
   size_t num_entries;     ///< Number of entries already used.
   khash_t(hmll_entries) contained_entries;  ///< Hash mapping all history entry
                                             ///< strings to corresponding entry
@@ -552,13 +551,12 @@ static inline void hmll_init(HMLList *const hmll, const size_t size)
     .entries = xcalloc(size, sizeof(hmll->entries[0])),
     .first = NULL,
     .last = NULL,
-    .free_entries = NULL,
+    .free_entry = NULL,
     .size = size,
-    .free_entries_size = 0,
     .num_entries = 0,
     .contained_entries = KHASH_EMPTY_TABLE(hmll_entries),
   };
-  hmll->last_free_element = hmll->entries;
+  hmll->last_free_entry = hmll->entries;
 }
 
 /// Iterate over HMLList in forward direction
@@ -579,15 +577,11 @@ static inline void hmll_remove(HMLList *const hmll,
                                HMLListEntry *const hmll_entry)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (hmll->free_entries == NULL) {
-    if (hmll_entry == hmll->last_free_element) {
-      hmll->last_free_element--;
-    } else {
-      hmll->free_entries = xcalloc(hmll->size, sizeof(hmll->free_entries[0]));
-      hmll->free_entries[hmll->free_entries_size++] = hmll_entry;
-    }
+  if (hmll_entry == hmll->last_free_entry - 1) {
+    hmll->last_free_entry--;
   } else {
-    hmll->free_entries[hmll->free_entries_size++] = hmll_entry;
+    assert(hmll->free_entry == NULL);
+    hmll->free_entry = hmll_entry;
   }
   const khiter_t k = kh_get(hmll_entries, &hmll->contained_entries,
                             hmll_entry->data.data.history_item.string);
@@ -630,12 +624,15 @@ static inline void hmll_insert(HMLList *const hmll,
     hmll_remove(hmll, hmll->first);
   }
   HMLListEntry *target_entry;
-  if (hmll->free_entries == NULL) {
-    assert((size_t) (hmll->last_free_element - hmll->entries)
+  if (hmll->free_entry == NULL) {
+    assert((size_t) (hmll->last_free_entry - hmll->entries)
            == hmll->num_entries);
-    target_entry = hmll->last_free_element++;
+    target_entry = hmll->last_free_entry++;
   } else {
-    target_entry = hmll->free_entries[--hmll->free_entries_size];
+    assert((size_t) (hmll->last_free_entry - hmll->entries) - 1
+           == hmll->num_entries);
+    target_entry = hmll->free_entry;
+    hmll->free_entry = NULL;
   }
   target_entry->data = data;
   target_entry->can_free_entry = can_free_entry;
@@ -680,7 +677,6 @@ static inline void hmll_dealloc(HMLList *const hmll)
 {
   kh_dealloc(hmll_entries, &hmll->contained_entries);
   xfree(hmll->entries);
-  xfree(hmll->free_entries);
 }
 
 /// Wrapper for reading from file descriptors
