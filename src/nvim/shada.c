@@ -3141,6 +3141,9 @@ static inline uint64_t be64toh(uint64_t big_endian_64_bits)
 #ifdef ORDER_BIG_ENDIAN
   return big_endian_64_bits;
 #else
+  // It may appear that when !defined(ORDER_BIG_ENDIAN) actual order is big
+  // endian. This variant is suboptimal, but it works regardless of actual
+  // order.
   uint8_t *buf = (uint8_t *) &big_endian_64_bits;
   uint64_t ret = 0;
   for (size_t i = 8; i; i--) {
