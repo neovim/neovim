@@ -45,6 +45,11 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(true, found)
+    nvim_eval('garbagecollect(1)')
+    nvim_eval('garbagecollect(1)')
+    nvim_command('rshada! ' .. shada_fname)
+    nvim_eval('garbagecollect(1)')
+    nvim_eval('garbagecollect(1)')
   end)
 
   it('works with s/search pattern item with BOOL unknown (sX) key value', function()
@@ -72,6 +77,11 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(true, found)
+    nvim_eval('garbagecollect(1)')
+    nvim_eval('garbagecollect(1)')
+    nvim_command('rshada!' .. shada_fname)
+    nvim_eval('garbagecollect(1)')
+    nvim_eval('garbagecollect(1)')
   end)
 
   it('works with replacement item with BOOL additional value in list', function()
@@ -100,6 +110,11 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(true, found)
+    nvim_eval('garbagecollect(1)')
+    nvim_eval('garbagecollect(1)')
+    nvim_command('rshada!' .. shada_fname)
+    nvim_eval('garbagecollect(1)')
+    nvim_eval('garbagecollect(1)')
   end)
 
   for _, v in ipairs({{name='global mark', mpack='\007\001\018\131\162mX\195\161f\196\006/a/b/c\161nA'},
@@ -138,6 +153,11 @@ describe('ShaDa forward compatibility support code', function()
         end
       end
       eq(false, found)
+      nvim_eval('garbagecollect(1)')
+      nvim_eval('garbagecollect(1)')
+      nvim_command('rshada!' .. shada_fname)
+      nvim_eval('garbagecollect(1)')
+      nvim_eval('garbagecollect(1)')
     end)
 
     if v.name == 'global mark' or v.name == 'local mark' then
@@ -175,6 +195,11 @@ describe('ShaDa forward compatibility support code', function()
           end
         end
         eq(0, found)
+        nvim_eval('garbagecollect(1)')
+        nvim_eval('garbagecollect(1)')
+        nvim_command('rshada!' .. shada_fname)
+        nvim_eval('garbagecollect(1)')
+        nvim_eval('garbagecollect(1)')
       end)
     end
   end
@@ -202,6 +227,11 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(false, found)
+    nvim_eval('garbagecollect(1)')
+    nvim_eval('garbagecollect(1)')
+    nvim_command('rshada!' .. shada_fname)
+    nvim_eval('garbagecollect(1)')
+    nvim_eval('garbagecollect(1)')
   end)
 
   it('works with register item with <C-a> name', function()
@@ -233,6 +263,11 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(0, found)
+    nvim_eval('garbagecollect(1)')
+    nvim_eval('garbagecollect(1)')
+    nvim_command('rshada!' .. shada_fname)
+    nvim_eval('garbagecollect(1)')
+    nvim_eval('garbagecollect(1)')
   end)
 
   it('works with register item with type 10', function()
@@ -265,6 +300,11 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(0, found)
+    nvim_eval('garbagecollect(1)')
+    nvim_eval('garbagecollect(1)')
+    nvim_command('rshada!' .. shada_fname)
+    nvim_eval('garbagecollect(1)')
+    nvim_eval('garbagecollect(1)')
   end)
 
   it('works with buffer list item with BOOL unknown (bX) key', function()
@@ -295,6 +335,11 @@ describe('ShaDa forward compatibility support code', function()
     end
     eq(false, found)
     nvim_command('bwipeout!')
+    nvim_eval('garbagecollect(1)')
+    nvim_eval('garbagecollect(1)')
+    nvim_command('rshada!' .. shada_fname)
+    nvim_eval('garbagecollect(1)')
+    nvim_eval('garbagecollect(1)')
   end)
 
   it('works with history item with BOOL additional value in list', function()
@@ -324,6 +369,11 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(true, found)
+    nvim_eval('garbagecollect(1)')
+    nvim_eval('garbagecollect(1)')
+    nvim_command('rshada!' .. shada_fname)
+    nvim_eval('garbagecollect(1)')
+    nvim_eval('garbagecollect(1)')
   end)
 
   it('works with history item with type 10', function()
@@ -356,6 +406,11 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(0, found)
+    nvim_eval('garbagecollect(1)')
+    nvim_eval('garbagecollect(1)')
+    nvim_command('rshada!' .. shada_fname)
+    nvim_eval('garbagecollect(1)')
+    nvim_eval('garbagecollect(1)')
   end)
 
   it('works with item with 100 type', function()
@@ -388,5 +443,10 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(0, found)
+    nvim_eval('garbagecollect(1)')
+    nvim_eval('garbagecollect(1)')
+    nvim_command('rshada!' .. shada_fname)
+    nvim_eval('garbagecollect(1)')
+    nvim_eval('garbagecollect(1)')
   end)
 end)

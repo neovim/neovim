@@ -5541,6 +5541,7 @@ static int list_join(garray_T *const gap, list_T *const l,
 bool garbage_collect(void)
 {
   bool abort = false;
+#define ABORTING(func) abort = abort || func
 
   // Only do this once.
   want_garbage_collect = false;
@@ -5559,45 +5560,104 @@ bool garbage_collect(void)
   // referenced through previous_funccal.  This must be first, because if
   // the item is referenced elsewhere the funccal must not be freed.
   for (funccall_T *fc = previous_funccal; fc != NULL; fc = fc->caller) {
-    abort = abort || set_ref_in_ht(&fc->l_vars.dv_hashtab, copyID + 1, NULL);
-    abort = abort || set_ref_in_ht(&fc->l_avars.dv_hashtab, copyID + 1, NULL);
+    ABORTING(set_ref_in_ht)(&fc->l_vars.dv_hashtab, copyID + 1, NULL);
+    ABORTING(set_ref_in_ht)(&fc->l_avars.dv_hashtab, copyID + 1, NULL);
   }
 
   // script-local variables
   for (int i = 1; i <= ga_scripts.ga_len; ++i) {
-    abort = abort || set_ref_in_ht(&SCRIPT_VARS(i), copyID, NULL);
+    ABORTING(set_ref_in_ht)(&SCRIPT_VARS(i), copyID, NULL);
   }
 
-  // buffer-local variables
   FOR_ALL_BUFFERS(buf) {
-    abort = abort || set_ref_in_item(&buf->b_bufvar.di_tv, copyID, NULL, NULL);
+    // buffer-local variables
+    ABORTING(set_ref_in_item)(&buf->b_bufvar.di_tv, copyID, NULL, NULL);
+    // buffer marks (ShaDa additional data)
+    ABORTING(set_ref_in_fmark)(buf->b_last_cursor, copyID);
+    ABORTING(set_ref_in_fmark)(buf->b_last_insert, copyID);
+    ABORTING(set_ref_in_fmark)(buf->b_last_change, copyID);
+    for (size_t i = 0; i < NMARKS; i++) {
+      ABORTING(set_ref_in_fmark)(buf->b_namedm[i], copyID);
+    }
+    // buffer change list (ShaDa additional data)
+    for (int i = 0; i < buf->b_changelistlen; i++) {
+      ABORTING(set_ref_in_fmark)(buf->b_changelist[i], copyID);
+    }
+    // buffer ShaDa additional data
+    ABORTING(set_ref_dict)(buf->additional_data, copyID);
   }
 
-  // window-local variables
   FOR_ALL_TAB_WINDOWS(tp, wp) {
-    abort = abort || set_ref_in_item(&wp->w_winvar.di_tv, copyID, NULL, NULL);
+    // window-local variables
+    ABORTING(set_ref_in_item)(&wp->w_winvar.di_tv, copyID, NULL, NULL);
+    // window jump list (ShaDa additional data)
+    for (int i = 0; i < wp->w_jumplistlen; i++) {
+      ABORTING(set_ref_in_fmark)(wp->w_jumplist[i].fmark, copyID);
+    }
   }
   if (aucmd_win != NULL) {
-    abort = abort ||
-            set_ref_in_item(&aucmd_win->w_winvar.di_tv, copyID, NULL, NULL);
+    ABORTING(set_ref_in_item)(&aucmd_win->w_winvar.di_tv, copyID, NULL, NULL);
+  }
+
+  // registers (ShaDa additional data)
+  {
+    const void *reg_iter = NULL;
+    do {
+      yankreg_T reg;
+      char name;
+      reg_iter = op_register_iter(reg_iter, &name, &reg);
+      if (reg.y_array != NULL) {
+        ABORTING(set_ref_dict)(reg.additional_data, copyID);
+      }
+    } while (reg_iter != NULL);
   }
 
   // tabpage-local variables
   FOR_ALL_TABS(tp) {
-    abort = abort || set_ref_in_item(&tp->tp_winvar.di_tv, copyID, NULL, NULL);
+    ABORTING(set_ref_in_item)(&tp->tp_winvar.di_tv, copyID, NULL, NULL);
   }
 
   // global variables
-  abort = abort || set_ref_in_ht(&globvarht, copyID, NULL);
+  ABORTING(set_ref_in_ht)(&globvarht, copyID, NULL);
 
   // function-local variables
   for (funccall_T *fc = current_funccal; fc != NULL; fc = fc->caller) {
-    abort = abort || set_ref_in_ht(&fc->l_vars.dv_hashtab, copyID, NULL);
-    abort = abort || set_ref_in_ht(&fc->l_avars.dv_hashtab, copyID, NULL);
+    ABORTING(set_ref_in_ht)(&fc->l_vars.dv_hashtab, copyID, NULL);
+    ABORTING(set_ref_in_ht)(&fc->l_avars.dv_hashtab, copyID, NULL);
   }
 
   // v: vars
-  abort = abort || set_ref_in_ht(&vimvarht, copyID, NULL);
+  ABORTING(set_ref_in_ht)(&vimvarht, copyID, NULL);
+
+  // history items (ShaDa additional elements)
+  if (p_hi) {
+    for (uint8_t i = 0; i < HIST_COUNT; i++) {
+      const void *iter = NULL;
+      do {
+        histentry_T hist;
+        iter = hist_iter(iter, i, false, &hist);
+        if (hist.hisstr != NULL) {
+          ABORTING(set_ref_list)(hist.additional_elements, copyID);
+        }
+      } while (iter != NULL);
+    }
+  }
+
+  // previously used search/substitute patterns (ShaDa additional data)
+  {
+    SearchPattern pat;
+    get_search_pattern(&pat);
+    ABORTING(set_ref_dict)(pat.additional_data, copyID);
+    get_substitute_pattern(&pat);
+    ABORTING(set_ref_dict)(pat.additional_data, copyID);
+  }
+
+  // previously used replacement string
+  {
+    SubReplacementString sub;
+    sub_get_replacement(&sub);
+    ABORTING(set_ref_list)(sub.additional_elements, copyID);
+  }
 
   bool did_free = false;
   if (!abort) {
@@ -5626,6 +5686,7 @@ bool garbage_collect(void)
     verb_msg((char_u *)_(
         "Not enough memory to set references, garbage collection aborted!"));
   }
+#undef ABORTING
   return did_free;
 }
 
@@ -5685,6 +5746,7 @@ static int free_unref_items(int copyID)
 ///
 /// @returns             true if setting references failed somehow.
 bool set_ref_in_ht(hashtab_T *ht, int copyID, list_stack_T **list_stack)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   bool abort = false;
   ht_stack_T *ht_stack = NULL;
@@ -5727,6 +5789,7 @@ bool set_ref_in_ht(hashtab_T *ht, int copyID, list_stack_T **list_stack)
 ///
 /// @returns             true if setting references failed somehow.
 bool set_ref_in_list(list_T *l, int copyID, ht_stack_T **ht_stack)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   bool abort = false;
   list_stack_T *list_stack = NULL;
@@ -5767,6 +5830,7 @@ bool set_ref_in_list(list_T *l, int copyID, ht_stack_T **ht_stack)
 /// @returns             true if setting references failed somehow.
 bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack,
                      list_stack_T **list_stack)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   bool abort = false;
 
@@ -5814,6 +5878,52 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack,
     }
   }
   return abort;
+}
+
+/// Mark all lists and dicts referenced in given mark
+///
+/// @returns true if setting references failed somehow.
+static inline bool set_ref_in_fmark(fmark_T fm, int copyID)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (fm.additional_data != NULL
+      && fm.additional_data->dv_copyID != copyID) {
+    fm.additional_data->dv_copyID = copyID;
+    return set_ref_in_ht(&fm.additional_data->dv_hashtab, copyID, NULL);
+  }
+  return false;
+}
+
+/// Mark all lists and dicts referenced in given list and the list itself
+///
+/// @returns true if setting references failed somehow.
+static inline bool set_ref_list(list_T *list, int copyID)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (list != NULL) {
+    typval_T tv = (typval_T) {
+      .v_type = VAR_LIST,
+      .vval = { .v_list = list }
+    };
+    return set_ref_in_item(&tv, copyID, NULL, NULL);
+  }
+  return false;
+}
+
+/// Mark all lists and dicts referenced in given dict and the dict itself
+///
+/// @returns true if setting references failed somehow.
+static inline bool set_ref_dict(dict_T *dict, int copyID)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (dict != NULL) {
+    typval_T tv = (typval_T) {
+      .v_type = VAR_DICT,
+      .vval = { .v_dict = dict }
+    };
+    return set_ref_in_item(&tv, copyID, NULL, NULL);
+  }
+  return false;
 }
 
 /*

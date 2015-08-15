@@ -5330,7 +5330,7 @@ static inline bool reg_empty(const yankreg_T *const reg)
 /// @return Pointer that needs to be passed to next `op_register_iter` call or 
 ///         NULL if iteration is over.
 const void *op_register_iter(const void *const iter, char *const name,
-                          yankreg_T *const reg)
+                             yankreg_T *const reg)
   FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ARG(2, 3) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const yankreg_T *iter_reg = (iter == NULL
