@@ -2,6 +2,7 @@ include(CheckTypeSize)
 include(CheckSymbolExists)
 include(CheckFunctionExists)
 include(CheckIncludeFiles)
+include(CheckCSourceRuns)
 
 check_type_size("int" SIZEOF_INT)
 check_type_size("long" SIZEOF_LONG)
@@ -70,6 +71,35 @@ check_symbol_exists(FD_CLOEXEC "fcntl.h" HAVE_FD_CLOEXEC)
 if(HAVE_LANGINFO_H)
   check_symbol_exists(CODESET "langinfo.h" HAVE_NL_LANGINFO_CODESET)
 endif()
+
+set(SI "#include <stdint.h>\n")
+set(MS "int main(int argc,char**argv)\n{\n  uint64_t i=0x0102030405060708ULL;")
+set(ME "}")
+check_c_source_runs("
+  ${SI}
+  ${MS}
+    char *s = (char *) &i;
+    return (
+      s[0] == 0x01
+      && s[1] == 0x02
+      && s[2] == 0x03
+      && s[3] == 0x04
+      && s[4] == 0x05
+      && s[5] == 0x06
+      && s[6] == 0x07
+      && s[7] == 0x08) ? 0 : 1;
+  ${ME}"
+  ORDER_BIG_ENDIAN)
+check_c_source_runs("
+  #define _BSD_SOURCE 1
+  #define _DEFAULT_SOURCE 1
+  ${SI}
+  #include <endian.h>
+  ${MS}
+    uint64_t j = be64toh(i);
+    return (j == 0);  // Must not be zero
+  ${ME}"
+  HAVE_BE64TOH)
 
 # generate configuration header and update include directories
 configure_file (

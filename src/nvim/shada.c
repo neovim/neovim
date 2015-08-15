@@ -1,3 +1,8 @@
+#ifdef HAVE_BE64TOH
+# define _BSD_SOURCE 1
+# define _DEFAULT_SOURCE 1
+# include <endian.h>
+#endif
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdbool.h>
@@ -7,15 +12,6 @@
 #include <errno.h>
 #include <unistd.h>
 #include <assert.h>
-#if defined (__GLIBC__)
-# ifndef _BSD_SOURCE
-#  define _BSD_SOURCE 1
-# endif
-# ifndef _DEFAULT_SOURCE
-#  define _DEFAULT_SOURCE 1
-# endif
-# include <endian.h>
-#endif
 
 #include <msgpack.h>
 
@@ -87,43 +83,6 @@ KHASH_SET_INIT_STR(strset)
 #define os_isdir(f) (os_isdir((char_u *) f))
 #define regtilde(s, m) ((char *) regtilde((char_u *) s, m))
 #define path_tail_with_sep(f) ((char *) path_tail_with_sep((char_u *)f))
-
-// From http://www.boost.org/doc/libs/1_43_0/boost/detail/endian.hpp + some
-// additional checks done after examining `{compiler} -dM -E - < /dev/null`
-// output.
-#if defined (__GLIBC__)
-# if (__BYTE_ORDER == __BIG_ENDIAN)
-#  define SHADA_BIG_ENDIAN
-# endif
-#elif defined(_BIG_ENDIAN) || defined(_LITTLE_ENDIAN)
-# if defined(_BIG_ENDIAN) && !defined(_LITTLE_ENDIAN)
-#  define SHADA_BIG_ENDIAN
-# endif
-// clang-specific
-#elif defined(__BIG_ENDIAN__) || defined(__LITTLE_ENDIAN__)
-# if defined(_BIG_ENDIAN) && !defined(_LITTLE_ENDIAN)
-#  define SHADA_BIG_ENDIAN
-# endif
-// pcc-, gcc- and clang-specific
-#elif defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__)
-# if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-#  define SHADA_BIG_ENDIAN
-# endif
-#elif defined(__sparc) || defined(__sparc__) \
-  || defined(_POWER) || defined(__powerpc__) \
-  || defined(__ppc__) || defined(__hpux) || defined(__hppa) \
-  || defined(_MIPSEB) || defined(_POWER) \
-  || defined(__s390__)
-# define SHADA_BIG_ENDIAN
-#elif defined(__i386__) || defined(__alpha__) \
-  || defined(__ia64) || defined(__ia64__) \
-  || defined(_M_IX86) || defined(_M_IA64) \
-  || defined(_M_ALPHA) || defined(__amd64) \
-  || defined(__amd64__) || defined(_M_AMD64) \
-  || defined(__x86_64) || defined(__x86_64__) \
-  || defined(_M_X64) || defined(__bfin__)
-// Define nothing
-#endif
 
 #define SEARCH_KEY_MAGIC "sm"
 #define SEARCH_KEY_SMARTCASE "sc"
@@ -3176,10 +3135,10 @@ static void shada_free_shada_entry(ShadaEntry *const entry)
   }
 }
 
-#ifndef __GLIBC__
+#ifndef HAVE_BE64TOH
 static inline uint64_t be64toh(uint64_t big_endian_64_bits)
 {
-#ifdef SHADA_BIG_ENDIAN
+#ifdef ORDER_BIG_ENDIAN
   return big_endian_64_bits;
 #else
   uint8_t *buf = (uint8_t *) &big_endian_64_bits;
