@@ -178,12 +178,27 @@ local function rawfeed(...)
   end
 end
 
-local function spawn(argv)
+local function merge_args(...)
+  local i = 1
+  local argv = {}
+  for anum = 1,select('#', ...) do
+    local args = select(anum, ...)
+    if args then
+      for _, arg in ipairs(args) do
+        argv[i] = arg
+        i = i + 1
+      end
+    end
+  end
+  return argv
+end
+
+local function spawn(argv, merge)
   local loop = Loop.new()
   local msgpack_stream = MsgpackStream.new(loop)
   local async_session = AsyncSession.new(msgpack_stream)
   local session = Session.new(async_session)
-  loop:spawn(argv)
+  loop:spawn(merge and merge_args(prepend_argv, argv) or argv)
   return session
 end
 
@@ -382,4 +397,5 @@ return {
   rmdir = rmdir,
   mkdir = lfs.mkdir,
   exc_exec = exc_exec,
+  merge_args = merge_args,
 }

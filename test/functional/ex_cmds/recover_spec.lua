@@ -47,7 +47,8 @@ describe(':preserve', function()
 
     --TODO(justinmk): this is an ugly hack to force `helpers` to support
     --multiple sessions.
-    local nvim2 = helpers.spawn({helpers.nvim_prog, '-u', 'NONE', '--embed'})
+    local nvim2 = helpers.spawn({helpers.nvim_prog, '-u', 'NONE', '--embed'},
+                                true)
     helpers.set_session(nvim2)
 
     source(init)

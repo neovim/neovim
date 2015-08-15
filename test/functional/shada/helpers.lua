@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')
 local spawn, set_session, nvim, nvim_prog, nvim_command, nvim_eval =
   helpers.spawn, helpers.set_session, helpers.nvim, helpers.nvim_prog,
   helpers.command, helpers.eval
-local write_file = helpers.write_file
+local write_file, merge_args = helpers.write_file, helpers.merge_args
 
 local msgpack = require('MessagePack')
 
@@ -16,18 +16,10 @@ local function nvim_argv()
                      '--cmd', additional_cmd,
                      '--embed'}
   if helpers.prepend_argv then
-    ret = {}
-    for i, v in ipairs(helpers.prepend_argv) do
-      ret[i] = v
-    end
-    local shift = #ret
-    for i, v in ipairs(nvim_argv) do
-      ret[i + shift] = v
-    end
+    return merge_args(helpers.prepend_argv, nvim_argv)
   else
-    ret = nvim_argv
+    return nvim_argv
   end
-  return ret
 end
 
 local session = nil
