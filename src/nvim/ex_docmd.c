@@ -79,12 +79,13 @@
 /// The scope of a command.
 ///
 /// The higher a number, the deeper a scope.
-enum {
-  SCOPE_EDITOR,     ///< Affects the entire instance of NeoVim.
-  SCOPE_TABPAGE,    ///< Affects on tab page.
-  SCOPE_WINDOW,     ///< Affects one window.
-  NUMBER_OF_SCOPES  ///< Total number of scoped defined.
+enum cd_scope {
+  kCdScopeEditor, ///< Affects the entire instance of NeoVim.
+  kCdScopeTab,    ///< Affects on tab page.
+  kCdScopeWindow, ///< Affects one window.
 };
+
+#define MAX_CD_SCOPE  kCdScopeWindow  ///< Total number of scoped defined.
 
 static int quitmore = 0;
 static int ex_pressedreturn = FALSE;
@@ -6802,30 +6803,24 @@ void free_cd_dir(void)
 
 /// Deal with the side effects of changing the current directory.
 ///
-/// The value of `scope` reflects the name under which the command was invoked:
-///   - `SCOPE_EDITOR` for `:cd` and `chdir`
-///   - `SCOPE_TABPAGE` for `:tcd` and `tchdir`
-///   - `SCOPE_WINDOW` for `:lcd` and `lchdir`
-///
 /// @param scope  Scope of the function call (editor, tab or window).
-///
-/// @pre  The value of `scope` must be less than the number of scopes
-///       (`NUMBER_OF_SCOPES`) and higher than zero.
 void post_chdir(int scope)
 {
-  assert(scope >= 0 && scope < NUMBER_OF_SCOPES);
+  assert(scope >= kCdScopeEditor && scope <= MAX_CD_SCOPE);
+
+  enum cd_scope s = scope; // Treat it as an enum so switch catches unused cases.
 
   // The local directory of the current window is always overwritten.
   xfree(curwin->w_localdir);
   curwin->w_localdir = NULL;
 
   // Overwrite the local directory of current the tab page for `cd` and `tcd`
-  if (scope <= SCOPE_TABPAGE) {
-    xfree(curtab->tp_localdir);
-    curtab->tp_localdir = NULL;
+  if (s <= kCdScopeTab) {
+    xfree(curtab->localdir);
+    curtab->localdir = NULL;
   }
 
-  if (scope > SCOPE_EDITOR) {
+  if (s > kCdScopeEditor) {
     // If still in global directory, need to remember current directory as
     // global directory.
     if (globaldir == NULL && prev_dir != NULL) {
@@ -6833,26 +6828,24 @@ void post_chdir(int scope)
     }
   }
 
-  switch (scope) {
-  case SCOPE_EDITOR:
+  switch (s) {
+  case kCdScopeEditor:
     // We are now in the global directory, no need to remember its name.
     xfree(globaldir);
     globaldir = NULL;
     break;
-  case SCOPE_TABPAGE:
+  case kCdScopeTab:
     // Remember this local directory for the tab page.
     if (os_dirname(NameBuff, MAXPATHL) == OK) {
-      curtab->tp_localdir = vim_strsave(NameBuff);
+      curtab->localdir = vim_strsave(NameBuff);
     }
     break;
-  case SCOPE_WINDOW:
+  case kCdScopeWindow:
     // Remember this local directory for the window.
     if (os_dirname(NameBuff, MAXPATHL) == OK) {
       curwin->w_localdir = vim_strsave(NameBuff);
     }
     break;
-  default:
-    assert(0);
   }
 
   shorten_fnames(TRUE);
@@ -6905,23 +6898,19 @@ void ex_cd(exarg_T *eap)
     if (new_dir == NULL || vim_chdir(new_dir))
       EMSG(_(e_failed));
     else {
-      int scope = -1; // Depends on what command was invoked
+      enum cd_scope scope = kCdScopeEditor; // Depends on command invoked
 
       switch (eap->cmdidx) {
-      case CMD_cd:
-      case CMD_chdir:
-        scope = SCOPE_EDITOR;
-        break;
       case CMD_tcd:
       case CMD_tchdir:
-        scope = SCOPE_TABPAGE;
+        scope = kCdScopeTab;
         break;
       case CMD_lcd:
       case CMD_lchdir:
-        scope = SCOPE_WINDOW;
+        scope = kCdScopeWindow;
         break;
       default:
-        assert(0);
+        break;
       }
 
       post_chdir(scope);
