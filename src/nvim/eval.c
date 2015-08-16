@@ -17491,14 +17491,14 @@ char_u *get_vim_var_str(int idx) FUNC_ATTR_PURE FUNC_ATTR_NONNULL_RET
  * Get List v: variable value.  Caller must take care of reference count when
  * needed.
  */
-list_T *get_vim_var_list(int idx) FUNC_ATTR_PURE FUNC_ATTR_NONNULL_RET
+list_T *get_vim_var_list(int idx) FUNC_ATTR_PURE
 {
   return vimvars[idx].vv_list;
 }
 
 /// Get Dictionary v: variable value.  Caller must take care of reference count
 /// when needed.
-dict_T *get_vim_var_dict(int idx) FUNC_ATTR_PURE FUNC_ATTR_NONNULL_RET
+dict_T *get_vim_var_dict(int idx) FUNC_ATTR_PURE
 {
   return vimvars[idx].vv_dict;
 }
