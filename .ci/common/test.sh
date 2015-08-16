@@ -85,7 +85,7 @@ install_nvim() {
 
   # Check that all runtime files were installed
   for file in doc/tags syntax/vim/generated.vim $(
-    cd runtime ; git ls-files | grep -e '.vim$' -e '.ps$' -e '.dict$' -e '.py$'
+    cd runtime ; git ls-files | grep -e '.vim$' -e '.ps$' -e '.dict$' -e '.py$' -e '.tutor$'
   ) ; do
     if ! test -e "${INSTALL_PREFIX}/share/nvim/runtime/$file" ; then
       echo "It appears that $file is not installed."
