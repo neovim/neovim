@@ -34,5 +34,4 @@ typedef enum {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_docmd.h.generated.h"
 #endif
-
 #endif  // NVIM_EX_DOCMD_H
