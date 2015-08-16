@@ -6838,21 +6838,21 @@ void post_chdir(int scope)
     // We are now in the global directory, no need to remember its name.
     xfree(globaldir);
     globaldir = NULL;
-  	break;
+    break;
   case SCOPE_TABPAGE:
     // Remember this local directory for the tab page.
     if (os_dirname(NameBuff, MAXPATHL) == OK) {
       curtab->tp_localdir = vim_strsave(NameBuff);
     }
-  	break;
+    break;
   case SCOPE_WINDOW:
     // Remember this local directory for the window.
     if (os_dirname(NameBuff, MAXPATHL) == OK) {
       curwin->w_localdir = vim_strsave(NameBuff);
     }
-  	break;
+    break;
   default:
-  	assert(0);
+    assert(0);
   }
 
   shorten_fnames(TRUE);
