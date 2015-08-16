@@ -1249,7 +1249,8 @@ present in 'cpoptions' and "!" is not used in the command.
                         or the local directory of windows in this tab is not
                         changed, except for the current window.
 
-:tch[dir][!] {path}	Same as |:tcd|.
+							*:tch* *:tchdir*
+:tch[dir][!]		Same as |:tcd|.
 
 							*:lc* *:lcd*
 :lc[d][!] {path}	Like |:cd|, but only set the current directory for the
