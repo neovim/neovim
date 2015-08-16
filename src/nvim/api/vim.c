@@ -291,7 +291,7 @@ void vim_change_directory(String dir, Error *err)
     return;
   }
 
-  post_chdir(false);
+  post_chdir(kCdScopeEditor);
   try_end(err);
 }
 
