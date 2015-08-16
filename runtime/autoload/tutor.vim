@@ -258,9 +258,9 @@ endfunction
 
 function! s:GlobPath(lp, pat)
     if version >= 704 && has('patch279')
-        return globpath(a:lp, a:pat, 0, 1)
+        return globpath(a:lp, a:pat, 1, 1)
     else
-        return split(globpath(a:lp, a:pat, 0), '\n')
+        return split(globpath(a:lp, a:pat, 1), '\n')
     endif
 endfunction
 
@@ -336,11 +336,7 @@ function! tutor#TutorCmd(tutor_name)
         let l:to_open = l:tutors[l:tutor_to_open-1]
     endif
 
-    if has('gui') || has('nvim')
-        exe "drop ".l:to_open
-    else
-        exe "edit ".l:to_open
-    endif
+    exe "edit ".l:to_open
 endfunction
 
 function! tutor#TutorCmdComplete(lead,line,pos)
