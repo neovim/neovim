@@ -1037,8 +1037,8 @@ static void hms_insert(HistoryMergerState *const hms_p, const ShadaEntry entry,
       }
     } else {
       while (hms_p->iter != NULL
-            && hms_p->last_hist_entry.type != kSDItemMissing
-            && hms_p->last_hist_entry.timestamp < entry.timestamp) {
+             && hms_p->last_hist_entry.type != kSDItemMissing
+             && hms_p->last_hist_entry.timestamp < entry.timestamp) {
         hms_insert(hms_p, hms_p->last_hist_entry, false, hms_p->reading);
         hms_p->iter = shada_hist_iter(hms_p->iter, hms_p->history_type,
                                       hms_p->reading,
@@ -1111,7 +1111,7 @@ static inline void hms_insert_whole_neovim_history(
     hms_insert(hms_p, hms_p->last_hist_entry, false, hms_p->reading);
   }
   while (hms_p->iter != NULL
-        && hms_p->last_hist_entry.type != kSDItemMissing) {
+         && hms_p->last_hist_entry.type != kSDItemMissing) {
     hms_p->iter = shada_hist_iter(hms_p->iter, hms_p->history_type,
                                   hms_p->reading,
                                   &(hms_p->last_hist_entry));
@@ -2631,10 +2631,10 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   if (dump_global_marks) {
     const void *global_mark_iter = NULL;
     do {
-      char name;
+      char name = NUL;
       xfmark_T fm;
       global_mark_iter = mark_global_iter(global_mark_iter, &name, &fm);
-      if (fm.fmark.mark.lnum == 0) {
+      if (name == NUL) {
         break;
       }
       const char *fname;
@@ -2675,9 +2675,9 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
     const void *reg_iter = NULL;
     do {
       yankreg_T reg;
-      char name;
+      char name = NUL;
       reg_iter = op_register_iter(reg_iter, &name, &reg);
-      if (reg.y_array == NULL) {
+      if (name == NUL) {
         break;
       }
       if (limit_reg_lines && reg.y_size > max_reg_lines) {
@@ -2721,9 +2721,9 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
       }
       do {
         fmark_T fm;
-        char name;
+        char name = NUL;
         local_marks_iter = mark_buffer_iter(local_marks_iter, buf, &name, &fm);
-        if (fm.mark.lnum == 0) {
+        if (name == NUL) {
           break;
         }
         filemarks->marks[mark_local_index(name)] = (PossiblyFreedShadaEntry) {

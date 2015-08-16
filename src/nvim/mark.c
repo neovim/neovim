@@ -1173,7 +1173,7 @@ void copy_jumplist(win_T *from, win_T *to)
 ///         NULL if iteration is over.
 const void *mark_jumplist_iter(const void *const iter, const win_T *const win,
                                xfmark_T *const fm)
-  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ARG(2, 3) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(2, 3) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (iter == NULL && win->w_jumplistlen == 0) {
     *fm = (xfmark_T) {{{0, 0, 0}, 0, 0, NULL}, NULL};
@@ -1204,8 +1204,9 @@ const void *mark_jumplist_iter(const void *const iter, const win_T *const win,
 ///         NULL if iteration is over.
 const void *mark_global_iter(const void *const iter, char *const name,
                              xfmark_T *const fm)
-  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ARG(2, 3) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(2, 3) FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  *name = NUL;
   const xfmark_T *iter_mark = (iter == NULL
                                ? &(namedfm[0])
                                : (const xfmark_T *const) iter);
@@ -1215,7 +1216,6 @@ const void *mark_global_iter(const void *const iter, char *const name,
   }
   if ((size_t) (iter_mark - &(namedfm[0])) == ARRAY_SIZE(namedfm)
       || !iter_mark->fmark.mark.lnum) {
-    *fm = (xfmark_T) { .fmark = { .mark = { .lnum = 0 } } };
     return NULL;
   }
   size_t iter_off = (size_t) (iter_mark - &(namedfm[0]));
@@ -1244,7 +1244,7 @@ const void *mark_global_iter(const void *const iter, char *const name,
 /// @return Pointer to the next mark or NULL.
 static inline const fmark_T *next_buffer_mark(const buf_T *const buf,
                                               char *const mark_name)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   switch (*mark_name) {
     case NUL: {
@@ -1287,8 +1287,9 @@ static inline const fmark_T *next_buffer_mark(const buf_T *const buf,
 ///         NULL if iteration is over.
 const void *mark_buffer_iter(const void *const iter, const buf_T *const buf,
                              char *const name, fmark_T *const fm)
-  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ARG(2, 3, 4) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(2, 3, 4) FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  *name = NUL;
   char mark_name = (char) (iter == NULL
                            ? NUL
                            : (iter == &(buf->b_last_cursor)
@@ -1304,7 +1305,6 @@ const void *mark_buffer_iter(const void *const iter, const buf_T *const buf,
     iter_mark = next_buffer_mark(buf, &mark_name);
   }
   if (iter_mark == NULL) {
-    *fm = (fmark_T) {.mark = {.lnum = 0}};
     return NULL;
   }
   size_t iter_off = (size_t) (iter_mark - &(buf->b_namedm[0]));
@@ -1315,34 +1315,6 @@ const void *mark_buffer_iter(const void *const iter, const buf_T *const buf,
   }
   *fm = *iter_mark;
   return (const void *) iter_mark;
-}
-
-/// Get a number of valid marks
-size_t mark_global_amount(void)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  size_t ret = 0;
-  for (size_t i = 0; i < NGLOBALMARKS; i++) {
-    if (namedfm[i].fmark.mark.lnum != 0) {
-      ret++;
-    }
-  }
-  return ret;
-}
-
-/// Get a number of valid marks
-size_t mark_buffer_amount(const buf_T *const buf)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
-{
-  size_t ret = (size_t) ((buf->b_last_cursor.mark.lnum != 0)
-                         + (buf->b_last_insert.mark.lnum != 0)
-                         + (buf->b_last_change.mark.lnum != 0));
-  for (size_t i = 0; i < NMARKS; i++) {
-    if (buf->b_namedm[i].mark.lnum != 0) {
-      ret++;
-    }
-  }
-  return ret;
 }
 
 /// Set global mark

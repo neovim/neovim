@@ -5604,12 +5604,25 @@ bool garbage_collect(void)
     const void *reg_iter = NULL;
     do {
       yankreg_T reg;
-      char name;
+      char name = NUL;
       reg_iter = op_register_iter(reg_iter, &name, &reg);
-      if (reg.y_array != NULL) {
+      if (name != NUL) {
         ABORTING(set_ref_dict)(reg.additional_data, copyID);
       }
     } while (reg_iter != NULL);
+  }
+
+  // global marks (ShaDa additional data)
+  {
+    const void *mark_iter = NULL;
+    do {
+      xfmark_T fm;
+      char name = NUL;
+      mark_iter = mark_global_iter(mark_iter, &name, &fm);
+      if (name != NUL) {
+        ABORTING(set_ref_dict)(fm.fmark.additional_data, copyID);
+      }
+    } while (mark_iter != NULL);
   }
 
   // tabpage-local variables
@@ -20882,7 +20895,7 @@ static var_flavour_T var_flavour(char_u *varname)
 ///         or NULL to indicate that iteration is over.
 const void *var_shada_iter(const void *const iter, const char **const name,
                            typval_T *rettv)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2, 3)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2, 3)
 {
   const hashitem_T *hi;
   const hashitem_T *hifirst = globvarht.ht_array;

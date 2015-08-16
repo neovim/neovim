@@ -5312,7 +5312,7 @@ void end_global_changes(void)
 
 /// Check whether register is empty
 static inline bool reg_empty(const yankreg_T *const reg)
-  FUNC_ATTR_CONST
+  FUNC_ATTR_PURE
 {
   return (reg->y_array == NULL
           || reg->y_size == 0
@@ -5331,8 +5331,9 @@ static inline bool reg_empty(const yankreg_T *const reg)
 ///         NULL if iteration is over.
 const void *op_register_iter(const void *const iter, char *const name,
                              yankreg_T *const reg)
-  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ARG(2, 3) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(2, 3) FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  *name = NUL;
   const yankreg_T *iter_reg = (iter == NULL
                                ? &(y_regs[0])
                                : (const yankreg_T *const) iter);
@@ -5340,7 +5341,6 @@ const void *op_register_iter(const void *const iter, char *const name,
     iter_reg++;
   }
   if (iter_reg - &(y_regs[0]) == NUM_SAVED_REGISTERS || reg_empty(iter_reg)) {
-    *reg = (yankreg_T) { .y_array = NULL };
     return NULL;
   }
   size_t iter_off = iter_reg - &(y_regs[0]);
@@ -5356,7 +5356,7 @@ const void *op_register_iter(const void *const iter, char *const name,
 
 /// Get a number of non-empty registers
 size_t op_register_amount(void)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   size_t ret = 0;
   for (size_t i = 0; i < NUM_SAVED_REGISTERS; i++) {
