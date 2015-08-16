@@ -28,7 +28,7 @@ typedef enum {
   kCdScopeWindow,  ///< Affects one window.
 } CdScope;
 
-/// Last `:cd` scopes defined.
+/// Last `:cd` scope defined.
 #define MAX_CD_SCOPE  kCdScopeWindow
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
