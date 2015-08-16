@@ -814,7 +814,6 @@ struct tabpage_S {
   frame_T         *(tp_snapshot[SNAP_COUNT]);    /* window layout snapshots */
   dictitem_T tp_winvar;             /* variable for "t:" Dictionary */
   dict_T          *tp_vars;         /* internal variables, local to tab page */
-
   char_u          *tp_localdir;     /* absolute path of local directory or
                                        NULL */
 };

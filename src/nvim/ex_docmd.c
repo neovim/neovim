@@ -6905,21 +6905,21 @@ void ex_cd(exarg_T *eap)
     if (new_dir == NULL || vim_chdir(new_dir))
       EMSG(_(e_failed));
     else {
-      int scope = 0; // Depends on what command was invoked
+      int scope = -1; // Depends on what command was invoked
 
       switch (eap->cmdidx) {
       case CMD_cd:
       case CMD_chdir:
-      	scope = SCOPE_EDITOR;
-      	break;
+        scope = SCOPE_EDITOR;
+        break;
       case CMD_tcd:
       case CMD_tchdir:
-      	scope = SCOPE_TABPAGE;
-      	break;
+        scope = SCOPE_TABPAGE;
+        break;
       case CMD_lcd:
       case CMD_lchdir:
-      	scope = SCOPE_WINDOW;
-      	break;
+        scope = SCOPE_WINDOW;
+        break;
       default:
         assert(0);
       }
