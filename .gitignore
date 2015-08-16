@@ -13,6 +13,8 @@
 *.o
 *.so
 
+tags
+
 /src/nvim/po/vim.pot
 /src/nvim/po/*.ck
 

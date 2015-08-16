@@ -73,15 +73,21 @@ int setmark(int c)
 void free_fmark(fmark_T fm)
 {
   dict_unref(fm.additional_data);
-  fm.additional_data = NULL;
 }
 
 /// Free xfmark_T item
 void free_xfmark(xfmark_T fm)
 {
   xfree(fm.fname);
-  fm.fname = NULL;
   free_fmark(fm.fmark);
+}
+
+/// Free and clear fmark_T item
+void clear_fmark(fmark_T *fm)
+  FUNC_ATTR_NONNULL_ALL
+{
+  free_fmark(*fm);
+  memset(fm, 0, sizeof(*fm));
 }
 
 /*
@@ -1409,6 +1415,7 @@ void free_jumplist(win_T *wp)
   for (i = 0; i < wp->w_jumplistlen; ++i) {
     free_xfmark(wp->w_jumplist[i]);
   }
+  wp->w_jumplistlen = 0;
 }
 
 void set_last_cursor(win_T *win)
@@ -1428,5 +1435,6 @@ void free_all_marks(void)
       free_xfmark(namedfm[i]);
     }
   }
+  memset(&namedfm[0], 0, sizeof(namedfm));
 }
 #endif
