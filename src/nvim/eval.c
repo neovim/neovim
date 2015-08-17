@@ -20908,9 +20908,8 @@ const void *var_shada_iter(const void *const iter, const char **const name,
                || var_flavour(HI2DI(hi)->di_key) != VAR_FLAVOUR_SHADA)) {
       hi++;
     }
-    if (HASHITEM_EMPTY(hi)
-        || var_flavour(HI2DI(hi)->di_key) != VAR_FLAVOUR_SHADA) {
-      *rettv = (typval_T) {.v_type = VAR_UNKNOWN};
+    if ((size_t) (hi - hifirst) == hinum) {
+      *rettv = (typval_T) { .v_type = VAR_UNKNOWN };
       return NULL;
     }
   } else {
