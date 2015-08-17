@@ -1847,6 +1847,7 @@ has_key( {dict}, {key})		Number	TRUE if {dict} has entry {key}
 haslocaldir()			Number	TRUE if current window executed |:lcd|
 hasmapto( {what} [, {mode} [, {abbr}]])
 				Number	TRUE if mapping to {what} exists
+hastabdir()			Number	TRUE if current tab executed |:tcd|
 histadd( {history},{item})	String	add an item to a history
 histdel( {history} [, {item}])	String	remove an item from a history
 histget( {history} [, {index}])	String	get the item {index} from a history
@@ -3770,6 +3771,10 @@ hasmapto({what} [, {mode} [, {abbr}]])			*hasmapto()*
 			:endif
 <		This installs the mapping to "\ABCdoit" only if there isn't
 		already a mapping to "\ABCdoit".
+
+hastabdir()						*hastabdir()*
+		The result is a Number, which is 1 when the current
+		tab has set a local path via |:tcd|, and 0 otherwise.
 
 histadd({history}, {item})				*histadd()*
 		Add the String {item} to the history {history} which can be
