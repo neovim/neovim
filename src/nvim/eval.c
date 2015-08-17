@@ -20903,9 +20903,9 @@ const void *var_shada_iter(const void *const iter, const char **const name,
   *name = NULL;
   if (iter == NULL) {
     hi = globvarht.ht_array;
-    while ((HASHITEM_EMPTY(hi)
-            || var_flavour(HI2DI(hi)->di_key) != VAR_FLAVOUR_SHADA)
-           && (size_t) (hi - hifirst) < hinum) {
+    while ((size_t) (hi - hifirst) < hinum
+           && (HASHITEM_EMPTY(hi)
+               || var_flavour(HI2DI(hi)->di_key) != VAR_FLAVOUR_SHADA)) {
       hi++;
     }
     if (HASHITEM_EMPTY(hi)
