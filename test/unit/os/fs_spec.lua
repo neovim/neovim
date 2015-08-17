@@ -229,10 +229,6 @@ describe('fs function', function()
       return res
     end
 
-    local function os_file_is_readonly(filename)
-      return fs.os_file_is_readonly((to_cstr(filename)))
-    end
-
     local function os_file_is_readable(filename)
       return fs.os_file_is_readable((to_cstr(filename)))
     end
@@ -324,55 +320,6 @@ describe('fs function', function()
       end
     end)
 
-    describe('os_file_is_readonly', function()
-      -- pending('returns ? if the file does not exist', function() end)
-      -- pending('returns ? if the path is a directory', function() end)
-      -- pending('returns ? if the file is executable', function() end)
-
-      it('returns false if the file is non-read, non-write', function()
-        local perm = os_getperm('unit-test-directory/test.file')
-        perm = unset_bit(perm, ffi.C.kS_IWUSR)
-        perm = unset_bit(perm, ffi.C.kS_IWGRP)
-        perm = unset_bit(perm, ffi.C.kS_IWOTH)
-        perm = unset_bit(perm, ffi.C.kS_IRUSR)
-        perm = unset_bit(perm, ffi.C.kS_IRGRP)
-        perm = unset_bit(perm, ffi.C.kS_IROTH)
-
-        eq(OK, (os_setperm('unit-test-directory/test.file', perm)))
-        eq(1, os_file_is_writable('unit-test-directory/test.file'))
-        eq(false, os_file_is_readonly('unit-test-directory/test.file'))
-      end)
-
-      it('returns false if the file is write-only', function()
-        local perm = os_getperm('unit-test-directory/test.file')
-        perm = set_bit(perm, ffi.C.kS_IWUSR)
-        perm = set_bit(perm, ffi.C.kS_IWGRP)
-        perm = set_bit(perm, ffi.C.kS_IWOTH)
-        perm = unset_bit(perm, ffi.C.kS_IRUSR)
-        perm = unset_bit(perm, ffi.C.kS_IRGRP)
-        perm = unset_bit(perm, ffi.C.kS_IROTH)
-
-        eq(OK, (os_setperm('unit-test-directory/test.file', perm)))
-        eq(1, os_file_is_writable('unit-test-directory/test.file'))
-        eq(false, os_file_is_readonly('unit-test-directory/test.file'))
-      end)
-
-      it('returns true if the file is read-only', function()
-        local perm = os_getperm('unit-test-directory/test.file')
-        local perm_orig = perm
-        perm = unset_bit(perm, ffi.C.kS_IWUSR)
-        perm = unset_bit(perm, ffi.C.kS_IWGRP)
-        perm = unset_bit(perm, ffi.C.kS_IWOTH)
-
-        eq(OK, (os_setperm('unit-test-directory/test.file', perm)))
-        eq(true, os_file_is_readonly('unit-test-directory/test.file'))
-        eq(OK, (os_setperm('unit-test-directory/test.file', perm_orig)))
-      end)
-
-      it('returns false if the file is read-write', function()
-        eq(false, os_file_is_readonly('unit-test-directory/test.file'))
-      end)
-    end)
 
     describe('os_file_is_readable', function()
       it('returns false if the file is not readable', function()

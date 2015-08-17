@@ -2623,7 +2623,7 @@ buf_write (
      * Check if the file is really writable (when renaming the file to
      * make a backup we won't discover it later).
      */
-    file_readonly = os_file_is_readonly((char *)fname);
+    file_readonly = !os_file_is_writable((char *)fname);
 
     if (!forceit && file_readonly) {
       if (vim_strchr(p_cpo, CPO_FWRITE) != NULL) {

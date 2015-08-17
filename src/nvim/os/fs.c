@@ -270,15 +270,6 @@ bool os_file_exists(const char_u *name)
   return os_stat((char *)name, &statbuf);
 }
 
-/// Check if a file is readonly.
-///
-/// @return `true` if `name` is readonly.
-bool os_file_is_readonly(const char *name)
-  FUNC_ATTR_NONNULL_ALL
-{
-  return access(name, W_OK) != 0;
-}
-
 /// Check if a file is readable.
 ///
 /// @return true if `name` is readable, otherwise false.
