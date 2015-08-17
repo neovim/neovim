@@ -21,4 +21,12 @@
 // - SYS_VIMRC_FILE
 // - SPECIAL_WILDCHAR
 
+// _access(): https://msdn.microsoft.com/en-us/library/1w06ktdy.aspx
+#ifndef R_OK
+# define R_OK 4
+#endif
+#ifndef W_OK
+# define W_OK 2
+#endif
+
 #endif  // NVIM_OS_WIN_DEFS_H
