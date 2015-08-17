@@ -20909,7 +20909,6 @@ const void *var_shada_iter(const void *const iter, const char **const name,
       hi++;
     }
     if ((size_t) (hi - hifirst) == hinum) {
-      *rettv = (typval_T) { .v_type = VAR_UNKNOWN };
       return NULL;
     }
   } else {

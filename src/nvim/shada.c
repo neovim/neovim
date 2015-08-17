@@ -2483,9 +2483,9 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
     const Timestamp cur_timestamp = os_time();
     do {
       typval_T vartv;
-      const char *name;
+      const char *name = NULL;
       var_iter = var_shada_iter(var_iter, &name, &vartv);
-      if (var_iter == NULL && vartv.v_type == VAR_UNKNOWN) {
+      if (name == NULL) {
         break;
       }
       typval_T tgttv;
