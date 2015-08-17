@@ -271,7 +271,7 @@ char_u *shorten_dir(char_u *str)
 int dir_of_file_exists(char_u *fname)
 {
   char_u      *p;
-  int c;
+  char_u c;
   int retval;
 
   p = path_tail_with_sep(fname);
@@ -508,8 +508,8 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
   int start_len = gap->ga_len;
   char_u      *pat;
   int starts_with_dot;
-  int matches;
-  int len;
+  size_t matches;
+  size_t len;
   int starstar = FALSE;
   static int stardepth = 0;         /* depth for "**" expansion */
 
@@ -547,7 +547,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
                        && isalpha(PTR2CHAR(path_end)))))
       e = p;
     if (has_mbyte) {
-      len = (*mb_ptr2len)(path_end);
+      len = (size_t)(*mb_ptr2len)(path_end);
       STRNCPY(p, path_end, len);
       p += len;
       path_end += len;
@@ -606,7 +606,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
       && *path_end == '/') {
     STRCPY(s, path_end + 1);
     ++stardepth;
-    (void)do_path_expand(gap, buf, (int)(s - buf), flags, TRUE);
+    (void)do_path_expand(gap, buf, (size_t)(s - buf), flags, true);
     --stardepth;
   }
   *s = NUL;
@@ -657,7 +657,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
   xfree(buf);
   vim_regfree(regmatch.regprog);
 
-  matches = gap->ga_len - start_len;
+  matches = (size_t)(gap->ga_len - start_len);
   if (matches > 0)
     qsort(((char_u **)gap->ga_data) + start_len, matches,
         sizeof(char_u *), pstrcmp);
@@ -690,8 +690,8 @@ static int find_previous_pathsep(char_u *path, char_u **psep)
  */
 static int is_unique(char_u *maybe_unique, garray_T *gap, int i)
 {
-  int candidate_len;
-  int other_path_len;
+  size_t candidate_len;
+  size_t other_path_len;
   char_u  **other_paths = (char_u **)gap->ga_data;
   char_u  *rival;
 
@@ -699,8 +699,8 @@ static int is_unique(char_u *maybe_unique, garray_T *gap, int i)
     if (j == i)
       continue;        /* don't compare it with itself */
 
-    candidate_len = (int)STRLEN(maybe_unique);
-    other_path_len = (int)STRLEN(other_paths[j]);
+    candidate_len = STRLEN(maybe_unique);
+    other_path_len = STRLEN(other_paths[j]);
     if (other_path_len < candidate_len)
       continue;        /* it's different when it's shorter */
 
@@ -727,7 +727,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
   char_u      *path_option = *curbuf->b_p_path == NUL
                              ? p_path : curbuf->b_p_path;
   char_u      *buf;
-  int len;
+  size_t len;
 
   buf = xmalloc(MAXPATHL);
 
@@ -741,8 +741,8 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
       if (curbuf->b_ffname == NULL)
         continue;
       char_u *p = path_tail(curbuf->b_ffname);
-      len = (int)(p - curbuf->b_ffname);
-      if (len + (int)STRLEN(buf) >= MAXPATHL)
+      len = (size_t)(p - curbuf->b_ffname);
+      if (len + STRLEN(buf) >= MAXPATHL)
         continue;
       if (buf[1] == NUL)
         buf[len] = NUL;
@@ -758,8 +758,8 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
       continue;
     else if (!path_is_absolute_path(buf)) {
       /* Expand relative path to their full path equivalent */
-      len = (int)STRLEN(curdir);
-      if (len + (int)STRLEN(buf) + 3 > MAXPATHL)
+      len = STRLEN(curdir);
+      if (len + STRLEN(buf) + 3 > MAXPATHL)
         continue;
       STRMOVE(buf + len + 1, buf);
       STRCPY(buf, curdir);
@@ -814,7 +814,7 @@ static char_u *get_path_cutoff(char_u *fname, garray_T *gap)
  */
 static void uniquefy_paths(garray_T *gap, char_u *pattern)
 {
-  int len;
+  size_t len;
   char_u      **fnames = (char_u **)gap->ga_data;
   int sort_again = FALSE;
   char_u      *pat;
@@ -833,7 +833,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
    * regex matches anywhere in the path. FIXME: is this valid for all
    * possible patterns?
    */
-  len = (int)STRLEN(pattern);
+  len = STRLEN(pattern);
   file_pattern = xmalloc(len + 2);
   file_pattern[0] = '*';
   file_pattern[1] = NUL;
@@ -853,7 +853,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
   os_dirname(curdir, MAXPATHL);
   expand_path_option(curdir, &path_ga);
 
-  in_curdir = xcalloc(gap->ga_len, sizeof(char_u *));
+  in_curdir = xcalloc((size_t)gap->ga_len, sizeof(char_u *));
 
   for (int i = 0; i < gap->ga_len && !got_int; i++) {
     char_u      *path = fnames[i];
@@ -862,7 +862,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
     char_u      *pathsep_p;
     char_u      *path_cutoff;
 
-    len = (int)STRLEN(path);
+    len = STRLEN(path);
     is_in_curdir = fnamencmp(curdir, path, dir_end - path) == 0
                    && curdir[dir_end - path] == NUL;
     if (is_in_curdir)
@@ -1071,6 +1071,10 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   garray_T ga;
   char_u              *p;
   static int recursive = FALSE;
+  // TODO(vheon): `add_pat` seems to have two meaning in this function: it is
+  // first assigned to -1 to note that no expansion has been make and then it
+  // is assigned to the count of expansion made. Check if it is possible to
+  // refactor.
   int add_pat;
   int did_expand_in_path = FALSE;
 
@@ -1113,9 +1117,11 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     add_pat = -1;
     p = pat[i];
 
-    if (vim_backtick(p))
-      add_pat = expand_backtick(&ga, p, flags);
-    else {
+    if (vim_backtick(p)) {
+      size_t tmp_add_pat = expand_backtick(&ga, p, flags);
+      assert(tmp_add_pat <= INT_MAX);
+      add_pat = (int)tmp_add_pat;
+    } else {
       /*
        * First expand environment variables, "~/" and "~user/".
        */
@@ -1160,8 +1166,11 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
           add_pat = expand_in_path(&ga, p, flags);
           recursive = TRUE;
           did_expand_in_path = TRUE;
-        } else
-          add_pat = path_expand(&ga, p, flags);
+        } else {
+          size_t tmp_add_pat = path_expand(&ga, p, flags);
+          assert(tmp_add_pat <= INT_MAX);
+          add_pat = (int)tmp_add_pat;
+        }
       }
     }
 
@@ -1205,7 +1214,7 @@ static int vim_backtick(char_u *p)
  * Currently only works when pat[] starts and ends with a `.
  * Returns number of file names found.
  */
-static int 
+static size_t
 expand_backtick (
     garray_T *gap,
     char_u *pat,
@@ -1215,11 +1224,11 @@ expand_backtick (
   char_u      *p;
   char_u      *cmd;
   char_u      *buffer;
-  int cnt = 0;
-  int i;
+  size_t cnt = 0;
+  char_u i;
 
   /* Create the command: lop off the backticks. */
-  cmd = vim_strnsave(pat + 1, (int)STRLEN(pat) - 2);
+  cmd = vim_strnsave(pat + 1, STRLEN(pat) - 2);
 
   if (*cmd == '=')          /* `={expr}`: Expand expression */
     buffer = eval_to_string(cmd + 1, &p, TRUE);
@@ -1490,7 +1499,7 @@ find_file_name_in_path (
 )
 {
   char_u      *file_name;
-  int c;
+  char_u c;
   char_u      *tofree = NULL;
 
   if ((options & FNAME_INCL) && *curbuf->b_p_inex != NUL) {
@@ -1579,7 +1588,7 @@ bool vim_isAbsName(char_u *name)
 /// @param      force is a flag to force expanding even if the path is absolute
 ///
 /// @return           FAIL for failure, OK otherwise
-int vim_FullName(const char *fname, char *buf, int len, bool force)
+int vim_FullName(const char *fname, char *buf, size_t len, bool force)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   int retval = OK;
@@ -1951,12 +1960,13 @@ int expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file,
  */
 int match_suffix(char_u *fname)
 {
-  int fnamelen, setsuflen;
+  size_t fnamelen;
+  size_t setsuflen;
   char_u      *setsuf;
 #define MAXSUFLEN 30        /* maximum length of a file suffix */
   char_u suf_buf[MAXSUFLEN];
 
-  fnamelen = (int)STRLEN(fname);
+  fnamelen = STRLEN(fname);
   setsuflen = 0;
   for (setsuf = p_su; *setsuf; ) {
     setsuflen = copy_option_part(&setsuf, suf_buf, MAXSUFLEN, ".,");
@@ -1969,9 +1979,8 @@ int match_suffix(char_u *fname)
         break;
       }
     } else {
-      if (fnamelen >= setsuflen
-          && fnamencmp(suf_buf, fname + fnamelen - setsuflen,
-              (size_t)setsuflen) == 0)
+      if (fnamelen >= setsuflen &&
+          fnamencmp(suf_buf, fname + fnamelen - setsuflen, setsuflen) == 0)
         break;
       setsuflen = 0;
     }
@@ -1983,7 +1992,7 @@ int match_suffix(char_u *fname)
 ///
 /// @param directory Directory name, relative to current directory.
 /// @return `FAIL` for failure, `OK` for success.
-int path_full_dir_name(char *directory, char *buffer, int len)
+int path_full_dir_name(char *directory, char *buffer, size_t len)
 {
   int SUCCESS = 0;
   int retval = OK;
@@ -2025,10 +2034,10 @@ int path_full_dir_name(char *directory, char *buffer, int len)
 
 // Append to_append to path with a slash in between.
 // Append to_append to path with a slash in between.
-int append_path(char *path, const char *to_append, int max_len)
+int append_path(char *path, const char *to_append, size_t max_len)
 {
-  int current_length = STRLEN(path);
-  int to_append_length = STRLEN(to_append);
+  size_t current_length = strlen(path);
+  size_t to_append_length = strlen(to_append);
 
   // Do not append empty strings.
   if (to_append_length == 0) {
@@ -2068,7 +2077,7 @@ int append_path(char *path, const char *to_append, int max_len)
 /// @param len Length of `buf`.
 /// @param force Also expand when `fname` is already absolute.
 /// @return `FAIL` for failure, `OK` for success.
-static int path_get_absolute_path(const char_u *fname, char_u *buf, int len, int force)
+static int path_get_absolute_path(const char_u *fname, char_u *buf, size_t len, int force)
 {
   char_u *p;
   *buf = NUL;

@@ -79,7 +79,6 @@ set(CONV_SOURCES
   message.c
   misc1.c
   ops.c
-  path.c
   quickfix.c
   regexp.c
   screen.c
