@@ -1597,23 +1597,25 @@ static char *shada_filename(const char *file)
   if (file == NULL || *file == NUL) {
     if (used_shada_file != NULL) {
       file = used_shada_file;
-    } else if ((file = find_shada_parameter('n')) == NULL || *file == NUL) {
+    } else {
+      if ((file = find_shada_parameter('n')) == NULL || *file == NUL) {
 #ifdef SHADA_FILE2
-      // don't use $HOME when not defined (turned into "c:/"!).
-      if (os_getenv((char_u *)"HOME") == NULL) {
-        // don't use $VIM when not available.
-        expand_env((char_u *)"$VIM", NameBuff, MAXPATHL);
-        if (STRCMP("$VIM", NameBuff) != 0) {  // $VIM was expanded
-          file = SHADA_FILE2;
+        // don't use $HOME when not defined (turned into "c:/"!).
+        if (os_getenv((char_u *)"HOME") == NULL) {
+          // don't use $VIM when not available.
+          expand_env((char_u *)"$VIM", NameBuff, MAXPATHL);
+          if (STRCMP("$VIM", NameBuff) != 0) {  // $VIM was expanded
+            file = SHADA_FILE2;
+          } else {
+            file = SHADA_FILE;
+          }
         } else {
-          file = SHADA_FILE;
-        }
-      } else {
 #endif
-        file =  SHADA_FILE;
+          file =  SHADA_FILE;
 #ifdef SHADA_FILE2
-      }
+        }
 #endif
+      }
       // XXX It used to be one level lower, so that whatever is in
       //     `used_shada_file` was expanded. I intentionally moved it here
       //     because various expansions must have already be done by the shell.
