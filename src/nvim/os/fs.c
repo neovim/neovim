@@ -285,7 +285,10 @@ bool os_file_is_readonly(const char *name)
 bool os_file_is_readable(const char *name)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return (access(name, R_OK) == 0);
+  uv_fs_t req;
+  int r = uv_fs_access(&fs_loop, &req, name, R_OK, NULL);
+  uv_fs_req_cleanup(&req);
+  return (r == 0);
 }
 
 /// Check if a file is writable.
@@ -296,11 +299,11 @@ bool os_file_is_readable(const char *name)
 int os_file_is_writable(const char *name)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (access(name, W_OK) == 0) {
-    if (os_isdir((char_u *)name)) {
-      return 2;
-    }
-    return 1;
+  uv_fs_t req;
+  int r = uv_fs_access(&fs_loop, &req, name, W_OK, NULL);
+  uv_fs_req_cleanup(&req);
+  if (r == 0) {
+    return os_isdir((char_u *)name) ? 2 : 1;
   }
   return 0;
 }
