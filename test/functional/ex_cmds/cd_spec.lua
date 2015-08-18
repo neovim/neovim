@@ -9,9 +9,10 @@ describe(':tcd', function()
   before_each(clear)
 
   it('sets to local directory of the current tab', function()
-    assert.is_nil(nvim.globaldir)
-    assert.is_nil(curtab.localdir)
-    execute('tcd test') -- Change the directory
+    local globalDir = eval('getcwd()')
+    execute('tabnew') -- Create a new tab first
+    -- assert.is_same(eval('getcwd()'), globalDir) -- Confirm nothing changed
+    -- feed('tcd test') -- Change the tab directory
   end)
 end)
 
