@@ -55,10 +55,10 @@ function! s:check_interpreter(prog, major_ver, skip) abort
   " Try to load neovim module, and output Python version.
   let prog_ver = system(a:prog . ' -c ' .
         \ '''import sys; sys.stdout.write(str(sys.version_info[0]) + '.
-        \ '"." + str(sys.version_info[1])); '''.
+        \ '"." + str(sys.version_info[1])); '.
         \ (a:major_ver == 2 ?
-        \   '''import pkgutil; exit(pkgutil.get_loader("neovim") is None)''':
-        \   '''import importlib; exit(importlib.find_loader("neovim") is None)''')
+        \   'import pkgutil; exit(pkgutil.get_loader("neovim") is None)''':
+        \   'import importlib; exit(importlib.find_loader("neovim") is None)''')
         \ )
   if v:shell_error
     return [0, prog_path . ' does have not have the neovim module installed. '
