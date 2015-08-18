@@ -1182,14 +1182,19 @@ exactly four MessagePack objects:
    entry type:
 
    Entry type (name)   Entry data ~
-   1 (Header)          Map containing data that describes the NeoVim instance 
-                       that written this ShaDa file.  It is ignored when 
-                       reading ShaDa files.  Contains the following data:
+   1 (Header)          Map containing data that describes the generator 
+                       instance that wrote this ShaDa file.  It is ignored 
+                       when reading ShaDa files.  Contains the following data:
                        Key        Data ~
-                       version    Binary, NeoVim version.
+                       generator  Binary, software used to generate ShaDa 
+                                  file. Is equal to "nvim" when ShaDa file was 
+                                  written by NeoVim.
+                       version    Binary, generator version.
                        encoding   Binary, effective 'encoding' value.
                        max_kbyte  Integer, effective |shada-s| limit value.
                        pid        Integer, instance process ID.
+                       *          It is allowed to have any number of 
+                                  additional keys with any data.
    2 (SearchPattern)   Map containing data describing last used search or 
                        substitute pattern.  Normally ShaDa file contains two 
                        such entries: one with "ss" key set to true (describes 

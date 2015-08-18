@@ -2418,9 +2418,11 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
     .timestamp = os_time(),
     .data = {
       .header = {
-        .size = 4,
-        .capacity = 4,
+        .size = 5,
+        .capacity = 5,
         .items = ((KeyValuePair[]) {
+          { STATIC_CSTR_AS_STRING("generator"),
+            STRING_OBJ(STATIC_CSTR_AS_STRING("nvim")) },
           { STATIC_CSTR_AS_STRING("version"),
             STRING_OBJ(cstr_as_string(longVersion)) },
           { STATIC_CSTR_AS_STRING("max_kbyte"),
@@ -2605,9 +2607,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
       continue;
     }
     const char *const fname = (char *) (fm.fmark.fnum == 0
-                                        ? (fm.fname == NULL
-                                           ? NULL
-                                           : fm.fname)
+                                        ? (fm.fname == NULL ? NULL : fm.fname)
                                         : buf->b_ffname);
     if (fname == NULL) {
       continue;
