@@ -21,7 +21,7 @@ describe('ShaDa history merging code', function()
     os.remove(shada_fname)
   end)
 
-  it('takes item with greater timestamp from NeoVim instance when reading',
+  it('takes item with greater timestamp from Neovim instance when reading',
   function()
     wshada('\004\001\009\147\000\196\002ab\196\001a')
     eq(0, exc_exec(sdrcmd()))
@@ -40,7 +40,7 @@ describe('ShaDa history merging code', function()
     eq(1, found)
   end)
 
-  it('takes item with equal timestamp from NeoVim instance when reading',
+  it('takes item with equal timestamp from Neovim instance when reading',
   function()
     wshada('\004\000\009\147\000\196\002ab\196\001a')
     eq(0, exc_exec(sdrcmd()))
@@ -78,7 +78,7 @@ describe('ShaDa history merging code', function()
     eq(1, found)
   end)
 
-  it('takes item with greater timestamp from NeoVim instance when writing',
+  it('takes item with greater timestamp from Neovim instance when writing',
   function()
     wshada('\004\001\009\147\000\196\002ab\196\001a')
     eq(0, exc_exec(sdrcmd()))
@@ -95,7 +95,7 @@ describe('ShaDa history merging code', function()
     eq(1, found)
   end)
 
-  it('takes item with equal timestamp from NeoVim instance when writing',
+  it('takes item with equal timestamp from Neovim instance when writing',
   function()
     wshada('\004\000\009\147\000\196\002ab\196\001a')
     eq(0, exc_exec(sdrcmd()))
