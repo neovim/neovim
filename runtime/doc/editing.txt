@@ -1264,9 +1264,9 @@ present in 'cpoptions' and "!" is not used in the command.
 :pw[d]			Print the current directory name.
 			Also see |getcwd()|.
 
-So long as no |:lcd| command has been used, all windows share the same current
-directory.  Using a command to jump to another window doesn't change anything
-for the current directory.
+So long as no |:tcd| or |:lcd| command has been used, all windows share the
+same current directory.  Using a command to jump to another window doesn't
+change anything for the current directory.
 When a |:lcd| command has been used for a window, the specified directory
 becomes the current directory for that window.  Windows where the |:lcd|
 command has not been used stick to the tab- or global current directory.  When
