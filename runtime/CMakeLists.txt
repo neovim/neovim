@@ -39,6 +39,7 @@ add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
     -u NONE
     -i NONE
     -esX
+    --headless
     -c "helptags ++t ."
     -c quit
   DEPENDS
