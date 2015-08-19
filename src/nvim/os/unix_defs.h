@@ -19,6 +19,10 @@
 #define SPECIAL_WILDCHAR "`'{"
 
 // Unix system-dependent file names
+
+#define NVIM_CONF_DIR "$XDG_CONFIG_HOME/nvim/"
+#define NVIM_DATA_DIR "$XDG_DATA_HOME/nvim/"
+
 #ifndef SYS_VIMRC_FILE
 # define SYS_VIMRC_FILE "$VIM/nvimrc"
 #endif
@@ -28,46 +32,51 @@
 #ifndef SYNTAX_FNAME
 # define SYNTAX_FNAME   "$VIMRUNTIME/syntax/%s.vim"
 #endif
+// Not used anymore ?
 #ifndef USR_EXRC_FILE
 # define USR_EXRC_FILE "~/.exrc"
 #endif
 #ifndef USR_VIMRC_FILE
-# define USR_VIMRC_FILE "~/.nvimrc"
+# define USR_VIMRC_FILE NVIM_CONF_DIR "/init.vim"
 #endif
+// Not used anymore ?
 #ifndef USR_VIMRC_FILE2
 # define USR_VIMRC_FILE2     "~/.nvim/nvimrc"
 #endif
+// Not used anymore ?
 #ifndef EXRC_FILE
 # define EXRC_FILE      ".exrc"
 #endif
+// Not used anymore ?
 #ifndef VIMRC_FILE
 # define VIMRC_FILE     ".nvimrc"
 #endif
 #ifndef VIMINFO_FILE
-# define VIMINFO_FILE "~/.nviminfo"
+# define VIMINFO_FILE NVIM_DATA_DIR "/viminfo"
 #endif
 
 // Default for 'backupdir'.
 #ifndef DFLT_BDIR
-# define DFLT_BDIR    ".,~/tmp,~/"
+# define DFLT_BDIR    ".," NVIM_DATA_DIR "/backup/"
 #endif
 
 // Default for 'directory'.
 #ifndef DFLT_DIR
-# define DFLT_DIR     ".,~/tmp,/var/tmp,/tmp"
+# define DFLT_DIR     NVIM_DATA_DIR "/swap//"
 #endif
 
 // Default for 'viewdir'.
 #ifndef DFLT_VDIR
-# define DFLT_VDIR    "~/.nvim/view"
+# define DFLT_VDIR    NVIM_CONF_DIR "/view/"
 #endif
 
 #ifdef RUNTIME_GLOBAL
-# define DFLT_RUNTIMEPATH "~/.nvim," RUNTIME_GLOBAL ",$VIMRUNTIME," \
-  RUNTIME_GLOBAL "/after,~/.nvim/after"
+# define DFLT_RUNTIMEPATH NVIM_CONF_DIR "," RUNTIME_GLOBAL ",$VIMRUNTIME," \
+                          RUNTIME_GLOBAL "/after," NVIM_CONF_DIR "/after"
 #else
 # define DFLT_RUNTIMEPATH \
-  "~/.nvim,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,~/.nvim/after"
+  NVIM_CONF_DIR ",$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,"\
+  NVIM_CONF_DIR "/after"
 #endif
 
 #endif  // NVIM_OS_UNIX_DEFS_H

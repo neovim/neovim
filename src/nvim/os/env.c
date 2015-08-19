@@ -417,14 +417,44 @@ static char *remove_tail(char *p, char *pend, char *name)
 
 /// Vim's version of getenv().
 /// Special handling of $HOME, $VIM and $VIMRUNTIME, allowing the user to
-/// override the vim runtime directory at runtime.  Also does ACP to 'enc'
-/// conversion for Win32.  Results must be freed by the calling function.
+/// override the vim runtime directory at runtime. $XDG_* env variables are
+/// expanded conforming to the XDG specification. Also does ACP to 'enc'
+/// conversion for Win32. Results must be freed by the calling function.
 /// @param name Name of environment variable to expand
 char *vim_getenv(const char *name)
 {
   const char *kos_env_path = os_getenv(name);
   if (kos_env_path != NULL) {
     return xstrdup(kos_env_path);
+  }
+
+  // XDG Base Directory expansion.
+  if (strncmp(name, "XDG_", 4) == 0) {
+    const char *home_suffix = "";
+    if (strcmp(name, "XDG_DATA_HOME") == 0) {
+      home_suffix = "/.local/share/";
+    } else if (strcmp(name, "XDG_CONFIG_HOME") == 0) {
+      home_suffix = "/.config/";
+    } else if (strcmp(name, "XDG_CACHE_HOME") == 0) {
+      home_suffix = "/.cache/";
+    } else if (strcmp(name, "XDG_RUNTIME_DIR") == 0) {
+      return xstrdup("/tmp/");  // Arbitrary value, any idea?
+    } else if (strcmp(name, "XDG_CONFIG_DIRS") == 0) {
+      return xstrdup("/etc/xdg");
+    } else if (strcmp(name, "XDG_DATA_DIRS") == 0) {
+      return xstrdup("/usr/local/share/:/usr/share/");
+    }
+
+    // We need to append the prefix to the HOME path.
+    char *value = vim_getenv("HOME");
+    if (!value) {
+      return NULL;
+    }
+    const size_t value_len = strlen(value);
+    const size_t home_suffix_len = strlen(home_suffix);
+    value = xrealloc(value, value_len + home_suffix_len + 1);
+    memmove(value + value_len, home_suffix, home_suffix_len + 1);
+    return value;
   }
 
   bool vimruntime = (strcmp(name, "VIMRUNTIME") == 0);
