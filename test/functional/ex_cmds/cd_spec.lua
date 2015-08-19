@@ -7,48 +7,89 @@ local nvim, execute, eq, clear, eval, feed =
 describe(':cd :tcd', function()
   before_each(clear)
 
-  it('sets to local directory of the current tab', function()
-    -- Store the initial working directory
-    local globalDir = eval('getcwd()')
+  --it('sets to local directory for the program, tabs and windows', function()
+    local wd = function()
+      return eval('getcwd()')
+    end
 
-    -- Create a new tab first and verify that is has the same working dir
-    execute('tabnew')
-    assert.is_same(eval('getcwd()'), globalDir)
+    -- Test both spellings: cd and chdir
+    -- Their variants differ in prefix (none, 't' and 'l')
+    for _, cmd in ipairs({'cd', 'chdir'}) do
+      describe('*' .. cmd, function()
+        it('works', function()
+          -- Store the initial working directory
+          local globalDir = wd()
 
-    -- Change tab-local working directory and verify it is different
-    execute('tcd test')
-    assert.is_same(eval('getcwd()'), globalDir .. '/test')
+          -- Make tree of directories
+          local directories = {
+            {name = 'lua_test_dir_1', children =  {
+                {name = 'dir_a', children = nil},
+                {name = 'dir_b', children = nil},
+              },
+            },
+            {name = 'lua_test_dir_2', children =  nil},
+          }
 
-    -- Create a new window in this tab to test `:lcd`
-    execute('new')
-    assert.is_same(eval('getcwd()'), globalDir .. '/test')
-    execute('lcd benchmark')
-    assert.is_same(eval('getcwd()'), globalDir .. '/test/benchmark')
-    -- Verify the first window still has the tab local directory
-    execute('exe "normal \\<c-w>\\<c-w>"')
-    assert.is_same(eval('getcwd()'), globalDir .. '/test')
+          local buildDirectoryTree
+          buildDirectoryTree = function(tree, prefix)
+            for _, v in ipairs(tree) do
+              os.execute('mkdir ' .. prefix .. v.name)
+              if v.children then
+                for _, w in ipairs(v.children) do
+                  buildDirectoryTree(w, prefix .. v.name .. '/')
+                end
+              end
+            end
+          end
+          
+          buildDirectoryTree(directories, '')
 
-    -- Change back to initial tab and verify working directory has stayed
-    feed('gt')
-    assert.is_same(eval('getcwd()'), globalDir)
+          --os.execute('mkdir ' .. directories[1].name)
+          --os.execute('mkdir ' .. directories[1])
+          --os.execute('mkdir ' .. directories[2])
+          --os.execute('mkdir ' .. directories[3])
 
-    -- Verify global changes don't affect local ones
-    execute('cd build')
-    assert.is_same(eval('getcwd()'), globalDir .. '/build')
-    feed('gt')
-    assert.is_same(eval('getcwd()'), globalDir .. '/test')
+          -- Create a new tab first and verify that is has the same working dir
+          execute('tabnew')
+          eq(wd(), globalDir)
 
-    -- Unless the global change happened in a tab with local directory
-    execute('cd ..')
-    assert.is_same(eval('getcwd()'), globalDir)
-    -- Which also affects the first tab
-    feed('gt')
-    assert.is_same(eval('getcwd()'), globalDir)
+          -- Change tab-local working directory and verify it is different
+          execute('t' .. cmd .. ' ' .. directories[1].name)
+          eq(wd(), globalDir .. '/' .. directories[1].name)
 
-    -- But not in a window with its own local directory
-    feed('gt')
-    execute('exe "normal \\<c-w>\\<c-w>"')
-    assert.is_same(eval('getcwd()'), globalDir .. '/test/benchmark')
-  end)
+          -- Create a new window in this tab to test `:lcd`
+          execute('new')
+          eq(wd(), globalDir .. '/test')
+          execute('l' .. cmd .. ' benchmark')
+          eq(wd(), globalDir .. '/test/benchmark')
+          -- Verify the first window still has the tab local directory
+          execute('wincmd w')
+          eq(wd(), globalDir .. '/test')
+
+          -- Change back to initial tab and verify working directory has stayed
+          feed('gt')
+          eq(wd(), globalDir)
+
+          -- Verify global changes don't affect local ones
+          execute('' .. cmd .. ' build')
+          eq(wd(), globalDir .. '/build')
+          feed('gt')
+          eq(wd(), globalDir .. '/test')
+
+          -- Unless the global change happened in a tab with local directory
+          execute('' .. cmd .. ' ..')
+          eq(wd(), globalDir)
+          -- Which also affects the first tab
+          feed('gt')
+          eq(wd(), globalDir)
+
+          -- But not in a window with its own local directory
+          feed('gt')
+          execute('wincmd w')
+          eq(wd(), globalDir .. '/test/benchmark')
+        end)
+      end)
+    end
+  --end)
 end)
 
