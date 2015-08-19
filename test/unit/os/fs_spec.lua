@@ -229,10 +229,6 @@ describe('fs function', function()
       return res
     end
 
-    local function os_file_is_readonly(filename)
-      return fs.os_file_is_readonly((to_cstr(filename)))
-    end
-
     local function os_file_is_readable(filename)
       return fs.os_file_is_readable((to_cstr(filename)))
     end
@@ -314,10 +310,8 @@ describe('fs function', function()
         end)
       end
 
-      -- On Windows `os_fchown` always returns 0
-      -- because `uv_fs_chown` is no-op on this platform.
       if (ffi.os == 'Windows' or ffi.C.geteuid() == 0) then
-        pending('skipped (os_fchown is no-op on Windows)', function() end)
+        pending('skipped (uv_fs_chown is no-op on Windows)', function() end)
       else
         it('returns nonzero if process has not enough permissions', function()
           -- chown to root
@@ -326,22 +320,6 @@ describe('fs function', function()
       end
     end)
 
-    describe('os_file_is_readonly', function()
-      it('returns true if the file is readonly', function()
-        local perm = os_getperm('unit-test-directory/test.file')
-        local perm_orig = perm
-        perm = unset_bit(perm, ffi.C.kS_IWUSR)
-        perm = unset_bit(perm, ffi.C.kS_IWGRP)
-        perm = unset_bit(perm, ffi.C.kS_IWOTH)
-        eq(OK, (os_setperm('unit-test-directory/test.file', perm)))
-        eq(true, os_file_is_readonly('unit-test-directory/test.file'))
-        eq(OK, (os_setperm('unit-test-directory/test.file', perm_orig)))
-      end)
-
-      it('returns false if the file is writable', function()
-        eq(false, os_file_is_readonly('unit-test-directory/test.file'))
-      end)
-    end)
 
     describe('os_file_is_readable', function()
       it('returns false if the file is not readable', function()
