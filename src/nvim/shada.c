@@ -1027,23 +1027,18 @@ static const void *shada_hist_iter(const void *const iter,
 /// @param[in]      can_free_entry  True if entry can be freed.
 static void hms_insert(HistoryMergerState *const hms_p, const ShadaEntry entry,
                        const bool do_iter, const bool can_free_entry)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (do_iter) {
-    if (hms_p->iter == NULL) {
-      if (hms_p->last_hist_entry.type != kSDItemMissing
-          && hms_p->last_hist_entry.timestamp < entry.timestamp) {
-        hms_insert(hms_p, hms_p->last_hist_entry, false, hms_p->reading);
+    while (hms_p->last_hist_entry.type != kSDItemMissing
+           && hms_p->last_hist_entry.timestamp < entry.timestamp) {
+      hms_insert(hms_p, hms_p->last_hist_entry, false, hms_p->reading);
+      if (hms_p->iter == NULL) {
         hms_p->last_hist_entry.type = kSDItemMissing;
+        break;
       }
-    } else {
-      while (hms_p->iter != NULL
-             && hms_p->last_hist_entry.type != kSDItemMissing
-             && hms_p->last_hist_entry.timestamp < entry.timestamp) {
-        hms_insert(hms_p, hms_p->last_hist_entry, false, hms_p->reading);
-        hms_p->iter = shada_hist_iter(hms_p->iter, hms_p->history_type,
-                                      hms_p->reading,
-                                      &(hms_p->last_hist_entry));
-      }
+      hms_p->iter = shada_hist_iter(hms_p->iter, hms_p->history_type,
+                                    hms_p->reading, &hms_p->last_hist_entry);
     }
   }
   HMLList *const hmll = &hms_p->hmll;
@@ -1107,15 +1102,13 @@ static inline void hms_insert_whole_neovim_history(
     HistoryMergerState *const hms_p)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (hms_p->last_hist_entry.type != kSDItemMissing) {
+  while (hms_p->last_hist_entry.type != kSDItemMissing) {
     hms_insert(hms_p, hms_p->last_hist_entry, false, hms_p->reading);
-  }
-  while (hms_p->iter != NULL
-         && hms_p->last_hist_entry.type != kSDItemMissing) {
+    if (hms_p->iter == NULL) {
+      break;
+    }
     hms_p->iter = shada_hist_iter(hms_p->iter, hms_p->history_type,
-                                  hms_p->reading,
-                                  &(hms_p->last_hist_entry));
-    hms_insert(hms_p, hms_p->last_hist_entry, false, hms_p->reading);
+                                  hms_p->reading, &hms_p->last_hist_entry);
   }
 }
 
