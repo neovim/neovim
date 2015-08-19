@@ -36,17 +36,17 @@ check_executable() {
 }
 
 get_vim_sources() {
-  check_executable hg
+  check_executable git
 
   echo "Retrieving Vim sources."
   if [[ ! -d ${VIM_SOURCE_DIR} ]]; then
     echo "Cloning Vim sources into '${VIM_SOURCE_DIR}'."
-    hg clone https://code.google.com/p/vim "${VIM_SOURCE_DIR}"
+    git clone https://github.com/vim/vim.git "${VIM_SOURCE_DIR}"
     cd "${VIM_SOURCE_DIR}"
   else
     echo "Updating Vim sources in '${VIM_SOURCE_DIR}'."
     cd "${VIM_SOURCE_DIR}"
-    hg pull --update &&
+    git pull &&
       echo "✔ Updated Vim sources." ||
       echo "✘ Could not update Vim sources; ignoring error."
   fi
@@ -74,7 +74,7 @@ assign_commit_details() {
     local strip_commit_line=false
     vim_commit_url="https://github.com/vim/vim/commit/${vim_commit}"
   fi
-  vim_message="$(hg log --template "{desc}" --rev "${vim_commit}")"
+  vim_message="$(git log --pretty='format:%B' "${vim_commit}^\!")"
   if [[ ${strip_commit_line} == "true" ]]; then
     # Remove first line of commit message.
     vim_message="$(echo "${vim_message}" | sed -e '1d')"
@@ -86,7 +86,7 @@ get_vim_patch() {
 
   assign_commit_details "${1}"
 
-  hg log --rev "${vim_commit}" >/dev/null 2>&1 || {
+  git log "${vim_commit}^\!" -- >/dev/null 2>&1 || {
     >&2 echo "✘ Couldn't find Vim revision '${vim_commit}'."
     exit 3
   }
@@ -94,8 +94,8 @@ get_vim_patch() {
   echo "✔ Found Vim revision '${vim_commit}'."
 
   # Collect patch details and store into variables.
-  vim_full="$(hg log --patch --git --verbose --rev "${vim_commit}")"
-  vim_diff="$(hg diff --show-function --git --change "${vim_commit}" \
+  vim_full="$(git log --pretty=medium "${vim_commit}^\!")"
+  vim_diff="$(git diff "${vim_commit}^\!" \
     | sed -e 's/\( [ab]\/src\)/\1\/nvim/g')" # Change directory to src/nvim.
   neovim_message="$(commit_message)"
   neovim_pr="
