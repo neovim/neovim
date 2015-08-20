@@ -6599,6 +6599,7 @@ static struct fst {
   {"getbufvar",       2, 3, f_getbufvar},
   {"getchar",         0, 1, f_getchar},
   {"getcharmod",      0, 0, f_getcharmod},
+  {"getcharsearch",   0, 0, f_getcharsearch},
   {"getcmdline",      0, 0, f_getcmdline},
   {"getcmdpos",       0, 0, f_getcmdpos},
   {"getcmdtype",      0, 0, f_getcmdtype},
@@ -6725,6 +6726,7 @@ static struct fst {
   {"serverstart",     0, 1, f_serverstart},
   {"serverstop",      1, 1, f_serverstop},
   {"setbufvar",       3, 3, f_setbufvar},
+  {"setcharsearch",   1, 1, f_setcharsearch},
   {"setcmdpos",       1, 1, f_setcmdpos},
   {"setline",         2, 2, f_setline},
   {"setloclist",      2, 3, f_setloclist},
@@ -9301,6 +9303,20 @@ static void f_getchar(typval_T *argvars, typval_T *rettv)
 static void f_getcharmod(typval_T *argvars, typval_T *rettv)
 {
   rettv->vval.v_number = mod_mask;
+}
+
+/*
+ * "getcharsearch()" function
+ */
+static void f_getcharsearch(typval_T *argvars, typval_T *rettv)
+{
+  rettv_dict_alloc(rettv);
+
+  dict_T *dict = rettv->vval.v_dict;
+
+  dict_add_nr_str(dict, "char", 0L, last_csearch());
+  dict_add_nr_str(dict, "forward", last_csearch_forward(), NULL);
+  dict_add_nr_str(dict, "until", last_csearch_until(), NULL);
 }
 
 /*
@@ -14296,6 +14312,40 @@ static void f_setbufvar(typval_T *argvars, typval_T *rettv)
 
     /* reset notion of buffer */
     aucmd_restbuf(&aco);
+  }
+}
+
+static void f_setcharsearch(typval_T *argvars, typval_T *rettv)
+{
+  dict_T        *d;
+  dictitem_T        *di;
+  char_u        *csearch;
+
+  if (argvars[0].v_type != VAR_DICT) {
+    EMSG(_(e_dictreq));
+    return;
+  }
+
+  if ((d = argvars[0].vval.v_dict) != NULL) {
+    csearch = get_dict_string(d, (char_u *)"char", FALSE);
+    if (csearch != NULL) {
+      if (enc_utf8) {
+        int pcc[MAX_MCO];
+        int c = utfc_ptr2char(csearch, pcc);
+        set_last_csearch(c, csearch, utfc_ptr2len(csearch));
+      }
+      else
+        set_last_csearch(PTR2CHAR(csearch),
+                         csearch, MB_PTR2LEN(csearch));
+    }
+
+    di = dict_find(d, (char_u *)"forward", -1);
+    if (di != NULL)
+      set_csearch_direction(get_tv_number(&di->di_tv) ? FORWARD : BACKWARD);
+
+    di = dict_find(d, (char_u *)"until", -1);
+    if (di != NULL)
+      set_csearch_until(!!get_tv_number(&di->di_tv));
   }
 }
 
