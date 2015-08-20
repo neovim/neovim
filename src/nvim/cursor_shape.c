@@ -53,7 +53,7 @@ char_u *parse_shape_opt(int what)
   int all_idx;
   int len;
   int i;
-  int found_ve = FALSE;                 /* found "ve" flag */
+  int found_ve = false;                 /* found "ve" flag */
   int round;
 
   /*
@@ -85,18 +85,18 @@ char_u *parse_shape_opt(int what)
             len = 1;
           else
             len = 2;
-          if (len == 1 && TOLOWER_ASC(modep[0]) == 'a')
+
+          if (len == 1 && TOLOWER_ASC(modep[0]) == 'a') {
             all_idx = SHAPE_IDX_COUNT - 1;
-          else {
+          } else {
             for (idx = 0; idx < SHAPE_IDX_COUNT; ++idx)
-              if (STRNICMP(modep, shape_table[idx].name, len)
-                  == 0)
+              if (STRNICMP(modep, shape_table[idx].name, len) == 0)
                 break;
             if (idx == SHAPE_IDX_COUNT
-                || (shape_table[idx].used_for & what) == 0)
+                    || (shape_table[idx].used_for & what) == 0)
               return (char_u *)N_("E546: Illegal mode");
             if (len == 2 && modep[0] == 'v' && modep[1] == 'e')
-              found_ve = TRUE;
+              found_ve = true;
           }
           modep += len + 1;
         }
@@ -160,11 +160,12 @@ char_u *parse_shape_opt(int what)
               p += 5;
             } else {          /* must be a highlight group name then */
               endp = vim_strchr(p, '-');
-              if (commap == NULL) {                         /* last part */
+              if (commap == NULL) {                       /* last part */
                 if (endp == NULL)
-                  endp = p + STRLEN(p);                     /* find end of part */
-              } else if (endp > commap || endp == NULL)
+                  endp = p + STRLEN(p);                  /* find end of part */
+              } else if (endp > commap || endp == NULL) {
                 endp = commap;
+              }
               slashp = vim_strchr(p, '/');
               if (slashp != NULL && slashp < endp) {
                 /* "group/langmap_group" */
