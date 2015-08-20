@@ -25,6 +25,7 @@
 #include "nvim/os_unix.h"
 #include "nvim/strings.h"
 #include "nvim/path.h"
+#include "nvim/lib/kstring.h"
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -399,33 +400,22 @@ char_u *transstr(char_u *s) FUNC_ATTR_NONNULL_RET
 char_u* str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
   FUNC_ATTR_NONNULL_RET
 {
-  garray_T ga;
+  kstring_t ks = KSTRING_INIT;
   int i;
   int len = orglen;
 
-#define GA_CHAR(i) ((char_u *)ga.ga_data)[i]
-#define GA_PTR(i) ((char_u *)ga.ga_data + i)
-#define STR_CHAR(i) (buf == NULL ? GA_CHAR(i) : buf[i])
-#define STR_PTR(i) (buf == NULL ? GA_PTR(i) : buf + i)
+#define STR_CHAR(i) (buf == NULL ? (char_u)ks.s[i] : buf[i])
+#define STR_PTR(i) (buf == NULL ? (char_u *)ks.s + i : buf + i)
 
-  // Copy "str" into "buf" or allocated memory, unmodified.
+  // Copy "str" into "buf" or allocated memory(kstring), unmodified.
   if (buf == NULL) {
-    ga_init(&ga, 1, 10);
-
-    ga_grow(&ga, len + 1);
-    memmove(ga.ga_data, str, (size_t)len);
-    ga.ga_len = len;
+    kputsn((char *)str, len, &ks);
   } else {
     if (len >= buflen) {
       // Ugly!
       len = buflen - 1;
     }
     memmove(buf, str, (size_t)len);
-  }
-
-  if (buf == NULL) {
-    GA_CHAR(len) = NUL;
-  } else {
     buf[len] = NUL;
   }
 
@@ -449,7 +439,7 @@ char_u* str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
           if (olen != nlen) {
             if (nlen > olen) {
               if (buf == NULL) {
-                ga_grow(&ga, nlen - olen + 1);
+                ks_resize(&ks, ks.l + nlen - olen + 1);
               } else {
                 if (len + nlen - olen >= buflen) {
                   // out of memory, keep old char
@@ -461,8 +451,8 @@ char_u* str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
 
             if (olen != nlen) {
               if (buf == NULL) {
-                STRMOVE(GA_PTR(i) + nlen, GA_PTR(i) + olen);
-                ga.ga_len += nlen - olen;
+                STRMOVE(ks.s + i + nlen, ks.s + i + olen);
+                ks.l += nlen - olen;
               } else {
                 STRMOVE(buf + i + nlen, buf + i + olen);
                 len += nlen - olen;
@@ -477,7 +467,7 @@ char_u* str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
       i += (*mb_ptr2len)(STR_PTR(i));
     } else {
       if (buf == NULL) {
-        GA_CHAR(i) = TOLOWER_LOC(GA_CHAR(i));
+        ks.s[i] = TOLOWER_LOC(ks.s[i]);
       } else {
         buf[i] = TOLOWER_LOC(buf[i]);
       }
@@ -486,7 +476,7 @@ char_u* str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
   }
 
   if (buf == NULL) {
-    return (char_u *)ga.ga_data;
+    return (char_u *)ks.s;
   }
   return buf;
 }
