@@ -177,10 +177,25 @@ static void read_event(void **argv)
     bool eof = (uintptr_t)argv[2];
     stream->read_cb(stream, stream->buffer, count, stream->data, eof);
   }
+  stream->pending_reqs--;
+  if (stream->closed && !stream->pending_reqs) {
+    stream_close_handle(stream);
+  }
 }
 
 static void invoke_read_cb(Stream *stream, size_t count, bool eof)
 {
-  CREATE_EVENT(stream->events, read_event, 3, stream,
-      (void *)(uintptr_t *)count, (void *)(uintptr_t)eof);
+  if (stream->closed) {
+    return;
+  }
+
+  // Don't let the stream be closed before the event is processed.
+  stream->pending_reqs++;
+
+  CREATE_EVENT(stream->events,
+               read_event,
+               3,
+               stream,
+               (void *)(uintptr_t *)count,
+               (void *)(uintptr_t)eof);
 }

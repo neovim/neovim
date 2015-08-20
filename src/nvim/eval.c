@@ -8562,27 +8562,12 @@ static void f_feedkeys(typval_T *argvars, typval_T *rettv)
   }
 }
 
-/*
- * "filereadable()" function
- */
+/// "filereadable()" function
 static void f_filereadable(typval_T *argvars, typval_T *rettv)
 {
-  int fd;
-  char_u      *p;
-  int n;
-
-#ifndef O_NONBLOCK
-# define O_NONBLOCK 0
-#endif
-  p = get_tv_string(&argvars[0]);
-  if (*p && !os_isdir(p) && (fd = os_open((char *)p,
-                                  O_RDONLY | O_NONBLOCK, 0)) >= 0) {
-    n = TRUE;
-    close(fd);
-  } else
-    n = FALSE;
-
-  rettv->vval.v_number = n;
+  char_u *p = get_tv_string(&argvars[0]);
+  rettv->vval.v_number =
+    (*p && !os_isdir(p) && os_file_is_readable((char*)p));
 }
 
 /*
