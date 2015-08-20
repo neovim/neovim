@@ -27,6 +27,12 @@ set(OPTIONS_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/genoptions.lua)
 set(EVENTS_LIST_FILE ${PROJECT_SOURCE_DIR}/src/nvim/auevents.lua)
 set(EX_CMDS_DEFS_FILE ${PROJECT_SOURCE_DIR}/src/nvim/ex_cmds.lua)
 set(OPTIONS_LIST_FILE ${PROJECT_SOURCE_DIR}/src/nvim/options.lua)
+set(UNICODE_TABLES_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/genunicodetables.lua)
+set(UNICODE_DIR ${PROJECT_SOURCE_DIR}/unicode)
+set(UNICODEDATA_FILE ${UNICODE_DIR}/UnicodeData.txt)
+set(CASEFOLDING_FILE ${UNICODE_DIR}/CaseFolding.txt)
+set(EASTASIANWIDTH_FILE ${UNICODE_DIR}/EastAsianWidth.txt)
+set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
 
 include_directories(${GENERATED_DIR})
 include_directories(${GENERATED_INCLUDES_DIR})
@@ -143,6 +149,19 @@ foreach(sfile ${NEOVIM_SOURCES}
   endif()
 endforeach()
 
+add_custom_command(OUTPUT ${GENERATED_UNICODE_TABLES}
+  COMMAND ${LUA_PRG} ${UNICODE_TABLES_GENERATOR}
+                     ${UNICODEDATA_FILE}
+                     ${CASEFOLDING_FILE}
+                     ${EASTASIANWIDTH_FILE}
+                     ${GENERATED_UNICODE_TABLES}
+  DEPENDS
+    ${UNICODE_TABLES_GENERATOR}
+    ${UNICODEDATA_FILE}
+    ${CASEFOLDING_FILE}
+    ${EASTASIANWIDTH_FILE}
+)
+
 add_custom_command(OUTPUT ${MSGPACK_DISPATCH}
   COMMAND ${LUA_PRG} ${DISPATCH_GENERATOR} ${API_HEADERS} ${MSGPACK_DISPATCH}
   DEPENDS
@@ -159,6 +178,7 @@ list(APPEND NEOVIM_GENERATED_SOURCES
   "${GENERATED_EVENTS_ENUM}"
   "${GENERATED_EVENTS_NAMES_MAP}"
   "${GENERATED_OPTIONS}"
+  "${GENERATED_UNICODE_TABLES}"
 )
 
 add_custom_command(OUTPUT ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS}
