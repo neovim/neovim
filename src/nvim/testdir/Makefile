@@ -27,6 +27,7 @@ SCRIPTS := test_eval.out                                               \
                                    test88.out                          \
            test_listlbr.out                                            \
            test_breakindent.out                                        \
+           test_charsearch.out                                         \
            test_close_count.out                                        \
            test_command_count.out                                      \
 

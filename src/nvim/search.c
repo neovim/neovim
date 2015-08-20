@@ -108,6 +108,12 @@ static struct spat spats[2] =
 
 static int last_idx = 0;        /* index in spats[] for RE_LAST */
 
+static char_u lastc[2] = {NUL, NUL};        /* last character searched for */
+static int lastcdir = FORWARD;              /* last direction of character search */
+static int last_t_cmd = TRUE;               /* last search t_cmd */
+static char_u lastc_bytes[MB_MAXBYTES + 1];
+static int lastc_bytelen = 1;               /* >1 for multi-byte char */
+
 /* copy of spats[], for keeping the search patterns while executing autocmds */
 static struct spat saved_spats[2];
 static int saved_last_idx = 0;
@@ -327,7 +333,7 @@ int ignorecase(char_u *pat)
 }
 
 /*
- * Return TRUE if patter "pat" has an uppercase character.
+ * Return TRUE if pattern "pat" has an uppercase character.
  */
 int pat_has_uppercase(char_u *pat)
 {
@@ -355,6 +361,41 @@ int pat_has_uppercase(char_u *pat)
       ++p;
   }
   return FALSE;
+}
+
+char_u *last_csearch(void)
+{
+  return lastc_bytes;
+}
+
+int last_csearch_forward(void)
+{
+  return lastcdir == FORWARD;
+}
+
+int last_csearch_until(void)
+{
+  return last_t_cmd == TRUE;
+}
+
+void set_last_csearch(int c, char_u *s, int len)
+{
+  *lastc = c;
+  lastc_bytelen = len;
+  if (len)
+    memcpy(lastc_bytes, s, len);
+  else
+    memset(lastc_bytes, 0, sizeof(lastc_bytes));
+}
+
+void set_csearch_direction(int cdir)
+{
+  lastcdir = cdir;
+}
+
+void set_csearch_until(int t_cmd)
+{
+  last_t_cmd = t_cmd;
 }
 
 char_u *last_search_pat(void)
@@ -1286,38 +1327,33 @@ int searchc(cmdarg_T *cap, int t_cmd)
   int c = cap->nchar;                   /* char to search for */
   int dir = cap->arg;                   /* TRUE for searching forward */
   long count = cap->count1;                     /* repeat count */
-  static int lastc = NUL;               /* last character searched for */
-  static int lastcdir;                  /* last direction of character search */
-  static int last_t_cmd;                /* last search t_cmd */
   int col;
   char_u              *p;
   int len;
   int stop = TRUE;
-  static char_u bytes[MB_MAXBYTES + 1];
-  static int bytelen = 1;               /* >1 for multi-byte char */
 
   if (c != NUL) {       /* normal search: remember args for repeat */
     if (!KeyStuffed) {      /* don't remember when redoing */
-      lastc = c;
-      lastcdir = dir;
-      last_t_cmd = t_cmd;
-      bytelen = (*mb_char2bytes)(c, bytes);
+      *lastc = c;
+      set_csearch_direction(dir);
+      set_csearch_until(t_cmd);
+      lastc_bytelen = (*mb_char2bytes)(c, lastc_bytes);
       if (cap->ncharC1 != 0) {
-        bytelen += (*mb_char2bytes)(cap->ncharC1, bytes + bytelen);
+        lastc_bytelen += (*mb_char2bytes)(cap->ncharC1, lastc_bytes + lastc_bytelen);
         if (cap->ncharC2 != 0)
-          bytelen += (*mb_char2bytes)(cap->ncharC2, bytes + bytelen);
+          lastc_bytelen += (*mb_char2bytes)(cap->ncharC2, lastc_bytes + lastc_bytelen);
       }
     }
   } else {            /* repeat previous search */
-    if (lastc == NUL)
+    if (*lastc == NUL)
       return FAIL;
     if (dir)            /* repeat in opposite direction */
       dir = -lastcdir;
     else
       dir = lastcdir;
     t_cmd = last_t_cmd;
-    c = lastc;
-    /* For multi-byte re-use last bytes[] and bytelen. */
+    c = *lastc;
+    /* For multi-byte re-use last lastc_bytes[] and lastc_bytelen. */
 
     /* Force a move of at least one char, so ";" and "," will move the
      * cursor, even if the cursor is right in front of char we are looking
@@ -1347,11 +1383,11 @@ int searchc(cmdarg_T *cap, int t_cmd)
             return FAIL;
           col -= (*mb_head_off)(p, p + col - 1) + 1;
         }
-        if (bytelen == 1) {
+        if (lastc_bytelen == 1) {
           if (p[col] == c && stop)
             break;
         } else {
-          if (memcmp(p + col, bytes, bytelen) == 0 && stop)
+          if (memcmp(p + col, lastc_bytes, lastc_bytelen) == 0 && stop)
             break;
         }
         stop = TRUE;
@@ -1372,8 +1408,8 @@ int searchc(cmdarg_T *cap, int t_cmd)
     col -= dir;
     if (has_mbyte) {
       if (dir < 0)
-        /* Landed on the search char which is bytelen long */
-        col += bytelen - 1;
+        /* Landed on the search char which is lastc_bytelen long */
+        col += lastc_bytelen - 1;
       else
         /* To previous char, which may be multi-byte. */
         col -= (*mb_head_off)(p, p + col);
