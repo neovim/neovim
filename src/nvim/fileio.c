@@ -418,7 +418,6 @@ readfile (
    * If the name is too long we might crash further on, quit here.
    */
   if (fname != NULL && *fname != NUL) {
-    p = fname + STRLEN(fname);
     if (STRLEN(fname) >= MAXPATHL) {
       filemess(curbuf, fname, (char_u *)_("Illegal file name"), 0);
       msg_end();
@@ -2624,7 +2623,7 @@ buf_write (
      * Check if the file is really writable (when renaming the file to
      * make a backup we won't discover it later).
      */
-    file_readonly = os_file_is_readonly((char *)fname);
+    file_readonly = !os_file_is_writable((char *)fname);
 
     if (!forceit && file_readonly) {
       if (vim_strchr(p_cpo, CPO_FWRITE) != NULL) {

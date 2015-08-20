@@ -39,6 +39,7 @@ add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
     -u NONE
     -i NONE
     -esX
+    --headless
     -c "helptags ++t ."
     -c quit
   DEPENDS
@@ -80,7 +81,7 @@ endforeach()
 
 file(GLOB_RECURSE RUNTIME_FILES
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-  *.vim *.dict *.py *.ps)
+  *.vim *.dict *.py *.ps *.tutor)
 list(APPEND RUNTIME_FILES macros/dvorak)
 
 foreach(F ${RUNTIME_FILES})

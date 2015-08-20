@@ -2395,7 +2395,7 @@ static int check_readonly(int *forceit, buf_T *buf)
    * the file exists and permissions are read-only. */
   if (!*forceit && (buf->b_p_ro
                     || (os_file_exists(buf->b_ffname)
-                        && os_file_is_readonly((char *)buf->b_ffname)))) {
+                        && !os_file_is_writable((char *)buf->b_ffname)))) {
     if ((p_confirm || cmdmod.confirm) && buf->b_fname != NULL) {
       char_u buff[DIALOG_MSG_SIZE];
 

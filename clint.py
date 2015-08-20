@@ -56,12 +56,15 @@ import sre_compile
 import string
 import sys
 import unicodedata
+import json
+import collections  # for defaultdict
 
 
 _USAGE = """
 Syntax: clint.py [--verbose=#] [--output=vs7] [--filter=-x,+y,...]
                  [--counting=total|toplevel|detailed] [--root=subdir]
-                 [--linelength=digits]
+                 [--linelength=digits] [--record-errors=file]
+                 [--suppress-errors=file]
         <file> [file] ...
 
   The style guidelines this tries to follow are those in
@@ -156,6 +159,13 @@ Syntax: clint.py [--verbose=#] [--output=vs7] [--filter=-x,+y,...]
 
       Examples:
         --extensions=hpp,cpp
+
+    record-errors=file
+      Record errors to the given location. This file may later be used for error
+      suppression using suppress-errors flag.
+
+    suppress-errors=file
+      Errors listed in the given file will not be reported.
 """
 
 # We categorize each error message we print.  Here are the categories.
@@ -270,6 +280,10 @@ _RE_SUPPRESSION = re.compile(r'\bNOLINT\b(\([^)]*\))?')
 # on which those errors are expected and should be suppressed.
 _error_suppressions = {}
 
+# {(str, int)}: a set of error categories and line numbers which are expected to
+# be suppressed
+_error_suppressions_2 = set()
+
 # The allowed line length of files.
 # This is set by --linelength flag.
 _line_length = 80
@@ -309,9 +323,28 @@ def ParseNolintSuppressions(filename, raw_line, linenum, error):
                           'Unknown NOLINT error category: %s' % category)
 
 
+def ParseKnownErrorSuppressions(filename, raw_lines, linenum):
+    """Updates the global list of error-suppressions from suppress-file.
+
+    Args:
+      filename: str, the name of the input file.
+      raw_lines: list, all file lines
+      linenum: int, the number of the current line.
+    """
+    key = tuple(raw_lines[linenum - 1 if linenum else 0:linenum + 2])
+    if key in _cpplint_state.suppressed_errors[filename]:
+        for category in _cpplint_state.suppressed_errors[filename][key]:
+            _error_suppressions_2.add((category, linenum))
+
+
 def ResetNolintSuppressions():
     "Resets the set of NOLINT suppressions to empty."
     _error_suppressions.clear()
+
+
+def ResetKnownErrorSuppressions():
+    "Resets the set of suppress-errors=file suppressions to empty."
+    _error_suppressions_2.clear()
 
 
 def IsErrorSuppressedByNolint(category, linenum):
@@ -328,6 +361,19 @@ def IsErrorSuppressedByNolint(category, linenum):
     """
     return (linenum in _error_suppressions.get(category, set()) or
             linenum in _error_suppressions.get(None, set()))
+
+
+def IsErrorInSuppressedErrorsList(category, linenum):
+    """Returns true if the specified error is suppressed by suppress-errors=file
+
+    Args:
+      category: str, the category of the error.
+      linenum: int, the current line number.
+    Returns:
+      bool, True iff the error should be suppressed due to presense in
+            suppressions file.
+    """
+    return (category, linenum) in _error_suppressions_2
 
 
 def Match(pattern, s):
@@ -454,6 +500,10 @@ class _CppLintState(object):
         # "vs7" - format that Microsoft Visual Studio 7 can parse
         self.output_format = 'emacs'
 
+        self.record_errors_file = None
+        self.suppressed_errors = collections.defaultdict(
+            lambda: collections.defaultdict(set))
+
     def SetOutputFormat(self, output_format):
         """Sets the output format for errors."""
         self.output_format = output_format
@@ -517,6 +567,25 @@ class _CppLintState(object):
                              (category, count))
         sys.stderr.write('Total errors found: %d\n' % self.error_count)
 
+    def SuppressErrorsFrom(self, fname):
+        """Open file and read a list of suppressed errors from it"""
+        if fname is None:
+            return
+        try:
+            with open(fname) as fp:
+                for line in fp:
+                    fname, lines, category = json.loads(line)
+                    lines = tuple(lines)
+                    self.suppressed_errors[fname][lines].add(category)
+        except IOError:
+            pass
+
+    def RecordErrorsTo(self, fname):
+        """Open file with suppressed errors for writing"""
+        if fname is None:
+            return
+        self.record_errors_file = open(fname, 'w')
+
 _cpplint_state = _CppLintState()
 
 
@@ -543,6 +612,16 @@ def _SetVerboseLevel(level):
 def _SetCountingStyle(level):
     """Sets the module's counting options."""
     _cpplint_state.SetCountingStyle(level)
+
+
+def _SuppressErrorsFrom(fname):
+    """Sets the file containing suppressed errors."""
+    _cpplint_state.SuppressErrorsFrom(fname)
+
+
+def _RecordErrorsTo(fname):
+    """Sets the file containing suppressed errors to write to."""
+    _cpplint_state.RecordErrorsTo(fname)
 
 
 def _Filters():
@@ -686,6 +765,8 @@ def _ShouldPrintError(category, confidence, linenum):
     # a "NOLINT(category)" comment appears in the source,
     # the verbosity level isn't high enough, or the filters filter it out.
     if IsErrorSuppressedByNolint(category, linenum):
+        return False
+    if IsErrorInSuppressedErrorsList(category, linenum):
         return False
     if confidence < _cpplint_state.verbose_level:
         return False
@@ -2986,6 +3067,23 @@ def ProcessFileData(filename, file_extension, lines, error,
     nesting_state = _NestingState()
 
     ResetNolintSuppressions()
+    ResetKnownErrorSuppressions()
+
+    for line in range(1, len(lines)):
+        ParseKnownErrorSuppressions(filename, lines, line)
+
+    if _cpplint_state.record_errors_file:
+        raw_lines = lines[:]
+
+        def RecordedError(filename, linenum, category, confidence, message):
+            if not IsErrorSuppressedByNolint(category, linenum):
+                key = raw_lines[linenum - 1 if linenum else 0:linenum + 2]
+                err = [filename, key, category]
+                json.dump(err, _cpplint_state.record_errors_file)
+                _cpplint_state.record_errors_file.write('\n')
+            Error(filename, linenum, category, confidence, message)
+
+        error = RecordedError
 
     if file_extension == 'h':
         CheckForHeaderGuard(filename, lines, error)
@@ -3113,7 +3211,9 @@ def ParseArguments(args):
                                                      'filter=',
                                                      'root=',
                                                      'linelength=',
-                                                     'extensions='])
+                                                     'extensions=',
+                                                     'record-errors=',
+                                                     'suppress-errors='])
     except getopt.GetoptError:
         PrintUsage('Invalid arguments.')
 
@@ -3121,6 +3221,8 @@ def ParseArguments(args):
     output_format = _OutputFormat()
     filters = ''
     counting_style = ''
+    record_errors_file = None
+    suppress_errors_file = None
 
     for (opt, val) in opts:
         if opt == '--help':
@@ -3153,6 +3255,10 @@ def ParseArguments(args):
                 _valid_extensions = set(val.split(','))
             except ValueError:
                 PrintUsage('Extensions must be comma separated list.')
+        elif opt == '--record-errors':
+            record_errors_file = val
+        elif opt == '--suppress-errors':
+            suppress_errors_file = val
 
     if not filenames:
         PrintUsage('No files were specified.')
@@ -3161,6 +3267,8 @@ def ParseArguments(args):
     _SetVerboseLevel(verbosity)
     _SetFilters(filters)
     _SetCountingStyle(counting_style)
+    _SuppressErrorsFrom(suppress_errors_file)
+    _RecordErrorsTo(record_errors_file)
 
     return filenames
 
