@@ -1,0 +1,180 @@
+Tests for spell checking with 'encoding' set to "utf-8".  vim: set ft=vim :
+
+STARTTEST
+:so small.vim
+:so mbyte.vim
+:"
+:" Don't want to depend on the locale from the environment.  The .aff and .dic
+:" text is in latin1, the test text is utf-8.
+:%w! backup.test59.in.1
+:set enc=latin1
+:%w! backup.test59.in.2
+:e!
+:%w! backup.test59.in.3
+:set enc=utf-8
+:%w! backup.test59.in.4
+:set fenc=
+:%w! backup.test59.in.5
+:"
+:" Function to test .aff/.dic with list of good and bad words.
+:func TestOne(aff, dic)
+  set spellfile=
+  $put =''
+  $put ='test '. a:aff . '-' . a:dic
+  " Generate a .spl file from a .dic and .aff file.
+  exe '1;/^' . a:aff . 'affstart/+1,/^' . a:aff . 'affend/-1w! Xtest.aff'
+  exe '1;/^' . a:dic . 'dicstart/+1,/^' . a:dic . 'dicend/-1w! Xtest.dic'
+  exe '!cp -f Xtest.aff backup.Xtest'.a:aff.'.aff'
+  exe '!cp -f Xtest.dic backup.Xtest'.a:dic.'.dic'
+  mkspell! Xtest Xtest
+  " use that spell file
+  set spl=Xtest.utf-8.spl spell
+  " list all valid words
+  spelldump
+  %yank
+  quit
+  $put
+  $put ='-------'
+  " find all bad words and suggestions for them
+  exe '1;/^' . a:aff . 'good:'
+  normal 0f:]s
+  let prevbad = ''
+  while 1
+    let [bad, a] = spellbadword()
+    if bad == '' || bad == prevbad || bad == 'badend'
+      break
+    endif
+    let prevbad = bad
+    let lst = spellsuggest(bad, 3)
+    normal mm
+    $put =bad
+    $put =string(lst)
+    normal `m]s
+  endwhile
+endfunc
+:"
+:call TestOne('1', '1')
+:$put =soundfold('goobledygoook')
+:$put =soundfold('kÃ³opÃ«rÃ¿nÃ´ven')
+:$put =soundfold('oeverloos gezwets edale')
+:"
+:"
+:" and now with SAL instead of SOFO items; test automatic reloading
+gg:/^affstart_sal/+1,/^affend_sal/-1w! Xtest.aff
+:!cp -f Xtest.aff backup.Xtest.sal.aff
+:mkspell! Xtest Xtest
+:$put =soundfold('goobledygoook')
+:$put =soundfold('kÃ³opÃ«rÃ¿nÃ´ven')
+:$put =soundfold('oeverloos gezwets edale')
+:"
+:" also use an addition file
+gg:/^addstart/+1,/^addend/-1w! Xtest.utf-8.add
+:!cp -f Xtest.utf-8.add backup.Xtest.utf-8.add
+:mkspell! Xtest.utf-8.add.spl Xtest.utf-8.add
+:set spellfile=Xtest.utf-8.add
+/^test2:
+]s:let [str, a] = spellbadword()
+:$put =str
+:set spl=Xtest_us.utf-8.spl
+/^test2:
+]smm:let [str, a] = spellbadword()
+:$put =str
+`m]s:let [str, a] = spellbadword()
+:$put =str
+:set spl=Xtest_gb.utf-8.spl
+/^test2:
+]smm:let [str, a] = spellbadword()
+:$put =str
+`m]s:let [str, a] = spellbadword()
+:$put =str
+:set spl=Xtest_nz.utf-8.spl
+/^test2:
+]smm:let [str, a] = spellbadword()
+:$put =str
+`m]s:let [str, a] = spellbadword()
+:$put =str
+:set spl=Xtest_ca.utf-8.spl
+/^test2:
+]smm:let [str, a] = spellbadword()
+:$put =str
+`m]s:let [str, a] = spellbadword()
+:$put =str
+:unlet str a
+:"
+:" Postponed prefixes
+:call TestOne('2', '1')
+:"
+:" Compound words
+:call TestOne('3', '3')
+:call TestOne('4', '4')
+:call TestOne('5', '5')
+:call TestOne('6', '6')
+:call TestOne('7', '7')
+:"
+:" clean up for valgrind
+:delfunc TestOne
+:set spl= enc=latin1
+:"
+gg:/^test output:/,$wq! test.out
+ENDTEST
+
+
+1good: wrong OK puts. Test the end
+bad:  inputs comment ok Ok. test dÃ©Ã´l end the
+badend
+
+2good: puts
+bad: inputs comment ok Ok end the. test dÃ©Ã´l
+badend
+
+Test rules for compounding.
+
+
+3good: foo mÃ¯ foobar foofoobar barfoo barbarfoo
+bad: bar la foomÃ¯ barmÃ¯ mÃ¯foo mÃ¯bar mÃ¯mÃ¯ lala mÃ¯la lamÃ¯ foola labar
+badend
+
+
+Tests for compounding.
+
+
+4good: word util bork prebork start end wordutil wordutils pro-ok
+	bork borkbork borkborkbork borkborkborkbork borkborkborkborkbork
+	tomato tomatotomato startend startword startwordword startwordend
+	startwordwordend startwordwordwordend prebork preborkbork
+	preborkborkbork
+	nouword
+bad: wordutilize pro borkborkborkborkborkbork tomatotomatotomato
+	endstart endend startstart wordend wordstart
+	preborkprebork  preborkpreborkbork
+ 	startwordwordwordwordend borkpreborkpreborkbork
+	utilsbork  startnouword
+badend
+
+test2:
+elequint test elekwint test elekwent asdf
+
+Test affix flags with two characters
+
+
+5good: fooa1 fooaÃ© bar prebar barbork prebarbork  startprebar
+      start end startend  startmiddleend nouend
+bad: foo fooa2 prabar probarbirk middle startmiddle middleend endstart
+	startprobar startnouend
+badend
+
+
+6good: meea1 meeaÃ© bar prebar barbork prebarbork  leadprebar
+      lead end leadend  leadmiddleend
+bad: mee meea2 prabar probarbirk middle leadmiddle middleend endlead
+	leadprobar
+badend
+
+
+7good: meea1 meeaÃ© bar prebar barmeat prebarmeat  leadprebar
+      lead tail leadtail  leadmiddletail
+bad: mee meea2 prabar probarmaat middle leadmiddle middletail taillead
+	leadprobar
+badend
+
+test output:
