@@ -8,6 +8,7 @@ local write_file = helpers.write_file
 describe("spell checking with 'encoding' set to utf-8", function()
   setup(function()
     clear()
+    execute("syntax off")
     -- This file should be encoded in ISO8859-1.
     write_file('Xtest1.aff', 
       'SET ISO8859-1\n' ..
