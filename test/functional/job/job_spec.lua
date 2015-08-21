@@ -6,6 +6,7 @@ local clear, eq, eval, execute, expect, feed, insert, neq, next_msg, nvim,
   helpers.insert, helpers.neq, helpers.next_message, helpers.nvim,
   helpers.nvim_dir, helpers.ok, helpers.run, helpers.session, helpers.source,
   helpers.stop, helpers.wait, helpers.write_file
+local Screen = require('test.functional.ui.screen')
 
 
 describe('jobs', function()
@@ -186,6 +187,41 @@ describe('jobs', function()
     call jobstart([&sh, '-c', 'exit 45'], g:dict)
     ]])
     eq({'notification', 'exit', {45, 10}}, next_msg())
+  end)
+
+  it('cant redefine callbacks being used by a job', function()
+    local screen = Screen.new()
+    screen:attach()
+    local script = [[
+      function! g:JobHandler(job_id, data, event)
+      endfunction
+
+      let g:callbacks = {
+      \ 'on_stdout': function('g:JobHandler'),
+      \ 'on_stderr': function('g:JobHandler'),
+      \ 'on_exit': function('g:JobHandler')
+      \ }
+      let job = jobstart('cat -', g:callbacks)
+    ]]
+    source(script)
+    feed(':function! g:JobHandler(job_id, data, event)<cr>')
+    feed(':endfunction<cr>')
+    screen:expect([[
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      :function! g:JobHandler(job_id, data, event)         |
+      :  :endfunction                                      |
+      E127: Cannot redefine function JobHandler: It is in u|
+      se                                                   |
+      Press ENTER or type command to continue^              |
+    ]])
   end)
 
   describe('jobwait', function()

@@ -245,6 +245,7 @@ int main(int argc, char **argv)
   set_vim_var_string(VV_PROGPATH, (char_u *)argv[0], -1);
   set_vim_var_string(VV_PROGNAME, path_tail((char_u *)argv[0]), -1);
 
+  event_init();
   /*
    * Process the command line arguments.  File names are put in the global
    * argument list "global_alist".
@@ -275,7 +276,6 @@ int main(int argc, char **argv)
   if (GARGCOUNT > 1 && !silent_mode)
     printf(_("%d files to edit\n"), GARGCOUNT);
 
-  event_init();
   full_screen = true;
   t_colors = 256;
   check_tty(&params);
@@ -963,6 +963,7 @@ static void command_line_scan(mparm_T *parmp)
           } else if (STRICMP(argv[0] + argv_idx, "embed") == 0) {
             embedded_mode = true;
             parmp->headless = true;
+            channel_from_stdio();
           } else if (STRNICMP(argv[0] + argv_idx, "literal", 7) == 0) {
 #if !defined(UNIX)
             parmp->literal = TRUE;

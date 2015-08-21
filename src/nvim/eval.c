@@ -18987,7 +18987,7 @@ void ex_function(exarg_T *eap)
         emsg_funcname(e_funcexts, name);
         goto erret;
       }
-      if (fp->uf_calls > 0) {
+      if (fp->uf_refcount > 1 || fp->uf_calls > 0) {
         emsg_funcname(N_("E127: Cannot redefine function %s: It is in use"),
             name);
         goto erret;
@@ -21136,14 +21136,18 @@ static inline bool common_job_start(TerminalJobData *data, typval_T *rettv)
 {
   data->refcount++;
   Process *proc = (Process *)&data->proc;
+  char *cmd = xstrdup(proc->argv[0]);
   if (!process_spawn(proc)) {
-    EMSG(_(e_jobexe));
+    EMSG2(_(e_jobspawn), cmd);
+    xfree(cmd);
     if (proc->type == kProcessTypePty) {
       xfree(data->proc.pty.term_name);
-      free_term_job_data(data);
     }
+    rettv->vval.v_number = proc->status;
+    term_job_data_decref(data);
     return false;
   }
+  xfree(cmd);
 
   data->id = current_job_id++;
   wstream_init(proc->in, 0);

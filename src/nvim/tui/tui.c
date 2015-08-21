@@ -140,6 +140,7 @@ UI *tui_start(void)
 
   // listen for SIGWINCH
   signal_watcher_init(&loop, &data->winch_handle, ui);
+  data->winch_handle.events = queue_new_child(loop.events);
   signal_watcher_start(&data->winch_handle, sigwinch_cb, SIGWINCH);
 
   ui->stop = tui_stop;
@@ -179,6 +180,7 @@ static void tui_stop(UI *ui)
   // Destroy common stuff
   kv_destroy(data->invalid_regions);
   signal_watcher_stop(&data->winch_handle);
+  queue_free(data->winch_handle.events);
   signal_watcher_close(&data->winch_handle, NULL);
   // Destroy input stuff
   term_input_destroy(data->input);
