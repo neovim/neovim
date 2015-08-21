@@ -41,7 +41,7 @@ get_vim_sources() {
   echo "Retrieving Vim sources."
   if [[ ! -d ${VIM_SOURCE_DIR} ]]; then
     echo "Cloning Vim sources into '${VIM_SOURCE_DIR}'."
-    git clone https://github.com/vim/vim.git "${VIM_SOURCE_DIR}"
+    git clone --depth=1000 https://github.com/vim/vim.git "${VIM_SOURCE_DIR}"
     cd "${VIM_SOURCE_DIR}"
   else
     if [[ ! -d "${VIM_SOURCE_DIR}/.git" ]]; then
