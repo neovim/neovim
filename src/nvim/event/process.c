@@ -66,7 +66,12 @@ bool process_spawn(Process *proc) FUNC_ATTR_NONNULL_ALL
     if (proc->err) {
       uv_close((uv_handle_t *)&proc->err->uv.pipe, NULL);
     }
-    process_close(proc);
+
+    if (proc->type == kProcessTypeUv) {
+      uv_close((uv_handle_t *)&(((UvProcess *)proc)->uv), NULL);
+    } else {
+      process_close(proc);
+    }
     shell_free_argv(proc->argv);
     proc->status = -1;
     return false;
