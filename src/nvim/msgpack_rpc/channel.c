@@ -93,11 +93,6 @@ void channel_init(void)
   channels = pmap_new(uint64_t)();
   event_strings = pmap_new(cstr_t)();
   msgpack_sbuffer_init(&out_buffer);
-
-  if (embedded_mode) {
-    channel_from_stdio();
-  }
-
   remote_ui_init();
 }
 
@@ -316,7 +311,7 @@ bool channel_close(uint64_t id)
 
 /// Creates an API channel from stdin/stdout. This is used when embedding
 /// Neovim
-static void channel_from_stdio(void)
+void channel_from_stdio(void)
 {
   Channel *channel = register_channel(kChannelTypeStdio);
   incref(channel);  // stdio channels are only closed on exit
