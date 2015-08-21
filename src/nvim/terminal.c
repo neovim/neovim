@@ -423,7 +423,9 @@ end:
   ui_busy_stop();
   if (close) {
     term->opts.close_cb(term->opts.data);
-    do_cmdline_cmd("bwipeout!");
+    if (term->buf) {
+      do_cmdline_cmd("bwipeout!");
+    }
   }
 }
 
