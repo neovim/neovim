@@ -162,22 +162,17 @@ list_vim_patches() {
   # runtime patches before between 384 and 442 have already been ported
   # to Neovim as of the creation of this script.
   local vim_commits=$(cd "${VIM_SOURCE_DIR}" && \
-    hg log --removed --template='{if(startswith("Added tag", firstline(desc)),
-      "{latesttag}\n",
-      "{if(startswith(\"updated for version\", firstline(desc)),
-        \"\",
-        \"{node}\n\")}")}' -r tip:v7-4-442)
+    git log --pretty='tformat:%H|%D' v7.4.442..HEAD | awk -f ${NEOVIM_SOURCE_DIR}/scripts/vim-patch-helper.awk)
+
   # Append remaining vim patches.
   # Start from 7.4.160, where Neovim was forked.
   local vim_old_commits=$(cd "${VIM_SOURCE_DIR}" && \
-    hg log --removed --template='{if(startswith("Added tag",
-      firstline(desc)),
-      "{latesttag}\n")}' -r v7-4-442:v7-4-161)
+    git log --pretty='tformat:%D' v7.4.160..v7.4.442 | awk '{ if ($1 != "") print($2); }')
 
   local vim_commit
   for vim_commit in ${vim_commits} ${vim_old_commits}; do
     local is_missing
-    if [[ ${vim_commit} =~ v([0-9]-[0-9]-([0-9]{3,4})) ]]; then
+    if [[ ${vim_commit} =~ v([0-9].[0-9].([0-9]{3,4})) ]]; then
       local patch_number="${BASH_REMATCH[2]}"
       # "Proper" Vim patch
       # Check version.c:
@@ -253,9 +248,9 @@ review_pr() {
   echo "✔ Saved pull request diff to '${NEOVIM_SOURCE_DIR}/n${base_name}.diff'."
   echo "${neovim_patch}" > "${NEOVIM_SOURCE_DIR}/n${base_name}.patch"
   echo "✔ Saved full pull request commit details to '${NEOVIM_SOURCE_DIR}/n${base_name}.patch'."
-  hg diff --show-function --git --change "${vim_commit}" > "${NEOVIM_SOURCE_DIR}/${base_name}.diff"
+  git diff "${vim_commit}^\!" > "${NEOVIM_SOURCE_DIR}/${base_name}.diff"
   echo "✔ Saved Vim diff to '${NEOVIM_SOURCE_DIR}/${base_name}.diff'."
-  hg log --patch --git --verbose --rev "${vim_commit}" > "${NEOVIM_SOURCE_DIR}/${base_name}.patch"
+  git show "${vim_commit}" > "${NEOVIM_SOURCE_DIR}/${base_name}.patch"
   echo "✔ Saved full Vim commit details to '${NEOVIM_SOURCE_DIR}/${base_name}.patch'."
   echo "You can use 'git clean' to remove these files when you're done."
 
