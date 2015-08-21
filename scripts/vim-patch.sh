@@ -167,12 +167,12 @@ list_vim_patches() {
   # runtime patches before between 384 and 442 have already been ported
   # to Neovim as of the creation of this script.
   local vim_commits=$(cd "${VIM_SOURCE_DIR}" && \
-    git log --pretty='tformat:%H|%D' v7.4.442..HEAD | awk -f ${NEOVIM_SOURCE_DIR}/scripts/vim-patch-helper.awk)
+    git log --pretty='tformat:%H|%d' v7.4.442..HEAD | awk -f ${NEOVIM_SOURCE_DIR}/scripts/vim-patch-helper.awk)
 
   # Append remaining vim patches.
   # Start from 7.4.160, where Neovim was forked.
   local vim_old_commits=$(cd "${VIM_SOURCE_DIR}" && \
-    git log --pretty='tformat:%D' v7.4.160..v7.4.442 | awk '{ if ($1 != "") print($2); }')
+    git log --pretty='tformat:%d' v7.4.160..v7.4.442 | awk '{ if ($1 != "") { gsub(/[()]/, "", $2); print($2); } }')
 
   local vim_commit
   for vim_commit in ${vim_commits} ${vim_old_commits}; do

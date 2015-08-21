@@ -8,8 +8,9 @@ BEGIN {
   } else {
     n=split($2,ary,", ");
     for (i=1;i<=n;i++) {
-      if (match(ary[i], "^tag: ")) {
-        sub(/tag: /, "", ary[i]);
+      if (match(ary[i], /tag: /)) {
+        gsub(/[()]/, "", ary[i]);
+        sub(/ *tag: /, "", ary[i]);
         print(ary[i]);
       } 
     }
