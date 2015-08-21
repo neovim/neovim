@@ -44,6 +44,11 @@ get_vim_sources() {
     git clone https://github.com/vim/vim.git "${VIM_SOURCE_DIR}"
     cd "${VIM_SOURCE_DIR}"
   else
+    if [[ ! -d "${VIM_SOURCE_DIR}/.git" ]]; then
+      echo "✘ ${VIM_SOURCE_DIR} does not appear to be a git repository."
+      echo "  Please remove it and try again."
+      exit 1
+    fi
     echo "Updating Vim sources in '${VIM_SOURCE_DIR}'."
     cd "${VIM_SOURCE_DIR}"
     git pull &&
