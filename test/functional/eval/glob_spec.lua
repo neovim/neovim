@@ -4,7 +4,10 @@ local clear, execute, eval, eq = helpers.clear, helpers.execute, helpers.eval, h
 before_each(function()
   clear()
   lfs.mkdir('test-glob')
-  execute('cd test-glob')
+
+  -- When building Neovim in a long path, the path might wrap and cause Neovim
+  -- to prompt, so we use silent here to avoid the potential prompt.
+  execute('silent cd test-glob')
 end)
 
 after_each(function()
