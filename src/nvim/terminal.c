@@ -422,8 +422,9 @@ end:
   redraw(term->buf != curbuf);
   ui_busy_stop();
   if (close) {
+    bool wipe = term->buf != NULL;
     term->opts.close_cb(term->opts.data);
-    if (term->buf) {
+    if (wipe) {
       do_cmdline_cmd("bwipeout!");
     }
   }
