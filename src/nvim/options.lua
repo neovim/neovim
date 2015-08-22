@@ -1422,10 +1422,10 @@ return {
       full_name='listchars', abbreviation='lcs',
       type='string', list='comma', scope={'global'},
       deny_duplicates=true,
-      vi_def=true,
+      vim=true,
       redraw={'all_windows'},
       varname='p_lcs',
-      defaults={if_true={vi="eol:$"}}
+      defaults={if_true={vi="eol:$", vim="tab:> ,trail:-,nbsp:+"}}
     },
     {
       full_name='loadplugins', abbreviation='lpl',
