@@ -162,11 +162,6 @@ static schar_T  *current_ScreenLine;
 #endif
 #define SEARCH_HL_PRIORITY 0
 
-//signs column
-
-/* Ugly global: overrule attribute used by screen_char() */
-static int screen_char_attr = 0;
-
 /*
  * Redraw the current window later, with update_screen(type).
  * Set must_redraw only if not already set to a higher value.
@@ -5718,10 +5713,7 @@ static void screen_char(unsigned off, int row, int col)
   /*
    * Stop highlighting first, so it's easier to move the cursor.
    */
-  if (screen_char_attr != 0)
-    attr = screen_char_attr;
-  else
-    attr = ScreenAttrs[off];
+  attr = ScreenAttrs[off];
   if (screen_attr != attr)
     screen_stop_highlight();
 
