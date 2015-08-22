@@ -30,6 +30,7 @@ these differences.
 
 - 'autoindent' is set by default
 - 'autoread' is set by default
+- 'background' defaults to "dark"
 - 'backspace' defaults to "indent,eol,start"
 - 'complete' doesn't include "i"
 - 'display' defaults to "lastline"
