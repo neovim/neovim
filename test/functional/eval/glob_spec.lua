@@ -4,7 +4,9 @@ local clear, execute, eval, eq = helpers.clear, helpers.execute, helpers.eval, h
 before_each(function()
   clear()
   lfs.mkdir('test-glob')
-  execute('cd test-glob')
+
+  -- Long path might cause "Press ENTER" prompt; use :silent to avoid it.
+  execute('silent cd test-glob')
 end)
 
 after_each(function()
