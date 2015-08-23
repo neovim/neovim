@@ -454,9 +454,6 @@ void set_init_1(void)
   /* Set all options to their Vim default */
   set_options_default(OPT_FREE);
 
-  // set 'laststatus'
-  last_status(false);
-
   /* Must be before option_expand(), because that one needs vim_isIDc() */
   didset_options();
 
@@ -654,6 +651,8 @@ set_options_default (
       set_option_default(i, opt_flags, p_cp);
     }
   }
+  // set 'laststatus'
+  last_status(false);
 
   /* The 'scroll' option must be computed for all windows. */
   FOR_ALL_TAB_WINDOWS(tp, wp) {

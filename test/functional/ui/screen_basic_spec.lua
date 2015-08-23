@@ -1,15 +1,15 @@
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
+local nvim_prog = helpers.nvim_prog
 local spawn, set_session, clear = helpers.spawn, helpers.set_session, helpers.clear
 local feed, execute = helpers.feed, helpers.execute
 local insert, wait = helpers.insert, helpers.wait
 
 describe('Initial screen', function()
   local screen
-  local nvim_prog = os.getenv('NVIM_PROG') or 'build/bin/nvim'
   local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
-	'--cmd', 'set shortmess+=I background=light noswapfile',
-	'--embed'}
+        '--cmd', 'set shortmess+=I background=light noswapfile',
+        '--embed'}
 
   before_each(function()
     if session then
