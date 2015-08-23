@@ -3,202 +3,190 @@
 local helpers = require('test.functional.helpers')
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
-local write_file = helpers.write_file
+local write_file, call = helpers.write_file, helpers.call
+
+local function write_latin1(name, text)
+  text = call('iconv', text, 'utf-8', 'latin-1')
+  write_file(name, text)
+end
 
 describe("spell checking with 'encoding' set to utf-8", function()
   setup(function()
     clear()
     execute("syntax off")
-    -- This file should be encoded in ISO8859-1.
-    write_file('Xtest1.aff', 
-      'SET ISO8859-1\n' ..
-      'TRY esianrtolcdugmphbyfvkwjkqxz-\xeb\xe9\xe8\xea\xef\xee\xe4\xe0' ..
-      '\xe2\xf6\xfc\xfb\'ESIANRTOLCDUGMPHBYFVKWJKQXZ\n' ..
-      '\n' ..
-      'FOL  \xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee' ..
-      '\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xdf' ..
-      '\xff\n' ..
-      'LOW  \xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee' ..
-      '\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xdf' ..
-      '\xff\n' ..
-      'UPP  \xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce' ..
-      '\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf' ..
-      '\xff\n' ..
-      '\n' ..
-      'SOFOFROM abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\xe0' ..
-      '\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0' ..
-      '\xf1\xf2\xf3\xf4\xf5\xf6\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xdf\xff\xc0' ..
-      '\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0' ..
-      '\xd1\xd2\xd3\xd4\xd5\xd6\xd8\xd9\xda\xdb\xdc\xdd\xde\xbf\n' ..
-      'SOFOTO   ebctefghejklnnepkrstevvkesebctefghejklnnepkrstevvkeseeeeee' ..
-      'eceeeeeeeedneeeeeeeeeeepseeeeeeeeceeeeeeeedneeeeeeeeeeep?\n' ..
-      '\n' ..
-      'MIDWORD\t\'-\n' ..
-      '\n' ..
-      'KEP =\n' ..
-      'RAR ?\n' ..
-      'BAD !\n' ..
-      '\n' ..
-      '#NOSPLITSUGS\n' ..
-      '\n' ..
-      'PFX I N 1\n' ..
-      'PFX I 0 in .\n' ..
-      '\n' ..
-      'PFX O Y 1\n' ..
-      'PFX O 0 out .\n' ..
-      '\n' ..
-      'SFX S Y 2\n' ..
-      'SFX S 0 s [^s]\n' ..
-      'SFX S 0 es s\n' ..
-      '\n' ..
-      'SFX N N 3\n' ..
-      'SFX N 0 en [^n]\n' ..
-      'SFX N 0 nen n\n' ..
-      'SFX N 0 n .\n' ..
-      '\n' ..
-      'REP 3\n' ..
-      'REP g ch\n' ..
-      'REP ch g\n' ..
-      'REP svp s.v.p.\n' ..
-      '\n' ..
-      'MAP 9\n' ..
-      'MAP a\xe0\xe1\xe2\xe3\xe4\xe5\n' ..
-      'MAP e\xe8\xe9\xea\xeb\n' ..
-      'MAP i\xec\xed\xee\xef\n' ..
-      'MAP o\xf2\xf3\xf4\xf5\xf6\n' ..
-      'MAP u\xf9\xfa\xfb\xfc\n' ..
-      'MAP n\xf1\n' ..
-      'MAP c\xe7\n' ..
-      'MAP y\xff\xfd\n' ..
-      'MAP s\xdf\n')
-    write_file('Xtest1.dic',
-      '123456\n' ..
-      'test/NO\n' ..
-      '# comment\n' ..
-      'wrong\n' ..
-      'Comment\n' ..
-      'OK\n' ..
-      'uk\n' ..
-      'put/ISO\n' ..
-      'the end\n' ..
-      'deol\n' ..
-      '\x64\xe9\xf4\x72\n')
-    write_file('Xtest2.aff', 
-      'SET ISO8859-1\n' ..
-      '\n' ..
-      'FOL  \xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee' ..
-      '\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xdf' ..
-      '\xff\n' ..
-      'LOW  \xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee' ..
-      '\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xdf' ..
-      '\xff\n' ..
-      'UPP  \xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce' ..
-      '\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf' ..
-      '\xff\n' ..
-      '\n' ..
-      'PFXPOSTPONE\n' ..
-      '\n' ..
-      'MIDWORD\t\'-\n' ..
-      '\n' ..
-      'KEP =\n' ..
-      'RAR ?\n' ..
-      'BAD !\n' ..
-      '\n' ..
-      '#NOSPLITSUGS\n' ..
-      '\n' ..
-      'PFX I N 1\n' ..
-      'PFX I 0 in .\n' ..
-      '\n' ..
-      'PFX O Y 1\n' ..
-      'PFX O 0 out [a-z]\n' ..
-      '\n' ..
-      'SFX S Y 2\n' ..
-      'SFX S 0 s [^s]\n' ..
-      'SFX S 0 es s\n' ..
-      '\n' ..
-      'SFX N N 3\n' ..
-      'SFX N 0 en [^n]\n' ..
-      'SFX N 0 nen n\n' ..
-      'SFX N 0 n .\n' ..
-      '\n' ..
-      'REP 3\n' ..
-      'REP g ch\n' ..
-      'REP ch g\n' ..
-      'REP svp s.v.p.\n' ..
-      '\n' ..
-      'MAP 9\n' ..
-      'MAP a\xe0\xe1\xe2\xe3\xe4\xe5\n' ..
-      'MAP e\xe8\xe9\xea\xeb\n' ..
-      'MAP i\xec\xed\xee\xef\n' ..
-      'MAP o\xf2\xf3\xf4\xf5\xf6\n' ..
-      'MAP u\xf9\xfa\xfb\xfc\n' ..
-      'MAP n\xf1\n' ..
-      'MAP c\xe7\n' ..
-      'MAP y\xff\xfd\n' ..
-      'MAP s\xdf\n')
-    write_file('Xtest3.aff', [[
+    write_latin1('Xtest1.aff',[[
+      SET ISO8859-1
+      TRY esianrtolcdugmphbyfvkwjkqxz-ëéèêïîäàâöüû'ESIANRTOLCDUGMPHBYFVKWJKQXZ
+      
+      FOL  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
+      LOW  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
+      UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßÿ
+      
+      SOFOFROM abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ¿
+      SOFOTO   ebctefghejklnnepkrstevvkesebctefghejklnnepkrstevvkeseeeeeeeceeeeeeeedneeeeeeeeeeepseeeeeeeeceeeeeeeedneeeeeeeeeeep?
+      
+      MIDWORD	'-
+      
+      KEP =
+      RAR ?
+      BAD !
+      
+      #NOSPLITSUGS
+      
+      PFX I N 1
+      PFX I 0 in .
+      
+      PFX O Y 1
+      PFX O 0 out .
+      
+      SFX S Y 2
+      SFX S 0 s [^s]
+      SFX S 0 es s
+      
+      SFX N N 3
+      SFX N 0 en [^n]
+      SFX N 0 nen n
+      SFX N 0 n .
+      
+      REP 3
+      REP g ch
+      REP ch g
+      REP svp s.v.p.
+      
+      MAP 9
+      MAP aàáâãäå
+      MAP eèéêë
+      MAP iìíîï
+      MAP oòóôõö
+      MAP uùúûü
+      MAP nñ
+      MAP cç
+      MAP yÿý
+      MAP sß
+      ]])
+    write_latin1('Xtest1.dic', [[
+      123456
+      test/NO
+      # comment
+      wrong
+      Comment
+      OK
+      uk
+      put/ISO
+      the end
+      deol
+      déôr
+      ]])
+    write_latin1('Xtest2.aff', [[
+      SET ISO8859-1
+      
+      FOL  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
+      LOW  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
+      UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßÿ
+      
+      PFXPOSTPONE
+      
+      MIDWORD	'-
+      
+      KEP =
+      RAR ?
+      BAD !
+      
+      #NOSPLITSUGS
+      
+      PFX I N 1
+      PFX I 0 in .
+      
+      PFX O Y 1
+      PFX O 0 out [a-z]
+      
+      SFX S Y 2
+      SFX S 0 s [^s]
+      SFX S 0 es s
+      
+      SFX N N 3
+      SFX N 0 en [^n]
+      SFX N 0 nen n
+      SFX N 0 n .
+      
+      REP 3
+      REP g ch
+      REP ch g
+      REP svp s.v.p.
+      
+      MAP 9
+      MAP aàáâãäå
+      MAP eèéêë
+      MAP iìíîï
+      MAP oòóôõö
+      MAP uùúûü
+      MAP nñ
+      MAP cç
+      MAP yÿý
+      MAP sß
+      ]])
+    write_latin1('Xtest3.aff', [[
       SET ISO8859-1
       
       COMPOUNDMIN 3
       COMPOUNDRULE m*
       NEEDCOMPOUND x
       ]])
-    write_file('Xtest3.dic',
-      '1234\nfoo/m\nbar/mx\n\x6d\xef\x2f\x6d\n\x6c\x61\x2f\x6d\x78\n')
-    write_file('Xtest4.aff', 
-      'SET ISO8859-1\n' ..
-      '\n' ..
-      'FOL  \xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee' ..
-      '\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xdf' ..
-      '\xff\n' ..
-      'LOW  \xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee' ..
-      '\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xdf' ..
-      '\xff\n' ..
-      'UPP  \xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce' ..
-      '\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf' ..
-      '\xff\n' ..
-      '\n' ..
-      'COMPOUNDRULE m+\n' ..
-      'COMPOUNDRULE sm*e\n' ..
-      'COMPOUNDRULE sm+\n' ..
-      'COMPOUNDMIN 3\n' ..
-      'COMPOUNDWORDMAX 3\n' ..
-      'COMPOUNDFORBIDFLAG t\n' ..
-      '\n' ..
-      'COMPOUNDSYLMAX 5\n' ..
-      'SYLLABLE a\xe1e\xe9i\xedo\xf3\xf6\xf5u\xfa\xfc\xfby/aa/au/ea/ee/ei/' ..
-      'ie/oa/oe/oo/ou/uu/ui\n' ..
-      '\n' ..
-      'MAP 9\n' ..
-      'MAP a\xe0\xe1\xe2\xe3\xe4\xe5\n' ..
-      'MAP e\xe8\xe9\xea\xeb\n' ..
-      'MAP i\xec\xed\xee\xef\n' ..
-      'MAP o\xf2\xf3\xf4\xf5\xf6\n' ..
-      'MAP u\xf9\xfa\xfb\xfc\n' ..
-      'MAP n\xf1\n' ..
-      'MAP c\xe7\n' ..
-      'MAP y\xff\xfd\n' ..
-      'MAP s\xdf\n' ..
-      '\n' ..
-      'NEEDAFFIX x\n' ..
-      '\n' ..
-      'PFXPOSTPONE\n' ..
-      '\n' ..
-      'MIDWORD \'-\n' ..
-      '\n' ..
-      'SFX q N 1\n' ..
-      'SFX q   0    -ok .\n' ..
-      '\n' ..
-      'SFX a Y 2\n' ..
-      'SFX a 0 s .\n' ..
-      'SFX a 0 ize/t .\n' ..
-      '\n' ..
-      'PFX p N 1\n' ..
-      'PFX p 0 pre .\n' ..
-      '\n' ..
-      'PFX P N 1\n' ..
-      'PFX P 0 nou .\n')
-    write_file('Xtest4.dic', [[
+    write_latin1('Xtest3.dic', [[
+      1234
+      foo/m
+      bar/mx
+      mï/m
+      la/mx
+      ]])
+    write_latin1('Xtest4.aff', [[
+      SET ISO8859-1
+      
+      FOL  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
+      LOW  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
+      UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßÿ
+      
+      COMPOUNDRULE m+
+      COMPOUNDRULE sm*e
+      COMPOUNDRULE sm+
+      COMPOUNDMIN 3
+      COMPOUNDWORDMAX 3
+      COMPOUNDFORBIDFLAG t
+      
+      COMPOUNDSYLMAX 5
+      SYLLABLE aáeéiíoóöõuúüûy/aa/au/ea/ee/ei/ie/oa/oe/oo/ou/uu/ui
+      
+      MAP 9
+      MAP aàáâãäå
+      MAP eèéêë
+      MAP iìíîï
+      MAP oòóôõö
+      MAP uùúûü
+      MAP nñ
+      MAP cç
+      MAP yÿý
+      MAP sß
+      
+      NEEDAFFIX x
+      
+      PFXPOSTPONE
+      
+      MIDWORD '-
+      
+      SFX q N 1
+      SFX q   0    -ok .
+      
+      SFX a Y 2
+      SFX a 0 s .
+      SFX a 0 ize/t .
+      
+      PFX p N 1
+      PFX p 0 pre .
+      
+      PFX P N 1
+      PFX P 0 nou .
+      ]])
+    write_latin1('Xtest4.dic', [[
       1234
       word/mP
       util/am
@@ -208,95 +196,103 @@ describe("spell checking with 'encoding' set to utf-8", function()
       start/s
       end/e
       ]])
-    write_file('Xtest5.aff',
-      'SET ISO8859-1\n' ..
-      '\n' ..
-      'FLAG long\n' ..
-      '\n' ..
-      'NEEDAFFIX !!\n' ..
-      '\n' ..
-      'COMPOUNDRULE ssmm*ee\n' ..
-      '\n' ..
-      'NEEDCOMPOUND xx\n' ..
-      'COMPOUNDPERMITFLAG pp\n' ..
-      '\n' ..
-      'SFX 13 Y 1\n' ..
-      'SFX 13 0 bork .\n' ..
-      '\n' ..
-      'SFX a1 Y 1\n' ..
-      'SFX a1 0 a1 .\n' ..
-      '\n' ..
-      'SFX a\xe9 Y 1\n' ..
-      'SFX a\xe9 0 a\xe9 .\n' ..
-      '\n' ..
-      'PFX zz Y 1\n' ..
-      'PFX zz 0 pre/pp .\n' ..
-      '\n' ..
-      'PFX yy Y 1\n' ..
-      'PFX yy 0 nou .\n')
-    write_file('Xtest5.dic',
-      '1234\nfoo/a1a\xe9!!\nbar/zz13ee\nstart/ss\nend/eeyy\nmiddle/mmxx\n')
-    write_file('Xtest6.aff',
-      'SET ISO8859-1\n' ..
-      '\n' ..
-      'FLAG caplong\n' ..
-      '\n' ..
-      'NEEDAFFIX A!\n' ..
-      '\n' ..
-      'COMPOUNDRULE sMm*Ee\n' ..
-      '\n' ..
-      'NEEDCOMPOUND Xx\n' ..
-      '\n' ..
-      'COMPOUNDPERMITFLAG p\n' ..
-      '\n' ..
-      'SFX N3 Y 1\n' ..
-      'SFX N3 0 bork .\n' ..
-      '\n' ..
-      'SFX A1 Y 1\n' ..
-      'SFX A1 0 a1 .\n' ..
-      '\n' ..
-      'SFX A\xe9 Y 1\n' ..
-      'SFX A\xe9 0 a\xe9 .\n' ..
-      '\n' ..
-      'PFX Zz Y 1\n' ..
-      'PFX Zz 0 pre/p .\n')
-    write_file('Xtest6.dic',
-      '1234\nmee/A1A\xe9A!\nbar/ZzN3Ee\nlead/s\nend/Ee\nmiddle/MmXx\n')
-    write_file('Xtest7.aff',
-      'SET ISO8859-1\n' ..
-      '\n' ..
-      'FOL  \xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee' ..
-      '\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xdf' ..
-      '\xff\n' ..
-      'LOW  \xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee' ..
-      '\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xdf' ..
-      '\xff\n' ..
-      'UPP  \xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce' ..
-      '\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf' ..
-      '\xff\n' ..
-      '\n' ..
-      'FLAG num\n' ..
-      '\n' ..
-      'NEEDAFFIX 9999\n' ..
-      '\n' ..
-      'COMPOUNDRULE 2,77*123\n' ..
-      '\n' ..
-      'NEEDCOMPOUND 1\n' ..
-      'COMPOUNDPERMITFLAG 432\n' ..
-      '\n' ..
-      'SFX 61003 Y 1\n' ..
-      'SFX 61003 0 meat .\n' ..
-      '\n' ..
-      'SFX 391 Y 1\n' ..
-      'SFX 391 0 a1 .\n' ..
-      '\n' ..
-      'SFX 111 Y 1\n' ..
-      'SFX 111 0 a\xe9'..
-      ' .\n' ..
-      '\n' ..
-      'PFX 17 Y 1\n' ..
-      'PFX 17 0 pre/432 .\n')
-    write_file('Xtest7.dic', [[
+    write_latin1('Xtest5.aff', [[
+      SET ISO8859-1
+      
+      FLAG long
+      
+      NEEDAFFIX !!
+      
+      COMPOUNDRULE ssmm*ee
+      
+      NEEDCOMPOUND xx
+      COMPOUNDPERMITFLAG pp
+      
+      SFX 13 Y 1
+      SFX 13 0 bork .
+      
+      SFX a1 Y 1
+      SFX a1 0 a1 .
+      
+      SFX aé Y 1
+      SFX aé 0 aé .
+      
+      PFX zz Y 1
+      PFX zz 0 pre/pp .
+      
+      PFX yy Y 1
+      PFX yy 0 nou .
+      ]])
+    write_latin1('Xtest5.dic', [[
+      1234
+      foo/a1aé!!
+      bar/zz13ee
+      start/ss
+      end/eeyy
+      middle/mmxx
+      ]])
+    write_latin1('Xtest6.aff', [[
+      SET ISO8859-1
+      
+      FLAG caplong
+      
+      NEEDAFFIX A!
+      
+      COMPOUNDRULE sMm*Ee
+      
+      NEEDCOMPOUND Xx
+      
+      COMPOUNDPERMITFLAG p
+      
+      SFX N3 Y 1
+      SFX N3 0 bork .
+      
+      SFX A1 Y 1
+      SFX A1 0 a1 .
+      
+      SFX Aé Y 1
+      SFX Aé 0 aé .
+      
+      PFX Zz Y 1
+      PFX Zz 0 pre/p .
+      ]])
+    write_latin1('Xtest6.dic', [[
+      1234
+      mee/A1AéA!
+      bar/ZzN3Ee
+      lead/s
+      end/Ee
+      middle/MmXx
+      ]])
+    write_latin1('Xtest7.aff', [[
+      SET ISO8859-1
+      
+      FOL  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
+      LOW  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
+      UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßÿ
+      
+      FLAG num
+      
+      NEEDAFFIX 9999
+      
+      COMPOUNDRULE 2,77*123
+      
+      NEEDCOMPOUND 1
+      COMPOUNDPERMITFLAG 432
+      
+      SFX 61003 Y 1
+      SFX 61003 0 meat .
+      
+      SFX 391 Y 1
+      SFX 391 0 a1 .
+      
+      SFX 111 Y 1
+      SFX 111 0 aé .
+      
+      PFX 17 Y 1
+      PFX 17 0 pre/432 .
+      ]])
+    write_latin1('Xtest7.dic', [[
       1234
       mee/391,111,9999
       bar/17,61003,123
@@ -304,167 +300,161 @@ describe("spell checking with 'encoding' set to utf-8", function()
       tail/123
       middle/77,1
       ]])
-    write_file('Xtest-sal.aff',
-      'SET ISO8859-1\n' ..
-      'TRY esianrtolcdugmphbyfvkwjkqxz-\xeb\xe9\xe8\xea\xef\xee\xe4\xe0' ..
-      '\xe2\xf6\xfc\xfb\'ESIANRTOLCDUGMPHBYFVKWJKQXZ\n' ..
-      '\n' ..
-      'FOL  \xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee' ..
-      '\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xdf' ..
-      '\xff\n' ..
-      'LOW  \xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee' ..
-      '\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xdf' ..
-      '\xff\n' ..
-      'UPP  \xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce' ..
-      '\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf' ..
-      '\xff\n' ..
-      '\n' ..
-      'MIDWORD\t\'-\n' ..
-      '\n' ..
-      'KEP =\n' ..
-      'RAR ?\n' ..
-      'BAD !\n' ..
-      '\n' ..
-      '#NOSPLITSUGS\n' ..
-      '\n' ..
-      'PFX I N 1\n' ..
-      'PFX I 0 in .\n' ..
-      '\n' ..
-      'PFX O Y 1\n' ..
-      'PFX O 0 out .\n' ..
-      '\n' ..
-      'SFX S Y 2\n' ..
-      'SFX S 0 s [^s]\n' ..
-      'SFX S 0 es s\n' ..
-      '\n' ..
-      'SFX N N 3\n' ..
-      'SFX N 0 en [^n]\n' ..
-      'SFX N 0 nen n\n' ..
-      'SFX N 0 n .\n' ..
-      '\n' ..
-      'REP 3\n' ..
-      'REP g ch\n' ..
-      'REP ch g\n' ..
-      'REP svp s.v.p.\n' ..
-      '\n' ..
-      'MAP 9\n' ..
-      'MAP a\xe0\xe1\xe2\xe3\xe4\xe5\n' ..
-      'MAP e\xe8\xe9\xea\xeb\n' ..
-      'MAP i\xec\xed\xee\xef\n' ..
-      'MAP o\xf2\xf3\xf4\xf5\xf6\n' ..
-      'MAP u\xf9\xfa\xfb\xfc\n' ..
-      'MAP n\xf1\n' ..
-      'MAP c\xe7\n' ..
-      'MAP y\xff\xfd\n' ..
-      'MAP s\xdf\n' ..
-      '\n' ..
-      'SAL AH(AEIOUY)-^         *H\n' ..
-      'SAL AR(AEIOUY)-^         *R\n' ..
-      'SAL A(HR)^               *\n' ..
-      'SAL A^                   *\n' ..
-      'SAL AH(AEIOUY)-          H\n' ..
-      'SAL AR(AEIOUY)-          R\n' ..
-      'SAL A(HR)                _\n' ..
-      'SAL \xc0^                   *\n' ..
-      'SAL \xc5^                   *\n' ..
-      'SAL BB-                  _\n' ..
-      'SAL B                    B\n' ..
-      'SAL CQ-                  _\n' ..
-      'SAL CIA                  X\n' ..
-      'SAL CH                   X\n' ..
-      'SAL C(EIY)-              S\n' ..
-      'SAL CK                   K\n' ..
-      'SAL COUGH^               KF\n' ..
-      'SAL CC<                  C\n' ..
-      'SAL C                    K\n' ..
-      'SAL DG(EIY)              K\n' ..
-      'SAL DD-                  _\n' ..
-      'SAL D                    T\n' ..
-      'SAL \xc9<                   E\n' ..
-      'SAL EH(AEIOUY)-^         *H\n' ..
-      'SAL ER(AEIOUY)-^         *R\n' ..
-      'SAL E(HR)^               *\n' ..
-      'SAL ENOUGH^$             *NF\n' ..
-      'SAL E^                   *\n' ..
-      'SAL EH(AEIOUY)-          H\n' ..
-      'SAL ER(AEIOUY)-          R\n' ..
-      'SAL E(HR)                _\n' ..
-      'SAL FF-                  _\n' ..
-      'SAL F                    F\n' ..
-      'SAL GN^                  N\n' ..
-      'SAL GN$                  N\n' ..
-      'SAL GNS$                 NS\n' ..
-      'SAL GNED$                N\n' ..
-      'SAL GH(AEIOUY)-          K\n' ..
-      'SAL GH                   _\n' ..
-      'SAL GG9                  K\n' ..
-      'SAL G                    K\n' ..
-      'SAL H                    H\n' ..
-      'SAL IH(AEIOUY)-^         *H\n' ..
-      'SAL IR(AEIOUY)-^         *R\n' ..
-      'SAL I(HR)^               *\n' ..
-      'SAL I^                   *\n' ..
-      'SAL ING6                 N\n' ..
-      'SAL IH(AEIOUY)-          H\n' ..
-      'SAL IR(AEIOUY)-          R\n' ..
-      'SAL I(HR)                _\n' ..
-      'SAL J                    K\n' ..
-      'SAL KN^                  N\n' ..
-      'SAL KK-                  _\n' ..
-      'SAL K                    K\n' ..
-      'SAL LAUGH^               LF\n' ..
-      'SAL LL-                  _\n' ..
-      'SAL L                    L\n' ..
-      'SAL MB$                  M\n' ..
-      'SAL MM                   M\n' ..
-      'SAL M                    M\n' ..
-      'SAL NN-                  _\n' ..
-      'SAL N                    N\n' ..
-      'SAL OH(AEIOUY)-^         *H\n' ..
-      'SAL OR(AEIOUY)-^         *R\n' ..
-      'SAL O(HR)^               *\n' ..
-      'SAL O^                   *\n' ..
-      'SAL OH(AEIOUY)-          H\n' ..
-      'SAL OR(AEIOUY)-          R\n' ..
-      'SAL O(HR)                _\n' ..
-      'SAL PH                   F\n' ..
-      'SAL PN^                  N\n' ..
-      'SAL PP-                  _\n' ..
-      'SAL P                    P\n' ..
-      'SAL Q                    K\n' ..
-      'SAL RH^                  R\n' ..
-      'SAL ROUGH^               RF\n' ..
-      'SAL RR-                  _\n' ..
-      'SAL R                    R\n' ..
-      'SAL SCH(EOU)-            SK\n' ..
-      'SAL SC(IEY)-             S\n' ..
-      'SAL SH                   X\n' ..
-      'SAL SI(AO)-              X\n' ..
-      'SAL SS-                  _\n' ..
-      'SAL S                    S\n' ..
-      'SAL TI(AO)-              X\n' ..
-      'SAL TH                   @\n' ..
-      'SAL TCH--                _\n' ..
-      'SAL TOUGH^               TF\n' ..
-      'SAL TT-                  _\n' ..
-      'SAL T                    T\n' ..
-      'SAL UH(AEIOUY)-^         *H\n' ..
-      'SAL UR(AEIOUY)-^         *R\n' ..
-      'SAL U(HR)^               *\n' ..
-      'SAL U^                   *\n' ..
-      'SAL UH(AEIOUY)-          H\n' ..
-      'SAL UR(AEIOUY)-          R\n' ..
-      'SAL U(HR)                _\n' ..
-      'SAL V^                   W\n' ..
-      'SAL V                    F\n' ..
-      'SAL WR^                  R\n' ..
-      'SAL WH^                  W\n' ..
-      'SAL W(AEIOU)-            W\n' ..
-      'SAL X^                   S\n' ..
-      'SAL X                    KS\n' ..
-      'SAL Y(AEIOU)-            Y\n' ..
-      'SAL ZZ-                  _\n' ..
-      'SAL Z                    S\n')
+    write_latin1('Xtest-sal.aff', [[
+      SET ISO8859-1
+      TRY esianrtolcdugmphbyfvkwjkqxz-ëéèêïîäàâöüû'ESIANRTOLCDUGMPHBYFVKWJKQXZ
+      
+      FOL  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
+      LOW  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
+      UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßÿ
+      
+      MIDWORD	'-
+      
+      KEP =
+      RAR ?
+      BAD !
+      
+      #NOSPLITSUGS
+      
+      PFX I N 1
+      PFX I 0 in .
+      
+      PFX O Y 1
+      PFX O 0 out .
+      
+      SFX S Y 2
+      SFX S 0 s [^s]
+      SFX S 0 es s
+      
+      SFX N N 3
+      SFX N 0 en [^n]
+      SFX N 0 nen n
+      SFX N 0 n .
+      
+      REP 3
+      REP g ch
+      REP ch g
+      REP svp s.v.p.
+      
+      MAP 9
+      MAP aàáâãäå
+      MAP eèéêë
+      MAP iìíîï
+      MAP oòóôõö
+      MAP uùúûü
+      MAP nñ
+      MAP cç
+      MAP yÿý
+      MAP sß
+      
+      SAL AH(AEIOUY)-^         *H
+      SAL AR(AEIOUY)-^         *R
+      SAL A(HR)^               *
+      SAL A^                   *
+      SAL AH(AEIOUY)-          H
+      SAL AR(AEIOUY)-          R
+      SAL A(HR)                _
+      SAL À^                   *
+      SAL Å^                   *
+      SAL BB-                  _
+      SAL B                    B
+      SAL CQ-                  _
+      SAL CIA                  X
+      SAL CH                   X
+      SAL C(EIY)-              S
+      SAL CK                   K
+      SAL COUGH^               KF
+      SAL CC<                  C
+      SAL C                    K
+      SAL DG(EIY)              K
+      SAL DD-                  _
+      SAL D                    T
+      SAL É<                   E
+      SAL EH(AEIOUY)-^         *H
+      SAL ER(AEIOUY)-^         *R
+      SAL E(HR)^               *
+      SAL ENOUGH^$             *NF
+      SAL E^                   *
+      SAL EH(AEIOUY)-          H
+      SAL ER(AEIOUY)-          R
+      SAL E(HR)                _
+      SAL FF-                  _
+      SAL F                    F
+      SAL GN^                  N
+      SAL GN$                  N
+      SAL GNS$                 NS
+      SAL GNED$                N
+      SAL GH(AEIOUY)-          K
+      SAL GH                   _
+      SAL GG9                  K
+      SAL G                    K
+      SAL H                    H
+      SAL IH(AEIOUY)-^         *H
+      SAL IR(AEIOUY)-^         *R
+      SAL I(HR)^               *
+      SAL I^                   *
+      SAL ING6                 N
+      SAL IH(AEIOUY)-          H
+      SAL IR(AEIOUY)-          R
+      SAL I(HR)                _
+      SAL J                    K
+      SAL KN^                  N
+      SAL KK-                  _
+      SAL K                    K
+      SAL LAUGH^               LF
+      SAL LL-                  _
+      SAL L                    L
+      SAL MB$                  M
+      SAL MM                   M
+      SAL M                    M
+      SAL NN-                  _
+      SAL N                    N
+      SAL OH(AEIOUY)-^         *H
+      SAL OR(AEIOUY)-^         *R
+      SAL O(HR)^               *
+      SAL O^                   *
+      SAL OH(AEIOUY)-          H
+      SAL OR(AEIOUY)-          R
+      SAL O(HR)                _
+      SAL PH                   F
+      SAL PN^                  N
+      SAL PP-                  _
+      SAL P                    P
+      SAL Q                    K
+      SAL RH^                  R
+      SAL ROUGH^               RF
+      SAL RR-                  _
+      SAL R                    R
+      SAL SCH(EOU)-            SK
+      SAL SC(IEY)-             S
+      SAL SH                   X
+      SAL SI(AO)-              X
+      SAL SS-                  _
+      SAL S                    S
+      SAL TI(AO)-              X
+      SAL TH                   @
+      SAL TCH--                _
+      SAL TOUGH^               TF
+      SAL TT-                  _
+      SAL T                    T
+      SAL UH(AEIOUY)-^         *H
+      SAL UR(AEIOUY)-^         *R
+      SAL U(HR)^               *
+      SAL U^                   *
+      SAL UH(AEIOUY)-          H
+      SAL UR(AEIOUY)-          R
+      SAL U(HR)                _
+      SAL V^                   W
+      SAL V                    F
+      SAL WR^                  R
+      SAL WH^                  W
+      SAL W(AEIOU)-            W
+      SAL X^                   S
+      SAL X                    KS
+      SAL Y(AEIOU)-            Y
+      SAL ZZ-                  _
+      SAL Z                    S
+      ]])
     write_file('Xtest.utf-8.add', [[
       /regions=usgbnz
       elequint/2

@@ -129,6 +129,10 @@ local function nvim_eval(expr)
   return request('vim_eval', expr)
 end
 
+local function nvim_call(name, ...)
+  return request('vim_call_function', name, {...})
+end
+
 local function nvim_feed(input)
   while #input > 0 do
     local written = request('vim_input', input)
@@ -321,6 +325,7 @@ return {
   feed = feed,
   execute = execute,
   eval = nvim_eval,
+  call = nvim_call,
   command = nvim_command,
   request = request,
   next_message = next_message,
