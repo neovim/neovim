@@ -14,6 +14,7 @@
 #include <assert.h>
 
 #include <msgpack.h>
+#include <uv.h>
 
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
@@ -2902,6 +2903,11 @@ int shada_write_file(const char *const file, bool nomerge)
     .error = NULL,
   };
   ShaDaReadDef sd_reader;
+#ifdef UNIX
+  bool do_fchown = false;
+  uv_uid_t old_uid = (uv_uid_t) -1;
+  uv_gid_t old_gid = (uv_gid_t) -1;
+#endif
 
   intptr_t fd;
 
@@ -2915,17 +2921,24 @@ int shada_write_file(const char *const file, bool nomerge)
     // overwrite a user’s viminfo file after a "su root", with a
     // viminfo file that the user can't read.
     FileInfo old_info;
-    if (os_fileinfo((char *)fname, &old_info)
-        && getuid() != ROOT_UID
-        && !(old_info.stat.st_uid == getuid()
-             ? (old_info.stat.st_mode & 0200)
-             : (old_info.stat.st_gid == getgid()
-                ? (old_info.stat.st_mode & 0020)
-                : (old_info.stat.st_mode & 0002)))) {
-      EMSG2(_("E137: ShaDa file is not writable: %s"), fname);
-      sd_reader.close(&sd_reader);
-      xfree(fname);
-      return FAIL;
+    if (os_fileinfo((char *)fname, &old_info)) {
+      if (getuid() == ROOT_UID) {
+        if (old_info.stat.st_uid != ROOT_UID
+            || old_info.stat.st_gid != getgid()) {
+          do_fchown = true;
+          old_uid = (uv_uid_t) old_info.stat.st_uid;
+          old_gid = (uv_gid_t) old_info.stat.st_gid;
+        }
+      } else if (!(old_info.stat.st_uid == getuid()
+                   ? (old_info.stat.st_mode & 0200)
+                   : (old_info.stat.st_gid == getgid()
+                      ? (old_info.stat.st_mode & 0020)
+                      : (old_info.stat.st_mode & 0002)))) {
+        EMSG2(_("E137: ShaDa file is not writable: %s"), fname);
+        sd_reader.close(&sd_reader);
+        xfree(fname);
+        return FAIL;
+      }
     }
 #endif
     tempname = modname(fname, ".tmp.a", false);
@@ -3011,12 +3024,28 @@ shada_write_file_nomerge: {}
   const ShaDaWriteResult sw_ret = shada_write(&sd_writer, (nomerge
                                                            ? NULL
                                                            : &sd_reader));
-  sd_writer.close(&sd_writer);
-
+#ifdef UNIX
+  if (!do_fchown) {
+#endif
+    sd_writer.close(&sd_writer);
+#ifdef UNIX
+  }
+#endif
   if (!nomerge) {
     sd_reader.close(&sd_reader);
     bool did_remove = false;
     if (sw_ret == kSDWriteSuccessfull) {
+#ifdef UNIX
+      if (do_fchown) {
+        const int fchown_ret = os_fchown((int) fd, old_uid, old_gid);
+        sd_writer.close(&sd_writer);
+        if (fchown_ret != 0) {
+          EMSG3(_(RNERR "Failed setting uid and gid for file %s: %s"),
+                tempname, os_strerror(fchown_ret));
+          goto shada_write_file_did_not_remove;
+        }
+      }
+#endif
       if (vim_rename(tempname, fname) == -1) {
         EMSG3(_(RNERR "Can't rename ShaDa file from %s to %s!"),
               tempname, fname);
@@ -3034,6 +3063,9 @@ shada_write_file_nomerge: {}
       }
     }
     if (!did_remove) {
+#ifdef UNIX
+shada_write_file_did_not_remove:
+#endif
       EMSG3(_(RNERR "Do not forget to remove %s or rename it manually to %s."),
             tempname, fname);
     }
