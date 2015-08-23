@@ -2531,7 +2531,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
             .offset = pat.off.off,
             .is_last_used = search_was_last_used(),
             .is_substitute_pattern = false,
-            .highlighted = (!no_hlsearch && find_shada_parameter('h') != NULL),
+            .highlighted = !(no_hlsearch || find_shada_parameter('h') != NULL),
             .pat = (char *) pat.pat,
             .additional_data = pat.additional_data,
           }
