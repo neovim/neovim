@@ -1108,26 +1108,46 @@ files for different types of files (e.g., C code) and load them based on the
 file name, using the ":autocmd" command (see |:autocmd|).  More information on 
 ShaDa file format is contained in |shada-format| section.
 
-							*shada-errors*
-When Vim detects an error while reading a ShaDa file, it will not overwrite
-that file.  This was done to avoid accidentally destroying a file when the 
-file name of the ShaDa file is wrong.  This could happen when accidentally 
-typing "nvim -i file" when you wanted "nvim -R file" (yes, somebody 
-accidentally did that!).  If you want to overwrite a ShaDa file with an error 
-in it, you will either have to fix the error, delete the file (while Neovim is 
-running, so most of the information will be restored) or write it explicitly 
-with |:wshada| and a bang.
 					  *E136* *E138* *shada-error-handling*
-Note: when Neovim finds out that it failed to write part of the ShaDa file 
-(e.g. because there is no space left to write the file) or when it appears 
-that already present ShaDa file contains errors that indicate that this file 
-is likely not a ShaDa file then ShaDa file with `.tmp.X` suffix is left on the 
-file system (where X is any latin small letter: from U+0061 to U+007A).  You 
-may use such file to recover the data if you want, but in any case it needs to 
-be cleaned up after you resolve the issue that prevented old ShaDa file from 
-being overwritten.  If Neovim fails to find unexisting `.tmp.X` file it will 
-not write ShaDa file at all.  Errors which trigger this behaviour are listed 
-at |shada-keeping-tmpfile|.
+Some errors make Neovim leave temporary file named `{basename}.tmp.X` (X is 
+any free letter from `a` to `z`) while normally it will create this file, 
+write to it and then rename `{basename}.tmp.X` to `{basename}`. Such errors 
+include:
+
+- Errors which make Neovim think that read file is not a ShaDa file at all: 
+  non-ShaDa files are not overwritten for safety reasons to avoid accidentally 
+  destroying an unrelated file.  This could happen e.g. when typing "nvim -i 
+  file" in place of "nvim -R file" (yes, somebody did that at least with Vim).  
+  Such errors are listed at |shada-critical-contents-errors|.
+- If writing to the temporary file failed: e.g. because of the insufficient 
+  space left.
+- If renaming file failed: e.g. because of insufficient permissions.  On Unix 
+  permissions are checked before trying to create even the temporary file, so 
+  permission error can only happen if permissions were changed after starting 
+  to edit the temporary file and before renaming it.
+- If target ShaDa file has different from the Neovim instance's owners (user 
+  and group) and changing them failed.  Unix-specific, applies only when 
+  Neovim was launched from root.
+
+Do not forget to remove the temporary file or replace the target file with 
+temporary one after getting one of the above errors or all attempts to create 
+a ShaDa file may fail with |E138|.  If you got one of them when using 
+|:wshada| (and not when exiting Neovim: i.e. when you have Neovim session 
+running) you have additional options:
+
+- First thing which you should consider if you got any error, except failure 
+  to write to the temporary file: remove existing file and replace it with the 
+  temporary file.  Do it even if you have running Neovim instance.
+- Fix the permissions and/or file ownership, free some space and attempt to 
+  write again.  Do not remove the existing file.
+- Use |:wshada| with bang.  Does not help in case of permission error.  If 
+  target file was actually the ShaDa file some information may be lost in this 
+  case.  To make the matters slightly better use |:rshada| prior to writing, 
+  but this still will loose buffer-local marks and change list entries for any 
+  file which is not opened in the current Neovim instance.
+- Remove the target file from shell and use |:wshada|.  Consequences are not 
+  different from using |:wshada| with bang, but "rm -f" works in some cases 
+  when you don't have write permissions.
 
 						    *:rsh* *:rshada* *E886*
 :rsh[ada][!] [file]	Read from ShaDa file [file] (default: see above).
@@ -1144,8 +1164,8 @@ at |shada-keeping-tmpfile|.
 			a merge between old and new info.  When [!] is used,
 			the old information is not read first, only the
 			internal info is written (also disables safety checks 
-			described in |shada-errors|).  If 'shada' is empty, 
-			marks for up to 100 files will be written.
+			described in |shada-error-handling|).  If 'shada' is 
+			empty, marks for up to 100 files will be written.
 			When you get error "E138: All .tmp.X files exist, 
 			cannot write ShaDa file!" check that no old temp files 
 			were left behind (e.g. ~/.nvim/shada/main.shada.tmp*).
@@ -1311,7 +1331,7 @@ Errors in ShaDa file may have two types: E575 used for all “logical” errors
 and E576 used for all “critical” errors.  Critical errors trigger behaviour 
 described in |shada-error-handling| when writing and skipping the rest of the 
 file when reading and include:
-						    *shada-keeping-tmpfile*
+					    *shada-critical-contents-errors*
 - Any of first three MessagePack objects being not an unsigned integer.
 - Third object requesting amount of bytes greater then bytes left in the ShaDa 
   file.
