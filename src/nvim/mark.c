@@ -312,22 +312,21 @@ pos_T *getmark_buf_fnum(buf_T *buf, int c, int changefile, int *fnum)
    * to crash. */
   if (c < 0)
     return posp;
-  if (c > '~')                          /* check for islower()/isupper() */
-    ;
-  else if (c == '\'' || c == '`') {    /* previous context mark */
-    pos_copy = curwin->w_pcmark;        /* need to make a copy because */
-    posp = &pos_copy;                   /*   w_pcmark may be changed soon */
-  } else if (c == '"')                  /* to pos when leaving buffer */
+  if (c > '~') {                        // check for islower()/isupper()
+  } else if (c == '\'' || c == '`') {   // previous context mark
+    pos_copy = curwin->w_pcmark;        // need to make a copy because
+    posp = &pos_copy;                   //   w_pcmark may be changed soon
+  } else if (c == '"') {                // to pos when leaving buffer
     posp = &(buf->b_last_cursor.mark);
-  else if (c == '^')                    /* to where Insert mode stopped */
+  } else if (c == '^') {                // to where Insert mode stopped
     posp = &(buf->b_last_insert.mark);
-  else if (c == '.')                    /* to where last change was made */
+  } else if (c == '.') {                // to where last change was made
     posp = &(buf->b_last_change.mark);
-  else if (c == '[')                    /* to start of previous operator */
+  } else if (c == '[') {                // to start of previous operator
     posp = &(buf->b_op_start);
-  else if (c == ']')                    /* to end of previous operator */
+  } else if (c == ']') {                // to end of previous operator
     posp = &(buf->b_op_end);
-  else if (c == '{' || c == '}') {      /* to previous/next paragraph */
+  } else if (c == '{' || c == '}') {    // to previous/next paragraph
     pos_T pos;
     oparg_T oa;
     int slcb = listcmd_busy;
@@ -620,9 +619,9 @@ void do_marks(exarg_T *eap)
   if (arg != NULL && *arg == NUL)
     arg = NULL;
 
-  show_one_mark('\'', arg, &curwin->w_pcmark, NULL, TRUE);
+  show_one_mark('\'', arg, &curwin->w_pcmark, NULL, true);
   for (i = 0; i < NMARKS; ++i)
-    show_one_mark(i + 'a', arg, &curbuf->b_namedm[i].mark, NULL, TRUE);
+    show_one_mark(i + 'a', arg, &curbuf->b_namedm[i].mark, NULL, true);
   for (i = 0; i < NGLOBALMARKS; ++i) {
     if (namedfm[i].fmark.fnum != 0)
       name = fm_getname(&namedfm[i].fmark, 15);
@@ -636,14 +635,14 @@ void do_marks(exarg_T *eap)
         xfree(name);
     }
   }
-  show_one_mark('"', arg, &curbuf->b_last_cursor.mark, NULL, TRUE);
-  show_one_mark('[', arg, &curbuf->b_op_start, NULL, TRUE);
-  show_one_mark(']', arg, &curbuf->b_op_end, NULL, TRUE);
-  show_one_mark('^', arg, &curbuf->b_last_insert.mark, NULL, TRUE);
-  show_one_mark('.', arg, &curbuf->b_last_change.mark, NULL, TRUE);
-  show_one_mark('<', arg, &curbuf->b_visual.vi_start, NULL, TRUE);
-  show_one_mark('>', arg, &curbuf->b_visual.vi_end, NULL, TRUE);
-  show_one_mark(-1, arg, NULL, NULL, FALSE);
+  show_one_mark('"', arg, &curbuf->b_last_cursor.mark, NULL, true);
+  show_one_mark('[', arg, &curbuf->b_op_start, NULL, true);
+  show_one_mark(']', arg, &curbuf->b_op_end, NULL, true);
+  show_one_mark('^', arg, &curbuf->b_last_insert.mark, NULL, true);
+  show_one_mark('.', arg, &curbuf->b_last_change.mark, NULL, true);
+  show_one_mark('<', arg, &curbuf->b_visual.vi_start, NULL, true);
+  show_one_mark('>', arg, &curbuf->b_visual.vi_end, NULL, true);
+  show_one_mark(-1, arg, NULL, NULL, false);
 }
 
 static void 
@@ -737,13 +736,14 @@ void ex_delmarks(exarg_T *eap)
           from = to = *p;
 
         for (i = from; i <= to; ++i) {
-          if (lower)
+          if (lower) {
             curbuf->b_namedm[i - 'a'].mark.lnum = 0;
-          else {
-            if (digit)
+          } else {
+            if (digit) {
               n = i - '0' + NMARKS;
-            else
+            } else {
               n = i - 'A';
+            }
             namedfm[n].fmark.mark.lnum = 0;
             xfree(namedfm[n].fname);
             namedfm[n].fname = NULL;
@@ -1127,10 +1127,10 @@ void cleanup_jumplist(void)
           && curwin->w_jumplist[i].fmark.mark.lnum
           == curwin->w_jumplist[from].fmark.mark.lnum)
         break;
-    if (i >= curwin->w_jumplistlen) { // no duplicate
+    if (i >= curwin->w_jumplistlen) {  // no duplicate
       if (to != from) {
-        // Not using curwin->w_jumplist[to++] = curwin->w_jumplist[from] because 
-        // this way valgrind complains about overlapping source and destination 
+        // Not using curwin->w_jumplist[to++] = curwin->w_jumplist[from] because
+        // this way valgrind complains about overlapping source and destination
         // in memcpy() call. (clang-3.6.0, debug build with -DEXITFREE).
         curwin->w_jumplist[to] = curwin->w_jumplist[from];
       }
@@ -1162,14 +1162,14 @@ void copy_jumplist(win_T *from, win_T *to)
 
 /// Iterate over jumplist items
 ///
-/// @warning No jumplist-editing functions must be run while iteration is in 
+/// @warning No jumplist-editing functions must be run while iteration is in
 ///          progress.
 ///
 /// @param[in]   iter  Iterator. Pass NULL to start iteration.
 /// @param[in]   win   Window for which jump list is processed.
 /// @param[out]  fm    Item definition.
 ///
-/// @return Pointer that needs to be passed to next `mark_jumplist_iter` call or 
+/// @return Pointer that needs to be passed to next `mark_jumplist_iter` call or
 ///         NULL if iteration is over.
 const void *mark_jumplist_iter(const void *const iter, const win_T *const win,
                                xfmark_T *const fm)
@@ -1193,14 +1193,14 @@ const void *mark_jumplist_iter(const void *const iter, const win_T *const win,
 
 /// Iterate over global marks
 ///
-/// @warning No mark-editing functions must be run while iteration is in 
+/// @warning No mark-editing functions must be run while iteration is in
 ///          progress.
 ///
 /// @param[in]   iter  Iterator. Pass NULL to start iteration.
 /// @param[out]  name  Mark name.
 /// @param[out]  fm    Mark definition.
 ///
-/// @return Pointer that needs to be passed to next `mark_global_iter` call or 
+/// @return Pointer that needs to be passed to next `mark_global_iter` call or
 ///         NULL if iteration is over.
 const void *mark_global_iter(const void *const iter, char *const name,
                              xfmark_T *const fm)
@@ -1234,11 +1234,11 @@ const void *mark_global_iter(const void *const iter, char *const name,
 /// Get next mark and its name
 ///
 /// @param[in]      buf        Buffer for which next mark is taken.
-/// @param[in,out]  mark_name  Pointer to the current mark name. Next mark name 
+/// @param[in,out]  mark_name  Pointer to the current mark name. Next mark name
 ///                            will be saved at this address as well.
 ///
-///                            Current mark name must either be NUL, '"', '^', 
-///                            '.' or 'a' .. 'z'. If it is neither of these 
+///                            Current mark name must either be NUL, '"', '^',
+///                            '.' or 'a' .. 'z'. If it is neither of these
 ///                            behaviour is undefined.
 ///
 /// @return Pointer to the next mark or NULL.
@@ -1275,7 +1275,7 @@ static inline const fmark_T *next_buffer_mark(const buf_T *const buf,
 
 /// Iterate over buffer marks
 ///
-/// @warning No mark-editing functions must be run while iteration is in 
+/// @warning No mark-editing functions must be run while iteration is in
 ///          progress.
 ///
 /// @param[in]   iter  Iterator. Pass NULL to start iteration.
@@ -1283,7 +1283,7 @@ static inline const fmark_T *next_buffer_mark(const buf_T *const buf,
 /// @param[out]  name  Mark name.
 /// @param[out]  fm    Mark definition.
 ///
-/// @return Pointer that needs to be passed to next `mark_buffer_iter` call or 
+/// @return Pointer that needs to be passed to next `mark_buffer_iter` call or
 ///         NULL if iteration is over.
 const void *mark_buffer_iter(const void *const iter, const buf_T *const buf,
                              char *const name, fmark_T *const fm)
@@ -1321,7 +1321,7 @@ const void *mark_buffer_iter(const void *const iter, const buf_T *const buf,
 ///
 /// @param[in]  name    Mark name.
 /// @param[in]  fm      Mark to be set.
-/// @param[in]  update  If true then only set global mark if it was created 
+/// @param[in]  update  If true then only set global mark if it was created
 ///                     later then existing one.
 ///
 /// @return true on success, false on failure.
@@ -1347,7 +1347,7 @@ bool mark_set_global(const char name, const xfmark_T fm, const bool update)
 /// @param[in]  name    Mark name.
 /// @param[in]  buf     Pointer to the buffer to set mark in.
 /// @param[in]  fm      Mark to be set.
-/// @param[in]  update  If true then only set global mark if it was created 
+/// @param[in]  update  If true then only set global mark if it was created
 ///                     later then existing one.
 ///
 /// @return true on success, false on failure.

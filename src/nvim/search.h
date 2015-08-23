@@ -44,7 +44,7 @@
 
 /// Structure containing offset definition for the last search pattern
 ///
-/// @note Only offset for the last search pattern is used, not for the last 
+/// @note Only offset for the last search pattern is used, not for the last
 ///       substitute pattern.
 typedef struct soffset {
   char dir;     ///< Search direction: forward ('/') or backward ('?')

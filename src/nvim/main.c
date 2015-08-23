@@ -2042,7 +2042,7 @@ static void usage(void)
   mch_msg(_("  -r, -L                List swap files and exit\n"));
   mch_msg(_("  -r <file>             Recover crashed session\n"));
   mch_msg(_("  -u <nvimrc>           Use <nvimrc> instead of the default\n"));
-  mch_msg(_("  -i <shada>            Use <shada> instead of the default " SHADA_FILE "\n"));
+  mch_msg(_("  -i <shada>            Use <shada> instead of the default " SHADA_FILE "\n"));  // NOLINT(whitespace/line_length)
   mch_msg(_("  --noplugin            Don't load plugin scripts\n"));
   mch_msg(_("  -o[N]                 Open N windows (default: one for each file)\n"));
   mch_msg(_("  -O[N]                 Like -o but split vertically\n"));

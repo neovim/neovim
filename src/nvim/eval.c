@@ -5340,7 +5340,7 @@ static int list_concat(list_T *l1, list_T *l2, typval_T *tv)
     return FAIL;
 
   /* make a copy of the first list. */
-  l = list_copy(NULL, l1, FALSE, 0);
+  l = list_copy(NULL, l1, false, 0);
   if (l == NULL)
     return FAIL;
   tv->v_type = VAR_LIST;
@@ -5358,7 +5358,7 @@ static int list_concat(list_T *l1, list_T *l2, typval_T *tv)
 /// @param[in]  deep  If false, then shallow copy will be done.
 /// @param[in]  copyID  See var_item_copy().
 ///
-/// @return Copied list. May be NULL in case original list is NULL or some 
+/// @return Copied list. May be NULL in case original list is NULL or some
 ///         failure happens. The refcount of the new list is set to 1.
 static list_T *list_copy(const vimconv_T *const conv,
                          list_T *const orig,
@@ -6089,8 +6089,8 @@ void dictitem_free(dictitem_T *item)
 /// @param[in]  deep  If false, then shallow copy will be done.
 /// @param[in]  copyID  See var_item_copy().
 ///
-/// @return Copied dictionary. May be NULL in case original dictionary is NULL 
-///         or some failure happens. The refcount of the new dictionary is set 
+/// @return Copied dictionary. May be NULL in case original dictionary is NULL
+///         or some failure happens. The refcount of the new dictionary is set
 ///         to 1.
 static dict_T *dict_copy(const vimconv_T *const conv,
                          dict_T *const orig,
@@ -18591,21 +18591,21 @@ void copy_tv(typval_T *from, typval_T *to)
 /// @param[in]  conv  If not NULL, convert all copied strings.
 /// @param[in]  from  Value to copy.
 /// @param[out]  to  Location where to copy to.
-/// @param[in]  deep  If true, use copy the container and all of the contained 
+/// @param[in]  deep  If true, use copy the container and all of the contained
 ///                   containers (nested).
-/// @param[in]  copyID  If non-zero then when container is referenced more then 
-///                     once then copy of it that was already done is used. E.g. 
-///                     when copying list `list = [list2, list2]` (`list[0] is 
-///                     list[1]`) var_item_copy with zero copyID will emit 
-///                     a copy with (`copy[0] isnot copy[1]`), with non-zero it 
-///                     will emit a copy with (`copy[0] is copy[1]`) like in the 
+/// @param[in]  copyID  If non-zero then when container is referenced more then
+///                     once then copy of it that was already done is used. E.g.
+///                     when copying list `list = [list2, list2]` (`list[0] is
+///                     list[1]`) var_item_copy with zero copyID will emit
+///                     a copy with (`copy[0] isnot copy[1]`), with non-zero it
+///                     will emit a copy with (`copy[0] is copy[1]`) like in the
 ///                     original list. Not use when deep is false.
 int var_item_copy(const vimconv_T *const conv,
                   typval_T *const from,
                   typval_T *const to,
                   const bool deep,
                   const int copyID)
-  FUNC_ATTR_NONNULL_ARG(2,3)
+  FUNC_ATTR_NONNULL_ARG(2, 3)
 {
   static int recurse = 0;
   int ret = OK;
@@ -18645,8 +18645,9 @@ int var_item_copy(const vimconv_T *const conv,
       /* use the copy made earlier */
       to->vval.v_list = from->vval.v_list->lv_copylist;
       ++to->vval.v_list->lv_refcount;
-    } else
+    } else {
       to->vval.v_list = list_copy(conv, from->vval.v_list, deep, copyID);
+    }
     if (to->vval.v_list == NULL)
       ret = FAIL;
     break;
@@ -18659,8 +18660,9 @@ int var_item_copy(const vimconv_T *const conv,
       /* use the copy made earlier */
       to->vval.v_dict = from->vval.v_dict->dv_copydict;
       ++to->vval.v_dict->dv_refcount;
-    } else
+    } else {
       to->vval.v_dict = dict_copy(conv, from->vval.v_dict, deep, copyID);
+    }
     if (to->vval.v_dict == NULL)
       ret = FAIL;
     break;
@@ -20875,23 +20877,25 @@ static var_flavour_T var_flavour(char_u *varname)
 
   if (ASCII_ISUPPER(*p)) {
     while (*(++p))
-      if (ASCII_ISLOWER(*p))
+      if (ASCII_ISLOWER(*p)) {
         return VAR_FLAVOUR_SESSION;
+      }
     return VAR_FLAVOUR_SHADA;
-  } else
+  } else {
     return VAR_FLAVOUR_DEFAULT;
+  }
 }
 
 /// Iterate over global variables
 ///
-/// @warning No modifications to global variable dictionary must be performed 
+/// @warning No modifications to global variable dictionary must be performed
 ///          while iteration is in progress.
 ///
 /// @param[in]   iter   Iterator. Pass NULL to start iteration.
 /// @param[out]  name   Variable name.
 /// @param[out]  rettv  Variable value.
 ///
-/// @return Pointer that needs to be passed to next `var_shada_iter` invocation 
+/// @return Pointer that needs to be passed to next `var_shada_iter` invocation
 ///         or NULL to indicate that iteration is over.
 const void *var_shada_iter(const void *const iter, const char **const name,
                            typval_T *rettv)

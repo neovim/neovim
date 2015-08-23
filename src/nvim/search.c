@@ -4633,7 +4633,7 @@ void set_substitute_pattern(const SearchPattern pat)
 
 /// Set last used search pattern
 ///
-/// @param[in]  is_substitute_pattern  If true set substitute pattern as last 
+/// @param[in]  is_substitute_pattern  If true set substitute pattern as last
 ///                                    used. Otherwise sets search pattern.
 void set_last_used_pattern(const bool is_substitute_pattern)
 {

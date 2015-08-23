@@ -1995,7 +1995,7 @@ buflist_nr2name (
 ///
 /// @param[in,out]  buf           Buffer for which line and column are set.
 /// @param[in,out]  win           Window for which line and column are set.
-/// @param[in]      lnum          Line number to be set. If it is zero then only 
+/// @param[in]      lnum          Line number to be set. If it is zero then only
 ///                               options are touched.
 /// @param[in]      col           Column number to be set.
 /// @param[in]      copy_options  If true save the local window option values.

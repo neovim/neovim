@@ -5190,7 +5190,7 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
   reg->y_size = lines->lv_len;
   reg->additional_data = NULL;
   reg->timestamp = 0;
-  // Timestamp is not saved for clipboard registers because clipboard registers 
+  // Timestamp is not saved for clipboard registers because clipboard registers
   // are not saved in the ShaDa file.
 
   int i = 0;
@@ -5327,7 +5327,7 @@ static inline bool reg_empty(const yankreg_T *const reg)
 /// @param[out]  name      Register name.
 /// @param[out]  reg       Register contents.
 ///
-/// @return Pointer that needs to be passed to next `op_register_iter` call or 
+/// @return Pointer that needs to be passed to next `op_register_iter` call or
 ///         NULL if iteration is over.
 const void *op_register_iter(const void *const iter, char *const name,
                              yankreg_T *const reg)

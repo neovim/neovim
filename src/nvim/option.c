@@ -2441,9 +2441,8 @@ did_set_string_option (
     verbose_stop();
     if (*p_vfile != NUL && verbose_open() == FAIL)
       errmsg = e_invarg;
-  }
   /* 'shada' */
-  else if (varp == &p_shada) {
+  } else if (varp == &p_shada) {
     for (s = p_shada; *s; ) {
       /* Check it's a valid character */
       if (vim_strchr((char_u *)"!\"%'/:<@cfhnrs", *s) == NULL) {

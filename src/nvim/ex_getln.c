@@ -4268,7 +4268,7 @@ static int
 in_history (
     int type,
     char_u *str,
-    int move_to_front,              /* Move the entry to the front if it exists */
+    int move_to_front,              // Move the entry to the front if it exists
     int sep
 )
 {
@@ -4309,9 +4309,9 @@ in_history (
     history[type][i].hisstr = str;
     history[type][i].timestamp = os_time();
     history[type][i].additional_elements = NULL;
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 /*
@@ -4378,7 +4378,7 @@ add_to_history (
     }
     last_maptick = -1;
   }
-  if (!in_history(histype, new_entry, TRUE, sep)) {
+  if (!in_history(histype, new_entry, true, sep)) {
     if (++hisidx[histype] == hislen)
       hisidx[histype] = 0;
     hisptr = &history[histype][hisidx[histype]];
@@ -4548,7 +4548,7 @@ char_u *get_history_entry(int histype, int idx)
 ///
 /// @param[in]  histype  One of the HIST_ values.
 ///
-/// @return OK if there was something to clean and histype was one of HIST_ 
+/// @return OK if there was something to clean and histype was one of HIST_
 ///         values, FAIL otherwise.
 int clr_history(const int histype)
 {
@@ -4575,7 +4575,7 @@ int del_history_entry(int histype, char_u *str)
   int idx;
   int i;
   int last;
-  int found = FALSE;
+  bool found = false;
 
   regmatch.regprog = NULL;
   regmatch.rm_ic = FALSE;       /* always match case */
@@ -4592,7 +4592,7 @@ int del_history_entry(int histype, char_u *str)
       if (hisptr->hisstr == NULL)
         break;
       if (vim_regexec(&regmatch, hisptr->hisstr, (colnr_T)0)) {
-        found = TRUE;
+        found = true;
         hist_free_entry(hisptr);
       } else {
         if (i != last) {
@@ -5077,24 +5077,24 @@ char_u *script_get(exarg_T *eap, char_u *cmd)
 
 /// Iterate over history items
 ///
-/// @warning No history-editing functions must be run while iteration is in 
+/// @warning No history-editing functions must be run while iteration is in
 ///          progress.
 ///
 /// @param[in]   iter          Pointer to the last history entry.
-/// @param[in]   history_type  Type of the history (HIST_*). Ignored if iter 
+/// @param[in]   history_type  Type of the history (HIST_*). Ignored if iter
 ///                            parameter is not NULL.
 /// @param[in]   zero          If true then zero (but not free) returned items.
 ///
-///                            @warning When using this parameter user is 
-///                                     responsible for calling clr_history() 
-///                                     itself after iteration is over. If 
-///                                     clr_history() is not called behaviour is 
-///                                     undefined. No functions that work with 
-///                                     history must be called during iteration 
+///                            @warning When using this parameter user is
+///                                     responsible for calling clr_history()
+///                                     itself after iteration is over. If
+///                                     clr_history() is not called behaviour is
+///                                     undefined. No functions that work with
+///                                     history must be called during iteration
 ///                                     in this case.
 /// @param[out]  hist          Next history entry.
 ///
-/// @return Pointer used in next iteration or NULL to indicate that iteration 
+/// @return Pointer used in next iteration or NULL to indicate that iteration
 ///         was finished.
 const void *hist_iter(const void *const iter, const uint8_t history_type,
                       const bool zero, histentry_T *const hist)
@@ -5143,9 +5143,9 @@ const void *hist_iter(const void *const iter, const uint8_t history_type,
 /// Get array of history items
 ///
 /// @param[in]   history_type  Type of the history to get array for.
-/// @param[out]  new_hisidx    Location where last index in the new array should 
+/// @param[out]  new_hisidx    Location where last index in the new array should
 ///                            be saved.
-/// @param[out]  new_hisnum    Location where last history number in the new 
+/// @param[out]  new_hisnum    Location where last history number in the new
 ///                            history should be saved.
 ///
 /// @return Pointer to the array or NULL.

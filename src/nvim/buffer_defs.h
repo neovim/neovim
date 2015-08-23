@@ -512,10 +512,10 @@ struct file_buffer {
   visualinfo_T b_visual;
   int b_visual_mode_eval;            /* b_visual.vi_mode for visualmode() */
 
-  fmark_T b_last_cursor;        /* cursor position when last unloading this
-                                   buffer */
-  fmark_T b_last_insert;        /* where Insert mode was left */
-  fmark_T b_last_change;        /* position of last change: '. mark */
+  fmark_T b_last_cursor;        // cursor position when last unloading this
+                                // buffer
+  fmark_T b_last_insert;        // where Insert mode was left
+  fmark_T b_last_change;        // position of last change: '. mark
 
   /*
    * the changelist contains old change positions
