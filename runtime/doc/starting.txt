@@ -1121,10 +1121,7 @@ include:
   Such errors are listed at |shada-critical-contents-errors|.
 - If writing to the temporary file failed: e.g. because of the insufficient 
   space left.
-- If renaming file failed: e.g. because of insufficient permissions.  On Unix 
-  permissions are checked before trying to create even the temporary file, so 
-  permission error can only happen if permissions were changed after starting 
-  to edit the temporary file and before renaming it.
+- If renaming file failed: e.g. because of insufficient permissions.
 - If target ShaDa file has different from the Neovim instance's owners (user 
   and group) and changing them failed.  Unix-specific, applies only when 
   Neovim was launched from root.
