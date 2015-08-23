@@ -1343,7 +1343,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
           set_last_used_pattern(
               cur_entry.data.search_pattern.is_substitute_pattern);
         }
-        if (!cur_entry.data.search_pattern.is_substitute_pattern) {
+        if (cur_entry.data.search_pattern.is_last_used) {
           SET_NO_HLSEARCH(!cur_entry.data.search_pattern.highlighted);
         }
         // Do not free shada entry: its allocated memory was saved above.
@@ -2513,59 +2513,47 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
     } while (var_iter != NULL);
   }
 
+  const bool search_highlighted = !(no_hlsearch
+                                    || find_shada_parameter('h') != NULL);
+  const bool search_last_used = search_was_last_used();
+#define ADD_SEARCH_PAT(func, wms_attr, hlo, pcae, o, is_sub) \
+  do { \
+    SearchPattern pat; \
+    func(&pat); \
+    if (pat.pat != NULL) { \
+      wms->wms_attr = (PossiblyFreedShadaEntry) { \
+        .can_free_entry = false, \
+        .data = { \
+          .type = kSDItemSearchPattern, \
+          .timestamp = pat.timestamp, \
+          .data = { \
+            .search_pattern = { \
+              .magic = pat.magic, \
+              .smartcase = !pat.no_scs, \
+              .has_line_offset = hlo, \
+              .place_cursor_at_end = pcae, \
+              .offset = o, \
+              .is_last_used = (is_sub ^ search_last_used), \
+              .is_substitute_pattern = is_sub, \
+              .highlighted = ((is_sub ^ search_last_used) \
+                              && search_highlighted), \
+              .pat = (char *) pat.pat, \
+              .additional_data = pat.additional_data, \
+            } \
+          } \
+        } \
+      }; \
+    } \
+  } while (0)
+
   // Initialize search pattern
-  {
-    SearchPattern pat;
-    get_search_pattern(&pat);
-    wms->search_pattern = (PossiblyFreedShadaEntry) {
-      .can_free_entry = false,
-      .data = {
-        .type = kSDItemSearchPattern,
-        .timestamp = pat.timestamp,
-        .data = {
-          .search_pattern = {
-            .magic = pat.magic,
-            .smartcase = !pat.no_scs,
-            .has_line_offset = pat.off.line,
-            .place_cursor_at_end = pat.off.end,
-            .offset = pat.off.off,
-            .is_last_used = search_was_last_used(),
-            .is_substitute_pattern = false,
-            .highlighted = !(no_hlsearch || find_shada_parameter('h') != NULL),
-            .pat = (char *) pat.pat,
-            .additional_data = pat.additional_data,
-          }
-        }
-      }
-    };
-  }
+  ADD_SEARCH_PAT(get_search_pattern, search_pattern, pat.off.line, \
+                 pat.off.end, pat.off.off, false);
 
   // Initialize substitute search pattern
-  {
-    SearchPattern pat;
-    get_substitute_pattern(&pat);
-    wms->sub_search_pattern = (PossiblyFreedShadaEntry) {
-      .can_free_entry = false,
-      .data = {
-        .type = kSDItemSearchPattern,
-        .timestamp = pat.timestamp,
-        .data = {
-          .search_pattern = {
-            .magic = pat.magic,
-            .smartcase = !pat.no_scs,
-            .has_line_offset = false,
-            .place_cursor_at_end = false,
-            .offset = 0,
-            .is_last_used = !search_was_last_used(),
-            .is_substitute_pattern = true,
-            .highlighted = false,
-            .pat = (char *) pat.pat,
-            .additional_data = pat.additional_data,
-          }
-        }
-      }
-    };
-  }
+  ADD_SEARCH_PAT(get_substitute_pattern, sub_search_pattern, false, false, 0,
+                 true);
+#undef ADD_SEARCH_PAT
 
   // Initialize substitute replacement string
   {

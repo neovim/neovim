@@ -39,7 +39,7 @@ describe('ShaDa forward compatibility support code', function()
     nvim_command('wshada ' .. shada_fname)
     found = false
     for _, v in ipairs(read_shada_file(shada_fname)) do
-      if v.type == 2 and v.value.ss then
+      if v.type == 2 and not v.value.ss then
         eq(nil, v.value.sX)
         found = true
       end
