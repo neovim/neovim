@@ -114,17 +114,19 @@ bool os_can_exe(const char_u *name, char_u **abspath)
 static bool is_executable(const char_u *name)
   FUNC_ATTR_NONNULL_ALL
 {
+#ifdef WIN32
+    // Windows does not have an executable bit.
+    // Instead check if the file exists and is readable.
+    return os_file_is_readable((char *) name);
+#else
   int32_t mode = os_getperm(name);
 
   if (mode < 0) {
     return false;
   }
 
-  if (S_ISREG(mode) && (S_IXUSR & mode)) {
-    return true;
-  }
-
-  return false;
+  return (S_ISREG(mode) && (S_IXUSR & mode));
+#endif
 }
 
 /// Checks if a file is inside the `$PATH` and is executable.
