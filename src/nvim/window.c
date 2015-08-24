@@ -2948,7 +2948,7 @@ void free_tabpage(tabpage_T *tp)
   unref_var_dict(tp->tp_vars);
 
 
-
+  xfree(tp->localdir);  // Free tab-local working directory
   xfree(tp);
 }
 
@@ -3560,18 +3560,24 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid, int tri
     curwin->w_cursor.coladd = 0;
   changed_line_abv_curs();      /* assume cursor position needs updating */
 
-  if (curwin->w_localdir != NULL) {
-    /* Window has a local directory: Save current directory as global
-     * directory (unless that was done already) and change to the local
-     * directory. */
+  // The new directory is either the local directory of the window, of the tab
+  // or NULL.
+  char_u *new_dir = curwin->w_localdir ? curwin->w_localdir : curtab->localdir;
+
+  if (new_dir) {
+    // Window/tab has a local directory: Save current directory as global
+    // directory (unless that was done already) and change to the local
+    // directory.
     if (globaldir == NULL) {
       char_u cwd[MAXPATHL];
 
-      if (os_dirname(cwd, MAXPATHL) == OK)
+      if (os_dirname(cwd, MAXPATHL) == OK) {
         globaldir = vim_strsave(cwd);
+      }
     }
-    if (os_chdir((char *)curwin->w_localdir) == 0)
-      shorten_fnames(TRUE);
+    if (os_chdir((char *)new_dir) == 0) {
+      shorten_fnames(true);
+    }
   } else if (globaldir != NULL) {
     /* Window doesn't have a local directory and we are not in the global
      * directory: Change to the global directory. */

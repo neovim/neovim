@@ -1886,7 +1886,7 @@ getcmdpos()			Number	return cursor position in command-line
 getcmdtype()			String	return current command-line type
 getcmdwintype()			String	return current command-line window type
 getcurpos()			List	position of the cursor
-getcwd()			String	the current working directory
+getcwd( [{scope}])			String	the current working directory
 getfontname( [{name}])		String	name of font being used
 getfperm( {fname})		String	file permissions of file {fname}
 getfsize( {fname})		Number	size in bytes of file {fname}
@@ -3559,9 +3559,22 @@ getcurpos()	Get the position of the cursor.  This is like getpos('.'), but
 			MoveTheCursorAround
 			call setpos('.', save_cursor)
 <
-							*getcwd()*
-getcwd()	The result is a String, which is the name of the current
-		working directory.
+getcwd([{window}[, {tab}]])					*getcwd()*
+		With no argument the result is a String, which is the name of the
+		current effective working directory. If an arguments are provided for a
+		window or a tabpage the working directory of that scope is returned.
+
+		Tabs and windows are identified using their respective number. If a
+		number is 0 the current tab or window is implied. If one is not given
+		it defaults to 0. Thus
+		
+			getcwd()
+			getcwd(0)
+			getcwd(0, 0)
+
+		are all equal. If {window} is -1 it will be ignored and only the tab
+		will be looked at.
+
 
 getfsize({fname})					*getfsize()*
 		The result is a Number, which is the size in bytes of the
@@ -3896,9 +3909,20 @@ has_key({dict}, {key})					*has_key()*
 		The result is a Number, which is 1 if |Dictionary| {dict} has
 		an entry with key {key}.  Zero otherwise.
 
-haslocaldir()						*haslocaldir()*
-		The result is a Number, which is 1 when the current
-		window has set a local path via |:lcd|, and 0 otherwise.
+haslocaldir([{window}[, {tab}]])						*haslocaldir()*
+		The result is a Number, which is 1 when the specified tabpage or window
+		has a local path set via |:lcd| or |:tcd|, and 0 otherwise.
+		
+		Tabs and windows are identified using their respective number. If a
+		number is 0 the current tab or window is implied. If one is not given
+		it defaults to 0. Thus
+		
+			haslocaldir()
+			haslocaldir(0)
+			haslocaldir(0, 0)
+
+		are all equal. If {window} is -1 it will be ignored and only the tab
+		will be looked at.
 
 hasmapto({what} [, {mode} [, {abbr}]])			*hasmapto()*
 		The result is a Number, which is 1 if there is a mapping that

@@ -6656,7 +6656,7 @@ static struct fst {
 } functions[] =
 {
   { "abs",               1, 1, f_abs },
-  { "acos",              1, 1, f_acos },    // WJMc
+  { "acos",              1, 1, f_acos },  // WJMc
   { "add",               2, 2, f_add },
   { "and",               2, 2, f_and },
   { "append",            2, 2, f_append },
@@ -6673,9 +6673,9 @@ static struct fst {
   { "browse",            4, 4, f_browse },
   { "browsedir",         2, 2, f_browsedir },
   { "bufexists",         1, 1, f_bufexists },
-  { "buffer_exists",     1, 1, f_bufexists },       // obsolete
-  { "buffer_name",       1, 1, f_bufname },         // obsolete
-  { "buffer_number",     1, 1, f_bufnr },           // obsolete
+  { "buffer_exists",     1, 1, f_bufexists },  // obsolete
+  { "buffer_name",       1, 1, f_bufname },    // obsolete
+  { "buffer_number",     1, 1, f_bufnr },      // obsolete
   { "buflisted",         1, 1, f_buflisted },
   { "bufloaded",         1, 1, f_bufloaded },
   { "bufname",           1, 1, f_bufname },
@@ -6719,7 +6719,7 @@ static struct fst {
   { "expand",            1, 3, f_expand },
   { "extend",            2, 3, f_extend },
   { "feedkeys",          1, 2, f_feedkeys },
-  { "file_readable",     1, 1, f_filereadable },    // obsolete
+  { "file_readable",     1, 1, f_filereadable },  // obsolete
   { "filereadable",      1, 1, f_filereadable },
   { "filewritable",      1, 1, f_filewritable },
   { "filter",            2, 2, f_filter },
@@ -6749,7 +6749,7 @@ static struct fst {
   { "getcmdtype",        0, 0, f_getcmdtype },
   { "getcmdwintype",     0, 0, f_getcmdwintype },
   { "getcurpos",         0, 0, f_getcurpos },
-  { "getcwd",            0, 0, f_getcwd },
+  { "getcwd",            0, 2, f_getcwd },
   { "getfontname",       0, 1, f_getfontname },
   { "getfperm",          1, 1, f_getfperm },
   { "getfsize",          1, 1, f_getfsize },
@@ -6773,7 +6773,7 @@ static struct fst {
   { "globpath",          2, 5, f_globpath },
   { "has",               1, 1, f_has },
   { "has_key",           2, 2, f_has_key },
-  { "haslocaldir",       0, 0, f_haslocaldir },
+  { "haslocaldir",       0, 2, f_haslocaldir },
   { "hasmapto",          1, 3, f_hasmapto },
   { "highlightID",       1, 1, f_hlID },            // obsolete
   { "highlight_exists",  1, 1, f_hlexists },        // obsolete
@@ -9758,22 +9758,144 @@ static void f_getcmdwintype(typval_T *argvars, typval_T *rettv)
   rettv->vval.v_string[0] = cmdwin_type;
 }
 
-/*
- * "getcwd()" function
- */
+/// `getcwd([{win}[, {tab}]])` function
+///
+/// Every scope not specified implies the currently selected scope object.
+///
+/// @pre  The arguments must be of type number.
+/// @pre  There may not be more than two arguments.
+/// @pre  An argument may not be -1 if preceding arguments are not all -1.
+///
+/// @post  The return value will be a string.
 static void f_getcwd(typval_T *argvars, typval_T *rettv)
 {
-  char_u      *cwd;
+  // Possible scope of working directory to return.
+  CdScope scope = kCdScopeWindow;
+
+  // Numbers of the scope objects (window, tab) we want the working directory
+  // of. A `-1` means to skip this scope, a `0` means the current object.
+  int scope_number[] = {
+    [kCdScopeWindow] = 0,  // Number of window to look at.
+    [kCdScopeTab   ] = 0,  // Number of tab to look at.
+  };
+
+  char_u *cwd  = NULL;  // Current working directory to print
+  char_u *from = NULL;  // The original string to copy
+
+  tabpage_T *tp  = curtab;  // The tabpage to look at.
+  win_T     *win = curwin;  // The window to look at.
 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
-  cwd = xmalloc(MAXPATHL);
-  if (os_dirname(cwd, MAXPATHL) != FAIL) {
-    rettv->vval.v_string = vim_strsave(cwd);
-#ifdef BACKSLASH_IN_FILENAME
-    slash_adjust(rettv->vval.v_string);
-#endif
+
+  // Pre-conditions and scope extraction together
+  for (int i = 0; i < kCdScopeGlobal; i++) {
+    if (argvars[i].v_type == VAR_UNKNOWN) {
+      break;
+    }
+    if (argvars[i].v_type != VAR_NUMBER) {
+      EMSG(_(e_invarg));
+      return;
+    }
+    scope_number[i] = argvars[i].vval.v_number;
+    // The scope is the current iteration step.
+    scope = i;
+
+    if (scope_number[i] < -1) {
+      EMSG(_(e_invarg));
+      return;
+    }
   }
+
+  // Allocate and initialize the string to return.
+  cwd = xmalloc(MAXPATHL);
+
+  // Get the scope and numbers from the arguments
+  for (int i = 0; i < MAX_CD_SCOPE; i++) {
+    // If there is no argument there are no more scopes after it, break out.
+    if (argvars[i].v_type == VAR_UNKNOWN) {
+      break;
+    }
+    scope_number[i] = argvars[i].vval.v_number;
+    // The scope is the current iteration step.
+    scope = i;
+    // It is an error for the scope number to be less than `-1`.
+    if (scope_number[i] < -1) {
+      EMSG(_(e_invarg));
+      goto end;
+    }
+  }
+
+  // It the deepest scope number is `-1` advance the scope by one.
+  if (scope_number[scope] < 0) {
+    scope++;
+  }
+
+  // Find the tabpage by number
+  if (scope_number[kCdScopeTab] == -1) {
+    tp = NULL;
+  } else if (scope_number[kCdScopeTab] > 0) {
+    tp = find_tabpage(scope_number[kCdScopeTab]);
+    if (!tp) {
+      EMSG(_("E5000: Cannot find tab number."));
+      goto end;
+    }
+  }
+
+  // Find the window in `tp` by number, `NULL` if none.
+  if (scope_number[kCdScopeWindow] == -1) {
+    win = NULL;
+  } else if (scope_number[kCdScopeWindow] >= 0) {
+    if (!tp) {
+      EMSG(_("E5001: A higher-level scope cannot be -1 if a lower-level"
+             " scope is >= 0."));
+      goto end;
+    }
+
+    if (scope_number[kCdScopeWindow] > 0) {
+      win = find_win_by_nr(&argvars[0], curtab);
+      if (!win) {
+        EMSG(_("E5002: Cannot find window number."));
+        goto end;
+      }
+    }
+  }
+
+  switch (scope) {
+    case kCdScopeWindow:
+      from = win->w_localdir;
+      if (from) {
+        break;
+      }
+    case kCdScopeTab:  // FALLTHROUGH
+      from = tp->localdir;
+      if (from) {
+        break;
+      }
+    case kCdScopeGlobal:  // FALLTHROUGH
+      // The `globaldir` variable is not always set.
+      if (globaldir) {
+        from = globaldir;
+      } else {
+        // Copy the OS path directly into output string and jump to the end.
+        if (os_dirname(cwd, MAXPATHL) == FAIL) {
+          EMSG(_("E41: Could not display path."));
+          goto end;
+        }
+      }
+      break;
+  }
+
+  if (from) {
+    xstrlcpy((char *)cwd, (char *)from, MAXPATHL);
+  }
+
+  rettv->vval.v_string = vim_strsave(cwd);
+#ifdef BACKSLASH_IN_FILENAME
+  slash_adjust(rettv->vval.v_string);
+#endif
+
+end:
   xfree(cwd);
 }
 
@@ -10592,12 +10714,99 @@ static void f_has_key(typval_T *argvars, typval_T *rettv)
       get_tv_string(&argvars[1]), -1) != NULL;
 }
 
-/*
- * "haslocaldir()" function
- */
+/// `haslocaldir([{win}[, {tab}]])` function
+///
+/// Returns `1` if the scope object has a local directory, `0` otherwise. If a
+/// scope object is not specified the current one is implied. This function
+/// share a lot of code with `f_getcwd`.
+///
+/// @pre  The arguments must be of type number.
+/// @pre  There may not be more than two arguments.
+/// @pre  An argument may not be -1 if preceding arguments are not all -1.
+///
+/// @post  The return value will be either the number `1` or `0`.
 static void f_haslocaldir(typval_T *argvars, typval_T *rettv)
 {
-  rettv->vval.v_number = (curwin->w_localdir != NULL);
+  // Possible scope of working directory to return.
+  CdScope scope = kCdScopeWindow;
+
+  // Numbers of the scope objects (window, tab) we want the working directory
+  // of. A `-1` means to skip this scope, a `0` means the current object.
+  int scope_number[] = {
+    [kCdScopeWindow] = 0,  // Number of window to look at.
+    [kCdScopeTab   ] = 0,  // Number of tab to look at.
+  };
+
+  tabpage_T *tp  = curtab;  // The tabpage to look at.
+  win_T     *win = curwin;  // The window to look at.
+
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  // Pre-conditions and scope extraction together
+  for (int i = 0; i < kCdScopeGlobal; i++) {
+    if (argvars[i].v_type == VAR_UNKNOWN) {
+      break;
+    }
+    if (argvars[i].v_type != VAR_NUMBER) {
+      EMSG(_(e_invarg));
+      return;
+    }
+    scope_number[i] = argvars[i].vval.v_number;
+    // The scope is the current iteration step.
+    scope = i;
+    if (scope_number[i] < -1) {
+      EMSG(_(e_invarg));
+      return;
+    }
+  }
+
+  // It the deepest scope number is `-1` advance the scope by one.
+  if (scope_number[scope] < 0) {
+    ++scope;
+  }
+
+  // Find the tabpage by number
+  if (scope_number[kCdScopeTab] == -1) {
+    tp = NULL;
+  } else if (scope_number[kCdScopeTab] > 0) {
+    tp = find_tabpage(scope_number[kCdScopeTab]);
+    if (!tp) {
+      EMSG(_("5000: Cannot find tab number."));
+      return;
+    }
+  }
+
+  // Find the window in `tp` by number, `NULL` if none.
+  if (scope_number[kCdScopeWindow] == -1) {
+    win = NULL;
+  } else if (scope_number[kCdScopeWindow] >= 0) {
+    if (!tp) {
+      EMSG(_("E5001: A higher-level scope cannot be -1 if a lower-level"
+             " scope is >= 0."));
+      return;
+    }
+
+    if (scope_number[kCdScopeWindow] > 0) {
+      win = find_win_by_nr(&argvars[0], curtab);
+      if (!win) {
+        EMSG(_("E5002: Cannot find window number."));
+        return;
+      }
+    }
+  }
+
+  switch (scope) {
+    case kCdScopeWindow:
+      rettv->vval.v_number = win->w_localdir ? 1 : 0;
+      break;
+    case kCdScopeTab:
+      rettv->vval.v_number = tp->localdir ? 1 : 0;
+      break;
+    case kCdScopeGlobal:
+      assert(0);
+      break;
+  }
 }
 
 /*
