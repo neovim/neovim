@@ -651,6 +651,8 @@ set_options_default (
       set_option_default(i, opt_flags, p_cp);
     }
   }
+  // set 'laststatus'
+  last_status(false);
 
   /* The 'scroll' option must be computed for all windows. */
   FOR_ALL_TAB_WINDOWS(tp, wp) {
@@ -3662,10 +3664,9 @@ set_num_option (
       p_wmw = p_wiw;
     }
     win_setminheight();
-  }
-  /* (re)set last window status line */
-  else if (pp == &p_ls) {
-    last_status(FALSE);
+  } else if (pp == &p_ls) {
+    /* (re)set last window status line */
+    last_status(false);
   }
   /* (re)set tab page line */
   else if (pp == &p_stal) {

@@ -4052,7 +4052,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	that works for you to avoid mappings to break.
 
 					*'laststatus'* *'ls'*
-'laststatus' 'ls'	number	(default 1)
+'laststatus' 'ls'	number	(default 2)
 			global
 	The value of this option influences when the last window will have a
 	status line:

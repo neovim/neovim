@@ -1,7 +1,50 @@
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
-local clear, feed, execute = helpers.clear, helpers.feed, helpers.execute
+local nvim_prog = helpers.nvim_prog
+local spawn, set_session, clear = helpers.spawn, helpers.set_session, helpers.clear
+local feed, execute = helpers.feed, helpers.execute
 local insert, wait = helpers.insert, helpers.wait
+
+describe('Initial screen', function()
+  local screen
+  local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
+        '--cmd', 'set shortmess+=I background=light noswapfile',
+        '--embed'}
+
+  before_each(function()
+    if session then
+      session:exit(0)
+    end
+    local screen_nvim = spawn(nvim_argv)
+    set_session(screen_nvim)
+    screen = Screen.new()
+    screen:attach()
+    screen:set_default_attr_ignore( {{bold=true, foreground=255}} )
+  end)
+
+  after_each(function()
+    screen:detach()
+  end)
+
+  it('is the default initial screen', function()
+      screen:expect([[
+      ^                                                     |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      [No Name]                                            |
+                                                           |
+    ]])
+  end)
+end)
 
 describe('Screen', function()
   local screen
@@ -101,7 +144,6 @@ describe('Screen', function()
       end)
     end)
   end)
-
 
   describe('window', function()
     describe('split', function()
