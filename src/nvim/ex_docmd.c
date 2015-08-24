@@ -2948,6 +2948,8 @@ set_one_cmd_context (
   case CMD_chdir:
   case CMD_lcd:
   case CMD_lchdir:
+  case CMD_tcd:
+  case CMD_tchdir:
     if (xp->xp_context == EXPAND_FILES)
       xp->xp_context = EXPAND_DIRECTORIES;
     break;
@@ -6788,27 +6790,49 @@ void free_cd_dir(void)
 
 #endif
 
-/*
- * Deal with the side effects of changing the current directory.
- * When "local" is TRUE then this was after an ":lcd" command.
- */
-void post_chdir(int local)
+/// Deal with the side effects of changing the current directory.
+///
+/// @param scope  Scope of the function call (editor, tab or window).
+void post_chdir(CdScope scope)
 {
+  assert(scope >= kCdScopeEditor && scope <= MAX_CD_SCOPE);
+
+  // The local directory of the current window is always overwritten.
   xfree(curwin->w_localdir);
   curwin->w_localdir = NULL;
-  if (local) {
-    /* If still in global directory, need to remember current
-     * directory as global directory. */
-    if (globaldir == NULL && prev_dir != NULL)
+
+  // Overwrite the local directory of current the tab page for `cd` and `tcd`
+  if (scope <= kCdScopeTab) {
+    xfree(curtab->localdir);
+    curtab->localdir = NULL;
+  }
+
+  if (scope > kCdScopeEditor) {
+    // If still in global directory, need to remember current directory as
+    // global directory.
+    if (globaldir == NULL && prev_dir != NULL) {
       globaldir = vim_strsave(prev_dir);
-    /* Remember this local directory for the window. */
-    if (os_dirname(NameBuff, MAXPATHL) == OK)
-      curwin->w_localdir = vim_strsave(NameBuff);
-  } else {
-    /* We are now in the global directory, no need to remember its
-     * name. */
+    }
+  }
+
+  switch (scope) {
+  case kCdScopeEditor:
+    // We are now in the global directory, no need to remember its name.
     xfree(globaldir);
     globaldir = NULL;
+    break;
+  case kCdScopeTab:
+    // Remember this local directory for the tab page.
+    if (os_dirname(NameBuff, MAXPATHL) == OK) {
+      curtab->localdir = vim_strsave(NameBuff);
+    }
+    break;
+  case kCdScopeWindow:
+    // Remember this local directory for the window.
+    if (os_dirname(NameBuff, MAXPATHL) == OK) {
+      curwin->w_localdir = vim_strsave(NameBuff);
+    }
+    break;
   }
 
   shorten_fnames(TRUE);
@@ -6861,7 +6885,22 @@ void ex_cd(exarg_T *eap)
     if (new_dir == NULL || vim_chdir(new_dir))
       EMSG(_(e_failed));
     else {
-      post_chdir(eap->cmdidx == CMD_lcd || eap->cmdidx == CMD_lchdir);
+      CdScope scope = kCdScopeEditor; // Depends on command invoked
+
+      switch (eap->cmdidx) {
+      case CMD_tcd:
+      case CMD_tchdir:
+        scope = kCdScopeTab;
+        break;
+      case CMD_lcd:
+      case CMD_lchdir:
+        scope = kCdScopeWindow;
+        break;
+      default:
+        break;
+      }
+
+      post_chdir(scope);
 
       /* Echo the new current directory if the command was typed. */
       if (KeyTyped || p_verbose >= 5)

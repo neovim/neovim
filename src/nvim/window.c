@@ -3541,6 +3541,20 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid, int tri
     }
     if (os_chdir((char *)curwin->w_localdir) == 0)
       shorten_fnames(TRUE);
+  
+  } else if (curtab->localdir != NULL) {
+    // Similar to above, but if the tab has a local directory.
+    if (globaldir == NULL) {
+      char_u cwd[MAXPATHL];
+
+      if (os_dirname(cwd, MAXPATHL) == OK) {
+        globaldir = vim_strsave(cwd);
+      }
+    }
+    if (os_chdir((char *)curtab->localdir) == 0) {
+      shorten_fnames(true);
+    }
+
   } else if (globaldir != NULL) {
     /* Window doesn't have a local directory and we are not in the global
      * directory: Change to the global directory. */

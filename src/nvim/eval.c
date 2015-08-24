@@ -6631,6 +6631,7 @@ static struct fst {
   {"has_key",         2, 2, f_has_key},
   {"haslocaldir",     0, 0, f_haslocaldir},
   {"hasmapto",        1, 3, f_hasmapto},
+  {"hastabdir",       0, 0, f_hastabdir},
   {"highlightID",     1, 1, f_hlID},            /* obsolete */
   {"highlight_exists",1, 1, f_hlexists},        /* obsolete */
   {"histadd",         2, 2, f_histadd},
@@ -10207,6 +10208,12 @@ static void f_hasmapto(typval_T *argvars, typval_T *rettv)
     rettv->vval.v_number = TRUE;
   else
     rettv->vval.v_number = FALSE;
+}
+
+/// `hastabdir()` function
+static void f_hastabdir(typval_T *argvars, typval_T *rettv)
+{
+  rettv->vval.v_number = (curtab->localdir != NULL);
 }
 
 /*

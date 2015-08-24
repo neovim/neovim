@@ -752,6 +752,7 @@ System functions and manipulation of files:
 	getfsize()		get the size of a file
 	getcwd()		get the current working directory
 	haslocaldir()		check if current window used |:lcd|
+	hastabdir()		check if current tab used |:tcd|
 	tempname()		get the name of a temporary file
 	mkdir()			create a new directory
 	delete()		delete a file
