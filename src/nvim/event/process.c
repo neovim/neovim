@@ -8,7 +8,7 @@
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
 #include "nvim/event/process.h"
-#include "nvim/event/uv_process.h"
+#include "nvim/event/libuv_process.h"
 #include "nvim/event/pty_process.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"
@@ -47,7 +47,7 @@ bool process_spawn(Process *proc) FUNC_ATTR_NONNULL_ALL
   bool success;
   switch (proc->type) {
     case kProcessTypeUv:
-      success = uv_process_spawn((UvProcess *)proc);
+      success = libuv_process_spawn((LibuvProcess *)proc);
       break;
     case kProcessTypePty:
       success = pty_process_spawn((PtyProcess *)proc);
@@ -68,7 +68,7 @@ bool process_spawn(Process *proc) FUNC_ATTR_NONNULL_ALL
     }
 
     if (proc->type == kProcessTypeUv) {
-      uv_close((uv_handle_t *)&(((UvProcess *)proc)->uv), NULL);
+      uv_close((uv_handle_t *)&(((LibuvProcess *)proc)->uv), NULL);
     } else {
       process_close(proc);
     }
@@ -307,7 +307,7 @@ static void process_close(Process *proc)
   proc->closed = true;
   switch (proc->type) {
     case kProcessTypeUv:
-      uv_process_close((UvProcess *)proc);
+      libuv_process_close((LibuvProcess *)proc);
       break;
     case kProcessTypePty:
       pty_process_close((PtyProcess *)proc);

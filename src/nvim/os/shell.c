@@ -9,7 +9,7 @@
 #include "nvim/lib/kvec.h"
 #include "nvim/log.h"
 #include "nvim/event/loop.h"
-#include "nvim/event/uv_process.h"
+#include "nvim/event/libuv_process.h"
 #include "nvim/event/rstream.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/signal.h"
@@ -205,7 +205,7 @@ static int do_os_system(char **argv,
   xstrlcpy(prog, argv[0], MAXPATHL);
 
   Stream in, out, err;
-  UvProcess uvproc = uv_process_init(&loop, &buf);
+  LibuvProcess uvproc = libuv_process_init(&loop, &buf);
   Process *proc = &uvproc.process;
   Queue *events = queue_new_child(loop.events);
   proc->events = events;

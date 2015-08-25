@@ -10,7 +10,7 @@
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/remote_ui.h"
 #include "nvim/event/loop.h"
-#include "nvim/event/uv_process.h"
+#include "nvim/event/libuv_process.h"
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
 #include "nvim/event/socket.h"
@@ -55,7 +55,7 @@ typedef struct {
   union {
     Stream stream;
     struct {
-      UvProcess uvproc;
+      LibuvProcess uvproc;
       Stream in;
       Stream out;
       Stream err;
@@ -119,7 +119,7 @@ void channel_teardown(void)
 uint64_t channel_from_process(char **argv)
 {
   Channel *channel = register_channel(kChannelTypeProc);
-  channel->data.process.uvproc = uv_process_init(&loop, channel);
+  channel->data.process.uvproc = libuv_process_init(&loop, channel);
   Process *proc = &channel->data.process.uvproc.process;
   proc->argv = argv;
   proc->in = &channel->data.process.in;

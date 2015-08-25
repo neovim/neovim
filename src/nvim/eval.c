@@ -84,7 +84,7 @@
 #include "nvim/version.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
-#include "nvim/event/uv_process.h"
+#include "nvim/event/libuv_process.h"
 #include "nvim/event/pty_process.h"
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
@@ -456,7 +456,7 @@ static dictitem_T vimvars_var;                  /* variable used for v: */
 
 typedef struct {
   union {
-    UvProcess uv;
+    LibuvProcess uv;
     PtyProcess pty;
   } proc;
   Stream in, out, err;
@@ -21098,7 +21098,7 @@ static inline TerminalJobData *common_job_init(char **argv, ufunc_T *on_stdout,
   if (pty) {
     data->proc.pty = pty_process_init(&loop, data);
   } else {
-    data->proc.uv = uv_process_init(&loop, data);
+    data->proc.uv = libuv_process_init(&loop, data);
   }
   Process *proc = (Process *)&data->proc;
   proc->argv = argv;
