@@ -17,16 +17,15 @@
 #include "nvim/event/loop.h"
 #include "nvim/event/signal.h"
 #include "nvim/tui/tui.h"
+#include "nvim/tui/input.h"
+#include "nvim/os/input.h"
+#include "nvim/os/os.h"
 #include "nvim/strings.h"
 
 // Space reserved in the output buffer to restore the cursor to normal when
 // flushing. No existing terminal will require 32 bytes to do that.
 #define CNORM_COMMAND_MAX_SIZE 32
 #define OUTBUF_SIZE 0xffff
-
-typedef struct term_input TermInput;
-
-#include "term_input.inl"
 
 typedef struct {
   int top, bot, left, right;

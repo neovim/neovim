@@ -1,21 +1,64 @@
-#include <termkey.h>
 
+#include "nvim/tui/input.h"
+#include "nvim/vim.h"
+#include "nvim/api/vim.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/misc2.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 #include "nvim/event/rstream.h"
-#include "nvim/event/time.h"
 
 #define PASTETOGGLE_KEY "<f37>"
 
-struct term_input {
-  int in_fd;
-  bool paste_enabled;
-  TermKey *tk;
-  TimeWatcher timer_handle;
-  Stream read_stream;
-};
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "tui/input.c.generated.h"
+#endif
+
+TermInput *term_input_new(void)
+{
+  TermInput *rv = xmalloc(sizeof(TermInput));
+  rv->paste_enabled = false;
+  rv->in_fd = 0;
+
+  const char *term = os_getenv("TERM");
+  if (!term) {
+    term = "";  // termkey_new_abstract assumes non-null (#2745)
+  }
+  rv->tk = termkey_new_abstract(term, 0);
+  int curflags = termkey_get_canonflags(rv->tk);
+  termkey_set_canonflags(rv->tk, curflags | TERMKEY_CANON_DELBS);
+  // setup input handle
+  rstream_init_fd(&loop, &rv->read_stream, rv->in_fd, 0xfff, rv);
+  rstream_start(&rv->read_stream, read_cb);
+  // initialize a timer handle for handling ESC with libtermkey
+  time_watcher_init(&loop, &rv->timer_handle, rv);
+  // Set the pastetoggle option to a special key that will be sent when
+  // \e[20{0,1}~/ are received
+  Error err = ERROR_INIT;
+  vim_set_option(cstr_as_string("pastetoggle"),
+      STRING_OBJ(cstr_as_string(PASTETOGGLE_KEY)), &err);
+  return rv;
+}
+
+void term_input_destroy(TermInput *input)
+{
+  time_watcher_stop(&input->timer_handle);
+  time_watcher_close(&input->timer_handle, NULL);
+  rstream_stop(&input->read_stream);
+  stream_close(&input->read_stream, NULL);
+  termkey_destroy(input->tk);
+  // Run once to remove references to input/timer handles
+  loop_poll_events(&loop, 0);
+  xfree(input);
+}
+
+void term_input_set_encoding(TermInput *input, char* enc)
+{
+  int enc_flag = strcmp(enc, "utf-8") == 0 ? TERMKEY_FLAG_UTF8
+                                           : TERMKEY_FLAG_RAW;
+  termkey_set_flags(input->tk, enc_flag);
+}
 
 static void forward_simple_utf8(TermKeyKey *key)
 {
@@ -277,49 +320,4 @@ static void restart_reading(void **argv)
   TermInput *input = argv[0];
   rstream_init_fd(&loop, &input->read_stream, input->in_fd, 0xfff, input);
   rstream_start(&input->read_stream, read_cb);
-}
-
-static TermInput *term_input_new(void)
-{
-  TermInput *rv = xmalloc(sizeof(TermInput));
-  rv->paste_enabled = false;
-  rv->in_fd = 0;
-
-  const char *term = os_getenv("TERM");
-  if (!term) {
-    term = "";  // termkey_new_abstract assumes non-null (#2745)
-  }
-  rv->tk = termkey_new_abstract(term, 0);
-  int curflags = termkey_get_canonflags(rv->tk);
-  termkey_set_canonflags(rv->tk, curflags | TERMKEY_CANON_DELBS);
-  // setup input handle
-  rstream_init_fd(&loop, &rv->read_stream, rv->in_fd, 0xfff, rv);
-  rstream_start(&rv->read_stream, read_cb);
-  // initialize a timer handle for handling ESC with libtermkey
-  time_watcher_init(&loop, &rv->timer_handle, rv);
-  // Set the pastetoggle option to a special key that will be sent when
-  // \e[20{0,1}~/ are received
-  Error err = ERROR_INIT;
-  vim_set_option(cstr_as_string("pastetoggle"),
-      STRING_OBJ(cstr_as_string(PASTETOGGLE_KEY)), &err);
-  return rv;
-}
-
-static void term_input_destroy(TermInput *input)
-{
-  time_watcher_stop(&input->timer_handle);
-  time_watcher_close(&input->timer_handle, NULL);
-  rstream_stop(&input->read_stream);
-  stream_close(&input->read_stream, NULL);
-  termkey_destroy(input->tk);
-  // Run once to remove references to input/timer handles
-  loop_poll_events(&loop, 0);
-  xfree(input);
-}
-
-static void term_input_set_encoding(TermInput *input, char* enc)
-{
-  int enc_flag = strcmp(enc, "utf-8") == 0 ? TERMKEY_FLAG_UTF8
-                                           : TERMKEY_FLAG_RAW;
-  termkey_set_flags(input->tk, enc_flag);
 }
