@@ -21,6 +21,15 @@
 // - SYS_VIMRC_FILE
 // - SPECIAL_WILDCHAR
 
+#ifdef _MSC_VER
+# ifndef inline
+#  define inline __inline
+# endif
+# ifndef restrict
+#  define restrict __restrict
+# endif
+#endif
+
 typedef SSIZE_T ssize_t;
 
 #ifndef SSIZE_MAX
