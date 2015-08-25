@@ -6,14 +6,14 @@
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
 #include "nvim/event/process.h"
-#include "nvim/event/uv_process.h"
+#include "nvim/event/libuv_process.h"
 #include "nvim/log.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/uv_process.c.generated.h"
+# include "event/libuv_process.c.generated.h"
 #endif
 
-bool uv_process_spawn(UvProcess *uvproc)
+bool libuv_process_spawn(LibuvProcess *uvproc)
   FUNC_ATTR_NONNULL_ALL
 {
   Process *proc = (Process *)uvproc;
@@ -55,7 +55,7 @@ bool uv_process_spawn(UvProcess *uvproc)
   return true;
 }
 
-void uv_process_close(UvProcess *uvproc)
+void libuv_process_close(LibuvProcess *uvproc)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   uv_close((uv_handle_t *)&uvproc->uv, close_cb);
