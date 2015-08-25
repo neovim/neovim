@@ -112,6 +112,10 @@ endif()
 
 add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter
     -Wstrict-prototypes -std=gnu99)
+if (MINGW)
+  # Use POSIX compatible stdio in Mingw
+  add_definitions(-D__USE_MINGW_ANSI_STDIO)
+endif()
 
 option(
   TRAVIS_CI_BUILD "Travis CI build.  Extra compilation flags will be set." OFF)
