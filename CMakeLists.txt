@@ -101,7 +101,7 @@ if(NOT HAS_ACCEPTABLE_FORTIFY)
   # Extract possible prefix to _FORTIFY_SOURCE (e.g. -Wp,-D_FORTIFY_SOURCE).
   STRING(REGEX MATCH "[^\ ]+-D_FORTIFY_SOURCE" _FORTIFY_SOURCE_PREFIX "${CMAKE_C_FLAGS}")
   STRING(REPLACE "-D_FORTIFY_SOURCE" "" _FORTIFY_SOURCE_PREFIX "${_FORTIFY_SOURCE_PREFIX}" )
-  if (NOT _FORTIFY_SOURCE_PREFIX STREQUAL "")
+  if(NOT _FORTIFY_SOURCE_PREFIX STREQUAL "")
     message(STATUS "Detected _FORTIFY_SOURCE Prefix=${_FORTIFY_SOURCE_PREFIX}.")
   endif()
   # -U in add_definitions doesn't end up in the correct spot, so we add it to
@@ -112,9 +112,19 @@ endif()
 
 add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter
     -Wstrict-prototypes -std=gnu99)
-if (MINGW)
+if(MINGW)
   # Use POSIX compatible stdio in Mingw
   add_definitions(-D__USE_MINGW_ANSI_STDIO)
+endif()
+
+include(CheckCCompilerFlag)
+check_c_compiler_flag(-fstack-protector-strong HAS_FSTACK_PROTECTOR_STRONG_FLAG)
+check_c_compiler_flag(-fstack-protector HAS_FSTACK_PROTECTOR_FLAG)
+
+if(HAS_FSTACK_PROTECTOR_STRONG_FLAG)
+  add_definitions(-fstack-protector-strong)
+elseif(HAS_FSTACK_PROTECTOR_FLAG)
+  add_definitions(-fstack-protector --param ssp-buffer-size=4)
 endif()
 
 option(
@@ -126,7 +136,6 @@ if(TRAVIS_CI_BUILD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCC)
-  include(CheckCCompilerFlag)
   check_c_compiler_flag(-Og HAS_OG_FLAG)
 else()
   set(HAS_OG_FLAG 0)
