@@ -13,9 +13,6 @@
 # include "nvim/os/unix_defs.h"
 #endif
 
-#define SIGDEFARG(s)  (int s)
-#define SIGDUMMYARG   0
-
 #if defined(DIRSIZ) && !defined(MAXNAMLEN)
 # define MAXNAMLEN DIRSIZ
 #endif

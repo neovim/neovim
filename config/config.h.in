@@ -51,8 +51,6 @@
 #cmakedefine HAVE_UTIME_H
 #cmakedefine HAVE_UTIMES
 #cmakedefine HAVE_WORKING_LIBINTL
-#define RETSIGTYPE void
-#define SIGRETURN return
 #cmakedefine UNIX
 #cmakedefine USE_FNAME_CASE
 #define USEMAN_S 1
