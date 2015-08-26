@@ -4333,6 +4333,8 @@ eval_index (
     return FAIL;
   }
 
+  init_tv(&var1);
+  init_tv(&var2);
   if (**arg == '.') {
     /*
      * dict.name
