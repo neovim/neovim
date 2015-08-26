@@ -18,16 +18,9 @@
  * have an argument??? */
 #define SIGHASARG
 
-/* List 3 arg systems here. I guess __sgi, please test and correct me. jw. */
-
 #ifdef SIGHASARG
-# ifdef SIGHAS3ARGS
-#  define SIGDEFARG(s)  (int s, int sig2, struct sigcontext *scont)
-#  define SIGDUMMYARG   0, 0, (struct sigcontext *)0
-# else
-#  define SIGDEFARG(s)  (int s)
-#  define SIGDUMMYARG   0
-# endif
+# define SIGDEFARG(s)  (int s)
+# define SIGDUMMYARG   0
 #else
 # define SIGDEFARG(s)  (void)
 # define SIGDUMMYARG
