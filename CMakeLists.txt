@@ -68,7 +68,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 string(REPLACE "-O3" "-O2" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 
 # Enable -Wconversion.
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wconversion")
+if(NOT MSVC)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wconversion")
+endif()
 
 # gcc 4.0 and better turn on _FORTIFY_SOURCE=2 automatically.  This currently
 # does not work with Neovim due to some uses of dynamically-sized structures.
@@ -110,9 +112,14 @@ if(NOT HAS_ACCEPTABLE_FORTIFY)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_FORTIFY_SOURCE_PREFIX}-U_FORTIFY_SOURCE ${_FORTIFY_SOURCE_PREFIX}-D_FORTIFY_SOURCE=1")
 endif()
 
-add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter
+if(NOT MSVC)
+  add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter
     -Wstrict-prototypes -std=gnu99)
-if (MINGW)
+else()
+  add_definitions(/W3 -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
+endif()
+
+if(MINGW)
   # Use POSIX compatible stdio in Mingw
   add_definitions(-D__USE_MINGW_ANSI_STDIO)
 endif()
