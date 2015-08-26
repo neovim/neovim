@@ -13,18 +13,8 @@
 # include "nvim/os/unix_defs.h"
 #endif
 
-/* The number of arguments to a signal handler is configured here. */
-/* It used to be a long list of almost all systems. Any system that doesn't
- * have an argument??? */
-#define SIGHASARG
-
-#ifdef SIGHASARG
-# define SIGDEFARG(s)  (int s)
-# define SIGDUMMYARG   0
-#else
-# define SIGDEFARG(s)  (void)
-# define SIGDUMMYARG
-#endif
+#define SIGDEFARG(s)  (int s)
+#define SIGDUMMYARG   0
 
 #if defined(DIRSIZ) && !defined(MAXNAMLEN)
 # define MAXNAMLEN DIRSIZ
