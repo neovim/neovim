@@ -170,7 +170,7 @@ list_vim_patches() {
 
   # Get "runtime update" commits since e2719096.
   local vim_runtime_commits=$(cd "${VIM_SOURCE_DIR}" && \
-    git log --format='%H' --grep='Updated' e2719096250a19ecdd9a35d13702879f163d2a50..HEAD)
+    git log --format='%H' --grep='^patch' --grep='^updated for version' --invert-grep e2719096250a19ecdd9a35d13702879f163d2a50..HEAD)
 
   local vim_commit
   for vim_commit in ${vim_tags} ${vim_runtime_commits}; do
