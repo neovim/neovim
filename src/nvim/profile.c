@@ -5,6 +5,7 @@
 #include "nvim/profile.h"
 #include "nvim/os/time.h"
 #include "nvim/func_attr.h"
+#include "nvim/os/os_defs.h"
 
 #include "nvim/globals.h"  // for the global `time_fd` (startuptime)
 
