@@ -67,19 +67,21 @@ ${vim_commit_url}"
 
 assign_commit_details() {
   if [[ ${1} =~ [0-9]\.[0-9]\.[0-9]{3,4} ]]; then
-    # Interpret parameter as version number.
+    # Interpret parameter as version number (tag).
     vim_version="${1}"
-    vim_commit="v${1}"
+    vim_tag="v${1}"
+    vim_commit=$( cd "${VIM_SOURCE_DIR}" \
+      && git log -1 --format="%H" ${vim_tag} )
     local strip_commit_line=true
-    vim_commit_url="https://github.com/vim/vim/tree/${vim_commit}"
   else
     # Interpret parameter as commit hash.
     vim_version="${1:0:7}"
     vim_commit="${1}"
     local strip_commit_line=false
-    vim_commit_url="https://github.com/vim/vim/commit/${vim_commit}"
   fi
-  vim_message="$(git log --pretty='format:%B' "${vim_commit}^\!")"
+
+  vim_commit_url="https://github.com/vim/vim/commit/${vim_commit}"
+  vim_message="$(git log -1 --pretty='format:%B' "${vim_commit}")"
   if [[ ${strip_commit_line} == "true" ]]; then
     # Remove first line of commit message.
     vim_message="$(echo "${vim_message}" | sed -e '1d')"
@@ -91,7 +93,7 @@ get_vim_patch() {
 
   assign_commit_details "${1}"
 
-  git log "${vim_commit}^\!" -- >/dev/null 2>&1 || {
+  git log -1 "${vim_commit}" -- >/dev/null 2>&1 || {
     >&2 echo "✘ Couldn't find Vim revision '${vim_commit}'."
     exit 3
   }
@@ -99,8 +101,8 @@ get_vim_patch() {
   echo "✔ Found Vim revision '${vim_commit}'."
 
   # Collect patch details and store into variables.
-  vim_full="$(git log --pretty=medium "${vim_commit}^\!")"
-  vim_diff="$(git diff "${vim_commit}^\!" \
+  vim_full="$(git show -1 --pretty=medium "${vim_commit}")"
+  vim_diff="$(git show -1 "${vim_commit}" \
     | sed -e 's/\( [ab]\/src\)/\1\/nvim/g')" # Change directory to src/nvim.
   neovim_message="$(commit_message)"
   neovim_pr="
@@ -162,31 +164,25 @@ list_vim_patches() {
   echo
   echo "Vim patches missing from Neovim:"
 
-  # Get vim patches and runtime file updates.
-  # Start from 7.4.442. The runtime was re-integrated from 7.4.384, but
-  # runtime patches before between 384 and 442 have already been ported
-  # to Neovim as of the creation of this script.
-  local vim_commits=$(cd "${VIM_SOURCE_DIR}" && \
-    git log --pretty='tformat:%H|%d' v7.4.442..HEAD | awk -f ${NEOVIM_SOURCE_DIR}/scripts/vim-patch-helper.awk)
+  # Get tags since 7.4.442.
+  local vim_tags=$(cd "${VIM_SOURCE_DIR}" && \
+    git tag --contains v7.4.442)
 
-  # Append remaining vim patches.
-  # Start from 7.4.160, where Neovim was forked.
-  local vim_old_commits=$(cd "${VIM_SOURCE_DIR}" && \
-    git log --pretty='tformat:%d' v7.4.160..v7.4.442 | awk '{ if ($1 != "") { gsub(/[()]/, "", $2); print($2); } }')
+  # Get "runtime update" commits since e2719096.
+  local vim_runtime_commits=$(cd "${VIM_SOURCE_DIR}" && \
+    git log --format='%H' --grep='Updated' e2719096250a19ecdd9a35d13702879f163d2a50..HEAD)
 
   local vim_commit
-  for vim_commit in ${vim_commits} ${vim_old_commits}; do
+  for vim_commit in ${vim_tags} ${vim_runtime_commits}; do
     local is_missing
     if [[ ${vim_commit} =~ v([0-9].[0-9].([0-9]{3,4})) ]]; then
       local patch_number="${BASH_REMATCH[2]}"
-      # "Proper" Vim patch
-      # Check version.c:
+      # Tagged Vim patch, check version.c:
       is_missing="$(sed -n '/static int included_patches/,/}/p' "${NEOVIM_SOURCE_DIR}/src/nvim/version.c" |
         grep -x -e "[[:space:]]*//${patch_number} NA" -e "[[:space:]]*${patch_number}," >/dev/null && echo "false" || echo "true")"
       vim_commit="${BASH_REMATCH[1]//-/.}"
     else
-      # Untagged Vim patch, e.g. runtime updates.
-      # Check Neovim log:
+      # Untagged Vim patch (e.g. runtime updates), check the Neovim git log:
       is_missing="$(cd "${NEOVIM_SOURCE_DIR}" &&
         git log -1 --no-merges --grep="vim\-patch:${vim_commit:0:7}" --pretty=format:"false")"
     fi
@@ -253,7 +249,7 @@ review_pr() {
   echo "✔ Saved pull request diff to '${NEOVIM_SOURCE_DIR}/n${base_name}.diff'."
   echo "${neovim_patch}" > "${NEOVIM_SOURCE_DIR}/n${base_name}.patch"
   echo "✔ Saved full pull request commit details to '${NEOVIM_SOURCE_DIR}/n${base_name}.patch'."
-  git diff "${vim_commit}^\!" > "${NEOVIM_SOURCE_DIR}/${base_name}.diff"
+  git show "${vim_commit}" > "${NEOVIM_SOURCE_DIR}/${base_name}.diff"
   echo "✔ Saved Vim diff to '${NEOVIM_SOURCE_DIR}/${base_name}.diff'."
   git show "${vim_commit}" > "${NEOVIM_SOURCE_DIR}/${base_name}.patch"
   echo "✔ Saved full Vim commit details to '${NEOVIM_SOURCE_DIR}/${base_name}.patch'."
