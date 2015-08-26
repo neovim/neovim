@@ -33,8 +33,6 @@
 # define SIGDUMMYARG
 #endif
 
-# include <time.h>
-
 #if defined(DIRSIZ) && !defined(MAXNAMLEN)
 # define MAXNAMLEN DIRSIZ
 #endif
