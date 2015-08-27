@@ -9,6 +9,9 @@ set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/usr" CACHE PATH "Path prefix 
 list(INSERT CMAKE_PREFIX_PATH 0 ${DEPS_PREFIX})
 set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${DEPS_PREFIX}/lib/pkgconfig")
 
+# used for check_c_compiler_flag
+include(CheckCCompilerFlag)
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   # CMake tries to treat /sw and /opt/local as extension of the system path, but
   # that doesn't really work out very well.  Once you have a dependency that
@@ -117,7 +120,6 @@ if(MINGW)
   add_definitions(-D__USE_MINGW_ANSI_STDIO)
 endif()
 
-include(CheckCCompilerFlag)
 check_c_compiler_flag(-fstack-protector-strong HAS_FSTACK_PROTECTOR_STRONG_FLAG)
 check_c_compiler_flag(-fstack-protector HAS_FSTACK_PROTECTOR_FLAG)
 
@@ -125,6 +127,11 @@ if(HAS_FSTACK_PROTECTOR_STRONG_FLAG)
   add_definitions(-fstack-protector-strong)
 elseif(HAS_FSTACK_PROTECTOR_FLAG)
   add_definitions(-fstack-protector --param ssp-buffer-size=4)
+endif()
+
+check_c_compiler_flag(-fdiagnostics-color=auto HAS_DIAG_COLOR_FLAG)
+if(HAS_DIAG_COLOR_FLAG)
+  add_definitions(-fdiagnostics-color=auto)
 endif()
 
 option(
