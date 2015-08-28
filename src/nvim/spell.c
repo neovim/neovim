@@ -923,7 +923,7 @@ typedef struct spellinfo_S {
 
   sblock_T    *si_blocks;       // memory blocks used
   long si_blocks_cnt;           // memory blocks allocated
-  int si_did_emsg;              // TRUE when ran out of memory
+  int si_did_emsg;              // true when ran out of memory
 
   long si_compress_cnt;         // words to add before lowering
                                 // compression limit
@@ -937,7 +937,7 @@ typedef struct spellinfo_S {
 
   int si_ascii;                 // handling only ASCII words
   int si_add;                   // addition file
-  int si_clear_chartab;             // when TRUE clear char tables
+  int si_clear_chartab;             // when true clear char tables
   int si_region;                // region mask
   vimconv_T si_conv;            // for conversion to 'encoding'
   int si_memtot;                // runtime memory used
@@ -1199,7 +1199,7 @@ spell_check (
 
         // Check for end of sentence.
         regmatch.regprog = wp->w_s->b_cap_prog;
-        regmatch.rm_ic = FALSE;
+        regmatch.rm_ic = false;
         int r = vim_regexec(&regmatch, ptr, 0);
         wp->w_s->b_cap_prog = regmatch.regprog;
         if (r) {
@@ -2089,7 +2089,7 @@ spell_move_to (
   clearpos(&found_pos);
 
   while (!got_int) {
-    line = ml_get_buf(wp->w_buffer, lnum, FALSE);
+    line = ml_get_buf(wp->w_buffer, lnum, false);
 
     len = STRLEN(line);
     if (buflen < len + MAXWLEN + 2) {
@@ -2114,7 +2114,7 @@ spell_move_to (
 
       // Need to get the line again, may have looked at the previous
       // one.
-      line = ml_get_buf(wp->w_buffer, lnum, FALSE);
+      line = ml_get_buf(wp->w_buffer, lnum, false);
     }
 
     // Copy the line into "buf" and append the start of the next line if
@@ -2122,7 +2122,7 @@ spell_move_to (
     STRCPY(buf, line);
     if (lnum < wp->w_buffer->b_ml.ml_line_count)
       spell_cat_line(buf + STRLEN(buf),
-                     ml_get_buf(wp->w_buffer, lnum + 1, FALSE),
+                     ml_get_buf(wp->w_buffer, lnum + 1, false),
                      MAXWLEN);
     p = buf + skip;
     endp = buf + len;
@@ -2155,7 +2155,7 @@ spell_move_to (
             if (has_syntax) {
               col = (int)(p - buf);
               (void)syn_get_id(wp, lnum, (colnr_T)col,
-                  FALSE, &can_spell, FALSE);
+                  false, &can_spell, false);
               if (!can_spell)
                 attr = HLF_COUNT;
             } else
@@ -2309,18 +2309,18 @@ static void spell_load_lang(char_u *lang)
     vim_snprintf((char *)fname_enc, sizeof(fname_enc) - 5,
         "spell/%s.%s.spl",
         lang, spell_enc());
-    r = do_in_runtimepath(fname_enc, FALSE, spell_load_cb, &sl);
+    r = do_in_runtimepath(fname_enc, false, spell_load_cb, &sl);
 
     if (r == FAIL && *sl.sl_lang != NUL) {
       // Try loading the ASCII version.
       vim_snprintf((char *)fname_enc, sizeof(fname_enc) - 5,
           "spell/%s.ascii.spl",
           lang);
-      r = do_in_runtimepath(fname_enc, FALSE, spell_load_cb, &sl);
+      r = do_in_runtimepath(fname_enc, false, spell_load_cb, &sl);
 
       if (r == FAIL && *sl.sl_lang != NUL && round == 1
           && apply_autocmds(EVENT_SPELLFILEMISSING, lang,
-              curbuf->b_fname, FALSE, curbuf))
+              curbuf->b_fname, false, curbuf))
         continue;
       break;
     }
@@ -2341,7 +2341,7 @@ static void spell_load_lang(char_u *lang)
   } else if (sl.sl_slang != NULL) {
     // At least one file was loaded, now load ALL the additions.
     STRCPY(fname_enc + STRLEN(fname_enc) - 3, "add.spl");
-    do_in_runtimepath(fname_enc, TRUE, spell_load_cb, &sl);
+    do_in_runtimepath(fname_enc, true, spell_load_cb, &sl);
   }
 }
 
@@ -3776,7 +3776,7 @@ char_u *did_set_spelllang(win_T *wp)
 
       // Check if we loaded this language before.
       for (slang = first_lang; slang != NULL; slang = slang->sl_next)
-        if (path_full_compare(lang, slang->sl_fname, FALSE) == kEqualFiles)
+        if (path_full_compare(lang, slang->sl_fname, false) == kEqualFiles)
           break;
     } else {
       filename = false;
@@ -3818,7 +3818,7 @@ char_u *did_set_spelllang(win_T *wp)
 
     // Loop over the languages, there can be several files for "lang".
     for (slang = first_lang; slang != NULL; slang = slang->sl_next)
-      if (filename ? path_full_compare(lang, slang->sl_fname, FALSE) == kEqualFiles
+      if (filename ? path_full_compare(lang, slang->sl_fname, false) == kEqualFiles
           : STRICMP(lang, slang->sl_name) == 0) {
         region_mask = REGION_ALL;
         if (!filename && region != NULL) {
@@ -3869,7 +3869,7 @@ char_u *did_set_spelllang(win_T *wp)
       // If it was already found above then skip it.
       for (c = 0; c < ga.ga_len; ++c) {
         p = LANGP_ENTRY(ga, c)->lp_slang->sl_fname;
-        if (p != NULL && path_full_compare(spf_name, p, FALSE) == kEqualFiles)
+        if (p != NULL && path_full_compare(spf_name, p, false) == kEqualFiles)
           break;
       }
       if (c < ga.ga_len)
@@ -3878,7 +3878,7 @@ char_u *did_set_spelllang(win_T *wp)
 
     // Check if it was loaded already.
     for (slang = first_lang; slang != NULL; slang = slang->sl_next)
-      if (path_full_compare(spf_name, slang->sl_fname, FALSE) == kEqualFiles)
+      if (path_full_compare(spf_name, slang->sl_fname, false) == kEqualFiles)
         break;
     if (slang == NULL) {
       // Not loaded, try loading it now.  The language name includes the
@@ -4193,7 +4193,7 @@ spell_reload_one (
   bool didit = false;
 
   for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
-    if (path_full_compare(fname, slang->sl_fname, FALSE) == kEqualFiles) {
+    if (path_full_compare(fname, slang->sl_fname, false) == kEqualFiles) {
       slang_clear(slang);
       if (spell_load_file(fname, NULL, slang, false) == NULL)
         // reloading failed, clear the language
@@ -4249,7 +4249,7 @@ static void spell_clear_flags(wordnode_T *node)
   wordnode_T  *np;
 
   for (np = node; np != NULL; np = np->wn_sibling) {
-    np->wn_u1.index = FALSE;
+    np->wn_u1.index = false;
     spell_clear_flags(np->wn_child);
   }
 }
@@ -4265,7 +4265,7 @@ static void spell_print_node(wordnode_T *node, int depth)
     msg(line2);
     msg(line3);
   } else {
-    node->wn_u1.index = TRUE;
+    node->wn_u1.index = true;
 
     if (node->wn_byte != NUL) {
       if (node->wn_child != NULL)
@@ -5478,7 +5478,7 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
       msg_start();
       msg_puts_long_attr(message, 0);
       msg_clr_eos();
-      msg_didout = FALSE;
+      msg_didout = false;
       msg_col = 0;
       ui_flush();
     }
@@ -6324,7 +6324,7 @@ static int tree_add_word(spellinfo_T *spin, char_u *word, wordnode_T *root, int 
       msg_start();
       msg_puts((char_u *)_(msg_compressing));
       msg_clr_eos();
-      msg_didout = FALSE;
+      msg_didout = false;
       msg_col = 0;
       ui_flush();
     }
@@ -7118,7 +7118,7 @@ static void spell_make_sugfile(spellinfo_T *spin, char_u *wfname)
   // of the code for the soundfolding stuff.
   // It might have been done already by spell_reload_one().
   for (slang = first_lang; slang != NULL; slang = slang->sl_next)
-    if (path_full_compare(wfname, slang->sl_fname, FALSE) == kEqualFiles)
+    if (path_full_compare(wfname, slang->sl_fname, false) == kEqualFiles)
       break;
   if (slang == NULL) {
     spell_message(spin, (char_u *)_("Reading back spell file..."));
@@ -7326,7 +7326,7 @@ sug_filltable (
       ((char_u *)gap->ga_data)[gap->ga_len++] = NUL;
 
       if (ml_append_buf(spin->si_spellbuf, (linenr_T)wordnr,
-              gap->ga_data, gap->ga_len, TRUE) == FAIL)
+              gap->ga_data, gap->ga_len, true) == FAIL)
         return -1;
       ++wordnr;
 
@@ -7468,7 +7468,7 @@ static void sug_write(spellinfo_T *spin, char_u *fname)
 
   for (linenr_T lnum = 1; lnum <= wcount; ++lnum) {
     // <sugline>: <sugnr> ... NUL
-    char_u *line = ml_get_buf(spin->si_spellbuf, lnum, FALSE);
+    char_u *line = ml_get_buf(spin->si_spellbuf, lnum, false);
     size_t len = STRLEN(line) + 1;
     if (fwrite(line, len, 1, fd) == 0) {
       EMSG(_(e_write));
@@ -7512,7 +7512,7 @@ static buf_T *open_spellbuf(void)
 static void close_spellbuf(buf_T *buf)
 {
   if (buf != NULL) {
-    ml_close(buf, TRUE);
+    ml_close(buf, true);
     xfree(buf);
   }
 }
@@ -7849,7 +7849,7 @@ spell_add_word (
           if (fseek(fd, fpos, SEEK_SET) == 0) {
             fputc('#', fd);
             if (undo) {
-              home_replace(NULL, fname, NameBuff, MAXPATHL, TRUE);
+              home_replace(NULL, fname, NameBuff, MAXPATHL, true);
               smsg(_("Word '%.*s' removed from %s"),
                    len, word, NameBuff);
             }
@@ -7892,7 +7892,7 @@ spell_add_word (
         fprintf(fd, "%.*s\n", len, word);
       fclose(fd);
 
-      home_replace(NULL, fname, NameBuff, MAXPATHL, TRUE);
+      home_replace(NULL, fname, NameBuff, MAXPATHL, true);
       smsg(_("Word '%.*s' added to %s"), len, word, NameBuff);
     }
   }
@@ -8489,7 +8489,7 @@ void spell_suggest(int count)
     msg_clr_eos();
     msg_putchar('\n');
 
-    msg_scroll = TRUE;
+    msg_scroll = true;
     for (int i = 0; i < sug.su_ga.ga_len; ++i) {
       stp = &SUG(sug.su_ga, i);
 
@@ -8533,7 +8533,7 @@ void spell_suggest(int count)
       msg_putchar('\n');
     }
 
-    cmdmsg_rl = FALSE;
+    cmdmsg_rl = false;
     msg_col = 0;
     // Ask for choice.
     selected = prompt_for_number(&mouse_used);
@@ -8567,7 +8567,7 @@ void spell_suggest(int count)
     memmove(p, line, c);
     STRCPY(p + c, stp->st_word);
     STRCAT(p, sug.su_badptr + stp->st_orglen);
-    ml_replace(curwin->w_cursor.lnum, p, FALSE);
+    ml_replace(curwin->w_cursor.lnum, p, false);
     curwin->w_cursor.col = c;
 
     // For redo we use a change-word command.
@@ -8623,7 +8623,7 @@ static bool check_need_cap(linenr_T lnum, colnr_T col)
   if (endcol > 0) {
     // Check if sentence ends before the bad word.
     regmatch.regprog = curwin->w_s->b_cap_prog;
-    regmatch.rm_ic = FALSE;
+    regmatch.rm_ic = false;
     p = line + endcol;
     for (;; ) {
       mb_ptr_back(line, p);
@@ -8682,7 +8682,7 @@ void ex_spellrepall(exarg_T *eap)
       memmove(p, line, curwin->w_cursor.col);
       STRCPY(p + curwin->w_cursor.col, repl_to);
       STRCAT(p, line + curwin->w_cursor.col + STRLEN(repl_from));
-      ml_replace(curwin->w_cursor.lnum, p, FALSE);
+      ml_replace(curwin->w_cursor.lnum, p, false);
       changed_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col);
 
       if (curwin->w_cursor.lnum != prev_lnum) {
@@ -8999,7 +8999,7 @@ static void spell_suggest_intern(suginfo_T *su, bool interactive)
   os_breakcheck();
   if (interactive && got_int) {
     (void)vgetc();
-    got_int = FALSE;
+    got_int = false;
   }
 
   if ((sps_flags & SPS_DOUBLE) == 0 && su->su_ga.ga_len != 0) {
@@ -9112,7 +9112,7 @@ someerror:
             break;
         }
         if (ml_append_buf(slang->sl_sugbuf, (linenr_T)wordnr,
-                ga.ga_data, ga.ga_len, TRUE) == FAIL)
+                ga.ga_data, ga.ga_len, true) == FAIL)
           goto someerror;
       }
       ga_clear(&ga);
@@ -11073,7 +11073,7 @@ add_sound_suggest (
   }
 
   // Go over the list of good words that produce this soundfold word
-  nrline = ml_get_buf(slang->sl_sugbuf, (linenr_T)(sfwordnr + 1), FALSE);
+  nrline = ml_get_buf(slang->sl_sugbuf, (linenr_T)(sfwordnr + 1), false);
   orgnr = 0;
   while (*nrline != NUL) {
     // The wordnr was stored in a minimal nr of bytes as an offset to the
@@ -12906,7 +12906,7 @@ void ex_spelldump(exarg_T *eap)
   do_cmdline_cmd("new");
 
   // enable spelling locally in the new window
-  set_option_value((char_u*)"spell", TRUE, (char_u*)"", OPT_LOCAL);
+  set_option_value((char_u*)"spell", true, (char_u*)"", OPT_LOCAL);
   set_option_value((char_u*)"spl",  dummy,         spl, OPT_LOCAL);
   xfree(spl);
 
@@ -12917,7 +12917,7 @@ void ex_spelldump(exarg_T *eap)
 
   // Delete the empty line that we started with.
   if (curbuf->b_ml.ml_line_count > 1)
-    ml_delete(curbuf->b_ml.ml_line_count, FALSE);
+    ml_delete(curbuf->b_ml.ml_line_count, false);
 
   redraw_later(NOT_VALID);
 }
@@ -12987,7 +12987,7 @@ spell_dump_compl (
   if (do_region && region_names != NULL) {
     if (pat == NULL) {
       vim_snprintf((char *)IObuff, IOSIZE, "/regions=%s", region_names);
-      ml_append(lnum++, IObuff, (colnr_T)0, FALSE);
+      ml_append(lnum++, IObuff, (colnr_T)0, false);
     }
   } else
     do_region = false;
@@ -13001,7 +13001,7 @@ spell_dump_compl (
 
     if (pat == NULL) {
       vim_snprintf((char *)IObuff, IOSIZE, "# file: %s", slang->sl_fname);
-      ml_append(lnum++, IObuff, (colnr_T)0, FALSE);
+      ml_append(lnum++, IObuff, (colnr_T)0, false);
     }
 
     // When matching with a pattern and there are no prefixes only use
@@ -13155,7 +13155,7 @@ static void dump_word(slang_T *slang, char_u *word, char_u *pat, int *dir, int d
       }
     }
 
-    ml_append(lnum, p, (colnr_T)0, FALSE);
+    ml_append(lnum, p, (colnr_T)0, false);
   } else if (((dumpflags & DUMPFLAG_ICASE)
               ? mb_strnicmp(p, pat, STRLEN(pat)) == 0
               : STRNCMP(p, pat, STRLEN(pat)) == 0)

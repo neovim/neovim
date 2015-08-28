@@ -7365,7 +7365,7 @@ static void nv_cursorhold(cmdarg_T *cap)
 }
 
 /*
- * Return TRUE when 'mousemodel' is set to "popup" or "popup_setpos".
+ * Return true when 'mousemodel' is set to "popup" or "popup_setpos".
  */
 static int mouse_model_popup(void)
 {

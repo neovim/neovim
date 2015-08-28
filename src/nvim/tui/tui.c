@@ -144,7 +144,7 @@ UI *tui_start(void)
   signal_watcher_start(&data->winch_handle, sigwinch_cb, SIGWINCH);
 
   ui->stop = tui_stop;
-  ui->rgb = os_getenv("NVIM_TUI_ENABLE_TRUE_COLOR") != NULL;
+  ui->rgb = os_getenv("NVIM_TUI_ENABLE_true_COLOR") != NULL;
   ui->data = data;
   ui->resize = tui_resize;
   ui->clear = tui_clear;

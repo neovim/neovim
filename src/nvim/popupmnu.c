@@ -31,12 +31,12 @@ static int pum_height;              // nr of displayed pum items
 static int pum_width;               // width of displayed pum items
 static int pum_base_width;          // width of pum items base
 static int pum_kind_width;          // width of pum items kind column
-static int pum_scrollbar;           // TRUE when scrollbar present
+static int pum_scrollbar;           // true when scrollbar present
 
 static int pum_row;                 // top row of pum
 static int pum_col;                 // left column of pum
 
-static int pum_do_redraw = FALSE;   // do redraw anyway
+static int pum_do_redraw = false;   // do redraw anyway
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -470,11 +470,11 @@ void pum_redraw(void)
 /// @param n
 /// @param repeat
 ///
-/// @returns TRUE when the window was resized and the location of the popup
+/// @returns true when the window was resized and the location of the popup
 /// menu must be recomputed.
 static int pum_set_selected(int n, int repeat)
 {
-  int resized = FALSE;
+  int resized = false;
   int context = pum_height / 2;
 
   pum_selected = n;
@@ -556,7 +556,7 @@ static int pum_set_selected(int n, int repeat)
             && (curbuf->b_p_bh[0] == 'w')) {
           // Already a "wipeout" buffer, make it empty.
           while (!bufempty()) {
-            ml_delete((linenr_T)1, FALSE);
+            ml_delete((linenr_T)1, false);
           }
         } else {
           // Don't want to sync undo in the current buffer.
@@ -584,11 +584,11 @@ static int pum_set_selected(int n, int repeat)
           for (p = pum_array[pum_selected].pum_info; *p != NUL;) {
             e = vim_strchr(p, '\n');
             if (e == NULL) {
-              ml_append(lnum++, p, 0, FALSE);
+              ml_append(lnum++, p, 0, false);
               break;
             } else {
               *e = NUL;
-              ml_append(lnum++, p, (int)(e - p + 1), FALSE);
+              ml_append(lnum++, p, (int)(e - p + 1), false);
               *e = '\n';
               p = e + 1;
             }
@@ -603,12 +603,12 @@ static int pum_set_selected(int n, int repeat)
 
             if (curwin->w_height < lnum) {
               win_setheight((int)lnum);
-              resized = TRUE;
+              resized = true;
             }
           }
 
           curbuf->b_changed = false;
-          curbuf->b_p_ma = FALSE;
+          curbuf->b_p_ma = false;
           curwin->w_cursor.lnum = 1;
           curwin->w_cursor.col = 0;
 
@@ -617,7 +617,7 @@ static int pum_set_selected(int n, int repeat)
             // window is not resized, skip the preview window's
             // status line redrawing.
             if (ins_compl_active() && !resized) {
-              curwin->w_redr_status = FALSE;
+              curwin->w_redr_status = false;
             }
 
             // Return cursor to where we were
@@ -635,9 +635,9 @@ static int pum_set_selected(int n, int repeat)
 
             // Update the screen before drawing the popup menu.
             // Enable updating the status lines.
-            pum_do_redraw = TRUE;
+            pum_do_redraw = true;
             update_screen(0);
-            pum_do_redraw = FALSE;
+            pum_do_redraw = false;
 
             if (!resized && win_valid(curwin_save)) {
               win_enter(curwin_save, true);
@@ -645,9 +645,9 @@ static int pum_set_selected(int n, int repeat)
 
             // May need to update the screen again when there are
             // autocommands involved.
-            pum_do_redraw = TRUE;
+            pum_do_redraw = true;
             update_screen(0);
-            pum_do_redraw = FALSE;
+            pum_do_redraw = false;
           }
         }
       }
@@ -666,7 +666,7 @@ void pum_undisplay(void)
 {
   pum_array = NULL;
   redraw_all_later(SOME_VALID);
-  redraw_tabline = TRUE;
+  redraw_tabline = true;
   status_redraw_all();
 }
 
@@ -679,7 +679,7 @@ void pum_clear(void)
 
 /// Overruled when "pum_do_redraw" is set, used to redraw the status lines.
 ///
-/// @return TRUE if the popup menu is displayed.
+/// @return true if the popup menu is displayed.
 int pum_visible(void)
 {
   return !pum_do_redraw && pum_array != NULL;
@@ -688,7 +688,7 @@ int pum_visible(void)
 /// Gets the height of the menu.
 ///
 /// @return the height of the popup menu, the number of entries visible.
-/// Only valid when pum_visible() returns TRUE!
+/// Only valid when pum_visible() returns true!
 int pum_get_height(void)
 {
   return pum_height;

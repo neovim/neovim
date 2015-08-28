@@ -196,16 +196,7 @@ enum {
 #define MAX_SWAP_PAGE_SIZE 50000
 
 
-
-/*
- * Boolean constants
- */
-#ifndef TRUE
-# define FALSE  0           /* note: this is an int, not a long! */
-# define TRUE   1
-#endif
-
-#define MAYBE   2           /* sometimes used for a variant on TRUE */
+#define MAYBE   2           /* sometimes used for a variant on true */
 
 /*
  * Motion types, used for operators and for yank/delete registers.
@@ -346,4 +337,4 @@ enum {
 # define SET_NO_HLSEARCH(flag) no_hlsearch = (flag); set_vim_var_nr( \
     VV_HLSEARCH, !no_hlsearch && p_hls)
 
-#endif /* NVIM_VIM_H */
+#endif // NVIM_VIM_H

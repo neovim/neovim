@@ -908,7 +908,7 @@ void mf_fullname(memfile_T *mfp)
   }
 }
 
-/// Return TRUE if there are any translations pending for memfile.
+/// Return true if there are any translations pending for memfile.
 bool mf_need_trans(memfile_T *mfp)
 {
   return mfp->mf_fname != NULL && mfp->mf_neg_count > 0;

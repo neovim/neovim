@@ -294,25 +294,25 @@ static struct mousetable {
   int is_drag;                  /* Is it a mouse drag event? */
 } mouse_table[] =
 {
-  {(int)KE_LEFTMOUSE,         MOUSE_LEFT,     TRUE,   FALSE},
-  {(int)KE_LEFTDRAG,          MOUSE_LEFT,     FALSE,  TRUE},
-  {(int)KE_LEFTRELEASE,       MOUSE_LEFT,     FALSE,  FALSE},
-  {(int)KE_MIDDLEMOUSE,       MOUSE_MIDDLE,   TRUE,   FALSE},
-  {(int)KE_MIDDLEDRAG,        MOUSE_MIDDLE,   FALSE,  TRUE},
-  {(int)KE_MIDDLERELEASE,     MOUSE_MIDDLE,   FALSE,  FALSE},
-  {(int)KE_RIGHTMOUSE,        MOUSE_RIGHT,    TRUE,   FALSE},
-  {(int)KE_RIGHTDRAG,         MOUSE_RIGHT,    FALSE,  TRUE},
-  {(int)KE_RIGHTRELEASE,      MOUSE_RIGHT,    FALSE,  FALSE},
-  {(int)KE_X1MOUSE,           MOUSE_X1,       TRUE,   FALSE},
-  {(int)KE_X1DRAG,            MOUSE_X1,       FALSE,  TRUE},
-  {(int)KE_X1RELEASE,         MOUSE_X1,       FALSE,  FALSE},
-  {(int)KE_X2MOUSE,           MOUSE_X2,       TRUE,   FALSE},
-  {(int)KE_X2DRAG,            MOUSE_X2,       FALSE,  TRUE},
-  {(int)KE_X2RELEASE,         MOUSE_X2,       FALSE,  FALSE},
+  {(int)KE_LEFTMOUSE,         MOUSE_LEFT,     true,   false},
+  {(int)KE_LEFTDRAG,          MOUSE_LEFT,     false,  true},
+  {(int)KE_LEFTRELEASE,       MOUSE_LEFT,     false,  false},
+  {(int)KE_MIDDLEMOUSE,       MOUSE_MIDDLE,   true,   false},
+  {(int)KE_MIDDLEDRAG,        MOUSE_MIDDLE,   false,  true},
+  {(int)KE_MIDDLERELEASE,     MOUSE_MIDDLE,   false,  false},
+  {(int)KE_RIGHTMOUSE,        MOUSE_RIGHT,    true,   false},
+  {(int)KE_RIGHTDRAG,         MOUSE_RIGHT,    false,  true},
+  {(int)KE_RIGHTRELEASE,      MOUSE_RIGHT,    false,  false},
+  {(int)KE_X1MOUSE,           MOUSE_X1,       true,   false},
+  {(int)KE_X1DRAG,            MOUSE_X1,       false,  true},
+  {(int)KE_X1RELEASE,         MOUSE_X1,       false,  false},
+  {(int)KE_X2MOUSE,           MOUSE_X2,       true,   false},
+  {(int)KE_X2DRAG,            MOUSE_X2,       false,  true},
+  {(int)KE_X2RELEASE,         MOUSE_X2,       false,  false},
   /* DRAG without CLICK */
-  {(int)KE_IGNORE,            MOUSE_RELEASE,  FALSE,  TRUE},
+  {(int)KE_IGNORE,            MOUSE_RELEASE,  false,  true},
   /* RELEASE without CLICK */
-  {(int)KE_IGNORE,            MOUSE_RELEASE,  FALSE,  FALSE},
+  {(int)KE_IGNORE,            MOUSE_RELEASE,  false,  false},
   {0,                         0,              0,      0},
 };
 
@@ -498,7 +498,7 @@ trans_special (
   int key;
   unsigned int dlen = 0;
 
-  key = find_special_key(srcp, &modifiers, keycode, FALSE);
+  key = find_special_key(srcp, &modifiers, keycode, false);
   if (key == 0)
     return 0;
 
@@ -570,7 +570,7 @@ find_special_key (
     if (bp[0] == 't' && bp[1] == '_' && bp[2] && bp[3])
       bp += 3;          /* skip t_xx, xx may be '-' or '>' */
     else if (STRNICMP(bp, "char-", 5) == 0) {
-      vim_str2nr(bp + 5, NULL, &l, TRUE, TRUE, NULL, NULL);
+      vim_str2nr(bp + 5, NULL, &l, true, true, NULL, NULL);
       bp += l + 5;
       break;
     }
@@ -597,7 +597,7 @@ find_special_key (
       if (STRNICMP(last_dash + 1, "char-", 5) == 0
           && ascii_isdigit(last_dash[6])) {
         /* <Char-123> or <Char-033> or <Char-0x33> */
-        vim_str2nr(last_dash + 6, NULL, NULL, TRUE, TRUE, NULL, &n);
+        vim_str2nr(last_dash + 6, NULL, NULL, true, true, NULL, &n);
         key = (int)n;
       } else {
         /*
@@ -751,7 +751,7 @@ int get_mouse_button(int code, bool *is_click, bool *is_drag)
 // pointer to it is returned. If something fails *bufp is set to NULL and from
 // is returned.
 //
-// CTRL-V characters are removed.  When "from_part" is TRUE, a trailing CTRL-V
+// CTRL-V characters are removed.  When "from_part" is true, a trailing CTRL-V
 // is included, otherwise it is removed (for ":map xx ^V", maps xx to
 // nothing).  When 'cpoptions' does not contain 'B', a backslash can be used
 // instead of a CTRL-V.
@@ -815,7 +815,7 @@ char_u * replace_termcodes (
         }
       }
 
-      slen = trans_special(&src, result + dlen, TRUE);
+      slen = trans_special(&src, result + dlen, true);
       if (slen) {
         dlen += slen;
         continue;
