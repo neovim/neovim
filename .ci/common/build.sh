@@ -61,19 +61,25 @@ build_nvim() {
     exit 1
   fi
 
-  echo "Building libnvim."
-  if ! ${MAKE_CMD} libnvim; then
-    exit 1
-  fi
+  if [ "$CLANG_SANITIZER" != "TSAN" ]; then
+    echo "Building libnvim."
+    if ! ${MAKE_CMD} libnvim; then
+      exit 1
+    fi
 
-  echo "Building nvim-test."
-  if ! ${MAKE_CMD} nvim-test; then
-    exit 1
+    echo "Building nvim-test."
+    if ! ${MAKE_CMD} nvim-test; then
+      exit 1
+    fi
   fi
 
   # Invoke nvim to trigger *San early.
-  bin/nvim --version
-  bin/nvim -u NONE -e -c ':qall'
+  if ! (bin/nvim --version && bin/nvim -u NONE -e -c ':qall'); then
+    asan_check "${LOG_DIR}"
+    exit 1
+  fi
+  asan_check "${LOG_DIR}"
+  
 
   cd "${TRAVIS_BUILD_DIR}"
 }
