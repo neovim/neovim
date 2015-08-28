@@ -21,6 +21,8 @@
 // - SYS_VIMRC_FILE
 // - SPECIAL_WILDCHAR
 
+#define USE_CRNL
+
 #ifdef _MSC_VER
 # ifndef inline
 #  define inline __inline
