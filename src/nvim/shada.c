@@ -2282,7 +2282,6 @@ static inline ShaDaWriteResult shada_read_when_writing(
         k = kh_put(file_marks, &wms->file_marks, fname, &kh_ret);
         FileMarks *const filemarks = &kh_val(&wms->file_marks, k);
         if (kh_ret > 0) {
-          kh_key(&wms->file_marks, k) = xstrdup(fname);
           memset(filemarks, 0, sizeof(*filemarks));
         }
         if (entry.timestamp > filemarks->greatest_timestamp) {
@@ -2298,7 +2297,22 @@ static inline ShaDaWriteResult shada_read_when_writing(
             filemarks->additional_marks[filemarks->additional_marks_size - 1] =
                 entry;
           } else {
-            COMPARE_WITH_ENTRY(&filemarks->marks[idx], entry);
+            PossiblyFreedShadaEntry *const wms_entry = &filemarks->marks[idx];
+            if (wms_entry->data.type != kSDItemMissing) {
+              if (wms_entry->data.timestamp >= entry.timestamp) {
+                shada_free_shada_entry(&entry);
+                break;
+              }
+              if (wms_entry->can_free_entry) {
+                if (kh_key(&wms->file_marks, k)
+                    == wms_entry->data.data.filemark.fname) {
+                  kh_key(&wms->file_marks, k) = entry.data.filemark.fname;
+                }
+                shada_free_shada_entry(&wms_entry->data);
+              }
+            }
+            wms_entry->can_free_entry = true;
+            wms_entry->data = entry;
           }
         } else {
 #define FREE_POSSIBLY_FREED_SHADA_ENTRY(entry) \
@@ -2700,7 +2714,6 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
       k = kh_put(file_marks, &wms->file_marks, fname, &kh_ret);
       FileMarks *const filemarks = &kh_val(&wms->file_marks, k);
       if (kh_ret > 0) {
-        kh_key(&wms->file_marks, k) = xstrdup(fname);
         memset(filemarks, 0, sizeof(*filemarks));
       }
       do {
@@ -2807,7 +2820,6 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
        i++) {
     if (kh_exist(&wms->file_marks, i)) {
       *cur_file_marks++ = &kh_val(&wms->file_marks, i);
-      xfree((void *) kh_key(&wms->file_marks, i));
     }
   }
   qsort((void *) all_file_markss, file_markss_size, sizeof(*all_file_markss),
