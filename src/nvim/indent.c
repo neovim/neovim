@@ -48,7 +48,7 @@ int get_indent_buf(buf_T *buf, linenr_T lnum)
 
 // Count the size (in window cells) of the indent in line "ptr", with
 // 'tabstop' at "ts".
-// If @param list is TRUE, count only screen size for tabs.
+// If @param list is true, count only screen size for tabs.
 int get_indent_str(char_u *ptr, int ts, int list)
 {
   int count = 0;

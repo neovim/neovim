@@ -1427,7 +1427,7 @@ int do_digraph(int c)
     backspaced = -1;
   } else if (p_dg)   {
     if (backspaced >= 0) {
-      c = getdigraph(backspaced, c, FALSE);
+      c = getdigraph(backspaced, c, false);
     }
     backspaced = -1;
 
@@ -1442,7 +1442,7 @@ int do_digraph(int c)
 /// Get a digraph.  Used after typing CTRL-K on the command line or in normal
 /// mode.
 ///
-/// @param cmdline TRUE when called from the cmdline
+/// @param cmdline true when called from the cmdline
 ///
 /// @returns composed character, or NUL when ESC was used.
 int get_digraph(int cmdline)
@@ -1463,7 +1463,7 @@ int get_digraph(int cmdline)
 
     if (cmdline) {
       if ((char2cells(c) == 1) && (cmdline_star == 0)) {
-        putcmdline(c, TRUE);
+        putcmdline(c, true);
       }
     } else {
       add_to_showcmd(c);
@@ -1476,7 +1476,7 @@ int get_digraph(int cmdline)
 
     if (cc != ESC) {
       // ESC cancels CTRL-K
-      return getdigraph(c, cc, TRUE);
+      return getdigraph(c, cc, true);
     }
   }
   return NUL;
@@ -1488,7 +1488,7 @@ int get_digraph(int cmdline)
 /// @param char2
 /// @param meta_char
 ///
-/// @return If no match, return "char2". If "meta_char" is TRUE and "char1"
+/// @return If no match, return "char2". If "meta_char" is true and "char1"
 //          is a space, return "char2" | 0x80.
 static int getexactdigraph(int char1, int char2, int meta_char)
 {
@@ -1651,7 +1651,7 @@ void listdigraphs(void)
     // May need to convert the result to 'encoding'.
     tmp.char1 = dp->char1;
     tmp.char2 = dp->char2;
-    tmp.result = getexactdigraph(tmp.char1, tmp.char2, FALSE);
+    tmp.result = getexactdigraph(tmp.char1, tmp.char2, false);
 
     if ((tmp.result != 0)
         && (tmp.result != tmp.char2)
@@ -1757,12 +1757,12 @@ char_u* keymap_init(void)
     vim_snprintf(buf, buflen, "keymap/%s_%s.vim",
                  curbuf->b_p_keymap, p_enc);
 
-    if (source_runtime((char_u *)buf, FALSE) == FAIL) {
+    if (source_runtime((char_u *)buf, false) == FAIL) {
       // try finding "keymap/'keymap'.vim" in 'runtimepath'
       vim_snprintf(buf, buflen, "keymap/%s.vim",
                    curbuf->b_p_keymap);
 
-      if (source_runtime((char_u *)buf, FALSE) == FAIL) {
+      if (source_runtime((char_u *)buf, false) == FAIL) {
         xfree(buf);
         return (char_u *)N_("E544: Keymap file not found");
       }
@@ -1837,7 +1837,7 @@ void ex_loadkeymap(exarg_T *eap)
     vim_snprintf((char *)buf, sizeof(buf), "<buffer> %s %s",
                  ((kmap_T *)curbuf->b_kmap_ga.ga_data)[i].from,
                  ((kmap_T *)curbuf->b_kmap_ga.ga_data)[i].to);
-    (void)do_map(2, buf, LANGMAP, FALSE);
+    (void)do_map(2, buf, LANGMAP, false);
   }
 
   p_cpo = save_cpo;
@@ -1865,7 +1865,7 @@ static void keymap_unload(void)
 
   for (int i = 0; i < curbuf->b_kmap_ga.ga_len; ++i) {
     vim_snprintf((char *)buf, sizeof(buf), "<buffer> %s", kp[i].from);
-    (void)do_map(1, buf, LANGMAP, FALSE);
+    (void)do_map(1, buf, LANGMAP, false);
     xfree(kp[i].from);
     xfree(kp[i].to);
   }

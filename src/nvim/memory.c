@@ -437,7 +437,7 @@ void do_outofmem_msg(size_t size)
 
     /* Must come first to avoid coming back here when printing the error
      * message fails, e.g. when setting v:errmsg. */
-    did_outofmem_msg = TRUE;
+    did_outofmem_msg = true;
 
     EMSGU(_("E342: Out of memory!  (allocating %" PRIu64 " bytes)"), size);
   }
@@ -496,7 +496,7 @@ void free_all_mem(void)
   block_autocmds();
 
   /* Close all tabs and windows.  Reset 'equalalways' to avoid redraws. */
-  p_ea = FALSE;
+  p_ea = false;
   if (first_tabpage->tp_next != NULL)
     do_cmdline_cmd("tabonly!");
   if (firstwin != lastwin)
@@ -567,10 +567,10 @@ void free_all_mem(void)
 
   /* Free all buffers.  Reset 'autochdir' to avoid accessing things that
    * were freed already. */
-  p_acd = FALSE;
+  p_acd = false;
   for (buf = firstbuf; buf != NULL; ) {
     nextbuf = buf->b_next;
-    close_buffer(NULL, buf, DOBUF_WIPE, FALSE);
+    close_buffer(NULL, buf, DOBUF_WIPE, false);
     if (buf_valid(buf))
       buf = nextbuf;            /* didn't work, try next one */
     else
