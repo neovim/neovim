@@ -575,6 +575,12 @@ void set_init_1(void)
     mb_init();
   }
 
+  // Don't change &encoding when resetting to defaults with ":set all&".
+  opt_idx = findoption((char_u *)"encoding");
+  if (opt_idx >= 0) {
+    options[opt_idx].flags |= P_NODEFAULT;
+  }
+
   /* Set the default for 'helplang'. */
   set_helplang_default(get_mess_lang());
 }
@@ -2271,10 +2277,11 @@ did_set_string_option (
   else if (varp == &p_ei) {
     if (check_ei() == FAIL)
       errmsg = e_invarg;
-  }
   /* 'encoding' and 'fileencoding' */
-  else if (varp == &p_enc || gvarp == &p_fenc) {
-    if (gvarp == &p_fenc) {
+  } else if (varp == &p_enc || gvarp == &p_fenc) {
+    if (varp == &p_enc && did_source_startup_scripts) {
+       errmsg = e_afterinit;
+    } else if (gvarp == &p_fenc) {
       if (!MODIFIABLE(curbuf) && opt_flags != OPT_GLOBAL)
         errmsg = e_modifiable;
       else if (vim_strchr(*varp, ',') != NULL)

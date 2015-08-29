@@ -633,6 +633,10 @@ EXTERN int silent_mode INIT(= FALSE);
 /* set to TRUE when "-s" commandline argument
  * used for ex */
 
+// Set to true when sourcing of startup scripts (nvimrc) is done.
+// Used for options that cannot be changed after startup scripts.
+EXTERN bool did_source_startup_scripts INIT(= false);
+
 EXTERN pos_T VIsual;            /* start position of active Visual selection */
 EXTERN int VIsual_active INIT(= FALSE);
 /* whether Visual mode is active */
@@ -1078,6 +1082,8 @@ EXTERN garray_T error_ga
  * Excluded are errors that are only used once and debugging messages.
  */
 EXTERN char_u e_abort[] INIT(= N_("E470: Command aborted"));
+EXTERN char_u e_afterinit[] INIT(= N_(
+        "E905: Cannot set this option after startup"));
 EXTERN char_u e_api_spawn_failed[] INIT(= N_("E903: Could not spawn API job"));
 EXTERN char_u e_argreq[] INIT(= N_("E471: Argument required"));
 EXTERN char_u e_backslash[] INIT(= N_("E10: \\ should be followed by /, ? or &"));
