@@ -79,7 +79,7 @@ matrix:
       env: GCOV=llvm-cov-3.6 CLANG_SANITIZER=MSAN
     - os: linux
       compiler: clang-3.6
-      env: GCOV=llvm-cov-3.6 CLANG_SANITIZER=TSAN
+      env: CLANG_SANITIZER=TSAN
     - os: osx
       compiler: clang
       env: GCOV=gcov
