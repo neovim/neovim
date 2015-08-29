@@ -183,11 +183,16 @@ local function spawn(argv)
   return session
 end
 
-local function clear()
+local function clear(extra_cmd)
   if session then
     session:exit(0)
   end
-  session = spawn(nvim_argv)
+  local args = {unpack(nvim_argv)}
+  if extra_cmd ~= nil then
+    table.insert(args, '--cmd')
+    table.insert(args, extra_cmd)
+  end
+  session = spawn(args)
 end
 
 local function insert(...)
