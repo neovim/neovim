@@ -74,6 +74,8 @@ are always available and may be used simultaneously in separate plugins.  The
    'p')) mkdir() will silently exit. In Vim this was an error.
 3. mkdir() error messages now include strerror() text when mkdir fails.
 
+'encoding' cannot be changed after startup.
+
 ==============================================================================
 4. New Features						     *nvim-features-new*
 

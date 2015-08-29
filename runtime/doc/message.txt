@@ -739,6 +739,12 @@ Example: >
 You tried to execute a command that is neither an Ex command nor
 a user-defined command.
 
+							*E905*  >
+  Cannot set this option after startup
+
+This option might only be changed in a |vimrc| file (or earlier). This means
+that plugins can rely on the value being constant after initialization.
+
 ==============================================================================
 3. Messages						*messages*
 
