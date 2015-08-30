@@ -4429,16 +4429,15 @@ void ex_global(exarg_T *eap)
   if (got_int)
     MSG(_(e_interr));
   else if (ndone == 0) {
-    if (type == 'v')
+    if (type == 'v') {
       smsg(_("Pattern found in every line: %s"), pat);
-    else
+    } else {
       smsg(_("Pattern not found: %s"), pat);
   } else {
     start_global_changes();
     global_exe(cmd);
     end_global_changes();
   }
-
   ml_clearmarked();        /* clear rest of the marks */
   vim_regfree(regmatch.regprog);
 }

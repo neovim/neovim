@@ -1737,7 +1737,7 @@ static void edit_buffers(mparm_T *parmp)
   --autocmd_no_leave;
   TIME_MSG("editing files in windows");
   if (parmp->window_count > 1 && parmp->window_layout != WIN_TABS)
-    win_equal(curwin, FALSE, 'b');      /* adjust heights */
+    win_equal(curwin, false, 'b');      /* adjust heights */
 }
 
 /*
