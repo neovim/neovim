@@ -612,8 +612,8 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
   *s = NUL;
 
   Directory dir;
-  if (os_scandir(&dir, *buf == NUL ? "." : (char *)buf)
-      || os_isdir(*buf == NUL ? (char_u *)"." : (char_u *)buf)) {
+  char *dirpath = (*buf == NUL ? "." : (char *)buf);
+  if (os_file_is_readable(dirpath) && os_scandir(&dir, dirpath)) {
     // Find all matching entries.
     char_u *name;
     scandir_next_with_dots(NULL /* initialize */);

@@ -421,10 +421,10 @@ bool os_scandir(Directory *dir, const char *path)
   FUNC_ATTR_NONNULL_ALL
 {
   int r = uv_fs_scandir(&fs_loop, &dir->request, path, 0, NULL);
-  if (r <= 0) {
+  if (r < 0) {
     os_closedir(dir);
   }
-  return r > 0;
+  return r >= 0;
 }
 
 /// Increments the directory pointer.
