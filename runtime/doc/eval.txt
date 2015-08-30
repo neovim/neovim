@@ -6473,9 +6473,7 @@ termopen({cmd}[, {opts}])			{Nvim} *termopen()*
 		The {opts} dict is similar to the one passed to |jobstart()|,
 		but the `pty`, `width`, `height`, and `TERM` fields are
 		ignored: `height`/`width` are taken from the current window
-		and `$TERM` is set to "xterm-256color", and it may have a
-		`name` field.  `name`, if present, sets the buffer's name to
-		"term://{cwd}/{pid}:{name}".
+		and `$TERM` is set to "xterm-256color".
 		Returns the same values as |jobstart()|.
 
 		See |nvim-terminal-emulator| for more information.
