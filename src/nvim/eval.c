@@ -16140,7 +16140,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv)
   char *name = job_opts ?
     (char *)get_dict_string(job_opts, (char_u *)"name", false) : cmd;
   char buf[1024];
-  // format the title with the pid to conform with the term:// URI 
+  // format the title with the pid to conform with the term:// URI
   snprintf(buf, sizeof(buf), "term://%s//%d:%s", cwd, pid, name);
   // at this point the buffer has no terminal instance associated yet, so unset
   // the 'swapfile' option to ensure no swap file will be created

@@ -266,7 +266,7 @@
  */
 
 EXTERN long p_aleph;            /* 'aleph' */
-EXTERN int p_acd;               /* 'autochdir' */
+EXTERN bool p_acd;              /* 'autochdir' */
 EXTERN char_u   *p_ambw;        /* 'ambiwidth' */
 EXTERN int p_ar;                /* 'autoread' */
 EXTERN int p_aw;                /* 'autowrite' */
@@ -341,7 +341,7 @@ static char *(p_dy_values[]) = {"lastline", "uhex", NULL};
 #define DY_UHEX                 0x002
 EXTERN int p_ed;                /* 'edcompatible' */
 EXTERN char_u   *p_ead;         /* 'eadirection' */
-EXTERN int p_ea;                /* 'equalalways' */
+EXTERN bool p_ea;               /* 'equalalways' */
 EXTERN char_u   *p_ep;          /* 'equalprg' */
 EXTERN int p_eb;                /* 'errorbells' */
 EXTERN char_u   *p_ef;          /* 'errorfile' */
