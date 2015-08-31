@@ -6,10 +6,10 @@ local spawn, set_session, nvim_prog, merge_args =
 
 local additional_cmd = ''
 
-local function nvim_argv()
+local function nvim_argv(shada_file)
   local rtp_value = ('\'%s/runtime\''):format(
       paths.test_source_path:gsub('\'', '\'\''))
-  local nvim_argv = {nvim_prog, '-u', 'NORC', '-i', 'NONE', '-N',
+  local nvim_argv = {nvim_prog, '-u', 'NORC', '-i', shada_file or 'NONE', '-N',
                      '--cmd', 'set shortmess+=I background=light noswapfile',
                      '--cmd', 'let &runtimepath=' .. rtp_value,
                      '--cmd', additional_cmd,
@@ -23,11 +23,11 @@ end
 
 local session = nil
 
-local reset = function()
+local reset = function(...)
   if session then
     session:exit(0)
   end
-  session = spawn(nvim_argv())
+  session = spawn(nvim_argv(...))
   set_session(session)
 end
 
