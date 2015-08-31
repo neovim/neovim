@@ -774,6 +774,8 @@ au BufNewFile,BufRead *.ged,lltxxxxx.txt	setf gedcom
 " Git
 au BufNewFile,BufRead *.git/COMMIT_EDITMSG	setf gitcommit
 au BufNewFile,BufRead *.git/MERGE_MSG		setf gitcommit
+au BufNewFile,BufRead *.git/worktrees/*/COMMIT_EDITMSG	setf gitcommit
+au BufNewFile,BufRead *.git/worktrees/*/MERGE_MSG	setf gitcommit
 au BufNewFile,BufRead *.git/config,.gitconfig,.gitmodules setf gitconfig
 au BufNewFile,BufRead *.git/modules/*/COMMIT_EDITMSG setf gitcommit
 au BufNewFile,BufRead *.git/modules/*/config	setf gitconfig
