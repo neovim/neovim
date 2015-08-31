@@ -69,8 +69,8 @@ endif()
 
 include(ExternalProject)
 
-set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.5.0.tar.gz)
-set(LIBUV_SHA256 f9c6ad4b7a2c90d93c8e09d2e739bb46d199639c4d884ba30323359521b09367)
+set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.7.3.tar.gz)
+set(LIBUV_SHA256 db5d46318e18330c696d954747036e1be8e2346411d4f30236d7e2f499f0cfab)
 
 set(MSGPACK_URL https://github.com/msgpack/msgpack-c/archive/cpp-1.0.0.tar.gz)
 set(MSGPACK_SHA256 afda64ca445203bb7092372b822bae8b2539fdcebbfc3f753f393628c2bcfe7d)
