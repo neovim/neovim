@@ -2488,3 +2488,346 @@ describe('ftplugin/shada.vim', function()
     eq('x', curbuf('get_line', 0))
   end)
 end)
+
+describe('syntax/shada.vim', function()
+  local epoch = os.date('%Y-%m-%dT%H:%M:%S', 0)
+  before_each(reset)
+
+  it('works', function()
+    nvim_command('syntax on')
+    nvim_command('setlocal syntax=shada')
+    curbuf('set_line_slice', 0, 0, true, true, {
+      'Header with timestamp ' .. epoch .. ':',
+      '  % Key  Value',
+      '  + t    "test"',
+      'Jump with timestamp ' .. epoch .. ':',
+      '  % Key________  Description  Value',
+      '  + n            name         \'A\'',
+      '  + f            file name    ["foo"]',
+      '  + l            line number  2',
+      '  + c            column       -200',
+      'Register with timestamp ' .. epoch .. ':',
+      '  % Key  Description  Value',
+      '  + rc   contents     @',
+      '  | - {"abcdefghijklmnopqrstuvwxyz": 1.0}',
+      '  + rt   type         CHARACTERWISE',
+      '  + rt   type         LINEWISE',
+      '  + rt   type         BLOCKWISE',
+      'Replacement string with timestamp ' .. epoch .. ':',
+      '  @ Description__________  Value',
+      '  - :s replacement string  CMD',
+      '  - :s replacement string  SEARCH',
+      '  - :s replacement string  EXPR',
+      '  - :s replacement string  INPUT',
+      '  - :s replacement string  DEBUG',
+      'Buffer list with timestamp ' .. epoch .. ':',
+      '  # Expected array of maps',
+      '  = [{="a": +(10)"ac\\0df\\ngi\\"tt\\.", TRUE: FALSE}, [NIL, +(-10)""]]',
+      'Buffer list with timestamp ' .. epoch .. ':',
+      '  % Key  Description  Value',
+      '',
+      '  % Key  Description  Value',
+      'Header with timestamp ' .. epoch .. ':',
+      '  % Key  Description________  Value',
+      '  + se   place cursor at end  TRUE',
+    })
+    nvim_command([[
+      function GetSyntax()
+        let lines = []
+        for l in range(1, line('$'))
+          let columns = []
+          let line = getline(l)
+          for c in range(1, col([l, '$']) - 1)
+            let synstack = map(synstack(l, c), 'synIDattr(v:val, "name")')
+            if !empty(columns) && columns[-1][0] ==# synstack
+              let columns[-1][1] .= line[c - 1]
+            else
+              call add(columns, [ synstack, line[c - 1] ])
+            endif
+          endfor
+          call add(lines, columns)
+        endfor
+        return lines
+      endfunction
+    ]])
+    local hname = function(s) return {{'ShaDaEntryHeader', 'ShaDaEntryName'},
+                                      s} end
+    local h = function(s) return {{'ShaDaEntryHeader'}, s} end
+    local htsnum = function(s) return {
+      {'ShaDaEntryHeader', 'ShaDaEntryTimestamp', 'ShaDaEntryTimestampNumber'},
+      s
+    } end
+    local synhtssep = function(s)
+      return {{'ShaDaEntryHeader', 'ShaDaEntryTimestamp'}, s}
+    end
+    local synepoch = {
+      year = htsnum(os.date('%Y', 0)),
+      month = htsnum(os.date('%m', 0)),
+      day = htsnum(os.date('%d', 0)),
+      hour = htsnum(os.date('%H', 0)),
+      minute = htsnum(os.date('%M', 0)),
+      second = htsnum(os.date('%S', 0)),
+    }
+    local msh = function(s) return {{'ShaDaEntryMapShort',
+                                     'ShaDaEntryMapHeader'}, s} end
+    local mlh = function(s) return {{'ShaDaEntryMapLong',
+                                     'ShaDaEntryMapHeader'}, s} end
+    local ah = function(s) return {{'ShaDaEntryArray',
+                                    'ShaDaEntryArrayHeader'}, s} end
+    local mses = function(s) return {{'ShaDaEntryMapShort',
+                                      'ShaDaEntryMapShortEntryStart'}, s} end
+    local mles = function(s) return {{'ShaDaEntryMapLong',
+                                      'ShaDaEntryMapLongEntryStart'}, s} end
+    local act = funcs.GetSyntax()
+    local ms = function(syn)
+      return {
+        {'ShaDaEntryMap' .. syn, 'ShaDaEntryMap' .. syn .. 'EntryStart'}, '  + '
+      }
+    end
+    local as = function()
+      return {{'ShaDaEntryArray', 'ShaDaEntryArrayEntryStart'}, '  - '}
+    end
+    local ad = function(s) return {{'ShaDaEntryArray',
+                                    'ShaDaEntryArrayDescription'}, s} end
+    local mbas = function(syn)
+      return {
+        {'ShaDaEntryMap' .. syn, 'ShaDaEntryMapBinArrayStart'},
+        '  | - '
+      }
+    end
+    local msk = function(s) return {{'ShaDaEntryMapShort',
+                                     'ShaDaEntryMapShortKey'}, s} end
+    local mlk = function(s) return {{'ShaDaEntryMapLong',
+                                     'ShaDaEntryMapLongKey'}, s} end
+    local mld = function(s) return {{'ShaDaEntryMapLong',
+                                     'ShaDaEntryMapLongDescription'}, s} end
+    local c = function(s) return {{'ShaDaComment'}, s} end
+    local exp = {
+      {
+        hname('Header'), h(' with timestamp '),
+        synepoch.year, synhtssep('-'), synepoch.month, synhtssep('-'),
+        synepoch.day, synhtssep('T'), synepoch.hour, synhtssep(':'),
+        synepoch.minute, synhtssep(':'), synepoch.second, h(':'),
+      },
+      {
+        msh('  % Key  Value'),
+      },
+      {
+        ms('Short'), msk('t    '),
+        {{'ShaDaEntryMapShort', 'ShaDaMsgpackBinaryString',
+          'ShaDaMsgpackStringQuotes'}, '"'},
+        {{'ShaDaEntryMapShort', 'ShaDaMsgpackBinaryString'}, 'test'},
+        {{'ShaDaEntryMapShort', 'ShaDaMsgpackStringQuotes'}, '"'},
+      },
+      {
+        hname('Jump'), h(' with timestamp '),
+        synepoch.year, synhtssep('-'), synepoch.month, synhtssep('-'),
+        synepoch.day, synhtssep('T'), synepoch.hour, synhtssep(':'),
+        synepoch.minute, synhtssep(':'), synepoch.second, h(':'),
+      },
+      {
+        mlh('  % Key________  Description  Value'),
+      },
+      {
+        ms('Long'), mlk('n            '), mld('name         '),
+        {{'ShaDaEntryMapLong', 'ShaDaMsgpackCharacter'}, '\'A\''},
+      },
+      {
+        ms('Long'), mlk('f            '), mld('file name    '),
+        {{'ShaDaEntryMapLong', 'ShaDaMsgpackArray',
+          'ShaDaMsgpackArrayBraces'}, '['},
+        {{'ShaDaEntryMapLong', 'ShaDaMsgpackArray', 'ShaDaMsgpackBinaryString',
+          'ShaDaMsgpackStringQuotes'}, '"'},
+        {{'ShaDaEntryMapLong', 'ShaDaMsgpackArray', 'ShaDaMsgpackBinaryString'},
+         'foo'},
+        {{'ShaDaEntryMapLong', 'ShaDaMsgpackArray', 'ShaDaMsgpackStringQuotes'},
+         '"'},
+        {{'ShaDaEntryMapLong', 'ShaDaMsgpackArrayBraces'}, ']'},
+      },
+      {
+        ms('Long'), mlk('l            '), mld('line number  '),
+        {{'ShaDaEntryMapLong', 'ShaDaMsgpackInteger'}, '2'},
+      },
+      {
+        ms('Long'), mlk('c            '), mld('column       '),
+        {{'ShaDaEntryMapLong', 'ShaDaMsgpackInteger'}, '-200'},
+      },
+      {
+        hname('Register'), h(' with timestamp '),
+        synepoch.year, synhtssep('-'), synepoch.month, synhtssep('-'),
+        synepoch.day, synhtssep('T'), synepoch.hour, synhtssep(':'),
+        synepoch.minute, synhtssep(':'), synepoch.second, h(':'),
+      },
+      {
+        mlh('  % Key  Description  Value'),
+      },
+      {
+        ms('Long'), mlk('rc   '), mld('contents     '),
+        {{'ShaDaEntryMapLong', 'ShaDaMsgpackMultilineArray'}, '@'},
+      },
+      {
+        mbas('Long'),
+        {{'ShaDaEntryMapLong', 'ShaDaMsgpackMap', 'ShaDaMsgpackMapBraces'},
+         '{'},
+        {{'ShaDaEntryMapLong', 'ShaDaMsgpackMap', 'ShaDaMsgpackBinaryString',
+          'ShaDaMsgpackStringQuotes'}, '"'},
+        {{'ShaDaEntryMapLong', 'ShaDaMsgpackMap', 'ShaDaMsgpackBinaryString'},
+         'abcdefghijklmnopqrstuvwxyz'},
+        {{'ShaDaEntryMapLong', 'ShaDaMsgpackMap', 'ShaDaMsgpackStringQuotes'},
+         '"'},
+        {{'ShaDaEntryMapLong', 'ShaDaMsgpackMap', 'ShaDaMsgpackColon'}, ':'},
+        {{'ShaDaEntryMapLong', 'ShaDaMsgpackMap'}, ' '},
+        {{'ShaDaEntryMapLong', 'ShaDaMsgpackMap', 'ShaDaMsgpackFloat'}, '1.0'},
+        {{'ShaDaEntryMapLong', 'ShaDaMsgpackMapBraces'}, '}'},
+      },
+      {
+        ms('Long'), mlk('rt   '), mld('type         '),
+        {{'ShaDaEntryMapLong', 'ShaDaMsgpackShaDaKeyword'}, 'CHARACTERWISE'},
+      },
+      {
+        ms('Long'), mlk('rt   '), mld('type         '),
+        {{'ShaDaEntryMapLong', 'ShaDaMsgpackShaDaKeyword'}, 'LINEWISE'},
+      },
+      {
+        ms('Long'), mlk('rt   '), mld('type         '),
+        {{'ShaDaEntryMapLong', 'ShaDaMsgpackShaDaKeyword'}, 'BLOCKWISE'},
+      },
+      {
+        hname('Replacement string'), h(' with timestamp '),
+        synepoch.year, synhtssep('-'), synepoch.month, synhtssep('-'),
+        synepoch.day, synhtssep('T'), synepoch.hour, synhtssep(':'),
+        synepoch.minute, synhtssep(':'), synepoch.second, h(':'),
+      },
+      {
+        ah('  @ Description__________  Value'),
+      },
+      {
+        as(), ad(':s replacement string  '),
+        {{'ShaDaEntryArray', 'ShaDaMsgpackShaDaKeyword'}, 'CMD'},
+      },
+      {
+        as(), ad(':s replacement string  '),
+        {{'ShaDaEntryArray', 'ShaDaMsgpackShaDaKeyword'}, 'SEARCH'},
+      },
+      {
+        as(), ad(':s replacement string  '),
+        {{'ShaDaEntryArray', 'ShaDaMsgpackShaDaKeyword'}, 'EXPR'},
+      },
+      {
+        as(), ad(':s replacement string  '),
+        {{'ShaDaEntryArray', 'ShaDaMsgpackShaDaKeyword'}, 'INPUT'},
+      },
+      {
+        {{'ShaDaEntryArrayEntryStart'}, '  - '},
+        {{'ShaDaEntryArrayDescription'}, ':s replacement string  '},
+        {{'ShaDaMsgpackShaDaKeyword'}, 'DEBUG'},
+      },
+      {
+        hname('Buffer list'), h(' with timestamp '),
+        synepoch.year, synhtssep('-'), synepoch.month, synhtssep('-'),
+        synepoch.day, synhtssep('T'), synepoch.hour, synhtssep(':'),
+        synepoch.minute, synhtssep(':'), synepoch.second, h(':'),
+      },
+      {
+        c('  # Expected array of maps'),
+      },
+      {
+        {{'ShaDaEntryRawMsgpack'}, '  = '},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackArrayBraces'}, '['},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap', 'ShaDaMsgpackMapBraces'},
+         '{'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap', 'ShaDaMsgpackString'}, '='},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap', 'ShaDaMsgpackBinaryString',
+          'ShaDaMsgpackStringQuotes'}, '"'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap', 'ShaDaMsgpackBinaryString'},
+         'a'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap', 'ShaDaMsgpackStringQuotes'},
+         '"'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap', 'ShaDaMsgpackColon'}, ':'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap'}, ' '},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap', 'ShaDaMsgpackExt'}, '+('},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap', 'ShaDaMsgpackExt',
+          'ShaDaMsgpackExtType'}, '10'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap', 'ShaDaMsgpackExt'}, ')'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap', 'ShaDaMsgpackBinaryString',
+          'ShaDaMsgpackStringQuotes'}, '"'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap', 'ShaDaMsgpackBinaryString'},
+         'ac'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap', 'ShaDaMsgpackBinaryString',
+          'ShaDaMsgpackBinaryStringEscape'},
+         '\\0'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap', 'ShaDaMsgpackBinaryString'},
+         'df'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap', 'ShaDaMsgpackBinaryString',
+          'ShaDaMsgpackBinaryStringEscape'},
+         '\\n'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap', 'ShaDaMsgpackBinaryString'},
+         'gi'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap', 'ShaDaMsgpackBinaryString',
+          'ShaDaMsgpackBinaryStringEscape'},
+         '\\"'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap', 'ShaDaMsgpackBinaryString'},
+         'tt\\.'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap', 'ShaDaMsgpackStringQuotes'},
+         '"'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap', 'ShaDaMsgpackComma'}, ','},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap'}, ' '},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap', 'ShaDaMsgpackKeyword'},
+         'TRUE'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap', 'ShaDaMsgpackColon'}, ':'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap'}, ' '},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMap', 'ShaDaMsgpackKeyword'},
+         'FALSE'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackMapBraces'}, '}'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackComma'}, ','},
+        {{'ShaDaMsgpackArray'}, ' '},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackArray', 'ShaDaMsgpackArrayBraces'},
+         '['},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackArray', 'ShaDaMsgpackKeyword'},
+         'NIL'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackArray', 'ShaDaMsgpackComma'}, ','},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackArray'}, ' '},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackArray', 'ShaDaMsgpackExt'}, '+('},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackArray', 'ShaDaMsgpackExt',
+          'ShaDaMsgpackExtType'}, '-10'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackArray', 'ShaDaMsgpackExt'}, ')'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackArray', 'ShaDaMsgpackBinaryString',
+          'ShaDaMsgpackStringQuotes'}, '"'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackArray', 'ShaDaMsgpackStringQuotes'},
+         '"'},
+        {{'ShaDaMsgpackArray', 'ShaDaMsgpackArrayBraces'}, ']'},
+        {{'ShaDaMsgpackArrayBraces'}, ']'},
+      },
+      {
+        hname('Buffer list'), h(' with timestamp '),
+        synepoch.year, synhtssep('-'), synepoch.month, synhtssep('-'),
+        synepoch.day, synhtssep('T'), synepoch.hour, synhtssep(':'),
+        synepoch.minute, synhtssep(':'), synepoch.second, h(':'),
+      },
+      {
+        mlh('  % Key  Description  Value'),
+      },
+      {
+      },
+      {
+        mlh('  % Key  Description  Value'),
+      },
+      {
+        hname('Header'), h(' with timestamp '),
+        synepoch.year, synhtssep('-'), synepoch.month, synhtssep('-'),
+        synepoch.day, synhtssep('T'), synepoch.hour, synhtssep(':'),
+        synepoch.minute, synhtssep(':'), synepoch.second, h(':'),
+      },
+      {
+        mlh('  % Key  Description________  Value'),
+      },
+      {
+        {{'ShaDaEntryMapLongEntryStart'}, '  + '},
+        {{'ShaDaEntryMapLongKey'}, 'se   '},
+        {{'ShaDaEntryMapLongDescription'}, 'place cursor at end  '},
+        {{'ShaDaMsgpackKeyword'}, 'TRUE'},
+      },
+    }
+    eq(exp, act)
+  end)
+end)
