@@ -2583,11 +2583,11 @@ did_set_string_option (
   else if (varp == &p_ead) {
     if (check_opt_strings(p_ead, p_ead_values, FALSE) != OK)
       errmsg = e_invarg;
-  }
-  else if (varp == &p_cb) {
-    if (opt_strings_flags(p_cb, p_cb_values, &cb_flags, TRUE) != OK)
+  } else if (varp == &p_cb) {  // 'clipboard'
+    if (opt_strings_flags(p_cb, p_cb_values, &cb_flags, true) != OK) {
       errmsg = e_invarg;
-  } else if (varp == &(curwin->w_s->b_p_spl)
+    }
+  } else if (varp == &(curwin->w_s->b_p_spl)  // 'spell'
              || varp == &(curwin->w_s->b_p_spf)) {
     // When 'spelllang' or 'spellfile' is set and there is a window for this
     // buffer in which 'spell' is set load the wordlists.

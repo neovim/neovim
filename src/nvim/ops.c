@@ -72,6 +72,12 @@ static yankreg_T y_regs[NUM_REGISTERS];
 static yankreg_T   *y_previous = NULL; /* ptr to last written yankreg */
 
 static bool clipboard_didwarn_unnamed = false;
+
+// for behavior between start_global_changes() and end_global_changes())
+static bool clipboard_delay_update = false;  // delay clipboard update
+static int global_change_count = 0;          // if set, inside global changes
+static bool clipboard_needs_update = false;   // the clipboard was updated
+
 /*
  * structure used by block_prep, op_delete and op_yank for blockwise operators
  * also op_change, op_shift, op_insert, op_replace - AKelly
@@ -5244,7 +5250,7 @@ void cursor_pos_info(void)
 int get_default_register_name(void)
 {
   int name = NUL;
-  adjust_clipboard_name(&name, true);
+  adjust_clipboard_name(&name, true, false);
   return name;
 }
 
@@ -5258,7 +5264,7 @@ int get_default_register_name(void)
 ///
 /// @returns the yankreg that should be written into, or `NULL`
 /// if the register isn't a clipboard or provider isn't available.
-static yankreg_T *adjust_clipboard_name(int *name, bool quiet)
+static yankreg_T *adjust_clipboard_name(int *name, bool quiet, bool writing)
 {
   if (*name == '*' || *name == '+') {
     if(!eval_has_provider("clipboard")) {
@@ -5276,6 +5282,14 @@ static yankreg_T *adjust_clipboard_name(int *name, bool quiet)
       }
       return NULL;
     }
+    if (writing && clipboard_delay_update) {
+      clipboard_needs_update = true;
+      return NULL;
+    } else if (!writing && clipboard_needs_update) {
+      // use the internal value
+      return NULL;
+    }
+
     yankreg_T *target;
     if (cb_flags & CB_UNNAMEDPLUS) {
       *name = cb_flags & CB_UNNAMED ? '"': '+';
@@ -5295,7 +5309,7 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
   // show message on error
   bool errmsg = true;
 
-  yankreg_T *reg = adjust_clipboard_name(&name, quiet);
+  yankreg_T *reg = adjust_clipboard_name(&name, quiet, false);
   if (reg == NULL) {
     return false;
   }
@@ -5406,7 +5420,7 @@ err:
 
 static void set_clipboard(int name, yankreg_T *reg)
 {
-  if(!adjust_clipboard_name(&name, false)) {
+  if (!adjust_clipboard_name(&name, false, true)) {
     return;
   }
 
@@ -5439,4 +5453,32 @@ static void set_clipboard(int name, yankreg_T *reg)
   list_append_string(args, &regname, 1);
 
   (void)eval_call_provider("clipboard", "set", args);
+}
+
+/// Prevent the clipboard being accesed before doing possibly many changes.
+/// Otherwise, Nvim might slow down considerably.
+///
+/// When doing global changes, we shouldn't try to update the clipboard until
+/// the changes are finished.
+void start_global_changes(void)
+{
+  if (++global_change_count > 1) {
+    return;
+  }
+  clipboard_delay_update = true;
+  clipboard_needs_update = false;
+}
+
+/// Update the clipboard once the global changes are done.
+void end_global_changes(void)
+{
+  if (--global_change_count > 0) {
+    // recursive
+    return;
+  }
+  clipboard_delay_update = false;
+  if (clipboard_needs_update) {
+    set_clipboard(NUL, y_previous);
+    clipboard_needs_update = false;
+  }
 }

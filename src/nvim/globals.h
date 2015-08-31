@@ -519,8 +519,6 @@ EXTERN int sys_menu INIT(= FALSE);
  * ('lines' and 'rows') must not be changed. */
 EXTERN int updating_screen INIT(= FALSE);
 
-
-
 /*
  * All windows are linked in a list. firstwin points to the first entry,
  * lastwin to the last entry (can be the same as firstwin) and curwin to the
