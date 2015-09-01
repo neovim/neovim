@@ -22,6 +22,7 @@
 #include "nvim/os/os.h"
 #include "nvim/strings.h"
 #include "nvim/ugrid.h"
+#include "nvim/ui_bridge.h"
 
 // Space reserved in the output buffer to restore the cursor to normal when
 // flushing. No existing terminal will require 32 bytes to do that.
@@ -33,14 +34,21 @@ typedef struct {
 } Rect;
 
 typedef struct {
+  UIBridgeData *bridge;
+  Loop *loop;
+  bool stop;
   unibi_var_t params[9];
   char buf[OUTBUF_SIZE];
   size_t bufpos, bufsize;
-  TermInput *input;
-  uv_loop_t *write_loop;
+  TermInput input;
+  uv_loop_t write_loop;
   unibi_term *ut;
   uv_tty_t output_handle;
-  SignalWatcher winch_handle;
+  SignalWatcher winch_handle, cont_handle;
+  bool cont_received;
+  // Event scheduled by the ui bridge. Since the main thread suspends until
+  // the event is handled, it is fine to use a single field instead of a queue
+  Event scheduled_event;
   UGrid grid;
   kvec_t(Rect) invalid_regions;
   int out_fd;
@@ -66,59 +74,9 @@ static bool volatile got_winch = false;
 
 UI *tui_start(void)
 {
-  TUIData *data = xcalloc(1, sizeof(TUIData));
   UI *ui = xcalloc(1, sizeof(UI));
-  ui->data = data;
-  data->print_attrs = EMPTY_ATTRS;
-  ugrid_init(&data->grid);
-  data->can_use_terminal_scroll = true;
-  data->bufpos = 0;
-  data->bufsize = sizeof(data->buf) - CNORM_COMMAND_MAX_SIZE;
-  data->showing_mode = 0;
-  data->unibi_ext.enable_mouse = -1;
-  data->unibi_ext.disable_mouse = -1;
-  data->unibi_ext.enable_bracketed_paste = -1;
-  data->unibi_ext.disable_bracketed_paste = -1;
-  data->unibi_ext.enter_insert_mode = -1;
-  data->unibi_ext.enter_replace_mode = -1;
-  data->unibi_ext.exit_insert_mode = -1;
-
-  // write output to stderr if stdout is not a tty
-  data->out_fd = os_isatty(1) ? 1 : (os_isatty(2) ? 2 : 1);
-  kv_init(data->invalid_regions);
-  // setup term input
-  data->input = term_input_new();
-  // setup unibilium
-  data->ut = unibi_from_env();
-  if (!data->ut) {
-    // For some reason could not read terminfo file, use a dummy entry that
-    // will be populated with common values by fix_terminfo below
-    data->ut = unibi_dummy();
-  }
-  fix_terminfo(data);
-  // Enter alternate screen and clear
-  unibi_out(ui, unibi_enter_ca_mode);
-  unibi_out(ui, unibi_clear_screen);
-  // Enable bracketed paste
-  unibi_out(ui, data->unibi_ext.enable_bracketed_paste);
-  // setup output handle in a separate event loop(we wanna do synchronous
-  // write to the tty)
-  data->write_loop = xmalloc(sizeof(uv_loop_t));
-  uv_loop_init(data->write_loop);
-  uv_tty_init(data->write_loop, &data->output_handle, data->out_fd, 0);
-  uv_tty_set_mode(&data->output_handle, UV_TTY_MODE_RAW);
-
-  // Obtain screen dimensions
-  update_size(ui);
-
-  // listen for SIGWINCH
-  signal_watcher_init(&loop, &data->winch_handle, ui);
-  data->winch_handle.events = queue_new_child(loop.events);
-  signal_watcher_start(&data->winch_handle, sigwinch_cb, SIGWINCH);
-
   ui->stop = tui_stop;
   ui->rgb = os_getenv("NVIM_TUI_ENABLE_TRUE_COLOR") != NULL;
-  ui->data = data;
   ui->resize = tui_resize;
   ui->clear = tui_clear;
   ui->eol_clear = tui_eol_clear;
@@ -142,21 +100,46 @@ UI *tui_start(void)
   ui->set_title = tui_set_title;
   ui->set_icon = tui_set_icon;
   ui->set_encoding = tui_set_encoding;
-  // Attach
-  ui_attach(ui);
-  return ui;
+  return ui_bridge_attach(ui, tui_main, tui_scheduler);
 }
 
-static void tui_stop(UI *ui)
+static void terminfo_start(UI *ui)
 {
   TUIData *data = ui->data;
-  // Destroy common stuff
-  kv_destroy(data->invalid_regions);
-  signal_watcher_stop(&data->winch_handle);
-  queue_free(data->winch_handle.events);
-  signal_watcher_close(&data->winch_handle, NULL);
-  // Destroy input stuff
-  term_input_destroy(data->input);
+  data->can_use_terminal_scroll = true;
+  data->bufpos = 0;
+  data->bufsize = sizeof(data->buf) - CNORM_COMMAND_MAX_SIZE;
+  data->showing_mode = 0;
+  data->unibi_ext.enable_mouse = -1;
+  data->unibi_ext.disable_mouse = -1;
+  data->unibi_ext.enable_bracketed_paste = -1;
+  data->unibi_ext.disable_bracketed_paste = -1;
+  data->unibi_ext.enter_insert_mode = -1;
+  data->unibi_ext.enter_replace_mode = -1;
+  data->unibi_ext.exit_insert_mode = -1;
+  // write output to stderr if stdout is not a tty
+  data->out_fd = os_isatty(1) ? 1 : (os_isatty(2) ? 2 : 1);
+  // setup unibilium
+  data->ut = unibi_from_env();
+  if (!data->ut) {
+    // For some reason could not read terminfo file, use a dummy entry that
+    // will be populated with common values by fix_terminfo below
+    data->ut = unibi_dummy();
+  }
+  fix_terminfo(data);
+  // Enter alternate screen and clear
+  unibi_out(ui, unibi_enter_ca_mode);
+  unibi_out(ui, unibi_clear_screen);
+  // Enable bracketed paste
+  unibi_out(ui, data->unibi_ext.enable_bracketed_paste);
+  uv_loop_init(&data->write_loop);
+  uv_tty_init(&data->write_loop, &data->output_handle, data->out_fd, 0);
+  uv_tty_set_mode(&data->output_handle, UV_TTY_MODE_RAW);
+}
+
+static void terminfo_stop(UI *ui)
+{
+  TUIData *data = ui->data;
   // Destroy output stuff
   tui_mode_change(ui, NORMAL);
   tui_mouse_off(ui);
@@ -169,16 +152,90 @@ static void tui_stop(UI *ui)
   flush_buf(ui);
   uv_tty_reset_mode();
   uv_close((uv_handle_t *)&data->output_handle, NULL);
-  uv_run(data->write_loop, UV_RUN_DEFAULT);
-  if (uv_loop_close(data->write_loop)) {
+  uv_run(&data->write_loop, UV_RUN_DEFAULT);
+  if (uv_loop_close(&data->write_loop)) {
     abort();
   }
-  xfree(data->write_loop);
   unibi_destroy(data->ut);
+}
+
+static void tui_terminal_start(UI *ui)
+{
+  TUIData *data = ui->data;
+  data->print_attrs = EMPTY_ATTRS;
+  ugrid_init(&data->grid);
+  terminfo_start(ui);
+  update_size(ui);
+  signal_watcher_start(&data->winch_handle, sigwinch_cb, SIGWINCH);
+  term_input_start(&data->input);
+}
+
+static void tui_terminal_stop(UI *ui)
+{
+  TUIData *data = ui->data;
+  term_input_stop(&data->input);
+  signal_watcher_stop(&data->winch_handle);
+  terminfo_stop(ui);
   ugrid_free(&data->grid);
+}
+
+static void tui_stop(UI *ui)
+{
+  tui_terminal_stop(ui);
+  TUIData *data = ui->data;
+  data->stop = true;
+}
+
+// Main function of the TUI thread
+static void tui_main(UIBridgeData *bridge, UI *ui)
+{
+  Loop tui_loop;
+  loop_init(&tui_loop, NULL);
+  TUIData *data = xcalloc(1, sizeof(TUIData));
+  ui->data = data;
+  data->bridge = bridge;
+  data->loop = &tui_loop;
+  kv_init(data->invalid_regions);
+  signal_watcher_init(data->loop, &data->winch_handle, ui);
+  signal_watcher_init(data->loop, &data->cont_handle, data);
+  signal_watcher_start(&data->cont_handle, sigcont_cb, SIGCONT);
+  // initialize input reading structures
+  term_input_init(&data->input, &tui_loop);
+  tui_terminal_start(ui);
+  data->stop = false;
+  // allow the main thread to continue, we are ready to start handling UI
+  // callbacks
+  CONTINUE(bridge);
+
+  while (!data->stop) {
+    loop_poll_events(&tui_loop, -1);
+  }
+
+  term_input_destroy(&data->input);
+  signal_watcher_stop(&data->cont_handle);
+  signal_watcher_close(&data->cont_handle, NULL);
+  signal_watcher_close(&data->winch_handle, NULL);
+  loop_close(&tui_loop);
+  kv_destroy(data->invalid_regions);
   xfree(data);
-  ui_detach(ui);
   xfree(ui);
+}
+
+static void tui_scheduler(Event event, void *d)
+{
+  UI *ui = d;
+  TUIData *data = ui->data;
+  loop_schedule(data->loop, event);
+}
+
+static void refresh_event(void **argv)
+{
+  ui_refresh();
+}
+
+static void sigcont_cb(SignalWatcher *watcher, int signum, void *data)
+{
+  ((TUIData *)data)->cont_received = true;
 }
 
 static void sigwinch_cb(SignalWatcher *watcher, int signum, void *data)
@@ -186,7 +243,8 @@ static void sigwinch_cb(SignalWatcher *watcher, int signum, void *data)
   got_winch = true;
   UI *ui = data;
   update_size(ui);
-  ui_refresh();
+  // run refresh_event in nvim main loop
+  loop_schedule(&loop, event_create(1, refresh_event, 0));
 }
 
 static bool attrs_differ(HlAttrs a1, HlAttrs a2)
@@ -521,16 +579,34 @@ static void tui_flush(UI *ui)
   flush_buf(ui);
 }
 
-static void tui_suspend(UI *ui)
+static void suspend_event(void **argv)
 {
+  UI *ui = argv[0];
   TUIData *data = ui->data;
   bool enable_mouse = data->mouse_enabled;
-  tui_stop(ui);
+  tui_terminal_stop(ui);
+  data->cont_received = false;
   kill(0, SIGTSTP);
-  ui = tui_start();
+  while (!data->cont_received) {
+    // poll the event loop until SIGCONT is received
+    loop_poll_events(data->loop, -1);
+  }
+  tui_terminal_start(ui);
   if (enable_mouse) {
     tui_mouse_on(ui);
   }
+  // resume the main thread
+  CONTINUE(data->bridge);
+}
+
+static void tui_suspend(UI *ui)
+{
+  TUIData *data = ui->data;
+  // kill(0, SIGTSTP) won't stop the UI thread, so we must poll for SIGCONT
+  // before continuing. This is done in another callback to avoid
+  // loop_poll_events recursion
+  queue_put_event(data->loop->fast_events,
+      event_create(1, suspend_event, 1, ui));
 }
 
 static void tui_set_title(UI *ui, char *title)
@@ -552,7 +628,7 @@ static void tui_set_icon(UI *ui, char *icon)
 static void tui_set_encoding(UI *ui, char* enc)
 {
   TUIData *data = ui->data;
-  term_input_set_encoding(data->input, enc);
+  term_input_set_encoding(&data->input, enc);
 }
 
 static void invalidate(UI *ui, int top, int bot, int left, int right)
@@ -633,8 +709,8 @@ end:
     height = DFLT_ROWS;
   }
 
-  ui->width = width;
-  ui->height = height;
+  data->bridge->bridge.width = ui->width = width;
+  data->bridge->bridge.height = ui->height = height;
 }
 
 static void unibi_goto(UI *ui, int row, int col)
@@ -817,7 +893,7 @@ static void flush_buf(UI *ui)
   buf.base = data->buf;
   buf.len = data->bufpos;
   uv_write(&req, (uv_stream_t *)&data->output_handle, &buf, 1, NULL);
-  uv_run(data->write_loop, UV_RUN_DEFAULT);
+  uv_run(&data->write_loop, UV_RUN_DEFAULT);
   data->bufpos = 0;
 
   if (!data->busy) {

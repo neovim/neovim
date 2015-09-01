@@ -15,42 +15,46 @@
 # include "tui/input.c.generated.h"
 #endif
 
-TermInput *term_input_new(void)
+void term_input_init(TermInput *input, Loop *loop)
 {
-  TermInput *rv = xmalloc(sizeof(TermInput));
-  rv->paste_enabled = false;
-  rv->in_fd = 0;
+  input->loop = loop;
+  input->paste_enabled = false;
+  input->in_fd = 0;
 
   const char *term = os_getenv("TERM");
   if (!term) {
     term = "";  // termkey_new_abstract assumes non-null (#2745)
   }
-  rv->tk = termkey_new_abstract(term, 0);
-  int curflags = termkey_get_canonflags(rv->tk);
-  termkey_set_canonflags(rv->tk, curflags | TERMKEY_CANON_DELBS);
+  input->tk = termkey_new_abstract(term, 0);
+  int curflags = termkey_get_canonflags(input->tk);
+  termkey_set_canonflags(input->tk, curflags | TERMKEY_CANON_DELBS);
   // setup input handle
-  rstream_init_fd(&loop, &rv->read_stream, rv->in_fd, 0xfff, rv);
-  rstream_start(&rv->read_stream, read_cb);
+  rstream_init_fd(loop, &input->read_stream, input->in_fd, 0xfff, input);
   // initialize a timer handle for handling ESC with libtermkey
-  time_watcher_init(&loop, &rv->timer_handle, rv);
+  time_watcher_init(loop, &input->timer_handle, input);
   // Set the pastetoggle option to a special key that will be sent when
   // \e[20{0,1}~/ are received
   Error err = ERROR_INIT;
   vim_set_option(cstr_as_string("pastetoggle"),
       STRING_OBJ(cstr_as_string(PASTETOGGLE_KEY)), &err);
-  return rv;
 }
 
 void term_input_destroy(TermInput *input)
 {
-  time_watcher_stop(&input->timer_handle);
   time_watcher_close(&input->timer_handle, NULL);
-  rstream_stop(&input->read_stream);
   stream_close(&input->read_stream, NULL);
   termkey_destroy(input->tk);
-  // Run once to remove references to input/timer handles
-  loop_poll_events(&loop, 0);
-  xfree(input);
+}
+
+void term_input_start(TermInput *input)
+{
+  rstream_start(&input->read_stream, read_cb);
+}
+
+void term_input_stop(TermInput *input)
+{
+  rstream_stop(&input->read_stream);
+  time_watcher_stop(&input->timer_handle);
 }
 
 void term_input_set_encoding(TermInput *input, char* enc)
@@ -58,6 +62,24 @@ void term_input_set_encoding(TermInput *input, char* enc)
   int enc_flag = strcmp(enc, "utf-8") == 0 ? TERMKEY_FLAG_UTF8
                                            : TERMKEY_FLAG_RAW;
   termkey_set_flags(input->tk, enc_flag);
+}
+
+static void input_enqueue_event(void **argv)
+{
+  char *buf = argv[0];
+  input_enqueue(cstr_as_string(buf));
+  xfree(buf);
+}
+
+static void input_done_event(void **argv)
+{
+  input_done();
+}
+
+static void enqueue_input(char *buf, size_t size)
+{
+  loop_schedule(&loop, event_create(1, input_enqueue_event, 1,
+        xstrndup(buf, size)));
 }
 
 static void forward_simple_utf8(TermKeyKey *key)
@@ -76,7 +98,7 @@ static void forward_simple_utf8(TermKeyKey *key)
   }
 
   buf[len] = 0;
-  input_enqueue((String){.data = buf, .size = len});
+  enqueue_input(buf, len);
 }
 
 static void forward_modified_utf8(TermKey *tk, TermKeyKey *key)
@@ -91,7 +113,7 @@ static void forward_modified_utf8(TermKey *tk, TermKeyKey *key)
     len = termkey_strfkey(tk, buf, sizeof(buf), key, TERMKEY_FORMAT_VIM);
   }
 
-  input_enqueue((String){.data = buf, .size = len});
+  enqueue_input(buf, len);
 }
 
 static void forward_mouse_event(TermKey *tk, TermKeyKey *key)
@@ -142,7 +164,7 @@ static void forward_mouse_event(TermKey *tk, TermKeyKey *key)
   }
 
   len += (size_t)snprintf(buf + len, sizeof(buf) - len, "><%d,%d>", col, row);
-  input_enqueue((String){.data = buf, .size = len});
+  enqueue_input(buf, len);
 }
 
 static TermKeyResult tk_getkey(TermKey *tk, TermKeyKey *key, bool force)
@@ -218,16 +240,16 @@ static bool handle_bracketed_paste(TermInput *input)
       int state = get_real_state();
       if (state & NORMAL) {
         // Enter insert mode
-        input_enqueue(cstr_as_string("i"));
+        enqueue_input("i", 1);
       } else if (state & VISUAL) {
         // Remove the selected text and enter insert mode
-        input_enqueue(cstr_as_string("c"));
+        enqueue_input("c", 1);
       } else if (!(state & INSERT)) {
         // Don't mess with the paste option
         return true;
       }
     }
-    input_enqueue(cstr_as_string(PASTETOGGLE_KEY));
+    enqueue_input(PASTETOGGLE_KEY, sizeof(PASTETOGGLE_KEY) - 1);
     input->paste_enabled = enable;
     return true;
   }
@@ -270,9 +292,9 @@ static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
       // ls *.md | xargs nvim
       input->in_fd = 2;
       stream_close(&input->read_stream, NULL);
-      queue_put(loop.fast_events, restart_reading, 1, input);
+      queue_put(input->loop->fast_events, restart_reading, 1, input);
     } else {
-      input_done();
+      loop_schedule(&loop, event_create(1, input_done_event, 0));
     }
     return;
   }
@@ -318,6 +340,6 @@ static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
 static void restart_reading(void **argv)
 {
   TermInput *input = argv[0];
-  rstream_init_fd(&loop, &input->read_stream, input->in_fd, 0xfff, input);
+  rstream_init_fd(input->loop, &input->read_stream, input->in_fd, 0xfff, input);
   rstream_start(&input->read_stream, read_cb);
 }

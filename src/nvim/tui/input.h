@@ -12,6 +12,7 @@ typedef struct term_input {
   bool paste_enabled;
   TermKey *tk;
   TimeWatcher timer_handle;
+  Loop *loop;
   Stream read_stream;
 } TermInput;
 
