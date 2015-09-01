@@ -29,19 +29,19 @@ clipboard functions account for more than 1k lines of C source code (and that
 is just on ui.c), all to peform two tasks that are now accomplished with
 simple shell commands such as xclip or pbcopy/pbpaste.
 
-The other example is Python scripting support: Vim has three files dedicated
-to embed the Python interpreter: if_python.c, if_python3.c and if_py_both.h.
+The other example is Python scripting support: Vim has three files dedicated to
+embedding the Python interpreter: if_python.c, if_python3.c and if_py_both.h.
 Together these files sum about 9.5k lines of C source code. On Nvim, Python
 scripting is performed by an external host process that is running 2k sloc
 Python program.
 
 In a perfect world, we would implement Python and clipboard integration in
 pure vimscript and without touching the C code. Unfortunately we can't achieve
-these goals without severly compromising backwards compatibility with Vim.
-Thats where providers comes to rescue.
+these goals without severely compromising backwards compatibility with Vim.
+That's where providers come to the rescue.
 
-In essence, this infrastructure a simple framework that simplifies the task of
-calling vimscript from C code, making it simpler to rewrite C functions that
+In essence, this infrastructure is a simple framework that simplifies the task
+of calling vimscript from C code, making it simpler to rewrite C functions that
 interact with external systems in pure vimscript. It is composed of two
 functions in eval.c:
 
