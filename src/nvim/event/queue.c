@@ -105,16 +105,15 @@ static Queue *queue_new(Queue *parent, put_callback put_cb, void *data)
 void queue_free(Queue *queue)
 {
   assert(queue);
-  if (queue->parent) {
-    while (!QUEUE_EMPTY(&queue->headtail)) {
-      QUEUE *q = QUEUE_HEAD(&queue->headtail);
-      QueueItem *item = queue_node_data(q);
-      assert(!item->link);
+  while (!QUEUE_EMPTY(&queue->headtail)) {
+    QUEUE *q = QUEUE_HEAD(&queue->headtail);
+    QueueItem *item = queue_node_data(q);
+    if (queue->parent) {
       QUEUE_REMOVE(&item->data.item.parent->node);
       xfree(item->data.item.parent);
-      QUEUE_REMOVE(q);
-      xfree(item);
     }
+    QUEUE_REMOVE(q);
+    xfree(item);
   }
 
   xfree(queue);
@@ -128,9 +127,8 @@ Event queue_get(Queue *queue)
 void queue_put_event(Queue *queue, Event event)
 {
   assert(queue);
-  assert(queue->parent);  // don't push directly to the parent queue
   queue_push(queue, event);
-  if (queue->parent->put_cb) {
+  if (queue->parent && queue->parent->put_cb) {
     queue->parent->put_cb(queue->parent, queue->parent->data);
   }
 }
@@ -177,11 +175,11 @@ static Event queue_remove(Queue *queue)
     rv = child->data.item.event;
     xfree(child);
   } else {
-    assert(queue->parent);
-    assert(!queue_empty(queue->parent));
-    // remove the corresponding link node in the parent queue
-    QUEUE_REMOVE(&item->data.item.parent->node);
-    xfree(item->data.item.parent);
+    if (queue->parent) {
+      // remove the corresponding link node in the parent queue
+      QUEUE_REMOVE(&item->data.item.parent->node);
+      xfree(item->data.item.parent);
+    }
     rv = item->data.item.event;
   }
 
@@ -195,11 +193,13 @@ static void queue_push(Queue *queue, Event event)
   item->link = false;
   item->data.item.event = event;
   QUEUE_INSERT_TAIL(&queue->headtail, &item->node);
-  // push link node to the parent queue
-  item->data.item.parent = xmalloc(sizeof(QueueItem));
-  item->data.item.parent->link = true;
-  item->data.item.parent->data.queue = queue;
-  QUEUE_INSERT_TAIL(&queue->parent->headtail, &item->data.item.parent->node);
+  if (queue->parent) {
+    // push link node to the parent queue
+    item->data.item.parent = xmalloc(sizeof(QueueItem));
+    item->data.item.parent->link = true;
+    item->data.item.parent->data.queue = queue;
+    QUEUE_INSERT_TAIL(&queue->parent->headtail, &item->data.item.parent->node);
+  }
 }
 
 static QueueItem *queue_node_data(QUEUE *q)
