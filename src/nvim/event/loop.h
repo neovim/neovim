@@ -16,11 +16,14 @@ KLIST_INIT(WatcherPtr, WatcherPtr, _noop)
 
 typedef struct loop {
   uv_loop_t uv;
-  Queue *events, *fast_events;
+  Queue *events, *fast_events, *thread_events;
   klist_t(WatcherPtr) *children;
   uv_signal_t children_watcher;
   uv_timer_t children_kill_timer, poll_timer;
   size_t children_stop_requests;
+  uv_async_t async;
+  uv_mutex_t mutex;
+  int recursive;
 } Loop;
 
 #define CREATE_EVENT(queue, handler, argc, ...)                  \
