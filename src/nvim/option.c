@@ -2211,9 +2211,7 @@ did_set_string_option (
   else if (gvarp == &p_nf) {
     if (check_opt_strings(*varp, p_nf_values, TRUE) != OK)
       errmsg = e_invarg;
-  }
-  /* 'sessionoptions' */
-  else if (varp == &p_ssop) {
+  } else if (varp == &p_ssop) {  // 'sessionoptions'
     if (opt_strings_flags(p_ssop, p_ssop_values, &ssop_flags, true) != OK)
       errmsg = e_invarg;
     if ((ssop_flags & SSOP_CURDIR) && (ssop_flags & SSOP_SESDIR)) {
@@ -2221,9 +2219,7 @@ did_set_string_option (
       (void)opt_strings_flags(oldval, p_ssop_values, &ssop_flags, true);
       errmsg = e_invarg;
     }
-  }
-  /* 'viewoptions' */
-  else if (varp == &p_vop) {
+  } else if (varp == &p_vop) {  // 'viewoptions'
     if (opt_strings_flags(p_vop, p_ssop_values, &vop_flags, true) != OK)
       errmsg = e_invarg;
   }
@@ -2560,9 +2556,7 @@ did_set_string_option (
   else if (varp == &p_mousem) {
     if (check_opt_strings(p_mousem, p_mousem_values, FALSE) != OK)
       errmsg = e_invarg;
-  }
-  /* 'switchbuf' */
-  else if (varp == &p_swb) {
+  } else if (varp == &p_swb) {  // 'switchbuf'
     if (opt_strings_flags(p_swb, p_swb_values, &swb_flags, true) != OK)
       errmsg = e_invarg;
   }
@@ -2570,9 +2564,7 @@ did_set_string_option (
   else if (varp == &p_debug) {
     if (check_opt_strings(p_debug, p_debug_values, TRUE) != OK)
       errmsg = e_invarg;
-  }
-  /* 'display' */
-  else if (varp == &p_dy) {
+  } else if (varp == &p_dy) {  // 'display'
     if (opt_strings_flags(p_dy, p_dy_values, &dy_flags, true) != OK)
       errmsg = e_invarg;
     else
@@ -2721,9 +2713,7 @@ did_set_string_option (
         errmsg = e_invarg;
     } else if (check_opt_strings(p_bs, p_bs_values, TRUE) != OK)
       errmsg = e_invarg;
-  }
-  /* 'casemap' */
-  else if (varp == &p_cmp) {
+  } else if (varp == &p_cmp) {  // 'casemap'
     if (opt_strings_flags(p_cmp, p_cmp_values, &cmp_flags, true) != OK)
       errmsg = e_invarg;
   }
@@ -2761,10 +2751,9 @@ did_set_string_option (
   /* 'commentstring' */
   else if (gvarp == &p_cms) {
     if (**varp != NUL && strstr((char *)*varp, "%s") == NULL)
-      errmsg = (char_u *)N_("E537: 'commentstring' must be empty or contain %s");
-  }
-  /* 'foldopen' */
-  else if (varp == &p_fdo) {
+      errmsg = (char_u *)N_(
+                "E537: 'commentstring' must be empty or contain %s");
+  } else if (varp == &p_fdo) {  // 'foldopen'
     if (opt_strings_flags(p_fdo, p_fdo_values, &fdo_flags, true) != OK)
       errmsg = e_invarg;
   }
@@ -2777,9 +2766,7 @@ did_set_string_option (
   else if (gvarp == &curwin->w_allbuf_opt.wo_fdi) {
     if (foldmethodIsIndent(curwin))
       foldUpdateAll(curwin);
-  }
-  /* 'virtualedit' */
-  else if (varp == &p_ve) {
+  } else if (varp == &p_ve) {  // 'virtualedit'
     if (opt_strings_flags(p_ve, p_ve_values, &ve_flags, true) != OK)
       errmsg = e_invarg;
     else if (STRCMP(p_ve, oldval) != 0) {
