@@ -2199,7 +2199,7 @@ unchanged (
     int ff                 /* also reset 'fileformat' */
 )
 {
-  if (buf->b_changed || (ff && file_ff_differs(buf, FALSE))) {
+  if (buf->b_changed || (ff && file_ff_differs(buf, false))) {
     buf->b_changed = false;
     ml_setflags(buf);
     if (ff)

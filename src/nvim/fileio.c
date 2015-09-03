@@ -6088,11 +6088,11 @@ aucmd_prepbuf (
     block_autocmds();
     make_snapshot(SNAP_AUCMD_IDX);
     save_ea = p_ea;
-    p_ea = FALSE;
+    p_ea = false;
 
     /* Prevent chdir() call in win_enter_ext(), through do_autochdir(). */
     save_acd = p_acd;
-    p_acd = FALSE;
+    p_acd = false;
 
     (void)win_split_ins(0, WSP_TOP, aucmd_win, 0);
     (void)win_comp_pos();       /* recompute window positions */

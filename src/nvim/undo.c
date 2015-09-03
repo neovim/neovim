@@ -2799,14 +2799,14 @@ int bufIsChanged(buf_T *buf)
 {
   return
     !bt_dontwrite(buf) &&
-    (buf->b_changed || file_ff_differs(buf, TRUE));
+    (buf->b_changed || file_ff_differs(buf, true));
 }
 
 int curbufIsChanged(void)
 {
   return
     !bt_dontwrite(curbuf) &&
-    (curbuf->b_changed || file_ff_differs(curbuf, TRUE));
+    (curbuf->b_changed || file_ff_differs(curbuf, true));
 }
 
 /*
