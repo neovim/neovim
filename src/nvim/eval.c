@@ -5570,96 +5570,97 @@ static int list_join(garray_T *gap, list_T *l, char_u *sep, int echo_style, int 
  *	http://python.ca/nas/python/gc/
  */
 
-/*
- * Do garbage collection for lists and dicts.
- * Return TRUE if some memory was freed.
- */
-int garbage_collect(void)
+/// Do garbage collection for lists and dicts.
+///
+/// @returns        true if some memory was freed.
+bool garbage_collect(void)
 {
-  int copyID;
-  funccall_T  *fc, **pfc;
-  int did_free;
-  int did_free_funccal = FALSE;
+  bool abort = false;
 
-  /* Only do this once. */
-  want_garbage_collect = FALSE;
-  may_garbage_collect = FALSE;
-  garbage_collect_at_exit = FALSE;
+  // Only do this once.
+  want_garbage_collect = false;
+  may_garbage_collect = false;
+  garbage_collect_at_exit = false;
 
-  /* We advance by two because we add one for items referenced through
-   * previous_funccal. */
+  // We advance by two because we add one for items referenced through
+  // previous_funccal.
   current_copyID += COPYID_INC;
-  copyID = current_copyID;
+  int copyID = current_copyID;
 
-  /*
-   * 1. Go through all accessible variables and mark all lists and dicts
-   *    with copyID.
-   */
+  // 1. Go through all accessible variables and mark all lists and dicts
+  // with copyID.
 
-  /* Don't free variables in the previous_funccal list unless they are only
-   * referenced through previous_funccal.  This must be first, because if
-   * the item is referenced elsewhere the funccal must not be freed. */
-  for (fc = previous_funccal; fc != NULL; fc = fc->caller) {
-    set_ref_in_ht(&fc->l_vars.dv_hashtab, copyID + 1);
-    set_ref_in_ht(&fc->l_avars.dv_hashtab, copyID + 1);
+  // Don't free variables in the previous_funccal list unless they are only
+  // referenced through previous_funccal.  This must be first, because if
+  // the item is referenced elsewhere the funccal must not be freed.
+  for (funccall_T *fc = previous_funccal; fc != NULL; fc = fc->caller) {
+    abort = abort || set_ref_in_ht(&fc->l_vars.dv_hashtab, copyID + 1, NULL);
+    abort = abort || set_ref_in_ht(&fc->l_avars.dv_hashtab, copyID + 1, NULL);
   }
 
-  /* script-local variables */
-  for (int i = 1; i <= ga_scripts.ga_len; ++i)
-    set_ref_in_ht(&SCRIPT_VARS(i), copyID);
+  // script-local variables
+  for (int i = 1; i <= ga_scripts.ga_len; ++i) {
+    abort = abort || set_ref_in_ht(&SCRIPT_VARS(i), copyID, NULL);
+  }
 
-  /* buffer-local variables */
+  // buffer-local variables
   FOR_ALL_BUFFERS(buf) {
-    set_ref_in_item(&buf->b_bufvar.di_tv, copyID);
+    abort = abort || set_ref_in_item(&buf->b_bufvar.di_tv, copyID, NULL, NULL);
   }
 
-  /* window-local variables */
+  // window-local variables
   FOR_ALL_TAB_WINDOWS(tp, wp) {
-    set_ref_in_item(&wp->w_winvar.di_tv, copyID);
+    abort = abort || set_ref_in_item(&wp->w_winvar.di_tv, copyID, NULL, NULL);
   }
-  if (aucmd_win != NULL)
-    set_ref_in_item(&aucmd_win->w_winvar.di_tv, copyID);
+  if (aucmd_win != NULL) {
+    abort = abort ||
+            set_ref_in_item(&aucmd_win->w_winvar.di_tv, copyID, NULL, NULL);
+  }
 
-  /* tabpage-local variables */
+  // tabpage-local variables
   FOR_ALL_TABS(tp) {
-    set_ref_in_item(&tp->tp_winvar.di_tv, copyID);
+    abort = abort || set_ref_in_item(&tp->tp_winvar.di_tv, copyID, NULL, NULL);
   }
 
-  /* global variables */
-  set_ref_in_ht(&globvarht, copyID);
+  // global variables
+  abort = abort || set_ref_in_ht(&globvarht, copyID, NULL);
 
-  /* function-local variables */
-  for (fc = current_funccal; fc != NULL; fc = fc->caller) {
-    set_ref_in_ht(&fc->l_vars.dv_hashtab, copyID);
-    set_ref_in_ht(&fc->l_avars.dv_hashtab, copyID);
+  // function-local variables
+  for (funccall_T *fc = current_funccal; fc != NULL; fc = fc->caller) {
+    abort = abort || set_ref_in_ht(&fc->l_vars.dv_hashtab, copyID, NULL);
+    abort = abort || set_ref_in_ht(&fc->l_avars.dv_hashtab, copyID, NULL);
   }
 
-  /* v: vars */
-  set_ref_in_ht(&vimvarht, copyID);
+  // v: vars
+  abort = abort || set_ref_in_ht(&vimvarht, copyID, NULL);
 
-  /*
-   * 2. Free lists and dictionaries that are not referenced.
-   */
-  did_free = free_unref_items(copyID);
+  bool did_free = false;
+  if (!abort) {
+    // 2. Free lists and dictionaries that are not referenced.
+    did_free = free_unref_items(copyID);
 
-  /*
-   * 3. Check if any funccal can be freed now.
-   */
-  for (pfc = &previous_funccal; *pfc != NULL; ) {
-    if (can_free_funccal(*pfc, copyID)) {
-      fc = *pfc;
-      *pfc = fc->caller;
-      free_funccal(fc, TRUE);
-      did_free = TRUE;
-      did_free_funccal = TRUE;
-    } else
-      pfc = &(*pfc)->caller;
+    // 3. Check if any funccal can be freed now.
+    bool did_free_funccal = false;
+    for (funccall_T **pfc = &previous_funccal; *pfc != NULL;) {
+      if (can_free_funccal(*pfc, copyID)) {
+        funccall_T *fc = *pfc;
+        *pfc = fc->caller;
+        free_funccal(fc, true);
+        did_free = true;
+        did_free_funccal = true;
+      } else {
+        pfc = &(*pfc)->caller;
+      }
+    }
+    if (did_free_funccal) {
+      // When a funccal was freed some more items might be garbage
+      // collected, so run again.
+      (void)garbage_collect();
+    }
+  } else if (p_verbose > 0) {
+    verb_msg((char_u *)_(
+        "Not enough memory to set references, garbage collection aborted!"));
   }
-  if (did_free_funccal)
-    /* When a funccal was freed some more items might be garbage
-     * collected, so run again. */
-    (void)garbage_collect();
-
   return did_free;
 }
 
@@ -5711,61 +5712,143 @@ static int free_unref_items(int copyID)
   return did_free;
 }
 
-/*
- * Mark all lists and dicts referenced through hashtab "ht" with "copyID".
- */
-void set_ref_in_ht(hashtab_T *ht, int copyID)
+/// Mark all lists and dicts referenced through hashtab "ht" with "copyID".
+///
+/// @param ht            Hashtab content will be marked.
+/// @param copyID        New mark for lists and dicts.
+/// @param list_stack    Used to add lists to be marked. Can be NULL.
+///
+/// @returns             true if setting references failed somehow.
+bool set_ref_in_ht(hashtab_T *ht, int copyID, list_stack_T **list_stack)
 {
-  int todo;
-  hashitem_T  *hi;
+  bool abort = false;
+  ht_stack_T *ht_stack = NULL;
 
-  todo = (int)ht->ht_used;
-  for (hi = ht->ht_array; todo > 0; ++hi)
-    if (!HASHITEM_EMPTY(hi)) {
-      --todo;
-      set_ref_in_item(&HI2DI(hi)->di_tv, copyID);
+  hashtab_T *cur_ht = ht;
+  for (;;) {
+    if (!abort) {
+      // Mark each item in the hashtab.  If the item contains a hashtab
+      // it is added to ht_stack, if it contains a list it is added to
+      // list_stack.
+      int todo = (int)cur_ht->ht_used;
+      for (hashitem_T *hi = cur_ht->ht_array; todo > 0; ++hi) {
+        if (!HASHITEM_EMPTY(hi)) {
+          --todo;
+          abort = abort || set_ref_in_item(&HI2DI(hi)->di_tv, copyID, &ht_stack,
+                                           list_stack);
+        }
+      }
     }
+
+    if (ht_stack == NULL) {
+      break;
+    }
+
+    // take an item from the stack
+    cur_ht = ht_stack->ht;
+    ht_stack_T *tempitem = ht_stack;
+    ht_stack = ht_stack->prev;
+    xfree(tempitem);
+  }
+
+  return abort;
 }
 
-/*
- * Mark all lists and dicts referenced through list "l" with "copyID".
- */
-void set_ref_in_list(list_T *l, int copyID)
+/// Mark all lists and dicts referenced through list "l" with "copyID".
+///
+/// @param l             List content will be marked.
+/// @param copyID        New mark for lists and dicts.
+/// @param ht_stack      Used to add hashtabs to be marked. Can be NULL.
+///
+/// @returns             true if setting references failed somehow.
+bool set_ref_in_list(list_T *l, int copyID, ht_stack_T **ht_stack)
 {
-  listitem_T *li;
+  bool abort = false;
+  list_stack_T *list_stack = NULL;
 
-  for (li = l->lv_first; li != NULL; li = li->li_next)
-    set_ref_in_item(&li->li_tv, copyID);
+  list_T *cur_l = l;
+  for (;;) {
+    if (!abort) {
+      // Mark each item in the list.  If the item contains a hashtab
+      // it is added to ht_stack, if it contains a list it is added to
+      // list_stack.
+      for (listitem_T *li = cur_l->lv_first; !abort && li != NULL;
+           li = li->li_next) {
+        abort = set_ref_in_item(&li->li_tv, copyID, ht_stack, &list_stack);
+      }
+    }
+
+    if (list_stack == NULL) {
+      break;
+    }
+
+    // take an item from the stack
+    cur_l = list_stack->list;
+    list_stack_T *tempitem = list_stack;
+    list_stack = list_stack->prev;
+    xfree(tempitem);
+  }
+
+  return abort;
 }
 
-/*
- * Mark all lists and dicts referenced through typval "tv" with "copyID".
- */
-void set_ref_in_item(typval_T *tv, int copyID)
+/// Mark all lists and dicts referenced through typval "tv" with "copyID".
+///
+/// @param tv            Typval content will be marked.
+/// @param copyID        New mark for lists and dicts.
+/// @param ht_stack      Used to add hashtabs to be marked. Can be NULL.
+/// @param list_stack    Used to add lists to be marked. Can be NULL.
+///
+/// @returns             true if setting references failed somehow.
+bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack,
+                     list_stack_T **list_stack)
 {
-  dict_T      *dd;
-  list_T      *ll;
+  bool abort = false;
 
   switch (tv->v_type) {
-  case VAR_DICT:
-    dd = tv->vval.v_dict;
-    if (dd != NULL && dd->dv_copyID != copyID) {
-      /* Didn't see this dict yet. */
-      dd->dv_copyID = copyID;
-      set_ref_in_ht(&dd->dv_hashtab, copyID);
+    case VAR_DICT: {
+      dict_T *dd = tv->vval.v_dict;
+      if (dd != NULL && dd->dv_copyID != copyID) {
+        // Didn't see this dict yet.
+        dd->dv_copyID = copyID;
+        if (ht_stack == NULL) {
+          abort = set_ref_in_ht(&dd->dv_hashtab, copyID, list_stack);
+        } else {
+          ht_stack_T *newitem = try_malloc(sizeof(ht_stack_T));
+          if (newitem == NULL) {
+            abort = true;
+          } else {
+            newitem->ht = &dd->dv_hashtab;
+            newitem->prev = *ht_stack;
+            *ht_stack = newitem;
+          }
+        }
+      }
+      break;
     }
-    break;
 
-  case VAR_LIST:
-    ll = tv->vval.v_list;
-    if (ll != NULL && ll->lv_copyID != copyID) {
-      /* Didn't see this list yet. */
-      ll->lv_copyID = copyID;
-      set_ref_in_list(ll, copyID);
+    case VAR_LIST: {
+      list_T *ll = tv->vval.v_list;
+      if (ll != NULL && ll->lv_copyID != copyID) {
+        // Didn't see this list yet.
+        ll->lv_copyID = copyID;
+        if (list_stack == NULL) {
+          abort = set_ref_in_list(ll, copyID, ht_stack);
+        } else {
+          list_stack_T *newitem = try_malloc(sizeof(list_stack_T));
+          if (newitem == NULL) {
+            abort = true;
+          } else {
+            newitem->list = ll;
+            newitem->prev = *list_stack;
+            *list_stack = newitem;
+          }
+        }
+      }
+      break;
     }
-    break;
   }
-  return;
+  return abort;
 }
 
 /*
