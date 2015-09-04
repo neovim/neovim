@@ -1820,13 +1820,13 @@ static void didset_options(void)
   /* initialize the table for 'iskeyword' et.al. */
   (void)init_chartab();
 
-  (void)opt_strings_flags(p_cmp, p_cmp_values, &cmp_flags, TRUE);
-  (void)opt_strings_flags(p_bkc, p_bkc_values, &bkc_flags, TRUE);
-  (void)opt_strings_flags(p_ssop, p_ssop_values, &ssop_flags, TRUE);
-  (void)opt_strings_flags(p_vop, p_ssop_values, &vop_flags, TRUE);
-  (void)opt_strings_flags(p_fdo, p_fdo_values, &fdo_flags, TRUE);
-  (void)opt_strings_flags(p_dy, p_dy_values, &dy_flags, TRUE);
-  (void)opt_strings_flags(p_ve, p_ve_values, &ve_flags, TRUE);
+  (void)opt_strings_flags(p_cmp, p_cmp_values, &cmp_flags, true);
+  (void)opt_strings_flags(p_bkc, p_bkc_values, &bkc_flags, true);
+  (void)opt_strings_flags(p_ssop, p_ssop_values, &ssop_flags, true);
+  (void)opt_strings_flags(p_vop, p_ssop_values, &vop_flags, true);
+  (void)opt_strings_flags(p_fdo, p_fdo_values, &fdo_flags, true);
+  (void)opt_strings_flags(p_dy, p_dy_values, &dy_flags, true);
+  (void)opt_strings_flags(p_ve, p_ve_values, &ve_flags, true);
   (void)spell_check_msm();
   (void)spell_check_sps();
   (void)compile_cap_prog(curwin->w_s);
@@ -2136,7 +2136,7 @@ did_set_string_option (
       // make the local value empty: use the global value
       *flags = 0;
     } else {
-      if (opt_strings_flags(bkc, p_bkc_values, flags, TRUE) != OK) {
+      if (opt_strings_flags(bkc, p_bkc_values, flags, true) != OK) {
         errmsg = e_invarg;
       }
 
@@ -2144,7 +2144,7 @@ did_set_string_option (
           + ((*flags & BKC_YES) != 0)
           + ((*flags & BKC_NO) != 0) != 1) {
         // Must have exactly one of "auto", "yes"  and "no".
-        (void)opt_strings_flags(oldval, p_bkc_values, flags, TRUE);
+        (void)opt_strings_flags(oldval, p_bkc_values, flags, true);
         errmsg = e_invarg;
       }
     }
@@ -2211,20 +2211,16 @@ did_set_string_option (
   else if (gvarp == &p_nf) {
     if (check_opt_strings(*varp, p_nf_values, TRUE) != OK)
       errmsg = e_invarg;
-  }
-  /* 'sessionoptions' */
-  else if (varp == &p_ssop) {
-    if (opt_strings_flags(p_ssop, p_ssop_values, &ssop_flags, TRUE) != OK)
+  } else if (varp == &p_ssop) {  // 'sessionoptions'
+    if (opt_strings_flags(p_ssop, p_ssop_values, &ssop_flags, true) != OK)
       errmsg = e_invarg;
     if ((ssop_flags & SSOP_CURDIR) && (ssop_flags & SSOP_SESDIR)) {
       /* Don't allow both "sesdir" and "curdir". */
-      (void)opt_strings_flags(oldval, p_ssop_values, &ssop_flags, TRUE);
+      (void)opt_strings_flags(oldval, p_ssop_values, &ssop_flags, true);
       errmsg = e_invarg;
     }
-  }
-  /* 'viewoptions' */
-  else if (varp == &p_vop) {
-    if (opt_strings_flags(p_vop, p_ssop_values, &vop_flags, TRUE) != OK)
+  } else if (varp == &p_vop) {  // 'viewoptions'
+    if (opt_strings_flags(p_vop, p_ssop_values, &vop_flags, true) != OK)
       errmsg = e_invarg;
   }
   /* 'scrollopt' */
@@ -2560,20 +2556,16 @@ did_set_string_option (
   else if (varp == &p_mousem) {
     if (check_opt_strings(p_mousem, p_mousem_values, FALSE) != OK)
       errmsg = e_invarg;
-  }
-  /* 'switchbuf' */
-  else if (varp == &p_swb) {
-    if (opt_strings_flags(p_swb, p_swb_values, &swb_flags, TRUE) != OK)
+  } else if (varp == &p_swb) {  // 'switchbuf'
+    if (opt_strings_flags(p_swb, p_swb_values, &swb_flags, true) != OK)
       errmsg = e_invarg;
   }
   /* 'debug' */
   else if (varp == &p_debug) {
     if (check_opt_strings(p_debug, p_debug_values, TRUE) != OK)
       errmsg = e_invarg;
-  }
-  /* 'display' */
-  else if (varp == &p_dy) {
-    if (opt_strings_flags(p_dy, p_dy_values, &dy_flags, TRUE) != OK)
+  } else if (varp == &p_dy) {  // 'display'
+    if (opt_strings_flags(p_dy, p_dy_values, &dy_flags, true) != OK)
       errmsg = e_invarg;
     else
       (void)init_chartab();
@@ -2721,10 +2713,8 @@ did_set_string_option (
         errmsg = e_invarg;
     } else if (check_opt_strings(p_bs, p_bs_values, TRUE) != OK)
       errmsg = e_invarg;
-  }
-  /* 'casemap' */
-  else if (varp == &p_cmp) {
-    if (opt_strings_flags(p_cmp, p_cmp_values, &cmp_flags, TRUE) != OK)
+  } else if (varp == &p_cmp) {  // 'casemap'
+    if (opt_strings_flags(p_cmp, p_cmp_values, &cmp_flags, true) != OK)
       errmsg = e_invarg;
   }
   /* 'diffopt' */
@@ -2761,11 +2751,10 @@ did_set_string_option (
   /* 'commentstring' */
   else if (gvarp == &p_cms) {
     if (**varp != NUL && strstr((char *)*varp, "%s") == NULL)
-      errmsg = (char_u *)N_("E537: 'commentstring' must be empty or contain %s");
-  }
-  /* 'foldopen' */
-  else if (varp == &p_fdo) {
-    if (opt_strings_flags(p_fdo, p_fdo_values, &fdo_flags, TRUE) != OK)
+      errmsg = (char_u *)N_(
+                "E537: 'commentstring' must be empty or contain %s");
+  } else if (varp == &p_fdo) {  // 'foldopen'
+    if (opt_strings_flags(p_fdo, p_fdo_values, &fdo_flags, true) != OK)
       errmsg = e_invarg;
   }
   /* 'foldclose' */
@@ -2777,10 +2766,8 @@ did_set_string_option (
   else if (gvarp == &curwin->w_allbuf_opt.wo_fdi) {
     if (foldmethodIsIndent(curwin))
       foldUpdateAll(curwin);
-  }
-  /* 'virtualedit' */
-  else if (varp == &p_ve) {
-    if (opt_strings_flags(p_ve, p_ve_values, &ve_flags, TRUE) != OK)
+  } else if (varp == &p_ve) {  // 'virtualedit'
+    if (opt_strings_flags(p_ve, p_ve_values, &ve_flags, true) != OK)
       errmsg = e_invarg;
     else if (STRCMP(p_ve, oldval) != 0) {
       /* Recompute cursor position in case the new 've' setting
@@ -3418,10 +3405,10 @@ set_bool_option (
   else if ((int *)varp == &curwin->w_p_wrap) {
     if (curwin->w_p_wrap)
       curwin->w_leftcol = 0;
-  } else if ((int *)varp == &p_ea) {
+  } else if ((bool *)varp == &p_ea) {
     if (p_ea && !old_value)
-      win_equal(curwin, FALSE, 0);
-  } else if ((int *)varp == &p_acd) {
+      win_equal(curwin, false, 0);
+  } else if ((bool *)varp == &p_acd) {
     /* Change directories when the 'acd' option is set now. */
     do_autochdir();
   }
@@ -6011,8 +5998,7 @@ static void fill_breakat_flags(void)
  * Return OK for correct value, FAIL otherwise.
  * Empty is always OK.
  */
-static int 
-check_opt_strings (
+static int check_opt_strings(
     char_u *val,
     char **values,
     int list                   /* when TRUE: accept a list of values */
@@ -6028,12 +6014,11 @@ check_opt_strings (
  * Return OK for correct value, FAIL otherwise.
  * Empty is always OK.
  */
-static int 
-opt_strings_flags (
-    char_u *val,               /* new value */
+static int opt_strings_flags(
+    char_u *val,             /* new value */
     char **values,           /* array of valid string values */
     unsigned *flagp,
-    int list                       /* when TRUE: accept a list of values */
+    bool list                /* when TRUE: accept a list of values */
 )
 {
   unsigned int new_flags = 0;
@@ -6109,11 +6094,10 @@ static int check_opt_wim(void)
 
 /*
  * Check if backspacing over something is allowed.
+ * The parameter what is one of the following: whatBS_INDENT, BS_EOL 
+ * or BS_START
  */
-int 
-can_bs (
-    int what                   /* BS_INDENT, BS_EOL or BS_START */
-)
+bool can_bs(int what)
 {
   switch (*p_bs) {
   case '2':       return TRUE;
@@ -6149,7 +6133,7 @@ void save_file_ff(buf_T *buf)
  * When "ignore_empty" is true don't consider a new, empty buffer to be
  * changed.
  */
-int file_ff_differs(buf_T *buf, int ignore_empty)
+bool file_ff_differs(buf_T *buf, bool ignore_empty)
 {
   /* In a buffer that was never loaded the options are not valid. */
   if (buf->b_flags & BF_NEVERLOADED)

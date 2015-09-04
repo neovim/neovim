@@ -321,7 +321,7 @@ newwindow:
 
   /* make all windows the same height */
   case '=':
-    win_equal(NULL, FALSE, 'b');
+    win_equal(NULL, false, 'b');
     break;
 
   /* increase current window height */
@@ -950,7 +950,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
    * equalize the window sizes.
    */
   if (do_equal || dir != 0)
-    win_equal(wp, TRUE,
+    win_equal(wp, true,
         (flags & WSP_VERT) ? (dir == 'v' ? 'b' : 'h')
         : dir == 'h' ? 'b' :
         'v');
@@ -1331,7 +1331,7 @@ static void win_totop(int size, int flags)
   if (!(flags & WSP_VERT)) {
     win_setheight(height);
     if (p_ea)
-      win_equal(curwin, TRUE, 'v');
+      win_equal(curwin, true, 'v');
   }
 
 }
@@ -1393,12 +1393,11 @@ void win_move_after(win_T *win1, win_T *win2)
  * 'next_curwin' will soon be the current window, make sure it has enough
  * rows.
  */
-void 
-win_equal (
-    win_T *next_curwin,       /* pointer to current window to be or NULL */
-    int current,                    /* do only frame with current window */
-    int dir                        /* 'v' for vertically, 'h' for horizontally,
-                                   'b' for both, 0 for using p_ead */
+void win_equal(
+    win_T *next_curwin,            // pointer to current window to be or NULL
+    bool current,                  // do only frame with current window
+    int dir                        // 'v' for vertically, 'h' for horizontally,
+                                   // 'b' for both, 0 for using p_ead
 )
 {
   if (dir == 0)
@@ -1414,10 +1413,9 @@ win_equal (
  * The window "next_curwin" (if not NULL) should at least get the size from
  * 'winheight' and 'winwidth' if possible.
  */
-static void 
-win_equal_rec (
+static void win_equal_rec(
     win_T *next_curwin,       /* pointer to current window to be or NULL */
-    int current,                    /* do only frame with current window */
+    bool current,                    /* do only frame with current window */
     frame_T *topfr,             /* frame to set size off */
     int dir,                        /* 'v', 'h' or 'b', see win_equal() */
     int col,                        /* horizontal position for frame */
@@ -1972,12 +1970,12 @@ int win_close(win_T *win, int free_buf)
   }
   if (p_ea
       && (*p_ead == 'b' || *p_ead == dir)
-      )
-    win_equal(curwin, TRUE,
-        dir
-        );
-  else
+      ) {
+    win_equal(curwin, true, dir);
+  } else {
     win_comp_pos();
+  }
+
   if (close_curwin) {
     win_enter_ext(wp, false, TRUE, TRUE, TRUE);
     if (other_buffer)
