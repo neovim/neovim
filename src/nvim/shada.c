@@ -1209,8 +1209,11 @@ static inline bool marks_equal(const pos_T a, const pos_T b)
     if (i > 0) { \
       if (jl_len == JUMPLISTSIZE) { \
         free_func(jumps[0]); \
+        if (i == JUMPLISTSIZE) { \
+          i = JUMPLISTSIZE - 1; \
+        } \
         memmove(&jumps[0], &jumps[1], sizeof(jumps[1]) * (size_t) i); \
-      } else { \
+      } else if (i != jl_len) { \
         memmove(&jumps[i + 1], &jumps[i], \
                 sizeof(jumps[0]) * (size_t) (jl_len - i)); \
       } \

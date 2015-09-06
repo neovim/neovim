@@ -861,6 +861,41 @@ describe('ShaDa jumps support code', function()
     end
     eq(found, #jumps)
   end)
+
+  it('merges JUMPLISTSIZE jumps when writing', function()
+    local jumps = {}
+    local shada = ''
+    for i = 1,100 do
+      shada = shada .. ('\008%c\018\131\162mX\195\161f\196\006/a/b/c\161l%c'
+                       ):format(i, i)
+      jumps[i] = {file='/a/b/c', line=i}
+    end
+    wshada(shada)
+    eq(0, exc_exec(sdrcmd()))
+    local shada = ''
+    for i = 1,101 do
+      local t = i * 2
+      shada = shada .. (
+          '\008\204%c\019\131\162mX\195\161f\196\006/a/b/c\161l\204%c'
+          ):format(t, t)
+      jumps[(t > #jumps + 1) and (#jumps + 1) or t] = {file='/a/b/c', line=t}
+    end
+    wshada(shada)
+    eq(0, exc_exec('wshada ' .. shada_fname))
+    local shift = #jumps - 100
+    for i = 1,100 do
+      jumps[i] = jumps[i + shift]
+    end
+    local found = 0
+    for _, v in ipairs(read_shada_file(shada_fname)) do
+      if v.type == 8 then
+        found = found + 1
+        eq(jumps[found].file, v.value.f)
+        eq(jumps[found].line, v.value.l)
+      end
+    end
+    eq(found, 100)
+  end)
 end)
 
 describe('ShaDa changes support code', function()
@@ -918,5 +953,41 @@ describe('ShaDa changes support code', function()
       end
     end
     eq(found, #changes)
+  end)
+
+  it('merges JUMPLISTSIZE changes when writing', function()
+    nvim_command('edit /a/b/c')
+    nvim_command('keepjumps call setline(1, range(202))')
+    local changes = {}
+    local shada = ''
+    for i = 1,100 do
+      shada = shada .. ('\011%c\018\131\162mX\195\161f\196\006/a/b/c\161l%c'
+                       ):format(i, i)
+      changes[i] = {line=i}
+    end
+    wshada(shada)
+    eq(0, exc_exec(sdrcmd()))
+    local shada = ''
+    for i = 1,101 do
+      local t = i * 2
+      shada = shada .. (
+          '\011\204%c\019\131\162mX\195\161f\196\006/a/b/c\161l\204%c'
+          ):format(t, t)
+      changes[(t > #changes + 1) and (#changes + 1) or t] = {line=t}
+    end
+    wshada(shada)
+    eq(0, exc_exec('wshada ' .. shada_fname))
+    local shift = #changes - 100
+    for i = 1,100 do
+      changes[i] = changes[i + shift]
+    end
+    local found = 0
+    for _, v in ipairs(read_shada_file(shada_fname)) do
+      if v.type == 11 and v.value.f == '/a/b/c' then
+        found = found + 1
+        eq(changes[found].line, v.value.l)
+      end
+    end
+    eq(found, 100)
   end)
 end)
