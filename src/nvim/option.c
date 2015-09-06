@@ -1214,17 +1214,10 @@ do_set (
                 errmsg = e_invarg;
                 goto skip;
               }
-            }
-            /* allow negative numbers (for 'undolevels') */
-            else if (*arg == '-' || ascii_isdigit(*arg)) {
-              i = 0;
-              if (*arg == '-')
-                i = 1;
-              value = strtol((char *)arg, NULL, 0);
-              if (arg[i] == '0' && TOLOWER_ASC(arg[i + 1]) == 'x')
-                i += 2;
-              while (ascii_isdigit(arg[i]))
-                ++i;
+            } else if (*arg == '-' || ascii_isdigit(*arg)) {
+              // Allow negative (for 'undolevels'), octal and
+              // hex numbers.
+              vim_str2nr(arg, NULL, &i, true, true, &value, NULL);
               if (arg[i] != NUL && !ascii_iswhite(arg[i])) {
                 errmsg = e_invarg;
                 goto skip;
