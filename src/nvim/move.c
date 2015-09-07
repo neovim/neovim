@@ -58,7 +58,7 @@ static void comp_botline(win_T *wp)
   linenr_T lnum;
   int done;
   linenr_T last;
-  int folded;
+  bool folded;
 
   /*
    * If w_cline_row is valid, start there.
@@ -75,10 +75,10 @@ static void comp_botline(win_T *wp)
 
   for (; lnum <= wp->w_buffer->b_ml.ml_line_count; ++lnum) {
     last = lnum;
-    folded = FALSE;
+    folded = false;
     if (hasFoldingWin(wp, lnum, NULL, &last, TRUE, NULL)) {
       n = 1;
-      folded = TRUE;
+      folded = true;
     } else if (lnum == wp->w_topline)
       n = plines_win_nofill(wp, lnum, TRUE) + wp->w_topfill;
     else
@@ -596,15 +596,15 @@ static void curs_rows(win_T *wp)
       else
         wp->w_cline_height = plines_win(wp, wp->w_cursor.lnum, TRUE);
       wp->w_cline_folded = hasFoldingWin(wp, wp->w_cursor.lnum,
-          NULL, NULL, TRUE, NULL);
+          NULL, NULL, TRUE, NULL) == TRUE;
     } else if (i > wp->w_lines_valid) {
       /* a line that is too long to fit on the last screen line */
       wp->w_cline_height = 0;
       wp->w_cline_folded = hasFoldingWin(wp, wp->w_cursor.lnum,
-          NULL, NULL, TRUE, NULL);
+          NULL, NULL, TRUE, NULL) == TRUE;
     } else {
       wp->w_cline_height = wp->w_lines[i].wl_size;
-      wp->w_cline_folded = wp->w_lines[i].wl_folded;
+      wp->w_cline_folded = wp->w_lines[i].wl_folded == TRUE;
     }
   }
 
@@ -648,7 +648,7 @@ static void validate_cheight(void)
                                + curwin->w_topfill;
     else
       curwin->w_cline_height = plines(curwin->w_cursor.lnum);
-    curwin->w_cline_folded = hasFolding(curwin->w_cursor.lnum, NULL, NULL);
+    curwin->w_cline_folded = hasFolding(curwin->w_cursor.lnum, NULL, NULL) == TRUE;
     curwin->w_valid |= VALID_CHEIGHT;
   }
 }
