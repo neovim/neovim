@@ -148,9 +148,9 @@ int hasAnyFolding(win_T *win)
  * When returning TRUE, *firstp and *lastp are set to the first and last
  * lnum of the sequence of folded lines (skipped when NULL).
  */
-int hasFolding(linenr_T lnum, linenr_T *firstp, linenr_T *lastp)
+bool hasFolding(linenr_T lnum, linenr_T *firstp, linenr_T *lastp)
 {
-  return hasFoldingWin(curwin, lnum, firstp, lastp, TRUE, NULL) ? TRUE : FALSE;
+  return hasFoldingWin(curwin, lnum, firstp, lastp, TRUE, NULL);
 }
 
 /* hasFoldingWin() {{{2 */

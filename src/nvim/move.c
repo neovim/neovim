@@ -648,7 +648,7 @@ static void validate_cheight(void)
                                + curwin->w_topfill;
     else
       curwin->w_cline_height = plines(curwin->w_cursor.lnum);
-    curwin->w_cline_folded = hasFolding(curwin->w_cursor.lnum, NULL, NULL) == TRUE;
+    curwin->w_cline_folded = hasFolding(curwin->w_cursor.lnum, NULL, NULL);
     curwin->w_valid |= VALID_CHEIGHT;
   }
 }
@@ -1177,7 +1177,7 @@ void scrolldown_clamp(void)
       --curwin->w_topline;
       curwin->w_topfill = 0;
     }
-    hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
+    (void)hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
     --curwin->w_botline;            /* approximate w_botline */
     curwin->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE);
   }
