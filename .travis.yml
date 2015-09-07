@@ -77,10 +77,9 @@ matrix:
     - os: linux
       compiler: clang-3.6
       env: GCOV=llvm-cov-3.6 CLANG_SANITIZER=MSAN
-    # FIXME (tarruda): Uncomment when TSan tests don't hang anymore.
-    #- os: linux
-    #  compiler: clang-3.6
-    #  env: GCOV=llvm-cov-3.6 CLANG_SANITIZER=TSAN
+    - os: linux
+      compiler: clang-3.6
+      env: CLANG_SANITIZER=TSAN
     - os: osx
       compiler: clang
       env: GCOV=gcov

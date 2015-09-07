@@ -177,6 +177,7 @@ void event_teardown(void)
 /// Needed for unit tests. Must be called after `time_init()`.
 void early_init(void)
 {
+  log_init();
   fs_init();
   handle_init();
 

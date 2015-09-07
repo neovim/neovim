@@ -2,11 +2,14 @@ include(CheckLibraryExists)
 
 option(USE_GCOV "Enable gcov support" OFF)
 
+if(NOT CLANG_TSAN)
+# GCOV and TSAN results in false data race reports
 if(USE_GCOV)
   message(STATUS "Enabling gcov support")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} --coverage")
+endif()
 endif()
 
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)

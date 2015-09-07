@@ -17,46 +17,45 @@
 #include "nvim/event/loop.h"
 #include "nvim/event/signal.h"
 #include "nvim/tui/tui.h"
+#include "nvim/tui/input.h"
+#include "nvim/os/input.h"
+#include "nvim/os/os.h"
 #include "nvim/strings.h"
+#include "nvim/ugrid.h"
+#include "nvim/ui_bridge.h"
 
 // Space reserved in the output buffer to restore the cursor to normal when
 // flushing. No existing terminal will require 32 bytes to do that.
 #define CNORM_COMMAND_MAX_SIZE 32
 #define OUTBUF_SIZE 0xffff
 
-typedef struct term_input TermInput;
-
-#include "term_input.inl"
-
 typedef struct {
   int top, bot, left, right;
 } Rect;
 
 typedef struct {
-  char data[7];
-  HlAttrs attrs;
-} Cell;
-
-typedef struct {
+  UIBridgeData *bridge;
+  Loop *loop;
+  bool stop;
   unibi_var_t params[9];
   char buf[OUTBUF_SIZE];
   size_t bufpos, bufsize;
-  TermInput *input;
-  uv_loop_t *write_loop;
+  TermInput input;
+  uv_loop_t write_loop;
   unibi_term *ut;
   uv_tty_t output_handle;
-  SignalWatcher winch_handle;
-  Rect scroll_region;
+  SignalWatcher winch_handle, cont_handle;
+  bool cont_received;
+  // Event scheduled by the ui bridge. Since the main thread suspends until
+  // the event is handled, it is fine to use a single field instead of a queue
+  Event scheduled_event;
+  UGrid grid;
   kvec_t(Rect) invalid_regions;
-  int row, col;
-  int bg, fg;
   int out_fd;
-  int old_height;
   bool can_use_terminal_scroll;
   bool mouse_enabled;
   bool busy;
-  HlAttrs attrs, print_attrs;
-  Cell **screen;
+  HlAttrs print_attrs;
   int showing_mode;
   struct {
     int enable_mouse, disable_mouse;
@@ -72,80 +71,12 @@ static bool volatile got_winch = false;
 # include "tui/tui.c.generated.h"
 #endif
 
-#define EMPTY_ATTRS ((HlAttrs){false, false, false, false, false, -1, -1})
-
-#define FOREACH_CELL(ui, top, bot, left, right, go, code)               \
-  do {                                                                  \
-    TUIData *data = ui->data;                                           \
-    for (int row = top; row <= bot; ++row) {                            \
-      Cell *cells = data->screen[row];                                  \
-      if (go) {                                                         \
-        unibi_goto(ui, row, left);                                      \
-      }                                                                 \
-      for (int col = left; col <= right; ++col) {                       \
-        Cell *cell = cells + col;                                       \
-        (void)(cell);                                                   \
-        code;                                                           \
-      }                                                                 \
-    }                                                                   \
-  } while (0)
-
 
 UI *tui_start(void)
 {
-  TUIData *data = xcalloc(1, sizeof(TUIData));
   UI *ui = xcalloc(1, sizeof(UI));
-  ui->data = data;
-  data->attrs = data->print_attrs = EMPTY_ATTRS;
-  data->fg = data->bg = -1;
-  data->can_use_terminal_scroll = true;
-  data->bufpos = 0;
-  data->bufsize = sizeof(data->buf) - CNORM_COMMAND_MAX_SIZE;
-  data->showing_mode = 0;
-  data->unibi_ext.enable_mouse = -1;
-  data->unibi_ext.disable_mouse = -1;
-  data->unibi_ext.enable_bracketed_paste = -1;
-  data->unibi_ext.disable_bracketed_paste = -1;
-  data->unibi_ext.enter_insert_mode = -1;
-  data->unibi_ext.enter_replace_mode = -1;
-  data->unibi_ext.exit_insert_mode = -1;
-
-  // write output to stderr if stdout is not a tty
-  data->out_fd = os_isatty(1) ? 1 : (os_isatty(2) ? 2 : 1);
-  kv_init(data->invalid_regions);
-  // setup term input
-  data->input = term_input_new();
-  // setup unibilium
-  data->ut = unibi_from_env();
-  if (!data->ut) {
-    // For some reason could not read terminfo file, use a dummy entry that
-    // will be populated with common values by fix_terminfo below
-    data->ut = unibi_dummy();
-  }
-  fix_terminfo(data);
-  // Enter alternate screen and clear
-  unibi_out(ui, unibi_enter_ca_mode);
-  unibi_out(ui, unibi_clear_screen);
-  // Enable bracketed paste
-  unibi_out(ui, data->unibi_ext.enable_bracketed_paste);
-  // setup output handle in a separate event loop(we wanna do synchronous
-  // write to the tty)
-  data->write_loop = xmalloc(sizeof(uv_loop_t));
-  uv_loop_init(data->write_loop);
-  uv_tty_init(data->write_loop, &data->output_handle, data->out_fd, 0);
-  uv_tty_set_mode(&data->output_handle, UV_TTY_MODE_RAW);
-
-  // Obtain screen dimensions
-  update_size(ui);
-
-  // listen for SIGWINCH
-  signal_watcher_init(&loop, &data->winch_handle, ui);
-  data->winch_handle.events = queue_new_child(loop.events);
-  signal_watcher_start(&data->winch_handle, sigwinch_cb, SIGWINCH);
-
   ui->stop = tui_stop;
   ui->rgb = os_getenv("NVIM_TUI_ENABLE_TRUE_COLOR") != NULL;
-  ui->data = data;
   ui->resize = tui_resize;
   ui->clear = tui_clear;
   ui->eol_clear = tui_eol_clear;
@@ -169,21 +100,46 @@ UI *tui_start(void)
   ui->set_title = tui_set_title;
   ui->set_icon = tui_set_icon;
   ui->set_encoding = tui_set_encoding;
-  // Attach
-  ui_attach(ui);
-  return ui;
+  return ui_bridge_attach(ui, tui_main, tui_scheduler);
 }
 
-static void tui_stop(UI *ui)
+static void terminfo_start(UI *ui)
 {
   TUIData *data = ui->data;
-  // Destroy common stuff
-  kv_destroy(data->invalid_regions);
-  signal_watcher_stop(&data->winch_handle);
-  queue_free(data->winch_handle.events);
-  signal_watcher_close(&data->winch_handle, NULL);
-  // Destroy input stuff
-  term_input_destroy(data->input);
+  data->can_use_terminal_scroll = true;
+  data->bufpos = 0;
+  data->bufsize = sizeof(data->buf) - CNORM_COMMAND_MAX_SIZE;
+  data->showing_mode = 0;
+  data->unibi_ext.enable_mouse = -1;
+  data->unibi_ext.disable_mouse = -1;
+  data->unibi_ext.enable_bracketed_paste = -1;
+  data->unibi_ext.disable_bracketed_paste = -1;
+  data->unibi_ext.enter_insert_mode = -1;
+  data->unibi_ext.enter_replace_mode = -1;
+  data->unibi_ext.exit_insert_mode = -1;
+  // write output to stderr if stdout is not a tty
+  data->out_fd = os_isatty(1) ? 1 : (os_isatty(2) ? 2 : 1);
+  // setup unibilium
+  data->ut = unibi_from_env();
+  if (!data->ut) {
+    // For some reason could not read terminfo file, use a dummy entry that
+    // will be populated with common values by fix_terminfo below
+    data->ut = unibi_dummy();
+  }
+  fix_terminfo(data);
+  // Enter alternate screen and clear
+  unibi_out(ui, unibi_enter_ca_mode);
+  unibi_out(ui, unibi_clear_screen);
+  // Enable bracketed paste
+  unibi_out(ui, data->unibi_ext.enable_bracketed_paste);
+  uv_loop_init(&data->write_loop);
+  uv_tty_init(&data->write_loop, &data->output_handle, data->out_fd, 0);
+  uv_tty_set_mode(&data->output_handle, UV_TTY_MODE_RAW);
+}
+
+static void terminfo_stop(UI *ui)
+{
+  TUIData *data = ui->data;
   // Destroy output stuff
   tui_mode_change(ui, NORMAL);
   tui_mouse_off(ui);
@@ -196,16 +152,90 @@ static void tui_stop(UI *ui)
   flush_buf(ui);
   uv_tty_reset_mode();
   uv_close((uv_handle_t *)&data->output_handle, NULL);
-  uv_run(data->write_loop, UV_RUN_DEFAULT);
-  if (uv_loop_close(data->write_loop)) {
+  uv_run(&data->write_loop, UV_RUN_DEFAULT);
+  if (uv_loop_close(&data->write_loop)) {
     abort();
   }
-  xfree(data->write_loop);
   unibi_destroy(data->ut);
-  destroy_screen(data);
+}
+
+static void tui_terminal_start(UI *ui)
+{
+  TUIData *data = ui->data;
+  data->print_attrs = EMPTY_ATTRS;
+  ugrid_init(&data->grid);
+  terminfo_start(ui);
+  update_size(ui);
+  signal_watcher_start(&data->winch_handle, sigwinch_cb, SIGWINCH);
+  term_input_start(&data->input);
+}
+
+static void tui_terminal_stop(UI *ui)
+{
+  TUIData *data = ui->data;
+  term_input_stop(&data->input);
+  signal_watcher_stop(&data->winch_handle);
+  terminfo_stop(ui);
+  ugrid_free(&data->grid);
+}
+
+static void tui_stop(UI *ui)
+{
+  tui_terminal_stop(ui);
+  TUIData *data = ui->data;
+  data->stop = true;
+}
+
+// Main function of the TUI thread
+static void tui_main(UIBridgeData *bridge, UI *ui)
+{
+  Loop tui_loop;
+  loop_init(&tui_loop, NULL);
+  TUIData *data = xcalloc(1, sizeof(TUIData));
+  ui->data = data;
+  data->bridge = bridge;
+  data->loop = &tui_loop;
+  kv_init(data->invalid_regions);
+  signal_watcher_init(data->loop, &data->winch_handle, ui);
+  signal_watcher_init(data->loop, &data->cont_handle, data);
+  signal_watcher_start(&data->cont_handle, sigcont_cb, SIGCONT);
+  // initialize input reading structures
+  term_input_init(&data->input, &tui_loop);
+  tui_terminal_start(ui);
+  data->stop = false;
+  // allow the main thread to continue, we are ready to start handling UI
+  // callbacks
+  CONTINUE(bridge);
+
+  while (!data->stop) {
+    loop_poll_events(&tui_loop, -1);
+  }
+
+  term_input_destroy(&data->input);
+  signal_watcher_stop(&data->cont_handle);
+  signal_watcher_close(&data->cont_handle, NULL);
+  signal_watcher_close(&data->winch_handle, NULL);
+  loop_close(&tui_loop);
+  kv_destroy(data->invalid_regions);
   xfree(data);
-  ui_detach(ui);
   xfree(ui);
+}
+
+static void tui_scheduler(Event event, void *d)
+{
+  UI *ui = d;
+  TUIData *data = ui->data;
+  loop_schedule(data->loop, event);
+}
+
+static void refresh_event(void **argv)
+{
+  ui_refresh();
+}
+
+static void sigcont_cb(SignalWatcher *watcher, int signum, void *data)
+{
+  ((TUIData *)data)->cont_received = true;
 }
 
 static void sigwinch_cb(SignalWatcher *watcher, int signum, void *data)
@@ -213,7 +243,8 @@ static void sigwinch_cb(SignalWatcher *watcher, int signum, void *data)
   got_winch = true;
   UI *ui = data;
   update_size(ui);
-  ui_refresh();
+  // run refresh_event in nvim main loop
+  loop_schedule(&loop, event_create(1, refresh_event, 0));
 }
 
 static bool attrs_differ(HlAttrs a1, HlAttrs a2)
@@ -234,9 +265,10 @@ static void update_attrs(UI *ui, HlAttrs attrs)
 
   data->print_attrs = attrs;
   unibi_out(ui, unibi_exit_attribute_mode);
+  UGrid *grid = &data->grid;
 
-  int fg = attrs.foreground != -1 ? attrs.foreground : data->fg;
-  int bg = attrs.background != -1 ? attrs.background : data->bg;
+  int fg = attrs.foreground != -1 ? attrs.foreground : grid->fg;
+  int bg = attrs.background != -1 ? attrs.background : grid->bg;
 
   if (ui->rgb) {
     if (fg != -1) {
@@ -278,25 +310,25 @@ static void update_attrs(UI *ui, HlAttrs attrs)
   }
 }
 
-static void print_cell(UI *ui, Cell *ptr)
+static void print_cell(UI *ui, UCell *ptr)
 {
   update_attrs(ui, ptr->attrs);
   out(ui, ptr->data, strlen(ptr->data));
 }
 
-static void clear_region(UI *ui, int top, int bot, int left, int right,
-    bool refresh)
+static void clear_region(UI *ui, int top, int bot, int left, int right)
 {
   TUIData *data = ui->data;
-  HlAttrs clear_attrs = EMPTY_ATTRS;
-  clear_attrs.foreground = data->fg;
-  clear_attrs.background = data->bg;
-  update_attrs(ui, clear_attrs);
+  UGrid *grid = &data->grid;
 
   bool cleared = false;
-  if (refresh && data->bg == -1 && right == ui->width -1) {
+  if (grid->bg == -1 && right == ui->width -1) {
     // Background is set to the default color and the right edge matches the
     // screen end, try to use terminal codes for clearing the requested area.
+    HlAttrs clear_attrs = EMPTY_ATTRS;
+    clear_attrs.foreground = grid->fg;
+    clear_attrs.background = grid->bg;
+    update_attrs(ui, clear_attrs);
     if (left == 0) {
       if (bot == ui->height - 1) {
         if (top == 0) {
@@ -319,36 +351,26 @@ static void clear_region(UI *ui, int top, int bot, int left, int right,
     }
   }
 
-  bool clear = refresh && !cleared;
-  FOREACH_CELL(ui, top, bot, left, right, clear, {
-    cell->data[0] = ' ';
-    cell->data[1] = 0;
-    cell->attrs = clear_attrs;
-    if (clear) {
+  if (!cleared) {
+    // could not clear using faster terminal codes, refresh the whole region
+    int currow = -1;
+    UGRID_FOREACH_CELL(grid, top, bot, left, right, {
+      if (currow != row) {
+        unibi_goto(ui, row, col);
+        currow = row;
+      }
       print_cell(ui, cell);
-    }
-  });
+    });
+  }
 
   // restore cursor
-  unibi_goto(ui, data->row, data->col);
+  unibi_goto(ui, grid->row, grid->col);
 }
 
 static void tui_resize(UI *ui, int width, int height)
 {
   TUIData *data = ui->data;
-  destroy_screen(data);
-
-  data->screen = xmalloc((size_t)height * sizeof(Cell *));
-  for (int i = 0; i < height; i++) {
-    data->screen[i] = xcalloc((size_t)width, sizeof(Cell));
-  }
-
-  data->old_height = height;
-  data->scroll_region.top = 0;
-  data->scroll_region.bot = height - 1;
-  data->scroll_region.left = 0;
-  data->scroll_region.right = width - 1;
-  data->row = data->col = 0;
+  ugrid_resize(&data->grid, width, height);
 
   if (!got_winch) {  // Try to resize the terminal window.
     char r[16];  // enough for 9999x9999
@@ -362,22 +384,23 @@ static void tui_resize(UI *ui, int width, int height)
 static void tui_clear(UI *ui)
 {
   TUIData *data = ui->data;
-  clear_region(ui, data->scroll_region.top, data->scroll_region.bot,
-      data->scroll_region.left, data->scroll_region.right, true);
+  UGrid *grid = &data->grid;
+  ugrid_clear(grid);
+  clear_region(ui, grid->top, grid->bot, grid->left, grid->right);
 }
 
 static void tui_eol_clear(UI *ui)
 {
   TUIData *data = ui->data;
-  clear_region(ui, data->row, data->row, data->col,
-      data->scroll_region.right, true);
+  UGrid *grid = &data->grid;
+  ugrid_eol_clear(grid);
+  clear_region(ui, grid->row, grid->row, grid->col, grid->right);
 }
 
 static void tui_cursor_goto(UI *ui, int row, int col)
 {
   TUIData *data = ui->data;
-  data->row = row;
-  data->col = col;
+  ugrid_goto(&data->grid, row, col);
   unibi_goto(ui, row, col);
 }
 
@@ -435,11 +458,7 @@ static void tui_set_scroll_region(UI *ui, int top, int bot, int left,
     int right)
 {
   TUIData *data = ui->data;
-  data->scroll_region.top = top;
-  data->scroll_region.bot = bot;
-  data->scroll_region.left = left;
-  data->scroll_region.right = right;
-
+  ugrid_set_scroll_region(&data->grid, top, bot, left, right);
   data->can_use_terminal_scroll =
     left == 0 && right == ui->width - 1
     && ((top == 0 && bot == ui->height - 1)
@@ -449,31 +468,24 @@ static void tui_set_scroll_region(UI *ui, int top, int bot, int left,
 static void tui_scroll(UI *ui, int count)
 {
   TUIData *data = ui->data;
-  int top = data->scroll_region.top;
-  int bot = data->scroll_region.bot;
-  int left = data->scroll_region.left;
-  int right = data->scroll_region.right;
+  UGrid *grid = &data->grid;
+  int clear_top, clear_bot;
+  ugrid_scroll(grid, count, &clear_top, &clear_bot);
 
   if (data->can_use_terminal_scroll) {
     // Change terminal scroll region and move cursor to the top
-    data->params[0].i = top;
-    data->params[1].i = bot;
+    data->params[0].i = grid->top;
+    data->params[1].i = grid->bot;
     unibi_out(ui, unibi_change_scroll_region);
-    unibi_goto(ui, top, left);
+    unibi_goto(ui, grid->top, grid->left);
     // also set default color attributes or some terminals can become funny
     HlAttrs clear_attrs = EMPTY_ATTRS;
-    clear_attrs.foreground = data->fg;
-    clear_attrs.background = data->bg;
+    clear_attrs.foreground = grid->fg;
+    clear_attrs.background = grid->bg;
     update_attrs(ui, clear_attrs);
   }
 
-  // Compute start/stop/step for the loop below, also use terminal scroll
-  // if possible
-  int start, stop, step;
   if (count > 0) {
-    start = top;
-    stop = bot - count + 1;
-    step = 1;
     if (data->can_use_terminal_scroll) {
       if (count == 1) {
         unibi_out(ui, unibi_delete_line);
@@ -484,9 +496,6 @@ static void tui_scroll(UI *ui, int count)
     }
 
   } else {
-    start = bot;
-    stop = top - count - 1;
-    step = -1;
     if (data->can_use_terminal_scroll) {
       if (count == -1) {
         unibi_out(ui, unibi_insert_line);
@@ -502,52 +511,30 @@ static void tui_scroll(UI *ui, int count)
     data->params[0].i = 0;
     data->params[1].i = ui->height - 1;
     unibi_out(ui, unibi_change_scroll_region);
-    unibi_goto(ui, data->row, data->col);
-  }
+    unibi_goto(ui, grid->row, grid->col);
 
-  int i;
-  // Scroll internal screen
-  for (i = start; i != stop; i += step) {
-    Cell *target_row = data->screen[i] + left;
-    Cell *source_row = data->screen[i + count] + left;
-    memcpy(target_row, source_row, sizeof(Cell) * (size_t)(right - left + 1));
-  }
-
-  // clear emptied region, updating the terminal if its builtin scrolling
-  // facility was used. This is done when the background color is not the
-  // default, since scrolling may leave wrong background in the cleared area.
-  bool update_clear = data->bg != -1 && data->can_use_terminal_scroll;
-  if (count > 0) {
-    clear_region(ui, stop, stop + count - 1, left, right, update_clear);
+    if (grid->bg != -1) {
+      // Update the cleared area of the terminal if its builtin scrolling
+      // facility was used and the background color is not the default. This is
+      // required because scrolling may leave wrong background in the cleared
+      // area.
+      clear_region(ui, clear_top, clear_bot, grid->left, grid->right);
+    }
   } else {
-    clear_region(ui, stop + count + 1, stop, left, right, update_clear);
-  }
-
-  if (!data->can_use_terminal_scroll) {
     // Mark the entire scroll region as invalid for redrawing later
-    invalidate(ui, data->scroll_region.top, data->scroll_region.bot,
-        data->scroll_region.left, data->scroll_region.right);
+    invalidate(ui, grid->top, grid->bot, grid->left, grid->right);
   }
 }
 
 static void tui_highlight_set(UI *ui, HlAttrs attrs)
 {
-  ((TUIData *)ui->data)->attrs = attrs;
+  ((TUIData *)ui->data)->grid.attrs = attrs;
 }
 
 static void tui_put(UI *ui, uint8_t *text, size_t size)
 {
   TUIData *data = ui->data;
-  Cell *cell = data->screen[data->row] + data->col;
-  cell->data[size] = 0;
-  cell->attrs = data->attrs;
-
-  if (text) {
-    memcpy(cell->data, text, size);
-  }
-
-  print_cell(ui, cell);
-  data->col += 1;
+  print_cell(ui, ugrid_put(&data->grid, text, size));
 }
 
 static void tui_bell(UI *ui)
@@ -562,40 +549,64 @@ static void tui_visual_bell(UI *ui)
 
 static void tui_update_fg(UI *ui, int fg)
 {
-  ((TUIData *)ui->data)->fg = fg;
+  ((TUIData *)ui->data)->grid.fg = fg;
 }
 
 static void tui_update_bg(UI *ui, int bg)
 {
-  ((TUIData *)ui->data)->bg = bg;
+  ((TUIData *)ui->data)->grid.bg = bg;
 }
 
 static void tui_flush(UI *ui)
 {
   TUIData *data = ui->data;
+  UGrid *grid = &data->grid;
 
   while (kv_size(data->invalid_regions)) {
     Rect r = kv_pop(data->invalid_regions);
-    FOREACH_CELL(ui, r.top, r.bot, r.left, r.right, true, {
+    int currow = -1;
+    UGRID_FOREACH_CELL(grid, r.top, r.bot, r.left, r.right, {
+      if (currow != row) {
+        unibi_goto(ui, row, col);
+        currow = row;
+      }
       print_cell(ui, cell);
     });
   }
 
-  unibi_goto(ui, data->row, data->col);
+  unibi_goto(ui, grid->row, grid->col);
 
   flush_buf(ui);
+}
+
+static void suspend_event(void **argv)
+{
+  UI *ui = argv[0];
+  TUIData *data = ui->data;
+  bool enable_mouse = data->mouse_enabled;
+  tui_terminal_stop(ui);
+  data->cont_received = false;
+  kill(0, SIGTSTP);
+  while (!data->cont_received) {
+    // poll the event loop until SIGCONT is received
+    loop_poll_events(data->loop, -1);
+  }
+  tui_terminal_start(ui);
+  if (enable_mouse) {
+    tui_mouse_on(ui);
+  }
+  // resume the main thread
+  CONTINUE(data->bridge);
 }
 
 static void tui_suspend(UI *ui)
 {
   TUIData *data = ui->data;
-  bool enable_mouse = data->mouse_enabled;
-  tui_stop(ui);
-  kill(0, SIGTSTP);
-  ui = tui_start();
-  if (enable_mouse) {
-    tui_mouse_on(ui);
-  }
+  // kill(0, SIGTSTP) won't stop the UI thread, so we must poll for SIGCONT
+  // before continuing. This is done in another callback to avoid
+  // loop_poll_events recursion
+  queue_put_event(data->loop->fast_events,
+      event_create(1, suspend_event, 1, ui));
 }
 
 static void tui_set_title(UI *ui, char *title)
@@ -617,7 +628,7 @@ static void tui_set_icon(UI *ui, char *icon)
 static void tui_set_encoding(UI *ui, char* enc)
 {
   TUIData *data = ui->data;
-  term_input_set_encoding(data->input, enc);
+  term_input_set_encoding(&data->input, enc);
 }
 
 static void invalidate(UI *ui, int top, int bot, int left, int right)
@@ -698,8 +709,8 @@ end:
     height = DFLT_ROWS;
   }
 
-  ui->width = width;
-  ui->height = height;
+  data->bridge->bridge.width = ui->width = width;
+  data->bridge->bridge.height = ui->height = height;
 }
 
 static void unibi_goto(UI *ui, int row, int col)
@@ -882,22 +893,12 @@ static void flush_buf(UI *ui)
   buf.base = data->buf;
   buf.len = data->bufpos;
   uv_write(&req, (uv_stream_t *)&data->output_handle, &buf, 1, NULL);
-  uv_run(data->write_loop, UV_RUN_DEFAULT);
+  uv_run(&data->write_loop, UV_RUN_DEFAULT);
   data->bufpos = 0;
 
   if (!data->busy) {
     // not busy and cursor is visible(see above), append a "cursor invisible"
     // command to the beginning of the buffer for the next flush
     unibi_out(ui, unibi_cursor_invisible);
-  }
-}
-
-static void destroy_screen(TUIData *data)
-{
-  if (data->screen) {
-    for (int i = 0; i < data->old_height; i++) {
-      xfree(data->screen[i]);
-    }
-    xfree(data->screen);
   }
 }

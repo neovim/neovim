@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <stdarg.h>
 
-#define EVENT_HANDLER_MAX_ARGC 4
+#define EVENT_HANDLER_MAX_ARGC 6
 
 typedef void (*argv_callback)(void **argv);
 typedef struct message {
@@ -12,6 +12,7 @@ typedef struct message {
   argv_callback handler;
   void *argv[EVENT_HANDLER_MAX_ARGC];
 } Event;
+typedef void(*event_scheduler)(Event event, void *data);
 
 #define VA_EVENT_INIT(event, p, h, a)                   \
   do {                                                  \
