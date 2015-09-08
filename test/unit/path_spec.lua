@@ -416,6 +416,14 @@ describe('more path function', function()
       eq('unit-test-directory/test.file', (ffi.string(filename)))
       eq(OK, result)
     end)
+
+    it('works with directories that have one path component', function()
+      local force_expansion = 1
+      local filename = to_cstr('/tmp')
+      local result = path.vim_FullName(filename, buffer, len, force_expansion)
+      eq('/tmp', ffi.string(buffer))
+      eq(OK, result)
+    end)
   end)
 
   describe('path_fix_case', function()
