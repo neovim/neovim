@@ -48,6 +48,7 @@ endif()
 
 # Version tokens
 include(GetGitRevisionDescription)
+file(TO_NATIVE_PATH ${CMAKE_CURRENT_LIST_DIR}/.git GIT_DIR)
 get_git_head_revision(GIT_REFSPEC NVIM_VERSION_COMMIT)
 if(NOT NVIM_VERSION_COMMIT)
   set(NVIM_VERSION_COMMIT "?")
