@@ -596,12 +596,12 @@ static void curs_rows(win_T *wp)
       else
         wp->w_cline_height = plines_win(wp, wp->w_cursor.lnum, TRUE);
       wp->w_cline_folded = hasFoldingWin(wp, wp->w_cursor.lnum,
-          NULL, NULL, TRUE, NULL) == TRUE;
+          NULL, NULL, TRUE, NULL);
     } else if (i > wp->w_lines_valid) {
       /* a line that is too long to fit on the last screen line */
       wp->w_cline_height = 0;
       wp->w_cline_folded = hasFoldingWin(wp, wp->w_cursor.lnum,
-          NULL, NULL, TRUE, NULL) == TRUE;
+          NULL, NULL, TRUE, NULL);
     } else {
       wp->w_cline_height = wp->w_lines[i].wl_size;
       wp->w_cline_folded = wp->w_lines[i].wl_folded == TRUE;

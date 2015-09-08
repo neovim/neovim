@@ -4673,7 +4673,7 @@ void win_new_height(win_T *wp, int height)
       set_topline(wp, lnum);
     } else if (sline > 0) {
       while (sline > 0 && lnum > 1) {
-        hasFoldingWin(wp, lnum, &lnum, NULL, TRUE, NULL);
+        (void)hasFoldingWin(wp, lnum, &lnum, NULL, true, NULL);
         if (lnum == 1) {
           /* first line in buffer is folded */
           line_size = 1;
@@ -4694,7 +4694,7 @@ void win_new_height(win_T *wp, int height)
          * Line we want at top would go off top of screen.  Use next
          * line instead.
          */
-        hasFoldingWin(wp, lnum, NULL, &lnum, TRUE, NULL);
+        (void)hasFoldingWin(wp, lnum, NULL, &lnum, true, NULL);
         lnum++;
         wp->w_wrow -= line_size + sline;
       } else if (sline > 0) {

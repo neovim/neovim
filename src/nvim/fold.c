@@ -150,12 +150,11 @@ int hasAnyFolding(win_T *win)
  */
 int hasFolding(linenr_T lnum, linenr_T *firstp, linenr_T *lastp)
 {
-  return hasFoldingWin(curwin, lnum, firstp, lastp, TRUE, NULL);
+  return hasFoldingWin(curwin, lnum, firstp, lastp, TRUE, NULL) ? TRUE : FALSE;
 }
 
 /* hasFoldingWin() {{{2 */
-int 
-hasFoldingWin (
+bool hasFoldingWin(
     win_T *win,
     linenr_T lnum,
     linenr_T *firstp,
@@ -183,7 +182,7 @@ hasFoldingWin (
   if (!hasAnyFolding(win)) {
     if (infop != NULL)
       infop->fi_level = 0;
-    return FALSE;
+    return false;
   }
 
   if (cache) {
@@ -238,7 +237,7 @@ hasFoldingWin (
       infop->fi_lnum = lnum - lnum_rel;
       infop->fi_low_level = low_level == 0 ? level : low_level;
     }
-    return FALSE;
+    return false;
   }
 
   if (last > win->w_buffer->b_ml.ml_line_count) {
@@ -253,7 +252,7 @@ hasFoldingWin (
     infop->fi_lnum = first;
     infop->fi_low_level = low_level == 0 ? level + 1 : low_level;
   }
-  return TRUE;
+  return true;
 }
 
 /* foldLevel() {{{2 */
