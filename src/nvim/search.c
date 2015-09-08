@@ -653,7 +653,7 @@ int searchit(
               }
               if (matchcol == 0 && (options & SEARCH_START))
                 break;
-              if (ptr[matchcol] == NUL
+              if (STRLEN(ptr) <= (size_t)matchcol || ptr[matchcol] == NUL
                   || (nmatched = vim_regexec_multi(&regmatch,
                           win, buf, lnum + matchpos.lnum,
                           matchcol,
