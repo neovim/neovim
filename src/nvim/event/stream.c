@@ -56,7 +56,6 @@ void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream,
 
   if (stream->uvstream) {
     stream->uvstream->data = stream;
-    loop = stream->uvstream->loop->data;
   }
 
   stream->data = data;
