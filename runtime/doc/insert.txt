@@ -363,6 +363,9 @@ CTRL-O		execute one command, return to Insert mode   *i_CTRL-O*
 CTRL-\ CTRL-O	like CTRL-O but don't move the cursor	     *i_CTRL-\_CTRL-O*
 CTRL-L		when 'insertmode' is set: go to Normal mode  *i_CTRL-L*
 CTRL-G u	break undo sequence, start new change	     *i_CTRL-G_u*
+CTRL-G U	don't break undo with next left/right cursor *i_CTRL-G_U*
+		movement (but only if the cursor stays
+		within same the line)
 -----------------------------------------------------------------------
 
 Note: If the cursor keys take you out of Insert mode, check the 'noesckeys'
@@ -401,6 +404,29 @@ that, with CTRL-O u.  Another example: >
 
 This breaks undo at each line break.  It also expands abbreviations before
 this.
+
+An example for using CTRL-G U: >
+
+	inoremap <Left>  <C-G>U<Left>
+	inoremap <Right> <C-G>U<Right>
+	inoremap <expr> <Home> col('.') == match(getline('.'), '\S') + 1 ?
+	 \ repeat('<C-G>U<Left>', col('.') - 1) :
+	 \ (col('.') < match(getline('.'), '\S') ?
+	 \     repeat('<C-G>U<Right>', match(getline('.'), '\S') + 0) :
+	 \     repeat('<C-G>U<Left>', col('.') - 1 - match(getline('.'), '\S')))
+	inoremap <expr> <End> repeat('<C-G>U<Right>', col('$') - col('.'))
+	inoremap ( ()<C-G>U<Left>
+
+This makes it possible to use the cursor keys in Insert mode, without breaking
+the undo sequence and therefore using |.| (redo) will work as expected. 
+Also entering a text like (with the "(" mapping from above): >
+
+   Lorem ipsum (dolor
+
+will be repeatable by the |.|to the expected
+
+   Lorem ipsum (dolor)
+
 
 Using CTRL-O splits undo: the text typed before and after it is undone
 separately.  If you want to avoid this (e.g., in a mapping) you might be able

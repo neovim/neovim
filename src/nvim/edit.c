@@ -228,6 +228,8 @@ static int ins_need_undo;               /* call u_save() before inserting a
 
 static int did_add_space = FALSE;       /* auto_format() added an extra space
                                            under the cursor */
+static int dont_sync_undo = false;      /* CTRL-G U prevents syncing undo for
+                                           the next left/right cursor */
 
 /*
  * edit(): Start inserting text.
@@ -611,6 +613,13 @@ edit (
      * Get a character for Insert mode.  Ignore K_IGNORE.
      */
     lastc = c;                          /* remember previous char for CTRL-D */
+
+    // After using CTRL-G U the next cursor key will not break undo.
+    if (dont_sync_undo == MAYBE)
+        dont_sync_undo = true;
+    else
+        dont_sync_undo = false;
+
     input_enable_events();
     do {
       c = safe_vgetc();
@@ -988,7 +997,7 @@ doESCkey:
       if (mod_mask & (MOD_MASK_SHIFT|MOD_MASK_CTRL))
         ins_s_left();
       else
-        ins_left();
+        ins_left(dont_sync_undo == false);
       break;
 
     case K_S_LEFT:      /* <S-Left> */
@@ -1000,7 +1009,7 @@ doESCkey:
       if (mod_mask & (MOD_MASK_SHIFT|MOD_MASK_CTRL))
         ins_s_right();
       else
-        ins_right();
+        ins_right(dont_sync_undo == false);
       break;
 
     case K_S_RIGHT:     /* <S-Right> */
@@ -5627,16 +5636,31 @@ static void redo_literal(int c)
     AppendCharToRedobuff(c);
 }
 
-/*
- * start_arrow() is called when an arrow key is used in insert mode.
- * For undo/redo it resembles hitting the <ESC> key.
- */
-static void
-start_arrow (
-    pos_T *end_insert_pos           /* can be NULL */
-)
+// start_arrow() is called when an arrow key is used in insert mode.
+// For undo/redo it resembles hitting the <ESC> key.
+static void start_arrow(pos_T *end_insert_pos /* can be NULL */)
 {
-  if (!arrow_used) {        /* something has been inserted */
+  start_arrow_common(end_insert_pos, true);
+}
+
+/// Like start_arrow() but with end_change argument.
+/// Will prepare for redo of CTRL-G U if "end_change" is FALSE.
+/// @param end_insert_pos  can be NULL
+/// @param end_change      end undoable change
+static void start_arrow_with_change(pos_T *end_insert_pos, bool end_change)
+{
+  start_arrow_common(end_insert_pos, end_change);
+  if (!end_change) {
+    AppendCharToRedobuff(Ctrl_G);
+    AppendCharToRedobuff('U');
+  }
+}
+
+/// @param end_insert_pos  can be NULL
+/// @param end_change      end undoable change
+static void start_arrow_common(pos_T *end_insert_pos, bool end_change)
+{
+  if (!arrow_used && end_change) {  // something has been inserted
     AppendToRedobuff(ESC_STR);
     stop_insert(end_insert_pos, FALSE, FALSE);
     arrow_used = TRUE;          /* this means we stopped the current insert */
@@ -6903,6 +6927,13 @@ static void ins_ctrl_g(void)
     Insstart = curwin->w_cursor;
     break;
 
+  // CTRL-G U: do not break undo with the next char.
+  case 'U':
+    // Allow one left/right cursor movement with the next char,
+    // without breaking undo.
+    dont_sync_undo = MAYBE;
+    break;
+
   /* Unknown CTRL-G command, reserved for future expansion. */
   default: vim_beep(BO_CTRLG);
   }
@@ -7649,7 +7680,7 @@ static void ins_mousescroll(int dir)
 
 
 
-static void ins_left(void)
+static void ins_left(bool end_change)
 {
   pos_T tpos;
 
@@ -7658,7 +7689,10 @@ static void ins_left(void)
   undisplay_dollar();
   tpos = curwin->w_cursor;
   if (oneleft() == OK) {
-    start_arrow(&tpos);
+    start_arrow_with_change(&tpos, end_change);
+    if (!end_change) {
+      AppendCharToRedobuff(K_LEFT);
+    }
     /* If exit reversed string, position is fixed */
     if (revins_scol != -1 && (int)curwin->w_cursor.col >= revins_scol)
       revins_legal++;
@@ -7669,6 +7703,7 @@ static void ins_left(void)
    * previous line
    */
   else if (vim_strchr(p_ww, '[') != NULL && curwin->w_cursor.lnum > 1) {
+    // always break undo when moving upwards/downwards, else undo may break
     start_arrow(&tpos);
     --(curwin->w_cursor.lnum);
     coladvance((colnr_T)MAXCOL);
@@ -7676,6 +7711,7 @@ static void ins_left(void)
   } else {
     vim_beep(BO_CRSR);
   }
+  dont_sync_undo = false;
 }
 
 static void ins_home(int c)
@@ -7724,16 +7760,18 @@ static void ins_s_left(void)
   }
 }
 
-static void ins_right(void)
+/// @param end_change      end undoable change
+static void ins_right(bool end_change)
 {
   if ((fdo_flags & FDO_HOR) && KeyTyped)
     foldOpenCursor();
   undisplay_dollar();
-  if (gchar_cursor() != NUL
-      || virtual_active()
-      ) {
-    start_arrow(&curwin->w_cursor);
-    curwin->w_set_curswant = TRUE;
+  if (gchar_cursor() != NUL || virtual_active()) {
+    start_arrow_with_change(&curwin->w_cursor, end_change);
+    if (!end_change) {
+      AppendCharToRedobuff(K_RIGHT);
+    }
+    curwin->w_set_curswant = true;
     if (virtual_active())
       oneright();
     else {
@@ -7758,6 +7796,7 @@ static void ins_right(void)
   } else {
     vim_beep(BO_CRSR);
   }
+  dont_sync_undo = false;
 }
 
 static void ins_s_right(void)
