@@ -18,3 +18,5 @@ elif [[ "${BUILD_MINGW}" == ON ]]; then
 fi
 
 pip install --user --upgrade cpp-coveralls neovim
+easy_install3 --user neovim
+

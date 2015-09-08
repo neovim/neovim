@@ -58,6 +58,10 @@ env:
     # available in before_cache (which is run before after_success).
     - SUCCESS_MARKER="$BUILD_DIR/.tests_successful"
 
+python:
+  - "2.7"
+  - "3.3"
+
 matrix:
   include:
     - os: linux
@@ -116,6 +120,9 @@ addons:
       - pkg-config
       - unzip
       - xclip
+      # TODO(justinmk): use pip instead after travis upgrades ubuntu.
+      - python3-setuptools
+      - python3-dev
       # Additional compilers/tools.
       - clang-3.6
       - g++-5-multilib
