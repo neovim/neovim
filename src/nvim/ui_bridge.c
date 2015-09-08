@@ -233,8 +233,11 @@ static void ui_bridge_highlight_set_event(void **argv)
 
 static void ui_bridge_put(UI *b, uint8_t *text, size_t size)
 {
-  uint8_t *t = xmalloc(8);
-  memcpy(t, text, size);
+  uint8_t *t = NULL;
+  if (text) {
+    t = xmalloc(8);
+    memcpy(t, text, size);
+  }
   UI_CALL(b, put, 3, b, t, INT2PTR(size));
 }
 static void ui_bridge_put_event(void **argv)
