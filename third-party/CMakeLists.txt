@@ -22,6 +22,8 @@ option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAJIT "Use the bundled version of luajit." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAROCKS "Use the bundled version of luarocks." ${USE_BUNDLED})
 
+option(USE_EXISTING_SRC_DIR "Skip download of deps sources in case of existing source directory." OFF)
+
 if(UNIX)
   find_program(MAKE_PRG NAMES gmake make)
   if(MAKE_PRG)

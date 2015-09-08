@@ -27,6 +27,7 @@ function(BuildLuajit)
       -DURL=${LUAJIT_URL}
       -DEXPECTED_SHA256=${LUAJIT_SHA256}
       -DTARGET=${_luajit_TARGET}
+      -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND "${_luajit_CONFIGURE_COMMAND}"
     BUILD_IN_SOURCE 1

@@ -13,6 +13,7 @@ ExternalProject_Add(jemalloc
     -DURL=${JEMALLOC_URL}
     -DEXPECTED_SHA256=${JEMALLOC_SHA256}
     -DTARGET=jemalloc
+    -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
     -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
   BUILD_IN_SOURCE 1
   CONFIGURE_COMMAND ${DEPS_BUILD_DIR}/src/jemalloc/configure --enable-cc-silence
