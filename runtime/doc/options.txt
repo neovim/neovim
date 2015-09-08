@@ -2217,21 +2217,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	viminfo file, etc.  It sets the kind of characters which Vim can work
 	with.  See |encoding-names| for the possible values.
 
-	NOTE: Changing this option will not change the encoding of the
-	existing text in Vim.  It may cause non-ASCII text to become invalid.
-	It should normally be kept at its default value, or set when Vim
-	starts up.  See |multibyte|.  To reload the menus see |:menutrans|.
+	This option cannot be changed after startup.
+	Otherwise it would cause non-ASCII text inside Vim to become
+	invalid. It should normally be kept at its default value, or be set
+	in vimrc. See |multibyte|.
 
-	This option cannot be set from a |modeline|.  It would most likely
-	corrupt the text.
-
-	NOTE: For GTK+ 2 it is highly recommended to set 'encoding' to
-	"utf-8".  Although care has been taken to allow different values of
-	'encoding', "utf-8" is the natural choice for the environment and
-	avoids unnecessary conversion overhead.  "utf-8" has not been made
-	the default to prevent different behavior of the GUI and terminal
-	versions, and to avoid changing the encoding of newly created files
-	without your knowledge (in case 'fileencodings' is empty).
+	The recommended 'encoding' is "utf-8". Remote plugins and GUI:s
+	only support utf-8.
 
 	The character encoding of files can be different from 'encoding'.
 	This is specified with 'fileencoding'.  The conversion is done with
@@ -2243,6 +2235,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 <
 	Normally 'encoding' will be equal to your current locale.  This will
 	be the default if Vim recognizes your environment settings.
+	"utf-8" is used when the locale encoding could not be detected.
 
 	When you set this option, it fires the |EncodingChanged| autocommand
 	event so that you can set up fonts if necessary.
@@ -2253,12 +2246,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When the encoding is recognized, it is changed to the standard name.
 	For example "Latin-1" becomes "latin1", "ISO_88592" becomes
 	"iso-8859-2" and "utf8" becomes "utf-8".
-
-	Note: "latin1" is also used when the encoding could not be detected.
-	This only works when editing files in the same encoding!  When the
-	actual character set is not latin1, make sure 'fileencoding' and
-	'fileencodings' are empty.  When conversion is needed, switch to using
-	utf-8.
 
 	When "unicode", "ucs-2" or "ucs-4" is used, Vim internally uses utf-8.
 	You don't notice this while editing, but it does matter for the

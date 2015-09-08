@@ -9,7 +9,6 @@ describe('case-insensitive string comparison in UTF-8', function()
   setup(clear)
 
   it('is working', function()
-    execute('set enc=utf8')
     feed('ggdG<cr>')
     source([[
       function! Ch(a, op, b, expected)

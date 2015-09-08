@@ -1911,6 +1911,7 @@ static void source_startup_scripts(mparm_T *parmp)
       need_wait_return = TRUE;
     secure = 0;
   }
+  did_source_startup_scripts = true;
   TIME_MSG("sourcing vimrc file(s)");
 }
 

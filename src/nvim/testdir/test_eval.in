@@ -4,7 +4,6 @@ Note: system clipboard is saved, changed and restored.
 
 STARTTEST
 :so small.vim
-:set encoding=latin1
 :set noswapfile
 :lang C
 :fun AppendRegContents(reg)

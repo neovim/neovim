@@ -10,7 +10,6 @@ describe('utf8', function()
   it('is working', function()
     insert('start:')
 
-    execute('set encoding=utf-8')
     execute('new')
     execute('call setline(1, ["aaa", "あああ", "bbb"])')
 

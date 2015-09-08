@@ -25,7 +25,9 @@ void term_input_init(TermInput *input, Loop *loop)
   if (!term) {
     term = "";  // termkey_new_abstract assumes non-null (#2745)
   }
-  input->tk = termkey_new_abstract(term, 0);
+  int enc_flag = enc_utf8 ? TERMKEY_FLAG_UTF8 : TERMKEY_FLAG_RAW;
+  input->tk = termkey_new_abstract(term, enc_flag);
+
   int curflags = termkey_get_canonflags(input->tk);
   termkey_set_canonflags(input->tk, curflags | TERMKEY_CANON_DELBS);
   // setup input handle
@@ -55,13 +57,6 @@ void term_input_stop(TermInput *input)
 {
   rstream_stop(&input->read_stream);
   time_watcher_stop(&input->timer_handle);
-}
-
-void term_input_set_encoding(TermInput *input, char* enc)
-{
-  int enc_flag = strcmp(enc, "utf-8") == 0 ? TERMKEY_FLAG_UTF8
-                                           : TERMKEY_FLAG_RAW;
-  termkey_set_flags(input->tk, enc_flag);
 }
 
 static void input_enqueue_event(void **argv)

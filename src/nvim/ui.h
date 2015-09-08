@@ -38,7 +38,6 @@ struct ui_t {
   void (*suspend)(UI *ui);
   void (*set_title)(UI *ui, char *title);
   void (*set_icon)(UI *ui, char *icon);
-  void (*set_encoding)(UI *ui, char *enc);
   void (*stop)(UI *ui);
 };
 

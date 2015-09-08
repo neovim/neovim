@@ -7,7 +7,7 @@ local Session = require('nvim.session')
 
 local nvim_prog = os.getenv('NVIM_PROG') or 'build/bin/nvim'
 local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
-                   '--cmd', 'set shortmess+=I background=light noswapfile noautoindent laststatus=1',
+                   '--cmd', 'set shortmess+=I background=light noswapfile noautoindent laststatus=1 encoding=utf-8',
                    '--embed'}
 
 -- Formulate a path to the directory containing nvim.  We use this to
@@ -183,11 +183,16 @@ local function spawn(argv)
   return session
 end
 
-local function clear()
+local function clear(extra_cmd)
   if session then
     session:exit(0)
   end
-  session = spawn(nvim_argv)
+  local args = {unpack(nvim_argv)}
+  if extra_cmd ~= nil then
+    table.insert(args, '--cmd')
+    table.insert(args, extra_cmd)
+  end
+  session = spawn(args)
 end
 
 local function insert(...)

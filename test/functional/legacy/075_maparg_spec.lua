@@ -10,7 +10,6 @@ describe('maparg()', function()
 
   it('is working', function()
     execute('set cpo-=<')
-    execute('set encoding=utf8')
 
     -- Test maparg() with a string result
     execute('map foo<C-V> is<F4>foo')
