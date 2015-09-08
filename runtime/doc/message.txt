@@ -739,6 +739,14 @@ Example: >
 You tried to execute a command that is neither an Ex command nor
 a user-defined command.
 
+							*W51*  >
+  Invalid VIMRUNTIME: {runtimepath}
+
+The value of "VIMRUNTIME" doesn't point to a valid Neovim runtime. Neovim
+looks for the file "VIMRUNTIME/autoload/provider/clipboard.vim" to check if
+the runtime is valid. "VIMRUNTIME" has either been set by the user, or
+found by Neovim itself, according to the 'runtimepath' option.
+
 ==============================================================================
 3. Messages						*messages*
 
