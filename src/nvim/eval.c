@@ -19832,7 +19832,9 @@ void ex_delfunction(exarg_T *eap)
       EMSG2(_("E131: Cannot delete function %s: It is in use"), eap->arg);
       return;
     }
-    if (fp->uf_refcount > 1) {
+    // check `uf_refcount > 2` because deleting a function should also reduce
+    // the reference count, and 1 is the initial refcount.
+    if (fp->uf_refcount > 2) {
       EMSG2(_("Cannot delete function %s: It is being used internally"),
           eap->arg);
       return;
