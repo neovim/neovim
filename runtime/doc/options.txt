@@ -2217,13 +2217,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	viminfo file, etc.  It sets the kind of characters which Vim can work
 	with.  See |encoding-names| for the possible values.
 
-	This option cannot be changed after startup.
-	Otherwise it would cause non-ASCII text inside Vim to become
-	invalid. It should normally be kept at its default value, or be set
-	in vimrc. See |multibyte|.
-
-	The recommended 'encoding' is "utf-8". Remote plugins and GUI:s
-	only support utf-8.
+	'encoding' cannot be changed after startup, because (1) it causes
+	non-ASCII text inside Vim to become invalid, and (2) it complicates
+	runtime logic.  The recommended 'encoding' is "utf-8".  Remote plugins
+	and GUIs only support utf-8. See |multibyte|.
 
 	The character encoding of files can be different from 'encoding'.
 	This is specified with 'fileencoding'.  The conversion is done with
@@ -2234,8 +2231,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 		if has("multi_byte_encoding")
 <
 	Normally 'encoding' will be equal to your current locale.  This will
-	be the default if Vim recognizes your environment settings.
-	"utf-8" is used when the locale encoding could not be detected.
+	be the default if Vim recognizes your environment settings, otherwise
+	"utf-8" is used.
 
 	When you set this option, it fires the |EncodingChanged| autocommand
 	event so that you can set up fonts if necessary.

@@ -742,8 +742,8 @@ a user-defined command.
 							*E905*  >
   Cannot set this option after startup
 
-This option might only be changed in a |vimrc| file (or earlier). This means
-that plugins can rely on the value being constant after initialization.
+You tried to set an option after startup that only allows changes during
+startup.
 
 ==============================================================================
 3. Messages						*messages*

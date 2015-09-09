@@ -89,8 +89,8 @@ See |encoding-values| for a list of acceptable values.
 
 The result is that all the text that is used inside Vim will be in this
 encoding.  Not only the text in the buffers, but also in registers, variables,
-etc. 'encoding' cannot be changed after startup (at latest when |vimrc|
-is sourced) as changing the value later would make the existing text invalid.
+etc. 'encoding' is read-only after startup because changing it would make the
+existing text invalid.
 
 You can edit files in another encoding than what 'encoding' is set to.  Vim
 will convert the file when you read it and convert it back when you write it.
