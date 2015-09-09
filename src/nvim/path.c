@@ -1843,7 +1843,11 @@ char_u *path_shorten_fname(char_u *full_path, char_u *dir_name)
 /// @param[out]  file      Array of resulting files.
 /// @param[in]   flags     Flags passed to expand_wildcards().
 ///
-/// @return OK or FAIL.
+/// @returns               OK when *file is set to allocated array of matches
+///                        and *num_file(can be zero) to the number of matches.
+///                        If FAIL is returned, *num_file and *file are either
+///                        unchanged or *num_file is set to 0 and *file is set
+///                        to NULL or points to "".
 int expand_wildcards_eval(char_u **pat, int *num_file, char_u ***file,
                           int flags)
 {
@@ -1882,9 +1886,8 @@ int expand_wildcards_eval(char_u **pat, int *num_file, char_u ***file,
 /// @param[out] file     is pointer to array of pointers to matched file names.
 /// @param      flags    is a combination of EW_* flags.
 ///
-/// @returns             OK when some files were found. *num_file is set to the
-///                      number of matches, *file to the allocated array of
-///                      matches.
+/// @returns             OK when *file is set to allocated array of matches
+///                      and *num_file (can be zero) to the number of matches.
 ///                      If FAIL is returned, *num_file and *file are either
 ///                      unchanged or *num_file is set to 0 and *file is set to
 ///                      NULL or points to "".
@@ -1942,6 +1945,12 @@ int expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file,
         (*file)[non_suf_match++] = p;
       }
     }
+  }
+
+  // Free empty array of matches
+  if (*num_file == 0) {
+    xfree(*file);
+    *file = NULL;
   }
 
   return retval;
