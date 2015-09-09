@@ -120,4 +120,16 @@ struct dictvar_S {
                                 // prevent garbage collection
 };
 
-#endif // NVIM_EVAL_DEFS_H
+// structure used for explicit stack while garbage collecting hash tables
+typedef struct ht_stack_S {
+  hashtab_T *ht;
+  struct ht_stack_S *prev;
+} ht_stack_T;
+
+// structure used for explicit stack while garbage collecting lists
+typedef struct list_stack_S {
+  list_T *list;
+  struct list_stack_S *prev;
+} list_stack_T;
+
+#endif  // NVIM_EVAL_DEFS_H
