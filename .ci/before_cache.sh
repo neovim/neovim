@@ -15,10 +15,8 @@ rm -f "${HOME}/.cache/pip/selfcheck.json"
 
 # Update the third-party dependency cache only if the build was successful.
 if [[ -f "${SUCCESS_MARKER}" ]]; then
-  if [[ ! -f "${CACHE_MARKER}" ]] || [[ "${BUILD_NVIM_DEPS}" == true ]]; then
-    echo "Updating third-party dependency cache."
-    rm -rf "${HOME}/.cache/nvim-deps"
-    mv -T "${DEPS_INSTALL_PREFIX}" "${HOME}/.cache/nvim-deps"
-    touch "${CACHE_MARKER}"
-  fi
+  rm -rf "${HOME}/.cache/nvim-deps"
+  mv -T "${DEPS_BUILD_DIR}" "${HOME}/.cache/nvim-deps"
+  touch "${CACHE_MARKER}"
+  echo "Updated third-party dependencies (timestamp: $(stat -c '%y' "${CACHE_MARKER}"))."
 fi

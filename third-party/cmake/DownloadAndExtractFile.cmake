@@ -22,12 +22,15 @@ set(SRC_DIR ${PREFIX}/src/${TARGET})
 
 # Check whether the source has been downloaded. If true, skip it.
 # Useful for external downloads like homebrew.
-if(EXISTS "${SRC_DIR}" AND IS_DIRECTORY "${SRC_DIR}")
-  file(GLOB EXISTED_FILES "${SRC_DIR}/*")
-  if(EXISTED_FILES)
-    message(STATUS "${SRC_DIR} is found and not empty, skipping download and extraction. ")
-    return()
+if(USE_EXISTING_SRC_DIR)
+  if(EXISTS "${SRC_DIR}" AND IS_DIRECTORY "${SRC_DIR}")
+    file(GLOB EXISTED_FILES "${SRC_DIR}/*")
+    if(EXISTED_FILES)
+      message(STATUS "${SRC_DIR} is found and not empty, skipping download and extraction. ")
+      return()
+    endif()
   endif()
+  message(FATAL_ERROR "USE_EXISTING_SRC_DIR set to ON, but '${SRC_DIR}' does not exist or is empty.")
 endif()
 
 # Taken from ExternalProject_Add.  Let's hope we can drop this one day when

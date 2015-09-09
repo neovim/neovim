@@ -25,6 +25,7 @@ function(BuildMsgpack)
       -DURL=${MSGPACK_URL}
       -DEXPECTED_SHA256=${MSGPACK_SHA256}
       -DTARGET=msgpack
+      -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND "${_msgpack_CONFIGURE_COMMAND}"
     BUILD_COMMAND "${_msgpack_BUILD_COMMAND}"

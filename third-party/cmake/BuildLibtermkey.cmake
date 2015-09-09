@@ -14,6 +14,7 @@ ExternalProject_Add(libtermkey
     -DURL=${LIBTERMKEY_URL}
     -DEXPECTED_SHA256=${LIBTERMKEY_SHA256}
     -DTARGET=libtermkey
+    -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
     -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
   CONFIGURE_COMMAND ""
   BUILD_IN_SOURCE 1
