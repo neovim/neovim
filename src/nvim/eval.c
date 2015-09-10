@@ -19826,24 +19826,18 @@ void ex_delfunction(exarg_T *eap)
   if (!eap->skip) {
     if (fp == NULL) {
       EMSG2(_(e_nofunc), eap->arg);
-      return;
-    }
-    if (fp->uf_calls > 0) {
+    } else if (fp->uf_calls > 0) {
       EMSG2(_("E131: Cannot delete function %s: It is in use"), eap->arg);
-      return;
-    }
-    if (fp->uf_refcount > 1) {
-      EMSG2(_("Cannot delete function %s: It is being used internally"),
-          eap->arg);
-      return;
-    }
-
-    if (fudi.fd_dict != NULL) {
+    } else if (fudi.fd_dict != NULL) {
       /* Delete the dict item that refers to the function, it will
        * invoke func_unref() and possibly delete the function. */
       dictitem_remove(fudi.fd_dict, fudi.fd_di);
-    } else
+    } else if (fp->uf_refcount > 1) {
+      EMSG2(_("Cannot delete function %s: It is being used internally"),
+          eap->arg);
+    } else {
       func_free(fp);
+    }
   }
 }
 
