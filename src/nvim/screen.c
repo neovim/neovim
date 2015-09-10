@@ -1992,7 +1992,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
       && lnume >= curwin->w_cursor.lnum) {
     curwin->w_cline_row = row;
     curwin->w_cline_height = 1;
-    curwin->w_cline_folded = TRUE;
+    curwin->w_cline_folded = true;
     curwin->w_valid |= (VALID_CHEIGHT|VALID_CROW);
   }
 }
@@ -3866,7 +3866,7 @@ win_line (
       if (wp == curwin && lnum == curwin->w_cursor.lnum) {
         curwin->w_cline_row = startrow;
         curwin->w_cline_height = row - startrow;
-        curwin->w_cline_folded = FALSE;
+        curwin->w_cline_folded = false;
         curwin->w_valid |= (VALID_CHEIGHT|VALID_CROW);
       }
 

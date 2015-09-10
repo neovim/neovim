@@ -2120,12 +2120,12 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
        * might be displayed differently.
        * Set w_cline_folded here as an efficient way to update it when
        * inserting lines just above a closed fold. */
-      i = hasFoldingWin(wp, lnum, &lnum, NULL, FALSE, NULL);
+      bool folded = hasFoldingWin(wp, lnum, &lnum, NULL, false, NULL);
       if (wp->w_cursor.lnum == lnum)
-        wp->w_cline_folded = i;
-      i = hasFoldingWin(wp, lnume, NULL, &lnume, FALSE, NULL);
+        wp->w_cline_folded = folded;
+      folded = hasFoldingWin(wp, lnume, NULL, &lnume, false, NULL);
       if (wp->w_cursor.lnum == lnume)
-        wp->w_cline_folded = i;
+        wp->w_cline_folded = folded;
 
       /* If the changed line is in a range of previously folded lines,
        * compare with the first line in that range. */
