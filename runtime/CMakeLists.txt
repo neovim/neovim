@@ -82,7 +82,6 @@ endforeach()
 file(GLOB_RECURSE RUNTIME_FILES
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
   *.vim *.dict *.py *.ps *.tutor)
-list(APPEND RUNTIME_FILES macros/dvorak)
 
 foreach(F ${RUNTIME_FILES})
   get_filename_component(BASEDIR ${F} PATH)
