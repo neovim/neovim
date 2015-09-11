@@ -35,24 +35,29 @@ function(BuildLibuv)
     INSTALL_COMMAND "${_libuv_INSTALL_COMMAND}")
 endfunction()
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=memory")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize-memory-track-origins")
+
 set(UNIX_CFGCMD sh ${DEPS_BUILD_DIR}/src/libuv/autogen.sh &&
-  ${DEPS_BUILD_DIR}/src/libuv/configure --with-pic --disable-shared
+  ${DEPS_BUILD_DIR}/src/libuv/configure
+  CFLAGS=-fsanitize=memory
+  --with-pic --disable-shared
   --prefix=${DEPS_INSTALL_DIR} --libdir=${DEPS_INSTALL_DIR}/lib
   CC=${DEPS_C_COMPILER})
 
 if(UNIX)
-  BuildLibUv(
+  BuildLibuv(
     CONFIGURE_COMMAND ${UNIX_CFGCMD}
     INSTALL_COMMAND ${MAKE_PRG} install)
 
 elseif(MINGW AND CMAKE_CROSSCOMPILING)
   # Build libuv for the host
-  BuildLibUv(TARGET libuv_host
+  BuildLibuv(TARGET libuv_host
     CONFIGURE_COMMAND sh ${DEPS_BUILD_DIR}/src/libuv_host/autogen.sh && ${DEPS_BUILD_DIR}/src/libuv_host/configure --with-pic --disable-shared --prefix=${HOSTDEPS_INSTALL_DIR} CC=${HOST_C_COMPILER}
     INSTALL_COMMAND ${MAKE_PRG} install)
 
   # Build libuv for the target
-  BuildLibUv(
+  BuildLibuv(
     CONFIGURE_COMMAND ${UNIX_CFGCMD} --host=${CROSS_TARGET}
     INSTALL_COMMAND ${MAKE_PRG} install)
 
@@ -70,7 +75,7 @@ elseif(WIN32 AND MSVC)
   else()
     set(VS_ARCH x64)
   endif()
-  BuildLibUv(
+  BuildLibuv(
     # By default this creates Debug builds
     BUILD_COMMAND set PYTHON=${PYTHON_EXECUTABLE} COMMAND ${DEPS_BUILD_DIR}/src/libuv/vcbuild.bat static debug ${VS_ARCH}
     INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/lib
