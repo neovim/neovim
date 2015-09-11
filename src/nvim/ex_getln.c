@@ -4112,10 +4112,11 @@ void globpath(char_u *path, char_u *file, garray_T *ga, int expand_options)
       STRCAT(buf, file);  // NOLINT
 
       char_u **p;
-      int num_p;
-      if (ExpandFromContext(&xpc, buf, &num_p, &p,
-              WILD_SILENT|expand_options) != FAIL && num_p > 0) {
-        ExpandEscape(&xpc, buf, num_p, p, WILD_SILENT|expand_options);
+      int num_p = 0;
+      (void)ExpandFromContext(&xpc, buf, &num_p, &p,
+                              WILD_SILENT | expand_options);
+      if (num_p > 0) {
+        ExpandEscape(&xpc, buf, num_p, p, WILD_SILENT | expand_options);
 
         // Concatenate new results to previous ones.
         ga_grow(ga, num_p);
