@@ -99,6 +99,8 @@ variables (set via the |TermOpen| autocmd):
 - `{g,b}:terminal_color_$NUM`: The terminal color palette, where `$NUM` is the
   color index, between 0 and 255 inclusive. This only affects UIs with RGB
   capabilities; for normal terminals the color index is simply forwarded.
+- `{g,b}:terminal_bold_highbright`: Whether to highlight bold text. Either 1
+  to enable or 0 to disable. The default is 0.
 
 The configuration variables are only processed when the terminal starts, which
 is why it needs to be done with the |TermOpen| autocmd or setting global
