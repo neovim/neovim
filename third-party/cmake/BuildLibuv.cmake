@@ -44,6 +44,8 @@ if(UNIX)
   BuildLibuv(
     CONFIGURE_COMMAND ${UNIX_CFGCMD}
     INSTALL_COMMAND ${MAKE_PRG} install
+                                LDFLAGS+=-fsanitize=memory
+                                LDFLAGS+=-fsanitize-memory-track-origins
                                 CFLAGS+=-fno-omit-frame-pointer
                                 CFLAGS+=-fno-optimize-sibling-calls
                                 CFLAGS+=-fsanitize-memory-track-origins
