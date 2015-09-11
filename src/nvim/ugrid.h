@@ -2,12 +2,13 @@
 #define NVIM_UGRID_H
 
 #include "nvim/ui.h"
+#include "nvim/globals.h"
 
 typedef struct ucell UCell;
 typedef struct ugrid UGrid;
 
 struct ucell {
-  char data[7];
+  char data[6 * MAX_MCO + 1];
   HlAttrs attrs;
 };
 

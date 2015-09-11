@@ -9,6 +9,7 @@
 #include "nvim/ui.h"
 #include "nvim/memory.h"
 #include "nvim/ui_bridge.h"
+#include "nvim/ugrid.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui_bridge.c.generated.h"
@@ -235,7 +236,7 @@ static void ui_bridge_put(UI *b, uint8_t *text, size_t size)
 {
   uint8_t *t = NULL;
   if (text) {
-    t = xmalloc(8);
+    t = xmalloc(sizeof(((UCell *)0)->data));
     memcpy(t, text, size);
   }
   UI_CALL(b, put, 3, b, t, INT2PTR(size));
