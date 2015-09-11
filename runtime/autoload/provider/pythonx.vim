@@ -54,7 +54,7 @@ function! s:check_interpreter(prog, major_ver, skip) abort
 
   " Try to load neovim module, and output Python version.
   let prog_ver = system([ a:prog , '-c' ,
-        \ 'import sys; sys.stdout.write(str(sys.version_info[0]) + '.
+        \ 'import sys; sys.path.remove(""); sys.stdout.write(str(sys.version_info[0]) + '.
         \ '"." + str(sys.version_info[1])); '.
         \ (a:major_ver == 2
         \   ? 'import pkgutil; exit(pkgutil.get_loader("neovim") is None)'
