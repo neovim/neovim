@@ -201,7 +201,6 @@ Terminal *terminal_open(TerminalOptions opts)
   vterm_set_utf8(rv->vt, 1);
   // Setup state
   VTermState *state = vterm_obtain_state(rv->vt);
-  vterm_state_set_bold_highbright(state, true);
   // Set up screen
   rv->vts = vterm_obtain_screen(rv->vt);
   vterm_screen_enable_altscreen(rv->vts, true);
