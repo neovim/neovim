@@ -35,20 +35,17 @@ function(BuildLibuv)
     INSTALL_COMMAND "${_libuv_INSTALL_COMMAND}")
 endfunction()
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=memory")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize-memory-track-origins")
-
 set(UNIX_CFGCMD sh ${DEPS_BUILD_DIR}/src/libuv/autogen.sh &&
-  ${DEPS_BUILD_DIR}/src/libuv/configure
-  CFLAGS=-fsanitize=memory
-  --with-pic --disable-shared
+  ${DEPS_BUILD_DIR}/src/libuv/configure --with-pic --disable-shared
   --prefix=${DEPS_INSTALL_DIR} --libdir=${DEPS_INSTALL_DIR}/lib
   CC=${DEPS_C_COMPILER})
 
 if(UNIX)
   BuildLibuv(
     CONFIGURE_COMMAND ${UNIX_CFGCMD}
-    INSTALL_COMMAND ${MAKE_PRG} install)
+    INSTALL_COMMAND ${MAKE_PRG} install
+                                CFLAGS+=-fsanitize-memory-track-origins
+                                CFLAGS+=-fsanitize=memory)
 
 elseif(MINGW AND CMAKE_CROSSCOMPILING)
   # Build libuv for the host
