@@ -209,7 +209,7 @@ int os_open(const char* path, int flags, int mode)
 static bool os_stat(const char *name, uv_stat_t *statbuf)
   FUNC_ATTR_NONNULL_ALL
 {
-  uv_fs_t request;
+  uv_fs_t request = {0};
   int result = uv_fs_stat(&fs_loop, &request, name, NULL);
   *statbuf = request.statbuf;
   uv_fs_req_cleanup(&request);
