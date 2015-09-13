@@ -2831,27 +2831,7 @@ build_stl_str_hl (
     struct stl_hlrec *tabtab       /* return: tab page nrs (can be NULL) */
 )
 {
-  char_u      *p;
-  char_u      *s;
-  char_u      *t;
-  int byteval;
-  win_T       *o_curwin;
-  buf_T       *o_curbuf;
-  int empty_line;
-  colnr_T virtcol;
-  long l;
-  long n;
-  int prevchar_isflag;
-  int prevchar_isitem;
-  int itemisflag;
-  int fillable;
-  char_u      *str;
-  long num;
-  int width;
-  int itemcnt;
-  int curitem;
   int groupitem[STL_MAX_ITEM];
-  int groupdepth;
   struct stl_item {
     char_u          *start;
     int minwid;
@@ -2866,15 +2846,9 @@ build_stl_str_hl (
       Trunc
     }               type;
   }           item[STL_MAX_ITEM];
-  int minwid;
-  int maxwid;
-  int zeropad;
-  char_u base;
-  char_u opt;
 #define TMPLEN 70
   char_u tmp[TMPLEN];
   char_u      *usefmt = fmt;
-  struct stl_hlrec *sp;
 
   /*
    * When the format starts with "%!" then evaluate it as an expression and
@@ -2892,23 +2866,24 @@ build_stl_str_hl (
   else if (mb_char2len(fillchar) > 1)
     fillchar = '-';
 
-  /* Get line & check if empty (cursorpos will show "0-1").  Note that
-   * p will become invalid when getting another buffer line. */
-  p = ml_get_buf(wp->w_buffer, wp->w_cursor.lnum, FALSE);
-  empty_line = (*p == NUL);
+  /* Get line & check if empty (cursorpos will show "0-1"). */
+  char_u *line_ptr = ml_get_buf(wp->w_buffer, wp->w_cursor.lnum, false);
+  bool empty_line = (*line_ptr == NUL);
 
   /* Get the byte value now, in case we need it below. This is more
    * efficient than making a copy of the line. */
-  if (wp->w_cursor.col > (colnr_T)STRLEN(p))
+  int byteval;
+  if (wp->w_cursor.col > (colnr_T)STRLEN(line_ptr))
     byteval = 0;
   else
-    byteval = (*mb_ptr2char)(p + wp->w_cursor.col);
+    byteval = (*mb_ptr2char)(line_ptr + wp->w_cursor.col);
 
-  groupdepth = 0;
-  p = out;
-  curitem = 0;
-  prevchar_isflag = TRUE;
-  prevchar_isitem = FALSE;
+  int groupdepth = 0;
+  char_u *p = out;
+  int curitem = 0;
+  bool prevchar_isflag = true;
+  bool prevchar_isitem = false;
+  char_u *s;
   for (s = usefmt; *s; ) {
     if (curitem == STL_MAX_ITEM) {
       /* There are too many items.  Add the error code to the statusline
@@ -2921,7 +2896,7 @@ build_stl_str_hl (
     }
 
     if (*s != NUL && *s != '%')
-      prevchar_isflag = prevchar_isitem = FALSE;
+      prevchar_isflag = prevchar_isitem = false;
 
     /*
      * Handle up to the next '%' or the end.
@@ -2941,7 +2916,7 @@ build_stl_str_hl (
       if (p + 1 >= out + outlen)
         break;
       *p++ = *s++;
-      prevchar_isflag = prevchar_isitem = FALSE;
+      prevchar_isflag = prevchar_isitem = false;
       continue;
     }
     if (*s == STL_MIDDLEMARK) {
@@ -2964,12 +2939,13 @@ build_stl_str_hl (
         continue;
       groupdepth--;
 
-      t = item[groupitem[groupdepth]].start;
+      char_u *t = item[groupitem[groupdepth]].start;
       *p = NUL;
-      l = vim_strsize(t);
+      long l = vim_strsize(t);
       if (curitem > groupitem[groupdepth] + 1
           && item[groupitem[groupdepth]].minwid == 0) {
         /* remove group if all items are empty */
+        long n;
         for (n = groupitem[groupdepth] + 1; n < curitem; n++)
           if (item[n].type == Normal)
             break;
@@ -2980,6 +2956,7 @@ build_stl_str_hl (
       }
       if (l > item[groupitem[groupdepth]].maxwid) {
         /* truncate, remove n bytes of text at the start */
+        long n;
         if (has_mbyte) {
           /* Find the first character that should be included. */
           n = 0;
@@ -3005,7 +2982,7 @@ build_stl_str_hl (
         }
       } else if (abs(item[groupitem[groupdepth]].minwid) > l) {
         /* fill */
-        n = item[groupitem[groupdepth]].minwid;
+        long n = item[groupitem[groupdepth]].minwid;
         if (n < 0) {
           /* fill by appending characters */
           n = 0 - n;
@@ -3026,13 +3003,13 @@ build_stl_str_hl (
       }
       continue;
     }
-    minwid = 0;
-    maxwid = 9999;
-    zeropad = FALSE;
-    l = 1;
+    int minwid = 0;
+    int maxwid = 9999;
+    bool zeropad = false;
+    long l = 1;
     if (*s == '0') {
       s++;
-      zeropad = TRUE;
+      zeropad = true;
     }
     if (*s == '-') {
       s++;
@@ -3056,7 +3033,7 @@ build_stl_str_hl (
         if (minwid == 0) {
           /* %X ends the close label, go back to the previously
            * define tab label nr. */
-          for (n = curitem - 1; n >= 0; --n)
+          for (long n = curitem - 1; n >= 0; --n)
             if (item[n].type == TabPage && item[n].minwid >= 0) {
               minwid = item[n].minwid;
               break;
@@ -3095,25 +3072,26 @@ build_stl_str_hl (
       s++;
       continue;
     }
-    opt = *s++;
+    char_u opt = *s++;
 
     /* OK - now for the real work */
-    base = 'D';
-    itemisflag = FALSE;
-    fillable = TRUE;
-    num = -1;
-    str = NULL;
+    char_u base = 'D';
+    bool itemisflag = false;
+    bool fillable = true;
+    long num = -1;
+    char_u *str = NULL;
     switch (opt) {
     case STL_FILEPATH:
     case STL_FULLPATH:
     case STL_FILENAME:
-      fillable = FALSE;         /* don't change ' ' to fillchar */
-      if (buf_spname(wp->w_buffer) != NULL)
+    {
+      fillable = false;         /* don't change ' ' to fillchar */
+      if (buf_spname(wp->w_buffer) != NULL) {
         STRLCPY(NameBuff, buf_spname(wp->w_buffer), MAXPATHL);
-      else {
-        t = (opt == STL_FULLPATH) ? wp->w_buffer->b_ffname
-            : wp->w_buffer->b_fname;
-        home_replace(wp->w_buffer, t, NameBuff, MAXPATHL, TRUE);
+      } else {
+        char_u *t = (opt == STL_FULLPATH) ? wp->w_buffer->b_ffname
+                     : wp->w_buffer->b_fname;
+        home_replace(wp->w_buffer, t, NameBuff, MAXPATHL, true);
       }
       trans_characters(NameBuff, MAXPATHL);
       if (opt != STL_FILENAME)
@@ -3121,10 +3099,11 @@ build_stl_str_hl (
       else
         str = path_tail(NameBuff);
       break;
-
+    }
     case STL_VIM_EXPR:     /* '{' */
-      itemisflag = TRUE;
-      t = p;
+    {
+      itemisflag = true;
+      char_u *t = p;
       while (*s != '}' && *s != NUL && p + 1 < out + outlen)
         *p++ = *s++;
       if (*s != '}')            /* missing '}' or out of space */
@@ -3136,8 +3115,8 @@ build_stl_str_hl (
       vim_snprintf((char *)tmp, sizeof(tmp), "%d", curbuf->b_fnum);
       set_internal_string_var((char_u *)"actual_curbuf", tmp);
 
-      o_curbuf = curbuf;
-      o_curwin = curwin;
+      buf_T *o_curbuf = curbuf;
+      win_T *o_curwin = curwin;
       curwin = wp;
       curbuf = wp->w_buffer;
 
@@ -3152,11 +3131,11 @@ build_stl_str_hl (
           num = atoi((char *)str);
           xfree(str);
           str = NULL;
-          itemisflag = FALSE;
+          itemisflag = false;
         }
       }
       break;
-
+    }
     case STL_LINE:
       num = (wp->w_buffer->b_ml.ml_flags & ML_EMPTY)
             ? 0L : (long)(wp->w_cursor.lnum);
@@ -3173,8 +3152,9 @@ build_stl_str_hl (
 
     case STL_VIRTCOL:
     case STL_VIRTCOL_ALT:
+    {
       /* In list mode virtcol needs to be recomputed */
-      virtcol = wp->w_virtcol;
+      colnr_T virtcol = wp->w_virtcol;
       if (wp->w_p_list && lcs_tab1 == NUL) {
         wp->w_p_list = FALSE;
         getvcol(wp, &wp->w_cursor, NULL, &virtcol, NULL);
@@ -3188,6 +3168,7 @@ build_stl_str_hl (
         break;
       num = (long)virtcol;
       break;
+    }
 
     case STL_PERCENTAGE:
       num = (int)(((long)wp->w_cursor.lnum * 100L) /
@@ -3200,14 +3181,14 @@ build_stl_str_hl (
       break;
 
     case STL_ARGLISTSTAT:
-      fillable = FALSE;
+      fillable = false;
       tmp[0] = 0;
       if (append_arg_number(wp, tmp, (int)sizeof(tmp), FALSE))
         str = tmp;
       break;
 
     case STL_KEYMAP:
-      fillable = FALSE;
+      fillable = false;
       if (get_keymap_str(wp, tmp, TMPLEN))
         str = tmp;
       break;
@@ -3240,14 +3221,14 @@ build_stl_str_hl (
 
     case STL_ROFLAG:
     case STL_ROFLAG_ALT:
-      itemisflag = TRUE;
+      itemisflag = true;
       if (wp->w_buffer->b_p_ro)
         str = (char_u *)((opt == STL_ROFLAG_ALT) ? ",RO" : _("[RO]"));
       break;
 
     case STL_HELPFLAG:
     case STL_HELPFLAG_ALT:
-      itemisflag = TRUE;
+      itemisflag = true;
       if (wp->w_buffer->b_help)
         str = (char_u *)((opt == STL_HELPFLAG_ALT) ? ",HLP"
                          : _("[Help]"));
@@ -3263,20 +3244,21 @@ build_stl_str_hl (
       break;
 
     case STL_FILETYPE_ALT:
-      itemisflag = TRUE;
+    {
+      itemisflag = true;
       if (*wp->w_buffer->b_p_ft != NUL
           && STRLEN(wp->w_buffer->b_p_ft) < TMPLEN - 2) {
         vim_snprintf((char *)tmp, sizeof(tmp), ",%s",
             wp->w_buffer->b_p_ft);
-        for (t = tmp; *t != 0; t++)
+        for (char_u *t = tmp; *t != 0; t++)
           *t = TOUPPER_LOC(*t);
         str = tmp;
       }
       break;
-
+    }
     case STL_PREVIEWFLAG:
     case STL_PREVIEWFLAG_ALT:
-      itemisflag = TRUE;
+      itemisflag = true;
       if (wp->w_p_pvw)
         str = (char_u *)((opt == STL_PREVIEWFLAG_ALT) ? ",PRV"
                          : _("[Preview]"));
@@ -3291,7 +3273,7 @@ build_stl_str_hl (
 
     case STL_MODIFIED:
     case STL_MODIFIED_ALT:
-      itemisflag = TRUE;
+      itemisflag = true;
       switch ((opt == STL_MODIFIED_ALT)
               + bufIsChanged(wp->w_buffer) * 2
               + (!MODIFIABLE(wp->w_buffer)) * 4) {
@@ -3305,7 +3287,8 @@ build_stl_str_hl (
       break;
 
     case STL_HIGHLIGHT:
-      t = s;
+    {
+      char_u *t = s;
       while (*s != '#' && *s != NUL)
         ++s;
       if (*s == '#') {
@@ -3318,21 +3301,22 @@ build_stl_str_hl (
         ++s;
       continue;
     }
+    }
 
     item[curitem].start = p;
     item[curitem].type = Normal;
     if (str != NULL && *str) {
-      t = str;
+      char_u *t = str;
       if (itemisflag) {
         if ((t[0] && t[1])
             && ((!prevchar_isitem && *t == ',')
                 || (prevchar_isflag && *t == ' ')))
           t++;
-        prevchar_isflag = TRUE;
+        prevchar_isflag = true;
       }
       l = vim_strsize(t);
       if (l > 0)
-        prevchar_isitem = TRUE;
+        prevchar_isitem = true;
       if (l > maxwid) {
         while (l >= maxwid)
           if (has_mbyte) {
@@ -3371,8 +3355,8 @@ build_stl_str_hl (
 
       if (p + 20 >= out + outlen)
         break;                  /* not sufficient space */
-      prevchar_isitem = TRUE;
-      t = nstr;
+      prevchar_isitem = true;
+      char_u *t = nstr;
       if (opt == STL_VIRTCOL_ALT) {
         *t++ = '-';
         minwid--;
@@ -3384,6 +3368,7 @@ build_stl_str_hl (
       *t++ = nbase == 16 ? base : (char_u)(nbase == 8 ? 'o' : 'd');
       *t = 0;
 
+      long n;
       for (n = num, l = 1; n >= nbase; n /= nbase)
         l++;
       if (opt == STL_VIRTCOL_ALT)
@@ -3410,19 +3395,19 @@ build_stl_str_hl (
       xfree(str);
 
     if (num >= 0 || (!itemisflag && str && *str))
-      prevchar_isflag = FALSE;              /* Item not NULL, but not a flag */
+      prevchar_isflag = false;              /* Item not NULL, but not a flag */
     curitem++;
   }
   *p = NUL;
-  itemcnt = curitem;
+  int itemcnt = curitem;
 
   if (usefmt != fmt)
     xfree(usefmt);
 
-  width = vim_strsize(out);
+  int width = vim_strsize(out);
   if (maxwidth > 0 && width > maxwidth) {
     /* Result is too long, must truncate somewhere. */
-    l = 0;
+    long l = 0;
     if (itemcnt == 0)
       s = out;
     else {
@@ -3462,6 +3447,7 @@ build_stl_str_hl (
       *s++ = '>';
       *s = 0;
     } else {
+      long n;
       if (has_mbyte) {
         n = 0;
         while (width >= maxwidth) {
@@ -3493,24 +3479,24 @@ build_stl_str_hl (
   } else if (width < maxwidth && STRLEN(out) + maxwidth - width + 1 <
              outlen) {
     /* Apply STL_MIDDLE if any */
-    for (l = 0; l < itemcnt; l++)
-      if (item[l].type == Middle)
+    for (long l = 0; l < itemcnt; l++)
+      if (item[l].type == Middle) {
+        p = item[l].start + maxwidth - width;
+        STRMOVE(p, item[l].start);
+        for (s = item[l].start; s < p; s++)
+          *s = fillchar;
+        for (l++; l < itemcnt; l++)
+          item[l].start += maxwidth - width;
+        width = maxwidth;
+
         break;
-    if (l < itemcnt) {
-      p = item[l].start + maxwidth - width;
-      STRMOVE(p, item[l].start);
-      for (s = item[l].start; s < p; s++)
-        *s = fillchar;
-      for (l++; l < itemcnt; l++)
-        item[l].start += maxwidth - width;
-      width = maxwidth;
-    }
+      }
   }
 
   /* Store the info about highlighting. */
   if (hltab != NULL) {
-    sp = hltab;
-    for (l = 0; l < itemcnt; l++) {
+    struct stl_hlrec *sp = hltab;
+    for (long l = 0; l < itemcnt; l++) {
       if (item[l].type == Highlight) {
         sp->start = item[l].start;
         sp->userhl = item[l].minwid;
@@ -3523,8 +3509,8 @@ build_stl_str_hl (
 
   /* Store the info about tab pages labels. */
   if (tabtab != NULL) {
-    sp = tabtab;
-    for (l = 0; l < itemcnt; l++) {
+    struct stl_hlrec *sp = tabtab;
+    for (long l = 0; l < itemcnt; l++) {
       if (item[l].type == TabPage) {
         sp->start = item[l].start;
         sp->userhl = item[l].minwid;
