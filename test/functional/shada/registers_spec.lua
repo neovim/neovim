@@ -128,36 +128,24 @@ describe('ShaDa support code', function()
     eq({{}, ''}, getreg('h'))
   end)
 
-  it('dumps and loads register correctly when &encoding is not UTF-8',
+  it('dumps and loads register correctly with utf-8 contents',
   function()
-    set_additional_cmd('set encoding=latin1')
     reset()
-    -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
-    setreg('e', {'\171'}, 'c')
-    nvim_command('qall')
-    reset()
-    eq({{'\171'}, 'v'}, getreg('e'))
-  end)
-
-  it('dumps and loads history correctly when &encoding /= UTF-8 when dumping',
-  function()
-    set_additional_cmd('set encoding=latin1')
-    reset()
-    -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
-    setreg('e', {'\171'}, 'c')
-    set_additional_cmd('')
+    setreg('e', {'«'}, 'c')
     nvim_command('qall')
     reset()
     eq({{'«'}, 'v'}, getreg('e'))
   end)
 
-  it('dumps and loads history correctly when &encoding /= UTF-8 when loading',
+  it('dumps and loads history correctly with 8-bit single-byte',
   function()
+    reset()
     -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
-    setreg('e', {'«'}, 'c')
-    set_additional_cmd('set encoding=latin1')
+    setreg('e', {'\171«'}, 'c')
+    set_additional_cmd('')
     nvim_command('qall')
     reset()
-    eq({{'\171'}, 'v'}, getreg('e'))
+    eq({{'\171«'}, 'v'}, getreg('e'))
   end)
+
 end)

@@ -91,35 +91,13 @@ describe('ShaDa support code', function()
     eq(0, funcs.exists('g:str_var'))
   end)
 
-  it('dumps and loads variables correctly when &encoding is not UTF-8',
+  it('dumps and loads variables correctly with utf-8 strings',
   function()
-    set_additional_cmd('set encoding=latin1')
     reset()
-    -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
-    meths.set_var('STRVAR', '\171')
-    meths.set_var('LSTVAR', {'\171'})
-    meths.set_var('DCTVAR', {['\171']='\171'})
-    meths.set_var('NESTEDVAR', {['\171']={{'\171'}, {['\171']='\171'},
-                                {a='Test'}}})
-    nvim_command('qall')
-    reset()
-    eq('\171', meths.get_var('STRVAR'))
-    eq({'\171'}, meths.get_var('LSTVAR'))
-    eq({['\171']='\171'}, meths.get_var('DCTVAR'))
-    eq({['\171']={{'\171'}, {['\171']='\171'}, {a='Test'}}},
-       meths.get_var('NESTEDVAR'))
-  end)
-
-  it('dumps and loads variables correctly when &encoding /= UTF-8 when dumping',
-  function()
-    set_additional_cmd('set encoding=latin1')
-    reset()
-    -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
-    meths.set_var('STRVAR', '\171')
-    meths.set_var('LSTVAR', {'\171'})
-    meths.set_var('DCTVAR', {['\171']='\171'})
-    meths.set_var('NESTEDVAR', {['\171']={{'\171'}, {['\171']='\171'},
-                                {a='Test'}}})
+    meths.set_var('STRVAR', '«')
+    meths.set_var('LSTVAR', {'«'})
+    meths.set_var('DCTVAR', {['«']='«'})
+    meths.set_var('NESTEDVAR', {['«']={{'«'}, {['«']='«'}, {a='Test'}}})
     set_additional_cmd('')
     nvim_command('qall')
     reset()
@@ -129,20 +107,22 @@ describe('ShaDa support code', function()
     eq({['«']={{'«'}, {['«']='«'}, {a='Test'}}}, meths.get_var('NESTEDVAR'))
   end)
 
-  it('dumps and loads variables correctly when &encoding /= UTF-8 when loading',
+  it('dumps and loads variables correctly with 8-bit strings',
   function()
+    reset()
     -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
-    meths.set_var('STRVAR', '«')
-    meths.set_var('LSTVAR', {'«'})
-    meths.set_var('DCTVAR', {['«']='«'})
-    meths.set_var('NESTEDVAR', {['«']={{'«'}, {['«']='«'}, {a='Test'}}})
-    set_additional_cmd('set encoding=latin1')
+    -- This is invalid unicode, but we should still dump and restore it.
+    meths.set_var('STRVAR', '\171')
+    meths.set_var('LSTVAR', {'\171'})
+    meths.set_var('DCTVAR', {['«\171']='«\171'})
+    meths.set_var('NESTEDVAR', {['\171']={{'\171«'}, {['\171']='\171'},
+                                {a='Test'}}})
     nvim_command('qall')
     reset()
     eq('\171', meths.get_var('STRVAR'))
     eq({'\171'}, meths.get_var('LSTVAR'))
-    eq({['\171']='\171'}, meths.get_var('DCTVAR'))
-    eq({['\171']={{'\171'}, {['\171']='\171'}, {a='Test'}}},
+    eq({['«\171']='«\171'}, meths.get_var('DCTVAR'))
+    eq({['\171']={{'\171«'}, {['\171']='\171'}, {a='Test'}}},
        meths.get_var('NESTEDVAR'))
   end)
 
