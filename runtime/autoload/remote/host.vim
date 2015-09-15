@@ -1,6 +1,6 @@
 let s:hosts = {}
 let s:plugin_patterns = {}
-let s:remote_plugins_manifest = fnamemodify($MYVIMRC, ':p:h')
+let s:remote_plugins_manifest = fnamemodify(expand($MYVIMRC, 1), ':h')
       \.'/.'.fnamemodify($MYVIMRC, ':t').'-rplugin~'
 
 
