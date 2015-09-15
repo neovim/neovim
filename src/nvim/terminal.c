@@ -155,6 +155,8 @@ void terminal_init(void)
 {
   invalidated_terminals = pmap_new(ptr_t)();
   time_watcher_init(&loop, &refresh_timer, NULL);
+  // refresh_timer_cb will redraw the screen which can call vimscript
+  refresh_timer.events = queue_new_child(loop.events);
 
   // initialize a rgb->color index map for cterm attributes(VTermScreenCell
   // only has RGB information and we need color indexes for terminal UIs)
@@ -180,6 +182,7 @@ void terminal_init(void)
 void terminal_teardown(void)
 {
   time_watcher_stop(&refresh_timer);
+  queue_free(refresh_timer.events);
   time_watcher_close(&refresh_timer, NULL);
   pmap_free(ptr_t)(invalidated_terminals);
   map_free(int, int)(color_indexes);
