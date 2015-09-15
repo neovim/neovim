@@ -2818,7 +2818,7 @@ void free_titles(void)
  * If maxwidth is not zero, the string will be filled at any middle marker
  * or truncated if too long, fillchar is used for all whitespace.
  */
-int 
+int
 build_stl_str_hl (
     win_T *wp,
     char_u *out,               /* buffer to write into != NameBuff */
@@ -2833,8 +2833,11 @@ build_stl_str_hl (
 {
   int groupitem[STL_MAX_ITEM];
   struct stl_item {
+    // Where the item starts in the status line output buffer
     char_u          *start;
+    // The minimum width of the item (at most 50 characters)
     int minwid;
+    // The maximum width of the item
     int maxwid;
     enum {
       Normal,
@@ -2846,6 +2849,13 @@ build_stl_str_hl (
       Trunc
     }               type;
   }           item[STL_MAX_ITEM];
+
+  enum number_base {
+     DECIMAL     = 10,
+     OCTAL       = 8,
+     HEXIDECIMAL = 16
+  };
+
 #define TMPLEN 70
   char_u tmp[TMPLEN];
   char_u      *usefmt = fmt;
@@ -2879,12 +2889,18 @@ build_stl_str_hl (
     byteval = (*mb_ptr2char)(line_ptr + wp->w_cursor.col);
 
   int groupdepth = 0;
-  char_u *p = out;
+
   int curitem = 0;
   bool prevchar_isflag = true;
   bool prevchar_isitem = false;
-  char_u *s;
-  for (s = usefmt; *s; ) {
+
+  // p is the current position in the output buffer
+  char_u *p = out;
+
+
+  // Proceed character by character through the statusline format string
+  // s is the current positon in the input buffer
+  for (char_u *s = usefmt; *s; ) {
     if (curitem == STL_MAX_ITEM) {
       /* There are too many items.  Add the error code to the statusline
        * to give the user a hint about what went wrong. */
@@ -2898,64 +2914,99 @@ build_stl_str_hl (
     if (*s != NUL && *s != '%')
       prevchar_isflag = prevchar_isitem = false;
 
-    /*
-     * Handle up to the next '%' or the end.
-     */
+    // Copy the formatting verbatim until we reach the end of the string
+    // or find a formatting item (denoted by `%`)
+    // or run out of room in our output buffer.
     while (*s != NUL && *s != '%' && p + 1 < out + outlen)
       *p++ = *s++;
+
+    // If we have processed the entire format string or run out of
+    // room in our output buffer, exit the loop.
     if (*s == NUL || p + 1 >= out + outlen)
       break;
 
-    /*
-     * Handle one '%' item.
-     */
+    // The rest of this loop wil handle a single `%` item.
+    // Note: We increment here to skip over the `%` character we are currently
+    //       on so we can process the item's contents.
     s++;
-    if (*s == NUL)      /* ignore trailing % */
+
+    // Ignore `%` at the end of the format string
+    if (*s == NUL) {
       break;
+    }
+
+    // Two `%` in a row is the escape sequence to print a
+    // single `%` in the output buffer.
     if (*s == '%') {
+      // Ignore the character if we're out of room in the output buffer.
       if (p + 1 >= out + outlen)
         break;
       *p++ = *s++;
       prevchar_isflag = prevchar_isitem = false;
       continue;
     }
+
+    // STL_MIDDLEMARK denotes the separation place between left and right aligned items.
     if (*s == STL_MIDDLEMARK) {
       s++;
-      if (groupdepth > 0)
+      // Ignored when we are inside of a grouping
+      if (groupdepth > 0) {
         continue;
+      }
       item[curitem].type = Middle;
       item[curitem++].start = p;
       continue;
     }
+
+    // STL_TRUNCMARK denotes where to begin truncating if the statusline is too long.
     if (*s == STL_TRUNCMARK) {
       s++;
       item[curitem].type = Trunc;
       item[curitem++].start = p;
       continue;
     }
+
+    // The end of a grouping
     if (*s == ')') {
       s++;
-      if (groupdepth < 1)
+      // Ignore if we are not actually inside a group currently
+      if (groupdepth < 1) {
         continue;
+      }
       groupdepth--;
 
+      //{ Determine how long the group is.
+      //  Note: We set the current output position to null so `vim_strsize` will work.
       char_u *t = item[groupitem[groupdepth]].start;
       *p = NUL;
       long l = vim_strsize(t);
+      //}
+
+      // If the group contained internal items and the group did not have a minimum width,
+      // and if there were no normal items in the group,
+      // move the output pointer back to where the group started (erase the group).
+      // Note: This also erases any plaintext characters that were in the group.
+      //       Otherwise there would be no reason to do this step.
       if (curitem > groupitem[groupdepth] + 1
           && item[groupitem[groupdepth]].minwid == 0) {
-        /* remove group if all items are empty */
-        long n;
-        for (n = groupitem[groupdepth] + 1; n < curitem; n++)
-          if (item[n].type == Normal)
+        bool has_normal_items = false;
+        for (long n = groupitem[groupdepth] + 1; n < curitem; n++) {
+          if (item[n].type == Normal) {
+            has_normal_items = true;
             break;
-        if (n == curitem) {
+          }
+        }
+
+        if (!has_normal_items) {
           p = t;
           l = 0;
         }
       }
+
+      // If the group is longer than it is allowed to be
+      // truncate by removing bytes from the start of the group text.
       if (l > item[groupitem[groupdepth]].maxwid) {
-        /* truncate, remove n bytes of text at the start */
+        //{ Determine the number of bytes to remove
         long n;
         if (has_mbyte) {
           /* Find the first character that should be included. */
@@ -2966,60 +3017,88 @@ build_stl_str_hl (
           }
         } else
           n = (long)(p - t) - item[groupitem[groupdepth]].maxwid + 1;
+        //}
 
+        // Prepend the `<` to indicate that the output was truncated.
         *t = '<';
+
+        //{ Move the truncated output
         memmove(t + 1, t + n, (size_t)(p - (t + n)));
         p = p - n + 1;
         /* Fill up space left over by half a double-wide char. */
         while (++l < item[groupitem[groupdepth]].minwid)
           *p++ = fillchar;
+        //}
 
         /* correct the start of the items for the truncation */
         for (l = groupitem[groupdepth] + 1; l < curitem; l++) {
+          // Shift everything back by the number of removed bytes
           item[l].start -= n;
+
+          // If the item was partially or completely truncated, set its
+          // start to the start of the group
           if (item[l].start < t)
             item[l].start = t;
         }
+      // If the group is shorter than the minimum width, add padding characters.
       } else if (abs(item[groupitem[groupdepth]].minwid) > l) {
-        /* fill */
-        long n = item[groupitem[groupdepth]].minwid;
-        if (n < 0) {
-          /* fill by appending characters */
-          n = 0 - n;
-          while (l++ < n && p + 1 < out + outlen)
+        long min_group_width = item[groupitem[groupdepth]].minwid;
+        // If the group is left-aligned, add characters to the right.
+        if (min_group_width < 0) {
+          min_group_width = 0 - min_group_width;
+          while (l++ < min_group_width && p + 1 < out + outlen)
             *p++ = fillchar;
+        // If the group is right-aligned, shift everything to the right and
+        // prepend with filler characters.
         } else {
-          /* fill by inserting characters */
-          memmove(t + n - l, t, (size_t)(p - t));
-          l = n - l;
-          if (p + l >= out + outlen)
+          //{ Move the group to the right
+          memmove(t + min_group_width - l, t, (size_t)(p - t));
+          l = min_group_width - l;
+          if (p + l >= out + outlen) {
             l = (long)((out + outlen) - p - 1);
+          }
           p += l;
-          for (n = groupitem[groupdepth] + 1; n < curitem; n++)
+          //}
+
+          // Adjust item start positions
+          for (int n = groupitem[groupdepth] + 1; n < curitem; n++) {
             item[n].start += l;
-          for (; l > 0; l--)
+          }
+
+          // Prepend the fill characters
+          for (; l > 0; l--) {
             *t++ = fillchar;
+          }
         }
       }
       continue;
     }
     int minwid = 0;
     int maxwid = 9999;
-    bool zeropad = false;
-    long l = 1;
-    if (*s == '0') {
+    bool left_align = false;
+
+    // Denotes that numbers should be left-padded with zeros
+    bool zeropad = (*s == '0');
+    if (zeropad) {
       s++;
-      zeropad = true;
     }
+
+    // Denotes that the item should be left-aligned.
+    // This is tracked by using a negative length.
     if (*s == '-') {
       s++;
-      l = -1;
+      left_align = true;
     }
+
+    // The first digit group is the item's min width
     if (ascii_isdigit(*s)) {
       minwid = getdigits_int(&s);
       if (minwid < 0)           /* overflow */
         minwid = 0;
     }
+
+    // User highlight groups override the min width field
+    // to denote the styling to use.
     if (*s == STL_USER_HL) {
       item[curitem].type = Highlight;
       item[curitem].start = p;
@@ -3049,6 +3128,9 @@ build_stl_str_hl (
       curitem++;
       continue;
     }
+
+    // Denotes the end of the minwid
+    // the maxwid may follow immediately after
     if (*s == '.') {
       s++;
       if (ascii_isdigit(*s)) {
@@ -3057,7 +3139,12 @@ build_stl_str_hl (
           maxwid = 50;
       }
     }
-    minwid = (minwid > 50 ? 50 : minwid) * l;
+
+    // Bound the minimum width at 50.
+    // Make the number negative to denote left alignment of the item
+    minwid = (minwid > 50 ? 50 : minwid) * (left_align ? -1 : 1);
+
+    // Denotes the start of a new group
     if (*s == '(') {
       groupitem[groupdepth++] = curitem;
       item[curitem].type = Group;
@@ -3068,14 +3155,19 @@ build_stl_str_hl (
       curitem++;
       continue;
     }
+
+    // An invalid item was specified.
+    // Continue processing on the next character of the format string.
     if (vim_strchr(STL_ALL, *s) == NULL) {
       s++;
       continue;
     }
+
+    // The status line item type
     char_u opt = *s++;
 
     /* OK - now for the real work */
-    char_u base = 'D';
+    enum number_base base = DECIMAL;
     bool itemisflag = false;
     bool fillable = true;
     long num = -1;
@@ -3103,6 +3195,9 @@ build_stl_str_hl (
     case STL_VIM_EXPR:     /* '{' */
     {
       itemisflag = true;
+
+      // Attempt to copy the expression to evaluate into
+      // the output buffer as a null-terminated string.
       char_u *t = p;
       while (*s != '}' && *s != NUL && p + 1 < out + outlen)
         *p++ = *s++;
@@ -3110,22 +3205,37 @@ build_stl_str_hl (
         break;
       s++;
       *p = 0;
+
+      // Move our position in the output buffer to the beginning of the expression
       p = t;
 
+      //{ Evaluate the expression
+
+      // Store the current buffer number as a string variable
       vim_snprintf((char *)tmp, sizeof(tmp), "%d", curbuf->b_fnum);
       set_internal_string_var((char_u *)"actual_curbuf", tmp);
 
+      // Switch the curbuf and curwin to the buffer and window we are evaluating the
+      // statusline for.
       buf_T *o_curbuf = curbuf;
       win_T *o_curwin = curwin;
       curwin = wp;
       curbuf = wp->w_buffer;
 
+      // Note: The result stored in `t` is unused.
       str = eval_to_string_safe(p, &t, use_sandbox);
 
+      // Switch back to the actual current buffer and window.
       curwin = o_curwin;
       curbuf = o_curbuf;
+
+      // Remove the variable we just stored
       do_unlet((char_u *)"g:actual_curbuf", TRUE);
 
+      //}
+
+      // Check if the evaluated result is a number.
+      // If so, convert the number to an int and free the string.
       if (str != NULL && *str != 0) {
         if (*skipdigits(str) == NUL) {
           num = atoi((char *)str);
@@ -3176,15 +3286,27 @@ build_stl_str_hl (
       break;
 
     case STL_ALTPERCENT:
+      // Store the position percentage in our temporary buffer.
+      // Note: We cannot store the value in `num` because
+      //       `get_rel_pos` can return a named position. Ex: "Top"
+      get_rel_pos(wp, tmp, TMPLEN);
       str = tmp;
-      get_rel_pos(wp, str, TMPLEN);
       break;
 
     case STL_ARGLISTSTAT:
       fillable = false;
+
+      // Note: This is important because `append_arg_number` starts appending
+      //       at the end of the null-terminated string.
+      //       Setting the first byte to null means it will place the argument
+      //       number string at the beginning of the buffer.
       tmp[0] = 0;
-      if (append_arg_number(wp, tmp, (int)sizeof(tmp), FALSE))
+
+      // Note: The call will only return true if it actually
+      //       appended data to the `tmp` buffer.
+      if (append_arg_number(wp, tmp, (int)sizeof(tmp), FALSE)) {
         str = tmp;
+      }
       break;
 
     case STL_KEYMAP:
@@ -3201,16 +3323,17 @@ build_stl_str_hl (
       break;
 
     case STL_OFFSET_X:
-      base = 'X';
+      base = HEXIDECIMAL;
     case STL_OFFSET:
-      l = ml_find_line_or_offset(wp->w_buffer, wp->w_cursor.lnum, NULL);
+    {
+      long l = ml_find_line_or_offset(wp->w_buffer, wp->w_cursor.lnum, NULL);
       num = (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) || l < 0 ?
             0L : l + 1 + (!(State & INSERT) && empty_line ?
                           0 : (int)wp->w_cursor.col);
       break;
-
+    }
     case STL_BYTEVAL_X:
-      base = 'X';
+      base = HEXIDECIMAL;
     case STL_BYTEVAL:
       num = byteval;
       if (num == NL)
@@ -3235,6 +3358,8 @@ build_stl_str_hl (
       break;
 
     case STL_FILETYPE:
+      // Copy the filetype if it is not null and the formatted string will fit
+      // in the temporary buffer (including the brackets and null terminating character)
       if (*wp->w_buffer->b_p_ft != NUL
           && STRLEN(wp->w_buffer->b_p_ft) < TMPLEN - 3) {
         vim_snprintf((char *)tmp, sizeof(tmp), "[%s]",
@@ -3246,12 +3371,16 @@ build_stl_str_hl (
     case STL_FILETYPE_ALT:
     {
       itemisflag = true;
+      // Copy the filetype if it is not null and the formatted string will fit
+      // in the temporary buffer (including the comma and null terminating character)
       if (*wp->w_buffer->b_p_ft != NUL
           && STRLEN(wp->w_buffer->b_p_ft) < TMPLEN - 2) {
         vim_snprintf((char *)tmp, sizeof(tmp), ",%s",
             wp->w_buffer->b_p_ft);
-        for (char_u *t = tmp; *t != 0; t++)
+        // Uppercase the file extension
+        for (char_u *t = tmp; *t != 0; t++) {
           *t = TOUPPER_LOC(*t);
+        }
         str = tmp;
       }
       break;
@@ -3288,24 +3417,35 @@ build_stl_str_hl (
 
     case STL_HIGHLIGHT:
     {
+      //{ The name of the highlight is surrounded by `#`
       char_u *t = s;
-      while (*s != '#' && *s != NUL)
+      while (*s != '#' && *s != NUL) {
         ++s;
+      }
+      //}
+
+      // Create a highlight item based on the name
       if (*s == '#') {
         item[curitem].type = Highlight;
         item[curitem].start = p;
         item[curitem].minwid = -syn_namen2id(t, (int)(s - t));
         curitem++;
+        s++;
       }
-      if (*s != NUL)
-        ++s;
       continue;
     }
     }
 
+    // If we made it this far, the item is normal and starts at
+    // our current position in the output buffer.
+    // Non-normal items would have `continued`.
     item[curitem].start = p;
     item[curitem].type = Normal;
+
+    // Copy the item string into the output buffer
     if (str != NULL && *str) {
+      //{ Skip the leading `,` or ` ` if the item is a flag
+      //  and the proper conditions are met
       char_u *t = str;
       if (itemisflag) {
         if ((t[0] && t[1])
@@ -3314,20 +3454,35 @@ build_stl_str_hl (
           t++;
         prevchar_isflag = true;
       }
-      l = vim_strsize(t);
-      if (l > 0)
+      //}
+
+      long l = vim_strsize(t);
+
+      // If this item is non-empty, record that the last thing
+      // we put in the output buffer was an item
+      if (l > 0) {
         prevchar_isitem = true;
+      }
+
+      // If the item is too wide, truncate it from the beginning
       if (l > maxwid) {
         while (l >= maxwid)
           if (has_mbyte) {
             l -= ptr2cells(t);
             t += (*mb_ptr2len)(t);
-          } else
+          } else {
             l -= byte2cells(*t++);
+          }
+
+        // Early out if there isn't enough room for the truncation marker
         if (p + 1 >= out + outlen)
           break;
+
+        // Add the truncation marker
         *p++ = '<';
       }
+
+      // If the item is right aligned and not wide enough, pad with fill characters.
       if (minwid > 0) {
         for (; l < minwid && p + 1 < out + outlen; l++) {
           /* Don't put a "-" in front of a digit. */
@@ -3337,8 +3492,13 @@ build_stl_str_hl (
             *p++ = fillchar;
         }
         minwid = 0;
-      } else
+      } else {
+        // Note: The negative value denotes a left aligned item.
+        //       Here we switch the minimum width back to a positive value.
         minwid *= -1;
+      }
+
+      //{ Copy the string text into the output buffer
       while (*t && p + 1 < out + outlen) {
         *p++ = *t++;
         /* Change a space by fillchar, unless fillchar is '-' and a
@@ -3347,150 +3507,255 @@ build_stl_str_hl (
             && (!ascii_isdigit(*t) || fillchar != '-'))
           p[-1] = fillchar;
       }
-      for (; l < minwid && p + 1 < out + outlen; l++)
-        *p++ = fillchar;
-    } else if (num >= 0) {
-      int nbase = (base == 'D' ? 10 : (base == 'O' ? 8 : 16));
-      char_u nstr[20];
+      //}
 
+      // For left-aligned items, fill any remaining space with the fillchar
+      for (; l < minwid && p + 1 < out + outlen; l++) {
+        *p++ = fillchar;
+      }
+
+    // Otherwise if the item is a number, copy that to the output buffer.
+    } else if (num >= 0) {
       if (p + 20 >= out + outlen)
         break;                  /* not sufficient space */
       prevchar_isitem = true;
+
+      //{ Build the formatting string
+      char_u nstr[20];
       char_u *t = nstr;
       if (opt == STL_VIRTCOL_ALT) {
         *t++ = '-';
         minwid--;
       }
       *t++ = '%';
-      if (zeropad)
+      if (zeropad) {
         *t++ = '0';
-      *t++ = '*';
-      *t++ = nbase == 16 ? base : (char_u)(nbase == 8 ? 'o' : 'd');
-      *t = 0;
+      }
 
-      long n;
-      for (n = num, l = 1; n >= nbase; n /= nbase)
+      // Note: The `*` means we take the width as one of the arguments
+      *t++ = '*';
+      *t++ = (char_u) (base == HEXIDECIMAL ? 'X' : (base == OCTAL ? 'o' : 'd'));
+      *t = 0;
+      //}
+
+      //{ Determine how many characters the number will take up when printed
+      long l;
+      for (long n = num, l = 1; n >= base; n /= base) {
         l++;
-      if (opt == STL_VIRTCOL_ALT)
+      }
+
+      // VIRTCOL_ALT takes up an extra character because of the `-` we added above.
+      if (opt == STL_VIRTCOL_ALT) {
         l++;
+      }
+      //}
+
+      size_t remaining_buf_len = (outlen - (p - out));
+
+      // If the number is going to take up too much room
+      // Figure out the approximate number in "scientific" type notation.
+      // Ex: 14532 with maxwid of 4 -> '14>3'
       if (l > maxwid) {
+        // Add two to the width because the power piece will take two extra characters
         l += 2;
-        n = l - maxwid;
-        while (l-- > maxwid)
-          num /= nbase;
+
+        // How many extra characters there are
+        long n = l - maxwid;
+
+        //{ Reduce the number by base^n
+        while (l-- > maxwid) {
+          num /= base;
+        }
+        //}
+
+        //{ Add the format string for the exponent bit
         *t++ = '>';
         *t++ = '%';
+        // Use the same base as the first number
         *t = t[-3];
         *++t = 0;
-        vim_snprintf((char *)p, outlen - (p - out), (char *)nstr,
-            0, num, n);
-      } else
-        vim_snprintf((char *)p, outlen - (p - out), (char *)nstr,
-            minwid, num);
-      p += STRLEN(p);
-    } else
-      item[curitem].type = Empty;
+        //}
 
-    if (opt == STL_VIM_EXPR)
+        vim_snprintf((char *)p, remaining_buf_len, (char *)nstr,
+            0, num, n);
+      } else {
+        vim_snprintf((char *)p, remaining_buf_len, (char *)nstr,
+            minwid, num);
+      }
+
+      // Advance the output buffer position to the end of the number we just printed
+      p += STRLEN(p);
+
+    // Otherwise, there was nothing to print so mark the item as empty
+    } else {
+      item[curitem].type = Empty;
+    }
+
+    // Free the string buffer if we allocated it.
+    // Note: This is not needed if `str` is pointing at `tmp`
+    if (opt == STL_VIM_EXPR) {
       xfree(str);
+    }
 
     if (num >= 0 || (!itemisflag && str && *str))
       prevchar_isflag = false;              /* Item not NULL, but not a flag */
+
+    // Item processed, move to the next
     curitem++;
   }
+
+  // Null terminate the output buffer
   *p = NUL;
   int itemcnt = curitem;
 
-  if (usefmt != fmt)
+  // Free the format buffer if we allocated it internally
+  if (usefmt != fmt) {
     xfree(usefmt);
+  }
 
   int width = vim_strsize(out);
   if (maxwidth > 0 && width > maxwidth) {
     /* Result is too long, must truncate somewhere. */
-    long l = 0;
-    if (itemcnt == 0)
-      s = out;
-    else {
-      for (; l < itemcnt; l++)
-        if (item[l].type == Trunc) {
-          /* Truncate at %< item. */
-          s = item[l].start;
+    int item_idx = 0;
+    char_u *trunc_p;
+
+    // If there are no items, truncate from beginning
+    if (itemcnt == 0) {
+      trunc_p = out;
+
+    // Otherwise, look for the truncation item
+    } else {
+      // Default to truncating at the first item
+      trunc_p = item[0].start;
+      item_idx = 0;
+
+      for (int i; i < itemcnt; i++)
+        if (item[i].type == Trunc) {
+          // Truncate at %< item.
+          trunc_p = item[i].start;
+          item_idx = i;
           break;
         }
-      if (l == itemcnt) {
-        /* No %< item, truncate first item. */
-        s = item[0].start;
-        l = 0;
-      }
     }
 
-    if (width - vim_strsize(s) >= maxwidth) {
-      /* Truncation mark is beyond max length */
+    // If the truncation point we found is beyond the maximum
+    // length of the string, truncate the end of the string.
+    if (width - vim_strsize(trunc_p) >= maxwidth) {
+      // If we are using a multi-byte encoding, walk from the beginning of the
+      // string to find the last character that will fit.
       if (has_mbyte) {
-        s = out;
+        trunc_p = out;
         width = 0;
         for (;; ) {
-          width += ptr2cells(s);
+          width += ptr2cells(trunc_p);
           if (width >= maxwidth)
             break;
-          s += (*mb_ptr2len)(s);
+
+          // Note: Only advance the pointer if the next
+          //       character will fit in the available output space
+          trunc_p += (*mb_ptr2len)(trunc_p);
         }
         /* Fill up for half a double-wide character. */
-        while (++width < maxwidth)
-          *s++ = fillchar;
-      } else
-        s = out + maxwidth - 1;
-      for (l = 0; l < itemcnt; l++)
-        if (item[l].start > s)
-          break;
-      itemcnt = l;
-      *s++ = '>';
-      *s = 0;
-    } else {
-      long n;
-      if (has_mbyte) {
-        n = 0;
-        while (width >= maxwidth) {
-          width -= ptr2cells(s + n);
-          n += (*mb_ptr2len)(s + n);
+        // XXX : This seems impossible given the exit condition above?
+        while (++width < maxwidth) {
+          *trunc_p++ = fillchar;
         }
-      } else
-        n = width - maxwidth + 1;
-      p = s + n;
-      STRMOVE(s + 1, p);
-      *s = '<';
+
+      // Otherwise put the truncation point at the end, leaving enough room
+      // for a single-character truncation marker
+      } else {
+        trunc_p = out + maxwidth - 1;
+      }
+
+      // Ignore any items in the statusline that occur after
+      // the truncation point
+      for (int i = 0; i < itemcnt; i++) {
+        if (item[i].start > trunc_p) {
+          itemcnt = i;
+          break;
+        }
+      }
+
+      // Truncate the output
+      *trunc_p++ = '>';
+      *trunc_p = 0;
+
+    // Truncate at the truncation point we found
+    } else {
+      //{ Determine how many bytes to remove
+      long trunc_len;
+      if (has_mbyte) {
+        trunc_len = 0;
+        while (width >= maxwidth) {
+          width     -= ptr2cells(trunc_p + trunc_len);
+          trunc_len += (*mb_ptr2len)(trunc_p + trunc_len);
+        }
+      } else {
+        // Truncate an extra character so we can insert our `<`.
+        trunc_len = (width - maxwidth) + 1;
+      }
+      //}
+
+      //{ Truncate the string
+      char_u *trunc_end_p = trunc_p + trunc_len;
+      STRMOVE(trunc_p + 1, trunc_end_p);
+
+      // Put a `<` to mark where we truncated at
+      *trunc_p = '<';
+
+      // Advance the pointer to the end of the string
+      trunc_p = trunc_p + STRLEN(trunc_p);
 
       /* Fill up for half a double-wide character. */
       while (++width < maxwidth) {
-        s = s + STRLEN(s);
-        *s++ = fillchar;
-        *s = NUL;
+        *trunc_p++ = fillchar;
+        *trunc_p = NUL;
       }
+      //}
 
-      --n;              /* count the '<' */
-      for (; l < itemcnt; l++) {
-        if (item[l].start - n >= s)
-          item[l].start -= n;
-        else
-          item[l].start = s;
+      //{ Change the start point for items based on
+      //  their position relative to our truncation point
+
+      // Note: The offset is one less than the truncation length because
+      //       the truncation marker `<` is not counted.
+      long item_offset = trunc_len - 1;
+
+      for (int i = item_idx; i < itemcnt; i++) {
+        // Items starting at or after the end of the truncated section need
+        // to be moved backwards.
+        if (item[i].start >= trunc_end_p) {
+          item[i].start -= item_offset;
+        // Anything inside the truncated area is set to start at the `<` truncation character.
+        } else {
+          item[i].start = trunc_p;
+        }
       }
+      //}
     }
     width = maxwidth;
-  } else if (width < maxwidth && STRLEN(out) + maxwidth - width + 1 <
-             outlen) {
-    /* Apply STL_MIDDLE if any */
-    for (long l = 0; l < itemcnt; l++)
-      if (item[l].type == Middle) {
-        p = item[l].start + maxwidth - width;
-        STRMOVE(p, item[l].start);
-        for (s = item[l].start; s < p; s++)
-          *s = fillchar;
-        for (l++; l < itemcnt; l++)
-          item[l].start += maxwidth - width;
-        width = maxwidth;
 
+  // If there is room left in our statusline, and room left in our buffer,
+  // add characters at the middle marker (if there is one) to fill up the available space.
+  } else if (width < maxwidth
+               && STRLEN(out) + maxwidth - width + 1 < outlen) {
+    for (int item_idx = 0; item_idx < itemcnt; item_idx++) {
+      if (item[item_idx].type == Middle) {
+        // Move the statusline to make room for the middle characters
+        char_u *middle_end = item[item_idx].start + (maxwidth - width);
+        STRMOVE(middle_end, item[item_idx].start);
+
+        // Fill the middle section with our fill character
+        for (char_u *s = item[item_idx].start; s < middle_end; s++)
+          *s = fillchar;
+
+        // Adjust the offset of any items after the middle
+        for (item_idx++; item_idx < itemcnt; item_idx++)
+          item[item_idx].start += maxwidth - width;
+
+        width = maxwidth;
         break;
       }
+    }
   }
 
   /* Store the info about highlighting. */
