@@ -2897,6 +2897,11 @@ build_stl_str_hl (
   // out_p is the current position in the output buffer
   char_u *out_p = out;
 
+  // out_end_p is the last valid character in the output buffer
+  // Note: The null termination character must occur here or earlier,
+  //       so any user-visible characters must occur before here.
+  char_u *out_end_p = (out + outlen) - 1;
+
 
   // Proceed character by character through the statusline format string
   // fmt_p is the current positon in the input buffer
@@ -2904,7 +2909,7 @@ build_stl_str_hl (
     if (curitem == STL_MAX_ITEM) {
       /* There are too many items.  Add the error code to the statusline
        * to give the user a hint about what went wrong. */
-      if (out_p + 6 < out + outlen) {
+      if (out_p + 5 < out_end_p) {
         memmove(out_p, " E541", (size_t)5);
         out_p += 5;
       }
@@ -2918,12 +2923,12 @@ build_stl_str_hl (
     // Copy the formatting verbatim until we reach the end of the string
     // or find a formatting item (denoted by `%`)
     // or run out of room in our output buffer.
-    while (*fmt_p != NUL && *fmt_p != '%' && out_p + 1 < out + outlen)
+    while (*fmt_p != NUL && *fmt_p != '%' && out_p < out_end_p)
       *out_p++ = *fmt_p++;
 
     // If we have processed the entire format string or run out of
     // room in our output buffer, exit the loop.
-    if (*fmt_p == NUL || out_p + 1 >= out + outlen)
+    if (*fmt_p == NUL || out_p >= out_end_p)
       break;
 
     // The rest of this loop wil handle a single `%` item.
@@ -2940,7 +2945,7 @@ build_stl_str_hl (
     // single `%` in the output buffer.
     if (*fmt_p == '%') {
       // Ignore the character if we're out of room in the output buffer.
-      if (out_p + 1 >= out + outlen)
+      if (out_p >= out_end_p)
         break;
       *out_p++ = *fmt_p++;
       prevchar_isflag = prevchar_isitem = false;
@@ -3047,7 +3052,7 @@ build_stl_str_hl (
         // If the group is left-aligned, add characters to the right.
         if (min_group_width < 0) {
           min_group_width = 0 - min_group_width;
-          while (l++ < min_group_width && out_p + 1 < out + outlen)
+          while (l++ < min_group_width && out_p < out_end_p)
             *out_p++ = fillchar;
         // If the group is right-aligned, shift everything to the right and
         // prepend with filler characters.
@@ -3055,8 +3060,8 @@ build_stl_str_hl (
           //{ Move the group to the right
           memmove(t + min_group_width - l, t, (size_t)(out_p - t));
           l = min_group_width - l;
-          if (out_p + l >= out + outlen) {
-            l = (long)((out + outlen) - out_p - 1);
+          if (out_p + l >= (out_end_p + 1)) {
+            l = (long)(out_end_p - out_p);
           }
           out_p += l;
           //}
@@ -3200,7 +3205,7 @@ build_stl_str_hl (
       // Attempt to copy the expression to evaluate into
       // the output buffer as a null-terminated string.
       char_u *t = out_p;
-      while (*fmt_p != '}' && *fmt_p != NUL && out_p + 1 < out + outlen)
+      while (*fmt_p != '}' && *fmt_p != NUL && out_p < out_end_p)
         *out_p++ = *fmt_p++;
       if (*fmt_p != '}')            /* missing '}' or out of space */
         break;
@@ -3476,7 +3481,7 @@ build_stl_str_hl (
           }
 
         // Early out if there isn't enough room for the truncation marker
-        if (out_p + 1 >= out + outlen)
+        if (out_p >= out_end_p)
           break;
 
         // Add the truncation marker
@@ -3485,7 +3490,7 @@ build_stl_str_hl (
 
       // If the item is right aligned and not wide enough, pad with fill characters.
       if (minwid > 0) {
-        for (; l < minwid && out_p + 1 < out + outlen; l++) {
+        for (; l < minwid && out_p < out_end_p; l++) {
           /* Don't put a "-" in front of a digit. */
           if (l + 1 == minwid && fillchar == '-' && ascii_isdigit(*t))
             *out_p++ = ' ';
@@ -3500,7 +3505,7 @@ build_stl_str_hl (
       }
 
       //{ Copy the string text into the output buffer
-      while (*t && out_p + 1 < out + outlen) {
+      while (*t && out_p < out_end_p) {
         *out_p++ = *t++;
         /* Change a space by fillchar, unless fillchar is '-' and a
          * digit follows. */
@@ -3511,13 +3516,13 @@ build_stl_str_hl (
       //}
 
       // For left-aligned items, fill any remaining space with the fillchar
-      for (; l < minwid && out_p + 1 < out + outlen; l++) {
+      for (; l < minwid && out_p < out_end_p; l++) {
         *out_p++ = fillchar;
       }
 
     // Otherwise if the item is a number, copy that to the output buffer.
     } else if (num >= 0) {
-      if (out_p + 20 >= out + outlen)
+      if (out_p + 20 > out_end_p)
         break;                  /* not sufficient space */
       prevchar_isitem = true;
 
@@ -3540,31 +3545,33 @@ build_stl_str_hl (
       //}
 
       //{ Determine how many characters the number will take up when printed
-      long l;
-      for (long n = num, l = 1; n >= base; n /= base) {
-        l++;
+      //  Note: We have to cast the base because the compiler uses
+      //        unsigned ints for the enum values.
+      long num_chars = 0;
+      for (long n = num, num_chars = 1; n >= (int) base; n /= (int) base) {
+        num_chars++;
       }
 
       // VIRTCOL_ALT takes up an extra character because of the `-` we added above.
       if (opt == STL_VIRTCOL_ALT) {
-        l++;
+        num_chars++;
       }
       //}
 
-      size_t remaining_buf_len = (outlen - (out_p - out));
+      size_t remaining_buf_len = (out_end_p - out_p) + 1;
 
       // If the number is going to take up too much room
       // Figure out the approximate number in "scientific" type notation.
       // Ex: 14532 with maxwid of 4 -> '14>3'
-      if (l > maxwid) {
+      if (num_chars > maxwid) {
         // Add two to the width because the power piece will take two extra characters
-        l += 2;
+        num_chars += 2;
 
         // How many extra characters there are
-        long n = l - maxwid;
+        long n = num_chars - maxwid;
 
         //{ Reduce the number by base^n
-        while (l-- > maxwid) {
+        while (num_chars-- > maxwid) {
           num /= base;
         }
         //}
@@ -3630,7 +3637,7 @@ build_stl_str_hl (
       trunc_p = item[0].start;
       item_idx = 0;
 
-      for (int i; i < itemcnt; i++)
+      for (int i = 0; i < itemcnt; i++)
         if (item[i].type == Trunc) {
           // Truncate at %< item.
           trunc_p = item[i].start;
