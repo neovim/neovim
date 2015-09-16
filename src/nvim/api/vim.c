@@ -629,6 +629,7 @@ static void write_msg(String message, bool to_err)
                                                                               \
   line_buf[pos++] = message.data[i];
 
+  ++no_wait_return;
   for (uint32_t i = 0; i < message.size; i++) {
     if (to_err) {
       PUSH_CHAR(i, err_pos, err_line_buf, emsg);
@@ -636,4 +637,6 @@ static void write_msg(String message, bool to_err)
       PUSH_CHAR(i, out_pos, out_line_buf, msg);
     }
   }
+  --no_wait_return;
+  msg_end();
 }
