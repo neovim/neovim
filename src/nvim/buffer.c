@@ -2819,7 +2819,7 @@ void free_titles(void)
  * or truncated if too long, fillchar is used for all whitespace.
  */
 int
-build_stl_str_hl (
+build_stl_str_hl(
     win_T *wp,
     char_u *out,               /* buffer to write into != NameBuff */
     size_t outlen,                  /* length of out[] */
@@ -2850,11 +2850,11 @@ build_stl_str_hl (
     }               type;
   }           item[STL_MAX_ITEM];
 
-  enum number_base {
+  typedef enum {
      DECIMAL     = 10,
      OCTAL       = 8,
      HEXIDECIMAL = 16
-  };
+  } number_base;
 
 #define TMPLEN 70
   char_u tmp[TMPLEN];
@@ -2952,7 +2952,8 @@ build_stl_str_hl (
       continue;
     }
 
-    // STL_MIDDLEMARK denotes the separation place between left and right aligned items.
+    // STL_MIDDLEMARK denotes the separation place between
+    // left and right aligned items.
     if (*fmt_p == STL_MIDDLEMARK) {
       fmt_p++;
       // Ignored when we are inside of a grouping
@@ -2964,7 +2965,8 @@ build_stl_str_hl (
       continue;
     }
 
-    // STL_TRUNCMARK denotes where to begin truncating if the statusline is too long.
+    // STL_TRUNCMARK denotes where to begin truncating if the
+    // statusline is too long.
     if (*fmt_p == STL_TRUNCMARK) {
       fmt_p++;
       item[curitem].type = Trunc;
@@ -2981,17 +2983,19 @@ build_stl_str_hl (
       }
       groupdepth--;
 
-      //{ Determine how long the group is.
-      //  Note: We set the current output position to null so `vim_strsize` will work.
+      // { Determine how long the group is.
+      //   Note: We set the current output position to null
+      //         so `vim_strsize` will work.
       char_u *t = item[groupitem[groupdepth]].start;
       *out_p = NUL;
       long l = vim_strsize(t);
-      //}
+      // }
 
-      // If the group contained internal items and the group did not have a minimum width,
+      // If the group contained internal items
+      // and the group did not have a minimum width,
       // and if there were no normal items in the group,
-      // move the output pointer back to where the group started (erase the group).
-      // Note: This also erases any plaintext characters that were in the group.
+      // move the output pointer back to where the group started.
+      // Note: This erases any non-item characters that were in the group.
       //       Otherwise there would be no reason to do this step.
       if (curitem > groupitem[groupdepth] + 1
           && item[groupitem[groupdepth]].minwid == 0) {
@@ -3012,7 +3016,7 @@ build_stl_str_hl (
       // If the group is longer than it is allowed to be
       // truncate by removing bytes from the start of the group text.
       if (l > item[groupitem[groupdepth]].maxwid) {
-        //{ Determine the number of bytes to remove
+        // { Determine the number of bytes to remove
         long n;
         if (has_mbyte) {
           /* Find the first character that should be included. */
@@ -3021,20 +3025,21 @@ build_stl_str_hl (
             l -= ptr2cells(t + n);
             n += (*mb_ptr2len)(t + n);
           }
-        } else
+        } else {
           n = (long)(out_p - t) - item[groupitem[groupdepth]].maxwid + 1;
-        //}
+        }
+        // }
 
         // Prepend the `<` to indicate that the output was truncated.
         *t = '<';
 
-        //{ Move the truncated output
+        // { Move the truncated output
         memmove(t + 1, t + n, (size_t)(out_p - (t + n)));
         out_p = out_p - n + 1;
         /* Fill up space left over by half a double-wide char. */
         while (++l < item[groupitem[groupdepth]].minwid)
           *out_p++ = fillchar;
-        //}
+        // }
 
         /* correct the start of the items for the truncation */
         for (l = groupitem[groupdepth] + 1; l < curitem; l++) {
@@ -3057,14 +3062,14 @@ build_stl_str_hl (
         // If the group is right-aligned, shift everything to the right and
         // prepend with filler characters.
         } else {
-          //{ Move the group to the right
+          // { Move the group to the right
           memmove(t + min_group_width - l, t, (size_t)(out_p - t));
           l = min_group_width - l;
           if (out_p + l >= (out_end_p + 1)) {
             l = (long)(out_end_p - out_p);
           }
           out_p += l;
-          //}
+          // }
 
           // Adjust item start positions
           for (int n = groupitem[groupdepth] + 1; n < curitem; n++) {
@@ -3173,7 +3178,7 @@ build_stl_str_hl (
     char_u opt = *fmt_p++;
 
     /* OK - now for the real work */
-    enum number_base base = DECIMAL;
+    number_base base = DECIMAL;
     bool itemisflag = false;
     bool fillable = true;
     long num = -1;
@@ -3212,17 +3217,18 @@ build_stl_str_hl (
       fmt_p++;
       *out_p = 0;
 
-      // Move our position in the output buffer to the beginning of the expression
+      // Move our position in the output buffer
+      // to the beginning of the expression
       out_p = t;
 
-      //{ Evaluate the expression
+      // { Evaluate the expression
 
       // Store the current buffer number as a string variable
       vim_snprintf((char *)tmp, sizeof(tmp), "%d", curbuf->b_fnum);
       set_internal_string_var((char_u *)"actual_curbuf", tmp);
 
-      // Switch the curbuf and curwin to the buffer and window we are evaluating the
-      // statusline for.
+      // Switch the curbuf and curwin to the buffer and window we are
+      // evaluating the statusline for.
       buf_T *o_curbuf = curbuf;
       win_T *o_curwin = curwin;
       curwin = wp;
@@ -3236,9 +3242,9 @@ build_stl_str_hl (
       curbuf = o_curbuf;
 
       // Remove the variable we just stored
-      do_unlet((char_u *)"g:actual_curbuf", TRUE);
+      do_unlet((char_u *)"g:actual_curbuf", true);
 
-      //}
+      // }
 
       // Check if the evaluated result is a number.
       // If so, convert the number to an int and free the string.
@@ -3310,7 +3316,7 @@ build_stl_str_hl (
 
       // Note: The call will only return true if it actually
       //       appended data to the `tmp` buffer.
-      if (append_arg_number(wp, tmp, (int)sizeof(tmp), FALSE)) {
+      if (append_arg_number(wp, tmp, (int)sizeof(tmp), false)) {
         str = tmp;
       }
       break;
@@ -3365,7 +3371,8 @@ build_stl_str_hl (
 
     case STL_FILETYPE:
       // Copy the filetype if it is not null and the formatted string will fit
-      // in the temporary buffer (including the brackets and null terminating character)
+      // in the temporary buffer
+      // (including the brackets and null terminating character)
       if (*wp->w_buffer->b_p_ft != NUL
           && STRLEN(wp->w_buffer->b_p_ft) < TMPLEN - 3) {
         vim_snprintf((char *)tmp, sizeof(tmp), "[%s]",
@@ -3378,7 +3385,8 @@ build_stl_str_hl (
     {
       itemisflag = true;
       // Copy the filetype if it is not null and the formatted string will fit
-      // in the temporary buffer (including the comma and null terminating character)
+      // in the temporary buffer
+      // (including the comma and null terminating character)
       if (*wp->w_buffer->b_p_ft != NUL
           && STRLEN(wp->w_buffer->b_p_ft) < TMPLEN - 2) {
         vim_snprintf((char *)tmp, sizeof(tmp), ",%s",
@@ -3423,12 +3431,12 @@ build_stl_str_hl (
 
     case STL_HIGHLIGHT:
     {
-      //{ The name of the highlight is surrounded by `#`
+      // { The name of the highlight is surrounded by `#`
       char_u *t = fmt_p;
       while (*fmt_p != '#' && *fmt_p != NUL) {
         ++fmt_p;
       }
-      //}
+      // }
 
       // Create a highlight item based on the name
       if (*fmt_p == '#') {
@@ -3450,7 +3458,7 @@ build_stl_str_hl (
 
     // Copy the item string into the output buffer
     if (str != NULL && *str) {
-      //{ Skip the leading `,` or ` ` if the item is a flag
+      // { Skip the leading `,` or ` ` if the item is a flag
       //  and the proper conditions are met
       char_u *t = str;
       if (itemisflag) {
@@ -3460,7 +3468,7 @@ build_stl_str_hl (
           t++;
         prevchar_isflag = true;
       }
-      //}
+      // }
 
       long l = vim_strsize(t);
 
@@ -3488,7 +3496,8 @@ build_stl_str_hl (
         *out_p++ = '<';
       }
 
-      // If the item is right aligned and not wide enough, pad with fill characters.
+      // If the item is right aligned and not wide enough,
+      // pad with fill characters.
       if (minwid > 0) {
         for (; l < minwid && out_p < out_end_p; l++) {
           /* Don't put a "-" in front of a digit. */
@@ -3504,7 +3513,7 @@ build_stl_str_hl (
         minwid *= -1;
       }
 
-      //{ Copy the string text into the output buffer
+      // { Copy the string text into the output buffer
       while (*t && out_p < out_end_p) {
         *out_p++ = *t++;
         /* Change a space by fillchar, unless fillchar is '-' and a
@@ -3513,7 +3522,7 @@ build_stl_str_hl (
             && (!ascii_isdigit(*t) || fillchar != '-'))
           out_p[-1] = fillchar;
       }
-      //}
+      // }
 
       // For left-aligned items, fill any remaining space with the fillchar
       for (; l < minwid && out_p < out_end_p; l++) {
@@ -3526,7 +3535,7 @@ build_stl_str_hl (
         break;                  /* not sufficient space */
       prevchar_isitem = true;
 
-      //{ Build the formatting string
+      // { Build the formatting string
       char_u nstr[20];
       char_u *t = nstr;
       if (opt == STL_VIRTCOL_ALT) {
@@ -3542,9 +3551,9 @@ build_stl_str_hl (
       *t++ = '*';
       *t++ = (char_u) (base == HEXIDECIMAL ? 'X' : (base == OCTAL ? 'o' : 'd'));
       *t = 0;
-      //}
+      // }
 
-      //{ Determine how many characters the number will take up when printed
+      // { Determine how many characters the number will take up when printed
       //  Note: We have to cast the base because the compiler uses
       //        unsigned ints for the enum values.
       long num_chars = 0;
@@ -3552,11 +3561,12 @@ build_stl_str_hl (
         num_chars++;
       }
 
-      // VIRTCOL_ALT takes up an extra character because of the `-` we added above.
+      // VIRTCOL_ALT takes up an extra character because
+      // of the `-` we added above.
       if (opt == STL_VIRTCOL_ALT) {
         num_chars++;
       }
-      //}
+      // }
 
       size_t remaining_buf_len = (out_end_p - out_p) + 1;
 
@@ -3564,25 +3574,26 @@ build_stl_str_hl (
       // Figure out the approximate number in "scientific" type notation.
       // Ex: 14532 with maxwid of 4 -> '14>3'
       if (num_chars > maxwid) {
-        // Add two to the width because the power piece will take two extra characters
+        // Add two to the width because the power piece will take
+        // two extra characters
         num_chars += 2;
 
         // How many extra characters there are
         long n = num_chars - maxwid;
 
-        //{ Reduce the number by base^n
+        // { Reduce the number by base^n
         while (num_chars-- > maxwid) {
           num /= base;
         }
-        //}
+        // }
 
-        //{ Add the format string for the exponent bit
+        // { Add the format string for the exponent bit
         *t++ = '>';
         *t++ = '%';
         // Use the same base as the first number
         *t = t[-3];
         *++t = 0;
-        //}
+        // }
 
         vim_snprintf((char *)out_p, remaining_buf_len, (char *)nstr,
             0, num, n);
@@ -3591,7 +3602,8 @@ build_stl_str_hl (
             minwid, num);
       }
 
-      // Advance the output buffer position to the end of the number we just printed
+      // Advance the output buffer position to the end of the
+      // number we just printed
       out_p += STRLEN(out_p);
 
     // Otherwise, there was nothing to print so mark the item as empty
@@ -3690,7 +3702,7 @@ build_stl_str_hl (
 
     // Truncate at the truncation point we found
     } else {
-      //{ Determine how many bytes to remove
+      // { Determine how many bytes to remove
       long trunc_len;
       if (has_mbyte) {
         trunc_len = 0;
@@ -3702,9 +3714,9 @@ build_stl_str_hl (
         // Truncate an extra character so we can insert our `<`.
         trunc_len = (width - maxwidth) + 1;
       }
-      //}
+      // }
 
-      //{ Truncate the string
+      // { Truncate the string
       char_u *trunc_end_p = trunc_p + trunc_len;
       STRMOVE(trunc_p + 1, trunc_end_p);
 
@@ -3719,9 +3731,9 @@ build_stl_str_hl (
         *trunc_p++ = fillchar;
         *trunc_p = NUL;
       }
-      //}
+      // }
 
-      //{ Change the start point for items based on
+      // { Change the start point for items based on
       //  their position relative to our truncation point
 
       // Note: The offset is one less than the truncation length because
@@ -3733,17 +3745,19 @@ build_stl_str_hl (
         // to be moved backwards.
         if (item[i].start >= trunc_end_p) {
           item[i].start -= item_offset;
-        // Anything inside the truncated area is set to start at the `<` truncation character.
+        // Anything inside the truncated area is set to start
+        // at the `<` truncation character.
         } else {
           item[i].start = trunc_p;
         }
       }
-      //}
+      // }
     }
     width = maxwidth;
 
   // If there is room left in our statusline, and room left in our buffer,
-  // add characters at the middle marker (if there is one) to fill up the available space.
+  // add characters at the middle marker (if there is one) to
+  // fill up the available space.
   } else if (width < maxwidth
                && STRLEN(out) + maxwidth - width + 1 < outlen) {
     for (int item_idx = 0; item_idx < itemcnt; item_idx++) {
