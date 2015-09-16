@@ -86,9 +86,9 @@ void loop_close(Loop *loop)
   do {
     uv_run(&loop->uv, UV_RUN_DEFAULT);
   } while (uv_loop_close(&loop->uv));
-  queue_free(loop->events);
   queue_free(loop->fast_events);
   queue_free(loop->thread_events);
+  queue_free(loop->events);
   kl_destroy(WatcherPtr, loop->children);
 }
 
