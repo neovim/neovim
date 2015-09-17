@@ -37,8 +37,6 @@ of area is used, see |visual-repeat|.
 
 							*@:*
 @:			Repeat last command-line [count] times.
-			{not available when compiled without the
-			|+cmdline_hist| feature}
 
 
 ==============================================================================

@@ -898,8 +898,6 @@ Short explanation of each option:		*option-list*
 'titlelen'		    percentage of 'columns' used for window title
 'titleold'		    old title, restored when exiting
 'titlestring'		    string to use for the Vim window title
-'toolbar'	  'tb'	    GUI: which items to show in the toolbar
-'toolbariconsize' 'tbis'    size of the toolbar icons (for GTK 2 only)
 'ttimeout'		    time out on mappings
 'ttimeoutlen'	  'ttm'     time out time for key codes in milliseconds
 'ttytype'	  'tty'     alias for 'term'

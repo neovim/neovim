@@ -2525,11 +2525,7 @@ return {
       type='number', scope={'global', 'buffer'},
       vi_def=true,
       varname='p_ul',
-      defaults={
-        condition={'!UNIX', '!WIN3264'},
-        if_true={vi=100},
-        if_false={vi=1000},
-      }
+      defaults={if_true={vi=1000}}
     },
     {
       full_name='undoreload', abbreviation='ur',

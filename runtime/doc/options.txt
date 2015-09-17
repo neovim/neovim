@@ -373,8 +373,6 @@ Setting the filetype
 			used to set the option value in, unless this is a help
 			window, in which case the window below help window is
 			used (skipping the option-window).
-			{not available when compiled without the |+eval| or
-			|+autocmd| features}
 
 								*$HOME*
 Using "~" is like using "$HOME", but it is only recognized at the start of an
@@ -580,10 +578,8 @@ supported use something like this: >
 A jump table for the options with a short description can be found at |Q_op|.
 
 					*'aleph'* *'al'* *aleph* *Aleph*
-'aleph' 'al'		number	(default 128 for MS-DOS, 224 otherwise)
+'aleph' 'al'		number	(default 224)
 			global
-			{only available when compiled with the |+rightleft|
-			feature}
 	The ASCII code for the first letter of the Hebrew alphabet.  The
 	routine that maps the keyboard in Hebrew mode, both in Insert mode
 	(when hkmap is set) and on the command-line (when hitting CTRL-_)
@@ -594,8 +590,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			*'allowrevins'* *'ari'* *'noallowrevins'* *'noari'*
 'allowrevins' 'ari'	boolean	(default off)
 			global
-			{only available when compiled with the |+rightleft|
-			feature}
 	Allow CTRL-_ in Insert and Command-line mode.  This is default off, to
 	avoid that users that accidentally type CTRL-_ instead of SHIFT-_ get
 	into reverse Insert mode, and don't know how to get out.  See
@@ -604,8 +598,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			 *'altkeymap'* *'akm'* *'noaltkeymap'* *'noakm'*
 'altkeymap' 'akm'	boolean (default off)
 			global
-			{only available when compiled with the |+farsi|
-			feature}
 	When on, the second language is Farsi.  In editing mode CTRL-_ toggles
 	the keyboard map between Farsi and English, when 'allowrevins' set.
 
@@ -678,8 +670,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 				*'arabic'* *'arab'* *'noarabic'* *'noarab'*
 'arabic' 'arab'		boolean (default off)
 			local to window
-			{only available when compiled with the |+arabic|
-			feature}
 	This option can be set to start editing Arabic text.
 	Setting this option will:
 	- Set the 'rightleft' option, unless 'termbidi' is set.
@@ -700,8 +690,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 					*'noarabicshape'* *'noarshape'*
 'arabicshape' 'arshape'	boolean (default on)
 			global
-			{only available when compiled with the |+arabic|
-			feature}
 	When on and 'termbidi' is off, the required visual character
 	corrections that need to take place for displaying the Arabic language
 	take effect.  Shaping, in essence, gets enabled; the term is a broad
@@ -1197,8 +1185,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			written
 	  nowrite	buffer which will not be written
 	  acwrite	buffer which will always be written with BufWriteCmd
-			autocommands. {not available when compiled without the
-			|+autocmd| feature}
+			autocommands.
 	  quickfix	quickfix buffer, contains list of errors |:cwindow|
 			or list of locations |:lwindow|
 	  help		help buffer (you are not supposed to set this
@@ -1276,8 +1263,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'cedit'*
 'cedit'			string	(Vim default: CTRL-F, Vi default: "")
 			global
-			{not available when compiled without the |+vertsplit|
-			feature}
 	The key used in Command-line Mode to open the command-line window.
 	Only non-printable keys are allowed.
 	The key can be specified as a single character, but it is difficult to
@@ -1331,8 +1316,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 				   *'cindent'* *'cin'* *'nocindent'* *'nocin'*
 'cindent' 'cin'		boolean	(default off)
 			local to buffer
-			{not available when compiled without the |+cindent|
-			feature}
 	Enables automatic C program indenting.  See 'cinkeys' to set the keys
 	that trigger reindenting in insert mode and 'cinoptions' to set your
 	preferred indent style.
@@ -1348,8 +1331,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 							*'cinkeys'* *'cink'*
 'cinkeys' 'cink'	string	(default "0{,0},0),:,0#,!^F,o,O,e")
 			local to buffer
-			{not available when compiled without the |+cindent|
-			feature}
 	A list of keys that, when typed in Insert mode, cause reindenting of
 	the current line.  Only used if 'cindent' is on and 'indentexpr' is
 	empty.
@@ -1359,8 +1340,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'cinoptions'* *'cino'*
 'cinoptions' 'cino'	string	(default "")
 			local to buffer
-			{not available when compiled without the |+cindent|
-			feature}
 	The 'cinoptions' affect the way 'cindent' reindents lines in a C
 	program.  See |cinoptions-values| for the values of this option, and
 	|C-indenting| for info on C indenting in general.
@@ -1369,8 +1348,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'cinwords'* *'cinw'*
 'cinwords' 'cinw'	string	(default "if,else,while,do,for,switch")
 			local to buffer
-			{not available when compiled without both the
-			|+cindent| and the |+smartindent| features}
 	These keywords start an extra indent in the next line when
 	'smartindent' or 'cindent' is set.  For 'cindent' this is only done at
 	an appropriate place (inside {}).
@@ -1436,8 +1413,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'cmdwinheight'* *'cwh'*
 'cmdwinheight' 'cwh'	number	(default 7)
 			global
-			{not available when compiled without the |+vertsplit|
-			feature}
 	Number of screen lines to use for the command-line window. |cmdwin|
 
 						*'colorcolumn'* *'cc'*
@@ -1478,8 +1453,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 'comments' 'com'	string	(default
 				"s1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:-")
 			local to buffer
-			{not available when compiled without the |+comments|
-			feature}
 	A comma separated list of strings that can start a comment line.  See
 	|format-comments|.  See |option-backslash| about using backslashes to
 	insert a space.
@@ -1589,8 +1562,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'concealcursor'* *'cocu'*
 'concealcursor' 'cocu'	string (default: "")
 			local to window
-			{not available when compiled without the |+conceal|
-			feature}
 	Sets the modes in which text in the cursor line can also be concealed.
 	When the current mode is listed then concealing happens just like in
 	other lines.
@@ -1611,8 +1582,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 'conceallevel' 'cole'		*'conceallevel'* *'cole'*
 			number (default 0)
 			local to window
-			{not available when compiled without the |+conceal|
-			feature}
 	Determine how text with the "conceal" syntax attribute |:syn-conceal|
 	is shown:
 
@@ -1911,16 +1880,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'cscopepathcomp'* *'cspc'*
 'cscopepathcomp' 'cspc'	number	(default 0)
 			global
-			{not available when compiled without the |+cscope|
-			feature}
 	Determines how many components of the path to show in a list of tags.
 	See |cscopepathcomp|.
 
 						*'cscopeprg'* *'csprg'*
 'cscopeprg' 'csprg'	string	(default "cscope")
 			global
-			{not available when compiled without the |+cscope|
-			feature}
 	Specifies the command to execute cscope.  See |cscopeprg|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
@@ -1928,16 +1893,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'cscopequickfix'* *'csqf'*
 'cscopequickfix' 'csqf' string	(default "")
 			global
-			{not available when compiled without the |+cscope|
-			or |+quickfix| features}
 	Specifies whether to use quickfix window to show cscope results.
 	See |cscopequickfix|.
 
 		*'cscoperelative'* *'csre'* *'nocscoperelative'* *'nocsre'*
 'cscoperelative' 'csre' boolean (default off)
 			global
-			{not available when compiled without the |+cscope|
-			feature}
 	In the absence of a prefix (-P) for cscope. setting this option enables
 	to use the basename of cscope.out path as the prefix.
 	See |cscoperelative|.
@@ -1945,15 +1906,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 				*'cscopetag'* *'cst'* *'nocscopetag'* *'nocst'*
 'cscopetag' 'cst'	boolean (default off)
 			global
-			{not available when compiled without the |+cscope|
-			feature}
 	Use cscope for tag commands.  See |cscope-options|.
 
 						*'cscopetagorder'* *'csto'*
 'cscopetagorder' 'csto'	number	(default 0)
 			global
-			{not available when compiled without the |+cscope|
-			feature}
 	Determines the order in which ":cstag" performs a search.  See
 	|cscopetagorder|.
 
@@ -1961,15 +1918,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 					*'nocscopeverbose'* *'nocsverb'*
 'cscopeverbose' 'csverb' boolean (default off)
 			global
-			{not available when compiled without the |+cscope|
-			feature}
 	Give messages when adding a cscope database.  See |cscopeverbose|.
 
 			*'cursorbind'* *'crb'* *'nocursorbind'* *'nocrb'*
 'cursorbind' 'crb'	boolean  (default off)
 			local to window
-			{not available when compiled without the |+cursorbind|
-			feature}
 	When this option is set, as the cursor in the current
 	window moves other cursorbound windows (windows that also have
 	this option set) move their cursors to the corresponding line and
@@ -2197,8 +2150,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'eadirection'* *'ead'*
 'eadirection' 'ead'	string	(default "both")
 			global
-			{not available when compiled without the |+vertsplit|
-			feature}
 	Tells when the 'equalalways' option applies:
 		ver	vertically, width of windows is not affected
 		hor	horizontally, height of windows is not affected
@@ -2343,8 +2294,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'eventignore'* *'ei'*
 'eventignore' 'ei'	string	(default "")
 			global
-			{not available when compiled without the |+autocmd|
-			feature}
 	A list of autocommand event names, which are to be ignored.
 	When set to "all" or when "all" is one of the items, all autocommand
 	events are ignored, autocommands will not be executed.
@@ -2565,8 +2514,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 					*'filetype'* *'ft'*
 'filetype' 'ft'		string (default: "")
 			local to buffer
-			{not available when compiled without the |+autocmd|
-			feature}
 	When this option is set, the FileType autocommand event is triggered.
 	All autocommands that match with the value of this option will be
 	executed.  Thus the value of 'filetype' is used in place of the file
@@ -2626,8 +2573,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 					*'fkmap'* *'fk'* *'nofkmap'* *'nofk'*
 'fkmap' 'fk'		boolean (default off)			*E198*
 			global
-			{only available when compiled with the |+rightleft|
-			feature}
 	When on, the keyboard is mapped for the Farsi character set.
 	Normally you would set 'allowrevins' and use CTRL-_ in insert mode to
 	toggle this option |i_CTRL-_|.  See |farsi.txt|.
@@ -3477,8 +3422,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 					 *'hkmap'* *'hk'* *'nohkmap'* *'nohk'*
 'hkmap' 'hk'		boolean (default off)
 			global
-			{only available when compiled with the |+rightleft|
-			feature}
 	When on, the keyboard is mapped for the Hebrew character set.
 	Normally you would set 'allowrevins' and use CTRL-_ in insert mode to
 	toggle this option.  See |rileft.txt|.
@@ -3486,8 +3429,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 				 *'hkmapp'* *'hkp'* *'nohkmapp'* *'nohkp'*
 'hkmapp' 'hkp'		boolean (default off)
 			global
-			{only available when compiled with the |+rightleft|
-			feature}
 	When on, phonetic keyboard mapping is used.  'hkmap' must also be on.
 	This is useful if you have a non-Hebrew keyboard.
 	See |rileft.txt|.
@@ -3715,8 +3656,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'indentexpr'* *'inde'*
 'indentexpr' 'inde'	string	(default "")
 			local to buffer
-			{not available when compiled without the |+cindent|
-			or |+eval| features}
 	Expression which is evaluated to obtain the proper indent for a line.
 	It is used when a new line is created, for the |=| operator and
 	in Insert mode as specified with the 'indentkeys' option.
@@ -3751,8 +3690,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'indentkeys'* *'indk'*
 'indentkeys' 'indk'	string	(default "0{,0},:,0#,!^F,o,O,e")
 			local to buffer
-			{not available when compiled without the |+cindent|
-			feature}
 	A list of keys that, when typed in Insert mode, cause reindenting of
 	the current line.  Only happens if 'indentexpr' isn't empty.
 	The format is identical to 'cinkeys', see |indentkeys-format|.
@@ -5043,8 +4980,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 				*'revins'* *'ri'* *'norevins'* *'nori'*
 'revins' 'ri'		boolean	(default off)
 			global
-			{only available when compiled with the |+rightleft|
-			feature}
 	Inserting characters in Insert mode will work backwards.  See "typing
 	backwards" |ins-reverse|.  This option can be toggled with the CTRL-_
 	command in Insert mode, when 'allowrevins' is set.
@@ -5053,8 +4988,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 				 *'rightleft'* *'rl'* *'norightleft'* *'norl'*
 'rightleft' 'rl'	boolean	(default off)
 			local to window
-			{only available when compiled with the |+rightleft|
-			feature}
 	When on, display orientation becomes right-to-left, i.e., characters
 	that are stored in the file appear from the right to the left.
 	Using this option, it is possible to edit files for languages that
@@ -5068,8 +5001,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			*'rightleftcmd'* *'rlc'*
 'rightleftcmd' 'rlc'	string	(default "search")
 			local to window
-			{only available when compiled with the |+rightleft|
-			feature}
 	Each word in this option enables the command line editing to work in
 	right-to-left mode for a group of commands:
 
@@ -5953,8 +5884,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			*'splitright'* *'spr'* *'nosplitright'* *'nospr'*
 'splitright' 'spr'	boolean	(default off)
 			global
-			{not available when compiled without the |+vertsplit|
-			feature}
 	When on, splitting a window will put the new window right of the
 	current one. |:vsplit|
 
@@ -6034,7 +5963,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	W F   Preview window flag, text is ",PRV".
 	y F   Type of file in the buffer, e.g., "[vim]".  See 'filetype'.
 	Y F   Type of file in the buffer, e.g., ",VIM".  See 'filetype'.
-	      {not available when compiled without |+autocmd| feature}
 	q S   "[Quickfix List]", "[Location List]" or empty.
 	k S   Value of "b:keymap_name" or 'keymap' when |:lmap| mappings are
 	      being used: "<keymap>"
@@ -6043,7 +5971,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	B N   As above, in hexadecimal.
 	o N   Byte number in file of byte under cursor, first byte is 1.
 	      Mnemonic: Offset from start of file (with one added)
-	      {not available when compiled without |+byte_offset| feature}
 	O N   As above, in hexadecimal.
 	N N   Printer page number.  (Only works in the 'printheader' option.)
 	l N   Line number.
@@ -6419,10 +6346,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'termbidi'* *'tbidi'*
 						*'notermbidi'* *'notbidi'*
-'termbidi' 'tbidi'	boolean (default off, on for "mlterm")
+'termbidi' 'tbidi'	boolean (default off)
 			global
-			{only available when compiled with the |+arabic|
-			feature}
 	The terminal is in charge of Bi-directionality of text (as specified
 	by Unicode).  The terminal is also expected to do the required shaping
 	that some languages (such as Arabic) require.
@@ -6430,7 +6355,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'arabic' is set and the value of 'arabicshape' will be ignored.
 	Note that setting 'termbidi' has the immediate effect that
 	'arabicshape' is ignored, but 'rightleft' isn't changed automatically.
-	This option is reset when the GUI is started.
 	For further details see |arabic.txt|.
 
 					*'termencoding'* *'tenc'*
@@ -6580,46 +6504,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	{not available when compiled without the |+statusline| feature}
 
 				*'toolbar'* *'tb'*
-'toolbar' 'tb'		string	(default "icons,tooltips")
-			global
-			{only for |+GUI_GTK|, |+GUI_Athena|, and |+GUI_Motif|}
-	The contents of this option controls various toolbar settings.  The
-	possible values are:
-		icons		Toolbar buttons are shown with icons.
-		text		Toolbar buttons shown with text.
-		horiz		Icon and text of a toolbar button are
-				horizontally arranged.  {only in GTK+ 2 GUI}
-		tooltips	Tooltips are active for toolbar buttons.
-	Tooltips refer to the popup help text which appears after the mouse
-	cursor is placed over a toolbar button for a brief moment.
-
-	If you want the toolbar to be shown with icons as well as text, do the
-	following: >
-		:set tb=icons,text
-<	Motif and Athena cannot display icons and text at the same time.  They
-	will show icons if both are requested.
-
-	If none of the strings specified in 'toolbar' are valid or if
-	'toolbar' is empty, this option is ignored.  If you want to disable
-	the toolbar, you need to set the 'guioptions' option.  For example: >
-		:set guioptions-=T
-<	Also see |gui-toolbar|.
+'toolbar' 'tb'		Removed. |vim-differences| {Nvim}
 
 						*'toolbariconsize'* *'tbis'*
-'toolbariconsize' 'tbis'	string	(default "small")
-				global
-				{only in the GTK+ 2 GUI}
-	Controls the size of toolbar icons.  The possible values are:
-		tiny		Use tiny toolbar icons.
-		small		Use small toolbar icons (default).
-		medium		Use medium-sized toolbar icons.
-		large		Use large toolbar icons.
-	The exact dimensions in pixels of the various icon sizes depend on
-	the current theme.  Common dimensions are large=32x32, medium=24x24,
-	small=20x20 and tiny=16x16.
-
-	If 'toolbariconsize' is empty, the global default size as determined
-	by user preferences or the current theme is used.
+'toolbariconsize' 'tbis'	Removed. |vim-differences| {Nvim}
 
 			     *'ttybuiltin'* *'tbi'* *'nottybuiltin'* *'notbi'*
 'ttybuiltin' 'tbi'	Removed. |vim-differences| {Nvim}
@@ -6669,7 +6557,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When 'undofile' is turned off the undo file is NOT deleted.
 
 						*'undolevels'* *'ul'*
-'undolevels' 'ul'	number	(default 100, 1000 for Unix and Win32)
+'undolevels' 'ul'	number	(default 1000)
 			global or local to buffer |global-local|
 	Maximum number of changes that can be undone.  Since undo information
 	is kept in memory, higher numbers will cause more memory to be used
@@ -7220,8 +7108,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'winminwidth'* *'wmw'*
 'winminwidth' 'wmw'	number	(default 1)
 			global
-			{not available when compiled without the |+vertsplit|
-			feature}
 	The minimal width of a window, when it's not the current window.
 	This is a hard minimum, windows will never become smaller.
 	When set to zero, windows may be "squashed" to zero columns (i.e. just
@@ -7236,8 +7122,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'winwidth'* *'wiw'* *E592*
 'winwidth' 'wiw'	number	(default 20)
 			global
-			{not available when compiled without the |+vertsplit|
-			feature}
 	Minimal number of columns for the current window.  This is not a hard
 	minimum, Vim will use fewer columns if there is not enough room.  If
 	the current window is smaller, its size is increased, at the cost of

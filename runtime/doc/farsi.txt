@@ -6,10 +6,6 @@
 
 Right to Left and Farsi Mapping for Vim		*farsi* *Farsi*
 
-						*E27*
-In order to use right-to-left and Farsi mapping support, it is necessary to
-compile Vim with the |+farsi| feature.
-
 These functions have been made by Mortaza G. Shiran <shiran@jps.net>
 
 

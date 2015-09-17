@@ -159,6 +159,8 @@ Other options:
   'termencoding'
   'textauto'
   'textmode'
+  'toolbar'
+  'toolbariconsize'
   'ttybuiltin'
   'ttymouse'
   'weirdinvert'
