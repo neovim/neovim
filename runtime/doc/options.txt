@@ -6557,7 +6557,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When 'undofile' is turned off the undo file is NOT deleted.
 
 						*'undolevels'* *'ul'*
-'undolevels' 'ul'	number	(default 100, 1000 for Unix and Win32)
+'undolevels' 'ul'	number	(default 1000)
 			global or local to buffer |global-local|
 	Maximum number of changes that can be undone.  Since undo information
 	is kept in memory, higher numbers will cause more memory to be used
