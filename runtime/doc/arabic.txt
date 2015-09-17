@@ -6,10 +6,6 @@
 
 Arabic Language support (options & mappings) for Vim		*Arabic*
 
-								*E800*
-In order to use right-to-left and Arabic mapping support, it is
-necessary to compile VIM with the |+arabic| feature.
-
 These functions have been created by Nadim Shaikli <nadim-at-arabeyes.org>
 
 It is best to view this file with these settings within VIM's GUI: >
