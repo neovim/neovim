@@ -6504,46 +6504,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	{not available when compiled without the |+statusline| feature}
 
 				*'toolbar'* *'tb'*
-'toolbar' 'tb'		string	(default "icons,tooltips")
-			global
-			{only for |+GUI_GTK|, |+GUI_Athena|, and |+GUI_Motif|}
-	The contents of this option controls various toolbar settings.  The
-	possible values are:
-		icons		Toolbar buttons are shown with icons.
-		text		Toolbar buttons shown with text.
-		horiz		Icon and text of a toolbar button are
-				horizontally arranged.  {only in GTK+ 2 GUI}
-		tooltips	Tooltips are active for toolbar buttons.
-	Tooltips refer to the popup help text which appears after the mouse
-	cursor is placed over a toolbar button for a brief moment.
-
-	If you want the toolbar to be shown with icons as well as text, do the
-	following: >
-		:set tb=icons,text
-<	Motif and Athena cannot display icons and text at the same time.  They
-	will show icons if both are requested.
-
-	If none of the strings specified in 'toolbar' are valid or if
-	'toolbar' is empty, this option is ignored.  If you want to disable
-	the toolbar, you need to set the 'guioptions' option.  For example: >
-		:set guioptions-=T
-<	Also see |gui-toolbar|.
+'toolbar' 'tb'		Removed. |vim-differences| {Nvim}
 
 						*'toolbariconsize'* *'tbis'*
-'toolbariconsize' 'tbis'	string	(default "small")
-				global
-				{only in the GTK+ 2 GUI}
-	Controls the size of toolbar icons.  The possible values are:
-		tiny		Use tiny toolbar icons.
-		small		Use small toolbar icons (default).
-		medium		Use medium-sized toolbar icons.
-		large		Use large toolbar icons.
-	The exact dimensions in pixels of the various icon sizes depend on
-	the current theme.  Common dimensions are large=32x32, medium=24x24,
-	small=20x20 and tiny=16x16.
-
-	If 'toolbariconsize' is empty, the global default size as determined
-	by user preferences or the current theme is used.
+'toolbariconsize' 'tbis'	Removed. |vim-differences| {Nvim}
 
 			     *'ttybuiltin'* *'tbi'* *'nottybuiltin'* *'notbi'*
 'ttybuiltin' 'tbi'	Removed. |vim-differences| {Nvim}
