@@ -459,6 +459,41 @@ describe('msgpackparse() function', function()
     api_info = eval(cmd) -- do it again
     eq('functions', api_info)
   end)
+
+  it('fails when called with no arguments', function()
+    eq('Vim(call):E119: Not enough arguments for function: msgpackparse',
+       exc_exec('call msgpackparse()'))
+  end)
+
+  it('fails when called with two arguments', function()
+    eq('Vim(call):E118: Too many arguments for function: msgpackparse',
+       exc_exec('call msgpackparse(["", ""], 1)'))
+  end)
+
+  it('fails to parse a string', function()
+    eq('Vim(call):E686: Argument of msgpackparse() must be a List',
+       exc_exec('call msgpackparse("abcdefghijklmnopqrstuvwxyz")'))
+  end)
+
+  it('fails to parse a number', function()
+    eq('Vim(call):E686: Argument of msgpackparse() must be a List',
+       exc_exec('call msgpackparse(127)'))
+  end)
+
+  it('fails to parse a dictionary', function()
+    eq('Vim(call):E686: Argument of msgpackparse() must be a List',
+       exc_exec('call msgpackparse({})'))
+  end)
+
+  it('fails to parse a funcref', function()
+    eq('Vim(call):E686: Argument of msgpackparse() must be a List',
+       exc_exec('call msgpackparse(function("tr"))'))
+  end)
+
+  it('fails to parse a float', function()
+    eq('Vim(call):E686: Argument of msgpackparse() must be a List',
+       exc_exec('call msgpackparse(0.0)'))
+  end)
 end)
 
 describe('msgpackdump() function', function()
@@ -557,5 +592,40 @@ describe('msgpackdump() function', function()
     execute('call add(todump._VAL, [0, todump._VAL])')
     eq('Vim(call):E475: Invalid argument: container references itself',
        exc_exec('call msgpackdump([todump])'))
+  end)
+
+  it('fails when called with no arguments', function()
+    eq('Vim(call):E119: Not enough arguments for function: msgpackdump',
+       exc_exec('call msgpackdump()'))
+  end)
+
+  it('fails when called with two arguments', function()
+    eq('Vim(call):E118: Too many arguments for function: msgpackdump',
+       exc_exec('call msgpackdump(["", ""], 1)'))
+  end)
+
+  it('fails to dump a string', function()
+    eq('Vim(call):E686: Argument of msgpackdump() must be a List',
+       exc_exec('call msgpackdump("abcdefghijklmnopqrstuvwxyz")'))
+  end)
+
+  it('fails to dump a number', function()
+    eq('Vim(call):E686: Argument of msgpackdump() must be a List',
+       exc_exec('call msgpackdump(127)'))
+  end)
+
+  it('fails to dump a dictionary', function()
+    eq('Vim(call):E686: Argument of msgpackdump() must be a List',
+       exc_exec('call msgpackdump({})'))
+  end)
+
+  it('fails to dump a funcref', function()
+    eq('Vim(call):E686: Argument of msgpackdump() must be a List',
+       exc_exec('call msgpackdump(function("tr"))'))
+  end)
+
+  it('fails to dump a float', function()
+    eq('Vim(call):E686: Argument of msgpackdump() must be a List',
+       exc_exec('call msgpackdump(0.0)'))
   end)
 end)
