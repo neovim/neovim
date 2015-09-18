@@ -324,6 +324,19 @@ local function rmdir(path)
   return ret
 end
 
+local exc_exec = function(cmd)
+  nvim_command(([[
+    try
+      execute "%s"
+    catch
+      let g:__exception = v:exception
+    endtry
+  ]]):format(cmd:gsub('\n', '\\n'):gsub('[\\"]', '\\%0')))
+  local ret = nvim_eval('get(g:, "__exception", 0)')
+  nvim_command('unlet! g:__exception')
+  return ret
+end
+
 return {
   clear = clear,
   spawn = spawn,
@@ -358,5 +371,6 @@ return {
   wait = wait,
   set_session = set_session,
   write_file = write_file,
-  rmdir = rmdir
+  rmdir = rmdir,
+  exc_exec = exc_exec,
 }
