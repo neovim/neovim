@@ -4781,6 +4781,7 @@ static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
     if (match
         /* check that no composing char follows */
         && !(enc_utf8
+             && STRLEN(regline) > (size_t)(col + len2)
              && utf_iscomposing(PTR2CHAR(regline + col + len2)))
         ) {
       cleanup_subexpr();

@@ -2089,8 +2089,15 @@ static int path_get_absolute_path(const char_u *fname, char_u *buf, int len, int
   // expand it if forced or not an absolute path
   if (force || !path_is_absolute_path(fname)) {
     if ((p = vim_strrchr(fname, '/')) != NULL) {
-      STRNCPY(relative_directory, fname, p-fname);
-      relative_directory[p-fname] = NUL;
+      // relative to root
+      if (p == fname) {
+        // only one path component
+        relative_directory[0] = '/';
+        relative_directory[1] = NUL;
+      } else {
+        STRNCPY(relative_directory, fname, p-fname);
+        relative_directory[p-fname] = NUL;
+      }
       end_of_path = (char *) (p + 1);
     } else {
       relative_directory[0] = NUL;

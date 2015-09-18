@@ -823,6 +823,8 @@ EXTERN int no_u_sync INIT(= 0);         /* Don't call u_sync() */
 EXTERN int u_sync_once INIT(= 0);       /* Call u_sync() once when evaluating
                                            an expression. */
 
+EXTERN bool force_restart_edit INIT(= false);  // force restart_edit after
+                                               // ex_normal returns
 EXTERN int restart_edit INIT(= 0);      /* call edit when next cmd finished */
 EXTERN int arrow_used;                  /* Normally FALSE, set to TRUE after
                                          * hitting cursor key in insert mode.

@@ -7624,6 +7624,10 @@ void update_topline_cursor(void)
  */
 static void ex_normal(exarg_T *eap)
 {
+  if (curbuf->terminal) {
+    EMSG("Can't re-enter normal mode from terminal mode");
+    return;
+  }
   int save_msg_scroll = msg_scroll;
   int save_restart_edit = restart_edit;
   int save_msg_didout = msg_didout;
@@ -7715,7 +7719,14 @@ static void ex_normal(exarg_T *eap)
 
   --ex_normal_busy;
   msg_scroll = save_msg_scroll;
-  restart_edit = save_restart_edit;
+  if (force_restart_edit) {
+    force_restart_edit = false;
+  } else {
+    // some function called was aware of ex_normal and decided to override the
+    // value of restart_edit anyway. So far only used in terminal mode(see
+    // terminal_enter() in edit.c)
+    restart_edit = save_restart_edit;
+  }
   p_im = save_insertmode;
   finish_op = save_finish_op;
   opcount = save_opcount;

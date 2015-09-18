@@ -27,8 +27,6 @@ describe('terminal cursor', function()
                                                         |
       -- TERMINAL --                                    |
     ]])
-    eq(2, screen._cursor.row)
-    eq(15, screen._cursor.col)
   end)
 
   it('is highlighted when not focused', function()
