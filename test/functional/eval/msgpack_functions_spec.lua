@@ -3,16 +3,18 @@ local clear, feed, execute = helpers.clear, helpers.feed, helpers.execute
 local eval, eq, neq = helpers.eval, helpers.eq, helpers.neq
 local execute, source = helpers.execute, helpers.source
 local nvim = helpers.nvim
+local exc_exec = helpers.exc_exec
+
 describe('msgpack*() functions', function()
-  before_each(function()
-    clear()
-  end)
+  before_each(clear)
+
   local obj_test = function(msg, obj)
     it(msg, function()
       nvim('set_var', 'obj', obj)
       eq(obj, eval('msgpackparse(msgpackdump(g:obj))'))
     end)
   end
+
   -- Regression test: msgpack_list_write was failing to write buffer with zero 
   -- length.
   obj_test('are able to dump and restore {"file": ""}', {{file=''}})
@@ -327,75 +329,6 @@ describe('msgpack*() functions', function()
 
   obj_test('are able to dump and restore floating-point value', {0.125})
 
-  it('restore nil as special dict', function()
-    execute('let dumped = ["\\xC0"]')
-    execute('let parsed = msgpackparse(dumped)')
-    eq({{_TYPE={}, _VAL=0}}, eval('parsed'))
-    eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.nil'))
-  end)
-
-  it('restore boolean false as zero', function()
-    execute('let dumped = ["\\xC2"]')
-    execute('let parsed = msgpackparse(dumped)')
-    eq({{_TYPE={}, _VAL=0}}, eval('parsed'))
-    eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.boolean'))
-  end)
-
-  it('restore boolean true as one', function()
-    execute('let dumped = ["\\xC3"]')
-    execute('let parsed = msgpackparse(dumped)')
-    eq({{_TYPE={}, _VAL=1}}, eval('parsed'))
-    eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.boolean'))
-  end)
-
-  it('dump string as BIN 8', function()
-    nvim('set_var', 'obj', {'Test'})
-    eq({"\196\004Test"}, eval('msgpackdump(obj)'))
-  end)
-
-  it('restore FIXSTR as special dict', function()
-    execute('let dumped = ["\\xa2ab"]')
-    execute('let parsed = msgpackparse(dumped)')
-    eq({{_TYPE={}, _VAL={'ab'}}}, eval('parsed'))
-    eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.string'))
-  end)
-
-  it('restore BIN 8 as string', function()
-    execute('let dumped = ["\\xC4\\x02ab"]')
-    eq({'ab'}, eval('msgpackparse(dumped)'))
-  end)
-
-  it('restore FIXEXT1 as special dictionary', function()
-    execute('let dumped = ["\\xD4\\x10", ""]')
-    execute('let parsed = msgpackparse(dumped)')
-    eq({{_TYPE={}, _VAL={0x10, {"", ""}}}}, eval('parsed'))
-    eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.ext'))
-  end)
-
-  it('restore MAP with BIN key as special dictionary', function()
-    execute('let dumped = ["\\x81\\xC4\\x01a\\xC4\\n"]')
-    execute('let parsed = msgpackparse(dumped)')
-    eq({{_TYPE={}, _VAL={{'a', ''}}}}, eval('parsed'))
-    eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.map'))
-  end)
-
-  it('restore MAP with duplicate STR keys as special dictionary', function()
-    execute('let dumped = ["\\x82\\xA1a\\xC4\\n\\xA1a\\xC4\\n"]')
-    execute('let parsed = msgpackparse(dumped)')
-    eq({{_TYPE={}, _VAL={{{_TYPE={}, _VAL={'a'}}, ''},
-                         {{_TYPE={}, _VAL={'a'}}, ''}}}}, eval('parsed'))
-    eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.map'))
-    eq(1, eval('g:parsed[0]._VAL[0][0]._TYPE is v:msgpack_types.string'))
-    eq(1, eval('g:parsed[0]._VAL[1][0]._TYPE is v:msgpack_types.string'))
-  end)
-
-  it('restore MAP with MAP key as special dictionary', function()
-    execute('let dumped = ["\\x81\\x80\\xC4\\n"]')
-    execute('let parsed = msgpackparse(dumped)')
-    eq({{_TYPE={}, _VAL={{{}, ''}}}}, eval('parsed'))
-    eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.map'))
-  end)
-
   it('can restore and dump UINT64_MAX', function()
     execute('let dumped = ["\\xCF" . repeat("\\xFF", 8)]')
     execute('let parsed = msgpackparse(dumped)')
@@ -449,6 +382,92 @@ describe('msgpack*() functions', function()
     eq({"\n"}, eval('parsed'))
     eq(1, eval('dumped ==# dumped2'))
   end)
+end)
+
+describe('msgpackparse() function', function()
+  before_each(clear)
+
+  it('restores nil as special dict', function()
+    execute('let dumped = ["\\xC0"]')
+    execute('let parsed = msgpackparse(dumped)')
+    eq({{_TYPE={}, _VAL=0}}, eval('parsed'))
+    eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.nil'))
+  end)
+
+  it('restores boolean false as zero', function()
+    execute('let dumped = ["\\xC2"]')
+    execute('let parsed = msgpackparse(dumped)')
+    eq({{_TYPE={}, _VAL=0}}, eval('parsed'))
+    eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.boolean'))
+  end)
+
+  it('restores boolean true as one', function()
+    execute('let dumped = ["\\xC3"]')
+    execute('let parsed = msgpackparse(dumped)')
+    eq({{_TYPE={}, _VAL=1}}, eval('parsed'))
+    eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.boolean'))
+  end)
+
+  it('restores FIXSTR as special dict', function()
+    execute('let dumped = ["\\xa2ab"]')
+    execute('let parsed = msgpackparse(dumped)')
+    eq({{_TYPE={}, _VAL={'ab'}}}, eval('parsed'))
+    eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.string'))
+  end)
+
+  it('restores BIN 8 as string', function()
+    execute('let dumped = ["\\xC4\\x02ab"]')
+    eq({'ab'}, eval('msgpackparse(dumped)'))
+  end)
+
+  it('restores FIXEXT1 as special dictionary', function()
+    execute('let dumped = ["\\xD4\\x10", ""]')
+    execute('let parsed = msgpackparse(dumped)')
+    eq({{_TYPE={}, _VAL={0x10, {"", ""}}}}, eval('parsed'))
+    eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.ext'))
+  end)
+
+  it('restores MAP with BIN key as special dictionary', function()
+    execute('let dumped = ["\\x81\\xC4\\x01a\\xC4\\n"]')
+    execute('let parsed = msgpackparse(dumped)')
+    eq({{_TYPE={}, _VAL={{'a', ''}}}}, eval('parsed'))
+    eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.map'))
+  end)
+
+  it('restores MAP with duplicate STR keys as special dictionary', function()
+    execute('let dumped = ["\\x82\\xA1a\\xC4\\n\\xA1a\\xC4\\n"]')
+    execute('let parsed = msgpackparse(dumped)')
+    eq({{_TYPE={}, _VAL={ {{_TYPE={}, _VAL={'a'}}, ''},
+                          {{_TYPE={}, _VAL={'a'}}, ''}}} }, eval('parsed'))
+    eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.map'))
+    eq(1, eval('g:parsed[0]._VAL[0][0]._TYPE is v:msgpack_types.string'))
+    eq(1, eval('g:parsed[0]._VAL[1][0]._TYPE is v:msgpack_types.string'))
+  end)
+
+  it('restores MAP with MAP key as special dictionary', function()
+    execute('let dumped = ["\\x81\\x80\\xC4\\n"]')
+    execute('let parsed = msgpackparse(dumped)')
+    eq({{_TYPE={}, _VAL={{{}, ''}}}}, eval('parsed'))
+    eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.map'))
+  end)
+
+  it('msgpackparse(systemlist(...)) does not segfault. #3135', function()
+    local cmd = "msgpackparse(systemlist('"
+      ..helpers.nvim_prog.." --api-info'))['_TYPE']['_VAL'][0][0]"
+    local api_info = eval(cmd)
+    api_info = eval(cmd) -- do it again (try to force segfault)
+    api_info = eval(cmd) -- do it again
+    eq('functions', api_info)
+  end)
+end)
+
+describe('msgpackdump() function', function()
+  before_each(clear)
+
+  it('dumps string as BIN 8', function()
+    nvim('set_var', 'obj', {'Test'})
+    eq({"\196\004Test"}, eval('msgpackdump(obj)'))
+  end)
 
   it('can dump generic mapping with generic mapping keys and values', function()
     execute('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": []}')
@@ -487,129 +506,56 @@ describe('msgpack*() functions', function()
 
   it('fails to dump a function reference', function()
     execute('let Todump = function("tr")')
-    execute([[
-    try
-      let dumped = msgpackdump([Todump])
-      let exception = 0
-    catch
-      let exception = v:exception
-    endtry
-    ]])
-    eq('Vim(let):E475: Invalid argument: attempt to dump function reference',
-       eval('exception'))
+    eq('Vim(call):E475: Invalid argument: attempt to dump function reference',
+       exc_exec('call msgpackdump([Todump])'))
   end)
 
   it('fails to dump a function reference in a list', function()
     execute('let todump = [function("tr")]')
-    execute([[
-    try
-      let dumped = msgpackdump([todump])
-      let exception = 0
-    catch
-      let exception = v:exception
-    endtry
-    ]])
-    eq('Vim(let):E475: Invalid argument: attempt to dump function reference',
-       eval('exception'))
+    eq('Vim(call):E475: Invalid argument: attempt to dump function reference',
+       exc_exec('call msgpackdump([todump])'))
   end)
 
   it('fails to dump a recursive list', function()
     execute('let todump = [[[]]]')
     execute('call add(todump[0][0], todump)')
-    execute([[
-    try
-      let dumped = msgpackdump([todump])
-      let exception = 0
-    catch
-      let exception = v:exception
-    endtry
-    ]])
-    eq('Vim(let):E475: Invalid argument: container references itself',
-       eval('exception'))
+    eq('Vim(call):E475: Invalid argument: container references itself',
+       exc_exec('call msgpackdump([todump])'))
   end)
 
   it('fails to dump a recursive dict', function()
     execute('let todump = {"d": {"d": {}}}')
     execute('call extend(todump.d.d, {"d": todump})')
-    execute([[
-    try
-      let dumped = msgpackdump([todump])
-      let exception = 0
-    catch
-      let exception = v:exception
-    endtry
-    ]])
-    eq('Vim(let):E475: Invalid argument: container references itself',
-       eval('exception'))
+    eq('Vim(call):E475: Invalid argument: container references itself',
+       exc_exec('call msgpackdump([todump])'))
   end)
 
   it('fails to dump a recursive list in a special dict', function()
     execute('let todump = {"_TYPE": v:msgpack_types.array, "_VAL": []}')
     execute('call add(todump._VAL, todump)')
-    execute([[
-    try
-      let dumped = msgpackdump([todump])
-      let exception = 0
-    catch
-      let exception = v:exception
-    endtry
-    ]])
-    eq('Vim(let):E475: Invalid argument: container references itself',
-       eval('exception'))
+    eq('Vim(call):E475: Invalid argument: container references itself',
+       exc_exec('call msgpackdump([todump])'))
   end)
 
   it('fails to dump a recursive (key) map in a special dict', function()
     execute('let todump = {"_TYPE": v:msgpack_types.array, "_VAL": []}')
     execute('call add(todump._VAL, [todump, 0])')
-    execute([[
-    try
-      let dumped = msgpackdump([todump])
-      let exception = 0
-    catch
-      let exception = v:exception
-    endtry
-    ]])
-    eq('Vim(let):E475: Invalid argument: container references itself',
-       eval('exception'))
+    eq('Vim(call):E475: Invalid argument: container references itself',
+       exc_exec('call msgpackdump([todump])'))
   end)
 
   it('fails to dump a recursive (val) map in a special dict', function()
     execute('let todump = {"_TYPE": v:msgpack_types.array, "_VAL": []}')
     execute('call add(todump._VAL, [0, todump])')
-    execute([[
-    try
-      let dumped = msgpackdump([todump])
-      let exception = 0
-    catch
-      let exception = v:exception
-    endtry
-    ]])
-    eq('Vim(let):E475: Invalid argument: container references itself',
-       eval('exception'))
+    eq('Vim(call):E475: Invalid argument: container references itself',
+       exc_exec('call msgpackdump([todump])'))
   end)
 
   it('fails to dump a recursive (val) special list in a special dict',
   function()
     execute('let todump = {"_TYPE": v:msgpack_types.array, "_VAL": []}')
     execute('call add(todump._VAL, [0, todump._VAL])')
-    execute([[
-    try
-      let dumped = msgpackdump([todump])
-      let exception = 0
-    catch
-      let exception = v:exception
-    endtry
-    ]])
-    eq('Vim(let):E475: Invalid argument: container references itself',
-       eval('exception'))
-  end)
-
-  it('msgpackparse(systemlist(...)) does not segfault. #3135', function()
-    local cmd = "msgpackparse(systemlist('"
-      ..helpers.nvim_prog.." --api-info'))['_TYPE']['_VAL'][0][0]"
-    local api_info = eval(cmd)
-    api_info = eval(cmd) -- do it again (try to force segfault)
-    api_info = eval(cmd) -- do it again
-    eq('functions', api_info)
+    eq('Vim(call):E475: Invalid argument: container references itself',
+       exc_exec('call msgpackdump([todump])'))
   end)
 end)
