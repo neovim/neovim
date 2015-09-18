@@ -3118,6 +3118,30 @@ build_stl_str_hl(
       curitem++;
       continue;
     }
+
+    // TABPAGE pairs are used to denote a region that when clicked will
+    // either switch to or close a tab.
+    //
+    // Ex: tabline=%0Ttab\ zero%X
+    //   This tabline has a TABPAGENR item with minwid `0`,
+    //   which is then closed with a TABCLOSENR item.
+    //   Clicking on this region with mouse enabled will switch to tab 0.
+    //   Setting the minwid to a different value will switch
+    //   to that tab, if it exists
+    //
+    // Ex: tabline=%1Xtab\ one%X
+    //   This tabline has a TABCLOSENR item with minwid `1`,
+    //   which is then closed with a TABCLOSENR item.
+    //   Clicking on this region with mouse enabled will close tab 0.
+    //   This is determined by the following formula:
+    //      tab to close = (1 - minwid)
+    //   This is because for TABPAGENR we use `minwid` = `tab number`.
+    //   For TABCLOSENR we store the tab number as a negative value.
+    //   Because 0 is a valid TABPAGENR value, we have to
+    //   start our numbering at `-1`.
+    //   So, `-1` corresponds to us wanting to close tab `0`
+    //
+    // Note: These options are only valid when creating a tabline.
     if (*fmt_p == STL_TABPAGENR || *fmt_p == STL_TABCLOSENR) {
       if (*fmt_p == STL_TABCLOSENR) {
         if (minwid == 0) {
