@@ -12731,6 +12731,7 @@ static void f_msgpackparse(typval_T *argvars, typval_T *rettv)
 {
   if (argvars[0].v_type != VAR_LIST) {
     EMSG2(_(e_listarg), "msgpackparse()");
+    return;
   }
   list_T *ret_list = rettv_list_alloc(rettv);
   const list_T *list = argvars[0].vval.v_list;
