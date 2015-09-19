@@ -372,5 +372,6 @@ return {
   set_session = set_session,
   write_file = write_file,
   rmdir = rmdir,
+  mkdir = lfs.mkdir,
   exc_exec = exc_exec,
 }
