@@ -3,17 +3,17 @@ local helpers = require('test.functional.helpers')
 local nvim, nvim_window, nvim_curwin, nvim_command, nvim_feed, nvim_eval, eq =
   helpers.nvim, helpers.window, helpers.curwin, helpers.command, helpers.feed,
   helpers.eval, helpers.eq
-local write_file, spawn, set_session, nvim_prog =
-  helpers.write_file, helpers.spawn, helpers.set_session, helpers.nvim_prog
+local write_file, spawn, set_session, nvim_prog, exc_exec =
+  helpers.write_file, helpers.spawn, helpers.set_session, helpers.nvim_prog,
+  helpers.exc_exec
 local lfs = require('lfs')
 
 local msgpack = require('MessagePack')
 
 local shada_helpers = require('test.functional.shada.helpers')
-local reset, set_additional_cmd, clear, exc_exec, get_shada_rw =
+local reset, set_additional_cmd, clear, get_shada_rw =
   shada_helpers.reset, shada_helpers.set_additional_cmd,
-  shada_helpers.clear, shada_helpers.exc_exec,
-  shada_helpers.get_shada_rw
+  shada_helpers.clear, shada_helpers.get_shada_rw
 local read_shada_file = shada_helpers.read_shada_file
 
 local wshada, sdrcmd, shada_fname, clean = get_shada_rw('Xtest-functional-shada-shada.shada')

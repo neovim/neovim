@@ -42,19 +42,6 @@ local clear = function()
   set_additional_cmd('')
 end
 
-local exc_exec = function(cmd)
-  nvim_command(([[
-    try
-      execute "%s"
-    catch
-      let g:__exception = v:exception
-    endtry
-  ]]):format(cmd:gsub('\n', '\\n'):gsub('[\\"]', '\\%0')))
-  local ret = nvim_eval('get(g:, "__exception", 0)')
-  nvim_command('unlet! g:__exception')
-  return ret
-end
-
 local get_shada_rw = function(fname)
   local wshada = function(text)
     write_file(fname, text, true)

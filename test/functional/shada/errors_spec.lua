@@ -3,12 +3,12 @@ local helpers = require('test.functional.helpers')
 local nvim, nvim_window, nvim_curwin, nvim_command, nvim_feed, nvim_eval, eq =
   helpers.nvim, helpers.window, helpers.curwin, helpers.command, helpers.feed,
   helpers.eval, helpers.eq
+local exc_exec = helpers.exc_exec
 
 local shada_helpers = require('test.functional.shada.helpers')
-local reset, set_additional_cmd, clear, exc_exec, get_shada_rw =
+local reset, set_additional_cmd, clear, get_shada_rw =
   shada_helpers.reset, shada_helpers.set_additional_cmd,
-  shada_helpers.clear, shada_helpers.exc_exec,
-  shada_helpers.get_shada_rw
+  shada_helpers.clear, shada_helpers.get_shada_rw
 
 local wshada, sdrcmd, shada_fname, clean =
   get_shada_rw('Xtest-functional-shada-errors.shada')
