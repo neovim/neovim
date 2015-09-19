@@ -1329,9 +1329,7 @@ return {
       expand=true,
       varname='p_kp',
       defaults={
-        condition='USEMAN_S',
         if_true={vi="man -s"},
-        if_false={vi="man"},
       }
     },
     {
