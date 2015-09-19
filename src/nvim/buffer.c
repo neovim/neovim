@@ -3580,8 +3580,8 @@ build_stl_str_hl(
       // { Determine how many characters the number will take up when printed
       //  Note: We have to cast the base because the compiler uses
       //        unsigned ints for the enum values.
-      long num_chars = 0;
-      for (long n = num, num_chars = 1; n >= (int) base; n /= (int) base) {
+      long num_chars = 1;
+      for (long n = num; n >= (int) base; n /= (int) base) {
         num_chars++;
       }
 
