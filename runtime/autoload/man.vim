@@ -11,52 +11,54 @@ catch /E145:/
   " Ignore the error in restricted mode
 endtry
 
-function man#pre_get_page(cnt)
-  if a:cnt == 0
-    let old_isk = &iskeyword
-    if &ft == 'man'
-      setlocal iskeyword+=(,)
-    endif
-    let str = expand('<cword>')
-    let &l:iskeyword = old_isk
-    let page = substitute(str, '(*\(\k\+\).*', '\1', '')
-    let sect = substitute(str, '\(\k\+\)(\([^()]*\)).*', '\2', '')
-    if match(sect, '^[0-9 ]\+$') == -1
+" Expects a string like 'access' or 'access(2)'.
+function s:parse_page_and_section(str)
+  try
+    let save_isk = &iskeyword
+    setlocal iskeyword-=(,)
+    let page = substitute(a:str, '(*\(\k\+\).*', '\1', '')
+    let sect = substitute(a:str, '\(\k\+\)(\([^()]*\)).*', '\2', '')
+    if sect == page || -1 == match(sect, '^[0-9 ]\+$')
       let sect = ''
     endif
-    if sect == page
-      let sect = ''
-    endif
-  else
-    let sect = a:cnt
-    let page = expand('<cword>')
-  endif
-  call man#get_page(sect, page)
+  catch
+    let &l:iskeyword = save_isk
+    echoerr 'man.vim: failed to parse: "'.a:str.'"'
+  endtry
+
+  return [page, sect]
 endfunction
 
 function man#get_page(...)
-  if a:0 >= 2
-    let sect = a:1
-    let page = a:2
-  elseif a:0 >= 1
-    let sect = ''
-    let page = a:1
-  else
+  if a:0 == 0
+    echoerr 'argument required'
     return
+  elseif a:0 > 2
+    echoerr 'too many arguments'
+    return
+  elseif a:0 == 2
+    let [sect, page] = [a:1, a:2]
+  elseif type(1) == type(a:1)
+    let [page, sect] = ['<cword>', a:1]
+  else
+    let [page, sect] = [a:1, '']
   endif
 
-  " To support:	    nmap K :Man <cword>
   if page == '<cword>'
     let page = expand('<cword>')
   endif
 
-  if sect != '' && s:FindPage(sect, page) == 0
+  let [page, sect] = s:parse_page_and_section(page)
+
+  if sect !=# '' && s:FindPage(sect, page) == 0
     let sect = ''
   endif
+
   if s:FindPage(sect, page) == 0
     echo "\nNo manual entry for '".page."'"
     return
   endif
+
   exec 'let s:man_tag_buf_'.s:man_tag_depth.' = '.bufnr('%')
   exec 'let s:man_tag_lin_'.s:man_tag_depth.' = '.line('.')
   exec 'let s:man_tag_col_'.s:man_tag_depth.' = '.col('.')
@@ -65,14 +67,14 @@ function man#get_page(...)
   " Use an existing "man" window if it exists, otherwise open a new one.
   if &filetype != 'man'
     let thiswin = winnr()
-    exe "norm! \<C-W>b"
+    wincmd b
     if winnr() > 1
       exe "norm! " . thiswin . "\<C-W>w"
       while 1
         if &filetype == 'man'
           break
         endif
-        exe "norm! \<C-W>w"
+        wincmd w
         if thiswin == winnr()
           break
         endif
