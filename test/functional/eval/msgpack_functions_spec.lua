@@ -565,6 +565,18 @@ describe('msgpackdump() function', function()
        exc_exec('call msgpackdump([todump])'))
   end)
 
+  it('can dump dict with two same dicts inside', function()
+    execute('let inter = {}')
+    execute('let todump = {"a": inter, "b": inter}')
+    eq({"\130\161a\128\161b\128"}, eval('msgpackdump([todump])'))
+  end)
+
+  it('can dump list with two same lists inside', function()
+    execute('let inter = []')
+    execute('let todump = [inter, inter]')
+    eq({"\146\144\144"}, eval('msgpackdump([todump])'))
+  end)
+
   it('fails to dump a recursive list in a special dict', function()
     execute('let todump = {"_TYPE": v:msgpack_types.array, "_VAL": []}')
     execute('call add(todump._VAL, todump)')

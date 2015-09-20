@@ -480,13 +480,13 @@ typedef struct {
   } type;
   union {
     struct {
-      const dict_T *dict;    ///< Currently converted dictionary.
-      const hashitem_T *hi;  ///< Currently converted dictionary item.
-      size_t todo;           ///< Amount of items left to process.
+      dict_T *dict;    ///< Currently converted dictionary.
+      hashitem_T *hi;  ///< Currently converted dictionary item.
+      size_t todo;     ///< Amount of items left to process.
     } d;  ///< State of dictionary conversion.
     struct {
-      const list_T *list;    ///< Currently converted list.
-      const listitem_T *li;  ///< Currently converted list item.
+      list_T *list;    ///< Currently converted list.
+      listitem_T *li;  ///< Currently converted list item.
     } l;  ///< State of list or generic mapping conversion.
   } data;  ///< Data to convert.
 } MPConvStackVal;
@@ -12081,26 +12081,27 @@ static inline bool vim_list_to_buf(const list_T *const list,
 /// Convert one VimL value to msgpack
 ///
 /// @param       packer   Messagepack packer.
-/// @param[out]  mpstack  Stack with values to convert. Only used for pushing 
+/// @param[out]  mpstack  Stack with values to convert. Only used for pushing
 ///                       values to it.
 /// @param[in]   tv       Converted value.
+/// @param[in]   copyID   copyID value used to protect against self-referencing
+///                       containers.
 ///
 /// @return OK in case of success, FAIL otherwise.
 static int convert_one_value(msgpack_packer *const packer,
                              MPConvStack *const mpstack,
-                             const typval_T *const tv)
+                             typval_T *const tv,
+                             const int copyID)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   switch (tv->v_type) {
-#define CHECK_SELF_REFERENCE(conv_type, vval_name, ptr) \
+#define CHECK_SELF_REFERENCE(vval_copyID) \
     do { \
-      for (size_t i = 0; i < kv_size(*mpstack); i++) { \
-        if (kv_A(*mpstack, i).type == conv_type \
-            && kv_A(*mpstack, i).data.vval_name == ptr) { \
-          EMSG2(_(e_invarg2), "container references itself"); \
-          return FAIL; \
-        } \
+      if (vval_copyID == copyID) { \
+        EMSG2(_(e_invarg2), "container references itself"); \
+        return FAIL; \
       } \
+      vval_copyID = copyID; \
     } while (0)
     case VAR_STRING: {
       if (tv->vval.v_string == NULL) {
@@ -12129,7 +12130,7 @@ static int convert_one_value(msgpack_packer *const packer,
         msgpack_pack_array(packer, 0);
         break;
       }
-      CHECK_SELF_REFERENCE(kMPConvList, l.list, tv->vval.v_list);
+      CHECK_SELF_REFERENCE(tv->vval.v_list->lv_copyID);
       msgpack_pack_array(packer, tv->vval.v_list->lv_len);
       kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) {
                                            .type = kMPConvList,
@@ -12254,8 +12255,7 @@ static int convert_one_value(msgpack_packer *const packer,
             if (val_di->di_tv.v_type != VAR_LIST) {
               goto vim_to_msgpack_regural_dict;
             }
-            CHECK_SELF_REFERENCE(kMPConvList, l.list,
-                                 val_di->di_tv.vval.v_list);
+            CHECK_SELF_REFERENCE(val_di->di_tv.vval.v_list->lv_copyID);
             msgpack_pack_array(packer, val_di->di_tv.vval.v_list->lv_len);
             kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) {
                       .type = kMPConvList,
@@ -12276,7 +12276,7 @@ static int convert_one_value(msgpack_packer *const packer,
               msgpack_pack_map(packer, 0);
               break;
             }
-            const list_T *const val_list = val_di->di_tv.vval.v_list;
+            list_T *const val_list = val_di->di_tv.vval.v_list;
             for (const listitem_T *li = val_list->lv_first; li != NULL;
                  li = li->li_next) {
               if (li->li_tv.v_type != VAR_LIST
@@ -12284,7 +12284,7 @@ static int convert_one_value(msgpack_packer *const packer,
                 goto vim_to_msgpack_regural_dict;
               }
             }
-            CHECK_SELF_REFERENCE(kMPConvPairs, l.list, val_list);
+            CHECK_SELF_REFERENCE(val_list->lv_copyID);
             msgpack_pack_map(packer, val_list->lv_len);
             kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) {
                       .type = kMPConvPairs,
@@ -12324,7 +12324,7 @@ static int convert_one_value(msgpack_packer *const packer,
         break;
       }
 vim_to_msgpack_regural_dict:
-      CHECK_SELF_REFERENCE(kMPConvDict, d.dict, tv->vval.v_dict);
+      CHECK_SELF_REFERENCE(tv->vval.v_dict->dv_copyID);
       msgpack_pack_map(packer, tv->vval.v_dict->dv_hashtab.ht_used);
       kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) {
                 .type = kMPConvDict,
@@ -12344,28 +12344,30 @@ vim_to_msgpack_regural_dict:
 }
 
 /// Convert typval_T to messagepack
-static int vim_to_msgpack(msgpack_packer *const packer,
-                          const typval_T *const tv)
+static int vim_to_msgpack(msgpack_packer *const packer, typval_T *const tv)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  current_copyID += COPYID_INC;
+  const int copyID = current_copyID;
   MPConvStack mpstack;
   kv_init(mpstack);
-  if (convert_one_value(packer, &mpstack, tv) == FAIL) {
+  if (convert_one_value(packer, &mpstack, tv, copyID) == FAIL) {
     goto vim_to_msgpack_error_ret;
   }
   while (kv_size(mpstack)) {
     MPConvStackVal *cur_mpsv = &kv_A(mpstack, kv_size(mpstack) - 1);
-    const typval_T *cur_tv = NULL;
+    typval_T *cur_tv = NULL;
     switch (cur_mpsv->type) {
       case kMPConvDict: {
         if (!cur_mpsv->data.d.todo) {
           (void) kv_pop(mpstack);
+          cur_mpsv->data.d.dict->dv_copyID = copyID - 1;
           continue;
         }
         while (HASHITEM_EMPTY(cur_mpsv->data.d.hi)) {
           cur_mpsv->data.d.hi++;
         }
-        const dictitem_T *const di = HI2DI(cur_mpsv->data.d.hi);
+        dictitem_T *const di = HI2DI(cur_mpsv->data.d.hi);
         cur_mpsv->data.d.todo--;
         cur_mpsv->data.d.hi++;
         const size_t key_len = STRLEN(&di->di_key[0]);
@@ -12377,6 +12379,7 @@ static int vim_to_msgpack(msgpack_packer *const packer,
       case kMPConvList: {
         if (cur_mpsv->data.l.li == NULL) {
           (void) kv_pop(mpstack);
+          cur_mpsv->data.l.list->lv_copyID = copyID - 1;
           continue;
         }
         cur_tv = &cur_mpsv->data.l.li->li_tv;
@@ -12386,10 +12389,11 @@ static int vim_to_msgpack(msgpack_packer *const packer,
       case kMPConvPairs: {
         if (cur_mpsv->data.l.li == NULL) {
           (void) kv_pop(mpstack);
+          cur_mpsv->data.l.list->lv_copyID = copyID - 1;
           continue;
         }
         const list_T *const kv_pair = cur_mpsv->data.l.li->li_tv.vval.v_list;
-        if (convert_one_value(packer, &mpstack, &kv_pair->lv_first->li_tv)
+        if (convert_one_value(packer, &mpstack, &kv_pair->lv_first->li_tv, copyID)
             == FAIL) {
           goto vim_to_msgpack_error_ret;
         }
@@ -12398,7 +12402,7 @@ static int vim_to_msgpack(msgpack_packer *const packer,
         break;
       }
     }
-    if (convert_one_value(packer, &mpstack, cur_tv) == FAIL) {
+    if (convert_one_value(packer, &mpstack, cur_tv, copyID) == FAIL) {
       goto vim_to_msgpack_error_ret;
     }
   }
@@ -12423,7 +12427,7 @@ static void f_msgpackdump(typval_T *argvars, typval_T *rettv)
     return;
   }
   msgpack_packer *lpacker = msgpack_packer_new(ret_list, &msgpack_list_write);
-  for (const listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
+  for (listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
     if (vim_to_msgpack(lpacker, &li->li_tv) == FAIL) {
       break;
     }
