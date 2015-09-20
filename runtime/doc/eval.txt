@@ -7809,7 +7809,20 @@ This does NOT work: >
 			postponed until you type something), force a redraw
 			with the |:redraw| command.  Example: >
 		:new | redraw | echo "there is a new window"
-<
+<							*:echo-self-refer*
+			When printing nested containers echo prints second 
+			occurrence of the self-referencing container using 
+			"[...@level]" (self-referencing |List|) or 
+			"{...@level}" (self-referencing |Dict|): >
+		:let l = []
+		:call add(l, l)
+		:let l2 = []
+		:call add(l2, [l2])
+		:echo l l2
+<			echoes "[[...@0]] [[[...@0]]]". Echoing "[l]" will 
+			echo "[[[...@1]]]" because l first occurs at second 
+			level.
+
 							*:echon*
 :echon {expr1} ..	Echoes each {expr1}, without anything added.  Also see
 			|:comment|.

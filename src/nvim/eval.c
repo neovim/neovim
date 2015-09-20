@@ -1002,7 +1002,7 @@ char_u *eval_to_string(char_u *arg, char_u **nextcmd, int convert)
     if (convert && tv.v_type == VAR_LIST) {
       ga_init(&ga, (int)sizeof(char), 80);
       if (tv.vval.v_list != NULL) {
-        list_join(&ga, tv.vval.v_list, (char_u *)"\n", TRUE, 0);
+        list_join(&ga, tv.vval.v_list, "\n");
         if (tv.vval.v_list->lv_len > 0)
           ga_append(&ga, NL);
       }
@@ -1777,12 +1777,9 @@ static char_u *list_arg_vars(exarg_T *eap, char_u *arg, int *first)
                 EMSG2(_("E738: Can't list variables for %s"), name);
               }
             } else {
-              char_u numbuf[NUMBUFLEN];
-              char_u      *tf;
               int c;
-              char_u      *s;
 
-              s = echo_string(&tv, &tf, numbuf, 0);
+              char_u *s = (char_u *) echo_string(&tv, NULL);
               c = *arg;
               *arg = NUL;
               list_one_var_a((char_u *)"",
@@ -1791,7 +1788,7 @@ static char_u *list_arg_vars(exarg_T *eap, char_u *arg, int *first)
                   s == NULL ? (char_u *)"" : s,
                   first);
               *arg = c;
-              xfree(tf);
+              xfree(s);
             }
             clear_tv(&tv);
           }
@@ -5434,71 +5431,39 @@ void vim_list_remove(list_T *l, listitem_T *item, listitem_T *item2)
   l->lv_idx_item = NULL;
 }
 
-/*
- * Return an allocated string with the string representation of a list.
- * May return NULL.
- */
-static char_u *list2string(typval_T *tv, int copyID)
-{
-  garray_T ga;
-
-  if (tv->vval.v_list == NULL)
-    return NULL;
-  ga_init(&ga, (int)sizeof(char), 80);
-  ga_append(&ga, '[');
-  if (list_join(&ga, tv->vval.v_list, (char_u *)", ", FALSE, copyID) == FAIL) {
-    xfree(ga.ga_data);
-    return NULL;
-  }
-  ga_append(&ga, ']');
-  ga_append(&ga, NUL);
-  return (char_u *)ga.ga_data;
-}
-
 typedef struct join_S {
   char_u      *s;
   char_u      *tofree;
 } join_T;
 
-static int 
-list_join_inner (
-    garray_T *gap,               /* to store the result in */
-    list_T *l,
-    char_u *sep,
-    int echo_style,
-    int copyID,
-    garray_T *join_gap          /* to keep each list item string */
-)
+/// Join list into a string, helper function
+///
+/// @param[out]  gap  Garray where result will be saved.
+/// @param[in]  l  List to join.
+/// @param[in]  sep  Used separator.
+/// @param[in]  join_gap  Garray to keep each list item string.
+///
+/// @return OK in case of success, FAIL otherwise.
+static int list_join_inner(garray_T *const gap, list_T *const l,
+                           const char *const sep, garray_T *const join_gap)
+  FUNC_ATTR_NONNULL_ALL
 {
-  join_T      *p;
-  int len;
   int sumlen = 0;
-  int first = TRUE;
-  char_u      *tofree;
-  char_u numbuf[NUMBUFLEN];
+  bool first = true;
   listitem_T  *item;
-  char_u      *s;
 
   /* Stringify each item in the list. */
   for (item = l->lv_first; item != NULL && !got_int; item = item->li_next) {
-    if (echo_style)
-      s = echo_string(&item->li_tv, &tofree, numbuf, copyID);
-    else
-      s = tv2string(&item->li_tv, &tofree, numbuf, copyID);
+    char *s;
+    size_t len;
+    s = echo_string(&item->li_tv, &len);
     if (s == NULL)
       return FAIL;
 
-    len = (int)STRLEN(s);
-    sumlen += len;
+    sumlen += (int) len;
 
-    p = GA_APPEND_VIA_PTR(join_T, join_gap);
-    if (tofree != NULL || s != numbuf) {
-      p->s = s;
-      p->tofree = tofree;
-    } else {
-      p->s = vim_strnsave(s, len);
-      p->tofree = p->s;
-    }
+    join_T *const p = GA_APPEND_VIA_PTR(join_T, join_gap);
+    p->tofree = p->s = (char_u *) s;
 
     line_breakcheck();
     if (did_echo_string_emsg) {  // recursion error, bail out
@@ -5513,11 +5478,12 @@ list_join_inner (
   ga_grow(gap, sumlen + 2);
 
   for (int i = 0; i < join_gap->ga_len && !got_int; ++i) {
-    if (first)
-      first = FALSE;
-    else
-      ga_concat(gap, sep);
-    p = ((join_T *)join_gap->ga_data) + i;
+    if (first) {
+      first = false;
+    } else {
+      ga_concat(gap, (const char_u *) sep);
+    }
+    const join_T *const p = ((const join_T *)join_gap->ga_data) + i;
 
     if (p->s != NULL)
       ga_concat(gap, p->s);
@@ -5527,12 +5493,16 @@ list_join_inner (
   return OK;
 }
 
-/*
- * Join list "l" into a string in "*gap", using separator "sep".
- * When "echo_style" is TRUE use String as echoed, otherwise as inside a List.
- * Return FAIL or OK.
- */
-static int list_join(garray_T *gap, list_T *l, char_u *sep, int echo_style, int copyID)
+/// Join list into a string using given separator
+///
+/// @param[out]  gap  Garray where result will be saved.
+/// @param[in]  l  Joined list.
+/// @param[in]  sep  Separator.
+///
+/// @return OK in case of success, FAIL otherwise.
+static int list_join(garray_T *const gap, list_T *const l,
+                     const char *const sep)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (l->lv_len < 1) {
     return OK;
@@ -5542,7 +5512,7 @@ static int list_join(garray_T *gap, list_T *l, char_u *sep, int echo_style, int 
   int retval;
 
   ga_init(&join_ga, (int)sizeof(join_T), l->lv_len);
-  retval = list_join_inner(gap, l, sep, echo_style, copyID, &join_ga);
+  retval = list_join_inner(gap, l, sep, &join_ga);
 
 # define FREE_JOIN_TOFREE(join) xfree((join)->tofree)
   GA_DEEP_CLEAR(&join_ga, join_T, FREE_JOIN_TOFREE);
@@ -6215,63 +6185,6 @@ long get_dict_number(dict_T *d, char_u *key)
 }
 
 /*
- * Return an allocated string with the string representation of a Dictionary.
- * May return NULL.
- */
-static char_u *dict2string(typval_T *tv, int copyID)
-{
-  garray_T ga;
-  int first = TRUE;
-  char_u      *tofree;
-  char_u numbuf[NUMBUFLEN];
-  hashitem_T  *hi;
-  char_u      *s;
-  dict_T      *d;
-  int todo;
-
-  if ((d = tv->vval.v_dict) == NULL)
-    return NULL;
-  ga_init(&ga, (int)sizeof(char), 80);
-  ga_append(&ga, '{');
-
-  todo = (int)d->dv_hashtab.ht_used;
-  for (hi = d->dv_hashtab.ht_array; todo > 0 && !got_int; ++hi) {
-    if (HASHITEM_EMPTY(hi)) {
-      continue;
-    }
-    --todo;
-
-    if (first)
-      first = FALSE;
-    else
-      ga_concat(&ga, (char_u *)", ");
-
-    tofree = string_quote(hi->hi_key, FALSE);
-    if (tofree != NULL) {
-      ga_concat(&ga, tofree);
-      xfree(tofree);
-    }
-    ga_concat(&ga, (char_u *)": ");
-    s = tv2string(&HI2DI(hi)->di_tv, &tofree, numbuf, copyID);
-    if (s != NULL)
-      ga_concat(&ga, s);
-    xfree(tofree);
-    if (s == NULL || did_echo_string_emsg) {
-      break;
-    }
-    line_breakcheck();
-  }
-  if (todo > 0) {
-    xfree(ga.ga_data);
-    return NULL;
-  }
-
-  ga_append(&ga, '}');
-  ga_append(&ga, NUL);
-  return (char_u *)ga.ga_data;
-}
-
-/*
  * Allocate a variable for a Dictionary and fill it from "*arg".
  * Return OK or FAIL.  Returns NOTDONE for {expr}.
  */
@@ -6375,154 +6288,557 @@ failret:
   return OK;
 }
 
-/*
- * Return a string with the string representation of a variable.
- * If the memory is allocated "tofree" is set to it, otherwise NULL.
- * "numbuf" is used for a number.
- * Does not put quotes around strings, as ":echo" displays values.
- * When "copyID" is not NULL replace recursive lists and dicts with "...".
- * May return NULL.
- */
-static char_u *echo_string(typval_T *tv, char_u **tofree, char_u *numbuf, int copyID)
+#define CHECK_SELF_REFERENCE(val, copyID_attr, conv_type) \
+    do { \
+      if ((val)->copyID_attr == copyID) { \
+        CONV_RECURSE((val), conv_type); \
+      } \
+      (val)->copyID_attr = copyID; \
+    } while (0)
+
+/// Define functions which convert VimL value to something else
+///
+/// Creates function `vim_to_{name}(firstargtype firstargname, typval_T *const
+/// tv)` which returns OK or FAIL and helper functions.
+///
+/// @param  firstargtype  Type of the first argument. It will be used to return
+///                       the results.
+/// @param  firstargname  Name of the first argument.
+/// @param  name  Name of the target converter.
+#define DEFINE_VIML_CONV_FUNCTIONS(name, firstargtype, firstargname) \
+static int name##_convert_one_value(firstargtype firstargname, \
+                                    MPConvStack *const mpstack, \
+                                    typval_T *const tv, \
+                                    const int copyID) \
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT \
+{ \
+  switch (tv->v_type) { \
+    case VAR_STRING: { \
+      CONV_STRING(tv->vval.v_string, STRLEN(tv->vval.v_string)); \
+      break; \
+    } \
+    case VAR_NUMBER: { \
+      CONV_NUMBER(tv->vval.v_number); \
+      break; \
+    } \
+    case VAR_FLOAT: { \
+      CONV_FLOAT(tv->vval.v_float); \
+      break; \
+    } \
+    case VAR_FUNC: { \
+      CONV_FUNC(tv->vval.v_string); \
+      break; \
+    } \
+    case VAR_LIST: { \
+      if (tv->vval.v_list == NULL || tv->vval.v_list->lv_len == 0) { \
+        CONV_EMPTY_LIST(); \
+        break; \
+      } \
+      CHECK_SELF_REFERENCE(tv->vval.v_list, lv_copyID, kMPConvList); \
+      CONV_LIST_START(tv->vval.v_list); \
+      kv_push( \
+          MPConvStackVal, \
+          *mpstack, \
+          ((MPConvStackVal) { \
+            .type = kMPConvList, \
+            .data = { \
+              .l = { \
+                .list = tv->vval.v_list, \
+                .li = tv->vval.v_list->lv_first, \
+              }, \
+            }, \
+          })); \
+      break; \
+    } \
+    case VAR_DICT: { \
+      if (tv->vval.v_dict == NULL \
+          || tv->vval.v_dict->dv_hashtab.ht_used == 0) { \
+        CONV_EMPTY_DICT(); \
+        break; \
+      } \
+      const dictitem_T *type_di; \
+      const dictitem_T *val_di; \
+      if (CONV_ALLOW_SPECIAL \
+          && tv->vval.v_dict->dv_hashtab.ht_used == 2 \
+          && (type_di = dict_find((dict_T *) tv->vval.v_dict, \
+                                  (char_u *) "_TYPE", -1)) != NULL \
+          && type_di->di_tv.v_type == VAR_LIST \
+          && (val_di = dict_find((dict_T *) tv->vval.v_dict, \
+                                 (char_u *) "_VAL", -1)) != NULL) { \
+        size_t i; \
+        for (i = 0; i < ARRAY_SIZE(msgpack_type_lists); i++) { \
+          if (type_di->di_tv.vval.v_list == msgpack_type_lists[i]) { \
+            break; \
+          } \
+        } \
+        if (i == ARRAY_SIZE(msgpack_type_lists)) { \
+          goto name##_convert_one_value_regular_dict; \
+        } \
+        switch ((MessagePackType) i) { \
+          case kMPNil: { \
+            CONV_SPECIAL_NIL(); \
+            break; \
+          } \
+          case kMPBoolean: { \
+            if (val_di->di_tv.v_type != VAR_NUMBER) { \
+              goto name##_convert_one_value_regular_dict; \
+            } \
+            CONV_SPECIAL_BOOL(val_di->di_tv.vval.v_number); \
+            break; \
+          } \
+          case kMPInteger: { \
+            const list_T *val_list; \
+            varnumber_T sign; \
+            varnumber_T highest_bits; \
+            varnumber_T high_bits; \
+            varnumber_T low_bits; \
+            /* List of 4 integers; first is signed (should be 1 or -1, but */ \
+            /* this is not checked), second is unsigned and have at most */ \
+            /* one (sign is -1) or two (sign is 1) non-zero bits (number of */ \
+            /* bits is not checked), other unsigned and have at most 31 */ \
+            /* non-zero bits (number of bits is not checked).*/ \
+            if (val_di->di_tv.v_type != VAR_LIST \
+                || (val_list = val_di->di_tv.vval.v_list) == NULL \
+                || val_list->lv_len != 4 \
+                || val_list->lv_first->li_tv.v_type != VAR_NUMBER \
+                || (sign = val_list->lv_first->li_tv.vval.v_number) == 0 \
+                || val_list->lv_first->li_next->li_tv.v_type != VAR_NUMBER \
+                || (highest_bits = \
+                    val_list->lv_first->li_next->li_tv.vval.v_number) < 0 \
+                || val_list->lv_last->li_prev->li_tv.v_type != VAR_NUMBER \
+                || (high_bits = \
+                    val_list->lv_last->li_prev->li_tv.vval.v_number) < 0 \
+                || val_list->lv_last->li_tv.v_type != VAR_NUMBER \
+                || (low_bits = val_list->lv_last->li_tv.vval.v_number) < 0) { \
+              goto name##_convert_one_value_regular_dict; \
+            } \
+            uint64_t number = ((uint64_t) (((uint64_t) highest_bits) << 62) \
+                               | (uint64_t) (((uint64_t) high_bits) << 31) \
+                               | (uint64_t) low_bits); \
+            if (sign > 0) { \
+              CONV_UNSIGNED_NUMBER(number); \
+            } else { \
+              CONV_NUMBER(-number); \
+            } \
+            break; \
+          } \
+          case kMPFloat: { \
+            if (val_di->di_tv.v_type != VAR_FLOAT) { \
+              goto name##_convert_one_value_regular_dict; \
+            } \
+            CONV_FLOAT(val_di->di_tv.vval.v_float); \
+            break; \
+          } \
+          case kMPString: \
+          case kMPBinary: { \
+            const bool is_string = ((MessagePackType) i == kMPString); \
+            if (val_di->di_tv.v_type != VAR_LIST) { \
+              goto name##_convert_one_value_regular_dict; \
+            } \
+            size_t len; \
+            char *buf; \
+            if (!vim_list_to_buf(val_di->di_tv.vval.v_list, &len, &buf)) { \
+              goto name##_convert_one_value_regular_dict; \
+            } \
+            if (is_string) { \
+              CONV_STR_STRING(buf, len); \
+            } else { \
+              CONV_STRING(buf, len); \
+            } \
+            xfree(buf); \
+            break; \
+          } \
+          case kMPArray: { \
+            if (val_di->di_tv.v_type != VAR_LIST) { \
+              goto name##_convert_one_value_regular_dict; \
+            } \
+            CHECK_SELF_REFERENCE(val_di->di_tv.vval.v_list, lv_copyID, \
+                                 kMPConvList); \
+            CONV_LIST_START(val_di->di_tv.vval.v_list); \
+            kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) { \
+                      .type = kMPConvList, \
+                      .data = { \
+                        .l = { \
+                          .list = val_di->di_tv.vval.v_list, \
+                          .li = val_di->di_tv.vval.v_list->lv_first, \
+                        }, \
+                      }, \
+                    })); \
+            break; \
+          } \
+          case kMPMap: { \
+            if (val_di->di_tv.v_type != VAR_LIST) { \
+              goto name##_convert_one_value_regular_dict; \
+            } \
+            if (val_di->di_tv.vval.v_list == NULL) { \
+              CONV_EMPTY_DICT(); \
+              break; \
+            } \
+            list_T *const val_list = val_di->di_tv.vval.v_list; \
+            for (const listitem_T *li = val_list->lv_first; li != NULL; \
+                 li = li->li_next) { \
+              if (li->li_tv.v_type != VAR_LIST \
+                  || li->li_tv.vval.v_list->lv_len != 2) { \
+                goto name##_convert_one_value_regular_dict; \
+              } \
+            } \
+            CHECK_SELF_REFERENCE(val_list, lv_copyID, kMPConvPairs); \
+            CONV_SPECIAL_MAP_START(val_list); \
+            kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) { \
+                      .type = kMPConvPairs, \
+                      .data = { \
+                        .l = { \
+                          .list = val_list, \
+                          .li = val_list->lv_first, \
+                        }, \
+                      }, \
+                    })); \
+            break; \
+          } \
+          case kMPExt: { \
+            const list_T *val_list; \
+            varnumber_T type; \
+            if (val_di->di_tv.v_type != VAR_LIST \
+                || (val_list = val_di->di_tv.vval.v_list) == NULL \
+                || val_list->lv_len != 2 \
+                || (val_list->lv_first->li_tv.v_type != VAR_NUMBER) \
+                || (type = val_list->lv_first->li_tv.vval.v_number) > INT8_MAX \
+                || type < INT8_MIN \
+                || (val_list->lv_last->li_tv.v_type != VAR_LIST)) { \
+              goto name##_convert_one_value_regular_dict; \
+            } \
+            size_t len; \
+            char *buf; \
+            if (!vim_list_to_buf(val_list->lv_last->li_tv.vval.v_list, \
+                                 &len, &buf)) { \
+              goto name##_convert_one_value_regular_dict; \
+            } \
+            CONV_EXT_STRING(buf, len, type); \
+            xfree(buf); \
+            break; \
+          } \
+        } \
+        break; \
+      } \
+name##_convert_one_value_regular_dict: \
+      CHECK_SELF_REFERENCE(tv->vval.v_dict, dv_copyID, kMPConvDict); \
+      CONV_DICT_START(tv->vval.v_dict); \
+      kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) { \
+                .type = kMPConvDict, \
+                .data = { \
+                  .d = { \
+                    .dict = tv->vval.v_dict, \
+                    .hi = tv->vval.v_dict->dv_hashtab.ht_array, \
+                    .todo = tv->vval.v_dict->dv_hashtab.ht_used, \
+                  }, \
+                }, \
+              })); \
+      break; \
+    } \
+    default: { \
+      EMSG2(_(e_intern2), #name "_convert_one_value()"); \
+      return FAIL; \
+    } \
+  } \
+  return OK; \
+} \
+\
+static int vim_to_##name(firstargtype firstargname, typval_T *const tv) \
+  FUNC_ATTR_WARN_UNUSED_RESULT \
+{ \
+  current_copyID += COPYID_INC; \
+  const int copyID = current_copyID; \
+  MPConvStack mpstack; \
+  kv_init(mpstack); \
+  if (name##_convert_one_value(firstargname, &mpstack, tv, copyID) == FAIL) { \
+    goto vim_to_msgpack_error_ret; \
+  } \
+  while (kv_size(mpstack)) { \
+    MPConvStackVal *cur_mpsv = &kv_A(mpstack, kv_size(mpstack) - 1); \
+    typval_T *cur_tv = NULL; \
+    switch (cur_mpsv->type) { \
+      case kMPConvDict: { \
+        if (!cur_mpsv->data.d.todo) { \
+          (void) kv_pop(mpstack); \
+          cur_mpsv->data.d.dict->dv_copyID = copyID - 1; \
+          CONV_DICT_END(cur_mpsv->data.d.dict); \
+          continue; \
+        } else if (cur_mpsv->data.d.todo \
+                   != cur_mpsv->data.d.dict->dv_hashtab.ht_used) { \
+          CONV_DICT_BETWEEN_ITEMS(cur_mpsv->data.d.dict); \
+        } \
+        while (HASHITEM_EMPTY(cur_mpsv->data.d.hi)) { \
+          cur_mpsv->data.d.hi++; \
+        } \
+        dictitem_T *const di = HI2DI(cur_mpsv->data.d.hi); \
+        cur_mpsv->data.d.todo--; \
+        cur_mpsv->data.d.hi++; \
+        CONV_STR_STRING(&di->di_key[0], STRLEN(&di->di_key[0])); \
+        CONV_DICT_AFTER_KEY(cur_mpsv->data.d.dict); \
+        cur_tv = &di->di_tv; \
+        break; \
+      } \
+      case kMPConvList: { \
+        if (cur_mpsv->data.l.li == NULL) { \
+          (void) kv_pop(mpstack); \
+          cur_mpsv->data.l.list->lv_copyID = copyID - 1; \
+          CONV_LIST_END(cur_mpsv->data.l.list); \
+          continue; \
+        } else if (cur_mpsv->data.l.li != cur_mpsv->data.l.list->lv_first) { \
+          CONV_LIST_BETWEEN_ITEMS(cur_mpsv->data.l.list); \
+        } \
+        cur_tv = &cur_mpsv->data.l.li->li_tv; \
+        cur_mpsv->data.l.li = cur_mpsv->data.l.li->li_next; \
+        break; \
+      } \
+      case kMPConvPairs: { \
+        if (cur_mpsv->data.l.li == NULL) { \
+          (void) kv_pop(mpstack); \
+          cur_mpsv->data.l.list->lv_copyID = copyID - 1; \
+          continue; \
+        } \
+        const list_T *const kv_pair = cur_mpsv->data.l.li->li_tv.vval.v_list; \
+        if (name##_convert_one_value(firstargname, &mpstack, \
+                                     &kv_pair->lv_first->li_tv, copyID) \
+            == FAIL) { \
+          goto vim_to_msgpack_error_ret; \
+        } \
+        cur_tv = &kv_pair->lv_last->li_tv; \
+        cur_mpsv->data.l.li = cur_mpsv->data.l.li->li_next; \
+        break; \
+      } \
+    } \
+    if (name##_convert_one_value(firstargname, &mpstack, cur_tv, copyID) \
+        == FAIL) { \
+      goto vim_to_msgpack_error_ret; \
+    } \
+  } \
+  kv_destroy(mpstack); \
+  return OK; \
+vim_to_msgpack_error_ret: \
+  kv_destroy(mpstack); \
+  return FAIL; \
+}
+
+#define CONV_STRING(buf, len) \
+    do { \
+      const char *const buf_ = (const char *) buf; \
+      if (buf == NULL) { \
+        ga_concat(gap, (char_u *) "''"); \
+      } else { \
+        const size_t len_ = (len); \
+        size_t num_quotes = 0; \
+        for (size_t i = 0; i < len_; i++) { \
+          if (buf_[i] == '\'') { \
+            num_quotes++; \
+          } \
+        } \
+        ga_grow(gap, 2 + len_ + num_quotes); \
+        ga_append(gap, '\''); \
+        for (size_t i = 0; i < len_; i++) { \
+          if (buf_[i] == '\'') { \
+            num_quotes++; \
+            ga_append(gap, '\''); \
+          } \
+          ga_append(gap, buf_[i]); \
+        } \
+        ga_append(gap, '\''); \
+      } \
+    } while (0)
+
+#define CONV_STR_STRING(buf, len) \
+    CONV_STRING(buf, len)
+
+#define CONV_EXT_STRING(buf, len, type)
+
+#define CONV_NUMBER(num) \
+    do { \
+      char numbuf[NUMBUFLEN]; \
+      vim_snprintf(numbuf, NUMBUFLEN - 1, "%" PRId64, (int64_t) (num)); \
+      ga_concat(gap, (char_u *) numbuf); \
+    } while (0)
+
+#define CONV_FLOAT(flt) \
+    do { \
+      char numbuf[NUMBUFLEN]; \
+      vim_snprintf(numbuf, NUMBUFLEN - 1, "%g", (flt)); \
+      ga_concat(gap, (char_u *) numbuf); \
+    } while (0)
+
+#define CONV_FUNC(fun) \
+    do { \
+      ga_concat(gap, (char_u *) "function("); \
+      CONV_STRING(fun, STRLEN(fun)); \
+      ga_append(gap, ')'); \
+    } while (0)
+
+#define CONV_EMPTY_LIST() \
+    ga_concat(gap, (char_u *) "[]")
+
+#define CONV_LIST_START(lst) \
+    ga_append(gap, '[')
+
+#define CONV_EMPTY_DICT() \
+    ga_concat(gap, (char_u *) "{}")
+
+#define CONV_SPECIAL_NIL()
+
+#define CONV_SPECIAL_BOOL(num)
+
+#define CONV_UNSIGNED_NUMBER(num)
+
+#define CONV_SPECIAL_MAP_START(lst)
+
+#define CONV_DICT_START(dct) \
+    ga_append(gap, '{')
+
+#define CONV_DICT_END(dct) \
+    ga_append(gap, '}')
+
+#define CONV_DICT_AFTER_KEY(dct) \
+    ga_concat(gap, (char_u *) ": ")
+
+#define CONV_DICT_BETWEEN_ITEMS(dct) \
+    ga_concat(gap, (char_u *) ", ")
+
+#define CONV_LIST_END(lst) \
+    ga_append(gap, ']')
+
+#define CONV_LIST_BETWEEN_ITEMS(lst) \
+    CONV_DICT_BETWEEN_ITEMS(NULL)
+
+#define CONV_RECURSE(val, conv_type) \
+    do { \
+      if (!did_echo_string_emsg) { \
+        /* Only give this message once for a recursive call to avoid */ \
+        /* flooding the user with errors. */ \
+        did_echo_string_emsg = true; \
+        EMSG(_("E724: unable to correctly dump variable " \
+               "with self-referencing container")); \
+      } \
+      char ebuf[NUMBUFLEN + 7]; \
+      size_t backref = 0; \
+      for (; backref < kv_size(*mpstack); backref++) { \
+        const MPConvStackVal mpval = kv_a(MPConvStackVal, *mpstack, backref); \
+        if (mpval.type == conv_type) { \
+          if (conv_type == kMPConvDict) { \
+            if ((void *) mpval.data.d.dict == (void *) (val)) { \
+              break; \
+            } \
+          } else if (conv_type == kMPConvList) { \
+            if ((void *) mpval.data.l.list == (void *) (val)) { \
+              break; \
+            } \
+          } \
+        } \
+      } \
+      vim_snprintf(ebuf, NUMBUFLEN + 6, "{E724@%zu}", backref); \
+      ga_concat(gap, (char_u *) &ebuf[0]); \
+      return OK; \
+    } while (0)
+
+#define CONV_ALLOW_SPECIAL false
+
+DEFINE_VIML_CONV_FUNCTIONS(string, garray_T *const, gap)
+
+#undef CONV_RECURSE
+#define CONV_RECURSE(val, conv_type) \
+    do { \
+      char ebuf[NUMBUFLEN + 7]; \
+      size_t backref = 0; \
+      for (; backref < kv_size(*mpstack); backref++) { \
+        const MPConvStackVal mpval = kv_a(MPConvStackVal, *mpstack, backref); \
+        if (mpval.type == conv_type) { \
+          if (conv_type == kMPConvDict) { \
+            if ((void *) mpval.data.d.dict == (void *) val) { \
+              break; \
+            } \
+          } else if (conv_type == kMPConvList) { \
+            if ((void *) mpval.data.l.list == (void *) val) { \
+              break; \
+            } \
+          } \
+        } \
+      } \
+      if (conv_type == kMPConvDict) { \
+        vim_snprintf(ebuf, NUMBUFLEN + 6, "{...@%zu}", backref); \
+      } else { \
+        vim_snprintf(ebuf, NUMBUFLEN + 6, "[...@%zu]", backref); \
+      } \
+      ga_concat(gap, (char_u *) &ebuf[0]); \
+      return OK; \
+    } while (0)
+
+DEFINE_VIML_CONV_FUNCTIONS(echo, garray_T *const, gap)
+
+#undef CONV_STRING
+#undef CONV_STR_STRING
+#undef CONV_EXT_STRING
+#undef CONV_NUMBER
+#undef CONV_FLOAT
+#undef CONV_FUNC
+#undef CONV_EMPTY_LIST
+#undef CONV_LIST_START
+#undef CONV_EMPTY_DICT
+#undef CONV_SPECIAL_NIL
+#undef CONV_SPECIAL_BOOL
+#undef CONV_UNSIGNED_NUMBER
+#undef CONV_SPECIAL_MAP_START
+#undef CONV_DICT_START
+#undef CONV_DICT_END
+#undef CONV_DICT_AFTER_KEY
+#undef CONV_DICT_BETWEEN_ITEMS
+#undef CONV_LIST_END
+#undef CONV_LIST_BETWEEN_ITEMS
+#undef CONV_RECURSE
+#undef CONV_ALLOW_SPECIAL
+
+/// Return a string with the string representation of a variable.
+/// Puts quotes around strings, so that they can be parsed back by eval().
+///
+/// @param[in]  tv  typval_T to convert.
+/// @param[out]  len  Location where length of the result will be saved.
+///
+/// @return String representation of the variable or NULL.
+static char *tv2string(typval_T *tv, size_t *len)
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_MALLOC
 {
-  static int recurse = 0;
-  char_u      *r = NULL;
-
-  if (recurse >= DICT_MAXNEST) {
-    if (!did_echo_string_emsg) {
-      // Only give this message once for a recursive call to avoid
-      // flooding the user with errors. And stop iterating over lists
-      // and dicts.
-      did_echo_string_emsg = true;
-      EMSG(_("E724: variable nested too deep for displaying"));
-    }
-    *tofree = NULL;
-    return (char_u *)"{E724}";
+  garray_T ga;
+  ga_init(&ga, (int)sizeof(char), 80);
+  vim_to_string(&ga, tv);
+  did_echo_string_emsg = false;
+  if (len != NULL) {
+    *len = (size_t) ga.ga_len;
   }
-  ++recurse;
+  ga_append(&ga, '\0');
+  return (char *) ga.ga_data;
+}
 
-  switch (tv->v_type) {
-  case VAR_FUNC:
-    *tofree = NULL;
-    r = tv->vval.v_string;
-    break;
-
-  case VAR_LIST:
-    if (tv->vval.v_list == NULL) {
-      *tofree = NULL;
-      r = NULL;
-    } else if (copyID != 0 && tv->vval.v_list->lv_copyID == copyID) {
-      *tofree = NULL;
-      r = (char_u *)"[...]";
-    } else {
-      tv->vval.v_list->lv_copyID = copyID;
-      *tofree = list2string(tv, copyID);
-      r = *tofree;
+/// Return a string with the string representation of a variable.
+/// Does not put quotes around strings, as ":echo" displays values.
+///
+/// @param[in]  tv  typval_T to convert.
+/// @param[out]  len  Location where length of the result will be saved.
+///
+/// @return String representation of the variable or NULL.
+static char *echo_string(typval_T *tv, size_t *len)
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_MALLOC
+{
+  garray_T ga;
+  ga_init(&ga, (int)sizeof(char), 80);
+  if (tv->v_type == VAR_STRING || tv->v_type == VAR_FUNC) {
+    if (tv->vval.v_string != NULL) {
+      ga_concat(&ga, tv->vval.v_string);
     }
-    break;
-
-  case VAR_DICT:
-    if (tv->vval.v_dict == NULL) {
-      *tofree = NULL;
-      r = NULL;
-    } else if (copyID != 0 && tv->vval.v_dict->dv_copyID == copyID) {
-      *tofree = NULL;
-      r = (char_u *)"{...}";
-    } else {
-      tv->vval.v_dict->dv_copyID = copyID;
-      *tofree = dict2string(tv, copyID);
-      r = *tofree;
-    }
-    break;
-
-  case VAR_STRING:
-  case VAR_NUMBER:
-    *tofree = NULL;
-    r = get_tv_string_buf(tv, numbuf);
-    break;
-
-  case VAR_FLOAT:
-    *tofree = NULL;
-    vim_snprintf((char *)numbuf, NUMBUFLEN, "%g", tv->vval.v_float);
-    r = numbuf;
-    break;
-
-  default:
-    EMSG2(_(e_intern2), "echo_string()");
-    *tofree = NULL;
-  }
-
-  if (--recurse == 0) {
+  } else {
+    vim_to_echo(&ga, tv);
     did_echo_string_emsg = false;
   }
-  return r;
-}
-
-/*
- * Return a string with the string representation of a variable.
- * If the memory is allocated "tofree" is set to it, otherwise NULL.
- * "numbuf" is used for a number.
- * Puts quotes around strings, so that they can be parsed back by eval().
- * May return NULL.
- */
-static char_u *tv2string(typval_T *tv, char_u **tofree, char_u *numbuf, int copyID)
-{
-  switch (tv->v_type) {
-  case VAR_FUNC:
-    *tofree = string_quote(tv->vval.v_string, TRUE);
-    return *tofree;
-  case VAR_STRING:
-    *tofree = string_quote(tv->vval.v_string, FALSE);
-    return *tofree;
-  case VAR_FLOAT:
-    *tofree = NULL;
-    vim_snprintf((char *)numbuf, NUMBUFLEN - 1, "%g", tv->vval.v_float);
-    return numbuf;
-  case VAR_NUMBER:
-  case VAR_LIST:
-  case VAR_DICT:
-    break;
-  default:
-    EMSG2(_(e_intern2), "tv2string()");
+  if (len != NULL) {
+    *len = (size_t) ga.ga_len;
   }
-  return echo_string(tv, tofree, numbuf, copyID);
-}
-
-/*
- * Return string "str" in ' quotes, doubling ' characters.
- * If "str" is NULL an empty string is assumed.
- * If "function" is TRUE make it function('string').
- */
-static char_u *string_quote(char_u *str, int function)
-{
-  char_u      *p, *r, *s;
-
-  size_t len = (function ? 13 : 3);
-  if (str != NULL) {
-    len += STRLEN(str);
-    for (p = str; *p != NUL; mb_ptr_adv(p))
-      if (*p == '\'')
-        ++len;
-  }
-  s = r = xmalloc(len);
-
-  if (function) {
-    STRCPY(r, "function('");
-    r += 10;
-  } else
-    *r++ = '\'';
-  if (str != NULL)
-    for (p = str; *p != NUL; ) {
-      if (*p == '\'')
-        *r++ = '\'';
-      MB_COPY_CHAR(p, r);
-    }
-  *r++ = '\'';
-  if (function)
-    *r++ = ')';
-  *r++ = NUL;
-
-  return s;
+  ga_append(&ga, '\0');
+  return (char *) ga.ga_data;
 }
 
 /*
@@ -11237,7 +11553,7 @@ static void f_join(typval_T *argvars, typval_T *rettv)
 
   if (sep != NULL) {
     ga_init(&ga, (int)sizeof(char), 80);
-    list_join(&ga, argvars[0].vval.v_list, sep, TRUE, 0);
+    list_join(&ga, argvars[0].vval.v_list, (char *) sep);
     ga_append(&ga, NUL);
     rettv->vval.v_string = (char_u *)ga.ga_data;
   } else
@@ -11528,7 +11844,6 @@ static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
   char_u      *pat;
   regmatch_T regmatch;
   char_u patbuf[NUMBUFLEN];
-  char_u strbuf[NUMBUFLEN];
   char_u      *save_cpo;
   long start = 0;
   long nth = 1;
@@ -11609,7 +11924,7 @@ static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
           break;
         }
         xfree(tofree);
-        str = echo_string(&li->li_tv, &tofree, strbuf, 0);
+        tofree = str = (char_u *) echo_string(&li->li_tv, NULL);
         if (str == NULL)
           break;
       }
@@ -12078,340 +12393,122 @@ static inline bool vim_list_to_buf(const list_T *const list,
   return true;
 }
 
-/// Convert one VimL value to msgpack
-///
-/// @param       packer   Messagepack packer.
-/// @param[out]  mpstack  Stack with values to convert. Only used for pushing
-///                       values to it.
-/// @param[in]   tv       Converted value.
-/// @param[in]   copyID   copyID value used to protect against self-referencing
-///                       containers.
-///
-/// @return OK in case of success, FAIL otherwise.
-static int convert_one_value(msgpack_packer *const packer,
-                             MPConvStack *const mpstack,
-                             typval_T *const tv,
-                             const int copyID)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  switch (tv->v_type) {
-#define CHECK_SELF_REFERENCE(vval_copyID) \
+#define CONV_STRING(buf, len) \
     do { \
-      if (vval_copyID == copyID) { \
-        EMSG2(_(e_invarg2), "container references itself"); \
-        return FAIL; \
+      if (buf == NULL) { \
+        msgpack_pack_bin(packer, 0); \
+      } else { \
+        const size_t len_ = (len); \
+        msgpack_pack_bin(packer, len_); \
+        msgpack_pack_bin_body(packer, buf, len_); \
       } \
-      vval_copyID = copyID; \
     } while (0)
-    case VAR_STRING: {
-      if (tv->vval.v_string == NULL) {
-        msgpack_pack_bin(packer, 0);
-      } else {
-        const size_t len = STRLEN(tv->vval.v_string);
-        msgpack_pack_bin(packer, len);
-        msgpack_pack_bin_body(packer, tv->vval.v_string, len);
-      }
-      break;
-    }
-    case VAR_NUMBER: {
-      msgpack_pack_int64(packer, (int64_t) tv->vval.v_number);
-      break;
-    }
-    case VAR_FLOAT: {
-      msgpack_pack_double(packer, (double) tv->vval.v_float);
-      break;
-    }
-    case VAR_FUNC: {
-      EMSG2(_(e_invarg2), "attempt to dump function reference");
-      return FAIL;
-    }
-    case VAR_LIST: {
-      if (tv->vval.v_list == NULL) {
-        msgpack_pack_array(packer, 0);
-        break;
-      }
-      CHECK_SELF_REFERENCE(tv->vval.v_list->lv_copyID);
-      msgpack_pack_array(packer, tv->vval.v_list->lv_len);
-      kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) {
-                                           .type = kMPConvList,
-                                           .data = {
-                                             .l = {
-                                               .list = tv->vval.v_list,
-                                               .li = tv->vval.v_list->lv_first,
-                                             },
-                                           },
-                                         }));
-      break;
-    }
-    case VAR_DICT: {
-      if (tv->vval.v_dict == NULL) {
-        msgpack_pack_map(packer, 0);
-        break;
-      }
-      const dictitem_T *type_di;
-      const dictitem_T *val_di;
-      if (tv->vval.v_dict->dv_hashtab.ht_used == 2
-          && (type_di = dict_find((dict_T *) tv->vval.v_dict,
-                                  (char_u *) "_TYPE", -1)) != NULL
-          && type_di->di_tv.v_type == VAR_LIST
-          && (val_di = dict_find((dict_T *) tv->vval.v_dict,
-                                 (char_u *) "_VAL", -1)) != NULL) {
-        size_t i;
-        for (i = 0; i < ARRAY_SIZE(msgpack_type_lists); i++) {
-          if (type_di->di_tv.vval.v_list == msgpack_type_lists[i]) {
-            break;
-          }
-        }
-        if (i == ARRAY_SIZE(msgpack_type_lists)) {
-          goto vim_to_msgpack_regural_dict;
-        }
-        switch ((MessagePackType) i) {
-          case kMPNil: {
-            msgpack_pack_nil(packer);
-            break;
-          }
-          case kMPBoolean: {
-            if (val_di->di_tv.v_type != VAR_NUMBER) {
-              goto vim_to_msgpack_regural_dict;
-            }
-            if (val_di->di_tv.vval.v_number) {
-              msgpack_pack_true(packer);
-            } else {
-              msgpack_pack_false(packer);
-            }
-            break;
-          }
-          case kMPInteger: {
-            const list_T *val_list;
-            varnumber_T sign;
-            varnumber_T highest_bits;
-            varnumber_T high_bits;
-            varnumber_T low_bits;
-            // List of 4 integers; first is signed (should be 1 or -1, but this 
-            // is not checked), second is unsigned and have at most one (sign is 
-            // -1) or two (sign is 1) non-zero bits (number of bits is not 
-            // checked), other unsigned and have at most 31 non-zero bits 
-            // (number of bits is not checked).
-            if (val_di->di_tv.v_type != VAR_LIST
-                || (val_list = val_di->di_tv.vval.v_list) == NULL
-                || val_list->lv_len != 4
-                || val_list->lv_first->li_tv.v_type != VAR_NUMBER
-                || (sign = val_list->lv_first->li_tv.vval.v_number) == 0
-                || val_list->lv_first->li_next->li_tv.v_type != VAR_NUMBER
-                || (highest_bits =
-                    val_list->lv_first->li_next->li_tv.vval.v_number) < 0
-                || val_list->lv_last->li_prev->li_tv.v_type != VAR_NUMBER
-                || (high_bits =
-                    val_list->lv_last->li_prev->li_tv.vval.v_number) < 0
-                || val_list->lv_last->li_tv.v_type != VAR_NUMBER
-                || (low_bits = val_list->lv_last->li_tv.vval.v_number) < 0) {
-              goto vim_to_msgpack_regural_dict;
-            }
-            uint64_t number = ((uint64_t) (((uint64_t) highest_bits) << 62)
-                               | (uint64_t) (((uint64_t) high_bits) << 31)
-                               | (uint64_t) low_bits);
-            if (sign > 0) {
-              msgpack_pack_uint64(packer, number);
-            } else {
-              msgpack_pack_int64(packer, (int64_t) (-number));
-            }
-            break;
-          }
-          case kMPFloat: {
-            if (val_di->di_tv.v_type != VAR_FLOAT) {
-              goto vim_to_msgpack_regural_dict;
-            }
-            msgpack_pack_double(packer, val_di->di_tv.vval.v_float);
-            break;
-          }
-          case kMPString:
-          case kMPBinary: {
-            const bool is_string = ((MessagePackType) i == kMPString);
-            if (val_di->di_tv.v_type != VAR_LIST) {
-              goto vim_to_msgpack_regural_dict;
-            }
-            size_t len;
-            char *buf;
-            if (!vim_list_to_buf(val_di->di_tv.vval.v_list, &len, &buf)) {
-              goto vim_to_msgpack_regural_dict;
-            }
-            if (is_string) {
-              msgpack_pack_str(packer, len);
-            } else {
-              msgpack_pack_bin(packer, len);
-            }
-            if (len == 0) {
-              break;
-            }
-            if (is_string) {
-              msgpack_pack_str_body(packer, buf, len);
-            } else {
-              msgpack_pack_bin_body(packer, buf, len);
-            }
-            xfree(buf);
-            break;
-          }
-          case kMPArray: {
-            if (val_di->di_tv.v_type != VAR_LIST) {
-              goto vim_to_msgpack_regural_dict;
-            }
-            CHECK_SELF_REFERENCE(val_di->di_tv.vval.v_list->lv_copyID);
-            msgpack_pack_array(packer, val_di->di_tv.vval.v_list->lv_len);
-            kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) {
-                      .type = kMPConvList,
-                      .data = {
-                        .l = {
-                          .list = val_di->di_tv.vval.v_list,
-                          .li = val_di->di_tv.vval.v_list->lv_first,
-                        },
-                      },
-                    }));
-            break;
-          }
-          case kMPMap: {
-            if (val_di->di_tv.v_type != VAR_LIST) {
-              goto vim_to_msgpack_regural_dict;
-            }
-            if (val_di->di_tv.vval.v_list == NULL) {
-              msgpack_pack_map(packer, 0);
-              break;
-            }
-            list_T *const val_list = val_di->di_tv.vval.v_list;
-            for (const listitem_T *li = val_list->lv_first; li != NULL;
-                 li = li->li_next) {
-              if (li->li_tv.v_type != VAR_LIST
-                  || li->li_tv.vval.v_list->lv_len != 2) {
-                goto vim_to_msgpack_regural_dict;
-              }
-            }
-            CHECK_SELF_REFERENCE(val_list->lv_copyID);
-            msgpack_pack_map(packer, val_list->lv_len);
-            kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) {
-                      .type = kMPConvPairs,
-                      .data = {
-                        .l = {
-                          .list = val_list,
-                          .li = val_list->lv_first,
-                        },
-                      },
-                    }));
-            break;
-          }
-          case kMPExt: {
-            const list_T *val_list;
-            varnumber_T type;
-            if (val_di->di_tv.v_type != VAR_LIST
-                || (val_list = val_di->di_tv.vval.v_list) == NULL
-                || val_list->lv_len != 2
-                || (val_list->lv_first->li_tv.v_type != VAR_NUMBER)
-                || (type = val_list->lv_first->li_tv.vval.v_number) > INT8_MAX
-                || type < INT8_MIN
-                || (val_list->lv_last->li_tv.v_type != VAR_LIST)) {
-              goto vim_to_msgpack_regural_dict;
-            }
-            size_t len;
-            char *buf;
-            if (!vim_list_to_buf(val_list->lv_last->li_tv.vval.v_list,
-                                 &len, &buf)) {
-              goto vim_to_msgpack_regural_dict;
-            }
-            msgpack_pack_ext(packer, len, (int8_t) type);
-            msgpack_pack_ext_body(packer, buf, len);
-            xfree(buf);
-            break;
-          }
-        }
-        break;
-      }
-vim_to_msgpack_regural_dict:
-      CHECK_SELF_REFERENCE(tv->vval.v_dict->dv_copyID);
-      msgpack_pack_map(packer, tv->vval.v_dict->dv_hashtab.ht_used);
-      kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) {
-                .type = kMPConvDict,
-                .data = {
-                  .d = {
-                    .dict = tv->vval.v_dict,
-                    .hi = tv->vval.v_dict->dv_hashtab.ht_array,
-                    .todo = tv->vval.v_dict->dv_hashtab.ht_used,
-                  },
-                },
-              }));
-      break;
-    }
-  }
-#undef CHECK_SELF_REFERENCE
-  return OK;
-}
 
-/// Convert typval_T to messagepack
-static int vim_to_msgpack(msgpack_packer *const packer, typval_T *const tv)
-  FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  current_copyID += COPYID_INC;
-  const int copyID = current_copyID;
-  MPConvStack mpstack;
-  kv_init(mpstack);
-  if (convert_one_value(packer, &mpstack, tv, copyID) == FAIL) {
-    goto vim_to_msgpack_error_ret;
-  }
-  while (kv_size(mpstack)) {
-    MPConvStackVal *cur_mpsv = &kv_A(mpstack, kv_size(mpstack) - 1);
-    typval_T *cur_tv = NULL;
-    switch (cur_mpsv->type) {
-      case kMPConvDict: {
-        if (!cur_mpsv->data.d.todo) {
-          (void) kv_pop(mpstack);
-          cur_mpsv->data.d.dict->dv_copyID = copyID - 1;
-          continue;
-        }
-        while (HASHITEM_EMPTY(cur_mpsv->data.d.hi)) {
-          cur_mpsv->data.d.hi++;
-        }
-        dictitem_T *const di = HI2DI(cur_mpsv->data.d.hi);
-        cur_mpsv->data.d.todo--;
-        cur_mpsv->data.d.hi++;
-        const size_t key_len = STRLEN(&di->di_key[0]);
-        msgpack_pack_str(packer, key_len);
-        msgpack_pack_str_body(packer, &di->di_key[0], key_len);
-        cur_tv = &di->di_tv;
-        break;
-      }
-      case kMPConvList: {
-        if (cur_mpsv->data.l.li == NULL) {
-          (void) kv_pop(mpstack);
-          cur_mpsv->data.l.list->lv_copyID = copyID - 1;
-          continue;
-        }
-        cur_tv = &cur_mpsv->data.l.li->li_tv;
-        cur_mpsv->data.l.li = cur_mpsv->data.l.li->li_next;
-        break;
-      }
-      case kMPConvPairs: {
-        if (cur_mpsv->data.l.li == NULL) {
-          (void) kv_pop(mpstack);
-          cur_mpsv->data.l.list->lv_copyID = copyID - 1;
-          continue;
-        }
-        const list_T *const kv_pair = cur_mpsv->data.l.li->li_tv.vval.v_list;
-        if (convert_one_value(packer, &mpstack, &kv_pair->lv_first->li_tv, copyID)
-            == FAIL) {
-          goto vim_to_msgpack_error_ret;
-        }
-        cur_tv = &kv_pair->lv_last->li_tv;
-        cur_mpsv->data.l.li = cur_mpsv->data.l.li->li_next;
-        break;
-      }
-    }
-    if (convert_one_value(packer, &mpstack, cur_tv, copyID) == FAIL) {
-      goto vim_to_msgpack_error_ret;
-    }
-  }
-  kv_destroy(mpstack);
-  return OK;
-vim_to_msgpack_error_ret:
-  kv_destroy(mpstack);
-  return FAIL;
-}
+#define CONV_STR_STRING(buf, len) \
+    do { \
+      if (buf == NULL) { \
+        msgpack_pack_str(packer, 0); \
+      } else { \
+        const size_t len_ = (len); \
+        msgpack_pack_str(packer, len_); \
+        msgpack_pack_str_body(packer, buf, len_); \
+      } \
+    } while (0)
+
+#define CONV_EXT_STRING(buf, len, type) \
+    do { \
+      if (buf == NULL) { \
+        msgpack_pack_ext(packer, 0, type); \
+      } else { \
+        const size_t len_ = (len); \
+        msgpack_pack_ext(packer, len_, (int8_t) type); \
+        msgpack_pack_ext_body(packer, buf, len_); \
+      } \
+    } while (0)
+
+#define CONV_NUMBER(num) \
+    msgpack_pack_int64(packer, (int64_t) (num))
+
+#define CONV_FLOAT(flt) \
+    msgpack_pack_double(packer, (double) (flt))
+
+#define CONV_FUNC(fun) \
+    do { \
+      EMSG2(_(e_invarg2), "attempt to dump function reference"); \
+      return FAIL; \
+    } while (0)
+
+#define CONV_EMPTY_LIST() \
+    msgpack_pack_array(packer, 0)
+
+#define CONV_LIST_START(lst) \
+    msgpack_pack_array(packer, (lst)->lv_len)
+
+#define CONV_EMPTY_DICT() \
+    msgpack_pack_map(packer, 0)
+
+#define CONV_SPECIAL_NIL() \
+    msgpack_pack_nil(packer)
+
+#define CONV_SPECIAL_BOOL(num) \
+    do { \
+      if ((num)) { \
+        msgpack_pack_true(packer); \
+      } else { \
+        msgpack_pack_false(packer); \
+      } \
+    } while (0)
+
+#define CONV_UNSIGNED_NUMBER(num) \
+    msgpack_pack_uint64(packer, (num))
+
+#define CONV_SPECIAL_MAP_START(lst) \
+    msgpack_pack_map(packer, (lst)->lv_len)
+
+#define CONV_DICT_START(dct) \
+    msgpack_pack_map(packer, (dct)->dv_hashtab.ht_used)
+
+#define CONV_DICT_END(dct)
+
+#define CONV_DICT_AFTER_KEY(dct)
+
+#define CONV_DICT_BETWEEN_ITEMS(dct)
+
+#define CONV_LIST_END(lst)
+
+#define CONV_LIST_BETWEEN_ITEMS(lst)
+
+#define CONV_RECURSE(val, conv_type) \
+    do { \
+      EMSG2(_(e_invarg2), "container references itself"); \
+      return FAIL; \
+    } while (0)
+
+#define CONV_ALLOW_SPECIAL true
+
+DEFINE_VIML_CONV_FUNCTIONS(msgpack, msgpack_packer *const, packer)
+
+#undef CONV_STRING
+#undef CONV_STR_STRING
+#undef CONV_EXT_STRING
+#undef CONV_NUMBER
+#undef CONV_FLOAT
+#undef CONV_FUNC
+#undef CONV_EMPTY_LIST
+#undef CONV_LIST_START
+#undef CONV_EMPTY_DICT
+#undef CONV_SPECIAL_NIL
+#undef CONV_SPECIAL_BOOL
+#undef CONV_UNSIGNED_NUMBER
+#undef CONV_SPECIAL_MAP_START
+#undef CONV_DICT_START
+#undef CONV_DICT_END
+#undef CONV_DICT_AFTER_KEY
+#undef CONV_DICT_BETWEEN_ITEMS
+#undef CONV_LIST_END
+#undef CONV_LIST_BETWEEN_ITEMS
+#undef CONV_RECURSE
+#undef CONV_ALLOW_SPECIAL
 
 /// "msgpackdump()" function
 static void f_msgpackdump(typval_T *argvars, typval_T *rettv)
@@ -14926,11 +15023,11 @@ static int item_compare_func_err;
 static int item_compare(const void *s1, const void *s2, bool keep_zero)
 {
   sortItem_T  *si1, *si2;
-  char_u      *p1, *p2;
-  char_u      *tofree1 = NULL, *tofree2 = NULL;
+  char_u *p1;
+  char_u *p2;
+  char_u *tofree1 = NULL;
+  char_u *tofree2 = NULL;
   int res;
-  char_u numbuf1[NUMBUFLEN];
-  char_u numbuf2[NUMBUFLEN];
 
   si1 = (sortItem_T *)s1;
   si2 = (sortItem_T *)s2;
@@ -14946,7 +15043,7 @@ static int item_compare(const void *s1, const void *s2, bool keep_zero)
       p1 = tv1->vval.v_string;
     }
   } else {
-    p1 = tv2string(tv1, &tofree1, numbuf1, 0);
+    tofree1 = p1 = (char_u *) tv2string(tv1, NULL);
   }
   if (tv2->v_type == VAR_STRING) {
     if (tv1->v_type != VAR_STRING || item_compare_numeric) {
@@ -14955,7 +15052,7 @@ static int item_compare(const void *s1, const void *s2, bool keep_zero)
       p2 = tv2->vval.v_string;
     }
   } else {
-    p2 = tv2string(tv2, &tofree2, numbuf2, 0);
+    tofree2 = p2 = (char_u *) tv2string(tv2, NULL);
   }
   if (p1 == NULL)
     p1 = (char_u *)"";
@@ -14979,7 +15076,7 @@ static int item_compare(const void *s1, const void *s2, bool keep_zero)
   if (res == 0 && !keep_zero) {
     res = si1->idx > si2->idx ? 1 : -1;
   }
-  
+
   xfree(tofree1);
   xfree(tofree2);
   return res;
@@ -15504,14 +15601,8 @@ static void f_stridx(typval_T *argvars, typval_T *rettv)
  */
 static void f_string(typval_T *argvars, typval_T *rettv)
 {
-  char_u      *tofree;
-  char_u numbuf[NUMBUFLEN];
-
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = tv2string(&argvars[0], &tofree, numbuf, 0);
-  /* Make a copy if we have a value but it's not in allocated memory. */
-  if (rettv->vval.v_string != NULL && tofree == NULL)
-    rettv->vval.v_string = vim_strsave(rettv->vval.v_string);
+  rettv->vval.v_string = (char_u *) tv2string(&argvars[0], NULL);
 }
 
 /*
@@ -18061,15 +18152,10 @@ static void delete_var(hashtab_T *ht, hashitem_T *hi)
  */
 static void list_one_var(dictitem_T *v, char_u *prefix, int *first)
 {
-  char_u      *tofree;
-  char_u      *s;
-  char_u numbuf[NUMBUFLEN];
-
-  current_copyID += COPYID_INC;
-  s = echo_string(&v->di_tv, &tofree, numbuf, current_copyID);
+  char_u *s = (char_u *) echo_string(&v->di_tv, NULL);
   list_one_var_a(prefix, v->di_key, v->di_tv.v_type,
       s == NULL ? (char_u *)"" : s, first);
-  xfree(tofree);
+  xfree(s);
 }
 
 static void 
@@ -18430,11 +18516,9 @@ void ex_echo(exarg_T *eap)
 {
   char_u      *arg = eap->arg;
   typval_T rettv;
-  char_u      *tofree;
   char_u      *p;
-  int needclr = TRUE;
-  int atstart = TRUE;
-  char_u numbuf[NUMBUFLEN];
+  bool needclr = true;
+  bool atstart = true;
 
   if (eap->skip)
     ++emsg_skip;
@@ -18459,7 +18543,7 @@ void ex_echo(exarg_T *eap)
 
     if (!eap->skip) {
       if (atstart) {
-        atstart = FALSE;
+        atstart = false;
         /* Call msg_start() after eval1(), evaluating the expression
          * may cause a message to appear. */
         if (eap->cmdidx == CMD_echo) {
@@ -18471,15 +18555,14 @@ void ex_echo(exarg_T *eap)
         }
       } else if (eap->cmdidx == CMD_echo)
         msg_puts_attr((char_u *)" ", echo_attr);
-      current_copyID += COPYID_INC;
-      p = echo_string(&rettv, &tofree, numbuf, current_copyID);
-      if (p != NULL)
+      char_u *tofree = p = (char_u *) echo_string(&rettv, NULL);
+      if (p != NULL) {
         for (; *p != NUL && !got_int; ++p) {
           if (*p == '\n' || *p == '\r' || *p == TAB) {
             if (*p != TAB && needclr) {
               /* remove any text still there from the command */
               msg_clr_eos();
-              needclr = FALSE;
+              needclr = false;
             }
             msg_putchar_attr(*p, echo_attr);
           } else {
@@ -18492,6 +18575,7 @@ void ex_echo(exarg_T *eap)
               (void)msg_outtrans_len_attr(p, 1, echo_attr);
           }
         }
+      }
       xfree(tofree);
     }
     clear_tv(&rettv);
@@ -20095,20 +20179,19 @@ call_user_func (
       smsg(_("calling %s"), sourcing_name);
       if (p_verbose >= 14) {
         char_u buf[MSG_BUF_LEN];
-        char_u numbuf2[NUMBUFLEN];
-        char_u  *tofree;
-        char_u  *s;
 
         msg_puts((char_u *)"(");
         for (int i = 0; i < argcount; ++i) {
-          if (i > 0)
+          if (i > 0) {
             msg_puts((char_u *)", ");
-          if (argvars[i].v_type == VAR_NUMBER)
+          }
+          if (argvars[i].v_type == VAR_NUMBER) {
             msg_outnum((long)argvars[i].vval.v_number);
-          else {
+          } else {
             // Do not want errors such as E724 here.
             ++emsg_off;
-            s = tv2string(&argvars[i], &tofree, numbuf2, 0);
+            char_u *s = (char_u *) tv2string(&argvars[i], NULL);
+            char_u *tofree = s;
             --emsg_off;
             if (s != NULL) {
               if (vim_strsize(s) > MSG_BUF_CLEN) {
@@ -20196,15 +20279,13 @@ call_user_func (
            sourcing_name, (int64_t)fc->rettv->vval.v_number);
     else {
       char_u buf[MSG_BUF_LEN];
-      char_u numbuf2[NUMBUFLEN];
-      char_u      *tofree;
-      char_u      *s;
 
       // The value may be very long.  Skip the middle part, so that we
       // have some idea how it starts and ends. smsg() would always
       // truncate it at the end. Don't want errors such as E724 here.
       ++emsg_off;
-      s = tv2string(fc->rettv, &tofree, numbuf2, 0);
+      char_u *s = (char_u *) tv2string(fc->rettv, NULL);
+      char_u *tofree = s;
       --emsg_off;
       if (s != NULL) {
         if (vim_strsize(s) > MSG_BUF_CLEN) {
@@ -20472,14 +20553,15 @@ void discard_pending_return(void *rettv)
  */
 char_u *get_return_cmd(void *rettv)
 {
-  char_u      *s = NULL;
-  char_u      *tofree = NULL;
-  char_u numbuf[NUMBUFLEN];
+  char_u *s = NULL;
+  char_u *tofree = NULL;
 
-  if (rettv != NULL)
-    s = echo_string((typval_T *)rettv, &tofree, numbuf, 0);
-  if (s == NULL)
+  if (rettv != NULL) {
+    tofree = s = (char_u *) echo_string((typval_T *) rettv, NULL);
+  }
+  if (s == NULL) {
     s = (char_u *)"";
+  }
 
   STRCPY(IObuff, ":return ");
   STRNCPY(IObuff + 8, s, IOSIZE - 8);
@@ -20702,8 +20784,6 @@ void write_viminfo_varlist(FILE *fp)
   int todo;
   char        *s;
   char_u      *p;
-  char_u      *tofree;
-  char_u numbuf[NUMBUFLEN];
 
   if (find_viminfo_parameter('!') == NULL)
     return;
@@ -20725,10 +20805,11 @@ void write_viminfo_varlist(FILE *fp)
         default: continue;
         }
         fprintf(fp, "!%s\t%s\t", this_var->di_key, s);
-        p = echo_string(&this_var->di_tv, &tofree, numbuf, 0);
-        if (p != NULL)
+        p = (char_u *) echo_string(&this_var->di_tv, NULL);
+        if (p != NULL) {
           viminfo_writestring(fp, p);
-        xfree(tofree);
+        }
+        xfree(p);
       }
     }
   }
