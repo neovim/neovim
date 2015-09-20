@@ -4253,10 +4253,11 @@ static void nv_ident(cmdarg_T *cap)
   /* Allocate buffer to put the command in.  Inserting backslashes can
    * double the length of the word.  p_kp / curbuf->b_p_kp could be added
    * and some numbers. */
-  char_u *kp = (*curbuf->b_p_kp == NUL ? p_kp : curbuf->b_p_kp);  //'keywordprg'
-  assert(*kp != NUL);  //option.c::do_set() should default to ":help" if empty.
-  bool kp_ex = (*kp == ':');  //'keywordprg' is an ex command
-  char *buf = xmalloc(n * 2 + 30 + STRLEN(kp));
+  char_u *kp = *curbuf->b_p_kp == NUL ? p_kp : curbuf->b_p_kp;  // 'keywordprg'
+  assert(*kp != NUL);  // option.c:do_set() should default to ":help" if empty.
+  bool kp_ex = (*kp == ':');  // 'keywordprg' is an ex command
+  size_t buf_size = n * 2 + 30 + STRLEN(kp);
+  char *buf = xmalloc(buf_size);
   buf[0] = NUL;
 
   switch (cmdchar) {
@@ -4279,7 +4280,7 @@ static void nv_ident(cmdarg_T *cap)
   case 'K':
     if (kp_ex) {
       if (cap->count0 != 0) {  // Send the count to the ex command.
-        sprintf(buf, "%" PRId64, (int64_t)(cap->count0));
+        snprintf(buf, buf_size, "%" PRId64, (int64_t)(cap->count0));
       }
       STRCAT(buf, kp);
       STRCAT(buf, " ");
@@ -4300,17 +4301,20 @@ static void nv_ident(cmdarg_T *cap)
        * really what we want? */
       bool isman = (STRCMP(kp, "man") == 0);
       bool isman_s = (STRCMP(kp, "man -s") == 0);
-      if (cap->count0 != 0 && !(isman || isman_s))
-        sprintf(buf, ".,.+%" PRId64, (int64_t)(cap->count0 - 1));
+      if (cap->count0 != 0 && !(isman || isman_s)) {
+        snprintf(buf, buf_size, ".,.+%" PRId64, (int64_t)(cap->count0 - 1));
+      }
 
       STRCAT(buf, "! ");
-      if (cap->count0 == 0 && isman_s)
+      if (cap->count0 == 0 && isman_s) {
         STRCAT(buf, "man");
-      else
+      } else {
         STRCAT(buf, kp);
+      }
       STRCAT(buf, " ");
       if (cap->count0 != 0 && (isman || isman_s)) {
-        sprintf(buf + STRLEN(buf), "%" PRId64, (int64_t)cap->count0);
+        snprintf(buf + STRLEN(buf), buf_size - STRLEN(buf), "%" PRId64,
+            (int64_t)cap->count0);
         STRCAT(buf, " ");
       }
     }
@@ -4332,7 +4336,7 @@ static void nv_ident(cmdarg_T *cap)
       if (g_cmd)
         STRCPY(buf, "tj ");
       else
-        sprintf(buf, "%" PRId64 "ta ", (int64_t)cap->count0);
+        snprintf(buf, buf_size, "%" PRId64 "ta ", (int64_t)cap->count0);
     }
   }
 
@@ -4391,8 +4395,9 @@ static void nv_ident(cmdarg_T *cap)
     init_history();
     add_to_history(HIST_SEARCH, (char_u *)buf, true, NUL);
     (void)normal_search(cap, cmdchar == '*' ? '/' : '?', (char_u *)buf, 0);
-  } else
+  } else {
     do_cmdline_cmd(buf);
+  }
 
   xfree(buf);
 }
