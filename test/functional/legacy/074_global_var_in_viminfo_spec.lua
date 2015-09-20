@@ -12,7 +12,8 @@ describe('storing global variables in viminfo files', function()
   end)
 
   it('is working', function()
-    local nvim2 = helpers.spawn({helpers.nvim_prog, '-u', 'NONE', '--embed'})
+    local nvim2 = helpers.spawn({helpers.nvim_prog, '-u', 'NONE',
+                                 '-i', 'Xviminfo', '--embed'})
     helpers.set_session(nvim2)
 
     local test_dict = {foo = 1, bar = 0, longvarible = 1000}
