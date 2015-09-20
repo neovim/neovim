@@ -11,25 +11,9 @@ catch /E145:/
   " Ignore the error in restricted mode
 endtry
 
-" Expects a string like 'access' or 'access(2)'.
-function s:parse_page_and_section(str)
-  try
-    let save_isk = &iskeyword
-    setlocal iskeyword-=(,)
-    let page = substitute(a:str, '(*\(\k\+\).*', '\1', '')
-    let sect = substitute(a:str, '\(\k\+\)(\([^()]*\)).*', '\2', '')
-    if sect == page || -1 == match(sect, '^[0-9 ]\+$')
-      let sect = ''
-    endif
-  catch
-    let &l:iskeyword = save_isk
-    echoerr 'man.vim: failed to parse: "'.a:str.'"'
-  endtry
-
-  return [page, sect]
-endfunction
-
 function man#get_page(...)
+  let invoked_from_man = (&filetype ==# 'man')
+
   if a:0 == 0
     echoerr 'argument required'
     return
@@ -50,12 +34,12 @@ function man#get_page(...)
 
   let [page, sect] = s:parse_page_and_section(page)
 
-  if sect !=# '' && s:FindPage(sect, page) == 0
+  if sect !=# '' && s:find_page(sect, page) == 0
     let sect = ''
   endif
 
-  if s:FindPage(sect, page) == 0
-    echo "\nNo manual entry for '".page."'"
+  if s:find_page(sect, page) == 0
+    echo 'No manual entry for '.page
     return
   endif
 
@@ -65,7 +49,7 @@ function man#get_page(...)
   let s:man_tag_depth = s:man_tag_depth + 1
 
   " Use an existing "man" window if it exists, otherwise open a new one.
-  if &filetype != 'man'
+  if !invoked_from_man
     let thiswin = winnr()
     wincmd b
     if winnr() > 1
@@ -80,18 +64,18 @@ function man#get_page(...)
         endif
       endwhile
     endif
-    if &filetype != 'man'
+    if !invoked_from_man
       tabnew
-      " window-local options
-      setlocal foldcolumn=0 nonumber nolist norelativenumber nofoldenable
+      call s:set_window_local_options()
     endif
   endif
+
   silent exec 'edit man://'.page.(empty(sect)?'':'('.sect.')')
 
   setlocal modifiable
   silent keepjumps norm! 1G"_dG
   let $MANWIDTH = winwidth(0)
-  silent exec 'r!/usr/bin/man '.s:GetCmdArg(sect, page).' | col -b'
+  silent exec 'r!/usr/bin/man '.s:get_cmd_arg(sect, page).' | col -b'
   " Remove blank lines from top and bottom.
   while getline(1) =~ '^\s*$'
     silent keepjumps norm! gg"_dd
@@ -99,7 +83,17 @@ function man#get_page(...)
   while getline('$') =~ '^\s*$'
     silent keepjumps norm! G"_dd
   endwhile
+  setlocal nomodified
   setlocal filetype=man
+
+  if invoked_from_man
+    call s:set_window_local_options()
+  endif
+endfunction
+
+function s:set_window_local_options()
+  setlocal colorcolumn=0 foldcolumn=0 nonumber
+  setlocal nolist norelativenumber nofoldenable
 endfunction
 
 function man#pop_page()
@@ -118,15 +112,33 @@ function man#pop_page()
   endif
 endfunction
 
-function s:GetCmdArg(sect, page)
+" Expects a string like 'access' or 'access(2)'.
+function s:parse_page_and_section(str)
+  try
+    let save_isk = &iskeyword
+    setlocal iskeyword-=(,)
+    let page = substitute(a:str, '(*\(\k\+\).*', '\1', '')
+    let sect = substitute(a:str, '\(\k\+\)(\([^()]*\)).*', '\2', '')
+    if sect == page || -1 == match(sect, '^[0-9 ]\+$')
+      let sect = ''
+    endif
+  catch
+    let &l:iskeyword = save_isk
+    echoerr 'man.vim: failed to parse: "'.a:str.'"'
+  endtry
+
+  return [page, sect]
+endfunction
+
+function s:get_cmd_arg(sect, page)
   if a:sect == ''
     return a:page
   endif
   return s:man_sect_arg.' '.a:sect.' '.a:page
 endfunction
 
-function s:FindPage(sect, page)
-  let where = system('/usr/bin/man '.s:man_find_arg.' '.s:GetCmdArg(a:sect, a:page))
+function s:find_page(sect, page)
+  let where = system('/usr/bin/man '.s:man_find_arg.' '.s:get_cmd_arg(a:sect, a:page))
   if where !~ "^/"
     if matchstr(where, " [^ ]*$") !~ "^ /"
       return 0
