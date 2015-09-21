@@ -233,12 +233,6 @@ typedef struct vimoption {
 #define P_CURSWANT    0x2000000U /* update curswant required; not needed when
                                   * there is a redraw flag */
 
-#define ISK_LATIN1  (char_u *)"@,48-57,_,192-255"
-
-/* 'isprint' for latin1 is also used for MS-Windows cp1252, where 0x80 is used
- * for the currency sign. */
-# define ISP_LATIN1 (char_u *)"@,161-255"
-
 #define HIGHLIGHT_INIT \
   "8:SpecialKey,~:EndOfBuffer,z:TermCursor,Z:TermCursorNC,@:NonText," \
   "d:Directory,e:ErrorMsg,i:IncSearch,l:Search,m:MoreMsg,M:ModeMsg,n:LineNr," \
@@ -788,26 +782,6 @@ void set_init_1(void)
 
   // Initialize multibyte (utf-8) handling
   mb_init();
-
-#if defined(MSWIN) || defined(MACOS)
-  if (STRCMP(p_enc, "latin1") == 0
-      || enc_utf8
-      ) {
-    /* Adjust the default for 'isprint' and 'iskeyword' to match
-     * latin1. */
-    set_string_option_direct((char_u *)"isp", -1,
-        ISP_LATIN1, OPT_FREE, SID_NONE);
-    set_string_option_direct((char_u *)"isk", -1,
-        ISK_LATIN1, OPT_FREE, SID_NONE);
-    opt_idx = findoption((char_u *)"isp");
-    if (opt_idx >= 0)
-      options[opt_idx].def_val[VIM_DEFAULT] = ISP_LATIN1;
-    opt_idx = findoption((char_u *)"isk");
-    if (opt_idx >= 0)
-      options[opt_idx].def_val[VIM_DEFAULT] = ISK_LATIN1;
-    (void)init_chartab();
-  }
-#endif
 
   // Don't change &encoding when resetting to defaults with ":set all&".
   opt_idx = findoption((char_u *)"encoding");

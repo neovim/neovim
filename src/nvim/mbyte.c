@@ -568,11 +568,6 @@ char_u * mb_init(void)
   /* When enc_utf8 is set or reset, (de)allocate ScreenLinesUC[] */
   screenalloc(false);
 
-  /* When using Unicode, set default for 'fileencodings'. */
-  if (enc_utf8 && !option_was_set((char_u *)"fencs"))
-    set_string_option_direct((char_u *)"fencs", -1,
-        (char_u *)"ucs-bom,utf-8,default,latin1", OPT_FREE, 0);
-
 #ifdef HAVE_WORKING_LIBINTL
   /* GNU gettext 0.10.37 supports this feature: set the codeset used for
    * translated messages independently from the current locale. */
