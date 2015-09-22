@@ -148,6 +148,23 @@ describe('ShaDa support code', function()
     os.remove('NONE')
   end)
 
+  local marklike = {[7]=true, [8]=true, [10]=true, [11]=true}
+  local find_file = function(fname)
+    local found = {}
+    for _, v in ipairs(read_shada_file(shada_fname)) do
+      if marklike[v.type] and v.value.f == fname then
+        found[v.type] = (found[v.type] or 0) + 1
+      elseif v.type == 9 then
+        for _, b in ipairs(v.value) do
+          if b.f == fname then
+            found[v.type] = (found[v.type] or 0) + 1
+          end
+        end
+      end
+    end
+    return found
+  end
+
   it('correctly uses shada-r option', function()
     nvim('set_var', '__home', paths.test_source_path)
     nvim_command('let $HOME = __home')
@@ -157,32 +174,33 @@ describe('ShaDa support code', function()
     nvim_command('undo')
     nvim_command('set shada+=%')
     nvim_command('wshada! ' .. shada_fname)
-    local marklike = {[7]=true, [8]=true, [10]=true, [11]=true}
     local readme_fname = paths.test_source_path .. '/README.md'
-    local find_readme = function()
-      local found = {}
-      for _, v in ipairs(read_shada_file(shada_fname)) do
-        if marklike[v.type] and v.value.f == readme_fname then
-          found[v.type] = (found[v.type] or 0) + 1
-        elseif v.type == 9 then
-          for _, b in ipairs(v.value) do
-            if b.f == readme_fname then
-              found[v.type] = (found[v.type] or 0) + 1
-            end
-          end
-        end
-      end
-      return found
-    end
-    eq({[7]=1, [8]=2, [9]=1, [10]=4, [11]=1}, find_readme())
+    eq({[7]=1, [8]=2, [9]=1, [10]=4, [11]=1}, find_file(readme_fname))
     nvim_command('set shada+=r~')
     nvim_command('wshada! ' .. shada_fname)
-    eq({}, find_readme())
+    eq({}, find_file(readme_fname))
     nvim_command('set shada-=r~')
     nvim_command('wshada! ' .. shada_fname)
-    eq({[7]=1, [8]=2, [9]=1, [10]=4, [11]=1}, find_readme())
+    eq({[7]=1, [8]=2, [9]=1, [10]=4, [11]=1}, find_file(readme_fname))
     nvim_command('set shada+=r' .. paths.test_source_path)
     nvim_command('wshada! ' .. shada_fname)
-    eq({}, find_readme())
+    eq({}, find_file(readme_fname))
+  end)
+
+  it('correctly ignores case with shada-r option', function()
+    local pwd = nvim('call_function', 'getcwd', {})
+    local relfname = 'абв/test'
+    local fname = pwd .. '/' .. relfname
+    nvim('set_var', '__fname', fname)
+    nvim_command('silent! edit `=__fname`')
+    nvim('call_function', 'setline', {1, {'a', 'b', 'c', 'd'}})
+    nvim_command('normal! GmAggmaAabc')
+    nvim_command('undo')
+    nvim_command('set shada+=%')
+    nvim_command('wshada! ' .. shada_fname)
+    eq({[7]=1, [8]=2, [9]=1, [10]=4, [11]=2}, find_file(fname))
+    nvim_command('set shada+=r' .. pwd .. '/АБВ')
+    nvim_command('wshada! ' .. shada_fname)
+    eq({}, find_file(fname))
   end)
 end)

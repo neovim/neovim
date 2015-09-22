@@ -72,6 +72,8 @@ KHASH_SET_INIT_STR(strset)
     home_replace(a, (char_u *)b, (char_u *)c, d, e)
 #define vim_rename(a, b) \
     (vim_rename((char_u *)a, (char_u *)b))
+#define mb_strnicmp(a, b, c) \
+    (mb_strnicmp((char_u *)a, (char_u *)b, c))
 #define has_non_ascii(a) (has_non_ascii((char_u *)a))
 #define string_convert(a, b, c) \
       ((char *)string_convert((vimconv_T *)a, (char_u *)b, c))
@@ -4014,7 +4016,7 @@ bool shada_removable(const char *name)
     if (part[0] == 'r') {
       home_replace(NULL, part + 1, NameBuff, MAXPATHL, true);
       size_t n = STRLEN(NameBuff);
-      if (STRNICMP(NameBuff, new_name, n) == 0) {
+      if (mb_strnicmp(NameBuff, new_name, n) == 0) {
         retval = true;
         break;
       }
