@@ -11,7 +11,7 @@ catch /E145:/
   " Ignore the error in restricted mode
 endtry
 
-function man#get_page(...)
+function man#get_page(...) abort
   let invoked_from_man = (&filetype ==# 'man')
 
   if a:0 == 0
@@ -21,7 +21,7 @@ function man#get_page(...)
     echoerr 'too many arguments'
     return
   elseif a:0 == 2
-    let [sect, page] = [a:1, a:2]
+    let [page, sect] = [a:2, 0 + a:1]
   elseif type(1) == type(a:1)
     let [page, sect] = ['<cword>', a:1]
   else
@@ -32,9 +32,9 @@ function man#get_page(...)
     let page = expand('<cword>')
   endif
 
-  let [page, sect] = s:parse_page_and_section(page)
+  let [page, sect] = s:parse_page_and_section(sect, page)
 
-  if sect !=# '' && s:find_page(sect, page) == 0
+  if 0 + sect > 0 && s:find_page(sect, page) == 0
     let sect = ''
   endif
 
@@ -66,7 +66,7 @@ function man#get_page(...)
     endif
     if !invoked_from_man
       tabnew
-      call s:set_window_local_options()
+      let invoked_from_man = 1
     endif
   endif
 
@@ -75,7 +75,7 @@ function man#get_page(...)
   setlocal modifiable
   silent keepjumps norm! 1G"_dG
   let $MANWIDTH = winwidth(0)
-  silent exec 'r!/usr/bin/man '.s:get_cmd_arg(sect, page).' | col -b'
+  silent exec 'r!/usr/bin/man '.s:cmd(sect, page).' | col -b'
   " Remove blank lines from top and bottom.
   while getline(1) =~ '^\s*$'
     silent keepjumps norm! gg"_dd
@@ -91,12 +91,12 @@ function man#get_page(...)
   endif
 endfunction
 
-function s:set_window_local_options()
+function s:set_window_local_options() abort
   setlocal colorcolumn=0 foldcolumn=0 nonumber
   setlocal nolist norelativenumber nofoldenable
 endfunction
 
-function man#pop_page()
+function man#pop_page() abort
   if s:man_tag_depth > 0
     let s:man_tag_depth = s:man_tag_depth - 1
     exec "let s:man_tag_buf=s:man_tag_buf_".s:man_tag_depth
@@ -113,14 +113,14 @@ function man#pop_page()
 endfunction
 
 " Expects a string like 'access' or 'access(2)'.
-function s:parse_page_and_section(str)
+function s:parse_page_and_section(sect, str) abort
   try
     let save_isk = &iskeyword
     setlocal iskeyword-=(,)
     let page = substitute(a:str, '(*\(\k\+\).*', '\1', '')
     let sect = substitute(a:str, '\(\k\+\)(\([^()]*\)).*', '\2', '')
     if sect == page || -1 == match(sect, '^[0-9 ]\+$')
-      let sect = ''
+      let sect = a:sect
     endif
   catch
     let &l:iskeyword = save_isk
@@ -130,15 +130,15 @@ function s:parse_page_and_section(str)
   return [page, sect]
 endfunction
 
-function s:get_cmd_arg(sect, page)
-  if a:sect == ''
-    return a:page
+function s:cmd(sect, page) abort
+  if 0 + a:sect > 0
+    return s:man_sect_arg.' '.a:sect.' '.a:page
   endif
-  return s:man_sect_arg.' '.a:sect.' '.a:page
+  return a:page
 endfunction
 
-function s:find_page(sect, page)
-  let where = system('/usr/bin/man '.s:man_find_arg.' '.s:get_cmd_arg(a:sect, a:page))
+function s:find_page(sect, page) abort
+  let where = system('/usr/bin/man '.s:man_find_arg.' '.s:cmd(a:sect, a:page))
   if where !~ "^/"
     if matchstr(where, " [^ ]*$") !~ "^ /"
       return 0
