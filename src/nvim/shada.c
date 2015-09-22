@@ -68,6 +68,8 @@ KHASH_SET_INIT_STR(strset)
 #define emsgu(a, ...) emsgu((char_u *) a, __VA_ARGS__)
 #define home_replace_save(a, b) \
     ((char *)home_replace_save(a, (char_u *)b))
+#define home_replace(a, b, c, d, e) \
+    home_replace(a, (char_u *)b, (char_u *)c, d, e)
 #define vim_rename(a, b) \
     (vim_rename((char_u *)a, (char_u *)b))
 #define has_non_ascii(a) (has_non_ascii((char_u *)a))
@@ -4003,16 +4005,16 @@ bool shada_removable(const char *name)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   char  *p;
-  char part[51];
+  char part[MAXPATHL + 1];
   bool retval = false;
-  size_t n;
 
   char *new_name = home_replace_save(NULL, name);
   for (p = (char *) p_shada; *p; ) {
-    (void) copy_option_part(&p, part, 51, ", ");
+    (void) copy_option_part(&p, part, ARRAY_SIZE(part), ", ");
     if (part[0] == 'r') {
-      n = STRLEN(part + 1);
-      if (STRNICMP(part + 1, new_name, n) == 0) {
+      home_replace(NULL, part + 1, NameBuff, MAXPATHL, true);
+      size_t n = STRLEN(NameBuff);
+      if (STRNICMP(NameBuff, new_name, n) == 0) {
         retval = true;
         break;
       }

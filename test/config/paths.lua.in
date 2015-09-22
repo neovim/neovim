@@ -7,6 +7,7 @@ end
 
 module.test_include_path = "${CMAKE_BINARY_DIR}/test/includes/post"
 module.test_libnvim_path = "${TEST_LIBNVIM_PATH}"
+module.test_source_path = "${CMAKE_SOURCE_DIR}"
 table.insert(module.include_paths, "${CMAKE_BINARY_DIR}/include")
 
 return module

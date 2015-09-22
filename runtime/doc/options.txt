@@ -5374,8 +5374,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		specifies the start of a path for which no marks will be
 		stored.  This is to avoid removable media.  For MS-DOS you
 		could use "ra:,rb:".  You can also use it for temp files,
-		e.g., for Unix: "r/tmp".  Case is ignored.  Maximum length of
-		each 'r' argument is 50 characters.
+		e.g., for Unix: "r/tmp".  Case is ignored.
 							*shada-s*
 	s	Maximum size of an item contents in KiB.  If zero then nothing 
 		is saved.  Unlike Vim this applies to all items, except for 

@@ -7,6 +7,7 @@ local write_file, spawn, set_session, nvim_prog, exc_exec =
   helpers.write_file, helpers.spawn, helpers.set_session, helpers.nvim_prog,
   helpers.exc_exec
 local lfs = require('lfs')
+local paths = require('test.config.paths')
 
 local msgpack = require('MessagePack')
 
@@ -145,5 +146,43 @@ describe('ShaDa support code', function()
     eq('', nvim_eval('@a'))
     session:exit(0)
     os.remove('NONE')
+  end)
+
+  it('correctly uses shada-r option', function()
+    nvim('set_var', '__home', paths.test_source_path)
+    nvim_command('let $HOME = __home')
+    nvim_command('unlet __home')
+    nvim_command('edit ~/README.md')
+    nvim_command('normal! GmAggmaAabc')
+    nvim_command('undo')
+    nvim_command('set shada+=%')
+    nvim_command('wshada! ' .. shada_fname)
+    local marklike = {[7]=true, [8]=true, [10]=true, [11]=true}
+    local readme_fname = paths.test_source_path .. '/README.md'
+    local find_readme = function()
+      local found = {}
+      for _, v in ipairs(read_shada_file(shada_fname)) do
+        if marklike[v.type] and v.value.f == readme_fname then
+          found[v.type] = (found[v.type] or 0) + 1
+        elseif v.type == 9 then
+          for _, b in ipairs(v.value) do
+            if b.f == readme_fname then
+              found[v.type] = (found[v.type] or 0) + 1
+            end
+          end
+        end
+      end
+      return found
+    end
+    eq({[7]=1, [8]=2, [9]=1, [10]=4, [11]=1}, find_readme())
+    nvim_command('set shada+=r~')
+    nvim_command('wshada! ' .. shada_fname)
+    eq({}, find_readme())
+    nvim_command('set shada-=r~')
+    nvim_command('wshada! ' .. shada_fname)
+    eq({[7]=1, [8]=2, [9]=1, [10]=4, [11]=1}, find_readme())
+    nvim_command('set shada+=r' .. paths.test_source_path)
+    nvim_command('wshada! ' .. shada_fname)
+    eq({}, find_readme())
   end)
 end)
