@@ -9,7 +9,7 @@ env:
     # http://docs.travis-ci.com/user/speeding-up-the-build/#Paralellizing-your-build-on-one-VM
     - MAKE_CMD="make -j2"
     # Update PATH for pip and MinGW.
-    - PATH="$(python -c 'import site; print(site.getuserbase())')/bin:$HOME/.local/mingw32/bin:$PATH"
+    - PATH="$(python2.7 -c 'import site; print(site.getuserbase())')/bin:$HOME/.local/mingw32/bin:$PATH"
     # LLVM symbolizer path.
     - LLVM_SYMBOLIZER="$(which llvm-symbolizer-3.6)"
     # Force verification of DLOG macros.
@@ -101,28 +101,29 @@ after_success:  .ci/after_success.sh
 addons:
   apt:
     sources:
+      # TODO: Remove PPA when Travis gets Python >=3.3.
+      - deadsnakes
       - llvm-toolchain-precise-3.6
       - ubuntu-toolchain-r-test
     packages:
-      # Basic Neovim/test dependencies.
       - autoconf
       - automake
       - build-essential
-      - cmake
-      - gdb
-      - libtool
-      - pkg-config
-      - unzip
-      - xclip
-      # Additional compilers/tools.
       - clang-3.6
+      - cmake
       - g++-5-multilib
       - g++-multilib
       - gcc-5-multilib
       - gcc-multilib
+      - gdb
       - libc6-dev-i386
+      - libtool
       - llvm-3.6-dev
+      - pkg-config
+      - python3.3-dev
+      - unzip
       - valgrind
+      - xclip
 
 branches:
   except:
