@@ -145,13 +145,13 @@ KHASH_SET_INIT_STR(strset)
 #define RNERR "E136: "
 
 /// Flags for shada_read_file and children
-enum {
+typedef enum {
   kShaDaWantInfo = 1,       ///< Load non-mark information
   kShaDaWantMarks = 2,      ///< Load local file marks and change list
   kShaDaForceit = 4,        ///< Overwrite info already read
   kShaDaGetOldfiles = 8,    ///< Load v:oldfiles.
   kShaDaMissingError = 16,  ///< Error out when os_open returns -ENOENT.
-};
+} ShaDaReadFileFlags;
 
 /// Possible ShaDa entry types
 ///
@@ -398,7 +398,7 @@ typedef struct sd_read_def {
   ShaDaFileReader read;   ///< Reader function.
   ShaDaReadCloser close;  ///< Close function.
   ShaDaFileSkipper skip;  ///< Function used to skip some bytes.
-  void *cookie;           ///< Reader function last argument.
+  void *cookie;           ///< Data describing object read from.
   bool eof;               ///< True if reader reached end of file.
   char *error;            ///< Error message in case of error.
   uintmax_t fpos;         ///< Current position (amount of bytes read since
@@ -423,7 +423,7 @@ typedef ptrdiff_t (*ShaDaFileWriter)(struct sd_write_def *const sd_writer,
 typedef struct sd_write_def {
   ShaDaFileWriter write;   ///< Writer function.
   ShaDaWriteCloser close;  ///< Close function.
-  void *cookie;            ///< Writer function last argument.
+  void *cookie;            ///< Data describing object written to.
   char *error;             ///< Error message in case of error.
   vimconv_T sd_conv;       ///< Structure used for converting encodings of some
                            ///< items.
@@ -645,7 +645,7 @@ static inline void hmll_dealloc(HMLList *const hmll)
 
 /// Wrapper for reading from file descriptors
 ///
-/// @return true if read was successfull, false otherwise.
+/// @return -1 or number of bytes read.
 static ptrdiff_t read_file(ShaDaReadDef *const sd_reader, void *const dest,
                            const size_t size)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
@@ -698,7 +698,7 @@ static int read_char(ShaDaReadDef *const sd_reader)
 
 /// Wrapper for writing to file descriptors
 ///
-/// @return true if read was successfull, false otherwise.
+/// @return -1 or number of bytes written.
 static ptrdiff_t write_file(ShaDaWriteDef *const sd_writer,
                             const void *const dest,
                             const size_t size)
@@ -812,7 +812,7 @@ static ShaDaReadResult sd_reader_skip(ShaDaReadDef *const sd_reader,
 ///
 /// All arguments are passed to os_open().
 ///
-/// @return file descriptor or -1 on failure.
+/// @return file descriptor or -errno on failure.
 static int open_file(const char *const fname, const int flags, const int mode)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
@@ -935,7 +935,7 @@ static bool shada_disabled(void)
 /// Read ShaDa file
 ///
 /// @param[in]  file   File to read or NULL to use default name.
-/// @param[in]  flags  Flags, see kShaDa enum values in shada.h.
+/// @param[in]  flags  Flags, see ShaDaReadFileFlags enum.
 ///
 /// @return FAIL if reading failed for some reason and OK otherwise.
 static int shada_read_file(const char *const file, const int flags)
@@ -1243,7 +1243,7 @@ static inline bool marks_equal(const pos_T a, const pos_T b)
 /// Read data from ShaDa file
 ///
 /// @param[in]  sd_reader  Structure containing file reader definition.
-/// @param[in]  flags      What to read.
+/// @param[in]  flags      What to read, see ShaDaReadFileFlags enum.
 static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
   FUNC_ATTR_NONNULL_ALL
 {
