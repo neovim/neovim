@@ -990,4 +990,46 @@ describe('ShaDa changes support code', function()
     end
     eq(found, 100)
   end)
+
+  it('merges JUMPLISTSIZE changes when writing, with new items between old',
+  function()
+    nvim_command('edit /a/b/c')
+    nvim_command('keepjumps call setline(1, range(202))')
+    local shada = ''
+    for i = 1,101 do
+      local t = i * 2
+      shada = shada .. (
+          '\011\204%c\019\131\162mX\195\161f\196\006/a/b/c\161l\204%c'
+          ):format(t, t)
+    end
+    wshada(shada)
+    eq(0, exc_exec(sdrcmd()))
+    local shada = ''
+    for i = 1,100 do
+      shada = shada .. ('\011%c\018\131\162mX\195\161f\196\006/a/b/c\161l%c'
+                       ):format(i, i)
+    end
+    local changes = {}
+    for i = 1, 100 do
+      changes[i] = {line=i}
+    end
+    for i = 1, 101 do
+      local t = i * 2
+      changes[(t > #changes + 1) and (#changes + 1) or t] = {line=t}
+    end
+    wshada(shada)
+    eq(0, exc_exec('wshada ' .. shada_fname))
+    local shift = #changes - 100
+    for i = 1,100 do
+      changes[i] = changes[i + shift]
+    end
+    local found = 0
+    for _, v in ipairs(read_shada_file(shada_fname)) do
+      if v.type == 11 and v.value.f == '/a/b/c' then
+        found = found + 1
+        eq(changes[found].line, v.value.l)
+      end
+    end
+    eq(found, 100)
+  end)
 end)
