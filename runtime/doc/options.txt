@@ -3877,18 +3877,20 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The 'keymodel' option is set by the |:behave| command.
 
 					*'keywordprg'* *'kp'*
-'keywordprg' 'kp'	string	(default "man" or "man -s",  DOS: ":help")
+'keywordprg' 'kp'	string	(default ":Man", Windows: ":help")
 			global or local to buffer |global-local|
 	Program to use for the |K| command.  Environment variables are
 	expanded |:set_env|.  ":help" may be used to access the Vim internal
 	help.  (Note that previously setting the global option to the empty
 	value did this, which is now deprecated.)
-	When "man" is used, Vim will automatically translate a count for the
-	"K" command to a section number.  Also for "man -s", in which case the
-	"-s" is removed when there is no count.
+	When the first character is ":", the command is invoked as a Vim
+	command prefixed with [count]. {Nvim}
+	When "man" or "man -s" is used, Vim will automatically translate
+	a [count] for the "K" command to a section number.
 	See |option-backslash| about including spaces and backslashes.
 	Example: >
 		:set keywordprg=man\ -s
+		:set keywordprg=:Man
 <	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
