@@ -48,8 +48,9 @@ function man#get_page(...) abort
   exec 'let s:man_tag_col_'.s:man_tag_depth.' = '.col('.')
   let s:man_tag_depth = s:man_tag_depth + 1
 
-  " Use an existing "man" window if it exists, otherwise open a new one.
-  if !invoked_from_man
+  let editcmd = 'edit'
+  " Use an existing 'man' window, else open a new one.
+  if &filetype !=# 'man'
     let thiswin = winnr()
     wincmd b
     if winnr() > 1
@@ -64,13 +65,13 @@ function man#get_page(...) abort
         endif
       endwhile
     endif
-    if !invoked_from_man
-      tabnew
-      let invoked_from_man = 1
+
+    if &filetype !=# 'man'
+      let editcmd = 'tabnew'
     endif
   endif
 
-  silent exec 'edit man://'.page.(empty(sect)?'':'('.sect.')')
+  silent exec editcmd.' man://'.page.(empty(sect)?'':'('.sect.')')
 
   setlocal modifiable
   silent keepjumps norm! 1G"_dG
@@ -86,7 +87,7 @@ function man#get_page(...) abort
   setlocal nomodified
   setlocal filetype=man
 
-  if invoked_from_man
+  if invoked_from_man || editcmd ==# 'tabnew'
     call s:set_window_local_options()
   endif
 endfunction
