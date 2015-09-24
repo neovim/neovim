@@ -4003,8 +4003,8 @@ shada_read_next_item_error:
 /// @param[in]  name  Checked name.
 ///
 /// @return True if it is, false otherwise.
-bool shada_removable(const char *name)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+static bool shada_removable(const char *name)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char  *p;
   char part[MAXPATHL + 1];
