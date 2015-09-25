@@ -65,7 +65,7 @@ ex_menu (
   char_u      *map_to;
   int noremap;
   bool silent = false;
-  int special = FALSE;
+  bool special = false;
   int unmenu;
   char_u      *map_buf;
   char_u      *arg;
@@ -91,7 +91,7 @@ ex_menu (
       continue;
     }
     if (STRNCMP(arg, "<special>", 9) == 0) {
-      special = TRUE;
+      special = true;
       arg = skipwhite(arg + 9);
       continue;
     }
