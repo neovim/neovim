@@ -9,7 +9,7 @@
 #include "nvim/os/input.h"
 #include "nvim/event/rstream.h"
 
-#define PASTETOGGLE_KEY "<f37>"
+#define PASTETOGGLE_KEY "<Paste>"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/input.c.generated.h"
@@ -34,11 +34,6 @@ void term_input_init(TermInput *input, Loop *loop)
   rstream_init_fd(loop, &input->read_stream, input->in_fd, 0xfff, input);
   // initialize a timer handle for handling ESC with libtermkey
   time_watcher_init(loop, &input->timer_handle, input);
-  // Set the pastetoggle option to a special key that will be sent when
-  // \e[20{0,1}~/ are received
-  Error err = ERROR_INIT;
-  vim_set_option(cstr_as_string("pastetoggle"),
-      STRING_OBJ(cstr_as_string(PASTETOGGLE_KEY)), &err);
 }
 
 void term_input_destroy(TermInput *input)
@@ -229,20 +224,6 @@ static bool handle_bracketed_paste(TermInput *input)
     rbuffer_consumed(input->read_stream.buffer, 6);
     if (input->paste_enabled == enable) {
       return true;
-    }
-    if (enable) {
-      // Get the current mode
-      int state = get_real_state();
-      if (state & NORMAL) {
-        // Enter insert mode
-        enqueue_input("i", 1);
-      } else if (state & VISUAL) {
-        // Remove the selected text and enter insert mode
-        enqueue_input("c", 1);
-      } else if (!(state & INSERT)) {
-        // Don't mess with the paste option
-        return true;
-      }
     }
     enqueue_input(PASTETOGGLE_KEY, sizeof(PASTETOGGLE_KEY) - 1);
     input->paste_enabled = enable;

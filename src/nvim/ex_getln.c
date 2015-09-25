@@ -302,7 +302,7 @@ getcmdline (
     input_enable_events();
     do {
       c = safe_vgetc();
-    } while (c == K_IGNORE);
+    } while (c == K_IGNORE || c == K_PASTE);
     input_disable_events();
 
     if (c == K_EVENT) {
