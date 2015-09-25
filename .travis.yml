@@ -22,6 +22,8 @@ env:
     - DEPS_DOWNLOAD_DIR="$TRAVIS_BUILD_DIR/deps-downloads"
     # Install directory for Neovim.
     - INSTALL_PREFIX="$HOME/nvim-install"
+    # Directory for Neovim plugins for integration tests.
+    - PLUGIN_DIR="$HOME/nvim-plugins"
     # Log directory for Clang sanitizers and Valgrind.
     - LOG_DIR="$BUILD_DIR/log"
     # Default CMake flags.
@@ -133,6 +135,7 @@ cache:
   directories:
     - "$HOME/.cache/pip"
     - "$HOME/.cache/nvim-deps"
+    - "$PLUGIN_DIR"
 
 notifications:
   webhooks:

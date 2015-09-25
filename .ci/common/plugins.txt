@@ -1,0 +1,5 @@
+junegunn/vader.vim ad2c752435baba9e7544d0046f0277c3573439bd
+
+junegunn/vim-easy-align c62d124be614de65922b15d468c4049d1eee9353
+tpope/vim-repeat 7a6675f092842c8f81e71d5345bd7cdbf3759415
+
