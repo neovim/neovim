@@ -1308,6 +1308,9 @@ void ex_emenu(exarg_T *eap)
      * for exclusive mode */
     if (*p_sel == 'e' && gchar_cursor() != NUL)
       ++curwin->w_cursor.col;
+  } else if((State & CMDLINE)) {
+      mode = (char_u *)"Command";
+      idx = MENU_INDEX_CMDLINE;
   } else {
     mode = (char_u *)"Normal";
     idx = MENU_INDEX_NORMAL;
