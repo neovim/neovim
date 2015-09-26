@@ -36,3 +36,37 @@ describe(':emenu', function()
   end)
 
 end)
+
+describe('emenu Edit.Paste while in commandline', function()
+    before_each(clear)
+
+    it('ok', function()
+        local screen = require('test.functional.ui.screen').new()
+        screen:attach()
+        nvim('command', 'runtime menu.vim')
+        feed('ithis is a sentence<esc>^"+yiwo<esc>')
+        nvim('command', 'emenu Edit.Paste')
+        feed(':')
+        nvim('command', 'emenu Edit.Paste')
+        screen:expect([[
+          this is a sentence                                   |
+          this                                                 |
+          ~                                                    |
+          ~                                                    |
+          ~                                                    |
+          ~                                                    |
+          ~                                                    |
+          ~                                                    |
+          ~                                                    |
+          ~                                                    |
+          ~                                                    |
+          ~                                                    |
+          ~                                                    |
+          :this^                                                |
+        ]])
+
+        screen:detach()
+        clear()
+    end)
+end)
+
