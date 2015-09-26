@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')
+local Screen = require('test.functional.ui.screen').new(40,4)
 local clear, execute, nvim = helpers.clear, helpers.execute, helpers.nvim
 local expect = helpers.expect
 local feed = helpers.feed
@@ -35,4 +36,26 @@ describe(':emenu', function()
     expect('ae')
   end)
 
+end)
+
+describe('emenu Edit.Paste while in commandline', function()
+    before_each(function()
+      clear()
+      screen = Screen.new(40, 4)
+      screen:attach()
+    end)
+
+    it('ok', function()
+        nvim('command', 'runtime menu.vim')
+        feed('ithis is a sentence<esc>^"+yiwo<esc>')
+        nvim('command', 'emenu Edit.Paste')
+        feed(':')
+        nvim('command', 'emenu Edit.Paste')
+        screen:expect([[
+          this is a sentence                      |
+          this                                    |
+          ~                                       |
+          :this^                                   |
+        ]])
+    end)
 end)
