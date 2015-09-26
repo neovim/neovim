@@ -2,6 +2,10 @@
 " Language:	man
 " Maintainer:	SungHyun Nam <goweol@gmail.com>
 
+if has('vim_starting') && &filetype !=# 'man'
+  finish
+endif
+
 " Only do this when not done yet for this buffer
 if exists('b:did_ftplugin')
   finish
