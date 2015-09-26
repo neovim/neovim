@@ -6967,7 +6967,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|hl-WildMenu|.
 
 						*'wildmode'* *'wim'*
-'wildmode' 'wim'	string	(default: "list:longest,full")
+'wildmode' 'wim'	string	(default: "full")
 			global
 	Completion mode that is used for the character specified with
 	'wildchar'.  It is a comma separated list of up to four parts.  Each

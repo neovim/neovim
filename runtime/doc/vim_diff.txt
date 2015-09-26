@@ -51,7 +51,6 @@ these differences.
 - 'ttyfast' is always set
 - 'viminfo' includes "!"
 - 'wildmenu' is set by default
-- 'wildmode' defaults to "list:longest,full"
 
 ==============================================================================
 3. Changed features					 *nvim-features-changed*
