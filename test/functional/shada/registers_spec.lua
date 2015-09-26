@@ -1,34 +1,23 @@
 -- ShaDa registers saving/reading support
 local helpers = require('test.functional.helpers')
-local nvim, nvim_window, nvim_curwin, nvim_command, nvim_feed, nvim_eval, eq =
-  helpers.nvim, helpers.window, helpers.curwin, helpers.command, helpers.feed,
-  helpers.eval, helpers.eq
+local nvim_command, funcs, eq = helpers.command, helpers.funcs, helpers.eq
 
 local shada_helpers = require('test.functional.shada.helpers')
 local reset, set_additional_cmd, clear =
   shada_helpers.reset, shada_helpers.set_additional_cmd,
   shada_helpers.clear
 
-local nvim_current_line = function()
-  return nvim_window('get_cursor', nvim_curwin())[1]
-end
-
 local setreg = function(name, contents, typ)
-  local expr = 'setreg("' .. name .. '", ['
   if type(contents) == 'string' then
     contents = {contents}
   end
-  for _, line in ipairs(contents) do
-    expr = expr .. '"' .. line:gsub('[\\"]', '\\\\\\0') .. '", '
-  end
-  expr = expr .. '], "' .. typ .. '")'
-  nvim_eval(expr)
+  funcs.setreg(name, contents, typ)
 end
 
 local getreg = function(name)
   return {
-    nvim_eval(('getreg("%s", 1, 1)'):format(name)),
-    nvim_eval(('getregtype("%s")'):format(name)),
+    funcs.getreg(name, 1, 1),
+    funcs.getregtype(name),
   }
 end
 
@@ -40,7 +29,7 @@ describe('ShaDa support code', function()
     setreg('c', {'d', 'e', ''}, 'c')
     setreg('l', {'a', 'b', 'cde'}, 'l')
     setreg('b', {'bca', 'abc', 'cba'}, 'b3')
-    nvim_command('qa')
+    nvim_command('qall')
     reset()
     eq({{'d', 'e', ''}, 'v'}, getreg('c'))
     eq({{'a', 'b', 'cde'}, 'V'}, getreg('l'))
@@ -52,7 +41,7 @@ describe('ShaDa support code', function()
     setreg('c', {'d', 'e', ''}, 'c')
     setreg('l', {'a', 'b', 'cde'}, 'l')
     setreg('b', {'bca', 'abc', 'cba'}, 'b3')
-    nvim_command('qa')
+    nvim_command('qall')
     reset()
     eq({nil, ''}, getreg('c'))
     eq({nil, ''}, getreg('l'))
@@ -64,7 +53,7 @@ describe('ShaDa support code', function()
     setreg('l', {'a', 'b', 'cde'}, 'l')
     setreg('b', {'bca', 'abc', 'cba'}, 'b3')
     set_additional_cmd('set shada=\'0,<0')
-    nvim_command('qa')
+    nvim_command('qall')
     reset()
     eq({{'d', 'e', ''}, 'v'}, getreg('c'))
     eq({{'a', 'b', 'cde'}, 'V'}, getreg('l'))
@@ -76,7 +65,7 @@ describe('ShaDa support code', function()
     setreg('c', {'d', 'e', ''}, 'c')
     setreg('l', {'a', 'b', 'cde'}, 'l')
     setreg('b', {'bca', 'abc', 'cba'}, 'b3')
-    nvim_command('qa')
+    nvim_command('qall')
     reset()
     eq({nil, ''}, getreg('c'))
     eq({nil, ''}, getreg('l'))
@@ -88,7 +77,7 @@ describe('ShaDa support code', function()
     setreg('l', {'a', 'b', 'cde'}, 'l')
     setreg('b', {'bca', 'abc', 'cba'}, 'b3')
     set_additional_cmd('set shada=\'0,\\"0')
-    nvim_command('qa')
+    nvim_command('qall')
     reset()
     eq({{'d', 'e', ''}, 'v'}, getreg('c'))
     eq({{'a', 'b', 'cde'}, 'V'}, getreg('l'))
@@ -100,7 +89,7 @@ describe('ShaDa support code', function()
     setreg('c', {'d', 'e', ''}, 'c')
     setreg('l', {'a', 'b', 'cde'}, 'l')
     setreg('b', {'bca', 'abc', 'cba'}, 'b3')
-    nvim_command('qa')
+    nvim_command('qall')
     reset()
     eq({{'d', 'e', ''}, 'v'}, getreg('c'))
     eq({{'a', 'b', 'cde'}, 'V'}, getreg('l'))
@@ -111,7 +100,7 @@ describe('ShaDa support code', function()
     nvim_command('set shada=\'0,<2')
     setreg('o', {'d'}, 'c')
     setreg('t', {'a', 'b', 'cde'}, 'l')
-    nvim_command('qa')
+    nvim_command('qall')
     reset()
     eq({{'d'}, 'v'}, getreg('o'))
     eq({nil, ''}, getreg('t'))
@@ -121,7 +110,7 @@ describe('ShaDa support code', function()
     nvim_command('set shada=\'0,\\"2')
     setreg('o', {'d'}, 'c')
     setreg('t', {'a', 'b', 'cde'}, 'l')
-    nvim_command('qa')
+    nvim_command('qall')
     reset()
     eq({{'d'}, 'v'}, getreg('o'))
     eq({nil, ''}, getreg('t'))
@@ -132,7 +121,7 @@ describe('ShaDa support code', function()
     setreg('o', {'d'}, 'c')
     setreg('t', {'a', 'b', 'cde'}, 'l')
     setreg('h', {'abc', 'acb', 'bac', 'bca', 'cab', 'cba'}, 'b3')
-    nvim_command('qa')
+    nvim_command('qall')
     reset()
     eq({{'d'}, 'v'}, getreg('o'))
     eq({{'a', 'b', 'cde'}, 'V'}, getreg('t'))

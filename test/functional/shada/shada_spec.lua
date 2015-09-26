@@ -1,8 +1,7 @@
 -- Other ShaDa tests
 local helpers = require('test.functional.helpers')
-local nvim, nvim_window, nvim_curwin, nvim_command, nvim_feed, nvim_eval, eq =
-  helpers.nvim, helpers.window, helpers.curwin, helpers.command, helpers.feed,
-  helpers.eval, helpers.eq
+local meths, nvim_command, funcs, eq =
+  helpers.meths, helpers.command, helpers.funcs, helpers.eq
 local write_file, spawn, set_session, nvim_prog, exc_exec =
   helpers.write_file, helpers.spawn, helpers.set_session, helpers.nvim_prog,
   helpers.exc_exec
@@ -12,12 +11,12 @@ local paths = require('test.config.paths')
 local msgpack = require('MessagePack')
 
 local shada_helpers = require('test.functional.shada.helpers')
-local reset, set_additional_cmd, clear, get_shada_rw =
-  shada_helpers.reset, shada_helpers.set_additional_cmd,
-  shada_helpers.clear, shada_helpers.get_shada_rw
+local reset, clear, get_shada_rw =
+  shada_helpers.reset, shada_helpers.clear, shada_helpers.get_shada_rw
 local read_shada_file = shada_helpers.read_shada_file
 
-local wshada, sdrcmd, shada_fname, clean = get_shada_rw('Xtest-functional-shada-shada.shada')
+local wshada, _, shada_fname, clean =
+  get_shada_rw('Xtest-functional-shada-shada.shada')
 
 describe('ShaDa support code', function()
   before_each(reset)
@@ -52,8 +51,8 @@ describe('ShaDa support code', function()
     local hist1 = ('-'):rep(1024 - 5)
     local hist2 = ('-'):rep(1025 - 5)
     nvim_command('set shada-=s10 shada+=s1')
-    nvim_eval(('histadd(":", "%s")'):format(hist1))
-    nvim_eval(('histadd(":", "%s")'):format(hist2))
+    funcs.histadd(':', hist1)
+    funcs.histadd(':', hist2)
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
@@ -143,7 +142,7 @@ describe('ShaDa support code', function()
     local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed'},
                           true)
     set_session(session)
-    eq('', nvim_eval('@a'))
+    eq('', funcs.getreg('a'))
     session:exit(0)
     os.remove('NONE')
   end)
@@ -166,7 +165,7 @@ describe('ShaDa support code', function()
   end
 
   it('correctly uses shada-r option', function()
-    nvim('set_var', '__home', paths.test_source_path)
+    meths.set_var('__home', paths.test_source_path)
     nvim_command('let $HOME = __home')
     nvim_command('unlet __home')
     nvim_command('edit ~/README.md')
@@ -188,12 +187,12 @@ describe('ShaDa support code', function()
   end)
 
   it('correctly ignores case with shada-r option', function()
-    local pwd = nvim('call_function', 'getcwd', {})
+    local pwd = funcs.getcwd()
     local relfname = 'абв/test'
     local fname = pwd .. '/' .. relfname
-    nvim('set_var', '__fname', fname)
+    meths.set_var('__fname', fname)
     nvim_command('silent! edit `=__fname`')
-    nvim('call_function', 'setline', {1, {'a', 'b', 'c', 'd'}})
+    funcs.setline(1, {'a', 'b', 'c', 'd'})
     nvim_command('normal! GmAggmaAabc')
     nvim_command('undo')
     nvim_command('set shada+=%')

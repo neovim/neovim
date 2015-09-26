@@ -1,14 +1,13 @@
 -- ShaDa merging data support
 local helpers = require('test.functional.helpers')
-local nvim, nvim_window, nvim_curwin, nvim_command, nvim_feed, nvim_eval, eq =
-  helpers.nvim, helpers.window, helpers.curwin, helpers.command, helpers.feed,
-  helpers.eval, helpers.eq
-local exc_exec = helpers.exc_exec
+local nvim_command, meths, funcs, curbufmeths, eq =
+  helpers.command, helpers.meths, helpers.funcs,
+  helpers.curbufmeths, helpers.eq
+local exc_exec, redir_exec = helpers.exc_exec, helpers.redir_exec
 
 local shada_helpers = require('test.functional.shada.helpers')
-local reset, set_additional_cmd, clear, get_shada_rw =
-  shada_helpers.reset, shada_helpers.set_additional_cmd,
-  shada_helpers.clear, shada_helpers.get_shada_rw
+local reset, clear, get_shada_rw =
+  shada_helpers.reset, shada_helpers.clear, shada_helpers.get_shada_rw
 local read_shada_file = shada_helpers.read_shada_file
 
 local wshada, sdrcmd, shada_fname =
@@ -142,7 +141,7 @@ describe('ShaDa history merging code', function()
     eq(0, exc_exec('wshada! ' .. shada_fname))
     local items = {'ad', 'ab', 'ac', 'af', 'ae'}
     for i, v in ipairs(items) do
-      eq(v, nvim_eval(('histget(":", %i)'):format(i)))
+      eq(v, funcs.histget(':', i))
     end
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
@@ -244,7 +243,7 @@ describe('ShaDa search pattern support code', function()
     eq(0, exc_exec(sdrcmd()))
     wshada('\002\000\011\130\162sX\194\162sp\196\001?')
     eq(0, exc_exec(sdrcmd()))
-    eq('-', nvim_eval('@/'))
+    eq('-', funcs.getreg('/'))
   end)
 
   it('uses last search pattern with gt tstamp from file when reading with bang',
@@ -253,7 +252,7 @@ describe('ShaDa search pattern support code', function()
     eq(0, exc_exec(sdrcmd()))
     wshada('\002\000\011\130\162sX\194\162sp\196\001?')
     eq(0, exc_exec(sdrcmd(true)))
-    eq('?', nvim_eval('@/'))
+    eq('?', funcs.getreg('/'))
   end)
 
   it('uses last search pattern with eq timestamp from instance when reading',
@@ -262,7 +261,7 @@ describe('ShaDa search pattern support code', function()
     eq(0, exc_exec(sdrcmd()))
     wshada('\002\001\011\130\162sX\194\162sp\196\001?')
     eq(0, exc_exec(sdrcmd()))
-    eq('-', nvim_eval('@/'))
+    eq('-', funcs.getreg('/'))
   end)
 
   it('uses last search pattern with gt timestamp from file when reading',
@@ -271,7 +270,7 @@ describe('ShaDa search pattern support code', function()
     eq(0, exc_exec(sdrcmd()))
     wshada('\002\002\011\130\162sX\194\162sp\196\001?')
     eq(0, exc_exec(sdrcmd()))
-    eq('?', nvim_eval('@/'))
+    eq('?', funcs.getreg('/'))
   end)
 
   it('uses last search pattern with gt timestamp from instance when writing',
@@ -279,7 +278,7 @@ describe('ShaDa search pattern support code', function()
     wshada('\002\001\011\130\162sX\194\162sp\196\001-')
     eq(0, exc_exec(sdrcmd()))
     wshada('\002\000\011\130\162sX\194\162sp\196\001?')
-    eq('-', nvim_eval('@/'))
+    eq('-', funcs.getreg('/'))
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
@@ -295,7 +294,7 @@ describe('ShaDa search pattern support code', function()
     wshada('\002\001\011\130\162sX\194\162sp\196\001-')
     eq(0, exc_exec(sdrcmd()))
     wshada('\002\001\011\130\162sX\194\162sp\196\001?')
-    eq('-', nvim_eval('@/'))
+    eq('-', funcs.getreg('/'))
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
@@ -311,7 +310,7 @@ describe('ShaDa search pattern support code', function()
     wshada('\002\001\011\130\162sX\194\162sp\196\001-')
     eq(0, exc_exec(sdrcmd()))
     wshada('\002\002\011\130\162sX\194\162sp\196\001?')
-    eq('-', nvim_eval('@/'))
+    eq('-', funcs.getreg('/'))
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
@@ -328,7 +327,7 @@ describe('ShaDa search pattern support code', function()
     eq(0, exc_exec(sdrcmd()))
     wshada('\002\000\011\130\162ss\195\162sp\196\001?')
     eq(0, exc_exec(sdrcmd()))
-    eq('-', nvim_eval('@/'))
+    eq('-', funcs.getreg('/'))
   end)
 
   it('uses last s/ pattern with gt timestamp from file when reading with !',
@@ -337,7 +336,7 @@ describe('ShaDa search pattern support code', function()
     eq(0, exc_exec(sdrcmd()))
     wshada('\002\000\011\130\162ss\195\162sp\196\001?')
     eq(0, exc_exec(sdrcmd(true)))
-    eq('?', nvim_eval('@/'))
+    eq('?', funcs.getreg('/'))
   end)
 
   it('uses last s/ pattern with eq timestamp from instance when reading',
@@ -346,7 +345,7 @@ describe('ShaDa search pattern support code', function()
     eq(0, exc_exec(sdrcmd()))
     wshada('\002\001\011\130\162ss\195\162sp\196\001?')
     eq(0, exc_exec(sdrcmd()))
-    eq('-', nvim_eval('@/'))
+    eq('-', funcs.getreg('/'))
   end)
 
   it('uses last s/ pattern with gt timestamp from file when reading',
@@ -355,7 +354,7 @@ describe('ShaDa search pattern support code', function()
     eq(0, exc_exec(sdrcmd()))
     wshada('\002\002\011\130\162ss\195\162sp\196\001?')
     eq(0, exc_exec(sdrcmd()))
-    eq('?', nvim_eval('@/'))
+    eq('?', funcs.getreg('/'))
   end)
 
   it('uses last s/ pattern with gt timestamp from instance when writing',
@@ -363,7 +362,7 @@ describe('ShaDa search pattern support code', function()
     wshada('\002\001\011\130\162ss\195\162sp\196\001-')
     eq(0, exc_exec(sdrcmd()))
     wshada('\002\000\011\130\162ss\195\162sp\196\001?')
-    eq('-', nvim_eval('@/'))
+    eq('-', funcs.getreg('/'))
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
@@ -379,7 +378,7 @@ describe('ShaDa search pattern support code', function()
     wshada('\002\001\011\130\162ss\195\162sp\196\001-')
     eq(0, exc_exec(sdrcmd()))
     wshada('\002\001\011\130\162ss\195\162sp\196\001?')
-    eq('-', nvim_eval('@/'))
+    eq('-', funcs.getreg('/'))
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
@@ -395,7 +394,7 @@ describe('ShaDa search pattern support code', function()
     wshada('\002\001\011\130\162ss\195\162sp\196\001-')
     eq(0, exc_exec(sdrcmd()))
     wshada('\002\002\011\130\162ss\195\162sp\196\001?')
-    eq('-', nvim_eval('@/'))
+    eq('-', funcs.getreg('/'))
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
@@ -421,7 +420,7 @@ describe('ShaDa replacement string support code', function()
     wshada('\003\000\004\145\196\001?')
     eq(0, exc_exec(sdrcmd()))
     nvim_command('s/.*/~')
-    eq('-', nvim_eval('getline(".")'))
+    eq('-', funcs.getline('.'))
     nvim_command('bwipeout!')
   end)
 
@@ -432,7 +431,7 @@ describe('ShaDa replacement string support code', function()
     wshada('\003\000\004\145\196\001?')
     eq(0, exc_exec(sdrcmd(true)))
     nvim_command('s/.*/~')
-    eq('?', nvim_eval('getline(".")'))
+    eq('?', funcs.getline('.'))
     nvim_command('bwipeout!')
   end)
 
@@ -443,7 +442,7 @@ describe('ShaDa replacement string support code', function()
     wshada('\003\001\004\145\196\001?')
     eq(0, exc_exec(sdrcmd()))
     nvim_command('s/.*/~')
-    eq('-', nvim_eval('getline(".")'))
+    eq('-', funcs.getline('.'))
     nvim_command('bwipeout!')
   end)
 
@@ -454,7 +453,7 @@ describe('ShaDa replacement string support code', function()
     wshada('\003\002\004\145\196\001?')
     eq(0, exc_exec(sdrcmd()))
     nvim_command('s/.*/~')
-    eq('?', nvim_eval('getline(".")'))
+    eq('?', funcs.getline('.'))
     nvim_command('bwipeout!')
   end)
 
@@ -518,7 +517,7 @@ describe('ShaDa marks support code', function()
     wshada('\007\000\018\131\162mX\195\161f\196\006/a/b/?\161nA')
     eq(0, exc_exec(sdrcmd()))
     nvim_command('normal! `A')
-    eq('-', nvim_eval('fnamemodify(bufname("%"), ":t")'))
+    eq('-', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
   end)
 
   it('uses last A mark with gt timestamp from file when reading with !',
@@ -528,7 +527,7 @@ describe('ShaDa marks support code', function()
     wshada('\007\000\018\131\162mX\195\161f\196\006/a/b/?\161nA')
     eq(0, exc_exec(sdrcmd(true)))
     nvim_command('normal! `A')
-    eq('?', nvim_eval('fnamemodify(bufname("%"), ":t")'))
+    eq('?', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
   end)
 
   it('uses last A mark with eq timestamp from instance when reading',
@@ -538,7 +537,7 @@ describe('ShaDa marks support code', function()
     wshada('\007\001\018\131\162mX\195\161f\196\006/a/b/?\161nA')
     eq(0, exc_exec(sdrcmd()))
     nvim_command('normal! `A')
-    eq('-', nvim_eval('fnamemodify(bufname("%"), ":t")'))
+    eq('-', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
   end)
 
   it('uses last A mark with gt timestamp from file when reading',
@@ -548,7 +547,7 @@ describe('ShaDa marks support code', function()
     wshada('\007\002\018\131\162mX\195\161f\196\006/a/b/?\161nA')
     eq(0, exc_exec(sdrcmd()))
     nvim_command('normal! `A')
-    eq('?', nvim_eval('fnamemodify(bufname("%"), ":t")'))
+    eq('?', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
   end)
 
   it('uses last A mark with gt timestamp from instance when writing',
@@ -557,7 +556,7 @@ describe('ShaDa marks support code', function()
     eq(0, exc_exec(sdrcmd()))
     wshada('\007\000\018\131\162mX\195\161f\196\006/a/b/?\161nA')
     nvim_command('normal! `A')
-    eq('-', nvim_eval('fnamemodify(bufname("%"), ":t")'))
+    eq('-', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
@@ -574,7 +573,7 @@ describe('ShaDa marks support code', function()
     eq(0, exc_exec(sdrcmd()))
     wshada('\007\001\018\131\162mX\195\161f\196\006/a/b/?\161nA')
     nvim_command('normal! `A')
-    eq('-', nvim_eval('fnamemodify(bufname("%"), ":t")'))
+    eq('-', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
@@ -591,7 +590,7 @@ describe('ShaDa marks support code', function()
     eq(0, exc_exec(sdrcmd()))
     wshada('\007\002\018\131\162mX\195\161f\196\006/a/b/?\161nA')
     nvim_command('normal! `A')
-    eq('-', nvim_eval('fnamemodify(bufname("%"), ":t")'))
+    eq('-', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
@@ -605,60 +604,60 @@ describe('ShaDa marks support code', function()
   it('uses last a mark with gt timestamp from instance when reading',
   function()
     nvim_command('edit /a/b/-')
-    nvim_eval('setline(1, ["-", "?"])')
+    funcs.setline(1, {'-', '?'})
     wshada('\010\001\017\131\161l\001\161f\196\006/a/b/-\161na')
     eq(0, exc_exec(sdrcmd()))
     wshada('\010\000\017\131\161l\002\161f\196\006/a/b/-\161na')
     eq(0, exc_exec(sdrcmd()))
     nvim_command('normal! `a')
-    eq('-', nvim_eval('getline(".")'))
+    eq('-', funcs.getline('.'))
   end)
 
   it('uses last a mark with gt timestamp from file when reading with !',
   function()
     nvim_command('edit /a/b/-')
-    nvim_eval('setline(1, ["-", "?"])')
+    funcs.setline(1, {'-', '?'})
     wshada('\010\001\017\131\161l\001\161f\196\006/a/b/-\161na')
     eq(0, exc_exec(sdrcmd()))
     wshada('\010\000\017\131\161l\002\161f\196\006/a/b/-\161na')
     eq(0, exc_exec(sdrcmd(true)))
     nvim_command('normal! `a')
-    eq('?', nvim_eval('getline(".")'))
+    eq('?', funcs.getline('.'))
   end)
 
   it('uses last a mark with eq timestamp from instance when reading',
   function()
     nvim_command('edit /a/b/-')
-    nvim_eval('setline(1, ["-", "?"])')
+    funcs.setline(1, {'-', '?'})
     wshada('\010\001\017\131\161l\001\161f\196\006/a/b/-\161na')
     eq(0, exc_exec(sdrcmd()))
     wshada('\010\001\017\131\161l\002\161f\196\006/a/b/-\161na')
     eq(0, exc_exec(sdrcmd()))
     nvim_command('normal! `a')
-    eq('-', nvim_eval('getline(".")'))
+    eq('-', funcs.getline('.'))
   end)
 
   it('uses last a mark with gt timestamp from file when reading',
   function()
     nvim_command('edit /a/b/-')
-    nvim_eval('setline(1, ["-", "?"])')
+    funcs.setline(1, {'-', '?'})
     wshada('\010\001\017\131\161l\001\161f\196\006/a/b/-\161na')
     eq(0, exc_exec(sdrcmd()))
     wshada('\010\002\017\131\161l\002\161f\196\006/a/b/-\161na')
     eq(0, exc_exec(sdrcmd()))
     nvim_command('normal! `a')
-    eq('?', nvim_eval('getline(".")'))
+    eq('?', funcs.getline('.'))
   end)
 
   it('uses last a mark with gt timestamp from instance when writing',
   function()
     nvim_command('edit /a/b/-')
-    nvim_eval('setline(1, ["-", "?"])')
+    funcs.setline(1, {'-', '?'})
     wshada('\010\001\017\131\161l\001\161f\196\006/a/b/-\161na')
     eq(0, exc_exec(sdrcmd()))
     wshada('\010\000\017\131\161l\002\161f\196\006/a/b/-\161na')
     nvim_command('normal! `a')
-    eq('-', nvim_eval('getline(".")'))
+    eq('-', funcs.getline('.'))
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
@@ -673,12 +672,12 @@ describe('ShaDa marks support code', function()
   it('uses last a mark with eq timestamp from instance when writing',
   function()
     nvim_command('edit /a/b/-')
-    nvim_eval('setline(1, ["-", "?"])')
+    funcs.setline(1, {'-', '?'})
     wshada('\010\001\017\131\161l\001\161f\196\006/a/b/-\161na')
     eq(0, exc_exec(sdrcmd()))
     wshada('\010\001\017\131\161l\002\161f\196\006/a/b/-\161na')
     nvim_command('normal! `a')
-    eq('-', nvim_eval('getline(".")'))
+    eq('-', funcs.getline('.'))
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
@@ -693,12 +692,12 @@ describe('ShaDa marks support code', function()
   it('uses last a mark with gt timestamp from file when writing',
   function()
     nvim_command('edit /a/b/-')
-    nvim_eval('setline(1, ["-", "?"])')
+    funcs.setline(1, {'-', '?'})
     wshada('\010\001\017\131\161l\001\161f\196\006/a/b/-\161na')
     eq(0, exc_exec(sdrcmd()))
     wshada('\010\002\017\131\161l\002\161f\196\006/a/b/-\161na')
     nvim_command('normal! `a')
-    eq('-', nvim_eval('fnamemodify(bufname("%"), ":t")'))
+    eq('-', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
@@ -724,7 +723,7 @@ describe('ShaDa registers support code', function()
     eq(0, exc_exec(sdrcmd()))
     wshada('\005\000\015\131\161na\162rX\194\162rc\145\196\001?')
     eq(0, exc_exec(sdrcmd()))
-    eq('-', nvim_eval('@a'))
+    eq('-', funcs.getreg('a'))
   end)
 
   it('uses last a register with gt timestamp from file when reading with !',
@@ -733,7 +732,7 @@ describe('ShaDa registers support code', function()
     eq(0, exc_exec(sdrcmd()))
     wshada('\005\000\015\131\161na\162rX\194\162rc\145\196\001?')
     eq(0, exc_exec(sdrcmd(true)))
-    eq('?', nvim_eval('@a'))
+    eq('?', funcs.getreg('a'))
   end)
 
   it('uses last a register with eq timestamp from instance when reading',
@@ -742,7 +741,7 @@ describe('ShaDa registers support code', function()
     eq(0, exc_exec(sdrcmd()))
     wshada('\005\001\015\131\161na\162rX\194\162rc\145\196\001?')
     eq(0, exc_exec(sdrcmd()))
-    eq('-', nvim_eval('@a'))
+    eq('-', funcs.getreg('a'))
   end)
 
   it('uses last a register with gt timestamp from file when reading',
@@ -751,7 +750,7 @@ describe('ShaDa registers support code', function()
     eq(0, exc_exec(sdrcmd()))
     wshada('\005\002\015\131\161na\162rX\194\162rc\145\196\001?')
     eq(0, exc_exec(sdrcmd()))
-    eq('?', nvim_eval('@a'))
+    eq('?', funcs.getreg('a'))
   end)
 
   it('uses last a register with gt timestamp from instance when writing',
@@ -759,7 +758,7 @@ describe('ShaDa registers support code', function()
     wshada('\005\001\015\131\161na\162rX\194\162rc\145\196\001-')
     eq(0, exc_exec(sdrcmd()))
     wshada('\005\000\015\131\161na\162rX\194\162rc\145\196\001?')
-    eq('-', nvim_eval('@a'))
+    eq('-', funcs.getreg('a'))
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
@@ -776,7 +775,7 @@ describe('ShaDa registers support code', function()
     wshada('\005\001\015\131\161na\162rX\194\162rc\145\196\001-')
     eq(0, exc_exec(sdrcmd()))
     wshada('\005\001\015\131\161na\162rX\194\162rc\145\196\001?')
-    eq('-', nvim_eval('@a'))
+    eq('-', funcs.getreg('a'))
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
@@ -793,7 +792,7 @@ describe('ShaDa registers support code', function()
     wshada('\005\001\015\131\161na\162rX\194\162rc\145\196\001-')
     eq(0, exc_exec(sdrcmd()))
     wshada('\005\002\015\131\161na\162rX\194\162rc\145\196\001?')
-    eq('-', nvim_eval('@a'))
+    eq('-', funcs.getreg('a'))
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
@@ -822,8 +821,7 @@ describe('ShaDa jumps support code', function()
            .. '\008\004\018\131\162mX\195\161f\196\006/a/b/d\161l\003'
            .. '\008\007\018\131\162mX\195\161f\196\006/a/b/f\161l\002')
     eq(0, exc_exec(sdrcmd()))
-    nvim_command('redir => g:jumps | jumps | redir END')
-    eq('', nvim_eval('bufname("%")'))
+    eq('', curbufmeths.get_name())
     eq('\n'
        .. ' jump line  col file/text\n'
        .. '   6     2    0 /a/b/c\n'
@@ -832,7 +830,7 @@ describe('ShaDa jumps support code', function()
        .. '   3     2    0 /a/b/e\n'
        .. '   2     2    0 /a/b/f\n'
        .. '   1     1    0 \n'
-       .. '>', nvim_eval('g:jumps'))
+       .. '>', redir_exec('jumps'))
   end)
 
   it('merges jumps when writing', function()
@@ -916,7 +914,6 @@ describe('ShaDa changes support code', function()
            .. '\011\004\018\131\162mX\195\161f\196\006/a/b/c\161l\005'
            .. '\011\008\018\131\162mX\195\161f\196\006/a/b/c\161l\004')
     eq(0, exc_exec(sdrcmd()))
-    nvim_command('redir => g:changes | changes | redir END')
     eq('\n'
        .. 'change line  col text\n'
        .. '    5     1    0 0\n'
@@ -924,7 +921,7 @@ describe('ShaDa changes support code', function()
        .. '    3     5    0 4\n'
        .. '    2     3    0 2\n'
        .. '    1     4    0 3\n'
-       .. '>', nvim_eval('g:changes'))
+       .. '>', redir_exec('changes'))
   end)
 
   it('merges changes when writing', function()

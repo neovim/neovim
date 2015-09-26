@@ -359,6 +359,38 @@ local exc_exec = function(cmd)
   return ret
 end
 
+local function redir_exec(cmd)
+  nvim_command(([[
+    redir => g:__output
+      silent! execute "%s"
+    redir END
+  ]]):format(cmd:gsub('\n', '\\n'):gsub('[\\"]', '\\%0')))
+  local ret = nvim_eval('get(g:, "__output", 0)')
+  nvim_command('unlet! g:__output')
+  return ret
+end
+
+local function create_callindex(func)
+  local tbl = {}
+  setmetatable(tbl, {
+    __index = function(tbl, arg1)
+      ret = function(...) return func(arg1, ...) end
+      tbl[arg1] = ret
+      return ret
+    end,
+  })
+  return tbl
+end
+
+local funcs = create_callindex(nvim_call)
+local meths = create_callindex(nvim)
+local bufmeths = create_callindex(buffer)
+local winmeths = create_callindex(window)
+local tabmeths = create_callindex(tabpage)
+local curbufmeths = create_callindex(curbuf)
+local curwinmeths = create_callindex(curwin)
+local curtabmeths = create_callindex(curtab)
+
 return {
   prepend_argv = prepend_argv,
   clear = clear,
@@ -397,5 +429,14 @@ return {
   rmdir = rmdir,
   mkdir = lfs.mkdir,
   exc_exec = exc_exec,
+  redir_exec = redir_exec,
   merge_args = merge_args,
+  funcs = funcs,
+  meths = meths,
+  bufmeths = bufmeths,
+  winmeths = winmeths,
+  tabmeths = tabmeths,
+  curbufmeths = curbufmeths,
+  curwinmeths = curwinmeths,
+  curtabmeths = curtabmeths,
 }

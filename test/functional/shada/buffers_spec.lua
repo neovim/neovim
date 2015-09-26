@@ -1,17 +1,12 @@
 -- ShaDa buffer list saving/reading support
 local helpers = require('test.functional.helpers')
-local nvim, nvim_window, nvim_curwin, nvim_command, nvim_feed, nvim_eval, eq =
-  helpers.nvim, helpers.window, helpers.curwin, helpers.command, helpers.feed,
-  helpers.eval, helpers.eq
+local nvim_command, funcs, eq =
+  helpers.command, helpers.funcs, helpers.eq
 
 local shada_helpers = require('test.functional.shada.helpers')
 local reset, set_additional_cmd, clear =
   shada_helpers.reset, shada_helpers.set_additional_cmd,
   shada_helpers.clear
-
-local nvim_current_line = function()
-  return nvim_window('get_cursor', nvim_curwin())[1]
-end
 
 describe('ShaDa support code', function()
   testfilename = 'Xtestfile-functional-shada-buffers'
@@ -24,15 +19,12 @@ describe('ShaDa support code', function()
     reset()
     nvim_command('edit ' .. testfilename)
     nvim_command('edit ' .. testfilename_2)
-    -- nvim_command('redir! > /tmp/vistr | verbose set shada? | redir END')
-    -- nvim_command('wshada /tmp/foo')
     nvim_command('qall')
     reset()
-    -- nvim_command('call writefile([&shada], "/tmp/vistr")')
-    eq(3, nvim_eval('bufnr("$")'))
-    eq('', nvim_eval('bufname(1)'))
-    eq(testfilename, nvim_eval('bufname(2)'))
-    eq(testfilename_2, nvim_eval('bufname(3)'))
+    eq(3, funcs.bufnr('$'))
+    eq('', funcs.bufname(1))
+    eq(testfilename, funcs.bufname(2))
+    eq(testfilename_2, funcs.bufname(3))
   end)
 
   it('does not restore buffer list without % in &shada', function()
@@ -40,26 +32,20 @@ describe('ShaDa support code', function()
     reset()
     nvim_command('edit ' .. testfilename)
     nvim_command('edit ' .. testfilename_2)
-    -- nvim_command('redir! > /tmp/vistr | verbose set shada? | redir END')
-    -- nvim_command('wshada /tmp/foo')
     set_additional_cmd('')
     nvim_command('qall')
     reset()
-    -- nvim_command('call writefile([&shada], "/tmp/vistr")')
-    eq(1, nvim_eval('bufnr("$")'))
-    eq('', nvim_eval('bufname(1)'))
+    eq(1, funcs.bufnr('$'))
+    eq('', funcs.bufname(1))
   end)
 
   it('does not dump buffer list without % in &shada', function()
     nvim_command('edit ' .. testfilename)
     nvim_command('edit ' .. testfilename_2)
-    -- nvim_command('redir! > /tmp/vistr | verbose set shada? | redir END')
-    -- nvim_command('wshada /tmp/foo')
     set_additional_cmd('set shada+=%')
     nvim_command('qall')
     reset()
-    -- nvim_command('call writefile([&shada], "/tmp/vistr")')
-    eq(1, nvim_eval('bufnr("$")'))
-    eq('', nvim_eval('bufname(1)'))
+    eq(1, funcs.bufnr('$'))
+    eq('', funcs.bufname(1))
   end)
 end)

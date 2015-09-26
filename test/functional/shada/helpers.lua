@@ -1,7 +1,6 @@
 local helpers = require('test.functional.helpers')
-local spawn, set_session, nvim, nvim_prog, nvim_command, nvim_eval =
-  helpers.spawn, helpers.set_session, helpers.nvim, helpers.nvim_prog,
-  helpers.command, helpers.eval
+local spawn, set_session, meths, nvim_prog =
+  helpers.spawn, helpers.set_session, helpers.meths, helpers.nvim_prog
 local write_file, merge_args = helpers.write_file, helpers.merge_args
 
 local msgpack = require('MessagePack')
@@ -30,7 +29,7 @@ local reset = function()
   end
   session = spawn(nvim_argv())
   set_session(session)
-  nvim('set_var', 'tmpname', tmpname)
+  meths.set_var('tmpname', tmpname)
 end
 
 local set_additional_cmd = function(s)
