@@ -4298,6 +4298,7 @@ in_history (
   } while (i != hisidx[type]);
 
   if (last_i >= 0) {
+    list_T *const list = history[type][i].additional_elements;
     str = history[type][i].hisstr;
     while (i != hisidx[type]) {
       if (++i >= hislen)
@@ -4305,6 +4306,7 @@ in_history (
       history[type][last_i] = history[type][i];
       last_i = i;
     }
+    list_unref(list);
     history[type][i].hisnum = ++hisnum[type];
     history[type][i].hisstr = str;
     history[type][i].timestamp = os_time();
