@@ -171,10 +171,17 @@ size_t input_enqueue(String keys)
     }
 
     if (*ptr == '<') {
-      // Invalid key sequence, skip until the next '>' or until *end
+      char *old_ptr = ptr;
+      // Invalid or incomplete key sequence, skip until the next '>' or until
+      // *end
       do {
         ptr++;
       } while (ptr < end && *ptr != '>');
+      if (*ptr != '>') {
+        // Incomplete key sequence, return without consuming.
+        ptr = old_ptr;
+        break;
+      }
       ptr++;
       continue;
     }
