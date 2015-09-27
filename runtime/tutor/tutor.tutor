@@ -60,7 +60,7 @@ is displayed like
 
 1. Format the line below so it becomes a lesson description:
 
----> This is text with importat information {expect:This is text with **important information**}
+---> This is text with important information {expect:This is text with **important information**}
 ---> This is text with **important information** {expect:This is text with **important information**}
 
 Note: Some words (e.g., NOTE, IMPORTANT, tip, ATTENTION, etc.) will also be
@@ -130,7 +130,7 @@ and are hidden by default. Links to them look like
 
 # Tutorial links
 
-You can also have links to other tutorials. For this, you'll write the wnchor in the format
+You can also have links to other tutorials. For this, you'll write the anchor in the format
 
     @tutor:TUTORIAL
 
