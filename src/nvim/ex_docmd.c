@@ -9459,7 +9459,7 @@ static void ex_plug(exarg_T *eap)
         if (path == NULL) {
           path = concat_fnames((char *)p_plugindir, (char *)basename, true);
         }
-      xfree(basename);
+        xfree(basename);
       }
     }
 
@@ -9510,7 +9510,7 @@ static void ex_plug(exarg_T *eap)
                ":let v:plugins['%s'] = { 'path': '%s' }", eap->arg, path);
       do_cmdline_cmd(ex_cmd);
     }
-  xfree(path);
-  xfree(rtp_copy);
+    xfree(path);
+    xfree(rtp_copy);
   }
 }
