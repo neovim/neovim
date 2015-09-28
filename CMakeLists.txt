@@ -47,22 +47,27 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Version tokens
-include(GetGitRevisionDescription)
-file(TO_NATIVE_PATH ${CMAKE_CURRENT_LIST_DIR}/.git GIT_DIR)
-get_git_head_revision(GIT_REFSPEC NVIM_VERSION_COMMIT)
-if(NOT NVIM_VERSION_COMMIT)
-  set(NVIM_VERSION_COMMIT "?")
-endif()
 set(NVIM_VERSION_MAJOR 0)
 set(NVIM_VERSION_MINOR 0)
 set(NVIM_VERSION_PATCH 0)
 set(NVIM_VERSION_PRERELEASE "-alpha")
-# TODO(justinmk): UTC time would be nice here #1071
-git_timestamp(GIT_TIMESTAMP)
-# TODO(justinmk): do not set this for "release" builds #1071
-if(GIT_TIMESTAMP)
-  set(NVIM_VERSION_BUILD "+${GIT_TIMESTAMP}")
+
+include(GetGitRevisionDescription)
+file(TO_NATIVE_PATH ${CMAKE_CURRENT_LIST_DIR}/.git GIT_DIR)
+if(NVIM_VERSION_PRERELEASE)
+  get_git_head_revision(GIT_REFSPEC NVIM_VERSION_COMMIT)
+
+  # TODO(justinmk): UTC time would be nice here #1071
+  git_timestamp(GIT_TIMESTAMP)
+  if(GIT_TIMESTAMP)
+    set(NVIM_VERSION_BUILD "+${GIT_TIMESTAMP}")
+  endif()
+else()
+  # If possible, get the Git tag for the current revision.
+  git_get_exact_tag(NVIM_VERSION_COMMIT)
+  set(NVIM_VERSION_BUILD "")
 endif()
+
 set(NVIM_VERSION_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
 # NVIM_VERSION_CFLAGS set further below.
 
