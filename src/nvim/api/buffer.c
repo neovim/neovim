@@ -467,7 +467,8 @@ void buffer_insert(Buffer buffer,
                    ArrayOf(String) lines,
                    Error *err)
 {
-  buffer_set_line_slice(buffer, lnum, lnum, true, false, lines, err);
+  bool end_start = lnum < 0;
+  buffer_set_line_slice(buffer, lnum, lnum, !end_start, end_start, lines, err);
 }
 
 /// Return a tuple (row,col) representing the position of the named mark
