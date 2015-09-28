@@ -38,12 +38,12 @@ endif()
 # Set available build types for CMake GUIs.
 # A different build type can still be set by -DCMAKE_BUILD_TYPE=...
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
-  STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+  STRINGS "Debug" "Dev" "Release" "MinSizeRel" "RelWithDebInfo")
 
 # Set default build type.
 if(NOT CMAKE_BUILD_TYPE)
-  message(STATUS "CMAKE_BUILD_TYPE not given; setting to 'RelWithDebInfo'.")
-  set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build." FORCE)
+  message(STATUS "CMAKE_BUILD_TYPE not given, defaulting to 'Dev'.")
+  set(CMAKE_BUILD_TYPE "Dev" CACHE STRING "Choose the type of build." FORCE)
 endif()
 
 # Version tokens
@@ -73,6 +73,46 @@ if(CMAKE_C_FLAGS_RELEASE MATCHES "-O3")
   message(STATUS "Replacing -O3 in CMAKE_C_FLAGS_RELEASE with -O2.")
   string(REPLACE "-O3" "-O2" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 endif()
+
+# Enable assertions for RelWithDebInfo.
+if(CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
+  string(REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
+endif()
+
+# Set build flags for custom Dev build type.
+# -DNDEBUG purposely omitted because we want assertions.
+if(MSVC)
+  SET(CMAKE_C_FLAGS_DEV ""
+      CACHE STRING "Flags used by the compiler during development (optimized, but with debug info and logging) builds."
+      FORCE)
+else()
+  if(CMAKE_COMPILER_IS_GNUCC)
+    check_c_compiler_flag(-Og HAS_OG_FLAG)
+  else()
+    set(HAS_OG_FLAG 0)
+  endif()
+
+  if(HAS_OG_FLAG)
+    set(CMAKE_C_FLAGS_DEV "-Og -g"
+        CACHE STRING "Flags used by the compiler during development (optimized, but with debug info and logging) builds."
+        FORCE)
+  else()
+    set(CMAKE_C_FLAGS_DEV "-O2 -g"
+        CACHE STRING "Flags used by the compiler during development (optimized, but with debug info and logging) builds."
+        FORCE)
+  endif()
+endif()
+SET(CMAKE_EXE_LINKER_FLAGS_DEV ""
+    CACHE STRING "Flags used for linking binaries during development (optimized, but with debug info and logging) builds."
+    FORCE)
+SET(CMAKE_SHARED_LINKER_FLAGS_DEV ""
+    CACHE STRING "Flags used by the shared libraries linker during development (optimized, but with debug info and logging) builds."
+    FORCE)
+
+MARK_AS_ADVANCED(
+  CMAKE_C_FLAGS_DEV
+  CMAKE_EXE_LINKER_FLAGS_DEV
+  CMAKE_SHARED_LINKER_FLAGS_DEV)
 
 # Enable -Wconversion.
 if(NOT MSVC)
@@ -175,22 +215,6 @@ option(
 if(TRAVIS_CI_BUILD)
   message(STATUS "Travis CI build enabled.")
   add_definitions(-Werror)
-endif()
-
-if(CMAKE_COMPILER_IS_GNUCC)
-  check_c_compiler_flag(-Og HAS_OG_FLAG)
-else()
-  set(HAS_OG_FLAG 0)
-endif()
-
-# Set custom build flags for RelWithDebInfo.
-# -DNDEBUG purposely omitted because we want assertions.
-if(HAS_OG_FLAG)
-  set(CMAKE_C_FLAGS_RELWITHDEBINFO "-Og -g"
-    CACHE STRING "Flags used by the compiler during release builds with debug info." FORCE)
-elseif(NOT MSVC)
-  set(CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g"
-    CACHE STRING "Flags used by the compiler during release builds with debug info." FORCE)
 endif()
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
