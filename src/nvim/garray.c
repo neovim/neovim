@@ -184,10 +184,12 @@ char_u* ga_concat_strings(const garray_T *gap) FUNC_ATTR_NONNULL_RET
 void ga_concat(garray_T *gap, const char_u *restrict s)
 {
   int len = (int)strlen((char *) s);
-  ga_grow(gap, len);
-  char *data = gap->ga_data;
-  memcpy(data + gap->ga_len, s, (size_t) len);
-  gap->ga_len += len;
+  if (len) {
+    ga_grow(gap, len);
+    char *data = gap->ga_data;
+    memcpy(data + gap->ga_len, s, (size_t)len);
+    gap->ga_len += len;
+  }
 }
 
 /// Append one byte to a growarray which contains bytes.
