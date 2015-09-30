@@ -7624,7 +7624,7 @@ void update_topline_cursor(void)
  */
 static void ex_normal(exarg_T *eap)
 {
-  if (curbuf->terminal) {
+  if (curbuf->terminal && State & TERM_FOCUS) {
     EMSG("Can't re-enter normal mode from terminal mode");
     return;
   }
