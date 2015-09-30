@@ -9,7 +9,7 @@ if exists('g:loaded_python3_provider')
 endif
 let g:loaded_python3_provider = 1
 
-let [s:prog, s:err] = provider#pythonx#Detect(3)
+let [s:prog, s:err, s:module_path] = provider#pythonx#Detect(3)
 
 function! provider#python3#Prog()
   return s:prog
@@ -24,7 +24,7 @@ if s:prog == ''
   finish
 endif
 
-let s:plugin_path = expand('<sfile>:p:h').'/script_host.py'
+let s:plugin_path = s:module_path . '/provider/script_host.py'
 
 " The Python3 provider plugin will run in a separate instance of the Python3
 " host.

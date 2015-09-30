@@ -9,7 +9,7 @@ if exists('g:loaded_python_provider')
 endif
 let g:loaded_python_provider = 1
 
-let [s:prog, s:err] = provider#pythonx#Detect(2)
+let [s:prog, s:err, s:module_path] = provider#pythonx#Detect(2)
 
 function! provider#python#Prog()
   return s:prog
@@ -24,7 +24,7 @@ if s:prog == ''
   finish
 endif
 
-let s:plugin_path = expand('<sfile>:p:h').'/script_host.py'
+let s:plugin_path = s:module_path . '/provider/script_host.py'
 
 " The Python provider plugin will run in a separate instance of the Python
 " host.
