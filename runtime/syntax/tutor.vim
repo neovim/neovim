@@ -20,7 +20,7 @@ syn match tutorSectionBullet /#/ contained containedin=tutorSection
 
 syn match tutorTOC /\ctable of contents:/
 
-syn match tutorConcealedEscapes /\\[`*!\[\]()«»:$-]\@=/ conceal
+syn match tutorConcealedEscapes /\\[`*!\[\]():$-]\@=/ conceal
 
 syn region tutorEmphasis matchgroup=Delimiter start=/[\*]\@<!\*\*\@!/ end=/[\*]\@<!\*\*\@!/
 	    \ concealends contains=tutorInlineCommand,tutorInlineNormal

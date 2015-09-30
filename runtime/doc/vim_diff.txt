@@ -51,7 +51,6 @@ these differences.
 - 'ttyfast' is always set
 - 'viminfo' includes "!"
 - 'wildmenu' is set by default
-- 'wildmode' defaults to "list:longest,full"
 
 ==============================================================================
 3. Changed features					 *nvim-features-changed*
@@ -75,6 +74,24 @@ are always available and may be used simultaneously in separate plugins.  The
 3. mkdir() error messages now include strerror() text when mkdir fails.
 
 'encoding' cannot be changed after startup.
+
+|string()| and |:echo| behaviour changed:
+1. No maximum recursion depth limit is applied to nested container 
+   structures.
+2. |string()| fails immediately on nested containers, not when recursion limit 
+   was exceeded.
+2. When |:echo| encounters duplicate containers like >
+
+       let l = []
+       echo [l, l]
+<
+   it does not use "[...]" (was: "[[], [...]]", now: "[[], []]"). "..." is 
+   only used for recursive containers.
+3. |:echo| printing nested containers adds "@level" after "..." designating 
+   the level at which recursive container was printed: |:echo-self-refer|.  
+   Same thing applies to |string()| (though it uses construct like 
+   "{E724@level}"), but this is not reliable because |string()| continues to 
+   error out.
 
 ==============================================================================
 4. New Features						     *nvim-features-new*

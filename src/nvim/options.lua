@@ -2660,7 +2660,7 @@ return {
       deny_duplicates=true,
       vim=true,
       varname='p_wim',
-      defaults={if_true={vi="", vim="list:longest,full"}}
+      defaults={if_true={vi="", vim="full"}}
     },
     {
       full_name='wildoptions', abbreviation='wop',
