@@ -440,6 +440,7 @@ static struct vimvar {
   {VV_NAME("command_output",   VAR_STRING), 0},
   {VV_NAME("completed_item",   VAR_DICT), VV_RO},
   {VV_NAME("msgpack_types",    VAR_DICT), VV_RO},
+  {VV_NAME("plugins",          VAR_DICT), 0}
 };
 
 /* shorthand */
@@ -600,6 +601,7 @@ void eval_init(void)
 
   set_vim_var_dict(VV_MSGPACK_TYPES, msgpack_types_dict);
   set_vim_var_dict(VV_COMPLETED_ITEM, dict_alloc());
+  set_vim_var_dict(VV_PLUGINS, dict_alloc());
   set_vim_var_nr(VV_SEARCHFORWARD, 1L);
   set_vim_var_nr(VV_HLSEARCH, 1L);
   set_reg_var(0);    /* default for v:register is not 0 but '"' */

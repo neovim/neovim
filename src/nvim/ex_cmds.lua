@@ -1856,6 +1856,12 @@ return {
     func='ex_pedit',
   },
   {
+    command='plug',
+    flags=bit.bor(WORD1, NEEDARG, BANG),
+    addr_type=ADDR_LINES,
+    func='ex_plug',
+  },
+  {
     command='pop',
     flags=bit.bor(RANGE, NOTADR, BANG, COUNT, TRLBAR, ZEROR),
     addr_type=ADDR_LINES,

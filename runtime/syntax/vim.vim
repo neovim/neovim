@@ -21,6 +21,7 @@ syn cluster vimCommentGroup	contains=vimTodo,@Spell
 syn match   vimCommand contained	"\<z[-+^.=]\="
 syn keyword vimOnlyCommand contained	fix[del] sh[ell] P[rint]
 syn keyword vimStdPlugin contained	DiffOrig Man N[ext] S TOhtml XMLent XMLns
+syn match   vimplugCommandSpec	"\(^\s*plug\s*\)\@<=.*$"
 
 " Vim-specific options {{{2
 syn keyword vimOnlyOption contained	biosk bioskey cp compatible consk conskey cm cryptmethod edcompatible guipty key macatsui mzq mzquantum osfiletype oft renderoptions rop st shelltype sn shortname tenc termencoding ta textauto tx textmode tf ttyfast ttym ttymouse tbi ttybuiltin wiv weirdinvert

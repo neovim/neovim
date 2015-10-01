@@ -4765,6 +4765,21 @@ A jump table for the options with a short description can be found at |Q_op|.
 <	Replace the ';' with a ':' or whatever separator is used.  Note that
 	this doesn't work when $INCL contains a comma or white space.
 
+							   *'plugindir'*
+'plugindir' 'pidir'	string (default "bundle") {Nvim}
+			global
+	The name of the folder in 'runtimepath' where to look for plugin bundles.
+	The |:plug| command depends on this value to expand path specs;
+	for example >
+	    plug neovim/neovimplugin
+<	expands the bundle path to `~/config/nvim/bundle/neovimplugin`.
+	You can declare plugins in several locations by setting 'plugindir'
+	when declaring plugins: >
+	    set plugindir=plugged
+	    plug neovim/nvimplugin
+	    set plugindir=~/devel/plugins
+	    plug devel-plugin
+<
 			*'preserveindent'* *'pi'* *'nopreserveindent'* *'nopi'*
 'preserveindent' 'pi'	boolean	(default off)
 			local to buffer
