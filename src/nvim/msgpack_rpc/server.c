@@ -101,8 +101,12 @@ char *server_address_new(void)
 /// @returns 0 on success, 1 on a regular error, and negative errno
 ///          on failure to bind or connect.
 int server_start(const char *endpoint)
-  FUNC_ATTR_NONNULL_ALL
 {
+  if (endpoint == NULL) {
+    ELOG("Attempting to start server on NULL endpoint");
+    return 1;
+  }
+
   SocketWatcher *watcher = xmalloc(sizeof(SocketWatcher));
   socket_watcher_init(&loop, watcher, endpoint, NULL);
 
