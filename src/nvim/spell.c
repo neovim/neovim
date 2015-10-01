@@ -8583,6 +8583,7 @@ void spell_suggest(int count)
     curwin->w_cursor = prev_cursor;
 
   spell_find_cleanup(&sug);
+  xfree(line);
 }
 
 // Check if the word at line "lnum" column "col" is required to start with a
