@@ -12,7 +12,9 @@ describe('tui', function()
   before_each(function()
     helpers.clear()
     screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
-    screen.timeout = 30000 -- pasting can be really slow in the TUI
+    -- right now pasting can be really slow in the TUI, especially in ASAN.
+    -- this will be fixed later but for now we require a high timeout.
+    screen.timeout = 60000
     screen:expect([[
       {1: }                                                 |
       ~                                                 |
@@ -49,6 +51,49 @@ describe('tui', function()
                                                         |
       -- TERMINAL --                                    |
     ]])
+  end)
+
+  it('interprets leading esc byte as the alt modifier', function()
+    local keys = 'dfghjkl'
+    for c in keys:gmatch('.') do
+      execute('nnoremap <a-'..c..'> ialt-'..c..'<cr><esc>')
+      feed('\x1b'..c)
+    end
+    screen:expect([[
+      alt-j                                             |
+      alt-k                                             |
+      alt-l                                             |
+      {1: }                                                 |
+      [No Name] [+]                                     |
+                                                        |
+      -- TERMINAL --                                    |
+    ]])
+    feed('gg')
+    screen:expect([[
+      {1:a}lt-d                                             |
+      alt-f                                             |
+      alt-g                                             |
+      alt-h                                             |
+      [No Name] [+]                                     |
+                                                        |
+      -- TERMINAL --                                    |
+    ]])
+  end)
+
+  it('accepts ascii control sequences', function()
+    feed('i')
+    feed('\x16\x07') -- ctrl+g
+    feed('\x16\x16') -- ctrl+v
+    feed('\x16\x0d') -- ctrl+m
+    screen:expect([[
+    {3:^G^V^M}{1: }                                           |
+    ~                                                 |
+    ~                                                 |
+    ~                                                 |
+    [No Name] [+]                                     |
+    -- INSERT --                                      |
+    -- TERMINAL --                                    |
+    ]], {[1] = {reverse = true}, [2] = {background = 11}, [3] = {foreground = 4}})
   end)
 
   it('automatically sends <Paste> for bracketed paste sequences', function()
