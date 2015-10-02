@@ -153,6 +153,7 @@ static char_u typebuf_init[TYPELEN_INIT];       /* initial typebuf.tb_buf */
 static char_u noremapbuf_init[TYPELEN_INIT];    /* initial typebuf.tb_noremap */
 
 static int last_recorded_len = 0;       /* number of last recorded chars */
+static const uint8_t ui_toggle[] = { K_SPECIAL, KS_EXTRA, KE_PASTE, 0 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "getchar.c.generated.h"
@@ -1873,14 +1874,15 @@ static int vgetorpeek(int advance)
             }
           }
 
-          /* Check for match with 'pastetoggle' */
-          if (*p_pt != NUL && mp == NULL && (State & (INSERT|NORMAL))) {
-            for (mlen = 0; mlen < typebuf.tb_len && p_pt[mlen];
-                 ++mlen)
-              if (p_pt[mlen] != typebuf.tb_buf[typebuf.tb_off
-                                               + mlen])
-                break;
-            if (p_pt[mlen] == NUL) {            /* match */
+          // Check for a key that can toggle the 'paste' option
+          if (mp == NULL && (State & (INSERT|NORMAL))) {
+            bool match = typebuf_match_len(ui_toggle, &mlen);
+            if (!match && mlen != typebuf.tb_len && *p_pt != NUL) {
+              // didn't match ui_toggle_key and didn't try the whole typebuf,
+              // check the 'pastetoggle'
+              match = typebuf_match_len(p_pt, &mlen);
+            }
+            if (match) {
               /* write chars to script file(s) */
               if (mlen > typebuf.tb_maplen)
                 gotchars(typebuf.tb_buf + typebuf.tb_off
@@ -4237,4 +4239,15 @@ static char_u * translate_mapping (
   }
   ga_append(&ga, NUL);
   return (char_u *)(ga.ga_data);
+}
+
+static bool typebuf_match_len(const uint8_t *str, int *mlen)
+{
+  int i;
+  for (i = 0; i < typebuf.tb_len && str[i]; i++) {
+    if (str[i] != typebuf.tb_buf[typebuf.tb_off + i])
+      break;
+  }
+  *mlen = i;
+  return str[i] == NUL;  // matched the whole string
 }

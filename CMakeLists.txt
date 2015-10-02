@@ -69,7 +69,10 @@ set(NVIM_VERSION_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Default to -O2 on release builds.
-string(REPLACE "-O3" "-O2" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+if(CMAKE_C_FLAGS_RELEASE MATCHES "-O3")
+  message(STATUS "Replacing -O3 in CMAKE_C_FLAGS_RELEASE with -O2.")
+  string(REPLACE "-O3" "-O2" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+endif()
 
 # Enable -Wconversion.
 if(NOT MSVC)
@@ -116,12 +119,30 @@ if(NOT HAS_ACCEPTABLE_FORTIFY)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_FORTIFY_SOURCE_PREFIX}-U_FORTIFY_SOURCE ${_FORTIFY_SOURCE_PREFIX}-D_FORTIFY_SOURCE=1")
 endif()
 
+# Remove --sort-common from linker flags, as this seems to cause bugs (see #2641, #3374).
+# TODO: Figure out the root cause.
+if(CMAKE_EXE_LINKER_FLAGS MATCHES "--sort-common" OR
+   CMAKE_SHARED_LINKER_FLAGS MATCHES "--sort-common" OR
+   CMAKE_MODULE_LINKER_FLAGS MATCHES "--sort-common")
+  message(STATUS "Removing --sort-common from linker flags.")
+  string(REGEX REPLACE ",--sort-common(=[^,]+)?" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
+  string(REGEX REPLACE ",--sort-common(=[^,]+)?" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+  string(REGEX REPLACE ",--sort-common(=[^,]+)?" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}")
+
+  # If no linker flags remain for a -Wl argument, remove it.
+  # '-Wl$' will match LDFLAGS="-Wl,--sort-common",
+  # '-Wl ' will match LDFLAGS="-Wl,--sort-common -Wl,..."
+  string(REGEX REPLACE "-Wl($| )" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
+  string(REGEX REPLACE "-Wl($| )" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+  string(REGEX REPLACE "-Wl($| )" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}")
+endif()
+
 if(MSVC)
   # XXX: /W4 gives too many warnings. #3241
   add_definitions(/W3 -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
 else()
   add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter
-    -Wstrict-prototypes -Wvla -std=gnu99)
+    -Wstrict-prototypes -std=gnu99)
 endif()
 
 if(MINGW)
@@ -129,9 +150,14 @@ if(MINGW)
   add_definitions(-D__USE_MINGW_ANSI_STDIO)
 endif()
 
+# OpenBSD's GCC (4.2.1) doesn't have -Wvla
+check_c_compiler_flag(-Wvla HAS_WVLA_FLAG)
+if(HAS_WVLA_FLAG)
+  add_definitions(-Wvla)
+endif()
+
 check_c_compiler_flag(-fstack-protector-strong HAS_FSTACK_PROTECTOR_STRONG_FLAG)
 check_c_compiler_flag(-fstack-protector HAS_FSTACK_PROTECTOR_FLAG)
-
 if(HAS_FSTACK_PROTECTOR_STRONG_FLAG)
   add_definitions(-fstack-protector-strong)
 elseif(HAS_FSTACK_PROTECTOR_FLAG)
@@ -284,10 +310,10 @@ else()
 endif()
 
 if(NOT LUA_PRG_WORKS)
-  message(FATAL_ERROR "A suitable Lua interpreter was not found")
+  message(FATAL_ERROR "A suitable Lua interpreter was not found.")
 endif()
 
-message(STATUS "Using the Lua interpreter ${LUA_PRG}")
+message(STATUS "Using the Lua interpreter ${LUA_PRG}.")
 
 # Setup busted.
 find_program(BUSTED_PRG busted)
@@ -317,7 +343,6 @@ add_subdirectory(test/includes)
 add_subdirectory(config)
 add_subdirectory(test/functional/fixtures) # compile pty/shell test programs
 add_subdirectory(runtime)
-
 
 # Setup some test-related bits.  We do this after going down the tree because we
 # need some of the targets.

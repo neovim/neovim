@@ -1246,8 +1246,9 @@ do_shell (
   // 1" command to the terminal.
   ui_cursor_goto(msg_row, msg_col);
   (void)call_shell(cmd, flags, NULL);
-  did_check_timestamps = FALSE;
-  need_check_timestamps = TRUE;
+  msg_didout = true;
+  did_check_timestamps = false;
+  need_check_timestamps = true;
 
   // put the message cursor at the end of the screen, avoids wait_return()
   // to overwrite the text that the external command showed

@@ -163,6 +163,7 @@ function Screen.new(width, height)
     height = 14
   end
   local self = setmetatable({
+    timeout = default_screen_timeout,
     title = '',
     icon = '',
     bell = false,
@@ -248,7 +249,7 @@ function Screen:wait(check, timeout)
 
     return true
   end
-  run(nil, notification_cb, nil, timeout or default_screen_timeout)
+  run(nil, notification_cb, nil, timeout or self.timeout)
   if not checked then
     err = check()
   end
