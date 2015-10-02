@@ -1262,6 +1262,9 @@ void ex_emenu(exarg_T *eap)
   if (((State & INSERT) || restart_edit) && !current_SID) {
     mode = (char_u *)"Insert";
     idx = MENU_INDEX_INSERT;
+  } else if (State & CMDLINE) {
+      mode = (char_u *)"Command";
+      idx = MENU_INDEX_CMDLINE;
   } else if (get_real_state() & VISUAL) {
     /* Detect real visual mode -- if we are really in visual mode we
      * don't need to do any guesswork to figure out what the selection
@@ -1308,9 +1311,6 @@ void ex_emenu(exarg_T *eap)
      * for exclusive mode */
     if (*p_sel == 'e' && gchar_cursor() != NUL)
       ++curwin->w_cursor.col;
-  } else if (State & CMDLINE) {
-      mode = (char_u *)"Command";
-      idx = MENU_INDEX_CMDLINE;
   } else {
     mode = (char_u *)"Normal";
     idx = MENU_INDEX_NORMAL;
