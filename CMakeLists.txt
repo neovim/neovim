@@ -142,7 +142,7 @@ if(MSVC)
   add_definitions(/W3 -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
 else()
   add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter
-    -Wstrict-prototypes -Wvla -std=gnu99)
+    -Wstrict-prototypes -std=gnu99)
 endif()
 
 if(MINGW)
@@ -150,9 +150,14 @@ if(MINGW)
   add_definitions(-D__USE_MINGW_ANSI_STDIO)
 endif()
 
+# OpenBSD's GCC (4.2.1) doesn't have -Wvla
+check_c_compiler_flag(-Wvla HAS_WVLA_FLAG)
+if(HAS_WVLA_FLAG)
+  add_definitions(-Wvla)
+endif()
+
 check_c_compiler_flag(-fstack-protector-strong HAS_FSTACK_PROTECTOR_STRONG_FLAG)
 check_c_compiler_flag(-fstack-protector HAS_FSTACK_PROTECTOR_FLAG)
-
 if(HAS_FSTACK_PROTECTOR_STRONG_FLAG)
   add_definitions(-fstack-protector-strong)
 elseif(HAS_FSTACK_PROTECTOR_FLAG)
