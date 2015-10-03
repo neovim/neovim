@@ -553,14 +553,6 @@ int check_mark(pos_T *pos)
  */
 void clrallmarks(buf_T *buf)
 {
-  static bool initialized = false;
-
-  if (!initialized) {
-    // first call ever: initialize
-    memset(&(namedfm[0]), 0, sizeof(namedfm));
-    initialized = true;
-  }
-
   memset(&(buf->b_namedm[0]), 0, sizeof(buf->b_namedm));
   buf->b_op_start.lnum = 0;             /* start/end op mark cleared */
   buf->b_op_end.lnum = 0;
