@@ -1,6 +1,6 @@
 function(get_compile_flags _compile_flags)
   # Create template akin to CMAKE_C_COMPILE_OBJECT.
-  set(compile_flags "<CMAKE_C_COMPILER> <CFLAGS> <BUILD_TYPE_CFLAGS> <DEFINITIONS> <INCLUDES>")
+  set(compile_flags "<CMAKE_C_COMPILER> <CFLAGS> <BUILD_TYPE_CFLAGS> <COMPILE_DEFINITIONS> <INCLUDES>")
 
   # Get C compiler.
   string(REPLACE
@@ -12,9 +12,9 @@ function(get_compile_flags _compile_flags)
   # Get flags set by add_definition().
   get_directory_property(definitions
     DIRECTORY "src/nvim"
-    DEFINITIONS)
+    COMPILE_DEFINITIONS)
   string(REPLACE
-    "<DEFINITIONS>"
+    "<COMPILE_DEFINITIONS>"
     "${definitions}"
     compile_flags
     "${compile_flags}")
