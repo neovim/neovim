@@ -68,5 +68,11 @@ describe('shell functions', function()
       eq(input, output)
       eq(0, status)
     end)
+
+    it ('can deal with non-existent command', function()
+      local cmd = 'this_cmd_dne12345'
+      local status, output = os_system(cmd)
+      eq(127, status)
+    end)
   end)
 end)
