@@ -469,137 +469,127 @@ void normal_enter(bool cmdwin, bool noexmode)
 
 static void normal_prepare(NormalState *s)
 {
-  cmdarg_T ca;                          /* command arguments */
-  int c;
-  oparg_T *oap = &s->oa;
-  memset(&ca, 0, sizeof(ca));       /* also resets ca.retval */
-  ca.oap = oap;
+  memset(&s->ca, 0, sizeof(s->ca));  // also resets ca.retval
+  s->ca.oap = &s->oa;
 
-  /* Use a count remembered from before entering an operator.  After typing
-   * "3d" we return from normal_cmd() and come back here, the "3" is
-   * remembered in "opcount". */
-  ca.opcount = opcount;
+  // Use a count remembered from before entering an operator. After typing "3d"
+  // we return from normal_cmd() and come back here, the "3" is remembered in
+  // "opcount".
+  s->ca.opcount = opcount;
 
-
-  /*
-   * If there is an operator pending, then the command we take this time
-   * will terminate it. Finish_op tells us to finish the operation before
-   * returning this time (unless the operation was cancelled).
-   */
-  c = finish_op;
-  finish_op = (oap->op_type != OP_NOP);
+  // If there is an operator pending, then the command we take this time will
+  // terminate it. Finish_op tells us to finish the operation before returning
+  // this time (unless the operation was cancelled).
+  int c = finish_op;
+  finish_op = (s->oa.op_type != OP_NOP);
   if (finish_op != c) {
-    ui_cursor_shape();                  /* may show different cursor shape */
+    ui_cursor_shape();  // may show different cursor shape
   }
 
-  /* When not finishing an operator and no register name typed, reset the
-   * count. */
-  if (!finish_op && !oap->regname) {
-    ca.opcount = 0;
+  // When not finishing an operator and no register name typed, reset the count.
+  if (!finish_op && !s->oa.regname) {
+    s->ca.opcount = 0;
     s->set_prevcount = true;
   }
 
-  /* Restore counts from before receiving K_CURSORHOLD.  This means after
-   * typing "3", handling K_CURSORHOLD and then typing "2" we get "32", not
-   * "3 * 2". */
-  if (oap->prev_opcount > 0 || oap->prev_count0 > 0) {
-    ca.opcount = oap->prev_opcount;
-    ca.count0 = oap->prev_count0;
-    oap->prev_opcount = 0;
-    oap->prev_count0 = 0;
+  // Restore counts from before receiving K_CURSORHOLD.  This means after
+  // typing "3", handling K_CURSORHOLD and then typing "2" we get "32", not
+  // "3 * 2".
+  if (s->oa.prev_opcount > 0 || s->oa.prev_count0 > 0) {
+    s->ca.opcount = s->oa.prev_opcount;
+    s->ca.count0 = s->oa.prev_count0;
+    s->oa.prev_opcount = 0;
+    s->oa.prev_count0 = 0;
   }
 
   s->mapped_len = typebuf_maplen();
-
   State = NORMAL_BUSY;
 
-  /* Set v:count here, when called from main() and not a stuffed
-   * command, so that v:count can be used in an expression mapping
-   * when there is no count. Do set it for redo. */
-  if (s->toplevel && readbuf1_empty())
-    set_vcount_ca(&ca, &s->set_prevcount);
-  s->ca = ca;
+  // Set v:count here, when called from main() and not a stuffed command, so
+  // that v:count can be used in an expression mapping when there is no count.
+  // Do set it for redo
+  if (s->toplevel && readbuf1_empty()) {
+    set_vcount_ca(&s->ca, &s->set_prevcount);
+  }
 }
 
 static int normal_execute(NormalState *s, int c)
 {
-  cmdarg_T ca = s->ca;
   bool ctrl_w = false;                  /* got CTRL-W command */
   int old_col = curwin->w_curswant;
   bool need_flushbuf;                   /* need to call ui_flush() */
   pos_T old_pos;                        /* cursor position before command */
-  int mapped_len = s->mapped_len;
   static int old_mapped_len = 0;
   int idx;
-  bool set_prevcount = s->set_prevcount;
-  bool toplevel = s->toplevel;
-  oparg_T *oap = &s->oa;
 
   LANGMAP_ADJUST(c, true);
 
-  /*
-   * If a mapping was started in Visual or Select mode, remember the length
-   * of the mapping.  This is used below to not return to Insert mode for as
-   * long as the mapping is being executed.
-   */
-  if (restart_edit == 0)
+  // If a mapping was started in Visual or Select mode, remember the length
+  // of the mapping.  This is used below to not return to Insert mode for as
+  // long as the mapping is being executed.
+  if (restart_edit == 0) {
     old_mapped_len = 0;
-  else if (old_mapped_len
-           || (VIsual_active && mapped_len == 0 && typebuf_maplen() > 0))
+  } else if (old_mapped_len || (VIsual_active && s->mapped_len == 0
+        && typebuf_maplen() > 0)) {
     old_mapped_len = typebuf_maplen();
+  }
 
-  if (c == NUL)
+  if (c == NUL) {
     c = K_ZERO;
+  }
 
-  /*
-   * In Select mode, typed text replaces the selection.
-   */
-  if (VIsual_active
-      && VIsual_select
+  // In Select mode, typed text replaces the selection.
+  if (VIsual_active && VIsual_select
       && (vim_isprintc(c) || c == NL || c == CAR || c == K_KENTER)) {
-    /* Fake a "c"hange command.  When "restart_edit" is set (e.g., because
-     * 'insertmode' is set) fake a "d"elete command, Insert mode will
-     * restart automatically.
-     * Insert the typed character in the typeahead buffer, so that it can
-     * be mapped in Insert mode.  Required for ":lmap" to work. */
+    // Fake a "c"hange command.  When "restart_edit" is set (e.g., because
+    // 'insertmode' is set) fake a "d"elete command, Insert mode will
+    // restart automatically.
+    // Insert the typed character in the typeahead buffer, so that it can
+    // be mapped in Insert mode.  Required for ":lmap" to work.
     ins_char_typebuf(c);
-    if (restart_edit != 0)
+    if (restart_edit != 0) {
       c = 'd';
-    else
+    } else {
       c = 'c';
-    msg_nowait = true;          /* don't delay going to insert mode */
-    old_mapped_len = 0;         /* do go to Insert mode */
+    }
+    msg_nowait = true;          // don't delay going to insert mode
+    old_mapped_len = 0;         // do go to Insert mode
   }
 
   need_flushbuf = add_to_showcmd(c);
 
 getcount:
   if (!(VIsual_active && VIsual_select)) {
-    /*
-     * Handle a count before a command and compute ca.count0.
-     * Note that '0' is a command and not the start of a count, but it's
-     * part of a count after other digits.
-     */
-    while (    (c >= '1' && c <= '9')
-               || (ca.count0 != 0 &&
-                   (c == K_DEL || c == K_KDEL || c == '0'))) {
+    // Handle a count before a command and compute ca.count0.
+    // Note that '0' is a command and not the start of a count, but it's
+    // part of a count after other digits.
+    while ((c >= '1' && c <= '9') || (s->ca.count0 != 0
+          && (c == K_DEL || c == K_KDEL || c == '0'))) {
       if (c == K_DEL || c == K_KDEL) {
-        ca.count0 /= 10;
-        del_from_showcmd(4);            /* delete the digit and ~@% */
-      } else
-        ca.count0 = ca.count0 * 10 + (c - '0');
-      if (ca.count0 < 0)            /* got too large! */
-        ca.count0 = 999999999L;
-      /* Set v:count here, when called from main() and not a stuffed
-       * command, so that v:count can be used in an expression mapping
-       * right after the count. Do set it for redo. */
-      if (toplevel && readbuf1_empty())
-        set_vcount_ca(&ca, &set_prevcount);
+        s->ca.count0 /= 10;
+        del_from_showcmd(4);            // delete the digit and ~@%
+      } else {
+        s->ca.count0 = s->ca.count0 * 10 + (c - '0');
+      }
+
+      if (s->ca.count0 < 0) {
+        // got too large!
+        s->ca.count0 = 999999999L;
+      }
+
+      // Set v:count here, when called from main() and not a stuffed
+      // command, so that v:count can be used in an expression mapping
+      // right after the count. Do set it for redo.
+      if (s->toplevel && readbuf1_empty()) {
+        set_vcount_ca(&s->ca, &s->set_prevcount);
+      }
+
       if (ctrl_w) {
         ++no_mapping;
-        ++allow_keys;                   /* no mapping for nchar, but keys */
+        ++allow_keys;                   // no mapping for nchar, but keys
       }
-      ++no_zero_mapping;                /* don't map zero here */
+
+      ++no_zero_mapping;                // don't map zero here
       c = plain_vgetc();
       LANGMAP_ADJUST(c, true);
       --no_zero_mapping;
@@ -610,91 +600,86 @@ getcount:
       need_flushbuf |= add_to_showcmd(c);
     }
 
-    /*
-     * If we got CTRL-W there may be a/another count
-     */
-    if (c == Ctrl_W && !ctrl_w && oap->op_type == OP_NOP) {
+    // If we got CTRL-W there may be a/another count
+    if (c == Ctrl_W && !ctrl_w && s->oa.op_type == OP_NOP) {
       ctrl_w = true;
-      ca.opcount = ca.count0;           /* remember first count */
-      ca.count0 = 0;
+      s->ca.opcount = s->ca.count0;           // remember first count
+      s->ca.count0 = 0;
       ++no_mapping;
-      ++allow_keys;                     /* no mapping for nchar, but keys */
-      c = plain_vgetc();                /* get next character */
+      ++allow_keys;                     // no mapping for nchar, but keys
+      c = plain_vgetc();                // get next character
       LANGMAP_ADJUST(c, true);
       --no_mapping;
       --allow_keys;
       need_flushbuf |= add_to_showcmd(c);
-      goto getcount;                    /* jump back */
+      goto getcount;                    // jump back
     }
   }
 
   if (c == K_CURSORHOLD) {
-    /* Save the count values so that ca.opcount and ca.count0 are exactly
-     * the same when coming back here after handling K_CURSORHOLD. */
-    oap->prev_opcount = ca.opcount;
-    oap->prev_count0 = ca.count0;
-  } else if (ca.opcount != 0)  {
-    /*
-     * If we're in the middle of an operator (including after entering a
-     * yank buffer with '"') AND we had a count before the operator, then
-     * that count overrides the current value of ca.count0.
-     * What this means effectively, is that commands like "3dw" get turned
-     * into "d3w" which makes things fall into place pretty neatly.
-     * If you give a count before AND after the operator, they are
-     * multiplied.
-     */
-    if (ca.count0)
-      ca.count0 *= ca.opcount;
-    else
-      ca.count0 = ca.opcount;
+    // Save the count values so that ca.opcount and ca.count0 are exactly
+    // the same when coming back here after handling K_CURSORHOLD.
+    s->oa.prev_opcount = s->ca.opcount;
+    s->oa.prev_count0 = s->ca.count0;
+  } else if (s->ca.opcount != 0)  {
+    // If we're in the middle of an operator (including after entering a
+    // yank buffer with '"') AND we had a count before the operator, then
+    // that count overrides the current value of ca.count0.
+    // What this means effectively, is that commands like "3dw" get turned
+    // into "d3w" which makes things fall into place pretty neatly.
+    // If you give a count before AND after the operator, they are
+    // multiplied.
+    if (s->ca.count0) {
+      s->ca.count0 *= s->ca.opcount;
+    } else {
+      s->ca.count0 = s->ca.opcount;
+    }
   }
 
-  /*
-   * Always remember the count.  It will be set to zero (on the next call,
-   * above) when there is no pending operator.
-   * When called from main(), save the count for use by the "count" built-in
-   * variable.
-   */
-  ca.opcount = ca.count0;
-  ca.count1 = (ca.count0 == 0 ? 1 : ca.count0);
+  // Always remember the count.  It will be set to zero (on the next call,
+  // above) when there is no pending operator.
+  // When called from main(), save the count for use by the "count" built-in
+  // variable.
+  s->ca.opcount = s->ca.count0;
+  s->ca.count1 = (s->ca.count0 == 0 ? 1 : s->ca.count0);
 
-  /*
-   * Only set v:count when called from main() and not a stuffed command.
-   * Do set it for redo.
-   */
-  if (toplevel && readbuf1_empty())
-    set_vcount(ca.count0, ca.count1, set_prevcount);
+  // Only set v:count when called from main() and not a stuffed command.
+  // Do set it for redo.
+  if (s->toplevel && readbuf1_empty()) {
+    set_vcount(s->ca.count0, s->ca.count1, s->set_prevcount);
+  }
 
-  /*
-   * Find the command character in the table of commands.
-   * For CTRL-W we already got nchar when looking for a count.
-   */
+  // Find the command character in the table of commands.
+  // For CTRL-W we already got nchar when looking for a count.
   if (ctrl_w) {
-    ca.nchar = c;
-    ca.cmdchar = Ctrl_W;
-  } else
-    ca.cmdchar = c;
-  idx = find_command(ca.cmdchar);
+    s->ca.nchar = c;
+    s->ca.cmdchar = Ctrl_W;
+  } else {
+    s->ca.cmdchar = c;
+  }
+
+  idx = find_command(s->ca.cmdchar);
+
   if (idx < 0) {
-    /* Not a known command: beep. */
-    clearopbeep(oap);
+    // Not a known command: beep.
+    clearopbeep(&s->oa);
     goto normal_end;
   }
 
   if (text_locked() && (nv_cmds[idx].cmd_flags & NV_NCW)) {
     // This command is not allowed while editing a cmdline: beep.
-    clearopbeep(oap);
+    clearopbeep(&s->oa);
     text_locked_msg();
     goto normal_end;
   }
-  if ((nv_cmds[idx].cmd_flags & NV_NCW) && curbuf_locked())
-    goto normal_end;
 
-  /*
-   * In Visual/Select mode, a few keys are handled in a special way.
-   */
+  if ((nv_cmds[idx].cmd_flags & NV_NCW) && curbuf_locked()) {
+    goto normal_end;
+  }
+
+  // In Visual/Select mode, a few keys are handled in a special way.
   if (VIsual_active) {
-    /* when 'keymodel' contains "stopsel" may stop Select/Visual mode */
+    // when 'keymodel' contains "stopsel" may stop Select/Visual mode
     if (km_stopsel
         && (nv_cmds[idx].cmd_flags & NV_STS)
         && !(mod_mask & MOD_MASK_SHIFT)) {
@@ -702,14 +687,14 @@ getcount:
       redraw_curbuf_later(INVERTED);
     }
 
-    /* Keys that work different when 'keymodel' contains "startsel" */
+    // Keys that work different when 'keymodel' contains "startsel"
     if (km_startsel) {
       if (nv_cmds[idx].cmd_flags & NV_SS) {
-        unshift_special(&ca);
-        idx = find_command(ca.cmdchar);
+        unshift_special(&s->ca);
+        idx = find_command(s->ca.cmdchar);
         if (idx < 0) {
-          /* Just in case */
-          clearopbeep(oap);
+          // Just in case
+          clearopbeep(&s->oa);
           goto normal_end;
         }
       } else if ((nv_cmds[idx].cmd_flags & NV_SSS)
@@ -721,97 +706,94 @@ getcount:
 
   if (curwin->w_p_rl && KeyTyped && !KeyStuffed
       && (nv_cmds[idx].cmd_flags & NV_RL)) {
-    /* Invert horizontal movements and operations.  Only when typed by the
-     * user directly, not when the result of a mapping or "x" translated
-     * to "dl". */
-    switch (ca.cmdchar) {
-    case 'l':       ca.cmdchar = 'h'; break;
-    case K_RIGHT:   ca.cmdchar = K_LEFT; break;
-    case K_S_RIGHT: ca.cmdchar = K_S_LEFT; break;
-    case K_C_RIGHT: ca.cmdchar = K_C_LEFT; break;
-    case 'h':       ca.cmdchar = 'l'; break;
-    case K_LEFT:    ca.cmdchar = K_RIGHT; break;
-    case K_S_LEFT:  ca.cmdchar = K_S_RIGHT; break;
-    case K_C_LEFT:  ca.cmdchar = K_C_RIGHT; break;
-    case '>':       ca.cmdchar = '<'; break;
-    case '<':       ca.cmdchar = '>'; break;
+    // Invert horizontal movements and operations.  Only when typed by the
+    // user directly, not when the result of a mapping or "x" translated
+    // to "dl".
+    switch (s->ca.cmdchar) {
+    case 'l':       s->ca.cmdchar = 'h'; break;
+    case K_RIGHT:   s->ca.cmdchar = K_LEFT; break;
+    case K_S_RIGHT: s->ca.cmdchar = K_S_LEFT; break;
+    case K_C_RIGHT: s->ca.cmdchar = K_C_LEFT; break;
+    case 'h':       s->ca.cmdchar = 'l'; break;
+    case K_LEFT:    s->ca.cmdchar = K_RIGHT; break;
+    case K_S_LEFT:  s->ca.cmdchar = K_S_RIGHT; break;
+    case K_C_LEFT:  s->ca.cmdchar = K_C_RIGHT; break;
+    case '>':       s->ca.cmdchar = '<'; break;
+    case '<':       s->ca.cmdchar = '>'; break;
     }
-    idx = find_command(ca.cmdchar);
+    idx = find_command(s->ca.cmdchar);
   }
 
-  /*
-   * Get an additional character if we need one.
-   */
+  // Get an additional character if we need one.
   if ((nv_cmds[idx].cmd_flags & NV_NCH)
       && (((nv_cmds[idx].cmd_flags & NV_NCH_NOP) == NV_NCH_NOP
-           && oap->op_type == OP_NOP)
+           && s->oa.op_type == OP_NOP)
           || (nv_cmds[idx].cmd_flags & NV_NCH_ALW) == NV_NCH_ALW
-          || (ca.cmdchar == 'q'
-              && oap->op_type == OP_NOP
+          || (s->ca.cmdchar == 'q'
+              && s->oa.op_type == OP_NOP
               && !Recording
               && !Exec_reg)
-          || ((ca.cmdchar == 'a' || ca.cmdchar == 'i')
-              && (oap->op_type != OP_NOP
-                  || VIsual_active
-                  )))) {
-    int     *cp;
-    bool repl = false;          /* get character for replace mode */
-    bool lit = false;           /* get extra character literally */
-    bool langmap_active = false;           /* using :lmap mappings */
-    int lang;                   /* getting a text character */
+          || ((s->ca.cmdchar == 'a' || s->ca.cmdchar == 'i')
+              && (s->oa.op_type != OP_NOP || VIsual_active)))) {
+    int *cp;
+    bool repl = false;            // get character for replace mode
+    bool lit = false;             // get extra character literally
+    bool langmap_active = false;  // using :lmap mappings
+    int lang;                     // getting a text character
 
     ++no_mapping;
-    ++allow_keys;               /* no mapping for nchar, but allow key codes */
-    /* Don't generate a CursorHold event here, most commands can't handle
-     * it, e.g., nv_replace(), nv_csearch(). */
+    ++allow_keys;               // no mapping for nchar, but allow key codes
+    // Don't generate a CursorHold event here, most commands can't handle
+    // it, e.g., nv_replace(), nv_csearch().
     did_cursorhold = true;
-    if (ca.cmdchar == 'g') {
-      /*
-       * For 'g' get the next character now, so that we can check for
-       * "gr", "g'" and "g`".
-       */
-      ca.nchar = plain_vgetc();
-      LANGMAP_ADJUST(ca.nchar, true);
-      need_flushbuf |= add_to_showcmd(ca.nchar);
-      if (ca.nchar == 'r' || ca.nchar == '\'' || ca.nchar == '`'
-          || ca.nchar == Ctrl_BSL) {
-        cp = &ca.extra_char;            /* need to get a third character */
-        if (ca.nchar != 'r')
-          lit = true;                           /* get it literally */
-        else
-          repl = true;                          /* get it in replace mode */
-      } else
-        cp = NULL;                      /* no third character needed */
+    if (s->ca.cmdchar == 'g') {
+      // For 'g' get the next character now, so that we can check for
+      // "gr", "g'" and "g`".
+      s->ca.nchar = plain_vgetc();
+      LANGMAP_ADJUST(s->ca.nchar, true);
+      need_flushbuf |= add_to_showcmd(s->ca.nchar);
+      if (s->ca.nchar == 'r' || s->ca.nchar == '\'' || s->ca.nchar == '`'
+          || s->ca.nchar == Ctrl_BSL) {
+        cp = &s->ca.extra_char;            // need to get a third character
+        if (s->ca.nchar != 'r') {
+          lit = true;                           // get it literally
+        } else {
+          repl = true;                          // get it in replace mode
+        }
+      } else {
+        cp = NULL;                      // no third character needed
+      }
     } else {
-      if (ca.cmdchar == 'r')                    /* get it in replace mode */
+      if (s->ca.cmdchar == 'r') {
+        // get it in replace mode
         repl = true;
-      cp = &ca.nchar;
+      }
+      cp = &s->ca.nchar;
     }
     lang = (repl || (nv_cmds[idx].cmd_flags & NV_LANG));
 
-    /*
-     * Get a second or third character.
-     */
+    // Get a second or third character.
     if (cp != NULL) {
       if (repl) {
-        State = REPLACE;                /* pretend Replace mode */
-        ui_cursor_shape();              /* show different cursor shape */
+        State = REPLACE;                // pretend Replace mode
+        ui_cursor_shape();              // show different cursor shape
       }
       if (lang && curbuf->b_p_iminsert == B_IMODE_LMAP) {
-        /* Allow mappings defined with ":lmap". */
+        // Allow mappings defined with ":lmap".
         --no_mapping;
         --allow_keys;
-        if (repl)
+        if (repl) {
           State = LREPLACE;
-        else
+        } else {
           State = LANGMAP;
+        }
         langmap_active = true;
       }
 
       *cp = plain_vgetc();
 
       if (langmap_active) {
-        /* Undo the decrement done above */
+        // Undo the decrement done above
         ++no_mapping;
         ++allow_keys;
         State = NORMAL_BUSY;
@@ -820,69 +802,69 @@ getcount:
       need_flushbuf |= add_to_showcmd(*cp);
 
       if (!lit) {
-        /* Typing CTRL-K gets a digraph. */
-        if (*cp == Ctrl_K
-            && ((nv_cmds[idx].cmd_flags & NV_LANG)
-                || cp == &ca.extra_char)
+        // Typing CTRL-K gets a digraph.
+        if (*cp == Ctrl_K && ((nv_cmds[idx].cmd_flags & NV_LANG)
+                || cp == &s->ca.extra_char)
             && vim_strchr(p_cpo, CPO_DIGRAPH) == NULL) {
           c = get_digraph(false);
           if (c > 0) {
             *cp = c;
-            /* Guessing how to update showcmd here... */
+            // Guessing how to update showcmd here...
             del_from_showcmd(3);
             need_flushbuf |= add_to_showcmd(*cp);
           }
         }
 
-        /* adjust chars > 127, except after "tTfFr" commands */
+        // adjust chars > 127, except after "tTfFr" commands
         LANGMAP_ADJUST(*cp, !lang);
-        /* adjust Hebrew mapped char */
-        if (p_hkmap && lang && KeyTyped)
+        // adjust Hebrew mapped char
+        if (p_hkmap && lang && KeyTyped) {
           *cp = hkmap(*cp);
-        /* adjust Farsi mapped char */
-        if (p_fkmap && lang && KeyTyped)
+        }
+        // adjust Farsi mapped char
+        if (p_fkmap && lang && KeyTyped) {
           *cp = fkmap(*cp);
+        }
       }
 
-      /*
-       * When the next character is CTRL-\ a following CTRL-N means the
-       * command is aborted and we go to Normal mode.
-       */
-      if (cp == &ca.extra_char
-          && ca.nchar == Ctrl_BSL
-          && (ca.extra_char == Ctrl_N || ca.extra_char == Ctrl_G)) {
-        ca.cmdchar = Ctrl_BSL;
-        ca.nchar = ca.extra_char;
-        idx = find_command(ca.cmdchar);
-      } else if ((ca.nchar == 'n' || ca.nchar == 'N') && ca.cmdchar == 'g')
-        ca.oap->op_type = get_op_type(*cp, NUL);
-      else if (*cp == Ctrl_BSL) {
+      // When the next character is CTRL-\ a following CTRL-N means the
+      // command is aborted and we go to Normal mode.
+      if (cp == &s->ca.extra_char
+          && s->ca.nchar == Ctrl_BSL
+          && (s->ca.extra_char == Ctrl_N || s->ca.extra_char == Ctrl_G)) {
+        s->ca.cmdchar = Ctrl_BSL;
+        s->ca.nchar = s->ca.extra_char;
+        idx = find_command(s->ca.cmdchar);
+      } else if ((s->ca.nchar == 'n' || s->ca.nchar == 'N')
+          && s->ca.cmdchar == 'g') {
+        s->ca.oap->op_type = get_op_type(*cp, NUL);
+      } else if (*cp == Ctrl_BSL) {
         long towait = (p_ttm >= 0 ? p_ttm : p_tm);
 
-        /* There is a busy wait here when typing "f<C-\>" and then
-         * something different from CTRL-N.  Can't be avoided. */
+        // There is a busy wait here when typing "f<C-\>" and then
+        // something different from CTRL-N.  Can't be avoided.
         while ((c = vpeekc()) <= 0 && towait > 0L) {
           do_sleep(towait > 50L ? 50L : towait);
           towait -= 50L;
         }
         if (c > 0) {
           c = plain_vgetc();
-          if (c != Ctrl_N && c != Ctrl_G)
+          if (c != Ctrl_N && c != Ctrl_G) {
             vungetc(c);
-          else {
-            ca.cmdchar = Ctrl_BSL;
-            ca.nchar = c;
-            idx = find_command(ca.cmdchar);
+          } else {
+            s->ca.cmdchar = Ctrl_BSL;
+            s->ca.nchar = c;
+            idx = find_command(s->ca.cmdchar);
             assert(idx >= 0);
           }
         }
       }
 
-      /* When getting a text character and the next character is a
-       * multi-byte character, it could be a composing character.
-       * However, don't wait for it to arrive. Also, do enable mapping,
-       * because if it's put back with vungetc() it's too late to apply
-       * mapping. */
+      // When getting a text character and the next character is a
+      // multi-byte character, it could be a composing character.
+      // However, don't wait for it to arrive. Also, do enable mapping,
+      // because if it's put back with vungetc() it's too late to apply
+      // mapping.
       no_mapping--;
       while (enc_utf8 && lang && (c = vpeekc()) > 0
              && (c >= 0x100 || MB_BYTE2LEN(vpeekc()) > 1)) {
@@ -890,10 +872,11 @@ getcount:
         if (!utf_iscomposing(c)) {
           vungetc(c);                   /* it wasn't, put it back */
           break;
-        } else if (ca.ncharC1 == 0)
-          ca.ncharC1 = c;
-        else
-          ca.ncharC2 = c;
+        } else if (s->ca.ncharC1 == 0) {
+          s->ca.ncharC1 = c;
+        } else {
+          s->ca.ncharC2 = c;
+        }
       }
       no_mapping++;
     }
@@ -901,40 +884,41 @@ getcount:
     --allow_keys;
   }
 
-  /*
-   * Flush the showcmd characters onto the screen so we can see them while
-   * the command is being executed.  Only do this when the shown command was
-   * actually displayed, otherwise this will slow down a lot when executing
-   * mappings.
-   */
-  if (need_flushbuf)
+  // Flush the showcmd characters onto the screen so we can see them while
+  // the command is being executed.  Only do this when the shown command was
+  // actually displayed, otherwise this will slow down a lot when executing
+  // mappings.
+  if (need_flushbuf) {
     ui_flush();
-  if (ca.cmdchar != K_IGNORE)
+  }
+  if (s->ca.cmdchar != K_IGNORE) {
     did_cursorhold = false;
+  }
 
   State = NORMAL;
 
-  if (ca.nchar == ESC) {
-    clearop(oap);
-    if (restart_edit == 0 && goto_im())
+  if (s->ca.nchar == ESC) {
+    clearop(&s->oa);
+    if (restart_edit == 0 && goto_im()) {
       restart_edit = 'a';
+    }
     goto normal_end;
   }
 
-  if (ca.cmdchar != K_IGNORE) {
-    msg_didout = false;        /* don't scroll screen up for normal command */
+  if (s->ca.cmdchar != K_IGNORE) {
+    msg_didout = false;        // don't scroll screen up for normal command
     msg_col = 0;
   }
 
-  old_pos = curwin->w_cursor;           /* remember where cursor was */
+  old_pos = curwin->w_cursor;           // remember where cursor was
 
-  /* When 'keymodel' contains "startsel" some keys start Select/Visual
-   * mode. */
+  // When 'keymodel' contains "startsel" some keys start Select/Visual
+  // mode.
   if (!VIsual_active && km_startsel) {
     if (nv_cmds[idx].cmd_flags & NV_SS) {
       start_selection();
-      unshift_special(&ca);
-      idx = find_command(ca.cmdchar);
+      unshift_special(&s->ca);
+      idx = find_command(s->ca.cmdchar);
     } else if ((nv_cmds[idx].cmd_flags & NV_SSS)
                && (mod_mask & MOD_MASK_SHIFT)) {
       start_selection();
@@ -942,164 +926,148 @@ getcount:
     }
   }
 
-  /*
-   * Execute the command!
-   * Call the command function found in the commands table.
-   */
-  ca.arg = nv_cmds[idx].cmd_arg;
-  (nv_cmds[idx].cmd_func)(&ca);
+  // Execute the command!
+  // Call the command function found in the commands table.
+  s->ca.arg = nv_cmds[idx].cmd_arg;
+  (nv_cmds[idx].cmd_func)(&s->ca);
 
-  /*
-   * If we didn't start or finish an operator, reset oap->regname, unless we
-   * need it later.
-   */
+  // If we didn't start or finish an operator, reset oap->regname, unless we
+  // need it later.
   if (!finish_op
-      && !oap->op_type
+      && !s->oa.op_type
       && (idx < 0 || !(nv_cmds[idx].cmd_flags & NV_KEEPREG))) {
-    clearop(oap);
+    clearop(&s->oa);
     set_reg_var(get_default_register_name());
   }
 
-  /* Get the length of mapped chars again after typing a count, second
-   * character or "z333<cr>". */
-  if (old_mapped_len > 0)
+  // Get the length of mapped chars again after typing a count, second
+  // character or "z333<cr>".
+  if (old_mapped_len > 0) {
     old_mapped_len = typebuf_maplen();
+  }
 
-  /*
-   * If an operation is pending, handle it...
-   */
-  do_pending_operator(&ca, old_col, false);
+  // If an operation is pending, handle it...
+  do_pending_operator(&s->ca, old_col, false);
 
-  /*
-   * Wait for a moment when a message is displayed that will be overwritten
-   * by the mode message.
-   * In Visual mode and with "^O" in Insert mode, a short message will be
-   * overwritten by the mode message.  Wait a bit, until a key is hit.
-   * In Visual mode, it's more important to keep the Visual area updated
-   * than keeping a message (e.g. from a /pat search).
-   * Only do this if the command was typed, not from a mapping.
-   * Don't wait when emsg_silent is non-zero.
-   * Also wait a bit after an error message, e.g. for "^O:".
-   * Don't redraw the screen, it would remove the message.
-   */
-  if (       ((p_smd
-               && msg_silent == 0
-               && (restart_edit != 0
-                   || (VIsual_active
-                       && old_pos.lnum == curwin->w_cursor.lnum
-                       && old_pos.col == curwin->w_cursor.col)
-                   )
-               && (clear_cmdline
-                   || redraw_cmdline)
-               && (msg_didout || (msg_didany && msg_scroll))
-               && !msg_nowait
-               && KeyTyped)
-              || (restart_edit != 0
-                  && !VIsual_active
-                  && (msg_scroll
-                      || emsg_on_display)))
-             && oap->regname == 0
-             && !(ca.retval & CA_COMMAND_BUSY)
+  // Wait for a moment when a message is displayed that will be overwritten
+  // by the mode message.
+  // In Visual mode and with "^O" in Insert mode, a short message will be
+  // overwritten by the mode message.  Wait a bit, until a key is hit.
+  // In Visual mode, it's more important to keep the Visual area updated
+  // than keeping a message (e.g. from a /pat search).
+  // Only do this if the command was typed, not from a mapping.
+  // Don't wait when emsg_silent is non-zero.
+  // Also wait a bit after an error message, e.g. for "^O:".
+  // Don't redraw the screen, it would remove the message.
+  if (((p_smd && msg_silent == 0 && (restart_edit != 0 || (VIsual_active
+              && old_pos.lnum == curwin->w_cursor.lnum
+              && old_pos.col == curwin->w_cursor.col))
+          && (clear_cmdline || redraw_cmdline)
+          && (msg_didout || (msg_didany && msg_scroll))
+          && !msg_nowait
+          && KeyTyped) || (restart_edit != 0 && !VIsual_active && (msg_scroll
+              || emsg_on_display)))
+      && s->oa.regname == 0
+      && !(s->ca.retval & CA_COMMAND_BUSY)
              && stuff_empty()
              && typebuf_typed()
              && emsg_silent == 0
              && !did_wait_return
-             && oap->op_type == OP_NOP) {
+             && s->oa.op_type == OP_NOP) {
     int save_State = State;
 
-    /* Draw the cursor with the right shape here */
-    if (restart_edit != 0)
+    // Draw the cursor with the right shape here
+    if (restart_edit != 0) {
       State = INSERT;
+    }
 
-    /* If need to redraw, and there is a "keep_msg", redraw before the
-     * delay */
+    // If need to redraw, and there is a "keep_msg", redraw before the
+    // delay
     if (must_redraw && keep_msg != NULL && !emsg_on_display) {
       char_u      *kmsg;
 
       kmsg = keep_msg;
       keep_msg = NULL;
-      /* showmode() will clear keep_msg, but we want to use it anyway */
+      // showmode() will clear keep_msg, but we want to use it anyway
       update_screen(0);
-      /* now reset it, otherwise it's put in the history again */
+      // now reset it, otherwise it's put in the history again
       keep_msg = kmsg;
       msg_attr(kmsg, keep_msg_attr);
       xfree(kmsg);
     }
     setcursor();
     ui_flush();
-    if (msg_scroll || emsg_on_display)
-      os_delay(1000L, true);            /* wait at least one second */
-    os_delay(3000L, false);             /* wait up to three seconds */
+    if (msg_scroll || emsg_on_display) {
+      os_delay(1000L, true);            // wait at least one second
+    }
+    os_delay(3000L, false);             // wait up to three seconds
     State = save_State;
 
     msg_scroll = false;
     emsg_on_display = false;
   }
 
-  /*
-   * Finish up after executing a Normal mode command.
-   */
+  // Finish up after executing a Normal mode command.
 normal_end:
 
   msg_nowait = false;
 
-  /* Reset finish_op, in case it was set */
+  // Reset finish_op, in case it was set
   c = finish_op;
   finish_op = false;
-  /* Redraw the cursor with another shape, if we were in Operator-pending
-   * mode or did a replace command. */
-  if (c || ca.cmdchar == 'r') {
-    ui_cursor_shape();                  /* may show different cursor shape */
+  // Redraw the cursor with another shape, if we were in Operator-pending
+  // mode or did a replace command.
+  if (c || s->ca.cmdchar == 'r') {
+    ui_cursor_shape();                  // may show different cursor shape
   }
 
-  if (oap->op_type == OP_NOP && oap->regname == 0
-      && ca.cmdchar != K_CURSORHOLD
-      )
+  if (s->oa.op_type == OP_NOP && s->oa.regname == 0
+      && s->ca.cmdchar != K_CURSORHOLD) {
     clear_showcmd();
+  }
 
-  checkpcmark();                /* check if we moved since setting pcmark */
-  xfree(ca.searchbuf);
+  checkpcmark();                // check if we moved since setting pcmark
+  xfree(s->ca.searchbuf);
 
-  if (has_mbyte)
+  if (has_mbyte) {
     mb_adjust_cursor();
+  }
 
-  if (curwin->w_p_scb && toplevel) {
-    validate_cursor();          /* may need to update w_leftcol */
+  if (curwin->w_p_scb && s->toplevel) {
+    validate_cursor();          // may need to update w_leftcol
     do_check_scrollbind(true);
   }
 
-  if (curwin->w_p_crb && toplevel) {
-    validate_cursor();          /* may need to update w_leftcol */
+  if (curwin->w_p_crb && s->toplevel) {
+    validate_cursor();          // may need to update w_leftcol
     do_check_cursorbind();
   }
 
-  /*
-   * May restart edit(), if we got here with CTRL-O in Insert mode (but not
-   * if still inside a mapping that started in Visual mode).
-   * May switch from Visual to Select mode after CTRL-O command.
-   */
-  if (       oap->op_type == OP_NOP
+  // May restart edit(), if we got here with CTRL-O in Insert mode (but not
+  // if still inside a mapping that started in Visual mode).
+  // May switch from Visual to Select mode after CTRL-O command.
+  if (s->oa.op_type == OP_NOP
              && ((restart_edit != 0 && !VIsual_active && old_mapped_len == 0)
                  || restart_VIsual_select == 1)
-             && !(ca.retval & CA_COMMAND_BUSY)
+             && !(s->ca.retval & CA_COMMAND_BUSY)
              && stuff_empty()
-             && oap->regname == 0) {
+             && s->oa.regname == 0) {
     if (restart_VIsual_select == 1) {
       VIsual_select = true;
       showmode();
       restart_VIsual_select = 0;
     }
-    if (restart_edit != 0
-        && !VIsual_active && old_mapped_len == 0
-        )
+    if (restart_edit != 0 && !VIsual_active && old_mapped_len == 0) {
       (void)edit(restart_edit, false, 1L);
+    }
   }
 
-  if (restart_VIsual_select == 2)
+  if (restart_VIsual_select == 2) {
     restart_VIsual_select = 1;
+  }
 
-  /* Save count before an operator for next time. */
-  opcount = ca.opcount;
+  // Save count before an operator for next time
+  opcount = s->ca.opcount;
   return 1;
 }
 
