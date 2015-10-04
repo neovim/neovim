@@ -69,10 +69,11 @@ describe('shell functions', function()
       eq(0, status)
     end)
 
-    it ('can deal with non-existent command', function()
-      local cmd = 'this_cmd_dne12345'
+    it ('can return non-zero command execution results', function()
+      local ret = 2
+      local cmd = 'exit' .. ' ' .. ret
       local status, output = os_system(cmd)
-      eq(127, status)
+      eq(ret, status)
     end)
   end)
 end)
