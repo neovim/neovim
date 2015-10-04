@@ -1,9 +1,7 @@
 local helpers = require('test.functional.helpers')
-local Screen = require('test.functional.ui.screen').new(40,4)
 local clear, execute, nvim = helpers.clear, helpers.execute, helpers.nvim
-local expect = helpers.expect
-local feed = helpers.feed
-local command = helpers.command
+local expect, feed, command = helpers.expect, helpers.feed, helpers.command
+local eq, eval = helpers.eq, helpers.eval
 
 describe(':emenu', function()
 
@@ -12,6 +10,10 @@ describe(':emenu', function()
     execute('nnoremenu Test.Test inormal<ESC>')
     execute('inoremenu Test.Test insert')
     execute('vnoremenu Test.Test x')
+    execute('cnoremenu Test.Test cmdmode')
+
+    execute('nnoremenu Edit.Paste p')
+    execute('cnoremenu Edit.Paste <C-R>"')
   end)
 
   it('executes correct bindings in normal mode without using API', function()
@@ -36,26 +38,21 @@ describe(':emenu', function()
     expect('ae')
   end)
 
-end)
+  it('executes correct bindings in command mode', function()
+      feed('ithis is a sentence<esc>^"+yiwo<esc>')
 
-describe('emenu Edit.Paste while in commandline', function()
-    before_each(function()
-      clear()
-      screen = Screen.new(40, 4)
-      screen:attach()
-    end)
+      -- Invoke "Edit.Paste" in normal-mode.
+      nvim('command', 'emenu Edit.Paste')
 
-    it('ok', function()
-        nvim('command', 'runtime menu.vim')
-        feed('ithis is a sentence<esc>^"+yiwo<esc>')
-        nvim('command', 'emenu Edit.Paste')
-        feed(':')
-        nvim('command', 'emenu Edit.Paste')
-        screen:expect([[
-          this is a sentence                      |
-          this                                    |
-          ~                                       |
-          :this^                                   |
-        ]])
-    end)
+      -- Invoke "Edit.Paste" and "Test.Test" in command-mode.
+      feed(':')
+      nvim('command', 'emenu Edit.Paste')
+      nvim('command', 'emenu Test.Test')
+
+      expect([[
+        this is a sentence
+        this]])
+      -- Assert that Edit.Paste pasted @" into the commandline.
+      eq('thiscmdmode', eval('getcmdline()'))
+  end)
 end)
