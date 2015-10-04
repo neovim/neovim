@@ -776,7 +776,7 @@ static void fix_terminfo(TUIData *data)
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b]2");
   } else if (STARTS_WITH(term, "xterm")) {
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b]0;");
-  } else if (STARTS_WITH(term, "screen")) {
+  } else if (STARTS_WITH(term, "screen") || STARTS_WITH(term, "tmux")) {
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
   }
