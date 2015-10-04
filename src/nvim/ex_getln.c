@@ -4943,7 +4943,7 @@ static int ex_window(void)
    * Call the main loop until <CR> or CTRL-C is typed.
    */
   cmdwin_result = 0;
-  main_loop(TRUE, FALSE);
+  normal_enter(true, false);
 
   RedrawingDisabled = i;
 

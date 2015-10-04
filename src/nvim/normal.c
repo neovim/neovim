@@ -65,6 +65,19 @@
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
 
+typedef struct normal_state {
+  linenr_T conceal_old_cursor_line;
+  linenr_T conceal_new_cursor_line;
+  bool conceal_update_lines;
+  bool previous_got_int;             // `got_int` was true
+  bool cmdwin;                       // command-line window normal mode
+  bool noexmode;                     // true if the normal mode was pushed from
+                                     // ex mode(:global or :visual for example)
+  bool toplevel;                     // top-level normal mode
+  oparg_T oa;                        // operator arguments
+  cmdarg_T ca;                       // command arguments
+} NormalState;
+
 /*
  * The Visual area is remembered for reselection.
  */
@@ -79,6 +92,12 @@ static int restart_VIsual_select = 0;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "normal.c.generated.h"
 #endif
+
+static inline void normal_state_init(NormalState *s)
+{
+  memset(s, 0, sizeof(NormalState));
+}
+
 /*
  * nv_*(): functions called to handle Normal and Visual mode commands.
  * n_*(): functions called to handle Normal mode commands.
@@ -416,6 +435,34 @@ static int find_command(int cmdchar)
       top = i - 1;
   }
   return idx;
+}
+
+// Normal state entry point. This is called on:
+//
+// - Startup, In this case the function never returns.
+// - The command-line window is opened(`q:`). Returns when `cmdwin_result` != 0.
+// - The :visual command is called from :global in ex mode, `:global/PAT/visual`
+//   for example. Returns when re-entering ex mode(because ex mode recursion is
+//   not allowed)
+//
+// This used to be called main_loop on main.c
+void normal_enter(bool cmdwin, bool noexmode)
+{
+  NormalState state;
+  normal_state_init(&state);
+  state.cmdwin = cmdwin;
+  state.noexmode = noexmode;
+  state.toplevel = !cmdwin && !noexmode;
+
+  for (;;) {
+    int check_result = normal_check(&state);
+    if (!check_result) {
+      break;
+    } else if (check_result == -1) {
+      continue;
+    }
+    normal_cmd(&state.oa, true);
+  }
 }
 
 /*
@@ -1062,6 +1109,209 @@ normal_end:
 
   /* Save count before an operator for next time. */
   opcount = ca.opcount;
+}
+
+// Function executed before each iteration of normal mode.
+// Return:
+//   1 if the iteration should continue normally
+//   -1 if the iteration should be skipped
+//   0 if the main loop must exit
+static int normal_check(NormalState *s)
+{
+  if (stuff_empty()) {
+    did_check_timestamps = false;
+
+    if (need_check_timestamps) {
+      check_timestamps(false);
+    }
+
+    if (need_wait_return) {
+      // if wait_return still needed call it now
+      wait_return(false);
+    }
+
+    if (need_start_insertmode && goto_im() && !VIsual_active) {
+      need_start_insertmode = false;
+      stuffReadbuff((uint8_t *)"i");  // start insert mode next
+      // skip the fileinfo message now, because it would be shown
+      // after insert mode finishes!
+      need_fileinfo = false;
+    }
+  }
+
+  // Reset "got_int" now that we got back to the main loop.  Except when
+  // inside a ":g/pat/cmd" command, then the "got_int" needs to abort
+  // the ":g" command.
+  // For ":g/pat/vi" we reset "got_int" when used once.  When used
+  // a second time we go back to Ex mode and abort the ":g" command.
+  if (got_int) {
+    if (s->noexmode && global_busy && !exmode_active
+        && s->previous_got_int) {
+      // Typed two CTRL-C in a row: go back to ex mode as if "Q" was
+      // used and keep "got_int" set, so that it aborts ":g".
+      exmode_active = EXMODE_NORMAL;
+      State = NORMAL;
+    } else if (!global_busy || !exmode_active) {
+      if (!quit_more) {
+        // flush all buffers
+        (void)vgetc();
+      }
+      got_int = false;
+    }
+    s->previous_got_int = true;
+  } else {
+    s->previous_got_int = false;
+  }
+
+  if (!exmode_active) {
+    msg_scroll = false;
+  }
+  quit_more = false;
+
+  // If skip redraw is set (for ":" in wait_return()), don't redraw now.
+  // If there is nothing in the stuff_buffer or do_redraw is TRUE,
+  // update cursor and redraw.
+  if (skip_redraw || exmode_active) {
+    skip_redraw = false;
+  } else if (do_redraw || stuff_empty()) {
+    // Trigger CursorMoved if the cursor moved.
+    if (!finish_op && (has_cursormoved() || curwin->w_p_cole > 0)
+        && !equalpos(last_cursormoved, curwin->w_cursor)) {
+      if (has_cursormoved()) {
+        apply_autocmds(EVENT_CURSORMOVED, NULL, NULL, false, curbuf);
+      }
+
+      if (curwin->w_p_cole > 0) {
+        s->conceal_old_cursor_line = last_cursormoved.lnum;
+        s->conceal_new_cursor_line = curwin->w_cursor.lnum;
+        s->conceal_update_lines = true;
+      }
+
+      last_cursormoved = curwin->w_cursor;
+    }
+
+    // Trigger TextChanged if b_changedtick differs.
+    if (!finish_op && has_textchanged()
+        && last_changedtick != curbuf->b_changedtick) {
+      if (last_changedtick_buf == curbuf) {
+        apply_autocmds(EVENT_TEXTCHANGED, NULL, NULL, false, curbuf);
+      }
+
+      last_changedtick_buf = curbuf;
+      last_changedtick = curbuf->b_changedtick;
+    }
+
+    // Scroll-binding for diff mode may have been postponed until
+    // here.  Avoids doing it for every change.
+    if (diff_need_scrollbind) {
+      check_scrollbind((linenr_T)0, 0L);
+      diff_need_scrollbind = false;
+    }
+
+    // Include a closed fold completely in the Visual area.
+    foldAdjustVisual();
+
+    // When 'foldclose' is set, apply 'foldlevel' to folds that don't
+    // contain the cursor.
+    // When 'foldopen' is "all", open the fold(s) under the cursor.
+    // This may mark the window for redrawing.
+    if (hasAnyFolding(curwin) && !char_avail()) {
+      foldCheckClose();
+
+      if (fdo_flags & FDO_ALL) {
+        foldOpenCursor();
+      }
+    }
+
+    // Before redrawing, make sure w_topline is correct, and w_leftcol
+    // if lines don't wrap, and w_skipcol if lines wrap.
+    update_topline();
+    validate_cursor();
+
+    if (VIsual_active) {
+      update_curbuf(INVERTED);  // update inverted part
+    } else if (must_redraw) {
+      update_screen(0);
+    } else if (redraw_cmdline || clear_cmdline) {
+      showmode();
+    }
+
+    redraw_statuslines();
+
+    if (need_maketitle) {
+      maketitle();
+    }
+
+    // display message after redraw
+    if (keep_msg != NULL) {
+      // msg_attr_keep() will set keep_msg to NULL, must free the string here.
+      // Don't reset keep_msg, msg_attr_keep() uses it to check for duplicates.
+      char *p = (char *)keep_msg;
+      msg_attr((uint8_t *)p, keep_msg_attr);
+      xfree(p);
+    }
+
+    if (need_fileinfo) {  // show file info after redraw
+      fileinfo(false, true, false);
+      need_fileinfo = false;
+    }
+
+    emsg_on_display = false;  // can delete error message now
+    did_emsg = false;
+    msg_didany = false;  // reset lines_left in msg_start()
+    may_clear_sb_text();  // clear scroll-back text on next msg
+    showruler(false);
+
+    if (s->conceal_update_lines
+        && (s->conceal_old_cursor_line !=
+          s->conceal_new_cursor_line
+          || conceal_cursor_line(curwin)
+          || need_cursor_line_redraw)) {
+      if (s->conceal_old_cursor_line !=
+          s->conceal_new_cursor_line
+          && s->conceal_old_cursor_line <=
+          curbuf->b_ml.ml_line_count) {
+        update_single_line(curwin, s->conceal_old_cursor_line);
+      }
+
+      update_single_line(curwin, s->conceal_new_cursor_line);
+      curwin->w_valid &= ~VALID_CROW;
+    }
+
+    setcursor();
+
+    do_redraw = false;
+
+    // Now that we have drawn the first screen all the startup stuff
+    // has been done, close any file for startup messages.
+    if (time_fd != NULL) {
+      TIME_MSG("first screen update");
+      TIME_MSG("--- NVIM STARTED ---");
+      fclose(time_fd);
+      time_fd = NULL;
+    }
+  }
+
+  // May perform garbage collection when waiting for a character, but
+  // only at the very toplevel.  Otherwise we may be using a List or
+  // Dict internally somewhere.
+  // "may_garbage_collect" is reset in vgetc() which is invoked through
+  // do_exmode() and normal_cmd().
+  may_garbage_collect = s->toplevel;
+
+  // Update w_curswant if w_set_curswant has been set.
+  // Postponed until here to avoid computing w_virtcol too often.
+  update_curswant();
+
+  if (exmode_active) {
+    if (s->noexmode) {
+      return 0;
+    }
+    do_exmode(exmode_active == EXMODE_VIM);
+    return -1;
+  }
+
+  return !s->cmdwin || cmdwin_result == 0;
 }
 
 /*
@@ -7376,3 +7626,4 @@ static int mouse_model_popup(void)
 {
   return p_mousem[0] == 'p';
 }
+
