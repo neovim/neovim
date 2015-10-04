@@ -68,5 +68,12 @@ describe('shell functions', function()
       eq(input, output)
       eq(0, status)
     end)
+
+    it ('can return non-zero command execution results', function()
+      local ret = 2
+      local cmd = 'exit' .. ' ' .. ret
+      local status, output = os_system(cmd)
+      eq(ret, status)
+    end)
   end)
 end)
