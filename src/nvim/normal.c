@@ -69,6 +69,7 @@ typedef struct normal_state {
   linenr_T conceal_old_cursor_line;
   linenr_T conceal_new_cursor_line;
   bool conceal_update_lines;
+  bool set_prevcount;
   bool previous_got_int;             // `got_int` was true
   bool cmdwin;                       // command-line window normal mode
   bool noexmode;                     // true if the normal mode was pushed from
@@ -76,6 +77,7 @@ typedef struct normal_state {
   bool toplevel;                     // top-level normal mode
   oparg_T oa;                        // operator arguments
   cmdarg_T ca;                       // command arguments
+  int mapped_len;
 } NormalState;
 
 /*
@@ -465,26 +467,11 @@ void normal_enter(bool cmdwin, bool noexmode)
   }
 }
 
-/*
- * Execute a command in Normal mode.
- */
-void
-normal_cmd (
-    oparg_T *oap,
-    bool toplevel                    /* true when called from main() */
-)
+static void normal_prepare(NormalState *s)
 {
   cmdarg_T ca;                          /* command arguments */
   int c;
-  bool ctrl_w = false;                  /* got CTRL-W command */
-  int old_col = curwin->w_curswant;
-  bool need_flushbuf;                   /* need to call ui_flush() */
-  pos_T old_pos;                        /* cursor position before command */
-  int mapped_len;
-  static int old_mapped_len = 0;
-  int idx;
-  bool set_prevcount = false;
-
+  oparg_T *oap = &s->oa;
   memset(&ca, 0, sizeof(ca));       /* also resets ca.retval */
   ca.oap = oap;
 
@@ -509,7 +496,7 @@ normal_cmd (
    * count. */
   if (!finish_op && !oap->regname) {
     ca.opcount = 0;
-    set_prevcount = true;
+    s->set_prevcount = true;
   }
 
   /* Restore counts from before receiving K_CURSORHOLD.  This means after
@@ -522,27 +509,31 @@ normal_cmd (
     oap->prev_count0 = 0;
   }
 
-  mapped_len = typebuf_maplen();
+  s->mapped_len = typebuf_maplen();
 
   State = NORMAL_BUSY;
 
   /* Set v:count here, when called from main() and not a stuffed
    * command, so that v:count can be used in an expression mapping
    * when there is no count. Do set it for redo. */
-  if (toplevel && readbuf1_empty())
-    set_vcount_ca(&ca, &set_prevcount);
+  if (s->toplevel && readbuf1_empty())
+    set_vcount_ca(&ca, &s->set_prevcount);
+  s->ca = ca;
+}
 
-  /*
-   * Get the command character from the user.
-   */
-  input_enable_events();
-  c = safe_vgetc();
-  input_disable_events();
-
-  if (c == K_EVENT) {
-    queue_process_events(loop.events);
-    return;
-  }
+static int normal_execute(NormalState *s, int c)
+{
+  cmdarg_T ca = s->ca;
+  bool ctrl_w = false;                  /* got CTRL-W command */
+  int old_col = curwin->w_curswant;
+  bool need_flushbuf;                   /* need to call ui_flush() */
+  pos_T old_pos;                        /* cursor position before command */
+  int mapped_len = s->mapped_len;
+  static int old_mapped_len = 0;
+  int idx;
+  bool set_prevcount = s->set_prevcount;
+  bool toplevel = s->toplevel;
+  oparg_T *oap = &s->oa;
 
   LANGMAP_ADJUST(c, true);
 
@@ -1109,6 +1100,7 @@ normal_end:
 
   /* Save count before an operator for next time. */
   opcount = ca.opcount;
+  return 1;
 }
 
 // Function executed before each iteration of normal mode.
@@ -7627,3 +7619,25 @@ static int mouse_model_popup(void)
   return p_mousem[0] == 'p';
 }
 
+void normal_cmd(oparg_T *oap, bool toplevel)
+{
+  NormalState s;
+  normal_state_init(&s);
+  s.toplevel = toplevel;
+  s.oa = *oap;
+  normal_prepare(&s);
+
+  input_enable_events();
+  int c = safe_vgetc();
+  input_disable_events();
+
+  if (c == K_EVENT) {
+    queue_process_events(loop.events);
+    goto end;
+  }
+
+  (void)normal_execute(&s, c);
+
+end:
+  *oap = s.oa;
+}
