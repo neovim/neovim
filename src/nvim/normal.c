@@ -61,11 +61,13 @@
 #include "nvim/mouse.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
+#include "nvim/state.h"
 #include "nvim/event/loop.h"
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
 
 typedef struct normal_state {
+  VimState state;
   linenr_T conceal_old_cursor_line;
   linenr_T conceal_new_cursor_line;
   bool conceal_update_lines;
@@ -98,6 +100,8 @@ static int restart_VIsual_select = 0;
 static inline void normal_state_init(NormalState *s)
 {
   memset(s, 0, sizeof(NormalState));
+  s->state.check = normal_check;
+  s->state.execute = normal_execute;
 }
 
 /*
@@ -455,46 +459,7 @@ void normal_enter(bool cmdwin, bool noexmode)
   state.cmdwin = cmdwin;
   state.noexmode = noexmode;
   state.toplevel = !cmdwin && !noexmode;
-
-  for (;;) {
-    int check_result = normal_check(&state);
-    if (!check_result) {
-      break;
-    } else if (check_result == -1) {
-      continue;
-    }
-
-    int key;
-
-    if (char_avail() || using_script() || input_available()) {
-      // Don't block for events if there's a character already available for
-      // processing. Characters can come from mappings, scripts and other
-      // sources, so this scenario is very common.
-      key = safe_vgetc();
-    } else if (!queue_empty(loop.events)) {
-      // Event was made available after the last queue_process_events call
-      key = K_EVENT;
-    } else {
-      input_enable_events();
-      // Flush screen updates before blocking
-      ui_flush();
-      // Call `os_inchar` directly to block for events or user input without
-      // consuming anything from `input_buffer`(os/input.c) or calling the
-      // mapping engine. If an event was put into the queue, we send K_EVENT
-      // directly.
-      (void)os_inchar(NULL, 0, -1, 0);
-      input_disable_events();
-      key = !queue_empty(loop.events) ? K_EVENT : safe_vgetc();
-    }
-
-    if (key == K_EVENT) {
-      may_sync_undo();
-    }
-
-    if (!normal_execute(&state, key)) {
-      break;
-    }
-  }
+  state_enter(&state.state);
 }
 
 static void normal_prepare(NormalState *s)
@@ -543,8 +508,9 @@ static void normal_prepare(NormalState *s)
   }
 }
 
-static int normal_execute(NormalState *s, int c)
+static int normal_execute(VimState *state, int c)
 {
+  NormalState *s = (NormalState *)state;
   bool ctrl_w = false;                  /* got CTRL-W command */
   int old_col = curwin->w_curswant;
   bool need_flushbuf;                   /* need to call ui_flush() */
@@ -1106,8 +1072,9 @@ normal_end:
 //   1 if the iteration should continue normally
 //   -1 if the iteration should be skipped
 //   0 if the main loop must exit
-static int normal_check(NormalState *s)
+static int normal_check(VimState *state)
 {
+  NormalState *s = (NormalState *)state;
   if (stuff_empty()) {
     did_check_timestamps = false;
 
@@ -7625,6 +7592,6 @@ void normal_cmd(oparg_T *oap, bool toplevel)
   s.toplevel = toplevel;
   s.oa = *oap;
   normal_prepare(&s);
-  (void)normal_execute(&s, safe_vgetc());
+  (void)normal_execute(&s.state, safe_vgetc());
   *oap = s.oa;
 }
