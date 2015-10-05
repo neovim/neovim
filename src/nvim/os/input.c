@@ -91,7 +91,7 @@ static void create_cursorhold_event(void)
 // Low level input function
 int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
 {
-  if (rbuffer_size(input_buffer)) {
+  if (maxlen && rbuffer_size(input_buffer)) {
     return (int)rbuffer_read(input_buffer, (char *)buf, (size_t)maxlen);
   }
 
@@ -116,14 +116,14 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
     return 0;
   }
 
-  if (rbuffer_size(input_buffer)) {
+  if (maxlen && rbuffer_size(input_buffer)) {
     // Safe to convert rbuffer_read to int, it will never overflow since we use
     // relatively small buffers.
     return (int)rbuffer_read(input_buffer, (char *)buf, (size_t)maxlen);
   }
 
   // If there are events, return the keys directly
-  if (pending_events()) {
+  if (maxlen && pending_events()) {
     return push_event_key(buf, maxlen);
   }
 
@@ -322,6 +322,11 @@ static bool input_poll(int ms)
 void input_done(void)
 {
   input_eof = true;
+}
+
+bool input_available(void)
+{
+  return rbuffer_size(input_buffer) != 0;
 }
 
 // This is a replacement for the old `WaitForChar` function in os_unix.c
