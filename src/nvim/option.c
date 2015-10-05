@@ -1968,6 +1968,8 @@ static void redraw_titles(void) {
   redraw_tabline = TRUE;
 }
 
+static int shada_idx = -1;
+
 /*
  * Set a string option to a new value (without checking the effect).
  * The string is copied into allocated memory.
@@ -2000,6 +2002,8 @@ set_string_option_direct (
 
   if (options[idx].var == NULL)         /* can't set hidden option */
     return;
+
+  assert((void *) options[idx].var != (void *) &p_shada);
 
   s = vim_strsave(val);
   {
@@ -2443,6 +2447,13 @@ did_set_string_option (
       errmsg = e_invarg;
   /* 'shada' */
   } else if (varp == &p_shada) {
+    // TODO(ZyX-I): Remove this code in the future, alongside with &viminfo
+    //              option.
+    opt_idx = ((options[opt_idx].fullname[0] == 'v')
+               ? (shada_idx == -1
+                  ? ((shada_idx = findoption((char_u *) "shada")))
+                  : shada_idx)
+               : opt_idx);
     for (s = p_shada; *s; ) {
       /* Check it's a valid character */
       if (vim_strchr((char_u *)"!\"%'/:<@cfhnrs", *s) == NULL) {
