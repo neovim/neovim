@@ -463,7 +463,13 @@ void normal_enter(bool cmdwin, bool noexmode)
     } else if (check_result == -1) {
       continue;
     }
-    normal_cmd(&state.oa, true);
+
+    input_enable_events();
+    int c = safe_vgetc();
+    input_disable_events();
+    if (!normal_execute(&state, c)) {
+      break;
+    }
   }
 }
 
@@ -1271,7 +1277,13 @@ static int normal_check(NormalState *s)
     return -1;
   }
 
-  return !s->cmdwin || cmdwin_result == 0;
+  if (s->cmdwin && cmdwin_result != 0) {
+    // command-line window and cmdwin_result is set
+    return 0;
+  }
+
+  normal_prepare(s);
+  return 1;
 }
 
 /*
@@ -7589,9 +7601,6 @@ void normal_cmd(oparg_T *oap, bool toplevel)
   s.toplevel = toplevel;
   s.oa = *oap;
   normal_prepare(&s);
-  input_enable_events();
-  int c = safe_vgetc();
-  input_disable_events();
-  (void)normal_execute(&s, c);
+  (void)normal_execute(&s, safe_vgetc());
   *oap = s.oa;
 }
