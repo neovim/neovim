@@ -36,8 +36,8 @@ typedef struct oparg_S {
   bool block_mode;              /* current operator is Visual block mode */
   colnr_T start_vcol;           /* start col for block mode operator */
   colnr_T end_vcol;             /* end col for block mode operator */
-  long prev_opcount;            /* ca.opcount saved for K_CURSORHOLD */
-  long prev_count0;             /* ca.count0 saved for K_CURSORHOLD */
+  long prev_opcount;            // ca.opcount saved for K_EVENT
+  long prev_count0;             // ca.count0 saved for K_EVENT
 } oparg_T;
 
 /*

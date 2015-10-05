@@ -336,7 +336,7 @@ static const struct nv_cmd {
   {K_SELECT,  nv_select,      0,                      0},
   {K_F8,      farsi_fkey,     0,                      0},
   {K_F9,      farsi_fkey,     0,                      0},
-  {K_CURSORHOLD, nv_cursorhold, NV_KEEPREG,           0},
+  {K_EVENT,   nv_event,       NV_KEEPREG,             0},
 };
 
 /* Number of commands in nv_cmds[]. */
@@ -492,8 +492,8 @@ static void normal_prepare(NormalState *s)
     s->set_prevcount = true;
   }
 
-  // Restore counts from before receiving K_CURSORHOLD.  This means after
-  // typing "3", handling K_CURSORHOLD and then typing "2" we get "32", not
+  // Restore counts from before receiving K_EVENT.  This means after
+  // typing "3", handling K_EVENT and then typing "2" we get "32", not
   // "3 * 2".
   if (s->oa.prev_opcount > 0 || s->oa.prev_count0 > 0) {
     s->ca.opcount = s->oa.prev_opcount;
@@ -616,9 +616,9 @@ getcount:
     }
   }
 
-  if (c == K_CURSORHOLD) {
+  if (c == K_EVENT) {
     // Save the count values so that ca.opcount and ca.count0 are exactly
-    // the same when coming back here after handling K_CURSORHOLD.
+    // the same when coming back here after handling K_EVENT.
     s->oa.prev_opcount = s->ca.opcount;
     s->oa.prev_count0 = s->ca.count0;
   } else if (s->ca.opcount != 0)  {
@@ -891,7 +891,7 @@ getcount:
   if (need_flushbuf) {
     ui_flush();
   }
-  if (s->ca.cmdchar != K_IGNORE) {
+  if (s->ca.cmdchar != K_IGNORE && s->ca.cmdchar != K_EVENT) {
     did_cursorhold = false;
   }
 
@@ -1022,7 +1022,7 @@ normal_end:
   }
 
   if (s->oa.op_type == OP_NOP && s->oa.regname == 0
-      && s->ca.cmdchar != K_CURSORHOLD) {
+      && s->ca.cmdchar != K_EVENT) {
     clear_showcmd();
   }
 
@@ -3147,7 +3147,7 @@ bool add_to_showcmd(int c)
     K_RIGHTMOUSE, K_RIGHTDRAG, K_RIGHTRELEASE,
     K_MOUSEDOWN, K_MOUSEUP, K_MOUSELEFT, K_MOUSERIGHT,
     K_X1MOUSE, K_X1DRAG, K_X1RELEASE, K_X2MOUSE, K_X2DRAG, K_X2RELEASE,
-    K_CURSORHOLD,
+    K_EVENT,
     0
   };
 
@@ -7567,16 +7567,11 @@ static void nv_open(cmdarg_T *cap)
     n_opencmd(cap);
 }
 
-/*
- * Trigger CursorHold event.
- * When waiting for a character for 'updatetime' K_CURSORHOLD is put in the
- * input buffer.  "did_cursorhold" is set to avoid retriggering.
- */
-static void nv_cursorhold(cmdarg_T *cap)
+// Handle an arbitrary event in normal mode
+static void nv_event(cmdarg_T *cap)
 {
-  apply_autocmds(EVENT_CURSORHOLD, NULL, NULL, false, curbuf);
-  did_cursorhold = true;
-  cap->retval |= CA_COMMAND_BUSY;       /* don't call edit() now */
+  queue_process_events(loop.events);
+  cap->retval |= CA_COMMAND_BUSY;       // don't call edit() now
 }
 
 /*
@@ -7594,18 +7589,9 @@ void normal_cmd(oparg_T *oap, bool toplevel)
   s.toplevel = toplevel;
   s.oa = *oap;
   normal_prepare(&s);
-
   input_enable_events();
   int c = safe_vgetc();
   input_disable_events();
-
-  if (c == K_EVENT) {
-    queue_process_events(loop.events);
-    goto end;
-  }
-
   (void)normal_execute(&s, c);
-
-end:
   *oap = s.oa;
 }

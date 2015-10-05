@@ -73,6 +73,21 @@ void input_stop(void)
   stream_close(&read_stream, NULL);
 }
 
+static void cursorhold_event(void **argv)
+{
+  event_T event = State & INSERT ? EVENT_CURSORHOLDI : EVENT_CURSORHOLD;
+  apply_autocmds(event, NULL, NULL, false, curbuf);
+  did_cursorhold = true;
+}
+
+static void create_cursorhold_event(void)
+{
+  // If the queue had any items, this function should not have been
+  // called(inbuf_poll would return kInputAvail)
+  assert(queue_empty(loop.events));
+  queue_put(loop.events, cursorhold_event, 0);
+}
+
 // Low level input function
 int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
 {
@@ -87,16 +102,12 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
     }
   } else {
     if ((result = inbuf_poll((int)p_ut)) == kInputNone) {
-      if (trigger_cursorhold() && maxlen >= 3
-          && !typebuf_changed(tb_change_cnt)) {
-        buf[0] = K_SPECIAL;
-        buf[1] = KS_EXTRA;
-        buf[2] = KE_CURSORHOLD;
-        return 3;
+      if (trigger_cursorhold() && !typebuf_changed(tb_change_cnt)) {
+        create_cursorhold_event();
+      } else {
+        before_blocking();
+        result = inbuf_poll(-1);
       }
-
-      before_blocking();
-      result = inbuf_poll(-1);
     }
   }
 

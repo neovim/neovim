@@ -626,14 +626,9 @@ edit (
     } while (c == K_IGNORE);
     input_disable_events();
 
-    if (c == K_EVENT) {
-      c = lastc;
-      queue_process_events(loop.events);
-      continue;
-    }
-
-    /* Don't want K_CURSORHOLD for the second key, e.g., after CTRL-V. */
-    did_cursorhold = TRUE;
+    // Don't want K_EVENT with cursorhold for the second key, e.g., after
+    // CTRL-V.
+    did_cursorhold = true;
 
     if (p_hkmap && KeyTyped)
       c = hkmap(c);                     /* Hebrew mode mapping */
@@ -974,9 +969,8 @@ doESCkey:
     case K_IGNORE:      /* Something mapped to nothing */
       break;
 
-    case K_CURSORHOLD:          /* Didn't type something for a while. */
-      apply_autocmds(EVENT_CURSORHOLDI, NULL, NULL, FALSE, curbuf);
-      did_cursorhold = TRUE;
+    case K_EVENT:       // some event
+      queue_process_events(loop.events);
       break;
 
     case K_HOME:        /* <Home> */
@@ -1223,9 +1217,10 @@ normalchar:
       break;
     }       /* end of switch (c) */
 
-    /* If typed something may trigger CursorHoldI again. */
-    if (c != K_CURSORHOLD)
-      did_cursorhold = FALSE;
+    // If typed something may trigger CursorHoldI again.
+    if (c != K_EVENT) {
+      did_cursorhold = false;
+    }
 
     /* If the cursor was moved we didn't just insert a space */
     if (arrow_used)
