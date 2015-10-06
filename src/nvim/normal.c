@@ -572,6 +572,76 @@ static bool normal_need_aditional_char(NormalState *s)
      || ((cmdchar == 'a' || cmdchar == 'i') && (pending_op || VIsual_active)));
 }
 
+static bool normal_need_redraw_mode_message(NormalState *s)
+{
+  return (
+      (
+      // 'showmode' is set and messages can be printed
+      p_smd && msg_silent == 0
+      // must restart insert mode(ctrl+o or ctrl+l) or we just entered visual
+      // mode
+      && (restart_edit != 0 || (VIsual_active
+            && s->old_pos.lnum == curwin->w_cursor.lnum
+            && s->old_pos.col == curwin->w_cursor.col))
+      // command-line must be cleared or redrawn
+      && (clear_cmdline || redraw_cmdline)
+      // some message was printed or scrolled
+      && (msg_didout || (msg_didany && msg_scroll))
+      // it is fine to remove the current message
+      && !msg_nowait
+      // the command was the result of direct user input and not a mapping
+      && KeyTyped
+      )
+    ||
+      // must restart insert mode, not in visual mode and error message is
+      // being shown
+      (restart_edit != 0 && !VIsual_active && (msg_scroll && emsg_on_display))
+  )
+  // no register was used
+  && s->oa.regname == 0
+  && !(s->ca.retval & CA_COMMAND_BUSY)
+  && stuff_empty()
+  && typebuf_typed()
+  && emsg_silent == 0
+  && !did_wait_return
+  && s->oa.op_type == OP_NOP;
+}
+
+static void normal_redraw_mode_message(NormalState *s)
+{
+  int save_State = State;
+
+  // Draw the cursor with the right shape here
+  if (restart_edit != 0) {
+    State = INSERT;
+  }
+
+  // If need to redraw, and there is a "keep_msg", redraw before the
+  // delay
+  if (must_redraw && keep_msg != NULL && !emsg_on_display) {
+    char_u      *kmsg;
+
+    kmsg = keep_msg;
+    keep_msg = NULL;
+    // showmode() will clear keep_msg, but we want to use it anyway
+    update_screen(0);
+    // now reset it, otherwise it's put in the history again
+    keep_msg = kmsg;
+    msg_attr(kmsg, keep_msg_attr);
+    xfree(kmsg);
+  }
+  setcursor();
+  ui_flush();
+  if (msg_scroll || emsg_on_display) {
+    os_delay(1000L, true);            // wait at least one second
+  }
+  os_delay(3000L, false);             // wait up to three seconds
+  State = save_State;
+
+  msg_scroll = false;
+  emsg_on_display = false;
+}
+
 // TODO(tarruda): Split into a "normal pending" state that can handle K_EVENT
 static void normal_get_additional_char(NormalState *s)
 {
@@ -838,52 +908,8 @@ static void normal_finish_command(NormalState *s)
   // Don't wait when emsg_silent is non-zero.
   // Also wait a bit after an error message, e.g. for "^O:".
   // Don't redraw the screen, it would remove the message.
-  if (((p_smd && msg_silent == 0 && (restart_edit != 0 || (VIsual_active
-              && s->old_pos.lnum == curwin->w_cursor.lnum
-              && s->old_pos.col == curwin->w_cursor.col))
-          && (clear_cmdline || redraw_cmdline)
-          && (msg_didout || (msg_didany && msg_scroll))
-          && !msg_nowait
-          && KeyTyped) || (restart_edit != 0 && !VIsual_active && (msg_scroll
-              || emsg_on_display)))
-      && s->oa.regname == 0
-      && !(s->ca.retval & CA_COMMAND_BUSY)
-             && stuff_empty()
-             && typebuf_typed()
-             && emsg_silent == 0
-             && !did_wait_return
-             && s->oa.op_type == OP_NOP) {
-    int save_State = State;
-
-    // Draw the cursor with the right shape here
-    if (restart_edit != 0) {
-      State = INSERT;
-    }
-
-    // If need to redraw, and there is a "keep_msg", redraw before the
-    // delay
-    if (must_redraw && keep_msg != NULL && !emsg_on_display) {
-      char_u      *kmsg;
-
-      kmsg = keep_msg;
-      keep_msg = NULL;
-      // showmode() will clear keep_msg, but we want to use it anyway
-      update_screen(0);
-      // now reset it, otherwise it's put in the history again
-      keep_msg = kmsg;
-      msg_attr(kmsg, keep_msg_attr);
-      xfree(kmsg);
-    }
-    setcursor();
-    ui_flush();
-    if (msg_scroll || emsg_on_display) {
-      os_delay(1000L, true);            // wait at least one second
-    }
-    os_delay(3000L, false);             // wait up to three seconds
-    State = save_State;
-
-    msg_scroll = false;
-    emsg_on_display = false;
+  if (normal_need_redraw_mode_message(s)) {
+    normal_redraw_mode_message(s);
   }
 
   // Finish up after executing a Normal mode command.
