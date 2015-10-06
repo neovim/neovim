@@ -438,6 +438,7 @@ void set_init_1(void)
       );
 
   set_string_default("viewdir", (char_u *)get_from_user_data("view"));
+  set_string_default("backupdir", (char_u *)get_from_user_data("backup"));
   /*
    * Set all the options (except the terminal options) to their default
    * value.  Also set the global value for local options.

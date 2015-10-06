@@ -176,7 +176,7 @@ return {
       vi_def=true,
       expand=true,
       varname='p_bdir',
-      defaults={if_true={vi=macros('DFLT_BDIR')}}
+      defaults={if_true={vi=''}}
     },
     {
       full_name='backupext', abbreviation='bex',

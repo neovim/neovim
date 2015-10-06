@@ -41,11 +41,6 @@
 # define VIMINFO_FILE "~/.nviminfo"
 #endif
 
-// Default for 'backupdir'.
-#ifndef DFLT_BDIR
-# define DFLT_BDIR    ".,~/tmp,~/"
-#endif
-
 // Default for 'directory'.
 #ifndef DFLT_DIR
 # define DFLT_DIR     ".,~/tmp,/var/tmp,/tmp"
