@@ -41,12 +41,4 @@
 # define VIMINFO_FILE "~/.nviminfo"
 #endif
 
-#ifdef RUNTIME_GLOBAL
-# define DFLT_RUNTIMEPATH "~/.nvim," RUNTIME_GLOBAL ",$VIMRUNTIME," \
-  RUNTIME_GLOBAL "/after,~/.nvim/after"
-#else
-# define DFLT_RUNTIMEPATH \
-  "~/.nvim,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,~/.nvim/after"
-#endif
-
 #endif  // NVIM_OS_UNIX_DEFS_H

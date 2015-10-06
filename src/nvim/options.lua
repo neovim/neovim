@@ -1908,7 +1908,7 @@ return {
       vi_def=true,
       expand=true,
       varname='p_rtp',
-      defaults={if_true={vi=macros('DFLT_RUNTIMEPATH')}}
+      defaults={if_true={vi=''}}
     },
     {
       full_name='scroll', abbreviation='scr',
