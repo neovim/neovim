@@ -70,6 +70,7 @@ typedef struct normal_state {
   VimState state;
   linenr_T conceal_old_cursor_line;
   linenr_T conceal_new_cursor_line;
+  bool ctrl_w;
   bool need_flushbuf;
   bool conceal_update_lines;
   bool set_prevcount;
@@ -736,10 +737,73 @@ static void normal_invert_horizontal(NormalState *s)
   s->idx = find_command(s->ca.cmdchar);
 }
 
+static bool normal_get_command_count(NormalState *s)
+{
+  if (VIsual_active && VIsual_select) {
+    return false;
+  }
+  // Handle a count before a command and compute ca.count0.
+  // Note that '0' is a command and not the start of a count, but it's
+  // part of a count after other digits.
+  while ((s->c >= '1' && s->c <= '9') || (s->ca.count0 != 0
+        && (s->c == K_DEL || s->c == K_KDEL || s->c == '0'))) {
+    if (s->c == K_DEL || s->c == K_KDEL) {
+      s->ca.count0 /= 10;
+      del_from_showcmd(4);            // delete the digit and ~@%
+    } else {
+      s->ca.count0 = s->ca.count0 * 10 + (s->c - '0');
+    }
+
+    if (s->ca.count0 < 0) {
+      // got too large!
+      s->ca.count0 = 999999999L;
+    }
+
+    // Set v:count here, when called from main() and not a stuffed
+    // command, so that v:count can be used in an expression mapping
+    // right after the count. Do set it for redo.
+    if (s->toplevel && readbuf1_empty()) {
+      set_vcount_ca(&s->ca, &s->set_prevcount);
+    }
+
+    if (s->ctrl_w) {
+      ++no_mapping;
+      ++allow_keys;                   // no mapping for nchar, but keys
+    }
+
+    ++no_zero_mapping;                // don't map zero here
+    s->c = plain_vgetc();
+    LANGMAP_ADJUST(s->c, true);
+    --no_zero_mapping;
+    if (s->ctrl_w) {
+      --no_mapping;
+      --allow_keys;
+    }
+    s->need_flushbuf |= add_to_showcmd(s->c);
+  }
+
+  // If we got CTRL-W there may be a/another count
+  if (s->c == Ctrl_W && !s->ctrl_w && s->oa.op_type == OP_NOP) {
+    s->ctrl_w = true;
+    s->ca.opcount = s->ca.count0;           // remember first count
+    s->ca.count0 = 0;
+    ++no_mapping;
+    ++allow_keys;                     // no mapping for nchar, but keys
+    s->c = plain_vgetc();                // get next character
+    LANGMAP_ADJUST(s->c, true);
+    --no_mapping;
+    --allow_keys;
+    s->need_flushbuf |= add_to_showcmd(s->c);
+    return true;
+  }
+
+  return false;
+}
+
 static int normal_execute(VimState *state, int key)
 {
   NormalState *s = (NormalState *)state;
-  bool ctrl_w = false;                  /* got CTRL-W command */
+  s->ctrl_w = false;                  /* got CTRL-W command */
   int old_col = curwin->w_curswant;
   pos_T old_pos;                        /* cursor position before command */
   static int old_mapped_len = 0;
@@ -781,63 +845,7 @@ static int normal_execute(VimState *state, int key)
 
   s->need_flushbuf = add_to_showcmd(s->c);
 
-getcount:
-  if (!(VIsual_active && VIsual_select)) {
-    // Handle a count before a command and compute ca.count0.
-    // Note that '0' is a command and not the start of a count, but it's
-    // part of a count after other digits.
-    while ((s->c >= '1' && s->c <= '9') || (s->ca.count0 != 0
-          && (s->c == K_DEL || s->c == K_KDEL || s->c == '0'))) {
-      if (s->c == K_DEL || s->c == K_KDEL) {
-        s->ca.count0 /= 10;
-        del_from_showcmd(4);            // delete the digit and ~@%
-      } else {
-        s->ca.count0 = s->ca.count0 * 10 + (s->c - '0');
-      }
-
-      if (s->ca.count0 < 0) {
-        // got too large!
-        s->ca.count0 = 999999999L;
-      }
-
-      // Set v:count here, when called from main() and not a stuffed
-      // command, so that v:count can be used in an expression mapping
-      // right after the count. Do set it for redo.
-      if (s->toplevel && readbuf1_empty()) {
-        set_vcount_ca(&s->ca, &s->set_prevcount);
-      }
-
-      if (ctrl_w) {
-        ++no_mapping;
-        ++allow_keys;                   // no mapping for nchar, but keys
-      }
-
-      ++no_zero_mapping;                // don't map zero here
-      s->c = plain_vgetc();
-      LANGMAP_ADJUST(s->c, true);
-      --no_zero_mapping;
-      if (ctrl_w) {
-        --no_mapping;
-        --allow_keys;
-      }
-      s->need_flushbuf |= add_to_showcmd(s->c);
-    }
-
-    // If we got CTRL-W there may be a/another count
-    if (s->c == Ctrl_W && !ctrl_w && s->oa.op_type == OP_NOP) {
-      ctrl_w = true;
-      s->ca.opcount = s->ca.count0;           // remember first count
-      s->ca.count0 = 0;
-      ++no_mapping;
-      ++allow_keys;                     // no mapping for nchar, but keys
-      s->c = plain_vgetc();                // get next character
-      LANGMAP_ADJUST(s->c, true);
-      --no_mapping;
-      --allow_keys;
-      s->need_flushbuf |= add_to_showcmd(s->c);
-      goto getcount;                    // jump back
-    }
-  }
+  while (normal_get_command_count(s)) continue;
 
   if (s->c == K_EVENT) {
     // Save the count values so that ca.opcount and ca.count0 are exactly
@@ -874,7 +882,7 @@ getcount:
 
   // Find the command character in the table of commands.
   // For CTRL-W we already got nchar when looking for a count.
-  if (ctrl_w) {
+  if (s->ctrl_w) {
     s->ca.nchar = s->c;
     s->ca.cmdchar = Ctrl_W;
   } else {
