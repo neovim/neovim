@@ -70,6 +70,7 @@ typedef struct normal_state {
   VimState state;
   linenr_T conceal_old_cursor_line;
   linenr_T conceal_new_cursor_line;
+  bool command_finished;
   bool ctrl_w;
   bool need_flushbuf;
   bool conceal_update_lines;
@@ -82,8 +83,11 @@ typedef struct normal_state {
   oparg_T oa;                        // operator arguments
   cmdarg_T ca;                       // command arguments
   int mapped_len;
+  int old_mapped_len;
   int idx;
   int c;
+  int old_col;
+  pos_T old_pos;
 } NormalState;
 
 /*
@@ -800,178 +804,11 @@ static bool normal_get_command_count(NormalState *s)
   return false;
 }
 
-static int normal_execute(VimState *state, int key)
+static void normal_finish_command(NormalState *s)
 {
-  NormalState *s = (NormalState *)state;
-  s->ctrl_w = false;                  /* got CTRL-W command */
-  int old_col = curwin->w_curswant;
-  pos_T old_pos;                        /* cursor position before command */
-  static int old_mapped_len = 0;
-  s->c = key;
-
-  LANGMAP_ADJUST(s->c, true);
-
-  // If a mapping was started in Visual or Select mode, remember the length
-  // of the mapping.  This is used below to not return to Insert mode for as
-  // long as the mapping is being executed.
-  if (restart_edit == 0) {
-    old_mapped_len = 0;
-  } else if (old_mapped_len || (VIsual_active && s->mapped_len == 0
-        && typebuf_maplen() > 0)) {
-    old_mapped_len = typebuf_maplen();
-  }
-
-  if (s->c == NUL) {
-    s->c = K_ZERO;
-  }
-
-  // In Select mode, typed text replaces the selection.
-  if (VIsual_active && VIsual_select && (vim_isprintc(s->c)
-        || s->c == NL || s->c == CAR || s->c == K_KENTER)) {
-    // Fake a "c"hange command.  When "restart_edit" is set (e.g., because
-    // 'insertmode' is set) fake a "d"elete command, Insert mode will
-    // restart automatically.
-    // Insert the typed character in the typeahead buffer, so that it can
-    // be mapped in Insert mode.  Required for ":lmap" to work.
-    ins_char_typebuf(s->c);
-    if (restart_edit != 0) {
-      s->c = 'd';
-    } else {
-      s->c = 'c';
-    }
-    msg_nowait = true;          // don't delay going to insert mode
-    old_mapped_len = 0;         // do go to Insert mode
-  }
-
-  s->need_flushbuf = add_to_showcmd(s->c);
-
-  while (normal_get_command_count(s)) continue;
-
-  if (s->c == K_EVENT) {
-    // Save the count values so that ca.opcount and ca.count0 are exactly
-    // the same when coming back here after handling K_EVENT.
-    s->oa.prev_opcount = s->ca.opcount;
-    s->oa.prev_count0 = s->ca.count0;
-  } else if (s->ca.opcount != 0)  {
-    // If we're in the middle of an operator (including after entering a
-    // yank buffer with '"') AND we had a count before the operator, then
-    // that count overrides the current value of ca.count0.
-    // What this means effectively, is that commands like "3dw" get turned
-    // into "d3w" which makes things fall into place pretty neatly.
-    // If you give a count before AND after the operator, they are
-    // multiplied.
-    if (s->ca.count0) {
-      s->ca.count0 *= s->ca.opcount;
-    } else {
-      s->ca.count0 = s->ca.opcount;
-    }
-  }
-
-  // Always remember the count.  It will be set to zero (on the next call,
-  // above) when there is no pending operator.
-  // When called from main(), save the count for use by the "count" built-in
-  // variable.
-  s->ca.opcount = s->ca.count0;
-  s->ca.count1 = (s->ca.count0 == 0 ? 1 : s->ca.count0);
-
-  // Only set v:count when called from main() and not a stuffed command.
-  // Do set it for redo.
-  if (s->toplevel && readbuf1_empty()) {
-    set_vcount(s->ca.count0, s->ca.count1, s->set_prevcount);
-  }
-
-  // Find the command character in the table of commands.
-  // For CTRL-W we already got nchar when looking for a count.
-  if (s->ctrl_w) {
-    s->ca.nchar = s->c;
-    s->ca.cmdchar = Ctrl_W;
-  } else {
-    s->ca.cmdchar = s->c;
-  }
-
-  s->idx = find_command(s->ca.cmdchar);
-
-  if (s->idx < 0) {
-    // Not a known command: beep.
-    clearopbeep(&s->oa);
+  if (s->command_finished) {
     goto normal_end;
   }
-
-  if (text_locked() && (nv_cmds[s->idx].cmd_flags & NV_NCW)) {
-    // This command is not allowed while editing a cmdline: beep.
-    clearopbeep(&s->oa);
-    text_locked_msg();
-    goto normal_end;
-  }
-
-  if ((nv_cmds[s->idx].cmd_flags & NV_NCW) && curbuf_locked()) {
-    goto normal_end;
-  }
-
-  // In Visual/Select mode, a few keys are handled in a special way.
-  if (VIsual_active && normal_handle_special_visual_command(s)) {
-    goto normal_end;
-  }
-
-  if (curwin->w_p_rl && KeyTyped && !KeyStuffed
-      && (nv_cmds[s->idx].cmd_flags & NV_RL)) {
-    // Invert horizontal movements and operations.  Only when typed by the
-    // user directly, not when the result of a mapping or "x" translated
-    // to "dl".
-    normal_invert_horizontal(s);
-  }
-
-  // Get an additional character if we need one.
-  if (normal_need_aditional_char(s)) {
-    normal_get_additional_char(s);
-  }
-
-  // Flush the showcmd characters onto the screen so we can see them while
-  // the command is being executed.  Only do this when the shown command was
-  // actually displayed, otherwise this will slow down a lot when executing
-  // mappings.
-  if (s->need_flushbuf) {
-    ui_flush();
-  }
-  if (s->ca.cmdchar != K_IGNORE && s->ca.cmdchar != K_EVENT) {
-    did_cursorhold = false;
-  }
-
-  State = NORMAL;
-
-  if (s->ca.nchar == ESC) {
-    clearop(&s->oa);
-    if (restart_edit == 0 && goto_im()) {
-      restart_edit = 'a';
-    }
-    goto normal_end;
-  }
-
-  if (s->ca.cmdchar != K_IGNORE) {
-    msg_didout = false;        // don't scroll screen up for normal command
-    msg_col = 0;
-  }
-
-  old_pos = curwin->w_cursor;           // remember where cursor was
-
-  // When 'keymodel' contains "startsel" some keys start Select/Visual
-  // mode.
-  if (!VIsual_active && km_startsel) {
-    if (nv_cmds[s->idx].cmd_flags & NV_SS) {
-      start_selection();
-      unshift_special(&s->ca);
-      s->idx = find_command(s->ca.cmdchar);
-    } else if ((nv_cmds[s->idx].cmd_flags & NV_SSS)
-               && (mod_mask & MOD_MASK_SHIFT)) {
-      start_selection();
-      mod_mask &= ~MOD_MASK_SHIFT;
-    }
-  }
-
-  // Execute the command!
-  // Call the command function found in the commands table.
-  s->ca.arg = nv_cmds[s->idx].cmd_arg;
-  (nv_cmds[s->idx].cmd_func)(&s->ca);
 
   // If we didn't start or finish an operator, reset oap->regname, unless we
   // need it later.
@@ -984,12 +821,12 @@ static int normal_execute(VimState *state, int key)
 
   // Get the length of mapped chars again after typing a count, second
   // character or "z333<cr>".
-  if (old_mapped_len > 0) {
-    old_mapped_len = typebuf_maplen();
+  if (s->old_mapped_len > 0) {
+    s->old_mapped_len = typebuf_maplen();
   }
 
   // If an operation is pending, handle it...
-  do_pending_operator(&s->ca, old_col, false);
+  do_pending_operator(&s->ca, s->old_col, false);
 
   // Wait for a moment when a message is displayed that will be overwritten
   // by the mode message.
@@ -1002,8 +839,8 @@ static int normal_execute(VimState *state, int key)
   // Also wait a bit after an error message, e.g. for "^O:".
   // Don't redraw the screen, it would remove the message.
   if (((p_smd && msg_silent == 0 && (restart_edit != 0 || (VIsual_active
-              && old_pos.lnum == curwin->w_cursor.lnum
-              && old_pos.col == curwin->w_cursor.col))
+              && s->old_pos.lnum == curwin->w_cursor.lnum
+              && s->old_pos.col == curwin->w_cursor.col))
           && (clear_cmdline || redraw_cmdline)
           && (msg_didout || (msg_didany && msg_scroll))
           && !msg_nowait
@@ -1089,7 +926,7 @@ normal_end:
   // if still inside a mapping that started in Visual mode).
   // May switch from Visual to Select mode after CTRL-O command.
   if (s->oa.op_type == OP_NOP
-             && ((restart_edit != 0 && !VIsual_active && old_mapped_len == 0)
+             && ((restart_edit != 0 && !VIsual_active && s->old_mapped_len == 0)
                  || restart_VIsual_select == 1)
              && !(s->ca.retval & CA_COMMAND_BUSY)
              && stuff_empty()
@@ -1099,7 +936,7 @@ normal_end:
       showmode();
       restart_VIsual_select = 0;
     }
-    if (restart_edit != 0 && !VIsual_active && old_mapped_len == 0) {
+    if (restart_edit != 0 && !VIsual_active && s->old_mapped_len == 0) {
       (void)edit(restart_edit, false, 1L);
     }
   }
@@ -1110,6 +947,187 @@ normal_end:
 
   // Save count before an operator for next time
   opcount = s->ca.opcount;
+}
+
+static int normal_execute(VimState *state, int key)
+{
+  NormalState *s = (NormalState *)state;
+  s->command_finished = false;
+  s->ctrl_w = false;                  /* got CTRL-W command */
+  s->old_col = curwin->w_curswant;
+  s->c = key;
+
+  LANGMAP_ADJUST(s->c, true);
+
+  // If a mapping was started in Visual or Select mode, remember the length
+  // of the mapping.  This is used below to not return to Insert mode for as
+  // long as the mapping is being executed.
+  if (restart_edit == 0) {
+    s->old_mapped_len = 0;
+  } else if (s->old_mapped_len || (VIsual_active && s->mapped_len == 0
+        && typebuf_maplen() > 0)) {
+    s->old_mapped_len = typebuf_maplen();
+  }
+
+  if (s->c == NUL) {
+    s->c = K_ZERO;
+  }
+
+  // In Select mode, typed text replaces the selection.
+  if (VIsual_active && VIsual_select && (vim_isprintc(s->c)
+        || s->c == NL || s->c == CAR || s->c == K_KENTER)) {
+    // Fake a "c"hange command.  When "restart_edit" is set (e.g., because
+    // 'insertmode' is set) fake a "d"elete command, Insert mode will
+    // restart automatically.
+    // Insert the typed character in the typeahead buffer, so that it can
+    // be mapped in Insert mode.  Required for ":lmap" to work.
+    ins_char_typebuf(s->c);
+    if (restart_edit != 0) {
+      s->c = 'd';
+    } else {
+      s->c = 'c';
+    }
+    msg_nowait = true;          // don't delay going to insert mode
+    s->old_mapped_len = 0;      // do go to Insert mode
+  }
+
+  s->need_flushbuf = add_to_showcmd(s->c);
+
+  while (normal_get_command_count(s)) continue;
+
+  if (s->c == K_EVENT) {
+    // Save the count values so that ca.opcount and ca.count0 are exactly
+    // the same when coming back here after handling K_EVENT.
+    s->oa.prev_opcount = s->ca.opcount;
+    s->oa.prev_count0 = s->ca.count0;
+  } else if (s->ca.opcount != 0)  {
+    // If we're in the middle of an operator (including after entering a
+    // yank buffer with '"') AND we had a count before the operator, then
+    // that count overrides the current value of ca.count0.
+    // What this means effectively, is that commands like "3dw" get turned
+    // into "d3w" which makes things fall into place pretty neatly.
+    // If you give a count before AND after the operator, they are
+    // multiplied.
+    if (s->ca.count0) {
+      s->ca.count0 *= s->ca.opcount;
+    } else {
+      s->ca.count0 = s->ca.opcount;
+    }
+  }
+
+  // Always remember the count.  It will be set to zero (on the next call,
+  // above) when there is no pending operator.
+  // When called from main(), save the count for use by the "count" built-in
+  // variable.
+  s->ca.opcount = s->ca.count0;
+  s->ca.count1 = (s->ca.count0 == 0 ? 1 : s->ca.count0);
+
+  // Only set v:count when called from main() and not a stuffed command.
+  // Do set it for redo.
+  if (s->toplevel && readbuf1_empty()) {
+    set_vcount(s->ca.count0, s->ca.count1, s->set_prevcount);
+  }
+
+  // Find the command character in the table of commands.
+  // For CTRL-W we already got nchar when looking for a count.
+  if (s->ctrl_w) {
+    s->ca.nchar = s->c;
+    s->ca.cmdchar = Ctrl_W;
+  } else {
+    s->ca.cmdchar = s->c;
+  }
+
+  s->idx = find_command(s->ca.cmdchar);
+
+  if (s->idx < 0) {
+    // Not a known command: beep.
+    clearopbeep(&s->oa);
+    s->command_finished = true;
+    goto finish;
+  }
+
+  if (text_locked() && (nv_cmds[s->idx].cmd_flags & NV_NCW)) {
+    // This command is not allowed while editing a cmdline: beep.
+    clearopbeep(&s->oa);
+    text_locked_msg();
+    s->command_finished = true;
+    goto finish;
+  }
+
+  if ((nv_cmds[s->idx].cmd_flags & NV_NCW) && curbuf_locked()) {
+    s->command_finished = true;
+    goto finish;
+  }
+
+  // In Visual/Select mode, a few keys are handled in a special way.
+  if (VIsual_active && normal_handle_special_visual_command(s)) {
+    s->command_finished = true;
+    goto finish;
+  }
+
+  if (curwin->w_p_rl && KeyTyped && !KeyStuffed
+      && (nv_cmds[s->idx].cmd_flags & NV_RL)) {
+    // Invert horizontal movements and operations.  Only when typed by the
+    // user directly, not when the result of a mapping or "x" translated
+    // to "dl".
+    normal_invert_horizontal(s);
+  }
+
+  // Get an additional character if we need one.
+  if (normal_need_aditional_char(s)) {
+    normal_get_additional_char(s);
+  }
+
+  // Flush the showcmd characters onto the screen so we can see them while
+  // the command is being executed.  Only do this when the shown command was
+  // actually displayed, otherwise this will slow down a lot when executing
+  // mappings.
+  if (s->need_flushbuf) {
+    ui_flush();
+  }
+  if (s->ca.cmdchar != K_IGNORE && s->ca.cmdchar != K_EVENT) {
+    did_cursorhold = false;
+  }
+
+  State = NORMAL;
+
+  if (s->ca.nchar == ESC) {
+    clearop(&s->oa);
+    if (restart_edit == 0 && goto_im()) {
+      restart_edit = 'a';
+    }
+    s->command_finished = true;
+    goto finish;
+  }
+
+  if (s->ca.cmdchar != K_IGNORE) {
+    msg_didout = false;        // don't scroll screen up for normal command
+    msg_col = 0;
+  }
+
+  s->old_pos = curwin->w_cursor;           // remember where cursor was
+
+  // When 'keymodel' contains "startsel" some keys start Select/Visual
+  // mode.
+  if (!VIsual_active && km_startsel) {
+    if (nv_cmds[s->idx].cmd_flags & NV_SS) {
+      start_selection();
+      unshift_special(&s->ca);
+      s->idx = find_command(s->ca.cmdchar);
+    } else if ((nv_cmds[s->idx].cmd_flags & NV_SSS)
+               && (mod_mask & MOD_MASK_SHIFT)) {
+      start_selection();
+      mod_mask &= ~MOD_MASK_SHIFT;
+    }
+  }
+
+  // Execute the command!
+  // Call the command function found in the commands table.
+  s->ca.arg = nv_cmds[s->idx].cmd_arg;
+  (nv_cmds[s->idx].cmd_func)(&s->ca);
+
+finish:
+  normal_finish_command(s);
   return 1;
 }
 
