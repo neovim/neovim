@@ -619,7 +619,7 @@ return {
       vi_def=true,
       expand=true,
       varname='p_dir',
-      defaults={if_true={vi=macros('DFLT_DIR')}}
+      defaults={if_true={vi=''}}
     },
     {
       full_name='display', abbreviation='dy',

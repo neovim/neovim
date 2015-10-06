@@ -41,11 +41,6 @@
 # define VIMINFO_FILE "~/.nviminfo"
 #endif
 
-// Default for 'directory'.
-#ifndef DFLT_DIR
-# define DFLT_DIR     ".,~/tmp,/var/tmp,/tmp"
-#endif
-
 // Default for 'viewdir'.
 #ifndef DFLT_VDIR
 # define DFLT_VDIR    "~/.nvim/view"
