@@ -41,11 +41,6 @@
 # define VIMINFO_FILE "~/.nviminfo"
 #endif
 
-// Default for 'viewdir'.
-#ifndef DFLT_VDIR
-# define DFLT_VDIR    "~/.nvim/view"
-#endif
-
 #ifdef RUNTIME_GLOBAL
 # define DFLT_RUNTIMEPATH "~/.nvim," RUNTIME_GLOBAL ",$VIMRUNTIME," \
   RUNTIME_GLOBAL "/after,~/.nvim/after"
