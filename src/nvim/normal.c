@@ -1067,14 +1067,8 @@ normal_end:
   return 1;
 }
 
-// Function executed before each iteration of normal mode.
-// Return:
-//   1 if the iteration should continue normally
-//   -1 if the iteration should be skipped
-//   0 if the main loop must exit
-static int normal_check(VimState *state)
+static void normal_check_stuff_buffer(NormalState *s)
 {
-  NormalState *s = (NormalState *)state;
   if (stuff_empty()) {
     did_check_timestamps = false;
 
@@ -1095,7 +1089,10 @@ static int normal_check(VimState *state)
       need_fileinfo = false;
     }
   }
+}
 
+static void normal_check_interrupt(NormalState *s)
+{
   // Reset "got_int" now that we got back to the main loop.  Except when
   // inside a ":g/pat/cmd" command, then the "got_int" needs to abort
   // the ":g" command.
@@ -1119,6 +1116,129 @@ static int normal_check(VimState *state)
   } else {
     s->previous_got_int = false;
   }
+}
+
+static void normal_check_cursor_moved(NormalState *s)
+{
+  // Trigger CursorMoved if the cursor moved.
+  if (!finish_op && (has_cursormoved() || curwin->w_p_cole > 0)
+      && !equalpos(last_cursormoved, curwin->w_cursor)) {
+    if (has_cursormoved()) {
+      apply_autocmds(EVENT_CURSORMOVED, NULL, NULL, false, curbuf);
+    }
+
+    if (curwin->w_p_cole > 0) {
+      s->conceal_old_cursor_line = last_cursormoved.lnum;
+      s->conceal_new_cursor_line = curwin->w_cursor.lnum;
+      s->conceal_update_lines = true;
+    }
+
+    last_cursormoved = curwin->w_cursor;
+  }
+}
+
+static void normal_check_text_changed(NormalState *s)
+{
+  // Trigger TextChanged if b_changedtick differs.
+  if (!finish_op && has_textchanged()
+      && last_changedtick != curbuf->b_changedtick) {
+    if (last_changedtick_buf == curbuf) {
+      apply_autocmds(EVENT_TEXTCHANGED, NULL, NULL, false, curbuf);
+    }
+
+    last_changedtick_buf = curbuf;
+    last_changedtick = curbuf->b_changedtick;
+  }
+}
+
+static void normal_check_folds(NormalState *s)
+{
+  // Include a closed fold completely in the Visual area.
+  foldAdjustVisual();
+
+  // When 'foldclose' is set, apply 'foldlevel' to folds that don't
+  // contain the cursor.
+  // When 'foldopen' is "all", open the fold(s) under the cursor.
+  // This may mark the window for redrawing.
+  if (hasAnyFolding(curwin) && !char_avail()) {
+    foldCheckClose();
+
+    if (fdo_flags & FDO_ALL) {
+      foldOpenCursor();
+    }
+  }
+}
+
+static void normal_redraw(NormalState *s)
+{
+  // Before redrawing, make sure w_topline is correct, and w_leftcol
+  // if lines don't wrap, and w_skipcol if lines wrap.
+  update_topline();
+  validate_cursor();
+
+  if (VIsual_active) {
+    update_curbuf(INVERTED);  // update inverted part
+  } else if (must_redraw) {
+    update_screen(0);
+  } else if (redraw_cmdline || clear_cmdline) {
+    showmode();
+  }
+
+  redraw_statuslines();
+
+  if (need_maketitle) {
+    maketitle();
+  }
+
+  // display message after redraw
+  if (keep_msg != NULL) {
+    // msg_attr_keep() will set keep_msg to NULL, must free the string here.
+    // Don't reset keep_msg, msg_attr_keep() uses it to check for duplicates.
+    char *p = (char *)keep_msg;
+    msg_attr((uint8_t *)p, keep_msg_attr);
+    xfree(p);
+  }
+
+  if (need_fileinfo) {  // show file info after redraw
+    fileinfo(false, true, false);
+    need_fileinfo = false;
+  }
+
+  emsg_on_display = false;  // can delete error message now
+  did_emsg = false;
+  msg_didany = false;  // reset lines_left in msg_start()
+  may_clear_sb_text();  // clear scroll-back text on next msg
+  showruler(false);
+
+  if (s->conceal_update_lines
+      && (s->conceal_old_cursor_line !=
+        s->conceal_new_cursor_line
+        || conceal_cursor_line(curwin)
+        || need_cursor_line_redraw)) {
+    if (s->conceal_old_cursor_line !=
+        s->conceal_new_cursor_line
+        && s->conceal_old_cursor_line <=
+        curbuf->b_ml.ml_line_count) {
+      update_single_line(curwin, s->conceal_old_cursor_line);
+    }
+
+    update_single_line(curwin, s->conceal_new_cursor_line);
+    curwin->w_valid &= ~VALID_CROW;
+  }
+
+  setcursor();
+}
+
+// Function executed before each iteration of normal mode.
+// Return:
+//   1 if the iteration should continue normally
+//   -1 if the iteration should be skipped
+//   0 if the main loop must exit
+static int normal_check(VimState *state)
+{
+  NormalState *s = (NormalState *)state;
+  normal_check_stuff_buffer(s);
+  normal_check_interrupt(s);
 
   if (!exmode_active) {
     msg_scroll = false;
@@ -1131,32 +1251,8 @@ static int normal_check(VimState *state)
   if (skip_redraw || exmode_active) {
     skip_redraw = false;
   } else if (do_redraw || stuff_empty()) {
-    // Trigger CursorMoved if the cursor moved.
-    if (!finish_op && (has_cursormoved() || curwin->w_p_cole > 0)
-        && !equalpos(last_cursormoved, curwin->w_cursor)) {
-      if (has_cursormoved()) {
-        apply_autocmds(EVENT_CURSORMOVED, NULL, NULL, false, curbuf);
-      }
-
-      if (curwin->w_p_cole > 0) {
-        s->conceal_old_cursor_line = last_cursormoved.lnum;
-        s->conceal_new_cursor_line = curwin->w_cursor.lnum;
-        s->conceal_update_lines = true;
-      }
-
-      last_cursormoved = curwin->w_cursor;
-    }
-
-    // Trigger TextChanged if b_changedtick differs.
-    if (!finish_op && has_textchanged()
-        && last_changedtick != curbuf->b_changedtick) {
-      if (last_changedtick_buf == curbuf) {
-        apply_autocmds(EVENT_TEXTCHANGED, NULL, NULL, false, curbuf);
-      }
-
-      last_changedtick_buf = curbuf;
-      last_changedtick = curbuf->b_changedtick;
-    }
+    normal_check_cursor_moved(s);
+    normal_check_text_changed(s);
 
     // Scroll-binding for diff mode may have been postponed until
     // here.  Avoids doing it for every change.
@@ -1165,78 +1261,8 @@ static int normal_check(VimState *state)
       diff_need_scrollbind = false;
     }
 
-    // Include a closed fold completely in the Visual area.
-    foldAdjustVisual();
-
-    // When 'foldclose' is set, apply 'foldlevel' to folds that don't
-    // contain the cursor.
-    // When 'foldopen' is "all", open the fold(s) under the cursor.
-    // This may mark the window for redrawing.
-    if (hasAnyFolding(curwin) && !char_avail()) {
-      foldCheckClose();
-
-      if (fdo_flags & FDO_ALL) {
-        foldOpenCursor();
-      }
-    }
-
-    // Before redrawing, make sure w_topline is correct, and w_leftcol
-    // if lines don't wrap, and w_skipcol if lines wrap.
-    update_topline();
-    validate_cursor();
-
-    if (VIsual_active) {
-      update_curbuf(INVERTED);  // update inverted part
-    } else if (must_redraw) {
-      update_screen(0);
-    } else if (redraw_cmdline || clear_cmdline) {
-      showmode();
-    }
-
-    redraw_statuslines();
-
-    if (need_maketitle) {
-      maketitle();
-    }
-
-    // display message after redraw
-    if (keep_msg != NULL) {
-      // msg_attr_keep() will set keep_msg to NULL, must free the string here.
-      // Don't reset keep_msg, msg_attr_keep() uses it to check for duplicates.
-      char *p = (char *)keep_msg;
-      msg_attr((uint8_t *)p, keep_msg_attr);
-      xfree(p);
-    }
-
-    if (need_fileinfo) {  // show file info after redraw
-      fileinfo(false, true, false);
-      need_fileinfo = false;
-    }
-
-    emsg_on_display = false;  // can delete error message now
-    did_emsg = false;
-    msg_didany = false;  // reset lines_left in msg_start()
-    may_clear_sb_text();  // clear scroll-back text on next msg
-    showruler(false);
-
-    if (s->conceal_update_lines
-        && (s->conceal_old_cursor_line !=
-          s->conceal_new_cursor_line
-          || conceal_cursor_line(curwin)
-          || need_cursor_line_redraw)) {
-      if (s->conceal_old_cursor_line !=
-          s->conceal_new_cursor_line
-          && s->conceal_old_cursor_line <=
-          curbuf->b_ml.ml_line_count) {
-        update_single_line(curwin, s->conceal_old_cursor_line);
-      }
-
-      update_single_line(curwin, s->conceal_new_cursor_line);
-      curwin->w_valid &= ~VALID_CROW;
-    }
-
-    setcursor();
-
+    normal_check_folds(s);
+    normal_redraw(s);
     do_redraw = false;
 
     // Now that we have drawn the first screen all the startup stuff
