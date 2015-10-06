@@ -2508,7 +2508,7 @@ return {
       vi_def=true,
       expand=true,
       varname='p_udir',
-      defaults={if_true={vi="."}}
+      defaults={if_true={vi=''}}
     },
     {
       full_name='undofile', abbreviation='udf',
