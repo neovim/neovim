@@ -31,12 +31,6 @@
 #ifndef USR_EXRC_FILE
 # define USR_EXRC_FILE "~/.exrc"
 #endif
-#ifndef USR_VIMRC_FILE
-# define USR_VIMRC_FILE "~/.nvimrc"
-#endif
-#ifndef USR_VIMRC_FILE2
-# define USR_VIMRC_FILE2     "~/.nvim/nvimrc"
-#endif
 #ifndef EXRC_FILE
 # define EXRC_FILE      ".exrc"
 #endif

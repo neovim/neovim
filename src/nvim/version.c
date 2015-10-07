@@ -1067,21 +1067,7 @@ void list_version(void)
   version_msg(SYS_VIMRC_FILE);
   version_msg("\"\n");
 #endif  // ifdef SYS_VIMRC_FILE
-#ifdef USR_VIMRC_FILE
-  version_msg(_("     user vimrc file: \""));
-  version_msg(USR_VIMRC_FILE);
-  version_msg("\"\n");
-#endif  // ifdef USR_VIMRC_FILE
-#ifdef USR_VIMRC_FILE2
-  version_msg(_(" 2nd user vimrc file: \""));
-  version_msg(USR_VIMRC_FILE2);
-  version_msg("\"\n");
-#endif  // ifdef USR_VIMRC_FILE2
-#ifdef USR_VIMRC_FILE3
-  version_msg(_(" 3rd user vimrc file: \""));
-  version_msg(USR_VIMRC_FILE3);
-  version_msg("\"\n");
-#endif  // ifdef USR_VIMRC_FILE3
+  version_msg(_("     user vimrc file: $XDG_CONFIG_HOME/nvim/init.vim\n"));
 #ifdef USR_EXRC_FILE
   version_msg(_("      user exrc file: \""));
   version_msg(USR_EXRC_FILE);
