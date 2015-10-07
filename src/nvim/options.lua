@@ -2569,7 +2569,7 @@ return {
       vi_def=true,
       expand=true,
       varname='p_vdir',
-      defaults={if_true={vi=macros('DFLT_VDIR')}}
+      defaults={if_true={vi=''}}
     },
     {
       full_name='viewoptions', abbreviation='vop',

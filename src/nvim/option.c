@@ -437,6 +437,7 @@ void set_init_1(void)
       "system('lpr' . (&printdevice == '' ? '' : ' -P' . &printdevice) . ' ' . v:fname_in) . delete(v:fname_in) + v:shell_error"
       );
 
+  set_string_default("viewdir", (char_u *)get_from_user_data("view"));
   /*
    * Set all the options (except the terminal options) to their default
    * value.  Also set the global value for local options.
