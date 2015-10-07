@@ -452,12 +452,12 @@ describe('msgpackparse() function', function()
   end)
 
   it('msgpackparse(systemlist(...)) does not segfault. #3135', function()
-    local cmd = "msgpackparse(systemlist('"
-      ..helpers.nvim_prog.." --api-info'))['_TYPE']['_VAL'][0][0]"
+    local cmd = "sort(keys(msgpackparse(systemlist('"
+      ..helpers.nvim_prog.." --api-info'))[0]))"
     local api_info = eval(cmd)
     api_info = eval(cmd) -- do it again (try to force segfault)
     api_info = eval(cmd) -- do it again
-    eq('functions', api_info)
+    eq({'error_types', 'functions', 'types'}, api_info)
   end)
 
   it('fails when called with no arguments', function()

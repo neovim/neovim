@@ -175,7 +175,7 @@ Nil				  -> msgpack nil
 Boolean				  -> msgpack boolean
 Integer (signed 64-bit integer)	  -> msgpack integer
 Float (IEEE 754 double precision) -> msgpack float
-String				  -> msgpack binary
+String				  -> msgpack string
 Array				  -> msgpack array
 Dictionary			  -> msgpack map
 
