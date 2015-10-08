@@ -808,6 +808,14 @@ return {
       defaults={if_true={vi="vert:|,fold:-"}}
     },
     {
+      full_name='fixendofline', abbreviation='fixeol',
+      type='bool', scope={'buffer'},
+      vi_def=true,
+      redraw={'statuslines'},
+      varname='p_fixeol',
+      defaults={if_true={vi=true}}
+    },
+    {
       full_name='fkmap', abbreviation='fk',
       type='bool', scope={'global'},
       vi_def=true,

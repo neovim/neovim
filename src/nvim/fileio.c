@@ -1934,10 +1934,10 @@ failed:
   check_marks_read();
 
   /*
-   * Trick: We remember if the last line of the read didn't have
-   * an eol even when 'binary' is off, for when writing it again with
-   * 'binary' on.  This is required for
-   * ":autocmd FileReadPost *.gz set bin|'[,']!gunzip" to work.
+   * We remember if the last line of the read didn't have
+   * an eol even when 'binary' is off, to support turning 'fixeol' off,
+   * or writing the read again with 'binary' on.  The latter is required
+   * for ":autocmd FileReadPost *.gz set bin|'[,']!gunzip" to work.
    */
   curbuf->b_no_eol_lnum = read_no_eol_lnum;
 
@@ -3322,7 +3322,7 @@ restore_backup:
     /* write failed or last line has no EOL: stop here */
     if (end == 0
         || (lnum == end
-            && write_bin
+            && (write_bin || !buf->b_p_fixeol)
             && (lnum == buf->b_no_eol_lnum
                 || (lnum == buf->b_ml.ml_line_count && !buf->b_p_eol)))) {
       ++lnum;                           /* written the line, count it */

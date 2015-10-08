@@ -4972,7 +4972,7 @@ void cursor_pos_info(void)
               &char_count_cursor, len, eol_size);
           if (lnum == curbuf->b_ml.ml_line_count
               && !curbuf->b_p_eol
-              && curbuf->b_p_bin
+              && (curbuf->b_p_bin || !curbuf->b_p_fixeol)
               && (long)STRLEN(s) < len)
             byte_count_cursor -= eol_size;
         }
@@ -4993,7 +4993,7 @@ void cursor_pos_info(void)
     }
 
     /* Correction for when last line doesn't have an EOL. */
-    if (!curbuf->b_p_eol && curbuf->b_p_bin)
+    if (!curbuf->b_p_eol && (curbuf->b_p_bin || !curbuf->b_p_fixeol))
       byte_count -= eol_size;
 
     if (l_VIsual_active) {

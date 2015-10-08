@@ -41,7 +41,7 @@ typedef struct memline {
   int ml_flags;
 
   infoptr_T   *ml_stack;        /* stack of pointer blocks (array of IPTRs) */
-  int ml_stack_top;             /* current top if ml_stack */
+  int ml_stack_top;             /* current top of ml_stack */
   int ml_stack_size;            /* total number of entries in ml_stack */
 
   linenr_T ml_line_lnum;        /* line number of cached line, 0 if not valid */

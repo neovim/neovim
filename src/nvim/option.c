@@ -131,6 +131,7 @@ static char_u   *p_cpt;
 static char_u   *p_cfu;
 static char_u   *p_ofu;
 static int p_eol;
+static int p_fixeol;
 static int p_et;
 static char_u   *p_fenc;
 static char_u   *p_ff;
@@ -3556,6 +3557,9 @@ set_bool_option (
   /* when 'endofline' is changed, redraw the window title */
   else if ((int *)varp == &curbuf->b_p_eol) {
     redraw_titles();
+  } else if ((int *)varp == &curbuf->b_p_fixeol) {
+    // when 'fixeol' is changed, redraw the window title
+    redraw_titles();
   }
   /* when 'bomb' is changed, redraw the window title and tab page text */
   else if ((int *)varp == &curbuf->b_p_bomb) {
@@ -5230,6 +5234,7 @@ static char_u *get_varp(vimoption_T *p)
   case PV_CFU:    return (char_u *)&(curbuf->b_p_cfu);
   case PV_OFU:    return (char_u *)&(curbuf->b_p_ofu);
   case PV_EOL:    return (char_u *)&(curbuf->b_p_eol);
+  case PV_FIXEOL: return (char_u *)&(curbuf->b_p_fixeol);
   case PV_ET:     return (char_u *)&(curbuf->b_p_et);
   case PV_FENC:   return (char_u *)&(curbuf->b_p_fenc);
   case PV_FF:     return (char_u *)&(curbuf->b_p_ff);
@@ -6409,6 +6414,7 @@ void save_file_ff(buf_T *buf)
  * from when editing started (save_file_ff() called).
  * Also when 'endofline' was changed and 'binary' is set, or when 'bomb' was
  * changed and 'binary' is not set.
+ * Also when 'endofline' was changed and 'fixeol' is not set.
  * When "ignore_empty" is true don't consider a new, empty buffer to be
  * changed.
  */
@@ -6423,9 +6429,9 @@ bool file_ff_differs(buf_T *buf, bool ignore_empty)
       && *ml_get_buf(buf, (linenr_T)1, FALSE) == NUL)
     return FALSE;
   if (buf->b_start_ffc != *buf->b_p_ff)
-    return TRUE;
-  if (buf->b_p_bin && buf->b_start_eol != buf->b_p_eol)
-    return TRUE;
+    return true;
+  if ((buf->b_p_bin || !buf->b_p_fixeol) && buf->b_start_eol != buf->b_p_eol)
+    return true;
   if (!buf->b_p_bin && buf->b_start_bomb != buf->b_p_bomb)
     return TRUE;
   if (buf->b_start_fenc == NULL)
