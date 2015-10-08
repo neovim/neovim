@@ -1636,8 +1636,15 @@ static char *shada_filename(const char *file)
     } while (0)
 #define PACK_STRING(s) \
     do { \
-      msgpack_pack_str(spacker, s.size); \
-      msgpack_pack_str_body(spacker, s.data, s.size); \
+      const String s_ = (s); \
+      msgpack_pack_str(spacker, s_.size); \
+      msgpack_pack_str_body(spacker, s_.data, s_.size); \
+    } while (0)
+#define PACK_BIN(s) \
+    do { \
+      const String s_ = (s); \
+      msgpack_pack_bin(spacker, s_.size); \
+      msgpack_pack_bin_body(spacker, s_.data, s_.size); \
     } while (0)
 
 /// Write single ShaDa entry
@@ -1707,8 +1714,7 @@ static bool shada_pack_entry(msgpack_packer *const packer,
           : entry.data.history_item.additional_elements->lv_len);
       msgpack_pack_array(spacker, arr_size);
       msgpack_pack_uint8(spacker, entry.data.history_item.histtype);
-      msgpack_rpc_from_string(cstr_as_string(entry.data.history_item.string),
-                              spacker);
+      PACK_BIN(cstr_as_string(entry.data.history_item.string));
       if (is_hist_search) {
         msgpack_pack_uint8(spacker, (uint8_t) entry.data.history_item.sep);
       }
@@ -1721,8 +1727,7 @@ static bool shada_pack_entry(msgpack_packer *const packer,
           ? 0
           : entry.data.global_var.additional_elements->lv_len);
       msgpack_pack_array(spacker, arr_size);
-      msgpack_rpc_from_string(cstr_as_string(entry.data.global_var.name),
-                              spacker);
+      PACK_BIN(cstr_as_string(entry.data.global_var.name));
       if (vim_to_msgpack(spacker, &entry.data.global_var.value) == FAIL) {
         goto shada_pack_entry_error;
       }
@@ -1735,8 +1740,7 @@ static bool shada_pack_entry(msgpack_packer *const packer,
           ? 0
           : entry.data.sub_string.additional_elements->lv_len);
       msgpack_pack_array(spacker, arr_size);
-      msgpack_rpc_from_string(cstr_as_string(entry.data.sub_string.sub),
-                              spacker);
+      PACK_BIN(cstr_as_string(entry.data.sub_string.sub));
       DUMP_ADDITIONAL_ELEMENTS(entry.data.sub_string.additional_elements);
       break;
     }
@@ -1758,8 +1762,7 @@ static bool shada_pack_entry(msgpack_packer *const packer,
               : 0));
       msgpack_pack_map(spacker, map_size);
       PACK_STATIC_STR(SEARCH_KEY_PAT);
-      msgpack_rpc_from_string(cstr_as_string(entry.data.search_pattern.pat),
-                              spacker);
+      PACK_BIN(cstr_as_string(entry.data.search_pattern.pat));
 #define PACK_BOOL(entry, name, attr) \
       do { \
         if (!CHECK_DEFAULT(entry, search_pattern.attr)) { \
@@ -1802,8 +1805,7 @@ static bool shada_pack_entry(msgpack_packer *const packer,
               : entry.data.filemark.additional_data->dv_hashtab.ht_used));
       msgpack_pack_map(spacker, map_size);
       PACK_STATIC_STR(KEY_FILE);
-      msgpack_rpc_from_string(cstr_as_string(entry.data.filemark.fname),
-                              spacker);
+      PACK_BIN(cstr_as_string(entry.data.filemark.fname));
       if (!CHECK_DEFAULT(entry, filemark.mark.lnum)) {
         PACK_STATIC_STR(KEY_LNUM);
         msgpack_pack_long(spacker, entry.data.filemark.mark.lnum);
@@ -1835,8 +1837,7 @@ static bool shada_pack_entry(msgpack_packer *const packer,
       PACK_STATIC_STR(REG_KEY_CONTENTS);
       msgpack_pack_array(spacker, entry.data.reg.contents_size);
       for (size_t i = 0; i < entry.data.reg.contents_size; i++) {
-        msgpack_rpc_from_string(cstr_as_string(entry.data.reg.contents[i]),
-                                spacker);
+        PACK_BIN(cstr_as_string(entry.data.reg.contents[i]));
       }
       PACK_STATIC_STR(KEY_NAME_CHAR);
       msgpack_pack_char(spacker, entry.data.reg.name);
@@ -1868,8 +1869,7 @@ static bool shada_pack_entry(msgpack_packer *const packer,
                    ->dv_hashtab.ht_used)));
         msgpack_pack_map(spacker, map_size);
         PACK_STATIC_STR(KEY_FILE);
-        msgpack_rpc_from_string(
-            cstr_as_string(entry.data.buffer_list.buffers[i].fname), spacker);
+        PACK_BIN(cstr_as_string(entry.data.buffer_list.buffers[i].fname));
         if (entry.data.buffer_list.buffers[i].pos.lnum != 1) {
           PACK_STATIC_STR(KEY_LNUM);
           msgpack_pack_uint64(
@@ -1888,7 +1888,20 @@ static bool shada_pack_entry(msgpack_packer *const packer,
       msgpack_pack_map(spacker, entry.data.header.size);
       for (size_t i = 0; i < entry.data.header.size; i++) {
         PACK_STRING(entry.data.header.items[i].key);
-        msgpack_rpc_from_object(entry.data.header.items[i].value, spacker);
+        const Object obj = entry.data.header.items[i].value;
+        switch (obj.type) {
+          case kObjectTypeString: {
+            PACK_BIN(obj.data.string);
+            break;
+          }
+          case kObjectTypeInteger: {
+            msgpack_pack_int64(spacker, (int64_t) obj.data.integer);
+            break;
+          }
+          default: {
+            assert(false);
+          }
+        }
       }
       break;
     }
