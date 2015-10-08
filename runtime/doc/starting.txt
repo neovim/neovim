@@ -897,9 +897,11 @@ To automatically save and restore views for *.c files: >
 
 ==============================================================================
 8. The ShaDa file				*shada* *shada-file*
+
 If you exit Vim and later start it again, you would normally lose a lot of
 information.  The ShaDa file can be used to remember that information, which
-enables you to continue where you left off.
+enables you to continue where you left off.  Its name is the abbreviation of 
+SHAred DAta because it is used for sharing data between Neovim sessions.
 
 This is introduced in section |21.3| of the user manual.
 

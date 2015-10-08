@@ -84,7 +84,8 @@ After editing for a while you will have text in registers, marks in various
 files, a command line history filled with carefully crafted commands.  When
 you exit Vim all of this is lost.  But you can get it back!
 
-The ShaDa file is designed to store status information:
+The ShaDa (abbreviation of SHAred DAta) file is designed to store status 
+information:
 
 	Command-line and Search pattern history
 	Text in registers
