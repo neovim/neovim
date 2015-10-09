@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 7.4.  Last change: 2014 Nov 19
+*syntax.txt*	For Vim version 7.4.  Last change: 2015 Jan 07
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -1121,6 +1121,14 @@ But actually almost none implements this standard fully.  Thus it will
 highlight all Unix ini files.  But you can force strict highlighting according
 to standard by placing this in your vimrc file: >
 	:let enforce_freedesktop_standard = 1
+
+
+DIFF							*diff.vim*
+
+The diff highlighting normally finds translated headers.  This can be slow if
+there are very long lines in the file.  To disable translations: >
+
+	:let diff_translations = 0
 
 
 DIRCOLORS			       *dircolors.vim* *ft-dircolors-syntax*

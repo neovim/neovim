@@ -1,7 +1,7 @@
 " netrwSettings.vim: makes netrw settings simpler
-" Date:		Aug 27, 2013
+" Date:		Dec 30, 2014
 " Maintainer:	Charles E Campbell <drchipNOSPAM at campbellfamily dot biz>
-" Version:	14
+" Version:	15
 " Copyright:    Copyright (C) 1999-2007 Charles E. Campbell {{{1
 "               Permission is hereby granted to use and distribute this code,
 "               with or without modifications, provided that this copyright
@@ -19,7 +19,7 @@
 if exists("g:loaded_netrwSettings") || &cp
   finish
 endif
-let g:loaded_netrwSettings = "v14"
+let g:loaded_netrwSettings = "v15"
 if v:version < 700
  echohl WarningMsg
  echo "***warning*** this version of netrwSettings needs vim 7.0"
@@ -31,7 +31,7 @@ endif
 " NetrwSettings: {{{1
 fun! netrwSettings#NetrwSettings()
   " this call is here largely just to insure that netrw has been loaded
-  call netrw#NetrwSavePosn()
+  call netrw#SavePosn()
   if !exists("g:loaded_netrw")
    echohl WarningMsg | echomsg "***sorry*** netrw needs to be loaded prior to using NetrwSettings" | echohl None
    return
@@ -177,6 +177,7 @@ fun! netrwSettings#NetrwSettings()
   put = 'let g:netrw_sort_direction    = '.g:netrw_sort_direction
   put = 'let g:netrw_sort_options      = '.g:netrw_sort_options
   put = 'let g:netrw_sort_sequence     = '.g:netrw_sort_sequence
+  put = 'let g:netrw_servername        = '.g:netrw_servername
   put = 'let g:netrw_special_syntax    = '.g:netrw_special_syntax
   put = 'let g:netrw_ssh_browse_reject = '.g:netrw_ssh_browse_reject
   put = 'let g:netrw_ssh_cmd           = '.g:netrw_ssh_cmd

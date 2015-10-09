@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2014 Dec 06
+" Last Change:	2015 Jan 07
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -1047,6 +1047,9 @@ au BufNewFile,BufRead *.ldif			setf ldif
 
 " Ld loader
 au BufNewFile,BufRead *.ld			setf ld
+
+" Less
+au BufNewFile,BufRead *.less			setf less
 
 " Lex
 au BufNewFile,BufRead *.lex,*.l,*.lxx,*.l++	setf lex

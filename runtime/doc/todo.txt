@@ -67,6 +67,7 @@ Regexp problems:
 - Using back reference before the capturing group sometimes works with the old
   engine, can we do this with the new engine?  E.g. with
   "/\%(<\1>\)\@<=.*\%(<\/\(\w\+\)>\)\@=" matching text inside HTML tags.
+- Diff highlighting can be very slow. (Issue 309)
 
 Still using freed memory after using setloclist(). (lcd, 2014 Jul 23)
 More info Jul 24.  Not clear why.
@@ -130,6 +131,16 @@ Update Nov 5.
 MS-Windows: Crash opening very long file name starting with "\\".
 (Christian Brock, 2012 Jun 29)
 
+Patch for this from Marcin Szamotulski, 2014 Dec 28:
+8   Make the # register writable, so that it can be restored after jumping
+    around in windows.
+
+Using CTRL-L while popup menu is visible behaves like CTRL-P, which is wrong.
+Patch by Yasuhiro Matsumoto, 2015 Jan 5.
+Is this right?  Comment from Amadeus Demarzi.
+Another patch from Christian, Jan 6.
+Comment from Hirohito Higashi, Jan 6.
+
 Cursorline background color not mixed with character highlight.
 Patch by Yasuhiro Matsumoto, 2014 Dec 3.
 
@@ -142,8 +153,18 @@ ml_updatechunk() is slow when retrying for another encoding. (John Little,
 Patch to add a different escape sequence for replace mode.
 (Omar Sandoval, 2014 Nov 30)
 
+Calling setreg() with an empty list doesn't work.
+Patch by Yasuhiro Matsumoto, 2014 Dec 14.
+
+Extended file attributes lost on write (backupcopy=no).  Issue 306.
+
+Window height computed incorrectly when Vim is minimized.
+Patch to fix this. (Ingo Karkat, 2014 Dec 19)
+
 Patch to allow values greater than 255 for ctermfg/ctermbg on Windows.
 (Yasuhiro Matsumoto, 2014 Dec 5)
+
+Mixup of highlighting when there is a match and SpellBad. (ZyX, 2015 Jan 1)
 
 When 'balloonexpr' returns a list the result has a trailing newline.
 Just remove one trailing newline. (lcd, 2014 Oct 17)
@@ -192,6 +213,8 @@ Redo only remembers the last change.  Could use "{count}g." to redo an older
 change.  How does the user know which change?  At least have a way to list
 them: ":repeats".
 
+Patch for glob(), adding slash to normal files. (Ingo Karkat, 2014 Dec 22)
+
 Using "." to repeat an Ex command puts that command in history.  Probably
 should not happen.  If the command is the result of a mapping it's not put in
 history either. (Jacob Niehus, 2014 Nov 2)
@@ -221,6 +244,9 @@ Spell files use a latin single quote. Unicode also has another single quote:
 0x2019.  (Ron Aaron, 2014 Apr 4)
 New OpenOffice spell files support this with ICONV.  But they are not
 compatible with Vim spell files.  The old files can no longer be downloaded.
+
+Patch to make FocusGained and FocusLost work in modern terminals. (Hayaki
+Saito, 2013 Apr 24)
 
 Win32: patch to use 64 bit stat() if possible. (Ken Takata, 2014 May 12)
 More tests May 14. Update May 29.  Update Aug 10.
@@ -541,9 +567,6 @@ Patch to improve equivalence classes in regexp patterns.
 
 Patch with suggestions for starting.txt. (Tony Mechelynck, 2012 Oct 24)
 But use Gnome instead of GTK?
-
-Patch to make FocusGained and FocusLost work in modern terminals. (Hayaki
-Saito, 2013 Apr 24)
 
 Should be possible to enable/disable matchparen per window or buffer.
 Add a check for b:no_match_paren in Highlight_matching_Pair() (Marcin
@@ -4405,8 +4428,6 @@ Argument list:
 
 Registers:
 8   Don't display empty registers with ":display". (Etienne)
-8   Make the # register writable, so that it can be restored after jumping
-    around in windows.
 8   Add put command that overwrites existing text.  Should also work for
     blocks.  Useful to move text around in a table.  Works like using "R ^R r"
     for every line.

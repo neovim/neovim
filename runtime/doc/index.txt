@@ -1,4 +1,4 @@
-*index.txt*     For Vim version 7.4.  Last change: 2014 Sep 19
+*index.txt*     For Vim version 7.4.  Last change: 2015 Jan 07
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -1446,7 +1446,7 @@ tag	      command	      action ~
 				buffer list
 |:sbrewind|	:sbr[ewind]	split window and go to first file in the
 				buffer list
-|:scriptnames|	:scrip[tnames]	list names of all sourced Vim scripts
+|:scriptnames|	:scr[iptnames]	list names of all sourced Vim scripts
 |:scriptencoding| :scripte[ncoding]	encoding used in sourced Vim script
 |:scscope|	:scs[cope]	split window and execute cscope command
 |:set|		:se[t]		show or set options
