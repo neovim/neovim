@@ -1,7 +1,10 @@
 " Vim filetype plugin file
 " Language:	matlab
 " Maintainer:	Jake Wasserman <jwasserman at gmail dot com>
-" Last Changed: 2006 Jan 12
+" Last Changed: 2014 Dec 30
+
+" Contributors:
+" Charles Campbell
 
 if exists("b:did_ftplugin")
 	finish
@@ -12,10 +15,11 @@ let s:save_cpo = &cpo
 set cpo-=C
 
 if exists("loaded_matchit")
-	let s:conditionalEnd = '\(([^()]*\)\@!\<end\>\([^()]*)\)\@!'
-	let b:match_words = '\<if\>\|\<while\>\|\<for\>\|\<switch\>:' .
-		\ s:conditionalEnd . ',\<if\>:\<elseif\>:\<else\>:' .
-		\ s:conditionalEnd
+ let s:conditionalEnd = '\%(([^()]*\)\@!\<end\>\%([^()]*)\)\@!'
+ let b:match_words=
+   \ '\<\%(if\|switch\|for\|while\)\>:\<\%(elseif\|case\|break\|continue\|else\|otherwise\)\>:'.s:conditionalEnd.','.
+   \ '\<function\>:\<return\>:\<endfunction\>'
+ unlet s:conditionalEnd
 endif
 
 setlocal suffixesadd=.m
