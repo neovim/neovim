@@ -3907,8 +3907,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	be able to execute Normal mode commands.
 	This is the opposite of the 'keymap' option, where characters are
 	mapped in Insert mode.
-	Also consider setting 'langnoremap' to avoid 'langmap' applies to
-	characters resulting from a mapping.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
@@ -3967,10 +3965,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 'langnoremap' 'lnr'	boolean (default on)
 			global
 	When on, setting 'langmap' does not apply to characters resulting from
-	a mapping.  This basically means, if you noticed that setting
-	'langmap' disables some of your mappings, try setting this option.
-	This option defaults to off for backwards compatibility.  Set it on if
-	that works for you to avoid mappings to break.
+	a mapping.  If setting 'langmap' disables some of your mappings, make
+	sure this option is set.
 
 					*'laststatus'* *'ls'*
 'laststatus' 'ls'	number	(default 2)
