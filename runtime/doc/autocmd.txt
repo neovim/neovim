@@ -289,6 +289,7 @@ Name			triggered by ~
 |CursorHoldI|		the user doesn't press a key for a while in Insert mode
 |CursorMoved|		the cursor was moved in Normal mode
 |CursorMovedI|		the cursor was moved in Insert mode
+|CursorMovedT|		the cursor was moved in Terminal mode
 
 |WinEnter|		after entering another window
 |WinLeave|		before leaving a window
@@ -553,6 +554,9 @@ CursorMoved			After the cursor was moved in Normal or Visual
 CursorMovedI			After the cursor was moved in Insert mode.
 				Not triggered when the popup menu is visible.
 				Otherwise the same as CursorMoved.
+							*CursorMovedT*
+CursorMovedT			After the cursor was moved in Terminal mode.
+				Equivalent to CursorMovedI.
 							*EncodingChanged*
 EncodingChanged			Fires off after the 'encoding' option has been
 				changed.  Useful to set up fonts, for example.
