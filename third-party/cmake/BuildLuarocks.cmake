@@ -1,6 +1,6 @@
 # Luarocks recipe. Luarocks is only required when building Neovim, when
 # cross compiling we still want to build for the HOST system, whenever
-# writing a recipe than is mean for cross-compile, use the HOSTDEPS_* variables
+# writing a recipe that is meant for cross-compile, use the HOSTDEPS_* variables
 # instead of DEPS_* - check the main CMakeLists.txt for a list.
 
 if(MSVC)
@@ -34,6 +34,7 @@ function(BuildLuarocks)
       -DURL=${LUAROCKS_URL}
       -DEXPECTED_SHA256=${LUAROCKS_SHA256}
       -DTARGET=luarocks
+      -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND "${_luarocks_CONFIGURE_COMMAND}"
@@ -122,7 +123,7 @@ if(USE_BUNDLED_BUSTED)
 
   add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/nvim-client
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build https://raw.githubusercontent.com/neovim/lua-client/0.0.1-12/nvim-client-0.0.1-12.rockspec ${LUAROCKS_BUILDARGS} LIBUV_DIR=${HOSTDEPS_INSTALL_DIR}
+    ARGS build https://raw.githubusercontent.com/neovim/lua-client/0.0.1-14/nvim-client-0.0.1-14.rockspec ${LUAROCKS_BUILDARGS} LIBUV_DIR=${HOSTDEPS_INSTALL_DIR}
     DEPENDS busted libuv)
   add_custom_target(nvim-client
     DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/nvim-client)

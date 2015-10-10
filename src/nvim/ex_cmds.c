@@ -1246,8 +1246,9 @@ do_shell (
   // 1" command to the terminal.
   ui_cursor_goto(msg_row, msg_col);
   (void)call_shell(cmd, flags, NULL);
-  did_check_timestamps = FALSE;
-  need_check_timestamps = TRUE;
+  msg_didout = true;
+  did_check_timestamps = false;
+  need_check_timestamps = true;
 
   // put the message cursor at the end of the screen, avoids wait_return()
   // to overwrite the text that the external command showed
@@ -2395,7 +2396,7 @@ static int check_readonly(int *forceit, buf_T *buf)
    * the file exists and permissions are read-only. */
   if (!*forceit && (buf->b_p_ro
                     || (os_file_exists(buf->b_ffname)
-                        && os_file_is_readonly((char *)buf->b_ffname)))) {
+                        && !os_file_is_writable((char *)buf->b_ffname)))) {
     if ((p_confirm || cmdmod.confirm) && buf->b_fname != NULL) {
       char_u buff[DIALOG_MSG_SIZE];
 
@@ -4429,13 +4430,16 @@ void ex_global(exarg_T *eap)
   if (got_int)
     MSG(_(e_interr));
   else if (ndone == 0) {
-    if (type == 'v')
+    if (type == 'v') {
       smsg(_("Pattern found in every line: %s"), pat);
-    else
+    } else {
       smsg(_("Pattern not found: %s"), pat);
-  } else
+    }
+  } else {
+    start_global_changes();
     global_exe(cmd);
-
+    end_global_changes();
+  }
   ml_clearmarked();        /* clear rest of the marks */
   vim_regfree(regmatch.regprog);
 }
@@ -6125,7 +6129,7 @@ char_u * sign_typenr2name(int typenr)
 /*
  * Undefine/free all signs.
  */
-void free_signs()
+void free_signs(void)
 {
   while (first_sign != NULL)
     sign_undefine(first_sign, NULL);

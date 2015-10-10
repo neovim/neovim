@@ -33,17 +33,18 @@
 # include "event/pty_process.c.generated.h"
 #endif
 
-static const unsigned int KILL_RETRIES = 5;
-static const unsigned int KILL_TIMEOUT = 2;  // seconds
-
 bool pty_process_spawn(PtyProcess *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
+  static struct termios termios;
+  if (!termios.c_cflag) {
+    init_termios(&termios);
+  }
+
   Process *proc = (Process *)ptyproc;
+  assert(!proc->err);
   uv_signal_start(&proc->loop->children_watcher, chld_handler, SIGCHLD);
   ptyproc->winsize = (struct winsize){ptyproc->height, ptyproc->width, 0, 0};
-  struct termios termios;
-  init_termios(&termios);
   uv_disable_stdio_inheritance();
   int master;
   int pid = forkpty(&master, NULL, &termios, &ptyproc->winsize);
@@ -73,9 +74,6 @@ bool pty_process_spawn(PtyProcess *ptyproc)
   if (proc->out && !set_duplicating_descriptor(master, &proc->out->uv.pipe)) {
     goto error;
   }
-  if (proc->err && !set_duplicating_descriptor(master, &proc->err->uv.pipe)) {
-    goto error;
-  }
 
   ptyproc->tty_fd = master;
   proc->pid = pid;
@@ -83,19 +81,8 @@ bool pty_process_spawn(PtyProcess *ptyproc)
 
 error:
   close(master);
-
-  // terminate spawned process
-  kill(pid, SIGTERM);
-  int status, child;
-  unsigned int try = 0;
-  while (try++ < KILL_RETRIES && !(child = waitpid(pid, &status, WNOHANG))) {
-    sleep(KILL_TIMEOUT);
-  }
-  if (child != pid) {
-    kill(pid, SIGKILL);
-    waitpid(pid, NULL, 0);
-  }
-
+  kill(pid, SIGKILL);
+  waitpid(pid, NULL, 0);
   return false;
 }
 
@@ -152,7 +139,6 @@ static void init_child(PtyProcess *ptyproc) FUNC_ATTR_NONNULL_ALL
 
 static void init_termios(struct termios *termios) FUNC_ATTR_NONNULL_ALL
 {
-  memset(termios, 0, sizeof(struct termios));
   // Taken from pangoterm
   termios->c_iflag = ICRNL|IXON;
   termios->c_oflag = OPOST|ONLCR;

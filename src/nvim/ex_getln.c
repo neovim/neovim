@@ -62,6 +62,7 @@
 #include "nvim/tag.h"
 #include "nvim/window.h"
 #include "nvim/ui.h"
+#include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/event/loop.h"
 
@@ -298,14 +299,14 @@ getcmdline (
 
     /* Get a character.  Ignore K_IGNORE, it should not do anything, such
      * as stop completion. */
-    loop_enable_deferred_events(&loop);
+    input_enable_events();
     do {
       c = safe_vgetc();
-    } while (c == K_IGNORE);
-    loop_disable_deferred_events(&loop);
+    } while (c == K_IGNORE || c == K_PASTE);
+    input_disable_events();
 
     if (c == K_EVENT) {
-      loop_process_event(&loop);
+      queue_process_events(loop.events);
       continue;
     }
 
@@ -4111,10 +4112,11 @@ void globpath(char_u *path, char_u *file, garray_T *ga, int expand_options)
       STRCAT(buf, file);  // NOLINT
 
       char_u **p;
-      int num_p;
-      if (ExpandFromContext(&xpc, buf, &num_p, &p,
-              WILD_SILENT|expand_options) != FAIL && num_p > 0) {
-        ExpandEscape(&xpc, buf, num_p, p, WILD_SILENT|expand_options);
+      int num_p = 0;
+      (void)ExpandFromContext(&xpc, buf, &num_p, &p,
+                              WILD_SILENT | expand_options);
+      if (num_p > 0) {
+        ExpandEscape(&xpc, buf, num_p, p, WILD_SILENT | expand_options);
 
         // Concatenate new results to previous ones.
         ga_grow(ga, num_p);

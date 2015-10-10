@@ -5,8 +5,6 @@ And test "U" in Visual mode, also on German sharp S.
 STARTTEST
 :so small.vim
 :so mbyte.vim
-:" This only works when 'encoding' is "latin1", don't depend on the environment
-:set enc=latin1
 /^abcde
 :" Test shift-right of a block
 jlllljj>wlljlll>
@@ -39,18 +37,18 @@ G$khhhhhkkcmno
 :exe ":norm! l\<C-V>j$hhAab\<Esc>"
 :.,/^$/w >> test.out
 :" Test for Visual block insert when virtualedit=all and utf-8 encoding
-:set ve=all enc=utf-8
+:set ve=all
 :/\t\tline
 :exe ":norm! 07l\<C-V>jjIx\<Esc>"
 :.,/^$/w >> test.out
 :" Test for Visual block append when virtualedit=all
 :exe ":norm! 012l\<C-v>jjAx\<Esc>"
-:set ve= enc=latin1
+:set ve=
 :.,/^$/w >> test.out
-:" gUe must uppercase a whole word, also when ß changes to SS
-Gothe youtußeuu endYpk0wgUe
+:" gUe must uppercase a whole word, also when ÃŸ changes to SS
+Gothe youtuÃŸeuu endYpk0wgUe
 :" gUfx must uppercase until x, inclusive.
-O- youßtußexu -0fogUfx
+O- youÃŸtuÃŸexu -0fogUfx
 :" VU must uppercase a whole line
 YpkVU
 :" same, when it's the last line in the buffer
@@ -89,7 +87,7 @@ cccc
 dddd
 
 yaaa
-¿¿¿
+Â¿Â¿Â¿
 bbb
 
 A23

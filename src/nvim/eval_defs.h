@@ -1,10 +1,15 @@
 #ifndef NVIM_EVAL_DEFS_H
 #define NVIM_EVAL_DEFS_H
 
+#include <limits.h>
+
 #include "nvim/hashtab.h"
 
 typedef int varnumber_T;
 typedef double float_T;
+
+#define VARNUMBER_MAX INT_MAX
+#define VARNUMBER_MIN INT_MIN
 
 typedef struct listvar_S list_T;
 typedef struct dictvar_S dict_T;
@@ -115,4 +120,16 @@ struct dictvar_S {
                                 // prevent garbage collection
 };
 
-#endif // NVIM_EVAL_DEFS_H
+// structure used for explicit stack while garbage collecting hash tables
+typedef struct ht_stack_S {
+  hashtab_T *ht;
+  struct ht_stack_S *prev;
+} ht_stack_T;
+
+// structure used for explicit stack while garbage collecting lists
+typedef struct list_stack_S {
+  list_T *list;
+  struct list_stack_S *prev;
+} list_stack_T;
+
+#endif  // NVIM_EVAL_DEFS_H

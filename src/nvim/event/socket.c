@@ -77,6 +77,7 @@ void socket_watcher_init(Loop *loop, SocketWatcher *watcher,
   watcher->stream->data = watcher;
   watcher->cb = NULL;
   watcher->close_cb = NULL;
+  watcher->events = NULL;
 }
 
 int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
@@ -113,6 +114,7 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
 }
 
 int socket_watcher_accept(SocketWatcher *watcher, Stream *stream, void *data)
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
 {
   uv_stream_t *client;
 
@@ -142,10 +144,18 @@ void socket_watcher_close(SocketWatcher *watcher, socket_close_cb cb)
   uv_close((uv_handle_t *)watcher->stream, close_cb);
 }
 
+static void connection_event(void **argv)
+{
+  SocketWatcher *watcher = argv[0];
+  int status = (int)(uintptr_t)(argv[1]);
+  watcher->cb(watcher, status, watcher->data);
+}
+
 static void connection_cb(uv_stream_t *handle, int status)
 {
   SocketWatcher *watcher = handle->data;
-  watcher->cb(watcher, status, watcher->data);
+  CREATE_EVENT(watcher->events, connection_event, 2, watcher,
+      (void *)(uintptr_t)status);
 }
 
 static void close_cb(uv_handle_t *handle)

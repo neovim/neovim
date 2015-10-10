@@ -1,0 +1,24 @@
+*nvim.txt*    For Nvim.						{Nvim}
+
+
+		 NVIM REFERENCE MANUAL				*nvim*
+
+
+Introduction to Nvim				*nvim-intro*
+
+This is an introduction for Vim users who are just getting started with Nvim.
+It is not meant for Vim beginners. For a basic introduction to Vim,
+see |help.txt|.
+
+1. Transitioning from Vim	 |nvim-from-vim|
+2. Differences from Vim		 |vim-differences|
+3. Msgpack-RPC			 |msgpack-rpc|
+4. Job control			 |job-control|
+5. Python plugins		 |nvim-python|
+6. Clipboard integration	 |nvim-clipboard|
+7. Remote plugins		 |remote-plugin|
+8. Provider infrastructure	 |nvim-provider|
+9. Integrated terminal emulator	 |nvim-terminal-emulator|
+
+==============================================================================
+ vim:tw=78:ts=8:noet:ft=help:norl:

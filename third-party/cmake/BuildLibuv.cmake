@@ -28,6 +28,7 @@ function(BuildLibuv)
       -DURL=${LIBUV_URL}
       -DEXPECTED_SHA256=${LIBUV_SHA256}
       -DTARGET=${_libuv_TARGET}
+      -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND "${_libuv_CONFIGURE_COMMAND}"
     BUILD_COMMAND "${_libuv_BUILD_COMMAND}"

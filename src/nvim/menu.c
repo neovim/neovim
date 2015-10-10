@@ -30,6 +30,7 @@
 #include "nvim/keymap.h"
 #include "nvim/garray.h"
 #include "nvim/strings.h"
+#include "nvim/ui.h"
 
 
 #define MENUDEPTH   10          /* maximum depth of menus */
@@ -64,7 +65,7 @@ ex_menu (
   char_u      *map_to;
   int noremap;
   bool silent = false;
-  int special = FALSE;
+  bool special = false;
   int unmenu;
   char_u      *map_buf;
   char_u      *arg;
@@ -90,7 +91,7 @@ ex_menu (
       continue;
     }
     if (STRNCMP(arg, "<special>", 9) == 0) {
-      special = TRUE;
+      special = true;
       arg = skipwhite(arg + 9);
       continue;
     }
@@ -249,6 +250,7 @@ ex_menu (
     xfree(map_buf);
   }
 
+  ui_update_menu();
 
 theend:
   ;
@@ -1257,11 +1259,18 @@ void ex_emenu(exarg_T *eap)
 
   /* Found the menu, so execute.
    * Use the Insert mode entry when returning to Insert mode. */
-  if (restart_edit
-      && !current_SID
-      ) {
+  if (((State & INSERT) || restart_edit) && !current_SID) {
     mode = (char_u *)"Insert";
     idx = MENU_INDEX_INSERT;
+  } else if (State & CMDLINE) {
+      mode = (char_u *)"Command";
+      idx = MENU_INDEX_CMDLINE;
+  } else if (get_real_state() & VISUAL) {
+    /* Detect real visual mode -- if we are really in visual mode we
+     * don't need to do any guesswork to figure out what the selection
+     * is. Just execute the visual binding for the menu. */
+    mode = (char_u *)"Visual";
+    idx = MENU_INDEX_VISUAL;
   } else if (eap->addr_count) {
     pos_T tpos;
 

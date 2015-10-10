@@ -6,9 +6,8 @@ local AsyncSession = require('nvim.async_session')
 local Session = require('nvim.session')
 
 local nvim_prog = os.getenv('NVIM_PROG') or 'build/bin/nvim'
---- FIXME: 'autoindent' messes up the insert() function
 local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
-                   '--cmd', 'set shortmess+=I background=light noswapfile noautoindent',
+                   '--cmd', 'set shortmess+=I background=light noswapfile noautoindent laststatus=1 encoding=utf-8',
                    '--embed'}
 
 -- Formulate a path to the directory containing nvim.  We use this to
@@ -130,6 +129,10 @@ local function nvim_eval(expr)
   return request('vim_eval', expr)
 end
 
+local function nvim_call(name, ...)
+  return request('vim_call_function', name, {...})
+end
+
 local function nvim_feed(input)
   while #input > 0 do
     local written = request('vim_input', input)
@@ -180,11 +183,16 @@ local function spawn(argv)
   return session
 end
 
-local function clear()
+local function clear(extra_cmd)
   if session then
     session:exit(0)
   end
-  session = spawn(nvim_argv)
+  local args = {unpack(nvim_argv)}
+  if extra_cmd ~= nil then
+    table.insert(args, '--cmd')
+    table.insert(args, extra_cmd)
+  end
+  session = spawn(args)
 end
 
 local function insert(...)
@@ -236,6 +244,10 @@ end
 
 local function nvim(method, ...)
   return request('vim_'..method, ...)
+end
+
+local function nvim_async(method, ...)
+  session:notify('vim_'..method, ...)
 end
 
 local function buffer(method, ...)
@@ -312,6 +324,19 @@ local function rmdir(path)
   return ret
 end
 
+local exc_exec = function(cmd)
+  nvim_command(([[
+    try
+      execute "%s"
+    catch
+      let g:__exception = v:exception
+    endtry
+  ]]):format(cmd:gsub('\n', '\\n'):gsub('[\\"]', '\\%0')))
+  local ret = nvim_eval('get(g:, "__exception", 0)')
+  nvim_command('unlet! g:__exception')
+  return ret
+end
+
 return {
   clear = clear,
   spawn = spawn,
@@ -322,6 +347,7 @@ return {
   feed = feed,
   execute = execute,
   eval = nvim_eval,
+  call = nvim_call,
   command = nvim_command,
   request = request,
   next_message = next_message,
@@ -332,6 +358,7 @@ return {
   expect = expect,
   ok = ok,
   nvim = nvim,
+  nvim_async = nvim_async,
   nvim_prog = nvim_prog,
   nvim_dir = nvim_dir,
   buffer = buffer,
@@ -344,5 +371,7 @@ return {
   wait = wait,
   set_session = set_session,
   write_file = write_file,
-  rmdir = rmdir
+  rmdir = rmdir,
+  mkdir = lfs.mkdir,
+  exc_exec = exc_exec,
 }

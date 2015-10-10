@@ -247,6 +247,8 @@ enum key_extra {
   , KE_FOCUSGAINED      /* focus gained */
   , KE_FOCUSLOST        /* focus lost */
   , KE_EVENT            // event
+  , KE_PASTE            // special key to toggle the 'paste' option.
+                        // sent only by UIs
 };
 
 /*
@@ -437,6 +439,7 @@ enum key_extra {
 
 #define K_CURSORHOLD    TERMCAP2KEY(KS_EXTRA, KE_CURSORHOLD)
 #define K_EVENT         TERMCAP2KEY(KS_EXTRA, KE_EVENT)
+#define K_PASTE         TERMCAP2KEY(KS_EXTRA, KE_PASTE)
 
 /* Bits for modifier mask */
 /* 0x01 cannot be used, because the modifier must be 0x02 or higher */

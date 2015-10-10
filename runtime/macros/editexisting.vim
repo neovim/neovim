@@ -1,6 +1,6 @@
 " Vim Plugin:	Edit the file with an existing Vim if possible
 " Maintainer:	Bram Moolenaar
-" Last Change:	2013 Feb 24
+" Last Change:	2014 Dec 06
 
 " This is a plugin, drop it in your (Unix) ~/.vim/plugin or (Win32)
 " $VIM/vimfiles/plugin directory.  Or make a symbolic link, so that you
@@ -112,7 +112,7 @@ func! EditExisting(fname, command)
   endif
 
   if a:command != ''
-    exe "normal " . a:command
+    exe "normal! " . a:command
   endif
 
   redraw

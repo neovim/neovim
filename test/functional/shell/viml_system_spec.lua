@@ -186,7 +186,7 @@ describe('system()', function()
 
   describe("with a program that doesn't close stdout", function()
     if not xclip then
-      pending('skipped (missing xclip)')
+      pending('skipped (missing xclip)', function() end)
     else
       it('will exit properly after passing input', function()
         eq('', eval([[system('xclip -i -selection clipboard', 'clip-data')]]))
@@ -365,7 +365,7 @@ describe('systemlist()', function()
 
   describe("with a program that doesn't close stdout", function()
     if not xclip then
-      pending('skipped (missing xclip)')
+      pending('skipped (missing xclip)', function() end)
     else
       it('will exit properly after passing input', function()
         eq({}, eval(

@@ -18,15 +18,15 @@ SCRIPTS := test_eval.out                                               \
                        test42.out                          test45.out  \
                        test47.out  test48.out  test49.out              \
                        test52.out  test53.out              test55.out  \
-                                   test58.out  test59.out              \
                                                test64.out              \
                                    test68.out  test69.out              \
                                    test73.out                          \
-                                               test79.out  test80.out  \
+                                               test79.out              \
                                    test83.out                          \
-           test86.out  test87.out  test88.out                          \
+                                   test88.out                          \
            test_listlbr.out                                            \
            test_breakindent.out                                        \
+           test_charsearch.out                                         \
            test_close_count.out                                        \
            test_command_count.out                                      \
 

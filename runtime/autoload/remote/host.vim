@@ -1,6 +1,6 @@
 let s:hosts = {}
 let s:plugin_patterns = {}
-let s:remote_plugins_manifest = fnamemodify($MYVIMRC, ':p:h')
+let s:remote_plugins_manifest = fnamemodify(expand($MYVIMRC, 1), ':h')
       \.'/.'.fnamemodify($MYVIMRC, ':t').'-rplugin~'
 
 
@@ -197,7 +197,7 @@ function! s:RequirePythonHost(host)
   let ver = (a:host.orig_name ==# 'python') ? 2 : 3
 
   " Python host arguments
-  let args = ['-c', 'import neovim; neovim.start_host()']
+  let args = ['-c', 'import sys; sys.path.remove(""); import neovim; neovim.start_host()']
 
   " Collect registered Python plugins into args
   let python_plugins = remote#host#PluginsForHost(a:host.name)

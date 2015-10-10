@@ -343,6 +343,17 @@ describe('terminal prints more lines than the screen height and exits', function
       [Program exited, press any key to close]          |
       -- TERMINAL --                                    |
     ]])
+    feed('<cr>')
+    -- closes the buffer correctly after pressing a key
+    screen:expect([[
+      ^                                                  |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+                                                        |
+    ]])
   end)
 end)
 

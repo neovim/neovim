@@ -11,19 +11,21 @@ build_deps() {
     DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} ${CMAKE_FLAGS_MINGW}"
   fi
 
-  rm -rf "${DEPS_INSTALL_PREFIX}"
+  rm -rf "${DEPS_BUILD_DIR}"
 
   # If there is a valid cache and we're not forced to recompile,
   # use cached third-party dependencies.
   if [[ -f "${CACHE_MARKER}" ]] && [[ "${BUILD_NVIM_DEPS}" != true ]]; then
     echo "Using third-party dependencies from Travis's cache (last updated: $(stat -c '%y' "${CACHE_MARKER}"))."
 
-    mkdir -p "$(dirname "${DEPS_INSTALL_PREFIX}")"
-    ln -Ts "${HOME}/.cache/nvim-deps" "${DEPS_INSTALL_PREFIX}"
-    return
+     mkdir -p "$(dirname "${DEPS_BUILD_DIR}")"
+     mv -T "${HOME}/.cache/nvim-deps" "${DEPS_BUILD_DIR}"
+  else
+    mkdir -p "${DEPS_BUILD_DIR}"
   fi
 
-  mkdir -p "${DEPS_BUILD_DIR}"
+  # Even if we're using cached dependencies, run CMake and make to
+  # update CMake configuration and update to newer deps versions.
   cd "${DEPS_BUILD_DIR}"
   echo "Configuring with '${DEPS_CMAKE_FLAGS}'."
   cmake ${DEPS_CMAKE_FLAGS} "${TRAVIS_BUILD_DIR}/third-party/"
@@ -61,19 +63,25 @@ build_nvim() {
     exit 1
   fi
 
-  echo "Building libnvim."
-  if ! ${MAKE_CMD} libnvim; then
-    exit 1
-  fi
+  if [ "$CLANG_SANITIZER" != "TSAN" ]; then
+    echo "Building libnvim."
+    if ! ${MAKE_CMD} libnvim; then
+      exit 1
+    fi
 
-  echo "Building nvim-test."
-  if ! ${MAKE_CMD} nvim-test; then
-    exit 1
+    echo "Building nvim-test."
+    if ! ${MAKE_CMD} nvim-test; then
+      exit 1
+    fi
   fi
 
   # Invoke nvim to trigger *San early.
-  bin/nvim --version
-  bin/nvim -u NONE -e -c ':qall'
+  if ! (bin/nvim --version && bin/nvim -u NONE -e -c ':qall'); then
+    asan_check "${LOG_DIR}"
+    exit 1
+  fi
+  asan_check "${LOG_DIR}"
+
 
   cd "${TRAVIS_BUILD_DIR}"
 }

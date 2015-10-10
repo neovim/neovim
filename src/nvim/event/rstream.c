@@ -49,6 +49,7 @@ void rstream_init(Stream *stream, size_t bufsize)
 ///
 /// @param stream The `Stream` instance
 void rstream_start(Stream *stream, stream_read_cb cb)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   stream->read_cb = cb;
   if (stream->uvstream) {
@@ -62,6 +63,7 @@ void rstream_start(Stream *stream, stream_read_cb cb)
 ///
 /// @param stream The `Stream` instance
 void rstream_stop(Stream *stream)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (stream->uvstream) {
     uv_read_stop(stream->uvstream);
@@ -112,7 +114,7 @@ static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
       // Read error or EOF, either way stop the stream and invoke the callback
       // with eof == true
       uv_read_stop(uvstream);
-      invoke_read_cb(stream, true);
+      invoke_read_cb(stream, 0, true);
     }
     return;
   }
@@ -122,7 +124,7 @@ static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
   // Data was already written, so all we need is to update 'wpos' to reflect
   // the space actually used in the buffer.
   rbuffer_produced(stream->buffer, nread);
-  invoke_read_cb(stream, false);
+  invoke_read_cb(stream, nread, false);
 }
 
 // Called by the by the 'idle' handle to emulate a reading event
@@ -156,7 +158,7 @@ static void fread_idle_cb(uv_idle_t *handle)
 
   if (req.result <= 0) {
     uv_idle_stop(&stream->uv.idle);
-    invoke_read_cb(stream, true);
+    invoke_read_cb(stream, 0, true);
     return;
   }
 
@@ -164,12 +166,36 @@ static void fread_idle_cb(uv_idle_t *handle)
   size_t nread = (size_t) req.result;
   rbuffer_produced(stream->buffer, nread);
   stream->fpos += nread;
-  invoke_read_cb(stream, false);
+  invoke_read_cb(stream, nread, false);
 }
 
-static void invoke_read_cb(Stream *stream, bool eof)
+static void read_event(void **argv)
 {
+  Stream *stream = argv[0];
   if (stream->read_cb) {
-    stream->read_cb(stream, stream->buffer, stream->data, eof);
+    size_t count = (uintptr_t)argv[1];
+    bool eof = (uintptr_t)argv[2];
+    stream->read_cb(stream, stream->buffer, count, stream->data, eof);
   }
+  stream->pending_reqs--;
+  if (stream->closed && !stream->pending_reqs) {
+    stream_close_handle(stream);
+  }
+}
+
+static void invoke_read_cb(Stream *stream, size_t count, bool eof)
+{
+  if (stream->closed) {
+    return;
+  }
+
+  // Don't let the stream be closed before the event is processed.
+  stream->pending_reqs++;
+
+  CREATE_EVENT(stream->events,
+               read_event,
+               3,
+               stream,
+               (void *)(uintptr_t *)count,
+               (void *)(uintptr_t)eof);
 }

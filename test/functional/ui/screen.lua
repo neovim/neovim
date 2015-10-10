@@ -163,9 +163,11 @@ function Screen.new(width, height)
     height = 14
   end
   local self = setmetatable({
+    timeout = default_screen_timeout,
     title = '',
     icon = '',
     bell = false,
+    update_menu = false,
     visual_bell = false,
     suspended = false,
     _default_attr_ids = nil,
@@ -247,7 +249,7 @@ function Screen:wait(check, timeout)
 
     return true
   end
-  run(nil, notification_cb, nil, timeout or default_screen_timeout)
+  run(nil, notification_cb, nil, timeout or self.timeout)
   if not checked then
     err = check()
   end
@@ -340,12 +342,9 @@ function Screen:_handle_mouse_off()
   self._mouse_enabled = false
 end
 
-function Screen:_handle_insert_mode()
-  self._mode = 'insert'
-end
-
-function Screen:_handle_normal_mode()
-  self._mode = 'normal'
+function Screen:_handle_mode_change(mode)
+  assert(mode == 'insert' or mode == 'replace' or mode == 'normal')
+  self._mode = mode
 end
 
 function Screen:_handle_set_scroll_region(top, bot, left, right)
@@ -419,6 +418,10 @@ function Screen:_handle_suspend()
   self.suspended = true
 end
 
+function Screen:_handle_update_menu()
+  self.update_menu = true
+end
+
 function Screen:_handle_set_title(title)
   self.title = title
 end
@@ -487,7 +490,7 @@ function Screen:snapshot_util(attrs, ignore)
   self:print_snapshot(attrs, ignore)
 end
 
-function Screen:redraw_debug(attrs, ignore)
+function Screen:redraw_debug(attrs, ignore, timeout)
   self:print_snapshot(attrs, ignore)
   local function notification_cb(method, args)
     assert(method == 'redraw')
@@ -498,7 +501,10 @@ function Screen:redraw_debug(attrs, ignore)
     self:print_snapshot(attrs, ignore)
     return true
   end
-  run(nil, notification_cb, nil, 250)
+  if timeout == nil then
+    timeout = 250
+  end
+  run(nil, notification_cb, nil, timeout)
 end
 
 function Screen:print_snapshot(attrs, ignore)

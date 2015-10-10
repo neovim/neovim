@@ -7547,8 +7547,9 @@ static void ex_mkrc(exarg_T *eap)
 
 int vim_mkdir_emsg(char_u *name, int prot)
 {
-  if (os_mkdir((char *)name, prot) != 0) {
-    EMSG2(_("E739: Cannot create directory: %s"), name);
+  int ret;
+  if ((ret = os_mkdir((char *)name, prot)) != 0) {
+    EMSG3(_(e_mkdir), name, os_strerror(ret));
     return FAIL;
   }
   return OK;
@@ -7623,6 +7624,10 @@ void update_topline_cursor(void)
  */
 static void ex_normal(exarg_T *eap)
 {
+  if (curbuf->terminal && State & TERM_FOCUS) {
+    EMSG("Can't re-enter normal mode from terminal mode");
+    return;
+  }
   int save_msg_scroll = msg_scroll;
   int save_restart_edit = restart_edit;
   int save_msg_didout = msg_didout;
@@ -7714,7 +7719,14 @@ static void ex_normal(exarg_T *eap)
 
   --ex_normal_busy;
   msg_scroll = save_msg_scroll;
-  restart_edit = save_restart_edit;
+  if (force_restart_edit) {
+    force_restart_edit = false;
+  } else {
+    // some function called was aware of ex_normal and decided to override the
+    // value of restart_edit anyway. So far only used in terminal mode(see
+    // terminal_enter() in edit.c)
+    restart_edit = save_restart_edit;
+  }
   p_im = save_insertmode;
   finish_op = save_finish_op;
   opcount = save_opcount;
@@ -9379,6 +9391,8 @@ static void ex_folddo(exarg_T *eap)
 {
   linenr_T lnum;
 
+  start_global_changes();
+
   /* First set the marks for all lines closed/open. */
   for (lnum = eap->line1; lnum <= eap->line2; ++lnum)
     if (hasFolding(lnum, NULL, NULL) == (eap->cmdidx == CMD_folddoclosed))
@@ -9387,6 +9401,8 @@ static void ex_folddo(exarg_T *eap)
   /* Execute the command on the marked lines. */
   global_exe(eap->arg);
   ml_clearmarked();        /* clear rest of the marks */
+
+  end_global_changes();
 }
 
 static void ex_terminal(exarg_T *eap)

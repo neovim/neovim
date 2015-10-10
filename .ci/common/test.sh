@@ -82,4 +82,23 @@ install_nvim() {
     echo "Maybe the helptags have not been generated properly."
     exit 1
   }
+
+  # Check that all runtime files were installed
+  for file in doc/tags syntax/vim/generated.vim $(
+    cd runtime ; git ls-files | grep -e '.vim$' -e '.ps$' -e '.dict$' -e '.py$' -e '.tutor$'
+  ) ; do
+    if ! test -e "${INSTALL_PREFIX}/share/nvim/runtime/$file" ; then
+      echo "It appears that $file is not installed."
+      exit 1
+    fi
+  done
+
+  for file in $(
+    cd runtime ; git ls-files | grep -e '.awk$' -e '.sh$' -e '.bat$'
+  ) ; do
+    if ! test -x "${INSTALL_PREFIX}/share/nvim/runtime/$file" ; then
+      echo "It appears that $file is not installed or is not executable."
+      exit 1
+    fi
+  done
 }

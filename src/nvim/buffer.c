@@ -2679,7 +2679,7 @@ void maketitle(void)
 
       append_arg_number(curwin, buf, SPACE_FOR_ARGNR, FALSE);
 
-      STRCAT(buf, " - VIM");
+      STRCAT(buf, " - NVIM");
 
       if (maxlen > 0) {
         /* make it shorter by removing a bit in the middle */
@@ -3625,7 +3625,7 @@ do_arg_all (
   int opened_len;               /* length of opened[] */
   int use_firstwin = FALSE;             /* use first window for arglist */
   int split_ret = OK;
-  int p_ea_save;
+  bool p_ea_save;
   alist_T     *alist;           /* argument list to be used */
   buf_T       *buf;
   tabpage_T   *tpnext;
@@ -3792,7 +3792,7 @@ do_arg_all (
     } else if (split_ret == OK) {
       if (!use_firstwin) {              /* split current window */
         p_ea_save = p_ea;
-        p_ea = TRUE;                    /* use space from all windows */
+        p_ea = true;                    /* use space from all windows */
         split_ret = win_split(0, WSP_ROOM | WSP_BELOW);
         p_ea = p_ea_save;
         if (split_ret == FAIL)
@@ -3853,7 +3853,7 @@ void ex_buffer_all(exarg_T *eap)
   buf_T       *buf;
   win_T       *wp, *wpnext;
   int split_ret = OK;
-  int p_ea_save;
+  bool p_ea_save;
   int open_wins = 0;
   int r;
   int count;                    /* Maximum number of windows to open. */
@@ -3940,7 +3940,7 @@ void ex_buffer_all(exarg_T *eap)
     if (wp == NULL && split_ret == OK) {
       /* Split the window and put the buffer in it */
       p_ea_save = p_ea;
-      p_ea = TRUE;                      /* use space from all windows */
+      p_ea = true;                      /* use space from all windows */
       split_ret = win_split(0, WSP_ROOM | WSP_BELOW);
       ++open_wins;
       p_ea = p_ea_save;

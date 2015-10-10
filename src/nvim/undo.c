@@ -212,8 +212,11 @@ static void u_check(int newhead_may_be_NULL)                 {
  */
 int u_save_cursor(void)
 {
-  return u_save((linenr_T)(curwin->w_cursor.lnum - 1),
-      (linenr_T)(curwin->w_cursor.lnum + 1));
+  linenr_T cur = curwin->w_cursor.lnum;
+  linenr_T top = cur > 0 ? cur - 1 : 0;
+  linenr_T bot = cur + 1;
+
+  return u_save(top, bot);
 }
 
 /*
@@ -227,10 +230,9 @@ int u_save(linenr_T top, linenr_T bot)
   if (undo_off)
     return OK;
 
-  if (top > curbuf->b_ml.ml_line_count
-      || top >= bot
-      || bot > curbuf->b_ml.ml_line_count + 1)
+  if (top >= bot || bot > (curbuf->b_ml.ml_line_count + 1)) {
     return FAIL;        /* rely on caller to do error messages */
+  }
 
   if (top + 2 == bot)
     u_saveline((linenr_T)(top + 1));
@@ -2797,14 +2799,14 @@ int bufIsChanged(buf_T *buf)
 {
   return
     !bt_dontwrite(buf) &&
-    (buf->b_changed || file_ff_differs(buf, TRUE));
+    (buf->b_changed || file_ff_differs(buf, true));
 }
 
 int curbufIsChanged(void)
 {
   return
     !bt_dontwrite(curbuf) &&
-    (curbuf->b_changed || file_ff_differs(curbuf, TRUE));
+    (curbuf->b_changed || file_ff_differs(curbuf, true));
 }
 
 /*

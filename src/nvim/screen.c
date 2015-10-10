@@ -162,11 +162,6 @@ static schar_T  *current_ScreenLine;
 #endif
 #define SEARCH_HL_PRIORITY 0
 
-//signs column
-
-/* Ugly global: overrule attribute used by screen_char() */
-static int screen_char_attr = 0;
-
 /*
  * Redraw the current window later, with update_screen(type).
  * Set must_redraw only if not already set to a higher value.
@@ -1997,7 +1992,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
       && lnume >= curwin->w_cursor.lnum) {
     curwin->w_cline_row = row;
     curwin->w_cline_height = 1;
-    curwin->w_cline_folded = TRUE;
+    curwin->w_cline_folded = true;
     curwin->w_valid |= (VALID_CHEIGHT|VALID_CROW);
   }
 }
@@ -3898,7 +3893,7 @@ win_line (
       if (wp == curwin && lnum == curwin->w_cursor.lnum) {
         curwin->w_cline_row = startrow;
         curwin->w_cline_height = row - startrow;
-        curwin->w_cline_folded = FALSE;
+        curwin->w_cline_folded = false;
         curwin->w_valid |= (VALID_CHEIGHT|VALID_CROW);
       }
 
@@ -5746,10 +5741,7 @@ static void screen_char(unsigned off, int row, int col)
   /*
    * Stop highlighting first, so it's easier to move the cursor.
    */
-  if (screen_char_attr != 0)
-    attr = screen_char_attr;
-  else
-    attr = ScreenAttrs[off];
+  attr = ScreenAttrs[off];
   if (screen_attr != attr)
     screen_stop_highlight();
 

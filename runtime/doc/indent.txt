@@ -1,4 +1,4 @@
-*indent.txt*    For Vim version 7.4.  Last change: 2014 Apr 23
+*indent.txt*    For Vim version 7.4.  Last change: 2014 Dec 06
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -21,9 +21,6 @@ formatting conventions established with C.  These options affect only the
 indent and do not perform other formatting.  There are additional options that
 affect other kinds of formatting as well as indenting, see |format-comments|,
 |fo-table|, |gq| and |formatting| for the main ones.
-
-Note that this will not work when the |+smartindent| or |+cindent| features
-have been disabled at compile time.
 
 There are in fact four main methods available for indentation, each one
 overrides the previous if it is enabled, or non-empty for 'indentexpr':

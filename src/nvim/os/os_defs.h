@@ -13,35 +13,6 @@
 # include "nvim/os/unix_defs.h"
 #endif
 
-/* The number of arguments to a signal handler is configured here. */
-/* It used to be a long list of almost all systems. Any system that doesn't
- * have an argument??? */
-#define SIGHASARG
-
-/* List 3 arg systems here. I guess __sgi, please test and correct me. jw. */
-
-#ifdef SIGHASARG
-# ifdef SIGHAS3ARGS
-#  define SIGDEFARG(s)  (int s, int sig2, struct sigcontext *scont)
-#  define SIGDUMMYARG   0, 0, (struct sigcontext *)0
-# else
-#  define SIGDEFARG(s)  (int s)
-#  define SIGDUMMYARG   0
-# endif
-#else
-# define SIGDEFARG(s)  (void)
-# define SIGDUMMYARG
-#endif
-
-// On some systems, time.h should not be included together with sys/time.h.
-#if !defined(HAVE_SYS_TIME_H) || defined(TIME_WITH_SYS_TIME)
-# include <time.h>
-#endif
-
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
-
 #if defined(DIRSIZ) && !defined(MAXNAMLEN)
 # define MAXNAMLEN DIRSIZ
 #endif
@@ -132,7 +103,9 @@
 # include <strings.h>
 #endif
 
-// For dup(3).
-#define HAVE_DUP
+/// Function to convert -errno error to char * error description
+///
+/// -errno errors are returned by a number of os functions.
+#define os_strerror uv_strerror
 
 #endif  // NVIM_OS_OS_DEFS_H

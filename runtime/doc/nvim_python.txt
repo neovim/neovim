@@ -70,7 +70,7 @@ To disable Python 2 interface, set `g:loaded_python_provider` to 1:
 <
 						   *g:loaded_python3_provider*
 
-To disable Python 3 interface, set `g:loaded_python3_provider` to 0:
+To disable Python 3 interface, set `g:loaded_python3_provider` to 1:
 >
     let g:loaded_python3_provider = 1
 <

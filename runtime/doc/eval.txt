@@ -1,4 +1,4 @@
-*eval.txt*	For Vim version 7.4.  Last change: 2014 Nov 15
+*eval.txt*	For Vim version 7.4.  Last change: 2014 Nov 27
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -1517,6 +1517,12 @@ v:mouse_col	Column number for a mouse click obtained with |getchar()|.
 		This is the screen column number, like with |virtcol()|.  The
 		value is zero when there was no mouse button click.
 
+				*v:msgpack_types* *msgpack_types-variable*
+v:msgpack_types	Dictionary containing msgpack types used by |msgpackparse()| 
+		and |msgpackdump()|. All types inside dictionary are fixed 
+		(not editable) empty lists. To check whether some list is one 
+		of msgpack types, use |is| operator.
+
 					*v:oldfiles* *oldfiles-variable*
 v:oldfiles	List of file names that is loaded from the |viminfo| file on
 		startup.  These are the files that Vim remembers marks for.
@@ -1904,6 +1910,8 @@ min( {list})			Number	minimum value of items in {list}
 mkdir( {name} [, {path} [, {prot}]])
 				Number	create directory {name}
 mode( [expr])			String	current editing mode
+msgpackdump( {list})		List	dump a list of objects to msgpack
+msgpackparse( {list})		List	parse msgpack to a list of objects
 nextnonblank( {lnum})		Number	line nr of non-blank line >= {lnum}
 nr2char( {expr}[, {utf8}])	String	single char with ASCII/UTF8 value {expr}
 or( {expr}, {expr})		Number  bitwise OR
@@ -1959,6 +1967,7 @@ server2client( {clientid}, {string})
 				Number	send reply string
 serverlist()			String	get a list of available servers
 setbufvar( {expr}, {varname}, {val})	set {varname} in buffer {expr} to {val}
+setcharsearch( {dict})		Dict	set character search from {dict}
 setcmdpos( {pos})		Number	set cursor position in command-line
 setline( {lnum}, {line})	Number	set line {lnum} to {line}
 setloclist( {nr}, {list}[, {action}])
@@ -2298,8 +2307,6 @@ byte2line({byte})					*byte2line()*
 		for the current buffer.  The first character has byte count
 		one.
 		Also see |line2byte()|, |go| and |:goto|.
-		{not available when compiled without the |+byte_offset|
-		feature}
 
 byteidx({expr}, {nr})					*byteidx()*
 		Return byte index of the {nr}'th character in the string
@@ -2379,8 +2386,7 @@ cindent({lnum})						*cindent()*
 		indenting rules, as with 'cindent'.
 		The indent is counted in spaces, the value of 'tabstop' is
 		relevant.  {lnum} is used just like in |getline()|.
-		When {lnum} is invalid or Vim was not compiled the |+cindent|
-		feature, -1 is returned.
+		When {lnum} is invalid -1 is returned.
 		See |C-indenting|.
 
 clearmatches()						*clearmatches()*
@@ -3303,6 +3309,17 @@ getchar([expr])						*getchar()*
 			:    endif
 			:  endwhile
 			:endfunction
+<
+		You may also receive syntetic characters, such as
+		|<CursorHold>|. Often you will want to ignore this and get
+		another character: >
+			:function GetKey()
+			:  let c = getchar()
+			:  while c == "\<CursorHold>"
+			:    let c = getchar()
+			:  endwhile
+			:  return c
+			:endfunction
 
 getcharmod()						*getcharmod()*
 		The result is a Number which is the state of the modifiers for
@@ -3319,6 +3336,26 @@ getcharmod()						*getcharmod()*
 		Only the modifiers that have not been included in the
 		character itself are obtained.	Thus Shift-a results in "A"
 		without a modifier.
+
+getcharsearch()						*getcharsearch()*
+		Return the current character search information as a {dict}
+		with the following entries:
+
+		    char	character previously used for a character
+				search (|t|, |f|, |T|, or |F|); empty string
+				if no character search has been performed
+		    forward	direction of character search; 1 for forward,
+				0 for backward
+		    until	type of character search; 1 for a |t| or |T|
+				character search, 0 for an |f| or |F|
+				character search
+
+		This can be useful to always have |;| and |,| search
+		forward/backward regardless of the direction of the previous
+		character search: >
+			:nnoremap <expr> ; getcharsearch().forward ? ';' : ','
+			:nnoremap <expr> , getcharsearch().forward ? ',' : ';'
+<		Also see |setcharsearch()|.
 
 getcmdline()						*getcmdline()*
 		Return the current command-line.  Only works when the command
@@ -3513,7 +3550,7 @@ getpos({expr})	Get the position for {expr}.  For possible values of {expr}
 		This can be used to save and restore the position of a mark: >
 			let save_a_mark = getpos("'a")
 			...
-			call setpos(''a', save_a_mark
+			call setpos("'a", save_a_mark)
 <		Also see |getcurpos()| and |setpos()|.
 
 
@@ -4212,8 +4249,7 @@ line2byte({lnum})					*line2byte()*
 			line2byte(line("$") + 1)
 <		This is the buffer size plus one.  If 'fileencoding' is empty
 		it is the file size plus one.
-		When {lnum} is invalid, or the |+byte_offset| feature has been
-		disabled at compile time, -1 is returned.
+		When {lnum} is invalid -1 is returned.
 		Also see |byte2line()|, |go| and |:goto|.
 
 lispindent({lnum})					*lispindent()*
@@ -4573,15 +4609,16 @@ mkdir({name} [, {path} [, {prot}]])
 		If {prot} is given it is used to set the protection bits of
 		the new directory.  The default is 0755 (rwxr-xr-x: r/w for
 		the user readable for others).	Use 0700 to make it unreadable
-		for others.  This is only used for the last part of {name}.
-		Thus if you create /tmp/foo/bar then /tmp/foo will be created
-		with 0755.
-		Example: >
+		for others.
+									{Nvim}
+		{prot} is applied for all parts of {name}.  Thus if you create
+		/tmp/foo/bar then /tmp/foo will be created with 0700. Example: >
 			:call mkdir($HOME . "/tmp/foo/bar", "p", 0700)
 <		This function is not available in the |sandbox|.
-		Not available on all systems.  To check use: >
-			:if exists("*mkdir")
-<
+
+		If you try to create an existing directory with {path} set to 
+		"p" mkdir() will silently exit.
+
 							*mode()*
 mode([expr])	Return a string that indicates the current mode.
 		If [expr] is supplied and it evaluates to a non-zero Number or
@@ -4612,6 +4649,92 @@ mode([expr])	Return a string that indicates the current mode.
 		with |remote_expr()| In most other places it always returns
 		"c" or "n".
 		Also see |visualmode()|.
+
+msgpackdump({list})				   {Nvim} *msgpackdump()*
+		Convert a list of VimL objects to msgpack. Returned value is
+		|readfile()|-style list. Example: >
+			call writefile(msgpackdump([{}]), 'fname.mpack', 'b')
+<		This will write the single 0x80 byte to `fname.mpack` file
+		(dictionary with zero items is represented by 0x80 byte in
+		messagepack).
+
+		Limitations:
+		1. |Funcref|s cannot be dumped.
+		2. Containers that reference themselves cannot be dumped.
+		3. Dictionary keys are always dumped as STR strings.
+		4. Other strings are always dumped as BIN strings.
+		5. Points 3. and 4. do not apply to |msgpack-special-dict|s.
+
+msgpackparse({list})				   {Nvim} *msgpackparse()*
+		Convert a |readfile()|-style list to a list of VimL objects. 
+		Example: >
+			let fname = expand('~/.nvim/shada/main.shada')
+			let mpack = readfile(fname, 'b')
+			let shada_objects = msgpackparse(mpack)
+<		This will read ~/.nvim/shada/main.shada file to 
+		`shada_objects` list.
+
+		Limitations:
+		1. Mapping ordering is not preserved unless messagepack 
+		   mapping is dumped using generic  mapping 
+		   (|msgpack-special-map|).
+		2. Since the parser aims to preserve all data untouched 
+		   (except for 1.) some strings are parsed to 
+		   |msgpack-special-dict| format which is not convenient to 
+		   use.
+							*msgpack-special-dict*
+		Some messagepack strings may be parsed to special 
+		dictionaries. Special dictionaries are dictionaries which
+
+		1. Contain exactly two keys: `_TYPE` and `_VAL`.
+		2. `_TYPE` key is one of the types found in |v:msgpack_types| 
+		   variable.
+		3. Value for `_VAL` has the following format (Key column 
+		   contains name of the key from |v:msgpack_types|):
+
+		Key	Value ~
+		nil	Zero, ignored when dumping.
+		boolean	One or zero. When dumping it is only checked that 
+			value is a |Number|.
+		integer	|List| with four numbers: sign (-1 or 1), highest two 
+			bits, number with bits from 62nd to 31st, lowest 31 
+			bits. I.e. to get actual number one will need to use 
+			code like >
+				_VAL[0] * ((_VAL[1] << 62)
+				           & (_VAL[2] << 31)
+				           & _VAL[3])
+<			Special dictionary with this type will appear in 
+			|msgpackparse()| output under one of the following 
+			circumstances:
+			1. |Number| is 32-bit and value is either above 
+			   INT32_MAX or below INT32_MIN.
+			2. |Number| is 64-bit and value is above INT64_MAX. It 
+			   cannot possibly be below INT64_MIN because msgpack 
+			   C parser does not support such values.
+		float	|Float|. This value cannot possibly appear in 
+			|msgpackparse()| output.
+		string	|readfile()|-style list of strings. This value will 
+			appear in |msgpackparse()| output if string contains 
+			zero byte or if string is a mapping key and mapping is 
+			being represented as special dictionary for other 
+			reasons.
+		binary	|readfile()|-style list of strings. This value will 
+			appear in |msgpackparse()| output if binary string 
+			contains zero byte.
+		array	|List|. This value cannot appear in |msgpackparse()| 
+			output.
+							*msgpack-special-map*
+		map	|List| of |List|s with two items (key and value) each. 
+			This value will appear in |msgpackparse()| output if 
+			parsed mapping contains one of the following keys:
+			1. Any key that is not a string (including keys which 
+			   are binary strings).
+			2. String with NUL byte inside.
+			3. Duplicate key.
+			4. Empty key.
+		ext	|List| with two values: first is a signed integer 
+			representing extension type. Second is 
+			|readfile()|-style list of strings.
 
 nextnonblank({lnum})					*nextnonblank()*
 		Return the line number of the first line at or below {lnum}
@@ -5424,6 +5547,26 @@ setbufvar({expr}, {varname}, {val})			*setbufvar()*
 			:call setbufvar(1, "&mod", 1)
 			:call setbufvar("todo", "myvar", "foobar")
 <		This function is not available in the |sandbox|.
+
+setcharsearch()						*setcharsearch()*
+		Set the current character search information to {dict},
+		which contains one or more of the following entries:
+
+		    char	character which will be used for a subsequent
+				|,| or |;| command; an empty string clears the
+				character search
+		    forward	direction of character search; 1 for forward,
+				0 for backward
+		    until	type of character search; 1 for a |t| or |T|
+				character search, 0 for an |f| or |F|
+				character search
+
+		This can be useful to save/restore a user's character search
+		from a script: >
+			:let prevsearch = getcharsearch()
+			:" Perform a command which clobbers user's search
+			:call setcharsearch(prevsearch)
+<		Also see |getcharsearch()|.
 
 setcmdpos({pos})					*setcmdpos()*
 		Set the cursor position in the command line to byte position
@@ -6326,9 +6469,7 @@ termopen({cmd}[, {opts}])			{Nvim} *termopen()*
 		The {opts} dict is similar to the one passed to |jobstart()|,
 		but the `pty`, `width`, `height`, and `TERM` fields are
 		ignored: `height`/`width` are taken from the current window
-		and `$TERM` is set to "xterm-256color", and it may have a
-		`name` field.  `name`, if present, sets the buffer's name to
-		"term://{cwd}/{pid}:{name}".
+		and `$TERM` is set to "xterm-256color".
 		Returns the same values as |jobstart()|.
 
 		See |nvim-terminal-emulator| for more information.
@@ -7668,7 +7809,20 @@ This does NOT work: >
 			postponed until you type something), force a redraw
 			with the |:redraw| command.  Example: >
 		:new | redraw | echo "there is a new window"
-<
+<							*:echo-self-refer*
+			When printing nested containers echo prints second 
+			occurrence of the self-referencing container using 
+			"[...@level]" (self-referencing |List|) or 
+			"{...@level}" (self-referencing |Dict|): >
+		:let l = []
+		:call add(l, l)
+		:let l2 = []
+		:call add(l2, [l2])
+		:echo l l2
+<			echoes "[[...@0]] [[[...@0]]]". Echoing "[l]" will 
+			echo "[[[...@1]]]" because l first occurs at second 
+			level.
+
 							*:echon*
 :echon {expr1} ..	Echoes each {expr1}, without anything added.  Also see
 			|:comment|.

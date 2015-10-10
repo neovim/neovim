@@ -157,11 +157,11 @@ void event_init(void)
 
 void event_teardown(void)
 {
-  if (!loop.deferred_events) {
+  if (!loop.events) {
     return;
   }
 
-  loop_process_all_events(&loop);
+  queue_process_events(loop.events);
   input_stop();
   channel_teardown();
   process_teardown(&loop);
@@ -177,6 +177,7 @@ void event_teardown(void)
 /// Needed for unit tests. Must be called after `time_init()`.
 void early_init(void)
 {
+  log_init();
   fs_init();
   handle_init();
 
@@ -245,6 +246,7 @@ int main(int argc, char **argv)
   set_vim_var_string(VV_PROGPATH, (char_u *)argv[0], -1);
   set_vim_var_string(VV_PROGNAME, path_tail((char_u *)argv[0]), -1);
 
+  event_init();
   /*
    * Process the command line arguments.  File names are put in the global
    * argument list "global_alist".
@@ -275,7 +277,6 @@ int main(int argc, char **argv)
   if (GARGCOUNT > 1 && !silent_mode)
     printf(_("%d files to edit\n"), GARGCOUNT);
 
-  event_init();
   full_screen = true;
   t_colors = 256;
   check_tty(&params);
@@ -963,6 +964,7 @@ static void command_line_scan(mparm_T *parmp)
           } else if (STRICMP(argv[0] + argv_idx, "embed") == 0) {
             embedded_mode = true;
             parmp->headless = true;
+            channel_from_stdio();
           } else if (STRNICMP(argv[0] + argv_idx, "literal", 7) == 0) {
 #if !defined(UNIX)
             parmp->literal = TRUE;
@@ -1736,7 +1738,7 @@ static void edit_buffers(mparm_T *parmp)
   --autocmd_no_leave;
   TIME_MSG("editing files in windows");
   if (parmp->window_count > 1 && parmp->window_layout != WIN_TABS)
-    win_equal(curwin, FALSE, 'b');      /* adjust heights */
+    win_equal(curwin, false, 'b');      /* adjust heights */
 }
 
 /*
@@ -1909,6 +1911,7 @@ static void source_startup_scripts(mparm_T *parmp)
       need_wait_return = TRUE;
     secure = 0;
   }
+  did_source_startup_scripts = true;
   TIME_MSG("sourcing vimrc file(s)");
 }
 

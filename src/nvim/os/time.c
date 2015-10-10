@@ -43,7 +43,7 @@ void os_delay(uint64_t milliseconds, bool ignoreinput)
     if (milliseconds > INT_MAX) {
       milliseconds = INT_MAX;
     }
-    LOOP_POLL_EVENTS_UNTIL(&loop, (int)milliseconds, got_int);
+    LOOP_PROCESS_EVENTS_UNTIL(&loop, NULL, (int)milliseconds, got_int);
   } else {
     os_microdelay(milliseconds * 1000);
   }

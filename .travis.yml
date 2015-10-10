@@ -3,15 +3,13 @@ language: c
 
 env:
   global:
-    # To build third-party dependencies, set this to 'true'.
-    # TODO: Change deps caching to detect updated dependencies automatically, but
-    #       still don't rebuild deps every time.
+    # To force rebuilding of third-party dependencies, set this to 'true'.
     - BUILD_NVIM_DEPS=false
     # Travis has 1.5 virtual cores according to
     # http://docs.travis-ci.com/user/speeding-up-the-build/#Paralellizing-your-build-on-one-VM
     - MAKE_CMD="make -j2"
     # Update PATH for pip and MinGW.
-    - PATH="$(python -c 'import site; print(site.getuserbase())')/bin:$HOME/.local/mingw32/bin:$PATH"
+    - PATH="$(python2.7 -c 'import site; print(site.getuserbase())')/bin:$HOME/.local/mingw32/bin:$PATH"
     # LLVM symbolizer path.
     - LLVM_SYMBOLIZER="$(which llvm-symbolizer-3.6)"
     # Force verification of DLOG macros.
@@ -19,9 +17,9 @@ env:
     # Build directory for Neovim.
     - BUILD_DIR="$TRAVIS_BUILD_DIR/build"
     # Build directory for third-party dependencies.
-    - DEPS_BUILD_DIR="$TRAVIS_BUILD_DIR/deps-build"
-    # Directory where compiled third-party dependencies are stored.
-    - DEPS_INSTALL_PREFIX="$HOME/nvim-deps-install"
+    - DEPS_BUILD_DIR="$HOME/nvim-deps"
+    # Directory where third-party dependency sources are downloaded to.
+    - DEPS_DOWNLOAD_DIR="$TRAVIS_BUILD_DIR/deps-downloads"
     # Install directory for Neovim.
     - INSTALL_PREFIX="$HOME/nvim-install"
     # Log directory for Clang sanitizers and Valgrind.
@@ -32,8 +30,8 @@ env:
                    -DCMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX
                    -DUSE_GCOV=ON
                    -DBUSTED_OUTPUT_TYPE=plainTerminal
-                   -DDEPS_PREFIX=$DEPS_INSTALL_PREFIX"
-    - DEPS_CMAKE_FLAGS="-DDEPS_INSTALL_DIR:PATH=$DEPS_INSTALL_PREFIX"
+                   -DDEPS_PREFIX=$DEPS_BUILD_DIR/usr"
+    - DEPS_CMAKE_FLAGS="-DDEPS_DOWNLOAD_DIR:PATH=$DEPS_DOWNLOAD_DIR"
     # Additional CMake flags for 32-bit builds.
     - CMAKE_FLAGS_32BIT="-DCMAKE_SYSTEM_LIBRARY_PATH=/lib32:/usr/lib32:/usr/local/lib32
                          -DCMAKE_IGNORE_PATH=/lib:/usr/lib:/usr/local/lib
@@ -77,10 +75,9 @@ matrix:
     - os: linux
       compiler: clang-3.6
       env: GCOV=llvm-cov-3.6 CLANG_SANITIZER=MSAN
-    # FIXME (tarruda): Uncomment when TSan tests don't hang anymore.
-    #- os: linux
-    #  compiler: clang-3.6
-    #  env: GCOV=llvm-cov-3.6 CLANG_SANITIZER=TSAN
+    - os: linux
+      compiler: clang-3.6
+      env: CLANG_SANITIZER=TSAN
     - os: osx
       compiler: clang
       env: GCOV=gcov
@@ -104,28 +101,29 @@ after_success:  .ci/after_success.sh
 addons:
   apt:
     sources:
+      # TODO: Remove PPA when Travis gets Python >=3.3.
+      - deadsnakes
       - llvm-toolchain-precise-3.6
       - ubuntu-toolchain-r-test
     packages:
-      # Basic Neovim/test dependencies.
       - autoconf
       - automake
       - build-essential
-      - cmake
-      - gdb
-      - libtool
-      - pkg-config
-      - unzip
-      - xclip
-      # Additional compilers/tools.
       - clang-3.6
+      - cmake
       - g++-5-multilib
       - g++-multilib
       - gcc-5-multilib
       - gcc-multilib
+      - gdb
       - libc6-dev-i386
+      - libtool
       - llvm-3.6-dev
+      - pkg-config
+      - python3.3-dev
+      - unzip
       - valgrind
+      - xclip
 
 branches:
   except:

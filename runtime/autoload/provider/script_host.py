@@ -17,6 +17,9 @@ IS_PYTHON3 = sys.version_info >= (3, 0)
 if IS_PYTHON3:
     basestring = str
 
+    if sys.version_info >= (3, 4):
+        from importlib.machinery import PathFinder
+
 
 @neovim.plugin
 class ScriptHost(object):
@@ -190,31 +193,35 @@ def path_hook(nvim):
             name = oldtail[:idx]
             tail = oldtail[idx+1:]
             fmr = imp.find_module(name, path)
-            module = imp.load_module(fullname[:-len(oldtail)] + name, *fmr)
+            module = imp.find_module(fullname[:-len(oldtail)] + name, *fmr)
             return _find_module(fullname, tail, module.__path__)
         else:
-            fmr = imp.find_module(fullname, path)
-            return imp.load_module(fullname, *fmr)
+            return imp.find_module(fullname, path)
 
     class VimModuleLoader(object):
         def __init__(self, module):
             self.module = module
 
         def load_module(self, fullname, path=None):
-            return self.module
+            # Check sys.modules, required for reload (see PEP302).
+            if fullname in sys.modules:
+                return sys.modules[fullname]
+            return imp.load_module(fullname, *self.module)
 
     class VimPathFinder(object):
-        @classmethod
-        def find_module(cls, fullname, path=None):
+        @staticmethod
+        def find_module(fullname, path=None):
+            "Method for Python 2.7 and 3.3."
             try:
                 return VimModuleLoader(
                     _find_module(fullname, fullname, path or _get_paths()))
             except ImportError:
                 return None
 
-        @classmethod
-        def load_module(cls, fullname, path=None):
-            return _find_module(fullname, fullname, path or _get_paths())
+        @staticmethod
+        def find_spec(fullname, path=None, target=None):
+            "Method for Python 3.4+."
+            return PathFinder.find_spec(fullname, path or _get_paths(), target)
 
     def hook(path):
         if path == nvim.VIM_SPECIAL_PATH:

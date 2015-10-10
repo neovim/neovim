@@ -41,6 +41,7 @@
 #include "nvim/memory.h"
 #include "nvim/move.h"
 #include "nvim/normal.h"
+#include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
@@ -1838,6 +1839,8 @@ void ex_listdo(exarg_T *eap)
      * great speed improvement. */
     save_ei = au_event_disable(",Syntax");
 
+  start_global_changes();
+
   if (eap->cmdidx == CMD_windo
       || eap->cmdidx == CMD_tabdo
       || P_HID(curbuf)
@@ -1988,6 +1991,7 @@ void ex_listdo(exarg_T *eap)
     apply_autocmds(EVENT_SYNTAX, curbuf->b_p_syn,
         curbuf->b_fname, TRUE, curbuf);
   }
+  end_global_changes();
 }
 
 /*
@@ -2624,7 +2628,7 @@ char_u *get_scriptname(scid_T id)
 }
 
 # if defined(EXITFREE)
-void free_scriptnames()
+void free_scriptnames(void)
 {
 # define FREE_SCRIPTNAME(item) xfree((item)->sn_name)
   GA_DEEP_CLEAR(&script_items, scriptitem_T, FREE_SCRIPTNAME);

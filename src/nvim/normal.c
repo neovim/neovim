@@ -63,6 +63,7 @@
 #include "nvim/window.h"
 #include "nvim/event/loop.h"
 #include "nvim/os/time.h"
+#include "nvim/os/input.h"
 
 /*
  * The Visual area is remembered for reselection.
@@ -487,12 +488,12 @@ normal_cmd (
   /*
    * Get the command character from the user.
    */
-  loop_enable_deferred_events(&loop);
+  input_enable_events();
   c = safe_vgetc();
-  loop_disable_deferred_events(&loop);
+  input_disable_events();
 
   if (c == K_EVENT) {
-    loop_process_event(&loop);
+    queue_process_events(loop.events);
     return;
   }
 
@@ -4212,18 +4213,12 @@ void do_nv_ident(int c1, int c2)
 static void nv_ident(cmdarg_T *cap)
 {
   char_u      *ptr = NULL;
-  char_u      *buf;
-  char_u      *newbuf;
   char_u      *p;
-  char_u      *kp;              /* value of 'keywordprg' */
-  bool kp_help;                 /* 'keywordprg' is ":help" */
   size_t n = 0;                 /* init for GCC */
   int cmdchar;
   bool g_cmd;                   /* "g" command */
   bool tag_cmd = false;
   char_u      *aux_ptr;
-  bool isman;
-  bool isman_s;
 
   if (cap->cmdchar == 'g') {    /* "g*", "g#", "g]" and "gCTRL-]" */
     cmdchar = cap->nchar;
@@ -4258,10 +4253,11 @@ static void nv_ident(cmdarg_T *cap)
   /* Allocate buffer to put the command in.  Inserting backslashes can
    * double the length of the word.  p_kp / curbuf->b_p_kp could be added
    * and some numbers. */
-  kp = (*curbuf->b_p_kp == NUL ? p_kp : curbuf->b_p_kp);
-  kp_help = (*kp == NUL || STRCMP(kp, ":he") == 0
-             || STRCMP(kp, ":help") == 0);
-  buf = xmalloc(n * 2 + 30 + STRLEN(kp));
+  char_u *kp = *curbuf->b_p_kp == NUL ? p_kp : curbuf->b_p_kp;  // 'keywordprg'
+  assert(*kp != NUL);  // option.c:do_set() should default to ":help" if empty.
+  bool kp_ex = (*kp == ':');  // 'keywordprg' is an ex command
+  size_t buf_size = n * 2 + 30 + STRLEN(kp);
+  char *buf = xmalloc(buf_size);
   buf[0] = NUL;
 
   switch (cmdchar) {
@@ -4282,9 +4278,13 @@ static void nv_ident(cmdarg_T *cap)
     break;
 
   case 'K':
-    if (kp_help)
-      STRCPY(buf, "he! ");
-    else {
+    if (kp_ex) {
+      if (cap->count0 != 0) {  // Send the count to the ex command.
+        snprintf(buf, buf_size, "%" PRId64, (int64_t)(cap->count0));
+      }
+      STRCAT(buf, kp);
+      STRCAT(buf, " ");
+    } else {
       /* An external command will probably use an argument starting
        * with "-" as an option.  To avoid trouble we skip the "-". */
       while (*ptr == '-' && n > 0) {
@@ -4299,19 +4299,22 @@ static void nv_ident(cmdarg_T *cap)
 
       /* When a count is given, turn it into a range.  Is this
        * really what we want? */
-      isman = (STRCMP(kp, "man") == 0);
-      isman_s = (STRCMP(kp, "man -s") == 0);
-      if (cap->count0 != 0 && !(isman || isman_s))
-        sprintf((char *)buf, ".,.+%" PRId64, (int64_t)(cap->count0 - 1));
+      bool isman = (STRCMP(kp, "man") == 0);
+      bool isman_s = (STRCMP(kp, "man -s") == 0);
+      if (cap->count0 != 0 && !(isman || isman_s)) {
+        snprintf(buf, buf_size, ".,.+%" PRId64, (int64_t)(cap->count0 - 1));
+      }
 
       STRCAT(buf, "! ");
-      if (cap->count0 == 0 && isman_s)
+      if (cap->count0 == 0 && isman_s) {
         STRCAT(buf, "man");
-      else
+      } else {
         STRCAT(buf, kp);
+      }
       STRCAT(buf, " ");
       if (cap->count0 != 0 && (isman || isman_s)) {
-        sprintf((char *)buf + STRLEN(buf), "%" PRId64, (int64_t)cap->count0);
+        snprintf(buf + STRLEN(buf), buf_size - STRLEN(buf), "%" PRId64,
+            (int64_t)cap->count0);
         STRCAT(buf, " ");
       }
     }
@@ -4333,19 +4336,19 @@ static void nv_ident(cmdarg_T *cap)
       if (g_cmd)
         STRCPY(buf, "tj ");
       else
-        sprintf((char *)buf, "%" PRId64 "ta ", (int64_t)cap->count0);
+        snprintf(buf, buf_size, "%" PRId64 "ta ", (int64_t)cap->count0);
     }
   }
 
   /*
    * Now grab the chars in the identifier
    */
-  if (cmdchar == 'K' && !kp_help) {
+  if (cmdchar == 'K' && !kp_ex) {
     /* Escape the argument properly for a shell command */
     ptr = vim_strnsave(ptr, n);
     p = vim_strsave_shellescape(ptr, true, true);
     xfree(ptr);
-    newbuf = (char_u *)xrealloc(buf, STRLEN(buf) + STRLEN(p) + 1);
+    char *newbuf = xrealloc(buf, STRLEN(buf) + STRLEN(p) + 1);
     buf = newbuf;
     STRCAT(buf, p);
     xfree(p);
@@ -4363,7 +4366,7 @@ static void nv_ident(cmdarg_T *cap)
     } else
       aux_ptr = (char_u *)"\\|\"\n*?[";
 
-    p = buf + STRLEN(buf);
+    p = (char_u *)buf + STRLEN(buf);
     while (n-- > 0) {
       /* put a backslash before \ and some others */
       if (vim_strchr(aux_ptr, *ptr) != NULL)
@@ -4390,10 +4393,11 @@ static void nv_ident(cmdarg_T *cap)
       STRCAT(buf, "\\>");
     /* put pattern in search history */
     init_history();
-    add_to_history(HIST_SEARCH, buf, true, NUL);
-    (void)normal_search(cap, cmdchar == '*' ? '/' : '?', buf, 0);
-  } else
-    do_cmdline_cmd((char *)buf);
+    add_to_history(HIST_SEARCH, (char_u *)buf, true, NUL);
+    (void)normal_search(cap, cmdchar == '*' ? '/' : '?', (char_u *)buf, 0);
+  } else {
+    do_cmdline_cmd(buf);
+  }
 
   xfree(buf);
 }

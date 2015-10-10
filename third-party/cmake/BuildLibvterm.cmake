@@ -13,6 +13,7 @@ ExternalProject_Add(libvterm
     -DURL=${LIBVTERM_URL}
     -DEXPECTED_SHA256=${LIBVTERM_SHA256}
     -DTARGET=libvterm
+    -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
     -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
   CONFIGURE_COMMAND ""
   BUILD_IN_SOURCE 1

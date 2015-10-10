@@ -212,8 +212,7 @@ g8			Print the hex values of the bytes used in the
 			equivalent to: >
 
 			      :enew
-			      :call termopen([&sh, &shcf, '{cmd}'],
-			                    \{'name':'{cmd}'})
+			      :call termopen([&sh, &shcf, '{cmd}'])
 			      :startinsert
 <
 			If no {cmd} is given, 'shellcmdflag' will not be sent
@@ -543,7 +542,7 @@ which it was defined is reported.
 {not available when compiled without the |+eval| feature}
 
 							*K*
-K			Run a program to lookup the keyword under the
+[count]K       		Run a program to lookup the keyword under the
 			cursor.  The name of the program is given with the
 			'keywordprg' (kp) option (default is "man").  The
 			keyword is formed of letters, numbers and the
@@ -551,19 +550,18 @@ K			Run a program to lookup the keyword under the
 			right of the cursor is used.  The same can be done
 			with the command >
 				:!{program} {keyword}
-<			There is an example of a program to use in the tools
-			directory of Vim.  It is called 'ref' and does a
-			simple spelling check.
-			Special cases:
+<			Special cases:
+			- If 'keywordprg' begins with ":" it is invoked as
+			  a Vim command with [count].
 			- If 'keywordprg' is empty, the ":help" command is
 			  used.  It's a good idea to include more characters
 			  in 'iskeyword' then, to be able to find more help.
-			- When 'keywordprg' is equal to "man", a count before
-			  "K" is inserted after the "man" command and before
-			  the keyword.  For example, using "2K" while the
-			  cursor is on "mkdir", results in: >
+			- When 'keywordprg' is equal to "man", a [count]
+			  before "K" is inserted after the "man" command and
+			  before the keyword.  For example, using "2K" while
+			  the cursor is on "mkdir", results in: >
 				!man 2 mkdir
-<			- When 'keywordprg' is equal to "man -s", a count
+<			- When 'keywordprg' is equal to "man -s", a [count]
 			  before "K" is inserted after the "-s".  If there is
 			  no count, the "-s" is removed.
 

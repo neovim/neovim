@@ -39,6 +39,8 @@ these differences.
 - 'hlsearch' is set by default
 - 'incsearch' is set by default
 - 'langnoremap' is set by default
+- 'laststatus' defaults to 2 (statusline is always shown)
+- 'listchars' defaults to "tab:> ,trail:-,nbsp:+"
 - 'mouse' defaults to "a"
 - 'nocompatible' is always set
 - 'nrformats' defaults to "hex"
@@ -49,7 +51,6 @@ these differences.
 - 'ttyfast' is always set
 - 'viminfo' includes "!"
 - 'wildmenu' is set by default
-- 'wildmode' defaults to "list:longest,full"
 
 ==============================================================================
 3. Changed features					 *nvim-features-changed*
@@ -63,6 +64,34 @@ If a Python interpreter is available on your `$PATH`, |:python| and |:python3|
 are always available and may be used simultaneously in separate plugins.  The
 `neovim` pip package must be installed to use Python plugins in Nvim (see
 |nvim-python|).
+
+|mkdir()| behaviour changed:
+1. Assuming /tmp/foo does not exist and /tmp can be written to 
+   mkdir('/tmp/foo/bar', 'p', 0700) will create both /tmp/foo and /tmp/foo/bar 
+   with 0700 permissions. Vim mkdir will create /tmp/foo with 0755.
+2. If you try to create an existing directory with `'p'` (e.g. mkdir('/', 
+   'p')) mkdir() will silently exit. In Vim this was an error.
+3. mkdir() error messages now include strerror() text when mkdir fails.
+
+'encoding' cannot be changed after startup.
+
+|string()| and |:echo| behaviour changed:
+1. No maximum recursion depth limit is applied to nested container 
+   structures.
+2. |string()| fails immediately on nested containers, not when recursion limit 
+   was exceeded.
+2. When |:echo| encounters duplicate containers like >
+
+       let l = []
+       echo [l, l]
+<
+   it does not use "[...]" (was: "[[], [...]]", now: "[[], []]"). "..." is 
+   only used for recursive containers.
+3. |:echo| printing nested containers adds "@level" after "..." designating 
+   the level at which recursive container was printed: |:echo-self-refer|.  
+   Same thing applies to |string()| (though it uses construct like 
+   "{E724@level}"), but this is not reliable because |string()| continues to 
+   error out.
 
 ==============================================================================
 4. New Features						     *nvim-features-new*
@@ -147,6 +176,8 @@ Other options:
   'termencoding'
   'textauto'
   'textmode'
+  'toolbar'
+  'toolbariconsize'
   'ttybuiltin'
   'ttymouse'
   'weirdinvert'

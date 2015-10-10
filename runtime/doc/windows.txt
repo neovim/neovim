@@ -1,4 +1,4 @@
-*windows.txt*   For Vim version 7.4.  Last change: 2014 Sep 23
+*windows.txt*   For Vim version 7.4.  Last change: 2014 Dec 05
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -280,7 +280,7 @@ CTRL-W CTRL-Q						*CTRL-W_CTRL-Q*
 			    " if there are less than 9 windows opened
 		    :-quit  " quit the previous window
 		    :+quit  " quit the next window
-		    :+2quit " will also work as expected
+		    :+2quit " quit the second next window
 <
 :q[uit]!
 :{count}q[uit]!
@@ -324,9 +324,9 @@ CTRL-W CTRL-C						*CTRL-W_CTRL-C*
 		screen. For {count} see |:quit|.
 
 		The buffer becomes hidden (unless there is another window
-		editing it or 'bufhidden' is `unload` or `delete`). If the
-		window is the last one in the current tab page the tab page is
-		closed. |tab-page|
+		editing it or 'bufhidden' is `unload`, `delete` or `wipe`).
+		If the window is the last one in the current tab page the tab
+		page is closed. |tab-page|
 
 		The value of 'hidden' is irrelevant for this command.
 		Changes to the buffer are not written and won't get lost, so
@@ -477,7 +477,6 @@ CTRL-W H	Move the current window to be at the far left, using the
 		current window and then creating another one with
 		":vert topleft split", except that the current window contents
 		is used for the new window.
-		{not available when compiled without the |+vertsplit| feature}
 
 						*CTRL-W_L*
 CTRL-W L	Move the current window to be at the far right, using the full
@@ -485,7 +484,6 @@ CTRL-W L	Move the current window to be at the far right, using the full
 		current window and then creating another one with
 		":vert botright split", except that the current window
 		contents is used for the new window.
-		{not available when compiled without the |+vertsplit| feature}
 
 						*CTRL-W_T*
 CTRL-W T	Move the current window to a new tab page.  This fails if

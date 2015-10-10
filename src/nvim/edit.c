@@ -254,7 +254,16 @@ edit (
 )
 {
   if (curbuf->terminal) {
-    terminal_enter(true);
+    if (ex_normal_busy) {
+      // don't enter terminal mode from `ex_normal`, which can result in all
+      // kinds of havoc(such as terminal mode recursiveness). Instead, set a
+      // flag that allow us to force-set the value of `restart_edit` before
+      // `ex_normal` returns
+      restart_edit = 'i';
+      force_restart_edit = true;
+    } else {
+      terminal_enter();
+    }
     return false;
   }
 
@@ -601,15 +610,15 @@ edit (
      * Get a character for Insert mode.  Ignore K_IGNORE.
      */
     lastc = c;                          /* remember previous char for CTRL-D */
-    loop_enable_deferred_events(&loop);
+    input_enable_events();
     do {
       c = safe_vgetc();
     } while (c == K_IGNORE);
-    loop_disable_deferred_events(&loop);
+    input_disable_events();
 
     if (c == K_EVENT) {
       c = lastc;
-      loop_process_event(&loop);
+      queue_process_events(loop.events);
       continue;
     }
 

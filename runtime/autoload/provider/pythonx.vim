@@ -52,24 +52,38 @@ function! s:check_interpreter(prog, major_ver, skip) abort
     return [1, '']
   endif
 
+  let min_version = (a:major_ver == 2) ? '2.6' : '3.3'
+
   " Try to load neovim module, and output Python version.
-  let prog_ver = system(a:prog . ' -c ' .
-        \ '''import sys; sys.stdout.write(str(sys.version_info[0]) + '.
-        \ '"." + str(sys.version_info[1])); '''.
-        \ (a:major_ver == 2 ?
-        \   '''import pkgutil; exit(pkgutil.get_loader("neovim") is None)''':
-        \   '''import importlib; exit(importlib.find_loader("neovim") is None)''')
-        \ )
-  if v:shell_error
+  " Return codes:
+  "   0  Neovim module can be loaded.
+  "   1  Something else went wrong.
+  "   2  Neovim module cannot be loaded.
+  let prog_ver = system([ a:prog , '-c' ,
+        \ 'import sys; ' .
+        \ 'sys.path.remove(""); ' .
+        \ 'sys.stdout.write(str(sys.version_info[0]) + "." + str(sys.version_info[1])); ' .
+        \ 'import pkgutil; ' .
+        \ 'exit(2*int(pkgutil.get_loader("neovim") is None))'
+        \ ])
+
+  if prog_ver
+    if prog_ver !~ '^' . a:major_ver
+      return [0, prog_path . ' is Python ' . prog_ver . ' and cannot provide Python '
+            \ . a:major_ver . '.']
+    elseif prog_ver =~ '^' . a:major_ver && prog_ver < min_version
+      return [0, prog_path . ' is Python ' . prog_ver . ' and cannot provide Python >= '
+            \ . min_version . '.']
+    endif
+  endif
+
+  if v:shell_error == 1
+    return [0, 'Checking ' . prog_path . ' caused an unknown error. '
+          \ . 'Please report this at github.com/neovim/neovim.']
+  elseif v:shell_error == 2
     return [0, prog_path . ' does have not have the neovim module installed. '
           \ . 'See ":help nvim-python".']
   endif
 
-  let min_version = (a:major_ver == 2) ? '2.6' : '3.3'
-  if prog_ver =~ '^' . a:major_ver && prog_ver >= min_version
-    return [1, '']
-  endif
-
-  return [0, prog_path . ' is Python ' . prog_ver . ' and cannot provide Python '
-        \ . a:major_ver . '.']
+  return [1, '']
 endfunction

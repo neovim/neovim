@@ -153,6 +153,7 @@ static char_u typebuf_init[TYPELEN_INIT];       /* initial typebuf.tb_buf */
 static char_u noremapbuf_init[TYPELEN_INIT];    /* initial typebuf.tb_noremap */
 
 static int last_recorded_len = 0;       /* number of last recorded chars */
+static const uint8_t ui_toggle[] = { K_SPECIAL, KS_EXTRA, KE_PASTE, 0 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "getchar.c.generated.h"
@@ -1758,7 +1759,7 @@ static int vgetorpeek(int advance)
             if (c1 == K_SPECIAL)
               nolmaplen = 2;
             else {
-              LANGMAP_ADJUST(c1, (State & INSERT) == 0);
+              LANGMAP_ADJUST(c1, (State & (CMDLINE | INSERT)) == 0);
               nolmaplen = 0;
             }
             /* First try buffer-local mappings. */
@@ -1873,14 +1874,15 @@ static int vgetorpeek(int advance)
             }
           }
 
-          /* Check for match with 'pastetoggle' */
-          if (*p_pt != NUL && mp == NULL && (State & (INSERT|NORMAL))) {
-            for (mlen = 0; mlen < typebuf.tb_len && p_pt[mlen];
-                 ++mlen)
-              if (p_pt[mlen] != typebuf.tb_buf[typebuf.tb_off
-                                               + mlen])
-                break;
-            if (p_pt[mlen] == NUL) {            /* match */
+          // Check for a key that can toggle the 'paste' option
+          if (mp == NULL && (State & (INSERT|NORMAL))) {
+            bool match = typebuf_match_len(ui_toggle, &mlen);
+            if (!match && mlen != typebuf.tb_len && *p_pt != NUL) {
+              // didn't match ui_toggle_key and didn't try the whole typebuf,
+              // check the 'pastetoggle'
+              match = typebuf_match_len(p_pt, &mlen);
+            }
+            if (match) {
               /* write chars to script file(s) */
               if (mlen > typebuf.tb_maplen)
                 gotchars(typebuf.tb_buf + typebuf.tb_off
@@ -4109,7 +4111,6 @@ check_map (
   int hash;
   int len, minlen;
   mapblock_T  *mp;
-  char_u      *s;
   int local;
 
   validate_maphash();
@@ -4133,17 +4134,14 @@ check_map (
         /* skip entries with wrong mode, wrong length and not matching
          * ones */
         if ((mp->m_mode & mode) && (!exact || mp->m_keylen == len)) {
-          if (len > mp->m_keylen)
-            minlen = mp->m_keylen;
-          else
-            minlen = len;
-          s = mp->m_keys;
-          if (ign_mod && s[0] == K_SPECIAL && s[1] == KS_MODIFIER
-              && s[2] != NUL) {
+          char_u *s = mp->m_keys;
+          int keylen = mp->m_keylen;
+          if (ign_mod && keylen >= 3
+              && s[0] == K_SPECIAL && s[1] == KS_MODIFIER) {
             s += 3;
-            if (len > mp->m_keylen - 3)
-              minlen = mp->m_keylen - 3;
+            keylen -= 3;
           }
+          minlen = keylen < len ? keylen : len;
           if (STRNCMP(s, keys, minlen) == 0) {
             if (mp_ptr != NULL)
               *mp_ptr = mp;
@@ -4241,4 +4239,15 @@ static char_u * translate_mapping (
   }
   ga_append(&ga, NUL);
   return (char_u *)(ga.ga_data);
+}
+
+static bool typebuf_match_len(const uint8_t *str, int *mlen)
+{
+  int i;
+  for (i = 0; i < typebuf.tb_len && str[i]; i++) {
+    if (str[i] != typebuf.tb_buf[typebuf.tb_off + i])
+      break;
+  }
+  *mlen = i;
+  return str[i] == NUL;  // matched the whole string
 }

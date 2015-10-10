@@ -100,8 +100,7 @@ tag		char		action in Insert mode	~
 |i_CTRL-]|	CTRL-]		trigger abbreviation
 |i_CTRL-^|	CTRL-^		toggle use of |:lmap| mappings
 |i_CTRL-_|	CTRL-_		When 'allowrevins' set: change language
-				(Hebrew, Farsi) {only when compiled with
-				the |+rightleft| feature}
+				(Hebrew, Farsi)
 
 		<Space> to '~'	not used, except '0' and '^' followed by
 				CTRL-D

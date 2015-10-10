@@ -1007,7 +1007,7 @@ struct window_S {
    * that the cursor is on.  We use this to avoid extra calls to plines().
    */
   int w_cline_height;               /* current size of cursor line */
-  int w_cline_folded;               /* cursor line is folded */
+  bool w_cline_folded;               /* cursor line is folded */
 
   int w_cline_row;                  /* starting row of the cursor line */
 

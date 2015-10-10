@@ -21,4 +21,25 @@
 // - SYS_VIMRC_FILE
 // - SPECIAL_WILDCHAR
 
+#define USE_CRNL
+
+#ifdef _MSC_VER
+# ifndef inline
+#  define inline __inline
+# endif
+# ifndef restrict
+#  define restrict __restrict
+# endif
+#endif
+
+typedef SSIZE_T ssize_t;
+
+#ifndef SSIZE_MAX
+# ifdef _WIN64
+#  define SSIZE_MAX _I64_MAX
+# else
+#  define SSIZE_MAX LONG_MAX
+# endif
+#endif
+
 #endif  // NVIM_OS_WIN_DEFS_H
