@@ -3969,8 +3969,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When on, setting 'langmap' does not apply to characters resulting from
 	a mapping.  This basically means, if you noticed that setting
 	'langmap' disables some of your mappings, try setting this option.
-	This option defaults to off for backwards compatibility.  Set it on if
-	that works for you to avoid mappings to break.
 
 					*'laststatus'* *'ls'*
 'laststatus' 'ls'	number	(default 2)
