@@ -28,6 +28,7 @@ return {
     'CursorHoldI',            -- idem, in Insert mode
     'CursorMoved',            -- cursor was moved
     'CursorMovedI',           -- cursor was moved in Insert mode
+    'CursorMovedT',           -- cursor was moved in Terminal mode
     'EncodingChanged',        -- after changing the 'encoding' option
     'FileAppendCmd',          -- append to a file using command
     'FileAppendPost',         -- after appending to a file

@@ -584,6 +584,7 @@ static int term_movecursor(VTermPos new, VTermPos old, int visible,
   term->cursor.col = new.col;
   invalidate_terminal(term, old.row, old.row + 1);
   invalidate_terminal(term, new.row, new.row + 1);
+  apply_autocmds(EVENT_CURSORMOVEDT, NULL, NULL, FALSE, curbuf);
   return 1;
 }
 
