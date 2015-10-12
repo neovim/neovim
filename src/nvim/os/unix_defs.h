@@ -31,12 +31,6 @@
 #ifndef USR_EXRC_FILE
 # define USR_EXRC_FILE "~/.exrc"
 #endif
-#ifndef USR_VIMRC_FILE
-# define USR_VIMRC_FILE "~/.nvimrc"
-#endif
-#ifndef USR_VIMRC_FILE2
-# define USR_VIMRC_FILE2     "~/.nvim/nvimrc"
-#endif
 #ifndef EXRC_FILE
 # define EXRC_FILE      ".exrc"
 #endif
@@ -45,29 +39,6 @@
 #endif
 #ifndef VIMINFO_FILE
 # define VIMINFO_FILE "~/.nviminfo"
-#endif
-
-// Default for 'backupdir'.
-#ifndef DFLT_BDIR
-# define DFLT_BDIR    ".,~/tmp,~/"
-#endif
-
-// Default for 'directory'.
-#ifndef DFLT_DIR
-# define DFLT_DIR     ".,~/tmp,/var/tmp,/tmp"
-#endif
-
-// Default for 'viewdir'.
-#ifndef DFLT_VDIR
-# define DFLT_VDIR    "~/.nvim/view"
-#endif
-
-#ifdef RUNTIME_GLOBAL
-# define DFLT_RUNTIMEPATH "~/.nvim," RUNTIME_GLOBAL ",$VIMRUNTIME," \
-  RUNTIME_GLOBAL "/after,~/.nvim/after"
-#else
-# define DFLT_RUNTIMEPATH \
-  "~/.nvim,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,~/.nvim/after"
 #endif
 
 #endif  // NVIM_OS_UNIX_DEFS_H
