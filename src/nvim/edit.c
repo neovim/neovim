@@ -52,6 +52,7 @@
 #include "nvim/search.h"
 #include "nvim/spell.h"
 #include "nvim/strings.h"
+#include "nvim/state.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
 #include "nvim/ui.h"
@@ -192,6 +193,28 @@ static expand_T compl_xp;
 
 static int compl_opt_refresh_always = FALSE;
 
+typedef struct insert_state {
+  VimState state;
+  cmdarg_T *ca;
+  int mincol;
+  int cmdchar;
+  int startln;
+  long count;
+  int c;
+  int lastc;
+  int i;
+  bool did_backspace;                // previous char was backspace
+  bool line_is_white;                // line is empty before insert
+  linenr_T old_topline;              // topline before insertion
+  int old_topfill;
+  int inserted_space;                // just inserted a space
+  int replaceState;
+  int did_restart_edit;              // remember if insert mode was restarted
+                                     // after a ctrl+o
+  bool nomove;
+  uint8_t *ptr;
+} InsertState;
+
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "edit.c.generated.h"
@@ -228,8 +251,9 @@ static int ins_need_undo;               /* call u_save() before inserting a
 
 static int did_add_space = FALSE;       /* auto_format() added an extra space
                                            under the cursor */
-static int dont_sync_undo = false;      /* CTRL-G U prevents syncing undo for
-                                           the next left/right cursor */
+static int dont_sync_undo = false;      // CTRL-G U prevents syncing undo
+                                        // for the next left/right cursor
+
 
 /*
  * edit(): Start inserting text.
@@ -256,6 +280,9 @@ edit (
     long count
 )
 {
+  static linenr_T o_lnum = 0;
+  InsertState state, *s = &state;
+  memset(s, 0, sizeof(InsertState));
   if (curbuf->terminal) {
     if (ex_normal_busy) {
       // don't enter terminal mode from `ex_normal`, which can result in all
@@ -270,71 +297,63 @@ edit (
     return false;
   }
 
-  int c = 0;
-  char_u      *ptr;
-  int lastc;
-  int mincol;
-  static linenr_T o_lnum = 0;
-  int i;
-  int did_backspace = TRUE;                 /* previous char was backspace */
-  int line_is_white = FALSE;                /* line is empty before insert */
-  linenr_T old_topline = 0;                 /* topline before insertion */
-  int old_topfill = -1;
-  int inserted_space = FALSE;               /* just inserted a space */
-  int replaceState = REPLACE;
-  int nomove = FALSE;                       /* don't move cursor on return */
-
-  /* Remember whether editing was restarted after CTRL-O. */
+  s->cmdchar = cmdchar;
+  s->startln = startln;
+  s->count = count;
+  s->did_backspace = true;
+  s->old_topfill = -1;
+  s->replaceState = REPLACE;
+  // Remember whether editing was restarted after CTRL-O
   did_restart_edit = restart_edit;
-
-  /* sleep before redrawing, needed for "CTRL-O :" that results in an
-   * error message */
-  check_for_delay(TRUE);
-
+  // sleep before redrawing, needed for "CTRL-O :" that results in an
+  // error message
+  check_for_delay(true);
   // set Insstart_orig to Insstart
   update_Insstart_orig = true;
 
   // Don't allow inserting in the sandbox.
   if (sandbox != 0) {
     EMSG(_(e_sandbox));
-    return FALSE;
+    return false;
   }
-  /* Don't allow changes in the buffer while editing the cmdline.  The
-   * caller of getcmdline() may get confused. */
+
+  // Don't allow changes in the buffer while editing the cmdline.  The
+  // caller of getcmdline() may get confused.
   if (textlock != 0) {
     EMSG(_(e_secure));
-    return FALSE;
+    return false;
   }
 
-  /* Don't allow recursive insert mode when busy with completion. */
+  // Don't allow recursive insert mode when busy with completion.
   if (compl_started || compl_busy || pum_visible()) {
     EMSG(_(e_secure));
-    return FALSE;
+    return false;
   }
-  ins_compl_clear();        /* clear stuff for CTRL-X mode */
 
-  /*
-   * Trigger InsertEnter autocommands.  Do not do this for "r<CR>" or "grx".
-   */
+  ins_compl_clear();        // clear stuff for CTRL-X mode
+
+  // Trigger InsertEnter autocommands.  Do not do this for "r<CR>" or "grx".
   if (cmdchar != 'r' && cmdchar != 'v') {
     pos_T save_cursor = curwin->w_cursor;
 
-    if (cmdchar == 'R')
-      ptr = (char_u *)"r";
-    else if (cmdchar == 'V')
-      ptr = (char_u *)"v";
-    else
-      ptr = (char_u *)"i";
-    set_vim_var_string(VV_INSERTMODE, ptr, 1);
-    set_vim_var_string(VV_CHAR, NULL, -1);      /* clear v:char */
-    apply_autocmds(EVENT_INSERTENTER, NULL, NULL, FALSE, curbuf);
+    if (cmdchar == 'R') {
+      s->ptr = (char_u *)"r";
+    } else if (cmdchar == 'V') {
+      s->ptr = (char_u *)"v";
+    } else {
+      s->ptr = (char_u *)"i";
+    }
 
-    /* Make sure the cursor didn't move.  Do call check_cursor_col() in
-     * case the text was modified.  Since Insert mode was not started yet
-     * a call to check_cursor_col() may move the cursor, especially with
-     * the "A" command, thus set State to avoid that. Also check that the
-     * line number is still valid (lines may have been deleted).
-     * Do not restore if v:char was set to a non-empty string. */
+    set_vim_var_string(VV_INSERTMODE, s->ptr, 1);
+    set_vim_var_string(VV_CHAR, NULL, -1);      /* clear v:char */
+    apply_autocmds(EVENT_INSERTENTER, NULL, NULL, false, curbuf);
+
+    // Make sure the cursor didn't move.  Do call check_cursor_col() in
+    // case the text was modified.  Since Insert mode was not started yet
+    // a call to check_cursor_col() may move the cursor, especially with
+    // the "A" command, thus set State to avoid that. Also check that the
+    // line number is still valid (lines may have been deleted).
+    // Do not restore if v:char was set to a non-empty string.
     if (!equalpos(curwin->w_cursor, save_cursor)
         && *get_vim_var_str(VV_CHAR) == NUL
         && save_cursor.lnum <= curbuf->b_ml.ml_line_count) {
@@ -347,316 +366,316 @@ edit (
     }
   }
 
-  /* Check if the cursor line needs redrawing before changing State.  If
-  * 'concealcursor' is "n" it needs to be redrawn without concealing. */
+  // Check if the cursor line needs redrawing before changing State. If
+  // 'concealcursor' is "n" it needs to be redrawn without concealing.
   conceal_check_cursur_line();
 
-  /*
-   * When doing a paste with the middle mouse button, Insstart is set to
-   * where the paste started.
-   */
-  if (where_paste_started.lnum != 0)
+  // When doing a paste with the middle mouse button, Insstart is set to
+  // where the paste started.
+  if (where_paste_started.lnum != 0) {
     Insstart = where_paste_started;
-  else {
+  } else {
     Insstart = curwin->w_cursor;
-    if (startln)
+    if (startln) {
       Insstart.col = 0;
+    }
   }
+
   Insstart_textlen = (colnr_T)linetabsize(get_cursor_line_ptr());
   Insstart_blank_vcol = MAXCOL;
-  if (!did_ai)
+
+  if (!did_ai) {
     ai_col = 0;
+  }
 
   if (cmdchar != NUL && restart_edit == 0) {
     ResetRedobuff();
     AppendNumberToRedobuff(count);
     if (cmdchar == 'V' || cmdchar == 'v') {
-      /* "gR" or "gr" command */
+      // "gR" or "gr" command
       AppendCharToRedobuff('g');
       AppendCharToRedobuff((cmdchar == 'v') ? 'r' : 'R');
     } else {
       AppendCharToRedobuff(cmdchar);
-      if (cmdchar == 'g')                   /* "gI" command */
+      if (cmdchar == 'g') {          // "gI" command
         AppendCharToRedobuff('I');
-      else if (cmdchar == 'r')              /* "r<CR>" command */
-        count = 1;                          /* insert only one <CR> */
+      } else if (cmdchar == 'r') {  // "r<CR>" command
+        count = 1;                  // insert only one <CR>
+      }
     }
   }
 
   if (cmdchar == 'R') {
     if (p_fkmap && p_ri) {
       beep_flush();
-      EMSG(farsi_text_3);           /* encoded in Farsi */
+      EMSG(farsi_text_3);           // encoded in Farsi
       State = INSERT;
-    } else
+    } else {
       State = REPLACE;
+    }
   } else if (cmdchar == 'V' || cmdchar == 'v') {
     State = VREPLACE;
-    replaceState = VREPLACE;
+    s->replaceState = VREPLACE;
     orig_line_count = curbuf->b_ml.ml_line_count;
     vr_lines_changed = 1;
-  } else
+  } else {
     State = INSERT;
+  }
 
-  stop_insert_mode = FALSE;
+  stop_insert_mode = false;
 
-  /*
-   * Need to recompute the cursor position, it might move when the cursor is
-   * on a TAB or special character.
-   */
-  curs_columns(TRUE);
+  // Need to recompute the cursor position, it might move when the cursor is
+  // on a TAB or special character.
+  curs_columns(true);
 
-  /*
-   * Enable langmap or IME, indicated by 'iminsert'.
-   * Note that IME may enabled/disabled without us noticing here, thus the
-   * 'iminsert' value may not reflect what is actually used.  It is updated
-   * when hitting <Esc>.
-   */
-  if (curbuf->b_p_iminsert == B_IMODE_LMAP)
+  // Enable langmap or IME, indicated by 'iminsert'.
+  // Note that IME may enabled/disabled without us noticing here, thus the
+  // 'iminsert' value may not reflect what is actually used.  It is updated
+  // when hitting <Esc>.
+  if (curbuf->b_p_iminsert == B_IMODE_LMAP) {
     State |= LANGMAP;
+  }
 
   setmouse();
   clear_showcmd();
-  /* there is no reverse replace mode */
+  // there is no reverse replace mode
   revins_on = (State == INSERT && p_ri);
-  if (revins_on)
+  if (revins_on) {
     undisplay_dollar();
+  }
   revins_chars = 0;
   revins_legal = 0;
   revins_scol = -1;
 
-  /*
-   * Handle restarting Insert mode.
-   * Don't do this for "CTRL-O ." (repeat an insert): we get here with
-   * restart_edit non-zero, and something in the stuff buffer.
-   */
+  // Handle restarting Insert mode.
+  // Don't do this for "CTRL-O ." (repeat an insert): we get here with
+  // restart_edit non-zero, and something in the stuff buffer.
   if (restart_edit != 0 && stuff_empty()) {
-    /*
-     * After a paste we consider text typed to be part of the insert for
-     * the pasted text. You can backspace over the pasted text too.
-     */
-    if (where_paste_started.lnum)
-      arrow_used = FALSE;
-    else
-      arrow_used = TRUE;
+    // After a paste we consider text typed to be part of the insert for
+    // the pasted text. You can backspace over the pasted text too.
+    if (where_paste_started.lnum) {
+      arrow_used = false;
+    } else {
+      arrow_used = true;
+    }
     restart_edit = 0;
 
-    /*
-     * If the cursor was after the end-of-line before the CTRL-O and it is
-     * now at the end-of-line, put it after the end-of-line (this is not
-     * correct in very rare cases).
-     * Also do this if curswant is greater than the current virtual
-     * column.  Eg after "^O$" or "^O80|".
-     */
+    // If the cursor was after the end-of-line before the CTRL-O and it is
+    // now at the end-of-line, put it after the end-of-line (this is not
+    // correct in very rare cases).
+    // Also do this if curswant is greater than the current virtual
+    // column.  Eg after "^O$" or "^O80|".
     validate_virtcol();
     update_curswant();
     if (((ins_at_eol && curwin->w_cursor.lnum == o_lnum)
          || curwin->w_curswant > curwin->w_virtcol)
-        && *(ptr = get_cursor_line_ptr() + curwin->w_cursor.col) != NUL) {
-      if (ptr[1] == NUL)
+        && *(s->ptr = get_cursor_line_ptr() + curwin->w_cursor.col) != NUL) {
+      if (s->ptr[1] == NUL) {
         ++curwin->w_cursor.col;
-      else if (has_mbyte) {
-        i = (*mb_ptr2len)(ptr);
-        if (ptr[i] == NUL)
-          curwin->w_cursor.col += i;
+      } else if (has_mbyte) {
+        s->i = (*mb_ptr2len)(s->ptr);
+        if (s->ptr[s->i] == NUL) {
+          curwin->w_cursor.col += s->i;
+        }
       }
     }
-    ins_at_eol = FALSE;
-  } else
-    arrow_used = FALSE;
+    ins_at_eol = false;
+  } else {
+    arrow_used = false;
+  }
 
-  /* we are in insert mode now, don't need to start it anymore */
-  need_start_insertmode = FALSE;
+  // we are in insert mode now, don't need to start it anymore
+  need_start_insertmode = false;
 
-  /* Need to save the line for undo before inserting the first char. */
-  ins_need_undo = TRUE;
+  // Need to save the line for undo before inserting the first char.
+  ins_need_undo = true;
 
   where_paste_started.lnum = 0;
-  can_cindent = TRUE;
-  /* The cursor line is not in a closed fold, unless 'insertmode' is set or
-   * restarting. */
-  if (!p_im && did_restart_edit == 0)
+  can_cindent = true;
+  // The cursor line is not in a closed fold, unless 'insertmode' is set or
+  // restarting.
+  if (!p_im && did_restart_edit == 0) {
     foldOpenCursor();
+  }
 
-  /*
-   * If 'showmode' is set, show the current (insert/replace/..) mode.
-   * A warning message for changing a readonly file is given here, before
-   * actually changing anything.  It's put after the mode, if any.
-   */
-  i = 0;
-  if (p_smd && msg_silent == 0)
-    i = showmode();
+  // If 'showmode' is set, show the current (insert/replace/..) mode.
+  // A warning message for changing a readonly file is given here, before
+  // actually changing anything.  It's put after the mode, if any.
+  s->i = 0;
+  if (p_smd && msg_silent == 0) {
+    s->i = showmode();
+  }
 
-  if (!p_im && did_restart_edit == 0)
-    change_warning(i == 0 ? 0 : i + 1);
+  if (!p_im && did_restart_edit == 0) {
+    change_warning(s->i == 0 ? 0 : s->i + 1);
+  }
 
   ui_cursor_shape();            /* may show different cursor shape */
   do_digraph(-1);               /* clear digraphs */
 
-  /*
-   * Get the current length of the redo buffer, those characters have to be
-   * skipped if we want to get to the inserted characters.
-   */
-  ptr = get_inserted();
-  if (ptr == NULL)
+  // Get the current length of the redo buffer, those characters have to be
+  // skipped if we want to get to the inserted characters.
+  s->ptr = get_inserted();
+  if (s->ptr == NULL) {
     new_insert_skip = 0;
-  else {
-    new_insert_skip = (int)STRLEN(ptr);
-    xfree(ptr);
+  } else {
+    new_insert_skip = (int)STRLEN(s->ptr);
+    xfree(s->ptr);
   }
 
   old_indent = 0;
 
-  /*
-   * Main loop in Insert mode: repeat until Insert mode is left.
-   */
+
+  // Main loop in Insert mode: repeat until Insert mode is left.
   for (;; ) {
-    if (!revins_legal)
-      revins_scol = -1;             /* reset on illegal motions */
-    else
+    if (!revins_legal) {
+      revins_scol = -1;     // reset on illegal motions
+    } else {
       revins_legal = 0;
-    if (arrow_used)         /* don't repeat insert when arrow key used */
+    }
+
+    if (arrow_used) {       // don't repeat insert when arrow key used
       count = 0;
+    }
 
     if (update_Insstart_orig) {
       Insstart_orig = Insstart;
     }
 
     if (stop_insert_mode) {
-      /* ":stopinsert" used or 'insertmode' reset */
+      // ":stopinsert" used or 'insertmode' reset
       count = 0;
       goto doESCkey;
     }
 
-    /* set curwin->w_curswant for next K_DOWN or K_UP */
-    if (!arrow_used)
-      curwin->w_set_curswant = TRUE;
-
-    /* If there is no typeahead may check for timestamps (e.g., for when a
-     * menu invoked a shell command). */
-    if (stuff_empty()) {
-      did_check_timestamps = FALSE;
-      if (need_check_timestamps)
-        check_timestamps(FALSE);
+    // set curwin->w_curswant for next K_DOWN or K_UP
+    if (!arrow_used) {
+      curwin->w_set_curswant = true;
     }
 
-    /*
-     * When emsg() was called msg_scroll will have been set.
-     */
-    msg_scroll = FALSE;
-
-
-    /* Open fold at the cursor line, according to 'foldopen'. */
-    if (fdo_flags & FDO_INSERT)
-      foldOpenCursor();
-    /* Close folds where the cursor isn't, according to 'foldclose' */
-    if (!char_avail())
-      foldCheckClose();
-
-    /*
-     * If we inserted a character at the last position of the last line in
-     * the window, scroll the window one line up. This avoids an extra
-     * redraw.
-     * This is detected when the cursor column is smaller after inserting
-     * something.
-     * Don't do this when the topline changed already, it has
-     * already been adjusted (by insertchar() calling open_line())).
-     */
-    if (curbuf->b_mod_set
-        && curwin->w_p_wrap
-        && !did_backspace
-        && curwin->w_topline == old_topline
-        && curwin->w_topfill == old_topfill
-        ) {
-      mincol = curwin->w_wcol;
-      validate_cursor_col();
-
-      if (curwin->w_wcol < mincol - curbuf->b_p_ts
-          && curwin->w_wrow == curwin->w_winrow
-          + curwin->w_height - 1 - p_so
-          && (curwin->w_cursor.lnum != curwin->w_topline
-              || curwin->w_topfill > 0
-              )) {
-        if (curwin->w_topfill > 0)
-          --curwin->w_topfill;
-        else if (hasFolding(curwin->w_topline, NULL, &old_topline))
-          set_topline(curwin, old_topline + 1);
-        else
-          set_topline(curwin, curwin->w_topline + 1);
+    // If there is no typeahead may check for timestamps (e.g., for when a
+    // menu invoked a shell command).
+    if (stuff_empty()) {
+      did_check_timestamps = false;
+      if (need_check_timestamps) {
+        check_timestamps(false);
       }
     }
 
-    /* May need to adjust w_topline to show the cursor. */
+    // When emsg() was called msg_scroll will have been set.
+    msg_scroll = false;
+
+
+    // Open fold at the cursor line, according to 'foldopen'.
+    if (fdo_flags & FDO_INSERT) {
+      foldOpenCursor();
+    }
+
+    // Close folds where the cursor isn't, according to 'foldclose'
+    if (!char_avail()) {
+      foldCheckClose();
+    }
+
+    // If we inserted a character at the last position of the last line in the
+    // window, scroll the window one line up. This avoids an extra redraw.  This
+    // is detected when the cursor column is smaller after inserting something.
+    // Don't do this when the topline changed already, it has already been
+    // adjusted (by insertchar() calling open_line())).
+    if (curbuf->b_mod_set
+        && curwin->w_p_wrap
+        && !s->did_backspace
+        && curwin->w_topline == s->old_topline
+        && curwin->w_topfill == s->old_topfill) {
+      s->mincol = curwin->w_wcol;
+      validate_cursor_col();
+
+      if (curwin->w_wcol < s->mincol - curbuf->b_p_ts
+          && curwin->w_wrow == curwin->w_winrow
+          + curwin->w_height - 1 - p_so
+          && (curwin->w_cursor.lnum != curwin->w_topline
+              || curwin->w_topfill > 0)) {
+        if (curwin->w_topfill > 0) {
+          --curwin->w_topfill;
+        } else if (hasFolding(curwin->w_topline, NULL, &s->old_topline)) {
+          set_topline(curwin, s->old_topline + 1);
+        } else {
+          set_topline(curwin, curwin->w_topline + 1);
+        }
+      }
+    }
+
+    // May need to adjust w_topline to show the cursor.
     update_topline();
 
-    did_backspace = FALSE;
+    s->did_backspace = false;
 
-    validate_cursor();                  /* may set must_redraw */
+    validate_cursor();                  // may set must_redraw
 
-    /*
-     * Redraw the display when no characters are waiting.
-     * Also shows mode, ruler and positions cursor.
-     */
-    ins_redraw(TRUE);
+    // Redraw the display when no characters are waiting.
+    // Also shows mode, ruler and positions cursor.
+    ins_redraw(true);
 
-    if (curwin->w_p_scb)
-      do_check_scrollbind(TRUE);
+    if (curwin->w_p_scb) {
+      do_check_scrollbind(true);
+    }
 
-    if (curwin->w_p_crb)
+    if (curwin->w_p_crb) {
       do_check_cursorbind();
+    }
+
     update_curswant();
-    old_topline = curwin->w_topline;
-    old_topfill = curwin->w_topfill;
+    s->old_topline = curwin->w_topline;
+    s->old_topfill = curwin->w_topfill;
 
-
-    /*
-     * Get a character for Insert mode.  Ignore K_IGNORE.
-     */
-    lastc = c;                          /* remember previous char for CTRL-D */
+    // Get a character for Insert mode.  Ignore K_IGNORE.
+    s->lastc = s->c;   // remember previous char for CTRL-D
 
     // After using CTRL-G U the next cursor key will not break undo.
-    if (dont_sync_undo == MAYBE)
-        dont_sync_undo = true;
-    else
-        dont_sync_undo = false;
+    if (dont_sync_undo == MAYBE) {
+      dont_sync_undo = true;
+    } else {
+      dont_sync_undo = false;
+    }
 
     input_enable_events();
     do {
-      c = safe_vgetc();
-    } while (c == K_IGNORE);
+      s->c = safe_vgetc();
+    } while (s->c == K_IGNORE);
     input_disable_events();
 
     // Don't want K_EVENT with cursorhold for the second key, e.g., after
     // CTRL-V.
     did_cursorhold = true;
 
-    if (p_hkmap && KeyTyped)
-      c = hkmap(c);                     /* Hebrew mode mapping */
-    if (p_fkmap && KeyTyped)
-      c = fkmap(c);                     /* Farsi mode mapping */
+    if (p_hkmap && KeyTyped) {
+      s->c = hkmap(s->c);  // Hebrew mode mapping
+    }
 
-    /*
-     * Special handling of keys while the popup menu is visible or wanted
-     * and the cursor is still in the completed word.  Only when there is
-     * a match, skip this when no matches were found.
-     */
+    if (p_fkmap && KeyTyped) {
+      s->c = fkmap(s->c);  // Farsi mode mapping
+    }
+
+    // Special handling of keys while the popup menu is visible or wanted
+    // and the cursor is still in the completed word.  Only when there is
+    // a match, skip this when no matches were found.
     if (compl_started
         && pum_wanted()
         && curwin->w_cursor.col >= compl_col
         && (compl_shown_match == NULL
             || compl_shown_match != compl_shown_match->cp_next)) {
-      /* BS: Delete one character from "compl_leader". */
-      if ((c == K_BS || c == Ctrl_H)
+      // BS: Delete one character from "compl_leader".
+      if ((s->c == K_BS || s->c == Ctrl_H)
           && curwin->w_cursor.col > compl_col
-          && (c = ins_compl_bs()) == NUL)
+          && (s->c = ins_compl_bs()) == NUL) {
         continue;
+      }
 
-      /* When no match was selected or it was edited. */
+      // When no match was selected or it was edited.
       if (!compl_used_match) {
-        /* CTRL-L: Add one character from the current match to
-         * "compl_leader".  Except when at the original match and
-         * there is nothing to add, CTRL-L works like CTRL-P then. */
-        if (c == Ctrl_L
+        // CTRL-L: Add one character from the current match to
+        // "compl_leader".  Except when at the original match and
+        // there is nothing to add, CTRL-L works like CTRL-P then.
+        if (s->c == Ctrl_L
             && (!CTRL_X_MODE_LINE_OR_EVAL(ctrl_x_mode)
                 || (int)STRLEN(compl_shown_match->cp_str)
                 > curwin->w_cursor.col - compl_col)) {
@@ -664,124 +683,132 @@ edit (
           continue;
         }
 
-        /* A non-white character that fits in with the current
-         * completion: Add to "compl_leader". */
-        if (ins_compl_accept_char(c)) {
-          /* Trigger InsertCharPre. */
-          char_u *str = do_insert_char_pre(c);
+        // A non-white character that fits in with the current
+        // completion: Add to "compl_leader".
+        if (ins_compl_accept_char(s->c)) {
+          // Trigger InsertCharPre.
+          char_u *str = do_insert_char_pre(s->c);
           char_u *p;
 
           if (str != NULL) {
-            for (p = str; *p != NUL; mb_ptr_adv(p))
+            for (p = str; *p != NUL; mb_ptr_adv(p)) {
               ins_compl_addleader(PTR2CHAR(p));
+            }
             xfree(str);
-          } else
-            ins_compl_addleader(c);
+          } else {
+            ins_compl_addleader(s->c);
+          }
           continue;
         }
 
-        /* Pressing CTRL-Y selects the current match.  When
-         * compl_enter_selects is set the Enter key does the same. */
-        if (c == Ctrl_Y || (compl_enter_selects
-                            && (c == CAR || c == K_KENTER || c == NL))) {
+        // Pressing CTRL-Y selects the current match.  When
+        // compl_enter_selects is set the Enter key does the same.
+        if (s->c == Ctrl_Y
+            || (compl_enter_selects
+              && (s->c == CAR || s->c == K_KENTER || s->c == NL))) {
           ins_compl_delete();
           ins_compl_insert();
         }
       }
     }
 
-    /* Prepare for or stop CTRL-X mode.  This doesn't do completion, but
-     * it does fix up the text when finishing completion. */
-    compl_get_longest = FALSE;
-    if (ins_compl_prep(c))
+    // Prepare for or stop CTRL-X mode. This doesn't do completion, but it does
+    // fix up the text when finishing completion.
+    compl_get_longest = false;
+    if (ins_compl_prep(s->c)) {
       continue;
+    }
 
-    /* CTRL-\ CTRL-N goes to Normal mode,
-     * CTRL-\ CTRL-G goes to mode selected with 'insertmode',
-     * CTRL-\ CTRL-O is like CTRL-O but without moving the cursor.  */
-    if (c == Ctrl_BSL) {
-      /* may need to redraw when no more chars available now */
-      ins_redraw(FALSE);
+    // CTRL-\ CTRL-N goes to Normal mode,
+    // CTRL-\ CTRL-G goes to mode selected with 'insertmode',
+    // CTRL-\ CTRL-O is like CTRL-O but without moving the cursor
+    if (s->c == Ctrl_BSL) {
+      // may need to redraw when no more chars available now
+      ins_redraw(false);
       ++no_mapping;
       ++allow_keys;
-      c = plain_vgetc();
+      s->c = plain_vgetc();
       --no_mapping;
       --allow_keys;
-      if (c != Ctrl_N && c != Ctrl_G && c != Ctrl_O) {
-        /* it's something else */
-        vungetc(c);
-        c = Ctrl_BSL;
-      } else if (c == Ctrl_G && p_im)
+      if (s->c != Ctrl_N && s->c != Ctrl_G && s->c != Ctrl_O) {
+        // it's something else
+        vungetc(s->c);
+        s->c = Ctrl_BSL;
+      } else if (s->c == Ctrl_G && p_im) {
         continue;
-      else {
-        if (c == Ctrl_O) {
+      } else {
+        if (s->c == Ctrl_O) {
           ins_ctrl_o();
-          ins_at_eol = FALSE;           /* cursor keeps its column */
-          nomove = TRUE;
+          ins_at_eol = false;  // cursor keeps its column
+          s->nomove = true;
         }
         count = 0;
         goto doESCkey;
       }
     }
 
-    c = do_digraph(c);
+    s->c = do_digraph(s->c);
 
-    if ((c == Ctrl_V || c == Ctrl_Q) && ctrl_x_mode == CTRL_X_CMDLINE)
+    if ((s->c == Ctrl_V || s->c == Ctrl_Q) && ctrl_x_mode == CTRL_X_CMDLINE) {
       goto docomplete;
-    if (c == Ctrl_V || c == Ctrl_Q) {
+    }
+
+    if (s->c == Ctrl_V || s->c == Ctrl_Q) {
       ins_ctrl_v();
-      c = Ctrl_V;       /* pretend CTRL-V is last typed character */
+      s->c = Ctrl_V;       // pretend CTRL-V is last typed character
       continue;
     }
 
     if (cindent_on()
-        && ctrl_x_mode == 0
-        ) {
-      /* A key name preceded by a bang means this key is not to be
-       * inserted.  Skip ahead to the re-indenting below.
-       * A key name preceded by a star means that indenting has to be
-       * done before inserting the key. */
-      line_is_white = inindent(0);
-      if (in_cinkeys(c, '!', line_is_white))
+        && ctrl_x_mode == 0) {
+      // A key name preceded by a bang means this key is not to be
+      // inserted.  Skip ahead to the re-indenting below.
+      // A key name preceded by a star means that indenting has to be
+      // done before inserting the key.
+      s->line_is_white = inindent(0);
+      if (in_cinkeys(s->c, '!', s->line_is_white)) {
         goto force_cindent;
-      if (can_cindent && in_cinkeys(c, '*', line_is_white)
-          && stop_arrow() == OK)
+      }
+
+      if (can_cindent && in_cinkeys(s->c, '*', s->line_is_white)
+          && stop_arrow() == OK) {
         do_c_expr_indent();
+      }
     }
 
     if (curwin->w_p_rl)
-      switch (c) {
-      case K_LEFT:    c = K_RIGHT; break;
-      case K_S_LEFT:  c = K_S_RIGHT; break;
-      case K_C_LEFT:  c = K_C_RIGHT; break;
-      case K_RIGHT:   c = K_LEFT; break;
-      case K_S_RIGHT: c = K_S_LEFT; break;
-      case K_C_RIGHT: c = K_C_LEFT; break;
+      switch (s->c) {
+        case K_LEFT:    s->c = K_RIGHT; break;
+        case K_S_LEFT:  s->c = K_S_RIGHT; break;
+        case K_C_LEFT:  s->c = K_C_RIGHT; break;
+        case K_RIGHT:   s->c = K_LEFT; break;
+        case K_S_RIGHT: s->c = K_S_LEFT; break;
+        case K_C_RIGHT: s->c = K_C_LEFT; break;
       }
 
-    /*
-     * If 'keymodel' contains "startsel", may start selection.  If it
-     * does, a CTRL-O and c will be stuffed, we need to get these
-     * characters.
-     */
-    if (ins_start_select(c))
+    // If 'keymodel' contains "startsel", may start selection.  If it
+    // does, a CTRL-O and c will be stuffed, we need to get these
+    // characters.
+    if (ins_start_select(s->c)) {
       continue;
+    }
 
-    /*
-     * The big switch to handle a character in insert mode.
-     */
-    switch (c) {
-    case ESC:           /* End input mode */
-      if (echeck_abbr(ESC + ABBR_OFF))
+    // The big switch to handle a character in insert mode.
+    // TODO(tarruda): This could look better if a lookup table is used.
+    // (similar to normal mode `nv_cmds[]`)
+    switch (s->c) {
+    case ESC:           // End input mode
+      if (echeck_abbr(ESC + ABBR_OFF)) {
         break;
-    /*FALLTHROUGH*/
+      }
+    // FALLTHROUGH
 
-    case Ctrl_C:        /* End input mode */
-      if (c == Ctrl_C && cmdwin_type != 0) {
-        /* Close the cmdline window. */
+    case Ctrl_C:        // End input mode
+      if (s->c == Ctrl_C && cmdwin_type != 0) {
+        // Close the cmdline window. */
         cmdwin_result = K_IGNORE;
-        got_int = FALSE;         /* don't stop executing autocommands et al. */
-        nomove = TRUE;
+        got_int = false;         // don't stop executing autocommands et al
+        s->nomove = true;
         goto doESCkey;
       }
 
@@ -792,7 +819,7 @@ do_intr:
       // Insert mode
       if (goto_im()) {
         if (got_int) {
-          (void)vgetc();                        /* flush all buffers */
+          (void)vgetc();                        // flush all buffers
           got_int = false;
         } else {
           vim_beep(BO_IM);
@@ -800,137 +827,148 @@ do_intr:
         break;
       }
 doESCkey:
-      /*
-       * This is the ONLY return from edit()!
-       */
-      /* Always update o_lnum, so that a "CTRL-O ." that adds a line
-       * still puts the cursor back after the inserted text. */
-      if (ins_at_eol && gchar_cursor() == NUL)
+      // This is the ONLY return from edit()!
+      // Always update o_lnum, so that a "CTRL-O ." that adds a line
+      // still puts the cursor back after the inserted text.
+      if (ins_at_eol && gchar_cursor() == NUL) {
         o_lnum = curwin->w_cursor.lnum;
+      }
 
-      if (ins_esc(&count, cmdchar, nomove)) {
-        if (cmdchar != 'r' && cmdchar != 'v')
-          apply_autocmds(EVENT_INSERTLEAVE, NULL, NULL,
-              FALSE, curbuf);
-        did_cursorhold = FALSE;
-        return c == Ctrl_O;
+      if (ins_esc(&count, cmdchar, s->nomove)) {
+        if (cmdchar != 'r' && cmdchar != 'v') {
+          apply_autocmds(EVENT_INSERTLEAVE, NULL, NULL, false, curbuf);
+        }
+        did_cursorhold = false;
+        return s->c == Ctrl_O;
       }
       continue;
 
-    case Ctrl_Z:        /* suspend when 'insertmode' set */
-      if (!p_im)
-        goto normalchar;                /* insert CTRL-Z as normal char */
+    case Ctrl_Z:        // suspend when 'insertmode' set
+      if (!p_im) {
+        goto normalchar;                // insert CTRL-Z as normal char
+      }
       stuffReadbuff((char_u *)":st\r");
-      c = Ctrl_O;
-    /*FALLTHROUGH*/
+      s->c = Ctrl_O;
+    // FALLTHROUGH
 
-    case Ctrl_O:        /* execute one command */
-      if (ctrl_x_mode == CTRL_X_OMNI)
+    case Ctrl_O:        // execute one command
+      if (ctrl_x_mode == CTRL_X_OMNI) {
         goto docomplete;
-      if (echeck_abbr(Ctrl_O + ABBR_OFF))
+      }
+
+      if (echeck_abbr(Ctrl_O + ABBR_OFF)) {
         break;
+      }
+
       ins_ctrl_o();
 
-      /* don't move the cursor left when 'virtualedit' has "onemore". */
+      // don't move the cursor left when 'virtualedit' has "onemore".
       if (ve_flags & VE_ONEMORE) {
-        ins_at_eol = FALSE;
-        nomove = TRUE;
+        ins_at_eol = false;
+        s->nomove = true;
       }
+
       count = 0;
       goto doESCkey;
 
-    case K_INS:         /* toggle insert/replace mode */
+    case K_INS:         // toggle insert/replace mode
     case K_KINS:
-      ins_insert(replaceState);
+      ins_insert(s->replaceState);
       break;
 
-    case K_SELECT:      /* end of Select mode mapping - ignore */
+    case K_SELECT:      // end of Select mode mapping - ignore
       break;
 
 
-    case K_HELP:        /* Help key works like <ESC> <Help> */
+    case K_HELP:        // Help key works like <ESC> <Help>
     case K_F1:
     case K_XF1:
       stuffcharReadbuff(K_HELP);
-      if (p_im)
-        need_start_insertmode = TRUE;
+      if (p_im) {
+        need_start_insertmode = true;
+      }
       goto doESCkey;
 
 
-    case K_ZERO:        /* Insert the previously inserted text. */
+    case K_ZERO:        // Insert the previously inserted text.
     case NUL:
     case Ctrl_A:
-      /* For ^@ the trailing ESC will end the insert, unless there is an
-       * error.  */
-      if (stuff_inserted(NUL, 1L, (c == Ctrl_A)) == FAIL
-          && c != Ctrl_A && !p_im)
-        goto doESCkey;                  /* quit insert mode */
-      inserted_space = FALSE;
+      // For ^@ the trailing ESC will end the insert, unless there is an
+      // error.
+      if (stuff_inserted(NUL, 1L, (s->c == Ctrl_A)) == FAIL
+          && s->c != Ctrl_A && !p_im)
+        goto doESCkey;                  // quit insert mode
+      s->inserted_space = false;
       break;
 
-    case Ctrl_R:        /* insert the contents of a register */
+    case Ctrl_R:        // insert the contents of a register
       ins_reg();
-      auto_format(FALSE, TRUE);
-      inserted_space = FALSE;
+      auto_format(false, true);
+      s->inserted_space = false;
       break;
 
-    case Ctrl_G:        /* commands starting with CTRL-G */
+    case Ctrl_G:        // commands starting with CTRL-G
       ins_ctrl_g();
       break;
 
-    case Ctrl_HAT:      /* switch input mode and/or langmap */
+    case Ctrl_HAT:      // switch input mode and/or langmap
       ins_ctrl_hat();
       break;
 
-    case Ctrl__:        /* switch between languages */
-      if (!p_ari)
+    case Ctrl__:        // switch between languages
+      if (!p_ari) {
         goto normalchar;
+      }
       ins_ctrl_();
       break;
 
-    case Ctrl_D:        /* Make indent one shiftwidth smaller. */
-      if (ctrl_x_mode == CTRL_X_PATH_DEFINES)
+    case Ctrl_D:        // Make indent one shiftwidth smaller.
+      if (ctrl_x_mode == CTRL_X_PATH_DEFINES) {
         goto docomplete;
-    /* FALLTHROUGH */
+      }
+    // FALLTHROUGH
 
-    case Ctrl_T:        /* Make indent one shiftwidth greater. */
-      if (c == Ctrl_T && ctrl_x_mode == CTRL_X_THESAURUS) {
-        if (has_compl_option(FALSE))
+    case Ctrl_T:        // Make indent one shiftwidth greater.
+      if (s->c == Ctrl_T && ctrl_x_mode == CTRL_X_THESAURUS) {
+        if (has_compl_option(false)) {
           goto docomplete;
+        }
         break;
       }
-      ins_shift(c, lastc);
-      auto_format(FALSE, TRUE);
-      inserted_space = FALSE;
+      ins_shift(s->c, s->lastc);
+      auto_format(false, true);
+      s->inserted_space = false;
       break;
 
-    case K_DEL:         /* delete character under the cursor */
+    case K_DEL:         // delete character under the cursor
     case K_KDEL:
       ins_del();
-      auto_format(FALSE, TRUE);
+      auto_format(false, true);
       break;
 
-    case K_BS:          /* delete character before the cursor */
+    case K_BS:          // delete character before the cursor
     case Ctrl_H:
-      did_backspace = ins_bs(c, BACKSPACE_CHAR, &inserted_space);
-      auto_format(FALSE, TRUE);
+      s->did_backspace = ins_bs(s->c, BACKSPACE_CHAR, &s->inserted_space);
+      auto_format(false, true);
       break;
 
-    case Ctrl_W:        /* delete word before the cursor */
-      did_backspace = ins_bs(c, BACKSPACE_WORD, &inserted_space);
-      auto_format(FALSE, TRUE);
+    case Ctrl_W:        // delete word before the cursor
+      s->did_backspace = ins_bs(s->c, BACKSPACE_WORD, &s->inserted_space);
+      auto_format(false, true);
       break;
 
-    case Ctrl_U:        /* delete all inserted text in current line */
-      /* CTRL-X CTRL-U completes with 'completefunc'. */
-      if (ctrl_x_mode == CTRL_X_FUNCTION)
+    case Ctrl_U:        // delete all inserted text in current line
+      // CTRL-X CTRL-U completes with 'completefunc'.
+      if (ctrl_x_mode == CTRL_X_FUNCTION) {
         goto docomplete;
-      did_backspace = ins_bs(c, BACKSPACE_LINE, &inserted_space);
-      auto_format(FALSE, TRUE);
-      inserted_space = FALSE;
+      }
+
+      s->did_backspace = ins_bs(s->c, BACKSPACE_LINE, &s->inserted_space);
+      auto_format(false, true);
+      s->inserted_space = false;
       break;
 
-    case K_LEFTMOUSE:       /* mouse keys */
+    case K_LEFTMOUSE:     // mouse keys
     case K_LEFTMOUSE_NM:
     case K_LEFTDRAG:
     case K_LEFTRELEASE:
@@ -947,301 +985,324 @@ doESCkey:
     case K_X2MOUSE:
     case K_X2DRAG:
     case K_X2RELEASE:
-      ins_mouse(c);
+      ins_mouse(s->c);
       break;
 
-    case K_MOUSEDOWN:     /* Default action for scroll wheel up: scroll up */
+    case K_MOUSEDOWN:   // Default action for scroll wheel up: scroll up
       ins_mousescroll(MSCR_DOWN);
       break;
 
-    case K_MOUSEUP:     /* Default action for scroll wheel down: scroll down */
+    case K_MOUSEUP:     // Default action for scroll wheel down: scroll down
       ins_mousescroll(MSCR_UP);
       break;
 
-    case K_MOUSELEFT:     /* Scroll wheel left */
+    case K_MOUSELEFT:   // Scroll wheel left
       ins_mousescroll(MSCR_LEFT);
       break;
 
-    case K_MOUSERIGHT:     /* Scroll wheel right */
+    case K_MOUSERIGHT:  // Scroll wheel right
       ins_mousescroll(MSCR_RIGHT);
       break;
 
-    case K_IGNORE:      /* Something mapped to nothing */
+    case K_IGNORE:      // Something mapped to nothing
       break;
 
     case K_EVENT:       // some event
       queue_process_events(loop.events);
       break;
 
-    case K_HOME:        /* <Home> */
+    case K_HOME:        // <Home>
     case K_KHOME:
     case K_S_HOME:
     case K_C_HOME:
-      ins_home(c);
+      ins_home(s->c);
       break;
 
-    case K_END:         /* <End> */
+    case K_END:         // <End>
     case K_KEND:
     case K_S_END:
     case K_C_END:
-      ins_end(c);
+      ins_end(s->c);
       break;
 
-    case K_LEFT:        /* <Left> */
-      if (mod_mask & (MOD_MASK_SHIFT|MOD_MASK_CTRL))
+    case K_LEFT:        // <Left>
+      if (mod_mask & (MOD_MASK_SHIFT|MOD_MASK_CTRL)) {
         ins_s_left();
-      else
+      } else {
         ins_left(dont_sync_undo == false);
+      }
       break;
 
-    case K_S_LEFT:      /* <S-Left> */
+    case K_S_LEFT:      // <S-Left>
     case K_C_LEFT:
       ins_s_left();
       break;
 
-    case K_RIGHT:       /* <Right> */
-      if (mod_mask & (MOD_MASK_SHIFT|MOD_MASK_CTRL))
+    case K_RIGHT:       // <Right>
+      if (mod_mask & (MOD_MASK_SHIFT|MOD_MASK_CTRL)) {
         ins_s_right();
-      else
+      } else {
         ins_right(dont_sync_undo == false);
+      }
       break;
 
-    case K_S_RIGHT:     /* <S-Right> */
+    case K_S_RIGHT:     // <S-Right>
     case K_C_RIGHT:
       ins_s_right();
       break;
 
-    case K_UP:          /* <Up> */
-      if (pum_visible())
+    case K_UP:          // <Up>
+      if (pum_visible()) {
         goto docomplete;
-      if (mod_mask & MOD_MASK_SHIFT)
+      }
+
+      if (mod_mask & MOD_MASK_SHIFT) {
         ins_pageup();
-      else
-        ins_up(FALSE);
+      } else {
+        ins_up(false);
+      }
       break;
 
-    case K_S_UP:        /* <S-Up> */
+    case K_S_UP:        // <S-Up>
     case K_PAGEUP:
     case K_KPAGEUP:
-      if (pum_visible())
+      if (pum_visible()) {
         goto docomplete;
+      }
       ins_pageup();
       break;
 
-    case K_DOWN:        /* <Down> */
-      if (pum_visible())
+    case K_DOWN:        // <Down>
+      if (pum_visible()) {
         goto docomplete;
-      if (mod_mask & MOD_MASK_SHIFT)
+      }
+
+      if (mod_mask & MOD_MASK_SHIFT) {
         ins_pagedown();
-      else
-        ins_down(FALSE);
+      } else {
+        ins_down(false);
+      }
       break;
 
-    case K_S_DOWN:      /* <S-Down> */
+    case K_S_DOWN:      // <S-Down>
     case K_PAGEDOWN:
     case K_KPAGEDOWN:
-      if (pum_visible())
+      if (pum_visible()) {
         goto docomplete;
+      }
+
       ins_pagedown();
       break;
 
 
-    case K_S_TAB:       /* When not mapped, use like a normal TAB */
-      c = TAB;
-    /* FALLTHROUGH */
+    case K_S_TAB:       // When not mapped, use like a normal TAB
+      s->c = TAB;
+    // FALLTHROUGH
 
-    case TAB:           /* TAB or Complete patterns along path */
-      if (ctrl_x_mode == CTRL_X_PATH_PATTERNS)
+    case TAB:           // TAB or Complete patterns along path
+      if (ctrl_x_mode == CTRL_X_PATH_PATTERNS) {
         goto docomplete;
-      inserted_space = FALSE;
-      if (ins_tab())
-        goto normalchar;                /* insert TAB as a normal char */
-      auto_format(FALSE, TRUE);
+      }
+      s->inserted_space = false;
+      if (ins_tab()) {
+        goto normalchar;                // insert TAB as a normal char
+      }
+      auto_format(false, true);
       break;
 
-    case K_KENTER:      /* <Enter> */
-      c = CAR;
-    /* FALLTHROUGH */
+    case K_KENTER:      // <Enter>
+      s->c = CAR;
+    // FALLTHROUGH
     case CAR:
     case NL:
-      /* In a quickfix window a <CR> jumps to the error under the
-       * cursor. */
-      if (bt_quickfix(curbuf) && c == CAR) {
-        if (curwin->w_llist_ref == NULL)            /* quickfix window */
+      // In a quickfix window a <CR> jumps to the error under the
+      // cursor.
+      if (bt_quickfix(curbuf) && s->c == CAR) {
+        if (curwin->w_llist_ref == NULL) {          // quickfix window
           do_cmdline_cmd(".cc");
-        else                                        /* location list window */
+        } else {                                    // location list window
           do_cmdline_cmd(".ll");
+        }
         break;
       }
       if (cmdwin_type != 0) {
-        /* Execute the command in the cmdline window. */
+        // Execute the command in the cmdline window.
         cmdwin_result = CAR;
         goto doESCkey;
       }
-      if (ins_eol(c) && !p_im)
-        goto doESCkey;              /* out of memory */
-      auto_format(FALSE, FALSE);
-      inserted_space = FALSE;
+      if (ins_eol(s->c) && !p_im) {
+        goto doESCkey;  // out of memory
+      }
+      auto_format(false, false);
+      s->inserted_space = false;
       break;
 
-    case Ctrl_K:            /* digraph or keyword completion */
+    case Ctrl_K:        // digraph or keyword completion
       if (ctrl_x_mode == CTRL_X_DICTIONARY) {
-        if (has_compl_option(TRUE))
+        if (has_compl_option(true)) {
           goto docomplete;
+        }
         break;
       }
-      c = ins_digraph();
-      if (c == NUL)
+
+      s->c = ins_digraph();
+      if (s->c == NUL) {
         break;
+      }
       goto normalchar;
 
-    case Ctrl_X:        /* Enter CTRL-X mode */
+    case Ctrl_X:        // Enter CTRL-X mode
       ins_ctrl_x();
       break;
 
-    case Ctrl_RSB:      /* Tag name completion after ^X */
-      if (ctrl_x_mode != CTRL_X_TAGS)
+    case Ctrl_RSB:      // Tag name completion after ^X
+      if (ctrl_x_mode != CTRL_X_TAGS) {
         goto normalchar;
+      }
       goto docomplete;
 
-    case Ctrl_F:        /* File name completion after ^X */
-      if (ctrl_x_mode != CTRL_X_FILES)
+    case Ctrl_F:        // File name completion after ^X
+      if (ctrl_x_mode != CTRL_X_FILES) {
         goto normalchar;
+      }
       goto docomplete;
 
-    case 's':           /* Spelling completion after ^X */
+    case 's':           // Spelling completion after ^X
     case Ctrl_S:
-      if (ctrl_x_mode != CTRL_X_SPELL)
+      if (ctrl_x_mode != CTRL_X_SPELL) {
         goto normalchar;
+      }
       goto docomplete;
 
-    case Ctrl_L:        /* Whole line completion after ^X */
+    case Ctrl_L:        // Whole line completion after ^X
       if (ctrl_x_mode != CTRL_X_WHOLE_LINE) {
-        /* CTRL-L with 'insertmode' set: Leave Insert mode */
+        // CTRL-L with 'insertmode' set: Leave Insert mode
         if (p_im) {
-          if (echeck_abbr(Ctrl_L + ABBR_OFF))
+          if (echeck_abbr(Ctrl_L + ABBR_OFF)) {
             break;
+          }
           goto doESCkey;
         }
         goto normalchar;
       }
-    /* FALLTHROUGH */
+    // FALLTHROUGH
 
-    case Ctrl_P:        /* Do previous/next pattern completion */
+    case Ctrl_P:        // Do previous/next pattern completion
     case Ctrl_N:
-      /* if 'complete' is empty then plain ^P is no longer special,
-       * but it is under other ^X modes */
+      // if 'complete' is empty then plain ^P is no longer special,
+      // but it is under other ^X modes
       if (*curbuf->b_p_cpt == NUL
           && ctrl_x_mode != 0
-          && !(compl_cont_status & CONT_LOCAL))
+          && !(compl_cont_status & CONT_LOCAL)) {
         goto normalchar;
+      }
 
 docomplete:
-      compl_busy = TRUE;
-      if (ins_complete(c) == FAIL)
+      compl_busy = true;
+      if (ins_complete(s->c) == FAIL) {
         compl_cont_status = 0;
-      compl_busy = FALSE;
+      }
+      compl_busy = false;
       break;
 
-    case Ctrl_Y:        /* copy from previous line or scroll down */
-    case Ctrl_E:        /* copy from next line	   or scroll up */
-      c = ins_ctrl_ey(c);
+    case Ctrl_Y:        // copy from previous line or scroll down
+    case Ctrl_E:        // copy from next line or scroll up
+      s->c = ins_ctrl_ey(s->c);
       break;
 
     default:
 #ifdef UNIX
-      if (c == intr_char)               /* special interrupt char */
+      if (s->c == intr_char)               // special interrupt char
         goto do_intr;
 #endif
 
 normalchar:
-      /*
-       * Insert a normal character.
-       */
+      // Insert a normal character.
       if (!p_paste) {
-        /* Trigger InsertCharPre. */
-        char_u *str = do_insert_char_pre(c);
+        // Trigger InsertCharPre.
+        char_u *str = do_insert_char_pre(s->c);
         char_u *p;
 
         if (str != NULL) {
           if (*str != NUL && stop_arrow() != FAIL) {
-            /* Insert the new value of v:char literally. */
+            // Insert the new value of v:char literally.
             for (p = str; *p != NUL; mb_ptr_adv(p)) {
-              c = PTR2CHAR(p);
-              if (c == CAR || c == K_KENTER || c == NL)
-                ins_eol(c);
-              else
-                ins_char(c);
+              s->c = PTR2CHAR(p);
+              if (s->c == CAR || s->c == K_KENTER || s->c == NL) {
+                ins_eol(s->c);
+              } else {
+                ins_char(s->c);
+              }
             }
             AppendToRedobuffLit(str, -1);
           }
           xfree(str);
-          c = NUL;
+          s->c = NUL;
         }
 
-        /* If the new value is already inserted or an empty string
-         * then don't insert any character. */
-        if (c == NUL)
+        // If the new value is already inserted or an empty string
+        // then don't insert any character.
+        if (s->c == NUL)
           break;
       }
-      /* Try to perform smart-indenting. */
-      ins_try_si(c);
+      // Try to perform smart-indenting.
+      ins_try_si(s->c);
 
-      if (c == ' ') {
-        inserted_space = TRUE;
-        if (inindent(0))
-          can_cindent = FALSE;
+      if (s->c == ' ') {
+        s->inserted_space = true;
+        if (inindent(0)) {
+          can_cindent = false;
+        }
         if (Insstart_blank_vcol == MAXCOL
-            && curwin->w_cursor.lnum == Insstart.lnum)
+            && curwin->w_cursor.lnum == Insstart.lnum) {
           Insstart_blank_vcol = get_nolist_virtcol();
+        }
       }
 
-      /* Insert a normal character and check for abbreviations on a
-       * special character.  Let CTRL-] expand abbreviations without
-       * inserting it. */
-      if (vim_iswordc(c) || (!echeck_abbr(
-                                 /* Add ABBR_OFF for characters above 0x100, this is
-                                  * what check_abbr() expects. */
-                                 (has_mbyte && c >= 0x100) ? (c + ABBR_OFF) :
-                                 c) && c != Ctrl_RSB)) {
-        insert_special(c, FALSE, FALSE);
+      // Insert a normal character and check for abbreviations on a
+      // special character.  Let CTRL-] expand abbreviations without
+      // inserting it.
+      if (vim_iswordc(s->c)
+          || (!echeck_abbr(
+            // Add ABBR_OFF for characters above 0x100, this is
+            // what check_abbr() expects.
+            (has_mbyte && s->c >= 0x100) ? (s->c + ABBR_OFF) : s->c)
+            && s->c != Ctrl_RSB)) {
+        insert_special(s->c, false, false);
         revins_legal++;
         revins_chars++;
       }
 
-      auto_format(FALSE, TRUE);
+      auto_format(false, true);
 
-      /* When inserting a character the cursor line must never be in a
-       * closed fold. */
+      // When inserting a character the cursor line must never be in a
+      // closed fold.
       foldOpenCursor();
       break;
-    }       /* end of switch (c) */
+    }       // end of switch (s->c)
 
     // If typed something may trigger CursorHoldI again.
-    if (c != K_EVENT) {
+    if (s->c != K_EVENT) {
       did_cursorhold = false;
     }
 
-    /* If the cursor was moved we didn't just insert a space */
-    if (arrow_used)
-      inserted_space = FALSE;
-
-    if (can_cindent && cindent_on()
-        && ctrl_x_mode == 0
-        ) {
-force_cindent:
-      /*
-       * Indent now if a key was typed that is in 'cinkeys'.
-       */
-      if (in_cinkeys(c, ' ', line_is_white)) {
-        if (stop_arrow() == OK)
-          /* re-indent the current line */
-          do_c_expr_indent();
-      }
+    // If the cursor was moved we didn't just insert a space */
+    if (arrow_used) {
+      s->inserted_space = false;
     }
 
-  }     /* for (;;) */
-  /* NOTREACHED */
+    if (can_cindent && cindent_on() && ctrl_x_mode == 0) {
+force_cindent:
+      // Indent now if a key was typed that is in 'cinkeys'.
+      if (in_cinkeys(s->c, ' ', s->line_is_white)) {
+        if (stop_arrow() == OK) {
+          // re-indent the current line
+          do_c_expr_indent();
+        }
+      }
+    }
+  }  // for (;;)
+  // NOTREACHED
 }
 
 /*
