@@ -249,6 +249,7 @@ static void tk_getkeys(TermInput *input, bool force)
 static void timer_cb(TimeWatcher *watcher, void *data)
 {
   tk_getkeys(data, true);
+  flush_input(data, true);
 }
 
 static bool handle_bracketed_paste(TermInput *input)
