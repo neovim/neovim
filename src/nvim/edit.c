@@ -7741,6 +7741,8 @@ static void ins_mousescroll(int dir)
             (long)(curwin->w_botline - curwin->w_topline));
       else
         scroll_redraw(dir, 3L);
+    } else {
+        mouse_scroll_horiz(dir);
     }
     did_scroll = TRUE;
   }

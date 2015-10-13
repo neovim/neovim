@@ -3927,6 +3927,8 @@ static void nv_mousescroll(cmdarg_T *cap)
       cap->count0 = 3;
       nv_scroll_line(cap);
     }
+  } else {
+    mouse_scroll_horiz(cap->arg);
   }
 
   curwin->w_redr_status = true;

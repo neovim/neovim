@@ -34,6 +34,12 @@
 #define MOUSE_X1       0x300  // Mouse-button X1 (6th)
 #define MOUSE_X2       0x400  // Mouse-button X2
 
+// Direction for nv_mousescroll() and ins_mousescroll()
+#define MSCR_DOWN       0     // DOWN must be FALSE
+#define MSCR_UP         1
+#define MSCR_LEFT       -1
+#define MSCR_RIGHT      -2
+
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mouse.h.generated.h"
