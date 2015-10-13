@@ -28,7 +28,9 @@
 # endif
 #endif
 
+#ifdef _MSC_VER
 typedef SSIZE_T ssize_t;
+#endif
 
 #ifndef SSIZE_MAX
 # ifdef _WIN64
