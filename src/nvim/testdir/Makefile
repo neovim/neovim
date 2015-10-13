@@ -29,7 +29,6 @@ SCRIPTS := test_eval.out                                               \
            test_charsearch.out                                         \
            test_close_count.out                                        \
            test_command_count.out                                      \
-           test_fixeol.out                                             \
 
 SCRIPTS_GUI := test16.out
 
