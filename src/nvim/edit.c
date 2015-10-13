@@ -7620,6 +7620,15 @@ static void ins_mousescroll(int dir)
             (long)(curwin->w_botline - curwin->w_topline));
       else
         scroll_redraw(dir, 3L);
+    } else {
+      int val, step = 6;
+
+      if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL))
+        step = curwin->w_width;
+      val = curwin->w_leftcol + (dir == MSCR_RIGHT ? -step : step);
+      if (val < 0)
+        val = 0;
+      gui_do_horiz_scroll(val, TRUE);
     }
     did_scroll = TRUE;
   }

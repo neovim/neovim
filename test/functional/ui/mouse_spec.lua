@@ -306,4 +306,35 @@ describe('Mouse input', function()
                                                            |
     ]])
   end)
+
+  it('horizontal scrolling', function()
+    nvim("command", "set nowrap")
+
+    feed("a <esc>20Ab<esc>")
+    screen:expect([[
+                               |
+                               |
+      bbbbbbbbbbbbbbb^b         |
+      ~                        |
+                               |
+    ]])
+
+    feed("<ScrollWheelLeft><0,0>")
+    screen:expect([[
+                               |
+                               |
+      n bbbbbbbbbbbbbbbbbbb^b   |
+      ~                        |
+                               |
+    ]])
+
+    feed("^<ScrollWheelRight><0,0>")
+    screen:expect([[
+      g                        |
+                               |
+      ^t and selection bbbbbbbbb|
+      ~                        |
+                               |
+    ]])
+  end)
 end)
