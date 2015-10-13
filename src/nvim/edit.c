@@ -7628,7 +7628,7 @@ static void ins_mousescroll(int dir)
       val = curwin->w_leftcol + (dir == MSCR_RIGHT ? -step : step);
       if (val < 0)
         val = 0;
-      gui_do_horiz_scroll(val, TRUE);
+      gui_do_horiz_scroll(val, true);
     }
     did_scroll = TRUE;
   }
