@@ -5479,6 +5479,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_bin = p_bin;
       buf->b_p_bomb = p_bomb;
       buf->b_p_et = p_et;
+      buf->b_p_fixeol = p_fixeol;
       buf->b_p_et_nobin = p_et_nobin;
       buf->b_p_ml = p_ml;
       buf->b_p_ml_nobin = p_ml_nobin;
