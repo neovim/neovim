@@ -44,6 +44,7 @@ typedef struct {
 /// @return NULL if `cmd` is NULL. Otherwise, a newly allocated command string.
 ///         It must be freed with `xfree` when no longer needed.
 static char *shell_escape(const char *cmd)
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char *ncmd;
 
@@ -66,11 +67,11 @@ static char *shell_escape(const char *cmd)
     // When 'shellxquote' is '(', append ')'.
     // When 'shellxquote' is '"(', append ')"'.
     if (STRCMP(p_sxq, "(") == 0) {
-      snprintf(ncmd, ncmd_size, "(%s)", ecmd);
+      vim_snprintf(ncmd, ncmd_size, "(%s)", ecmd);
     } else if (STRCMP(p_sxq, "\"(") == 0) {
-      snprintf(ncmd, ncmd_size, "\"(%s)\"", ecmd);
+      vim_snprintf(ncmd, ncmd_size, "\"(%s)\"", ecmd);
     } else {
-      snprintf(ncmd, ncmd_size, "%s%s%s", p_sxq, ecmd, p_sxq);
+      vim_snprintf(ncmd, ncmd_size, "%s%s%s", p_sxq, ecmd, p_sxq);
     }
 
     if (ecmd != (const char *)cmd) {
