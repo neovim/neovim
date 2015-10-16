@@ -66,7 +66,7 @@
  * (4) The encoding of the file is specified with 'fileencoding'.  Conversion
  *     is to be done when it's different from 'encoding'.
  *
- * The viminfo file is a special case: Only text is converted, not file names.
+ * The ShaDa file is a special case: Only text is converted, not file names.
  * Vim scripts may contain an ":encoding" command.  This has an effect for
  * some commands, like ":menutrans"
  */

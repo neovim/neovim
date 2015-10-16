@@ -1226,8 +1226,8 @@ if has("mksession")
   call append("$", "viewdir\tdirectory where to store files with :mkview")
   call <SID>OptionG("vdir", &vdir)
 endif
-if has("viminfo")
-  call append("$", "viminfo\tlist that specifies what to write in the viminfo file")
+if has("shada")
+  call append("$", "viminfo\tlist that specifies what to write in the ShaDa file")
   call <SID>OptionG("vi", &vi)
 endif
 if has("quickfix")

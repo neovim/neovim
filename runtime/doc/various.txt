@@ -370,6 +370,7 @@ N  *+reltime*		|reltime()| function, 'hlsearch'/'incsearch' timeout,
 			'redrawtime' option
 B  *+rightleft*		Right to left typing |'rightleft'|
 N  *+scrollbind*	|'scrollbind'|
+N  *+shada*		|'shada'|
 B  *+signs*		|:sign|
 N  *+smartindent*	|'smartindent'|
 N  *+startuptime*	|--startuptime| argument
@@ -387,7 +388,6 @@ N  *+textobjects*	|text-objects| selection
 N  *+title*		Setting the window 'title' and 'icon'
 N  *+toolbar*		|gui-toolbar|
 N  *+user_commands*	User-defined commands. |user-commands|
-N  *+viminfo*		|'viminfo'|
 N  *+vertsplit*		Vertically split windows |:vsplit|
 N  *+virtualedit*	|'virtualedit'|
 S  *+visual*		Visual mode |Visual-mode| Always enabled since 7.4.200.

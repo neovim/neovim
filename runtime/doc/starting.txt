@@ -12,7 +12,7 @@ Starting Vim						*starting*
 4. Suspending			|suspend|
 5. Saving settings		|save-settings|
 6. Views and Sessions		|views-sessions|
-7. The viminfo file		|viminfo-file|
+7. The ShaDa file		|shada-file|
 
 ==============================================================================
 1. Vim arguments					*vim-arguments*
@@ -128,7 +128,7 @@ argument.
 		"pat" in the first file being edited (see |pattern| for the
 		available search patterns).  The search starts at the cursor
 		position, which can be the first line or the cursor position
-		last used from |viminfo|. To force a search from the first
+		last used from |shada|. To force a search from the first
 		line use "+1 +/pat".
 
 +{command}						*-+c* *-c*
@@ -251,7 +251,7 @@ argument.
 							*-V* *verbose*
 -V[N]		Verbose.  Sets the 'verbose' option to [N] (default: 10).
 		Messages will be given for each file that is ":source"d and
-		for reading or writing a viminfo file.  Can be used to find
+		for reading or writing a ShaDa file.  Can be used to find
 		out what is happening upon startup and exit.
 		Example: >
 			vim -V8 foobar
@@ -322,10 +322,10 @@ argument.
 		same effect as "NONE", but loading plugins is not skipped.
 
 							*-i*
--i {viminfo}	The file "viminfo" is used instead of the default viminfo
-		file.  If the name "NONE" is used (all uppercase), no viminfo
-		file is read or written, even if 'viminfo' is set or when
-		":rv" or ":wv" are used.  See also |viminfo-file|.
+-i {shada}	The file {shada} is used instead of the default ShaDa
+		file.  If the name "NONE" is used (all uppercase), no ShaDa
+		file is read or written, even if 'shada' is set or when
+		":rsh" or ":wsh" are used.  See also |shada-file|.
 
 							*-s*
 -s {scriptin}	The script file "scriptin" is read.  The characters in the
@@ -475,9 +475,9 @@ accordingly.  Vim proceeds in this order:
 	Only when starting "gvim", the GUI initializations will be done.  See
 	|gui-init|.
 
-9. Read the viminfo file
-	If the 'viminfo' option is not empty, the viminfo file is read.  See
-	|viminfo-file|.
+9. Read the ShaDa file
+	If the 'shada' option is not empty, the ShaDa file is read.  See
+	|shada-file|.
 
 10. Read the quickfix file
 	If the "-q" flag was given to Vim, the quickfix file is read.  If this
@@ -564,10 +564,10 @@ just like executing a command from a vimrc/exrc in the current directory.
 If Vim takes a long time to start up, use the |--startuptime| argument to find
 out what happens.
 
-If you have "viminfo" enabled, the loading of the viminfo file may take a
-while.  You can find out if this is the problem by disabling viminfo for a
+If you have 'shada' enabled, the loading of the ShaDa file may take a
+while.  You can find out if this is the problem by disabling ShaDa for a
 moment (use the Vim argument "-i NONE", |-i|).  Try reducing the number of
-lines stored in a register with ":set viminfo='20,<50,s10".  |viminfo-file|.
+lines stored in a register with ":set shada='20,<50,s10".  |shada-file|.
 
 							*:intro*
 When Vim starts without a file name, an introductory message is displayed (for
@@ -768,8 +768,8 @@ save a Session and when you restore it later the window layout looks the same.
 You can use a Session to quickly switch between different projects,
 automatically loading the files you were last working on in that project.
 
-Views and Sessions are a nice addition to viminfo-files, which are used to
-remember information for all Views and Sessions together |viminfo-file|.
+Views and Sessions are a nice addition to ShaDa files, which are used to
+remember information for all Views and Sessions together |shada-file|.
 
 You can quickly start editing with a previously saved View or Session with the
 |-S| argument: >
@@ -865,7 +865,7 @@ The output of ":mkview" contains these items:
 Note that Views and Sessions are not perfect:
 - They don't restore everything.  For example, defined functions, autocommands
   and ":syntax on" are not included.  Things like register contents and
-  command line history are in viminfo, not in Sessions or Views.
+  command line history are in ShaDa, not in Sessions or Views.
 - Global option values are only set when they differ from the default value.
   When the current value is not the default value, loading a Session will not
   set it back to the default value.  Local options will be set back to the
@@ -896,15 +896,16 @@ To automatically save and restore views for *.c files: >
 	au BufWinEnter *.c silent loadview
 
 ==============================================================================
-8. The viminfo file				*viminfo* *viminfo-file* *E136*
-						*E575* *E576* *E577*
+8. The ShaDa file				*shada* *shada-file*
+
 If you exit Vim and later start it again, you would normally lose a lot of
-information.  The viminfo file can be used to remember that information, which
-enables you to continue where you left off.
+information.  The ShaDa file can be used to remember that information, which
+enables you to continue where you left off.  Its name is the abbreviation of 
+SHAred DAta because it is used for sharing data between Neovim sessions.
 
 This is introduced in section |21.3| of the user manual.
 
-The viminfo file is used to store:
+The ShaDa file is used to store:
 - The command line history.
 - The search string history.
 - The input-line history.
@@ -915,62 +916,59 @@ The viminfo file is used to store:
 - The buffer list.
 - Global variables.
 
-The viminfo file is not supported when the |+viminfo| feature has been
-disabled at compile time.
-
-You could also use a Session file.  The difference is that the viminfo file
+You could also use a Session file.  The difference is that the ShaDa file
 does not depend on what you are working on.  There normally is only one
-viminfo file.  Session files are used to save the state of a specific editing
+ShaDa file.  Session files are used to save the state of a specific editing
 Session.  You could have several Session files, one for each project you are
-working on.  Viminfo and Session files together can be used to effectively
+working on.  ShaDa and Session files together can be used to effectively
 enter Vim and directly start working in your desired setup. |session-file|
 
-							*viminfo-read*
-When Vim is started and the 'viminfo' option is non-empty, the contents of
-the viminfo file are read and the info can be used in the appropriate places.
+							*shada-read*
+When Vim is started and the 'shada' option is non-empty, the contents of
+the ShaDa file are read and the info can be used in the appropriate places.
 The |v:oldfiles| variable is filled.  The marks are not read in at startup
-(but file marks are).  See |initialization| for how to set the 'viminfo'
+(but file marks are).  See |initialization| for how to set the 'shada'
 option upon startup.
 
-							*viminfo-write*
-When Vim exits and 'viminfo' is non-empty, the info is stored in the viminfo
-file (it's actually merged with the existing one, if one exists).  The
-'viminfo' option is a string containing information about what info should be
-stored, and contains limits on how much should be stored (see 'viminfo').
+							*shada-write*
+When Vim exits and 'shada' is non-empty, the info is stored in the ShaDa file 
+(it's actually merged with the existing one, if one exists |shada-merging|).  
+The 'shada' option is a string containing information about what info should 
+be stored, and contains limits on how much should be stored (see 'shada').
 
 Notes for Unix:
-- The file protection for the viminfo file will be set to prevent other users
+- The file protection for the ShaDa file will be set to prevent other users
   from being able to read it, because it may contain any text or commands that
   you have worked with.
-- If you want to share the viminfo file with other users (e.g. when you "su"
+- If you want to share the ShaDa file with other users (e.g. when you "su"
   to another user), you can make the file writable for the group or everybody.
-  Vim will preserve this when writing new viminfo files.  Be careful, don't
-  allow just anybody to read and write your viminfo file!
-- Vim will not overwrite a viminfo file that is not writable by the current
+  Vim will preserve this when writing new ShaDa files.  Be careful, don't
+  allow just anybody to read and write your ShaDa file!
+- Vim will not overwrite a ShaDa file that is not writable by the current
   "real" user.  This helps for when you did "su" to become root, but your
   $HOME is still set to a normal user's home directory.  Otherwise Vim would
-  create a viminfo file owned by root that nobody else can read.
-- The viminfo file cannot be a symbolic link.  This is to avoid security
+  create a ShaDa file owned by root that nobody else can read.
+- The ShaDa file cannot be a symbolic link.  This is to avoid security
   issues.
 
-Marks are stored for each file separately.  When a file is read and 'viminfo'
-is non-empty, the marks for that file are read from the viminfo file.  NOTE:
+Marks are stored for each file separately.  When a file is read and 'shada'
+is non-empty, the marks for that file are read from the ShaDa file.  NOTE:
 The marks are only written when exiting Vim, which is fine because marks are
 remembered for all the files you have opened in the current editing session,
 unless ":bdel" is used.  If you want to save the marks for a file that you are
-about to abandon with ":bdel", use ":wv".  The '[' and ']' marks are not
+about to abandon with ":bdel", use ":wsh".  The '[' and ']' marks are not
 stored, but the '"' mark is.  The '"' mark is very useful for jumping to the
 cursor position when the file was last exited.  No marks are saved for files
-that start with any string given with the "r" flag in 'viminfo'.  This can be
+that start with any string given with the "r" flag in 'shada'.  This can be
 used to avoid saving marks for files on removable media (for MS-DOS you would
 use "ra:,rb:".
-The |v:oldfiles| variable is filled with the file names that the viminfo file
+The |v:oldfiles| variable is filled with the file names that the ShaDa file
 has marks for.
 
-							*viminfo-file-marks*
-Uppercase marks ('A to 'Z) are stored when writing the viminfo file.  The
-numbered marks ('0 to '9) are a bit special.  When the viminfo file is written
-(when exiting or with the ":wviminfo" command), '0 is set to the current cursor
+							*shada-file-marks*
+Uppercase marks ('A to 'Z) are stored when writing the ShaDa file.  The
+numbered marks ('0 to '9) are a bit special.  When the ShaDa file is written
+(when exiting or with the |:wshada| command), '0 is set to the current cursor
 position and file.  The old '0 is moved to '1, '1 to '2, etc.  This
 resembles what happens with the "1 to "9 delete registers.  If the current
 cursor position is already present in '0 to '9, it is moved to '0, to avoid
@@ -988,93 +986,196 @@ For a bash-like shell: >
 
 	alias lvim='vim -c "normal '\''0"'
 
-Use the "r" flag in 'viminfo' to specify for which files no marks should be
+Use the "r" flag in 'shada' to specify for which files no marks should be
 remembered.
 
+MERGING							*shada-merging*
+									{Nvim}
+When writing ShaDa files with |:wshada| without bang or at regular exit 
+information in the existing ShaDa file is merged with information from current 
+Neovim instance.  For this purpose ShaDa files store timestamps associated 
+with ShaDa entries.  Specifically the following is being done:
 
-VIMINFO FILE NAME					*viminfo-file-name*
+1. History lines are merged, ordered by timestamp.  Maximum amount of items in 
+   ShaDa file is defined by 'shada' option (|shada-/|, |shada-:|, |shada-@|, 
+   etc: one suboption for each character that represents history name 
+   (|:history|)).
+2. Local marks and changes for files that were not opened by Neovim are copied 
+   to new ShaDa file. Marks for files that were opened by Neovim are merged, 
+   changes to files opened by Neovim are ignored. |shada-'|
+3. Jump list is merged: jumps are ordered by timestamp, identical jumps 
+   (identical position AND timestamp) are squashed.
+4. Search patterns and substitute strings are not merged: search pattern or 
+   substitute string which has greatest timestamp will be the only one copied 
+   to ShaDa file.
+5. For each register entity with greatest timestamp is the only saved. 
+   |shada-<|
+6. All saved variables are saved from current Neovim instance. Additionally 
+   existing variable values are copied, meaning that the only way to remove 
+   variable from a ShaDa file is either removing it by hand or disabling 
+   writing variables completely. |shada-!|
+7. For each global mark entity with greatest timestamp is the only saved.
+8. Buffer list and header are the only entries which are not merged in any 
+   fashion: the only header and buffer list present are the ones from the 
+   Neovim instance which was last writing the file. |shada-%|
 
-- The default name of the viminfo file is "$HOME/.viminfo" for Unix,
-  "$HOME\_viminfo" for MS-DOS and Win32.  For the last two, when $HOME is not
-  set, "$VIM\_viminfo" is used.  When $VIM is also not set, "c:\_viminfo" is
-  used.
-- The 'n' flag in the 'viminfo' option can be used to specify another viminfo
-  file name |'viminfo'|.
+COMPATIBILITY						*shada-compatibility*
+									{Nvim}
+ShaDa files are forward and backward compatible.  This means that
+
+1. Entries which have unknown type (i.e. that hold unidentified data) are 
+   ignored when reading and blindly copied when writing.
+2. Register entries with unknown register name are ignored when reading and 
+   blindly copied when writing. Limitation: only registers that use name with 
+   code in interval [1, 255] are supported. |registers|
+3. Register entries with unknown register type are ignored when reading and 
+   merged as usual when writing. |getregtype()|
+4. Local and global mark entries with unknown mark names are ignored when 
+   reading. When writing global mark entries are blindly copied and local mark 
+   entries are also blindly copied, but only if file they are attached to fits 
+   in the |shada-'| limit. Unknown local mark entry's timestamp is also taken 
+   into account when calculating which files exactly should fit into this 
+   limit. Limitation: only marks that use name with code in interval [1, 255] 
+   are supported. |mark-motions|
+5. History entries with unknown history type are ignored when reading and 
+   blindly copied when writing. Limitation: there can be only up to 256 
+   history types. |history|
+6. Unknown keys found in register, local mark, global mark, change, jump and 
+   search pattern entries are saved internally and dumped when writing. 
+   Entries created during Neovim session never have such additions.
+7. Additional elements found in replacement string and history entries are 
+   saved internally and dumped. Entries created during Neovim session never 
+   have such additions.
+8. Additional elements found in variable entries are simply ignored when 
+   reading. When writing new variables they will be preserved during merging, 
+   but that's all. Variable values dumped from current Neovim session never 
+   have additional elements, even if variables themselves were obtained by 
+   reading ShaDa files.
+
+"Blindly" here means that there will be no attempts to somehow merge them, 
+even if other entries (with known name/type/etc) are merged. |shada-merging|
+
+SHADA FILE NAME						*shada-file-name*
+
+- The default name of the ShaDa file is "$HOME/.nvim/shada/main.shada" for 
+  Unix, "$HOME\_nvim\shada\main.shada" for MS-DOS and Win32.  For the last 
+  two, when $HOME is not set, "$VIM\_nvim\shada\main.shada" is used.  When 
+  $VIM is also not set, "c:\_nvim\shada\main.shada" is used.
+- The 'n' flag in the 'shada' option can be used to specify another ShaDa
+  file name |'shada'|.
 - The "-i" Vim argument can be used to set another file name, |-i|.  When the
-  file name given is "NONE" (all uppercase), no viminfo file is ever read or
+  file name given is "NONE" (all uppercase), no ShaDa file is ever read or
   written.  Also not for the commands below!
 - For the commands below, another file name can be given, overriding the
-  default and the name given with 'viminfo' or "-i" (unless it's NONE).
+  default and the name given with 'shada' or "-i" (unless it's NONE).
 
 
-CHARACTER ENCODING					*viminfo-encoding*
+CHARACTER ENCODING					*shada-encoding*
 
-The text in the viminfo file is encoded as specified with the 'encoding'
-option.  Normally you will always work with the same 'encoding' value, and
-this works just fine.  However, if you read the viminfo file with another
-value for 'encoding' than what it was written with, some of the text
-(non-ASCII characters) may be invalid.  If this is unacceptable, add the 'c'
-flag to the 'viminfo' option: >
-	:set viminfo+=c
-Vim will then attempt to convert the text in the viminfo file from the
-'encoding' value it was written with to the current 'encoding' value.  This
-requires Vim to be compiled with the |+iconv| feature.  Filenames are not
-converted.
+The text in the ShaDa file is UTF-8-encoded.  Normally you will always work 
+with the same 'encoding' value, and this works just fine.  However, if you 
+read the ShaDa file with value for 'encoding' different from utf-8 and 
+'encoding' used when writing ShaDa file, some of the text (non-ASCII 
+characters) may be invalid as Neovim always attempts to convert the text in 
+the ShaDa file from the UTF-8 to the current 'encoding' value.  Filenames are 
+never converted, affected elements are:
+
+- history strings;
+- variable values;
+- register values;
+- last used search and substitute patterns;
+- last used substitute replacement string.
 
 
-MANUALLY READING AND WRITING				*viminfo-read-write*
+MANUALLY READING AND WRITING				*shada-read-write*
 
-Two commands can be used to read and write the viminfo file manually.  This
+Two commands can be used to read and write the ShaDa file manually.  This
 can be used to exchange registers between two running Vim programs: First
-type ":wv" in one and then ":rv" in the other.  Note that if the register
-already contained something, then ":rv!" would be required.  Also note
+type ":wsh" in one and then ":rsh" in the other.  Note that if the register
+already contained something, then ":rsh!" would be required.  Also note
 however that this means everything will be overwritten with information from
 the first Vim, including the command line history, etc.
 
-The viminfo file itself can be edited by hand too, although we suggest you
-start with an existing one to get the format right.  It is reasonably
-self-explanatory once you're in there.  This can be useful in order to
-create a second file, say "~/.my_viminfo" which could contain certain
-settings that you always want when you first start Vim.  For example, you
-can preload registers with particular data, or put certain commands in the
-command line history.  A line in your .vimrc file like >
-	:rviminfo! ~/.my_viminfo
-can be used to load this information.  You could even have different viminfos
-for different types of files (e.g., C code) and load them based on the file
-name, using the ":autocmd" command (see |:autocmd|).
+The ShaDa file itself can be edited by hand too, although we suggest you
+start with an existing one to get the format right.  You need to understand 
+MessagePack (or, more likely, find software that is able to use it) format to 
+do this.  This can be useful in order to create a second file, say 
+"~/.my.shada" which could contain certain settings that you always want when 
+you first start Neovim.  For example, you can preload registers with 
+particular data, or put certain commands in the command line history.  A line 
+in your .nvimrc file like >
+	:rshada! ~/.my.shada
+can be used to load this information.  You could even have different ShaDa 
+files for different types of files (e.g., C code) and load them based on the 
+file name, using the ":autocmd" command (see |:autocmd|).  More information on 
+ShaDa file format is contained in |shada-format| section.
 
-							*viminfo-errors*
-When Vim detects an error while reading a viminfo file, it will not overwrite
-that file.  If there are more than 10 errors, Vim stops reading the viminfo
-file.  This was done to avoid accidentally destroying a file when the file
-name of the viminfo file is wrong.  This could happen when accidentally typing
-"vim -i file" when you wanted "vim -R file" (yes, somebody accidentally did
-that!).  If you want to overwrite a viminfo file with an error in it, you will
-either have to fix the error, or delete the file (while Vim is running, so
-most of the information will be restored).
+					  *E136* *E138* *shada-error-handling*
+Some errors make Neovim leave temporary file named `{basename}.tmp.X` (X is 
+any free letter from `a` to `z`) while normally it will create this file, 
+write to it and then rename `{basename}.tmp.X` to `{basename}`. Such errors 
+include:
 
-						   *:rv* *:rviminfo* *E195*
-:rv[iminfo][!] [file]	Read from viminfo file [file] (default: see above).
+- Errors which make Neovim think that read file is not a ShaDa file at all: 
+  non-ShaDa files are not overwritten for safety reasons to avoid accidentally 
+  destroying an unrelated file.  This could happen e.g. when typing "nvim -i 
+  file" in place of "nvim -R file" (yes, somebody did that at least with Vim).  
+  Such errors are listed at |shada-critical-contents-errors|.
+- If writing to the temporary file failed: e.g. because of the insufficient 
+  space left.
+- If renaming file failed: e.g. because of insufficient permissions.
+- If target ShaDa file has different from the Neovim instance's owners (user 
+  and group) and changing them failed.  Unix-specific, applies only when 
+  Neovim was launched from root.
+
+Do not forget to remove the temporary file or replace the target file with 
+temporary one after getting one of the above errors or all attempts to create 
+a ShaDa file may fail with |E138|.  If you got one of them when using 
+|:wshada| (and not when exiting Neovim: i.e. when you have Neovim session 
+running) you have additional options:
+
+- First thing which you should consider if you got any error, except failure 
+  to write to the temporary file: remove existing file and replace it with the 
+  temporary file.  Do it even if you have running Neovim instance.
+- Fix the permissions and/or file ownership, free some space and attempt to 
+  write again.  Do not remove the existing file.
+- Use |:wshada| with bang.  Does not help in case of permission error.  If 
+  target file was actually the ShaDa file some information may be lost in this 
+  case.  To make the matters slightly better use |:rshada| prior to writing, 
+  but this still will loose buffer-local marks and change list entries for any 
+  file which is not opened in the current Neovim instance.
+- Remove the target file from shell and use |:wshada|.  Consequences are not 
+  different from using |:wshada| with bang, but "rm -f" works in some cases 
+  when you don't have write permissions.
+
+						    *:rsh* *:rshada* *E886*
+:rsh[ada][!] [file]	Read from ShaDa file [file] (default: see above).
 			If [!] is given, then any information that is
 			already set (registers, marks, |v:oldfiles|, etc.)
 			will be overwritten.
 
-				*:wv* *:wviminfo* *E137* *E138* *E574* *E886*
-:wv[iminfo][!] [file]	Write to viminfo file [file] (default: see above).
+						   *:rv* *:rviminfo*
+:rv[iminfo][!] [file]	Deprecated alias to |:rshada| command.
+
+						    *:wsh* *:wshada* *E137*
+:wsh[ada][!] [file]	Write to ShaDa file [file] (default: see above).
 			The information in the file is first read in to make
 			a merge between old and new info.  When [!] is used,
 			the old information is not read first, only the
-			internal info is written.  If 'viminfo' is empty, marks
-			for up to 100 files will be written.
-			When you get error "E138: Can't write viminfo file"
-			check that no old temp files were left behind (e.g.
-			~/.viminf*) and that you can write in the directory of
-			the .viminfo file.
+			internal info is written (also disables safety checks 
+			described in |shada-error-handling|).  If 'shada' is 
+			empty, marks for up to 100 files will be written.
+			When you get error "E138: All .tmp.X files exist, 
+			cannot write ShaDa file!" check that no old temp files 
+			were left behind (e.g. ~/.nvim/shada/main.shada.tmp*).
+
+						   *:wv* *:wviminfo*
+:wv[iminfo][!] [file]	Deprecated alias to |:wshada| command.
 
 						*:ol* *:oldfiles*
-:ol[dfiles]		List the files that have marks stored in the viminfo
+:ol[dfiles]		List the files that have marks stored in the ShaDa
 			file.  This list is read on startup and only changes
-			afterwards with ":rviminfo!".  Also see |v:oldfiles|.
+			afterwards with ":rshada!".  Also see |v:oldfiles|.
 			The number can be used with |c_#<|.
 
 :bro[wse] ol[dfiles][!]
@@ -1084,5 +1185,160 @@ most of the information will be restored).
 			If you get the |press-enter| prompt you can press "q"
 			and still get the prompt to enter a file number.
 			Use ! to abandon a modified buffer. |abandon|
+
+SHADA FILE FORMAT						*shada-format*
+
+ShaDa files are concats of MessagePack entries.  Each entry is a concat of 
+exactly four MessagePack objects:
+
+1. First goes type of the entry.  Object type must be an unsigned integer.  
+   Object type must not be equal to zero.
+2. Second goes entry timestamp.  It must also be an unsigned integer.
+3. Third goes the length of the fourth entry.  Unsigned integer as well, used 
+   for fast skipping without parsing.
+4. Fourth is actual entry data.  All currently used ShaDa entries use 
+   containers to hold data: either map or array.  Exact format depends on the 
+   entry type:
+
+   Entry type (name)   Entry data ~
+   1 (Header)          Map containing data that describes the generator 
+                       instance that wrote this ShaDa file.  It is ignored 
+                       when reading ShaDa files.  Contains the following data:
+                       Key        Data ~
+                       generator  Binary, software used to generate ShaDa 
+                                  file. Is equal to "nvim" when ShaDa file was 
+                                  written by Neovim.
+                       version    Binary, generator version.
+                       encoding   Binary, effective 'encoding' value.
+                       max_kbyte  Integer, effective |shada-s| limit value.
+                       pid        Integer, instance process ID.
+                       *          It is allowed to have any number of 
+                                  additional keys with any data.
+   2 (SearchPattern)   Map containing data describing last used search or 
+                       substitute pattern.  Normally ShaDa file contains two 
+                       such entries: one with "ss" key set to true (describes 
+                       substitute pattern, see |:substitute|), and one set to 
+                       false (describes search pattern, see 
+                       |search-commands|). "su" key should be true on one of 
+                       the entries.  If key value is equal to default then it 
+                       is normally not present.  Keys:
+                       Key  Type     Default  Description ~
+                       sm   Boolean  true     Effective 'magic' value.
+                       sc   Boolean  false    Effective 'smartcase' value.
+                       sl   Boolean  true     True if search pattern comes 
+                                              with a line offset.  See 
+                                              |search-offset|.
+                       se   Boolean  false    True if |search-offset| 
+                                              requested to place cursor at 
+                                              (relative to) the end of the 
+                                              pattern.
+                       so   Integer  0        Offset value. |search-offset|
+                       su   Boolean  false    True if current entry was the 
+                                              last used search pattern.
+                       ss   Boolean  false    True if current entry describes 
+                                              |:substitute| pattern.
+                       sh   Boolean  false    True if |v:hlsearch| is on.
+                                              With |shada-h| or 'nohlsearch' 
+                                              this key is always false.
+                       sp   Binary   N/A      Actual pattern.  Required.
+                       *    any      none     Other keys are allowed for 
+                                              compatibility reasons, see 
+                                              |shada-compatibility|.
+   3 (SubString)       Array containing last |:substitute| replacement string.  
+                       Contains single entry: binary, replacement string used.  
+                       More entries are allowed for compatibility reasons, see 
+                       |shada-compatibility|.
+   4 (HistoryEntry)    Array containing one entry from history.  Should have 
+                       two or three entries.  First one is history type 
+                       (unsigned integer), second is history line (binary), 
+                       third is the separator character (unsigned integer, 
+                       must be in interval [0, 255]).  Third item is only 
+                       valid for search history.  Possible history types are 
+                       listed in |hist-names|, here are the corresponding 
+                       numbers: 0 - cmd, 1 - search, 2 - expr, 3 - input, 
+                       4 - debug.
+   5 (Register)        Map describing one register (|registers|).  If key 
+                       value is equal to default then it is normally not 
+                       present.  Keys:
+                       Key  Type             Def  Description ~
+                       rt   UInteger         0    Register type:
+                                                  No  Description ~
+                                                  0   |characterwise-register|
+                                                  1   |linewise-register|
+                                                  2   |blockwise-register|
+                       rw   UInteger         0    Register width. Only valid 
+                                                  for |blockwise-register|s.
+                       rc   Array of binary  N/A  Register contents.  Each 
+                                                  entry in the array 
+                                                  represents its own line.  
+                                                  NUL characters inside the 
+                                                  line should be represented 
+                                                  as NL according to 
+                                                  |NL-used-for-Nul|.
+                       n    UInteger         N/A  Register name: character 
+                                                  code in range [1, 255].  
+                                                  Example: |quote0| register 
+                                                  has name 48 (ASCII code for 
+                                                  zero character).
+                       *    any              none Other keys are allowed 
+                                                  for compatibility reasons, 
+                                                  see |shada-compatibility|.
+   6 (Variable)        Array containing two items: variable name (binary) and 
+                       variable value (any object).  Values are converted 
+                       using the same code |msgpackparse()| uses when reading, 
+                       |msgpackdump()| when writing, so there may appear 
+                       |msgpack-special-dict|s.  If there are more then two 
+                       entries then the rest are ignored 
+                       (|shada-compatibility|).
+   7 (GlobalMark)
+   8 (Jump)
+   10 (LocalMark)
+   11 (Change)         Map containing some position description:
+                       Entry      Position ~
+                       GlobaMark  Global mark position. |'A|
+                       LocalMark  Local mark position. |'a|
+                       Jump       One position from the |jumplist|.
+                       Change     One position from the |changelist|.
+
+                       Data contained in the map:
+                       Key  Type      Default  Description ~
+                       l    UInteger  1        Position line number.  Must be 
+                                               greater then zero.
+                       c    UInteger  0        Position column number.
+                       n    UInteger  34 ('"') Mark name.  Only valid for 
+                                               GlobalMark and LocalMark 
+                                               entries.
+                       f    Binary    N/A      File name.  Required.
+                       *    any       none     Other keys are allowed for 
+                                               compatibility reasons, see 
+                                               |shada-compatibility|.
+   9 (BufferList)      Array containing maps.  Each map in the array 
+                       represents one buffer.  Possible keys:
+                       Key  Type      Default  Description ~
+                       l    UInteger  1        Position line number.  Must be 
+                                               greater then zero.
+                       c    UInteger  0        Position column number.
+                       f    Binary    N/A      File name.  Required.
+                       *    any       none     Other keys are allowed for 
+                                               compatibility reasons, see 
+                                               |shada-compatibility|.
+   * (Unknown)         Any other entry type is allowed for compatibility 
+                       reasons, see |shada-compatibility|.
+
+								*E575* *E576*
+Errors in ShaDa file may have two types: E575 used for all “logical” errors 
+and E576 used for all “critical” errors.  Critical errors trigger behaviour 
+described in |shada-error-handling| when writing and skipping the rest of the 
+file when reading and include:
+					    *shada-critical-contents-errors*
+- Any of first three MessagePack objects being not an unsigned integer.
+- Third object requesting amount of bytes greater then bytes left in the ShaDa 
+  file.
+- Entry with zero type.  I.e. first object being equal to zero.
+- MessagePack parser failing to parse the entry data.
+- MessagePack parser consuming less or requesting greater bytes then described 
+  in the third object for parsing fourth object.  I.e. when fourth object 
+  either contains more then one MessagePack object or it does not contain 
+  complete MessagePack object.
 
  vim:tw=78:ts=8:ft=help:norl:

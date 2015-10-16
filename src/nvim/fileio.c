@@ -57,6 +57,7 @@
 #include "nvim/types.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
+#include "nvim/shada.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
@@ -2166,16 +2167,17 @@ readfile_charconvert (
 
 
 /*
- * Read marks for the current buffer from the viminfo file, when we support
+ * Read marks for the current buffer from the ShaDa file, when we support
  * buffer marks and the buffer has a name.
  */
 static void check_marks_read(void)
 {
-  if (!curbuf->b_marks_read && get_viminfo_parameter('\'') > 0
-      && curbuf->b_ffname != NULL)
-    read_viminfo(NULL, VIF_WANT_MARKS);
+  if (!curbuf->b_marks_read && get_shada_parameter('\'') > 0
+      && curbuf->b_ffname != NULL) {
+    shada_read_marks();
+  }
 
-  /* Always set b_marks_read; needed when 'viminfo' is changed to include
+  /* Always set b_marks_read; needed when 'shada' is changed to include
    * the ' parameter after opening a buffer. */
   curbuf->b_marks_read = true;
 }

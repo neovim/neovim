@@ -44,11 +44,15 @@ elseif os.getenv('GDB') then
 end
 
 if prepend_argv then
+  local new_nvim_argv = {}
   local len = #prepend_argv
-  for i = 1, #nvim_argv do
-    prepend_argv[i + len] = nvim_argv[i]
+  for i = 1, len do
+    new_nvim_argv[i] = prepend_argv[i]
   end
-  nvim_argv = prepend_argv
+  for i = 1, #nvim_argv do
+    new_nvim_argv[i + len] = nvim_argv[i]
+  end
+  nvim_argv = new_nvim_argv
 end
 
 local session, loop_running, loop_stopped, last_error
@@ -174,12 +178,27 @@ local function rawfeed(...)
   end
 end
 
-local function spawn(argv)
+local function merge_args(...)
+  local i = 1
+  local argv = {}
+  for anum = 1,select('#', ...) do
+    local args = select(anum, ...)
+    if args then
+      for _, arg in ipairs(args) do
+        argv[i] = arg
+        i = i + 1
+      end
+    end
+  end
+  return argv
+end
+
+local function spawn(argv, merge)
   local loop = Loop.new()
   local msgpack_stream = MsgpackStream.new(loop)
   local async_session = AsyncSession.new(msgpack_stream)
   local session = Session.new(async_session)
-  loop:spawn(argv)
+  loop:spawn(merge and merge_args(prepend_argv, argv) or argv)
   return session
 end
 
@@ -216,9 +235,12 @@ local function execute(...)
 end
 
 -- Dedent the given text and write it to the file name.
-local function write_file(name, text)
+local function write_file(name, text, dont_dedent)
   local file = io.open(name, 'w')
-  file:write(dedent(text))
+  if not dont_dedent then
+    text = dedent(text)
+  end
+  file:write(text)
   file:flush()
   file:close()
 end
@@ -337,7 +359,40 @@ local exc_exec = function(cmd)
   return ret
 end
 
+local function redir_exec(cmd)
+  nvim_command(([[
+    redir => g:__output
+      silent! execute "%s"
+    redir END
+  ]]):format(cmd:gsub('\n', '\\n'):gsub('[\\"]', '\\%0')))
+  local ret = nvim_eval('get(g:, "__output", 0)')
+  nvim_command('unlet! g:__output')
+  return ret
+end
+
+local function create_callindex(func)
+  local tbl = {}
+  setmetatable(tbl, {
+    __index = function(tbl, arg1)
+      ret = function(...) return func(arg1, ...) end
+      tbl[arg1] = ret
+      return ret
+    end,
+  })
+  return tbl
+end
+
+local funcs = create_callindex(nvim_call)
+local meths = create_callindex(nvim)
+local bufmeths = create_callindex(buffer)
+local winmeths = create_callindex(window)
+local tabmeths = create_callindex(tabpage)
+local curbufmeths = create_callindex(curbuf)
+local curwinmeths = create_callindex(curwin)
+local curtabmeths = create_callindex(curtab)
+
 return {
+  prepend_argv = prepend_argv,
   clear = clear,
   spawn = spawn,
   dedent = dedent,
@@ -374,4 +429,14 @@ return {
   rmdir = rmdir,
   mkdir = lfs.mkdir,
   exc_exec = exc_exec,
+  redir_exec = redir_exec,
+  merge_args = merge_args,
+  funcs = funcs,
+  meths = meths,
+  bufmeths = bufmeths,
+  winmeths = winmeths,
+  tabmeths = tabmeths,
+  curbufmeths = curbufmeths,
+  curwinmeths = curwinmeths,
+  curtabmeths = curtabmeths,
 }

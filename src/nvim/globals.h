@@ -891,8 +891,8 @@ EXTERN int must_redraw INIT(= 0);           /* type of redraw necessary */
 EXTERN int skip_redraw INIT(= FALSE);       /* skip redraw once */
 EXTERN int do_redraw INIT(= FALSE);         /* extra redraw once */
 
-EXTERN int need_highlight_changed INIT(= TRUE);
-EXTERN char_u   *use_viminfo INIT(= NULL);  /* name of viminfo file to use */
+EXTERN int need_highlight_changed INIT(= true);
+EXTERN char *used_shada_file INIT(= NULL);  // name of the ShaDa file to use
 
 #define NSCRIPT 15
 EXTERN FILE     *scriptin[NSCRIPT];         /* streams to read script from */

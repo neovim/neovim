@@ -23,7 +23,8 @@ these differences.
 
 - Use `.nvimrc` instead of `.vimrc` for storing configuration.
 - Use `.nvim` instead of `.vim` to store configuration files.
-- Use `.nviminfo` instead of `.viminfo` for persistent session information.
+- Use `.nvim/shada/main.shada` instead of `.viminfo` for persistent session 
+  information.
 
 ==============================================================================
 2. Option defaults					  *nvim-option-defaults*
@@ -92,6 +93,28 @@ are always available and may be used simultaneously in separate plugins.  The
    Same thing applies to |string()| (though it uses construct like 
    "{E724@level}"), but this is not reliable because |string()| continues to 
    error out.
+
+Viminfo text files were replaced with binary (messagepack) ShaDa files. 
+Additional differences:
+
+- |shada-c| has no effect.
+- |shada-s| now limits size of every item and not just registers.
+- When reading ShaDa files items are merged according to the timestamp. 
+  |shada-merging|
+- 'viminfo' option got renamed to 'shada'. Old option is kept as an alias for 
+  compatibility reasons.
+- |:wviminfo| was renamed to |:wshada|, |:rviminfo| to |:rshada|.  Old 
+  commands are still kept.
+- When writing (|:wshada| without bang or at exit) it merges much more data, 
+  and does this according to the timestamp.  Vim merges only marks. 
+  |shada-merging|
+- ShaDa file format was designed with forward and backward compatibility in 
+  mind. |shada-compatibility|
+- Some errors make ShaDa code keep temporary file in-place for user to decide 
+  what to do with it.  Vim deletes temporary file in these cases. 
+  |shada-error-handling|
+- Vim keeps no timestamps at all, neither in viminfo file nor in the instance 
+  itself.
 
 ==============================================================================
 4. New Features						     *nvim-features-new*

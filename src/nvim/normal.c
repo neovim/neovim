@@ -6327,8 +6327,8 @@ static void nv_g_cmd(cmdarg_T *cap)
    * "gi": start Insert at the last position.
    */
   case 'i':
-    if (curbuf->b_last_insert.lnum != 0) {
-      curwin->w_cursor = curbuf->b_last_insert;
+    if (curbuf->b_last_insert.mark.lnum != 0) {
+      curwin->w_cursor = curbuf->b_last_insert.mark;
       check_cursor_lnum();
       i = (int)STRLEN(get_cursor_line_ptr());
       if (curwin->w_cursor.col > (colnr_T)i) {

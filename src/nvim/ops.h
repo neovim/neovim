@@ -3,7 +3,11 @@
 
 #include <stdbool.h>
 
+#include "nvim/macros.h"
+#include "nvim/ascii.h"
 #include "nvim/types.h"
+#include "nvim/eval_defs.h"
+#include "nvim/os/time.h"
 
 typedef int (*Indenter)(void);
 
@@ -14,6 +18,22 @@ typedef int (*Indenter)(void);
 #define PUT_LINE         8      /* put register as lines */
 #define PUT_LINE_SPLIT   16     /* split line for linewise register */
 #define PUT_LINE_FORWARD 32     /* put linewise register below Visual sel. */
+
+/*
+ * Registers:
+ *      0 = register for latest (unnamed) yank
+ *   1..9 = registers '1' to '9', for deletes
+ * 10..35 = registers 'a' to 'z'
+ *     36 = delete register '-'
+ *     37 = selection register '*'
+ *     38 = clipboard register '+'
+ */
+#define DELETION_REGISTER 36
+#define NUM_SAVED_REGISTERS 37
+// The following registers should not be saved in ShaDa file:
+#define STAR_REGISTER 37
+#define PLUS_REGISTER 38
+#define NUM_REGISTERS 39
 
 /*
  * Operator IDs; The order must correspond to opchars[] in ops.c!
@@ -47,20 +67,47 @@ typedef int (*Indenter)(void);
 #define OP_FORMAT2      26      /* "gw" format operator, keeps cursor pos */
 #define OP_FUNCTION     27      /* "g@" call 'operatorfunc' */
 
-/// Contents of a yank (read-write) register
-typedef struct yankreg {
-  char_u      **y_array;        ///< pointer to array of line pointers
-  linenr_T y_size;              ///< number of lines in y_array
-  char_u y_type;                ///< MLINE, MCHAR or MBLOCK
-  colnr_T y_width;              ///< only set if y_type == MBLOCK
-} yankreg_T;
-
 /// Flags for get_reg_contents().
 enum GRegFlags {
   kGRegNoExpr  = 1,  ///< Do not allow expression register.
   kGRegExprSrc = 2,  ///< Return expression itself for "=" register.
   kGRegList    = 4   ///< Return list.
 };
+
+/// Definition of one register
+typedef struct yankreg {
+  char_u **y_array;  ///< Pointer to an array of line pointers.
+  linenr_T y_size;   ///< Number of lines in y_array.
+  char_u y_type;     ///< Register type: MLINE, MCHAR or MBLOCK.
+  colnr_T y_width;   ///< Register width (only valid for y_type == MBLOCK).
+  Timestamp timestamp;  ///< Time when register was last modified.
+  dict_T *additional_data;  ///< Additional data from ShaDa file.
+} yankreg_T;
+
+/// Convert register name into register index
+///
+/// @param[in]  regname  Register name.
+///
+/// @return Index in y_regs array or -1 if register name was not recognized.
+static inline int op_reg_index(const int regname)
+  FUNC_ATTR_CONST
+{
+  if (ascii_isdigit(regname)) {
+    return regname - '0';
+  } else if (ASCII_ISLOWER(regname)) {
+    return CharOrdLow(regname) + 10;
+  } else if (ASCII_ISUPPER(regname)) {
+    return CharOrdUp(regname) + 10;
+  } else if (regname == '-') {
+    return DELETION_REGISTER;
+  } else if (regname == '*') {
+    return STAR_REGISTER;
+  } else if (regname == '+') {
+    return PLUS_REGISTER;
+  } else {
+    return -1;
+  }
+}
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ops.h.generated.h"

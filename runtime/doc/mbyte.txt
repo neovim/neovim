@@ -387,7 +387,7 @@ Vim will automatically convert from one to another encoding in several places:
   'encoding' (requires a gettext version that supports this).
 - When reading a Vim script where |:scriptencoding| is different from
   'encoding'.
-- When reading or writing a |viminfo| file.
+- When reading or writing a |shada| file.
 Most of these require the |+iconv| feature.  Conversion for reading and
 writing files may also be specified with the 'charconvert' option.
 

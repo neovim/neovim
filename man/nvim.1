@@ -138,7 +138,7 @@ Sets the options 'hkmap' and 'rightleft'.
 .It Fl V Ns Oo Ar N Oc Ns Op Ar file
 Verbose mode.
 Print messages about which files are being sourced and for reading and
-writing an nviminfo file.
+writing a ShaDa file.
 .Ar N
 is the value for the 'verbose' option; defaults to
 .Cm 10
@@ -191,18 +191,18 @@ is
 loading plugins is also skipped.
 See
 .Ic :help initialization .
-.It Fl i Ar nviminfo
+.It Fl i Ar shada
 Use
-.Ar nviminfo
+.Ar shada
 instead of the default of
-.Pa ~/.nviminfo .
+.Pa ~/.nvim/shada/main.shada .
 If
-.Ar nviminfo
+.Ar shada
 is
 .Cm NONE ,
-do not read or write an nviminfo file.
+do not read or write a ShaDa file.
 See
-.Ic :help viminfo .
+.Ic :help shada .
 .It Fl -noplugin
 Skip loading plugins.
 Implied by

@@ -1738,16 +1738,16 @@ set_options_bin (
 
 /*
  * Find the parameter represented by the given character (eg ', :, ", or /),
- * and return its associated value in the 'viminfo' string.
+ * and return its associated value in the 'shada' string.
  * Only works for number parameters, not for 'r' or 'n'.
  * If the parameter is not specified in the string or there is no following
  * number, return -1.
  */
-int get_viminfo_parameter(int type)
+int get_shada_parameter(int type)
 {
   char_u  *p;
 
-  p = find_viminfo_parameter(type);
+  p = find_shada_parameter(type);
   if (p != NULL && ascii_isdigit(*p))
     return atoi((char *)p);
   return -1;
@@ -1755,14 +1755,14 @@ int get_viminfo_parameter(int type)
 
 /*
  * Find the parameter represented by the given character (eg ''', ':', '"', or
- * '/') in the 'viminfo' option and return a pointer to the string after it.
+ * '/') in the 'shada' option and return a pointer to the string after it.
  * Return NULL if the parameter is not specified in the string.
  */
-char_u *find_viminfo_parameter(int type)
+char_u *find_shada_parameter(int type)
 {
   char_u  *p;
 
-  for (p = p_viminfo; *p; ++p) {
+  for (p = p_shada; *p; ++p) {
     if (*p == type)
       return p + 1;
     if (*p == 'n')                  /* 'n' is always the last one */
@@ -1968,6 +1968,8 @@ static void redraw_titles(void) {
   redraw_tabline = TRUE;
 }
 
+static int shada_idx = -1;
+
 /*
  * Set a string option to a new value (without checking the effect).
  * The string is copied into allocated memory.
@@ -2000,6 +2002,8 @@ set_string_option_direct (
 
   if (options[idx].var == NULL)         /* can't set hidden option */
     return;
+
+  assert((void *) options[idx].var != (void *) &p_shada);
 
   s = vim_strsave(val);
   {
@@ -2441,10 +2445,16 @@ did_set_string_option (
     verbose_stop();
     if (*p_vfile != NUL && verbose_open() == FAIL)
       errmsg = e_invarg;
-  }
-  /* 'viminfo' */
-  else if (varp == &p_viminfo) {
-    for (s = p_viminfo; *s; ) {
+  /* 'shada' */
+  } else if (varp == &p_shada) {
+    // TODO(ZyX-I): Remove this code in the future, alongside with &viminfo
+    //              option.
+    opt_idx = ((options[opt_idx].fullname[0] == 'v')
+               ? (shada_idx == -1
+                  ? ((shada_idx = findoption((char_u *) "shada")))
+                  : shada_idx)
+               : opt_idx);
+    for (s = p_shada; *s; ) {
       /* Check it's a valid character */
       if (vim_strchr((char_u *)"!\"%'/:<@cfhnrs", *s) == NULL) {
         errmsg = illegal_char(errbuf, *s);
@@ -2486,7 +2496,7 @@ did_set_string_option (
         break;
       }
     }
-    if (*p_viminfo && errmsg == NULL && get_viminfo_parameter('\'') < 0)
+    if (*p_shada && errmsg == NULL && get_shada_parameter('\'') < 0)
       errmsg = (char_u *)N_("E528: Must specify a ' value");
   }
   /* 'showbreak' */

@@ -729,7 +729,7 @@ function expand() |expand()|.
 	#<n	(where n is a number > 0) is replaced with old	  *:_#<* *c_#<*
 		file name n.  See |:oldfiles| or |v:oldfiles| to get the
 		number.							*E809*
-		{only when compiled with the |+eval| and |+viminfo| features}
+		{only when compiled with the |+eval| and |+shada| features}
 
 Note that these, except "#<n", give the file name as it was typed.  If an
 absolute path is needed (when using the file name from a different directory),

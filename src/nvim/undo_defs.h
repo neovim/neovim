@@ -5,6 +5,7 @@
 
 #include "nvim/pos.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/mark_defs.h"
 
 /* Structure to store info about the Visual area. */
 typedef struct {
@@ -54,7 +55,7 @@ struct u_header {
   pos_T uh_cursor;              /* cursor position before saving */
   long uh_cursor_vcol;
   int uh_flags;                 /* see below */
-  pos_T uh_namedm[NMARKS];              /* marks before undo/after redo */
+  fmark_T uh_namedm[NMARKS];    /* marks before undo/after redo */
   visualinfo_T uh_visual;       /* Visual areas before undo/after redo */
   time_t uh_time;               /* timestamp when the change was made */
   long uh_save_nr;              /* set when the file was saved after the

@@ -235,7 +235,7 @@ actually view a file that way, if you have lots of time at hand.
 	Note:
 	Since 'encoding' is used for all text inside Vim, changing it makes
 	all non-ASCII text invalid.  You will notice this when using registers
-	and the 'viminfo' file (e.g., a remembered search pattern).  It's
+	and the |shada-file| (e.g., a remembered search pattern).  It's
 	recommended to set 'encoding' in your vimrc file, and leave it alone.
 
 ==============================================================================

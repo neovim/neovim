@@ -75,6 +75,7 @@
 #include "nvim/mouse.h"
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
+#include "nvim/shada.h"
 
 static int quitmore = 0;
 static int ex_pressedreturn = FALSE;
@@ -9139,22 +9140,21 @@ int put_line(FILE *fd, char *s)
 }
 
 /*
- * ":rviminfo" and ":wviminfo".
+ * ":rshada" and ":wshada".
  */
-static void ex_viminfo(exarg_T *eap)
+static void ex_shada(exarg_T *eap)
 {
-  char_u      *save_viminfo;
+  char_u      *save_shada;
 
-  save_viminfo = p_viminfo;
-  if (*p_viminfo == NUL)
-    p_viminfo = (char_u *)"'100";
-  if (eap->cmdidx == CMD_rviminfo) {
-    if (read_viminfo(eap->arg, VIF_WANT_INFO | VIF_WANT_MARKS
-            | (eap->forceit ? VIF_FORCEIT : 0)) == FAIL)
-      EMSG(_("E195: Cannot open viminfo file for reading"));
-  } else
-    write_viminfo(eap->arg, eap->forceit);
-  p_viminfo = save_viminfo;
+  save_shada = p_shada;
+  if (*p_shada == NUL)
+    p_shada = (char_u *)"'100";
+  if (eap->cmdidx == CMD_rviminfo || eap->cmdidx == CMD_rshada) {
+    (void) shada_read_everything((char *) eap->arg, eap->forceit, false);
+  } else {
+    shada_write_file((char *) eap->arg, eap->forceit);
+  }
+  p_shada = save_shada;
 }
 
 /*

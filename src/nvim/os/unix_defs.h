@@ -43,8 +43,8 @@
 #ifndef VIMRC_FILE
 # define VIMRC_FILE     ".nvimrc"
 #endif
-#ifndef VIMINFO_FILE
-# define VIMINFO_FILE "~/.nviminfo"
+#ifndef SHADA_FILE
+# define SHADA_FILE "~/.nvim/shada/main.shada"
 #endif
 
 // Default for 'backupdir'.

@@ -53,7 +53,7 @@ hidden:   The buffer is not displayed.  If there is a file for this buffer, it
 							*inactive-buffer*
 inactive: The buffer is not displayed and does not contain anything.  Options
 	  for the buffer are remembered if the file was once loaded.  It can
-	  contain marks from the |viminfo| file.  But the buffer doesn't
+	  contain marks from the |shada| file.  But the buffer doesn't
 	  contain text.
 
 In a table:

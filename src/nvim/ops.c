@@ -50,26 +50,11 @@
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/input.h"
-
-/*
- * Registers:
- *      0 = register for latest (unnamed) yank
- *   1..9 = registers '1' to '9', for deletes
- * 10..35 = registers 'a' to 'z'
- *     36 = delete register '-'
- *     37 = selection register '*'
- *     38 = clipboard register '+'
- */
-#define DELETION_REGISTER 36
-#define NUM_SAVED_REGISTERS 37
-// The following registers should not be saved in viminfo:
-#define STAR_REGISTER 37
-#define PLUS_REGISTER 38
-#define NUM_REGISTERS 39
+#include "nvim/os/time.h"
 
 static yankreg_T y_regs[NUM_REGISTERS];
 
-static yankreg_T   *y_previous = NULL; /* ptr to last written yankreg */
+static yankreg_T *y_previous = NULL; /* ptr to last written yankreg */
 
 static bool clipboard_didwarn_unnamed = false;
 
@@ -778,19 +763,11 @@ yankreg_T *get_yank_register(int regname, int mode)
     return y_previous;
   }
 
-  int i = 0; // when not 0-9, a-z, A-Z or '-'/'+'/'*': use register 0
-  if (ascii_isdigit(regname))
-    i = regname - '0';
-  else if (ASCII_ISLOWER(regname))
-    i = CharOrdLow(regname) + 10;
-  else if (ASCII_ISUPPER(regname)) {
-    i = CharOrdUp(regname) + 10;
-  } else if (regname == '-')
-    i = DELETION_REGISTER;
-  else if (regname == '*')
-    i = STAR_REGISTER;
-  else if (regname == '+')
-    i = PLUS_REGISTER;
+  int i = op_reg_index(regname);
+  // when not 0-9, a-z, A-Z or '-'/'+'/'*': use register 0
+  if (i == -1) {
+    i = 0;
+  }
   reg = &y_regs[i];
 
   if (mode == YREG_YANK) {
@@ -890,6 +867,16 @@ int do_record(int c)
   return retval;
 }
 
+static void set_yreg_additional_data(yankreg_T *reg, dict_T *additional_data)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  if (reg->additional_data == additional_data) {
+    return;
+  }
+  dict_unref(reg->additional_data);
+  reg->additional_data = additional_data;
+}
+
 /*
  * Stuff string "p" into yank register "regname" as a single line (append if
  * uppercase).	"p" must have been alloced.
@@ -919,11 +906,13 @@ static int stuff_yank(int regname, char_u *p)
     *pp = lp;
   } else {
     free_register(reg);
+    set_yreg_additional_data(reg, NULL);
     reg->y_array = (char_u **)xmalloc(sizeof(char_u *));
     reg->y_array[0] = p;
     reg->y_size = 1;
     reg->y_type = MCHAR;      /* used to be MLINE, why? */
   }
+  reg->timestamp = os_time();
   return OK;
 }
 
@@ -2266,10 +2255,7 @@ int op_change(oparg_T *oap)
  */
 void init_yank(void)
 {
-  int i;
-
-  for (i = 0; i < NUM_REGISTERS; i++)
-    y_regs[i].y_array = NULL;
+  memset(&(y_regs[0]), 0, sizeof(y_regs));
 }
 
 #if defined(EXITFREE)
@@ -2291,6 +2277,7 @@ void clear_registers(void)
 void free_register(yankreg_T *reg)
   FUNC_ATTR_NONNULL_ALL
 {
+  set_yreg_additional_data(reg, NULL);
   if (reg->y_array != NULL) {
     long i;
 
@@ -2369,6 +2356,8 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
   reg->y_type = yanktype;     /* set the yank register type */
   reg->y_width = 0;
   reg->y_array = xcalloc(yanklines, sizeof(char_u *));
+  reg->additional_data = NULL;
+  reg->timestamp = os_time();
 
   y_idx = 0;
   lnum = oap->start.lnum;
@@ -4433,171 +4422,6 @@ int do_addsub(int command, linenr_T Prenum1)
   return OK;
 }
 
-int read_viminfo_register(vir_T *virp, int force)
-{
-  int eof;
-  int do_it = TRUE;
-  int size;
-  int limit;
-  int set_prev = FALSE;
-  char_u      *str;
-  char_u      **array = NULL;
-
-  /* We only get here (hopefully) if line[0] == '"' */
-  str = virp->vir_line + 1;
-
-  /* If the line starts with "" this is the y_previous register. */
-  if (*str == '"') {
-    set_prev = TRUE;
-    str++;
-  }
-
-  if (!ASCII_ISALNUM(*str) && *str != '-') {
-    if (viminfo_error("E577: ", _("Illegal register name"), virp->vir_line))
-      return TRUE;              /* too many errors, pretend end-of-file */
-    do_it = FALSE;
-  }
-  yankreg_T *reg = get_yank_register(*str++, YREG_PUT);
-  if (!force && reg->y_array != NULL)
-    do_it = FALSE;
-
-  if (*str == '@') {
-    /* "x@: register x used for @@ */
-    if (force || execreg_lastc == NUL)
-      execreg_lastc = str[-1];
-  }
-
-  size = 0;
-  limit = 100;          /* Optimized for registers containing <= 100 lines */
-  if (do_it) {
-    if (set_prev) {
-      y_previous = reg;
-    }
-
-    free_register(reg);
-    array = xmalloc(limit * sizeof(char_u *));
-
-    str = skipwhite(skiptowhite(str));
-    if (STRNCMP(str, "CHAR", 4) == 0) {
-      reg->y_type = MCHAR;
-    } else if (STRNCMP(str, "BLOCK", 5) == 0) {
-      reg->y_type = MBLOCK;
-    } else {
-      reg->y_type = MLINE;
-    }
-    /* get the block width; if it's missing we get a zero, which is OK */
-    str = skipwhite(skiptowhite(str));
-    reg->y_width = getdigits_int(&str);
-  }
-
-  while (!(eof = viminfo_readline(virp))
-         && (virp->vir_line[0] == TAB || virp->vir_line[0] == '<')) {
-    if (do_it) {
-      if (size >= limit) {
-        limit *= 2;
-        array = xrealloc(array, limit * sizeof(char_u *));
-      }
-      array[size++] = viminfo_readstring(virp, 1, TRUE);
-    }
-  }
-
-  if (do_it) {
-    if (size == 0) {
-      xfree(array);
-    } else if (size < limit) {
-      reg->y_array = xrealloc(array, size * sizeof(char_u *));
-    } else {
-      reg->y_array = array;
-    }
-    reg->y_size = size;
-  }
-  return eof;
-}
-
-void write_viminfo_registers(FILE *fp)
-{
-  int i, j;
-  char_u  *type;
-  char_u c;
-  int num_lines;
-  int max_num_lines;
-  int max_kbyte;
-  long len;
-
-  fputs(_("\n# Registers:\n"), fp);
-
-  /* Get '<' value, use old '"' value if '<' is not found. */
-  max_num_lines = get_viminfo_parameter('<');
-  if (max_num_lines < 0)
-    max_num_lines = get_viminfo_parameter('"');
-  if (max_num_lines == 0)
-    return;
-  max_kbyte = get_viminfo_parameter('s');
-  if (max_kbyte == 0)
-    return;
-
-  // don't include clipboard registers '*'/'+'
-  for (i = 0; i < NUM_SAVED_REGISTERS; i++) {
-    if (y_regs[i].y_array == NULL)
-      continue;
-
-    /* Skip empty registers. */
-    num_lines = y_regs[i].y_size;
-    if (num_lines == 0
-        || (num_lines == 1 && y_regs[i].y_type == MCHAR
-            && *y_regs[i].y_array[0] == NUL))
-      continue;
-
-    if (max_kbyte > 0) {
-      /* Skip register if there is more text than the maximum size. */
-      len = 0;
-      for (j = 0; j < num_lines; j++)
-        len += (long)STRLEN(y_regs[i].y_array[j]) + 1L;
-      if (len > (long)max_kbyte * 1024L)
-        continue;
-    }
-
-    switch (y_regs[i].y_type) {
-    case MLINE:
-      type = (char_u *)"LINE";
-      break;
-    case MCHAR:
-      type = (char_u *)"CHAR";
-      break;
-    case MBLOCK:
-      type = (char_u *)"BLOCK";
-      break;
-    default:
-      sprintf((char *)IObuff, _("E574: Unknown register type %d"),
-          y_regs[i].y_type);
-      emsg(IObuff);
-      type = (char_u *)"LINE";
-      break;
-    }
-    if (y_previous == &y_regs[i])
-      fprintf(fp, "\"");
-    c = get_register_name(i);
-    fprintf(fp, "\"%c", c);
-    if (c == execreg_lastc)
-      fprintf(fp, "@");
-    fprintf(fp, "\t%s\t%d\n", type,
-        (int)y_regs[i].y_width
-        );
-
-    /* If max_num_lines < 0, then we save ALL the lines in the register */
-    if (max_num_lines > 0 && num_lines > max_num_lines)
-      num_lines = max_num_lines;
-    for (j = 0; j < num_lines; j++) {
-      putc('\t', fp);
-      viminfo_writestring(fp, y_regs[i].y_array[j]);
-    }
-  }
-}
-
-
-
-
-
 /*
  * Return the type of a register.
  * Used for getregtype()
@@ -4738,7 +4562,6 @@ void *get_reg_contents(int regname, int flags)
 
   return retval;
 }
-
 
 static yankreg_T *init_write_reg(int name, yankreg_T **old_y_previous, bool must_append)
 {
@@ -4973,6 +4796,8 @@ static void str_to_reg(yankreg_T *y_ptr, int yank_type, const char_u *str,
   }
   y_ptr->y_type = type;
   y_ptr->y_size = lnum;
+  set_yreg_additional_data(y_ptr, NULL);
+  y_ptr->timestamp = os_time();
   if (type == MBLOCK) {
     y_ptr->y_width = (blocklen == -1 ? (colnr_T) maxlen - 1 : blocklen);
   } else {
@@ -5363,6 +5188,10 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
 
   reg->y_array = xcalloc(lines->lv_len, sizeof(uint8_t *));
   reg->y_size = lines->lv_len;
+  reg->additional_data = NULL;
+  reg->timestamp = 0;
+  // Timestamp is not saved for clipboard registers because clipboard registers
+  // are not saved in the ShaDa file.
 
   int i = 0;
   for (listitem_T *li = lines->lv_first; li != NULL; li = li->li_next) {
@@ -5411,6 +5240,8 @@ err:
   }
   reg->y_array = NULL;
   reg->y_size = 0;
+  reg->additional_data = NULL;
+  reg->timestamp = 0;
   if (errmsg) {
     EMSG("clipboard: provider returned invalid data");
   }
@@ -5477,4 +5308,92 @@ void end_global_changes(void)
     set_clipboard(NUL, y_previous);
     clipboard_needs_update = false;
   }
+}
+
+/// Check whether register is empty
+static inline bool reg_empty(const yankreg_T *const reg)
+  FUNC_ATTR_PURE
+{
+  return (reg->y_array == NULL
+          || reg->y_size == 0
+          || (reg->y_size == 1
+              && reg->y_type == MCHAR
+              && *(reg->y_array[0]) == NUL));
+}
+
+/// Iterate over registerrs
+///
+/// @param[in]   iter      Iterator. Pass NULL to start iteration.
+/// @param[out]  name      Register name.
+/// @param[out]  reg       Register contents.
+///
+/// @return Pointer that needs to be passed to next `op_register_iter` call or
+///         NULL if iteration is over.
+const void *op_register_iter(const void *const iter, char *const name,
+                             yankreg_T *const reg)
+  FUNC_ATTR_NONNULL_ARG(2, 3) FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  *name = NUL;
+  const yankreg_T *iter_reg = (iter == NULL
+                               ? &(y_regs[0])
+                               : (const yankreg_T *const) iter);
+  while (iter_reg - &(y_regs[0]) < NUM_SAVED_REGISTERS && reg_empty(iter_reg)) {
+    iter_reg++;
+  }
+  if (iter_reg - &(y_regs[0]) == NUM_SAVED_REGISTERS || reg_empty(iter_reg)) {
+    return NULL;
+  }
+  size_t iter_off = iter_reg - &(y_regs[0]);
+  *name = (char) get_register_name(iter_off);
+  *reg = *iter_reg;
+  while (++iter_reg - &(y_regs[0]) < NUM_SAVED_REGISTERS) {
+    if (!reg_empty(iter_reg)) {
+      return (void *) iter_reg;
+    }
+  }
+  return NULL;
+}
+
+/// Get a number of non-empty registers
+size_t op_register_amount(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  size_t ret = 0;
+  for (size_t i = 0; i < NUM_SAVED_REGISTERS; i++) {
+    if (!reg_empty(y_regs + i)) {
+      ret++;
+    }
+  }
+  return ret;
+}
+
+/// Set register to a given value
+///
+/// @param[in]  name  Register name.
+/// @param[in]  reg   Register value.
+///
+/// @return true on success, false on failure.
+bool op_register_set(const char name, const yankreg_T reg)
+{
+  int i = op_reg_index(name);
+  if (i == -1) {
+    return false;
+  }
+  free_register(&y_regs[i]);
+  y_regs[i] = reg;
+  return true;
+}
+
+/// Get register with the given name
+///
+/// @param[in]  name  Register name.
+///
+/// @return Pointer to the register contents or NULL.
+const yankreg_T *op_register_get(const char name)
+{
+  int i = op_reg_index(name);
+  if (i == -1) {
+    return NULL;
+  }
+  return &y_regs[i];
 }

@@ -325,6 +325,14 @@ static long get_undolevel(void)
   return curbuf->b_p_ul;
 }
 
+static inline void zero_fmark_additional_data(fmark_T *fmarks)
+{
+  for (size_t i = 0; i < NMARKS; i++) {
+    dict_unref(fmarks[i].additional_data);
+    fmarks[i].additional_data = NULL;
+  }
+}
+
 /*
  * Common code for various ways to save text before a change.
  * "top" is the line above the first changed line.
@@ -467,7 +475,9 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
                     ((curbuf->b_ml.ml_flags & ML_EMPTY) ? UH_EMPTYBUF : 0);
 
     /* save named marks and Visual marks for undo */
-    memmove(uhp->uh_namedm, curbuf->b_namedm, sizeof(pos_T) * NMARKS);
+    zero_fmark_additional_data(curbuf->b_namedm);
+    memmove(uhp->uh_namedm, curbuf->b_namedm,
+            sizeof(curbuf->b_namedm[0]) * NMARKS);
     uhp->uh_visual = curbuf->b_visual;
 
     curbuf->b_u_newhead = uhp;
@@ -785,7 +795,7 @@ static bool serialize_uhp(bufinfo_T *bi, u_header_T *uhp)
   undo_write_bytes(bi, (uintmax_t)uhp->uh_flags, 2);
   // Assume NMARKS will stay the same.
   for (size_t i = 0; i < (size_t)NMARKS; i++) {
-    serialize_pos(bi, uhp->uh_namedm[i]);
+    serialize_pos(bi, uhp->uh_namedm[i].mark);
   }
   serialize_visualinfo(bi, &uhp->uh_visual);
   uint8_t time_buf[8];
@@ -831,8 +841,11 @@ static u_header_T *unserialize_uhp(bufinfo_T *bi, char_u *file_name)
   unserialize_pos(bi, &uhp->uh_cursor);
   uhp->uh_cursor_vcol = undo_read_4c(bi);
   uhp->uh_flags = undo_read_2c(bi);
+  const Timestamp cur_timestamp = os_time();
   for (size_t i = 0; i < (size_t)NMARKS; i++) {
-    unserialize_pos(bi, &uhp->uh_namedm[i]);
+    unserialize_pos(bi, &uhp->uh_namedm[i].mark);
+    uhp->uh_namedm[i].timestamp = cur_timestamp;
+    uhp->uh_namedm[i].fnum = 0;
   }
   unserialize_visualinfo(bi, &uhp->uh_visual);
   uhp->uh_time = undo_read_time(bi);
@@ -2009,7 +2022,7 @@ static void u_undoredo(int undo)
   u_entry_T   *newlist = NULL;
   int old_flags;
   int new_flags;
-  pos_T namedm[NMARKS];
+  fmark_T namedm[NMARKS];
   visualinfo_T visualinfo;
   int empty_buffer;                         /* buffer became empty */
   u_header_T  *curhead = curbuf->b_u_curhead;
@@ -2029,7 +2042,8 @@ static void u_undoredo(int undo)
   /*
    * save marks before undo/redo
    */
-  memmove(namedm, curbuf->b_namedm, sizeof(pos_T) * NMARKS);
+  zero_fmark_additional_data(curbuf->b_namedm);
+  memmove(namedm, curbuf->b_namedm, sizeof(curbuf->b_namedm[0]) * NMARKS);
   visualinfo = curbuf->b_visual;
   curbuf->b_op_start.lnum = curbuf->b_ml.ml_line_count;
   curbuf->b_op_start.col = 0;
@@ -2158,7 +2172,8 @@ static void u_undoredo(int undo)
    * restore marks from before undo/redo
    */
   for (i = 0; i < NMARKS; ++i)
-    if (curhead->uh_namedm[i].lnum != 0) {
+    if (curhead->uh_namedm[i].mark.lnum != 0) {
+      free_fmark(curbuf->b_namedm[i]);
       curbuf->b_namedm[i] = curhead->uh_namedm[i];
       curhead->uh_namedm[i] = namedm[i];
     }
