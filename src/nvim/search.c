@@ -2052,11 +2052,13 @@ showmatch (
       return;
   }
 
-  if ((lpos = findmatch(NULL, NUL)) == NULL)        /* no match, so beep */
-    vim_beep();
-  else if (lpos->lnum >= curwin->w_topline && lpos->lnum < curwin->w_botline) {
-    if (!curwin->w_p_wrap)
+  if ((lpos = findmatch(NULL, NUL)) == NULL) {  // no match, so beep
+    vim_beep(BO_MATCH);
+  } else if (lpos->lnum >= curwin->w_topline
+      && lpos->lnum < curwin->w_botline) {
+    if (!curwin->w_p_wrap) {
       getvcol(curwin, lpos, NULL, &vcol, NULL);
+    }
     if (curwin->w_p_wrap || (vcol >= curwin->w_leftcol
                              && vcol < curwin->w_leftcol + curwin->w_width)) {
       mpos = *lpos;          /* save the pos, update_screen() may change it */

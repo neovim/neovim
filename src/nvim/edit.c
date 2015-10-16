@@ -789,9 +789,10 @@ do_intr:
       if (goto_im()) {
         if (got_int) {
           (void)vgetc();                        /* flush all buffers */
-          got_int = FALSE;
-        } else
-          vim_beep();
+          got_int = false;
+        } else {
+          vim_beep(BO_IM);
+        }
         break;
       }
 doESCkey:
@@ -1770,7 +1771,7 @@ static int has_compl_option(int dict_opt)
         : (char_u *)_("'thesaurus' option is empty"),
         hl_attr(HLF_E));
     if (emsg_silent == 0) {
-      vim_beep();
+      vim_beep(BO_COMPL);
       setcursor();
       ui_flush();
       os_delay(2000L, false);
@@ -6826,8 +6827,8 @@ static void ins_reg(void)
     regname = get_expr_register();
   }
   if (regname == NUL || !valid_yank_reg(regname, false)) {
-    vim_beep();
-    need_redraw = TRUE;         /* remove the '"' */
+    vim_beep(BO_REG);
+    need_redraw = true;  // remove the '"'
   } else {
     if (literally == Ctrl_O || literally == Ctrl_P) {
       /* Append the command to the redo buffer. */
@@ -6838,14 +6839,14 @@ static void ins_reg(void)
       do_put(regname, NULL, BACKWARD, 1L,
           (literally == Ctrl_P ? PUT_FIXINDENT : 0) | PUT_CURSEND);
     } else if (insert_reg(regname, literally) == FAIL) {
-      vim_beep();
-      need_redraw = TRUE;       /* remove the '"' */
-    } else if (stop_insert_mode)
-      /* When the '=' register was used and a function was invoked that
-       * did ":stopinsert" then stuff_empty() returns FALSE but we won't
-       * insert anything, need to remove the '"' */
-      need_redraw = TRUE;
-
+      vim_beep(BO_REG);
+      need_redraw = true;  // remove the '"'
+    } else if (stop_insert_mode) {
+      // When the '=' register was used and a function was invoked that
+      // did ":stopinsert" then stuff_empty() returns FALSE but we won't
+      // insert anything, need to remove the '"'
+      need_redraw = true;
+    }
   }
   --no_u_sync;
   if (u_sync_once == 1)
@@ -6903,7 +6904,7 @@ static void ins_ctrl_g(void)
     break;
 
   /* Unknown CTRL-G command, reserved for future expansion. */
-  default:  vim_beep();
+  default: vim_beep(BO_CTRLG);
   }
 }
 
@@ -7211,13 +7212,14 @@ static void ins_del(void)
   if (gchar_cursor() == NUL) {          /* delete newline */
     temp = curwin->w_cursor.col;
     if (!can_bs(BS_EOL)  // only if "eol" included
-        || do_join(2, FALSE, TRUE, FALSE, false) == FAIL) {
-      vim_beep();
+        || do_join(2, false, true, false, false) == FAIL) {
+      vim_beep(BO_BS);
     } else {
       curwin->w_cursor.col = temp;
     }
-  } else if (del_char(FALSE) == FAIL)   /* delete char under cursor */
-    vim_beep();
+  } else if (del_char(false) == FAIL) {  // delete char under cursor
+    vim_beep(BO_BS);
+  }
   did_ai = FALSE;
   did_si = FALSE;
   can_si = FALSE;
@@ -7276,8 +7278,8 @@ static int ins_bs(int c, int mode, int *inserted_space_p)
                 || (!can_bs(BS_INDENT) && !arrow_used && ai_col > 0
                     && curwin->w_cursor.col <= ai_col)
                 || (!can_bs(BS_EOL) && curwin->w_cursor.col == 0)))) {
-    vim_beep();
-    return FALSE;
+    vim_beep(BO_BS);
+    return false;
   }
 
   if (stop_arrow() == FAIL)
@@ -7670,9 +7672,10 @@ static void ins_left(void)
     start_arrow(&tpos);
     --(curwin->w_cursor.lnum);
     coladvance((colnr_T)MAXCOL);
-    curwin->w_set_curswant = TRUE;      /* so we stay at the end */
-  } else
-    vim_beep();
+    curwin->w_set_curswant = true;  // so we stay at the end
+  } else {
+    vim_beep(BO_CRSR);
+  }
 }
 
 static void ins_home(int c)
@@ -7714,10 +7717,11 @@ static void ins_s_left(void)
   undisplay_dollar();
   if (curwin->w_cursor.lnum > 1 || curwin->w_cursor.col > 0) {
     start_arrow(&curwin->w_cursor);
-    (void)bck_word(1L, FALSE, FALSE);
-    curwin->w_set_curswant = TRUE;
-  } else
-    vim_beep();
+    (void)bck_word(1L, false, false);
+    curwin->w_set_curswant = true;
+  } else {
+    vim_beep(BO_CRSR);
+  }
 }
 
 static void ins_right(void)
@@ -7751,8 +7755,9 @@ static void ins_right(void)
     curwin->w_set_curswant = TRUE;
     ++curwin->w_cursor.lnum;
     curwin->w_cursor.col = 0;
-  } else
-    vim_beep();
+  } else {
+    vim_beep(BO_CRSR);
+  }
 }
 
 static void ins_s_right(void)
@@ -7763,10 +7768,11 @@ static void ins_s_right(void)
   if (curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count
       || gchar_cursor() != NUL) {
     start_arrow(&curwin->w_cursor);
-    (void)fwd_word(1L, FALSE, 0);
-    curwin->w_set_curswant = TRUE;
-  } else
-    vim_beep();
+    (void)fwd_word(1L, false, 0);
+    curwin->w_set_curswant = true;
+  } else {
+    vim_beep(BO_CRSR);
+  }
 }
 
 static void
@@ -7788,9 +7794,10 @@ ins_up (
         )
       redraw_later(VALID);
     start_arrow(&tpos);
-    can_cindent = TRUE;
-  } else
-    vim_beep();
+    can_cindent = true;
+  } else {
+    vim_beep(BO_CRSR);
+  }
 }
 
 static void ins_pageup(void)
@@ -7811,9 +7818,10 @@ static void ins_pageup(void)
   tpos = curwin->w_cursor;
   if (onepage(BACKWARD, 1L) == OK) {
     start_arrow(&tpos);
-    can_cindent = TRUE;
-  } else
-    vim_beep();
+    can_cindent = true;
+  } else {
+    vim_beep(BO_CRSR);
+  }
 }
 
 static void
@@ -7835,9 +7843,10 @@ ins_down (
         )
       redraw_later(VALID);
     start_arrow(&tpos);
-    can_cindent = TRUE;
-  } else
-    vim_beep();
+    can_cindent = true;
+  } else {
+    vim_beep(BO_CRSR);
+  }
 }
 
 static void ins_pagedown(void)
@@ -7858,9 +7867,10 @@ static void ins_pagedown(void)
   tpos = curwin->w_cursor;
   if (onepage(FORWARD, 1L) == OK) {
     start_arrow(&tpos);
-    can_cindent = TRUE;
-  } else
-    vim_beep();
+    can_cindent = true;
+  } else {
+    vim_beep(BO_CRSR);
+  }
 }
 
 /*
@@ -8186,7 +8196,7 @@ int ins_copychar(linenr_T lnum)
   char_u  *line;
 
   if (lnum < 1 || lnum > curbuf->b_ml.ml_line_count) {
-    vim_beep();
+    vim_beep(BO_COPY);
     return NUL;
   }
 
@@ -8203,8 +8213,9 @@ int ins_copychar(linenr_T lnum)
     ptr = prev_ptr;
 
   c = (*mb_ptr2char)(ptr);
-  if (c == NUL)
-    vim_beep();
+  if (c == NUL) {
+    vim_beep(BO_COPY);
+  }
   return c;
 }
 

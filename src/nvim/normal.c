@@ -1534,7 +1534,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     case OP_DELETE:
       VIsual_reselect = false;              /* don't reselect now */
       if (empty_region_error) {
-        vim_beep();
+        vim_beep(BO_OPER);
         CancelRedo();
       } else {
         (void)op_delete(oap);
@@ -1547,7 +1547,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     case OP_YANK:
       if (empty_region_error) {
         if (!gui_yank) {
-          vim_beep();
+          vim_beep(BO_OPER);
           CancelRedo();
         }
       } else {
@@ -1560,7 +1560,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     case OP_CHANGE:
       VIsual_reselect = false;              /* don't reselect now */
       if (empty_region_error) {
-        vim_beep();
+        vim_beep(BO_OPER);
         CancelRedo();
       } else {
         /* This is a new edit command, not a restart.  Need to
@@ -1614,7 +1614,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     case OP_LOWER:
     case OP_ROT13:
       if (empty_region_error) {
-        vim_beep();
+        vim_beep(BO_OPER);
         CancelRedo();
       } else
         op_tilde(oap);
@@ -1642,7 +1642,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     case OP_APPEND:
       VIsual_reselect = false;          /* don't reselect now */
       if (empty_region_error) {
-        vim_beep();
+        vim_beep(BO_OPER);
         CancelRedo();
       } else {
         /* This is a new edit command, not a restart.  Need to
@@ -1671,7 +1671,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     case OP_REPLACE:
       VIsual_reselect = false;          /* don't reselect now */
       if (empty_region_error) {
-        vim_beep();
+        vim_beep(BO_OPER);
         CancelRedo();
       } else {
         // Restore linebreak, so that when the user edits it looks as before.
@@ -4040,10 +4040,11 @@ static void nv_exmode(cmdarg_T *cap)
   /*
    * Ignore 'Q' in Visual mode, just give a beep.
    */
-  if (VIsual_active)
-    vim_beep();
-  else if (!checkclearop(cap->oap))
+  if (VIsual_active) {
+    vim_beep(BO_EX);
+  } else if (!checkclearop(cap->oap)) {
     do_exmode(false);
+  }
 }
 
 /*
@@ -6972,8 +6973,9 @@ static void nv_esc(cmdarg_T *cap)
     check_cursor_col();         /* make sure cursor is not beyond EOL */
     curwin->w_set_curswant = true;
     redraw_curbuf_later(INVERTED);
-  } else if (no_reason)
-    vim_beep();
+  } else if (no_reason) {
+    vim_beep(BO_ESC);
+  }
   clearop(cap->oap);
 
   /* A CTRL-C is often used at the start of a menu.  When 'insertmode' is

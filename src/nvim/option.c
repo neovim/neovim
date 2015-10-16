@@ -1821,6 +1821,7 @@ static void didset_options(void)
 
   (void)opt_strings_flags(p_cmp, p_cmp_values, &cmp_flags, true);
   (void)opt_strings_flags(p_bkc, p_bkc_values, &bkc_flags, true);
+  (void)opt_strings_flags(p_bo, p_bo_values, &bo_flags, true);
   (void)opt_strings_flags(p_ssop, p_ssop_values, &ssop_flags, true);
   (void)opt_strings_flags(p_vop, p_ssop_values, &vop_flags, true);
   (void)opt_strings_flags(p_fdo, p_fdo_values, &fdo_flags, true);
@@ -2719,6 +2720,10 @@ did_set_string_option (
         errmsg = e_invarg;
     } else if (check_opt_strings(p_bs, p_bs_values, TRUE) != OK)
       errmsg = e_invarg;
+  } else if (varp == &p_bo) {
+    if (opt_strings_flags(p_bo, p_bo_values, &bo_flags, true) != OK) {
+      errmsg = e_invarg;
+    }
   } else if (varp == &p_cmp) {  // 'casemap'
     if (opt_strings_flags(p_cmp, p_cmp_values, &cmp_flags, true) != OK)
       errmsg = e_invarg;
