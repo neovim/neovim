@@ -485,6 +485,21 @@ static void insert_enter(InsertState *s)
 static int insert_check(VimState *state)
 {
   InsertState *s = (InsertState *)state;
+
+  // If typed something may trigger CursorHoldI again.
+  if (s->c != K_EVENT) {
+    did_cursorhold = false;
+  }
+
+  // If the cursor was moved we didn't just insert a space */
+  if (arrow_used) {
+    s->inserted_space = false;
+  }
+
+  if (can_cindent && cindent_on() && ctrl_x_mode == 0) {
+    insert_do_cindent(s);
+  }
+
   if (!revins_legal) {
     revins_scol = -1;     // reset on illegal motions
   } else {
@@ -709,7 +724,8 @@ static int insert_execute(VimState *state, int key)
   s->c = do_digraph(s->c);
 
   if ((s->c == Ctrl_V || s->c == Ctrl_Q) && ctrl_x_mode == CTRL_X_CMDLINE) {
-    goto docomplete;
+    insert_do_complete(s);
+    return 1;
   }
 
   if (s->c == Ctrl_V || s->c == Ctrl_Q) {
@@ -726,7 +742,8 @@ static int insert_execute(VimState *state, int key)
     // done before inserting the key.
     s->line_is_white = inindent(0);
     if (in_cinkeys(s->c, '!', s->line_is_white)) {
-      goto force_cindent;
+      insert_do_cindent(s);
+      return 1;  // continue
     }
 
     if (can_cindent && in_cinkeys(s->c, '*', s->line_is_white)
@@ -752,6 +769,11 @@ static int insert_execute(VimState *state, int key)
     return 1;  // continue
   }
 
+  return insert_handle_key(s);
+}
+
+static int insert_handle_key(InsertState *s)
+{
   // The big switch to handle a character in insert mode.
   // TODO(tarruda): This could look better if a lookup table is used.
   // (similar to normal mode `nv_cmds[]`)
@@ -794,7 +816,8 @@ static int insert_execute(VimState *state, int key)
 
   case Ctrl_O:        // execute one command
     if (ctrl_x_mode == CTRL_X_OMNI) {
-      goto docomplete;
+      insert_do_complete(s);
+      break;
     }
 
     if (echeck_abbr(Ctrl_O + ABBR_OFF)) {
@@ -866,14 +889,15 @@ static int insert_execute(VimState *state, int key)
 
   case Ctrl_D:        // Make indent one shiftwidth smaller.
     if (ctrl_x_mode == CTRL_X_PATH_DEFINES) {
-      goto docomplete;
+      insert_do_complete(s);
+      break;
     }
   // FALLTHROUGH
 
   case Ctrl_T:        // Make indent one shiftwidth greater.
     if (s->c == Ctrl_T && ctrl_x_mode == CTRL_X_THESAURUS) {
       if (has_compl_option(false)) {
-        goto docomplete;
+        insert_do_complete(s);
       }
       break;
     }
@@ -902,12 +926,12 @@ static int insert_execute(VimState *state, int key)
   case Ctrl_U:        // delete all inserted text in current line
     // CTRL-X CTRL-U completes with 'completefunc'.
     if (ctrl_x_mode == CTRL_X_FUNCTION) {
-      goto docomplete;
+      insert_do_complete(s);
+    } else {
+      s->did_backspace = ins_bs(s->c, BACKSPACE_LINE, &s->inserted_space);
+      auto_format(false, true);
+      s->inserted_space = false;
     }
-
-    s->did_backspace = ins_bs(s->c, BACKSPACE_LINE, &s->inserted_space);
-    auto_format(false, true);
-    s->inserted_space = false;
     break;
 
   case K_LEFTMOUSE:     // mouse keys
@@ -995,10 +1019,8 @@ static int insert_execute(VimState *state, int key)
 
   case K_UP:          // <Up>
     if (pum_visible()) {
-      goto docomplete;
-    }
-
-    if (mod_mask & MOD_MASK_SHIFT) {
+      insert_do_complete(s);
+    } else if (mod_mask & MOD_MASK_SHIFT) {
       ins_pageup();
     } else {
       ins_up(false);
@@ -1009,17 +1031,16 @@ static int insert_execute(VimState *state, int key)
   case K_PAGEUP:
   case K_KPAGEUP:
     if (pum_visible()) {
-      goto docomplete;
+      insert_do_complete(s);
+    } else {
+      ins_pageup();
     }
-    ins_pageup();
     break;
 
   case K_DOWN:        // <Down>
     if (pum_visible()) {
-      goto docomplete;
-    }
-
-    if (mod_mask & MOD_MASK_SHIFT) {
+      insert_do_complete(s);
+    } else if (mod_mask & MOD_MASK_SHIFT) {
       ins_pagedown();
     } else {
       ins_down(false);
@@ -1030,10 +1051,10 @@ static int insert_execute(VimState *state, int key)
   case K_PAGEDOWN:
   case K_KPAGEDOWN:
     if (pum_visible()) {
-      goto docomplete;
+      insert_do_complete(s);
+    } else {
+      ins_pagedown();
     }
-
-    ins_pagedown();
     break;
 
 
@@ -1043,7 +1064,8 @@ static int insert_execute(VimState *state, int key)
 
   case TAB:           // TAB or Complete patterns along path
     if (ctrl_x_mode == CTRL_X_PATH_PATTERNS) {
-      goto docomplete;
+      insert_do_complete(s);
+      break;
     }
     s->inserted_space = false;
     if (ins_tab()) {
@@ -1082,7 +1104,7 @@ static int insert_execute(VimState *state, int key)
   case Ctrl_K:        // digraph or keyword completion
     if (ctrl_x_mode == CTRL_X_DICTIONARY) {
       if (has_compl_option(true)) {
-        goto docomplete;
+        insert_do_complete(s);
       }
       break;
     }
@@ -1100,21 +1122,27 @@ static int insert_execute(VimState *state, int key)
   case Ctrl_RSB:      // Tag name completion after ^X
     if (ctrl_x_mode != CTRL_X_TAGS) {
       goto normalchar;
+    } else {
+      insert_do_complete(s);
     }
-    goto docomplete;
+    break;
 
   case Ctrl_F:        // File name completion after ^X
     if (ctrl_x_mode != CTRL_X_FILES) {
       goto normalchar;
+    } else {
+      insert_do_complete(s);
     }
-    goto docomplete;
+    break;
 
   case 's':           // Spelling completion after ^X
   case Ctrl_S:
     if (ctrl_x_mode != CTRL_X_SPELL) {
       goto normalchar;
+    } else {
+      insert_do_complete(s);
     }
-    goto docomplete;
+    break;
 
   case Ctrl_L:        // Whole line completion after ^X
     if (ctrl_x_mode != CTRL_X_WHOLE_LINE) {
@@ -1139,12 +1167,7 @@ static int insert_execute(VimState *state, int key)
       goto normalchar;
     }
 
-docomplete:
-    compl_busy = true;
-    if (ins_complete(s->c) == FAIL) {
-      compl_cont_status = 0;
-    }
-    compl_busy = false;
+    insert_do_complete(s);
     break;
 
   case Ctrl_Y:        // copy from previous line or scroll down
@@ -1219,28 +1242,27 @@ normalchar:
     break;
   }       // end of switch (s->c)
 
-  // If typed something may trigger CursorHoldI again.
-  if (s->c != K_EVENT) {
-    did_cursorhold = false;
-  }
+  return 1;  // continue
+}
 
-  // If the cursor was moved we didn't just insert a space */
-  if (arrow_used) {
-    s->inserted_space = false;
+static void insert_do_complete(InsertState *s)
+{
+  compl_busy = true;
+  if (ins_complete(s->c) == FAIL) {
+    compl_cont_status = 0;
   }
+  compl_busy = false;
+}
 
-  if (can_cindent && cindent_on() && ctrl_x_mode == 0) {
-force_cindent:
-    // Indent now if a key was typed that is in 'cinkeys'.
-    if (in_cinkeys(s->c, ' ', s->line_is_white)) {
-      if (stop_arrow() == OK) {
-        // re-indent the current line
-        do_c_expr_indent();
-      }
+static void insert_do_cindent(InsertState *s)
+{
+  // Indent now if a key was typed that is in 'cinkeys'.
+  if (in_cinkeys(s->c, ' ', s->line_is_white)) {
+    if (stop_arrow() == OK) {
+      // re-indent the current line
+      do_c_expr_indent();
     }
   }
-
-  return 1;  // continue
 }
 
 /*
