@@ -4,6 +4,7 @@
 #include "nvim/os/os.h"
 #include "nvim/path.h"
 #include "nvim/memory.h"
+#include "nvim/ascii.h"
 
 /// Names of the environment variables, mapped to XDGVarType values
 static const char *xdg_env_vars[] = {
