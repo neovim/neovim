@@ -332,11 +332,11 @@ static char *strcpy_comma_escaped(char *dest, const char *src, const size_t len)
 static void set_runtimepath_default(void)
 {
   size_t rtp_size = 0;
-  char *const data_home = vim_getenv("XDG_DATA_HOME");
-  char *const config_home = vim_getenv("XDG_CONFIG_HOME");
+  char *const data_home = stdpaths_get_xdg_var(kXDGDataHome);
+  char *const config_home = stdpaths_get_xdg_var(kXDGConfigHome);
   char *const vimruntime = vim_getenv("VIMRUNTIME");
-  char *const data_dirs = vim_getenv("XDG_DATA_DIRS");
-  char *const config_dirs = vim_getenv("XDG_CONFIG_DIRS");
+  char *const data_dirs = stdpaths_get_xdg_var(kXDGDataDirs);
+  char *const config_dirs = stdpaths_get_xdg_var(kXDGConfigDirs);
 #define NVIM_SIZE (sizeof("/nvim") - 1)
 #define SITE_SIZE (sizeof("/site") - 1)
 #define AFTER_SIZE (sizeof("/after") - 1)

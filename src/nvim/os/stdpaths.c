@@ -1,17 +1,9 @@
 #include <stdbool.h>
 
+#include "nvim/os/stdpaths_defs.h"
 #include "nvim/os/os.h"
 #include "nvim/path.h"
 #include "nvim/memory.h"
-
-typedef enum {
-  kXDGConfigHome,
-  kXDGDataHome,
-  kXDGCacheHome,
-  kXDGRuntimeDir,
-  kXDGConfigDirs,
-  kXDGDataDirs,
-} XDGVarType;
 
 static const char *xdg_env_vars[] = {
   [kXDGConfigHome] = "XDG_CONFIG_HOME",
@@ -45,7 +37,7 @@ static const char *const xdg_defaults[] = {
 };
 #endif
 
-static char *get_xdg(const XDGVarType idx)
+char *stdpaths_get_xdg_var(const XDGVarType idx)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const char *const env = xdg_env_vars[idx];
@@ -65,7 +57,7 @@ static char *get_xdg(const XDGVarType idx)
 static char *get_xdg_home(const XDGVarType idx)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  char *dir = get_xdg(idx);
+  char *dir = stdpaths_get_xdg_var(idx);
   if (dir) {
     dir = concat_fnames(dir, "nvim", true);
   }

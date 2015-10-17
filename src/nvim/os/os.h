@@ -5,6 +5,7 @@
 #include <uv.h>
 
 #include "nvim/os/fs_defs.h"
+#include "nvim/os/stdpaths_defs.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
