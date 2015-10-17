@@ -64,13 +64,15 @@ static char *get_xdg_home(const XDGVarType idx)
   return dir;
 }
 
-static void create_dir(const char *dir, int mode, const char *suffix)
+static void create_dir(const char *dir, int mode)
   FUNC_ATTR_NONNULL_ALL
 {
   char *failed;
-  if (!os_mkdir_recurse(dir, mode, &failed)) {
-    // TODO: Create a folder in $TMPDIR instead
-    DLOG("Create dir failed");
+  int err;
+  if ((err = os_mkdir_recurse(dir, mode, &failed)) != 0) {
+    EMSG3(_("E920: Failed to create data directory %s: %s"), failed,
+          os_strerror(-err));
+    xfree(failed);
   }
 }
 
@@ -85,7 +87,7 @@ char *stdpaths_user_data_subpath(const char *fname)
 {
   char *dir = concat_fnames_realloc(get_xdg_home(kXDGDataHome), fname, true);
   if (!os_isdir((char_u *)dir)) {
-    create_dir(dir, 0755, fname);
+    create_dir(dir, 0755);
   }
   return dir;
 }
