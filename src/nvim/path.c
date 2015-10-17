@@ -329,6 +329,31 @@ int vim_fnamencmp(char_u *x, char_u *y, size_t len)
 #endif
 }
 
+/// Append fname2 to fname1
+///
+/// @param[in]  fname1  First fname to append to.
+/// @param[in]  len1    Length of fname1.
+/// @param[in]  fname2  Secord part of the file name.
+/// @param[in]  len2    Length of fname2.
+/// @param[in]  sep     If true and fname1 does not end with a path separator,
+///                     add a path separator before fname2.
+///
+/// @return fname1
+static inline char *do_concat_fnames(char *fname1, const size_t len1,
+                                     const char *fname2, const size_t len2,
+                                     const bool sep)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+{
+  if (sep && *fname1 && !after_pathsep(fname1, fname1 + len1)) {
+    fname1[len1] = PATHSEP;
+    memmove(fname1 + len1 + 1, fname2, len2 + 1);
+  } else {
+    memmove(fname1 + len1, fname2, len2 + 1);
+  }
+
+  return fname1;
+}
+
 /// Concatenate file names fname1 and fname2 into allocated memory.
 ///
 /// Only add a '/' or '\\' when 'sep' is true and it is necessary.
@@ -341,15 +366,30 @@ int vim_fnamencmp(char_u *x, char_u *y, size_t len)
 char *concat_fnames(const char *fname1, const char *fname2, bool sep)
   FUNC_ATTR_NONNULL_ARG(1, 2) FUNC_ATTR_NONNULL_RET
 {
-  char *dest = xmalloc(strlen(fname1) + strlen(fname2) + 3);
+  const size_t len1 = strlen(fname1);
+  const size_t len2 = strlen(fname2);
+  char *dest = xmalloc(len1 + len2 + 3);
+  memmove(dest, fname1, len1 + 1);
+  return do_concat_fnames(dest, len1, fname2, len2, sep);
+}
 
-  strcpy(dest, fname1);
-  if (sep) {
-    add_pathsep(dest);
-  }
-  strcat(dest, fname2);
-
-  return dest;
+/// Concatenate file names fname1 and fname2
+///
+/// Like concat_fnames(), but in place of allocating new memory it reallocates
+/// fname1. For this reason fname1 must be allocated with xmalloc.
+///
+/// @param fname1 is the first part of the path or filename
+/// @param fname2 is the second half of the path or filename
+/// @param sep    is a flag to indicate a path separator should be added
+///               if necessary
+/// @return [allocated] Concatenation of fname1 and fname2.
+char *concat_fnames_realloc(char *fname1, const char *fname2, bool sep)
+  FUNC_ATTR_NONNULL_ARG(1, 2) FUNC_ATTR_NONNULL_RET
+{
+  const size_t len1 = strlen(fname1);
+  const size_t len2 = strlen(fname2);
+  return do_concat_fnames(xrealloc(fname1, len1 + len2 + 3), len1,
+                          fname2, len2, sep);
 }
 
 /*

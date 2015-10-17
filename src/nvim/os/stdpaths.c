@@ -59,7 +59,7 @@ static char *get_xdg_home(const XDGVarType idx)
 {
   char *dir = stdpaths_get_xdg_var(idx);
   if (dir) {
-    dir = concat_fnames(dir, "nvim", true);
+    dir = concat_fnames_realloc(dir, "nvim", true);
   }
   return dir;
 }
@@ -77,13 +77,13 @@ static void create_dir(const char *dir, int mode, const char *suffix)
 char *stdpaths_user_conf_subpath(const char *fname)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  return concat_fnames(get_xdg_home(kXDGConfigHome), fname, true);
+  return concat_fnames_realloc(get_xdg_home(kXDGConfigHome), fname, true);
 }
 
 char *stdpaths_user_data_subpath(const char *fname)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  char *dir = concat_fnames(get_xdg_home(kXDGDataHome), fname, true);
+  char *dir = concat_fnames_realloc(get_xdg_home(kXDGDataHome), fname, true);
   if (!os_isdir((char_u *)dir)) {
     create_dir(dir, 0755, fname);
   }

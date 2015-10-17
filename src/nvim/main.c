@@ -1895,6 +1895,7 @@ static void source_startup_scripts(mparm_T *parmp)
           (void)do_source((char_u *)EXRC_FILE, FALSE, DOSO_NONE);
       }
     }
+    xfree(user_vimrc);
     if (secure == 2)
       need_wait_return = TRUE;
     secure = 0;
