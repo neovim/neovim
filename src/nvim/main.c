@@ -1835,10 +1835,10 @@ static void source_startup_scripts(mparm_T *parmp)
     char_u *user_vimrc = (char_u *)stdpaths_user_conf_subpath("init.vim");
     if (process_env("VIMINIT", true) != OK) {
       if (do_source(user_vimrc, true, DOSO_VIMRC) == FAIL
-          && process_env("EXINIT", FALSE) == FAIL
-          && do_source((char_u *)USR_EXRC_FILE, FALSE, DOSO_NONE) == FAIL) {
+          && process_env("EXINIT", false) == FAIL
+          && do_source((char_u *)USR_EXRC_FILE, false, DOSO_NONE) == FAIL) {
 #ifdef USR_EXRC_FILE2
-        (void)do_source((char_u *)USR_EXRC_FILE2, FALSE, DOSO_NONE);
+        (void)do_source((char_u *)USR_EXRC_FILE2, false, DOSO_NONE);
 #endif
       }
     }

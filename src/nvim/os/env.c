@@ -431,7 +431,7 @@ const void *vim_colon_env_iter(const char *const val,
                                const void *const iter,
                                const char **const dir,
                                size_t *const len)
-  FUNC_ATTR_NONNULL_ARG(1,3,4) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(1, 3, 4) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const char *varval = (const char *) iter;
   if (varval == NULL) {
@@ -464,7 +464,7 @@ const void *vim_colon_env_iter_rev(const char *const val,
                                    const void *const iter,
                                    const char **const dir,
                                    size_t *const len)
-  FUNC_ATTR_NONNULL_ARG(1,3,4) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(1, 3, 4) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const char *varend = (const char *) iter;
   if (varend == NULL) {
