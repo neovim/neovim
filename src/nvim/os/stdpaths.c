@@ -20,7 +20,6 @@ static const char *xdg_env_vars[] = {
 ///
 /// Used in case environment variables contain nothing. Need to be expanded.
 static const char *const xdg_defaults[] = {
-  // Windows, Apple stuff are just shims right now
 #ifdef WIN32
   // Windows
   [kXDGConfigHome] = "$LOCALAPPDATA\\nvim\\config",
