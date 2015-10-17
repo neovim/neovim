@@ -29,7 +29,7 @@ env:
                    -DCMAKE_BUILD_TYPE=Debug
                    -DCMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX
                    -DUSE_GCOV=ON
-                   -DBUSTED_OUTPUT_TYPE=plainTerminal
+                   -DBUSTED_OUTPUT_TYPE=gtest
                    -DDEPS_PREFIX=$DEPS_BUILD_DIR/usr"
     - DEPS_CMAKE_FLAGS="-DDEPS_DOWNLOAD_DIR:PATH=$DEPS_DOWNLOAD_DIR"
     # Additional CMake flags for 32-bit builds.
