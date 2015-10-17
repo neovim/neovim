@@ -435,7 +435,7 @@ static void set_runtimepath_default(void)
 #undef NVIM_SIZE
 #undef SITE_SIZE
 #undef AFTER_SIZE
-  set_string_default("runtimepath", (char_u *)rtp);
+  set_string_default("runtimepath", rtp, true);
   xfree(data_dirs);
   xfree(config_dirs);
   xfree(data_home);
@@ -450,7 +450,6 @@ static void set_runtimepath_default(void)
  */
 void set_init_1(void)
 {
-  char_u      *p;
   int opt_idx;
 
   langmap_init();
@@ -462,8 +461,12 @@ void set_init_1(void)
    * Find default value for 'shell' option.
    * Don't use it if it is empty.
    */
-  if ((p = (char_u *)os_getenv("SHELL")) != NULL)
-    set_string_default("sh", p);
+  {
+    const char *shell = os_getenv("SHELL");
+    if (shell != NULL) {
+      set_string_default("sh", (char *) shell, false);
+    }
+  }
 
   /*
    * Set the default for 'backupskip' to include environment variables for
@@ -481,17 +484,18 @@ void set_init_1(void)
     ga_init(&ga, 1, 100);
     for (size_t n = 0; n < ARRAY_SIZE(names); ++n) {
       bool mustfree = true;
+      char *p;
 # ifdef UNIX
       if (*names[n] == NUL) {
-        p = (char_u *)"/tmp";
+        p = "/tmp";
         mustfree = false;
       }
       else
 # endif
-      p = (char_u *)vim_getenv(names[n]);
+      p = vim_getenv(names[n]);
       if (p != NULL && *p != NUL) {
         // First time count the NUL, otherwise count the ','.
-        len = (int)STRLEN(p) + 3;
+        len = (int)strlen(p) + 3;
         ga_grow(&ga, len);
         if (!GA_EMPTY(&ga))
           STRCAT(ga.ga_data, ",");
@@ -505,8 +509,7 @@ void set_init_1(void)
       }
     }
     if (ga.ga_data != NULL) {
-      set_string_default("bsk", ga.ga_data);
-      xfree(ga.ga_data);
+      set_string_default("bsk", ga.ga_data, true);
     }
   }
 
@@ -567,23 +570,17 @@ void set_init_1(void)
 
 #if defined(MSWIN) || defined(MAC)
   /* Set print encoding on platforms that don't default to latin1 */
-  set_string_default("penc",
-      (char_u *)"hp-roman8"
-      );
+  set_string_default("penc", "hp-roman8", false);
 #endif
 
   /* 'printexpr' must be allocated to be able to evaluate it. */
-  set_string_default(
-      "pexpr",
-      (char_u *)
-      "system('lpr' . (&printdevice == '' ? '' : ' -P' . &printdevice) . ' ' . v:fname_in) . delete(v:fname_in) + v:shell_error"
-      );
+  set_string_default("pexpr", "system('lpr' . (&printdevice == '' ? '' : ' -P' . &printdevice) . ' ' . v:fname_in) . delete(v:fname_in) + v:shell_error", false);
 
-  set_string_default("viewdir", (char_u *)stdpaths_user_data_subpath("view"));
-  set_string_default("backupdir",
-                     (char_u *)stdpaths_user_data_subpath("backup"));
-  set_string_default("directory", (char_u *)stdpaths_user_data_subpath("swap"));
-  set_string_default("undodir", (char_u *)stdpaths_user_data_subpath("undo"));
+
+  set_string_default("viewdir", stdpaths_user_data_subpath("view"), true);
+  set_string_default("backupdir", stdpaths_user_data_subpath("backup"), true);
+  set_string_default("directory", stdpaths_user_data_subpath("swap"), true);
+  set_string_default("undodir", stdpaths_user_data_subpath("undo"), true);
   // Set default for &runtimepath. All necessary expansions are performed in
   // this function.
   set_runtimepath_default();
@@ -629,14 +626,16 @@ void set_init_1(void)
    * default.
    */
   for (opt_idx = 0; options[opt_idx].fullname; opt_idx++) {
+    char *p;
     if ((options[opt_idx].flags & P_GETTEXT)
-        && options[opt_idx].var != NULL)
-      p = (char_u *)_(*(char **)options[opt_idx].var);
-    else
-      p = option_expand(opt_idx, NULL);
+        && options[opt_idx].var != NULL) {
+      p = _(*(char **)options[opt_idx].var);
+    } else {
+      p = (char *) option_expand(opt_idx, NULL);
+    }
     if (p != NULL) {
-      p = vim_strsave(p);
-      *(char_u **)options[opt_idx].var = p;
+      p = xstrdup(p);
+      *(char **)options[opt_idx].var = p;
       /* VIMEXP
        * Defaults for all expanded options are currently the same for Vi
        * and Vim.  When this changes, add some code here!  Also need to
@@ -644,7 +643,7 @@ void set_init_1(void)
        */
       if (options[opt_idx].flags & P_DEF_ALLOCED)
         xfree(options[opt_idx].def_val[VI_DEFAULT]);
-      options[opt_idx].def_val[VI_DEFAULT] = p;
+      options[opt_idx].def_val[VI_DEFAULT] = (char_u *) p;
       options[opt_idx].flags |= P_DEF_ALLOCED;
     }
   }
@@ -673,14 +672,14 @@ void set_init_1(void)
   (void)set_chars_option(&p_lcs);
 
   /* enc_locale() will try to find the encoding of the current locale. */
-  p = enc_locale();
+  char_u *p = enc_locale();
   if (p != NULL) {
     char_u *save_enc;
 
     /* Try setting 'encoding' and check if the value is valid.
      * If not, go back to the default "utf-8". */
     save_enc = p_enc;
-    p_enc = p;
+    p_enc = (char_u *) p;
     if (STRCMP(p_enc, "gb18030") == 0) {
       /* We don't support "gb18030", but "cp936" is a good substitute
        * for practical purposes, thus use that.  It's not an alias to
@@ -825,7 +824,9 @@ set_options_default (
 ///
 /// @param name The name of the option
 /// @param val The value of the option
-void set_string_default(const char *name, const char_u *val)
+/// @param allocated If true, do not copy default as it was already allocated.
+static void set_string_default(const char *name, char *val, bool allocated)
+  FUNC_ATTR_NONNULL_ALL
 {
   int opt_idx = findoption((char_u *)name);
   if (opt_idx >= 0) {
@@ -833,7 +834,10 @@ void set_string_default(const char *name, const char_u *val)
       xfree(options[opt_idx].def_val[VI_DEFAULT]);
     }
 
-    options[opt_idx].def_val[VI_DEFAULT] = (char_u *) xstrdup((char *) val);
+    options[opt_idx].def_val[VI_DEFAULT] = (char_u *) (
+        allocated
+        ? (char_u *) val
+        : (char_u *) xstrdup(val));
     options[opt_idx].flags |= P_DEF_ALLOCED;
   }
 }
