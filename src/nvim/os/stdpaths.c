@@ -23,6 +23,12 @@ static const char *const xdg_defaults[] = {
   // Windows, Apple stuff are just shims right now
 #ifdef WIN32
   // Windows
+  [kXDGConfigHome] = "$LOCALAPPDATA\\nvim\\config",
+  [kXDGDataHome]   = "$LOCALAPPDATA\\nvim\\data",
+  [kXDGCacheHome]  = "$LOCALAPPDATA\\nvim\\cache",
+  [kXDGRuntimeDir] = "",
+  [kXDGConfigDirs] = NULL,
+  [kXDGDataDirs] = NULL,
 #else
   // Linux, BSD, CYGWIN, Apple
   [kXDGConfigHome] = "~/.config",
