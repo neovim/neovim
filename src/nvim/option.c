@@ -570,12 +570,25 @@ void set_init_1(void)
 
 #if defined(MSWIN) || defined(MAC)
   /* Set print encoding on platforms that don't default to latin1 */
-  set_string_default("penc", "hp-roman8", false);
+  set_string_default("printencoding", "hp-roman8", false);
 #endif
 
-  /* 'printexpr' must be allocated to be able to evaluate it. */
-  set_string_default("pexpr", "system('lpr' . (&printdevice == '' ? '' : ' -P' . &printdevice) . ' ' . v:fname_in) . delete(v:fname_in) + v:shell_error", false);
-
+  // 'printexpr' must be allocated to be able to evaluate it.
+  set_string_default("printexpr",
+#ifdef UNIX
+                     "system(['lpr'] "
+                            "+ (empty(&printdevice)?[]:['-P', &printdevice]) "
+                            "+ [v:fname_in])"
+                     ". delete(v:fname_in)"
+                     "+ v:shell_error",
+#elif defined(MSWIN)
+                     "system(['copy', v:fname_in, "
+                             "empty(&printdevice)?'LPT1':&printdevice])"
+                     ". delete(v:fname_in)",
+#else
+                     "",
+#endif
+                     false);
 
   set_string_default("viewdir", stdpaths_user_data_subpath("view"), true);
   set_string_default("backupdir", stdpaths_user_data_subpath("backup"), true);
