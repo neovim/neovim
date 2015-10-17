@@ -28,9 +28,6 @@
 #ifndef SYNTAX_FNAME
 # define SYNTAX_FNAME   "$VIMRUNTIME/syntax/%s.vim"
 #endif
-#ifndef USR_EXRC_FILE
-# define USR_EXRC_FILE "~/.exrc"
-#endif
 #ifndef EXRC_FILE
 # define EXRC_FILE      ".exrc"
 #endif

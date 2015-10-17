@@ -407,7 +407,7 @@ accordingly.  Vim proceeds in this order:
 	":version" command.  Mostly it's "$VIM/vimrc".
 	For the Macintosh the $VIMRUNTIME/macmap.vim is read.
 
-				*VIMINIT* *EXINIT* *.exrc* *_exrc* *$MYVIMRC*
+						*VIMINIT* *EXINIT* *$MYVIMRC*
      b. Four places are searched for initializations.  The first that exists
 	is used, the others are ignored.  The $MYVIMRC environment variable is
 	set to the file that was first found, unless $MYVIMRC was already set
@@ -417,9 +417,6 @@ accordingly.  Vim proceeds in this order:
 	-  The user vimrc file: $XDG_CONFIG_HOME/nvim/init.vim.
 	-  The environment variable EXINIT.
 	   The value of $EXINIT is used as an Ex command line.
-	-  The user exrc file(s).  Same as for the user vimrc file, but with
-	   "vimrc" replaced by "exrc".  But only one of ".exrc" and "_exrc" is
-	   used, depending on the system.
 
      c. If the 'exrc' option is on (which is not the default), the current
 	directory is searched for three files.  The first that exists is used,

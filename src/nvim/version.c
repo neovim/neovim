@@ -1067,16 +1067,6 @@ void list_version(void)
   version_msg(SYS_VIMRC_FILE);
   version_msg("\"\n");
 #endif  // ifdef SYS_VIMRC_FILE
-#ifdef USR_EXRC_FILE
-  version_msg(_("      user exrc file: \""));
-  version_msg(USR_EXRC_FILE);
-  version_msg("\"\n");
-#endif  // ifdef USR_EXRC_FILE
-#ifdef USR_EXRC_FILE2
-  version_msg(_("  2nd user exrc file: \""));
-  version_msg(USR_EXRC_FILE2);
-  version_msg("\"\n");
-#endif  // ifdef USR_EXRC_FILE2
 #ifdef HAVE_PATHDEF
 
   if (*default_vim_dir != NUL) {

@@ -1834,12 +1834,8 @@ static void source_startup_scripts(mparm_T *parmp)
     // The first that exists is used, the rest is ignored.
     char_u *user_vimrc = (char_u *)stdpaths_user_conf_subpath("init.vim");
     if (process_env("VIMINIT", true) != OK) {
-      if (do_source(user_vimrc, true, DOSO_VIMRC) == FAIL
-          && process_env("EXINIT", false) == FAIL
-          && do_source((char_u *)USR_EXRC_FILE, false, DOSO_NONE) == FAIL) {
-#ifdef USR_EXRC_FILE2
-        (void)do_source((char_u *)USR_EXRC_FILE2, false, DOSO_NONE);
-#endif
+      if (do_source(user_vimrc, true, DOSO_VIMRC) == FAIL) {
+        process_env("EXINIT", false);
       }
     }
 
@@ -1877,14 +1873,7 @@ static void source_startup_scripts(mparm_T *parmp)
         else
           secure = 0;
 #endif
-        if (       path_full_compare((char_u *)USR_EXRC_FILE,
-              (char_u *)EXRC_FILE, FALSE) != kEqualFiles
-#ifdef USR_EXRC_FILE2
-            && path_full_compare((char_u *)USR_EXRC_FILE2,
-              (char_u *)EXRC_FILE, FALSE) != kEqualFiles
-#endif
-           )
-          (void)do_source((char_u *)EXRC_FILE, FALSE, DOSO_NONE);
+        (void) do_source((char_u *)EXRC_FILE, FALSE, DOSO_NONE);
       }
     }
     xfree(user_vimrc);
