@@ -484,9 +484,9 @@ static void set_runtimepath_default(void)
   char *const config_dirs = stdpaths_get_xdg_var(kXDGConfigDirs);
 #define SITE_SIZE (sizeof("site") - 1)
 #define AFTER_SIZE (sizeof("after") - 1)
-  size_t data_len;
-  size_t config_len;
-  size_t vimruntime_len;
+  size_t data_len = 0;
+  size_t config_len = 0;
+  size_t vimruntime_len = 0;
   if (data_home != NULL) {
     data_len = strlen(data_home);
     if (data_len != 0) {
