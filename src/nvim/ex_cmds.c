@@ -4587,8 +4587,11 @@ void fix_help_buffer(void)
           char_u      *cp;
 
           /* Find all "doc/ *.txt" files in this directory. */
-          add_pathsep((char *)NameBuff);
-          STRCAT(NameBuff, "doc/*.??[tx]");
+          if (add_pathsep((char *)NameBuff)
+              && STRLCAT(NameBuff, "doc/*.??[tx]", MAXPATHL) >= MAXPATHL) {
+            EMSG(_(e_pathtoolong));
+            continue;
+          }
 
           // Note: We cannot just do `&NameBuff` because it is a statically sized array
           //       so `NameBuff == &NameBuff` according to C semantics.
@@ -4758,8 +4761,8 @@ void ex_helptags(exarg_T *eap)
 
   /* Get a list of all files in the help directory and in subdirectories. */
   STRLCPY(NameBuff, dirname, MAXPATHL);
-  add_pathsep((char *)NameBuff);
-  if (STRLCAT(NameBuff, "**", MAXPATHL) >= MAXPATHL) {
+  if (add_pathsep((char *)NameBuff)
+      && STRLCAT(NameBuff, "**", MAXPATHL) >= MAXPATHL) {
     EMSG(_(e_pathtoolong));
     xfree(dirname);
     return;
@@ -4886,8 +4889,8 @@ helptags_one (
    * Do this before scanning through all the files.
    */
   memcpy(NameBuff, dir, dirlen + 1);
-  add_pathsep((char *)NameBuff);
-  if (STRLCAT(NameBuff, tagfname, MAXPATHL) >= MAXPATHL) {
+  if (add_pathsep((char *)NameBuff)
+      && STRLCAT(NameBuff, tagfname, MAXPATHL) >= MAXPATHL) {
     EMSG(_(e_pathtoolong));
     return;
   }
