@@ -11,7 +11,7 @@ typedef enum {
   kXDGRuntimeDir,
   kXDGConfigDirs,
   kXDGDataDirs,
-} XDGDirType;
+} XDGVarType;
 
 static const char *xdg_env_vars[] = {
   [kXDGConfigHome] = "XDG_CONFIG_HOME",
@@ -45,7 +45,7 @@ static const char *const xdg_defaults[] = {
 };
 #endif
 
-static char *get_xdg(const XDGDirType idx)
+static char *get_xdg(const XDGVarType idx)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const char *const env = xdg_env_vars[idx];
@@ -62,7 +62,7 @@ static char *get_xdg(const XDGDirType idx)
   return ret;
 }
 
-static char *get_xdg_home(XDGDirType idx)
+static char *get_xdg_home(const XDGVarType idx)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char *dir = get_xdg(idx);
@@ -82,28 +82,16 @@ static void create_dir(const char *dir, int mode, const char *suffix)
   }
 }
 
-char *get_user_conf_dir(void)
-  FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  return get_xdg_home(kXDGConfigHome);
-}
-
 char *get_from_user_conf(const char *fname)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  return concat_fnames(get_user_conf_dir(), fname, true);
-}
-
-char *get_user_data_dir(void)
-  FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  return get_xdg_home(kXDGDataHome);
+  return concat_fnames(get_xdg_home(kXDGConfigHome), fname, true);
 }
 
 char *get_from_user_data(const char *fname)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  char *dir = concat_fnames(get_user_data_dir(), fname, true);
+  char *dir = concat_fnames(get_xdg_home(kXDGDataHome), fname, true);
   if (!os_isdir((char_u *)dir)) {
     create_dir(dir, 0755, fname);
   }
