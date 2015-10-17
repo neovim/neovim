@@ -10,7 +10,9 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <errno.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 #include <assert.h>
 
 #include <msgpack.h>
