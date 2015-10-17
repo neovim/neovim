@@ -1,7 +1,8 @@
+#include <stdbool.h>
+
 #include "nvim/os/os.h"
-#include "nvim/strings.h"
 #include "nvim/path.h"
-#include "nvim/garray.h"
+#include "nvim/memory.h"
 
 typedef enum {
   kXDGConfigHome,
@@ -44,29 +45,35 @@ static const char *const xdg_defaults[] = {
 };
 #endif
 
-static const char *get_xdg(XDGDirType idx)
+static char *get_xdg(const XDGDirType idx)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  const char *env = xdg_env_vars[idx];
-  const char *fallback = xdg_defaults[idx];
+  const char *const env = xdg_env_vars[idx];
+  const char *const fallback = xdg_defaults[idx];
 
-  const char *ret = os_getenv(env);
-  if (!ret && fallback) {
-    ret = (const char *)expand_env_save((char_u *)fallback);
+  const char *const env_val = os_getenv(env);
+  char *ret = NULL;
+  if (env_val != NULL) {
+    ret = xstrdup(env_val);
+  } else if (fallback) {
+    ret = (char *) expand_env_save((char_u *)fallback);
   }
 
   return ret;
 }
 
-static const char *get_xdg_home(XDGDirType idx)
+static char *get_xdg_home(XDGDirType idx)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  const char *dir = get_xdg(idx);
+  char *dir = get_xdg(idx);
   if (dir) {
-    dir = (const char *)concat_fnames(dir, "nvim", true);
+    dir = concat_fnames(dir, "nvim", true);
   }
   return dir;
 }
 
 static void create_dir(const char *dir, int mode, const char *suffix)
+  FUNC_ATTR_NONNULL_ALL
 {
   char *failed;
   if (!os_mkdir_recurse(dir, mode, &failed)) {
@@ -75,24 +82,28 @@ static void create_dir(const char *dir, int mode, const char *suffix)
   }
 }
 
-const char *get_user_conf_dir(void)
+char *get_user_conf_dir(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return get_xdg_home(kXDGConfigHome);
 }
 
-const char *get_from_user_conf(const char * fname)
+char *get_from_user_conf(const char *fname)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  return (const char *)concat_fnames(get_user_conf_dir(), fname, true);
+  return concat_fnames(get_user_conf_dir(), fname, true);
 }
 
-const char *get_user_data_dir(void)
+char *get_user_data_dir(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return get_xdg_home(kXDGDataHome);
 }
 
-const char *get_from_user_data(const char * fname)
+char *get_from_user_data(const char *fname)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  const char *dir = (const char *)concat_fnames(get_user_data_dir(), fname, true);
+  char *dir = concat_fnames(get_user_data_dir(), fname, true);
   if (!os_isdir((char_u *)dir)) {
     create_dir(dir, 0755, fname);
   }
