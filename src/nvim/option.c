@@ -331,15 +331,15 @@ static char *strcpy_comma_escaped(char *dest, const char *src, const size_t len)
 /// Compute length of a colon-separated value, doubled and with some suffixes
 ///
 /// @param[in]  val  Colon-separated array value.
-/// @param[in]  common_suf_len  Length of the common suffix which is appended to 
+/// @param[in]  common_suf_len  Length of the common suffix which is appended to
 ///                             each item in the array, twice.
-/// @param[in]  single_suf_len  Length of the suffix which is appended to each 
+/// @param[in]  single_suf_len  Length of the suffix which is appended to each
 ///                             item in the array once.
 ///
-/// @return Length of the comma-separated string array that contains each item 
-///         in the original array twice with suffixes with given length 
-///         (common_suf is present after each new item, single_suf is present 
-///         after half of the new items) and with commas after each item, commas 
+/// @return Length of the comma-separated string array that contains each item
+///         in the original array twice with suffixes with given length
+///         (common_suf is present after each new item, single_suf is present
+///         after half of the new items) and with commas after each item, commas
 ///         inside the values are escaped.
 static inline size_t compute_double_colon_len(const char *const val,
                                               const size_t common_suf_len,
@@ -368,20 +368,20 @@ static inline size_t compute_double_colon_len(const char *const val,
 
 /// Add directories to a comma-separated array from a colon-separated one
 ///
-/// Commas are escaped in process. To each item PATHSEP "nvim" is appended in 
+/// Commas are escaped in process. To each item PATHSEP "nvim" is appended in
 /// addition to suf1 and suf2.
 ///
 /// @param[in,out]  dest  Destination comma-separated array.
 /// @param[in]  val  Source colon-separated array.
-/// @param[in]  suf1  If not NULL, suffix appended to destination. Prior to it 
-///                   directory separator is appended. Suffix must not contain 
+/// @param[in]  suf1  If not NULL, suffix appended to destination. Prior to it
+///                   directory separator is appended. Suffix must not contain
 ///                   commas.
 /// @param[in]  len1  Length of the suf1.
-/// @param[in]  suf2  If not NULL, another suffix appended to destination. Again 
-///                   with directory separator behind. Suffix must not contain 
+/// @param[in]  suf2  If not NULL, another suffix appended to destination. Again
+///                   with directory separator behind. Suffix must not contain
 ///                   commas.
 /// @param[in]  len2  Length of the suf2.
-/// @param[in]  forward  If true, iterate over val in forward direction. 
+/// @param[in]  forward  If true, iterate over val in forward direction.
 ///                      Otherwise in reverse.
 ///
 /// @return (dest + appended_characters_length)
@@ -430,15 +430,15 @@ static inline char *add_colon_dirs(char *dest, const char *const val,
 /// @param[in,out]  dest  Destination comma-separated array.
 /// @param[in]  dir  Directory to append.
 /// @param[in]  append_nvim  If true, append "nvim" as the very first suffix.
-/// @param[in]  suf1  If not NULL, suffix appended to destination. Prior to it 
-///                   directory separator is appended. Suffix must not contain 
+/// @param[in]  suf1  If not NULL, suffix appended to destination. Prior to it
+///                   directory separator is appended. Suffix must not contain
 ///                   commas.
 /// @param[in]  len1  Length of the suf1.
-/// @param[in]  suf2  If not NULL, another suffix appended to destination. Again 
-///                   with directory separator behind. Suffix must not contain 
+/// @param[in]  suf2  If not NULL, another suffix appended to destination. Again
+///                   with directory separator behind. Suffix must not contain
 ///                   commas.
 /// @param[in]  len2  Length of the suf2.
-/// @param[in]  forward  If true, iterate over val in forward direction. 
+/// @param[in]  forward  If true, iterate over val in forward direction.
 ///                      Otherwise in reverse.
 ///
 /// @return (dest + appended_characters_length)
