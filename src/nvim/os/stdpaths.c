@@ -92,10 +92,19 @@ char *stdpaths_user_conf_subpath(const char *fname)
 /// Return subpath of $XDG_DATA_HOME
 ///
 /// @param[in]  fname  New component of the path.
+/// @param[in]  trailing_pathseps  Amount of trailing path separators to add.
 ///
 /// @return [allocated] `$XDG_DATA_HOME/nvim/{fname}`
-char *stdpaths_user_data_subpath(const char *fname)
+char *stdpaths_user_data_subpath(const char *fname,
+                                 const size_t trailing_pathseps)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  return concat_fnames_realloc(get_xdg_home(kXDGDataHome), fname, true);
+  char *ret = concat_fnames_realloc(get_xdg_home(kXDGDataHome), fname, true);
+  if (trailing_pathseps) {
+    const size_t len = strlen(ret);
+    ret = xrealloc(ret, len + trailing_pathseps + 1);
+    memset(ret + len, PATHSEP, trailing_pathseps);
+    ret[len + trailing_pathseps] = NUL;
+  }
+  return ret;
 }

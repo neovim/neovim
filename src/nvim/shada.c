@@ -1591,7 +1591,7 @@ static const char *shada_get_default_file(void)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (default_shada_file == NULL) {
-    char *shada_dir = stdpaths_user_data_subpath("shada");
+    char *shada_dir = stdpaths_user_data_subpath("shada", 0);
     default_shada_file = concat_fnames_realloc(shada_dir, "main.shada", true);
   }
   return default_shada_file;
