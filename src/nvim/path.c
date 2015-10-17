@@ -364,7 +364,7 @@ static inline char *do_concat_fnames(char *fname1, const size_t len1,
 ///               if necessary
 /// @return [allocated] Concatenation of fname1 and fname2.
 char *concat_fnames(const char *fname1, const char *fname2, bool sep)
-  FUNC_ATTR_NONNULL_ARG(1, 2) FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   const size_t len1 = strlen(fname1);
   const size_t len2 = strlen(fname2);
@@ -376,7 +376,8 @@ char *concat_fnames(const char *fname1, const char *fname2, bool sep)
 /// Concatenate file names fname1 and fname2
 ///
 /// Like concat_fnames(), but in place of allocating new memory it reallocates
-/// fname1. For this reason fname1 must be allocated with xmalloc.
+/// fname1. For this reason fname1 must be allocated with xmalloc, and can no 
+/// longer be used after running concat_fnames_realloc.
 ///
 /// @param fname1 is the first part of the path or filename
 /// @param fname2 is the second half of the path or filename
@@ -384,7 +385,7 @@ char *concat_fnames(const char *fname1, const char *fname2, bool sep)
 ///               if necessary
 /// @return [allocated] Concatenation of fname1 and fname2.
 char *concat_fnames_realloc(char *fname1, const char *fname2, bool sep)
-  FUNC_ATTR_NONNULL_ARG(1, 2) FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   const size_t len1 = strlen(fname1);
   const size_t len2 = strlen(fname2);

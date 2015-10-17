@@ -64,18 +64,6 @@ static char *get_xdg_home(const XDGVarType idx)
   return dir;
 }
 
-static void create_dir(const char *dir, int mode)
-  FUNC_ATTR_NONNULL_ALL
-{
-  char *failed;
-  int err;
-  if ((err = os_mkdir_recurse(dir, mode, &failed)) != 0) {
-    EMSG3(_("E920: Failed to create data directory %s: %s"), failed,
-          os_strerror(-err));
-    xfree(failed);
-  }
-}
-
 char *stdpaths_user_conf_subpath(const char *fname)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
@@ -85,9 +73,5 @@ char *stdpaths_user_conf_subpath(const char *fname)
 char *stdpaths_user_data_subpath(const char *fname)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  char *dir = concat_fnames_realloc(get_xdg_home(kXDGDataHome), fname, true);
-  if (!os_isdir((char_u *)dir)) {
-    create_dir(dir, 0755);
-  }
-  return dir;
+  return concat_fnames_realloc(get_xdg_home(kXDGDataHome), fname, true);
 }
