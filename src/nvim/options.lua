@@ -959,7 +959,6 @@ return {
       type='bool', scope={'global'},
       secure=true,
       vi_def=true,
-      enable_if='HAVE_FSYNC',
       varname='p_fs',
       defaults={if_true={vi=true}}
     },

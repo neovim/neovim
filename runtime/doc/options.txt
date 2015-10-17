@@ -2821,9 +2821,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	written even on filesystems which do metadata-only journaling.  This
 	will force the harddrive to spin up on Linux systems running in laptop
 	mode, so it may be undesirable in some situations.  Be warned that
-	turning this off increases the chances of data loss after a crash.  On
-	systems without an fsync() implementation, this variable is always
-	off.
+	turning this off increases the chances of data loss after a crash.
 	Also see 'swapsync' for controlling fsync() on swap files.
 
 				   *'gdefault'* *'gd'* *'nogdefault'* *'nogd'*
@@ -6220,14 +6218,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 'swapsync' 'sws'	string	(default "fsync")
 			global
 	When this option is not empty a swap file is synced to disk after
-	writing to it.  This takes some time, especially on busy unix systems.
+	writing to it.  This takes some time, especially on busy Unix systems.
 	When this option is empty parts of the swap file may be in memory and
 	not written to disk.  When the system crashes you may lose more work.
 	On Unix the system does a sync now and then without Vim asking for it,
 	so the disadvantage of setting this option off is small.  On some
-	systems the swap file will not be written at all.  For a unix system
-	setting it to "sync" will use the sync() call instead of the default
-	fsync(), which may work better on some systems.
+	systems the swap file will not be written at all. 
 	The 'fsync' option is used for the actual file.
 
 						*'switchbuf'* *'swb'*

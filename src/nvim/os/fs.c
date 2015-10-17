@@ -202,6 +202,19 @@ int os_open(const char* path, int flags, int mode)
   return r;
 }
 
+/// Flushes file modifications to disk.
+///
+/// @param fd the file descriptor of the file to flush to disk.
+///
+/// @return `0` on success, a libuv error code on failure.
+int os_fsync(int fd)
+{
+  uv_fs_t fsync_req;
+  int r = uv_fs_fsync(&fs_loop, &fsync_req, fd, NULL);
+  uv_fs_req_cleanup(&fsync_req);
+  return r;
+}
+
 /// Get stat information for a file.
 ///
 /// @return libuv return code.

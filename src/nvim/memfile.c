@@ -460,31 +460,11 @@ int mf_sync(memfile_T *mfp, int flags)
     mfp->mf_dirty = false;
 
   if ((flags & MFS_FLUSH) && *p_sws != NUL) {
-#if defined(UNIX)
-# ifdef HAVE_FSYNC
     if (STRCMP(p_sws, "fsync") == 0) {
-      if (fsync(mfp->mf_fd))
+      if (os_fsync(mfp->mf_fd)) {
         status = FAIL;
-    } else {
-# endif
-    // OpenNT is strictly POSIX (Benzinger).
-    // Tandem/Himalaya NSK-OSS doesn't have sync()
-# if defined(__OPENNT) || defined(__TANDEM)
-    fflush(NULL);
-# else
-    sync();
-# endif
-# ifdef HAVE_FSYNC
+      }
     }
-# endif
-#endif
-# ifdef SYNC_DUP_CLOSE
-    // Win32 is a bit more work: Duplicate the file handle and close it.
-    // This should flush the file to disk.
-    int fd;
-    if ((fd = dup(mfp->mf_fd)) >= 0)
-      close(fd);
-# endif
   }
 
   got_int |= got_int_save;
