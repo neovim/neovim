@@ -346,7 +346,7 @@ static inline size_t compute_double_colon_len(const char *const val,
                                               const size_t single_suf_len)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
-  if (val == NULL) {
+  if (val == NULL && *val) {
     return 0;
   }
   size_t ret = 0;
@@ -356,7 +356,8 @@ static inline size_t compute_double_colon_len(const char *const val,
     const char *dir;
     iter = vim_colon_env_iter(val, iter, &dir, &dir_len);
     if (dir != NULL && dir_len > 0) {
-      ret += ((dir_len + count_commas(dir, dir_len) + common_suf_len + 1) * 2
+      ret += ((dir_len + count_commas(dir, dir_len) + common_suf_len
+               + !after_pathsep(dir, dir + dir_len)) * 2
               + single_suf_len);
     }
   } while (iter != NULL);
@@ -390,7 +391,7 @@ static inline char *add_colon_dirs(char *dest, const char *const val,
                                    const bool forward)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ARG(1)
 {
-  if (val == NULL) {
+  if (val == NULL && *val) {
     return dest;
   }
   const void *iter = NULL;
@@ -401,7 +402,9 @@ static inline char *add_colon_dirs(char *dest, const char *const val,
         val, iter, &dir, &dir_len);
     if (dir != NULL && dir_len > 0) {
       dest = strcpy_comma_escaped(dest, dir, dir_len);
-      *dest++ = PATHSEP;
+      if (!after_pathsep(dest - 1, dest)) {
+        *dest++ = PATHSEP;
+      }
       memmove(dest, "nvim", NVIM_SIZE);
       dest += NVIM_SIZE;
       if (suf1 != NULL) {
@@ -445,12 +448,14 @@ static inline char *add_dir(char *dest, const char *const dir,
                             const char *const suf2, const size_t len2)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (dir == NULL) {
+  if (dir == NULL && dir_len != 0) {
     return dest;
   }
   dest = strcpy_comma_escaped(dest, dir, dir_len);
   if (append_nvim) {
-    *dest++ = PATHSEP;
+    if (!after_pathsep(dest - 1, dest)) {
+      *dest++ = PATHSEP;
+    }
     memmove(dest, "nvim", NVIM_SIZE);
     dest += NVIM_SIZE;
     if (suf1 != NULL) {
@@ -484,17 +489,27 @@ static void set_runtimepath_default(void)
   size_t vimruntime_len;
   if (data_home != NULL) {
     data_len = strlen(data_home);
-    rtp_size += ((data_len + count_commas(data_home, data_len)
-                  + NVIM_SIZE + 1 + SITE_SIZE + 1 + 1) * 2 + AFTER_SIZE + 1);
+    if (data_len != 0) {
+      rtp_size += ((data_len + count_commas(data_home, data_len)
+                    + NVIM_SIZE + 1 + SITE_SIZE + 1
+                    + !after_pathsep(data_home, data_home + data_len)) * 2
+                   + AFTER_SIZE + 1);
+    }
   }
   if (config_home != NULL) {
     config_len = strlen(config_home);
-    rtp_size += ((config_len + count_commas(config_home, config_len)
-                  + NVIM_SIZE + 1 + 1) * 2 + AFTER_SIZE + 1);
+    if (config_len != 0) {
+      rtp_size += ((config_len + count_commas(config_home, config_len)
+                    + NVIM_SIZE + 1
+                    + !after_pathsep(config_home, config_home + config_len)) * 2
+                   + AFTER_SIZE + 1);
+    }
   }
   if (vimruntime != NULL) {
     vimruntime_len = strlen(vimruntime);
-    rtp_size += vimruntime_len + count_commas(vimruntime, vimruntime_len) + 1;
+    if (vimruntime_len != 0) {
+      rtp_size += vimruntime_len + count_commas(vimruntime, vimruntime_len) + 1;
+    }
   }
   rtp_size += compute_double_colon_len(data_dirs, NVIM_SIZE + 1 + SITE_SIZE + 1,
                                        AFTER_SIZE + 1);
