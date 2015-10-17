@@ -1840,7 +1840,7 @@ static void source_startup_scripts(mparm_T *parmp)
      * - second user exrc file ($VIM/.exrc for Dos)
      * The first that exists is used, the rest is ignored.
      */
-    char_u *user_vimrc = (char_u *)get_from_user_conf("init.vim");
+    char_u *user_vimrc = (char_u *)stdpaths_user_conf_subpath("init.vim");
     if (process_env("VIMINIT", true) != OK) {
       if (do_source(user_vimrc, true, DOSO_VIMRC) == FAIL
           && process_env("EXINIT", FALSE) == FAIL

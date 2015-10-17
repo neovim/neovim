@@ -82,13 +82,13 @@ static void create_dir(const char *dir, int mode, const char *suffix)
   }
 }
 
-char *get_from_user_conf(const char *fname)
+char *stdpaths_user_conf_subpath(const char *fname)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return concat_fnames(get_xdg_home(kXDGConfigHome), fname, true);
 }
 
-char *get_from_user_data(const char *fname)
+char *stdpaths_user_data_subpath(const char *fname)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   char *dir = concat_fnames(get_xdg_home(kXDGDataHome), fname, true);

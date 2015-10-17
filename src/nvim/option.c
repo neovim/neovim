@@ -579,11 +579,12 @@ void set_init_1(void)
       "system('lpr' . (&printdevice == '' ? '' : ' -P' . &printdevice) . ' ' . v:fname_in) . delete(v:fname_in) + v:shell_error"
       );
 
-  set_string_default("viewdir", (char_u *)get_from_user_data("view"));
-  set_string_default("backupdir", (char_u *)get_from_user_data("backup"));
-  set_string_default("directory", (char_u *)get_from_user_data("swap"));
-  set_string_default("undodir", (char_u *)get_from_user_data("undo"));
-  // Set default for &runtimepath. All necessary expansions are performed in 
+  set_string_default("viewdir", (char_u *)stdpaths_user_data_subpath("view"));
+  set_string_default("backupdir",
+                     (char_u *)stdpaths_user_data_subpath("backup"));
+  set_string_default("directory", (char_u *)stdpaths_user_data_subpath("swap"));
+  set_string_default("undodir", (char_u *)stdpaths_user_data_subpath("undo"));
+  // Set default for &runtimepath. All necessary expansions are performed in
   // this function.
   set_runtimepath_default();
 
