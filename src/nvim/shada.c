@@ -1614,22 +1614,7 @@ static char *shada_filename(const char *file)
       file = used_shada_file;
     } else {
       if ((file = find_shada_parameter('n')) == NULL || *file == NUL) {
-#ifdef SHADA_FILE2
-        // don't use $HOME when not defined (turned into "c:/"!).
-        if (os_getenv((char_u *)"HOME") == NULL) {
-          // don't use $VIM when not available.
-          expand_env((char_u *)"$VIM", NameBuff, MAXPATHL);
-          if (STRCMP("$VIM", NameBuff) != 0) {  // $VIM was expanded
-            file = SHADA_FILE2;
-          } else {
-            file = shada_get_default_file();
-          }
-        } else {
-#endif
-          file =  shada_get_default_file();
-#ifdef SHADA_FILE2
-        }
-#endif
+        file =  shada_get_default_file();
       }
       // XXX It used to be one level lower, so that whatever is in
       //     `used_shada_file` was expanded. I intentionally moved it here
