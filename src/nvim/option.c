@@ -328,6 +328,146 @@ static char *strcpy_comma_escaped(char *dest, const char *src, const size_t len)
   return &dest[len + shift];
 }
 
+/// Compute length of a colon-separated value, doubled and with some suffixes
+///
+/// @param[in]  val  Colon-separated array value.
+/// @param[in]  common_suf_len  Length of the common suffix which is appended to 
+///                             each item in the array, twice.
+/// @param[in]  single_suf_len  Length of the suffix which is appended to each 
+///                             item in the array once.
+///
+/// @return Length of the comma-separated string array that contains each item 
+///         in the original array twice with suffixes with given length 
+///         (common_suf is present after each new item, single_suf is present 
+///         after half of the new items) and with commas after each item, commas 
+///         inside the values are escaped.
+static inline size_t compute_double_colon_len(const char *const val,
+                                              const size_t common_suf_len,
+                                              const size_t single_suf_len)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  if (val == NULL) {
+    return 0;
+  }
+  size_t ret = 0;
+  const void *iter = NULL;
+  do {
+    size_t dir_len;
+    const char *dir;
+    iter = vim_colon_env_iter(val, iter, &dir, &dir_len);
+    if (dir != NULL && dir_len > 0) {
+      ret += ((dir_len + count_commas(dir, dir_len) + common_suf_len + 1) * 2
+              + single_suf_len);
+    }
+  } while (iter != NULL);
+  return ret;
+}
+
+#define NVIM_SIZE (sizeof("nvim") - 1)
+
+/// Add directories to a comma-separated array from a colon-separated one
+///
+/// Commas are escaped in process. To each item PATHSEP "nvim" is appended in 
+/// addition to suf1 and suf2.
+///
+/// @param[in,out]  dest  Destination comma-separated array.
+/// @param[in]  val  Source colon-separated array.
+/// @param[in]  suf1  If not NULL, suffix appended to destination. Prior to it 
+///                   directory separator is appended. Suffix must not contain 
+///                   commas.
+/// @param[in]  len1  Length of the suf1.
+/// @param[in]  suf2  If not NULL, another suffix appended to destination. Again 
+///                   with directory separator behind. Suffix must not contain 
+///                   commas.
+/// @param[in]  len2  Length of the suf2.
+/// @param[in]  forward  If true, iterate over val in forward direction. 
+///                      Otherwise in reverse.
+///
+/// @return (dest + appended_characters_length)
+static inline char *add_colon_dirs(char *dest, const char *const val,
+                                   const char *const suf1, const size_t len1,
+                                   const char *const suf2, const size_t len2,
+                                   const bool forward)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ARG(1)
+{
+  if (val == NULL) {
+    return dest;
+  }
+  const void *iter = NULL;
+  do {
+    size_t dir_len;
+    const char *dir;
+    iter = (forward ? vim_colon_env_iter : vim_colon_env_iter_rev)(
+        val, iter, &dir, &dir_len);
+    if (dir != NULL && dir_len > 0) {
+      dest = strcpy_comma_escaped(dest, dir, dir_len);
+      *dest++ = PATHSEP;
+      memmove(dest, "nvim", NVIM_SIZE);
+      dest += NVIM_SIZE;
+      if (suf1 != NULL) {
+        *dest++ = PATHSEP;
+        memmove(dest, suf1, len1);
+        dest += len1;
+        if (suf2 != NULL) {
+          *dest++ = PATHSEP;
+          memmove(dest, suf2, len2);
+          dest += len2;
+        }
+      }
+      *dest++ = ',';
+    }
+  } while (iter != NULL);
+  return dest;
+}
+
+/// Add directory to a comma-separated list of directories
+///
+/// In the added directory comma is escaped.
+///
+/// @param[in,out]  dest  Destination comma-separated array.
+/// @param[in]  dir  Directory to append.
+/// @param[in]  append_nvim  If true, append "nvim" as the very first suffix.
+/// @param[in]  suf1  If not NULL, suffix appended to destination. Prior to it 
+///                   directory separator is appended. Suffix must not contain 
+///                   commas.
+/// @param[in]  len1  Length of the suf1.
+/// @param[in]  suf2  If not NULL, another suffix appended to destination. Again 
+///                   with directory separator behind. Suffix must not contain 
+///                   commas.
+/// @param[in]  len2  Length of the suf2.
+/// @param[in]  forward  If true, iterate over val in forward direction. 
+///                      Otherwise in reverse.
+///
+/// @return (dest + appended_characters_length)
+static inline char *add_dir(char *dest, const char *const dir,
+                            const size_t dir_len, const bool append_nvim,
+                            const char *const suf1, const size_t len1,
+                            const char *const suf2, const size_t len2)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (dir == NULL) {
+    return dest;
+  }
+  dest = strcpy_comma_escaped(dest, dir, dir_len);
+  if (append_nvim) {
+    *dest++ = PATHSEP;
+    memmove(dest, "nvim", NVIM_SIZE);
+    dest += NVIM_SIZE;
+    if (suf1 != NULL) {
+      *dest++ = PATHSEP;
+      memmove(dest, suf1, len1);
+      dest += len1;
+      if (suf2 != NULL) {
+        *dest++ = PATHSEP;
+        memmove(dest, suf2, len2);
+        dest += len2;
+      }
+    }
+  }
+  *dest++ = ',';
+  return dest;
+}
+
 /// Set &runtimepath to default value
 static void set_runtimepath_default(void)
 {
@@ -337,102 +477,53 @@ static void set_runtimepath_default(void)
   char *const vimruntime = vim_getenv("VIMRUNTIME");
   char *const data_dirs = stdpaths_get_xdg_var(kXDGDataDirs);
   char *const config_dirs = stdpaths_get_xdg_var(kXDGConfigDirs);
-#define NVIM_SIZE (sizeof("/nvim") - 1)
-#define SITE_SIZE (sizeof("/site") - 1)
-#define AFTER_SIZE (sizeof("/after") - 1)
+#define SITE_SIZE (sizeof("site") - 1)
+#define AFTER_SIZE (sizeof("after") - 1)
   size_t data_len;
   size_t config_len;
   size_t vimruntime_len;
   if (data_home != NULL) {
     data_len = strlen(data_home);
     rtp_size += ((data_len + count_commas(data_home, data_len)
-                  + NVIM_SIZE + SITE_SIZE) * 2 + AFTER_SIZE) + 2;
+                  + NVIM_SIZE + 1 + SITE_SIZE + 1 + 1) * 2 + AFTER_SIZE + 1);
   }
   if (config_home != NULL) {
     config_len = strlen(config_home);
     rtp_size += ((config_len + count_commas(config_home, config_len)
-                  + NVIM_SIZE) * 2 + AFTER_SIZE) + 2;
+                  + NVIM_SIZE + 1 + 1) * 2 + AFTER_SIZE + 1);
   }
   if (vimruntime != NULL) {
     vimruntime_len = strlen(vimruntime);
     rtp_size += vimruntime_len + count_commas(vimruntime, vimruntime_len) + 1;
   }
-#define COMPUTE_COLON_LEN(rtp_size, additional_size, val) \
-  do { \
-    if (val != NULL) { \
-      const void *iter = NULL; \
-      do { \
-        size_t dir_len; \
-        const char *dir; \
-        iter = vim_colon_env_iter(val, iter, &dir, &dir_len); \
-        if (dir != NULL && dir_len > 0) { \
-          rtp_size += ((dir_len + count_commas(dir, dir_len) \
-                        + NVIM_SIZE + additional_size) * 2 \
-                       + AFTER_SIZE) + 2; \
-        } \
-      } while (iter != NULL); \
-    } \
-  } while (0)
-  COMPUTE_COLON_LEN(rtp_size, SITE_SIZE, data_dirs);
-  COMPUTE_COLON_LEN(rtp_size, 0, config_dirs);
-#undef COMPUTE_COLON_LEN
+  rtp_size += compute_double_colon_len(data_dirs, NVIM_SIZE + 1 + SITE_SIZE + 1,
+                                       AFTER_SIZE + 1);
+  rtp_size += compute_double_colon_len(config_dirs, NVIM_SIZE + 1,
+                                       AFTER_SIZE + 1);
   if (rtp_size == 0) {
     return;
   }
-  // All additions were including comma.
-  rtp_size--;
-  char *const rtp = xmallocz(rtp_size);
+  char *const rtp = xmalloc(rtp_size);
   char *rtp_cur = rtp;
-#define ADD_STRING(tgt, src, len) \
-  tgt = strcpy_comma_escaped(tgt, src, len)
-#define ADD_STATIC_STRING(tgt, src) \
-  do { memmove(tgt, src, sizeof(src) - 1); tgt += sizeof(src) - 1; } while (0)
-#define ADD_COLON_DIRS(tgt, val, suffix, revsuffix) \
-  do { \
-    if (val != NULL) { \
-      const void *iter = NULL; \
-      do { \
-        size_t dir_len; \
-        const char *dir; \
-        iter = vim_colon_env_iter##revsuffix(val, iter, &dir, &dir_len); \
-        if (dir != NULL && dir_len > 0) { \
-          ADD_STRING(rtp_cur, dir, dir_len); \
-          ADD_STATIC_STRING(rtp_cur, "/nvim" suffix ","); \
-        } \
-      } while (iter != NULL); \
-    } \
-  } while (0)
-  if (config_home != NULL) {
-    ADD_STRING(rtp_cur, config_home, config_len);
-    ADD_STATIC_STRING(rtp_cur, "/nvim,");
-  }
-  ADD_COLON_DIRS(rtp_cur, config_dirs, "", );
-  if (data_home != NULL) {
-    ADD_STRING(rtp_cur, data_home, data_len);
-    ADD_STATIC_STRING(rtp_cur, "/nvim/site,");
-  }
-  ADD_COLON_DIRS(rtp_cur, data_dirs, "/site", );
-  if (vimruntime != NULL) {
-    ADD_STRING(rtp_cur, vimruntime, vimruntime_len);
-    *rtp_cur++ = ',';
-  }
-  ADD_COLON_DIRS(rtp_cur, data_dirs, "/site/after", _rev);
-  if (data_home != NULL) {
-    ADD_STRING(rtp_cur, data_home, data_len);
-    ADD_STATIC_STRING(rtp_cur, "/nvim/site/after,");
-  }
-  ADD_COLON_DIRS(rtp_cur, config_dirs, "/after", _rev);
-  if (config_home != NULL) {
-    ADD_STRING(rtp_cur, config_home, config_len);
-    ADD_STATIC_STRING(rtp_cur, "/nvim/after");
-  } else {
-    // Strip trailing comma.
-    rtp[rtp_size] = NUL;
-  }
-#undef ADD_COLON_DIRS
-#undef ADD_STATIC_STRING
-#undef ADD_STRING
-#undef NVIM_SIZE
+  rtp_cur = add_dir(rtp_cur, config_home, config_len, true, NULL, 0, NULL, 0);
+  rtp_cur = add_colon_dirs(rtp_cur, config_dirs, NULL, 0, NULL, 0, true);
+  rtp_cur = add_dir(rtp_cur, data_home, data_len, true, "site", SITE_SIZE,
+                    NULL, 0);
+  rtp_cur = add_colon_dirs(rtp_cur, data_dirs, "site", SITE_SIZE, NULL, 0,
+                           true);
+  rtp_cur = add_dir(rtp_cur, vimruntime, vimruntime_len, false, NULL, 0,
+                    NULL, 0);
+  rtp_cur = add_colon_dirs(rtp_cur, data_dirs, "site", SITE_SIZE,
+                           "after", AFTER_SIZE, false);
+  rtp_cur = add_dir(rtp_cur, data_home, data_len, true, "site", SITE_SIZE,
+                    "after", AFTER_SIZE);
+  rtp_cur = add_colon_dirs(rtp_cur, config_dirs, "after", AFTER_SIZE, NULL, 0,
+                           false);
+  rtp_cur = add_dir(rtp_cur, config_home, config_len, true,
+                    "after", AFTER_SIZE, NULL, 0);
+  // Strip trailing comma.
+  rtp_cur[-1] = NUL;
+  assert((size_t) (rtp_cur - rtp) == rtp_size);
 #undef SITE_SIZE
 #undef AFTER_SIZE
   set_string_default("runtimepath", rtp, true);
@@ -442,6 +533,8 @@ static void set_runtimepath_default(void)
   xfree(config_home);
   xfree(vimruntime);
 }
+
+#undef NVIM_SIZE
 
 /*
  * Initialize the options, first part.
