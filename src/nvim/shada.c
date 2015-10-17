@@ -1583,6 +1583,20 @@ shada_read_main_cycle_end:
   kh_dealloc(strset, &oldfiles_set);
 }
 
+/// Default shada file location: cached path
+static char *default_shada_file = NULL;
+
+/// Get the default ShaDa file
+static const char *shada_get_default_file(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (default_shada_file == NULL) {
+    char *shada_dir = stdpaths_user_data_subpath("shada");
+    default_shada_file = concat_fnames_realloc(shada_dir, "main.shada", true);
+  }
+  return default_shada_file;
+}
+
 /// Get the ShaDa file name to use
 ///
 /// If "file" is given and not empty, use it (has already been expanded by
@@ -1608,11 +1622,11 @@ static char *shada_filename(const char *file)
           if (STRCMP("$VIM", NameBuff) != 0) {  // $VIM was expanded
             file = SHADA_FILE2;
           } else {
-            file = SHADA_FILE;
+            file = shada_get_default_file();
           }
         } else {
 #endif
-          file =  SHADA_FILE;
+          file =  shada_get_default_file();
 #ifdef SHADA_FILE2
         }
 #endif

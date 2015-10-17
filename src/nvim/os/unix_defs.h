@@ -37,8 +37,5 @@
 #ifndef VIMRC_FILE
 # define VIMRC_FILE     ".nvimrc"
 #endif
-#ifndef SHADA_FILE
-# define SHADA_FILE "~/.nvim/shada/main.shada"
-#endif
 
 #endif  // NVIM_OS_UNIX_DEFS_H

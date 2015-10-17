@@ -8,7 +8,6 @@
 
 // Defines needed to fix the build on Windows:
 // - USR_EXRC_FILE
-// - SHADA_FILE
 // - DFLT_DIR
 // - DFLT_BDIR
 // - DFLT_VDIR
