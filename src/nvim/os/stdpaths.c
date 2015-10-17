@@ -22,24 +22,16 @@ static const char *const xdg_defaults[] = {
   // Windows, Apple stuff are just shims right now
 #ifdef WIN32
   // Windows
-#elif APPLE
-  // Apple (this includes iOS, which we might need to handle differently)
-  [kXDGConfigHome] = "~/Library/Preferences",
-  [kXDGDataHome] = "~/Library/Application Support",
-  [kXDGCacheHome] = "~/Library/Caches",
-  [kXDGRuntimeDir] = "~/Library/Application Support",
-  [kXDGConfigDirs] = "/Library/Application Support",
-  [kXDGDataDirs] = "/Library/Application Support",
 #else
-  // Linux, BSD, CYGWIN
+  // Linux, BSD, CYGWIN, Apple
   [kXDGConfigHome] = "~/.config",
   [kXDGDataHome] = "~/.local/share",
   [kXDGCacheHome] = "~/.cache",
   [kXDGRuntimeDir] = "",
   [kXDGConfigDirs] = "/etc/xdg/",
   [kXDGDataDirs] = "/usr/local/share/:/usr/share/",
-};
 #endif
+};
 
 /// Return XDG variable value
 ///
