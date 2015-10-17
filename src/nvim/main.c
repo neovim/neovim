@@ -287,8 +287,8 @@ int main(int argc, char **argv)
    * Set the default values for the options that use Rows and Columns.
    */
   win_init_size();
-  /* Set the 'diff' option now, so that it can be checked for in a .vimrc
-   * file.  There is no buffer yet though. */
+  // Set the 'diff' option now, so that it can be checked for in a vimrc
+  // file.  There is no buffer yet though.
   if (params.diff_mode)
     diff_win_options(firstwin, FALSE);
 
@@ -345,7 +345,7 @@ int main(int argc, char **argv)
    */
   load_plugins();
 
-  /* Decide about window layout for diff mode after reading vimrc. */
+  // Decide about window layout for diff mode after reading vimrc.
   set_window_layout(&params);
 
   /*
@@ -358,10 +358,8 @@ int main(int argc, char **argv)
     mch_exit(0);
   }
 
-  /*
-   * Set a few option defaults after reading .vimrc files:
-   * 'title' and 'icon', Unix: 'shellpipe' and 'shellredir'.
-   */
+  // Set a few option defaults after reading vimrc files:
+  // 'title' and 'icon', Unix: 'shellpipe' and 'shellredir'.
   set_init_3();
   TIME_MSG("inits 3");
 
@@ -1551,8 +1549,8 @@ static void create_windows(mparm_T *parmp)
   if (parmp->window_count == 0)
     parmp->window_count = GARGCOUNT;
   if (parmp->window_count > 1) {
-    /* Don't change the windows if there was a command in .vimrc that
-     * already split some windows */
+    // Don't change the windows if there was a command in vimrc that
+    // already split some windows
     if (parmp->window_layout == 0)
       parmp->window_layout = WIN_HOR;
     if (parmp->window_layout == WIN_TABS) {
@@ -1574,14 +1572,11 @@ static void create_windows(mparm_T *parmp)
       getout(1);
     do_modelines(0);                    /* do modelines */
   } else {
-    /*
-     * Open a buffer for windows that don't have one yet.
-     * Commands in the .vimrc might have loaded a file or split the window.
-     * Watch out for autocommands that delete a window.
-     */
-    /*
-     * Don't execute Win/Buf Enter/Leave autocommands here
-     */
+    // Open a buffer for windows that don't have one yet.
+    // Commands in the vimrc might have loaded a file or split the window.
+    // Watch out for autocommands that delete a window.
+    //
+    // Don't execute Win/Buf Enter/Leave autocommands here
     ++autocmd_no_enter;
     ++autocmd_no_leave;
     dorewind = TRUE;
@@ -1691,8 +1686,8 @@ static void edit_buffers(mparm_T *parmp)
     }
     advance = TRUE;
 
-    /* Only open the file if there is no file in this window yet (that can
-     * happen when .vimrc contains ":sall"). */
+    // Only open the file if there is no file in this window yet (that can
+    // happen when vimrc contains ":sall").
     if (curbuf == firstwin->w_buffer || curbuf->b_ffname == NULL) {
       curwin->w_arg_idx = arg_idx;
       /* Edit file from arg list, if there is one.  When "Quit" selected
@@ -1830,16 +1825,13 @@ static void source_startup_scripts(mparm_T *parmp)
     (void)do_source((char_u *)SYS_VIMRC_FILE, FALSE, DOSO_NONE);
 #endif
 
-    /*
-     * Try to read initialization commands from the following places:
-     * - environment variable VIMINIT
-     * - user vimrc file (~/.vimrc)
-     * - second user vimrc file ($VIM/.vimrc for Dos)
-     * - environment variable EXINIT
-     * - user exrc file (~/.exrc)
-     * - second user exrc file ($VIM/.exrc for Dos)
-     * The first that exists is used, the rest is ignored.
-     */
+    // Try to read initialization commands from the following places:
+    // - environment variable VIMINIT
+    // - user vimrc file (~/.config/nvim/init.vim)
+    // - environment variable EXINIT
+    // - user exrc file (~/.exrc)
+    // - second user exrc file ($VIM/.exrc for Dos)
+    // The first that exists is used, the rest is ignored.
     char_u *user_vimrc = (char_u *)stdpaths_user_conf_subpath("init.vim");
     if (process_env("VIMINIT", true) != OK) {
       if (do_source(user_vimrc, true, DOSO_VIMRC) == FAIL
@@ -1856,13 +1848,13 @@ static void source_startup_scripts(mparm_T *parmp)
      * directory.  This is only done if the 'exrc' option is set.
      * Because of security reasons we disallow shell and write commands
      * now, except for unix if the file is owned by the user or 'secure'
-     * option has been reset in environment of global ".exrc" or ".vimrc".
+     * option has been reset in environment of global "exrc" or "vimrc".
      * Only do this if VIMRC_FILE is not the same as USR_VIMRC_FILE or
      * SYS_VIMRC_FILE.
      */
     if (p_exrc) {
 #if defined(UNIX)
-      /* If ".vimrc" file is not owned by user, set 'secure' mode. */
+      // If vimrc file is not owned by user, set 'secure' mode.
       if (!file_owned(VIMRC_FILE))
 #endif
         secure = p_secure;

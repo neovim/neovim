@@ -21,10 +21,11 @@ these differences.
 ==============================================================================
 1. Configuration					    *nvim-configuration*
 
-- Use `.nvimrc` instead of `.vimrc` for storing configuration.
-- Use `.nvim` instead of `.vim` to store configuration files.
-- Use `.nvim/shada/main.shada` instead of `.viminfo` for persistent session 
-  information.
+- Use `$XDG_CONFIG_HOME/nvim/init.vim` instead of `.vimrc` for storing 
+  configuration.
+- Use `$XDG_CONFIG_HOME/nvim` instead of `.vim` to store configuration files.
+- Use `$XDG_DATA_HOME/shada/main.shada` instead of `.viminfo` for persistent 
+  session information.
 
 ==============================================================================
 2. Option defaults					  *nvim-option-defaults*

@@ -22,30 +22,24 @@ Vim's capabilities.  Or define your own macros.
 Table of contents: |usr_toc.txt|
 
 ==============================================================================
-*05.1*	The vimrc file					*vimrc-intro*
+*05.1*	The vimrc file				*vimrc-intro*
 
 You probably got tired of typing commands that you use very often.  To start
 Vim with all your favorite option settings and mappings, you write them in
-what is called the vimrc file.  Vim executes the commands in this file when it
-starts up.
+what is called the init.vim file.  Vim executes the commands in this file when 
+it starts up.
 
-If you already have a vimrc file (e.g., when your sysadmin has one setup for
-you), you can edit it this way: >
+If you already have a init.vim file (e.g., when your sysadmin has one setup 
+for you), you can edit it this way: >
 
 	:edit $MYVIMRC
 
-If you don't have a vimrc file yet, see |vimrc| to find out where you can
-create a vimrc file.  Also, the ":version" command mentions the name of the
-"user vimrc file" Vim looks for.
+If you don't have a vimrc file yet, see |init.vim| to find out where you can
+create a vimrc file.
 
 For Unix and Macintosh this file is always used and is recommended:
 
-	~/.vimrc ~
-
-For MS-DOS and MS-Windows you can use one of these:
-
-	$HOME/_vimrc ~
-	$VIM/_vimrc ~
+	~/.config/nvim/init.vim ~
 
 The vimrc file can contain all the commands that you type after a colon.  The
 most simple ones are for setting options.  For example, if you want Vim to
@@ -300,23 +294,20 @@ First read the text in the plugin itself to check for any special conditions.
 Then copy the file to your plugin directory:
 
 	system		plugin directory ~
-	Unix		~/.vim/plugin/
-	Macintosh	$VIM:vimfiles:plugin
-	Mac OS X	~/.vim/plugin/
+	Unix		~/.local/share/nvim/site/plugin
 
 Example for Unix (assuming you didn't have a plugin directory yet): >
 
-	mkdir ~/.vim
-	mkdir ~/.vim/plugin
-	cp /usr/local/share/vim/vim60/macros/justify.vim ~/.vim/plugin
+	mkdir -p ~/.local/share/nvim/site/plugin
+	cp /usr/local/share/vim/vim60/macros/justify.vim ~/.local/share/nvim/site/plugin
 
 That's all!  Now you can use the commands defined in this plugin to justify
 text.
 
 Instead of putting plugins directly into the plugin/ directory, you may
 better organize them by putting them into subdirectories under plugin/.
-As an example, consider using "~/.vim/plugin/perl/*.vim" for all your Perl
-plugins.
+As an example, consider using "~/.local/share/nvim/site/plugin/perl/*.vim" for 
+all your Perl plugins.
 
 
 FILETYPE PLUGINS			*add-filetype-plugin* *ftplugins*
@@ -350,24 +341,18 @@ plugins, but the last part is "ftplugin".  Suppose you have found a plugin for
 the "stuff" filetype, and you are on Unix.  Then you can move this file to the
 ftplugin directory: >
 
-	mv thefile ~/.vim/ftplugin/stuff.vim
+	mkdir -p ~/.local/share/nvim/site/ftplugin
+	mv thefile ~/.local/share/nvim/site/ftplugin/stuff.vim
 
 If that file already exists you already have a plugin for "stuff".  You might
 want to check if the existing plugin doesn't conflict with the one you are
 adding.  If it's OK, you can give the new one another name: >
 
-	mv thefile ~/.vim/ftplugin/stuff_too.vim
+	mv thefile ~/.local/share/nvim/site/ftplugin/stuff_too.vim
 
 The underscore is used to separate the name of the filetype from the rest,
 which can be anything.  If you use "otherstuff.vim" it wouldn't work, it would
 be loaded for the "otherstuff" filetype.
-
-On MS-DOS you cannot use long filenames.  You would run into trouble if you
-add a second plugin and the filetype has more than six characters.  You can
-use an extra directory to get around this: >
-
-	mkdir $VIM/vimfiles/ftplugin/fortran
-	copy thefile $VIM/vimfiles/ftplugin/fortran/too.vim
 
 The generic names for the filetype plugins are: >
 
@@ -378,9 +363,9 @@ The generic names for the filetype plugins are: >
 Here "<name>" can be any name that you prefer.
 Examples for the "stuff" filetype on Unix: >
 
-	~/.vim/ftplugin/stuff.vim
-	~/.vim/ftplugin/stuff_def.vim
-	~/.vim/ftplugin/stuff/header.vim
+	~/.local/share/nvim/site/ftplugin/stuff.vim
+	~/.local/share/nvim/site/ftplugin/stuff_def.vim
+	~/.local/share/nvim/site/ftplugin/stuff/header.vim
 
 The <filetype> part is the name of the filetype the plugin is to be used for.
 Only files of this filetype will use the settings from the plugin.  The <name>
@@ -410,16 +395,16 @@ non-standard place (it usually resides in a sub-folder called `doc/`).
 
 First, create a "doc" directory in one of the directories in 'runtimepath': >
 
-	:!mkdir ~/.vim/doc
+	:!mkdir -p ~/.local/share/nvim/site/doc
 
 Now, copy the help file to the "doc" directory: >
 
-	:!cp my-plugin/my-plugin-doc.txt ~/.vim/doc
+	:!cp my-plugin/my-plugin-doc.txt ~/.local/share/nvim/site/doc
 
 Here comes the trick, which allows you to jump to the subjects in the new help
 file. Generate the local tags file with the |:helptags| command: >
 
-	:helptags ~/.vim/doc
+	:helptags ~/.local/share/nvim/site/doc
 
 You can see an entry for the local help file when you do: >
 

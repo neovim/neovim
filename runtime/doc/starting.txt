@@ -106,7 +106,7 @@ argument.
 --startuptime {fname}					*--startuptime*
 		During startup write timing messages to the file {fname}.
 		This can be used to find out where time is spent while loading
-		your .vimrc, plugins and opening the first file.
+		your |init.vim|, plugins and opening the first file.
 		When {fname} already exists new messages are appended.
 		(Only available when compiled with the |+startuptime|
 		feature).
@@ -232,8 +232,8 @@ argument.
 -b		Binary mode.  File I/O will only recognize <NL> to separate
 		lines.  The 'expandtab' option will be reset.  The 'textwidth'
 		option is set to 0.  'modeline' is reset.  The 'binary' option
-		is set.  This is done after reading the vimrc/exrc files but
-		before reading any file in the arglist.  See also
+		is set.  This is done after reading the init.vim/exrc files 
+		but before reading any file in the arglist.  See also
 		|edit-binary|.
 
 							*-l*
@@ -312,11 +312,11 @@ argument.
 		be used to start Vim in a special mode, with special
 		mappings and settings.  A shell alias can be used to make
 		this easy to use.  For example: >
-			alias vimc vim -u ~/.c_vimrc !*
+			alias vimc vim -u ~/.config/nvim/c_init.vim !*
 <		Also consider using autocommands; see |autocommand|.
 		When {vimrc} is equal to "NONE" (all uppercase), all
 		initializations from files and environment variables are
-		skipped, including reading the |gvimrc| file when the GUI
+		skipped, including reading the |ginit.vim| file when the GUI
 		starts.  Loading plugins is also skipped.
 		When {vimrc} is equal to "NORC" (all uppercase), this has the
 		same effect as "NONE", but loading plugins is not skipped.
@@ -373,24 +373,24 @@ accordingly.  Vim proceeds in this order:
 3. Execute Ex commands, from environment variables and/or files
 	An environment variable is read as one Ex command line, where multiple
 	commands must be separated with '|' or "<NL>".
-								*vimrc* *exrc*
+						    *init.vim* *vimrc* *exrc*
 	A file that contains initialization commands is called a "vimrc" file.
 	Each line in a vimrc file is executed as an Ex command line.  It is
 	sometimes also referred to as "exrc" file.  They are the same type of
 	file, but "exrc" is what Vi always used, "vimrc" is a Vim specific
-	name.  Also see |vimrc-intro|.
+	name, "init.vim" is Neovim specific location for vimrc file.  Also see 
+	|vimrc-intro|.
 
 	Places for your personal initializations:
-		Unix		$HOME/.vimrc or $HOME/.vim/vimrc
-		MS-Windows	$HOME/_vimrc, $HOME/vimfiles/vimrc
-				or $VIM/_vimrc
+		Unix		$XDG_CONFIG_HOME/nvim/init.vim
+				(default for $XDG_CONFIG_HOME is ~/.config)
 
 	The files are searched in the order specified above and only the first
 	one that is found is read.
 
-	RECOMMENDATION: Put all your Vim configuration stuff in the
-	$HOME/.vim/ directory ($HOME/vimfiles/ for MS-Windows). That makes it
-	easy to copy it to another system.
+	RECOMMENDATION: Put all your Vim configuration stuff in the 
+	$HOME/.config/nvim/ directory. That makes it easy to copy it to 
+	another system.
 
 	If Vim was started with "-u filename", the file "filename" is used.
 	All following initializations until 4. are skipped. $MYVIMRC is not
@@ -407,26 +407,14 @@ accordingly.  Vim proceeds in this order:
 	":version" command.  Mostly it's "$VIM/vimrc".
 	For the Macintosh the $VIMRUNTIME/macmap.vim is read.
 
-	  *VIMINIT* *.vimrc* *_vimrc* *EXINIT* *.exrc* *_exrc* *$MYVIMRC*
+				*VIMINIT* *EXINIT* *.exrc* *_exrc* *$MYVIMRC*
      b. Four places are searched for initializations.  The first that exists
 	is used, the others are ignored.  The $MYVIMRC environment variable is
 	set to the file that was first found, unless $MYVIMRC was already set
 	and when using VIMINIT.
 	-  The environment variable VIMINIT
 	   The value of $VIMINIT is used as an Ex command line.
-	-  The user vimrc file(s):
-		    "$HOME/.vimrc"	   (for Unix)
-		    "$HOME/.vim/vimrc"	   (for Unix)
-		    "$HOME/_vimrc"	   (for Win32)
-		    "$HOME/vimfiles/vimrc" (for Win32)
-		    "$VIM/_vimrc"	   (for Win32)
-		Note: For Unix, when ".vimrc" does not exist,
-		"_vimrc" is also tried, in case an MS-DOS compatible file
-		system is used.  For MS-DOS and Win32 ".vimrc" is checked
-		after "_vimrc", in case long file names are used.
-		Note: For MS-DOS and Win32, "$HOME" is checked first.  If no
-		"_vimrc" or ".vimrc" is found there, "$VIM" is tried.
-		See |$VIM| for when $VIM is not set.
+	-  The user vimrc file: $XDG_CONFIG_HOME/nvim/init.vim.
 	-  The environment variable EXINIT.
 	   The value of $EXINIT is used as an Ex command line.
 	-  The user exrc file(s).  Same as for the user vimrc file, but with
@@ -436,10 +424,10 @@ accordingly.  Vim proceeds in this order:
      c. If the 'exrc' option is on (which is not the default), the current
 	directory is searched for three files.  The first that exists is used,
 	the others are ignored.
-	-  The file ".vimrc" (for Unix)
-		    "_vimrc" (for Win32)
-	-  The file "_vimrc" (for Unix)
-		    ".vimrc" (for Win32)
+	-  The file ".nvimrc" (for Unix)
+		    "_nvimrc" (for Win32)
+	-  The file "_nvimrc" (for Unix)
+		    ".nvimrc" (for Win32)
 	-  The file ".exrc"  (for Unix)
 		    "_exrc"  (for Win32)
 
@@ -504,12 +492,12 @@ Some hints on using initializations:
 Standard setup:
 Create a vimrc file to set the default settings and mappings for all your edit
 sessions.  Put it in a place so that it will be found by 3b:
-	~/.vimrc	(Unix)
-	$VIM\_vimrc	(MS-DOS and Win32)
+	~/.config/nvim/init.vim		(Unix)
+	~/AppData/Local/nvim/init.vim	(Win32)
 
 Local setup:
 Put all commands that you need for editing a specific directory only into a
-vimrc file and place it in that directory under the name ".vimrc" ("_vimrc"
+vimrc file and place it in that directory under the name ".nvimrc" ("_nvimrc"
 for MS-DOS and Win32).  NOTE: To make Vim look for these special files you
 have to turn on the option 'exrc'.  See |trojan-horse| too.
 
@@ -517,7 +505,9 @@ System setup:
 This only applies if you are managing a Unix system with several users and
 want to set the defaults for all users.  Create a vimrc file with commands
 for default settings and mappings and put it in the place that is given with
-the ":version" command.
+the ":version" command.  NOTE: System vimrc file needs specific compilation 
+options (one needs to define SYS_VIMRC_FILE macros). If :version command does 
+not show anything like this, consider contacting the nvim package maintainer.
 
 Saving the current state of Vim to a file:
 Whenever you have changed values of options or when you have created a
@@ -526,7 +516,8 @@ mapping, then you may want to save them in a vimrc file for later use.  See
 
 Avoiding setup problems for Vi users:
 Vi uses the variable EXINIT and the file "~/.exrc".  So if you do not want to
-interfere with Vi, then use the variable VIMINIT and the file "vimrc" instead.
+interfere with Vi, then use the variable VIMINIT and the file init.vim 
+instead.
 
 MS-DOS line separators:
 On MS-DOS-like systems (MS-DOS itself and Win32), Vim assumes that all
@@ -538,7 +529,7 @@ The $MYVIMRC or $MYGVIMRC file will be set to the first found vimrc and/or
 gvimrc file.
 
 Avoiding trojan horses:					*trojan-horse*
-While reading the "vimrc" or the "exrc" file in the current directory, some
+While reading the vimrc or the exrc file in the current directory, some
 commands can be disabled for security reasons by setting the 'secure' option.
 This is always done when executing the command from a tags file.  Otherwise it
 would be possible that you accidentally use a vimrc or tags file that somebody
@@ -547,8 +538,8 @@ that start a shell, the ones that write to a file, and ":autocmd".  The ":map"
 commands are echoed, so you can see which keys are being mapped.
 	If you want Vim to execute all commands in a local vimrc file, you
 can reset the 'secure' option in the EXINIT or VIMINIT environment variable or
-in the global "exrc" or "vimrc" file.  This is not possible in "vimrc" or
-"exrc" in the current directory, for obvious reasons.
+in the global exrc or vimrc file.  This is not possible in vimrc or
+exrc in the current directory, for obvious reasons.
 	On Unix systems, this only happens if you are not the owner of the
 vimrc file.  Warning: If you unpack an archive that contains a vimrc or exrc
 file, it will be owned by you.  You won't have the security protection.  Check
@@ -603,7 +594,7 @@ though.
 4. $VIM and $VIMRUNTIME
 								*$VIM*
 The environment variable "$VIM" is used to locate various user files for Vim,
-such as the user startup script ".vimrc".  This depends on the system, see
+such as the user startup script |init.vim|.  This depends on the system, see
 |startup|.
 
 To avoid the need for every user to set the $VIM environment variable, Vim
@@ -712,7 +703,7 @@ vimrc file.
 			directory).
 
 							*:mkv* *:mkvimrc*
-:mkv[imrc][!] [file]	Like ":mkexrc", but the default is ".vimrc" in the
+:mkv[imrc][!] [file]	Like ":mkexrc", but the default is ".nvimrc" in the
 			current directory.  The ":version" command is also
 			written to the file.
 
@@ -731,13 +722,13 @@ can be used with different terminals.
 
 Only global mappings are stored, not mappings local to a buffer.
 
-A common method is to use a default ".vimrc" file, make some modifications
+A common method is to use a default |init.vim| file, make some modifications
 with ":map" and ":set" commands and write the modified file.  First read the
-default ".vimrc" in with a command like ":source ~piet/.vimrc.Cprogs", change
+default vimrc in with a command like ":source ~piet/.vimrc.Cprogs", change
 the settings and then save them in the current directory with ":mkvimrc!".  If
-you want to make this file your default .vimrc, move it to your home directory
-(on Unix) or $VIM directory (MS-DOS).  You could also use
-autocommands |autocommand| and/or modelines |modeline|.
+you want to make this file your default |init.vim|, move it to 
+$XDG_CONFIG_HOME/nvim.  You could also use autocommands |autocommand| and/or 
+modelines |modeline|.
 
 						*vimrc-option-example*
 If you only want to add a single option setting to your vimrc, you can use
@@ -1057,10 +1048,8 @@ even if other entries (with known name/type/etc) are merged. |shada-merging|
 
 SHADA FILE NAME						*shada-file-name*
 
-- The default name of the ShaDa file is "$HOME/.nvim/shada/main.shada" for 
-  Unix, "$HOME\_nvim\shada\main.shada" for MS-DOS and Win32.  For the last 
-  two, when $HOME is not set, "$VIM\_nvim\shada\main.shada" is used.  When 
-  $VIM is also not set, "c:\_nvim\shada\main.shada" is used.
+- The default name of the ShaDa file is "$XDG_DATA_HOME/nvim/shada/main.shada" 
+  for Unix. Default for $XDG_DATA_HOME is ~/.local/share.
 - The 'n' flag in the 'shada' option can be used to specify another ShaDa
   file name |'shada'|.
 - The "-i" Vim argument can be used to set another file name, |-i|.  When the
@@ -1103,7 +1092,7 @@ do this.  This can be useful in order to create a second file, say
 "~/.my.shada" which could contain certain settings that you always want when 
 you first start Neovim.  For example, you can preload registers with 
 particular data, or put certain commands in the command line history.  A line 
-in your .nvimrc file like >
+in your |init.vim| file like >
 	:rshada! ~/.my.shada
 can be used to load this information.  You could even have different ShaDa 
 files for different types of files (e.g., C code) and load them based on the 
@@ -1167,7 +1156,8 @@ running) you have additional options:
 			empty, marks for up to 100 files will be written.
 			When you get error "E138: All .tmp.X files exist, 
 			cannot write ShaDa file!" check that no old temp files 
-			were left behind (e.g. ~/.nvim/shada/main.shada.tmp*).
+			were left behind (e.g. 
+			~/.local/share/nvim/shada/main.shada.tmp*).
 
 						   *:wv* *:wviminfo*
 :wv[iminfo][!] [file]	Deprecated alias to |:wshada| command.

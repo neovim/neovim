@@ -1277,7 +1277,7 @@ Jikes(TM), a source-to-bytecode Java compiler published by IBM Research,
 produces simple multi-line error messages.
 
 An 'errorformat' string matching the produced messages is shown below.
-The following lines can be placed in the user's |vimrc| to overwrite Vim's
+The following lines can be placed in the user's |init.vim| to overwrite Vim's
 recognized default formats, or see |:set+=| how to install this format
 additionally to the default. >
 

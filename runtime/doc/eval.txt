@@ -3441,7 +3441,7 @@ getfperm({fname})					*getfperm()*
 		If a user does not have a given permission the flag for this
 		is replaced with the string "-".  Examples: >
 			:echo getfperm("/etc/passwd")
-			:echo getfperm(expand("~/.vimrc"))
+			:echo getfperm(expand("~/.config/nvim/init.vim"))
 <		This will hopefully (from a security point of view) display
 		the string "rw-r--r--" or even "rw-------".
 
@@ -4668,10 +4668,10 @@ msgpackdump({list})				   {Nvim} *msgpackdump()*
 msgpackparse({list})				   {Nvim} *msgpackparse()*
 		Convert a |readfile()|-style list to a list of VimL objects. 
 		Example: >
-			let fname = expand('~/.nvim/shada/main.shada')
+			let fname = expand('~/.config/nvim/shada/main.shada')
 			let mpack = readfile(fname, 'b')
 			let shada_objects = msgpackparse(mpack)
-<		This will read ~/.nvim/shada/main.shada file to 
+<		This will read ~/.config/nvim/shada/main.shada file to 
 		`shada_objects` list.
 
 		Limitations:
@@ -4770,8 +4770,8 @@ pathshorten({expr})					*pathshorten()*
 		result.  The tail, the file name, is kept as-is.  The other
 		components in the path are reduced to single letters.  Leading
 		'~' and '.' characters are kept.  Example: >
-			:echo pathshorten('~/.vim/autoload/myfile.vim')
-<			~/.v/a/myfile.vim ~
+			:echo pathshorten('~/.config/nvim/autoload/file1.vim')
+<			~/.v/a/file1.vim ~
 		It doesn't matter if the path exists or not.
 
 pow({x}, {y})						*pow()*
@@ -7274,8 +7274,8 @@ like this: >
 
 When such a function is called, and it is not defined yet, Vim will search the
 "autoload" directories in 'runtimepath' for a script file called
-"filename.vim".  For example "~/.vim/autoload/filename.vim".  That file should
-then define the function like this: >
+"filename.vim".  For example "~/.config/nvim/autoload/filename.vim".  That 
+file should then define the function like this: >
 
 	function filename#funcname()
 	   echo "Done!"
@@ -9080,7 +9080,7 @@ A few options contain an expression.  When this expression is evaluated it may
 have to be done in the sandbox to avoid a security risk.  But the sandbox is
 restrictive, thus this only happens when the option was set from an insecure
 location.  Insecure in this context are:
-- sourcing a .vimrc or .exrc in the current directory
+- sourcing a .nvimrc or .exrc in the current directory
 - while executing in the sandbox
 - value coming from a modeline
 

@@ -775,12 +775,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	in other cases Vim might not be able to guess the right value.
 
 	When starting the GUI, the default value for 'background' will be
-	"light".  When the value is not set in the .gvimrc, and Vim detects
+	"light".  When the value is not set in the gvimrc, and Vim detects
 	that the background is actually quite dark, 'background' is set to
-	"dark".  But this happens only AFTER the .gvimrc file has been read
+	"dark".  But this happens only AFTER the gvimrc file has been read
 	(because the window needs to be opened to find the actual background
 	color).  To get around this, force the GUI window to be opened by
-	putting a ":gui" command in the .gvimrc file, before where the value
+	putting a ":gui" command in the gvimrc file, before where the value
 	of 'background' is used (e.g., before ":syntax on").
 
 	For MS-DOS and Windows the default is "dark".
@@ -788,7 +788,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	"screen.linux", "cygwin" or "putty", or $COLORFGBG suggests a dark
 	background.  Otherwise the default is "light".
 
-	Normally this option would be set in the .vimrc file.  Possibly
+	Normally this option would be set in the vimrc file.  Possibly
 	depending on the terminal name.  Example: >
 		:if &term == "pcterm"
 		:  set background=dark
@@ -901,8 +901,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	again not rename the file.
 
 						*'backupdir'* *'bdir'*
-'backupdir' 'bdir'	string	(default for MS-DOS and Win32: ".,$TEMP,c:/tmp,c:/temp",
-				 for Unix: ".,~/tmp,~/")
+'backupdir' 'bdir'	string	(default "$XDG_DATA_HOME/nvim/backup")
 			global
 	List of directories for the backup file, separated with commas.
 	- The backup file will be created in the first directory in the list
@@ -1479,7 +1478,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	initialization and does not have to be set by hand.
 	When Vim is running in the GUI or in a resizable window, setting this
 	option will cause the window size to be changed.  When you only want
-	to use the size for the GUI, put the command in your |gvimrc| file.
+	to use the size for the GUI, put the command in your |ginit.vim| file.
 	When you set this option and Vim is unable to change the physical
 	number of columns of the display, the display may be messed up.  For
 	the GUI it is always possible and Vim limits the number of columns to
@@ -2130,8 +2129,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	{char2}.  See |digraphs|.
 
 						*'directory'* *'dir'*
-'directory' 'dir'	string	(default for MS-DOS and Win32: ".,$TEMP,c:\tmp,c:\temp",
-				 for Unix: ".,~/tmp,/var/tmp,/tmp")
+'directory' 'dir'	string	(default "$XDG_DATA_HOME/nvim/swap//")
 			global
 	List of directory names for the swap file, separated with commas.
 	- The swap file will be created in the first directory where this is
@@ -2351,11 +2349,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 					*'exrc'* *'ex'* *'noexrc'* *'noex'*
 'exrc' 'ex'		boolean (default off)
 			global
-	Enables the reading of .vimrc, .exrc and .gvimrc in the current
+	Enables the reading of .nvimrc, .exrc and .ngvimrc in the current
 	directory.  If you switch this option on you should also consider
 	setting the 'secure' option (see |initialization|).  Using a local
-	.exrc, .vimrc or .gvimrc is a potential security leak, use with care!
-	also see |.vimrc| and |gui-init|.
+	.exrc, .nvimrc or .ngvimrc is a potential security leak, use with care!
+	also see |init.vim| and |gui-init|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
@@ -2531,7 +2529,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When 'binary' is set, the value of 'fileformats' is not used.
 
 	Note that when Vim starts up with an empty buffer this option is not
-	used.  Set 'fileformat' in your .vimrc instead.
+	used.  Set 'fileformat' in your vimrc instead.
 
 	For systems with a Dos-like <EOL> (<CR><NL>), when reading files that
 	are ":source"ed and for vimrc files, automatic <EOL> detection may be
@@ -3211,7 +3209,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  'm'	Menu bar is present.
 								*'go-M'*
 	  'M'	The system menu "$VIMRUNTIME/menu.vim" is not sourced.  Note
-		that this flag must be added in the .vimrc file, before
+		that this flag must be added in the vimrc file, before
 		switching on syntax or filetype recognition (when the |gvimrc|
 		file is sourced the system menu has already been loaded; the
 		":syntax on" and ":filetype on" commands load the menu too).
@@ -3835,8 +3833,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	option.
 	Careful: If you change this option, it might break expanding
 	environment variables.  E.g., when '/' is included and Vim tries to
-	expand "$HOME/.nvim/shada/main.shada".  Maybe you should change 
-	'iskeyword' instead.
+	expand "$HOME/.local/share/nvim/shada/main.shada".  Maybe you should 
+	change 'iskeyword' instead.
 
 						*'iskeyword'* *'isk'*
 'iskeyword' 'isk'	string (Vim default for
@@ -4670,7 +4668,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	being set.  The same is true for a terminal where Vim handles the
 	mouse clicks itself.
 	This option is reset when starting the GUI.  Thus if you set it in
-	your .vimrc it will work in a terminal, but not in the GUI.  Setting
+	your vimrc it will work in a terminal, but not in the GUI.  Setting
 	'paste' in the GUI has side effects: e.g., the Paste toolbar button
 	will no longer work in Insert mode, because it uses a mapping.
 	When the 'paste' option is switched on (also when it was already on):
@@ -5010,7 +5008,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	happens when executing external commands.
 
 	For non-Windows Vim: You can set or reset the 't_ti' and 't_te'
-	options in your .vimrc.  To disable restoring:
+	options in your vimrc.  To disable restoring:
 		set t_ti= t_te=
 	To enable restoring (for an xterm):
 		set t_ti=^[7^[[r^[[?47h t_te=^[[?47l^[8
@@ -5090,14 +5088,23 @@ A jump table for the options with a short description can be found at |Q_op|.
 <
 				*'runtimepath'* *'rtp'* *vimfiles*
 'runtimepath' 'rtp'	string	(default:
-					Unix: "$HOME/.vim,
-						$VIM/vimfiles,
-						$VIMRUNTIME,
-						$VIM/vimfiles/after,
-						$HOME/.vim/after"
-					Macintosh: "$VIM:vimfiles,
-						$VIMRUNTIME,
-						$VIM:vimfiles:after")
+					Unix: "$XDG_CONFIG_HOME/nvim,
+					       $XDG_CONFIG_DIRS[1]/nvim,
+					       $XDG_CONFIG_DIRS[2]/nvim,
+					       …
+					       $XDG_DATA_HOME/nvim,
+					       $XDG_DATA_DIRS[1]/nvim/site,
+					       $XDG_DATA_DIRS[2]/nvim/site,
+					       …
+					       $VIMRUNTIME,
+					       …
+					       $XDG_DATA_DIRS[2]/nvim/site/after,
+					       $XDG_DATA_DIRS[1]/nvim/site/after,
+					       $XDG_DATA_HOME/nvim/after,
+					       …
+					       $XDG_CONFIG_DIRS[2]/nvim/after,
+					       $XDG_CONFIG_DIRS[1]/nvim/after,
+					       $XDG_CONFIG_HOME/nvim/after")
 			global
 	This is a list of directories which will be searched for runtime
 	files:
@@ -5120,18 +5127,23 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	And any other file searched for with the |:runtime| command.
 
-	The defaults for most systems are setup to search five locations:
-	1. In your home directory, for your personal preferences.
-	2. In a system-wide Vim directory, for preferences from the system
-	   administrator.
-	3. In $VIMRUNTIME, for files distributed with Vim.
+	The defaults for most systems are setup to search these locations:
+	1. In your home directory (XDG_CONFIG_HOME defaults to $HOME/.config), 
+	   for your personal preferences.
+	2. In directories which must contain configuration files according to 
+	   XDG ($XDG_CONFIG_DIRS).  This also contains preferences from system 
+	   administrator (XDG_CONFIG_DIRS defaults to /etc/xdg).
+	3. In data home directory, for plugins installed by user.
+	4. In nvim/site subdirectories for each directory in $XDG_DATA_DIRS.  
+	   This is for plugins which were installed by system administrator, 
+	   but are not part of the Neovim distribution. XDG_DATA_DIRS defaults 
+	   to /usr/local/share/:/usr/share/, so system administrators are 
+	   expected to install site plugins to /usr/share/nvim/site.
+	5. In $VIMRUNTIME, for files distributed with Neovim.
 							*after-directory*
-	4. In the "after" directory in the system-wide Vim directory.  This is
-	   for the system administrator to overrule or add to the distributed
-	   defaults (rarely needed)
-	5. In the "after" directory in your home directory.  This is for
-	   personal preferences to overrule or add to the distributed defaults
-	   or system-wide settings (rarely needed).
+	6, 7, 8, 9. In after/ subdirectories of 1, 2, 3 and 4, with reverse 
+	   ordering.  This is for preferences to overrule or add to the 
+	   distributed defaults or system-wide settings (rarely needed).
 
 	Note that, unlike 'path', no wildcards like "**" are allowed.  Normal
 	wildcards are allowed, but can significantly slow down searching for
@@ -5240,12 +5252,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 'secure'		boolean	(default off)
 			global
 	When on, ":autocmd", shell and write commands are not allowed in
-	".vimrc" and ".exrc" in the current directory and map commands are
+	".nvimrc" and ".exrc" in the current directory and map commands are
 	displayed.  Switch it off only if you know that you will not run into
 	problems, or when the 'exrc' option is off.  On Unix this option is
-	only used if the ".vimrc" or ".exrc" is not owned by you.  This can be
+	only used if the ".nvimrc" or ".exrc" is not owned by you.  This can be
 	dangerous if the systems allows users to do a "chown".  You better set
-	'secure' at the end of your ~/.vimrc then.
+	'secure' at the end of your |init.vim| then.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
@@ -5502,7 +5514,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	default becomes "2>&1| tee".  This means that stderr is also included.
 	Before using the 'shell' option a path is removed, thus "/bin/sh" uses
 	"sh".
-	The initialization of this option is done after reading the ".vimrc"
+	The initialization of this option is done after reading the vimrc
 	and the other initializations, so that when the 'shell' option is set
 	there, the 'shellpipe' option changes automatically, unless it was
 	explicitly set before.
@@ -5548,7 +5560,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	For Win32, the Unix checks are done and additionally "cmd" is checked
 	for, which makes the default ">%s 2>&1".  Also, the same names with
 	".exe" appended are checked for.
-	The initialization of this option is done after reading the ".vimrc"
+	The initialization of this option is done after reading the vimrc
 	and the other initializations, so that when the 'shell' option is set
 	there, the 'shellredir' option changes automatically unless it was
 	explicitly set before.
@@ -6023,7 +6035,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	Only one of "best", "double" or "fast" may be used.  The others may
 	appear several times in any order.  Example: >
-		:set sps=file:~/.vim/sugg,best,expr:MySuggest()
+		:set sps=file:~/.config/nvim/sugg,best,expr:MySuggest()
 <
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
@@ -6198,7 +6210,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	Watch out for errors in expressions.  They may render Vim unusable!
 	If you are stuck, hold down ':' or 'Q' to get a prompt, then quit and
-	edit your .vimrc or whatever with "vim -u NONE" to get it right.
+	edit your vimrc or whatever with "vim -u NONE" to get it right.
 
 	Examples:
 	Emulate standard status line with 'ruler' set >
@@ -6804,8 +6816,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	displayed when 'verbosefile' is set.
 
 						*'viewdir'* *'vdir'*
-'viewdir' 'vdir'	string	(default for MS-DOS and Win32: "$VIM/vimfiles/view",
-				 for Unix: "~/.vim/view")
+'viewdir' 'vdir'	string	(default: "$XDG_DATA_HOME/nvim/view")
 			global
 			{not available when compiled without the |+mksession|
 			feature}

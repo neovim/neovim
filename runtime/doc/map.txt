@@ -435,7 +435,7 @@ last defined.  Example: >
 
 	:verbose map <C-W>*
 	n  <C-W>*      * <C-W><C-S>*
-		Last set from /home/abcd/.vimrc
+		Last set from ~/.config/nvim/init.vim
 
 See |:verbose-cmd| for more information.
 
