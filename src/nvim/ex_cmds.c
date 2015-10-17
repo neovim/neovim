@@ -4812,9 +4812,13 @@ void fix_help_buffer(void)
           vimconv_T vc;
           char_u      *cp;
 
-          /* Find all "doc/ *.txt" files in this directory. */
-          add_pathsep((char *)NameBuff);
-          STRCAT(NameBuff, "doc/*.??[tx]");
+          // Find all "doc/ *.txt" files in this directory.
+          if (!add_pathsep((char *)NameBuff)
+              || STRLCAT(NameBuff, "doc/*.??[tx]",
+                         sizeof(NameBuff)) >= MAXPATHL) {
+            EMSG(_(e_pathtoolong));
+            continue;
+          }
 
           // Note: We cannot just do `&NameBuff` because it is a statically sized array
           //       so `NameBuff == &NameBuff` according to C semantics.
@@ -4995,13 +4999,13 @@ static void helptags_one(char_u *dir, char_u *ext, char_u *tagfname,
     return;
   }
 
-  /*
-   * Open the tags file for writing.
-   * Do this before scanning through all the files.
-   */
+  //
+  // Open the tags file for writing.
+  // Do this before scanning through all the files.
+  //
   memcpy(NameBuff, dir, dirlen + 1);
-  add_pathsep((char *)NameBuff);
-  if (STRLCAT(NameBuff, tagfname, sizeof(NameBuff)) >= MAXPATHL) {
+  if (!add_pathsep((char *)NameBuff)
+      || STRLCAT(NameBuff, tagfname, sizeof(NameBuff)) >= MAXPATHL) {
     EMSG(_(e_pathtoolong));
     return;
   }
@@ -5178,8 +5182,8 @@ static void do_helptags(char_u *dirname, bool add_help_tags)
 
   // Get a list of all files in the help directory and in subdirectories.
   STRLCPY(NameBuff, dirname, sizeof(NameBuff));
-  add_pathsep((char *)NameBuff);
-  if (STRLCAT(NameBuff, "**", MAXPATHL) >= MAXPATHL) {
+  if (!add_pathsep((char *)NameBuff)
+      || STRLCAT(NameBuff, "**", sizeof(NameBuff)) >= MAXPATHL) {
     EMSG(_(e_pathtoolong));
     xfree(dirname);
     return;
