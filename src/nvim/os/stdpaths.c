@@ -5,6 +5,7 @@
 #include "nvim/path.h"
 #include "nvim/memory.h"
 
+/// Names of the environment variables, mapped to XDGVarType values
 static const char *xdg_env_vars[] = {
   [kXDGConfigHome] = "XDG_CONFIG_HOME",
   [kXDGDataHome] = "XDG_DATA_HOME",
@@ -14,6 +15,9 @@ static const char *xdg_env_vars[] = {
   [kXDGDataDirs] = "XDG_DATA_DIRS",
 };
 
+/// Defaults for XDGVarType values
+///
+/// Used in case environment variables contain nothing. Need to be expanded.
 static const char *const xdg_defaults[] = {
   // Windows, Apple stuff are just shims right now
 #ifdef WIN32
@@ -37,6 +41,11 @@ static const char *const xdg_defaults[] = {
 };
 #endif
 
+/// Return XDG variable value
+///
+/// @param[in]  idx  XDG variable to use.
+///
+/// @return [allocated] variable value.
 char *stdpaths_get_xdg_var(const XDGVarType idx)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -54,6 +63,11 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
   return ret;
 }
 
+/// Return nvim-specific XDG directory subpath
+///
+/// @param[in]  idx  XDG directory to use.
+///
+/// @return [allocated] `{xdg_directory}/nvim`
 static char *get_xdg_home(const XDGVarType idx)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -64,12 +78,22 @@ static char *get_xdg_home(const XDGVarType idx)
   return dir;
 }
 
+/// Return subpath of $XDG_CONFIG_HOME
+///
+/// @param[in]  fname  New component of the path.
+///
+/// @return [allocated] `$XDG_CONFIG_HOME/nvim/{fname}`
 char *stdpaths_user_conf_subpath(const char *fname)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return concat_fnames_realloc(get_xdg_home(kXDGConfigHome), fname, true);
 }
 
+/// Return subpath of $XDG_DATA_HOME
+///
+/// @param[in]  fname  New component of the path.
+///
+/// @return [allocated] `$XDG_DATA_HOME/nvim/{fname}`
 char *stdpaths_user_data_subpath(const char *fname)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
