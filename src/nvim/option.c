@@ -301,19 +301,6 @@ static char *(p_cot_values[]) = {"menu", "menuone", "longest", "preview",
 # include "option.c.generated.h"
 #endif
 
-/// Count commas in the given string
-static size_t count_commas(const char *const s, size_t len)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  size_t ret = 0;
-  for (size_t i = 0; i < len; i++) {
-    if (s[i] == ',') {
-      ret++;
-    }
-  }
-  return ret;
-}
-
 /// Append string with escaped commas
 static char *strcpy_comma_escaped(char *dest, const char *src, const size_t len)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
@@ -356,7 +343,7 @@ static inline size_t compute_double_colon_len(const char *const val,
     const char *dir;
     iter = vim_colon_env_iter(val, iter, &dir, &dir_len);
     if (dir != NULL && dir_len > 0) {
-      ret += ((dir_len + count_commas(dir, dir_len) + common_suf_len
+      ret += ((dir_len + memcnt(dir, ',', dir_len) + common_suf_len
                + !after_pathsep(dir, dir + dir_len)) * 2
               + single_suf_len);
     }
@@ -490,7 +477,7 @@ static void set_runtimepath_default(void)
   if (data_home != NULL) {
     data_len = strlen(data_home);
     if (data_len != 0) {
-      rtp_size += ((data_len + count_commas(data_home, data_len)
+      rtp_size += ((data_len + memcnt(data_home, ',', data_len)
                     + NVIM_SIZE + 1 + SITE_SIZE + 1
                     + !after_pathsep(data_home, data_home + data_len)) * 2
                    + AFTER_SIZE + 1);
@@ -499,7 +486,7 @@ static void set_runtimepath_default(void)
   if (config_home != NULL) {
     config_len = strlen(config_home);
     if (config_len != 0) {
-      rtp_size += ((config_len + count_commas(config_home, config_len)
+      rtp_size += ((config_len + memcnt(config_home, ',', config_len)
                     + NVIM_SIZE + 1
                     + !after_pathsep(config_home, config_home + config_len)) * 2
                    + AFTER_SIZE + 1);
@@ -508,7 +495,7 @@ static void set_runtimepath_default(void)
   if (vimruntime != NULL) {
     vimruntime_len = strlen(vimruntime);
     if (vimruntime_len != 0) {
-      rtp_size += vimruntime_len + count_commas(vimruntime, vimruntime_len) + 1;
+      rtp_size += vimruntime_len + memcnt(vimruntime, ',', vimruntime_len) + 1;
     }
   }
   rtp_size += compute_double_colon_len(data_dirs, NVIM_SIZE + 1 + SITE_SIZE + 1,
