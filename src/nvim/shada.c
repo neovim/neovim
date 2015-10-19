@@ -815,7 +815,7 @@ static ShaDaReadResult sd_reader_skip(ShaDaReadDef *const sd_reader,
 ///
 /// All arguments are passed to os_open().
 ///
-/// @return file descriptor or -errno on failure.
+/// @return file descriptor or libuv error on failure.
 static int open_file(const char *const fname, const int flags, const int mode)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
@@ -825,15 +825,15 @@ open_file_start:
   fd = os_open(fname, flags, mode);
 
   if (fd < 0) {
-    if (-fd == ENOENT) {
+    if (fd == UV_ENOENT) {
       return fd;
     }
-    if (-fd == ENOMEM && !did_try_to_free) {
+    if (fd == UV_ENOMEM && !did_try_to_free) {
       try_to_free_memory();
       did_try_to_free = true;
       goto open_file_start;
     }
-    if (-fd != EEXIST) {
+    if (fd != UV_EEXIST) {
       emsg3(_(SERR "System error while opening ShaDa file %s: %s"),
             fname, os_strerror(fd));
     }
@@ -847,7 +847,7 @@ open_file_start:
 /// @param[in]   fname      File name to open.
 /// @param[out]  sd_reader  Location where reader structure will be saved.
 ///
-/// @return -errno in case of error, 0 otherwise.
+/// @return libuv error in case of error, 0 otherwise.
 static int open_shada_file_for_reading(const char *const fname,
                                        ShaDaReadDef *sd_reader)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
@@ -965,7 +965,7 @@ static int shada_read_file(const char *const file, const int flags)
   }
 
   if (of_ret != 0) {
-    if (-of_ret == ENOENT && (flags & kShaDaMissingError)) {
+    if (of_ret == UV_ENOENT && (flags & kShaDaMissingError)) {
       emsg3(_(SERR "System error while opening ShaDa file %s for reading: %s"),
             fname, os_strerror(of_ret));
     }
@@ -2964,9 +2964,9 @@ shada_write_file_open:
     fd = (intptr_t) open_file(tempname, O_CREAT|O_WRONLY|O_NOFOLLOW|O_EXCL,
                               perm);
     if (fd < 0) {
-      if (-fd == EEXIST
+      if (fd == UV_EEXIST
 #ifdef ELOOP
-          || -fd == ELOOP
+          || fd == UV_ELOOP
 #endif
           ) {
         // File already exists, try another name
