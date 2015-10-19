@@ -185,13 +185,13 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
 
 /// Opens or creates a file and returns a non-negative integer representing
 /// the lowest-numbered unused file descriptor, for use in subsequent system
-/// calls (read, write, lseek, fcntl, etc.). If the operation fails, `-errno`
-/// is returned, and no file is created or modified.
+/// calls (read, write, lseek, fcntl, etc.). If the operation fails, a libuv
+/// error code is returned, and no file is created or modified.
 ///
 /// @param flags Bitwise OR of flags defined in <fcntl.h>
 /// @param mode Permissions for the newly-created file (IGNORED if 'flags' is
 ///        not `O_CREAT` or `O_TMPFILE`), subject to the current umask
-/// @return file descriptor, or negative `errno` on failure
+/// @return file descriptor, or libuv error code on failure
 int os_open(const char* path, int flags, int mode)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -322,7 +322,7 @@ int os_rename(const char_u *path, const char_u *new_path)
 
 /// Make a directory.
 ///
-/// @return `0` for success, -errno for failure.
+/// @return `0` for success, libuv error code for failure.
 int os_mkdir(const char *path, int32_t mode)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -342,7 +342,7 @@ int os_mkdir(const char *path, int32_t mode)
 ///                          failed to create. I.e. it will contain dir or any
 ///                          of the higher level directories.
 ///
-/// @return `0` for success, -errno for failure.
+/// @return `0` for success, libuv error code for failure.
 int os_mkdir_recurse(const char *const dir, int32_t mode,
                      char **const failed_dir)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT

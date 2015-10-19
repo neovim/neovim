@@ -97,7 +97,7 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
     result = uv_listen(watcher->stream, backlog, connection_cb);
   }
 
-  assert(result <= 0);  // libuv should have returned -errno or zero.
+  assert(result <= 0);  // libuv should return negative error code or zero.
   if (result < 0) {
     if (result == -EACCES) {
       // Libuv converts ENOENT to EACCES for Windows compatibility, but if
