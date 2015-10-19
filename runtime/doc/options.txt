@@ -2133,7 +2133,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	List of directory names for the swap file, separated with commas.
 	- The swap file will be created in the first directory where this is
-	  possible.
+	  possible.  If it is not possible in any directory, but last 
+	  directory listed in the option does not exist, it is created.
 	- Empty means that no swap file will be used (recovery is
 	  impossible!).
 	- A directory "." means to put the swap file in the same directory as
