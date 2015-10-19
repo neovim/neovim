@@ -14572,7 +14572,7 @@ static void f_serverstart(typval_T *argvars, typval_T *rettv)
       rettv->vval.v_string = vim_strsave(get_tv_string(argvars));
     }
   } else {
-    rettv->vval.v_string = vim_tempname();
+    rettv->vval.v_string = (char_u *)server_address_new();
   }
 
   int result = server_start((char *) rettv->vval.v_string);
