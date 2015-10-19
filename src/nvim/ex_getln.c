@@ -729,10 +729,12 @@ getcmdline (
             else if (wim_flags[wim_index] & WIM_FULL)
               nextwild(&xpc, WILD_NEXT, WILD_NO_BEEP,
                   firstc != '@');
-          } else
-            vim_beep();
-        } else if (xpc.xp_numfiles == -1)
+          } else {
+            vim_beep(BO_WILD);
+          }
+        } else if (xpc.xp_numfiles == -1) {
           xpc.xp_context = EXPAND_NOTHING;
+        }
       }
       if (wim_index < 3)
         ++wim_index;
@@ -2854,8 +2856,9 @@ ExpandOne (
           break;
       }
       if (i < xp->xp_numfiles) {
-        if (!(options & WILD_NO_BEEP))
-          vim_beep();
+        if (!(options & WILD_NO_BEEP)) {
+          vim_beep(BO_WILD);
+        }
         break;
       }
     }

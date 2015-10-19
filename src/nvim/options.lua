@@ -194,6 +194,14 @@ return {
       defaults={if_true={vi=""}}
     },
     {
+      full_name='belloff', abbreviation='bo',
+      deny_duplicates=true,
+      type='string', list='comma', scope={'global'},
+      vi_def=true,
+      varname='p_bo',
+      defaults={if_true={vi=""}}
+    },
+    {
       full_name='binary', abbreviation='bin',
       type='bool', scope={'buffer'},
       vi_def=true,

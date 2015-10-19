@@ -2582,21 +2582,22 @@ void msgmore(long n)
 void beep_flush(void)
 {
   if (emsg_silent == 0) {
-    flush_buffers(FALSE);
-    vim_beep();
+    flush_buffers(false);
+    vim_beep(BO_ERROR);
   }
 }
 
-/*
- * give a warning for an error
- */
-void vim_beep(void)
+// Give a warning for an error
+// val is one of the BO_ values, e.g., BO_OPER
+void vim_beep(unsigned val)
 {
   if (emsg_silent == 0) {
-    if (p_vb) {
-      ui_visual_bell();
-    } else {
-      ui_putc(BELL);
+    if (!((bo_flags & val) || (bo_flags & BO_ALL))) {
+      if (p_vb) {
+        ui_visual_bell();
+      } else {
+        ui_putc(BELL);
+      }
     }
 
     /* When 'verbose' is set and we are sourcing a script or executing a

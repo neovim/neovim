@@ -1036,6 +1036,47 @@ A jump table for the options with a short description can be found at |Q_op|.
 	expression evaluates to a |List| this is equal to using each List item
 	as a string and putting "\n" in between them.
 
+						*'belloff'* *'bo'*
+'belloff' 'bo'		string	(default "")
+			global
+			{not in Vi}
+	Specifies for which events the bell will not be rung. It is a comma
+	separated list of items. For each item that is present, the bell
+	will be silenced. This is most useful to specify specific events in
+	insert mode to be silenced.
+
+	item	    meaning when present	~
+	all	    All events.
+	backspace   When hitting <BS> or <Del> and deleting results in an
+		    error.
+	cursor	    Fail to move around using the cursor keys or
+		    <PageUp>/<PageDown> in |Insert-mode|.
+	complete    Error occurred when using |i_CTRL-X_CTRL-K| or
+		    |i_CTRL-X_CTRL-T|.
+	copy	    Cannot copy char from insert mode using |i_CTRL-Y| or
+		    |i_CTRL-E|.
+	ctrlg	    Unknown Char after <C-G> in Insert mode.
+	error	    Other Error occurred (e.g. try to join last line)
+		    (mostly used in |Normal-mode| or |Cmdline-mode|).
+	esc	    hitting <Esc> in |Normal-mode|.
+	ex	    In |Visual-mode|, hitting |Q| results in an error.
+	hangul	    Error occurred when using hangul input.
+	insertmode  Pressing <Esc> in 'insertmode'.
+	lang	    Calling the beep module for Lua/Mzscheme/TCL.
+	mess	    No output available for |g<|.
+	showmatch   Error occurred for 'showmatch' function.
+	operator    Empty region error |cpo-E|.
+	register    Unknown register after <C-R> in |Insert-mode|.
+	shell	    Bell from shell output |:!|.
+	spell	    Error happened on spell suggest.
+	wildmode    More matches in |cmdline-completion| available
+		    (depends on the 'wildmode' setting).
+
+	This is most useful, to fine tune when in insert mode the bell should
+	be rung. For normal mode and ex commands, the bell is often rung to
+	indicate that an error occurred. It can be silenced by adding the
+	"error" keyword.
+
 				     *'binary'* *'bin'* *'nobinary'* *'nobin'*
 'binary' 'bin'		boolean	(default off)
 			local to buffer
@@ -2253,7 +2294,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	makes a difference for error messages, the bell will be used always
 	for a lot of errors without a message (e.g., hitting <Esc> in Normal
 	mode).  See 'visualbell' on how to make the bell behave like a beep,
-	screen flash or do nothing.
+	screen flash or do nothing. See 'belloff' to finetune when to ring the
+	bell.
 
 						*'errorfile'* *'ef'*
 'errorfile' 'ef'	string	(default: "errors.err")
