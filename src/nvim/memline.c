@@ -3385,10 +3385,10 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
             name = xmalloc(fname_len
                            + strlen(_("Swap file \""))
                            + strlen(_("\" already exists!")) + 5);
-            strcpy(name, _("Swap file \""));
+            STRCPY(name, _("Swap file \""));
             home_replace(NULL, (char_u *) fname, (char_u *)&name[strlen(name)],
                 fname_len, true);
-            strcat(name, _("\" already exists!"));
+            STRCAT(name, _("\" already exists!"));
             choice = do_dialog(VIM_WARNING,
                 (char_u *)_("VIM - ATTENTION"),
                 (char_u *)(name == NULL

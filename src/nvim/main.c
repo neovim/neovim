@@ -1873,7 +1873,7 @@ static void source_startup_scripts(mparm_T *parmp)
         else
           secure = 0;
 #endif
-        (void) do_source((char_u *)EXRC_FILE, FALSE, DOSO_NONE);
+        (void) do_source((char_u *)EXRC_FILE, false, DOSO_NONE);
       }
     }
     xfree(user_vimrc);

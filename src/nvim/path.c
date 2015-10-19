@@ -376,7 +376,7 @@ char *concat_fnames(const char *fname1, const char *fname2, bool sep)
 /// Concatenate file names fname1 and fname2
 ///
 /// Like concat_fnames(), but in place of allocating new memory it reallocates
-/// fname1. For this reason fname1 must be allocated with xmalloc, and can no 
+/// fname1. For this reason fname1 must be allocated with xmalloc, and can no
 /// longer be used after running concat_fnames_realloc.
 ///
 /// @param fname1 is the first part of the path or filename
