@@ -25,9 +25,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8-bit\n"
 
 #: ../api/private/helpers.c:201
-#, fuzzy
 msgid "Unable to get option value"
-msgstr "impossibile ottenere il valore di opzione"
+msgstr "Impossibile ottenere il valore di opzione"
 
 #: ../api/private/helpers.c:204
 msgid "internal error: unknown option type"
@@ -827,18 +826,16 @@ msgid "sort() argument"
 msgstr "argomento di sort()"
 
 #: ../eval.c:13721
-#, fuzzy
 msgid "uniq() argument"
-msgstr "argomento di add()"
+msgstr "argomento di uniq()"
 
 #: ../eval.c:13776
 msgid "E702: Sort compare function failed"
 msgstr "E702: Funzione confronto nel sort non riuscita"
 
 #: ../eval.c:13806
-#, fuzzy
 msgid "E882: Uniq compare function failed"
-msgstr "E702: Funzione confronto nel sort non riuscita"
+msgstr "E882: Funzione di comparazione 'uniq' fallita"
 
 #: ../eval.c:14085
 msgid "(Invalid)"
@@ -963,16 +960,12 @@ msgid "E129: Function name required"
 msgstr "E129: Nome funzione necessario"
 
 #: ../eval.c:17824
-#, fuzzy, c-format
 msgid "E128: Function name must start with a capital or \"s:\": %s"
-msgstr ""
-"E128: Il nome funzione deve iniziare con una maiuscola o contenere ':': %s"
+msgstr "E128: Il nome funzione deve iniziare con una maiuscola o \"s:\": %s"
 
 #: ../eval.c:17833
-#, fuzzy, c-format
 msgid "E884: Function name cannot contain a colon: %s"
-msgstr ""
-"E128: Il nome funzione deve iniziare con una maiuscola o contenere ':': %s"
+msgstr "E884: Il nome funzione non può contenere una virgola: %s"
 
 #: ../eval.c:18336
 #, c-format
@@ -2667,18 +2660,17 @@ msgid "E17: \"%s\" is a directory"
 msgstr "E17: \"%s\" è una directory"
 
 #: ../globals.h:1020
-#, fuzzy
 msgid "E900: Invalid job id"
-msgstr "E49: Quantità di 'scroll' non valida"
+msgstr "E900: 'Job id' non valido"
 
 #: ../globals.h:1021
 msgid "E901: Job table is full"
-msgstr ""
+msgstr "E901: Job table piena"
 
 #: ../globals.h:1022
 #, c-format
 msgid "E902: \"%s\" is not an executable"
-msgstr ""
+msgstr "E902: \"%s\" non è un esegubile"
 
 #: ../globals.h:1024
 #, c-format
@@ -2703,7 +2695,7 @@ msgstr "E22: Script troppo nidificati"
 
 #: ../globals.h:1031
 msgid "E23: No alternate file"
-msgstr "E23: Nessun file alternato"
+msgstr "E23: Nessun file alternativo"
 
 #: ../globals.h:1032
 msgid "E24: No such abbreviation"
@@ -2791,9 +2783,8 @@ msgid "E37: No write since last change (add ! to override)"
 msgstr "E37: Non salvato dopo modifica (aggiungi ! per eseguire comunque)"
 
 #: ../globals.h:1055
-#, fuzzy
 msgid "E37: No write since last change"
-msgstr "[Non salvato dopo l'ultima modifica]\n"
+msgstr "E37: Non salvato dall'ultima modifica"
 
 #: ../globals.h:1056
 msgid "E38: Null argument"
@@ -2857,8 +2848,7 @@ msgstr "E46: Non posso cambiare la variabile read-only \"%s\""
 #: ../globals.h:1075
 #, c-format
 msgid "E794: Cannot set variable in the sandbox: \"%s\""
-msgstr ""
-"E794: Non posso impostare la variabile read-only in ambiente protetto: \"%s\""
+msgstr "E794: Non posso impostare la variabile read-only in ambiente protetto: \"%s\""
 
 #: ../globals.h:1076
 msgid "E47: Error while reading errorfile"
@@ -4869,9 +4859,8 @@ msgid "E777: String or List expected"
 msgstr "E777: aspettavo Stringa o Lista"
 
 #: ../regexp.c:359
-#, fuzzy, c-format
 msgid "E369: invalid item in %s%%[]"
-msgstr "E239: Testo 'sign' non valido: %s"
+msgstr "E369: elemento non valido in %s%%[]"
 
 #: ../regexp.c:374
 #, c-format
@@ -5004,7 +4993,7 @@ msgstr "E866: (NFA regexp) %c fuori posto"
 #: ../regexp_nfa.c:242
 #, c-format
 msgid "E877: (NFA regexp) Invalid character class: %<PRId64>"
-msgstr ""
+msgstr "E877: (NFA regexp) Classe di caratteri non valida: %<PRId64>"
 
 #: ../regexp_nfa.c:1261
 #, c-format
@@ -5611,14 +5600,12 @@ msgid "E765: 'spellfile' does not have %<PRId64> entries"
 msgstr "E765: 'spellfile' non ha %<PRId64> elementi"
 
 #: ../spell.c:8074
-#, fuzzy, c-format
 msgid "Word '%.*s' removed from %s"
-msgstr "Parola rimossa da %s"
+msgstr "Parola '%.*s' rimossa da %s"
 
 #: ../spell.c:8117
-#, fuzzy, c-format
 msgid "Word '%.*s' added to %s"
-msgstr "Parola aggiunta a %s"
+msgstr "Parola '%.*s' aggiunta a %s"
 
 #: ../spell.c:8381
 msgid "E763: Word characters differ between spell files"
@@ -6100,9 +6087,8 @@ msgstr "Vim: Errore leggendo l'input, esco...\n"
 #. This happens when the FileChangedRO autocommand changes the
 #. * file in a way it becomes shorter.
 #: ../undo.c:379
-#, fuzzy
 msgid "E881: Line count changed unexpectedly"
-msgstr "E834: Il conteggio delle righe è inaspettatamente cambiato"
+msgstr "E881: Il conteggio delle righe è inaspettatamente cambiato"
 
 #: ../undo.c:627
 #, c-format
