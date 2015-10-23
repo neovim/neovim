@@ -797,7 +797,7 @@ g'{mark}  g`{mark}
 <
 
 :delm[arks]!		Delete all marks for the current buffer, but not marks
-			A-Z or 0-9.
+			A-Z or 0-9.  Also clear the |changelist|.
 
 A mark is not visible in any way.  It is just a position in the file that is
 remembered.  Do not confuse marks with named registers, they are totally
