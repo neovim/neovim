@@ -678,7 +678,7 @@ static int command_line_execute(VimState *state, int key)
 
           KeyTyped = false;                 // Don't do p_wc completion.
           redrawcmd();
-          goto cmdline_changed;
+          return command_line_changed(s);
         }
       }
       beep_flush();
@@ -686,7 +686,7 @@ static int command_line_execute(VimState *state, int key)
       did_emsg = false;
       emsg_on_display = false;
       redrawcmd();
-      goto cmdline_not_changed;
+      return command_line_not_changed(s);
     } else {
       if (s->c == Ctrl_G && p_im && restart_edit == 0) {
         restart_edit = 'a';
@@ -725,7 +725,7 @@ static int command_line_execute(VimState *state, int key)
       s->gotesc = false;         // Might have typed ESC previously, don't
                                  // truncate the cmdline now.
       if (ccheck_abbr(s->c + ABBR_OFF)) {
-        goto cmdline_changed;
+        return command_line_changed(s);
       }
 
       if (!cmd_silent) {
@@ -780,7 +780,7 @@ static int command_line_execute(VimState *state, int key)
         got_int = false;              // don't abandon the command line
         (void)ExpandOne(&s->xpc, NULL, NULL, 0, WILD_FREE);
         s->xpc.xp_context = EXPAND_NOTHING;
-        goto cmdline_changed;
+        return command_line_changed(s);
       }
 
       // when more than one match, and 'wildmode' first contains
@@ -831,7 +831,7 @@ static int command_line_execute(VimState *state, int key)
     }
 
     if (s->res == OK) {
-      goto cmdline_changed;
+      return command_line_changed(s);
     }
   }
 
@@ -842,7 +842,7 @@ static int command_line_execute(VimState *state, int key)
     if (nextwild(&s->xpc, WILD_EXPAND_KEEP, 0, s->firstc != '@') == OK
         && nextwild(&s->xpc, WILD_PREV, 0, s->firstc != '@') == OK
         && nextwild(&s->xpc, WILD_PREV, 0, s->firstc != '@') == OK) {
-      goto cmdline_changed;
+      return command_line_changed(s);
     }
   }
 
@@ -928,7 +928,7 @@ static int command_line_execute(VimState *state, int key)
                && ccline.cmdprompt == NULL && s->indent == 0) {
       // In ex and debug mode it doesn't make sense to return.
       if (exmode_active || ccline.cmdfirstc == '>') {
-        goto cmdline_not_changed;
+        return command_line_not_changed(s);
       }
 
       xfree(ccline.cmdbuff);               // no commandline to return
@@ -944,7 +944,7 @@ static int command_line_execute(VimState *state, int key)
       redraw_cmdline = true;
       return 0;                           // back to cmd mode
     }
-    goto cmdline_changed;
+    return command_line_changed(s);
 
   case K_INS:
   case K_KINS:
@@ -957,7 +957,7 @@ static int command_line_execute(VimState *state, int key)
     }
 
     ui_cursor_shape();                // may show different cursor shape
-    goto cmdline_not_changed;
+    return command_line_not_changed(s);
 
   case Ctrl_HAT:
     if (map_to_exists_mode((char_u *)"", LANGMAP, false)) {
@@ -982,7 +982,7 @@ static int command_line_execute(VimState *state, int key)
     ui_cursor_shape();                // may show different cursor shape
     // Show/unshow value of 'keymap' in status lines later.
     status_redraw_curbuf();
-    goto cmdline_not_changed;
+    return command_line_not_changed(s);
 
   // case '@':   only in very old vi
   case Ctrl_U:
@@ -997,7 +997,7 @@ static int command_line_execute(VimState *state, int key)
     // Truncate at the end, required for multi-byte chars.
     ccline.cmdbuff[ccline.cmdlen] = NUL;
     redrawcmd();
-    goto cmdline_changed;
+    return command_line_changed(s);
 
 
   case ESC:           // get here if p_wc != ESC or when ESC typed twice
@@ -1005,7 +1005,7 @@ static int command_line_execute(VimState *state, int key)
     // In exmode it doesn't make sense to return.  Except when
     // ":normal" runs out of characters.
     if (exmode_active && (ex_normal_busy == 0 || typebuf.tb_len > 0)) {
-      goto cmdline_not_changed;
+      return command_line_not_changed(s);
     }
 
     s->gotesc = true;                 // will free ccline.cmdbuff after
@@ -1060,7 +1060,7 @@ static int command_line_execute(VimState *state, int key)
       }
     }
     redrawcmd();
-    goto cmdline_changed;
+    return command_line_changed(s);
 
   case Ctrl_D:
     if (showmatches(&s->xpc, false) == EXPAND_NOTHING) {
@@ -1096,13 +1096,13 @@ static int command_line_execute(VimState *state, int key)
     if (has_mbyte) {
       set_cmdspos_cursor();
     }
-    goto cmdline_not_changed;
+    return command_line_not_changed(s);
 
   case K_LEFT:
   case K_S_LEFT:
   case K_C_LEFT:
     if (ccline.cmdpos == 0) {
-      goto cmdline_not_changed;
+      return command_line_not_changed(s);
     }
     do {
       --ccline.cmdpos;
@@ -1120,24 +1120,24 @@ static int command_line_execute(VimState *state, int key)
       set_cmdspos_cursor();
     }
 
-    goto cmdline_not_changed;
+    return command_line_not_changed(s);
 
   case K_IGNORE:
     // Ignore mouse event or ex_window() result.
-    goto cmdline_not_changed;
+    return command_line_not_changed(s);
 
 
   case K_MIDDLEDRAG:
   case K_MIDDLERELEASE:
-    goto cmdline_not_changed;                 // Ignore mouse
+    return command_line_not_changed(s);                 // Ignore mouse
 
   case K_MIDDLEMOUSE:
     if (!mouse_has(MOUSE_COMMAND)) {
-      goto cmdline_not_changed;                   // Ignore mouse
+      return command_line_not_changed(s);                   // Ignore mouse
     }
     cmdline_paste(0, true, true);
     redrawcmd();
-    goto cmdline_changed;
+    return command_line_changed(s);
 
 
   case K_LEFTDRAG:
@@ -1147,7 +1147,7 @@ static int command_line_execute(VimState *state, int key)
     // Ignore drag and release events when the button-down wasn't
     // seen before.
     if (s->ignore_drag_release) {
-      goto cmdline_not_changed;
+      return command_line_not_changed(s);
     }
   // FALLTHROUGH
   case K_LEFTMOUSE:
@@ -1159,7 +1159,7 @@ static int command_line_execute(VimState *state, int key)
     }
 
     if (!mouse_has(MOUSE_COMMAND)) {
-      goto cmdline_not_changed;                   // Ignore mouse
+      return command_line_not_changed(s);                   // Ignore mouse
     }
 
     set_cmdspos();
@@ -1179,7 +1179,7 @@ static int command_line_execute(VimState *state, int key)
       }
       ccline.cmdspos += s->i;
     }
-    goto cmdline_not_changed;
+    return command_line_not_changed(s);
 
   // Mouse scroll wheel: ignored here
   case K_MOUSEDOWN:
@@ -1193,12 +1193,12 @@ static int command_line_execute(VimState *state, int key)
   case K_X2MOUSE:
   case K_X2DRAG:
   case K_X2RELEASE:
-    goto cmdline_not_changed;
+    return command_line_not_changed(s);
 
 
 
   case K_SELECT:          // end of Select mode mapping - ignore
-    goto cmdline_not_changed;
+    return command_line_not_changed(s);
 
   case Ctrl_B:            // begin of command line
   case K_HOME:
@@ -1207,7 +1207,7 @@ static int command_line_execute(VimState *state, int key)
   case K_C_HOME:
     ccline.cmdpos = 0;
     set_cmdspos();
-    goto cmdline_not_changed;
+    return command_line_not_changed(s);
 
   case Ctrl_E:            // end of command line
   case K_END:
@@ -1216,12 +1216,12 @@ static int command_line_execute(VimState *state, int key)
   case K_C_END:
     ccline.cmdpos = ccline.cmdlen;
     set_cmdspos_cursor();
-    goto cmdline_not_changed;
+    return command_line_not_changed(s);
 
   case Ctrl_A:            // all matches
     if (nextwild(&s->xpc, WILD_ALL, 0, s->firstc != '@') == FAIL)
       break;
-    goto cmdline_changed;
+    return command_line_changed(s);
 
   case Ctrl_L:
     if (p_is && !cmd_silent && (s->firstc == '/' || s->firstc == '?')) {
@@ -1246,14 +1246,14 @@ static int command_line_execute(VimState *state, int key)
           break;
         }
       }
-      goto cmdline_not_changed;
+      return command_line_not_changed(s);
     }
 
     // completion: longest common part
     if (nextwild(&s->xpc, WILD_LONGEST, 0, s->firstc != '@') == FAIL) {
       break;
     }
-    goto cmdline_changed;
+    return command_line_changed(s);
 
   case Ctrl_N:            // next match
   case Ctrl_P:            // previous match
@@ -1262,7 +1262,7 @@ static int command_line_execute(VimState *state, int key)
               0, s->firstc != '@') == FAIL) {
         break;
       }
-      goto cmdline_changed;
+      return command_line_changed(s);
     }
 
   case K_UP:
@@ -1275,7 +1275,7 @@ static int command_line_execute(VimState *state, int key)
   case K_KPAGEDOWN:
     if (hislen == 0 || s->firstc == NUL) {
       // no history
-      goto cmdline_not_changed;
+      return command_line_not_changed(s);
     }
 
     s->i = s->hiscnt;
@@ -1397,10 +1397,10 @@ static int command_line_execute(VimState *state, int key)
 
       ccline.cmdpos = ccline.cmdlen = (int)STRLEN(ccline.cmdbuff);
       redrawcmd();
-      goto cmdline_changed;
+      return command_line_changed(s);
     }
     beep_flush();
-    goto cmdline_not_changed;
+    return command_line_not_changed(s);
 
   case Ctrl_V:
   case Ctrl_Q:
@@ -1426,7 +1426,7 @@ static int command_line_execute(VimState *state, int key)
     }
 
     redrawcmd();
-    goto cmdline_not_changed;
+    return command_line_not_changed(s);
 
   case Ctrl__:            // CTRL-_: switch language mode
     if (!p_ari) {
@@ -1442,7 +1442,7 @@ static int command_line_execute(VimState *state, int key)
       // Hebrew is default
       cmd_hkmap = !cmd_hkmap;
     }
-    goto cmdline_not_changed;
+    return command_line_not_changed(s);
 
   default:
     // Normal character with no special meaning.  Just set mod_mask
@@ -1462,7 +1462,7 @@ static int command_line_execute(VimState *state, int key)
       && (ccheck_abbr((has_mbyte && s->c >= 0x100) ?
           (s->c + ABBR_OFF) : s->c)
         || s->c == Ctrl_RSB)) {
-    goto cmdline_changed;
+    return command_line_changed(s);
   }
 
   // put the character in the command line
@@ -1478,19 +1478,25 @@ static int command_line_execute(VimState *state, int key)
       put_on_cmdline(IObuff, 1, true);
     }
   }
-  goto cmdline_changed;
+  return command_line_changed(s);
+}
 
+
+static int command_line_not_changed(CommandLineState *s)
+{
   // This part implements incremental searches for "/" and "?" Jump to
   // cmdline_not_changed when a character has been read but the command line
   // did not change. Then we only search and redraw if something changed in
   // the past.  Jump to cmdline_changed when the command line did change.
   // (Sorry for the goto's, I know it is ugly).
-cmdline_not_changed:
   if (!s->incsearch_postponed) {
     return 1;
   }
+  return command_line_changed(s);
+}
 
-cmdline_changed:
+static int command_line_changed(CommandLineState *s)
+{
   // 'incsearch' highlighting.
   if (p_is && !cmd_silent && (s->firstc == '/' || s->firstc == '?')) {
     pos_T end_pos;
