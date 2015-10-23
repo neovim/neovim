@@ -852,7 +852,11 @@ static int command_line_execute(VimState *state, int key)
   }
 
   s->do_abbr = true;             // default: check for abbreviation
+  return command_line_handle_key(s);
+}
 
+static int command_line_handle_key(CommandLineState *s)
+{
   // Big switch for a typed command line character.
   switch (s->c) {
   case K_BS:
