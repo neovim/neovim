@@ -797,7 +797,7 @@ g'{mark}  g`{mark}
 <
 
 :delm[arks]!		Delete all marks for the current buffer, but not marks
-			A-Z or 0-9.
+			A-Z or 0-9.  Also clear the |changelist|.
 
 A mark is not visible in any way.  It is just a position in the file that is
 remembered.  Do not confuse marks with named registers, they are totally
@@ -877,7 +877,8 @@ was made yet in the current file.
 			for each opened file.
 			Only one position is remembered per buffer, not one
 			for each window.  As long as the buffer is visible in
-			a window the position won't be changed.
+			a window the position won't be changed.  Mark is also 
+			reset when |:wshada| is run.
 
 							*'^* *`^*
 '^  `^			To the position where the cursor was the last time

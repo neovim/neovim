@@ -2433,6 +2433,15 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   msgpack_packer *const packer = msgpack_packer_new(sd_writer,
                                                     &msgpack_sd_writer_write);
 
+  // Set b_last_cursor for all the buffers that have a window.
+  //
+  // It is needed to correctly save '"' mark on exit. Has a side effect of
+  // setting '"' mark in all windows on :wshada to the current cursor
+  // position (basically what :wviminfo used to do).
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    set_last_cursor(wp);
+  }
+
   FOR_ALL_BUFFERS(buf) {
     if (buf->b_ffname != NULL && shada_removable((char *) buf->b_ffname)) {
       int kh_ret;

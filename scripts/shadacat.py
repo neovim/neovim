@@ -60,7 +60,20 @@ def mnormalize(o):
 
 
 fname = sys.argv[1]
+try:
+  filt = sys.argv[2]
+except IndexError:
+  filt = lambda entry: True
+else:
+  _filt = filt
+  filt = lambda entry: eval(_filt, globals(), {'entry': entry})
+
 poswidth = len(str(os.stat(fname).st_size or 1000))
+
+
+class FullEntry(dict):
+  def __init__(self, val):
+    self.__dict__.update(val)
 
 
 with open(fname, 'rb') as fp:
@@ -82,5 +95,15 @@ with open(fname, 'rb') as fp:
       else:
         entry = unpacker.unpack()
         typ = EntryTypes(typ)
+      full_entry = FullEntry({
+        'value': entry,
+        'timestamp': timestamp,
+        'time': time,
+        'length': length,
+        'pos': pos,
+        'type': typ,
+      })
+      if not filt(full_entry):
+        continue
       print('%*u %13s %s %5u %r' % (
         poswidth, pos, typ.name, time.isoformat(), length, mnormalize(entry)))

@@ -1169,6 +1169,8 @@ running) you have additional options:
 			cannot write ShaDa file!" check that no old temp files 
 			were left behind (e.g. ~/.nvim/shada/main.shada.tmp*).
 
+			Note: Executing :wshada will reset all |'quote| marks.
+
 						   *:wv* *:wviminfo*
 :wv[iminfo][!] [file]	Deprecated alias to |:wshada| command.
 

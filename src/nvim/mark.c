@@ -546,19 +546,26 @@ int check_mark(pos_T *pos)
   return OK;
 }
 
-/*
- * clrallmarks() - clear all marks in the buffer 'buf'
- *
- * Used mainly when trashing the entire buffer during ":e" type commands
- */
-void clrallmarks(buf_T *buf)
+/// Clear all marks and change list in the given buffer
+///
+/// Used mainly when trashing the entire buffer during ":e" type commands.
+///
+/// @param[out]  buf  Buffer to clear marks in.
+void clrallmarks(buf_T *const buf)
+  FUNC_ATTR_NONNULL_ALL
 {
-  memset(&(buf->b_namedm[0]), 0, sizeof(buf->b_namedm));
-  buf->b_op_start.lnum = 0;             /* start/end op mark cleared */
+  for (size_t i = 0; i < NMARKS; i++) {
+    clear_fmark(&buf->b_namedm[i]);
+  }
+  clear_fmark(&buf->b_last_cursor);
+  buf->b_last_cursor.mark.lnum = 1;
+  clear_fmark(&buf->b_last_insert);
+  clear_fmark(&buf->b_last_change);
+  buf->b_op_start.lnum = 0;  // start/end op mark cleared
   buf->b_op_end.lnum = 0;
-  RESET_FMARK(&buf->b_last_cursor, ((pos_T) {1, 0, 0}), 0);  // '" mark
-  CLEAR_FMARK(&buf->b_last_insert);                          // '^ mark
-  CLEAR_FMARK(&buf->b_last_change);                          // '. mark
+  for (int i = 0; i < buf->b_changelistlen; i++) {
+    clear_fmark(&buf->b_changelist[i]);
+  }
   buf->b_changelistlen = 0;
 }
 
