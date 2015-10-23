@@ -20,7 +20,7 @@
 
 // Unix system-dependent file names
 #ifndef SYS_VIMRC_FILE
-# define SYS_VIMRC_FILE "$VIM/nvimrc"
+# define SYS_VIMRC_FILE "$VIM/sysinit.vim"
 #endif
 #ifndef DFLT_HELPFILE
 # define DFLT_HELPFILE  "$VIMRUNTIME/doc/help.txt"
