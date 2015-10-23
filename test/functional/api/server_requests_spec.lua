@@ -118,7 +118,7 @@ describe('server -> client', function()
 
   describe('when the client is a recursive vim instance', function()
     before_each(function()
-      nvim('command', "let vim = rpcstart('"..nvim_prog.."', ['-u', 'NONE', '--embed'])")
+      nvim('command', "let vim = rpcstart('"..nvim_prog.."', ['-u', 'NONE', '-i', 'NONE', '--embed'])")
       neq(0, eval('vim'))
     end)
 

@@ -11,7 +11,7 @@ describe('tui', function()
 
   before_each(function()
     helpers.clear()
-    screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog..'", "-u", "NONE", "--cmd", "set noswapfile"]')
+    screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
     screen.timeout = 30000 -- pasting can be really slow in the TUI
     screen:expect([[
       {1: }                                                 |

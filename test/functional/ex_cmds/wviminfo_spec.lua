@@ -13,7 +13,7 @@ describe(':wshada', function()
     end
 
     -- Override the default session because we need 'swapfile' for these tests.
-    local session = spawn({nvim_prog, '-u', 'NONE', '--embed',
+    local session = spawn({nvim_prog, '-u', 'NONE', '-i', '/dev/null', '--embed',
                            '--cmd', 'set swapfile'})
     set_session(session)
 
