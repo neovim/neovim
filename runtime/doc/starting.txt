@@ -415,6 +415,8 @@ accordingly.  Vim proceeds in this order:
 	-  The environment variable VIMINIT
 	   The value of $VIMINIT is used as an Ex command line.
 	-  The user vimrc file: $XDG_CONFIG_HOME/nvim/init.vim.
+	-  Other vimrc file: {xdg_config_dir}/nvim/init.vim where 
+	   {xdg_config_dir} is one of the directories in $XDG_CONFIG_DIRS.
 	-  The environment variable EXINIT.
 	   The value of $EXINIT is used as an Ex command line.
 
