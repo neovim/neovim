@@ -977,6 +977,14 @@ static int insert_handle_key(InsertState *s)
     queue_process_events(loop.events);
     break;
 
+  case K_FOCUSGAINED:  // Neovim has been given focus
+    apply_autocmds(EVENT_FOCUSGAINED, NULL, NULL, false, curbuf);
+    break;
+
+  case K_FOCUSLOST:   // Neovim has lost focus
+    apply_autocmds(EVENT_FOCUSLOST, NULL, NULL, false, curbuf);
+    break;
+
   case K_HOME:        // <Home>
   case K_KHOME:
   case K_S_HOME:
