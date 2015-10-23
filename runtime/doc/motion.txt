@@ -877,7 +877,8 @@ was made yet in the current file.
 			for each opened file.
 			Only one position is remembered per buffer, not one
 			for each window.  As long as the buffer is visible in
-			a window the position won't be changed.
+			a window the position won't be changed.  Mark is also 
+			reset when |:wshada| is run.
 
 							*'^* *`^*
 '^  `^			To the position where the cursor was the last time
