@@ -18,7 +18,7 @@ describe('72', function()
 
     -- Test 'undofile': first a simple one-line change.
     execute('set visualbell')
-    execute('set ul=100 undofile nomore')
+    execute('set ul=100 undofile undodir=. nomore')
     execute('e! Xtestfile')
     feed('ggdGithis is one line<esc>:set ul=100<cr>')
     execute('s/one/ONE/')
