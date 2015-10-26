@@ -37,7 +37,7 @@ used.  Also see |xterm-screens|.
 Settings depending on terminal			*term-dependent-settings*
 
 If you want to set options or mappings, depending on the terminal name, you
-can do this best in your .vimrc.  Example: >
+can do this best in your vimrc.  Example: >
 
    if &term == "xterm"
      ... xterm maps and settings ...

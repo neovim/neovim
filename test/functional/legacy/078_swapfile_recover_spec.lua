@@ -17,7 +17,7 @@ describe('78', function()
 
   it('is working', function()
     source([=[
-      set swapfile fileformat=unix undolevels=-1
+      set directory=. swapfile fileformat=unix undolevels=-1
       e! Xtest
       let text = "\tabcdefghijklmnoparstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnoparstuvwxyz0123456789"
       let i = 1

@@ -1257,9 +1257,9 @@ A compiled .exe for MS-Windows can be found at:
 
 If you want to complete system functions you can do something like this.  Use
 ctags to generate a tags file for all the system header files: >
-	% ctags -R -f ~/.vim/systags /usr/include /usr/local/include
+	% ctags -R -f ~/.config/nvim/systags /usr/include /usr/local/include
 In your vimrc file add this tags file to the 'tags' option: >
-	set tags+=~/.vim/systags
+	set tags+=~/.config/nvim/systags
 
 When using CTRL-X CTRL-O after a name without any "." or "->" it is completed
 from the tags file directly.  This works for any identifier, also function
@@ -1459,7 +1459,7 @@ minimal language-sensitive completion.
 To enable syntax code completion you can run: >
     setlocal omnifunc=syntaxcomplete#Complete
 
-You can automate this by placing the following in your |.vimrc| (after any
+You can automate this by placing the following in your |init.vim| (after any
 ":filetype" command): >
     if has("autocmd") && exists("+omnifunc")
 	autocmd Filetype *

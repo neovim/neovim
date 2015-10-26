@@ -60,10 +60,7 @@ make them visible with: >
 It's not required for this tutorial, but we provide an example vimrc you may
 use:
 
-Unix: >
-	:!cp -i $VIMRUNTIME/vimrc_example.vim ~/.vimrc
-MS-DOS, MS-Windows: >
-	:!copy $VIMRUNTIME/vimrc_example.vim $VIM/_vimrc
+	:!cp -i $VIMRUNTIME/vimrc_example.vim ~/.config/nvim/init.vim
 
 If the file already exists you probably want to keep it.
 

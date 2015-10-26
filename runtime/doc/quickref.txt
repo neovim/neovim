@@ -548,7 +548,7 @@ In Insert or Command-line mode:
 				     settings to [file] (default: ".exrc";
 				     use ! to overwrite)
 |:mkvimrc|   :mkv[imrc][!] [file]
-				  same as ":mkexrc", but with default ".vimrc"
+				  same as :mkexrc, but with default ".nvimrc"
 |:mksession| :mks[ession][!] [file]
 				  like ":mkvimrc", but store current files,
 				     windows, etc. too, to be able to continue
@@ -681,7 +681,7 @@ Short explanation of each option:		*option-list*
 'esckeys'	  'ek'	    recognize function keys in Insert mode
 'eventignore'	  'ei'	    autocommand events that are ignored
 'expandtab'	  'et'	    use spaces when <Tab> is inserted
-'exrc'		  'ex'	    read .vimrc and .exrc in the current directory
+'exrc'		  'ex'	    read .nvimrc and .exrc in the current directory
 'fileencoding'	  'fenc'    file encoding for multi-byte text
 'fileencodings'   'fencs'   automatically detected character encodings
 'fileformat'	  'ff'	    file format used for file I/O

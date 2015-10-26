@@ -149,7 +149,7 @@ If you find a menu translation file for your language with a different name,
 create a file in your own runtime directory to load that one.  The name of
 that file could be: >
 
-	~/.vim/lang/menu_<v:lang>.vim
+	~/.config/nvim/lang/menu_<v:lang>.vim
 
 Check the 'runtimepath' option for directories which are searched.  In that
 file put a command to load the menu file with the other name: >

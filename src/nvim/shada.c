@@ -1583,6 +1583,20 @@ shada_read_main_cycle_end:
   kh_dealloc(strset, &oldfiles_set);
 }
 
+/// Default shada file location: cached path
+static char *default_shada_file = NULL;
+
+/// Get the default ShaDa file
+static const char *shada_get_default_file(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (default_shada_file == NULL) {
+    char *shada_dir = stdpaths_user_data_subpath("shada", 0);
+    default_shada_file = concat_fnames_realloc(shada_dir, "main.shada", true);
+  }
+  return default_shada_file;
+}
+
 /// Get the ShaDa file name to use
 ///
 /// If "file" is given and not empty, use it (has already been expanded by
@@ -1600,22 +1614,7 @@ static char *shada_filename(const char *file)
       file = used_shada_file;
     } else {
       if ((file = find_shada_parameter('n')) == NULL || *file == NUL) {
-#ifdef SHADA_FILE2
-        // don't use $HOME when not defined (turned into "c:/"!).
-        if (os_getenv((char_u *)"HOME") == NULL) {
-          // don't use $VIM when not available.
-          expand_env((char_u *)"$VIM", NameBuff, MAXPATHL);
-          if (STRCMP("$VIM", NameBuff) != 0) {  // $VIM was expanded
-            file = SHADA_FILE2;
-          } else {
-            file = SHADA_FILE;
-          }
-        } else {
-#endif
-          file =  SHADA_FILE;
-#ifdef SHADA_FILE2
-        }
-#endif
+        file =  shada_get_default_file();
       }
       // XXX It used to be one level lower, so that whatever is in
       //     `used_shada_file` was expanded. I intentionally moved it here

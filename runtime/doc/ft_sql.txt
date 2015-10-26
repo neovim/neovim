@@ -149,7 +149,7 @@ The above will also handle these cases: >
     );
 
 By default, the ftplugin only searches for CREATE statements.  You can also
-override this via your |vimrc| with the following: >
+override this via your |init.vim| with the following: >
     let g:ftplugin_sql_statements = 'create,alter'
 
 The filetype plugin defines three types of comments: >
@@ -227,7 +227,7 @@ you must either create:
     3.  Manual steps / commands
 
 The majority of people work with only one vendor's database product, it would
-be nice to specify a default in your |vimrc|.
+be nice to specify a default in your |init.vim|.
 
 
 2.1 SQLSetType					*sqlsettype* *SQLSetType*
@@ -273,12 +273,12 @@ This will echo: >
 -----------------------
 As mentioned earlier, the default syntax rules for Vim is based on Oracle
 (PL/SQL).  You can override this default by placing one of the following in
-your |vimrc|: >
+your |init.vim|: >
     let g:sql_type_default = 'sqlanywhere'
     let g:sql_type_default = 'sqlinformix'
     let g:sql_type_default = 'mysql'
 
-If you added the following to your |vimrc|: >
+If you added the following to your |init.vim|: >
     let g:sql_type_default = 'sqlinformix'
 
 The next time edit a SQL file the following scripts will be automatically
@@ -304,11 +304,8 @@ To help identify these scripts, try to create the files with a "sql" prefix.
 If you decide you wish to create customizations for the SQLite database, you
 can create any of the following: >
     Unix
-	~/.vim/syntax/sqlite.vim
-	~/.vim/indent/sqlite.vim
-    Windows
-	$VIM/vimfiles/syntax/sqlite.vim
-	$VIM/vimfiles/indent/sqlite.vim
+	~/.config/nvim/syntax/sqlite.vim
+	~/.config/nvim/indent/sqlite.vim
 
 No changes are necessary to the SQLSetType function.  It will automatically
 pickup the new SQL files and load them when you issue the SQLSetType command.
@@ -341,8 +338,8 @@ The defaults static maps are: >
     imap <buffer> <C-C>T <C-\><C-O>:call sqlcomplete#Map('sqlType')<CR><C-X><C-O>
     imap <buffer> <C-C>s <C-\><C-O>:call sqlcomplete#Map('sqlStatement')<CR><C-X><C-O>
 
-The use of "<C-C>" can be user chosen by using the following in your |.vimrc| as it 
-may not work properly on all platforms: >
+The use of "<C-C>" can be user chosen by using the following in your 
+|init.vim| as it may not work properly on all platforms: >
     let g:ftplugin_sql_omni_key = '<C-C>'
 >
 The static maps (which are based on the syntax highlight groups) follow this
@@ -440,7 +437,7 @@ the space bar):
 			   - This allows you to quickly drill down into a
 			     table to view its columns and back again.
 			   - <Right> and <Left> can be also be chosen via
-			     your |.vimrc| >
+			     your |init.vim| >
                                 let g:ftplugin_sql_omni_key_right = '<Right>'
                                 let g:ftplugin_sql_omni_key_left  = '<Left>'
 
@@ -604,7 +601,7 @@ database.
 ----------------------------
 
 The SQL completion plugin can be customized through various options set in
-your |vimrc|: >
+your |init.vim|: >
     omni_sql_no_default_maps
 <       - Default: This variable is not defined
 	- If this variable is defined, no maps are created for OMNI
@@ -723,7 +720,7 @@ will be specifying different syntax highlight groups.
 
 If you do not wish the default maps created or the key choices do not work on
 your platform (often a case on *nix) you define the following variable in
-your |vimrc|: >
+your |init.vim|: >
     let g:omni_sql_no_default_maps = 1
 
 Do no edit ftplugin/sql.vim directly!  If you change this file your changes

@@ -406,10 +406,12 @@ void ml_setname(buf_T *buf)
    * Try all directories in the 'directory' option.
    */
   dirp = p_dir;
+  bool found_existing_dir = false;
   for (;; ) {
     if (*dirp == NUL)               /* tried all directories, fail */
       break;
-    fname = findswapname(buf, &dirp, mfp->mf_fname);
+    fname = (char_u *)findswapname(buf, (char **)&dirp, (char *)mfp->mf_fname,
+                                   &found_existing_dir);
     /* alloc's fname */
     if (dirp == NULL)               /* out of memory */
       break;
@@ -504,13 +506,15 @@ void ml_open_file(buf_T *buf)
    * Try all directories in 'directory' option.
    */
   dirp = p_dir;
+  bool found_existing_dir = false;
   for (;; ) {
     if (*dirp == NUL)
       break;
-    /* There is a small chance that between choosing the swap file name
-     * and creating it, another Vim creates the file.  In that case the
-     * creation will fail and we will use another directory. */
-    fname = findswapname(buf, &dirp, NULL);     /* allocates fname */
+    // There is a small chance that between choosing the swap file name
+    // and creating it, another Vim creates the file.  In that case the
+    // creation will fail and we will use another directory.
+    fname = (char_u *)findswapname(buf, (char **)&dirp, NULL,
+                                   &found_existing_dir);
     if (dirp == NULL)
       break;        /* out of memory */
     if (fname == NULL)
@@ -3222,45 +3226,56 @@ static int do_swapexists(buf_T *buf, char_u *fname)
   return 0;
 }
 
-/*
- * Find out what name to use for the swap file for buffer 'buf'.
- *
- * Several names are tried to find one that does not exist
- * Returns the name in allocated memory or NULL.
- * When out of memory "dirp" is set to NULL.
- *
- * Note: If BASENAMELEN is not correct, you will get error messages for
- *	 not being able to open the swap or undo file
- * Note: May trigger SwapExists autocmd, pointers may change!
- */
-static char_u *
-findswapname (
-    buf_T *buf,
-    char_u **dirp,             /* pointer to list of directories */
-    char_u *old_fname         /* don't give warning for this file name */
-)
+/// Find out what name to use for the swap file for buffer 'buf'.
+///
+/// Several names are tried to find one that does not exist. Last directory in
+/// option is automatically created.
+///
+/// @note If BASENAMELEN is not correct, you will get error messages for
+///   not being able to open the swap or undo file.
+/// @note May trigger SwapExists autocmd, pointers may change!
+///
+/// @param[in]  buf  Buffer for which swap file names needs to be found.
+/// @param[in,out]  dirp  Pointer to a list of directories. When out of memory,
+///                       is set to NULL. Is advanced to the next directory in
+///                       the list otherwise.
+/// @param[in]  old_fname  Allowed existing swap file name. Except for this
+///                        case, name of the non-existing file is used.
+/// @param[in,out]  found_existing_dir  If points to true, then new directory
+///                                     for swap file is not created. At first
+///                                     findswapname() call this argument must
+///                                     point to false. This parameter may only
+///                                     be set to true by this function, it is
+///                                     never set to false.
+///
+/// @return [allocated] Name of the swap file.
+static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
+                          bool *found_existing_dir)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1, 2, 4)
 {
-  char_u      *fname;
-  int n;
-  char_u      *dir_name;
-  char_u      *buf_fname = buf->b_fname;
+  char *fname;
+  size_t n;
+  char *dir_name;
+  char *buf_fname = (char *) buf->b_fname;
 
   /*
    * Isolate a directory name from *dirp and put it in dir_name.
    * First allocate some memory to put the directory name in.
    */
-  dir_name = xmalloc(STRLEN(*dirp) + 1);
-  (void)copy_option_part(dirp, dir_name, 31000, ",");
+  const size_t dir_len = strlen(*dirp);
+  dir_name = xmalloc(dir_len + 1);
+  (void)copy_option_part((char_u **) dirp, (char_u *) dir_name, dir_len, ",");
 
   /*
    * we try different names until we find one that does not exist yet
    */
-  fname = makeswapname(buf_fname, buf->b_ffname, buf, dir_name);
+  fname = (char *)makeswapname((char_u *)buf_fname, buf->b_ffname, buf,
+                               (char_u *)dir_name);
 
   for (;; ) {
     if (fname == NULL)          /* must be out of memory */
       break;
-    if ((n = (int)STRLEN(fname)) == 0) {        /* safety check */
+    if ((n = strlen(fname)) == 0) {        /* safety check */
       xfree(fname);
       fname = NULL;
       break;
@@ -3269,7 +3284,7 @@ findswapname (
     // Extra security check: When a swap file is a symbolic link, this
     // is most likely a symlink attack.
     FileInfo file_info;
-    bool file_or_link_found = os_fileinfo_link((char *)fname, &file_info);
+    bool file_or_link_found = os_fileinfo_link(fname, &file_info);
     if (!file_or_link_found) {
       break;
     }
@@ -3300,7 +3315,7 @@ findswapname (
          * Try to read block 0 from the swap file to get the original
          * file name (and inode number).
          */
-        fd = os_open((char *)fname, O_RDONLY, 0);
+        fd = os_open(fname, O_RDONLY, 0);
         if (fd >= 0) {
           if (read_eintr(fd, &b0, sizeof(b0)) == sizeof(b0)) {
             /*
@@ -3311,7 +3326,7 @@ findswapname (
             if (b0.b0_flags & B0_SAME_DIR) {
               if (fnamecmp(path_tail(buf->b_ffname),
                            path_tail(b0.b0_fname)) != 0
-                  || !same_directory(fname, buf->b_ffname)) {
+                  || !same_directory((char_u *) fname, buf->b_ffname)) {
                 /* Symlinks may point to the same file even
                  * when the name differs, need to check the
                  * inode too. */
@@ -3351,12 +3366,12 @@ findswapname (
            * user anyway.
            */
           if (swap_exists_action != SEA_NONE
-              && has_autocmd(EVENT_SWAPEXISTS, buf_fname, buf))
-            choice = do_swapexists(buf, fname);
+              && has_autocmd(EVENT_SWAPEXISTS, (char_u *) buf_fname, buf))
+            choice = do_swapexists(buf, (char_u *) fname);
 
           if (choice == 0) {
             /* Show info about the existing swap file. */
-            attention_message(buf, fname);
+            attention_message(buf, (char_u *) fname);
 
             /* We don't want a 'q' typed at the more-prompt
              * interrupt loading a file. */
@@ -3364,20 +3379,21 @@ findswapname (
           }
 
           if (swap_exists_action != SEA_NONE && choice == 0) {
-            char_u  *name;
+            char *name;
 
-            name = xmalloc(STRLEN(fname)
-                           + STRLEN(_("Swap file \""))
-                           + STRLEN(_("\" already exists!")) + 5);
+            const size_t fname_len = strlen(fname);
+            name = xmalloc(fname_len
+                           + strlen(_("Swap file \""))
+                           + strlen(_("\" already exists!")) + 5);
             STRCPY(name, _("Swap file \""));
-            home_replace(NULL, fname, name + STRLEN(name),
-                1000, TRUE);
+            home_replace(NULL, (char_u *) fname, (char_u *)&name[strlen(name)],
+                fname_len, true);
             STRCAT(name, _("\" already exists!"));
             choice = do_dialog(VIM_WARNING,
                 (char_u *)_("VIM - ATTENTION"),
-                name == NULL
-                ?  (char_u *)_("Swap file already exists!")
-                : name,
+                (char_u *)(name == NULL
+                           ? _("Swap file already exists!")
+                           : name),
 # if defined(UNIX)
                 process_still_running
                 ? (char_u *)_(
@@ -3409,7 +3425,7 @@ findswapname (
               swap_exists_action = SEA_RECOVER;
               break;
             case 4:
-              os_remove((char *)fname);
+              os_remove(fname);
               break;
             case 5:
               swap_exists_action = SEA_QUIT;
@@ -3421,7 +3437,7 @@ findswapname (
             }
 
             /* If the file was deleted this fname can be used. */
-            if (!os_file_exists(fname))
+            if (!os_file_exists((char_u *) fname))
               break;
           } else
           {
@@ -3452,6 +3468,19 @@ findswapname (
       fname[n - 1] = 'z' + 1;
     }
     --fname[n - 1];                     /* ".swo", ".swn", etc. */
+  }
+
+  if (os_isdir((char_u *) dir_name)) {
+    *found_existing_dir = true;
+  } else if (!*found_existing_dir && **dirp == NUL) {
+    int ret;
+    char *failed_dir;
+    if ((ret = os_mkdir_recurse(dir_name, 0755, &failed_dir)) != 0) {
+      EMSG3(_("E303: Unable to create directory \"%s\" for swap file, "
+              "recovery impossible: %s"),
+            failed_dir, os_strerror(ret));
+      xfree(failed_dir);
+    }
   }
 
   xfree(dir_name);

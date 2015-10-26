@@ -222,7 +222,7 @@ To use a locale in Vim only, use the |:language| command: >
 
 	:language ko
 
-Put this in your ~/.vimrc file to use it always.
+Put this in your |init.vim| file to use it always.
 
 Or specify $LANG when starting Vim:
 
@@ -684,7 +684,7 @@ that works well you can use this command to see its name: >
 
 	:set guifont
 
-Then add a command to your |gvimrc| file to set 'guifont': >
+Then add a command to your |ginit.vim| file to set 'guifont': >
 
 	:set guifont=courier_new:h12
 
@@ -928,7 +928,7 @@ Cursor color when IME or XIM is on				*CursorIM*
     This works in the same way when using XIM.
 
     You can select cursor color when status is on by using highlight group
-    CursorIM.  For example, add these lines to your |gvimrc|: >
+    CursorIM.  For example, add these lines to your |ginit.vim|: >
 
 	if has('multi_byte_ime')
 	    highlight Cursor guifg=NONE guibg=Green

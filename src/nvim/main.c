@@ -287,8 +287,8 @@ int main(int argc, char **argv)
    * Set the default values for the options that use Rows and Columns.
    */
   win_init_size();
-  /* Set the 'diff' option now, so that it can be checked for in a .vimrc
-   * file.  There is no buffer yet though. */
+  // Set the 'diff' option now, so that it can be checked for in a vimrc
+  // file.  There is no buffer yet though.
   if (params.diff_mode)
     diff_win_options(firstwin, FALSE);
 
@@ -345,7 +345,7 @@ int main(int argc, char **argv)
    */
   load_plugins();
 
-  /* Decide about window layout for diff mode after reading vimrc. */
+  // Decide about window layout for diff mode after reading vimrc.
   set_window_layout(&params);
 
   /*
@@ -358,10 +358,8 @@ int main(int argc, char **argv)
     mch_exit(0);
   }
 
-  /*
-   * Set a few option defaults after reading .vimrc files:
-   * 'title' and 'icon', Unix: 'shellpipe' and 'shellredir'.
-   */
+  // Set a few option defaults after reading vimrc files:
+  // 'title' and 'icon', Unix: 'shellpipe' and 'shellredir'.
   set_init_3();
   TIME_MSG("inits 3");
 
@@ -1551,8 +1549,8 @@ static void create_windows(mparm_T *parmp)
   if (parmp->window_count == 0)
     parmp->window_count = GARGCOUNT;
   if (parmp->window_count > 1) {
-    /* Don't change the windows if there was a command in .vimrc that
-     * already split some windows */
+    // Don't change the windows if there was a command in vimrc that
+    // already split some windows
     if (parmp->window_layout == 0)
       parmp->window_layout = WIN_HOR;
     if (parmp->window_layout == WIN_TABS) {
@@ -1574,14 +1572,11 @@ static void create_windows(mparm_T *parmp)
       getout(1);
     do_modelines(0);                    /* do modelines */
   } else {
-    /*
-     * Open a buffer for windows that don't have one yet.
-     * Commands in the .vimrc might have loaded a file or split the window.
-     * Watch out for autocommands that delete a window.
-     */
-    /*
-     * Don't execute Win/Buf Enter/Leave autocommands here
-     */
+    // Open a buffer for windows that don't have one yet.
+    // Commands in the vimrc might have loaded a file or split the window.
+    // Watch out for autocommands that delete a window.
+    //
+    // Don't execute Win/Buf Enter/Leave autocommands here
     ++autocmd_no_enter;
     ++autocmd_no_leave;
     dorewind = TRUE;
@@ -1691,8 +1686,8 @@ static void edit_buffers(mparm_T *parmp)
     }
     advance = TRUE;
 
-    /* Only open the file if there is no file in this window yet (that can
-     * happen when .vimrc contains ":sall"). */
+    // Only open the file if there is no file in this window yet (that can
+    // happen when vimrc contains ":sall").
     if (curbuf == firstwin->w_buffer || curbuf->b_ffname == NULL) {
       curwin->w_arg_idx = arg_idx;
       /* Edit file from arg list, if there is one.  When "Quit" selected
@@ -1801,117 +1796,121 @@ static void exe_commands(mparm_T *parmp)
   TIME_MSG("executing command arguments");
 }
 
-/*
- * Source startup scripts.
- */
-static void source_startup_scripts(mparm_T *parmp)
+/// Source vimrc or do other user initialization
+///
+/// Does one of the following things, stops after whichever succeeds:
+///
+/// 1. Execution of VIMINIT environment variable.
+/// 2. Sourcing user vimrc file ($XDG_CONFIG_HOME/nvim/init.vim).
+/// 3. Sourcing other vimrc files ($XDG_CONFIG_DIRS[1]/nvim/init.vim, …).
+/// 4. Execution of EXINIT environment variable.
+///
+/// @return True if it is needed to attempt to source exrc file according to
+///         'exrc' option definition.
+static bool do_user_initialization(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  int i;
+  bool do_exrc = p_exrc;
+  if (process_env("VIMINIT", true) == OK) {
+    return do_exrc;
+  }
+  char_u *user_vimrc = (char_u *)stdpaths_user_conf_subpath("init.vim");
+  if (do_source(user_vimrc, true, DOSO_VIMRC) != FAIL) {
+    if (do_exrc) {
+      do_exrc = (path_full_compare((char_u *)VIMRC_FILE, user_vimrc, false)
+                 != kEqualFiles);
+    }
+    xfree(user_vimrc);
+    return do_exrc;
+  }
+  xfree(user_vimrc);
+  char *const config_dirs = stdpaths_get_xdg_var(kXDGConfigDirs);
+  if (config_dirs != NULL) {
+    const void *iter = NULL;
+    do {
+      const char *dir;
+      size_t dir_len;
+      iter = vim_colon_env_iter(config_dirs, iter, &dir, &dir_len);
+      if (dir == NULL || dir_len == 0) {
+        break;
+      }
+      const char path_tail[] = { 'n', 'v', 'i', 'm', PATHSEP,
+                                 'i', 'n', 'i', 't', '.', 'v', 'i', 'm', NUL };
+      char *vimrc = xmalloc(dir_len + sizeof(path_tail) + 1);
+      memmove(vimrc, dir, dir_len);
+      vimrc[dir_len] = PATHSEP;
+      memmove(vimrc + dir_len + 1, path_tail, sizeof(path_tail));
+      if (do_source((char_u *) vimrc, true, DOSO_VIMRC) != FAIL) {
+        if (do_exrc) {
+          do_exrc = (path_full_compare((char_u *)VIMRC_FILE, (char_u *)vimrc,
+                                      false) != kEqualFiles);
+        }
+        xfree(vimrc);
+        xfree(config_dirs);
+        return do_exrc;
+      }
+      xfree(vimrc);
+    } while (iter != NULL);
+    xfree(config_dirs);
+  }
+  if (process_env("EXINIT", false) == OK) {
+    return do_exrc;
+  }
+  return do_exrc;
+}
 
-  /*
-   * If -u argument given, use only the initializations from that file and
-   * nothing else.
-   */
+/// Source startup scripts
+///
+/// @param[in]
+static void source_startup_scripts(const mparm_T *const parmp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // If -u argument given, use only the initializations from that file and
+  // nothing else.
   if (parmp->use_vimrc != NULL) {
     if (strcmp(parmp->use_vimrc, "NONE") == 0
         || strcmp(parmp->use_vimrc, "NORC") == 0) {
       if (parmp->use_vimrc[2] == 'N')
-        p_lpl = FALSE;                      // don't load plugins either
+        p_lpl = false;  // don't load plugins either
     } else {
       if (do_source((char_u *)parmp->use_vimrc, FALSE, DOSO_NONE) != OK)
         EMSG2(_("E282: Cannot read from \"%s\""), parmp->use_vimrc);
     }
   } else if (!silent_mode) {
-
-    /*
-     * Get system wide defaults, if the file name is defined.
-     */
 #ifdef SYS_VIMRC_FILE
-    (void)do_source((char_u *)SYS_VIMRC_FILE, FALSE, DOSO_NONE);
+    // Get system wide defaults, if the file name is defined.
+    (void) do_source((char_u *)SYS_VIMRC_FILE, false, DOSO_NONE);
 #endif
 
-    /*
-     * Try to read initialization commands from the following places:
-     * - environment variable VIMINIT
-     * - user vimrc file (~/.vimrc)
-     * - second user vimrc file ($VIM/.vimrc for Dos)
-     * - environment variable EXINIT
-     * - user exrc file (~/.exrc)
-     * - second user exrc file ($VIM/.exrc for Dos)
-     * The first that exists is used, the rest is ignored.
-     */
-    if (process_env("VIMINIT", true) != OK) {
-      if (do_source((char_u *)USR_VIMRC_FILE, TRUE, DOSO_VIMRC) == FAIL
-#ifdef USR_VIMRC_FILE2
-          && do_source((char_u *)USR_VIMRC_FILE2, TRUE,
-            DOSO_VIMRC) == FAIL
-#endif
-#ifdef USR_VIMRC_FILE3
-          && do_source((char_u *)USR_VIMRC_FILE3, TRUE,
-            DOSO_VIMRC) == FAIL
-#endif
-          && process_env("EXINIT", FALSE) == FAIL
-          && do_source((char_u *)USR_EXRC_FILE, FALSE, DOSO_NONE) == FAIL) {
-#ifdef USR_EXRC_FILE2
-        (void)do_source((char_u *)USR_EXRC_FILE2, FALSE, DOSO_NONE);
-#endif
-      }
-    }
-
-    /*
-     * Read initialization commands from ".vimrc" or ".exrc" in current
-     * directory.  This is only done if the 'exrc' option is set.
-     * Because of security reasons we disallow shell and write commands
-     * now, except for unix if the file is owned by the user or 'secure'
-     * option has been reset in environment of global ".exrc" or ".vimrc".
-     * Only do this if VIMRC_FILE is not the same as USR_VIMRC_FILE or
-     * SYS_VIMRC_FILE.
-     */
-    if (p_exrc) {
+    if (do_user_initialization()) {
+      // Read initialization commands from ".vimrc" or ".exrc" in current
+      // directory.  This is only done if the 'exrc' option is set.
+      // Because of security reasons we disallow shell and write commands
+      // now, except for unix if the file is owned by the user or 'secure'
+      // option has been reset in environment of global "exrc" or "vimrc".
+      // Only do this if VIMRC_FILE is not the same as vimrc file sourced in
+      // do_user_initialization.
 #if defined(UNIX)
-      /* If ".vimrc" file is not owned by user, set 'secure' mode. */
+      // If vimrc file is not owned by user, set 'secure' mode.
       if (!file_owned(VIMRC_FILE))
 #endif
         secure = p_secure;
 
-      i = FAIL;
-      if (path_full_compare((char_u *)USR_VIMRC_FILE,
-            (char_u *)VIMRC_FILE, FALSE) != kEqualFiles
-#ifdef USR_VIMRC_FILE2
-          && path_full_compare((char_u *)USR_VIMRC_FILE2,
-            (char_u *)VIMRC_FILE, FALSE) != kEqualFiles
-#endif
-#ifdef USR_VIMRC_FILE3
-          && path_full_compare((char_u *)USR_VIMRC_FILE3,
-            (char_u *)VIMRC_FILE, FALSE) != kEqualFiles
-#endif
-#ifdef SYS_VIMRC_FILE
-          && path_full_compare((char_u *)SYS_VIMRC_FILE,
-            (char_u *)VIMRC_FILE, FALSE) != kEqualFiles
-#endif
-         )
-        i = do_source((char_u *)VIMRC_FILE, TRUE, DOSO_VIMRC);
-
-      if (i == FAIL) {
+      if (do_source((char_u *)VIMRC_FILE, true, DOSO_VIMRC) == FAIL) {
 #if defined(UNIX)
-        /* if ".exrc" is not owned by user set 'secure' mode */
-        if (!file_owned(EXRC_FILE))
+        // if ".exrc" is not owned by user set 'secure' mode
+        if (!file_owned(EXRC_FILE)) {
           secure = p_secure;
-        else
+        } else {
           secure = 0;
+        }
 #endif
-        if (       path_full_compare((char_u *)USR_EXRC_FILE,
-              (char_u *)EXRC_FILE, FALSE) != kEqualFiles
-#ifdef USR_EXRC_FILE2
-            && path_full_compare((char_u *)USR_EXRC_FILE2,
-              (char_u *)EXRC_FILE, FALSE) != kEqualFiles
-#endif
-           )
-          (void)do_source((char_u *)EXRC_FILE, FALSE, DOSO_NONE);
+        (void)do_source((char_u *)EXRC_FILE, false, DOSO_NONE);
       }
     }
-    if (secure == 2)
-      need_wait_return = TRUE;
+    if (secure == 2) {
+      need_wait_return = true;
+    }
     secure = 0;
   }
   did_source_startup_scripts = true;
@@ -2042,7 +2041,7 @@ static void usage(void)
   mch_msg(_("  -r, -L                List swap files and exit\n"));
   mch_msg(_("  -r <file>             Recover crashed session\n"));
   mch_msg(_("  -u <nvimrc>           Use <nvimrc> instead of the default\n"));
-  mch_msg(_("  -i <shada>            Use <shada> instead of the default " SHADA_FILE "\n"));  // NOLINT(whitespace/line_length)
+  mch_msg(_("  -i <shada>            Use <shada> instead of the default\n"));
   mch_msg(_("  --noplugin            Don't load plugin scripts\n"));
   mch_msg(_("  -o[N]                 Open N windows (default: one for each file)\n"));
   mch_msg(_("  -O[N]                 Like -o but split vertically\n"));

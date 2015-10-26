@@ -133,15 +133,17 @@ If there is no error, return zero or an empty string.
 The default for non MS-Windows systems is to simply use "lpr" to print the
 file: >
 
-    system('lpr' . (&printdevice == '' ? '' : ' -P' . &printdevice)
-	. ' ' . v:fname_in) . delete(v:fname_in) + v:shell_error
+    system(['lpr']
+           + (empty(&printdevice)?[]:['-P', &printdevice])
+           + [v:fname_in])
+    . delete(v:fname_in)
+    + v:shell_error
 
 On MS-Dos and MS-Windows machines the default is to copy the file to the
 currently specified printdevice: >
 
-    system('copy' . ' ' . v:fname_in . (&printdevice == ''
-		? ' LPT1:' : (' \"' . &printdevice . '\"')))
-		. delete(v:fname_in)
+    system(['copy', v:fname_in, empty(&printdevice)?'LPT1':&printdevice])
+    . delete(v:fname_in)
 
 If you change this option, using a function is an easy way to avoid having to
 escape all the spaces.  Example: >

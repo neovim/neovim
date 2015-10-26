@@ -324,11 +324,11 @@ the output of this command: >
 Now use the first item, the name before the first comma.  Thus if the output
 looks like this:
 
-	runtimepath=~/.vim,/usr/local/share/vim/vim60/runtime,~/.vim/after ~
+	runtimepath=~/.config/nvim,/usr/local/share/vim/vim60/runtime,~/.config/nvim/after ~
 
-You use "~/.vim" for {directory}.  Then the resulting file name is:
+You use "~/.config/nvim" for {directory}.  Then the resulting file name is:
 
-	~/.vim/indent/help.vim ~
+	~/.config/nvim/indent/help.vim ~
 
 Instead of switching the indenting off, you could write your own indent file.
 How to do that is explained here: |indent-expression|.

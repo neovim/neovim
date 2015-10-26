@@ -40,7 +40,7 @@ Setting a map					*spec-setting-a-map*
 As you should know, you can easily set a map to access any Vim command (or
 anything, for that matter).  If you don't like the default map of
 <LocalLeader>c, you may just set up your own key.  The following line
-shows you how you could do this in your .vimrc file, mapping the plugin to
+shows you how you could do this in your vimrc file, mapping the plugin to
 the <F5> key:
 
 	au FileType spec map <buffer> <F5> <Plug>SpecChangelog
@@ -58,7 +58,7 @@ The format string				*spec_chglog_format*
 -----------------
 
 You can easily customize how your spec file entry will look like.  To do
-this just set the variable "spec_chglog_format" in your .vimrc file like
+this just set the variable "spec_chglog_format" in your vimrc file like
 this: >
 
 	let spec_chglog_format = "%a %b %d %Y My Name <my@email.com>"
@@ -92,7 +92,7 @@ that it may control if the release has been updated after the last
 change in the package or not.  If you have not updated the package
 version or release, it will ask you if it should update the package
 release for you.  To turn this feature on, just insert the following
-code in your .vimrc: >
+code in your vimrc: >
 
 	let spec_chglog_release_info = 1
 
