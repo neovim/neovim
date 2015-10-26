@@ -1131,7 +1131,7 @@ static void gotchars(char_u *chars, int len)
  * - While reading a script file.
  * - When no_u_sync is non-zero.
  */
-static void may_sync_undo(void)
+void may_sync_undo(void)
 {
   if ((!(State & (INSERT + CMDLINE)) || arrow_used)
       && scriptin[curscript] == NULL)

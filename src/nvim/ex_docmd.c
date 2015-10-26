@@ -6544,7 +6544,7 @@ do_exedit (
         msg_scroll = 0;
         must_redraw = CLEAR;
 
-        main_loop(FALSE, TRUE);
+        normal_enter(false, true);
 
         RedrawingDisabled = rd;
         no_wait_return = nwr;

@@ -73,10 +73,25 @@ void input_stop(void)
   stream_close(&read_stream, NULL);
 }
 
+static void cursorhold_event(void **argv)
+{
+  event_T event = State & INSERT ? EVENT_CURSORHOLDI : EVENT_CURSORHOLD;
+  apply_autocmds(event, NULL, NULL, false, curbuf);
+  did_cursorhold = true;
+}
+
+static void create_cursorhold_event(void)
+{
+  // If the queue had any items, this function should not have been
+  // called(inbuf_poll would return kInputAvail)
+  assert(queue_empty(loop.events));
+  queue_put(loop.events, cursorhold_event, 0);
+}
+
 // Low level input function
 int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
 {
-  if (rbuffer_size(input_buffer)) {
+  if (maxlen && rbuffer_size(input_buffer)) {
     return (int)rbuffer_read(input_buffer, (char *)buf, (size_t)maxlen);
   }
 
@@ -87,16 +102,12 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
     }
   } else {
     if ((result = inbuf_poll((int)p_ut)) == kInputNone) {
-      if (trigger_cursorhold() && maxlen >= 3
-          && !typebuf_changed(tb_change_cnt)) {
-        buf[0] = K_SPECIAL;
-        buf[1] = KS_EXTRA;
-        buf[2] = KE_CURSORHOLD;
-        return 3;
+      if (trigger_cursorhold() && !typebuf_changed(tb_change_cnt)) {
+        create_cursorhold_event();
+      } else {
+        before_blocking();
+        result = inbuf_poll(-1);
       }
-
-      before_blocking();
-      result = inbuf_poll(-1);
     }
   }
 
@@ -105,14 +116,14 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
     return 0;
   }
 
-  if (rbuffer_size(input_buffer)) {
+  if (maxlen && rbuffer_size(input_buffer)) {
     // Safe to convert rbuffer_read to int, it will never overflow since we use
     // relatively small buffers.
     return (int)rbuffer_read(input_buffer, (char *)buf, (size_t)maxlen);
   }
 
   // If there are events, return the keys directly
-  if (pending_events()) {
+  if (maxlen && pending_events()) {
     return push_event_key(buf, maxlen);
   }
 
@@ -311,6 +322,11 @@ static bool input_poll(int ms)
 void input_done(void)
 {
   input_eof = true;
+}
+
+bool input_available(void)
+{
+  return rbuffer_size(input_buffer) != 0;
 }
 
 // This is a replacement for the old `WaitForChar` function in os_unix.c
