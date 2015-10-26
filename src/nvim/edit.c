@@ -7782,12 +7782,8 @@ static void ins_left(bool end_change)
     if (revins_scol != -1 && (int)curwin->w_cursor.col >= revins_scol)
       revins_legal++;
     revins_chars++;
-  }
-  /*
-   * if 'whichwrap' set for cursor in insert mode may go to
-   * previous line
-   */
-  else if (vim_strchr(p_ww, '[') != NULL && curwin->w_cursor.lnum > 1) {
+  } else if (vim_strchr(p_ww, '[') != NULL && curwin->w_cursor.lnum > 1) {
+    // if 'whichwrap' set for cursor in insert mode may go to previous line.
     // always break undo when moving upwards/downwards, else undo may break
     start_arrow(&tpos);
     --(curwin->w_cursor.lnum);
