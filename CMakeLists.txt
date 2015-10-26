@@ -260,12 +260,16 @@ if((CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN) AND NOT CMAKE_C_COMPILER_ID MA
   message(FATAL_ERROR "Sanitizers are only supported for Clang.")
 endif()
 
-if(CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN)
-  message(STATUS "Sanitizers have been enabled; don't use jemalloc.")
-else()
-  find_package(JeMalloc)
-  if(JEMALLOC_FOUND)
-    include_directories(SYSTEM ${JEMALLOC_INCLUDE_DIRS})
+option(ENABLE_JEMALLOC "enable jemalloc" OFF)
+
+if (ENABLE_JEMALLOC)
+  if(CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN)
+    message(STATUS "Sanitizers have been enabled; don't use jemalloc.")
+  else()
+    find_package(JeMalloc)
+    if(JEMALLOC_FOUND)
+      include_directories(SYSTEM ${JEMALLOC_INCLUDE_DIRS})
+    endif()
   endif()
 endif()
 
