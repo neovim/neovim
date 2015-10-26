@@ -200,6 +200,23 @@ describe('system()', function()
       eq('* $NOTHING ~/file',
          eval("system(['echo', '-n', '*', '$NOTHING', '~/file'])"))
     end)
+
+    it('quotes arguments correctly', function()
+      local pwd = helpers.funcs.getcwd()
+      local fname = (helpers.os_name() == "windows" and "countargs.bat" or "countargs.sh")
+      local script = pwd .. '/test/functional/fixtures/' .. fname
+      local out0 = eval('system("' .. script .. ' 1 \\\"2 3\\\"")')
+
+      local cmd1
+      if helpers.os_name() == "windows" then
+        cmd1 = 'system(["cmd", "/c", "' .. script ..'", "1", "2 3"])'
+      else
+        cmd1 = 'system(["' .. script ..'", "1", "2 3"])'
+      end
+      local out1 = eval(cmd1)
+      eq(out0, "2\n")
+      eq(out1, "2\n")
+    end)
   end)
 end)
 
