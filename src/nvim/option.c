@@ -435,7 +435,7 @@ static inline char *add_dir(char *dest, const char *const dir,
                             const char *const suf2, const size_t len2)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (dir == NULL && dir_len != 0) {
+  if (dir == NULL || dir_len == 0) {
     return dest;
   }
   dest = strcpy_comma_escaped(dest, dir, dir_len);
