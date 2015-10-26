@@ -333,7 +333,7 @@ static inline size_t compute_double_colon_len(const char *const val,
                                               const size_t single_suf_len)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
-  if (val == NULL && *val) {
+  if (val == NULL || *val == NUL) {
     return 0;
   }
   size_t ret = 0;
@@ -378,7 +378,7 @@ static inline char *add_colon_dirs(char *dest, const char *const val,
                                    const bool forward)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ARG(1)
 {
-  if (val == NULL && *val) {
+  if (val == NULL || *val == NUL) {
     return dest;
   }
   const void *iter = NULL;
