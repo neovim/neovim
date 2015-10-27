@@ -535,11 +535,7 @@ readfile (
     if (!newfile) {
       return FAIL;
     }
-    if (perm < 0
-#ifdef ENOENT
-        && errno == ENOENT
-#endif
-        ) {
+    if (perm == UV_ENOENT) {
       /*
        * Set the 'new-file' flag, so that when the file has
        * been created by someone else, a ":w" will complain.

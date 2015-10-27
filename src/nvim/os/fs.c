@@ -217,15 +217,16 @@ static int os_stat(const char *name, uv_stat_t *statbuf)
 
 /// Get the file permissions for a given file.
 ///
-/// @return `-1` when `name` doesn't exist.
+/// @return libuv error code on error.
 int32_t os_getperm(const char_u *name)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_stat_t statbuf;
-  if (os_stat((char *)name, &statbuf) == kLibuvSuccess) {
+  int stat_result = os_stat((char *)name, &statbuf);
+  if (stat_result == kLibuvSuccess) {
     return (int32_t)statbuf.st_mode;
   } else {
-    return -1;
+    return stat_result;
   }
 }
 
