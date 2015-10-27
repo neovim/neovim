@@ -1,4 +1,4 @@
-.Dd October 16, 2015
+.Dd October 27, 2015
 .Dt NVIM 1
 .Os
 .Sh NAME
@@ -177,7 +177,7 @@ Alias for
 Use
 .Ar nvimrc
 instead of the default of
-.Pa ~/.nvimrc .
+.Pa ~/.config/nvim/init.vim .
 If
 .Ar nvimrc
 is
@@ -195,7 +195,7 @@ See
 Use
 .Ar shada
 instead of the default of
-.Pa ~/.nvim/shada/main.shada .
+.Pa ~/.local/share/nvim/shada/main.shada .
 If
 .Ar shada
 is
@@ -337,10 +337,24 @@ Print version information and exit.
 .Sh ENVIRONMENT
 .Bl -tag -width Fl
 .It Ev VIM
-Used to locate various user files, such as the user's nvimrc.
+Used to locate various user files, such as the user's init.vim.
 .It Ev VIMRUNTIME
 Used to locate run time files, such as on-line documentation and
 syntax highlighting definitions.
+.It Ev XDG_CONFIG_HOME
+Path to use for the user-local configuration directory, see
+.Sx FILES .
+Defaults to
+.Pa ~/.config
+if not set.
+.It Ev XDG_DATA_HOME
+Like
+.Ev XDG_CONFIG_HOME ,
+but used to store data not generally edited by the user,
+namely swap, backup, and ShaDa files.
+Defaults to
+.Pa ~/.local/share/nvim
+if not set.
 .It Ev VIMINIT
 A string of Ex commands to be executed at startup.
 For example, the command to quit is
@@ -366,15 +380,21 @@ If defined, assume the host terminal supports 24 bit colors.
 Has no effect in GUIs.
 .El
 .Sh FILES
-.Bl -tag -width Pa
-.It Pa ~/.nvimrc , ~/.nvim/nvimrc
+.Bl -tag -width "~/.config/nvim/init.vim"
+.It Pa ~/.config/nvim/init.vim
 The user-local
 .Nm
 configuration file.
-.It Pa ~/.nvim
+See
+.Ev XDG_CONFIG_HOME
+above.
+.It Pa ~/.config/nvim
 The user-local
 .Nm
-run time directory.
+configuration directory.
+See
+.Ev XDG_CONFIG_HOME
+above.
 .It Pa /etc/nvim/nvimrc
 The system-global
 .Nm
