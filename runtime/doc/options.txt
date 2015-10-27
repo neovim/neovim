@@ -980,60 +980,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	the newly created file).  Also see 'backupcopy' and |crontab|.
 
 						*'balloondelay'* *'bdlay'*
-'balloondelay' 'bdlay'	number	(default: 600)
-			global
-			{only available when compiled with the |+balloon_eval|
-			feature}
-	Delay in milliseconds before a balloon may pop up.  See |balloon-eval|.
+'balloondelay' 'bdlay'	Removed. |vim-differences| {Nvim}
 
 		       *'ballooneval'* *'beval'* *'noballooneval'* *'nobeval'*
-'ballooneval' 'beval'	boolean	(default off)
-			global
-			{only available when compiled with the |+balloon_eval|
-			feature}
-	Switch on the |balloon-eval| functionality.
+'ballooneval' 'beval'	Removed. |vim-differences| {Nvim}
 
 						     *'balloonexpr'* *'bexpr'*
-'balloonexpr' 'bexpr'	string	(default "")
-			global or local to buffer |global-local|
-			{only available when compiled with the |+balloon_eval|
-			feature}
-	Expression for text to show in evaluation balloon.  It is only used
-	when 'ballooneval' is on.  These variables can be used:
-
-	v:beval_bufnr	number of the buffer in which balloon is going to show
-	v:beval_winnr	number of the window
-	v:beval_lnum	line number
-	v:beval_col	column number (byte index)
-	v:beval_text	word under or after the mouse pointer
-
-	The evaluation of the expression must not have side effects!
-	Example: >
-    function! MyBalloonExpr()
-	return 'Cursor is at line ' . v:beval_lnum .
-		\', column ' . v:beval_col .
-		\ ' of file ' .  bufname(v:beval_bufnr) .
-		\ ' on word "' . v:beval_text . '"'
-    endfunction
-    set bexpr=MyBalloonExpr()
-    set ballooneval
-<
-	NOTE: The balloon is displayed only if the cursor is on a text
-	character.  If the result of evaluating 'balloonexpr' is not empty,
-	Vim does not try to send a message to an external debugger (Netbeans
-	or Sun Workshop).
-
-	The expression will be evaluated in the |sandbox| when set from a
-	modeline, see |sandbox-option|.
-
-	It is not allowed to change text or jump to another window while
-	evaluating 'balloonexpr' |textlock|.
-
-	To check whether line breaks in the balloon text work use this check: >
-		if has("balloon_multiline")
-<	When they are supported "\n" characters will start a new line.  If the
-	expression evaluates to a |List| this is equal to using each List item
-	as a string and putting "\n" in between them.
+'balloonexpr' 'bexpr'	Removed. |vim-differences| {Nvim}
 
 						*'belloff'* *'bo'*
 'belloff' 'bo'		string	(default "")
