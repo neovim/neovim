@@ -37,9 +37,10 @@ for you), you can edit it this way: >
 If you don't have a vimrc file yet, see |init.vim| to find out where you can
 create a vimrc file.
 
-For Unix and Macintosh this file is always used and is recommended:
+This file is always used and is recommended:
 
-	~/.config/nvim/init.vim ~
+	~/.config/nvim/init.vim         (Unix and OSX) ~
+	~/AppData/Local/nvim/init.vim   (Windows) ~
 
 The vimrc file can contain all the commands that you type after a colon.  The
 most simple ones are for setting options.  For example, if you want Vim to

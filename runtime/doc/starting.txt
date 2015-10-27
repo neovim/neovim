@@ -380,6 +380,8 @@ accordingly.  Vim proceeds in this order:
 	Places for your personal initializations:
 		Unix		$XDG_CONFIG_HOME/nvim/init.vim
 				(default for $XDG_CONFIG_HOME is ~/.config)
+		Windows		$XDG_CONFIG_HOME/nvim/init.vim
+				(default for $XDG_CONFIG_HOME is ~/AppData/Local)
 
 	The files are searched in the order specified above and only the first
 	one that is found is read.
