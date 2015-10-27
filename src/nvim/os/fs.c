@@ -204,15 +204,15 @@ int os_open(const char* path, int flags, int mode)
 
 /// Get stat information for a file.
 ///
-/// @return OK on success, FAIL if a failure occurred.
-static bool os_stat(const char *name, uv_stat_t *statbuf)
+/// @return libuv return code.
+static int os_stat(const char *name, uv_stat_t *statbuf)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
   int result = uv_fs_stat(&fs_loop, &request, name, NULL);
   *statbuf = request.statbuf;
   uv_fs_req_cleanup(&request);
-  return (result == kLibuvSuccess);
+  return result;
 }
 
 /// Get the file permissions for a given file.
@@ -222,7 +222,7 @@ int32_t os_getperm(const char_u *name)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_stat_t statbuf;
-  if (os_stat((char *)name, &statbuf)) {
+  if (os_stat((char *)name, &statbuf) == kLibuvSuccess) {
     return (int32_t)statbuf.st_mode;
   } else {
     return -1;
@@ -270,7 +270,7 @@ bool os_file_exists(const char_u *name)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_stat_t statbuf;
-  return os_stat((char *)name, &statbuf);
+  return os_stat((char *)name, &statbuf) == kLibuvSuccess;
 }
 
 /// Check if a file is readable.
@@ -470,7 +470,7 @@ int os_remove(const char *path)
 bool os_fileinfo(const char *path, FileInfo *file_info)
   FUNC_ATTR_NONNULL_ALL
 {
-  return os_stat(path, &(file_info->stat));
+  return os_stat(path, &(file_info->stat)) == kLibuvSuccess;
 }
 
 /// Get the file information for a given path without following links
@@ -572,7 +572,7 @@ bool os_fileid(const char *path, FileID *file_id)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_stat_t statbuf;
-  if (os_stat(path, &statbuf)) {
+  if (os_stat(path, &statbuf) == kLibuvSuccess) {
     file_id->inode = statbuf.st_ino;
     file_id->device_id = statbuf.st_dev;
     return true;
