@@ -22,9 +22,9 @@ static const char *xdg_env_vars[] = {
 static const char *const xdg_defaults[] = {
 #ifdef WIN32
   // Windows
-  [kXDGConfigHome] = "$LOCALAPPDATA\\nvim\\config",
-  [kXDGDataHome]   = "$LOCALAPPDATA\\nvim\\data",
-  [kXDGCacheHome]  = "$LOCALAPPDATA\\nvim\\cache",
+  [kXDGConfigHome] = "$LOCALAPPDATA",
+  [kXDGDataHome]   = "$LOCALAPPDATA",
+  [kXDGCacheHome]  = "$TEMP",
   [kXDGRuntimeDir] = NULL,
   [kXDGConfigDirs] = NULL,
   [kXDGDataDirs] = NULL,
@@ -66,12 +66,20 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
 /// @param[in]  idx  XDG directory to use.
 ///
 /// @return [allocated] `{xdg_directory}/nvim`
+///
+/// In WIN32 get_xdg_home(kXDGDataHome) returns `{xdg_directory}/nvim-data` to
+/// avoid storing configuration and data files in the same path.
 static char *get_xdg_home(const XDGVarType idx)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char *dir = stdpaths_get_xdg_var(idx);
   if (dir) {
+#if defined(WIN32)
+    dir = concat_fnames_realloc(dir, (idx == kXDGDataHome ? "nvim-data" : "nvim"),
+                                true);
+#else
     dir = concat_fnames_realloc(dir, "nvim", true);
+#endif
   }
   return dir;
 }
