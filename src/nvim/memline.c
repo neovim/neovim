@@ -3262,8 +3262,8 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
    * Isolate a directory name from *dirp and put it in dir_name.
    * First allocate some memory to put the directory name in.
    */
-  const size_t dir_len = strlen(*dirp);
-  dir_name = xmalloc(dir_len + 1);
+  const size_t dir_len = strlen(*dirp) + 1;
+  dir_name = xmalloc(dir_len);
   (void)copy_option_part((char_u **) dirp, (char_u *) dir_name, dir_len, ",");
 
   /*
