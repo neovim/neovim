@@ -22,9 +22,9 @@ static const char *xdg_env_vars[] = {
 static const char *const xdg_defaults[] = {
 #ifdef WIN32
   // Windows
-  [kXDGConfigHome] = "$LOCALAPPDATA\\nvim\\config",
-  [kXDGDataHome]   = "$LOCALAPPDATA\\nvim\\data",
-  [kXDGCacheHome]  = "$LOCALAPPDATA\\nvim\\cache",
+  [kXDGConfigHome] = "$LOCALAPPDATA",
+  [kXDGDataHome]   = "$LOCALAPPDATA",
+  [kXDGCacheHome]  = "$TEMP",
   [kXDGRuntimeDir] = NULL,
   [kXDGConfigDirs] = NULL,
   [kXDGDataDirs] = NULL,
