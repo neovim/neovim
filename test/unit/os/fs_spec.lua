@@ -23,7 +23,7 @@ cimport('./src/nvim/fileio.h')
 local fs = cimport('./src/nvim/os/os.h')
 cppimport('sys/stat.h')
 cppimport('sys/fcntl.h')
-cppimport('sys/errno.h')
+cppimport('uv-errno.h')
 
 local buffer = ""
 local directory = nil
@@ -233,8 +233,8 @@ describe('fs function', function()
     end
 
     describe('os_getperm', function()
-      it('returns -1 when the given file does not exist', function()
-        eq(-1, (os_getperm('non-existing-file')))
+      it('returns UV_ENOENT when the given file does not exist', function()
+        eq(ffi.C.UV_ENOENT, (os_getperm('non-existing-file')))
       end)
 
       it('returns a perm > 0 when given an existing file', function()
@@ -445,8 +445,8 @@ describe('fs function', function()
       local new_file = 'test_new_file'
       local existing_file = 'unit-test-directory/test_existing.file'
 
-      it('returns -ENOENT for O_RDWR on a non-existing file', function()
-        eq(-ffi.C.kENOENT, (os_open('non-existing-file', ffi.C.kO_RDWR, 0)))
+      it('returns UV_ENOENT for O_RDWR on a non-existing file', function()
+        eq(ffi.C.UV_ENOENT, (os_open('non-existing-file', ffi.C.kO_RDWR, 0)))
       end)
 
       it('returns non-negative for O_CREAT on a non-existing file', function()
@@ -459,9 +459,9 @@ describe('fs function', function()
         assert.is_true(0 <= (os_open(existing_file, ffi.C.kO_CREAT, 0)))
       end)
 
-      it('returns -EEXIST for O_CREAT|O_EXCL on a existing file', function()
+      it('returns UV_EEXIST for O_CREAT|O_EXCL on a existing file', function()
         assert_file_exists(existing_file)
-        eq(-ffi.C.kEEXIST, (os_open(existing_file, (bit.bor(ffi.C.kO_CREAT, ffi.C.kO_EXCL)), 0)))
+        eq(ffi.C.kUV_EEXIST, (os_open(existing_file, (bit.bor(ffi.C.kO_CREAT, ffi.C.kO_EXCL)), 0)))
       end)
 
       it('sets `rwx` permissions for O_CREAT 700', function()
