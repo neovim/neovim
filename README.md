@@ -58,8 +58,8 @@ more. See [the wiki](https://github.com/neovim/neovim/wiki/Installing-Neovim)!
 Neovim is licensed under the terms of the Apache 2.0 license, except for
 parts that were contributed under the Vim license.
 
-- Contributions committed before [b17d96][license-commit] by authors who did
-  not sign the Contributor License Agreement (CLA) remain under the Vim license.
+- Contributions committed before [b17d96][license-commit] remain under the Vim
+  license.
 
 - Contributions committed after [b17d96][license-commit] are licensed under
   Apache 2.0 unless those contributions were copied from Vim (identified in
