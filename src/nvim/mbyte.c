@@ -71,7 +71,6 @@
  * some commands, like ":menutrans"
  */
 
-#include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>

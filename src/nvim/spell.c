@@ -285,7 +285,6 @@
 //                          few bytes as possible, see offset2bytes())
 
 #include <assert.h>
-#include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>

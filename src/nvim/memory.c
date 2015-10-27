@@ -1,7 +1,6 @@
  // Various routines dealing with allocation and deallocation of memory.
 
 #include <assert.h>
-#include <errno.h>
 #include <inttypes.h>
 #include <string.h>
 #include <stdbool.h>

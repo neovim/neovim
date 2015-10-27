@@ -44,7 +44,6 @@
 /// mf_fullname()     make file name full path (use before first :cd)
 
 #include <assert.h>
-#include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <string.h>

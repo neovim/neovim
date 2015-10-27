@@ -1,6 +1,5 @@
 // Much of this code was adapted from 'if_py_both.h' from the original
 // vim source
-#include <errno.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>

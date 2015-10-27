@@ -10,7 +10,6 @@
  * misc2.c: Various functions.
  */
 #include <assert.h>
-#include <errno.h>
 #include <inttypes.h>
 #include <string.h>
 

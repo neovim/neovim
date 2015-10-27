@@ -83,7 +83,6 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <limits.h>
-#include <errno.h>
 #include <stdbool.h>
 #include <string.h>
 
