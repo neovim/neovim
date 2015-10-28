@@ -25,7 +25,7 @@ static const char *const xdg_defaults[] = {
   [kXDGConfigHome] = "$LOCALAPPDATA\\nvim\\config",
   [kXDGDataHome]   = "$LOCALAPPDATA\\nvim\\data",
   [kXDGCacheHome]  = "$LOCALAPPDATA\\nvim\\cache",
-  [kXDGRuntimeDir] = "",
+  [kXDGRuntimeDir] = NULL,
   [kXDGConfigDirs] = NULL,
   [kXDGDataDirs] = NULL,
 #else
@@ -33,7 +33,7 @@ static const char *const xdg_defaults[] = {
   [kXDGConfigHome] = "~/.config",
   [kXDGDataHome] = "~/.local/share",
   [kXDGCacheHome] = "~/.cache",
-  [kXDGRuntimeDir] = "",
+  [kXDGRuntimeDir] = NULL,
   [kXDGConfigDirs] = "/etc/xdg/",
   [kXDGDataDirs] = "/usr/local/share/:/usr/share/",
 #endif
