@@ -775,12 +775,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	in other cases Vim might not be able to guess the right value.
 
 	When starting the GUI, the default value for 'background' will be
-	"light".  When the value is not set in the .gvimrc, and Vim detects
+	"light".  When the value is not set in the gvimrc, and Vim detects
 	that the background is actually quite dark, 'background' is set to
-	"dark".  But this happens only AFTER the .gvimrc file has been read
+	"dark".  But this happens only AFTER the gvimrc file has been read
 	(because the window needs to be opened to find the actual background
 	color).  To get around this, force the GUI window to be opened by
-	putting a ":gui" command in the .gvimrc file, before where the value
+	putting a ":gui" command in the gvimrc file, before where the value
 	of 'background' is used (e.g., before ":syntax on").
 
 	For MS-DOS and Windows the default is "dark".
@@ -788,7 +788,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	"screen.linux", "cygwin" or "putty", or $COLORFGBG suggests a dark
 	background.  Otherwise the default is "light".
 
-	Normally this option would be set in the .vimrc file.  Possibly
+	Normally this option would be set in the vimrc file.  Possibly
 	depending on the terminal name.  Example: >
 		:if &term == "pcterm"
 		:  set background=dark
@@ -901,8 +901,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	again not rename the file.
 
 						*'backupdir'* *'bdir'*
-'backupdir' 'bdir'	string	(default for MS-DOS and Win32: ".,$TEMP,c:/tmp,c:/temp",
-				 for Unix: ".,~/tmp,~/")
+'backupdir' 'bdir'	string	(default "$XDG_DATA_HOME/nvim/backup")
 			global
 	List of directories for the backup file, separated with commas.
 	- The backup file will be created in the first directory in the list
@@ -1035,6 +1034,47 @@ A jump table for the options with a short description can be found at |Q_op|.
 <	When they are supported "\n" characters will start a new line.  If the
 	expression evaluates to a |List| this is equal to using each List item
 	as a string and putting "\n" in between them.
+
+						*'belloff'* *'bo'*
+'belloff' 'bo'		string	(default "")
+			global
+			{not in Vi}
+	Specifies for which events the bell will not be rung. It is a comma
+	separated list of items. For each item that is present, the bell
+	will be silenced. This is most useful to specify specific events in
+	insert mode to be silenced.
+
+	item	    meaning when present	~
+	all	    All events.
+	backspace   When hitting <BS> or <Del> and deleting results in an
+		    error.
+	cursor	    Fail to move around using the cursor keys or
+		    <PageUp>/<PageDown> in |Insert-mode|.
+	complete    Error occurred when using |i_CTRL-X_CTRL-K| or
+		    |i_CTRL-X_CTRL-T|.
+	copy	    Cannot copy char from insert mode using |i_CTRL-Y| or
+		    |i_CTRL-E|.
+	ctrlg	    Unknown Char after <C-G> in Insert mode.
+	error	    Other Error occurred (e.g. try to join last line)
+		    (mostly used in |Normal-mode| or |Cmdline-mode|).
+	esc	    hitting <Esc> in |Normal-mode|.
+	ex	    In |Visual-mode|, hitting |Q| results in an error.
+	hangul	    Error occurred when using hangul input.
+	insertmode  Pressing <Esc> in 'insertmode'.
+	lang	    Calling the beep module for Lua/Mzscheme/TCL.
+	mess	    No output available for |g<|.
+	showmatch   Error occurred for 'showmatch' function.
+	operator    Empty region error |cpo-E|.
+	register    Unknown register after <C-R> in |Insert-mode|.
+	shell	    Bell from shell output |:!|.
+	spell	    Error happened on spell suggest.
+	wildmode    More matches in |cmdline-completion| available
+		    (depends on the 'wildmode' setting).
+
+	This is most useful, to fine tune when in insert mode the bell should
+	be rung. For normal mode and ex commands, the bell is often rung to
+	indicate that an error occurred. It can be silenced by adding the
+	"error" keyword.
 
 				     *'binary'* *'bin'* *'nobinary'* *'nobin'*
 'binary' 'bin'		boolean	(default off)
@@ -1290,8 +1330,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	used.
 	Conversion between "latin1", "unicode", "ucs-2", "ucs-4" and "utf-8"
 	is done internally by Vim, 'charconvert' is not used for this.
-	'charconvert' is also used to convert the viminfo file, if the 'c'
-	flag is present in 'viminfo'.  Also used for Unicode conversion.
+	'charconvert' is also used to convert the shada file, if 'encoding' is 
+	not "utf-8".  Also used for Unicode conversion.
 	Example: >
 		set charconvert=CharConvert()
 		fun CharConvert()
@@ -1438,7 +1478,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	initialization and does not have to be set by hand.
 	When Vim is running in the GUI or in a resizable window, setting this
 	option will cause the window size to be changed.  When you only want
-	to use the size for the GUI, put the command in your |gvimrc| file.
+	to use the size for the GUI, put the command in your |ginit.vim| file.
 	When you set this option and Vim is unable to change the physical
 	number of columns of the display, the display may be messed up.  For
 	the GUI it is always possible and Vim limits the number of columns to
@@ -2089,12 +2129,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	{char2}.  See |digraphs|.
 
 						*'directory'* *'dir'*
-'directory' 'dir'	string	(default for MS-DOS and Win32: ".,$TEMP,c:\tmp,c:\temp",
-				 for Unix: ".,~/tmp,/var/tmp,/tmp")
+'directory' 'dir'	string	(default "$XDG_DATA_HOME/nvim/swap//")
 			global
 	List of directory names for the swap file, separated with commas.
 	- The swap file will be created in the first directory where this is
-	  possible.
+	  possible.  If it is not possible in any directory, but last 
+	  directory listed in the option does not exist, it is created.
 	- Empty means that no swap file will be used (recovery is
 	  impossible!).
 	- A directory "." means to put the swap file in the same directory as
@@ -2163,7 +2203,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			feature}
 	Sets the character encoding used inside Vim.  It applies to text in
 	the buffers, registers, Strings in expressions, text stored in the
-	viminfo file, etc.  It sets the kind of characters which Vim can work
+	shada file, etc.  It sets the kind of characters which Vim can work
 	with.  See |encoding-names| for the possible values.
 
 	'encoding' cannot be changed after startup, because (1) it causes
@@ -2195,7 +2235,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	When "unicode", "ucs-2" or "ucs-4" is used, Vim internally uses utf-8.
 	You don't notice this while editing, but it does matter for the
-	|viminfo-file|.  And Vim expects the terminal to use utf-8 too.  Thus
+	|shada-file|.  And Vim expects the terminal to use utf-8 too.  Thus
 	setting 'encoding' to one of these values instead of utf-8 only has
 	effect for encoding used for files when 'fileencoding' is empty.
 
@@ -2253,7 +2293,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	makes a difference for error messages, the bell will be used always
 	for a lot of errors without a message (e.g., hitting <Esc> in Normal
 	mode).  See 'visualbell' on how to make the bell behave like a beep,
-	screen flash or do nothing.
+	screen flash or do nothing. See 'belloff' to finetune when to ring the
+	bell.
 
 						*'errorfile'* *'ef'*
 'errorfile' 'ef'	string	(default: "errors.err")
@@ -2309,11 +2350,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 					*'exrc'* *'ex'* *'noexrc'* *'noex'*
 'exrc' 'ex'		boolean (default off)
 			global
-	Enables the reading of .vimrc, .exrc and .gvimrc in the current
+	Enables the reading of .nvimrc, .exrc and .ngvimrc in the current
 	directory.  If you switch this option on you should also consider
 	setting the 'secure' option (see |initialization|).  Using a local
-	.exrc, .vimrc or .gvimrc is a potential security leak, use with care!
-	also see |.vimrc| and |gui-init|.
+	.exrc, .nvimrc or .ngvimrc is a potential security leak, use with care!
+	also see |init.vim| and |gui-init|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
@@ -2489,7 +2530,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When 'binary' is set, the value of 'fileformats' is not used.
 
 	Note that when Vim starts up with an empty buffer this option is not
-	used.  Set 'fileformat' in your .vimrc instead.
+	used.  Set 'fileformat' in your vimrc instead.
 
 	For systems with a Dos-like <EOL> (<CR><NL>), when reading files that
 	are ":source"ed and for vimrc files, automatic <EOL> detection may be
@@ -3169,7 +3210,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  'm'	Menu bar is present.
 								*'go-M'*
 	  'M'	The system menu "$VIMRUNTIME/menu.vim" is not sourced.  Note
-		that this flag must be added in the .vimrc file, before
+		that this flag must be added in the vimrc file, before
 		switching on syntax or filetype recognition (when the |gvimrc|
 		file is sourced the system menu has already been loaded; the
 		":syntax on" and ":filetype on" commands load the menu too).
@@ -3407,7 +3448,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	line below a closed fold.  A match in a previous line which is not
 	drawn may not continue in a newly drawn line.
 	You can specify whether the highlight status is restored on startup
-	with the 'h' flag in 'viminfo' |viminfo-h|.
+	with the 'h' flag in 'shada' |shada-h|.
 
 						*'history'* *'hi'*
 'history' 'hi'		number	(Vim default: 10000, Vi default: 0)
@@ -3793,7 +3834,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	option.
 	Careful: If you change this option, it might break expanding
 	environment variables.  E.g., when '/' is included and Vim tries to
-	expand "$HOME/.viminfo".  Maybe you should change 'iskeyword' instead.
+	expand "$HOME/.local/share/nvim/shada/main.shada".  Maybe you should 
+	change 'iskeyword' instead.
 
 						*'iskeyword'* *'isk'*
 'iskeyword' 'isk'	string (Vim default for
@@ -4627,7 +4669,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	being set.  The same is true for a terminal where Vim handles the
 	mouse clicks itself.
 	This option is reset when starting the GUI.  Thus if you set it in
-	your .vimrc it will work in a terminal, but not in the GUI.  Setting
+	your vimrc it will work in a terminal, but not in the GUI.  Setting
 	'paste' in the GUI has side effects: e.g., the Paste toolbar button
 	will no longer work in Insert mode, because it uses a mapping.
 	When the 'paste' option is switched on (also when it was already on):
@@ -4967,7 +5009,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	happens when executing external commands.
 
 	For non-Windows Vim: You can set or reset the 't_ti' and 't_te'
-	options in your .vimrc.  To disable restoring:
+	options in your vimrc.  To disable restoring:
 		set t_ti= t_te=
 	To enable restoring (for an xterm):
 		set t_ti=^[7^[[r^[[?47h t_te=^[[?47l^[8
@@ -5047,14 +5089,23 @@ A jump table for the options with a short description can be found at |Q_op|.
 <
 				*'runtimepath'* *'rtp'* *vimfiles*
 'runtimepath' 'rtp'	string	(default:
-					Unix: "$HOME/.vim,
-						$VIM/vimfiles,
-						$VIMRUNTIME,
-						$VIM/vimfiles/after,
-						$HOME/.vim/after"
-					Macintosh: "$VIM:vimfiles,
-						$VIMRUNTIME,
-						$VIM:vimfiles:after")
+					Unix: "$XDG_CONFIG_HOME/nvim,
+					       $XDG_CONFIG_DIRS[1]/nvim,
+					       $XDG_CONFIG_DIRS[2]/nvim,
+					       …
+					       $XDG_DATA_HOME/nvim,
+					       $XDG_DATA_DIRS[1]/nvim/site,
+					       $XDG_DATA_DIRS[2]/nvim/site,
+					       …
+					       $VIMRUNTIME,
+					       …
+					       $XDG_DATA_DIRS[2]/nvim/site/after,
+					       $XDG_DATA_DIRS[1]/nvim/site/after,
+					       $XDG_DATA_HOME/nvim/after,
+					       …
+					       $XDG_CONFIG_DIRS[2]/nvim/after,
+					       $XDG_CONFIG_DIRS[1]/nvim/after,
+					       $XDG_CONFIG_HOME/nvim/after")
 			global
 	This is a list of directories which will be searched for runtime
 	files:
@@ -5077,18 +5128,23 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	And any other file searched for with the |:runtime| command.
 
-	The defaults for most systems are setup to search five locations:
-	1. In your home directory, for your personal preferences.
-	2. In a system-wide Vim directory, for preferences from the system
-	   administrator.
-	3. In $VIMRUNTIME, for files distributed with Vim.
+	The defaults for most systems are setup to search these locations:
+	1. In your home directory (XDG_CONFIG_HOME defaults to $HOME/.config), 
+	   for your personal preferences.
+	2. In directories which must contain configuration files according to 
+	   XDG ($XDG_CONFIG_DIRS).  This also contains preferences from system 
+	   administrator (XDG_CONFIG_DIRS defaults to /etc/xdg).
+	3. In data home directory, for plugins installed by user.
+	4. In nvim/site subdirectories for each directory in $XDG_DATA_DIRS.  
+	   This is for plugins which were installed by system administrator, 
+	   but are not part of the Neovim distribution. XDG_DATA_DIRS defaults 
+	   to /usr/local/share/:/usr/share/, so system administrators are 
+	   expected to install site plugins to /usr/share/nvim/site.
+	5. In $VIMRUNTIME, for files distributed with Neovim.
 							*after-directory*
-	4. In the "after" directory in the system-wide Vim directory.  This is
-	   for the system administrator to overrule or add to the distributed
-	   defaults (rarely needed)
-	5. In the "after" directory in your home directory.  This is for
-	   personal preferences to overrule or add to the distributed defaults
-	   or system-wide settings (rarely needed).
+	6, 7, 8, 9. In after/ subdirectories of 1, 2, 3 and 4, with reverse 
+	   ordering.  This is for preferences to overrule or add to the 
+	   distributed defaults or system-wide settings (rarely needed).
 
 	Note that, unlike 'path', no wildcards like "**" are allowed.  Normal
 	wildcards are allowed, but can significantly slow down searching for
@@ -5197,12 +5253,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 'secure'		boolean	(default off)
 			global
 	When on, ":autocmd", shell and write commands are not allowed in
-	".vimrc" and ".exrc" in the current directory and map commands are
+	".nvimrc" and ".exrc" in the current directory and map commands are
 	displayed.  Switch it off only if you know that you will not run into
 	problems, or when the 'exrc' option is off.  On Unix this option is
-	only used if the ".vimrc" or ".exrc" is not owned by you.  This can be
+	only used if the ".nvimrc" or ".exrc" is not owned by you.  This can be
 	dangerous if the systems allows users to do a "chown".  You better set
-	'secure' at the end of your ~/.vimrc then.
+	'secure' at the end of your |init.vim| then.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
@@ -5284,6 +5340,123 @@ A jump table for the options with a short description can be found at |Q_op|.
 	with Unix.  The Unix version of Vim cannot source dos format scripts,
 	but the Windows version of Vim can source unix format scripts.
 
+				*'shada'* *'sd'* *E526* *E527* *E528*
+'shada' 'sd'		string	(Vim default for
+				   Win32:  '!,100,<50,s10,h,rA:,rB:
+				   others: '!,100,<50,s10,h
+				 Vi default: "")
+			global
+	When non-empty, the shada file is read upon startup and written
+	when exiting Vim (see |shada-file|).  The string should be a comma
+	separated list of parameters, each consisting of a single character
+	identifying the particular parameter, followed by a number or string
+	which specifies the value of that parameter.  If a particular
+	character is left out, then the default value is used for that
+	parameter.  The following is a list of the identifying characters and
+	the effect of their value.
+	CHAR	VALUE	~
+							*shada-!*
+	!	When included, save and restore global variables that start
+		with an uppercase letter, and don't contain a lowercase
+		letter.  Thus "KEEPTHIS and "K_L_M" are stored, but "KeepThis"
+		and "_K_L_M" are not.  Nested List and Dict items may not be
+		read back correctly, you end up with an empty item.
+							*shada-quote*
+	"	Maximum number of lines saved for each register.  Old name of
+		the '<' item, with the disadvantage that you need to put a
+		backslash before the ", otherwise it will be recognized as the
+		start of a comment!
+							*shada-%*
+	%	When included, save and restore the buffer list.  If Vim is
+		started with a file name argument, the buffer list is not
+		restored.  If Vim is started without a file name argument, the
+		buffer list is restored from the shada file.  Buffers
+		without a file name and buffers for help files are not written
+		to the shada file.
+		When followed by a number, the number specifies the maximum
+		number of buffers that are stored.  Without a number all
+		buffers are stored.
+							*shada-'*
+	'	Maximum number of previously edited files for which the marks
+		are remembered.  This parameter must always be included when
+		'shada' is non-empty.
+		Including this item also means that the |jumplist| and the
+		|changelist| are stored in the shada file.
+							*shada-/*
+	/	Maximum number of items in the search pattern history to be
+		saved.  If non-zero, then the previous search and substitute
+		patterns are also saved.  When not included, the value of
+		'history' is used.
+							*shada-:*
+	:	Maximum number of items in the command-line history to be
+		saved.  When not included, the value of 'history' is used.
+							*shada-<*
+	<	Maximum number of lines saved for each register.  If zero then
+		registers are not saved.  When not included, all lines are
+		saved.  '"' is the old name for this item.
+		Also see the 's' item below: limit specified in KiB.
+							*shada-@*
+	@	Maximum number of items in the input-line history to be
+		saved.  When not included, the value of 'history' is used.
+							*shada-c*
+	c	Dummy option, kept for compatibility reasons.  Has no actual 
+		effect.  Current encoding state is described in 
+		|shada-encoding|.
+							*shada-f*
+	f	Whether file marks need to be stored.  If zero, file marks ('0
+		to '9, 'A to 'Z) are not stored.  When not present or when
+		non-zero, they are all stored.  '0 is used for the current
+		cursor position (when exiting or when doing |:wshada|).
+							*shada-h*
+	h	Disable the effect of 'hlsearch' when loading the shada
+		file.  When not included, it depends on whether ":nohlsearch"
+		has been used since the last search command.
+							*shada-n*
+	n	Name of the shada file.  The name must immediately follow
+		the 'n'.  Must be the last one!  If the "-i" argument was
+		given when starting Vim, that file name overrides the one
+		given here with 'shada'.  Environment variables are expanded
+		when opening the file, not when setting the option.
+							*shada-r*
+	r	Removable media.  The argument is a string (up to the next
+		',').  This parameter can be given several times.  Each
+		specifies the start of a path for which no marks will be
+		stored.  This is to avoid removable media.  For MS-DOS you
+		could use "ra:,rb:".  You can also use it for temp files,
+		e.g., for Unix: "r/tmp".  Case is ignored.
+							*shada-s*
+	s	Maximum size of an item contents in KiB.  If zero then nothing 
+		is saved.  Unlike Vim this applies to all items, except for 
+		the buffer list and header.  Full item size is off by three 
+		unsigned integers: with `s10` maximum item size may be 1 byte 
+		(type: 7-bit integer) + 9 bytes (timestamp: up to 64-bit 
+		integer) + 3 bytes (item size: up to 16-bit integer because 
+		2^8 < 10240 < 2^16) + 10240 bytes (requested maximum item 
+		contents size) = 10253 bytes.
+
+	Example: >
+	    :set shada='50,<1000,s100,:0,n~/nvim/shada
+<
+	'50		Marks will be remembered for the last 50 files you
+			edited.
+	<1000		Contents of registers (up to 1000 lines each) will be
+			remembered.
+	s100		Items with contents occupying more then 100 KiB are 
+			skipped.
+	:0		Command-line history will not be saved.
+	n~/nvim/shada	The name of the file to use is "~/nvim/shada".
+	no /		Since '/' is not specified, the default will be used,
+			that is, save all of the search history, and also the
+			previous search and substitute patterns.
+	no %		The buffer list will not be saved nor read back.
+	no h		'hlsearch' highlighting will be restored.
+
+	When setting 'shada' from an empty value you can use |:rshada| to
+	load the contents of the file, this is not done automatically.
+
+	This option cannot be set from a |modeline| or in the |sandbox|, for
+	security reasons.
+
 						*'shell'* *'sh'* *E91*
 'shell' 'sh'		string	(default $SHELL or "sh",
 					MS-DOS and Win32: "command.com" or
@@ -5342,7 +5515,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	default becomes "2>&1| tee".  This means that stderr is also included.
 	Before using the 'shell' option a path is removed, thus "/bin/sh" uses
 	"sh".
-	The initialization of this option is done after reading the ".vimrc"
+	The initialization of this option is done after reading the vimrc
 	and the other initializations, so that when the 'shell' option is set
 	there, the 'shellpipe' option changes automatically, unless it was
 	explicitly set before.
@@ -5388,7 +5561,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	For Win32, the Unix checks are done and additionally "cmd" is checked
 	for, which makes the default ">%s 2>&1".  Also, the same names with
 	".exe" appended are checked for.
-	The initialization of this option is done after reading the ".vimrc"
+	The initialization of this option is done after reading the vimrc
 	and the other initializations, so that when the 'shell' option is set
 	there, the 'shellredir' option changes automatically unless it was
 	explicitly set before.
@@ -5863,7 +6036,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	Only one of "best", "double" or "fast" may be used.  The others may
 	appear several times in any order.  Example: >
-		:set sps=file:~/.vim/sugg,best,expr:MySuggest()
+		:set sps=file:~/.config/nvim/sugg,best,expr:MySuggest()
 <
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
@@ -6038,7 +6211,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	Watch out for errors in expressions.  They may render Vim unusable!
 	If you are stuck, hold down ':' or 'Q' to get a prompt, then quit and
-	edit your .vimrc or whatever with "vim -u NONE" to get it right.
+	edit your vimrc or whatever with "vim -u NONE" to get it right.
 
 	Examples:
 	Emulate standard status line with 'ruler' set >
@@ -6616,7 +6789,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	When bigger than zero, Vim will give messages about what it is doing.
 	Currently, these messages are given:
-	>= 1	When the viminfo file is read or written.
+	>= 1	When the shada file is read or written.
 	>= 2	When a file is ":source"'ed.
 	>= 5	Every searched tags file and include file.
 	>= 8	Files for which a group of autocommands is executed.
@@ -6644,8 +6817,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	displayed when 'verbosefile' is set.
 
 						*'viewdir'* *'vdir'*
-'viewdir' 'vdir'	string	(default for MS-DOS and Win32: "$VIM/vimfiles/view",
-				 for Unix: "~/.vim/view")
+'viewdir' 'vdir'	string	(default: "$XDG_DATA_HOME/nvim/view")
 			global
 			{not available when compiled without the |+mksession|
 			feature}
@@ -6676,120 +6848,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	with Unix.  The Unix version of Vim cannot source dos format scripts,
 	but the Windows version of Vim can source unix format scripts.
 
-				*'viminfo'* *'vi'* *E526* *E527* *E528*
-'viminfo' 'vi'		string	(Vim default for
-				   Win32:  '!,100,<50,s10,h,rA:,rB:
-				   others: '!,100,<50,s10,h
-				 Vi default: "")
+				*'viminfo'* *'vi'*
+'viminfo' 'vi'		string
 			global
-			{not available when compiled without the |+viminfo|
-			feature}
-	When non-empty, the viminfo file is read upon startup and written
-	when exiting Vim (see |viminfo-file|).  The string should be a comma
-	separated list of parameters, each consisting of a single character
-	identifying the particular parameter, followed by a number or string
-	which specifies the value of that parameter.  If a particular
-	character is left out, then the default value is used for that
-	parameter.  The following is a list of the identifying characters and
-	the effect of their value.
-	CHAR	VALUE	~
-							*viminfo-!*
-	!	When included, save and restore global variables that start
-		with an uppercase letter, and don't contain a lowercase
-		letter.  Thus "KEEPTHIS and "K_L_M" are stored, but "KeepThis"
-		and "_K_L_M" are not.  Nested List and Dict items may not be
-		read back correctly, you end up with an empty item.
-							*viminfo-quote*
-	"	Maximum number of lines saved for each register.  Old name of
-		the '<' item, with the disadvantage that you need to put a
-		backslash before the ", otherwise it will be recognized as the
-		start of a comment!
-							*viminfo-%*
-	%	When included, save and restore the buffer list.  If Vim is
-		started with a file name argument, the buffer list is not
-		restored.  If Vim is started without a file name argument, the
-		buffer list is restored from the viminfo file.  Buffers
-		without a file name and buffers for help files are not written
-		to the viminfo file.
-		When followed by a number, the number specifies the maximum
-		number of buffers that are stored.  Without a number all
-		buffers are stored.
-							*viminfo-'*
-	'	Maximum number of previously edited files for which the marks
-		are remembered.  This parameter must always be included when
-		'viminfo' is non-empty.
-		Including this item also means that the |jumplist| and the
-		|changelist| are stored in the viminfo file.
-							*viminfo-/*
-	/	Maximum number of items in the search pattern history to be
-		saved.  If non-zero, then the previous search and substitute
-		patterns are also saved.  When not included, the value of
-		'history' is used.
-							*viminfo-:*
-	:	Maximum number of items in the command-line history to be
-		saved.  When not included, the value of 'history' is used.
-							*viminfo-<*
-	<	Maximum number of lines saved for each register.  If zero then
-		registers are not saved.  When not included, all lines are
-		saved.  '"' is the old name for this item.
-		Also see the 's' item below: limit specified in Kbyte.
-							*viminfo-@*
-	@	Maximum number of items in the input-line history to be
-		saved.  When not included, the value of 'history' is used.
-							*viminfo-c*
-	c	When included, convert the text in the viminfo file from the
-		'encoding' used when writing the file to the current
-		'encoding'.  See |viminfo-encoding|.
-							*viminfo-f*
-	f	Whether file marks need to be stored.  If zero, file marks ('0
-		to '9, 'A to 'Z) are not stored.  When not present or when
-		non-zero, they are all stored.  '0 is used for the current
-		cursor position (when exiting or when doing ":wviminfo").
-							*viminfo-h*
-	h	Disable the effect of 'hlsearch' when loading the viminfo
-		file.  When not included, it depends on whether ":nohlsearch"
-		has been used since the last search command.
-							*viminfo-n*
-	n	Name of the viminfo file.  The name must immediately follow
-		the 'n'.  Must be the last one!  If the "-i" argument was
-		given when starting Vim, that file name overrides the one
-		given here with 'viminfo'.  Environment variables are expanded
-		when opening the file, not when setting the option.
-							*viminfo-r*
-	r	Removable media.  The argument is a string (up to the next
-		',').  This parameter can be given several times.  Each
-		specifies the start of a path for which no marks will be
-		stored.  This is to avoid removable media.  For MS-DOS you
-		could use "ra:,rb:".  You can also use it for temp files,
-		e.g., for Unix: "r/tmp".  Case is ignored.  Maximum length of
-		each 'r' argument is 50 characters.
-							*viminfo-s*
-	s	Maximum size of an item in Kbyte.  If zero then registers are
-		not saved.  Currently only applies to registers.  The default
-		"s10" will exclude registers with more than 10 Kbyte of text.
-		Also see the '<' item above: line count limit.
-
-	Example: >
-	    :set viminfo='50,<1000,s100,:0,n~/vim/viminfo
-<
-	'50		Marks will be remembered for the last 50 files you
-			edited.
-	<1000		Contents of registers (up to 1000 lines each) will be
-			remembered.
-	s100		Registers with more than 100 Kbyte text are skipped.
-	:0		Command-line history will not be saved.
-	n~/vim/viminfo	The name of the file to use is "~/vim/viminfo".
-	no /		Since '/' is not specified, the default will be used,
-			that is, save all of the search history, and also the
-			previous search and substitute patterns.
-	no %		The buffer list will not be saved nor read back.
-	no h		'hlsearch' highlighting will be restored.
-
-	When setting 'viminfo' from an empty value you can use |:rviminfo| to
-	load the contents of the file, this is not done automatically.
-
-	This option cannot be set from a |modeline| or in the |sandbox|, for
-	security reasons.
+	Deprecated alias for 'shada' option. Is kept for compatibility 
+	reasons.
 
 					    *'virtualedit'* *'ve'*
 'virtualedit' 've'	string	(default "")

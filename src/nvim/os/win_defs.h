@@ -7,13 +7,9 @@
 #define TEMP_FILE_PATH_MAXLEN _MAX_PATH
 
 // Defines needed to fix the build on Windows:
-// - USR_EXRC_FILE
-// - USR_VIMRC_FILE
-// - VIMINFO_FILE
 // - DFLT_DIR
 // - DFLT_BDIR
 // - DFLT_VDIR
-// - DFLT_RUNTIMEPATH
 // - EXRC_FILE
 // - VIMRC_FILE
 // - SYNTAX_FNAME

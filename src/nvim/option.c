@@ -301,6 +301,243 @@ static char *(p_cot_values[]) = {"menu", "menuone", "longest", "preview",
 # include "option.c.generated.h"
 #endif
 
+/// Append string with escaped commas
+static char *strcpy_comma_escaped(char *dest, const char *src, const size_t len)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  size_t shift = 0;
+  for (size_t i = 0; i < len; i++) {
+    if (src[i] == ',') {
+      dest[i + shift++] = '\\';
+    }
+    dest[i + shift] = src[i];
+  }
+  return &dest[len + shift];
+}
+
+/// Compute length of a colon-separated value, doubled and with some suffixes
+///
+/// @param[in]  val  Colon-separated array value.
+/// @param[in]  common_suf_len  Length of the common suffix which is appended to
+///                             each item in the array, twice.
+/// @param[in]  single_suf_len  Length of the suffix which is appended to each
+///                             item in the array once.
+///
+/// @return Length of the comma-separated string array that contains each item
+///         in the original array twice with suffixes with given length
+///         (common_suf is present after each new item, single_suf is present
+///         after half of the new items) and with commas after each item, commas
+///         inside the values are escaped.
+static inline size_t compute_double_colon_len(const char *const val,
+                                              const size_t common_suf_len,
+                                              const size_t single_suf_len)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  if (val == NULL || *val == NUL) {
+    return 0;
+  }
+  size_t ret = 0;
+  const void *iter = NULL;
+  do {
+    size_t dir_len;
+    const char *dir;
+    iter = vim_colon_env_iter(val, iter, &dir, &dir_len);
+    if (dir != NULL && dir_len > 0) {
+      ret += ((dir_len + memcnt(dir, ',', dir_len) + common_suf_len
+               + !after_pathsep(dir, dir + dir_len)) * 2
+              + single_suf_len);
+    }
+  } while (iter != NULL);
+  return ret;
+}
+
+#define NVIM_SIZE (sizeof("nvim") - 1)
+
+/// Add directories to a comma-separated array from a colon-separated one
+///
+/// Commas are escaped in process. To each item PATHSEP "nvim" is appended in
+/// addition to suf1 and suf2.
+///
+/// @param[in,out]  dest  Destination comma-separated array.
+/// @param[in]  val  Source colon-separated array.
+/// @param[in]  suf1  If not NULL, suffix appended to destination. Prior to it
+///                   directory separator is appended. Suffix must not contain
+///                   commas.
+/// @param[in]  len1  Length of the suf1.
+/// @param[in]  suf2  If not NULL, another suffix appended to destination. Again
+///                   with directory separator behind. Suffix must not contain
+///                   commas.
+/// @param[in]  len2  Length of the suf2.
+/// @param[in]  forward  If true, iterate over val in forward direction.
+///                      Otherwise in reverse.
+///
+/// @return (dest + appended_characters_length)
+static inline char *add_colon_dirs(char *dest, const char *const val,
+                                   const char *const suf1, const size_t len1,
+                                   const char *const suf2, const size_t len2,
+                                   const bool forward)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ARG(1)
+{
+  if (val == NULL || *val == NUL) {
+    return dest;
+  }
+  const void *iter = NULL;
+  do {
+    size_t dir_len;
+    const char *dir;
+    iter = (forward ? vim_colon_env_iter : vim_colon_env_iter_rev)(
+        val, iter, &dir, &dir_len);
+    if (dir != NULL && dir_len > 0) {
+      dest = strcpy_comma_escaped(dest, dir, dir_len);
+      if (!after_pathsep(dest - 1, dest)) {
+        *dest++ = PATHSEP;
+      }
+      memmove(dest, "nvim", NVIM_SIZE);
+      dest += NVIM_SIZE;
+      if (suf1 != NULL) {
+        *dest++ = PATHSEP;
+        memmove(dest, suf1, len1);
+        dest += len1;
+        if (suf2 != NULL) {
+          *dest++ = PATHSEP;
+          memmove(dest, suf2, len2);
+          dest += len2;
+        }
+      }
+      *dest++ = ',';
+    }
+  } while (iter != NULL);
+  return dest;
+}
+
+/// Add directory to a comma-separated list of directories
+///
+/// In the added directory comma is escaped.
+///
+/// @param[in,out]  dest  Destination comma-separated array.
+/// @param[in]  dir  Directory to append.
+/// @param[in]  append_nvim  If true, append "nvim" as the very first suffix.
+/// @param[in]  suf1  If not NULL, suffix appended to destination. Prior to it
+///                   directory separator is appended. Suffix must not contain
+///                   commas.
+/// @param[in]  len1  Length of the suf1.
+/// @param[in]  suf2  If not NULL, another suffix appended to destination. Again
+///                   with directory separator behind. Suffix must not contain
+///                   commas.
+/// @param[in]  len2  Length of the suf2.
+/// @param[in]  forward  If true, iterate over val in forward direction.
+///                      Otherwise in reverse.
+///
+/// @return (dest + appended_characters_length)
+static inline char *add_dir(char *dest, const char *const dir,
+                            const size_t dir_len, const bool append_nvim,
+                            const char *const suf1, const size_t len1,
+                            const char *const suf2, const size_t len2)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (dir == NULL || dir_len == 0) {
+    return dest;
+  }
+  dest = strcpy_comma_escaped(dest, dir, dir_len);
+  if (append_nvim) {
+    if (!after_pathsep(dest - 1, dest)) {
+      *dest++ = PATHSEP;
+    }
+    memmove(dest, "nvim", NVIM_SIZE);
+    dest += NVIM_SIZE;
+    if (suf1 != NULL) {
+      *dest++ = PATHSEP;
+      memmove(dest, suf1, len1);
+      dest += len1;
+      if (suf2 != NULL) {
+        *dest++ = PATHSEP;
+        memmove(dest, suf2, len2);
+        dest += len2;
+      }
+    }
+  }
+  *dest++ = ',';
+  return dest;
+}
+
+/// Set &runtimepath to default value
+static void set_runtimepath_default(void)
+{
+  size_t rtp_size = 0;
+  char *const data_home = stdpaths_get_xdg_var(kXDGDataHome);
+  char *const config_home = stdpaths_get_xdg_var(kXDGConfigHome);
+  char *const vimruntime = vim_getenv("VIMRUNTIME");
+  char *const data_dirs = stdpaths_get_xdg_var(kXDGDataDirs);
+  char *const config_dirs = stdpaths_get_xdg_var(kXDGConfigDirs);
+#define SITE_SIZE (sizeof("site") - 1)
+#define AFTER_SIZE (sizeof("after") - 1)
+  size_t data_len = 0;
+  size_t config_len = 0;
+  size_t vimruntime_len = 0;
+  if (data_home != NULL) {
+    data_len = strlen(data_home);
+    if (data_len != 0) {
+      rtp_size += ((data_len + memcnt(data_home, ',', data_len)
+                    + NVIM_SIZE + 1 + SITE_SIZE + 1
+                    + !after_pathsep(data_home, data_home + data_len)) * 2
+                   + AFTER_SIZE + 1);
+    }
+  }
+  if (config_home != NULL) {
+    config_len = strlen(config_home);
+    if (config_len != 0) {
+      rtp_size += ((config_len + memcnt(config_home, ',', config_len)
+                    + NVIM_SIZE + 1
+                    + !after_pathsep(config_home, config_home + config_len)) * 2
+                   + AFTER_SIZE + 1);
+    }
+  }
+  if (vimruntime != NULL) {
+    vimruntime_len = strlen(vimruntime);
+    if (vimruntime_len != 0) {
+      rtp_size += vimruntime_len + memcnt(vimruntime, ',', vimruntime_len) + 1;
+    }
+  }
+  rtp_size += compute_double_colon_len(data_dirs, NVIM_SIZE + 1 + SITE_SIZE + 1,
+                                       AFTER_SIZE + 1);
+  rtp_size += compute_double_colon_len(config_dirs, NVIM_SIZE + 1,
+                                       AFTER_SIZE + 1);
+  if (rtp_size == 0) {
+    return;
+  }
+  char *const rtp = xmalloc(rtp_size);
+  char *rtp_cur = rtp;
+  rtp_cur = add_dir(rtp_cur, config_home, config_len, true, NULL, 0, NULL, 0);
+  rtp_cur = add_colon_dirs(rtp_cur, config_dirs, NULL, 0, NULL, 0, true);
+  rtp_cur = add_dir(rtp_cur, data_home, data_len, true, "site", SITE_SIZE,
+                    NULL, 0);
+  rtp_cur = add_colon_dirs(rtp_cur, data_dirs, "site", SITE_SIZE, NULL, 0,
+                           true);
+  rtp_cur = add_dir(rtp_cur, vimruntime, vimruntime_len, false, NULL, 0,
+                    NULL, 0);
+  rtp_cur = add_colon_dirs(rtp_cur, data_dirs, "site", SITE_SIZE,
+                           "after", AFTER_SIZE, false);
+  rtp_cur = add_dir(rtp_cur, data_home, data_len, true, "site", SITE_SIZE,
+                    "after", AFTER_SIZE);
+  rtp_cur = add_colon_dirs(rtp_cur, config_dirs, "after", AFTER_SIZE, NULL, 0,
+                           false);
+  rtp_cur = add_dir(rtp_cur, config_home, config_len, true,
+                    "after", AFTER_SIZE, NULL, 0);
+  // Strip trailing comma.
+  rtp_cur[-1] = NUL;
+  assert((size_t) (rtp_cur - rtp) == rtp_size);
+#undef SITE_SIZE
+#undef AFTER_SIZE
+  set_string_default("runtimepath", rtp, true);
+  xfree(data_dirs);
+  xfree(config_dirs);
+  xfree(data_home);
+  xfree(config_home);
+  xfree(vimruntime);
+}
+
+#undef NVIM_SIZE
+
 /*
  * Initialize the options, first part.
  *
@@ -308,7 +545,6 @@ static char *(p_cot_values[]) = {"menu", "menuone", "longest", "preview",
  */
 void set_init_1(void)
 {
-  char_u      *p;
   int opt_idx;
 
   langmap_init();
@@ -320,8 +556,12 @@ void set_init_1(void)
    * Find default value for 'shell' option.
    * Don't use it if it is empty.
    */
-  if ((p = (char_u *)os_getenv("SHELL")) != NULL)
-    set_string_default("sh", p);
+  {
+    const char *shell = os_getenv("SHELL");
+    if (shell != NULL) {
+      set_string_default("sh", (char *) shell, false);
+    }
+  }
 
   /*
    * Set the default for 'backupskip' to include environment variables for
@@ -339,17 +579,18 @@ void set_init_1(void)
     ga_init(&ga, 1, 100);
     for (size_t n = 0; n < ARRAY_SIZE(names); ++n) {
       bool mustfree = true;
+      char *p;
 # ifdef UNIX
       if (*names[n] == NUL) {
-        p = (char_u *)"/tmp";
+        p = "/tmp";
         mustfree = false;
       }
       else
 # endif
-      p = (char_u *)vim_getenv(names[n]);
+      p = vim_getenv(names[n]);
       if (p != NULL && *p != NUL) {
         // First time count the NUL, otherwise count the ','.
-        len = (int)STRLEN(p) + 3;
+        len = (int)strlen(p) + 3;
         ga_grow(&ga, len);
         if (!GA_EMPTY(&ga))
           STRCAT(ga.ga_data, ",");
@@ -363,8 +604,7 @@ void set_init_1(void)
       }
     }
     if (ga.ga_data != NULL) {
-      set_string_default("bsk", ga.ga_data);
-      xfree(ga.ga_data);
+      set_string_default("bsk", ga.ga_data, true);
     }
   }
 
@@ -425,17 +665,34 @@ void set_init_1(void)
 
 #if defined(MSWIN) || defined(MAC)
   /* Set print encoding on platforms that don't default to latin1 */
-  set_string_default("penc",
-      (char_u *)"hp-roman8"
-      );
+  set_string_default("printencoding", "hp-roman8", false);
 #endif
 
-  /* 'printexpr' must be allocated to be able to evaluate it. */
-  set_string_default(
-      "pexpr",
-      (char_u *)
-      "system('lpr' . (&printdevice == '' ? '' : ' -P' . &printdevice) . ' ' . v:fname_in) . delete(v:fname_in) + v:shell_error"
-      );
+  // 'printexpr' must be allocated to be able to evaluate it.
+  set_string_default("printexpr",
+#ifdef UNIX
+                     "system(['lpr'] "
+                            "+ (empty(&printdevice)?[]:['-P', &printdevice]) "
+                            "+ [v:fname_in])"
+                     ". delete(v:fname_in)"
+                     "+ v:shell_error",
+#elif defined(MSWIN)
+                     "system(['copy', v:fname_in, "
+                             "empty(&printdevice)?'LPT1':&printdevice])"
+                     ". delete(v:fname_in)",
+#else
+                     "",
+#endif
+                     false);
+
+  set_string_default("viewdir", stdpaths_user_data_subpath("view", 0), true);
+  set_string_default("backupdir", stdpaths_user_data_subpath("backup", 0),
+                     true);
+  set_string_default("directory", stdpaths_user_data_subpath("swap", 2), true);
+  set_string_default("undodir", stdpaths_user_data_subpath("undo", 0), true);
+  // Set default for &runtimepath. All necessary expansions are performed in
+  // this function.
+  set_runtimepath_default();
 
   /*
    * Set all the options (except the terminal options) to their default
@@ -478,14 +735,16 @@ void set_init_1(void)
    * default.
    */
   for (opt_idx = 0; options[opt_idx].fullname; opt_idx++) {
+    char *p;
     if ((options[opt_idx].flags & P_GETTEXT)
-        && options[opt_idx].var != NULL)
-      p = (char_u *)_(*(char **)options[opt_idx].var);
-    else
-      p = option_expand(opt_idx, NULL);
+        && options[opt_idx].var != NULL) {
+      p = _(*(char **)options[opt_idx].var);
+    } else {
+      p = (char *) option_expand(opt_idx, NULL);
+    }
     if (p != NULL) {
-      p = vim_strsave(p);
-      *(char_u **)options[opt_idx].var = p;
+      p = xstrdup(p);
+      *(char **)options[opt_idx].var = p;
       /* VIMEXP
        * Defaults for all expanded options are currently the same for Vi
        * and Vim.  When this changes, add some code here!  Also need to
@@ -493,7 +752,7 @@ void set_init_1(void)
        */
       if (options[opt_idx].flags & P_DEF_ALLOCED)
         xfree(options[opt_idx].def_val[VI_DEFAULT]);
-      options[opt_idx].def_val[VI_DEFAULT] = p;
+      options[opt_idx].def_val[VI_DEFAULT] = (char_u *) p;
       options[opt_idx].flags |= P_DEF_ALLOCED;
     }
   }
@@ -522,14 +781,14 @@ void set_init_1(void)
   (void)set_chars_option(&p_lcs);
 
   /* enc_locale() will try to find the encoding of the current locale. */
-  p = enc_locale();
+  char_u *p = enc_locale();
   if (p != NULL) {
     char_u *save_enc;
 
     /* Try setting 'encoding' and check if the value is valid.
      * If not, go back to the default "utf-8". */
     save_enc = p_enc;
-    p_enc = p;
+    p_enc = (char_u *) p;
     if (STRCMP(p_enc, "gb18030") == 0) {
       /* We don't support "gb18030", but "cp936" is a good substitute
        * for practical purposes, thus use that.  It's not an alias to
@@ -674,7 +933,9 @@ set_options_default (
 ///
 /// @param name The name of the option
 /// @param val The value of the option
-void set_string_default(const char *name, const char_u *val)
+/// @param allocated If true, do not copy default as it was already allocated.
+static void set_string_default(const char *name, char *val, bool allocated)
+  FUNC_ATTR_NONNULL_ALL
 {
   int opt_idx = findoption((char_u *)name);
   if (opt_idx >= 0) {
@@ -682,7 +943,10 @@ void set_string_default(const char *name, const char_u *val)
       xfree(options[opt_idx].def_val[VI_DEFAULT]);
     }
 
-    options[opt_idx].def_val[VI_DEFAULT] = (char_u *) xstrdup((char *) val);
+    options[opt_idx].def_val[VI_DEFAULT] = (char_u *) (
+        allocated
+        ? (char_u *) val
+        : (char_u *) xstrdup(val));
     options[opt_idx].flags |= P_DEF_ALLOCED;
   }
 }
@@ -1738,16 +2002,16 @@ set_options_bin (
 
 /*
  * Find the parameter represented by the given character (eg ', :, ", or /),
- * and return its associated value in the 'viminfo' string.
+ * and return its associated value in the 'shada' string.
  * Only works for number parameters, not for 'r' or 'n'.
  * If the parameter is not specified in the string or there is no following
  * number, return -1.
  */
-int get_viminfo_parameter(int type)
+int get_shada_parameter(int type)
 {
   char_u  *p;
 
-  p = find_viminfo_parameter(type);
+  p = find_shada_parameter(type);
   if (p != NULL && ascii_isdigit(*p))
     return atoi((char *)p);
   return -1;
@@ -1755,14 +2019,14 @@ int get_viminfo_parameter(int type)
 
 /*
  * Find the parameter represented by the given character (eg ''', ':', '"', or
- * '/') in the 'viminfo' option and return a pointer to the string after it.
+ * '/') in the 'shada' option and return a pointer to the string after it.
  * Return NULL if the parameter is not specified in the string.
  */
-char_u *find_viminfo_parameter(int type)
+char_u *find_shada_parameter(int type)
 {
   char_u  *p;
 
-  for (p = p_viminfo; *p; ++p) {
+  for (p = p_shada; *p; ++p) {
     if (*p == type)
       return p + 1;
     if (*p == 'n')                  /* 'n' is always the last one */
@@ -1821,6 +2085,7 @@ static void didset_options(void)
 
   (void)opt_strings_flags(p_cmp, p_cmp_values, &cmp_flags, true);
   (void)opt_strings_flags(p_bkc, p_bkc_values, &bkc_flags, true);
+  (void)opt_strings_flags(p_bo, p_bo_values, &bo_flags, true);
   (void)opt_strings_flags(p_ssop, p_ssop_values, &ssop_flags, true);
   (void)opt_strings_flags(p_vop, p_ssop_values, &vop_flags, true);
   (void)opt_strings_flags(p_fdo, p_fdo_values, &fdo_flags, true);
@@ -1968,6 +2233,8 @@ static void redraw_titles(void) {
   redraw_tabline = TRUE;
 }
 
+static int shada_idx = -1;
+
 /*
  * Set a string option to a new value (without checking the effect).
  * The string is copied into allocated memory.
@@ -2000,6 +2267,8 @@ set_string_option_direct (
 
   if (options[idx].var == NULL)         /* can't set hidden option */
     return;
+
+  assert((void *) options[idx].var != (void *) &p_shada);
 
   s = vim_strsave(val);
   {
@@ -2441,10 +2710,16 @@ did_set_string_option (
     verbose_stop();
     if (*p_vfile != NUL && verbose_open() == FAIL)
       errmsg = e_invarg;
-  }
-  /* 'viminfo' */
-  else if (varp == &p_viminfo) {
-    for (s = p_viminfo; *s; ) {
+  /* 'shada' */
+  } else if (varp == &p_shada) {
+    // TODO(ZyX-I): Remove this code in the future, alongside with &viminfo
+    //              option.
+    opt_idx = ((options[opt_idx].fullname[0] == 'v')
+               ? (shada_idx == -1
+                  ? ((shada_idx = findoption((char_u *) "shada")))
+                  : shada_idx)
+               : opt_idx);
+    for (s = p_shada; *s; ) {
       /* Check it's a valid character */
       if (vim_strchr((char_u *)"!\"%'/:<@cfhnrs", *s) == NULL) {
         errmsg = illegal_char(errbuf, *s);
@@ -2486,7 +2761,7 @@ did_set_string_option (
         break;
       }
     }
-    if (*p_viminfo && errmsg == NULL && get_viminfo_parameter('\'') < 0)
+    if (*p_shada && errmsg == NULL && get_shada_parameter('\'') < 0)
       errmsg = (char_u *)N_("E528: Must specify a ' value");
   }
   /* 'showbreak' */
@@ -2709,6 +2984,10 @@ did_set_string_option (
         errmsg = e_invarg;
     } else if (check_opt_strings(p_bs, p_bs_values, TRUE) != OK)
       errmsg = e_invarg;
+  } else if (varp == &p_bo) {
+    if (opt_strings_flags(p_bo, p_bo_values, &bo_flags, true) != OK) {
+      errmsg = e_invarg;
+    }
   } else if (varp == &p_cmp) {  // 'casemap'
     if (opt_strings_flags(p_cmp, p_cmp_values, &cmp_flags, true) != OK)
       errmsg = e_invarg;
@@ -5933,7 +6212,7 @@ static void paste_option_changed(void)
   old_p_paste = p_paste;
 }
 
-/// vimrc_found() - Called when a ".vimrc" or "VIMINIT" has been found.
+/// vimrc_found() - Called when a vimrc or "VIMINIT" has been found.
 ///
 /// Set the values for options that didn't get set yet to the Vim defaults.
 /// When "fname" is not NULL, use it to set $"envname" when it wasn't set yet.

@@ -247,33 +247,21 @@ describe('vim_* functions', function()
         ~                                       |
         {1:very fail}                               |
       ]])
+      helpers.wait()
 
       -- shows up to &cmdheight lines
-      nvim_async('err_write', 'more fail\n')
-      nvim_async('err_write', 'too fail\n')
+      nvim_async('err_write', 'more fail\ntoo fail\n')
       screen:expect([[
         ~                                       |
         ~                                       |
         ~                                       |
         ~                                       |
         ~                                       |
-        {1:very fail}                               |
         {1:more fail}                               |
-        {2:Press ENTER or type command to continue}^ |
-      ]])
-
-      -- shows the rest after return
-      feed('<cr>')
-      screen:expect([[
-        ~                                       |
-        ~                                       |
-        ~                                       |
-        {1:very fail}                               |
-        {1:more fail}                               |
-        {2:Press ENTER or type command to continue} |
         {1:too fail}                                |
         {2:Press ENTER or type command to continue}^ |
       ]])
+      feed('<cr>')  -- exit the press ENTER screen
     end)
   end)
 

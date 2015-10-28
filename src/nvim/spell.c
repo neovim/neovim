@@ -8406,7 +8406,7 @@ void spell_suggest(int count)
     // Use the Visually selected text as the bad word.  But reject
     // a multi-line selection.
     if (curwin->w_cursor.lnum != VIsual.lnum) {
-      vim_beep();
+      vim_beep(BO_SPELL);
       return;
     }
     badlen = (int)curwin->w_cursor.col - (int)VIsual.col;

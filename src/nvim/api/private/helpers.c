@@ -597,7 +597,7 @@ static void init_type_metadata(Dictionary *metadata)
 }
 
 /// Creates a deep clone of an object
-static Object copy_object(Object obj)
+Object copy_object(Object obj)
 {
   switch (obj.type) {
     case kObjectTypeNil:

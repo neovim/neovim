@@ -61,4 +61,7 @@
 #cmakedefine HAVE_JEMALLOC
 #endif
 
+#cmakedefine HAVE_BE64TOH
+#cmakedefine ORDER_BIG_ENDIAN
+
 #endif  // AUTO_CONFIG_H

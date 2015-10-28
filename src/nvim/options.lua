@@ -176,7 +176,7 @@ return {
       vi_def=true,
       expand=true,
       varname='p_bdir',
-      defaults={if_true={vi=macros('DFLT_BDIR')}}
+      defaults={if_true={vi=''}}
     },
     {
       full_name='backupext', abbreviation='bex',
@@ -191,6 +191,14 @@ return {
       type='string', list='comma', scope={'global'},
       vi_def=true,
       varname='p_bsk',
+      defaults={if_true={vi=""}}
+    },
+    {
+      full_name='belloff', abbreviation='bo',
+      deny_duplicates=true,
+      type='string', list='comma', scope={'global'},
+      vi_def=true,
+      varname='p_bo',
       defaults={if_true={vi=""}}
     },
     {
@@ -619,7 +627,7 @@ return {
       vi_def=true,
       expand=true,
       varname='p_dir',
-      defaults={if_true={vi=macros('DFLT_DIR')}}
+      defaults={if_true={vi=''}}
     },
     {
       full_name='display', abbreviation='dy',
@@ -1908,7 +1916,7 @@ return {
       vi_def=true,
       expand=true,
       varname='p_rtp',
-      defaults={if_true={vi=macros('DFLT_RUNTIMEPATH')}}
+      defaults={if_true={vi=''}}
     },
     {
       full_name='scroll', abbreviation='scr',
@@ -1990,6 +1998,14 @@ return {
         vi="blank,buffers,curdir,folds,help,options,tabpages,winsize",
         vim="blank,buffers,curdir,folds,help,tabpages,winsize"
       }}
+    },
+    {
+      full_name='shada', abbreviation='sd',
+      type='string', list='comma', scope={'global'},
+      deny_duplicates=true,
+      secure=true,
+      varname='p_shada',
+      defaults={if_true={vi="", vim="!,'100,<50,s10,h"}}
     },
     {
       full_name='shell', abbreviation='sh',
@@ -2508,7 +2524,7 @@ return {
       vi_def=true,
       expand=true,
       varname='p_udir',
-      defaults={if_true={vi="."}}
+      defaults={if_true={vi=''}}
     },
     {
       full_name='undofile', abbreviation='udf',
@@ -2569,7 +2585,7 @@ return {
       vi_def=true,
       expand=true,
       varname='p_vdir',
-      defaults={if_true={vi=macros('DFLT_VDIR')}}
+      defaults={if_true={vi=''}}
     },
     {
       full_name='viewoptions', abbreviation='vop',
@@ -2584,7 +2600,7 @@ return {
       type='string', list='comma', scope={'global'},
       deny_duplicates=true,
       secure=true,
-      varname='p_viminfo',
+      varname='p_shada',
       defaults={if_true={vi="", vim="!,'100,<50,s10,h"}}
     },
     {

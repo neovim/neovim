@@ -181,7 +181,7 @@ Subjects that can be read independently.
 |usr_21.txt|  Go away and come back
 		|21.1|	Suspend and resume
 		|21.2|	Executing shell commands
-		|21.3|	Remembering information; viminfo
+		|21.3|	Remembering information; ShaDa
 		|21.4|	Sessions
 		|21.5|	Views
 		|21.6|	Modelines

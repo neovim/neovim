@@ -129,7 +129,7 @@ this name, but with all letters made lowercase.  Then copy the file to your
 own runtime directory, as found early in 'runtimepath'.  For example, for Unix
 you would do: >
 
-	:!cp $VIMRUNTIME/lang/menu_ko_kr.euckr.vim ~/.vim/lang/menu_nl_be.iso_8859-1.vim
+	:!cp $VIMRUNTIME/lang/menu_ko_kr.euckr.vim ~/.config/nvim/lang/menu_nl_be.iso_8859-1.vim
 
 You will find hints for the translation in "$VIMRUNTIME/lang/README.txt".
 
@@ -235,7 +235,7 @@ actually view a file that way, if you have lots of time at hand.
 	Note:
 	Since 'encoding' is used for all text inside Vim, changing it makes
 	all non-ASCII text invalid.  You will notice this when using registers
-	and the 'viminfo' file (e.g., a remembered search pattern).  It's
+	and the |shada-file| (e.g., a remembered search pattern).  It's
 	recommended to set 'encoding' in your vimrc file, and leave it alone.
 
 ==============================================================================
@@ -359,7 +359,7 @@ DO-IT-YOURSELF KEYMAPS
 You can create your own keymap file.  It's not very difficult.  Start with
 a keymap file that is similar to the language you want to use.  Copy it to the
 "keymap" directory in your runtime directory.  For example, for Unix, you
-would use the directory "~/.vim/keymap".
+would use the directory "~/.config/nvim/keymap".
    The name of the keymap file must look like this:
 
 	keymap/{name}.vim ~

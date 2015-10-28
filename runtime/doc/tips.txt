@@ -98,7 +98,7 @@ What you need:
 - An identifier database file called "ID" in the current directory.  You can
   create it with the shell command "mkid file1 file2 ..".
 
-Put this in your .vimrc: >
+Put this in your |init.vim|: >
 	map _u :call ID_search()<Bar>execute "/\\<" . g:word . "\\>"<CR>
 	map _n :n<Bar>execute "/\\<" . g:word . "\\>"<CR>
 
@@ -404,7 +404,7 @@ See section |23.4| of the user manual.
 
 If one has a particular extension that one uses for binary files (such as exe,
 bin, etc), you may find it helpful to automate the process with the following
-bit of autocmds for your <.vimrc>.  Change that "*.bin" to whatever
+bit of autocmds for your |init.vim|.  Change that "*.bin" to whatever
 comma-separated list of extension(s) you find yourself wanting to edit: >
 
 	" vim -b : edit binary using xxd-format!

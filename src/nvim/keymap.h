@@ -242,7 +242,6 @@ enum key_extra {
   , KE_X2RELEASE
 
   , KE_DROP             /* DnD data is available */
-  , KE_CURSORHOLD       /* CursorHold event */
   , KE_NOP              /* doesn't do something */
   , KE_FOCUSGAINED      /* focus gained */
   , KE_FOCUSLOST        /* focus lost */
@@ -437,7 +436,6 @@ enum key_extra {
 #define K_FOCUSGAINED   TERMCAP2KEY(KS_EXTRA, KE_FOCUSGAINED)
 #define K_FOCUSLOST     TERMCAP2KEY(KS_EXTRA, KE_FOCUSLOST)
 
-#define K_CURSORHOLD    TERMCAP2KEY(KS_EXTRA, KE_CURSORHOLD)
 #define K_EVENT         TERMCAP2KEY(KS_EXTRA, KE_EVENT)
 #define K_PASTE         TERMCAP2KEY(KS_EXTRA, KE_PASTE)
 

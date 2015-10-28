@@ -1359,7 +1359,7 @@ tag	      command	      action ~
 |:number|	:nu[mber]	print lines with line number
 |:nunmap|	:nun[map]	like ":unmap" but for Normal mode
 |:nunmenu|	:nunme[nu]	remove menu for Normal mode
-|:oldfiles|	:ol[dfiles]	list files that have marks in the viminfo file
+|:oldfiles|	:ol[dfiles]	list files that have marks in the ShaDa file
 |:open|		:o[pen]		start open mode (not implemented)
 |:omap|		:om[ap]		like ":map" but for Operator-pending mode
 |:omapclear|	:omapc[lear]	remove all mappings for Operator-pending mode
@@ -1418,9 +1418,9 @@ tag	      command	      action ~
 |:rewind|	:rew[ind]	go to the first file in the argument list
 |:right|	:ri[ght]	right align text
 |:rightbelow|	:rightb[elow]	make split window appear right or below
+|:rshada|	:rsh[ada]	read from ShaDa file
 |:rundo|	:rund[o]	read undo information from a file
 |:runtime|	:ru[ntime]	source vim scripts in 'runtimepath'
-|:rviminfo|	:rv[iminfo]	read from viminfo file
 |:substitute|	:s[ubstitute]	find and replace text
 |:sNext|	:sN[ext]	split window and go to previous file in
 				argument list
@@ -1579,8 +1579,8 @@ tag	      command	      action ~
 				argument list
 |:wq|		:wq		write to a file and quit window or Vim
 |:wqall|	:wqa[ll]	write all changed buffers and quit Vim
+|:wshada|	:wsh[ada]	write to ShaDa file
 |:wundo|	:wu[ndo]	write undo information to a file
-|:wviminfo|	:wv[iminfo]	write to viminfo file
 |:xit|		:x[it]		write if buffer changed and quit window or Vim
 |:xall|		:xa[ll]		same as ":wqall"
 |:xmapclear|	:xmapc[lear]	remove all mappings for Visual mode

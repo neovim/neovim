@@ -108,18 +108,6 @@
                                    function/variable names. */
 
 /*
- * In a hashtab item "hi_key" points to "di_key" in a dictitem.
- * This avoids adding a pointer to the hashtab item.
- * DI2HIKEY() converts a dictitem pointer to a hashitem key pointer.
- * HIKEY2DI() converts a hashitem key pointer to a dictitem pointer.
- * HI2DI() converts a hashitem pointer to a dictitem pointer.
- */
-static dictitem_T dumdi;
-#define DI2HIKEY(di) ((di)->di_key)
-#define HIKEY2DI(p)  ((dictitem_T *)(p - (dumdi.di_key - (char_u *)&dumdi)))
-#define HI2DI(hi)     HIKEY2DI((hi)->hi_key)
-
-/*
  * Structure returned by get_lval() and used by set_var_lval().
  * For a plain name:
  *	"name"	    points to the variable name.
@@ -354,7 +342,7 @@ typedef struct {
 typedef enum {
   VAR_FLAVOUR_DEFAULT,          /* doesn't start with uppercase */
   VAR_FLAVOUR_SESSION,          /* starts with uppercase, some lower */
-  VAR_FLAVOUR_VIMINFO           /* all uppercase */
+  VAR_FLAVOUR_SHADA             /* all uppercase */
 } var_flavour_T;
 
 /* values for vv_flags: */
@@ -5352,7 +5340,7 @@ static int list_concat(list_T *l1, list_T *l2, typval_T *tv)
     return FAIL;
 
   /* make a copy of the first list. */
-  l = list_copy(l1, FALSE, 0);
+  l = list_copy(NULL, l1, false, 0);
   if (l == NULL)
     return FAIL;
   tv->v_type = VAR_LIST;
@@ -5363,13 +5351,20 @@ static int list_concat(list_T *l1, list_T *l2, typval_T *tv)
   return OK;
 }
 
-/*
- * Make a copy of list "orig".  Shallow if "deep" is FALSE.
- * The refcount of the new list is set to 1.
- * See item_copy() for "copyID".
- * Returns NULL if orig is NULL or some failure happens.
- */
-static list_T *list_copy(list_T *orig, int deep, int copyID)
+/// Make a copy of list
+///
+/// @param[in]  conv  If non-NULL, then all internal strings will be converted.
+/// @param[in]  orig  Original list to copy.
+/// @param[in]  deep  If false, then shallow copy will be done.
+/// @param[in]  copyID  See var_item_copy().
+///
+/// @return Copied list. May be NULL in case original list is NULL or some
+///         failure happens. The refcount of the new list is set to 1.
+static list_T *list_copy(const vimconv_T *const conv,
+                         list_T *const orig,
+                         const bool deep,
+                         const int copyID)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   listitem_T  *item;
   listitem_T  *ni;
@@ -5388,7 +5383,7 @@ static list_T *list_copy(list_T *orig, int deep, int copyID)
        item = item->li_next) {
     ni = listitem_alloc();
     if (deep) {
-      if (item_copy(&item->li_tv, &ni->li_tv, deep, copyID) == FAIL) {
+      if (var_item_copy(conv, &item->li_tv, &ni->li_tv, deep, copyID) == FAIL) {
         xfree(ni);
         break;
       }
@@ -5546,6 +5541,7 @@ static int list_join(garray_T *const gap, list_T *const l,
 bool garbage_collect(void)
 {
   bool abort = false;
+#define ABORTING(func) abort = abort || func
 
   // Only do this once.
   want_garbage_collect = false;
@@ -5564,45 +5560,117 @@ bool garbage_collect(void)
   // referenced through previous_funccal.  This must be first, because if
   // the item is referenced elsewhere the funccal must not be freed.
   for (funccall_T *fc = previous_funccal; fc != NULL; fc = fc->caller) {
-    abort = abort || set_ref_in_ht(&fc->l_vars.dv_hashtab, copyID + 1, NULL);
-    abort = abort || set_ref_in_ht(&fc->l_avars.dv_hashtab, copyID + 1, NULL);
+    ABORTING(set_ref_in_ht)(&fc->l_vars.dv_hashtab, copyID + 1, NULL);
+    ABORTING(set_ref_in_ht)(&fc->l_avars.dv_hashtab, copyID + 1, NULL);
   }
 
   // script-local variables
   for (int i = 1; i <= ga_scripts.ga_len; ++i) {
-    abort = abort || set_ref_in_ht(&SCRIPT_VARS(i), copyID, NULL);
+    ABORTING(set_ref_in_ht)(&SCRIPT_VARS(i), copyID, NULL);
   }
 
-  // buffer-local variables
   FOR_ALL_BUFFERS(buf) {
-    abort = abort || set_ref_in_item(&buf->b_bufvar.di_tv, copyID, NULL, NULL);
+    // buffer-local variables
+    ABORTING(set_ref_in_item)(&buf->b_bufvar.di_tv, copyID, NULL, NULL);
+    // buffer marks (ShaDa additional data)
+    ABORTING(set_ref_in_fmark)(buf->b_last_cursor, copyID);
+    ABORTING(set_ref_in_fmark)(buf->b_last_insert, copyID);
+    ABORTING(set_ref_in_fmark)(buf->b_last_change, copyID);
+    for (size_t i = 0; i < NMARKS; i++) {
+      ABORTING(set_ref_in_fmark)(buf->b_namedm[i], copyID);
+    }
+    // buffer change list (ShaDa additional data)
+    for (int i = 0; i < buf->b_changelistlen; i++) {
+      ABORTING(set_ref_in_fmark)(buf->b_changelist[i], copyID);
+    }
+    // buffer ShaDa additional data
+    ABORTING(set_ref_dict)(buf->additional_data, copyID);
   }
 
-  // window-local variables
   FOR_ALL_TAB_WINDOWS(tp, wp) {
-    abort = abort || set_ref_in_item(&wp->w_winvar.di_tv, copyID, NULL, NULL);
+    // window-local variables
+    ABORTING(set_ref_in_item)(&wp->w_winvar.di_tv, copyID, NULL, NULL);
+    // window jump list (ShaDa additional data)
+    for (int i = 0; i < wp->w_jumplistlen; i++) {
+      ABORTING(set_ref_in_fmark)(wp->w_jumplist[i].fmark, copyID);
+    }
   }
   if (aucmd_win != NULL) {
-    abort = abort ||
-            set_ref_in_item(&aucmd_win->w_winvar.di_tv, copyID, NULL, NULL);
+    ABORTING(set_ref_in_item)(&aucmd_win->w_winvar.di_tv, copyID, NULL, NULL);
+  }
+
+  // registers (ShaDa additional data)
+  {
+    const void *reg_iter = NULL;
+    do {
+      yankreg_T reg;
+      char name = NUL;
+      reg_iter = op_register_iter(reg_iter, &name, &reg);
+      if (name != NUL) {
+        ABORTING(set_ref_dict)(reg.additional_data, copyID);
+      }
+    } while (reg_iter != NULL);
+  }
+
+  // global marks (ShaDa additional data)
+  {
+    const void *mark_iter = NULL;
+    do {
+      xfmark_T fm;
+      char name = NUL;
+      mark_iter = mark_global_iter(mark_iter, &name, &fm);
+      if (name != NUL) {
+        ABORTING(set_ref_dict)(fm.fmark.additional_data, copyID);
+      }
+    } while (mark_iter != NULL);
   }
 
   // tabpage-local variables
   FOR_ALL_TABS(tp) {
-    abort = abort || set_ref_in_item(&tp->tp_winvar.di_tv, copyID, NULL, NULL);
+    ABORTING(set_ref_in_item)(&tp->tp_winvar.di_tv, copyID, NULL, NULL);
   }
 
   // global variables
-  abort = abort || set_ref_in_ht(&globvarht, copyID, NULL);
+  ABORTING(set_ref_in_ht)(&globvarht, copyID, NULL);
 
   // function-local variables
   for (funccall_T *fc = current_funccal; fc != NULL; fc = fc->caller) {
-    abort = abort || set_ref_in_ht(&fc->l_vars.dv_hashtab, copyID, NULL);
-    abort = abort || set_ref_in_ht(&fc->l_avars.dv_hashtab, copyID, NULL);
+    ABORTING(set_ref_in_ht)(&fc->l_vars.dv_hashtab, copyID, NULL);
+    ABORTING(set_ref_in_ht)(&fc->l_avars.dv_hashtab, copyID, NULL);
   }
 
   // v: vars
-  abort = abort || set_ref_in_ht(&vimvarht, copyID, NULL);
+  ABORTING(set_ref_in_ht)(&vimvarht, copyID, NULL);
+
+  // history items (ShaDa additional elements)
+  if (p_hi) {
+    for (uint8_t i = 0; i < HIST_COUNT; i++) {
+      const void *iter = NULL;
+      do {
+        histentry_T hist;
+        iter = hist_iter(iter, i, false, &hist);
+        if (hist.hisstr != NULL) {
+          ABORTING(set_ref_list)(hist.additional_elements, copyID);
+        }
+      } while (iter != NULL);
+    }
+  }
+
+  // previously used search/substitute patterns (ShaDa additional data)
+  {
+    SearchPattern pat;
+    get_search_pattern(&pat);
+    ABORTING(set_ref_dict)(pat.additional_data, copyID);
+    get_substitute_pattern(&pat);
+    ABORTING(set_ref_dict)(pat.additional_data, copyID);
+  }
+
+  // previously used replacement string
+  {
+    SubReplacementString sub;
+    sub_get_replacement(&sub);
+    ABORTING(set_ref_list)(sub.additional_elements, copyID);
+  }
 
   bool did_free = false;
   if (!abort) {
@@ -5631,6 +5699,7 @@ bool garbage_collect(void)
     verb_msg((char_u *)_(
         "Not enough memory to set references, garbage collection aborted!"));
   }
+#undef ABORTING
   return did_free;
 }
 
@@ -5690,6 +5759,7 @@ static int free_unref_items(int copyID)
 ///
 /// @returns             true if setting references failed somehow.
 bool set_ref_in_ht(hashtab_T *ht, int copyID, list_stack_T **list_stack)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   bool abort = false;
   ht_stack_T *ht_stack = NULL;
@@ -5732,6 +5802,7 @@ bool set_ref_in_ht(hashtab_T *ht, int copyID, list_stack_T **list_stack)
 ///
 /// @returns             true if setting references failed somehow.
 bool set_ref_in_list(list_T *l, int copyID, ht_stack_T **ht_stack)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   bool abort = false;
   list_stack_T *list_stack = NULL;
@@ -5772,6 +5843,7 @@ bool set_ref_in_list(list_T *l, int copyID, ht_stack_T **ht_stack)
 /// @returns             true if setting references failed somehow.
 bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack,
                      list_stack_T **list_stack)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   bool abort = false;
 
@@ -5819,6 +5891,52 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack,
     }
   }
   return abort;
+}
+
+/// Mark all lists and dicts referenced in given mark
+///
+/// @returns true if setting references failed somehow.
+static inline bool set_ref_in_fmark(fmark_T fm, int copyID)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (fm.additional_data != NULL
+      && fm.additional_data->dv_copyID != copyID) {
+    fm.additional_data->dv_copyID = copyID;
+    return set_ref_in_ht(&fm.additional_data->dv_hashtab, copyID, NULL);
+  }
+  return false;
+}
+
+/// Mark all lists and dicts referenced in given list and the list itself
+///
+/// @returns true if setting references failed somehow.
+static inline bool set_ref_list(list_T *list, int copyID)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (list != NULL) {
+    typval_T tv = (typval_T) {
+      .v_type = VAR_LIST,
+      .vval = { .v_list = list }
+    };
+    return set_ref_in_item(&tv, copyID, NULL, NULL);
+  }
+  return false;
+}
+
+/// Mark all lists and dicts referenced in given dict and the dict itself
+///
+/// @returns true if setting references failed somehow.
+static inline bool set_ref_dict(dict_T *dict, int copyID)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (dict != NULL) {
+    typval_T tv = (typval_T) {
+      .v_type = VAR_DICT,
+      .vval = { .v_dict = dict }
+    };
+    return set_ref_in_item(&tv, copyID, NULL, NULL);
+  }
+  return false;
 }
 
 /*
@@ -5964,13 +6082,20 @@ void dictitem_free(dictitem_T *item)
   xfree(item);
 }
 
-/*
- * Make a copy of dict "d".  Shallow if "deep" is FALSE.
- * The refcount of the new dict is set to 1.
- * See item_copy() for "copyID".
- * Returns NULL if orig is NULL or some other failure.
- */
-static dict_T *dict_copy(dict_T *orig, int deep, int copyID)
+/// Make a copy of dictionary
+///
+/// @param[in]  conv  If non-NULL, then all internal strings will be converted.
+/// @param[in]  orig  Original dictionary to copy.
+/// @param[in]  deep  If false, then shallow copy will be done.
+/// @param[in]  copyID  See var_item_copy().
+///
+/// @return Copied dictionary. May be NULL in case original dictionary is NULL
+///         or some failure happens. The refcount of the new dictionary is set
+///         to 1.
+static dict_T *dict_copy(const vimconv_T *const conv,
+                         dict_T *const orig,
+                         const bool deep,
+                         const int copyID)
 {
   dictitem_T  *di;
   int todo;
@@ -5990,10 +6115,21 @@ static dict_T *dict_copy(dict_T *orig, int deep, int copyID)
       if (!HASHITEM_EMPTY(hi)) {
         --todo;
 
-        di = dictitem_alloc(hi->hi_key);
+        if (conv == NULL || conv->vc_type == CONV_NONE) {
+          di = dictitem_alloc(hi->hi_key);
+        } else {
+          char *const key = (char *) string_convert((vimconv_T *) conv,
+                                                    hi->hi_key, NULL);
+          if (key == NULL) {
+            di = dictitem_alloc(hi->hi_key);
+          } else {
+            di = dictitem_alloc((char_u *) key);
+            xfree(key);
+          }
+        }
         if (deep) {
-          if (item_copy(&HI2DI(hi)->di_tv, &di->di_tv, deep,
-                  copyID) == FAIL) {
+          if (var_item_copy(conv, &HI2DI(hi)->di_tv, &di->di_tv, deep,
+                            copyID) == FAIL) {
             xfree(di);
             break;
           }
@@ -6305,7 +6441,7 @@ failret:
 ///                       the results.
 /// @param  firstargname  Name of the first argument.
 /// @param  name  Name of the target converter.
-#define DEFINE_VIML_CONV_FUNCTIONS(name, firstargtype, firstargname) \
+#define DEFINE_VIML_CONV_FUNCTIONS(scope, name, firstargtype, firstargname) \
 static int name##_convert_one_value(firstargtype firstargname, \
                                     MPConvStack *const mpstack, \
                                     typval_T *const tv, \
@@ -6543,7 +6679,7 @@ name##_convert_one_value_regular_dict: \
   return OK; \
 } \
 \
-static int vim_to_##name(firstargtype firstargname, typval_T *const tv) \
+scope int vim_to_##name(firstargtype firstargname, typval_T *const tv) \
   FUNC_ATTR_WARN_UNUSED_RESULT \
 { \
   current_copyID += COPYID_INC; \
@@ -6739,7 +6875,7 @@ vim_to_msgpack_error_ret: \
 
 #define CONV_ALLOW_SPECIAL false
 
-DEFINE_VIML_CONV_FUNCTIONS(string, garray_T *const, gap)
+DEFINE_VIML_CONV_FUNCTIONS(static, string, garray_T *const, gap)
 
 #undef CONV_RECURSE
 #define CONV_RECURSE(val, conv_type) \
@@ -6769,7 +6905,7 @@ DEFINE_VIML_CONV_FUNCTIONS(string, garray_T *const, gap)
       return OK; \
     } while (0)
 
-DEFINE_VIML_CONV_FUNCTIONS(echo, garray_T *const, gap)
+DEFINE_VIML_CONV_FUNCTIONS(static, echo, garray_T *const, gap)
 
 #undef CONV_STRING
 #undef CONV_STR_STRING
@@ -8344,7 +8480,7 @@ static void f_confirm(typval_T *argvars, typval_T *rettv)
  */
 static void f_copy(typval_T *argvars, typval_T *rettv)
 {
-  item_copy(&argvars[0], rettv, FALSE, 0);
+  var_item_copy(NULL, &argvars[0], rettv, false, 0);
 }
 
 /*
@@ -8513,7 +8649,9 @@ static void f_deepcopy(typval_T *argvars, typval_T *rettv)
     EMSG(_(e_invarg));
   else {
     current_copyID += COPYID_INC;
-    item_copy(&argvars[0], rettv, TRUE, noref == 0 ? current_copyID : 0);
+    var_item_copy(NULL, &argvars[0], rettv, true, (noref == 0
+                                                   ? current_copyID
+                                                   : 0));
   }
 }
 
@@ -10482,6 +10620,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "scrollbind",
     "showcmd",
     "cmdline_info",
+    "shada",
     "signs",
     "smartindent",
     "startuptime",
@@ -10498,7 +10637,6 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "title",
     "user-commands",        /* was accidentally included in 5.4 */
     "user_commands",
-    "viminfo",
     "vertsplit",
     "virtualedit",
     "visual",
@@ -12486,7 +12624,7 @@ static inline bool vim_list_to_buf(const list_T *const list,
 
 #define CONV_ALLOW_SPECIAL true
 
-DEFINE_VIML_CONV_FUNCTIONS(msgpack, msgpack_packer *const, packer)
+DEFINE_VIML_CONV_FUNCTIONS(, msgpack, msgpack_packer *const, packer)
 
 #undef CONV_STRING
 #undef CONV_STR_STRING
@@ -12592,7 +12730,7 @@ static inline ListReaderState init_lrstate(const list_T *const list)
 }
 
 /// Convert msgpack object to a VimL one
-static int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
+int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
 #define INIT_SPECIAL_DICT(tv, type, val) \
@@ -14434,7 +14572,7 @@ static void f_serverstart(typval_T *argvars, typval_T *rettv)
       rettv->vval.v_string = vim_strsave(get_tv_string(argvars));
     }
   } else {
-    rettv->vval.v_string = vim_tempname();
+    rettv->vval.v_string = (char_u *)server_address_new();
   }
 
   int result = server_start((char *) rettv->vval.v_string);
@@ -17353,14 +17491,14 @@ char_u *get_vim_var_str(int idx) FUNC_ATTR_PURE FUNC_ATTR_NONNULL_RET
  * Get List v: variable value.  Caller must take care of reference count when
  * needed.
  */
-list_T *get_vim_var_list(int idx) FUNC_ATTR_PURE FUNC_ATTR_NONNULL_RET
+list_T *get_vim_var_list(int idx) FUNC_ATTR_PURE
 {
   return vimvars[idx].vv_list;
 }
 
 /// Get Dictionary v: variable value.  Caller must take care of reference count
 /// when needed.
-dict_T *get_vim_var_dict(int idx) FUNC_ATTR_PURE FUNC_ATTR_NONNULL_RET
+dict_T *get_vim_var_dict(int idx) FUNC_ATTR_PURE
 {
   return vimvars[idx].vv_dict;
 }
@@ -18446,14 +18584,28 @@ void copy_tv(typval_T *from, typval_T *to)
   }
 }
 
-/*
- * Make a copy of an item.
- * Lists and Dictionaries are also copied.  A deep copy if "deep" is set.
- * For deepcopy() "copyID" is zero for a full copy or the ID for when a
- * reference to an already copied list/dict can be used.
- * Returns FAIL or OK.
- */
-static int item_copy(typval_T *from, typval_T *to, int deep, int copyID)
+/// Make a copy of an item
+///
+/// Lists and Dictionaries are also copied.
+///
+/// @param[in]  conv  If not NULL, convert all copied strings.
+/// @param[in]  from  Value to copy.
+/// @param[out]  to  Location where to copy to.
+/// @param[in]  deep  If true, use copy the container and all of the contained
+///                   containers (nested).
+/// @param[in]  copyID  If non-zero then when container is referenced more then
+///                     once then copy of it that was already done is used. E.g.
+///                     when copying list `list = [list2, list2]` (`list[0] is
+///                     list[1]`) var_item_copy with zero copyID will emit
+///                     a copy with (`copy[0] isnot copy[1]`), with non-zero it
+///                     will emit a copy with (`copy[0] is copy[1]`) like in the
+///                     original list. Not use when deep is false.
+int var_item_copy(const vimconv_T *const conv,
+                  typval_T *const from,
+                  typval_T *const to,
+                  const bool deep,
+                  const int copyID)
+  FUNC_ATTR_NONNULL_ARG(2, 3)
 {
   static int recurse = 0;
   int ret = OK;
@@ -18467,9 +18619,22 @@ static int item_copy(typval_T *from, typval_T *to, int deep, int copyID)
   switch (from->v_type) {
   case VAR_NUMBER:
   case VAR_FLOAT:
-  case VAR_STRING:
   case VAR_FUNC:
     copy_tv(from, to);
+    break;
+  case VAR_STRING:
+    if (conv == NULL || conv->vc_type == CONV_NONE) {
+      copy_tv(from, to);
+    } else {
+      to->v_type = VAR_STRING;
+      to->v_lock = 0;
+      if ((to->vval.v_string = string_convert((vimconv_T *)conv,
+                                              from->vval.v_string,
+                                              NULL))
+          == NULL) {
+        to->vval.v_string = (char_u *) xstrdup((char *) from->vval.v_string);
+      }
+    }
     break;
   case VAR_LIST:
     to->v_type = VAR_LIST;
@@ -18480,8 +18645,9 @@ static int item_copy(typval_T *from, typval_T *to, int deep, int copyID)
       /* use the copy made earlier */
       to->vval.v_list = from->vval.v_list->lv_copylist;
       ++to->vval.v_list->lv_refcount;
-    } else
-      to->vval.v_list = list_copy(from->vval.v_list, deep, copyID);
+    } else {
+      to->vval.v_list = list_copy(conv, from->vval.v_list, deep, copyID);
+    }
     if (to->vval.v_list == NULL)
       ret = FAIL;
     break;
@@ -18494,13 +18660,14 @@ static int item_copy(typval_T *from, typval_T *to, int deep, int copyID)
       /* use the copy made earlier */
       to->vval.v_dict = from->vval.v_dict->dv_copydict;
       ++to->vval.v_dict->dv_refcount;
-    } else
-      to->vval.v_dict = dict_copy(from->vval.v_dict, deep, copyID);
+    } else {
+      to->vval.v_dict = dict_copy(conv, from->vval.v_dict, deep, copyID);
+    }
     if (to->vval.v_dict == NULL)
       ret = FAIL;
     break;
   default:
-    EMSG2(_(e_intern2), "item_copy()");
+    EMSG2(_(e_intern2), "var_item_copy()");
     ret = FAIL;
   }
   --recurse;
@@ -20710,109 +20877,64 @@ static var_flavour_T var_flavour(char_u *varname)
 
   if (ASCII_ISUPPER(*p)) {
     while (*(++p))
-      if (ASCII_ISLOWER(*p))
+      if (ASCII_ISLOWER(*p)) {
         return VAR_FLAVOUR_SESSION;
-    return VAR_FLAVOUR_VIMINFO;
-  } else
+      }
+    return VAR_FLAVOUR_SHADA;
+  } else {
     return VAR_FLAVOUR_DEFAULT;
+  }
 }
 
-/*
- * Restore global vars that start with a capital from the viminfo file
- */
-int read_viminfo_varlist(vir_T *virp, int writing)
+/// Iterate over global variables
+///
+/// @warning No modifications to global variable dictionary must be performed
+///          while iteration is in progress.
+///
+/// @param[in]   iter   Iterator. Pass NULL to start iteration.
+/// @param[out]  name   Variable name.
+/// @param[out]  rettv  Variable value.
+///
+/// @return Pointer that needs to be passed to next `var_shada_iter` invocation
+///         or NULL to indicate that iteration is over.
+const void *var_shada_iter(const void *const iter, const char **const name,
+                           typval_T *rettv)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2, 3)
 {
-  char_u      *tab;
-  int type = VAR_NUMBER;
-  typval_T tv;
-
-  if (!writing && (find_viminfo_parameter('!') != NULL)) {
-    tab = vim_strchr(virp->vir_line + 1, '\t');
-    if (tab != NULL) {
-      *tab++ = NUL;            /* isolate the variable name */
-      switch (*tab) {
-      case 'S': type = VAR_STRING; break;
-      case 'F': type = VAR_FLOAT; break;
-      case 'D': type = VAR_DICT; break;
-      case 'L': type = VAR_LIST; break;
-      }
-
-      tab = vim_strchr(tab, '\t');
-      if (tab != NULL) {
-        tv.v_type = type;
-        if (type == VAR_STRING || type == VAR_DICT || type == VAR_LIST)
-          tv.vval.v_string = viminfo_readstring(virp,
-              (int)(tab - virp->vir_line + 1), TRUE);
-        else if (type == VAR_FLOAT)
-          (void)string2float(tab + 1, &tv.vval.v_float);
-        else
-          tv.vval.v_number = atol((char *)tab + 1);
-        if (type == VAR_DICT || type == VAR_LIST) {
-          typval_T *etv = eval_expr(tv.vval.v_string, NULL);
-
-          if (etv == NULL)
-            /* Failed to parse back the dict or list, use it as a
-             * string. */
-            tv.v_type = VAR_STRING;
-          else {
-            xfree(tv.vval.v_string);
-            tv = *etv;
-            xfree(etv);
-          }
-        }
-
-        set_var(virp->vir_line + 1, &tv, FALSE);
-
-        if (tv.v_type == VAR_STRING)
-          xfree(tv.vval.v_string);
-        else if (tv.v_type == VAR_DICT || tv.v_type == VAR_LIST)
-          clear_tv(&tv);
-      }
+  const hashitem_T *hi;
+  const hashitem_T *hifirst = globvarht.ht_array;
+  const size_t hinum = (size_t) globvarht.ht_mask + 1;
+  *name = NULL;
+  if (iter == NULL) {
+    hi = globvarht.ht_array;
+    while ((size_t) (hi - hifirst) < hinum
+           && (HASHITEM_EMPTY(hi)
+               || var_flavour(HI2DI(hi)->di_key) != VAR_FLAVOUR_SHADA)) {
+      hi++;
+    }
+    if ((size_t) (hi - hifirst) == hinum) {
+      return NULL;
+    }
+  } else {
+    hi = (const hashitem_T *) iter;
+  }
+  *name = (char *) HI2DI(hi)->di_key;
+  copy_tv(&(HI2DI(hi)->di_tv), rettv);
+  while ((size_t) (++hi - hifirst) < hinum) {
+    if (!HASHITEM_EMPTY(hi)
+        && var_flavour(HI2DI(hi)->di_key) == VAR_FLAVOUR_SHADA) {
+      return hi;
     }
   }
-
-  return viminfo_readline(virp);
+  return NULL;
 }
 
-/*
- * Write global vars that start with a capital to the viminfo file
- */
-void write_viminfo_varlist(FILE *fp)
+void var_set_global(const char *const name, typval_T vartv)
 {
-  hashitem_T  *hi;
-  dictitem_T  *this_var;
-  int todo;
-  char        *s;
-  char_u      *p;
-
-  if (find_viminfo_parameter('!') == NULL)
-    return;
-
-  fputs(_("\n# global variables:\n"), fp);
-
-  todo = (int)globvarht.ht_used;
-  for (hi = globvarht.ht_array; todo > 0; ++hi) {
-    if (!HASHITEM_EMPTY(hi)) {
-      --todo;
-      this_var = HI2DI(hi);
-      if (var_flavour(this_var->di_key) == VAR_FLAVOUR_VIMINFO) {
-        switch (this_var->di_tv.v_type) {
-        case VAR_STRING: s = "STR"; break;
-        case VAR_NUMBER: s = "NUM"; break;
-        case VAR_FLOAT:  s = "FLO"; break;
-        case VAR_DICT:   s = "DIC"; break;
-        case VAR_LIST:   s = "LIS"; break;
-        default: continue;
-        }
-        fprintf(fp, "!%s\t%s\t", this_var->di_key, s);
-        p = (char_u *) echo_string(&this_var->di_tv, NULL);
-        if (p != NULL) {
-          viminfo_writestring(fp, p);
-        }
-        xfree(p);
-      }
-    }
-  }
+  funccall_T *const saved_current_funccal = current_funccal;
+  current_funccal = NULL;
+  set_var((char_u *) name, &vartv, false);
+  current_funccal = saved_current_funccal;
 }
 
 int store_session_globals(FILE *fd)

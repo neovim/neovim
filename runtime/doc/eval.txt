@@ -557,9 +557,9 @@ Functions that can be used with a Dictionary: >
 If you need to know the type of a variable or expression, use the |type()|
 function.
 
-When the '!' flag is included in the 'viminfo' option, global variables that
+When the '!' flag is included in the 'shada' option, global variables that
 start with an uppercase letter, and don't contain a lowercase letter, are
-stored in the viminfo file |viminfo-file|.
+stored in the shada file |shada-file|.
 
 When the 'sessionoptions' option contains "global", global variables that
 start with an uppercase letter and contain at least one lowercase letter are
@@ -568,7 +568,7 @@ stored in the session file |session-file|.
 variable name		can be stored where ~
 my_var_6		not
 My_Var_6		session file
-MY_VAR_6		viminfo file
+MY_VAR_6		shada file
 
 
 It's possible to form a variable name with curly braces, see
@@ -1524,16 +1524,16 @@ v:msgpack_types	Dictionary containing msgpack types used by |msgpackparse()|
 		of msgpack types, use |is| operator.
 
 					*v:oldfiles* *oldfiles-variable*
-v:oldfiles	List of file names that is loaded from the |viminfo| file on
+v:oldfiles	List of file names that is loaded from the |shada| file on
 		startup.  These are the files that Vim remembers marks for.
 		The length of the List is limited by the ' argument of the
-		'viminfo' option (default is 100).
-		When the |viminfo| file is not used the List is empty.
+		'shada' option (default is 100).
+		When the |shada| file is not used the List is empty.
 		Also see |:oldfiles| and |c_#<|.
 		The List can be modified, but this has no effect on what is
-		stored in the |viminfo| file later.  If you use values other
+		stored in the |shada| file later.  If you use values other
 		than String this will cause trouble.
-		{only when compiled with the |+viminfo| feature}
+		{only when compiled with the |+shada| feature}
 
 					*v:operator* *operator-variable*
 v:operator	The last operator given in Normal mode.  This is a single
@@ -3441,7 +3441,7 @@ getfperm({fname})					*getfperm()*
 		If a user does not have a given permission the flag for this
 		is replaced with the string "-".  Examples: >
 			:echo getfperm("/etc/passwd")
-			:echo getfperm(expand("~/.vimrc"))
+			:echo getfperm(expand("~/.config/nvim/init.vim"))
 <		This will hopefully (from a security point of view) display
 		the string "rw-r--r--" or even "rw-------".
 
@@ -4668,10 +4668,10 @@ msgpackdump({list})				   {Nvim} *msgpackdump()*
 msgpackparse({list})				   {Nvim} *msgpackparse()*
 		Convert a |readfile()|-style list to a list of VimL objects. 
 		Example: >
-			let fname = expand('~/.nvim/shada/main.shada')
+			let fname = expand('~/.config/nvim/shada/main.shada')
 			let mpack = readfile(fname, 'b')
 			let shada_objects = msgpackparse(mpack)
-<		This will read ~/.nvim/shada/main.shada file to 
+<		This will read ~/.config/nvim/shada/main.shada file to 
 		`shada_objects` list.
 
 		Limitations:
@@ -4770,8 +4770,8 @@ pathshorten({expr})					*pathshorten()*
 		result.  The tail, the file name, is kept as-is.  The other
 		components in the path are reduced to single letters.  Leading
 		'~' and '.' characters are kept.  Example: >
-			:echo pathshorten('~/.vim/autoload/myfile.vim')
-<			~/.v/a/myfile.vim ~
+			:echo pathshorten('~/.config/nvim/autoload/file1.vim')
+<			~/.v/a/file1.vim ~
 		It doesn't matter if the path exists or not.
 
 pow({x}, {y})						*pow()*
@@ -6936,6 +6936,7 @@ quickfix		Compiled with |quickfix| support.
 reltime			Compiled with |reltime()| support.
 rightleft		Compiled with 'rightleft' support.
 scrollbind		Compiled with 'scrollbind' support.
+shada			Compiled with shada support.
 showcmd			Compiled with 'showcmd' support.
 signs			Compiled with |:sign| support.
 smartindent		Compiled with 'smartindent' support.
@@ -6964,7 +6965,6 @@ unix			Unix version of Vim.
 user_commands		User-defined commands.
 vertsplit		Compiled with vertically split windows |:vsplit|.
 vim_starting		True while initial source'ing takes place. |startup|
-viminfo			Compiled with viminfo support.
 virtualedit		Compiled with 'virtualedit' option.
 visual			Compiled with Visual mode.
 visualextra		Compiled with extra Visual mode commands.
@@ -7274,8 +7274,8 @@ like this: >
 
 When such a function is called, and it is not defined yet, Vim will search the
 "autoload" directories in 'runtimepath' for a script file called
-"filename.vim".  For example "~/.vim/autoload/filename.vim".  That file should
-then define the function like this: >
+"filename.vim".  For example "~/.config/nvim/autoload/filename.vim".  That 
+file should then define the function like this: >
 
 	function filename#funcname()
 	   echo "Done!"
@@ -9080,7 +9080,7 @@ A few options contain an expression.  When this expression is evaluated it may
 have to be done in the sandbox to avoid a security risk.  But the sandbox is
 restrictive, thus this only happens when the option was set from an insecure
 location.  Insecure in this context are:
-- sourcing a .vimrc or .exrc in the current directory
+- sourcing a .nvimrc or .exrc in the current directory
 - while executing in the sandbox
 - value coming from a modeline
 

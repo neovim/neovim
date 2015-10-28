@@ -204,7 +204,7 @@ Colon, USA)
 VIM is a joy to use, it is so well thought and practical that I wonder why
 anybody would use visual development tools.  VIM is powerful and elegant, it
 looks deceptively simple but is almost as complex as a 747 (especially when I
-look at my growing .vimrc), keep up that wonderful job, VIM is a centerpiece
+look at my growing vimrc), keep up that wonderful job, VIM is a centerpiece
 of the free software world.  (Louis-David Mitterand, USA)
 
 I cannot believe how great it is to use VIM.  I think the guys at work are

@@ -564,6 +564,28 @@ describe('fs function', function()
         eq(false, os_isdir('unit-test-directory/new-dir-recurse'))
       end)
 
+      it('succeeds to create a directory ending with ///', function()
+        local mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
+        local ret, failed_str = os_mkdir_recurse(
+            'unit-test-directory/new-dir-recurse///', mode)
+        eq(0, ret)
+        eq(nil, failed_str)
+        eq(true, os_isdir('unit-test-directory/new-dir-recurse'))
+        lfs.rmdir('unit-test-directory/new-dir-recurse')
+        eq(false, os_isdir('unit-test-directory/new-dir-recurse'))
+      end)
+
+      it('succeeds to create a directory ending with /', function()
+        local mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
+        local ret, failed_str = os_mkdir_recurse(
+            'unit-test-directory/new-dir-recurse/', mode)
+        eq(0, ret)
+        eq(nil, failed_str)
+        eq(true, os_isdir('unit-test-directory/new-dir-recurse'))
+        lfs.rmdir('unit-test-directory/new-dir-recurse')
+        eq(false, os_isdir('unit-test-directory/new-dir-recurse'))
+      end)
+
       it('succeeds to create a directory tree', function()
         local mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
         local ret, failed_str = os_mkdir_recurse(

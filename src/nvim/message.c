@@ -1731,12 +1731,12 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
       if (msg_col)
         --msg_col;
     } else if (*s == TAB) {       /* translate Tab into spaces */
-      do
+      do {
         msg_screen_putchar(' ', attr);
-      while (msg_col & 7);
-    } else if (*s == BELL)          /* beep (from ":sh") */
-      vim_beep();
-    else {
+      } while (msg_col & 7);
+    } else if (*s == BELL) {  // beep (from ":sh")
+      vim_beep(BO_SH);
+    } else {
       if (has_mbyte) {
         cw = (*mb_ptr2cells)(s);
         if (enc_utf8 && maxlen >= 0)
@@ -1897,9 +1897,9 @@ void show_sb_text(void)
   /* Only show something if there is more than one line, otherwise it looks
    * weird, typing a command without output results in one line. */
   mp = msg_sb_start(last_msgchunk);
-  if (mp == NULL || mp->sb_prev == NULL)
-    vim_beep();
-  else {
+  if (mp == NULL || mp->sb_prev == NULL) {
+    vim_beep(BO_MESS);
+  } else {
     do_more_prompt('G');
     wait_return(FALSE);
   }

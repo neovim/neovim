@@ -69,6 +69,8 @@
 #define ADD(array, item)                                                      \
   kv_push(Object, array, item)
 
+#define STATIC_CSTR_AS_STRING(s) ((String) {.data = s, .size = sizeof(s) - 1})
+
 // Helpers used by the generated msgpack-rpc api wrappers
 #define api_init_boolean
 #define api_init_integer

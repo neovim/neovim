@@ -1,6 +1,9 @@
 #ifndef NVIM_SEARCH_H
 #define NVIM_SEARCH_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 /* Values for the find_pattern_in_path() function args 'type' and 'action': */
 #define FIND_ANY        1
 #define FIND_DEFINE     2
@@ -38,6 +41,27 @@
 #define RE_SUBST        1       /* save/use pat in/from subst_pattern */
 #define RE_BOTH         2       /* save pat in both patterns */
 #define RE_LAST         2       /* use last used pattern if "pat" is NULL */
+
+/// Structure containing offset definition for the last search pattern
+///
+/// @note Only offset for the last search pattern is used, not for the last
+///       substitute pattern.
+typedef struct soffset {
+  char dir;     ///< Search direction: forward ('/') or backward ('?')
+  bool line;    ///< True if search has line offset.
+  bool end;     ///< True if search sets cursor at the end.
+  int64_t off;  ///< Actual offset value.
+} SearchOffset;
+
+/// Structure containing last search pattern and its attributes.
+typedef struct spat {
+  char_u *pat;          ///< The pattern (in allocated memory) or NULL.
+  bool magic;           ///< Magicness of the pattern.
+  bool no_scs;          ///< No smartcase for this pattern.
+  Timestamp timestamp;  ///< Time of the last change.
+  SearchOffset off;     ///< Pattern offset.
+  dict_T *additional_data;  ///< Additional data from ShaDa file.
+} SearchPattern;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "search.h.generated.h"

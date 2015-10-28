@@ -63,6 +63,7 @@
 #include "nvim/map.h"
 #include "nvim/misc1.h"
 #include "nvim/move.h"
+#include "nvim/state.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/window.h"
@@ -72,6 +73,16 @@
 #include "nvim/os/input.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/handle.h"
+
+typedef struct terminal_state {
+  VimState state;
+  Terminal *term;
+  int save_state;           // saved value of State
+  int save_rd;              // saved value of RedrawingDisabled
+  bool save_mapped_ctrl_c;  // saved value of mapped_ctrl_c;
+  bool close;
+  bool got_bs;              // if the last input was <C-\>
+} TerminalState;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "terminal.c.generated.h"
@@ -341,103 +352,104 @@ void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
 void terminal_enter(void)
 {
   buf_T *buf = curbuf;
-  Terminal *term = buf->terminal;
-  assert(term && "should only be called when curbuf has a terminal");
+  TerminalState state, *s = &state;
+  memset(s, 0, sizeof(TerminalState));
+  s->term = buf->terminal;
+  assert(s->term && "should only be called when curbuf has a terminal");
 
   // Ensure the terminal is properly sized.
-  terminal_resize(term, 0, 0);
+  terminal_resize(s->term, 0, 0);
 
   checkpcmark();
   setpcmark();
-  int save_state = State;
-  int save_rd = RedrawingDisabled;
+  s->save_state = State;
+  s->save_rd = RedrawingDisabled;
   State = TERM_FOCUS;
   RedrawingDisabled = false;
-  bool save_mapped_ctrl_c = mapped_ctrl_c;
+  s->save_mapped_ctrl_c = mapped_ctrl_c;
   mapped_ctrl_c = true;
   // go to the bottom when the terminal is focused
-  adjust_topline(term, buf, false);
+  adjust_topline(s->term, buf, false);
   // erase the unfocused cursor
-  invalidate_terminal(term, term->cursor.row, term->cursor.row + 1);
+  invalidate_terminal(s->term, s->term->cursor.row, s->term->cursor.row + 1);
   showmode();
   ui_busy_start();
   redraw(false);
-  int c;
-  bool close = false;
 
-  bool got_bs = false;  // True if the last input was <C-\>
+  s->state.execute = terminal_execute;
+  state_enter(&s->state);
 
-  while (curbuf->handle == term->buf_handle) {
-    input_enable_events();
-    c = safe_vgetc();
-    input_disable_events();
-
-    switch (c) {
-      case K_LEFTMOUSE:
-      case K_LEFTDRAG:
-      case K_LEFTRELEASE:
-      case K_MIDDLEMOUSE:
-      case K_MIDDLEDRAG:
-      case K_MIDDLERELEASE:
-      case K_RIGHTMOUSE:
-      case K_RIGHTDRAG:
-      case K_RIGHTRELEASE:
-      case K_MOUSEDOWN:
-      case K_MOUSEUP:
-        if (send_mouse_event(term, c)) {
-          goto end;
-        }
-        break;
-
-      case K_EVENT:
-        // We cannot let an event free the terminal yet. It is still needed.
-        term->refcount++;
-        queue_process_events(loop.events);
-        term->refcount--;
-        if (term->buf_handle == 0) {
-          close = true;
-          goto end;
-        }
-        break;
-
-      case Ctrl_N:
-        if (got_bs) {
-          goto end;
-        }
-        // FALLTHROUGH
-
-      default:
-        if (c == Ctrl_BSL && !got_bs) {
-          got_bs = true;
-          break;
-        }
-        if (term->closed) {
-          close = true;
-          goto end;
-        }
-
-        got_bs = false;
-        terminal_send_key(term, c);
-    }
-  }
-
-end:
   restart_edit = 0;
-  State = save_state;
-  RedrawingDisabled = save_rd;
+  State = s->save_state;
+  RedrawingDisabled = s->save_rd;
   // draw the unfocused cursor
-  invalidate_terminal(term, term->cursor.row, term->cursor.row + 1);
-  mapped_ctrl_c = save_mapped_ctrl_c;
+  invalidate_terminal(s->term, s->term->cursor.row, s->term->cursor.row + 1);
+  mapped_ctrl_c = s->save_mapped_ctrl_c;
   unshowmode(true);
-  redraw(buf != curbuf);
+  redraw(curbuf->handle != s->term->buf_handle);
   ui_busy_stop();
-  if (close) {
-    bool wipe = term->buf_handle != 0;
-    term->opts.close_cb(term->opts.data);
+  if (s->close) {
+    bool wipe = s->term->buf_handle != 0;
+    s->term->opts.close_cb(s->term->opts.data);
     if (wipe) {
       do_cmdline_cmd("bwipeout!");
     }
   }
+}
+
+static int terminal_execute(VimState *state, int key)
+{
+  TerminalState *s = (TerminalState *)state;
+
+  switch (key) {
+    case K_LEFTMOUSE:
+    case K_LEFTDRAG:
+    case K_LEFTRELEASE:
+    case K_MIDDLEMOUSE:
+    case K_MIDDLEDRAG:
+    case K_MIDDLERELEASE:
+    case K_RIGHTMOUSE:
+    case K_RIGHTDRAG:
+    case K_RIGHTRELEASE:
+    case K_MOUSEDOWN:
+    case K_MOUSEUP:
+      if (send_mouse_event(s->term, key)) {
+        return 0;
+      }
+      break;
+
+    case K_EVENT:
+      // We cannot let an event free the terminal yet. It is still needed.
+      s->term->refcount++;
+      queue_process_events(loop.events);
+      s->term->refcount--;
+      if (s->term->buf_handle == 0) {
+        s->close = true;
+        return 0;
+      }
+      break;
+
+    case Ctrl_N:
+      if (s->got_bs) {
+        return 0;
+      }
+      // FALLTHROUGH
+
+    default:
+      if (key == Ctrl_BSL && !s->got_bs) {
+        s->got_bs = true;
+        break;
+      }
+      if (s->term->closed) {
+        s->close = true;
+        return 0;
+      }
+
+      s->got_bs = false;
+      terminal_send_key(s->term, key);
+  }
+
+  return curbuf->handle == s->term->buf_handle;
 }
 
 void terminal_destroy(Terminal *term)

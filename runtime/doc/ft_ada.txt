@@ -58,7 +58,7 @@ To disable them use ":unlet".  Example:
 
 You can just use ":" and type these into the command line to set these
 temporarily before loading an Ada file.  You can make these option settings
-permanent by adding the "let" command(s), without a colon, to your "~/.vimrc"
+permanent by adding the "let" command(s), without a colon, to your |init.vim|
 file.
 
 Even on a slow (90Mhz) PC this mode works quickly, but if you find the

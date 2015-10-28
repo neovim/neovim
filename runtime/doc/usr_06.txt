@@ -35,17 +35,17 @@ easy to overview the file.  After a while you will find that black&white text
 slows you down!
 
 If you always want to use syntax highlighting, put the ":syntax enable"
-command in your |vimrc| file.
+command in your |init.vim| file.
 
 If you want syntax highlighting only when the terminal supports colors, you
-can put this in your |vimrc| file: >
+can put this in your |init.vim| file: >
 
 	if &t_Co > 1
 	   syntax enable
 	endif
 
 If you want syntax highlighting only in the GUI version, put the ":syntax
-enable" command in your |gvimrc| file.
+enable" command in your |ginit.vim| file.
 
 ==============================================================================
 *06.2*	No or wrong colors?
@@ -144,14 +144,14 @@ the GUI use the Edit/Color Scheme menu.  You can also type the command: >
 want to try out.  Look in the directory $VIMRUNTIME/colors.
 
 When you found the color scheme that you like, add the ":colorscheme" command
-to your |vimrc| file.
+to your |init.vim| file.
 
 You could also write your own color scheme.  This is how you do it:
 
 1. Select a color scheme that comes close.  Copy this file to your own Vim
    directory.  For Unix, this should work: >
 
-	!mkdir ~/.vim/colors
+	!mkdir -p ~/.config/nvim/colors
 	!cp $VIMRUNTIME/colors/morning.vim ~/.vim/colors/mine.vim
 <
    This is done from Vim, because it knows the value of $VIMRUNTIME.

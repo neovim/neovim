@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
@@ -35,7 +36,7 @@ bool server_init(void)
   const char *listen_address = os_getenv(LISTEN_ADDRESS_ENV_VAR);
   if (listen_address == NULL) {
     must_free = true;
-    listen_address = (char *)vim_tempname();
+    listen_address = server_address_new();
   }
 
   bool ok = (server_start(listen_address) == 0);
@@ -67,6 +68,27 @@ void server_teardown(void)
   GA_DEEP_CLEAR(&watchers, SocketWatcher *, close_socket_watcher);
 }
 
+/// Generates unique address for local server.
+///
+/// In Windows this is a named pipe in the format
+///     \\.\pipe\nvim-<PID>-<COUNTER>.
+///
+/// For other systems it is a path returned by vim_tempname().
+///
+/// This function is NOT thread safe
+char *server_address_new(void)
+{
+#ifdef WIN32
+  static uint32_t count = 0;
+  char template[ADDRESS_MAX_SIZE];
+  snprintf(template, ADDRESS_MAX_SIZE,
+    "\\\\.\\pipe\\nvim-%" PRIu64 "-%" PRIu32, os_get_pid(), count++);
+  return xstrdup(template);
+#else
+  return (char *)vim_tempname();
+#endif
+}
+
 /// Starts listening for API calls on the TCP address or pipe path `endpoint`.
 /// The socket type is determined by parsing `endpoint`: If it's a valid IPv4
 /// address in 'ip[:port]' format, then it will be TCP socket. The port is
@@ -79,8 +101,12 @@ void server_teardown(void)
 /// @returns 0 on success, 1 on a regular error, and negative errno
 ///          on failure to bind or connect.
 int server_start(const char *endpoint)
-  FUNC_ATTR_NONNULL_ALL
 {
+  if (endpoint == NULL) {
+    ELOG("Attempting to start server on NULL endpoint");
+    return 1;
+  }
+
   SocketWatcher *watcher = xmalloc(sizeof(SocketWatcher));
   socket_watcher_init(&loop, watcher, endpoint, NULL);
 

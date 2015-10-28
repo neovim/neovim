@@ -58,7 +58,7 @@ Disadvantages:
   message.
 
 If you want to put swap files in a fixed place, put a command resembling the
-following ones in your .vimrc:
+following ones in your vimrc:
 	:set dir=~/tmp		(for Unix)
 	:set dir=c:\\tmp	(for MS-DOS and Win32)
 This is also very handy when editing files on floppy.  Of course you will have

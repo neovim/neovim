@@ -483,6 +483,21 @@ bool has_non_ascii(const char_u *s)
   return false;
 }
 
+/// Return true if string "s" contains a non-ASCII character (128 or higher).
+/// When "s" is NULL false is returned.
+bool has_non_ascii_len(const char *const s, const size_t len)
+  FUNC_ATTR_PURE
+{
+  if (s != NULL) {
+    for (size_t i = 0; i < len; i++) {
+      if ((uint8_t) s[i] >= 128) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 /*
  * Concatenate two strings and return the result in allocated memory.
  */

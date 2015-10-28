@@ -2120,6 +2120,12 @@ return {
     func='ex_wrongmodifier',
   },
   {
+    command='rshada',
+    flags=bit.bor(BANG, FILE1, TRLBAR, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_shada',
+  },
+  {
     command='runtime',
     flags=bit.bor(BANG, NEEDARG, FILES, TRLBAR, SBOXOK, CMDWIN),
     addr_type=ADDR_LINES,
@@ -2153,7 +2159,7 @@ return {
     command='rviminfo',
     flags=bit.bor(BANG, FILE1, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
-    func='ex_viminfo',
+    func='ex_shada',
   },
   {
     command='substitute',
@@ -3032,6 +3038,12 @@ return {
     func='ex_wsverb',
   },
   {
+    command='wshada',
+    flags=bit.bor(BANG, FILE1, TRLBAR, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_shada',
+  },
+  {
     command='wundo',
     flags=bit.bor(BANG, NEEDARG, FILE1),
     addr_type=ADDR_LINES,
@@ -3041,7 +3053,7 @@ return {
     command='wviminfo',
     flags=bit.bor(BANG, FILE1, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
-    func='ex_viminfo',
+    func='ex_shada',
   },
   {
     command='xit',

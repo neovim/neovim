@@ -248,7 +248,7 @@ you can set the 'lines' option to set a different window size: >
 You don't want to do this in a terminal, since its size is fixed (except for
 an xterm that supports resizing).
    The gvimrc file is searched for in the same locations as the vimrc file.
-Normally its name is "~/.gvimrc" for Unix and "$VIM/_gvimrc" for MS-Windows.
+Normally its name is "~/.config/nvim/ginit.vim".
 The $MYGVIMRC environment variable is set to it, thus you can use this command
 to edit the file, if you have one: >
 

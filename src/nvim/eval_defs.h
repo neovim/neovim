@@ -2,6 +2,7 @@
 #define NVIM_EVAL_DEFS_H
 
 #include <limits.h>
+#include <stddef.h>
 
 #include "nvim/hashtab.h"
 
@@ -131,5 +132,17 @@ typedef struct list_stack_S {
   list_T *list;
   struct list_stack_S *prev;
 } list_stack_T;
+
+// In a hashtab item "hi_key" points to "di_key" in a dictitem.
+// This avoids adding a pointer to the hashtab item.
+
+/// Convert a dictitem pointer to a hashitem key pointer
+#define DI2HIKEY(di) ((di)->di_key)
+
+/// Convert a hashitem key pointer to a dictitem pointer
+#define HIKEY2DI(p)  ((dictitem_T *)(p - offsetof(dictitem_T, di_key)))
+
+/// Convert a hashitem pointer to a dictitem pointer
+#define HI2DI(hi)     HIKEY2DI((hi)->hi_key)
 
 #endif  // NVIM_EVAL_DEFS_H

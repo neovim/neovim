@@ -72,7 +72,7 @@ static char *features[] = {
 // clang-format off
 static int included_patches[] = {
   // 850,
-  // 849,
+     849,
   // 848,
   // 847,
   // 846,
@@ -128,7 +128,7 @@ static int included_patches[] = {
   // 796 NA
   // 795,
   // 794 NA
-  // 793,
+  793,
   // 792,
   // 791,
   // 790,
@@ -1067,31 +1067,6 @@ void list_version(void)
   version_msg(SYS_VIMRC_FILE);
   version_msg("\"\n");
 #endif  // ifdef SYS_VIMRC_FILE
-#ifdef USR_VIMRC_FILE
-  version_msg(_("     user vimrc file: \""));
-  version_msg(USR_VIMRC_FILE);
-  version_msg("\"\n");
-#endif  // ifdef USR_VIMRC_FILE
-#ifdef USR_VIMRC_FILE2
-  version_msg(_(" 2nd user vimrc file: \""));
-  version_msg(USR_VIMRC_FILE2);
-  version_msg("\"\n");
-#endif  // ifdef USR_VIMRC_FILE2
-#ifdef USR_VIMRC_FILE3
-  version_msg(_(" 3rd user vimrc file: \""));
-  version_msg(USR_VIMRC_FILE3);
-  version_msg("\"\n");
-#endif  // ifdef USR_VIMRC_FILE3
-#ifdef USR_EXRC_FILE
-  version_msg(_("      user exrc file: \""));
-  version_msg(USR_EXRC_FILE);
-  version_msg("\"\n");
-#endif  // ifdef USR_EXRC_FILE
-#ifdef USR_EXRC_FILE2
-  version_msg(_("  2nd user exrc file: \""));
-  version_msg(USR_EXRC_FILE2);
-  version_msg("\"\n");
-#endif  // ifdef USR_EXRC_FILE2
 #ifdef HAVE_PATHDEF
 
   if (*default_vim_dir != NUL) {

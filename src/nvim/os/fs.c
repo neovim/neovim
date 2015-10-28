@@ -366,11 +366,17 @@ int os_mkdir_recurse(const char *const dir, int32_t mode,
   }
   while (e != real_end) {
     if (e > past_head) {
-      *e = '/';
+      *e = PATHSEP;
     } else {
       *past_head = past_head_save;
     }
-    e += strlen(e);
+    const size_t component_len = strlen(e);
+    e += component_len;
+    if (e == real_end
+        && memcnt(e - component_len, PATHSEP, component_len) == component_len) {
+      // Path ends with something like "////". Ignore this.
+      break;
+    }
     int ret;
     if ((ret = os_mkdir(curdir, mode)) != 0) {
       *failed_dir = curdir;

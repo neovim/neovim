@@ -610,11 +610,11 @@ More about synchronizing in the reference manual: |:syn-sync|.
 *44.11*	Installing a syntax file
 
 When your new syntax file is ready to be used, drop it in a "syntax" directory
-in 'runtimepath'.  For Unix that would be "~/.vim/syntax".
+in 'runtimepath'.  For Unix that would be "~/.config/nvim/syntax".
   The name of the syntax file must be equal to the file type, with ".vim"
 added.  Thus for the x language, the full path of the file would be:
 
-	~/.vim/syntax/x.vim ~
+	~/.config/nvim/syntax/x.vim ~
 
 You must also make the file type be recognized.  See |43.2|.
 
@@ -640,7 +640,7 @@ Write the file with the same name as the original syntax file.  In this case
 "c.vim".  Place it in a directory near the end of 'runtimepath'.  This makes
 it loaded after the original syntax file.  For Unix this would be:
 
-	~/.vim/after/syntax/c.vim ~
+	~/.config/nvim/after/syntax/c.vim ~
 
 ==============================================================================
 *44.12*	Portable syntax file layout

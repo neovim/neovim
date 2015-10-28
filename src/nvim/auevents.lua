@@ -84,7 +84,7 @@ return {
     'User',                   -- user defined autocommand
     'VimEnter',               -- after starting Vim
     'VimLeave',               -- before exiting Vim
-    'VimLeavePre',            -- before exiting Vim and writing .viminfo
+    'VimLeavePre',            -- before exiting Vim and writing ShaDa file
     'VimResized',             -- after Vim window was resized
     'WinEnter',               -- after entering a window
     'WinLeave',               -- before leaving a window

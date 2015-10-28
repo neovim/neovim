@@ -32,7 +32,7 @@ endfunc
   $put ='VimLeave done'
   write
 endfunc
-:set viminfo='100
+:set shada='100
 :au BufUnload * call CloseAll()
 :au VimLeave * call WriteToOut()
 :e small.vim

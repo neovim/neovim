@@ -316,7 +316,7 @@ When referring to a Vim option in the help file, place the option name between
 two single quotes, eg. 'statusline'
 
 When referring to any other technical term, such as a filename or function
-parameter, surround it in backticks (`), eg. `~/.path/to/nvimrc`.
+parameter, surround it in backticks (`), eg. `~/.path/to/init.vim`.
 
 
 HIGHLIGHTING

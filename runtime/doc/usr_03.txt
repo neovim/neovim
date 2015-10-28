@@ -470,7 +470,7 @@ If you like one of the options mentioned before, and set it each time you use
 Vim, you can put the command in your Vim startup file.  Edit the file, for
 example with: >
 
-	:edit ~/.vimrc
+	:edit ~/.config/nvim/init.vim
 
 Then add a line with the command to set the option, just like you typed it in
 Vim.  Example: >

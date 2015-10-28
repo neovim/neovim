@@ -12,8 +12,9 @@ good.
 To start the transition, link your previous configuration so Nvim can use
 it:
 >
-    ln -s ~/.vimrc ~/.nvimrc
-    ln -s ~/.vim ~/.nvim
+    mkdir -p ${XDG_CONFIG_HOME:=$HOME/.config}
+    ln -s ~/.vim $XDG_CONFIG_HOME/nvim
+    ln -s ~/.vimrc $XDG_CONFIG_HOME/nvim/init.vim
 <
 See |nvim-intro|, especially |nvim-python| and |nvim-clipboard|, for
 additional software you might need to install to use all of Nvim's features.

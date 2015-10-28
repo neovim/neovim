@@ -2042,8 +2042,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
 
   /* set the '. mark */
   if (!cmdmod.keepjumps) {
-    curbuf->b_last_change.lnum = lnum;
-    curbuf->b_last_change.col = col;
+    RESET_FMARK(&curbuf->b_last_change, ((pos_T) {lnum, col, 0}), 0);
 
     /* Create a new entry if a new undo-able change was started or we
      * don't have an entry yet. */
@@ -2054,7 +2053,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
         /* Don't create a new entry when the line number is the same
          * as the last one and the column is not too far away.  Avoids
          * creating many entries for typing "xxxxx". */
-        p = &curbuf->b_changelist[curbuf->b_changelistlen - 1];
+        p = &curbuf->b_changelist[curbuf->b_changelistlen - 1].mark;
         if (p->lnum != lnum)
           add = TRUE;
         else {
@@ -2074,7 +2073,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
           /* changelist is full: remove oldest entry */
           curbuf->b_changelistlen = JUMPLISTSIZE - 1;
           memmove(curbuf->b_changelist, curbuf->b_changelist + 1,
-              sizeof(pos_T) * (JUMPLISTSIZE - 1));
+              sizeof(curbuf->b_changelist[0]) * (JUMPLISTSIZE - 1));
           FOR_ALL_TAB_WINDOWS(tp, wp) {
             /* Correct position in changelist for other windows on
              * this buffer. */
@@ -2583,21 +2582,22 @@ void msgmore(long n)
 void beep_flush(void)
 {
   if (emsg_silent == 0) {
-    flush_buffers(FALSE);
-    vim_beep();
+    flush_buffers(false);
+    vim_beep(BO_ERROR);
   }
 }
 
-/*
- * give a warning for an error
- */
-void vim_beep(void)
+// Give a warning for an error
+// val is one of the BO_ values, e.g., BO_OPER
+void vim_beep(unsigned val)
 {
   if (emsg_silent == 0) {
-    if (p_vb) {
-      ui_visual_bell();
-    } else {
-      ui_putc(BELL);
+    if (!((bo_flags & val) || (bo_flags & BO_ALL))) {
+      if (p_vb) {
+        ui_visual_bell();
+      } else {
+        ui_putc(BELL);
+      }
     }
 
     /* When 'verbose' is set and we are sourcing a script or executing a

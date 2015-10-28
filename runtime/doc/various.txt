@@ -33,7 +33,7 @@ CTRL-L			Clear and redraw the screen.  The redraw may happen
 							*N<Del>*
 <Del>			When entering a number: Remove the last digit.
 			Note: if you like to use <BS> for this, add this
-			mapping to your .vimrc: >
+			mapping to your vimrc: >
 				:map CTRL-V <BS>   CTRL-V <Del>
 <
 :as[cii]	or					*ga* *:as* *:ascii*
@@ -370,6 +370,7 @@ N  *+reltime*		|reltime()| function, 'hlsearch'/'incsearch' timeout,
 			'redrawtime' option
 B  *+rightleft*		Right to left typing |'rightleft'|
 N  *+scrollbind*	|'scrollbind'|
+N  *+shada*		|'shada'|
 B  *+signs*		|:sign|
 N  *+smartindent*	|'smartindent'|
 N  *+startuptime*	|--startuptime| argument
@@ -387,7 +388,6 @@ N  *+textobjects*	|text-objects| selection
 N  *+title*		Setting the window 'title' and 'icon'
 N  *+toolbar*		|gui-toolbar|
 N  *+user_commands*	User-defined commands. |user-commands|
-N  *+viminfo*		|'viminfo'|
 N  *+vertsplit*		Vertically split windows |:vsplit|
 N  *+virtualedit*	|'virtualedit'|
 S  *+visual*		Visual mode |Visual-mode| Always enabled since 7.4.200.

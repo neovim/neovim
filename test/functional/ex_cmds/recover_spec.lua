@@ -29,9 +29,11 @@ describe(':preserve', function()
 
   it("saves to custom 'directory' and (R)ecovers (issue #1836)", function()
     local testfile = 'testfile_recover_spec'
+    -- Note: `set swapfile` *must* go after `set directory`: otherwise it may 
+    -- attempt to create a swapfile in different directory.
     local init = [[
-      set swapfile fileformat=unix undolevels=-1
       set directory^=]]..swapdir..[[//
+      set swapfile fileformat=unix undolevels=-1
     ]]
 
     source(init)
@@ -47,7 +49,8 @@ describe(':preserve', function()
 
     --TODO(justinmk): this is an ugly hack to force `helpers` to support
     --multiple sessions.
-    local nvim2 = helpers.spawn({helpers.nvim_prog, '-u', 'NONE', '--embed'})
+    local nvim2 = helpers.spawn({helpers.nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed'},
+                                true)
     helpers.set_session(nvim2)
 
     source(init)

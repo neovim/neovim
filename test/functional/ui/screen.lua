@@ -125,7 +125,7 @@ end
 
 do
   local spawn, nvim_prog = helpers.spawn, helpers.nvim_prog
-  local session = spawn({nvim_prog, '-u', 'NONE', '-N', '--embed'})
+  local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N', '--embed'})
   local status, rv = session:request('vim_get_color_map')
   if not status then
     print('failed to get color map')
