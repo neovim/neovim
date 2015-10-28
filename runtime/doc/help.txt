@@ -161,7 +161,6 @@ Versions ~
 						*sys-file-list*
 Remarks about specific systems ~
 |os_mac.txt|	Macintosh
-|os_unix.txt|	Unix
 |os_win32.txt|	MS-Windows
 						*standard-plugin-list*
 Standard plugins ~
