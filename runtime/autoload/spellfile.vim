@@ -196,9 +196,11 @@ function! spellfile#GetDirChoices()
 endfunc
 
 function! spellfile#WritableSpellDir()
-  if has("unix")
-    " For Unix always use the $HOME/.nvim directory
-    return $HOME . "/.nvim/spell"
+  " Always use the $XDG_DATA_HOME/nvim/site directory
+  if exists('$XDG_DATA_HOME')
+    return $XDG_DATA_HOME . "/nvim/site/spell"
+  else
+    return $HOME . "/.local/share/nvim/site/spell"
   endif
   for dir in split(&rtp, ',')
     if filewritable(dir) == 2
