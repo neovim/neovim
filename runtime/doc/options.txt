@@ -901,7 +901,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	again not rename the file.
 
 						*'backupdir'* *'bdir'*
-'backupdir' 'bdir'	string	(default "$XDG_DATA_HOME/nvim/backup")
+'backupdir' 'bdir'	string	(default ".,$XDG_DATA_HOME/nvim/backup")
 			global
 	List of directories for the backup file, separated with commas.
 	- The backup file will be created in the first directory in the list
