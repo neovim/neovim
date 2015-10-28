@@ -644,7 +644,9 @@ void u_compute_hash(char_u *hash)
 ///                         be found.
 /// @param[in]  reading  If true, find the file to read by traversing all of the
 ///                      directories in &undodir. If false use the first
-///                      existing directory.
+///                      existing directory. If none of the directories in
+///                      &undodir option exist then last directory in the list
+///                      will be automatically created.
 ///
 /// @return [allocated] File name to read from/write to or NULL.
 char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
@@ -690,7 +692,20 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
       memmove(tail + tail_len + 1, ".un~", sizeof(".un~"));
     } else {
       dir_name[dir_len] = NUL;
-      if (os_isdir((char_u *)dir_name)) {
+      bool has_directory = os_isdir((char_u *)dir_name);
+      if (!has_directory && *dirp == NUL && !reading) {
+        // Last directory in the list does not exist, create it.
+        int ret;
+        char *failed_dir;
+        if ((ret = os_mkdir_recurse(dir_name, 0755, &failed_dir)) != 0) {
+          EMSG3(_("E926: Unable to create directory \"%s\" for undo file: %s"),
+                failed_dir, os_strerror(ret));
+          xfree(failed_dir);
+        } else {
+          has_directory = true;
+        }
+      }
+      if (has_directory) {
         if (munged_name == NULL) {
           munged_name = xstrdup(ffname);
           for (char *p = munged_name; *p != NUL; mb_ptr_adv(p)) {
