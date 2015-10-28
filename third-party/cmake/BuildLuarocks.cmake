@@ -116,16 +116,12 @@ list(APPEND THIRD_PARTY_DEPS lpeg)
 if(USE_BUNDLED_BUSTED)
   # We can remove the cliargs dependency once the busted version dependency
   # is fixed.
-  add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/lua_cliargs
-    COMMAND ${LUAROCKS_BINARY}
-    ARGS install lua_cliargs 2.5-4
-    DEPENDS luarocks)
   add_custom_command(OUTPUT ${HOSTDEPS_BIN_DIR}/busted
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build https://raw.githubusercontent.com/Olivine-Labs/busted/v2.0.rc10-1/busted-2.0.rc10-1.rockspec ${LUAROCKS_BUILDARGS}
-    DEPENDS luarocks ${HOSTDEPS_LIB_DIR}/luarocks/rocks/lua_cliargs)
+    ARGS build https://raw.githubusercontent.com/Olivine-Labs/busted/v2.0.rc11-0/busted-2.0.rc11-0.rockspec ${LUAROCKS_BUILDARGS}
+    DEPENDS luarocks)
   add_custom_target(busted
-    DEPENDS ${HOSTDEPS_BIN_DIR}/busted ${HOSTDEPS_LIB_DIR}/luarocks/rocks/lua_cliargs)
+    DEPENDS ${HOSTDEPS_BIN_DIR}/busted)
 
   add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/nvim-client
     COMMAND ${LUAROCKS_BINARY}
