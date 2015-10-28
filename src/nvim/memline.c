@@ -2990,7 +2990,7 @@ static void ml_lineadd(buf_T *buf, int count)
  * If it worked returns OK and the resolved link in "buf[MAXPATHL]".
  * Otherwise returns FAIL.
  */
-int resolve_symlink(char_u *fname, char_u *buf)
+int resolve_symlink(const char_u *fname, char_u *buf)
 {
   char_u tmp[MAXPATHL];
   int ret;
