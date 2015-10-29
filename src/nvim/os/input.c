@@ -82,9 +82,11 @@ static void cursorhold_event(void **argv)
 
 static void create_cursorhold_event(void)
 {
-  // If the queue had any items, this function should not have been
-  // called(inbuf_poll would return kInputAvail)
-  assert(queue_empty(loop.events));
+  // If events are enabled and the queue has any items, this function should not
+  // have been called(inbuf_poll would return kInputAvail)
+  // TODO(tarruda): Cursorhold should be implemented as a timer set during the
+  // `state_check` callback for the states where it can be triggered.
+  assert(!events_enabled || queue_empty(loop.events));
   queue_put(loop.events, cursorhold_event, 0);
 }
 

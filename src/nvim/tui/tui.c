@@ -43,7 +43,11 @@ typedef struct {
   TermInput input;
   uv_loop_t write_loop;
   unibi_term *ut;
-  uv_tty_t output_handle;
+  union {
+    uv_tty_t tty;
+    uv_pipe_t pipe;
+  } output_handle;
+  bool out_isatty;
   SignalWatcher winch_handle, cont_handle;
   bool cont_received;
   // Event scheduled by the ui bridge. Since the main thread suspends until
@@ -116,8 +120,8 @@ static void terminfo_start(UI *ui)
   data->unibi_ext.enter_insert_mode = -1;
   data->unibi_ext.enter_replace_mode = -1;
   data->unibi_ext.exit_insert_mode = -1;
-  // write output to stderr if stdout is not a tty
-  data->out_fd = os_isatty(1) ? 1 : (os_isatty(2) ? 2 : 1);
+  data->out_fd = 1;
+  data->out_isatty = os_isatty(data->out_fd);
   // setup unibilium
   data->ut = unibi_from_env();
   if (!data->ut) {
@@ -132,8 +136,13 @@ static void terminfo_start(UI *ui)
   // Enable bracketed paste
   unibi_out(ui, data->unibi_ext.enable_bracketed_paste);
   uv_loop_init(&data->write_loop);
-  uv_tty_init(&data->write_loop, &data->output_handle, data->out_fd, 0);
-  uv_tty_set_mode(&data->output_handle, UV_TTY_MODE_RAW);
+  if (data->out_isatty) {
+    uv_tty_init(&data->write_loop, &data->output_handle.tty, data->out_fd, 0);
+    uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_RAW);
+  } else {
+    uv_pipe_init(&data->write_loop, &data->output_handle.pipe, 0);
+    uv_pipe_open(&data->output_handle.pipe, data->out_fd);
+  }
 }
 
 static void terminfo_stop(UI *ui)
@@ -677,7 +686,8 @@ static void update_size(UI *ui)
   }
 
   // 2 - try from a system call(ioctl/TIOCGWINSZ on unix)
-  if (!uv_tty_get_winsize(&data->output_handle, &width, &height)) {
+  if (data->out_isatty &&
+      !uv_tty_get_winsize(&data->output_handle.tty, &width, &height)) {
     goto end;
   }
 
