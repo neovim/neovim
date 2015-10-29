@@ -260,7 +260,7 @@ if((CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN) AND NOT CMAKE_C_COMPILER_ID MA
   message(FATAL_ERROR "Sanitizers are only supported for Clang.")
 endif()
 
-option(ENABLE_JEMALLOC "enable jemalloc" OFF)
+option(ENABLE_JEMALLOC "enable jemalloc" ON)
 
 if (ENABLE_JEMALLOC)
   if(CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN)
