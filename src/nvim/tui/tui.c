@@ -120,8 +120,7 @@ static void terminfo_start(UI *ui)
   data->unibi_ext.enter_insert_mode = -1;
   data->unibi_ext.enter_replace_mode = -1;
   data->unibi_ext.exit_insert_mode = -1;
-  // write output to stderr if stdout is not a tty
-  data->out_fd = os_isatty(1) ? 1 : (os_isatty(2) ? 2 : 1);
+  data->out_fd = 1;
   data->out_isatty = os_isatty(data->out_fd);
   // setup unibilium
   data->ut = unibi_from_env();
