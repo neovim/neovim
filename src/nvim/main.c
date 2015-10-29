@@ -1601,10 +1601,12 @@ static bool do_user_initialization(void)
 {
   bool do_exrc = p_exrc;
   if (process_env("VIMINIT", true) == OK) {
+    do_exrc = p_exrc;
     return do_exrc;
   }
   char_u *user_vimrc = (char_u *)stdpaths_user_conf_subpath("init.vim");
   if (do_source(user_vimrc, true, DOSO_VIMRC) != FAIL) {
+    do_exrc = p_exrc;
     if (do_exrc) {
       do_exrc = (path_full_compare((char_u *)VIMRC_FILE, user_vimrc, false)
                  != kEqualFiles);
@@ -1630,6 +1632,7 @@ static bool do_user_initialization(void)
       vimrc[dir_len] = PATHSEP;
       memmove(vimrc + dir_len + 1, path_tail, sizeof(path_tail));
       if (do_source((char_u *) vimrc, true, DOSO_VIMRC) != FAIL) {
+        do_exrc = p_exrc;
         if (do_exrc) {
           do_exrc = (path_full_compare((char_u *)VIMRC_FILE, (char_u *)vimrc,
                                       false) != kEqualFiles);
@@ -1643,6 +1646,7 @@ static bool do_user_initialization(void)
     xfree(config_dirs);
   }
   if (process_env("EXINIT", false) == OK) {
+    do_exrc = p_exrc;
     return do_exrc;
   }
   return do_exrc;
