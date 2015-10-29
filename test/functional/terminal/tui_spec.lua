@@ -149,3 +149,27 @@ describe('tui', function()
     ]])
   end)
 end)
+
+describe('tui with non-tty file descriptors', function()
+  before_each(helpers.clear)
+
+  after_each(function()
+    os.remove('testF') -- ensure test file is removed
+  end)
+
+  it('can handle pipes as stdout and stderr', function()
+    local screen = thelpers.screen_setup(0, '"'..helpers.nvim_prog..' -u NONE -i NONE --cmd \'set noswapfile\' --cmd \'normal iabc\' > /dev/null 2>&1 && cat testF && rm testF"')
+    screen:set_default_attr_ids({})
+    screen:set_default_attr_ignore(true)
+    feed(':w testF\n:q\n')
+    screen:expect([[
+      :w testF                                          |
+      :q                                                |
+      abc                                               |
+                                                        |
+      [Program exited, press any key to close]          |
+                                                        |
+      -- TERMINAL --                                    |
+    ]])
+  end)
+end)
