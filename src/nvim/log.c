@@ -9,12 +9,11 @@
 #include "nvim/types.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
+#include "nvim/path.h"
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-
-#define USR_LOG_FILE "$HOME/.nvimlog"
 
 static uv_mutex_t mutex;
 
@@ -64,7 +63,7 @@ end:
 
 /// Open the log file for appending.
 ///
-/// @return The FILE* specified by the USR_LOG_FILE path or stderr in case of
+/// @return The FILE* to log into or stderr in case of
 ///         error
 FILE *open_log_file(void)
 {
@@ -77,18 +76,12 @@ FILE *open_log_file(void)
     return stderr;
   }
 
-  // expand USR_LOG_FILE and open the file
+  // get log file location and open the file
   FILE *log_file;
   opening_log_file = true;
   {
-    static char expanded_log_file_path[MAXPATHL + 1];
-
-    expand_env((char_u *)USR_LOG_FILE, (char_u *)expanded_log_file_path,
-               MAXPATHL);
-    // if the log file path expansion failed then fall back to stderr
-    if (strcmp(USR_LOG_FILE, expanded_log_file_path) == 0) {
-      goto open_log_file_error;
-    }
+    char * const data_dir = stdpaths_get_xdg_var(kXDGDataHome);
+    char * const expanded_log_file_path = concat_fnames_realloc(data_dir,"nvimlog", true);
 
     log_file = fopen(expanded_log_file_path, "a");
     if (log_file == NULL) {
@@ -103,7 +96,7 @@ open_log_file_error:
   opening_log_file = false;
 
   do_log_to_file(stderr, ERROR_LOG_LEVEL, __func__, __LINE__, true,
-                 "Couldn't open USR_LOG_FILE, logging to stderr! This may be "
+                 "Couldn't open log file, logging to stderr! This may be "
                  "caused by attempting to LOG() before initialization "
                  "functions are called (e.g. init_homedir()).");
   return stderr;
