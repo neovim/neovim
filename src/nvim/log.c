@@ -80,10 +80,11 @@ FILE *open_log_file(void)
   FILE *log_file;
   opening_log_file = true;
   {
-    char * const data_dir = stdpaths_get_xdg_var(kXDGDataHome);
-    char * const expanded_log_file_path = concat_fnames_realloc(data_dir,"nvimlog", true);
+    char * dir = stdpaths_get_xdg_var(kXDGDataHome);
+    dir = concat_fnames_realloc(dir,"nvimlog", true);
 
-    log_file = fopen(expanded_log_file_path, "a");
+    log_file = fopen(dir, "a");
+    free(dir);
     if (log_file == NULL) {
       goto open_log_file_error;
     }
