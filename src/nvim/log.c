@@ -81,7 +81,7 @@ FILE *open_log_file(void)
   opening_log_file = true;
   {
     char * dir = stdpaths_get_xdg_var(kXDGDataHome);
-    dir = concat_fnames_realloc(dir, "nvimlog", true);
+    dir = concat_fnames_realloc(dir, "nvim/log", true);
 
     log_file = fopen(dir, "a");
     xfree(dir);
