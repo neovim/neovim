@@ -48,6 +48,17 @@ describe("'listchars'", function()
     feed('GG<cr>')
     feed('GG')
 
+    -- test third listchars tab character
+    execute('set listchars+=tab:<->,space:.,trail:~')
+    execute('set list')
+    execute('/^start:/')
+    execute('normal! jzt')
+    feed('GG<cr>')
+    feed('GG<cr>')
+    feed('GG<cr>')
+    feed('GG<cr>')
+    feed('GGH')
+
     -- Delete the buffer contents and :put the collected lines.
     execute('%d')
     execute('put =g:lines', '1d')
@@ -63,7 +74,12 @@ describe("'listchars'", function()
       ..bb>---..$
       ...cccc>.$
       dd........ee..>-$
-      .$]])
+      .$
+      <------>aa<---->$
+      ..bb<-->~~$
+      ...cccc>~$
+      dd........ee~~<>$
+      ~$]])
   end)
 
   it('works with :list', function()

@@ -4121,11 +4121,25 @@ A jump table for the options with a short description can be found at |Q_op|.
 			omitted, there is no extra character at the end of the
 			line.
 							*lcs-tab*
-	  tab:xy	Two characters to be used to show a tab.  The first
-			char is used once.  The second char is repeated to
-			fill the space that the tab normally occupies.
+	  tab:xy[z]	Two or three characters to be used to show a tab.
+			The third character is optional.
+
+			If the tab is at least two characters wide then:
+			 - the first character is used once at the beginning
+			 - the second character is repeated to fill the tab
+			 - if the third character is specified, it is used
+			   once at the end
+
+			If the tab is one character wide then:
+			 - if the third character is specified, then
+			   the third character is used
+			 - if the third character is not specified, then
+			   the first character is used
+
 			"tab:>-" will show a tab that takes four spaces as
-			">---".  When omitted, a tab is show as ^I.
+			">---".  "tab:<->" will show a tab as that takes
+			four spaces as "<-->".  When omitted, a tab is shown
+			as ^I.
 							*lcs-space*
 	  space:c	Character to show for a space.  When omitted, spaces
 			are left blank.
