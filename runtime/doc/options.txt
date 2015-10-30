@@ -6696,7 +6696,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Alias for 'term', see above.
 
 						*'undodir'* *'udir'* *E926*
-'undodir' 'udir'	string	(default ".")
+'undodir' 'udir'	string	(default "$XDG_DATA_HOME/nvim/undo")
 			global
 			{only when compiled with the |+persistent_undo| feature}
 	List of directory names for undo files, separated with commas.
