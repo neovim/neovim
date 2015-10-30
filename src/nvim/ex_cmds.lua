@@ -1754,12 +1754,6 @@ return {
     func='ex_menu',
   },
   {
-    command='open',
-    flags=bit.bor(RANGE, BANG, EXTRA),
-    addr_type=ADDR_LINES,
-    func='ex_open',
-  },
-  {
     command='oldfiles',
     flags=bit.bor(BANG, TRLBAR, SBOXOK, CMDWIN),
     addr_type=ADDR_LINES,
