@@ -901,7 +901,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	again not rename the file.
 
 						*'backupdir'* *'bdir'*
-'backupdir' 'bdir'	string	(default "$XDG_DATA_HOME/nvim/backup")
+'backupdir' 'bdir'	string	(default ".,$XDG_DATA_HOME/nvim/backup")
 			global
 	List of directories for the backup file, separated with commas.
 	- The backup file will be created in the first directory in the list
@@ -6695,8 +6695,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	Alias for 'term', see above.
 
-						*'undodir'* *'udir'*
-'undodir' 'udir'	string	(default ".")
+						*'undodir'* *'udir'* *E926*
+'undodir' 'udir'	string	(default "$XDG_DATA_HOME/nvim/undo")
 			global
 			{only when compiled with the |+persistent_undo| feature}
 	List of directory names for undo files, separated with commas.
@@ -6705,8 +6705,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	"file.txt" is ".file.txt.un~".
 	For other directories the file name is the full path of the edited
 	file, with path separators replaced with "%".
-	When writing: The first directory that exists is used. "." always
-	works, no directories after "." will be used for writing.
+	When writing: The first directory that exists is used.  "." always
+	works, no directories after "." will be used for writing.  If none of 
+	the directories exist Neovim will attempt to create last directory in 
+	the list.
 	When reading all entries are tried to find an undo file.  The first
 	undo file that exists is used.  When it cannot be read an error is
 	given, no further entry is used.

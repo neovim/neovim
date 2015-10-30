@@ -16678,10 +16678,11 @@ static void f_undofile(typval_T *argvars, typval_T *rettv)
       /* If there is no file name there will be no undo file. */
       rettv->vval.v_string = NULL;
     } else {
-      char_u *ffname = (char_u *)FullName_save((char *)fname, FALSE);
+      char *ffname = FullName_save((char *)fname, false);
 
-      if (ffname != NULL)
-        rettv->vval.v_string = u_get_undo_file_name(ffname, FALSE);
+      if (ffname != NULL) {
+        rettv->vval.v_string = (char_u *)u_get_undo_file_name(ffname, false);
+      }
       xfree(ffname);
     }
   }
