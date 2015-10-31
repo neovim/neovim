@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "nvim/log.h"
 #include "nvim/types.h"
@@ -30,8 +31,7 @@ void log_init(void)
   log_file_dir = getenv("NVIM_LOG_FILE");
   //TODO: add checks to see if NVIM_LOG_FILE is a valid path
   if (log_file_dir == NULL) {
-      log_file_dir = stdpaths_get_xdg_var(kXDGDataHome);
-      log_file_dir = concat_fnames_realloc(log_file_dir, "nvim/log", true);
+      log_file_dir = stdpaths_user_data_subpath("log", 0);
   }
 }
 
