@@ -140,9 +140,8 @@ static bool is_executable(const char_u *name)
 static bool is_executable_in_path(const char_u *name, char_u **abspath)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  const char *path = getenv("PATH");
-  // PATH environment variable does not exist or is empty.
-  if (path == NULL || *path == NUL) {
+  const char *path = os_getenv("PATH");
+  if (path == NULL) {
     return false;
   }
 
