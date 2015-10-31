@@ -16,6 +16,7 @@
 #endif
 
 static uv_mutex_t mutex;
+static char * log_file_dir;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "log.c.generated.h"
@@ -24,6 +25,8 @@ static uv_mutex_t mutex;
 void log_init(void)
 {
   uv_mutex_init(&mutex);
+  log_file_dir = stdpaths_get_xdg_var(kXDGDataHome);
+  log_file_dir = concat_fnames_realloc(log_file_dir, "nvim/log", true);
 }
 
 void log_lock(void)
@@ -80,11 +83,7 @@ FILE *open_log_file(void)
   FILE *log_file;
   opening_log_file = true;
   {
-    char * dir = stdpaths_get_xdg_var(kXDGDataHome);
-    dir = concat_fnames_realloc(dir, "nvim/log", true);
-
-    log_file = fopen(dir, "a");
-    xfree(dir);
+    log_file = fopen(log_file_dir, "a");
     if (log_file == NULL) {
       goto open_log_file_error;
     }
