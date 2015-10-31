@@ -391,7 +391,7 @@ example, to add up all the numbers in a list: >
 
 
 1.4 Dictionaries ~
-					*dict* *Dictionaries* *Dictionary*
+				 *Dict* *dict* *Dictionaries* *Dictionary*
 A Dictionary is an associative array: Each entry has a key and a value.  The
 entry can be located with the key.  The entries are stored without a specific
 ordering.
