@@ -18,7 +18,7 @@
 #endif
 
 static uv_mutex_t mutex;
-static char * log_file_dir;
+static char log_file_dir[MAXPATHL +1];
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "log.c.generated.h"
@@ -27,11 +27,19 @@ static char * log_file_dir;
 void log_init(void)
 {
   uv_mutex_init(&mutex);
-  // determine where to save the log file
-  log_file_dir = getenv("NVIM_LOG_FILE");
+  const char * envdir = os_getenv("NVIM_LOG_FILE");
   // TODO(5pacetoast): add checks to see if NVIM_LOG_FILE is a valid path
-  if (log_file_dir == NULL) {
-      log_file_dir = stdpaths_user_data_subpath("log", 0);
+  if (envdir == NULL) {
+      char * pathdir = stdpaths_user_data_subpath("log", 0);
+      char pathdir_glob[MAXPATHL+1];
+      if(strcmp(pathdir, pathdir_glob) == 0) {
+          // expand_env seems to always fail here
+          printf("expand_env failed!\n");
+      }
+      xfree(pathdir);
+      strncpy(log_file_dir, (char *)pathdir_glob, MAXPATHL);
+  } else {
+      strncpy(log_file_dir, envdir, MAXPATHL);
   }
 }
 
