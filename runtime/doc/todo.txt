@@ -1140,9 +1140,6 @@ Now that colnr_T is int instead of unsigned, more type casts can be removed.
 'delcombine' does not work for the command line. (Tony Mechelynck, 2009 Jul
 20)
 
-Don't load macmap.vim on startup, turn it into a plugin. (Ron Aaron,
-2009 Apr 7)  Reminder Apr 14.
-
 Add "no_hlsearch" to winsaveview().
 
 Cursorline highlighting combines with Search ('hlsearch') but not with
@@ -1388,9 +1385,6 @@ The utf class table is missing some entries:
 
 Visual line mode doesn't highlight properly when 'showbreak' is used and the
 line doesn't fit. (Dasn, 2008 May 1)
-
-Mac: Move Carbon todo items to os_mac.txt.  Note that this version is frozen,
-try the Cocoa version.
 
 Mac: After a ":vsplit" the left scrollbar doesn't appear until 'columns' is
 changed or the window is resized.
