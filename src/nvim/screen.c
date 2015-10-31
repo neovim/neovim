@@ -2750,7 +2750,8 @@ win_line (
           }
           p_extra = NULL;
           c_extra = ' ';
-          n_extra = get_breakindent_win(wp, ml_get_buf(wp->w_buffer, lnum, FALSE));
+          n_extra = get_breakindent_win(wp,
+                                        ml_get_buf(wp->w_buffer, lnum, false));
           /* Correct end of highlighted area for 'breakindent',
              required wen 'linebreak' is also set. */
           if (tocol == vcol)

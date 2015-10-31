@@ -3316,9 +3316,11 @@ static char_u *set_chars_option(char_u **varp)
     if (round > 0) {
       /* After checking that the value is valid: set defaults: space for
        * 'fillchars', NUL for 'listchars' */
-      for (i = 0; i < entries; ++i)
-        if (tab[i].cp != NULL)
+      for (i = 0; i < entries; ++i) {
+        if (tab[i].cp != NULL) {
           *(tab[i].cp) = (varp == &p_lcs ? NUL : ' ');
+        }
+      }
       if (varp == &p_lcs)
         lcs_tab1 = NUL;
       else
@@ -3347,9 +3349,9 @@ static char_u *set_chars_option(char_u **varp)
               if (tab[i].cp == &lcs_tab2) {
                 lcs_tab1 = c1;
                 lcs_tab2 = c2;
-              } else if (tab[i].cp != NULL)
+              } else if (tab[i].cp != NULL) {
                 *(tab[i].cp) = c1;
-
+              }
             }
             p = s;
             break;
