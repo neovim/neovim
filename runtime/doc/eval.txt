@@ -391,7 +391,7 @@ example, to add up all the numbers in a list: >
 
 
 1.4 Dictionaries ~
-					*dict* *Dictionaries* *Dictionary*
+				 *Dict* *dict* *Dictionaries* *Dictionary*
 A Dictionary is an associative array: Each entry has a key and a value.  The
 entry can be located with the key.  The entries are stored without a specific
 ordering.
@@ -6888,7 +6888,6 @@ fname_case		Case in file names matters (for MS-DOS and Windows
 			this is not present).
 folding			Compiled with |folding| support.
 footer			Compiled with GUI footer support. |gui-footer|
-fork			Compiled to use fork()/exec() instead of system().
 gettext			Compiled with message translation |multi-lang|
 gui			Compiled with GUI enabled.
 gui_athena		Compiled with Athena GUI.
@@ -6947,7 +6946,6 @@ statusline		Compiled with support for 'statusline', 'rulerformat'
 syntax			Compiled with syntax highlighting support |syntax|.
 syntax_items		There are active syntax highlighting items for the
 			current buffer.
-system			Compiled to use system() instead of fork()/exec().
 tag_binary		Compiled with binary searching in tags files
 			|tag-binary-search|.
 tag_old_static		Compiled with support for old static tags
