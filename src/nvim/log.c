@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "nvim/log.h"
 #include "nvim/types.h"
@@ -25,8 +26,13 @@ static char * log_file_dir;
 void log_init(void)
 {
   uv_mutex_init(&mutex);
-  log_file_dir = stdpaths_get_xdg_var(kXDGDataHome);
-  log_file_dir = concat_fnames_realloc(log_file_dir, "nvim/log", true);
+  //determine where to save the log file
+  log_file_dir = getenv("NVIM_LOG_FILE");
+  //TODO: add checks to see if NVIM_LOG_FILE is a valid path
+  if (log_file_dir == NULL) {
+      log_file_dir = stdpaths_get_xdg_var(kXDGDataHome);
+      log_file_dir = concat_fnames_realloc(log_file_dir, "nvim/log", true);
+  }
 }
 
 void log_lock(void)
