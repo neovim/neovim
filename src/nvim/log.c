@@ -27,9 +27,9 @@ static char * log_file_dir;
 void log_init(void)
 {
   uv_mutex_init(&mutex);
-  //determine where to save the log file
+  // determine where to save the log file
   log_file_dir = getenv("NVIM_LOG_FILE");
-  //TODO: add checks to see if NVIM_LOG_FILE is a valid path
+  // TODO(5pacetoast): add checks to see if NVIM_LOG_FILE is a valid path
   if (log_file_dir == NULL) {
       log_file_dir = stdpaths_user_data_subpath("log", 0);
   }
