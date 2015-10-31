@@ -219,6 +219,7 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
     loop_poll_events(&tui_loop, -1);
   }
 
+  ui_bridge_stopped(bridge);
   term_input_destroy(&data->input);
   signal_watcher_stop(&data->cont_handle);
   signal_watcher_close(&data->cont_handle, NULL);

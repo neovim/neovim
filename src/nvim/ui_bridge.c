@@ -74,6 +74,13 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   return &rv->bridge;
 }
 
+void ui_bridge_stopped(UIBridgeData *bridge)
+{
+  uv_mutex_lock(&bridge->mutex);
+  bridge->stopped = true;
+  uv_mutex_unlock(&bridge->mutex);
+}
+
 static void ui_thread_run(void *data)
 {
   UIBridgeData *bridge = data;
@@ -82,8 +89,18 @@ static void ui_thread_run(void *data)
 
 static void ui_bridge_stop(UI *b)
 {
-  UI_CALL(b, stop, 1, b);
   UIBridgeData *bridge = (UIBridgeData *)b;
+  bool stopped = bridge->stopped = false;
+  UI_CALL(b, stop, 1, b);
+  for (;;) {
+    uv_mutex_lock(&bridge->mutex);
+    stopped = bridge->stopped;
+    uv_mutex_unlock(&bridge->mutex);
+    if (stopped) {
+      break;
+    }
+    loop_poll_events(&loop, 10);
+  }
   uv_thread_join(&bridge->ui_thread);
   uv_mutex_destroy(&bridge->mutex);
   uv_cond_destroy(&bridge->cond);
