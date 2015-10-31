@@ -29,10 +29,12 @@ For lots more details, see
 
 ### What's been done so far
 
-- [Terminal emulator](http://neovim.io/doc/user/nvim_terminal_emulator.html)
-- [Job control](https://github.com/neovim/neovim/pull/2247)
-- MessagePack-based remote API
-- Performance, reliability, portability
+- Automatic [history merge](https://github.com/neovim/neovim/pull/2506) between multiple editor instances
+- [XDG-compliant](https://github.com/neovim/neovim/pull/3470) configuration
+- Embedded [terminal emulator](https://neovim.io/doc/user/nvim_terminal_emulator.html)
+- Asynchronous [job control](https://github.com/neovim/neovim/pull/2247)
+- [MessagePack](https://msgpack.org) remote API
+- [Pushdown automaton](https://github.com/neovim/neovim/pull/3413) for state transitions
 
 See the [progress page](https://github.com/neovim/neovim/wiki/Progress) for a comprehensive list.
 
