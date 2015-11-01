@@ -25,17 +25,18 @@
 #define STR_(x) #x
 #define STR(x) STR_(x)
 
-// for the startup-screen ( ":intro" command )
-#define NVIM_VERSION_MEDIUM STR(NVIM_VERSION_MAJOR) "." STR(NVIM_VERSION_MINOR)
-
-// for the ":version" command and "nvim --version"
-#define NVIM_VERSION_LONG "NVIM " NVIM_VERSION_MEDIUM "." STR(NVIM_VERSION_PATCH) NVIM_VERSION_PRERELEASE NVIM_VERSION_BUILD
+// for ":version", ":intro", and "nvim --version"
+#ifndef NVIM_VERSION_MEDIUM
+#define NVIM_VERSION_MEDIUM STR(NVIM_VERSION_MAJOR) "." STR(NVIM_VERSION_MINOR)\
+  "." STR(NVIM_VERSION_PATCH) NVIM_VERSION_PRERELEASE
+#endif
+#define NVIM_VERSION_LONG "NVIM " NVIM_VERSION_MEDIUM
 
 
 char *Version = VIM_VERSION_SHORT;
 char *longVersion = NVIM_VERSION_LONG;
-char *longVersionWithDate = NVIM_VERSION_LONG " (compiled " __DATE__ " " __TIME__ ")";
-char *mediumVersion = NVIM_VERSION_MEDIUM;
+char *longVersionWithDate = NVIM_VERSION_LONG \
+                            " (compiled " __DATE__ " " __TIME__ ")";
 #ifdef NVIM_VERSION_COMMIT
 char *version_commit = "Commit: " NVIM_VERSION_COMMIT;
 #endif

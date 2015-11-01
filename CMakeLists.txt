@@ -47,24 +47,26 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Version tokens
+#   - In a git repo, these tokens are _ignored_.
+#     - If the current HEAD is tagged, the tag name is used.
+#     - Otherwise the result of `git describe` is used.
+#   - If not in a git repo (e.g. a tarball) these tokens set the version string.
 set(NVIM_VERSION_MAJOR 0)
 set(NVIM_VERSION_MINOR 1)
 set(NVIM_VERSION_PATCH 0)
+set(NVIM_VERSION_PRERELEASE "-dev")
 
 file(TO_CMAKE_PATH ${CMAKE_CURRENT_LIST_DIR}/.git FORCED_GIT_DIR)
 include(GetGitRevisionDescription)
-if(NVIM_VERSION_PRERELEASE)
-  get_git_head_revision(GIT_REFSPEC NVIM_VERSION_COMMIT)
-
-  # TODO(justinmk): UTC time would be nice here #1071
-  git_timestamp(GIT_TIMESTAMP)
-  if(GIT_TIMESTAMP)
-    set(NVIM_VERSION_BUILD "+${GIT_TIMESTAMP}")
+get_git_head_revision(GIT_REFSPEC NVIM_VERSION_COMMIT)
+if(NVIM_VERSION_COMMIT)    # is a git repo
+  git_get_exact_tag(NVIM_VERSION_MEDIUM)
+  if(NVIM_VERSION_MEDIUM)  # is a tagged release
+    unset(NVIM_VERSION_COMMIT)
+  else()                   # is a dev build
+    git_describe(NVIM_VERSION_MEDIUM)
+    get_git_head_revision(GIT_REFSPEC NVIM_VERSION_COMMIT)
   endif()
-else()
-  # If possible, get the Git tag for the current revision.
-  git_get_exact_tag(NVIM_VERSION_COMMIT)
-  set(NVIM_VERSION_BUILD "")
 endif()
 
 set(NVIM_VERSION_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
