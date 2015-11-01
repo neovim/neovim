@@ -48,8 +48,8 @@ endif()
 
 # Version tokens
 set(NVIM_VERSION_MAJOR 0)
-set(NVIM_VERSION_MINOR 0)
-set(NVIM_VERSION_PATCH 1)
+set(NVIM_VERSION_MINOR 1)
+set(NVIM_VERSION_PATCH 0)
 
 file(TO_CMAKE_PATH ${CMAKE_CURRENT_LIST_DIR}/.git FORCED_GIT_DIR)
 include(GetGitRevisionDescription)
