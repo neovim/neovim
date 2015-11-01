@@ -10556,9 +10556,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
 #endif
     "arabic",
     "autocmd",
-#ifdef FEAT_BROWSE
     "browsefilter",
-#endif
     "byte_offset",
     "cindent",
     "cmdline_compl",

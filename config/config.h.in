@@ -54,7 +54,6 @@
 #cmakedefine UNIX
 #cmakedefine USE_FNAME_CASE
 
-#define FEAT_BROWSE
 #define FEAT_CSCOPE
 
 #ifndef UNIT_TESTING
