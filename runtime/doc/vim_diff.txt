@@ -117,6 +117,7 @@ Additional differences:
   |shada-error-handling|
 - Vim keeps no timestamps at all, neither in viminfo file nor in the instance 
   itself.
+- ShaDa file keeps search direction (|v:searchforward|), viminfo does not.
 
 ==============================================================================
 4. New Features						     *nvim-features-new*

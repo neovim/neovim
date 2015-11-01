@@ -98,6 +98,7 @@ KHASH_SET_INIT_STR(strset)
 #define SEARCH_KEY_HIGHLIGHTED "sh"
 #define SEARCH_KEY_OFFSET "so"
 #define SEARCH_KEY_PAT "sp"
+#define SEARCH_KEY_BACKWARD "sb"
 
 #define REG_KEY_TYPE "rt"
 #define REG_KEY_WIDTH "rw"
@@ -263,6 +264,7 @@ typedef struct {
       bool is_last_used;
       bool is_substitute_pattern;
       bool highlighted;
+      bool search_backward;
       char *pat;
       dict_T *additional_data;
     } search_pattern;
@@ -455,6 +457,7 @@ static const ShadaEntry sd_default_values[] = {
           .is_last_used = true,
           .is_substitute_pattern = false,
           .highlighted = false,
+          .search_backward = false,
           .pat = NULL,
           .additional_data = NULL),
   DEF_SDE(SubString, sub_string, .sub = NULL, .additional_elements = NULL),
@@ -1338,6 +1341,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
           .magic = cur_entry.data.search_pattern.magic,
           .no_scs = !cur_entry.data.search_pattern.smartcase,
           .off = {
+            .dir = cur_entry.data.search_pattern.search_backward ? '?' : '/',
             .line = cur_entry.data.search_pattern.has_line_offset,
             .end = cur_entry.data.search_pattern.place_cursor_at_end,
             .off = cur_entry.data.search_pattern.offset,
@@ -1754,6 +1758,7 @@ static bool shada_pack_entry(msgpack_packer *const packer,
           + ONE_IF_NOT_DEFAULT(entry, search_pattern.is_substitute_pattern)
           + ONE_IF_NOT_DEFAULT(entry, search_pattern.highlighted)
           + ONE_IF_NOT_DEFAULT(entry, search_pattern.offset)
+          + ONE_IF_NOT_DEFAULT(entry, search_pattern.search_backward)
           // finally, additional data:
           + (size_t) (
               entry.data.search_pattern.additional_data
@@ -1780,6 +1785,7 @@ static bool shada_pack_entry(msgpack_packer *const packer,
       PACK_BOOL(entry, SEARCH_KEY_PLACE_CURSOR_AT_END, place_cursor_at_end);
       PACK_BOOL(entry, SEARCH_KEY_IS_SUBSTITUTE_PATTERN, is_substitute_pattern);
       PACK_BOOL(entry, SEARCH_KEY_HIGHLIGHTED, highlighted);
+      PACK_BOOL(entry, SEARCH_KEY_BACKWARD, search_backward);
       if (!CHECK_DEFAULT(entry, search_pattern.offset)) {
         PACK_STATIC_STR(SEARCH_KEY_OFFSET);
         msgpack_pack_int64(spacker, entry.data.search_pattern.offset);
@@ -2581,6 +2587,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
                               && search_highlighted), \
               .pat = (char *) pat.pat, \
               .additional_data = pat.additional_data, \
+              .search_backward = (!is_sub && pat.off.dir == '?'), \
             } \
           } \
         } \
@@ -3632,6 +3639,9 @@ shada_read_next_item_start:
         else
           BOOLEAN_KEY("search pattern", SEARCH_KEY_HIGHLIGHTED,
                       entry->data.search_pattern.highlighted)
+        else
+          BOOLEAN_KEY("search pattern", SEARCH_KEY_BACKWARD,
+                      entry->data.search_pattern.search_backward)
         else
           INTEGER_KEY("search pattern", SEARCH_KEY_OFFSET,
                       entry->data.search_pattern.offset)

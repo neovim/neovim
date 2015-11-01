@@ -43,7 +43,8 @@ call map(copy(s:SHADA_ENTRY_NAMES),
 " Only contains data for entries which are represented as mappings, except for 
 " the header.
 let s:SHADA_MAP_ENTRIES = {
-  \'search_pattern': ['sp', 'sh', 'ss', 'sm', 'sc', 'sl', 'se', 'so', 'su'],
+  \'search_pattern': ['sp', 'sh', 'ss', 'sb', 'sm', 'sc', 'sl', 'se', 'so',
+  \                   'su'],
   \'register': ['n', 'rc', 'rw', 'rt'],
   \'global_mark': ['n', 'f', 'l', 'c'],
   \'local_mark': ['f', 'n', 'l', 'c'],
@@ -134,6 +135,7 @@ let s:SHADA_STANDARD_KEYS = {
   \'ss': ['is :s pattern', 'boolean', g:msgpack#false],
   \'sh': ['v:hlsearch value', 'boolean', g:msgpack#false],
   \'sp': ['pattern', 'bin', s:SHADA_REQUIRED],
+  \'sb': ['search backward', 'boolean', g:msgpack#false],
   \'rt': ['type', 'regtype', s:SHADA_ENUMS.regtype.CHARACTERWISE],
   \'rw': ['block width', 'uint', 0],
   \'rc': ['contents', 'binarray', s:SHADA_REQUIRED],
