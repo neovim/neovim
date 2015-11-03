@@ -6584,9 +6584,14 @@ static int cindent_on(void) {
  */
 void fixthisline(IndentGetter get_the_indent)
 {
-  change_indent(INDENT_SET, get_the_indent(), FALSE, 0, TRUE);
-  if (linewhite(curwin->w_cursor.lnum))
-    did_ai = TRUE;          /* delete the indent if the line stays empty */
+    int amount = get_the_indent();
+
+    if (amount >= 0) {
+        change_indent(INDENT_SET, amount, false, 0, true);
+        if (linewhite(curwin->w_cursor.lnum)) {
+            did_ai = TRUE;  // delete the indent if the line stays empty
+        }
+    }
 }
 
 void fix_indent(void) {

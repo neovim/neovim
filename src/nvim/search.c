@@ -1443,19 +1443,68 @@ static int check_prevcol(char_u *linep, int col, int ch, int *prevcol)
 }
 
 /*
+ * Raw string start is found at linep[startpos.col - 1].
+ * Return TRUE if the matching end can be found between startpos and endpos.
+ */
+    static int
+find_rawstring_end(linep, startpos, endpos)
+    char_u  *linep;
+    pos_T   *startpos;
+    pos_T   *endpos;
+{
+    char_u	*p;
+    char_u	*delim_copy;
+    size_t	delim_len;
+    linenr_T	lnum;
+    int		found = FALSE;
+
+    for (p = linep + startpos->col + 1; *p && *p != '('; ++p)
+	;
+    delim_len = (p - linep) - startpos->col - 1;
+    delim_copy = vim_strnsave(linep + startpos->col + 1, delim_len);
+    if (delim_copy == NULL)
+	return FALSE;
+    for (lnum = startpos->lnum; lnum <= endpos->lnum; ++lnum)
+    {
+	char_u *line = ml_get(lnum);
+
+	for (p = line + (lnum == startpos->lnum
+					    ? startpos->col + 1 : 0); *p; ++p)
+	{
+	    if (lnum == endpos->lnum && (colnr_T)(p - line) >= endpos->col)
+		break;
+	    if (*p == ')' && p[delim_len + 1] == '"'
+			  && STRNCMP(delim_copy, p + 1, delim_len) == 0)
+	    {
+		found = TRUE;
+		break;
+	    }
+	}
+	if (found)
+	    break;
+    }
+    xfree(delim_copy);
+    return found;
+}
+
+/*
  * findmatchlimit -- find the matching paren or brace, if it exists within
- * maxtravel lines of here.  A maxtravel of 0 means search until falling off
- * the edge of the file.
+ * maxtravel lines of the cursor.  A maxtravel of 0 means search until falling
+ * off the edge of the file.
  *
  * "initc" is the character to find a match for.  NUL means to find the
- * character at or after the cursor.
+ * character at or after the cursor. Special values:
+ * '*'  look for C-style comment / *
+ * '/'  look for C-style comment / *, ignoring comment-end
+ * '#'  look for preprocessor directives
+ * 'R'  look for raw string start: R"delim(text)delim" (only backwards)
  *
  * flags: FM_BACKWARD	search backwards (when initc is '/', '*' or '#')
  *	  FM_FORWARD	search forwards (when initc is '/', '*' or '#')
  *	  FM_BLOCKSTOP	stop at start/end of block ({ or } in column 0)
  *	  FM_SKIPCOMM	skip comments (not implemented yet!)
  *
- * "oap" is only used to set oap->motion_type for a linewise motion, it be
+ * "oap" is only used to set oap->motion_type for a linewise motion, it can be
  * NULL
  */
 
@@ -1466,6 +1515,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
   int c;
   int count = 0;                        /* cumulative number of braces */
   int backwards = FALSE;                /* init for gcc */
+  int raw_string = FALSE;               /* search for raw string */
   int inquote = FALSE;                  /* TRUE when inside quotes */
   char_u      *linep;                   /* pointer to current line */
   char_u      *ptr;
@@ -1506,22 +1556,23 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
    * When '/' is used, we ignore running backwards into a star-slash, for
    * "[*" command, we just want to find any comment.
    */
-  if (initc == '/' || initc == '*') {
+  if (initc == '/' || initc == '*' || initc == 'R') {
     comment_dir = dir;
     if (initc == '/')
       ignore_cend = TRUE;
     backwards = (dir == FORWARD) ? FALSE : TRUE;
+    raw_string = (initc == 'R');
     initc = NUL;
   } else if (initc != '#' && initc != NUL) {
     find_mps_values(&initc, &findc, &backwards, TRUE);
     if (findc == NUL)
       return NULL;
   }
-  /*
-   * Either initc is '#', or no initc was given and we need to look under the
-   * cursor.
-   */
   else {
+    /*
+     * Either initc is '#', or no initc was given and we need to look
+     * under the cursor.
+     */
     if (initc == '#') {
       hash_dir = dir;
     } else {
@@ -1766,6 +1817,26 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
          */
         if (pos.col == 0)
           continue;
+        else if (raw_string)
+        {
+          if (linep[pos.col - 1] == 'R'
+              && linep[pos.col] == '"'
+              && vim_strchr(linep + pos.col + 1, '(') != NULL)
+          {
+            /* Possible start of raw string. Now that we have the
+             * delimiter we can check if it ends before where we
+             * started searching, or before the previously found
+             * raw string start. */
+            if (!find_rawstring_end(linep, &pos,
+                  count > 0 ? &match_pos : &curwin->w_cursor))
+            {
+              count++;
+              match_pos = pos;
+              match_pos.col--;
+            }
+            linep = ml_get(pos.lnum); /* may have been released */
+          }
+        }
         else if (  linep[pos.col - 1] == '/'
                    && linep[pos.col] == '*'
                    && (int)pos.col < comment_col) {

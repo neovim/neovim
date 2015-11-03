@@ -901,6 +901,23 @@ describe('cindent', function()
       {
         111111111111111111;
       }
+      void getstring() {
+      /* Raw strings */
+      const char* s = R"(
+        test {
+          # comment
+          field: 123
+        }
+       )";
+           }
+      void getstring() {
+      const char* s = R"foo(
+        test {
+          # comment
+          field: 123
+        }
+          )foo";
+           }
       
       /* end of AUTO */
       ]=])
@@ -1789,6 +1806,23 @@ describe('cindent', function()
       namespace111111111
       {
       	111111111111111111;
+      }
+      void getstring() {
+      	/* Raw strings */
+      	const char* s = R"(
+        test {
+          # comment
+          field: 123
+        }
+       )";
+      }
+      void getstring() {
+      	const char* s = R"foo(
+        test {
+          # comment
+          field: 123
+        }
+          )foo";
       }
       
       /* end of AUTO */
@@ -4214,7 +4248,7 @@ describe('cindent', function()
       ]=])
   end)
 
-  it('54 is working', function()
+  it('javascript indent / vim-patch 7.4.670', function()
     insert_([=[
       
       JSSTART
