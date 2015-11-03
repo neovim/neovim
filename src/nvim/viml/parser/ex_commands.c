@@ -33,6 +33,7 @@
 
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/ex_commands.h"
+#include "nvim/viml/parser/highlight.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 // FIXME should include fileio.h, but this spawns lots of errors
@@ -8137,6 +8138,12 @@ int parse_range(CMD_P_ARGS, const char **range_start)
   return OK;
 }
 
+#define INLINE_TOKEN(type, sp, ep) \
+    hltokens_append_inline(ret_parsed->tokens, type, \
+                           state->position.lnr, \
+                           state->position.col + (size_t) ((sp) - state->s), \
+                           state->position.col + (size_t) ((ep) - state->s))
+
 /// Parses command modifiers
 ///
 /// @param[in,out]  state  Parser state.
@@ -8190,8 +8197,10 @@ int parse_modifiers(CMD_P_ARGS, const char *const pstart)
       ret_parsed->node->has_count = true;
       ret_parsed->node->count = (int) getdigits(&pstart);
     }
+    INLINE_TOKEN(kTokCommandModifier, mod_start, state->cmdp - 1);
     if (*state->cmdp == '!') {
       ret_parsed->node->bang = true;
+      INLINE_TOKEN(kTokCommandModifier, state->cmdp, state->cmdp);
       state->cmdp++;
     }
     ret_parsed->node->position.col = P_COL(state, mod_start);
@@ -8412,6 +8421,9 @@ int parse_one_cmd(CMD_P_ARGS)
 
   // Skip ':' and any white space
   while (*state->cmdp == ' ' || *state->cmdp == TAB || *state->cmdp == ':') {
+    if (*state->cmdp == ':') {
+      INLINE_TOKEN(kTokCommandColon, state->cmdp, state->cmdp);
+    }
     state->cmdp++;
   }
 
@@ -8431,6 +8443,7 @@ int parse_one_cmd(CMD_P_ARGS)
 
   if (*state->cmdp == '!') {
     if (CMDDEF(node.type).flags & BANG) {
+      INLINE_TOKEN(kTokBang, state->cmdp, state->cmdp);
       state->cmdp++;
       node.bang = true;
     } else {
@@ -9066,22 +9079,24 @@ void free_parser_result(ParserResult *pres)
 /// Parsed lines are supposed to be used for implementing `:function Func`
 /// introspection and error reporting.
 ///
-/// @param[in]  o         Parser options.
-/// @param[in]  fname     Path to the parsed file or a string enclosed in `<` to
-///                       indicate that current input is not from any file.
-/// @param[in]  fgetline  Function used to obtain the next line.
+/// @param[in]   o         Parser options.
+/// @param[in]   fname     Path to the parsed file or a string enclosed in `<`
+///                        to indicate that current input is not from any file.
+/// @param[out]  tokens    Location where highlight tokens are saved.
+/// @param[in]   fgetline  Function used to obtain the next line.
 ///
-///                       @par
-///                       This function should return NULL when there are no
-///                       more lines.
+///                        @par
+///                        This function should return NULL when there are no
+///                        more lines.
 ///
-///                       @note This function must return string in allocated
-///                             memory. Only parser thread must have access to
-///                             strings returned by fgetline.
-/// @param      cookie    Second argument to the above function.
+///                        @note This function must return string in allocated
+///                              memory. Only parser thread must have access to
+///                              strings returned by fgetline.
+/// @param       cookie    Second argument to the above function.
 ParserResult *parse_string(CommandParserOptions o, const char *fname,
+                           HighlightedTokens *const tokens,
                            VimlLineGetter fgetline, void *cookie)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ARG(2)
 {
   ParserResult *ret = xcalloc(1, sizeof(*ret));
   SavingFgetlineArgs fgargs = {
@@ -9099,8 +9114,13 @@ ParserResult *parse_string(CommandParserOptions o, const char *fname,
     .position = { 0, 0 },
     .o = o,
   };
-  CommandParserResult ret_parsed;
-  memset(&ret_parsed, 0, sizeof(ret_parsed));
+  CommandParserResult ret_parsed = {
+    .cur_node = NULL,
+    .node = NULL,
+    .error = { NULL, NULL },
+    .main_node = NULL,
+    .tokens = hltokens_new(),
+  };
   ga_init(&fgargs.ga, (int) sizeof(char *), 16);
   ret->node = parse_cmd_sequence(&state, &ret_parsed);
   ret->lines = (char **) fgargs.ga.ga_data;

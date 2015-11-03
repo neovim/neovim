@@ -29,7 +29,7 @@ char *execute_viml_test(const char *const s)
   };
   char *const dup = xstrdup(s);
 
-  ParserResult *pres = parse_string(o, "<:execute string>",
+  ParserResult *pres = parse_string(o, "<:execute string>", NULL,
                                     (VimlLineGetter) &fgetline_string,
                                     (void *) &dup);
   if (pres == NULL) {

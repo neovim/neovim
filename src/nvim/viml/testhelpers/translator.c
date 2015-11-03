@@ -32,8 +32,8 @@ int translate_script_std(void)
   CommandParserOptions o = { 0, false };
   int ret;
 
-  if ((pres = parse_string(o, "<test input>", (VimlLineGetter) &fgetline_file,
-                           stdin)) == NULL) {
+  if ((pres = parse_string(o, "<test input>", NULL,
+                           (VimlLineGetter) &fgetline_file, stdin)) == NULL) {
     return FAIL;
   }
 
@@ -61,8 +61,8 @@ int translate_script_str_to_file(const char *str,
 
   pp = &str;
 
-  if ((pres = parse_string(o, "<test input>", (VimlLineGetter) &fgetline_string,
-                           pp)) == NULL) {
+  if ((pres = parse_string(o, "<test input>", NULL,
+                           (VimlLineGetter) &fgetline_string, pp)) == NULL) {
     return FAIL;
   }
 

@@ -14,6 +14,7 @@
 #include "nvim/viml/parser/command_definitions.h"
 #include "nvim/viml/parser/command_arguments.h"
 #include "nvim/viml/parser/expressions.h"
+#include "nvim/viml/parser/highlight.h"
 #include "nvim/regexp_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/garray.h"
@@ -292,14 +293,6 @@ typedef struct {
   char *arg;
 } CmdComplete;
 
-/// A structure for holding command position
-///
-/// Intended for debugging purposes later
-typedef struct {
-  size_t lnr;
-  size_t col;
-} CommandPosition;
-
 /// Structure for representing a register.
 typedef struct {
   char name;         ///< Register name.
@@ -532,6 +525,7 @@ typedef struct {
   CommandParserError error;  ///< Error description.
   CommandNode *main_node;  ///< First node that is not a modifier.
                            ///< Only touched by parse_one_cmd.
+  HighlightedTokens *tokens;  ///< Tokens to highlight.
 } CommandParserResult;
 
 /// Type of the function used to parse one’s command arguments
