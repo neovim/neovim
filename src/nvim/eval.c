@@ -5651,6 +5651,14 @@ bool garbage_collect(void)
     ABORTING(set_ref_in_ht)(&fc->l_avars.dv_hashtab, copyID, NULL);
   }
 
+  // Jobs
+  {
+    TerminalJobData *data;
+    map_foreach_value(jobs, data, {
+      ABORTING(set_ref_dict)(data->self, copyID);
+    })
+  }
+
   // v: vars
   ABORTING(set_ref_in_ht)(&vimvarht, copyID, NULL);
 
@@ -5728,8 +5736,7 @@ static int free_unref_items(int copyID)
   // Go through the list of dicts and free items without the copyID.
   // Don't free dicts that are referenced internally.
   for (dict_T *dd = first_dict; dd != NULL; ) {
-    if ((dd->dv_copyID & COPYID_MASK) != (copyID & COPYID_MASK)
-        && !dd->internal_refcount) {
+    if ((dd->dv_copyID & COPYID_MASK) != (copyID & COPYID_MASK)) {
       // Free the Dictionary and ordinary items it contains, but don't
       // recurse into Lists and Dictionaries, they will be in the list
       // of dicts or list of lists. */
@@ -5970,7 +5977,6 @@ dict_T *dict_alloc(void) FUNC_ATTR_NONNULL_RET
   d->dv_scope = 0;
   d->dv_refcount = 0;
   d->dv_copyID = 0;
-  d->internal_refcount = 0;
   QUEUE_INIT(&d->watchers);
 
   return d;
@@ -21620,7 +21626,6 @@ static inline bool common_job_callbacks(dict_T *vopts, ufunc_T **on_stdout,
   if (get_dict_callback(vopts, "on_stdout", on_stdout)
       && get_dict_callback(vopts, "on_stderr", on_stderr)
       && get_dict_callback(vopts, "on_exit", on_exit)) {
-    vopts->internal_refcount++;
     vopts->dv_refcount++;
     return true;
   }
@@ -21682,7 +21687,6 @@ static inline void free_term_job_data_event(void **argv)
   }
 
   if (data->self) {
-    data->self->internal_refcount--;
     dict_unref(data->self);
   }
   queue_free(data->events);
