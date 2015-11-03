@@ -21937,7 +21937,7 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
                   true,
                   NULL);
 
-  arguments->lv_refcount--;
+  list_unref(arguments);
   // Restore caller scope information
   restore_funccal(provider_caller_scope.funccalp);
   provider_caller_scope = saved_provider_caller_scope;
