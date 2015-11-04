@@ -62,7 +62,6 @@
 #include "nvim/tempfile.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
-#include "nvim/version.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
