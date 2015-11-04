@@ -78,8 +78,8 @@ find_start_comment (  /* XXX */
  */
 static pos_T *ind_find_start_CORS(void)
 { /* XXX */
-    pos_T	*comment_pos = find_start_comment(curbuf->b_ind_maxcomment);
-    pos_T	*rs_pos = find_start_rawstring(curbuf->b_ind_maxcomment);
+    pos_T *comment_pos = find_start_comment(curbuf->b_ind_maxcomment);
+    pos_T *rs_pos = find_start_rawstring(curbuf->b_ind_maxcomment);
 
     /* If comment_pos is before rs_pos the raw string is inside the comment.
      * If rs_pos is before comment_pos the comment is inside the raw string. */
@@ -95,9 +95,9 @@ static pos_T *ind_find_start_CORS(void)
  */
 static pos_T *find_start_rawstring(int ind_maxcomment)
 { /* XXX */
-    pos_T	*pos;
-    char_u	*line;
-    char_u	*p;
+    pos_T *pos;
+    char_u *line;
+    char_u *p;
     long cur_maxcomment = ind_maxcomment;
 
     for (;;)
@@ -159,9 +159,7 @@ static char_u *skip_string(char_u *p)
       }
       if (p[0] == '"')
           continue; /* continue for another string */
-    }
-    else if (p[0] == 'R' && p[1] == '"')
-    {
+    } else if (p[0] == 'R' && p[1] == '"') {
         /* Raw string: R"[delim](...)[delim]" */
         char_u *delim = p + 2;
         char_u *paren = vim_strchr(delim, '(');
@@ -1748,7 +1746,7 @@ int get_c_indent(void)
   /*
    * #defines and so on always go at the left when included in 'cinkeys'.
    */
-  if (*theline == '#' && (*linecopy == '#' || in_cinkeys('#', ' ', TRUE))) {
+  if (*theline == '#' && (*linecopy == '#' || in_cinkeys('#', ' ', true))) {
     amount = curbuf->b_ind_hash_comment;
     goto theend;
   }
@@ -1842,12 +1840,12 @@ int get_c_indent(void)
                          lead_middle_len) == 0) {
               amount = get_indent_lnum(curwin->w_cursor.lnum - 1);
               break;
-            }
-            /* If the start comment string doesn't match with the
-             * start of the comment, skip this entry. XXX */
-            else if (STRNCMP(ml_get(comment_pos->lnum) + comment_pos->col,
-                         lead_start, lead_start_len) != 0)
+            } else if (STRNCMP(ml_get(comment_pos->lnum) + comment_pos->col,
+                        lead_start, lead_start_len) != 0) {
+              /* If the start comment string doesn't match with the
+               * start of the comment, skip this entry. XXX */
               continue;
+            }
           }
           if (start_off != 0)
             amount += start_off;
@@ -3201,11 +3199,11 @@ term_again:
   // basically just match where the previous line is, except
   // for the lines immediately following a function declaration,
   // which are K&R-style parameters and need to be indented.
-  
+
   // if our line starts with an open brace, forget about any
   // prevailing indent and make sure it looks like the start
   // of a function
-  
+
   if (theline[0] == '{') {
       amount = curbuf->b_ind_first_open;
       goto theend;
@@ -3225,7 +3223,7 @@ term_again:
           && !cin_ends_in(theline, (char_u *)",", NULL)
           && cin_isfuncdecl(NULL, cur_curpos.lnum + 1,
               cur_curpos.lnum + 1)
-          && !cin_isterminated(theline, FALSE, TRUE)) {
+          && !cin_isterminated(theline, false, true)) {
     amount = curbuf->b_ind_func_type;
     goto theend;
   }
@@ -3253,7 +3251,7 @@ term_again:
      * Are we at the start of a cpp base class declaration or
      * constructor initialization?
      */						    /* XXX */
-    n = FALSE;
+    n = false;
     if (curbuf->b_ind_cpp_baseclass != 0 && theline[0] != '{') {
       n = cin_is_cpp_baseclass(&cache_cpp_baseclass);
       l = get_cursor_line_ptr();

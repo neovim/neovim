@@ -6589,7 +6589,7 @@ void fixthisline(IndentGetter get_the_indent)
     if (amount >= 0) {
         change_indent(INDENT_SET, amount, false, 0, true);
         if (linewhite(curwin->w_cursor.lnum)) {
-            did_ai = TRUE;  // delete the indent if the line stays empty
+            did_ai = true;  // delete the indent if the line stays empty
         }
     }
 }

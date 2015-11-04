@@ -1448,39 +1448,39 @@ static int check_prevcol(char_u *linep, int col, int ch, int *prevcol)
  */
 static int find_rawstring_end(char_u *linep, pos_T *startpos, pos_T *endpos)
 {
-    char_u	*p;
-    char_u	*delim_copy;
-    size_t	delim_len;
-    linenr_T	lnum;
-    int		found = FALSE;
+  char_u *p;
+  char_u *delim_copy;
+  size_t delim_len;
+  linenr_T lnum;
+  int found = false;
 
-    for (p = linep + startpos->col + 1; *p && *p != '('; ++p)
-	;
-    delim_len = (p - linep) - startpos->col - 1;
-    delim_copy = vim_strnsave(linep + startpos->col + 1, delim_len);
-    if (delim_copy == NULL)
-	return FALSE;
-    for (lnum = startpos->lnum; lnum <= endpos->lnum; ++lnum)
+  for (p = linep + startpos->col + 1; *p && *p != '('; ++p) {}
+
+  delim_len = (p - linep) - startpos->col - 1;
+  delim_copy = vim_strnsave(linep + startpos->col + 1, delim_len);
+  if (delim_copy == NULL)
+    return false;
+  for (lnum = startpos->lnum; lnum <= endpos->lnum; ++lnum)
+  {
+    char_u *line = ml_get(lnum);
+
+    for (p = line + (lnum == startpos->lnum
+          ? startpos->col + 1 : 0); *p; ++p)
     {
-	char_u *line = ml_get(lnum);
-
-	for (p = line + (lnum == startpos->lnum
-					    ? startpos->col + 1 : 0); *p; ++p)
-	{
-	    if (lnum == endpos->lnum && (colnr_T)(p - line) >= endpos->col)
-		break;
-	    if (*p == ')' && p[delim_len + 1] == '"'
-			  && STRNCMP(delim_copy, p + 1, delim_len) == 0)
-	    {
-		found = TRUE;
-		break;
-	    }
-	}
-	if (found)
-	    break;
+      if (lnum == endpos->lnum && (colnr_T)(p - line) >= endpos->col)
+        break;
+      if (*p == ')' && p[delim_len + 1] == '"'
+          && STRNCMP(delim_copy, p + 1, delim_len) == 0)
+      {
+        found = true;
+        break;
+      }
     }
-    xfree(delim_copy);
-    return found;
+    if (found)
+      break;
+  }
+  xfree(delim_copy);
+  return found;
 }
 
 /*
@@ -1510,9 +1510,9 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
   int findc = 0;                        /* matching brace */
   int c;
   int count = 0;                        /* cumulative number of braces */
-  int backwards = FALSE;                /* init for gcc */
-  int raw_string = FALSE;               /* search for raw string */
-  int inquote = FALSE;                  /* TRUE when inside quotes */
+  int backwards = false;                /* init for gcc */
+  int raw_string = false;               /* search for raw string */
+  int inquote = false;                  /* true when inside quotes */
   char_u      *linep;                   /* pointer to current line */
   char_u      *ptr;
   int do_quotes;                        /* check for quotes in current line */
@@ -1555,16 +1555,15 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
   if (initc == '/' || initc == '*' || initc == 'R') {
     comment_dir = dir;
     if (initc == '/')
-      ignore_cend = TRUE;
-    backwards = (dir == FORWARD) ? FALSE : TRUE;
+      ignore_cend = true;
+    backwards = (dir == FORWARD) ? false : true;
     raw_string = (initc == 'R');
     initc = NUL;
   } else if (initc != '#' && initc != NUL) {
     find_mps_values(&initc, &findc, &backwards, TRUE);
     if (findc == NUL)
       return NULL;
-  }
-  else {
+  } else {
     /*
      * Either initc is '#', or no initc was given and we need to look
      * under the cursor.
@@ -1832,8 +1831,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
             }
             linep = ml_get(pos.lnum); /* may have been released */
           }
-        }
-        else if (  linep[pos.col - 1] == '/'
+        } else if (  linep[pos.col - 1] == '/'
                    && linep[pos.col] == '*'
                    && (int)pos.col < comment_col) {
           count++;
