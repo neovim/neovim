@@ -98,7 +98,7 @@ static pos_T *find_start_rawstring(int ind_maxcomment)
     pos_T	*pos;
     char_u	*line;
     char_u	*p;
-    int		cur_maxcomment = ind_maxcomment;
+    long cur_maxcomment = ind_maxcomment;
 
     for (;;)
     {
@@ -168,7 +168,7 @@ static char_u *skip_string(char_u *p)
 
         if (paren != NULL)
         {
-            size_t delim_len = paren - delim;
+            long delim_len = paren - delim;
 
             for (p += 3; *p; ++p)
                 if (p[0] == ')' && STRNCMP(p + 1, delim, delim_len) == 0

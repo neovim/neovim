@@ -1444,13 +1444,9 @@ static int check_prevcol(char_u *linep, int col, int ch, int *prevcol)
 
 /*
  * Raw string start is found at linep[startpos.col - 1].
- * Return TRUE if the matching end can be found between startpos and endpos.
+ * Return true if the matching end can be found between startpos and endpos.
  */
-    static int
-find_rawstring_end(linep, startpos, endpos)
-    char_u  *linep;
-    pos_T   *startpos;
-    pos_T   *endpos;
+static int find_rawstring_end(char_u *linep, pos_T *startpos, pos_T *endpos)
 {
     char_u	*p;
     char_u	*delim_copy;
