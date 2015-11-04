@@ -6264,7 +6264,16 @@ static bool get_dict_callback(dict_T *d, char *key, ufunc_T **result)
     return false;
   }
 
-  uint8_t *name = di->di_tv.vval.v_string;
+  if ((*result = find_ufunc(di->di_tv.vval.v_string)) == NULL) {
+    return false;
+  }
+
+  (*result)->uf_refcount++;
+  return true;
+}
+
+static ufunc_T *find_ufunc(uint8_t *name)
+{
   uint8_t *n = name;
   ufunc_T *rv = NULL;
   if (*n > '9' || *n < '0') {
@@ -6276,16 +6285,7 @@ static bool get_dict_callback(dict_T *d, char *key, ufunc_T **result)
     // dict function, name is already translated
     rv = find_func(n);
   }
-
-  if (!rv) {
-    EMSG2(_("Function %s doesn't exist"), name);
-    *result = NULL;
-    return false;
-  }
-  rv->uf_refcount++;
-
-  *result = rv;
-  return true;
+  return rv;
 }
 
 /*
