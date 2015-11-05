@@ -18109,53 +18109,67 @@ static dictitem_T *find_var_in_ht(hashtab_T *ht, int htname, char_u *varname, in
   return HI2DI(hi);
 }
 
-/*
- * Find the hashtab used for a variable name.
- * Set "varname" to the start of name without ':'.
- */
-static hashtab_T *find_var_ht(char_u *name, char_u **varname)
+// Find the dict and hashtable used for a variable name.  Set "varname" to the
+// start of name without ':'.
+static hashtab_T *find_var_ht_dict(char_u *name, uint8_t **varname, dict_T **d)
 {
   hashitem_T  *hi;
+  *d = NULL;
 
   if (name[1] != ':') {
-    /* The name must not start with a colon or #. */
-    if (name[0] == ':' || name[0] == AUTOLOAD_CHAR)
+    // name has implicit scope
+    if (name[0] == ':' || name[0] == AUTOLOAD_CHAR) {
+      // The name must not start with a colon or #.
       return NULL;
+    }
     *varname = name;
 
-    /* "version" is "v:version" in all scopes */
+    // "version" is "v:version" in all scopes
     hi = hash_find(&compat_hashtab, name);
-    if (!HASHITEM_EMPTY(hi))
+    if (!HASHITEM_EMPTY(hi)) {
       return &compat_hashtab;
+    }
 
-    if (current_funccal == NULL)
-      return &globvarht;                        /* global variable */
-    return &current_funccal->l_vars.dv_hashtab;     /* l: variable */
+    *d = current_funccal ? &current_funccal->l_vars : &globvardict;
+    goto end;
   }
+
   *varname = name + 2;
-  if (*name == 'g')                             /* global variable */
-    return &globvarht;
-  /* There must be no ':' or '#' in the rest of the name, unless g: is used
-   */
-  if (vim_strchr(name + 2, ':') != NULL
-      || vim_strchr(name + 2, AUTOLOAD_CHAR) != NULL)
+  if (*name == 'g') {                           // global variable
+    *d = &globvardict;
+  } else if (vim_strchr(name + 2, ':') != NULL
+      || vim_strchr(name + 2, AUTOLOAD_CHAR) != NULL) {
+    // There must be no ':' or '#' in the rest of the name if g: was not used
     return NULL;
-  if (*name == 'b')                             /* buffer variable */
-    return &curbuf->b_vars->dv_hashtab;
-  if (*name == 'w')                             /* window variable */
-    return &curwin->w_vars->dv_hashtab;
-  if (*name == 't')                             /* tab page variable */
-    return &curtab->tp_vars->dv_hashtab;
-  if (*name == 'v')                             /* v: variable */
-    return &vimvarht;
-  if (*name == 'a' && current_funccal != NULL)   /* function argument */
-    return &current_funccal->l_avars.dv_hashtab;
-  if (*name == 'l' && current_funccal != NULL)   /* local function variable */
-    return &current_funccal->l_vars.dv_hashtab;
-  if (*name == 's'                              /* script variable */
-      && current_SID > 0 && current_SID <= ga_scripts.ga_len)
-    return &SCRIPT_VARS(current_SID);
-  return NULL;
+  }
+
+  if (*name == 'b') {                    // buffer variable
+    *d = curbuf->b_vars;
+  } else if (*name == 'w') {                    // window variable
+    *d = curwin->w_vars;
+  } else if (*name == 't') {                    // tab page variable
+    *d = curtab->tp_vars;
+  } else if (*name == 'v') {                    // v: variable
+    *d = &vimvardict;
+  } else if (*name == 'a' && current_funccal != NULL) {  // function argument
+    *d = &current_funccal->l_avars;
+  } else if (*name == 'l' && current_funccal != NULL) {  // local variable
+    *d = &current_funccal->l_vars;
+  } else if (*name == 's'                       // script variable
+      && current_SID > 0 && current_SID <= ga_scripts.ga_len) {
+    *d = &SCRIPT_SV(current_SID)->sv_dict;
+  }
+
+end:
+  return *d ? &(*d)->dv_hashtab : NULL;
+}
+
+// Find the hashtab used for a variable name.
+// Set "varname" to the start of name without ':'.
+static hashtab_T *find_var_ht(uint8_t *name, uint8_t **varname)
+{
+  dict_T *d;
+  return find_var_ht_dict(name, varname, &d);
 }
 
 /*
