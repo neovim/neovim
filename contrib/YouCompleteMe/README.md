@@ -2,7 +2,7 @@
 
 ## What is this?
 
-This provides the code necessary to configure vim's YCM plugin to provide C semantic support (completion, go-to-definition, etc) for the Neovim project.
+This provides the code necessary to configure vim's YCM plugin to provide C semantic support (completion, go-to-definition, etc) for developers working on the Neovim project.
 
 ## Installation
 
