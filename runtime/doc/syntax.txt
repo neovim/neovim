@@ -208,7 +208,7 @@ A syntax group name doesn't specify any color or attributes itself.
 The name for a highlight or syntax group must consist of ASCII letters, digits
 and the underscore.  As a regexp: "[a-zA-Z0-9_]*"
 
-To be able to allow each user to pick his favorite set of colors, there must
+To be able to allow each user to pick their favorite set of colors, there must
 be preferred names for highlight groups that are common for many languages.
 These are the suggested group names (if syntax highlighting works properly
 you can see the actual color, except for "Ignore"):
@@ -1895,7 +1895,7 @@ LEX						*lex.vim* *ft-lex-syntax*
 Lex uses brute-force synchronizing as the "^%%$" section delimiter
 gives no clue as to what section follows.  Consequently, the value for >
 	:syn sync minlines=300
-may be changed by the user if s/he is experiencing synchronization
+may be changed by the user if they are experiencing synchronization
 difficulties (such as may happen with large lex files).
 
 
@@ -2819,7 +2819,7 @@ variables in your vimrc:
 <   sh: (default) Bourne shell >
 	let g:is_sh	   = 1
 
-If there's no "#! ..." line, and the user hasn't availed himself/herself of a
+If there's no "#! ..." line, and the user hasn't availed themself of a
 default sh.vim syntax setting as just shown, then syntax/sh.vim will assume
 the Bourne shell syntax.  No need to quote RFCs or market penetration
 statistics in error reports, please -- just select the default version of the
@@ -4198,8 +4198,8 @@ two different ways:
 	  (e.g., "syntax/pod.vim") the file is searched for in 'runtimepath'.
 	  All matching files are loaded.  Using a relative path is
 	  recommended, because it allows a user to replace the included file
-	  with his own version, without replacing the file that does the ":syn
-	  include".
+	  with their own version, without replacing the file that does the
+	  ":syn include".
 
 						*E847*
 The maximum number of includes is 999.

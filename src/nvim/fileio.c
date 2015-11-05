@@ -3161,7 +3161,7 @@ nobackup:
    * We may try to open the file twice: If we can't write to the
    * file and forceit is TRUE we delete the existing file and try to create
    * a new one. If this still fails we may have lost the original file!
-   * (this may happen when the user reached his quotum for number of files).
+   * (this may happen when the user reached their quotum for number of files).
    * Appending will fail if the file does not exist and forceit is FALSE.
    */
   while ((fd = os_open((char *)wfname, O_WRONLY | (append

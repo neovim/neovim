@@ -33,7 +33,7 @@ balance must be found between them.
 VIM IS... VI COMPATIBLE					*design-compatible*
 
 First of all, it should be possible to use Vim as a drop-in replacement for
-Vi.  When the user wants to, he can use Vim in compatible mode and hardly
+Vi.  When the user wants to, they can use Vim in compatible mode and hardly
 notice any difference with the original Vi.
 
 Exceptions:

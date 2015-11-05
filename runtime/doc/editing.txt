@@ -1257,7 +1257,7 @@ command has not been used stick to the global current directory.  When jumping
 to another window the current directory will become the last specified local
 current directory.  If none was specified, the global current directory is
 used.
-When a |:cd| command is used, the current window will lose his local current
+When a |:cd| command is used, the current window will lose its local current
 directory and will use the global current directory from now on.
 
 After using |:cd| the full path name will be used for reading and writing

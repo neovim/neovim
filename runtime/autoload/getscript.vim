@@ -393,7 +393,7 @@ fun! s:GetOneScript(...)
 "   call Decho("fname   <".fname.">")
   endif
 
-  " plugin author protection from downloading his/her own scripts atop their latest work
+  " plugin author protection from downloading their own scripts atop their latest work
   if scriptid == 0 || srcid == 0
    " When looking for :AutoInstall: lines, skip scripts that have   0 0 scriptname
    let @a= rega

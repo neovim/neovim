@@ -27,8 +27,8 @@ syn keyword pyrexType		signed unsigned
 syn keyword pyrexStructure	struct union enum
 syn keyword pyrexInclude	include cimport
 syn keyword pyrexAccess		public private property readonly extern
-" If someome wants Python's built-ins highlighted probably he
-" also wants Pyrex's built-ins highlighted
+" If someome wants Python's built-ins highlighted probably they
+" also want Pyrex's built-ins highlighted
 if exists("python_highlight_builtins") || exists("pyrex_highlight_builtins")
     syn keyword pyrexBuiltin    NULL
 endif

@@ -366,7 +366,7 @@ displaying the line.  The text in the file remains unchanged.
 	|ank.  They wanted to send out a s|
 	|pecial, personalized letter to th|
 	|eir richest 1000 customers.  Unfo|
-	|rtunately for the programmer, he |
+	|rtunately for the programmer, the|
 	+---------------------------------+
 After: >
 
