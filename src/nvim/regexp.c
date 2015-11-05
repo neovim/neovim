@@ -6349,7 +6349,7 @@ static fptr_T do_Lower(int *d, int c)
  * step further...  But we insert the previous pattern into the current one
  * and remember that.
  * This still does not handle the case where "magic" changes.  So require the
- * user to keep his hands off of "magic".
+ * user to keep their hands off of "magic".
  *
  * The tildes are parsed once before the first call to vim_regsub().
  */

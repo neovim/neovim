@@ -2,7 +2,7 @@
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
 " Last Change:	2014 May 13
 
-" Avoid loading this file twice, allow the user to define his own script.
+" Avoid loading this file twice, allow the user to define their own script.
 if exists("loaded_less")
   finish
 endif

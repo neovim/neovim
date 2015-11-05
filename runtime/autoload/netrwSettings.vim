@@ -44,7 +44,7 @@ fun! netrwSettings#NetrwSettings()
   file Netrw\ Settings
 
   " these variables have the following default effects when they don't
-  " exist (ie. have not been set by the user in his/her .vimrc)
+  " exist (ie. have not been set by the user in their .vimrc)
   if !exists("g:netrw_liststyle")
    let g:netrw_liststyle= 0
    let g:netrw_list_cmd= "ssh HOSTNAME ls -FLa"

@@ -149,7 +149,7 @@ vim.sf.net; whenever it is greater than the one stored in the
 GetLatestVimScripts.dat file, the script will be downloaded
 (see |GetLatestVimScripts_dat|).
 
-If your script's author has included a special comment line in his/her plugin,
+If your script's author has included a special comment line in their plugin,
 the plugin itself will be used by GetLatestVimScripts to build your
 <GetLatestVimScripts.dat> file, including any dependencies on other scripts it
 may have.  As an example, consider: >
@@ -177,7 +177,7 @@ In summary:
 <   in an already-downloaded plugin constitutes the concurrence of the
     plugin author that getscript may do AutoInstall.  Not all plugins
     may be AutoInstall-able, and the plugin's author is best situated
-    to know whether or not his/her plugin will AutoInstall properly.
+    to know whether or not their plugin will AutoInstall properly.
 
   * A line such as >
 	884 1 :AutoInstall: AutoAlign.vim
@@ -334,7 +334,7 @@ after/syntax/c.vim contained in it to overwrite a user's c.vim.
 <	default= 1
 		This variable indicates whether GetLatestVimScripts is allowed
 		to attempt to automatically install scripts.  Furthermore, the
-		plugin author has to have explicitly indicated that his/her
+		plugin author has to have explicitly indicated that their
 		plugin is automatically installable (via the :AutoInstall:
 		keyword in the GetLatestVimScripts comment line).
 >

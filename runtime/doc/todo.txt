@@ -1557,7 +1557,7 @@ Windows installer: licence text should not use indent, causes bad word wrap.
 (Benjamin Fritz, 2010 Aug 16)
 
 Dos uninstal may delete vim.bat from the wrong directory (e.g., when someone
-makes his own wrapper).  Add a magic string with the version number to the
+makes their own wrapper).  Add a magic string with the version number to the
 .bat file and check for it in the uninstaller.  E.g.
           # uninstall key: vim7.3*
 
@@ -2365,7 +2365,7 @@ Macintosh:
     two lines at a time.  "k" doesn't do this. (Cory T. Echols)
 8   When write_viminfo() is used while there are many orphaned viminfo
     tempfiles writing the viminfo file fails.  Give a clear error message so
-    that the user knows he has to delete the files.
+    that the user knows they have to delete the files.
 7   It's possible to redefine a script-local function with ":func
     <SNR>123_Test()". (Krishna)  Disallow this.
 
@@ -2508,8 +2508,8 @@ Help:
 -   Default mapping for help files: <Tab> to position cursor on next |:tag|.
 -   Implement a "sticky" help window, some help text lines that are always
     displayed in a window with fixed height. (Guckes)  Use "~/.vimhelp" file,
-    user can edit it to insert his favorite commands, new account can contain a
-    default contents.
+    user can edit it to insert their favorite commands, new account can
+    contain a default contents.
 -   Make 'winminheight' a local option, so that the user can set a minimal
     height for the help window (and other windows).
 -   ":help :s^I" should expand to ":help :substitute".
@@ -4244,7 +4244,7 @@ Modelines:
     .cpp files.
 -   Support the "abbreviate" command in modelines (Kearns).  Careful for
     characters after <Esc>, that is a security leak.
--   Add option setting to ask user if he wants to have the modelines executed
+-   Add option setting to ask user if they want to have the modelines executed
     or not.  Same for .exrc in local dir.
 
 

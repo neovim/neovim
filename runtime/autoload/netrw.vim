@@ -7760,7 +7760,7 @@ fun! s:NetrwPrevWinOpen(islocal)
 
    " if the previous window's buffer has been changed (ie. its modified flag is set),
    " and it doesn't appear in any other extant window, then ask the
-   " user if s/he wants to abandon modifications therein.
+   " user if they want to abandon modifications therein.
    if prevmod
 "    call Decho("detected that prev window's buffer has been modified: prevbufnr=".prevbufnr." winnr()#".winnr())
     windo if winbufnr(0) == prevbufnr | let bnrcnt=bnrcnt+1 | endif
@@ -9690,7 +9690,7 @@ endfun
 " s:LocalBrowseRefresh: this function is called after a user has {{{2
 " performed any shell command.  The idea is to cause all local-browsing
 " buffers to be refreshed after a user has executed some shell command,
-" on the chance that s/he removed/created a file/directory with it.
+" on the chance that they removed/created a file/directory with it.
 fun! s:LocalBrowseRefresh()
 "  call Dfunc("s:LocalBrowseRefresh() tabpagenr($)=".tabpagenr("$"))
 "  call Decho("s:netrw_browselist =".(exists("s:netrw_browselist")?  string(s:netrw_browselist)  : '<n/a>'))

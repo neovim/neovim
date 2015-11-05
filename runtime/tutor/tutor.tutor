@@ -215,8 +215,8 @@ Commands to run in the system shell can be highlighted by indenting a line start
 ## INTERACTIVE ELEMENTS *interactive*
 
 As visible in this very document, vim-tutor-mode includes some interactive
-elements, to provide feedback to the user about his progress. These elements
-all have the syntax
+elements, to provide feedback to the user about their progress. These
+elements all have the syntax
 
     \---> TEXT {CLAUSE}
 
