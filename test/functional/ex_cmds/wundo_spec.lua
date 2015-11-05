@@ -1,9 +1,9 @@
--- Specs for
--- :wundo
+-- Specs for :wundo and underlying functions
 
 local helpers = require('test.functional.helpers')
-local execute, eq, clear, eval, feed =
-  helpers.execute, helpers.eq, helpers.clear, helpers.eval, helpers.feed
+local execute, clear, eval, feed, spawn, nvim_prog, set_session =
+  helpers.execute, helpers.clear, helpers.eval, helpers.feed, helpers.spawn,
+  helpers.nvim_prog, helpers.set_session
 
 
 describe(':wundo', function()
@@ -16,5 +16,14 @@ describe(':wundo', function()
 
     os.remove(eval('getcwd()') .. '/foo') --cleanup
   end)
+end)
 
+describe('u_* functions', function()
+  it('safely fail on new, non-empty buffer', function()
+    local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed',
+                           '-c', 'set undodir=. undofile'})
+    set_session(session)
+    execute('echo "True"')  -- Should not error out due to crashed Neovim
+    session:exit(0)
+  end)
 end)
