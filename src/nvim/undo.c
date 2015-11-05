@@ -650,7 +650,7 @@ void u_compute_hash(char_u *hash)
 ///
 /// @return [allocated] File name to read from/write to or NULL.
 char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char *dirp;
   char dir_name[MAXPATHL + 1];
