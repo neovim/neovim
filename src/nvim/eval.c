@@ -21208,9 +21208,9 @@ void last_set_msg(scid_T scriptID)
  */
 void ex_oldfiles(exarg_T *eap)
 {
-  list_T      *l = vimvars[VV_OLDFILES].vv_list;
+  list_T      *l = get_vim_var_list(VV_OLDFILES);
   listitem_T  *li;
-  int nr = 0;
+  long nr = 0;
 
   if (l == NULL)
     msg((char_u *)_("No old files"));
@@ -21218,7 +21218,7 @@ void ex_oldfiles(exarg_T *eap)
     msg_start();
     msg_scroll = TRUE;
     for (li = l->lv_first; li != NULL && !got_int; li = li->li_next) {
-      msg_outnum((long)++nr);
+      msg_outnum(++nr);
       MSG_PUTS(": ");
       msg_outtrans(get_tv_string(&li->li_tv));
       msg_putchar('\n');
@@ -21228,6 +21228,23 @@ void ex_oldfiles(exarg_T *eap)
     /* Assume "got_int" was set to truncate the listing. */
     got_int = FALSE;
 
+    // File selection prompt on ":oldfiles!"
+    if (eap->forceit) {
+      quit_more = false;
+      nr = prompt_for_number(false);
+      msg_starthere();
+      if (nr > 0 && nr <= l->lv_len) {
+        char_u *p = list_find_str(l, nr);
+        if (p == NULL) {
+          return;
+        }
+        p = expand_env_save(p);
+        eap->arg = p;
+        eap->cmdidx = CMD_edit;
+        do_exedit(eap, NULL);
+        xfree(p);
+      }
+    }
   }
 }
 
