@@ -140,18 +140,13 @@ such that most users will enjoy using Vim as it is.  Commands and options can
 be used to adjust Vim to the desire of the user and its environment.
 
 
-VIM IS... NOT						*design-not*
+NVIM IS... NOT						*design-not*
 
-- Vim is not a shell or an Operating System.  You will not be able to run a
-  shell inside Vim or use it to control a debugger.  This should work the
-  other way around: Use Vim as a component from a shell or in an IDE.
-  A satirical way to say this: "Unlike Emacs, Vim does not attempt to include
-  everything but the kitchen sink, but some people say that you can clean one
-  with it.  ;-)"
-  To use Vim with gdb see: http://www.agide.org and http://clewn.sf.net.
-- Vim is not a fancy GUI editor that tries to look nice at the cost of
-  being less consistent over all platforms.  But functional GUI features are
-  welcomed.
+Nvim is not an Operating System; instead it should be composed with other
+tools, or hosted as a component. Marvim once said: "Unlike Emacs, Nvim does
+not attempt to include everything but the kitchen sink, but some people use it
+for plumbing."
+
 
 ==============================================================================
 2. Coding style						*coding-style*

@@ -402,10 +402,9 @@ accordingly.  Vim proceeds in this order:
 	initializations until 4. are skipped.  Only the "-u" option is
 	interpreted.
 							*system-vimrc*
-     a. For Unix, MS-DOS, MS-Windows, and Macintosh, the system vimrc file is
-	read for initializations.  The path of this file is shown with the
+     a. For Unix, MS-Windows, and Macintosh, the system vimrc file is read for
+	initializations.  The path of this file is shown with the
 	":version" command.  Mostly it's "$VIM/vimrc".
-	For the Macintosh the $VIMRUNTIME/macmap.vim is read.
 
 						*VIMINIT* *EXINIT* *$MYVIMRC*
      b. Four places are searched for initializations.  The first that exists
@@ -1163,13 +1162,14 @@ running) you have additional options:
 						   *:wv* *:wviminfo*
 :wv[iminfo][!] [file]	Deprecated alias to |:wshada| command.
 
-						*:ol* *:oldfiles*
-:ol[dfiles]		List the files that have marks stored in the ShaDa
+						*:o* *:ol* *:oldfiles*
+:o[ldfiles][!]		List the files that have marks stored in the ShaDa
 			file.  This list is read on startup and only changes
 			afterwards with ":rshada!".  Also see |v:oldfiles|.
 			The number can be used with |c_#<|.
+			Use ! to get a file selection prompt.
 
-:bro[wse] ol[dfiles][!]
+:bro[wse] o[ldfiles][!]
 			List file names as with |:oldfiles|, and then prompt
 			for a number.  When the number is valid that file from
 			the list is edited.

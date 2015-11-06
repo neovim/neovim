@@ -349,6 +349,8 @@ static const struct nv_cmd {
   {K_F8,      farsi_fkey,     0,                      0},
   {K_F9,      farsi_fkey,     0,                      0},
   {K_EVENT,   nv_event,       NV_KEEPREG,             0},
+  {K_FOCUSGAINED, nv_focusgained, NV_KEEPREG,         0},
+  {K_FOCUSLOST,   nv_focuslost,   NV_KEEPREG,         0},
 };
 
 /* Number of commands in nv_cmds[]. */
@@ -4253,8 +4255,13 @@ dozet:
     break;
 
   /* "zm": fold more */
-  case 'm':   if (curwin->w_p_fdl > 0)
-      --curwin->w_p_fdl;
+  case 'm':
+    if (curwin->w_p_fdl > 0) {
+      curwin->w_p_fdl -= cap->count1;
+      if (curwin->w_p_fdl < 0) {
+        curwin->w_p_fdl = 0;
+      }
+    }
     old_fdl = -1;                       /* force an update */
     curwin->w_p_fen = true;
     break;
@@ -4266,7 +4273,14 @@ dozet:
     break;
 
   /* "zr": reduce folding */
-  case 'r':   ++curwin->w_p_fdl;
+  case 'r':
+    curwin->w_p_fdl += cap->count1;
+    {
+      int d = getDeepestNesting();
+      if (curwin->w_p_fdl >= d) {
+        curwin->w_p_fdl = d;
+      }
+    }
     break;
 
   /* "zR": open all folds */
@@ -7689,8 +7703,30 @@ static void nv_open(cmdarg_T *cap)
 // Handle an arbitrary event in normal mode
 static void nv_event(cmdarg_T *cap)
 {
+  // Garbage collection should have been executed before blocking for events in
+  // the `os_inchar` in `state_enter`, but we also disable it here in case the
+  // `os_inchar` branch was not executed(!queue_empty(loop.events), which could
+  // have `may_garbage_collect` set to true in `normal_check`).
+  //
+  // That is because here we may run code that calls `os_inchar`
+  // later(`f_confirm` or `get_keystroke` for example), but in these cases it is
+  // not safe to perform garbage collection because there could be unreferenced
+  // lists or dicts being used.
+  may_garbage_collect = false;
   queue_process_events(loop.events);
   cap->retval |= CA_COMMAND_BUSY;       // don't call edit() now
+}
+
+/// Trigger FocusGained event.
+static void nv_focusgained(cmdarg_T *cap)
+{
+  apply_autocmds(EVENT_FOCUSGAINED, NULL, NULL, false, curbuf);
+}
+
+/// Trigger FocusLost event.
+static void nv_focuslost(cmdarg_T *cap)
+{
+  apply_autocmds(EVENT_FOCUSLOST, NULL, NULL, false, curbuf);
 }
 
 /*

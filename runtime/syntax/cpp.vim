@@ -63,7 +63,7 @@ if version >= 508 || !exists("did_cpp_syntax_inits")
   HiLink cppStructure		Structure
   HiLink cppBoolean		Boolean
   HiLink cppConstant		Constant
-  HiLink cppRawDelimiter	Delimiter
+  HiLink cppRawStringDelimiter	Delimiter
   HiLink cppRawString		String
   delcommand HiLink
 endif

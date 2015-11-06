@@ -105,6 +105,8 @@ The configuration variables are only processed when the terminal starts, which
 is why it needs to be done with the |TermOpen| autocmd or setting global
 variables before the terminal is started.
 
+There is also a corresponding |TermClose| event.
+
 The terminal cursor can be highlighted via |hl-TermCursor| and
 |hl-TermCursorNC|.
 

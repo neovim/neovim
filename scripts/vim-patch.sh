@@ -205,8 +205,8 @@ list_vim_patches() {
   echo "  To port one of the above patches to Neovim, execute"
   echo "  this script with the patch revision as argument."
   echo
-  echo "  Examples: '${BASENAME} 7.4.487'"
-  echo "            '${BASENAME} 1e8ebf870720e7b671f98f22d653009826304c4f'"
+  echo "  Examples: '${BASENAME} -p 7.4.487'"
+  echo "            '${BASENAME} -p 1e8ebf870720e7b671f98f22d653009826304c4f'"
 }
 
 review_pr() {

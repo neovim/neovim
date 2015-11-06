@@ -1763,6 +1763,8 @@ cursor( {lnum}, {col} [, {off}])
 cursor( {list})			Number	move cursor to position in {list}
 deepcopy( {expr} [, {noref}])	any	make a full copy of {expr}
 delete( {fname})		Number	delete file {fname}
+dictwatcheradd({dict}, {pattern}, {callback})	Start watching a dictionary
+dictwatcherdel({dict}, {pattern}, {callback})	Stop watching a dictionary
 did_filetype()			Number	TRUE if FileType autocommand event used
 diff_filler( {lnum})		Number	diff filler lines about {lnum}
 diff_hlID( {lnum}, {col})	Number	diff highlighting at {lnum}/{col}
@@ -1870,10 +1872,13 @@ invert( {expr})			Number  bitwise invert
 isdirectory( {directory})	Number	TRUE if {directory} is a directory
 islocked( {expr})		Number	TRUE if {expr} is locked
 items( {dict})			List	key-value pairs in {dict}
-job_close({job})		Closes a job with id {job}
-job_send({job}, {data})		Writes {data} to {job}'s stdin
-job_spawn({name}, {prog}[, {argv}])
-				Spawns {prog} as a job associated with {name}
+jobclose({job}[, {stream}])	Number	Closes a job stream(s)
+jobresize({job}, {width}, {height})
+				Number	Resize {job}'s pseudo terminal window
+jobsend({job}, {data})		Number	Writes {data} to {job}'s stdin
+jobstart({cmd}[, {opts}])	Number	Spawns {cmd} as a job
+jobstop({job})			Number	Stops a job
+jobwait({ids}[, {timeout}])	Number	Wait for a set of jobs
 join( {list} [, {sep}])		String	join {list} items into one String
 keys( {dict})			List	keys in {dict}
 len( {expr})			Number	the length of {expr}
@@ -2661,6 +2666,44 @@ delete({fname})							*delete()*
 		To delete a line from the buffer use |:delete|.  Use |:exe|
 		when the line number is in a variable.
 
+dictwatcheradd({dict}, {pattern}, {callback})		      *dictwatcheradd()*
+		Adds a watcher to a dictionary. A dictionary watcher is
+		identified by three components:
+
+		- A dictionary({dict});
+		- A key pattern({pattern}).
+		- A function({callback}).
+
+		After this is called, every change on {dict} and on keys
+		matching {pattern} will result in {callback} being invoked.
+
+		For now {pattern} only accepts very simple patterns that can
+		contain a '*' at the end of the string, in which case it will
+		match every key that begins with the substring before the '*'.
+		That means if '*' is not the last character of {pattern}, only
+		keys that are exactly equal as {pattern} will be matched.
+
+		The {callback} receives three arguments:
+
+		- The dictionary being watched.
+		- The key which changed.
+		- A dictionary containg the new and old values for the key.
+
+		The type of change can be determined by examining the keys
+		present on the third argument:
+
+		- If contains both `old` and `new`, the key was updated.
+		- If it contains only `new`, the key was added.
+		- If it contains only `old`, the key was deleted.
+
+		This function can be used by plugins to implement options with
+		validation and parsing logic.
+
+dictwatcherdel({dict}, {pattern}, {callback})		      *dictwatcherdel()*
+		Removes a watcher added  with |dictwatcheradd()|. All three
+		arguments must match the ones passed to |dictwatcheradd()| in
+		order for the watcher to be successfully deleted.
+
 							*did_filetype()*
 did_filetype()	Returns non-zero when autocommands are being executed and the
 		FileType event has been triggered at least once.  Can be used
@@ -2959,6 +3002,8 @@ extend({expr1}, {expr2} [, {expr3}])			*extend()*
 		{expr1} is changed when {expr2} is not empty.  If necessary
 		make a copy of {expr1} first.
 		{expr2} remains unchanged.
+		When {expr1} is locked and {expr2} is not empty the operation
+		fails.
 		Returns {expr1}.
 
 

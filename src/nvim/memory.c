@@ -42,8 +42,6 @@ void try_to_free_memory(void)
   clear_sb_text();
   // Try to save all buffers and release as many blocks as possible
   mf_release_all();
-  // cleanup recursive lists/dicts
-  garbage_collect();
 
   trying_to_free = false;
 }

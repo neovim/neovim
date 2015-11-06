@@ -5,6 +5,7 @@
 #include <stddef.h>
 
 #include "nvim/hashtab.h"
+#include "nvim/lib/queue.h"
 
 typedef int varnumber_T;
 typedef double float_T;
@@ -119,6 +120,7 @@ struct dictvar_S {
   dict_T      *dv_used_prev;    /* previous dict in used dicts list */
   int internal_refcount;        // number of internal references to
                                 // prevent garbage collection
+  QUEUE watchers;               // dictionary key watchers set by user code
 };
 
 // structure used for explicit stack while garbage collecting hash tables

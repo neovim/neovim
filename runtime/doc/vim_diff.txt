@@ -24,7 +24,7 @@ these differences.
 - Use `$XDG_CONFIG_HOME/nvim/init.vim` instead of `.vimrc` for storing 
   configuration.
 - Use `$XDG_CONFIG_HOME/nvim` instead of `.vim` to store configuration files.
-- Use `$XDG_DATA_HOME/shada/main.shada` instead of `.viminfo` for persistent 
+- Use `$XDG_DATA_HOME/nvim/shada/main.shada` instead of `.viminfo` for persistent 
   session information.
 
 ==============================================================================
@@ -106,6 +106,7 @@ Additional differences:
   compatibility reasons.
 - |:wviminfo| was renamed to |:wshada|, |:rviminfo| to |:rshada|.  Old 
   commands are still kept.
+- |:oldfiles| supports !.
 - When writing (|:wshada| without bang or at exit) it merges much more data, 
   and does this according to the timestamp.  Vim merges only marks. 
   |shada-merging|
@@ -142,6 +143,8 @@ Events:
   |TabNew|
   |TabNewEntered|
   |TabClosed|
+  |TermOpen|
+  |TermClose|
 
 Highlight groups:
   |hl-EndOfBuffer|
@@ -197,7 +200,7 @@ Other options:
   'macatsui'
   'shelltype'
   'shortname'
-  'termencoding'
+  'termencoding' (Vim 7.4.852 also removed this for Windows)
   'textauto'
   'textmode'
   'toolbar'
@@ -210,12 +213,14 @@ Other commands:
   :Print
   :fixdel
   :mode (no longer accepts an argument)
+  :open
   :shell
   :tearoff
 
 Other compile-time features:
   EBCDIC
   Emacs tags support
+  X11 integration (see |x11-selection|)
 
 Nvim does not have a built-in GUI and hence the following aliases have been
 removed: gvim, gex, gview, rgvim, rgview

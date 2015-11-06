@@ -17,6 +17,6 @@ cp contrib/YouCompleteMe/ycm_extra_conf.py src/.ycm_extra_conf.py
 echo .ycm_extra_conf.py >> .git/info/exclude
 make
 
-(Add the following somewhere in your .nvimrc files)
+(Add the following somewhere in your vimrc)
 autocmd FileType c nnoremap <buffer> <silent> <C-]> :YcmCompleter GoTo<cr>
 ```

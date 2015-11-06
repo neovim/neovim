@@ -148,6 +148,32 @@ describe('tui', function()
       -- TERMINAL --                                    |
     ]])
   end)
+
+  it('can handle focus events', function()
+    execute('autocmd FocusGained * echo "gained"')
+    execute('autocmd FocusLost * echo "lost"')
+    feed('\x1b[I')
+    screen:expect([[
+      {1: }                                                 |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      [No Name]                                         |
+      gained                                            |
+      -- TERMINAL --                                    |
+    ]])
+
+    feed('\x1b[O')
+    screen:expect([[
+      {1: }                                                 |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      [No Name]                                         |
+      lost                                              |
+      -- TERMINAL --                                    |
+    ]])
+  end)
 end)
 
 describe('tui with non-tty file descriptors', function()
@@ -167,7 +193,7 @@ describe('tui with non-tty file descriptors', function()
       :q                                                |
       abc                                               |
                                                         |
-      [Program exited, press any key to close]          |
+      [Process exited 0]                                |
                                                         |
       -- TERMINAL --                                    |
     ]])

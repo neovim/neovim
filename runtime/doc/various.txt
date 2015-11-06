@@ -212,7 +212,7 @@ g8			Print the hex values of the bytes used in the
 			equivalent to: >
 
 			      :enew
-			      :call termopen([&sh, &shcf, '{cmd}'])
+			      :call termopen('{cmd}')
 			      :startinsert
 <
 			If no {cmd} is given, 'shellcmdflag' will not be sent

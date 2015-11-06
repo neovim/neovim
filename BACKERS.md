@@ -104,7 +104,7 @@ Thank you to everyone who backed our [Bountysource fundraiser](https://www.bount
 - Michael Ulm www.mulm.at
 - Mikael Jansson http://mikaelj.se
 - Mikkel Høgh http://mikkel.hoegh.org/
-- Ming Liu http://www.codingupfengshui.io
+- Ming Liu http://ming.codes
 - Holger Peters http://www.holger-peters.de
 - Alexander Myshov http://myshov.com/
 - Darren Cheng http://sanguinerane.com/

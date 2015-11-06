@@ -12,6 +12,7 @@
 *.pyc
 *.o
 *.so
+*.out
 
 tags
 

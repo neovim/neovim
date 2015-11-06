@@ -80,6 +80,9 @@
 static int quitmore = 0;
 static int ex_pressedreturn = FALSE;
 
+/* whether ":lcd" was produced for a session */
+static int did_lcd;
+
 typedef struct ucmd {
   char_u      *uc_name;         /* The command name */
   uint32_t uc_argt;             /* The argument type */
@@ -144,23 +147,9 @@ struct dbg_stuff {
 # include "ex_docmd.c.generated.h"
 #endif
 
-# define ex_gui                 ex_nogui
-# define ex_popup               ex_ni
-# define ex_simalt              ex_ni
-# define gui_mch_find_dialog    ex_ni
-# define gui_mch_replace_dialog ex_ni
-# define ex_helpfind            ex_ni
-static int did_lcd;             /* whether ":lcd" was produced for a session */
 #ifndef HAVE_WORKING_LIBINTL
 # define ex_language            ex_ni
 #endif
-# define ex_wsverb              ex_ni
-# define ex_nbclose             ex_ni
-# define ex_nbkey               ex_ni
-# define ex_nbstart             ex_ni
-
-
-
 
 /*
  * Declare cmdnames[].
@@ -6464,40 +6453,6 @@ static void ex_find(exarg_T *eap)
     do_exedit(eap, NULL);
     xfree(fname);
   }
-}
-
-/*
- * ":open" simulation: for now just work like ":visual".
- */
-static void ex_open(exarg_T *eap)
-{
-  regmatch_T regmatch;
-  char_u      *p;
-
-  curwin->w_cursor.lnum = eap->line2;
-  beginline(BL_SOL | BL_FIX);
-  if (*eap->arg == '/') {
-    /* ":open /pattern/": put cursor in column found with pattern */
-    ++eap->arg;
-    p = skip_regexp(eap->arg, '/', p_magic, NULL);
-    *p = NUL;
-    regmatch.regprog = vim_regcomp(eap->arg, p_magic ? RE_MAGIC : 0);
-    if (regmatch.regprog != NULL) {
-      regmatch.rm_ic = p_ic;
-      p = get_cursor_line_ptr();
-      if (vim_regexec(&regmatch, p, (colnr_T)0))
-        curwin->w_cursor.col = (colnr_T)(regmatch.startp[0] - p);
-      else
-        EMSG(_(e_nomatch));
-      vim_regfree(regmatch.regprog);
-    }
-    /* Move to the NUL, ignore any other arguments. */
-    eap->arg += STRLEN(eap->arg);
-  }
-  check_cursor();
-
-  eap->cmdidx = CMD_visual;
-  do_exedit(eap, NULL);
 }
 
 /*

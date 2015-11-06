@@ -935,9 +935,6 @@ static void command_line_scan(mparm_T *parmp)
           want_argument = TRUE;
           break;
 
-        case 'X':                 /* "-X"  don't connect to X server */
-          break;
-
         case 'Z':                 /* "-Z"  restricted mode */
           restricted = TRUE;
           break;
@@ -1833,7 +1830,7 @@ static void usage(void)
   mch_msg(_("  -n                    No swap file, use memory only\n"));
   mch_msg(_("  -r, -L                List swap files and exit\n"));
   mch_msg(_("  -r <file>             Recover crashed session\n"));
-  mch_msg(_("  -u <nvimrc>           Use <nvimrc> instead of the default\n"));
+  mch_msg(_("  -u <vimrc>            Use <vimrc> instead of the default\n"));
   mch_msg(_("  -i <shada>            Use <shada> instead of the default\n"));
   mch_msg(_("  --noplugin            Don't load plugin scripts\n"));
   mch_msg(_("  -o[N]                 Open N windows (default: one for each file)\n"));
@@ -1842,7 +1839,7 @@ static void usage(void)
   mch_msg(_("  +                     Start at end of file\n"));
   mch_msg(_("  +<linenum>            Start at line <linenum>\n"));
   mch_msg(_("  +/<pattern>           Start at first occurrence of <pattern>\n"));
-  mch_msg(_("  --cmd <command>       Execute <command> before loading any nvimrc\n"));
+  mch_msg(_("  --cmd <command>       Execute <command> before loading any vimrc\n"));
   mch_msg(_("  -c <command>          Execute <command> after loading the first file\n"));
   mch_msg(_("  -S <session>          Source <session> after loading the first file\n"));
   mch_msg(_("  -s <scriptin>         Read Normal mode commands from <scriptin>\n"));
