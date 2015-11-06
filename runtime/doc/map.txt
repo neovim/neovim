@@ -1,4 +1,4 @@
-*map.txt*       For Vim version 7.4.  Last change: 2014 Jun 02
+*map.txt*       For Vim version 7.4.  Last change: 2014 Oct 03
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -74,7 +74,7 @@ modes.
 			Map the key sequence {lhs} to {rhs} for the modes
 			where the map command applies.  Disallow mapping of
 			{rhs}, to avoid nested and recursive mappings.  Often
-			used to redefine a command.  {not in Vi}
+			used to redefine a command.
 
 
 :unm[ap]  {lhs}			|mapmode-nvo|		*:unm*  *:unmap*
@@ -106,7 +106,7 @@ modes.
 :lmapc[lear]			|mapmode-l|		*:lmapc*  *:lmapclear*
 :cmapc[lear]			|mapmode-c|		*:cmapc*  *:cmapclear*
 			Remove ALL mappings for the modes where the map
-			command applies.  {not in Vi}
+			command applies.
 			Use the <buffer> argument to remove buffer-local
 			mappings |:map-<buffer>|
 			Warning: This also removes the default mappings.
@@ -137,7 +137,6 @@ modes.
 :cm[ap] {lhs}			|mapmode-c|		*:cmap_l*
 			List the key mappings for the key sequences starting
 			with {lhs} in the modes where the map command applies.
-			{not in Vi}
 
 These commands are used to map a key or key sequence to a string of
 characters.  You can use this to put command sequences under function keys,
@@ -154,7 +153,6 @@ decide if "aa" or "aaa" should be mapped.  This means that after typing "aa"
 that mapping won't get expanded yet, Vim is waiting for another character.
 If you type a space, then "foo" will get inserted, plus the space.  If you
 type "a", then "bar" will get inserted.
-{Vi does not allow ambiguous mappings}
 
 
 1.2 SPECIAL ARGUMENTS					*:map-arguments*
@@ -437,7 +435,7 @@ last defined.  Example: >
 
 	:verbose map <C-W>*
 	n  <C-W>*      * <C-W><C-S>*
-		Last set from /home/abcd/.vimrc
+		Last set from ~/.config/nvim/init.vim
 
 See |:verbose-cmd| for more information.
 
@@ -876,8 +874,7 @@ end-id	  The "end-id" type ends in a keyword character, but all the other
 	  Examples: "#i", "..f", "$/7"
 
 non-id	  The "non-id" type ends in a non-keyword character, the other
-	  characters may be of any type, excluding space and tab.  {this type
-	  is not supported by Vi}
+	  characters may be of any type, excluding space and tab.
 
 	  Examples: "def#", "4/7$"
 
@@ -923,9 +920,11 @@ Examples: ({CURSOR} is where you type a non-keyword character) >
 <		"test;;"	  is not expanded
 		"test ;;"	  is expanded to "test <endofline>"
 
-To avoid the abbreviation in insert mode: Type part of the abbreviation, exit
-insert mode with <Esc>, re-enter insert mode with "a" and type the rest.  Or
-type CTRL-V before the character after the abbreviation.
+To avoid the abbreviation in Insert mode: Type CTRL-V before the character
+that would trigger the abbreviation.  E.g. CTRL-V <Space>.  Or type part of
+the abbreviation, exit insert mode with <Esc>, re-enter insert mode with "a"
+and type the rest.
+
 To avoid the abbreviation in Command-line mode: Type CTRL-V twice somewhere in
 the abbreviation to avoid it to be replaced.  A CTRL-V in front of a normal
 character is mostly ignored otherwise.
@@ -993,45 +992,40 @@ See |:verbose-cmd| for more information.
 
 						*:norea* *:noreabbrev*
 :norea[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
-			same as ":ab", but no remapping for this {rhs} {not
-			in Vi}
+			same as ":ab", but no remapping for this {rhs}
 
 						*:ca* *:cabbrev*
 :ca[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
-			same as ":ab", but for Command-line mode only.  {not
-			in Vi}
+			same as ":ab", but for Command-line mode only.
 
 						*:cuna* *:cunabbrev*
-:cuna[bbrev] {lhs}	same as ":una", but for Command-line mode only.  {not
-			in Vi}
+:cuna[bbrev] {lhs}	same as ":una", but for Command-line mode only.
 
 						*:cnorea* *:cnoreabbrev*
 :cnorea[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
 			same as ":ab", but for Command-line mode only and no
-			remapping for this {rhs} {not in Vi}
+			remapping for this {rhs}
 
 						*:ia* *:iabbrev*
 :ia[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
-			same as ":ab", but for Insert mode only.  {not in Vi}
+			same as ":ab", but for Insert mode only.
 
 						*:iuna* *:iunabbrev*
-:iuna[bbrev] {lhs}	same as ":una", but for insert mode only.  {not in
-			Vi}
+:iuna[bbrev] {lhs}	same as ":una", but for insert mode only.
 
 						*:inorea* *:inoreabbrev*
 :inorea[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
 			same as ":ab", but for Insert mode only and no
-			remapping for this {rhs} {not in Vi}
+			remapping for this {rhs}
 
 							*:abc* *:abclear*
-:abc[lear] [<buffer>]	Remove all abbreviations.  {not in Vi}
+:abc[lear] [<buffer>]	Remove all abbreviations.
 
 							*:iabc* *:iabclear*
-:iabc[lear] [<buffer>]	Remove all abbreviations for Insert mode.  {not in Vi}
+:iabc[lear] [<buffer>]	Remove all abbreviations for Insert mode.
 
 							*:cabc* *:cabclear*
-:cabc[lear] [<buffer>]	Remove all abbreviations for Command-line mode.  {not
-			in Vi}
+:cabc[lear] [<buffer>]	Remove all abbreviations for Command-line mode.
 
 							*using_CTRL-V*
 It is possible to use special characters in the rhs of an abbreviation.
@@ -1052,7 +1046,7 @@ You type:   ab esc ^V^V^V^V^V^[
 You see:    ab esc ^V^V^[
 
 	The command-line contains two actual ^Vs before the ^[.  This is
-	how it should appear in your .exrc file, if you choose to go that
+	how it should appear in your vimrc file, if you choose to go that
 	route.  The first ^V is there to quote the second ^V; the :ab
 	command uses ^V as its own quote character, so you can include quoted
 	whitespace or the | character in the abbreviation.  The :ab command
@@ -1124,9 +1118,6 @@ to find out what they are defined to.
 The |:scriptnames| command can be used to see which scripts have been sourced
 and what their <SNR> number is.
 
-This is all {not in Vi} and {not available when compiled without the |+eval|
-feature}.
-
 ==============================================================================
 4. User-defined commands				*user-commands*
 
@@ -1141,9 +1132,7 @@ For starters: See section |40.2| in the user manual.
 All user defined commands must start with an uppercase letter, to avoid
 confusion with builtin commands.  Exceptions are these builtin commands:
 	:Next
-	:X
-They cannot be used for a user defined command.  ":Print" is also an existing
-command, but it is deprecated and can be overruled.
+They cannot be used for a user defined command.
 
 The other characters of the user command can be uppercase letters, lowercase
 letters or digits.  When using digits, note that other commands that take a
@@ -1163,7 +1152,6 @@ Example: >
 	:Renu				" Means "Renumber"
 	:Ren				" Error - ambiguous
 	:command Paste ...
-	:P				" The built-in :Print
 
 It is recommended that full names for user-defined commands are used in
 scripts.
@@ -1283,6 +1271,8 @@ completion can be enabled:
 	-complete=custom,{func} custom completion, defined via {func}
 	-complete=customlist,{func} custom completion, defined via {func}
 
+Note: That some completion methods might expand environment variables.
+
 
 Custom completion			*:command-completion-custom*
 					*:command-completion-customlist*
@@ -1353,6 +1343,20 @@ Possible attributes are:
 
 Note that -range=N and -count=N are mutually exclusive - only one should be
 specified.
+
+                                                  *E889* *:command-addr*
+It is possible that the special characters in the range like `.`, `$` or `%`
+which by default correspond to the current line, last line and the whole
+buffer, relate to arguments, (loaded) buffers, windows or tab pages.
+
+Possible values are:
+     -addr=lines            Range of lines (this is the default)
+     -addr=arguments        Range for arguments
+     -addr=buffers          Range for buffers (also not loaded buffers)
+     -addr=loaded_buffers   Range for loaded buffers
+     -addr=windows          Range for windows
+     -addr=tabs             Range for tab pages
+
 
 Special cases				*:command-bang* *:command-bar*
 					*:command-register* *:command-buffer*

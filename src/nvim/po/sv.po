@@ -419,7 +419,7 @@ msgid "E201: *ReadPre autocommands must not change current buffer"
 msgstr "E201: *ReadPre autokommandon får inte ändra nuvarande buffert"
 
 #: ../fileio.c:720
-msgid "Vim: Reading from stdin...\n"
+msgid "Nvim: Reading from stdin...\n"
 msgstr "Vim: Läser från standard in...\n"
 
 #. Re-opening the original file failed!
@@ -922,7 +922,7 @@ msgid "E663: At end of changelist"
 msgstr "E663: Vid slutet av ändringslista"
 
 #: ../normal.c:6950
-msgid "Type  :quit<Enter>  to exit Vim"
+msgid "Type  :quit<Enter>  to exit Nvim"
 msgstr "skriv  :q<Enter>                för att avsluta Vim         "
 
 #: ../ex_cmds2.c:163
@@ -4781,7 +4781,7 @@ msgid "E477: No ! allowed"
 msgstr "E477: Inget ! tillåtet"
 
 #: ../globals.h:1019
-msgid "E25: GUI cannot be used: Not enabled at compile time"
+msgid "E25: Nvim does not have a built-in GUI"
 msgstr "E25: GUI kan inte användas: Inte aktiverat vid kompilering"
 
 #: ../globals.h:1020
@@ -5380,7 +5380,7 @@ msgid "E494: Use w or w>>"
 msgstr "E494: Använd w eller w>>"
 
 #: ../ex_docmd.c:3318
-msgid "E319: Sorry, the command is not available in this version"
+msgid "E319: The command is not available in this version"
 msgstr "E319: Tyvärr, kommandot är inte tillgängligt i den här versionen"
 
 #: ../ex_docmd.c:3611

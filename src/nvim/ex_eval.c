@@ -11,7 +11,9 @@
  */
 #include <assert.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <inttypes.h>
+#include <limits.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
@@ -245,28 +247,24 @@ int cause_errthrow(char_u *mesg, int severe, int *ignore)
         plist = &(*plist)->next;
 
       elem = xmalloc(sizeof(struct msglist));
-      {
-        elem->msg = vim_strsave(mesg);
-        {
-          elem->next = NULL;
-          elem->throw_msg = NULL;
-          *plist = elem;
-          if (plist == msg_list || severe) {
-            char_u      *tmsg;
+      elem->msg = vim_strsave(mesg);
+      elem->next = NULL;
+      elem->throw_msg = NULL;
+      *plist = elem;
+      if (plist == msg_list || severe) {
+        char_u      *tmsg;
 
-            /* Skip the extra "Vim " prefix for message "E458". */
-            tmsg = elem->msg;
-            if (STRNCMP(tmsg, "Vim E", 5) == 0
-                && VIM_ISDIGIT(tmsg[5])
-                && VIM_ISDIGIT(tmsg[6])
-                && VIM_ISDIGIT(tmsg[7])
-                && tmsg[8] == ':'
-                && tmsg[9] == ' ')
-              (*msg_list)->throw_msg = &tmsg[4];
-            else
-              (*msg_list)->throw_msg = tmsg;
-          }
-        }
+        /* Skip the extra "Vim " prefix for message "E458". */
+        tmsg = elem->msg;
+        if (STRNCMP(tmsg, "Vim E", 5) == 0
+            && ascii_isdigit(tmsg[5])
+            && ascii_isdigit(tmsg[6])
+            && ascii_isdigit(tmsg[7])
+            && tmsg[8] == ':'
+            && tmsg[9] == ' ')
+          (*msg_list)->throw_msg = &tmsg[4];
+        else
+          (*msg_list)->throw_msg = tmsg;
       }
     }
     return TRUE;
@@ -283,8 +281,8 @@ static void free_msglist(struct msglist *l)
   messages = l;
   while (messages != NULL) {
     next = messages->next;
-    free(messages->msg);
-    free(messages);
+    xfree(messages->msg);
+    xfree(messages);
     messages = next;
   }
 }
@@ -385,21 +383,19 @@ int do_intthrow(struct condstack *cstack)
 char_u *get_exception_string(void *value, int type, char_u *cmdname, int *should_free)
 {
   char_u      *ret, *mesg;
-  int cmdlen;
   char_u      *p, *val;
 
   if (type == ET_ERROR) {
     *should_free = FALSE;
     mesg = ((struct msglist *)value)->throw_msg;
     if (cmdname != NULL && *cmdname != NUL) {
-      cmdlen = (int)STRLEN(cmdname);
-      ret = vim_strnsave((char_u *)"Vim(",
-          4 + cmdlen + 2 + (int)STRLEN(mesg));
+      size_t cmdlen = STRLEN(cmdname);
+      ret = vim_strnsave((char_u *)"Vim(", 4 + cmdlen + 2 + STRLEN(mesg));
       STRCPY(&ret[4], cmdname);
       STRCPY(&ret[4 + cmdlen], "):");
       val = ret + 4 + cmdlen + 2;
     } else {
-      ret = vim_strnsave((char_u *)"Vim:", 4 + (int)STRLEN(mesg));
+      ret = vim_strnsave((char_u *)"Vim:", 4 + STRLEN(mesg));
       val = ret + 4;
     }
 
@@ -409,11 +405,11 @@ char_u *get_exception_string(void *value, int type, char_u *cmdname, int *should
     for (p = mesg;; p++) {
       if (*p == NUL
           || (*p == 'E'
-              && VIM_ISDIGIT(p[1])
+              && ascii_isdigit(p[1])
               && (p[2] == ':'
-                  || (VIM_ISDIGIT(p[2])
+                  || (ascii_isdigit(p[2])
                       && (p[3] == ':'
-                          || (VIM_ISDIGIT(p[3])
+                          || (ascii_isdigit(p[3])
                               && p[4] == ':')))))) {
         if (*p == NUL || p == mesg)
           STRCAT(val, mesg);            /* 'E123' missing or at beginning */
@@ -493,7 +489,7 @@ static int throw_exception(void *value, int type, char_u *cmdname)
     if (debug_break_level > 0 || *p_vfile == NUL)
       msg_scroll = TRUE;            /* always scroll up, don't overwrite */
 
-    smsg((char_u *)_("Exception thrown: %s"), excp->value);
+    smsg(_("Exception thrown: %s"), excp->value);
     msg_puts((char_u *)"\n");       /* don't overwrite this either */
 
     if (debug_break_level > 0 || *p_vfile == NUL)
@@ -509,7 +505,7 @@ static int throw_exception(void *value, int type, char_u *cmdname)
   return OK;
 
 nomem:
-  free(excp);
+  xfree(excp);
   suppress_errthrow = TRUE;
   EMSG(_(e_outofmem));
 fail:
@@ -541,10 +537,9 @@ static void discard_exception(except_T *excp, int was_finished)
     ++no_wait_return;
     if (debug_break_level > 0 || *p_vfile == NUL)
       msg_scroll = TRUE;            /* always scroll up, don't overwrite */
-    smsg(was_finished
-        ? (char_u *)_("Exception finished: %s")
-        : (char_u *)_("Exception discarded: %s"),
-        excp->value);
+    smsg(was_finished ? _("Exception finished: %s")
+                      : _("Exception discarded: %s"),
+         excp->value);
     msg_puts((char_u *)"\n");       /* don't overwrite this either */
     if (debug_break_level > 0 || *p_vfile == NUL)
       cmdline_row = msg_row;
@@ -554,14 +549,14 @@ static void discard_exception(except_T *excp, int was_finished)
     else
       verbose_leave();
     STRCPY(IObuff, saved_IObuff);
-    free(saved_IObuff);
+    xfree(saved_IObuff);
   }
   if (excp->type != ET_INTERRUPT)
-    free(excp->value);
+    xfree(excp->value);
   if (excp->type == ET_ERROR)
     free_msglist(excp->messages);
-  free(excp->throw_name);
-  free(excp);
+  xfree(excp->throw_name);
+  xfree(excp);
 }
 
 /*
@@ -605,7 +600,7 @@ static void catch_exception(except_T *excp)
     if (debug_break_level > 0 || *p_vfile == NUL)
       msg_scroll = TRUE;            /* always scroll up, don't overwrite */
 
-    smsg((char_u *)_("Exception caught: %s"), excp->value);
+    smsg(_("Exception caught: %s"), excp->value);
     msg_puts((char_u *)"\n");       /* don't overwrite this either */
 
     if (debug_break_level > 0 || *p_vfile == NUL)
@@ -666,22 +661,22 @@ static void finish_exception(except_T *excp)
  */
 static void report_pending(int action, int pending, void *value)
 {
-  char_u      *mesg;
-  char        *s;
+  char *mesg;
+  char *s;
   int save_msg_silent;
 
   assert(value || !(pending & CSTP_THROW));
 
   switch (action) {
   case RP_MAKE:
-    mesg = (char_u *)_("%s made pending");
+    mesg = _("%s made pending");
     break;
   case RP_RESUME:
-    mesg = (char_u *)_("%s resumed");
+    mesg = _("%s resumed");
     break;
   /* case RP_DISCARD: */
   default:
-    mesg = (char_u *)_("%s discarded");
+    mesg = _("%s discarded");
     break;
   }
 
@@ -706,9 +701,8 @@ static void report_pending(int action, int pending, void *value)
   default:
     if (pending & CSTP_THROW) {
       vim_snprintf((char *)IObuff, IOSIZE,
-          (char *)mesg, _("Exception"));
-      mesg = vim_strnsave(IObuff, (int)STRLEN(IObuff) + 4);
-      STRCAT(mesg, ": %s");
+                   mesg, _("Exception"));
+      mesg = (char *)concat_str(IObuff, (char_u *)": %s");
       s = (char *)((except_T *)value)->value;
     } else if ((pending & CSTP_ERROR) && (pending & CSTP_INTERRUPT))
       s = _("Error and interrupt");
@@ -723,7 +717,7 @@ static void report_pending(int action, int pending, void *value)
     msg_silent = FALSE;         /* display messages */
   ++no_wait_return;
   msg_scroll = TRUE;            /* always scroll up, don't overwrite */
-  smsg(mesg, (char_u *)s);
+  smsg(mesg, s);
   msg_puts((char_u *)"\n");     /* don't overwrite this either */
   cmdline_row = msg_row;
   --no_wait_return;
@@ -731,9 +725,9 @@ static void report_pending(int action, int pending, void *value)
     msg_silent = save_msg_silent;
 
   if (pending == CSTP_RETURN)
-    free(s);
+    xfree(s);
   else if (pending & CSTP_THROW)
-    free(mesg);
+    xfree(mesg);
 }
 
 /*
@@ -1033,7 +1027,8 @@ void ex_continue(exarg_T *eap)
      * next).  Therefor, inactivate all conditionals except the ":while"
      * itself (if reached). */
     idx = cleanup_conditionals(cstack, CSF_WHILE | CSF_FOR, FALSE);
-    if (idx >= 0 && (cstack->cs_flags[idx] & (CSF_WHILE | CSF_FOR))) {
+    assert(idx >= 0);
+    if (cstack->cs_flags[idx] & (CSF_WHILE | CSF_FOR)) {
       rewind_conditionals(cstack, idx, CSF_TRY, &cstack->cs_trylevel);
 
       /*
@@ -1168,7 +1163,7 @@ void ex_throw(exarg_T *eap)
    * not throw. */
   if (!eap->skip && value != NULL) {
     if (throw_exception(value, ET_USER, NULL) == FAIL)
-      free(value);
+      xfree(value);
     else
       do_throw(eap->cstack);
   }
@@ -1307,7 +1302,7 @@ void ex_catch(exarg_T *eap)
   int skip = FALSE;
   int caught = FALSE;
   char_u      *end;
-  int save_char = 0;
+  char_u save_char = 0;
   char_u      *save_cpo;
   regmatch_T regmatch;
   int prev_got_int;
@@ -1530,7 +1525,8 @@ void ex_finally(exarg_T *eap)
           pending |= did_throw ? CSTP_THROW : 0;
         pending |= did_emsg  ? CSTP_ERROR     : 0;
         pending |= got_int   ? CSTP_INTERRUPT : 0;
-        cstack->cs_pending[cstack->cs_idx] = pending;
+        assert(pending >= CHAR_MIN && pending <= CHAR_MAX);
+        cstack->cs_pending[cstack->cs_idx] = (char)pending;
 
         /* It's mandatory that the current exception is stored in the
          * cstack so that it can be rethrown at the ":endtry" or be
@@ -1817,7 +1813,7 @@ void leave_cleanup(cleanup_T *csp)
   if (aborting() || need_rethrow) {
     if (pending & CSTP_THROW)
       /* Cancel the pending exception (includes report). */
-      discard_exception((except_T *)csp->exception, FALSE);
+      discard_exception(csp->exception, FALSE);
     else
       report_discard_pending(pending, NULL);
 
@@ -1979,7 +1975,7 @@ int cleanup_conditionals(struct condstack *cstack, int searched_cond, int inclus
       elem = cstack->cs_emsg_silent_list;
       cstack->cs_emsg_silent_list = elem->next;
       emsg_silent = elem->saved_emsg_silent;
-      free(elem);
+      xfree(elem);
       cstack->cs_flags[idx] &= ~CSF_SILENT;
     }
     if (stop)

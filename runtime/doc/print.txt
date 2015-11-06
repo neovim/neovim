@@ -15,9 +15,6 @@ Printing						*printing*
 7. PostScript Utilities			|postscript-print-util|
 8. Formfeed Characters			|printing-formfeed|
 
-{Vi has None of this}
-{only available when compiled with the |+printer| feature}
-
 ==============================================================================
 1. Introduction						*print-intro*
 
@@ -93,11 +90,9 @@ If the option is empty, then vim will use the system default printer for
 
 							*penc-option* *E620*
 'printencoding' 'penc'	String	(default empty, except for:
-					Windows, OS/2: cp1252,
+					Windows: cp1252,
 					Macintosh: mac-roman,
-					VMS: dec-mcs,
-					HPUX: hp-roman8,
-					EBCDIC: ebcdic-uk)
+					HPUX: hp-roman8)
 			global
 Sets the character encoding used when printing.  This option tells VIM which
 print character encoding file from the "print" directory in 'runtimepath' to
@@ -121,10 +116,9 @@ other than latin1 will require VIM to be compiled with the |+iconv| feature.
 If no conversion is possible then printing will fail.  Any characters that
 cannot be converted will be replaced with upside down question marks.
 
-Four print character encoding files are provided to support default Mac, VMS,
-HPUX, and EBCDIC character encodings and are used by default on these
-platforms.  Code page 1252 print character encoding is used by default on
-Windows and OS/2 platforms.
+Two print character encoding files are provided to support default Mac and
+HPUX character encodings and are used by default on these platforms. Code page
+1252 print character encoding is used by default on the Windows platform.
 
 							*pexpr-option*
 'printexpr' 'pexpr'	String	(default: see below)
@@ -136,24 +130,20 @@ The arguments to the ":hardcopy" command are in |v:cmdarg|.
 The expression must take care of deleting the file after printing it.
 When there is an error, the expression must return a non-zero number.
 If there is no error, return zero or an empty string.
-The default for non MS-Windows or VMS systems is to simply use "lpr" to print
-the file: >
+The default for non MS-Windows systems is to simply use "lpr" to print the
+file: >
 
-    system('lpr' . (&printdevice == '' ? '' : ' -P' . &printdevice)
-	. ' ' . v:fname_in) . delete(v:fname_in) + v:shell_error
+    system(['lpr']
+           + (empty(&printdevice)?[]:['-P', &printdevice])
+           + [v:fname_in])
+    . delete(v:fname_in)
+    + v:shell_error
 
-On MS-Dos, MS-Windows and OS/2 machines the default is to copy the file to the
+On MS-Dos and MS-Windows machines the default is to copy the file to the
 currently specified printdevice: >
 
-    system('copy' . ' ' . v:fname_in . (&printdevice == ''
-		? ' LPT1:' : (' \"' . &printdevice . '\"')))
-		. delete(v:fname_in)
-
-On VMS machines the default is to send the file to either the default or
-currently specified printdevice: >
-
-    system('print' . (&printdevice == '' ? '' : ' /queue=' .
-		&printdevice) . ' ' . v:fname_in) . delete(v:fname_in)
+    system(['copy', v:fname_in, empty(&printdevice)?'LPT1':&printdevice])
+    . delete(v:fname_in)
 
 If you change this option, using a function is an easy way to avoid having to
 escape all the spaces.  Example: >
@@ -615,13 +605,7 @@ X11
 
     http://www.cs.wisc.edu/~ghost/gv/
 
-OpenVMS
-
-- Is apparently supported in the main code now (untested).  See:
-
-    http://wwwthep.physik.uni-mainz.de/~plass/gv/
-
-Windows and OS/2
+Windows
 
 - GSview.  Obtainable from:
 
@@ -636,7 +620,7 @@ DOS
 
 Linux
 
-- GSview.  Linux version of the popular Windows and OS/2 previewer.
+- GSview.  Linux version of the popular Windows previewer.
   Obtainable from:
 
     http://www.cs.wisc.edu/~ghost/gsview/

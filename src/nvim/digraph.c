@@ -23,7 +23,7 @@
 #include "nvim/normal.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
-#include "nvim/ui.h"
+#include "nvim/os/input.h"
 
 typedef int result_T;
 
@@ -1532,11 +1532,13 @@ static int getexactdigraph(int char1, int char2, int meta_char)
 
     if (convert_setup(&vc, (char_u *)"utf-8", p_enc) == OK) {
       vc.vc_fail = true;
-      to = string_convert(&vc, buf, &i);
+      assert(i >= 0);
+      size_t len = (size_t)i;
+      to = string_convert(&vc, buf, &len);
 
       if (to != NULL) {
         retval = (*mb_ptr2char)(to);
-        free(to);
+        xfree(to);
       }
       (void)convert_setup(&vc, NULL, NULL);
     }
@@ -1607,13 +1609,11 @@ void putdigraph(char_u *str)
     }
     str = skipwhite(str);
 
-    if (!VIM_ISDIGIT(*str)) {
+    if (!ascii_isdigit(*str)) {
       EMSG(_(e_number_exp));
       return;
     }
-    long digits = getdigits(&str);
-    assert(digits <= INT_MAX);
-    int n = (int)digits;
+    int n = getdigits_int(&str);
 
     // If the digraph already exists, replace the result.
     dp = (digr_T *)user_digraphs.ga_data;
@@ -1659,13 +1659,13 @@ void listdigraphs(void)
       printdigraph(&tmp);
     }
     dp++;
-    ui_breakcheck();
+    os_breakcheck();
   }
 
   dp = (digr_T *)user_digraphs.ga_data;
   for (int i = 0; i < user_digraphs.ga_len && !got_int; ++i) {
     printdigraph(dp);
-    ui_breakcheck();
+    os_breakcheck();
     dp++;
   }
   // clear screen, because some digraphs may be wrong, in which case we messed
@@ -1743,7 +1743,7 @@ char_u* keymap_init(void)
     // Stop any active keymap and clear the table.  Also remove
     // b:keymap_name, as no keymap is active now.
     keymap_unload();
-    do_cmdline_cmd((char_u *)"unlet! b:keymap_name");
+    do_cmdline_cmd("unlet! b:keymap_name");
   } else {
     char *buf;
     size_t buflen;
@@ -1763,11 +1763,11 @@ char_u* keymap_init(void)
                    curbuf->b_p_keymap);
 
       if (source_runtime((char_u *)buf, FALSE) == FAIL) {
-        free(buf);
+        xfree(buf);
         return (char_u *)N_("E544: Keymap file not found");
       }
     }
-    free(buf);
+    xfree(buf);
   }
 
   return NULL;
@@ -1813,10 +1813,10 @@ void ex_loadkeymap(exarg_T *eap)
     if ((*p != '"') && (*p != NUL)) {
       kmap_T *kp = GA_APPEND_VIA_PTR(kmap_T, &curbuf->b_kmap_ga);
       s = skiptowhite(p);
-      kp->from = vim_strnsave(p, (int)(s - p));
+      kp->from = vim_strnsave(p, (size_t)(s - p));
       p = skipwhite(s);
       s = skiptowhite(p);
-      kp->to = vim_strnsave(p, (int)(s - p));
+      kp->to = vim_strnsave(p, (size_t)(s - p));
 
       if ((STRLEN(kp->from) + STRLEN(kp->to) >= KMAP_LLEN)
           || (*kp->from == NUL)
@@ -1824,12 +1824,12 @@ void ex_loadkeymap(exarg_T *eap)
         if (*kp->to == NUL) {
           EMSG(_("E791: Empty keymap entry"));
         }
-        free(kp->from);
-        free(kp->to);
+        xfree(kp->from);
+        xfree(kp->to);
         --curbuf->b_kmap_ga.ga_len;
       }
     }
-    free(line);
+    xfree(line);
   }
 
   // setup ":lnoremap" to map the keys
@@ -1866,8 +1866,8 @@ static void keymap_unload(void)
   for (int i = 0; i < curbuf->b_kmap_ga.ga_len; ++i) {
     vim_snprintf((char *)buf, sizeof(buf), "<buffer> %s", kp[i].from);
     (void)do_map(1, buf, LANGMAP, FALSE);
-    free(kp[i].from);
-    free(kp[i].to);
+    xfree(kp[i].from);
+    xfree(kp[i].to);
   }
 
   p_cpo = save_cpo;

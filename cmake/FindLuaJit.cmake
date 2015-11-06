@@ -4,7 +4,6 @@
 #  LUAJIT_INCLUDE_DIRS - The luajit include directories
 #  LUAJIT_LIBRARIES - The libraries needed to use luajit
 
-find_package(PkgConfig)
 if(NOT LUAJIT_USE_BUNDLED)
   find_package(PkgConfig)
   if (PKG_CONFIG_FOUND)
@@ -25,15 +24,22 @@ find_path(LUAJIT_INCLUDE_DIR luajit.h
           PATH_SUFFIXES luajit-2.0
           ${LIMIT_SEARCH})
 
-# If we're asked to use static linkage, add libuv.a as a preferred library name.
+# If we're asked to use static linkage, add libluajit-5.1.a as a preferred
+# library name.
 if(LUAJIT_USE_STATIC)
   list(APPEND LUAJIT_NAMES
     "${CMAKE_STATIC_LIBRARY_PREFIX}luajit-5.1${CMAKE_STATIC_LIBRARY_SUFFIX}")
 endif()
 
-list(APPEND LUAJIT_NAMES luajit-5.1)
+if(MSVC)
+  list(APPEND LUAJIT_NAMES lua51)
+elseif(MINGW)
+  list(APPEND LUAJIT_NAMES libluajit)
+else()
+  list(APPEND LUAJIT_NAMES luajit-5.1)
+endif()
 
-find_library(LUAJIT_LIBRARY NAMES luajit-5.1
+find_library(LUAJIT_LIBRARY NAMES ${LUAJIT_NAMES}
              PATHS ${PC_LUAJIT_LIBDIR} ${PC_LUAJIT_LIBRARY_DIRS}
              ${LIMIT_SEARCH})
 

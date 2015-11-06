@@ -1574,7 +1574,7 @@ msgid "E494: Use w or w>>"
 msgstr "E494: w もしくは w>> を使用してください"
 
 #: ../ex_docmd.c:3454
-msgid "E319: Sorry, the command is not available in this version"
+msgid "E319: The command is not available in this version"
 msgstr "E319: このバージョンではこのコマンドは利用できません, ごめんなさい"
 
 #: ../ex_docmd.c:3752
@@ -2050,7 +2050,7 @@ msgid "E201: *ReadPre autocommands must not change current buffer"
 msgstr "E201: *ReadPre autocommand は現在のバッファを変えられません"
 
 #: ../fileio.c:672
-msgid "Vim: Reading from stdin...\n"
+msgid "Nvim: Reading from stdin...\n"
 msgstr "Vim: 標準入力から読込中...\n"
 
 #. Re-opening the original file failed!
@@ -2689,7 +2689,7 @@ msgid "E477: No ! allowed"
 msgstr "E477: ! は許可されていません"
 
 #: ../globals.h:1035
-msgid "E25: GUI cannot be used: Not enabled at compile time"
+msgid "E25: Nvim does not have a built-in GUI"
 msgstr "E25: GUIは使用不可能\です: コンパイル時に無効にされています"
 
 #: ../globals.h:1036
@@ -4375,7 +4375,7 @@ msgid "E663: At end of changelist"
 msgstr "E663: 変更リストの末尾"
 
 #: ../normal.c:7053
-msgid "Type  :quit<Enter>  to exit Vim"
+msgid "Type  :quit<Enter>  to exit Nvim"
 msgstr "Vimを終了するには :quit<Enter> と入力してください"
 
 #: ../ops.c:248

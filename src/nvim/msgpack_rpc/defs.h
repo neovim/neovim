@@ -11,13 +11,16 @@ typedef struct {
                uint64_t request_id,
                Array args,
                Error *error);
-  bool defer;  // Should the call be deferred to the main loop? This should
-               // be true if the function mutates editor data structures such
-               // as buffers, windows, tabs, or if it executes vimscript code.
+  bool async;  // function is always safe to run immediately instead of being
+               // put in a request queue for handling when nvim waits for input.
 } MsgpackRpcRequestHandler;
 
 /// Initializes the msgpack-rpc method table
 void msgpack_rpc_init_method_table(void);
+
+// Add a handler to the method table
+void msgpack_rpc_add_method_handler(String method,
+                                    MsgpackRpcRequestHandler handler);
 
 void msgpack_rpc_init_function_metadata(Dictionary *metadata);
 

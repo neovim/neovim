@@ -216,7 +216,7 @@ there is no different error message for that.
   Command not allowed from exrc/vimrc in current dir or tag search
 
 Some commands are not allowed for security reasons.  These commands mostly
-come from a .exrc or .vimrc file in the current directory, or from a tags
+come from a .exrc or .nvimrc file in the current directory, or from a tags
 file.  Also see 'secure'.
 
 							*E74*  >
@@ -315,10 +315,9 @@ generate this message.  This could be caused by a |-m| commandline argument.
 You can switch the 'write' option on with ":set write".
 
 							*E25*  >
-  GUI cannot be used: Not enabled at compile time
+  Nvim does not have a built-in GUI
 
-You are running a version of Vim that doesn't include the GUI code.  Therefore
-"gvim" and ":gui" don't work.
+Neovim does not have a built in GUI, so `:gvim` and `:gui` don't work.
 
 							*E49*  >
   Invalid scroll size
@@ -522,7 +521,7 @@ for about 14 levels.  When more nesting is done, Vim assumes that there is a
 recursive loop somewhere and stops with this error message.
 
 							*E319*  >
-  Sorry, the command is not available in this version
+  The command is not available in this version
 
 You have used a command that is not present in the version of Vim you are
 using.  When compiling Vim, many different features can be enabled or
@@ -672,22 +671,12 @@ This mostly happens when the disk is full.  Vim could not write text into the
 text may be lost without recovery being possible.  Vim might run out of memory
 when this problem persists.
 
-						*connection-refused*  >
-  Xlib: connection to "<machine-name:0.0" refused by server
-
-This happens when Vim tries to connect to the X server, but the X server does
-not allow a connection.  The connection to the X server is needed to be able
-to restore the title and for the xterm clipboard support.  Unfortunately this
-error message cannot be avoided, except by disabling the |+xterm_clipboard|
-and |+X11| features.
-
 							*E10*  >
   \\ should be followed by /, ? or &
 
 A command line started with a backslash or the range of a command contained a
 backslash in a wrong place.  This is often caused by command-line continuation
 being disabled.  Remove the 'C' flag from the 'cpoptions' option to enable it.
-Or use ":set nocp".
 
 							*E471*  >
   Argument required
@@ -750,6 +739,12 @@ Example: >
 You tried to execute a command that is neither an Ex command nor
 a user-defined command.
 
+							*E905*  >
+  Cannot set this option after startup
+
+You tried to set an option after startup that only allows changes during
+startup.
+
 ==============================================================================
 3. Messages						*messages*
 
@@ -770,18 +765,16 @@ and the screen is about to be redrawn:
    key being used otherwise.
 -> Press ':' or any other Normal mode command character to start that command.
 -> Press 'k', <Up>, 'u', 'b' or 'g' to scroll back in the messages.  This
-   works the same way as at the |more-prompt|.  Only works when 'compatible'
-   is off and 'more' is on.
+   works the same way as at the |more-prompt|.  Only works when 'more' is on.
 -> Pressing 'j', 'f', 'd' or <Down> is ignored when messages scrolled off the
-   top of the screen, 'compatible' is off and 'more' is on, to avoid that
-   typing one 'j' or 'f' too many causes the messages to disappear.
+   top of the screen and 'more' is on, to avoid that typing one 'j' or 'f' too
+   many causes the messages to disappear.
 -> Press <C-Y> to copy (yank) a modeless selection to the clipboard register.
 -> Use a menu.  The characters defined for Cmdline-mode are used.
 -> When 'mouse' contains the 'r' flag, clicking the left mouse button works
    like pressing <Space>.  This makes it impossible to select text though.
 -> For the GUI clicking the left mouse button in the last line works like
    pressing <Space>.
-{Vi: only ":" commands are interpreted}
 
 If you accidentally hit <Enter> or <Space> and you want to see the displayed
 text then use |g<|.  This only works when 'more' is set.
@@ -813,10 +806,10 @@ Type					effect ~
      G					down all the way, until the hit-enter
 					prompt
 
-     <BS> or k or <Up>			one line back (*)
-     u					up a page (half a screen) (*)
-     b or <PageUp>			back a screen (*)
-     g					back to the start (*)
+     <BS> or k or <Up>			one line back
+     u					up a page (half a screen)
+     b or <PageUp>			back a screen
+     g					back to the start
 
      q, <Esc> or CTRL-C			stop the listing
      :					stop the listing and enter a
@@ -825,13 +818,11 @@ Type					effect ~
 					the clipboard ("* and "+ registers)
     {menu-entry}			what the menu is defined to in
 					Cmdline-mode.
-    <LeftMouse> (**)			next page
+    <LeftMouse> (*)			next page
 
 Any other key causes the meaning of the keys to be displayed.
 
-(*)  backwards scrolling is {not in Vi}.  Only scrolls back to where messages
-     started to scroll.
-(**) Clicking the left mouse button only works:
+(*)  Clicking the left mouse button only works:
      - For the GUI: in the last line of the screen.
      - When 'r' is included in 'mouse' (but then selecting text won't work).
 

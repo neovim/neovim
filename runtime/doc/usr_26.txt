@@ -64,8 +64,6 @@ Now press CTRL-A.  The year will be increased by one:
 
 Use "n" to find the next year, and press "." to repeat the CTRL-A ("." is a
 bit quicker to type).  Repeat "n" and "." for all years that appear.
-   Hint: set the 'hlsearch' option to see the matches you are going to change,
-then you can look ahead and do it faster.
 
 Adding more than one can be done by prepending the number to CTRL-A.  Suppose
 you have this list:
@@ -81,24 +79,15 @@ Move the cursor to "1." and type: >
 The "1." will change to "4.".  Again, you can use "." to repeat this on the
 other numbers.
 
-Another example:
-
-	006	foo bar ~
-	007	foo bar ~
-
-Using CTRL-A on these numbers results in:
-
-	007	foo bar ~
-	010	foo bar ~
-
-7 plus one is 10?  What happened here is that Vim recognized "007" as an octal
-number, because there is a leading zero.  This notation is often used in C
-programs.  If you do not want a number with leading zeros to be handled as
-octal, use this: >
-
-	:set nrformats-=octal
-
 The CTRL-X command does subtraction in a similar way.
+
+The behavior of CTRL-A and CTRL-X depends on the value of |'nrformats'|. For
+example, if you use: >
+
+        :set nrformats+=octal
+
+pressing CTRL-A over "007" will increment to "010", because "007" will be
+identified as an octal number.
 
 ==============================================================================
 *26.3*	Making a change in many files

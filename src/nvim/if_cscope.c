@@ -20,7 +20,6 @@
 #include "nvim/eval.h"
 #include "nvim/fileio.h"
 #include "nvim/message.h"
-#include "nvim/misc1.h"
 #include "nvim/misc2.h"
 #include "nvim/memory.h"
 #include "nvim/os/time.h"
@@ -29,9 +28,10 @@
 #include "nvim/strings.h"
 #include "nvim/tag.h"
 #include "nvim/tempfile.h"
-#include "nvim/ui.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
+#include "nvim/os/input.h"
+#include "nvim/event/stream.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -45,11 +45,9 @@
 #endif
 
 static csinfo_T *   csinfo = NULL;
-static int csinfo_size = 0;             /* number of items allocated in
-                                           csinfo[] */
+static size_t csinfo_size = 0;    // number of items allocated in csinfo[]
 
-static int eap_arg_len;             /* length of eap->arg, set in
-                                       cs_lookup_cmd() */
+static int eap_arg_len;           // length of eap->arg, set in cs_lookup_cmd()
 static cscmd_T cs_cmds[] =
 {
   { "add",    cs_add,
@@ -87,7 +85,6 @@ static enum {
 char_u *get_cscope_name(expand_T *xp, int idx)
 {
   int current_idx;
-  int i;
 
   switch (expand_what) {
   case EXP_CSCOPE_SUBCMD:
@@ -95,13 +92,16 @@ char_u *get_cscope_name(expand_T *xp, int idx)
      * add, find, help, kill, reset, show */
     return (char_u *)cs_cmds[idx].name;
   case EXP_SCSCOPE_SUBCMD:
+  {
     /* Complete with sub-commands of ":scscope": same sub-commands as
      * ":cscope" but skip commands which don't support split windows */
+    int i;
     for (i = 0, current_idx = 0; cs_cmds[i].name != NULL; i++)
       if (cs_cmds[i].cansplit)
         if (current_idx++ == idx)
           break;
     return (char_u *)cs_cmds[i].name;
+  }
   case EXP_CSCOPE_FIND:
   {
     const char *query_type[] =
@@ -123,11 +123,12 @@ char_u *get_cscope_name(expand_T *xp, int idx)
      * the pathname of the cscope database as argument.  Only complete
      * with connection numbers. -1 can also be used to kill all
      * connections. */
+    size_t i;
     for (i = 0, current_idx = 0; i < csinfo_size; i++) {
       if (csinfo[i].fname == NULL)
         continue;
       if (current_idx++ == idx) {
-        vim_snprintf(connection, sizeof(connection), "%d", i);
+        vim_snprintf(connection, sizeof(connection), "%zu", i);
         return (char_u *)connection;
       }
     }
@@ -300,8 +301,8 @@ int cs_fgets(char_u *buf, int size)
 {
   char *p;
 
-  if ((p = cs_manage_matches(NULL, NULL, -1, Get)) == NULL)
-    return TRUE;
+  if ((p = cs_manage_matches(NULL, NULL, 0, Get)) == NULL)
+    return true;
   STRLCPY(buf, p, size);
 
   return FALSE;
@@ -315,7 +316,7 @@ int cs_fgets(char_u *buf, int size)
  */
 void cs_free_tags(void)
 {
-  cs_manage_matches(NULL, NULL, -1, Free);
+  cs_manage_matches(NULL, NULL, 0, Free);
 }
 
 /*
@@ -325,7 +326,7 @@ void cs_free_tags(void)
  */
 void cs_print_tags(void)
 {
-  cs_manage_matches(NULL, NULL, -1, Print);
+  cs_manage_matches(NULL, NULL, 0, Print);
 }
 
 /*
@@ -357,12 +358,10 @@ void cs_print_tags(void)
  */
 int cs_connection(int num, char_u *dbpath, char_u *ppath)
 {
-  int i;
-
   if (num < 0 || num > 4 || (num > 0 && !dbpath))
-    return FALSE;
+    return false;
 
-  for (i = 0; i < csinfo_size; i++) {
+  for (size_t i = 0; i < csinfo_size; i++) {
     if (!csinfo[i].fname)
       continue;
 
@@ -434,7 +433,7 @@ static void cs_stat_emsg(char *fname)
 
   (void)sprintf(buf, stat_emsg, fname, errno);
   (void)EMSG(buf);
-  free(buf);
+  xfree(buf);
 }
 
 
@@ -455,23 +454,20 @@ cs_add_common (
   char        *fname = NULL;
   char        *fname2 = NULL;
   char        *ppath = NULL;
-  int i;
-  int len;
-  int usedlen = 0;
+  size_t usedlen = 0;
   char_u      *fbuf = NULL;
 
   /* get the filename (arg1), expand it, and try to stat it */
   fname = xmalloc(MAXPATHL + 1);
 
   expand_env((char_u *)arg1, (char_u *)fname, MAXPATHL);
-  len = (int)STRLEN(fname);
+  size_t len = STRLEN(fname);
   fbuf = (char_u *)fname;
-  (void)modify_fname((char_u *)":p", &usedlen,
-      (char_u **)&fname, &fbuf, &len);
+  (void)modify_fname((char_u *)":p", &usedlen, (char_u **)&fname, &fbuf, &len);
   if (fname == NULL)
     goto add_err;
   fname = (char *)vim_strnsave((char_u *)fname, len);
-  free(fbuf);
+  xfree(fbuf);
   FileInfo file_info;
   bool file_info_ok  = os_fileinfo(fname, &file_info);
   if (!file_info_ok) {
@@ -489,6 +485,7 @@ staterr:
       goto staterr;
   }
 
+  int i;
   /* if filename is a directory, append the cscope database name to it */
   if ((file_info.stat.st_mode & S_IFMT) == S_IFDIR) {
     fname2 = (char *)xmalloc(strlen(CSCOPE_DBFILE) + strlen(fname) + 2);
@@ -525,29 +522,30 @@ staterr:
   }
 
   if (i != -1) {
-    if (cs_create_connection(i) == CSCOPE_FAILURE
-        || cs_read_prompt(i) == CSCOPE_FAILURE) {
-      cs_release_csp(i, TRUE);
+    assert(i >= 0);
+    if (cs_create_connection((size_t)i) == CSCOPE_FAILURE
+        || cs_read_prompt((size_t)i) == CSCOPE_FAILURE) {
+      cs_release_csp((size_t)i, true);
       goto add_err;
     }
 
     if (p_csverbose) {
       msg_clr_eos();
       (void)smsg_attr(hl_attr(HLF_R),
-          (char_u *)_("Added cscope database %s"),
-          csinfo[i].fname);
+            _("Added cscope database %s"),
+            csinfo[i].fname);
     }
   }
 
-  free(fname);
-  free(fname2);
-  free(ppath);
+  xfree(fname);
+  xfree(fname2);
+  xfree(ppath);
   return CSCOPE_SUCCESS;
 
 add_err:
-  free(fname2);
-  free(fname);
-  free(ppath);
+  xfree(fname2);
+  xfree(fname);
+  xfree(ppath);
   return CSCOPE_FAILURE;
 } /* cs_add_common */
 
@@ -567,24 +565,22 @@ static int cs_check_for_tags(void)
  *
  * count the number of cscope connections
  */
-static int cs_cnt_connections(void)
+static size_t cs_cnt_connections(void)
 {
-  short i;
-  short cnt = 0;
+  size_t cnt = 0;
 
-  for (i = 0; i < csinfo_size; i++) {
+  for (size_t i = 0; i < csinfo_size; i++) {
     if (csinfo[i].fname != NULL)
       cnt++;
   }
   return cnt;
 } /* cs_cnt_connections */
 
-static void 
-cs_reading_emsg (
-    int idx        /* connection index */
+static void cs_reading_emsg(
+    size_t idx        /* connection index */
 )
 {
-  EMSGN(_("E262: error reading cscope connection %" PRId64), idx);
+  EMSGU(_("E262: error reading cscope connection %" PRIu64), idx);
 }
 
 #define CSREAD_BUFSIZE  2048
@@ -593,7 +589,7 @@ cs_reading_emsg (
  *
  * count the number of matches for a given cscope connection.
  */
-static int cs_cnt_matches(int idx)
+static int cs_cnt_matches(size_t idx)
 {
   char *stok;
   int nlines;
@@ -606,8 +602,8 @@ static int cs_cnt_matches(int idx)
 
       cs_reading_emsg(idx);
 
-      free(buf);
-      return -1;
+      xfree(buf);
+      return CSCOPE_FAILURE;
     }
 
     /*
@@ -637,7 +633,7 @@ static int cs_cnt_matches(int idx)
     break;
   }
 
-  free(buf);
+  xfree(buf);
   return nlines;
 } /* cs_cnt_matches */
 
@@ -688,7 +684,7 @@ static char *cs_create_cmd(char *csoption, char *pattern)
    * they may want to use the leading white space. */
   pat = pattern;
   if (search != 4 && search != 6)
-    while (vim_iswhite(*pat))
+    while (ascii_iswhite(*pat))
       ++pat;
 
   cmd = xmalloc(strlen(pat) + 2);
@@ -705,12 +701,11 @@ static char *cs_create_cmd(char *csoption, char *pattern)
  * This piece of code was taken/adapted from nvi.  do we need to add
  * the BSD license notice?
  */
-static int cs_create_connection(int i)
+static int cs_create_connection(size_t i)
 {
 #ifdef UNIX
   int to_cs[2], from_cs[2];
 #endif
-  int len;
   char        *prog, *cmd, *ppath = NULL;
 
 #if defined(UNIX)
@@ -772,20 +767,20 @@ err_closing:
 #endif
     /* expand the cscope exec for env var's */
     prog = xmalloc(MAXPATHL + 1);
-    expand_env((char_u *)p_csprg, (char_u *)prog, MAXPATHL);
+    expand_env(p_csprg, (char_u *)prog, MAXPATHL);
 
     /* alloc space to hold the cscope command */
-    len = (int)(strlen(prog) + strlen(csinfo[i].fname) + 32);
+    size_t len = strlen(prog) + strlen(csinfo[i].fname) + 32;
     if (csinfo[i].ppath) {
       /* expand the prepend path for env var's */
       ppath = xmalloc(MAXPATHL + 1);
       expand_env((char_u *)csinfo[i].ppath, (char_u *)ppath, MAXPATHL);
 
-      len += (int)strlen(ppath);
+      len += strlen(ppath);
     }
 
     if (csinfo[i].flags)
-      len += (int)strlen(csinfo[i].flags);
+      len += strlen(csinfo[i].flags);
 
     cmd = xmalloc(len);
 
@@ -806,9 +801,9 @@ err_closing:
     }
 # ifdef UNIX
     /* on Win32 we still need prog */
-    free(prog);
+    xfree(prog);
 # endif
-    free(ppath);
+    xfree(ppath);
 
 #if defined(UNIX)
 # if defined(HAVE_SETSID) || defined(HAVE_SETPGID)
@@ -823,6 +818,7 @@ err_closing:
     if (execl("/bin/sh", "sh", "-c", cmd, (char *)NULL) == -1)
       PERROR(_("cs_create_connection exec failed"));
 
+    stream_set_blocking(input_global_fd(), true);  // normalize stream (#2598)
     exit(127);
   /* NOTREACHED */
   default:      /* parent. */
@@ -853,8 +849,8 @@ err_closing:
     si.hStdInput  = stdin_rd;
     created = CreateProcess(NULL, cmd, NULL, NULL, TRUE, CREATE_NEW_CONSOLE,
         NULL, NULL, &si, &pi);
-    free(prog);
-    free(cmd);
+    xfree(prog);
+    xfree(cmd);
 
     if (!created) {
       PERROR(_("cs_create_connection exec failed"));
@@ -897,7 +893,6 @@ err_closing:
 static int cs_find(exarg_T *eap)
 {
   char *opt, *pat;
-  int i;
 
   if (cs_check_for_connections() == FALSE) {
     (void)EMSG(_("E567: no cscope connections"));
@@ -919,7 +914,7 @@ static int cs_find(exarg_T *eap)
    * Let's replace the NULs written by strtok() with spaces - we need the
    * spaces to correctly display the quickfix/location list window's title.
    */
-  for (i = 0; i < eap_arg_len; ++i)
+  for (int i = 0; i < eap_arg_len; ++i)
     if (NUL == eap->arg[i])
       eap->arg[i] = ' ';
 
@@ -933,12 +928,12 @@ static int cs_find(exarg_T *eap)
  *
  * common code for cscope find, shared by cs_find() and do_cstag()
  */
-static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int use_ll, char_u *cmdline)
+static int cs_find_common(char *opt, char *pat, int forceit, int verbose,
+                          int use_ll, char_u *cmdline)
 {
-  int i;
   char *cmd;
   int *nummatches;
-  int totmatches;
+  size_t totmatches;
   char cmdletter;
   char *qfpos;
 
@@ -983,7 +978,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
 
       sprintf(buf, nf, *qfpos, *(qfpos-1));
       (void)EMSG(buf);
-      free(buf);
+      xfree(buf);
       return FALSE;
     }
 
@@ -1004,10 +999,10 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
 
   /* Send query to all open connections, then count the total number
    * of matches so we can alloc all in one swell foop. */
-  for (i = 0; i < csinfo_size; i++)
+  for (size_t i = 0; i < csinfo_size; i++)
     nummatches[i] = 0;
   totmatches = 0;
-  for (i = 0; i < csinfo_size; i++) {
+  for (size_t i = 0; i < csinfo_size; i++) {
     if (csinfo[i].fname == NULL || csinfo[i].to_fp == NULL)
       continue;
 
@@ -1018,27 +1013,27 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
     nummatches[i] = cs_cnt_matches(i);
 
     if (nummatches[i] > -1)
-      totmatches += nummatches[i];
+      totmatches += (size_t)nummatches[i];
 
     if (nummatches[i] == 0)
       (void)cs_read_prompt(i);
   }
-  free(cmd);
+  xfree(cmd);
 
   if (totmatches == 0) {
     char *nf = _("E259: no matches found for cscope query %s of %s");
     char *buf;
 
     if (!verbose) {
-      free(nummatches);
+      xfree(nummatches);
       return FALSE;
     }
 
     buf = xmalloc(strlen(opt) + strlen(pat) + strlen(nf));
     sprintf(buf, nf, opt, pat);
     (void)EMSG(buf);
-    free(buf);
-    free(nummatches);
+    xfree(buf);
+    xfree(nummatches);
     return FALSE;
   }
 
@@ -1080,17 +1075,17 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
       }
     }
     os_remove((char *)tmp);
-    free(tmp);
-    free(nummatches);
+    xfree(tmp);
+    xfree(nummatches);
     return TRUE;
   } else {
     char **matches = NULL, **contexts = NULL;
-    int matched = 0;
+    size_t matched = 0;
 
     /* read output */
     cs_fill_results((char *)pat, totmatches, nummatches, &matches,
         &contexts, &matched);
-    free(nummatches);
+    xfree(nummatches);
     if (matches == NULL)
       return FALSE;
 
@@ -1118,7 +1113,7 @@ static int cs_help(exarg_T *eap)
     /* Use %*s rather than %30s to ensure proper alignment in utf-8 */
     if (space_cnt < 0)
       space_cnt = 0;
-    (void)smsg((char_u *)_("%-5s: %s%*s (Usage: %s)"),
+    (void)smsg(_("%-5s: %s%*s (Usage: %s)"),
         cmdp->name,
         help, space_cnt, " ",
         cmdp->usage);
@@ -1137,11 +1132,11 @@ static int cs_help(exarg_T *eap)
   }
 
   wait_return(TRUE);
-  return 0;
+  return CSCOPE_SUCCESS;
 } /* cs_help */
 
 
-static void clear_csinfo(int i)
+static void clear_csinfo(size_t i)
 {
   csinfo[i].fname  = NULL;
   csinfo[i].ppath  = NULL;
@@ -1176,22 +1171,24 @@ static char *GetWin32Error(void)
 static int cs_insert_filelist(char *fname, char *ppath, char *flags,
                               FileInfo *file_info)
 {
-  short i, j;
+  size_t i = 0;
+  bool empty_found = false;
 
-  i = -1;   /* can be set to the index of an empty item in csinfo */
-  for (j = 0; j < csinfo_size; j++) {
+  for (size_t j = 0; j < csinfo_size; j++) {
     if (csinfo[j].fname != NULL
         && os_fileid_equal_fileinfo(&(csinfo[j].file_id), file_info)) {
       if (p_csverbose)
         (void)EMSG(_("E568: duplicate cscope database not added"));
-      return -1;
+      return CSCOPE_FAILURE;
     }
 
-    if (csinfo[j].fname == NULL && i == -1)
+    if (csinfo[j].fname == NULL && !empty_found) {
       i = j;       /* remember first empty entry */
+      empty_found = true;
+    }
   }
 
-  if (i == -1) {
+  if (!empty_found) {
     i = csinfo_size;
     if (csinfo_size == 0) {
       /* First time allocation: allocate only 1 connection. It should
@@ -1204,7 +1201,7 @@ static int cs_insert_filelist(char *fname, char *ppath, char *flags,
       csinfo_size *= 2;
       csinfo = xrealloc(csinfo, sizeof(csinfo_T)*csinfo_size);
     }
-    for (j = csinfo_size/2; j < csinfo_size; j++)
+    for (size_t j = csinfo_size/2; j < csinfo_size; j++)
       clear_csinfo(j);
   }
 
@@ -1225,7 +1222,8 @@ static int cs_insert_filelist(char *fname, char *ppath, char *flags,
     csinfo[i].flags = NULL;
 
   os_fileinfo_id(file_info, &(csinfo[i].file_id));
-  return i;
+  assert(i <= INT_MAX);
+  return (int)i;
 } /* cs_insert_filelist */
 
 
@@ -1266,42 +1264,55 @@ static cscmd_T * cs_lookup_cmd(exarg_T *eap)
 static int cs_kill(exarg_T *eap)
 {
   char *stok;
-  short i;
+  int num;
+  size_t i = 0;
+  bool killall = false;
 
   if ((stok = strtok((char *)NULL, (const char *)" ")) == NULL) {
     cs_usage_msg(Kill);
     return CSCOPE_FAILURE;
   }
 
-  /* only single digit positive and negative integers are allowed */
-  if ((strlen(stok) < 2 && VIM_ISDIGIT((int)(stok[0])))
+  // Check if string is a number, only single digit
+  // positive and negative integers are allowed
+  if ((strlen(stok) < 2 && ascii_isdigit((int)(stok[0])))
       || (strlen(stok) < 3 && stok[0] == '-'
-          && VIM_ISDIGIT((int)(stok[1]))))
-    i = atoi(stok);
-  else {
-    /* It must be part of a name.  We will try to find a match
-     * within all the names in the csinfo data structure
-     */
+          && ascii_isdigit((int)(stok[1])))) {
+    num = atoi(stok);
+    if (num == -1)
+      killall = true;
+    else if (num >= 0) {
+      i = (size_t)num;
+    } else {      // All negative values besides -1 are invalid.
+      if (p_csverbose)
+        (void)EMSG2(_("E261: cscope connection %s not found"), stok);
+      return CSCOPE_FAILURE;
+    }
+  } else {
+    // Else it must be part of a name.  We will try to find a match
+    // within all the names in the csinfo data structure
     for (i = 0; i < csinfo_size; i++) {
       if (csinfo[i].fname != NULL && strstr(csinfo[i].fname, stok))
         break;
     }
   }
 
-  if ((i != -1) && (i >= csinfo_size || i < -1 || csinfo[i].fname == NULL)) {
+  if (i >= csinfo_size || csinfo[i].fname == NULL) {
     if (p_csverbose)
       (void)EMSG2(_("E261: cscope connection %s not found"), stok);
+    return CSCOPE_FAILURE;
   } else {
-    if (i == -1) {
+    if (killall) {
       for (i = 0; i < csinfo_size; i++) {
         if (csinfo[i].fname)
           cs_kill_execute(i, csinfo[i].fname);
       }
-    } else
-      cs_kill_execute(i, stok);
+    } else {
+      cs_kill_execute((size_t)i, stok);
+    }
   }
 
-  return 0;
+  return CSCOPE_SUCCESS;
 } /* cs_kill */
 
 
@@ -1310,16 +1321,15 @@ static int cs_kill(exarg_T *eap)
  *
  * Actually kills a specific cscope connection.
  */
-static void 
-cs_kill_execute (
-    int i,              /* cscope table index */
+static void cs_kill_execute(
+    size_t i,              /* cscope table index */
     char *cname        /* cscope database name */
 )
 {
   if (p_csverbose) {
     msg_clr_eos();
     (void)smsg_attr(hl_attr(HLF_R) | MSG_HIST,
-        (char_u *)_("cscope connection %s closed"), cname);
+          _("cscope connection %s closed"), cname);
   }
   cs_release_csp(i, TRUE);
 }
@@ -1345,7 +1355,8 @@ cs_kill_execute (
  * would still have to be modified to escape all the special regular expression
  * characters to comply with ctags formatting.
  */
-static char *cs_make_vim_style_matches(char *fname, char *slno, char *search, char *tagstr)
+static char *cs_make_vim_style_matches(char *fname, char *slno, char *search,
+                                       char *tagstr)
 {
   /* vim style is ctags:
    *
@@ -1395,12 +1406,13 @@ static char *cs_make_vim_style_matches(char *fname, char *slno, char *search, ch
  *
  * Print: prints the tags
  */
-static char *cs_manage_matches(char **matches, char **contexts, int totmatches, mcmd_e cmd)
+static char *cs_manage_matches(char **matches, char **contexts,
+                               size_t totmatches, mcmd_e cmd)
 {
   static char **mp = NULL;
   static char **cp = NULL;
-  static int cnt = -1;
-  static int next = -1;
+  static size_t cnt = 0;
+  static size_t next = 0;
   char *p = NULL;
 
   switch (cmd) {
@@ -1408,7 +1420,7 @@ static char *cs_manage_matches(char **matches, char **contexts, int totmatches, 
     assert(matches != NULL);
     assert(totmatches > 0);
     if (mp != NULL || cp != NULL)
-      (void)cs_manage_matches(NULL, NULL, -1, Free);
+      (void)cs_manage_matches(NULL, NULL, 0, Free);
     mp = matches;
     cp = contexts;
     cnt = totmatches;
@@ -1423,14 +1435,13 @@ static char *cs_manage_matches(char **matches, char **contexts, int totmatches, 
     break;
   case Free:
     if (mp != NULL) {
-      if (cnt > 0)
-        while (cnt--) {
-          free(mp[cnt]);
-          if (cp != NULL)
-            free(cp[cnt]);
-        }
-      free(mp);
-      free(cp);
+      while (cnt--) {
+        xfree(mp[cnt]);
+        if (cp != NULL)
+          xfree(cp[cnt]);
+      }
+      xfree(mp);
+      xfree(cp);
     }
     mp = NULL;
     cp = NULL;
@@ -1454,7 +1465,8 @@ static char *cs_manage_matches(char **matches, char **contexts, int totmatches, 
  *
  * parse cscope output
  */
-static char *cs_parse_results(int cnumber, char *buf, int bufsize, char **context, char **linenumber, char **search)
+static char *cs_parse_results(size_t cnumber, char *buf, int bufsize,
+                              char **context, char **linenumber, char **search)
 {
   int ch;
   char *p;
@@ -1509,7 +1521,6 @@ static char *cs_parse_results(int cnumber, char *buf, int bufsize, char **contex
  */
 static void cs_file_results(FILE *f, int *nummatches_a)
 {
-  int i, j;
   char *search, *slno;
   char *fullname;
   char *cntx;
@@ -1517,11 +1528,11 @@ static void cs_file_results(FILE *f, int *nummatches_a)
 
   char *buf = xmalloc(CSREAD_BUFSIZE);
 
-  for (i = 0; i < csinfo_size; i++) {
+  for (size_t i = 0; i < csinfo_size; i++) {
     if (nummatches_a[i] < 1)
       continue;
 
-    for (j = 0; j < nummatches_a[i]; j++) {
+    for (int j = 0; j < nummatches_a[i]; j++) {
       if ((fullname = cs_parse_results(i, buf, CSREAD_BUFSIZE, &cntx,
                &slno, &search)) == NULL)
         continue;
@@ -1538,14 +1549,14 @@ static void cs_file_results(FILE *f, int *nummatches_a)
       else
         fprintf(f, "%s\t%s\t%s %s\n", fullname, slno, context, search);
 
-      free(context);
-      free(fullname);
+      xfree(context);
+      xfree(fullname);
     }     /* for all matches */
 
     (void)cs_read_prompt(i);
 
   }   /* for all cscope connections */
-  free(buf);
+  xfree(buf);
 }
 
 /*
@@ -1555,12 +1566,13 @@ static void cs_file_results(FILE *f, int *nummatches_a)
  * into ctags format
  * When there are no matches sets "*matches_p" to NULL.
  */
-static void cs_fill_results(char *tagstr, int totmatches, int *nummatches_a, char ***matches_p, char ***cntxts_p, int *matched)
+static void cs_fill_results(char *tagstr, size_t totmatches, int *nummatches_a,
+                            char ***matches_p, char ***cntxts_p,
+                            size_t *matched)
 {
-  int i, j;
   char *buf;
   char *search, *slno;
-  int totsofar = 0;
+  size_t totsofar = 0;
   char **matches = NULL;
   char **cntxts = NULL;
   char *fullname;
@@ -1569,14 +1581,14 @@ static void cs_fill_results(char *tagstr, int totmatches, int *nummatches_a, cha
   assert(totmatches > 0);
 
   buf = xmalloc(CSREAD_BUFSIZE);
-  matches = xmalloc(sizeof(char *) * totmatches);
-  cntxts = xmalloc(sizeof(char *) * totmatches);
+  matches = xmalloc(sizeof(char *) * (size_t)totmatches);
+  cntxts = xmalloc(sizeof(char *) * (size_t)totmatches);
 
-  for (i = 0; i < csinfo_size; i++) {
+  for (size_t i = 0; i < csinfo_size; i++) {
     if (nummatches_a[i] < 1)
       continue;
 
-    for (j = 0; j < nummatches_a[i]; j++) {
+    for (int j = 0; j < nummatches_a[i]; j++) {
       if ((fullname = cs_parse_results(i, buf, CSREAD_BUFSIZE, &cntx,
                &slno, &search)) == NULL)
         continue;
@@ -1584,7 +1596,7 @@ static void cs_fill_results(char *tagstr, int totmatches, int *nummatches_a, cha
       matches[totsofar] = cs_make_vim_style_matches(fullname, slno, search,
                                                     tagstr);
 
-      free(fullname);
+      xfree(fullname);
 
       if (strcmp(cntx, "<global>") == 0)
         cntxts[totsofar] = NULL;
@@ -1602,35 +1614,29 @@ static void cs_fill_results(char *tagstr, int totmatches, int *nummatches_a, cha
 
   if (totsofar == 0) {
     /* No matches, free the arrays and return NULL in "*matches_p". */
-    free(matches);
+    xfree(matches);
     matches = NULL;
-    free(cntxts);
+    xfree(cntxts);
     cntxts = NULL;
   }
   *matched = totsofar;
   *matches_p = matches;
   *cntxts_p = cntxts;
 
-  free(buf);
+  xfree(buf);
 } /* cs_fill_results */
 
 
 /* get the requested path components */
 static char *cs_pathcomponents(char *path)
 {
-  int i;
-  char        *s;
-
   if (p_cspc == 0)
     return path;
 
-  s = path + strlen(path) - 1;
-  for (i = 0; i < p_cspc; ++i)
-    while (s > path && *--s != '/'
-           )
-      ;
-  if ((s > path && *s == '/')
-      )
+  char *s = path + strlen(path) - 1;
+  for (int i = 0; i < p_cspc; ++i)
+    while (s > path && *--s != '/') continue;
+  if ((s > path && *s == '/'))
     ++s;
   return s;
 }
@@ -1640,16 +1646,15 @@ static char *cs_pathcomponents(char *path)
  *
  * called from cs_manage_matches()
  */
-static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
+static void cs_print_tags_priv(char **matches, char **cntxts,
+                                size_t num_matches)
 {
   char        *ptag;
   char        *fname, *lno, *extra, *tbuf;
-  int i, idx, num;
+  size_t      num;
   char        *globalcntx = "GLOBAL";
-  char        *cntxformat = " <<%s>>";
   char        *context;
   char        *cstag_msg = _("Cscope tag: %s");
-  char        *csfmt_str = "%4d %6s  ";
 
   assert (num_matches > 0);
 
@@ -1664,15 +1669,15 @@ static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
   (void)sprintf(buf, cstag_msg, ptag);
   MSG_PUTS_ATTR(buf, hl_attr(HLF_T));
 
-  free(tbuf);
+  xfree(tbuf);
 
   MSG_PUTS_ATTR(_("\n   #   line"), hl_attr(HLF_T));      /* strlen is 7 */
   msg_advance(msg_col + 2);
   MSG_PUTS_ATTR(_("filename / context / line\n"), hl_attr(HLF_T));
 
   num = 1;
-  for (i = 0; i < num_matches; i++) {
-    idx = i;
+  for (size_t i = 0; i < num_matches; i++) {
+    size_t idx = i;
 
     /* if we really wanted to, we could avoid this malloc and strcpy
      * by parsing matches[i] on the fly and placing stuff into buf
@@ -1691,17 +1696,15 @@ static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
 
     lno[strlen(lno)-2] = '\0';      /* ignore ;" at the end */
 
+    const char *csfmt_str = "%4zu %6s  ";
     /* hopefully 'num' (num of matches) will be less than 10^16 */
     newsize = strlen(csfmt_str) + 16 + strlen(lno);
     if (bufsize < newsize) {
       buf = xrealloc(buf, newsize);
       bufsize = newsize;
     }
-    if (buf != NULL) {
-      /* csfmt_str = "%4d %6s  "; */
-      (void)sprintf(buf, csfmt_str, num, lno);
-      MSG_PUTS_ATTR(buf, hl_attr(HLF_CM));
-    }
+    (void)sprintf(buf, csfmt_str, num, lno);
+    MSG_PUTS_ATTR(buf, hl_attr(HLF_CM));
     MSG_PUTS_LONG_ATTR(cs_pathcomponents(fname), hl_attr(HLF_CM));
 
     /* compute the required space for the context */
@@ -1709,33 +1712,35 @@ static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
       context = cntxts[idx];
     else
       context = globalcntx;
-    newsize = strlen(context) + strlen(cntxformat);
+
+    const char *cntxformat = " <<%s>>";
+    // '%s' won't appear in result string, so:
+    // newsize = len(cntxformat) - 2 + len(context) + 1 (for NUL).
+    newsize = strlen(context) + strlen(cntxformat) - 1;
 
     if (bufsize < newsize) {
       buf = xrealloc(buf, newsize);
       bufsize = newsize;
     }
-    if (buf != NULL) {
-      (void)sprintf(buf, cntxformat, context);
+    (void)sprintf(buf, cntxformat, context);
 
-      /* print the context only if it fits on the same line */
-      if (msg_col + (int)strlen(buf) >= (int)Columns)
-        msg_putchar('\n');
-      msg_advance(12);
-      MSG_PUTS_LONG(buf);
+    /* print the context only if it fits on the same line */
+    if (msg_col + (int)strlen(buf) >= (int)Columns)
       msg_putchar('\n');
-    }
+    msg_advance(12);
+    MSG_PUTS_LONG(buf);
+    msg_putchar('\n');
     if (extra != NULL) {
       msg_advance(13);
       MSG_PUTS_LONG(extra);
     }
 
-    free(tbuf);     /* only after printing extra due to strtok use */
+    xfree(tbuf);     /* only after printing extra due to strtok use */
 
     if (msg_col)
       msg_putchar('\n');
 
-    ui_breakcheck();
+    os_breakcheck();
     if (got_int) {
       got_int = FALSE;          /* don't print any more matches */
       break;
@@ -1744,7 +1749,7 @@ static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
     num++;
   }   /* for all matches */
 
-  free(buf);
+  xfree(buf);
 } /* cs_print_tags_priv */
 
 
@@ -1753,23 +1758,22 @@ static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
  *
  * read a cscope prompt (basically, skip over the ">> ")
  */
-static int cs_read_prompt(int i)
+static int cs_read_prompt(size_t i)
 {
-  int ch;
+  char ch;
   char        *buf = NULL;   /* buffer for possible error message from cscope */
-  int bufpos = 0;
-  char        *cs_emsg;
-  int maxlen;
+  size_t bufpos = 0;
+  char   *cs_emsg = _("E609: Cscope error: %s");
+  size_t cs_emsg_len = strlen(cs_emsg);
   static char *eprompt = "Press the RETURN key to continue:";
-  int epromptlen = (int)strlen(eprompt);
-  int n;
+  size_t epromptlen = strlen(eprompt);
 
-  cs_emsg = _("E609: Cscope error: %s");
   /* compute maximum allowed len for Cscope error message */
-  maxlen = (int)(IOSIZE - strlen(cs_emsg));
+  assert(IOSIZE >= cs_emsg_len);
+  size_t maxlen = IOSIZE - cs_emsg_len;
 
   for (;; ) {
-    while ((ch = getc(csinfo[i].fr_fp)) != EOF && ch != CSCOPE_PROMPT[0])
+    while ((ch = (char)getc(csinfo[i].fr_fp)) != EOF && ch != CSCOPE_PROMPT[0])
       /* if there is room and char is printable */
       if (bufpos < maxlen - 1 && vim_isprintc(ch)) {
         // lazy buffer allocation
@@ -1799,9 +1803,9 @@ static int cs_read_prompt(int i)
         }
       }
 
-    for (n = 0; n < (int)strlen(CSCOPE_PROMPT); ++n) {
+    for (size_t n = 0; n < strlen(CSCOPE_PROMPT); ++n) {
       if (n > 0)
-        ch = getc(csinfo[i].fr_fp);
+        ch = (char)getc(csinfo[i].fr_fp);
       if (ch == EOF) {
         PERROR("cs_read_prompt EOF");
         if (buf != NULL && buf[0] != NUL)
@@ -1809,7 +1813,7 @@ static int cs_read_prompt(int i)
         else if (p_csverbose)
           cs_reading_emsg(i);           /* don't have additional information */
         cs_release_csp(i, TRUE);
-        free(buf);
+        xfree(buf);
         return CSCOPE_FAILURE;
       }
 
@@ -1824,7 +1828,7 @@ static int cs_read_prompt(int i)
     break;                  /* did find the prompt */
   }
 
-  free(buf);
+  xfree(buf);
   return CSCOPE_SUCCESS;
 }
 
@@ -1832,10 +1836,9 @@ static int cs_read_prompt(int i)
 /*
  * Used to catch and ignore SIGALRM below.
  */
-static RETSIGTYPE
-sig_handler SIGDEFARG(sigarg) {
+static void sig_handler(int s) {
   /* do nothing */
-  SIGRETURN;
+  return;
 }
 
 #endif
@@ -1846,7 +1849,7 @@ sig_handler SIGDEFARG(sigarg) {
  * Does the actual free'ing for the cs ptr with an optional flag of whether
  * or not to free the filename.  Called by cs_kill and cs_reset.
  */
-static void cs_release_csp(int i, int freefnpp)
+static void cs_release_csp(size_t i, int freefnpp)
 {
   /*
    * Trying to exit normally (not sure whether it is fit to UNIX cscope
@@ -1950,9 +1953,9 @@ static void cs_release_csp(int i, int freefnpp)
     (void)fclose(csinfo[i].to_fp);
 
   if (freefnpp) {
-    free(csinfo[i].fname);
-    free(csinfo[i].ppath);
-    free(csinfo[i].flags);
+    xfree(csinfo[i].fname);
+    xfree(csinfo[i].ppath);
+    xfree(csinfo[i].flags);
   }
 
   clear_csinfo(i);
@@ -1967,8 +1970,7 @@ static void cs_release_csp(int i, int freefnpp)
 static int cs_reset(exarg_T *eap)
 {
   char        **dblist = NULL, **pplist = NULL, **fllist = NULL;
-  int i;
-  char buf[20];   /* for sprintf " (#%d)" */
+  char buf[20];   /* for snprintf " (#%zu)" */
 
   if (csinfo_size == 0)
     return CSCOPE_SUCCESS;
@@ -1978,7 +1980,7 @@ static int cs_reset(exarg_T *eap)
   pplist = xmalloc(csinfo_size * sizeof(char *));
   fllist = xmalloc(csinfo_size * sizeof(char *));
 
-  for (i = 0; i < csinfo_size; i++) {
+  for (size_t i = 0; i < csinfo_size; i++) {
     dblist[i] = csinfo[i].fname;
     pplist[i] = csinfo[i].ppath;
     fllist[i] = csinfo[i].flags;
@@ -1987,7 +1989,7 @@ static int cs_reset(exarg_T *eap)
   }
 
   /* rebuild the cscope connection list */
-  for (i = 0; i < csinfo_size; i++) {
+  for (size_t i = 0; i < csinfo_size; i++) {
     if (dblist[i] != NULL) {
       cs_add_common(dblist[i], pplist[i], fllist[i]);
       if (p_csverbose) {
@@ -1995,17 +1997,17 @@ static int cs_reset(exarg_T *eap)
          * connection number in the same line as
          * "Added cscope database..."
          */
-        sprintf(buf, " (#%d)", i);
+        snprintf(buf, ARRAY_SIZE(buf), " (#%zu)", i);
         MSG_PUTS_ATTR(buf, hl_attr(HLF_R));
       }
     }
-    free(dblist[i]);
-    free(pplist[i]);
-    free(fllist[i]);
+    xfree(dblist[i]);
+    xfree(pplist[i]);
+    xfree(fllist[i]);
   }
-  free(dblist);
-  free(pplist);
-  free(fllist);
+  xfree(dblist);
+  xfree(pplist);
+  xfree(fllist);
 
   if (p_csverbose)
     MSG_ATTR(_("All cscope databases reset"), hl_attr(HLF_R) | MSG_HIST);
@@ -2024,7 +2026,7 @@ static int cs_reset(exarg_T *eap)
  * ships with Solaris 2.6), the output never has the prefix prepended.
  * Contrast this with my development system (Digital Unix), which does.
  */
-static char *cs_resolve_file(int i, char *name)
+static char *cs_resolve_file(size_t i, char *name)
 {
   char        *fullname;
   char_u      *csdir = NULL;
@@ -2059,12 +2061,12 @@ static char *cs_resolve_file(int i, char *name)
   } else if (csdir != NULL && csinfo[i].fname != NULL && *csdir != NUL) {
     /* Check for csdir to be non empty to avoid empty path concatenated to
      * cscope output. */
-    fullname = (char *)concat_fnames(csdir, (char_u *)name, TRUE);
+    fullname = concat_fnames((char *)csdir, name, TRUE);
   } else {
     fullname = xstrdup(name);
   }
 
-  free(csdir);
+  xfree(csdir);
   return fullname;
 }
 
@@ -2076,22 +2078,21 @@ static char *cs_resolve_file(int i, char *name)
  */
 static int cs_show(exarg_T *eap)
 {
-  short i;
   if (cs_cnt_connections() == 0)
     MSG_PUTS(_("no cscope connections\n"));
   else {
     MSG_PUTS_ATTR(
         _(" # pid    database name                       prepend path\n"),
         hl_attr(HLF_T));
-    for (i = 0; i < csinfo_size; i++) {
+    for (size_t i = 0; i < csinfo_size; i++) {
       if (csinfo[i].fname == NULL)
         continue;
 
       if (csinfo[i].ppath != NULL)
-        (void)smsg((char_u *)"%2d %-5ld  %-34s  %-32s",
+        (void)smsg("%2zu %-5" PRId64 "  %-34s  %-32s",
             i, (long)csinfo[i].pid, csinfo[i].fname, csinfo[i].ppath);
       else
-        (void)smsg((char_u *)"%2d %-5ld  %-34s  <none>",
+        (void)smsg("%2zu %-5" PRId64 "  %-34s  <none>",
             i, (long)csinfo[i].pid, csinfo[i].fname);
     }
   }
@@ -2108,11 +2109,9 @@ static int cs_show(exarg_T *eap)
  */
 void cs_end(void)
 {
-  int i;
-
-  for (i = 0; i < csinfo_size; i++)
-    cs_release_csp(i, TRUE);
-  free(csinfo);
+  for (size_t i = 0; i < csinfo_size; i++)
+    cs_release_csp(i, true);
+  xfree(csinfo);
   csinfo_size = 0;
 }
 

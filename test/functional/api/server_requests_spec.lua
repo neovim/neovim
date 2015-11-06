@@ -3,8 +3,8 @@
 -- be running.
 local helpers = require('test.functional.helpers')
 local clear, nvim, eval = helpers.clear, helpers.nvim, helpers.eval
-local eq, run, stop = helpers.eq, helpers.run, helpers.stop
-
+local eq, neq, run, stop = helpers.eq, helpers.neq, helpers.run, helpers.stop
+local nvim_prog = helpers.nvim_prog
 
 
 describe('server -> client', function()
@@ -113,6 +113,46 @@ describe('server -> client', function()
 
       run(on_request, on_notification, on_setup)
       eq(expected, notified)
+    end)
+  end)
+
+  describe('when the client is a recursive vim instance', function()
+    before_each(function()
+      nvim('command', "let vim = rpcstart('"..nvim_prog.."', ['-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--embed'])")
+      neq(0, eval('vim'))
+    end)
+
+    after_each(function() nvim('command', 'call rpcstop(vim)') end)
+
+    it('can send/recieve notifications and make requests', function()
+      nvim('command', "call rpcnotify(vim, 'vim_set_current_line', 'SOME TEXT')")
+
+      -- Wait for the notification to complete.
+      nvim('command', "call rpcrequest(vim, 'vim_eval', '0')")
+
+      eq('SOME TEXT', eval("rpcrequest(vim, 'vim_get_current_line')"))
+    end)
+
+    it('can communicate buffers, tabpages, and windows', function()
+      eq({3}, eval("rpcrequest(vim, 'vim_get_tabpages')"))
+      eq({1}, eval("rpcrequest(vim, 'vim_get_windows')"))
+
+      local buf = eval("rpcrequest(vim, 'vim_get_buffers')")[1]
+      eq(2, buf)
+
+      eval("rpcnotify(vim, 'buffer_set_line', "..buf..", 0, 'SOME TEXT')")
+      nvim('command', "call rpcrequest(vim, 'vim_eval', '0')")  -- wait
+
+      eq('SOME TEXT', eval("rpcrequest(vim, 'buffer_get_line', "..buf..", 0)"))
+
+      -- Call get_line_slice(buf, range [0,0], includes start, includes end)
+      eq({'SOME TEXT'}, eval("rpcrequest(vim, 'buffer_get_line_slice', "..buf..", 0, 0, 1, 1)"))
+    end)
+
+    it('returns an error if the request failed', function()
+      local status, err = pcall(eval, "rpcrequest(vim, 'does-not-exist')")
+      eq(false, status)
+      eq(true, string.match(err, ': (.*)') == 'Failed to evaluate expression')
     end)
   end)
 end)

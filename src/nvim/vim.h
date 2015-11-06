@@ -6,9 +6,7 @@
  */
 
 #ifndef NVIM_VIM_H
-# define NVIM_VIM_H
-
-#define min(X, Y) (X < Y ? X : Y)
+#define NVIM_VIM_H
 
 #include "nvim/types.h"
 #include "nvim/pos.h"  // for linenr_T, MAXCOL, etc...
@@ -45,14 +43,13 @@ Error: configure did not run properly.Check auto/config.log.
 # define VIMPACKAGE     "vim"
 #endif
 
-#include "nvim/os_unix_defs.h"       /* bring lots of system header files */
+#include "nvim/os/os_defs.h"       /* bring lots of system header files */
 
 #define NUMBUFLEN 30        /* length of a buffer to store a number in ASCII */
 
 # define MAX_TYPENR 65535
 
 #include "nvim/keymap.h"
-#include "nvim/term_defs.h"
 #include "nvim/macros.h"
 
 
@@ -112,9 +109,10 @@ Error: configure did not run properly.Check auto/config.log.
 #define SHOWMATCH       (0x700 + INSERT) /* show matching paren */
 #define CONFIRM         0x800   /* ":confirm" prompt */
 #define SELECTMODE      0x1000  /* Select mode, only for mappings */
+#define TERM_FOCUS      0x2000  // Terminal focus mode
 
-#define MAP_ALL_MODES   (0x3f | SELECTMODE)     /* all mode bits used for
-                                                 * mapping */
+// all mode bits used for mapping
+#define MAP_ALL_MODES   (0x3f | SELECTMODE | TERM_FOCUS)
 
 /* directions */
 #define FORWARD                 1
@@ -181,14 +179,8 @@ enum {
   EXPAND_HISTORY,
   EXPAND_USER,
   EXPAND_SYNTIME,
+  EXPAND_USER_ADDR_TYPE,
 };
-
-
-#ifdef NO_EXPANDPATH
-# define gen_expand_wildcards mch_expand_wildcards
-#endif
-
-
 
 
 
@@ -289,17 +281,6 @@ enum {
 # endif
 #endif
 
-/* We need to call mb_stricmp() even when we aren't dealing with a multi-byte
- * encoding because mb_stricmp() takes care of all ascii and non-ascii
- * encodings, including characters with umlauts in latin1, etc., while
- * STRICMP() only handles the system locale version, which often does not
- * handle non-ascii properly. */
-
-# define MB_STRICMP(d, s)       mb_strnicmp((char_u *)(d), (char_u *)(s), \
-    (int)MAXCOL)
-# define MB_STRNICMP(d, s, n)   mb_strnicmp((char_u *)(d), (char_u *)(s), \
-    (int)(n))
-
 #define STRCAT(d, s)        strcat((char *)(d), (char *)(s))
 #define STRNCAT(d, s, n)    strncat((char *)(d), (char *)(s), (size_t)(n))
 
@@ -339,49 +320,30 @@ enum {
 #define fnamencmp(x, y, n) vim_fnamencmp((char_u *)(x), (char_u *)(y), \
     (size_t)(n))
 
-#ifndef EINTR
-# define read_eintr(fd, buf, count) vim_read((fd), (buf), (count))
-# define write_eintr(fd, buf, count) vim_write((fd), (buf), (count))
-#endif
-
-# define vim_read(fd, buf, count)   read((fd), (char *)(buf), (size_t) (count))
-# define vim_write(fd, buf, count)  write((fd), (char *)(buf), (size_t) (count))
-
 /*
  * Enums need a typecast to be used as array index (for Ultrix).
  */
 #define hl_attr(n)      highlight_attr[(int)(n)]
 #define term_str(n)     term_strings[(int)(n)]
 
-/*
- * vim_iswhite() is used for "^" and the like. It differs from isspace()
- * because it doesn't include <CR> and <LF> and the like.
- */
-#define vim_iswhite(x)  ((x) == ' ' || (x) == '\t')
-
 /* Maximum number of bytes in a multi-byte character.  It can be one 32-bit
  * character of up to 6 bytes, or one 16-bit character of up to three bytes
  * plus six following composing characters of three bytes each. */
-# define MB_MAXBYTES    21
+#define MB_MAXBYTES    21
 
 /* This has to go after the include of proto.h, as proto/gui.pro declares
  * functions of these names. The declarations would break if the defines had
  * been seen at that stage.  But it must be before globals.h, where error_ga
  * is declared. */
-#if !defined(FEAT_GUI_W32) && !defined(FEAT_GUI_X11) \
-  && !defined(FEAT_GUI_GTK) && !defined(FEAT_GUI_MAC)
-# define mch_errmsg(str)        fprintf(stderr, "%s", (str))
-# define display_errors()       fflush(stderr)
-# define mch_msg(str)           printf("%s", (str))
-#else
-# define USE_MCH_ERRMSG
-#endif
+#define mch_errmsg(str)        fprintf(stderr, "%s", (str))
+#define display_errors()       fflush(stderr)
+#define mch_msg(str)           printf("%s", (str))
 
 #include "nvim/globals.h"        /* global variables and messages */
 #include "nvim/buffer_defs.h"         /* buffer and windows */
 #include "nvim/ex_cmds_defs.h"        /* Ex command defines */
 
 # define SET_NO_HLSEARCH(flag) no_hlsearch = (flag); set_vim_var_nr( \
-    VV_HLSEARCH, !no_hlsearch)
+    VV_HLSEARCH, !no_hlsearch && p_hls)
 
 #endif /* NVIM_VIM_H */

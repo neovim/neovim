@@ -1,11 +1,14 @@
 filter-false = $(strip $(filter-out 0 off OFF false FALSE,$1))
 filter-true = $(strip $(filter-out 1 on ON true TRUE,$1))
 
+# See contrib/local.mk.example
 -include local.mk
 
 CMAKE_BUILD_TYPE ?= Debug
 
 CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE)
+DOC_DOWNLOAD_URL_BASE := https://raw.githubusercontent.com/neovim/doc/gh-pages
+CLINT_ERRORS_FILE_PATH := /reports/clint/errors.json
 
 BUILD_TYPE ?= $(shell (type ninja > /dev/null 2>&1 && echo "Ninja") || \
     echo "Unix Makefiles")
@@ -51,6 +54,9 @@ all: nvim
 nvim: build/.ran-cmake deps
 	+$(BUILD_CMD) -C build
 
+libnvim: build/.ran-cmake deps
+	+$(BUILD_CMD) -C build libnvim
+
 cmake:
 	touch CMakeLists.txt
 	$(MAKE) build/.ran-cmake
@@ -61,15 +67,15 @@ build/.ran-cmake: | deps
 
 deps: | build/.ran-third-party-cmake
 ifeq ($(call filter-true,$(USE_BUNDLED_DEPS)),)
-	+$(BUILD_CMD) -C .deps/build/third-party
+	+$(BUILD_CMD) -C .deps
 endif
 
 build/.ran-third-party-cmake:
 ifeq ($(call filter-true,$(USE_BUNDLED_DEPS)),)
-	mkdir -p .deps/build/third-party
-	cd .deps/build/third-party && \
+	mkdir -p .deps
+	cd .deps && \
 		cmake -G '$(BUILD_TYPE)' $(BUNDLED_CMAKE_FLAG) \
-		$(DEPS_CMAKE_FLAGS) ../../../third-party
+		$(DEPS_CMAKE_FLAGS) ../third-party
 endif
 	mkdir -p build
 	touch $@
@@ -85,6 +91,9 @@ test: functionaltest
 unittest: | nvim
 	+$(BUILD_CMD) -C build unittest
 
+benchmark: | nvim
+	+$(BUILD_CMD) -C build benchmark
+
 clean:
 	+test -d build && $(BUILD_CMD) -C build clean || true
 	$(MAKE) -C src/nvim/testdir clean
@@ -95,4 +104,10 @@ distclean: clean
 install: | nvim
 	+$(BUILD_CMD) -C build install
 
-.PHONY: test functionaltest unittest clean distclean nvim cmake deps install
+lint:
+	cmake -DLINT_PRG=./clint.py \
+		-DLINT_DIR=src \
+		-DLINT_SUPPRESS_URL="$(DOC_DOWNLOAD_URL_BASE)$(CLINT_ERRORS_FILE_PATH)" \
+		-P cmake/RunLint.cmake
+
+.PHONY: test functionaltest unittest lint clean distclean nvim libnvim cmake deps install

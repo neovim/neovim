@@ -17,9 +17,6 @@ The basics are explained in the user manual: |usr_45.txt|.
 
 Also see |help-translated| for multi-language help.
 
-{Vi does not have any of these features}
-{not available when compiled without the |+multi_lang| feature}
-
 ==============================================================================
 1. Messages						*multilang-messages*
 
@@ -75,12 +72,12 @@ use of "-" and "_".
 			This sets $LC_TIME.
 			Without an argument both are set, and additionally
 			$LANG is set.
-			When compiled with the |+float| feature the LC_NUMERIC
-			value will always be set to "C", so that floating
-			point numbers use '.' as the decimal point.
-			This will make a difference for items that depend on
-			the language (some messages, time and date format).
-			Not fully supported on all systems
+			The LC_NUMERIC value will always be set to "C" so
+			that floating point numbers use '.' as the decimal
+			point.  This will make a difference for items that
+			depend on the language (some messages, time and date
+			format).
+			Not fully supported on all systems.
 			If this fails there will be an error message.  If it
 			succeeds there is no message.  Example: >
 				:language
@@ -152,7 +149,7 @@ If you find a menu translation file for your language with a different name,
 create a file in your own runtime directory to load that one.  The name of
 that file could be: >
 
-	~/.vim/lang/menu_<v:lang>.vim
+	~/.config/nvim/lang/menu_<v:lang>.vim
 
 Check the 'runtimepath' option for directories which are searched.  In that
 file put a command to load the menu file with the other name: >

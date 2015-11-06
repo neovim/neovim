@@ -53,7 +53,7 @@ void hash_init(hashtab_T *ht)
 void hash_clear(hashtab_T *ht)
 {
   if (ht->ht_array != ht->ht_smallarray) {
-    free(ht->ht_array);
+    xfree(ht->ht_array);
   }
 }
 
@@ -65,7 +65,7 @@ void hash_clear_all(hashtab_T *ht, unsigned int off)
   size_t todo = ht->ht_used;
   for (hashitem_T *hi = ht->ht_array; todo > 0; ++hi) {
     if (!HASHITEM_EMPTY(hi)) {
-      free(hi->hi_key - off);
+      xfree(hi->hi_key - off);
       todo--;
     }
   }
@@ -329,28 +329,29 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
   size_t todo = ht->ht_used;
 
   for (hashitem_T *olditem = oldarray; todo > 0; ++olditem) {
-    if (!HASHITEM_EMPTY(olditem)) {
-      // The algorithm to find the spot to add the item is identical to
-      // the algorithm to find an item in hash_lookup(). But we only
-      // need to search for a NULL key, thus it's simpler.
-      hash_T newi = olditem->hi_hash & newmask;
-      hashitem_T *newitem = &newarray[newi];
-      if (newitem->hi_key != NULL) {
-        for (hash_T perturb = olditem->hi_hash;; perturb >>= PERTURB_SHIFT) {
-          newi = 5 * newi + perturb + 1;
-          newitem = &newarray[newi & newmask];
-          if (newitem->hi_key == NULL) {
-            break;
-          }
+    if (HASHITEM_EMPTY(olditem)) {
+      continue;
+    }
+    // The algorithm to find the spot to add the item is identical to
+    // the algorithm to find an item in hash_lookup(). But we only
+    // need to search for a NULL key, thus it's simpler.
+    hash_T newi = olditem->hi_hash & newmask;
+    hashitem_T *newitem = &newarray[newi];
+    if (newitem->hi_key != NULL) {
+      for (hash_T perturb = olditem->hi_hash;; perturb >>= PERTURB_SHIFT) {
+        newi = 5 * newi + perturb + 1;
+        newitem = &newarray[newi & newmask];
+        if (newitem->hi_key == NULL) {
+          break;
         }
       }
-      *newitem = *olditem;
-      todo--;
     }
+    *newitem = *olditem;
+    todo--;
   }
 
   if (ht->ht_array != ht->ht_smallarray) {
-    free(ht->ht_array);
+    xfree(ht->ht_array);
   }
   ht->ht_array = newarray;
   ht->ht_mask = newmask;

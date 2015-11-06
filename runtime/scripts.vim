@@ -1,7 +1,7 @@
 " Vim support file to detect file types in scripts
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last change:	2013 May 24
+" Last change:	2014 Aug 24
 
 " This file is called by an autocommand for every file that has just been
 " loaded into a buffer.  It checks if the type of file can be recognized by
@@ -223,11 +223,6 @@ else
 	\ || s:line5 =~ '^\s*dnl\>'
     set ft=m4
 
-    " AmigaDos scripts
-  elseif $TERM == "amiga"
-	\ && (s:line1 =~ "^;" || s:line1 =~ '^\.[bB][rR][aA]')
-    set ft=amiga
-
     " SiCAD scripts (must have procn or procd as the first line to trigger this)
   elseif s:line1 =~? '^ *proc[nd] *$'
     set ft=sicad
@@ -318,6 +313,10 @@ else
   " Valgrind
   elseif s:line1 =~ '^==\d\+== valgrind' || s:line3 =~ '^==\d\+== Using valgrind'
     set ft=valgrind
+
+  " Go docs
+  elseif s:line1 =~ '^PACKAGE DOCUMENTATION$'
+    set ft=godoc
 
   " Renderman Interface Bytestream
   elseif s:line1 =~ '^##RenderMan'

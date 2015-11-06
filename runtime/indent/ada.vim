@@ -148,7 +148,7 @@ function s:StatementIndent( current_indent, prev_lnum )
       " Get previous non-blank/non-comment-only line
       while 1
 	 let line = substitute( getline(lnum), g:ada#Comment, '', '' )
-	 
+
 	 if line !~ '^\s*$' && line !~ '^\s*#'
 	    break
 	 endif

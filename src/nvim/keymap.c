@@ -3,14 +3,20 @@
  * special key codes.
  */
 
+#include <assert.h>
 #include <inttypes.h>
+#include <limits.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/keymap.h"
 #include "nvim/charset.h"
+#include "nvim/memory.h"
 #include "nvim/edit.h"
-#include "nvim/term.h"
+#include "nvim/eval.h"
+#include "nvim/message.h"
+#include "nvim/strings.h"
+#include "nvim/mouse.h"
 
 
 /*
@@ -250,10 +256,6 @@ static struct key_name_entry {
   {'<',               (char_u *)"lt"},
 
   {K_MOUSE,           (char_u *)"Mouse"},
-  {K_NETTERM_MOUSE,   (char_u *)"NetMouse"},
-  {K_DEC_MOUSE,       (char_u *)"DecMouse"},
-  {K_URXVT_MOUSE,     (char_u *)"UrxvtMouse"},
-  {K_SGR_MOUSE,       (char_u *)"SgrMouse"},
   {K_LEFTMOUSE,       (char_u *)"LeftMouse"},
   {K_LEFTMOUSE_NM,    (char_u *)"LeftMouseNM"},
   {K_LEFTDRAG,        (char_u *)"LeftDrag"},
@@ -281,11 +283,9 @@ static struct key_name_entry {
   {K_ZERO,            (char_u *)"Nul"},
   {K_SNR,             (char_u *)"SNR"},
   {K_PLUG,            (char_u *)"Plug"},
+  {K_PASTE,           (char_u *)"Paste"},
   {0,                 NULL}
 };
-
-#define KEY_NAMES_TABLE_LEN (sizeof(key_names_table) / \
-                             sizeof(struct key_name_entry))
 
 static struct mousetable {
   int pseudo_code;              /* Code for pseudo mouse event */
@@ -457,7 +457,7 @@ char_u *get_special_key_name(int c, int modifiers)
     if (IS_SPECIAL(c)) {
       string[idx++] = 't';
       string[idx++] = '_';
-      string[idx++] = KEY2TERMCAP0(c);
+      string[idx++] = (char_u)KEY2TERMCAP0(c);
       string[idx++] = KEY2TERMCAP1(c);
     }
     /* Not a special key, only modifiers, output directly */
@@ -465,7 +465,7 @@ char_u *get_special_key_name(int c, int modifiers)
       if (has_mbyte && (*mb_char2len)(c) > 1)
         idx += (*mb_char2bytes)(c, string + idx);
       else if (vim_isprintc(c))
-        string[idx++] = c;
+        string[idx++] = (char_u)c;
       else {
         s = transchar(c);
         while (*s)
@@ -487,7 +487,7 @@ char_u *get_special_key_name(int c, int modifiers)
  * If there is a match, srcp is advanced to after the <> name.
  * dst[] must be big enough to hold the result (up to six characters)!
  */
-int 
+unsigned int 
 trans_special (
     char_u **srcp,
     char_u *dst,
@@ -496,7 +496,7 @@ trans_special (
 {
   int modifiers = 0;
   int key;
-  int dlen = 0;
+  unsigned int dlen = 0;
 
   key = find_special_key(srcp, &modifiers, keycode, FALSE);
   if (key == 0)
@@ -506,19 +506,22 @@ trans_special (
   if (modifiers != 0) {
     dst[dlen++] = K_SPECIAL;
     dst[dlen++] = KS_MODIFIER;
-    dst[dlen++] = modifiers;
+    dst[dlen++] = (char_u)modifiers;
   }
 
   if (IS_SPECIAL(key)) {
     dst[dlen++] = K_SPECIAL;
-    dst[dlen++] = KEY2TERMCAP0(key);
+    dst[dlen++] = (char_u)KEY2TERMCAP0(key);
     dst[dlen++] = KEY2TERMCAP1(key);
   } else if (has_mbyte && !keycode)
-    dlen += (*mb_char2bytes)(key, dst + dlen);
-  else if (keycode)
-    dlen = (int)(add_char2buf(key, dst + dlen) - dst);
+    dlen += (unsigned int)(*mb_char2bytes)(key, dst + dlen);
+  else if (keycode) {
+    char_u *after = add_char2buf(key, dst + dlen);
+    assert(after >= dst && (uintmax_t)(after - dst) <= UINT_MAX);
+    dlen = (unsigned int)(after - dst);
+  }
   else
-    dst[dlen++] = key;
+    dst[dlen++] = (char_u)key;
 
   return dlen;
 }
@@ -592,7 +595,7 @@ find_special_key (
      */
     if (bp >= last_dash) {
       if (STRNICMP(last_dash + 1, "char-", 5) == 0
-          && VIM_ISDIGIT(last_dash[6])) {
+          && ascii_isdigit(last_dash[6])) {
         /* <Char-123> or <Char-033> or <Char-0x33> */
         vim_str2nr(last_dash + 6, NULL, NULL, TRUE, TRUE, NULL, &n);
         key = (int)n;
@@ -705,35 +708,18 @@ int find_special_key_in_table(int c)
 int get_special_key_code(char_u *name)
 {
   char_u  *table_name;
-  char_u string[3];
   int i, j;
 
-  /*
-   * If it's <t_xx> we get the code for xx from the termcap
-   */
-  if (name[0] == 't' && name[1] == '_' && name[2] != NUL && name[3] != NUL) {
-    string[0] = name[2];
-    string[1] = name[3];
-    string[2] = NUL;
-    if (add_termcap_entry(string, FALSE) == OK)
-      return TERMCAP2KEY(name[2], name[3]);
-  } else
-    for (i = 0; key_names_table[i].name != NULL; i++) {
-      table_name = key_names_table[i].name;
-      for (j = 0; vim_isIDc(name[j]) && table_name[j] != NUL; j++)
-        if (TOLOWER_ASC(table_name[j]) != TOLOWER_ASC(name[j]))
-          break;
-      if (!vim_isIDc(name[j]) && table_name[j] == NUL)
-        return key_names_table[i].key;
-    }
-  return 0;
-}
+  for (i = 0; key_names_table[i].name != NULL; i++) {
+    table_name = key_names_table[i].name;
+    for (j = 0; vim_isIDc(name[j]) && table_name[j] != NUL; j++)
+      if (TOLOWER_ASC(table_name[j]) != TOLOWER_ASC(name[j]))
+        break;
+    if (!vim_isIDc(name[j]) && table_name[j] == NUL)
+      return key_names_table[i].key;
+  }
 
-char_u *get_key_name(int i)
-{
-  if (i >= (int)KEY_NAMES_TABLE_LEN)
-    return NULL;
-  return key_names_table[i].name;
+  return 0;
 }
 
 /*
@@ -753,25 +739,155 @@ int get_mouse_button(int code, bool *is_click, bool *is_drag)
   return 0;         /* Shouldn't get here */
 }
 
-/*
- * Return the appropriate pseudo mouse event token (KE_LEFTMOUSE etc) based on
- * the given information about which mouse button is down, and whether the
- * mouse was clicked, dragged or released.
- */
-int 
-get_pseudo_mouse_code (
-    int button,             /* eg MOUSE_LEFT */
-    int is_click,
-    int is_drag
+// Replace any terminal code strings in from[] with the equivalent internal
+// vim representation.	This is used for the "from" and "to" part of a
+// mapping, and the "to" part of a menu command.
+// Any strings like "<C-UP>" are also replaced, unless 'cpoptions' contains
+// '<'.
+// K_SPECIAL by itself is replaced by K_SPECIAL KS_SPECIAL KE_FILLER.
+//
+// The replacement is done in result[] and finally copied into allocated
+// memory. If this all works well *bufp is set to the allocated memory and a
+// pointer to it is returned. If something fails *bufp is set to NULL and from
+// is returned.
+//
+// CTRL-V characters are removed.  When "from_part" is TRUE, a trailing CTRL-V
+// is included, otherwise it is removed (for ":map xx ^V", maps xx to
+// nothing).  When 'cpoptions' does not contain 'B', a backslash can be used
+// instead of a CTRL-V.
+char_u * replace_termcodes (
+    char_u *from,
+    char_u **bufp,
+    int from_part,
+    int do_lt,                     // also translate <lt>
+    int special                    // always accept <key> notation
 )
 {
-  int i;
+  ssize_t i;
+  size_t slen;
+  char_u key;
+  size_t dlen = 0;
+  char_u      *src;
+  int do_backslash;             // backslash is a special character
+  int do_special;               // recognize <> key codes
+  char_u      *result;          // buffer for resulting string
 
-  for (i = 0; mouse_table[i].pseudo_code; i++)
-    if (button == mouse_table[i].button
-        && is_click == mouse_table[i].is_click
-        && is_drag == mouse_table[i].is_drag) {
-      return mouse_table[i].pseudo_code;
+  do_backslash = (vim_strchr(p_cpo, CPO_BSLASH) == NULL);
+  do_special = (vim_strchr(p_cpo, CPO_SPECI) == NULL) || special;
+
+  // Allocate space for the translation.  Worst case a single character is
+  // replaced by 6 bytes (shifted special key), plus a NUL at the end.
+  result = xmalloc(STRLEN(from) * 6 + 1);
+
+  src = from;
+
+  // Check for #n at start only: function key n
+  if (from_part && src[0] == '#' && ascii_isdigit(src[1])) {  // function key
+    result[dlen++] = K_SPECIAL;
+    result[dlen++] = 'k';
+    if (src[1] == '0') {
+      result[dlen++] = ';';     // #0 is F10 is "k;"
+    } else {
+      result[dlen++] = src[1];  // #3 is F3 is "k3"
     }
-  return (int)KE_IGNORE;            /* not recognized, ignore it */
+    src += 2;
+  }
+
+  // Copy each byte from *from to result[dlen]
+  while (*src != NUL) {
+    // If 'cpoptions' does not contain '<', check for special key codes,
+    // like "<C-S-LeftMouse>"
+    if (do_special && (do_lt || STRNCMP(src, "<lt>", 4) != 0)) {
+      // Replace <SID> by K_SNR <script-nr> _.
+      // (room: 5 * 6 = 30 bytes; needed: 3 + <nr> + 1 <= 14)
+      if (STRNICMP(src, "<SID>", 5) == 0) {
+        if (current_SID <= 0) {
+          EMSG(_(e_usingsid));
+        } else {
+          src += 5;
+          result[dlen++] = K_SPECIAL;
+          result[dlen++] = (int)KS_EXTRA;
+          result[dlen++] = (int)KE_SNR;
+          sprintf((char *)result + dlen, "%" PRId64, (int64_t)current_SID);
+          dlen += STRLEN(result + dlen);
+          result[dlen++] = '_';
+          continue;
+        }
+      }
+
+      slen = trans_special(&src, result + dlen, TRUE);
+      if (slen) {
+        dlen += slen;
+        continue;
+      }
+    }
+
+    if (do_special) {
+      char_u  *p, *s, len;
+
+      // Replace <Leader> by the value of "mapleader".
+      // Replace <LocalLeader> by the value of "maplocalleader".
+      // If "mapleader" or "maplocalleader" isn't set use a backslash.
+      if (STRNICMP(src, "<Leader>", 8) == 0) {
+        len = 8;
+        p = get_var_value((char_u *)"g:mapleader");
+      } else if (STRNICMP(src, "<LocalLeader>", 13) == 0)   {
+        len = 13;
+        p = get_var_value((char_u *)"g:maplocalleader");
+      } else {
+        len = 0;
+        p = NULL;
+      }
+
+      if (len != 0) {
+        // Allow up to 8 * 6 characters for "mapleader".
+        if (p == NULL || *p == NUL || STRLEN(p) > 8 * 6) {
+          s = (char_u *)"\\";
+        } else {
+          s = p;
+        }
+        while (*s != NUL) {
+          result[dlen++] = *s++;
+        }
+        src += len;
+        continue;
+      }
+    }
+
+    // Remove CTRL-V and ignore the next character.
+    // For "from" side the CTRL-V at the end is included, for the "to"
+    // part it is removed.
+    // If 'cpoptions' does not contain 'B', also accept a backslash.
+    key = *src;
+    if (key == Ctrl_V || (do_backslash && key == '\\')) {
+      ++src;  // skip CTRL-V or backslash
+      if (*src == NUL) {
+        if (from_part) {
+          result[dlen++] = key;
+        }
+        break;
+      }
+    }
+
+    // skip multibyte char correctly
+    for (i = (*mb_ptr2len)(src); i > 0; --i) {
+      // If the character is K_SPECIAL, replace it with K_SPECIAL
+      // KS_SPECIAL KE_FILLER.
+      // If compiled with the GUI replace CSI with K_CSI.
+      if (*src == K_SPECIAL) {
+        result[dlen++] = K_SPECIAL;
+        result[dlen++] = KS_SPECIAL;
+        result[dlen++] = KE_FILLER;
+      } else {
+        result[dlen++] = *src;
+      }
+      ++src;
+    }
+  }
+  result[dlen] = NUL;
+
+  *bufp = xrealloc(result, dlen + 1);
+
+  return *bufp;
 }
+

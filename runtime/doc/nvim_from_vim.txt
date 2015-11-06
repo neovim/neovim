@@ -1,0 +1,50 @@
+*nvim_from_vim.txt*    For Nvim.						{Nvim}
+
+
+		 NVIM REFERENCE MANUAL
+
+
+Transitioning from Vim				*nvim-from-vim*
+
+Nvim is emphatically a fork of Vim, so compatibility to Vim should be pretty
+good.
+
+To start the transition, link your previous configuration so Nvim can use
+it:
+>
+    mkdir -p ${XDG_CONFIG_HOME:=$HOME/.config}
+    ln -s ~/.vim $XDG_CONFIG_HOME/nvim
+    ln -s ~/.vimrc $XDG_CONFIG_HOME/nvim/init.vim
+<
+See |nvim-intro|, especially |nvim-python| and |nvim-clipboard|, for
+additional software you might need to install to use all of Nvim's features.
+
+Your Vim configuration might not be entirely compatible with Nvim. For a
+full list of differences between Vim and Nvim, see |vim-differences|.
+
+The |'ttymouse'| option, for example, was removed from Nvim (mouse support
+should work without it). If you use the same |vimrc| for Vim and Nvim,
+consider guarding |'ttymouse'| in your configuration like so:
+>
+    if !has('nvim')
+        set ttymouse=xterm2
+    endif
+<
+Conversely, if you have Nvim specific configuration items, you could do
+this:
+>
+    if has('nvim')
+        tnoremap <Esc> <C-\><C-n>
+    endif
+<
+For a more granular approach, use |exists()|:
+>
+    if exists(':tnoremap')
+        tnoremap <Esc> <C-\><C-n>
+    endif
+<
+Now you should be able to explore Nvim more comfortably. Check |nvim| for more
+information.
+
+==============================================================================
+ vim:tw=78:ts=8:noet:ft=help:norl:

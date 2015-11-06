@@ -19,7 +19,7 @@ require('bit')
 cimport('unistd.h')
 cimport('./src/nvim/os/shell.h')
 cimport('./src/nvim/option_defs.h')
-cimport('./src/nvim/os/event.h')
+cimport('./src/nvim/main.h')
 cimport('./src/nvim/fileio.h')
 local fs = cimport('./src/nvim/os/os.h')
 cppimport('sys/stat.h')
@@ -32,19 +32,40 @@ local directory = nil
 local absolute_executable = nil
 local executable_name = nil
 
+local function set_bit(number, to_set)
+  return bit.bor(number, to_set)
+end
+
+local function unset_bit(number, to_unset)
+  return bit.band(number, (bit.bnot(to_unset)))
+end
+
 local function assert_file_exists(filepath)
-  eq(false, nil == (lfs.attributes(filepath, 'r')))
+  neq(nil, lfs.attributes(filepath))
 end
 
 local function assert_file_does_not_exist(filepath)
-  eq(true, nil == (lfs.attributes(filepath, 'r')))
+  eq(nil, lfs.attributes(filepath))
+end
+
+local function os_setperm(filename, perm)
+  return fs.os_setperm((to_cstr(filename)), perm)
+end
+
+local function os_getperm(filename)
+  local perm = fs.os_getperm((to_cstr(filename)))
+  return tonumber(perm)
 end
 
 describe('fs function', function()
+  local orig_test_file_perm
 
   setup(function()
     lfs.mkdir('unit-test-directory');
+
     io.open('unit-test-directory/test.file', 'w').close()
+    orig_test_file_perm = os_getperm('unit-test-directory/test.file')
+
     io.open('unit-test-directory/test_2.file', 'w').close()
     lfs.link('test.file', 'unit-test-directory/test_link.file', true)
     -- Since the tests are executed, they are called by an executable. We use
@@ -170,16 +191,28 @@ describe('fs function', function()
 
     it('returns the absolute path when given an executable relative to the current dir', function()
       local old_dir = lfs.currentdir()
+
       lfs.chdir(directory)
+
+      -- Rely on currentdir to resolve symlinks, if any. Testing against 
+      -- the absolute path taken from arg[0] may result in failure where 
+      -- the path has a symlink in it.
+      local canonical = lfs.currentdir() .. '/' .. executable_name
+      local expected = exe(canonical)
       local relative_executable = './' .. executable_name
-      -- Don't test yet; we need to chdir back first.
       local res = exe(relative_executable)
+
+      -- Don't test yet; we need to chdir back first.
       lfs.chdir(old_dir)
-      eq(absolute_executable, res)
+      eq(expected, res)
     end)
   end)
 
   describe('file permissions', function()
+    before_each(function()
+      os_setperm('unit-test-directory/test.file', orig_test_file_perm)
+    end)
+
     local function os_getperm(filename)
       local perm = fs.os_getperm((to_cstr(filename)))
       return tonumber(perm)
@@ -196,8 +229,8 @@ describe('fs function', function()
       return res
     end
 
-    local function os_file_is_readonly(filename)
-      return fs.os_file_is_readonly((to_cstr(filename)))
+    local function os_file_is_readable(filename)
+      return fs.os_file_is_readable((to_cstr(filename)))
     end
 
     local function os_file_is_writable(filename)
@@ -206,14 +239,6 @@ describe('fs function', function()
 
     local function bit_set(number, check_bit)
       return 0 ~= (bit.band(number, check_bit))
-    end
-
-    local function set_bit(number, to_set)
-      return bit.bor(number, to_set)
-    end
-
-    local function unset_bit(number, to_unset)
-      return bit.band(number, (bit.bnot(to_unset)))
     end
 
     describe('os_getperm', function()
@@ -260,9 +285,11 @@ describe('fs function', function()
         return eq(gid, lfs.attributes(filename, 'gid'))
       end)
 
-      it('owner of a file may change the group of the file to any group of which that owner is a member', function()
-        -- Some systems may not have `id` utility.
-        if (os.execute('id -G &> /dev/null') == 0) then
+      -- Some systems may not have `id` utility.
+      if (os.execute('id -G > /dev/null 2>&1') ~= 0) then
+        pending('skipped (missing `id` utility)', function() end)
+      else
+        it('owner of a file may change the group of the file to any group of which that owner is a member', function()
           local file_gid = lfs.attributes(filename, 'gid')
 
           -- Gets ID of any group of which current user is a member except the
@@ -280,46 +307,49 @@ describe('fs function', function()
             eq(0, (os_fchown(filename, -1, new_gid)))
             eq(new_gid, (lfs.attributes(filename, 'gid')))
           end
-        end
-      end)
+        end)
+      end
 
-      it('returns nonzero if process has not enough permissions', function()
-        -- On Windows `os_fchown` always returns 0
-        -- because `uv_fs_chown` is no-op on this platform.
-        if (ffi.os ~= 'Windows' and ffi.C.geteuid() ~= 0) then
+      if (ffi.os == 'Windows' or ffi.C.geteuid() == 0) then
+        pending('skipped (uv_fs_chown is no-op on Windows)', function() end)
+      else
+        it('returns nonzero if process has not enough permissions', function()
           -- chown to root
           neq(0, os_fchown(filename, 0, 0))
-        end
-      end)
+        end)
+      end
     end)
 
-    describe('os_file_is_readonly', function()
-      it('returns true if the file is readonly', function()
+
+    describe('os_file_is_readable', function()
+      it('returns false if the file is not readable', function()
         local perm = os_getperm('unit-test-directory/test.file')
-        local perm_orig = perm
-        perm = unset_bit(perm, ffi.C.kS_IWUSR)
-        perm = unset_bit(perm, ffi.C.kS_IWGRP)
-        perm = unset_bit(perm, ffi.C.kS_IWOTH)
+        perm = unset_bit(perm, ffi.C.kS_IRUSR)
+        perm = unset_bit(perm, ffi.C.kS_IRGRP)
+        perm = unset_bit(perm, ffi.C.kS_IROTH)
         eq(OK, (os_setperm('unit-test-directory/test.file', perm)))
-        eq(true, os_file_is_readonly('unit-test-directory/test.file'))
-        eq(OK, (os_setperm('unit-test-directory/test.file', perm_orig)))
+        eq(false, os_file_is_readable('unit-test-directory/test.file'))
       end)
 
-      it('returns false if the file is writable', function()
-        eq(false, os_file_is_readonly('unit-test-directory/test.file'))
+      it('returns false if the file does not exist', function()
+        eq(false, os_file_is_readable(
+          'unit-test-directory/what_are_you_smoking.gif'))
+      end)
+
+      it('returns true if the file is readable', function()
+        eq(true, os_file_is_readable(
+          'unit-test-directory/test.file'))
       end)
     end)
 
     describe('os_file_is_writable', function()
       it('returns 0 if the file is readonly', function()
         local perm = os_getperm('unit-test-directory/test.file')
-        local perm_orig = perm
         perm = unset_bit(perm, ffi.C.kS_IWUSR)
         perm = unset_bit(perm, ffi.C.kS_IWGRP)
         perm = unset_bit(perm, ffi.C.kS_IWOTH)
         eq(OK, (os_setperm('unit-test-directory/test.file', perm)))
         eq(0, os_file_is_writable('unit-test-directory/test.file'))
-        eq(OK, (os_setperm('unit-test-directory/test.file', perm_orig)))
       end)
 
       it('returns 1 if the file is writable', function()
@@ -474,6 +504,16 @@ describe('fs function', function()
       return fs.os_rmdir(to_cstr(path))
     end
 
+    local function os_mkdir_recurse(path, mode)
+      local failed_str = ffi.new('char *[1]', {nil})
+      local ret = fs.os_mkdir_recurse(path, mode, failed_str)
+      local str = failed_str[0]
+      if str ~= nil then
+        str = ffi.string(str)
+      end
+      return ret, str
+    end
+
     describe('os_mkdir', function()
       it('returns non-zero when given an already existing directory', function()
         local mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
@@ -486,6 +526,81 @@ describe('fs function', function()
         eq(0, (os_mkdir('unit-test-directory/new-dir', mode)))
         eq(true, (os_isdir('unit-test-directory/new-dir')))
         lfs.rmdir('unit-test-directory/new-dir')
+      end)
+    end)
+
+    describe('os_mkdir_recurse', function()
+      it('returns zero when given an already existing directory', function()
+        local mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
+        local ret, failed_str = os_mkdir_recurse('unit-test-directory', mode)
+        eq(0, ret)
+        eq(nil, failed_str)
+      end)
+
+      it('fails to create a directory where there is a file', function()
+        local mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
+        local ret, failed_str = os_mkdir_recurse(
+            'unit-test-directory/test.file', mode)
+        neq(0, ret)
+        eq('unit-test-directory/test.file', failed_str)
+      end)
+
+      it('fails to create a directory where there is a file in path', function()
+        local mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
+        local ret, failed_str = os_mkdir_recurse(
+            'unit-test-directory/test.file/test', mode)
+        neq(0, ret)
+        eq('unit-test-directory/test.file', failed_str)
+      end)
+
+      it('succeeds to create a directory', function()
+        local mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
+        local ret, failed_str = os_mkdir_recurse(
+            'unit-test-directory/new-dir-recurse', mode)
+        eq(0, ret)
+        eq(nil, failed_str)
+        eq(true, os_isdir('unit-test-directory/new-dir-recurse'))
+        lfs.rmdir('unit-test-directory/new-dir-recurse')
+        eq(false, os_isdir('unit-test-directory/new-dir-recurse'))
+      end)
+
+      it('succeeds to create a directory ending with ///', function()
+        local mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
+        local ret, failed_str = os_mkdir_recurse(
+            'unit-test-directory/new-dir-recurse///', mode)
+        eq(0, ret)
+        eq(nil, failed_str)
+        eq(true, os_isdir('unit-test-directory/new-dir-recurse'))
+        lfs.rmdir('unit-test-directory/new-dir-recurse')
+        eq(false, os_isdir('unit-test-directory/new-dir-recurse'))
+      end)
+
+      it('succeeds to create a directory ending with /', function()
+        local mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
+        local ret, failed_str = os_mkdir_recurse(
+            'unit-test-directory/new-dir-recurse/', mode)
+        eq(0, ret)
+        eq(nil, failed_str)
+        eq(true, os_isdir('unit-test-directory/new-dir-recurse'))
+        lfs.rmdir('unit-test-directory/new-dir-recurse')
+        eq(false, os_isdir('unit-test-directory/new-dir-recurse'))
+      end)
+
+      it('succeeds to create a directory tree', function()
+        local mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
+        local ret, failed_str = os_mkdir_recurse(
+            'unit-test-directory/new-dir-recurse/1/2/3', mode)
+        eq(0, ret)
+        eq(nil, failed_str)
+        eq(true, os_isdir('unit-test-directory/new-dir-recurse'))
+        eq(true, os_isdir('unit-test-directory/new-dir-recurse/1'))
+        eq(true, os_isdir('unit-test-directory/new-dir-recurse/1/2'))
+        eq(true, os_isdir('unit-test-directory/new-dir-recurse/1/2/3'))
+        lfs.rmdir('unit-test-directory/new-dir-recurse/1/2/3')
+        lfs.rmdir('unit-test-directory/new-dir-recurse/1/2')
+        lfs.rmdir('unit-test-directory/new-dir-recurse/1')
+        lfs.rmdir('unit-test-directory/new-dir-recurse')
+        eq(false, os_isdir('unit-test-directory/new-dir-recurse'))
       end)
     end)
 

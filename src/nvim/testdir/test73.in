@@ -2,12 +2,12 @@ Tests for find completion.
 
 STARTTEST
 :so small.vim
+:set wildmode=full
 :" Do all test in a separate window to avoid E211 when we recursively
 :" delete the Xfind directory during cleanup
 :"
 :" This will cause a few errors, do it silently.
 :set visualbell
-:set nocp viminfo+=nviminfo
 :"
 :function! DeleteDirectory(dir)
 : if has("win16") || has("win32") || has("win64") || has("dos16") || has("dos32")

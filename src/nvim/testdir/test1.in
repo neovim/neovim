@@ -14,8 +14,6 @@ set like small.vim above.  tiny.vim is sourced by tests that require the
 If Vim was not compiled with the +multi_byte feature, the mbyte.vim script will
 be set like small.vim above.  mbyte.vim is sourced by tests that require the
 +multi_byte feature.
-Similar logic is applied to the +mzscheme feature, using mzscheme.vim.
-Similar logic is applied to the +lua feature, using lua.vim.
 
 STARTTEST
 :" If columns or lines are too small, create wrongtermsize.
@@ -32,17 +30,9 @@ ae! test.ok
 w! test.out
 qa!
 :w! mbyte.vim
-:w! mzscheme.vim
-:w! lua.vim
 :"
 :" If +multi_byte feature supported, make mbyte.vim empty.
 :if has("multi_byte") | sp another | w! mbyte.vim | q | endif
-:"
-:" If +mzscheme feature supported, make mzscheme.vim empty.
-:if has("mzscheme") | sp another | w! mzscheme.vim | q | endif
-:"
-:" If +lua feature supported, make lua.vim empty.
-:if has("lua") | sp another | w! lua.vim | q | endif
 :"
 :" If +eval feature supported quit here, leaving tiny.vim and small.vim empty.
 :" Otherwise write small.vim to skip the test.

@@ -22,36 +22,30 @@ Vim's capabilities.  Or define your own macros.
 Table of contents: |usr_toc.txt|
 
 ==============================================================================
-*05.1*	The vimrc file					*vimrc-intro*
+*05.1*	The vimrc file				*vimrc-intro*
 
 You probably got tired of typing commands that you use very often.  To start
 Vim with all your favorite option settings and mappings, you write them in
-what is called the vimrc file.  Vim executes the commands in this file when it
-starts up.
+what is called the init.vim file.  Vim executes the commands in this file when 
+it starts up.
 
-If you already have a vimrc file (e.g., when your sysadmin has one setup for
-you), you can edit it this way: >
+If you already have a init.vim file (e.g., when your sysadmin has one setup 
+for you), you can edit it this way: >
 
 	:edit $MYVIMRC
 
-If you don't have a vimrc file yet, see |vimrc| to find out where you can
-create a vimrc file.  Also, the ":version" command mentions the name of the
-"user vimrc file" Vim looks for.
+If you don't have a vimrc file yet, see |init.vim| to find out where you can
+create a vimrc file.
 
 For Unix and Macintosh this file is always used and is recommended:
 
-	~/.vimrc ~
-
-For MS-DOS and MS-Windows you can use one of these:
-
-	$HOME/_vimrc ~
-	$VIM/_vimrc ~
+	~/.config/nvim/init.vim ~
 
 The vimrc file can contain all the commands that you type after a colon.  The
 most simple ones are for setting options.  For example, if you want Vim to
-always start with the 'incsearch' option on, add this line your vimrc file: >
+always start with the 'ignorecase' option on, add this line your vimrc file: >
 
-	set incsearch
+	set ignorecase
 
 For this new line to take effect you need to exit Vim and start it again.
 Later you will learn how to do this without exiting Vim.
@@ -62,22 +56,14 @@ to write a Vim script file: |usr_41.txt|.
 ==============================================================================
 *05.2*	The example vimrc file explained		*vimrc_example.vim*
 
-In the first chapter was explained how the example vimrc (included in the
-Vim distribution) file can be used to make Vim startup in not-compatible mode
-(see |not-compatible|).  The file can be found here:
+In the first chapter was explained how the example vimrc file can be used.
+The file can be found here:
 
 	$VIMRUNTIME/vimrc_example.vim ~
 
 In this section we will explain the various commands used in this file.  This
 will give you hints about how to set up your own preferences.  Not everything
 will be explained though.  Use the ":help" command to find out more.
-
->
-	set nocompatible
-
-As mentioned in the first chapter, these manuals explain Vim working in an
-improved way, thus not completely Vi compatible.  Setting the 'compatible'
-option off, thus 'nocompatible' takes care of this.
 
 >
 	set backspace=indent,eol,start
@@ -96,14 +82,9 @@ when pressing <Enter> in Insert mode, and when using the "o" command to open a
 new line.
 >
 
-	if has("vms")
-	  set nobackup
-	else
-	  set backup
-	endif
+	set backup
 
-This tells Vim to keep a backup copy of a file when overwriting it.  But not
-on the VMS system, since it keeps old versions of files already.  The backup
+This tells Vim to keep a backup copy of a file when overwriting it. The backup
 file will have the same name as the original file with "~" added.  See |07.4|
 >
 
@@ -138,7 +119,7 @@ the "2fw" command is executed and the displayed "2f" is removed.
 >
 	set incsearch
 
-Display the match for a search pattern when halfway typing it.
+Display matches for a search pattern while you type.
 
 >
 	map Q gq
@@ -313,26 +294,20 @@ First read the text in the plugin itself to check for any special conditions.
 Then copy the file to your plugin directory:
 
 	system		plugin directory ~
-	Unix		~/.vim/plugin/
-	PC and OS/2	$HOME/vimfiles/plugin or $VIM/vimfiles/plugin
-	Amiga		s:vimfiles/plugin
-	Macintosh	$VIM:vimfiles:plugin
-	Mac OS X	~/.vim/plugin/
-	RISC-OS		Choices:vimfiles.plugin
+	Unix		~/.local/share/nvim/site/plugin
 
 Example for Unix (assuming you didn't have a plugin directory yet): >
 
-	mkdir ~/.vim
-	mkdir ~/.vim/plugin
-	cp /usr/local/share/vim/vim60/macros/justify.vim ~/.vim/plugin
+	mkdir -p ~/.local/share/nvim/site/plugin
+	cp /usr/local/share/vim/vim60/macros/justify.vim ~/.local/share/nvim/site/plugin
 
 That's all!  Now you can use the commands defined in this plugin to justify
 text.
 
 Instead of putting plugins directly into the plugin/ directory, you may
 better organize them by putting them into subdirectories under plugin/.
-As an example, consider using "~/.vim/plugin/perl/*.vim" for all your Perl
-plugins.
+As an example, consider using "~/.local/share/nvim/site/plugin/perl/*.vim" for 
+all your Perl plugins.
 
 
 FILETYPE PLUGINS			*add-filetype-plugin* *ftplugins*
@@ -366,24 +341,18 @@ plugins, but the last part is "ftplugin".  Suppose you have found a plugin for
 the "stuff" filetype, and you are on Unix.  Then you can move this file to the
 ftplugin directory: >
 
-	mv thefile ~/.vim/ftplugin/stuff.vim
+	mkdir -p ~/.local/share/nvim/site/ftplugin
+	mv thefile ~/.local/share/nvim/site/ftplugin/stuff.vim
 
 If that file already exists you already have a plugin for "stuff".  You might
 want to check if the existing plugin doesn't conflict with the one you are
 adding.  If it's OK, you can give the new one another name: >
 
-	mv thefile ~/.vim/ftplugin/stuff_too.vim
+	mv thefile ~/.local/share/nvim/site/ftplugin/stuff_too.vim
 
 The underscore is used to separate the name of the filetype from the rest,
 which can be anything.  If you use "otherstuff.vim" it wouldn't work, it would
 be loaded for the "otherstuff" filetype.
-
-On MS-DOS you cannot use long filenames.  You would run into trouble if you
-add a second plugin and the filetype has more than six characters.  You can
-use an extra directory to get around this: >
-
-	mkdir $VIM/vimfiles/ftplugin/fortran
-	copy thefile $VIM/vimfiles/ftplugin/fortran/too.vim
 
 The generic names for the filetype plugins are: >
 
@@ -394,9 +363,9 @@ The generic names for the filetype plugins are: >
 Here "<name>" can be any name that you prefer.
 Examples for the "stuff" filetype on Unix: >
 
-	~/.vim/ftplugin/stuff.vim
-	~/.vim/ftplugin/stuff_def.vim
-	~/.vim/ftplugin/stuff/header.vim
+	~/.local/share/nvim/site/ftplugin/stuff.vim
+	~/.local/share/nvim/site/ftplugin/stuff_def.vim
+	~/.local/share/nvim/site/ftplugin/stuff/header.vim
 
 The <filetype> part is the name of the filetype the plugin is to be used for.
 Only files of this filetype will use the settings from the plugin.  The <name>
@@ -415,45 +384,29 @@ Further reading:
 |new-filetype|		How to detect a new file type.
 
 ==============================================================================
-*05.5*	Adding a help file		*add-local-help* *matchit-install*
+*05.5*	Adding a help file		                   *add-local-help*
 
 If you are lucky, the plugin you installed also comes with a help file.  We
 will explain how to install the help file, so that you can easily find help
 for your new plugin.
-   Let us use the "matchit.vim" plugin as an example (it is included with
-Vim).  This plugin makes the "%" command jump to matching HTML tags,
-if/else/endif in Vim scripts, etc.  Very useful, although it's not backwards
-compatible (that's why it is not enabled by default).
-   This plugin comes with documentation: "matchit.txt".  Let's first copy the
-plugin to the right directory.  This time we will do it from inside Vim, so
-that we can use $VIMRUNTIME.  (You may skip some of the "mkdir" commands if
-you already have the directory.) >
 
-	:!mkdir ~/.vim
-	:!mkdir ~/.vim/plugin
-	:!cp $VIMRUNTIME/macros/matchit.vim ~/.vim/plugin
+Let us suppose a plugin ("my-plugin"), which comes with a help file in a
+non-standard place (it usually resides in a sub-folder called `doc/`).
 
-The "cp" command is for Unix, on MS-DOS you can use "copy".
+First, create a "doc" directory in one of the directories in 'runtimepath': >
 
-Now create a "doc" directory in one of the directories in 'runtimepath'. >
+	:!mkdir -p ~/.local/share/nvim/site/doc
 
-	:!mkdir ~/.vim/doc
+Now, copy the help file to the "doc" directory: >
 
-Copy the help file to the "doc" directory. >
+	:!cp my-plugin/my-plugin-doc.txt ~/.local/share/nvim/site/doc
 
-	:!cp $VIMRUNTIME/macros/matchit.txt ~/.vim/doc
+Here comes the trick, which allows you to jump to the subjects in the new help
+file. Generate the local tags file with the |:helptags| command: >
 
-Now comes the trick, which allows you to jump to the subjects in the new help
-file: Generate the local tags file with the |:helptags| command. >
+	:helptags ~/.local/share/nvim/site/doc
 
-	:helptags ~/.vim/doc
-
-Now you can use the >
-
-	:help g%
-
-command to find help for "g%" in the help file you just added.  You can see an
-entry for the local help file when you do: >
+You can see an entry for the local help file when you do: >
 
 	:help local-additions
 

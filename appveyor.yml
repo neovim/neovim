@@ -1,0 +1,23 @@
+version: '{build}'
+skip_tags: true
+os: Windows Server 2012 R2
+environment:
+  GYP_MSVS_VERSION: 2015
+  matrix:
+  - GENERATOR: Visual Studio 14 Win64
+    DEPS_PATH: deps64
+  - GENERATOR: Visual Studio 14
+    DEPS_PATH: deps32
+matrix:
+  # Allow builds to fail
+  allow_failures:
+  - os: Windows Server 2012 R2
+install: []
+build_script:
+# See http://help.appveyor.com/discussions/problems/539-cloning-gyp-fails
+- git config --global url."http://".insteadOf https://
+- mkdir %DEPS_PATH%
+- cd %DEPS_PATH%
+- cmake -G "%GENERATOR%" ..\third-party\
+- cmake --build .
+- cd ..

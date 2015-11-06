@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
 
@@ -58,8 +59,8 @@ int get_indent_str(char_u *ptr, int ts, int list)
       if (!list || lcs_tab1) {  // count a tab for what it is worth
         count += ts - (count % ts);
       } else {
-        // in list mode, when tab is not set, count screen char width for Tab:
-        // ^I
+        // In list mode, when tab is not set, count screen char width
+        // for Tab, displays: ^I
         count += ptr2cells(ptr);
       }
     } else if (*ptr == ' ') {
@@ -117,7 +118,7 @@ int set_indent(int size, int flags)
       ind_done = 0;
 
       // Count as many characters as we can use.
-      while (todo > 0 && vim_iswhite(*p)) {
+      while (todo > 0 && ascii_iswhite(*p)) {
         if (*p == TAB) {
           tab_pad = (int)curbuf->b_p_ts - (ind_done % (int)curbuf->b_p_ts);
 
@@ -182,7 +183,7 @@ int set_indent(int size, int flags)
   }
 
   // Return if the indent is OK already.
-  if (!doit && !vim_iswhite(*p) && !(flags & SIN_INSERT)) {
+  if (!doit && !ascii_iswhite(*p) && !(flags & SIN_INSERT)) {
     return false;
   }
 
@@ -198,7 +199,8 @@ int set_indent(int size, int flags)
   // characters and allocate accordingly.  We will fill the rest with spaces
   // after the if (!curbuf->b_p_et) below.
   if (orig_char_len != -1) {
-    newline = xmalloc(orig_char_len + size - ind_done + line_len);
+    assert(orig_char_len + size - ind_done + line_len >= 0);
+    newline = xmalloc((size_t)(orig_char_len + size - ind_done + line_len));
     todo = size - ind_done;
 
     // Set total length of indent in characters, which may have been
@@ -214,12 +216,13 @@ int set_indent(int size, int flags)
 
     // Skip over any additional white space (useful when newindent is less
     // than old).
-    while (vim_iswhite(*p)) {
+    while (ascii_iswhite(*p)) {
       p++;
     }
   } else {
     todo = size;
-    newline = xmalloc(ind_len + line_len);
+    assert(ind_len + line_len >= 0);
+    newline = xmalloc((size_t)(ind_len + line_len));
     s = newline;
   }
 
@@ -232,7 +235,7 @@ int set_indent(int size, int flags)
       p = oldline;
       ind_done = 0;
 
-      while (todo > 0 && vim_iswhite(*p)) {
+      while (todo > 0 && ascii_iswhite(*p)) {
         if (*p == TAB) {
           tab_pad = (int)curbuf->b_p_ts - (ind_done % (int)curbuf->b_p_ts);
 
@@ -294,7 +297,7 @@ int set_indent(int size, int flags)
     }
     retval = true;
   } else {
-    free(newline);
+    xfree(newline);
   }
   curwin->w_cursor.col = ind_len;
   return retval;
@@ -325,7 +328,7 @@ int copy_indent(int size, char_u *src)
     s = src;
 
     // Count/copy the usable portion of the source line.
-    while (todo > 0 && vim_iswhite(*s)) {
+    while (todo > 0 && ascii_iswhite(*s)) {
       if (*s == TAB) {
         tab_pad = (int)curbuf->b_p_ts
                   - (ind_done % (int)curbuf->b_p_ts);
@@ -384,7 +387,8 @@ int copy_indent(int size, char_u *src)
       // Allocate memory for the result: the copied indent, new indent
       // and the rest of the line.
       line_len = (int)STRLEN(get_cursor_line_ptr()) + 1;
-      line = xmalloc(ind_len + line_len);
+      assert(ind_len + line_len >= 0);
+      line = xmalloc((size_t)(ind_len + line_len));
       p = line;
     }
   }
@@ -449,7 +453,7 @@ int get_number_indent(linenr_T lnum)
  */
 int get_breakindent_win(win_T *wp, char_u *line) {
   static int prev_indent = 0;  /* cached indent value */
-  static int prev_ts     = 0L; /* cached tabstop value */
+  static long prev_ts = 0; /* cached tabstop value */
   static char_u *prev_line = NULL; /* cached pointer to line */
   static int prev_tick = 0;  // changedtick of cached value
   int bri = 0;
@@ -498,7 +502,7 @@ int inindent(int extra)
   char_u      *ptr;
   colnr_T col;
 
-  for (col = 0, ptr = get_cursor_line_ptr(); vim_iswhite(*ptr); ++col) {
+  for (col = 0, ptr = get_cursor_line_ptr(); ascii_iswhite(*ptr); ++col) {
     ptr++;
   }
 
@@ -684,7 +688,7 @@ int get_lisp_indent(void)
           amount++;
           firsttry = amount;
 
-          while (vim_iswhite(*that)) {
+          while (ascii_iswhite(*that)) {
             amount += lbr_chartabsize(line, that, (colnr_T)amount);
             that++;
           }
@@ -702,7 +706,8 @@ int get_lisp_indent(void)
 
             if (vi_lisp || ((*that != '"') && (*that != '\'')
                 && (*that != '#') && ((*that < '0') || (*that > '9')))) {
-              while (*that && (!vim_iswhite(*that) || quotecount || parencount)
+              while (*that
+                     && (!ascii_iswhite(*that) || quotecount || parencount)
                      && (!((*that == '(' || *that == '[')
                      && !quotecount && !parencount && vi_lisp))) {
                 if (*that == '"') {
@@ -722,7 +727,7 @@ int get_lisp_indent(void)
               }
             }
 
-            while (vim_iswhite(*that)) {
+            while (ascii_iswhite(*that)) {
               amount += lbr_chartabsize(line, that, (colnr_T)amount);
               that++;
             }

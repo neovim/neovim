@@ -27,22 +27,21 @@ want to set the 'softtabstop' option to 4 and define a mapping to insert a
 three-line comment.  You do this with only two steps:
 
 							*your-runtime-dir*
-1. Create your own runtime directory.  On Unix this usually is "~/.vim".  In
-   this directory create the "ftplugin" directory: >
+1. Create your own runtime directory.  On Unix this usually is 
+   "~/.config/nvim".  In this directory create the "ftplugin" directory: >
 
-	mkdir ~/.vim
-	mkdir ~/.vim/ftplugin
+	mkdir -p ~/.config/nvim/ftplugin
 <
    When you are not on Unix, check the value of the 'runtimepath' option to
    see where Vim will look for the "ftplugin" directory: >
 
-	set runtimepath
+	set runtimepath?
 
 <  You would normally use the first directory name (before the first comma).
    You might want to prepend a directory name to the 'runtimepath' option in
-   your |vimrc| file if you don't like the default value.
+   your |init.vim| file if you don't like the default value.
 
-2. Create the file "~/.vim/ftplugin/c.vim", with the contents: >
+2. Create the file "~/.config/nvim/ftplugin/c.vim", with the contents: >
 
 	setlocal softtabstop=4
 	noremap <buffer> <LocalLeader>c o/**************<CR><CR>/<Esc>
@@ -102,26 +101,26 @@ However, if you now edit a file /usr/share/scripts/README.txt, this is not a
 ruby file.  The danger of a pattern ending in "*" is that it quickly matches
 too many files.  To avoid trouble with this, put the filetype.vim file in
 another directory, one that is at the end of 'runtimepath'.  For Unix for
-example, you could use "~/.vim/after/filetype.vim".
-   You now put the detection of text files in ~/.vim/filetype.vim: >
+example, you could use "~/.config/nvim/after/filetype.vim".
+   You now put the detection of text files in ~/.config/nvim/filetype.vim: >
 
 	augroup filetypedetect
 	au BufNewFile,BufRead *.txt			setf text
 	augroup END
 
 That file is found in 'runtimepath' first.  Then use this in
-~/.vim/after/filetype.vim, which is found last: >
+~/.config/nvim/after/filetype.vim, which is found last: >
 
 	augroup filetypedetect
 	au BufNewFile,BufRead /usr/share/scripts/*	setf ruby
 	augroup END
 
 What will happen now is that Vim searches for "filetype.vim" files in each
-directory in 'runtimepath'.  First ~/.vim/filetype.vim is found.  The
+directory in 'runtimepath'.  First ~/.config/nvim/filetype.vim is found.  The
 autocommand to catch *.txt files is defined there.  Then Vim finds the
 filetype.vim file in $VIMRUNTIME, which is halfway 'runtimepath'.  Finally
-~/.vim/after/filetype.vim is found and the autocommand for detecting ruby
-files in /usr/share/scripts is added.
+~/.config/nvim/after/filetype.vim is found and the autocommand for detecting 
+ruby files in /usr/share/scripts is added.
    When you now edit /usr/share/scripts/README.txt, the autocommands are
 checked in the order in which they were defined.  The *.txt pattern matches,
 thus "setf text" is executed to set the filetype to "text".  The pattern for

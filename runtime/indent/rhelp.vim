@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	R Documentation (Help), *.Rd
 " Author:	Jakson Alves de Aquino <jalvesaq@gmail.com>
-" Last Change:	Wed Jul 09, 2014  07:34PM
+" Last Change:	Thu Oct 16, 2014  07:07AM
 
 
 " Only load this indent file when no other was loaded.
@@ -12,21 +12,17 @@ runtime indent/r.vim
 let s:RIndent = function(substitute(&indentexpr, "()", "", ""))
 let b:did_indent = 1
 
-setlocal indentkeys=0{,0},:,!^F,o,O,e
-setlocal indentexpr=GetRHelpIndent()
-
-" Only define the function once.
-if exists("*GetRHelpIndent")
-  finish
-endif
-
 setlocal noautoindent
 setlocal nocindent
 setlocal nosmartindent
 setlocal nolisp
-
 setlocal indentkeys=0{,0},:,!^F,o,O,e
 setlocal indentexpr=GetCorrectRHelpIndent()
+
+" Only define the functions once.
+if exists("*GetRHelpIndent")
+  finish
+endif
 
 function s:SanitizeRHelpLine(line)
   let newline = substitute(a:line, '\\\\', "x", "g")

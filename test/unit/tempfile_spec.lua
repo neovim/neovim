@@ -4,8 +4,6 @@ local helpers = require 'test.unit.helpers'
 local os = helpers.cimport './src/nvim/os/os.h'
 local tempfile = helpers.cimport './src/nvim/tempfile.h'
 
-helpers.vim_init()
-
 describe('tempfile related functions', function()
   after_each(function()
     tempfile.vim_deltempdir()

@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2014 Apr 01
+" Last Change:	2014 Nov 19
 
 " If there already is an option window, jump to that one.
 if bufwinnr("option-window") > 0
@@ -149,7 +149,7 @@ setlocal ts=15 tw=0 noro buftype=nofile
 call append(0, '" Each "set" line shows the current value of an option (on the left).')
 call append(1, '" Hit <CR> on a "set" line to execute it.')
 call append(2, '"            A boolean option will be toggled.')
-call append(3, '"            For other options you can edit the value.')
+call append(3, '"            For other options you can edit the value before hitting <CR>.')
 call append(4, '" Hit <CR> on a help line to open a help window on this option.')
 call append(5, '" Hit <CR> on an index line to jump there.')
 call append(6, '" Hit <Space> on a "set" line to refresh it.')
@@ -514,22 +514,10 @@ endif
 
 
 call <SID>Header("terminal")
-call append("$", "term\tname of the used terminal")
-call <SID>OptionG("term", &term)
-call append("$", "ttytype\talias for 'term'")
-call <SID>OptionG("tty", &tty)
-call append("$", "ttybuiltin\tcheck built-in termcaps first")
-call <SID>BinOptionG("tbi", &tbi)
-call append("$", "ttyfast\tterminal connection is fast")
-call <SID>BinOptionG("tf", &tf)
-call append("$", "weirdinvert\tterminal that requires extra redrawing")
-call <SID>BinOptionG("wiv", &wiv)
 call append("$", "esckeys\trecognize keys that start with <Esc> in Insert mode")
 call <SID>BinOptionG("ek", &ek)
 call append("$", "scrolljump\tminimal number of lines to scroll at a time")
 call append("$", " \tset sj=" . &sj)
-call append("$", "ttyscroll\tmaximum number of lines to use scrolling instead of redrawing")
-call append("$", " \tset tsl=" . &tsl)
 if has("gui") || has("msdos") || has("win32")
   call append("$", "guicursor\tspecifies what the cursor looks like in different modes")
   call <SID>OptionG("gcr", &gcr)
@@ -572,8 +560,6 @@ call append("$", "\tmouse button is used for")
 call <SID>OptionG("mousem", &mousem)
 call append("$", "mousetime\tmaximum time in msec to recognize a double-click")
 call append("$", " \tset mouset=" . &mouset)
-call append("$", "ttymouse\t\"xterm\", \"xterm2\", \"dec\" or \"netterm\"; type of mouse")
-call <SID>OptionG("ttym", &ttym)
 if has("mouseshape")
   call append("$", "mouseshape\twhat the mouse pointer looks like in different modes")
   call <SID>OptionG("mouses", &mouses)
@@ -606,8 +592,6 @@ if has("gui")
     call append("$", "guiheadroom\troom (in pixels) left above/below the window")
     call append("$", " \tset ghr=" . &ghr)
   endif
-  call append("$", "guipty\tuse a pseudo-tty for I/O to external commands")
-  call <SID>BinOptionG("guipty", &guipty)
   if has("browse")
     call append("$", "browsedir\t\"last\", \"buffer\" or \"current\": which directory used for the file browser")
     call <SID>OptionG("bsdir", &bsdir)
@@ -633,10 +617,6 @@ if has("gui")
       call append("$", "balloonexpr\texpression to show in balloon eval")
       call append("$", " \tset bexpr=" . &bexpr)
     endif
-  endif
-  if exists("+macatsui")
-    call append("$", "macatsui\tuse ATSUI text drawing; disable to avoid display problems")
-    call <SID>OptionG("macatsui", &macatsui)
   endif
 endif
 
@@ -724,6 +704,7 @@ call <SID>OptionG("km", &km)
 
 call <SID>Header("editing text")
 call append("$", "undolevels\tmaximum number of changes that can be undone")
+call append("$", "\t(global or local to buffer)")
 call append("$", " \tset ul=" . &ul)
 call append("$", "undoreload\tmaximum number lines to save for undo on a buffer reload")
 call append("$", " \tset ur=" . &ur)
@@ -969,6 +950,7 @@ call <SID>BinOptionG("bk", &bk)
 call append("$", "backupskip\tpatterns that specify for which files a backup is not made")
 call append("$", " \tset bsk=" . &bsk)
 call append("$", "backupcopy\twhether to make the backup as a copy or rename the existing file")
+call append("$", "\t(global or local to buffer)")
 call append("$", " \tset bkc=" . &bkc)
 call append("$", "backupdir\tlist of directories to put backup files in")
 call <SID>OptionG("bdir", &bdir)
@@ -987,14 +969,6 @@ call append("$", "patchmode\tkeep oldest version of a file; specifies file name 
 call <SID>OptionG("pm", &pm)
 call append("$", "fsync\tforcibly sync the file to disk after writing it")
 call <SID>BinOptionG("fs", &fs)
-if !has("msdos")
-  call append("$", "shortname\tuse 8.3 file names")
-  call append("$", "\t(local to buffer)")
-  call <SID>BinOptionL("sn")
-endif
-call append("$", "cryptmethod\tencryption method for file writing: zip or blowfish")
-call append("$", "\t(local to buffer)")
-call <SID>OptionL("cm")
 
 
 call <SID>Header("the swap file")
@@ -1107,14 +1081,9 @@ if has("quickfix")
 endif
 
 
-if has("msdos") || has("os2") || has("win16") || has("win32") || has("osfiletype")
+if has("msdos") || has("win16") || has("win32")
   call <SID>Header("system specific")
-  if has("osfiletype")
-    call append("$", "osfiletype\tOS-specific information about the type of file")
-    call append("$", "\t(local to buffer)")
-    call <SID>OptionL("oft")
-  endif
-  if has("msdos") || has("os2") || has("win16") || has("win32")
+  if has("msdos") || has("win16") || has("win32")
     call append("$", "shellslash\tuse forward slashes in file names; for Unix-like shells")
     call <SID>BinOptionG("ssl", &ssl)
   endif
@@ -1174,8 +1143,10 @@ if has("keymap")
   call <SID>OptionL("kmp")
 endif
 if has("langmap")
-  call append("$", "langmap\ttranslate characters for Normal mode")
+  call append("$", "langmap\tlist of characters that are translated in Normal mode")
   call <SID>OptionG("lmap", &lmap)
+  call append("$", "langnoremap\tdon't apply 'langmap' to mapped characters")
+  call <SID>BinOptionG("lnr", &lnr)
 endif
 if has("xim")
   call append("$", "imdisable\twhen set never use IM; overrules following IM options")
@@ -1207,8 +1178,6 @@ if has("multi_byte")
   call <SID>OptionL("fenc")
   call append("$", "fileencodings\tautomatically detected character encodings")
   call <SID>OptionG("fencs", &fencs)
-  call append("$", "termencoding\tcharacter encoding used by the terminal")
-  call <SID>OptionG("tenc", &tenc)
   call append("$", "charconvert\texpression used for character encoding conversion")
   call <SID>OptionG("ccv", &ccv)
   call append("$", "delcombine\tdelete combining (composing) characters on their own")
@@ -1241,8 +1210,6 @@ call append("$", "secure\tsafer working with script files in the current directo
 call <SID>BinOptionG("secure", &secure)
 call append("$", "gdefault\tuse the 'g' flag for \":substitute\"")
 call <SID>BinOptionG("gd", &gd)
-call append("$", "edcompatible\t'g' and 'c' flags of \":substitute\" toggle")
-call <SID>BinOptionG("ed", &ed)
 if exists("+opendevice")
   call append("$", "opendevice\tallow reading/writing devices")
   call <SID>BinOptionG("odev", &odev)
@@ -1259,8 +1226,8 @@ if has("mksession")
   call append("$", "viewdir\tdirectory where to store files with :mkview")
   call <SID>OptionG("vdir", &vdir)
 endif
-if has("viminfo")
-  call append("$", "viminfo\tlist that specifies what to write in the viminfo file")
+if has("shada")
+  call append("$", "viminfo\tlist that specifies what to write in the ShaDa file")
   call <SID>OptionG("vi", &vi)
 endif
 if has("quickfix")
@@ -1276,10 +1243,6 @@ call append("$", "\t(local to buffer)")
 call <SID>BinOptionL("bl")
 call append("$", "debug\tset to \"msg\" to see all error messages")
 call append("$", " \tset debug=" . &debug)
-if has("mzscheme")
-  call append("$", "mzquantum\tinterval in milliseconds between polls for MzScheme threads")
-  call append("$", " \tset mzq=" . &mzq)
-endif
 
 set cpo&vim
 

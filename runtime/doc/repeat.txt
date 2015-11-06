@@ -1,4 +1,4 @@
-*repeat.txt*    For Vim version 7.4.  Last change: 2014 Mar 25
+*repeat.txt*    For Vim version 7.4.  Last change: 2015 Jan 07
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -37,8 +37,6 @@ of area is used, see |visual-repeat|.
 
 							*@:*
 @:			Repeat last command-line [count] times.
-			{not available when compiled without the
-			|+cmdline_hist| feature}
 
 
 ==============================================================================
@@ -63,6 +61,9 @@ This is useful if you want to include a '/' in the search pattern or
 replacement string.
 
 For the definition of a pattern, see |pattern|.
+
+NOTE [cmd] may contain a range; see |collapse| and |edit-paragraph-join| for
+examples.
 
 The global commands work by first scanning through the [range] lines and
 marking each line where a match occurs (for a multi-line pattern, only the
@@ -106,11 +107,12 @@ To abort this type CTRL-C twice.
 q{0-9a-zA-Z"}		Record typed characters into register {0-9a-zA-Z"}
 			(uppercase to append).  The 'q' command is disabled
 			while executing a register, and it doesn't work inside
-			a mapping and |:normal|.  {Vi: no recording}
+			a mapping and |:normal|.
 
-q			Stops recording.  (Implementation note: The 'q' that
-			stops recording is not stored in the register, unless
-			it was the result of a mapping)  {Vi: no recording}
+q			Stops recording.
+			Implementation note: The 'q' that stops recording is
+			not stored in the register, unless it was the result
+			of a mapping
 
 							*@*
 @{0-9a-z".=*+}		Execute the contents of register {0-9a-z".=*+} [count]
@@ -122,35 +124,29 @@ q			Stops recording.  (Implementation note: The 'q' that
 			applies.
 			For "@=" you are prompted to enter an expression.  The
 			result of the expression is then executed.
-			See also |@:|.  {Vi: only named registers}
+			See also |@:|.
 
 							*@@* *E748*
 @@			Repeat the previous @{0-9a-z":*} [count] times.
 
-:[addr]*{0-9a-z".=+}						*:@* *:star*
+							*:@*
 :[addr]@{0-9a-z".=*+}	Execute the contents of register {0-9a-z".=*+} as an Ex
 			command.  First set cursor at line [addr] (default is
 			current line).  When the last line in the register does
 			not have a <CR> it will be added automatically when
 			the 'e' flag is present in 'cpoptions'.
-			Note that the ":*" command is only recognized when the
-			'*' flag is present in 'cpoptions'.  This is NOT the
-			default when 'nocompatible' is used.
 			For ":@=" the last used expression is used.  The
 			result of evaluating the expression is executed as an
 			Ex command.
 			Mappings are not recognized in these commands.
-			{Vi: only in some versions} Future: Will execute the
-			register for each line in the address range.
 
 							*:@:*
 :[addr]@:		Repeat last command-line.  First set cursor at line
-			[addr] (default is current line).  {not in Vi}
+			[addr] (default is current line).
 
 							*:@@*
 :[addr]@@		Repeat the previous :@{0-9a-z"}.  First set cursor at
-			line [addr] (default is current line).  {Vi: only in
-			some versions}
+			line [addr] (default is current line).
 
 ==============================================================================
 4. Using Vim scripts					*using-scripts*
@@ -169,7 +165,6 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			|:bufdo|, in a loop or when another command follows
 			the display won't be updated while executing the
 			commands.
-			{not in Vi}
 
 							*:ru* *:runtime*
 :ru[ntime][!] {file} ..
@@ -201,7 +196,6 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			when no file could be found.
 			When 'verbose' is two or higher, there is a message
 			about each searched file.
-			{not in Vi}
 
 :scripte[ncoding] [encoding]		*:scripte* *:scriptencoding* *E167*
 			Specify the character encoding used in the script.
@@ -228,16 +222,10 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			Mark) in utf-8 format Vim will recognize it, no need
 			to use ":scriptencoding utf-8" then.
 
-			When compiled without the |+multi_byte| feature this
-			command is ignored.
-			{not in Vi}
-
-						*:scrip* *:scriptnames*
-:scrip[tnames]		List all sourced script names, in the order they were
+						*:scr* *:scriptnames*
+:scr[iptnames]		List all sourced script names, in the order they were
 			first sourced.  The number is used for the script ID
 			|<SID>|.
-			{not in Vi} {not available when compiled without the
-			|+eval| feature}
 
 						*:fini* *:finish* *E168*
 :fini[sh]		Stop sourcing a script.  Can only be used in a Vim
@@ -247,7 +235,7 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			following the ":finally" up to the matching |:endtry|
 			are executed first.  This process applies to all
 			nested ":try"s in the script.  The outermost ":endtry"
-			then stops sourcing the script.  {not in Vi}
+			then stops sourcing the script.
 
 All commands and command sequences can be repeated by putting them in a named
 register and then executing it.  There are two ways to get the commands in the
@@ -286,8 +274,8 @@ nested as deep as the number of files that can be opened at one time (about
 You can use the "<sfile>" string (literally, this is not a special key) inside
 of the sourced file, in places where a file name is expected.  It will be
 replaced by the file name of the sourced file.  For example, if you have a
-"other.vimrc" file in the same directory as your ".vimrc" file, you can source
-it from your ".vimrc" file with this command: >
+"other.vimrc" file in the same directory as your |init.vim| file, you can 
+source it from your |init.vim| file with this command: >
 	:source <sfile>:h/other.vimrc
 
 In script files terminal-dependent key codes are represented by
@@ -299,7 +287,7 @@ with CTRL-V followed by the three digit decimal code.  This does NOT work for
 the <t_xx> termcap codes, these can only be used in mappings.
 
 							*:source_crnl* *W15*
-MS-DOS, Win32 and OS/2: Files that are read with ":source" normally have
+MS-DOS and Win32: Files that are read with ":source" normally have
 <CR><NL> <EOL>s.  These always work.  If you are using a file with <NL> <EOL>s
 (for example, a file made on Unix), this will be recognized if 'fileformats'
 is not empty and the first line does not end in a <CR>.  This fails if the
@@ -388,7 +376,6 @@ sourced file or user function and set breakpoints.
 NOTE: The debugging mode is far from perfect.  Debugging will have side
 effects on how Vim works.  You cannot use it to debug everything.  For
 example, the display is messed up by the debugging messages.
-{Vi does not have a debug mode}
 
 An alternative to debug mode is setting the 'verbose' option.  With a bigger
 number it will give more verbose messages about what Vim is doing.
@@ -495,7 +482,7 @@ DEFINING BREAKPOINTS
 
 :breaka[dd] file [lnum] {name}
 		Set a breakpoint in a sourced file.  Example: >
-			:breakadd file 43 .vimrc
+			:breakadd file 43 init.vim
 
 :breaka[dd] here
 		Set a breakpoint in the current line of the current file.
@@ -581,7 +568,6 @@ OBSCURE
 Profiling means that Vim measures the time that is spent on executing
 functions and/or scripts.  The |+profile| feature is required for this.
 It is only included when Vim was compiled with "huge" features.
-{Vi does not have profiling}
 
 You can also use the |reltime()| function to measure time.  This only requires
 the |+reltime| feature, which is present more often.

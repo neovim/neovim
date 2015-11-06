@@ -1,8 +1,9 @@
 " Vim syntax file
 " Language:	Windows Registry export with regedit (*.reg)
-" Maintainer:	Dominique Stéphan (dominique@mggen.com)
-" URL: http://www.mggen.com/vim/syntax/registry.zip
-" Last change:	2004 Apr 23
+" Maintainer:	Dominique StÃ©phan (dominique@mggen.com)
+" URL: 		http://www.mggen.com/vim/syntax/registry.zip (doesn't work)
+" Last change:	2014 Oct 31
+"		Included patch from Alexander A. Ulitin
 
 " clear any unwanted syntax defs
 " For version 5.x: Clear all syntax items
@@ -17,7 +18,7 @@ endif
 syn case ignore
 
 " Head of regedit .reg files, it's REGEDIT4 on Win9#/NT
-syn match registryHead		"^REGEDIT[0-9]*$"
+syn match registryHead		"^REGEDIT[0-9]*\s*$\|^Windows Registry Editor Version \d*\.\d*\s*$"
 
 " Comment
 syn match  registryComment	"^;.*$"
@@ -58,7 +59,7 @@ syn region registryRemove	start="\[\-" end="\]" contains=registryHKEY,registryGU
 " Subkey
 syn match  registrySubKey		"^\".*\"="
 " Default value
-syn match  registrySubKey		"^\@="
+syn match  registrySubKey		"^@="
 
 " Numbers
 

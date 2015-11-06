@@ -12,6 +12,13 @@
  * macros.h: macro definitions for often used code
  */
 
+#ifndef MIN
+# define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
+#endif
+#ifndef MAX
+# define MAX(X, Y) ((X) > (Y) ? (X) : (Y))
+#endif
+
 /*
  * Position comparisons
  */
@@ -56,17 +63,15 @@
 # define TOUPPER_ASC(c) (((c) < 'a' || (c) > 'z') ? (c) : (c) - ('a' - 'A'))
 # define TOLOWER_ASC(c) (((c) < 'A' || (c) > 'Z') ? (c) : (c) + ('a' - 'A'))
 
-/* Use our own isdigit() replacement, because on MS-Windows isdigit() returns
- * non-zero for superscript 1.  Also avoids that isdigit() crashes for numbers
- * below 0 and above 255.  */
-#define VIM_ISDIGIT(c) ((unsigned)(c) - '0' < 10)
-
 /* Like isalpha() but reject non-ASCII characters.  Can't be used with a
  * special key (negative value). */
-# define ASCII_ISLOWER(c) ((unsigned)(c) - 'a' < 26)
-# define ASCII_ISUPPER(c) ((unsigned)(c) - 'A' < 26)
+# define ASCII_ISLOWER(c) ((unsigned)(c) >= 'a' && (unsigned)(c) <= 'z')
+# define ASCII_ISUPPER(c) ((unsigned)(c) >= 'A' && (unsigned)(c) <= 'Z')
 # define ASCII_ISALPHA(c) (ASCII_ISUPPER(c) || ASCII_ISLOWER(c))
-# define ASCII_ISALNUM(c) (ASCII_ISALPHA(c) || VIM_ISDIGIT(c))
+# define ASCII_ISALNUM(c) (ASCII_ISALPHA(c) || ascii_isdigit(c))
+
+/* Returns empty string if it is NULL. */
+#define EMPTY_IF_NULL(x) ((x) ? (x) : (char_u *)"")
 
 /* macro version of chartab().
  * Only works with values 0-255!
@@ -77,12 +82,17 @@
  * Adjust chars in a language according to 'langmap' option.
  * NOTE that there is no noticeable overhead if 'langmap' is not set.
  * When set the overhead for characters < 256 is small.
- * Don't apply 'langmap' if the character comes from the Stuff buffer.
+ * Don't apply 'langmap' if the character comes from the Stuff buffer or from a
+ * mapping and the langnoremap option was set.
  * The do-while is just to ignore a ';' after the macro.
  */
 #  define LANGMAP_ADJUST(c, condition) \
   do { \
-    if (*p_langmap && (condition) && !KeyStuffed && (c) >= 0) \
+    if (*p_langmap \
+        && (condition) \
+        && (!p_lnr || (p_lnr && typebuf_maplen() == 0)) \
+        && !KeyStuffed \
+        && (c) >= 0) \
     { \
       if ((c) < 256) \
         c = langmap_mapchar[c]; \
@@ -97,15 +107,9 @@
  */
 #define vim_isbreak(c) (breakat_flags[(char_u)(c)])
 
-#ifdef BINARY_FILE_IO
-# define WRITEBIN   "wb"        /* no CR-LF translation */
-# define READBIN    "rb"
-# define APPENDBIN  "ab"
-#else
-# define WRITEBIN   "w"
-# define READBIN    "r"
-# define APPENDBIN  "a"
-#endif
+#define WRITEBIN   "wb"        /* no CR-LF translation */
+#define READBIN    "rb"
+#define APPENDBIN  "ab"
 
 #  define mch_fopen(n, p)       fopen((n), (p))
 
@@ -134,21 +138,32 @@
 /* Get the length of the character p points to */
 # define MB_PTR2LEN(p)          (has_mbyte ? (*mb_ptr2len)(p) : 1)
 /* Advance multi-byte pointer, skip over composing chars. */
-# define mb_ptr_adv(p)      p += has_mbyte ? (*mb_ptr2len)(p) : 1
+# define mb_ptr_adv(p)      (p += has_mbyte ? (*mb_ptr2len)((char_u *)p) : 1)
 /* Advance multi-byte pointer, do not skip over composing chars. */
-# define mb_cptr_adv(p)     p += \
-  enc_utf8 ? utf_ptr2len(p) : has_mbyte ? (*mb_ptr2len)(p) : 1
+# define mb_cptr_adv(p)     (p += \
+  enc_utf8 ? utf_ptr2len(p) : has_mbyte ? (*mb_ptr2len)(p) : 1)
 /* Backup multi-byte pointer. Only use with "p" > "s" ! */
-# define mb_ptr_back(s, p)  p -= has_mbyte ? ((*mb_head_off)(s, p - 1) + 1) : 1
+# define mb_ptr_back(s, p)  (p -= has_mbyte ? ((*mb_head_off)((char_u *)s, (char_u *)p - 1) + 1) : 1)
 /* get length of multi-byte char, not including composing chars */
 # define mb_cptr2len(p)     (enc_utf8 ? utf_ptr2len(p) : (*mb_ptr2len)(p))
 
-# define MB_COPY_CHAR(f, \
-                      t) if (has_mbyte) mb_copy_char(&f, &t); else *t++ = *f++
+# define MB_COPY_CHAR(f, t) \
+  if (has_mbyte) mb_copy_char((const char_u **)(&f), &t); \
+  else *t++ = *f++
 # define MB_CHARLEN(p)      (has_mbyte ? mb_charlen(p) : (int)STRLEN(p))
 # define MB_CHAR2LEN(c)     (has_mbyte ? mb_char2len(c) : 1)
 # define PTR2CHAR(p)        (has_mbyte ? mb_ptr2char(p) : (int)*(p))
 
 # define RESET_BINDING(wp)  (wp)->w_p_scb = FALSE; (wp)->w_p_crb = FALSE
+
+/// Calculate the length of a C array.
+///
+/// This should be called with a real array. Calling this with a pointer is an
+/// error. A mechanism to detect many (though not all) of those errors at compile
+/// time is implemented. It works by the second division producing a division by
+/// zero in those cases (-Wdiv-by-zero in GCC).
+#define ARRAY_SIZE(arr) ((sizeof(arr)/sizeof((arr)[0])) / ((size_t)(!(sizeof(arr) % sizeof((arr)[0])))))
+
+#define RGB(r, g, b) ((r << 16) | (g << 8) | b)
 
 #endif  // NVIM_MACROS_H

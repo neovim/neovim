@@ -1,4 +1,4 @@
-*usr_04.txt*	For Vim version 7.4.  Last change: 2008 Sep 06
+*usr_04.txt*	For Vim version 7.4.  Last change: 2014 Aug 29
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -186,7 +186,7 @@ commands:
 	/four<Enter>	find the first string "four"
 	cwfive<Esc>	change the word to "five"
 	n		find the next "four"
-	.		repeat the change to "five'
+	.		repeat the change to "five"
 	n		find the next "four"
 	.		repeat the change
 			etc.
@@ -201,7 +201,7 @@ change.  Then you can use Visual mode.
 You start Visual mode by pressing "v".  You move the cursor over the text you
 want to work on.  While you do this, the text is highlighted.  Finally type
 the operator command.
-   For example, to delete from halfway one word to halfway another word:
+   For example, to delete from the middle of a word to the middle of another:
 
 		This is an examination sample of visual mode ~
 			       ---------->

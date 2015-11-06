@@ -1,4 +1,4 @@
-*index.txt*     For Vim version 7.4.  Last change: 2014 Mar 25
+*index.txt*     For Vim version 7.4.  Last change: 2015 Jan 07
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -100,8 +100,7 @@ tag		char		action in Insert mode	~
 |i_CTRL-]|	CTRL-]		trigger abbreviation
 |i_CTRL-^|	CTRL-^		toggle use of |:lmap| mappings
 |i_CTRL-_|	CTRL-_		When 'allowrevins' set: change language
-				(Hebrew, Farsi) {only when compiled with
-				the |+rightleft| feature}
+				(Hebrew, Farsi)
 
 		<Space> to '~'	not used, except '0' and '^' followed by
 				CTRL-D
@@ -1064,15 +1063,12 @@ tag	      command	      action ~
 |:!!|		:!!		repeat last ":!" command
 |:#|		:#		same as ":number"
 |:&|		:&		repeat last ":substitute"
-|:star|		:*		execute contents of a register
 |:<|		:<		shift lines one 'shiftwidth' left
 |:=|		:=		print the cursor line number
 |:>|		:>		shift lines one 'shiftwidth' right
 |:@|		:@		execute contents of a register
 |:@@|		:@@		repeat the previous ":@"
 |:Next|		:N[ext]		go to previous file in the argument list
-|:Print|	:P[rint]	print lines
-|:X|		:X		ask for encryption key
 |:append|	:a[ppend]	append text
 |:abbreviate|	:ab[breviate]	enter abbreviation
 |:abclear|	:abc[lear]	remove all abbreviations
@@ -1227,7 +1223,6 @@ tag	      command	      action ~
 |:finally|	:fina[lly]	part of a :try command
 |:finish|	:fini[sh]	quit sourcing a Vim script
 |:first|	:fir[st]	go to the first file in the argument list
-|:fixdel|	:fix[del]	set key code of <Del>
 |:fold|		:fo[ld]		create a fold
 |:foldclose|	:foldc[lose]	close folds
 |:folddoopen|	:foldd[oopen]	execute command on lines not in a closed fold
@@ -1243,6 +1238,7 @@ tag	      command	      action ~
 |:gvim|		:gv[im]		start the GUI
 |:hardcopy|	:ha[rdcopy]	send text to the printer
 |:help|		:h[elp]		open a help window
+|:helpclose|	:helpc[lose]	close one help window
 |:helpfind|	:helpf[ind]	dialog to open a help window
 |:helpgrep|	:helpg[rep]	like ":grep" but searches help files
 |:helptags|	:helpt[ags]	generate help tags for a directory
@@ -1325,9 +1321,6 @@ tag	      command	      action ~
 |:ltag|		:lt[ag]		jump to tag and add matching tags to the
 				location list
 |:lunmap|	:lu[nmap]	like ":unmap!" but includes Lang-Arg mode
-|:lua|		:lua		execute |Lua| command
-|:luado|	:luad[o]	execute Lua command for each line
-|:luafile|	:luaf[ile]	execute |Lua| script file
 |:lvimgrep|	:lv[imgrep]	search for pattern in files
 |:lvimgrepadd|	:lvimgrepa[dd]	like :vimgrep, but append to current list
 |:lwindow|	:lw[indow]	open or close location window
@@ -1348,8 +1341,6 @@ tag	      command	      action ~
 |:mkvimrc|	:mkv[imrc]	write current mappings and settings to a file
 |:mkview|	:mkvie[w]	write view of current window to a file
 |:mode|		:mod[e]		show or change the screen mode
-|:mzscheme|	:mz[scheme]	execute MzScheme command
-|:mzfile|	:mzf[ile]	execute MzScheme script file
 |:next|		:n[ext]		go to next file in the argument list
 |:new|		:new		create a new empty window
 |:nmap|		:nm[ap]		like ":map" but for Normal mode
@@ -1368,7 +1359,7 @@ tag	      command	      action ~
 |:number|	:nu[mber]	print lines with line number
 |:nunmap|	:nun[map]	like ":unmap" but for Normal mode
 |:nunmenu|	:nunme[nu]	remove menu for Normal mode
-|:oldfiles|	:ol[dfiles]	list files that have marks in the viminfo file
+|:oldfiles|	:ol[dfiles]	list files that have marks in the ShaDa file
 |:open|		:o[pen]		start open mode (not implemented)
 |:omap|		:om[ap]		like ":map" but for Operator-pending mode
 |:omapclear|	:omapc[lear]	remove all mappings for Operator-pending mode
@@ -1382,13 +1373,11 @@ tag	      command	      action ~
 |:ownsyntax|	:ow[nsyntax]	set new local syntax highlight for this window
 |:pclose|	:pc[lose]	close preview window
 |:pedit|	:ped[it]	edit file in the preview window
-|:perl|		:pe[rl]		execute Perl command
 |:print|	:p[rint]	print lines
 |:profdel|	:profd[el]	stop profiling a function or script
 |:profile|	:prof[ile]	profiling functions and scripts
 |:promptfind|	:pro[mptfind]	open GUI dialog for searching
 |:promptrepl|	:promptr[epl]	open GUI dialog for search/replace
-|:perldo|	:perld[o]	execute Perl command for each line
 |:pop|		:po[p]		jump to older entry in tag stack
 |:popup|	:popu[p]	popup a menu by name
 |:ppop|		:pp[op]		":pop" in preview window
@@ -1429,12 +1418,9 @@ tag	      command	      action ~
 |:rewind|	:rew[ind]	go to the first file in the argument list
 |:right|	:ri[ght]	right align text
 |:rightbelow|	:rightb[elow]	make split window appear right or below
-|:ruby|		:rub[y]		execute Ruby command
-|:rubydo|	:rubyd[o]	execute Ruby command for each line
-|:rubyfile|	:rubyf[ile]	execute Ruby script file
+|:rshada|	:rsh[ada]	read from ShaDa file
 |:rundo|	:rund[o]	read undo information from a file
 |:runtime|	:ru[ntime]	source vim scripts in 'runtimepath'
-|:rviminfo|	:rv[iminfo]	read from viminfo file
 |:substitute|	:s[ubstitute]	find and replace text
 |:sNext|	:sN[ext]	split window and go to previous file in
 				argument list
@@ -1460,7 +1446,7 @@ tag	      command	      action ~
 				buffer list
 |:sbrewind|	:sbr[ewind]	split window and go to first file in the
 				buffer list
-|:scriptnames|	:scrip[tnames]	list names of all sourced Vim scripts
+|:scriptnames|	:scr[iptnames]	list names of all sourced Vim scripts
 |:scriptencoding| :scripte[ncoding]	encoding used in sourced Vim script
 |:scscope|	:scs[cope]	split window and execute cscope command
 |:set|		:se[t]		show or set options
@@ -1534,10 +1520,7 @@ tag	      command	      action ~
 |:tab|		:tab		create new tab when opening new window
 |:tag|		:ta[g]		jump to tag
 |:tags|		:tags		show the contents of the tag stack
-|:tcl|		:tc[l]		execute Tcl command
-|:tcldo|	:tcld[o]	execute Tcl command for each line
-|:tclfile|	:tclf[ile]	execute Tcl script file
-|:tearoff|	:te[aroff]	tear-off a menu
+|:terminal|	:te[rminal]	open a terminal buffer
 |:tfirst|	:tf[irst]	jump to first matching tag
 |:throw|	:th[row]	throw an exception
 |:tjump|	:tj[ump]	like ":tselect", but jump directly when there
@@ -1596,8 +1579,8 @@ tag	      command	      action ~
 				argument list
 |:wq|		:wq		write to a file and quit window or Vim
 |:wqall|	:wqa[ll]	write all changed buffers and quit Vim
+|:wshada|	:wsh[ada]	write to ShaDa file
 |:wundo|	:wu[ndo]	write undo information to a file
-|:wviminfo|	:wv[iminfo]	write to viminfo file
 |:xit|		:x[it]		write if buffer changed and quit window or Vim
 |:xall|		:xa[ll]		same as ":wqall"
 |:xmapclear|	:xmapc[lear]	remove all mappings for Visual mode

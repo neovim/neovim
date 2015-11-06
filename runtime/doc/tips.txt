@@ -26,7 +26,6 @@ Change a name in multiple files			|change-name|
 Speeding up external commands			|speed-up|
 Useful mappings					|useful-mappings|
 Compressing the help files			|gzip-helpfile|
-Executing shell commands in a window		|shell-window|
 Hex editing					|hex-editing|
 Using <> notation in autocommands		|autocmd-<>|
 Highlighting matching parens			|match-parens|
@@ -99,7 +98,7 @@ What you need:
 - An identifier database file called "ID" in the current directory.  You can
   create it with the shell command "mkid file1 file2 ..".
 
-Put this in your .vimrc: >
+Put this in your |init.vim|: >
 	map _u :call ID_search()<Bar>execute "/\\<" . g:word . "\\>"<CR>
 	map _n :n<Bar>execute "/\\<" . g:word . "\\>"<CR>
 
@@ -160,13 +159,6 @@ entries similar to: >
 
 PS: If you find any difference, someone (your sysadmin?) should better check
     the complete termcap and terminfo database for consistency.
-
-NOTE 1: If you recompile Vim with FEAT_XTERM_SAVE defined in feature.h, the
-builtin xterm will include the mentioned "te" and "ti" entries.
-
-NOTE 2: If you want to disable the screen switching, and you don't want to
-change your termcap, you can add these lines to your .vimrc: >
-	:set t_ti= t_te=
 
 ==============================================================================
 Scrolling in Insert mode				*scroll-insert*
@@ -406,27 +398,13 @@ when they are not in the same location as the compressed "doc" directory.  See
 |$VIMRUNTIME|.
 
 ==============================================================================
-Executing shell commands in a window			*shell-window*
-
-There have been questions for the possibility to execute a shell in a window
-inside Vim.  The answer: you can't!  Including this would add a lot of code to
-Vim, which is a good reason not to do this.  After all, Vim is an editor, it
-is not supposed to do non-editing tasks.  However, to get something like this,
-you might try splitting your terminal screen or display window with the
-"splitvt" program.  You can probably find it on some ftp server.  The person
-that knows more about this is Sam Lantinga <slouken@cs.ucdavis.edu>.
-An alternative is the "window" command, found on BSD Unix systems, which
-supports multiple overlapped windows.  Or the "screen" program, found at
-www.uni-erlangen.de, which supports a stack of windows.
-
-==============================================================================
 Hex editing					*hex-editing* *using-xxd*
 
 See section |23.4| of the user manual.
 
 If one has a particular extension that one uses for binary files (such as exe,
 bin, etc), you may find it helpful to automate the process with the following
-bit of autocmds for your <.vimrc>.  Change that "*.bin" to whatever
+bit of autocmds for your |init.vim|.  Change that "*.bin" to whatever
 comma-separated list of extension(s) you find yourself wanting to edit: >
 
 	" vim -b : edit binary using xxd-format!

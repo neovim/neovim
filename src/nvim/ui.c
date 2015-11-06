@@ -1,716 +1,486 @@
-/*
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
- */
-
-/*
- * ui.c: functions that handle the user interface.
- * 1. Keyboard input stuff, and a bit of windowing stuff.  These are called
- *    before the machine specific stuff (mch_*) so that we can call the GUI
- *    stuff instead if the GUI is running.
- * 2. Clipboard stuff.
- * 3. Input buffer stuff.
- */
-
+#include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
+#include <limits.h>
 
 #include "nvim/vim.h"
 #include "nvim/ui.h"
+#include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/fold.h"
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
+#include "nvim/ascii.h"
 #include "nvim/misc1.h"
 #include "nvim/misc2.h"
+#include "nvim/mbyte.h"
 #include "nvim/garray.h"
 #include "nvim/memory.h"
 #include "nvim/move.h"
 #include "nvim/normal.h"
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
+#include "nvim/event/loop.h"
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
 #include "nvim/os/signal.h"
 #include "nvim/screen.h"
-#include "nvim/term.h"
+#include "nvim/syntax.h"
 #include "nvim/window.h"
+#include "nvim/tui/tui.h"
 
-void ui_write(char_u *s, int len)
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "ui.c.generated.h"
+#endif
+
+#define MAX_UI_COUNT 16
+
+static UI *uis[MAX_UI_COUNT];
+static size_t ui_count = 0;
+static int row = 0, col = 0;
+static struct {
+  int top, bot, left, right;
+} sr;
+static int current_attr_code = 0;
+static bool pending_cursor_update = false;
+static int busy = 0;
+static int height, width;
+
+// This set of macros allow us to use UI_CALL to invoke any function on
+// registered UI instances. The functions can have 0-5 arguments(configurable
+// by SELECT_NTH)
+//
+// See http://stackoverflow.com/a/11172679 for a better explanation of how it
+// works.
+#define UI_CALL(...)                                              \
+  do {                                                            \
+    flush_cursor_update();                                        \
+    for (size_t i = 0; i < ui_count; i++) {                       \
+      UI *ui = uis[i];                                            \
+      UI_CALL_HELPER(CNT(__VA_ARGS__), __VA_ARGS__);              \
+    }                                                             \
+  } while (0)
+#define CNT(...) SELECT_NTH(__VA_ARGS__, MORE, MORE, MORE, MORE, ZERO, ignore)
+#define SELECT_NTH(a1, a2, a3, a4, a5, a6, ...) a6
+#define UI_CALL_HELPER(c, ...) UI_CALL_HELPER2(c, __VA_ARGS__)
+#define UI_CALL_HELPER2(c, ...) UI_CALL_##c(__VA_ARGS__)
+#define UI_CALL_MORE(method, ...) if (ui->method) ui->method(ui, __VA_ARGS__)
+#define UI_CALL_ZERO(method) if (ui->method) ui->method(ui)
+
+void ui_builtin_start(void)
 {
-#ifndef NO_CONSOLE
-  /* Don't output anything in silent mode ("ex -s") unless 'verbose' set */
-  if (!(silent_mode && p_verbose == 0)) {
-    char_u  *tofree = NULL;
+  tui_start();
+}
 
-    if (output_conv.vc_type != CONV_NONE) {
-      /* Convert characters from 'encoding' to 'termencoding'. */
-      tofree = string_convert(&output_conv, s, &len);
-      if (tofree != NULL)
-        s = tofree;
+void ui_builtin_stop(void)
+{
+  UI_CALL(stop);
+}
+
+bool ui_rgb_attached(void)
+{
+  for (size_t i = 0; i < ui_count; i++) {
+    if (uis[i]->rgb) {
+      return true;
     }
-
-    mch_write(s, len);
-
-    if (output_conv.vc_type != CONV_NONE)
-      free(tofree);
   }
-#endif
+  return false;
 }
 
-/*
- * ui_inchar(): low level input function.
- * Get characters from the keyboard.
- * Return the number of characters that are available.
- * If "wtime" == 0 do not wait for characters.
- * If "wtime" == -1 wait forever for characters.
- * If "wtime" > 0 wait "wtime" milliseconds for a character.
- *
- * "tb_change_cnt" is the value of typebuf.tb_change_cnt if "buf" points into
- * it.  When typebuf.tb_change_cnt changes (e.g., when a message is received
- * from a remote client) "buf" can no longer be used.  "tb_change_cnt" is NULL
- * otherwise.
- */
-int 
-ui_inchar (
-    char_u *buf,
-    int maxlen,
-    long wtime,                 /* don't use "time", MIPS cannot handle it */
-    int tb_change_cnt
-)
+bool ui_active(void)
 {
-  int retval = 0;
-
-
-  if (do_profiling == PROF_YES && wtime != 0)
-    prof_inchar_enter();
-
-#ifdef NO_CONSOLE_INPUT
-  /* Don't wait for character input when the window hasn't been opened yet.
-   * Do try reading, this works when redirecting stdin from a file.
-   * Must return something, otherwise we'll loop forever.  If we run into
-   * this very often we probably got stuck, exit Vim. */
-  if (no_console_input()) {
-    static int count = 0;
-
-# ifndef NO_CONSOLE
-    retval = os_inchar(buf, maxlen, (wtime >= 0 && wtime < 10)
-        ? 10L : wtime, tb_change_cnt);
-    if (retval > 0 || typebuf_changed(tb_change_cnt) || wtime >= 0)
-      goto theend;
-# endif
-    if (wtime == -1 && ++count == 1000)
-      read_error_exit();
-    buf[0] = CAR;
-    retval = 1;
-    goto theend;
-  }
-#endif
-
-  /* If we are going to wait for some time or block... */
-  if (wtime == -1 || wtime > 100L) {
-    /* ... allow signals to kill us. */
-    signal_accept_deadly();
-
-    /* ... there is no need for CTRL-C to interrupt something, don't let
-     * it set got_int when it was mapped. */
-    if (mapped_ctrl_c)
-      ctrl_c_interrupts = false;
-  }
-
-#ifndef NO_CONSOLE
-  {
-    retval = os_inchar(buf, maxlen, wtime, tb_change_cnt);
-  }
-#endif
-
-  if (wtime == -1 || wtime > 100L)
-    /* block SIGHUP et al. */
-    signal_reject_deadly();
-
-  ctrl_c_interrupts = true;
-
-#ifdef NO_CONSOLE_INPUT
-theend:
-#endif
-  if (do_profiling == PROF_YES && wtime != 0)
-    prof_inchar_exit();
-  return retval;
+  return ui_count != 0;
 }
 
-/*
- * return non-zero if a character is available
- */
-int ui_char_avail(void)
-{
-#ifndef NO_CONSOLE
-# ifdef NO_CONSOLE_INPUT
-  if (no_console_input())
-    return 0;
-# endif
-  return os_char_avail();
-#else
-  return 0;
-#endif
-}
-
-/*
- * Delay for the given number of milliseconds.	If ignoreinput is FALSE then we
- * cancel the delay if a key is hit.
- */
-void ui_delay(long msec, bool ignoreinput)
-{
-  os_delay(msec, ignoreinput);
-}
-
-/*
- * If the machine has job control, use it to suspend the program,
- * otherwise fake it by starting a new shell.
- * When running the GUI iconify the window.
- */
 void ui_suspend(void)
 {
-  mch_suspend();
+  UI_CALL(suspend);
+  UI_CALL(flush);
 }
 
-/*
- * Try to get the current Vim shell size.  Put the result in Rows and Columns.
- * Use the new sizes as defaults for 'columns' and 'lines'.
- * Return OK when size could be determined, FAIL otherwise.
- */
-int ui_get_shellsize(void)
+void ui_set_title(char *title)
 {
-  int retval;
-
-  retval = mch_get_shellsize();
-
-  check_shellsize();
-
-  /* adjust the default for 'lines' and 'columns' */
-  if (retval == OK) {
-    set_number_default("lines", Rows);
-    set_number_default("columns", Columns);
-  }
-  return retval;
+  UI_CALL(set_title, title);
+  UI_CALL(flush);
 }
 
-/*
- * Set the size of the Vim shell according to Rows and Columns, if possible.
- * The gui_set_shellsize() or mch_set_shellsize() function will try to set the
- * new size.  If this is not possible, it will adjust Rows and Columns.
- */
-void 
-ui_set_shellsize(int mustset)
+void ui_set_icon(char *icon)
 {
-  mch_set_shellsize();
+  UI_CALL(set_icon, icon);
+  UI_CALL(flush);
 }
 
-void ui_breakcheck(void)
-{
-  os_breakcheck();
-}
-
-/*****************************************************************************
- * Functions for copying and pasting text between applications.
- * This is always included in a GUI version, but may also be included when the
- * clipboard and mouse is available to a terminal version such as xterm.
- * Note: there are some more functions in ops.c that handle selection stuff.
- *
- * Also note that the majority of functions here deal with the X 'primary'
- * (visible - for Visual mode use) selection, and only that. There are no
- * versions of these for the 'clipboard' selection, as Visual mode has no use
- * for them.
- */
-
-/*
- * Exit because of an input read error.
- */
-void read_error_exit(void)
-{
-  if (silent_mode)      /* Normal way to exit for "ex -s" */
-    getout(0);
-  STRCPY(IObuff, _("Vim: Error reading input, exiting...\n"));
-  preserve_exit();
-}
-
-/*
- * May update the shape of the cursor.
- */
+// May update the shape of the cursor.
 void ui_cursor_shape(void)
 {
-  term_cursor_shape();
-
-
-  conceal_check_cursur_line();
+  ui_mode_change();
 }
 
-/*
- * Check bounds for column number
- */
-int check_col(int col)
+void ui_refresh(void)
 {
-  if (col < 0)
-    return 0;
-  if (col >= (int)screen_Columns)
-    return (int)screen_Columns - 1;
-  return col;
+  if (!ui_active()) {
+    return;
+  }
+
+  int width = INT_MAX, height = INT_MAX;
+
+  for (size_t i = 0; i < ui_count; i++) {
+    UI *ui = uis[i];
+    width = ui->width < width ? ui->width : width;
+    height = ui->height < height ? ui->height : height;
+  }
+
+  row = col = 0;
+  screen_resize(width, height);
 }
 
-/*
- * Check bounds for row number
- */
-int check_row(int row)
+void ui_resize(int new_width, int new_height)
 {
-  if (row < 0)
-    return 0;
-  if (row >= (int)screen_Rows)
-    return (int)screen_Rows - 1;
+  width = new_width;
+  height = new_height;
+
+  UI_CALL(update_fg, (ui->rgb ? normal_fg : cterm_normal_fg_color - 1));
+  UI_CALL(update_bg, (ui->rgb ? normal_bg : cterm_normal_bg_color - 1));
+
+  sr.top = 0;
+  sr.bot = height - 1;
+  sr.left = 0;
+  sr.right = width - 1;
+  UI_CALL(resize, width, height);
+}
+
+void ui_busy_start(void)
+{
+  if (!(busy++)) {
+    UI_CALL(busy_start);
+  }
+}
+
+void ui_busy_stop(void)
+{
+  if (!(--busy)) {
+    UI_CALL(busy_stop);
+  }
+}
+
+void ui_mouse_on(void)
+{
+  UI_CALL(mouse_on);
+}
+
+void ui_mouse_off(void)
+{
+  UI_CALL(mouse_off);
+}
+
+void ui_attach(UI *ui)
+{
+  if (ui_count == MAX_UI_COUNT) {
+    abort();
+  }
+
+  uis[ui_count++] = ui;
+  ui_refresh();
+}
+
+void ui_detach(UI *ui)
+{
+  size_t shift_index = MAX_UI_COUNT;
+
+  // Find the index that will be removed
+  for (size_t i = 0; i < ui_count; i++) {
+    if (uis[i] == ui) {
+      shift_index = i;
+      break;
+    }
+  }
+
+  if (shift_index == MAX_UI_COUNT) {
+    abort();
+  }
+
+  // Shift UIs at "shift_index"
+  while (shift_index < ui_count - 1) {
+    uis[shift_index] = uis[shift_index + 1];
+    shift_index++;
+  }
+
+  if (--ui_count) {
+    ui_refresh();
+  }
+}
+
+void ui_clear(void)
+{
+  UI_CALL(clear);
+}
+
+// Set scrolling region for window 'wp'.
+// The region starts 'off' lines from the start of the window.
+// Also set the vertical scroll region for a vertically split window.  Always
+// the full width of the window, excluding the vertical separator.
+void ui_set_scroll_region(win_T *wp, int off)
+{
+  sr.top = wp->w_winrow + off;
+  sr.bot = wp->w_winrow + wp->w_height - 1;
+
+  if (wp->w_width != Columns) {
+    sr.left = wp->w_wincol;
+    sr.right = wp->w_wincol + wp->w_width - 1;
+  }
+
+  UI_CALL(set_scroll_region, sr.top, sr.bot, sr.left, sr.right);
+}
+
+// Reset scrolling region to the whole screen.
+void ui_reset_scroll_region(void)
+{
+  sr.top = 0;
+  sr.bot = (int)Rows - 1;
+  sr.left = 0;
+  sr.right = (int)Columns - 1;
+  UI_CALL(set_scroll_region, sr.top, sr.bot, sr.left, sr.right);
+}
+
+void ui_append_lines(int count)
+{
+  UI_CALL(scroll, -count);
+}
+
+void ui_delete_lines(int count)
+{
+  UI_CALL(scroll, count);
+}
+
+void ui_eol_clear(void)
+{
+  UI_CALL(eol_clear);
+}
+
+void ui_start_highlight(int attr_code)
+{
+  current_attr_code = attr_code;
+
+  if (!ui_count) {
+    return;
+  }
+
+  set_highlight_args(current_attr_code);
+}
+
+void ui_stop_highlight(void)
+{
+  current_attr_code = HL_NORMAL;
+
+  if (!ui_count) {
+    return;
+  }
+
+  set_highlight_args(current_attr_code);
+}
+
+void ui_visual_bell(void)
+{
+  UI_CALL(visual_bell);
+}
+
+void ui_puts(uint8_t *str)
+{
+  uint8_t *ptr = str;
+  uint8_t c;
+
+  while ((c = *ptr)) {
+    if (c < 0x20) {
+      parse_control_character(c);
+      ptr++;
+    } else {
+      send_output(&ptr);
+    }
+  }
+}
+
+void ui_putc(uint8_t c)
+{
+  uint8_t buf[2] = {c, 0};
+  ui_puts(buf);
+}
+
+void ui_cursor_goto(int new_row, int new_col)
+{
+  if (new_row == row && new_col == col) {
+    return;
+  }
+  row = new_row;
+  col = new_col;
+  pending_cursor_update = true;
+}
+
+void ui_update_menu(void)
+{
+    UI_CALL(update_menu);
+}
+
+int ui_current_row(void)
+{
   return row;
 }
 
-/*
- * Stuff for the X clipboard.  Shared between VMS and Unix.
- */
-
-/*
- * Move the cursor to the specified row and column on the screen.
- * Change current window if necessary.	Returns an integer with the
- * CURSOR_MOVED bit set if the cursor has moved or unset otherwise.
- *
- * The MOUSE_FOLD_CLOSE bit is set when clicked on the '-' in a fold column.
- * The MOUSE_FOLD_OPEN bit is set when clicked on the '+' in a fold column.
- *
- * If flags has MOUSE_FOCUS, then the current window will not be changed, and
- * if the mouse is outside the window then the text will scroll, or if the
- * mouse was previously on a status line, then the status line may be dragged.
- *
- * If flags has MOUSE_MAY_VIS, then VIsual mode will be started before the
- * cursor is moved unless the cursor was on a status line.
- * This function returns one of IN_UNKNOWN, IN_BUFFER, IN_STATUS_LINE or
- * IN_SEP_LINE depending on where the cursor was clicked.
- *
- * If flags has MOUSE_MAY_STOP_VIS, then Visual mode will be stopped, unless
- * the mouse is on the status line of the same window.
- *
- * If flags has MOUSE_DID_MOVE, nothing is done if the mouse didn't move since
- * the last call.
- *
- * If flags has MOUSE_SETPOS, nothing is done, only the current position is
- * remembered.
- */
-int 
-jump_to_mouse (
-    int flags,
-    bool *inclusive,        /* used for inclusive operator, can be NULL */
-    int which_button               /* MOUSE_LEFT, MOUSE_RIGHT, MOUSE_MIDDLE */
-)
+int ui_current_col(void)
 {
-  static int on_status_line = 0;        /* #lines below bottom of window */
-  static int on_sep_line = 0;           /* on separator right of window */
-  static int prev_row = -1;
-  static int prev_col = -1;
-  static win_T *dragwin = NULL;         /* window being dragged */
-  static int did_drag = FALSE;          /* drag was noticed */
+  return col;
+}
 
-  win_T       *wp, *old_curwin;
-  pos_T old_cursor;
-  int count;
-  bool first;
-  int row = mouse_row;
-  int col = mouse_col;
-  int mouse_char;
+void ui_flush(void)
+{
+  UI_CALL(flush);
+}
 
-  mouse_past_bottom = false;
-  mouse_past_eol = false;
+static void send_output(uint8_t **ptr)
+{
+  uint8_t *p = *ptr;
 
-  if (flags & MOUSE_RELEASED) {
-    /* On button release we may change window focus if positioned on a
-     * status line and no dragging happened. */
-    if (dragwin != NULL && !did_drag)
-      flags &= ~(MOUSE_FOCUS | MOUSE_DID_MOVE);
-    dragwin = NULL;
-    did_drag = FALSE;
-  }
-
-  if ((flags & MOUSE_DID_MOVE)
-      && prev_row == mouse_row
-      && prev_col == mouse_col) {
-retnomove:
-    /* before moving the cursor for a left click which is NOT in a status
-     * line, stop Visual mode */
-    if (on_status_line)
-      return IN_STATUS_LINE;
-    if (on_sep_line)
-      return IN_SEP_LINE;
-    if (flags & MOUSE_MAY_STOP_VIS) {
-      end_visual_mode();
-      redraw_curbuf_later(INVERTED);            /* delete the inversion */
+  while (*p >= 0x20) {
+    size_t clen = (size_t)mb_ptr2len(p);
+    UI_CALL(put, p, (size_t)clen);
+    col++;
+    if (mb_ptr2cells(p) > 1) {
+      // double cell character, blank the next cell
+      UI_CALL(put, NULL, 0);
+      col++;
     }
-    return IN_BUFFER;
+    if (col >= width) {
+      ui_linefeed();
+    }
+    p += clen;
   }
 
-  prev_row = mouse_row;
-  prev_col = mouse_col;
+  *ptr = p;
+}
 
-  if (flags & MOUSE_SETPOS)
-    goto retnomove;                             /* ugly goto... */
+static void parse_control_character(uint8_t c)
+{
+  if (c == '\n') {
+    ui_linefeed();
+  } else if (c == '\r') {
+    ui_carriage_return();
+  } else if (c == '\b') {
+    ui_cursor_left();
+  } else if (c == Ctrl_L) {
+    ui_cursor_right();
+  } else if (c == Ctrl_G) {
+    UI_CALL(bell);
+  }
+}
 
-  /* Remember the character under the mouse, it might be a '-' or '+' in the
-   * fold column. */
-  if (row >= 0 && row < Rows && col >= 0 && col <= Columns
-      && ScreenLines != NULL)
-    mouse_char = ScreenLines[LineOffset[row] + col];
+static void set_highlight_args(int attr_code)
+{
+  HlAttrs rgb_attrs = { false, false, false, false, false, -1, -1 };
+  HlAttrs cterm_attrs = rgb_attrs;
+
+  if (attr_code == HL_NORMAL) {
+    goto end;
+  }
+
+  int rgb_mask = 0;
+  int cterm_mask = 0;
+  attrentry_T *aep = syn_cterm_attr2entry(attr_code);
+
+  if (!aep) {
+    goto end;
+  }
+
+  rgb_mask = aep->rgb_ae_attr;
+  cterm_mask = aep->cterm_ae_attr;
+
+  rgb_attrs.bold = rgb_mask & HL_BOLD;
+  rgb_attrs.underline = rgb_mask & HL_UNDERLINE;
+  rgb_attrs.undercurl = rgb_mask & HL_UNDERCURL;
+  rgb_attrs.italic = rgb_mask & HL_ITALIC;
+  rgb_attrs.reverse = rgb_mask & (HL_INVERSE | HL_STANDOUT);
+  cterm_attrs.bold = cterm_mask & HL_BOLD;
+  cterm_attrs.underline = cterm_mask & HL_UNDERLINE;
+  cterm_attrs.undercurl = cterm_mask & HL_UNDERCURL;
+  cterm_attrs.italic = cterm_mask & HL_ITALIC;
+  cterm_attrs.reverse = cterm_mask & (HL_INVERSE | HL_STANDOUT);
+
+  if (aep->rgb_fg_color != normal_fg) {
+    rgb_attrs.foreground = aep->rgb_fg_color;
+  }
+
+  if (aep->rgb_bg_color != normal_bg) {
+    rgb_attrs.background = aep->rgb_bg_color;
+  }
+
+  if (cterm_normal_fg_color != aep->cterm_fg_color) {
+    cterm_attrs.foreground = aep->cterm_fg_color - 1;
+  }
+
+  if (cterm_normal_bg_color != aep->cterm_bg_color) {
+    cterm_attrs.background = aep->cterm_bg_color - 1;
+  }
+
+end:
+  UI_CALL(highlight_set, (ui->rgb ? rgb_attrs : cterm_attrs));
+}
+
+static void ui_linefeed(void)
+{
+  int new_col = 0;
+  int new_row = row;
+  if (new_row < sr.bot) {
+    new_row++;
+  } else {
+    UI_CALL(scroll, 1);
+  }
+  ui_cursor_goto(new_row, new_col);
+}
+
+static void ui_carriage_return(void)
+{
+  int new_col = 0;
+  ui_cursor_goto(row, new_col);
+}
+
+static void ui_cursor_left(void)
+{
+  int new_col = col - 1;
+  assert(new_col >= 0);
+  ui_cursor_goto(row, new_col);
+}
+
+static void ui_cursor_right(void)
+{
+  int new_col = col + 1;
+  assert(new_col < width);
+  ui_cursor_goto(row, new_col);
+}
+
+static void flush_cursor_update(void)
+{
+  if (pending_cursor_update) {
+    pending_cursor_update = false;
+    UI_CALL(cursor_goto, row, col);
+  }
+}
+
+// Notify that the current mode has changed. Can be used to change cursor
+// shape, for example.
+static void ui_mode_change(void)
+{
+  int mode;
+  if (!full_screen) {
+    return;
+  }
+  /* Get a simple UI mode out of State. */
+  if ((State & REPLACE) == REPLACE)
+    mode = REPLACE;
+  else if (State & INSERT)
+    mode = INSERT;
   else
-    mouse_char = ' ';
-
-  old_curwin = curwin;
-  old_cursor = curwin->w_cursor;
-
-  if (!(flags & MOUSE_FOCUS)) {
-    if (row < 0 || col < 0)                     /* check if it makes sense */
-      return IN_UNKNOWN;
-
-    /* find the window where the row is in */
-    wp = mouse_find_win(&row, &col);
-    dragwin = NULL;
-    /*
-     * winpos and height may change in win_enter()!
-     */
-    if (row >= wp->w_height) {                  /* In (or below) status line */
-      on_status_line = row - wp->w_height + 1;
-      dragwin = wp;
-    } else
-      on_status_line = 0;
-    if (col >= wp->w_width) {           /* In separator line */
-      on_sep_line = col - wp->w_width + 1;
-      dragwin = wp;
-    } else
-      on_sep_line = 0;
-
-    /* The rightmost character of the status line might be a vertical
-     * separator character if there is no connecting window to the right. */
-    if (on_status_line && on_sep_line) {
-      if (stl_connected(wp))
-        on_sep_line = 0;
-      else
-        on_status_line = 0;
-    }
-
-    /* Before jumping to another buffer, or moving the cursor for a left
-     * click, stop Visual mode. */
-    if (VIsual_active
-        && (wp->w_buffer != curwin->w_buffer
-            || (!on_status_line
-                && !on_sep_line
-                && (
-                  wp->w_p_rl ? col < wp->w_width - wp->w_p_fdc :
-                                     col >= wp->w_p_fdc
-                                             + (cmdwin_type == 0 && wp ==
-                                                curwin ? 0 : 1)
-                  )
-                && (flags & MOUSE_MAY_STOP_VIS)))) {
-      end_visual_mode();
-      redraw_curbuf_later(INVERTED);            /* delete the inversion */
-    }
-    if (cmdwin_type != 0 && wp != curwin) {
-      /* A click outside the command-line window: Use modeless
-       * selection if possible.  Allow dragging the status lines. */
-      on_sep_line = 0;
-      row = 0;
-      col += wp->w_wincol;
-      wp = curwin;
-    }
-    /* Only change window focus when not clicking on or dragging the
-     * status line.  Do change focus when releasing the mouse button
-     * (MOUSE_FOCUS was set above if we dragged first). */
-    if (dragwin == NULL || (flags & MOUSE_RELEASED))
-      win_enter(wp, true);                      /* can make wp invalid! */
-# ifdef CHECK_DOUBLE_CLICK
-    /* set topline, to be able to check for double click ourselves */
-    if (curwin != old_curwin)
-      set_mouse_topline(curwin);
-# endif
-    if (on_status_line) {                       /* In (or below) status line */
-      /* Don't use start_arrow() if we're in the same window */
-      if (curwin == old_curwin)
-        return IN_STATUS_LINE;
-      else
-        return IN_STATUS_LINE | CURSOR_MOVED;
-    }
-    if (on_sep_line) {                          /* In (or below) status line */
-      /* Don't use start_arrow() if we're in the same window */
-      if (curwin == old_curwin)
-        return IN_SEP_LINE;
-      else
-        return IN_SEP_LINE | CURSOR_MOVED;
-    }
-
-    curwin->w_cursor.lnum = curwin->w_topline;
-  } else if (on_status_line && which_button == MOUSE_LEFT)   {
-    if (dragwin != NULL) {
-      /* Drag the status line */
-      count = row - dragwin->w_winrow - dragwin->w_height + 1
-              - on_status_line;
-      win_drag_status_line(dragwin, count);
-      did_drag |= count;
-    }
-    return IN_STATUS_LINE;                      /* Cursor didn't move */
-  } else if (on_sep_line && which_button == MOUSE_LEFT)   {
-    if (dragwin != NULL) {
-      /* Drag the separator column */
-      count = col - dragwin->w_wincol - dragwin->w_width + 1
-              - on_sep_line;
-      win_drag_vsep_line(dragwin, count);
-      did_drag |= count;
-    }
-    return IN_SEP_LINE;                         /* Cursor didn't move */
-  } else { /* keep_window_focus must be TRUE */
-          /* before moving the cursor for a left click, stop Visual mode */
-    if (flags & MOUSE_MAY_STOP_VIS) {
-      end_visual_mode();
-      redraw_curbuf_later(INVERTED);            /* delete the inversion */
-    }
-
-
-    row -= curwin->w_winrow;
-    col -= curwin->w_wincol;
-
-    /*
-     * When clicking beyond the end of the window, scroll the screen.
-     * Scroll by however many rows outside the window we are.
-     */
-    if (row < 0) {
-      count = 0;
-      for (first = true; curwin->w_topline > 1; ) {
-        if (curwin->w_topfill < diff_check(curwin, curwin->w_topline))
-          ++count;
-        else
-          count += plines(curwin->w_topline - 1);
-        if (!first && count > -row)
-          break;
-        first = false;
-        hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
-        if (curwin->w_topfill < diff_check(curwin, curwin->w_topline))
-          ++curwin->w_topfill;
-        else {
-          --curwin->w_topline;
-          curwin->w_topfill = 0;
-        }
-      }
-      check_topfill(curwin, false);
-      curwin->w_valid &=
-        ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
-      redraw_later(VALID);
-      row = 0;
-    } else if (row >= curwin->w_height)   {
-      count = 0;
-      for (first = true; curwin->w_topline < curbuf->b_ml.ml_line_count; ) {
-        if (curwin->w_topfill > 0)
-          ++count;
-        else
-          count += plines(curwin->w_topline);
-        if (!first && count > row - curwin->w_height + 1)
-          break;
-        first = false;
-        if (hasFolding(curwin->w_topline, NULL, &curwin->w_topline)
-            && curwin->w_topline == curbuf->b_ml.ml_line_count)
-          break;
-        if (curwin->w_topfill > 0)
-          --curwin->w_topfill;
-        else {
-          ++curwin->w_topline;
-          curwin->w_topfill =
-            diff_check_fill(curwin, curwin->w_topline);
-        }
-      }
-      check_topfill(curwin, false);
-      redraw_later(VALID);
-      curwin->w_valid &=
-        ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
-      row = curwin->w_height - 1;
-    } else if (row == 0)   {
-      /* When dragging the mouse, while the text has been scrolled up as
-       * far as it goes, moving the mouse in the top line should scroll
-       * the text down (done later when recomputing w_topline). */
-      if (mouse_dragging > 0
-          && curwin->w_cursor.lnum
-          == curwin->w_buffer->b_ml.ml_line_count
-          && curwin->w_cursor.lnum == curwin->w_topline)
-        curwin->w_valid &= ~(VALID_TOPLINE);
-    }
-  }
-
-  /* Check for position outside of the fold column. */
-  if (
-    curwin->w_p_rl ? col < curwin->w_width - curwin->w_p_fdc :
-                           col >= curwin->w_p_fdc
-                                   + (cmdwin_type == 0 ? 0 : 1)
-    )
-    mouse_char = ' ';
-
-  /* compute the position in the buffer line from the posn on the screen */
-  if (mouse_comp_pos(curwin, &row, &col, &curwin->w_cursor.lnum))
-    mouse_past_bottom = true;
-
-  /* Start Visual mode before coladvance(), for when 'sel' != "old" */
-  if ((flags & MOUSE_MAY_VIS) && !VIsual_active) {
-    check_visual_highlight();
-    VIsual = old_cursor;
-    VIsual_active = TRUE;
-    VIsual_reselect = TRUE;
-    /* if 'selectmode' contains "mouse", start Select mode */
-    may_start_select('o');
-    setmouse();
-    if (p_smd && msg_silent == 0)
-      redraw_cmdline = TRUE;            /* show visual mode later */
-  }
-
-  curwin->w_curswant = col;
-  curwin->w_set_curswant = FALSE;       /* May still have been TRUE */
-  if (coladvance(col) == FAIL) {        /* Mouse click beyond end of line */
-    if (inclusive != NULL)
-      *inclusive = true;
-    mouse_past_eol = true;
-  } else if (inclusive != NULL)
-    *inclusive = false;
-
-  count = IN_BUFFER;
-  if (curwin != old_curwin || curwin->w_cursor.lnum != old_cursor.lnum
-      || curwin->w_cursor.col != old_cursor.col)
-    count |= CURSOR_MOVED;              /* Cursor has moved */
-
-  if (mouse_char == '+')
-    count |= MOUSE_FOLD_OPEN;
-  else if (mouse_char != ' ')
-    count |= MOUSE_FOLD_CLOSE;
-
-  return count;
+    mode = NORMAL;
+  UI_CALL(mode_change, mode);
+  conceal_check_cursur_line();
 }
-
-/*
- * Compute the position in the buffer line from the posn on the screen in
- * window "win".
- * Returns TRUE if the position is below the last line.
- */
-bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
-{
-  int col = *colp;
-  int row = *rowp;
-  linenr_T lnum;
-  bool retval = false;
-  int off;
-  int count;
-
-  if (win->w_p_rl)
-    col = win->w_width - 1 - col;
-
-  lnum = win->w_topline;
-
-  while (row > 0) {
-    /* Don't include filler lines in "count" */
-    if (win->w_p_diff
-        && !hasFoldingWin(win, lnum, NULL, NULL, TRUE, NULL)
-        ) {
-      if (lnum == win->w_topline)
-        row -= win->w_topfill;
-      else
-        row -= diff_check_fill(win, lnum);
-      count = plines_win_nofill(win, lnum, TRUE);
-    } else
-      count = plines_win(win, lnum, TRUE);
-    if (count > row)
-      break;            /* Position is in this buffer line. */
-    (void)hasFoldingWin(win, lnum, NULL, &lnum, TRUE, NULL);
-    if (lnum == win->w_buffer->b_ml.ml_line_count) {
-      retval = true;
-      break;                    /* past end of file */
-    }
-    row -= count;
-    ++lnum;
-  }
-
-  if (!retval) {
-    /* Compute the column without wrapping. */
-    off = win_col_off(win) - win_col_off2(win);
-    if (col < off)
-      col = off;
-    col += row * (win->w_width - off);
-    /* add skip column (for long wrapping line) */
-    col += win->w_skipcol;
-  }
-
-  if (!win->w_p_wrap)
-    col += win->w_leftcol;
-
-  /* skip line number and fold column in front of the line */
-  col -= win_col_off(win);
-  if (col < 0) {
-    col = 0;
-  }
-
-  *colp = col;
-  *rowp = row;
-  *lnump = lnum;
-  return retval;
-}
-
-/*
- * Find the window at screen position "*rowp" and "*colp".  The positions are
- * updated to become relative to the top-left of the window.
- */
-win_T *mouse_find_win(int *rowp, int *colp)
-{
-  frame_T     *fp;
-
-  fp = topframe;
-  *rowp -= firstwin->w_winrow;
-  for (;; ) {
-    if (fp->fr_layout == FR_LEAF)
-      break;
-    if (fp->fr_layout == FR_ROW) {
-      for (fp = fp->fr_child; fp->fr_next != NULL; fp = fp->fr_next) {
-        if (*colp < fp->fr_width)
-          break;
-        *colp -= fp->fr_width;
-      }
-    } else {  /* fr_layout == FR_COL */
-      for (fp = fp->fr_child; fp->fr_next != NULL; fp = fp->fr_next) {
-        if (*rowp < fp->fr_height)
-          break;
-        *rowp -= fp->fr_height;
-      }
-    }
-  }
-  return fp->fr_win;
-}
-
-#if defined(USE_IM_CONTROL) || defined(PROTO)
-/*
- * Save current Input Method status to specified place.
- */
-void im_save_status(long *psave)
-{
-  /* Don't save when 'imdisable' is set or "xic" is NULL, IM is always
-   * disabled then (but might start later).
-   * Also don't save when inside a mapping, vgetc_im_active has not been set
-   * then.
-   * And don't save when the keys were stuffed (e.g., for a "." command).
-   * And don't save when the GUI is running but our window doesn't have
-   * input focus (e.g., when a find dialog is open). */
-  if (!p_imdisable && KeyTyped && !KeyStuffed
-      ) {
-    /* Do save when IM is on, or IM is off and saved status is on. */
-    if (vgetc_im_active)
-      *psave = B_IMODE_IM;
-    else if (*psave == B_IMODE_IM)
-      *psave = B_IMODE_NONE;
-  }
-}
-#endif
-

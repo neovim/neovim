@@ -4,8 +4,11 @@
  * This file is included in "regexp.c".
  */
 
+#include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <limits.h>
 
 #include "nvim/ascii.h"
 #include "nvim/misc2.h"
@@ -267,8 +270,10 @@ typedef struct {
   /* When REG_MULTI is TRUE list.multi is used, otherwise list.line. */
   union {
     struct multipos {
-      lpos_T start;
-      lpos_T end;
+      linenr_T  start_lnum;
+      linenr_T  end_lnum;
+      colnr_T start_col;
+      colnr_T end_col;
     } multi[NSUBEXP];
     struct linepos {
       char_u      *start;
@@ -311,6 +316,9 @@ typedef struct {
   int id;                       /* ID of the list */
   int has_pim;                  /* TRUE when any state has a PIM */
 } nfa_list_T;
+
+/// re_flags passed to nfa_regcomp().
+static int nfa_re_flags;
 
 /* NFA regexp \ze operator encountered. */
 static int nfa_has_zend;
@@ -710,8 +718,8 @@ static int nfa_recognize_char_class(char_u *start, char_u *end, int extra_newl)
  */
 static void nfa_emit_equi_class(int c)
 {
-#define EMIT2(c)    EMIT(c); EMIT(NFA_CONCAT);
-# define EMITMBC(c) EMIT(c); EMIT(NFA_CONCAT);
+#define EMIT2(c)   EMIT(c); EMIT(NFA_CONCAT);
+#define EMITMBC(c) EMIT(c); EMIT(NFA_CONCAT);
 
   if (enc_utf8 || STRCMP(p_enc, "latin1") == 0
       || STRCMP(p_enc, "iso-8859-15") == 0) {
@@ -900,10 +908,10 @@ static void nfa_emit_equi_class(int c)
       EMITMBC(0x10b) EMITMBC(0x10d)
       return;
 
-    case 'd': CASEMBC(0x10f) CASEMBC(0x111) CASEMBC(0x1d0b)
-      CASEMBC(0x1e11)
+    case 'd': CASEMBC(0x10f) CASEMBC(0x111) CASEMBC(0x1e0b)
+      CASEMBC(0x1e0f) CASEMBC(0x1e11)
       EMIT2('d'); EMITMBC(0x10f) EMITMBC(0x111) EMITMBC(0x1e0b)
-      EMITMBC(0x01e0f) EMITMBC(0x1e11)
+      EMITMBC(0x1e0f) EMITMBC(0x1e11)
       return;
 
     case 'e': case 0350: case 0351: case 0352: case 0353:
@@ -1385,7 +1393,7 @@ static int nfa_regatom(void)
        * matched an unlimited number of times. NFA_NOPEN is
        * added only once at a position, while NFA_SPLIT is
        * added multiple times.  This is more efficient than
-       * not allowsing NFA_SPLIT multiple times, it is used
+       * not allowing NFA_SPLIT multiple times, it is used
        * a lot. */
       EMIT(NFA_NOPEN);
       break;
@@ -1398,7 +1406,7 @@ static int nfa_regatom(void)
 
       if (c == '<' || c == '>')
         c = getchr();
-      while (VIM_ISDIGIT(c)) {
+      while (ascii_isdigit(c)) {
         n = n * 10 + (c - '0');
         c = getchr();
       }
@@ -1578,10 +1586,8 @@ collection:
          * Only "\]", "\^", "\]" and "\\" are special in Vi.  Vim
          * accepts "\t", "\e", etc., but only when the 'l' flag in
          * 'cpoptions' is not included.
-         * Posix doesn't recognize backslash at all.
          */
         if (*regparse == '\\'
-            && !reg_cpo_bsl
             && regparse + 1 <= endp
             && (vim_strchr(REGEXP_INRANGE, regparse[1]) != NULL
                 || (!reg_cpo_lit
@@ -1889,6 +1895,12 @@ static int nfa_regpiece(void)
       /* NFA_EMPTY is 0-length and works everywhere */
       EMIT(NFA_EMPTY);
       return OK;
+    }
+
+    // The engine is very inefficient (uses too many states) when the maximum is
+    // much larger than the minimum. Bail out if we can use the other engine.
+    if ((nfa_re_flags & RE_AUTO) && maxval > minval + 200) {
+      return FAIL;
     }
 
     /* Ignore previous call to nfa_regatom() */
@@ -2344,7 +2356,6 @@ static void nfa_set_code(int c)
 
 }
 
-#ifdef REGEXP_DEBUG
 static FILE *log_fd;
 
 /*
@@ -2464,7 +2475,6 @@ static void nfa_dump(nfa_regprog_T *prog)
     fclose(debugf);
   }
 }
-#endif      /* REGEXP_DEBUG */
 #endif      /* REGEXP_DEBUG */
 
 /*
@@ -2885,6 +2895,7 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
   if (stackp < stack)                 \
   {                                   \
     st_error(postfix, end, p);      \
+    xfree(stack);                    \
     return NULL;                    \
   }
 
@@ -3314,13 +3325,17 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
   }
 
   e = POP();
-  if (stackp != stack)
-    EMSG_RET_NULL(_(
-            "E875: (NFA regexp) (While converting from postfix to NFA), too many states left on stack"));
+  if (stackp != stack) {
+    xfree(stack);
+    EMSG_RET_NULL(_("E875: (NFA regexp) (While converting from postfix to NFA),"
+                    "too many states left on stack"));
+  }
 
-  if (istate >= nstate)
-    EMSG_RET_NULL(_(
-            "E876: (NFA regexp) Not enough space to store the whole NFA "));
+  if (istate >= nstate) {
+    xfree(stack);
+    EMSG_RET_NULL(_("E876: (NFA regexp) "
+                    "Not enough space to store the whole NFA "));
+  }
 
   matchstate = &state_ptr[istate++];   /* the match state */
   matchstate->c = NFA_MATCH;
@@ -3331,7 +3346,7 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
   ret = e.start;
 
 theend:
-  free(stack);
+  xfree(stack);
   return ret;
 
 #undef POP1
@@ -3418,10 +3433,10 @@ static void log_subexpr(regsub_T *sub)
     if (REG_MULTI)
       fprintf(log_fd, "*** group %d, start: c=%d, l=%d, end: c=%d, l=%d\n",
           j,
-          sub->list.multi[j].start.col,
-          (int)sub->list.multi[j].start.lnum,
-          sub->list.multi[j].end.col,
-          (int)sub->list.multi[j].end.lnum);
+          sub->list.multi[j].start_col,
+          (int)sub->list.multi[j].start_lnum,
+          sub->list.multi[j].end_col,
+          (int)sub->list.multi[j].end_lnum);
     else {
       char *s = (char *)sub->list.line[j].start;
       char *e = (char *)sub->list.line[j].end;
@@ -3522,8 +3537,10 @@ static void copy_ze_off(regsub_T *to, regsub_T *from)
 {
   if (nfa_has_zend) {
     if (REG_MULTI) {
-      if (from->list.multi[0].end.lnum >= 0)
-        to->list.multi[0].end = from->list.multi[0].end;
+      if (from->list.multi[0].end_lnum >= 0){
+        to->list.multi[0].end_lnum = from->list.multi[0].end_lnum;
+        to->list.multi[0].end_col = from->list.multi[0].end_col;
+      }
     } else {
       if (from->list.line[0].end != NULL)
         to->list.line[0].end = from->list.line[0].end;
@@ -3546,27 +3563,27 @@ static int sub_equal(regsub_T *sub1, regsub_T *sub2)
   if (REG_MULTI) {
     for (i = 0; i < todo; ++i) {
       if (i < sub1->in_use)
-        s1 = sub1->list.multi[i].start.lnum;
+        s1 = sub1->list.multi[i].start_lnum;
       else
         s1 = -1;
       if (i < sub2->in_use)
-        s2 = sub2->list.multi[i].start.lnum;
+        s2 = sub2->list.multi[i].start_lnum;
       else
         s2 = -1;
       if (s1 != s2)
         return FALSE;
-      if (s1 != -1 && sub1->list.multi[i].start.col
-          != sub2->list.multi[i].start.col)
+      if (s1 != -1 && sub1->list.multi[i].start_col
+          != sub2->list.multi[i].start_col)
         return FALSE;
 
       if (nfa_has_backref) {
         if (i < sub1->in_use) {
-          s1 = sub1->list.multi[i].end.lnum;
+          s1 = sub1->list.multi[i].end_lnum;
         } else {
           s1 = -1;
         }
         if (i < sub2->in_use) {
-          s2 = sub2->list.multi[i].end.lnum;
+          s2 = sub2->list.multi[i].end_lnum;
         } else {
           s2 = -1;
         }
@@ -3574,7 +3591,7 @@ static int sub_equal(regsub_T *sub1, regsub_T *sub2)
           return FALSE;
         }
         if (s1 != -1
-            && sub1->list.multi[i].end.col != sub2->list.multi[i].end.col) {
+            && sub1->list.multi[i].end_col != sub2->list.multi[i].end_col) {
           return FALSE;
         }
       }
@@ -3624,7 +3641,7 @@ static void report_state(char *action,
   if (sub->in_use <= 0)
     col = -1;
   else if (REG_MULTI)
-    col = sub->list.multi[0].start.col;
+    col = sub->list.multi[0].start_col;
   else
     col = (int)(sub->list.line[0].start - regline);
   nfa_set_code(state->c);
@@ -3955,7 +3972,6 @@ skip_add:
 #endif
   switch (state->c) {
   case NFA_MATCH:
-    //nfa_match = TRUE;
     break;
 
   case NFA_SPLIT:
@@ -4011,22 +4027,24 @@ skip_add:
      * and restore it when it was in use.  Otherwise fill any gap. */
     if (REG_MULTI) {
       if (subidx < sub->in_use) {
-        save_lpos = sub->list.multi[subidx].start;
+        save_lpos.lnum = sub->list.multi[subidx].start_lnum;
+        save_lpos.col = sub->list.multi[subidx].start_col;
         save_in_use = -1;
       } else {
         save_in_use = sub->in_use;
         for (i = sub->in_use; i < subidx; ++i) {
-          sub->list.multi[i].start.lnum = -1;
-          sub->list.multi[i].end.lnum = -1;
+          sub->list.multi[i].start_lnum = -1;
+          sub->list.multi[i].end_lnum = -1;
         }
         sub->in_use = subidx + 1;
       }
       if (off == -1) {
-        sub->list.multi[subidx].start.lnum = reglnum + 1;
-        sub->list.multi[subidx].start.col = 0;
+        sub->list.multi[subidx].start_lnum = reglnum + 1;
+        sub->list.multi[subidx].start_col = 0;
       } else {
-        sub->list.multi[subidx].start.lnum = reglnum;
-        sub->list.multi[subidx].start.col =
+
+        sub->list.multi[subidx].start_lnum = reglnum;
+        sub->list.multi[subidx].start_col =
           (colnr_T)(reginput - regline + off);
       }
     } else {
@@ -4052,8 +4070,10 @@ skip_add:
       sub = &subs->norm;
 
     if (save_in_use == -1) {
-      if (REG_MULTI)
-        sub->list.multi[subidx].start = save_lpos;
+      if (REG_MULTI){
+        sub->list.multi[subidx].start_lnum = save_lpos.lnum;
+        sub->list.multi[subidx].start_col = save_lpos.col;
+      }
       else
         sub->list.line[subidx].start = save_ptr;
     } else
@@ -4062,7 +4082,7 @@ skip_add:
 
   case NFA_MCLOSE:
     if (nfa_has_zend && (REG_MULTI
-                         ? subs->norm.list.multi[0].end.lnum >= 0
+                         ? subs->norm.list.multi[0].end_lnum >= 0
                          : subs->norm.list.line[0].end != NULL)) {
       /* Do not overwrite the position set by \ze. */
       subs = addstate(l, state->out, subs, pim, off);
@@ -4105,13 +4125,14 @@ skip_add:
     if (sub->in_use <= subidx)
       sub->in_use = subidx + 1;
     if (REG_MULTI) {
-      save_lpos = sub->list.multi[subidx].end;
+      save_lpos.lnum = sub->list.multi[subidx].end_lnum;
+      save_lpos.col = sub->list.multi[subidx].end_col;
       if (off == -1) {
-        sub->list.multi[subidx].end.lnum = reglnum + 1;
-        sub->list.multi[subidx].end.col = 0;
+        sub->list.multi[subidx].end_lnum = reglnum + 1;
+        sub->list.multi[subidx].end_col = 0;
       } else {
-        sub->list.multi[subidx].end.lnum = reglnum;
-        sub->list.multi[subidx].end.col =
+        sub->list.multi[subidx].end_lnum = reglnum;
+        sub->list.multi[subidx].end_col =
           (colnr_T)(reginput - regline + off);
       }
       /* avoid compiler warnings */
@@ -4131,8 +4152,10 @@ skip_add:
     else
       sub = &subs->norm;
 
-    if (REG_MULTI)
-      sub->list.multi[subidx].end = save_lpos;
+    if (REG_MULTI){
+      sub->list.multi[subidx].end_lnum = save_lpos.lnum;
+      sub->list.multi[subidx].end_col = save_lpos.col;
+    }
     else
       sub->list.line[subidx].end = save_ptr;
     sub->in_use = save_in_use;
@@ -4190,7 +4213,7 @@ addstate_here (
       memmove(&(newl[listidx + count]),
           &(l->t[listidx + 1]),
           sizeof(nfa_thread_T) * (l->n - count - listidx - 1));
-      free(l->t);
+      xfree(l->t);
       l->t = newl;
     } else {
       /* make space for new states, then move them from the
@@ -4230,7 +4253,7 @@ static int check_char_class(int class, int c)
       return OK;
     break;
   case NFA_CLASS_DIGIT:
-    if (VIM_ISDIGIT(c))
+    if (ascii_isdigit(c))
       return OK;
     break;
   case NFA_CLASS_GRAPH:
@@ -4258,7 +4281,7 @@ static int check_char_class(int class, int c)
       return OK;
     break;
   case NFA_CLASS_XDIGIT:
-    if (vim_isxdigit(c))
+    if (ascii_isxdigit(c))
       return OK;
     break;
   case NFA_CLASS_TAB:
@@ -4307,24 +4330,24 @@ retempty:
   }
 
   if (REG_MULTI) {
-    if (sub->list.multi[subidx].start.lnum < 0
-        || sub->list.multi[subidx].end.lnum < 0)
+    if (sub->list.multi[subidx].start_lnum < 0
+        || sub->list.multi[subidx].end_lnum < 0)
       goto retempty;
-    if (sub->list.multi[subidx].start.lnum == reglnum
-        && sub->list.multi[subidx].end.lnum == reglnum) {
-      len = sub->list.multi[subidx].end.col
-            - sub->list.multi[subidx].start.col;
-      if (cstrncmp(regline + sub->list.multi[subidx].start.col,
+    if (sub->list.multi[subidx].start_lnum == reglnum
+        && sub->list.multi[subidx].end_lnum == reglnum) {
+      len = sub->list.multi[subidx].end_col
+            - sub->list.multi[subidx].start_col;
+      if (cstrncmp(regline + sub->list.multi[subidx].start_col,
               reginput, &len) == 0) {
         *bytelen = len;
         return TRUE;
       }
     } else {
       if (match_with_backref(
-              sub->list.multi[subidx].start.lnum,
-              sub->list.multi[subidx].start.col,
-              sub->list.multi[subidx].end.lnum,
-              sub->list.multi[subidx].end.col,
+              sub->list.multi[subidx].start_lnum,
+              sub->list.multi[subidx].start_col,
+              sub->list.multi[subidx].end_lnum,
+              sub->list.multi[subidx].end_col,
               bytelen) == RA_MATCH)
         return TRUE;
     }
@@ -4404,7 +4427,7 @@ static void nfa_restore_listids(nfa_regprog_T *prog, int *list)
   }
 }
 
-static int nfa_re_num_cmp(long_u val, int op, long_u pos)
+static bool nfa_re_num_cmp(uintmax_t val, int op, uintmax_t pos)
 {
   if (op == 1) return pos > val;
   if (op == 2) return pos < val;
@@ -4758,6 +4781,7 @@ static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
     if (match
         /* check that no composing char follows */
         && !(enc_utf8
+             && STRLEN(regline) > (size_t)(col + len2)
              && utf_iscomposing(PTR2CHAR(regline + col + len2)))
         ) {
       cleanup_subexpr();
@@ -4804,7 +4828,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
   nfa_list_T  *nextlist;
   int         *listids = NULL;
   nfa_state_T *add_state;
-  int add_here;
+  bool add_here;
   int add_count;
   int add_off = 0;
   int toplevel = start->c == NFA_MOPEN;
@@ -4861,8 +4885,8 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
    * it's the first MOPEN. */
   if (toplevel) {
     if (REG_MULTI) {
-      m->norm.list.multi[0].start.lnum = reglnum;
-      m->norm.list.multi[0].start.col = (colnr_T)(reginput - regline);
+      m->norm.list.multi[0].start_lnum = reglnum;
+      m->norm.list.multi[0].start_col = (colnr_T)(reginput - regline);
     } else
       m->norm.list.line[0].start = reginput;
     m->norm.in_use = 1;
@@ -4901,6 +4925,12 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
     nextlist->n = 0;                /* clear nextlist */
     nextlist->has_pim = FALSE;
     ++nfa_listid;
+    if (prog->re_engine == AUTOMATIC_ENGINE && nfa_listid >= NFA_MAX_STATES) {
+      // Too many states, retry with old engine.
+      nfa_match = NFA_TOO_EXPENSIVE;
+      goto theend;
+    }
+
     thislist->id = nfa_listid;
     nextlist->id = nfa_listid + 1;
 
@@ -4944,7 +4974,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         if (t->subs.norm.in_use <= 0)
           col = -1;
         else if (REG_MULTI)
-          col = t->subs.norm.list.multi[0].start.col;
+          col = t->subs.norm.list.multi[0].start_col;
         else
           col = (int)(t->subs.norm.list.line[0].start - regline);
         nfa_set_code(t->state->c);
@@ -4959,7 +4989,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
        * The most important is NFA_MATCH.
        */
       add_state = NULL;
-      add_here = FALSE;
+      add_here = false;
       add_count = 0;
       switch (t->state->c) {
       case NFA_MATCH:
@@ -5075,6 +5105,10 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
            */
           result = recursive_regmatch(t->state, NULL, prog,
               submatch, m, &listids);
+          if (result == NFA_TOO_EXPENSIVE) {
+            nfa_match = result;
+            goto theend;
+          }
 
           /* for \@! and \@<! it is a match when the result is
            * FALSE */
@@ -5095,7 +5129,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
             /* t->state->out1 is the corresponding
              * END_INVISIBLE node; Add its out to the current
              * list (zero-width match). */
-            add_here = TRUE;
+            add_here = true;
             add_state = t->state->out1->out;
           }
           m->norm.in_use = in_use;
@@ -5173,6 +5207,10 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         /* First try matching the pattern. */
         result = recursive_regmatch(t->state, NULL, prog,
             submatch, m, &listids);
+        if (result == NFA_TOO_EXPENSIVE) {
+          nfa_match = result;
+          goto theend;
+        }
         if (result) {
           int bytelen;
 
@@ -5188,7 +5226,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
            * continue with what follows. */
           if (REG_MULTI)
             /* TODO: multi-line match */
-            bytelen = m->norm.list.multi[0].end.col
+            bytelen = m->norm.list.multi[0].end_col
                       - (int)(reginput - regline);
           else
             bytelen = (int)(m->norm.list.line[0].end - reginput);
@@ -5200,7 +5238,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
             /* empty match, output of corresponding
              * NFA_END_PATTERN/NFA_SKIP to be used at current
              * position */
-            add_here = TRUE;
+            add_here = true;
             add_state = t->state->out1->out->out;
           } else if (bytelen <= clen) {
             /* match current character, output of corresponding
@@ -5220,14 +5258,14 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
 
       case NFA_BOL:
         if (reginput == regline) {
-          add_here = TRUE;
+          add_here = true;
           add_state = t->state->out;
         }
         break;
 
       case NFA_EOL:
         if (curc == NUL) {
-          add_here = TRUE;
+          add_here = true;
           add_state = t->state->out;
         }
         break;
@@ -5251,7 +5289,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
                        && vim_iswordc_buf(reginput[-1], reg_buf)))
           result = FALSE;
         if (result) {
-          add_here = TRUE;
+          add_here = true;
           add_state = t->state->out;
         }
         break;
@@ -5274,7 +5312,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
                        && vim_iswordc_buf(curc, reg_buf)))
           result = FALSE;
         if (result) {
-          add_here = TRUE;
+          add_here = true;
           add_state = t->state->out;
         }
         break;
@@ -5282,14 +5320,14 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       case NFA_BOF:
         if (reglnum == 0 && reginput == regline
             && (!REG_MULTI || reg_firstlnum == 1)) {
-          add_here = TRUE;
+          add_here = true;
           add_state = t->state->out;
         }
         break;
 
       case NFA_EOF:
         if (reglnum == reg_maxline && curc == NUL) {
-          add_here = TRUE;
+          add_here = true;
           add_state = t->state->out;
         }
         break;
@@ -5315,7 +5353,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         if (ireg_icombine && len == 0) {
           /* If \Z was present, then ignore composing characters.
            * When ignoring the base character this always matches. */
-          if (len == 0 && sta->c != curc)
+          if (sta->c != curc)
             result = FAIL;
           else
             result = OK;
@@ -5454,7 +5492,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         if (enc_utf8 && utf_iscomposing(curc)) {
           add_off = clen;
         } else {
-          add_here = TRUE;
+          add_here = true;
           add_off = 0;
         }
         add_state = t->state->out;
@@ -5469,7 +5507,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_SIDENT:          /*  \I	*/
-        result = !VIM_ISDIGIT(curc) && vim_isIDc(curc);
+        result = !ascii_isdigit(curc) && vim_isIDc(curc);
         ADD_STATE_IF_MATCH(t->state);
         break;
 
@@ -5479,7 +5517,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_SKWORD:          /*  \K	*/
-        result = !VIM_ISDIGIT(curc)
+        result = !ascii_isdigit(curc)
                  && vim_iswordp_buf(reginput, reg_buf);
         ADD_STATE_IF_MATCH(t->state);
         break;
@@ -5490,7 +5528,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_SFNAME:          /*  \F	*/
-        result = !VIM_ISDIGIT(curc) && vim_isfilec(curc);
+        result = !ascii_isdigit(curc) && vim_isfilec(curc);
         ADD_STATE_IF_MATCH(t->state);
         break;
 
@@ -5500,17 +5538,17 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_SPRINT:          /*  \P	*/
-        result = !VIM_ISDIGIT(curc) && vim_isprintc(PTR2CHAR(reginput));
+        result = !ascii_isdigit(curc) && vim_isprintc(PTR2CHAR(reginput));
         ADD_STATE_IF_MATCH(t->state);
         break;
 
       case NFA_WHITE:           /*  \s	*/
-        result = vim_iswhite(curc);
+        result = ascii_iswhite(curc);
         ADD_STATE_IF_MATCH(t->state);
         break;
 
       case NFA_NWHITE:          /*  \S	*/
-        result = curc != NUL && !vim_iswhite(curc);
+        result = curc != NUL && !ascii_iswhite(curc);
         ADD_STATE_IF_MATCH(t->state);
         break;
 
@@ -5651,7 +5689,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
           if (bytelen == 0) {
             /* empty match always works, output of NFA_SKIP to be
              * used next */
-            add_here = TRUE;
+            add_here = true;
             add_state = t->state->out->out;
           } else if (bytelen <= clen) {
             /* match current character, jump ahead to out of
@@ -5685,11 +5723,16 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       case NFA_LNUM:
       case NFA_LNUM_GT:
       case NFA_LNUM_LT:
-        result = (REG_MULTI &&
-                  nfa_re_num_cmp(t->state->val, t->state->c - NFA_LNUM,
-                      (long_u)(reglnum + reg_firstlnum)));
+        assert(t->state->val >= 0
+               && !((reg_firstlnum > 0 && reglnum > LONG_MAX - reg_firstlnum)
+                    || (reg_firstlnum <0 && reglnum < LONG_MIN + reg_firstlnum))
+               && reglnum + reg_firstlnum >= 0);
+        result = (REG_MULTI
+                  && nfa_re_num_cmp((uintmax_t)t->state->val,
+                                    t->state->c - NFA_LNUM,
+                                    (uintmax_t)(reglnum + reg_firstlnum)));
         if (result) {
-          add_here = TRUE;
+          add_here = true;
           add_state = t->state->out;
         }
         break;
@@ -5697,10 +5740,14 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       case NFA_COL:
       case NFA_COL_GT:
       case NFA_COL_LT:
-        result = nfa_re_num_cmp(t->state->val, t->state->c - NFA_COL,
-            (long_u)(reginput - regline) + 1);
+        assert(t->state->val >= 0
+               && reginput >= regline
+               && (uintmax_t)(reginput - regline) <= UINTMAX_MAX - 1);
+        result = nfa_re_num_cmp((uintmax_t)t->state->val,
+                                t->state->c - NFA_COL,
+                                (uintmax_t)(reginput - regline + 1));
         if (result) {
-          add_here = TRUE;
+          add_here = true;
           add_state = t->state->out;
         }
         break;
@@ -5708,13 +5755,37 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       case NFA_VCOL:
       case NFA_VCOL_GT:
       case NFA_VCOL_LT:
-        result = nfa_re_num_cmp(t->state->val, t->state->c - NFA_VCOL,
-            (long_u)win_linetabsize(
-                reg_win == NULL ? curwin : reg_win,
-                regline, (colnr_T)(reginput - regline)) + 1);
-        if (result) {
-          add_here = TRUE;
-          add_state = t->state->out;
+        {
+          int op = t->state->c - NFA_VCOL;
+          colnr_T col = (colnr_T)(reginput - regline);
+
+          // Bail out quickly when there can't be a match, avoid the overhead of
+          // win_linetabsize() on long lines.
+          if (op != 1 && col > t->state->val) {
+            break;
+          }
+
+          result = FALSE;
+          win_T *wp = reg_win == NULL ? curwin : reg_win;
+          if (op == 1 && col - 1 > t->state->val && col > 100) {
+            long ts = wp->w_buffer->b_p_ts;
+
+            // Guess that a character won't use more columns than 'tabstop',
+            // with a minimum of 4.
+            if (ts < 4) {
+              ts = 4;
+            }
+            result = col > t->state->val * ts;
+          }
+          if (!result) {
+            uintmax_t lts = win_linetabsize(wp, regline, col);
+            assert(t->state->val >= 0);
+            result = nfa_re_num_cmp((uintmax_t)t->state->val, op, lts + 1);
+          }
+          if (result) {
+            add_here = true;
+            add_state = t->state->out;
+          }
         }
         break;
 
@@ -5737,7 +5808,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
                          ? t->state->c == NFA_MARK_GT
                          : t->state->c == NFA_MARK_LT)));
         if (result) {
-          add_here = TRUE;
+          add_here = true;
           add_state = t->state->out;
         }
         break;
@@ -5749,7 +5820,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
                   && ((colnr_T)(reginput - regline)
                       == reg_win->w_cursor.col));
         if (result) {
-          add_here = TRUE;
+          add_here = true;
           add_state = t->state->out;
         }
         break;
@@ -5757,7 +5828,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       case NFA_VISUAL:
         result = reg_match_visual();
         if (result) {
-          add_here = TRUE;
+          add_here = true;
           add_state = t->state->out;
         }
         break;
@@ -5959,7 +6030,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
 
         if (add) {
           if (REG_MULTI)
-            m->norm.list.multi[0].start.col =
+            m->norm.list.multi[0].start_col =
               (colnr_T)(reginput - regline) + clen;
           else
             m->norm.list.line[0].start = reginput + clen;
@@ -5990,6 +6061,12 @@ nextchar:
       reg_nextline();
     else
       break;
+
+    // Allow interrupting with CTRL-C.
+    fast_breakcheck();
+    if (got_int) {
+      break;
+    }
   }
 
 #ifdef REGEXP_DEBUG
@@ -5998,10 +6075,11 @@ nextchar:
   log_fd = NULL;
 #endif
 
+theend:
   /* Free memory */
-  free(list[0].t);
-  free(list[1].t);
-  free(listids);
+  xfree(list[0].t);
+  xfree(list[1].t);
+  xfree(listids);
 #undef ADD_STATE_IF_MATCH
 #ifdef NFA_REGEXP_DEBUG_LOG
   fclose(debug);
@@ -6012,7 +6090,7 @@ nextchar:
 
 /*
  * Try match of "prog" with at regline["col"].
- * Returns 0 for failure, number of lines contained in the match otherwise.
+ * Returns <= 0 for failure, number of lines contained in the match otherwise.
  */
 static long nfa_regtry(nfa_regprog_T *prog, colnr_T col)
 {
@@ -6047,14 +6125,21 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col)
   clear_sub(&subs.synt);
   clear_sub(&m.synt);
 
-  if (nfa_regmatch(prog, start, &subs, &m) == FALSE)
+  int result = nfa_regmatch(prog, start, &subs, &m);
+  if (result == FALSE) {
     return 0;
+  } else if (result == NFA_TOO_EXPENSIVE) {
+    return result;
+  }
 
   cleanup_subexpr();
   if (REG_MULTI) {
     for (i = 0; i < subs.norm.in_use; i++) {
-      reg_startpos[i] = subs.norm.list.multi[i].start;
-      reg_endpos[i] = subs.norm.list.multi[i].end;
+      reg_startpos[i].lnum = subs.norm.list.multi[i].start_lnum;
+      reg_startpos[i].col = subs.norm.list.multi[i].start_col;
+
+      reg_endpos[i].lnum = subs.norm.list.multi[i].end_lnum;
+      reg_endpos[i].col = subs.norm.list.multi[i].end_col;
     }
 
     if (reg_startpos[0].lnum < 0) {
@@ -6092,12 +6177,12 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col)
         struct multipos *mpos = &subs.synt.list.multi[i];
 
         // Only accept single line matches that are valid.
-        if (mpos->start.lnum >= 0
-            && mpos->start.lnum == mpos->end.lnum
-            && mpos->end.col >= mpos->start.col) {
+        if (mpos->start_lnum >= 0
+            && mpos->start_lnum == mpos->end_lnum
+            && mpos->end_col >= mpos->start_col) {
           re_extmatch_out->matches[i] =
-            vim_strnsave(reg_getline(mpos->start.lnum) + mpos->start.col,
-                         mpos->end.col - mpos->start.col);
+            vim_strnsave(reg_getline(mpos->start_lnum) + mpos->start_col,
+                         mpos->end_col - mpos->start_col);
         }
       } else {
         struct linepos *lpos = &subs.synt.list.line[i];
@@ -6117,7 +6202,7 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col)
  * Match a regexp against a string ("line" points to the string) or multiple
  * lines ("line" is NULL, use reg_getline()).
  *
- * Returns 0 for failure, number of lines contained in the match otherwise.
+ * Returns <= 0 for failure, number of lines contained in the match otherwise.
  */
 static long 
 nfa_regexec_both (
@@ -6165,9 +6250,7 @@ nfa_regexec_both (
   nfa_nsubexpr = prog->nsubexp;
   nfa_listid = 1;
   nfa_alt_listid = 2;
-#ifdef REGEXP_DEBUG
   nfa_regengine.expr = prog->pattern;
-#endif
 
   if (prog->reganch && col > 0)
     return 0L;
@@ -6207,9 +6290,7 @@ nfa_regexec_both (
 
   retval = nfa_regtry(prog, col);
 
-#ifdef REGEXP_DEBUG
   nfa_regengine.expr = NULL;
-#endif
 
 theend:
   return retval;
@@ -6227,9 +6308,8 @@ static regprog_T *nfa_regcomp(char_u *expr, int re_flags)
   if (expr == NULL)
     return NULL;
 
-#ifdef REGEXP_DEBUG
   nfa_regengine.expr = expr;
-#endif
+  nfa_re_flags = re_flags;
 
   init_class_tab();
 
@@ -6304,26 +6384,22 @@ static regprog_T *nfa_regcomp(char_u *expr, int re_flags)
 #endif
   /* Remember whether this pattern has any \z specials in it. */
   prog->reghasz = re_has_z;
-#ifdef REGEXP_DEBUG
   prog->pattern = vim_strsave(expr);
   nfa_regengine.expr = NULL;
-#endif
 
 out:
-  free(post_start);
+  xfree(post_start);
   post_start = post_ptr = post_end = NULL;
   state_ptr = NULL;
   return (regprog_T *)prog;
 
 fail:
-  free(prog);
+  xfree(prog);
   prog = NULL;
 #ifdef REGEXP_DEBUG
   nfa_postfix_dump(expr, FAIL);
 #endif
-#ifdef REGEXP_DEBUG
   nfa_regengine.expr = NULL;
-#endif
   goto out;
 }
 
@@ -6333,11 +6409,9 @@ fail:
 static void nfa_regfree(regprog_T *prog)
 {
   if (prog != NULL) {
-    free(((nfa_regprog_T *)prog)->match_text);
-#ifdef REGEXP_DEBUG
-    free(((nfa_regprog_T *)prog)->pattern);
-#endif
-    free(prog);
+    xfree(((nfa_regprog_T *)prog)->match_text);
+    xfree(((nfa_regprog_T *)prog)->pattern);
+    xfree(prog);
   }
 }
 
@@ -6347,7 +6421,7 @@ static void nfa_regfree(regprog_T *prog)
  * Uses curbuf for line count and 'iskeyword'.
  * If "line_lbr" is true, consider a "\n" in "line" to be a line break.
  *
- * Return TRUE if there is a match, FALSE if not.
+ * Returns <= 0 for failure, number of lines contained in the match otherwise.
  */
 static int 
 nfa_regexec_nl (
@@ -6366,7 +6440,7 @@ nfa_regexec_nl (
   ireg_ic = rmp->rm_ic;
   ireg_icombine = FALSE;
   ireg_maxcol = 0;
-  return nfa_regexec_both(line, col) != 0;
+  return nfa_regexec_both(line, col);
 }
 
 /// Matches a regexp against multiple lines.
@@ -6379,7 +6453,7 @@ nfa_regexec_nl (
 /// @param col Column to start looking for match
 /// @param tm Timeout limit or NULL
 ///
-/// @return Zero if there is no match and number of lines contained in the match
+/// @return <= 0 if there is no match and number of lines contained in the match
 /// otherwise.
 ///
 /// @note The body is the same as bt_regexec() except for nfa_regexec_both()

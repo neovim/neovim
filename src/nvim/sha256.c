@@ -8,16 +8,13 @@
 /// at your choice.
 ///
 /// Vim specific notes:
-/// Functions exported by this file:
-///  2. sha2_seed() generates a random header.
 /// sha256_self_test() is implicitly called once.
 
-#include <inttypes.h>
-#include <string.h>
+#include <stddef.h>        // for size_t
+#include <stdio.h>         // for snprintf().
 
-#include "nvim/os/time.h"
-#include "nvim/vim.h"
-#include "nvim/sha256.h"
+#include "nvim/sha256.h"   // for context_sha256_T
+#include "nvim/vim.h"      // for STRCPY()/STRLEN().
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "sha256.c.generated.h"
@@ -51,9 +48,10 @@ void sha256_start(context_sha256_T *ctx)
   ctx->state[7] = 0x5BE0CD19;
 }
 
-static void sha256_process(context_sha256_T *ctx, char_u data[64])
+static void sha256_process(context_sha256_T *ctx,
+                           const char_u data[SHA256_BUFFER_SIZE])
 {
-  uint32_t temp1, temp2, W[64];
+  uint32_t temp1, temp2, W[SHA256_BUFFER_SIZE];
   uint32_t A, B, C, D, E, F, G, H;
 
   GET_UINT32(W[0],  data,  0);
@@ -179,23 +177,22 @@ static void sha256_process(context_sha256_T *ctx, char_u data[64])
   ctx->state[7] += H;
 }
 
-void sha256_update(context_sha256_T *ctx, char_u *input, uint32_t length)
+void sha256_update(context_sha256_T *ctx, const char_u *input, size_t length)
 {
-  uint32_t left, fill;
-
   if (length == 0) {
     return;
   }
 
-  left = ctx->total[0] & 0x3F;
-  fill = 64 - left;
+  uint32_t left = ctx->total[0] & (SHA256_BUFFER_SIZE-1);  // left < buf size
 
-  ctx->total[0] += length;
+  ctx->total[0] += (uint32_t) length;
   ctx->total[0] &= 0xFFFFFFFF;
 
   if (ctx->total[0] < length) {
     ctx->total[1]++;
   }
+
+  size_t fill = SHA256_BUFFER_SIZE - left;
 
   if (left && (length >= fill)) {
     memcpy((void *)(ctx->buffer + left), (void *)input, fill);
@@ -205,10 +202,10 @@ void sha256_update(context_sha256_T *ctx, char_u *input, uint32_t length)
     left = 0;
   }
 
-  while (length >= 64) {
+  while (length >= SHA256_BUFFER_SIZE) {
     sha256_process(ctx, input);
-    length -= 64;
-    input  += 64;
+    length -= SHA256_BUFFER_SIZE;
+    input  += SHA256_BUFFER_SIZE;
   }
 
   if (length) {
@@ -216,14 +213,14 @@ void sha256_update(context_sha256_T *ctx, char_u *input, uint32_t length)
   }
 }
 
-static char_u sha256_padding[64] = {
+static char_u sha256_padding[SHA256_BUFFER_SIZE] = {
   0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
-void sha256_finish(context_sha256_T *ctx, char_u digest[32])
+void sha256_finish(context_sha256_T *ctx, char_u digest[SHA256_SUM_SIZE])
 {
   uint32_t last, padn;
   uint32_t high, low;
@@ -251,6 +248,7 @@ void sha256_finish(context_sha256_T *ctx, char_u digest[32])
   PUT_UINT32(ctx->state[7], digest, 28);
 }
 
+#define SHA_STEP 2
 
 /// Gets the hex digest of the buffer.
 ///
@@ -261,25 +259,25 @@ void sha256_finish(context_sha256_T *ctx, char_u digest[32])
 ///
 /// @returns hex digest of "buf[buf_len]" in a static array.
 ///          if "salt" is not NULL also do "salt[salt_len]".
-char_u *sha256_bytes(char_u *buf, int buf_len, char_u *salt, int salt_len)
+char_u *sha256_bytes(const char_u *restrict buf,  size_t buf_len,
+                     const char_u *restrict salt, size_t salt_len)
 {
-  char_u sha256sum[32];
-  static char_u hexit[65];
-  int j;
+  char_u sha256sum[SHA256_SUM_SIZE];
+  static char_u hexit[SHA256_BUFFER_SIZE + 1];  // buf size + NULL
   context_sha256_T ctx;
 
   sha256_self_test();
 
   sha256_start(&ctx);
-    sha256_update(&ctx, buf, buf_len);
+  sha256_update(&ctx, buf, buf_len);
 
   if (salt != NULL) {
     sha256_update(&ctx, salt, salt_len);
   }
   sha256_finish(&ctx, sha256sum);
 
-  for (j = 0; j < 32; j++) {
-    sprintf((char *) hexit + j * 2, "%02x", sha256sum[j]);
+  for (size_t j = 0; j < SHA256_SUM_SIZE; j++) {
+    snprintf((char *) hexit + j * SHA_STEP, SHA_STEP+1, "%02x", sha256sum[j]);
   }
   hexit[sizeof(hexit) - 1] = '\0';
   return hexit;
@@ -303,85 +301,49 @@ static char *sha_self_test_vector[] = {
 
 /// Perform a test on the SHA256 algorithm.
 ///
-/// @return FAIL or OK.
-int sha256_self_test(void)
+/// @returns true if not failures generated.
+bool sha256_self_test(void)
 {
-  int i, j;
-  char output[65];
+  char output[SHA256_BUFFER_SIZE + 1];  // buf size + NULL
   context_sha256_T ctx;
   char_u buf[1000];
-  char_u sha256sum[32];
-  static int failures = 0;
+  char_u sha256sum[SHA256_SUM_SIZE];
   char_u *hexit;
-  static int sha256_self_tested = 0;
 
-  if (sha256_self_tested > 0) {
-    return failures > 0 ? FAIL : OK;
+  static bool sha256_self_tested = false;
+  static bool failures = false;
+
+  if (sha256_self_tested) {
+    return failures == false;
   }
-  sha256_self_tested = 1;
+  sha256_self_tested = true;
 
-  for (i = 0; i < 3; i++) {
+  for (size_t i = 0; i < 3; i++) {
     if (i < 2) {
       hexit = sha256_bytes((char_u *) sha_self_test_msg[i],
-                           (int) STRLEN(sha_self_test_msg[i]),
+                           STRLEN(sha_self_test_msg[i]),
                            NULL, 0);
       STRCPY(output, hexit);
     } else {
       sha256_start(&ctx);
       memset(buf, 'a', 1000);
 
-      for (j = 0; j < 1000; j++) {
-        sha256_update(&ctx, (char_u *) buf, 1000);
+      for (size_t j = 0; j < 1000; j++) {
+        sha256_update(&ctx, buf, 1000);
       }
       sha256_finish(&ctx, sha256sum);
 
-      for (j = 0; j < 32; j++) {
-        sprintf(output + j * 2, "%02x", sha256sum[j]);
+      for (size_t j = 0; j < SHA256_SUM_SIZE; j++) {
+        snprintf(output + j * SHA_STEP, SHA_STEP+1, "%02x", sha256sum[j]);
       }
     }
 
-    if (memcmp(output, sha_self_test_vector[i], 64)) {
-      failures++;
+    if (memcmp(output, sha_self_test_vector[i], SHA256_BUFFER_SIZE)) {
+      failures = true;
       output[sizeof(output) - 1] = '\0';
 
       // printf("sha256_self_test %d failed %s\n", i, output);
     }
   }
-  return failures > 0 ? FAIL : OK;
-}
-
-/// Fill "header[header_len]" with random_data.
-/// Also "salt[salt_len]" when "salt" is not NULL.
-///
-/// @param header
-/// @param header_len
-/// @param salt
-/// @param salt_len
-void sha2_seed(char_u *header, int header_len, char_u *salt, int salt_len)
-{
-  static char_u random_data[1000];
-  char_u sha256sum[32];
-  context_sha256_T ctx;
-
-  srand((unsigned int) os_hrtime());
-
-  int i;
-  for (i = 0; i < (int) sizeof(random_data) - 1; i++) {
-    random_data[i] = (char_u) ((os_hrtime() ^ rand()) & 0xff);
-  }
-  sha256_start(&ctx);
-  sha256_update(&ctx, (char_u *) random_data, sizeof(random_data));
-  sha256_finish(&ctx, sha256sum);
-
-  // put first block into header.
-  for (i = 0; i < header_len; i++) {
-    header[i] = sha256sum[i % sizeof(sha256sum)];
-  }
-
-  // put remaining block into salt.
-  if (salt != NULL) {
-    for (i = 0; i < salt_len; i++) {
-      salt[i] = sha256sum[(i + header_len) % sizeof(sha256sum)];
-    }
-  }
+  return failures == false;
 }

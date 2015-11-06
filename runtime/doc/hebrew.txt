@@ -10,11 +10,6 @@ The supporting 'rightleft' functionality was originally created by Avner
 Lottem. <alottem at gmail dot com>  Ron Aaron <ron at ronware dot org> is
 currently helping support these features.
 
-{Vi does not have any of these commands}
-
-All this is only available when the |+rightleft| feature was enabled at
-compile time.
-
 
 Introduction
 ------------

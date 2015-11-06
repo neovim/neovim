@@ -1,4 +1,4 @@
-*tabpage.txt*   For Vim version 7.4.  Last change: 2012 Aug 08
+*tabpage.txt*   For Vim version 7.4.  Last change: 2015 Apr 18
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -15,10 +15,6 @@ when used in combination with more than one tab page.
 3. Other items			|tab-page-other|
 4. Setting 'tabline'		|setting-tabline|
 5. Setting 'guitablabel'	|setting-guitablabel|
-
-{Vi does not have any of these commands}
-{not able to use multiple tab pages when the |+windows| feature was disabled
-at compile time}
 
 ==============================================================================
 1. Introduction						*tab-page-intro*
@@ -61,16 +57,25 @@ In the GUI tab pages line you can use the right mouse button to open menu.
 :[count]tabe[dit]				*:tabe* *:tabedit* *:tabnew*
 :[count]tabnew
 		Open a new tab page with an empty window, after the current
-		tab page.  For [count] see |:tab| below.
+		tab page. If [count] is given the new tab page appears after
+		the tabpage [count] otherwise the new tab page will appear
+		after the current one. >
+		    :tabnew     " opens tabpage after the current one
+		    :.tabnew    " as above
+		    :+tabnew    " opens tabpage after the next tab page
+				" note: it is one further than :tabnew
+		    :-tabnew    " opens tabpage before the current
+		    :0tabnew    " opens tabpage before the first one
+		    :$tabnew    " opens tabpage after the last one
 
 :[count]tabe[dit] [++opt] [+cmd] {file}
 :[count]tabnew [++opt] [+cmd] {file}
 		Open a new tab page and edit {file}, like with |:edit|.
-		For [count] see |:tab| below.
+		For [count] see |:tabnew| above.
 
 :[count]tabf[ind] [++opt] [+cmd] {file}			*:tabf* *:tabfind*
 		Open a new tab page and edit {file} in 'path', like with
-		|:find|.  For [count] see |:tab| below.
+		|:find|.  For [count] see |:tabnew| above.
 		{not available when the |+file_in_path| feature was disabled
 		at compile time}
 
@@ -110,12 +115,18 @@ something else.
 		- When 'hidden' is not set, [!] is not used, a buffer has
 		  changes, and there is no other window on this buffer.
 		Changes to the buffer are not written and won't get lost, so
-		this is a "safe" command.
+		this is a "safe" command. >
+                    :tabclose   " close the current tab page
 
+:{count}tabc[lose][!]
 :tabc[lose][!] {count}
 		Close tab page {count}.  Fails in the same way as `:tabclose`
-		above.
-
+		above. >
+		    :-tabclose      " close the previous tab page
+		    :+tabclose      " close the next tab page
+		    :1tabclose      " close the first tab page
+		    :$tabclose      " close the last tab page
+<
 							*:tabo* *:tabonly*
 :tabo[nly][!]	Close all other tab pages.
 		When the 'hidden' option is set, all buffers in closed windows
@@ -124,7 +135,16 @@ something else.
 		modified buffers are written.  Otherwise, windows that have
 		buffers that are modified are not removed, unless the [!] is
 		given, then they become hidden.  But modified buffers are
-		never abandoned, so changes cannot get lost.
+		never abandoned, so changes cannot get lost. >
+		    :tabonly " close all tab pages except the current one
+
+:{count}tabo[nly][!]
+		Close all tab pages except the {count}th one. >
+		    :.tabonly " one
+		    :-tabonly " close all tab pages except the previous one
+		    :+tabonly " close all tab pages except the next one
+		    :1tabonly " close all tab pages except the first one
+		    :$tabonly " close all tab pages except the last one.
 
 
 SWITCHING TO ANOTHER TAB PAGE:
@@ -176,8 +196,15 @@ REORDERING TAB PAGES:
 :[N]tabm[ove]
 		Move the current tab page to after tab page N.  Use zero to
 		make the current tab page the first one.  Without N the tab
-		page is made the last one.
-
+		page is made the last one. >
+		    :-tabmove   " move the tab page to the left
+		    :tabmove    " move the tab page to the right
+		    :.tabmove   " as above
+		    :+tabmove   " as above
+		    :0tabmove   " move the tab page to the beginning  of the tab
+				" list
+		    :$tabmove   " move the tab page to the end of the tab list
+<
 :tabm[ove] +[N]
 :tabm[ove] -[N]
 		Move the current tab page N places to the right (with +) or to
@@ -191,8 +218,10 @@ clarification what +N means in this context see |[range]|.
 LOOPING OVER TAB PAGES:
 
 							*:tabd* *:tabdo*
-:tabd[o] {cmd}	Execute {cmd} in each tab page.
-		It works like doing this: >
+:[range]tabd[o] {cmd}
+		Execute {cmd} in each tab page or, if [range] is given, only
+		in tabpages which tab page number is in the [range]. It works
+		like doing this: >
 			:tabfirst
 			:{cmd}
 			:tabnext
@@ -205,8 +234,6 @@ LOOPING OVER TAB PAGES:
 		current tab page.
 		{cmd} can contain '|' to concatenate several commands.
 		{cmd} must not open or close tab pages or reorder them.
-		{not in Vi} {not available when compiled without the
-		|+listcmds| feature}
 		Also see |:windo|, |:argdo| and |:bufdo|.
 
 ==============================================================================
@@ -250,6 +277,9 @@ When switching to another tab page the order is:
 	TabEnter
 	WinEnter
 	BufEnter
+
+When entering a new tab page (|:tabnew|), TabNew is triggered before TabEnter
+and after WinEnter.
 
 ==============================================================================
 4. Setting 'tabline'					*setting-tabline*

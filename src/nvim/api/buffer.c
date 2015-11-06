@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "nvim/api/buffer.h"
 #include "nvim/api/private/helpers.h"
@@ -57,7 +58,7 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
     rv = slice.items[0].data.string;
   }
 
-  free(slice.items);
+  xfree(slice.items);
 
   return rv;
 }
@@ -69,7 +70,6 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 /// @param line The new line.
 /// @param[out] err Details of an error that may have occurred
 void buffer_set_line(Buffer buffer, Integer index, String line, Error *err)
-  FUNC_ATTR_DEFERRED
 {
   Object l = STRING_OBJ(line);
   Array array = {.items = &l, .size = 1};
@@ -82,7 +82,6 @@ void buffer_set_line(Buffer buffer, Integer index, String line, Error *err)
 /// @param index The line index
 /// @param[out] err Details of an error that may have occurred
 void buffer_del_line(Buffer buffer, Integer index, Error *err)
-  FUNC_ATTR_DEFERRED
 {
   Array array = ARRAY_DICT_INIT;
   buffer_set_line_slice(buffer, index, index, true, true, array, err);
@@ -107,7 +106,7 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
   Array rv = ARRAY_DICT_INIT;
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
-  if (!buf) {
+  if (!buf || !inbounds(buf, start)) {
     return rv;
   }
 
@@ -132,16 +131,21 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
     }
 
     const char *bufstr = (char *) ml_get_buf(buf, (linenr_T) lnum, false);
-    rv.items[i] = STRING_OBJ(cstr_to_string(bufstr));
+    Object str = STRING_OBJ(cstr_to_string(bufstr));
+
+    // Vim represents NULs as NLs, but this may confuse clients.
+    strchrsub(str.data.string.data, '\n', '\0');
+
+    rv.items[i] = str;
   }
 
 end:
   if (err->set) {
     for (size_t i = 0; i < rv.size; i++) {
-      free(rv.items[i].data.string.data);
+      xfree(rv.items[i].data.string.data);
     }
 
-    free(rv.items);
+    xfree(rv.items);
     rv.items = NULL;
   }
 
@@ -165,11 +169,15 @@ void buffer_set_line_slice(Buffer buffer,
                       Boolean include_end,
                       ArrayOf(String) replacement,
                       Error *err)
-  FUNC_ATTR_DEFERRED
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
+    return;
+  }
+
+  if (!inbounds(buf, start)) {
+    api_set_error(err, Validation, _("Index out of bounds"));
     return;
   }
 
@@ -201,7 +209,18 @@ void buffer_set_line_slice(Buffer buffer,
     }
 
     String l = replacement.items[i].data.string;
-    lines[i] = xmemdupz(l.data, l.size);
+
+    // Fill lines[i] with l's contents. Disallow newlines in the middle of a
+    // line and convert NULs to newlines to avoid truncation.
+    lines[i] = xmallocz(l.size);
+    for (size_t j = 0; j < l.size; j++) {
+      if (l.data[j] == '\n') {
+        api_set_error(err, Exception, _("string cannot contain newlines"));
+        new_len = i + 1;
+        goto end;
+      }
+      lines[i][j] = (char) (l.data[j] == '\0' ? '\n' : l.data[j]);
+    }
   }
 
   try_start();
@@ -263,7 +282,7 @@ void buffer_set_line_slice(Buffer buffer,
     }
 
     // Same as with replacing, but we also need to free lines
-    free(lines[i]);
+    xfree(lines[i]);
     lines[i] = NULL;
     extra++;
   }
@@ -284,15 +303,15 @@ void buffer_set_line_slice(Buffer buffer,
 
 end:
   for (size_t i = 0; i < new_len; i++) {
-    free(lines[i]);
+    xfree(lines[i]);
   }
 
-  free(lines);
+  xfree(lines);
   restore_win_for_buf(save_curwin, save_curtab, save_curbuf);
   try_end(err);
 }
 
-/// Gets a buffer variable
+/// Gets a buffer-scoped (b:) variable.
 ///
 /// @param buffer The buffer handle
 /// @param name The variable name
@@ -309,7 +328,7 @@ Object buffer_get_var(Buffer buffer, String name, Error *err)
   return dict_get_value(buf->b_vars, name, err);
 }
 
-/// Sets a buffer variable. Passing 'nil' as value deletes the variable.
+/// Sets a buffer-scoped (b:) variable. 'nil' value deletes the variable.
 ///
 /// @param buffer The buffer handle
 /// @param name The variable name
@@ -317,7 +336,6 @@ Object buffer_get_var(Buffer buffer, String name, Error *err)
 /// @param[out] err Details of an error that may have occurred
 /// @return The old value
 Object buffer_set_var(Buffer buffer, String name, Object value, Error *err)
-  FUNC_ATTR_DEFERRED
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -353,7 +371,6 @@ Object buffer_get_option(Buffer buffer, String name, Error *err)
 /// @param value The option value
 /// @param[out] err Details of an error that may have occurred
 void buffer_set_option(Buffer buffer, String name, Object value, Error *err)
-  FUNC_ATTR_DEFERRED
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -404,7 +421,6 @@ String buffer_get_name(Buffer buffer, Error *err)
 /// @param name The buffer name
 /// @param[out] err Details of an error that may have occurred
 void buffer_set_name(Buffer buffer, String name, Error *err)
-  FUNC_ATTR_DEFERRED
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -450,9 +466,9 @@ void buffer_insert(Buffer buffer,
                    Integer lnum,
                    ArrayOf(String) lines,
                    Error *err)
-  FUNC_ATTR_DEFERRED
 {
-  buffer_set_line_slice(buffer, lnum, lnum, false, true, lines, err);
+  bool end_start = lnum < 0;
+  buffer_set_line_slice(buffer, lnum, lnum, !end_start, end_start, lines, err);
 }
 
 /// Return a tuple (row,col) representing the position of the named mark
@@ -499,33 +515,6 @@ ArrayOf(Integer, 2) buffer_get_mark(Buffer buffer, String name, Error *err)
   return rv;
 }
 
-// Find a window that contains "buf" and switch to it.
-// If there is no such window, use the current window and change "curbuf".
-// Caller must initialize save_curbuf to NULL.
-// restore_win_for_buf() MUST be called later!
-static void switch_to_win_for_buf(buf_T *buf,
-                                  win_T **save_curwinp,
-                                  tabpage_T **save_curtabp,
-                                  buf_T **save_curbufp)
-{
-  win_T *wp;
-  tabpage_T *tp;
-
-  if (!find_win_for_buf(buf, &wp, &tp)
-      || switch_win(save_curwinp, save_curtabp, wp, tp, true) == FAIL)
-    switch_buffer(save_curbufp, buf);
-}
-
-static void restore_win_for_buf(win_T *save_curwin,
-                                tabpage_T *save_curtab,
-                                buf_T *save_curbuf)
-{
-  if (save_curbuf == NULL) {
-    restore_win(save_curwin, save_curtab, true);
-  } else {
-    restore_buffer(save_curbuf);
-  }
-}
 
 // Check if deleting lines made the cursor position invalid.
 // Changed the lines from "lo" to "hi" and added "extra" lines (negative if
@@ -559,4 +548,11 @@ static int64_t normalize_index(buf_T *buf, int64_t index)
   // Fix if > line_count
   index = index > buf->b_ml.ml_line_count ? buf->b_ml.ml_line_count : index;
   return index;
+}
+
+// Returns true if the 0-indexed `index` is within the 1-indexed buffer bounds.
+static bool inbounds(buf_T *buf, int64_t index)
+{
+  linenr_T nlines = buf->b_ml.ml_line_count;
+  return index >= -nlines && index < nlines;
 }

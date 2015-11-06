@@ -602,7 +602,7 @@ static int get_char_class(char_u **pp)
   int i;
 
   if ((*pp)[1] == ':') {
-    for (i = 0; i < (int)(sizeof(class_names) / sizeof(*class_names)); ++i)
+    for (i = 0; i < (int)ARRAY_SIZE(class_names); ++i)
       if (STRNCMP(*pp + 2, class_names[i], STRLEN(class_names[i])) == 0) {
         *pp += STRLEN(class_names[i]) + 2;
         return i;
@@ -961,10 +961,10 @@ static void reg_equi_class(int c)
       REGMBC(0x107) REGMBC(0x109) REGMBC(0x10b)
       REGMBC(0x10d)
       return;
-    case 'd': CASEMBC(0x10f) CASEMBC(0x111) CASEMBC(0x1d0b)
-      CASEMBC(0x1e11)
+    case 'd': CASEMBC(0x10f) CASEMBC(0x111) CASEMBC(0x1e0b)
+      CASEMBC(0x1e0f) CASEMBC(0x1e11)
       regmbc('d'); REGMBC(0x10f) REGMBC(0x111)
-      REGMBC(0x1e0b) REGMBC(0x01e0f) REGMBC(0x1e11)
+      REGMBC(0x1e0b) REGMBC(0x1e0f) REGMBC(0x1e11)
       return;
     case 'e': case '\350': case '\351': case '\352': case '\353':
       CASEMBC(0x113) CASEMBC(0x115) CASEMBC(0x117) CASEMBC(0x119)
@@ -1104,7 +1104,7 @@ static int get_coll_element(char_u **pp)
   int l = 1;
   char_u      *p = *pp;
 
-  if (p[1] == '.') {
+  if (p[0] != NUL && p[1] == '.') {
     if (has_mbyte)
       l = (*mb_ptr2len)(p + 2);
     if (p[l + 2] == '.' && p[l + 3] == ']') {
@@ -1120,12 +1120,10 @@ static int get_coll_element(char_u **pp)
 }
 
 static int reg_cpo_lit; /* 'cpoptions' contains 'l' flag */
-static int reg_cpo_bsl; /* 'cpoptions' contains '\' flag */
 
 static void get_cpo_flags(void)
 {
   reg_cpo_lit = vim_strchr(p_cpo, CPO_LITERAL) != NULL;
-  reg_cpo_bsl = vim_strchr(p_cpo, CPO_BACKSL) != NULL;
 }
 
 /*
@@ -1149,15 +1147,15 @@ static char_u *skip_anyof(char_u *p)
       if (*p != ']' && *p != NUL)
         mb_ptr_adv(p);
     } else if (*p == '\\'
-               && !reg_cpo_bsl
                && (vim_strchr(REGEXP_INRANGE, p[1]) != NULL
                    || (!reg_cpo_lit && vim_strchr(REGEXP_ABBR, p[1]) != NULL)))
       p += 2;
     else if (*p == '[') {
       if (get_char_class(&p) == CLASS_NONE
           && get_equi_class(&p) == 0
-          && get_coll_element(&p) == 0)
-        ++p;         /* It was not a class name */
+          && get_coll_element(&p) == 0
+          && *p != NUL)
+        ++p;         /* It is not a class name and not NUL */
     } else
       ++p;
   }
@@ -1265,7 +1263,7 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
   regcode = r->program;
   regc(REGMAGIC);
   if (reg(REG_NOPAREN, &flags) == NULL || reg_toolong) {
-    free(r);
+    xfree(r);
     if (reg_toolong)
       EMSG_RET_NULL(_("E339: Pattern too long"));
     return NULL;
@@ -1349,7 +1347,7 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
  */
 static void bt_regfree(regprog_T *prog)
 {
-  free(prog);
+  xfree(prog);
 }
 
 /*
@@ -1693,7 +1691,7 @@ static char_u *regpiece(int *flagp)
     if (lop == BEHIND || lop == NOBEHIND) {
       if (nr < 0)
         nr = 0;                 /* no limit is same as zero limit */
-      reginsert_nr(lop, nr, ret);
+      reginsert_nr(lop, (uint32_t)nr, ret);
     } else
       reginsert(lop, ret);
     break;
@@ -2120,16 +2118,16 @@ static char_u *regatom(int *flagp)
     }
 
     default:
-      if (VIM_ISDIGIT(c) || c == '<' || c == '>'
+      if (ascii_isdigit(c) || c == '<' || c == '>'
           || c == '\'') {
-        long_u n = 0;
+        uint32_t n = 0;
         int cmp;
 
         cmp = c;
         if (cmp == '<' || cmp == '>')
           c = getchr();
-        while (VIM_ISDIGIT(c)) {
-          n = n * 10 + (c - '0');
+        while (ascii_isdigit(c)) {
+          n = n * 10 + (uint32_t)(c - '0');
           c = getchr();
         }
         if (c == '\'' && n == 0) {
@@ -2155,7 +2153,7 @@ static char_u *regatom(int *flagp)
           else {
             /* put the number and the optional
              * comparator after the opcode */
-            regcode = re_put_long(regcode, n);
+            regcode = re_put_uint32(regcode, n);
             *regcode++ = cmp;
           }
           break;
@@ -2221,7 +2219,7 @@ collection:
               }
 
               /* Handle \o40, \x20 and \u20AC style sequences */
-              if (endc == '\\' && !reg_cpo_lit && !reg_cpo_bsl)
+              if (endc == '\\' && !reg_cpo_lit)
                 endc = coll_get_char();
 
               if (startc > endc)
@@ -2244,10 +2242,8 @@ collection:
            * Only "\]", "\^", "\]" and "\\" are special in Vi.  Vim
            * accepts "\t", "\e", etc., but only when the 'l' flag in
            * 'cpoptions' is not included.
-           * Posix doesn't recognize backslash at all.
            */
           else if (*regparse == '\\'
-                   && !reg_cpo_bsl
                    && (vim_strchr(REGEXP_INRANGE, regparse[1]) != NULL
                        || (!reg_cpo_lit
                            && vim_strchr(REGEXP_ABBR,
@@ -2324,7 +2320,7 @@ collection:
               break;
             case CLASS_DIGIT:
               for (cu = 1; cu <= 255; cu++)
-                if (VIM_ISDIGIT(cu))
+                if (ascii_isdigit(cu))
                   regc(cu);
               break;
             case CLASS_GRAPH:
@@ -2359,7 +2355,7 @@ collection:
               break;
             case CLASS_XDIGIT:
               for (cu = 1; cu <= 255; cu++)
-                if (vim_isxdigit(cu))
+                if (ascii_isxdigit(cu))
                   regc(cu);
               break;
             case CLASS_TAB:
@@ -2580,7 +2576,8 @@ static void reginsert_nr(int op, long val, char_u *opnd)
   *place++ = op;
   *place++ = NUL;
   *place++ = NUL;
-  re_put_long(place, (long_u)val);
+  assert(val >= 0 && (uintmax_t)val <= UINT32_MAX);
+  re_put_uint32(place, (uint32_t)val);
 }
 
 /*
@@ -2609,15 +2606,17 @@ static void reginsert_limits(int op, long minval, long maxval, char_u *opnd)
   *place++ = op;
   *place++ = NUL;
   *place++ = NUL;
-  place = re_put_long(place, (long_u)minval);
-  place = re_put_long(place, (long_u)maxval);
+  assert(minval >= 0 && (uintmax_t)minval <= UINT32_MAX);
+  place = re_put_uint32(place, (uint32_t)minval);
+  assert(maxval >= 0 && (uintmax_t)maxval <= UINT32_MAX);
+  place = re_put_uint32(place, (uint32_t)maxval);
   regtail(opnd, place);
 }
 
 /*
- * Write a long as four bytes at "p" and return pointer to the next char.
+ * Write a four bytes number at "p" and return pointer to the next char.
  */
-static char_u *re_put_long(char_u *p, long_u val)
+static char_u *re_put_uint32(char_u *p, uint32_t val)
 {
   *p++ = (char_u) ((val >> 24) & 0377);
   *p++ = (char_u) ((val >> 16) & 0377);
@@ -2735,150 +2734,152 @@ static int peekchr(void)
 {
   static int after_slash = FALSE;
 
-  if (curchr == -1) {
-    switch (curchr = regparse[0]) {
-    case '.':
-    case '[':
-    case '~':
-      /* magic when 'magic' is on */
-      if (reg_magic >= MAGIC_ON)
-        curchr = Magic(curchr);
-      break;
-    case '(':
-    case ')':
-    case '{':
-    case '%':
-    case '+':
-    case '=':
-    case '?':
-    case '@':
-    case '!':
-    case '&':
-    case '|':
-    case '<':
-    case '>':
-    case '#':           /* future ext. */
-    case '"':           /* future ext. */
-    case '\'':          /* future ext. */
-    case ',':           /* future ext. */
-    case '-':           /* future ext. */
-    case ':':           /* future ext. */
-    case ';':           /* future ext. */
-    case '`':           /* future ext. */
-    case '/':           /* Can't be used in / command */
-      /* magic only after "\v" */
-      if (reg_magic == MAGIC_ALL)
-        curchr = Magic(curchr);
-      break;
-    case '*':
-      /* * is not magic as the very first character, eg "?*ptr", when
-       * after '^', eg "/^*ptr" and when after "\(", "\|", "\&".  But
-       * "\(\*" is not magic, thus must be magic if "after_slash" */
-      if (reg_magic >= MAGIC_ON
-          && !at_start
-          && !(prev_at_start && prevchr == Magic('^'))
-          && (after_slash
-              || (prevchr != Magic('(')
-                  && prevchr != Magic('&')
-                  && prevchr != Magic('|'))))
-        curchr = Magic('*');
-      break;
-    case '^':
-      /* '^' is only magic as the very first character and if it's after
-       * "\(", "\|", "\&' or "\n" */
-      if (reg_magic >= MAGIC_OFF
-          && (at_start
-              || reg_magic == MAGIC_ALL
-              || prevchr == Magic('(')
-              || prevchr == Magic('|')
-              || prevchr == Magic('&')
-              || prevchr == Magic('n')
-              || (no_Magic(prevchr) == '('
-                  && prevprevchr == Magic('%')))) {
-        curchr = Magic('^');
-        at_start = TRUE;
-        prev_at_start = FALSE;
-      }
-      break;
-    case '$':
-      /* '$' is only magic as the very last char and if it's in front of
-       * either "\|", "\)", "\&", or "\n" */
-      if (reg_magic >= MAGIC_OFF) {
-        char_u *p = regparse + 1;
-        bool is_magic_all = (reg_magic == MAGIC_ALL);
+  if (curchr != -1) {
+    return curchr;
+  }
 
-        // ignore \c \C \m \M \v \V and \Z after '$'
-        while (p[0] == '\\' && (p[1] == 'c' || p[1] == 'C'
-                                || p[1] == 'm' || p[1] == 'M'
-                                || p[1] == 'v' || p[1] == 'V'
-                                || p[1] == 'Z')) {
-          if (p[1] == 'v') {
-            is_magic_all = true;
-          } else if (p[1] == 'm' || p[1] == 'M' || p[1] == 'V') {
-            is_magic_all = false;
-          }
-          p += 2;
-        }
-        if (p[0] == NUL
-            || (p[0] == '\\'
-                && (p[1] == '|' || p[1] == '&' || p[1] == ')'
-                    || p[1] == 'n'))
-            || (is_magic_all
-                && (p[0] == '|' || p[0] == '&' || p[0] == ')'))
-            || reg_magic == MAGIC_ALL) {
-          curchr = Magic('$');
-        }
-      }
-      break;
-    case '\\':
-    {
-      int c = regparse[1];
-
-      if (c == NUL)
-        curchr = '\\';                  /* trailing '\' */
-      else if (
-        c <= '~' && META_flags[c]
-        ) {
-        /*
-         * META contains everything that may be magic sometimes,
-         * except ^ and $ ("\^" and "\$" are only magic after
-         * "\v").  We now fetch the next character and toggle its
-         * magicness.  Therefore, \ is so meta-magic that it is
-         * not in META.
-         */
-        curchr = -1;
-        prev_at_start = at_start;
-        at_start = FALSE;               /* be able to say "/\*ptr" */
-        ++regparse;
-        ++after_slash;
-        peekchr();
-        --regparse;
-        --after_slash;
-        curchr = toggle_Magic(curchr);
-      } else if (vim_strchr(REGEXP_ABBR, c)) {
-        /*
-         * Handle abbreviations, like "\t" for TAB -- webb
-         */
-        curchr = backslash_trans(c);
-      } else if (reg_magic == MAGIC_NONE && (c == '$' || c == '^'))
-        curchr = toggle_Magic(c);
-      else {
-        /*
-         * Next character can never be (made) magic?
-         * Then backslashing it won't do anything.
-         */
-        if (has_mbyte)
-          curchr = (*mb_ptr2char)(regparse + 1);
-        else
-          curchr = c;
-      }
-      break;
+  switch (curchr = regparse[0]) {
+  case '.':
+  case '[':
+  case '~':
+    /* magic when 'magic' is on */
+    if (reg_magic >= MAGIC_ON)
+      curchr = Magic(curchr);
+    break;
+  case '(':
+  case ')':
+  case '{':
+  case '%':
+  case '+':
+  case '=':
+  case '?':
+  case '@':
+  case '!':
+  case '&':
+  case '|':
+  case '<':
+  case '>':
+  case '#':           /* future ext. */
+  case '"':           /* future ext. */
+  case '\'':          /* future ext. */
+  case ',':           /* future ext. */
+  case '-':           /* future ext. */
+  case ':':           /* future ext. */
+  case ';':           /* future ext. */
+  case '`':           /* future ext. */
+  case '/':           /* Can't be used in / command */
+    /* magic only after "\v" */
+    if (reg_magic == MAGIC_ALL)
+      curchr = Magic(curchr);
+    break;
+  case '*':
+    /* * is not magic as the very first character, eg "?*ptr", when
+     * after '^', eg "/^*ptr" and when after "\(", "\|", "\&".  But
+     * "\(\*" is not magic, thus must be magic if "after_slash" */
+    if (reg_magic >= MAGIC_ON
+        && !at_start
+        && !(prev_at_start && prevchr == Magic('^'))
+        && (after_slash
+            || (prevchr != Magic('(')
+                && prevchr != Magic('&')
+                && prevchr != Magic('|'))))
+      curchr = Magic('*');
+    break;
+  case '^':
+    /* '^' is only magic as the very first character and if it's after
+     * "\(", "\|", "\&' or "\n" */
+    if (reg_magic >= MAGIC_OFF
+        && (at_start
+            || reg_magic == MAGIC_ALL
+            || prevchr == Magic('(')
+            || prevchr == Magic('|')
+            || prevchr == Magic('&')
+            || prevchr == Magic('n')
+            || (no_Magic(prevchr) == '('
+                && prevprevchr == Magic('%')))) {
+      curchr = Magic('^');
+      at_start = TRUE;
+      prev_at_start = FALSE;
     }
+    break;
+  case '$':
+    /* '$' is only magic as the very last char and if it's in front of
+     * either "\|", "\)", "\&", or "\n" */
+    if (reg_magic >= MAGIC_OFF) {
+      char_u *p = regparse + 1;
+      bool is_magic_all = (reg_magic == MAGIC_ALL);
 
-    default:
+      // ignore \c \C \m \M \v \V and \Z after '$'
+      while (p[0] == '\\' && (p[1] == 'c' || p[1] == 'C'
+                              || p[1] == 'm' || p[1] == 'M'
+                              || p[1] == 'v' || p[1] == 'V'
+                              || p[1] == 'Z')) {
+        if (p[1] == 'v') {
+          is_magic_all = true;
+        } else if (p[1] == 'm' || p[1] == 'M' || p[1] == 'V') {
+          is_magic_all = false;
+        }
+        p += 2;
+      }
+      if (p[0] == NUL
+          || (p[0] == '\\'
+              && (p[1] == '|' || p[1] == '&' || p[1] == ')'
+                  || p[1] == 'n'))
+          || (is_magic_all
+              && (p[0] == '|' || p[0] == '&' || p[0] == ')'))
+          || reg_magic == MAGIC_ALL) {
+        curchr = Magic('$');
+      }
+    }
+    break;
+  case '\\':
+  {
+    int c = regparse[1];
+
+    if (c == NUL)
+      curchr = '\\';                  /* trailing '\' */
+    else if (
+      c <= '~' && META_flags[c]
+      ) {
+      /*
+       * META contains everything that may be magic sometimes,
+       * except ^ and $ ("\^" and "\$" are only magic after
+       * "\V").  We now fetch the next character and toggle its
+       * magicness.  Therefore, \ is so meta-magic that it is
+       * not in META.
+       */
+      curchr = -1;
+      prev_at_start = at_start;
+      at_start = FALSE;               /* be able to say "/\*ptr" */
+      ++regparse;
+      ++after_slash;
+      peekchr();
+      --regparse;
+      --after_slash;
+      curchr = toggle_Magic(curchr);
+    } else if (vim_strchr(REGEXP_ABBR, c)) {
+      /*
+       * Handle abbreviations, like "\t" for TAB -- webb
+       */
+      curchr = backslash_trans(c);
+    } else if (reg_magic == MAGIC_NONE && (c == '$' || c == '^'))
+      curchr = toggle_Magic(c);
+    else {
+      /*
+       * Next character can never be (made) magic?
+       * Then backslashing it won't do anything.
+       */
       if (has_mbyte)
-        curchr = (*mb_ptr2char)(regparse);
+        curchr = (*mb_ptr2char)(regparse + 1);
+      else
+        curchr = c;
     }
+    break;
+  }
+
+  default:
+    if (has_mbyte)
+      curchr = (*mb_ptr2char)(regparse);
   }
 
   return curchr;
@@ -2973,7 +2974,7 @@ static int gethexchrs(int maxinputlen)
 
   for (i = 0; i < maxinputlen; ++i) {
     c = regparse[0];
-    if (!vim_isxdigit(c))
+    if (!ascii_isxdigit(c))
       break;
     nr <<= 4;
     nr |= hex2nr(c);
@@ -3080,13 +3081,13 @@ static int read_limits(long *minval, long *maxval)
     reverse = TRUE;
   }
   first_char = regparse;
-  *minval = getdigits(&regparse);
+  *minval = getdigits_long(&regparse);
   if (*regparse == ',') {           /* There is a comma */
-    if (vim_isdigit(*++regparse))
-      *maxval = getdigits(&regparse);
+    if (ascii_isdigit(*++regparse))
+      *maxval = getdigits_long(&regparse);
     else
       *maxval = MAX_LIMIT;
-  } else if (VIM_ISDIGIT(*first_char))
+  } else if (ascii_isdigit(*first_char))
     *maxval = *minval;              /* It was \{n} or \{-n} */
   else
     *maxval = MAX_LIMIT;            /* It was \{} or \{-} */
@@ -3226,13 +3227,13 @@ static garray_T backpos = GA_EMPTY_INIT_VALUE;
 #define REGSTACK_INITIAL        2048
 #define BACKPOS_INITIAL         64
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 void free_regexp_stuff(void)
 {
   ga_clear(&regstack);
   ga_clear(&backpos);
-  free(reg_tofree);
-  free(reg_prev_sub);
+  xfree(reg_tofree);
+  xfree(reg_prev_sub);
 }
 
 #endif
@@ -3269,7 +3270,7 @@ static lpos_T reg_endzpos[NSUBEXP];     /* idem, end pos */
  * Uses curbuf for line count and 'iskeyword'.
  * If "line_lbr" is true, consider a "\n" in "line" to be a line break.
  *
- * Return TRUE if there is a match, FALSE if not.
+ * Returns 0 for failure, number of lines contained in the match otherwise.
  */
 static int 
 bt_regexec_nl (
@@ -3288,7 +3289,10 @@ bt_regexec_nl (
   ireg_ic = rmp->rm_ic;
   ireg_icombine = FALSE;
   ireg_maxcol = 0;
-  return bt_regexec_both(line, col, NULL) != 0;
+
+  long r = bt_regexec_both(line, col, NULL);
+  assert(r <= INT_MAX);
+  return (int)r;
 }
 
 
@@ -3307,8 +3311,6 @@ bt_regexec_nl (
 static long bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
                              linenr_T lnum, colnr_T col, proftime_T *tm)
 {
-  long r;
-
   reg_match = NULL;
   reg_mmatch = rmp;
   reg_buf = buf;
@@ -3320,14 +3322,13 @@ static long bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
   ireg_icombine = FALSE;
   ireg_maxcol = rmp->rmm_maxcol;
 
-  r = bt_regexec_both(NULL, col, tm);
-
-  return r;
+  return bt_regexec_both(NULL, col, tm);
 }
 
 /*
  * Match a regexp against a string ("line" points to the string) or multiple
  * lines ("line" is NULL, use reg_getline()).
+ * Returns 0 for failure, number of lines contained in the match otherwise.
  */
 static long bt_regexec_both(char_u *line,
                             colnr_T col, /* column to start looking for match */
@@ -3504,7 +3505,7 @@ theend:
   /* Free "reg_tofree" when it's a bit big.
    * Free regstack and backpos if they are bigger than their initial size. */
   if (reg_tofreelen > 400) {
-    free(reg_tofree);
+    xfree(reg_tofree);
     reg_tofree = NULL;
   }
   if (regstack.ga_maxlen > REGSTACK_INITIAL)
@@ -3546,8 +3547,8 @@ void unref_extmatch(reg_extmatch_T *em)
 
   if (em != NULL && --em->refcnt <= 0) {
     for (i = 0; i < NSUBEXP; ++i)
-      free(em->matches[i]);
-    free(em);
+      xfree(em->matches[i]);
+    xfree(em);
   }
 }
 
@@ -3641,7 +3642,6 @@ static int reg_match_visual(void)
   int mode;
   colnr_T start, end;
   colnr_T start2, end2;
-  colnr_T cols;
 
   /* Check if the buffer is the current buffer. */
   if (reg_buf != curbuf || VIsual.lnum == 0)
@@ -3684,7 +3684,10 @@ static int reg_match_visual(void)
       end = end2;
     if (top.col == MAXCOL || bot.col == MAXCOL)
       end = MAXCOL;
-    cols = win_linetabsize(wp, regline, (colnr_T)(reginput - regline));
+    unsigned int cols_u = win_linetabsize(wp, regline,
+                                          (colnr_T)(reginput - regline));
+    assert(cols_u <= MAXCOL);
+    colnr_T cols = (colnr_T)cols_u;
     if (cols < start || cols > end - (*p_sel == 'e'))
       return FALSE;
   }
@@ -3860,20 +3863,25 @@ regmatch (
           break;
 
         case RE_LNUM:
-          if (!REG_MULTI || !re_num_cmp((long_u)(reglnum + reg_firstlnum),
-                  scan))
+          assert(reglnum + reg_firstlnum >= 0
+                 && (uintmax_t)(reglnum + reg_firstlnum) <= UINT32_MAX);
+          if (!REG_MULTI || !re_num_cmp((uint32_t)(reglnum + reg_firstlnum),
+                                        scan))
             status = RA_NOMATCH;
           break;
 
         case RE_COL:
-          if (!re_num_cmp((long_u)(reginput - regline) + 1, scan))
+          assert(reginput - regline + 1 >= 0
+                 && (uintmax_t)(reginput - regline + 1) <= UINT32_MAX);
+          if (!re_num_cmp((uint32_t)(reginput - regline + 1), scan))
             status = RA_NOMATCH;
           break;
 
         case RE_VCOL:
-          if (!re_num_cmp((long_u)win_linetabsize(
-                      reg_win == NULL ? curwin : reg_win,
-                      regline, (colnr_T)(reginput - regline)) + 1, scan))
+          if (!re_num_cmp(win_linetabsize(reg_win == NULL ? curwin : reg_win,
+                                          regline,
+                                          (colnr_T)(reginput - regline)) + 1,
+                          scan))
             status = RA_NOMATCH;
           break;
 
@@ -3932,7 +3940,7 @@ regmatch (
           break;
 
         case SIDENT:
-          if (VIM_ISDIGIT(*reginput) || !vim_isIDc(c))
+          if (ascii_isdigit(*reginput) || !vim_isIDc(c))
             status = RA_NOMATCH;
           else
             ADVANCE_REGINPUT();
@@ -3946,7 +3954,7 @@ regmatch (
           break;
 
         case SKWORD:
-          if (VIM_ISDIGIT(*reginput) || !vim_iswordp_buf(reginput, reg_buf))
+          if (ascii_isdigit(*reginput) || !vim_iswordp_buf(reginput, reg_buf))
             status = RA_NOMATCH;
           else
             ADVANCE_REGINPUT();
@@ -3960,7 +3968,7 @@ regmatch (
           break;
 
         case SFNAME:
-          if (VIM_ISDIGIT(*reginput) || !vim_isfilec(c))
+          if (ascii_isdigit(*reginput) || !vim_isfilec(c))
             status = RA_NOMATCH;
           else
             ADVANCE_REGINPUT();
@@ -3974,21 +3982,21 @@ regmatch (
           break;
 
         case SPRINT:
-          if (VIM_ISDIGIT(*reginput) || !vim_isprintc(PTR2CHAR(reginput)))
+          if (ascii_isdigit(*reginput) || !vim_isprintc(PTR2CHAR(reginput)))
             status = RA_NOMATCH;
           else
             ADVANCE_REGINPUT();
           break;
 
         case WHITE:
-          if (!vim_iswhite(c))
+          if (!ascii_iswhite(c))
             status = RA_NOMATCH;
           else
             ADVANCE_REGINPUT();
           break;
 
         case NWHITE:
-          if (c == NUL || vim_iswhite(c))
+          if (c == NUL || ascii_iswhite(c))
             status = RA_NOMATCH;
           else
             ADVANCE_REGINPUT();
@@ -5100,7 +5108,7 @@ regrepeat (
   case SIDENT:
   case SIDENT + ADD_NL:
     while (count < maxcount) {
-      if (vim_isIDc(PTR2CHAR(scan)) && (testval || !VIM_ISDIGIT(*scan))) {
+      if (vim_isIDc(PTR2CHAR(scan)) && (testval || !ascii_isdigit(*scan))) {
         mb_ptr_adv(scan);
       } else if (*scan == NUL) {
         if (!REG_MULTI || !WITH_NL(OP(p)) || reglnum > reg_maxline
@@ -5126,7 +5134,7 @@ regrepeat (
   case SKWORD + ADD_NL:
     while (count < maxcount) {
       if (vim_iswordp_buf(scan, reg_buf)
-          && (testval || !VIM_ISDIGIT(*scan))) {
+          && (testval || !ascii_isdigit(*scan))) {
         mb_ptr_adv(scan);
       } else if (*scan == NUL) {
         if (!REG_MULTI || !WITH_NL(OP(p)) || reglnum > reg_maxline
@@ -5151,7 +5159,7 @@ regrepeat (
   case SFNAME:
   case SFNAME + ADD_NL:
     while (count < maxcount) {
-      if (vim_isfilec(PTR2CHAR(scan)) && (testval || !VIM_ISDIGIT(*scan))) {
+      if (vim_isfilec(PTR2CHAR(scan)) && (testval || !ascii_isdigit(*scan))) {
         mb_ptr_adv(scan);
       } else if (*scan == NUL) {
         if (!REG_MULTI || !WITH_NL(OP(p)) || reglnum > reg_maxline
@@ -5185,7 +5193,7 @@ regrepeat (
         if (got_int)
           break;
       } else if (vim_isprintc(PTR2CHAR(scan)) == 1
-                 && (testval || !VIM_ISDIGIT(*scan))) {
+                 && (testval || !ascii_isdigit(*scan))) {
         mb_ptr_adv(scan);
       } else if (reg_line_lbr && *scan == '\n' && WITH_NL(OP(p)))
         ++scan;
@@ -5597,9 +5605,9 @@ static void save_se_one(save_se_T *savep, char_u **pp)
 /*
  * Compare a number with the operand of RE_LNUM, RE_COL or RE_VCOL.
  */
-static int re_num_cmp(long_u val, char_u *scan)
+static int re_num_cmp(uint32_t val, char_u *scan)
 {
-  long_u n = OPERAND_MIN(scan);
+  uint32_t n = (uint32_t)OPERAND_MIN(scan);
 
   if (OPERAND_CMP(scan) == '>')
     return val > n;
@@ -5630,7 +5638,7 @@ static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T e
       len = (int)STRLEN(regline);
       if (reg_tofree == NULL || len >= (int)reg_tofreelen) {
         len += 50;              /* get some extra */
-        free(reg_tofree);
+        xfree(reg_tofree);
         reg_tofree = xmalloc(len);
         reg_tofreelen = len;
       }
@@ -6214,8 +6222,10 @@ static int cstrncmp(char_u *s1, char_u *s2, int *n)
 
   if (!ireg_ic)
     result = STRNCMP(s1, s2, *n);
-  else
-    result = MB_STRNICMP(s1, s2, *n);
+  else {
+    assert(*n >= 0);
+    result = mb_strnicmp(s1, s2, (size_t)*n);
+  }
 
   /* if it failed and it's utf8 and we want to combineignore: */
   if (result != 0 && enc_utf8 && ireg_icombine) {
@@ -6368,7 +6378,7 @@ char_u *regtilde(char_u *source, int magic)
         STRCPY(tmpsub + len + prevlen, p + 1);
 
         if (newsub != source)                 /* already allocated newsub */
-          free(newsub);
+          xfree(newsub);
         newsub = tmpsub;
         p = newsub + len + prevlen;
       } else if (magic)
@@ -6384,7 +6394,7 @@ char_u *regtilde(char_u *source, int magic)
     }
   }
 
-  free(reg_prev_sub);
+  xfree(reg_prev_sub);
   if (newsub != source)         /* newsub was allocated, just keep it */
     reg_prev_sub = newsub;
   else                          /* no ~ found, need to save newsub  */
@@ -6480,14 +6490,14 @@ static int vim_regsub_both(char_u *source, char_u *dest, int copy, int magic, in
       if (eval_result != NULL) {
         STRCPY(dest, eval_result);
         dst += STRLEN(eval_result);
-        free(eval_result);
+        xfree(eval_result);
         eval_result = NULL;
       }
     } else {
       win_T       *save_reg_win;
       int save_ireg_ic;
 
-      free(eval_result);
+      xfree(eval_result);
 
       /* The expression may contain substitute(), which calls us
        * recursively.  Make sure submatch() gets the text from the first
@@ -6528,7 +6538,7 @@ static int vim_regsub_both(char_u *source, char_u *dest, int copy, int magic, in
         if (had_backslash && backslash) {
           /* Backslashes will be consumed, need to double them. */
           s = vim_strsave_escaped(eval_result, (char_u *)"\\");
-          free(eval_result);
+          xfree(eval_result);
           eval_result = s;
         }
 
@@ -6900,13 +6910,8 @@ static regengine_T bt_regengine =
   bt_regcomp,
   bt_regfree,
   bt_regexec_nl,
-  bt_regexec_multi
-#ifdef REGEXP_DEBUG
-  ,(char_u *)""
-#endif
-#ifdef DEBUG
-  ,NULL
-#endif
+  bt_regexec_multi,
+  (char_u *)""
 };
 
 
@@ -6920,21 +6925,14 @@ static regengine_T nfa_regengine =
   nfa_regcomp,
   nfa_regfree,
   nfa_regexec_nl,
-  nfa_regexec_multi
-#ifdef REGEXP_DEBUG
-  ,(char_u *)""
-#endif
-#ifdef DEBUG
-  , NULL
-#endif
+  nfa_regexec_multi,
+  (char_u *)""
 };
 
 /* Which regexp engine to use? Needed for vim_regcomp().
  * Must match with 'regexpengine'. */
 static int regexp_engine = 0;
-#define     AUTOMATIC_ENGINE    0
-#define     BACKTRACKING_ENGINE 1
-#define     NFA_ENGINE          2
+
 #ifdef REGEXP_DEBUG
 static char_u regname[][30] = {
   "AUTOMATIC Regexp Engine",
@@ -6966,7 +6964,7 @@ regprog_T *vim_regcomp(char_u *expr_arg, int re_flags)
       regexp_engine = expr[4] - '0';
       expr += 5;
 #ifdef REGEXP_DEBUG
-      smsg((char_u *)"New regexp mode selected (%d): %s",
+      smsg("New regexp mode selected (%d): %s",
            regexp_engine,
            regname[newengine]);
 #endif
@@ -6976,24 +6974,25 @@ regprog_T *vim_regcomp(char_u *expr_arg, int re_flags)
       regexp_engine = AUTOMATIC_ENGINE;
     }
   }
-#ifdef REGEXP_DEBUG
   bt_regengine.expr = expr;
   nfa_regengine.expr = expr;
-#endif
 
   /*
    * First try the NFA engine, unless backtracking was requested.
    */
-  if (regexp_engine != BACKTRACKING_ENGINE)
-    prog = nfa_regengine.regcomp(expr, re_flags);
-  else
+  if (regexp_engine != BACKTRACKING_ENGINE) {
+    prog = nfa_regengine.regcomp(expr,
+        re_flags + (regexp_engine == AUTOMATIC_ENGINE ? RE_AUTO : 0));
+  } else {
     prog = bt_regengine.regcomp(expr, re_flags);
+  }
 
-  if (prog == NULL) {       /* error compiling regexp with initial engine */
+  // Check for error compiling regexp with initial engine.
+  if (prog == NULL) {
 #ifdef BT_REGEXP_DEBUG_LOG
-    if (regexp_engine != BACKTRACKING_ENGINE) {     /* debugging log for NFA */
-      FILE *f;
-      f = fopen(BT_REGEXP_DEBUG_LOG_NAME, "a");
+    // Debugging log for NFA.
+    if (regexp_engine != BACKTRACKING_ENGINE) {
+      FILE *f = fopen(BT_REGEXP_DEBUG_LOG_NAME, "a");
       if (f) {
         fprintf(f, "Syntax error in \"%s\"\n", expr);
         fclose(f);
@@ -7002,12 +7001,20 @@ regprog_T *vim_regcomp(char_u *expr_arg, int re_flags)
             BT_REGEXP_DEBUG_LOG_NAME);
     }
 #endif
-    /*
-     * If the NFA engine failed, the backtracking engine won't work either.
-     *
-       if (regexp_engine == AUTOMATIC_ENGINE)
-        prog = bt_regengine.regcomp(expr, re_flags);
-     */
+    // If the NFA engine failed, try the backtracking engine. The NFA engine
+    // also fails for patterns that it can't handle well but are still valid
+    // patterns, thus a retry should work.
+    if (regexp_engine == AUTOMATIC_ENGINE) {
+      regexp_engine = BACKTRACKING_ENGINE;
+      prog = bt_regengine.regcomp(expr, re_flags);
+    }
+  }
+
+  if (prog != NULL) {
+    // Store the info needed to call regcomp() again when the engine turns out
+    // to be very slow when executing it.
+    prog->re_engine = regexp_engine;
+    prog->re_flags = re_flags;
   }
 
   return prog;
@@ -7022,34 +7029,84 @@ void vim_regfree(regprog_T *prog)
     prog->engine->regfree(prog);
 }
 
-/*
- * Match a regexp against a string.
- * "rmp->regprog" is a compiled regexp as returned by vim_regcomp().
- * Uses curbuf for line count and 'iskeyword'.
- *
- * Return TRUE if there is a match, FALSE if not.
- */
-int 
-vim_regexec (
-    regmatch_T *rmp,
-    char_u *line,      /* string to match against */
-    colnr_T col            /* column to start looking for match */
-)
+static void report_re_switch(char_u *pat)
 {
-  return rmp->regprog->engine->regexec_nl(rmp, line, col, false);
+  if (p_verbose > 0) {
+    verbose_enter();
+    MSG_PUTS(_("Switching to backtracking RE engine for pattern: "));
+    MSG_PUTS(pat);
+    verbose_leave();
+  }
 }
 
-/*
- * Like vim_regexec(), but consider a "\n" in "line" to be a line break.
- */
+/// Matches a regexp against a string.
+/// "rmp->regprog" is a compiled regexp as returned by vim_regcomp().
+/// Note: "rmp->regprog" may be freed and changed.
+/// Uses curbuf for line count and 'iskeyword'.
+/// When "nl" is true consider a "\n" in "line" to be a line break.
+///
+/// @param rmp
+/// @param line the string to match against
+/// @param col  the column to start looking for match
+/// @param nl
+///
+/// @return TRUE if there is a match, FALSE if not.
+static int vim_regexec_both(regmatch_T *rmp, char_u *line, colnr_T col, bool nl)
+{
+  int result = rmp->regprog->engine->regexec_nl(rmp, line, col, nl);
+
+  // NFA engine aborted because it's very slow, use backtracking engine instead.
+  if (rmp->regprog->re_engine == AUTOMATIC_ENGINE
+      && result == NFA_TOO_EXPENSIVE) {
+    int save_p_re = p_re;
+    int re_flags = rmp->regprog->re_flags;
+    char_u *pat = vim_strsave(((nfa_regprog_T *)rmp->regprog)->pattern);
+
+    p_re = BACKTRACKING_ENGINE;
+    vim_regfree(rmp->regprog);
+    report_re_switch(pat);
+    rmp->regprog = vim_regcomp(pat, re_flags);
+    if (rmp->regprog != NULL) {
+      result = rmp->regprog->engine->regexec_nl(rmp, line, col, nl);
+    }
+
+    xfree(pat);
+    p_re = save_p_re;
+  }
+
+  return result > 0;
+}
+
+// Note: "*prog" may be freed and changed.
+// Return TRUE if there is a match, FALSE if not.
+int vim_regexec_prog(regprog_T **prog, bool ignore_case, char_u *line,
+                      colnr_T col)
+{
+  regmatch_T regmatch = {.regprog = *prog, .rm_ic = ignore_case};
+  int r = vim_regexec_both(&regmatch, line, col, false);
+  *prog = regmatch.regprog;
+  return r;
+}
+
+// Note: "rmp->regprog" may be freed and changed.
+// Return TRUE if there is a match, FALSE if not.
+int vim_regexec(regmatch_T *rmp, char_u *line, colnr_T col)
+{
+  return vim_regexec_both(rmp, line, col, false);
+}
+
+// Like vim_regexec(), but consider a "\n" in "line" to be a line break.
+// Note: "rmp->regprog" may be freed and changed.
+// Return TRUE if there is a match, FALSE if not.
 int vim_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col)
 {
-  return rmp->regprog->engine->regexec_nl(rmp, line, col, true);
+  return vim_regexec_both(rmp, line, col, true);
 }
 
 /*
  * Match a regexp against multiple lines.
  * "rmp->regprog" is a compiled regexp as returned by vim_regcomp().
+ * Note: "rmp->regprog" may be freed and changed.
  * Uses curbuf for line count and 'iskeyword'.
  *
  * Return zero if there is no match.  Return number of lines contained in the
@@ -7064,5 +7121,28 @@ long vim_regexec_multi(
   proftime_T  *tm                 /* timeout limit or NULL */
 )
 {
-  return rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, col, tm);
+  int result = rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, col,
+                                                   tm);
+
+  // NFA engine aborted because it's very slow, use backtracking engine instead.
+  if (rmp->regprog->re_engine == AUTOMATIC_ENGINE
+      && result == NFA_TOO_EXPENSIVE) {
+    int save_p_re = p_re;
+    int re_flags = rmp->regprog->re_flags;
+    char_u *pat = vim_strsave(((nfa_regprog_T *)rmp->regprog)->pattern);
+
+    p_re = BACKTRACKING_ENGINE;
+    vim_regfree(rmp->regprog);
+    report_re_switch(pat);
+    rmp->regprog = vim_regcomp(pat, re_flags);
+    if (rmp->regprog != NULL) {
+      result = rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, col,
+                                                   tm);
+    }
+
+    xfree(pat);
+    p_re = save_p_re;
+  }
+
+  return result <= 0 ? 0 : result;
 }

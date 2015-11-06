@@ -10,9 +10,6 @@ Sign Support Features				*sign-support*
 1. Introduction				|sign-intro|
 2. Commands				|sign-commands|
 
-{Vi does not have any of these features}
-{only available when compiled with the |+signs| feature}
-
 ==============================================================================
 1. Introduction					*sign-intro* *signs*
 

@@ -10,17 +10,12 @@ Throughout the help files differences between Vim and Vi/Ex are given in
 curly braces, like "{not in Vi}".  This file only lists what has not been
 mentioned in other files and gives an overview.
 
-Vim is mostly POSIX 1003.2-1 compliant.  The only command known to be missing
-is ":open".  There are probably a lot of small differences (either because Vim
-is missing something or because Posix is beside the mark).
-
 1. Simulated command			|simulated-command|
 2. Missing options			|missing-options|
 3. Limits				|limits|
 4. The most interesting additions	|vim-additions|
 5. Other vim features			|other-features|
 6. Command-line arguments		|cmdline-arguments|
-7. POSIX compliance			|posix-compliance|
 
 ==============================================================================
 1. Simulated command					*simulated-command*
@@ -43,9 +38,7 @@ only one line.
 ==============================================================================
 2. Missing options					*missing-options*
 
-These options are in the Unix Vi, but not in Vim.  If you try to set one of
-them you won't get an error message, but the value is not used and cannot be
-printed.
+These options are in the Unix Vi, but not in Vim.
 
 autoprint (ap)		boolean	(default on)		*'autoprint'* *'ap'*
 beautify (bf)		boolean	(default off)		*'beautify'* *'bf'*
@@ -71,10 +64,8 @@ Vim has only a few limits for the files that can be edited {Vi: can not handle
 <Nul> characters and characters above 128, has limited line length, many other
 limits}.
 							*E340*
-Maximum line length	   On machines with 16-bit ints (Amiga and MS-DOS real
-			   mode): 32767, otherwise 2147483647 characters.
-			   Longer lines are split.
-Maximum number of lines	   2147483647 lines.
+Maximum line length	   2147483647 characters
+Maximum number of lines	   2147483647 lines
 Maximum file size	   2147483647 bytes (2 Gbyte) when a long integer is
 			   32 bits.  Much more for 64 bit longs.  Also limited
 			   by available disk space for the |swap-file|.
@@ -102,9 +93,8 @@ Memory usage limits
 
 The option 'maxmem' ('mm') is used to set the maximum memory used for one
 buffer (in kilobytes).  'maxmemtot' is used to set the maximum memory used for
-all buffers (in kilobytes).  The defaults depend on the system used.  For the
-Amiga and MS-DOS, 'maxmemtot' is set depending on the amount of memory
-available.
+all buffers (in kilobytes).  The defaults depend on the system used.  For
+MS-DOS, 'maxmemtot' is set depending on the amount of memory available.
 These are not hard limits, but tell Vim when to move text into a swap file.
 If you don't like Vim to swap to a file, set 'maxmem' and 'maxmemtot' to a
 very large value.  The swap file will then only be used for recovery.  If you
@@ -132,17 +122,10 @@ Support for different systems.
 	Vim can be used on:
 	- All Unix systems (it works on all systems it was tested on, although
 	  the GUI and Perl interface may not work everywhere).
-	- Amiga (500, 1000, 1200, 2000, 3000, 4000, ...).
 	- MS-DOS in real-mode (no additional drivers required).
 	- In protected mode on Windows 3.1 and MS-DOS (DPMI driver required).
 	- Windows 95 and Windows NT, with support for long file names.
-	- OS/2 (needs emx.dll)
-	- Atari MiNT
-	- VMS
-	- BeOS
 	- Macintosh
-	- Risc OS
-	- IBM OS/390
 	Note that on some systems features need to be disabled to reduce
 	resource usage, esp. on MS-DOS.  For some outdated systems you need to
 	use an older Vim version.
@@ -164,7 +147,7 @@ Graphical User Interface (GUI).				|gui|
 	define your own menus.  Better support for CTRL/SHIFT/ALT keys in
 	combination with special keys and mouse.  Supported for various
 	platforms, such as X11 (with Motif and Athena interfaces), GTK, Win32
-	(Windows 95 and later), BeOS, Amiga and Macintosh.
+	(Windows 95 and later), and Macintosh.
 
 Multiple windows and buffers.				|windows.txt|
 	Vim can split the screen into several windows, each editing a
@@ -202,7 +185,7 @@ Folding.						|folding|
 	Folds can be created manually, from the syntax of the file, by indent,
 	etc.
 
-Diff mode.						|diff|
+Diff mode.						|diff-mode|
 	Vim can show two versions of a file with the differences highlighted.
 	Parts of the text that are equal are folded away.  Commands can be
 	used to move text from one version to the other.
@@ -411,8 +394,7 @@ Scripts and Expressions.				|expression|
 	|:try|		Catch exceptions.
 	etc., etc.  See |eval|.
 	Debugging and profiling are supported. |debug-scripts| |profile|
-	If this is not enough, an interface is provided to |Python|, |Ruby|,
-	|Tcl|, |Lua|, |Perl| and |MzScheme|.
+	If this is not enough, an interface is provided to |Python|.
 
 Viminfo.						|viminfo-file|
 	The command-line history, marks and registers can be stored in a file
@@ -723,10 +705,6 @@ When the 'fileformats' option is not empty, Vim tries to detect the type of
 On systems that have no job control (older Unix systems and non-Unix systems)
 the CTRL-Z, ":stop" or ":suspend" command starts a new shell.
 
-If Vim is started on the Amiga without an interactive window for output, a
-window is opened (and :sh still works).  You can give a device to use for
-editing with the |-d| argument, e.g. "-d con:20/20/600/150".
-
 The 'columns' and 'lines' options are used to set or get the width and height
 of the display.
 
@@ -739,8 +717,8 @@ If the 'insertmode' option is set (e.g. in .exrc), Vim starts in insert mode.
 And it comes back there, when pressing <Esc>.
 
 Undo information is kept in memory.  Available memory limits the number and
-size of change that can be undone.  This may be a problem with MS-DOS, is
-hardly a problem on the Amiga and almost never with Unix and Win32.
+size of change that can be undone.  This may be a problem with MS-DOS, but is
+almost never one with Unix and Win32.
 
 If the 'backup' or 'writebackup' option is set: Before a file is overwritten,
 a backup file (.bak) is made.  If the "backup" option is set it is left
@@ -753,10 +731,6 @@ switched off by setting the 'updatecount' option to 0 or starting Vim with
 the "-n" option.  Use the 'directory' option for placing the .swp file
 somewhere else.
 
-Vim is able to work correctly on filesystems with 8.3 file names, also when
-using messydos or crossdos filesystems on the Amiga, or any 8.3 mounted
-filesystem under Unix.  See |'shortname'|.
-
 Error messages are shown at least one second (Vi overwrites error messages).
 
 If Vim gives the |hit-enter| prompt, you can hit any key.  Characters other
@@ -768,8 +742,6 @@ changing files.
 
 The "No lines in buffer" message is a normal message instead of an error
 message, since that may cause a mapping to be aborted.
-
-The AUX: device of the Amiga is supported.
 
 ==============================================================================
 6. Command-line arguments				*cmdline-arguments*
@@ -802,7 +774,7 @@ Only Vim is able to accept options in between and after the file names.
 
 --literal	Vim: take file names literally, don't expand wildcards.
 
---nofork	Vim: same as |-f|
+--nofork	Vim: same as -f
 
 --noplugin[s]	Vim: Skip loading plugins.
 
@@ -846,20 +818,15 @@ Only Vim is able to accept options in between and after the file names.
 		loading the edit buffer.
 		Vim: allow up to 10 "-c" arguments
 
--d {device}	Vim: Use {device} for I/O (Amiga only). {only when compiled
-		without the |+diff| feature}
--d		Vim: start with 'diff' set. |vimdiff|
-
--dev {device}	Vim: Use {device} for I/O (Amiga only).
+-d		Vim: start with 'diff' set. |diff-mode|
 
 -D		Vim: debug mode.
 
--e		Elvis, Nvi, Vim: Start in Ex mode, as if the executable is
-		called "ex".
+-e		Elvis, Nvi, Vim: Start in Ex mode.
 
--E		Vim: Start in improved Ex mode |gQ|, like "exim".
+-E		Vim: Start in improved Ex mode |gQ|.
 
--f		Vim: Run GUI in foreground (Amiga: don't open new window).
+-f		Vim: Run GUI in foreground.
 -f {session}	Elvis: Use {session} as the session file.
 
 -F		Vim: Start in Farsi mode (when compiled with Farsi).
@@ -941,69 +908,11 @@ Only Vim is able to accept options in between and after the file names.
 
 -W {name}	Vim: Append to script file {name}.
 
--x		Vi, Vim: Ask for encryption key.  See |encryption|.
-
 -X		Vim: Don't connect to the X server.
-
--y		Vim: Start in easy mode, like |evim|.
 
 -Z		Vim: restricted mode
 
 @{cmdfile}	Vile: use {cmdfile} as startup file.
-
-==============================================================================
-7. POSIX compliance				*posix* *posix-compliance*
-
-In 2005 the POSIX test suite was run to check the compatibility of Vim.  Most
-of the test was executed properly.  There are the few things where Vim
-is not POSIX compliant, even when run in Vi compatibility mode.
-
-Set the $VIM_POSIX environment variable to have 'cpoptions' include the POSIX
-flags when Vim starts up.  This makes Vim run as POSIX as it can.  That's
-a bit different from being Vi compatible.
-
-This is where Vim does not behave as POSIX specifies and why:
-
-							*posix-screen-size*
-	The $COLUMNS and $LINES environment variables are ignored by Vim if
-	the size can be obtained from the terminal in a more reliable way.
-	Add the '|' flag to 'cpoptions' to have $COLUMNS and $LINES overrule
-	sizes obtained in another way.
-
-	The "{" and "}" commands don't stop at a "{" in the original Vi, but
-	POSIX specifies it does.  Add the '{' flag to 'cpoptions' if you want
-	it the POSIX way.
-
-	The "D", "o" and "O" commands accept a count.  Also when repeated.
-	Add the '#' flag to 'cpoptions' if you want to ignore the count.
-
-	The ":cd" command fails if the current buffer is modified when the '.'
-	flag is present in 'cpoptions'.
-
-	There is no ATTENTION message, the "A" flag is added to 'shortmess'.
-
-These are remarks about running the POSIX test suite:
-- vi test 33 sometimes fails for unknown reasons
-- vi test 250 fails; behavior will be changed in a new revision
-    http://www.opengroup.org/austin/mailarchives/ag-review/msg01710.html
-    (link no longer works, perhaps it's now:
-    https://www.opengroup.org/sophocles/show_mail.tpl?CALLER=show_archive.tpl&source=L&listname=austin-review-l&id=1711)
-- vi test 310 fails; exit code non-zero when any error occurred?
-- ex test 24 fails because test is wrong.  Changed between SUSv2 and SUSv3.
-- ex tests 47, 48, 49, 72, 73 fail because .exrc file isn't read in silent
-  mode and $EXINIT isn't used.
-- ex tests 76, 78 fail because echo is used instead of printf. (fixed)
-    Also: problem with \s not changed to space.
-- ex test 355 fails because 'window' isn't used for "30z".
-- ex test 368 fails because shell command isn't echoed in silent mode.
-- ex test 394 fails because "=" command output isn't visible in silent mode.
-- ex test 411 fails because test file is wrong, contains stray ':'.
-- ex test 475 and 476 fail because reprint output isn't visible in silent mode.
-- ex test 480 and 481 fail because the tags file has spaces instead of a tab.
-- ex test 502 fails because .exrc isn't read in silent mode.
-- ex test 509 fails because .exrc isn't read in silent mode. and exit code is
-  1 instead of 2.
-- ex test 534 fails because .exrc isn't read in silent mode.
 
 
  vim:tw=78:ts=8:ft=help:norl:

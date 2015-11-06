@@ -10,14 +10,16 @@
  * misc1.c: functions that didn't seem to fit elsewhere
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
+#include <limits.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
-#include "nvim/version_defs.h"
+#include "nvim/version.h"
 #include "nvim/misc1.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
@@ -42,22 +44,24 @@
 #include "nvim/misc2.h"
 #include "nvim/garray.h"
 #include "nvim/move.h"
+#include "nvim/mouse.h"
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
-#include "nvim/path.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/tag.h"
-#include "nvim/term.h"
 #include "nvim/tempfile.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
+#include "nvim/os/input.h"
+#include "nvim/os/time.h"
+#include "nvim/event/stream.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "misc1.c.generated.h"
@@ -263,7 +267,7 @@ open_line (
         } else {      /* Not a comment line */
           /* Find last non-blank in line */
           p = ptr + STRLEN(ptr) - 1;
-          while (p > ptr && vim_iswhite(*p))
+          while (p > ptr && ascii_iswhite(*p))
             --p;
           last_char = *p;
 
@@ -273,7 +277,7 @@ open_line (
           if (last_char == '{' || last_char == ';') {
             if (p > ptr)
               --p;
-            while (p > ptr && vim_iswhite(*p))
+            while (p > ptr && ascii_iswhite(*p))
               --p;
           }
           /*
@@ -439,7 +443,7 @@ open_line (
            * comment leader, then put a space after the middle
            * comment leader on the next line.
            */
-          if (!vim_iswhite(saved_line[lead_len - 1])
+          if (!ascii_iswhite(saved_line[lead_len - 1])
               && ((p_extra != NULL
                    && (int)curwin->w_cursor.col == lead_len)
                   || (p_extra == NULL
@@ -521,15 +525,15 @@ open_line (
         for (p = lead_flags; *p != NUL && *p != ':'; ) {
           if (*p == COM_RIGHT || *p == COM_LEFT)
             c = *p++;
-          else if (VIM_ISDIGIT(*p) || *p == '-')
-            off = getdigits(&p);
+          else if (ascii_isdigit(*p) || *p == '-')
+            off = getdigits_int(&p);
           else
             ++p;
         }
         if (c == COM_RIGHT) {            /* right adjusted leader */
           /* find last non-white in the leader to line up with */
           for (p = leader + lead_len - 1; p > leader
-               && vim_iswhite(*p); --p)
+               && ascii_iswhite(*p); --p)
             ;
           ++p;
 
@@ -570,7 +574,7 @@ open_line (
                   (size_t)((leader + lead_len) - (p + l + 1)));
               lead_len -= l;
               *p = ' ';
-            } else if (!vim_iswhite(*p))
+            } else if (!ascii_iswhite(*p))
               *p = ' ';
           }
         } else {                        /* left adjusted leader */
@@ -601,7 +605,7 @@ open_line (
            * leader by spaces.  Keep Tabs, the indent must
            * remain the same. */
           for (p += lead_repl_len; p < leader + lead_len; ++p)
-            if (!vim_iswhite(*p)) {
+            if (!ascii_iswhite(*p)) {
               /* Don't put a space before a TAB. */
               if (p + 1 < leader + lead_len && p[1] == TAB) {
                 --lead_len;
@@ -653,7 +657,7 @@ open_line (
 
         /* If the leader ends in white space, don't add an
          * extra space */
-        if (lead_len > 0 && vim_iswhite(leader[lead_len - 1]))
+        if (lead_len > 0 && ascii_iswhite(leader[lead_len - 1]))
           extra_space = FALSE;
         leader[lead_len] = NUL;
       }
@@ -672,7 +676,7 @@ open_line (
       if (newindent
           || did_si
           ) {
-        while (lead_len && vim_iswhite(*leader)) {
+        while (lead_len && ascii_iswhite(*leader)) {
           --lead_len;
           --newcol;
           ++leader;
@@ -793,7 +797,7 @@ open_line (
       ) {
     ++curwin->w_cursor.lnum;
     if (did_si) {
-      int sw = (int)get_sw_value(curbuf);
+      int sw = get_sw_value(curbuf);
 
       if (p_sr)
         newindent -= newindent % sw;
@@ -926,16 +930,16 @@ open_line (
     curwin->w_cursor.col = 0;
     curwin->w_cursor.coladd = 0;
     ins_bytes(p_extra);         /* will call changed_bytes() */
-    free(p_extra);
+    xfree(p_extra);
     next_line = NULL;
   }
 
   retval = TRUE;                /* success! */
 theend:
   curbuf->b_p_pi = saved_pi;
-  free(saved_line);
-  free(next_line);
-  free(allocated);
+  xfree(saved_line);
+  xfree(next_line);
+  xfree(allocated);
   return retval;
 }
 
@@ -963,7 +967,7 @@ int get_leader_len(char_u *line, char_u **flags, int backward, int include_space
   char_u      *saved_flags = NULL;
 
   result = i = 0;
-  while (vim_iswhite(line[i]))      /* leading white space is ignored */
+  while (ascii_iswhite(line[i]))      /* leading white space is ignored */
     ++i;
 
   /*
@@ -1006,10 +1010,10 @@ int get_leader_len(char_u *line, char_u **flags, int backward, int include_space
        * When string starts with white space, must have some white space
        * (but the amount does not need to match, there might be a mix of
        * TABs and spaces). */
-      if (vim_iswhite(string[0])) {
-        if (i == 0 || !vim_iswhite(line[i - 1]))
+      if (ascii_iswhite(string[0])) {
+        if (i == 0 || !ascii_iswhite(line[i - 1]))
           continue;            /* missing white space */
-        while (vim_iswhite(string[0]))
+        while (ascii_iswhite(string[0]))
           ++string;
       }
       for (j = 0; string[j] != NUL && string[j] == line[i + j]; ++j)
@@ -1020,7 +1024,7 @@ int get_leader_len(char_u *line, char_u **flags, int backward, int include_space
       /* When 'b' flag used, there must be white space or an
        * end-of-line after the string in the line. */
       if (vim_strchr(part_buf, COM_BLANK) != NULL
-          && !vim_iswhite(line[i + j]) && line[i + j] != NUL)
+          && !ascii_iswhite(line[i + j]) && line[i + j] != NUL)
         continue;
 
       /* We have found a match, stop searching unless this is a middle
@@ -1062,7 +1066,7 @@ int get_leader_len(char_u *line, char_u **flags, int backward, int include_space
     result = i;
 
     /* Include any trailing white space. */
-    while (vim_iswhite(line[i]))
+    while (ascii_iswhite(line[i]))
       ++i;
 
     if (include_space)
@@ -1126,10 +1130,10 @@ int get_last_leader_offset(char_u *line, char_u **flags)
        * (but the amount does not need to match, there might be a mix of
        * TABs and spaces).
        */
-      if (vim_iswhite(string[0])) {
-        if (i == 0 || !vim_iswhite(line[i - 1]))
+      if (ascii_iswhite(string[0])) {
+        if (i == 0 || !ascii_iswhite(line[i - 1]))
           continue;
-        while (vim_iswhite(string[0]))
+        while (ascii_iswhite(string[0]))
           ++string;
       }
       for (j = 0; string[j] != NUL && string[j] == line[i + j]; ++j)
@@ -1142,7 +1146,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
        * end-of-line after the string in the line.
        */
       if (vim_strchr(part_buf, COM_BLANK) != NULL
-          && !vim_iswhite(line[i + j]) && line[i + j] != NUL) {
+          && !ascii_iswhite(line[i + j]) && line[i + j] != NUL) {
         continue;
       }
 
@@ -1177,7 +1181,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
        * the comment leader correctly.
        */
 
-      while (vim_iswhite(*com_leader))
+      while (ascii_iswhite(*com_leader))
         ++com_leader;
       len1 = (int)STRLEN(com_leader);
 
@@ -1189,7 +1193,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
           continue;
         string = vim_strchr(part_buf2, ':');
         ++string;
-        while (vim_iswhite(*string))
+        while (ascii_iswhite(*string))
           ++string;
         len2 = (int)STRLEN(string);
         if (len2 == 0)
@@ -1257,7 +1261,7 @@ plines_win_nofill (
 
   lines = plines_win_nofold(wp, lnum);
   if (winheight > 0 && lines > wp->w_height)
-    return (int)wp->w_height;
+    return wp->w_height;
   return lines;
 }
 
@@ -1268,7 +1272,7 @@ plines_win_nofill (
 int plines_win_nofold(win_T *wp, linenr_T lnum)
 {
   char_u      *s;
-  long col;
+  unsigned int col;
   int width;
 
   s = ml_get_buf(wp->w_buffer, lnum, FALSE);
@@ -1289,11 +1293,12 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
   width = wp->w_width - win_col_off(wp);
   if (width <= 0)
     return 32000;
-  if (col <= width)
+  if (col <= (unsigned int)width)
     return 1;
   col -= width;
   width += win_col_off2(wp);
-  return (col + (width - 1)) / width + 1;
+  assert(col <= INT_MAX && (int)col < INT_MAX - (width -1));
+  return ((int)col + (width - 1)) / width + 1;
 }
 
 /*
@@ -1839,8 +1844,8 @@ void changed(void)
        * message.  Since we could be anywhere, call wait_return() now,
        * and don't let the emsg() set msg_scroll. */
       if (need_wait_return && emsg_silent == 0) {
-        out_flush();
-        ui_delay(2000L, true);
+        ui_flush();
+        os_delay(2000L, true);
         wait_return(TRUE);
         msg_scroll = save_msg_scroll;
       }
@@ -2037,8 +2042,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
 
   /* set the '. mark */
   if (!cmdmod.keepjumps) {
-    curbuf->b_last_change.lnum = lnum;
-    curbuf->b_last_change.col = col;
+    RESET_FMARK(&curbuf->b_last_change, ((pos_T) {lnum, col, 0}), 0);
 
     /* Create a new entry if a new undo-able change was started or we
      * don't have an entry yet. */
@@ -2049,7 +2053,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
         /* Don't create a new entry when the line number is the same
          * as the last one and the column is not too far away.  Avoids
          * creating many entries for typing "xxxxx". */
-        p = &curbuf->b_changelist[curbuf->b_changelistlen - 1];
+        p = &curbuf->b_changelist[curbuf->b_changelistlen - 1].mark;
         if (p->lnum != lnum)
           add = TRUE;
         else {
@@ -2069,7 +2073,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
           /* changelist is full: remove oldest entry */
           curbuf->b_changelistlen = JUMPLISTSIZE - 1;
           memmove(curbuf->b_changelist, curbuf->b_changelist + 1,
-              sizeof(pos_T) * (JUMPLISTSIZE - 1));
+              sizeof(curbuf->b_changelist[0]) * (JUMPLISTSIZE - 1));
           FOR_ALL_TAB_WINDOWS(tp, wp) {
             /* Correct position in changelist for other windows on
              * this buffer. */
@@ -2115,12 +2119,12 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
        * might be displayed differently.
        * Set w_cline_folded here as an efficient way to update it when
        * inserting lines just above a closed fold. */
-      i = hasFoldingWin(wp, lnum, &lnum, NULL, FALSE, NULL);
+      bool folded = hasFoldingWin(wp, lnum, &lnum, NULL, false, NULL);
       if (wp->w_cursor.lnum == lnum)
-        wp->w_cline_folded = i;
-      i = hasFoldingWin(wp, lnume, NULL, &lnume, FALSE, NULL);
+        wp->w_cline_folded = folded;
+      folded = hasFoldingWin(wp, lnume, NULL, &lnume, false, NULL);
       if (wp->w_cursor.lnum == lnume)
-        wp->w_cline_folded = i;
+        wp->w_cline_folded = folded;
 
       /* If the changed line is in a range of previously folded lines,
        * compare with the first line in that range. */
@@ -2194,7 +2198,7 @@ unchanged (
     int ff                 /* also reset 'fileformat' */
 )
 {
-  if (buf->b_changed || (ff && file_ff_differs(buf, FALSE))) {
+  if (buf->b_changed || (ff && file_ff_differs(buf, false))) {
     buf->b_changed = false;
     ml_setflags(buf);
     if (ff)
@@ -2260,8 +2264,8 @@ change_warning (
     msg_clr_eos();
     (void)msg_end();
     if (msg_silent == 0 && !silent_mode) {
-      out_flush();
-      ui_delay(1000L, true);       /* give the user time to think about it */
+      ui_flush();
+      os_delay(1000L, true);       /* give the user time to think about it */
     }
     curbuf->b_did_warn = true;
     redraw_cmdline = FALSE;     /* don't redraw and erase the message */
@@ -2284,12 +2288,7 @@ int ask_yesno(char_u *str, int direct)
   int r = ' ';
   int save_State = State;
 
-  if (exiting)                  /* put terminal in raw mode for this question */
-    settmode(TMODE_RAW);
   ++no_wait_return;
-#ifdef USE_ON_FLY_SCROLL
-  dont_scroll = TRUE;           /* disallow scrolling here */
-#endif
   State = CONFIRM;              /* mouse behaves like with :confirm */
   setmouse();                   /* disables mouse for xterm */
   ++no_mapping;
@@ -2297,7 +2296,8 @@ int ask_yesno(char_u *str, int direct)
 
   while (r != 'y' && r != 'n') {
     /* same highlighting as for wait_return */
-    smsg_attr(hl_attr(HLF_R), (char_u *)"%s (y/n)?", str);
+    smsg_attr(hl_attr(HLF_R),
+              "%s (y/n)?", str);
     if (direct)
       r = get_keystroke();
     else
@@ -2305,7 +2305,7 @@ int ask_yesno(char_u *str, int direct)
     if (r == Ctrl_C || r == ESC)
       r = 'n';
     msg_putchar(r);         /* show what you typed */
-    out_flush();
+    ui_flush();
   }
   --no_wait_return;
   State = save_State;
@@ -2364,9 +2364,8 @@ int get_keystroke(void)
 
   mapped_ctrl_c = FALSE;        /* mappings are not used here */
   for (;; ) {
-    cursor_on();
-    out_flush();
-
+    // flush output before waiting
+    ui_flush();
     /* Leave some room for check_termcode() to insert a key code into (max
      * 5 chars plus NUL).  And fix_input_buffer() can triple the number of
      * bytes. */
@@ -2383,7 +2382,7 @@ int get_keystroke(void)
 
     /* First time: blocking wait.  Second time: wait up to 100ms for a
      * terminal code to complete. */
-    n = ui_inchar(buf + len, maxlen, len == 0 ? -1L : 100L, 0);
+    n = os_inchar(buf + len, maxlen, len == 0 ? -1L : 100L, 0);
     if (n > 0) {
       /* Replace zero and CSI by a special key code. */
       n = fix_input_buffer(buf + len, n, FALSE);
@@ -2391,11 +2390,6 @@ int get_keystroke(void)
       waited = 0;
     } else if (len > 0)
       ++waited;             /* keep track of the waiting time */
-
-    /* Incomplete termcode and not timed out yet: get more characters */
-    if ((n = check_termcode(1, buf, buflen, &len)) < 0
-        && (!p_ttimeout || waited * 100L < (p_ttm < 0 ? p_tm : p_ttm)))
-      continue;
 
     if (n == KEYLEN_REMOVED) {    /* key code removed */
       if (must_redraw != 0 && !need_wait_return && (State & CMDLINE) == 0) {
@@ -2439,7 +2433,7 @@ int get_keystroke(void)
 #endif
     break;
   }
-  free(buf);
+  xfree(buf);
 
   mapped_ctrl_c = save_mapped_ctrl_c;
   return n;
@@ -2467,15 +2461,12 @@ get_number (
   if (msg_silent != 0)
     return 0;
 
-#ifdef USE_ON_FLY_SCROLL
-  dont_scroll = TRUE;           /* disallow scrolling here */
-#endif
   ++no_mapping;
   ++allow_keys;                 /* no mapping here, but recognize keys */
   for (;; ) {
-    windgoto(msg_row, msg_col);
+    ui_cursor_goto(msg_row, msg_col);
     c = safe_vgetc();
-    if (VIM_ISDIGIT(c)) {
+    if (ascii_isdigit(c)) {
       n = n * 10 + c - '0';
       msg_putchar(c);
       ++typed;
@@ -2591,22 +2582,22 @@ void msgmore(long n)
 void beep_flush(void)
 {
   if (emsg_silent == 0) {
-    flush_buffers(FALSE);
-    vim_beep();
+    flush_buffers(false);
+    vim_beep(BO_ERROR);
   }
 }
 
-/*
- * give a warning for an error
- */
-void vim_beep(void)
+// Give a warning for an error
+// val is one of the BO_ values, e.g., BO_OPER
+void vim_beep(unsigned val)
 {
   if (emsg_silent == 0) {
-    if (p_vb
-        ) {
-      out_str(T_VB);
-    } else {
-      out_char(BELL);
+    if (!((bo_flags & val) || (bo_flags & BO_ALL))) {
+      if (p_vb) {
+        ui_visual_bell();
+      } else {
+        ui_putc(BELL);
+      }
     }
 
     /* When 'verbose' is set and we are sourcing a script or executing a
@@ -2618,54 +2609,7 @@ void vim_beep(void)
   }
 }
 
-/*
- * To get the "real" home directory:
- * - get value of $HOME
- * For Unix:
- *  - go to that directory
- *  - do os_dirname() to get the real name of that directory.
- *  This also works with mounts and links.
- *  Don't do this for MS-DOS, it will change the "current dir" for a drive.
- */
-static char_u   *homedir = NULL;
-
-void init_homedir(void)
-{
-  char_u  *var;
-
-  /* In case we are called a second time (when 'encoding' changes). */
-  free(homedir);
-  homedir = NULL;
-
-  var = (char_u *)os_getenv("HOME");
-
-  if (var != NULL && *var == NUL)       /* empty is same as not set */
-    var = NULL;
-
-
-  if (var != NULL) {
-#ifdef UNIX
-    /*
-     * Change to the directory and get the actual path.  This resolves
-     * links.  Don't do it when we can't return.
-     */
-    if (os_dirname(NameBuff, MAXPATHL) == OK
-        && os_chdir((char *)NameBuff) == 0) {
-      if (!os_chdir((char *)var) && os_dirname(IObuff, IOSIZE) == OK)
-        var = IObuff;
-      if (os_chdir((char *)NameBuff) != 0)
-        EMSG(_(e_prev_dir));
-    }
-#endif
-    homedir = vim_strsave(var);
-  }
-}
-
-#if defined(EXITFREE) || defined(PROTO)
-void free_homedir(void)
-{
-  free(homedir);
-}
+#if defined(EXITFREE)
 
 void free_users(void)
 {
@@ -2673,450 +2617,6 @@ void free_users(void)
 }
 
 #endif
-
-/*
- * Call expand_env() and store the result in an allocated string.
- * This is not very memory efficient, this expects the result to be freed
- * again soon.
- */
-char_u *expand_env_save(char_u *src)
-{
-  return expand_env_save_opt(src, FALSE);
-}
-
-/*
- * Idem, but when "one" is TRUE handle the string as one file name, only
- * expand "~" at the start.
- */
-char_u *expand_env_save_opt(char_u *src, int one)
-{
-  char_u *p = xmalloc(MAXPATHL);
-  expand_env_esc(src, p, MAXPATHL, FALSE, one, NULL);
-  return p;
-}
-
-/*
- * Expand environment variable with path name.
- * "~/" is also expanded, using $HOME.	For Unix "~user/" is expanded.
- * Skips over "\ ", "\~" and "\$" (not for Win32 though).
- * If anything fails no expansion is done and dst equals src.
- */
-void 
-expand_env (
-    char_u *src,               /* input string e.g. "$HOME/vim.hlp" */
-    char_u *dst,               /* where to put the result */
-    int dstlen                     /* maximum length of the result */
-)
-{
-  expand_env_esc(src, dst, dstlen, FALSE, FALSE, NULL);
-}
-
-void 
-expand_env_esc (
-    char_u *srcp,              /* input string e.g. "$HOME/vim.hlp" */
-    char_u *dst,               /* where to put the result */
-    int dstlen,                     /* maximum length of the result */
-    int esc,                        /* escape spaces in expanded variables */
-    int one,                        /* "srcp" is one file name */
-    char_u *startstr          /* start again after this (can be NULL) */
-)
-{
-  char_u      *src;
-  char_u      *tail;
-  int c;
-  char_u      *var;
-  int copy_char;
-  int mustfree;                 /* var was allocated, need to free it later */
-  int at_start = TRUE;           /* at start of a name */
-  int startstr_len = 0;
-
-  if (startstr != NULL)
-    startstr_len = (int)STRLEN(startstr);
-
-  src = skipwhite(srcp);
-  --dstlen;                 /* leave one char space for "\," */
-  while (*src && dstlen > 0) {
-    copy_char = TRUE;
-    if ((*src == '$'
-         )
-        || (*src == '~' && at_start)) {
-      mustfree = FALSE;
-
-      /*
-       * The variable name is copied into dst temporarily, because it may
-       * be a string in read-only memory and a NUL needs to be appended.
-       */
-      if (*src != '~') {                                /* environment var */
-        tail = src + 1;
-        var = dst;
-        c = dstlen - 1;
-
-#ifdef UNIX
-        /* Unix has ${var-name} type environment vars */
-        if (*tail == '{' && !vim_isIDc('{')) {
-          tail++;               /* ignore '{' */
-          while (c-- > 0 && *tail && *tail != '}')
-            *var++ = *tail++;
-        } else
-#endif
-        {
-          while (c-- > 0 && *tail != NUL && ((vim_isIDc(*tail))
-                                             )) {
-            *var++ = *tail++;
-          }
-        }
-
-#if defined(MSWIN) || defined(UNIX)
-# ifdef UNIX
-        if (src[1] == '{' && *tail != '}')
-# else
-        if (*src == '%' && *tail != '%')
-# endif
-          var = NULL;
-        else {
-# ifdef UNIX
-          if (src[1] == '{')
-# else
-          if (*src == '%')
-#endif
-            ++tail;
-#endif
-        *var = NUL;
-        var = vim_getenv(dst, &mustfree);
-#if defined(MSWIN) || defined(UNIX)
-      }
-#endif
-      }
-      /* home directory */
-      else if (  src[1] == NUL
-                 || vim_ispathsep(src[1])
-                 || vim_strchr((char_u *)" ,\t\n", src[1]) != NULL) {
-        var = homedir;
-        tail = src + 1;
-      } else {                                        /* user directory */
-#if defined(UNIX)
-        /*
-         * Copy ~user to dst[], so we can put a NUL after it.
-         */
-        tail = src;
-        var = dst;
-        c = dstlen - 1;
-        while (    c-- > 0
-                   && *tail
-                   && vim_isfilec(*tail)
-                   && !vim_ispathsep(*tail))
-          *var++ = *tail++;
-        *var = NUL;
-        /*
-         * Use os_get_user_directory() to get the user directory.
-         * If this function fails, the shell is used to
-         * expand ~user. This is slower and may fail if the shell
-         * does not support ~user (old versions of /bin/sh).
-         */
-        var = (char_u *)os_get_user_directory((char *)dst + 1);
-        mustfree = TRUE;
-        if (var == NULL)
-        {
-          expand_T xpc;
-
-          ExpandInit(&xpc);
-          xpc.xp_context = EXPAND_FILES;
-          var = ExpandOne(&xpc, dst, NULL,
-              WILD_ADD_SLASH|WILD_SILENT, WILD_EXPAND_FREE);
-          mustfree = TRUE;
-        }
-#else
-        /* cannot expand user's home directory, so don't try */
-        var = NULL;
-        tail = (char_u *)"";            /* for gcc */
-#endif /* UNIX */
-      }
-
-#ifdef BACKSLASH_IN_FILENAME
-      /* If 'shellslash' is set change backslashes to forward slashes.
-       * Can't use slash_adjust(), p_ssl may be set temporarily. */
-      if (p_ssl && var != NULL && vim_strchr(var, '\\') != NULL) {
-        char_u  *p = vim_strsave(var);
-
-        if (mustfree) {
-          free(var);
-        }
-        var = p;
-        mustfree = TRUE;
-        forward_slash(var);
-      }
-#endif
-
-      /* If "var" contains white space, escape it with a backslash.
-       * Required for ":e ~/tt" when $HOME includes a space. */
-      if (esc && var != NULL && vim_strpbrk(var, (char_u *)" \t") != NULL) {
-        char_u  *p = vim_strsave_escaped(var, (char_u *)" \t");
-
-        if (mustfree)
-          free(var);
-        var = p;
-        mustfree = TRUE;
-      }
-
-      if (var != NULL && *var != NUL
-          && (STRLEN(var) + STRLEN(tail) + 1 < (unsigned)dstlen)) {
-        STRCPY(dst, var);
-        dstlen -= (int)STRLEN(var);
-        c = (int)STRLEN(var);
-        /* if var[] ends in a path separator and tail[] starts
-         * with it, skip a character */
-        if (*var != NUL && after_pathsep(dst, dst + c)
-#if defined(BACKSLASH_IN_FILENAME)
-            && dst[-1] != ':'
-#endif
-            && vim_ispathsep(*tail))
-          ++tail;
-        dst += c;
-        src = tail;
-        copy_char = FALSE;
-      }
-      if (mustfree)
-        free(var);
-    }
-
-    if (copy_char) {        /* copy at least one char */
-      /*
-       * Recognize the start of a new name, for '~'.
-       * Don't do this when "one" is TRUE, to avoid expanding "~" in
-       * ":edit foo ~ foo".
-       */
-      at_start = FALSE;
-      if (src[0] == '\\' && src[1] != NUL) {
-        *dst++ = *src++;
-        --dstlen;
-      } else if ((src[0] == ' ' || src[0] == ',') && !one)
-        at_start = TRUE;
-      *dst++ = *src++;
-      --dstlen;
-
-      if (startstr != NULL && src - startstr_len >= srcp
-          && STRNCMP(src - startstr_len, startstr, startstr_len) == 0)
-        at_start = TRUE;
-    }
-  }
-  *dst = NUL;
-}
-
-/*
- * Vim's version of getenv().
- * Special handling of $HOME, $VIM and $VIMRUNTIME.
- * Also does ACP to 'enc' conversion for Win32.
- * "mustfree" is set to TRUE when returned is allocated, it must be
- * initialized to FALSE by the caller.
- */
-char_u *vim_getenv(char_u *name, int *mustfree)
-{
-  char_u      *p;
-  char_u      *pend;
-  int vimruntime;
-
-
-  p = (char_u *)os_getenv((char *)name);
-  if (p != NULL && *p == NUL)       /* empty is the same as not set */
-    p = NULL;
-
-  if (p != NULL) {
-    return p;
-  }
-
-  vimruntime = (STRCMP(name, "VIMRUNTIME") == 0);
-  if (!vimruntime && STRCMP(name, "VIM") != 0)
-    return NULL;
-
-  /*
-   * When expanding $VIMRUNTIME fails, try using $VIM/vim<version> or $VIM.
-   * Don't do this when default_vimruntime_dir is non-empty.
-   */
-  if (vimruntime
-#ifdef HAVE_PATHDEF
-      && *default_vimruntime_dir == NUL
-#endif
-      ) {
-    p = (char_u *)os_getenv("VIM");
-    if (p != NULL && *p == NUL)             /* empty is the same as not set */
-      p = NULL;
-    if (p != NULL) {
-      p = vim_version_dir(p);
-      if (p != NULL)
-        *mustfree = TRUE;
-      else
-        p = (char_u *)os_getenv("VIM");
-
-    }
-  }
-
-  /*
-   * When expanding $VIM or $VIMRUNTIME fails, try using:
-   * - the directory name from 'helpfile' (unless it contains '$')
-   * - the executable name from argv[0]
-   */
-  if (p == NULL) {
-    if (p_hf != NULL && vim_strchr(p_hf, '$') == NULL)
-      p = p_hf;
-#ifdef USE_EXE_NAME
-    /*
-     * Use the name of the executable, obtained from argv[0].
-     */
-    else
-      p = exe_name;
-#endif
-    if (p != NULL) {
-      /* remove the file name */
-      pend = path_tail(p);
-
-      /* remove "doc/" from 'helpfile', if present */
-      if (p == p_hf)
-        pend = remove_tail(p, pend, (char_u *)"doc");
-
-#ifdef USE_EXE_NAME
-      /* remove "src/" from exe_name, if present */
-      if (p == exe_name)
-        pend = remove_tail(p, pend, (char_u *)"src");
-#endif
-
-      /* for $VIM, remove "runtime/" or "vim54/", if present */
-      if (!vimruntime) {
-        pend = remove_tail(p, pend, (char_u *)RUNTIME_DIRNAME);
-        pend = remove_tail(p, pend, (char_u *)VIM_VERSION_NODOT);
-      }
-
-      /* remove trailing path separator */
-      /* With MacOS path (with  colons) the final colon is required */
-      /* to avoid confusion between absolute and relative path */
-      if (pend > p && after_pathsep(p, pend))
-        --pend;
-
-      /* check that the result is a directory name */
-      p = vim_strnsave(p, (int)(pend - p));
-
-      if (!os_isdir(p)) {
-        free(p);
-        p = NULL;
-      } else {
-#ifdef USE_EXE_NAME
-        /* may add "/vim54" or "/runtime" if it exists */
-        if (vimruntime && (pend = vim_version_dir(p)) != NULL) {
-          free(p);
-          p = pend;
-        }
-#endif
-        *mustfree = TRUE;
-      }
-    }
-  }
-
-#ifdef HAVE_PATHDEF
-  /* When there is a pathdef.c file we can use default_vim_dir and
-   * default_vimruntime_dir */
-  if (p == NULL) {
-    /* Only use default_vimruntime_dir when it is not empty */
-    if (vimruntime && *default_vimruntime_dir != NUL) {
-      p = default_vimruntime_dir;
-      *mustfree = FALSE;
-    } else if (*default_vim_dir != NUL) {
-      if (vimruntime && (p = vim_version_dir(default_vim_dir)) != NULL)
-        *mustfree = TRUE;
-      else {
-        p = default_vim_dir;
-        *mustfree = FALSE;
-      }
-    }
-  }
-#endif
-
-  /*
-   * Set the environment variable, so that the new value can be found fast
-   * next time, and others can also use it (e.g. Perl).
-   */
-  if (p != NULL) {
-    if (vimruntime) {
-      vim_setenv((char_u *)"VIMRUNTIME", p);
-      didset_vimruntime = TRUE;
-    } else {
-      vim_setenv((char_u *)"VIM", p);
-      didset_vim = TRUE;
-    }
-  }
-  return p;
-}
-
-/*
- * Check if the directory "vimdir/<version>" or "vimdir/runtime" exists.
- * Return NULL if not, return its name in allocated memory otherwise.
- */
-static char_u *vim_version_dir(char_u *vimdir)
-{
-  char_u      *p;
-
-  if (vimdir == NULL || *vimdir == NUL)
-    return NULL;
-  p = concat_fnames(vimdir, (char_u *)VIM_VERSION_NODOT, TRUE);
-  if (os_isdir(p))
-    return p;
-  free(p);
-  p = concat_fnames(vimdir, (char_u *)RUNTIME_DIRNAME, TRUE);
-  if (os_isdir(p))
-    return p;
-  free(p);
-  return NULL;
-}
-
-/*
- * If the string between "p" and "pend" ends in "name/", return "pend" minus
- * the length of "name/".  Otherwise return "pend".
- */
-static char_u *remove_tail(char_u *p, char_u *pend, char_u *name)
-{
-  int len = (int)STRLEN(name) + 1;
-  char_u      *newend = pend - len;
-
-  if (newend >= p
-      && fnamencmp(newend, name, len - 1) == 0
-      && (newend == p || after_pathsep(p, newend)))
-    return newend;
-  return pend;
-}
-
-/*
- * Our portable version of setenv.
- */
-void vim_setenv(char_u *name, char_u *val)
-{
-  os_setenv((char *)name, (char *)val, 1);
-  /*
-   * When setting $VIMRUNTIME adjust the directory to find message
-   * translations to $VIMRUNTIME/lang.
-   */
-  if (*val != NUL && STRICMP(name, "VIMRUNTIME") == 0) {
-    char_u  *buf = concat_str(val, (char_u *)"/lang");
-    bindtextdomain(VIMPACKAGE, (char *)buf);
-    free(buf);
-  }
-}
-
-
-/*
- * Function given to ExpandGeneric() to obtain an environment variable name.
- */
-char_u *get_env_name(expand_T *xp, int idx)
-{
-# define ENVNAMELEN 100
-  // this static buffer is needed to avoid a memory leak in ExpandGeneric
-  static char_u name[ENVNAMELEN];
-  char *envname = os_getenvname_at_index(idx);
-  if (envname) {
-    STRLCPY(name, envname, ENVNAMELEN);
-    free(envname);
-    return name;
-  } else {
-    return NULL;
-  }
-}
 
 /*
  * Find all user names for user completion.
@@ -3168,159 +2668,6 @@ int match_user(char_u *name)
 }
 
 /*
- * Replace home directory by "~" in each space or comma separated file name in
- * 'src'.
- * If anything fails (except when out of space) dst equals src.
- */
-void 
-home_replace (
-    buf_T *buf,       /* when not NULL, check for help files */
-    char_u *src,       /* input file name */
-    char_u *dst,       /* where to put the result */
-    int dstlen,             /* maximum length of the result */
-    int one                /* if TRUE, only replace one file name, include
-                           spaces and commas in the file name. */
-)
-{
-  size_t dirlen = 0, envlen = 0;
-  size_t len;
-  char_u      *homedir_env, *homedir_env_orig;
-  char_u      *p;
-
-  if (src == NULL) {
-    *dst = NUL;
-    return;
-  }
-
-  /*
-   * If the file is a help file, remove the path completely.
-   */
-  if (buf != NULL && buf->b_help) {
-    STRCPY(dst, path_tail(src));
-    return;
-  }
-
-  /*
-   * We check both the value of the $HOME environment variable and the
-   * "real" home directory.
-   */
-  if (homedir != NULL)
-    dirlen = STRLEN(homedir);
-
-  homedir_env_orig = homedir_env = (char_u *)os_getenv("HOME");
-  /* Empty is the same as not set. */
-  if (homedir_env != NULL && *homedir_env == NUL)
-    homedir_env = NULL;
-
-  if (homedir_env != NULL && vim_strchr(homedir_env, '~') != NULL) {
-    int usedlen = 0;
-    int flen;
-    char_u  *fbuf = NULL;
-
-    flen = (int)STRLEN(homedir_env);
-    (void)modify_fname((char_u *)":p", &usedlen,
-        &homedir_env, &fbuf, &flen);
-    flen = (int)STRLEN(homedir_env);
-    if (flen > 0 && vim_ispathsep(homedir_env[flen - 1]))
-      /* Remove the trailing / that is added to a directory. */
-      homedir_env[flen - 1] = NUL;
-  }
-
-  if (homedir_env != NULL)
-    envlen = STRLEN(homedir_env);
-
-  if (!one)
-    src = skipwhite(src);
-  while (*src && dstlen > 0) {
-    /*
-     * Here we are at the beginning of a file name.
-     * First, check to see if the beginning of the file name matches
-     * $HOME or the "real" home directory. Check that there is a '/'
-     * after the match (so that if e.g. the file is "/home/pieter/bla",
-     * and the home directory is "/home/piet", the file does not end up
-     * as "~er/bla" (which would seem to indicate the file "bla" in user
-     * er's home directory)).
-     */
-    p = homedir;
-    len = dirlen;
-    for (;; ) {
-      if (   len
-             && fnamencmp(src, p, len) == 0
-             && (vim_ispathsep(src[len])
-                 || (!one && (src[len] == ',' || src[len] == ' '))
-                 || src[len] == NUL)) {
-        src += len;
-        if (--dstlen > 0)
-          *dst++ = '~';
-
-        /*
-         * If it's just the home directory, add  "/".
-         */
-        if (!vim_ispathsep(src[0]) && --dstlen > 0)
-          *dst++ = '/';
-        break;
-      }
-      if (p == homedir_env)
-        break;
-      p = homedir_env;
-      len = envlen;
-    }
-
-    /* if (!one) skip to separator: space or comma */
-    while (*src && (one || (*src != ',' && *src != ' ')) && --dstlen > 0)
-      *dst++ = *src++;
-    /* skip separator */
-    while ((*src == ' ' || *src == ',') && --dstlen > 0)
-      *dst++ = *src++;
-  }
-  /* if (dstlen == 0) out of space, what to do??? */
-
-  *dst = NUL;
-
-  if (homedir_env != homedir_env_orig)
-    free(homedir_env);
-}
-
-/*
- * Like home_replace, store the replaced string in allocated memory.
- */
-char_u *
-home_replace_save (
-    buf_T *buf,       /* when not NULL, check for help files */
-    char_u *src       /* input file name */
-) FUNC_ATTR_NONNULL_RET
-{
-  size_t len = 3;                      /* space for "~/" and trailing NUL */
-  if (src != NULL)              /* just in case */
-    len += STRLEN(src);
-  char_u *dst = xmalloc(len);
-  home_replace(buf, src, dst, (int)len, TRUE);
-  return dst;
-}
-
-void prepare_to_exit(void)
-{
-#if defined(SIGHUP) && defined(SIG_IGN)
-  /* Ignore SIGHUP, because a dropped connection causes a read error, which
-   * makes Vim exit and then handling SIGHUP causes various reentrance
-   * problems. */
-  signal(SIGHUP, SIG_IGN);
-#endif
-
-  {
-    windgoto((int)Rows - 1, 0);
-
-    /*
-     * Switch terminal mode back now, so messages end up on the "normal"
-     * screen (if there are two screens).
-     */
-    settmode(TMODE_COOK);
-    stoptermcap();
-    out_flush();
-  }
-}
-
-/*
  * Preserve files and exit.
  * When called IObuff must contain a message.
  * NOTE: This may be called from deathtrap() in a signal handler, avoid unsafe
@@ -3328,42 +2675,42 @@ void prepare_to_exit(void)
  */
 void preserve_exit(void)
 {
+  // 'true' when we are sure to exit, e.g., after a deadly signal
+  static bool really_exiting = false;
+
   // Prevent repeated calls into this method.
   if (really_exiting) {
+    stream_set_blocking(input_global_fd(), true);  //normalize stream (#2598)
     exit(2);
   }
 
-  really_exiting = TRUE;
+  really_exiting = true;
+  mch_errmsg(IObuff);
+  mch_errmsg("\n");
+  ui_flush();
 
-  prepare_to_exit();
-
-  out_str(IObuff);
-  screen_start();                   /* don't know where cursor is now */
-  out_flush();
-
-  ml_close_notmod();                /* close all not-modified buffers */
+  ml_close_notmod();                // close all not-modified buffers
 
   FOR_ALL_BUFFERS(buf) {
     if (buf->b_ml.ml_mfp != NULL && buf->b_ml.ml_mfp->mf_fname != NULL) {
-      OUT_STR("Vim: preserving files...\n");
-      screen_start();               /* don't know where cursor is now */
-      out_flush();
-      ml_sync_all(FALSE, FALSE);        /* preserve all swap files */
+      mch_errmsg((uint8_t *)"Vim: preserving files...\n");
+      ui_flush();
+      ml_sync_all(false, false);    // preserve all swap files
       break;
     }
   }
 
-  ml_close_all(FALSE);              /* close all memfiles, without deleting */
+  ml_close_all(false);              // close all memfiles, without deleting
 
-  OUT_STR("Vim: Finished.\n");
+  mch_errmsg("Vim: Finished.\n");
 
   getout(1);
 }
 
 /*
  * Check for CTRL-C pressed, but only once in a while.
- * Should be used instead of ui_breakcheck() for functions that check for
- * each line in the file.  Calling ui_breakcheck() each time takes too much
+ * Should be used instead of os_breakcheck() for functions that check for
+ * each line in the file.  Calling os_breakcheck() each time takes too much
  * time, because it can be a system call.
  */
 
@@ -3377,7 +2724,7 @@ void line_breakcheck(void)
 {
   if (++breakcheck_count >= BREAKCHECK_SKIP) {
     breakcheck_count = 0;
-    ui_breakcheck();
+    os_breakcheck();
   }
 }
 
@@ -3388,7 +2735,7 @@ void fast_breakcheck(void)
 {
   if (++breakcheck_count >= BREAKCHECK_SKIP * 10) {
     breakcheck_count = 0;
-    ui_breakcheck();
+    os_breakcheck();
   }
 }
 
@@ -3440,7 +2787,7 @@ get_cmd_output (
   call_shell(command, kShellOptDoOut | kShellOptExpand | flags, NULL);
   --no_check_timestamps;
 
-  free(command);
+  xfree(command);
 
   /*
    * read the names from the file into memory
@@ -3460,11 +2807,9 @@ get_cmd_output (
   i = (int)fread((char *)buffer, (size_t)1, (size_t)len, fd);
   fclose(fd);
   os_remove((char *)tempname);
-  if (buffer == NULL)
-    goto done;
   if (i != len) {
     EMSG2(_(e_notread), tempname);
-    free(buffer);
+    xfree(buffer);
     buffer = NULL;
   } else if (ret_len == NULL) {
     /* Change NUL into SOH, otherwise the string is truncated. */
@@ -3478,7 +2823,7 @@ get_cmd_output (
   }
 
 done:
-  free(tempname);
+  xfree(tempname);
   return buffer;
 }
 
@@ -3491,8 +2836,8 @@ void FreeWild(int count, char_u **files)
   if (count <= 0 || files == NULL)
     return;
   while (count--)
-    free(files[count]);
-  free(files);
+    xfree(files[count]);
+  xfree(files);
 }
 
 /*

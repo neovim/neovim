@@ -10,7 +10,7 @@ C, Ct, Cc, Cg = lpeg.C, lpeg.Ct, lpeg.Cc, lpeg.Cg
 any = P(1) -- (consume one character)
 letter = R('az', 'AZ') + S('_$')
 alpha = letter + R('09')
-nl = P('\n')
+nl = P('\r\n') + P('\n')
 not_nl = any - nl
 ws = S(' \t') + nl
 fill = ws ^ 0
@@ -34,8 +34,8 @@ c_params = Ct(c_void + c_param_list)
 c_proto = Ct(
   Cg(c_type, 'return_type') * Cg(c_id, 'name') *
   fill * P('(') * fill * Cg(c_params, 'parameters') * fill * P(')') *
-  Cg(Cc(false), 'deferred') *
-  (fill * Cg((P('FUNC_ATTR_DEFERRED') * Cc(true)), 'deferred') ^ -1) *
+  Cg(Cc(false), 'async') *
+  (fill * Cg((P('FUNC_ATTR_ASYNC') * Cc(true)), 'async') ^ -1) *
   fill * P(';')
   )
 grammar = Ct((c_proto + c_comment + c_preproc + ws) ^ 1)
@@ -183,13 +183,20 @@ for i = 1, #functions do
     local converted, convert_arg, param, arg
     param = fn.parameters[j]
     converted = 'arg_'..j
-    if real_type(param[1]) ~= 'Object' then
-      output:write('\n  if (args.items['..(j - 1)..'].type != kObjectType'..real_type(param[1])..') {')
+    local rt = real_type(param[1])
+    if rt ~= 'Object' then
+      output:write('\n  if (args.items['..(j - 1)..'].type == kObjectType'..rt..') {')
+      output:write('\n    '..converted..' = args.items['..(j - 1)..'].data.'..rt:lower()..';')
+      if rt:match('^Buffer$') or rt:match('^Window$') or rt:match('^Tabpage$') or rt:match('^Boolean$') then
+        -- accept positive integers for Buffers, Windows and Tabpages
+        output:write('\n  } else if (args.items['..(j - 1)..'].type == kObjectTypeInteger && args.items['..(j - 1)..'].data.integer > 0) {')
+        output:write('\n    '..converted..' = (unsigned)args.items['..(j - 1)..'].data.integer;')
+      end
+      output:write('\n  } else {')
       output:write('\n    snprintf(error->msg, sizeof(error->msg), "Wrong type for argument '..j..', expecting '..param[1]..'");')
       output:write('\n    error->set = true;')
       output:write('\n    goto cleanup;')
-      output:write('\n  }')
-      output:write('\n  '..converted..' = args.items['..(j - 1)..'].data.'..real_type(param[1]):lower()..';\n')
+      output:write('\n  }\n')
     else
       output:write('\n  '..converted..' = args.items['..(j - 1)..'];\n')
     end
@@ -252,6 +259,11 @@ end
 output:write([[
 static Map(String, MsgpackRpcRequestHandler) *methods = NULL;
 
+void msgpack_rpc_add_method_handler(String method, MsgpackRpcRequestHandler handler)
+{
+  map_put(String, MsgpackRpcRequestHandler)(methods, method, handler);
+}
+
 void msgpack_rpc_init_method_table(void)
 {
   methods = map_new(String, MsgpackRpcRequestHandler)();
@@ -263,11 +275,11 @@ void msgpack_rpc_init_method_table(void)
 local max_fname_len = 0
 for i = 1, #functions do
   local fn = functions[i]
-  output:write('  map_put(String, MsgpackRpcRequestHandler)(methods, '..
+  output:write('  msgpack_rpc_add_method_handler('..
                '(String) {.data = "'..fn.name..'", '..
                '.size = sizeof("'..fn.name..'") - 1}, '..
                '(MsgpackRpcRequestHandler) {.fn = handle_'..  fn.name..
-               ', .defer = '..tostring(fn.deferred)..'});\n')
+               ', .async = '..tostring(fn.async)..'});\n')
 
   if #fn.name > max_fname_len then
     max_fname_len = #fn.name
@@ -282,7 +294,7 @@ MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *name,
 {
   String m = {
     .data=(char *)name,
-    .size=min(name_len, ]]..max_fname_len..[[)
+    .size=MIN(name_len, ]]..max_fname_len..[[)
   };
   MsgpackRpcRequestHandler rv =
     map_get(String, MsgpackRpcRequestHandler)(methods, m);

@@ -16,7 +16,7 @@
 
 /*
  * For MSDOS some keys produce codes larger than 0xff. They are split into two
- * chars, the first one is K_NUL (same value used in term_defs.h).
+ * chars, the first one is K_NUL.
  */
 #define K_NUL                   (0xce)  /* for MSDOS: special key follows */
 
@@ -78,39 +78,19 @@
 #define KS_HOR_SCROLLBAR        248
 
 /*
- * These are used for DEC mouse
- */
-#define KS_NETTERM_MOUSE        247
-#define KS_DEC_MOUSE            246
-
-/*
  * Used for switching Select mode back on after a mapping or menu.
  */
 #define KS_SELECT               245
 #define K_SELECT_STRING         (char_u *)"\200\365X"
 
-/*
- * Used for tearing off a menu.
- */
-#define KS_TEAROFF              244
-
 /* Used a termcap entry that produces a normal character. */
 #define KS_KEY                  242
-
-/* Used for the qnx pterm mouse. */
-#define KS_PTERM_MOUSE          241
 
 /* Used for click in a tab pages label. */
 #define KS_TABLINE              240
 
 /* Used for menu in a tab pages line. */
 #define KS_TABMENU              239
-
-/* Used for the urxvt mouse. */
-#define KS_URXVT_MOUSE          238
-
-/* Used for the sgr mouse. */
-#define KS_SGR_MOUSE            237
 
 /*
  * Filler used after KS_SPECIAL and others
@@ -262,11 +242,12 @@ enum key_extra {
   , KE_X2RELEASE
 
   , KE_DROP             /* DnD data is available */
-  , KE_CURSORHOLD       /* CursorHold event */
   , KE_NOP              /* doesn't do something */
   , KE_FOCUSGAINED      /* focus gained */
   , KE_FOCUSLOST        /* focus lost */
   , KE_EVENT            // event
+  , KE_PASTE            // special key to toggle the 'paste' option.
+                        // sent only by UIs
 };
 
 /*
@@ -410,14 +391,7 @@ enum key_extra {
 #define K_VER_SCROLLBAR TERMCAP2KEY(KS_VER_SCROLLBAR, KE_FILLER)
 #define K_HOR_SCROLLBAR   TERMCAP2KEY(KS_HOR_SCROLLBAR, KE_FILLER)
 
-#define K_NETTERM_MOUSE TERMCAP2KEY(KS_NETTERM_MOUSE, KE_FILLER)
-#define K_DEC_MOUSE     TERMCAP2KEY(KS_DEC_MOUSE, KE_FILLER)
-#define K_PTERM_MOUSE   TERMCAP2KEY(KS_PTERM_MOUSE, KE_FILLER)
-#define K_URXVT_MOUSE   TERMCAP2KEY(KS_URXVT_MOUSE, KE_FILLER)
-#define K_SGR_MOUSE     TERMCAP2KEY(KS_SGR_MOUSE, KE_FILLER)
-
 #define K_SELECT        TERMCAP2KEY(KS_SELECT, KE_FILLER)
-#define K_TEAROFF       TERMCAP2KEY(KS_TEAROFF, KE_FILLER)
 
 #define K_TABLINE       TERMCAP2KEY(KS_TABLINE, KE_FILLER)
 #define K_TABMENU       TERMCAP2KEY(KS_TABMENU, KE_FILLER)
@@ -462,8 +436,8 @@ enum key_extra {
 #define K_FOCUSGAINED   TERMCAP2KEY(KS_EXTRA, KE_FOCUSGAINED)
 #define K_FOCUSLOST     TERMCAP2KEY(KS_EXTRA, KE_FOCUSLOST)
 
-#define K_CURSORHOLD    TERMCAP2KEY(KS_EXTRA, KE_CURSORHOLD)
 #define K_EVENT         TERMCAP2KEY(KS_EXTRA, KE_EVENT)
+#define K_PASTE         TERMCAP2KEY(KS_EXTRA, KE_PASTE)
 
 /* Bits for modifier mask */
 /* 0x01 cannot be used, because the modifier must be 0x02 or higher */

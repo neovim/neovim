@@ -5,6 +5,7 @@
 " URL:          http://asciidoc.org/
 " Licence:      GPL (http://www.gnu.org)
 " Remarks:      Vim 6 or greater
+" Last Update:  2014 Aug 29 (see Issue 240)
 " Limitations:
 " 
 " - Nested quoted text formatting is highlighted according to the outer
@@ -155,7 +156,8 @@ hi def link asciidocQuotedAttributeList Special
 hi def link asciidocQuotedBold Special
 hi def link asciidocQuotedDoubleQuoted Label
 hi def link asciidocQuotedEmphasized2 Type
-hi def link asciidocQuotedEmphasized Type
+hi asciidocQuotedEmphasizedItalic term=italic cterm=italic gui=italic
+hi def link asciidocQuotedEmphasized asciidocQuotedEmphasizedItalic
 hi def link asciidocQuotedMonospaced2 Identifier
 hi def link asciidocQuotedMonospaced Identifier
 hi def link asciidocQuotedSingleQuoted Label

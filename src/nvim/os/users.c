@@ -41,7 +41,12 @@ int os_get_usernames(garray_T *users)
 // Return OK if a name found.
 int os_get_user_name(char *s, size_t len)
 {
+#ifdef UNIX
   return os_get_uname(getuid(), s, len);
+#else
+  // TODO(equalsraf): Windows GetUserName()
+  return os_get_uname(0, s, len);
+#endif
 }
 
 // Insert user name for "uid" in s[len].
@@ -52,7 +57,7 @@ int os_get_uname(uid_t uid, char *s, size_t len)
 #if defined(HAVE_PWD_H) && defined(HAVE_GETPWUID)
   struct passwd *pw;
 
-  if ((pw = getpwuid(uid)) != NULL
+  if ((pw = getpwuid(uid)) != NULL  // NOLINT(runtime/threadsafe_fn)
       && pw->pw_name != NULL && *(pw->pw_name) != NUL) {
     STRLCPY(s, pw->pw_name, len);
     return OK;
@@ -72,7 +77,7 @@ char *os_get_user_directory(const char *name)
   if (name == NULL) {
     return NULL;
   }
-  pw = getpwnam(name);
+  pw = getpwnam(name);  // NOLINT(runtime/threadsafe_fn)
   if (pw != NULL) {
     // save the string from the static passwd entry into malloced memory
     return xstrdup(pw->pw_dir);

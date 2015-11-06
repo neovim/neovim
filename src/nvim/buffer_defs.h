@@ -2,8 +2,11 @@
 #define NVIM_BUFFER_DEFS_H
 
 #include <stdbool.h>
+#include <stdint.h>
 // for FILE
 #include <stdio.h>
+
+typedef struct file_buffer buf_T; // Forward declaration
 
 // for garray_T
 #include "nvim/garray.h"
@@ -15,7 +18,7 @@
 #include "nvim/iconv.h"
 // for jump list and tag stack sizes in a buffer and mark types
 #include "nvim/mark_defs.h"
-// for u_header_T
+// for u_header_T; needs buf_T.
 #include "nvim/undo_defs.h"
 // for hashtab_T
 #include "nvim/hashtab.h"
@@ -25,6 +28,8 @@
 #include "nvim/profile.h"
 // for String
 #include "nvim/api/private/defs.h"
+
+#define MODIFIABLE(buf) (!buf->terminal && buf->b_p_ma)
 
 /*
  * Flags for w_valid.
@@ -77,7 +82,6 @@ typedef struct window_S win_T;
 typedef struct wininfo_S wininfo_T;
 typedef struct frame_S frame_T;
 typedef int scid_T;                     /* script ID */
-typedef struct file_buffer buf_T;       /* forward declaration */
 
 // for struct memline (it needs memfile_T)
 #include "nvim/memline_defs.h"
@@ -99,6 +103,9 @@ typedef struct file_buffer buf_T;       /* forward declaration */
 
 // for FileID
 #include "nvim/os/fs_defs.h"
+
+// for Terminal
+#include "nvim/terminal.h"
 
 /*
  * The taggy struct is used to store the information about a :tag command.
@@ -320,15 +327,6 @@ typedef struct {
   bool vc_fail;                 /* fail for invalid char, don't use '?' */
 } vimconv_T;
 
-/*
- * Structure used for reading from the viminfo file.
- */
-typedef struct {
-  char_u      *vir_line;        /* text of the current line */
-  FILE        *vir_fd;          /* file descriptor */
-  vimconv_T vir_conv;           /* encoding conversion */
-} vir_T;
-
 #define CONV_NONE               0
 #define CONV_TO_UTF8            1
 #define CONV_9_TO_UTF8          2
@@ -508,21 +506,21 @@ struct file_buffer {
   uint64_t b_orig_size;         /* size of original file in bytes */
   int b_orig_mode;              /* mode of original file */
 
-  pos_T b_namedm[NMARKS];         /* current named marks (mark.c) */
+  fmark_T b_namedm[NMARKS];     /* current named marks (mark.c) */
 
   /* These variables are set when VIsual_active becomes FALSE */
   visualinfo_T b_visual;
   int b_visual_mode_eval;            /* b_visual.vi_mode for visualmode() */
 
-  pos_T b_last_cursor;          /* cursor position when last unloading this
-                                   buffer */
-  pos_T b_last_insert;          /* where Insert mode was left */
-  pos_T b_last_change;          /* position of last change: '. mark */
+  fmark_T b_last_cursor;        // cursor position when last unloading this
+                                // buffer
+  fmark_T b_last_insert;        // where Insert mode was left
+  fmark_T b_last_change;        // position of last change: '. mark
 
   /*
    * the changelist contains old change positions
    */
-  pos_T b_changelist[JUMPLISTSIZE];
+  fmark_T b_changelist[JUMPLISTSIZE];
   int b_changelistlen;                  /* number of active entries */
   bool b_new_change;                    /* set by u_savecommon() */
 
@@ -546,7 +544,7 @@ struct file_buffer {
   pos_T b_op_start_orig;  // used for Insstart_orig
   pos_T b_op_end;
 
-  bool b_marks_read;            /* Have we read viminfo marks yet? */
+  bool b_marks_read;            /* Have we read ShaDa marks yet? */
 
   /*
    * The following only used in undo.c.
@@ -578,12 +576,7 @@ struct file_buffer {
 #define B_IMODE_USE_INSERT -1   /*	Use b_p_iminsert value for search */
 #define B_IMODE_NONE 0          /*	Input via none */
 #define B_IMODE_LMAP 1          /*	Input via langmap */
-#ifndef USE_IM_CONTROL
 # define B_IMODE_LAST 1
-#else
-# define B_IMODE_IM 2           /*	Input via input method */
-# define B_IMODE_LAST 2
-#endif
 
   short b_kmap_state;           /* using "lmap" mappings */
 # define KEYMAP_INIT    1       /* 'keymap' was set, call keymap_init() */
@@ -601,6 +594,8 @@ struct file_buffer {
 
   int b_p_ai;                   /* 'autoindent' */
   int b_p_ai_nopaste;           /* b_p_ai saved for paste mode */
+  char_u      *b_p_bkc;         ///< 'backupcopy'
+  unsigned int b_bkc_flags;     ///< flags for 'backupcopy'
   int b_p_ci;                   /* 'copyindent' */
   int b_p_bin;                  /* 'binary' */
   int b_p_bomb;                 /* 'bomb' */
@@ -629,12 +624,12 @@ struct file_buffer {
   char_u      *b_p_def;         /* 'define' local value */
   char_u      *b_p_inc;         /* 'include' */
   char_u      *b_p_inex;        /* 'includeexpr' */
-  long_u b_p_inex_flags;        /* flags for 'includeexpr' */
+  uint32_t b_p_inex_flags;      /* flags for 'includeexpr' */
   char_u      *b_p_inde;        /* 'indentexpr' */
-  long_u b_p_inde_flags;        /* flags for 'indentexpr' */
+  uint32_t b_p_inde_flags;        /* flags for 'indentexpr' */
   char_u      *b_p_indk;        /* 'indentkeys' */
   char_u      *b_p_fex;         /* 'formatexpr' */
-  long_u b_p_fex_flags;         /* flags for 'formatexpr' */
+  uint32_t b_p_fex_flags;       /* flags for 'formatexpr' */
   char_u      *b_p_kp;          /* 'keywordprg' */
   int b_p_lisp;                 /* 'lisp' */
   char_u      *b_p_mps;         /* 'matchpairs' */
@@ -751,6 +746,10 @@ struct file_buffer {
                                  * may use a different synblock_T. */
 
   signlist_T *b_signlist;       /* list of signs to draw */
+
+  Terminal *terminal;           // Terminal instance associated with the buffer
+
+  dict_T *additional_data;      // Additional data from shada file if any.
 };
 
 /*
@@ -1001,7 +1000,7 @@ struct window_S {
    * that the cursor is on.  We use this to avoid extra calls to plines().
    */
   int w_cline_height;               /* current size of cursor line */
-  int w_cline_folded;               /* cursor line is folded */
+  bool w_cline_folded;               /* cursor line is folded */
 
   int w_cline_row;                  /* starting row of the cursor line */
 
@@ -1085,9 +1084,9 @@ struct window_S {
   winopt_T w_allbuf_opt;
 
   /* A few options have local flags for P_INSECURE. */
-  long_u w_p_stl_flags;             /* flags for 'statusline' */
-  long_u w_p_fde_flags;             /* flags for 'foldexpr' */
-  long_u w_p_fdt_flags;             /* flags for 'foldtext' */
+  uint32_t w_p_stl_flags;           /* flags for 'statusline' */
+  uint32_t w_p_fde_flags;           /* flags for 'foldexpr' */
+  uint32_t w_p_fdt_flags;           /* flags for 'foldtext' */
   int         *w_p_cc_cols;         /* array of columns to highlight or NULL */
   int         w_p_brimin;           /* minimum width for breakindent */
   int         w_p_brishift;         /* additional shift for breakindent */

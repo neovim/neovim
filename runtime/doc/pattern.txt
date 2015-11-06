@@ -1,4 +1,4 @@
-*pattern.txt*   For Vim version 7.4.  Last change: 2014 May 28
+*pattern.txt*   For Vim version 7.4.  Last change: 2014 Sep 06
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -59,11 +59,11 @@ explanations are in chapter 27 |usr_27.txt|.
 
 							*n*
 n			Repeat the latest "/" or "?" [count] times.
-			|last-pattern| {Vi: no count}
+			|last-pattern|
 
 							*N*
 N			Repeat the latest "/" or "?" [count] times in
-			opposite direction. |last-pattern| {Vi: no count}
+			opposite direction. |last-pattern|
 
 							*star* *E348* *E349*
 *			Search forward for the [count]'th occurrence of the
@@ -76,24 +76,24 @@ N			Repeat the latest "/" or "?" [count] times in
 				4. the first non-blank word after the cursor,
 				   in the current line
 			Only whole keywords are searched for, like with the
-			command "/\<keyword\>".  |exclusive|  {not in Vi}
+			command "/\<keyword\>".  |exclusive|
 			'ignorecase' is used, 'smartcase' is not.
 
 							*#*
 #			Same as "*", but search backward.  The pound sign
 			(character 163) also works.  If the "#" key works as
 			backspace, try using "stty erase <BS>" before starting
-			Vim (<BS> is CTRL-H or a real backspace).  {not in Vi}
+			Vim (<BS> is CTRL-H or a real backspace).
 
 							*gstar*
 g*			Like "*", but don't put "\<" and "\>" around the word.
 			This makes the search also find matches that are not a
-			whole word.  {not in Vi}
+			whole word.
 
 							*g#*
 g#			Like "#", but don't put "\<" and "\>" around the word.
 			This makes the search also find matches that are not a
-			whole word.  {not in Vi}
+			whole word.
 
 							*gd*
 gd			Goto local Declaration.  When the cursor is on a local
@@ -111,22 +111,21 @@ gd			Goto local Declaration.  When the cursor is on a local
 			searched use the commands listed in |include-search|.
 			After this command |n| searches forward for the next
 			match (not backward).
-			{not in Vi}
 
 							*gD*
 gD			Goto global Declaration.  When the cursor is on a
 			global variable that is defined in the file, this
 			command will jump to its declaration.  This works just
 			like "gd", except that the search for the keyword
-			always starts in line 1.  {not in Vi}
+			always starts in line 1.
 
 							*1gd*
 1gd			Like "gd", but ignore matches inside a {} block that
-			ends before the cursor position. {not in Vi}
+			ends before the cursor position.
 
 							*1gD*
 1gD			Like "gD", but ignore matches inside a {} block that
-			ends before the cursor position. {not in Vi}
+			ends before the cursor position.
 
 							*CTRL-C*
 CTRL-C			Interrupt current (search) command.  Use CTRL-Break on
@@ -158,7 +157,7 @@ error message |:s_flags|.
 					*search-offset* *{offset}*
 These commands search for the specified pattern.  With "/" and "?" an
 additional offset may be given.  There are two types of offsets: line offsets
-and character offsets.  {the character offsets are not in Vi}
+and character offsets.
 
 The offset gives the cursor position relative to the found match:
     [num]	[num] lines downwards, in column 1
@@ -361,7 +360,7 @@ into a problem or want to specifically select one engine or the other, you can
 prepend one of the following to the pattern:
 
 	\%#=0	Force automatic selection.  Only has an effect when
-	        'regexpengine' has been set to a non-zero value.
+		'regexpengine' has been set to a non-zero value.
 	\%#=1	Force using the old engine.
 	\%#=2	Force using the NFA engine.
 
@@ -425,30 +424,28 @@ More explanation and examples below, follow the links.		*E64* *E871*
 	  multi ~
      'magic' 'nomagic'	matches of the preceding atom ~
 |/star|	*	\*	0 or more	as many as possible
-|/\+|	\+	\+	1 or more	as many as possible (*)
-|/\=|	\=	\=	0 or 1		as many as possible (*)
-|/\?|	\?	\?	0 or 1		as many as possible (*)
+|/\+|	\+	\+	1 or more	as many as possible
+|/\=|	\=	\=	0 or 1		as many as possible
+|/\?|	\?	\?	0 or 1		as many as possible
 
-|/\{|	\{n,m}	\{n,m}	n to m		as many as possible (*)
-	\{n}	\{n}	n		exactly (*)
-	\{n,}	\{n,}	at least n	as many as possible (*)
-	\{,m}	\{,m}	0 to m		as many as possible (*)
-	\{}	\{}	0 or more	as many as possible (same as *) (*)
+|/\{|	\{n,m}	\{n,m}	n to m		as many as possible
+	\{n}	\{n}	n		exactly
+	\{n,}	\{n,}	at least n	as many as possible
+	\{,m}	\{,m}	0 to m		as many as possible
+	\{}	\{}	0 or more	as many as possible (same as *)
 
-|/\{-|	\{-n,m}	\{-n,m}	n to m		as few as possible (*)
-	\{-n}	\{-n}	n		exactly (*)
-	\{-n,}	\{-n,}	at least n	as few as possible (*)
-	\{-,m}	\{-,m}	0 to m		as few as possible (*)
-	\{-}	\{-}	0 or more	as few as possible (*)
+|/\{-|	\{-n,m}	\{-n,m}	n to m		as few as possible
+	\{-n}	\{-n}	n		exactly
+	\{-n,}	\{-n,}	at least n	as few as possible
+	\{-,m}	\{-,m}	0 to m		as few as possible
+	\{-}	\{-}	0 or more	as few as possible
 
 							*E59*
-|/\@>|	\@>	\@>	1, like matching a whole pattern (*)
-|/\@=|	\@=	\@=	nothing, requires a match |/zero-width| (*)
-|/\@!|	\@!	\@!	nothing, requires NO match |/zero-width| (*)
-|/\@<=|	\@<=	\@<=	nothing, requires a match behind |/zero-width| (*)
-|/\@<!|	\@<!	\@<!	nothing, requires NO match behind |/zero-width| (*)
-
-(*) {not in Vi}
+|/\@>|	\@>	\@>	1, like matching a whole pattern
+|/\@=|	\@=	\@=	nothing, requires a match |/zero-width|
+|/\@!|	\@!	\@!	nothing, requires NO match |/zero-width|
+|/\@<=|	\@<=	\@<=	nothing, requires a match behind |/zero-width|
+|/\@<!|	\@<!	\@<!	nothing, requires NO match behind |/zero-width|
 
 
 Overview of ordinary atoms.				*/ordinary-atom*
@@ -477,7 +474,7 @@ More explanation and examples below, follow the links.
 |/\%c|	\%23c	\%23c	in column 23 |/zero-width|
 |/\%v|	\%23v	\%23v	in virtual column 23 |/zero-width|
 
-Character classes {not in Vi}:				*/character-classes*
+Character classes:					*/character-classes*
 |/\i|	\i	\i	identifier character (see 'isident' option)
 |/\I|	\I	\I	like "\i", but excluding digits
 |/\k|	\k	\k	keyword character (see 'iskeyword' option)
@@ -514,7 +511,7 @@ Character classes {not in Vi}:				*/character-classes*
 |/\b|	\b	\b	<BS>
 |/\n|	\n	\n	end-of-line
 |/~|	~	\~	last given substitute string
-|/\1|	\1	\1	same string as matched by first \(\) {not in Vi}
+|/\1|	\1	\1	same string as matched by first \(\)
 |/\2|	\2	\2	Like "\1", but uses second \(\)
 	   ...
 |/\9|	\9	\9	Like "\1", but uses ninth \(\)
@@ -591,20 +588,19 @@ overview.
 	character at a time.
 
 							*/\+* *E57*
-\+	Matches 1 or more of the preceding atom, as many as possible. {not in
-	Vi}
+\+	Matches 1 or more of the preceding atom, as many as possible.
 	Example		matches ~
 	^.\+$		any non-empty line
 	\s\+		white space of at least one character
 
 							*/\=*
-\=	Matches 0 or 1 of the preceding atom, as many as possible. {not in Vi}
+\=	Matches 0 or 1 of the preceding atom, as many as possible.
 	Example		matches ~
 	foo\=		"fo" and "foo"
 
 							*/\?*
 \?	Just like \=.  Cannot be used when searching backwards with the "?"
-	command. {not in Vi}
+	command.
 
 					*/\{* *E58* *E60* *E554* *E870*
 \{n,m}	Matches n to m of the preceding atom, as many as possible
@@ -618,7 +614,6 @@ overview.
 \{-n,}	matches at least n of the preceding atom, as few as possible
 \{-,m}	matches 0 to m of the preceding atom, as few as possible
 \{-}	matches 0 or more of the preceding atom, as few as possible
-	{Vi does not have any of these}
 
 	n and m are positive decimal numbers or zero
 								*non-greedy*
@@ -641,7 +636,7 @@ overview.
 	The } may optionally be preceded with a backslash: \{n,m\}.
 
 							*/\@=*
-\@=	Matches the preceding atom with zero width. {not in Vi}
+\@=	Matches the preceding atom with zero width.
 	Like "(?=pattern)" in Perl.
 	Example			matches ~
 	foo\(bar\)\@=		"foo" in "foobar"
@@ -661,7 +656,7 @@ overview.
 
 							*/\@!*
 \@!	Matches with zero width if the preceding atom does NOT match at the
-	current position. |/zero-width| {not in Vi}
+	current position. |/zero-width|
 	Like "(?!pattern)" in Perl.
 	Example			matches ~
 	foo\(bar\)\@!		any "foo" not followed by "bar"
@@ -691,7 +686,7 @@ overview.
 
 							*/\@<=*
 \@<=	Matches with zero width if the preceding atom matches just before what
-	follows. |/zero-width| {not in Vi}
+	follows. |/zero-width|
 	Like "(?<=pattern)" in Perl, but Vim allows non-fixed-width patterns.
 	Example			matches ~
 	\(an\_s\+\)\@<=file	"file" after "an" and white space or an
@@ -706,11 +701,18 @@ overview.
 	But to limit the time needed, only the line where what follows matches
 	is searched, and one line before that (if there is one).  This should
 	be sufficient to match most things and not be too slow.
-	The part of the pattern after "\@<=" and "\@<!" are checked for a
-	match first, thus things like "\1" don't work to reference \(\) inside
-	the preceding atom.  It does work the other way around:
-	Example			matches ~
-	\1\@<=,\([a-z]\+\)	",abc" in "abc,abc"
+
+	In the old regexp engine the part of the pattern after "\@<=" and
+	"\@<!" are checked for a match first, thus things like "\1" don't work
+	to reference \(\) inside the preceding atom.  It does work the other
+	way around:
+	Bad example			matches ~
+	\%#=1\1\@<=,\([a-z]\+\)		",abc" in "abc,abc"
+
+	However, the new regexp engine works differently, it is better to not
+	rely on this behavior, do not use \@<= if it can be avoided:
+	Example				matches ~
+	\([a-z]\+\)\zs,\1		",abc" in "abc,abc"
 
 \@123<=
 	Like "\@<=" but only look back 123 bytes. This avoids trying lots
@@ -728,7 +730,7 @@ overview.
 \@<!	Matches with zero width if the preceding atom does NOT match just
 	before what follows.  Thus this matches if there is no position in the
 	current or previous line where the atom matches such that it ends just
-	before what follows.  |/zero-width| {not in Vi}
+	before what follows.  |/zero-width|
 	Like "(?<!pattern)" in Perl, but Vim allows non-fixed-width patterns.
 	The match with the preceding atom is made to end just before the match
 	with what follows, thus an atom that ends in ".*" will work.
@@ -744,7 +746,7 @@ overview.
 	slow.
 
 							*/\@>*
-\@>	Matches the preceding atom like matching a whole pattern. {not in Vi}
+\@>	Matches the preceding atom like matching a whole pattern.
 	Like "(?>pattern)" in Perl.
 	Example		matches ~
 	\(a*\)\@>a	nothing (the "a*" takes all the "a"'s, there can't be
@@ -822,7 +824,8 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	branch is used.  Example: >
 		/\(.\{-}\zsFab\)\{3}
 <	Finds the third occurrence of "Fab".
-	{not in Vi} {not available when compiled without the |+syntax| feature}
+	This cannot be followed by a multi. *E888*
+
 							*/\ze*
 \ze	Matches at any position, and sets the end of the match there: The
 	previous char is the last char of the whole match. |/zero-width|
@@ -830,17 +833,17 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	branch is used.
 	Example: "end\ze\(if\|for\)" matches the "end" in "endif" and
 	"endfor".
-	{not in Vi} {not available when compiled without the |+syntax| feature}
+	This cannot be followed by a multi. |E888|
 
 						*/\%^* *start-of-file*
 \%^	Matches start of the file.  When matching with a string, matches the
-	start of the string. {not in Vi}
+	start of the string.
 	For example, to find the first "VIM" in a file: >
 		/\%^\_.\{-}\zsVIM
 <
 						*/\%$* *end-of-file*
 \%$	Matches end of the file.  When matching with a string, matches the
-	end of the string. {not in Vi}
+	end of the string.
 	Note that this does NOT find the last "VIM" in a file: >
 		/VIM\_.\{-}\%$
 <	It will find the next VIM, because the part after it will always
@@ -861,7 +864,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 
 						*/\%#* *cursor-position*
 \%#	Matches with the cursor position.  Only works when matching in a
-	buffer displayed in a window. {not in Vi}
+	buffer displayed in a window.
 	WARNING: When the cursor is moved after the pattern was used, the
 	result becomes invalid.  Vim doesn't automatically update the matches.
 	This is especially relevant for syntax highlighting and 'hlsearch'.
@@ -882,7 +885,6 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 <	Note that two dots are required to include mark 'e in the match.  That
 	is because "\%<'e" matches at the character before the 'e mark, and
 	since it's a |/zero-width| match it doesn't include that character.
-	{not in Vi}
 	WARNING: When the mark is moved after the pattern was used, the result
 	becomes invalid.  Vim doesn't automatically update the matches.
 	Similar to moving the cursor for "\%#" |/\%#|.
@@ -892,7 +894,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 \%<23l	Matches above a specific line (lower line number).
 \%>23l	Matches below a specific line (higher line number).
 	These three can be used to match specific lines in a buffer.  The "23"
-	can be any line number.  The first line is 1. {not in Vi}
+	can be any line number.  The first line is 1.
 	WARNING: When inserting or deleting lines Vim does not automatically
 	update the matches.  This means Syntax highlighting quickly becomes
 	wrong.
@@ -908,7 +910,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	These three can be used to match specific columns in a buffer or
 	string.  The "23" can be any column number.  The first column is 1.
 	Actually, the column is the byte number (thus it's not exactly right
-	for multi-byte characters).  {not in Vi}
+	for multi-byte characters).
 	WARNING: When inserting or deleting text Vim does not automatically
 	update the matches.  This means Syntax highlighting quickly becomes
 	wrong.
@@ -930,7 +932,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	The "23" can be any column number.  The first column is 1.
 	Note that some virtual column positions will never match, because they
 	are halfway through a tab or other character that occupies more than
-	one screen character.  {not in Vi}
+	one screen character.
 	WARNING: When inserting or deleting text Vim does not automatically
 	update highlighted matches.  This means Syntax highlighting quickly
 	becomes wrong.
@@ -949,7 +951,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 		/.*\%<18v.
 <
 
-Character classes: {not in Vi}
+Character classes:
 \i	identifier character (see 'isident' option)	*/\i*
 \I	like "\i", but excluding digits			*/\I*
 \k	keyword character (see 'iskeyword' option)	*/\k*
@@ -1009,7 +1011,7 @@ match ASCII characters, as indicated by the range.
 	*E51* *E54* *E55* *E872* *E873*
 
 \1      Matches the same string that was matched by	*/\1* *E65*
-	the first sub-expression in \( and \). {not in Vi}
+	the first sub-expression in \( and \).
 	Example: "\([a-z]\).\1" matches "ata", "ehe", "tot", etc.
 \2      Like "\1", but uses second sub-expression,	*/\2*
    ...							*/\3*
@@ -1021,7 +1023,6 @@ match ASCII characters, as indicated by the range.
 \%(\)	A pattern enclosed by escaped parentheses.	*/\%(\)* */\%(* *E53*
 	Just like \(\), but without counting it as a sub-expression.  This
 	allows using more groups and it's a little bit faster.
-	{not in Vi}
 
 x	A single character, with no special meaning, matches itself
 
@@ -1099,7 +1100,7 @@ x	A single character, with no special meaning, matches itself
 	  backslash before it: "[xyz\]]", "[\^xyz]", "[xy\-z]" and "[xyz\\]".
 	  (Note: POSIX does not support the use of a backslash this way).  For
 	  ']' you can also make it the first character (following a possible
-	  "^"):  "[]xyz]" or "[^]xyz]" {not in Vi}.
+	  "^"):  "[]xyz]" or "[^]xyz]".
 	  For '-' you can also make it the first or last character: "[-xyz]",
 	  "[^-xyz]" or "[xyz-]".  For '\' you can also let it be followed by
 	  any character that's not in "^]-\bdertnoUux".  "[\xyz]" matches '\',
@@ -1108,7 +1109,7 @@ x	A single character, with no special meaning, matches itself
 	- Omitting the trailing ] is not considered an error. "[]" works like
 	  "[]]", it matches the ']' character.
 	- The following translations are accepted when the 'l' flag is not
-	  included in 'cpoptions' {not in Vi}:
+	  included in 'cpoptions':
 		\e	<Esc>
 		\t	<Tab>
 		\r	<CR>	(NOT end-of-line!)
@@ -1188,7 +1189,7 @@ files.  To match a <Nul> with a search pattern you can just enter CTRL-@ or
 "CTRL-V 000".  This is probably just what you expect.  Internally the
 character is replaced with a <NL> in the search pattern.  What is unusual is
 that typing CTRL-V CTRL-J also inserts a <NL>, thus also searches for a <Nul>
-in the file.  {Vi cannot handle <Nul> characters in the file at all}
+in the file.
 
 						*CR-used-for-NL*
 When 'fileformat' is "mac", <NL> characters in the file are stored as <CR>

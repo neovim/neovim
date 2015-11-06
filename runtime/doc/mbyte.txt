@@ -89,8 +89,8 @@ See |encoding-values| for a list of acceptable values.
 
 The result is that all the text that is used inside Vim will be in this
 encoding.  Not only the text in the buffers, but also in registers, variables,
-etc.  This also means that changing the value of 'encoding' makes the existing
-text invalid!  The text doesn't change, but it will be displayed wrong.
+etc. 'encoding' is read-only after startup because changing it would make the
+existing text invalid.
 
 You can edit files in another encoding than what 'encoding' is set to.  Vim
 will convert the file when you read it and convert it back when you write it.
@@ -100,8 +100,7 @@ See 'fileencoding', 'fileencodings' and |++enc|.
 DISPLAY AND FONTS
 
 If you are working in a terminal (emulator) you must make sure it accepts the
-same encoding as which Vim is working with.  If this is not the case, you can
-use the 'termencoding' option to make Vim convert text automatically.
+same encoding as which Vim is working with.
 
 For the GUI you must select fonts that work with the current 'encoding'.  This
 is the difficult part.  It depends on the system you are using, the locale and
@@ -223,7 +222,7 @@ To use a locale in Vim only, use the |:language| command: >
 
 	:language ko
 
-Put this in your ~/.vimrc file to use it always.
+Put this in your |init.vim| file to use it always.
 
 Or specify $LANG when starting Vim:
 
@@ -276,8 +275,7 @@ u   Unicode	Universal encoding, can replace all others.  ISO 10646.
 
 Other encodings cannot be used by Vim internally.  But files in other
 encodings can be edited by using conversion, see 'fileencoding'.
-Note that all encodings must use ASCII for the characters up to 128 (except
-when compiled for EBCDIC).
+Note that all encodings must use ASCII for the characters up to 128.
 
 Supported 'encoding' values are:			*encoding-values*
 1   latin1	8-bit characters (ISO 8859-1, also used for cp1252)
@@ -380,67 +378,16 @@ or when conversion is not possible:
 	cp932, shift-jis, sjis
 	cp936, euc-cn
 
-							*encoding-table*
-Normally 'encoding' is equal to your current locale and 'termencoding' is
-empty.  This means that your keyboard and display work with characters encoded
-in your current locale, and Vim uses the same characters internally.
-
-You can make Vim use characters in a different encoding by setting the
-'encoding' option to a different value.  Since the keyboard and display still
-use the current locale, conversion needs to be done.  The 'termencoding' then
-takes over the value of the current locale, so Vim converts between 'encoding'
-and 'termencoding'.  Example: >
-	:let &termencoding = &encoding
-	:set encoding=utf-8
-
-However, not all combinations of values are possible.  The table below tells
-you how each of the nine combinations works.  This is further restricted by
-not all conversions being possible, iconv() being present, etc.  Since this
-depends on the system used, no detailed list can be given.
-
-('tenc' is the short name for 'termencoding' and 'enc' short for 'encoding')
-
-'tenc'	    'enc'	remark ~
-
- 8bit	    8bit	Works.  When 'termencoding' is different from
-			'encoding' typing and displaying may be wrong for some
-			characters, Vim does NOT perform conversion (set
-			'encoding' to "utf-8" to get this).
- 8bit      2byte	MS-Windows: works for all codepages installed on your
-			system; you can only type 8bit characters;
-			Other systems: does NOT work.
- 8bit	   Unicode	Works, but only 8bit characters can be typed directly
-			(others through digraphs, keymaps, etc.); in a
-			terminal you can only see 8bit characters; the GUI can
-			show all characters that the 'guifont' supports.
-
- 2byte	    8bit	Works, but typing non-ASCII characters might
-			be a problem.
- 2byte	   2byte	MS-Windows: works for all codepages installed on your
-			system; typing characters might be a problem when
-			locale is different from 'encoding'.
-			Other systems: Only works when 'termencoding' is equal
-			to 'encoding', you might as well leave it empty.
- 2byte	   Unicode	works, Vim will translate typed characters.
-
- Unicode    8bit	works (unusual)
- Unicode    2byte	does NOT work
- Unicode   Unicode	works very well (leaving 'termencoding' empty works
-			the same way, because all Unicode is handled
-			internally as UTF-8)
-
 CONVERSION						*charset-conversion*
 
 Vim will automatically convert from one to another encoding in several places:
 - When reading a file and 'fileencoding' is different from 'encoding'
 - When writing a file and 'fileencoding' is different from 'encoding'
-- When displaying characters and 'termencoding' is different from 'encoding'
-- When reading input and 'termencoding' is different from 'encoding'
 - When displaying messages and the encoding used for LC_MESSAGES differs from
   'encoding' (requires a gettext version that supports this).
 - When reading a Vim script where |:scriptencoding| is different from
   'encoding'.
-- When reading or writing a |viminfo| file.
+- When reading or writing a |shada| file.
 Most of these require the |+iconv| feature.  Conversion for reading and
 writing files may also be specified with the 'charconvert' option.
 
@@ -507,17 +454,6 @@ is less flexible.
 For example, you can run Vim in a xterm with added multi-byte support and/or
 |XIM|.  Examples are kterm (Kanji term) and hanterm (for Korean), Eterm
 (Enlightened terminal) and rxvt.
-
-If your terminal does not support the right encoding, you can set the
-'termencoding' option.  Vim will then convert the typed characters from
-'termencoding' to 'encoding'.  And displayed text will be converted from
-'encoding' to 'termencoding'.  If the encoding supported by the terminal
-doesn't include all the characters that Vim uses, this leads to lost
-characters.  This may mess up the display.  If you use a terminal that
-supports Unicode, such as the xterm mentioned below, it should work just fine,
-since nearly every character set can be converted to Unicode without loss of
-information.
-
 
 UTF-8 IN XFREE86 XTERM					*UTF8-xterm*
 
@@ -748,7 +684,7 @@ that works well you can use this command to see its name: >
 
 	:set guifont
 
-Then add a command to your |gvimrc| file to set 'guifont': >
+Then add a command to your |ginit.vim| file to set 'guifont': >
 
 	:set guifont=courier_new:h12
 
@@ -992,7 +928,7 @@ Cursor color when IME or XIM is on				*CursorIM*
     This works in the same way when using XIM.
 
     You can select cursor color when status is on by using highlight group
-    CursorIM.  For example, add these lines to your |gvimrc|: >
+    CursorIM.  For example, add these lines to your |ginit.vim|: >
 
 	if has('multi_byte_ime')
 	    highlight Cursor guifg=NONE guibg=Green
@@ -1368,10 +1304,6 @@ utf-8.
 If your system does not provide support for typing utf-8, you can use the
 'keymap' feature.  This allows writing a keymap file, which defines a utf-8
 character as a sequence of ASCII characters.  See |mbyte-keymap|.
-
-Another method is to set the current locale to the language you want to use
-and for which you have a XIM available.  Then set 'termencoding' to that
-language and Vim will convert the typed characters to 'encoding' for you.
 
 If everything else fails, you can type any character as four hex bytes: >
 

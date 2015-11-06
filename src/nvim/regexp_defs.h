@@ -30,6 +30,16 @@
  */
 #define NFA_MAX_BRACES 20
 
+// In the NFA engine: how many states are allowed.
+#define NFA_MAX_STATES 100000
+#define NFA_TOO_EXPENSIVE -1
+
+// Which regexp engine to use? Needed for vim_regcomp().
+// Must match with 'regexpengine'.
+#define AUTOMATIC_ENGINE    0
+#define BACKTRACKING_ENGINE 1
+#define NFA_ENGINE          2
+
 typedef struct regengine regengine_T;
 
 /*
@@ -38,8 +48,10 @@ typedef struct regengine regengine_T;
  * structures are used. See code below.
  */
 typedef struct regprog {
-  regengine_T         *engine;
+  regengine_T *engine;
   unsigned regflags;
+  unsigned re_engine;  ///< Automatic, backtracking or NFA engine.
+  unsigned re_flags;   ///< Second argument for vim_regcomp().
 } regprog_T;
 
 /*
@@ -48,9 +60,11 @@ typedef struct regprog {
  * See regexp.c for an explanation.
  */
 typedef struct {
-  /* These two members implement regprog_T */
-  regengine_T         *engine;
+  // These four members implement regprog_T.
+  regengine_T *engine;
   unsigned regflags;
+  unsigned re_engine;
+  unsigned re_flags;  ///< Second argument for vim_regcomp().
 
   int regstart;
   char_u reganch;
@@ -78,9 +92,11 @@ struct nfa_state {
  * Structure used by the NFA matcher.
  */
 typedef struct {
-  /* These two members implement regprog_T */
-  regengine_T         *engine;
+  // These four members implement regprog_T.
+  regengine_T *engine;
   unsigned regflags;
+  unsigned re_engine;
+  unsigned re_flags;  ///< Second argument for vim_regcomp().
 
   nfa_state_T         *start;           /* points into state[] */
 
@@ -91,9 +107,7 @@ typedef struct {
   int has_zend;                         /* pattern contains \ze */
   int has_backref;                      /* pattern contains \1 .. \9 */
   int reghasz;
-#ifdef DEBUG
   char_u              *pattern;
-#endif
   int nsubexp;                          /* number of () */
   int nstate;
   nfa_state_T state[1];                 /* actually longer.. */
@@ -108,7 +122,7 @@ typedef struct {
   regprog_T           *regprog;
   char_u              *startp[NSUBEXP];
   char_u              *endp[NSUBEXP];
-  int rm_ic;
+  bool                 rm_ic;
 } regmatch_T;
 
 /*
@@ -143,9 +157,7 @@ struct regengine {
   int (*regexec_nl)(regmatch_T*, char_u*, colnr_T, bool);
   long (*regexec_multi)(regmmatch_T*, win_T*, buf_T*, linenr_T, colnr_T,
       proftime_T*);
-#ifdef DEBUG
   char_u      *expr;
-#endif
 };
 
 #endif  // NVIM_REGEXP_DEFS_H

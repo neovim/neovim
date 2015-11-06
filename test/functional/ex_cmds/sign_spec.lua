@@ -4,6 +4,7 @@ local clear, nvim, buffer, curbuf, curwin, eq, ok =
   helpers.eq, helpers.ok
 
 describe('sign', function()
+  before_each(clear)
   describe('unplace {id}', function()
     describe('without specifying buffer', function()
       it('deletes the sign from all buffers', function()

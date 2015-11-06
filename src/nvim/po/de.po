@@ -1040,7 +1040,7 @@ msgid "E494: Use w or w>>"
 msgstr "E494: Verwenden Sie w oder w>>"
 
 #: ../ex_docmd.c:3319
-msgid "E319: Sorry, the command is not available in this version"
+msgid "E319: The command is not available in this version"
 msgstr "E319: Der Befehl ist in dieser Version nicht implementiert"
 
 #: ../ex_docmd.c:3612
@@ -1523,7 +1523,7 @@ msgstr ""
 "E201: *ReadPre-Autokommandos dürfen den aktuellen Puffer nicht wechseln"
 
 #: ../fileio.c:720
-msgid "Vim: Reading from stdin...\n"
+msgid "Nvim: Reading from stdin...\n"
 msgstr "Vim: Lese von stdin...\n"
 
 #. Re-opening the original file failed!
@@ -2176,7 +2176,7 @@ msgid "E477: No ! allowed"
 msgstr "E477: Kein ! erlaubt"
 
 #: ../globals.h:1034
-msgid "E25: GUI cannot be used: Not enabled at compile time"
+msgid "E25: Nvim does not have a built-in GUI"
 msgstr ""
 "E25: GUI kann nicht benutzt werden: wurde zum Zeitpunkt des Übersetzens "
 "nicht eingeschaltet."
@@ -3899,7 +3899,7 @@ msgid "E663: At end of changelist"
 msgstr "E663: Am Ende der Liste der Änderungen"
 
 #: ../normal.c:6950
-msgid "Type  :quit<Enter>  to exit Vim"
+msgid "Type  :quit<Enter>  to exit Nvim"
 msgstr "Bitte  :quit<Enter>  eingeben um Vim zu verlassen"
 
 #: ../ops.c:229

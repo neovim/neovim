@@ -5,25 +5,21 @@
 #include <uv.h>
 #include <msgpack.h>
 
-#include "nvim/lib/klist.h"
-
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
 #include "nvim/msgpack_rpc/channel.h"
-#include "nvim/os/event.h"
-#include "nvim/os/rstream.h"
-#include "nvim/os/rstream_defs.h"
-#include "nvim/os/wstream.h"
-#include "nvim/os/wstream_defs.h"
-#include "nvim/os/job.h"
-#include "nvim/os/job_defs.h"
+#include "nvim/msgpack_rpc/remote_ui.h"
+#include "nvim/event/loop.h"
+#include "nvim/event/libuv_process.h"
+#include "nvim/event/rstream.h"
+#include "nvim/event/wstream.h"
+#include "nvim/event/socket.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/memory.h"
 #include "nvim/os_unix.h"
 #include "nvim/message.h"
-#include "nvim/term.h"
 #include "nvim/map.h"
 #include "nvim/log.h"
 #include "nvim/misc1.h"
@@ -36,6 +32,12 @@
 #define log_server_msg(...)
 #endif
 
+typedef enum {
+  kChannelTypeSocket,
+  kChannelTypeProc,
+  kChannelTypeStdio
+} ChannelType;
+
 typedef struct {
   uint64_t request_id;
   bool returned, errored;
@@ -44,19 +46,29 @@ typedef struct {
 
 typedef struct {
   uint64_t id;
+  size_t refcount;
+  size_t pending_requests;
   PMap(cstr_t) *subscribed_events;
-  bool is_job, closed;
+  bool closed;
+  ChannelType type;
   msgpack_unpacker *unpacker;
   union {
-    Job *job;
+    Stream stream;
     struct {
-      RStream *read;
-      WStream *write;
-      uv_stream_t *uv;
-    } streams;
+      LibuvProcess uvproc;
+      Stream in;
+      Stream out;
+      Stream err;
+    } process;
+    struct {
+      Stream in;
+      Stream out;
+    } std;
   } data;
   uint64_t next_request_id;
   kvec_t(ChannelCallFrame *) call_stack;
+  kvec_t(WBuffer *) delayed_notifications;
+  Queue *events;
 } Channel;
 
 typedef struct {
@@ -66,23 +78,10 @@ typedef struct {
   uint64_t request_id;
 } RequestEvent;
 
-typedef struct {
-  Channel *channel;
-  String method;
-  Array args;
-} DelayedNotification;
-
-#define _noop(x)
-KMEMPOOL_INIT(RequestEventPool, RequestEvent, _noop)
-KLIST_INIT(DelayedNotification, DelayedNotification, _noop)
-
-static kmempool_t(RequestEventPool) *request_event_pool = NULL;
-static klist_t(DelayedNotification) *delayed_notifications = NULL;
 static uint64_t next_id = 1;
 static PMap(uint64_t) *channels = NULL;
 static PMap(cstr_t) *event_strings = NULL;
 static msgpack_sbuffer out_buffer;
-static size_t pending_requests = 0;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "msgpack_rpc/channel.c.generated.h"
@@ -91,15 +90,10 @@ static size_t pending_requests = 0;
 /// Initializes the module
 void channel_init(void)
 {
-  request_event_pool = kmp_init(RequestEventPool);
-  delayed_notifications = kl_init(DelayedNotification);
   channels = pmap_new(uint64_t)();
   event_strings = pmap_new(cstr_t)();
   msgpack_sbuffer_init(&out_buffer);
-
-  if (embedded_mode) {
-    channel_from_stdio();
-  }
+  remote_ui_init();
 }
 
 /// Teardown the module
@@ -116,59 +110,51 @@ void channel_teardown(void)
   });
 }
 
-/// Creates an API channel by starting a job and connecting to its
+/// Creates an API channel by starting a process and connecting to its
 /// stdin/stdout. stderr is forwarded to the editor error stream.
 ///
 /// @param argv The argument vector for the process. [consumed]
-/// @return The channel id
-uint64_t channel_from_job(char **argv)
+/// @return The channel id (> 0), on success.
+///         0, on error.
+uint64_t channel_from_process(char **argv)
 {
-  Channel *channel = register_channel();
-  channel->is_job = true;
-
-  int status;
-  channel->data.job = job_start(argv,
-                                channel,
-                                true,
-                                job_out,
-                                job_err,
-                                job_exit,
-                                0,
-                                &status);
-
-  if (status <= 0) {
+  Channel *channel = register_channel(kChannelTypeProc);
+  channel->data.process.uvproc = libuv_process_init(&loop, channel);
+  Process *proc = &channel->data.process.uvproc.process;
+  proc->argv = argv;
+  proc->in = &channel->data.process.in;
+  proc->out = &channel->data.process.out;
+  proc->err = &channel->data.process.err;
+  proc->cb = process_exit;
+  if (!process_spawn(proc)) {
+    loop_poll_events(&loop, 0);
+    decref(channel);
     return 0;
   }
+
+  incref(channel);  // process channels are only closed by the exit_cb
+  wstream_init(proc->in, 0);
+  rstream_init(proc->out, 0);
+  rstream_start(proc->out, parse_msgpack);
+  rstream_init(proc->err, 0);
+  rstream_start(proc->err, forward_stderr);
 
   return channel->id;
 }
 
-/// Creates an API channel from a libuv stream representing a tcp or
-/// pipe/socket client connection
+/// Creates an API channel from a tcp/pipe socket connection
 ///
-/// @param stream The established connection
-void channel_from_stream(uv_stream_t *stream)
+/// @param watcher The SocketWatcher ready to accept the connection
+void channel_from_connection(SocketWatcher *watcher)
 {
-  Channel *channel = register_channel();
-  stream->data = NULL;
-  channel->is_job = false;
-  // read stream
-  channel->data.streams.read = rstream_new(parse_msgpack,
-                                           rbuffer_new(CHANNEL_BUFFER_SIZE),
-                                           channel);
-  rstream_set_stream(channel->data.streams.read, stream);
-  rstream_start(channel->data.streams.read);
-  // write stream
-  channel->data.streams.write = wstream_new(0);
-  wstream_set_stream(channel->data.streams.write, stream);
-  channel->data.streams.uv = stream;
-}
-
-bool channel_exists(uint64_t id)
-{
-  Channel *channel;
-  return (channel = pmap_get(uint64_t)(channels, id)) != NULL
-    && !channel->closed;
+  Channel *channel = register_channel(kChannelTypeSocket);
+  socket_watcher_accept(watcher, &channel->data.stream, channel);
+  incref(channel);  // close channel only after the stream is closed
+  channel->data.stream.internal_close_cb = close_cb;
+  channel->data.stream.internal_data = channel;
+  wstream_init(&channel->data.stream, 0);
+  rstream_init(&channel->data.stream, CHANNEL_BUFFER_SIZE);
+  rstream_start(&channel->data.stream, parse_msgpack);
 }
 
 /// Sends event/arguments to channel
@@ -188,20 +174,18 @@ bool channel_send_event(uint64_t id, char *name, Array args)
     return false;
   }
 
-  if (pending_requests) {
-    DelayedNotification p = {
-      .channel = channel,
-      .method = cstr_to_string(name),
-      .args = args
-    };
-    // Pending request, queue the notification for sending later
-    *kl_pushp(DelayedNotification, delayed_notifications) = p;
-  } else {
-    if (channel) {
-      send_event(channel, name, args);
+  if (channel) {
+    if (channel->pending_requests) {
+      // Pending request, queue the notification for later sending.
+      String method = cstr_as_string(name);
+      WBuffer *buffer = serialize_request(id, 0, method, args, &out_buffer, 1);
+      kv_push(WBuffer *, channel->delayed_notifications, buffer);
     } else {
-      broadcast_event(name, args);
+      send_event(channel, name, args);
     }
+  }  else {
+    // TODO(tarruda): Implement event broadcasting in vimscript
+    broadcast_event(name, args);
   }
 
   return true;
@@ -227,6 +211,7 @@ Object channel_send_call(uint64_t id,
     return NIL;
   }
 
+  incref(channel);
   uint64_t request_id = channel->next_request_id++;
   // Send the msgpack-rpc request
   send_request(channel, request_id, method_name, args);
@@ -234,25 +219,41 @@ Object channel_send_call(uint64_t id,
   // Push the frame
   ChannelCallFrame frame = {request_id, false, false, NIL};
   kv_push(ChannelCallFrame *, channel->call_stack, &frame);
-  pending_requests++;
-  event_poll_until(-1, frame.returned);
+  channel->pending_requests++;
+  LOOP_PROCESS_EVENTS_UNTIL(&loop, channel->events, -1, frame.returned);
   (void)kv_pop(channel->call_stack);
-  pending_requests--;
+  channel->pending_requests--;
 
   if (frame.errored) {
-    api_set_error(err, Exception, "%s", frame.result.data.string.data);
-    return NIL;
+    if (frame.result.type == kObjectTypeString) {
+      api_set_error(err, Exception, "%s", frame.result.data.string.data);
+    } else if (frame.result.type == kObjectTypeArray) {
+      // Should be an error in the form [type, message]
+      Array array = frame.result.data.array;
+      if (array.size == 2 && array.items[0].type == kObjectTypeInteger
+          && (array.items[0].data.integer == kErrorTypeException
+              || array.items[0].data.integer == kErrorTypeValidation)
+          && array.items[1].type == kObjectTypeString) {
+        err->type = (ErrorType) array.items[0].data.integer;
+        xstrlcpy(err->msg, array.items[1].data.string.data, sizeof(err->msg));
+        err->set = true;
+      } else {
+        api_set_error(err, Exception, "%s", "unknown error");
+      }
+    } else {
+      api_set_error(err, Exception, "%s", "unknown error");
+    }
+
+    api_free_object(frame.result);
   }
 
-  if (!kv_size(channel->call_stack) && channel->closed) {
-    free_channel(channel);
+  if (!channel->pending_requests) {
+    send_delayed_notifications(channel);
   }
 
-  if (!pending_requests) {
-    send_delayed_notifications();
-  }
+  decref(channel);
 
-  return frame.result;
+  return frame.errored ? NIL : frame.result;
 }
 
 /// Subscribes to event broadcasts
@@ -310,64 +311,54 @@ bool channel_close(uint64_t id)
 
 /// Creates an API channel from stdin/stdout. This is used when embedding
 /// Neovim
-static void channel_from_stdio(void)
+void channel_from_stdio(void)
 {
-  Channel *channel = register_channel();
-  channel->is_job = false;
+  Channel *channel = register_channel(kChannelTypeStdio);
+  incref(channel);  // stdio channels are only closed on exit
   // read stream
-  channel->data.streams.read = rstream_new(parse_msgpack,
-                                           rbuffer_new(CHANNEL_BUFFER_SIZE),
-                                           channel);
-  rstream_set_file(channel->data.streams.read, 0);
-  rstream_start(channel->data.streams.read);
+  rstream_init_fd(&loop, &channel->data.std.in, 0, CHANNEL_BUFFER_SIZE,
+      channel);
+  rstream_start(&channel->data.std.in, parse_msgpack);
   // write stream
-  channel->data.streams.write = wstream_new(0);
-  wstream_set_file(channel->data.streams.write, 1);
-  channel->data.streams.uv = NULL;
+  wstream_init_fd(&loop, &channel->data.std.out, 1, 0, NULL);
 }
 
-static void job_out(RStream *rstream, void *data, bool eof)
+static void forward_stderr(Stream *stream, RBuffer *rbuf, size_t count,
+    void *data, bool eof)
 {
-  Job *job = data;
-  parse_msgpack(rstream, job_data(job), eof);
-}
-
-static void job_err(RStream *rstream, void *data, bool eof)
-{
-  size_t count;
-  char buf[256];
-  Channel *channel = job_data(data);
-
-  while ((count = rstream_pending(rstream))) {
-    size_t read = rstream_read(rstream, buf, sizeof(buf) - 1);
+  while (rbuffer_size(rbuf)) {
+    char buf[256];
+    size_t read = rbuffer_read(rbuf, buf, sizeof(buf) - 1);
     buf[read] = NUL;
-    ELOG("Channel %" PRIu64 " stderr: %s", channel->id, buf);
+    ELOG("Channel %" PRIu64 " stderr: %s", ((Channel *)data)->id, buf);
   }
 }
 
-static void job_exit(Job *job, void *data)
+static void process_exit(Process *proc, int status, void *data)
 {
-  free_channel((Channel *)data);
+  decref(data);
 }
 
-static void parse_msgpack(RStream *rstream, void *data, bool eof)
+static void parse_msgpack(Stream *stream, RBuffer *rbuf, size_t c, void *data,
+    bool eof)
 {
   Channel *channel = data;
+  incref(channel);
 
   if (eof) {
     close_channel(channel);
     call_set_error(channel, "Channel was closed by the client");
-    return;
+    goto end;
   }
 
-  size_t count = rstream_pending(rstream);
-  DLOG("Feeding the msgpack parser with %u bytes of data from RStream(%p)",
+  size_t count = rbuffer_size(rbuf);
+  DLOG("Feeding the msgpack parser with %u bytes of data from Stream(%p)",
        count,
-       rstream);
+       stream);
 
   // Feed the unpacker with data
   msgpack_unpacker_reserve_buffer(channel->unpacker, count);
-  rstream_read(rstream, msgpack_unpacker_buffer(channel->unpacker), count);
+  rbuffer_read(rbuf, msgpack_unpacker_buffer(channel->unpacker), count);
   msgpack_unpacker_buffer_consumed(channel->unpacker, count);
 
   msgpack_unpacked unpacked;
@@ -395,15 +386,16 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
       }
       msgpack_unpacked_destroy(&unpacked);
       // Bail out from this event loop iteration
-      return;
+      goto end;
     }
 
     handle_request(channel, &unpacked.data);
   }
 
   if (result == MSGPACK_UNPACK_NOMEM_ERROR) {
-    OUT_STR(e_outofmem);
-    out_char('\n');
+    mch_errmsg(e_outofmem);
+    mch_errmsg("\n");
+    decref(channel);
     preserve_exit();
   }
 
@@ -418,6 +410,9 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
                            "This error can also happen when deserializing "
                            "an object with high level of nesting");
   }
+
+end:
+  decref(channel);
 }
 
 static void handle_request(Channel *channel, msgpack_object *request)
@@ -429,66 +424,77 @@ static void handle_request(Channel *channel, msgpack_object *request)
 
   if (error.set) {
     // Validation failed, send response with error
-    channel_write(channel,
-                  serialize_response(channel->id,
-                                     request_id,
-                                     &error,
-                                     NIL,
-                                     &out_buffer));
-    char buf[256];
-    snprintf(buf, sizeof(buf),
-             "Channel %" PRIu64 " sent an invalid message, closing.",
-             channel->id);
-    call_set_error(channel, buf);
+    if (channel_write(channel,
+                      serialize_response(channel->id,
+                                         request_id,
+                                         &error,
+                                         NIL,
+                                         &out_buffer))) {
+      char buf[256];
+      snprintf(buf, sizeof(buf),
+               "Channel %" PRIu64 " sent an invalid message, closed.",
+               channel->id);
+      call_set_error(channel, buf);
+    }
     return;
   }
 
   // Retrieve the request handler
   MsgpackRpcRequestHandler handler;
-  msgpack_object method = request->via.array.ptr[2];
+  msgpack_object *method = msgpack_rpc_method(request);
 
-  if (method.type == MSGPACK_OBJECT_BIN || method.type == MSGPACK_OBJECT_STR) {
-    handler = msgpack_rpc_get_handler_for(method.via.bin.ptr,
-                                          method.via.bin.size);
+  if (method) {
+    handler = msgpack_rpc_get_handler_for(method->via.bin.ptr,
+                                          method->via.bin.size);
   } else {
     handler.fn = msgpack_rpc_handle_missing_method;
-    handler.defer = false;
+    handler.async = true;
   }
 
   Array args = ARRAY_DICT_INIT;
-  msgpack_rpc_to_array(request->via.array.ptr + 3, &args);
-  bool defer = (!kv_size(channel->call_stack) && handler.defer);
-  RequestEvent *event_data = kmp_alloc(RequestEventPool, request_event_pool);
+  if (!msgpack_rpc_to_array(msgpack_rpc_args(request), &args)) {
+    handler.fn = msgpack_rpc_handle_invalid_arguments;
+    handler.async = true;
+  }
+
+  RequestEvent *event_data = xmalloc(sizeof(RequestEvent));
   event_data->channel = channel;
   event_data->handler = handler;
   event_data->args = args;
   event_data->request_id = request_id;
-  event_push((Event) {
-    .handler = on_request_event,
-    .data = event_data
-  }, defer);
+  incref(channel);
+  if (handler.async) {
+    on_request_event((void **)&event_data);
+  } else {
+    queue_put(channel->events, on_request_event, 1, event_data);
+  }
 }
 
-static void on_request_event(Event event)
+static void on_request_event(void **argv)
 {
-  RequestEvent *e = event.data;
+  RequestEvent *e = argv[0];
   Channel *channel = e->channel;
   MsgpackRpcRequestHandler handler = e->handler;
   Array args = e->args;
   uint64_t request_id = e->request_id;
   Error error = ERROR_INIT;
   Object result = handler.fn(channel->id, request_id, args, &error);
-  // send the response
-  msgpack_packer response;
-  msgpack_packer_init(&response, &out_buffer, msgpack_sbuffer_write);
-  channel_write(channel, serialize_response(channel->id,
-                                            request_id,
-                                            &error,
-                                            result,
-                                            &out_buffer));
+  if (request_id != NO_RESPONSE) {
+    // send the response
+    msgpack_packer response;
+    msgpack_packer_init(&response, &out_buffer, msgpack_sbuffer_write);
+    channel_write(channel, serialize_response(channel->id,
+                                              request_id,
+                                              &error,
+                                              result,
+                                              &out_buffer));
+  } else {
+    api_free_object(result);
+  }
   // All arguments were freed already, but we still need to free the array
-  free(args.items);
-  kmp_free(RequestEventPool, request_event_pool, e);
+  xfree(args.items);
+  decref(channel);
+  xfree(e);
 }
 
 static bool channel_write(Channel *channel, WBuffer *buffer)
@@ -496,13 +502,22 @@ static bool channel_write(Channel *channel, WBuffer *buffer)
   bool success;
 
   if (channel->closed) {
+    wstream_release_wbuffer(buffer);
     return false;
   }
 
-  if (channel->is_job) {
-    success = job_write(channel->data.job, buffer);
-  } else {
-    success = wstream_write(channel->data.streams.write, buffer);
+  switch (channel->type) {
+    case kChannelTypeSocket:
+      success = wstream_write(&channel->data.stream, buffer);
+      break;
+    case kChannelTypeProc:
+      success = wstream_write(&channel->data.process.in, buffer);
+      break;
+    case kChannelTypeStdio:
+      success = wstream_write(&channel->data.std.out, buffer);
+      break;
+    default:
+      abort();
   }
 
   if (!success) {
@@ -583,7 +598,12 @@ static void broadcast_event(char *name, Array args)
                                       kv_size(subscribed));
 
   for (size_t i = 0; i < kv_size(subscribed); i++) {
-    channel_write(kv_A(subscribed, i), buffer);
+    Channel *channel = kv_A(subscribed, i);
+    if (channel->pending_requests) {
+      kv_push(WBuffer *, channel->delayed_notifications, buffer);
+    } else {
+      channel_write(channel, buffer);
+    }
   }
 
 end:
@@ -603,11 +623,10 @@ static void unsubscribe(Channel *channel, char *event)
 
   // Since the string is no longer used by other channels, release it's memory
   pmap_del(cstr_t)(event_strings, event_string);
-  free(event_string);
+  xfree(event_string);
 }
 
-/// Close the channel streams/job. The channel resources will be freed by
-/// free_channel later.
+/// Close the channel streams/process and free the channel resources.
 static void close_channel(Channel *channel)
 {
   if (channel->closed) {
@@ -615,29 +634,40 @@ static void close_channel(Channel *channel)
   }
 
   channel->closed = true;
-  if (channel->is_job) {
-    if (channel->data.job) {
-      job_stop(channel->data.job);
-    }
-  } else {
-    rstream_free(channel->data.streams.read);
-    wstream_free(channel->data.streams.write);
-    uv_handle_t *handle = (uv_handle_t *)channel->data.streams.uv;
-    if (handle) {
-      uv_close(handle, close_cb);
-    } else {
-      event_push((Event) { .handler = on_stdio_close }, false);
-    }
+
+  switch (channel->type) {
+    case kChannelTypeSocket:
+      stream_close(&channel->data.stream, NULL);
+      break;
+    case kChannelTypeProc:
+      if (!channel->data.process.uvproc.process.closed) {
+        process_stop(&channel->data.process.uvproc.process);
+      }
+      break;
+    case kChannelTypeStdio:
+      stream_close(&channel->data.std.in, NULL);
+      stream_close(&channel->data.std.out, NULL);
+      queue_put(loop.fast_events, exit_event, 1, channel);
+      return;
+    default:
+      abort();
   }
+
+  decref(channel);
 }
 
-static void on_stdio_close(Event e)
+static void exit_event(void **argv)
 {
-  mch_exit(0);
+  decref(argv[0]);
+
+  if (!exiting) {
+    mch_exit(0);
+  }
 }
 
 static void free_channel(Channel *channel)
 {
+  remote_ui_disconnect(channel->id);
   pmap_del(uint64_t)(channels, channel->id);
   msgpack_unpacker_free(channel->unpacker);
 
@@ -649,24 +679,30 @@ static void free_channel(Channel *channel)
 
   pmap_free(cstr_t)(channel->subscribed_events);
   kv_destroy(channel->call_stack);
-  free(channel);
+  kv_destroy(channel->delayed_notifications);
+  queue_free(channel->events);
+  xfree(channel);
 }
 
-static void close_cb(uv_handle_t *handle)
+static void close_cb(Stream *stream, void *data)
 {
-  free(handle->data);
-  free(handle);
+  decref(data);
 }
 
-static Channel *register_channel(void)
+static Channel *register_channel(ChannelType type)
 {
   Channel *rv = xmalloc(sizeof(Channel));
+  rv->events = queue_new_child(loop.events);
+  rv->type = type;
+  rv->refcount = 1;
   rv->closed = false;
   rv->unpacker = msgpack_unpacker_new(MSGPACK_UNPACKER_INIT_BUFFER_SIZE);
   rv->id = next_id++;
+  rv->pending_requests = 0;
   rv->subscribed_events = pmap_new(cstr_t)();
   rv->next_request_id = 1;
   kv_init(rv->call_stack);
+  kv_init(rv->delayed_notifications);
   pmap_put(uint64_t)(channels, rv->id, rv);
   return rv;
 }
@@ -704,7 +740,7 @@ static void complete_call(msgpack_object *obj, Channel *channel)
 
 static void call_set_error(Channel *channel, char *msg)
 {
-  ELOG("Msgpack-RPC error: %s", msg);
+  ELOG("msgpack-rpc: %s", msg);
   for (size_t i = 0; i < kv_size(channel->call_stack); i++) {
     ChannelCallFrame *frame = kv_A(channel->call_stack, i);
     frame->returned = true;
@@ -729,7 +765,7 @@ static WBuffer *serialize_request(uint64_t channel_id,
   WBuffer *rv = wstream_new_buffer(xmemdup(sbuffer->data, sbuffer->size),
                                    sbuffer->size,
                                    refcount,
-                                   free);
+                                   xfree);
   msgpack_sbuffer_clear(sbuffer);
   api_free_array(args);
   return rv;
@@ -748,23 +784,31 @@ static WBuffer *serialize_response(uint64_t channel_id,
   WBuffer *rv = wstream_new_buffer(xmemdup(sbuffer->data, sbuffer->size),
                                    sbuffer->size,
                                    1,  // responses only go though 1 channel
-                                   free);
+                                   xfree);
   msgpack_sbuffer_clear(sbuffer);
   api_free_object(arg);
   return rv;
 }
 
-static void send_delayed_notifications(void)
+static void send_delayed_notifications(Channel* channel)
 {
-  DelayedNotification p;
+  for (size_t i = 0; i < kv_size(channel->delayed_notifications); i++) {
+    WBuffer *buffer = kv_A(channel->delayed_notifications, i);
+    channel_write(channel, buffer);
+  }
 
-  while (kl_shift(DelayedNotification, delayed_notifications, &p) == 0) {
-    if (p.channel) {
-      send_event(p.channel, p.method.data, p.args);
-    } else {
-      broadcast_event(p.method.data, p.args);
-    }
-    free(p.method.data);
+  kv_size(channel->delayed_notifications) = 0;
+}
+
+static void incref(Channel *channel)
+{
+  channel->refcount++;
+}
+
+static void decref(Channel *channel)
+{
+  if (!(--channel->refcount)) {
+    free_channel(channel);
   }
 }
 
@@ -781,6 +825,7 @@ static void log_server_msg(uint64_t channel_id,
   msgpack_unpack_next(&unpacked, packed->data, packed->size, NULL);
   uint64_t type = unpacked.data.via.array.ptr[0].via.u64;
   DLOGN("[msgpack-rpc] nvim -> client(%" PRIu64 ") ", channel_id);
+  log_lock();
   FILE *f = open_log_file();
   fprintf(f, type ? (type == 1 ? RES : NOT) : REQ);
   log_msg_close(f, unpacked.data);
@@ -792,6 +837,7 @@ static void log_client_msg(uint64_t channel_id,
                            msgpack_object msg)
 {
   DLOGN("[msgpack-rpc] client(%" PRIu64 ") -> nvim ", channel_id);
+  log_lock();
   FILE *f = open_log_file();
   fprintf(f, is_request ? REQ : RES);
   log_msg_close(f, msg);
@@ -803,6 +849,7 @@ static void log_msg_close(FILE *f, msgpack_object msg)
   fputc('\n', f);
   fflush(f);
   fclose(f);
+  log_unlock();
 }
 #endif
 

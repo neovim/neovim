@@ -1,4 +1,4 @@
-*spell.txt*	For Vim version 7.4.  Last change: 2014 Jul 02
+*spell.txt*	For Vim version 7.4.  Last change: 2014 Sep 19
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -10,11 +10,6 @@ Spell checking						*spell*
 2. Remarks on spell checking	|spell-remarks|
 3. Generating a spell file	|spell-mkspell|
 4. Spell file format		|spell-file-format|
-
-{Vi does not have any of these commands}
-
-Spell checking is not available when the |+syntax| feature has been disabled
-at compile time.
 
 Note: There also is a vimspell plugin.  If you have it you can do ":help
 vimspell" to find about it.  But you will probably want to get rid of the
@@ -312,38 +307,33 @@ Exceptions:
   spell file is used.
 
 For example, with these values:
-	'runtimepath' is "~/.vim,/usr/share/vim70,~/.vim/after"
+	'runtimepath' is "~/.config/nvim,/usr/share/vim70,~/.config/nvim/after"
 	'encoding'    is "iso-8859-2"
 	'spelllang'   is "pl"
 
 Vim will look for:
-1. ~/.vim/spell/pl.iso-8859-2.spl
+1. ~/.config/nvim/spell/pl.iso-8859-2.spl
 2. /usr/share/vim70/spell/pl.iso-8859-2.spl
-3. ~/.vim/spell/pl.iso-8859-2.add.spl
+3. ~/.config/nvim/spell/pl.iso-8859-2.add.spl
 4. /usr/share/vim70/spell/pl.iso-8859-2.add.spl
-5. ~/.vim/after/spell/pl.iso-8859-2.add.spl
+5. ~/.config/nvim/after/spell/pl.iso-8859-2.add.spl
 
 This assumes 1. is not found and 2. is found.
 
 If 'encoding' is "latin1" Vim will look for:
-1. ~/.vim/spell/pl.latin1.spl
+1. ~/.config/nvim/spell/pl.latin1.spl
 2. /usr/share/vim70/spell/pl.latin1.spl
-3. ~/.vim/after/spell/pl.latin1.spl
-4. ~/.vim/spell/pl.ascii.spl
+3. ~/.config/nvim/after/spell/pl.latin1.spl
+4. ~/.config/nvim/spell/pl.ascii.spl
 5. /usr/share/vim70/spell/pl.ascii.spl
-6. ~/.vim/after/spell/pl.ascii.spl
+6. ~/.config/nvim/after/spell/pl.ascii.spl
 
 This assumes none of them are found (Polish doesn't make sense when leaving
 out the non-ASCII characters).
 
-Spelling for EBCDIC is currently not supported.
-
 A spell file might not be available in the current 'encoding'.  See
 |spell-mkspell| about how to create a spell file.  Converting a spell file
 with "iconv" will NOT work!
-
-Note: on VMS ".{enc}.spl" is changed to "_{enc}.spl" to avoid trouble with
-filenames.
 
 						    *spell-sug-file* *E781*
 If there is a file with exactly the same name as the ".spl" file but ending in
@@ -573,8 +563,8 @@ following procedure is recommended:
 
 When the Myspell files are updated you can merge the differences:
 1. Obtain the new Myspell files as xx_YY.new.aff and xx_UU.new.dic.
-2. Use Vimdiff to see what changed: >
-	vimdiff xx_YY.orig.dic xx_YY.new.dic
+2. Use |diff-mode| to see what changed: >
+	nvim -d xx_YY.orig.dic xx_YY.new.dic
 3. Take over the changes you like in xx_YY.dic.
    You may also need to change xx_YY.aff.
 4. Rename xx_YY.new.dic to xx_YY.orig.dic and xx_YY.new.aff to xx_YY.new.aff.
@@ -1058,6 +1048,9 @@ this text to start with a "#" so that mistakes don't go unnoticed.  Example:
 	SFX F 0 in   [^i]n      # Spion > Spionin  ~
 	SFX F 0 nen  in		# Bauerin > Bauerinnen ~
 
+However, to avoid lots of errors in affix files written for Myspell, you can
+add the IGNOREEXTRA flag.
+
 Apparently Myspell allows an affix name to appear more than once.  Since this
 might also be a mistake, Vim checks for an extra "S".  The affix files for
 Myspell that use this feature apparently have this flag.  Example:
@@ -1109,6 +1102,14 @@ Specifically, the affix flags can be used for:
   word.  |spell-compound|
 - NEEDAFFIX: another affix is needed to make a valid word.
 - CIRCUMFIX, as explained just below.
+
+
+IGNOREEXTRA						*spell-IGNOREEXTRA*
+
+Normally Vim gives an error for an extra field that does not start with '#'.
+This avoids errors going unnoticed.  However, some files created for Myspell
+or Hunspell may contain many entries with an extra field.  Use the IGNOREEXTRA
+flag to avoid lots of errors.
 
 
 CIRCUMFIX						*spell-CIRCUMFIX*
@@ -1175,8 +1176,7 @@ rare words.  Example:
 
 Rare words are highlighted differently from bad words.  This is to be used for
 words that are correct for the language, but are hardly ever used and could be
-a typing mistake anyway.  When the same word is found as good it won't be
-highlighted as rare.
+a typing mistake anyway.
 
 This flag can also be used on an affix, so that a basic word is not rare but
 the basic word plus affix is rare |spell-affix-flags|.  However, if the word
@@ -1351,8 +1351,8 @@ Note: this doesn't work for postponed prefixes yet.
 						    *spell-COMPOUNDPERMITFLAG*
 The COMPOUNDPERMITFLAG specifies a flag that can be used on an affix.  It
 means that the word plus affix can also be used in a compound word in a way
-where the affix ends up halfway the word.  Without this flag that is not
-allowed.
+where the affix ends up halfway through the word.  Without this flag that is
+not allowed.
 Note: this doesn't work for postponed prefixes yet.
 
 						    *spell-COMPOUNDROOT*

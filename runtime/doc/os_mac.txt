@@ -54,7 +54,7 @@ algorithm is used:
 
 You can use the |$VIM| and |$VIMRUNTIME|  variable. >
 
-		:so $VIMRUNTIME:syntax:syntax.vim
+		:so $VIMRUNTIME/syntax/syntax.vim
 
 ==============================================================================
 2. .vimrc and .vim files				*mac-vimfile*
@@ -67,9 +67,7 @@ default command-key mappings.
 
 On older systems files starting with a dot "." are discouraged, thus the rc
 files are named "vimrc" or "_vimrc" and "gvimrc" or "_gvimrc".  These files
-can be in any format (mac, dos or unix).  Vim can handle any file format when
-the |'nocompatible'| option is set, otherwise it will only handle mac format
-files.
+can be in any format (mac, dos or unix).
 
 ==============================================================================
 3. Mac FAQ						*mac-faq*

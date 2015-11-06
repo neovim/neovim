@@ -20,10 +20,6 @@ This is introduced in section |04.4| of the user manual.
 7. Examples				|visual-examples|
 8. Select mode				|Select-mode|
 
-{Vi has no Visual mode, the name "visual" is used for Normal mode, to
-distinguish it from Ex mode}
-{Since Vim 7.4.200 the |+visual| feature is always included}
-
 ==============================================================================
 1. Using Visual mode					*visual-use*
 
@@ -308,7 +304,7 @@ mode.
 {not available when compiled without the |+visualextra| feature}
 
 Reminder: Use 'virtualedit' to be able to select blocks that start or end
-after the end of a line or halfway a tab.
+after the end of a line or halfway through a tab.
 
 Visual-block Insert						*v_b_I*
 With a blockwise selection, I{string}<ESC> will insert {string} at the start
@@ -492,7 +488,8 @@ Otherwise, typed characters are handled as in Visual mode.
 
 When using an operator in Select mode, and the selection is linewise, the
 selected lines are operated upon, but like in characterwise selection.  For
-example, when a whole line is deleted, it can later be pasted halfway a line.
+example, when a whole line is deleted, it can later be pasted in the middle of
+a line.
 
 
 Mappings and menus in Select mode.			*Select-mode-mapping*

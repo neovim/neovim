@@ -24,12 +24,8 @@ NOTE: Most of this is not used when running the |GUI|.
 ==============================================================================
 1. Startup						*startup-terminal*
 
-When Vim is started a default terminal type is assumed.  For the Amiga this is
-a standard CLI window, for MS-DOS the pc terminal, for Unix an ansi terminal.
-A few other terminal types are always available, see below |builtin-terms|.
-
-You can give the terminal name with the '-T' Vim argument.  If it is not given
-Vim will try to get the name from the TERM environment variable.
+When Vim is started a default terminal type is assumed.  for MS-DOS this is
+the pc terminal, for Unix an ansi terminal.
 
 				*termcap* *terminfo* *E557* *E558* *E559*
 On Unix the terminfo database or termcap file is used.  This is referred to as
@@ -38,39 +34,10 @@ the choice whether to use terminfo or termcap is done automatically.  When
 running Vim the output of ":version" will show |+terminfo| if terminfo is
 used.  Also see |xterm-screens|.
 
-On non-Unix systems a termcap is only available if Vim was compiled with
-TERMCAP defined.
-
-					*builtin-terms* *builtin_terms*
-Which builtin terminals are available depends on a few defines in feature.h,
-which need to be set at compile time:
-    define		output of ":version"	terminals builtin	~
-NO_BUILTIN_TCAPS	-builtin_terms		none
-SOME_BUILTIN_TCAPS	+builtin_terms		most common ones (default)
-ALL_BUILTIN_TCAPS	++builtin_terms		all available
-
-You can see a list of available builtin terminals with ":set term=xxx" (when
-not running the GUI).  Also see |+builtin_terms|.
-
-If the termcap code is included Vim will try to get the strings for the
-terminal you are using from the termcap file and the builtin termcaps.  Both
-are always used, if an entry for the terminal you are using is present.  Which
-one is used first depends on the 'ttybuiltin' option:
-
-'ttybuiltin' on		1: builtin termcap	2: external termcap
-'ttybuiltin' off	1: external termcap	2: builtin termcap
-
-If an option is missing in one of them, it will be obtained from the other
-one.  If an option is present in both, the one first encountered is used.
-
-Which external termcap file is used varies from system to system and may
-depend on the environment variables "TERMCAP" and "TERMPATH".  See "man
-tgetent".
-
 Settings depending on terminal			*term-dependent-settings*
 
 If you want to set options or mappings, depending on the terminal name, you
-can do this best in your .vimrc.  Example: >
+can do this best in your vimrc.  Example: >
 
    if &term == "xterm"
      ... xterm maps and settings ...
@@ -84,10 +51,7 @@ defined with 't_ti' and 't_ks' will be sent to the terminal.  Normally this
 puts the terminal in a state where the termcap codes are valid and activates
 the cursor and function keys.  When Vim exits the terminal will be put back
 into the mode it was before Vim started.  The strings defined with 't_te' and
-'t_ke' will be sent to the terminal.  On the Amiga, with commands that execute
-an external command (e.g., "!!"), the terminal will be put into Normal mode
-for a moment.  This means that you can stop the output to the screen by
-hitting a printing key.  Output resumes when you hit <BS>.
+'t_ke' will be sent to the terminal.
 
 							*cs7-problem*
 Note: If the terminal settings are changed after running Vim, you might have
@@ -100,17 +64,6 @@ cursor keys send codes different from the codes defined in the termcap.  To
 avoid this you can set 't_ks' (and 't_ke') to empty strings.  This must be
 done during initialization (see |initialization|), otherwise it's too late.
 
-Some termcap entries assume that the highest bit is always reset.  For
-example: The cursor-up entry for the Amiga could be ":ku=\E[A:".  But the
-Amiga really sends "\233A".  This works fine if the highest bit is reset,
-e.g., when using an Amiga over a serial line.  If the cursor keys don't work,
-try the entry ":ku=\233A:".
-
-Some termcap entries have the entry ":ku=\E[A:".  But the Amiga really sends
-"\233A".  On output "\E[" and "\233" are often equivalent, on input they
-aren't.  You will have to change the termcap entry, or change the key code with
-the :set command to fix this.
-
 Many cursor key codes start with an <Esc>.  Vim must find out if this is a
 single hit of the <Esc> key or the start of a cursor key sequence.  It waits
 for a next character to arrive.  If it does not arrive within one second a
@@ -120,9 +73,6 @@ option.  Vim will wait for the next character to arrive after an <Esc>.  If
 you want to enter a single <Esc> you must type it twice.  Resetting the
 'esckeys' option avoids this problem in Insert mode, but you lose the
 possibility to use cursor and function keys in Insert mode.
-
-On the Amiga the recognition of window resizing is activated only when the
-terminal name is "amiga" or "builtin_amiga".
 
 Some terminals have confusing codes for the cursor keys.  The televideo 925 is
 such a terminal.  It sends a CTRL-H for cursor-left.  This would make it
@@ -217,9 +167,6 @@ It is always possible to change individual strings by setting the
 appropriate option.  For example: >
 	:set t_ce=^V^[[K	(CTRL-V, <Esc>, [, K)
 
-{Vi: no terminal options.  You have to exit Vi, edit the termcap entry and
-try again}
-
 The options are listed below.  The associated termcap code is always equal to
 the last two characters of the option name.  Only one termcap code is
 required: Cursor motion, 't_cm'.
@@ -293,7 +240,7 @@ Added by Vim (there are no standard codes for these):
 	t_EI	end insert mode (block cursor shape)		*t_EI* *'t_EI'*
 		|termcap-cursor-shape|
 	t_RV	request terminal version string (for xterm)	*t_RV* *'t_RV'*
-		|xterm-8bit| |v:termresponse| |'ttymouse'| |xterm-codes|
+		|xterm-8bit| |v:termresponse| |xterm-codes|
 	t_u7	request cursor position (for xterm)		*t_u7* *'t_u7'*
 		see |'ambiwidth'|
 
@@ -445,7 +392,6 @@ Example for an xterm, this changes the color of the cursor: >
     endif
 NOTE: When Vim exits the shape for Normal mode will remain.  The shape from
 before Vim started will not be restored.
-{not available when compiled without the |+cursorshape| feature}
 
 							*termcap-title*
 The 't_ts' and 't_fs' options are used to set the window title if the terminal
@@ -516,9 +462,7 @@ closes the window.  On other systems you can probably use them.)
 [This is about the size of the whole window Vim is using, not a window that is
 created with the ":split" command.]
 
-If you are running Vim on an Amiga and the terminal name is "amiga" or
-"builtin_amiga", the amiga-specific window resizing will be enabled.  On Unix
-systems three methods are tried to get the window size:
+On Unix systems, three methods are tried to get the window size:
 
 - an ioctl call (TIOCGSIZE or TIOCGWINSZ, depends on your system)
 - the environment variables "LINES" and "COLUMNS"
@@ -556,15 +500,6 @@ If the characters from the terminal are arriving with more than 1 second
 between them you might want to set the 'timeout' and/or 'ttimeout' option.
 See the "Options" chapter |options|.
 
-If your terminal does not support a scrolling region, but it does support
-insert/delete line commands, scrolling with multiple windows may make the
-lines jump up and down.  If you don't want this set the 'ttyfast' option.
-This will redraw the window instead of scroll it.
-
-If your terminal scrolls very slowly, but redrawing is not slow, set the
-'ttyscroll' option to a small number, e.g., 3.  This will make Vim redraw the
-screen instead of scrolling, when there are more than 3 lines to be scrolled.
-
 If you are using a color terminal that is slow, use this command: >
 	hi NonText cterm=NONE ctermfg=NONE
 This avoids that spaces are sent when they have different attributes.  On most
@@ -586,15 +521,6 @@ This section is about using the mouse on a terminal or a terminal window.  How
 to use the mouse in a GUI window is explained in |gui-mouse|.  For scrolling
 with a mouse wheel see |scroll-mouse-wheel|.
 
-Don't forget to enable the mouse with this command: >
-	:set mouse=a
-Otherwise Vim won't recognize the mouse in all modes (See 'mouse').
-
-Currently the mouse is supported for Unix in an xterm window, in a *BSD
-console with |sysmouse|, in a Linux console (with GPM |gpm-mouse|), for
-MS-DOS and in a Windows console.
-Mouse clicks can be used to position the cursor, select an area and paste.
-
 These characters in the 'mouse' option tell in which situations the mouse will
 be used by Vim:
 		n	Normal mode
@@ -605,10 +531,6 @@ be used by Vim:
 		a	all previous modes
 		r	for |hit-enter| prompt
 
-The default for 'mouse' is empty, the mouse is not used.  Normally you would
-do: >
-	:set mouse=a
-to start using the mouse (this is equivalent to setting 'mouse' to "nvich").
 If you only want to use the mouse in a few modes or also want to use it for
 the two questions you will have to concatenate the letters for those modes.
 For example: >
@@ -628,10 +550,8 @@ pressed go to the xterm.  With the currently active mode not included in
 'mouse' all mouse clicks go to the xterm.
 
 							*xterm-clipboard*
-In the Athena and Motif GUI versions, when running in a terminal and there is
-access to the X-server (DISPLAY is set), the copy and paste will behave like
-in the GUI.  If not, the middle mouse button will insert the unnamed register.
-In that case, here is how you copy and paste a piece of text:
+The middle mouse button will insert the unnamed register.  In that case, here
+is how you copy and paste a piece of text:
 
 Copy/paste with the mouse and Visual mode ('mouse' option must be set, see
 above):
@@ -646,18 +566,10 @@ Shortcut: If the insert position is on the screen at the same time as the
 Visual text, you can do 2, 3 and 4 all in one: Click the middle mouse button
 at the insert position.
 
-Note: When the |-X| command line argument is used, Vim will not connect to the
-X server and copy/paste to the X clipboard (selection) will not work.  Use the
-shift key with the mouse buttons to let the xterm do the selection.
-
-							*xterm-command-server*
-When the X-server clipboard is available, the command server described in
-|x11-clientserver| can be enabled with the --servername command line argument.
-
 							*xterm-copy-paste*
 NOTE: In some (older) xterms, it's not possible to move the cursor past column
 95 or 223.  This is an xterm problem, not Vim's.  Get a newer xterm
-|color-xterm|.  Also see |'ttymouse'|.
+|color-xterm|.
 
 Copy/paste in xterm with (current mode NOT included in 'mouse'):
 1. Press left mouse button on first letter of text, move mouse pointer to last
@@ -678,6 +590,19 @@ commands requiring the CTRL modifier can be simulated by typing the "g" key
 before using the mouse:
 	"g<LeftMouse>"	is "<C-LeftMouse>	(jump to tag under mouse click)
 	"g<RightMouse>" is "<C-RightMouse>	("CTRL-T")
+
+							*bracketed-paste-mode*
+Bracketed paste mode allows terminal emulators to distinguish between typed
+text and pasted text.
+
+For terminal emulators that support it, this mode is enabled by default. Thus
+you can paste text without Neovim giving any special meaning to it. Most
+notably it won't try reindenting those lines.
+
+If your terminal emulator doesn't support it yet, you can get the old Vim
+behaviour by enabling |'paste'| temporarily.
+
+NOTE: See https://cirw.in/blog/bracketed-paste for technical details.
 
 					*mouse-mode-table* *mouse-overview*
 A short overview of what the mouse buttons do, when 'mousemodel' is "extend":
@@ -788,20 +713,10 @@ and then drag) will result in whole words to be selected.  This continues
 until the button is released, at which point the selection is per character
 again.
 
-							*gpm-mouse*
-The GPM mouse is only supported when the |+mouse_gpm| feature was enabled at
-compile time.  The GPM mouse driver (Linux console) does not support quadruple
-clicks.
-
 In Insert mode, when a selection is started, Vim goes into Normal mode
 temporarily.  When Visual or Select mode ends, it returns to Insert mode.
 This is like using CTRL-O in Insert mode.  Select mode is used when the
 'selectmode' option contains "mouse".
-							*sysmouse*
-The sysmouse is only supported when the |+mouse_sysmouse| feature was enabled
-at compile time.  The sysmouse driver (*BSD console) does not support keyboard
-modifiers.
-
 							*drag-status-line*
 When working with several windows, the size of the windows can be changed by
 dragging the status line with the mouse.  Point the mouse at a status line,

@@ -41,8 +41,6 @@
 #include "nvim/spell.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
-#include "nvim/term.h"
-#include "nvim/ui.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
@@ -50,7 +48,8 @@
 /*
  * Copy "string" into newly allocated memory.
  */
-char_u *vim_strsave(char_u *string) FUNC_ATTR_NONNULL_RET
+char_u *vim_strsave(const char_u *string)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   return (char_u *)xstrdup((char *)string);
 }
@@ -61,7 +60,8 @@ char_u *vim_strsave(char_u *string) FUNC_ATTR_NONNULL_RET
  * The allocated memory always has size "len + 1", also when "string" is
  * shorter.
  */
-char_u *vim_strnsave(char_u *string, int len) FUNC_ATTR_NONNULL_RET
+char_u *vim_strnsave(const char_u *string, size_t len)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   return (char_u *)strncpy(xmallocz(len), (char *)string, len);
 }
@@ -70,31 +70,30 @@ char_u *vim_strnsave(char_u *string, int len) FUNC_ATTR_NONNULL_RET
  * Same as vim_strsave(), but any characters found in esc_chars are preceded
  * by a backslash.
  */
-char_u *vim_strsave_escaped(char_u *string, char_u *esc_chars)
-  FUNC_ATTR_NONNULL_RET
+char_u *vim_strsave_escaped(const char_u *string, const char_u *esc_chars)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
-  return vim_strsave_escaped_ext(string, esc_chars, '\\', FALSE);
+  return vim_strsave_escaped_ext(string, esc_chars, '\\', false);
 }
 
 /*
- * Same as vim_strsave_escaped(), but when "bsl" is TRUE also escape
+ * Same as vim_strsave_escaped(), but when "bsl" is true also escape
  * characters where rem_backslash() would remove the backslash.
  * Escape the characters with "cc".
  */
-char_u *vim_strsave_escaped_ext(char_u *string, char_u *esc_chars, int cc, int bsl)
-  FUNC_ATTR_NONNULL_RET
+char_u *vim_strsave_escaped_ext(const char_u *string, const char_u *esc_chars,
+                                char_u cc, bool bsl)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
-  unsigned length;
-  int l;
-
   /*
    * First count the number of backslashes required.
    * Then allocate the memory and insert them.
    */
-  length = 1;                           /* count the trailing NUL */
-  for (char_u *p = string; *p; p++) {
-    if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1) {
-      length += l;                      /* count a multibyte char */
+  size_t length = 1;                    // count the trailing NUL
+  for (const char_u *p = string; *p; p++) {
+    size_t l;
+    if (has_mbyte && (l = (size_t)(*mb_ptr2len)(p)) > 1) {
+      length += l;                      // count a multibyte char
       p += l - 1;
       continue;
     }
@@ -105,9 +104,10 @@ char_u *vim_strsave_escaped_ext(char_u *string, char_u *esc_chars, int cc, int b
 
   char_u *escaped_string = xmalloc(length);
   char_u *p2 = escaped_string;
-  for (char_u *p = string; *p; p++) {
-    if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1) {
-      memmove(p2, p, (size_t)l);
+  for (const char_u *p = string; *p; p++) {
+    size_t l;
+    if (has_mbyte && (l = (size_t)(*mb_ptr2len)(p)) > 1) {
+      memcpy(p2, p, l);
       p2 += l;
       p += l - 1;                     /* skip multibyte char  */
       continue;
@@ -131,13 +131,13 @@ char_u *vim_strsave_escaped_ext(char_u *string, char_u *esc_chars, int cc, int b
  * When "do_newline" is false do not escape newline unless it is csh shell.
  * Returns the result in allocated memory.
  */
-char_u *vim_strsave_shellescape(char_u *string, bool do_special, bool do_newline)
+char_u *vim_strsave_shellescape(const char_u *string,
+                                bool do_special, bool do_newline)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
-  unsigned length;
-  char_u      *p;
   char_u      *d;
   char_u      *escaped_string;
-  int l;
+  size_t l;
   int csh_like;
 
   /* Only csh and similar shells expand '!' within single quotes.  For sh and
@@ -147,8 +147,8 @@ char_u *vim_strsave_shellescape(char_u *string, bool do_special, bool do_newline
   csh_like = csh_like_shell();
 
   /* First count the number of extra bytes required. */
-  length = (unsigned)STRLEN(string) + 3;    /* two quotes and a trailing NUL */
-  for (p = string; *p != NUL; mb_ptr_adv(p)) {
+  size_t length = STRLEN(string) + 3;       // two quotes and a trailing NUL
+  for (const char_u *p = string; *p != NUL; mb_ptr_adv(p)) {
     if (*p == '\'')
       length += 3;                      /* ' => '\'' */
     if ((*p == '\n' && (csh_like || do_newline))
@@ -170,7 +170,7 @@ char_u *vim_strsave_shellescape(char_u *string, bool do_special, bool do_newline
   /* add opening quote */
   *d++ = '\'';
 
-  for (p = string; *p != NUL; ) {
+  for (const char_u *p = string; *p != NUL; ) {
     if (*p == '\'') {
       *d++ = '\'';
       *d++ = '\\';
@@ -189,7 +189,7 @@ char_u *vim_strsave_shellescape(char_u *string, bool do_special, bool do_newline
     }
     if (do_special && find_cmdline_var(p, &l) >= 0) {
       *d++ = '\\';                    /* insert backslash */
-      while (--l >= 0)                /* copy the var */
+      while (--l != SIZE_MAX)                /* copy the var */
         *d++ = *p++;
       continue;
     }
@@ -208,7 +208,8 @@ char_u *vim_strsave_shellescape(char_u *string, bool do_special, bool do_newline
  * Like vim_strsave(), but make all characters uppercase.
  * This uses ASCII lower-to-upper case translation, language independent.
  */
-char_u *vim_strsave_up(char_u *string)
+char_u *vim_strsave_up(const char_u *string)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   char_u *p1;
 
@@ -221,7 +222,8 @@ char_u *vim_strsave_up(char_u *string)
  * Like vim_strnsave(), but make all characters uppercase.
  * This uses ASCII lower-to-upper case translation, language independent.
  */
-char_u *vim_strnsave_up(char_u *string, int len) FUNC_ATTR_NONNULL_RET
+char_u *vim_strnsave_up(const char_u *string, size_t len)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   char_u *p1 = vim_strnsave(string, len);
   vim_strup(p1);
@@ -232,14 +234,11 @@ char_u *vim_strnsave_up(char_u *string, int len) FUNC_ATTR_NONNULL_RET
  * ASCII lower-to-upper case translation, language independent.
  */
 void vim_strup(char_u *p)
+  FUNC_ATTR_NONNULL_ALL
 {
-  char_u  *p2;
-  int c;
-
-  if (p != NULL) {
-    p2 = p;
-    while ((c = *p2) != NUL)
-      *p2++ = (c < 'a' || c > 'z') ? c : (c - 0x20);
+  char_u c;
+  while ((c = *p) != NUL) {
+    *p++ = (char_u)(c < 'a' || c > 'z' ? c : c - 0x20);
   }
 }
 
@@ -247,7 +246,8 @@ void vim_strup(char_u *p)
  * Make string "s" all upper-case and return it in allocated memory.
  * Handles multi-byte characters as well as possible.
  */
-char_u *strup_save(char_u *orig)
+char_u *strup_save(const char_u *orig)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   char_u *res = vim_strsave(orig);
 
@@ -265,11 +265,11 @@ char_u *strup_save(char_u *orig)
       int newl = utf_char2len(uc);
       if (newl != l) {
         // TODO(philix): use xrealloc() in strup_save()
-        char_u *s = xmalloc(STRLEN(res) + 1 + newl - l);
-        memmove(s, res, p - res);
+        char_u *s = xmalloc(STRLEN(res) + (size_t)(1 + newl - l));
+        memcpy(s, res, (size_t)(p - res));
         STRCPY(s + (p - res) + newl, p + l);
         p = s + (p - res);
-        free(res);
+        xfree(res);
         res = s;
       }
 
@@ -278,7 +278,7 @@ char_u *strup_save(char_u *orig)
     } else if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1)
       p += l;                 /* skip multi-byte character */
     else {
-      *p = TOUPPER_LOC(*p);         /* note that toupper() can be a macro */
+      *p = (char_u) TOUPPER_LOC(*p);  // note that toupper() can be a macro
       p++;
     }
   }
@@ -287,75 +287,44 @@ char_u *strup_save(char_u *orig)
 }
 
 /*
- * copy a space a number of times
- */
-void copy_spaces(char_u *ptr, size_t count)
-{
-  size_t i = count;
-  char_u      *p = ptr;
-
-  while (i--)
-    *p++ = ' ';
-}
-
-/*
- * Copy a character a number of times.
- * Does not work for multi-byte characters!
- */
-void copy_chars(char_u *ptr, size_t count, int c)
-{
-  size_t i = count;
-  char_u      *p = ptr;
-
-  while (i--)
-    *p++ = c;
-}
-
-/*
  * delete spaces at the end of a string
  */
 void del_trailing_spaces(char_u *ptr)
+  FUNC_ATTR_NONNULL_ALL
 {
   char_u      *q;
 
   q = ptr + STRLEN(ptr);
-  while (--q > ptr && vim_iswhite(q[0]) && q[-1] != '\\' && q[-1] != Ctrl_V)
+  while (--q > ptr && ascii_iswhite(q[0]) && q[-1] != '\\' && q[-1] != Ctrl_V)
     *q = NUL;
-}
-
-/*
- * Like strncpy(), but always terminate the result with one NUL.
- * "to" must be "len + 1" long!
- */
-void vim_strncpy(char_u *to, char_u *from, size_t len)
-{
-  STRNCPY(to, from, len);
-  to[len] = NUL;
 }
 
 /*
  * Like strcat(), but make sure the result fits in "tosize" bytes and is
  * always NUL terminated.
  */
-void vim_strcat(char_u *to, char_u *from, size_t tosize)
+void vim_strcat(char_u *restrict to, const char_u *restrict from,
+                size_t tosize)
+  FUNC_ATTR_NONNULL_ALL
 {
   size_t tolen = STRLEN(to);
   size_t fromlen = STRLEN(from);
 
   if (tolen + fromlen + 1 > tosize) {
-    memmove(to + tolen, from, tosize - tolen - 1);
+    memcpy(to + tolen, from, tosize - tolen - 1);
     to[tosize - 1] = NUL;
   } else
     STRCPY(to + tolen, from);
 }
 
-#if (!defined(HAVE_STRCASECMP) && !defined(HAVE_STRICMP)) || defined(PROTO)
+#if (!defined(HAVE_STRCASECMP) && !defined(HAVE_STRICMP))
 /*
  * Compare two strings, ignoring case, using current locale.
  * Doesn't work for multi-byte characters.
  * return 0 for match, < 0 for smaller, > 0 for bigger
  */
-int vim_stricmp(char *s1, char *s2)
+int vim_stricmp(const char *s1, const char *s2)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   int i;
 
@@ -372,13 +341,14 @@ int vim_stricmp(char *s1, char *s2)
 }
 #endif
 
-#if (!defined(HAVE_STRNCASECMP) && !defined(HAVE_STRNICMP)) || defined(PROTO)
+#if (!defined(HAVE_STRNCASECMP) && !defined(HAVE_STRNICMP))
 /*
  * Compare two strings, for length "len", ignoring case, using current locale.
  * Doesn't work for multi-byte characters.
  * return 0 for match, < 0 for smaller, > 0 for bigger
  */
-int vim_strnicmp(char *s1, char *s2, size_t len)
+int vim_strnicmp(const char *s1, const char *s2, size_t len)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   int i;
 
@@ -401,16 +371,16 @@ int vim_strnicmp(char *s1, char *s2, size_t len)
  * with characters from 128 to 255 correctly.  It also doesn't return a
  * pointer to the NUL at the end of the string.
  */
-char_u *vim_strchr(char_u *string, int c)
+char_u *vim_strchr(const char_u *string, int c)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
-  char_u      *p;
   int b;
 
-  p = string;
+  const char_u *p = string;
   if (enc_utf8 && c >= 0x80) {
     while (*p != NUL) {
       if (utf_ptr2char(p) == c)
-        return p;
+        return (char_u *) p;
       p += (*mb_ptr2len)(p);
     }
     return NULL;
@@ -421,7 +391,7 @@ char_u *vim_strchr(char_u *string, int c)
     c = ((unsigned)c >> 8) & 0xff;
     while ((b = *p) != NUL) {
       if (b == c && p[1] == n2)
-        return p;
+        return (char_u *) p;
       p += (*mb_ptr2len)(p);
     }
     return NULL;
@@ -429,14 +399,14 @@ char_u *vim_strchr(char_u *string, int c)
   if (has_mbyte) {
     while ((b = *p) != NUL) {
       if (b == c)
-        return p;
+        return (char_u *) p;
       p += (*mb_ptr2len)(p);
     }
     return NULL;
   }
   while ((b = *p) != NUL) {
     if (b == c)
-      return p;
+      return (char_u *) p;
     ++p;
   }
   return NULL;
@@ -447,13 +417,14 @@ char_u *vim_strchr(char_u *string, int c)
  * strings with characters above 128 correctly. It also doesn't return a
  * pointer to the NUL at the end of the string.
  */
-char_u *vim_strbyte(char_u *string, int c)
+char_u *vim_strbyte(const char_u *string, int c)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
-  char_u      *p = string;
+  const char_u *p = string;
 
   while (*p != NUL) {
     if (*p == c)
-      return p;
+      return (char_u *) p;
     ++p;
   }
   return NULL;
@@ -464,26 +435,18 @@ char_u *vim_strbyte(char_u *string, int c)
  * Return NULL if not found.
  * Does not handle multi-byte char for "c"!
  */
-char_u *vim_strrchr(char_u *string, int c)
+char_u *vim_strrchr(const char_u *string, int c)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
-  char_u      *retval = NULL;
-  char_u      *p = string;
+  const char_u *retval = NULL;
+  const char_u *p = string;
 
   while (*p) {
     if (*p == c)
       retval = p;
     mb_ptr_adv(p);
   }
-  return retval;
-}
-
-/*
- * Vim has its own isspace() function, because on some machines isspace()
- * can't handle characters above 128.
- */
-int vim_isspace(int x)
-{
-  return (x >= 9 && x <= 13) || x == ' ';
+  return (char_u *) retval;
 }
 
 /*
@@ -494,6 +457,7 @@ int vim_isspace(int x)
 # include "strings.c.generated.h"
 #endif
 static int sort_compare(const void *s1, const void *s2)
+  FUNC_ATTR_NONNULL_ALL
 {
   return STRCMP(*(char **)s1, *(char **)s2);
 }
@@ -504,24 +468,41 @@ void sort_strings(char_u **files, int count)
 }
 
 /*
- * Return TRUE if string "s" contains a non-ASCII character (128 or higher).
- * When "s" is NULL FALSE is returned.
+ * Return true if string "s" contains a non-ASCII character (128 or higher).
+ * When "s" is NULL false is returned.
  */
-int has_non_ascii(char_u *s)
+bool has_non_ascii(const char_u *s)
+  FUNC_ATTR_PURE
 {
-  char_u      *p;
+  const char_u *p;
 
   if (s != NULL)
     for (p = s; *p != NUL; ++p)
       if (*p >= 128)
-        return TRUE;
-  return FALSE;
+        return true;
+  return false;
+}
+
+/// Return true if string "s" contains a non-ASCII character (128 or higher).
+/// When "s" is NULL false is returned.
+bool has_non_ascii_len(const char *const s, const size_t len)
+  FUNC_ATTR_PURE
+{
+  if (s != NULL) {
+    for (size_t i = 0; i < len; i++) {
+      if ((uint8_t) s[i] >= 128) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 /*
  * Concatenate two strings and return the result in allocated memory.
  */
-char_u *concat_str(char_u *str1, char_u *str2) FUNC_ATTR_NONNULL_RET
+char_u *concat_str(const char_u *restrict str1, const char_u *restrict str2)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   size_t l = STRLEN(str1);
   char_u *dest = xmalloc(l + STRLEN(str2) + 1);

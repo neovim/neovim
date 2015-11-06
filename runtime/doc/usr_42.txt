@@ -268,13 +268,6 @@ command like: >
 			but are completely removed.  (Does not work on all
 			systems.)
 
-	t		When removed the tearoff feature is not enabled.
-
-The dotted line at the top of a menu is not a separator line.  When you select
-this item, the menu is "teared-off": It is displayed in a separate window.
-This is called a tearoff menu.  This is useful when you use the same menu
-often.
-
 For translating menu items, see |:menutrans|.
 
 Since the mouse has to be used to select a menu item, it is a good idea to use
@@ -318,7 +311,7 @@ with the name "Compile.bmp".  For Unix XPM format is used, the file name is
 "Compile.xpm".  The size must be 18 by 18 pixels.  On MS-Windows other sizes
 can be used as well, but it will look ugly.
    Put the bitmap in the directory "bitmaps" in one of the directories from
-'runtimepath'.  E.g., for Unix "~/.vim/bitmaps/Compile.xpm".
+'runtimepath'.  E.g., for Unix "~/.config/nvim/bitmaps/Compile.xpm".
 
 You can define tooltips for the items in the toolbar.  A tooltip is a short
 text that explains what a toolbar item will do.  For example "Open file".  It

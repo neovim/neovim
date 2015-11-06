@@ -8,23 +8,22 @@
 #include "nvim/ascii.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/log.h"
-#include "nvim/os/event.h"
-#include "nvim/os/job.h"
-#include "nvim/os/rstream.h"
+#include "nvim/event/loop.h"
+#include "nvim/event/libuv_process.h"
+#include "nvim/event/rstream.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/signal.h"
 #include "nvim/types.h"
 #include "nvim/vim.h"
 #include "nvim/message.h"
 #include "nvim/memory.h"
-#include "nvim/term.h"
+#include "nvim/ui.h"
 #include "nvim/misc2.h"
 #include "nvim/screen.h"
 #include "nvim/memline.h"
 #include "nvim/option_defs.h"
 #include "nvim/charset.h"
 #include "nvim/strings.h"
-#include "nvim/ui.h"
 
 #define DYNAMIC_BUFFER_INIT {NULL, 0, 0}
 
@@ -38,17 +37,14 @@ typedef struct {
 #endif
 
 
-// Callbacks for libuv
-
-/// Builds the argument vector for running the shell configured in `sh`
-/// ('shell' option), optionally with a command that will be passed with `shcf`
-/// ('shellcmdflag').
+/// Builds the argument vector for running the user-configured 'shell' (p_sh)
+/// with an optional command prefixed by 'shellcmdflag' (p_shcf).
 ///
-/// @param cmd Command string. If NULL it will run an interactive shell.
-/// @param extra_shell_opt Extra argument to the shell. If NULL it is ignored
+/// @param cmd Command string, or NULL to run an interactive shell.
+/// @param extra_args Extra arguments to the shell, or NULL.
 /// @return A newly allocated argument vector. It must be freed with
 ///         `shell_free_argv` when no longer needed.
-char **shell_build_argv(const char_u *cmd, const char_u *extra_shell_opt)
+char **shell_build_argv(const char *cmd, const char *extra_args)
 {
   size_t argc = tokenize(p_sh, NULL) + tokenize(p_shcf, NULL);
   char **rv = xmalloc((unsigned)((argc + 4) * sizeof(char *)));
@@ -56,18 +52,18 @@ char **shell_build_argv(const char_u *cmd, const char_u *extra_shell_opt)
   // Split 'shell'
   size_t i = tokenize(p_sh, rv);
 
-  if (extra_shell_opt != NULL) {
-    // Push a copy of `extra_shell_opt`
-    rv[i++] = xstrdup((char *)extra_shell_opt);
+  if (extra_args) {
+    rv[i++] = xstrdup(extra_args);   // Push a copy of `extra_args`
   }
 
-  if (cmd != NULL) {
-    // Split 'shellcmdflag'
-    i += tokenize(p_shcf, rv + i);
-    rv[i++] = xstrdup((char *)cmd);
+  if (cmd) {
+    i += tokenize(p_shcf, rv + i);   // Split 'shellcmdflag'
+    rv[i++] = xstrdup(cmd);          // Push a copy of the command.
   }
 
   rv[i] = NULL;
+
+  assert(rv[0]);
 
   return rv;
 }
@@ -86,31 +82,25 @@ void shell_free_argv(char **argv)
 
   while (*p != NULL) {
     // Free each argument
-    free(*p);
+    xfree(*p);
     p++;
   }
 
-  free(argv);
+  xfree(argv);
 }
 
-/// Calls the user shell for running a command, interactive session or
-/// wildcard expansion. It uses the shell set in the `sh` option.
+/// Calls the user-configured 'shell' (p_sh) for running a command or wildcard
+/// expansion.
 ///
-/// @param cmd The command to be executed. If NULL it will run an interactive
-///        shell
-/// @param opts Various options that control how the shell will work
-/// @param extra_arg Extra argument to be passed to the shell
-int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_arg)
+/// @param cmd The command to execute, or NULL to run an interactive shell.
+/// @param opts Options that control how the shell will work.
+/// @param extra_args Extra arguments to the shell, or NULL.
+int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
 {
   DynamicBuffer input = DYNAMIC_BUFFER_INIT;
   char *output = NULL, **output_ptr = NULL;
-  int current_state = State, old_mode = cur_tmode;
+  int current_state = State;
   bool forward_output = true;
-  out_flush();
-
-  if (opts & kShellOptCooked) {
-    settmode(TMODE_COOK);
-  }
 
   // While the child is running, ignore terminating signals
   signal_reject_deadly();
@@ -131,22 +121,20 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_arg)
   }
 
   size_t nread;
-  int status = shell((const char *)cmd,
-                     (const char *)extra_arg,
-                     input.data,
-                     input.len,
-                     output_ptr,
-                     &nread,
-                     emsg_silent,
-                     forward_output);
 
-  if (input.data) {
-    free(input.data);
-  }
+  int status = do_os_system(shell_build_argv((char *)cmd, (char *)extra_args),
+                            input.data,
+                            input.len,
+                            output_ptr,
+                            &nread,
+                            emsg_silent,
+                            forward_output);
+
+  xfree(input.data);
 
   if (output) {
-    write_output(output, nread);
-    free(output);
+    (void)write_output(output, nread, true, true);
+    xfree(output);
   }
 
   if (!emsg_silent && status != 0 && !(opts & kShellOptSilent)) {
@@ -155,10 +143,6 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_arg)
     msg_putchar('\n');
   }
 
-  if (old_mode == TMODE_RAW) {
-    // restore mode
-    settmode(TMODE_RAW);
-  }
   State = current_state;
   signal_accept_deadly();
 
@@ -170,9 +154,11 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_arg)
 /// example:
 ///   char *output = NULL;
 ///   size_t nread = 0;
-///   int status = os_sytem("ls -la", NULL, 0, &output, &nread);
+///   char *argv[] = {"ls", "-la", NULL};
+///   int status = os_sytem(argv, NULL, 0, &output, &nread);
 ///
-/// @param cmd The full commandline to be passed to the shell
+/// @param argv The commandline arguments to be passed to the shell. `argv`
+///             will be consumed.
 /// @param input The input to the shell (NULL for no input), passed to the
 ///              stdin of the resulting process.
 /// @param len The length of the input buffer (not used if `input` == NULL)
@@ -184,27 +170,29 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_arg)
 ///             returned buffer is not NULL)
 /// @return the return code of the process, -1 if the process couldn't be
 ///         started properly
-int os_system(const char *cmd,
+int os_system(char **argv,
               const char *input,
               size_t len,
               char **output,
               size_t *nread) FUNC_ATTR_NONNULL_ARG(1)
 {
-  return shell(cmd, NULL, input, len, output, nread, true, false);
+  return do_os_system(argv, input, len, output, nread, true, false);
 }
 
-static int shell(const char *cmd,
-                 const char *extra_arg,
-                 const char *input,
-                 size_t len,
-                 char **output,
-                 size_t *nread,
-                 bool silent,
-                 bool forward_output) FUNC_ATTR_NONNULL_ARG(1)
+static int do_os_system(char **argv,
+                        const char *input,
+                        size_t len,
+                        char **output,
+                        size_t *nread,
+                        bool silent,
+                        bool forward_output)
 {
   // the output buffer
   DynamicBuffer buf = DYNAMIC_BUFFER_INIT;
-  rstream_cb data_cb = system_data_cb;
+  stream_read_cb data_cb = system_data_cb;
+  if (nread) {
+    *nread = 0;
+  }
 
   if (forward_output) {
     data_cb = out_data_cb;
@@ -212,54 +200,72 @@ static int shell(const char *cmd,
     data_cb = NULL;
   }
 
-  char **argv = shell_build_argv((char_u *) cmd, (char_u *)extra_arg);
+  // Copy the program name in case we need to report an error.
+  char prog[MAXPATHL];
+  xstrlcpy(prog, argv[0], MAXPATHL);
 
-  int status;
-  Job *job = job_start(argv,
-                       &buf,
-                       input != NULL,
-                       data_cb,
-                       data_cb,
-                       NULL,
-                       0,
-                       &status);
-
-  if (status <= 0) {
+  Stream in, out, err;
+  LibuvProcess uvproc = libuv_process_init(&loop, &buf);
+  Process *proc = &uvproc.process;
+  Queue *events = queue_new_child(loop.events);
+  proc->events = events;
+  proc->argv = argv;
+  proc->in = input != NULL ? &in : NULL;
+  proc->out = &out;
+  proc->err = &err;
+  if (!process_spawn(proc)) {
+    loop_poll_events(&loop, 0);
     // Failed, probably due to `sh` not being executable
-    ELOG("Couldn't start job, command: '%s', error code: '%d'", cmd, status);
     if (!silent) {
-      MSG_PUTS(_("\nCannot execute shell "));
-      msg_outtrans(p_sh);
+      MSG_PUTS(_("\nCannot execute "));
+      msg_outtrans((char_u *)prog);
       msg_putchar('\n');
     }
+    queue_free(events);
     return -1;
   }
+
+  // We want to deal with stream events as fast a possible while queueing
+  // process events, so reset everything to NULL. It prevents closing the
+  // streams while there's still data in the OS buffer(due to the process
+  // exiting before all data is read).
+  if (input != NULL) {
+    proc->in->events = NULL;
+    wstream_init(proc->in, 0);
+  }
+  proc->out->events = NULL;
+  rstream_init(proc->out, 0);
+  rstream_start(proc->out, data_cb);
+  proc->err->events = NULL;
+  rstream_init(proc->err, 0);
+  rstream_start(proc->err, data_cb);
 
   // write the input, if any
   if (input) {
     WBuffer *input_buffer = wstream_new_buffer((char *) input, len, 1, NULL);
 
-    if (!job_write(job, input_buffer)) {
-      // couldn't write, stop the job and tell the user about it
-      job_stop(job);
+    if (!wstream_write(&in, input_buffer)) {
+      // couldn't write, stop the process and tell the user about it
+      process_stop(proc);
       return -1;
     }
     // close the input stream after everything is written
-    job_write_cb(job, shell_write_cb);
-  } else {
-    // close the input stream, let the process know that no more input is
-    // coming
-    job_close_in(job);
+    wstream_set_write_cb(&in, shell_write_cb);
   }
 
-  status = job_wait(job, -1);
+  // invoke busy_start here so event_poll_until wont change the busy state for
+  // the UI
+  ui_busy_start();
+  ui_flush();
+  int status = process_wait(proc, -1, NULL);
+  ui_busy_stop();
 
   // prepare the out parameters if requested
   if (output) {
     if (buf.len == 0) {
       // no data received from the process, return NULL
       *output = NULL;
-      free(buf.data);
+      xfree(buf.data);
     } else {
       // NUL-terminate to make the output directly usable as a C string
       buf.data[buf.len] = NUL;
@@ -271,6 +277,9 @@ static int shell(const char *cmd,
     }
   }
 
+  assert(queue_empty(events));
+  queue_free(events);
+
   return status;
 }
 
@@ -280,6 +289,7 @@ static int shell(const char *cmd,
 static void dynamic_buffer_ensure(DynamicBuffer *buf, size_t desired)
 {
   if (buf->cap >= desired) {
+    assert(buf->data);
     return;
   }
 
@@ -288,25 +298,37 @@ static void dynamic_buffer_ensure(DynamicBuffer *buf, size_t desired)
   buf->data = xrealloc(buf->data, buf->cap);
 }
 
-static void system_data_cb(RStream *rstream, void *data, bool eof)
+static void system_data_cb(Stream *stream, RBuffer *buf, size_t count,
+    void *data, bool eof)
 {
-  Job *job = data;
-  DynamicBuffer *buf = job_data(job);
+  DynamicBuffer *dbuf = data;
 
-  size_t nread = rstream_pending(rstream);
-
-  dynamic_buffer_ensure(buf, buf->len + nread + 1);
-  rstream_read(rstream, buf->data + buf->len, nread);
-
-  buf->len += nread;
+  size_t nread = buf->size;
+  dynamic_buffer_ensure(dbuf, dbuf->len + nread + 1);
+  rbuffer_read(buf, dbuf->data + dbuf->len, nread);
+  dbuf->len += nread;
 }
 
-static void out_data_cb(RStream *rstream, void *data, bool eof)
+static void out_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data,
+    bool eof)
 {
-  RBuffer *rbuffer = rstream_buffer(rstream);
-  size_t len = rbuffer_pending(rbuffer);
-  ui_write((char_u *)rbuffer_read_ptr(rbuffer), (int)len);
-  rbuffer_consumed(rbuffer, len);
+  size_t cnt;
+  char *ptr = rbuffer_read_ptr(buf, &cnt);
+
+  if (!cnt) {
+    return;
+  }
+
+  size_t written = write_output(ptr, cnt, false, eof);
+  // No output written, force emptying the Rbuffer if it is full.
+  if (!written && rbuffer_size(buf) == rbuffer_capacity(buf)) {
+    screen_del_lines(0, 0, 1, (int)Rows, NULL);
+    screen_puts_len((char_u *)ptr, (int)cnt, (int)Rows - 1, 0, 0);
+    written = cnt;
+  }
+  if (written) {
+    rbuffer_consumed(buf, written);
+  }
 }
 
 /// Parses a command string into a sequence of words, taking quotes into
@@ -364,9 +386,9 @@ static size_t word_length(const char_u *str)
   return length;
 }
 
-/// To remain compatible with the old implementation(which forked a process
+/// To remain compatible with the old implementation (which forked a process
 /// for writing) the entire text is copied to a temporary buffer before the
-/// event loop starts. If we don't(by writing in chunks returned by `ml_get`)
+/// event loop starts. If we don't (by writing in chunks returned by `ml_get`)
 /// the buffer being modified might get modified by reading from the process
 /// before we finish writing.
 static void read_input(DynamicBuffer *buf)
@@ -391,6 +413,7 @@ static void read_input(DynamicBuffer *buf)
       memcpy(buf->data + buf->len, lp + written, len);
       buf->len += len;
     }
+
     if (len == l) {
       // Finished a line, add a NL, unless this line should not have one.
       // FIXME need to make this more readable
@@ -415,18 +438,28 @@ static void read_input(DynamicBuffer *buf)
   }
 }
 
-static void write_output(char *output, size_t remaining)
+static size_t write_output(char *output, size_t remaining, bool to_buffer,
+                           bool eof)
 {
   if (!output) {
-    return;
+    return 0;
   }
+  char replacement_NUL = to_buffer ? NL : 1;
 
+  char *start = output;
   size_t off = 0;
+  int lastrow = (int)Rows - 1;
   while (off < remaining) {
     if (output[off] == NL) {
       // Insert the line
-      output[off] = NUL;
-      ml_append(curwin->w_cursor.lnum++, (char_u *)output, 0, false);
+      if (to_buffer) {
+        output[off] = NUL;
+        ml_append(curwin->w_cursor.lnum++, (char_u *)output, (int)off + 1,
+                  false);
+      } else {
+        screen_del_lines(0, 0, 1, (int)Rows, NULL);
+        screen_puts_len((char_u *)output, (int)off, lastrow, 0, 0);
+      }
       size_t skip = off + 1;
       output += skip;
       remaining -= skip;
@@ -436,23 +469,34 @@ static void write_output(char *output, size_t remaining)
 
     if (output[off] == NUL) {
       // Translate NUL to NL
-      output[off] = NL;
+      output[off] = replacement_NUL;
     }
     off++;
   }
 
-  if (remaining) {
-    // append unfinished line
-    ml_append(curwin->w_cursor.lnum++, (char_u *)output, 0, false);
-    // remember that the NL was missing
-    curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
-  } else {
-    curbuf->b_no_eol_lnum = 0;
+  if (eof) {
+    if (remaining) {
+      if (to_buffer) {
+        // append unfinished line
+        ml_append(curwin->w_cursor.lnum++, (char_u *)output, 0, false);
+        // remember that the NL was missing
+        curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
+      } else {
+        screen_del_lines(0, 0, 1, (int)Rows, NULL);
+        screen_puts_len((char_u *)output, (int)remaining, lastrow, 0, 0);
+      }
+      output += remaining;
+    } else if (to_buffer) {
+      curbuf->b_no_eol_lnum = 0;
+    }
   }
+
+  ui_flush();
+
+  return (size_t)(output - start);
 }
 
-static void shell_write_cb(WStream *wstream, void *data, int status)
+static void shell_write_cb(Stream *stream, void *data, int status)
 {
-  Job *job = data;
-  job_close_in(job);
+  stream_close(stream, NULL);
 }

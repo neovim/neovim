@@ -6,6 +6,8 @@ local helpers = require('test.functional.helpers')
 local eq, clear, eval, feed, nvim =
   helpers.eq, helpers.clear, helpers.eval, helpers.feed, helpers.nvim
 
+local Screen = require('test.functional.ui.screen')
+
 
 local function create_file_with_nuls(name)
   return function()
@@ -22,11 +24,9 @@ end
 
 -- Some tests require the xclip program and a x server.
 local xclip = nil
-do 
+do
   if os.getenv('DISPLAY') then
-    local proc = io.popen('which xclip') 
-    xclip = proc:read()
-    proc:close()
+    xclip = (os.execute('command -v xclip > /dev/null 2>&1') == 0)
   end
 end
 
@@ -42,6 +42,77 @@ describe('system()', function()
     eq(5, eval('v:shell_error'))
     eval([[system('this-should-not-exist')]])
     eq(127, eval('v:shell_error'))
+  end)
+
+  describe('executes shell function if passed a string', function()
+    local screen
+
+    before_each(function()
+        clear()
+        screen = Screen.new()
+        screen:attach()
+    end)
+
+    after_each(function()
+        screen:detach()
+    end)
+
+    it('`echo` and waits for its return', function()
+      feed(':call system("echo")<cr>')
+      screen:expect([[
+        ^                                                     |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        :call system("echo")                                 |
+      ]])
+    end)
+
+    it('`yes` and is interrupted with CTRL-C', function()
+      feed(':call system("yes")<cr>')
+      screen:expect([[
+                                                             |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        :call system("yes")                                  |
+      ]])
+      feed('<c-c>')
+      screen:expect([[
+        ^                                                     |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        Type  :quit<Enter>  to exit Nvim                     |
+      ]])
+    end)
   end)
 
   describe('passing no input', function()
@@ -113,14 +184,23 @@ describe('system()', function()
     end)
   end)
 
-  if xclip then
-    describe("with a program that doesn't close stdout", function()
+  describe("with a program that doesn't close stdout", function()
+    if not xclip then
+      pending('skipped (missing xclip)', function() end)
+    else
       it('will exit properly after passing input', function()
-        eq(nil, eval([[system('xclip -i -selection clipboard', 'clip-data')]]))
+        eq('', eval([[system('xclip -i -selection clipboard', 'clip-data')]]))
         eq('clip-data', eval([[system('xclip -o -selection clipboard')]]))
       end)
+    end
+  end)
+
+  describe('command passed as a list', function()
+    it('does not execute &shell', function()
+      eq('* $NOTHING ~/file',
+         eval("system(['echo', '-n', '*', '$NOTHING', '~/file'])"))
     end)
-  end
+  end)
 end)
 
 describe('systemlist()', function()
@@ -137,6 +217,77 @@ describe('systemlist()', function()
     eq(5, eval('v:shell_error'))
     eval([[systemlist('this-should-not-exist')]])
     eq(127, eval('v:shell_error'))
+  end)
+
+  describe('exectues shell function', function()
+    local screen
+
+    before_each(function()
+        clear()
+        screen = Screen.new()
+        screen:attach()
+    end)
+
+    after_each(function()
+        screen:detach()
+    end)
+
+    it('`echo` and waits for its return', function()
+      feed(':call systemlist("echo")<cr>')
+      screen:expect([[
+        ^                                                     |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        :call systemlist("echo")                             |
+      ]])
+    end)
+
+    it('`yes` and is interrupted with CTRL-C', function()
+      feed(':call systemlist("yes | xargs")<cr>')
+      screen:expect([[
+                                                             |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        :call systemlist("yes | xargs")                      |
+      ]])
+      feed('<c-c>')
+      screen:expect([[
+        ^                                                     |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        Type  :quit<Enter>  to exit Nvim                     |
+      ]])
+    end)
   end)
 
   describe('passing string with linefeed characters as input', function()
@@ -190,14 +341,38 @@ describe('systemlist()', function()
     end)
   end)
 
-  if xclip then
-    describe("with a program that doesn't close stdout", function()
+  describe('handles empty lines', function()
+    it('in the middle', function()
+      eq({'line one','','line two'}, eval("systemlist('cat',['line one','','line two'])"))
+    end)
+
+    it('in the beginning', function()
+      eq({'','line one','line two'}, eval("systemlist('cat',['','line one','line two'])"))
+    end)
+  end)
+
+  describe('when keepempty option is', function()
+    it('0, ignores trailing newline', function()
+      eq({'aa','bb'}, eval("systemlist('cat',['aa','bb'],0)"))
+      eq({'aa','bb'}, eval("systemlist('cat',['aa','bb',''],0)"))
+    end)
+
+    it('1, preserves trailing newline', function()
+      eq({'aa','bb'}, eval("systemlist('cat',['aa','bb'],1)"))
+      eq({'aa','bb',''}, eval("systemlist('cat',['aa','bb',''],2)"))
+    end)
+  end)
+
+  describe("with a program that doesn't close stdout", function()
+    if not xclip then
+      pending('skipped (missing xclip)', function() end)
+    else
       it('will exit properly after passing input', function()
         eq({}, eval(
           "systemlist('xclip -i -selection clipboard', ['clip', 'data'])"))
         eq({'clip', 'data'}, eval(
           "systemlist('xclip -o -selection clipboard')"))
       end)
-    end)
-  end
+    end
+  end)
 end)

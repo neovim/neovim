@@ -393,7 +393,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
         }
       }
       dprev->df_next = dp->df_next;
-      free(dp);
+      xfree(dp);
       dp = dprev->df_next;
     } else {
       // Advance to next entry.
@@ -416,7 +416,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
 
     if (i == DB_COUNT) {
       diff_T *dnext = dp->df_next;
-      free(dp);
+      xfree(dp);
       dp = dnext;
 
       if (dprev == NULL) {
@@ -527,7 +527,7 @@ static void diff_check_unchanged(tabpage_T *tp, diff_T *dp)
           break;
         }
       }
-      free(line_org);
+      xfree(line_org);
 
       // Stop when a line isn't equal in all diff buffers.
       if (i_new != DB_COUNT) {
@@ -579,24 +579,25 @@ static int diff_check_sanity(tabpage_T *tp, diff_T *dp)
 static void diff_redraw(int dofold)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_p_diff) {
-      redraw_win_later(wp, SOME_VALID);
-      if (dofold && foldmethodIsDiff(wp)) {
-        foldUpdateAll(wp);
-      }
+    if (!wp->w_p_diff) {
+      continue;
+    }
+    redraw_win_later(wp, SOME_VALID);
+    if (dofold && foldmethodIsDiff(wp)) {
+      foldUpdateAll(wp);
+    }
 
-      /* A change may have made filler lines invalid, need to take care
-       * of that for other windows. */
-      int n = diff_check(wp, wp->w_topline);
+    /* A change may have made filler lines invalid, need to take care
+     * of that for other windows. */
+    int n = diff_check(wp, wp->w_topline);
 
-      if (((wp != curwin) && (wp->w_topfill > 0)) || (n > 0)) {
-        if (wp->w_topfill > n) {
-          wp->w_topfill = (n < 0 ? 0 : n);
-        } else if ((n > 0) && (n > wp->w_topfill)) {
-          wp->w_topfill = n;
-        }
-        check_topfill(wp, FALSE);
+    if (((wp != curwin) && (wp->w_topfill > 0)) || (n > 0)) {
+      if (wp->w_topfill > n) {
+        wp->w_topfill = (n < 0 ? 0 : n);
+      } else if ((n > 0) && (n > wp->w_topfill)) {
+        wp->w_topfill = n;
       }
+      check_topfill(wp, FALSE);
     }
   }
 }
@@ -785,9 +786,9 @@ void ex_diffupdate(exarg_T *eap)
   diff_redraw(TRUE);
 
 theend:
-  free(tmp_orig);
-  free(tmp_new);
-  free(tmp_diff);
+  xfree(tmp_orig);
+  xfree(tmp_new);
+  xfree(tmp_diff);
 }
 
 /// Make a diff between files "tmp_orig" and "tmp_new", results in "tmp_diff".
@@ -807,7 +808,7 @@ static void diff_file(char_u *tmp_orig, char_u *tmp_new, char_u *tmp_diff)
 
     /* We don't want $DIFF_OPTIONS to get in the way. */
     if (os_getenv("DIFF_OPTIONS")) {
-      vim_setenv((char_u *)"DIFF_OPTIONS", (char_u *)"");
+      os_unsetenv("DIFF_OPTIONS");
     }
 
     /* Build the diff command and execute it.  Always use -a, binary
@@ -827,7 +828,7 @@ static void diff_file(char_u *tmp_orig, char_u *tmp_new, char_u *tmp_diff)
         NULL
         );
     unblock_autocmds();
-    free(cmd);
+    xfree(cmd);
   }
 }
 
@@ -866,7 +867,7 @@ void ex_diffpatch(exarg_T *eap)
 
 #ifdef UNIX
   // Get the absolute path of the patchfile, changing directory below.
-  fullname = FullName_save(eap->arg, FALSE);
+  fullname = (char_u *)FullName_save((char *)eap->arg, FALSE);
 #endif  // ifdef UNIX
 
 #ifdef UNIX
@@ -918,7 +919,7 @@ void ex_diffpatch(exarg_T *eap)
 #endif  // ifdef UNIX
     // Avoid ShellCmdPost stuff
     block_autocmds();
-    (void)call_shell(buf, kShellOptFilter | kShellOptCooked, NULL);
+    (void)call_shell(buf, kShellOptFilter, NULL);
     unblock_autocmds();
   }
 
@@ -977,7 +978,7 @@ void ex_diffpatch(exarg_T *eap)
 
           // Do filetype detection with the new name.
           if (au_has_group((char_u *)"filetypedetect")) {
-            do_cmdline_cmd((char_u *)":doau filetypedetect BufRead");
+            do_cmdline_cmd(":doau filetypedetect BufRead");
           }
         }
       }
@@ -988,16 +989,16 @@ theend:
   if (tmp_orig != NULL) {
     os_remove((char *)tmp_orig);
   }
-  free(tmp_orig);
+  xfree(tmp_orig);
 
   if (tmp_new != NULL) {
     os_remove((char *)tmp_new);
   }
-  free(tmp_new);
-  free(newname);
-  free(buf);
+  xfree(tmp_new);
+  xfree(newname);
+  xfree(buf);
 #ifdef UNIX
-  free(fullname);
+  xfree(fullname);
 #endif  // ifdef UNIX
 }
 
@@ -1083,10 +1084,10 @@ void diff_win_options(win_T *wp, int addbuf)
   wp->w_p_fdl = 0;
   foldUpdateAll(wp);
 
-  // make sure topline is not halfway a fold
+  // make sure topline is not halfway through a fold
   changed_window_setting_win(wp);
   if (vim_strchr(p_sbo, 'h') == NULL) {
-    do_cmdline_cmd((char_u *)"set sbo+=hor");
+    do_cmdline_cmd("set sbo+=hor");
   }
 
   // Saved the current values, to be restored in ex_diffoff().
@@ -1159,7 +1160,7 @@ void ex_diffoff(exarg_T *eap)
 
       foldUpdateAll(wp);
 
-      // make sure topline is not halfway a fold
+      // make sure topline is not halfway through a fold
       changed_window_setting_win(wp);
 
       // Note: 'sbo' is not restored, it's a global option.
@@ -1172,7 +1173,7 @@ void ex_diffoff(exarg_T *eap)
 
   // Remove "hor" from from 'scrollopt' if there are no diff windows left.
   if (!diffwin && (vim_strchr(p_sbo, 'h') != NULL)) {
-    do_cmdline_cmd((char_u *)"set sbo-=hor");
+    do_cmdline_cmd("set sbo-=hor");
   }
 }
 
@@ -1220,11 +1221,11 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
     // {first}a{first}[,{last}]
     // {first}[,{last}]d{first}
     p = linebuf;
-    f1 = getdigits(&p);
+    f1 = getdigits_long(&p);
 
     if (*p == ',') {
       ++p;
-      l1 = getdigits(&p);
+      l1 = getdigits_long(&p);
     } else {
       l1 = f1;
     }
@@ -1234,11 +1235,11 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
       continue;
     }
     difftype = *p++;
-    f2 = getdigits(&p);
+    f2 = getdigits_long(&p);
 
     if (*p == ',') {
       ++p;
-      l2 = getdigits(&p);
+      l2 = getdigits_long(&p);
     } else {
       l2 = f2;
     }
@@ -1339,7 +1340,7 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
 
       while (dn != dp->df_next) {
         dpl = dn->df_next;
-        free(dn);
+        xfree(dn);
         dn = dpl;
       }
     } else {
@@ -1406,7 +1407,7 @@ void diff_clear(tabpage_T *tp)
   diff_T *next_p;
   for (p = tp->tp_first_diff; p != NULL; p = next_p) {
     next_p = p->df_next;
-    free(p);
+    xfree(p);
   }
   tp->tp_first_diff = NULL;
 }
@@ -1510,8 +1511,8 @@ int diff_check(win_T *wp, linenr_T lnum)
     // If there is no buffer with zero lines then there is no difference
     // any longer.  Happens when making a change (or undo) that removes
     // the difference.  Can't remove the entry here, we might be halfway
-    // updating the window.  Just report the text as unchanged.  Other
-    // windows might still show the change though.
+    // through updating the window.  Just report the text as unchanged.
+    // Other windows might still show the change though.
     if (zero == FALSE) {
       return 0;
     }
@@ -1558,7 +1559,7 @@ static int diff_equal_entry(diff_T *dp, int idx1, int idx2)
 
     int cmp = diff_cmp(line, ml_get_buf(curtab->tp_diffbuf[idx2],
                                         dp->df_lnum[idx2] + i, FALSE));
-    free(line);
+    xfree(line);
 
     if (cmp != 0) {
       return FALSE;
@@ -1581,7 +1582,7 @@ static int diff_cmp(char_u *s1, char_u *s2)
   }
 
   if ((diff_flags & DIFF_ICASE) && !(diff_flags & DIFF_IWHITE)) {
-    return MB_STRICMP(s1, s2);
+    return mb_stricmp(s1, s2);
   }
 
   // Ignore white space changes and possibly ignore case.
@@ -1589,7 +1590,7 @@ static int diff_cmp(char_u *s1, char_u *s2)
   char_u *p2 = s2;
 
   while (*p1 != NUL && *p2 != NUL) {
-    if (vim_iswhite(*p1) && vim_iswhite(*p2)) {
+    if (ascii_iswhite(*p1) && ascii_iswhite(*p2)) {
       p1 = skipwhite(p1);
       p2 = skipwhite(p2);
     } else {
@@ -1780,9 +1781,9 @@ int diffopt_changed(void)
     if (STRNCMP(p, "filler", 6) == 0) {
       p += 6;
       diff_flags_new |= DIFF_FILLER;
-    } else if ((STRNCMP(p, "context:", 8) == 0) && VIM_ISDIGIT(p[8])) {
+    } else if ((STRNCMP(p, "context:", 8) == 0) && ascii_isdigit(p[8])) {
       p += 8;
-      diff_context_new = getdigits(&p);
+      diff_context_new = getdigits_int(&p);
     } else if (STRNCMP(p, "icase", 5) == 0) {
       p += 5;
       diff_flags_new |= DIFF_ICASE;
@@ -1795,9 +1796,9 @@ int diffopt_changed(void)
     } else if (STRNCMP(p, "vertical", 8) == 0) {
       p += 8;
       diff_flags_new |= DIFF_VERTICAL;
-    } else if ((STRNCMP(p, "foldcolumn:", 11) == 0) && VIM_ISDIGIT(p[11])) {
+    } else if ((STRNCMP(p, "foldcolumn:", 11) == 0) && ascii_isdigit(p[11])) {
       p += 11;
-      diff_foldcolumn_new = getdigits(&p);
+      diff_foldcolumn_new = getdigits_int(&p);
     }
 
     if ((*p != ',') && (*p != NUL)) {
@@ -1862,7 +1863,7 @@ int diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
   int idx = diff_buf_idx(wp->w_buffer);
   if (idx == DB_COUNT) {
     // cannot happen
-    free(line_org);
+    xfree(line_org);
     return FALSE;
   }
 
@@ -1875,7 +1876,7 @@ int diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
   }
 
   if ((dp == NULL) || (diff_check_sanity(curtab, dp) == FAIL)) {
-    free(line_org);
+    xfree(line_org);
     return FALSE;
   }
 
@@ -1896,8 +1897,8 @@ int diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
 
       while (line_org[si_org] != NUL) {
         if ((diff_flags & DIFF_IWHITE)
-            && vim_iswhite(line_org[si_org])
-            && vim_iswhite(line_new[si_new])) {
+            && ascii_iswhite(line_org[si_org])
+            && ascii_iswhite(line_new[si_new])) {
           si_org = (int)(skipwhite(line_org + si_org) - line_org);
           si_new = (int)(skipwhite(line_new + si_new) - line_new);
         } else {
@@ -1930,13 +1931,13 @@ int diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
                && ei_org >= 0
                && ei_new >= 0) {
           if ((diff_flags & DIFF_IWHITE)
-              && vim_iswhite(line_org[ei_org])
-              && vim_iswhite(line_new[ei_new])) {
-            while (ei_org >= *startp && vim_iswhite(line_org[ei_org])) {
+              && ascii_iswhite(line_org[ei_org])
+              && ascii_iswhite(line_new[ei_new])) {
+            while (ei_org >= *startp && ascii_iswhite(line_org[ei_org])) {
               ei_org--;
             }
 
-            while (ei_new >= si_new && vim_iswhite(line_new[ei_new])) {
+            while (ei_new >= si_new && ascii_iswhite(line_new[ei_new])) {
               ei_new--;
             }
           } else {
@@ -1955,7 +1956,7 @@ int diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
     }
   }
 
-  free(line_org);
+  xfree(line_org);
   return added;
 }
 
@@ -2016,17 +2017,24 @@ int diff_infold(win_T *wp, linenr_T lnum)
 }
 
 /// "dp" and "do" commands.
-///
-/// @param put
-void nv_diffgetput(int put)
+void nv_diffgetput(bool put, size_t count)
 {
   exarg_T ea;
-  ea.arg = (char_u *)"";
+  char buf[30];
+
+  if (count == 0) {
+    ea.arg = (char_u *)"";
+  } else {
+    vim_snprintf(buf, 30, "%zu", count);
+    ea.arg = (char_u *)buf;
+  }
+
   if (put) {
     ea.cmdidx = CMD_diffput;
   } else {
     ea.cmdidx = CMD_diffget;
   }
+
   ea.addr_count = 0;
   ea.line1 = curwin->w_cursor.lnum;
   ea.line2 = curwin->w_cursor.lnum;
@@ -2070,7 +2078,7 @@ void ex_diffgetput(exarg_T *eap)
       if ((curtab->tp_diffbuf[idx_other] != curbuf)
           && (curtab->tp_diffbuf[idx_other] != NULL)) {
         if ((eap->cmdidx != CMD_diffput)
-            || curtab->tp_diffbuf[idx_other]->b_p_ma) {
+            || MODIFIABLE(curtab->tp_diffbuf[idx_other])) {
           break;
         }
         found_not_ma = TRUE;
@@ -2090,7 +2098,8 @@ void ex_diffgetput(exarg_T *eap)
     for (i = idx_other + 1; i < DB_COUNT; ++i) {
       if ((curtab->tp_diffbuf[i] != curbuf)
           && (curtab->tp_diffbuf[i] != NULL)
-          && ((eap->cmdidx != CMD_diffput) || curtab->tp_diffbuf[i]->b_p_ma)) {
+          && ((eap->cmdidx != CMD_diffput)
+            || MODIFIABLE(curtab->tp_diffbuf[i]))) {
         EMSG(_("E101: More than two buffers in diff mode, don't know "
                "which one to use"));
         return;
@@ -2099,11 +2108,11 @@ void ex_diffgetput(exarg_T *eap)
   } else {
     // Buffer number or pattern given. Ignore trailing white space.
     p = eap->arg + STRLEN(eap->arg);
-    while (p > eap->arg && vim_iswhite(p[-1])) {
+    while (p > eap->arg && ascii_iswhite(p[-1])) {
       p--;
     }
 
-    for (i = 0; vim_isdigit(eap->arg[i]) && eap->arg + i < p; ++i) {
+    for (i = 0; ascii_isdigit(eap->arg[i]) && eap->arg + i < p; ++i) {
     }
 
     if (eap->arg + i == p) {
@@ -2236,7 +2245,7 @@ void ex_diffgetput(exarg_T *eap)
         }
       }
 
-      buf_empty = FALSE;
+      buf_empty = bufempty();
       added = 0;
 
       for (i = 0; i < count; ++i) {
@@ -2253,7 +2262,7 @@ void ex_diffgetput(exarg_T *eap)
         }
         p = vim_strsave(ml_get_buf(curtab->tp_diffbuf[idx_from], nr, FALSE));
         ml_append(lnum + i - 1, p, 0, FALSE);
-        free(p);
+        xfree(p);
         added++;
         if (buf_empty && (curbuf->b_ml.ml_line_count == 2)) {
           // Added the first line into an empty buffer, need to
@@ -2308,7 +2317,7 @@ void ex_diffgetput(exarg_T *eap)
       if (dfree != NULL) {
         // Diff is deleted, update folds in other windows.
         diff_fold_update(dfree, idx_to);
-        free(dfree);
+        xfree(dfree);
       } else {
         // mark_adjust() may have changed the count in a wrong way
         dp->df_count[idx_to] = new_count;

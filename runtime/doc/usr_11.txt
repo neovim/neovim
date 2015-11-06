@@ -44,7 +44,7 @@ To be on the safe side, write this file under another name: >
 	:write help.txt.recovered
 
 Compare the file with the original file to check if you ended up with what you
-expected.  Vimdiff is very useful for this |08.7|.  For example: >
+expected.  Diff mode is very useful for this |08.7|.  For example: >
 
 	:write help.txt.recovered
 	:edit #
@@ -282,8 +282,6 @@ machines.  Therefore, don't rely on Vim always warning you.
 
 If you really don't want to see this message, you can add the 'A' flag to the
 'shortmess' option.  But it's very unusual that you need this.
-
-For remarks about encryption and the swap file, see |:recover-crypt|.
 
 ==============================================================================
 *11.4*	Further reading

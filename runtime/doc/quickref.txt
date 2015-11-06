@@ -1,4 +1,4 @@
-*quickref.txt*  For Vim version 7.4.  Last change: 2014 Jun 25
+*quickref.txt*  For Vim version 7.4.  Last change: 2014 Nov 19
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -548,7 +548,7 @@ In Insert or Command-line mode:
 				     settings to [file] (default: ".exrc";
 				     use ! to overwrite)
 |:mkvimrc|   :mkv[imrc][!] [file]
-				  same as ":mkexrc", but with default ".vimrc"
+				  same as :mkexrc, but with default ".nvimrc"
 |:mksession| :mks[ession][!] [file]
 				  like ":mkvimrc", but store current files,
 				     windows, etc. too, to be able to continue
@@ -590,8 +590,6 @@ In Insert or Command-line mode:
 |:setglobal|	:setg[lobal]		  like ":set" but set the global value
 					  of a local option
 
-|:fix|		:fix[del]		  set value of 't_kD' according to
-					  value of 't_kb'
 |:options|	:opt[ions]		  open a new window to view and set
 					  options, grouped by functionality,
 					  a one line explanation and links to
@@ -644,7 +642,6 @@ Short explanation of each option:		*option-list*
 'columns'	  'co'	    number of columns in the display
 'comments'	  'com'     patterns that can start a comment line
 'commentstring'   'cms'     template for comments; used for fold marker
-'compatible'	  'cp'	    behave Vi-compatible as much as possible
 'complete'	  'cpt'     specify how Insert mode completion works
 'completefunc'	  'cfu'     function to be used for Insert mode completion
 'completeopt'	  'cot'     options for Insert mode completion
@@ -653,7 +650,6 @@ Short explanation of each option:		*option-list*
 'confirm'	  'cf'	    ask what to do about unsaved/read-only files
 'copyindent'	  'ci'	    make 'autoindent' use existing indent structure
 'cpoptions'	  'cpo'     flags for Vi-compatible behavior
-'cryptmethod'	  'cm'	    type of encryption to use for file writing
 'cscopepathcomp'  'cspc'    how many components of the path to show
 'cscopeprg'       'csprg'   command to execute cscope
 'cscopequickfix'  'csqf'    use quickfix window for cscope results
@@ -675,7 +671,6 @@ Short explanation of each option:		*option-list*
 'directory'	  'dir'     list of directory names for the swap file
 'display'	  'dy'	    list of flags for how to display text
 'eadirection'	  'ead'     in which direction 'equalalways' works
-'edcompatible'	  'ed'	    toggle flags of ":substitute" command
 'encoding'	  'enc'     encoding used internally
 'endofline'	  'eol'     write <EOL> for last line in file
 'equalalways'	  'ea'	    windows are automatically made the same size
@@ -686,7 +681,7 @@ Short explanation of each option:		*option-list*
 'esckeys'	  'ek'	    recognize function keys in Insert mode
 'eventignore'	  'ei'	    autocommand events that are ignored
 'expandtab'	  'et'	    use spaces when <Tab> is inserted
-'exrc'		  'ex'	    read .vimrc and .exrc in the current directory
+'exrc'		  'ex'	    read .nvimrc and .exrc in the current directory
 'fileencoding'	  'fenc'    file encoding for multi-byte text
 'fileencodings'   'fencs'   automatically detected character encodings
 'fileformat'	  'ff'	    file format used for file I/O
@@ -722,7 +717,6 @@ Short explanation of each option:		*option-list*
 'guifontwide'	  'gfw'     list of font names for double-wide characters
 'guiheadroom'	  'ghr'     GUI: pixels room for window decorations
 'guioptions'	  'go'	    GUI: Which components and options are used
-'guipty'		    GUI: try to use a pseudo-tty for ":!" commands
 'guitablabel'	  'gtl'     GUI: custom label for a tab page
 'guitabtooltip'   'gtt'     GUI: custom tooltip for a tab page
 'helpfile'	  'hf'	    full path name of the main help file
@@ -756,12 +750,12 @@ Short explanation of each option:		*option-list*
 'iskeyword'	  'isk'     characters included in keywords
 'isprint'	  'isp'     printable characters
 'joinspaces'	  'js'	    two spaces after a period with a join command
-'key'			    encryption key
 'keymap'	  'kmp'     name of a keyboard mapping
 'keymodel'	  'km'	    enable starting/stopping selection with keys
 'keywordprg'	  'kp'	    program to use for the "K" command
 'langmap'	  'lmap'    alphabetic characters for other language mode
 'langmenu'	  'lm'	    language to be used for the menus
+'langnoremap'	  'lnr'	    do not apply 'langmap' to mapped characters
 'laststatus'	  'ls'	    tells when last window has status lines
 'lazyredraw'	  'lz'	    don't redraw while executing macros
 'linebreak'	  'lbr'     wrap long lines at a blank
@@ -772,7 +766,6 @@ Short explanation of each option:		*option-list*
 'list'			    show <Tab> and <EOL>
 'listchars'	  'lcs'     characters for displaying in list mode
 'loadplugins'	  'lpl'     load plugin scripts when starting up
-'macatsui'		    Mac GUI: use ATSUI text drawing
 'magic'			    changes special characters in search patterns
 'makeef'	  'mef'     name of the errorfile for ":make"
 'makeprg'	  'mp'	    program to use for the ":make" command
@@ -797,14 +790,12 @@ Short explanation of each option:		*option-list*
 'mousemodel'	  'mousem'  changes meaning of mouse buttons
 'mouseshape'	  'mouses'  shape of the mouse pointer in different modes
 'mousetime'	  'mouset'  max time between mouse double-click
-'mzquantum'	  'mzq'     the interval between polls for MzScheme threads
 'nrformats'	  'nf'	    number formats recognized for CTRL-A command
 'number'	  'nu'	    print the line number in front of each line
 'numberwidth'	  'nuw'     number of columns used for the line number
 'omnifunc'	  'ofu'     function for filetype-specific completion
 'opendevice'	  'odev'    allow reading/writing devices on MS-Windows
 'operatorfunc'	  'opfunc'  function to be called for |g@| operator
-'osfiletype' 	  'oft'     no longer supported
 'paragraphs'	  'para'    nroff macros that separate paragraphs
 'paste'			    allow pasting text
 'pastetoggle'	  'pt'	    key code that causes 'paste' to toggle
@@ -847,6 +838,7 @@ Short explanation of each option:		*option-list*
 'selection'	  'sel'     what type of selection to use
 'selectmode'	  'slm'     when to use Select mode instead of Visual mode
 'sessionoptions'  'ssop'    options for |:mksession|
+'shada'		  'sd'	    use .shada file upon startup and exiting
 'shell'		  'sh'	    name of shell to use for external commands
 'shellcmdflag'	  'shcf'    flag to shell to execute one command
 'shellpipe'	  'sp'	    string to put output of ":make" in error file
@@ -859,7 +851,6 @@ Short explanation of each option:		*option-list*
 'shiftround'	  'sr'	    round indent to multiple of shiftwidth
 'shiftwidth'	  'sw'	    number of spaces to use for (auto)indent step
 'shortmess'	  'shm'     list of flags, reduce length of messages
-'shortname'	  'sn'	    non-MS-DOS: Filenames assumed to be 8.3 chars
 'showbreak'	  'sbr'     string to use at the start of wrapped lines
 'showcmd'	  'sc'	    show (partial) command in status line
 'showfulltag'	  'sft'     show full tag pattern when completing tag
@@ -898,7 +889,6 @@ Short explanation of each option:		*option-list*
 'tagstack'	  'tgst'    push tags onto the tag stack
 'term'			    name of the terminal
 'termbidi'	  'tbidi'   terminal takes care of bi-directionality
-'termencoding'	  'tenc'    character encoding used by the terminal
 'terse'			    shorten some messages
 'textwidth'	  'tw'	    maximum width of text that is being inserted
 'thesaurus'	  'tsr'     list of thesaurus files for keyword completion
@@ -909,14 +899,8 @@ Short explanation of each option:		*option-list*
 'titlelen'		    percentage of 'columns' used for window title
 'titleold'		    old title, restored when exiting
 'titlestring'		    string to use for the Vim window title
-'toolbar'	  'tb'	    GUI: which items to show in the toolbar
-'toolbariconsize' 'tbis'    size of the toolbar icons (for GTK 2 only)
 'ttimeout'		    time out on mappings
 'ttimeoutlen'	  'ttm'     time out time for key codes in milliseconds
-'ttybuiltin'	  'tbi'     use built-in termcap before external termcap
-'ttyfast'	  'tf'	    indicates a fast terminal connection
-'ttymouse'	  'ttym'    type of mouse codes generated
-'ttyscroll'	  'tsl'     maximum number of lines for a scroll
 'ttytype'	  'tty'     alias for 'term'
 'undodir'	  'udir'    where to store undo files
 'undofile'	  'udf'	    save undo information in a file
@@ -928,11 +912,9 @@ Short explanation of each option:		*option-list*
 'verbosefile'	  'vfile'   file to write messages in
 'viewdir'	  'vdir'    directory where to store files with :mkview
 'viewoptions'	  'vop'     specifies what to save for :mkview
-'viminfo'	  'vi'	    use .viminfo file upon startup and exiting
 'virtualedit'	  've'	    when to use virtual editing
 'visualbell'	  'vb'	    use visual bell instead of beeping
 'warn'			    warn for shell command when buffer was changed
-'weirdinvert'	  'wiv'	    for terminals that have weird inversion method
 'whichwrap'	  'ww'	    allow specified keys to cross line boundaries
 'wildchar'	  'wc'	    command-line character for wildcard expansion
 'wildcharm'	  'wcm'     like 'wildchar' but also works when mapped
@@ -1128,39 +1110,28 @@ Context-sensitive completion on the command-line:
 
 	Most useful Vim arguments (for full list see |startup-options|)
 
-|-gui|	-g		    start GUI (also allows other options)
-
 |-+|	+[num]		    put the cursor at line [num] (default: last line)
 |-+c|	+{command}	    execute {command} after loading the file
 |-+/|	+/{pat} {file} ..   put the cursor at the first occurrence of {pat}
-|-v|	-v		    Vi mode, start ex in Normal mode
 |-e|	-e		    Ex mode, start vim in Ex mode
 |-R|	-R		    Read-only mode, implies -n
 |-m|	-m		    modifications not allowed (resets 'write' option)
-|-d|	-d		    diff mode |diff|
+|-d|	-d		    |diff-mode|
 |-b|	-b		    binary mode
 |-l|	-l		    lisp mode
 |-A|	-A		    Arabic mode ('arabic' is set)
 |-F|	-F		    Farsi mode ('fkmap' and 'rightleft' are set)
 |-H|	-H		    Hebrew mode ('hkmap' and 'rightleft' are set)
 |-V|	-V		    Verbose, give informative messages
-|-C|	-C		    Compatible, set the 'compatible' option
-|-N|	-N		    Nocompatible, reset the 'compatible' option
 |-r|	-r		    give list of swap files
 |-r|	-r {file} ..	    recover aborted edit session
 |-n|	-n		    do not create a swap file
 |-o|	-o [num]	    open [num] windows (default: one for each file)
-|-f|	-f		    GUI: foreground process, don't fork
-			    Amiga: do not restart Vim to open a window (for
-				e.g., mail)
 |-s|	-s {scriptin}	    first read commands from the file {scriptin}
 |-w|	-w {scriptout}	    write typed chars to file {scriptout} (append)
 |-W|	-W {scriptout}	    write typed chars to file {scriptout} (overwrite)
-|-T|	-T {terminal}	    set terminal name
-|-d|	-d {device}	    Amiga: open {device} to be used as a console
 |-u|	-u {vimrc}	    read inits from {vimrc} instead of other inits
-|-U|	-U {gvimrc}	    idem, for when starting the GUI
-|-i|	-i {viminfo}	    read info from {viminfo} instead of other files
+|-i|	-i {shada}	    read info from {shada} instead of other files
 |---|	--		    end of options, other arguments are file names
 |--help|    --help	    show list of arguments and exit
 |--version| --version	    show version info and exit
@@ -1244,12 +1215,12 @@ Context-sensitive completion on the command-line:
 ------------------------------------------------------------------------------
 *Q_ac*		Automatic Commands
 
-|viminfo-file|	read registers, marks, history at startup, save when exiting.
+|shada-file|	read registers, marks, history at startup, save when exiting.
 
-|:rviminfo|	:rv[iminfo] [file]	read info from viminfo file [file]
-|:rviminfo|	:rv[iminfo]! [file]	idem, overwrite existing info
-|:wviminfo|	:wv[iminfo] [file]	add info to viminfo file [file]
-|:wviminfo|	:wv[iminfo]! [file]	write info to viminfo file [file]
+|:rshada|	:rsh[ada] [file]	read info from ShaDa file [file]
+|:rshada|	:rsh[ada]! [file]	idem, overwrite existing info
+|:wshada|	:wsh[ada] [file]	add info to ShaDa file [file]
+|:wshada|	:wsh[ada]! [file]	write info to ShaDa file [file]
 
 |modeline|	Automatic option setting when editing a file
 
@@ -1306,11 +1277,16 @@ Context-sensitive completion on the command-line:
 |CTRL-W_R|	CTRL-W R		rotate windows upwards
 |CTRL-W_x|	CTRL-W x		exchange current window with next one
 
-|CTRL-W_=|	CTRL-W =		make all windows equal height
+|CTRL-W_=|	CTRL-W =		make all windows equal height & width
 |CTRL-W_-|	CTRL-W -		decrease current window height
 |CTRL-W_+|	CTRL-W +		increase current window height
 |CTRL-W__|	CTRL-W _		set current window height (default:
 					   very high)
+
+|CTRL-W_<|	CTRL-W <		decrease current window width
+|CTRL-W_>|	CTRL-W >		increase current window width
+|CTRL-W_bar|	CTRL-W |		set current window width (default:
+					   widest possible)
 ------------------------------------------------------------------------------
 *Q_bu*		Buffer list commands
 
@@ -1360,9 +1336,6 @@ Context-sensitive completion on the command-line:
 					automatic indenting and settings
 ------------------------------------------------------------------------------
 *Q_gu*		GUI commands
-
-|:gui|		:gui			UNIX: start the GUI
-|:gui|		:gui {fname} ..		idem, and edit {fname} ..
 
 |:menu|		:menu			list all menus
 |:menu|		:menu {mpath}		list menus starting with {mpath}

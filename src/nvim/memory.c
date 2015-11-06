@@ -7,13 +7,22 @@
 #include <stdbool.h>
 
 #include "nvim/vim.h"
-#include "nvim/misc2.h"
 #include "nvim/eval.h"
 #include "nvim/memfile.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
-#include "nvim/term.h"
+#include "nvim/ui.h"
+
+#ifdef HAVE_JEMALLOC
+// Force je_ prefix on jemalloc functions.
+# define JEMALLOC_NO_DEMANGLE
+# include <jemalloc/jemalloc.h>
+# define malloc(size) je_malloc(size)
+# define calloc(count, size) je_calloc(count, size)
+# define realloc(ptr, size) je_realloc(ptr, size)
+# define free(ptr) je_free(ptr)
+#endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "memory.c.generated.h"
@@ -21,7 +30,7 @@
 
 /// Try to free memory. Used when trying to recover from out of memory errors.
 /// @see {xmalloc}
-static void try_to_free_memory(void)
+void try_to_free_memory(void)
 {
   static bool trying_to_free = false;
   // avoid recursive calls
@@ -49,11 +58,11 @@ static void try_to_free_memory(void)
 /// @return pointer to allocated space. NULL if out of memory
 void *try_malloc(size_t size) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1)
 {
-  size = size ? size : 1;
-  void *ret = malloc(size);
+  size_t allocated_size = size ? size : 1;
+  void *ret = malloc(allocated_size);
   if (!ret) {
     try_to_free_memory();
-    ret = malloc(size);
+    ret = malloc(allocated_size);
   }
   return ret;
 }
@@ -86,11 +95,17 @@ void *xmalloc(size_t size)
 {
   void *ret = try_malloc(size);
   if (!ret) {
-    OUT_STR(e_outofmem);
-    out_char('\n');
+    mch_errmsg(e_outofmem);
+    mch_errmsg("\n");
     preserve_exit();
   }
   return ret;
+}
+
+/// free wrapper that returns delegates to the backing memory manager
+void xfree(void *ptr)
+{
+  free(ptr);
 }
 
 /// calloc() wrapper
@@ -102,13 +117,15 @@ void *xmalloc(size_t size)
 void *xcalloc(size_t count, size_t size)
   FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE_PROD(1, 2) FUNC_ATTR_NONNULL_RET
 {
-  void *ret = count && size ? calloc(count, size) : calloc(1, 1);
+  size_t allocated_count = count && size ? count : 1;
+  size_t allocated_size = count && size ? size : 1;
+  void *ret = calloc(allocated_count, allocated_size);
   if (!ret) {
     try_to_free_memory();
-    ret = count && size ? calloc(count, size) : calloc(1, 1);
+    ret = calloc(allocated_count, allocated_size);
     if (!ret) {
-      OUT_STR(e_outofmem);
-      out_char('\n');
+      mch_errmsg(e_outofmem);
+      mch_errmsg("\n");
       preserve_exit();
     }
   }
@@ -123,13 +140,14 @@ void *xcalloc(size_t count, size_t size)
 void *xrealloc(void *ptr, size_t size)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALLOC_SIZE(2) FUNC_ATTR_NONNULL_RET
 {
-  void *ret = size ? realloc(ptr, size) : realloc(ptr, 1);
+  size_t allocated_size = size ? size : 1;
+  void *ret = realloc(ptr, allocated_size);
   if (!ret) {
     try_to_free_memory();
-    ret = size ? realloc(ptr, size) : realloc(ptr, 1);
+    ret = realloc(ptr, allocated_size);
     if (!ret) {
-      OUT_STR(e_outofmem);
-      out_char('\n');
+      mch_errmsg(e_outofmem);
+      mch_errmsg("\n");
       preserve_exit();
     }
   }
@@ -146,7 +164,7 @@ void *xmallocz(size_t size)
 {
   size_t total_size = size + 1;
   if (total_size < size) {
-    OUT_STR(_("Vim: Data too large to fit into virtual memory space\n"));
+    mch_errmsg(_("Vim: Data too large to fit into virtual memory space\n"));
     preserve_exit();
   }
 
@@ -231,6 +249,43 @@ void memchrsub(void *data, char c, char x, size_t len)
   }
 }
 
+/// Counts the number of occurrences of `c` in `str`.
+///
+/// @warning Unsafe if `c == NUL`.
+///
+/// @param str Pointer to the string to search.
+/// @param c   The byte to search for.
+/// @returns the number of occurrences of `c` in `str`.
+size_t strcnt(const char *str, char c)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+{
+  assert(c != 0);
+  size_t cnt = 0;
+  while ((str = strchr(str, c))) {
+    cnt++;
+    str++;  // Skip the instance of c.
+  }
+  return cnt;
+}
+
+/// Counts the number of occurrences of byte `c` in `data[len]`.
+///
+/// @param data Pointer to the data to search.
+/// @param c    The byte to search for.
+/// @param len  The length of `data`.
+/// @returns the number of occurrences of `c` in `data[len]`.
+size_t memcnt(const void *data, char c, size_t len)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+{
+  size_t cnt = 0;
+  const char *ptr = data, *end = ptr + len;
+  while ((ptr = memchr(ptr, c, (size_t)(end - ptr))) != NULL) {
+    cnt++;
+    ptr++;  // Skip the instance of c.
+  }
+  return cnt;
+}
+
 /// The xstpcpy() function shall copy the string pointed to by src (including
 /// the terminating NUL character) into the array pointed to by dst.
 ///
@@ -302,6 +357,7 @@ char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen)
 /// @param size Size of destination buffer
 /// @return Length of the source string (i.e.: strlen(src))
 size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
+  FUNC_ATTR_NONNULL_ALL
 {
     size_t ret = strlen(src);
 
@@ -322,19 +378,7 @@ size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
 char *xstrdup(const char *str)
   FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
-  char *ret = strdup(str);
-
-  if (!ret) {
-    try_to_free_memory();
-    ret = strdup(str);
-    if (!ret) {
-      OUT_STR(e_outofmem);
-      out_char('\n');
-      preserve_exit();
-    }
-  }
-
-  return ret;
+  return xmemdupz(str, strlen(str));
 }
 
 /// A version of memchr that starts the search at `src + len`.
@@ -345,7 +389,7 @@ char *xstrdup(const char *str)
 /// @param c   The byte to search for.
 /// @param len The length of the memory object.
 /// @returns a pointer to the found byte in src[len], or NULL.
-void *xmemrchr(void *src, uint8_t c, size_t len)
+void *xmemrchr(const void *src, uint8_t c, size_t len)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   while (len--) {
@@ -393,13 +437,13 @@ void do_outofmem_msg(size_t size)
 
     /* Must come first to avoid coming back here when printing the error
      * message fails, e.g. when setting v:errmsg. */
-    did_outofmem_msg = TRUE;
+    did_outofmem_msg = true;
 
     EMSGU(_("E342: Out of memory!  (allocating %" PRIu64 " bytes)"), size);
   }
 }
 
-#if defined(EXITFREE) || defined(PROTO)
+#if defined(EXITFREE)
 
 #include "nvim/file_search.h"
 #include "nvim/buffer.h"
@@ -427,7 +471,6 @@ void do_outofmem_msg(size_t size)
 #include "nvim/spell.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
-#include "nvim/ui.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 
@@ -449,14 +492,15 @@ void free_all_mem(void)
     return;
   entered = true;
 
-  block_autocmds();         /* don't want to trigger autocommands here */
+  // Don't want to trigger autocommands from here on.
+  block_autocmds();
 
   /* Close all tabs and windows.  Reset 'equalalways' to avoid redraws. */
-  p_ea = FALSE;
+  p_ea = false;
   if (first_tabpage->tp_next != NULL)
-    do_cmdline_cmd((char_u *)"tabonly!");
+    do_cmdline_cmd("tabonly!");
   if (firstwin != lastwin)
-    do_cmdline_cmd((char_u *)"only!");
+    do_cmdline_cmd("only!");
 
   /* Free all spell info. */
   spell_free_all();
@@ -465,25 +509,24 @@ void free_all_mem(void)
   ex_comclear(NULL);
 
   /* Clear menus. */
-  do_cmdline_cmd((char_u *)"aunmenu *");
-  do_cmdline_cmd((char_u *)"menutranslate clear");
+  do_cmdline_cmd("aunmenu *");
+  do_cmdline_cmd("menutranslate clear");
 
   /* Clear mappings, abbreviations, breakpoints. */
-  do_cmdline_cmd((char_u *)"lmapclear");
-  do_cmdline_cmd((char_u *)"xmapclear");
-  do_cmdline_cmd((char_u *)"mapclear");
-  do_cmdline_cmd((char_u *)"mapclear!");
-  do_cmdline_cmd((char_u *)"abclear");
-  do_cmdline_cmd((char_u *)"breakdel *");
-  do_cmdline_cmd((char_u *)"profdel *");
-  do_cmdline_cmd((char_u *)"set keymap=");
+  do_cmdline_cmd("lmapclear");
+  do_cmdline_cmd("xmapclear");
+  do_cmdline_cmd("mapclear");
+  do_cmdline_cmd("mapclear!");
+  do_cmdline_cmd("abclear");
+  do_cmdline_cmd("breakdel *");
+  do_cmdline_cmd("profdel *");
+  do_cmdline_cmd("set keymap=");
 
   free_titles();
   free_findfile();
 
   /* Obviously named calls. */
   free_all_autocmds();
-  clear_termcodes();
   free_all_options();
   free_all_marks();
   alist_clear(&global_alist);
@@ -502,8 +545,8 @@ void free_all_mem(void)
   clear_sb_text();            /* free any scrollback text */
 
   /* Free some global vars. */
-  free(last_cmdline);
-  free(new_last_cmdline);
+  xfree(last_cmdline);
+  xfree(new_last_cmdline);
   set_keep_msg(NULL, 0);
 
   /* Clear cmdline history. */
@@ -524,10 +567,10 @@ void free_all_mem(void)
 
   /* Free all buffers.  Reset 'autochdir' to avoid accessing things that
    * were freed already. */
-  p_acd = FALSE;
+  p_acd = false;
   for (buf = firstbuf; buf != NULL; ) {
     nextbuf = buf->b_next;
-    close_buffer(NULL, buf, DOBUF_WIPE, FALSE);
+    close_buffer(NULL, buf, DOBUF_WIPE, false);
     if (buf_valid(buf))
       buf = nextbuf;            /* didn't work, try next one */
     else
@@ -550,19 +593,12 @@ void free_all_mem(void)
   free_tabpage(first_tabpage);
   first_tabpage = NULL;
 
-# ifdef UNIX
-  /* Machine-specific free. */
-  mch_free_mem();
-# endif
-
   /* message history */
   for (;; )
     if (delete_first_msg() == FAIL)
       break;
 
   eval_clear();
-
-  free_termoptions();
 
   /* screenlines (can't display anything now!) */
   free_screenlines();

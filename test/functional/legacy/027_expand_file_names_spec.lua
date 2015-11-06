@@ -10,7 +10,6 @@ describe('expand file name', function()
   setup(clear)
 
   it('is working', function()
-    execute('set nocp')
     execute('!mkdir Xdir1')
     execute('!mkdir Xdir2')
     execute('!mkdir Xdir3')

@@ -61,10 +61,11 @@ bool try_end(Error *err)
     free_global_msglist();
 
     if (should_free) {
-      free(msg);
+      xfree(msg);
     }
   } else if (did_throw) {
     api_set_error(err, Exception, "%s", current_exception->value);
+    discard_current_exception();
   }
 
   return err->set;
@@ -145,6 +146,7 @@ Object dict_set_value(dict_T *dict, String key, Object value, Error *err)
       dict_add(dict, di);
     } else {
       // Return the old value
+      rv = vim_to_object(&di->di_tv);
       clear_tv(&di->di_tv);
     }
 
@@ -404,6 +406,9 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
       tv->vval.v_number = obj.data.boolean;
       break;
 
+    case kObjectTypeBuffer:
+    case kObjectTypeWindow:
+    case kObjectTypeTabpage:
     case kObjectTypeInteger:
       if (obj.data.integer > INT_MAX || obj.data.integer < INT_MIN) {
         api_set_error(err, Validation, _("Integer value outside range"));
@@ -421,8 +426,12 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
 
     case kObjectTypeString:
       tv->v_type = VAR_STRING;
-      tv->vval.v_string = xmemdupz(obj.data.string.data,
-                                   obj.data.string.size);
+      if (obj.data.string.data == NULL) {
+        tv->vval.v_string = NULL;
+      } else {
+        tv->vval.v_string = xmemdupz(obj.data.string.data,
+                                     obj.data.string.size);
+      }
       break;
 
     case kObjectTypeArray:
@@ -488,7 +497,7 @@ void api_free_string(String value)
     return;
   }
 
-  free(value.data);
+  xfree(value.data);
 }
 
 void api_free_object(Object value)
@@ -526,7 +535,7 @@ void api_free_array(Array value)
     api_free_object(value.items[i]);
   }
 
-  free(value.items);
+  xfree(value.items);
 }
 
 void api_free_dictionary(Dictionary value)
@@ -536,7 +545,7 @@ void api_free_dictionary(Dictionary value)
     api_free_object(value.items[i].value);
   }
 
-  free(value.items);
+  xfree(value.items);
 }
 
 Dictionary api_metadata(void)
@@ -588,7 +597,7 @@ static void init_type_metadata(Dictionary *metadata)
 }
 
 /// Creates a deep clone of an object
-static Object copy_object(Object obj)
+Object copy_object(Object obj)
 {
   switch (obj.type) {
     case kObjectTypeNil:
@@ -643,10 +652,8 @@ static Object vim_to_object_rec(typval_T *obj, PMap(ptr_t) *lookup)
 
   switch (obj->v_type) {
     case VAR_STRING:
-      if (obj->vval.v_string != NULL) {
-        rv.type = kObjectTypeString;
-        rv.data.string = cstr_to_string((char *) obj->vval.v_string);
-      }
+      rv.type = kObjectTypeString;
+      rv.data.string = cstr_to_string((char *) obj->vval.v_string);
       break;
 
     case VAR_NUMBER:

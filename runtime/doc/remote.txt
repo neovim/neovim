@@ -10,8 +10,6 @@ Vim client-server communication				*client-server*
 2. X11 specific items		|x11-clientserver|
 3. MS-Windows specific items	|w32-clientserver|
 
-{Vi does not have any of these commands}
-
 ==============================================================================
 1. Common functionality					*clientserver*
 
@@ -58,11 +56,6 @@ The following command line arguments are available:
 						*--remote-tab-wait-silent*
    --remote-tab-wait-silent	Like --remote-wait-silent but open each file
 				in a new tabpage.
-								*--servername*
-   --servername {name}		Become the server {name}.  When used together
-				with one of the --remote commands: connect to
-				server {name} instead of the default (see
-				below).
 								*--remote-send*
    --remote-send {keys}		Send {keys} to server and exit.  The {keys}
    				are not mapped.  Special key names are
@@ -71,9 +64,6 @@ The following command line arguments are available:
 								*--remote-expr*
    --remote-expr {expr}		Evaluate {expr} in server and print the result
 				on stdout.
-								*--serverlist*
-   --serverlist			Output a list of server names.
-
 
 Examples ~
 

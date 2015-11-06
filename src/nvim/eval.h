@@ -1,6 +1,8 @@
 #ifndef NVIM_EVAL_H
 #define NVIM_EVAL_H
 
+#include <msgpack.h>
+
 #include "nvim/profile.h"
 
 /* Defines for Vim variables.  These must match vimvars[] in eval.c! */
@@ -63,10 +65,16 @@ enum {
     VV_OLDFILES,
     VV_WINDOWID,
     VV_PROGPATH,
-    VV_JOB_DATA,
     VV_COMMAND_OUTPUT,
+    VV_COMPLETED_ITEM,
+    VV_MSGPACK_TYPES,
     VV_LEN, /* number of v: vars */
 };
+
+/// Maximum number of function arguments
+#define MAX_FUNC_ARGS   20
+
+int vim_to_msgpack(msgpack_packer *const, typval_T *const);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval.h.generated.h"

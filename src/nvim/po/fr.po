@@ -1766,7 +1766,7 @@ msgid "E494: Use w or w>>"
 msgstr "E494: Utilisez w ou w>>"
 
 #: ../ex_docmd.c:3454
-msgid "E319: Sorry, the command is not available in this version"
+msgid "E319: The command is not available in this version"
 msgstr "E319: Désolé, cette commande n'est pas disponible dans cette version"
 
 #: ../ex_docmd.c:3752
@@ -2252,7 +2252,7 @@ msgstr ""
 "courant"
 
 #: ../fileio.c:672
-msgid "Vim: Reading from stdin...\n"
+msgid "Nvim: Reading from stdin...\n"
 msgstr "Vim : Lecture de stdin...\n"
 
 #. Re-opening the original file failed!
@@ -2909,7 +2909,7 @@ msgid "E477: No ! allowed"
 msgstr "E477: Le ! n'est pas autorisé"
 
 #: ../globals.h:1035
-msgid "E25: GUI cannot be used: Not enabled at compile time"
+msgid "E25: Nvim does not have a built-in GUI"
 msgstr "E25: L'interface graphique n'a pas été compilée dans cette version"
 
 #: ../globals.h:1036
@@ -4616,7 +4616,7 @@ msgid "E663: At end of changelist"
 msgstr "E663: À la fin de la liste des modifications"
 
 #: ../normal.c:7053
-msgid "Type  :quit<Enter>  to exit Vim"
+msgid "Type  :quit<Enter>  to exit Nvim"
 msgstr "tapez  :q<Entrée>  pour quitter Vim"
 
 #: ../ops.c:248

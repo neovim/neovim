@@ -1633,7 +1633,7 @@ msgid "E494: Use w or w>>"
 msgstr "Pou¾ijte w èi w>>"
 
 #: ../ex_docmd.c:3454
-msgid "E319: Sorry, the command is not available in this version"
+msgid "E319: The command is not available in this version"
 msgstr "E319: Pøíkaz není této verzi bohu¾el implementován"
 
 #: ../ex_docmd.c:3752
@@ -2137,7 +2137,7 @@ msgid "E201: *ReadPre autocommands must not change current buffer"
 msgstr "E201: *ReadPre automatické pøíkazy nesmí mìnit aktuální buffer"
 
 #: ../fileio.c:672
-msgid "Vim: Reading from stdin...\n"
+msgid "Nvim: Reading from stdin...\n"
 msgstr "Vim: Ètu ze standardního vstupu...\n"
 
 #. Re-opening the original file failed!
@@ -2803,7 +2803,7 @@ msgid "E477: No ! allowed"
 msgstr "! není povoleno"
 
 #: ../globals.h:1035
-msgid "E25: GUI cannot be used: Not enabled at compile time"
+msgid "E25: Nvim does not have a built-in GUI"
 msgstr "E25: Nelze pou¾ít GUI: nebylo zapnuto pøi pøekladu programu"
 
 #: ../globals.h:1036
@@ -4533,7 +4533,7 @@ msgstr ""
 
 #: ../normal.c:7053
 #, fuzzy
-msgid "Type  :quit<Enter>  to exit Vim"
+msgid "Type  :quit<Enter>  to exit Nvim"
 msgstr "zadejte :q<Enter>             pro ukonèení programu"
 
 #: ../ops.c:248

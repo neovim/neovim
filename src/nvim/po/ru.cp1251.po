@@ -7,10 +7,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: vim_7.4_ru\n"
+"Project-Id-Version: vim_ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-05-26 14:21+0200\n"
-"PO-Revision-Date: 2013-08-31 21:11+0400\n"
+"PO-Revision-Date: 2014-10-10 12:00+0400\n"
 "Last-Translator: Sergey Alyoshin <alyoshin.s@gmail.com>\n"
 "Language-Team: \n"
 "Language: Russian\n"
@@ -820,18 +820,17 @@ msgid "sort() argument"
 msgstr "параметра sort()"
 
 #: ../eval.c:13721
-#, fuzzy
 msgid "uniq() argument"
-msgstr "параметра add()"
+msgstr "параметра uniq()"
 
 #: ../eval.c:13776
 msgid "E702: Sort compare function failed"
 msgstr "E702: Неудачное завершение функции сравнения при сортировке"
 
 #: ../eval.c:13806
-#, fuzzy
 msgid "E882: Uniq compare function failed"
-msgstr "E702: Неудачное завершение функции сравнения при сортировке"
+msgstr ""
+"E882: Неудачное завершение функции сравнения при проверке единственности"
 
 #: ../eval.c:14085
 msgid "(Invalid)"
@@ -957,18 +956,14 @@ msgid "E129: Function name required"
 msgstr "E129: Требуется имя функции"
 
 #: ../eval.c:17824
-#, fuzzy, c-format
+#, c-format
 msgid "E128: Function name must start with a capital or \"s:\": %s"
-msgstr ""
-"E128: Имя функции должно начинаться с заглавной буквы или содержать "
-"двоеточие: %s"
+msgstr "E128: Имя функции должно начинаться с заглавной буквы или \"s:\": %s"
 
 #: ../eval.c:17833
-#, fuzzy, c-format
+#, c-format
 msgid "E884: Function name cannot contain a colon: %s"
-msgstr ""
-"E128: Имя функции должно начинаться с заглавной буквы или содержать "
-"двоеточие: %s"
+msgstr "E884: Имя функции не может содержать двоеточие: %s"
 
 #: ../eval.c:18336
 #, c-format
@@ -1115,6 +1110,10 @@ msgstr "E138: Невозможно записать файл viminfo %s!"
 #, c-format
 msgid "Writing viminfo file \"%s\""
 msgstr "Запись файла viminfo \"%s\""
+
+#, c-format
+msgid "E886: Can't rename viminfo file to %s!"
+msgstr "E886: Невозможно переименовать файл viminfo в %s!"
 
 #. Write the info:
 #: ../ex_cmds.c:1720
@@ -1358,6 +1357,10 @@ msgstr "E158: Неправильное имя буфера: %s"
 msgid "E157: Invalid sign ID: %<PRId64>"
 msgstr "E157: Неправильный ID значка: %<PRId64>"
 
+#, c-format
+msgid "E885: Not possible to change sign %s"
+msgstr "E885: Невозможно изменить значок %s"
+
 #: ../ex_cmds.c:6066
 msgid " (not supported)"
 msgstr " (не поддерживается)"
@@ -1577,7 +1580,7 @@ msgid "E494: Use w or w>>"
 msgstr "E494: Используйте w или w>>"
 
 #: ../ex_docmd.c:3454
-msgid "E319: Sorry, the command is not available in this version"
+msgid "E319: The command is not available in this version"
 msgstr "E319: Извините, эта команда недоступна в данной версии"
 
 #: ../ex_docmd.c:3752
@@ -2003,6 +2006,9 @@ msgstr "E344: Каталог \"%s\" не найден в пути для смены каталога"
 msgid "E345: Can't find file \"%s\" in path"
 msgstr "E345: Файл \"%s\" в известных каталогах не найден"
 
+msgid "List or number required"
+msgstr "Требуется список или число"
+
 #: ../file_search.c:1512
 #, c-format
 msgid "E346: No more directory \"%s\" found in cdpath"
@@ -2054,7 +2060,7 @@ msgid "E201: *ReadPre autocommands must not change current buffer"
 msgstr "E201: Автокоманды *ReadPre не должны изменять активный буфер"
 
 #: ../fileio.c:672
-msgid "Vim: Reading from stdin...\n"
+msgid "Nvim: Reading from stdin...\n"
 msgstr "Vim: Чтение из стандартного потока ввода stdin...\n"
 
 #. Re-opening the original file failed!
@@ -2711,7 +2717,7 @@ msgid "E477: No ! allowed"
 msgstr "E477: ! не допускается"
 
 #: ../globals.h:1035
-msgid "E25: GUI cannot be used: Not enabled at compile time"
+msgid "E25: Nvim does not have a built-in GUI"
 msgstr ""
 "E25: Возможность использования графического интерфейса выключена при "
 "компиляции"
@@ -4429,7 +4435,7 @@ msgid "E663: At end of changelist"
 msgstr "E663: В конце списка изменений"
 
 #: ../normal.c:7053
-msgid "Type  :quit<Enter>  to exit Vim"
+msgid "Type  :quit<Enter>  to exit Nvim"
 msgstr "Введите :quit<Enter>  для выхода из Vim"
 
 #: ../ops.c:248
@@ -4532,6 +4538,13 @@ msgstr ""
 #, c-format
 msgid "E574: Unknown register type %d"
 msgstr "E574: Неизвестный тип регистра %d"
+
+msgid ""
+"E883: search pattern and expression register may not contain two or more "
+"lines"
+msgstr ""
+"E883: шаблон поиска и регистр выражения не могут содержать двух или более "
+"строк"
 
 #: ../ops.c:5089
 #, c-format
@@ -4796,6 +4809,19 @@ msgstr ""
 "\n"
 "Невозможно установить контекст безопасности для "
 
+msgid "Could not set security context "
+msgstr "Невозможно установить контекст безопасности "
+
+msgid " for "
+msgstr " для "
+
+#. no enough size OR unexpected error
+msgid "Could not get security context "
+msgstr "Невозможно получить контекст безопасности "
+
+msgid ". Removing it!\n"
+msgstr ". Будет удалён!\n"
+
 #: ../os_unix.c:1558 ../os_unix.c:1647
 #, c-format
 msgid "dlerror = \"%s\""
@@ -5007,6 +5033,10 @@ msgstr "E554: Синтаксическая ошибка в %s{...}"
 #: ../regexp.c:3805
 msgid "External submatches:\n"
 msgstr "Внешние подсоответствия:\n"
+
+#, c-format
+msgid "E888: (NFA regexp) cannot repeat %s"
+msgstr "E888: (рег. выражение НКА) невозможно повторить %s"
 
 #: ../regexp.c:7022
 msgid ""
@@ -8243,3 +8273,10 @@ msgstr "E446: Нет имени файла в позиции курсора"
 #~ msgstr ""
 #~ "Ошибка при установке пути: sys.path не является списком\n"
 #~ "Следует добавить vim.VIM_SPECIAL_PATH в sys.path"
+
+#~ msgid ""
+#~ "E887: Sorry, this command is disabled, the Python's site module could not be "
+#~ "loaded."
+#~ msgstr ""
+#~ "E887: К сожалению эта команда не работает, поскольку не загружен модуль "
+#~ "Python site."

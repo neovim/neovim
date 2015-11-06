@@ -12,8 +12,6 @@ Filetypes						*filetype* *file-type*
 
 Also see |autocmd.txt|.
 
-{Vi does not have any of these commands}
-
 ==============================================================================
 1. Filetypes					*filetypes* *file-types*
 
@@ -28,17 +26,10 @@ Each time a new or existing file is edited, Vim will try to recognize the type
 of the file and set the 'filetype' option.  This will trigger the FileType
 event, which can be used to set the syntax highlighting, set options, etc.
 
-NOTE: Filetypes and 'compatible' don't work together well, since being Vi
-compatible means options are global.  Resetting 'compatible' is recommended,
-if you didn't do that already.
-
 Detail: The ":filetype on" command will load one of these files:
-		Amiga	    $VIMRUNTIME/filetype.vim
-		Mac	    $VIMRUNTIME:filetype.vim
+		Mac	    $VIMRUNTIME/filetype.vim
 		MS-DOS	    $VIMRUNTIME\filetype.vim
-		RiscOS	    Vim:Filetype
 		Unix	    $VIMRUNTIME/filetype.vim
-		VMS	    $VIMRUNTIME/filetype.vim
 	This file is a Vim script that defines autocommands for the
 	BufNewFile and BufRead events.  If the file type is not found by the
 	name, the file $VIMRUNTIME/scripts.vim is used to detect it from the
@@ -171,8 +162,7 @@ A. If you want to overrule all default file type checks.
    1. Create your user runtime directory.  You would normally use the first
       item of the 'runtimepath' option.  Then create the directory "ftdetect"
       inside it.  Example for Unix: >
-	:!mkdir ~/.vim
-	:!mkdir ~/.vim/ftdetect
+	:!mkdir -p ~/.config/nvim/ftdetect
 <
    2. Create a file that contains an autocommand to detect the file type.
       Example: >
@@ -182,7 +172,7 @@ A. If you want to overrule all default file type checks.
       check the contents of the file to recognize it.
       Write this file as "mine.vim" in the "ftdetect" directory in your user
       runtime directory.  For example, for Unix: >
-	:w ~/.vim/ftdetect/mine.vim
+	:w ~/.config/nvim/ftdetect/mine.vim
 
 <  3. To use the new filetype detection you must restart Vim.
 
@@ -205,7 +195,7 @@ B. If you want to detect your file after the default file type checks.
 C. If your file type can be detected by the file name.
    1. Create your user runtime directory.  You would normally use the first
       item of the 'runtimepath' option.  Example for Unix: >
-	:!mkdir ~/.vim
+	:!mkdir -p ~/.config/nvim
 <
    2. Create a file that contains autocommands to detect the file type.
       Example: >
@@ -219,7 +209,7 @@ C. If your file type can be detected by the file name.
 	augroup END
 <     Write this file as "filetype.vim" in your user runtime directory.  For
       example, for Unix: >
-	:w ~/.vim/filetype.vim
+	:w ~/.config/nvim/filetype.vim
 
 <  3. To use the new filetype detection you must restart Vim.
 
@@ -233,7 +223,7 @@ D. If your filetype can only be detected by inspecting the contents of the
 
    1. Create your user runtime directory.  You would normally use the first
       item of the 'runtimepath' option.  Example for Unix: >
-	:!mkdir ~/.vim
+	:!mkdir -p ~/.config/nvim
 <
    2. Create a vim script file for doing this.  Example: >
 	if did_filetype()	" filetype already set..
@@ -247,7 +237,7 @@ D. If your filetype can only be detected by inspecting the contents of the
 <     See $VIMRUNTIME/scripts.vim for more examples.
       Write this file as "scripts.vim" in your user runtime directory.  For
       example, for Unix: >
-	:w ~/.vim/scripts.vim
+	:w ~/.config/nvim/scripts.vim
 <
    3. The detection will work right away, no need to restart Vim.
 
@@ -268,38 +258,6 @@ the 'runtimepath' for a directory to use.  If there isn't one, set
 'runtimepath' in the |system-vimrc|.  Be careful to keep the default
 directories!
 
-
-						*autocmd-osfiletypes*
-NOTE: this code is currently disabled, as the RISC OS implementation was
-removed.  In the future this will use the 'filetype' option.
-
-On operating systems which support storing a file type with the file, you can
-specify that an autocommand should only be executed if the file is of a
-certain type.
-
-The actual type checking depends on which platform you are running Vim
-on; see your system's documentation for details.
-
-To use osfiletype checking in an autocommand you should put a list of types to
-match in angle brackets in place of a pattern, like this: >
-
-	:au BufRead *.html,<&faf;HTML>  runtime! syntax/html.vim
-
-This will match:
-
-- Any file whose name ends in ".html"
-- Any file whose type is "&faf" or "HTML", where the meaning of these types
-  depends on which version of Vim you are using.
-  Unknown types are considered NOT to match.
-
-You can also specify a type and a pattern at the same time (in which case they
-must both match): >
-
-	:au BufRead <&fff>diff*
-
-This will match files of type "&fff" whose names start with "diff".
-
-
 							*plugin-details*
 The "plugin" directory can be in any of the directories in the 'runtimepath'
 option.  All of these directories will be searched for plugins and they are
@@ -309,12 +267,12 @@ all loaded.  For example, if this command: >
 
 produces this output:
 
-	runtimepath=/etc/vim,~/.vim,/usr/local/share/vim/vim60 ~
+	runtimepath=/etc/vim,~/.config/nvim,/usr/local/share/vim/vim60 ~
 
 then Vim will load all plugins in these directories and below:
 
 	/etc/vim/plugin/  ~
-	~/.vim/plugin/  ~
+	~/.config/nvim/plugin/  ~
 	/usr/local/share/vim/vim60/plugin/  ~
 
 Note that the last one is the value of $VIMRUNTIME which has been expanded.
@@ -370,7 +328,7 @@ ways to change this:
 1. Add a few settings.
    You must create a new filetype plugin in a directory early in
    'runtimepath'.  For Unix, for example you could use this file: >
-	vim ~/.vim/ftplugin/fortran.vim
+	vim ~/.config/nvim/ftplugin/fortran.vim
 <  You can set those settings and mappings that you would like to add.  Note
    that the global plugin will be loaded after this, it may overrule the
    settings that you do here.  If this is the case, you need to use one of the
@@ -379,7 +337,7 @@ ways to change this:
 2. Make a copy of the plugin and change it.
    You must put the copy in a directory early in 'runtimepath'.  For Unix, for
    example, you could do this: >
-	cp $VIMRUNTIME/ftplugin/fortran.vim ~/.vim/ftplugin/fortran.vim
+	cp $VIMRUNTIME/ftplugin/fortran.vim ~/.config/nvim/ftplugin/fortran.vim
 <  Then you can edit the copied file to your liking.  Since the b:did_ftplugin
    variable will be set, the global plugin will not be loaded.
    A disadvantage of this method is that when the distributed plugin gets
@@ -388,7 +346,7 @@ ways to change this:
 3. Overrule the settings after loading the global plugin.
    You must create a new filetype plugin in a directory from the end of
    'runtimepath'.  For Unix, for example, you could use this file: >
-	vim ~/.vim/after/ftplugin/fortran.vim
+	vim ~/.config/nvim/after/ftplugin/fortran.vim
 <  In this file you can change just those settings that you want to change.
 
 ==============================================================================
@@ -417,7 +375,7 @@ Global mappings:
 			NOTE: The global mappings are accessed by sourcing the
 			ftplugin/changelog.vim file first, e.g. with >
 				runtime ftplugin/changelog.vim
-<			in your |.vimrc|.
+<			in your |init.vim|.
 <Leader>o		Switches to the ChangeLog buffer opened for the
 			current directory, or opens it in a new buffer if it
 			exists in the current directory.  Then it does the
@@ -519,7 +477,7 @@ FORTRAN							*ft-fortran-plugin*
 
 Options:
 'expandtab'	is switched on to avoid tabs as required by the Fortran
-		standards unless the user has set fortran_have_tabs in .vimrc.
+		standards unless the user has set fortran_have_tabs in vimrc.
 'textwidth'	is set to 72 for fixed source format as required by the
 		Fortran standards and to 80 for free source format.
 'formatoptions' is set to break code and comment lines and to preserve long

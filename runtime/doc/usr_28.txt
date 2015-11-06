@@ -376,7 +376,7 @@ More about folding by expression in the reference manual: |fold-expr|
 *28.9*	Folding unchanged lines
 
 This is useful when you set the 'diff' option in the same window.  The
-|vimdiff| command does this for you.  Example: >
+|-d| option does this for you.  Example: >
 
 	:setlocal diff foldmethod=diff scrollbind nowrap foldlevel=1
 

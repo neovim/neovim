@@ -1,4 +1,4 @@
-*cmdline.txt*   For Vim version 7.4.  Last change: 2014 Feb 23
+*cmdline.txt*   For Vim version 7.4.  Last change: 2014 Sep 06
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -27,7 +27,6 @@ Basic command line editing is explained in chapter 20 of the user manual
 Normally characters are inserted in front of the cursor position.  You can
 move around in the command-line with the left and right cursor keys.  With the
 <Insert> key, you can toggle between inserting and overstriking characters.
-{Vi: can only alter the last character in the line}
 
 Note that if your keyboard does not have working cursor keys or any of the
 other special keys, you can use ":cnoremap" to define another key for them.
@@ -55,8 +54,7 @@ history tables:
 - one for debug mode commands
 These are completely separate.  Each history can only be accessed when
 entering the same type of line.
-Use the 'history' option to set the number of lines that are remembered
-(default: 20).
+Use the 'history' option to set the number of lines that are remembered.
 Notes:
 - When you enter a command-line that is exactly the same as an older one, the
   old one is removed (to avoid repeated commands moving older commands out of
@@ -66,8 +64,6 @@ Notes:
 - All searches are put in the search history, including the ones that come
   from commands like "*" and "#".  But for a mapping, only the last search is
   remembered (to avoid that long mappings trash the history).
-{Vi: no history}
-{not available when compiled without the |+cmdline_hist| feature}
 
 There is an automatic completion of names on the command-line; see
 |cmdline-completion|.
@@ -102,12 +98,10 @@ CTRL-E or <End>					*c_CTRL-E* *c_<End>* *c_End*
 <LeftMouse>	Move the cursor to the position of the mouse click.
 
 CTRL-H						*c_<BS>* *c_CTRL-H* *c_BS*
-<BS>		Delete the character in front of the cursor (see |:fixdel| if
-		your <BS> key does not do what you want).
+<BS>		Delete the character in front of the cursor.
 							*c_<Del>* *c_Del*
 <Del>		Delete the character under the cursor (at end of line:
-		character before the cursor) (see |:fixdel| if your <Del>
-		key does not do what you want).
+		character before the cursor).
 							*c_CTRL-W*
 CTRL-W		Delete the |word| before the cursor.  This depends on the
 		'iskeyword' option.
@@ -115,16 +109,16 @@ CTRL-W		Delete the |word| before the cursor.  This depends on the
 CTRL-U		Remove all characters between the cursor position and
 		the beginning of the line.  Previous versions of vim
 		deleted all characters on the line.  If that is the
-		preferred behavior, add the following to your .vimrc: >
+		preferred behavior, add the following to your vimrc: >
 			:cnoremap <C-U> <C-E><C-U>
 <
 						*c_<Insert>* *c_Insert*
-<Insert>	Toggle between insert and overstrike.  {not in Vi}
+<Insert>	Toggle between insert and overstrike.
 
 {char1} <BS> {char2}	or				*c_digraph*
 CTRL-K {char1} {char2}					*c_CTRL-K*
 		enter digraph (see |digraphs|).  When {char1} is a special
-		key, the code for that key is inserted in <> form.  {not in Vi}
+		key, the code for that key is inserted in <> form.
 
 CTRL-R {0-9a-z"%#:-=.}					*c_CTRL-R* *c_<C-R>*
 		Insert the contents of a numbered or named register.  Between
@@ -160,7 +154,7 @@ CTRL-R {0-9a-z"%#:-=.}					*c_CTRL-R* *c_<C-R>*
 				too.
 				When the result is a Float it's automatically
 				converted to a String.
-		See |registers| about registers.  {not in Vi}
+		See |registers| about registers.
 		Implementation detail: When using the |expression| register
 		and invoking setcmdpos(), this sets the position before
 		inserting the resulting string.  Use CTRL-R CTRL-R to set the
@@ -180,10 +174,6 @@ CTRL-R CTRL-A				*c_CTRL-R_CTRL-A* *c_<C-R>_<C-A>*
 		When 'incsearch' is set the cursor position at the end of the
 		currently displayed match is used.  With CTRL-W the part of
 		the word that was already typed is not inserted again.
-
-		{not in Vi}
-		CTRL-F and CTRL-P: {only when |+file_in_path| feature is
-		included}
 
 					*c_CTRL-R_CTRL-R* *c_<C-R>_<C-R>*
 					*c_CTRL-R_CTRL-O* *c_<C-R>_<C-O>*
@@ -238,24 +228,16 @@ CTRL-C		quit command-line without executing
 							*c_<Up>* *c_Up*
 <Up>		recall older command-line from history, whose beginning
 		matches the current command-line (see below).
-		{not available when compiled without the |+cmdline_hist|
-		feature}
 							*c_<Down>* *c_Down*
 <Down>		recall more recent command-line from history, whose beginning
 		matches the current command-line (see below).
-		{not available when compiled without the |+cmdline_hist|
-		feature}
 
 							*c_<S-Up>* *c_<PageUp>*
 <S-Up> or <PageUp>
 		recall older command-line from history
-		{not available when compiled without the |+cmdline_hist|
-		feature}
 						*c_<S-Down>* *c_<PageDown>*
 <S-Down> or <PageDown>
 		recall more recent command-line from history
-		{not available when compiled without the |+cmdline_hist|
-		feature}
 
 CTRL-D		command-line completion (see |cmdline-completion|)
 'wildchar' option
@@ -270,8 +252,7 @@ CTRL-_		a - switch between Hebrew and English keyboard mode, which is
 		private to the command-line and not related to hkmap.
 		This is useful when Hebrew text entry is required in the
 		command-line, searches, abbreviations, etc.  Applies only if
-		Vim is compiled with the |+rightleft| feature and the
-		'allowrevins' option is set.
+		the 'allowrevins' option is set.
 		See |rileft.txt|.
 
 		b - switch between Farsi and English keyboard mode, which is
@@ -279,7 +260,6 @@ CTRL-_		a - switch between Hebrew and English keyboard mode, which is
 		Farsi keyboard mode the characters are inserted in reverse
 		insert manner.  This is useful when Farsi text entry is
 		required in the command-line, searches, abbreviations, etc.
-		Applies only if Vim is compiled with the |+farsi| feature.
 		See |farsi.txt|.
 
 							*c_CTRL-^*
@@ -305,11 +285,9 @@ CTRL-^		Toggle the use of language |:lmap| mappings and/or Input
 		off, since you are expected to type a command.  After
 		switching it on with CTRL-^, the new state is not used again
 		for the next command or Search pattern.
-		{not in Vi}
 
 						*c_CTRL-]*
-CTRL-]		Trigger abbreviation, without inserting a character.  {not in
-		Vi}
+CTRL-]		Trigger abbreviation, without inserting a character.
 
 For Emacs-style editing on the command-line see |emacs-keys|.
 
@@ -324,9 +302,6 @@ terminals)
 
 							*:his* *:history*
 :his[tory]	Print the history of last entered commands.
-		{not in Vi}
-		{not available when compiled without the |+cmdline_hist|
-		feature}
 
 :his[tory] [{name}] [{first}][, [{last}]]
 		List the contents of history {name} which can be:
@@ -336,7 +311,6 @@ terminals)
 		i[nput]	 or @		input line history
 		d[ebug]	 or >		debug command history
 		a[ll]			all of the above
-		{not in Vi}
 
 		If the numbers {first} and/or {last} are given, the respective
 		range of entries from a history is listed.  These numbers can
@@ -376,10 +350,8 @@ word before the cursor.  This is available for:
 - Mappings: Only after a ":map" or similar command.
 - Variable and function names: Only after a ":if", ":call" or similar command.
 
-When Vim was compiled without the |+cmdline_compl| feature only file names,
-directories and help items can be completed.  The number of help item matches
-is limited (currently to 300) to avoid a long delay when there are very many
-matches.
+The number of help item matches is limited (currently to 300) to avoid a long
+delay when there are very many matches.
 
 These are the commands that can be used:
 
@@ -407,8 +379,7 @@ CTRL-N		After using 'wildchar' which got multiple matches, go to next
 <S-Tab>							*c_CTRL-P* *c_<S-Tab>*
 CTRL-P		After using 'wildchar' which got multiple matches, go to
 		previous match.  Otherwise recall older command-line from
-		history.  <S-Tab> only works with the GUI, on the Amiga and
-		with MS-DOS.
+		history.  <S-Tab> only works with the GUI and with MS-DOS.
 							*c_CTRL-A*
 CTRL-A		All names that match the pattern in front of the cursor are
 		inserted.
@@ -485,7 +456,7 @@ that take a file name.
 If you would like using <S-Tab> for CTRL-P in an xterm, put this command in
 your .cshrc: >
 	xmodmap -e "keysym Tab = Tab Find"
-And this in your .vimrc: >
+And this in your vimrc: >
 	:cmap <Esc>[1~ <C-P>
 
 ==============================================================================
@@ -523,8 +494,6 @@ followed by another Vim command:
     :lcscope
     :make
     :normal
-    :perl
-    :perldo
     :promptfind
     :promptrepl
     :pyfile
@@ -533,9 +502,6 @@ followed by another Vim command:
     :read !
     :scscope
     :sign
-    :tcl
-    :tcldo
-    :tclfile
     :vglobal
     :windo
     :write !
@@ -587,10 +553,9 @@ When the character '%' or '#' is used where a file name is expected, they are
 expanded to the current and alternate file name (see the chapter "editing
 files" |:_%| |:_#|).
 
-Embedded spaces in file names are allowed on the Amiga if one file name is
-expected as argument.  Trailing spaces will be ignored, unless escaped with a
-backslash or CTRL-V.  Note that the ":next" command uses spaces to separate
-file names.  Escape the spaces to include them in a file name.  Example: >
+Trailing spaces in filenames will be ignored, unless escaped with a backslash
+or CTRL-V.  Note that the ":next" command uses spaces to separate file names.
+Escape the spaces to include them in a file name.  Example: >
 	:next foo\ bar goes\ to school\
 starts editing the three files "foo bar", "goes to" and "school ".
 
@@ -723,10 +688,7 @@ Visual Mode and Range					*v_:*
 		history for repeating a command on different Visually selected
 		lines.
 		When Visual mode was already ended, a short way to use the
-		Visual area for a range is `:*`.  This requires that "*" does
-		not appear in 'cpo', see |cpo-star|.  Otherwise you will have
-		to type `:'<,'>`
-
+		Visual area for a range is `:*`.
 
 ==============================================================================
 5. Ex command-line flags				*ex-flags*
@@ -767,7 +729,7 @@ function expand() |expand()|.
 	#<n	(where n is a number > 0) is replaced with old	  *:_#<* *c_#<*
 		file name n.  See |:oldfiles| or |v:oldfiles| to get the
 		number.							*E809*
-		{only when compiled with the |+eval| and |+viminfo| features}
+		{only when compiled with the |+eval| and |+shada| features}
 
 Note that these, except "#<n", give the file name as it was typed.  If an
 absolute path is needed (when using the file name from a different directory),
@@ -832,12 +794,11 @@ These are not available when Vim has been compiled without the |+modify_fname|
 feature.
 These modifiers can be given, in this order:
 	:p	Make file name a full path.  Must be the first modifier.  Also
-		changes "~/" (and "~user/" for Unix and VMS) to the path for
-		the home directory.  If the name is a directory a path
-		separator is added at the end.  For a file name that does not
-		exist and does not have an absolute path the result is
-		unpredictable.  On MS-Windows an 8.3 filename is expanded to
-		the long name.
+		changes "~/" (and "~user/" for Unix) to the path for the home
+		directory.  If the name is a directory a path separator is
+		added at the end.  For a file name that does not exist and
+		does not have an absolute path the result is unpredictable.
+		On MS-Windows an 8.3 filename is expanded to the long name.
 	:8	Converts the path to 8.3 short format (currently only on
 		MS-Windows).  Will act on as much of a path that is an
 		existing path.
@@ -855,15 +816,15 @@ These modifiers can be given, in this order:
 		separator is removed.  Thus ":p:h" on a directory name results
 		on the directory name itself (without trailing slash).
 		When the file name is an absolute path (starts with "/" for
-		Unix; "x:\" for MS-DOS, WIN32, OS/2; "drive:" for Amiga), that
-		part is not removed.  When there is no head (path is relative
-		to current directory) the result is empty.
+		Unix; "x:\" for MS-DOS and WIN32), that part is not removed.
+		When there is no head (path is relative to current directory)
+		the result is empty.
 	:t	Tail of the file name (last component of the name).  Must
 		precede any :r or :e.
 	:r	Root of the file name (the last extension removed).  When
 		there is only an extension (file name that starts with '.',
-		e.g., ".vimrc"), it is not removed.  Can be repeated to remove
-		several extensions (last one first).
+		e.g., ".nvimrc"), it is not removed.  Can be repeated to 
+		remove several extensions (last one first).
 	:e	Extension of the file name.  Only makes sense when used alone.
 		When there is no extension the result is empty.
 		When there is only an extension (file name that starts with
@@ -954,10 +915,10 @@ option contains "sh", this is done twice, to avoid the shell trying to expand
 the "!".
 
 							*filename-backslash*
-For filesystems that use a backslash as directory separator (MS-DOS, Windows,
-OS/2), it's a bit difficult to recognize a backslash that is used to escape
-the special meaning of the next character.  The general rule is: If the
-backslash is followed by a normal file name character, it does not have a
+For filesystems that use a backslash as directory separator (MS-DOS and
+Windows), it's a bit difficult to recognize a backslash that is used
+to escape the special meaning of the next character.  The general rule is: If
+the backslash is followed by a normal file name character, it does not have a
 special meaning.  Therefore "\file\foo" is a valid file name, you don't have
 to type the backslash twice.
 
@@ -978,15 +939,12 @@ for the file "$home" in the root directory.  A few examples:
 In the command-line window the command line can be edited just like editing
 text in any window.  It is a special kind of window, because you cannot leave
 it in a normal way.
-{not available when compiled without the |+cmdline_hist| or |+vertsplit|
-feature}
 
 
 OPEN						*c_CTRL-F* *q:* *q/* *q?*
 
 There are two ways to open the command-line window:
 1. From Command-line mode, use the key specified with the 'cedit' option.
-   The default is CTRL-F when 'compatible' is not set.
 2. From Normal mode, use the "q:", "q/" or "q?" command.
    This starts editing an Ex command-line ("q:") or search string ("q/" or
    "q?").  Note that this is not possible while recording is in progress (the
@@ -1051,10 +1009,8 @@ command-line window open again, you may find this mapping useful: >
 
 VARIOUS
 
-The command-line window cannot be used:
-- when there already is a command-line window (no nesting)
-- for entering an encryption key or when using inputsecret()
-- when Vim was not compiled with the |+vertsplit| feature
+The command-line window cannot be used when there already is a command-line
+window (no nesting).
 
 Some options are set when the command-line window is opened:
 'filetype'	"vim", when editing an Ex command-line; this starts Vim syntax
@@ -1083,6 +1039,9 @@ While in the command-line window you cannot use the mouse to put the cursor in
 another window, or drag statuslines of other windows.  You can drag the
 statusline of the command-line window itself and the statusline above it.
 Thus you can resize the command-line window, but not others.
+
+The |getcmdwintype()| function returns the type of the command-line being
+edited as described in |cmdwin-char|.
 
 
 AUTOCOMMANDS

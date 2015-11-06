@@ -33,7 +33,8 @@ know what the hjkl keys do.  The mnemonic value of hjkl is clear from looking
 at the keyboard.  Think of j as an arrow pointing downwards.
 
 The 'virtualedit' option can be set to make it possible to move the cursor to
-positions where there is no character or halfway a character.
+positions where there is no character or within a multi-column character (like
+a tab).
 
 ==============================================================================
 1. Motions and operators				*operator*
@@ -166,8 +167,6 @@ CTRL-H		or					*CTRL-H* *<BS>*
 				:map CTRL-V<BS>		X
 			(to enter "CTRL-V<BS>" type the CTRL-V key, followed
 			by the <BS> key)
-			See |:fixdel| if the <BS> key does not do what you
-			want.
 
 l		or					*l*
 <Right>		or					*<Right>* *<Space>*
@@ -183,7 +182,7 @@ l		or					*l*
 			TEXT column (if possible).  Most other commands stay
 			in the same SCREEN column.  <Home> works like "1|",
 			which differs from "0" when the line starts with a
-			<Tab>.  {not in Vi}
+			<Tab>.
 
 							*^*
 ^			To the first non-blank character of the line.
@@ -200,7 +199,7 @@ $  or <End>		To the end of the line.  When a count is given also go
 
 							*g_*
 g_			To the last non-blank character of the line and
-			[count - 1] lines downward |inclusive|. {not in Vi}
+			[count - 1] lines downward |inclusive|.
 
 							*g0* *g<Home>*
 g0 or g<Home>		When lines wrap ('wrap' on): To the first character of
@@ -209,7 +208,7 @@ g0 or g<Home>		When lines wrap ('wrap' on): To the first character of
 			When lines don't wrap ('wrap' off): To the leftmost
 			character of the current line that is on the screen.
 			Differs from "0" when the first character of the line
-			is not on the screen.  {not in Vi}
+			is not on the screen.
 
 							*g^*
 g^			When lines wrap ('wrap' on): To the first non-blank
@@ -218,12 +217,11 @@ g^			When lines wrap ('wrap' on): To the first non-blank
 			When lines don't wrap ('wrap' off): To the leftmost
 			non-blank character of the current line that is on the
 			screen.  Differs from "^" when the first non-blank
-			character of the line is not on the screen.  {not in
-			Vi}
+			character of the line is not on the screen.
 
 							*gm*
 gm			Like "g0", but half a screenwidth to the right (or as
-			much as possible). {not in Vi}
+			much as possible).
 
 							*g$* *g<End>*
 g$ or g<End>		When lines wrap ('wrap' on): To the last character of
@@ -238,7 +236,6 @@ g$ or g<End>		When lines wrap ('wrap' on): To the last character of
 			instead of going to the end of the line.
 			When 'virtualedit' is enabled moves to the end of the
 			screen line.
-			{not in Vi}
 
 							*bar*
 |			To screen column [count] in the current line.
@@ -294,12 +291,12 @@ CTRL-N			[count] lines downward |linewise|.
 gk		or					*gk* *g<Up>*
 g<Up>			[count] display lines upward.  |exclusive| motion.
 			Differs from 'k' when lines wrap, and when used with
-			an operator, because it's not linewise.  {not in Vi}
+			an operator, because it's not linewise.
 
 gj		or					*gj* *g<Down>*
 g<Down>			[count] display lines downward.  |exclusive| motion.
 			Differs from 'j' when lines wrap, and when used with
-			an operator, because it's not linewise.  {not in Vi}
+			an operator, because it's not linewise.
 
 							*-*
 -  <minus>		[count] lines upward, on the first non-blank
@@ -322,7 +319,7 @@ G			Goto line [count], default last line, on the first
 
 							*<C-End>*
 <C-End>			Goto line [count], default last line, on the last
-			character |inclusive|. {not in Vi}
+			character |inclusive|.
 
 <C-Home>	or					*gg* *<C-Home>*
 gg			Goto line [count], default first line, on the first
@@ -340,7 +337,7 @@ gg			Goto line [count], default first line, on the first
 			non-blank in the line |linewise|.  To compute the new
 			line number this formula is used:
 			    ({count} * number-of-lines + 99) / 100
-			See also 'startofline' option.  {not in Vi}
+			See also 'startofline' option.
 
 :[range]go[to] [count]					*:go* *:goto* *go*
 [count]go		Go to [count] byte in the buffer.  Default [count] is
@@ -350,19 +347,12 @@ gg			Goto line [count], default first line, on the first
 			'fileformat' setting.
 			Also see the |line2byte()| function, and the 'o'
 			option in 'statusline'.
-			{not in Vi}
-			{not available when compiled without the
-			|+byte_offset| feature}
 
 These commands move to the specified line.  They stop when reaching the first
 or the last line.  The first two commands put the cursor in the same column
 (if possible) as it was after the last command that changed the column,
 except after the "$" command, then the cursor will be put on the last
 character of the line.
-
-If "k", "-" or CTRL-P is used with a [count] and there are less than [count]
-lines above the cursor and the 'cpo' option includes the "-" flag it is an
-error. |cpo--|.
 
 ==============================================================================
 4. Word motions						*word-motions*
@@ -410,9 +400,7 @@ WORD before the fold.
 
 Special case: "cw" and "cW" are treated like "ce" and "cE" if the cursor is
 on a non-blank.  This is because "cw" is interpreted as change-word, and a
-word does not include the following white space.  {Vi: "cw" when on a blank
-followed by other blanks changes only the first blank; this is probably a
-bug, because "dw" deletes all the blanks}
+word does not include the following white space.
 
 Another special case: When using the "w" motion in combination with an
 operator and the last word moved over is at the end of a line, the end of
@@ -481,9 +469,7 @@ the macros ".IP", ".LP", etc.  (These are nroff macros, so the dot must be in
 the first column).  A section boundary is also a paragraph boundary.
 Note that a blank line (only containing white space) is NOT a paragraph
 boundary.
-Also note that this does not include a '{' or '}' in the first column.  When
-the '{' flag is in 'cpoptions' then '{' in the first column is used as a
-paragraph boundary |posix|.
+Note: this does not include a '{' or '}' in the first column.
 
 							*section*
 A section begins after a form-feed (<C-L>) in the first column and at each of
@@ -514,9 +500,6 @@ including white space, the commands starting with "i" select an "inner" object
 without white space, or just the white space.  Thus the "inner" commands
 always select less text than the "a" commands.
 
-These commands are {not in Vi}.
-These commands are not available when the |+textobjects| feature has been
-disabled at compile time.
 Also see `gn` and `gN`, operating on the last search pattern.
 
 							*v_aw* *aw*
@@ -778,7 +761,7 @@ m<  or  m>		Set the |'<| or |'>| mark.  Useful to change what the
 
 						*'A* *'0* *`A* *`0*
 '{A-Z0-9}  `{A-Z0-9}	To the mark {A-Z0-9} in the file where it was set (not
-			a motion command when in another file).  {not in Vi}
+			a motion command when in another file).
 
 						*g'* *g'a* *g`* *g`a*
 g'{mark}  g`{mark}
@@ -788,18 +771,16 @@ g'{mark}  g`{mark}
 <			jumps to the last known position in a file.  See
 			$VIMRUNTIME/vimrc_example.vim.
 			Also see |:keepjumps|.
-			{not in Vi}
 
 						*:marks*
 :marks			List all the current marks (not a motion command).
 			The |'(|, |')|, |'{| and |'}| marks are not listed.
 			The first column has number zero.
-			{not in Vi}
 						*E283*
 :marks {arg}		List the marks that are mentioned in {arg} (not a
 			motion command).  For example: >
 				:marks aB
-<			to list marks 'a' and 'B'.  {not in Vi}
+<			to list marks 'a' and 'B'.
 
 							*:delm* *:delmarks*
 :delm[arks] {marks}	Delete the specified marks.  Marks that can be deleted
@@ -813,11 +794,10 @@ g'{mark}  g`{mark}
 			   :delmarks p-z      deletes marks in the range p to z
 			   :delmarks ^.[]     deletes marks ^ . [ ]
 			   :delmarks \"	      deletes mark "
-<			{not in Vi}
+<
 
 :delm[arks]!		Delete all marks for the current buffer, but not marks
-			A-Z or 0-9.
-			{not in Vi}
+			A-Z or 0-9.  Also clear the |changelist|.
 
 A mark is not visible in any way.  It is just a position in the file that is
 remembered.  Do not confuse marks with named registers, they are totally
@@ -825,7 +805,7 @@ unrelated.
 
 'a - 'z		lowercase marks, valid within one file
 'A - 'Z		uppercase marks, also called file marks, valid between files
-'0 - '9		numbered marks, set from .viminfo file
+'0 - '9		numbered marks, set from .shada file
 
 Lowercase marks 'a to 'z are remembered as long as the file remains in the
 buffer list.  If you remove the file from the buffer list, all its marks are
@@ -836,27 +816,27 @@ deletes the lines from the cursor position to mark 't'.  Hint: Use mark 't' for
 Top, 'b' for Bottom, etc..  Lowercase marks are restored when using undo and
 redo.
 
-Uppercase marks 'A to 'Z include the file name.  {Vi: no uppercase marks} You
-can use them to jump from file to file.  You can only use an uppercase mark
-with an operator if the mark is in the current file.  The line number of the
-mark remains correct, even if you insert/delete lines or edit another file for
-a moment.  When the 'viminfo' option is not empty, uppercase marks are kept in
-the .viminfo file.  See |viminfo-file-marks|.
+Uppercase marks 'A to 'Z include the file name.
+You can use them to jump from file to file.  You can only use an uppercase
+mark with an operator if the mark is in the current file.  The line number of
+the mark remains correct, even if you insert/delete lines or edit another file
+for a moment.  When the 'shada' option is not empty, uppercase marks are
+kept in the .shada file.  See |shada-file-marks|.
 
 Numbered marks '0 to '9 are quite different.  They can not be set directly.
-They are only present when using a viminfo file |viminfo-file|.  Basically '0
+They are only present when using a shada file |shada-file|.  Basically '0
 is the location of the cursor when you last exited Vim, '1 the last but one
-time, etc.  Use the "r" flag in 'viminfo' to specify files for which no
-Numbered mark should be stored.  See |viminfo-file-marks|.
+time, etc.  Use the "r" flag in 'shada' to specify files for which no
+Numbered mark should be stored.  See |shada-file-marks|.
 
 
 							*'[* *`[*
 '[  `[			To the first character of the previously changed
-			or yanked text.  {not in Vi}
+			or yanked text.
 
 							*']* *`]*
 ']  `]			To the last character of the previously changed or
-			yanked text.  {not in Vi}
+			yanked text.
 
 After executing an operator the Cursor is put at the beginning of the text
 that was operated upon.  After a put command ("p" or "P") the cursor is
@@ -874,7 +854,7 @@ was made yet in the current file.
 '<  `<			To the first line or character of the last selected
 			Visual area in the current buffer.  For block mode it
 			may also be the last character in the first line (to
-			be able to define the block).  {not in Vi}.
+			be able to define the block).
 
 							*'>* *`>*
 '>  `>			To the last line or character of the last selected
@@ -882,7 +862,7 @@ was made yet in the current file.
 			may also be the first character of the last line (to
 			be able to define the block).  Note that 'selection'
 			applies, the position may be just after the Visual
-			area.  {not in Vi}.
+			area.
 
 							*''* *``*
 ''  ``			To the position before the latest jump, or where the
@@ -897,14 +877,14 @@ was made yet in the current file.
 			for each opened file.
 			Only one position is remembered per buffer, not one
 			for each window.  As long as the buffer is visible in
-			a window the position won't be changed.
-			{not in Vi}.
+			a window the position won't be changed.  Mark is also 
+			reset when |:wshada| is run.
 
 							*'^* *`^*
 '^  `^			To the position where the cursor was the last time
 			when Insert mode was stopped.  This is used by the
 			|gi| command.  Not set when the |:keepjumps| command
-			modifier was used.  {not in Vi}
+			modifier was used.
 
 							*'.* *`.*
 '.  `.			To the position where the last change was made.  The
@@ -913,43 +893,40 @@ was made yet in the current file.
 			then the position can be near the end of what the
 			command changed.  For example when inserting a word,
 			the position will be on the last character.
-			{not in Vi}
 
 							*'(* *`(*
 '(  `(			To the start of the current sentence, like the |(|
-			command.  {not in Vi}
+			command.
 
 							*')* *`)*
 ')  `)			To the end of the current sentence, like the |)|
-			command.  {not in Vi}
+			command.
 
 							*'{* *`{*
 '{  `{			To the start of the current paragraph, like the |{|
-			command.  {not in Vi}
+			command.
 
 							*'}* *`}*
 '}  `}			To the end of the current paragraph, like the |}|
-			command.  {not in Vi}
+			command.
 
 These commands are not marks themselves, but jump to a mark:
 
 							*]'*
 ]'			[count] times to next line with a lowercase mark below
 			the cursor, on the first non-blank character in the
-			line. {not in Vi}
+			line.
 
 							*]`*
-]`			[count] times to lowercase mark after the cursor. {not
-			in Vi}
+]`			[count] times to lowercase mark after the cursor.
 
 							*['*
 ['			[count] times to previous line with a lowercase mark
 			before the cursor, on the first non-blank character in
-			the line. {not in Vi}
+			the line.
 
 							*[`*
 [`			[count] times to lowercase mark before the cursor.
-			{not in Vi}
 
 
 :loc[kmarks] {command}					*:loc* *:lockmarks*
@@ -1025,25 +1002,20 @@ unless the line containing that position was changed or deleted.
 
 							*CTRL-O*
 CTRL-O			Go to [count] Older cursor position in jump list
-			(not a motion command).  {not in Vi}
-			{not available without the |+jumplist| feature}
+			(not a motion command).
 
 <Tab>		or					*CTRL-I* *<Tab>*
 CTRL-I			Go to [count] newer cursor position in jump list
 			(not a motion command).
-			{not in Vi}
-			{not available without the |+jumplist| feature}
 
 							*:ju* *:jumps*
-:ju[mps]		Print the jump list (not a motion command).  {not in
-			Vi} {not available without the |+jumplist| feature}
+:ju[mps]		Print the jump list (not a motion command).
 
 							*jumplist*
 Jumps are remembered in a jump list.  With the CTRL-O and CTRL-I command you
 can go to cursor positions before older jumps, and back again.  Thus you can
 move up and down the list.  There is a separate jump list for each window.
 The maximum number of entries is fixed at 100.
-{not available without the |+jumplist| feature}
 
 For example, after three jump commands you have this jump list:
 
@@ -1103,8 +1075,8 @@ if you stop editing a file without writing, like with ":n!".
 
 When you split a window, the jumplist will be copied to the new window.
 
-If you have included the ' item in the 'viminfo' option the jumplist will be
-stored in the viminfo file and restored when starting Vim.
+If you have included the ' item in the 'shada' option the jumplist will be
+stored in the ShaDa file and restored when starting Vim.
 
 
 CHANGE LIST JUMPS			*changelist* *change-list-jumps* *E664*
@@ -1120,15 +1092,11 @@ g;			Go to [count] older position in change list.
 			positions go to the oldest change.
 			If there is no older change an error message is given.
 			(not a motion command)
-			{not in Vi}
-			{not available without the |+jumplist| feature}
 
 							*g,* *E663*
 g,			Go to [count] newer cursor position in change list.
 			Just like |g;| but in the opposite direction.
 			(not a motion command)
-			{not in Vi}
-			{not available without the |+jumplist| feature}
 
 When using a count you jump as far back or forward as possible.  Thus you can
 use "999g;" to go to the first change for which the position is still
@@ -1190,8 +1158,8 @@ remembered.
 					cursor is on the # or no ([{
 					following)
 			For other items the matchit plugin can be used, see
-			|matchit-install|.  This plugin also helps to skip
-			matches in comments.
+			|matchit|.  This plugin also helps to skip matches in
+			comments.
 
 			When 'cpoptions' contains "M" |cpo-M| backslashes
 			before parens and braces are ignored.  Without "M" the
@@ -1209,8 +1177,8 @@ remembered.
 			Perl, where single quotes are used for strings.
 
 			Nothing special is done for matches in comments.  You
-			can either use the matchit plugin |matchit-install| or
-			put quotes around matches.
+			can either use the |matchit| plugin or put quotes around
+			matches.
 
 			No count is allowed, {count}% jumps to a line {count}
 			percentage down the file |N%|.  Using '%' on
@@ -1218,19 +1186,19 @@ remembered.
 
 						*[(*
 [(			go to [count] previous unmatched '('.
-			|exclusive| motion. {not in Vi}
+			|exclusive| motion.
 
 						*[{*
 [{			go to [count] previous unmatched '{'.
-			|exclusive| motion. {not in Vi}
+			|exclusive| motion.
 
 						*])*
 ])			go to [count] next unmatched ')'.
-			|exclusive| motion. {not in Vi}
+			|exclusive| motion.
 
 						*]}*
 ]}			go to [count] next unmatched '}'.
-			|exclusive| motion. {not in Vi}
+			|exclusive| motion.
 
 The above four commands can be used to go to the start or end of the current
 code block.  It is like doing "%" on the '(', ')', '{' or '}' at the other
@@ -1243,25 +1211,25 @@ bring you back to the switch statement.
 			similar structured language).  When not before the
 			start of a method, jump to the start or end of the
 			class.  When no '{' is found after the cursor, this is
-			an error.  |exclusive| motion. {not in Vi}
+			an error.  |exclusive| motion.
 						*]M*
 ]M			Go to [count] next end of a method (for Java or
 			similar structured language).  When not before the end
 			of a method, jump to the start or end of the class.
 			When no '}' is found after the cursor, this is an
-			error. |exclusive| motion. {not in Vi}
+			error. |exclusive| motion.
 						*[m*
 [m			Go to [count] previous start of a method (for Java or
 			similar structured language).  When not after the
 			start of a method, jump to the start or end of the
 			class.  When no '{' is found before the cursor this is
-			an error. |exclusive| motion. {not in Vi}
+			an error. |exclusive| motion.
 						*[M*
 [M			Go to [count] previous end of a method (for Java or
 			similar structured language).  When not after the
 			end of a method, jump to the start or end of the
 			class.  When no '}' is found before the cursor this is
-			an error. |exclusive| motion. {not in Vi}
+			an error. |exclusive| motion.
 
 The above two commands assume that the file contains a class with methods.
 The class definition is surrounded in '{' and '}'.  Each method in the class
@@ -1284,11 +1252,11 @@ Using "3[m" will jump to the start of the class.
 
 						*[#*
 [#			go to [count] previous unmatched "#if" or "#else".
-			|exclusive| motion. {not in Vi}
+			|exclusive| motion.
 
 						*]#*
 ]#			go to [count] next unmatched "#else" or "#endif".
-			|exclusive| motion. {not in Vi}
+			|exclusive| motion.
 
 These two commands work in C programs that contain #if/#else/#endif
 constructs.  It brings you to the start or end of the #if/#else/#endif where
@@ -1296,11 +1264,11 @@ the current line is included.  You can then use "%" to go to the matching line.
 
 						*[star* *[/*
 [*  or  [/		go to [count] previous start of a C comment "/*".
-			|exclusive| motion. {not in Vi}
+			|exclusive| motion.
 
 						*]star* *]/*
 ]*  or  ]/		go to [count] next end of a C comment "*/".
-			|exclusive| motion. {not in Vi}
+			|exclusive| motion.
 
 
 						*H*
@@ -1322,6 +1290,6 @@ L			To line [count] from bottom of window (default: Last
 <LeftMouse>		Moves to the position on the screen where the mouse
 			click is |exclusive|.  See also |<LeftMouse>|.  If the
 			position is in a status line, that window is made the
-			active window and the cursor is not moved.  {not in Vi}
+			active window and the cursor is not moved.
 
  vim:tw=78:ts=8:ft=help:norl:

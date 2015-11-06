@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "nvim/api/window.h"
 #include "nvim/api/private/defs.h"
@@ -53,7 +54,6 @@ ArrayOf(Integer, 2) window_get_cursor(Window window, Error *err)
 /// @param pos the (row, col) tuple representing the new position
 /// @param[out] err Details of an error that may have occurred
 void window_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
-  FUNC_ATTR_DEFERRED
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -117,7 +117,6 @@ Integer window_get_height(Window window, Error *err)
 /// @param height the new height in rows
 /// @param[out] err Details of an error that may have occurred
 void window_set_height(Window window, Integer height, Error *err)
-  FUNC_ATTR_DEFERRED
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -161,7 +160,6 @@ Integer window_get_width(Window window, Error *err)
 /// @param width the new width in columns
 /// @param[out] err Details of an error that may have occurred
 void window_set_width(Window window, Integer width, Error *err)
-  FUNC_ATTR_DEFERRED
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -182,7 +180,7 @@ void window_set_width(Window window, Integer width, Error *err)
   try_end(err);
 }
 
-/// Gets a window variable
+/// Gets a window-scoped (w:) variable
 ///
 /// @param window The window handle
 /// @param name The variable name
@@ -199,7 +197,7 @@ Object window_get_var(Window window, String name, Error *err)
   return dict_get_value(win->w_vars, name, err);
 }
 
-/// Sets a window variable. Passing 'nil' as value deletes the variable.
+/// Sets a window-scoped (w:) variable. 'nil' value deletes the variable.
 ///
 /// @param window The window handle
 /// @param name The variable name
@@ -207,7 +205,6 @@ Object window_get_var(Window window, String name, Error *err)
 /// @param[out] err Details of an error that may have occurred
 /// @return The old value
 Object window_set_var(Window window, String name, Object value, Error *err)
-  FUNC_ATTR_DEFERRED
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -243,7 +240,6 @@ Object window_get_option(Window window, String name, Error *err)
 /// @param value The option value
 /// @param[out] err Details of an error that may have occurred
 void window_set_option(Window window, String name, Object value, Error *err)
-  FUNC_ATTR_DEFERRED
 {
   win_T *win = find_window_by_handle(window, err);
 

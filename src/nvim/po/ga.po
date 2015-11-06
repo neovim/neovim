@@ -1589,7 +1589,7 @@ msgid "E494: Use w or w>>"
 msgstr "E494: Bain úsáid as w nó w>>"
 
 #: ../ex_docmd.c:3454
-msgid "E319: Sorry, the command is not available in this version"
+msgid "E319: The command is not available in this version"
 msgstr "E319: Tá brón orm, níl an t-ordú ar fáil sa leagan seo"
 
 #: ../ex_docmd.c:3752
@@ -2073,7 +2073,7 @@ msgid "E201: *ReadPre autocommands must not change current buffer"
 msgstr "E201: Ní cheadaítear d'uathorduithe *ReadPre an maolán reatha a athrú"
 
 #: ../fileio.c:672
-msgid "Vim: Reading from stdin...\n"
+msgid "Nvim: Reading from stdin...\n"
 msgstr "Vim: Ag léamh ón ionchur caighdeánach...\n"
 
 #. Re-opening the original file failed!
@@ -2725,7 +2725,7 @@ msgid "E477: No ! allowed"
 msgstr "E477: Ní cheadaítear !"
 
 #: ../globals.h:1035
-msgid "E25: GUI cannot be used: Not enabled at compile time"
+msgid "E25: Nvim does not have a built-in GUI"
 msgstr "E25: Ní féidir an GUI a úsáid: Níor cumasaíodh é ag am tiomsaithe"
 
 #: ../globals.h:1036
@@ -4438,7 +4438,7 @@ msgid "E663: At end of changelist"
 msgstr "E663: Ag deireadh liosta na n-athruithe"
 
 #: ../normal.c:7053
-msgid "Type  :quit<Enter>  to exit Vim"
+msgid "Type  :quit<Enter>  to exit Nvim"
 msgstr "Clóscríobh  :quit<Enter>  chun Vim a scor"
 
 # ouch - English -ed ?

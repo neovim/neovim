@@ -14,16 +14,9 @@ The Python Interface to Vim				*python* *Python*
 6. Tab page objects				|python-tabpage|
 7. vim.bindeval objects				|python-bindeval-objects|
 8. pyeval(), py3eval() Vim functions		|python-pyeval|
-9. Dynamic loading				|python-dynamic|
-10. Python 3					|python3|
+9. Python 3					|python3|
 
-{Vi does not have any of these commands}
-
-The Python 2.x interface is available only when Vim was compiled with the
-|+python| feature.
-The Python 3 interface is available only when Vim was compiled with the
-|+python3| feature.
-Both can be available at the same time, but read |python-2-and-3|.
+See |nvim-python| for more information. {Nvim}
 
 ==============================================================================
 1. Commands						*python-commands*
@@ -38,9 +31,8 @@ Both can be available at the same time, but read |python-2-and-3|.
 {script}
 {endmarker}
 			Execute Python script {script}.
-			Note: This command doesn't work when the Python
-			feature wasn't compiled in.  To avoid errors, see
-			|script-here|.
+			Note: This command doesn't work when Python isn't
+			available.  To avoid errors, see |script-here|.
 
 {endmarker} must NOT be preceded by any white space.  If {endmarker} is
 omitted from after the "<<", a dot '.' must be used after {script}, like
@@ -69,7 +61,6 @@ and "EOF" do not have any indent.
 			None. If a string is returned, it becomes the text of
 			the line in the current turn. The default for [range]
 			is the whole file: "1,$".
-			{not in Vi}
 
 Examples:
 >
@@ -79,7 +70,7 @@ Examples:
 							*:pyfile* *:pyf*
 :[range]pyf[ile] {file}
 			Execute the Python script in {file}.  The whole
-			argument is used as a single file name.  {not in Vi}
+			argument is used as a single file name.
 
 Both of these commands do essentially the same thing - they execute a piece of
 Python code, with the "current range" |python-range| set to the given line
@@ -106,6 +97,29 @@ Here are some examples					*python-examples*  >
 
 (Note that changes - like the imports - persist from one command to the next,
 just like in the Python interpreter.)
+
+							*script-here*
+When using a script language in-line, you might want to skip this when the
+language isn't supported.  Note that this mechanism doesn't work:
+>
+   if has('python')
+     python << EOF
+       this will NOT work!
+   EOF
+   endif
+
+Instead, put the Python command in a function and call that function:
+>
+    if has('python')
+      function DefPython()
+        python << EOF
+          this works
+    EOF
+      endfunction
+      call DefPython()
+    endif
+
+Note that "EOF" must be at the start of the line.
 
 ==============================================================================
 2. The vim module					*python-vim*
@@ -677,24 +691,7 @@ To facilitate bi-directional interface, you can use |pyeval()| and |py3eval()|
 functions to evaluate Python expressions and pass their values to VimL.
 
 ==============================================================================
-9. Dynamic loading					*python-dynamic*
-
-On MS-Windows the Python library can be loaded dynamically.  The |:version|
-output then includes |+python/dyn|.
-
-This means that Vim will search for the Python DLL file only when needed.
-When you don't use the Python interface you don't need it, thus you can use
-Vim without this DLL file.
-
-To use the Python interface the Python DLL must be in your search path.  In a
-console window type "path" to see what directories are used.
-
-The name of the DLL must match the Python version Vim was compiled with.
-Currently the name is "python24.dll".  That is for Python 2.4.  To know for
-sure edit "gvim.exe" and search for "python\d*.dll\c".
-
-==============================================================================
-10. Python 3						*python3*
+9. Python 3						*python3*
 
 							*:py3* *:python3*
 The `:py3` and `:python3` commands work similar to `:python`.  A simple check
@@ -705,47 +702,10 @@ The `:py3file` command works similar to `:pyfile`.
 							*:py3do* *E863*
 The `:py3do` command works similar to `:pydo`.
 
-
-Vim can be built in four ways (:version output):
-1. No Python support	    (-python, -python3)
-2. Python 2 support only    (+python or +python/dyn, -python3)
-3. Python 3 support only    (-python, +python3 or +python3/dyn)
-4. Python 2 and 3 support   (+python/dyn, +python3/dyn)
-
-Some more details on the special case 4:  *python-2-and-3*
-
-When Python 2 and Python 3 are both supported they must be loaded dynamically.
-
-When doing this on Linux/Unix systems and importing global symbols, this leads
-to a crash when the second Python version is used.  So either global symbols
-are loaded but only one Python version is activated, or no global symbols are
-loaded. The latter makes Python's "import" fail on libraries that expect the
-symbols to be provided by Vim.
-							*E836* *E837*
-Vim's configuration script makes a guess for all libraries based on one
-standard Python library (termios).  If importing this library succeeds for
-both Python versions, then both will be made available in Vim at the same
-time.  If not, only the version first used in a session will be enabled.
-When trying to use the other one you will get the E836 or E837 error message.
-
-Here Vim's behavior depends on the system in which it was configured.  In a
-system where both versions of Python were configured with --enable-shared,
-both versions of Python will be activated at the same time.  There will still
-be problems with other third party libraries that were not linked to
-libPython.
-
-To work around such problems there are these options:
-1. The problematic library is recompiled to link to the according
-   libpython.so.
-2. Vim is recompiled for only one Python version.
-3. You undefine PY_NO_RTLD_GLOBAL in auto/config.h after configuration.  This
-   may crash Vim though.
-
 							*E880*
 Raising SystemExit exception in python isn't endorsed way to quit vim, use: >
 	:py vim.command("qall!")
 <
-
 							*has-python*
 You can test what Python version is available with: >
 	if has('python')
@@ -754,10 +714,8 @@ You can test what Python version is available with: >
 	  echo 'there is Python 3.x'
 	endif
 
-Note however, that when Python 2 and 3 are both available and loaded
-dynamically, these has() calls will try to load them.  If only one can be
-loaded at a time, just checking if Python 2 or 3 are available will prevent
-the other one from being available.
+Note however, that if Python 2 and 3 are both available, but not loaded,
+these has() calls will try to load them.
 
 ==============================================================================
  vim:tw=78:ts=8:ft=help:norl:

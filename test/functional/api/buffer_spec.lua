@@ -34,10 +34,50 @@ describe('buffer_* functions', function()
       curbuf('del_line', 0)
       eq('', curbuf('get_line', 0))
     end)
+
+    it('get_line: out-of-bounds returns empty string', function()
+      curbuf('set_line', 0, 'line1.a')
+      eq('', curbuf('get_line', 1))
+      eq('', curbuf('get_line', -2))
+    end)
+
+    it('set_line, del_line: out-of-bounds is an error', function()
+      curbuf('set_line', 0, 'line1.a')
+      eq(false, pcall(curbuf, 'set_line', 1, 'line1.b'))
+      eq(false, pcall(curbuf, 'set_line', -2, 'line1.b'))
+      eq(false, pcall(curbuf, 'del_line', 2))
+      eq(false, pcall(curbuf, 'del_line', -3))
+    end)
+
+    it('can handle NULs', function()
+      curbuf('set_line', 0, 'ab\0cd')
+      eq('ab\0cd', curbuf('get_line', 0))
+    end)
   end)
 
 
   describe('{get,set}_line_slice', function()
+    it('get_line_slice: out-of-bounds returns empty array', function()
+      curbuf('set_line_slice', 0, 0, true, true, {'a', 'b', 'c'})
+      eq({'a', 'b', 'c'}, curbuf('get_line_slice', 0, 2, true, true)) --sanity
+
+      eq({}, curbuf('get_line_slice', 2, 3, false, true))
+      eq({}, curbuf('get_line_slice', 3, 9, true, true))
+      eq({}, curbuf('get_line_slice', 3, -1, true, true))
+      eq({}, curbuf('get_line_slice', -3, -4, false, true))
+      eq({}, curbuf('get_line_slice', -4, -5, true, true))
+    end)
+
+    it('set_line_slice: out-of-bounds is an error', function()
+      curbuf('set_line_slice', 0, 0, true, true, {'a', 'b', 'c'})
+      eq({'a', 'b', 'c'}, curbuf('get_line_slice', 0, 2, true, true)) --sanity
+
+      eq({'c'}, curbuf('get_line_slice', -1, 4, true, true))
+      eq({'a', 'b', 'c'}, curbuf('get_line_slice', 0, 5, true, true))
+      eq(false, pcall(curbuf, 'set_line_slice', 4, 5, true, true, {'d'}))
+      eq(false, pcall(curbuf, 'set_line_slice', -4, -5, true, true, {'d'}))
+    end)
+
     it('works', function()
       eq({''}, curbuf('get_line_slice', 0, -1, true, true))
       -- Replace buffer

@@ -1,4 +1,4 @@
-*insert.txt*    For Vim version 7.4.  Last change: 2014 Jul 06
+*insert.txt*    For Vim version 7.4.  Last change: 2014 Aug 04
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -51,29 +51,27 @@ char		action	~
 		abbreviation.
 		Note: If your <Esc> key is hard to hit on your keyboard, train
 		yourself to use CTRL-[.
+		If Esc doesn't work and you are using a Mac, try CTRL-Esc.
+		Or disable Listening under Accessibility preferences.
 						*i_CTRL-C*
 CTRL-C		Quit insert mode, go back to Normal mode.  Do not check for
 		abbreviations.  Does not trigger the |InsertLeave| autocommand
 		event.
 
 						*i_CTRL-@*
-CTRL-@		Insert previously inserted text and stop insert.  {Vi: only
-		when typed as first char, only up to 128 chars}
+CTRL-@		Insert previously inserted text and stop insert.
+
 						*i_CTRL-A*
-CTRL-A		Insert previously inserted text.  {not in Vi}
+CTRL-A		Insert previously inserted text.
 
 						*i_CTRL-H* *i_<BS>* *i_BS*
 <BS> or CTRL-H	Delete the character before the cursor (see |i_backspacing|
 		about joining lines).
-		See |:fixdel| if your <BS> key does not do what you want.
-		{Vi: does not delete autoindents}
 						*i_<Del>* *i_DEL*
 <Del>		Delete the character under the cursor.  If the cursor is at
 		the end of the line, and the 'backspace' option includes
-		"eol", delete the <EOL>; the next line is appended after the
-		current one.
-		See |:fixdel| if your <Del> key does not do what you want.
-		{not in Vi}
+		"eol" (the default), delete the <EOL>; the next line is
+		appended after the current one.
 						*i_CTRL-W*
 CTRL-W		Delete the word before the cursor (see |i_backspacing| about
 		joining lines).  See the section "word motions",
@@ -98,10 +96,10 @@ CTRL-K {char1} [char2]
 		key, the code for that key is inserted in <> form.  For
 		example, the string "<S-Space>" can be entered by typing
 		<C-K><S-Space> (two keys).  Neither char is considered for
-		mapping.  {not in Vi}
+		mapping.
 
-CTRL-N		Find next keyword (see |i_CTRL-N|).  {not in Vi}
-CTRL-P		Find previous keyword (see |i_CTRL-P|).  {not in Vi}
+CTRL-N		Find next keyword (see |i_CTRL-N|).
+CTRL-P		Find previous keyword (see |i_CTRL-P|).
 
 CTRL-R {0-9a-z"%#*+:.-=}					*i_CTRL-R*
 		Insert the contents of a register.  Between typing CTRL-R and
@@ -138,7 +136,7 @@ CTRL-R {0-9a-z"%#*+:.-=}					*i_CTRL-R*
 				converted to a String.
 				When append() or setline() is invoked the undo
 				sequence will be broken.
-		See |registers| about registers.  {not in Vi}
+		See |registers| about registers.
 
 CTRL-R CTRL-R {0-9a-z"%#*+/:.-=}			*i_CTRL-R_CTRL-R*
 		Insert the contents of a register.  Works like using a single
@@ -150,7 +148,7 @@ CTRL-R CTRL-R {0-9a-z"%#*+/:.-=}			*i_CTRL-R_CTRL-R*
 <		Options 'textwidth', 'formatoptions', etc. still apply.  If
 		you also want to avoid these, use "<C-R><C-O>r", see below.
 		The '.' register (last inserted text) is still inserted as
-		typed.  {not in Vi}
+		typed.
 
 CTRL-R CTRL-O {0-9a-z"%#*+/:.-=}			*i_CTRL-R_CTRL-O*
 		Insert the contents of a register literally and don't
@@ -158,31 +156,29 @@ CTRL-R CTRL-O {0-9a-z"%#*+/:.-=}			*i_CTRL-R_CTRL-O*
 		|<MiddleMouse>|.
 		Does not replace characters!
 		The '.' register (last inserted text) is still inserted as
-		typed.  {not in Vi}
+		typed.
 
 CTRL-R CTRL-P {0-9a-z"%#*+/:.-=}			*i_CTRL-R_CTRL-P*
 		Insert the contents of a register literally and fix the
 		indent, like |[<MiddleMouse>|.
 		Does not replace characters!
 		The '.' register (last inserted text) is still inserted as
-		typed.  {not in Vi}
+		typed.
 
 						*i_CTRL-T*
 CTRL-T		Insert one shiftwidth of indent at the start of the current
-		line.  The indent is always rounded to a 'shiftwidth' (this is
-		vi compatible).  {Vi: only when in indent}
+		line.  The indent is always rounded to a 'shiftwidth'.
 						*i_CTRL-D*
 CTRL-D		Delete one shiftwidth of indent at the start of the current
-		line.  The indent is always rounded to a 'shiftwidth' (this is
-		vi compatible).  {Vi: CTRL-D works only when used after
-		autoindent}
+		line.  The indent is always rounded to a 'shiftwidth'.
+
 						*i_0_CTRL-D*
-0 CTRL-D	Delete all indent in the current line.  {Vi: CTRL-D works
-		only when used after autoindent}
+0 CTRL-D	Delete all indent in the current line.
+
 						*i_^_CTRL-D*
 ^ CTRL-D	Delete all indent in the current line.  The indent is
 		restored in the next line.  This is useful when inserting a
-		label.  {Vi: CTRL-D works only when used after autoindent}
+		label.
 
 						*i_CTRL-V*
 CTRL-V		Insert next non-digit literally.  For special keys, the
@@ -190,7 +186,7 @@ CTRL-V		Insert next non-digit literally.  For special keys, the
 		decimal, octal or hexadecimal value of a character
 		|i_CTRL-V_digit|.
 		The characters typed right after CTRL-V are not considered for
-		mapping.  {Vi: no decimal byte entry}
+		mapping.
 		Note: When CTRL-V is mapped (e.g., to paste text) you can
 		often use CTRL-Q instead |i_CTRL-Q|.
 
@@ -201,12 +197,12 @@ CTRL-Q		Same as CTRL-V.
 
 CTRL-X		Enter CTRL-X mode.  This is a sub-mode where commands can
 		be given to complete words or scroll the window.  See
-		|i_CTRL-X| and |ins-completion|. {not in Vi}
+		|i_CTRL-X| and |ins-completion|.
 
 						*i_CTRL-E*
-CTRL-E		Insert the character which is below the cursor.  {not in Vi}
+CTRL-E		Insert the character which is below the cursor.
 						*i_CTRL-Y*
-CTRL-Y		Insert the character which is above the cursor.  {not in Vi}
+CTRL-Y		Insert the character which is above the cursor.
 		Note that for CTRL-E and CTRL-Y 'textwidth' is not used, to be
 		able to copy characters from a long line.
 
@@ -223,8 +219,6 @@ CTRL-_		Switch between languages, as follows:
 		is set.
 		Please refer to |rileft.txt| for more information about
 		right-to-left mode.
-		{not in Vi}
-		Only if compiled with the |+rightleft| feature.
 
 						*i_CTRL-^*
 CTRL-^		Toggle the use of typing language characters.
@@ -243,14 +237,12 @@ CTRL-^		Toggle the use of typing language characters.
 		The language mappings are normally used to type characters
 		that are different from what the keyboard produces.  The
 		'keymap' option can be used to install a whole number of them.
-		{not in Vi}
 
 						*i_CTRL-]*
-CTRL-]		Trigger abbreviation, without inserting a character.  {not in
-		Vi}
+CTRL-]		Trigger abbreviation, without inserting a character.
 
 						*i_<Insert>*
-<Insert>	Toggle between Insert and Replace mode.  {not in Vi}
+<Insert>	Toggle between Insert and Replace mode.
 -----------------------------------------------------------------------
 
 						*i_backspacing*
@@ -272,7 +264,6 @@ For backwards compatibility the values "0", "1" and "2" are also allowed, see
 If the 'backspace' option does contain "eol" and the cursor is in column 1
 when one of the three keys is used, the current line is joined with the
 previous line.  This effectively deletes the <EOL> in front of the cursor.
-{Vi: does not cross lines, does not delete past start position of insert}
 
 						*i_CTRL-V_digit*
 With CTRL-V the decimal, octal or hexadecimal value of a character can be
@@ -328,9 +319,8 @@ The following keys are special.  They stop the current insert, do something,
 and then restart insertion.  This means you can do something without getting
 out of Insert mode.  This is very handy if you prefer to use the Insert mode
 all the time, just like editors that don't have a separate Normal mode.  You
-may also want to set the 'backspace' option to "indent,eol,start" and set the
-'insertmode' option.  You can use CTRL-O if you want to map a function key to
-a command.
+may also want to set the 'insertmode' option.  You can use CTRL-O if you want
+to map a function key to a command.
 
 The changes (inserted or deleted characters) before and after these keys can
 be undone separately.  Only the last change can be redone and always behaves
@@ -373,6 +363,9 @@ CTRL-O		execute one command, return to Insert mode   *i_CTRL-O*
 CTRL-\ CTRL-O	like CTRL-O but don't move the cursor	     *i_CTRL-\_CTRL-O*
 CTRL-L		when 'insertmode' is set: go to Normal mode  *i_CTRL-L*
 CTRL-G u	break undo sequence, start new change	     *i_CTRL-G_u*
+CTRL-G U	don't break undo with next left/right cursor *i_CTRL-G_U*
+		movement (but only if the cursor stays
+		within same the line)
 -----------------------------------------------------------------------
 
 Note: If the cursor keys take you out of Insert mode, check the 'noesckeys'
@@ -411,6 +404,29 @@ that, with CTRL-O u.  Another example: >
 
 This breaks undo at each line break.  It also expands abbreviations before
 this.
+
+An example for using CTRL-G U: >
+
+	inoremap <Left>  <C-G>U<Left>
+	inoremap <Right> <C-G>U<Right>
+	inoremap <expr> <Home> col('.') == match(getline('.'), '\S') + 1 ?
+	 \ repeat('<C-G>U<Left>', col('.') - 1) :
+	 \ (col('.') < match(getline('.'), '\S') ?
+	 \     repeat('<C-G>U<Right>', match(getline('.'), '\S') + 0) :
+	 \     repeat('<C-G>U<Left>', col('.') - 1 - match(getline('.'), '\S')))
+	inoremap <expr> <End> repeat('<C-G>U<Right>', col('$') - col('.'))
+	inoremap ( ()<C-G>U<Left>
+
+This makes it possible to use the cursor keys in Insert mode, without breaking
+the undo sequence and therefore using |.| (redo) will work as expected. 
+Also entering a text like (with the "(" mapping from above): >
+
+   Lorem ipsum (dolor
+
+will be repeatable by the |.|to the expected
+
+   Lorem ipsum (dolor)
+
 
 Using CTRL-O splits undo: the text typed before and after it is undone
 separately.  If you want to avoid this (e.g., in a mapping) you might be able
@@ -489,15 +505,14 @@ The 'expandtab' option is off by default.  Note that in Replace mode, a single
 character is replaced with several spaces.  The result of this is that the
 number of characters in the line increases.  Backspacing will delete one
 space at a time.  The original character will be put back for only one space
-that you backspace over (the last one).  {Vi does not have the 'expandtab'
-option}
+that you backspace over (the last one).
 
 							*ins-smarttab*
 When the 'smarttab' option is on, a <Tab> inserts 'shiftwidth' positions at
 the beginning of a line and 'tabstop' positions in other places.  This means
 that often spaces instead of a <Tab> character are inserted.  When 'smarttab'
 is off, a <Tab> always inserts 'tabstop' positions, and 'shiftwidth' is only
-used for ">>" and the like.  {not in Vi}
+used for ">>" and the like.
 
 							*ins-softtabstop*
 When the 'softtabstop' option is non-zero, a <Tab> inserts 'softtabstop'
@@ -537,14 +552,12 @@ If the 'expandtab' option is on, a <Tab> will replace one character with
 several spaces.  The result of this is that the number of characters in the
 line increases.  Backspacing will delete one space at a time.  The original
 character will be put back for only one space that you backspace over (the
-last one).  {Vi does not have the 'expandtab' option}
+last one).
 
 ==============================================================================
 6. Virtual Replace mode		*vreplace-mode* *Virtual-Replace-mode*
 
 Enter Virtual Replace mode with the "gR" command in normal mode.
-{not available when compiled without the |+vreplace| feature}
-{Vi does not have Virtual Replace mode}
 
 Virtual Replace mode is similar to Replace mode, but instead of replacing
 actual characters in the file, you are replacing screen real estate, so that
@@ -1270,9 +1283,9 @@ A compiled .exe for MS-Windows can be found at:
 
 If you want to complete system functions you can do something like this.  Use
 ctags to generate a tags file for all the system header files: >
-	% ctags -R -f ~/.vim/systags /usr/include /usr/local/include
+	% ctags -R -f ~/.config/nvim/systags /usr/include /usr/local/include
 In your vimrc file add this tags file to the 'tags' option: >
-	set tags+=~/.vim/systags
+	set tags+=~/.config/nvim/systags
 
 When using CTRL-X CTRL-O after a name without any "." or "->" it is completed
 from the tags file directly.  This works for any identifier, also function
@@ -1419,9 +1432,9 @@ automatically switch to HTML/CSS/JavaScript completion. Note: contrary to
 original HTML files completion of tags (and only tags) isn't context aware.
 
 
-RUBY							*ft-ruby-omni*
+RUBY						 *ft-ruby-omni* {Nvim}
 
-Completion of Ruby code requires that vim be built with |+ruby|.
+NOTE: Completion for ruby code is not currently provided by Nvim.
 
 Ruby completion will parse your buffer on demand in order to provide a list of
 completions.  These completions will be drawn from modules loaded by 'require'
@@ -1442,7 +1455,7 @@ The completions provided by CTRL-X CTRL-O are sensitive to the context:
 
 Notes:
  - Vim will load/evaluate code in order to provide completions.  This may
-   cause some code execution, which may be a concern. This is no longer 
+   cause some code execution, which may be a concern. This is no longer
    enabled by default, to enable this feature add >
      let g:rubycomplete_buffer_loading = 1
 <- In context 1 above, Vim can parse the entire buffer to add a list of
@@ -1472,7 +1485,7 @@ minimal language-sensitive completion.
 To enable syntax code completion you can run: >
     setlocal omnifunc=syntaxcomplete#Complete
 
-You can automate this by placing the following in your |.vimrc| (after any
+You can automate this by placing the following in your |init.vim| (after any
 ":filetype" command): >
     if has("autocmd") && exists("+omnifunc")
 	autocmd Filetype *
@@ -1764,7 +1777,7 @@ I			Insert text before the first non-blank in the line
 			the last blank.
 
 							*gI*
-gI			Insert text in column 1 [count] times.  {not in Vi}
+gI			Insert text in column 1 [count] times.
 
 							*gi*
 gi			Insert text in the same position as where Insert mode
@@ -1775,19 +1788,16 @@ gi			Insert text in the same position as where Insert mode
 			but NOT for inserted/deleted characters.
 			When the |:keepjumps| command modifier is used the |'^|
 			mark won't be changed.
-			{not in Vi}
 
 							*o*
 o			Begin a new line below the cursor and insert text,
-			repeat [count] times.  {Vi: blank [count] screen
-			lines}
+			repeat [count] times.
 			When the '#' flag is in 'cpoptions' the count is
 			ignored.
 
 							*O*
 O			Begin a new line above the cursor and insert text,
-			repeat [count] times.  {Vi: blank [count] screen
-			lines}
+			repeat [count] times.
 			When the '#' flag is in 'cpoptions' the count is
 			ignored.
 
@@ -1842,9 +1852,6 @@ NOTE: These commands cannot be used with |:global| or |:vglobal|.
 			script, the insertion only starts after the function
 			or script is finished.
 			This command does not work from |:normal|.
-			{not in Vi}
-			{not available when compiled without the |+ex_extra|
-			feature}
 
 							*:stopi* *:stopinsert*
 :stopi[nsert]		Stop Insert mode as soon as possible.  Works like
@@ -1861,16 +1868,10 @@ NOTE: These commands cannot be used with |:global| or |:vglobal|.
 			Note that when using this command in a function or
 			script that the replacement will only start after
 			the function or script is finished.
-			{not in Vi}
-			{not available when compiled without the |+ex_extra|
-			feature}
 
 							*:startgreplace*
 :startg[replace][!]	Just like |:startreplace|, but use Virtual Replace
 			mode, like with |gR|.
-			{not in Vi}
-			{not available when compiled without the |+ex_extra|
-			feature}
 
 ==============================================================================
 10. Inserting a file					*inserting-file*
@@ -1938,9 +1939,9 @@ If the 'fileformats' option is not empty Vim tries to recognize the type of
 changed, the detected format is only used while reading the file.
 A similar thing happens with 'fileencodings'.
 
-On non-MS-DOS, Win32, and OS/2 systems the message "[dos format]" is shown if
+On non-MS-DOS and Win32 systems the message "[dos format]" is shown if
 a file is read in DOS format, to remind you that something unusual is done.
-On Macintosh, MS-DOS, Win32, and OS/2 the message "[unix format]" is shown if
+On Macintosh, MS-DOS, and Win32 the message "[unix format]" is shown if
 a file is read in Unix format.
 On non-Macintosh systems, the message "[Mac format]" is shown if a file is
 read in Mac format.
@@ -1972,7 +1973,6 @@ self explanatory.  Using the long or the short version depends on the
 					possible
 	[converted]			conversion from 'fileencoding' to
 					'encoding' done
-	[crypted]			file was decrypted
 	[READ ERRORS]			not all of the file could be read
 
 

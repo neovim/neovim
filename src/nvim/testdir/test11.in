@@ -46,13 +46,13 @@ STARTTEST
 :w>>test.out                    " Append it to the output file
 :set shelltemp                  " need temp files here
 :au FilterReadPre   *.out  call rename(expand("<afile>"), expand("<afile>") . ".t")
-:au FilterReadPre   *.out  exe '!sed s/e/E/ ' . shellescape(expand("<afile>")) . ".t >" . shellescape(expand("<afile>"))
-:au FilterReadPre   *.out  exe '!rm ' . shellescape(expand("<afile>")) . '.t'
+:au FilterReadPre   *.out  exe 'silent !sed s/e/E/ ' . shellescape(expand("<afile>")) . ".t >" . shellescape(expand("<afile>"))
+:au FilterReadPre   *.out  exe 'silent !rm ' . shellescape(expand("<afile>")) . '.t'
 :au FilterReadPost  *.out  '[,']s/x/X/g
 :e! test.out                    " Edit the output file
 :23,$!cat
 :23,$s/\r$//                 " remove CR for when sed adds them
-:au! FileReadPre    *.gz   exe '!gzip -d ' . shellescape(expand("<afile>"))
+:au! FileReadPre    *.gz   exe 'silent !gzip -d ' . shellescape(expand("<afile>"))
 :au  FileReadPre    *.gz   call rename(expand("<afile>:r"), expand("<afile>"))
 :au! FileReadPost   *.gz   '[,']s/l/L/
 :$r Xtestfile.gz             " Read compressed file

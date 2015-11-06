@@ -1,4 +1,4 @@
-*windows.txt*   For Vim version 7.4.  Last change: 2014 Mar 25
+*windows.txt*   For Vim version 7.4.  Last change: 2014 Dec 05
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -25,12 +25,6 @@ The basics are explained in chapter 7 and 8 of the user manual |usr_07.txt|
 10. The preview window				|preview-window|
 11. Using hidden buffers			|buffer-hidden|
 12. Special kinds of buffers			|special-buffers|
-
-{Vi does not have any of these commands}
-{not able to use multiple windows when the |+windows| feature was disabled at
-compile time}
-{not able to use vertically split windows when the |+vertsplit| feature was
-disabled at compile time}
 
 ==============================================================================
 1. Introduction					*windows-intro* *window*
@@ -59,7 +53,7 @@ hidden:   The buffer is not displayed.  If there is a file for this buffer, it
 							*inactive-buffer*
 inactive: The buffer is not displayed and does not contain anything.  Options
 	  for the buffer are remembered if the file was once loaded.  It can
-	  contain marks from the |viminfo| file.  But the buffer doesn't
+	  contain marks from the |shada| file.  But the buffer doesn't
 	  contain text.
 
 In a table:
@@ -263,28 +257,54 @@ left of the Vim window.
 Closing a window
 ----------------
 
+:q[uit]
+:{count}q[uit]
 CTRL-W q						*CTRL-W_q*
 CTRL-W CTRL-Q						*CTRL-W_CTRL-Q*
-:q[uit]		Quit current window.  When quitting the last window (not
-		counting a help window), exit Vim.
+		Without {count}: Quit the current window. If {count} is
+		given quit the {count} window
+
+		When quitting the last window (not counting a help window),
+		exit Vim.
+
 		When 'hidden' is set, and there is only one window for the
-		current buffer, it becomes hidden.
-		When 'hidden' is not set, and there is only one window for the
-		current buffer, and the buffer was changed, the command fails.
-		(Note: CTRL-Q does not work on all terminals)
+		current buffer, it becomes hidden. When 'hidden' is not set,
+		and there is only one window for the current buffer, and the
+		buffer was changed, the command fails.
+		(Note: CTRL-Q does not work on all terminals).
+		If [count] is greater than the last window number the last
+		window will be closed: >
+		    :1quit  " quit the first window
+		    :$quit  " quit the last window
+		    :9quit  " quit the last window
+			    " if there are less than 9 windows opened
+		    :-quit  " quit the previous window
+		    :+quit  " quit the next window
+		    :+2quit " quit the second next window
+<
+:q[uit]!
+:{count}q[uit]!
+		Without {count}: Quit the current window.  If {count} is
+		given quit the {count} window
+		If this was the last window for a buffer, any changes to that
+		buffer are lost. When quitting the last window (not counting
+		help windows), exit Vim. The contents of the buffer are lost,
+		even when 'hidden' is set.
 
-:q[uit]!	Quit current window.  If this was the last window for a buffer,
-		any changes to that buffer are lost.  When quitting the last
-		window (not counting help windows), exit Vim.  The contents of
-		the buffer are lost, even when 'hidden' is set.
-
+:clo[se][!]
+:{count}clo[se][!]
 CTRL-W c					*CTRL-W_c* *:clo* *:close*
-:clo[se][!]	Close current window.  When the 'hidden' option is set, or
-		when the buffer was changed and the [!] is used, the buffer
-		becomes hidden (unless there is another window editing it).
+		Without {count}: Close the current window. If given close the
+		{count} window.
+
+		When 'hidden' is set, or when the buffer was changed and the
+		[!] is used, the buffer becomes hidden (unless there is another
+		window editing it).
+
 		When there is only one window in the current tab page and
 		there is another tab page, this closes the current tab page.
 		|tab-page|.
+
 		This command fails when:			*E444*
 		- There is only one window on the screen.
 		- When 'hidden' is not set, [!] is not used, the buffer has
@@ -297,29 +317,38 @@ CTRL-W CTRL-C						*CTRL-W_CTRL-C*
 		window, but that does not work, because the CTRL-C cancels the
 		command.
 
-							*:hide*
-:hid[e]		Quit current window, unless it is the last window on the
-		screen.  The buffer becomes hidden (unless there is another
-		window editing it or 'bufhidden' is "unload" or "delete").
+                                                                *:hide*
+:hid[e]
+:{count}hid[e]
+		Quit the current window, unless it is the last window on the
+		screen. For {count} see |:quit|.
+
+		The buffer becomes hidden (unless there is another window
+		editing it or 'bufhidden' is `unload`, `delete` or `wipe`).
 		If the window is the last one in the current tab page the tab
 		page is closed. |tab-page|
+
 		The value of 'hidden' is irrelevant for this command.
 		Changes to the buffer are not written and won't get lost, so
 		this is a "safe" command.
 
-:hid[e] {cmd}	Execute {cmd} with 'hidden' is set.  The previous value of
+:hid[e] {cmd}	Execute {cmd} with 'hidden' set. The previous value of
 		'hidden' is restored after {cmd} has been executed.
 		Example: >
 		    :hide edit Makefile
 <		This will edit "Makefile", and hide the current buffer if it
 		has any changes.
 
+:on[ly][!]
+:{count}on[ly][!]
 CTRL-W o						*CTRL-W_o* *E445*
 CTRL-W CTRL-O					*CTRL-W_CTRL-O* *:on* *:only*
-:on[ly][!]	Make the current window the only one on the screen.  All other
-		windows are closed.
+		Make the current window the only one on the screen. All other
+		windows are closed. For {count} see |:quit|.
+
 		When the 'hidden' option is set, all buffers in closed windows
 		become hidden.
+
 		When 'hidden' is not set, and the 'autowrite' option is set,
 		modified buffers are written.  Otherwise, windows that have
 		buffers that are modified are not removed, unless the [!] is
@@ -448,7 +477,6 @@ CTRL-W H	Move the current window to be at the far left, using the
 		current window and then creating another one with
 		":vert topleft split", except that the current window contents
 		is used for the new window.
-		{not available when compiled without the |+vertsplit| feature}
 
 						*CTRL-W_L*
 CTRL-W L	Move the current window to be at the far right, using the full
@@ -456,7 +484,6 @@ CTRL-W L	Move the current window to be at the far right, using the full
 		current window and then creating another one with
 		":vert botright split", except that the current window
 		contents is used for the new window.
-		{not available when compiled without the |+vertsplit| feature}
 
 						*CTRL-W_T*
 CTRL-W T	Move the current window to a new tab page.  This fails if
@@ -660,8 +687,9 @@ can also get to them with the buffer list commands, like ":bnext".
 8. Do a command in all buffers or windows			*list-repeat*
 
 							*:windo*
-:windo {cmd}		Execute {cmd} in each window.
-			It works like doing this: >
+:[range]windo {cmd}	Execute {cmd} in each window or if [range] is given
+			only in windows for which the window number lies in
+			the [range]. It works like doing this: >
 				CTRL-W t
 				:{cmd}
 				CTRL-W w
@@ -674,13 +702,13 @@ can also get to them with the buffer list commands, like ":bnext".
 			the current window.
 			{cmd} can contain '|' to concatenate several commands.
 			{cmd} must not open or close windows or reorder them.
-			{not in Vi} {not available when compiled without the
-			|+listcmds| feature}
 			Also see |:tabdo|, |:argdo| and |:bufdo|.
 
 							*:bufdo*
-:bufdo[!] {cmd}		Execute {cmd} in each buffer in the buffer list.
-			It works like doing this: >
+:[range]bufdo[!] {cmd}	Execute {cmd} in each buffer in the buffer list or if
+			[range[ is given only for buffers for which their
+			buffer name is in the [range]. It works like doing
+                        this: >
 				:bfirst
 				:{cmd}
 				:bnext
@@ -700,8 +728,6 @@ can also get to them with the buffer list commands, like ":bnext".
 			autocommand event is disabled by adding it to
 			'eventignore'.  This considerably speeds up editing
 			each buffer.
-			{not in Vi} {not available when compiled without the
-			|+listcmds| feature}
 			Also see |:tabdo|, |:argdo| and |:windo|.
 
 Examples: >
@@ -726,18 +752,21 @@ the buffer.  The result is that all buffers will use the 'encoding' encoding
 
 CTRL-W ]					*CTRL-W_]* *CTRL-W_CTRL-]*
 CTRL-W CTRL-]	Split current window in two.  Use identifier under cursor as a
-		tag and jump to it in the new upper window.  Make new window N
-		high.
+		tag and jump to it in the new upper window.
+		In Visual mode uses the Visually selected text as a tag.
+		Make new window N high.
 
 							*CTRL-W_g]*
 CTRL-W g ]	Split current window in two.  Use identifier under cursor as a
 		tag and perform ":tselect" on it in the new upper window.
+		In Visual mode uses the Visually selected text as a tag.
 		Make new window N high.
 
 							*CTRL-W_g_CTRL-]*
 CTRL-W g CTRL-]	Split current window in two.  Use identifier under cursor as a
-		tag and perform ":tjump" on it in the new upper window.  Make
-		new window N high.
+		tag and perform ":tjump" on it in the new upper window.
+		In Visual mode uses the Visually selected text as a tag.
+		Make new window N high.
 
 CTRL-W f					*CTRL-W_f* *CTRL-W_CTRL-F*
 CTRL-W CTRL-F	Split current window in two.  Edit file name under cursor.
@@ -817,7 +846,7 @@ CTRL-W CTRL-Z					*CTRL-W_CTRL-Z* *:pc* *:pclose*
 							*:pp* *:ppop*
 :[count]pp[op][!]
 		Does ":[count]pop[!]" in the preview window.  See |:pop| and
-		|:ptag|.  {not in Vi}
+		|:ptag|.
 
 CTRL-W }						*CTRL-W_}*
 		Use identifier under cursor as a tag and perform a :ptag on
@@ -989,8 +1018,11 @@ list of buffers. |unlisted-buffer|
 		Actually, the buffer isn't completely deleted, it is removed
 		from the buffer list |unlisted-buffer| and option values,
 		variables and mappings/abbreviations for the buffer are
-		cleared.
-
+		cleared. Examples: >
+                    :.,$-bdelete   "delete buffers from the current one to
+                                   " last but one
+                    :%bdelete      " delete all buffers
+<
 :bdelete[!] {bufname}						*E93* *E94*
 		Like ":bdelete[!] [N]", but buffer given by name.  Note that a
 		buffer whose name is a number cannot be referenced by that
@@ -1013,8 +1045,11 @@ list of buffers. |unlisted-buffer|
 		Like |:bdelete|, but really delete the buffer.  Everything
 		related to the buffer is lost.  All marks in this buffer
 		become invalid, option settings are lost, etc.  Don't use this
-		unless you know what you are doing.
-
+		unless you know what you are doing. Examples: >
+                    :.+,$bwipeout   " wipe out all buffers after the current
+                                    " one
+                    :%bwipeout      " wipe out all buffers
+<
 :[N]bun[load][!]				*:bun* *:bunload* *E515*
 :bun[load][!] [N]
 		Unload buffer [N] (default: current buffer).  The memory
@@ -1042,36 +1077,41 @@ list of buffers. |unlisted-buffer|
 		a number).  Insert a backslash before a space in a buffer
 		name.
 
-:[N]b[uffer][!] [N]			*:b* *:bu* *:buf* *:buffer* *E86*
+:[N]b[uffer][!] [+cmd] [N]		*:b* *:bu* *:buf* *:buffer* *E86*
 		Edit buffer [N] from the buffer list.  If [N] is not given,
 		the current buffer remains being edited.  See |:buffer-!| for
 		[!].  This will also edit a buffer that is not in the buffer
 		list, without setting the 'buflisted' flag.
+		Also see ||+cmd|.
 
-:[N]b[uffer][!] {bufname}
+:[N]b[uffer][!] [+cmd] {bufname}
 		Edit buffer for {bufname} from the buffer list.  See
 		|:buffer-!| for [!].  This will also edit a buffer that is not
 		in the buffer list, without setting the 'buflisted' flag.
+		Also see ||+cmd|.
 
-:[N]sb[uffer] [N]					*:sb* *:sbuffer*
+:[N]sb[uffer] [+cmd] [N]				*:sb* *:sbuffer*
 		Split window and edit buffer [N] from the buffer list.  If [N]
 		is not given, the current buffer is edited.  Respects the
 		"useopen" setting of 'switchbuf' when splitting.  This will
 		also edit a buffer that is not in the buffer list, without
 		setting the 'buflisted' flag.
+		Also see ||+cmd|.
 
-:[N]sb[uffer] {bufname}
+:[N]sb[uffer] [+cmd] {bufname}
 		Split window and edit buffer for {bufname} from the buffer
 		list.  This will also edit a buffer that is not in the buffer
 		list, without setting the 'buflisted' flag.
 		Note: If what you want to do is split the buffer, make a copy
 		under another name, you can do it this way: >
 			:w foobar | sp #
+<		Also see ||+cmd|.
 
-:[N]bn[ext][!] [N]					*:bn* *:bnext* *E87*
+:[N]bn[ext][!] [+cmd] [N]				*:bn* *:bnext* *E87*
 		Go to [N]th next buffer in buffer list.  [N] defaults to one.
 		Wraps around the end of the buffer list.
 		See |:buffer-!| for [!].
+		Also see ||+cmd|.
 		If you are in a help buffer, this takes you to the next help
 		buffer (if there is one).  Similarly, if you are in a normal
 		(non-help) buffer, this takes you to the next normal buffer.
@@ -1079,55 +1119,61 @@ list of buffers. |unlisted-buffer|
 		the way when you're browsing code/text buffers.  The next three
 		commands also work like this.
 
+
 							*:sbn* *:sbnext*
-:[N]sbn[ext] [N]
+:[N]sbn[ext] [+cmd] [N]
 		Split window and go to [N]th next buffer in buffer list.
 		Wraps around the end of the buffer list.  Uses 'switchbuf'
+		Also see ||+cmd|.
 
-:[N]bN[ext][!] [N]			*:bN* *:bNext* *:bp* *:bprevious* *E88*
-:[N]bp[revious][!] [N]
+:[N]bN[ext][!] [+cmd] [N]		*:bN* *:bNext* *:bp* *:bprevious* *E88*
+:[N]bp[revious][!] [+cmd] [N]
 		Go to [N]th previous buffer in buffer list.  [N] defaults to
 		one.  Wraps around the start of the buffer list.
 		See |:buffer-!| for [!] and 'switchbuf'.
+		Also see ||+cmd|.
 
-:[N]sbN[ext] [N]			*:sbN* *:sbNext* *:sbp* *:sbprevious*
-:[N]sbp[revious] [N]
+:[N]sbN[ext] [+cmd] [N]			*:sbN* *:sbNext* *:sbp* *:sbprevious*
+:[N]sbp[revious] [+cmd] [N]
 		Split window and go to [N]th previous buffer in buffer list.
 		Wraps around the start of the buffer list.
 		Uses 'switchbuf'.
+		Also see ||+cmd|.
 
-							*:br* *:brewind*
-:br[ewind][!]	Go to first buffer in buffer list.  If the buffer list is
+:br[ewind][!] [+cmd]					*:br* *:brewind*
+		Go to first buffer in buffer list.  If the buffer list is
 		empty, go to the first unlisted buffer.
 		See |:buffer-!| for [!].
 
-							*:bf* *:bfirst*
-:bf[irst]	Same as ":brewind".
+:bf[irst] [+cmd]					*:bf* *:bfirst*
+		Same as |:brewind|.
+		Also see |+cmd|.
 
-							*:sbr* *:sbrewind*
-:sbr[ewind]	Split window and go to first buffer in buffer list.  If the
+:sbr[ewind] [+cmd]					*:sbr* *:sbrewind*
+		Split window and go to first buffer in buffer list.  If the
 		buffer list is empty, go to the first unlisted buffer.
 		Respects the 'switchbuf' option.
+		Also see |+cmd|.
 
-							*:sbf* *:sbfirst*
-:sbf[irst]	Same as ":sbrewind".
+:sbf[irst] [+cmd]					*:sbf* *:sbfirst*
+		Same as ":sbrewind".
 
-							*:bl* *:blast*
-:bl[ast][!]	Go to last buffer in buffer list.  If the buffer list is
+:bl[ast][!] [+cmd]					*:bl* *:blast*
+		Go to last buffer in buffer list.  If the buffer list is
 		empty, go to the last unlisted buffer.
 		See |:buffer-!| for [!].
 
-							*:sbl* *:sblast*
-:sbl[ast]	Split window and go to last buffer in buffer list.  If the
+:sbl[ast] [+cmd]					*:sbl* *:sblast*
+		Split window and go to last buffer in buffer list.  If the
 		buffer list is empty, go to the last unlisted buffer.
 		Respects 'switchbuf' option.
 
-:[N]bm[odified][!] [N]				*:bm* *:bmodified* *E84*
+:[N]bm[odified][!] [+cmd] [N]			*:bm* *:bmodified* *E84*
 		Go to [N]th next modified buffer.  Note: this command also
 		finds unlisted buffers.  If there is no modified buffer the
 		command fails.
 
-:[N]sbm[odified] [N]					*:sbm* *:sbmodified*
+:[N]sbm[odified] [+cmd] [N]				*:sbm* *:sbmodified*
 		Split window and go to [N]th next modified buffer.
 		Respects 'switchbuf' option.
 		Note: this command also finds buffers not in the buffer list.

@@ -30,14 +30,14 @@ static void vim_maketempdir(void)
   // Try the entries in `TEMP_DIR_NAMES` to create the temp directory.
   char_u template[TEMP_FILE_PATH_MAXLEN];
   char_u path[TEMP_FILE_PATH_MAXLEN];
-  for (size_t i = 0; i < sizeof(temp_dirs) / sizeof(char *); ++i) {
+  for (size_t i = 0; i < ARRAY_SIZE(temp_dirs); ++i) {
     // Expand environment variables, leave room for "/nvimXXXXXX/999999999"
     expand_env((char_u *)temp_dirs[i], template, TEMP_FILE_PATH_MAXLEN - 22);
     if (!os_isdir(template)) {  // directory doesn't exist
       continue;
     }
 
-    add_pathsep(template);
+    add_pathsep((char *)template);
     // Concatenate with temporary directory name pattern
     STRCAT(template, "nvimXXXXXX");
 
@@ -45,7 +45,7 @@ static void vim_maketempdir(void)
       continue;
     }
 
-    if (vim_settempdir(path)) {
+    if (vim_settempdir((char *)path)) {
       // Successfully created and set temporary directory so stop trying.
       break;
     } else {
@@ -66,7 +66,7 @@ void vim_deltempdir(void)
 
     // Note: We cannot just do `&NameBuff` because it is a statically
     //       sized array so `NameBuff == &NameBuff` according to C semantics.
-    char_u *buff_list[1] = {(char_u*) NameBuff};
+    char_u *buff_list[1] = {NameBuff};
     if (gen_expand_wildcards(1, buff_list, &file_count, &files,
         EW_DIR|EW_FILE|EW_SILENT) == OK) {
       for (int i = 0; i < file_count; ++i) {
@@ -77,7 +77,7 @@ void vim_deltempdir(void)
     path_tail(NameBuff)[-1] = NUL;
     os_rmdir((char *)NameBuff);
 
-    free(vim_tempdir);
+    xfree(vim_tempdir);
     vim_tempdir = NULL;
   }
 }
@@ -100,16 +100,16 @@ char_u *vim_gettempdir(void)
 /// @param tempdir must be no longer than MAXPATHL.
 ///
 /// @return false if we run out of memory.
-static bool vim_settempdir(char_u *tempdir)
+static bool vim_settempdir(char *tempdir)
 {
-  char_u *buf = verbose_try_malloc((size_t)MAXPATHL + 2);
+  char *buf = verbose_try_malloc(MAXPATHL + 2);
   if (!buf) {
     return false;
   }
   vim_FullName(tempdir, buf, MAXPATHL, false);
   add_pathsep(buf);
-  vim_tempdir = vim_strsave(buf);
-  free(buf);
+  vim_tempdir = (char_u *)xstrdup(buf);
+  xfree(buf);
   return true;
 }
 

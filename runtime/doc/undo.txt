@@ -19,26 +19,24 @@ The basics are explained in section |02.5| of the user manual.
 1. Undo and redo commands				*undo-commands*
 
 <Undo>		or					*undo* *<Undo>* *u*
-u			Undo [count] changes.  {Vi: only one level}
+u			Undo [count] changes.
 
 							*:u* *:un* *:undo*
-:u[ndo]			Undo one change.  {Vi: only one level}
+:u[ndo]			Undo one change.
 								*E830*
 :u[ndo] {N}		Jump to after change number {N}.  See |undo-branches|
-			for the meaning of {N}.  {not in Vi}
+			for the meaning of {N}.
 
 							*CTRL-R*
-CTRL-R			Redo [count] changes which were undone.  {Vi: redraw
-			screen}
+CTRL-R			Redo [count] changes which were undone.
 
 							*:red* *:redo* *redo*
-:red[o]			Redo one change which was undone.  {Vi: no redo}
+:red[o]			Redo one change which was undone.
 
 							*U*
 U			Undo all latest changes on one line, the line where
 			the latest change was made. |U| itself also counts as
 			a change, and thus |U| undoes a previous |U|.
-			{Vi: while not moved off of the last modified line}
 
 The last changes are remembered.  You can use the undo and redo commands above
 to revert the text to how it was before each change.  You can also apply the
@@ -95,7 +93,6 @@ change but joins in with the previous change use this command:
 			Warning: Use with care, it may prevent the user from
 			properly undoing changes.  Don't use this after undo
 			or redo.
-			{not in Vi}
 
 This is most useful when you need to prompt the user halfway through a change.
 For example in a function that calls |getchar()|.  Do make sure that there was
@@ -151,7 +148,7 @@ This is explained in the user manual: |usr_32.txt|.
 
 							*g-*
 g-			Go to older text state.  With a count repeat that many
-			times.  {not in Vi}
+			times.
 							*:ea* *:earlier*
 :earlier {count}	Go to older text state {count} times.
 :earlier {N}s		Go to older text state about {N} seconds before.
@@ -170,7 +167,7 @@ g-			Go to older text state.  With a count repeat that many
 
 							*g+*
 g+			Go to newer text state.  With a count repeat that many
-			times.  {not in Vi}
+			times.
 							*:lat* *:later*
 :later {count}		Go to newer text state {count} times.
 :later {N}s		Go to newer text state about {N} seconds later.
@@ -256,9 +253,6 @@ message about that when opening a file.
 Undo files are normally saved in the same directory as the file.  This can be
 changed with the 'undodir' option.
 
-When the file is encrypted, the text in the undo file is also crypted.  The
-same key and method is used. |encryption|
-
 You can also save and restore undo histories by using ":wundo" and ":rundo"
 respectively:
 							*:wundo* *:rundo*
@@ -274,10 +268,8 @@ respectively:
 		the existing file and then creating a new file with the same
 		name. So it is not possible to overwrite an existing undofile
 		in a write-protected directory.
-		{not in Vi}
 
 :rundo {file}	Read undo history from {file}.
-		{not in Vi}
 
 You can use these in autocommands to explicitly specify the name of the
 history file.  E.g.: >
@@ -321,13 +313,6 @@ Reading an existing undo file may fail for several reasons:
 	the undo file cannot be used, it would corrupt the text.  This also
 	happens when 'encoding' differs from when the undo file was written.
 *E825*  The undo file does not contain valid contents and cannot be used.
-*E826*  The undo file is encrypted but decryption failed.
-*E827*  The undo file is encrypted but this version of Vim does not support
-	encryption.  Open the file with another Vim.
-*E832*  The undo file is encrypted but 'key' is not set, the text file is not
-	encrypted.  This would happen if the text file was written by Vim
-	encrypted at first, and later overwritten by not encrypted text.
-	You probably want to delete this undo file.
 "Not reading undo file, owner differs"
 	The undo file is owned by someone else than the owner of the text
 	file.  For safety the undo file is not used.
@@ -368,13 +353,13 @@ information you can use these commands: >
 	:unlet old_undolevels
 
 Marks for the buffer ('a to 'z) are also saved and restored, together with the
-text.  {Vi does this a little bit different}
+text.
 
 When all changes have been undone, the buffer is not considered to be changed.
-It is then possible to exit Vim with ":q" instead of ":q!" {not in Vi}.  Note
-that this is relative to the last write of the file.  Typing "u" after ":w"
-actually changes the buffer, compared to what was written, so the buffer is
-considered changed then.
+It is then possible to exit Vim with ":q" instead of ":q!".
+Note that this is relative to the last write of the file.  Typing "u" after
+":w" actually changes the buffer, compared to what was written, so the buffer
+is considered changed then.
 
 When manual |folding| is being used, the folds are not saved and restored.
 Only changes completely within a fold will keep the fold as it was, because

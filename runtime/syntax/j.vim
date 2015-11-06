@@ -2,7 +2,7 @@
 " Language:	J
 " Maintainer:	David Bürgin <676c7473@gmail.com>
 " URL:		https://github.com/glts/vim-j
-" Last Change:	2014-05-25
+" Last Change:	2014-10-05
 
 if exists('b:current_syntax')
   finish
@@ -12,7 +12,7 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 syntax case match
-syntax sync minlines=50
+syntax sync minlines=100
 
 syntax cluster jStdlibItems contains=jStdlibNoun,jStdlibAdverb,jStdlibConjunction,jStdlibVerb
 syntax cluster jPrimitiveItems contains=jNoun,jAdverb,jConjunction,jVerb,jCopula
@@ -30,26 +30,32 @@ syntax keyword jStdlibVerb AND Endian IFDEF Note OR XOR alpha17 alpha27 anddf an
 syntax match jStdlibNoun /\<\%(adverb\|conjunction\|dyad\|monad\|noun\|verb\)\>/
 syntax match jStdlibVerb /\<\%(assert\|break\|do\)\>\.\@!/
 
-" Numbers. Matching J numbers is difficult. The regular expression used for
-" the general case roughly embodies this grammar sketch:
+" Numbers. Matching J numbers is difficult. In fact, the job cannot be done
+" with regular expressions alone. Below is a sketch of the pattern used. It
+" accepts most well-formed numbers and rejects most of the ill-formed ones.
+" See http://www.jsoftware.com/help/dictionary/dcons.htm for reference.
 "
-"     BASE     := /_?\d+(\.\d*)?([eE]_?\d+)?/
-"     RATIONAL := BASE  |  BASE r BASE
-"     COMPLEX  := BASE  |  BASE (j|a[dr]) BASE
-"     JNUMBER  := RATIONAL  |  RATIONAL [px] RATIONAL  |  COMPLEX  |  COMPLEX [px] COMPLEX
+" "double1" and "double2" patterns:
+"     (_?\d+(\.\d*)?|_\.\d+)([eE]_?\d+)?
+"     (_?\d+(\.\d*)?|_\.\d+|\.\d+)([eE]_?\d+)?
 "
-" The grammar is implemented as shown in this pseudo-regexp:
+" "rational1" and "rational2" patterns:
+"     \k<double1>(r\k<double2>)?|__?
+"     \k<double2>(r\k<double2>)?|__?
 "
-"        base         rational                       complex                       remainder
-"     /\< B  (  [r]B ([px]B([r]B)?)?  |  (j|a[dr])B ([px]B((j|a[dr])B)?)?  |  [px]B ((j|a[dr]|r)B)?  )?/
+" "complex1" and "complex2" patterns:
+"     \k<rational1>((j|a[dr])\k<rational2>)?
+"     \k<rational2>((j|a[dr])\k<rational2>)?
 "
-" All in all, a compromise between correctness and practicality had to be
-" made. See http://www.jsoftware.com/help/dictionary/dcons.htm for reference.
-syntax match jNumber /\<_\=\d\+\%(\.\d*\)\=\%([eE]_\=\d\+\)\=\%(\%(r_\=\d\+\%(\.\d*\)\=\%([eE]_\=\d\+\)\=\%([px]_\=\d\+\%(\.\d*\)\=\%([eE]_\=\d\+\)\=\%(r_\=\d\+\%(\.\d*\)\=\%([eE]_\=\d\+\)\=\)\=\)\=\)\|\%(\%(j\|a[dr]\)_\=\d\+\%(\.\d*\)\=\%([eE]_\=\d\+\)\=\%([px]_\=\d\+\%(\.\d*\)\=\%([eE]_\=\d\+\)\=\%(\%(j\|a[dr]\)_\=\d\+\%(\.\d*\)\=\%([eE]_\=\d\+\)\=\)\=\)\=\)\|\%([px]_\=\d\+\%(\.\d*\)\=\%([eE]_\=\d\+\)\=\%(\%(j\|a[dr]\|r\)_\=\d\+\%(\.\d*\)\=\%([eE]_\=\d\+\)\=\)\=\)\)\=/
-syntax match jNumber /\<_\=\d\+\%([eE]\d\+\)\=b_\=[0-9a-z]\+\%(\.[0-9a-z]\+\)\=/
-syntax match jNumber /\<__\=\>/
-syntax match jNumber /\<_\./
-syntax match jNumber /\<_\=\d\+x\>/
+" "basevalue" pattern:
+"     _?[0-9a-z]+(\.[0-9a-z]*)?|_?\.[0-9a-z]+
+"
+" all numbers:
+"     \b\k<complex1>([px]\k<complex2>)?(b\k<basevalue>)?(?![0-9A-Za-z_.])
+syntax match jNumber /\<_\.[0-9A-Za-z_.]\@!/
+syntax match jNumber /\<_\=\d\+x[0-9A-Za-z_.]\@!/
+syntax match jNumber /\<\%(__\=r_\=\d\+\|_\=\d\+r__\=\)[0-9A-Za-z_.]\@!/
+syntax match jNumber /\<\%(\%(_\=\d\+\%(\.\d*\)\=\|_\.\d\+\)\%([eE]_\=\d\+\)\=\%(r\%(_\=\d\+\%(\.\d*\)\=\|_\.\d\+\|\.\d\+\)\%([eE]_\=\d\+\)\=\)\=\|__\=\)\%(\%(j\|a[dr]\)\%(\%(_\=\d\+\%(\.\d*\)\=\|_\.\d\+\|\.\d\+\)\%([eE]_\=\d\+\)\=\%(r\%(_\=\d\+\%(\.\d*\)\=\|_\.\d\+\|\.\d\+\)\%([eE]_\=\d\+\)\=\)\=\|__\=\)\)\=\%([px]\%(\%(_\=\d\+\%(\.\d*\)\=\|_\.\d\+\|\.\d\+\)\%([eE]_\=\d\+\)\=\%(r\%(_\=\d\+\%(\.\d*\)\=\|_\.\d\+\|\.\d\+\)\%([eE]_\=\d\+\)\=\)\=\|__\=\)\%(\%(j\|a[dr]\)\%(\%(_\=\d\+\%(\.\d*\)\=\|_\.\d\+\|\.\d\+\)\%([eE]_\=\d\+\)\=\%(r\%(_\=\d\+\%(\.\d*\)\=\|_\.\d\+\|\.\d\+\)\%([eE]_\=\d\+\)\=\)\=\|__\=\)\)\=\)\=\%(b\%(_\=[0-9a-z]\+\%(\.[0-9a-z]*\)\=\|_\=\.[0-9a-z]\+\)\)\=[0-9A-Za-z_.]\@!/
 
 syntax region jString oneline start=/'/ skip=/''/ end=/'/
 

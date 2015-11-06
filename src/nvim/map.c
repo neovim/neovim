@@ -16,6 +16,8 @@
 #define uint64_t_eq kh_int64_hash_equal
 #define uint32_t_hash kh_int_hash_func
 #define uint32_t_eq kh_int_hash_equal
+#define int_hash kh_int_hash_func
+#define int_eq kh_int_hash_equal
 
 #if defined(ARCH_64)
 #define ptr_t_hash(key) uint64_t_hash((uint64_t)key)
@@ -43,7 +45,7 @@
   void map_##T##_##U##_free(Map(T, U) *map)                                   \
   {                                                                           \
     kh_destroy(T##_##U##_map, map->table);                                    \
-    free(map);                                                                \
+    xfree(map);                                                               \
   }                                                                           \
                                                                               \
   U map_##T##_##U##_get(Map(T, U) *map, T key)                                \
@@ -87,6 +89,11 @@
     }                                                                         \
                                                                               \
     return rv;                                                                \
+  }                                                                           \
+                                                                              \
+  void map_##T##_##U##_clear(Map(T, U) *map)                                  \
+  {                                                                           \
+    kh_clear(T##_##U##_map, map->table);                                      \
   }
 
 static inline khint_t String_hash(String s)
@@ -100,13 +107,14 @@ static inline khint_t String_hash(String s)
 
 static inline bool String_eq(String a, String b)
 {
-  return strncmp(a.data, b.data, min(a.size, b.size)) == 0;
+  return strncmp(a.data, b.data, MIN(a.size, b.size)) == 0;
 }
 
 
+MAP_IMPL(int, int, DEFAULT_INITIALIZER)
 MAP_IMPL(cstr_t, uint64_t, DEFAULT_INITIALIZER)
 MAP_IMPL(cstr_t, ptr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(ptr_t, ptr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(uint64_t, ptr_t, DEFAULT_INITIALIZER)
-#define MSGPACK_HANDLER_INITIALIZER {.fn = NULL, .defer = false}
+#define MSGPACK_HANDLER_INITIALIZER {.fn = NULL, .async = false}
 MAP_IMPL(String, MsgpackRpcRequestHandler, MSGPACK_HANDLER_INITIALIZER)

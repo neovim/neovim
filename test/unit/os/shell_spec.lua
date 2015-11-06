@@ -14,7 +14,7 @@ local helpers = require('test.unit.helpers')
 local shell = helpers.cimport(
   './src/nvim/os/shell.h',
   './src/nvim/option_defs.h',
-  './src/nvim/os/event.h',
+  './src/nvim/main.h',
   './src/nvim/misc1.h'
 )
 local ffi, eq, neq = helpers.ffi, helpers.eq, helpers.neq
@@ -40,7 +40,9 @@ describe('shell functions', function()
     local output = ffi.new('char *[1]')
     local nread = ffi.new('size_t[1]')
 
-    local status = shell.os_system(to_cstr(cmd), input_or, input_len, output, nread)
+    local argv = ffi.cast('char**',
+                          shell.shell_build_argv(to_cstr(cmd), nil))
+    local status = shell.os_system(argv, input_or, input_len, output, nread)
 
     return status, intern(output[0], nread[0])
   end
@@ -65,6 +67,11 @@ describe('shell functions', function()
       local status, output = os_system(cmd, input)
       eq(input, output)
       eq(0, status)
+    end)
+
+    it ('returns non-zero exit code', function()
+      local status, output = os_system('exit 2')
+      eq(2, status)
     end)
   end)
 end)

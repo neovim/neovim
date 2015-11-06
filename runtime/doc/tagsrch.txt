@@ -55,11 +55,10 @@ CTRL-]			Jump to the definition of the keyword under the
 			to the [count] one.  When no [count] is given the
 			first one is jumped to. See |tag-matchlist| for
 			jumping to other matching tags.
-			{Vi: identifier after the cursor}
 
 							*v_CTRL-]*
 {Visual}CTRL-]		Same as ":tag {ident}", where {ident} is the text that
-			is highlighted.  {not in Vi}
+			is highlighted.
 
 							*telnet-CTRL-]*
 CTRL-] is the default telnet escape key.  When you type CTRL-] to jump to a
@@ -100,18 +99,18 @@ Tags are only pushed onto the stack when the 'tagstack' option is set.
 g<RightMouse>						*g<RightMouse>*
 <C-RightMouse>					*<C-RightMouse>* *CTRL-T*
 CTRL-T			Jump to [count] older entry in the tag stack
-			(default 1).  {not in Vi}
+			(default 1).
 
 						*:po* *:pop* *E555* *E556*
 :[count]po[p][!]	Jump to [count] older entry in tag stack (default 1).
-			See |tag-!| for [!].  {not in Vi}
+			See |tag-!| for [!].
 
 :[count]ta[g][!]	Jump to [count] newer entry in tag stack (default 1).
-			See |tag-!| for [!].  {not in Vi}
+			See |tag-!| for [!].
 
 							*:tags*
 :tags			Show the contents of the tag stack.  The active
-			entry is marked with a '>'.  {not in Vi}
+			entry is marked with a '>'.
 
 The output of ":tags" looks like this:
 
@@ -188,7 +187,7 @@ the same entry.
 			the current position in the list (if there is one).
 			[ident] can be a regexp pattern, see |tag-regexp|.
 			See |tag-priority| for the priorities used in the
-			listing.  {not in Vi}
+			listing.
 			Example output:
 
 >
@@ -215,54 +214,50 @@ the same entry.
 
 							*:sts* *:stselect*
 :sts[elect][!] [ident]	Does ":tselect[!] [ident]" and splits the window for
-			the selected tag.  {not in Vi}
+			the selected tag.
 
 							*g]*
 g]			Like CTRL-], but use ":tselect" instead of ":tag".
-			{not in Vi}
 
 							*v_g]*
 {Visual}g]		Same as "g]", but use the highlighted text as the
-			identifier.  {not in Vi}
+			identifier.
 
 							*:tj* *:tjump*
 :tj[ump][!] [ident]	Like ":tselect", but jump to the tag directly when
-			there is only one match.  {not in Vi}
+			there is only one match.
 
 							*:stj* *:stjump*
 :stj[ump][!] [ident]	Does ":tjump[!] [ident]" and splits the window for the
-			selected tag.  {not in Vi}
+			selected tag.
 
 							*g_CTRL-]*
 g CTRL-]		Like CTRL-], but use ":tjump" instead of ":tag".
-			{not in Vi}
 
 							*v_g_CTRL-]*
 {Visual}g CTRL-]	Same as "g CTRL-]", but use the highlighted text as
-			the identifier.  {not in Vi}
+			the identifier.
 
 							*:tn* *:tnext*
 :[count]tn[ext][!]	Jump to [count] next matching tag (default 1).  See
-			|tag-!| for [!].  {not in Vi}
+			|tag-!| for [!].
 
 							*:tp* *:tprevious*
 :[count]tp[revious][!]	Jump to [count] previous matching tag (default 1).
-			See |tag-!| for [!].  {not in Vi}
+			See |tag-!| for [!].
 
 							*:tN* *:tNext*
-:[count]tN[ext][!]	Same as ":tprevious".  {not in Vi}
+:[count]tN[ext][!]	Same as ":tprevious".
 
 							*:tr* *:trewind*
 :[count]tr[ewind][!]	Jump to first matching tag.  If [count] is given, jump
-			to [count]th matching tag.  See |tag-!| for [!].  {not
-			in Vi}
+			to [count]th matching tag.  See |tag-!| for [!].
 
 							*:tf* *:tfirst*
-:[count]tf[irst][!]	Same as ":trewind".  {not in Vi}
+:[count]tf[irst][!]	Same as ":trewind".
 
 							*:tl* *:tlast*
-:tl[ast][!]		Jump to last matching tag.  See |tag-!| for [!].  {not
-			in Vi}
+:tl[ast][!]		Jump to last matching tag.  See |tag-!| for [!].
 
 							*:lt* *:ltag*
 :lt[ag][!] [ident]	Jump to tag [ident] and add the matching tags to a new
@@ -274,7 +269,6 @@ g CTRL-]		Like CTRL-], but use ":tjump" instead of ":tag".
 			characters (very nomagic). The location list showing
 			the matching tags is independent of the tag stack.
 			See |tag-!| for [!].
-			{not in Vi}
 
 When there is no other message, Vim shows which matching tag has been jumped
 to, and the number of matching tags: >
@@ -301,34 +295,28 @@ the same as above, with a "p" prepended.
 							*:pts* *:ptselect*
 :pts[elect][!] [ident]	Does ":tselect[!] [ident]" and shows the new tag in a
 			"Preview" window.  See |:ptag| for more info.
-			{not in Vi}
 
 							*:ptj* *:ptjump*
 :ptj[ump][!] [ident]	Does ":tjump[!] [ident]" and shows the new tag in a
 			"Preview" window.  See |:ptag| for more info.
-			{not in Vi}
 
 							*:ptn* *:ptnext*
 :[count]ptn[ext][!]	":tnext" in the preview window.  See |:ptag|.
-			{not in Vi}
 
 							*:ptp* *:ptprevious*
 :[count]ptp[revious][!]	":tprevious" in the preview window.  See |:ptag|.
-			{not in Vi}
 
 							*:ptN* *:ptNext*
-:[count]ptN[ext][!]	Same as ":ptprevious".  {not in Vi}
+:[count]ptN[ext][!]	Same as ":ptprevious".
 
 							*:ptr* *:ptrewind*
 :[count]ptr[ewind][!]	":trewind" in the preview window.  See |:ptag|.
-			{not in Vi}
 
 							*:ptf* *:ptfirst*
-:[count]ptf[irst][!]	Same as ":ptrewind".  {not in Vi}
+:[count]ptf[irst][!]	Same as ":ptrewind".
 
 							*:ptl* *:ptlast*
 :ptl[ast][!]		":tlast" in the preview window.  See |:ptag|.
-			{not in Vi}
 
 ==============================================================================
 4. Tags details						*tag-details*
@@ -416,21 +404,11 @@ In a future version changing the buffer will be impossible.  All this for
 security reasons: Somebody might hide a nasty command in the tags file, which
 would otherwise go unnoticed.  Example: >
 	:$d|/tag-function-name/
-{this security prevention is not present in Vi}
 
 In Vi the ":tag" command sets the last search pattern when the tag is searched
 for.  In Vim this is not done, the previous search pattern is still remembered,
 unless the 't' flag is present in 'cpoptions'.  The search pattern is always
 put in the search history, so you can modify it if searching fails.
-
-					*emacs-tags* *emacs_tags* *E430*
-Emacs style tag files are only supported if Vim was compiled with the
-|+emacs_tags| feature enabled.  Sorry, there is no explanation about Emacs tag
-files here, it is only supported for backwards compatibility :-).
-
-Lines in Emacs tags files can be very long.  Vim only deals with lines of up
-to about 510 bytes.  To see whether lines are ignored set 'verbose' to 5 or
-higher.
 
 							*tags-option*
 The 'tags' option is a list of file names.  Each of these files is searched
@@ -497,7 +475,6 @@ ctags			As found on most Unix systems.  Only supports C.  Only
 exuberant ctags		This a very good one.  It works for C, C++, Java,
 			Fortran, Eiffel and others.  It can generate tags for
 			many items.  See http://ctags.sourceforge.net.
-etags			Connected to Emacs.  Supports many languages.
 JTags			For Java, in Java.  It can be found at
 			http://www.fleiner.com/jtags/.
 ptags.py		For Python, in Python.  Found in your Python source
@@ -608,9 +585,7 @@ If the command is a normal search command (it starts and ends with "/" or
 - Searching starts on line 1 of the file.
   The direction of the search is forward for "/", backward for "?".
   Note that 'wrapscan' does not matter, the whole file is always searched.  (Vi
-  does use 'wrapscan', which caused tags sometimes not be found.)  {Vi starts
-  searching in line 2 of another file.  It does not find a tag in line 1 of
-  another file when 'wrapscan' is not set}
+  does use 'wrapscan', which caused tags sometimes not be found.)
 - If the search fails, another try is done ignoring case.  If that fails too,
   a search is done for:
 	"^tagname[ \t]*("
@@ -621,7 +596,7 @@ If the command is a normal search command (it starts and ends with "/" or
 	"^[#a-zA-Z_].*\<tagname[ \t]*("
   This means: A line starting with '#' or an identifier and containing the tag
   followed by white space and a '('.  This will find macro names and function
-  names with a type prepended.  {the extra searches are not in Vi}
+  names with a type prepended.
 
 ==============================================================================
 6. Include file searches		*include-search* *definition-search*
@@ -682,33 +657,31 @@ mapping to do that for you.  Here is an example: >
 			of the file.  Lines that look like a comment are
 			ignored (see 'comments' option).  If a count is given,
 			the count'th matching line is displayed, and comment
-			lines are not ignored.  {not in Vi}
+			lines are not ignored.
 
 							*]i*
 ]i			like "[i", but start at the current cursor position.
-			{not in Vi}
 
 							*:is* *:isearch*
 :[range]is[earch][!] [count] [/]pattern[/]
 			Like "[i"  and "]i", but search in [range] lines
 			(default: whole file).
-			See |:search-args| for [/] and [!].  {not in Vi}
+			See |:search-args| for [/] and [!].
 
 							*[I*
 [I			Display all lines that contain the keyword under the
 			cursor.  Filenames and line numbers are displayed
 			for the found lines.  The search starts at the
-			beginning of the file.  {not in Vi}
+			beginning of the file.
 
 							*]I*
 ]I			like "[I", but start at the current cursor position.
-			{not in Vi}
 
 							*:il* *:ilist*
 :[range]il[ist][!] [/]pattern[/]
 			Like "[I" and "]I", but search in [range] lines
 			(default: whole file).
-			See |:search-args| for [/] and [!].  {not in Vi}
+			See |:search-args| for [/] and [!].
 
 							*[_CTRL-I*
 [ CTRL-I		Jump to the first line that contains the keyword
@@ -716,17 +689,17 @@ mapping to do that for you.  Here is an example: >
 			of the file.  Lines that look like a comment are
 			ignored (see 'comments' option).  If a count is given,
 			the count'th matching line is jumped to, and comment
-			lines are not ignored.  {not in Vi}
+			lines are not ignored.
 
 							*]_CTRL-I*
 ] CTRL-I		like "[ CTRL-I", but start at the current cursor
-			position.  {not in Vi}
+			position.
 
 							*:ij* *:ijump*
 :[range]ij[ump][!] [count] [/]pattern[/]
 			Like "[ CTRL-I"  and "] CTRL-I", but search in
 			[range] lines (default: whole file).
-			See |:search-args| for [/] and [!].  {not in Vi}
+			See |:search-args| for [/] and [!].
 
 CTRL-W CTRL-I					*CTRL-W_CTRL-I* *CTRL-W_i*
 CTRL-W i		Open a new window, with the cursor on the first line
@@ -735,45 +708,43 @@ CTRL-W i		Open a new window, with the cursor on the first line
 			that look like a comment line are ignored (see
 			'comments' option).  If a count is given, the count'th
 			matching line is jumped to, and comment lines are not
-			ignored.  {not in Vi}
+			ignored.
 
 							*:isp* *:isplit*
 :[range]isp[lit][!] [count] [/]pattern[/]
 			Like "CTRL-W i"  and "CTRL-W i", but search in
 			[range] lines (default: whole file).
-			See |:search-args| for [/] and [!].  {not in Vi}
+			See |:search-args| for [/] and [!].
 
 							*[d*
 [d			Display the first macro definition that contains the
 			macro under the cursor.  The search starts from the
 			beginning of the file.  If a count is given, the
-			count'th matching line is displayed.  {not in Vi}
+			count'th matching line is displayed.
 
 							*]d*
 ]d			like "[d", but start at the current cursor position.
-			{not in Vi}
 
 							*:ds* *:dsearch*
 :[range]ds[earch][!] [count] [/]string[/]
 			Like "[d"  and "]d", but search in [range] lines
 			(default: whole file).
-			See |:search-args| for [/] and [!].  {not in Vi}
+			See |:search-args| for [/] and [!].
 
 							*[D*
 [D			Display all macro definitions that contain the macro
 			under the cursor.  Filenames and line numbers are
 			displayed for the found lines.  The search starts
-			from the beginning of the file.  {not in Vi}
+			from the beginning of the file.
 
 							*]D*
 ]D			like "[D", but start at the current cursor position.
-			{not in Vi}
 
 							*:dli* *:dlist*
 :[range]dli[st][!] [/]string[/]
 			Like `[D`  and `]D`, but search in [range] lines
 			(default: whole file).
-			See |:search-args| for [/] and [!].  {not in Vi}
+			See |:search-args| for [/] and [!].
 			Note that `:dl` works like `:delete` with the "l"
 			flag, not `:dlist`.
 
@@ -781,36 +752,35 @@ CTRL-W i		Open a new window, with the cursor on the first line
 [ CTRL-D		Jump to the first macro definition that contains the
 			keyword under the cursor.  The search starts from
 			the beginning of the file.  If a count is given, the
-			count'th matching line is jumped to.  {not in Vi}
+			count'th matching line is jumped to.
 
 							*]_CTRL-D*
 ] CTRL-D		like "[ CTRL-D", but start at the current cursor
-			position.  {not in Vi}
+			position.
 
 							*:dj* *:djump*
 :[range]dj[ump][!] [count] [/]string[/]
 			Like "[ CTRL-D"  and "] CTRL-D", but search  in
 			[range] lines (default: whole file).
-			See |:search-args| for [/] and [!].  {not in Vi}
+			See |:search-args| for [/] and [!].
 
 CTRL-W CTRL-D					*CTRL-W_CTRL-D* *CTRL-W_d*
 CTRL-W d		Open a new window, with the cursor on the first
 			macro definition line that contains the keyword
 			under the cursor.  The search starts from the
 			beginning of the file.  If a count is given, the
-			count'th matching line is jumped to.  {not in Vi}
+			count'th matching line is jumped to.
 
 							*:dsp* *:dsplit*
 :[range]dsp[lit][!] [count] [/]string[/]
 			Like "CTRL-W d", but search in [range] lines
 			(default: whole file).
-			See |:search-args| for [/] and [!].  {not in Vi}
+			See |:search-args| for [/] and [!].
 
 							*:che* *:checkpath*
 :che[ckpath]		List all the included files that could not be found.
-			{not in Vi}
 
-:che[ckpath]!		List all the included files.  {not in Vi}
+:che[ckpath]!		List all the included files.
 
 								*:search-args*
 Common arguments for the commands above:
@@ -818,7 +788,7 @@ Common arguments for the commands above:
       When excluded, a match is ignored when the line is recognized as a
       comment (according to 'comments'), or the match is in a C comment (after
       "//" or inside /* */).  Note that a match may be missed if a line is
-      recognized as a comment, but the comment ends halfway the line.
+      recognized as a comment, but the comment ends halfway through the line.
       And  if the line is a comment, but it is not recognized (according to
       'comments') a match may be found in it anyway.  Example: >
 		/* comment

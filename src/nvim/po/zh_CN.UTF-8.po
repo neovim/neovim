@@ -1595,7 +1595,7 @@ msgid "E494: Use w or w>>"
 msgstr "E494: 请使用 w 或 w>>"
 
 #: ../ex_docmd.c:3454
-msgid "E319: Sorry, the command is not available in this version"
+msgid "E319: The command is not available in this version"
 msgstr "E319: 抱歉，命令在此版本中不可用"
 
 #: ../ex_docmd.c:3752
@@ -2078,7 +2078,7 @@ msgid "E201: *ReadPre autocommands must not change current buffer"
 msgstr "E201: *ReadPre 自动命令不允许改变当前缓冲区"
 
 #: ../fileio.c:672
-msgid "Vim: Reading from stdin...\n"
+msgid "Nvim: Reading from stdin...\n"
 msgstr "Vim: 从标准输入读取...\n"
 
 #. Re-opening the original file failed!
@@ -2714,7 +2714,7 @@ msgid "E477: No ! allowed"
 msgstr "E477: 不能使用 \"!\""
 
 #: ../globals.h:1035
-msgid "E25: GUI cannot be used: Not enabled at compile time"
+msgid "E25: Nvim does not have a built-in GUI"
 msgstr "E25: 无法使用图形界面: 编译时没有启用"
 
 #: ../globals.h:1036
@@ -4416,7 +4416,7 @@ msgid "E663: At end of changelist"
 msgstr "E663: 已在改变列表的末尾处"
 
 #: ../normal.c:7053
-msgid "Type  :quit<Enter>  to exit Vim"
+msgid "Type  :quit<Enter>  to exit Nvim"
 msgstr "输入  :quit<Enter>  退出 Vim"
 
 #: ../ops.c:248

@@ -1,0 +1,237 @@
+*vim_diff.txt*    For Nvim.						{Nvim}
+
+
+			    NVIM REFERENCE MANUAL
+
+
+Differences between Nvim and Vim			       *vim-differences*
+
+Throughout the help files, differences between Nvim and Vim are indicated via
+the "{Nvim}" tag.  This document is a complete and centralized list of all
+these differences.
+
+1. Configuration		|nvim-configuration|
+2. Option defaults		|nvim-option-defaults|
+3. Changed features		|nvim-features-changed|
+4. New features			|nvim-features-new|
+5. Missing legacy features	|nvim-features-missing|
+6. Removed features		|nvim-features-removed|
+
+
+==============================================================================
+1. Configuration					    *nvim-configuration*
+
+- Use `$XDG_CONFIG_HOME/nvim/init.vim` instead of `.vimrc` for storing 
+  configuration.
+- Use `$XDG_CONFIG_HOME/nvim` instead of `.vim` to store configuration files.
+- Use `$XDG_DATA_HOME/shada/main.shada` instead of `.viminfo` for persistent 
+  session information.
+
+==============================================================================
+2. Option defaults					  *nvim-option-defaults*
+
+- 'autoindent' is set by default
+- 'autoread' is set by default
+- 'backspace' defaults to "indent,eol,start"
+- 'complete' doesn't include "i"
+- 'display' defaults to "lastline"
+- 'encoding' defaults to "utf-8"
+- 'formatoptions' defaults to "tcqj"
+- 'history' defaults to 10000 (the maximum)
+- 'hlsearch' is set by default
+- 'incsearch' is set by default
+- 'langnoremap' is set by default
+- 'laststatus' defaults to 2 (statusline is always shown)
+- 'listchars' defaults to "tab:> ,trail:-,nbsp:+"
+- 'mouse' defaults to "a"
+- 'nocompatible' is always set
+- 'nrformats' defaults to "hex"
+- 'sessionoptions' doesn't include "options"
+- 'smarttab' is set by default
+- 'tabpagemax' defaults to 50
+- 'tags' defaults to "./tags;,tags"
+- 'ttyfast' is always set
+- 'viminfo' includes "!"
+- 'wildmenu' is set by default
+
+==============================================================================
+3. Changed features					 *nvim-features-changed*
+
+Nvim always builds with all features, in contrast to Vim which may have
+certain features removed/added at compile-time.  This is like if Vim's "HUGE"
+build was the only Vim release type (except Nvim is smaller than Vim's "HUGE"
+build).
+
+If a Python interpreter is available on your `$PATH`, |:python| and |:python3|
+are always available and may be used simultaneously in separate plugins.  The
+`neovim` pip package must be installed to use Python plugins in Nvim (see
+|nvim-python|).
+
+|mkdir()| behaviour changed:
+1. Assuming /tmp/foo does not exist and /tmp can be written to 
+   mkdir('/tmp/foo/bar', 'p', 0700) will create both /tmp/foo and /tmp/foo/bar 
+   with 0700 permissions. Vim mkdir will create /tmp/foo with 0755.
+2. If you try to create an existing directory with `'p'` (e.g. mkdir('/', 
+   'p')) mkdir() will silently exit. In Vim this was an error.
+3. mkdir() error messages now include strerror() text when mkdir fails.
+
+'encoding' cannot be changed after startup.
+
+|string()| and |:echo| behaviour changed:
+1. No maximum recursion depth limit is applied to nested container 
+   structures.
+2. |string()| fails immediately on nested containers, not when recursion limit 
+   was exceeded.
+2. When |:echo| encounters duplicate containers like >
+
+       let l = []
+       echo [l, l]
+<
+   it does not use "[...]" (was: "[[], [...]]", now: "[[], []]"). "..." is 
+   only used for recursive containers.
+3. |:echo| printing nested containers adds "@level" after "..." designating 
+   the level at which recursive container was printed: |:echo-self-refer|.  
+   Same thing applies to |string()| (though it uses construct like 
+   "{E724@level}"), but this is not reliable because |string()| continues to 
+   error out.
+
+Viminfo text files were replaced with binary (messagepack) ShaDa files. 
+Additional differences:
+
+- |shada-c| has no effect.
+- |shada-s| now limits size of every item and not just registers.
+- When reading ShaDa files items are merged according to the timestamp. 
+  |shada-merging|
+- 'viminfo' option got renamed to 'shada'. Old option is kept as an alias for 
+  compatibility reasons.
+- |:wviminfo| was renamed to |:wshada|, |:rviminfo| to |:rshada|.  Old 
+  commands are still kept.
+- When writing (|:wshada| without bang or at exit) it merges much more data, 
+  and does this according to the timestamp.  Vim merges only marks. 
+  |shada-merging|
+- ShaDa file format was designed with forward and backward compatibility in 
+  mind. |shada-compatibility|
+- Some errors make ShaDa code keep temporary file in-place for user to decide 
+  what to do with it.  Vim deletes temporary file in these cases. 
+  |shada-error-handling|
+- Vim keeps no timestamps at all, neither in viminfo file nor in the instance 
+  itself.
+
+==============================================================================
+4. New Features						     *nvim-features-new*
+
+See |nvim-intro| for a list of Nvim's largest new features.
+
+|bracketed-paste-mode| is built-in and enabled by default.
+
+Meta (alt) chords are recognized (even in the terminal).
+  <M-1>, <M-2>, ...
+  <M-BS>, <M-Del>, <M-Ins>, ...
+  <M-/>, <M-\>, ...
+  <M-Space>, <M-Enter>, <M-=>, <M-->, <M-?>, <M-$>, ...
+
+  Note: Meta chords are case-sensitive (<M-a> is distinguished from <M-A>).
+
+Some `CTRL-SHIFT-...` key chords are distinguished from `CTRL-...` variants (even in
+the terminal). Specifically, the following are known to work:
+  <C-Tab>, <C-S-Tab>
+  <C-BS>, <C-S-BS>
+  <C-Enter>, <C-S-Enter>
+
+Events:
+  |TabNew|
+  |TabNewEntered|
+  |TabClosed|
+
+Highlight groups:
+  |hl-EndOfBuffer|
+  |hl-TermCursor|
+  |hl-TermCursorNC|
+
+==============================================================================
+5. Missing legacy features				 *nvim-features-missing*
+				     *if_ruby* *if_lua* *if_perl* *if_mzscheme* *if_tcl*
+
+These legacy Vim features may be implemented in the future, but they are not
+planned for the current milestone.
+
+- vim.bindeval() (new feature in Vim 7.4 Python interface)
+- |if_ruby|
+- |if_lua|
+- |if_perl|
+- |if_mzscheme|
+- |if_tcl|
+
+==============================================================================
+6. Removed features					 *nvim-features-removed*
+
+These features are in Vim, but have been intentionally removed from Nvim.
+
+Vi-compatible mode:
+  ":set nocompatible" is ignored
+  ":set compatible" is an error
+
+Ed-compatible mode:
+  ":set noedcompatible" is ignored
+  ":set edcompatible" is an error
+
+'ttyfast':
+  ":set ttyfast" is ignored
+  ":set nottyfast" is an error
+
+Encryption support:
+  'cryptmethod'
+  'key'
+
+MS-DOS support:
+  'bioskey'
+  'conskey'
+
+Highlight groups:
+  |hl-VisualNOS|
+
+Other options:
+  'cpoptions' ('g', 'w', 'H', '*', '-', 'j', and all POSIX flags were removed)
+  'guioptions' (only the 't' flag was removed)
+  'guipty'
+  'macatsui'
+  'shelltype'
+  'shortname'
+  'termencoding'
+  'textauto'
+  'textmode'
+  'toolbar'
+  'toolbariconsize'
+  'ttybuiltin'
+  'ttymouse'
+  'weirdinvert'
+
+Other commands:
+  :Print
+  :fixdel
+  :mode (no longer accepts an argument)
+  :shell
+  :tearoff
+
+Other compile-time features:
+  EBCDIC
+  Emacs tags support
+
+Nvim does not have a built-in GUI and hence the following aliases have been
+removed: gvim, gex, gview, rgvim, rgview
+
+"Easy mode" (eview, evim, nvim -y)
+"(g)vimdiff" (alias for "(g)nvim -d" |diff-mode|)
+"Vi mode" (nvim -v)
+
+The ability to start nvim via the following aliases has been removed in favor
+of just using their command line arguments:
+
+  ex        nvim -e
+  exim      nvim -E
+  view      nvim -R
+  rvim      nvim -Z
+  rview     nvim -RZ
+
+==============================================================================
+ vim:tw=78:ts=8:noet:ft=help:norl:

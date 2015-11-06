@@ -8,6 +8,7 @@
 #define NVIM_EX_CMDS_DEFS_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "nvim/pos.h"      // for linenr_T
 #include "nvim/normal.h"
@@ -59,16 +60,24 @@
 #define USECTRLV       0x2000   /* do not remove CTRL-V from argument */
 #define NOTADR         0x4000   /* number before command is not an address */
 #define EDITCMD        0x8000   /* allow "+command" argument */
-#define BUFNAME       0x10000L  /* accepts buffer name */
-#define BUFUNL        0x20000L  /* accepts unlisted buffer too */
-#define ARGOPT        0x40000L  /* allow "++opt=val" argument */
-#define SBOXOK        0x80000L  /* allowed in the sandbox */
-#define CMDWIN       0x100000L  /* allowed in cmdline window */
-#define MODIFY       0x200000L  /* forbidden in non-'modifiable' buffer */
-#define EXFLAGS      0x400000L  /* allow flags after count in argument */
+#define BUFNAME       0x10000   /* accepts buffer name */
+#define BUFUNL        0x20000   /* accepts unlisted buffer too */
+#define ARGOPT        0x40000   /* allow "++opt=val" argument */
+#define SBOXOK        0x80000   /* allowed in the sandbox */
+#define CMDWIN       0x100000   /* allowed in cmdline window */
+#define MODIFY       0x200000   /* forbidden in non-'modifiable' buffer */
+#define EXFLAGS      0x400000   /* allow flags after count in argument */
 #define FILES   (XFILE | EXTRA) /* multiple extra files allowed */
 #define WORD1   (EXTRA | NOSPC) /* one extra word allowed */
 #define FILE1   (FILES | NOSPC) /* 1 file allowed, defaults to current file */
+
+// values for cmd_addr_type
+#define ADDR_LINES              0
+#define ADDR_WINDOWS            1
+#define ADDR_ARGUMENTS          2
+#define ADDR_LOADED_BUFFERS     3
+#define ADDR_BUFFERS            4
+#define ADDR_TABS               5
 
 typedef struct exarg exarg_T;
 
@@ -85,10 +94,9 @@ typedef char_u *(*LineGetter)(int, void *, int);
 typedef struct cmdname {
   char_u *cmd_name;    ///< Name of the command.
   ex_func_T cmd_func;  ///< Function with implementation of this command.
-  long_u cmd_argt;     ///< Relevant flags from the declared above.
+  uint32_t cmd_argt;     ///< Relevant flags from the declared above.
+  int cmd_addr_type;     ///< Flag for address type
 } CommandDefinition;
-
-#define USER_CMDIDX(idx) ((int)(idx) < 0)
 
 /// Arguments used for Ex commands.
 struct exarg {
@@ -97,12 +105,13 @@ struct exarg {
   char_u      *cmd;             ///< the name of the command (except for :make)
   char_u      **cmdlinep;       ///< pointer to pointer of allocated cmdline
   cmdidx_T cmdidx;              ///< the index for the command
-  long argt;                    ///< flags for the command
+  uint32_t argt;                ///< flags for the command
   int skip;                     ///< don't execute the command, only parse it
   int forceit;                  ///< TRUE if ! present
   int addr_count;               ///< the number of addresses given
   linenr_T line1;               ///< the first line number
   linenr_T line2;               ///< the second line number or count
+  int addr_type;                ///< type of the count/range
   int flags;                    ///< extra flags after count: EXFLAG_
   char_u      *do_ecmd_cmd;     ///< +command arg to be used in edited file
   linenr_T do_ecmd_lnum;        ///< the line number in an edited file

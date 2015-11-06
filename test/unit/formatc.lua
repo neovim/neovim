@@ -149,8 +149,7 @@ local C_keywords = set {
 --   };
 --
 -- would become:
---  struct mystruct
---  { int a; int b; };
+--  struct mystruct { int a; int b; };
 --
 --  The first one will have a lot of false positives (the line '{' for
 --  example), the second one is more unique.
@@ -179,7 +178,8 @@ local function formatc(str)
       -- static and/or inline usually indicate an inline header function,
       -- which has no trailing ';', so we have to add a newline after the
       -- '}' ourselves.
-      if token[1] == 'static' or token[1] == 'inline' then
+      local tok = token[1]
+      if tok == 'static' or tok == 'inline' or tok == '__inline' then
         end_at_brace = true
       end
     elseif typ == 'preprocessor' then

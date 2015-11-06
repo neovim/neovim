@@ -1,3 +1,4 @@
+local assert = require('luassert')
 local ffi = require('ffi')
 local formatc = require('test.unit.formatc')
 local Set = require('test.unit.set')
@@ -135,31 +136,11 @@ end
 
 -- initialize some global variables, this is still necessary to unit test
 -- functions that rely on global state.
-local function vim_init()
-  if vim_init_called ~= nil then
-    return 
-  end
-  -- import os_unix.h for mch_early_init(), which initializes some globals
-  local all = cimport('./src/nvim/os_unix.h',
-                      './src/nvim/misc1.h',
-                      './src/nvim/eval.h',
-                      './src/nvim/os_unix.h',
-                      './src/nvim/option.h',
-                      './src/nvim/ex_cmds2.h',
-                      './src/nvim/window.h',
-                      './src/nvim/ops.h',
-                      './src/nvim/normal.h',
-                      './src/nvim/mbyte.h')
-  all.mch_early_init()
-  all.mb_init()
-  all.eval_init()
-  all.init_normal_cmds()
-  all.win_alloc_first()
-  all.init_yank()
-  all.init_homedir()
-  all.set_init_1()
-  all.set_lang_var()
-  vim_init_called = true
+do
+  local main = cimport('./src/nvim/main.h')
+  local time = cimport('./src/nvim/os/time.h')
+  time.time_init()
+  main.early_init()
 end
 
 -- C constants.
@@ -182,7 +163,6 @@ return {
   lib = libnvim,
   cstr = cstr,
   to_cstr = to_cstr,
-  vim_init = vim_init,
   NULL = NULL,
   OK = OK,
   FAIL = FAIL

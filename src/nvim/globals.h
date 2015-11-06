@@ -28,6 +28,7 @@
 #include "nvim/menu.h"
 #include "nvim/syntax_defs.h"
 #include "nvim/types.h"
+#include "nvim/event/loop.h"
 
 /*
  * definition of global variables
@@ -58,7 +59,7 @@
 /* Values for "starting" */
 #define NO_SCREEN       2       /* no screen updating yet */
 #define NO_BUFFERS      1       /* not all buffers loaded yet */
-/*			0	   not starting anymore */
+/*                      0          not starting anymore */
 
 /*
  * Number of Rows and Columns in the screen.
@@ -67,12 +68,16 @@
  * They may have different values when the screen wasn't (re)allocated yet
  * after setting Rows or Columns (e.g., when starting up).
  */
+
+#define DFLT_COLS       80              /* default value for 'columns' */
+#define DFLT_ROWS       24              /* default value for 'lines' */
+
 EXTERN long Rows                        /* nr of rows in the screen */
 #ifdef DO_INIT
-  = 24L
+  = DFLT_ROWS
 #endif
 ;
-EXTERN long Columns INIT(= 80);         /* nr of columns in the screen */
+EXTERN long Columns INIT(= DFLT_COLS);         /* nr of columns in the screen */
 
 /*
  * The characters and attributes cached for the screen.
@@ -376,7 +381,6 @@ EXTERN int provider_call_nesting INIT(= 0);
 EXTERN char_u hash_removed;
 
 
-EXTERN int scroll_region INIT(= FALSE);      /* term supports scroll region */
 EXTERN int t_colors INIT(= 0);              /* int value of T_CCO */
 
 /*
@@ -405,7 +409,10 @@ EXTERN int no_check_timestamps INIT(= 0);       /* Don't check timestamps */
 typedef enum {
   HLF_8 = 0         /* Meta & special keys listed with ":map", text that is
                        displayed different from what it is */
-  , HLF_AT          /* @ and ~ characters at end of screen, characters that
+  , HLF_EOB         //< after the last line in the buffer
+  , HLF_TERM        //< terminal cursor focused
+  , HLF_TERMNC      //< terminal cursor unfocused
+  , HLF_AT          /* @ characters at end of screen, characters that
                        don't really exist in the text */
   , HLF_D           /* directories in CTRL-D listing */
   , HLF_E           /* error messages */
@@ -451,20 +458,19 @@ typedef enum {
 
 /* The HL_FLAGS must be in the same order as the HLF_ enums!
  * When changing this also adjust the default for 'highlight'. */
-#define HL_FLAGS {'8', '@', 'd', 'e', 'i', 'l', 'm', 'M', 'n', 'N', 'r', 's', \
-                  'S', 'c', 't', 'v', 'V', 'w', 'W', 'f', 'F', 'A', 'C', 'D', \
-                  'T', '-', '>', 'B', 'P', 'R', 'L', '+', '=', 'x', 'X', '*', \
-                  '#', '_', '!', '.', 'o'}
+#define HL_FLAGS {'8', '~', 'z', 'Z', '@', 'd', 'e', 'i', 'l', 'm', 'M', 'n', \
+                  'N', 'r', 's', 'S', 'c', 't', 'v', 'V', 'w', 'W', 'f', 'F', \
+                  'A', 'C', 'D', 'T', '-', '>', 'B', 'P', 'R', 'L', '+', '=', \
+                  'x', 'X', '*', '#', '_', '!', '.', 'o'}
 
 EXTERN int highlight_attr[HLF_COUNT];       /* Highl. attr for each context. */
-# define USER_HIGHLIGHT
-#ifdef USER_HIGHLIGHT
 EXTERN int highlight_user[9];                   /* User[1-9] attributes */
 EXTERN int highlight_stlnc[9];                  /* On top of user */
-#endif
 EXTERN int cterm_normal_fg_color INIT(= 0);
 EXTERN int cterm_normal_fg_bold INIT(= 0);
 EXTERN int cterm_normal_bg_color INIT(= 0);
+EXTERN RgbValue normal_fg INIT(= -1);
+EXTERN RgbValue normal_bg INIT(= -1);
 
 EXTERN int autocmd_busy INIT(= FALSE);          /* Is apply_autocmds() busy? */
 EXTERN int autocmd_no_enter INIT(= FALSE);      /* *Enter autocmds disabled */
@@ -495,14 +501,6 @@ EXTERN bool mouse_past_bottom INIT(= false);    /* mouse below last line */
 EXTERN bool mouse_past_eol INIT(= false);       /* mouse right of line */
 EXTERN int mouse_dragging INIT(= 0);            /* extending Visual area with
                                                    mouse dragging */
-/*
- * When the DEC mouse has been pressed but not yet released we enable
- * automatic querys for the mouse position.
- */
-EXTERN int WantQueryMouse INIT(= FALSE);
-
-
-
 
 /* Value set from 'diffopt'. */
 EXTERN int diff_context INIT(= 6);              /* context for folds */
@@ -520,8 +518,6 @@ EXTERN int sys_menu INIT(= FALSE);
 /* While redrawing the screen this flag is set.  It means the screen size
  * ('lines' and 'rows') must not be changed. */
 EXTERN int updating_screen INIT(= FALSE);
-
-
 
 /*
  * All windows are linked in a list. firstwin points to the first entry,
@@ -604,16 +600,13 @@ EXTERN int exiting INIT(= FALSE);
 /* TRUE when planning to exit Vim.  Might
  * still keep on running if there is a changed
  * buffer. */
-EXTERN int really_exiting INIT(= FALSE);
-/* TRUE when we are sure to exit, e.g., after
- * a deadly signal */
 /* volatile because it is used in signal handler deathtrap(). */
 EXTERN volatile int full_screen INIT(= FALSE);
 /* TRUE when doing full-screen output
  * otherwise only writing some messages */
 
 EXTERN int restricted INIT(= FALSE);
-/* TRUE when started as "rvim" */
+// TRUE when started in restricted mode (-Z)
 EXTERN int secure INIT(= FALSE);
 /* non-zero when only "safe" commands are
  * allowed, e.g. when sourcing .exrc or .vimrc
@@ -631,7 +624,6 @@ EXTERN int allbuf_lock INIT(= 0);
  * changed, no buffer can be deleted and
  * current directory can't be changed.
  * Used for SwapExists et al. */
-# define HAVE_SANDBOX
 EXTERN int sandbox INIT(= 0);
 /* Non-zero when evaluating an expression in a
  * "sandbox".  Several things are not allowed
@@ -640,6 +632,10 @@ EXTERN int sandbox INIT(= 0);
 EXTERN int silent_mode INIT(= FALSE);
 /* set to TRUE when "-s" commandline argument
  * used for ex */
+
+// Set to true when sourcing of startup scripts (nvimrc) is done.
+// Used for options that cannot be changed after startup scripts.
+EXTERN bool did_source_startup_scripts INIT(= false);
 
 EXTERN pos_T VIsual;            /* start position of active Visual selection */
 EXTERN int VIsual_active INIT(= FALSE);
@@ -764,11 +760,6 @@ EXTERN int has_mbyte INIT(= 0);                 /* any multi-byte encoding */
  */
 EXTERN char mb_bytelen_tab[256];
 
-/* Variables that tell what conversion is used for keyboard input and display
- * output. */
-EXTERN vimconv_T input_conv;                    /* type of input conversion */
-EXTERN vimconv_T output_conv;                   /* type of output conversion */
-
 /*
  * Function pointers, used to quickly get to the right function.  Each has
  * three possible values: latin_ (8-bit), utfc_ or utf_ (utf-8) and dbcs_
@@ -813,7 +804,7 @@ EXTERN int State INIT(= NORMAL);        /* This is the current state of the
                                          * command interpreter. */
 
 EXTERN int finish_op INIT(= FALSE);     /* TRUE while an operator is pending */
-EXTERN int opcount INIT(= 0);           /* count for pending operator */
+EXTERN long opcount INIT(= 0);          /* count for pending operator */
 
 /*
  * ex mode (Q) state
@@ -832,6 +823,8 @@ EXTERN int no_u_sync INIT(= 0);         /* Don't call u_sync() */
 EXTERN int u_sync_once INIT(= 0);       /* Call u_sync() once when evaluating
                                            an expression. */
 
+EXTERN bool force_restart_edit INIT(= false);  // force restart_edit after
+                                               // ex_normal returns
 EXTERN int restart_edit INIT(= 0);      /* call edit when next cmd finished */
 EXTERN int arrow_used;                  /* Normally FALSE, set to TRUE after
                                          * hitting cursor key in insert mode.
@@ -847,15 +840,7 @@ EXTERN int ctrl_x_mode INIT(= 0);       /* Which Ctrl-X mode are we in? */
 
 EXTERN int no_abbr INIT(= TRUE);        /* TRUE when no abbreviations loaded */
 
-#ifdef USE_EXE_NAME
-EXTERN char_u   *exe_name;              /* the name of the executable */
-#endif
-
-#ifdef USE_ON_FLY_SCROLL
-EXTERN int dont_scroll INIT(= FALSE);     /* don't use scrollbars when TRUE */
-#endif
 EXTERN int mapped_ctrl_c INIT(= FALSE);      /* CTRL-C is mapped */
-EXTERN bool ctrl_c_interrupts INIT(= true);  /* CTRL-C sets got_int */
 
 EXTERN cmdmod_T cmdmod;                 /* Ex command modifiers */
 
@@ -869,7 +854,6 @@ EXTERN int cmd_silent INIT(= FALSE);      /* don't echo the command line */
 #define SEA_QUIT        2       /* quit editing the file */
 #define SEA_RECOVER     3       /* recover the file */
 
-#define HAS_SWAP_EXISTS_ACTION
 EXTERN int swap_exists_action INIT(= SEA_NONE);
 /* For dialog when swap file already
  * exists. */
@@ -898,10 +882,6 @@ EXTERN int stop_insert_mode;            /* for ":stopinsert" and 'insertmode' */
 
 EXTERN int KeyTyped;                    /* TRUE if user typed current char */
 EXTERN int KeyStuffed;                  /* TRUE if current char from stuffbuf */
-#ifdef USE_IM_CONTROL
-EXTERN int vgetc_im_active;             /* Input Method was active for last
-                                           character obtained from vgetc() */
-#endif
 EXTERN int maptick INIT(= 0);           /* tick for each non-mapped char */
 
 EXTERN char_u chartab[256];             /* table used in charset.c; See
@@ -911,20 +891,17 @@ EXTERN int must_redraw INIT(= 0);           /* type of redraw necessary */
 EXTERN int skip_redraw INIT(= FALSE);       /* skip redraw once */
 EXTERN int do_redraw INIT(= FALSE);         /* extra redraw once */
 
-EXTERN int need_highlight_changed INIT(= TRUE);
-EXTERN char_u   *use_viminfo INIT(= NULL);  /* name of viminfo file to use */
+EXTERN int need_highlight_changed INIT(= true);
+EXTERN char *used_shada_file INIT(= NULL);  // name of the ShaDa file to use
 
 #define NSCRIPT 15
 EXTERN FILE     *scriptin[NSCRIPT];         /* streams to read script from */
 EXTERN int curscript INIT(= 0);             /* index in scriptin[] */
 EXTERN FILE     *scriptout INIT(= NULL);    /* stream to write script to */
-EXTERN int read_cmd_fd INIT(= 0);           /* fd to read commands from */
 
 /* volatile because it is used in signal handler catch_sigint(). */
 EXTERN volatile int got_int INIT(= FALSE);    /* set to TRUE when interrupt
                                                  signal occurred */
-EXTERN int termcap_active INIT(= FALSE);        /* set by starttermcap() */
-EXTERN int cur_tmode INIT(= TMODE_COOK);        /* input terminal mode */
 EXTERN int bangredo INIT(= FALSE);          /* set to TRUE with ! command */
 EXTERN int searchcmdlen;                    /* length of previous search cmd */
 EXTERN int reg_do_extmatch INIT(= 0);       /* Used when compiling regexp:
@@ -996,17 +973,13 @@ EXTERN int wild_menu_showing INIT(= 0);
 
 EXTERN char breakat_flags[256];         /* which characters are in 'breakat' */
 
-/* these are in version.c */
-extern char *Version;
-extern char *longVersion;
-
 /*
  * Some file names are stored in pathdef.c, which is generated from the
  * Makefile to make their value depend on the Makefile.
  */
 #ifdef HAVE_PATHDEF
-extern char_u *default_vim_dir;
-extern char_u *default_vimruntime_dir;
+extern char *default_vim_dir;
+extern char *default_vimruntime_dir;
 extern char_u *compiled_user;
 extern char_u *compiled_sys;
 #endif
@@ -1021,6 +994,7 @@ EXTERN int lcs_eol INIT(= '$');
 EXTERN int lcs_ext INIT(= NUL);
 EXTERN int lcs_prec INIT(= NUL);
 EXTERN int lcs_nbsp INIT(= NUL);
+EXTERN int lcs_space INIT(= NUL);
 EXTERN int lcs_tab1 INIT(= NUL);
 EXTERN int lcs_tab2 INIT(= NUL);
 EXTERN int lcs_trail INIT(= NUL);
@@ -1070,14 +1044,6 @@ EXTERN int typebuf_was_filled INIT(= FALSE);      /* received text from client
                                                      or from feedkeys() */
 
 
-#if defined(UNIX)
-EXTERN int term_is_xterm INIT(= FALSE);         /* xterm-like 'term' */
-#endif
-
-#if defined(UNIX)
-EXTERN int xterm_conflict_mouse INIT(= FALSE);
-#endif
-
 #ifdef BACKSLASH_IN_FILENAME
 EXTERN char psepc INIT(= '\\');         /* normal path separator character */
 EXTERN char psepcN INIT(= '/');         /* abnormal path separator character */
@@ -1118,6 +1084,8 @@ EXTERN garray_T error_ga
  * Excluded are errors that are only used once and debugging messages.
  */
 EXTERN char_u e_abort[] INIT(= N_("E470: Command aborted"));
+EXTERN char_u e_afterinit[] INIT(= N_(
+        "E905: Cannot set this option after startup"));
 EXTERN char_u e_api_spawn_failed[] INIT(= N_("E903: Could not spawn API job"));
 EXTERN char_u e_argreq[] INIT(= N_("E471: Argument required"));
 EXTERN char_u e_backslash[] INIT(= N_("E10: \\ should be followed by /, ? or &"));
@@ -1145,7 +1113,11 @@ EXTERN char_u e_isadir2[] INIT(= N_("E17: \"%s\" is a directory"));
 EXTERN char_u e_invjob[] INIT(= N_("E900: Invalid job id"));
 EXTERN char_u e_jobtblfull[] INIT(= N_("E901: Job table is full"));
 EXTERN char_u e_jobexe[] INIT(= N_("E902: \"%s\" is not an executable"));
+EXTERN char_u e_jobspawn[] INIT(= N_(
+      "E903: Process for command \"%s\" could not be spawned"));
+EXTERN char_u e_jobnotpty[] INIT(= N_("E904: Job is not connected to a pty"));
 EXTERN char_u e_libcall[] INIT(= N_("E364: Library call failed for \"%s()\""));
+EXTERN char_u e_mkdir[] INIT(= N_("E739: Cannot create directory %s: %s"));
 EXTERN char_u e_markinval[] INIT(= N_("E19: Mark has invalid line number"));
 EXTERN char_u e_marknotset[] INIT(= N_("E20: Mark not set"));
 EXTERN char_u e_modifiable[] INIT(= N_(
@@ -1154,8 +1126,7 @@ EXTERN char_u e_nesting[] INIT(= N_("E22: Scripts nested too deep"));
 EXTERN char_u e_noalt[] INIT(= N_("E23: No alternate file"));
 EXTERN char_u e_noabbr[] INIT(= N_("E24: No such abbreviation"));
 EXTERN char_u e_nobang[] INIT(= N_("E477: No ! allowed"));
-EXTERN char_u e_nogvim[] INIT(= N_(
-        "E25: GUI cannot be used: Not enabled at compile time"));
+EXTERN char_u e_nogvim[] INIT(= N_("E25: Nvim does not have a built-in GUI"));
 EXTERN char_u e_nogroup[] INIT(= N_("E28: No such highlight group name: %s"));
 EXTERN char_u e_noinstext[] INIT(= N_("E29: No inserted text yet"));
 EXTERN char_u e_nolastcmd[] INIT(= N_("E30: No previous command line"));
@@ -1197,9 +1168,7 @@ EXTERN char_u e_readonlyvar[] INIT(= N_(
 EXTERN char_u e_readonlysbx[] INIT(= N_(
         "E794: Cannot set variable in the sandbox: \"%s\""));
 EXTERN char_u e_readerrf[] INIT(= N_("E47: Error while reading errorfile"));
-#ifdef HAVE_SANDBOX
 EXTERN char_u e_sandbox[] INIT(= N_("E48: Not allowed in sandbox"));
-#endif
 EXTERN char_u e_secure[] INIT(= N_("E523: Not allowed here"));
 EXTERN char_u e_screenmode[] INIT(= N_(
         "E359: Screen mode setting not supported"));
@@ -1232,6 +1201,7 @@ EXTERN char_u e_invalpat[] INIT(= N_(
 EXTERN char_u e_bufloaded[] INIT(= N_("E139: File is loaded in another buffer"));
 EXTERN char_u e_notset[] INIT(= N_("E764: Option '%s' is not set"));
 EXTERN char_u e_invalidreg[] INIT(= N_("E850: Invalid register name"));
+EXTERN char_u e_unsupportedoption[] INIT(= N_("E519: Option not supported"));
 
 
 EXTERN char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
@@ -1250,12 +1220,9 @@ EXTERN FILE *time_fd INIT(= NULL);  /* where to write startup timing */
 EXTERN int ignored;
 EXTERN char *ignoredp;
 
-/* Temporarily moved these static variables to assist in migrating from
- * os_unix.c */
-EXTERN int curr_tmode INIT(= TMODE_COOK); /* contains current terminal mode */
-
 // If a msgpack-rpc channel should be started over stdin/stdout
 EXTERN bool embedded_mode INIT(= false);
+EXTERN Loop loop;
 
 /// Used to track the status of external functions.
 /// Currently only used for iconv().

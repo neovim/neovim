@@ -4,6 +4,7 @@ local clear, nvim, buffer, curbuf, curbuf_contents, window, curwin, eq, neq,
   ok, feed, rawfeed, insert, eval = helpers.clear, helpers.nvim, helpers.buffer, helpers.curbuf,
   helpers.curbuf_contents, helpers.window, helpers.curwin, helpers.eq,
   helpers.neq, helpers.ok, helpers.feed, helpers.rawfeed, helpers.insert, helpers.eval
+local wait = helpers.wait
 
 -- check if str is visible at the beginning of some line
 local function is_visible(str)
@@ -55,6 +56,7 @@ describe('window_* functions', function()
       insert("epilogue")
       win = curwin()
       feed('gg')
+      wait() -- let nvim process the 'gg' command
 
       -- cursor position is at beginning
       eq({1, 0}, window('get_cursor', win))
@@ -104,7 +106,7 @@ describe('window_* functions', function()
       nvim('set_current_window', nvim('get_windows')[2])
       nvim('command', 'split')
       eq(window('get_height', nvim('get_windows')[2]),
-        window('get_height', nvim('get_windows')[1]) / 2)
+        math.floor(window('get_height', nvim('get_windows')[1]) / 2))
       window('set_height', nvim('get_windows')[2], 2)
       eq(2, window('get_height', nvim('get_windows')[2]))
     end)
@@ -118,7 +120,7 @@ describe('window_* functions', function()
       nvim('set_current_window', nvim('get_windows')[2])
       nvim('command', 'vsplit')
       eq(window('get_width', nvim('get_windows')[2]),
-        window('get_width', nvim('get_windows')[1]) / 2)
+        math.floor(window('get_width', nvim('get_windows')[1]) / 2))
       window('set_width', nvim('get_windows')[2], 2)
       eq(2, window('get_width', nvim('get_windows')[2]))
     end)

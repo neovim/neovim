@@ -1577,7 +1577,7 @@ msgid "E494: Use w or w>>"
 msgstr "E494: w나 w>>를 사용하십시오"
 
 #: ../ex_docmd.c:3454
-msgid "E319: Sorry, the command is not available in this version"
+msgid "E319: The command is not available in this version"
 msgstr "E319: 미안합니다, 그 명령은 현재 판에서 사용할 수 없습니다"
 
 #: ../ex_docmd.c:3752
@@ -2049,7 +2049,7 @@ msgid "E201: *ReadPre autocommands must not change current buffer"
 msgstr "E201: *ReadPre 자동명령은 현재 버퍼를 바꾸면 안 됩니다"
 
 #: ../fileio.c:672
-msgid "Vim: Reading from stdin...\n"
+msgid "Nvim: Reading from stdin...\n"
 msgstr "빔: 표준입력에서 읽는 중...\n"
 
 #. Re-opening the original file failed!
@@ -2687,7 +2687,7 @@ msgid "E477: No ! allowed"
 msgstr "E477: !은 허용되지 않습니다"
 
 #: ../globals.h:1035
-msgid "E25: GUI cannot be used: Not enabled at compile time"
+msgid "E25: Nvim does not have a built-in GUI"
 msgstr "E25: GUI는 사용할 수 없습니다: 컴파일 때 포함되지 않았습니다"
 
 #: ../globals.h:1036
@@ -4373,7 +4373,7 @@ msgid "E663: At end of changelist"
 msgstr ""
 
 #: ../normal.c:7053
-msgid "Type  :quit<Enter>  to exit Vim"
+msgid "Type  :quit<Enter>  to exit Nvim"
 msgstr "VIM을 마치려면  :quit<Enter>  입력"
 
 #: ../ops.c:248

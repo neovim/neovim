@@ -45,7 +45,6 @@ let colors_name = "slate"
 :hi Todo guifg=orangered guibg=yellow2
 :hi Directory ctermfg=darkcyan
 :hi ErrorMsg cterm=bold guifg=White guibg=Red cterm=bold ctermfg=7 ctermbg=1
-:hi VisualNOS cterm=bold,underline
 :hi WildMenu ctermfg=0 ctermbg=3
 :hi DiffAdd ctermbg=4
 :hi DiffChange ctermbg=5

@@ -1,0 +1,25 @@
+Test for character searches
+
+STARTTEST
+:so small.vim
+:" check that "fe" and ";" work
+/^X
+ylfep;;p,,p:
+:" check that save/restore works
+/^Y
+ylfep:let csave = getcharsearch()
+fip:call setcharsearch(csave)
+;p;p:
+:" check that setcharsearch() changes the settins.
+/^Z
+ylfep:call setcharsearch({'char': 'k'})
+;p:call setcharsearch({'forward': 0})
+$;p:call setcharseearch({'until'}: 1})
+;;p:
+:/^X/,$w! test.out
+:qa!
+ENDTEST
+
+Xabcdefghijkemnopqretuvwxyz
+Yabcdefghijkemnopqretuvwxyz
+Zabcdefghijkemnokqretkvwxyz

@@ -24,7 +24,7 @@
 /// Clear an allocated growing array.
 void ga_clear(garray_T *gap)
 {
-  free(gap->ga_data);
+  xfree(gap->ga_data);
 
   // Initialize growing array without resetting itemsize or growsize
   gap->ga_data = NULL;
@@ -37,10 +37,7 @@ void ga_clear(garray_T *gap)
 /// @param gap
 void ga_clear_strings(garray_T *gap)
 {
-  for (int i = 0; i < gap->ga_len; ++i) {
-    free(((char_u **)(gap->ga_data))[i]);
-  }
-  ga_clear(gap);
+  GA_DEEP_CLEAR_PTR(gap);
 }
 
 /// Initialize a growing array.
@@ -117,7 +114,7 @@ void ga_remove_duplicate_strings(garray_T *gap)
   // loop over the growing array in reverse
   for (int i = gap->ga_len - 1; i > 0; i--) {
     if (fnamecmp(fnames[i - 1], fnames[i]) == 0) {
-      free(fnames[i]);
+      xfree(fnames[i]);
 
       // close the gap (move all strings one slot lower)
       for (int j = i + 1; j < gap->ga_len; j++) {
@@ -187,10 +184,12 @@ char_u* ga_concat_strings(const garray_T *gap) FUNC_ATTR_NONNULL_RET
 void ga_concat(garray_T *gap, const char_u *restrict s)
 {
   int len = (int)strlen((char *) s);
-  ga_grow(gap, len);
-  char *data = gap->ga_data;
-  memcpy(data + gap->ga_len, s, (size_t) len);
-  gap->ga_len += len;
+  if (len) {
+    ga_grow(gap, len);
+    char *data = gap->ga_data;
+    memcpy(data + gap->ga_len, s, (size_t)len);
+    gap->ga_len += len;
+  }
 }
 
 /// Append one byte to a growarray which contains bytes.
@@ -201,23 +200,3 @@ void ga_append(garray_T *gap, char c)
 {
   GA_APPEND(char, gap, c);
 }
-
-#if defined(UNIX) || defined(WIN3264) || defined(PROTO)
-
-/// Append the text in "gap" below the cursor line and clear "gap".
-///
-/// @param gap
-void append_ga_line(garray_T *gap)
-{
-  // Remove trailing CR.
-  if (!GA_EMPTY(gap)
-      && !curbuf->b_p_bin
-      && (((char_u *)gap->ga_data)[gap->ga_len - 1] == CAR)) {
-    gap->ga_len--;
-  }
-  ga_append(gap, NUL);
-  ml_append(curwin->w_cursor.lnum++, gap->ga_data, 0, FALSE);
-  gap->ga_len = 0;
-}
-
-#endif  // if defined(UNIX) || defined(WIN3264)

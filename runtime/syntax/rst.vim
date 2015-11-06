@@ -1,7 +1,8 @@
 " Vim syntax file
-" Language:         reStructuredText documentation format
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2013-11-26
+" Language: reStructuredText documentation format
+" Maintainer: Marshall Ward <marshall.ward@gmail.com>
+" Previous Maintainer: Nikolai Weibull <now@bitwi.se>
+" Latest Revision: 2014-10-03
 
 if exists("b:current_syntax")
   finish
@@ -47,7 +48,7 @@ syn match   rstSimpleTableLines     contained display
 syn cluster rstDirectives           contains=rstFootnote,rstCitation,
       \ rstHyperlinkTarget,rstExDirective
 
-syn match   rstExplicitMarkup       '^\.\.\_s'
+syn match   rstExplicitMarkup       '^\s*\.\.\_s'
       \ nextgroup=@rstDirectives,rstComment,rstSubstitutionDefinition
 
 let s:ReferenceName = '[[:alnum:]]\+\%([_.-][[:alnum:]]\+\)*'
@@ -99,11 +100,11 @@ function! s:DefineInlineMarkup(name, start, middle, end)
         \ ""
 
   call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, "'", "'")
-  call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '"', '"') 
-  call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '(', ')') 
-  call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '\[', '\]') 
-  call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '{', '}') 
-  call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '<', '>') 
+  call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '"', '"')
+  call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '(', ')')
+  call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '\[', '\]')
+  call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '{', '}')
+  call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '<', '>')
 
   call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '\%(^\|\s\|[/:]\)', '')
 
@@ -136,24 +137,32 @@ syn match   rstStandaloneHyperlink  contains=@NoSpell
       \ "\<\%(\%(\%(https\=\|file\|ftp\|gopher\)://\|\%(mailto\|news\):\)[^[:space:]'\"<>]\+\|www[[:alnum:]_-]*\.[[:alnum:]_-]\+\.[^[:space:]'\"<>]\+\)[[:alnum:]/]"
 
 syn region rstCodeBlock contained matchgroup=rstDirective
-      \ start=+\%(sourcecode\|code\%(-block\)\=\)::\s+
+      \ start=+\%(sourcecode\|code\%(-block\)\=\)::\_s*\n\ze\z(\s\+\)+
       \ skip=+^$+
-      \ end=+^\s\@!+ 
+      \ end=+^\z1\@!+
       \ contains=@NoSpell
 syn cluster rstDirectives add=rstCodeBlock
 
 if !exists('g:rst_syntax_code_list')
-    let g:rst_syntax_code_list = ['vim', 'java', 'cpp', 'lisp', 'php', 'python', 'perl']
+    let g:rst_syntax_code_list = ['vim', 'java', 'cpp', 'lisp', 'php',
+                                \ 'python', 'perl', 'sh']
 endif
 
 for code in g:rst_syntax_code_list
     unlet! b:current_syntax
+    " guard against setting 'isk' option which might cause problems (issue #108)
+    let prior_isk = &l:iskeyword
     exe 'syn include @rst'.code.' syntax/'.code.'.vim'
     exe 'syn region rstDirective'.code.' matchgroup=rstDirective fold '
-                \.'start=#\%(sourcecode\|code\%(-block\)\=\)::\s\+'.code.'\s*$# '
+                \.'start=#\%(sourcecode\|code\%(-block\)\=\)::\s\+'.code.'\_s*\n\ze\z(\s\+\)# '
                 \.'skip=#^$# '
-                \.'end=#^\s\@!# contains=@NoSpell,@rst'.code.' keepend'
+                \.'end=#^\z1\@!# contains=@NoSpell,@rst'.code
     exe 'syn cluster rstDirectives add=rstDirective'.code
+    " reset 'isk' setting, if it has been changed
+    if &l:iskeyword !=# prior_isk
+        let &l:iskeyword = prior_isk
+    endif
+    unlet! prior_isk
 endfor
 
 " TODO: Use better syncing.

@@ -1,6 +1,7 @@
 #ifndef NVIM_EX_GETLN_H
 #define NVIM_EX_GETLN_H
 
+#include "nvim/eval_defs.h"
 #include "nvim/ex_cmds.h"
 
 /* Values for nextwild() and ExpandOne().  See ExpandOne() for meaning. */
@@ -23,17 +24,27 @@
 #define WILD_ESCAPE             128
 #define WILD_ICASE              256
 
-/*
- * There are four history tables:
- */
-#define HIST_CMD        0       /* colon commands */
-#define HIST_SEARCH     1       /* search commands */
-#define HIST_EXPR       2       /* expressions (from entering = register) */
-#define HIST_INPUT      3       /* input() lines */
-#define HIST_DEBUG      4       /* debug commands */
-#define HIST_COUNT      5       /* number of history tables */
+/// Present history tables
+typedef enum {
+  HIST_CMD,     ///< Colon commands.
+  HIST_SEARCH,  ///< Search commands.
+  HIST_EXPR,    ///< Expressions (e.g. from entering = register).
+  HIST_INPUT,   ///< input() lines.
+  HIST_DEBUG,   ///< Debug commands.
+} HistoryType;
+
+/// Number of history tables
+#define HIST_COUNT      (HIST_DEBUG + 1)
 
 typedef char_u *(*CompleteListItemGetter)(expand_T *, int);
+
+/// History entry definition
+typedef struct hist_entry {
+  int hisnum;           ///< Entry identifier number.
+  char_u *hisstr;       ///< Actual entry, separator char after the NUL.
+  Timestamp timestamp;  ///< Time when entry was added.
+  list_T *additional_elements;  ///< Additional entries from ShaDa file.
+} histentry_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_getln.h.generated.h"

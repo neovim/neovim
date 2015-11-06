@@ -3,9 +3,8 @@
 local fname = arg[1]
 local static_fname = arg[2]
 local non_static_fname = arg[3]
-local cpp = arg[4]
+local preproc_fname = arg[4]
 
-cpp = cpp:gsub(' %-DINCLUDE_GENERATED_DECLARATIONS ', ' ')
 
 local lpeg = require('lpeg')
 
@@ -88,6 +87,15 @@ local spaces = any_amount(branch(
       any_character
     )),
     lit('\n')
+  ),
+  -- Linemarker inserted by preprocessor
+  concat(
+    lit('# '),
+    any_amount(concat(
+      neg_look_ahead(lit('\n')),
+      any_character
+    )),
+    lit('\n')
   )
 ))
 local typ_part = concat(
@@ -156,15 +164,14 @@ local pattern = concat(
 if fname == '--help' then
   print'Usage:'
   print()
-  print'  gendeclarations.lua definitions.c static.h non-static.h "cc -E …"'
+  print'  gendeclarations.lua definitions.c static.h non-static.h preprocessor.i'
   os.exit()
 end
 
-local pipe = io.popen(cpp .. ' -DDO_NOT_DEFINE_EMPTY_ATTRIBUTES ' .. fname, 'r')
-local text = pipe:read('*a')
-if not pipe:close() then
-  os.exit(2)
-end
+local preproc_f = io.open(preproc_fname)
+local text = preproc_f:read("*all")
+preproc_f:close()
+
 
 local header = [[
 #ifndef DEFINE_FUNC_ATTRIBUTES
@@ -181,7 +188,7 @@ local footer = [[
 local non_static = header
 local static = header
 
-local filepattern = '^# %d+ "[^"]-/?([^"/]+)"'
+local filepattern = '^#%a* %d+ "[^"]-/?([^"/]+)"'
 local curfile
 
 init = 0
@@ -208,6 +215,8 @@ while init ~= nil do
       declaration = declaration:gsub('/%*.-%*/', '')
       declaration = declaration:gsub('//.-\n', '\n')
 
+      declaration = declaration:gsub('# .-\n', '')
+
       declaration = declaration:gsub('\n', ' ')
       declaration = declaration:gsub('%s+', ' ')
       declaration = declaration:gsub(' ?%( ?', '(')
@@ -222,6 +231,7 @@ while init ~= nil do
       else
         non_static = non_static .. declaration
       end
+      init = e
     end
   end
 end

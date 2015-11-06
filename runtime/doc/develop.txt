@@ -135,10 +135,9 @@ VIM IS... FLEXIBLE					*design-flexible*
 
 Vim should make it easy for users to work in their preferred styles rather
 than coercing its users into particular patterns of work.  This can be for
-items with a large impact (e.g., the 'compatible' option) or for details.  The
-defaults are carefully chosen such that most users will enjoy using Vim as it
-is.  Commands and options can be used to adjust Vim to the desire of the user
-and its environment.
+items with a large impact or for details.  The defaults are carefully chosen
+such that most users will enjoy using Vim as it is.  Commands and options can
+be used to adjust Vim to the desire of the user and its environment.
 
 
 VIM IS... NOT						*design-not*
@@ -186,8 +185,8 @@ malloc()	lalloc()	Like alloc(), but has long argument
 strcpy()	STRCPY()	Includes cast to (char *), for char_u * args
 strchr()	vim_strchr()	Accepts special characters
 strrchr()	vim_strrchr()	Accepts special characters
-isspace()	vim_isspace()	Can handle characters > 128
-iswhite()	vim_iswhite()	Only TRUE for tab and space
+isspace()	ascii_isspace()	Can handle characters > 128
+iswhite()	ascii_iswhite()	Only true for tab and space
 memcpy()	mch_memmove()	Handles overlapped copies
 bcopy()		mch_memmove()	Handles overlapped copies
 memset()	vim_memset()	Uniform for all systems

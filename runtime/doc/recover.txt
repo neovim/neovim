@@ -33,20 +33,13 @@ with the extension ".swp".
 - On Unix, a '.' is prepended to swap file names in the same directory as the
   edited file.  This avoids that the swap file shows up in a directory
   listing.
-- On MS-DOS machines and when the 'shortname' option is on, any '.' in the
-  original file name is replaced with '_'.
 - If this file already exists (e.g., when you are recovering from a crash) a
   warning is given and another extension is used, ".swo", ".swn", etc.
 - An existing file will never be overwritten.
 - The swap file is deleted as soon as Vim stops editing the file.
 
-Technical: The replacement of '.' with '_' is done to avoid problems with
-	   MS-DOS compatible filesystems (e.g., crossdos, multidos).  If Vim
-	   is able to detect that the file is on an MS-DOS-like filesystem, a
-	   flag is set that has the same effect as the 'shortname' option.
-	   This flag is reset when you start editing another file.
 							*E326*
-	   If the ".swp" file name already exists, the last character is
+Technical: If the ".swp" file name already exists, the last character is
 	   decremented until there is no file with that name or ".saa" is
 	   reached.  In the last case, no swap file is created.
 
@@ -63,14 +56,9 @@ Disadvantages:
 - When you use your home directory, and somebody else tries to edit the same
   file, he will not see your swap file and will not get the ATTENTION warning
   message.
-On the Amiga you can also use a recoverable ram disk, but there is no 100%
-guarantee that this works.  Putting swap files in a normal ram disk (like RAM:
-on the Amiga) or in a place that is cleared when rebooting (like /tmp on Unix)
-makes no sense, you will lose the swap file in a crash.
 
 If you want to put swap files in a fixed place, put a command resembling the
-following ones in your .vimrc:
-	:set dir=dh2:tmp	(for Amiga)
+following ones in your vimrc:
 	:set dir=~/tmp		(for Unix)
 	:set dir=c:\\tmp	(for MS-DOS and Win32)
 This is also very handy when editing files on floppy.  Of course you will have
@@ -107,8 +95,7 @@ the time with the 'updatetime' option.  The time is given in milliseconds.
 After writing to the swap file Vim syncs the file to disk.  This takes some
 time, especially on busy Unix systems.  If you don't want this you can set the
 'swapsync' option to an empty string.  The risk of losing work becomes bigger
-though.  On some non-Unix systems (MS-DOS, Amiga) the swap file won't be
-written at all.
+though.
 
 If the writing to the swap file is not wanted, it can be switched off by
 setting the 'updatecount' option to 0.  The same is done when starting Vim
@@ -124,11 +111,6 @@ command:
 					*:pre* *:preserve* *E313* *E314*
 :pre[serve]		Write all text for all buffers into swap file.  The
 			original file is no longer needed for recovery.
-			This sets a flag in the current buffer.  When the '&'
-			flag is present in 'cpoptions' the swap file will not
-			be deleted for this buffer when Vim exits and the
-			buffer is still loaded |cpo-&|.
-			{Vi: might also exit}
 
 A Vim swap file can be recognized by the first six characters: "b0VIM ".
 After that comes the version number, e.g., "3.0".
@@ -192,46 +174,6 @@ recovered file.  Or use |:DiffOrig|.
 
 Once you are sure the recovery is ok delete the swap file.  Otherwise, you
 will continue to get warning messages that the ".swp" file already exists.
-
-{Vi: recovers in another way and sends mail if there is something to recover}
-
-
-ENCRYPTION AND THE SWAP FILE				*:recover-crypt*
-
-When the text file is encrypted the swap file is encrypted as well.  This
-makes recovery a bit more complicated.  When recovering from a swap file and
-encryption has been used, you will be asked to enter one or two crypt keys.
-
-If the text file does not exist you will only be asked to enter the crypt key
-for the swap file.
-
-If the text file does exist, it may be encrypted in a different way than the
-swap file.  You will be asked for the crypt key twice:
-
-	Need encryption key for "/tmp/tt" ~
-	Enter encryption key: ****** ~
-	"/tmp/tt" [crypted] 23200L, 522129C ~
-	Using swap file "/tmp/.tt.swp" ~
-	Original file "/tmp/tt" ~
-	Swap file is encrypted: "/tmp/.tt.swp" ~
-	If you entered a new crypt key but did not write the text file, ~
-	enter the new crypt key. ~
-	If you wrote the text file after changing the crypt key press enter ~
-	to use the same key for text file and swap file ~
-	Enter encryption key:  ~
-
-You can be in one of these two situations:
-
-1. The encryption key was not changed, or after changing the key the text file
-   was written.  You will be prompted for the crypt key twice.  The second
-   time you can simply press Enter.  That means the same key is used for the
-   text file and the swap file.
-2. You entered a new encryption key, but did not save the text file.  Vim will
-   then use the new key for the swap file, and the text file will still be
-   encrypted with the old key.  At the second prompt enter the new key.
-
-Note that after recovery the key of the swap file will be used for the text
-file.  Thus if you write the text file, you need to use that new key.
 
 
  vim:tw=78:ts=8:ft=help:norl:

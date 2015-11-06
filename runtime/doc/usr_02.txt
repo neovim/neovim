@@ -164,7 +164,7 @@ right and j points down.  In a picture: >
 The best way to learn these commands is by using them.  Use the "i" command to
 insert some more lines of text.  Then use the hjkl keys to move around and
 insert a word somewhere.  Don't forget to press <Esc> to go back to Normal
-mode.  The |vimtutor| is also a nice way to learn by doing.
+mode.  |:Tutor| is also a nice way to learn by doing.
 
 For Japanese users, Hiroshi Iwatani suggested using this:
 
@@ -266,15 +266,6 @@ The next u command gives you the u, and so on:
 	young intelligent turtle ~
 	 young intelligent turtle ~
 	A young intelligent turtle ~
-
-	Note:
-	If you type "u" twice, and the result is that you get the same text
-	back, you have Vim configured to work Vi compatible.  Look here to fix
-	this: |not-compatible|.
-	   This text assumes you work "The Vim Way".  You might prefer to use
-	the good old Vi way, but you will have to watch out for small
-	differences in the text then.
-
 
 REDO
 

@@ -87,15 +87,15 @@ key		key code     Normal/Visual mode	    Insert mode ~
 CTRL-PageUp	<M-N><M-C-D>	    H		    <C-O>H
 CTRL-PageDown	<M-N>v		    L$		    <C-O>L<C-O>$
 
-Additionally, these keys are available for copy/cut/paste.  In the Win32
-and DJGPP versions, they also use the clipboard.
+Additionally, these keys are available for copy/cut/paste.
+In the Win32 version, they also use the clipboard.
 
 Shift-Insert	paste text (from clipboard)			*<S-Insert>*
 CTRL-Insert	copy Visual text (to clipboard)			*<C-Insert>*
 CTRL-Del	cut Visual text (to clipboard)			*<C-Del>*
 Shift-Del	cut Visual text (to clipboard)			*<S-Del>*
 
-These mappings accomplish this (Win32 and DJGPP versions of Vim):
+These mappings accomplish this (Win32 version of Vim):
 
 key		key code     Normal	Visual	    Insert ~
 Shift-Insert	<M-N><M-T>   "*P	"-d"*P      <C-R><C-O>*
@@ -276,18 +276,14 @@ If you are running a third-party shell, you may need to set the
 |'shellcmdflag'| ('shcf') and |'shellquote'| ('shq') or |'shellxquote'|
 ('sxq') options.  Unfortunately, this also depends on the version of Vim used.
 For example, with the MKS Korn shell or with bash, the values of the options
-should be:
+on Win32 should be:
 
-		DOS 16 bit	    DOS 32 bit		Win32  ~
-'shellcmdflag'	   -c			-c		 -c
-'shellquote'	   "
-'shellxquote'						 "
+'shellcmdflag'	-c
+'shellquote'	(empty)
+'shellxquote'	"
 
-For Dos 16 bit this starts the shell as:
-	<shell> -c "command name" >file
-For Win32 as:
+For Win32, this starts the shell as:
 	<shell> -c "command name >file"
-For DOS 32 bit, DJGPP does this internally somehow.
 
 When starting up, Vim checks for the presence of "sh" anywhere in the 'shell'
 option.  If it is present, Vim sets the 'shellcmdflag' and 'shellquote' or

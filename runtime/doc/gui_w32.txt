@@ -1,4 +1,4 @@
-*gui_w32.txt*   For Vim version 7.4.  Last change: 2012 Aug 04
+*gui_w32.txt*   For Vim version 7.4.  Last change: 2014 Dec 20
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -18,8 +18,6 @@ Vim's Win32 Graphical User Interface			*gui-w32* *win32-gui*
 Other relevant documentation:
 |gui.txt|	For generic items of the GUI.
 |os_win32.txt| 	For Win32 specific items.
-
-{Vi does not have a Windows GUI}
 
 ==============================================================================
 1. Starting the GUI					*gui-w32-start*
@@ -52,16 +50,6 @@ vimrc or gvimrc file: >
 								*gui-w32s*
 There is a specific version of gvim.exe that runs under the Win32s subsystem
 of Windows 3.1 or 3.11.  See |win32s|.
-
-
-Using Vim as a plugin					*gui-w32-windowid*
-
-When gvim starts up normally, it creates its own top level window.  If you
-pass Vim the command-line option |--windowid| with a decimal or hexadecimal
-value, Vim will create a window that is a child of the window with the given
-ID.  This enables Vim to act as a plugin in another application.  This really
-is a programmer's interface, and is of no use without a supporting application
-to spawn Vim correctly.
 
 ==============================================================================
 2. Vim as default editor				*vim-default-editor*
@@ -274,12 +262,6 @@ WARNING: If you close this window with the "X" button, and confirm the
 question if you really want to kill the application, Vim may be killed too!
 (This does not apply to commands run asynchronously with ":!start".)
 
-In Windows 95, the window in which the commands are executed is always 25x80
-characters, to be as DOS compatible as possible (this matters!).  The default
-system font is used.  On NT, the window will be the default you have set up for
-"Console" in Control Panel.  On Win32s, the properties of the DOS box are
-determined by _default.pif in the windows directory.
-
 							*msdos-mode*
 If you get a dialog that says "This program is set to run in MS-DOS mode..."
 when you run an external program, you can solve this by changing the
@@ -371,35 +353,6 @@ changes this.
 When prepending ":browse" before file editing commands, a file requester is
 used to allow you to select an existing file.  See |:browse|.
 
-
-6.3 Tearoff Menus
-
-The Win32 GUI emulates Motif's tear-off menus.  At the top of each menu you
-will see a small graphic "rip here" sign.  Selecting it will cause a floating
-window to be created with the same menu entries on it.  The floating menu can
-then be accessed just as if it was the original (including sub-menus), but
-without having to go to the menu bar each time.
-This is most useful if you find yourself using a command buried in a sub-menu
-over and over again.
-The tearoff menus can be positioned where you like, and always stay just above
-the Main Vim window.  You can get rid of them by closing them as usual; they
-also of course close when you exit Vim.
-
-							*:tearoff* *:te*
-:te[aroff] {name}	Tear-off the menu {name}.  The menu named must have at
-			least one subentry, but need not appear on the
-			menu-bar (see |win32-hidden-menus|).
-
-Example: >
-	:tearoff File
-will make the "File" menu (if there is one) appear as a tearoff menu. >
-
-	:amenu ]Toolbar.Make	:make<CR>
-	:tearoff ]Toolbar
-This creates a floating menu that doesn't exist on the main menu-bar.
-
-Note that a menu that starts with ']' will not be displayed.
-
 ==============================================================================
 7. Command line arguments				*gui-w32-cmdargs*
 
@@ -454,7 +407,7 @@ be opened as normal.  See |drag-n-drop|.
 
 							*:simalt* *:si*
 :sim[alt] {key}		simulate pressing {key} while holding Alt pressed.
-			{not in Vi} {only for Win32 versions}
+			{only for Win32 versions}
 
 Normally, Vim takes control of all Alt-<Key> combinations, to increase the
 number of possible mappings.  This clashes with the standard use of Alt as the

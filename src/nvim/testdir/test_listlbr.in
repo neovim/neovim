@@ -3,6 +3,7 @@ Test for linebreak and list option (non-utf8)
 STARTTEST
 :so small.vim
 :if !exists("+linebreak") | e! test.ok | w! test.out | qa! | endif
+:set wildchar=^E
 :10new|:vsp|:vert resize 20
 :put =\"\tabcdef hijklmn\tpqrstuvwxyz_1060ABCDEFGHIJKLMNOP \"
 :norm! zt
@@ -56,6 +57,14 @@ STARTTEST
 :syn match All /.*/ contains=ConcealVar
 :let line=ScreenChar(winwidth(0))
 :call DoRecordScreen()
+:set cpo&vim linebreak
+:let g:test ="Test 6: set linebreak with visual block mode"
+:let line="REMOVE: this not"
+:$put =line
+:let line="REMOVE: aaaaaaaaaaaaa"
+:$put =line
+:1/^REMOVE:
+0jf x:$put
 :%w! test.out
 :qa!
 ENDTEST

@@ -19,15 +19,9 @@ if has("conceal")
 else
   syn region helpExample	matchgroup=helpIgnore start=" >$" start="^>$" end="^[^ \t]"me=e-1 end="^<"
 endif
-if has("ebcdic")
-  syn match helpHyperTextJump	"\\\@<!|[^"*|]\+|" contains=helpBar
-  syn match helpHyperTextEntry	"\*[^"*|]\+\*\s"he=e-1 contains=helpStar
-  syn match helpHyperTextEntry	"\*[^"*|]\+\*$" contains=helpStar
-else
-  syn match helpHyperTextJump	"\\\@<!|[#-)!+-~]\+|" contains=helpBar
-  syn match helpHyperTextEntry	"\*[#-)!+-~]\+\*\s"he=e-1 contains=helpStar
-  syn match helpHyperTextEntry	"\*[#-)!+-~]\+\*$" contains=helpStar
-endif
+syn match helpHyperTextJump	"\\\@<!|[#-)!+-~]\+|" contains=helpBar
+syn match helpHyperTextEntry	"\*[#-)!+-~]\+\*\s"he=e-1 contains=helpStar
+syn match helpHyperTextEntry	"\*[#-)!+-~]\+\*$" contains=helpStar
 if has("conceal")
   syn match helpBar		contained "|" conceal
   syn match helpBacktick	contained "`" conceal
@@ -91,8 +85,6 @@ syn match helpSpecial		"CTRL-PageDown"
 syn match helpSpecial		"CTRL-Insert"
 syn match helpSpecial		"CTRL-Del"
 syn match helpSpecial		"CTRL-{char}"
-syn region helpNotVi		start="{Vi[: ]" start="{not" start="{only" end="}" contains=helpLeadBlank,helpHyperTextJump
-syn match helpLeadBlank		"^\s\+" contained
 
 " Highlight group items in their own color.
 syn match helpComment		"\t[* ]Comment\t\+[a-z].*"
@@ -146,7 +138,6 @@ if v:lang =~ '\<IT\>' || v:lang =~ '_IT\>' || v:lang =~? "italian"
   syn match helpSpecial		"Nmi"me=e-2
   syn match helpSpecial		"Nmo"me=e-2
   syn match helpSpecial		"\[interv.]"
-  syn region helpNotVi		start="{non" start="{solo" start="{disponibile" end="}" contains=helpLeadBlank,helpHyperTextJump
 endif
 
 syn sync minlines=40
@@ -167,7 +158,6 @@ hi def link helpVim		Identifier
 hi def link helpCommand		Comment
 hi def link helpExample		Comment
 hi def link helpOption		Type
-hi def link helpNotVi		Special
 hi def link helpSpecial		Special
 hi def link helpNote		Todo
 

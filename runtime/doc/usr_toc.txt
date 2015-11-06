@@ -44,9 +44,6 @@ Tuning Vim
 |usr_44.txt|  Your own syntax highlighted
 |usr_45.txt|  Select your language
 
-Making Vim Run
-|usr_90.txt|  Installing Vim
-
 
 Reference manual
 |reference_toc|     More detailed information for all commands
@@ -133,7 +130,7 @@ Read this from start to end to learn the essential commands.
 		|08.4|	Vertical splits
 		|08.5|	Moving windows
 		|08.6|	Commands for all windows
-		|08.7|	Viewing differences with vimdiff
+		|08.7|	Viewing differences with diff mode
 		|08.8|	Various
 
 |usr_09.txt|  Using the GUI
@@ -184,7 +181,7 @@ Subjects that can be read independently.
 |usr_21.txt|  Go away and come back
 		|21.1|	Suspend and resume
 		|21.2|	Executing shell commands
-		|21.3|	Remembering information; viminfo
+		|21.3|	Remembering information; ShaDa
 		|21.4|	Sessions
 		|21.5|	Views
 		|21.6|	Modelines
@@ -198,9 +195,8 @@ Subjects that can be read independently.
 |usr_23.txt|  Editing other files
 		|23.1|	DOS, Mac and Unix files
 		|23.2|	Files on the internet
-		|23.3|	Encryption
-		|23.4|	Binary files
-		|23.5|	Compressed files
+		|23.3|	Binary files
+		|23.4|	Compressed files
 
 |usr_24.txt|  Inserting quickly
 		|24.1|	Making corrections
@@ -336,18 +332,6 @@ Make Vim work as you like it.
 		|45.3|	Using another encoding
 		|45.4|	Editing files with a different encoding
 		|45.5|	Entering language text
-
-==============================================================================
-Making Vim Run ~
-
-Before you can use Vim.
-
-|usr_90.txt|  Installing Vim
-		|90.1|	Unix
-		|90.2|	MS-Windows
-		|90.3|	Upgrading
-		|90.4|	Common installation issues
-		|90.5|	Uninstalling Vim
 
 ==============================================================================
 

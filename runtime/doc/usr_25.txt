@@ -1,4 +1,4 @@
-*usr_25.txt*	For Vim version 7.4.  Last change: 2007 May 11
+*usr_25.txt*	For Vim version 7.4.  Last change: 2014 Oct 29
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -402,7 +402,7 @@ the cursor keys: >
 	:map <Down> gj
 
 
-TURNING A PARAGRAPH INTO ONE LINE
+TURNING A PARAGRAPH INTO ONE LINE			*edit-paragraph-join*
 
 If you want to import text into a program like MS-Word, each paragraph should
 be a single line.  If your paragraphs are currently separated with empty

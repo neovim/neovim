@@ -2,7 +2,7 @@
 " Language:	Diff (context or unified)
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
 "               Translations by Jakson Alves de Aquino.
-" Last Change:	2013 Oct 06
+" Last Change:	2015 Jan 07
 
 " Quit when a (custom) syntax file was already loaded
 if exists("b:current_syntax")
@@ -17,6 +17,9 @@ syn match diffBDiffer	"^Binary files .* and .* differ$"
 syn match diffIsA	"^File .* is a .* while file .* is a .*"
 syn match diffNoEOL	"^\\ No newline at end of file .*"
 syn match diffCommon	"^Common subdirectories: .*"
+
+" Disable the translations by setting diff_translations to zero.
+if !exists("diff_translations") || diff_translations
 
 " ca
 syn match diffOnly	"^Només a .*"
@@ -125,7 +128,7 @@ syn match diffIdentical	"^םיהז םניה .*-ו .* םיצבקה$"
 syn match diffDiffer	"^הזמ הז םינוש `.*'-ו `.*' םיצבקה$"
 syn match diffBDiffer	"^הזמ הז םינוש `.*'-ו `.*' םיירניב םיצבק$"
 syn match diffIsA	"^.* .*-ל .* .* תוושהל ןתינ אל$"
-syn match diffNoEOL	"^\\ ץבוקה ףוסב השדח-הרוש ות רסח"
+syn match diffNoEOL	"^\\ ץבוקה ףוסב השד.-הרוש ות רס."
 syn match diffCommon	"^.*-ו .* :תוהז תויקית-תת$"
 
 " hr
@@ -319,6 +322,8 @@ syn match diffBDiffer	"^二元碼檔 .* 與 .* 不同$"
 syn match diffIsA	"^檔案 .* 是.*而檔案 .* 是.*"
 syn match diffNoEOL	"^\\ 檔案末沒有 newline 字元"
 syn match diffCommon	"^.* 和 .* 有共同的副目錄$"
+
+endif
 
 
 syn match diffRemoved	"^-.*"

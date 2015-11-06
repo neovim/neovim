@@ -1,7 +1,5 @@
 /*
  * VIM - Vi IMproved	by Bram Moolenaar
- *	      OS/2 port by Paul Slootman
- *	      VMS merge by Zoltan Arpadffy
  *
  * Do ":help uganda"  in Vim to read copying and usage conditions.
  * Do ":help credits" in Vim to see a list of people who contributed.
@@ -10,12 +8,12 @@
 
 /*
  * os_unix.c -- code for all flavors of Unix (BSD, SYSV, SVR4, POSIX, ...)
- *	     Also for BeOS and Atari MiNT.
  *
  * A lot of this file was originally written by Juergen Weigert and later
  * changed beyond recognition.
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -38,35 +36,24 @@
 #include "nvim/message.h"
 #include "nvim/misc1.h"
 #include "nvim/misc2.h"
+#include "nvim/mouse.h"
 #include "nvim/garray.h"
 #include "nvim/path.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tempfile.h"
-#include "nvim/term.h"
-#include "nvim/types.h"
 #include "nvim/ui.h"
+#include "nvim/types.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
-#include "nvim/os/event.h"
 #include "nvim/os/input.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/signal.h"
-#include "nvim/os/job.h"
 #include "nvim/msgpack_rpc/helpers.h"
-#include "nvim/msgpack_rpc/defs.h"
-
-#if defined(HAVE_SYS_IOCTL_H)
-# include <sys/ioctl.h>
-#endif
 
 #ifdef HAVE_STROPTS_H
 # include <stropts.h>
-#endif
-
-#if defined(HAVE_TERMIOS_H)
-# include <termios.h>
 #endif
 
 #ifdef HAVE_SELINUX
@@ -78,297 +65,8 @@ static int selinux_enabled = -1;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os_unix.c.generated.h"
 #endif
-static char_u   *oldtitle = NULL;
-static int did_set_title = FALSE;
-static char_u   *oldicon = NULL;
-static int did_set_icon = FALSE;
 
-
-
-/*
- * Write s[len] to the screen.
- */
-void mch_write(char_u *s, int len)
-{
-  if (embedded_mode) {
-    // TODO(tarruda): This is a temporary hack to stop Neovim from writing
-    // messages to stdout in embedded mode. In the future, embedded mode will
-    // be the only possibility(GUIs will always start neovim with a msgpack-rpc
-    // over stdio) and this function won't exist.
-    //
-    // The reason for this is because before Neovim fully migrates to a
-    // msgpack-rpc-driven architecture, we must have a fully functional
-    // UI working
-    return;
-  }
-
-  ignored = (int)write(1, (char *)s, len);
-  if (p_wd)             /* Unix is too fast, slow down a bit more */
-    os_microdelay(p_wd, false);
-}
-
-/*
- * If the machine has job control, use it to suspend the program,
- * otherwise fake it by starting a new shell.
- */
-void mch_suspend(void)
-{
-  /* BeOS does have SIGTSTP, but it doesn't work. */
-#if defined(SIGTSTP) && !defined(__BEOS__)
-  out_flush();              /* needed to make cursor visible on some systems */
-  settmode(TMODE_COOK);
-  out_flush();              /* needed to disable mouse on some systems */
-
-
-# if defined(_REENTRANT) && defined(SIGCONT)
-  sigcont_received = FALSE;
-# endif
-  kill(0, SIGTSTP);         /* send ourselves a STOP signal */
-# if defined(_REENTRANT) && defined(SIGCONT)
-  /*
-   * Wait for the SIGCONT signal to be handled. It generally happens
-   * immediately, but somehow not all the time. Do not call pause()
-   * because there would be race condition which would hang Vim if
-   * signal happened in between the test of sigcont_received and the
-   * call to pause(). If signal is not yet received, call sleep(0)
-   * to just yield CPU. Signal should then be received. If somehow
-   * it's still not received, sleep 1, 2, 3 ms. Don't bother waiting
-   * further if signal is not received after 1+2+3+4 ms (not expected
-   * to happen).
-   */
-  {
-    long wait_time;
-    for (wait_time = 0; !sigcont_received && wait_time <= 3L; wait_time++)
-      /* Loop is not entered most of the time */
-      os_delay(wait_time, false);
-  }
-# endif
-
-  /*
-   * Set oldtitle to NULL, so the current title is obtained again.
-   */
-  free(oldtitle);
-  oldtitle = NULL;
-  settmode(TMODE_RAW);
-  need_check_timestamps = TRUE;
-  did_check_timestamps = FALSE;
-#endif
-}
-
-void mch_init(void)
-{
-  Columns = 80;
-  Rows = 24;
-
-  out_flush();
-
-#ifdef MACOS_CONVERT
-  mac_conv_init();
-#endif
-
-  event_init();
-}
-
-static int get_x11_title(int test_only)
-{
-  return FALSE;
-}
-
-static int get_x11_icon(int test_only)
-{
-  if (!test_only) {
-    if (STRNCMP(T_NAME, "builtin_", 8) == 0)
-      oldicon = vim_strsave(T_NAME + 8);
-    else
-      oldicon = vim_strsave(T_NAME);
-  }
-  return FALSE;
-}
-
-
-int mch_can_restore_title(void)
-{
-  return get_x11_title(TRUE);
-}
-
-int mch_can_restore_icon(void)
-{
-  return get_x11_icon(TRUE);
-}
-
-/*
- * Set the window title and icon.
- */
-void mch_settitle(char_u *title, char_u *icon)
-{
-  int type = 0;
-  static int recursive = 0;
-
-  if (T_NAME == NULL)       /* no terminal name (yet) */
-    return;
-  if (title == NULL && icon == NULL)        /* nothing to do */
-    return;
-
-  /* When one of the X11 functions causes a deadly signal, we get here again
-   * recursively.  Avoid hanging then (something is probably locked). */
-  if (recursive)
-    return;
-  ++recursive;
-
-  /*
-   * if the window ID and the display is known, we may use X11 calls
-   */
-
-  /*
-   * Note: if "t_ts" is set, title is set with escape sequence rather
-   *	     than x11 calls, because the x11 calls don't always work
-   */
-  if ((type || *T_TS != NUL) && title != NULL) {
-    if (oldtitle == NULL
-        )                       /* first call but not in GUI, save title */
-      (void)get_x11_title(FALSE);
-
-    if (*T_TS != NUL)                   /* it's OK if t_fs is empty */
-      term_settitle(title);
-    did_set_title = TRUE;
-  }
-
-  if ((type || *T_CIS != NUL) && icon != NULL) {
-    if (oldicon == NULL
-        )                       /* first call, save icon */
-      get_x11_icon(FALSE);
-
-    if (*T_CIS != NUL) {
-      out_str(T_CIS);                           /* set icon start */
-      out_str_nf(icon);
-      out_str(T_CIE);                           /* set icon end */
-      out_flush();
-    }
-    did_set_icon = TRUE;
-  }
-  --recursive;
-}
-
-/*
- * Restore the window/icon title.
- * "which" is one of:
- *  1  only restore title
- *  2  only restore icon
- *  3  restore title and icon
- */
-void mch_restore_title(int which)
-{
-  /* only restore the title or icon when it has been set */
-  mch_settitle(((which & 1) && did_set_title) ?
-      (oldtitle ? oldtitle : p_titleold) : NULL,
-      ((which & 2) && did_set_icon) ? oldicon : NULL);
-}
-
-
-/*
- * Return TRUE if "name" looks like some xterm name.
- * Seiichi Sato mentioned that "mlterm" works like xterm.
- */
-int vim_is_xterm(char_u *name)
-{
-  if (name == NULL)
-    return FALSE;
-  return STRNICMP(name, "xterm", 5) == 0
-         || STRNICMP(name, "nxterm", 6) == 0
-         || STRNICMP(name, "kterm", 5) == 0
-         || STRNICMP(name, "mlterm", 6) == 0
-         || STRNICMP(name, "rxvt", 4) == 0
-         || STRCMP(name, "builtin_xterm") == 0;
-}
-
-/*
- * Return TRUE if "name" appears to be that of a terminal
- * known to support the xterm-style mouse protocol.
- * Relies on term_is_xterm having been set to its correct value.
- */
-int use_xterm_like_mouse(char_u *name)
-{
-  return name != NULL
-         && (term_is_xterm || STRNICMP(name, "screen", 6) == 0);
-}
-
-/*
- * Return non-zero when using an xterm mouse, according to 'ttymouse'.
- * Return 1 for "xterm".
- * Return 2 for "xterm2".
- * Return 3 for "urxvt".
- * Return 4 for "sgr".
- */
-int use_xterm_mouse(void)
-{
-  if (ttym_flags == TTYM_SGR)
-    return 4;
-  if (ttym_flags == TTYM_URXVT)
-    return 3;
-  if (ttym_flags == TTYM_XTERM2)
-    return 2;
-  if (ttym_flags == TTYM_XTERM)
-    return 1;
-  return 0;
-}
-
-#if defined(USE_FNAME_CASE) || defined(PROTO)
-/*
- * Set the case of the file name, if it already exists.  This will cause the
- * file name to remain exactly the same.
- * Only required for file systems where case is ignored and preserved.
- */
-void fname_case(
-char_u      *name,
-int len               /* buffer size, only used when name gets longer */
-)
-{
-  char_u      *slash, *tail;
-  DIR         *dirp;
-  struct dirent *dp;
-
-  FileInfo file_info;
-  if (os_fileinfo_link((char *)name, &file_info)) {
-    /* Open the directory where the file is located. */
-    slash = vim_strrchr(name, '/');
-    if (slash == NULL) {
-      dirp = opendir(".");
-      tail = name;
-    } else {
-      *slash = NUL;
-      dirp = opendir((char *)name);
-      *slash = '/';
-      tail = slash + 1;
-    }
-
-    if (dirp != NULL) {
-      while ((dp = readdir(dirp)) != NULL) {
-        /* Only accept names that differ in case and are the same byte
-         * length. TODO: accept different length name. */
-        if (STRICMP(tail, dp->d_name) == 0
-            && STRLEN(tail) == STRLEN(dp->d_name)) {
-          char_u newname[MAXPATHL + 1];
-
-          /* Verify the inode is equal. */
-          STRLCPY(newname, name, MAXPATHL + 1);
-          STRLCPY(newname + (tail - name), dp->d_name,
-              MAXPATHL - (tail - name) + 1);
-          FileInfo file_info_new;
-          if (os_fileinfo_link((char *)newname, &file_info_new)
-              && os_fileinfo_id_equal(&file_info, &file_info_new)) {
-            STRCPY(tail, dp->d_name);
-            break;
-          }
-        }
-      }
-
-      closedir(dirp);
-    }
-  }
-}
-#endif
-
-#if defined(HAVE_ACL) || defined(PROTO)
+#if defined(HAVE_ACL)
 # ifdef HAVE_SYS_ACL_H
 #  include <sys/acl.h>
 # endif
@@ -377,7 +75,7 @@ int len               /* buffer size, only used when name gets longer */
 # endif
 
 
-#if defined(HAVE_SELINUX) || defined(PROTO)
+#if defined(HAVE_SELINUX)
 /*
  * Copy security info from "from_file" to "to_file".
  */
@@ -452,14 +150,6 @@ void mch_free_acl(vim_acl_T aclent)
 #endif
 
 /*
- * Set hidden flag for "name".
- */
-void mch_hide(char_u *name)
-{
-  /* can't hide a file */
-}
-
-/*
  * Check what "name" is:
  * NODE_NORMAL: file or directory (or doesn't exist)
  * NODE_WRITABLE: writable device, socket, fifo, etc.
@@ -479,85 +169,16 @@ int mch_nodetype(char_u *name)
   return NODE_WRITABLE;
 }
 
-void mch_early_init(void)
-{
-  handle_init();
-  time_init();
-}
-
-#if defined(EXITFREE) || defined(PROTO)
-void mch_free_mem(void)
-{
-  free(oldtitle);
-  free(oldicon);
-}
-
-#endif
-
-
-/*
- * Output a newline when exiting.
- * Make sure the newline goes to the same stream as the text.
- */
-static void exit_scroll(void)
-{
-  if (silent_mode)
-    return;
-  if (newline_on_exit || msg_didout) {
-    if (msg_use_printf()) {
-      if (info_message)
-        mch_msg("\n");
-      else
-        mch_errmsg("\r\n");
-    } else
-      out_char('\n');
-  } else {
-    restore_cterm_colors();             /* get original colors back */
-    msg_clr_eos_force();                /* clear the rest of the display */
-    windgoto((int)Rows - 1, 0);         /* may have moved the cursor */
-  }
-}
-
 void mch_exit(int r)
 {
-  exiting = TRUE;
+  exiting = true;
 
-  {
-    settmode(TMODE_COOK);
-    mch_restore_title(3);       /* restore xterm title and icon name */
-    /*
-     * When t_ti is not empty but it doesn't cause swapping terminal
-     * pages, need to output a newline when msg_didout is set.  But when
-     * t_ti does swap pages it should not go to the shell page.  Do this
-     * before stoptermcap().
-     */
-    if (swapping_screen() && !newline_on_exit)
-      exit_scroll();
-
-    /* Stop termcap: May need to check for T_CRV response, which
-     * requires RAW mode. */
-    stoptermcap();
-
-    /*
-     * A newline is only required after a message in the alternate screen.
-     * This is set to TRUE by wait_return().
-     */
-    if (!swapping_screen() || newline_on_exit)
-      exit_scroll();
-
-    /* Cursor may have been switched off without calling starttermcap()
-     * when doing "vim -u vimrc" and vimrc contains ":q". */
-    if (full_screen)
-      cursor_on();
-  }
-  out_flush();
-  ml_close_all(TRUE);           /* remove all memfiles */
-
-#ifdef MACOS_CONVERT
-  mac_conv_cleanup();
-#endif
+  ui_builtin_stop();
+  ui_flush();
+  ml_close_all(true);           /* remove all memfiles */
 
   event_teardown();
+  stream_set_blocking(input_global_fd(), true);  // normalize stream (#2598)
 
 #ifdef EXITFREE
   free_all_mem();
@@ -565,377 +186,6 @@ void mch_exit(int r)
 
   exit(r);
 }
-
-void mch_settmode(int tmode)
-{
-  static int first = TRUE;
-
-  /* Why is NeXT excluded here (and not in os_unixx.h)? */
-#if defined(ECHOE) && defined(ICANON) && (defined(HAVE_TERMIO_H) || \
-  defined(HAVE_TERMIOS_H)) && !defined(__NeXT__)
-  /*
-   * for "new" tty systems
-   */
-# ifdef HAVE_TERMIOS_H
-  static struct termios told;
-  struct termios tnew;
-# else
-  static struct termio told;
-  struct termio tnew;
-# endif
-
-  if (first) {
-    first = FALSE;
-# if defined(HAVE_TERMIOS_H)
-    tcgetattr(read_cmd_fd, &told);
-# else
-    ioctl(read_cmd_fd, TCGETA, &told);
-# endif
-  }
-
-  tnew = told;
-  if (tmode == TMODE_RAW) {
-    /*
-     * ~ICRNL enables typing ^V^M
-     */
-    tnew.c_iflag &= ~ICRNL;
-    tnew.c_lflag &= ~(ICANON | ECHO | ISIG | ECHOE
-# if defined(IEXTEN) && !defined(__MINT__)
-                      | IEXTEN      /* IEXTEN enables typing ^V on SOLARIS */
-                                    /* but it breaks function keys on MINT */
-# endif
-                      );
-# ifdef ONLCR       /* don't map NL -> CR NL, we do it ourselves */
-    tnew.c_oflag &= ~ONLCR;
-# endif
-    tnew.c_cc[VMIN] = 1;                /* return after 1 char */
-    tnew.c_cc[VTIME] = 0;               /* don't wait */
-  } else if (tmode == TMODE_SLEEP)
-    tnew.c_lflag &= ~(ECHO);
-
-# if defined(HAVE_TERMIOS_H)
-  {
-    int n = 10;
-
-    /* A signal may cause tcsetattr() to fail (e.g., SIGCONT).  Retry a
-     * few times. */
-    while (tcsetattr(read_cmd_fd, TCSANOW, &tnew) == -1
-           && errno == EINTR && n > 0)
-      --n;
-  }
-# else
-  ioctl(read_cmd_fd, TCSETA, &tnew);
-# endif
-
-#else
-
-  /*
-   * for "old" tty systems
-   */
-# ifndef TIOCSETN
-#  define TIOCSETN TIOCSETP     /* for hpux 9.0 */
-# endif
-  static struct sgttyb ttybold;
-  struct sgttyb ttybnew;
-
-  if (first) {
-    first = FALSE;
-    ioctl(read_cmd_fd, TIOCGETP, &ttybold);
-  }
-
-  ttybnew = ttybold;
-  if (tmode == TMODE_RAW) {
-    ttybnew.sg_flags &= ~(CRMOD | ECHO);
-    ttybnew.sg_flags |= RAW;
-  } else if (tmode == TMODE_SLEEP)
-    ttybnew.sg_flags &= ~(ECHO);
-  ioctl(read_cmd_fd, TIOCSETN, &ttybnew);
-#endif
-  curr_tmode = tmode;
-}
-
-/*
- * Try to get the code for "t_kb" from the stty setting
- *
- * Even if termcap claims a backspace key, the user's setting *should*
- * prevail.  stty knows more about reality than termcap does, and if
- * somebody's usual erase key is DEL (which, for most BSD users, it will
- * be), they're going to get really annoyed if their erase key starts
- * doing forward deletes for no reason. (Eric Fischer)
- */
-void get_stty(void)
-{
-  char_u buf[2];
-  char_u  *p;
-
-  /* Why is NeXT excluded here (and not in os_unixx.h)? */
-#if defined(ECHOE) && defined(ICANON) && (defined(HAVE_TERMIO_H) || \
-  defined(HAVE_TERMIOS_H)) && !defined(__NeXT__)
-  /* for "new" tty systems */
-# ifdef HAVE_TERMIOS_H
-  struct termios keys;
-# else
-  struct termio keys;
-# endif
-
-# if defined(HAVE_TERMIOS_H)
-  if (tcgetattr(read_cmd_fd, &keys) != -1)
-# else
-  if (ioctl(read_cmd_fd, TCGETA, &keys) != -1)
-# endif
-  {
-    buf[0] = keys.c_cc[VERASE];
-    intr_char = keys.c_cc[VINTR];
-#else
-  /* for "old" tty systems */
-  struct sgttyb keys;
-
-  if (ioctl(read_cmd_fd, TIOCGETP, &keys) != -1) {
-    buf[0] = keys.sg_erase;
-    intr_char = keys.sg_kill;
-#endif
-    buf[1] = NUL;
-    add_termcode((char_u *)"kb", buf, FALSE);
-
-    /*
-     * If <BS> and <DEL> are now the same, redefine <DEL>.
-     */
-    p = find_termcode((char_u *)"kD");
-    if (p != NULL && p[0] == buf[0] && p[1] == buf[1])
-      do_fixdel(NULL);
-  }
-}
-
-/*
- * Set mouse clicks on or off.
- */
-void mch_setmouse(int on)
-{
-  static int ison = FALSE;
-  int xterm_mouse_vers;
-
-  if (on == ison)       /* return quickly if nothing to do */
-    return;
-
-  xterm_mouse_vers = use_xterm_mouse();
-
-  if (ttym_flags == TTYM_URXVT) {
-    out_str_nf((char_u *)
-        (on
-         ? "\033[?1015h"
-         : "\033[?1015l"));
-    ison = on;
-  }
-
-  if (ttym_flags == TTYM_SGR) {
-    out_str_nf((char_u *)
-        (on
-         ? "\033[?1006h"
-         : "\033[?1006l"));
-    ison = on;
-  }
-
-  if (xterm_mouse_vers > 0) {
-    if (on)     /* enable mouse events, use mouse tracking if available */
-      out_str_nf((char_u *)
-          (xterm_mouse_vers > 1
-           ? "\033[?1002h"
-           : "\033[?1000h"));
-    else        /* disable mouse events, could probably always send the same */
-      out_str_nf((char_u *)
-          (xterm_mouse_vers > 1
-           ? "\033[?1002l"
-           : "\033[?1000l"));
-    ison = on;
-  } else if (ttym_flags == TTYM_DEC) {
-    if (on)     /* enable mouse events */
-      out_str_nf((char_u *)"\033[1;2'z\033[1;3'{");
-    else        /* disable mouse events */
-      out_str_nf((char_u *)"\033['z");
-    ison = on;
-  }
-
-}
-
-/// Sets the mouse termcode, depending on the 'term' and 'ttymouse' options.
-void check_mouse_termcode(void)
-{
-  xterm_conflict_mouse = false;
-
-  if (use_xterm_mouse()
-      && use_xterm_mouse() != 3
-      ) {
-    set_mouse_termcode(KS_MOUSE, (char_u *)(term_is_8bit(T_NAME)
-                                            ? "\233M"
-                                            : "\033[M"));
-    if (*p_mouse != NUL) {
-      /* force mouse off and maybe on to send possibly new mouse
-       * activation sequence to the xterm, with(out) drag tracing. */
-      mch_setmouse(FALSE);
-      setmouse();
-    }
-  } else
-    del_mouse_termcode(KS_MOUSE);
-
-
-  /* There is no conflict, but one may type "ESC }" from Insert mode.  Don't
-   * define it in the GUI or when using an xterm. */
-  if (!use_xterm_mouse()
-      )
-    set_mouse_termcode(KS_NETTERM_MOUSE,
-        (char_u *)"\033}");
-  else
-    del_mouse_termcode(KS_NETTERM_MOUSE);
-
-  // Conflicts with xterm mouse: "\033[" and "\033[M".
-  // Also conflicts with the xterm termresponse, skip this if it was requested
-  // already.
-  if (!use_xterm_mouse()) {
-    set_mouse_termcode(KS_DEC_MOUSE, (char_u *)(term_is_8bit(T_NAME)
-                                                ? "\233" : "\033["));
-    xterm_conflict_mouse = true;
-  }
-  else {
-    del_mouse_termcode(KS_DEC_MOUSE);
-  }
-  /* same as the dec mouse */
-  if (use_xterm_mouse() == 3 && !did_request_esc_sequence()) {
-    set_mouse_termcode(KS_URXVT_MOUSE,
-                       (char_u *)(term_is_8bit(T_NAME) ? "\233" : "\033["));
-    if (*p_mouse != NUL) {
-      mch_setmouse(false);
-      setmouse();
-    }
-    resume_get_esc_sequence();
-  } else {
-    del_mouse_termcode(KS_URXVT_MOUSE);
-  }
-  // There is no conflict with xterm mouse.
-  if (use_xterm_mouse() == 4) {
-    set_mouse_termcode(KS_SGR_MOUSE, (char_u *)(term_is_8bit(T_NAME)
-                                                ? "\233<"
-                                                : "\033[<"));
-
-    if (*p_mouse != NUL) {
-      mch_setmouse(FALSE);
-      setmouse();
-    }
-  } else {
-    del_mouse_termcode(KS_SGR_MOUSE);
-  }
-}
-
-/*
- * Try to get the current window size:
- * 1. with an ioctl(), most accurate method
- * 2. from the environment variables LINES and COLUMNS
- * 3. from the termcap
- * 4. keep using the old values
- * Return OK when size could be determined, FAIL otherwise.
- */
-int mch_get_shellsize(void)
-{
-  long rows = 0;
-  long columns = 0;
-  char_u      *p;
-
-  /*
-   * 1. try using an ioctl. It is the most accurate method.
-   *
-   * Try using TIOCGWINSZ first, some systems that have it also define
-   * TIOCGSIZE but don't have a struct ttysize.
-   */
-# ifdef TIOCGWINSZ
-  {
-    struct winsize ws;
-    int fd = 1;
-
-    /* When stdout is not a tty, use stdin for the ioctl(). */
-    if (!isatty(fd) && isatty(read_cmd_fd))
-      fd = read_cmd_fd;
-    if (ioctl(fd, TIOCGWINSZ, &ws) == 0) {
-      columns = ws.ws_col;
-      rows = ws.ws_row;
-    }
-  }
-# else /* TIOCGWINSZ */
-#  ifdef TIOCGSIZE
-  {
-    struct ttysize ts;
-    int fd = 1;
-
-    /* When stdout is not a tty, use stdin for the ioctl(). */
-    if (!isatty(fd) && isatty(read_cmd_fd))
-      fd = read_cmd_fd;
-    if (ioctl(fd, TIOCGSIZE, &ts) == 0) {
-      columns = ts.ts_cols;
-      rows = ts.ts_lines;
-    }
-  }
-#  endif /* TIOCGSIZE */
-# endif /* TIOCGWINSZ */
-
-  /*
-   * 2. get size from environment
-   *    When being POSIX compliant ('|' flag in 'cpoptions') this overrules
-   *    the ioctl() values!
-   */
-  if (columns == 0 || rows == 0 || vim_strchr(p_cpo, CPO_TSIZE) != NULL) {
-    if ((p = (char_u *)os_getenv("LINES")))
-      rows = atoi((char *)p);
-    if ((p = (char_u *)os_getenv("COLUMNS")))
-      columns = atoi((char *)p);
-  }
-
-#ifdef HAVE_TGETENT
-  /*
-   * 3. try reading "co" and "li" entries from termcap
-   */
-  if (columns == 0 || rows == 0)
-    getlinecol(&columns, &rows);
-#endif
-
-  /*
-   * 4. If everything fails, use the old values
-   */
-  if (columns <= 0 || rows <= 0)
-    return FAIL;
-
-  Rows = rows;
-  Columns = columns;
-  limit_screen_size();
-  return OK;
-}
-
-/*
- * Try to set the window size to Rows and Columns.
- */
-void mch_set_shellsize(void)
-{
-  if (*T_CWS) {
-    /*
-     * NOTE: if you get an error here that term_set_winsize() is
-     * undefined, check the output of configure.  It could probably not
-     * find a ncurses, termcap or termlib library.
-     */
-    term_set_winsize((int)Rows, (int)Columns);
-    out_flush();
-    screen_start();                     /* don't know where cursor is now */
-  }
-}
-
-/*
- * mch_expand_wildcards() - this code does wild-card pattern matching using
- * the shell
- *
- * return OK for success, FAIL for error (you may lose some memory) and put
- * an error message in *file.
- *
- * num_pat is number of input patterns
- * pat is array of pointers to input patterns
- * num_file is pointer to number of matched file names
- * file is pointer to array of pointers to matched file names
- */
 
 #ifndef SEEK_SET
 # define SEEK_SET 0
@@ -946,10 +196,27 @@ void mch_set_shellsize(void)
 
 #define SHELL_SPECIAL (char_u *)"\t \"&'$;<>()\\|"
 
+/// Does wildcard pattern matching using the shell.
+///
+/// @param      num_pat  is the number of input patterns.
+/// @param      pat      is an array of pointers to input patterns.
+/// @param[out] num_file is pointer to number of matched file names.
+///                      Set to the number of pointers in *file.
+/// @param[out] file     is pointer to array of pointers to matched file names.
+///                      Memory pointed to by the initial value of *file will
+///                      not be freed.
+///                      Set to NULL if FAIL is returned. Otherwise points to
+///                      allocated memory.
+/// @param      flags    is a combination of EW_* flags used in
+///                      expand_wildcards().
+///                      If matching fails but EW_NOTFOUND is set in flags or
+///                      there are no wildcards, the patterns from pat are
+///                      copied into *file.
+///
+/// @returns             OK for success or FAIL for error.
 int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
-                         char_u ***file,
-                         int flags /* EW_* flags */
-                         )
+                         char_u ***file, int flags) FUNC_ATTR_NONNULL_ARG(3)
+    FUNC_ATTR_NONNULL_ARG(4)
 {
   int i;
   size_t len;
@@ -970,8 +237,8 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
                                  * directly */
   int shell_style = STYLE_ECHO;
   int check_spaces;
-  static int did_find_nul = FALSE;
-  int ampersent = FALSE;
+  static bool did_find_nul = false;
+  bool ampersent = false;
   /* vimglob() function to define for Posix shell */
   static char *sh_vimglob_func =
     "vimglob() { while [ $# -ge 1 ]; do echo \"$1\"; shift; done }; vimglob >";
@@ -988,11 +255,10 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     return OK;
   }
 
-# ifdef HAVE_SANDBOX
-  /* Don't allow any shell command in the sandbox. */
-  if (sandbox != 0 && check_secure())
+  // Don't allow any shell command in the sandbox.
+  if (sandbox != 0 && check_secure()) {
     return FAIL;
-# endif
+  }
 
   /*
    * Don't allow the use of backticks in secure and restricted mode.
@@ -1072,10 +338,10 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     STRCAT(command, pat[0] + 1);                /* exclude first backtick */
     p = command + STRLEN(command) - 1;
     *p-- = ')';                                 /* remove last backtick */
-    while (p > command && vim_iswhite(*p))
+    while (p > command && ascii_iswhite(*p))
       --p;
     if (*p == '&') {                            /* remove trailing '&' */
-      ampersent = TRUE;
+      ampersent = true;
       *p = ' ';
     }
     STRCAT(command, ">");
@@ -1100,7 +366,7 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     for (i = 0; i < num_pat; ++i) {
       /* Put a backslash before special
        * characters, except inside ``. */
-      int intick = FALSE;
+      bool intick = false;
 
       p = command + STRLEN(command);
       *p++ = ' ';
@@ -1116,10 +382,12 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
               || pat[i][j + 1] == '`')
             *p++ = '\\';
           ++j;
-        } else if (!intick && vim_strchr(SHELL_SPECIAL,
-                       pat[i][j]) != NULL)
+        } else if (!intick
+            && ((flags & EW_KEEPDOLLAR) == 0 || pat[i][j] != '$')
+            && vim_strchr(SHELL_SPECIAL, pat[i][j]) != NULL)
           /* Put a backslash before a special character, but not
-           * when inside ``. */
+           * when inside ``. And not for $var when EW_KEEPDOLLAR is
+           * set. */
           *p++ = '\\';
 
         /* Copy one character. */
@@ -1165,11 +433,11 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   if (ampersent)
     os_delay(10L, true);
 
-  free(command);
+  xfree(command);
 
-  if (i != 0) {                         /* mch_call_shell() failed */
+  if (i) {                         /* os_call_shell() failed */
     os_remove((char *)tempname);
-    free(tempname);
+    xfree(tempname);
     /*
      * With interactive completion, the error message is not printed.
      */
@@ -1177,7 +445,10 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     {
       redraw_later_clear();             /* probably messed up screen */
       msg_putchar('\n');                /* clear bottom line quickly */
-      cmdline_row = Rows - 1;           /* continue on last line */
+#if SIZEOF_LONG > SIZEOF_INT
+      assert(Rows <= (long)INT_MAX + 1);
+#endif
+      cmdline_row = (int)(Rows - 1);           /* continue on last line */
       MSG(_(e_wildexpand));
       msg_start();                    /* don't overwrite this message */
     }
@@ -1199,26 +470,40 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
       MSG(_(e_wildexpand));
       msg_start();                      /* don't overwrite this message */
     }
-    free(tempname);
+    xfree(tempname);
     goto notfound;
   }
-  fseek(fd, 0L, SEEK_END);
-  len = ftell(fd);                      /* get size of temp file */
-  fseek(fd, 0L, SEEK_SET);
-  buffer = xmalloc(len + 1);
-  i = fread((char *)buffer, 1, len, fd);
-  fclose(fd);
-  os_remove((char *)tempname);
-  if (i != (int)len) {
-    /* unexpected read error */
-    EMSG2(_(e_notread), tempname);
-    free(tempname);
-    free(buffer);
+  int fseek_res = fseek(fd, 0L, SEEK_END);
+  if (fseek_res < 0) {
+    xfree(tempname);
+    fclose(fd);
     return FAIL;
   }
-  free(tempname);
-
-
+  long long templen = ftell(fd);        /* get size of temp file */
+  if (templen < 0) {
+    xfree(tempname);
+    fclose(fd);
+    return FAIL;
+  }
+#if SIZEOF_LONG_LONG > SIZEOF_SIZE_T
+  assert(templen <= (long long)SIZE_MAX);
+#endif
+  len = (size_t)templen;
+  fseek(fd, 0L, SEEK_SET);
+  buffer = xmalloc(len + 1);
+  // fread() doesn't terminate buffer with NUL;
+  // appropiate termination (not always NUL) is done below.
+  size_t readlen = fread((char *)buffer, 1, len, fd);
+  fclose(fd);
+  os_remove((char *)tempname);
+  if (readlen != len) {
+    /* unexpected read error */
+    EMSG2(_(e_notread), tempname);
+    xfree(tempname);
+    xfree(buffer);
+    return FAIL;
+  }
+  xfree(tempname);
 
   /* file names are separated with Space */
   if (shell_style == STYLE_ECHO) {
@@ -1252,14 +537,14 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
      * When we found a NUL once, we know zsh is OK, set did_find_nul and
      * don't check for spaces again.
      */
-    check_spaces = FALSE;
+    check_spaces = false;
     if (shell_style == STYLE_PRINT && !did_find_nul) {
       /* If there is a NUL, set did_find_nul, else set check_spaces */
       buffer[len] = NUL;
       if (len && (int)STRLEN(buffer) < (int)len)
-        did_find_nul = TRUE;
+        did_find_nul = true;
       else
-        check_spaces = TRUE;
+        check_spaces = true;
     }
 
     /*
@@ -1279,17 +564,19 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     if (len)
       ++i;                              /* count last entry */
   }
+  assert(buffer[len] == NUL || buffer[len] == '\n');
+
   if (i == 0) {
     /*
      * Can happen when using /bin/sh and typing ":e $NO_SUCH_VAR^I".
      * /bin/sh will happily expand it to nothing rather than returning an
      * error; and hey, it's good to check anyway -- webb.
      */
-    free(buffer);
+    xfree(buffer);
     goto notfound;
   }
   *num_file = i;
-  *file = (char_u **)xmalloc(sizeof(char_u *) * i);
+  *file = xmalloc(sizeof(char_u *) * (size_t)i);
 
   /*
    * Isolate the individual file names.
@@ -1336,14 +623,14 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     p = xmalloc(STRLEN((*file)[i]) + 1 + dir);
     STRCPY(p, (*file)[i]);
     if (dir)
-      add_pathsep(p);             /* add '/' to a directory name */
+      add_pathsep((char *)p);             /* add '/' to a directory name */
     (*file)[j++] = p;
   }
-  free(buffer);
+  xfree(buffer);
   *num_file = j;
 
   if (*num_file == 0) {     /* rejected all entries */
-    free(*file);
+    xfree(*file);
     *file = NULL;
     goto notfound;
   }
@@ -1378,57 +665,22 @@ static void save_patterns(int num_pat, char_u **pat, int *num_file,
   *num_file = num_pat;
 }
 
-/*
- * Return TRUE if the string "p" contains a wildcard that mch_expandpath() can
- * expand.
- */
-int mch_has_exp_wildcard(char_u *p)
-{
-  for (; *p; mb_ptr_adv(p)) {
-    if (*p == '\\' && p[1] != NUL)
-      ++p;
-    else if (vim_strchr((char_u *)
-                 "*?[{'"
-                 , *p) != NULL)
-      return TRUE;
-  }
-  return FALSE;
-}
-
-/*
- * Return TRUE if the string "p" contains a wildcard.
- * Don't recognize '~' at the end as a wildcard.
- */
-int mch_has_wildcard(char_u *p)
-{
-  for (; *p; mb_ptr_adv(p)) {
-    if (*p == '\\' && p[1] != NUL)
-      ++p;
-    else if (vim_strchr((char_u *)
-                 "*?[{`'$"
-                 , *p) != NULL
-             || (*p == '~' && p[1] != NUL))
-      return TRUE;
-  }
-  return FALSE;
-}
-
-static int have_wildcard(int num, char_u **file)
+static bool have_wildcard(int num, char_u **file)
 {
   int i;
 
   for (i = 0; i < num; i++)
-    if (mch_has_wildcard(file[i]))
-      return 1;
-  return 0;
+    if (path_has_wildcard(file[i]))
+      return true;
+  return false;
 }
 
-static int have_dollars(int num, char_u **file)
+static bool have_dollars(int num, char_u **file)
 {
   int i;
 
   for (i = 0; i < num; i++)
     if (vim_strchr(file[i], '$') != NULL)
-      return TRUE;
-  return FALSE;
+      return true;
+  return false;
 }
