@@ -10,34 +10,11 @@ Throughout the help files differences between Vim and Vi/Ex are given in
 curly braces, like "{not in Vi}".  This file only lists what has not been
 mentioned in other files and gives an overview.
 
-1. Missing options			|missing-options|
-2. Limits				|limits|
-3. The most interesting additions	|vim-additions|
+1. Limits				|limits|
+2. The most interesting additions	|vim-additions|
 
 ==============================================================================
-1. Missing options					*missing-options*
-
-These options are in the Unix Vi, but not in Vim.
-
-autoprint (ap)		boolean	(default on)		*'autoprint'* *'ap'*
-beautify (bf)		boolean	(default off)		*'beautify'* *'bf'*
-flash (fl)		boolean	(default ??)		*'flash'* *'fl'*
-graphic (gr)		boolean	(default off)		*'graphic'* *'gr'*
-hardtabs (ht)		number	(default 8)		*'hardtabs'* *'ht'*
-	number of spaces that a <Tab> moves on the display
-mesg			boolean	(default on)		*'mesg'*
-novice			boolean	(default off)		*'novice'*
-open			boolean	(default on)		*'open'*
-optimize (op)		boolean	(default off)		*'optimize'* *'op'*
-redraw			boolean	(default off)		*'redraw'*
-slowopen (slow)		boolean	(default off)		*'slowopen'* *'slow'*
-sourceany		boolean	(default off)		*'sourceany'*
-w300			number	(default 23)		*'w300'*
-w1200			number	(default 23)		*'w1200'*
-w9600			number	(default 23)		*'w9600'*
-
-==============================================================================
-2. Limits						*limits*
+1. Limits						*limits*
 
 Vim has only a few limits for the files that can be edited {Vi: can not handle
 <Nul> characters and characters above 128, has limited line length, many other
@@ -81,7 +58,7 @@ don't want a swap file at all, set 'updatecount' to 0, or use the "-n"
 argument when starting Vim.
 
 ==============================================================================
-3. The most interesting additions			*vim-additions*
+2. The most interesting additions			*vim-additions*
 
 Vi compatibility.					|'compatible'|
 	Although Vim is 99% Vi compatible, some things in Vi can be
