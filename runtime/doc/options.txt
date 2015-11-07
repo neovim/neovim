@@ -1491,14 +1491,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	(gzipped files for example).  Unloaded buffers are not scanned for
 	whole-line completion.
 
-	The default is ".,w,b,u,t,i", which means to scan:
-	   1. the current buffer
-	   2. buffers in other windows
-	   3. other loaded buffers
-	   4. unloaded buffers
-	   5. tags
-	   6. included files
-
 	As you can see, CTRL-N and CTRL-P can be used to do any 'iskeyword'-
 	based expansion (e.g., dictionary |i_CTRL-X_CTRL-K|, included patterns
 	|i_CTRL-X_CTRL-I|, tags |i_CTRL-X_CTRL-]| and normal expansions).
