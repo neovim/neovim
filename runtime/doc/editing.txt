@@ -1141,8 +1141,8 @@ If you want to always use ":confirm", set the 'confirm' option.
 			|:mkvimrc|, |:mksession|, |:mkview|, |:split|,
 			|:vsplit|, |:tabe|, |:tabnew|, |:cfile|, |:cgetfile|,
 			|:caddfile|, |:lfile|, |:lgetfile|, |:laddfile|,
-			|:diffsplit|, |:diffpatch|, |:open|, |:pedit|,
-			|:redir|, |:source|, |:update|, |:visual|, |:vsplit|,
+			|:diffsplit|, |:diffpatch|, |:pedit|, |:redir|,
+			|:source|, |:update|, |:visual|, |:vsplit|,
 			and |:qall| if 'confirm' is set.
 			{only in Win32, Athena, Motif, GTK and Mac GUI}
 			When ":browse" is not possible you get an error
