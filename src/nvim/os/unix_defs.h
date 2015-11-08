@@ -9,7 +9,6 @@
 # include <sys/param.h>
 #endif
 
-
 #define TEMP_DIR_NAMES {"$TMPDIR", "/tmp", ".", "~"}
 #define TEMP_FILE_PATH_MAXLEN 256
 
@@ -17,22 +16,5 @@
 
 // Special wildcards that need to be handled by the shell.
 #define SPECIAL_WILDCHAR "`'{"
-
-// Unix system-dependent file names
-#ifndef SYS_VIMRC_FILE
-# define SYS_VIMRC_FILE "$VIM/sysinit.vim"
-#endif
-#ifndef DFLT_HELPFILE
-# define DFLT_HELPFILE  "$VIMRUNTIME/doc/help.txt"
-#endif
-#ifndef SYNTAX_FNAME
-# define SYNTAX_FNAME   "$VIMRUNTIME/syntax/%s.vim"
-#endif
-#ifndef EXRC_FILE
-# define EXRC_FILE      ".exrc"
-#endif
-#ifndef VIMRC_FILE
-# define VIMRC_FILE     ".nvimrc"
-#endif
 
 #endif  // NVIM_OS_UNIX_DEFS_H
