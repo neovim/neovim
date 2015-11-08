@@ -1,4 +1,4 @@
-*insert.txt*    For Vim version 7.4.  Last change: 2014 Aug 04
+*insert.txt*    For Vim version 7.4.  Last change: 2015 May 22
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -77,9 +77,11 @@ CTRL-W		Delete the word before the cursor (see |i_backspacing| about
 		joining lines).  See the section "word motions",
 		|word-motions|, for the definition of a word.
 						*i_CTRL-U*
-CTRL-U		Delete all entered characters in the current line (see
-		|i_backspacing| about joining lines).
-
+CTRL-U		Delete all entered characters before the cursor in the current
+		line.  If there are no newly entereed characters and
+		'backspace'is not empty, delete all characters before the
+		cursor in the current line.
+		See |i_backspacing| about joining lines.
 						*i_CTRL-I* *i_<Tab>* *i_Tab*
 <Tab> or CTRL-I Insert a tab.  If the 'expandtab' option is on, the
 		equivalent number of spaces is inserted (use CTRL-V <Tab> to
