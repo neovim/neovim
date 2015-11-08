@@ -1,7 +1,10 @@
 " Vim syntax file
 " Language:	M$ Resource files (*.rc)
-" Maintainer:	Heiko Erhardt <Heiko.Erhardt@munich.netsurf.de>
-" Last Change:	2001 May 09
+" Maintainer:	Christian Brabandt
+" Last Change:	2015-05-29
+" Repository:   https://github.com/chrisbra/vim-rc-syntax
+" License:	Vim (see :h license)
+" Previous Maintainer:	Heiko Erhardt <Heiko.Erhardt@munich.netsurf.de>
 
 " This file is based on the c.vim
 
@@ -21,7 +24,7 @@ syn keyword rcMainObject MENU ACCELERATORS TOOLBAR DIALOG
 syn keyword rcMainObject STRINGTABLE MESSAGETABLE RCDATA DLGINIT DESIGNINFO
 
 syn keyword rcSubObject POPUP MENUITEM SEPARATOR
-syn keyword rcSubObject CONTROL LTEXT CTEXT EDITTEXT
+syn keyword rcSubObject CONTROL LTEXT CTEXT RTEXT EDITTEXT
 syn keyword rcSubObject BUTTON PUSHBUTTON DEFPUSHBUTTON GROUPBOX LISTBOX COMBOBOX
 syn keyword rcSubObject FILEVERSION PRODUCTVERSION FILEFLAGSMASK FILEFLAGS FILEOS
 syn keyword rcSubObject FILETYPE FILESUBTYPE

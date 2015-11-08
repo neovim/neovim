@@ -1,6 +1,9 @@
 " Vim syntax file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2009-05-25
+" Maintainer:           Christian Brabandt <cb@256bit.org>
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2015-05-29
+" License:              Vim (see :h license)
+" Repository:		https://github.com/chrisbra/vim-kconfig
 
 if exists("b:current_syntax")
   finish

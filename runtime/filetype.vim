@@ -495,7 +495,7 @@ au BufNewFile,BufRead *.prg
 	\ endif
 
 " Clojure
-au BufNewFile,BufRead *.clj,*.cljs		setf clojure
+au BufNewFile,BufRead *.clj,*.cljs,*.cljx,*.cljc		setf clojure
 
 " Cmake
 au BufNewFile,BufRead CMakeLists.txt,*.cmake,*.cmake.in		setf cmake
@@ -772,10 +772,9 @@ au BufNewFile,BufRead *.mo,*.gdmo		setf gdmo
 au BufNewFile,BufRead *.ged,lltxxxxx.txt	setf gedcom
 
 " Git
-au BufNewFile,BufRead *.git/COMMIT_EDITMSG	setf gitcommit
-au BufNewFile,BufRead *.git/MERGE_MSG		setf gitcommit
+au BufNewFile,BufRead COMMIT_EDITMSG		setf gitcommit
+au BufNewFile,BufRead MERGE_MSG			setf gitcommit
 au BufNewFile,BufRead *.git/config,.gitconfig,.gitmodules setf gitconfig
-au BufNewFile,BufRead *.git/modules/*/COMMIT_EDITMSG setf gitcommit
 au BufNewFile,BufRead *.git/modules/*/config	setf gitconfig
 au BufNewFile,BufRead */.config/git/config	setf gitconfig
 if !empty($XDG_CONFIG_HOME)
