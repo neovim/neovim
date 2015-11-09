@@ -98,6 +98,7 @@
 #include "nvim/os/input.h"
 #include "nvim/event/loop.h"
 #include "nvim/lib/kvec.h"
+#include "nvim/lib/queue.h"
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
 
@@ -458,6 +459,13 @@ typedef struct {
   uint64_t id;
   Queue *events;
 } TerminalJobData;
+
+typedef struct dict_watcher {
+  ufunc_T *callback;
+  char *key_pattern;
+  QUEUE node;
+  bool busy;  // prevent recursion if the dict is changed in the callback
+} DictWatcher;
 
 /// Structure representing current VimL to messagepack conversion state
 typedef struct {
@@ -2376,6 +2384,14 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv, int copy, ch
              : lp->ll_n1 != lp->ll_n2)
       EMSG(_("E711: List value has not enough items"));
   } else {
+    typval_T oldtv;
+    dict_T *dict = lp->ll_dict;
+    bool watched = is_watched(dict);
+
+    if (watched) {
+      init_tv(&oldtv);
+    }
+
     /*
      * Assign to a List or Dictionary item.
      */
@@ -2392,21 +2408,37 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv, int copy, ch
         return;
       }
       lp->ll_tv = &di->di_tv;
-    } else if (op != NULL && *op != '=') {
-      tv_op(lp->ll_tv, rettv, op);
-      return;
-    } else
-      clear_tv(lp->ll_tv);
+    } else {
+      if (watched) {
+        copy_tv(lp->ll_tv, &oldtv);
+      }
 
-    /*
-     * Assign the value to the variable or list item.
-     */
-    if (copy)
+      if (op != NULL && *op != '=') {
+        tv_op(lp->ll_tv, rettv, op);
+        goto notify;
+      } else {
+        clear_tv(lp->ll_tv);
+      }
+    }
+
+    // Assign the value to the variable or list item.
+    if (copy) {
       copy_tv(rettv, lp->ll_tv);
-    else {
+    } else {
       *lp->ll_tv = *rettv;
       lp->ll_tv->v_lock = 0;
       init_tv(rettv);
+    }
+
+notify:
+    if (watched) {
+      if (oldtv.v_type == VAR_UNKNOWN) {
+        dictwatcher_notify(dict, (char *)lp->ll_newkey, lp->ll_tv, NULL);
+      } else {
+        dictitem_T *di = lp->ll_di;
+        dictwatcher_notify(dict, (char *)di->di_key, lp->ll_tv, &oldtv);
+        clear_tv(&oldtv);
+      }
     }
   }
 }
@@ -2932,12 +2964,31 @@ static int do_unlet_var(lval_T *lp, char_u *name_end, int forceit)
       ++lp->ll_n1;
     }
   } else {
-    if (lp->ll_list != NULL)
-      /* unlet a List item. */
+    if (lp->ll_list != NULL) {
+      // unlet a List item.
       listitem_remove(lp->ll_list, lp->ll_li);
-    else
-      /* unlet a Dictionary item. */
-      dictitem_remove(lp->ll_dict, lp->ll_di);
+    } else {
+      // unlet a Dictionary item.
+      dict_T *d = lp->ll_dict;
+      dictitem_T *di = lp->ll_di;
+      bool watched = is_watched(d);
+      char *key = NULL;
+      typval_T oldtv;
+
+      if (watched) {
+        copy_tv(&di->di_tv, &oldtv);
+        // need to save key because dictitem_remove will free it
+        key = xstrdup((char *)di->di_key);
+      }
+
+      dictitem_remove(d, di);
+
+      if (watched) {
+        dictwatcher_notify(d, key, NULL, &oldtv);
+        clear_tv(&oldtv);
+        xfree(key);
+      }
+    }
   }
 
   return ret;
@@ -2953,8 +3004,9 @@ int do_unlet(char_u *name, int forceit)
   hashitem_T  *hi;
   char_u      *varname;
   dictitem_T  *di;
+  dict_T *dict;
+  ht = find_var_ht_dict(name, &varname, &dict);
 
-  ht = find_var_ht(name, &varname);
   if (ht != NULL && *varname != NUL) {
     hi = hash_find(ht, varname);
     if (!HASHITEM_EMPTY(hi)) {
@@ -2962,7 +3014,19 @@ int do_unlet(char_u *name, int forceit)
       if (var_check_fixed(di->di_flags, name)
           || var_check_ro(di->di_flags, name))
         return FAIL;
+      typval_T oldtv;
+      bool watched = is_watched(dict);
+
+      if (watched) {
+        copy_tv(&di->di_tv, &oldtv);
+      }
+
       delete_var(ht, hi);
+
+      if (watched) {
+        dictwatcher_notify(dict, (char *)varname, NULL, &oldtv);
+        clear_tv(&oldtv);
+      }
       return OK;
     }
   }
@@ -5959,6 +6023,7 @@ dict_T *dict_alloc(void) FUNC_ATTR_NONNULL_RET
   d->dv_refcount = 0;
   d->dv_copyID = 0;
   d->internal_refcount = 0;
+  QUEUE_INIT(&d->watchers);
 
   return d;
 }
@@ -6025,6 +6090,14 @@ dict_free (
       --todo;
     }
   }
+
+  while (!QUEUE_EMPTY(&d->watchers)) {
+    QUEUE *w = QUEUE_HEAD(&d->watchers);
+    DictWatcher *watcher = dictwatcher_node_data(w);
+    dictwatcher_free(watcher);
+    QUEUE_REMOVE(w);
+  }
+
   hash_clear(&d->dv_hashtab);
   xfree(d);
 }
@@ -6066,10 +6139,11 @@ static void dictitem_remove(dict_T *dict, dictitem_T *item)
   hashitem_T  *hi;
 
   hi = hash_find(&dict->dv_hashtab, item->di_key);
-  if (HASHITEM_EMPTY(hi))
+  if (HASHITEM_EMPTY(hi)) {
     EMSG2(_(e_intern2), "dictitem_remove()");
-  else
+  } else {
     hash_remove(&dict->dv_hashtab, hi);
+  }
   dictitem_free(item);
 }
 
@@ -6264,7 +6338,16 @@ static bool get_dict_callback(dict_T *d, char *key, ufunc_T **result)
     return false;
   }
 
-  uint8_t *name = di->di_tv.vval.v_string;
+  if ((*result = find_ufunc(di->di_tv.vval.v_string)) == NULL) {
+    return false;
+  }
+
+  (*result)->uf_refcount++;
+  return true;
+}
+
+static ufunc_T *find_ufunc(uint8_t *name)
+{
   uint8_t *n = name;
   ufunc_T *rv = NULL;
   if (*n > '9' || *n < '0') {
@@ -6279,13 +6362,10 @@ static bool get_dict_callback(dict_T *d, char *key, ufunc_T **result)
 
   if (!rv) {
     EMSG2(_("Function %s doesn't exist"), name);
-    *result = NULL;
-    return false;
+    return NULL;
   }
-  rv->uf_refcount++;
 
-  *result = rv;
-  return true;
+  return rv;
 }
 
 /*
@@ -7098,6 +7178,8 @@ static struct fst {
   {"cursor",          1, 3, f_cursor},
   {"deepcopy",        1, 2, f_deepcopy},
   {"delete",          1, 1, f_delete},
+  {"dictwatcheradd",  3, 3, f_dictwatcheradd},
+  {"dictwatcherdel",  3, 3, f_dictwatcherdel},
   {"did_filetype",    0, 0, f_did_filetype},
   {"diff_filler",     1, 1, f_diff_filler},
   {"diff_hlID",       2, 2, f_diff_hlID},
@@ -8666,6 +8748,110 @@ static void f_delete(typval_T *argvars, typval_T *rettv)
     rettv->vval.v_number = os_remove((char *)get_tv_string(&argvars[0]));
 }
 
+// dictwatcheradd(dict, key, funcref) function
+static void f_dictwatcheradd(typval_T *argvars, typval_T *rettv)
+{
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_DICT) {
+    EMSG2(e_invarg2, "dict");
+    return;
+  }
+
+  if (argvars[1].v_type != VAR_STRING && argvars[1].v_type != VAR_NUMBER) {
+    EMSG2(e_invarg2, "key");
+    return;
+  }
+
+  if (argvars[2].v_type != VAR_FUNC && argvars[2].v_type != VAR_STRING) {
+    EMSG2(e_invarg2, "funcref");
+    return;
+  }
+
+  char *key_pattern = (char *)get_tv_string_chk(argvars + 1);
+  assert(key_pattern);
+  const size_t key_len = STRLEN(argvars[1].vval.v_string);
+
+  if (key_len == 0) {
+    EMSG(_(e_emptykey));
+    return;
+  }
+
+  ufunc_T *func = find_ufunc(argvars[2].vval.v_string);
+  if (!func) {
+    // Invalid function name. Error already reported by `find_ufunc`.
+    return;
+  }
+
+  func->uf_refcount++;
+  DictWatcher *watcher = xmalloc(sizeof(DictWatcher));
+  watcher->key_pattern = xmemdupz(key_pattern, key_len);
+  watcher->callback = func;
+  watcher->busy = false;
+  QUEUE_INSERT_TAIL(&argvars[0].vval.v_dict->watchers, &watcher->node);
+}
+
+// dictwatcherdel(dict, key, funcref) function
+static void f_dictwatcherdel(typval_T *argvars, typval_T *rettv)
+{
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_DICT) {
+    EMSG2(e_invarg2, "dict");
+    return;
+  }
+
+  if (argvars[1].v_type != VAR_STRING && argvars[1].v_type != VAR_NUMBER) {
+    EMSG2(e_invarg2, "key");
+    return;
+  }
+
+  if (argvars[2].v_type != VAR_FUNC && argvars[2].v_type != VAR_STRING) {
+    EMSG2(e_invarg2, "funcref");
+    return;
+  }
+
+  char *key_pattern = (char *)get_tv_string_chk(argvars + 1);
+  assert(key_pattern);
+  const size_t key_len = STRLEN(argvars[1].vval.v_string);
+
+  if (key_len == 0) {
+    EMSG(_(e_emptykey));
+    return;
+  }
+
+  ufunc_T *func = find_ufunc(argvars[2].vval.v_string);
+  if (!func) {
+    // Invalid function name. Error already reported by `find_ufunc`.
+    return;
+  }
+
+  dict_T *dict = argvars[0].vval.v_dict;
+  QUEUE *w = NULL;
+  DictWatcher *watcher = NULL;
+  bool matched = false;
+  QUEUE_FOREACH(w, &dict->watchers) {
+    watcher = dictwatcher_node_data(w);
+    if (func == watcher->callback
+        && !strcmp(watcher->key_pattern, key_pattern)) {
+      matched = true;
+      break;
+    }
+  }
+
+  if (!matched) {
+    EMSG("Couldn't find a watcher matching key and callback");
+    return;
+  }
+
+  QUEUE_REMOVE(w);
+  dictwatcher_free(watcher);
+}
+
 /*
  * "did_filetype()" function
  */
@@ -8972,6 +9158,7 @@ void dict_extend(dict_T *d1, dict_T *d2, char_u *action)
   dictitem_T  *di1;
   hashitem_T  *hi2;
   int todo;
+  bool watched = is_watched(d1);
 
   todo = (int)d2->dv_hashtab.ht_used;
   for (hi2 = d2->dv_hashtab.ht_array; todo > 0; ++hi2) {
@@ -8992,14 +9179,30 @@ void dict_extend(dict_T *d1, dict_T *d2, char_u *action)
       }
       if (di1 == NULL) {
         di1 = dictitem_copy(HI2DI(hi2));
-        if (dict_add(d1, di1) == FAIL)
+        if (dict_add(d1, di1) == FAIL) {
           dictitem_free(di1);
+        }
+
+        if (watched) {
+          dictwatcher_notify(d1, (char *)di1->di_key, &di1->di_tv, NULL);
+        }
       } else if (*action == 'e') {
         EMSG2(_("E737: Key already exists: %s"), hi2->hi_key);
         break;
       } else if (*action == 'f' && HI2DI(hi2) != di1) {
+        typval_T oldtv;
+
+        if (watched) {
+          copy_tv(&di1->di_tv, &oldtv);
+        }
+
         clear_tv(&di1->di_tv);
         copy_tv(&HI2DI(hi2)->di_tv, &di1->di_tv);
+
+        if (watched) {
+          dictwatcher_notify(d1, (char *)di1->di_key, &di1->di_tv, &oldtv);
+          clear_tv(&oldtv);
+        }
       }
     }
   }
@@ -13517,6 +13720,9 @@ static void f_remove(typval_T *argvars, typval_T *rettv)
           *rettv = di->di_tv;
           init_tv(&di->di_tv);
           dictitem_remove(d, di);
+          if (is_watched(d)) {
+            dictwatcher_notify(d, (char *)key, NULL, rettv);
+          }
         }
       }
     }
@@ -18109,53 +18315,67 @@ static dictitem_T *find_var_in_ht(hashtab_T *ht, int htname, char_u *varname, in
   return HI2DI(hi);
 }
 
-/*
- * Find the hashtab used for a variable name.
- * Set "varname" to the start of name without ':'.
- */
-static hashtab_T *find_var_ht(char_u *name, char_u **varname)
+// Find the dict and hashtable used for a variable name.  Set "varname" to the
+// start of name without ':'.
+static hashtab_T *find_var_ht_dict(char_u *name, uint8_t **varname, dict_T **d)
 {
   hashitem_T  *hi;
+  *d = NULL;
 
   if (name[1] != ':') {
-    /* The name must not start with a colon or #. */
-    if (name[0] == ':' || name[0] == AUTOLOAD_CHAR)
+    // name has implicit scope
+    if (name[0] == ':' || name[0] == AUTOLOAD_CHAR) {
+      // The name must not start with a colon or #.
       return NULL;
+    }
     *varname = name;
 
-    /* "version" is "v:version" in all scopes */
+    // "version" is "v:version" in all scopes
     hi = hash_find(&compat_hashtab, name);
-    if (!HASHITEM_EMPTY(hi))
+    if (!HASHITEM_EMPTY(hi)) {
       return &compat_hashtab;
+    }
 
-    if (current_funccal == NULL)
-      return &globvarht;                        /* global variable */
-    return &current_funccal->l_vars.dv_hashtab;     /* l: variable */
+    *d = current_funccal ? &current_funccal->l_vars : &globvardict;
+    goto end;
   }
+
   *varname = name + 2;
-  if (*name == 'g')                             /* global variable */
-    return &globvarht;
-  /* There must be no ':' or '#' in the rest of the name, unless g: is used
-   */
-  if (vim_strchr(name + 2, ':') != NULL
-      || vim_strchr(name + 2, AUTOLOAD_CHAR) != NULL)
+  if (*name == 'g') {                           // global variable
+    *d = &globvardict;
+  } else if (vim_strchr(name + 2, ':') != NULL
+      || vim_strchr(name + 2, AUTOLOAD_CHAR) != NULL) {
+    // There must be no ':' or '#' in the rest of the name if g: was not used
     return NULL;
-  if (*name == 'b')                             /* buffer variable */
-    return &curbuf->b_vars->dv_hashtab;
-  if (*name == 'w')                             /* window variable */
-    return &curwin->w_vars->dv_hashtab;
-  if (*name == 't')                             /* tab page variable */
-    return &curtab->tp_vars->dv_hashtab;
-  if (*name == 'v')                             /* v: variable */
-    return &vimvarht;
-  if (*name == 'a' && current_funccal != NULL)   /* function argument */
-    return &current_funccal->l_avars.dv_hashtab;
-  if (*name == 'l' && current_funccal != NULL)   /* local function variable */
-    return &current_funccal->l_vars.dv_hashtab;
-  if (*name == 's'                              /* script variable */
-      && current_SID > 0 && current_SID <= ga_scripts.ga_len)
-    return &SCRIPT_VARS(current_SID);
-  return NULL;
+  }
+
+  if (*name == 'b') {                    // buffer variable
+    *d = curbuf->b_vars;
+  } else if (*name == 'w') {                    // window variable
+    *d = curwin->w_vars;
+  } else if (*name == 't') {                    // tab page variable
+    *d = curtab->tp_vars;
+  } else if (*name == 'v') {                    // v: variable
+    *d = &vimvardict;
+  } else if (*name == 'a' && current_funccal != NULL) {  // function argument
+    *d = &current_funccal->l_avars;
+  } else if (*name == 'l' && current_funccal != NULL) {  // local variable
+    *d = &current_funccal->l_vars;
+  } else if (*name == 's'                       // script variable
+      && current_SID > 0 && current_SID <= ga_scripts.ga_len) {
+    *d = &SCRIPT_SV(current_SID)->sv_dict;
+  }
+
+end:
+  return *d ? &(*d)->dv_hashtab : NULL;
+}
+
+// Find the hashtab used for a variable name.
+// Set "varname" to the start of name without ':'.
+static hashtab_T *find_var_ht(uint8_t *name, uint8_t **varname)
+{
+  dict_T *d;
+  return find_var_ht_dict(name, varname, &d);
 }
 
 /*
@@ -18219,6 +18439,7 @@ void init_var_dict(dict_T *dict, dictitem_T *dict_var, int scope)
   dict_var->di_tv.v_lock = VAR_FIXED;
   dict_var->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
   dict_var->di_key[0] = NUL;
+  QUEUE_INIT(&dict->watchers);
 }
 
 /*
@@ -18351,8 +18572,16 @@ set_var (
   dictitem_T  *v;
   char_u      *varname;
   hashtab_T   *ht;
+  typval_T oldtv;
+  dict_T *dict;
 
-  ht = find_var_ht(name, &varname);
+  ht = find_var_ht_dict(name, &varname, &dict);
+  bool watched = is_watched(dict);
+
+  if (watched) {
+    init_tv(&oldtv);
+  }
+
   if (ht == NULL || *varname == NUL) {
     EMSG2(_(e_illvar), name);
     return;
@@ -18409,6 +18638,9 @@ set_var (
       return;
     }
 
+    if (watched) {
+      copy_tv(&v->di_tv, &oldtv);
+    }
     clear_tv(&v->di_tv);
   } else {                /* add a new variable */
     /* Can't add "v:" variable. */
@@ -18430,12 +18662,21 @@ set_var (
     v->di_flags = 0;
   }
 
-  if (copy || tv->v_type == VAR_NUMBER || tv->v_type == VAR_FLOAT)
+  if (copy || tv->v_type == VAR_NUMBER || tv->v_type == VAR_FLOAT) {
     copy_tv(tv, &v->di_tv);
-  else {
+  } else {
     v->di_tv = *tv;
     v->di_tv.v_lock = 0;
     init_tv(tv);
+  }
+
+  if (watched) {
+    if (oldtv.v_type == VAR_UNKNOWN) {
+      dictwatcher_notify(dict, (char *)v->di_key, &v->di_tv, NULL);
+    } else {
+      dictwatcher_notify(dict, (char *)v->di_key, &v->di_tv, &oldtv);
+      clear_tv(&oldtv);
+    }
   }
 }
 
@@ -21757,3 +21998,94 @@ bool eval_has_provider(char *name)
 
   return false;
 }
+
+// Compute the `DictWatcher` address from a QUEUE node. This only exists because
+// ASAN doesn't handle `QUEUE_DATA` pointer arithmetic, and we blacklist this
+// function on .asan-blacklist.
+static DictWatcher *dictwatcher_node_data(QUEUE *q)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+{
+  return QUEUE_DATA(q, DictWatcher, node);
+}
+
+// Send a change notification to all `dict` watchers that match `key`.
+static void dictwatcher_notify(dict_T *dict, const char *key, typval_T *newtv,
+    typval_T *oldtv)
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
+{
+  typval_T argv[3];
+  for (size_t i = 0; i < ARRAY_SIZE(argv); i++) {
+    init_tv(argv + i);
+  }
+
+  argv[0].v_type = VAR_DICT;
+  argv[0].vval.v_dict = dict;
+  argv[1].v_type = VAR_STRING;
+  argv[1].vval.v_string = (char_u *)xstrdup(key);
+  argv[2].v_type = VAR_DICT;
+  argv[2].vval.v_dict = dict_alloc();
+  argv[2].vval.v_dict->dv_refcount++;
+
+  if (newtv) {
+    dictitem_T *v = dictitem_alloc((char_u *)"new");
+    copy_tv(newtv, &v->di_tv);
+    dict_add(argv[2].vval.v_dict, v);
+  }
+
+  if (oldtv) {
+    dictitem_T *v = dictitem_alloc((char_u *)"old");
+    copy_tv(oldtv, &v->di_tv);
+    dict_add(argv[2].vval.v_dict, v);
+  }
+
+  typval_T rettv;
+
+  QUEUE *w;
+  QUEUE_FOREACH(w, &dict->watchers) {
+    DictWatcher *watcher = dictwatcher_node_data(w);
+    if (!watcher->busy && dictwatcher_matches(watcher, key)) {
+      init_tv(&rettv);
+      watcher->busy = true;
+      call_user_func(watcher->callback, ARRAY_SIZE(argv), argv, &rettv,
+          curwin->w_cursor.lnum, curwin->w_cursor.lnum, NULL);
+      watcher->busy = false;
+      clear_tv(&rettv);
+    }
+  }
+
+  for (size_t i = 1; i < ARRAY_SIZE(argv); i++) {
+    clear_tv(argv + i);
+  }
+}
+
+// Test if `key` matches with with `watcher->key_pattern`
+static bool dictwatcher_matches(DictWatcher *watcher, const char *key)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // For now only allow very simple globbing in key patterns: a '*' at the end
+  // of the string means it should match everything up to the '*' instead of the
+  // whole string.
+  char *nul = strchr(watcher->key_pattern, NUL);
+  size_t len = nul - watcher->key_pattern;
+  if (*(nul - 1) == '*') {
+    return !strncmp(key, watcher->key_pattern, len - 1);
+  } else {
+    return !strcmp(key, watcher->key_pattern);
+  }
+}
+
+// Perform all necessary cleanup for a `DictWatcher` instance.
+static void dictwatcher_free(DictWatcher *watcher)
+  FUNC_ATTR_NONNULL_ALL
+{
+  user_func_unref(watcher->callback);
+  xfree(watcher->key_pattern);
+  xfree(watcher);
+}
+
+// Check if `d` has at least one watcher.
+static bool is_watched(dict_T *d)
+{
+  return d && !QUEUE_EMPTY(&d->watchers);
+}
+
