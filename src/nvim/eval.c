@@ -229,49 +229,10 @@ static int echo_attr = 0;   /* attributes used for ":echo" */
 #define GLV_QUIET       TFN_QUIET       /* no error messages */
 #define GLV_NO_AUTOLOAD TFN_NO_AUTOLOAD /* do not use script autoloading */
 
-/*
- * Structure to hold info for a user function.
- */
-typedef struct ufunc ufunc_T;
-
-struct ufunc {
-  int uf_varargs;               /* variable nr of arguments */
-  int uf_flags;
-  int uf_calls;                 /* nr of active calls */
-  garray_T uf_args;             /* arguments */
-  garray_T uf_lines;            /* function lines */
-  int uf_profiling;             /* TRUE when func is being profiled */
-  /* profiling the function as a whole */
-  int uf_tm_count;              /* nr of calls */
-  proftime_T uf_tm_total;       /* time spent in function + children */
-  proftime_T uf_tm_self;        /* time spent in function itself */
-  proftime_T uf_tm_children;    /* time spent in children this call */
-  /* profiling the function per line */
-  int         *uf_tml_count;    /* nr of times line was executed */
-  proftime_T  *uf_tml_total;    /* time spent in a line + children */
-  proftime_T  *uf_tml_self;     /* time spent in a line itself */
-  proftime_T uf_tml_start;      /* start time for current line */
-  proftime_T uf_tml_children;    /* time spent in children for this line */
-  proftime_T uf_tml_wait;       /* start wait time for current line */
-  int uf_tml_idx;               /* index of line being timed; -1 if none */
-  int uf_tml_execed;            /* line being timed was executed */
-  scid_T uf_script_ID;          /* ID of script where function was defined,
-                                   used for s: variables */
-  int uf_refcount;              /* for numbered function: reference count */
-  char_u uf_name[1];            /* name of function (actually longer); can
-                                   start with <SNR>123_ (<SNR> is K_SPECIAL
-                                   KS_EXTRA KE_SNR) */
-};
-
 /* function flags */
 #define FC_ABORT    1           /* abort function on error */
 #define FC_RANGE    2           /* function accepts range */
 #define FC_DICT     4           /* Dict function, uses "self" */
-
-/*
- * All user-defined functions are found in this hashtable.
- */
-static hashtab_T func_hashtab;
 
 /* The names of packages that once were loaded are remembered. */
 static garray_T ga_loaded = {0, 0, sizeof(char_u *), 4, NULL};
@@ -279,12 +240,6 @@ static garray_T ga_loaded = {0, 0, sizeof(char_u *), 4, NULL};
 /* list heads for garbage collection */
 static dict_T           *first_dict = NULL;     /* list of all dicts */
 static list_T           *first_list = NULL;     /* list of all lists */
-
-/* From user function to hashitem and back. */
-static ufunc_T dumuf;
-#define UF2HIKEY(fp) ((fp)->uf_name)
-#define HIKEY2UF(p)  ((ufunc_T *)(p - (dumuf.uf_name - (char_u *)&dumuf)))
-#define HI2UF(hi)     HIKEY2UF((hi)->hi_key)
 
 #define FUNCARG(fp, j)  ((char_u **)(fp->uf_args.ga_data))[j]
 #define FUNCLINE(fp, j) ((char_u **)(fp->uf_lines.ga_data))[j]

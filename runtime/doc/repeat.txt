@@ -586,6 +586,9 @@ For example, to profile the one_script.vim script file: >
 		If {fname} already exists it will be silently overwritten.
 		The variable |v:profiling| is set to one.
 
+:prof[ile] stop
+		Write the logfile and stop profiling.
+
 :prof[ile] pause
 		Don't profile until the following ":profile continue".  Can be
 		used when doing something that should not be counted (e.g., an
@@ -609,6 +612,9 @@ For example, to profile the one_script.vim script file: >
 		after this command.  A :profile command in the script itself
 		won't work.
 
+:prof[ile] dump
+		Don't wait until exiting Vim and write the current state of
+		profiling to the log immediately.
 
 :profd[el] ...						*:profd* *:profdel*
 		Stop profiling for the arguments specified. See |:breakdel|
