@@ -41,6 +41,7 @@ set(INSTALLCMD_UNIX ${MAKE_PRG} CFLAGS=-fPIC
                                 CFLAGS+=-DLUA_USE_ASSERT
                                 CCDEBUG+=-g
                                 BUILDMODE=static
+                                Q=
                                 install)
 
 if(UNIX)
@@ -67,6 +68,7 @@ elseif(MINGW AND CMAKE_CROSSCOMPILING)
         HOST_CC=${HOST_C_COMPILER} HOST_CFLAGS=${HOST_C_FLAGS}
         HOST_LDFLAGS=${HOST_EXE_LINKER_FLAGS}
         FILE_T=luajit.exe
+        Q=
         INSTALL_TSYMNAME=luajit.exe)
 
 elseif(WIN32 AND MSVC)
