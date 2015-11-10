@@ -2417,11 +2417,8 @@ char_u *enc_canonize(char_u *enc) FUNC_ATTR_NONNULL_RET
   int i;
 
   if (STRCMP(enc, "default") == 0) {
-    /* Use the default encoding as it's found by set_init_1(). */
-    char_u *r = get_encoding_default();
-    if (r == NULL)
-      r = (char_u *)"latin1";
-    return vim_strsave(r);
+    // Use the default encoding as found by set_init_1().
+    return vim_strsave(fenc_default);
   }
 
   /* copy "enc" to allocated memory, with room for two '-' */
