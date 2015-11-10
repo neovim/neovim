@@ -5761,7 +5761,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
 
           // Bail out quickly when there can't be a match, avoid the overhead of
           // win_linetabsize() on long lines.
-          if (op != 1 && col > t->state->val) {
+          if (op != 1 && col > t->state->val * (has_mbyte ? MB_MAXBYTES : 1)) {
             break;
           }
 
