@@ -935,9 +935,6 @@ static void command_line_scan(mparm_T *parmp)
           want_argument = TRUE;
           break;
 
-        case 'X':                 /* "-X"  don't connect to X server */
-          break;
-
         case 'Z':                 /* "-Z"  restricted mode */
           restricted = TRUE;
           break;
