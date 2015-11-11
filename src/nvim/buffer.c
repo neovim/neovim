@@ -2853,7 +2853,7 @@ int build_stl_str_hl(
   struct stl_item {
     // Where the item starts in the status line output buffer
     char_u          *start;
-    // The minimum width of the item (at most 50 characters)
+    // The minimum width of the item
     int minwid;
     // The maximum width of the item
     int maxwid;
@@ -2941,7 +2941,7 @@ int build_stl_str_hl(
     if (*fmt_p == NUL || out_p >= out_end_p)
       break;
 
-    // The rest of this loop wil handle a single `%` item.
+    // The rest of this loop will handle a single `%` item.
     // Note: We increment here to skip over the `%` character we are currently
     //       on so we can process the item's contents.
     fmt_p++;
@@ -2962,8 +2962,7 @@ int build_stl_str_hl(
       continue;
     }
 
-    // STL_MIDDLEMARK denotes the separation place between
-    // left and right aligned items.
+    // STL_MIDDLEMARK: Separation place between left and right aligned items.
     if (*fmt_p == STL_MIDDLEMARK) {
       fmt_p++;
       // Ignored when we are inside of a grouping
@@ -2975,8 +2974,7 @@ int build_stl_str_hl(
       continue;
     }
 
-    // STL_TRUNCMARK denotes where to begin truncating if the
-    // statusline is too long.
+    // STL_TRUNCMARK: Where to begin truncating if the statusline is too long.
     if (*fmt_p == STL_TRUNCMARK) {
       fmt_p++;
       item[curitem].type = Trunc;
@@ -2993,13 +2991,12 @@ int build_stl_str_hl(
       }
       groupdepth--;
 
-      // { Determine how long the group is.
-      //   Note: We set the current output position to null
-      //         so `vim_strsize` will work.
+      // Determine how long the group is.
+      // Note: We set the current output position to null
+      //       so `vim_strsize` will work.
       char_u *t = item[groupitem[groupdepth]].start;
       *out_p = NUL;
-      long l = vim_strsize(t);
-      // }
+      long group_len = vim_strsize(t);
 
       // If the group contained internal items
       // and the group did not have a minimum width,
@@ -3019,20 +3016,20 @@ int build_stl_str_hl(
 
         if (!has_normal_items) {
           out_p = t;
-          l = 0;
+          group_len = 0;
         }
       }
 
       // If the group is longer than it is allowed to be
       // truncate by removing bytes from the start of the group text.
-      if (l > item[groupitem[groupdepth]].maxwid) {
+      if (group_len > item[groupitem[groupdepth]].maxwid) {
         // { Determine the number of bytes to remove
         long n;
         if (has_mbyte) {
           /* Find the first character that should be included. */
           n = 0;
-          while (l >= item[groupitem[groupdepth]].maxwid) {
-            l -= ptr2cells(t + n);
+          while (group_len >= item[groupitem[groupdepth]].maxwid) {
+            group_len -= ptr2cells(t + n);
             n += (*mb_ptr2len)(t + n);
           }
         } else {
@@ -3047,47 +3044,48 @@ int build_stl_str_hl(
         memmove(t + 1, t + n, (size_t)(out_p - (t + n)));
         out_p = out_p - n + 1;
         /* Fill up space left over by half a double-wide char. */
-        while (++l < item[groupitem[groupdepth]].minwid)
+        while (++group_len < item[groupitem[groupdepth]].minwid)
           *out_p++ = fillchar;
         // }
 
         /* correct the start of the items for the truncation */
-        for (l = groupitem[groupdepth] + 1; l < curitem; l++) {
+        for (int idx = groupitem[groupdepth] + 1; idx < curitem; idx++) {
           // Shift everything back by the number of removed bytes
-          item[l].start -= n;
+          item[idx].start -= n;
 
           // If the item was partially or completely truncated, set its
           // start to the start of the group
-          if (item[l].start < t)
-            item[l].start = t;
+          if (item[idx].start < t) {
+            item[idx].start = t;
+          }
         }
       // If the group is shorter than the minimum width, add padding characters.
-      } else if (abs(item[groupitem[groupdepth]].minwid) > l) {
+      } else if (abs(item[groupitem[groupdepth]].minwid) > group_len) {
         long min_group_width = item[groupitem[groupdepth]].minwid;
         // If the group is left-aligned, add characters to the right.
         if (min_group_width < 0) {
           min_group_width = 0 - min_group_width;
-          while (l++ < min_group_width && out_p < out_end_p)
+          while (group_len++ < min_group_width && out_p < out_end_p)
             *out_p++ = fillchar;
         // If the group is right-aligned, shift everything to the right and
         // prepend with filler characters.
         } else {
           // { Move the group to the right
-          memmove(t + min_group_width - l, t, (size_t)(out_p - t));
-          l = min_group_width - l;
-          if (out_p + l >= (out_end_p + 1)) {
-            l = (long)(out_end_p - out_p);
+          memmove(t + min_group_width - group_len, t, (size_t)(out_p - t));
+          group_len = min_group_width - group_len;
+          if (out_p + group_len >= (out_end_p + 1)) {
+            group_len = (long)(out_end_p - out_p);
           }
-          out_p += l;
+          out_p += group_len;
           // }
 
           // Adjust item start positions
           for (int n = groupitem[groupdepth] + 1; n < curitem; n++) {
-            item[n].start += l;
+            item[n].start += group_len;
           }
 
           // Prepend the fill characters
-          for (; l > 0; l--) {
+          for (; group_len > 0; group_len--) {
             *t++ = fillchar;
           }
         }
@@ -3263,8 +3261,6 @@ int build_stl_str_hl(
       vim_snprintf((char *)tmp, sizeof(tmp), "%d", curbuf->b_fnum);
       set_internal_string_var((char_u *)"actual_curbuf", tmp);
 
-      // Switch the curbuf and curwin to the buffer and window we are
-      // evaluating the statusline for.
       buf_T *o_curbuf = curbuf;
       win_T *o_curwin = curwin;
       curwin = wp;
@@ -3273,7 +3269,6 @@ int build_stl_str_hl(
       // Note: The result stored in `t` is unused.
       str = eval_to_string_safe(out_p, &t, use_sandbox);
 
-      // Switch back to the actual current buffer and window.
       curwin = o_curwin;
       curbuf = o_curbuf;
 
@@ -3649,7 +3644,7 @@ int build_stl_str_hl(
       item[curitem].type = Empty;
     }
 
-    // Free the string buffer if we allocated it.
+    // Only free the string buffer if we allocated it.
     // Note: This is not needed if `str` is pointing at `tmp`
     if (opt == STL_VIM_EXPR) {
       xfree(str);
@@ -3662,7 +3657,6 @@ int build_stl_str_hl(
     curitem++;
   }
 
-  // Null terminate the output buffer
   *out_p = NUL;
   int itemcnt = curitem;
 
@@ -3670,6 +3664,10 @@ int build_stl_str_hl(
   if (usefmt != fmt) {
     xfree(usefmt);
   }
+
+  // We have now processed the entire statusline format string.
+  // What follows is post-processing to handle alignment and
+  // highlighting factors.
 
   int width = vim_strsize(out);
   if (maxwidth > 0 && width > maxwidth) {
@@ -3712,11 +3710,6 @@ int build_stl_str_hl(
           // Note: Only advance the pointer if the next
           //       character will fit in the available output space
           trunc_p += (*mb_ptr2len)(trunc_p);
-        }
-        // Fill up for half a double-wide character.
-        // XXX : This seems impossible given the exit condition above?
-        while (++width < maxwidth) {
-          *trunc_p++ = fillchar;
         }
 
       // Otherwise put the truncation point at the end, leaving enough room
