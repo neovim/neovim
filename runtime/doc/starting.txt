@@ -402,10 +402,9 @@ accordingly.  Vim proceeds in this order:
 	initializations until 4. are skipped.  Only the "-u" option is
 	interpreted.
 							*system-vimrc*
-     a. For Unix, MS-DOS, MS-Windows, and Macintosh, the system vimrc file is
-	read for initializations.  The path of this file is shown with the
+     a. For Unix, MS-Windows, and Macintosh, the system vimrc file is read for
+	initializations.  The path of this file is shown with the
 	":version" command.  Mostly it's "$VIM/vimrc".
-	For the Macintosh the $VIMRUNTIME/macmap.vim is read.
 
 						*VIMINIT* *EXINIT* *$MYVIMRC*
      b. Four places are searched for initializations.  The first that exists
