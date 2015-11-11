@@ -251,6 +251,7 @@ Name			triggered by ~
 
 |SwapExists|		detected an existing swap file
 |TermOpen|		when a terminal buffer is starting
+|TermClose|		when a terminal buffer ends
 
 	Options
 |FileType|		when the 'filetype' option has been set
@@ -871,6 +872,8 @@ TermChanged			After the value of 'term' has changed.  Useful
 				for re-loading the syntax file to update the
 				colors, fonts and other terminal-dependent
 				settings.  Executed for all loaded buffers.
+						 {Nvim} *TermClose*
+TermClose			When a terminal buffer ends.
 						 {Nvim} *TermOpen*
 TermOpen			When a terminal buffer is starting.  This can
 				be used to configure the terminal emulator by

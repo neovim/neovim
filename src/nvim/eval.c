@@ -21781,8 +21781,10 @@ static void on_process_exit(Process *proc, int status, void *d)
   TerminalJobData *data = d;
   if (data->term && !data->exited) {
     data->exited = true;
-    terminal_close(data->term,
-        _("\r\n[Program exited, press any key to close]"));
+    char msg[22];
+    snprintf(msg, sizeof msg, "\r\n[Process exited %d]", proc->status);
+    terminal_close(data->term, msg);
+    apply_autocmds(EVENT_TERMCLOSE, NULL, NULL, false, curbuf);
   }
 
   if (data->status_ptr) {

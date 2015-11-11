@@ -22,7 +22,7 @@ describe(':terminal', function()
     wait()
     screen:expect([[
       ready $                                           |
-      [Program exited, press any key to close]          |
+      [Process exited 0]                                |
                                                         |
                                                         |
                                                         |
@@ -37,7 +37,7 @@ describe(':terminal', function()
     screen:expect([[
       ready $ echo hi                                   |
                                                         |
-      [Program exited, press any key to close]          |
+      [Process exited 0]                                |
                                                         |
                                                         |
                                                         |
@@ -51,7 +51,7 @@ describe(':terminal', function()
     screen:expect([[
       ready $ echo 'hello' \ "world"                    |
                                                         |
-      [Program exited, press any key to close]          |
+      [Process exited 0]                                |
                                                         |
                                                         |
                                                         |

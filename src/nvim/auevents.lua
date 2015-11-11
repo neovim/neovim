@@ -77,8 +77,9 @@ return {
     'TabNew',                 -- when creating a new tab
     'TabNewEntered',          -- after entering a new tab
     'TermChanged',            -- after changing 'term'
-    'TermResponse',           -- after setting "v:termresponse"
+    'TermClose',              -- after the processs exits
     'TermOpen',               -- after opening a terminal buffer
+    'TermResponse',           -- after setting "v:termresponse"
     'TextChanged',            -- text was modified
     'TextChangedI',           -- text was modified in Insert mode
     'User',                   -- user defined autocommand
@@ -98,9 +99,10 @@ return {
   -- List of neovim-specific events or aliases for the purpose of generating 
   -- syntax file
   neovim_specific = {
+    TabClosed=true,
     TabNew=true,
     TabNewEntered=true,
-    TabClosed=true,
+    TermClose=true,
     TermOpen=true,
   },
 }

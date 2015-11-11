@@ -143,6 +143,8 @@ Events:
   |TabNew|
   |TabNewEntered|
   |TabClosed|
+  |TermOpen|
+  |TermClose|
 
 Highlight groups:
   |hl-EndOfBuffer|
