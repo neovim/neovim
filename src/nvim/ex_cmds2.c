@@ -2412,9 +2412,7 @@ do_source (
      */
     p = path_tail(fname_exp);
     if ((*p == '.' || *p == '_')
-        && (STRICMP(p + 1, "nvimrc") == 0
-            || STRICMP(p + 1, "ngvimrc") == 0
-            || STRICMP(p + 1, "exrc") == 0)) {
+        && (STRICMP(p + 1, "nvimrc") == 0 || STRICMP(p + 1, "exrc") == 0)) {
       if (*p == '_')
         *p = '.';
       else

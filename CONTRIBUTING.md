@@ -28,7 +28,7 @@ If your issue isn't mentioned there:
     - For runtime issues, see
       [Troubleshooting#runtime-issues][wiki-troubleshooting-runtime-issues].
       If your issue isn't mentioned there, try to reproduce your it using
-      `nvim` with the smallest possible `nvimrc` (or none at all via `nvim -u
+      `nvim` with the smallest possible `vimrc` (or none at all via `nvim -u
       NONE`), to rule out bugs in plugins you're using.
       If you're using a plugin manager, comment out your plugins, then add
       them back in one by one.

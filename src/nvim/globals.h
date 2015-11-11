@@ -633,7 +633,7 @@ EXTERN int silent_mode INIT(= FALSE);
 /* set to TRUE when "-s" commandline argument
  * used for ex */
 
-// Set to true when sourcing of startup scripts (nvimrc) is done.
+// Set to true when sourcing of startup scripts (init.vim) is done.
 // Used for options that cannot be changed after startup scripts.
 EXTERN bool did_source_startup_scripts INIT(= false);
 

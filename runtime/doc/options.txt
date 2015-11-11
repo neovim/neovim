@@ -2295,13 +2295,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 					*'exrc'* *'ex'* *'noexrc'* *'noex'*
 'exrc' 'ex'		boolean (default off)
 			global
-	Enables the reading of .nvimrc, .exrc and .ngvimrc in the current
-	directory.  If you switch this option on you should also consider
-	setting the 'secure' option (see |initialization|).  Using a local
-	.exrc, .nvimrc or .ngvimrc is a potential security leak, use with care!
-	also see |init.vim| and |gui-init|.
+	Enables the reading of .nvimrc and .exrc in the current directory.
+	If you switch this option on you should also consider setting the
+	'secure' option (see |initialization|).  Using this option comes
+	with a potential security risk, use with care!
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
+	Also see |init.vim| and |gui-init|.
 
 				*'fileencoding'* *'fenc'* *E213*
 'fileencoding' 'fenc'	string (default: "")
