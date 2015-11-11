@@ -101,6 +101,6 @@ return {
     TabNew=true,
     TabNewEntered=true,
     TabClosed=true,
-    TermEnter=true,
+    TermOpen=true,
   },
 }
