@@ -456,7 +456,7 @@ function! ExtraVim(...)
     " messing up the user's viminfo file.
     let redirect = a:0 ?
 	\ " -c 'au VimLeave * redir END' -c 'redir\\! >" . a:1 . "'" : ""
-    exec "!echo '" . debug_quits . "q' | ../../../build/bin/nvim -u NONE -N -Xes" . redirect .
+    exec "!echo '" . debug_quits . "q' | ../../../build/bin/nvim -u NONE -N -es" . redirect .
 	\ " -c 'debuggreedy|set viminfo+=nviminfo'" .
 	\ " -c 'let ExtraVimBegin = " . extra_begin . "'" .
 	\ " -c 'let ExtraVimResult = \"" . resultfile . "\"'" . breakpoints .
