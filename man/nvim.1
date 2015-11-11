@@ -1,4 +1,4 @@
-.Dd October 27, 2015
+.Dd November 11, 2015
 .Dt NVIM 1
 .Os
 .Sh NAME
@@ -173,19 +173,19 @@ See
 .It Fl L Op Ar file
 Alias for
 .Fl r .
-.It Fl u Ar nvimrc
+.It Fl u Ar vimrc
 Use
-.Ar nvimrc
+.Ar vimrc
 instead of the default of
 .Pa ~/.config/nvim/init.vim .
 If
-.Ar nvimrc
+.Ar vimrc
 is
 .Cm NORC ,
 do not load any initialization files (excluding plugins),
 and do not attempt to parse environment variables.
 If
-.Ar nvimrc
+.Ar vimrc
 is
 .Cm NONE ,
 loading plugins is also skipped.
@@ -278,7 +278,7 @@ Like
 .Fl c ,
 but execute
 .Ar command
-before processing any nvimrc.
+before processing any vimrc.
 Up to 10 instances of these can be used independently from instances of
 .Fl c .
 .It Fl S Op Ar session
@@ -395,11 +395,11 @@ configuration directory.
 See
 .Ev XDG_CONFIG_HOME
 above.
-.It Pa /etc/nvim/nvimrc
+.It Pa $VIM/sysinit.vim
 The system-global
 .Nm
 configuration file.
-.It Pa /usr/share/nvim
+.It Pa /usr/local/share/nvim
 The system-global
 .Nm
 runtime directory.

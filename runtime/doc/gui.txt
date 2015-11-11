@@ -61,10 +61,6 @@ When the GUI starts up initializations are carried out, in this order:
     ~/.config).
   The name of the first file found is stored in $MYGVIMRC, unless it was
   already set.
-- If the 'exrc' option is set (which is NOT the default) the file ./.ngvimrc
-  is sourced, if it exists and isn't the same file as the system or user
-  gvimrc file.  If this file is not owned by you, some security restrictions
-  apply.  When ".ngvimrc" is not found, "_ngvimrc" is tried too.
 
 NOTE: All but the first one are not carried out if Vim was started with
 "-u NONE" and no "-U" argument was given, or when started with "-U NONE".
