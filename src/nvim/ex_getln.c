@@ -5132,12 +5132,13 @@ static int ex_window(void)
       wp = curwin;
       bp = curbuf;
       win_goto(old_curwin);
-      win_close(wp, TRUE);
+      win_close(wp, true);
 
       /* win_close() may have already wiped the buffer when 'bh' is
        * set to 'wipe' */
-      if (buf_valid(bp))
-        close_buffer(NULL, bp, DOBUF_WIPE, FALSE);
+      if (buf_valid(bp)) {
+        close_buffer(NULL, bp, DOBUF_WIPE, false);
+      }
 
       /* Restore window sizes. */
       win_size_restore(&winsizes);

@@ -4572,9 +4572,9 @@ int buf_contents_changed(buf_T *buf)
 
   // Safety check
   if (curbuf != newbuf) {
-    WITH_BLOCK_AUTOCMDS(
+    WITH_BLOCK_AUTOCMDS({
       wipe_buffer(newbuf);
-    );
+    });
   }
 
   return differ;
@@ -4586,12 +4586,12 @@ int buf_contents_changed(buf_T *buf)
 /// marks.
 ///
 /// @param buf The buffer to wipe
-void wipe_buffer (
-    buf_T *buf,
+void wipe_buffer(
+  buf_T *buf
 )
 {
   if (buf->b_fnum == top_file_num - 1)
     --top_file_num;
 
-  close_buffer(NULL, buf, DOBUF_WIPE, FALSE);
+  close_buffer(NULL, buf, DOBUF_WIPE, false);
 }

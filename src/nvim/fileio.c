@@ -5040,9 +5040,9 @@ void buf_reload(buf_T *buf, int orig_mode)
   xfree(ea.cmd);
 
   if (savebuf != NULL && buf_valid(savebuf)) {
-    WITH_BLOCK_AUTOCMDS(
-      wipe_buffer(savebuf)
-    );
+    WITH_BLOCK_AUTOCMDS({
+      wipe_buffer(savebuf);
+    });
   }
 
   /* Invalidate diff info if necessary. */
@@ -6093,7 +6093,7 @@ aucmd_prepbuf (
       save_ea = p_ea;
       p_ea = false;
 
-      /* Prevent chdir() call in win_enter_ext(), through do_autochdir(). */
+      // Prevent chdir() call in win_enter_ext(), through do_autochdir().
       save_acd = p_acd;
       p_acd = false;
 
@@ -6129,7 +6129,7 @@ aucmd_restbuf (
         FOR_ALL_TAB_WINDOWS(tp, wp) {
           if (wp == aucmd_win) {
             if (tp != curtab) {
-              goto_tabpage_tp(tp, TRUE, TRUE);
+              goto_tabpage_tp(tp, true, true);
             }
             win_goto(aucmd_win);
             goto win_found;
@@ -6141,9 +6141,9 @@ win_found:
       /* Remove the window and frame from the tree of frames. */
       (void)winframe_remove(curwin, &dummy, NULL);
       win_remove(curwin, NULL);
-      aucmd_win_used = FALSE;
-      last_status(FALSE);             /* may need to remove last status line */
-      restore_snapshot(SNAP_AUCMD_IDX, FALSE);
+      aucmd_win_used = false;
+      last_status(false);             /* may need to remove last status line */
+      restore_snapshot(SNAP_AUCMD_IDX, false);
       (void)win_comp_pos();       /* recompute window positions */
     });
 

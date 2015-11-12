@@ -39,6 +39,6 @@ typedef struct {
     block_autocmds();             \
     code;                         \
     unblock_autocmds();           \
-  } while(0);
+  } while (0);
 
 #endif  // NVIM_FILEIO_H

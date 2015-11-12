@@ -827,8 +827,7 @@ static void diff_file(char_u *tmp_orig, char_u *tmp_new, char_u *tmp_diff)
       (void)call_shell(
           cmd,
           kShellOptFilter | kShellOptSilent | kShellOptDoOut,
-          NULL
-          );
+          NULL);
     });
     xfree(cmd);
   }
