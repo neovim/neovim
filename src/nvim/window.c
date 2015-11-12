@@ -1118,26 +1118,22 @@ make_windows (
   if (count > 1)
     last_status(TRUE);
 
-  /*
-   * Don't execute autocommands while creating the windows.  Must do that
-   * when putting the buffers in the windows.
-   */
-  block_autocmds();
-
-  /* todo is number of windows left to create */
-  for (todo = count - 1; todo > 0; --todo)
-    if (vertical) {
-      if (win_split(curwin->w_width - (curwin->w_width - todo)
-              / (todo + 1) - 1, WSP_VERT | WSP_ABOVE) == FAIL)
-        break;
-    } else {
-      if (win_split(curwin->w_height - (curwin->w_height - todo
-                                        * STATUS_HEIGHT) / (todo + 1)
-              - STATUS_HEIGHT, WSP_ABOVE) == FAIL)
-        break;
-    }
-
-  unblock_autocmds();
+  // Don't execute autocommands while creating the windows.  Must do that
+  // when putting the buffers in the windows.
+  WITH_BLOCK_AUTOCMDS({
+    /* todo is number of windows left to create */
+    for (todo = count - 1; todo > 0; --todo)
+      if (vertical) {
+        if (win_split(curwin->w_width - (curwin->w_width - todo)
+                / (todo + 1) - 1, WSP_VERT | WSP_ABOVE) == FAIL)
+          break;
+      } else {
+        if (win_split(curwin->w_height - (curwin->w_height - todo
+                                          * STATUS_HEIGHT) / (todo + 1)
+                - STATUS_HEIGHT, WSP_ABOVE) == FAIL)
+          break;
+      }
+  });
 
   /* return actual number of windows */
   return count - todo;
@@ -3021,17 +3017,15 @@ int make_tabpages(int maxcount)
   if (count > p_tpm)
     count = p_tpm;
 
-  /*
-   * Don't execute autocommands while creating the tab pages.  Must do that
-   * when putting the buffers in the windows.
-   */
-  block_autocmds();
-
-  for (todo = count - 1; todo > 0; --todo)
-    if (win_new_tabpage(0) == FAIL)
-      break;
-
-  unblock_autocmds();
+  // Don't execute autocommands while creating the tab pages.  Must do that
+  // when putting the buffers in the windows.
+  WITH_BLOCK_AUTOCMDS({
+    for (todo = count - 1; todo > 0; --todo) {
+      if (win_new_tabpage(0) == FAIL) {
+        break;
+      }
+    }
+  });
 
   /* return actual number of tab pages */
   return count - todo;
@@ -3651,32 +3645,30 @@ static win_T *win_alloc(win_T *after, int hidden)
   new_wp->w_vars = dict_alloc();
   init_var_dict(new_wp->w_vars, &new_wp->w_winvar, VAR_SCOPE);
 
-  /* Don't execute autocommands while the window is not properly
-   * initialized yet.  gui_create_scrollbar() may trigger a FocusGained
-   * event. */
-  block_autocmds();
-  /*
-   * link the window in the window list
-   */
-  if (!hidden)
-    win_append(after, new_wp);
+  // Don't execute autocommands while the window is not properly
+  // initialized yet.  gui_create_scrollbar() may trigger a FocusGained
+  // event.
+  WITH_BLOCK_AUTOCMDS({
+    // Link the window in the window list
+    if (!hidden)
+      win_append(after, new_wp);
 
-  new_wp->w_wincol = 0;
-  new_wp->w_width = Columns;
+    new_wp->w_wincol = 0;
+    new_wp->w_width = Columns;
 
-  /* position the display and the cursor at the top of the file. */
-  new_wp->w_topline = 1;
-  new_wp->w_topfill = 0;
-  new_wp->w_botline = 2;
-  new_wp->w_cursor.lnum = 1;
-  new_wp->w_scbind_pos = 1;
+    // Position the display and the cursor at the top of the file.
+    new_wp->w_topline = 1;
+    new_wp->w_topfill = 0;
+    new_wp->w_botline = 2;
+    new_wp->w_cursor.lnum = 1;
+    new_wp->w_scbind_pos = 1;
 
-  /* We won't calculate w_fraction until resizing the window */
-  new_wp->w_fraction = 0;
-  new_wp->w_prev_fraction_row = -1;
+    // We won't calculate w_fraction until resizing the window
+    new_wp->w_fraction = 0;
+    new_wp->w_prev_fraction_row = -1;
 
-  foldInitWin(new_wp);
-  unblock_autocmds();
+    foldInitWin(new_wp);
+  });
   new_wp->w_match_head = NULL;
   new_wp->w_next_match_id = 4;
   return new_wp;
@@ -3701,53 +3693,51 @@ win_free (
   /* reduce the reference count to the argument list. */
   alist_unlink(wp->w_alist);
 
-  /* Don't execute autocommands while the window is halfway being deleted.
-   * gui_mch_destroy_scrollbar() may trigger a FocusGained event. */
-  block_autocmds();
+  // Don't execute autocommands while the window is halfway being deleted.
+  // gui_mch_destroy_scrollbar() may trigger a FocusGained event.
+  WITH_BLOCK_AUTOCMDS({
+    clear_winopt(&wp->w_onebuf_opt);
+    clear_winopt(&wp->w_allbuf_opt);
 
-  clear_winopt(&wp->w_onebuf_opt);
-  clear_winopt(&wp->w_allbuf_opt);
+    vars_clear(&wp->w_vars->dv_hashtab);          /* free all w: variables */
+    hash_init(&wp->w_vars->dv_hashtab);
+    unref_var_dict(wp->w_vars);
 
-  vars_clear(&wp->w_vars->dv_hashtab);          /* free all w: variables */
-  hash_init(&wp->w_vars->dv_hashtab);
-  unref_var_dict(wp->w_vars);
+    if (prevwin == wp)
+      prevwin = NULL;
+    win_free_lsize(wp);
 
-  if (prevwin == wp)
-    prevwin = NULL;
-  win_free_lsize(wp);
+    for (i = 0; i < wp->w_tagstacklen; ++i)
+      xfree(wp->w_tagstack[i].tagname);
 
-  for (i = 0; i < wp->w_tagstacklen; ++i)
-    xfree(wp->w_tagstack[i].tagname);
+    xfree(wp->w_localdir);
 
-  xfree(wp->w_localdir);
+    // Remove the window from the b_wininfo lists, it may happen that the
+    // freed memory is re-used for another window.
+    FOR_ALL_BUFFERS(buf) {
+      for (wip = buf->b_wininfo; wip != NULL; wip = wip->wi_next)
+        if (wip->wi_win == wp)
+          wip->wi_win = NULL;
+    }
 
-  /* Remove the window from the b_wininfo lists, it may happen that the
-   * freed memory is re-used for another window. */
-  FOR_ALL_BUFFERS(buf) {
-    for (wip = buf->b_wininfo; wip != NULL; wip = wip->wi_next)
-      if (wip->wi_win == wp)
-        wip->wi_win = NULL;
-  }
+    clear_matches(wp);
 
-  clear_matches(wp);
+    free_jumplist(wp);
 
-  free_jumplist(wp);
-
-  qf_free_all(wp);
+    qf_free_all(wp);
 
 
-  xfree(wp->w_p_cc_cols);
+    xfree(wp->w_p_cc_cols);
 
-  if (wp != aucmd_win)
-    win_remove(wp, tp);
-  if (autocmd_busy) {
-    wp->w_next = au_pending_free_win;
-    au_pending_free_win = wp;
-  } else {
-    xfree(wp);
-  }
-
-  unblock_autocmds();
+    if (wp != aucmd_win)
+      win_remove(wp, tp);
+    if (autocmd_busy) {
+      wp->w_next = au_pending_free_win;
+      au_pending_free_win = wp;
+    } else {
+      xfree(wp);
+    }
+  });
 }
 
 /*

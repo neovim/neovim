@@ -821,13 +821,15 @@ static void diff_file(char_u *tmp_orig, char_u *tmp_new, char_u *tmp_diff)
                  (diff_flags & DIFF_ICASE) ? "-i " : "",
                  tmp_orig, tmp_new);
     append_redir(cmd, (int)len, p_srr, tmp_diff);
-    block_autocmds(); /* Avoid ShellCmdPost stuff */
-    (void)call_shell(
-        cmd,
-        kShellOptFilter | kShellOptSilent | kShellOptDoOut,
-        NULL
-        );
-    unblock_autocmds();
+
+    // Avoid ShellCmdPost stuff
+    WITH_BLOCK_AUTOCMDS({
+      (void)call_shell(
+          cmd,
+          kShellOptFilter | kShellOptSilent | kShellOptDoOut,
+          NULL
+          );
+    });
     xfree(cmd);
   }
 }
@@ -918,9 +920,9 @@ void ex_diffpatch(exarg_T *eap)
                  tmp_new, tmp_orig, eap->arg);
 #endif  // ifdef UNIX
     // Avoid ShellCmdPost stuff
-    block_autocmds();
-    (void)call_shell(buf, kShellOptFilter, NULL);
-    unblock_autocmds();
+    WITH_BLOCK_AUTOCMDS({
+      (void)call_shell(buf, kShellOptFilter, NULL);
+    });
   }
 
 #ifdef UNIX

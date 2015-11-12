@@ -463,9 +463,9 @@ void terminal_destroy(Terminal *term)
   if (!term->refcount) {
     if (pmap_has(ptr_t)(invalidated_terminals, term)) {
       // flush any pending changes to the buffer
-      block_autocmds();
-      refresh_terminal(term);
-      unblock_autocmds();
+      WITH_BLOCK_AUTOCMDS({
+        refresh_terminal(term);
+      });
       pmap_del(ptr_t)(invalidated_terminals, term);
     }
     for (size_t i = 0; i < term->sb_current; i++) {
@@ -958,12 +958,12 @@ static void refresh_timer_cb(TimeWatcher *watcher, void *data)
   Terminal *term;
   void *stub; (void)(stub);
   // don't process autocommands while updating terminal buffers
-  block_autocmds();
-  map_foreach(invalidated_terminals, term, stub, {
-    refresh_terminal(term);
+  WITH_BLOCK_AUTOCMDS({
+    map_foreach(invalidated_terminals, term, stub, {
+      refresh_terminal(term);
+    });
+    pmap_clear(ptr_t)(invalidated_terminals);
   });
-  pmap_clear(ptr_t)(invalidated_terminals);
-  unblock_autocmds();
   redraw(true);
 end:
   refresh_pending = false;
@@ -1061,37 +1061,38 @@ static void redraw(bool restore_cursor)
     save_row = ui_current_row();
     save_col = ui_current_col();
   }
-  block_autocmds();
-  validate_cursor();
 
-  if (must_redraw) {
-    update_screen(0);
-  }
+  WITH_BLOCK_AUTOCMDS({
+    validate_cursor();
 
-  redraw_statuslines();
+    if (must_redraw) {
+      update_screen(0);
+    }
 
-  if (need_maketitle) {
-    maketitle();
-  }
+    redraw_statuslines();
 
-  showruler(false);
+    if (need_maketitle) {
+      maketitle();
+    }
 
-  if (term && is_focused(term)) {
-    curwin->w_wrow = term->cursor.row;
-    curwin->w_wcol = term->cursor.col + win_col_off(curwin);
-    setcursor();
-  } else if (restore_cursor) {
-    ui_cursor_goto(save_row, save_col);
-  } else if (term) {
-    // exiting terminal focus, put the window cursor in a valid position
-    int height, width;
-    vterm_get_size(term->vt, &height, &width);
-    curwin->w_wrow = height - 1;
-    curwin->w_wcol = 0;
-    setcursor();
-  }
+    showruler(false);
 
-  unblock_autocmds();
+    if (term && is_focused(term)) {
+      curwin->w_wrow = term->cursor.row;
+      curwin->w_wcol = term->cursor.col + win_col_off(curwin);
+      setcursor();
+    } else if (restore_cursor) {
+      ui_cursor_goto(save_row, save_col);
+    } else if (term) {
+      // exiting terminal focus, put the window cursor in a valid position
+      int height;
+      int width;
+      vterm_get_size(term->vt, &height, &width);
+      curwin->w_wrow = height - 1;
+      curwin->w_wcol = 0;
+      setcursor();
+    }
+  });
   ui_flush();
 }
 

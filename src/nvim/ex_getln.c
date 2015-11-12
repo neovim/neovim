@@ -5128,21 +5128,20 @@ static int ex_window(void)
     }
 
     /* Don't execute autocommands while deleting the window. */
-    block_autocmds();
-    wp = curwin;
-    bp = curbuf;
-    win_goto(old_curwin);
-    win_close(wp, TRUE);
+    WITH_BLOCK_AUTOCMDS({
+      wp = curwin;
+      bp = curbuf;
+      win_goto(old_curwin);
+      win_close(wp, TRUE);
 
-    /* win_close() may have already wiped the buffer when 'bh' is
-     * set to 'wipe' */
-    if (buf_valid(bp))
-      close_buffer(NULL, bp, DOBUF_WIPE, FALSE);
+      /* win_close() may have already wiped the buffer when 'bh' is
+       * set to 'wipe' */
+      if (buf_valid(bp))
+        close_buffer(NULL, bp, DOBUF_WIPE, FALSE);
 
-    /* Restore window sizes. */
-    win_size_restore(&winsizes);
-
-    unblock_autocmds();
+      /* Restore window sizes. */
+      win_size_restore(&winsizes);
+    });
   }
 
   ga_clear(&winsizes);

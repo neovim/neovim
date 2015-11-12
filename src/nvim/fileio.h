@@ -30,4 +30,31 @@ typedef struct {
 # include "auevents_enum.generated.h"
 # include "fileio.h.generated.h"
 #endif
+
+/// Perform `code` with autocmds blocked.
+///
+/// @param code The code to block autocmds during
+#define WITH_BLOCK_AUTOCMDS(code) \
+  do {                            \
+    block_autocmds();             \
+    code;                         \
+    unblock_autocmds();           \
+  } while(0);
+
+/// Perform `code` with autocmds possibly blocked.
+///
+/// @param block If true, block autocmds
+/// @param code  The code to block autocmds during
+#define WITH_MAYBE_BLOCK_AUTOCMDS(block, code) \
+  do {                                         \
+    bool _do_block = (block);                  \
+    if (_do_block) {                           \
+      block_autocmds();                        \
+    }                                          \
+    code;                                      \
+    if (_do_block) {                           \
+      unblock_autocmds();                      \
+    }                                          \
+  } while(0);
+
 #endif  // NVIM_FILEIO_H

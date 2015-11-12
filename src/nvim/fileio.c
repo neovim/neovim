@@ -6085,20 +6085,20 @@ aucmd_prepbuf (
 
     /* Split the current window, put the aucmd_win in the upper half.
      * We don't want the BufEnter or WinEnter autocommands. */
-    block_autocmds();
-    make_snapshot(SNAP_AUCMD_IDX);
-    save_ea = p_ea;
-    p_ea = false;
+    WITH_BLOCK_AUTOCMDS({
+      make_snapshot(SNAP_AUCMD_IDX);
+      save_ea = p_ea;
+      p_ea = false;
 
-    /* Prevent chdir() call in win_enter_ext(), through do_autochdir(). */
-    save_acd = p_acd;
-    p_acd = false;
+      /* Prevent chdir() call in win_enter_ext(), through do_autochdir(). */
+      save_acd = p_acd;
+      p_acd = false;
 
-    (void)win_split_ins(0, WSP_TOP, aucmd_win, 0);
-    (void)win_comp_pos();       /* recompute window positions */
-    p_ea = save_ea;
-    p_acd = save_acd;
-    unblock_autocmds();
+      (void)win_split_ins(0, WSP_TOP, aucmd_win, 0);
+      (void)win_comp_pos();       /* recompute window positions */
+      p_ea = save_ea;
+      p_acd = save_acd;
+    });
     curwin = aucmd_win;
   }
   curbuf = buf;
@@ -6121,28 +6121,28 @@ aucmd_restbuf (
     --curbuf->b_nwindows;
     /* Find "aucmd_win", it can't be closed, but it may be in another tab
      * page. Do not trigger autocommands here. */
-    block_autocmds();
-    if (curwin != aucmd_win) {
-      FOR_ALL_TAB_WINDOWS(tp, wp) {
-        if (wp == aucmd_win) {
-          if (tp != curtab) {
-            goto_tabpage_tp(tp, TRUE, TRUE);
+    WITH_BLOCK_AUTOCMDS({
+      if (curwin != aucmd_win) {
+        FOR_ALL_TAB_WINDOWS(tp, wp) {
+          if (wp == aucmd_win) {
+            if (tp != curtab) {
+              goto_tabpage_tp(tp, TRUE, TRUE);
+            }
+            win_goto(aucmd_win);
+            goto win_found;
           }
-          win_goto(aucmd_win);
-          goto win_found;
         }
       }
-    }
 win_found:
 
-    /* Remove the window and frame from the tree of frames. */
-    (void)winframe_remove(curwin, &dummy, NULL);
-    win_remove(curwin, NULL);
-    aucmd_win_used = FALSE;
-    last_status(FALSE);             /* may need to remove last status line */
-    restore_snapshot(SNAP_AUCMD_IDX, FALSE);
-    (void)win_comp_pos();       /* recompute window positions */
-    unblock_autocmds();
+      /* Remove the window and frame from the tree of frames. */
+      (void)winframe_remove(curwin, &dummy, NULL);
+      win_remove(curwin, NULL);
+      aucmd_win_used = FALSE;
+      last_status(FALSE);             /* may need to remove last status line */
+      restore_snapshot(SNAP_AUCMD_IDX, FALSE);
+      (void)win_comp_pos();       /* recompute window positions */
+    });
 
     if (win_valid(aco->save_curwin))
       curwin = aco->save_curwin;
