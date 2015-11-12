@@ -1006,7 +1006,7 @@ list of buffers. |unlisted-buffer|
 			-	buffers with 'modifiable' off
 			=	readonly buffers
 			a	active buffers
-			u	unloaded buffers (overrides the "!")
+			u	unlisted buffers (overrides the "!")
 			h	hidden buffers
 			x	buffers with a read error
 			%	current buffer
