@@ -3161,8 +3161,11 @@ load_dummy_buffer (
 
     /* restore curwin/curbuf and a few other things */
     aucmd_restbuf(&aco);
-    if (newbuf_to_wipe != NULL && buf_valid(newbuf_to_wipe))
-      wipe_buffer(newbuf_to_wipe, FALSE);
+    if (newbuf_to_wipe != NULL && buf_valid(newbuf_to_wipe)) {
+      WITH_BLOCK_AUTOCMDS(
+        wipe_buffer(newbuf_to_wipe)
+      );
+    }
   }
 
   /*
@@ -3197,7 +3200,9 @@ static void wipe_dummy_buffer(buf_T *buf, char_u *dirname_start)
      * work when got_int is set. */
     enter_cleanup(&cs);
 
-    wipe_buffer(buf, FALSE);
+    WITH_BLOCK_AUTOCMDS(
+      wipe_buffer(buf)
+    );
 
     /* Restore the error/interrupt/exception state if not discarded by a
      * new aborting error, interrupt, or uncaught exception. */

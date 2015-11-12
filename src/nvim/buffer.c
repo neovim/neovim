@@ -4570,28 +4570,28 @@ int buf_contents_changed(buf_T *buf)
   /* restore curwin/curbuf and a few other things */
   aucmd_restbuf(&aco);
 
-  if (curbuf != newbuf)         /* safety check */
-    wipe_buffer(newbuf, FALSE);
+  // Safety check
+  if (curbuf != newbuf) {
+    WITH_BLOCK_AUTOCMDS(
+      wipe_buffer(newbuf);
+    );
+  }
 
   return differ;
 }
 
-/*
- * Wipe out a buffer and decrement the last buffer number if it was used for
- * this buffer.  Call this to wipe out a temp buffer that does not contain any
- * marks.
- */
-void 
-wipe_buffer (
+
+/// Wipe out a buffer and decrement the last buffer number if it was used for
+/// this buffer.  Call this to wipe out a temp buffer that does not contain any
+/// marks.
+///
+/// @param buf The buffer to wipe
+void wipe_buffer (
     buf_T *buf,
-    int aucmd                   /* When TRUE trigger autocommands. */
 )
 {
   if (buf->b_fnum == top_file_num - 1)
     --top_file_num;
 
-  // Don't trigger BufDelete autocommands here.
-  WITH_MAYBE_BLOCK_AUTOCMDS(!aucmd, {
-    close_buffer(NULL, buf, DOBUF_WIPE, FALSE);
-  });
+  close_buffer(NULL, buf, DOBUF_WIPE, FALSE);
 }

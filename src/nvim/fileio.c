@@ -5039,8 +5039,11 @@ void buf_reload(buf_T *buf, int orig_mode)
   }
   xfree(ea.cmd);
 
-  if (savebuf != NULL && buf_valid(savebuf))
-    wipe_buffer(savebuf, FALSE);
+  if (savebuf != NULL && buf_valid(savebuf)) {
+    WITH_BLOCK_AUTOCMDS(
+      wipe_buffer(savebuf)
+    );
+  }
 
   /* Invalidate diff info if necessary. */
   diff_invalidate(curbuf);
