@@ -24,7 +24,7 @@ these differences.
 - Use `$XDG_CONFIG_HOME/nvim/init.vim` instead of `.vimrc` for storing 
   configuration.
 - Use `$XDG_CONFIG_HOME/nvim` instead of `.vim` to store configuration files.
-- Use `$XDG_DATA_HOME/shada/main.shada` instead of `.viminfo` for persistent 
+- Use `$XDG_DATA_HOME/nvim/shada/main.shada` instead of `.viminfo` for persistent 
   session information.
 
 ==============================================================================
