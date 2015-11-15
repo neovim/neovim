@@ -167,7 +167,7 @@ describe('tui with non-tty file descriptors', function()
       :q                                                |
       abc                                               |
                                                         |
-      [Program exited, press any key to close]          |
+      [Process exited 0]                                |
                                                         |
       -- TERMINAL --                                    |
     ]])
