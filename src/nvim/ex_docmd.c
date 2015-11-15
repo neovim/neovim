@@ -80,6 +80,9 @@
 static int quitmore = 0;
 static int ex_pressedreturn = FALSE;
 
+/* whether ":lcd" was produced for a session */
+static int did_lcd;
+
 typedef struct ucmd {
   char_u      *uc_name;         /* The command name */
   uint32_t uc_argt;             /* The argument type */
@@ -144,23 +147,9 @@ struct dbg_stuff {
 # include "ex_docmd.c.generated.h"
 #endif
 
-# define ex_gui                 ex_nogui
-# define ex_popup               ex_ni
-# define ex_simalt              ex_ni
-# define gui_mch_find_dialog    ex_ni
-# define gui_mch_replace_dialog ex_ni
-# define ex_helpfind            ex_ni
-static int did_lcd;             /* whether ":lcd" was produced for a session */
 #ifndef HAVE_WORKING_LIBINTL
 # define ex_language            ex_ni
 #endif
-# define ex_wsverb              ex_ni
-# define ex_nbclose             ex_ni
-# define ex_nbkey               ex_ni
-# define ex_nbstart             ex_ni
-
-
-
 
 /*
  * Declare cmdnames[].
