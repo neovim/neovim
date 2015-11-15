@@ -2,6 +2,12 @@
 
 " Setup: {{{1
 function! tutor#SetupVim()
+    if &col < 90
+        set columns=90
+    endif
+    if !exists('g:did_load_ftplugin') || g:did_load_ftplugin != 1
+        filetype plugin on
+    endif
     if has('syntax')
         if !exists('g:syntax_on') || g:syntax_on == 0
             syntax on
@@ -336,6 +342,7 @@ function! tutor#TutorCmd(tutor_name)
         let l:to_open = l:tutors[l:tutor_to_open-1]
     endif
 
+    call tutor#SetupVim()
     exe "edit ".l:to_open
 endfunction
 
