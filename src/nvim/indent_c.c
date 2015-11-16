@@ -1237,18 +1237,36 @@ static pos_T * find_match_char(char_u c, int ind_maxparen)
   pos_T cursor_save;
   pos_T       *trypos;
   static pos_T pos_copy;
+  int ind_maxp_wk;
 
   cursor_save = curwin->w_cursor;
-  if ((trypos = findmatchlimit(NULL, c, 0, ind_maxparen)) != NULL) {
-    /* check if the ( is in a // comment */
-    if ((colnr_T)cin_skip2pos(trypos) > trypos->col)
+  ind_maxp_wk = ind_maxparen;
+retry:
+  if ((trypos = findmatchlimit(NULL, c, 0, ind_maxp_wk)) != NULL) {
+    // check if the ( is in a // comment
+    if ((colnr_T)cin_skip2pos(trypos) > trypos->col) {
+      ind_maxp_wk = ind_maxparen - (int)(cursor_save.lnum - trypos->lnum);
+      if (ind_maxp_wk > 0) {
+        curwin->w_cursor = *trypos;
+        curwin->w_cursor.col = 0;  // XXX
+        goto retry;
+      }
       trypos = NULL;
-    else {
+    } else {
+      pos_T *trypos_wk;
+
       pos_copy = *trypos;           /* copy trypos, findmatch will change it */
       trypos = &pos_copy;
       curwin->w_cursor = *trypos;
-      if (ind_find_start_comment() != NULL)
+      if ((trypos_wk = ind_find_start_comment()) != NULL) { /* XXX */
+        ind_maxp_wk = ind_maxparen - (int)(cursor_save.lnum
+            - trypos_wk->lnum);
+        if (ind_maxp_wk > 0) {
+          curwin->w_cursor = *trypos_wk;
+          goto retry;
+        }
         trypos = NULL;
+      }
     }
   }
   curwin->w_cursor = cursor_save;
@@ -1567,7 +1585,7 @@ int get_c_indent(void)
 #define LOOKFOR_CPP_BASECLASS   9
 #define LOOKFOR_ENUM_OR_INIT    10
 #define LOOKFOR_JS_KEY          11
-#define LOOKFOR_NO_COMMA        12
+#define LOOKFOR_COMMA           12
 
   int whilelevel;
   linenr_T lnum;
@@ -2286,7 +2304,8 @@ int get_c_indent(void)
                 amount += ind_continuation;
             } else {
               if (lookfor != LOOKFOR_TERM
-                  && lookfor != LOOKFOR_CPP_BASECLASS) {
+                  && lookfor != LOOKFOR_CPP_BASECLASS
+                  && lookfor != LOOKFOR_COMMA) {
                 amount = scope_amount;
                 if (theline[0] == '{') {
                   amount += curbuf->b_ind_open_extra;
@@ -2550,23 +2569,31 @@ int get_c_indent(void)
             amount = get_indent();
             break;
           }
-          if (lookfor == LOOKFOR_NO_COMMA) {
-            if (terminated != ',') {
+          if (lookfor == LOOKFOR_COMMA) {
+            if (tryposBrace != NULL && tryposBrace->lnum
+                >= curwin->w_cursor.lnum) {
+              break;
+            }
+            if (terminated == ',') {
               // Line below current line is the one that starts a
               // (possibly broken) line ending in a comma.
               break;
-            }
-            amount = get_indent();
-            if (curwin->w_cursor.lnum - 1 == ourscope) {
-              // line above is start of the scope, thus current line
-              // is the one that stars a (possibly broken) line
-              // ending in a comma.
-              break;
+            } else {
+              amount = get_indent();
+              if (curwin->w_cursor.lnum - 1 == ourscope) {
+                // line above is start of the scope, thus current
+                // line is the one that stars a (possibly broken)
+                // line ending in a comma.
+                break;
+              }
             }
           }
 
           if (terminated == 0 || (lookfor != LOOKFOR_UNTERM
                                   && terminated == ',')) {
+            if (*skipwhite(l) == '[' || l[STRLEN(l) - 1] == '[') {
+              amount += ind_continuation;
+            }
             // If we're in the middle of a paren thing, Go back to the line
             // that starts it so we can get the right prevailing indent
             //	   if ( foo &&
@@ -2783,7 +2810,11 @@ int get_c_indent(void)
                  *	    100 +
                  * ->	    here;
                  */
+                l = get_cursor_line_ptr();
                 amount = cur_amount;
+                if (*skipwhite(l) == ']' || l[STRLEN(l) - 1] == ']') {
+                  break;
+                }
 
                 /*
                  * If previous line ends in ',', check whether we
@@ -2809,8 +2840,10 @@ int get_c_indent(void)
                     //       4 *
                     //        5,
                     //     6,
-                    lookfor = LOOKFOR_NO_COMMA;
-                    amount = get_indent();      // XXX
+                    if (cin_iscomment(skipwhite(l))) {
+                      break;
+                    }
+                    lookfor = LOOKFOR_COMMA;
                     trypos = find_match_char('[', curbuf->b_ind_maxparen);
                     if (trypos != NULL) {
                       if (trypos->lnum == curwin->w_cursor.lnum - 1) {
@@ -2831,7 +2864,9 @@ int get_c_indent(void)
                     // XXX
                     cont_amount = cin_get_equal_amount( curwin->w_cursor.lnum);
                   }
-                  if (lookfor != LOOKFOR_TERM && lookfor != LOOKFOR_JS_KEY) {
+                  if (lookfor != LOOKFOR_TERM
+                      && lookfor != LOOKFOR_JS_KEY
+                      && lookfor != LOOKFOR_COMMA) {
                     lookfor = LOOKFOR_UNTERM;
                   }
                 }
