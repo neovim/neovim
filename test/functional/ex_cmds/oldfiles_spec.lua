@@ -3,7 +3,7 @@ local helpers = require('test.functional.helpers')
 
 local buf, eq, execute = helpers.curbufmeths, helpers.eq, helpers.execute
 local feed, nvim, nvim_prog = helpers.feed, helpers.nvim, helpers.nvim_prog
-local set_session, spawn = helpers.set_session, helpers.spawn
+local ok, set_session, spawn = helpers.ok, helpers.set_session, helpers.spawn
 
 local shada_file = 'test.shada'
 
@@ -35,16 +35,15 @@ describe(':oldfiles', function()
     screen = Screen.new(100, 5)
     screen:attach()
     execute('edit testfile1')
-    local filename1 = buf.get_name()
     execute('edit testfile2')
-    local filename2 = buf.get_name()
     execute('wshada ' .. shada_file)
     execute('rshada! ' .. shada_file)
+    local oldfiles = helpers.meths.get_vvar('oldfiles')
     execute('oldfiles')
     screen:expect([[
       testfile2                                                                                           |
-      1: ]].. add_padding(filename1) ..[[ |
-      2: ]].. add_padding(filename2) ..[[ |
+      1: ]].. add_padding(oldfiles[1]) ..[[ |
+      2: ]].. add_padding(oldfiles[2]) ..[[ |
                                                                                                           |
       Press ENTER or type command to continue^                                                             |
     ]])
@@ -53,15 +52,27 @@ end)
 
 describe(':oldfiles!', function()
   local filename
+  local filename2
+  local oldfiles
 
   before_each(function()
     _clear()
     execute('edit testfile1')
-    execute('edit testfile2')
     filename = buf.get_name()
+    execute('edit testfile2')
+    filename2 = buf.get_name()
     execute('wshada ' .. shada_file)
     _clear()
     execute('rshada! ' .. shada_file)
+
+    -- Ensure v:oldfiles isn't busted.  Since things happen so fast,
+    -- the ordering of v:oldfiles is unstable (it uses qsort() under-the-hood).
+    -- Let's verify the contents and the length of v:oldfiles before moving on.
+    oldfiles = helpers.meths.get_vvar('oldfiles')
+    eq(2, #oldfiles)
+    ok(filename == oldfiles[1] or filename == oldfiles[2])
+    ok(filename2 == oldfiles[1] or filename2 == oldfiles[2])
+
     execute('oldfiles!')
   end)
 
@@ -71,7 +82,7 @@ describe(':oldfiles!', function()
 
   it('provides a prompt and edits the chosen file', function()
     feed('2<cr>')
-    eq(filename, buf.get_name())
+    eq(oldfiles[2], buf.get_name())
   end)
 
   it('provides a prompt and does nothing on <cr>', function()
