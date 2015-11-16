@@ -942,6 +942,11 @@ normal_end:
     do_check_cursorbind();
   }
 
+  if (VIsual_active) {
+    // probably too soon, but for testing:
+    autoselect_test();
+  }
+
   // May restart edit(), if we got here with CTRL-O in Insert mode (but not
   // if still inside a mapping that started in Visual mode).
   // May switch from Visual to Select mode after CTRL-O command.
@@ -1401,6 +1406,116 @@ static void set_vcount_ca(cmdarg_T *cap, bool *set_prevcount)
   set_vcount(count, count == 0 ? 1 : count, *set_prevcount);
   *set_prevcount = false;    /* only set v:prevcount once */
 }
+
+bool get_visual_selection_bounds(oparg_T *oap)
+{
+  bool include_line_break = false;
+  if (!VIsual_active) {
+    return false;
+  }
+  oap->is_VIsual = VIsual_active;
+  /* If 'selection' is "exclusive", backup one character for
+   * charwise selections. */
+  if (VIsual_mode == 'v') {
+    include_line_break =
+      unadjust_for_sel();
+  }
+
+  oap->start = VIsual;
+  if (VIsual_mode == 'V') {
+    oap->start.col = 0;
+  }
+
+  if (lt(oap->start, curwin->w_cursor)) {
+    /* Include folded lines completely. */
+    oap->end = curwin->w_cursor;
+  } else {
+    oap->end = oap->start;
+    oap->start = curwin->w_cursor;
+  }
+
+  oap->line_count = oap->end.lnum - oap->start.lnum + 1;
+  if (VIsual_mode == Ctrl_V) {      /* block mode */
+    colnr_T start, end;
+
+    oap->block_mode = true;
+
+    getvvcol(curwin, &(oap->start),
+        &oap->start_vcol, NULL, &oap->end_vcol);
+    getvvcol(curwin, &(oap->end), &start, NULL, &end);
+
+    if (start < oap->start_vcol)
+      oap->start_vcol = start;
+    if (end > oap->end_vcol) {
+      if (*p_sel == 'e' && start >= 1
+          && start - 1 >= oap->end_vcol)
+        oap->end_vcol = start - 1;
+      else
+        oap->end_vcol = end;
+    }
+
+    /* if '$' was used, get oap->end_vcol from longest line */
+    if (curwin->w_curswant == MAXCOL) {
+      pos_T cursor;
+      cursor.col = MAXCOL;
+      oap->end_vcol = 0;
+      for (cursor.lnum = oap->start.lnum;
+          cursor.lnum <= oap->end.lnum;
+          ++cursor.lnum) {
+        getvvcol(curwin, &cursor, NULL, NULL, &end);
+        if (end > oap->end_vcol)
+          oap->end_vcol = end;
+      }
+    }
+  }
+
+  /*
+   * oap->inclusive defaults to true.
+   * If oap->end is on a NUL (empty line) oap->inclusive becomes
+   * false.  This makes "d}P" and "v}dP" work the same.
+   */
+  oap->inclusive = true;
+  if (VIsual_mode == 'V') {
+    oap->motion_type = MLINE;
+  } else {
+    oap->motion_type = MCHAR;
+    if (VIsual_mode != Ctrl_V && *ml_get_pos(&(oap->end)) == NUL
+        && (include_line_break || !virtual_op)
+        ) {
+      oap->inclusive = false;
+      /* Try to include the newline, unless it's an operator
+       * that works on lines only. */
+      if (*p_sel != 'o' && !op_on_lines(oap->op_type)) {
+        if (oap->end.lnum < curbuf->b_ml.ml_line_count) {
+          // XXX: only for yank, kill this branch?
+          ++oap->end.lnum;
+          oap->end.col = 0;
+          oap->end.coladd = 0;
+          ++oap->line_count;
+        } else {
+          /* Cannot move below the last line, make the op
+           * inclusive to tell the operation to include the
+           * line break. */
+          oap->inclusive = true;
+        }
+      }
+    }
+  }
+
+  /* Include the trailing byte of a multi-byte char. */
+  if (has_mbyte && oap->inclusive) {
+    int l;
+
+    l = (*mb_ptr2len)(ml_get_pos(&oap->end));
+    if (l > 1)
+      oap->end.col += l - 1;
+  }
+
+  oap->empty = false;
+
+  return true;
+}
+
 
 /*
  * Handle an operator after visual mode or when the movement is finished
@@ -2545,6 +2660,11 @@ do_mouse (
   moved = (jump_flags & CURSOR_MOVED);
   in_status_line = (jump_flags & IN_STATUS_LINE);
   in_sep_line = (jump_flags & IN_SEP_LINE);
+
+  // TODO: doesn't work, no release events
+  if (!is_click && !is_drag) {
+    autoselect_test();
+  }
 
 
   /* When jumping to another window, clear a pending operator.  That's a bit
