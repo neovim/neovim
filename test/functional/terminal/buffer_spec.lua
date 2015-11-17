@@ -1,5 +1,4 @@
 local helpers = require('test.functional.helpers')
-local Screen = require('test.functional.ui.screen')
 local thelpers = require('test.functional.terminal.helpers')
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
 local wait = helpers.wait

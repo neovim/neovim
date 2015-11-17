@@ -2,7 +2,4 @@
 
 std = '+luajit +busted'
 cache = true
-exclude_files = {
-  'benchmark/preload.lua',
-  'unit/preload.lua'
-}
+exclude_files = { '*/preload.lua' }

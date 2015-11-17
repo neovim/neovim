@@ -1,7 +1,7 @@
 -- ShaDa merging data support
 local helpers = require('test.functional.helpers')
-local nvim_command, meths, funcs, curbufmeths, eq =
-  helpers.command, helpers.meths, helpers.funcs,
+local nvim_command, funcs, curbufmeths, eq =
+  helpers.command, helpers.funcs,
   helpers.curbufmeths, helpers.eq
 local exc_exec, redir_exec = helpers.exc_exec, helpers.redir_exec
 
@@ -870,7 +870,7 @@ describe('ShaDa jumps support code', function()
     end
     wshada(shada)
     eq(0, exc_exec(sdrcmd()))
-    local shada = ''
+    shada = ''
     for i = 1,101 do
       local t = i * 2
       shada = shada .. (
@@ -964,7 +964,7 @@ describe('ShaDa changes support code', function()
     end
     wshada(shada)
     eq(0, exc_exec(sdrcmd()))
-    local shada = ''
+    shada = ''
     for i = 1,101 do
       local t = i * 2
       shada = shada .. (
@@ -1001,7 +1001,7 @@ describe('ShaDa changes support code', function()
     end
     wshada(shada)
     eq(0, exc_exec(sdrcmd()))
-    local shada = ''
+    shada = ''
     for i = 1,100 do
       shada = shada .. ('\011%c\018\131\162mX\195\161f\196\006/a/b/c\161l%c'
                        ):format(i, i)

@@ -4,8 +4,8 @@
 -- actually tried.
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local insert, source = helpers.insert, helpers.source
+local clear, expect = helpers.clear, helpers.expect
 
 describe('regex with multi-byte', function()
   setup(clear)

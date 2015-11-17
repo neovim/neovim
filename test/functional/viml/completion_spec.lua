@@ -1,6 +1,6 @@
 
 local helpers = require('test.functional.helpers')
-local clear, feed, execute = helpers.clear, helpers.feed, helpers.execute
+local clear, feed = helpers.clear, helpers.feed
 local eval, eq, neq = helpers.eval, helpers.eq, helpers.neq
 local execute, source = helpers.execute, helpers.source
 

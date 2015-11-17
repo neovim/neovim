@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
 local thelpers = require('test.functional.terminal.helpers')
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
-local nvim_dir, execute, eq = helpers.nvim_dir, helpers.execute, helpers.eq
+local nvim_dir, execute = helpers.nvim_dir, helpers.execute
 local hide_cursor = thelpers.hide_cursor
 local show_cursor = thelpers.show_cursor
 

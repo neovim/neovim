@@ -9,15 +9,14 @@ local tmpname = os.tmpname()
 local additional_cmd = ''
 
 local function nvim_argv()
-  local ret
-  local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', tmpname, '-N',
-                     '--cmd', 'set shortmess+=I background=light noswapfile',
-                     '--cmd', additional_cmd,
-                     '--embed'}
+  local argv = {nvim_prog, '-u', 'NONE', '-i', tmpname, '-N',
+                '--cmd', 'set shortmess+=I background=light noswapfile',
+                '--cmd', additional_cmd,
+                '--embed'}
   if helpers.prepend_argv then
-    return merge_args(helpers.prepend_argv, nvim_argv)
+    return merge_args(helpers.prepend_argv, argv)
   else
-    return nvim_argv
+    return argv
   end
 end
 
@@ -88,7 +87,6 @@ return {
   reset=reset,
   set_additional_cmd=set_additional_cmd,
   clear=clear,
-  exc_exec=exc_exec,
   get_shada_rw=get_shada_rw,
   read_shada_file=read_shada_file,
 }

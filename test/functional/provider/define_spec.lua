@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')
 local eval, command, nvim = helpers.eval, helpers.command, helpers.nvim
 local eq, run, stop = helpers.eq, helpers.run, helpers.stop
-local clear, feed = helpers.clear, helpers.feed
+local clear = helpers.clear
 
 
 local function get_prefix(sync)
@@ -12,8 +12,8 @@ local function get_prefix(sync)
 end
 
 
-local function call(fn, args)
-  command('call '..fn..'('..args..')')
+local function call(fn, arguments)
+  command('call '..fn..'('..arguments..')')
 end
 
 
@@ -87,9 +87,9 @@ local function command_specs_for(fn, sync, first_arg_factory, init)
             command('RpcCommand arg1 arg2 arg3')
           end
 
-          local function handler(method, args)
+          local function handler(method, arguments)
             eq('test-handler', method)
-            eq({'arg1', 'arg2', 'arg3'}, args[1])
+            eq({'arg1', 'arg2', 'arg3'}, arguments[1])
             return ''
           end
 
@@ -104,9 +104,9 @@ local function command_specs_for(fn, sync, first_arg_factory, init)
             command('1,1RpcCommand')
           end
 
-          local function handler(method, args)
+          local function handler(method, arguments)
             eq('test-handler', method)
-            eq({1, 1}, args[1])
+            eq({1, 1}, arguments[1])
             return ''
           end
 
@@ -121,10 +121,10 @@ local function command_specs_for(fn, sync, first_arg_factory, init)
             command('1,1RpcCommand arg')
           end
 
-          local function handler(method, args)
+          local function handler(method, arguments)
             eq('test-handler', method)
-            eq({'arg'}, args[1])
-            eq({1, 1}, args[2])
+            eq({'arg'}, arguments[1])
+            eq({1, 1}, arguments[2])
             return ''
           end
 
@@ -139,10 +139,10 @@ local function command_specs_for(fn, sync, first_arg_factory, init)
             command('5RpcCommand arg')
           end
 
-          local function handler(method, args)
+          local function handler(method, arguments)
             eq('test-handler', method)
-            eq({'arg'}, args[1])
-            eq(5, args[2])
+            eq({'arg'}, arguments[1])
+            eq(5, arguments[2])
             return ''
           end
 
@@ -157,11 +157,11 @@ local function command_specs_for(fn, sync, first_arg_factory, init)
             command('5RpcCommand! arg')
           end
 
-          local function handler(method, args)
+          local function handler(method, arguments)
             eq('test-handler', method)
-            eq({'arg'}, args[1])
-            eq(5, args[2])
-            eq(1, args[3])
+            eq({'arg'}, arguments[1])
+            eq(5, arguments[2])
+            eq(1, arguments[3])
             return ''
           end
 
@@ -177,12 +177,12 @@ local function command_specs_for(fn, sync, first_arg_factory, init)
             command('5RpcCommand! b arg')
           end
 
-          local function handler(method, args)
+          local function handler(method, arguments)
             eq('test-handler', method)
-            eq({'arg'}, args[1])
-            eq(5, args[2])
-            eq(1, args[3])
-            eq('b', args[4])
+            eq({'arg'}, arguments[1])
+            eq(5, arguments[2])
+            eq(1, arguments[3])
+            eq('b', arguments[4])
             return ''
           end
 
@@ -199,13 +199,13 @@ local function command_specs_for(fn, sync, first_arg_factory, init)
             command('5RpcCommand! b arg')
           end
 
-          local function handler(method, args)
+          local function handler(method, arguments)
             eq('test-handler', method)
-            eq({'arg'}, args[1])
-            eq(5, args[2])
-            eq(1, args[3])
-            eq('b', args[4])
-            eq('regb', args[5])
+            eq({'arg'}, arguments[1])
+            eq(5, arguments[2])
+            eq(1, arguments[3])
+            eq('b', arguments[4])
+            eq('regb', arguments[5])
             return ''
           end
 
@@ -243,7 +243,7 @@ local function autocmd_specs_for(fn, sync, first_arg_factory, init)
             command('doautocmd BufEnter x.c')
           end
 
-          local function handler(method, args)
+          local function handler(method)
             eq('test-handler', method)
             return ''
           end
@@ -259,9 +259,9 @@ local function autocmd_specs_for(fn, sync, first_arg_factory, init)
             command('doautocmd BufEnter x.c')
           end
 
-          local function handler(method, args)
+          local function handler(method, arguments)
             eq('test-handler', method)
-            eq('x.c', args[1])
+            eq('x.c', arguments[1])
             return ''
           end
 
@@ -303,9 +303,9 @@ local function function_specs_for(fn, sync, first_arg_factory, init)
             end
           end
 
-          local function handler(method, args)
+          local function handler(method, arguments)
             eq('test-handler', method)
-            eq({{1, 'a', {'b', 'c'}}}, args)
+            eq({{1, 'a', {'b', 'c'}}}, arguments)
             return 'rv'
           end
 
@@ -324,9 +324,9 @@ local function function_specs_for(fn, sync, first_arg_factory, init)
             end
           end
 
-          local function handler(method, args)
+          local function handler(method, arguments)
             eq('test-handler', method)
-            eq({{1, 'a', {'b', 'c'}}, 4}, args)
+            eq({{1, 'a', {'b', 'c'}}, 4}, arguments)
             return 'rv'
           end
 

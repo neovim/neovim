@@ -1,6 +1,5 @@
 -- Some sanity checks for the TUI using the builtin terminal emulator
 -- as a simple way to send keys and assert screen state.
-local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')
 local thelpers = require('test.functional.terminal.helpers')
 local feed = thelpers.feed_data

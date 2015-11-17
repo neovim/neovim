@@ -4,7 +4,7 @@
 
 local helpers = require('test.functional.helpers')
 local feed = helpers.feed
-local clear, execute, expect, source = helpers.clear, helpers.execute, helpers.expect, helpers.source
+local clear, expect, source = helpers.clear, helpers.expect, helpers.source
 
 describe("setting 'number' and 'relativenumber'", function()
   setup(clear)

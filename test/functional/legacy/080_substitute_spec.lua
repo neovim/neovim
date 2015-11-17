@@ -3,7 +3,7 @@
 -- Test for *:s%* on :substitute.
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
+local feed, insert = helpers.feed, helpers.insert
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 local eq, eval = helpers.eq, helpers.eval
 

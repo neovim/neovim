@@ -107,7 +107,7 @@
 
 local helpers = require('test.functional.helpers')
 local request, run, stop = helpers.request, helpers.run, helpers.stop
-local eq, dedent = helpers.eq, helpers.dedent
+local dedent = helpers.dedent
 
 local Screen = {}
 Screen.__index = Screen
@@ -294,9 +294,9 @@ end
 
 function Screen:_handle_resize(width, height)
   local rows = {}
-  for i = 1, height do
+  for _ = 1, height do
     local cols = {}
-    for j = 1, width do
+    for _ = 1, width do
       table.insert(cols, {text = ' ', attrs = {}})
     end
     table.insert(rows, cols)

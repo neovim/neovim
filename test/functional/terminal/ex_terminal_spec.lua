@@ -2,8 +2,7 @@ local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
 local clear, wait, nvim = helpers.clear, helpers.wait, helpers.nvim
 local nvim_dir = helpers.nvim_dir
-local execute, source = helpers.execute, helpers.source
-local eq, neq = helpers.eq, helpers.neq
+local execute = helpers.execute
 
 describe(':terminal', function()
   local screen
