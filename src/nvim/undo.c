@@ -275,32 +275,32 @@ int u_savedel(linenr_T lnum, long nlines)
       nlines == curbuf->b_ml.ml_line_count ? 2 : lnum, FALSE);
 }
 
-/*
- * Return TRUE when undo is allowed.  Otherwise give an error message and
- * return FALSE.
- */
-int undo_allowed(void)
+/// Return true when undo is allowed. Otherwise print an error message and
+/// return false.
+///
+/// @return true if undo is allowed.
+bool undo_allowed(void)
 {
   /* Don't allow changes when 'modifiable' is off.  */
   if (!MODIFIABLE(curbuf)) {
     EMSG(_(e_modifiable));
-    return FALSE;
+    return false;
   }
 
   // In the sandbox it's not allowed to change the text.
   if (sandbox != 0) {
     EMSG(_(e_sandbox));
-    return FALSE;
+    return false;
   }
 
   /* Don't allow changes in the buffer while editing the cmdline.  The
    * caller of getcmdline() may get confused. */
   if (textlock != 0) {
     EMSG(_(e_secure));
-    return FALSE;
+    return false;
   }
 
-  return TRUE;
+  return true;
 }
 
 /*
@@ -747,7 +747,11 @@ static void u_free_uhp(u_header_T *uhp)
   xfree(uhp);
 }
 
-/// Writes the header.
+/// Writes the undofile header.
+///
+/// @param bi   The buffer information
+/// @param hash The hash of the buffer contents
+//
 /// @returns false in case of an error.
 static bool serialize_header(bufinfo_T *bi, char_u *hash)
   FUNC_ATTR_NONNULL_ALL
@@ -801,6 +805,12 @@ static bool serialize_header(bufinfo_T *bi, char_u *hash)
   return true;
 }
 
+/// Writes an undo header.
+///
+/// @param bi  The buffer information
+/// @param uhp The undo header to write
+//
+/// @returns false in case of an error.
 static bool serialize_uhp(bufinfo_T *bi, u_header_T *uhp)
 {
   if (!undo_write_bytes(bi, (uintmax_t)UF_HEADER_MAGIC, 2)) {
@@ -921,6 +931,9 @@ static u_header_T *unserialize_uhp(bufinfo_T *bi,
 
 /// Serializes "uep".
 ///
+/// @param bi  The buffer information
+/// @param uep The undo entry to write
+//
 /// @returns false in case of an error.
 static bool serialize_uep(bufinfo_T *bi, u_entry_T *uep)
 {
@@ -1545,6 +1558,10 @@ theend:
 
 /// Writes a sequence of bytes to the undo file.
 ///
+/// @param bi  The buffer info
+/// @param ptr The byte buffer to write
+/// @param len The number of bytes to write
+///
 /// @returns false in case of an error.
 static bool undo_write(bufinfo_T *bi, uint8_t *ptr, size_t len)
   FUNC_ATTR_NONNULL_ARG(1)
@@ -1555,6 +1572,10 @@ static bool undo_write(bufinfo_T *bi, uint8_t *ptr, size_t len)
 /// Writes a number, most significant bit first, in "len" bytes.
 ///
 /// Must match with undo_read_?c() functions.
+///
+/// @param bi  The buffer info
+/// @param nr  The number to write
+/// @param len The number of bytes to use when writing the number.
 ///
 /// @returns false in case of an error.
 static bool undo_write_bytes(bufinfo_T *bi, uintmax_t nr, size_t len)
@@ -1599,6 +1620,10 @@ static time_t undo_read_time(bufinfo_T *bi)
 }
 
 /// Reads "buffer[size]" from the undo file.
+///
+/// @param bi     The buffer info
+/// @param buffer Character buffer to read data into
+/// @param size   The size of the character buffer
 ///
 /// @returns false in case of an error.
 static bool undo_read(bufinfo_T *bi, uint8_t *buffer, size_t size)
@@ -2830,19 +2855,26 @@ static char_u *u_save_line(linenr_T lnum)
   return vim_strsave(ml_get(lnum));
 }
 
-/*
- * Check if the 'modified' flag is set, or 'ff' has changed (only need to
- * check the first character, because it can only be "dos", "unix" or "mac").
- * "nofile" and "scratch" type buffers are considered to always be unchanged.
- */
-int bufIsChanged(buf_T *buf)
+/// Check if the 'modified' flag is set, or 'ff' has changed (only need to
+/// check the first character, because it can only be "dos", "unix" or "mac").
+/// "nofile" and "scratch" type buffers are considered to always be unchanged.
+///
+/// @param buf The buffer to check
+///
+/// @return true if the buffer has changed
+bool bufIsChanged(buf_T *buf)
 {
   return
     !bt_dontwrite(buf) &&
     (buf->b_changed || file_ff_differs(buf, true));
 }
 
-int curbufIsChanged(void)
+/// Check if the 'modified' flag is set, or 'ff' has changed (only need to
+/// check the first character, because it can only be "dos", "unix" or "mac").
+/// "nofile" and "scratch" type buffers are considered to always be unchanged.
+///
+/// @return true if the current buffer has changed
+bool curbufIsChanged(void)
 {
   return
     !bt_dontwrite(curbuf) &&
