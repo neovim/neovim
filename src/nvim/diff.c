@@ -1535,25 +1535,24 @@ int diff_check(win_T *wp, linenr_T lnum)
   return maxcount - dp->df_count[idx];
 }
 
-/// Compare two entries in diff "*dp" and return TRUE if they are equal.
+/// Compare two entries in diff "*dp" and return true if they are equal.
 ///
-/// @param dp
+/// @param dp   The diff
 /// @param idx1 First entry in diff "*dp"
 /// @param idx2 Second entry in diff "*dp"
 ///
-/// @return return TRUE if two entires are equal.
-static int diff_equal_entry(diff_T *dp, int idx1, int idx2)
+/// @return true if two entires are equal.
+static bool diff_equal_entry(diff_T *dp, int idx1, int idx2)
 {
   if (dp->df_count[idx1] != dp->df_count[idx2]) {
-    return FALSE;
+    return false;
   }
 
   if (diff_check_sanity(curtab, dp) == FAIL) {
-    return FALSE;
+    return false;
   }
 
-  int i;
-  for (i = 0; i < dp->df_count[idx1]; ++i) {
+  for (int i = 0; i < dp->df_count[idx1]; ++i) {
     char_u *line = vim_strsave(ml_get_buf(curtab->tp_diffbuf[idx1],
                                           dp->df_lnum[idx1] + i, FALSE));
 
@@ -1562,10 +1561,10 @@ static int diff_equal_entry(diff_T *dp, int idx1, int idx2)
     xfree(line);
 
     if (cmp != 0) {
-      return FALSE;
+      return false;
     }
   }
-  return TRUE;
+  return true;
 }
 
 /// Compare strings "s1" and "s2" according to 'diffopt'.
@@ -1834,28 +1833,30 @@ int diffopt_changed(void)
   return OK;
 }
 
-/// Return TRUE if 'diffopt' contains "horizontal".
+/// Return true if 'diffopt' contains "horizontal".
 ///
-/// @return TRUE if 'diffopt' contains "horizontal"
-int diffopt_horizontal(void)
+/// @return true if 'diffopt' contains "horizontal"
+bool diffopt_horizontal(void)
 {
   return (diff_flags & DIFF_HORIZONTAL) != 0;
 }
 
 /// Find the difference within a changed line.
 ///
-/// @param startp first char of the change
-/// @param endp last char of the change
+/// @param wp     The window whose current buffer to check
+/// @param lnum   The line number to check within the buffer
+/// @param startp The first char of the change
+/// @param endp   The last char of the change
 ///
-/// @returns TRUE if the line was added, no other buffer has it.
-int diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
+/// @return true if the line was added, no other buffer has it.
+bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
 {
   char_u *line_new;
   int si_org;
   int si_new;
   int ei_org;
   int ei_new;
-  int added = TRUE;
+  bool added = true;
 
   // Make a copy of the line, the next ml_get() will invalidate it.
   char_u *line_org = vim_strsave(ml_get_buf(wp->w_buffer, lnum, FALSE));
@@ -1864,7 +1865,7 @@ int diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
   if (idx == DB_COUNT) {
     // cannot happen
     xfree(line_org);
-    return FALSE;
+    return false;
   }
 
   // search for a change that includes "lnum" in the list of diffblocks.
@@ -1877,7 +1878,7 @@ int diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
 
   if ((dp == NULL) || (diff_check_sanity(curtab, dp) == FAIL)) {
     xfree(line_org);
-    return FALSE;
+    return false;
   }
 
   int off = lnum - dp->df_lnum[idx];
@@ -1888,7 +1889,7 @@ int diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       if (off >= dp->df_count[i]) {
         continue;
       }
-      added = FALSE;
+      added = false;
       line_new = ml_get_buf(curtab->tp_diffbuf[i],
                             dp->df_lnum[i] + off, FALSE);
 
@@ -1960,21 +1961,21 @@ int diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
   return added;
 }
 
-/// Return TRUE if line "lnum" is not close to a diff block, this line should
+/// Return true if line "lnum" is not close to a diff block, this line should
 /// be in a fold.
 ///
-/// @param wp
-/// @param lnum
+/// @param wp   The window whose current buffer to check
+/// @param lnum The line number to check within the buffer
 ///
-/// @return FALSE if there are no diff blocks at all in this window.
-int diff_infold(win_T *wp, linenr_T lnum)
+/// @return false if there are no diff blocks at all in this window.
+bool diff_infold(win_T *wp, linenr_T lnum)
 {
-  int other = FALSE;
+  bool other = false;
   diff_T *dp;
 
   // Return if 'diff' isn't set.
   if (!wp->w_p_diff) {
-    return FALSE;
+    return false;
   }
 
   int idx = -1;
@@ -1983,13 +1984,13 @@ int diff_infold(win_T *wp, linenr_T lnum)
     if (curtab->tp_diffbuf[i] == wp->w_buffer) {
       idx = i;
     } else if (curtab->tp_diffbuf[i] != NULL) {
-      other = TRUE;
+      other = true;
     }
   }
 
   // return here if there are no diffs in the window
   if ((idx == -1) || !other) {
-    return FALSE;
+    return false;
   }
 
   if (curtab->tp_diff_invalid) {
@@ -1999,7 +2000,7 @@ int diff_infold(win_T *wp, linenr_T lnum)
 
   // Return if there are no diff blocks.  All lines will be folded.
   if (curtab->tp_first_diff == NULL) {
-    return TRUE;
+    return true;
   }
 
   for (dp = curtab->tp_first_diff; dp != NULL; dp = dp->df_next) {
@@ -2010,10 +2011,10 @@ int diff_infold(win_T *wp, linenr_T lnum)
 
     // If this change ends before the line we have a match.
     if (dp->df_lnum[idx] + dp->df_count[idx] + diff_context > lnum) {
-      return FALSE;
+      return false;
     }
   }
-  return TRUE;
+  return true;
 }
 
 /// "dp" and "do" commands.
@@ -2380,7 +2381,7 @@ static void diff_fold_update(diff_T *dp, int skip_idx)
 ///
 /// @param buf The buffer to check.
 ///
-/// @return TRUE if buffer "buf" is in diff-mode.
+/// @return true if buffer "buf" is in diff-mode.
 bool diff_mode_buf(buf_T *buf)
 {
   FOR_ALL_TABS(tp) {
