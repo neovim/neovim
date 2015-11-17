@@ -9,15 +9,15 @@ local additional_cmd = ''
 local function nvim_argv(shada_file)
   local rtp_value = ('\'%s/runtime\''):format(
       paths.test_source_path:gsub('\'', '\'\''))
-  local nvim_argv = {nvim_prog, '-u', 'NORC', '-i', shada_file or 'NONE', '-N',
+  local nvim_args = {nvim_prog, '-u', 'NORC', '-i', shada_file or 'NONE', '-N',
                      '--cmd', 'set shortmess+=I background=light noswapfile',
                      '--cmd', 'let &runtimepath=' .. rtp_value,
                      '--cmd', additional_cmd,
                      '--embed'}
   if helpers.prepend_argv then
-    return merge_args(helpers.prepend_argv, nvim_argv)
+    return merge_args(helpers.prepend_argv, nvim_args)
   else
-    return nvim_argv
+    return nvim_args
   end
 end
 

@@ -5,7 +5,6 @@
 
 local helpers = require('test.functional.helpers')
 local clear, expect, source = helpers.clear, helpers.expect, helpers.source
-local eval = helpers.eval
 
 describe('78', function()
   setup(clear)

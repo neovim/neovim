@@ -1,6 +1,7 @@
 -- Tests for :recover
 
 local helpers = require('test.functional.helpers')
+local lfs = require('lfs')
 local execute, eq, clear, eval, feed, expect, source =
   helpers.execute, helpers.eq, helpers.clear, helpers.eval, helpers.feed,
   helpers.expect, helpers.source

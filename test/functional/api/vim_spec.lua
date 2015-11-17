@@ -180,6 +180,8 @@ describe('vim_* functions', function()
   end)
 
   describe('err_write', function()
+    local screen
+
     before_each(function()
       clear()
       screen = Screen.new(40, 8)

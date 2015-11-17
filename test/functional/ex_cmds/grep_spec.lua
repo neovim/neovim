@@ -1,7 +1,6 @@
 local helpers = require('test.functional.helpers')
-local clear, execute, nvim, feed, eq, ok, eval =
-  helpers.clear, helpers.execute, helpers.nvim, helpers.feed,
-  helpers.eq, helpers.ok, helpers.eval
+local clear, execute, feed, ok, eval =
+  helpers.clear, helpers.execute, helpers.feed, helpers.ok, helpers.eval
 
 describe(':grep', function()
   before_each(clear)

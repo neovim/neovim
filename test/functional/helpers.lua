@@ -1,4 +1,5 @@
 require('coxpcall')
+local lfs = require('lfs')
 local assert = require('luassert')
 local Loop = require('nvim.loop')
 local MsgpackStream = require('nvim.msgpack_stream')
@@ -55,7 +56,7 @@ if prepend_argv then
   nvim_argv = new_nvim_argv
 end
 
-local session, loop_running, loop_stopped, last_error
+local session, loop_running, last_error
 
 local function set_session(s)
   session = s
@@ -79,7 +80,7 @@ local function next_message()
 end
 
 local function call_and_stop_on_error(...)
-  local status, result = copcall(...)
+  local status, result = copcall(...)  -- luacheck: ignore
   if not status then
     session:stop()
     last_error = result
@@ -109,7 +110,6 @@ local function run(request_cb, notification_cb, setup_cb, timeout)
     end
   end
 
-  loop_stopped = false
   loop_running = true
   session:run(on_request, on_notification, on_setup, timeout)
   loop_running = false
@@ -121,7 +121,6 @@ local function run(request_cb, notification_cb, setup_cb, timeout)
 end
 
 local function stop()
-  loop_stopped = true
   session:stop()
 end
 
@@ -197,9 +196,9 @@ local function spawn(argv, merge)
   local loop = Loop.new()
   local msgpack_stream = MsgpackStream.new(loop)
   local async_session = AsyncSession.new(msgpack_stream)
-  local session = Session.new(async_session)
+  local sess = Session.new(async_session)
   loop:spawn(merge and merge_args(prepend_argv, argv) or argv)
-  return session
+  return sess
 end
 
 local function clear(extra_cmd)
@@ -332,14 +331,14 @@ local function rmdir(path)
     if file == '.' or file == '..' then
       goto continue
     end
-    ret, err = os.remove(path..'/'..file)
+    local ret, err = os.remove(path..'/'..file)
     if not ret then
       error('os.remove: '..err)
       return nil
     end
     ::continue::
   end
-  ret, err = os.remove(path)
+  local ret, err = os.remove(path)
   if not ret then
     error('os.remove: '..err)
   end
@@ -371,15 +370,15 @@ local function redir_exec(cmd)
 end
 
 local function create_callindex(func)
-  local tbl = {}
-  setmetatable(tbl, {
+  local table = {}
+  setmetatable(table, {
     __index = function(tbl, arg1)
-      ret = function(...) return func(arg1, ...) end
+      local ret = function(...) return func(arg1, ...) end
       tbl[arg1] = ret
       return ret
     end,
   })
-  return tbl
+  return table
 end
 
 local funcs = create_callindex(nvim_call)

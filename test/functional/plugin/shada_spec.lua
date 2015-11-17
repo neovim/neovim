@@ -11,7 +11,6 @@ local reset = plugin_helpers.reset
 
 local shada_helpers = require('test.functional.shada.helpers')
 local get_shada_rw = shada_helpers.get_shada_rw
-local read_shada_file = shada_helpers.read_shada_file
 
 local mpack_eq = function(expected, mpack_result)
   local mpack_keys = {'type', 'timestamp', 'length', 'value'}
@@ -96,10 +95,10 @@ describe('In autoload/shada.vim', function()
         return a[1] < b[1]
       end)
       local state = {i=0}
-      return (function(state, var)
-        state.i = state.i + 1
-        if ret[state.i] then
-          return table.unpack(ret[state.i])
+      return (function(state_, _)
+        state_.i = state_.i + 1
+        if ret[state_.i] then
+          return table.unpack(ret[state_.i])
         end
       end), state
     end
@@ -2103,8 +2102,8 @@ describe('In plugin/shada.vim', function()
     os.remove(fname_tmp)
   end)
 
-  local shada_eq = function(expected, fname)
-    local fd = io.open(fname)
+  local shada_eq = function(expected, fname_)
+    local fd = io.open(fname_)
     local mpack_result = fd:read('*a')
     fd:close()
     mpack_eq(expected, mpack_result)
@@ -2574,6 +2573,7 @@ describe('syntax/shada.vim', function()
                                      'ShaDaEntryMapHeader'}, s} end
     local ah = function(s) return {{'ShaDaEntryArray',
                                     'ShaDaEntryArrayHeader'}, s} end
+    -- luacheck: ignore
     local mses = function(s) return {{'ShaDaEntryMapShort',
                                       'ShaDaEntryMapShortEntryStart'}, s} end
     local mles = function(s) return {{'ShaDaEntryMapLong',

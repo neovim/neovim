@@ -13,7 +13,7 @@ describe('storing global variables in ShaDa files', function()
   end)
 
   it('is working', function()
-    local nvim2 = helpers.spawn({helpers.nvim_prog, '-u', 'NONE',
+    local nvim2 = spawn({helpers.nvim_prog, '-u', 'NONE',
                                  '-i', 'Xviminfo', '--embed'})
     helpers.set_session(nvim2)
 

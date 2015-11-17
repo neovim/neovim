@@ -2,7 +2,7 @@ local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')
 
 local buf, eq, execute = helpers.curbufmeths, helpers.eq, helpers.execute
-local feed, nvim, nvim_prog = helpers.feed, helpers.nvim, helpers.nvim_prog
+local feed, nvim_prog = helpers.feed, helpers.nvim_prog
 local ok, set_session, spawn = helpers.ok, helpers.set_session, helpers.spawn
 
 local shada_file = 'test.shada'
@@ -11,9 +11,6 @@ local shada_file = 'test.shada'
 -- helpers.clear() uses "-i NONE", which is not useful for this test.
 --
 local function _clear()
-  if session then
-    session:exit(0)
-  end
   set_session(spawn({nvim_prog,
                      '-u', 'NONE',
                      '--cmd', 'set noswapfile undodir=. directory=. viewdir=. backupdir=.',
@@ -32,7 +29,7 @@ describe(':oldfiles', function()
   end
 
   it('shows most recently used files', function()
-    screen = Screen.new(100, 5)
+    local screen = Screen.new(100, 5)
     screen:attach()
     execute('edit testfile1')
     execute('edit testfile2')

@@ -4,7 +4,6 @@ local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local execute, expect, eq, eval = helpers.execute, helpers.expect, helpers.eq, helpers.eval
-local nvim, run, stop, restart = helpers.nvim, helpers.run, helpers.stop, helpers.restart
 
 local function basic_register_test(noblock)
   insert("some words")

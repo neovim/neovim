@@ -1,3 +1,4 @@
+local lfs = require('lfs')
 local helpers = require('test.functional.helpers')
 local clear, execute, eval, eq = helpers.clear, helpers.execute, helpers.eval, helpers.eq
 

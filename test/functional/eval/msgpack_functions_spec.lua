@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')
-local clear, feed, execute = helpers.clear, helpers.feed, helpers.execute
-local eval, eq, neq = helpers.eval, helpers.eq, helpers.neq
-local execute, source = helpers.execute, helpers.source
+local clear = helpers.clear
+local eval, eq = helpers.eval, helpers.eq
+local execute = helpers.execute
 local nvim = helpers.nvim
 local exc_exec = helpers.exc_exec
 
@@ -454,9 +454,9 @@ describe('msgpackparse() function', function()
   it('msgpackparse(systemlist(...)) does not segfault. #3135', function()
     local cmd = "sort(keys(msgpackparse(systemlist('"
       ..helpers.nvim_prog.." --api-info'))[0]))"
-    local api_info = eval(cmd)
-    api_info = eval(cmd) -- do it again (try to force segfault)
-    api_info = eval(cmd) -- do it again
+    eval(cmd)
+    eval(cmd)  -- do it again (try to force segfault)
+    local api_info = eval(cmd)  -- do it again
     eq({'error_types', 'functions', 'types'}, api_info)
   end)
 

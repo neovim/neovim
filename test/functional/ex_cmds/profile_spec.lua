@@ -1,5 +1,5 @@
 require('os')
-require('lfs')
+local lfs = require('lfs')
 
 local helpers  = require('test.functional.helpers')
 local eval     = helpers.eval

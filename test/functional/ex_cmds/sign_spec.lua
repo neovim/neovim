@@ -1,7 +1,5 @@
 local helpers = require('test.functional.helpers')
-local clear, nvim, buffer, curbuf, curwin, eq, ok =
-  helpers.clear, helpers.nvim, helpers.buffer, helpers.curbuf, helpers.curwin,
-  helpers.eq, helpers.ok
+local clear, nvim, eq = helpers.clear, helpers.nvim, helpers.eq
 
 describe('sign', function()
   before_each(clear)

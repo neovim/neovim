@@ -175,6 +175,8 @@ describe('tui with non-tty file descriptors', function()
 end)
 
 describe('tui focus event handling', function()
+  local screen
+
   before_each(function()
     helpers.clear()
     screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')

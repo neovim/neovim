@@ -4,7 +4,7 @@
 -- This test contains both "test44" and "test99" from the old test suite.
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
+local feed, insert = helpers.feed, helpers.insert
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 
 -- Runs the test protocol with the given 'regexpengine' setting. In the old test
