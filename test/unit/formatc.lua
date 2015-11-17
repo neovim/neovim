@@ -124,13 +124,13 @@ end
 
 local function set(t)
   local s = {}
-  for i, v in ipairs(t) do
+  for _, v in ipairs(t) do
     s[v] = true
   end
   return s
 end
 
-local C_keywords = set {
+local C_keywords = set {  -- luacheck: ignore
   "break", "case", "char", "const", "continue", "default", "do", "double",
   "else", "enum", "extern", "float", "for", "goto", "if", "int", "long",
   "register", "return", "short", "signed", "sizeof", "static", "struct",
@@ -154,13 +154,13 @@ local C_keywords = set {
 --  The first one will have a lot of false positives (the line '{' for
 --  example), the second one is more unique.
 local function formatc(str)
-  local tokens = TokeniseC(str)
+  local toks = TokeniseC(str)
   local result = {}
   local block_level = 0
   local allow_one_nl = false
   local end_at_brace = false
 
-  for i, token in ipairs(tokens) do
+  for _, token in ipairs(toks) do
     local typ = token[2]
     if typ == '{' then
       block_level = block_level + 1
@@ -213,8 +213,8 @@ local function formatc(str)
 end
 
 -- standalone operation (very handy for debugging)
-local function standalone(...)
-  Preprocess = require("preprocess")
+local function standalone(...)  -- luacheck: ignore
+  local Preprocess = require("preprocess")
   Preprocess.add_to_include_path('./../../src')
   Preprocess.add_to_include_path('./../../build/include')
   Preprocess.add_to_include_path('./../../.deps/usr/include')

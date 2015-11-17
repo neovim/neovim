@@ -1,3 +1,6 @@
+local lfs = require('lfs')
+local bit = require('bit')
+
 local helpers = require('test.unit.helpers')
 
 local cimport = helpers.cimport
@@ -6,15 +9,11 @@ local internalize = helpers.internalize
 local eq = helpers.eq
 local neq = helpers.neq
 local ffi = helpers.ffi
-local lib = helpers.lib
 local cstr = helpers.cstr
 local to_cstr = helpers.to_cstr
 local OK = helpers.OK
 local FAIL = helpers.FAIL
 local NULL = helpers.NULL
-
-require('lfs')
-require('bit')
 
 cimport('unistd.h')
 cimport('./src/nvim/os/shell.h')
@@ -26,8 +25,7 @@ cppimport('sys/stat.h')
 cppimport('sys/fcntl.h')
 cppimport('sys/errno.h')
 
-local len = 0
-local buf = ""
+local buffer = ""
 local directory = nil
 local absolute_executable = nil
 local executable_name = nil
@@ -85,24 +83,26 @@ describe('fs function', function()
   end)
 
   describe('os_dirname', function()
+    local length
+
     local function os_dirname(buf, len)
       return fs.os_dirname(buf, len)
     end
 
     before_each(function()
-      len = (string.len(lfs.currentdir())) + 1
-      buf = cstr(len, '')
+      length = (string.len(lfs.currentdir())) + 1
+      buffer = cstr(length, '')
     end)
 
     it('returns OK and writes current directory into the buffer if it is large\n    enough', function()
-      eq(OK, (os_dirname(buf, len)))
-      eq(lfs.currentdir(), (ffi.string(buf)))
+      eq(OK, (os_dirname(buffer, length)))
+      eq(lfs.currentdir(), (ffi.string(buffer)))
     end)
 
     -- What kind of other failing cases are possible?
     it('returns FAIL if the buffer is too small', function()
-      local buf = cstr((len - 1), '')
-      eq(FAIL, (os_dirname(buf, (len - 1))))
+      local buf = cstr((length - 1), '')
+      eq(FAIL, (os_dirname(buf, (length - 1))))
     end)
   end)
 
@@ -212,15 +212,6 @@ describe('fs function', function()
     before_each(function()
       os_setperm('unit-test-directory/test.file', orig_test_file_perm)
     end)
-
-    local function os_getperm(filename)
-      local perm = fs.os_getperm((to_cstr(filename)))
-      return tonumber(perm)
-    end
-
-    local function os_setperm(filename, perm)
-      return fs.os_setperm((to_cstr(filename)), perm)
-    end
 
     local function os_fchown(filename, user_id, group_id)
       local fd = ffi.C.open(filename, 0)
@@ -611,7 +602,7 @@ describe('fs function', function()
 
       it('removes the given directory and returns 0', function()
         lfs.mkdir('unit-test-directory/new-dir')
-        eq(0, (os_rmdir('unit-test-directory/new-dir', mode)))
+        eq(0, os_rmdir('unit-test-directory/new-dir'))
         eq(false, (os_isdir('unit-test-directory/new-dir')))
       end)
     end)

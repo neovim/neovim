@@ -5,13 +5,10 @@ local helpers = require("test.unit.helpers")
 local to_cstr = helpers.to_cstr
 local eq      = helpers.eq
 local neq     = helpers.neq
+local NULL    = helpers.NULL
 
 local globals = helpers.cimport("./src/nvim/globals.h")
 local buffer = helpers.cimport("./src/nvim/buffer.h")
-local fileio = helpers.cimport("./src/nvim/fileio.h")
-local ex_docmd = helpers.cimport("./src/nvim/ex_docmd.h")
-local window = helpers.cimport("./src/nvim/window.h")
-local option = helpers.cimport("./src/nvim/option.h")
 
 describe('buffer functions', function()
 
@@ -215,7 +212,7 @@ describe('buffer functions', function()
 
   describe('build_stl_str_hl', function()
 
-    output_buffer = to_cstr(string.rep(" ", 100))
+    local output_buffer = to_cstr(string.rep(" ", 100))
 
     local build_stl_str_hl = function(pat)
       return buffer.build_stl_str_hl(globals.curwin,
