@@ -114,8 +114,6 @@ add_custom_target(lpeg
 list(APPEND THIRD_PARTY_DEPS lpeg)
 
 if(USE_BUNDLED_BUSTED)
-  # We can remove the cliargs dependency once the busted version dependency
-  # is fixed.
   add_custom_command(OUTPUT ${HOSTDEPS_BIN_DIR}/busted
     COMMAND ${LUAROCKS_BINARY}
     ARGS build https://raw.githubusercontent.com/Olivine-Labs/busted/v2.0.rc11-0/busted-2.0.rc11-0.rockspec ${LUAROCKS_BUILDARGS}
