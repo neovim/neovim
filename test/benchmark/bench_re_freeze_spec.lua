@@ -1,7 +1,7 @@
 -- Test for benchmarking RE engine.
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
+local insert, source = helpers.insert, helpers.source
 local clear, execute, wait = helpers.clear, helpers.execute, helpers.wait
 
 -- Temporary file for gathering benchmarking results for each regexp engine.
