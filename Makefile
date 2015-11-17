@@ -86,6 +86,9 @@ oldtest: | nvim
 functionaltest: | nvim
 	+$(BUILD_CMD) -C build functionaltest
 
+testlint: | nvim
+	$(BUILD_CMD) -C build testlint
+
 test: functionaltest
 
 unittest: | nvim
@@ -110,4 +113,4 @@ lint:
 		-DLINT_SUPPRESS_URL="$(DOC_DOWNLOAD_URL_BASE)$(CLINT_ERRORS_FILE_PATH)" \
 		-P cmake/RunLint.cmake
 
-.PHONY: test functionaltest unittest lint clean distclean nvim libnvim cmake deps install
+.PHONY: test testlint functionaltest unittest lint clean distclean nvim libnvim cmake deps install

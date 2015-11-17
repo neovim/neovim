@@ -366,6 +366,8 @@ if(NOT BUSTED_OUTPUT_TYPE)
   set(BUSTED_OUTPUT_TYPE "utfTerminal")
 endif()
 
+find_program(LUACHECK_PRG luacheck)
+
 include(InstallHelpers)
 
 file(GLOB MANPAGES
@@ -455,4 +457,12 @@ if(BUSTED_PRG)
       -DTEST_TYPE=benchmark
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${BENCHMARK_PREREQS})
+endif()
+
+if(LUACHECK_PRG)
+  add_custom_target(testlint
+    COMMAND ${CMAKE_COMMAND}
+      -DLUACHECK_PRG=${LUACHECK_PRG}
+      -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
+      -P ${PROJECT_SOURCE_DIR}/cmake/RunTestsLint.cmake)
 endif()
