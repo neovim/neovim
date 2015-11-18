@@ -2536,7 +2536,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
 
 static bool get_visual_selection(yankreg_T* out)
 {
-  oparg_T oap;
+  oparg_T oap = {0};
   if(!get_visual_selection_bounds(&oap)) {
     return false;
   }

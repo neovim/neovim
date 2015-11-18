@@ -942,11 +942,6 @@ normal_end:
     do_check_cursorbind();
   }
 
-  if (VIsual_active) {
-    // probably too soon, but for testing:
-    autoselect_test();
-  }
-
   // May restart edit(), if we got here with CTRL-O in Insert mode (but not
   // if still inside a mapping that started in Visual mode).
   // May switch from Visual to Select mode after CTRL-O command.
@@ -1221,6 +1216,8 @@ static void normal_check_cursor_moved(NormalState *s)
       s->conceal_new_cursor_line = curwin->w_cursor.lnum;
       s->conceal_update_lines = true;
     }
+
+    autoselect_test();
 
     last_cursormoved = curwin->w_cursor;
   }
@@ -3045,6 +3042,8 @@ void check_visual_highlight(void)
  */
 void end_visual_mode(void)
 {
+
+  autoselect_test();
 
   VIsual_active = false;
   setmouse();
@@ -6456,6 +6455,7 @@ static void nv_visual(cmdarg_T *cap)
       }
     }
   }
+  autoselect_test();
 }
 
 /*
