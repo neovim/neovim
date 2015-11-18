@@ -66,6 +66,7 @@ typedef struct {
     int enable_bracketed_paste, disable_bracketed_paste;
     int enter_insert_mode, enter_replace_mode, exit_insert_mode;
     int set_rgb_foreground, set_rgb_background;
+    int enable_focus_reporting, disable_focus_reporting;
   } unibi_ext;
 } TUIData;
 
@@ -120,6 +121,8 @@ static void terminfo_start(UI *ui)
   data->unibi_ext.enter_insert_mode = -1;
   data->unibi_ext.enter_replace_mode = -1;
   data->unibi_ext.exit_insert_mode = -1;
+  data->unibi_ext.enable_focus_reporting = -1;
+  data->unibi_ext.disable_focus_reporting = -1;
   data->out_fd = 1;
   data->out_isatty = os_isatty(data->out_fd);
   // setup unibilium
@@ -135,6 +138,8 @@ static void terminfo_start(UI *ui)
   unibi_out(ui, unibi_clear_screen);
   // Enable bracketed paste
   unibi_out(ui, data->unibi_ext.enable_bracketed_paste);
+  // Enable focus reporting
+  unibi_out(ui, data->unibi_ext.enable_focus_reporting);
   uv_loop_init(&data->write_loop);
   if (data->out_isatty) {
     uv_tty_init(&data->write_loop, &data->output_handle.tty, data->out_fd, 0);
@@ -157,6 +162,8 @@ static void terminfo_stop(UI *ui)
   unibi_out(ui, unibi_exit_ca_mode);
   // Disable bracketed paste
   unibi_out(ui, data->unibi_ext.disable_bracketed_paste);
+  // Disable focus reporting
+  unibi_out(ui, data->unibi_ext.disable_focus_reporting);
   flush_buf(ui);
   uv_tty_reset_mode();
   uv_close((uv_handle_t *)&data->output_handle, NULL);
@@ -806,6 +813,11 @@ static void fix_terminfo(TUIData *data)
       "\x1b[?2004h");
   data->unibi_ext.disable_bracketed_paste = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[?2004l");
+
+  data->unibi_ext.enable_focus_reporting = (int)unibi_add_ext_str(ut, NULL,
+      "\x1b[?1004h");
+  data->unibi_ext.disable_focus_reporting = (int)unibi_add_ext_str(ut, NULL,
+      "\x1b[?1004l");
 
 #define XTERM_SETAF \
   "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38;5;%p1%d%;m"
