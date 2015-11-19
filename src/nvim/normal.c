@@ -1406,25 +1406,20 @@ static void set_vcount_ca(cmdarg_T *cap, bool *set_prevcount)
 
 bool get_visual_selection_bounds(oparg_T *oap)
 {
-  bool include_line_break = false;
   if (!VIsual_active) {
     return false;
   }
-  oap->is_VIsual = VIsual_active;
-  /* If 'selection' is "exclusive", backup one character for
-   * charwise selections. */
-  if (VIsual_mode == 'v') {
-    include_line_break =
-      unadjust_for_sel();
-  }
+  oap->is_VIsual = true;
 
   oap->start = VIsual;
   if (VIsual_mode == 'V') {
     oap->start.col = 0;
+    oap->motion_type = MLINE;
+  } else {
+    oap->motion_type = MCHAR;
   }
 
   if (lt(oap->start, curwin->w_cursor)) {
-    /* Include folded lines completely. */
     oap->end = curwin->w_cursor;
   } else {
     oap->end = oap->start;
@@ -1432,6 +1427,7 @@ bool get_visual_selection_bounds(oparg_T *oap)
   }
 
   oap->line_count = oap->end.lnum - oap->start.lnum + 1;
+
   if (VIsual_mode == Ctrl_V) {      /* block mode */
     colnr_T start, end;
 
@@ -1472,29 +1468,25 @@ bool get_visual_selection_bounds(oparg_T *oap)
    * false.  This makes "d}P" and "v}dP" work the same.
    */
   oap->inclusive = true;
-  if (VIsual_mode == 'V') {
-    oap->motion_type = MLINE;
-  } else {
-    oap->motion_type = MCHAR;
-    if (VIsual_mode != Ctrl_V && *ml_get_pos(&(oap->end)) == NUL
-        && (include_line_break || !virtual_op)
-        ) {
-      oap->inclusive = false;
-      /* Try to include the newline, unless it's an operator
-       * that works on lines only. */
-      if (*p_sel != 'o' && !op_on_lines(oap->op_type)) {
-        if (oap->end.lnum < curbuf->b_ml.ml_line_count) {
-          // XXX: only for yank, kill this branch?
-          ++oap->end.lnum;
-          oap->end.col = 0;
-          oap->end.coladd = 0;
-          ++oap->line_count;
-        } else {
-          /* Cannot move below the last line, make the op
-           * inclusive to tell the operation to include the
-           * line break. */
-          oap->inclusive = true;
-        }
+    /* If 'selection' is "exclusive", backup one character for
+     * charwise selections. */
+  if (VIsual_mode == 'v' && *ml_get_pos(&(oap->end)) == NUL
+      && (unadjust_for_sel() || !virtual_op)) {
+    oap->inclusive = false;
+    /* Try to include the newline, unless it's an operator
+     * that works on lines only. */
+    if (*p_sel != 'o' && !op_on_lines(oap->op_type)) {
+      if (oap->end.lnum < curbuf->b_ml.ml_line_count) {
+        // XXX: only for yank, kill this branch?
+        ++oap->end.lnum;
+        oap->end.col = 0;
+        oap->end.coladd = 0;
+        ++oap->line_count;
+      } else {
+        /* Cannot move below the last line, make the op
+         * inclusive to tell the operation to include the
+         * line break. */
+        oap->inclusive = true;
       }
     }
   }
