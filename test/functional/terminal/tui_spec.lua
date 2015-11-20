@@ -5,6 +5,7 @@ local helpers = require('test.functional.helpers')
 local thelpers = require('test.functional.terminal.helpers')
 local feed = thelpers.feed_data
 local execute = helpers.execute
+local nvim_dir = helpers.nvim_dir
 
 describe('tui', function()
   local screen
@@ -150,8 +151,11 @@ describe('tui', function()
   end)
 
   it('can handle focus events', function()
+    execute('set noshowmode')
     execute('autocmd FocusGained * echo "gained"')
     execute('autocmd FocusLost * echo "lost"')
+
+    -- In normal mode
     feed('\x1b[I')
     screen:expect([[
       {1: }                                                 |
@@ -170,6 +174,79 @@ describe('tui', function()
       ~                                                 |
       ~                                                 |
       [No Name]                                         |
+      lost                                              |
+      -- TERMINAL --                                    |
+    ]])
+
+    -- In insert mode
+    feed('i')
+    feed('\x1b[I')
+    screen:expect([[
+      {1: }                                                 |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      [No Name]                                         |
+      gained                                            |
+      -- TERMINAL --                                    |
+    ]])
+    feed('\x1b[O')
+    screen:expect([[
+      {1: }                                                 |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      [No Name]                                         |
+      lost                                              |
+      -- TERMINAL --                                    |
+    ]])
+
+    -- In command-line mode
+    feed('\x1b')
+    feed(':')
+    feed('\x1b[I')
+    screen:expect([[
+                                                        |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      [No Name]                                         |
+      g{1:a}ined                                            |
+      -- TERMINAL --                                    |
+    ]])
+    feed('\x1b[O')
+    screen:expect([[
+                                                        |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      [No Name]                                         |
+      l{1:o}st                                              |
+      -- TERMINAL --                                    |
+    ]])
+
+    -- In terminal mode
+    execute('set shell='..nvim_dir..'/shell-test')
+    execute('set laststatus=0')
+    feed('\x1b')
+    execute('terminal')
+    feed('\x1b[I')
+    screen:expect([[
+      ready $                                           |
+      [Process exited 0]{1: }                               |
+                                                        |
+                                                        |
+                                                        |
+      gained                                            |
+      -- TERMINAL --                                    |
+    ]])
+   feed('\x1b[O')
+    screen:expect([[
+      ready $                                           |
+      [Process exited 0]{1: }                               |
+                                                        |
+                                                        |
+                                                        |
       lost                                              |
       -- TERMINAL --                                    |
     ]])
