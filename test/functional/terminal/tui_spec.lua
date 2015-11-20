@@ -149,108 +149,6 @@ describe('tui', function()
       -- TERMINAL --                                    |
     ]])
   end)
-
-  it('can handle focus events', function()
-    execute('set noshowmode')
-    execute('autocmd FocusGained * echo "gained"')
-    execute('autocmd FocusLost * echo "lost"')
-
-    -- In normal mode
-    feed('\x1b[I')
-    screen:expect([[
-      {1: }                                                 |
-      ~                                                 |
-      ~                                                 |
-      ~                                                 |
-      [No Name]                                         |
-      gained                                            |
-      -- TERMINAL --                                    |
-    ]])
-
-    feed('\x1b[O')
-    screen:expect([[
-      {1: }                                                 |
-      ~                                                 |
-      ~                                                 |
-      ~                                                 |
-      [No Name]                                         |
-      lost                                              |
-      -- TERMINAL --                                    |
-    ]])
-
-    -- In insert mode
-    feed('i')
-    feed('\x1b[I')
-    screen:expect([[
-      {1: }                                                 |
-      ~                                                 |
-      ~                                                 |
-      ~                                                 |
-      [No Name]                                         |
-      gained                                            |
-      -- TERMINAL --                                    |
-    ]])
-    feed('\x1b[O')
-    screen:expect([[
-      {1: }                                                 |
-      ~                                                 |
-      ~                                                 |
-      ~                                                 |
-      [No Name]                                         |
-      lost                                              |
-      -- TERMINAL --                                    |
-    ]])
-
-    -- In command-line mode
-    feed('\x1b')
-    feed(':')
-    feed('\x1b[I')
-    screen:expect([[
-                                                        |
-      ~                                                 |
-      ~                                                 |
-      ~                                                 |
-      [No Name]                                         |
-      g{1:a}ined                                            |
-      -- TERMINAL --                                    |
-    ]])
-    feed('\x1b[O')
-    screen:expect([[
-                                                        |
-      ~                                                 |
-      ~                                                 |
-      ~                                                 |
-      [No Name]                                         |
-      l{1:o}st                                              |
-      -- TERMINAL --                                    |
-    ]])
-
-    -- In terminal mode
-    execute('set shell='..nvim_dir..'/shell-test')
-    execute('set laststatus=0')
-    feed('\x1b')
-    execute('terminal')
-    feed('\x1b[I')
-    screen:expect([[
-      ready $                                           |
-      [Process exited 0]{1: }                               |
-                                                        |
-                                                        |
-                                                        |
-      gained                                            |
-      -- TERMINAL --                                    |
-    ]])
-   feed('\x1b[O')
-    screen:expect([[
-      ready $                                           |
-      [Process exited 0]{1: }                               |
-                                                        |
-                                                        |
-                                                        |
-      lost                                              |
-      -- TERMINAL --                                    |
-    ]])
-  end)
 end)
 
 describe('tui with non-tty file descriptors', function()
@@ -272,6 +170,115 @@ describe('tui with non-tty file descriptors', function()
                                                         |
       [Process exited 0]                                |
                                                         |
+      -- TERMINAL --                                    |
+    ]])
+  end)
+end)
+
+describe('tui focus event handling', function()
+  before_each(function()
+    helpers.clear()
+    screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
+    execute('autocmd FocusGained * echo "gained"')
+    execute('autocmd FocusLost * echo "lost"')
+  end)
+
+  it('can handle focus events in normal mode', function()
+    feed('\x1b[I')
+    screen:expect([[
+      {1: }                                                 |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      [No Name]                                         |
+      gained                                            |
+      -- TERMINAL --                                    |
+    ]])
+
+    feed('\x1b[O')
+    screen:expect([[
+      {1: }                                                 |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      [No Name]                                         |
+      lost                                              |
+      -- TERMINAL --                                    |
+    ]])
+  end)
+
+  it('can handle focus events in insert mode', function()
+    execute('set noshowmode')
+    feed('i')
+    feed('\x1b[I')
+    screen:expect([[
+      {1: }                                                 |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      [No Name]                                         |
+      gained                                            |
+      -- TERMINAL --                                    |
+    ]])
+    feed('\x1b[O')
+    screen:expect([[
+      {1: }                                                 |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      [No Name]                                         |
+      lost                                              |
+      -- TERMINAL --                                    |
+    ]])
+  end)
+
+  it('can handle focus events in cmdline mode', function()
+    feed(':')
+    feed('\x1b[I')
+    screen:expect([[
+                                                        |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      [No Name]                                         |
+      g{1:a}ined                                            |
+      -- TERMINAL --                                    |
+    ]])
+    feed('\x1b[O')
+    screen:expect([[
+                                                        |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      [No Name]                                         |
+      l{1:o}st                                              |
+      -- TERMINAL --                                    |
+    ]])
+  end)
+
+  it('can handle focus events in terminal mode', function()
+    execute('set shell='..nvim_dir..'/shell-test')
+    execute('set laststatus=0')
+    execute('set noshowmode')
+    execute('terminal')
+    feed('\x1b[I')
+    screen:expect([[
+      ready $                                           |
+      [Process exited 0]{1: }                               |
+                                                        |
+                                                        |
+                                                        |
+      gained                                            |
+      -- TERMINAL --                                    |
+    ]])
+   feed('\x1b[O')
+    screen:expect([[
+      ready $                                           |
+      [Process exited 0]{1: }                               |
+                                                        |
+                                                        |
+                                                        |
+      lost                                              |
       -- TERMINAL --                                    |
     ]])
   end)
