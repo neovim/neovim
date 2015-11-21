@@ -17,7 +17,12 @@
 #include "nvim/search.h"
 #include "nvim/strings.h"
 
-
+// Find result cache for cpp_baseclass
+typedef struct {
+  int  found;
+  linenr_T  start_of_decl;
+  lpos_T  lpos;
+} cpp_baseclass_cache_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "indent_c.c.generated.h"
@@ -766,10 +771,24 @@ static int cin_isfuncdecl(char_u **sp, linenr_T first_lnum, linenr_T min_lnum)
     return FALSE;
 
   while (*s && *s != '(' && *s != ';' && *s != '\'' && *s != '"') {
-    if (cin_iscomment(s))       /* ignore comments */
+    if (cin_iscomment(s)) {
+      /* ignore comments */
       s = cin_skipcomment(s);
-    else
+    } else if (*s == ':') {
+      if (*(s + 1) == ':') {
+        s += 2;
+      } else {
+        // to avoid following situation
+        // A::A(int a, int b)
+        //     : a(0)  // <--not a function decl
+        //     , b(0)
+        // { //...
+        // }
+        return false;
+      }
+    } else {
       ++s;
+    }
   }
   if (*s != '(')
     return FALSE;               /* ';', ' or "  before any () or no '(' */
@@ -986,39 +1005,44 @@ static int cin_isbreak(char_u *p)
  *
  * This is a lot of guessing.  Watch out for "cond ? func() : foo".
  */
-static int 
-cin_is_cpp_baseclass (
-    colnr_T *col           /* return: column to align with */
-)
-{
-  char_u      *s;
-  int class_or_struct, lookfor_ctor_init, cpp_base_class;
-  linenr_T lnum = curwin->w_cursor.lnum;
-  char_u      *line = get_cursor_line_ptr();
 
-  *col = 0;
+static int
+cin_is_cpp_baseclass(cpp_baseclass_cache_T *cached)
+{
+  lpos_T  *pos = &cached->lpos;     /* find position */
+  char_u  *s;
+  int   class_or_struct, lookfor_ctor_init, cpp_base_class;
+  linenr_T  lnum = curwin->w_cursor.lnum;
+  char_u  *line = get_cursor_line_ptr();
+  linenr_T  start_of_decl;
+  pos_T end_paren = { 0, 0, 0 };
+
+  if (pos->lnum <= lnum)
+    return cached->found; /* Use the cached result */
+
+  pos->col = 0;
 
   s = skipwhite(line);
-  if (*s == '#')                /* skip #define FOO x ? (x) : x */
-    return FALSE;
+  if (*s == '#')    /* skip #define FOO x ? (x) : x */
+    return false;
   s = cin_skipcomment(s);
   if (*s == NUL)
-    return FALSE;
+    return false;
 
-  cpp_base_class = lookfor_ctor_init = class_or_struct = FALSE;
+  cpp_base_class = lookfor_ctor_init = class_or_struct = false;
 
   /* Search for a line starting with '#', empty, ending in ';' or containing
    * '{' or '}' and start below it.  This handles the following situations:
-   *	a = cond ?
-   *	      func() :
-   *		   asdf;
-   *	func::foo()
-   *	      : something
-   *	{}
-   *	Foo::Foo (int one, int two)
-   *		: something(4),
-   *		somethingelse(3)
-   *	{}
+   *  a = cond ?
+   *        func() :
+   *       asdf;
+   *  func::foo()
+   *        : something
+   *  {}
+   *  Foo::Foo (int one, int two)
+   *    : something(4),
+   *    somethingelse(3)
+   *  {}
    */
   while (lnum > 1) {
     line = ml_get(lnum - 1);
@@ -1038,40 +1062,63 @@ cin_is_cpp_baseclass (
     --lnum;
   }
 
+  start_of_decl = lnum;
+  pos->lnum = lnum;
   line = ml_get(lnum);
   s = cin_skipcomment(line);
-  for (;; ) {
+  for (;;) {
     if (*s == NUL) {
-      if (lnum == curwin->w_cursor.lnum)
+      if (lnum == curwin->w_cursor.lnum) {
+        // take care of the following situation
+        // class B
+        //     : public A  // <-- here
+        // { // ....
+        // }
+        if (!cin_ends_in(ml_get(lnum), (char_u *)":", NULL)
+            && cin_skipcomment(ml_get(lnum + 1))[0] == ':'
+            && cin_skipcomment(ml_get(lnum + 1))[1] != ':'
+            && class_or_struct) {
+          cpp_base_class = true;
+        }
         break;
+      }
       /* Continue in the cursor line. */
       line = ml_get(++lnum);
+      s = cin_skipcomment(line);
+    }
+    if (s == line) {
+      /* don't recognize "case (foo):" as a baseclass */
+      if (cin_iscase(s, false))
+        break;
       s = cin_skipcomment(line);
       if (*s == NUL)
         continue;
     }
 
-    if (s[0] == '"')
+    if (s[0] == '"' || (s[0] == 'R' && s[1] == '"'))
       s = skip_string(s) + 1;
     else if (s[0] == ':') {
       if (s[1] == ':') {
         /* skip double colon. It can't be a constructor
          * initialization any more */
-        lookfor_ctor_init = FALSE;
+        lookfor_ctor_init = false;
         s = cin_skipcomment(s + 2);
       } else if (lookfor_ctor_init || class_or_struct) {
         /* we have something found, that looks like the start of
          * cpp-base-class-declaration or constructor-initialization */
-        cpp_base_class = TRUE;
-        lookfor_ctor_init = class_or_struct = FALSE;
-        *col = 0;
+        cpp_base_class = true;
+        lookfor_ctor_init = class_or_struct = false;
+        pos->col = 0;
         s = cin_skipcomment(s + 1);
-      } else
+      } else {
         s = cin_skipcomment(s + 1);
+      }
     } else if ((STRNCMP(s, "class", 5) == 0 && !vim_isIDc(s[5]))
-               || (STRNCMP(s, "struct", 6) == 0 && !vim_isIDc(s[6]))) {
-      class_or_struct = TRUE;
-      lookfor_ctor_init = FALSE;
+        || (STRNCMP(s, "struct", 6) == 0 && !vim_isIDc(s[6]))) {
+      class_or_struct = true;
+      lookfor_ctor_init = false;
+      if (!cpp_base_class)
+        start_of_decl = lnum;
 
       if (*s == 'c')
         s = cin_skipcomment(s + 5);
@@ -1079,34 +1126,77 @@ cin_is_cpp_baseclass (
         s = cin_skipcomment(s + 6);
     } else {
       if (s[0] == '{' || s[0] == '}' || s[0] == ';') {
-        cpp_base_class = lookfor_ctor_init = class_or_struct = FALSE;
+        cpp_base_class = lookfor_ctor_init = class_or_struct = false;
       } else if (s[0] == ')') {
         /* Constructor-initialization is assumed if we come across
          * something like "):" */
-        class_or_struct = FALSE;
-        lookfor_ctor_init = TRUE;
+        class_or_struct = false;
+        lookfor_ctor_init = true;
+        if (!cpp_base_class) {
+          start_of_decl = 0;
+          end_paren.lnum = lnum;
+          end_paren.col = (colnr_T)(s - line);
+        }
       } else if (s[0] == '?') {
         /* Avoid seeing '() :' after '?' as constructor init. */
-        return FALSE;
+        return false;
       } else if (!vim_isIDc(s[0])) {
         /* if it is not an identifier, we are wrong */
-        class_or_struct = FALSE;
-        lookfor_ctor_init = FALSE;
-      } else if (*col == 0) {
+        class_or_struct = false;
+        lookfor_ctor_init = false;
+      } else if (pos->col == 0) {
         /* it can't be a constructor-initialization any more */
-        lookfor_ctor_init = FALSE;
+        lookfor_ctor_init = false;
 
         /* the first statement starts here: lineup with this one... */
         if (cpp_base_class)
-          *col = (colnr_T)(s - line);
+          pos->col = (colnr_T)(s - line);
+
+        // take care of follow situation
+        // A::A(int a, int b)
+        //     : m_a(a)
+        //     , m_b(b) // <---- here
+        // { // ...
+        // }
+        if (lnum > 1
+            && cin_isfuncdecl(NULL, lnum - 1, 0)
+            && cin_ends_in(line, (char_u *)")", NULL)
+            && cin_skipcomment(line)[0] == ':'
+            && cin_skipcomment(line)[1] != ':'
+           ) {
+          lookfor_ctor_init = true;
+          pos->col = (colnr_T)(cin_skipcomment(line) - line);
+        }
       }
 
       /* When the line ends in a comma don't align with it. */
       if (lnum == curwin->w_cursor.lnum && *s == ',' && cin_nocode(s + 1))
-        *col = 0;
+        pos->col = 0;
 
       s = cin_skipcomment(s + 1);
     }
+  }
+
+  cached->found = cpp_base_class;
+  if (cpp_base_class) {
+    pos->lnum = lnum;
+    if (start_of_decl > 0) {
+      cached->start_of_decl = start_of_decl;
+    } else {
+      pos_T   *start_paren;
+      pos_T   cursor_save = curwin->w_cursor;
+
+      curwin->w_cursor = end_paren;
+      start_paren = findmatchlimit(NULL, '(', FM_BACKWARD,
+          curbuf->b_ind_maxparen);
+      curwin->w_cursor = cursor_save;
+      if (start_paren == NULL)
+        cached->start_of_decl = end_paren.lnum;
+      else
+        cached->start_of_decl = start_paren->lnum;
+    }
+  } else {
+    cached->start_of_decl = 0;
   }
 
   return cpp_base_class;
@@ -1579,6 +1669,7 @@ int get_c_indent(void)
   int original_line_islabel;
   int added_to_amount = 0;
 
+  cpp_baseclass_cache_T cache_cpp_baseclass = { false, 0, { MAXLNUM, 0 } };
   /* make a copy, value is changed below */
   int ind_continuation = curbuf->b_ind_continuation;
 
@@ -2492,7 +2583,7 @@ int get_c_indent(void)
            */						    /* XXX */
           n = FALSE;
           if (lookfor != LOOKFOR_TERM && curbuf->b_ind_cpp_baseclass > 0) {
-            n = cin_is_cpp_baseclass(&col);
+            n = cin_is_cpp_baseclass(&cache_cpp_baseclass);
             l = get_cursor_line_ptr();
           }
           if (n) {
@@ -2502,13 +2593,22 @@ int get_c_indent(void)
               else
                 amount += ind_continuation;
             } else if (theline[0] == '{') {
+              // Get indent and pointer to text for current line,
+              // ignoring any jump label.
+              // XXX
+              curwin->w_cursor.lnum = cache_cpp_baseclass.start_of_decl;
+              if (curbuf->b_ind_js)
+                amount = get_indent();
+              else
+                amount = skip_label(curwin->w_cursor.lnum, &l);
               /* Need to find start of the declaration. */
               lookfor = LOOKFOR_UNTERM;
               ind_continuation = 0;
               continue;
-            } else
+            } else {
               /* XXX */
-              amount = get_baseclass_amount(col);
+              amount = get_baseclass_amount(cache_cpp_baseclass.lpos.col);
+            }
             break;
           } else if (lookfor == LOOKFOR_CPP_BASECLASS) {
             /* only look, whether there is a cpp base class
@@ -3046,6 +3146,12 @@ term_again:
     // basically just match where the previous line is, except
     // for the lines immediately following a function declaration,
     // which are K&R-style parameters and need to be indented.
+    //
+    // int f(a, b)
+    //     int a;  // <--- here
+    //     int b;
+    // { // ....
+    // }
 
     // if our line starts with an open brace, forget about any
     // prevailing indent and make sure it looks like the start
@@ -3056,6 +3162,13 @@ term_again:
     /*
      * If the NEXT line is a function declaration, the current
      * line needs to be indented as a function type spec.
+     *     int     // <--- here
+     * f(a, b, c)
+     *     int a;
+     *     int b;
+     *     int c;
+     * { // ...
+     * }
      * Don't do this if the current line looks like a comment or if the
      * current line is terminated, ie. ends in ';', or if the current line
      * contains { or }: "void f() {\n if (1)"
@@ -3097,12 +3210,12 @@ term_again:
          */						    /* XXX */
         n = FALSE;
         if (curbuf->b_ind_cpp_baseclass != 0 && theline[0] != '{') {
-          n = cin_is_cpp_baseclass(&col);
+          n = cin_is_cpp_baseclass(&cache_cpp_baseclass);
           l = get_cursor_line_ptr();
         }
         if (n) {
           /* XXX */
-          amount = get_baseclass_amount(col);
+          amount = get_baseclass_amount(cache_cpp_baseclass.lpos.col);
           break;
         }
 
