@@ -990,10 +990,7 @@ static int cin_isbreak(char_u *p)
  *
  * This is a lot of guessing.  Watch out for "cond ? func() : foo".
  */
-static int cin_is_cpp_baseclass (
-    cpp_baseclass_cache_T *cached  // input and output
-)
-{
+static int cin_is_cpp_baseclass(cpp_baseclass_cache_T *cached) {
   lpos_T *pos = &cached->lpos;  // find position
   char_u      *s;
   int class_or_struct, lookfor_ctor_init, cpp_base_class;
@@ -1071,8 +1068,8 @@ static int cin_is_cpp_baseclass (
       } else if (lookfor_ctor_init || class_or_struct) {
         /* we have something found, that looks like the start of
          * cpp-base-class-declaration or constructor-initialization */
-        cpp_base_class = TRUE;
-        lookfor_ctor_init = class_or_struct = FALSE;
+        cpp_base_class = true;
+        lookfor_ctor_init = class_or_struct = false;
         pos->col = 0;
         s = cin_skipcomment(s + 1);
       } else
@@ -1099,8 +1096,8 @@ static int cin_is_cpp_baseclass (
         return FALSE;
       } else if (!vim_isIDc(s[0])) {
         /* if it is not an identifier, we are wrong */
-        class_or_struct = FALSE;
-        lookfor_ctor_init = FALSE;
+        class_or_struct = false;
+        lookfor_ctor_init = false;
       } else if (pos->col == 0) {
         /* it can't be a constructor-initialization any more */
         lookfor_ctor_init = FALSE;
