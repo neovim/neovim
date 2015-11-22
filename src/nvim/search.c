@@ -926,7 +926,7 @@ static int first_submatch(regmmatch_T *rp)
  * Careful: If spats[0].off.line == TRUE and spats[0].off.off == 0 this
  * makes the movement linewise without moving the match position.
  *
- * return 0 for failure, 1 for found, 2 for found and line offset added
+ * Return 0 for failure, 1 for found, 2 for found and line offset added.
  */
 int do_search(
     oparg_T         *oap,           /* can be NULL */
@@ -3201,6 +3201,7 @@ current_tagblock (
   int do_include = include;
   bool save_p_ws = p_ws;
   int retval = FAIL;
+  int is_inclusive = true;
 
   p_ws = false;
 
@@ -3295,9 +3296,16 @@ again:
       if (inc_cursor() < 0)
         break;
   } else {
-    /* Exclude the '<' of the end tag. */
-    if (*get_cursor_pos_ptr() == '<')
+    char_u *c = get_cursor_pos_ptr();
+    // Exclude the '<' of the end tag.
+    // If the closing tag is on new line, do not decrement cursor, but make
+    // operation exclusive, so that the linefeed will be selected
+    if (*c == '<' && !VIsual_active && curwin->w_cursor.col == 0) {
+      // do not decrement cursor
+      is_inclusive = false;
+    } else if (*c == '<') {
       dec_cursor();
+    }
   }
   end_pos = curwin->w_cursor;
 
@@ -3342,8 +3350,9 @@ again:
        * on an empty area. */
       curwin->w_cursor = start_pos;
       oap->inclusive = false;
-    } else
-      oap->inclusive = true;
+    } else {
+      oap->inclusive = is_inclusive;
+    }
   }
   retval = OK;
 

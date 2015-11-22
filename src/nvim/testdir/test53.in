@@ -23,6 +23,7 @@ jfXdit
 0fXdit
 fXdat
 0fXdat
+dit
 :"
 :put =matchstr(\"abcd\", \".\", 0, 2) " b
 :put =matchstr(\"abcd\", \"..\", 0, 2) " bc
@@ -97,6 +98,9 @@ voo "nah" sdf " asdf" sdf " sdf" sd
 -<b>asdX<i>a<i />sdf</i>asdf</b>-
 -<b>asdf<i>Xasdf</i>asdf</b>-
 -<b>asdX<i>as<b />df</i>asdf</b>-
+-<b>
+innertext object
+</b>
 </begin>
 SEARCH:
 foobar
