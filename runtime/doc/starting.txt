@@ -1232,6 +1232,8 @@ exactly four MessagePack objects:
                                               With |shada-h| or 'nohlsearch' 
                                               this key is always false.
                        sp   Binary   N/A      Actual pattern.  Required.
+                       sb   Boolean  false    True if search direction is 
+                                              backward.
                        *    any      none     Other keys are allowed for 
                                               compatibility reasons, see 
                                               |shada-compatibility|.

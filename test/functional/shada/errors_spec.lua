@@ -124,6 +124,11 @@ describe('ShaDa error handling', function()
     eq('Vim(rshada):E575: Error while reading ShaDa file: search pattern entry at position 0 has sc key value which is not a boolean', exc_exec(sdrcmd()))
   end)
 
+  it('fails on search pattern item with NIL search_backward key value', function()
+    wshada('\002\000\009\130\162sX\192\162sb\192')
+    eq('Vim(rshada):E575: Error while reading ShaDa file: search pattern entry at position 0 has sb key value which is not a boolean', exc_exec(sdrcmd()))
+  end)
+
   it('fails on search pattern item with NIL has_line_offset key value', function()
     wshada('\002\000\009\130\162sX\192\162sl\192')
     eq('Vim(rshada):E575: Error while reading ShaDa file: search pattern entry at position 0 has sl key value which is not a boolean', exc_exec(sdrcmd()))

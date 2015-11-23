@@ -4623,6 +4623,7 @@ void set_search_pattern(const SearchPattern pat)
 {
   free_spat(&spats[0]);
   memcpy(&(spats[0]), &pat, sizeof(spats[0]));
+  set_vv_searchforward();
 }
 
 /// Set last substitute pattern
