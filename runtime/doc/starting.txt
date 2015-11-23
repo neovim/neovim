@@ -28,8 +28,6 @@ More generally, Vim is started with:
 Option arguments and file name arguments can be mixed, and any number of them
 can be given.  However, watch out for options that take an argument.
 
-For compatibility with various Vi versions, see	|cmdline-arguments|.
-
 Exactly one out of the following five items may be used to choose how to
 start editing:
 

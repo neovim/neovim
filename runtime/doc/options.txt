@@ -991,7 +991,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'belloff'* *'bo'*
 'belloff' 'bo'		string	(default "")
 			global
-			{not in Vi}
 	Specifies for which events the bell will not be rung. It is a comma
 	separated list of items. For each item that is present, the bell
 	will be silenced. This is most useful to specify specific events in
