@@ -6011,11 +6011,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	( -   Start of item group.  Can be used for setting the width and
 	      alignment of a section.  Must be followed by %) somewhere.
 	) -   End of item group.  No width fields allowed.
-	T N   For 'tabline': start of tab page N label.  Use %T after the last
-	      label.  This information is used for mouse clicks.
-	X N   For 'tabline': start of close tab N label.  Use %X after the
-	      label, e.g.: %3Xclose%X.  Use %999X for a "close current tab"
-	      mark.  This information is used for mouse clicks.
+	T N   For 'tabline': start of tab page N label.  Use %T or %X to end 
+	      the label.  This information is used for mouse clicks.
+	X N   For 'tabline': start of close tab N label.  Use %X or %T to end 
+	      the label, e.g.: %3Xclose%X.  Use %999X for a "close current 
+	      tab" mark.  This information is used for mouse clicks.
+	[ -   For 'tabline': start of execute command label. Use %X or %T to 
+	      end the label, e.g.: %[buffer 10]foo.c%X.  This information is 
+	      used for mouse clicks: in the example when clicking on "foo.c" 
+	      "buffer 10" command will be run.
 	< -   Where to truncate line if too long.  Default is at the start.
 	      No width fields allowed.
 	= -   Separation point between left and right aligned items.

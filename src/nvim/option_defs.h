@@ -247,6 +247,7 @@ enum {
   STL_HIGHLIGHT       = '#',  ///< Highlight name.
   STL_TABPAGENR       = 'T',  ///< Tab page label nr.
   STL_TABCLOSENR      = 'X',  ///< Tab page close nr.
+  STL_CLICK_CMD       = '[',  ///< Click region start.
 };
 /// C string containing all 'statusline' option flags
 #define STL_ALL ((char_u[]) { \
@@ -257,7 +258,7 @@ enum {
   STL_PREVIEWFLAG, STL_PREVIEWFLAG_ALT, STL_MODIFIED, STL_MODIFIED_ALT, \
   STL_QUICKFIX, STL_PERCENTAGE, STL_ALTPERCENT, STL_ARGLISTSTAT, STL_PAGENUM, \
   STL_VIM_EXPR, STL_MIDDLEMARK, STL_TRUNCMARK, STL_USER_HL, STL_HIGHLIGHT, \
-  STL_TABPAGENR, STL_TABCLOSENR, \
+  STL_TABPAGENR, STL_TABCLOSENR, STL_CLICK_CMD, \
   0, \
 })
 

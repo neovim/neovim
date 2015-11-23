@@ -147,6 +147,9 @@ static foldinfo_T win_foldinfo; /* info for 'foldcolumn' */
  */
 static schar_T  *current_ScreenLine;
 
+StlClickDefinition *tab_page_click_defs = NULL;
+long tab_page_click_defs_size = 0;
+
 # define SCREEN_LINE(r, o, e, c, rl)    screen_line((r), (o), (e), (c), (rl))
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "screen.c.generated.h"
@@ -5009,8 +5012,8 @@ win_redr_custom (
   char_u      *stl;
   char_u      *p;
   struct      stl_hlrec hltab[STL_MAX_ITEM];
-  struct      stl_hlrec tabtab[STL_MAX_ITEM];
-  int use_sandbox = FALSE;
+  StlClickRecord tabtab[STL_MAX_ITEM];
+  int use_sandbox = false;
   win_T       *ewp;
   int p_crb_save;
 
@@ -5126,20 +5129,24 @@ win_redr_custom (
   screen_puts(p >= buf + len ? (char_u *)"" : p, row, col, curattr);
 
   if (wp == NULL) {
-    /* Fill the TabPageIdxs[] array for clicking in the tab pagesline. */
+    // Fill the tab_page_click_defs array for clicking in the tab pages line.
     col = 0;
     len = 0;
     p = buf;
-    fillchar = 0;
+    StlClickDefinition cur_click_def = {
+      .type = kStlClickDisabled,
+    };
     for (n = 0; tabtab[n].start != NULL; n++) {
-      len += vim_strnsize(p, (int)(tabtab[n].start - p));
-      while (col < len)
-        TabPageIdxs[col++] = fillchar;
-      p = tabtab[n].start;
-      fillchar = tabtab[n].userhl;
+      len += vim_strnsize(p, (int)(tabtab[n].start - (char *) p));
+      while (col < len) {
+        tab_page_click_defs[col++] = cur_click_def;
+      }
+      p = (char_u *) tabtab[n].start;
+      cur_click_def = tabtab[n].def;
     }
-    while (col < Columns)
-      TabPageIdxs[col++] = fillchar;
+    while (col < Columns) {
+      tab_page_click_defs[col++] = cur_click_def;
+    }
   }
 
 theend:
@@ -5958,9 +5965,9 @@ void screenalloc(bool doclear)
   sattr_T         *new_ScreenAttrs;
   unsigned        *new_LineOffset;
   char_u          *new_LineWraps;
-  short           *new_TabPageIdxs;
-  static int entered = FALSE;                   /* avoid recursiveness */
-  static int done_outofmem_msg = FALSE;         /* did outofmem message */
+  StlClickDefinition *new_tab_page_click_defs;
+  static bool entered = false;  // avoid recursiveness
+  static bool done_outofmem_msg = false;
   int retry_count = 0;
   const bool l_enc_utf8 = enc_utf8;
   const int l_enc_dbcs = enc_dbcs;
@@ -6033,7 +6040,8 @@ retry:
   new_ScreenAttrs = xmalloc((size_t)((Rows + 1) * Columns * sizeof(sattr_T)));
   new_LineOffset = xmalloc((size_t)(Rows * sizeof(unsigned)));
   new_LineWraps = xmalloc((size_t)(Rows * sizeof(char_u)));
-  new_TabPageIdxs = xmalloc((size_t)(Columns * sizeof(short)));
+  new_tab_page_click_defs = xcalloc(
+      (size_t) Columns, sizeof(*new_tab_page_click_defs));
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     win_alloc_lines(wp);
@@ -6051,7 +6059,7 @@ retry:
       || new_ScreenAttrs == NULL
       || new_LineOffset == NULL
       || new_LineWraps == NULL
-      || new_TabPageIdxs == NULL
+      || new_tab_page_click_defs == NULL
       || outofmem) {
     if (ScreenLines != NULL || !done_outofmem_msg) {
       /* guess the size */
@@ -6077,8 +6085,8 @@ retry:
     new_LineOffset = NULL;
     xfree(new_LineWraps);
     new_LineWraps = NULL;
-    xfree(new_TabPageIdxs);
-    new_TabPageIdxs = NULL;
+    xfree(new_tab_page_click_defs);
+    new_tab_page_click_defs = NULL;
   } else {
     done_outofmem_msg = FALSE;
 
@@ -6157,7 +6165,8 @@ retry:
   ScreenAttrs = new_ScreenAttrs;
   LineOffset = new_LineOffset;
   LineWraps = new_LineWraps;
-  TabPageIdxs = new_TabPageIdxs;
+  tab_page_click_defs = new_tab_page_click_defs;
+  tab_page_click_defs_size = Columns;
 
   /* It's important that screen_Rows and screen_Columns reflect the actual
    * size of ScreenLines[].  Set them before calling anything. */
@@ -6196,7 +6205,25 @@ void free_screenlines(void)
   xfree(ScreenAttrs);
   xfree(LineOffset);
   xfree(LineWraps);
-  xfree(TabPageIdxs);
+  clear_tab_page_click_defs(tab_page_click_defs, tab_page_click_defs_size);
+  xfree(tab_page_click_defs);
+}
+
+/// Clear tab_page_click_defs table
+///
+/// @param[out]  tpcd  Table to clear.
+/// @param[in]  tpcd_size  Size of the table.
+void clear_tab_page_click_defs(StlClickDefinition *const tpcd,
+                               const long tpcd_size)
+{
+  if (tpcd != NULL) {
+    for (long i = 0; i < tpcd_size; i++) {
+      if (i == 0 || tpcd[i].cmd != tpcd[i - 1].cmd) {
+        xfree(tpcd[i].cmd);
+      }
+    }
+  }
+  memset(tpcd, 0, (size_t) tpcd_size * sizeof(tpcd[0]));
 }
 
 void screenclear(void)
@@ -6804,9 +6831,9 @@ static void draw_tabline(void)
     return;
 
 
-  /* Init TabPageIdxs[] to zero: Clicking outside of tabs has no effect. */
-  for (scol = 0; scol < Columns; ++scol)
-    TabPageIdxs[scol] = 0;
+  // Init TabPageIdxs[] to zero: Clicking outside of tabs has no effect.
+  assert(Columns == tab_page_click_defs_size);
+  clear_tab_page_click_defs(tab_page_click_defs, tab_page_click_defs_size);
 
   /* Use the 'tabline' option if it's set. */
   if (*p_tal != NUL) {
@@ -6904,11 +6931,16 @@ static void draw_tabline(void)
       }
       screen_putchar(' ', 0, col++, attr);
 
-      /* Store the tab page number in TabPageIdxs[], so that
-       * jump_to_mouse() knows where each one is. */
-      ++tabcount;
-      while (scol < col)
-        TabPageIdxs[scol++] = tabcount;
+      // Store the tab page number in tab_page_click_defs[], so that
+      // jump_to_mouse() knows where each one is.
+      tabcount++;
+      while (scol < col) {
+        tab_page_click_defs[scol++] = (StlClickDefinition) {
+          .type = kStlClickTabSwitch,
+          .tabnr = tabcount,
+          .cmd = NULL,
+        };
+      }
     }
 
     if (use_sep_chars)
@@ -6920,7 +6952,11 @@ static void draw_tabline(void)
     /* Put an "X" for closing the current tab if there are several. */
     if (first_tabpage->tp_next != NULL) {
       screen_putchar('X', 0, (int)Columns - 1, attr_nosel);
-      TabPageIdxs[Columns - 1] = -999;
+      tab_page_click_defs[Columns - 1] = (StlClickDefinition) {
+        .type = kStlClickTabClose,
+        .tabnr = 999,
+        .cmd = NULL,
+      };
     }
   }
 
