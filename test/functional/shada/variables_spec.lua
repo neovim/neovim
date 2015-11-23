@@ -1,7 +1,7 @@
 -- ShaDa variables saving/reading support
 local helpers = require('test.functional.helpers')
-local meths, funcs, nvim_command, eq =
-  helpers.meths, helpers.funcs, helpers.command, helpers.eq
+local meths, funcs, nvim_command, eq, exc_exec =
+  helpers.meths, helpers.funcs, helpers.command, helpers.eq, helpers.exc_exec
 
 local shada_helpers = require('test.functional.shada.helpers')
 local reset, set_additional_cmd, clear =
@@ -135,5 +135,32 @@ describe('ShaDa support code', function()
     eq({['\171']='\171'}, meths.get_var('DCTVAR'))
     eq({['\171']={{'\171'}, {['\171']='\171'}, {a='Test'}}},
        meths.get_var('NESTEDVAR'))
+  end)
+
+  it('errors and writes when a funcref is stored in a variable',
+  function()
+    nvim_command('let F = function("tr")')
+    meths.set_var('U', '10')
+    nvim_command('set shada+=!')
+    set_additional_cmd('set shada+=!')
+    eq('Vim(wshada):E475: Invalid argument: attempt to dump function reference',
+       exc_exec('wshada'))
+    meths.set_option('shada', '')
+    reset()
+    eq('10', meths.get_var('U'))
+  end)
+
+  it('errors and writes when a self-referencing list is stored in a variable',
+  function()
+    meths.set_var('L', {})
+    nvim_command('call add(L, L)')
+    meths.set_var('U', '10')
+    nvim_command('set shada+=!')
+    eq('Vim(wshada):E475: Invalid argument: container references itself',
+       exc_exec('wshada'))
+    meths.set_option('shada', '')
+    set_additional_cmd('set shada+=!')
+    reset()
+    eq('10', meths.get_var('U'))
   end)
 end)
