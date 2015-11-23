@@ -2,10 +2,9 @@
 
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local eval, clear, execute, expect = helpers.eval, helpers.clear, helpers.execute
-local expect, eq, neq = helpers.expect, helpers.eq, helpers.neq
-local command = helpers.command
+local feed, insert = helpers.feed, helpers.insert
+local eval, clear, execute = helpers.eval, helpers.clear, helpers.execute
+local eq, neq = helpers.eq, helpers.neq
 
 describe('063: Test for ":match", "matchadd()" and related functions', function()
   setup(clear)
@@ -86,7 +85,7 @@ describe('063: Test for ":match", "matchadd()" and related functions', function(
     execute("2match MyGroup2 /HUMPPA/")
     execute("3match MyGroup3 /VIM/")
     execute("let ml = getmatches()")
-    ml = eval("ml")
+    local ml = eval("ml")
     execute("call clearmatches()")
     execute("call setmatches(ml)")
     eq(ml, eval('getmatches()'))

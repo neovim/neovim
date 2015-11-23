@@ -9,8 +9,8 @@ local reset, set_additional_cmd, clear =
   shada_helpers.clear
 
 describe('ShaDa support code', function()
-  testfilename = 'Xtestfile-functional-shada-buffers'
-  testfilename_2 = 'Xtestfile-functional-shada-buffers-2'
+  local testfilename = 'Xtestfile-functional-shada-buffers'
+  local testfilename_2 = 'Xtestfile-functional-shada-buffers-2'
   before_each(reset)
   after_each(clear)
 

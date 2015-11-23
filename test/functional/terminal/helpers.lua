@@ -72,7 +72,7 @@ local function screen_setup(extra_height, command)
       empty_line,
       empty_line,
     }
-    for i = 1, extra_height do
+    for _ = 1, extra_height do
       table.insert(expected, empty_line)
     end
 

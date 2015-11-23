@@ -1,11 +1,11 @@
 
 local helpers = require('test.functional.helpers')
-local clear, eq, eval, execute, expect, feed, insert, neq, next_msg, nvim,
-  nvim_dir, ok, run, session, source, stop, wait, write_file = helpers.clear,
-  helpers.eq, helpers.eval, helpers.execute, helpers.expect, helpers.feed,
+local clear, eq, eval, execute, feed, insert, neq, next_msg, nvim,
+  nvim_dir, ok, source, write_file = helpers.clear,
+  helpers.eq, helpers.eval, helpers.execute, helpers.feed,
   helpers.insert, helpers.neq, helpers.next_message, helpers.nvim,
-  helpers.nvim_dir, helpers.ok, helpers.run, helpers.session, helpers.source,
-  helpers.stop, helpers.wait, helpers.write_file
+  helpers.nvim_dir, helpers.ok, helpers.source,
+  helpers.write_file
 local Screen = require('test.functional.ui.screen')
 
 
@@ -370,7 +370,7 @@ describe('jobs', function()
 
   describe('running tty-test program', function()
     local function next_chunk()
-      local rv = ''
+      local rv
       while true do
         local msg = next_msg()
         local data = msg[3][2]

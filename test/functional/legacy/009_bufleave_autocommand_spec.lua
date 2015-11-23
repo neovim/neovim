@@ -1,7 +1,7 @@
 -- Test for Bufleave autocommand that deletes the buffer we are about to edit.
 
 local helpers = require('test.functional.helpers')
-local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
+local clear, insert = helpers.clear, helpers.insert
 local execute, expect = helpers.execute, helpers.expect
 
 describe('BufLeave autocommand', function()

@@ -1,9 +1,8 @@
 -- Test for v:hlsearch
 
 local helpers = require('test.functional.helpers')
-local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
+local clear, feed = helpers.clear, helpers.feed
 local execute, expect = helpers.execute, helpers.expect
-local eval = helpers.eval
 
 describe('v:hlsearch', function()
   setup(clear)

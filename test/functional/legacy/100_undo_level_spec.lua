@@ -1,8 +1,8 @@
 -- Tests for 'undolevel' setting being global-local
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local source = helpers.source
+local clear, expect = helpers.clear, helpers.expect
 
 describe('undolevel', function()
   setup(clear)

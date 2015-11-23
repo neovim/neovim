@@ -15,15 +15,15 @@ local nvim_current_line = function()
 end
 
 describe('ShaDa support code', function()
-  testfilename = 'Xtestfile-functional-shada-marks'
-  testfilename_2 = 'Xtestfile-functional-shada-marks-2'
+  local testfilename = 'Xtestfile-functional-shada-marks'
+  local testfilename_2 = 'Xtestfile-functional-shada-marks-2'
   before_each(function()
     reset()
     local fd = io.open(testfilename, 'w')
     fd:write('test\n')
     fd:write('test2\n')
     fd:close()
-    local fd = io.open(testfilename_2, 'w')
+    fd = io.open(testfilename_2, 'w')
     fd:write('test3\n')
     fd:write('test4\n')
     fd:close()
@@ -115,7 +115,7 @@ describe('ShaDa support code', function()
     eq(tf_full, oldfiles[1])
     eq(tf_full_2, oldfiles[2])
     nvim_command('rshada!')
-    local oldfiles = meths.get_vvar('oldfiles')
+    oldfiles = meths.get_vvar('oldfiles')
     table.sort(oldfiles)
     eq(2, #oldfiles)
     eq(testfilename, oldfiles[1]:sub(-#testfilename))

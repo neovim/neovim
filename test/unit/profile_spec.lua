@@ -36,20 +36,20 @@ local function cmp_assert(v1, v2, op, opstr)
   assert.is_true(res)
 end
 
-local function lt(v1, v2)
-  cmp_assert(v1, v2, function(v1, v2) return v1 < v2 end, "<")
+local function lt(a, b)  -- luacheck: ignore
+  cmp_assert(a, b, function(x, y) return x < y end, "<")
 end
 
-local function lte(v1, v2)
-  cmp_assert(v1, v2, function(v1, v2) return v1 <= v2 end, "<=")
+local function lte(a, b)  -- luacheck: ignore
+  cmp_assert(a, b, function(x, y) return x <= y end, "<=")
 end
 
-local function gt(v1, v2)
-  cmp_assert(v1, v2, function(v1, v2) return v1 > v2 end, ">")
+local function gt(a, b)  -- luacheck: ignore
+  cmp_assert(a, b, function(x, y) return x > y end, ">")
 end
 
-local function gte(v1, v2)
-  cmp_assert(v1, v2, function(v1, v2) return v1 >= v2 end, ">=")
+local function gte(a, b)
+  cmp_assert(a, b, function(x, y) return x >= y end, ">=")
 end
 
 -- missing functions:
@@ -70,7 +70,7 @@ describe('profiling related functions', function()
   local function profile_equal(t1, t2) return prof.profile_equal(t1, t2) end
   local function profile_msg(t) return ffi.string(prof.profile_msg(t)) end
 
-  local function toseconds(t)
+  local function toseconds(t)  -- luacheck: ignore
     local str = trim(profile_msg(t))
     local spl = split(str, ".")
     local s, us = spl[1], spl[2]
@@ -122,7 +122,7 @@ describe('profiling related functions', function()
       local divided = profile_divide(start, divisor)
 
       local res = divided
-      for i = 1, divisor - 1 do
+      for _ = 1, divisor - 1 do
         res = profile_add(res, divided)
       end
 
@@ -143,7 +143,7 @@ describe('profiling related functions', function()
   describe('profile_start', function()
     it('increases', function()
       local last = profile_start()
-      for i=1,100 do
+      for _ = 1, 100 do
         local curr = profile_start()
         gte(curr, last)
         last = curr
@@ -157,7 +157,7 @@ describe('profiling related functions', function()
     end)
 
     it('outer elapsed >= inner elapsed', function()
-      for i = 1, 100 do
+      for _ = 1, 100 do
         local start_outer = profile_start()
         local start_inner = profile_start()
         local elapsed_inner = profile_end(start_inner)
@@ -238,7 +238,7 @@ describe('profiling related functions', function()
       -- t2 >= t1 => profile_cmp(t1, t2) >= 0
       assert.is_true(cmp >= 0)
 
-      local cmp = profile_cmp(profile_sub(start3, start1), profile_sub(start2, start1))
+      cmp = profile_cmp(profile_sub(start3, start1), profile_sub(start2, start1))
       -- t2 <= t1 => profile_cmp(t1, t2) <= 0
       assert.is_true(cmp <= 0)
     end)

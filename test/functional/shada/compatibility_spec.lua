@@ -4,9 +4,8 @@ local nvim_command, funcs, eq = helpers.command, helpers.funcs, helpers.eq
 local exc_exec = helpers.exc_exec
 
 local shada_helpers = require('test.functional.shada.helpers')
-local reset, set_additional_cmd, clear, get_shada_rw =
-  shada_helpers.reset, shada_helpers.set_additional_cmd,
-  shada_helpers.clear, shada_helpers.get_shada_rw
+local reset, clear, get_shada_rw = shada_helpers.reset, shada_helpers.clear,
+  shada_helpers.get_shada_rw
 local read_shada_file = shada_helpers.read_shada_file
 
 local wshada, sdrcmd, shada_fname = get_shada_rw('Xtest-functional-shada-compatibility.shada')
@@ -181,7 +180,7 @@ describe('ShaDa forward compatibility support code', function()
         end
         eq(3, found)
         nvim_command('wshada! ' .. shada_fname)
-        local found = 0
+        found = 0
         for i, subv in ipairs(read_shada_file(shada_fname)) do
           if i == 1 then
             eq(1, subv.type)
@@ -249,7 +248,7 @@ describe('ShaDa forward compatibility support code', function()
     end
     eq(1, found)
     nvim_command('wshada! ' .. shada_fname)
-    local found = 0
+    found = 0
     for i, v in ipairs(read_shada_file(shada_fname)) do
       if i == 1 then
         eq(1, v.type)
@@ -289,7 +288,7 @@ describe('ShaDa forward compatibility support code', function()
     end
     eq(1, found)
     nvim_command('wshada! ' .. shada_fname)
-    local found = 0
+    found = 0
     for i, v in ipairs(read_shada_file(shada_fname)) do
       if i == 1 then
         eq(1, v.type)
@@ -395,7 +394,7 @@ describe('ShaDa forward compatibility support code', function()
     end
     eq(1, found)
     nvim_command('wshada! ' .. shada_fname)
-    local found = 0
+    found = 0
     for i, v in ipairs(read_shada_file(shada_fname)) do
       if i == 1 then
         eq(1, v.type)
@@ -432,7 +431,7 @@ describe('ShaDa forward compatibility support code', function()
     end
     eq(1, found)
     nvim_command('wshada! ' .. shada_fname)
-    local found = 0
+    found = 0
     for i, v in ipairs(read_shada_file(shada_fname)) do
       if i == 1 then
         eq(1, v.type)

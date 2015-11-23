@@ -1,6 +1,5 @@
 local helpers = require('test.functional.helpers')
 local thelpers = require('test.functional.terminal.helpers')
-local Screen = require('test.functional.ui.screen')
 local clear, eq, curbuf = helpers.clear, helpers.eq, helpers.curbuf
 local feed = helpers.feed
 local feed_data = thelpers.feed_data

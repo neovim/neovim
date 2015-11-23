@@ -8,7 +8,6 @@ describe('mappings', function()
   local cid
 
   local add_mapping = function(mapping, send)
-    local str = 'mapped '..mapping
     local cmd = "nnoremap "..mapping.." :call rpcnotify("..cid..", 'mapped', '"
                 ..send:gsub('<', '<lt>').."')<cr>"
     execute(cmd)

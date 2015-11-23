@@ -4,9 +4,7 @@
 -- pointer blocks.
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, execute, expect, source = helpers.clear, helpers.execute, helpers.expect, helpers.source
-local eval = helpers.eval
+local clear, expect, source = helpers.clear, helpers.expect, helpers.source
 
 describe('78', function()
   setup(clear)

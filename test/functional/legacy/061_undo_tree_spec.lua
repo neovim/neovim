@@ -1,8 +1,8 @@
 -- Tests for undo tree and :earlier and :later.
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source, eq, eval, clear, execute, expect, wait, write_file
-  = helpers.feed, helpers.insert, helpers.source, helpers.eq, helpers.eval,
+local feed, source, eq, eval, clear, execute, expect, wait, write_file =
+  helpers.feed, helpers.source, helpers.eq, helpers.eval,
   helpers.clear, helpers.execute, helpers.expect, helpers.wait,
   helpers.write_file
 
@@ -97,9 +97,8 @@ describe('undo tree:', function()
 
       -- Retry up to 3 times. pcall() is _not_ used for the final attempt, so
       -- that failure messages can bubble up.
-      local success, result = false, ''
-      for i = 1, 2 do
-        success, result = pcall(test_earlier_later)
+      for _ = 1, 2 do
+        local success = pcall(test_earlier_later)
         if success then
           return
         end

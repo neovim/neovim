@@ -1,9 +1,9 @@
 -- Sanity checks for window_* API calls via msgpack-rpc
 local helpers = require('test.functional.helpers')
-local clear, nvim, buffer, curbuf, curbuf_contents, window, curwin, eq, neq,
-  ok, feed, rawfeed, insert, eval = helpers.clear, helpers.nvim, helpers.buffer, helpers.curbuf,
+local clear, nvim, curbuf, curbuf_contents, window, curwin, eq, neq,
+  ok, feed, insert, eval = helpers.clear, helpers.nvim, helpers.curbuf,
   helpers.curbuf_contents, helpers.window, helpers.curwin, helpers.eq,
-  helpers.neq, helpers.ok, helpers.feed, helpers.rawfeed, helpers.insert, helpers.eval
+  helpers.neq, helpers.ok, helpers.feed, helpers.insert, helpers.eval
 local wait = helpers.wait
 
 -- check if str is visible at the beginning of some line
@@ -54,7 +54,7 @@ describe('window_* functions', function()
       insert("prologue")
       feed('100o<esc>')
       insert("epilogue")
-      win = curwin()
+      local win = curwin()
       feed('gg')
       wait() -- let nvim process the 'gg' command
 

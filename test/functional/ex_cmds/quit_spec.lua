@@ -1,5 +1,5 @@
 local helpers = require('test.functional.helpers')
-local execute, eq, clear = helpers.execute, helpers.eq, helpers.clear
+local clear = helpers.clear
 
 describe(':qa', function()
   before_each(function() 

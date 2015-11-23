@@ -1,11 +1,11 @@
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
 
-local clear, eval, execute, feed, nvim, nvim_dir = helpers.clear, helpers.eval,
+local clear, execute, feed, nvim, nvim_dir = helpers.clear,
 helpers.execute, helpers.feed, helpers.nvim, helpers.nvim_dir
-local wait = helpers.wait
 
 describe('TermClose event', function()
+  local screen
   before_each(function()
     clear()
     nvim('set_option', 'shell', nvim_dir .. '/shell-test')

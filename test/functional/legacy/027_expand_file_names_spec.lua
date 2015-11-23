@@ -1,10 +1,10 @@
 -- Test for expanding file names
 
 local helpers = require('test.functional.helpers')
-local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute, expect = helpers.execute, helpers.expect
+local clear, feed = helpers.clear, helpers.feed
+local execute = helpers.execute
 local curbuf_contents = helpers.curbuf_contents
-local eq, eval = helpers.eq, helpers.eval
+local eq = helpers.eq
 
 describe('expand file name', function()
   setup(clear)

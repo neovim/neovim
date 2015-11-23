@@ -1,7 +1,7 @@
 -- Test for floating point and logical operators.
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
+local insert, source = helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 
 describe('floating point and logical operators', function()
