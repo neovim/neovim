@@ -13,7 +13,7 @@ Vim.
 2. Coding style		|coding-style|
 3. Design decisions	|design-decisions|
 
-See the file README.txt in the "src" directory for an overview of the source
+See the file "src/nvim/README.md" for a high-level overview of the source
 code.
 
 Vim is open source software.  Everybody is encouraged to contribute to help
