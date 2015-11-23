@@ -12,7 +12,6 @@ Vim.
 1. Design goals		|design-goals|
 2. Coding style		|coding-style|
 3. Design decisions	|design-decisions|
-4. Assumptions		|design-assumptions|
 
 See the file README.txt in the "src" directory for an overview of the source
 code.
@@ -478,18 +477,5 @@ also works when starting a new file.
 This isn't ideal, because the longer Vim is running the higher the counts
 become.  But in practice it is a noticeable improvement over not using the word
 count.
-
-==============================================================================
-4. Assumptions						*design-assumptions*
-
-Size of variables:
-char	    8 bit signed
-char_u	    8 bit unsigned
-int	    32 or 64 bit signed (16 might be possible with limited features)
-unsigned    32 or 64 bit unsigned (16 as with ints)
-long	    32 or 64 bit signed, can hold a pointer
-
-Note that some compilers cannot handle long lines or strings.  The C89
-standard specifies a limit of 509 characters.
 
  vim:tw=78:ts=8:ft=help:norl:
