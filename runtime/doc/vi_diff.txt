@@ -6,10 +6,6 @@
 
 Differences between Vim and Vi				*vi-differences*
 
-Throughout the help files differences between Vim and Vi/Ex are given in
-curly braces, like "{not in Vi}".  This file only lists what has not been
-mentioned in other files and gives an overview.
-
 1. Limits				|limits|
 2. The most interesting additions	|vim-additions|
 
