@@ -60,20 +60,6 @@ argument when starting Vim.
 ==============================================================================
 2. The most interesting additions			*vim-additions*
 
-Vi compatibility.					|'compatible'|
-	Although Vim is 99% Vi compatible, some things in Vi can be
-	considered to be a bug, or at least need improvement.  But still, Vim
-	starts in a mode which behaves like the "real" Vi as much as possible.
-	To make Vim behave a little bit better, try resetting the 'compatible'
-	option:
-		:set nocompatible
-	Or start Vim with the "-N" argument:
-		vim -N
-	Vim starts with 'nocompatible' automatically if you have a .vimrc
-	file.  See |startup|.
-	The 'cpoptions' option can be used to set Vi compatibility on/off for
-	a number of specific items.
-
 Support for different systems.
 	Vim can be used on:
 	- All Unix systems (it works on all systems it was tested on, although
