@@ -94,7 +94,6 @@ General subjects ~
 |tips.txt|	various tips on using Vim
 |message.txt|	(error) messages and explanations
 |quotes.txt|	remarks from users of Vim
-|todo.txt|	known problems and desired extensions
 |develop.txt|	development of Vim
 |debug.txt|	debugging Vim itself
 |uganda.txt|	Vim distribution conditions and what to do with your money
