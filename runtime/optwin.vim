@@ -576,10 +576,6 @@ if has("gui")
   endif
   call append("$", "guifontwide\tlist of font names to be used for double-wide characters")
   call <SID>OptionG("gfw", &gfw)
-  if has("mac")
-    call append("$", "antialias\tuse smooth, antialiased fonts")
-    call <SID>BinOptionG("anti", &anti)
-  endif
   call append("$", "guioptions\tlist of flags that specify how the GUI works")
   call <SID>OptionG("go", &go)
   if has("gui_gtk")

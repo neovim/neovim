@@ -51,15 +51,6 @@ return {
       defaults={if_true={vi=224}}
     },
     {
-      full_name='antialias', abbreviation='anti',
-      type='bool', scope={'global'},
-      vi_def=true,
-      vim=true,
-      redraw={'everything'},
-      enable_if=false,
-      defaults={if_true={vi=false, vim=false}}
-    },
-    {
       full_name='arabic', abbreviation='arab',
       type='bool', scope={'window'},
       vi_def=true,
