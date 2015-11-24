@@ -3,7 +3,7 @@
  *
  * Do ":help uganda"  in Vim to read a list of people who contributed.
  * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
+ * See README.md for an overview of the Vim source code.
  */
 
 #include <errno.h>
