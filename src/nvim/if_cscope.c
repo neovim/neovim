@@ -5,7 +5,7 @@
  * The basic idea/structure of cscope for Vim was borrowed from Nvi.  There
  * might be a few lines of code that look similar to what Nvi has.
  *
- * See README.txt for an overview of the Vim source code.
+ * See README.md for an overview of the Vim source code.
  */
 #include <stdbool.h>
 
