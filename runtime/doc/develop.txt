@@ -10,11 +10,9 @@ This text is important for those who want to be involved in further developing
 Vim.
 
 1. Design goals		|design-goals|
-2. Coding style		|coding-style|
-3. Design decisions	|design-decisions|
-4. Assumptions		|design-assumptions|
+2. Design decisions	|design-decisions|
 
-See the file README.txt in the "src" directory for an overview of the source
+See the file "src/nvim/README.md" for a high-level overview of the source
 code.
 
 Vim is open source software.  Everybody is encouraged to contribute to help
@@ -122,7 +120,6 @@ fast.
 VIM IS... MAINTAINABLE					*design-maintain*
 
 - The source code should not become a mess.  It should be reliable code.
-- Use the same layout in all files to make it easy to read |coding-style|.
 - Use comments in a useful way!  Quoting the function name and argument names
   is NOT useful.  Do explain what they are for.
 - Porting to another platform should be made easy, without having to change
@@ -149,202 +146,7 @@ for plumbing."
 
 
 ==============================================================================
-2. Coding style						*coding-style*
-
-These are the rules to use when making changes to the Vim source code.  Please
-stick to these rules, to keep the sources readable and maintainable.
-
-This list is not complete.  Look in the source code for more examples.
-
-
-MAKING CHANGES						*style-changes*
-
-The basic steps to make changes to the code:
-1. Adjust the documentation.  Doing this first gives you an impression of how
-   your changes affect the user.
-2. Make the source code changes.
-3. Check ../doc/todo.txt if the change affects any listed item.
-4. Make a patch with "diff -c" against the unmodified code and docs.
-5. Make a note about what changed and include it with the patch.
-
-
-USE OF COMMON FUNCTIONS					*style-functions*
-
-Some functions that are common to use, have a special Vim version.  Always
-consider using the Vim version, because they were introduced with a reason.
-
-NORMAL NAME	VIM NAME	DIFFERENCE OF VIM VERSION
-free()		vim_free()	Checks for freeing NULL
-malloc()	alloc()		Checks for out of memory situation
-malloc()	lalloc()	Like alloc(), but has long argument
-strcpy()	STRCPY()	Includes cast to (char *), for char_u * args
-strchr()	vim_strchr()	Accepts special characters
-strrchr()	vim_strrchr()	Accepts special characters
-isspace()	ascii_isspace()	Can handle characters > 128
-iswhite()	ascii_iswhite()	Only true for tab and space
-memcpy()	mch_memmove()	Handles overlapped copies
-bcopy()		mch_memmove()	Handles overlapped copies
-memset()	vim_memset()	Uniform for all systems
-
-
-NAMES							*style-names*
-
-Function names can not be more than 31 characters long (because of VMS).
-
-Don't use "delete" as a variable name, C++ doesn't like it.
-
-Because of the requirement that Vim runs on as many systems as possible, we
-need to avoid using names that are already defined by the system.  This is a
-list of names that are known to cause trouble.  The name is given as a regexp
-pattern.
-
-is.*()		POSIX, ctype.h
-to.*()		POSIX, ctype.h
-
-d_.*		POSIX, dirent.h
-l_.*		POSIX, fcntl.h
-gr_.*		POSIX, grp.h
-pw_.*		POSIX, pwd.h
-sa_.*		POSIX, signal.h
-mem.*		POSIX, string.h
-str.*		POSIX, string.h
-wcs.*		POSIX, string.h
-st_.*		POSIX, stat.h
-tms_.*		POSIX, times.h
-tm_.*		POSIX, time.h
-c_.*		POSIX, termios.h
-MAX.*		POSIX, limits.h
-__.*		POSIX, system
-_[A-Z].*	POSIX, system
-E[A-Z0-9]*	POSIX, errno.h
-
-.*_t		POSIX, for typedefs.  Use .*_T instead.
-
-wait		don't use as argument to a function, conflicts with types.h
-index		shadows global declaration
-time		shadows global declaration
-new		C++ reserved keyword
-try		Borland C++ doesn't like it to be used as a variable.
-
-clear		Mac curses.h
-echo		Mac curses.h
-instr		Mac curses.h
-meta		Mac curses.h
-newwin		Mac curses.h
-nl		Mac curses.h
-overwrite	Mac curses.h
-refresh		Mac curses.h
-scroll		Mac curses.h
-typeahead	Mac curses.h
-
-basename()	GNU string function
-dirname()	GNU string function
-get_env_value()	Linux system function
-
-
-VARIOUS							*style-various*
-
-Typedef'ed names should end in "_T": >
-    typedef int some_T;
-Define'ed names should be uppercase: >
-    #define SOME_THING
-Features always start with "FEAT_": >
-    #define FEAT_FOO
-
-Don't use '\"', some compilers can't handle it.  '"' works fine.
-
-Don't use:
-    #if HAVE_SOME
-Some compilers can't handle that and complain that "HAVE_SOME" is not defined.
-Use
-    #ifdef HAVE_SOME
-or
-    #if defined(HAVE_SOME)
-
-
-STYLE							*style-examples*
-
-General rule: One statement per line.
-
-Wrong:	    if (cond) a = 1;
-
-OK:	    if (cond)
-		a = 1;
-
-Wrong:	    while (cond);
-
-OK:	    while (cond)
-		;
-
-Wrong:	    do a = 1; while (cond);
-
-OK:	    do
-		a = 1;
-	    while (cond);
-
-
-Functions start with:
-
-Wrong:	int function_name(int arg1, int arg2)
-
-OK:	/*
-	 * Explanation of what this function is used for.
-	 *
-	 * Return value explanation.
-	 */
-	    int
-	function_name(arg1, arg2)
-	    int		arg1;		/* short comment about arg1 */
-	    int		arg2;		/* short comment about arg2 */
-	{
-	    int		local;		/* comment about local */
-
-	    local = arg1 * arg2;
-
-NOTE: Don't use ANSI style function declarations.  A few people still have to
-use a compiler that doesn't support it.
-
-
-SPACES AND PUNCTUATION					*style-spaces*
-
-No space between a function name and the bracket:
-
-Wrong:  func (arg);
-OK:	func(arg);
-
-Do use a space after if, while, switch, etc.
-
-Wrong:	if(arg)		for(;;)
-OK:	if (arg)	for (;;)
-
-Use a space after a comma and semicolon:
-
-Wrong:  func(arg1,arg2);	for (i = 0;i < 2;++i)
-OK:	func(arg1, arg2);	for (i = 0; i < 2; ++i)
-
-Use a space before and after '=', '+', '/', etc.
-
-Wrong:	var=a*5;
-OK:	var = a * 5;
-
-In general: Use empty lines to group lines of code together.  Put a comment
-just above the group of lines.  This makes it easier to quickly see what is
-being done.
-
-OK:	/* Prepare for building the table. */
-	get_first_item();
-	table_idx = 0;
-
-	/* Build the table */
-	while (has_item())
-	    table[table_idx++] = next_item();
-
-	/* Finish up. */
-	cleanup_items();
-	generate_hash(table);
-
-==============================================================================
-3. Design decisions					*design-decisions*
+2. Design decisions					*design-decisions*
 
 Folding
 
@@ -478,18 +280,5 @@ also works when starting a new file.
 This isn't ideal, because the longer Vim is running the higher the counts
 become.  But in practice it is a noticeable improvement over not using the word
 count.
-
-==============================================================================
-4. Assumptions						*design-assumptions*
-
-Size of variables:
-char	    8 bit signed
-char_u	    8 bit unsigned
-int	    32 or 64 bit signed (16 might be possible with limited features)
-unsigned    32 or 64 bit unsigned (16 as with ints)
-long	    32 or 64 bit signed, can hold a pointer
-
-Note that some compilers cannot handle long lines or strings.  The C89
-standard specifies a limit of 509 characters.
 
  vim:tw=78:ts=8:ft=help:norl:
