@@ -28,28 +28,6 @@ Note that quite a few items are contradicting.  This is intentional.  A
 balance must be found between them.
 
 
-VIM IS... VI COMPATIBLE					*design-compatible*
-
-First of all, it should be possible to use Vim as a drop-in replacement for
-Vi.  When the user wants to, he can use Vim in compatible mode and hardly
-notice any difference with the original Vi.
-
-Exceptions:
-- We don't reproduce obvious Vi bugs in Vim.
-- There are different versions of Vi.  I am using Version 3.7 (6/7/85) as a
-  reference.  But support for other versions is also included when possible.
-  The Vi part of POSIX is not considered a definitive source.
-- Vim adds new commands, you cannot rely on some command to fail because it
-  didn't exist in Vi.
-- Vim will have a lot of features that Vi doesn't have.  Going back from Vim
-  to Vi will be a problem, this cannot be avoided.
-- Some things are hardly ever used (open mode, sending an e-mail when
-  crashing, etc.).  Those will only be included when someone has a good reason
-  why it should be included and it's not too much work.
-- For some items it is debatable whether Vi compatibility should be
-  maintained.  There will be an option flag for these.
-
-
 VIM IS... IMPROVED					*design-improved*
 
 The IMproved bits of Vim should make it a better Vi, without becoming a
