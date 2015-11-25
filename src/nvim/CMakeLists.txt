@@ -90,7 +90,6 @@ list(REMOVE_ITEM NEOVIM_SOURCES ${to_remove})
 
 # Legacy files that do not yet pass -Wconversion.
 set(CONV_SOURCES
-  buffer.c
   diff.c
   edit.c
   eval.c
