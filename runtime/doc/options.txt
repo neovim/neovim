@@ -643,17 +643,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	compiled with the |+termresponse| feature and if |t_u7| is set to the
 	escape sequence to request cursor position report.
 
-			*'antialias'* *'anti'* *'noantialias'* *'noanti'*
-'antialias' 'anti'	boolean (default: off)
-			global
-			{only available when compiled with GUI enabled
-			on Mac OS X}
-	This option only has an effect in the GUI version of Vim on Mac OS X
-	v10.2 or later.  When on, Vim will use smooth ("antialiased") fonts,
-	which can be easier to read at certain sizes on certain displays.
-	Setting this option can sometimes cause problems if 'guifont' is set
-	to its default (empty string).
-
 			*'autochdir'* *'acd'* *'noautochdir'* *'noacd'*
 'autochdir' 'acd'	boolean (default off)
 			global
