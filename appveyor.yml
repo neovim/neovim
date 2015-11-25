@@ -2,11 +2,11 @@ version: '{build}'
 skip_tags: true
 os: Windows Server 2012 R2
 environment:
-  GYP_MSVS_VERSION: 2013
+  GYP_MSVS_VERSION: 2015
   matrix:
-  - GENERATOR: Visual Studio 12 Win64
+  - GENERATOR: Visual Studio 14 Win64
     DEPS_PATH: deps64
-  - GENERATOR: Visual Studio 12
+  - GENERATOR: Visual Studio 14
     DEPS_PATH: deps32
 matrix:
   # Allow builds to fail

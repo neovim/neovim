@@ -4,7 +4,7 @@
  *
  * Do ":help uganda"  in Vim to read copying and usage conditions.
  * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
+ * See README.md for an overview of the Vim source code.
  */
 
 /*
@@ -148,14 +148,13 @@ int hasAnyFolding(win_T *win)
  * When returning TRUE, *firstp and *lastp are set to the first and last
  * lnum of the sequence of folded lines (skipped when NULL).
  */
-int hasFolding(linenr_T lnum, linenr_T *firstp, linenr_T *lastp)
+bool hasFolding(linenr_T lnum, linenr_T *firstp, linenr_T *lastp)
 {
   return hasFoldingWin(curwin, lnum, firstp, lastp, TRUE, NULL);
 }
 
 /* hasFoldingWin() {{{2 */
-int 
-hasFoldingWin (
+bool hasFoldingWin(
     win_T *win,
     linenr_T lnum,
     linenr_T *firstp,
@@ -183,7 +182,7 @@ hasFoldingWin (
   if (!hasAnyFolding(win)) {
     if (infop != NULL)
       infop->fi_level = 0;
-    return FALSE;
+    return false;
   }
 
   if (cache) {
@@ -238,7 +237,7 @@ hasFoldingWin (
       infop->fi_lnum = lnum - lnum_rel;
       infop->fi_low_level = low_level == 0 ? level : low_level;
     }
-    return FALSE;
+    return false;
   }
 
   if (last > win->w_buffer->b_ml.ml_line_count) {
@@ -253,7 +252,7 @@ hasFoldingWin (
     infop->fi_lnum = first;
     infop->fi_low_level = low_level == 0 ? level + 1 : low_level;
   }
-  return TRUE;
+  return true;
 }
 
 /* foldLevel() {{{2 */

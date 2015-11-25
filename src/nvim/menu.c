@@ -4,7 +4,7 @@
  *
  * Do ":help uganda"  in Vim to read copying and usage conditions.
  * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
+ * See README.md for an overview of the Vim source code.
  */
 
 /*
@@ -30,6 +30,7 @@
 #include "nvim/keymap.h"
 #include "nvim/garray.h"
 #include "nvim/strings.h"
+#include "nvim/ui.h"
 
 
 #define MENUDEPTH   10          /* maximum depth of menus */
@@ -64,7 +65,7 @@ ex_menu (
   char_u      *map_to;
   int noremap;
   bool silent = false;
-  int special = FALSE;
+  bool special = false;
   int unmenu;
   char_u      *map_buf;
   char_u      *arg;
@@ -90,7 +91,7 @@ ex_menu (
       continue;
     }
     if (STRNCMP(arg, "<special>", 9) == 0) {
-      special = TRUE;
+      special = true;
       arg = skipwhite(arg + 9);
       continue;
     }
@@ -249,6 +250,7 @@ ex_menu (
     xfree(map_buf);
   }
 
+  ui_update_menu();
 
 theend:
   ;
@@ -417,9 +419,8 @@ add_menu_path (
         /* free any old menu */
         free_menu_string(menu, i);
 
-        /* For "amenu", may insert an extra character.
-         * Don't do this if adding a tearbar (addtearoff == FALSE).
-         * Don't do this for "<Nop>". */
+        // For "amenu", may insert an extra character.
+        // Don't do this for "<Nop>".
         c = 0;
         d = 0;
         if (amenu && call_data != NULL && *call_data != NUL
@@ -461,12 +462,6 @@ add_menu_path (
         menu->silent[i] = menuarg->silent[0];
       }
     }
-#if defined(FEAT_TOOLBAR) && !defined(FEAT_GUI_W32) \
-    && (defined(FEAT_BEVAL) || defined(FEAT_GUI_GTK))
-    /* Need to update the menu tip. */
-    if (modes & MENU_TIP_MODE)
-      gui_mch_menu_set_tip(menu);
-#endif
   }
   return OK;
 
@@ -571,16 +566,6 @@ remove_menu (
         return FAIL;
       }
       if ((menu->modes & modes) != 0x0) {
-#if defined(FEAT_GUI_W32) & defined(FEAT_TEAROFF)
-        /*
-         * If we are removing all entries for this menu,MENU_ALL_MODES,
-         * Then kill any tearoff before we start
-         */
-        if (*p == NUL && modes == MENU_ALL_MODES) {
-          if (IsWindow(menu->tearoff_handle))
-            DestroyWindow(menu->tearoff_handle);
-        }
-#endif
         if (remove_menu(&menu->children, p, modes, silent) == FAIL)
           return FAIL;
       } else if (*name != NUL) {
@@ -619,29 +604,14 @@ remove_menu (
 
     /* Recalculate modes for menu based on the new updated children */
     menu->modes &= ~modes;
-#if defined(FEAT_GUI_W32) & defined(FEAT_TEAROFF)
-    if ((s_tearoffs) && (menu->children != NULL))     /* there's a tear bar.. */
-      child = menu->children->next;       /* don't count tearoff bar */
-    else
-#endif
     child = menu->children;
     for (; child != NULL; child = child->next)
       menu->modes |= child->modes;
     if (modes & MENU_TIP_MODE) {
       free_menu_string(menu, MENU_INDEX_TIP);
-#if defined(FEAT_TOOLBAR) && !defined(FEAT_GUI_W32) \
-      && (defined(FEAT_BEVAL) || defined(FEAT_GUI_GTK))
-      /* Need to update the menu tip. */
-      if (gui.in_use)
-        gui_mch_menu_set_tip(menu);
-#endif
     }
     if ((menu->modes & MENU_ALL_MODES) == 0) {
       /* The menu item is no longer valid in ANY mode, so delete it */
-#if defined(FEAT_GUI_W32) & defined(FEAT_TEAROFF)
-      if (s_tearoffs && menu->children != NULL)       /* there's a tear bar.. */
-        free_menu(&menu->children);
-#endif
       *menup = menu;
       free_menu(menup);
     }
@@ -862,7 +832,7 @@ char_u *set_context_in_menu_cmd(expand_T *xp, char_u *cmd, char_u *arg, int forc
       after_dot = p + 1;
   }
 
-  /* ":tearoff" and ":popup" only use menus, not entries */
+  // ":popup" only uses menues, not entries
   expand_menus = !((*cmd == 't' && cmd[1] == 'e') || *cmd == 'p');
   expand_emenu = (*cmd == 'e');
   if (expand_menus && ascii_iswhite(*p))
@@ -938,7 +908,6 @@ char_u *get_menu_name(expand_T *xp, int idx)
   /* Skip PopUp[nvoci]. */
   while (menu != NULL && (menu_is_hidden(menu->dname)
                           || menu_is_separator(menu->dname)
-                          || menu_is_tearoff(menu->dname)
                           || menu->children == NULL))
     menu = menu->next;
 
@@ -986,7 +955,6 @@ char_u *get_menu_names(expand_T *xp, int idx)
   while (menu != NULL
          && (   menu_is_hidden(menu->dname)
                 || (expand_emenu && menu_is_separator(menu->dname))
-                || menu_is_tearoff(menu->dname)
                 || menu->dname[STRLEN(menu->dname) - 1] == '.'
                 ))
     menu = menu->next;
@@ -1245,16 +1213,6 @@ static int menu_is_hidden(char_u *name)
 }
 
 /*
- * Return TRUE if the menu is the tearoff menu.
- */
-static int menu_is_tearoff(char_u *name)
-{
-  return FALSE;
-}
-
-
-
-/*
  * Given a menu descriptor, e.g. "File.New", find it in the menu hierarchy and
  * execute it.
  */
@@ -1301,11 +1259,18 @@ void ex_emenu(exarg_T *eap)
 
   /* Found the menu, so execute.
    * Use the Insert mode entry when returning to Insert mode. */
-  if (restart_edit
-      && !current_SID
-      ) {
+  if (((State & INSERT) || restart_edit) && !current_SID) {
     mode = (char_u *)"Insert";
     idx = MENU_INDEX_INSERT;
+  } else if (State & CMDLINE) {
+      mode = (char_u *)"Command";
+      idx = MENU_INDEX_CMDLINE;
+  } else if (get_real_state() & VISUAL) {
+    /* Detect real visual mode -- if we are really in visual mode we
+     * don't need to do any guesswork to figure out what the selection
+     * is. Just execute the visual binding for the menu. */
+    mode = (char_u *)"Visual";
+    idx = MENU_INDEX_VISUAL;
   } else if (eap->addr_count) {
     pos_T tpos;
 
@@ -1363,61 +1328,6 @@ void ex_emenu(exarg_T *eap)
   } else
     EMSG2(_("E335: Menu not defined for %s mode"), mode);
 }
-
-#if defined(FEAT_GUI_MSWIN) \
-  || defined(FEAT_GUI_GTK) \
-  || defined(FEAT_BEVAL_TIP)
-/*
- * Given a menu descriptor, e.g. "File.New", find it in the menu hierarchy.
- */
-vimmenu_T *gui_find_menu(char_u *path_name)
-{
-  vimmenu_T   *menu = NULL;
-  char_u      *name;
-  char_u      *saved_name;
-  char_u      *p;
-
-  menu = root_menu;
-
-  saved_name = vim_strsave(path_name);
-
-  name = saved_name;
-  while (*name) {
-    /* find the end of one dot-separated name and put a NUL at the dot */
-    p = menu_name_skip(name);
-
-    while (menu != NULL) {
-      if (menu_name_equal(name, menu)) {
-        if (menu->children == NULL) {
-          /* found a menu item instead of a sub-menu */
-          if (*p == NUL)
-            EMSG(_("E336: Menu path must lead to a sub-menu"));
-          else
-            EMSG(_(e_notsubmenu));
-          menu = NULL;
-          goto theend;
-        }
-        if (*p == NUL)              /* found a full match */
-          goto theend;
-        break;
-      }
-      menu = menu->next;
-    }
-    if (menu == NULL)           /* didn't find it */
-      break;
-
-    /* Found a match, search the sub-menu. */
-    menu = menu->children;
-    name = p;
-  }
-
-  if (menu == NULL)
-    EMSG(_("E337: Menu not found - check menu names"));
-theend:
-  xfree(saved_name);
-  return menu;
-}
-#endif
 
 /*
  * Translation of menu names.  Just a simple lookup table.

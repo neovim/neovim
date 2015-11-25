@@ -7,7 +7,7 @@
 #include <uv.h>
 
 #include "nvim/os/time.h"
-#include "nvim/os/event.h"
+#include "nvim/event/loop.h"
 #include "nvim/vim.h"
 
 static uv_mutex_t delay_mutex;
@@ -43,7 +43,7 @@ void os_delay(uint64_t milliseconds, bool ignoreinput)
     if (milliseconds > INT_MAX) {
       milliseconds = INT_MAX;
     }
-    event_poll_until((int)milliseconds, got_int);
+    LOOP_PROCESS_EVENTS_UNTIL(&loop, NULL, (int)milliseconds, got_int);
   } else {
     os_microdelay(milliseconds * 1000);
   }
@@ -102,4 +102,13 @@ struct tm *os_get_localtime(struct tm *result) FUNC_ATTR_NONNULL_ALL
 {
   time_t rawtime = time(NULL);
   return os_localtime_r(&rawtime, result);
+}
+
+/// Obtains the current UNIX timestamp
+///
+/// @return Seconds since epoch.
+Timestamp os_time(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return (Timestamp) time(NULL);
 }

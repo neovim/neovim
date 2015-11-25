@@ -10,38 +10,55 @@
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
 
 #define USR_LOG_FILE "$HOME/.nvimlog"
 
+static uv_mutex_t mutex;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "log.c.generated.h"
 #endif
 
+void log_init(void)
+{
+  uv_mutex_init(&mutex);
+}
+
+void log_lock(void)
+{
+  uv_mutex_lock(&mutex);
+}
+
+void log_unlock(void)
+{
+  uv_mutex_unlock(&mutex);
+}
+
 bool do_log(int log_level, const char *func_name, int line_num, bool eol,
             const char* fmt, ...) FUNC_ATTR_UNUSED
 {
+  log_lock();
+  bool ret = false;
   FILE *log_file = open_log_file();
 
   if (log_file == NULL) {
-    return false;
+    goto end;
   }
 
   va_list args;
   va_start(args, fmt);
-  bool ret = v_do_log_to_file(log_file, log_level, func_name, line_num, eol,
+  ret = v_do_log_to_file(log_file, log_level, func_name, line_num, eol,
                               fmt, args);
   va_end(args);
 
   if (log_file != stderr && log_file != stdout) {
     fclose(log_file);
   }
+end:
+  log_unlock();
   return ret;
 }
 

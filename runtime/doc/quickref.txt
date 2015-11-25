@@ -548,7 +548,7 @@ In Insert or Command-line mode:
 				     settings to [file] (default: ".exrc";
 				     use ! to overwrite)
 |:mkvimrc|   :mkv[imrc][!] [file]
-				  same as ":mkexrc", but with default ".vimrc"
+				  same as :mkexrc, but with default ".nvimrc"
 |:mksession| :mks[ession][!] [file]
 				  like ":mkvimrc", but store current files,
 				     windows, etc. too, to be able to continue
@@ -681,7 +681,7 @@ Short explanation of each option:		*option-list*
 'esckeys'	  'ek'	    recognize function keys in Insert mode
 'eventignore'	  'ei'	    autocommand events that are ignored
 'expandtab'	  'et'	    use spaces when <Tab> is inserted
-'exrc'		  'ex'	    read .vimrc and .exrc in the current directory
+'exrc'		  'ex'	    read .nvimrc and .exrc in the current directory
 'fileencoding'	  'fenc'    file encoding for multi-byte text
 'fileencodings'   'fencs'   automatically detected character encodings
 'fileformat'	  'ff'	    file format used for file I/O
@@ -838,6 +838,7 @@ Short explanation of each option:		*option-list*
 'selection'	  'sel'     what type of selection to use
 'selectmode'	  'slm'     when to use Select mode instead of Visual mode
 'sessionoptions'  'ssop'    options for |:mksession|
+'shada'		  'sd'	    use .shada file upon startup and exiting
 'shell'		  'sh'	    name of shell to use for external commands
 'shellcmdflag'	  'shcf'    flag to shell to execute one command
 'shellpipe'	  'sp'	    string to put output of ":make" in error file
@@ -898,8 +899,6 @@ Short explanation of each option:		*option-list*
 'titlelen'		    percentage of 'columns' used for window title
 'titleold'		    old title, restored when exiting
 'titlestring'		    string to use for the Vim window title
-'toolbar'	  'tb'	    GUI: which items to show in the toolbar
-'toolbariconsize' 'tbis'    size of the toolbar icons (for GTK 2 only)
 'ttimeout'		    time out on mappings
 'ttimeoutlen'	  'ttm'     time out time for key codes in milliseconds
 'ttytype'	  'tty'     alias for 'term'
@@ -913,7 +912,6 @@ Short explanation of each option:		*option-list*
 'verbosefile'	  'vfile'   file to write messages in
 'viewdir'	  'vdir'    directory where to store files with :mkview
 'viewoptions'	  'vop'     specifies what to save for :mkview
-'viminfo'	  'vi'	    use .viminfo file upon startup and exiting
 'virtualedit'	  've'	    when to use virtual editing
 'visualbell'	  'vb'	    use visual bell instead of beeping
 'warn'			    warn for shell command when buffer was changed
@@ -1133,7 +1131,7 @@ Context-sensitive completion on the command-line:
 |-w|	-w {scriptout}	    write typed chars to file {scriptout} (append)
 |-W|	-W {scriptout}	    write typed chars to file {scriptout} (overwrite)
 |-u|	-u {vimrc}	    read inits from {vimrc} instead of other inits
-|-i|	-i {viminfo}	    read info from {viminfo} instead of other files
+|-i|	-i {shada}	    read info from {shada} instead of other files
 |---|	--		    end of options, other arguments are file names
 |--help|    --help	    show list of arguments and exit
 |--version| --version	    show version info and exit
@@ -1217,12 +1215,12 @@ Context-sensitive completion on the command-line:
 ------------------------------------------------------------------------------
 *Q_ac*		Automatic Commands
 
-|viminfo-file|	read registers, marks, history at startup, save when exiting.
+|shada-file|	read registers, marks, history at startup, save when exiting.
 
-|:rviminfo|	:rv[iminfo] [file]	read info from viminfo file [file]
-|:rviminfo|	:rv[iminfo]! [file]	idem, overwrite existing info
-|:wviminfo|	:wv[iminfo] [file]	add info to viminfo file [file]
-|:wviminfo|	:wv[iminfo]! [file]	write info to viminfo file [file]
+|:rshada|	:rsh[ada] [file]	read info from ShaDa file [file]
+|:rshada|	:rsh[ada]! [file]	idem, overwrite existing info
+|:wshada|	:wsh[ada] [file]	add info to ShaDa file [file]
+|:wshada|	:wsh[ada]! [file]	write info to ShaDa file [file]
 
 |modeline|	Automatic option setting when editing a file
 

@@ -3,7 +3,7 @@
  *
  * Do ":help uganda"  in Vim to read copying and usage conditions.
  * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
+ * See README.md for an overview of the Vim source code.
  */
 
 #define EXTERN
@@ -49,21 +49,28 @@
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/path.h"
 #include "nvim/profile.h"
 #include "nvim/quickfix.h"
 #include "nvim/screen.h"
+#include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
 #include "nvim/version.h"
 #include "nvim/window.h"
+#include "nvim/shada.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
-#include "nvim/os/event.h"
+#include "nvim/event/loop.h"
 #include "nvim/os/signal.h"
+#include "nvim/event/process.h"
+#include "nvim/msgpack_rpc/defs.h"
 #include "nvim/msgpack_rpc/helpers.h"
+#include "nvim/msgpack_rpc/server.h"
+#include "nvim/msgpack_rpc/channel.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/handle.h"
@@ -133,11 +140,47 @@ static const char *err_extra_cmd =
   N_("Too many \"+command\", \"-c command\" or \"--cmd command\" arguments");
 
 
+void event_init(void)
+{
+  loop_init(&loop, NULL);
+  // early msgpack-rpc initialization
+  msgpack_rpc_init_method_table();
+  msgpack_rpc_helpers_init();
+  // Initialize input events
+  input_init();
+  // Timer to wake the event loop if a timeout argument is passed to
+  // `event_poll`
+  // Signals
+  signal_init();
+  // finish mspgack-rpc initialization
+  channel_init();
+  server_init();
+  terminal_init();
+}
+
+void event_teardown(void)
+{
+  if (!loop.events) {
+    return;
+  }
+
+  queue_process_events(loop.events);
+  input_stop();
+  channel_teardown();
+  process_teardown(&loop);
+  server_teardown();
+  signal_teardown();
+  terminal_teardown();
+
+  loop_close(&loop);
+}
+
 /// Performs early initialization.
 ///
 /// Needed for unit tests. Must be called after `time_init()`.
 void early_init(void)
 {
+  log_init();
   fs_init();
   handle_init();
 
@@ -206,6 +249,7 @@ int main(int argc, char **argv)
   set_vim_var_string(VV_PROGPATH, (char_u *)argv[0], -1);
   set_vim_var_string(VV_PROGNAME, path_tail((char_u *)argv[0]), -1);
 
+  event_init();
   /*
    * Process the command line arguments.  File names are put in the global
    * argument list "global_alist".
@@ -236,7 +280,6 @@ int main(int argc, char **argv)
   if (GARGCOUNT > 1 && !silent_mode)
     printf(_("%d files to edit\n"), GARGCOUNT);
 
-  event_init();
   full_screen = true;
   t_colors = 256;
   check_tty(&params);
@@ -245,8 +288,8 @@ int main(int argc, char **argv)
    * Set the default values for the options that use Rows and Columns.
    */
   win_init_size();
-  /* Set the 'diff' option now, so that it can be checked for in a .vimrc
-   * file.  There is no buffer yet though. */
+  // Set the 'diff' option now, so that it can be checked for in a vimrc
+  // file.  There is no buffer yet though.
   if (params.diff_mode)
     diff_win_options(firstwin, FALSE);
 
@@ -303,7 +346,7 @@ int main(int argc, char **argv)
    */
   load_plugins();
 
-  /* Decide about window layout for diff mode after reading vimrc. */
+  // Decide about window layout for diff mode after reading vimrc.
   set_window_layout(&params);
 
   /*
@@ -316,10 +359,8 @@ int main(int argc, char **argv)
     mch_exit(0);
   }
 
-  /*
-   * Set a few option defaults after reading .vimrc files:
-   * 'title' and 'icon', Unix: 'shellpipe' and 'shellredir'.
-   */
+  // Set a few option defaults after reading vimrc files:
+  // 'title' and 'icon', Unix: 'shellpipe' and 'shellredir'.
   set_init_3();
   TIME_MSG("inits 3");
 
@@ -337,12 +378,12 @@ int main(int argc, char **argv)
   }
 
   /*
-   * Read in registers, history etc, but not marks, from the viminfo file.
+   * Read in registers, history etc, from the ShaDa file.
    * This is where v:oldfiles gets filled.
    */
-  if (*p_viminfo != NUL) {
-    read_viminfo(NULL, VIF_WANT_INFO | VIF_GET_OLDFILES);
-    TIME_MSG("reading viminfo");
+  if (*p_shada != NUL) {
+    shada_read_everything(NULL, false, true);
+    TIME_MSG("reading ShaDa");
   }
   /* It's better to make v:oldfiles an empty list than NULL. */
   if (get_vim_var_list(VV_OLDFILES) == NULL)
@@ -482,228 +523,21 @@ int main(int argc, char **argv)
   if (restart_edit != 0)
     stuffcharReadbuff(K_NOP);
 
+  // WORKAROUND(mhi): #3023
+  if (cb_flags & CB_UNNAMEDMASK) {
+    (void)eval_has_provider("clipboard");
+  }
+
   TIME_MSG("before starting main loop");
+  ILOG("Starting Neovim main loop.");
 
   /*
    * Call the main command loop.  This never returns.
    */
-  main_loop(FALSE, FALSE);
+  normal_enter(false, false);
 
   return 0;
 }
-
-/*
- * Main loop: Execute Normal mode commands until exiting Vim.
- * Also used to handle commands in the command-line window, until the window
- * is closed.
- * Also used to handle ":visual" command after ":global": execute Normal mode
- * commands, return when entering Ex mode.  "noexmode" is TRUE then.
- */
-void
-main_loop (
-    int cmdwin,                 /* TRUE when working in the command-line window */
-    int noexmode               /* TRUE when return on entering Ex mode */
-)
-{
-  oparg_T oa;                                   /* operator arguments */
-  int previous_got_int = FALSE;                 /* "got_int" was TRUE */
-  linenr_T conceal_old_cursor_line = 0;
-  linenr_T conceal_new_cursor_line = 0;
-  int conceal_update_lines = FALSE;
-
-  ILOG("Starting Neovim main loop.");
-
-  clear_oparg(&oa);
-  while (!cmdwin
-      || cmdwin_result == 0
-      ) {
-    if (stuff_empty()) {
-      did_check_timestamps = FALSE;
-      if (need_check_timestamps)
-        check_timestamps(FALSE);
-      if (need_wait_return)             /* if wait_return still needed ... */
-        wait_return(FALSE);             /* ... call it now */
-      if (need_start_insertmode && goto_im()
-          && !VIsual_active
-         ) {
-        need_start_insertmode = FALSE;
-        stuffReadbuff((char_u *)"i");           /* start insert mode next */
-        /* skip the fileinfo message now, because it would be shown
-         * after insert mode finishes! */
-        need_fileinfo = FALSE;
-      }
-    }
-
-    /* Reset "got_int" now that we got back to the main loop.  Except when
-     * inside a ":g/pat/cmd" command, then the "got_int" needs to abort
-     * the ":g" command.
-     * For ":g/pat/vi" we reset "got_int" when used once.  When used
-     * a second time we go back to Ex mode and abort the ":g" command. */
-    if (got_int) {
-      if (noexmode && global_busy && !exmode_active && previous_got_int) {
-        /* Typed two CTRL-C in a row: go back to ex mode as if "Q" was
-         * used and keep "got_int" set, so that it aborts ":g". */
-        exmode_active = EXMODE_NORMAL;
-        State = NORMAL;
-      } else if (!global_busy || !exmode_active) {
-        if (!quit_more)
-          (void)vgetc();                        /* flush all buffers */
-        got_int = FALSE;
-      }
-      previous_got_int = TRUE;
-    } else
-      previous_got_int = FALSE;
-
-    if (!exmode_active)
-      msg_scroll = FALSE;
-    quit_more = FALSE;
-
-    /*
-     * If skip redraw is set (for ":" in wait_return()), don't redraw now.
-     * If there is nothing in the stuff_buffer or do_redraw is TRUE,
-     * update cursor and redraw.
-     */
-    if (skip_redraw || exmode_active)
-      skip_redraw = FALSE;
-    else if (do_redraw || stuff_empty()) {
-      /* Trigger CursorMoved if the cursor moved. */
-      if (!finish_op && (
-            has_cursormoved()
-            ||
-            curwin->w_p_cole > 0
-            )
-          && !equalpos(last_cursormoved, curwin->w_cursor)) {
-        if (has_cursormoved())
-          apply_autocmds(EVENT_CURSORMOVED, NULL, NULL,
-              FALSE, curbuf);
-        if (curwin->w_p_cole > 0) {
-          conceal_old_cursor_line = last_cursormoved.lnum;
-          conceal_new_cursor_line = curwin->w_cursor.lnum;
-          conceal_update_lines = TRUE;
-        }
-        last_cursormoved = curwin->w_cursor;
-      }
-
-      /* Trigger TextChanged if b_changedtick differs. */
-      if (!finish_op && has_textchanged()
-          && last_changedtick != curbuf->b_changedtick) {
-        if (last_changedtick_buf == curbuf)
-          apply_autocmds(EVENT_TEXTCHANGED, NULL, NULL,
-              FALSE, curbuf);
-        last_changedtick_buf = curbuf;
-        last_changedtick = curbuf->b_changedtick;
-      }
-
-      /* Scroll-binding for diff mode may have been postponed until
-       * here.  Avoids doing it for every change. */
-      if (diff_need_scrollbind) {
-        check_scrollbind((linenr_T)0, 0L);
-        diff_need_scrollbind = FALSE;
-      }
-      /* Include a closed fold completely in the Visual area. */
-      foldAdjustVisual();
-      /*
-       * When 'foldclose' is set, apply 'foldlevel' to folds that don't
-       * contain the cursor.
-       * When 'foldopen' is "all", open the fold(s) under the cursor.
-       * This may mark the window for redrawing.
-       */
-      if (hasAnyFolding(curwin) && !char_avail()) {
-        foldCheckClose();
-        if (fdo_flags & FDO_ALL)
-          foldOpenCursor();
-      }
-
-      /*
-       * Before redrawing, make sure w_topline is correct, and w_leftcol
-       * if lines don't wrap, and w_skipcol if lines wrap.
-       */
-      update_topline();
-      validate_cursor();
-
-      if (VIsual_active)
-        update_curbuf(INVERTED);        /* update inverted part */
-      else if (must_redraw)
-        update_screen(0);
-      else if (redraw_cmdline || clear_cmdline)
-        showmode();
-      redraw_statuslines();
-      if (need_maketitle)
-        maketitle();
-      /* display message after redraw */
-      if (keep_msg != NULL) {
-        char_u *p;
-
-        // msg_attr_keep() will set keep_msg to NULL, must free the string
-        // here. Don't reset keep_msg, msg_attr_keep() uses it to check for
-        // duplicates.
-        p = keep_msg;
-        msg_attr(p, keep_msg_attr);
-        xfree(p);
-      }
-      if (need_fileinfo) {              /* show file info after redraw */
-        fileinfo(FALSE, TRUE, FALSE);
-        need_fileinfo = FALSE;
-      }
-
-      emsg_on_display = FALSE;          /* can delete error message now */
-      did_emsg = FALSE;
-      msg_didany = FALSE;               /* reset lines_left in msg_start() */
-      may_clear_sb_text();              /* clear scroll-back text on next msg */
-      showruler(FALSE);
-
-      if (conceal_update_lines
-          && (conceal_old_cursor_line != conceal_new_cursor_line
-            || conceal_cursor_line(curwin)
-            || need_cursor_line_redraw)) {
-        if (conceal_old_cursor_line != conceal_new_cursor_line
-            && conceal_old_cursor_line
-            <= curbuf->b_ml.ml_line_count)
-          update_single_line(curwin, conceal_old_cursor_line);
-        update_single_line(curwin, conceal_new_cursor_line);
-        curwin->w_valid &= ~VALID_CROW;
-      }
-      setcursor();
-
-      do_redraw = FALSE;
-
-      /* Now that we have drawn the first screen all the startup stuff
-       * has been done, close any file for startup messages. */
-      if (time_fd != NULL) {
-        TIME_MSG("first screen update");
-        TIME_MSG("--- NVIM STARTED ---");
-        fclose(time_fd);
-        time_fd = NULL;
-      }
-    }
-
-    /*
-     * Update w_curswant if w_set_curswant has been set.
-     * Postponed until here to avoid computing w_virtcol too often.
-     */
-    update_curswant();
-
-    /*
-     * May perform garbage collection when waiting for a character, but
-     * only at the very toplevel.  Otherwise we may be using a List or
-     * Dict internally somewhere.
-     * "may_garbage_collect" is reset in vgetc() which is invoked through
-     * do_exmode() and normal_cmd().
-     */
-    may_garbage_collect = (!cmdwin && !noexmode);
-    /*
-     * If we're invoked as ex, do a round of ex commands.
-     * Otherwise, get and execute a normal mode command.
-     */
-    if (exmode_active) {
-      if (noexmode)         /* End of ":global/path/visual" commands */
-        return;
-      do_exmode(exmode_active == EXMODE_VIM);
-    } else
-      normal_cmd(&oa, TRUE);
-  }
-}
-
 
 /* Exit properly */
 void getout(int exitval)
@@ -758,9 +592,10 @@ void getout(int exitval)
     apply_autocmds(EVENT_VIMLEAVEPRE, NULL, NULL, FALSE, curbuf);
   }
 
-  if (p_viminfo && *p_viminfo != NUL)
-    /* Write out the registers, history, marks etc, to the viminfo file */
-    write_viminfo(NULL, FALSE);
+  if (p_shada && *p_shada != NUL) {
+    // Write out the registers, history, marks etc, to the ShaDa file
+    shada_write_file(NULL, false);
+  }
 
   if (get_vim_var_nr(VV_DYING) <= 1)
     apply_autocmds(EVENT_VIMLEAVE, NULL, NULL, FALSE, curbuf);
@@ -919,6 +754,7 @@ static void command_line_scan(mparm_T *parmp)
           } else if (STRICMP(argv[0] + argv_idx, "embed") == 0) {
             embedded_mode = true;
             parmp->headless = true;
+            channel_from_stdio();
           } else if (STRNICMP(argv[0] + argv_idx, "literal", 7) == 0) {
 #if !defined(UNIX)
             parmp->literal = TRUE;
@@ -1099,9 +935,6 @@ static void command_line_scan(mparm_T *parmp)
           want_argument = TRUE;
           break;
 
-        case 'X':                 /* "-X"  don't connect to X server */
-          break;
-
         case 'Z':                 /* "-Z"  restricted mode */
           restricted = TRUE;
           break;
@@ -1118,7 +951,7 @@ static void command_line_scan(mparm_T *parmp)
           }
           /*FALLTHROUGH*/
         case 'S':                 /* "-S {file}" execute Vim script */
-        case 'i':                 /* "-i {viminfo}" use for viminfo */
+        case 'i':                 /* "-i {shada}" use for ShaDa file */
         case 'u':                 /* "-u {vimrc}" vim inits file */
         case 'U':                 /* "-U {gvimrc}" gvim inits file */
         case 'W':                 /* "-W {scriptout}" overwrite */
@@ -1189,8 +1022,8 @@ static void command_line_scan(mparm_T *parmp)
             parmp->use_ef = (char_u *)argv[0];
             break;
 
-          case 'i':               /* "-i {viminfo}" use for viminfo */
-            use_viminfo = (char_u *)argv[0];
+          case 'i':               /* "-i {shada}" use for shada */
+            used_shada_file = argv[0];
             break;
 
           case 's':               /* "-s {scriptin}" read from script file */
@@ -1502,8 +1335,8 @@ static void create_windows(mparm_T *parmp)
   if (parmp->window_count == 0)
     parmp->window_count = GARGCOUNT;
   if (parmp->window_count > 1) {
-    /* Don't change the windows if there was a command in .vimrc that
-     * already split some windows */
+    // Don't change the windows if there was a command in vimrc that
+    // already split some windows
     if (parmp->window_layout == 0)
       parmp->window_layout = WIN_HOR;
     if (parmp->window_layout == WIN_TABS) {
@@ -1525,14 +1358,11 @@ static void create_windows(mparm_T *parmp)
       getout(1);
     do_modelines(0);                    /* do modelines */
   } else {
-    /*
-     * Open a buffer for windows that don't have one yet.
-     * Commands in the .vimrc might have loaded a file or split the window.
-     * Watch out for autocommands that delete a window.
-     */
-    /*
-     * Don't execute Win/Buf Enter/Leave autocommands here
-     */
+    // Open a buffer for windows that don't have one yet.
+    // Commands in the vimrc might have loaded a file or split the window.
+    // Watch out for autocommands that delete a window.
+    //
+    // Don't execute Win/Buf Enter/Leave autocommands here
     ++autocmd_no_enter;
     ++autocmd_no_leave;
     dorewind = TRUE;
@@ -1642,8 +1472,8 @@ static void edit_buffers(mparm_T *parmp)
     }
     advance = TRUE;
 
-    /* Only open the file if there is no file in this window yet (that can
-     * happen when .vimrc contains ":sall"). */
+    // Only open the file if there is no file in this window yet (that can
+    // happen when vimrc contains ":sall").
     if (curbuf == firstwin->w_buffer || curbuf->b_ffname == NULL) {
       curwin->w_arg_idx = arg_idx;
       /* Edit file from arg list, if there is one.  When "Quit" selected
@@ -1692,7 +1522,7 @@ static void edit_buffers(mparm_T *parmp)
   --autocmd_no_leave;
   TIME_MSG("editing files in windows");
   if (parmp->window_count > 1 && parmp->window_layout != WIN_TABS)
-    win_equal(curwin, FALSE, 'b');      /* adjust heights */
+    win_equal(curwin, false, 'b');      /* adjust heights */
 }
 
 /*
@@ -1752,119 +1582,128 @@ static void exe_commands(mparm_T *parmp)
   TIME_MSG("executing command arguments");
 }
 
-/*
- * Source startup scripts.
- */
-static void source_startup_scripts(mparm_T *parmp)
+/// Source vimrc or do other user initialization
+///
+/// Does one of the following things, stops after whichever succeeds:
+///
+/// 1. Execution of VIMINIT environment variable.
+/// 2. Sourcing user vimrc file ($XDG_CONFIG_HOME/nvim/init.vim).
+/// 3. Sourcing other vimrc files ($XDG_CONFIG_DIRS[1]/nvim/init.vim, …).
+/// 4. Execution of EXINIT environment variable.
+///
+/// @return True if it is needed to attempt to source exrc file according to
+///         'exrc' option definition.
+static bool do_user_initialization(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  int i;
+  bool do_exrc = p_exrc;
+  if (process_env("VIMINIT", true) == OK) {
+    do_exrc = p_exrc;
+    return do_exrc;
+  }
+  char_u *user_vimrc = (char_u *)stdpaths_user_conf_subpath("init.vim");
+  if (do_source(user_vimrc, true, DOSO_VIMRC) != FAIL) {
+    do_exrc = p_exrc;
+    if (do_exrc) {
+      do_exrc = (path_full_compare((char_u *)VIMRC_FILE, user_vimrc, false)
+                 != kEqualFiles);
+    }
+    xfree(user_vimrc);
+    return do_exrc;
+  }
+  xfree(user_vimrc);
+  char *const config_dirs = stdpaths_get_xdg_var(kXDGConfigDirs);
+  if (config_dirs != NULL) {
+    const void *iter = NULL;
+    do {
+      const char *dir;
+      size_t dir_len;
+      iter = vim_colon_env_iter(config_dirs, iter, &dir, &dir_len);
+      if (dir == NULL || dir_len == 0) {
+        break;
+      }
+      const char path_tail[] = { 'n', 'v', 'i', 'm', PATHSEP,
+                                 'i', 'n', 'i', 't', '.', 'v', 'i', 'm', NUL };
+      char *vimrc = xmalloc(dir_len + sizeof(path_tail) + 1);
+      memmove(vimrc, dir, dir_len);
+      vimrc[dir_len] = PATHSEP;
+      memmove(vimrc + dir_len + 1, path_tail, sizeof(path_tail));
+      if (do_source((char_u *) vimrc, true, DOSO_VIMRC) != FAIL) {
+        do_exrc = p_exrc;
+        if (do_exrc) {
+          do_exrc = (path_full_compare((char_u *)VIMRC_FILE, (char_u *)vimrc,
+                                      false) != kEqualFiles);
+        }
+        xfree(vimrc);
+        xfree(config_dirs);
+        return do_exrc;
+      }
+      xfree(vimrc);
+    } while (iter != NULL);
+    xfree(config_dirs);
+  }
+  if (process_env("EXINIT", false) == OK) {
+    do_exrc = p_exrc;
+    return do_exrc;
+  }
+  return do_exrc;
+}
 
-  /*
-   * If -u argument given, use only the initializations from that file and
-   * nothing else.
-   */
+/// Source startup scripts
+///
+/// @param[in]
+static void source_startup_scripts(const mparm_T *const parmp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // If -u argument given, use only the initializations from that file and
+  // nothing else.
   if (parmp->use_vimrc != NULL) {
     if (strcmp(parmp->use_vimrc, "NONE") == 0
         || strcmp(parmp->use_vimrc, "NORC") == 0) {
       if (parmp->use_vimrc[2] == 'N')
-        p_lpl = FALSE;                      // don't load plugins either
+        p_lpl = false;  // don't load plugins either
     } else {
       if (do_source((char_u *)parmp->use_vimrc, FALSE, DOSO_NONE) != OK)
         EMSG2(_("E282: Cannot read from \"%s\""), parmp->use_vimrc);
     }
   } else if (!silent_mode) {
-
-    /*
-     * Get system wide defaults, if the file name is defined.
-     */
 #ifdef SYS_VIMRC_FILE
-    (void)do_source((char_u *)SYS_VIMRC_FILE, FALSE, DOSO_NONE);
+    // Get system wide defaults, if the file name is defined.
+    (void) do_source((char_u *)SYS_VIMRC_FILE, false, DOSO_NONE);
 #endif
 
-    /*
-     * Try to read initialization commands from the following places:
-     * - environment variable VIMINIT
-     * - user vimrc file (~/.vimrc)
-     * - second user vimrc file ($VIM/.vimrc for Dos)
-     * - environment variable EXINIT
-     * - user exrc file (~/.exrc)
-     * - second user exrc file ($VIM/.exrc for Dos)
-     * The first that exists is used, the rest is ignored.
-     */
-    if (process_env("VIMINIT", true) != OK) {
-      if (do_source((char_u *)USR_VIMRC_FILE, TRUE, DOSO_VIMRC) == FAIL
-#ifdef USR_VIMRC_FILE2
-          && do_source((char_u *)USR_VIMRC_FILE2, TRUE,
-            DOSO_VIMRC) == FAIL
-#endif
-#ifdef USR_VIMRC_FILE3
-          && do_source((char_u *)USR_VIMRC_FILE3, TRUE,
-            DOSO_VIMRC) == FAIL
-#endif
-          && process_env("EXINIT", FALSE) == FAIL
-          && do_source((char_u *)USR_EXRC_FILE, FALSE, DOSO_NONE) == FAIL) {
-#ifdef USR_EXRC_FILE2
-        (void)do_source((char_u *)USR_EXRC_FILE2, FALSE, DOSO_NONE);
-#endif
-      }
-    }
-
-    /*
-     * Read initialization commands from ".vimrc" or ".exrc" in current
-     * directory.  This is only done if the 'exrc' option is set.
-     * Because of security reasons we disallow shell and write commands
-     * now, except for unix if the file is owned by the user or 'secure'
-     * option has been reset in environment of global ".exrc" or ".vimrc".
-     * Only do this if VIMRC_FILE is not the same as USR_VIMRC_FILE or
-     * SYS_VIMRC_FILE.
-     */
-    if (p_exrc) {
+    if (do_user_initialization()) {
+      // Read initialization commands from ".vimrc" or ".exrc" in current
+      // directory.  This is only done if the 'exrc' option is set.
+      // Because of security reasons we disallow shell and write commands
+      // now, except for unix if the file is owned by the user or 'secure'
+      // option has been reset in environment of global "exrc" or "vimrc".
+      // Only do this if VIMRC_FILE is not the same as vimrc file sourced in
+      // do_user_initialization.
 #if defined(UNIX)
-      /* If ".vimrc" file is not owned by user, set 'secure' mode. */
+      // If vimrc file is not owned by user, set 'secure' mode.
       if (!file_owned(VIMRC_FILE))
 #endif
         secure = p_secure;
 
-      i = FAIL;
-      if (path_full_compare((char_u *)USR_VIMRC_FILE,
-            (char_u *)VIMRC_FILE, FALSE) != kEqualFiles
-#ifdef USR_VIMRC_FILE2
-          && path_full_compare((char_u *)USR_VIMRC_FILE2,
-            (char_u *)VIMRC_FILE, FALSE) != kEqualFiles
-#endif
-#ifdef USR_VIMRC_FILE3
-          && path_full_compare((char_u *)USR_VIMRC_FILE3,
-            (char_u *)VIMRC_FILE, FALSE) != kEqualFiles
-#endif
-#ifdef SYS_VIMRC_FILE
-          && path_full_compare((char_u *)SYS_VIMRC_FILE,
-            (char_u *)VIMRC_FILE, FALSE) != kEqualFiles
-#endif
-         )
-        i = do_source((char_u *)VIMRC_FILE, TRUE, DOSO_VIMRC);
-
-      if (i == FAIL) {
+      if (do_source((char_u *)VIMRC_FILE, true, DOSO_VIMRC) == FAIL) {
 #if defined(UNIX)
-        /* if ".exrc" is not owned by user set 'secure' mode */
-        if (!file_owned(EXRC_FILE))
+        // if ".exrc" is not owned by user set 'secure' mode
+        if (!file_owned(EXRC_FILE)) {
           secure = p_secure;
-        else
+        } else {
           secure = 0;
+        }
 #endif
-        if (       path_full_compare((char_u *)USR_EXRC_FILE,
-              (char_u *)EXRC_FILE, FALSE) != kEqualFiles
-#ifdef USR_EXRC_FILE2
-            && path_full_compare((char_u *)USR_EXRC_FILE2,
-              (char_u *)EXRC_FILE, FALSE) != kEqualFiles
-#endif
-           )
-          (void)do_source((char_u *)EXRC_FILE, FALSE, DOSO_NONE);
+        (void)do_source((char_u *)EXRC_FILE, false, DOSO_NONE);
       }
     }
-    if (secure == 2)
-      need_wait_return = TRUE;
+    if (secure == 2) {
+      need_wait_return = true;
+    }
     secure = 0;
   }
+  did_source_startup_scripts = true;
   TIME_MSG("sourcing vimrc file(s)");
 }
 
@@ -1991,8 +1830,8 @@ static void usage(void)
   mch_msg(_("  -n                    No swap file, use memory only\n"));
   mch_msg(_("  -r, -L                List swap files and exit\n"));
   mch_msg(_("  -r <file>             Recover crashed session\n"));
-  mch_msg(_("  -u <nvimrc>           Use <nvimrc> instead of the default\n"));
-  mch_msg(_("  -i <nviminfo>         Use <nviminfo> instead of the default\n"));
+  mch_msg(_("  -u <vimrc>            Use <vimrc> instead of the default\n"));
+  mch_msg(_("  -i <shada>            Use <shada> instead of the default\n"));
   mch_msg(_("  --noplugin            Don't load plugin scripts\n"));
   mch_msg(_("  -o[N]                 Open N windows (default: one for each file)\n"));
   mch_msg(_("  -O[N]                 Like -o but split vertically\n"));
@@ -2000,7 +1839,7 @@ static void usage(void)
   mch_msg(_("  +                     Start at end of file\n"));
   mch_msg(_("  +<linenum>            Start at line <linenum>\n"));
   mch_msg(_("  +/<pattern>           Start at first occurrence of <pattern>\n"));
-  mch_msg(_("  --cmd <command>       Execute <command> before loading any nvimrc\n"));
+  mch_msg(_("  --cmd <command>       Execute <command> before loading any vimrc\n"));
   mch_msg(_("  -c <command>          Execute <command> after loading the first file\n"));
   mch_msg(_("  -S <session>          Source <session> after loading the first file\n"));
   mch_msg(_("  -s <scriptin>         Read Normal mode commands from <scriptin>\n"));
@@ -2026,3 +1865,5 @@ static void check_swap_exists_action(void)
     getout(1);
   handle_swap_exists(NULL);
 }
+
+

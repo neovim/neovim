@@ -1,4 +1,4 @@
-*gui_w32.txt*   For Vim version 7.4.  Last change: 2012 Aug 04
+*gui_w32.txt*   For Vim version 7.4.  Last change: 2014 Dec 20
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -352,35 +352,6 @@ changes this.
 
 When prepending ":browse" before file editing commands, a file requester is
 used to allow you to select an existing file.  See |:browse|.
-
-
-6.3 Tearoff Menus
-
-The Win32 GUI emulates Motif's tear-off menus.  At the top of each menu you
-will see a small graphic "rip here" sign.  Selecting it will cause a floating
-window to be created with the same menu entries on it.  The floating menu can
-then be accessed just as if it was the original (including sub-menus), but
-without having to go to the menu bar each time.
-This is most useful if you find yourself using a command buried in a sub-menu
-over and over again.
-The tearoff menus can be positioned where you like, and always stay just above
-the Main Vim window.  You can get rid of them by closing them as usual; they
-also of course close when you exit Vim.
-
-							*:tearoff* *:te*
-:te[aroff] {name}	Tear-off the menu {name}.  The menu named must have at
-			least one subentry, but need not appear on the
-			menu-bar (see |win32-hidden-menus|).
-
-Example: >
-	:tearoff File
-will make the "File" menu (if there is one) appear as a tearoff menu. >
-
-	:amenu ]Toolbar.Make	:make<CR>
-	:tearoff ]Toolbar
-This creates a floating menu that doesn't exist on the main menu-bar.
-
-Note that a menu that starts with ']' will not be displayed.
 
 ==============================================================================
 7. Command line arguments				*gui-w32-cmdargs*

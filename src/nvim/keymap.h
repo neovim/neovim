@@ -83,11 +83,6 @@
 #define KS_SELECT               245
 #define K_SELECT_STRING         (char_u *)"\200\365X"
 
-/*
- * Used for tearing off a menu.
- */
-#define KS_TEAROFF              244
-
 /* Used a termcap entry that produces a normal character. */
 #define KS_KEY                  242
 
@@ -247,11 +242,12 @@ enum key_extra {
   , KE_X2RELEASE
 
   , KE_DROP             /* DnD data is available */
-  , KE_CURSORHOLD       /* CursorHold event */
   , KE_NOP              /* doesn't do something */
   , KE_FOCUSGAINED      /* focus gained */
   , KE_FOCUSLOST        /* focus lost */
   , KE_EVENT            // event
+  , KE_PASTE            // special key to toggle the 'paste' option.
+                        // sent only by UIs
 };
 
 /*
@@ -396,7 +392,6 @@ enum key_extra {
 #define K_HOR_SCROLLBAR   TERMCAP2KEY(KS_HOR_SCROLLBAR, KE_FILLER)
 
 #define K_SELECT        TERMCAP2KEY(KS_SELECT, KE_FILLER)
-#define K_TEAROFF       TERMCAP2KEY(KS_TEAROFF, KE_FILLER)
 
 #define K_TABLINE       TERMCAP2KEY(KS_TABLINE, KE_FILLER)
 #define K_TABMENU       TERMCAP2KEY(KS_TABMENU, KE_FILLER)
@@ -441,8 +436,8 @@ enum key_extra {
 #define K_FOCUSGAINED   TERMCAP2KEY(KS_EXTRA, KE_FOCUSGAINED)
 #define K_FOCUSLOST     TERMCAP2KEY(KS_EXTRA, KE_FOCUSLOST)
 
-#define K_CURSORHOLD    TERMCAP2KEY(KS_EXTRA, KE_CURSORHOLD)
 #define K_EVENT         TERMCAP2KEY(KS_EXTRA, KE_EVENT)
+#define K_PASTE         TERMCAP2KEY(KS_EXTRA, KE_PASTE)
 
 /* Bits for modifier mask */
 /* 0x01 cannot be used, because the modifier must be 0x02 or higher */

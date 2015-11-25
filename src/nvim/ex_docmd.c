@@ -3,7 +3,7 @@
  *
  * Do ":help uganda"  in Vim to read copying and usage conditions.
  * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
+ * See README.md for an overview of the Vim source code.
  */
 
 /*
@@ -73,11 +73,15 @@
 #include "nvim/os/time.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/mouse.h"
-#include "nvim/os/rstream.h"
-#include "nvim/os/wstream.h"
+#include "nvim/event/rstream.h"
+#include "nvim/event/wstream.h"
+#include "nvim/shada.h"
 
 static int quitmore = 0;
 static int ex_pressedreturn = FALSE;
+
+/* whether ":lcd" was produced for a session */
+static int did_lcd;
 
 typedef struct ucmd {
   char_u      *uc_name;         /* The command name */
@@ -143,24 +147,9 @@ struct dbg_stuff {
 # include "ex_docmd.c.generated.h"
 #endif
 
-# define ex_gui                 ex_nogui
-# define ex_tearoff             ex_ni
-# define ex_popup               ex_ni
-# define ex_simalt              ex_ni
-# define gui_mch_find_dialog    ex_ni
-# define gui_mch_replace_dialog ex_ni
-# define ex_helpfind            ex_ni
-static int did_lcd;             /* whether ":lcd" was produced for a session */
 #ifndef HAVE_WORKING_LIBINTL
 # define ex_language            ex_ni
 #endif
-# define ex_wsverb              ex_ni
-# define ex_nbclose             ex_ni
-# define ex_nbkey               ex_ni
-# define ex_nbstart             ex_ni
-
-
-
 
 /*
  * Declare cmdnames[].
@@ -2402,9 +2391,8 @@ static char_u *find_command(exarg_T *eap, int *full)
         break;
       }
 
-    /* Look for a user defined command as a last resort.  Let ":Print" be
-     * overruled by a user defined command. */
-    if ((eap->cmdidx == CMD_SIZE || eap->cmdidx == CMD_Print)
+    // Look for a user defined command as a last resort.
+    if ((eap->cmdidx == CMD_SIZE)
         && *eap->cmd >= 'A' && *eap->cmd <= 'Z') {
       /* User defined commands may contain digits. */
       while (ASCII_ISALNUM(*p))
@@ -3276,7 +3264,7 @@ set_one_cmd_context (
   case CMD_imenu:     case CMD_inoremenu:     case CMD_iunmenu:
   case CMD_cmenu:     case CMD_cnoremenu:     case CMD_cunmenu:
   case CMD_tmenu:                             case CMD_tunmenu:
-  case CMD_popup:     case CMD_tearoff:       case CMD_emenu:
+  case CMD_popup:                             case CMD_emenu:
     return set_context_in_menu_cmd(xp, cmd, arg, forceit);
 
   case CMD_colorscheme:
@@ -6468,40 +6456,6 @@ static void ex_find(exarg_T *eap)
 }
 
 /*
- * ":open" simulation: for now just work like ":visual".
- */
-static void ex_open(exarg_T *eap)
-{
-  regmatch_T regmatch;
-  char_u      *p;
-
-  curwin->w_cursor.lnum = eap->line2;
-  beginline(BL_SOL | BL_FIX);
-  if (*eap->arg == '/') {
-    /* ":open /pattern/": put cursor in column found with pattern */
-    ++eap->arg;
-    p = skip_regexp(eap->arg, '/', p_magic, NULL);
-    *p = NUL;
-    regmatch.regprog = vim_regcomp(eap->arg, p_magic ? RE_MAGIC : 0);
-    if (regmatch.regprog != NULL) {
-      regmatch.rm_ic = p_ic;
-      p = get_cursor_line_ptr();
-      if (vim_regexec(&regmatch, p, (colnr_T)0))
-        curwin->w_cursor.col = (colnr_T)(regmatch.startp[0] - p);
-      else
-        EMSG(_(e_nomatch));
-      vim_regfree(regmatch.regprog);
-    }
-    /* Move to the NUL, ignore any other arguments. */
-    eap->arg += STRLEN(eap->arg);
-  }
-  check_cursor();
-
-  eap->cmdidx = CMD_visual;
-  do_exedit(eap, NULL);
-}
-
-/*
  * ":edit", ":badd", ":visual".
  */
 static void ex_edit(exarg_T *eap)
@@ -6545,7 +6499,7 @@ do_exedit (
         msg_scroll = 0;
         must_redraw = CLEAR;
 
-        main_loop(FALSE, TRUE);
+        normal_enter(false, true);
 
         RedrawingDisabled = rd;
         no_wait_return = nwr;
@@ -6835,12 +6789,6 @@ void ex_cd(exarg_T *eap)
   {
     if (allbuf_locked())
       return;
-    if (vim_strchr(p_cpo, CPO_CHDIR) != NULL && curbufIsChanged()
-        && !eap->forceit) {
-      EMSG(_(
-              "E747: Cannot change directory, buffer is modified (add ! to override)"));
-      return;
-    }
 
     /* ":cd -": Change to previous directory */
     if (STRCMP(new_dir, "-") == 0) {
@@ -7200,7 +7148,7 @@ static void ex_wundo(exarg_T *eap)
   char_u hash[UNDO_HASH_SIZE];
 
   u_compute_hash(hash);
-  u_write_undo(eap->arg, eap->forceit, curbuf, hash);
+  u_write_undo((char *) eap->arg, eap->forceit, curbuf, hash);
 }
 
 static void ex_rundo(exarg_T *eap)
@@ -7208,7 +7156,7 @@ static void ex_rundo(exarg_T *eap)
   char_u hash[UNDO_HASH_SIZE];
 
   u_compute_hash(hash);
-  u_read_undo(eap->arg, hash, NULL);
+  u_read_undo((char *) eap->arg, hash, NULL);
 }
 
 /*
@@ -7555,8 +7503,9 @@ static void ex_mkrc(exarg_T *eap)
 
 int vim_mkdir_emsg(char_u *name, int prot)
 {
-  if (os_mkdir((char *)name, prot) != 0) {
-    EMSG2(_("E739: Cannot create directory: %s"), name);
+  int ret;
+  if ((ret = os_mkdir((char *)name, prot)) != 0) {
+    EMSG3(_(e_mkdir), name, os_strerror(ret));
     return FAIL;
   }
   return OK;
@@ -7631,6 +7580,10 @@ void update_topline_cursor(void)
  */
 static void ex_normal(exarg_T *eap)
 {
+  if (curbuf->terminal && State & TERM_FOCUS) {
+    EMSG("Can't re-enter normal mode from terminal mode");
+    return;
+  }
   int save_msg_scroll = msg_scroll;
   int save_restart_edit = restart_edit;
   int save_msg_didout = msg_didout;
@@ -7722,7 +7675,14 @@ static void ex_normal(exarg_T *eap)
 
   --ex_normal_busy;
   msg_scroll = save_msg_scroll;
-  restart_edit = save_restart_edit;
+  if (force_restart_edit) {
+    force_restart_edit = false;
+  } else {
+    // some function called was aware of ex_normal and decided to override the
+    // value of restart_edit anyway. So far only used in terminal mode(see
+    // terminal_enter() in edit.c)
+    restart_edit = save_restart_edit;
+  }
   p_im = save_insertmode;
   finish_op = save_finish_op;
   opcount = save_opcount;
@@ -9135,22 +9095,21 @@ int put_line(FILE *fd, char *s)
 }
 
 /*
- * ":rviminfo" and ":wviminfo".
+ * ":rshada" and ":wshada".
  */
-static void ex_viminfo(exarg_T *eap)
+static void ex_shada(exarg_T *eap)
 {
-  char_u      *save_viminfo;
+  char_u      *save_shada;
 
-  save_viminfo = p_viminfo;
-  if (*p_viminfo == NUL)
-    p_viminfo = (char_u *)"'100";
-  if (eap->cmdidx == CMD_rviminfo) {
-    if (read_viminfo(eap->arg, VIF_WANT_INFO | VIF_WANT_MARKS
-            | (eap->forceit ? VIF_FORCEIT : 0)) == FAIL)
-      EMSG(_("E195: Cannot open viminfo file for reading"));
-  } else
-    write_viminfo(eap->arg, eap->forceit);
-  p_viminfo = save_viminfo;
+  save_shada = p_shada;
+  if (*p_shada == NUL)
+    p_shada = (char_u *)"'100";
+  if (eap->cmdidx == CMD_rviminfo || eap->cmdidx == CMD_rshada) {
+    (void) shada_read_everything((char *) eap->arg, eap->forceit, false);
+  } else {
+    shada_write_file((char *) eap->arg, eap->forceit);
+  }
+  p_shada = save_shada;
 }
 
 /*
@@ -9387,6 +9346,8 @@ static void ex_folddo(exarg_T *eap)
 {
   linenr_T lnum;
 
+  start_global_changes();
+
   /* First set the marks for all lines closed/open. */
   for (lnum = eap->line1; lnum <= eap->line2; ++lnum)
     if (hasFolding(lnum, NULL, NULL) == (eap->cmdidx == CMD_folddoclosed))
@@ -9395,6 +9356,8 @@ static void ex_folddo(exarg_T *eap)
   /* Execute the command on the marked lines. */
   global_exe(eap->arg);
   ml_clearmarked();        /* clear rest of the marks */
+
+  end_global_changes();
 }
 
 static void ex_terminal(exarg_T *eap)

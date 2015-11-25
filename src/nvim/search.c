@@ -3,7 +3,7 @@
  *
  * Do ":help uganda"  in Vim to read copying and usage conditions.
  * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
+ * See README.md for an overview of the Vim source code.
  */
 /*
  * search.c: code for normal mode searching commands
@@ -14,6 +14,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
+#include <limits.h>             /* for INT_MAX on MSVC */
 
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
@@ -78,23 +79,6 @@
  * Henry Spencer's regular expression library.  See regexp.c.
  */
 
-/* The offset for a search command is store in a soff struct */
-/* Note: only spats[0].off is really used */
-struct soffset {
-  int dir;                      /* search direction, '/' or '?' */
-  int line;                     /* search has line offset */
-  int end;                      /* search set cursor at end */
-  long off;                     /* line or char offset */
-};
-
-/* A search pattern and its attributes are stored in a spat struct */
-struct spat {
-  char_u          *pat;         /* the pattern (in allocated memory) or NULL */
-  int magic;                    /* magicness of the pattern */
-  int no_scs;                   /* no smartcase for this pattern */
-  struct soffset off;
-};
-
 /*
  * Two search patterns are remembered: One for the :substitute command and
  * one for other searches.  last_idx points to the one that was used the last
@@ -102,11 +86,19 @@ struct spat {
  */
 static struct spat spats[2] =
 {
-  {NULL, TRUE, FALSE, {'/', 0, 0, 0L}},         /* last used search pat */
-  {NULL, TRUE, FALSE, {'/', 0, 0, 0L}}          /* last used substitute pat */
+  // Last used search pattern
+  [0] = {NULL, true, false, 0, {'/', false, false, 0L}, NULL},
+  // Last used substitute pattern
+  [1] = {NULL, true, false, 0, {'/', false, false, 0L}, NULL}
 };
 
 static int last_idx = 0;        /* index in spats[] for RE_LAST */
+
+static char_u lastc[2] = {NUL, NUL};        /* last character searched for */
+static int lastcdir = FORWARD;              /* last direction of character search */
+static int last_t_cmd = TRUE;               /* last search t_cmd */
+static char_u lastc_bytes[MB_MAXBYTES + 1];
+static int lastc_bytelen = 1;               /* >1 for multi-byte char */
 
 /* copy of spats[], for keeping the search patterns while executing autocmds */
 static struct spat saved_spats[2];
@@ -249,10 +241,12 @@ char_u *reverse_text(char_u *s) FUNC_ATTR_NONNULL_RET
 void save_re_pat(int idx, char_u *pat, int magic)
 {
   if (spats[idx].pat != pat) {
-    xfree(spats[idx].pat);
+    free_spat(&spats[idx]);
     spats[idx].pat = vim_strsave(pat);
     spats[idx].magic = magic;
     spats[idx].no_scs = no_smartcase;
+    spats[idx].timestamp = os_time();
+    spats[idx].additional_data = NULL;
     last_idx = idx;
     /* If 'hlsearch' set and search pat changed: need redraw. */
     if (p_hls)
@@ -284,21 +278,29 @@ void save_search_patterns(void)
 void restore_search_patterns(void)
 {
   if (--save_level == 0) {
-    xfree(spats[0].pat);
+    free_spat(&spats[0]);
     spats[0] = saved_spats[0];
     set_vv_searchforward();
-    xfree(spats[1].pat);
+    free_spat(&spats[1]);
     spats[1] = saved_spats[1];
     last_idx = saved_last_idx;
     SET_NO_HLSEARCH(saved_no_hlsearch);
   }
 }
 
+static inline void free_spat(struct spat *const spat)
+{
+  xfree(spat->pat);
+  dict_unref(spat->additional_data);
+}
+
 #if defined(EXITFREE)
 void free_search_patterns(void)
 {
-  xfree(spats[0].pat);
-  xfree(spats[1].pat);
+  free_spat(&spats[0]);
+  free_spat(&spats[1]);
+
+  memset(spats, 0, sizeof(spats));
 
   if (mr_pattern_alloced) {
     xfree(mr_pattern);
@@ -327,7 +329,7 @@ int ignorecase(char_u *pat)
 }
 
 /*
- * Return TRUE if patter "pat" has an uppercase character.
+ * Return TRUE if pattern "pat" has an uppercase character.
  */
 int pat_has_uppercase(char_u *pat)
 {
@@ -357,6 +359,41 @@ int pat_has_uppercase(char_u *pat)
   return FALSE;
 }
 
+char_u *last_csearch(void)
+{
+  return lastc_bytes;
+}
+
+int last_csearch_forward(void)
+{
+  return lastcdir == FORWARD;
+}
+
+int last_csearch_until(void)
+{
+  return last_t_cmd == TRUE;
+}
+
+void set_last_csearch(int c, char_u *s, int len)
+{
+  *lastc = c;
+  lastc_bytelen = len;
+  if (len)
+    memcpy(lastc_bytes, s, len);
+  else
+    memset(lastc_bytes, 0, sizeof(lastc_bytes));
+}
+
+void set_csearch_direction(int cdir)
+{
+  lastcdir = cdir;
+}
+
+void set_csearch_until(int t_cmd)
+{
+  last_t_cmd = t_cmd;
+}
+
 char_u *last_search_pat(void)
 {
   return spats[last_idx].pat;
@@ -372,17 +409,19 @@ void reset_search_dir(void)
 }
 
 /*
- * Set the last search pattern.  For ":let @/ =" and viminfo.
+ * Set the last search pattern.  For ":let @/ =" and ShaDa file.
  * Also set the saved search pattern, so that this works in an autocommand.
  */
 void set_last_search_pat(const char_u *s, int idx, int magic, int setlast)
 {
-  xfree(spats[idx].pat);
+  free_spat(&spats[idx]);
   /* An empty string means that nothing should be matched. */
   if (*s == NUL)
     spats[idx].pat = NULL;
   else
     spats[idx].pat = (char_u *) xstrdup((char *) s);
+  spats[idx].timestamp = os_time();
+  spats[idx].additional_data = NULL;
   spats[idx].magic = magic;
   spats[idx].no_scs = FALSE;
   spats[idx].off.dir = '/';
@@ -393,7 +432,7 @@ void set_last_search_pat(const char_u *s, int idx, int magic, int setlast)
   if (setlast)
     last_idx = idx;
   if (save_level) {
-    xfree(saved_spats[idx].pat);
+    free_spat(&saved_spats[idx]);
     saved_spats[idx] = spats[0];
     if (spats[idx].pat == NULL)
       saved_spats[idx].pat = NULL;
@@ -611,7 +650,7 @@ int searchit(
               }
               if (matchcol == 0 && (options & SEARCH_START))
                 break;
-              if (ptr[matchcol] == NUL
+              if (STRLEN(ptr) <= (size_t)matchcol || ptr[matchcol] == NUL
                   || (nmatched = vim_regexec_multi(&regmatch,
                           win, buf, lnum + matchpos.lnum,
                           matchcol,
@@ -1011,7 +1050,7 @@ int do_search(
       else if ((options & SEARCH_OPT) &&
                (*p == 'e' || *p == 's' || *p == 'b')) {
         if (*p == 'e')                  /* end */
-          spats[0].off.end = SEARCH_END;
+          spats[0].off.end = true;
         ++p;
       }
       if (ascii_isdigit(*p) || *p == '+' || *p == '-') {      /* got an offset */
@@ -1124,12 +1163,13 @@ int do_search(
       lrFswap(searchstr,0);
 
     c = searchit(curwin, curbuf, &pos, dirc == '/' ? FORWARD : BACKWARD,
-        searchstr, count, spats[0].off.end + (options &
-                                              (SEARCH_KEEP + SEARCH_PEEK +
-                                               SEARCH_HIS
-                                               + SEARCH_MSG + SEARCH_START
-                                               + ((pat != NULL && *pat ==
-                                                   ';') ? 0 : SEARCH_NOOF))),
+        searchstr, count, (spats[0].off.end * SEARCH_END
+                           + (options &
+                              (SEARCH_KEEP + SEARCH_PEEK +
+                               SEARCH_HIS
+                               + SEARCH_MSG + SEARCH_START
+                               + ((pat != NULL && *pat ==
+                                   ';') ? 0 : SEARCH_NOOF)))),
         RE_LAST, (linenr_T)0, tm);
 
     if (dircp != NULL)
@@ -1286,38 +1326,33 @@ int searchc(cmdarg_T *cap, int t_cmd)
   int c = cap->nchar;                   /* char to search for */
   int dir = cap->arg;                   /* TRUE for searching forward */
   long count = cap->count1;                     /* repeat count */
-  static int lastc = NUL;               /* last character searched for */
-  static int lastcdir;                  /* last direction of character search */
-  static int last_t_cmd;                /* last search t_cmd */
   int col;
   char_u              *p;
   int len;
   int stop = TRUE;
-  static char_u bytes[MB_MAXBYTES + 1];
-  static int bytelen = 1;               /* >1 for multi-byte char */
 
   if (c != NUL) {       /* normal search: remember args for repeat */
     if (!KeyStuffed) {      /* don't remember when redoing */
-      lastc = c;
-      lastcdir = dir;
-      last_t_cmd = t_cmd;
-      bytelen = (*mb_char2bytes)(c, bytes);
+      *lastc = c;
+      set_csearch_direction(dir);
+      set_csearch_until(t_cmd);
+      lastc_bytelen = (*mb_char2bytes)(c, lastc_bytes);
       if (cap->ncharC1 != 0) {
-        bytelen += (*mb_char2bytes)(cap->ncharC1, bytes + bytelen);
+        lastc_bytelen += (*mb_char2bytes)(cap->ncharC1, lastc_bytes + lastc_bytelen);
         if (cap->ncharC2 != 0)
-          bytelen += (*mb_char2bytes)(cap->ncharC2, bytes + bytelen);
+          lastc_bytelen += (*mb_char2bytes)(cap->ncharC2, lastc_bytes + lastc_bytelen);
       }
     }
   } else {            /* repeat previous search */
-    if (lastc == NUL)
+    if (*lastc == NUL)
       return FAIL;
     if (dir)            /* repeat in opposite direction */
       dir = -lastcdir;
     else
       dir = lastcdir;
     t_cmd = last_t_cmd;
-    c = lastc;
-    /* For multi-byte re-use last bytes[] and bytelen. */
+    c = *lastc;
+    /* For multi-byte re-use last lastc_bytes[] and lastc_bytelen. */
 
     /* Force a move of at least one char, so ";" and "," will move the
      * cursor, even if the cursor is right in front of char we are looking
@@ -1347,11 +1382,11 @@ int searchc(cmdarg_T *cap, int t_cmd)
             return FAIL;
           col -= (*mb_head_off)(p, p + col - 1) + 1;
         }
-        if (bytelen == 1) {
+        if (lastc_bytelen == 1) {
           if (p[col] == c && stop)
             break;
         } else {
-          if (memcmp(p + col, bytes, bytelen) == 0 && stop)
+          if (memcmp(p + col, lastc_bytes, lastc_bytelen) == 0 && stop)
             break;
         }
         stop = TRUE;
@@ -1372,8 +1407,8 @@ int searchc(cmdarg_T *cap, int t_cmd)
     col -= dir;
     if (has_mbyte) {
       if (dir < 0)
-        /* Landed on the search char which is bytelen long */
-        col += bytelen - 1;
+        /* Landed on the search char which is lastc_bytelen long */
+        col += lastc_bytelen - 1;
       else
         /* To previous char, which may be multi-byte. */
         col -= (*mb_head_off)(p, p + col);
@@ -2017,11 +2052,13 @@ showmatch (
       return;
   }
 
-  if ((lpos = findmatch(NULL, NUL)) == NULL)        /* no match, so beep */
-    vim_beep();
-  else if (lpos->lnum >= curwin->w_topline && lpos->lnum < curwin->w_botline) {
-    if (!curwin->w_p_wrap)
+  if ((lpos = findmatch(NULL, NUL)) == NULL) {  // no match, so beep
+    vim_beep(BO_MATCH);
+  } else if (lpos->lnum >= curwin->w_topline
+      && lpos->lnum < curwin->w_botline) {
+    if (!curwin->w_p_wrap) {
       getvcol(curwin, lpos, NULL, &vcol, NULL);
+    }
     if (curwin->w_p_wrap || (vcol >= curwin->w_leftcol
                              && vcol < curwin->w_leftcol + curwin->w_width)) {
       mpos = *lpos;          /* save the pos, update_screen() may change it */
@@ -2199,7 +2236,6 @@ findpar (
   linenr_T curr;
   bool did_skip;            /* true after separating lines have been skipped */
   bool first;               /* true on first line */
-  int posix = (vim_strchr(p_cpo, CPO_PARA) != NULL);
   linenr_T fold_first;      /* first line of a closed fold */
   linenr_T fold_last;       /* last line of a closed fold */
   bool fold_skipped;        /* true if a closed fold was skipped this
@@ -2220,12 +2256,7 @@ findpar (
         fold_skipped = true;
       }
 
-      /* POSIX has it's own ideas of what a paragraph boundary is and it
-       * doesn't match historical Vi: It also stops at a "{" in the
-       * first column and at an empty line. */
-      if (!first && did_skip && (startPS(curr, what, both)
-                                 || (posix && what == NUL && *ml_get(curr) ==
-                                     '{')))
+      if (!first && did_skip && startPS(curr, what, both))
         break;
 
       if (fold_skipped)
@@ -4574,105 +4605,46 @@ static void show_pat_in_path(char_u *line, int type, int did_show, int action, F
   }
 }
 
-int read_viminfo_search_pattern(vir_T *virp, int force)
+/// Get last search pattern
+void get_search_pattern(SearchPattern *const pat)
 {
-  char_u      *lp;
-  int idx = -1;
-  int magic = FALSE;
-  int no_scs = FALSE;
-  int off_line = FALSE;
-  int off_end = 0;
-  long off = 0;
-  int setlast = FALSE;
-  static int hlsearch_on = FALSE;
-  char_u      *val;
-
-  /*
-   * Old line types:
-   * "/pat", "&pat": search/subst. pat
-   * "~/pat", "~&pat": last used search/subst. pat
-   * New line types:
-   * "~h", "~H": hlsearch highlighting off/on
-   * "~<magic><smartcase><line><end><off><last><which>pat"
-   * <magic>: 'm' off, 'M' on
-   * <smartcase>: 's' off, 'S' on
-   * <line>: 'L' line offset, 'l' char offset
-   * <end>: 'E' from end, 'e' from start
-   * <off>: decimal, offset
-   * <last>: '~' last used pattern
-   * <which>: '/' search pat, '&' subst. pat
-   */
-  lp = virp->vir_line;
-  if (lp[0] == '~' && (lp[1] == 'm' || lp[1] == 'M')) { /* new line type */
-    if (lp[1] == 'M')                   /* magic on */
-      magic = TRUE;
-    if (lp[2] == 's')
-      no_scs = TRUE;
-    if (lp[3] == 'L')
-      off_line = TRUE;
-    if (lp[4] == 'E')
-      off_end = SEARCH_END;
-    lp += 5;
-    off = getdigits_long(&lp);
-  }
-  if (lp[0] == '~') {           /* use this pattern for last-used pattern */
-    setlast = TRUE;
-    lp++;
-  }
-  if (lp[0] == '/')
-    idx = RE_SEARCH;
-  else if (lp[0] == '&')
-    idx = RE_SUBST;
-  else if (lp[0] == 'h')        /* ~h: 'hlsearch' highlighting off */
-    hlsearch_on = FALSE;
-  else if (lp[0] == 'H')        /* ~H: 'hlsearch' highlighting on */
-    hlsearch_on = TRUE;
-  if (idx >= 0) {
-    if (force || spats[idx].pat == NULL) {
-      val = viminfo_readstring(virp, (int)(lp - virp->vir_line + 1), TRUE);
-      set_last_search_pat(val, idx, magic, setlast);
-      xfree(val);
-      spats[idx].no_scs = no_scs;
-      spats[idx].off.line = off_line;
-      spats[idx].off.end = off_end;
-      spats[idx].off.off = off;
-      if (setlast) {
-        SET_NO_HLSEARCH(!hlsearch_on);
-      }
-    }
-  }
-  return viminfo_readline(virp);
+  memcpy(pat, &(spats[0]), sizeof(spats[0]));
 }
 
-void write_viminfo_search_pattern(FILE *fp)
+/// Get last substitute pattern
+void get_substitute_pattern(SearchPattern *const pat)
 {
-  if (get_viminfo_parameter('/') != 0) {
-    fprintf(fp, "\n# hlsearch on (H) or off (h):\n~%c",
-        (no_hlsearch || find_viminfo_parameter('h') != NULL) ? 'h' : 'H');
-    wvsp_one(fp, RE_SEARCH, "", '/');
-    wvsp_one(fp, RE_SUBST, _("Substitute "), '&');
-  }
+  memcpy(pat, &(spats[1]), sizeof(spats[1]));
+  memset(&(pat->off), 0, sizeof(pat->off));
 }
 
-static void 
-wvsp_one (
-    FILE *fp,        /* file to write to */
-    int idx,                /* spats[] index */
-    char *s,         /* search pat */
-    int sc                 /* dir char */
-)
+/// Set last search pattern
+void set_search_pattern(const SearchPattern pat)
 {
-  if (spats[idx].pat != NULL) {
-    fprintf(fp, _("\n# Last %sSearch Pattern:\n~"), s);
-    /* off.dir is not stored, it's reset to forward */
-    fprintf(fp, "%c%c%c%c%" PRId64 "%s%c",
-        spats[idx].magic    ? 'M' : 'm',                /* magic */
-        spats[idx].no_scs   ? 's' : 'S',                /* smartcase */
-        spats[idx].off.line ? 'L' : 'l',                /* line offset */
-        spats[idx].off.end  ? 'E' : 'e',                /* offset from end */
-        (int64_t)spats[idx].off.off,                    /* offset */
-        last_idx == idx     ? "~" : "",                 /* last used pat */
-        sc);
-    viminfo_writestring(fp, spats[idx].pat);
-  }
+  free_spat(&spats[0]);
+  memcpy(&(spats[0]), &pat, sizeof(spats[0]));
+  set_vv_searchforward();
+}
+
+/// Set last substitute pattern
+void set_substitute_pattern(const SearchPattern pat)
+{
+  free_spat(&spats[1]);
+  memcpy(&(spats[1]), &pat, sizeof(spats[1]));
+  memset(&(spats[1].off), 0, sizeof(spats[1].off));
+}
+
+/// Set last used search pattern
+///
+/// @param[in]  is_substitute_pattern  If true set substitute pattern as last
+///                                    used. Otherwise sets search pattern.
+void set_last_used_pattern(const bool is_substitute_pattern)
+{
+  last_idx = (is_substitute_pattern ? 1 : 0);
+}
+
+/// Returns true if search pattern was the last used one
+bool search_was_last_used(void)
+{
+  return last_idx == 0;
 }

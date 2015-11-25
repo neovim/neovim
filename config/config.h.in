@@ -44,7 +44,6 @@
 #cmakedefine HAVE_STRNCASECMP
 #cmakedefine HAVE_STROPTS_H
 #cmakedefine HAVE_SYS_PARAM_H
-#cmakedefine HAVE_SYS_TIME_H
 #cmakedefine HAVE_SYS_UTSNAME_H
 #cmakedefine HAVE_SYS_WAIT_H
 #cmakedefine HAVE_UNISTD_H
@@ -52,18 +51,16 @@
 #cmakedefine HAVE_UTIME_H
 #cmakedefine HAVE_UTIMES
 #cmakedefine HAVE_WORKING_LIBINTL
-#define RETSIGTYPE void
-#define SIGRETURN return
-#define TIME_WITH_SYS_TIME 1
 #cmakedefine UNIX
 #cmakedefine USE_FNAME_CASE
-#define USEMAN_S 1
 
-#define FEAT_BROWSE
 #define FEAT_CSCOPE
 
 #ifndef UNIT_TESTING
 #cmakedefine HAVE_JEMALLOC
 #endif
+
+#cmakedefine HAVE_BE64TOH
+#cmakedefine ORDER_BIG_ENDIAN
 
 #endif  // AUTO_CONFIG_H

@@ -157,7 +157,7 @@ syn match groovyOperator "\.\."
 syn match groovyOperator "<\{2,3}"
 syn match groovyOperator ">\{2,3}"
 syn match groovyOperator "->"
-syn match groovyExternal		'^#!.*[/\\]groovy\>'
+syn match groovyLineComment       '^\%1l#!.*'  " Shebang line
 syn match groovyExceptions        "\<Exception\>\|\<[A-Z]\{1,}[a-zA-Z0-9]*Exception\>"
 
 " Groovy JDK stuff

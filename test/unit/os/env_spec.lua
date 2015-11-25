@@ -1,11 +1,9 @@
 local helpers = require('test.unit.helpers')
 
 local cimport = helpers.cimport
-local internalize = helpers.internalize
 local eq = helpers.eq
 local neq = helpers.neq
 local ffi = helpers.ffi
-local lib = helpers.lib
 local cstr = helpers.cstr
 local to_cstr = helpers.to_cstr
 local NULL = helpers.NULL
@@ -15,15 +13,15 @@ require('lfs')
 local env = cimport('./src/nvim/os/os.h')
 
 describe('env function', function()
-  function os_setenv(name, value, override)
+  local function os_setenv(name, value, override)
     return env.os_setenv((to_cstr(name)), (to_cstr(value)), override)
   end
 
-  function os_unsetenv(name, value, override)
+  local function os_unsetenv(name, _, _)
     return env.os_unsetenv((to_cstr(name)))
   end
 
-  function os_getenv(name)
+  local function os_getenv(name)
     local rval = env.os_getenv((to_cstr(name)))
     if rval ~= NULL then
       return ffi.string(rval)

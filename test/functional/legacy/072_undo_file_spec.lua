@@ -3,7 +3,7 @@
 -- undo-able pieces.  Do that by setting 'undolevels'.
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
+local feed, insert = helpers.feed, helpers.insert
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 
 describe('72', function()
@@ -18,7 +18,7 @@ describe('72', function()
 
     -- Test 'undofile': first a simple one-line change.
     execute('set visualbell')
-    execute('set ul=100 undofile nomore')
+    execute('set ul=100 undofile undodir=. nomore')
     execute('e! Xtestfile')
     feed('ggdGithis is one line<esc>:set ul=100<cr>')
     execute('s/one/ONE/')

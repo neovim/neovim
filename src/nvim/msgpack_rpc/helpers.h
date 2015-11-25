@@ -6,7 +6,7 @@
 
 #include <msgpack.h>
 
-#include "nvim/os/wstream.h"
+#include "nvim/event/wstream.h"
 #include "nvim/api/private/defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

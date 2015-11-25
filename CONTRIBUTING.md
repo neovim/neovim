@@ -28,7 +28,7 @@ If your issue isn't mentioned there:
     - For runtime issues, see
       [Troubleshooting#runtime-issues][wiki-troubleshooting-runtime-issues].
       If your issue isn't mentioned there, try to reproduce your it using
-      `nvim` with the smallest possible `nvimrc` (or none at all via `nvim -u
+      `nvim` with the smallest possible `vimrc` (or none at all via `nvim -u
       NONE`), to rule out bugs in plugins you're using.
       If you're using a plugin manager, comment out your plugins, then add
       them back in one by one.
@@ -47,8 +47,6 @@ Include as much detail as possible; we generally need to know:
 
 ## Submitting contributions
 
-- If you're a first-time contributor, please sign the [Neovim Contributor
-  License Agreement (CLA)][cla] before submitting your pull request.
 - Make it clear in the issue tracker what you are working on.
 - Be descriptive in your pull request description: what is it for, why is it
   needed, etc.
@@ -176,7 +174,6 @@ as context, use the `-W` argument as well.
 You may find it easier to instead use an interactive program for code reviews,
 such as [`tig`][tig].
 
-[cla]: https://docs.google.com/forms/d/1u54bpbwzneDIRltFx1TGi2evKxY3w0cOV3vlpj8DPbg/viewform
 [clang-format]: http://clang.llvm.org/docs/ClangFormat.html
 [clint]: clint.py
 [entry-level]: https://github.com/neovim/neovim/issues?labels=entry-level&state=open

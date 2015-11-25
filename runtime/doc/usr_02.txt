@@ -164,7 +164,7 @@ right and j points down.  In a picture: >
 The best way to learn these commands is by using them.  Use the "i" command to
 insert some more lines of text.  Then use the hjkl keys to move around and
 insert a word somewhere.  Don't forget to press <Esc> to go back to Normal
-mode.  The |vimtutor| is also a nice way to learn by doing.
+mode.  |:Tutor| is also a nice way to learn by doing.
 
 For Japanese users, Hiroshi Iwatani suggested using this:
 

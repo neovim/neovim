@@ -1,4 +1,4 @@
-.Dd June 26, 2015
+.Dd November 11, 2015
 .Dt NVIM 1
 .Os
 .Sh NAME
@@ -16,11 +16,10 @@
 .Fl t Ar tag
 .Nm
 .Op Ar options
-.Fl q Ar errorfile
+.Fl q Op Ar errorfile
 .Sh DESCRIPTION
 .Nm
-is a text editor based on
-.Xr vim 1 .
+is a text editor based on Vim.
 To enter commands in
 .Nm ,
 type a colon
@@ -56,7 +55,7 @@ is a function name, the file containing that function is opened
 with the cursor positioned at the start of the function.
 See
 .Ic :help tag-commands .
-.It Fl q Ar errorfile
+.It Fl q Op Ar errorfile
 QuickFix mode.
 Display the first error in
 .Ar errorfile .
@@ -75,7 +74,7 @@ Interpret all further arguments as files.
 Can be used to edit files starting with a hyphen
 .Pq Sq - .
 .It Fl -literal
-Interpret filenames literally, that is do not expand wildcards.
+Interpret filenames literally, that is, do not expand wildcards.
 Has no effect on UNIX-like systems, where the shell expands wildcards.
 .It Fl e
 Ex mode.
@@ -91,14 +90,11 @@ Only takes effect if
 .Fl e
 or
 .Fl E
-is specified before
-.Fl s .
-.It Fl d Op Ar file ...
+is specified before it.
+.It Fl d
 Diff mode.
-Show the difference between two to four files.
-If
-.Ar file
-is omitted, options related to diff mode are still set.
+Show the difference between two to four files, similar to
+.Xr sdiff 1 .
 See
 .Ic :help diff .
 .It Fl R
@@ -140,9 +136,9 @@ Sets the options 'fkmap' and 'rightleft'.
 Hebrew mode.
 Sets the options 'hkmap' and 'rightleft'.
 .It Fl V Ns Oo Ar N Oc Ns Op Ar file
-Verbose.
+Verbose mode.
 Print messages about which files are being sourced and for reading and
-writing an nviminfo file.
+writing a ShaDa file.
 .Ar N
 is the value for the 'verbose' option; defaults to
 .Cm 10
@@ -160,48 +156,53 @@ Disable the use of swap files.
 Sets the option 'updatecount' to
 .Cm 0 .
 Can be useful for editing file(s) on a slow medium.
-.It Fl r , L
-List swap files with information about recovering them.
-.It Fl r Ar file
+.It Fl r Op Ar file
 Recovery mode.
-The swap file
+If
+.Ar file
+is omitted
+then list swap files with recovery information.
+Otherwise the swap file
 .Ar file
 is used to recover a crashed session.
-The swap file has the same filename as the text file, but with
+The swap file has the same name as the file it's associated with, but with
 .Sq .swp
 appended.
 See
 .Ic :help recovery .
-.It Fl u Ar nvimrc
+.It Fl L Op Ar file
+Alias for
+.Fl r .
+.It Fl u Ar vimrc
 Use
-.Ar nvimrc
+.Ar vimrc
 instead of the default of
-.Pa ~/.nvimrc .
+.Pa ~/.config/nvim/init.vim .
 If
-.Ar nvimrc
+.Ar vimrc
 is
 .Cm NORC ,
 do not load any initialization files (excluding plugins),
 and do not attempt to parse environment variables.
 If
-.Ar nvimrc
+.Ar vimrc
 is
 .Cm NONE ,
 loading plugins is also skipped.
 See
 .Ic :help initialization .
-.It Fl i Ar nviminfo
+.It Fl i Ar shada
 Use
-.Ar nviminfo
+.Ar shada
 instead of the default of
-.Pa ~/.nviminfo .
+.Pa ~/.local/share/nvim/shada/main.shada .
 If
-.Ar nviminfo
+.Ar shada
 is
 .Cm NONE ,
-do not read or write an nviminfo file.
+do not read or write a ShaDa file.
 See
-.Ic :help viminfo .
+.Ic :help shada .
 .It Fl -noplugin
 Skip loading plugins.
 Implied by
@@ -219,29 +220,13 @@ is less than the number of file arguments, allocate windows for the first
 .Ar N
 files and hide the rest.
 .It Fl O Ns Op Ar N
-Open
-.Ar N
-windows stacked vertically.
-If
-.Ar N
-is omitted, open one window for each file.
-If
-.Ar N
-is less than the number of file arguments, allocate windows for the first
-.Ar N
-files and hide the rest.
+Like
+.Fl o ,
+but tile windows vertically.
 .It Fl p Ns Op Ar N
-Open
-.Ar N
-tab pages.
-If
-.Ar N
-is omitted, open one tab page for each file.
-If
-.Ar N
-is less than the number of file arguments, allocate tab pages for the first
-.Ar N
-files and hide the rest.
+Like
+.Fl o ,
+but for tab pages.
 .It Cm + Ns Op Ar linenum
 For the first file, position the cursor on line
 .Ar linenum .
@@ -293,7 +278,7 @@ Like
 .Fl c ,
 but execute
 .Ar command
-before processing any nvimrc.
+before processing any vimrc.
 Up to 10 instances of these can be used independently from instances of
 .Fl c .
 .It Fl S Op Ar session
@@ -352,10 +337,24 @@ Print version information and exit.
 .Sh ENVIRONMENT
 .Bl -tag -width Fl
 .It Ev VIM
-Used to locate various user files, such as the user's nvimrc.
+Used to locate various user files, such as the user's init.vim.
 .It Ev VIMRUNTIME
 Used to locate run time files, such as on-line documentation and
 syntax highlighting definitions.
+.It Ev XDG_CONFIG_HOME
+Path to use for the user-local configuration directory, see
+.Sx FILES .
+Defaults to
+.Pa ~/.config
+if not set.
+.It Ev XDG_DATA_HOME
+Like
+.Ev XDG_CONFIG_HOME ,
+but used to store data not generally edited by the user,
+namely swap, backup, and ShaDa files.
+Defaults to
+.Pa ~/.local/share/nvim
+if not set.
 .It Ev VIMINIT
 A string of Ex commands to be executed at startup.
 For example, the command to quit is
@@ -381,20 +380,26 @@ If defined, assume the host terminal supports 24 bit colors.
 Has no effect in GUIs.
 .El
 .Sh FILES
-.Bl -tag -width Pa
-.It Pa ~/.nvimrc , ~/.nvim/nvimrc
+.Bl -tag -width "~/.config/nvim/init.vim"
+.It Pa ~/.config/nvim/init.vim
 The user-local
 .Nm
 configuration file.
-.It Pa ~/.nvim
+See
+.Ev XDG_CONFIG_HOME
+above.
+.It Pa ~/.config/nvim
 The user-local
 .Nm
-run time directory.
-.It Pa /etc/nvim/nvimrc
+configuration directory.
+See
+.Ev XDG_CONFIG_HOME
+above.
+.It Pa $VIM/sysinit.vim
 The system-global
 .Nm
 configuration file.
-.It Pa /usr/share/nvim
+.It Pa /usr/local/share/nvim
 The system-global
 .Nm
 runtime directory.
@@ -405,17 +410,14 @@ was started by
 .An Thiago de Arruda ,
 with a lot of help from others.
 .Pp
-Most of
-.Xr vim 1
-was written by
+Most of Vim was written by
 .An -nosplit
 .An Bram Moolenaar ,
 with a lot of help from others.
 See
 .Ic :help credits .
 .Pp
-.Xr vim 1
-is based on Stevie, worked on by
+Vim is based on Stevie, worked on by
 .An Tim Thompson ,
 .An Tony Andrews ,
 and

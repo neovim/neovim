@@ -4,9 +4,7 @@
 -- pointer blocks.
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, execute, expect, source = helpers.clear, helpers.execute, helpers.expect, helpers.source
-local eval = helpers.eval
+local clear, expect, source = helpers.clear, helpers.expect, helpers.source
 
 describe('78', function()
   setup(clear)
@@ -17,7 +15,7 @@ describe('78', function()
 
   it('is working', function()
     source([=[
-      set swapfile fileformat=unix undolevels=-1
+      set directory=. swapfile fileformat=unix undolevels=-1
       e! Xtest
       let text = "\tabcdefghijklmnoparstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnoparstuvwxyz0123456789"
       let i = 1

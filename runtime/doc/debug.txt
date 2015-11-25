@@ -52,7 +52,7 @@ Use this command to start Vim:
 >
 	valgrind --log-file=valgrind.log --leak-check=full ./vim
 
-Note: Vim will run much slower.  If your .vimrc is big or you have several
+Note: Vim will run much slower.  If your vimrc is big or you have several
 plugins you need to be patient for startup, or run with the "-u NONE"
 argument.
 

@@ -10,7 +10,7 @@ C, Ct, Cc, Cg = lpeg.C, lpeg.Ct, lpeg.Cc, lpeg.Cg
 any = P(1) -- (consume one character)
 letter = R('az', 'AZ') + S('_$')
 alpha = letter + R('09')
-nl = P('\n')
+nl = P('\r\n') + P('\n')
 not_nl = any - nl
 ws = S(' \t') + nl
 fill = ws ^ 0
@@ -34,8 +34,8 @@ c_params = Ct(c_void + c_param_list)
 c_proto = Ct(
   Cg(c_type, 'return_type') * Cg(c_id, 'name') *
   fill * P('(') * fill * Cg(c_params, 'parameters') * fill * P(')') *
-  Cg(Cc(false), 'deferred') *
-  (fill * Cg((P('FUNC_ATTR_DEFERRED') * Cc(true)), 'deferred') ^ -1) *
+  Cg(Cc(false), 'async') *
+  (fill * Cg((P('FUNC_ATTR_ASYNC') * Cc(true)), 'async') ^ -1) *
   fill * P(';')
   )
 grammar = Ct((c_proto + c_comment + c_preproc + ws) ^ 1)
@@ -279,7 +279,7 @@ for i = 1, #functions do
                '(String) {.data = "'..fn.name..'", '..
                '.size = sizeof("'..fn.name..'") - 1}, '..
                '(MsgpackRpcRequestHandler) {.fn = handle_'..  fn.name..
-               ', .defer = '..tostring(fn.deferred)..'});\n')
+               ', .async = '..tostring(fn.async)..'});\n')
 
   if #fn.name > max_fname_len then
     max_fname_len = #fn.name

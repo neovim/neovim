@@ -1,7 +1,6 @@
 
 local helpers = require('test.functional.helpers')
-local nvim, eq, neq, ok, eval
-  = helpers.nvim, helpers.eq, helpers.neq, helpers.ok, helpers.eval
+local nvim, eq, neq, eval = helpers.nvim, helpers.eq, helpers.neq, helpers.eval
 local clear = helpers.clear
 
 describe('serverstart(), serverstop()', function()

@@ -1,7 +1,46 @@
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
-local clear, feed, execute = helpers.clear, helpers.feed, helpers.execute
-local insert, wait = helpers.insert, helpers.wait
+local spawn, set_session, clear = helpers.spawn, helpers.set_session, helpers.clear
+local feed, execute = helpers.feed, helpers.execute
+local insert = helpers.insert
+
+describe('Initial screen', function()
+  local screen
+  local nvim_argv = {helpers.nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
+                     '--cmd', 'set shortmess+=I background=light noswapfile',
+                     '--embed'}
+
+  before_each(function()
+    local screen_nvim = spawn(nvim_argv)
+    set_session(screen_nvim)
+    screen = Screen.new()
+    screen:attach()
+    screen:set_default_attr_ignore( {{bold=true, foreground=255}} )
+  end)
+
+  after_each(function()
+    screen:detach()
+  end)
+
+  it('is the default initial screen', function()
+      screen:expect([[
+      ^                                                     |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      [No Name]                                            |
+                                                           |
+    ]])
+  end)
+end)
 
 describe('Screen', function()
   local screen
@@ -63,6 +102,29 @@ describe('Screen', function()
         end
       end)
     end)
+
+    it('has correct default title with unnamed file', function()
+      local expected = '[No Name] - NVIM'
+      execute('set title')
+      screen:wait(function()
+        local actual = screen.title
+        if actual ~= expected then
+          return 'Expected title to be "'..expected..'" but was "'..actual..'"'
+        end
+      end)
+    end)
+
+    it('has correct default title with named file', function()
+      local expected = 'myfile (/mydir) - NVIM'
+      execute('set title')
+      execute('file /mydir/myfile')
+      screen:wait(function()
+        local actual = screen.title
+        if actual ~= expected then
+          return 'Expected title to be "'..expected..'" but was "'..actual..'"'
+        end
+      end)
+    end)
   end)
 
   describe(':set icon', function()
@@ -78,7 +140,6 @@ describe('Screen', function()
       end)
     end)
   end)
-
 
   describe('window', function()
     describe('split', function()
@@ -487,8 +548,8 @@ describe('Screen', function()
       ]])
     end)
 
-    it('has minimum width/height values', function()
-      wait()
+    -- FIXME this has some race conditions that cause it to fail periodically
+    pending('has minimum width/height values', function()
       screen:try_resize(1, 1)
       screen:expect([[
         -- INS^ERT --|

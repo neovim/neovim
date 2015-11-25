@@ -2,7 +2,7 @@
 //
 // Do ":help uganda"  in Vim to read copying and usage conditions.
 // Do ":help credits" in Vim to see a list of people who contributed.
-// See README.txt for an overview of the Vim source code.
+// See README.md for an overview of the Vim source code.
 
 // spell.c: code for spell checking
 //
@@ -2328,8 +2328,16 @@ static void spell_load_lang(char_u *lang)
   }
 
   if (r == FAIL) {
-    smsg(_("Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""),
-          lang, spell_enc(), lang);
+    if (starting) {
+      // Some startup file sets &spell, but the necessary files don't exist:
+      // try to prompt the user at VimEnter. Also set spell again. #3027
+      do_cmdline_cmd(
+        "autocmd VimEnter * call spellfile#LoadFile(&spelllang)|set spell");
+    } else {
+      smsg(
+        _("Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""),
+	    lang, spell_enc(), lang);
+    }
   } else if (sl.sl_slang != NULL) {
     // At least one file was loaded, now load ALL the additions.
     STRCPY(fname_enc + STRLEN(fname_enc) - 3, "add.spl");
@@ -8398,7 +8406,7 @@ void spell_suggest(int count)
     // Use the Visually selected text as the bad word.  But reject
     // a multi-line selection.
     if (curwin->w_cursor.lnum != VIsual.lnum) {
-      vim_beep();
+      vim_beep(BO_SPELL);
       return;
     }
     badlen = (int)curwin->w_cursor.col - (int)VIsual.col;
@@ -8575,6 +8583,7 @@ void spell_suggest(int count)
     curwin->w_cursor = prev_cursor;
 
   spell_find_cleanup(&sug);
+  xfree(line);
 }
 
 // Check if the word at line "lnum" column "col" is required to start with a

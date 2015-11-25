@@ -25,18 +25,21 @@
 #define STR_(x) #x
 #define STR(x) STR_(x)
 
-// for the startup-screen ( ":intro" command )
-#define NVIM_VERSION_MEDIUM STR(NVIM_VERSION_MAJOR) "." STR(NVIM_VERSION_MINOR)
-
-// for the ":version" command and "nvim --version"
-#define NVIM_VERSION_LONG "NVIM " NVIM_VERSION_MEDIUM "." STR(NVIM_VERSION_PATCH) NVIM_VERSION_PRERELEASE NVIM_VERSION_BUILD
+// for ":version", ":intro", and "nvim --version"
+#ifndef NVIM_VERSION_MEDIUM
+#define NVIM_VERSION_MEDIUM STR(NVIM_VERSION_MAJOR) "." STR(NVIM_VERSION_MINOR)\
+  "." STR(NVIM_VERSION_PATCH) NVIM_VERSION_PRERELEASE
+#endif
+#define NVIM_VERSION_LONG "NVIM " NVIM_VERSION_MEDIUM
 
 
 char *Version = VIM_VERSION_SHORT;
 char *longVersion = NVIM_VERSION_LONG;
-char *longVersionWithDate = NVIM_VERSION_LONG " (compiled " __DATE__ " " __TIME__ ")";
-char *mediumVersion = NVIM_VERSION_MEDIUM;
+char *longVersionWithDate = NVIM_VERSION_LONG \
+                            " (compiled " __DATE__ " " __TIME__ ")";
+#ifdef NVIM_VERSION_COMMIT
 char *version_commit = "Commit: " NVIM_VERSION_COMMIT;
+#endif
 char *version_buildtype = "Build type: " NVIM_VERSION_BUILD_TYPE;
 char *version_cflags = "Compilation: " NVIM_VERSION_CFLAGS;
 
@@ -71,164 +74,348 @@ static char *features[] = {
 
 // clang-format off
 static int included_patches[] = {
-  //738 NA
-  //737,
-  //736,
-  //735,
-  //734,
-  //733,
-  //732,
-  //731 NA
-  //730 NA
-  //729,
-  //728 NA
-  //727 NA
-  //726 NA
-  //725,
-  //724 NA
-  //723,
-  //722,
-  //721,
-  //720 NA
+  // 922,
+  // 921 NA
+  // 920 NA
+  // 919 NA
+  // 918 NA
+  // 917 NA
+  916,
+  // 915,
+  // 914,
+  // 913 NA
+  // 912,
+  // 911 NA
+  // 910 NA
+  // 909,
+  // 908 NA
+  // 907 NA
+  // 906 NA
+  // 905,
+  // 904,
+  // 903,
+  // 902 NA
+  // 901,
+  // 900 NA
+  // 899 NA
+  // 898,
+  // 897,
+  // 896,
+  // 895,
+  // 894 NA
+  // 893,
+  // 892,
+  // 891,
+  // 890 NA
+  // 889,
+  // 888,
+  // 887,
+  // 886 NA
+  // 885,
+  // 884 NA
+  // 883,
+  // 882,
+  // 881,
+  // 880 NA
+  // 879,
+  // 878,
+  // 877,
+  // 876 NA
+  // 875 NA
+  // 874 NA
+  // 873,
+  // 872 NA
+  // 871,
+  // 870,
+  // 869 NA
+  // 868,
+  // 867 NA
+  // 866,
+  // 865,
+  // 864,
+  // 863,
+  // 862 NA
+  // 861 NA
+  // 860,
+  // 859,
+  // 858,
+  // 857,
+  // 856,
+  // 855 NA
+  // 854,
+  // 853,
+  // 852 NA
+  // 851 NA
+  // 850 NA
+  849,
+  // 848,
+  // 847,
+  // 846 NA
+  // 845,
+  // 844,
+  // 843,
+  // 842,
+  // 841,
+  // 840 NA
+  // 839,
+  // 838,
+  // 837 NA
+  836,
+  // 835,
+  // 834,
+  // 833,
+  // 832,
+  // 831,
+  // 830,
+  // 829 NA
+  // 828,
+  // 827,
+  826,
+  // 825,
+  // 824 NA
+  // 823,
+  // 822,
+  // 821,
+  // 820,
+  // 819,
+  // 818,
+  // 817,
+  // 816,
+  // 815,
+  // 814,
+  813,
+  // 812,
+  // 811,
+  // 810,
+  809,
+  // 808,
+  // 807,
+  // 806,
+  // 805,
+  // 804,
+  // 803,
+  802,
+  // 801,
+  // 800,
+  799,
+  // 798,
+  // 797,
+  // 796 NA
+  // 795,
+  // 794 NA
+  793,
+  // 792,
+  791,
+  // 790,
+  // 789,
+  // 788 NA
+  // 787,
+  // 786,
+  // 785,
+  784,
+  // 783 NA
+  // 782,
+  781,
+  // 780 NA
+  // 779,
+  // 778 NA
+  // 777 NA
+  776,
+  775,
+  774,
+  773,
+  // 772 NA
+  // 771,
+  // 770 NA
+  // 769,
+  // 768,
+  // 767,
+  // 766 NA
+  // 765,
+  // 764,
+  // 763 NA
+  // 762 NA
+  // 761 NA
+  // 760,
+  // 759 NA
+  // 758,
+  // 757 NA
+  // 756 NA
+  // 755,
+  // 754,
+  // 753,
+  // 752,
+  // 751 NA
+  // 750 NA
+  // 749,
+  // 748,
+  // 747,
+  // 746,
+  // 745,
+  // 744 NA
+  // 743,
+  // 742,
+  // 741,
+  // 740,
+  // 739,
+  // 738 NA
+  // 737,
+  736,
+  // 735,
+  // 734,
+  // 733,
+  // 732,
+  // 731 NA
+  // 730 NA
+  // 729,
+  // 728 NA
+  // 727 NA
+  // 726 NA
+  // 725,
+  // 724 NA
+  // 723,
+  // 722,
+  // 721,
+  // 720 NA
   719,
-  //718,
-  //717,
-  //716,
-  //715,
-  //714,
+  // 718,
+  // 717,
+  // 716,
+  // 715,
+  // 714,
   713,
   712,
   711,
   710,
-  //709,
-  //708,
+  // 709,
+  // 708,
   707,
   706,
-  //705 NA
-  //704,
-  //703 NA
+  // 705 NA
+  // 704,
+  // 703 NA
   702,
-  //701 NA
-  //700,
+  // 701 NA
+  // 700,
   699,
-  //698,
-  //697,
+  // 698,
+  // 697,
   696,
   695,
-  //694,
-  //693,
-  //692 NA
-  //691 NA
+  // 694,
+  // 693,
+  // 692 NA
+  // 691 NA
   690,
-  //689,
-  //688,
-  //687 NA
-  //686,
-  //685,
-  //684,
-  //683 NA
-  //682,
-  //681 NA
-  //680,
-  //679 NA
-  //678 NA
-  //677 NA
-  //676 NA
-  //675,
-  //674 NA
+  // 689,
+  // 688,
+  // 687 NA
+  686,
+  // 685,
+  // 684,
+  // 683 NA
+  // 682,
+  // 681 NA
+  // 680,
+  // 679 NA
+  // 678 NA
+  // 677 NA
+  // 676 NA
+  // 675,
+  // 674 NA
   673,
-  //672,
-  //671,
-  //670,
-  //669 NA
-  //668,
-  //667,
-  //666 NA
-  //665,
-  //664 NA
-  //663 NA
-  //662,
-  //661,
+  // 672,
+  // 671,
+  // 670,
+  // 669 NA
+  668,
+  667,
+  // 666 NA
+  // 665,
+  // 664 NA
+  // 663 NA
+  // 662,
+  // 661,
   660,
   659,
-  //658,
-  //657 NA
-  //656,
-  //655,
-  //654,
+  // 658,
+  // 657 NA
+  // 656,
+  // 655,
+  // 654,
   653,
-  //652,
-  //651,
-  //650 NA
-  //649,
-  //648 NA
-  //647 NA
+  // 652 NA
+  651,
+  // 650 NA
+  // 649,
+  // 648 NA
+  // 647 NA
   646,
-  //645,
-  //644 NA
-  //643,
-  //642,
-  //641,
-  //640,
-  //639,
-  //638 NA
+  // 645,
+  // 644 NA
+  // 643,
+  // 642,
+  // 641,
+  // 640,
+  // 639,
+  // 638 NA
   637,
   636,
-  //635,
-  //634,
+  // 635,
+  // 634,
   633,
-  //632 NA
-  //631,
+  // 632 NA
+  // 631,
   630,
   629,
-  //628,
-  //627 NA
-  //626 NA
-  //625 NA
-  //624,
-  //623,
-  //622 NA
-  //621 NA
-  //620,
-  //619 NA
-  //618 NA
-  //617,
-  //616,
+  // 628,
+  // 627 NA
+  // 626 NA
+  // 625 NA
+  // 624,
+  // 623,
+  // 622 NA
+  // 621 NA
+  // 620,
+  // 619 NA
+  // 618 NA
+  // 617,
+  // 616,
   615,
-  //614,
-  //613,
-  //612,
-  //611 NA
-  //610 NA
-  //609,
-  //608,
-  //607,
+  // 614,
+  // 613,
+  // 612,
+  // 611 NA
+  // 610 NA
+  609,
+  // 608,
+  // 607,
   606,
-  //605,
-  //604,
-  //603,
-  //602,
+  // 605,
+  // 604,
+  // 603,
+  602,
   601,
-  //600,
+  600,
   599,
-  //598,
+  598,
   597,
-  //596 NA
+  // 596 NA
   595,
   594,
   593,
-  //592 NA
-  //591 NA
+  // 592 NA
+  // 591 NA
   590,
-  //589 NA
+  // 589 NA
   588,
   587,
-  //586 NA
+  // 586 NA
   585,
-  //584 NA
-  //583 NA
+  // 584 NA
+  // 583 NA
   582,
-  //581 NA
+  // 581 NA
   580,
   579,
   578,
@@ -236,46 +423,46 @@ static int included_patches[] = {
   576,
   575,
   574,
-  //573,
+  // 573,
   572,
-  //571 NA
-  //570 NA
-  //569,
+  // 571 NA
+  // 570 NA
+  // 569,
   568,
   567,
   566,
   565,
-  //564 NA
+  // 564 NA
   563,
   562,
   561,
-  //560 NA
+  // 560 NA
   559,
-  //558 NA
-  //557 NA
-  //556 NA
-  //555 NA
+  // 558 NA
+  // 557 NA
+  // 556 NA
+  // 555 NA
   554,
   553,
   552,
   551,
   550,
   549,
-  //548 NA
+  // 548 NA
   547,
   546,
   545,
-  //544 NA
+  // 544 NA
   543,
   542,
   541,
-  //540 NA
+  // 540 NA
   539,
   538,
   537,
   536,
   535,
-  //534 NA
+  // 534 NA
   533,
   532,
   531,
@@ -286,8 +473,8 @@ static int included_patches[] = {
   526,
   525,
   524,
-  //523 NA
-  //522 NA
+  // 523 NA
+  // 522 NA
   521,
   520,
   519,
@@ -297,24 +484,24 @@ static int included_patches[] = {
   515,
   514,
   513,
-  //512 NA
-  //511 NA
-  //510 NA
-  //509 NA
+  // 512 NA
+  // 511 NA
+  // 510 NA
+  // 509 NA
   508,
-  //507 NA
-  //506 NA
-  //505 NA
-  //504 NA
+  // 507 NA
+  // 506 NA
+  // 505 NA
+  // 504 NA
   503,
   502,
-  //501 NA
+  // 501 NA
   500,
   499,
-  //498 NA
+  // 498 NA
   497,
-  //496 NA
-  //495 NA
+  // 496 NA
+  // 495 NA
   494,
   493,
   492,
@@ -325,48 +512,48 @@ static int included_patches[] = {
   487,
   486,
   485,
-  //484 NA
+  // 484 NA
   483,
-  //482 NA
-  //481 NA
-  //480 NA
-  //479 NA
+  // 482 NA
+  // 481 NA
+  // 480 NA
+  // 479 NA
   478,
   477,
-  //476 NA
-  //475 NA
+  // 476 NA
+  // 475 NA
   474,
   473,
   472,
-  //471 NA
+  // 471 NA
   470,
-  //469 NA
+  // 469 NA
   468,
   467,
   466,
-  //465 NA
-  //464 NA
+  // 465 NA
+  // 464 NA
   463,
   462,
-  //461 NA
-  //460 NA
-  //459 NA
+  // 461 NA
+  // 460 NA
+  // 459 NA
   458,
   457,
   456,
   455,
   454,
-  //453 NA
+  // 453 NA
   452,
-  //451 NA
+  // 451 NA
   450,
   449,
-  //448 NA
+  // 448 NA
   447,
   446,
-  //445,
+  445,
   444,
-  //443 NA
+  // 443 NA
   442,
   441,
   440,
@@ -377,46 +564,46 @@ static int included_patches[] = {
   435,
   434,
   433,
-  //432 NA
-  //431 NA
-  //430 NA
-  //429 NA
-  //428 NA
+  // 432 NA
+  // 431 NA
+  // 430 NA
+  // 429 NA
+  // 428 NA
   427,
-  //426 NA
+  // 426 NA
   425,
-  //424 NA
+  // 424 NA
   423,
   422,
   421,
-  //420 NA
+  // 420 NA
   419,
   418,
   417,
   416,
   415,
   414,
-  //413 NA
-  //412 NA
+  // 413 NA
+  // 412 NA
   411,
   410,
-  //409 NA
+  // 409 NA
   408,
   407,
   406,
   405,
-  //404 NA
-  //403 NA
-  //402 NA
-  //401 NA
-  //400 NA
-  //399 NA
-  //398 NA
+  // 404 NA
+  // 403 NA
+  // 402 NA
+  // 401 NA
+  // 400 NA
+  // 399 NA
+  // 398 NA
   397,
-  //396,
+  396,
   395,
-  //394 NA
-  //393 NA
+  // 394 NA
+  // 393 NA
   392,
   391,
   390,
@@ -424,12 +611,12 @@ static int included_patches[] = {
   388,
   387,
   386,
-  //385 NA
-  //384 NA
+  // 385 NA
+  // 384 NA
   383,
   382,
   381,
-  //380 NA
+  // 380 NA
   379,
   378,
   377,
@@ -443,19 +630,19 @@ static int included_patches[] = {
   369,
   368,
   367,
-  //366 NA
+  // 366 NA
   365,
   364,
-  //363 NA
+  // 363 NA
   362,
   361,
   360,
   359,
   358,
   357,
-  //356 NA
+  // 356 NA
   355,
-  //354 NA
+  // 354 NA
   353,
   352,
   351,
@@ -467,33 +654,33 @@ static int included_patches[] = {
   345,
   344,
   343,
-  //342 NA
+  // 342 NA
   341,
-  //340 NA
+  // 340 NA
   339,
   338,
   337,
   336,
   335,
   334,
-  //333 NA
-  //332 NA
+  // 333 NA
+  // 332 NA
   331,
   330,
   329,
   328,
   327,
-  //326 NA
+  // 326 NA
   325,
   324,
   323,
-  //322 NA
-  //321 NA
+  // 322 NA
+  // 321 NA
   320,
-  //319 NA
+  // 319 NA
   318,
   317,
-  //316 NA
+  // 316 NA
   315,
   314,
   313,
@@ -502,15 +689,15 @@ static int included_patches[] = {
   310,
   309,
   308,
-  //307 NA
+  // 307 NA
   306,
   305,
-  //304 NA
+  // 304 NA
   303,
   302,
   301,
-  //300 NA
-  //299 NA
+  // 300 NA
+  // 299 NA
   298,
   297,
   296,
@@ -522,11 +709,11 @@ static int included_patches[] = {
   290,
   289,
   288,
-  //287 NA
+  // 287 NA
   286,
   285,
   284,
-  //283 NA
+  // 283 NA
   282,
   281,
   280,
@@ -536,42 +723,42 @@ static int included_patches[] = {
   276,
   275,
   274,
-  //273 NA
+  // 273 NA
   272,
-  //271 NA
-  //270 NA
+  // 271 NA
+  // 270 NA
   269,
   268,
   267,
   266,
   265,
   264,
-  //263 NA
+  // 263 NA
   262,
   261,
   260,
-  //259 NA
-  //258 NA
-  //257 NA
+  // 259 NA
+  // 258 NA
+  // 257 NA
   256,
-  //255 NA
-  //254 NA
+  // 255 NA
+  // 254 NA
   253,
-  //252 NA
+  // 252 NA
   251,
-  //250 NA
+  // 250 NA
   249,
   248,
   247,
-  //246 NA
+  // 246 NA
   245,
-  //244,
+  // 244,
   243,
   242,
   241,
   240,
   239,
-  //238,
+  // 238,
   237,
   236,
   235,
@@ -581,74 +768,74 @@ static int included_patches[] = {
   231,
   230,
   229,
-  //228 NA
-  //227 NA
+  // 228 NA
+  // 227 NA
   226,
-  //225 NA
-  //224 NA
-  //223 NA
-  //222 NA
+  // 225 NA
+  // 224 NA
+  // 223 NA
+  // 222 NA
   221,
   220,
   219,
   218,
-  //217 NA
-  //216 NA
+  // 217 NA
+  // 216 NA
   215,
-  //214 NA
+  // 214 NA
   213,
-  //212 NA
+  // 212 NA
   211,
   210,
   209,
-  //208 NA
+  // 208 NA
   207,
-  //206 NA
+  // 206 NA
   205,
   204,
   203,
-  //202 NA
+  // 202 NA
   201,
-  //200 NA
+  // 200 NA
   199,
-  //198 NA
-  //197 NA
-  //196 NA
-  //195 NA
-  //194 NA
+  // 198 NA
+  // 197 NA
+  // 196 NA
+  // 195 NA
+  // 194 NA
   193,
   192,
   191,
-  //190 NA
-  //189 NA
-  //188 NA
+  // 190 NA
+  // 189 NA
+  // 188 NA
   187,
   186,
-  //185 NA
+  // 185 NA
   184,
-  //183 NA
-  //182 NA
+  // 183 NA
+  // 182 NA
   181,
-  //180 NA
-  //179 NA
+  // 180 NA
+  // 179 NA
   178,
-  //177 NA
-  //176 NA
-  //175 NA
-  //174 NA
+  // 177 NA
+  // 176 NA
+  // 175 NA
+  // 174 NA
   173,
   172,
   171,
   170,
   169,
-  //168 NA
+  // 168 NA
   167,
   166,
   165,
-  //164 NA
-  //163 NA
-  //162 NA
-  //161 NA
+  // 164 NA
+  // 163 NA
+  // 162 NA
+  // 161 NA
   160,
   159,
   158,
@@ -912,7 +1099,9 @@ void list_version(void)
   // When adding features here, don't forget to update the list of
   // internal variables in eval.c!
   MSG(longVersionWithDate);
+#ifdef NVIM_VERSION_COMMIT
   MSG(version_commit);
+#endif
   MSG(version_buildtype);
   MSG(version_cflags);
 
@@ -955,31 +1144,6 @@ void list_version(void)
   version_msg(SYS_VIMRC_FILE);
   version_msg("\"\n");
 #endif  // ifdef SYS_VIMRC_FILE
-#ifdef USR_VIMRC_FILE
-  version_msg(_("     user vimrc file: \""));
-  version_msg(USR_VIMRC_FILE);
-  version_msg("\"\n");
-#endif  // ifdef USR_VIMRC_FILE
-#ifdef USR_VIMRC_FILE2
-  version_msg(_(" 2nd user vimrc file: \""));
-  version_msg(USR_VIMRC_FILE2);
-  version_msg("\"\n");
-#endif  // ifdef USR_VIMRC_FILE2
-#ifdef USR_VIMRC_FILE3
-  version_msg(_(" 3rd user vimrc file: \""));
-  version_msg(USR_VIMRC_FILE3);
-  version_msg("\"\n");
-#endif  // ifdef USR_VIMRC_FILE3
-#ifdef USR_EXRC_FILE
-  version_msg(_("      user exrc file: \""));
-  version_msg(USR_EXRC_FILE);
-  version_msg("\"\n");
-#endif  // ifdef USR_EXRC_FILE
-#ifdef USR_EXRC_FILE2
-  version_msg(_("  2nd user exrc file: \""));
-  version_msg(USR_EXRC_FILE2);
-  version_msg("\"\n");
-#endif  // ifdef USR_EXRC_FILE2
 #ifdef HAVE_PATHDEF
 
   if (*default_vim_dir != NUL) {
@@ -1045,6 +1209,15 @@ void intro_message(int colon)
     "",
     N_("by Bram Moolenaar et al."),
     N_("Vim is open source and freely distributable"),
+    "",
+    N_("First time using a vi-like editor?"),
+    N_("Type :Tutor<Enter> to get started!"),
+    "",
+    N_("Already know your way around Vim?"),
+    N_("See :help nvim-intro for an introduction to Neovim."),
+    "",
+    N_("Still have questions?"),
+    N_("Reach out to the Neovim community at neovim.io/community."),
     "",
     N_("Help poor children in Uganda!"),
     N_("type  :help iccf<Enter>       for information "),

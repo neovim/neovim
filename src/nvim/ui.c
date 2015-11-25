@@ -23,7 +23,7 @@
 #include "nvim/normal.h"
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
-#include "nvim/os/event.h"
+#include "nvim/event/loop.h"
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
 #include "nvim/os/signal.h"
@@ -113,15 +113,10 @@ void ui_set_icon(char *icon)
   UI_CALL(flush);
 }
 
-void ui_update_encoding(void)
-{
-  UI_CALL(set_encoding, (char*)p_enc);
-}
-
 // May update the shape of the cursor.
 void ui_cursor_shape(void)
 {
-  ui_change_mode();
+  ui_mode_change();
 }
 
 void ui_refresh(void)
@@ -188,7 +183,6 @@ void ui_attach(UI *ui)
   }
 
   uis[ui_count++] = ui;
-  ui_update_encoding();
   ui_refresh();
 }
 
@@ -214,9 +208,9 @@ void ui_detach(UI *ui)
     shift_index++;
   }
 
-  ui_count--;
-  // schedule a refresh
-  event_push((Event) { .handler = refresh }, false);
+  if (--ui_count) {
+    ui_refresh();
+  }
 }
 
 void ui_clear(void)
@@ -322,6 +316,11 @@ void ui_cursor_goto(int new_row, int new_col)
   row = new_row;
   col = new_col;
   pending_cursor_update = true;
+}
+
+void ui_update_menu(void)
+{
+    UI_CALL(update_menu);
 }
 
 int ui_current_row(void)
@@ -469,32 +468,19 @@ static void flush_cursor_update(void)
 
 // Notify that the current mode has changed. Can be used to change cursor
 // shape, for example.
-static void ui_change_mode(void)
+static void ui_mode_change(void)
 {
-  static int showing_insert_mode = MAYBE;
-
+  int mode;
   if (!full_screen) {
     return;
   }
-
-  if (State & INSERT) {
-    if (showing_insert_mode != TRUE) {
-      UI_CALL(insert_mode);
-    }
-    showing_insert_mode = TRUE;
-  } else {
-    if (showing_insert_mode != FALSE) {
-      UI_CALL(normal_mode);
-    }
-    showing_insert_mode = FALSE;
-  }
+  /* Get a simple UI mode out of State. */
+  if ((State & REPLACE) == REPLACE)
+    mode = REPLACE;
+  else if (State & INSERT)
+    mode = INSERT;
+  else
+    mode = NORMAL;
+  UI_CALL(mode_change, mode);
   conceal_check_cursur_line();
 }
-
-static void refresh(Event event)
-{
-  if (ui_count) {
-    ui_refresh();
-  }
-}
-

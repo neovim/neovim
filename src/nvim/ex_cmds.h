@@ -3,6 +3,9 @@
 
 #include <stdbool.h>
 
+#include "nvim/os/time.h"
+#include "nvim/eval_defs.h"
+
 /* flags for do_ecmd() */
 #define ECMD_HIDE       0x01    /* don't free the current buffer */
 #define ECMD_SET_HELP   0x02    /* set b_help flag of (new) buffer before
@@ -16,11 +19,12 @@
 #define ECMD_LAST       (linenr_T)-1    /* use last position in all files */
 #define ECMD_ONE        (linenr_T)1     /* use first line */
 
-/* flags for read_viminfo() and children */
-#define VIF_WANT_INFO           1       /* load non-mark info */
-#define VIF_WANT_MARKS          2       /* load file marks */
-#define VIF_FORCEIT             4       /* overwrite info already read */
-#define VIF_GET_OLDFILES        8       /* load v:oldfiles */
+/// Previous :substitute replacement string definition
+typedef struct {
+  char *sub;            ///< Previous replacement string.
+  Timestamp timestamp;  ///< Time when it was last set.
+  list_T *additional_elements;  ///< Additional data left from ShaDa file.
+} SubReplacementString;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds.h.generated.h"

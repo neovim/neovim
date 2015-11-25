@@ -3,7 +3,6 @@
 
 // defined in version.c
 extern char* Version;
-extern char* mediumVersion;
 extern char* longVersion;
 
 //

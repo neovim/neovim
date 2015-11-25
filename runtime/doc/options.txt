@@ -1,4 +1,4 @@
-*options.txt*	For Vim version 7.4.  Last change: 2014 Nov 05
+*options.txt*	For Vim version 7.4.  Last change: 2014 Dec 17
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -58,9 +58,7 @@ achieve special effects.  These options come in three forms:
 :se[t] {option}:{value}
 			Set string or number option to {value}.
 			For numeric options the value can be given in decimal,
-			hex (preceded with 0x) or octal (preceded with '0')
-			(hex and octal are only available for machines which
-			have the strtol() function).
+			hex (preceded with 0x) or octal (preceded with '0').
 			The old value can be inserted by typing 'wildchar' (by
 			default this is a <Tab>).  See |cmdline-completion|.
 			White space between {option} and '=' is allowed and
@@ -375,8 +373,6 @@ Setting the filetype
 			used to set the option value in, unless this is a help
 			window, in which case the window below help window is
 			used (skipping the option-window).
-			{not available when compiled without the |+eval| or
-			|+autocmd| features}
 
 								*$HOME*
 Using "~" is like using "$HOME", but it is only recognized at the start of an
@@ -582,10 +578,8 @@ supported use something like this: >
 A jump table for the options with a short description can be found at |Q_op|.
 
 					*'aleph'* *'al'* *aleph* *Aleph*
-'aleph' 'al'		number	(default 128 for MS-DOS, 224 otherwise)
+'aleph' 'al'		number	(default 224)
 			global
-			{only available when compiled with the |+rightleft|
-			feature}
 	The ASCII code for the first letter of the Hebrew alphabet.  The
 	routine that maps the keyboard in Hebrew mode, both in Insert mode
 	(when hkmap is set) and on the command-line (when hitting CTRL-_)
@@ -596,8 +590,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			*'allowrevins'* *'ari'* *'noallowrevins'* *'noari'*
 'allowrevins' 'ari'	boolean	(default off)
 			global
-			{only available when compiled with the |+rightleft|
-			feature}
 	Allow CTRL-_ in Insert and Command-line mode.  This is default off, to
 	avoid that users that accidentally type CTRL-_ instead of SHIFT-_ get
 	into reverse Insert mode, and don't know how to get out.  See
@@ -606,8 +598,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			 *'altkeymap'* *'akm'* *'noaltkeymap'* *'noakm'*
 'altkeymap' 'akm'	boolean (default off)
 			global
-			{only available when compiled with the |+farsi|
-			feature}
 	When on, the second language is Farsi.  In editing mode CTRL-_ toggles
 	the keyboard map between Farsi and English, when 'allowrevins' set.
 
@@ -673,15 +663,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	open a file, switch buffers, delete a buffer or open/close a window.
 	It will change to the directory containing the file which was opened
 	or selected.
-	This option is provided for backward compatibility with the Vim
-	released with Sun ONE Studio 4 Enterprise Edition.
 	Note: When this option is on some plugins may not work.
 
 				*'arabic'* *'arab'* *'noarabic'* *'noarab'*
 'arabic' 'arab'		boolean (default off)
 			local to window
-			{only available when compiled with the |+arabic|
-			feature}
 	This option can be set to start editing Arabic text.
 	Setting this option will:
 	- Set the 'rightleft' option, unless 'termbidi' is set.
@@ -702,8 +688,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 					*'noarabicshape'* *'noarshape'*
 'arabicshape' 'arshape'	boolean (default on)
 			global
-			{only available when compiled with the |+arabic|
-			feature}
 	When on and 'termbidi' is off, the required visual character
 	corrections that need to take place for displaying the Arabic language
 	take effect.  Shaping, in essence, gets enabled; the term is a broad
@@ -791,12 +775,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	in other cases Vim might not be able to guess the right value.
 
 	When starting the GUI, the default value for 'background' will be
-	"light".  When the value is not set in the .gvimrc, and Vim detects
+	"light".  When the value is not set in the gvimrc, and Vim detects
 	that the background is actually quite dark, 'background' is set to
-	"dark".  But this happens only AFTER the .gvimrc file has been read
+	"dark".  But this happens only AFTER the gvimrc file has been read
 	(because the window needs to be opened to find the actual background
 	color).  To get around this, force the GUI window to be opened by
-	putting a ":gui" command in the .gvimrc file, before where the value
+	putting a ":gui" command in the gvimrc file, before where the value
 	of 'background' is used (e.g., before ":syntax on").
 
 	For MS-DOS and Windows the default is "dark".
@@ -804,7 +788,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	"screen.linux", "cygwin" or "putty", or $COLORFGBG suggests a dark
 	background.  Otherwise the default is "light".
 
-	Normally this option would be set in the .vimrc file.  Possibly
+	Normally this option would be set in the vimrc file.  Possibly
 	depending on the terminal name.  Example: >
 		:if &term == "pcterm"
 		:  set background=dark
@@ -917,8 +901,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	again not rename the file.
 
 						*'backupdir'* *'bdir'*
-'backupdir' 'bdir'	string	(default for MS-DOS and Win32: ".,$TEMP,c:/tmp,c:/temp",
-				 for Unix: ".,~/tmp,~/")
+'backupdir' 'bdir'	string	(default ".,$XDG_DATA_HOME/nvim/backup")
 			global
 	List of directories for the backup file, separated with commas.
 	- The backup file will be created in the first directory in the list
@@ -997,60 +980,53 @@ A jump table for the options with a short description can be found at |Q_op|.
 	the newly created file).  Also see 'backupcopy' and |crontab|.
 
 						*'balloondelay'* *'bdlay'*
-'balloondelay' 'bdlay'	number	(default: 600)
+'balloondelay' 'bdlay'	Removed. {Nvim}
+
+			*'ballooneval'* *'beval'* *'noballooneval'* *'nobeval'*
+'ballooneval' 'beval'	Removed. {Nvim}
+
+						*'balloonexpr'* *'bexpr'*
+'balloonexpr' 'bexpr'	Removed. {Nvim}
+
+						*'belloff'* *'bo'*
+'belloff' 'bo'		string	(default "")
 			global
-			{only available when compiled with the |+balloon_eval|
-			feature}
-	Delay in milliseconds before a balloon may pop up.  See |balloon-eval|.
+	Specifies for which events the bell will not be rung. It is a comma
+	separated list of items. For each item that is present, the bell
+	will be silenced. This is most useful to specify specific events in
+	insert mode to be silenced.
 
-		       *'ballooneval'* *'beval'* *'noballooneval'* *'nobeval'*
-'ballooneval' 'beval'	boolean	(default off)
-			global
-			{only available when compiled with the |+balloon_eval|
-			feature}
-	Switch on the |balloon-eval| functionality.
+	item	    meaning when present	~
+	all	    All events.
+	backspace   When hitting <BS> or <Del> and deleting results in an
+		    error.
+	cursor	    Fail to move around using the cursor keys or
+		    <PageUp>/<PageDown> in |Insert-mode|.
+	complete    Error occurred when using |i_CTRL-X_CTRL-K| or
+		    |i_CTRL-X_CTRL-T|.
+	copy	    Cannot copy char from insert mode using |i_CTRL-Y| or
+		    |i_CTRL-E|.
+	ctrlg	    Unknown Char after <C-G> in Insert mode.
+	error	    Other Error occurred (e.g. try to join last line)
+		    (mostly used in |Normal-mode| or |Cmdline-mode|).
+	esc	    hitting <Esc> in |Normal-mode|.
+	ex	    In |Visual-mode|, hitting |Q| results in an error.
+	hangul	    Error occurred when using hangul input.
+	insertmode  Pressing <Esc> in 'insertmode'.
+	lang	    Calling the beep module for Lua/Mzscheme/TCL.
+	mess	    No output available for |g<|.
+	showmatch   Error occurred for 'showmatch' function.
+	operator    Empty region error |cpo-E|.
+	register    Unknown register after <C-R> in |Insert-mode|.
+	shell	    Bell from shell output |:!|.
+	spell	    Error happened on spell suggest.
+	wildmode    More matches in |cmdline-completion| available
+		    (depends on the 'wildmode' setting).
 
-						     *'balloonexpr'* *'bexpr'*
-'balloonexpr' 'bexpr'	string	(default "")
-			global or local to buffer |global-local|
-			{only available when compiled with the |+balloon_eval|
-			feature}
-	Expression for text to show in evaluation balloon.  It is only used
-	when 'ballooneval' is on.  These variables can be used:
-
-	v:beval_bufnr	number of the buffer in which balloon is going to show
-	v:beval_winnr	number of the window
-	v:beval_lnum	line number
-	v:beval_col	column number (byte index)
-	v:beval_text	word under or after the mouse pointer
-
-	The evaluation of the expression must not have side effects!
-	Example: >
-    function! MyBalloonExpr()
-	return 'Cursor is at line ' . v:beval_lnum .
-		\', column ' . v:beval_col .
-		\ ' of file ' .  bufname(v:beval_bufnr) .
-		\ ' on word "' . v:beval_text . '"'
-    endfunction
-    set bexpr=MyBalloonExpr()
-    set ballooneval
-<
-	NOTE: The balloon is displayed only if the cursor is on a text
-	character.  If the result of evaluating 'balloonexpr' is not empty,
-	Vim does not try to send a message to an external debugger (Netbeans
-	or Sun Workshop).
-
-	The expression will be evaluated in the |sandbox| when set from a
-	modeline, see |sandbox-option|.
-
-	It is not allowed to change text or jump to another window while
-	evaluating 'balloonexpr' |textlock|.
-
-	To check whether line breaks in the balloon text work use this check: >
-		if has("balloon_multiline")
-<	When they are supported "\n" characters will start a new line.  If the
-	expression evaluates to a |List| this is equal to using each List item
-	as a string and putting "\n" in between them.
+	This is most useful, to fine tune when in insert mode the bell should
+	be rung. For normal mode and ex commands, the bell is often rung to
+	indicate that an error occurred. It can be silenced by adding the
+	"error" keyword.
 
 				     *'binary'* *'bin'* *'nobinary'* *'nobin'*
 'binary' 'bin'		boolean	(default off)
@@ -1199,8 +1175,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			written
 	  nowrite	buffer which will not be written
 	  acwrite	buffer which will always be written with BufWriteCmd
-			autocommands. {not available when compiled without the
-			|+autocmd| feature}
+			autocommands.
 	  quickfix	quickfix buffer, contains list of errors |:cwindow|
 			or list of locations |:lwindow|
 	  help		help buffer (you are not supposed to set this
@@ -1278,8 +1253,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'cedit'*
 'cedit'			string	(Vim default: CTRL-F, Vi default: "")
 			global
-			{not available when compiled without the |+vertsplit|
-			feature}
 	The key used in Command-line Mode to open the command-line window.
 	Only non-printable keys are allowed.
 	The key can be specified as a single character, but it is difficult to
@@ -1309,8 +1282,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	used.
 	Conversion between "latin1", "unicode", "ucs-2", "ucs-4" and "utf-8"
 	is done internally by Vim, 'charconvert' is not used for this.
-	'charconvert' is also used to convert the viminfo file, if the 'c'
-	flag is present in 'viminfo'.  Also used for Unicode conversion.
+	'charconvert' is also used to convert the shada file, if 'encoding' is 
+	not "utf-8".  Also used for Unicode conversion.
 	Example: >
 		set charconvert=CharConvert()
 		fun CharConvert()
@@ -1333,8 +1306,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 				   *'cindent'* *'cin'* *'nocindent'* *'nocin'*
 'cindent' 'cin'		boolean	(default off)
 			local to buffer
-			{not available when compiled without the |+cindent|
-			feature}
 	Enables automatic C program indenting.  See 'cinkeys' to set the keys
 	that trigger reindenting in insert mode and 'cinoptions' to set your
 	preferred indent style.
@@ -1350,8 +1321,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 							*'cinkeys'* *'cink'*
 'cinkeys' 'cink'	string	(default "0{,0},0),:,0#,!^F,o,O,e")
 			local to buffer
-			{not available when compiled without the |+cindent|
-			feature}
 	A list of keys that, when typed in Insert mode, cause reindenting of
 	the current line.  Only used if 'cindent' is on and 'indentexpr' is
 	empty.
@@ -1361,8 +1330,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'cinoptions'* *'cino'*
 'cinoptions' 'cino'	string	(default "")
 			local to buffer
-			{not available when compiled without the |+cindent|
-			feature}
 	The 'cinoptions' affect the way 'cindent' reindents lines in a C
 	program.  See |cinoptions-values| for the values of this option, and
 	|C-indenting| for info on C indenting in general.
@@ -1371,8 +1338,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'cinwords'* *'cinw'*
 'cinwords' 'cinw'	string	(default "if,else,while,do,for,switch")
 			local to buffer
-			{not available when compiled without both the
-			|+cindent| and the |+smartindent| features}
 	These keywords start an extra indent in the next line when
 	'smartindent' or 'cindent' is set.  For 'cindent' this is only done at
 	an appropriate place (inside {}).
@@ -1402,8 +1367,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			register '*' for all yank, delete, change and put
 			operations which would normally go to the unnamed
 			register.  When "unnamed" is also included to the
-			option, yank operations (but not delete, change or
-			put) will additionally copy the text into register
+			option, yank and delete operations (but not put)
+			will additionally copy the text into register
 			'*'. See |nvim-clipboard|.
 <
 						*clipboard-autoselect*
@@ -1427,35 +1392,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	autoselectml	Like "autoselect", but for the modeless selection
 			only.  Compare to the 'A' flag in 'guioptions'.
 
-						*clipboard-html*
-	html		When the clipboard contains HTML, use this when
-			pasting.  When putting text on the clipboard, mark it
-			as HTML.  This works to copy rendered HTML from
-			Firefox, paste it as raw HTML in Vim, select the HTML
-			in Vim and paste it in a rich edit box in Firefox.
-			You probably want to add this only temporarily,
-			possibly use BufEnter autocommands.
-			Only supported for GTK version 2 and later.
-			Only available with the |+multi_byte| feature.
-
-						*clipboard-exclude*
-	exclude:{pattern}
-			Defines a pattern that is matched against the name of
-			the terminal 'term'.  If there is a match, no
-			connection will be made to the X server.  This is
-			useful in this situation:
-			- Running Vim in a console.
-			- $DISPLAY is set to start applications on another
-			  display.
-			- You do not want to connect to the X server in the
-			  console, but do want this in a terminal emulator.
-			To never connect to the X server use: >
-				exclude:.*
-			The value of 'magic' is ignored, {pattern} is
-			interpreted as if 'magic' was on.
-			The rest of the option value will be used for
-			{pattern}, this must be the last entry.
-
 						*'cmdheight'* *'ch'*
 'cmdheight' 'ch'	number	(default 1)
 			global
@@ -1467,8 +1403,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'cmdwinheight'* *'cwh'*
 'cmdwinheight' 'cwh'	number	(default 7)
 			global
-			{not available when compiled without the |+vertsplit|
-			feature}
 	Number of screen lines to use for the command-line window. |cmdwin|
 
 						*'colorcolumn'* *'cc'*
@@ -1493,11 +1427,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 'columns' 'co'		number	(default 80 or terminal width)
 			global
 	Number of columns of the screen.  Normally this is set by the terminal
-	initialization and does not have to be set by hand.  Also see
-	|posix-screen-size|.
+	initialization and does not have to be set by hand.
 	When Vim is running in the GUI or in a resizable window, setting this
 	option will cause the window size to be changed.  When you only want
-	to use the size for the GUI, put the command in your |gvimrc| file.
+	to use the size for the GUI, put the command in your |ginit.vim| file.
 	When you set this option and Vim is unable to change the physical
 	number of columns of the display, the display may be messed up.  For
 	the GUI it is always possible and Vim limits the number of columns to
@@ -1510,8 +1443,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 'comments' 'com'	string	(default
 				"s1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:-")
 			local to buffer
-			{not available when compiled without the |+comments|
-			feature}
 	A comma separated list of strings that can start a comment line.  See
 	|format-comments|.  See |option-backslash| about using backslashes to
 	insert a space.
@@ -1558,14 +1489,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	not executed, this may lead to unexpected completions from some files
 	(gzipped files for example).  Unloaded buffers are not scanned for
 	whole-line completion.
-
-	The default is ".,w,b,u,t,i", which means to scan:
-	   1. the current buffer
-	   2. buffers in other windows
-	   3. other loaded buffers
-	   4. unloaded buffers
-	   5. tags
-	   6. included files
 
 	As you can see, CTRL-N and CTRL-P can be used to do any 'iskeyword'-
 	based expansion (e.g., dictionary |i_CTRL-X_CTRL-K|, included patterns
@@ -1621,8 +1544,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'concealcursor'* *'cocu'*
 'concealcursor' 'cocu'	string (default: "")
 			local to window
-			{not available when compiled without the |+conceal|
-			feature}
 	Sets the modes in which text in the cursor line can also be concealed.
 	When the current mode is listed then concealing happens just like in
 	other lines.
@@ -1643,8 +1564,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 'conceallevel' 'cole'		*'conceallevel'* *'cole'*
 			number (default 0)
 			local to window
-			{not available when compiled without the |+conceal|
-			feature}
 	Determine how text with the "conceal" syntax attribute |:syn-conceal|
 	is shown:
 
@@ -1701,10 +1620,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Commas can be added for readability.
 	To avoid problems with flags that are added in the future, use the
 	"+=" and "-=" feature of ":set" |add-option-flags|.
-	NOTE: This option is set to the POSIX default value at startup when
-	the Vi default value would be used and the $VIM_POSIX environment
-	variable exists |posix|.  This means Vim tries to behave like the
-	POSIX specification.
 
 	    contains	behavior	~
 								*cpo-a*
@@ -1802,7 +1717,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			See |/[]|
 			   'l' included: "/[ \t]"  finds <Space>, '\' and 't'
 			   'l' excluded: "/[ \t]"  finds <Space> and <Tab>
-			Also see |cpo-\|.
 								*cpo-L*
 		L	When the 'list' option is set, 'wrapmargin',
 			'textwidth', 'softtabstop' and Virtual Replace mode
@@ -1942,54 +1856,18 @@ A jump table for the options with a short description can be found at |Q_op|.
 			the cursor would skip over it and jump to the
 			following occurrence.
 
-	POSIX flags.  These are not included in the Vi default value, except
-	when $VIM_POSIX was set on startup. |posix|
-
-	    contains	behavior	~
-								*cpo-#*
-		#	A count before "D", "o" and "O" has no effect.
-								*cpo-&*
-		&	When ":preserve" was used keep the swap file when
-			exiting normally while this buffer is still loaded.
-			This flag is tested when exiting.
-								*cpo-\*
-		\	Backslash in a [] range in a search pattern is taken
-			literally, only "\]" is special  See |/[]|
-			   '\' included: "/[ \-]"  finds <Space>, '\' and '-'
-			   '\' excluded: "/[ \-]"  finds <Space> and '-'
-			Also see |cpo-l|.
-								*cpo-/*
-		/	When "%" is used as the replacement string in a |:s|
-			command, use the previous replacement string. |:s%|
-								*cpo-{*
-		{	The |{| and |}| commands also stop at a "{" character
-			at the start of a line.
-								*cpo-.*
-		.	The ":chdir" and ":cd" commands fail if the current
-			buffer is modified, unless ! is used.  Vim doesn't
-			need this, since it remembers the full path of an
-			opened file.
-								*cpo-bar*
-		|	The value of the $LINES and $COLUMNS environment
-			variables overrule the terminal size values obtained
-			with system specific functions.
-
 						*'cryptmethod'* *'cm'*
 'cryptmethod'		Removed. |vim-differences| {Nvim}
 
 						*'cscopepathcomp'* *'cspc'*
 'cscopepathcomp' 'cspc'	number	(default 0)
 			global
-			{not available when compiled without the |+cscope|
-			feature}
 	Determines how many components of the path to show in a list of tags.
 	See |cscopepathcomp|.
 
 						*'cscopeprg'* *'csprg'*
 'cscopeprg' 'csprg'	string	(default "cscope")
 			global
-			{not available when compiled without the |+cscope|
-			feature}
 	Specifies the command to execute cscope.  See |cscopeprg|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
@@ -1997,16 +1875,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'cscopequickfix'* *'csqf'*
 'cscopequickfix' 'csqf' string	(default "")
 			global
-			{not available when compiled without the |+cscope|
-			or |+quickfix| features}
 	Specifies whether to use quickfix window to show cscope results.
 	See |cscopequickfix|.
 
 		*'cscoperelative'* *'csre'* *'nocscoperelative'* *'nocsre'*
 'cscoperelative' 'csre' boolean (default off)
 			global
-			{not available when compiled without the |+cscope|
-			feature}
 	In the absence of a prefix (-P) for cscope. setting this option enables
 	to use the basename of cscope.out path as the prefix.
 	See |cscoperelative|.
@@ -2014,15 +1888,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 				*'cscopetag'* *'cst'* *'nocscopetag'* *'nocst'*
 'cscopetag' 'cst'	boolean (default off)
 			global
-			{not available when compiled without the |+cscope|
-			feature}
 	Use cscope for tag commands.  See |cscope-options|.
 
 						*'cscopetagorder'* *'csto'*
 'cscopetagorder' 'csto'	number	(default 0)
 			global
-			{not available when compiled without the |+cscope|
-			feature}
 	Determines the order in which ":cstag" performs a search.  See
 	|cscopetagorder|.
 
@@ -2030,15 +1900,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 					*'nocscopeverbose'* *'nocsverb'*
 'cscopeverbose' 'csverb' boolean (default off)
 			global
-			{not available when compiled without the |+cscope|
-			feature}
 	Give messages when adding a cscope database.  See |cscopeverbose|.
 
 			*'cursorbind'* *'crb'* *'nocursorbind'* *'nocrb'*
 'cursorbind' 'crb'	boolean  (default off)
 			local to window
-			{not available when compiled without the |+cursorbind|
-			feature}
 	When this option is set, as the cursor in the current
 	window moves other cursorbound windows (windows that also have
 	this option set) move their cursors to the corresponding line and
@@ -2207,12 +2073,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	{char2}.  See |digraphs|.
 
 						*'directory'* *'dir'*
-'directory' 'dir'	string	(default for MS-DOS and Win32: ".,$TEMP,c:\tmp,c:\temp",
-				 for Unix: ".,~/tmp,/var/tmp,/tmp")
+'directory' 'dir'	string	(default "$XDG_DATA_HOME/nvim/swap//")
 			global
 	List of directory names for the swap file, separated with commas.
 	- The swap file will be created in the first directory where this is
-	  possible.
+	  possible.  If it is not possible in any directory, but last 
+	  directory listed in the option does not exist, it is created.
 	- Empty means that no swap file will be used (recovery is
 	  impossible!).
 	- A directory "." means to put the swap file in the same directory as
@@ -2266,8 +2132,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'eadirection'* *'ead'*
 'eadirection' 'ead'	string	(default "both")
 			global
-			{not available when compiled without the |+vertsplit|
-			feature}
 	Tells when the 'equalalways' option applies:
 		ver	vertically, width of windows is not affected
 		hor	horizontally, height of windows is not affected
@@ -2283,24 +2147,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 			feature}
 	Sets the character encoding used inside Vim.  It applies to text in
 	the buffers, registers, Strings in expressions, text stored in the
-	viminfo file, etc.  It sets the kind of characters which Vim can work
+	shada file, etc.  It sets the kind of characters which Vim can work
 	with.  See |encoding-names| for the possible values.
 
-	NOTE: Changing this option will not change the encoding of the
-	existing text in Vim.  It may cause non-ASCII text to become invalid.
-	It should normally be kept at its default value, or set when Vim
-	starts up.  See |multibyte|.  To reload the menus see |:menutrans|.
-
-	This option cannot be set from a |modeline|.  It would most likely
-	corrupt the text.
-
-	NOTE: For GTK+ 2 it is highly recommended to set 'encoding' to
-	"utf-8".  Although care has been taken to allow different values of
-	'encoding', "utf-8" is the natural choice for the environment and
-	avoids unnecessary conversion overhead.  "utf-8" has not been made
-	the default to prevent different behavior of the GUI and terminal
-	versions, and to avoid changing the encoding of newly created files
-	without your knowledge (in case 'fileencodings' is empty).
+	'encoding' cannot be changed after startup, because (1) it causes
+	non-ASCII text inside Vim to become invalid, and (2) it complicates
+	runtime logic.  The recommended 'encoding' is "utf-8".  Remote plugins
+	and GUIs only support utf-8. See |multibyte|.
 
 	The character encoding of files can be different from 'encoding'.
 	This is specified with 'fileencoding'.  The conversion is done with
@@ -2311,7 +2164,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 		if has("multi_byte_encoding")
 <
 	Normally 'encoding' will be equal to your current locale.  This will
-	be the default if Vim recognizes your environment settings.
+	be the default if Vim recognizes your environment settings, otherwise
+	"utf-8" is used.
 
 	When you set this option, it fires the |EncodingChanged| autocommand
 	event so that you can set up fonts if necessary.
@@ -2323,15 +2177,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	For example "Latin-1" becomes "latin1", "ISO_88592" becomes
 	"iso-8859-2" and "utf8" becomes "utf-8".
 
-	Note: "latin1" is also used when the encoding could not be detected.
-	This only works when editing files in the same encoding!  When the
-	actual character set is not latin1, make sure 'fileencoding' and
-	'fileencodings' are empty.  When conversion is needed, switch to using
-	utf-8.
-
 	When "unicode", "ucs-2" or "ucs-4" is used, Vim internally uses utf-8.
 	You don't notice this while editing, but it does matter for the
-	|viminfo-file|.  And Vim expects the terminal to use utf-8 too.  Thus
+	|shada-file|.  And Vim expects the terminal to use utf-8 too.  Thus
 	setting 'encoding' to one of these values instead of utf-8 only has
 	effect for encoding used for files when 'fileencoding' is empty.
 
@@ -2389,7 +2237,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	makes a difference for error messages, the bell will be used always
 	for a lot of errors without a message (e.g., hitting <Esc> in Normal
 	mode).  See 'visualbell' on how to make the bell behave like a beep,
-	screen flash or do nothing.
+	screen flash or do nothing. See 'belloff' to finetune when to ring the
+	bell.
 
 						*'errorfile'* *'ef'*
 'errorfile' 'ef'	string	(default: "errors.err")
@@ -2428,8 +2277,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'eventignore'* *'ei'*
 'eventignore' 'ei'	string	(default "")
 			global
-			{not available when compiled without the |+autocmd|
-			feature}
 	A list of autocommand event names, which are to be ignored.
 	When set to "all" or when "all" is one of the items, all autocommand
 	events are ignored, autocommands will not be executed.
@@ -2447,13 +2294,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 					*'exrc'* *'ex'* *'noexrc'* *'noex'*
 'exrc' 'ex'		boolean (default off)
 			global
-	Enables the reading of .vimrc, .exrc and .gvimrc in the current
-	directory.  If you switch this option on you should also consider
-	setting the 'secure' option (see |initialization|).  Using a local
-	.exrc, .vimrc or .gvimrc is a potential security leak, use with care!
-	also see |.vimrc| and |gui-init|.
+	Enables the reading of .nvimrc and .exrc in the current directory.
+	If you switch this option on you should also consider setting the
+	'secure' option (see |initialization|).  Using this option comes
+	with a potential security risk, use with care!
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
+	Also see |init.vim| and |gui-init|.
 
 				*'fileencoding'* *'fenc'* *E213*
 'fileencoding' 'fenc'	string (default: "")
@@ -2627,7 +2474,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When 'binary' is set, the value of 'fileformats' is not used.
 
 	Note that when Vim starts up with an empty buffer this option is not
-	used.  Set 'fileformat' in your .vimrc instead.
+	used.  Set 'fileformat' in your vimrc instead.
 
 	For systems with a Dos-like <EOL> (<CR><NL>), when reading files that
 	are ":source"ed and for vimrc files, automatic <EOL> detection may be
@@ -2650,8 +2497,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 					*'filetype'* *'ft'*
 'filetype' 'ft'		string (default: "")
 			local to buffer
-			{not available when compiled without the |+autocmd|
-			feature}
 	When this option is set, the FileType autocommand event is triggered.
 	All autocommands that match with the value of this option will be
 	executed.  Thus the value of 'filetype' is used in place of the file
@@ -2711,8 +2556,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 					*'fkmap'* *'fk'* *'nofkmap'* *'nofk'*
 'fkmap' 'fk'		boolean (default off)			*E198*
 			global
-			{only available when compiled with the |+rightleft|
-			feature}
 	When on, the keyboard is mapped for the Farsi character set.
 	Normally you would set 'allowrevins' and use CTRL-_ in insert mode to
 	toggle this option |i_CTRL-_|.  See |farsi.txt|.
@@ -3256,8 +3099,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	screen.
 
 						*'guioptions'* *'go'*
-'guioptions' 'go'	string	(default "egmrLtT"   (MS-Windows),
-					 "aegimrLtT" (GTK, Motif and Athena))
+'guioptions' 'go'	string	(default "egmrLT"   (MS-Windows),
+					 "aegimrLT" (GTK, Motif and Athena))
 			global
 			{only available when compiled with GUI enabled}
 	This option only has an effect in the GUI version of Vim.  It is a
@@ -3311,7 +3154,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  'm'	Menu bar is present.
 								*'go-M'*
 	  'M'	The system menu "$VIMRUNTIME/menu.vim" is not sourced.  Note
-		that this flag must be added in the .vimrc file, before
+		that this flag must be added in the vimrc file, before
 		switching on syntax or filetype recognition (when the |gvimrc|
 		file is sourced the system menu has already been loaded; the
 		":syntax on" and ":filetype on" commands load the menu too).
@@ -3319,9 +3162,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  'g'	Grey menu items: Make menu items that are not active grey.  If
 		'g' is not included inactive menu items are not shown at all.
 		Exception: Athena will always use grey menu items.
-								*'go-t'*
-	  't'	Include tearoff menu items.  Currently only works for Win32,
-		GTK+, and Motif 1.2 GUI.
 								*'go-T'*
 	  'T'	Include Toolbar.  Currently only in Win32, GTK+, Motif,
 		and Athena GUIs.
@@ -3552,10 +3392,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	line below a closed fold.  A match in a previous line which is not
 	drawn may not continue in a newly drawn line.
 	You can specify whether the highlight status is restored on startup
-	with the 'h' flag in 'viminfo' |viminfo-h|.
+	with the 'h' flag in 'shada' |shada-h|.
 
 						*'history'* *'hi'*
-'history' 'hi'		number	(Vim default: 50, Vi default: 0)
+'history' 'hi'		number	(Vim default: 10000, Vi default: 0)
 			global
 	A history of ":" commands, and a history of previous search patterns
 	is remembered.  This option decides how many entries may be stored in
@@ -3565,8 +3405,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 					 *'hkmap'* *'hk'* *'nohkmap'* *'nohk'*
 'hkmap' 'hk'		boolean (default off)
 			global
-			{only available when compiled with the |+rightleft|
-			feature}
 	When on, the keyboard is mapped for the Hebrew character set.
 	Normally you would set 'allowrevins' and use CTRL-_ in insert mode to
 	toggle this option.  See |rileft.txt|.
@@ -3574,8 +3412,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 				 *'hkmapp'* *'hkp'* *'nohkmapp'* *'nohkp'*
 'hkmapp' 'hkp'		boolean (default off)
 			global
-			{only available when compiled with the |+rightleft|
-			feature}
 	When on, phonetic keyboard mapping is used.  'hkmap' must also be on.
 	This is useful if you have a non-Hebrew keyboard.
 	See |rileft.txt|.
@@ -3803,8 +3639,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'indentexpr'* *'inde'*
 'indentexpr' 'inde'	string	(default "")
 			local to buffer
-			{not available when compiled without the |+cindent|
-			or |+eval| features}
 	Expression which is evaluated to obtain the proper indent for a line.
 	It is used when a new line is created, for the |=| operator and
 	in Insert mode as specified with the 'indentkeys' option.
@@ -3839,8 +3673,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'indentkeys'* *'indk'*
 'indentkeys' 'indk'	string	(default "0{,0},:,0#,!^F,o,O,e")
 			local to buffer
-			{not available when compiled without the |+cindent|
-			feature}
 	A list of keys that, when typed in Insert mode, cause reindenting of
 	the current line.  Only happens if 'indentexpr' isn't empty.
 	The format is identical to 'cinkeys', see |indentkeys-format|.
@@ -3946,7 +3778,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	option.
 	Careful: If you change this option, it might break expanding
 	environment variables.  E.g., when '/' is included and Vim tries to
-	expand "$HOME/.viminfo".  Maybe you should change 'iskeyword' instead.
+	expand "$HOME/.local/share/nvim/shada/main.shada".  Maybe you should 
+	change 'iskeyword' instead.
 
 						*'iskeyword'* *'isk'*
 'iskeyword' 'isk'	string (Vim default for
@@ -4028,18 +3861,20 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The 'keymodel' option is set by the |:behave| command.
 
 					*'keywordprg'* *'kp'*
-'keywordprg' 'kp'	string	(default "man" or "man -s",  DOS: ":help")
+'keywordprg' 'kp'	string	(default ":Man", Windows: ":help")
 			global or local to buffer |global-local|
 	Program to use for the |K| command.  Environment variables are
 	expanded |:set_env|.  ":help" may be used to access the Vim internal
 	help.  (Note that previously setting the global option to the empty
 	value did this, which is now deprecated.)
-	When "man" is used, Vim will automatically translate a count for the
-	"K" command to a section number.  Also for "man -s", in which case the
-	"-s" is removed when there is no count.
+	When the first character is ":", the command is invoked as a Vim
+	command prefixed with [count]. {Nvim}
+	When "man" or "man -s" is used, Vim will automatically translate
+	a [count] for the "K" command to a section number.
 	See |option-backslash| about including spaces and backslashes.
 	Example: >
 		:set keywordprg=man\ -s
+		:set keywordprg=:Man
 <	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
@@ -4056,8 +3891,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	be able to execute Normal mode commands.
 	This is the opposite of the 'keymap' option, where characters are
 	mapped in Insert mode.
-	Also consider setting 'langnoremap' to avoid 'langmap' applies to
-	characters resulting from a mapping.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
@@ -4116,13 +3949,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 'langnoremap' 'lnr'	boolean (default on)
 			global
 	When on, setting 'langmap' does not apply to characters resulting from
-	a mapping.  This basically means, if you noticed that setting
-	'langmap' disables some of your mappings, try setting this option.
-	This option defaults to off for backwards compatibility.  Set it on if
-	that works for you to avoid mappings to break.
+	a mapping.  If setting 'langmap' disables some of your mappings, make
+	sure this option is set.
 
 					*'laststatus'* *'ls'*
-'laststatus' 'ls'	number	(default 1)
+'laststatus' 'ls'	number	(default 2)
 			global
 	The value of this option influences when the last window will have a
 	status line:
@@ -4160,7 +3991,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	Number of lines of the Vim window.
 	Normally you don't need to set this.  It is done automatically by the
-	terminal initialization code.  Also see |posix-screen-size|.
+	terminal initialization code.
 	When Vim is running in the GUI or in a resizable window, setting this
 	option will cause the window size to be changed.  When you only want
 	to use the size for the GUI, put the command in your |gvimrc| file.
@@ -4224,7 +4055,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	changing the way tabs are displayed.
 
 						*'listchars'* *'lcs'*
-'listchars' 'lcs'	string	(default "eol:$")
+'listchars' 'lcs'	string	(default: "tab:> ,trail:-,nbsp:+"
+				 Vi default: "eol:$")
 			global
 	Strings to use in 'list' mode and for the |:list| command.  It is a
 	comma separated list of string settings.
@@ -4770,6 +4602,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'paste'* *'nopaste'*
 'paste'			boolean	(default off)
 			global
+	You probably don't have to set this option: |bracketed-paste-mode|.
+
 	Put Vim in Paste mode.  This is useful if you want to cut or copy
 	some text from one window and paste it in Vim.  This will avoid
 	unexpected effects.
@@ -4779,7 +4613,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	being set.  The same is true for a terminal where Vim handles the
 	mouse clicks itself.
 	This option is reset when starting the GUI.  Thus if you set it in
-	your .vimrc it will work in a terminal, but not in the GUI.  Setting
+	your vimrc it will work in a terminal, but not in the GUI.  Setting
 	'paste' in the GUI has side effects: e.g., the Paste toolbar button
 	will no longer work in Insert mode, because it uses a mapping.
 	When the 'paste' option is switched on (also when it was already on):
@@ -5119,7 +4953,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	happens when executing external commands.
 
 	For non-Windows Vim: You can set or reset the 't_ti' and 't_te'
-	options in your .vimrc.  To disable restoring:
+	options in your vimrc.  To disable restoring:
 		set t_ti= t_te=
 	To enable restoring (for an xterm):
 		set t_ti=^[7^[[r^[[?47h t_te=^[[?47l^[8
@@ -5128,8 +4962,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 				*'revins'* *'ri'* *'norevins'* *'nori'*
 'revins' 'ri'		boolean	(default off)
 			global
-			{only available when compiled with the |+rightleft|
-			feature}
 	Inserting characters in Insert mode will work backwards.  See "typing
 	backwards" |ins-reverse|.  This option can be toggled with the CTRL-_
 	command in Insert mode, when 'allowrevins' is set.
@@ -5138,8 +4970,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 				 *'rightleft'* *'rl'* *'norightleft'* *'norl'*
 'rightleft' 'rl'	boolean	(default off)
 			local to window
-			{only available when compiled with the |+rightleft|
-			feature}
 	When on, display orientation becomes right-to-left, i.e., characters
 	that are stored in the file appear from the right to the left.
 	Using this option, it is possible to edit files for languages that
@@ -5153,8 +4983,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			*'rightleftcmd'* *'rlc'*
 'rightleftcmd' 'rlc'	string	(default "search")
 			local to window
-			{only available when compiled with the |+rightleft|
-			feature}
 	Each word in this option enables the command line editing to work in
 	right-to-left mode for a group of commands:
 
@@ -5205,14 +5033,23 @@ A jump table for the options with a short description can be found at |Q_op|.
 <
 				*'runtimepath'* *'rtp'* *vimfiles*
 'runtimepath' 'rtp'	string	(default:
-					Unix: "$HOME/.vim,
-						$VIM/vimfiles,
-						$VIMRUNTIME,
-						$VIM/vimfiles/after,
-						$HOME/.vim/after"
-					Macintosh: "$VIM:vimfiles,
-						$VIMRUNTIME,
-						$VIM:vimfiles:after")
+					Unix: "$XDG_CONFIG_HOME/nvim,
+					       $XDG_CONFIG_DIRS[1]/nvim,
+					       $XDG_CONFIG_DIRS[2]/nvim,
+					       …
+					       $XDG_DATA_HOME/nvim,
+					       $XDG_DATA_DIRS[1]/nvim/site,
+					       $XDG_DATA_DIRS[2]/nvim/site,
+					       …
+					       $VIMRUNTIME,
+					       …
+					       $XDG_DATA_DIRS[2]/nvim/site/after,
+					       $XDG_DATA_DIRS[1]/nvim/site/after,
+					       $XDG_DATA_HOME/nvim/after,
+					       …
+					       $XDG_CONFIG_DIRS[2]/nvim/after,
+					       $XDG_CONFIG_DIRS[1]/nvim/after,
+					       $XDG_CONFIG_HOME/nvim/after")
 			global
 	This is a list of directories which will be searched for runtime
 	files:
@@ -5231,22 +5068,27 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  print/	files for printing |postscript-print-encoding|
 	  spell/	spell checking files |spell|
 	  syntax/	syntax files |mysyntaxfile|
-	  tutor/	files for vimtutor |tutor|
+	  tutor/	tutorial files |:Tutor|
 
 	And any other file searched for with the |:runtime| command.
 
-	The defaults for most systems are setup to search five locations:
-	1. In your home directory, for your personal preferences.
-	2. In a system-wide Vim directory, for preferences from the system
-	   administrator.
-	3. In $VIMRUNTIME, for files distributed with Vim.
+	The defaults for most systems are setup to search these locations:
+	1. In your home directory (XDG_CONFIG_HOME defaults to $HOME/.config), 
+	   for your personal preferences.
+	2. In directories which must contain configuration files according to 
+	   XDG ($XDG_CONFIG_DIRS).  This also contains preferences from system 
+	   administrator (XDG_CONFIG_DIRS defaults to /etc/xdg).
+	3. In data home directory, for plugins installed by user.
+	4. In nvim/site subdirectories for each directory in $XDG_DATA_DIRS.  
+	   This is for plugins which were installed by system administrator, 
+	   but are not part of the Neovim distribution. XDG_DATA_DIRS defaults 
+	   to /usr/local/share/:/usr/share/, so system administrators are 
+	   expected to install site plugins to /usr/share/nvim/site.
+	5. In $VIMRUNTIME, for files distributed with Neovim.
 							*after-directory*
-	4. In the "after" directory in the system-wide Vim directory.  This is
-	   for the system administrator to overrule or add to the distributed
-	   defaults (rarely needed)
-	5. In the "after" directory in your home directory.  This is for
-	   personal preferences to overrule or add to the distributed defaults
-	   or system-wide settings (rarely needed).
+	6, 7, 8, 9. In after/ subdirectories of 1, 2, 3 and 4, with reverse 
+	   ordering.  This is for preferences to overrule or add to the 
+	   distributed defaults or system-wide settings (rarely needed).
 
 	Note that, unlike 'path', no wildcards like "**" are allowed.  Normal
 	wildcards are allowed, but can significantly slow down searching for
@@ -5355,12 +5197,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 'secure'		boolean	(default off)
 			global
 	When on, ":autocmd", shell and write commands are not allowed in
-	".vimrc" and ".exrc" in the current directory and map commands are
+	".nvimrc" and ".exrc" in the current directory and map commands are
 	displayed.  Switch it off only if you know that you will not run into
 	problems, or when the 'exrc' option is off.  On Unix this option is
-	only used if the ".vimrc" or ".exrc" is not owned by you.  This can be
+	only used if the ".nvimrc" or ".exrc" is not owned by you.  This can be
 	dangerous if the systems allows users to do a "chown".  You better set
-	'secure' at the end of your ~/.vimrc then.
+	'secure' at the end of your |init.vim| then.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
@@ -5442,6 +5284,123 @@ A jump table for the options with a short description can be found at |Q_op|.
 	with Unix.  The Unix version of Vim cannot source dos format scripts,
 	but the Windows version of Vim can source unix format scripts.
 
+				*'shada'* *'sd'* *E526* *E527* *E528*
+'shada' 'sd'		string	(Vim default for
+				   Win32:  !,'100,<50,s10,h,rA:,rB:
+				   others: !,'100,<50,s10,h
+				 Vi default: "")
+			global
+	When non-empty, the shada file is read upon startup and written
+	when exiting Vim (see |shada-file|).  The string should be a comma
+	separated list of parameters, each consisting of a single character
+	identifying the particular parameter, followed by a number or string
+	which specifies the value of that parameter.  If a particular
+	character is left out, then the default value is used for that
+	parameter.  The following is a list of the identifying characters and
+	the effect of their value.
+	CHAR	VALUE	~
+							*shada-!*
+	!	When included, save and restore global variables that start
+		with an uppercase letter, and don't contain a lowercase
+		letter.  Thus "KEEPTHIS and "K_L_M" are stored, but "KeepThis"
+		and "_K_L_M" are not.  Nested List and Dict items may not be
+		read back correctly, you end up with an empty item.
+							*shada-quote*
+	"	Maximum number of lines saved for each register.  Old name of
+		the '<' item, with the disadvantage that you need to put a
+		backslash before the ", otherwise it will be recognized as the
+		start of a comment!
+							*shada-%*
+	%	When included, save and restore the buffer list.  If Vim is
+		started with a file name argument, the buffer list is not
+		restored.  If Vim is started without a file name argument, the
+		buffer list is restored from the shada file.  Buffers
+		without a file name and buffers for help files are not written
+		to the shada file.
+		When followed by a number, the number specifies the maximum
+		number of buffers that are stored.  Without a number all
+		buffers are stored.
+							*shada-'*
+	'	Maximum number of previously edited files for which the marks
+		are remembered.  This parameter must always be included when
+		'shada' is non-empty.
+		Including this item also means that the |jumplist| and the
+		|changelist| are stored in the shada file.
+							*shada-/*
+	/	Maximum number of items in the search pattern history to be
+		saved.  If non-zero, then the previous search and substitute
+		patterns are also saved.  When not included, the value of
+		'history' is used.
+							*shada-:*
+	:	Maximum number of items in the command-line history to be
+		saved.  When not included, the value of 'history' is used.
+							*shada-<*
+	<	Maximum number of lines saved for each register.  If zero then
+		registers are not saved.  When not included, all lines are
+		saved.  '"' is the old name for this item.
+		Also see the 's' item below: limit specified in KiB.
+							*shada-@*
+	@	Maximum number of items in the input-line history to be
+		saved.  When not included, the value of 'history' is used.
+							*shada-c*
+	c	Dummy option, kept for compatibility reasons.  Has no actual 
+		effect.  Current encoding state is described in 
+		|shada-encoding|.
+							*shada-f*
+	f	Whether file marks need to be stored.  If zero, file marks ('0
+		to '9, 'A to 'Z) are not stored.  When not present or when
+		non-zero, they are all stored.  '0 is used for the current
+		cursor position (when exiting or when doing |:wshada|).
+							*shada-h*
+	h	Disable the effect of 'hlsearch' when loading the shada
+		file.  When not included, it depends on whether ":nohlsearch"
+		has been used since the last search command.
+							*shada-n*
+	n	Name of the shada file.  The name must immediately follow
+		the 'n'.  Must be the last one!  If the "-i" argument was
+		given when starting Vim, that file name overrides the one
+		given here with 'shada'.  Environment variables are expanded
+		when opening the file, not when setting the option.
+							*shada-r*
+	r	Removable media.  The argument is a string (up to the next
+		',').  This parameter can be given several times.  Each
+		specifies the start of a path for which no marks will be
+		stored.  This is to avoid removable media.  For MS-DOS you
+		could use "ra:,rb:".  You can also use it for temp files,
+		e.g., for Unix: "r/tmp".  Case is ignored.
+							*shada-s*
+	s	Maximum size of an item contents in KiB.  If zero then nothing 
+		is saved.  Unlike Vim this applies to all items, except for 
+		the buffer list and header.  Full item size is off by three 
+		unsigned integers: with `s10` maximum item size may be 1 byte 
+		(type: 7-bit integer) + 9 bytes (timestamp: up to 64-bit 
+		integer) + 3 bytes (item size: up to 16-bit integer because 
+		2^8 < 10240 < 2^16) + 10240 bytes (requested maximum item 
+		contents size) = 10253 bytes.
+
+	Example: >
+	    :set shada='50,<1000,s100,:0,n~/nvim/shada
+<
+	'50		Marks will be remembered for the last 50 files you
+			edited.
+	<1000		Contents of registers (up to 1000 lines each) will be
+			remembered.
+	s100		Items with contents occupying more then 100 KiB are 
+			skipped.
+	:0		Command-line history will not be saved.
+	n~/nvim/shada	The name of the file to use is "~/nvim/shada".
+	no /		Since '/' is not specified, the default will be used,
+			that is, save all of the search history, and also the
+			previous search and substitute patterns.
+	no %		The buffer list will not be saved nor read back.
+	no h		'hlsearch' highlighting will be restored.
+
+	When setting 'shada' from an empty value you can use |:rshada| to
+	load the contents of the file, this is not done automatically.
+
+	This option cannot be set from a |modeline| or in the |sandbox|, for
+	security reasons.
+
 						*'shell'* *'sh'* *E91*
 'shell' 'sh'		string	(default $SHELL or "sh",
 					MS-DOS and Win32: "command.com" or
@@ -5500,7 +5459,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	default becomes "2>&1| tee".  This means that stderr is also included.
 	Before using the 'shell' option a path is removed, thus "/bin/sh" uses
 	"sh".
-	The initialization of this option is done after reading the ".vimrc"
+	The initialization of this option is done after reading the vimrc
 	and the other initializations, so that when the 'shell' option is set
 	there, the 'shellpipe' option changes automatically, unless it was
 	explicitly set before.
@@ -5546,7 +5505,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	For Win32, the Unix checks are done and additionally "cmd" is checked
 	for, which makes the default ">%s 2>&1".  Also, the same names with
 	".exe" appended are checked for.
-	The initialization of this option is done after reading the ".vimrc"
+	The initialization of this option is done after reading the vimrc
 	and the other initializations, so that when the 'shell' option is set
 	there, the 'shellredir' option changes automatically unless it was
 	explicitly set before.
@@ -5633,8 +5592,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	function to get the effective shiftwidth value.
 
 						*'shortmess'* *'shm'*
-'shortmess' 'shm'	string	(Vim default "filnxtToO", Vi default: "",
-							POSIX default: "A")
+'shortmess' 'shm'	string	(Vim default "filnxtToO", Vi default: "")
 			global
 	This option helps to avoid all the |hit-enter| prompts caused by file
 	messages, for example  with CTRL-G, and to avoid some other messages.
@@ -6022,7 +5980,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	Only one of "best", "double" or "fast" may be used.  The others may
 	appear several times in any order.  Example: >
-		:set sps=file:~/.vim/sugg,best,expr:MySuggest()
+		:set sps=file:~/.config/nvim/sugg,best,expr:MySuggest()
 <
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
@@ -6039,8 +5997,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			*'splitright'* *'spr'* *'nosplitright'* *'nospr'*
 'splitright' 'spr'	boolean	(default off)
 			global
-			{not available when compiled without the |+vertsplit|
-			feature}
 	When on, splitting a window will put the new window right of the
 	current one. |:vsplit|
 
@@ -6120,7 +6076,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	W F   Preview window flag, text is ",PRV".
 	y F   Type of file in the buffer, e.g., "[vim]".  See 'filetype'.
 	Y F   Type of file in the buffer, e.g., ",VIM".  See 'filetype'.
-	      {not available when compiled without |+autocmd| feature}
 	q S   "[Quickfix List]", "[Location List]" or empty.
 	k S   Value of "b:keymap_name" or 'keymap' when |:lmap| mappings are
 	      being used: "<keymap>"
@@ -6129,7 +6084,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	B N   As above, in hexadecimal.
 	o N   Byte number in file of byte under cursor, first byte is 1.
 	      Mnemonic: Offset from start of file (with one added)
-	      {not available when compiled without |+byte_offset| feature}
 	O N   As above, in hexadecimal.
 	N N   Printer page number.  (Only works in the 'printheader' option.)
 	l N   Line number.
@@ -6201,7 +6155,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	Watch out for errors in expressions.  They may render Vim unusable!
 	If you are stuck, hold down ':' or 'Q' to get a prompt, then quit and
-	edit your .vimrc or whatever with "vim -u NONE" to get it right.
+	edit your vimrc or whatever with "vim -u NONE" to get it right.
 
 	Examples:
 	Emulate standard status line with 'ruler' set >
@@ -6505,10 +6459,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'termbidi'* *'tbidi'*
 						*'notermbidi'* *'notbidi'*
-'termbidi' 'tbidi'	boolean (default off, on for "mlterm")
+'termbidi' 'tbidi'	boolean (default off)
 			global
-			{only available when compiled with the |+arabic|
-			feature}
 	The terminal is in charge of Bi-directionality of text (as specified
 	by Unicode).  The terminal is also expected to do the required shaping
 	that some languages (such as Arabic) require.
@@ -6516,7 +6468,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'arabic' is set and the value of 'arabicshape' will be ignored.
 	Note that setting 'termbidi' has the immediate effect that
 	'arabicshape' is ignored, but 'rightleft' isn't changed automatically.
-	This option is reset when the GUI is started.
 	For further details see |arabic.txt|.
 
 					*'termencoding'* *'tenc'*
@@ -6666,46 +6617,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	{not available when compiled without the |+statusline| feature}
 
 				*'toolbar'* *'tb'*
-'toolbar' 'tb'		string	(default "icons,tooltips")
-			global
-			{only for |+GUI_GTK|, |+GUI_Athena|, and |+GUI_Motif|}
-	The contents of this option controls various toolbar settings.  The
-	possible values are:
-		icons		Toolbar buttons are shown with icons.
-		text		Toolbar buttons shown with text.
-		horiz		Icon and text of a toolbar button are
-				horizontally arranged.  {only in GTK+ 2 GUI}
-		tooltips	Tooltips are active for toolbar buttons.
-	Tooltips refer to the popup help text which appears after the mouse
-	cursor is placed over a toolbar button for a brief moment.
-
-	If you want the toolbar to be shown with icons as well as text, do the
-	following: >
-		:set tb=icons,text
-<	Motif and Athena cannot display icons and text at the same time.  They
-	will show icons if both are requested.
-
-	If none of the strings specified in 'toolbar' are valid or if
-	'toolbar' is empty, this option is ignored.  If you want to disable
-	the toolbar, you need to set the 'guioptions' option.  For example: >
-		:set guioptions-=T
-<	Also see |gui-toolbar|.
+'toolbar' 'tb'		Removed. |vim-differences| {Nvim}
 
 						*'toolbariconsize'* *'tbis'*
-'toolbariconsize' 'tbis'	string	(default "small")
-				global
-				{only in the GTK+ 2 GUI}
-	Controls the size of toolbar icons.  The possible values are:
-		tiny		Use tiny toolbar icons.
-		small		Use small toolbar icons (default).
-		medium		Use medium-sized toolbar icons.
-		large		Use large toolbar icons.
-	The exact dimensions in pixels of the various icon sizes depend on
-	the current theme.  Common dimensions are large=32x32, medium=24x24,
-	small=20x20 and tiny=16x16.
-
-	If 'toolbariconsize' is empty, the global default size as determined
-	by user preferences or the current theme is used.
+'toolbariconsize' 'tbis'	Removed. |vim-differences| {Nvim}
 
 			     *'ttybuiltin'* *'tbi'* *'nottybuiltin'* *'notbi'*
 'ttybuiltin' 'tbi'	Removed. |vim-differences| {Nvim}
@@ -6724,8 +6639,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	Alias for 'term', see above.
 
-						*'undodir'* *'udir'*
-'undodir' 'udir'	string	(default ".")
+						*'undodir'* *'udir'* *E926*
+'undodir' 'udir'	string	(default "$XDG_DATA_HOME/nvim/undo")
 			global
 			{only when compiled with the |+persistent_undo| feature}
 	List of directory names for undo files, separated with commas.
@@ -6734,8 +6649,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	"file.txt" is ".file.txt.un~".
 	For other directories the file name is the full path of the edited
 	file, with path separators replaced with "%".
-	When writing: The first directory that exists is used. "." always
-	works, no directories after "." will be used for writing.
+	When writing: The first directory that exists is used.  "." always
+	works, no directories after "." will be used for writing.  If none of 
+	the directories exist Neovim will attempt to create last directory in 
+	the list.
 	When reading all entries are tried to find an undo file.  The first
 	undo file that exists is used.  When it cannot be read an error is
 	given, no further entry is used.
@@ -6755,7 +6672,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When 'undofile' is turned off the undo file is NOT deleted.
 
 						*'undolevels'* *'ul'*
-'undolevels' 'ul'	number	(default 100, 1000 for Unix and Win32)
+'undolevels' 'ul'	number	(default 1000)
 			global or local to buffer |global-local|
 	Maximum number of changes that can be undone.  Since undo information
 	is kept in memory, higher numbers will cause more memory to be used
@@ -6818,7 +6735,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	When bigger than zero, Vim will give messages about what it is doing.
 	Currently, these messages are given:
-	>= 1	When the viminfo file is read or written.
+	>= 1	When the shada file is read or written.
 	>= 2	When a file is ":source"'ed.
 	>= 5	Every searched tags file and include file.
 	>= 8	Files for which a group of autocommands is executed.
@@ -6846,8 +6763,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	displayed when 'verbosefile' is set.
 
 						*'viewdir'* *'vdir'*
-'viewdir' 'vdir'	string	(default for MS-DOS and Win32: "$VIM/vimfiles/view",
-				 for Unix: "~/.vim/view")
+'viewdir' 'vdir'	string	(default: "$XDG_DATA_HOME/nvim/view")
 			global
 			{not available when compiled without the |+mksession|
 			feature}
@@ -6878,120 +6794,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	with Unix.  The Unix version of Vim cannot source dos format scripts,
 	but the Windows version of Vim can source unix format scripts.
 
-				*'viminfo'* *'vi'* *E526* *E527* *E528*
-'viminfo' 'vi'		string	(Vim default for
-				   Win32:  '!,100,<50,s10,h,rA:,rB:
-				   others: '!,100,<50,s10,h
-				 Vi default: "")
+				*'viminfo'* *'vi'*
+'viminfo' 'vi'		string
 			global
-			{not available when compiled without the |+viminfo|
-			feature}
-	When non-empty, the viminfo file is read upon startup and written
-	when exiting Vim (see |viminfo-file|).  The string should be a comma
-	separated list of parameters, each consisting of a single character
-	identifying the particular parameter, followed by a number or string
-	which specifies the value of that parameter.  If a particular
-	character is left out, then the default value is used for that
-	parameter.  The following is a list of the identifying characters and
-	the effect of their value.
-	CHAR	VALUE	~
-							*viminfo-!*
-	!	When included, save and restore global variables that start
-		with an uppercase letter, and don't contain a lowercase
-		letter.  Thus "KEEPTHIS and "K_L_M" are stored, but "KeepThis"
-		and "_K_L_M" are not.  Nested List and Dict items may not be
-		read back correctly, you end up with an empty item.
-							*viminfo-quote*
-	"	Maximum number of lines saved for each register.  Old name of
-		the '<' item, with the disadvantage that you need to put a
-		backslash before the ", otherwise it will be recognized as the
-		start of a comment!
-							*viminfo-%*
-	%	When included, save and restore the buffer list.  If Vim is
-		started with a file name argument, the buffer list is not
-		restored.  If Vim is started without a file name argument, the
-		buffer list is restored from the viminfo file.  Buffers
-		without a file name and buffers for help files are not written
-		to the viminfo file.
-		When followed by a number, the number specifies the maximum
-		number of buffers that are stored.  Without a number all
-		buffers are stored.
-							*viminfo-'*
-	'	Maximum number of previously edited files for which the marks
-		are remembered.  This parameter must always be included when
-		'viminfo' is non-empty.
-		Including this item also means that the |jumplist| and the
-		|changelist| are stored in the viminfo file.
-							*viminfo-/*
-	/	Maximum number of items in the search pattern history to be
-		saved.  If non-zero, then the previous search and substitute
-		patterns are also saved.  When not included, the value of
-		'history' is used.
-							*viminfo-:*
-	:	Maximum number of items in the command-line history to be
-		saved.  When not included, the value of 'history' is used.
-							*viminfo-<*
-	<	Maximum number of lines saved for each register.  If zero then
-		registers are not saved.  When not included, all lines are
-		saved.  '"' is the old name for this item.
-		Also see the 's' item below: limit specified in Kbyte.
-							*viminfo-@*
-	@	Maximum number of items in the input-line history to be
-		saved.  When not included, the value of 'history' is used.
-							*viminfo-c*
-	c	When included, convert the text in the viminfo file from the
-		'encoding' used when writing the file to the current
-		'encoding'.  See |viminfo-encoding|.
-							*viminfo-f*
-	f	Whether file marks need to be stored.  If zero, file marks ('0
-		to '9, 'A to 'Z) are not stored.  When not present or when
-		non-zero, they are all stored.  '0 is used for the current
-		cursor position (when exiting or when doing ":wviminfo").
-							*viminfo-h*
-	h	Disable the effect of 'hlsearch' when loading the viminfo
-		file.  When not included, it depends on whether ":nohlsearch"
-		has been used since the last search command.
-							*viminfo-n*
-	n	Name of the viminfo file.  The name must immediately follow
-		the 'n'.  Must be the last one!  If the "-i" argument was
-		given when starting Vim, that file name overrides the one
-		given here with 'viminfo'.  Environment variables are expanded
-		when opening the file, not when setting the option.
-							*viminfo-r*
-	r	Removable media.  The argument is a string (up to the next
-		',').  This parameter can be given several times.  Each
-		specifies the start of a path for which no marks will be
-		stored.  This is to avoid removable media.  For MS-DOS you
-		could use "ra:,rb:".  You can also use it for temp files,
-		e.g., for Unix: "r/tmp".  Case is ignored.  Maximum length of
-		each 'r' argument is 50 characters.
-							*viminfo-s*
-	s	Maximum size of an item in Kbyte.  If zero then registers are
-		not saved.  Currently only applies to registers.  The default
-		"s10" will exclude registers with more than 10 Kbyte of text.
-		Also see the '<' item above: line count limit.
-
-	Example: >
-	    :set viminfo='50,<1000,s100,:0,n~/vim/viminfo
-<
-	'50		Marks will be remembered for the last 50 files you
-			edited.
-	<1000		Contents of registers (up to 1000 lines each) will be
-			remembered.
-	s100		Registers with more than 100 Kbyte text are skipped.
-	:0		Command-line history will not be saved.
-	n~/vim/viminfo	The name of the file to use is "~/vim/viminfo".
-	no /		Since '/' is not specified, the default will be used,
-			that is, save all of the search history, and also the
-			previous search and substitute patterns.
-	no %		The buffer list will not be saved nor read back.
-	no h		'hlsearch' highlighting will be restored.
-
-	When setting 'viminfo' from an empty value you can use |:rviminfo| to
-	load the contents of the file, this is not done automatically.
-
-	This option cannot be set from a |modeline| or in the |sandbox|, for
-	security reasons.
+	Deprecated alias for 'shada' option. Is kept for compatibility 
+	reasons.
 
 					    *'virtualedit'* *'ve'*
 'virtualedit' 've'	string	(default "")
@@ -7163,7 +6970,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|hl-WildMenu|.
 
 						*'wildmode'* *'wim'*
-'wildmode' 'wim'	string	(default: "list:longest,full")
+'wildmode' 'wim'	string	(default: "full")
 			global
 	Completion mode that is used for the character specified with
 	'wildchar'.  It is a comma separated list of up to four parts.  Each
@@ -7306,8 +7113,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'winminwidth'* *'wmw'*
 'winminwidth' 'wmw'	number	(default 1)
 			global
-			{not available when compiled without the |+vertsplit|
-			feature}
 	The minimal width of a window, when it's not the current window.
 	This is a hard minimum, windows will never become smaller.
 	When set to zero, windows may be "squashed" to zero columns (i.e. just
@@ -7322,8 +7127,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'winwidth'* *'wiw'* *E592*
 'winwidth' 'wiw'	number	(default 20)
 			global
-			{not available when compiled without the |+vertsplit|
-			feature}
 	Minimal number of columns for the current window.  This is not a hard
 	minimum, Vim will use fewer columns if there is not enough room.  If
 	the current window is smaller, its size is increased, at the cost of

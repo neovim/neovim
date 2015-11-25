@@ -2,7 +2,7 @@
 -- Also test utf8 map with a 0x80 byte.
 
 local helpers = require('test.functional.helpers')
-local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
+local clear, feed = helpers.clear, helpers.feed
 local execute, expect = helpers.execute, helpers.expect
 
 describe('maparg()', function()
@@ -10,7 +10,6 @@ describe('maparg()', function()
 
   it('is working', function()
     execute('set cpo-=<')
-    execute('set encoding=utf8')
 
     -- Test maparg() with a string result
     execute('map foo<C-V> is<F4>foo')

@@ -30,7 +30,7 @@
 
 /// Try to free memory. Used when trying to recover from out of memory errors.
 /// @see {xmalloc}
-static void try_to_free_memory(void)
+void try_to_free_memory(void)
 {
   static bool trying_to_free = false;
   // avoid recursive calls
@@ -42,8 +42,6 @@ static void try_to_free_memory(void)
   clear_sb_text();
   // Try to save all buffers and release as many blocks as possible
   mf_release_all();
-  // cleanup recursive lists/dicts
-  garbage_collect();
 
   trying_to_free = false;
 }
@@ -437,7 +435,7 @@ void do_outofmem_msg(size_t size)
 
     /* Must come first to avoid coming back here when printing the error
      * message fails, e.g. when setting v:errmsg. */
-    did_outofmem_msg = TRUE;
+    did_outofmem_msg = true;
 
     EMSGU(_("E342: Out of memory!  (allocating %" PRIu64 " bytes)"), size);
   }
@@ -496,7 +494,7 @@ void free_all_mem(void)
   block_autocmds();
 
   /* Close all tabs and windows.  Reset 'equalalways' to avoid redraws. */
-  p_ea = FALSE;
+  p_ea = false;
   if (first_tabpage->tp_next != NULL)
     do_cmdline_cmd("tabonly!");
   if (firstwin != lastwin)
@@ -567,10 +565,10 @@ void free_all_mem(void)
 
   /* Free all buffers.  Reset 'autochdir' to avoid accessing things that
    * were freed already. */
-  p_acd = FALSE;
+  p_acd = false;
   for (buf = firstbuf; buf != NULL; ) {
     nextbuf = buf->b_next;
-    close_buffer(NULL, buf, DOBUF_WIPE, FALSE);
+    close_buffer(NULL, buf, DOBUF_WIPE, false);
     if (buf_valid(buf))
       buf = nextbuf;            /* didn't work, try next one */
     else

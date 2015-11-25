@@ -1,11 +1,9 @@
 Test for various eval features.   vim: set ft=vim :
 
-Note: system clipboard support is not tested. I do not think anybody will thank
-me for messing with clipboard.
+Note: system clipboard is saved, changed and restored.
 
 STARTTEST
 :so small.vim
-:set encoding=latin1
 :set noswapfile
 :lang C
 :fun AppendRegContents(reg)
@@ -122,7 +120,19 @@ call SetReg('/', ['abc/'])
 call SetReg('/', ["abc/\n"])
 call SetReg('=', ['"abc/"'])
 call SetReg('=', ["\"abc/\n\""])
-
+$put ='{{{1 System clipboard'
+" Save and restore system clipboard.
+" If no connection to X-Server is possible, test should succeed.
+:let _clipreg = ['+', getreg('+'), getregtype('+')]
+:let _clipopt = &cb
+:let &cb='unnamedplus'
+:1y
+:AR +
+:tabdo :windo :echo "hi"
+:3y
+:AR +
+:let &cb=_clipopt
+:call call('setreg', _clipreg)
 $put ='{{{1 Errors'
 call ErrExe('call setreg()')
 call ErrExe('call setreg(1)')

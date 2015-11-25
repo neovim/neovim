@@ -54,8 +54,7 @@ history tables:
 - one for debug mode commands
 These are completely separate.  Each history can only be accessed when
 entering the same type of line.
-Use the 'history' option to set the number of lines that are remembered
-(default: 50).
+Use the 'history' option to set the number of lines that are remembered.
 Notes:
 - When you enter a command-line that is exactly the same as an older one, the
   old one is removed (to avoid repeated commands moving older commands out of
@@ -110,7 +109,7 @@ CTRL-W		Delete the |word| before the cursor.  This depends on the
 CTRL-U		Remove all characters between the cursor position and
 		the beginning of the line.  Previous versions of vim
 		deleted all characters on the line.  If that is the
-		preferred behavior, add the following to your .vimrc: >
+		preferred behavior, add the following to your vimrc: >
 			:cnoremap <C-U> <C-E><C-U>
 <
 						*c_<Insert>* *c_Insert*
@@ -229,24 +228,16 @@ CTRL-C		quit command-line without executing
 							*c_<Up>* *c_Up*
 <Up>		recall older command-line from history, whose beginning
 		matches the current command-line (see below).
-		{not available when compiled without the |+cmdline_hist|
-		feature}
 							*c_<Down>* *c_Down*
 <Down>		recall more recent command-line from history, whose beginning
 		matches the current command-line (see below).
-		{not available when compiled without the |+cmdline_hist|
-		feature}
 
 							*c_<S-Up>* *c_<PageUp>*
 <S-Up> or <PageUp>
 		recall older command-line from history
-		{not available when compiled without the |+cmdline_hist|
-		feature}
 						*c_<S-Down>* *c_<PageDown>*
 <S-Down> or <PageDown>
 		recall more recent command-line from history
-		{not available when compiled without the |+cmdline_hist|
-		feature}
 
 CTRL-D		command-line completion (see |cmdline-completion|)
 'wildchar' option
@@ -261,8 +252,7 @@ CTRL-_		a - switch between Hebrew and English keyboard mode, which is
 		private to the command-line and not related to hkmap.
 		This is useful when Hebrew text entry is required in the
 		command-line, searches, abbreviations, etc.  Applies only if
-		Vim is compiled with the |+rightleft| feature and the
-		'allowrevins' option is set.
+		the 'allowrevins' option is set.
 		See |rileft.txt|.
 
 		b - switch between Farsi and English keyboard mode, which is
@@ -270,7 +260,6 @@ CTRL-_		a - switch between Hebrew and English keyboard mode, which is
 		Farsi keyboard mode the characters are inserted in reverse
 		insert manner.  This is useful when Farsi text entry is
 		required in the command-line, searches, abbreviations, etc.
-		Applies only if Vim is compiled with the |+farsi| feature.
 		See |farsi.txt|.
 
 							*c_CTRL-^*
@@ -313,8 +302,6 @@ terminals)
 
 							*:his* *:history*
 :his[tory]	Print the history of last entered commands.
-		{not available when compiled without the |+cmdline_hist|
-		feature}
 
 :his[tory] [{name}] [{first}][, [{last}]]
 		List the contents of history {name} which can be:
@@ -363,10 +350,8 @@ word before the cursor.  This is available for:
 - Mappings: Only after a ":map" or similar command.
 - Variable and function names: Only after a ":if", ":call" or similar command.
 
-When Vim was compiled without the |+cmdline_compl| feature only file names,
-directories and help items can be completed.  The number of help item matches
-is limited (currently to 300) to avoid a long delay when there are very many
-matches.
+The number of help item matches is limited (currently to 300) to avoid a long
+delay when there are very many matches.
 
 These are the commands that can be used:
 
@@ -471,7 +456,7 @@ that take a file name.
 If you would like using <S-Tab> for CTRL-P in an xterm, put this command in
 your .cshrc: >
 	xmodmap -e "keysym Tab = Tab Find"
-And this in your .vimrc: >
+And this in your vimrc: >
 	:cmap <Esc>[1~ <C-P>
 
 ==============================================================================
@@ -744,7 +729,7 @@ function expand() |expand()|.
 	#<n	(where n is a number > 0) is replaced with old	  *:_#<* *c_#<*
 		file name n.  See |:oldfiles| or |v:oldfiles| to get the
 		number.							*E809*
-		{only when compiled with the |+eval| and |+viminfo| features}
+		{only when compiled with the |+eval| and |+shada| features}
 
 Note that these, except "#<n", give the file name as it was typed.  If an
 absolute path is needed (when using the file name from a different directory),
@@ -838,8 +823,8 @@ These modifiers can be given, in this order:
 		precede any :r or :e.
 	:r	Root of the file name (the last extension removed).  When
 		there is only an extension (file name that starts with '.',
-		e.g., ".vimrc"), it is not removed.  Can be repeated to remove
-		several extensions (last one first).
+		e.g., ".nvimrc"), it is not removed.  Can be repeated to 
+		remove several extensions (last one first).
 	:e	Extension of the file name.  Only makes sense when used alone.
 		When there is no extension the result is empty.
 		When there is only an extension (file name that starts with
@@ -954,8 +939,6 @@ for the file "$home" in the root directory.  A few examples:
 In the command-line window the command line can be edited just like editing
 text in any window.  It is a special kind of window, because you cannot leave
 it in a normal way.
-{not available when compiled without the |+cmdline_hist| or |+vertsplit|
-feature}
 
 
 OPEN						*c_CTRL-F* *q:* *q/* *q?*
@@ -1026,9 +1009,8 @@ command-line window open again, you may find this mapping useful: >
 
 VARIOUS
 
-The command-line window cannot be used:
-- when there already is a command-line window (no nesting)
-- when Vim was not compiled with the |+vertsplit| feature
+The command-line window cannot be used when there already is a command-line
+window (no nesting).
 
 Some options are set when the command-line window is opened:
 'filetype'	"vim", when editing an Ex command-line; this starts Vim syntax

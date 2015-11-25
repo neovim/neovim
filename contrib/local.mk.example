@@ -7,18 +7,25 @@
 # These CFLAGS can be used in addition to those specified in CMakeLists.txt:
 # CMAKE_EXTRA_FLAGS="-DCMAKE_C_FLAGS=-ftrapv -Wlogical-op"
 
+# By default, the jemalloc family of memory allocation functions are used.
+# Uncomment the following to instead use libc memory allocation functions.
+# CMAKE_EXTRA_FLAGS += -DENABLE_JEMALLOC=OFF
+
 # Sets the build type; defaults to Debug. Valid values:
 #
-# - Debug:          Disables optimizations (-O0), enables debug information.
+# - Debug:          Disables optimizations (-O0), enables debug information and logging.
 #
-# - RelWithDebInfo: Enables all optimizations that do not interfere with
+# - Dev:            Enables all optimizations that do not interfere with
 #                   debugging (-Og if available, -O2 and -g if not).
-#                   Enables debug information.
+#                   Enables debug information and logging.
+#
+# - RelWithDebInfo: Enables optimizations (-O2) and debug information.
+#                   Disables logging.
 #
 # - MinSizeRel:     Enables all -O2 optimization that do not typically
 #                   increase code size, and performs further optimizations
 #                   designed to reduce code size (-Os).
-#                   Disables debug information.
+#                   Disables debug information and logging.
 #
 # - Release:        Same as RelWithDebInfo, but disables debug information.
 #

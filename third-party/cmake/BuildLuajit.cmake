@@ -27,6 +27,7 @@ function(BuildLuajit)
       -DURL=${LUAJIT_URL}
       -DEXPECTED_SHA256=${LUAJIT_SHA256}
       -DTARGET=${_luajit_TARGET}
+      -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND "${_luajit_CONFIGURE_COMMAND}"
     BUILD_IN_SOURCE 1
@@ -40,6 +41,7 @@ set(INSTALLCMD_UNIX ${MAKE_PRG} CFLAGS=-fPIC
                                 CFLAGS+=-DLUA_USE_ASSERT
                                 CCDEBUG+=-g
                                 BUILDMODE=static
+                                Q=
                                 install)
 
 if(UNIX)
@@ -66,6 +68,7 @@ elseif(MINGW AND CMAKE_CROSSCOMPILING)
         HOST_CC=${HOST_C_COMPILER} HOST_CFLAGS=${HOST_C_FLAGS}
         HOST_LDFLAGS=${HOST_EXE_LINKER_FLAGS}
         FILE_T=luajit.exe
+        Q=
         INSTALL_TSYMNAME=luajit.exe)
 
 elseif(WIN32 AND MSVC)

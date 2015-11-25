@@ -2,6 +2,8 @@ include(CheckTypeSize)
 include(CheckSymbolExists)
 include(CheckFunctionExists)
 include(CheckIncludeFiles)
+include(CheckCSourceRuns)
+include(CheckCSourceCompiles)
 
 check_type_size("int" SIZEOF_INT)
 check_type_size("long" SIZEOF_LONG)
@@ -24,7 +26,6 @@ check_include_files(pwd.h HAVE_PWD_H)
 check_include_files(strings.h HAVE_STRINGS_H)
 check_include_files(stropts.h HAVE_STROPTS_H)
 check_include_files(sys/param.h HAVE_SYS_PARAM_H)
-check_include_files(sys/time.h HAVE_SYS_TIME_H)
 check_include_files(sys/wait.h HAVE_SYS_WAIT_H)
 if(NOT HAVE_SYS_WAIT_H AND UNIX)
   # See if_cscope.c
@@ -70,6 +71,54 @@ check_function_exists(utimes HAVE_UTIMES)
 check_symbol_exists(FD_CLOEXEC "fcntl.h" HAVE_FD_CLOEXEC)
 if(HAVE_LANGINFO_H)
   check_symbol_exists(CODESET "langinfo.h" HAVE_NL_LANGINFO_CODESET)
+endif()
+
+set(SI "#include <stdint.h>\n")
+set(MS "int main(int argc,char**argv)\n{\n  uint64_t i=0x0102030405060708ULL;")
+set(ME "}")
+check_c_source_compiles("
+  #define _BSD_SOURCE 1
+  #define _DEFAULT_SOURCE 1
+  ${SI}
+  #include <endian.h>
+  #ifndef be64toh
+  # error No be64toh macros
+  #endif
+  ${MS}
+    uint64_t j = be64toh(i);
+    return (j == 0);  // j must not be zero
+  ${ME}"
+  HAVE_BE64TOH_MACROS)
+if(NOT "${HAVE_BE64TOH_MACROS}")
+  check_function_exists(be64toh HAVE_BE64TOH_FUNC)
+endif()
+if("${HAVE_BE64TOH_MACROS}" OR "${HAVE_BE64TOH_FUNC}")
+  set(HAVE_BE64TOH 1)
+endif()
+if (NOT "${HAVE_BE64TOH}")
+  if (NOT "${CMAKE_CROSSCOMPILING}")
+    # It is safe to make ORDER_BIG_ENDIAN not defined if
+    # - HAVE_BE64TOH is true. In this case be64toh will be used unconditionally in 
+    #   any case and ORDER_BIG_ENDIAN will not be examined.
+    # - CMAKE_CROSSCOMPILING *and* HAVE_BE64TOH are both false. In this case 
+    #   be64toh function which uses cycle and arithmetic operations is used which 
+    #   will work regardless of endianess. Function is sub-optimal though.
+    check_c_source_runs("
+      ${SI}
+      ${MS}
+        char *s = (char *) &i;
+        return (
+          s[0] == 0x01
+          && s[1] == 0x02
+          && s[2] == 0x03
+          && s[3] == 0x04
+          && s[4] == 0x05
+          && s[5] == 0x06
+          && s[6] == 0x07
+          && s[7] == 0x08) ? 0 : 1;
+      ${ME}"
+      ORDER_BIG_ENDIAN)
+  endif()
 endif()
 
 # generate configuration header and update include directories

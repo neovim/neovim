@@ -81,10 +81,6 @@ is Edit/Global Settings.  You will find these entries:
 	Toggle Left Scrollbar	make a scrollbar appear/disappear at the left
 	Toggle Right Scrollbar	make a scrollbar appear/disappear at the right
 
-On most systems you can tear-off the menus.  Select the top item of the menu,
-the one that looks like a dashed line.  You will get a separate window with
-the items of the menu.  It will hang around until you close the window.
-
 
 THE TOOLBAR
 

@@ -1,80 +1,140 @@
-sudo: required
+sudo: false
 language: c
-os:
-  - linux
-branches:
-  except:
-    - nightly
+
 env:
   global:
-    - CI_SCRIPTS=$TRAVIS_BUILD_DIR/.ci
-    # To build third-party dependencies, set this to 'true'.
+    # To force rebuilding of third-party dependencies, set this to 'true'.
     - BUILD_NVIM_DEPS=false
-    # Travis reports back that it has 32-cores via /proc/cpuinfo, but it's not
-    # what we really have available.  According to their documentation, it only has
-    # 1.5 virtual cores.
-    # See
-    #   http://docs.travis-ci.com/user/speeding-up-the-build/#Paralellizing-your-build-on-one-VM
-    # for more information.
+    # Travis has 1.5 virtual cores according to
+    # http://docs.travis-ci.com/user/speeding-up-the-build/#Paralellizing-your-build-on-one-VM
     - MAKE_CMD="make -j2"
+    # Update PATH for pip and MinGW.
+    - PATH="$(python2.7 -c 'import site; print(site.getuserbase())')/bin:$HOME/.local/mingw32/bin:$PATH"
+    # LLVM symbolizer path.
+    - LLVM_SYMBOLIZER="$(which llvm-symbolizer-3.6)"
     # Force verification of DLOG macros.
-    - CFLAGS='-DMIN_LOG_LEVEL=0'
-  matrix:
-    - CI_TARGET=gcc
-    - CI_TARGET=gcc-32
-    - CI_TARGET=clint
-    - CI_TARGET=mingw
+    - CFLAGS="-DMIN_LOG_LEVEL=0"
+    # Build directory for Neovim.
+    - BUILD_DIR="$TRAVIS_BUILD_DIR/build"
+    # Build directory for third-party dependencies.
+    - DEPS_BUILD_DIR="$HOME/nvim-deps"
+    # Directory where third-party dependency sources are downloaded to.
+    - DEPS_DOWNLOAD_DIR="$TRAVIS_BUILD_DIR/deps-downloads"
+    # Install directory for Neovim.
+    - INSTALL_PREFIX="$HOME/nvim-install"
+    # Log directory for Clang sanitizers and Valgrind.
+    - LOG_DIR="$BUILD_DIR/log"
+    # Default CMake flags.
+    - CMAKE_FLAGS="-DTRAVIS_CI_BUILD=ON
+                   -DCMAKE_BUILD_TYPE=Debug
+                   -DCMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX
+                   -DUSE_GCOV=ON
+                   -DBUSTED_OUTPUT_TYPE=gtest
+                   -DDEPS_PREFIX=$DEPS_BUILD_DIR/usr"
+    - DEPS_CMAKE_FLAGS="-DDEPS_DOWNLOAD_DIR:PATH=$DEPS_DOWNLOAD_DIR"
+    # Additional CMake flags for 32-bit builds.
+    - CMAKE_FLAGS_32BIT="-DCMAKE_SYSTEM_LIBRARY_PATH=/lib32:/usr/lib32:/usr/local/lib32
+                         -DCMAKE_IGNORE_PATH=/lib:/usr/lib:/usr/local/lib
+                         -DCMAKE_TOOLCHAIN_FILE=$TRAVIS_BUILD_DIR/cmake/i386-linux-gnu.toolchain.cmake"
+    # Additional CMake flags for MinGW builds.
+    - CMAKE_FLAGS_MINGW="-DCMAKE_TOOLCHAIN_FILE=$TRAVIS_BUILD_DIR/cmake/mingw32-w64-cross-travis.toolchain.cmake"
+    # Environment variables for Clang sanitizers.
+    - ASAN_OPTIONS="detect_leaks=1:check_initialization_order=1:log_path=$LOG_DIR/asan"
+    - ASAN_SYMBOLIZER_PATH="$LLVM_SYMBOLIZER"
+    - MSAN_SYMBOLIZER_PATH="$LLVM_SYMBOLIZER"
+    - TSAN_OPTIONS="external_symbolizer_path=$LLVM_SYMBOLIZER log_path=$LOG_DIR/tsan"
+    - UBSAN_OPTIONS="log_path=$LOG_DIR/ubsan"
+    # Environment variables for Valgrind.
+    - VALGRIND_LOG="$LOG_DIR/valgrind-%p.log"
+    # Cache marker for third-party dependencies cache.
+    # If this file exists, we know that the cache contains compiled
+    # dependencies and we can use it.
+    - CACHE_MARKER="$HOME/.cache/nvim-deps/.travis_cache_marker"
+    # Test success marker. If this file exists, we know that all tests
+    # were successful. Required because we only want to update the cache
+    # if the tests were successful, but don't have this information
+    # available in before_cache (which is run before after_success).
+    - SUCCESS_MARKER="$BUILD_DIR/.tests_successful"
+
 matrix:
   include:
     - os: linux
-      env: CI_TARGET=clang CLANG_SANITIZER=ASAN_UBSAN
+      env: CI_TARGET=clint
     - os: linux
-      env: CI_TARGET=clang CLANG_SANITIZER=MSAN
-    # FIXME: Re-enable TSan when tests run successfully.
-    #- os: linux
-    #  env: CI_TARGET=clang CLANG_SANITIZER=TSAN
+      compiler: gcc-5
+      env: GCOV=gcov-5
+    - os: linux
+      # Travis creates a cache per compiler.
+      # Set a different value here to store 32-bit
+      # dependencies in a separate cache.
+      compiler: gcc-5 -m32
+      env: GCOV=gcov-5 BUILD_32BIT=ON
+    - os: linux
+      compiler: clang-3.6
+      env: GCOV=llvm-cov-3.6 CLANG_SANITIZER=ASAN_UBSAN
+    - os: linux
+      compiler: clang-3.6
+      env: GCOV=llvm-cov-3.6 CLANG_SANITIZER=MSAN
+    - os: linux
+      compiler: clang-3.6
+      env: CLANG_SANITIZER=TSAN
     - os: osx
-      env: CI_TARGET=clang
       compiler: clang
+      env: GCOV=gcov
     - os: osx
-      env: CI_TARGET=gcc
       compiler: gcc-4.9
+      env: GCOV=gcov-4.9
+    - os: linux
+      env: BUILD_MINGW=ON
   fast_finish: true
   allow_failures:
-    - env: CI_TARGET=clang CLANG_SANITIZER=MSAN
-before_install:
-  # Pins the version of the java package installed on the Travis VMs
-  # and avoids a lengthy upgrade process for them.
-  - if [ $TRAVIS_OS_NAME = linux ]; then
-      sudo apt-mark hold oracle-java7-installer oracle-java8-installer;
-      sudo apt-get update;
-    elif [ $TRAVIS_OS_NAME = osx ]; then
-      brew update;
-    fi
-install:
-  - if [ $TRAVIS_OS_NAME = linux ]; then
-      sudo apt-get install xclip gdb;
-    elif [ $TRAVIS_OS_NAME = osx ]; then
-      brew install gettext;
-    fi
-before_script:
-  # Adds user to a dummy group.
-  # That allows to test changing the group of the file by `os_fchown`.
-  # Need xvfb for running some tests with xclip
-  - if [ $TRAVIS_OS_NAME = linux ]; then
-      sudo groupadd chown_test;
-      sudo usermod -a -G chown_test $USER;
-      export DISPLAY=:99.0;
-      sh -e /etc/init.d/xvfb start;
-    elif [ $TRAVIS_OS_NAME = osx ]; then
-      sudo dscl . -create /Groups/chown_test;
-      sudo dscl . -append /Groups/chown_test GroupMembership $USER;
-    fi
-script:
-  # This will pass the environment variables down to a bash process which runs
-  # as $USER, while retaining the environment variables defined and belonging
-  # to secondary groups given above in usermod.
-  - sudo -E su $USER -c "sh -e \"$CI_SCRIPTS/$CI_TARGET.sh\""
+    # TODO: Remove when all MSan errors have been fixed.
+    - env: GCOV=llvm-cov-3.6 CLANG_SANITIZER=MSAN
+
+before_install: .ci/before_install.sh
+install:        .ci/install.sh
+before_script:  .ci/before_script.sh
+script:         .ci/script.sh
+before_cache:   .ci/before_cache.sh
+after_success:  .ci/after_success.sh
+
+addons:
+  apt:
+    sources:
+      # TODO: Remove PPA when Travis gets Python >=3.3.
+      - deadsnakes
+      - llvm-toolchain-precise-3.6
+      - ubuntu-toolchain-r-test
+    packages:
+      - autoconf
+      - automake
+      - build-essential
+      - clang-3.6
+      - cmake
+      - g++-5-multilib
+      - g++-multilib
+      - gcc-5-multilib
+      - gcc-multilib
+      - gdb
+      - libc6-dev-i386
+      - libtool
+      - llvm-3.6-dev
+      - pkg-config
+      - python3.3-dev
+      - unzip
+      - valgrind
+      - xclip
+
+branches:
+  except:
+    - nightly
+
+cache:
+  apt: true
+  directories:
+    - "$HOME/.cache/pip"
+    - "$HOME/.cache/nvim-deps"
+
 notifications:
   webhooks:
     urls:

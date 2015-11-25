@@ -18,17 +18,9 @@ local function trim(s)
 end
 
 -- a Set that keeps around the lines we've already seen
-if cdefs == nil then
-  cdefs = Set:new()
-end
-
-if imported == nil then
-  imported = Set:new()
-end
-
-if pragma_pack_id == nil then
-  pragma_pack_id = 1
-end
+local cdefs = Set:new()
+local imported = Set:new()
+local pragma_pack_id = 1
 
 -- some things are just too complex for the LuaJIT C parser to digest. We
 -- usually don't need them anyway.
@@ -67,7 +59,7 @@ local function cimport(...)
   end
 
   local body = nil
-  for i=1, 10 do
+  for _ = 1, 10 do
     local stream = Preprocess.preprocess_stream(unpack(paths))
     body = stream:read("*a")
     stream:close()

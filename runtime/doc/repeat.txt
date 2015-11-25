@@ -1,4 +1,4 @@
-*repeat.txt*    For Vim version 7.4.  Last change: 2014 Oct 29
+*repeat.txt*    For Vim version 7.4.  Last change: 2015 Jan 07
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -37,8 +37,6 @@ of area is used, see |visual-repeat|.
 
 							*@:*
 @:			Repeat last command-line [count] times.
-			{not available when compiled without the
-			|+cmdline_hist| feature}
 
 
 ==============================================================================
@@ -224,8 +222,8 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			Mark) in utf-8 format Vim will recognize it, no need
 			to use ":scriptencoding utf-8" then.
 
-						*:scrip* *:scriptnames*
-:scrip[tnames]		List all sourced script names, in the order they were
+						*:scr* *:scriptnames*
+:scr[iptnames]		List all sourced script names, in the order they were
 			first sourced.  The number is used for the script ID
 			|<SID>|.
 
@@ -276,8 +274,8 @@ nested as deep as the number of files that can be opened at one time (about
 You can use the "<sfile>" string (literally, this is not a special key) inside
 of the sourced file, in places where a file name is expected.  It will be
 replaced by the file name of the sourced file.  For example, if you have a
-"other.vimrc" file in the same directory as your ".vimrc" file, you can source
-it from your ".vimrc" file with this command: >
+"other.vimrc" file in the same directory as your |init.vim| file, you can 
+source it from your |init.vim| file with this command: >
 	:source <sfile>:h/other.vimrc
 
 In script files terminal-dependent key codes are represented by
@@ -484,7 +482,7 @@ DEFINING BREAKPOINTS
 
 :breaka[dd] file [lnum] {name}
 		Set a breakpoint in a sourced file.  Example: >
-			:breakadd file 43 .vimrc
+			:breakadd file 43 init.vim
 
 :breaka[dd] here
 		Set a breakpoint in the current line of the current file.
@@ -588,6 +586,9 @@ For example, to profile the one_script.vim script file: >
 		If {fname} already exists it will be silently overwritten.
 		The variable |v:profiling| is set to one.
 
+:prof[ile] stop
+		Write the logfile and stop profiling.
+
 :prof[ile] pause
 		Don't profile until the following ":profile continue".  Can be
 		used when doing something that should not be counted (e.g., an
@@ -611,6 +612,9 @@ For example, to profile the one_script.vim script file: >
 		after this command.  A :profile command in the script itself
 		won't work.
 
+:prof[ile] dump
+		Don't wait until exiting Vim and write the current state of
+		profiling to the log immediately.
 
 :profd[el] ...						*:profd* *:profdel*
 		Stop profiling for the arguments specified. See |:breakdel|

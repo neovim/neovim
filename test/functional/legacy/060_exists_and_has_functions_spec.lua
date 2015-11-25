@@ -1,18 +1,15 @@
--- Tests for the exists() and has() functions.   ts=8 sw=2
+-- Tests for the exists() and has() functions.
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local source = helpers.source
+local clear, expect = helpers.clear, helpers.expect
 local write_file = helpers.write_file
-local os = require('os')
 
 describe('exists() and has() functions', function()
-  setup(clear)
-
-  it('is working', function()
-
+  setup(function()
+    clear()
     -- Create a temporary script needed for the test.
-    write_file('test60.vim', [=[
+    write_file('test60.vim', [[
       " Vim script for exists() function test
       " Script-local variables are checked here
       
@@ -110,7 +107,14 @@ describe('exists() and has() functions', function()
           echo "FAILED"
       endif
       unlet str
-      ]=])
+      ]])
+  end)
+  teardown(function()
+    os.remove('test.out')
+    os.remove('test60.vim')
+  end)
+
+  it('is working', function()
 
     source([=[
       " Add the special directory with test scripts to &rtp
@@ -648,7 +652,7 @@ describe('exists() and has() functions', function()
     ]=])
 
     -- Assert buffer contents.
-    expect([=[
+    expect([[
       
       #myagroup: 1
       OK
@@ -859,11 +863,7 @@ describe('exists() and has() functions', function()
       has patch 7.1.999: 1
       has patch 7.4.123: 1
       has patch 9.1.0: 0
-      has patch 9.9.1: 0]=])
+      has patch 9.9.1: 0]])
 
-  end)
-  teardown(function()
-    os.remove('test.out')
-    os.remove('test60.vim')
   end)
 end)

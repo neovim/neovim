@@ -4,8 +4,8 @@
 -- actually tried.
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local insert, source = helpers.insert, helpers.source
+local clear, expect = helpers.clear, helpers.expect
 
 describe('regex with multi-byte', function()
   setup(clear)
@@ -15,7 +15,7 @@ describe('regex with multi-byte', function()
       Results of test95:]])
 
     source([=[
-      set encoding=utf-8 nomore
+      set nomore
       let tl = []
 
       call add(tl, [2, '[[:alpha:][=a=]]\+', '879 aiaãâaiuvna ', 'aiaãâaiuvna'])

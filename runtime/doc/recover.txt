@@ -58,7 +58,7 @@ Disadvantages:
   message.
 
 If you want to put swap files in a fixed place, put a command resembling the
-following ones in your .vimrc:
+following ones in your vimrc:
 	:set dir=~/tmp		(for Unix)
 	:set dir=c:\\tmp	(for MS-DOS and Win32)
 This is also very handy when editing files on floppy.  Of course you will have
@@ -111,10 +111,6 @@ command:
 					*:pre* *:preserve* *E313* *E314*
 :pre[serve]		Write all text for all buffers into swap file.  The
 			original file is no longer needed for recovery.
-			This sets a flag in the current buffer.  When the '&'
-			flag is present in 'cpoptions' the swap file will not
-			be deleted for this buffer when Vim exits and the
-			buffer is still loaded |cpo-&|.
 
 A Vim swap file can be recognized by the first six characters: "b0VIM ".
 After that comes the version number, e.g., "3.0".

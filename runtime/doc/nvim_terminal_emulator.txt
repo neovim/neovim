@@ -62,8 +62,8 @@ with the terminal. For example, here's how to map <Esc> to exit terminal mode:
     :tnoremap <Esc> <C-\><C-n>
 <
 Navigating to other windows is only possible by exiting to normal mode, which
-can be cumbersome with <C-\><C-n> keys. Here are some mappings to improve
-the navigation experience:
+can be cumbersome with <C-\><C-n> keys. To improve the navigation experience,
+you could use the following mappings:
 >
     :tnoremap <A-h> <C-\><C-n><C-w>h
     :tnoremap <A-j> <C-\><C-n><C-w>j
@@ -74,8 +74,9 @@ the navigation experience:
     :nnoremap <A-k> <C-w>k
     :nnoremap <A-l> <C-w>l
 <
-This allows using `Alt+{h,j,k,l}` to navigate between windows no matter if
-they are displaying a normal buffer or a terminal buffer in terminal mode.
+This configuration allows using `Alt+{h,j,k,l}` to navigate between windows no
+matter if they are displaying a normal buffer or a terminal buffer in terminal
+mode.
 
 Mouse input is also fully supported, and has the following behavior:
 
@@ -97,12 +98,14 @@ variables (set via the |TermOpen| autocmd):
 - `{g,b}:terminal_scrollback_buffer_size`: Scrollback buffer size, between 1
   and 100000 inclusive. The default is 1000.
 - `{g,b}:terminal_color_$NUM`: The terminal color palette, where `$NUM` is the
-  color index, between 0 and 255 inclusive. This only affects UIs with RGB
-  capabilities; for normal terminals the color index is simply forwarded.
+  color index, between 0 and 255 inclusive. This setting only affects UIs with
+  RGB capabilities; for normal terminals the color index is simply forwarded.
 
 The configuration variables are only processed when the terminal starts, which
 is why it needs to be done with the |TermOpen| autocmd or setting global
 variables before the terminal is started.
+
+There is also a corresponding |TermClose| event.
 
 The terminal cursor can be highlighted via |hl-TermCursor| and
 |hl-TermCursorNC|.

@@ -14,10 +14,10 @@ local helpers = require('test.unit.helpers')
 local shell = helpers.cimport(
   './src/nvim/os/shell.h',
   './src/nvim/option_defs.h',
-  './src/nvim/os/event.h',
+  './src/nvim/main.h',
   './src/nvim/misc1.h'
 )
-local ffi, eq, neq = helpers.ffi, helpers.eq, helpers.neq
+local ffi, eq = helpers.ffi, helpers.eq
 local intern = helpers.internalize
 local to_cstr = helpers.to_cstr
 local NULL = ffi.cast('void *', 0)
@@ -67,6 +67,11 @@ describe('shell functions', function()
       local status, output = os_system(cmd, input)
       eq(input, output)
       eq(0, status)
+    end)
+
+    it ('returns non-zero exit code', function()
+      local status = os_system('exit 2')
+      eq(2, status)
     end)
   end)
 end)

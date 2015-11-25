@@ -6,10 +6,7 @@
  */
 
 #ifndef NVIM_VIM_H
-# define NVIM_VIM_H
-
-#define MIN(X, Y) (X < Y ? X : Y)
-#define MAX(X, Y) (X > Y ? X : Y)
+#define NVIM_VIM_H
 
 #include "nvim/types.h"
 #include "nvim/pos.h"  // for linenr_T, MAXCOL, etc...
@@ -332,20 +329,15 @@ enum {
 /* Maximum number of bytes in a multi-byte character.  It can be one 32-bit
  * character of up to 6 bytes, or one 16-bit character of up to three bytes
  * plus six following composing characters of three bytes each. */
-# define MB_MAXBYTES    21
+#define MB_MAXBYTES    21
 
 /* This has to go after the include of proto.h, as proto/gui.pro declares
  * functions of these names. The declarations would break if the defines had
  * been seen at that stage.  But it must be before globals.h, where error_ga
  * is declared. */
-#if !defined(FEAT_GUI_W32) && !defined(FEAT_GUI_X11) \
-  && !defined(FEAT_GUI_GTK) && !defined(FEAT_GUI_MAC)
-# define mch_errmsg(str)        fprintf(stderr, "%s", (str))
-# define display_errors()       fflush(stderr)
-# define mch_msg(str)           printf("%s", (str))
-#else
-# define USE_MCH_ERRMSG
-#endif
+#define mch_errmsg(str)        fprintf(stderr, "%s", (str))
+#define display_errors()       fflush(stderr)
+#define mch_msg(str)           printf("%s", (str))
 
 #include "nvim/globals.h"        /* global variables and messages */
 #include "nvim/buffer_defs.h"         /* buffer and windows */

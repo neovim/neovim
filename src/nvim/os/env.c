@@ -415,6 +415,74 @@ static char *remove_tail(char *p, char *pend, char *name)
   return pend;
 }
 
+/// Iterate over colon-separated list
+///
+/// @note Environment variables must not be modified during iteration.
+///
+/// @param[in]   val   Value of the environment variable to iterate over.
+/// @param[in]   iter  Pointer used for iteration. Must be NULL on first
+///                    iteration.
+/// @param[out]  dir   Location where pointer to the start of the current
+///                    directory name should be saved. May be set to NULL.
+/// @param[out]  len   Location where current directory length should be saved.
+///
+/// @return Next iter argument value or NULL when iteration should stop.
+const void *vim_colon_env_iter(const char *const val,
+                               const void *const iter,
+                               const char **const dir,
+                               size_t *const len)
+  FUNC_ATTR_NONNULL_ARG(1, 3, 4) FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  const char *varval = (const char *) iter;
+  if (varval == NULL) {
+    varval = val;
+  }
+  *dir = varval;
+  const char *const dirend = strchr(varval, ':');
+  if (dirend == NULL) {
+    *len = strlen(varval);
+    return NULL;
+  } else {
+    *len = (size_t) (dirend - varval);
+    return dirend + 1;
+  }
+}
+
+/// Iterate over colon-separated list in reverse order
+///
+/// @note Environment variables must not be modified during iteration.
+///
+/// @param[in]   val   Value of the environment variable to iterate over.
+/// @param[in]   iter  Pointer used for iteration. Must be NULL on first
+///                    iteration.
+/// @param[out]  dir   Location where pointer to the start of the current
+///                    directory name should be saved. May be set to NULL.
+/// @param[out]  len   Location where current directory length should be saved.
+///
+/// @return Next iter argument value or NULL when iteration should stop.
+const void *vim_colon_env_iter_rev(const char *const val,
+                                   const void *const iter,
+                                   const char **const dir,
+                                   size_t *const len)
+  FUNC_ATTR_NONNULL_ARG(1, 3, 4) FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  const char *varend = (const char *) iter;
+  if (varend == NULL) {
+    varend = val + strlen(val) - 1;
+  }
+  const size_t varlen = (size_t) (varend - val) + 1;
+  const char *const colon = xmemrchr(val, ':', varlen);
+  if (colon == NULL) {
+    *len = varlen;
+    *dir = val;
+    return NULL;
+  } else {
+    *dir = colon + 1;
+    *len = (size_t) (varend - colon);
+    return colon - 1;
+  }
+}
+
 /// Vim's version of getenv().
 /// Special handling of $HOME, $VIM and $VIMRUNTIME, allowing the user to
 /// override the vim runtime directory at runtime.  Also does ACP to 'enc'

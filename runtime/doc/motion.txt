@@ -1,4 +1,4 @@
-*motion.txt*    For Vim version 7.4.  Last change: 2014 Feb 11
+*motion.txt*    For Vim version 7.4.  Last change: 2015 Jun 06
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -171,6 +171,8 @@ CTRL-H		or					*CTRL-H* *<BS>*
 l		or					*l*
 <Right>		or					*<Right>* *<Space>*
 <Space>			[count] characters to the right.  |exclusive| motion.
+			See the 'whichwrap' option for adjusting the behavior
+			at end of line
 
 							*0*
 0			To the first character of the line.  |exclusive|
@@ -469,9 +471,7 @@ the macros ".IP", ".LP", etc.  (These are nroff macros, so the dot must be in
 the first column).  A section boundary is also a paragraph boundary.
 Note that a blank line (only containing white space) is NOT a paragraph
 boundary.
-Also note that this does not include a '{' or '}' in the first column.  When
-the '{' flag is in 'cpoptions' then '{' in the first column is used as a
-paragraph boundary |posix|.
+Note: this does not include a '{' or '}' in the first column.
 
 							*section*
 A section begins after a form-feed (<C-L>) in the first column and at each of
@@ -799,7 +799,7 @@ g'{mark}  g`{mark}
 <
 
 :delm[arks]!		Delete all marks for the current buffer, but not marks
-			A-Z or 0-9.
+			A-Z or 0-9.  Also clear the |changelist|.
 
 A mark is not visible in any way.  It is just a position in the file that is
 remembered.  Do not confuse marks with named registers, they are totally
@@ -807,7 +807,7 @@ unrelated.
 
 'a - 'z		lowercase marks, valid within one file
 'A - 'Z		uppercase marks, also called file marks, valid between files
-'0 - '9		numbered marks, set from .viminfo file
+'0 - '9		numbered marks, set from .shada file
 
 Lowercase marks 'a to 'z are remembered as long as the file remains in the
 buffer list.  If you remove the file from the buffer list, all its marks are
@@ -822,14 +822,14 @@ Uppercase marks 'A to 'Z include the file name.
 You can use them to jump from file to file.  You can only use an uppercase
 mark with an operator if the mark is in the current file.  The line number of
 the mark remains correct, even if you insert/delete lines or edit another file
-for a moment.  When the 'viminfo' option is not empty, uppercase marks are
-kept in the .viminfo file.  See |viminfo-file-marks|.
+for a moment.  When the 'shada' option is not empty, uppercase marks are
+kept in the .shada file.  See |shada-file-marks|.
 
 Numbered marks '0 to '9 are quite different.  They can not be set directly.
-They are only present when using a viminfo file |viminfo-file|.  Basically '0
+They are only present when using a shada file |shada-file|.  Basically '0
 is the location of the cursor when you last exited Vim, '1 the last but one
-time, etc.  Use the "r" flag in 'viminfo' to specify files for which no
-Numbered mark should be stored.  See |viminfo-file-marks|.
+time, etc.  Use the "r" flag in 'shada' to specify files for which no
+Numbered mark should be stored.  See |shada-file-marks|.
 
 
 							*'[* *`[*
@@ -879,7 +879,8 @@ was made yet in the current file.
 			for each opened file.
 			Only one position is remembered per buffer, not one
 			for each window.  As long as the buffer is visible in
-			a window the position won't be changed.
+			a window the position won't be changed.  Mark is also 
+			reset when |:wshada| is run.
 
 							*'^* *`^*
 '^  `^			To the position where the cursor was the last time
@@ -1076,8 +1077,8 @@ if you stop editing a file without writing, like with ":n!".
 
 When you split a window, the jumplist will be copied to the new window.
 
-If you have included the ' item in the 'viminfo' option the jumplist will be
-stored in the viminfo file and restored when starting Vim.
+If you have included the ' item in the 'shada' option the jumplist will be
+stored in the ShaDa file and restored when starting Vim.
 
 
 CHANGE LIST JUMPS			*changelist* *change-list-jumps* *E664*

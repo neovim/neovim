@@ -89,8 +89,8 @@ See |encoding-values| for a list of acceptable values.
 
 The result is that all the text that is used inside Vim will be in this
 encoding.  Not only the text in the buffers, but also in registers, variables,
-etc.  This also means that changing the value of 'encoding' makes the existing
-text invalid!  The text doesn't change, but it will be displayed wrong.
+etc. 'encoding' is read-only after startup because changing it would make the
+existing text invalid.
 
 You can edit files in another encoding than what 'encoding' is set to.  Vim
 will convert the file when you read it and convert it back when you write it.
@@ -222,7 +222,7 @@ To use a locale in Vim only, use the |:language| command: >
 
 	:language ko
 
-Put this in your ~/.vimrc file to use it always.
+Put this in your |init.vim| file to use it always.
 
 Or specify $LANG when starting Vim:
 
@@ -387,7 +387,7 @@ Vim will automatically convert from one to another encoding in several places:
   'encoding' (requires a gettext version that supports this).
 - When reading a Vim script where |:scriptencoding| is different from
   'encoding'.
-- When reading or writing a |viminfo| file.
+- When reading or writing a |shada| file.
 Most of these require the |+iconv| feature.  Conversion for reading and
 writing files may also be specified with the 'charconvert' option.
 
@@ -684,7 +684,7 @@ that works well you can use this command to see its name: >
 
 	:set guifont
 
-Then add a command to your |gvimrc| file to set 'guifont': >
+Then add a command to your |ginit.vim| file to set 'guifont': >
 
 	:set guifont=courier_new:h12
 
@@ -928,7 +928,7 @@ Cursor color when IME or XIM is on				*CursorIM*
     This works in the same way when using XIM.
 
     You can select cursor color when status is on by using highlight group
-    CursorIM.  For example, add these lines to your |gvimrc|: >
+    CursorIM.  For example, add these lines to your |ginit.vim|: >
 
 	if has('multi_byte_ime')
 	    highlight Cursor guifg=NONE guibg=Green

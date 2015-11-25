@@ -21,4 +21,9 @@ typedef struct {
   uv_dirent_t ent;  ///< @private The entry information.
 } Directory;
 
+/// Function to convert -errno error to char * error description
+///
+/// -errno errors are returned by a number of os functions.
+#define os_strerror uv_strerror
+
 #endif  // NVIM_OS_FS_DEFS_H

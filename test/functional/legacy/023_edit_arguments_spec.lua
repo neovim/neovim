@@ -1,7 +1,7 @@
 -- Tests for complicated + argument to :edit command
 
 local helpers = require('test.functional.helpers')
-local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
+local clear, insert = helpers.clear, helpers.insert
 local execute, expect = helpers.execute, helpers.expect
 
 describe(':edit', function()

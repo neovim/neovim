@@ -95,13 +95,13 @@ describe('server -> client', function()
         eq('notified!', eval('rpcrequest('..cid..', "notify")'))
       end
 
-      local function on_request(method, args)
+      local function on_request(method)
         eq('notify', method)
         eq(1, eval('rpcnotify('..cid..', "notification")'))
         return 'notified!'
       end
 
-      local function on_notification(method, args)
+      local function on_notification(method)
         eq('notification', method)
         if notified == expected then
           stop()
@@ -118,7 +118,7 @@ describe('server -> client', function()
 
   describe('when the client is a recursive vim instance', function()
     before_each(function()
-      nvim('command', "let vim = rpcstart('"..nvim_prog.."', ['-u', 'NONE', '--embed'])")
+      nvim('command', "let vim = rpcstart('"..nvim_prog.."', ['-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--embed'])")
       neq(0, eval('vim'))
     end)
 

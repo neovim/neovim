@@ -24,11 +24,13 @@ RBuffer *rbuffer_new(size_t capacity)
   rv->size = 0;
   rv->write_ptr = rv->read_ptr = rv->start_ptr;
   rv->end_ptr = rv->start_ptr + capacity;
+  rv->temp = NULL;
   return rv;
 }
 
 void rbuffer_free(RBuffer *buf)
 {
+  xfree(buf->temp);
   xfree(buf);
 }
 
@@ -67,6 +69,23 @@ char *rbuffer_write_ptr(RBuffer *buf, size_t *write_count) FUNC_ATTR_NONNULL_ALL
   }
 
   return buf->write_ptr;
+}
+
+// Reset an RBuffer so read_ptr is at the beginning of the memory. If
+// necessary, this moves existing data by allocating temporary memory.
+void rbuffer_reset(RBuffer *buf) FUNC_ATTR_NONNULL_ALL
+{
+  size_t temp_size;
+  if ((temp_size = rbuffer_size(buf))) {
+    if (buf->temp == NULL) {
+      buf->temp = xmalloc(rbuffer_capacity(buf));
+    }
+    rbuffer_read(buf, buf->temp, buf->size);
+  }
+  buf->read_ptr = buf->write_ptr = buf->start_ptr;
+  if (temp_size) {
+    rbuffer_write(buf, buf->temp, temp_size);
+  }
 }
 
 /// Adjust `rbuffer` write pointer to reflect produced data. This is called

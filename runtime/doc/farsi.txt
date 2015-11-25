@@ -6,10 +6,6 @@
 
 Right to Left and Farsi Mapping for Vim		*farsi* *Farsi*
 
-						*E27*
-In order to use right-to-left and Farsi mapping support, it is necessary to
-compile Vim with the |+farsi| feature.
-
 These functions have been made by Mortaza G. Shiran <shiran@jps.net>
 
 
@@ -126,8 +122,7 @@ o  Setting the Farsi fonts
       ':set guifont=far-a01' in the Vim window.
 
       You can have 'guifont' set to far-a01 by Vim during the Vim startup
-      by appending the ':set guifont=far-a01' into your .vimrc file
-      (in case of NT/95/98 platforms _vimrc).
+      by appending the ':set guifont=far-a01' into your vimrc file.
 
       Under the X Window environment, you can also start Vim with the
       '-fn far-a01' option.
@@ -143,7 +138,7 @@ o  Farsi Keymapping Activation
    To activate the Farsi keymapping, set either 'altkeymap' or 'fkmap'.
    This is done by entering ':set akm' or ':set fk' in the Vim window.
    You can have 'altkeymap' or 'fkmap' set as default by appending ':set akm'
-   or ':set fk' in your .vimrc file or _vimrc in case of NT/95/98 platforms.
+   or ':set fk' in your vimrc file.
 
    To turn off the Farsi keymapping as a default second language keymapping,
    reset the 'altkeymap' by entering ':set noakm'.
@@ -160,8 +155,8 @@ o  right-to-left Farsi Mode
    + While in Left-to-right mode, enter 'set rl' in the command line ('rl' is
      the abbreviation for rightleft).
 
-   + Put the 'set rl' line in your '.vimrc' file to start Vim in
-     right-to-left mode permanently.
+   + Put the 'set rl' line in your vimrc file to start Vim in right-to-left 
+     mode permanently.
 
 Encoding
 --------

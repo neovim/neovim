@@ -7,7 +7,7 @@
 --    it belongs to.
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
+local source = helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 
 describe('location list', function()

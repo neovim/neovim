@@ -4,7 +4,6 @@ local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local execute, expect, eq, eval = helpers.execute, helpers.expect, helpers.eq, helpers.eval
-local nvim, run, stop, restart = helpers.nvim, helpers.run, helpers.stop, helpers.restart
 
 local function basic_register_test(noblock)
   insert("some words")
@@ -92,7 +91,7 @@ end)
 describe('clipboard usage', function()
   before_each(function()
     clear()
-    execute('let &rtp = "test/functional/clipboard,".&rtp')
+    execute('let &rtp = "test/functional/fixtures,".&rtp')
     execute('call getreg("*")') -- force load of provider
   end)
 
@@ -197,6 +196,17 @@ describe('clipboard usage', function()
     expect('some more')
   end)
 
+  it('pastes unnamed register if the provider fails', function()
+    insert('the text')
+    feed('yy')
+    execute("let g:cliperror = 1")
+    feed('"*p')
+    expect([[
+      the text
+      the text]])
+  end)
+
+
   describe('with clipboard=unnamed', function()
     -- the basic behavior of unnamed register should be the same
     -- even when handled by clipboard provider
@@ -221,12 +231,15 @@ describe('clipboard usage', function()
       expect('words')
       eq({{'words'}, 'v'}, eval("g:test_clip['*']"))
 
+      -- "+ shouldn't have changed
+      eq({''}, eval("g:test_clip['+']"))
+
       execute("let g:test_clip['*'] = ['linewise stuff','']")
       feed('p')
       expect([[
         words
         linewise stuff]])
-      end)
+    end)
 
     it('does not clobber "0 when pasting', function()
       insert('a line')
@@ -261,6 +274,91 @@ describe('clipboard usage', function()
       expect("indeed star")
     end)
 
+    it('unamed operations work even if the provider fails', function()
+      insert('the text')
+      feed('yy')
+      execute("let g:cliperror = 1")
+      feed('p')
+      expect([[
+        the text
+        the text]])
+    end)
+
+    it('is updated on global changes', function()
+      insert([[
+	text
+	match
+	match
+	text
+      ]])
+      execute('g/match/d')
+      eq('match\n', eval('getreg("*")'))
+      feed('u')
+      eval('setreg("*", "---")')
+      execute('g/test/')
+      feed('<esc>')
+      eq('---', eval('getreg("*")'))
+    end)
+
+  end)
+
+  describe('with clipboard=unnamedplus', function()
+    before_each(function()
+      execute('set clipboard=unnamedplus')
+    end)
+
+    it('links the "+ and unnamed registers', function()
+      insert("one two")
+      feed('^"+dwdw"+P')
+      expect('two')
+      eq({{'two'}, 'v'}, eval("g:test_clip['+']"))
+
+      -- "* shouldn't have changed
+      eq({''}, eval("g:test_clip['*']"))
+
+      execute("let g:test_clip['+'] = ['three']")
+      feed('p')
+      expect('twothree')
+    end)
+
+    it('and unnamed, yanks to both', function()
+      execute('set clipboard=unnamedplus,unnamed')
+      insert([[
+        really unnamed
+        text]])
+      feed('ggdd"*p"+p')
+      expect([[
+        text
+        really unnamed
+        really unnamed]])
+      eq({{'really unnamed', ''}, 'V'}, eval("g:test_clip['+']"))
+      eq({{'really unnamed', ''}, 'V'}, eval("g:test_clip['*']"))
+
+      -- unnamedplus takes predecence when pasting
+      execute("let g:test_clip['+'] = ['the plus','']")
+      execute("let g:test_clip['*'] = ['the star','']")
+      feed("p")
+      expect([[
+        text
+        really unnamed
+        really unnamed
+        the plus]])
+    end)
+    it('is updated on global changes', function()
+      insert([[
+	text
+	match
+	match
+	text
+      ]])
+      execute('g/match/d')
+      eq('match\n', eval('getreg("+")'))
+      feed('u')
+      eval('setreg("+", "---")')
+      execute('g/test/')
+      feed('<esc>')
+      eq('---', eval('getreg("+")'))
+    end)
   end)
 
   it('supports :put', function()
@@ -301,6 +399,7 @@ describe('clipboard usage', function()
       [2] = {foreground = Screen.colors.Blue},
       [3] = {bold = true, foreground = Screen.colors.SeaGreen}},
       {{bold = true, foreground = Screen.colors.Blue}})
+    feed('<cr>') -- clear out of Press ENTER screen
   end)
 
   it('can paste "* to the commandline', function()
@@ -335,4 +434,34 @@ describe('clipboard usage', function()
       'Howdy!',
     }, 'v'}, eval("g:test_clip['*']"))
   end)
+
+  it('handles middleclick correctly', function()
+    local screen = Screen.new(30, 5)
+    screen:attach()
+    insert([[
+      the source
+      a target]])
+    feed('gg"*ywwyw')
+    -- clicking depends on the exact visual layout, so expect it:
+    screen:expect([[
+      the ^source                    |
+      a target                      |
+      ~                             |
+      ~                             |
+                                    |
+    ]], nil, {{bold = true, foreground = Screen.colors.Blue}})
+
+    feed('<MiddleMouse><0,1>')
+    expect([[
+      the source
+      the a target]])
+
+    -- on error, fall back to unnamed register
+    execute("let g:cliperror = 1")
+    feed('<MiddleMouse><6,1>')
+    expect([[
+      the source
+      the a sourcetarget]])
+  end)
+
 end)

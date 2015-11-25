@@ -120,9 +120,13 @@ static bool is_executable(const char_u *name)
     return false;
   }
 
-  if (S_ISREG(mode) && (S_IXUSR & mode)) {
-    return true;
-  }
+#if WIN32
+  // Windows does not have exec bit; just check if the file exists and is not
+  // a directory.
+  return (S_ISREG(mode));
+#else
+  return (S_ISREG(mode) && (S_IXUSR & mode));
+#endif
 
   return false;
 }
@@ -136,9 +140,8 @@ static bool is_executable(const char_u *name)
 static bool is_executable_in_path(const char_u *name, char_u **abspath)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  const char *path = getenv("PATH");
-  // PATH environment variable does not exist or is empty.
-  if (path == NULL || *path == NUL) {
+  const char *path = os_getenv("PATH");
+  if (path == NULL) {
     return false;
   }
 
@@ -270,13 +273,16 @@ bool os_file_exists(const char_u *name)
   return os_stat((char *)name, &statbuf);
 }
 
-/// Check if a file is readonly.
+/// Check if a file is readable.
 ///
-/// @return `true` if `name` is readonly.
-bool os_file_is_readonly(const char *name)
-  FUNC_ATTR_NONNULL_ALL
+/// @return true if `name` is readable, otherwise false.
+bool os_file_is_readable(const char *name)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return access(name, W_OK) != 0;
+  uv_fs_t req;
+  int r = uv_fs_access(&fs_loop, &req, name, R_OK, NULL);
+  uv_fs_req_cleanup(&req);
+  return (r == 0);
 }
 
 /// Check if a file is writable.
@@ -285,13 +291,13 @@ bool os_file_is_readonly(const char *name)
 /// @return `1` if `name` is writable,
 /// @return `2` for a directory which we have rights to write into.
 int os_file_is_writable(const char *name)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (access(name, W_OK) == 0) {
-    if (os_isdir((char_u *)name)) {
-      return 2;
-    }
-    return 1;
+  uv_fs_t req;
+  int r = uv_fs_access(&fs_loop, &req, name, W_OK, NULL);
+  uv_fs_req_cleanup(&req);
+  if (r == 0) {
+    return os_isdir((char_u *)name) ? 2 : 1;
   }
   return 0;
 }
@@ -316,7 +322,7 @@ int os_rename(const char_u *path, const char_u *new_path)
 
 /// Make a directory.
 ///
-/// @return `0` for success, non-zero for failure.
+/// @return `0` for success, -errno for failure.
 int os_mkdir(const char *path, int32_t mode)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -324,6 +330,60 @@ int os_mkdir(const char *path, int32_t mode)
   int result = uv_fs_mkdir(&fs_loop, &request, path, mode, NULL);
   uv_fs_req_cleanup(&request);
   return result;
+}
+
+/// Make a directory, with higher levels when needed
+///
+/// @param[in]  dir  Directory to create.
+/// @param[in]  mode  Permissions for the newly-created directory.
+/// @param[out]  failed_dir  If it failed to create directory, then this
+///                          argument is set to an allocated string containing
+///                          the name of the directory which os_mkdir_recurse
+///                          failed to create. I.e. it will contain dir or any
+///                          of the higher level directories.
+///
+/// @return `0` for success, -errno for failure.
+int os_mkdir_recurse(const char *const dir, int32_t mode,
+                     char **const failed_dir)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  // Get end of directory name in "dir".
+  // We're done when it's "/" or "c:/".
+  const size_t dirlen = strlen(dir);
+  char *const curdir = xmemdupz(dir, dirlen);
+  char *const past_head = (char *) get_past_head((char_u *) curdir);
+  char *e = curdir + dirlen;
+  const char *const real_end = e;
+  const char past_head_save = *past_head;
+  while (!os_isdir((char_u *) curdir)) {
+    e = (char *) path_tail_with_sep((char_u *) curdir);
+    if (e <= past_head) {
+      *past_head = NUL;
+      break;
+    }
+    *e = NUL;
+  }
+  while (e != real_end) {
+    if (e > past_head) {
+      *e = PATHSEP;
+    } else {
+      *past_head = past_head_save;
+    }
+    const size_t component_len = strlen(e);
+    e += component_len;
+    if (e == real_end
+        && memcnt(e - component_len, PATHSEP, component_len) == component_len) {
+      // Path ends with something like "////". Ignore this.
+      break;
+    }
+    int ret;
+    if ((ret = os_mkdir(curdir, mode)) != 0) {
+      *failed_dir = curdir;
+      return ret;
+    }
+  }
+  xfree(curdir);
+  return 0;
 }
 
 /// Create a unique temporary directory.
@@ -366,10 +426,10 @@ bool os_scandir(Directory *dir, const char *path)
   FUNC_ATTR_NONNULL_ALL
 {
   int r = uv_fs_scandir(&fs_loop, &dir->request, path, 0, NULL);
-  if (r <= 0) {
+  if (r < 0) {
     os_closedir(dir);
   }
-  return r > 0;
+  return r >= 0;
 }
 
 /// Increments the directory pointer.

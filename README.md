@@ -29,10 +29,12 @@ For lots more details, see
 
 ### What's been done so far
 
-- [Terminal emulator](http://neovim.io/doc/user/nvim_terminal_emulator.html)
-- [Job control](https://github.com/neovim/neovim/pull/2247)
-- MessagePack-based remote API
-- Performance, reliability, portability
+- Automatic [history merge](https://github.com/neovim/neovim/pull/2506) between multiple editor instances
+- [XDG-compliant](https://github.com/neovim/neovim/pull/3470) configuration
+- Embedded [terminal emulator](https://neovim.io/doc/user/nvim_terminal_emulator.html)
+- Asynchronous [job control](https://github.com/neovim/neovim/pull/2247)
+- [MessagePack](https://msgpack.org) remote API
+- [Pushdown automaton](https://github.com/neovim/neovim/pull/3413) for state transitions
 
 See the [progress page](https://github.com/neovim/neovim/wiki/Progress) for a comprehensive list.
 
@@ -58,8 +60,8 @@ more. See [the wiki](https://github.com/neovim/neovim/wiki/Installing-Neovim)!
 Neovim is licensed under the terms of the Apache 2.0 license, except for
 parts that were contributed under the Vim license.
 
-- Contributions committed before [b17d96][license-commit] by authors who did
-  not sign the Contributor License Agreement (CLA) remain under the Vim license.
+- Contributions committed before [b17d96][license-commit] remain under the Vim
+  license.
 
 - Contributions committed after [b17d96][license-commit] are licensed under
   Apache 2.0 unless those contributions were copied from Vim (identified in

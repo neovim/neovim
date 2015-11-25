@@ -1,6 +1,6 @@
 let s:hosts = {}
 let s:plugin_patterns = {}
-let s:remote_plugins_manifest = fnamemodify($MYVIMRC, ':p:h')
+let s:remote_plugins_manifest = fnamemodify(expand($MYVIMRC, 1), ':h')
       \.'/.'.fnamemodify($MYVIMRC, ':t').'-rplugin~'
 
 
@@ -81,7 +81,7 @@ function! remote#host#RegisterPlugin(host, path, specs)
     endif
   endfor
 
-  if remote#host#IsRunning(a:host)
+  if has_key(s:hosts, a:host) && remote#host#IsRunning(a:host)
     " For now we won't allow registration of plugins when the host is already
     " running.
     throw 'Host "'.a:host.'" is already running'
@@ -197,7 +197,7 @@ function! s:RequirePythonHost(host)
   let ver = (a:host.orig_name ==# 'python') ? 2 : 3
 
   " Python host arguments
-  let args = ['-c', 'import neovim; neovim.start_host()']
+  let args = ['-c', 'import sys; sys.path.remove(""); import neovim; neovim.start_host()']
 
   " Collect registered Python plugins into args
   let python_plugins = remote#host#PluginsForHost(a:host.name)

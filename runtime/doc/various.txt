@@ -33,7 +33,7 @@ CTRL-L			Clear and redraw the screen.  The redraw may happen
 							*N<Del>*
 <Del>			When entering a number: Remove the last digit.
 			Note: if you like to use <BS> for this, add this
-			mapping to your .vimrc: >
+			mapping to your vimrc: >
 				:map CTRL-V <BS>   CTRL-V <Del>
 <
 :as[cii]	or					*ga* *:as* *:ascii*
@@ -89,13 +89,6 @@ g8			Print the hex values of the bytes used in the
 :[range]p[rint] {count} [flags]
 			Print {count} lines, starting with [range] (default
 			current line |cmdline-ranges|).
-			See |ex-flags| for [flags].
-
-							*:P* *:Print*
-:[range]P[rint] [count] [flags]
-			Just as ":print".  Was apparently added to Vi for
-			people that keep the shift key pressed too long...
-			Note: A user command can overrule this command.
 			See |ex-flags| for [flags].
 
 							*:l* *:list*
@@ -213,14 +206,13 @@ g8			Print the hex values of the bytes used in the
 						  *:sh* *:shell* *E371* *E360*
 :sh[ell]		Removed. |vim-differences| {Nvim}
 
-						  *:term* *:terminal*
-:term[inal][!] {cmd}	Spawns {cmd} using the current value of 'shell' and
+						  *:terminal* *:te*
+:te[rminal][!] {cmd}	Spawns {cmd} using the current value of 'shell' and
 			'shellcmdflag' in a new terminal buffer.  This is
 			equivalent to: >
 
 			      :enew
-			      :call termopen([&sh, &shcf, '{cmd}'],
-			                    \{'name':'{cmd}'})
+			      :call termopen('{cmd}')
 			      :startinsert
 <
 			If no {cmd} is given, 'shellcmdflag' will not be sent
@@ -340,7 +332,6 @@ N  *+find_in_path*	include file searches: |[I|, |:isearch|,
 			|CTRL-W_CTRL-I|, |:checkpath|, etc.
 N  *+folding*		|folding|
    *+footer*		|gui-footer|
-   *+fork*		Unix only: |fork| shell commands
 N  *+gettext*		message translations |multi-lang|
    *+GUI_Athena*	Unix only: Athena |GUI|
    *+GUI_neXtaw*	Unix only: neXtaw |GUI|
@@ -378,13 +369,13 @@ N  *+reltime*		|reltime()| function, 'hlsearch'/'incsearch' timeout,
 			'redrawtime' option
 B  *+rightleft*		Right to left typing |'rightleft'|
 N  *+scrollbind*	|'scrollbind'|
+N  *+shada*		|'shada'|
 B  *+signs*		|:sign|
 N  *+smartindent*	|'smartindent'|
 N  *+startuptime*	|--startuptime| argument
 N  *+statusline*	Options 'statusline', 'rulerformat' and special
 			formats of 'titlestring' and 'iconstring'
 N  *+syntax*		Syntax highlighting |syntax|
-   *+system()*		Unix only: opposite of |+fork|
 N  *+tag_binary*	binary searching in tags file |tag-binary-search|
 N  *+tag_old_static*	old method for static tags |tag-old-static|
 m  *+tag_any_white*	any white space allowed in tags file |tag-any-white|
@@ -395,7 +386,6 @@ N  *+textobjects*	|text-objects| selection
 N  *+title*		Setting the window 'title' and 'icon'
 N  *+toolbar*		|gui-toolbar|
 N  *+user_commands*	User-defined commands. |user-commands|
-N  *+viminfo*		|'viminfo'|
 N  *+vertsplit*		Vertically split windows |:vsplit|
 N  *+virtualedit*	|'virtualedit'|
 S  *+visual*		Visual mode |Visual-mode| Always enabled since 7.4.200.
@@ -550,7 +540,7 @@ which it was defined is reported.
 {not available when compiled without the |+eval| feature}
 
 							*K*
-K			Run a program to lookup the keyword under the
+[count]K       		Run a program to lookup the keyword under the
 			cursor.  The name of the program is given with the
 			'keywordprg' (kp) option (default is "man").  The
 			keyword is formed of letters, numbers and the
@@ -558,19 +548,18 @@ K			Run a program to lookup the keyword under the
 			right of the cursor is used.  The same can be done
 			with the command >
 				:!{program} {keyword}
-<			There is an example of a program to use in the tools
-			directory of Vim.  It is called 'ref' and does a
-			simple spelling check.
-			Special cases:
+<			Special cases:
+			- If 'keywordprg' begins with ":" it is invoked as
+			  a Vim command with [count].
 			- If 'keywordprg' is empty, the ":help" command is
 			  used.  It's a good idea to include more characters
 			  in 'iskeyword' then, to be able to find more help.
-			- When 'keywordprg' is equal to "man", a count before
-			  "K" is inserted after the "man" command and before
-			  the keyword.  For example, using "2K" while the
-			  cursor is on "mkdir", results in: >
+			- When 'keywordprg' is equal to "man", a [count]
+			  before "K" is inserted after the "man" command and
+			  before the keyword.  For example, using "2K" while
+			  the cursor is on "mkdir", results in: >
 				!man 2 mkdir
-<			- When 'keywordprg' is equal to "man -s", a count
+<			- When 'keywordprg' is equal to "man -s", a [count]
 			  before "K" is inserted after the "-s".  If there is
 			  no count, the "-s" is removed.
 

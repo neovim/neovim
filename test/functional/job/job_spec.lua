@@ -1,11 +1,12 @@
 
 local helpers = require('test.functional.helpers')
-local clear, eq, eval, execute, expect, feed, insert, neq, next_msg, nvim,
-  nvim_dir, ok, run, session, source, stop, wait, write_file = helpers.clear,
-  helpers.eq, helpers.eval, helpers.execute, helpers.expect, helpers.feed,
+local clear, eq, eval, execute, feed, insert, neq, next_msg, nvim,
+  nvim_dir, ok, source, write_file = helpers.clear,
+  helpers.eq, helpers.eval, helpers.execute, helpers.feed,
   helpers.insert, helpers.neq, helpers.next_message, helpers.nvim,
-  helpers.nvim_dir, helpers.ok, helpers.run, helpers.session, helpers.source,
-  helpers.stop, helpers.wait, helpers.write_file
+  helpers.nvim_dir, helpers.ok, helpers.source,
+  helpers.write_file
+local Screen = require('test.functional.ui.screen')
 
 
 describe('jobs', function()
@@ -188,6 +189,41 @@ describe('jobs', function()
     eq({'notification', 'exit', {45, 10}}, next_msg())
   end)
 
+  it('cant redefine callbacks being used by a job', function()
+    local screen = Screen.new()
+    screen:attach()
+    local script = [[
+      function! g:JobHandler(job_id, data, event)
+      endfunction
+
+      let g:callbacks = {
+      \ 'on_stdout': function('g:JobHandler'),
+      \ 'on_stderr': function('g:JobHandler'),
+      \ 'on_exit': function('g:JobHandler')
+      \ }
+      let job = jobstart('cat -', g:callbacks)
+    ]]
+    source(script)
+    feed(':function! g:JobHandler(job_id, data, event)<cr>')
+    feed(':endfunction<cr>')
+    screen:expect([[
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      ~                                                    |
+      :function! g:JobHandler(job_id, data, event)         |
+      :  :endfunction                                      |
+      E127: Cannot redefine function JobHandler: It is in u|
+      se                                                   |
+      Press ENTER or type command to continue^              |
+    ]])
+  end)
+
   describe('jobwait', function()
     it('returns a list of status codes', function()
       source([[
@@ -304,7 +340,7 @@ describe('jobs', function()
         source([[
         call rpcnotify(g:channel, 'wait', jobwait([
         \  jobstart([&sh, '-c', 'exit 4']),
-        \  jobstart([&sh, '-c', 'sleep 10000; exit 5']),
+        \  jobstart([&sh, '-c', 'sleep 10; exit 5']),
         \  ], 100))
         ]])
         eq({'notification', 'wait', {{4, -1}}}, next_msg())
@@ -334,7 +370,7 @@ describe('jobs', function()
 
   describe('running tty-test program', function()
     local function next_chunk()
-      local rv = ''
+      local rv
       while true do
         local msg = next_msg()
         local data = msg[3][2]

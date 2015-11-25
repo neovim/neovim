@@ -28,6 +28,7 @@ function(BuildLibuv)
       -DURL=${LIBUV_URL}
       -DEXPECTED_SHA256=${LIBUV_SHA256}
       -DTARGET=${_libuv_TARGET}
+      -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND "${_libuv_CONFIGURE_COMMAND}"
     BUILD_COMMAND "${_libuv_BUILD_COMMAND}"
@@ -42,18 +43,18 @@ set(UNIX_CFGCMD sh ${DEPS_BUILD_DIR}/src/libuv/autogen.sh &&
 if(UNIX)
   BuildLibUv(
     CONFIGURE_COMMAND ${UNIX_CFGCMD}
-    INSTALL_COMMAND ${MAKE_PRG} install)
+    INSTALL_COMMAND ${MAKE_PRG} V=1 install)
 
 elseif(MINGW AND CMAKE_CROSSCOMPILING)
   # Build libuv for the host
   BuildLibUv(TARGET libuv_host
     CONFIGURE_COMMAND sh ${DEPS_BUILD_DIR}/src/libuv_host/autogen.sh && ${DEPS_BUILD_DIR}/src/libuv_host/configure --with-pic --disable-shared --prefix=${HOSTDEPS_INSTALL_DIR} CC=${HOST_C_COMPILER}
-    INSTALL_COMMAND ${MAKE_PRG} install)
+    INSTALL_COMMAND ${MAKE_PRG} V=1 install)
 
   # Build libuv for the target
   BuildLibUv(
     CONFIGURE_COMMAND ${UNIX_CFGCMD} --host=${CROSS_TARGET}
-    INSTALL_COMMAND ${MAKE_PRG} install)
+    INSTALL_COMMAND ${MAKE_PRG} V=1 install)
 
 
 elseif(WIN32 AND MSVC)

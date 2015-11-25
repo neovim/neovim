@@ -1,4 +1,4 @@
-*windows.txt*   For Vim version 7.4.  Last change: 2014 Sep 23
+*windows.txt*   For Vim version 7.4.  Last change: 2014 Dec 05
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -53,7 +53,7 @@ hidden:   The buffer is not displayed.  If there is a file for this buffer, it
 							*inactive-buffer*
 inactive: The buffer is not displayed and does not contain anything.  Options
 	  for the buffer are remembered if the file was once loaded.  It can
-	  contain marks from the |viminfo| file.  But the buffer doesn't
+	  contain marks from the |shada| file.  But the buffer doesn't
 	  contain text.
 
 In a table:
@@ -280,7 +280,7 @@ CTRL-W CTRL-Q						*CTRL-W_CTRL-Q*
 			    " if there are less than 9 windows opened
 		    :-quit  " quit the previous window
 		    :+quit  " quit the next window
-		    :+2quit " will also work as expected
+		    :+2quit " quit the second next window
 <
 :q[uit]!
 :{count}q[uit]!
@@ -324,9 +324,9 @@ CTRL-W CTRL-C						*CTRL-W_CTRL-C*
 		screen. For {count} see |:quit|.
 
 		The buffer becomes hidden (unless there is another window
-		editing it or 'bufhidden' is `unload` or `delete`). If the
-		window is the last one in the current tab page the tab page is
-		closed. |tab-page|
+		editing it or 'bufhidden' is `unload`, `delete` or `wipe`).
+		If the window is the last one in the current tab page the tab
+		page is closed. |tab-page|
 
 		The value of 'hidden' is irrelevant for this command.
 		Changes to the buffer are not written and won't get lost, so
@@ -477,7 +477,6 @@ CTRL-W H	Move the current window to be at the far left, using the
 		current window and then creating another one with
 		":vert topleft split", except that the current window contents
 		is used for the new window.
-		{not available when compiled without the |+vertsplit| feature}
 
 						*CTRL-W_L*
 CTRL-W L	Move the current window to be at the far right, using the full
@@ -485,7 +484,6 @@ CTRL-W L	Move the current window to be at the far right, using the full
 		current window and then creating another one with
 		":vert botright split", except that the current window
 		contents is used for the new window.
-		{not available when compiled without the |+vertsplit| feature}
 
 						*CTRL-W_T*
 CTRL-W T	Move the current window to a new tab page.  This fails if
@@ -973,9 +971,10 @@ A buffer can also be unlisted.  This means it exists, but it is not in the
 list of buffers. |unlisted-buffer|
 
 
-:files[!]					*:files*
-:buffers[!]					*:buffers* *:ls*
-:ls[!]		Show all buffers.  Example:
+:files[!] [flags]				*:files*
+:buffers[!] [flags]				*:buffers* *:ls*
+:ls[!] [flags]
+		Show all buffers.  Example:
 
 			1 #h   "/test/text"		line 1 ~
 			2u     "asdf"			line 0 ~
@@ -1000,6 +999,21 @@ list of buffers. |unlisted-buffer|
 		   =	a readonly buffer
 		    +	a modified buffer
 		    x   a buffer with read errors
+
+		[flags] can be a combination of the following characters,
+		which restrict the buffers to be listed:
+			+	modified buffers
+			-	buffers with 'modifiable' off
+			=	readonly buffers
+			a	active buffers
+			u	unlisted buffers (overrides the "!")
+			h	hidden buffers
+			x	buffers with a read error
+			%	current buffer
+			#	alternate buffer
+		Combining flags means they are "and"ed together, e.g.:
+			h+	hidden buffers which are modified
+			a+	active buffers which are modified
 
 						*:bad* *:badd*
 :bad[d]	[+lnum] {fname}

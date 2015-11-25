@@ -72,6 +72,8 @@ struct rbuffer {
   rbuffer_callback full_cb, nonfull_cb;
   void *data;
   size_t size;
+  // helper memory used to by rbuffer_reset if required
+  char *temp;
   char *end_ptr, *read_ptr, *write_ptr;
   char start_ptr[];
 };

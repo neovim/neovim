@@ -569,7 +569,10 @@ list of the current window.
 			Also see |++opt| and |+cmd|.
 
 :[count]arga[dd] {name} ..			*:arga* *:argadd* *E479*
-			Add the {name}s to the argument list.
+:[count]arga[dd]
+			Add the {name}s to the argument list.  When {name} is
+			omitted add the current buffer name to the argument
+			list.
 			If [count] is omitted, the {name}s are added just
 			after the current entry in the argument list.
 			Otherwise they are added after the [count]'th file.
@@ -579,7 +582,8 @@ list of the current window.
 				:argadd x	a b x c
 				:0argadd x	x a b c
 				:1argadd x	a x b c
-				:99argadd x	a b c x
+				:$argadd x	a b c x
+				:+2argadd y	a b c x y
 			There is no check for duplicates, it is possible to
 			add a file to the argument list twice.
 			The currently edited file is not changed.
@@ -597,11 +601,19 @@ list of the current window.
 			Example: >
 				:argdel *.obj
 
-:{range}argd[elete]	Delete the {range} files from the argument list.
+:[range]argd[elete]	Delete the {range} files from the argument list.
+			Example: >
+				:10,$argdel
+<			Deletes arguments 10 and further, keeping 1-9. >
+				:$argd
+<			Deletes just the last one. >
+				:argd
+				:.argd
+<			Deletes the current argument. >
+				:%argd
+<			Removes all the files from the arglist.
 			When the last number in the range is too high, up to
-			the last argument is deleted.  Example: >
-				:10,1000argdel
-<			Deletes arguments 10 and further, keeping 1-9.
+			the last argument is deleted.
 
 							*:argu* *:argument*
 :[count]argu[ment] [count] [++opt] [+cmd]
@@ -1018,7 +1030,7 @@ The names can be in upper- or lowercase.
 
 :q[uit]!		Quit without writing, also when currently visible
 			buffers have changes.  Does not exit when this is the
-			last window and there are is a changed hidden buffer.
+			last window and there is a changed hidden buffer.
 			In this case, the first changed hidden buffer becomes
 			the current buffer.
 			Use ":qall!" to exit always.
@@ -1129,8 +1141,8 @@ If you want to always use ":confirm", set the 'confirm' option.
 			|:mkvimrc|, |:mksession|, |:mkview|, |:split|,
 			|:vsplit|, |:tabe|, |:tabnew|, |:cfile|, |:cgetfile|,
 			|:caddfile|, |:lfile|, |:lgetfile|, |:laddfile|,
-			|:diffsplit|, |:diffpatch|, |:open|, |:pedit|,
-			|:redir|, |:source|, |:update|, |:visual|, |:vsplit|,
+			|:diffsplit|, |:diffpatch|, |:pedit|, |:redir|,
+			|:source|, |:update|, |:visual|, |:vsplit|,
 			and |:qall| if 'confirm' is set.
 			{only in Win32, Athena, Motif, GTK and Mac GUI}
 			When ":browse" is not possible you get an error

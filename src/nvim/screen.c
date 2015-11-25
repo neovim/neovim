@@ -3,7 +3,7 @@
  *
  * Do ":help uganda"  in Vim to read copying and usage conditions.
  * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
+ * See README.md for an overview of the Vim source code.
  */
 
 /*
@@ -161,11 +161,6 @@ static schar_T  *current_ScreenLine;
 # include "screen.c.generated.h"
 #endif
 #define SEARCH_HL_PRIORITY 0
-
-//signs column
-
-/* Ugly global: overrule attribute used by screen_char() */
-static int screen_char_attr = 0;
 
 /*
  * Redraw the current window later, with update_screen(type).
@@ -1951,6 +1946,28 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
     }
   }
 
+  // Show colorcolumn in the fold line, but let cursorcolumn override it.
+  if (wp->w_p_cc_cols) {
+    int i = 0;
+    int j = wp->w_p_cc_cols[i];
+    int old_txtcol = txtcol;
+
+    while (j > -1) {
+      txtcol += j;
+      if (wp->w_p_wrap) {
+        txtcol -= wp->w_skipcol;
+      } else {
+        txtcol -= wp->w_leftcol;
+      }
+      if (txtcol >= 0 && txtcol < wp->w_width) {
+        ScreenAttrs[off + txtcol] =
+          hl_combine_attr(ScreenAttrs[off + txtcol], hl_attr(HLF_MC));
+      }
+      txtcol = old_txtcol;
+      j = wp->w_p_cc_cols[++i];
+    }
+  }
+
   /* Show 'cursorcolumn' in the fold line. */
   if (wp->w_p_cuc) {
     txtcol += wp->w_virtcol;
@@ -1975,7 +1992,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
       && lnume >= curwin->w_cursor.lnum) {
     curwin->w_cline_row = row;
     curwin->w_cline_height = 1;
-    curwin->w_cline_folded = TRUE;
+    curwin->w_cline_folded = true;
     curwin->w_valid |= (VALID_CHEIGHT|VALID_CROW);
   }
 }
@@ -3849,7 +3866,7 @@ win_line (
       if (wp == curwin && lnum == curwin->w_cursor.lnum) {
         curwin->w_cline_row = startrow;
         curwin->w_cline_height = row - startrow;
-        curwin->w_cline_folded = FALSE;
+        curwin->w_cline_folded = false;
         curwin->w_valid |= (VALID_CHEIGHT|VALID_CROW);
       }
 
@@ -5696,10 +5713,7 @@ static void screen_char(unsigned off, int row, int col)
   /*
    * Stop highlighting first, so it's easier to move the cursor.
    */
-  if (screen_char_attr != 0)
-    attr = screen_char_attr;
-  else
-    attr = ScreenAttrs[off];
+  attr = ScreenAttrs[off];
   if (screen_attr != attr)
     screen_stop_highlight();
 

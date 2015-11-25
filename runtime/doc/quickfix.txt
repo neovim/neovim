@@ -273,9 +273,9 @@ deleted for some reason, the message "line changed" is shown to warn you that
 the error location may not be correct.  If you quit Vim and start again the
 marks are lost and the error locations may not be correct anymore.
 
-If vim is built with |+autocmd| support, two autocommands are available for
-running commands before and after a quickfix command (':make', ':grep' and so
-on) is executed. See |QuickFixCmdPre| and |QuickFixCmdPost| for details.
+Two autocommands are available for running commands before and after a
+quickfix command (':make', ':grep' and so on) is executed. See
+|QuickFixCmdPre| and |QuickFixCmdPost| for details.
 
 						*QuickFixCmdPost-example*
 When 'encoding' differs from the locale, the error messages may have a
@@ -440,8 +440,8 @@ lists, use ":cnewer 99" first.
 4. Using :make						*:make_makeprg*
 
 							*:mak* *:make*
-:mak[e][!] [arguments]	1. If vim was built with |+autocmd|, all relevant
-			   |QuickFixCmdPre| autocommands are executed.
+:mak[e][!] [arguments]	1. All relevant |QuickFixCmdPre| autocommands are
+			   executed.
 			2. If the 'autowrite' option is on, write any changed
 			   buffers
 			3. An errorfile name is made from 'makeef'.  If
@@ -453,9 +453,8 @@ lists, use ":cnewer 99" first.
 			   errorfile (for Unix it is also echoed on the
 			   screen).
 			5. The errorfile is read using 'errorformat'.
-			6. If vim was built with |+autocmd|, all relevant
-			   |QuickFixCmdPost| autocommands are executed.
-			   See example below.
+			6. All relevant |QuickFixCmdPost| autocommands are
+			   executed. See example below.
 			7. If [!] is not given the first error is jumped to.
 			8. The errorfile is deleted.
 			9. You can now move through the errors with commands
@@ -1278,7 +1277,7 @@ Jikes(TM), a source-to-bytecode Java compiler published by IBM Research,
 produces simple multi-line error messages.
 
 An 'errorformat' string matching the produced messages is shown below.
-The following lines can be placed in the user's |vimrc| to overwrite Vim's
+The following lines can be placed in the user's |init.vim| to overwrite Vim's
 recognized default formats, or see |:set+=| how to install this format
 additionally to the default. >
 

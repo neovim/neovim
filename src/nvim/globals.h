@@ -28,6 +28,7 @@
 #include "nvim/menu.h"
 #include "nvim/syntax_defs.h"
 #include "nvim/types.h"
+#include "nvim/event/loop.h"
 
 /*
  * definition of global variables
@@ -58,7 +59,7 @@
 /* Values for "starting" */
 #define NO_SCREEN       2       /* no screen updating yet */
 #define NO_BUFFERS      1       /* not all buffers loaded yet */
-/*			0	   not starting anymore */
+/*                      0          not starting anymore */
 
 /*
  * Number of Rows and Columns in the screen.
@@ -67,12 +68,16 @@
  * They may have different values when the screen wasn't (re)allocated yet
  * after setting Rows or Columns (e.g., when starting up).
  */
+
+#define DFLT_COLS       80              /* default value for 'columns' */
+#define DFLT_ROWS       24              /* default value for 'lines' */
+
 EXTERN long Rows                        /* nr of rows in the screen */
 #ifdef DO_INIT
-  = 24L
+  = DFLT_ROWS
 #endif
 ;
-EXTERN long Columns INIT(= 80);         /* nr of columns in the screen */
+EXTERN long Columns INIT(= DFLT_COLS);         /* nr of columns in the screen */
 
 /*
  * The characters and attributes cached for the screen.
@@ -514,8 +519,6 @@ EXTERN int sys_menu INIT(= FALSE);
  * ('lines' and 'rows') must not be changed. */
 EXTERN int updating_screen INIT(= FALSE);
 
-
-
 /*
  * All windows are linked in a list. firstwin points to the first entry,
  * lastwin to the last entry (can be the same as firstwin) and curwin to the
@@ -629,6 +632,10 @@ EXTERN int sandbox INIT(= 0);
 EXTERN int silent_mode INIT(= FALSE);
 /* set to TRUE when "-s" commandline argument
  * used for ex */
+
+// Set to true when sourcing of startup scripts (init.vim) is done.
+// Used for options that cannot be changed after startup scripts.
+EXTERN bool did_source_startup_scripts INIT(= false);
 
 EXTERN pos_T VIsual;            /* start position of active Visual selection */
 EXTERN int VIsual_active INIT(= FALSE);
@@ -816,6 +823,8 @@ EXTERN int no_u_sync INIT(= 0);         /* Don't call u_sync() */
 EXTERN int u_sync_once INIT(= 0);       /* Call u_sync() once when evaluating
                                            an expression. */
 
+EXTERN bool force_restart_edit INIT(= false);  // force restart_edit after
+                                               // ex_normal returns
 EXTERN int restart_edit INIT(= 0);      /* call edit when next cmd finished */
 EXTERN int arrow_used;                  /* Normally FALSE, set to TRUE after
                                          * hitting cursor key in insert mode.
@@ -882,8 +891,8 @@ EXTERN int must_redraw INIT(= 0);           /* type of redraw necessary */
 EXTERN int skip_redraw INIT(= FALSE);       /* skip redraw once */
 EXTERN int do_redraw INIT(= FALSE);         /* extra redraw once */
 
-EXTERN int need_highlight_changed INIT(= TRUE);
-EXTERN char_u   *use_viminfo INIT(= NULL);  /* name of viminfo file to use */
+EXTERN int need_highlight_changed INIT(= true);
+EXTERN char *used_shada_file INIT(= NULL);  // name of the ShaDa file to use
 
 #define NSCRIPT 15
 EXTERN FILE     *scriptin[NSCRIPT];         /* streams to read script from */
@@ -893,14 +902,6 @@ EXTERN FILE     *scriptout INIT(= NULL);    /* stream to write script to */
 /* volatile because it is used in signal handler catch_sigint(). */
 EXTERN volatile int got_int INIT(= FALSE);    /* set to TRUE when interrupt
                                                  signal occurred */
-EXTERN int disable_breakcheck INIT(= 0);    // > 0 if breakchecks should be 
-                                            // ignored. FIXME(tarruda): Hacky
-                                            // way to run functions that would
-                                            // result in *_breakcheck calls
-                                            // while events that would normally
-                                            // be deferred are being processed
-                                            // immediately. Ref:
-                                            // neovim/neovim#2371
 EXTERN int bangredo INIT(= FALSE);          /* set to TRUE with ! command */
 EXTERN int searchcmdlen;                    /* length of previous search cmd */
 EXTERN int reg_do_extmatch INIT(= 0);       /* Used when compiling regexp:
@@ -1083,6 +1084,8 @@ EXTERN garray_T error_ga
  * Excluded are errors that are only used once and debugging messages.
  */
 EXTERN char_u e_abort[] INIT(= N_("E470: Command aborted"));
+EXTERN char_u e_afterinit[] INIT(= N_(
+        "E905: Cannot set this option after startup"));
 EXTERN char_u e_api_spawn_failed[] INIT(= N_("E903: Could not spawn API job"));
 EXTERN char_u e_argreq[] INIT(= N_("E471: Argument required"));
 EXTERN char_u e_backslash[] INIT(= N_("E10: \\ should be followed by /, ? or &"));
@@ -1110,8 +1113,11 @@ EXTERN char_u e_isadir2[] INIT(= N_("E17: \"%s\" is a directory"));
 EXTERN char_u e_invjob[] INIT(= N_("E900: Invalid job id"));
 EXTERN char_u e_jobtblfull[] INIT(= N_("E901: Job table is full"));
 EXTERN char_u e_jobexe[] INIT(= N_("E902: \"%s\" is not an executable"));
+EXTERN char_u e_jobspawn[] INIT(= N_(
+      "E903: Process for command \"%s\" could not be spawned"));
 EXTERN char_u e_jobnotpty[] INIT(= N_("E904: Job is not connected to a pty"));
 EXTERN char_u e_libcall[] INIT(= N_("E364: Library call failed for \"%s()\""));
+EXTERN char_u e_mkdir[] INIT(= N_("E739: Cannot create directory %s: %s"));
 EXTERN char_u e_markinval[] INIT(= N_("E19: Mark has invalid line number"));
 EXTERN char_u e_marknotset[] INIT(= N_("E20: Mark not set"));
 EXTERN char_u e_modifiable[] INIT(= N_(
@@ -1216,6 +1222,7 @@ EXTERN char *ignoredp;
 
 // If a msgpack-rpc channel should be started over stdin/stdout
 EXTERN bool embedded_mode INIT(= false);
+EXTERN Loop loop;
 
 /// Used to track the status of external functions.
 /// Currently only used for iconv().

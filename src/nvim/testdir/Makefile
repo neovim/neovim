@@ -12,21 +12,21 @@ SCRIPTS := test_eval.out                                               \
            test11.out  test12.out  test13.out  test14.out              \
                        test17.out                                      \
                                                test24.out              \
-           test26.out  test27.out                          test30.out  \
+                                                           test30.out  \
                        test32.out              test34.out              \
            test36.out  test37.out              test39.out  test40.out  \
-                       test42.out  test43.out              test45.out  \
-           test46.out  test47.out  test48.out  test49.out              \
+                       test42.out                          test45.out  \
+                       test47.out  test48.out  test49.out              \
                        test52.out  test53.out              test55.out  \
-                       test57.out  test58.out  test59.out              \
-                       test62.out  test63.out  test64.out              \
+                                               test64.out              \
                                    test68.out  test69.out              \
-           test71.out              test73.out                          \
-                                               test79.out  test80.out  \
+                                   test73.out                          \
+                                               test79.out              \
                                    test83.out                          \
-           test86.out  test87.out  test88.out                          \
+                                   test88.out                          \
            test_listlbr.out                                            \
            test_breakindent.out                                        \
+           test_charsearch.out                                         \
            test_close_count.out                                        \
            test_command_count.out                                      \
 
@@ -143,8 +143,6 @@ test1.out: .gdbinit test1.in
 	-rm -rf X* test.ok viminfo
 
 test49.out: test49.vim
-
-test60.out: test60.vim
 
 nolog:
 	-rm -f test.log

@@ -1,4 +1,4 @@
-*eval.txt*	For Vim version 7.4.  Last change: 2014 Nov 15
+*eval.txt*	For Vim version 7.4.  Last change: 2014 Nov 27
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -391,7 +391,7 @@ example, to add up all the numbers in a list: >
 
 
 1.4 Dictionaries ~
-					*dict* *Dictionaries* *Dictionary*
+				 *Dict* *dict* *Dictionaries* *Dictionary*
 A Dictionary is an associative array: Each entry has a key and a value.  The
 entry can be located with the key.  The entries are stored without a specific
 ordering.
@@ -557,9 +557,9 @@ Functions that can be used with a Dictionary: >
 If you need to know the type of a variable or expression, use the |type()|
 function.
 
-When the '!' flag is included in the 'viminfo' option, global variables that
+When the '!' flag is included in the 'shada' option, global variables that
 start with an uppercase letter, and don't contain a lowercase letter, are
-stored in the viminfo file |viminfo-file|.
+stored in the shada file |shada-file|.
 
 When the 'sessionoptions' option contains "global", global variables that
 start with an uppercase letter and contain at least one lowercase letter are
@@ -568,7 +568,7 @@ stored in the session file |session-file|.
 variable name		can be stored where ~
 my_var_6		not
 My_Var_6		session file
-MY_VAR_6		viminfo file
+MY_VAR_6		shada file
 
 
 It's possible to form a variable name with curly braces, see
@@ -1517,17 +1517,23 @@ v:mouse_col	Column number for a mouse click obtained with |getchar()|.
 		This is the screen column number, like with |virtcol()|.  The
 		value is zero when there was no mouse button click.
 
+				*v:msgpack_types* *msgpack_types-variable*
+v:msgpack_types	Dictionary containing msgpack types used by |msgpackparse()| 
+		and |msgpackdump()|. All types inside dictionary are fixed 
+		(not editable) empty lists. To check whether some list is one 
+		of msgpack types, use |is| operator.
+
 					*v:oldfiles* *oldfiles-variable*
-v:oldfiles	List of file names that is loaded from the |viminfo| file on
+v:oldfiles	List of file names that is loaded from the |shada| file on
 		startup.  These are the files that Vim remembers marks for.
 		The length of the List is limited by the ' argument of the
-		'viminfo' option (default is 100).
-		When the |viminfo| file is not used the List is empty.
+		'shada' option (default is 100).
+		When the |shada| file is not used the List is empty.
 		Also see |:oldfiles| and |c_#<|.
 		The List can be modified, but this has no effect on what is
-		stored in the |viminfo| file later.  If you use values other
+		stored in the |shada| file later.  If you use values other
 		than String this will cause trouble.
-		{only when compiled with the |+viminfo| feature}
+		{only when compiled with the |+shada| feature}
 
 					*v:operator* *operator-variable*
 v:operator	The last operator given in Normal mode.  This is a single
@@ -1757,6 +1763,8 @@ cursor( {lnum}, {col} [, {off}])
 cursor( {list})			Number	move cursor to position in {list}
 deepcopy( {expr} [, {noref}])	any	make a full copy of {expr}
 delete( {fname})		Number	delete file {fname}
+dictwatcheradd({dict}, {pattern}, {callback})	Start watching a dictionary
+dictwatcherdel({dict}, {pattern}, {callback})	Stop watching a dictionary
 did_filetype()			Number	TRUE if FileType autocommand event used
 diff_filler( {lnum})		Number	diff filler lines about {lnum}
 diff_hlID( {lnum}, {col})	Number	diff highlighting at {lnum}/{col}
@@ -1833,6 +1841,7 @@ getwinvar( {nr}, {varname} [, {def}])
 				any	variable {varname} in window {nr}
 glob( {expr} [, {nosuf} [, {list}]])
 				any	expand file wildcards in {expr}
+glob2regpat( {expr})		String  convert a glob pat into a search pat
 globpath( {path}, {expr} [, {nosuf} [, {list}]])
 				String	do glob({expr}) for all dirs in {path}
 has( {feature})			Number	TRUE if feature {feature} supported
@@ -1863,10 +1872,13 @@ invert( {expr})			Number  bitwise invert
 isdirectory( {directory})	Number	TRUE if {directory} is a directory
 islocked( {expr})		Number	TRUE if {expr} is locked
 items( {dict})			List	key-value pairs in {dict}
-job_close({job})		Closes a job with id {job}
-job_send({job}, {data})		Writes {data} to {job}'s stdin
-job_spawn({name}, {prog}[, {argv}])
-				Spawns {prog} as a job associated with {name}
+jobclose({job}[, {stream}])	Number	Closes a job stream(s)
+jobresize({job}, {width}, {height})
+				Number	Resize {job}'s pseudo terminal window
+jobsend({job}, {data})		Number	Writes {data} to {job}'s stdin
+jobstart({cmd}[, {opts}])	Number	Spawns {cmd} as a job
+jobstop({job})			Number	Stops a job
+jobwait({ids}[, {timeout}])	Number	Wait for a set of jobs
 join( {list} [, {sep}])		String	join {list} items into one String
 keys( {dict})			List	keys in {dict}
 len( {expr})			Number	the length of {expr}
@@ -1903,6 +1915,8 @@ min( {list})			Number	minimum value of items in {list}
 mkdir( {name} [, {path} [, {prot}]])
 				Number	create directory {name}
 mode( [expr])			String	current editing mode
+msgpackdump( {list})		List	dump a list of objects to msgpack
+msgpackparse( {list})		List	parse msgpack to a list of objects
 nextnonblank( {lnum})		Number	line nr of non-blank line >= {lnum}
 nr2char( {expr}[, {utf8}])	String	single char with ASCII/UTF8 value {expr}
 or( {expr}, {expr})		Number  bitwise OR
@@ -1958,6 +1972,7 @@ server2client( {clientid}, {string})
 				Number	send reply string
 serverlist()			String	get a list of available servers
 setbufvar( {expr}, {varname}, {val})	set {varname} in buffer {expr} to {val}
+setcharsearch( {dict})		Dict	set character search from {dict}
 setcmdpos( {pos})		Number	set cursor position in command-line
 setline( {lnum}, {line})	Number	set line {lnum} to {line}
 setloclist( {nr}, {list}[, {action}])
@@ -2297,8 +2312,6 @@ byte2line({byte})					*byte2line()*
 		for the current buffer.  The first character has byte count
 		one.
 		Also see |line2byte()|, |go| and |:goto|.
-		{not available when compiled without the |+byte_offset|
-		feature}
 
 byteidx({expr}, {nr})					*byteidx()*
 		Return byte index of the {nr}'th character in the string
@@ -2378,8 +2391,7 @@ cindent({lnum})						*cindent()*
 		indenting rules, as with 'cindent'.
 		The indent is counted in spaces, the value of 'tabstop' is
 		relevant.  {lnum} is used just like in |getline()|.
-		When {lnum} is invalid or Vim was not compiled the |+cindent|
-		feature, -1 is returned.
+		When {lnum} is invalid -1 is returned.
 		See |C-indenting|.
 
 clearmatches()						*clearmatches()*
@@ -2653,6 +2665,44 @@ delete({fname})							*delete()*
 		Use |remove()| to delete an item from a |List|.
 		To delete a line from the buffer use |:delete|.  Use |:exe|
 		when the line number is in a variable.
+
+dictwatcheradd({dict}, {pattern}, {callback})		      *dictwatcheradd()*
+		Adds a watcher to a dictionary. A dictionary watcher is
+		identified by three components:
+
+		- A dictionary({dict});
+		- A key pattern({pattern}).
+		- A function({callback}).
+
+		After this is called, every change on {dict} and on keys
+		matching {pattern} will result in {callback} being invoked.
+
+		For now {pattern} only accepts very simple patterns that can
+		contain a '*' at the end of the string, in which case it will
+		match every key that begins with the substring before the '*'.
+		That means if '*' is not the last character of {pattern}, only
+		keys that are exactly equal as {pattern} will be matched.
+
+		The {callback} receives three arguments:
+
+		- The dictionary being watched.
+		- The key which changed.
+		- A dictionary containg the new and old values for the key.
+
+		The type of change can be determined by examining the keys
+		present on the third argument:
+
+		- If contains both `old` and `new`, the key was updated.
+		- If it contains only `new`, the key was added.
+		- If it contains only `old`, the key was deleted.
+
+		This function can be used by plugins to implement options with
+		validation and parsing logic.
+
+dictwatcherdel({dict}, {pattern}, {callback})		      *dictwatcherdel()*
+		Removes a watcher added  with |dictwatcheradd()|. All three
+		arguments must match the ones passed to |dictwatcheradd()| in
+		order for the watcher to be successfully deleted.
 
 							*did_filetype()*
 did_filetype()	Returns non-zero when autocommands are being executed and the
@@ -2952,6 +3002,8 @@ extend({expr1}, {expr2} [, {expr3}])			*extend()*
 		{expr1} is changed when {expr2} is not empty.  If necessary
 		make a copy of {expr1} first.
 		{expr2} remains unchanged.
+		When {expr1} is locked and {expr2} is not empty the operation
+		fails.
 		Returns {expr1}.
 
 
@@ -3302,6 +3354,17 @@ getchar([expr])						*getchar()*
 			:    endif
 			:  endwhile
 			:endfunction
+<
+		You may also receive syntetic characters, such as
+		|<CursorHold>|. Often you will want to ignore this and get
+		another character: >
+			:function GetKey()
+			:  let c = getchar()
+			:  while c == "\<CursorHold>"
+			:    let c = getchar()
+			:  endwhile
+			:  return c
+			:endfunction
 
 getcharmod()						*getcharmod()*
 		The result is a Number which is the state of the modifiers for
@@ -3318,6 +3381,26 @@ getcharmod()						*getcharmod()*
 		Only the modifiers that have not been included in the
 		character itself are obtained.	Thus Shift-a results in "A"
 		without a modifier.
+
+getcharsearch()						*getcharsearch()*
+		Return the current character search information as a {dict}
+		with the following entries:
+
+		    char	character previously used for a character
+				search (|t|, |f|, |T|, or |F|); empty string
+				if no character search has been performed
+		    forward	direction of character search; 1 for forward,
+				0 for backward
+		    until	type of character search; 1 for a |t| or |T|
+				character search, 0 for an |f| or |F|
+				character search
+
+		This can be useful to always have |;| and |,| search
+		forward/backward regardless of the direction of the previous
+		character search: >
+			:nnoremap <expr> ; getcharsearch().forward ? ';' : ','
+			:nnoremap <expr> , getcharsearch().forward ? ',' : ';'
+<		Also see |setcharsearch()|.
 
 getcmdline()						*getcmdline()*
 		Return the current command-line.  Only works when the command
@@ -3403,7 +3486,7 @@ getfperm({fname})					*getfperm()*
 		If a user does not have a given permission the flag for this
 		is replaced with the string "-".  Examples: >
 			:echo getfperm("/etc/passwd")
-			:echo getfperm(expand("~/.vimrc"))
+			:echo getfperm(expand("~/.config/nvim/init.vim"))
 <		This will hopefully (from a security point of view) display
 		the string "rw-r--r--" or even "rw-------".
 
@@ -3512,7 +3595,7 @@ getpos({expr})	Get the position for {expr}.  For possible values of {expr}
 		This can be used to save and restore the position of a mark: >
 			let save_a_mark = getpos("'a")
 			...
-			call setpos(''a', save_a_mark
+			call setpos("'a", save_a_mark)
 <		Also see |getcurpos()| and |setpos()|.
 
 
@@ -3646,6 +3729,14 @@ glob({expr} [, {nosuf} [, {list}]])				*glob()*
 		See |expand()| for expanding special Vim variables.  See
 		|system()| for getting the raw output of an external command.
 
+glob2regpat({expr})					 *glob2regpat()*
+		Convert a file pattern, as used by glob(), into a search
+		pattern.  The result can be used to match with a string that
+		is a file name.  E.g. >
+			if filename =~ glob2regpat('Make*.mak')
+<		This is equivalent to: >
+			if filename =~ '^Make.*\.mak$'
+<
 globpath({path}, {expr} [, {nosuf} [, {list}]])			*globpath()*
 		Perform glob() on all directories in {path} and concatenate
 		the results.  Example: >
@@ -4203,8 +4294,7 @@ line2byte({lnum})					*line2byte()*
 			line2byte(line("$") + 1)
 <		This is the buffer size plus one.  If 'fileencoding' is empty
 		it is the file size plus one.
-		When {lnum} is invalid, or the |+byte_offset| feature has been
-		disabled at compile time, -1 is returned.
+		When {lnum} is invalid -1 is returned.
 		Also see |byte2line()|, |go| and |:goto|.
 
 lispindent({lnum})					*lispindent()*
@@ -4564,15 +4654,16 @@ mkdir({name} [, {path} [, {prot}]])
 		If {prot} is given it is used to set the protection bits of
 		the new directory.  The default is 0755 (rwxr-xr-x: r/w for
 		the user readable for others).	Use 0700 to make it unreadable
-		for others.  This is only used for the last part of {name}.
-		Thus if you create /tmp/foo/bar then /tmp/foo will be created
-		with 0755.
-		Example: >
+		for others.
+									{Nvim}
+		{prot} is applied for all parts of {name}.  Thus if you create
+		/tmp/foo/bar then /tmp/foo will be created with 0700. Example: >
 			:call mkdir($HOME . "/tmp/foo/bar", "p", 0700)
 <		This function is not available in the |sandbox|.
-		Not available on all systems.  To check use: >
-			:if exists("*mkdir")
-<
+
+		If you try to create an existing directory with {path} set to 
+		"p" mkdir() will silently exit.
+
 							*mode()*
 mode([expr])	Return a string that indicates the current mode.
 		If [expr] is supplied and it evaluates to a non-zero Number or
@@ -4603,6 +4694,92 @@ mode([expr])	Return a string that indicates the current mode.
 		with |remote_expr()| In most other places it always returns
 		"c" or "n".
 		Also see |visualmode()|.
+
+msgpackdump({list})				   {Nvim} *msgpackdump()*
+		Convert a list of VimL objects to msgpack. Returned value is
+		|readfile()|-style list. Example: >
+			call writefile(msgpackdump([{}]), 'fname.mpack', 'b')
+<		This will write the single 0x80 byte to `fname.mpack` file
+		(dictionary with zero items is represented by 0x80 byte in
+		messagepack).
+
+		Limitations:
+		1. |Funcref|s cannot be dumped.
+		2. Containers that reference themselves cannot be dumped.
+		3. Dictionary keys are always dumped as STR strings.
+		4. Other strings are always dumped as BIN strings.
+		5. Points 3. and 4. do not apply to |msgpack-special-dict|s.
+
+msgpackparse({list})				   {Nvim} *msgpackparse()*
+		Convert a |readfile()|-style list to a list of VimL objects. 
+		Example: >
+			let fname = expand('~/.config/nvim/shada/main.shada')
+			let mpack = readfile(fname, 'b')
+			let shada_objects = msgpackparse(mpack)
+<		This will read ~/.config/nvim/shada/main.shada file to 
+		`shada_objects` list.
+
+		Limitations:
+		1. Mapping ordering is not preserved unless messagepack 
+		   mapping is dumped using generic  mapping 
+		   (|msgpack-special-map|).
+		2. Since the parser aims to preserve all data untouched 
+		   (except for 1.) some strings are parsed to 
+		   |msgpack-special-dict| format which is not convenient to 
+		   use.
+							*msgpack-special-dict*
+		Some messagepack strings may be parsed to special 
+		dictionaries. Special dictionaries are dictionaries which
+
+		1. Contain exactly two keys: `_TYPE` and `_VAL`.
+		2. `_TYPE` key is one of the types found in |v:msgpack_types| 
+		   variable.
+		3. Value for `_VAL` has the following format (Key column 
+		   contains name of the key from |v:msgpack_types|):
+
+		Key	Value ~
+		nil	Zero, ignored when dumping.
+		boolean	One or zero. When dumping it is only checked that 
+			value is a |Number|.
+		integer	|List| with four numbers: sign (-1 or 1), highest two 
+			bits, number with bits from 62nd to 31st, lowest 31 
+			bits. I.e. to get actual number one will need to use 
+			code like >
+				_VAL[0] * ((_VAL[1] << 62)
+				           & (_VAL[2] << 31)
+				           & _VAL[3])
+<			Special dictionary with this type will appear in 
+			|msgpackparse()| output under one of the following 
+			circumstances:
+			1. |Number| is 32-bit and value is either above 
+			   INT32_MAX or below INT32_MIN.
+			2. |Number| is 64-bit and value is above INT64_MAX. It 
+			   cannot possibly be below INT64_MIN because msgpack 
+			   C parser does not support such values.
+		float	|Float|. This value cannot possibly appear in 
+			|msgpackparse()| output.
+		string	|readfile()|-style list of strings. This value will 
+			appear in |msgpackparse()| output if string contains 
+			zero byte or if string is a mapping key and mapping is 
+			being represented as special dictionary for other 
+			reasons.
+		binary	|readfile()|-style list of strings. This value will 
+			appear in |msgpackparse()| output if binary string 
+			contains zero byte.
+		array	|List|. This value cannot appear in |msgpackparse()| 
+			output.
+							*msgpack-special-map*
+		map	|List| of |List|s with two items (key and value) each. 
+			This value will appear in |msgpackparse()| output if 
+			parsed mapping contains one of the following keys:
+			1. Any key that is not a string (including keys which 
+			   are binary strings).
+			2. String with NUL byte inside.
+			3. Duplicate key.
+			4. Empty key.
+		ext	|List| with two values: first is a signed integer 
+			representing extension type. Second is 
+			|readfile()|-style list of strings.
 
 nextnonblank({lnum})					*nextnonblank()*
 		Return the line number of the first line at or below {lnum}
@@ -4638,8 +4815,8 @@ pathshorten({expr})					*pathshorten()*
 		result.  The tail, the file name, is kept as-is.  The other
 		components in the path are reduced to single letters.  Leading
 		'~' and '.' characters are kept.  Example: >
-			:echo pathshorten('~/.vim/autoload/myfile.vim')
-<			~/.v/a/myfile.vim ~
+			:echo pathshorten('~/.config/nvim/autoload/file1.vim')
+<			~/.v/a/file1.vim ~
 		It doesn't matter if the path exists or not.
 
 pow({x}, {y})						*pow()*
@@ -5415,6 +5592,26 @@ setbufvar({expr}, {varname}, {val})			*setbufvar()*
 			:call setbufvar(1, "&mod", 1)
 			:call setbufvar("todo", "myvar", "foobar")
 <		This function is not available in the |sandbox|.
+
+setcharsearch()						*setcharsearch()*
+		Set the current character search information to {dict},
+		which contains one or more of the following entries:
+
+		    char	character which will be used for a subsequent
+				|,| or |;| command; an empty string clears the
+				character search
+		    forward	direction of character search; 1 for forward,
+				0 for backward
+		    until	type of character search; 1 for a |t| or |T|
+				character search, 0 for an |f| or |F|
+				character search
+
+		This can be useful to save/restore a user's character search
+		from a script: >
+			:let prevsearch = getcharsearch()
+			:" Perform a command which clobbers user's search
+			:call setcharsearch(prevsearch)
+<		Also see |getcharsearch()|.
 
 setcmdpos({pos})					*setcmdpos()*
 		Set the cursor position in the command line to byte position
@@ -6317,9 +6514,7 @@ termopen({cmd}[, {opts}])			{Nvim} *termopen()*
 		The {opts} dict is similar to the one passed to |jobstart()|,
 		but the `pty`, `width`, `height`, and `TERM` fields are
 		ignored: `height`/`width` are taken from the current window
-		and `$TERM` is set to "xterm-256color", and it may have a
-		`name` field.  `name`, if present, sets the buffer's name to
-		"term://{cwd}/{pid}:{name}".
+		and `$TERM` is set to "xterm-256color".
 		Returns the same values as |jobstart()|.
 
 		See |nvim-terminal-emulator| for more information.
@@ -6738,7 +6933,6 @@ fname_case		Case in file names matters (for MS-DOS and Windows
 			this is not present).
 folding			Compiled with |folding| support.
 footer			Compiled with GUI footer support. |gui-footer|
-fork			Compiled to use fork()/exec() instead of system().
 gettext			Compiled with message translation |multi-lang|
 gui			Compiled with GUI enabled.
 gui_athena		Compiled with Athena GUI.
@@ -6786,6 +6980,7 @@ quickfix		Compiled with |quickfix| support.
 reltime			Compiled with |reltime()| support.
 rightleft		Compiled with 'rightleft' support.
 scrollbind		Compiled with 'scrollbind' support.
+shada			Compiled with shada support.
 showcmd			Compiled with 'showcmd' support.
 signs			Compiled with |:sign| support.
 smartindent		Compiled with 'smartindent' support.
@@ -6796,7 +6991,6 @@ statusline		Compiled with support for 'statusline', 'rulerformat'
 syntax			Compiled with syntax highlighting support |syntax|.
 syntax_items		There are active syntax highlighting items for the
 			current buffer.
-system			Compiled to use system() instead of fork()/exec().
 tag_binary		Compiled with binary searching in tags files
 			|tag-binary-search|.
 tag_old_static		Compiled with support for old static tags
@@ -6814,7 +7008,6 @@ unix			Unix version of Vim.
 user_commands		User-defined commands.
 vertsplit		Compiled with vertically split windows |:vsplit|.
 vim_starting		True while initial source'ing takes place. |startup|
-viminfo			Compiled with viminfo support.
 virtualedit		Compiled with 'virtualedit' option.
 visual			Compiled with Visual mode.
 visualextra		Compiled with extra Visual mode commands.
@@ -7124,8 +7317,8 @@ like this: >
 
 When such a function is called, and it is not defined yet, Vim will search the
 "autoload" directories in 'runtimepath' for a script file called
-"filename.vim".  For example "~/.vim/autoload/filename.vim".  That file should
-then define the function like this: >
+"filename.vim".  For example "~/.config/nvim/autoload/filename.vim".  That 
+file should then define the function like this: >
 
 	function filename#funcname()
 	   echo "Done!"
@@ -7659,7 +7852,20 @@ This does NOT work: >
 			postponed until you type something), force a redraw
 			with the |:redraw| command.  Example: >
 		:new | redraw | echo "there is a new window"
-<
+<							*:echo-self-refer*
+			When printing nested containers echo prints second 
+			occurrence of the self-referencing container using 
+			"[...@level]" (self-referencing |List|) or 
+			"{...@level}" (self-referencing |Dict|): >
+		:let l = []
+		:call add(l, l)
+		:let l2 = []
+		:call add(l2, [l2])
+		:echo l l2
+<			echoes "[[...@0]] [[[...@0]]]". Echoing "[l]" will 
+			echo "[[[...@1]]]" because l first occurs at second 
+			level.
+
 							*:echon*
 :echon {expr1} ..	Echoes each {expr1}, without anything added.  Also see
 			|:comment|.
@@ -8917,7 +9123,7 @@ A few options contain an expression.  When this expression is evaluated it may
 have to be done in the sandbox to avoid a security risk.  But the sandbox is
 restrictive, thus this only happens when the option was set from an insecure
 location.  Insecure in this context are:
-- sourcing a .vimrc or .exrc in the current directory
+- sourcing a .nvimrc or .exrc in the current directory
 - while executing in the sandbox
 - value coming from a modeline
 

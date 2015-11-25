@@ -2,14 +2,13 @@
 -- Also test "g~ap".
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
+local feed, source = helpers.feed, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 
 describe('case-insensitive string comparison in UTF-8', function()
   setup(clear)
 
   it('is working', function()
-    execute('set enc=utf8')
     feed('ggdG<cr>')
     source([[
       function! Ch(a, op, b, expected)

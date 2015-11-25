@@ -290,8 +290,8 @@ deletes the first line.
 
 	Note:
 	User-defined commands must start with a capital letter.  You cannot
-	use ":X", ":Next" and ":Print".  The underscore cannot be used!  You
-	can use digits, but this is discouraged.
+	use ":Next".  The underscore cannot be used!  You can use digits, but
+	this is discouraged.
 
 To list the user-defined commands, execute the following command: >
 
@@ -478,7 +478,7 @@ for you.  This triggers the Filetype event.  Use this to do something when a
 certain type of file is edited.  For example, to load a list of abbreviations
 for text files: >
 
-	:autocmd Filetype text  source ~/.vim/abbrevs.vim
+	:autocmd Filetype text  source ~/.config/nvim/abbrevs.vim
 
 When starting to edit a new file, you could make Vim insert a skeleton: >
 

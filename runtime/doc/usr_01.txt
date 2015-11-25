@@ -60,62 +60,25 @@ make them visible with: >
 It's not required for this tutorial, but we provide an example vimrc you may
 use:
 
-Unix: >
-	:!cp -i $VIMRUNTIME/vimrc_example.vim ~/.vimrc
-MS-DOS, MS-Windows: >
-	:!copy $VIMRUNTIME/vimrc_example.vim $VIM/_vimrc
+	:!cp -i $VIMRUNTIME/vimrc_example.vim ~/.config/nvim/init.vim
 
 If the file already exists you probably want to keep it.
 
 For more info see |vimrc|.
 
 ==============================================================================
-*01.3*	Using the Vim tutor				*tutor* *vimtutor*
+*01.3*	Using the Vim tutor			         *tutor* *vimtutor*
 
 Instead of reading the text (boring!) you can use the vimtutor to learn your
 first Vim commands.  This is a 30 minute tutorial that teaches the most basic
 Vim functionality hands-on.
 
-On Unix, if Vim has been properly installed, you can start it from the shell:
->
-	vimtutor
+To start the tutorial, execute >
 
-On MS-Windows you can find it in the Program/Vim menu.  Or execute
-vimtutor.bat in the $VIMRUNTIME directory.
-
-This will make a copy of the tutor file, so that you can edit it without
-the risk of damaging the original.
-   There are a few translated versions of the tutor.  To find out if yours is
-available, use the two-letter language code.  For French: >
-
-	vimtutor fr
-
-On Unix, if you prefer using the GUI version of Vim, use "gvimtutor" or
-"vimtutor -g", optionally with a two-letter language code.
-
-
-On other systems, you have to do a little work:
-
-1. Copy the tutor file.  You can do this with Vim (it knows where to find it):
->
-	vim -u NONE -c 'e $VIMRUNTIME/tutor/tutor' -c 'w! TUTORCOPY' -c 'q'
+        :Tutor
 <
-   This will write the file "TUTORCOPY" in the current directory.  To use a
-translated version of the tutor, append the two-letter language code to the
-filename.  For French:
->
-	vim -u NONE -c 'e $VIMRUNTIME/tutor/tutor.fr' -c 'w! TUTORCOPY' -c 'q'
-<
-2. Edit the copied file with Vim:
->
-	vim -u NONE TUTORCOPY
-<
-   The extra arguments make sure Vim is started in a good mood.
+from within nvim. The tutorial will lead you from that point. Have fun!
 
-3. Delete the copied file when you are finished with it:
->
-	del TUTORCOPY
-<
 ==============================================================================
 *01.4*	Copyright					*manual-copyright*
 

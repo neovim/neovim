@@ -1,7 +1,7 @@
 -- Tests for nested function.
 
 local helpers = require('test.functional.helpers')
-local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
+local clear, insert = helpers.clear, helpers.insert
 local execute, expect, source = helpers.execute, helpers.expect, helpers.source
 
 describe('test_nested_function', function()

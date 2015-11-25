@@ -93,8 +93,9 @@ approach with |rpcnotify()|, meaning return values or exceptions raised in the
 handler function are ignored.
 
 To test the above plugin, it must be saved in "rplugin/python" in a
-'runtimepath' directory (~/.nvim/rplugin/python/limit.py for example). Then,
-the remote plugin manifest must be generated with `:UpdateRemotePlugins`.
+'runtimepath' directory (~/.config/nvim/rplugin/python/limit.py for example). 
+Then, the remote plugin manifest must be generated with 
+`:UpdateRemotePlugins`.
 
 ==============================================================================
 4. Remote plugin manifest			    *remote-plugin-manifest*

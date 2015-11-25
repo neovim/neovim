@@ -1,11 +1,14 @@
+
+local assert = require("luassert")
 local helpers = require("test.unit.helpers")
 
 local to_cstr = helpers.to_cstr
 local eq      = helpers.eq
+local neq     = helpers.neq
+local NULL    = helpers.NULL
 
+local globals = helpers.cimport("./src/nvim/globals.h")
 local buffer = helpers.cimport("./src/nvim/buffer.h")
-local window = helpers.cimport("./src/nvim/window.h")
-local option = helpers.cimport("./src/nvim/option.h")
 
 describe('buffer functions', function()
 
@@ -204,6 +207,97 @@ describe('buffer functions', function()
 
       close_buffer(NULL, buf1, buffer.DOBUF_WIPE, 0)
       close_buffer(NULL, buf2, buffer.DOBUF_WIPE, 0)
+    end)
+  end)
+
+  describe('build_stl_str_hl', function()
+
+    local output_buffer = to_cstr(string.rep(" ", 100))
+
+    local build_stl_str_hl = function(pat)
+      return buffer.build_stl_str_hl(globals.curwin,
+                                     output_buffer,
+                                     100,
+                                     to_cstr(pat),
+                                     false,
+                                     32,
+                                     80,
+                                     NULL,
+                                     NULL)
+    end
+
+    it('should copy plain text', function()
+      local width = build_stl_str_hl("this is a test")
+
+      eq(14, width)
+      eq("this is a test", helpers.ffi.string(output_buffer, width))
+
+    end)
+
+    it('should print no file name', function()
+      local width = build_stl_str_hl("%f")
+
+      eq(9, width)
+      eq("[No Name]", helpers.ffi.string(output_buffer, width))
+
+    end)
+
+    it('should print the relative file name', function()
+      buffer.setfname(globals.curbuf, to_cstr("Makefile"), NULL, 1)
+      local width = build_stl_str_hl("%f")
+
+      eq(8, width)
+      eq("Makefile", helpers.ffi.string(output_buffer, width))
+
+    end)
+
+    it('should print the full file name', function()
+      buffer.setfname(globals.curbuf, to_cstr("Makefile"), NULL, 1)
+
+      local width = build_stl_str_hl("%F")
+
+      assert.is_true(8 < width)
+      neq(NULL, string.find(helpers.ffi.string(output_buffer, width), "Makefile"))
+
+    end)
+
+    it('should print the tail file name', function()
+      buffer.setfname(globals.curbuf, to_cstr("src/nvim/buffer.c"), NULL, 1)
+
+      local width = build_stl_str_hl("%t")
+
+      eq(8, width)
+      eq("buffer.c", helpers.ffi.string(output_buffer, width))
+
+    end)
+
+    it('should print the buffer number', function()
+      buffer.setfname(globals.curbuf, to_cstr("src/nvim/buffer.c"), NULL, 1)
+
+      local width = build_stl_str_hl("%n")
+
+      eq(1, width)
+      eq("1", helpers.ffi.string(output_buffer, width))
+    end)
+
+    it('should print the current line number in the buffer', function()
+      buffer.setfname(globals.curbuf, to_cstr("test/unit/buffer_spec.lua"), NULL, 1)
+
+      local width = build_stl_str_hl("%l")
+
+      eq(1, width)
+      eq("0", helpers.ffi.string(output_buffer, width))
+
+    end)
+
+    it('should print the number of lines in the buffer', function()
+      buffer.setfname(globals.curbuf, to_cstr("test/unit/buffer_spec.lua"), NULL, 1)
+
+      local width = build_stl_str_hl("%L")
+
+      eq(1, width)
+      eq("1", helpers.ffi.string(output_buffer, width))
+
     end)
   end)
 end)

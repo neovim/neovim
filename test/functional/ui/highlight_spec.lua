@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
-local clear, feed, nvim = helpers.clear, helpers.feed, helpers.nvim
+local clear, feed = helpers.clear, helpers.feed
 local execute, request, eq = helpers.execute, helpers.request, helpers.eq
 
 

@@ -8,9 +8,9 @@
 #include "nvim/ascii.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/log.h"
-#include "nvim/os/event.h"
-#include "nvim/os/job.h"
-#include "nvim/os/rstream.h"
+#include "nvim/event/loop.h"
+#include "nvim/event/libuv_process.h"
+#include "nvim/event/rstream.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/signal.h"
 #include "nvim/types.h"
@@ -189,7 +189,7 @@ static int do_os_system(char **argv,
 {
   // the output buffer
   DynamicBuffer buf = DYNAMIC_BUFFER_INIT;
-  rstream_cb data_cb = system_data_cb;
+  stream_read_cb data_cb = system_data_cb;
   if (nread) {
     *nread = 0;
   }
@@ -204,48 +204,60 @@ static int do_os_system(char **argv,
   char prog[MAXPATHL];
   xstrlcpy(prog, argv[0], MAXPATHL);
 
-  int status;
-  JobOptions opts = JOB_OPTIONS_INIT;
-  opts.argv = argv;
-  opts.data = &buf;
-  opts.writable = input != NULL;
-  opts.stdout_cb = data_cb;
-  opts.stderr_cb = data_cb;
-  opts.exit_cb = NULL;
-  Job *job = job_start(opts, &status);
-
-  if (status <= 0) {
+  Stream in, out, err;
+  LibuvProcess uvproc = libuv_process_init(&loop, &buf);
+  Process *proc = &uvproc.process;
+  Queue *events = queue_new_child(loop.events);
+  proc->events = events;
+  proc->argv = argv;
+  proc->in = input != NULL ? &in : NULL;
+  proc->out = &out;
+  proc->err = &err;
+  if (!process_spawn(proc)) {
+    loop_poll_events(&loop, 0);
     // Failed, probably due to `sh` not being executable
     if (!silent) {
       MSG_PUTS(_("\nCannot execute "));
       msg_outtrans((char_u *)prog);
       msg_putchar('\n');
     }
+    queue_free(events);
     return -1;
   }
+
+  // We want to deal with stream events as fast a possible while queueing
+  // process events, so reset everything to NULL. It prevents closing the
+  // streams while there's still data in the OS buffer(due to the process
+  // exiting before all data is read).
+  if (input != NULL) {
+    proc->in->events = NULL;
+    wstream_init(proc->in, 0);
+  }
+  proc->out->events = NULL;
+  rstream_init(proc->out, 0);
+  rstream_start(proc->out, data_cb);
+  proc->err->events = NULL;
+  rstream_init(proc->err, 0);
+  rstream_start(proc->err, data_cb);
 
   // write the input, if any
   if (input) {
     WBuffer *input_buffer = wstream_new_buffer((char *) input, len, 1, NULL);
 
-    if (!job_write(job, input_buffer)) {
-      // couldn't write, stop the job and tell the user about it
-      job_stop(job);
+    if (!wstream_write(&in, input_buffer)) {
+      // couldn't write, stop the process and tell the user about it
+      process_stop(proc);
       return -1;
     }
     // close the input stream after everything is written
-    job_write_cb(job, shell_write_cb);
-  } else {
-    // close the input stream, let the process know that no more input is
-    // coming
-    job_close_in(job);
+    wstream_set_write_cb(&in, shell_write_cb);
   }
 
   // invoke busy_start here so event_poll_until wont change the busy state for
   // the UI
   ui_busy_start();
   ui_flush();
-  status = job_wait(job, -1);
+  int status = process_wait(proc, -1, NULL);
   ui_busy_stop();
 
   // prepare the out parameters if requested
@@ -265,6 +277,9 @@ static int do_os_system(char **argv,
     }
   }
 
+  assert(queue_empty(events));
+  queue_free(events);
+
   return status;
 }
 
@@ -283,10 +298,10 @@ static void dynamic_buffer_ensure(DynamicBuffer *buf, size_t desired)
   buf->data = xrealloc(buf->data, buf->cap);
 }
 
-static void system_data_cb(RStream *rstream, RBuffer *buf, void *data, bool eof)
+static void system_data_cb(Stream *stream, RBuffer *buf, size_t count,
+    void *data, bool eof)
 {
-  Job *job = data;
-  DynamicBuffer *dbuf = job_data(job);
+  DynamicBuffer *dbuf = data;
 
   size_t nread = buf->size;
   dynamic_buffer_ensure(dbuf, dbuf->len + nread + 1);
@@ -294,16 +309,25 @@ static void system_data_cb(RStream *rstream, RBuffer *buf, void *data, bool eof)
   dbuf->len += nread;
 }
 
-static void out_data_cb(RStream *rstream, RBuffer *buf, void *data, bool eof)
+static void out_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data,
+    bool eof)
 {
-  RBUFFER_UNTIL_EMPTY(buf, ptr, len) {
-    size_t written = write_output(ptr, len, false,
-        eof && len <= rbuffer_size(buf));
-    if (written) {
-      rbuffer_consumed(buf, written);
-    } else {
-      break;
-    }
+  size_t cnt;
+  char *ptr = rbuffer_read_ptr(buf, &cnt);
+
+  if (!cnt) {
+    return;
+  }
+
+  size_t written = write_output(ptr, cnt, false, eof);
+  // No output written, force emptying the Rbuffer if it is full.
+  if (!written && rbuffer_size(buf) == rbuffer_capacity(buf)) {
+    screen_del_lines(0, 0, 1, (int)Rows, NULL);
+    screen_puts_len((char_u *)ptr, (int)cnt, (int)Rows - 1, 0, 0);
+    written = cnt;
+  }
+  if (written) {
+    rbuffer_consumed(buf, written);
   }
 }
 
@@ -420,6 +444,7 @@ static size_t write_output(char *output, size_t remaining, bool to_buffer,
   if (!output) {
     return 0;
   }
+  char replacement_NUL = to_buffer ? NL : 1;
 
   char *start = output;
   size_t off = 0;
@@ -427,9 +452,10 @@ static size_t write_output(char *output, size_t remaining, bool to_buffer,
   while (off < remaining) {
     if (output[off] == NL) {
       // Insert the line
-      output[off] = NUL;
       if (to_buffer) {
-        ml_append(curwin->w_cursor.lnum++, (char_u *)output, 0, false);
+        output[off] = NUL;
+        ml_append(curwin->w_cursor.lnum++, (char_u *)output, (int)off + 1,
+                  false);
       } else {
         screen_del_lines(0, 0, 1, (int)Rows, NULL);
         screen_puts_len((char_u *)output, (int)off, lastrow, 0, 0);
@@ -443,7 +469,7 @@ static size_t write_output(char *output, size_t remaining, bool to_buffer,
 
     if (output[off] == NUL) {
       // Translate NUL to NL
-      output[off] = NL;
+      output[off] = replacement_NUL;
     }
     off++;
   }
@@ -470,8 +496,7 @@ static size_t write_output(char *output, size_t remaining, bool to_buffer,
   return (size_t)(output - start);
 }
 
-static void shell_write_cb(WStream *wstream, void *data, int status)
+static void shell_write_cb(Stream *stream, void *data, int status)
 {
-  Job *job = data;
-  job_close_in(job);
+  stream_close(stream, NULL);
 }

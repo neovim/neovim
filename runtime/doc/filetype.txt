@@ -162,8 +162,7 @@ A. If you want to overrule all default file type checks.
    1. Create your user runtime directory.  You would normally use the first
       item of the 'runtimepath' option.  Then create the directory "ftdetect"
       inside it.  Example for Unix: >
-	:!mkdir ~/.vim
-	:!mkdir ~/.vim/ftdetect
+	:!mkdir -p ~/.config/nvim/ftdetect
 <
    2. Create a file that contains an autocommand to detect the file type.
       Example: >
@@ -173,7 +172,7 @@ A. If you want to overrule all default file type checks.
       check the contents of the file to recognize it.
       Write this file as "mine.vim" in the "ftdetect" directory in your user
       runtime directory.  For example, for Unix: >
-	:w ~/.vim/ftdetect/mine.vim
+	:w ~/.config/nvim/ftdetect/mine.vim
 
 <  3. To use the new filetype detection you must restart Vim.
 
@@ -196,7 +195,7 @@ B. If you want to detect your file after the default file type checks.
 C. If your file type can be detected by the file name.
    1. Create your user runtime directory.  You would normally use the first
       item of the 'runtimepath' option.  Example for Unix: >
-	:!mkdir ~/.vim
+	:!mkdir -p ~/.config/nvim
 <
    2. Create a file that contains autocommands to detect the file type.
       Example: >
@@ -210,7 +209,7 @@ C. If your file type can be detected by the file name.
 	augroup END
 <     Write this file as "filetype.vim" in your user runtime directory.  For
       example, for Unix: >
-	:w ~/.vim/filetype.vim
+	:w ~/.config/nvim/filetype.vim
 
 <  3. To use the new filetype detection you must restart Vim.
 
@@ -224,7 +223,7 @@ D. If your filetype can only be detected by inspecting the contents of the
 
    1. Create your user runtime directory.  You would normally use the first
       item of the 'runtimepath' option.  Example for Unix: >
-	:!mkdir ~/.vim
+	:!mkdir -p ~/.config/nvim
 <
    2. Create a vim script file for doing this.  Example: >
 	if did_filetype()	" filetype already set..
@@ -238,7 +237,7 @@ D. If your filetype can only be detected by inspecting the contents of the
 <     See $VIMRUNTIME/scripts.vim for more examples.
       Write this file as "scripts.vim" in your user runtime directory.  For
       example, for Unix: >
-	:w ~/.vim/scripts.vim
+	:w ~/.config/nvim/scripts.vim
 <
    3. The detection will work right away, no need to restart Vim.
 
@@ -268,12 +267,12 @@ all loaded.  For example, if this command: >
 
 produces this output:
 
-	runtimepath=/etc/vim,~/.vim,/usr/local/share/vim/vim60 ~
+	runtimepath=/etc/vim,~/.config/nvim,/usr/local/share/vim/vim60 ~
 
 then Vim will load all plugins in these directories and below:
 
 	/etc/vim/plugin/  ~
-	~/.vim/plugin/  ~
+	~/.config/nvim/plugin/  ~
 	/usr/local/share/vim/vim60/plugin/  ~
 
 Note that the last one is the value of $VIMRUNTIME which has been expanded.
@@ -329,7 +328,7 @@ ways to change this:
 1. Add a few settings.
    You must create a new filetype plugin in a directory early in
    'runtimepath'.  For Unix, for example you could use this file: >
-	vim ~/.vim/ftplugin/fortran.vim
+	vim ~/.config/nvim/ftplugin/fortran.vim
 <  You can set those settings and mappings that you would like to add.  Note
    that the global plugin will be loaded after this, it may overrule the
    settings that you do here.  If this is the case, you need to use one of the
@@ -338,7 +337,7 @@ ways to change this:
 2. Make a copy of the plugin and change it.
    You must put the copy in a directory early in 'runtimepath'.  For Unix, for
    example, you could do this: >
-	cp $VIMRUNTIME/ftplugin/fortran.vim ~/.vim/ftplugin/fortran.vim
+	cp $VIMRUNTIME/ftplugin/fortran.vim ~/.config/nvim/ftplugin/fortran.vim
 <  Then you can edit the copied file to your liking.  Since the b:did_ftplugin
    variable will be set, the global plugin will not be loaded.
    A disadvantage of this method is that when the distributed plugin gets
@@ -347,7 +346,7 @@ ways to change this:
 3. Overrule the settings after loading the global plugin.
    You must create a new filetype plugin in a directory from the end of
    'runtimepath'.  For Unix, for example, you could use this file: >
-	vim ~/.vim/after/ftplugin/fortran.vim
+	vim ~/.config/nvim/after/ftplugin/fortran.vim
 <  In this file you can change just those settings that you want to change.
 
 ==============================================================================
@@ -376,7 +375,7 @@ Global mappings:
 			NOTE: The global mappings are accessed by sourcing the
 			ftplugin/changelog.vim file first, e.g. with >
 				runtime ftplugin/changelog.vim
-<			in your |.vimrc|.
+<			in your |init.vim|.
 <Leader>o		Switches to the ChangeLog buffer opened for the
 			current directory, or opens it in a new buffer if it
 			exists in the current directory.  Then it does the
@@ -478,7 +477,7 @@ FORTRAN							*ft-fortran-plugin*
 
 Options:
 'expandtab'	is switched on to avoid tabs as required by the Fortran
-		standards unless the user has set fortran_have_tabs in .vimrc.
+		standards unless the user has set fortran_have_tabs in vimrc.
 'textwidth'	is set to 72 for fixed source format as required by the
 		Fortran standards and to 80 for free source format.
 'formatoptions' is set to break code and comment lines and to preserve long
@@ -556,6 +555,149 @@ RPM SPEC						*ft-spec-plugin*
 
 Since the text for this plugin is rather long it has been put in a separate
 file: |pi_spec.txt|.
+
+
+SHADA							*ft-shada*
+
+Allows editing binary |shada-file|s in a nice way.  Opened binary files are 
+displayed in the following format: >
+
+    Type with timestamp YYYY-mm-ddTHH:MM:SS:
+      % Key__  Description___  Value
+      + fooba  foo bar baz fo  {msgpack-value}
+      + abcde  abc def ghi jk  {msgpack-value}
+    Other type with timestamp YYYY-mm-ddTHH:MM:SS:
+      @ Description__  Value
+      - foo bar baz t  {msgpack-value}
+      # Expected more elements in list
+    Some other type with timestamp YYYY-mm-ddTHH:MM:SS:
+      # Unexpected type: type instead of map
+      = {msgpack-value}
+
+Filetype plugin defines all |Cmd-event|s.  Defined |SourceCmd| event makes 
+"source file.shada" be equivalent to "|:rshada| file.shada".  |BufWriteCmd|, 
+|FileWriteCmd| and |FileAppendCmd| events are affected by the following 
+settings:
+
+*g:shada#keep_old_header*	Boolean, if set to false all header entries 
+				are ignored when writing.  Defaults to 1.
+*g:shada#add_own_header*	Boolean, if set to true first written entry 
+				will always be header entry with two values in 
+				a map with attached data: |v:version| attached 
+				to "version" key and "shada.vim" attached to 
+				"generator" key.  Defaults to 1.
+
+Format description:
+
+1. `#` starts a comment.  Lines starting with space characters and then `#` 
+   are ignored.  Plugin may only add comment lines to indicate some errors in 
+   ShaDa format.  Lines containing no non-whitespace characters are also 
+   ignored.
+2. Each entry starts with line that has format "{type} with timestamp 
+   {timestamp}:". {timestamp} is |strftime()|-formatted string representing 
+   actual UNIX timestamp value. First strftime() argument is equal to 
+   `%Y-%m-%dT%H:%M:%S`.  When writing this timestamp is parsed using 
+   |msgpack#strptime()|, with caching (it remembers which timestamp produced 
+   particular strftime() output and uses this value if you did not change 
+   timestamp). {type} is one of
+    1 - Header
+    2 - Search pattern
+    3 - Replacement string
+    4 - History entry
+    5 - Register
+    6 - Variable
+    7 - Global mark
+    8 - Jump
+    9 - Buffer list
+   10 - Local mark
+   11 - Change
+    * - Unknown (0x{type-hex})
+
+   Each type may be represented using Unknown entry: "Jump with timestamp ..." 
+   is the same as "Unknown (0x8) with timestamp ....".
+3. After header there is one of the following lines:
+   1. "  % Key__  Description__  Value": map header.  After mapping header 
+      follows a table which may contain comments and lines consisting of 
+      "  +", key, description and |{msgpack-value}|.  Key is separated by at 
+      least two spaces with description, description is separated by at least 
+      two spaces with the value.  Each key in the map must be at most as wide 
+      as "Key__" header: "Key" allows at most 3-byte keys, "Key__" allows at 
+      most 5-byte keys.  If keys actually occupy less bytes then the rest is 
+      filled with spaces.  Keys cannot be empty, end with spaces, contain two 
+      consequent spaces inside of them or contain multibyte characters (use 
+      "=" format if you need this).  Descriptions have the same restrictions 
+      on width and contents, except that empty descriptions are allowed.  
+      Description column may be omitted.
+
+      When writing description is ignored.  Keys with values |msgpack#equal| 
+      to default ones are ignored.  Order of keys is preserved.  All keys are 
+      treated as strings (not binary strings).
+
+      Note: specifically for buffer list entries it is allowed to have more 
+      then one map header.  Each map header starts a new map entry inside 
+      buffer list because ShaDa buffer list entry is an array of maps.  I.e. >
+
+        Buffer list with timestamp 1970-01-01T00:00:00:
+          % Key  Description  Value
+          + f    file name    "/foo"
+          + l    line number  1
+          + c    column       10
+<
+      is equivalent to >
+
+        Buffer list with timestamp 1970-01-01T00:00:00:
+          = [{="f": "/foo", ="c": 10}]
+<
+      and >
+
+        Buffer list with timestamp 1970-01-01T00:00:00:
+          % Key  Description  Value
+          + f    file name    "/foo"
+
+          % Key  Description  Value
+          + f    file name    "/bar"
+<
+      is equivalent to >
+
+        Buffer list with timestamp 1970-01-01T00:00:00:
+          = [{="f": "/foo"}, {="f": "/bar"}]
+<
+      Note 2: specifically for register entries special syntax for arrays was 
+      designed: >
+
+        Register with timestamp 1970-01-01T00:00:00:
+          % Key  Description  Value
+          + rc   contents     @
+          | - "line1"
+          | - "line2"
+<
+      This is equivalent to >
+
+        Register with timestamp 1970-01-01T00:00:00:
+          % Key  Description  Value
+          + rc   contents     ["line1", "line2"]
+<
+      Such syntax is automatically used if array representation appears to be 
+      too lengthy.
+   2. "  @  Description__  Value": array header.  Same as map, but key is 
+      omitted and description cannot be omitted.  Array entries start with 
+      "  -". Example: >
+
+        History entry with timestamp 1970-01-01T00:00:00:
+          @ Description_  Value
+          - history type  SEARCH
+          - contents      "foo"
+          - separator     '/'
+<
+      is equivalent to >
+
+        History entry with timestamp 1970-01-01T00:00:00:
+          = [SEARCH, "foo", '/']
+<
+      Note: special array syntax for register entries is not recognized here.
+   3. "  = {msgpack-value}": raw values.  |{msgpack-value}| in this case may 
+      have absolutely any type.  Special array syntax for register entries is 
+      not recognized here as well.
 
 
 SQL							*ft-sql*

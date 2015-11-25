@@ -106,8 +106,8 @@
 -- use `screen:snapshot_util({},true)`
 
 local helpers = require('test.functional.helpers')
-local request, run, stop = helpers.request, helpers.run, helpers.stop
-local eq, dedent = helpers.eq, helpers.dedent
+local request, run = helpers.request, helpers.run
+local dedent = helpers.dedent
 
 local Screen = {}
 Screen.__index = Screen
@@ -125,7 +125,7 @@ end
 
 do
   local spawn, nvim_prog = helpers.spawn, helpers.nvim_prog
-  local session = spawn({nvim_prog, '-u', 'NONE', '-N', '--embed'})
+  local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N', '--embed'})
   local status, rv = session:request('vim_get_color_map')
   if not status then
     print('failed to get color map')
@@ -163,9 +163,11 @@ function Screen.new(width, height)
     height = 14
   end
   local self = setmetatable({
+    timeout = default_screen_timeout,
     title = '',
     icon = '',
     bell = false,
+    update_menu = false,
     visual_bell = false,
     suspended = false,
     _default_attr_ids = nil,
@@ -239,7 +241,7 @@ function Screen:wait(check, timeout)
     checked = true
     if not err then
       success_seen = true
-      stop()
+      helpers.stop()
     elseif success_seen and #args > 0 then
       failure_after_success = true
       --print(require('inspect')(args))
@@ -247,7 +249,7 @@ function Screen:wait(check, timeout)
 
     return true
   end
-  run(nil, notification_cb, nil, timeout or default_screen_timeout)
+  run(nil, notification_cb, nil, timeout or self.timeout)
   if not checked then
     err = check()
   end
@@ -259,6 +261,13 @@ This is probably due to an indeterminism in the test. Try adding
 `wait()` (or even a separate `screen:expect(...)`) at a point of possible
 indeterminism, typically in between a `feed()` or `execute()` which is non-
 synchronous, and a synchronous api call.
+
+Note that sometimes a `wait` can trigger redraws and consequently generate more
+indeterminism. If adding `wait` calls seems to increase the frequency of these
+messages, try removing every `wait` call in the test.
+
+If everything else fails, use Screen:redraw_debug to help investigate what is
+  causing the problem.
       ]])
     local tb = debug.traceback()
     local index = string.find(tb, '\n%s*%[C]')
@@ -285,9 +294,9 @@ end
 
 function Screen:_handle_resize(width, height)
   local rows = {}
-  for i = 1, height do
+  for _ = 1, height do
     local cols = {}
-    for j = 1, width do
+    for _ = 1, width do
       table.insert(cols, {text = ' ', attrs = {}})
     end
     table.insert(rows, cols)
@@ -333,12 +342,9 @@ function Screen:_handle_mouse_off()
   self._mouse_enabled = false
 end
 
-function Screen:_handle_insert_mode()
-  self._mode = 'insert'
-end
-
-function Screen:_handle_normal_mode()
-  self._mode = 'normal'
+function Screen:_handle_mode_change(mode)
+  assert(mode == 'insert' or mode == 'replace' or mode == 'normal')
+  self._mode = mode
 end
 
 function Screen:_handle_set_scroll_region(top, bot, left, right)
@@ -412,6 +418,10 @@ function Screen:_handle_suspend()
   self.suspended = true
 end
 
+function Screen:_handle_update_menu()
+  self.update_menu = true
+end
+
 function Screen:_handle_set_title(title)
   self.title = title
 end
@@ -438,7 +448,7 @@ function Screen:_row_repr(row, attr_ids, attr_ignore)
   local rv = {}
   local current_attr_id
   for i = 1, self._width do
-    local attr_id = get_attr_id(attr_ids, attr_ignore, row[i].attrs)
+    local attr_id = self:_get_attr_id(attr_ids, attr_ignore, row[i].attrs)
     if current_attr_id and attr_id ~= current_attr_id then
       -- close current attribute bracket, add it before any whitespace
       -- up to the current cell
@@ -480,7 +490,7 @@ function Screen:snapshot_util(attrs, ignore)
   self:print_snapshot(attrs, ignore)
 end
 
-function Screen:redraw_debug(attrs, ignore)
+function Screen:redraw_debug(attrs, ignore, timeout)
   self:print_snapshot(attrs, ignore)
   local function notification_cb(method, args)
     assert(method == 'redraw')
@@ -491,7 +501,10 @@ function Screen:redraw_debug(attrs, ignore)
     self:print_snapshot(attrs, ignore)
     return true
   end
-  run(nil, notification_cb, nil, 250)
+  if timeout == nil then
+    timeout = 250
+  end
+  run(nil, notification_cb, nil, timeout)
 end
 
 function Screen:print_snapshot(attrs, ignore)
@@ -511,8 +524,8 @@ function Screen:print_snapshot(attrs, ignore)
         local row = self._rows[i]
         for j = 1, self._width do
           local attr = row[j].attrs
-          if attr_index(attrs, attr) == nil and attr_index(ignore, attr) == nil then
-            if not equal_attrs(attr, {}) then
+          if self:_attr_index(attrs, attr) == nil and self:_attr_index(ignore, attr) == nil then
+            if not self:_equal_attrs(attr, {}) then
               table.insert(attrs, attr)
             end
           end
@@ -531,7 +544,7 @@ function Screen:print_snapshot(attrs, ignore)
     if self._default_attr_ids == nil or self._default_attr_ids[i] ~= a then
       alldefault = false
     end
-    local dict = "{"..pprint_attrs(a).."}"
+    local dict = "{"..self:_pprint_attrs(a).."}"
     table.insert(attrstrs, "["..tostring(i).."] = "..dict)
   end
   local attrstr = "{"..table.concat(attrstrs, ", ").."}"
@@ -545,7 +558,7 @@ function Screen:print_snapshot(attrs, ignore)
   io.stdout:flush()
 end
 
-function pprint_attrs(attrs)
+function Screen:_pprint_attrs(attrs)
     local items = {}
     for f, v in pairs(attrs) do
       local desc = tostring(v)
@@ -559,7 +572,7 @@ function pprint_attrs(attrs)
     return table.concat(items, ", ")
 end
 
-function backward_find_meaningful(tbl, from)
+function backward_find_meaningful(tbl, from)  -- luacheck: ignore
   for i = from or #tbl, 1, -1 do
     if tbl[i] ~= ' ' then
       return i + 1
@@ -568,24 +581,24 @@ function backward_find_meaningful(tbl, from)
   return from
 end
 
-function get_attr_id(attr_ids, ignore, attrs)
+function Screen:_get_attr_id(attr_ids, ignore, attrs)
   if not attr_ids then
     return
   end
   for id, a in pairs(attr_ids) do
-    if equal_attrs(a, attrs) then
+    if self:_equal_attrs(a, attrs) then
        return id
      end
   end
-  if equal_attrs(attrs, {}) or
-      ignore == true or attr_index(ignore, attrs) ~= nil then
+  if self:_equal_attrs(attrs, {}) or
+      ignore == true or self:_attr_index(ignore, attrs) ~= nil then
     -- ignore this attrs
     return nil
   end
-  return "UNEXPECTED "..pprint_attrs(attrs)
+  return "UNEXPECTED "..self:_pprint_attrs(attrs)
 end
 
-function equal_attrs(a, b)
+function Screen:_equal_attrs(a, b)
     return a.bold == b.bold and a.standout == b.standout and
        a.underline == b.underline and a.undercurl == b.undercurl and
        a.italic == b.italic and a.reverse == b.reverse and
@@ -593,12 +606,12 @@ function equal_attrs(a, b)
        a.background == b.background
 end
 
-function attr_index(attrs, attr)
+function Screen:_attr_index(attrs, attr)
   if not attrs then
     return nil
   end
   for i,a in pairs(attrs) do
-    if equal_attrs(a, attr) then
+    if self:_equal_attrs(a, attr) then
       return i
     end
   end

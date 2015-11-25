@@ -128,21 +128,11 @@
 #define CPO_PLUS        '+'     /* ":write file" resets 'modified' */
 #define CPO_SPECI       '<'     /* don't recognize <> in mappings */
 #define CPO_REGAPPEND   '>'     /* insert NL when appending to a register */
-/* POSIX flags */
-#define CPO_HASH        '#'     /* "D", "o" and "O" do not use a count */
-#define CPO_PARA        '{'     /* "{" is also a paragraph boundary */
-#define CPO_TSIZE       '|'     /* $LINES and $COLUMNS overrule term size */
-#define CPO_PRESERVE    '&'     /* keep swap file after :preserve */
-#define CPO_SUBPERCENT  '/'     /* % in :s string uses previous one */
-#define CPO_BACKSL      '\\'    /* \ is not special in [] */
-#define CPO_CHDIR       '.'     /* don't chdir if buffer is modified */
 #define CPO_SCOLON      ';'     /* using "," and ";" will skip over char if
                                  * cursor would not move */
-/* default values for Vim, Vi and POSIX */
+/* default values for Vim and Vi */
 #define CPO_VIM         "aABceFs"
 #define CPO_VI          "aAbBcCdDeEfFiIJkKlLmMnoOpPqrRsStuvWxXyZ$!%+<>;"
-#define CPO_ALL \
-  "aAbBcCdDeEfFiIJkKlLmMnoOpPqrRsStuvWxXyZ$!%+<>#{|&/\\.;"
 
 /* characters for p_ww option: */
 #define WW_ALL          "bshl<>[],~"
@@ -200,11 +190,10 @@
 #define GO_ASELPLUS     'P'             /* autoselectPlus */
 #define GO_RIGHT        'r'             /* use right scrollbar */
 #define GO_VRIGHT       'R'             /* right scrollbar with vert split */
-#define GO_TEAROFF      't'             /* add tear-off menu items */
 #define GO_TOOLBAR      'T'             /* add toolbar */
 #define GO_FOOTER       'F'             /* add footer */
 #define GO_VERTICAL     'v'             /* arrange dialog buttons vertically */
-#define GO_ALL          "aAbcefFghilmMprtTv" /* all possible flags for 'go' */
+#define GO_ALL          "aAbcefFghilmMprTv" /* all possible flags for 'go' */
 
 /* flags for 'comments' option */
 #define COM_NEST        'n'             /* comments strings nest */
@@ -277,7 +266,7 @@
  */
 
 EXTERN long p_aleph;            /* 'aleph' */
-EXTERN int p_acd;               /* 'autochdir' */
+EXTERN bool p_acd;              /* 'autochdir' */
 EXTERN char_u   *p_ambw;        /* 'ambiwidth' */
 EXTERN int p_ar;                /* 'autoread' */
 EXTERN int p_aw;                /* 'autowrite' */
@@ -298,6 +287,37 @@ static char *(p_bkc_values[]) =
 # define BKC_BREAKHARDLINK      0x010
 EXTERN char_u   *p_bdir;        /* 'backupdir' */
 EXTERN char_u   *p_bex;         /* 'backupext' */
+EXTERN char_u   *p_bo;          // 'belloff'
+EXTERN unsigned bo_flags;
+# ifdef IN_OPTION_C
+static char *(p_bo_values[]) = {"all", "backspace", "cursor", "complete",
+  "copy", "ctrlg", "error", "esc", "ex",
+  "hangul", "insertmode", "lang", "mess",
+  "showmatch", "operator", "register", "shell",
+  "spell", "wildmode", NULL};
+# endif
+
+// values for the 'belloff' option
+#define BO_ALL    0x0001
+#define BO_BS     0x0002
+#define BO_CRSR   0x0004
+#define BO_COMPL  0x0008
+#define BO_COPY   0x0010
+#define BO_CTRLG  0x0020
+#define BO_ERROR  0x0040
+#define BO_ESC    0x0080
+#define BO_EX     0x0100
+#define BO_HANGUL 0x0200
+#define BO_IM     0x0400
+#define BO_LANG   0x0800
+#define BO_MESS   0x1000
+#define BO_MATCH  0x2000
+#define BO_OPER   0x4000
+#define BO_REG    0x8000
+#define BO_SH     0x10000
+#define BO_SPELL  0x20000
+#define BO_WILD   0x40000
+
 EXTERN char_u   *p_bsk;         /* 'backupskip' */
 EXTERN char_u   *p_breakat;     /* 'breakat' */
 EXTERN char_u   *p_cmp;         /* 'casemap' */
@@ -352,7 +372,7 @@ static char *(p_dy_values[]) = {"lastline", "uhex", NULL};
 #define DY_UHEX                 0x002
 EXTERN int p_ed;                /* 'edcompatible' */
 EXTERN char_u   *p_ead;         /* 'eadirection' */
-EXTERN int p_ea;                /* 'equalalways' */
+EXTERN bool p_ea;               /* 'equalalways' */
 EXTERN char_u   *p_ep;          /* 'equalprg' */
 EXTERN int p_eb;                /* 'errorbells' */
 EXTERN char_u   *p_ef;          /* 'errorfile' */
@@ -569,7 +589,7 @@ EXTERN long p_ur;               /* 'undoreload' */
 EXTERN long p_uc;               /* 'updatecount' */
 EXTERN long p_ut;               /* 'updatetime' */
 EXTERN char_u   *p_fcs;         /* 'fillchar' */
-EXTERN char_u   *p_viminfo;     /* 'viminfo' */
+EXTERN char_u   *p_shada;       /* 'shada' */
 EXTERN char_u   *p_vdir;        /* 'viewdir' */
 EXTERN char_u   *p_vop;         /* 'viewoptions' */
 EXTERN unsigned vop_flags;      /* uses SSOP_ flags */

@@ -3,7 +3,7 @@
  *
  * Do ":help uganda"  in Vim to read copying and usage conditions.
  * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
+ * See README.md for an overview of the Vim source code.
  */
 
 /*
@@ -1731,12 +1731,12 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
       if (msg_col)
         --msg_col;
     } else if (*s == TAB) {       /* translate Tab into spaces */
-      do
+      do {
         msg_screen_putchar(' ', attr);
-      while (msg_col & 7);
-    } else if (*s == BELL)          /* beep (from ":sh") */
-      vim_beep();
-    else {
+      } while (msg_col & 7);
+    } else if (*s == BELL) {  // beep (from ":sh")
+      vim_beep(BO_SH);
+    } else {
       if (has_mbyte) {
         cw = (*mb_ptr2cells)(s);
         if (enc_utf8 && maxlen >= 0)
@@ -1897,9 +1897,9 @@ void show_sb_text(void)
   /* Only show something if there is more than one line, otherwise it looks
    * weird, typing a command without output results in one line. */
   mp = msg_sb_start(last_msgchunk);
-  if (mp == NULL || mp->sb_prev == NULL)
-    vim_beep();
-  else {
+  if (mp == NULL || mp->sb_prev == NULL) {
+    vim_beep(BO_MESS);
+  } else {
     do_more_prompt('G');
     wait_return(FALSE);
   }
@@ -2234,15 +2234,11 @@ void mch_errmsg(char *str)
 {
   int len;
 
-#if (defined(UNIX) || defined(FEAT_GUI)) && !defined(ALWAYS_USE_GUI)
+#ifdef UNIX
   /* On Unix use stderr if it's a tty.
    * When not going to start the GUI also use stderr.
    * On Mac, when started from Finder, stderr is the console. */
-  if (
-# ifdef UNIX
-    isatty(2)
-# endif
-    ) {
+  if (os_isatty(2)) {
     fprintf(stderr, "%s", str);
     return;
   }
@@ -2284,16 +2280,12 @@ void mch_errmsg(char *str)
  */
 void mch_msg(char *str)
 {
-#if (defined(UNIX) || defined(FEAT_GUI)) && !defined(ALWAYS_USE_GUI)
+#ifdef UNIX
   /* On Unix use stdout if we have a tty.  This allows "vim -h | more" and
    * uses mch_errmsg() when started from the desktop.
    * When not going to start the GUI also use stdout.
    * On Mac, when started from Finder, stderr is the console. */
-  if (
-#  ifdef UNIX
-    isatty(2)
-#  endif
-    ) {
+  if (os_isatty(2)) {
     printf("%s", str);
     return;
   }

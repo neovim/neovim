@@ -133,7 +133,7 @@ describe('system()', function()
       -- write more than 1mb of data, which should be enough to overcome
       -- the os buffer limit and force multiple event loop iterations to write
       -- everything
-      for i = 1, 0xffff do
+      for _ = 1, 0xffff do
         input[#input + 1] = '01234567890ABCDEFabcdef'
       end
       input = table.concat(input, '\n')
@@ -186,7 +186,7 @@ describe('system()', function()
 
   describe("with a program that doesn't close stdout", function()
     if not xclip then
-      pending('skipped (missing xclip)')
+      pending('skipped (missing xclip)', function() end)
     else
       it('will exit properly after passing input', function()
         eq('', eval([[system('xclip -i -selection clipboard', 'clip-data')]]))
@@ -299,7 +299,7 @@ describe('systemlist()', function()
   describe('passing a lot of input', function()
     it('returns the program output', function()
       local input = {}
-      for i = 1, 0xffff do
+      for _ = 1, 0xffff do
         input[#input + 1] = '01234567890ABCDEFabcdef'
       end
       nvim('set_var', 'input', input)
@@ -365,7 +365,7 @@ describe('systemlist()', function()
 
   describe("with a program that doesn't close stdout", function()
     if not xclip then
-      pending('skipped (missing xclip)')
+      pending('skipped (missing xclip)', function() end)
     else
       it('will exit properly after passing input', function()
         eq({}, eval(

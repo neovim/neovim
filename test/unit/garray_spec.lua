@@ -5,8 +5,6 @@ local internalize = helpers.internalize
 local eq = helpers.eq
 local neq = helpers.neq
 local ffi = helpers.ffi
-local lib = helpers.lib
-local cstr = helpers.cstr
 local to_cstr = helpers.to_cstr
 local NULL = helpers.NULL
 
@@ -48,7 +46,7 @@ local ga_size = function(garr)
   return ga_len(garr) * ga_itemsize(garr)
 end
 
-local ga_maxsize = function(garr)
+local ga_maxsize = function(garr)  -- luacheck: ignore
   return ga_maxlen(garr) * ga_itemsize(garr)
 end
 
@@ -65,8 +63,8 @@ local ga_data_as_ints = function(garr)
 end
 
 -- garray manipulation
-local ga_init = function(garr, itemsize, growsize)
-  return garray.ga_init(garr, itemsize, growsize)
+local ga_init = function(garr, itemsize_, growsize_)
+  return garray.ga_init(garr, itemsize_, growsize_)
 end
 
 local ga_clear = function(garr)
@@ -113,7 +111,7 @@ local ga_set_len = function(garr, len)
 end
 
 local ga_inc_len = function(garr, by)
-  return ga_set_len(garr, ga_len(garr) + 1)
+  return ga_set_len(garr, ga_len(garr) + by)
 end
 
 -- custom append functions
@@ -197,10 +195,9 @@ describe('garray', function()
   end)
 
   describe('ga_grow', function()
-    local new_and_grow
-    function new_and_grow(itemsize, growsize, req)
+    local function new_and_grow(itemsize_, growsize_, req)
       local garr = new_garray()
-      ga_init(garr, itemsize, growsize)
+      ga_init(garr, itemsize_, growsize_)
       eq(0, ga_size(garr))         -- should be 0 at first     
       eq(NULL, ga_data(garr))      -- should be NULL           
       ga_grow(garr, req)           -- add space for `req` items
@@ -306,7 +303,7 @@ describe('garray', function()
       ga_init(garr, ffi.sizeof("char"), 1)
       local str = "ohwell●●"
       local loop = 5
-      for i = 1, loop do
+      for _ = 1, loop do
         ga_concat(garr, str)
       end
 
@@ -321,7 +318,7 @@ describe('garray', function()
     end)
   end)
 
-  function test_concat_fn(input, fn, sep)
+  local function test_concat_fn(input, fn, sep)
     local garr = new_string_garray()
     ga_append_strings(garr, unpack(input))
     if sep == nil then

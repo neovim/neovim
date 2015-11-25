@@ -11,12 +11,13 @@
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
 #include "nvim/misc2.h"
+#include "nvim/event/signal.h"
 #include "nvim/os/signal.h"
-#include "nvim/os/event.h"
+#include "nvim/event/loop.h"
 
-static uv_signal_t spipe, shup, squit, sterm;
+static SignalWatcher spipe, shup, squit, sterm;
 #ifdef SIGPWR
-static uv_signal_t spwr;
+static SignalWatcher spwr;
 #endif
 
 static bool rejecting_deadly;
@@ -27,40 +28,40 @@ static bool rejecting_deadly;
 
 void signal_init(void)
 {
-  uv_signal_init(uv_default_loop(), &spipe);
-  uv_signal_init(uv_default_loop(), &shup);
-  uv_signal_init(uv_default_loop(), &squit);
-  uv_signal_init(uv_default_loop(), &sterm);
-  uv_signal_start(&spipe, signal_cb, SIGPIPE);
-  uv_signal_start(&shup, signal_cb, SIGHUP);
-  uv_signal_start(&squit, signal_cb, SIGQUIT);
-  uv_signal_start(&sterm, signal_cb, SIGTERM);
+  signal_watcher_init(&loop, &spipe, NULL);
+  signal_watcher_init(&loop, &shup, NULL);
+  signal_watcher_init(&loop, &squit, NULL);
+  signal_watcher_init(&loop, &sterm, NULL);
+  signal_watcher_start(&spipe, on_signal, SIGPIPE);
+  signal_watcher_start(&shup, on_signal, SIGHUP);
+  signal_watcher_start(&squit, on_signal, SIGQUIT);
+  signal_watcher_start(&sterm, on_signal, SIGTERM);
 #ifdef SIGPWR
-  uv_signal_init(uv_default_loop(), &spwr);
-  uv_signal_start(&spwr, signal_cb, SIGPWR);
+  signal_watcher_init(&loop, &spwr, NULL);
+  signal_watcher_start(&spwr, on_signal, SIGPWR);
 #endif
 }
 
 void signal_teardown(void)
 {
   signal_stop();
-  uv_close((uv_handle_t *)&spipe, NULL);
-  uv_close((uv_handle_t *)&shup, NULL);
-  uv_close((uv_handle_t *)&squit, NULL);
-  uv_close((uv_handle_t *)&sterm, NULL);
+  signal_watcher_close(&spipe, NULL);
+  signal_watcher_close(&shup, NULL);
+  signal_watcher_close(&squit, NULL);
+  signal_watcher_close(&sterm, NULL);
 #ifdef SIGPWR
-  uv_close((uv_handle_t *)&spwr, NULL);
+  signal_watcher_close(&spwr, NULL);
 #endif
 }
 
 void signal_stop(void)
 {
-  uv_signal_stop(&spipe);
-  uv_signal_stop(&shup);
-  uv_signal_stop(&squit);
-  uv_signal_stop(&sterm);
+  signal_watcher_stop(&spipe);
+  signal_watcher_stop(&shup);
+  signal_watcher_stop(&squit);
+  signal_watcher_stop(&sterm);
 #ifdef SIGPWR
-  uv_signal_stop(&spwr);
+  signal_watcher_stop(&spwr);
 #endif
 }
 
@@ -111,19 +112,9 @@ static void deadly_signal(int signum)
   preserve_exit();
 }
 
-static void signal_cb(uv_signal_t *handle, int signum)
+static void on_signal(SignalWatcher *handle, int signum, void *data)
 {
   assert(signum >= 0);
-  event_push((Event) {
-    .handler = on_signal_event,
-    .data = (void *)(uintptr_t)signum
-  }, false);
-}
-
-static void on_signal_event(Event event)
-{
-  int signum = (int)(uintptr_t)event.data;
-
   switch (signum) {
 #ifdef SIGPWR
     case SIGPWR:
@@ -147,4 +138,3 @@ static void on_signal_event(Event event)
       break;
   }
 }
-

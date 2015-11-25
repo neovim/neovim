@@ -28,7 +28,7 @@ a file, when entering or leaving a buffer or window, and when exiting Vim.
 For example, you can create an autocommand to set the 'cindent' option for
 files matching *.c.  You can also use autocommands to implement advanced
 features, such as editing compressed files (see |gzip-example|).  The usual
-place to put autocommands is in your .vimrc or .exrc file.
+place to put autocommands is in your vimrc file.
 
 						*E203* *E204* *E143* *E855*
 WARNING: Using autocommands is very powerful, and may lead to unexpected side
@@ -73,8 +73,8 @@ exception is that "<sfile>" is expanded when the autocmd is defined.  Example:
 
 Here Vim expands <sfile> to the name of the file containing this line.
 
-When your .vimrc file is sourced twice, the autocommands will appear twice.
-To avoid this, put this command in your .vimrc file, before defining
+When your vimrc file is sourced twice, the autocommands will appear twice.
+To avoid this, put this command in your vimrc file, before defining
 autocommands: >
 
 	:autocmd!	" Remove ALL autocommands for the current group.
@@ -251,6 +251,7 @@ Name			triggered by ~
 
 |SwapExists|		detected an existing swap file
 |TermOpen|		when a terminal buffer is starting
+|TermClose|		when a terminal buffer ends
 
 	Options
 |FileType|		when the 'filetype' option has been set
@@ -265,8 +266,8 @@ Name			triggered by ~
 |TermResponse|		after the terminal response to |t_RV| is received
 
 |QuitPre|		when using `:quit`, before deciding whether to quit
-|VimLeavePre|		before exiting Vim, before writing the viminfo file
-|VimLeave|		before exiting Vim, after writing the viminfo file
+|VimLeavePre|		before exiting Vim, before writing the shada file
+|VimLeave|		before exiting Vim, after writing the shada file
 
 	Various
 |FileChangedShell|	Vim notices that a file changed since editing started
@@ -695,7 +696,7 @@ FuncUndefined			When a user function is used but it isn't
 GUIEnter			After starting the GUI successfully, and after
 				opening the window.  It is triggered before
 				VimEnter when using gvim.  Can be used to
-				position the window from a .gvimrc file: >
+				position the window from a gvimrc file: >
 	:autocmd GUIEnter * winpos 100 50
 <							*GUIFailed*
 GUIFailed			After starting the GUI failed.  Vim may
@@ -871,6 +872,8 @@ TermChanged			After the value of 'term' has changed.  Useful
 				for re-loading the syntax file to update the
 				colors, fonts and other terminal-dependent
 				settings.  Executed for all loaded buffers.
+						 {Nvim} *TermClose*
+TermClose			When a terminal buffer ends.
 						 {Nvim} *TermOpen*
 TermOpen			When a terminal buffer is starting.  This can
 				be used to configure the terminal emulator by
@@ -907,19 +910,19 @@ UserGettingBored		When the user presses the same key 42 times.
 				Just kidding! :-)
 							*VimEnter*
 VimEnter			After doing all the startup stuff, including
-				loading .vimrc files, executing the "-c cmd"
+				loading vimrc files, executing the "-c cmd"
 				arguments, creating all windows and loading
 				the buffers in them.
 							*VimLeave*
 VimLeave			Before exiting Vim, just after writing the
-				.viminfo file.  Executed only once, like
+				.shada file.  Executed only once, like
 				VimLeavePre.
 				To detect an abnormal exit use |v:dying|.
 				When v:dying is 2 or more this event is not
 				triggered.
 							*VimLeavePre*
 VimLeavePre			Before exiting Vim, just before writing the
-				.viminfo file.  This is executed only once,
+				.shada file.  This is executed only once,
 				if there is a match with the name of what
 				happens to be the current buffer when exiting.
 				Mostly useful with a "*" pattern. >
@@ -994,7 +997,7 @@ expect.
 Environment variables can be used in a pattern: >
 	:autocmd BufRead $VIMRUNTIME/doc/*.txt  set expandtab
 And ~ can be used for the home directory (if $HOME is defined): >
-	:autocmd BufWritePost ~/.vimrc   so ~/.vimrc
+	:autocmd BufWritePost ~/.config/nvim/init.vim   so <afile>
 	:autocmd BufRead ~archive/*      set readonly
 The environment variable is expanded when the autocommand is defined, not when
 the autocommand is executed.  This is different from the command!
@@ -1135,7 +1138,7 @@ Example: >
 	:augroup END
 
 This prevents having the autocommands defined twice (e.g., after sourcing the
-.vimrc file again).
+vimrc file again).
 
 ==============================================================================
 9. Executing autocommands				*autocmd-execute*
@@ -1157,7 +1160,7 @@ option will not cause any commands to be executed.
 			It's possible to use this inside an autocommand too,
 			so you can base the autocommands for one extension on
 			another extension.  Example: >
-				:au BufEnter *.cpp so ~/.vimrc_cpp
+				:au BufEnter *.cpp so ~/.config/nvim/init_cpp.vim
 				:au BufEnter *.cpp doau BufEnter x.c
 <			Be careful to avoid endless loops.  See
 			|autocmd-nested|.
@@ -1375,7 +1378,7 @@ use search patterns normally, e.g., with the "n" command.
 If you want an autocommand to set the search pattern, such that it is used
 after the autocommand finishes, use the ":let @/ =" command.
 The search-highlighting cannot be switched off with ":nohlsearch" in an
-autocommand.  Use the 'h' flag in the 'viminfo' option to disable search-
+autocommand.  Use the 'h' flag in the 'shada' option to disable search-
 highlighting when starting Vim.
 
 							*Cmd-event*

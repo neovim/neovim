@@ -3,7 +3,7 @@
  *
  * Do ":help uganda"  in Vim to read a list of people who contributed.
  * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
+ * See README.md for an overview of the Vim source code.
  */
 
 #include <errno.h>
@@ -321,7 +321,7 @@ newwindow:
 
   /* make all windows the same height */
   case '=':
-    win_equal(NULL, FALSE, 'b');
+    win_equal(NULL, false, 'b');
     break;
 
   /* increase current window height */
@@ -950,7 +950,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
    * equalize the window sizes.
    */
   if (do_equal || dir != 0)
-    win_equal(wp, TRUE,
+    win_equal(wp, true,
         (flags & WSP_VERT) ? (dir == 'v' ? 'b' : 'h')
         : dir == 'h' ? 'b' :
         'v');
@@ -1331,7 +1331,7 @@ static void win_totop(int size, int flags)
   if (!(flags & WSP_VERT)) {
     win_setheight(height);
     if (p_ea)
-      win_equal(curwin, TRUE, 'v');
+      win_equal(curwin, true, 'v');
   }
 
 }
@@ -1393,12 +1393,11 @@ void win_move_after(win_T *win1, win_T *win2)
  * 'next_curwin' will soon be the current window, make sure it has enough
  * rows.
  */
-void 
-win_equal (
-    win_T *next_curwin,       /* pointer to current window to be or NULL */
-    int current,                    /* do only frame with current window */
-    int dir                        /* 'v' for vertically, 'h' for horizontally,
-                                   'b' for both, 0 for using p_ead */
+void win_equal(
+    win_T *next_curwin,            // pointer to current window to be or NULL
+    bool current,                  // do only frame with current window
+    int dir                        // 'v' for vertically, 'h' for horizontally,
+                                   // 'b' for both, 0 for using p_ead
 )
 {
   if (dir == 0)
@@ -1414,10 +1413,9 @@ win_equal (
  * The window "next_curwin" (if not NULL) should at least get the size from
  * 'winheight' and 'winwidth' if possible.
  */
-static void 
-win_equal_rec (
+static void win_equal_rec(
     win_T *next_curwin,       /* pointer to current window to be or NULL */
-    int current,                    /* do only frame with current window */
+    bool current,                    /* do only frame with current window */
     frame_T *topfr,             /* frame to set size off */
     int dir,                        /* 'v', 'h' or 'b', see win_equal() */
     int col,                        /* horizontal position for frame */
@@ -1927,7 +1925,7 @@ int win_close(win_T *win, int free_buf)
       && (last_window() || curtab != prev_curtab
           || close_last_window_tabpage(win, free_buf, prev_curtab))) {
     /* Autocommands have close all windows, quit now.  Restore
-    * curwin->w_buffer, otherwise writing viminfo may fail. */
+    * curwin->w_buffer, otherwise writing ShaDa file may fail. */
     if (curwin->w_buffer == NULL)
       curwin->w_buffer = curbuf;
     getout(0);
@@ -1972,12 +1970,12 @@ int win_close(win_T *win, int free_buf)
   }
   if (p_ea
       && (*p_ead == 'b' || *p_ead == dir)
-      )
-    win_equal(curwin, TRUE,
-        dir
-        );
-  else
+      ) {
+    win_equal(curwin, true, dir);
+  } else {
     win_comp_pos();
+  }
+
   if (close_curwin) {
     win_enter_ext(wp, false, TRUE, TRUE, TRUE);
     if (other_buffer)
@@ -4675,7 +4673,7 @@ void win_new_height(win_T *wp, int height)
       set_topline(wp, lnum);
     } else if (sline > 0) {
       while (sline > 0 && lnum > 1) {
-        hasFoldingWin(wp, lnum, &lnum, NULL, TRUE, NULL);
+        (void)hasFoldingWin(wp, lnum, &lnum, NULL, true, NULL);
         if (lnum == 1) {
           /* first line in buffer is folded */
           line_size = 1;
@@ -4696,7 +4694,7 @@ void win_new_height(win_T *wp, int height)
          * Line we want at top would go off top of screen.  Use next
          * line instead.
          */
-        hasFoldingWin(wp, lnum, NULL, &lnum, TRUE, NULL);
+        (void)hasFoldingWin(wp, lnum, NULL, &lnum, true, NULL);
         lnum++;
         wp->w_wrow -= line_size + sline;
       } else if (sline > 0) {

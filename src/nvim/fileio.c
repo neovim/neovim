@@ -3,7 +3,7 @@
  *
  * Do ":help uganda"  in Vim to read copying and usage conditions.
  * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
+ * See README.md for an overview of the Vim source code.
  */
 
 /*
@@ -57,6 +57,7 @@
 #include "nvim/types.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
+#include "nvim/shada.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
@@ -415,14 +416,10 @@ readfile (
     msg_scroll = TRUE;          /* don't overwrite previous file message */
 
   /*
-   * If the name ends in a path separator, we can't open it.  Check here,
-   * because reading the file may actually work, but then creating the swap
-   * file may destroy it!  Reported on MS-DOS and Win 95.
    * If the name is too long we might crash further on, quit here.
    */
   if (fname != NULL && *fname != NUL) {
-    p = fname + STRLEN(fname);
-    if (after_pathsep((char *)fname, (char *)p) || STRLEN(fname) >= MAXPATHL) {
+    if (STRLEN(fname) >= MAXPATHL) {
       filemess(curbuf, fname, (char_u *)_("Illegal file name"), 0);
       msg_end();
       msg_scroll = msg_save;
@@ -1759,13 +1756,11 @@ failed:
 #endif
   xfree(buffer);
 
-#ifdef HAVE_DUP
   if (read_stdin) {
     /* Use stderr for stdin, makes shell commands work. */
     close(0);
     ignored = dup(2);
   }
-#endif
 
   if (tmpname != NULL) {
     os_remove((char *)tmpname);  // delete converted file
@@ -2172,16 +2167,17 @@ readfile_charconvert (
 
 
 /*
- * Read marks for the current buffer from the viminfo file, when we support
+ * Read marks for the current buffer from the ShaDa file, when we support
  * buffer marks and the buffer has a name.
  */
 static void check_marks_read(void)
 {
-  if (!curbuf->b_marks_read && get_viminfo_parameter('\'') > 0
-      && curbuf->b_ffname != NULL)
-    read_viminfo(NULL, VIF_WANT_MARKS);
+  if (!curbuf->b_marks_read && get_shada_parameter('\'') > 0
+      && curbuf->b_ffname != NULL) {
+    shada_read_marks();
+  }
 
-  /* Always set b_marks_read; needed when 'viminfo' is changed to include
+  /* Always set b_marks_read; needed when 'shada' is changed to include
    * the ' parameter after opening a buffer. */
   curbuf->b_marks_read = true;
 }
@@ -2567,9 +2563,9 @@ buf_write (
   /*
    * Get information about original file (if there is one).
    */
+  FileInfo file_info_old;
 #if defined(UNIX)
   perm = -1;
-  FileInfo file_info_old;
   if (!os_fileinfo((char *)fname, &file_info_old)) {
     newfile = TRUE;
   } else {
@@ -2627,7 +2623,7 @@ buf_write (
      * Check if the file is really writable (when renaming the file to
      * make a backup we won't discover it later).
      */
-    file_readonly = os_file_is_readonly((char *)fname);
+    file_readonly = !os_file_is_writable((char *)fname);
 
     if (!forceit && file_readonly) {
       if (vim_strchr(p_cpo, CPO_FWRITE) != NULL) {
@@ -5121,116 +5117,9 @@ void forward_slash(char_u *fname)
 /*
  * Code for automatic commands.
  */
-
-
-static struct event_name {
-  char        *name;    /* event name */
-  event_T event;        /* event number */
-} event_names[] =
-{
-  {"BufAdd",          EVENT_BUFADD},
-  {"BufCreate",       EVENT_BUFADD},
-  {"BufDelete",       EVENT_BUFDELETE},
-  {"BufEnter",        EVENT_BUFENTER},
-  {"BufFilePost",     EVENT_BUFFILEPOST},
-  {"BufFilePre",      EVENT_BUFFILEPRE},
-  {"BufHidden",       EVENT_BUFHIDDEN},
-  {"BufLeave",        EVENT_BUFLEAVE},
-  {"BufNew",          EVENT_BUFNEW},
-  {"BufNewFile",      EVENT_BUFNEWFILE},
-  {"BufRead",         EVENT_BUFREADPOST},
-  {"BufReadCmd",      EVENT_BUFREADCMD},
-  {"BufReadPost",     EVENT_BUFREADPOST},
-  {"BufReadPre",      EVENT_BUFREADPRE},
-  {"BufUnload",       EVENT_BUFUNLOAD},
-  {"BufWinEnter",     EVENT_BUFWINENTER},
-  {"BufWinLeave",     EVENT_BUFWINLEAVE},
-  {"BufWipeout",      EVENT_BUFWIPEOUT},
-  {"BufWrite",        EVENT_BUFWRITEPRE},
-  {"BufWritePost",    EVENT_BUFWRITEPOST},
-  {"BufWritePre",     EVENT_BUFWRITEPRE},
-  {"BufWriteCmd",     EVENT_BUFWRITECMD},
-  {"CmdwinEnter",     EVENT_CMDWINENTER},
-  {"CmdwinLeave",     EVENT_CMDWINLEAVE},
-  {"CmdUndefined",    EVENT_CMDUNDEFINED},
-  {"ColorScheme",     EVENT_COLORSCHEME},
-  {"CompleteDone",    EVENT_COMPLETEDONE},
-  {"CursorHold",      EVENT_CURSORHOLD},
-  {"CursorHoldI",     EVENT_CURSORHOLDI},
-  {"CursorMoved",     EVENT_CURSORMOVED},
-  {"CursorMovedI",    EVENT_CURSORMOVEDI},
-  {"EncodingChanged", EVENT_ENCODINGCHANGED},
-  {"FileEncoding",    EVENT_ENCODINGCHANGED},
-  {"FileAppendPost",  EVENT_FILEAPPENDPOST},
-  {"FileAppendPre",   EVENT_FILEAPPENDPRE},
-  {"FileAppendCmd",   EVENT_FILEAPPENDCMD},
-  {"FileChangedShell",EVENT_FILECHANGEDSHELL},
-  {"FileChangedShellPost",EVENT_FILECHANGEDSHELLPOST},
-  {"FileChangedRO",   EVENT_FILECHANGEDRO},
-  {"FileReadPost",    EVENT_FILEREADPOST},
-  {"FileReadPre",     EVENT_FILEREADPRE},
-  {"FileReadCmd",     EVENT_FILEREADCMD},
-  {"FileType",        EVENT_FILETYPE},
-  {"FileWritePost",   EVENT_FILEWRITEPOST},
-  {"FileWritePre",    EVENT_FILEWRITEPRE},
-  {"FileWriteCmd",    EVENT_FILEWRITECMD},
-  {"FilterReadPost",  EVENT_FILTERREADPOST},
-  {"FilterReadPre",   EVENT_FILTERREADPRE},
-  {"FilterWritePost", EVENT_FILTERWRITEPOST},
-  {"FilterWritePre",  EVENT_FILTERWRITEPRE},
-  {"FocusGained",     EVENT_FOCUSGAINED},
-  {"FocusLost",       EVENT_FOCUSLOST},
-  {"FuncUndefined",   EVENT_FUNCUNDEFINED},
-  {"GUIEnter",        EVENT_GUIENTER},
-  {"GUIFailed",       EVENT_GUIFAILED},
-  {"InsertChange",    EVENT_INSERTCHANGE},
-  {"InsertEnter",     EVENT_INSERTENTER},
-  {"InsertLeave",     EVENT_INSERTLEAVE},
-  {"InsertCharPre",   EVENT_INSERTCHARPRE},
-  {"MenuPopup",       EVENT_MENUPOPUP},
-  {"QuickFixCmdPost", EVENT_QUICKFIXCMDPOST},
-  {"QuickFixCmdPre",  EVENT_QUICKFIXCMDPRE},
-  {"QuitPre",         EVENT_QUITPRE},
-  {"RemoteReply",     EVENT_REMOTEREPLY},
-  {"SessionLoadPost", EVENT_SESSIONLOADPOST},
-  {"ShellCmdPost",    EVENT_SHELLCMDPOST},
-  {"ShellFilterPost", EVENT_SHELLFILTERPOST},
-  {"SourcePre",       EVENT_SOURCEPRE},
-  {"SourceCmd",       EVENT_SOURCECMD},
-  {"SpellFileMissing",EVENT_SPELLFILEMISSING},
-  {"StdinReadPost",   EVENT_STDINREADPOST},
-  {"StdinReadPre",    EVENT_STDINREADPRE},
-  {"SwapExists",      EVENT_SWAPEXISTS},
-  {"Syntax",          EVENT_SYNTAX},
-  {"TabClosed",       EVENT_TABCLOSED},
-  {"TabEnter",        EVENT_TABENTER},
-  {"TabLeave",        EVENT_TABLEAVE},
-  {"TabNew",          EVENT_TABNEW},
-  {"TabNewEntered",   EVENT_TABNEWENTERED},
-  {"TermChanged",     EVENT_TERMCHANGED},
-  {"TermOpen",        EVENT_TERMOPEN},
-  {"TermResponse",    EVENT_TERMRESPONSE},
-  {"TextChanged",     EVENT_TEXTCHANGED},
-  {"TextChangedI",    EVENT_TEXTCHANGEDI},
-  {"User",            EVENT_USER},
-  {"VimEnter",        EVENT_VIMENTER},
-  {"VimLeave",        EVENT_VIMLEAVE},
-  {"VimLeavePre",     EVENT_VIMLEAVEPRE},
-  {"WinEnter",        EVENT_WINENTER},
-  {"WinLeave",        EVENT_WINLEAVE},
-  {"VimResized",      EVENT_VIMRESIZED},
-  {NULL,              (event_T)0}
-};
-
-static AutoPat *first_autopat[NUM_EVENTS] =
-{
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
-};
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "auevents_name_map.generated.h"
+#endif
 
 static AutoPatCmd *active_apc_list = NULL; /* stack of active autocommands */
 
@@ -5526,7 +5415,7 @@ static event_T event_name2nr(char_u *start, char_u **end)
   for (p = start; *p && !ascii_iswhite(*p) && *p != ','; ++p)
     ;
   for (i = 0; event_names[i].name != NULL; ++i) {
-    len = (int)STRLEN(event_names[i].name);
+    len = (int) event_names[i].len;
     if (len == p - start && STRNICMP(event_names[i].name, start, len) == 0)
       break;
   }
@@ -5860,16 +5749,19 @@ static int do_autocmd_event(event_T event, char_u *pat, int nested, char_u *cmd,
      * Find end of the pattern.
      * Watch out for a comma in braces, like "*.\{obj,o\}".
      */
+    endpat = pat;
+    // ignore single comma
+    if (*endpat == ',') {
+      continue;
+    }
     brace_level = 0;
-    for (endpat = pat; *endpat && (*endpat != ',' || brace_level
-                                   || endpat[-1] == '\\'); ++endpat) {
+    for (; *endpat && (*endpat != ',' || brace_level || endpat[-1] == '\\');
+         ++endpat) {
       if (*endpat == '{')
         brace_level++;
       else if (*endpat == '}')
         brace_level--;
     }
-    if (pat == endpat)                  /* ignore single comma */
-      continue;
     patlen = (int)(endpat - pat);
 
     /*
@@ -6196,11 +6088,11 @@ aucmd_prepbuf (
     block_autocmds();
     make_snapshot(SNAP_AUCMD_IDX);
     save_ea = p_ea;
-    p_ea = FALSE;
+    p_ea = false;
 
     /* Prevent chdir() call in win_enter_ext(), through do_autochdir(). */
     save_acd = p_acd;
-    p_acd = FALSE;
+    p_acd = false;
 
     (void)win_split_ins(0, WSP_TOP, aucmd_win, 0);
     (void)win_comp_pos();       /* recompute window positions */

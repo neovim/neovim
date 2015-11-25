@@ -714,9 +714,6 @@ When the {string} starts with "\=" it is evaluated as an expression, see
 characters.
 
 Otherwise these characters in {string} have a special meaning:
-								*:s%*
-When {string} is equal to "%" and '/' is included with the 'cpoptions' option,
-then the {string} of the previous substitute command is used, see |cpo-/|
 
 magic	nomagic	  action    ~
   &	  \&	  replaced with the whole matched pattern	     *s/\&*
@@ -1131,8 +1128,6 @@ and ":put" commands and with CTRL-R.
 		The command-line is only stored in this register when at least
 		one character of it was typed.  Thus it remains unchanged if
 		the command was completely from a mapping.
-		{not available when compiled without the |+cmdline_hist|
-		feature}
 
 6. Expression register "=			*quote_=* *quote=* *@=*
 This is not really a register that stores text, but is a way to use an
@@ -1440,8 +1435,6 @@ Other examples: >
 By default, "b:#" is included.  This means that a line that starts with
 "#include" is not recognized as a comment line.  But a line that starts with
 "# define" is recognized.  This is a compromise.
-
-{not available when compiled without the |+comments| feature}
 
 							*fo-table*
 You can use the 'formatoptions' option  to influence how Vim formats text.

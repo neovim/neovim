@@ -216,7 +216,7 @@ there is no different error message for that.
   Command not allowed from exrc/vimrc in current dir or tag search
 
 Some commands are not allowed for security reasons.  These commands mostly
-come from a .exrc or .vimrc file in the current directory, or from a tags
+come from a .exrc or .nvimrc file in the current directory, or from a tags
 file.  Also see 'secure'.
 
 							*E74*  >
@@ -738,6 +738,12 @@ Example: >
 
 You tried to execute a command that is neither an Ex command nor
 a user-defined command.
+
+							*E905*  >
+  Cannot set this option after startup
+
+You tried to set an option after startup that only allows changes during
+startup.
 
 ==============================================================================
 3. Messages						*messages*

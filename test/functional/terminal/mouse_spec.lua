@@ -1,8 +1,7 @@
-local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')
 local thelpers = require('test.functional.terminal.helpers')
-local clear, eq, curbuf = helpers.clear, helpers.eq, helpers.curbuf
-local feed, execute, nvim = helpers.feed, helpers.execute, helpers.nvim
+local clear = helpers.clear
+local feed, nvim = helpers.feed, helpers.nvim
 local feed_data = thelpers.feed_data
 
 describe('terminal mouse', function()

@@ -6,10 +6,6 @@
 
 Arabic Language support (options & mappings) for Vim		*Arabic*
 
-								*E800*
-In order to use right-to-left and Arabic mapping support, it is
-necessary to compile VIM with the |+arabic| feature.
-
 These functions have been created by Nadim Shaikli <nadim-at-arabeyes.org>
 
 It is best to view this file with these settings within VIM's GUI: >
@@ -108,9 +104,9 @@ o  Setting the Arabic fonts
 	    font name akin to that used in Linux/Unix systems.
 	    (e.g. -misc-fixed-medium-r-normal--20-200-75-75-c-100-iso10646-1)
 
-      You can append the 'guifont' set command to your .vimrc file
+      You can append the 'guifont' set command to your vimrc file
       in order to get the same above noted results.  In other words,
-      you can include ':set guifont=your_ARABIC_FONT' to your .vimrc
+      you can include ':set guifont=your_ARABIC_FONT' to your vimrc
       file.
 
    +  Under the X Window environment, you can also start VIM with
@@ -122,9 +118,9 @@ o  Setting the appropriate character Encoding
 >
 		:set encoding=utf-8
 <
-   to your .vimrc file (entering the command manually into you VIM
+   to your vimrc file (entering the command manually into you VIM
    window is highly discouraged).  In short, include ':set
-   encoding=utf-8' to your .vimrc file.
+   encoding=utf-8' to your vimrc file.
 
    Attempts to use Arabic without UTF-8 will result the following
    warning message,
@@ -153,7 +149,7 @@ o  Enable Arabic settings [short-cut]
      4. enable rightleftcmd mode (affecting the command-line)
      5. enable arabicshape  mode (do visual character alterations)
 
-   You may also append the command to your .vimrc file and simply
+   You may also append the command to your vimrc file and simply
    include ':set arabic' to it.
 
    You are also capable of disabling Arabic support via
@@ -188,8 +184,8 @@ o  Enable Arabic settings [short-cut]
 		:set keymap=arabic
 <
       in your VIM window.  You can also append the 'keymap' set command to
-      your .vimrc file.  In other words, you can include ':set keymap=arabic'
-      to your .vimrc file.
+      your vimrc file.  In other words, you can include ':set keymap=arabic'
+      to your vimrc file.
 
       To turn toggle (or switch) your keymapping between Arabic and the
       default mapping (English), it is advised that users use the 'CTRL-^'
@@ -210,8 +206,8 @@ o  Enable Arabic settings [short-cut]
 		:set delcombine
 <
       in our VIM window.  You can also append the 'delcombine' set command
-      to your .vimrc file.  In other words, you can include ':set delcombine'
-      to your .vimrc file.
+      to your vimrc file.  In other words, you can include ':set delcombine'
+      to your vimrc file.
 
    +  Arabic right-to-left Mode
 
@@ -225,8 +221,8 @@ o  Enable Arabic settings [short-cut]
       - While in Left-to-right mode, enter ':set rl' in the command line
 	('rl' is the abbreviation for rightleft).
 
-      - Put the ':set rl' line in your '.vimrc' file to start Vim in
-	right-to-left mode permanently.
+      - Put the ':set rl' line in your vimrc file to start Vim in 
+        right-to-left mode permanently.
 
    +  Arabic right-to-left command-line Mode
 
@@ -252,8 +248,8 @@ o  Enable Arabic settings [short-cut]
 		:set arabicshape
 <
       in our VIM window.  You can also append the 'arabicshape' set
-      command to your .vimrc file.  In other words, you can include
-      ':set arabicshape' to your .vimrc file.
+      command to your vimrc file.  In other words, you can include
+      ':set arabicshape' to your vimrc file.
 
 
 Keymap/Keyboard						*arabickeymap*

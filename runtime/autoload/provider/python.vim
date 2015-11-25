@@ -46,7 +46,7 @@ function! provider#python#Call(method, args)
       echohl WarningMsg
       echomsg v:exception
       echohl None
-      finish
+      return
     endtry
   endif
   return call(s:rpcrequest, insert(insert(a:args, 'python_'.a:method), s:host))

@@ -55,13 +55,21 @@ endif
 let s:clipboard = {}
 
 function! s:clipboard.get(reg)
-  if s:selections[a:reg].owner > 0
-    return s:selections[a:reg].data
+  let reg = a:reg == '"' ? '+' : a:reg
+  if s:selections[reg].owner > 0
+    return s:selections[reg].data
   end
-  return s:try_cmd(s:paste[a:reg])
+  return s:try_cmd(s:paste[reg])
 endfunction
 
 function! s:clipboard.set(lines, regtype, reg)
+  if a:reg == '"'
+    call s:clipboard.set(a:lines,a:regtype,'+')
+    if s:copy['*'] != s:copy['+']
+      call s:clipboard.set(a:lines,a:regtype,'*')
+    end
+    return 0
+  end
   if s:cache_enabled == 0
     call s:try_cmd(s:copy[a:reg], a:lines)
     return 0

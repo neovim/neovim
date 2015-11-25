@@ -1,18 +1,16 @@
+local lfs = require('lfs')
 local helpers = require('test.unit.helpers')
 
 local cimport = helpers.cimport
-local internalize = helpers.internalize
 local eq = helpers.eq
 local neq = helpers.neq
 local ffi = helpers.ffi
-local lib = helpers.lib
 local cstr = helpers.cstr
 local to_cstr = helpers.to_cstr
 local NULL = helpers.NULL
 local OK = helpers.OK
 local FAIL = helpers.FAIL
 
-require('lfs')
 cimport('string.h')
 local path = cimport('./src/nvim/path.h')
 
@@ -23,7 +21,7 @@ local kBothFilesMissing = path.kBothFilesMissing
 local kOneFileMissing = path.kOneFileMissing
 local kEqualFileNames = path.kEqualFileNames
 
-local len = 0
+local length = 0
 local buffer = nil
 
 describe('path function', function()
@@ -36,19 +34,19 @@ describe('path function', function()
       lfs.rmdir('unit-test-directory')
     end)
 
-    function path_full_dir_name(directory, buffer, len)
+    local function path_full_dir_name(directory, buf, len)
       directory = to_cstr(directory)
-      return path.path_full_dir_name(directory, buffer, len)
+      return path.path_full_dir_name(directory, buf, len)
     end
 
     before_each(function()
       -- Create empty string buffer which will contain the resulting path.
-      len = (string.len(lfs.currentdir())) + 22
-      buffer = cstr(len, '')
+      length = string.len(lfs.currentdir()) + 22
+      buffer = cstr(length, '')
     end)
 
     it('returns the absolute directory name of a given relative one', function()
-      local result = path_full_dir_name('..', buffer, len)
+      local result = path_full_dir_name('..', buffer, length)
       eq(OK, result)
       local old_dir = lfs.currentdir()
       lfs.chdir('..')
@@ -58,23 +56,23 @@ describe('path function', function()
     end)
 
     it('returns the current directory name if the given string is empty', function()
-      eq(OK, (path_full_dir_name('', buffer, len)))
+      eq(OK, (path_full_dir_name('', buffer, length)))
       eq(lfs.currentdir(), (ffi.string(buffer)))
     end)
 
     it('fails if the given directory does not exist', function()
-      eq(FAIL, path_full_dir_name('does_not_exist', buffer, len))
+      eq(FAIL, path_full_dir_name('does_not_exist', buffer, length))
     end)
 
     it('works with a normal relative dir', function()
-      local result = path_full_dir_name('unit-test-directory', buffer, len)
+      local result = path_full_dir_name('unit-test-directory', buffer, length)
       eq(lfs.currentdir() .. '/unit-test-directory', (ffi.string(buffer)))
       eq(OK, result)
     end)
   end)
 
   describe('path_full_compare', function()
-    function path_full_compare(s1, s2, cn)
+    local function path_full_compare(s1, s2, cn)
       s1 = to_cstr(s1)
       s2 = to_cstr(s2)
       return path.path_full_compare(s1, s2, cn or 0)
@@ -117,7 +115,7 @@ describe('path function', function()
   end)
 
   describe('path_tail', function()
-    function path_tail(file)
+    local function path_tail(file)
       local res = path.path_tail((to_cstr(file)))
       neq(NULL, res)
       return ffi.string(res)
@@ -133,7 +131,7 @@ describe('path function', function()
   end)
 
   describe('path_tail_with_sep', function()
-    function path_tail_with_sep(file)
+    local function path_tail_with_sep(file)
       local res = path.path_tail_with_sep((to_cstr(file)))
       neq(NULL, res)
       return ffi.string(res)
@@ -165,7 +163,7 @@ describe('path function', function()
     -- Returns the path tail and length (out param) of the tail.
     -- Does not convert the tail from C-pointer to lua string for use with
     -- strcmp.
-    function invocation_path_tail(invk)
+    local function invocation_path_tail(invk)
       local plen = ffi.new('size_t[?]', 1)
       local ptail = path.invocation_path_tail((to_cstr(invk)), plen)
       neq(NULL, ptail)
@@ -178,7 +176,7 @@ describe('path function', function()
     end
 
     -- This test mimics the intended use in C.
-    function compare(base, pinvk, len)
+    local function compare(base, pinvk, len)
       return eq(0, (ffi.C.strncmp((to_cstr(base)), pinvk, len)))
     end
 
@@ -207,7 +205,7 @@ describe('path function', function()
     end)
 
     it('only accepts whitespace as a terminator for the executable name', function()
-      local invk, len = invocation_path_tail('exe-a+b_c[]()|#!@$%^&*')
+      local invk, _ = invocation_path_tail('exe-a+b_c[]()|#!@$%^&*')
       eq('exe-a+b_c[]()|#!@$%^&*', (ffi.string(invk)))
     end)
 
@@ -215,20 +213,20 @@ describe('path function', function()
       local ptail = path.path_tail(to_cstr("a/b/c x y z"))
       neq(NULL, ptail)
       local tail = ffi.string(ptail)
-      local invk, len = invocation_path_tail("a/b/c x y z")
+      local invk, _ = invocation_path_tail("a/b/c x y z")
       eq(tail, ffi.string(invk))
     end)
 
     it('is not equivalent to path_tail when args contain a path separator', function()
       local ptail = path.path_tail(to_cstr("a/b/c x y/z"))
       neq(NULL, ptail)
-      local invk, len = invocation_path_tail("a/b/c x y/z")
+      local invk, _ = invocation_path_tail("a/b/c x y/z")
       neq((ffi.string(ptail)), (ffi.string(invk)))
     end)
   end)
 
   describe('path_next_component', function()
-    function path_next_component(file)
+    local function path_next_component(file)
       local res = path.path_next_component((to_cstr(file)))
       neq(NULL, res)
       return ffi.string(res)
@@ -308,11 +306,11 @@ describe('more path function', function()
 
     -- Since the tests are executed, they are called by an executable. We use
     -- that executable for several asserts.
-    absolute_executable = arg[0]
+    local absolute_executable = arg[0]
 
     -- Split absolute_executable into a directory and the actual file name for
     -- later usage.
-    directory, executable_name = string.match(absolute_executable, '^(.*)/(.*)$')
+    local directory, executable_name = string.match(absolute_executable, '^(.*)/(.*)$')  -- luacheck: ignore
   end)
 
   teardown(function()
@@ -321,27 +319,27 @@ describe('more path function', function()
   end)
 
   describe('vim_FullName', function()
-    function vim_FullName(filename, buffer, length, force)
+    local function vim_FullName(filename, buf, len, force)
       filename = to_cstr(filename)
-      return path.vim_FullName(filename, buffer, length, force)
+      return path.vim_FullName(filename, buf, len, force)
     end
 
     before_each(function()
       -- Create empty string buffer which will contain the resulting path.
-      len = (string.len(lfs.currentdir())) + 33
-      buffer = cstr(len, '')
+      length = (string.len(lfs.currentdir())) + 33
+      buffer = cstr(length, '')
     end)
 
     it('fails if given filename is NULL', function()
       local force_expansion = 1
-      local result = path.vim_FullName(NULL, buffer, len, force_expansion)
+      local result = path.vim_FullName(NULL, buffer, length, force_expansion)
       eq(FAIL, result)
     end)
 
     it('uses the filename if the filename is a URL', function()
       local force_expansion = 1
       local filename = 'http://www.neovim.org'
-      local result = vim_FullName(filename, buffer, len, force_expansion)
+      local result = vim_FullName(filename, buffer, length, force_expansion)
       eq(filename, (ffi.string(buffer)))
       eq(OK, result)
     end)
@@ -349,14 +347,14 @@ describe('more path function', function()
     it('fails and uses filename if given filename contains non-existing directory', function()
       local force_expansion = 1
       local filename = 'non_existing_dir/test.file'
-      local result = vim_FullName(filename, buffer, len, force_expansion)
+      local result = vim_FullName(filename, buffer, length, force_expansion)
       eq(filename, (ffi.string(buffer)))
       eq(FAIL, result)
     end)
 
     it('concatenates given filename if it does not contain a slash', function()
       local force_expansion = 1
-      local result = vim_FullName('test.file', buffer, len, force_expansion)
+      local result = vim_FullName('test.file', buffer, length, force_expansion)
       local expected = lfs.currentdir() .. '/test.file'
       eq(expected, (ffi.string(buffer)))
       eq(OK, result)
@@ -364,7 +362,7 @@ describe('more path function', function()
 
     it('concatenates given filename if it is a directory but does not contain a\n    slash', function()
       local force_expansion = 1
-      local result = vim_FullName('..', buffer, len, force_expansion)
+      local result = vim_FullName('..', buffer, length, force_expansion)
       local expected = lfs.currentdir() .. '/..'
       eq(expected, (ffi.string(buffer)))
       eq(OK, result)
@@ -374,7 +372,7 @@ describe('more path function', function()
     -- the unit tests? Which other directory would be better?
     it('enters given directory (instead of just concatenating the strings) if possible and if path contains a slash', function()
       local force_expansion = 1
-      local result = vim_FullName('../test.file', buffer, len, force_expansion)
+      local result = vim_FullName('../test.file', buffer, length, force_expansion)
       local old_dir = lfs.currentdir()
       lfs.chdir('..')
       local expected = lfs.currentdir() .. '/test.file'
@@ -386,7 +384,7 @@ describe('more path function', function()
     it('just copies the path if it is already absolute and force=0', function()
       local force_expansion = 0
       local absolute_path = '/absolute/path'
-      local result = vim_FullName(absolute_path, buffer, len, force_expansion)
+      local result = vim_FullName(absolute_path, buffer, length, force_expansion)
       eq(absolute_path, (ffi.string(buffer)))
       eq(OK, result)
     end)
@@ -394,14 +392,14 @@ describe('more path function', function()
     it('fails and uses filename when the path is relative to HOME', function()
       local force_expansion = 1
       local absolute_path = '~/home.file'
-      local result = vim_FullName(absolute_path, buffer, len, force_expansion)
+      local result = vim_FullName(absolute_path, buffer, length, force_expansion)
       eq(absolute_path, (ffi.string(buffer)))
       eq(FAIL, result)
     end)
 
     it('works with some "normal" relative path with directories', function()
       local force_expansion = 1
-      local result = vim_FullName('unit-test-directory/test.file', buffer, len, force_expansion)
+      local result = vim_FullName('unit-test-directory/test.file', buffer, length, force_expansion)
       eq(OK, result)
       eq(lfs.currentdir() .. '/unit-test-directory/test.file', (ffi.string(buffer)))
     end)
@@ -411,16 +409,24 @@ describe('more path function', function()
       local filename = to_cstr('unit-test-directory/test.file')
       -- Don't use the wrapper here but pass a cstring directly to the c
       -- function.
-      local result = path.vim_FullName(filename, buffer, len, force_expansion)
+      local result = path.vim_FullName(filename, buffer, length, force_expansion)
       eq(lfs.currentdir() .. '/unit-test-directory/test.file', (ffi.string(buffer)))
       eq('unit-test-directory/test.file', (ffi.string(filename)))
+      eq(OK, result)
+    end)
+
+    it('works with directories that have one path component', function()
+      local force_expansion = 1
+      local filename = to_cstr('/tmp')
+      local result = path.vim_FullName(filename, buffer, length, force_expansion)
+      eq('/tmp', ffi.string(buffer))
       eq(OK, result)
     end)
   end)
 
   describe('path_fix_case', function()
-    function fix_case(file)
-      c_file = to_cstr(file)
+    local function fix_case(file)
+      local c_file = to_cstr(file)
       path.path_fix_case(c_file)
       return ffi.string(c_file)
     end
@@ -485,7 +491,7 @@ describe('more path function', function()
   end)
 
   describe('path_is_absolute_path', function()
-    function path_is_absolute_path(filename)
+    local function path_is_absolute_path(filename)
       filename = to_cstr(filename)
       return path.path_is_absolute_path(filename)
     end

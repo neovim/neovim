@@ -35,7 +35,7 @@ end
 
 -- adds the argument table to this Set
 function Set:union_table(t)
-  for k, v in pairs(t) do
+  for _, v in pairs(t) do
     self:add(v)
   end
 end

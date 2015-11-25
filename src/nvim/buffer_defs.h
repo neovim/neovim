@@ -327,15 +327,6 @@ typedef struct {
   bool vc_fail;                 /* fail for invalid char, don't use '?' */
 } vimconv_T;
 
-/*
- * Structure used for reading from the viminfo file.
- */
-typedef struct {
-  char_u      *vir_line;        /* text of the current line */
-  FILE        *vir_fd;          /* file descriptor */
-  vimconv_T vir_conv;           /* encoding conversion */
-} vir_T;
-
 #define CONV_NONE               0
 #define CONV_TO_UTF8            1
 #define CONV_9_TO_UTF8          2
@@ -515,21 +506,21 @@ struct file_buffer {
   uint64_t b_orig_size;         /* size of original file in bytes */
   int b_orig_mode;              /* mode of original file */
 
-  pos_T b_namedm[NMARKS];         /* current named marks (mark.c) */
+  fmark_T b_namedm[NMARKS];     /* current named marks (mark.c) */
 
   /* These variables are set when VIsual_active becomes FALSE */
   visualinfo_T b_visual;
   int b_visual_mode_eval;            /* b_visual.vi_mode for visualmode() */
 
-  pos_T b_last_cursor;          /* cursor position when last unloading this
-                                   buffer */
-  pos_T b_last_insert;          /* where Insert mode was left */
-  pos_T b_last_change;          /* position of last change: '. mark */
+  fmark_T b_last_cursor;        // cursor position when last unloading this
+                                // buffer
+  fmark_T b_last_insert;        // where Insert mode was left
+  fmark_T b_last_change;        // position of last change: '. mark
 
   /*
    * the changelist contains old change positions
    */
-  pos_T b_changelist[JUMPLISTSIZE];
+  fmark_T b_changelist[JUMPLISTSIZE];
   int b_changelistlen;                  /* number of active entries */
   bool b_new_change;                    /* set by u_savecommon() */
 
@@ -553,7 +544,7 @@ struct file_buffer {
   pos_T b_op_start_orig;  // used for Insstart_orig
   pos_T b_op_end;
 
-  bool b_marks_read;            /* Have we read viminfo marks yet? */
+  bool b_marks_read;            /* Have we read ShaDa marks yet? */
 
   /*
    * The following only used in undo.c.
@@ -757,6 +748,8 @@ struct file_buffer {
   signlist_T *b_signlist;       /* list of signs to draw */
 
   Terminal *terminal;           // Terminal instance associated with the buffer
+
+  dict_T *additional_data;      // Additional data from shada file if any.
 };
 
 /*
@@ -1007,7 +1000,7 @@ struct window_S {
    * that the cursor is on.  We use this to avoid extra calls to plines().
    */
   int w_cline_height;               /* current size of cursor line */
-  int w_cline_folded;               /* cursor line is folded */
+  bool w_cline_folded;               /* cursor line is folded */
 
   int w_cline_row;                  /* starting row of the cursor line */
 

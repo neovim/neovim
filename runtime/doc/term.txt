@@ -37,7 +37,7 @@ used.  Also see |xterm-screens|.
 Settings depending on terminal			*term-dependent-settings*
 
 If you want to set options or mappings, depending on the terminal name, you
-can do this best in your .vimrc.  Example: >
+can do this best in your vimrc.  Example: >
 
    if &term == "xterm"
      ... xterm maps and settings ...
@@ -392,7 +392,6 @@ Example for an xterm, this changes the color of the cursor: >
     endif
 NOTE: When Vim exits the shape for Normal mode will remain.  The shape from
 before Vim started will not be restored.
-{not available when compiled without the |+cursorshape| feature}
 
 							*termcap-title*
 The 't_ts' and 't_fs' options are used to set the window title if the terminal
@@ -591,6 +590,19 @@ commands requiring the CTRL modifier can be simulated by typing the "g" key
 before using the mouse:
 	"g<LeftMouse>"	is "<C-LeftMouse>	(jump to tag under mouse click)
 	"g<RightMouse>" is "<C-RightMouse>	("CTRL-T")
+
+							*bracketed-paste-mode*
+Bracketed paste mode allows terminal emulators to distinguish between typed
+text and pasted text.
+
+For terminal emulators that support it, this mode is enabled by default. Thus
+you can paste text without Neovim giving any special meaning to it. Most
+notably it won't try reindenting those lines.
+
+If your terminal emulator doesn't support it yet, you can get the old Vim
+behaviour by enabling |'paste'| temporarily.
+
+NOTE: See https://cirw.in/blog/bracketed-paste for technical details.
 
 					*mouse-mode-table* *mouse-overview*
 A short overview of what the mouse buttons do, when 'mousemodel' is "extend":

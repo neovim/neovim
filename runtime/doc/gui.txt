@@ -26,10 +26,10 @@ How to start the GUI depends on the system used.  Mostly you can run the
 GUI version of Vim with:
     gvim [options] [files...]
 
-			*gui-init* *gvimrc* *.gvimrc* *_gvimrc* *$MYGVIMRC*
+				*ginit.vim* *gui-init* *gvimrc* *$MYGVIMRC*
 The gvimrc file is where GUI-specific startup commands should be placed.  It
-is always sourced after the |vimrc| file.  If you have one then the $MYGVIMRC
-environment variable has its name.
+is always sourced after the |init.vim| file.  If you have one then the 
+$MYGVIMRC environment variable has its name.
 
 When the GUI starts up initializations are carried out, in this order:
 - The 'term' option is set to "builtin_gui" and terminal options are reset to
@@ -39,7 +39,7 @@ When the GUI starts up initializations are carried out, in this order:
   see |$VIMRUNTIME|.  To skip loading the system menu include 'M' in
   'guioptions'.				*buffers-menu* *no_buffers_menu*
   The system menu file includes a "Buffers" menu.  If you don't want this, set
-  the "no_buffers_menu" variable in your .vimrc (not .gvimrc!): >
+  the "no_buffers_menu" variable in your init.vim (not ginit.vim!): >
 	:let no_buffers_menu = 1
 < NOTE: Switching on syntax highlighting also loads the menu file, thus
   disabling the Buffers menu must be done before ":syntax on".
@@ -51,29 +51,22 @@ When the GUI starts up initializations are carried out, in this order:
   initializations are skipped.  When {gvimrc} is "NONE" no file will be read
   for initializations.
 - For Unix and MS-Windows, if the system gvimrc exists, it is sourced.  The
-  name of this file is normally "$VIM/gvimrc".  You can check this with
+  name of this file is normally "$VIM/ginit.vim".  You can check this with
   ":version".  Also see |$VIM|.
 - The following are tried, and only the first one that exists is used:
   - If the GVIMINIT environment variable exists and is not empty, it is
     executed as an Ex command.
   - If the user gvimrc file exists, it is sourced.  The name of this file is
-    normally "$HOME/.gvimrc".  You can check this with ":version".
-  - For Win32, when $HOME is not set, "$VIM\_gvimrc" is used.
-  - When a "_gvimrc" file is not found, ".gvimrc" is tried too.  And vice
-    versa.
+    normally "$XDG_CONFIG_HOME/nvim/ginit.vim" ($XDG_CONFIG_HOME defaults to 
+    ~/.config).
   The name of the first file found is stored in $MYGVIMRC, unless it was
   already set.
-- If the 'exrc' option is set (which is NOT the default) the file ./.gvimrc
-  is sourced, if it exists and isn't the same file as the system or user
-  gvimrc file.  If this file is not owned by you, some security restrictions
-  apply.  When ".gvimrc" is not found, "_gvimrc" is tried too.  For Macintosh
-  and DOS/Win32 "_gvimrc" is tried first.
 
 NOTE: All but the first one are not carried out if Vim was started with
 "-u NONE" and no "-U" argument was given, or when started with "-U NONE".
 
 All this happens AFTER the normal Vim initializations, like reading your
-.vimrc file.  See |initialization|.
+vimrc file.  See |initialization|.
 But the GUI window is only opened after all the initializations have been
 carried out.  If you want some commands to be executed just after opening the
 GUI window, use the |GUIEnter| autocommand event.  Example: >
@@ -84,9 +77,8 @@ and initialize other things that you may want to set up differently from the
 terminal version.
 
 Recommended place for your personal GUI initializations:
-	Unix		    $HOME/.gvimrc or $HOME/.vim/gvimrc
-	MS-DOS and Win32    $HOME/_gvimrc, $HOME/vimfiles/gvimrc
-			    or $VIM/_gvimrc
+	Unix		$XDG_CONFIG_HOME/.config/nvim/ginit.vim
+			(default for $XDG_CONFIG_HOME is ~/.config)
 
 The personal initialization files are searched in the order specified above
 and only the first one that is found is read.
@@ -464,7 +456,7 @@ The default menus are read from the file "$VIMRUNTIME/menu.vim".  See
 Starting off with the default set is a good idea.  You can add more items, or,
 if you don't like the defaults at all, start with removing all menus
 |:unmenu-all|.  You can also avoid the default menus being loaded by adding
-this line to your .vimrc file (NOT your .gvimrc file!): >
+this line to your vimrc file (NOT your gvimrc file!): >
 	:let did_install_default_menus = 1
 If you also want to avoid the Syntax menu: >
 	:let did_install_syntax_menu = 1
@@ -479,7 +471,7 @@ Although this documentation is in the GUI section, you can actually use menus
 in console mode too.  You will have to load |menu.vim| explicitly then, it is
 not done by default.  You can use the |:emenu| command and command-line
 completion with 'wildmenu' to access the menu entries almost like a real menu
-system.  To do this, put these commands in your .vimrc file: >
+system.  To do this, put these commands in your vimrc file: >
 	:source $VIMRUNTIME/menu.vim
 	:set wildmenu
 	:set cpo-=<
@@ -488,18 +480,6 @@ system.  To do this, put these commands in your .vimrc file: >
 Pressing <F4> will start the menu.  You can now use the cursor keys to select
 a menu entry.  Hit <Enter> to execute it.  Hit <Esc> if you want to cancel.
 This does require the |+menu| feature enabled at compile time.
-
-							*tear-off-menus*
-GTK+ and Motif support Tear-off menus.  These are sort of sticky menus or
-pop-up menus that are present all the time.  If the resizing does not work
-correctly, this may be caused by using something like "Vim*geometry" in the
-defaults.  Use "Vim.geometry" instead.
-
-The Win32 GUI version emulates Motif's tear-off menus.  Actually, a Motif user
-will spot the differences easily, but hopefully they're just as useful.  You
-can also use the |:tearoff| command together with |hidden-menus| to create
-floating menus that do not appear on the main menu bar.
-
 
 5.2 Creating New Menus					*creating-menus*
 
@@ -750,8 +730,7 @@ nr  Name		Normal action  ~
 
 					*hidden-menus* *win32-hidden-menus*
 In the Win32 and GTK+ GUI, starting a menu name with ']' excludes that menu
-from the main menu bar.  You must then use the |:popup| or |:tearoff| command
-to display it.
+from the main menu bar.  You must then use the |:popup| command to display it.
 
 							*popup-menu*
 You can define the special menu "PopUp".  This is the menu that is displayed

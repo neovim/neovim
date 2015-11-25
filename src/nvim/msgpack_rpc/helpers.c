@@ -225,8 +225,8 @@ void msgpack_rpc_from_float(Float result, msgpack_packer *res)
 void msgpack_rpc_from_string(String result, msgpack_packer *res)
   FUNC_ATTR_NONNULL_ARG(2)
 {
-  msgpack_pack_bin(res, result.size);
-  msgpack_pack_bin_body(res, result.data, result.size);
+  msgpack_pack_str(res, result.size);
+  msgpack_pack_str_body(res, result.data, result.size);
 }
 
 void msgpack_rpc_from_object(Object result, msgpack_packer *res)
@@ -332,8 +332,7 @@ void msgpack_rpc_serialize_request(uint64_t request_id,
     msgpack_pack_uint64(pac, request_id);
   }
 
-  msgpack_pack_bin(pac, method.size);
-  msgpack_pack_bin_body(pac, method.data, method.size);
+  msgpack_rpc_from_string(method, pac);
   msgpack_rpc_from_array(args, pac);
 }
 

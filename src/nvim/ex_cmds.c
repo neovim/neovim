@@ -3,7 +3,7 @@
  *
  * Do ":help uganda"  in Vim to read copying and usage conditions.
  * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
+ * See README.md for an overview of the Vim source code.
  */
 
 /*
@@ -62,11 +62,11 @@
 #include "nvim/tempfile.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
-#include "nvim/version.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/input.h"
+#include "nvim/os/time.h"
 
 /*
  * Struct to hold the sign properties.
@@ -1246,8 +1246,9 @@ do_shell (
   // 1" command to the terminal.
   ui_cursor_goto(msg_row, msg_col);
   (void)call_shell(cmd, flags, NULL);
-  did_check_timestamps = FALSE;
-  need_check_timestamps = TRUE;
+  msg_didout = true;
+  did_check_timestamps = false;
+  need_check_timestamps = true;
 
   // put the message cursor at the end of the screen, avoids wait_return()
   // to overwrite the text that the external command showed
@@ -1388,550 +1389,6 @@ void append_redir(char_u *buf, int buflen, char_u *opt, char_u *fname)
     vim_snprintf((char *)end, (size_t)(buflen - (end - buf)),
         " %s %s",
         (char *)opt, (char *)fname);
-}
-
-
-static int viminfo_errcnt;
-
-static int no_viminfo(void)
-{
-  /* "vim -i NONE" does not read or write a viminfo file */
-  return use_viminfo != NULL && STRCMP(use_viminfo, "NONE") == 0;
-}
-
-/*
- * Report an error for reading a viminfo file.
- * Count the number of errors.	When there are more than 10, return TRUE.
- */
-int viminfo_error(char *errnum, char *message, char_u *line)
-{
-  vim_snprintf((char *)IObuff, IOSIZE, _("%sviminfo: %s in line: "),
-      errnum, message);
-  STRNCAT(IObuff, line, IOSIZE - STRLEN(IObuff) - 1);
-  if (IObuff[STRLEN(IObuff) - 1] == '\n')
-    IObuff[STRLEN(IObuff) - 1] = NUL;
-  emsg(IObuff);
-  if (++viminfo_errcnt >= 10) {
-    EMSG(_("E136: viminfo: Too many errors, skipping rest of file"));
-    return TRUE;
-  }
-  return FALSE;
-}
-
-/*
- * read_viminfo() -- Read the viminfo file.  Registers etc. which are already
- * set are not over-written unless "flags" includes VIF_FORCEIT. -- webb
- */
-int 
-read_viminfo (
-    char_u *file,          /* file name or NULL to use default name */
-    int flags                  /* VIF_WANT_INFO et al. */
-)
-{
-  FILE        *fp;
-  char_u      *fname;
-
-  if (no_viminfo())
-    return FAIL;
-
-  fname = viminfo_filename(file);       /* get file name in allocated buffer */
-  fp = mch_fopen((char *)fname, READBIN);
-
-  if (p_verbose > 0) {
-    verbose_enter();
-    smsg(_("Reading viminfo file \"%s\"%s%s%s"),
-        fname,
-        (flags & VIF_WANT_INFO) ? _(" info") : "",
-        (flags & VIF_WANT_MARKS) ? _(" marks") : "",
-        (flags & VIF_GET_OLDFILES) ? _(" oldfiles") : "",
-        fp == NULL ? _(" FAILED") : "");
-    verbose_leave();
-  }
-
-  xfree(fname);
-  if (fp == NULL)
-    return FAIL;
-
-  viminfo_errcnt = 0;
-  do_viminfo(fp, NULL, flags);
-
-  fclose(fp);
-  return OK;
-}
-
-/*
- * Write the viminfo file.  The old one is read in first so that effectively a
- * merge of current info and old info is done.  This allows multiple vims to
- * run simultaneously, without losing any marks etc.
- * If "forceit" is TRUE, then the old file is not read in, and only internal
- * info is written to the file.
- */
-void write_viminfo(char_u *file, int forceit)
-{
-  char_u      *fname;
-  FILE        *fp_in = NULL;    /* input viminfo file, if any */
-  FILE        *fp_out = NULL;   /* output viminfo file */
-  char_u      *tempname = NULL;         /* name of temp viminfo file */
-  char_u      *wp;
-#if defined(UNIX)
-  mode_t umask_save;
-#endif
-
-  if (no_viminfo())
-    return;
-
-  fname = viminfo_filename(file);       /* may set to default if NULL */
-
-  fp_in = mch_fopen((char *)fname, READBIN);
-  if (fp_in == NULL) {
-    /* if it does exist, but we can't read it, don't try writing */
-    if (os_file_exists(fname))
-      goto end;
-#if defined(UNIX)
-    /*
-     * For Unix we create the .viminfo non-accessible for others,
-     * because it may contain text from non-accessible documents.
-     */
-    umask_save = umask(077);
-#endif
-    fp_out = mch_fopen((char *)fname, WRITEBIN);
-#if defined(UNIX)
-    (void)umask(umask_save);
-#endif
-  } else {
-    /*
-     * There is an existing viminfo file.  Create a temporary file to
-     * write the new viminfo into, in the same directory as the
-     * existing viminfo file, which will be renamed later.
-     */
-#ifdef UNIX
-    /*
-     * For Unix we check the owner of the file.  It's not very nice to
-     * overwrite a user's viminfo file after a "su root", with a
-     * viminfo file that the user can't read.
-     */
-
-    FileInfo old_info;  // FileInfo of existing viminfo file
-    if (os_fileinfo((char *)fname, &old_info)
-        && getuid() != ROOT_UID
-        && !(old_info.stat.st_uid == getuid()
-             ? (old_info.stat.st_mode & 0200)
-             : (old_info.stat.st_gid == getgid()
-                ? (old_info.stat.st_mode & 0020)
-                : (old_info.stat.st_mode & 0002)))) {
-      int tt = msg_didany;
-
-      /* avoid a wait_return for this message, it's annoying */
-      EMSG2(_("E137: Viminfo file is not writable: %s"), fname);
-      msg_didany = tt;
-      fclose(fp_in);
-      goto end;
-    }
-#endif
-
-    // Make tempname
-    tempname = (char_u *)modname((char *)fname, ".tmp", FALSE);
-    if (tempname != NULL) {
-      /*
-       * Check if tempfile already exists.  Never overwrite an
-       * existing file!
-       */
-      if (os_file_exists(tempname)) {
-        /*
-         * Try another name.  Change one character, just before
-         * the extension.
-         */
-        wp = tempname + STRLEN(tempname) - 5;
-        if (wp < path_tail(tempname))                 /* empty file name? */
-          wp = path_tail(tempname);
-        for (*wp = 'z'; os_file_exists(tempname); --*wp) {
-          /*
-           * They all exist?  Must be something wrong! Don't
-           * write the viminfo file then.
-           */
-          if (*wp == 'a') {
-            xfree(tempname);
-            tempname = NULL;
-            break;
-          }
-        }
-      }
-    }
-
-    if (tempname != NULL) {
-      int fd;
-
-      /* Use os_open() to be able to use O_NOFOLLOW and set file
-       * protection:
-       * Unix: same as original file, but strip s-bit.  Reset umask to
-       * avoid it getting in the way.
-       * Others: r&w for user only. */
-# ifdef UNIX
-      umask_save = umask(0);
-      fd = os_open((char *)tempname,
-          O_CREAT|O_EXCL|O_WRONLY|O_NOFOLLOW,
-          (int)((old_info.stat.st_mode & 0777) | 0600));
-      (void)umask(umask_save);
-# else
-      fd = os_open((char *)tempname,
-          O_CREAT|O_EXCL|O_WRONLY|O_NOFOLLOW, 0600);
-# endif
-      if (fd < 0)
-        fp_out = NULL;
-      else
-        fp_out = fdopen(fd, WRITEBIN);
-
-      /*
-       * If we can't create in the same directory, try creating a
-       * "normal" temp file.
-       */
-      if (fp_out == NULL) {
-        xfree(tempname);
-        if ((tempname = vim_tempname()) != NULL)
-          fp_out = mch_fopen((char *)tempname, WRITEBIN);
-      }
-
-#ifdef UNIX
-      /*
-       * Make sure the owner can read/write it.  This only works for
-       * root.
-       */
-      if (fp_out != NULL) {
-        os_fchown(fileno(fp_out), old_info.stat.st_uid, old_info.stat.st_gid);
-      }
-#endif
-    }
-  }
-
-  /*
-   * Check if the new viminfo file can be written to.
-   */
-  if (fp_out == NULL) {
-    EMSG2(_("E138: Can't write viminfo file %s!"),
-        (fp_in == NULL || tempname == NULL) ? fname : tempname);
-    if (fp_in != NULL)
-      fclose(fp_in);
-    goto end;
-  }
-
-  if (p_verbose > 0) {
-    verbose_enter();
-    smsg(_("Writing viminfo file \"%s\""), fname);
-    verbose_leave();
-  }
-
-  viminfo_errcnt = 0;
-  do_viminfo(fp_in, fp_out, forceit ? 0 : (VIF_WANT_INFO | VIF_WANT_MARKS));
-
-  fclose(fp_out);           /* errors are ignored !? */
-  if (fp_in != NULL) {
-    fclose(fp_in);
-
-    /* In case of an error keep the original viminfo file. Otherwise
-     * rename the newly written file. Give an error if that fails. */
-    if (viminfo_errcnt == 0 && vim_rename(tempname, fname) == -1) {
-      viminfo_errcnt++;
-      EMSG2(_("E886: Can't rename viminfo file to %s!"), fname);
-    }
-    if (viminfo_errcnt > 0) {
-      os_remove((char *)tempname);
-    }
-  }
-
-end:
-  xfree(fname);
-  xfree(tempname);
-}
-
-/*
- * Get the viminfo file name to use.
- * If "file" is given and not empty, use it (has already been expanded by
- * cmdline functions).
- * Otherwise use "-i file_name", value from 'viminfo' or the default, and
- * expand environment variables.
- * Returns an allocated string.
- */
-static char_u *viminfo_filename(char_u *file)
-{
-  if (file == NULL || *file == NUL) {
-    if (use_viminfo != NULL)
-      file = use_viminfo;
-    else if ((file = find_viminfo_parameter('n')) == NULL || *file == NUL) {
-#ifdef VIMINFO_FILE2
-      // don't use $HOME when not defined (turned into "c:/"!).
-      if (!os_env_exists("HOME")) {
-        // don't use $VIM when not available.
-        expand_env((char_u *)"$VIM", NameBuff, MAXPATHL);
-        if (STRCMP("$VIM", NameBuff) != 0)          /* $VIM was expanded */
-          file = (char_u *)VIMINFO_FILE2;
-        else
-          file = (char_u *)VIMINFO_FILE;
-      } else
-#endif
-      file = (char_u *)VIMINFO_FILE;
-    }
-    expand_env(file, NameBuff, MAXPATHL);
-    file = NameBuff;
-  }
-  return vim_strsave(file);
-}
-
-/*
- * do_viminfo() -- Should only be called from read_viminfo() & write_viminfo().
- */
-static void do_viminfo(FILE *fp_in, FILE *fp_out, int flags)
-{
-  int count = 0;
-  int eof = FALSE;
-  vir_T vir;
-  int merge = FALSE;
-
-  vir.vir_line = xmalloc(LSIZE);
-  vir.vir_fd = fp_in;
-  vir.vir_conv.vc_type = CONV_NONE;
-
-  if (fp_in != NULL) {
-    if (flags & VIF_WANT_INFO) {
-      eof = read_viminfo_up_to_marks(&vir,
-          flags & VIF_FORCEIT, fp_out != NULL);
-      merge = TRUE;
-    } else if (flags != 0)
-      /* Skip info, find start of marks */
-      while (!(eof = viminfo_readline(&vir))
-             && vir.vir_line[0] != '>')
-        ;
-  }
-  if (fp_out != NULL) {
-    /* Write the info: */
-    fprintf(fp_out, _("# This viminfo file was generated by Nvim %s.\n"),
-        mediumVersion);
-    fputs(_("# You may edit it if you're careful!\n\n"), fp_out);
-    fputs(_("# Value of 'encoding' when this file was written\n"), fp_out);
-    fprintf(fp_out, "*encoding=%s\n\n", p_enc);
-    write_viminfo_search_pattern(fp_out);
-    write_viminfo_sub_string(fp_out);
-    write_viminfo_history(fp_out, merge);
-    write_viminfo_registers(fp_out);
-    write_viminfo_varlist(fp_out);
-    write_viminfo_filemarks(fp_out);
-    write_viminfo_bufferlist(fp_out);
-    count = write_viminfo_marks(fp_out);
-  }
-  if (fp_in != NULL
-      && (flags & (VIF_WANT_MARKS | VIF_GET_OLDFILES | VIF_FORCEIT)))
-    copy_viminfo_marks(&vir, fp_out, count, eof, flags);
-
-  xfree(vir.vir_line);
-  if (vir.vir_conv.vc_type != CONV_NONE)
-    convert_setup(&vir.vir_conv, NULL, NULL);
-}
-
-/*
- * read_viminfo_up_to_marks() -- Only called from do_viminfo().  Reads in the
- * first part of the viminfo file which contains everything but the marks that
- * are local to a file.  Returns TRUE when end-of-file is reached. -- webb
- */
-static int read_viminfo_up_to_marks(vir_T *virp, int forceit, int writing)
-{
-  int eof;
-
-  prepare_viminfo_history(forceit ? 9999 : 0, writing);
-  eof = viminfo_readline(virp);
-  while (!eof && virp->vir_line[0] != '>') {
-    switch (virp->vir_line[0]) {
-    /* Characters reserved for future expansion, ignored now */
-    case '+':         /* "+40 /path/dir file", for running vim without args */
-    case '|':         /* to be defined */
-    case '^':         /* to be defined */
-    case '<':         /* long line - ignored */
-    /* A comment or empty line. */
-    case NUL:
-    case '\r':
-    case '\n':
-    case '#':
-      eof = viminfo_readline(virp);
-      break;
-    case '*':         /* "*encoding=value" */
-      eof = viminfo_encoding(virp);
-      break;
-    case '!':         /* global variable */
-      eof = read_viminfo_varlist(virp, writing);
-      break;
-    case '%':         /* entry for buffer list */
-      eof = read_viminfo_bufferlist(virp, writing);
-      break;
-    case '"':
-      eof = read_viminfo_register(virp, forceit);
-      break;
-    case '/':               /* Search string */
-    case '&':               /* Substitute search string */
-    case '~':               /* Last search string, followed by '/' or '&' */
-      eof = read_viminfo_search_pattern(virp, forceit);
-      break;
-    case '$':
-      eof = read_viminfo_sub_string(virp, forceit);
-      break;
-    case ':':
-    case '?':
-    case '=':
-    case '@':
-      eof = read_viminfo_history(virp, writing);
-      break;
-    case '-':
-    case '\'':
-      eof = read_viminfo_filemark(virp, forceit);
-      break;
-    default:
-      if (viminfo_error("E575: ", _("Illegal starting char"),
-              virp->vir_line))
-        eof = TRUE;
-      else
-        eof = viminfo_readline(virp);
-      break;
-    }
-  }
-
-  /* Finish reading history items. */
-  if (!writing)
-    finish_viminfo_history();
-
-  /* Change file names to buffer numbers for fmarks. */
-  FOR_ALL_BUFFERS(buf) {
-    fmarks_check_names(buf);
-  }
-
-  return eof;
-}
-
-/*
- * Compare the 'encoding' value in the viminfo file with the current value of
- * 'encoding'.  If different and the 'c' flag is in 'viminfo', setup for
- * conversion of text with iconv() in viminfo_readstring().
- */
-static int viminfo_encoding(vir_T *virp)
-{
-  char_u      *p;
-  int i;
-
-  if (get_viminfo_parameter('c') != 0) {
-    p = vim_strchr(virp->vir_line, '=');
-    if (p != NULL) {
-      /* remove trailing newline */
-      ++p;
-      for (i = 0; vim_isprintc(p[i]); ++i)
-        ;
-      p[i] = NUL;
-
-      convert_setup(&virp->vir_conv, p, p_enc);
-    }
-  }
-  return viminfo_readline(virp);
-}
-
-/*
- * Read a line from the viminfo file.
- * Returns TRUE for end-of-file;
- */
-int viminfo_readline(vir_T *virp)
-{
-  return vim_fgets(virp->vir_line, LSIZE, virp->vir_fd);
-}
-
-/*
- * check string read from viminfo file
- * remove '\n' at the end of the line
- * - replace CTRL-V CTRL-V with CTRL-V
- * - replace CTRL-V 'n'    with '\n'
- *
- * Check for a long line as written by viminfo_writestring().
- *
- * Return the string in allocated memory.
- */
-char_u *
-viminfo_readstring (
-    vir_T *virp,
-    int off,                            /* offset for virp->vir_line */
-    int convert                 /* convert the string */
-)
-  FUNC_ATTR_NONNULL_RET
-{
-  char_u      *retval;
-  char_u      *s, *d;
-
-  if (virp->vir_line[off] == Ctrl_V && ascii_isdigit(virp->vir_line[off + 1])) {
-    ssize_t len = atol((char *)virp->vir_line + off + 1);
-    retval = xmalloc(len);
-    // TODO(philix): change type of vim_fgets() size argument to size_t
-    (void)vim_fgets(retval, (int)len, virp->vir_fd);
-    s = retval + 1;         /* Skip the leading '<' */
-  } else {
-    retval = vim_strsave(virp->vir_line + off);
-    s = retval;
-  }
-
-  /* Change CTRL-V CTRL-V to CTRL-V and CTRL-V n to \n in-place. */
-  d = retval;
-  while (*s != NUL && *s != '\n') {
-    if (s[0] == Ctrl_V && s[1] != NUL) {
-      if (s[1] == 'n')
-        *d++ = '\n';
-      else
-        *d++ = Ctrl_V;
-      s += 2;
-    } else
-      *d++ = *s++;
-  }
-  *d = NUL;
-
-  if (convert && virp->vir_conv.vc_type != CONV_NONE && *retval != NUL) {
-    d = string_convert(&virp->vir_conv, retval, NULL);
-    if (d != NULL) {
-      xfree(retval);
-      retval = d;
-    }
-  }
-
-  return retval;
-}
-
-/*
- * write string to viminfo file
- * - replace CTRL-V with CTRL-V CTRL-V
- * - replace '\n'   with CTRL-V 'n'
- * - add a '\n' at the end
- *
- * For a long line:
- * - write " CTRL-V <length> \n " in first line
- * - write " < <string> \n "	  in second line
- */
-void viminfo_writestring(FILE *fd, char_u *p)
-{
-  int c;
-  char_u      *s;
-  int len = 0;
-
-  for (s = p; *s != NUL; ++s) {
-    if (*s == Ctrl_V || *s == '\n')
-      ++len;
-    ++len;
-  }
-
-  /* If the string will be too long, write its length and put it in the next
-   * line.  Take into account that some room is needed for what comes before
-   * the string (e.g., variable name).  Add something to the length for the
-   * '<', NL and trailing NUL. */
-  if (len > LSIZE / 2)
-    fprintf(fd, "\026%d\n<", len + 3);
-
-  while ((c = *p++) != NUL) {
-    if (c == Ctrl_V || c == '\n') {
-      putc(Ctrl_V, fd);
-      if (c == '\n')
-        c = 'n';
-    }
-    putc(c, fd);
-  }
-  putc('\n', fd);
 }
 
 void print_line_no_prefix(linenr_T lnum, int use_number, int list)
@@ -2395,7 +1852,7 @@ static int check_readonly(int *forceit, buf_T *buf)
    * the file exists and permissions are read-only. */
   if (!*forceit && (buf->b_p_ro
                     || (os_file_exists(buf->b_ffname)
-                        && os_file_is_readonly((char *)buf->b_ffname)))) {
+                        && !os_file_is_writable((char *)buf->b_ffname)))) {
     if ((p_confirm || cmdmod.confirm) && buf->b_fname != NULL) {
       char_u buff[DIALOG_MSG_SIZE];
 
@@ -3363,8 +2820,33 @@ int check_secure(void)
   return FALSE;
 }
 
-static char_u   *old_sub = NULL;        /* previous substitute pattern */
-static int global_need_beginline;       /* call beginline() after ":g" */
+/// Previous substitute replacement string
+static SubReplacementString old_sub = {NULL, 0, NULL};
+
+static int global_need_beginline;       // call beginline() after ":g"
+
+/// Get old substitute replacement string
+///
+/// @param[out]  ret_sub    Location where old string will be saved.
+void sub_get_replacement(SubReplacementString *const ret_sub)
+  FUNC_ATTR_NONNULL_ALL
+{
+  *ret_sub = old_sub;
+}
+
+/// Set substitute string and timestamp
+///
+/// @warning `sub` must be in allocated memory. It is not copied.
+///
+/// @param[in]  sub  New replacement string.
+void sub_set_replacement(SubReplacementString sub)
+{
+  xfree(old_sub.sub);
+  if (sub.additional_elements != old_sub.additional_elements) {
+    list_unref(old_sub.additional_elements);
+  }
+  old_sub = sub;
+}
 
 /* do_sub()
  *
@@ -3472,26 +2954,19 @@ void do_sub(exarg_T *eap)
     }
 
     if (!eap->skip) {
-      /* In POSIX vi ":s/pat/%/" uses the previous subst. string. */
-      if (STRCMP(sub, "%") == 0
-          && vim_strchr(p_cpo, CPO_SUBPERCENT) != NULL) {
-        if (old_sub == NULL) {          /* there is no previous command */
-          EMSG(_(e_nopresub));
-          return;
-        }
-        sub = old_sub;
-      } else {
-        xfree(old_sub);
-        old_sub = vim_strsave(sub);
-      }
+      sub_set_replacement((SubReplacementString) {
+        .sub = xstrdup((char *) sub),
+        .timestamp = os_time(),
+        .additional_elements = NULL,
+      });
     }
   } else if (!eap->skip) {    /* use previous pattern and substitution */
-    if (old_sub == NULL) {      /* there is no previous command */
+    if (old_sub.sub == NULL) {      /* there is no previous command */
       EMSG(_(e_nopresub));
       return;
     }
     pat = NULL;                 /* search_regcomp() will use previous pattern */
-    sub = old_sub;
+    sub = (char_u *) old_sub.sub;
 
     /* Vi compatibility quirk: repeating with ":s" keeps the cursor in the
      * last column after using "$". */
@@ -4439,13 +3914,16 @@ void ex_global(exarg_T *eap)
   if (got_int)
     MSG(_(e_interr));
   else if (ndone == 0) {
-    if (type == 'v')
+    if (type == 'v') {
       smsg(_("Pattern found in every line: %s"), pat);
-    else
+    } else {
       smsg(_("Pattern not found: %s"), pat);
-  } else
+    }
+  } else {
+    start_global_changes();
     global_exe(cmd);
-
+    end_global_changes();
+  }
   ml_clearmarked();        /* clear rest of the marks */
   vim_regfree(regmatch.regprog);
 }
@@ -4507,27 +3985,10 @@ void global_exe(char_u *cmd)
     msgmore(curbuf->b_ml.ml_line_count - old_lcount);
 }
 
-int read_viminfo_sub_string(vir_T *virp, int force)
-{
-  if (force)
-    xfree(old_sub);
-  if (force || old_sub == NULL)
-    old_sub = viminfo_readstring(virp, 1, TRUE);
-  return viminfo_readline(virp);
-}
-
-void write_viminfo_sub_string(FILE *fp)
-{
-  if (get_viminfo_parameter('/') != 0 && old_sub != NULL) {
-    fputs(_("\n# Last Substitute String:\n$"), fp);
-    viminfo_writestring(fp, old_sub);
-  }
-}
-
 #if defined(EXITFREE)
 void free_old_sub(void)
 {
-  xfree(old_sub);
+  sub_set_replacement((SubReplacementString) {NULL, 0, NULL});
 }
 
 #endif
@@ -6135,7 +5596,7 @@ char_u * sign_typenr2name(int typenr)
 /*
  * Undefine/free all signs.
  */
-void free_signs()
+void free_signs(void)
 {
   while (first_sign != NULL)
     sign_undefine(first_sign, NULL);

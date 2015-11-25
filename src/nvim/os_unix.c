@@ -3,7 +3,7 @@
  *
  * Do ":help uganda"  in Vim to read copying and usage conditions.
  * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
+ * See README.md for an overview of the Vim source code.
  */
 
 /*
@@ -47,13 +47,10 @@
 #include "nvim/types.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
-#include "nvim/os/event.h"
 #include "nvim/os/input.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/signal.h"
-#include "nvim/os/job.h"
 #include "nvim/msgpack_rpc/helpers.h"
-#include "nvim/msgpack_rpc/defs.h"
 
 #ifdef HAVE_STROPTS_H
 # include <stropts.h>
@@ -174,11 +171,11 @@ int mch_nodetype(char_u *name)
 
 void mch_exit(int r)
 {
-  exiting = TRUE;
+  exiting = true;
 
   ui_builtin_stop();
   ui_flush();
-  ml_close_all(TRUE);           /* remove all memfiles */
+  ml_close_all(true);           /* remove all memfiles */
 
   event_teardown();
   stream_set_blocking(input_global_fd(), true);  // normalize stream (#2598)
@@ -240,8 +237,8 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
                                  * directly */
   int shell_style = STYLE_ECHO;
   int check_spaces;
-  static int did_find_nul = FALSE;
-  int ampersent = FALSE;
+  static bool did_find_nul = false;
+  bool ampersent = false;
   /* vimglob() function to define for Posix shell */
   static char *sh_vimglob_func =
     "vimglob() { while [ $# -ge 1 ]; do echo \"$1\"; shift; done }; vimglob >";
@@ -344,7 +341,7 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     while (p > command && ascii_iswhite(*p))
       --p;
     if (*p == '&') {                            /* remove trailing '&' */
-      ampersent = TRUE;
+      ampersent = true;
       *p = ' ';
     }
     STRCAT(command, ">");
@@ -369,7 +366,7 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     for (i = 0; i < num_pat; ++i) {
       /* Put a backslash before special
        * characters, except inside ``. */
-      int intick = FALSE;
+      bool intick = false;
 
       p = command + STRLEN(command);
       *p++ = ' ';
@@ -540,14 +537,14 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
      * When we found a NUL once, we know zsh is OK, set did_find_nul and
      * don't check for spaces again.
      */
-    check_spaces = FALSE;
+    check_spaces = false;
     if (shell_style == STYLE_PRINT && !did_find_nul) {
       /* If there is a NUL, set did_find_nul, else set check_spaces */
       buffer[len] = NUL;
       if (len && (int)STRLEN(buffer) < (int)len)
-        did_find_nul = TRUE;
+        did_find_nul = true;
       else
-        check_spaces = TRUE;
+        check_spaces = true;
     }
 
     /*
@@ -668,22 +665,22 @@ static void save_patterns(int num_pat, char_u **pat, int *num_file,
   *num_file = num_pat;
 }
 
-static int have_wildcard(int num, char_u **file)
+static bool have_wildcard(int num, char_u **file)
 {
   int i;
 
   for (i = 0; i < num; i++)
     if (path_has_wildcard(file[i]))
-      return 1;
-  return 0;
+      return true;
+  return false;
 }
 
-static int have_dollars(int num, char_u **file)
+static bool have_dollars(int num, char_u **file)
 {
   int i;
 
   for (i = 0; i < num; i++)
     if (vim_strchr(file[i], '$') != NULL)
-      return TRUE;
-  return FALSE;
+      return true;
+  return false;
 }

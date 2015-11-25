@@ -57,7 +57,7 @@ STARTTEST
 :let line1=ScreenChar(line('.'),10)
 :call DoRecordScreen()
 :let g:test=" Test 8: breakindent + shift:1 + nu + sbr=# list briopt:sbr"
-:set briopt=shift:1,sbr,min:0 nu sbr=# list
+:set briopt=shift:1,sbr,min:0 nu sbr=# list lcs&vi
 :let line1=ScreenChar(line('.'),10)
 :call DoRecordScreen()
 :let g:test=" Test 9: breakindent + shift by +1 + 'nu' + sbr=# list"

@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
 local nvim_dir = helpers.nvim_dir
-local execute, nvim = helpers.execute, helpers.nvim
+local execute, nvim, wait = helpers.execute, helpers.nvim, helpers.wait
 
 local function feed_data(data)
   nvim('set_var', 'term_data', data)
@@ -31,13 +31,15 @@ local function clear_attrs() feed_termcode('[0;10m') end
 local function enable_mouse() feed_termcode('[?1002h') end
 local function disable_mouse() feed_termcode('[?1002l') end
 
+local default_command = '["'..nvim_dir..'/tty-test'..'"]'
 
 
-local function screen_setup(extra_height)
+local function screen_setup(extra_height, command)
   nvim('command', 'highlight TermCursor cterm=reverse')
   nvim('command', 'highlight TermCursorNC ctermbg=11')
   nvim('set_var', 'terminal_scrollback_buffer_size', 10)
   if not extra_height then extra_height = 0 end
+  if not command then command = default_command end
   local screen = Screen.new(50, 7 + extra_height)
   screen:set_default_attr_ids({
     [1] = {reverse = true},   -- focused cursor
@@ -56,25 +58,29 @@ local function screen_setup(extra_height)
   -- tty-test puts the terminal into raw mode and echoes all input. tests are
   -- done by feeding it with terminfo codes to control the display and
   -- verifying output with screen:expect.
-  execute('enew | call termopen(["'..nvim_dir..'/tty-test"]) | startinsert')
-  -- wait for "tty ready" to be printed before each test or the terminal may
-  -- still be in canonical mode(will echo characters for example)
-  --
-  local empty_line =  '                                                   '
-  local expected = {
-    'tty ready                                          ',
-    '{1: }                                                  ',
-    empty_line,
-    empty_line,
-    empty_line,
-    empty_line,
-  }
-  for i = 1, extra_height do
-    table.insert(expected, empty_line)
-  end
+  execute('enew | call termopen('..command..') | startinsert')
+  if command == default_command then
+    -- wait for "tty ready" to be printed before each test or the terminal may
+    -- still be in canonical mode(will echo characters for example)
+    --
+    local empty_line =  '                                                   '
+    local expected = {
+      'tty ready                                          ',
+      '{1: }                                                  ',
+      empty_line,
+      empty_line,
+      empty_line,
+      empty_line,
+    }
+    for _ = 1, extra_height do
+      table.insert(expected, empty_line)
+    end
 
-  table.insert(expected, '-- TERMINAL --                                     ')
-  screen:expect(table.concat(expected, '\n'))
+    table.insert(expected, '-- TERMINAL --                                     ')
+    screen:expect(table.concat(expected, '\n'))
+  else
+    wait()
+  end
   return screen
 end
 

@@ -3,7 +3,7 @@
  *
  * Do ":help uganda"  in Vim to read copying and usage conditions.
  * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
+ * See README.md for an overview of the Vim source code.
  */
 
 /*
@@ -21,7 +21,6 @@
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
 #endif
-#include "nvim/version.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
@@ -41,6 +40,7 @@
 #include "nvim/memory.h"
 #include "nvim/move.h"
 #include "nvim/normal.h"
+#include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
@@ -761,9 +761,14 @@ void ex_profile(exarg_T *eap)
     do_profiling = PROF_YES;
     profile_set_wait(profile_zero());
     set_vim_var_nr(VV_PROFILING, 1L);
-  } else if (do_profiling == PROF_NONE)
+  } else if (do_profiling == PROF_NONE) {
     EMSG(_("E750: First use \":profile start {fname}\""));
-  else if (STRCMP(eap->arg, "pause") == 0) {
+  } else if (STRCMP(eap->arg, "stop") == 0) {
+    profile_dump();
+    do_profiling = PROF_NONE;
+    set_vim_var_nr(VV_PROFILING, 0L);
+    profile_reset();
+  } else if (STRCMP(eap->arg, "pause") == 0) {
     if (do_profiling == PROF_YES)
       pause_time = profile_start();
     do_profiling = PROF_PAUSED;
@@ -773,6 +778,8 @@ void ex_profile(exarg_T *eap)
       profile_set_wait(profile_add(profile_get_wait(), pause_time));
     }
     do_profiling = PROF_YES;
+  } else if (STRCMP(eap->arg, "dump") == 0) {
+    profile_dump();
   } else {
     /* The rest is similar to ":breakadd". */
     ex_breakadd(eap);
@@ -816,18 +823,14 @@ static enum {
 } pexpand_what;
 
 static char *pexpand_cmds[] = {
-  "start",
-#define PROFCMD_START   0
-  "pause",
-#define PROFCMD_PAUSE   1
   "continue",
-#define PROFCMD_CONTINUE 2
-  "func",
-#define PROFCMD_FUNC    3
+  "dump",
   "file",
-#define PROFCMD_FILE    4
+  "func",
+  "pause",
+  "start",
+  "stop",
   NULL
-#define PROFCMD_LAST    5
 };
 
 /*
@@ -890,10 +893,63 @@ void profile_dump(void)
   }
 }
 
-/*
- * Start profiling script "fp".
- */
-static void script_do_profile(scriptitem_T *si)
+/// Reset all profiling information.
+static void profile_reset(void)
+{
+  // Reset sourced files.
+  for (int id = 1; id <= script_items.ga_len; id++) {
+    scriptitem_T *si = &SCRIPT_ITEM(id);
+    if (si->sn_prof_on) {
+      si->sn_prof_on      = 0;
+      si->sn_pr_force     = 0;
+      si->sn_pr_child     = profile_zero();
+      si->sn_pr_nest      = 0;
+      si->sn_pr_count     = 0;
+      si->sn_pr_total     = profile_zero();
+      si->sn_pr_self      = profile_zero();
+      si->sn_pr_start     = profile_zero();
+      si->sn_pr_children  = profile_zero();
+      ga_clear(&si->sn_prl_ga);
+      si->sn_prl_start    = profile_zero();
+      si->sn_prl_children = profile_zero();
+      si->sn_prl_wait     = profile_zero();
+      si->sn_prl_idx      = -1;
+      si->sn_prl_execed   = 0;
+    }
+  }
+
+  // Reset functions.
+  size_t      n  = func_hashtab.ht_used;
+  hashitem_T *hi = func_hashtab.ht_array;
+
+  for (; n > (size_t)0; hi++) {
+    if (!HASHITEM_EMPTY(hi)) {
+      n--;
+      ufunc_T *uf = HI2UF(hi);
+      if (uf->uf_profiling) {
+        uf->uf_profiling    = 0;
+        uf->uf_tm_count     = 0;
+        uf->uf_tm_total     = profile_zero();
+        uf->uf_tm_self      = profile_zero();
+        uf->uf_tm_children  = profile_zero();
+        uf->uf_tml_count    = NULL;
+        uf->uf_tml_total    = NULL;
+        uf->uf_tml_self     = NULL;
+        uf->uf_tml_start    = profile_zero();
+        uf->uf_tml_children = profile_zero();
+        uf->uf_tml_wait     = profile_zero();
+        uf->uf_tml_idx      = -1;
+        uf->uf_tml_execed   = 0;
+      }
+    }
+  }
+
+  xfree(profile_fname);
+  profile_fname = NULL;
+}
+
+/// Start profiling a script.
+static void profile_init(scriptitem_T *si)
 {
   si->sn_pr_count = 0;
   si->sn_pr_total = profile_zero();
@@ -1838,6 +1894,8 @@ void ex_listdo(exarg_T *eap)
      * great speed improvement. */
     save_ei = au_event_disable(",Syntax");
 
+  start_global_changes();
+
   if (eap->cmdidx == CMD_windo
       || eap->cmdidx == CMD_tabdo
       || P_HID(curbuf)
@@ -1988,6 +2046,7 @@ void ex_listdo(exarg_T *eap)
     apply_autocmds(EVENT_SYNTAX, curbuf->b_p_syn,
         curbuf->b_fname, TRUE, curbuf);
   }
+  end_global_changes();
 }
 
 /*
@@ -2353,9 +2412,7 @@ do_source (
      */
     p = path_tail(fname_exp);
     if ((*p == '.' || *p == '_')
-        && (STRICMP(p + 1, "nvimrc") == 0
-            || STRICMP(p + 1, "ngvimrc") == 0
-            || STRICMP(p + 1, "exrc") == 0)) {
+        && (STRICMP(p + 1, "nvimrc") == 0 || STRICMP(p + 1, "exrc") == 0)) {
       if (*p == '_')
         *p = '.';
       else
@@ -2506,8 +2563,8 @@ do_source (
     int forceit;
 
     /* Check if we do profiling for this script. */
-    if (!si->sn_prof_on && has_profiling(TRUE, si->sn_name, &forceit)) {
-      script_do_profile(si);
+    if (!si->sn_prof_on && has_profiling(true, si->sn_name, &forceit)) {
+      profile_init(si);
       si->sn_pr_force = forceit;
     }
     if (si->sn_prof_on) {
@@ -2624,7 +2681,7 @@ char_u *get_scriptname(scid_T id)
 }
 
 # if defined(EXITFREE)
-void free_scriptnames()
+void free_scriptnames(void)
 {
 # define FREE_SCRIPTNAME(item) xfree((item)->sn_name)
   GA_DEEP_CLEAR(&script_items, scriptitem_T, FREE_SCRIPTNAME);

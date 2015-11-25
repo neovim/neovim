@@ -28,7 +28,7 @@ void remote_ui_init(void)
   connected_uis = pmap_new(uint64_t)();
   // Add handler for "attach_ui"
   String method = cstr_as_string("ui_attach");
-  MsgpackRpcRequestHandler handler = {.fn = remote_ui_attach, .defer = false};
+  MsgpackRpcRequestHandler handler = {.fn = remote_ui_attach, .async = false};
   msgpack_rpc_add_method_handler(method, handler);
   method = cstr_as_string("ui_detach");
   handler.fn = remote_ui_detach;
@@ -82,12 +82,12 @@ static Object remote_ui_attach(uint64_t channel_id, uint64_t request_id,
   ui->clear = remote_ui_clear;
   ui->eol_clear = remote_ui_eol_clear;
   ui->cursor_goto = remote_ui_cursor_goto;
+  ui->update_menu = remote_ui_update_menu;
   ui->busy_start = remote_ui_busy_start;
   ui->busy_stop = remote_ui_busy_stop;
   ui->mouse_on = remote_ui_mouse_on;
   ui->mouse_off = remote_ui_mouse_off;
-  ui->insert_mode = remote_ui_insert_mode;
-  ui->normal_mode = remote_ui_normal_mode;
+  ui->mode_change = remote_ui_mode_change;
   ui->set_scroll_region = remote_ui_set_scroll_region;
   ui->scroll = remote_ui_scroll;
   ui->highlight_set = remote_ui_highlight_set;
@@ -190,6 +190,12 @@ static void remote_ui_cursor_goto(UI *ui, int row, int col)
   push_call(ui, "cursor_goto", args);
 }
 
+static void remote_ui_update_menu(UI *ui)
+{
+  Array args = ARRAY_DICT_INIT;
+  push_call(ui, "update_menu", args);
+}
+
 static void remote_ui_busy_start(UI *ui)
 {
   Array args = ARRAY_DICT_INIT;
@@ -214,16 +220,18 @@ static void remote_ui_mouse_off(UI *ui)
   push_call(ui, "mouse_off", args);
 }
 
-static void remote_ui_insert_mode(UI *ui)
+static void remote_ui_mode_change(UI *ui, int mode)
 {
   Array args = ARRAY_DICT_INIT;
-  push_call(ui, "insert_mode", args);
-}
-
-static void remote_ui_normal_mode(UI *ui)
-{
-  Array args = ARRAY_DICT_INIT;
-  push_call(ui, "normal_mode", args);
+  if (mode == INSERT) {
+    ADD(args, STRING_OBJ(cstr_to_string("insert")));
+  } else if (mode == REPLACE) {
+    ADD(args, STRING_OBJ(cstr_to_string("replace")));
+  } else {
+    assert(mode == NORMAL);
+    ADD(args, STRING_OBJ(cstr_to_string("normal")));
+  }
+  push_call(ui, "mode_change", args);
 }
 
 static void remote_ui_set_scroll_region(UI *ui, int top, int bot, int left,

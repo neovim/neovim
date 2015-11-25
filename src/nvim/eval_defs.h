@@ -1,10 +1,17 @@
 #ifndef NVIM_EVAL_DEFS_H
 #define NVIM_EVAL_DEFS_H
 
+#include <limits.h>
+#include <stddef.h>
+
 #include "nvim/hashtab.h"
+#include "nvim/lib/queue.h"
 
 typedef int varnumber_T;
 typedef double float_T;
+
+#define VARNUMBER_MAX INT_MAX
+#define VARNUMBER_MIN INT_MIN
 
 typedef struct listvar_S list_T;
 typedef struct dictvar_S dict_T;
@@ -113,6 +120,31 @@ struct dictvar_S {
   dict_T      *dv_used_prev;    /* previous dict in used dicts list */
   int internal_refcount;        // number of internal references to
                                 // prevent garbage collection
+  QUEUE watchers;               // dictionary key watchers set by user code
 };
 
-#endif // NVIM_EVAL_DEFS_H
+// structure used for explicit stack while garbage collecting hash tables
+typedef struct ht_stack_S {
+  hashtab_T *ht;
+  struct ht_stack_S *prev;
+} ht_stack_T;
+
+// structure used for explicit stack while garbage collecting lists
+typedef struct list_stack_S {
+  list_T *list;
+  struct list_stack_S *prev;
+} list_stack_T;
+
+// In a hashtab item "hi_key" points to "di_key" in a dictitem.
+// This avoids adding a pointer to the hashtab item.
+
+/// Convert a dictitem pointer to a hashitem key pointer
+#define DI2HIKEY(di) ((di)->di_key)
+
+/// Convert a hashitem key pointer to a dictitem pointer
+#define HIKEY2DI(p)  ((dictitem_T *)(p - offsetof(dictitem_T, di_key)))
+
+/// Convert a hashitem pointer to a dictitem pointer
+#define HI2DI(hi)     HIKEY2DI((hi)->hi_key)
+
+#endif  // NVIM_EVAL_DEFS_H

@@ -5,7 +5,6 @@ Also test byteidx() and byteidxcomp()
 
 STARTTEST
 :so mbyte.vim
-:set encoding=utf-8
 ENDTEST
 
 Results of test69:

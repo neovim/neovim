@@ -3,7 +3,7 @@
  *
  * Do ":help uganda"  in Vim to read copying and usage conditions.
  * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
+ * See README.md for an overview of the Vim source code.
  */
 
 /*
@@ -19,7 +19,6 @@
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
-#include "nvim/version.h"
 #include "nvim/misc1.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
@@ -61,6 +60,7 @@
 #include "nvim/os/shell.h"
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
+#include "nvim/event/stream.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "misc1.c.generated.h"
@@ -2041,8 +2041,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
 
   /* set the '. mark */
   if (!cmdmod.keepjumps) {
-    curbuf->b_last_change.lnum = lnum;
-    curbuf->b_last_change.col = col;
+    RESET_FMARK(&curbuf->b_last_change, ((pos_T) {lnum, col, 0}), 0);
 
     /* Create a new entry if a new undo-able change was started or we
      * don't have an entry yet. */
@@ -2053,7 +2052,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
         /* Don't create a new entry when the line number is the same
          * as the last one and the column is not too far away.  Avoids
          * creating many entries for typing "xxxxx". */
-        p = &curbuf->b_changelist[curbuf->b_changelistlen - 1];
+        p = &curbuf->b_changelist[curbuf->b_changelistlen - 1].mark;
         if (p->lnum != lnum)
           add = TRUE;
         else {
@@ -2073,7 +2072,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
           /* changelist is full: remove oldest entry */
           curbuf->b_changelistlen = JUMPLISTSIZE - 1;
           memmove(curbuf->b_changelist, curbuf->b_changelist + 1,
-              sizeof(pos_T) * (JUMPLISTSIZE - 1));
+              sizeof(curbuf->b_changelist[0]) * (JUMPLISTSIZE - 1));
           FOR_ALL_TAB_WINDOWS(tp, wp) {
             /* Correct position in changelist for other windows on
              * this buffer. */
@@ -2119,12 +2118,12 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
        * might be displayed differently.
        * Set w_cline_folded here as an efficient way to update it when
        * inserting lines just above a closed fold. */
-      i = hasFoldingWin(wp, lnum, &lnum, NULL, FALSE, NULL);
+      bool folded = hasFoldingWin(wp, lnum, &lnum, NULL, false, NULL);
       if (wp->w_cursor.lnum == lnum)
-        wp->w_cline_folded = i;
-      i = hasFoldingWin(wp, lnume, NULL, &lnume, FALSE, NULL);
+        wp->w_cline_folded = folded;
+      folded = hasFoldingWin(wp, lnume, NULL, &lnume, false, NULL);
       if (wp->w_cursor.lnum == lnume)
-        wp->w_cline_folded = i;
+        wp->w_cline_folded = folded;
 
       /* If the changed line is in a range of previously folded lines,
        * compare with the first line in that range. */
@@ -2198,7 +2197,7 @@ unchanged (
     int ff                 /* also reset 'fileformat' */
 )
 {
-  if (buf->b_changed || (ff && file_ff_differs(buf, FALSE))) {
+  if (buf->b_changed || (ff && file_ff_differs(buf, false))) {
     buf->b_changed = false;
     ml_setflags(buf);
     if (ff)
@@ -2582,21 +2581,22 @@ void msgmore(long n)
 void beep_flush(void)
 {
   if (emsg_silent == 0) {
-    flush_buffers(FALSE);
-    vim_beep();
+    flush_buffers(false);
+    vim_beep(BO_ERROR);
   }
 }
 
-/*
- * give a warning for an error
- */
-void vim_beep(void)
+// Give a warning for an error
+// val is one of the BO_ values, e.g., BO_OPER
+void vim_beep(unsigned val)
 {
   if (emsg_silent == 0) {
-    if (p_vb) {
-      ui_visual_bell();
-    } else {
-      ui_putc(BELL);
+    if (!((bo_flags & val) || (bo_flags & BO_ALL))) {
+      if (p_vb) {
+        ui_visual_bell();
+      } else {
+        ui_putc(BELL);
+      }
     }
 
     /* When 'verbose' is set and we are sourcing a script or executing a

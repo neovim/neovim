@@ -3,7 +3,7 @@
  *
  * Do ":help uganda"  in Vim to read copying and usage conditions.
  * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
+ * See README.md for an overview of the Vim source code.
  */
 
 /*
@@ -212,8 +212,11 @@ static void u_check(int newhead_may_be_NULL)                 {
  */
 int u_save_cursor(void)
 {
-  return u_save((linenr_T)(curwin->w_cursor.lnum - 1),
-      (linenr_T)(curwin->w_cursor.lnum + 1));
+  linenr_T cur = curwin->w_cursor.lnum;
+  linenr_T top = cur > 0 ? cur - 1 : 0;
+  linenr_T bot = cur + 1;
+
+  return u_save(top, bot);
 }
 
 /*
@@ -227,10 +230,9 @@ int u_save(linenr_T top, linenr_T bot)
   if (undo_off)
     return OK;
 
-  if (top > curbuf->b_ml.ml_line_count
-      || top >= bot
-      || bot > curbuf->b_ml.ml_line_count + 1)
+  if (top >= bot || bot > (curbuf->b_ml.ml_line_count + 1)) {
     return FAIL;        /* rely on caller to do error messages */
+  }
 
   if (top + 2 == bot)
     u_saveline((linenr_T)(top + 1));
@@ -321,6 +323,14 @@ static long get_undolevel(void)
   if (curbuf->b_p_ul == NO_LOCAL_UNDOLEVEL)
     return p_ul;
   return curbuf->b_p_ul;
+}
+
+static inline void zero_fmark_additional_data(fmark_T *fmarks)
+{
+  for (size_t i = 0; i < NMARKS; i++) {
+    dict_unref(fmarks[i].additional_data);
+    fmarks[i].additional_data = NULL;
+  }
 }
 
 /*
@@ -465,7 +475,9 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
                     ((curbuf->b_ml.ml_flags & ML_EMPTY) ? UH_EMPTYBUF : 0);
 
     /* save named marks and Visual marks for undo */
-    memmove(uhp->uh_namedm, curbuf->b_namedm, sizeof(pos_T) * NMARKS);
+    zero_fmark_additional_data(curbuf->b_namedm);
+    memmove(uhp->uh_namedm, curbuf->b_namedm,
+            sizeof(curbuf->b_namedm[0]) * NMARKS);
     uhp->uh_visual = curbuf->b_visual;
 
     curbuf->b_u_newhead = uhp;
@@ -626,64 +638,89 @@ void u_compute_hash(char_u *hash)
   sha256_finish(&ctx, hash);
 }
 
-/*
- * Return an allocated string of the full path of the target undofile.
- * When "reading" is TRUE find the file to read, go over all directories in
- * 'undodir'.
- * When "reading" is FALSE use the first name where the directory exists.
- * Returns NULL when there is no place to write or no file to read.
- */
-char_u *u_get_undo_file_name(char_u *buf_ffname, int reading)
+/// Return an allocated string of the full path of the target undofile.
+///
+/// @param[in]  buf_ffname  Full file name for which undo file location should
+///                         be found.
+/// @param[in]  reading  If true, find the file to read by traversing all of the
+///                      directories in &undodir. If false use the first
+///                      existing directory. If none of the directories in
+///                      &undodir option exist then last directory in the list
+///                      will be automatically created.
+///
+/// @return [allocated] File name to read from/write to or NULL.
+char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  char_u      *dirp;
-  char_u dir_name[IOSIZE + 1];
-  char_u      *munged_name = NULL;
-  char_u      *undo_file_name = NULL;
-  char_u      *p;
-  char_u      *ffname = buf_ffname;
+  char *dirp;
+  char dir_name[MAXPATHL + 1];
+  char *munged_name = NULL;
+  char *undo_file_name = NULL;
+  const char *ffname = buf_ffname;
 #ifdef HAVE_READLINK
-  char_u fname_buf[MAXPATHL];
+  char fname_buf[MAXPATHL];
 #endif
 
-  if (ffname == NULL)
+  if (ffname == NULL) {
     return NULL;
+  }
 
 #ifdef HAVE_READLINK
-  /* Expand symlink in the file name, so that we put the undo file with the
-   * actual file instead of with the symlink. */
-  if (resolve_symlink(ffname, fname_buf) == OK)
+  // Expand symlink in the file name, so that we put the undo file with the
+  // actual file instead of with the symlink.
+  if (resolve_symlink((const char_u *)ffname, (char_u *)fname_buf) == OK) {
     ffname = fname_buf;
+  }
 #endif
 
-  /* Loop over 'undodir'.  When reading find the first file that exists.
-   * When not reading use the first directory that exists or ".". */
-  dirp = p_udir;
+  // Loop over 'undodir'.  When reading find the first file that exists.
+  // When not reading use the first directory that exists or ".".
+  dirp = (char *) p_udir;
   while (*dirp != NUL) {
-    size_t dir_len = copy_option_part(&dirp, dir_name, IOSIZE, ",");
+    size_t dir_len = copy_option_part((char_u **)&dirp, (char_u *)dir_name,
+                                      MAXPATHL, ",");
     if (dir_len == 1 && dir_name[0] == '.') {
-      /* Use same directory as the ffname,
-       * "dir/name" -> "dir/.name.un~" */
-      undo_file_name = vim_strnsave(ffname, STRLEN(ffname) + 5);
-      p = path_tail(undo_file_name);
-      memmove(p + 1, p, STRLEN(p) + 1);
-      *p = '.';
-      STRCAT(p, ".un~");
+      // Use same directory as the ffname,
+      // "dir/name" -> "dir/.name.un~"
+      const size_t ffname_len = strlen(ffname);
+      undo_file_name = xmalloc(ffname_len + 6);
+      memmove(undo_file_name, ffname, ffname_len + 1);
+      char *const tail = (char *) path_tail((char_u *) undo_file_name);
+      const size_t tail_len = strlen(tail);
+      memmove(tail + 1, tail, tail_len + 1);
+      *tail = '.';
+      memmove(tail + tail_len + 1, ".un~", sizeof(".un~"));
     } else {
       dir_name[dir_len] = NUL;
-      if (os_isdir(dir_name)) {
-        if (munged_name == NULL) {
-          munged_name = vim_strsave(ffname);
-          for (p = munged_name; *p != NUL; mb_ptr_adv(p))
-            if (vim_ispathsep(*p))
-              *p = '%';
+      bool has_directory = os_isdir((char_u *)dir_name);
+      if (!has_directory && *dirp == NUL && !reading) {
+        // Last directory in the list does not exist, create it.
+        int ret;
+        char *failed_dir;
+        if ((ret = os_mkdir_recurse(dir_name, 0755, &failed_dir)) != 0) {
+          EMSG3(_("E926: Unable to create directory \"%s\" for undo file: %s"),
+                failed_dir, os_strerror(ret));
+          xfree(failed_dir);
+        } else {
+          has_directory = true;
         }
-        undo_file_name = (char_u *)concat_fnames((char *)dir_name, (char *)munged_name, TRUE);
+      }
+      if (has_directory) {
+        if (munged_name == NULL) {
+          munged_name = xstrdup(ffname);
+          for (char *p = munged_name; *p != NUL; mb_ptr_adv(p)) {
+            if (vim_ispathsep(*p)) {
+              *p = '%';
+            }
+          }
+        }
+        undo_file_name = concat_fnames(dir_name, munged_name, true);
       }
     }
 
     // When reading check if the file exists.
-    if (undo_file_name != NULL &&
-        (!reading || os_file_exists(undo_file_name))) {
+    if (undo_file_name != NULL
+        && (!reading || os_file_exists((char_u *)undo_file_name))) {
       break;
     }
     xfree(undo_file_name);
@@ -694,7 +731,13 @@ char_u *u_get_undo_file_name(char_u *buf_ffname, int reading)
   return undo_file_name;
 }
 
-static void corruption_error(char *mesg, char_u *file_name)
+/// Display an error for corrupted undo file
+///
+/// @param[in]  mesg  Identifier of the corruption kind.
+/// @param[in]  file_name  File in which error occurred.
+static void corruption_error(const char *const mesg,
+                             const char *const file_name)
+  FUNC_ATTR_NONNULL_ALL
 {
   EMSG3(_("E825: Corrupted undo file (%s): %s"), mesg, file_name);
 }
@@ -783,7 +826,7 @@ static bool serialize_uhp(bufinfo_T *bi, u_header_T *uhp)
   undo_write_bytes(bi, (uintmax_t)uhp->uh_flags, 2);
   // Assume NMARKS will stay the same.
   for (size_t i = 0; i < (size_t)NMARKS; i++) {
-    serialize_pos(bi, uhp->uh_namedm[i]);
+    serialize_pos(bi, uhp->uh_namedm[i].mark);
   }
   serialize_visualinfo(bi, &uhp->uh_visual);
   uint8_t time_buf[8];
@@ -809,7 +852,8 @@ static bool serialize_uhp(bufinfo_T *bi, u_header_T *uhp)
   return true;
 }
 
-static u_header_T *unserialize_uhp(bufinfo_T *bi, char_u *file_name)
+static u_header_T *unserialize_uhp(bufinfo_T *bi,
+                                   const char *file_name)
 {
   u_header_T *uhp = xmalloc(sizeof(u_header_T));
   memset(uhp, 0, sizeof(u_header_T));
@@ -829,8 +873,11 @@ static u_header_T *unserialize_uhp(bufinfo_T *bi, char_u *file_name)
   unserialize_pos(bi, &uhp->uh_cursor);
   uhp->uh_cursor_vcol = undo_read_4c(bi);
   uhp->uh_flags = undo_read_2c(bi);
+  const Timestamp cur_timestamp = os_time();
   for (size_t i = 0; i < (size_t)NMARKS; i++) {
-    unserialize_pos(bi, &uhp->uh_namedm[i]);
+    unserialize_pos(bi, &uhp->uh_namedm[i].mark);
+    uhp->uh_namedm[i].timestamp = cur_timestamp;
+    uhp->uh_namedm[i].fnum = 0;
   }
   unserialize_visualinfo(bi, &uhp->uh_visual);
   uhp->uh_time = undo_read_time(bi);
@@ -903,7 +950,8 @@ static bool serialize_uep(bufinfo_T *bi, u_entry_T *uep)
   return true;
 }
 
-static u_entry_T *unserialize_uep(bufinfo_T * bi, bool *error, char_u *file_name)
+static u_entry_T *unserialize_uep(bufinfo_T * bi, bool *error,
+                                  const char *file_name)
 {
   u_entry_T *uep = xmalloc(sizeof(u_entry_T));
   memset(uep, 0, sizeof(u_entry_T));
@@ -985,19 +1033,20 @@ static void unserialize_visualinfo(bufinfo_T *bi, visualinfo_T *info)
   info->vi_curswant = undo_read_4c(bi);
 }
 
-/*
- * Write the undo tree in an undo file.
- * When "name" is not NULL, use it as the name of the undo file.
- * Otherwise use buf->b_ffname to generate the undo file name.
- * "buf" must never be null, buf->b_ffname is used to obtain the original file
- * permissions.
- * "forceit" is TRUE for ":wundo!", FALSE otherwise.
- * "hash[UNDO_HASH_SIZE]" must be the hash value of the buffer text.
- */
-void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
+/// Write the undo tree in an undo file.
+///
+/// @param[in]  name  Name of the undo file or NULL if this function needs to
+///                   generate the undo file name based on buf->b_ffname.
+/// @param[in]  forceit  True for `:wundo!`, false otherwise.
+/// @param[in]  buf  Buffer for which undo file is written.
+/// @param[in]  hash  Hash value of the buffer text. Must have #UNDO_HASH_SIZE
+///                   size.
+void u_write_undo(const char *const name, const bool forceit, buf_T *const buf,
+                  char_u *const hash)
+  FUNC_ATTR_NONNULL_ARG(3, 4)
 {
   u_header_T  *uhp;
-  char_u      *file_name;
+  char *file_name;
   int mark;
 #ifdef U_DEBUG
   int headers_written = 0;
@@ -1009,7 +1058,7 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
   bufinfo_T bi;
 
   if (name == NULL) {
-    file_name = u_get_undo_file_name(buf->b_ffname, FALSE);
+    file_name = u_get_undo_file_name((char *) buf->b_ffname, false);
     if (file_name == NULL) {
       if (p_verbose > 0) {
         verbose_enter();
@@ -1018,8 +1067,9 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
       }
       return;
     }
-  } else
-    file_name = name;
+  } else {
+    file_name = (char *) name;
+  }
 
   /*
    * Decide about the permission to use for the undo file.  If the buffer
@@ -1039,10 +1089,10 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
 
   /* If the undo file already exists, verify that it actually is an undo
    * file, and delete it. */
-  if (os_file_exists(file_name)) {
+  if (os_file_exists((char_u *)file_name)) {
     if (name == NULL || !forceit) {
       /* Check we can read it and it's an undo file. */
-      fd = os_open((char *)file_name, O_RDONLY, 0);
+      fd = os_open(file_name, O_RDONLY, 0);
       if (fd < 0) {
         if (name != NULL || p_verbose > 0) {
           if (name == NULL)
@@ -1071,7 +1121,7 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
         }
       }
     }
-    os_remove((char *)file_name);
+    os_remove(file_name);
   }
 
   /* If there is no undo information at all, quit here after deleting any
@@ -1082,13 +1132,12 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
     goto theend;
   }
 
-  fd = os_open((char *)file_name,
-      O_CREAT|O_WRONLY|O_EXCL|O_NOFOLLOW, perm);
+  fd = os_open(file_name, O_CREAT|O_WRONLY|O_EXCL|O_NOFOLLOW, perm);
   if (fd < 0) {
     EMSG2(_(e_not_open), file_name);
     goto theend;
   }
-  (void)os_setperm(file_name, perm);
+  (void)os_setperm((char_u *)file_name, perm);
   if (p_verbose > 0) {
     verbose_enter();
     smsg(_("Writing undo file: %s"), file_name);
@@ -1110,10 +1159,10 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
   FileInfo file_info_new;
   if (buf->b_ffname != NULL
       && os_fileinfo((char *)buf->b_ffname, &file_info_old)
-      && os_fileinfo((char *)file_name, &file_info_new)
+      && os_fileinfo(file_name, &file_info_new)
       && file_info_old.stat.st_gid != file_info_new.stat.st_gid
       && os_fchown(fd, (uv_uid_t)-1, (uv_gid_t)file_info_old.stat.st_gid)) {
-    os_setperm(file_name, (perm & 0707) | ((perm & 07) << 3));
+    os_setperm((char_u *)file_name, (perm & 0707) | ((perm & 07) << 3));
   }
 # ifdef HAVE_SELINUX
   if (buf->b_ffname != NULL)
@@ -1125,7 +1174,7 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
   if (fp == NULL) {
     EMSG2(_(e_not_open), file_name);
     close(fd);
-    os_remove((char *)file_name);
+    os_remove(file_name);
     goto theend;
   }
 
@@ -1194,7 +1243,7 @@ write_error:
 
     /* For systems that support ACL: get the ACL from the original file. */
     acl = mch_get_acl(buf->b_ffname);
-    mch_set_acl(file_name, acl);
+    mch_set_acl((char_u *)file_name, acl);
     mch_free_acl(acl);
   }
 #endif
@@ -1209,15 +1258,15 @@ theend:
 /// a bit more verbose.
 /// Otherwise use curbuf->b_ffname to generate the undo file name.
 /// "hash[UNDO_HASH_SIZE]" must be the hash value of the buffer text.
-void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
+void u_read_undo(char *name, char_u *hash, char_u *orig_name)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   u_header_T **uhp_table = NULL;
   char_u *line_ptr = NULL;
 
-  char_u *file_name;
+  char *file_name;
   if (name == NULL) {
-    file_name = u_get_undo_file_name(curbuf->b_ffname, TRUE);
+    file_name = u_get_undo_file_name((char *) curbuf->b_ffname, true);
     if (file_name == NULL) {
       return;
     }
@@ -1241,7 +1290,7 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
     }
 #endif
   } else {
-    file_name = name;
+    file_name = (char *) name;
   }
 
   if (p_verbose > 0) {
@@ -1250,7 +1299,7 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
     verbose_leave();
   }
 
-  FILE *fp = mch_fopen((char *)file_name, "r");
+  FILE *fp = mch_fopen(file_name, "r");
   if (fp == NULL) {
     if (name != NULL || p_verbose > 0) {
       EMSG2(_("E822: Cannot open undo file for reading: %s"), file_name);
@@ -2007,7 +2056,7 @@ static void u_undoredo(int undo)
   u_entry_T   *newlist = NULL;
   int old_flags;
   int new_flags;
-  pos_T namedm[NMARKS];
+  fmark_T namedm[NMARKS];
   visualinfo_T visualinfo;
   int empty_buffer;                         /* buffer became empty */
   u_header_T  *curhead = curbuf->b_u_curhead;
@@ -2027,7 +2076,8 @@ static void u_undoredo(int undo)
   /*
    * save marks before undo/redo
    */
-  memmove(namedm, curbuf->b_namedm, sizeof(pos_T) * NMARKS);
+  zero_fmark_additional_data(curbuf->b_namedm);
+  memmove(namedm, curbuf->b_namedm, sizeof(curbuf->b_namedm[0]) * NMARKS);
   visualinfo = curbuf->b_visual;
   curbuf->b_op_start.lnum = curbuf->b_ml.ml_line_count;
   curbuf->b_op_start.col = 0;
@@ -2156,7 +2206,8 @@ static void u_undoredo(int undo)
    * restore marks from before undo/redo
    */
   for (i = 0; i < NMARKS; ++i)
-    if (curhead->uh_namedm[i].lnum != 0) {
+    if (curhead->uh_namedm[i].mark.lnum != 0) {
+      free_fmark(curbuf->b_namedm[i]);
       curbuf->b_namedm[i] = curhead->uh_namedm[i];
       curhead->uh_namedm[i] = namedm[i];
     }
@@ -2797,14 +2848,14 @@ int bufIsChanged(buf_T *buf)
 {
   return
     !bt_dontwrite(buf) &&
-    (buf->b_changed || file_ff_differs(buf, TRUE));
+    (buf->b_changed || file_ff_differs(buf, true));
 }
 
 int curbufIsChanged(void)
 {
   return
     !bt_dontwrite(curbuf) &&
-    (curbuf->b_changed || file_ff_differs(curbuf, TRUE));
+    (curbuf->b_changed || file_ff_differs(curbuf, true));
 }
 
 /*

@@ -3,7 +3,7 @@
 " Maintainer:	Daniel Kho <daniel.kho@tauhop.com>
 " Previous Maintainer:	Czo <Olivier.Sirol@lip6.fr>
 " Credits:	Stephan Hegel <stephan.hegel@snc.siemens.com.cn>
-" Last Changed:	2012 Feb 03 by Thilo Six
+" Last Changed:	2015 Apr 25 by Daniel Kho
 " $Id: vhdl.vim,v 1.1 2004/06/13 15:34:56 vimboss Exp $
 
 " VHSIC (Very High Speed Integrated Circuit) Hardware Description Language
@@ -160,10 +160,20 @@ syn match   vhdlSpecial  "[().,;]"
 syn match vhdlTime "\<\d\+\s\+\(\([fpnum]s\)\|\(sec\)\|\(min\)\|\(hr\)\)\>"
 syn match vhdlTime "\<\d\+\.\d\+\s\+\(\([fpnum]s\)\|\(sec\)\|\(min\)\|\(hr\)\)\>"
 
-syn keyword vhdlTodo contained TODO FIXME
+syn keyword vhdlTodo	contained TODO NOTE
+syn keyword vhdlFixme	contained FIXME
 
-syn region vhdlComment start="/\*" end="\*/" contains=vhdlTodo,@Spell
-syn match vhdlComment "--.*" contains=vhdlTodo,@Spell
+" Regex for space is '\s'
+"   Any number of spaces: \s*
+"   At least one space:	  \s+
+syn region vhdlComment start="/\*" end="\*/" contains=vhdlTodo,vhdlFixme,@Spell
+syn match vhdlComment "--.*" contains=vhdlTodo,vhdlFixme,@Spell
+syn match vhdlPreProc "/\* synthesis .* \*/"
+syn match vhdlPreProc "/\* pragma .* \*/"
+syn match vhdlPreProc "/\* synopsys .* \*/"
+syn match vhdlPreProc "--\s*synthesis .*"
+syn match vhdlPreProc "--\s*pragma .*"
+syn match vhdlPreProc "--\s*synopsys .*"
 " syn match vhdlGlobal "[\'$#~!%@?\^\[\]{}\\]"
 
 "Modify the following as needed.  The trade-off is performance versus functionality.
@@ -180,21 +190,22 @@ if version >= 508 || !exists("did_vhdl_syntax_inits")
     command -nargs=+ HiLink hi def link <args>
   endif
 
-"  HiLink cDefine       PreProc
-  HiLink vhdlSpecial   Special
-  HiLink vhdlStatement Statement
-  HiLink vhdlCharacter Character
-  HiLink vhdlString    String
-  HiLink vhdlVector    Number
-  HiLink vhdlBoolean   Number
-  HiLink vhdlTodo      Todo
-  HiLink vhdlComment   Comment
-  HiLink vhdlNumber    Number
-  HiLink vhdlTime      Number
-  HiLink vhdlType      Type
-  HiLink vhdlOperator  Special
+  HiLink vhdlSpecial	Special
+  HiLink vhdlStatement	Statement
+  HiLink vhdlCharacter	Character
+  HiLink vhdlString	String
+  HiLink vhdlVector	Number
+  HiLink vhdlBoolean  	Number
+  HiLink vhdlTodo	Todo
+  HiLink vhdlFixme	Fixme
+  HiLink vhdlComment	Comment
+  HiLink vhdlNumber	Number
+  HiLink vhdlTime	Number
+  HiLink vhdlType	Type
+  HiLink vhdlOperator	Operator
 "  HiLink vhdlGlobal    Error
-  HiLink vhdlAttribute Type
+  HiLink vhdlAttribute	Special
+  HiLink vhdlPreProc	PreProc
 
   delcommand HiLink
 endif
