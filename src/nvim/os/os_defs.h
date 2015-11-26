@@ -103,9 +103,9 @@
 # include <strings.h>
 #endif
 
-/// Function to convert -errno error to char * error description
+/// Function to convert libuv error to char * error description
 ///
-/// -errno errors are returned by a number of os functions.
+/// negative libuv error codes are returned by a number of os functions.
 #define os_strerror uv_strerror
 
 #endif  // NVIM_OS_OS_DEFS_H

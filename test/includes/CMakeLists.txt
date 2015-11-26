@@ -8,6 +8,7 @@ foreach(hfile ${PRE_HEADERS})
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${post_hfile}
     COMMAND ${CMAKE_C_COMPILER} -std=c99 -E -P
       ${CMAKE_CURRENT_SOURCE_DIR}/${hfile}
+      -I${LIBUV_INCLUDE_DIRS}
       -o ${CMAKE_CURRENT_BINARY_DIR}/${post_hfile})
   list(APPEND POST_HEADERS ${post_hfile})
 endforeach()

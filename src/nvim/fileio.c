@@ -535,11 +535,7 @@ readfile (
     if (!newfile) {
       return FAIL;
     }
-    if (perm < 0
-#ifdef ENOENT
-        && errno == ENOENT
-#endif
-        ) {
+    if (perm == UV_ENOENT) {
       /*
        * Set the 'new-file' flag, so that when the file has
        * been created by someone else, a ":w" will complain.
@@ -582,11 +578,11 @@ readfile (
       return OK;                  /* a new file is not an error */
     } else {
       filemess(curbuf, sfname, (char_u *)(
-# ifdef EFBIG
-            (errno == EFBIG) ? _("[File too big]") :
-# endif
-# ifdef EOVERFLOW
-            (errno == EOVERFLOW) ? _("[File too big]") :
+            (fd == UV_EFBIG) ? _("[File too big]") :
+# if defined(UNIX) && defined(EOVERFLOW)
+            // libuv only returns -errno in Unix and in Windows open() does not
+            // set EOVERFLOW
+            (fd == -EOVERFLOW) ? _("[File too big]") :
 # endif
             _("[Permission Denied]")), 0);
       curbuf->b_p_ro = TRUE;                  /* must use "w!" now */
