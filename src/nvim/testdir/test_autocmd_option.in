@@ -2,7 +2,7 @@ Test for option autocommand
 
 STARTTEST
 :so small.vim
-:if !has("eval") || !has("autocmd") | e! test.ok | w! test.out | qa! | endif
+:if !has("eval") || !has("autocmd") || !exists("+autochdir") | e! test.ok | w! test.out | qa! | endif
 :fu! AutoCommand(match)
 :       let c=g:testcase
 :       let item=remove(g:options, 0)
@@ -62,7 +62,7 @@ STARTTEST
 :" Write register now, because next test shouldn't output anything.
 :$put r
 :let @r=''
-:%w! test.out
+:/^dummy text/,$w! test.out
 :qa!
 ENDTEST
 dummy text
