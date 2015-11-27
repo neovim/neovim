@@ -43,6 +43,7 @@
 #include "nvim/path.h"
 #include "nvim/fileio.h"
 #include "nvim/strings.h"
+#include "nvim/quickfix.h"
 #include "nvim/lib/khash.h"
 #include "nvim/lib/kvec.h"
 
@@ -2484,8 +2485,11 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   // Write buffer list
   if (find_shada_parameter('%') != NULL) {
     size_t buf_count = 0;
+#define IGNORE_BUF(buf)\
+    (buf->b_ffname == NULL || !buf->b_p_bl || bt_quickfix(buf) \
+     || in_bufset(&removable_bufs, buf))
     FOR_ALL_BUFFERS(buf) {
-      if (buf->b_ffname != NULL && !in_bufset(&removable_bufs, buf)) {
+      if (!IGNORE_BUF(buf)) {
         buf_count++;
       }
     }
@@ -2503,7 +2507,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
     };
     size_t i = 0;
     FOR_ALL_BUFFERS(buf) {
-      if (buf->b_ffname == NULL || in_bufset(&removable_bufs, buf)) {
+      if (IGNORE_BUF(buf)) {
         continue;
       }
       buflist_entry.data.buffer_list.buffers[i] = (struct buffer_list_buffer) {
@@ -2519,6 +2523,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
       goto shada_write_exit;
     }
     xfree(buflist_entry.data.buffer_list.buffers);
+#undef IGNORE_BUF
   }
 
   // Write some of the variables

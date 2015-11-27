@@ -5303,9 +5303,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	%	When included, save and restore the buffer list.  If Vim is
 		started with a file name argument, the buffer list is not
 		restored.  If Vim is started without a file name argument, the
-		buffer list is restored from the shada file.  Buffers
-		without a file name and buffers for help files are not written
-		to the shada file.
+		buffer list is restored from the shada file.  Quickfix 
+		('buftype'), unlisted ('buflisted'), unnamed and buffers on 
+		removable media (|shada-r|) are not saved.
 		When followed by a number, the number specifies the maximum
 		number of buffers that are stored.  Without a number all
 		buffers are stored.
