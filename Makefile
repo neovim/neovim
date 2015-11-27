@@ -89,13 +89,13 @@ functionaltest: | nvim
 testlint: | nvim
 	$(BUILD_CMD) -C build testlint
 
-test: functionaltest
-
 unittest: | nvim
 	+$(BUILD_CMD) -C build unittest
 
 benchmark: | nvim
 	+$(BUILD_CMD) -C build benchmark
+
+test: functionaltest unittest
 
 clean:
 	+test -d build && $(BUILD_CMD) -C build clean || true
