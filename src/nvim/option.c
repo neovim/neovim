@@ -1,12 +1,4 @@
 /*
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.md for an overview of the Vim source code.
- */
-
-/*
  * Code to handle user-settable options. This is all pretty much table-
  * driven. Checklist for adding a new option:
  * - Put it in the options array below (copy an existing entry).

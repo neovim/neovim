@@ -1,11 +1,4 @@
-/* vim: set fdm=marker fdl=1 fdc=3
- *
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.md for an overview of the Vim source code.
- */
+// vim: set fdm=marker fdl=1 fdc=3
 
 /*
  * fold.c: code for folding

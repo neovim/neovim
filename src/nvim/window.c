@@ -1,11 +1,3 @@
-/*
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read a list of people who contributed.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.md for an overview of the Vim source code.
- */
-
 #include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>

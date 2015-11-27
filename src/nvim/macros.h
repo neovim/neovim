@@ -1,17 +1,6 @@
 #ifndef NVIM_MACROS_H
 #define NVIM_MACROS_H
 
-/*
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- */
-
-/*
- * macros.h: macro definitions for often used code
- */
-
 #ifndef MIN
 # define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
 #endif

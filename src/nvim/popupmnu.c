@@ -1,7 +1,7 @@
 /// @file popupmnu.c
 ///
 /// Popup menu (PUM)
-//
+
 #include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
