@@ -243,7 +243,7 @@ selection.  You can use CTRL-Q instead.  You can also use CTRL-Q in Insert
 mode and Command-line mode to get the old meaning of CTRL-V.  But CTRL-Q
 doesn't work for terminals when it's used for control flow.
 
-NOTE: The clipboard support still has a number of bugs.  See |todo|.
+NOTE: The clipboard support still has a number of bugs.
 
 ==============================================================================
 4. Shell Commands					*gui-shell-win32*
