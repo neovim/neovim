@@ -1511,9 +1511,10 @@ do_set (
           } else if (opt_idx >= 0) {                      /* string */
             char_u      *save_arg = NULL;
             char_u      *s = NULL;
-            char_u      *oldval;                /* previous value if *varp */
+            char_u      *oldval = NULL;         /* previous value if *varp */
             char_u      *newval;
-            char_u      *origval;
+            char_u      *origval = NULL;
+            char_u      *saved_origval = NULL;
             unsigned newlen;
             int comma;
             int bs;
@@ -1780,6 +1781,11 @@ do_set (
             /* Set the new value. */
             *(char_u **)(varp) = newval;
 
+            if (!starting && origval != NULL)
+              /* origval may be freed by
+               * did_set_string_option(), make a copy. */
+              saved_origval = vim_strsave(origval);
+
             /* Handle side effects, and set the global value for
              * ":set" on local options. */
             errmsg = did_set_string_option(opt_idx, (char_u **)varp,
@@ -1788,6 +1794,20 @@ do_set (
             /* If error detected, print the error message. */
             if (errmsg != NULL)
               goto skip;
+            if (saved_origval != NULL) {
+              char_u buf_type[7];
+
+              sprintf((char *)buf_type, "%s",
+                  (opt_flags & OPT_LOCAL) ? "local" : "global");
+              set_vim_var_string(VV_OPTION_NEW, newval, -1);
+              set_vim_var_string(VV_OPTION_OLD, saved_origval, -1);
+              set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
+              apply_autocmds(EVENT_OPTIONSET,
+                  (char_u *)options[opt_idx].fullname,
+                  NULL, FALSE, NULL);
+              reset_v_option_vars();
+              xfree(saved_origval);
+            }
           } else {
             // key code option(FIXME(tarruda): Show a warning or something
             // similar)
@@ -2337,6 +2357,7 @@ set_string_option (
   char_u      *s;
   char_u      **varp;
   char_u      *oldval;
+  char_u      *saved_oldval = NULL;
   char_u      *r = NULL;
 
   if (options[opt_idx].var == NULL)     /* don't set hidden option */
@@ -2350,9 +2371,26 @@ set_string_option (
       : opt_flags);
   oldval = *varp;
   *varp = s;
+
+  if (!starting)
+      saved_oldval = vim_strsave(oldval);
+
   if ((r = did_set_string_option(opt_idx, varp, TRUE, oldval, NULL,
           opt_flags)) == NULL)
     did_set_option(opt_idx, opt_flags, TRUE);
+
+  /* call autocommand after handling side effects */
+  if (saved_oldval != NULL) {
+    char_u buf_type[7];
+    sprintf((char *)buf_type, "%s",
+        (opt_flags & OPT_LOCAL) ? "local" : "global");
+    set_vim_var_string(VV_OPTION_NEW, s, -1);
+    set_vim_var_string(VV_OPTION_OLD, oldval, -1);
+    set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
+    apply_autocmds(EVENT_OPTIONSET, (char_u *)options[opt_idx].fullname, NULL, FALSE, NULL);
+    reset_v_option_vars();
+    xfree(saved_oldval);
+  }
 
   return r;
 }
@@ -3822,7 +3860,21 @@ set_bool_option (
    * End of handling side effects for bool options.
    */
 
+  /* after handling side effects, call autocommand */
+
   options[opt_idx].flags |= P_WAS_SET;
+
+  if (!starting) {
+    char_u buf_old[2], buf_new[2], buf_type[7];
+    snprintf((char *)buf_old, 2, "%d", old_value ? TRUE: FALSE);
+    snprintf((char *)buf_new, 2, "%d", value ? TRUE: FALSE);
+    sprintf((char *)buf_type, "%s", (opt_flags & OPT_LOCAL) ? "local" : "global");
+    set_vim_var_string(VV_OPTION_NEW, buf_new, -1);
+    set_vim_var_string(VV_OPTION_OLD, buf_old, -1);
+    set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
+    apply_autocmds(EVENT_OPTIONSET, (char_u *) options[opt_idx].fullname, NULL, FALSE, NULL);
+    reset_v_option_vars();
+  }
 
   comp_col();                       /* in case 'ruler' or 'showcmd' changed */
   if (curwin->w_curswant != MAXCOL
@@ -4194,6 +4246,18 @@ set_num_option (
     *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = *pp;
 
   options[opt_idx].flags |= P_WAS_SET;
+
+  if (!starting && errmsg == NULL) {
+    char_u buf_old[11], buf_new[11], buf_type[7];
+    snprintf((char *)buf_old, 10, "%ld", old_value);
+    snprintf((char *)buf_new, 10, "%ld", value);
+    snprintf((char *)buf_type, 7, "%s", (opt_flags & OPT_LOCAL) ? "local" : "global");
+    set_vim_var_string(VV_OPTION_NEW, buf_new, -1);
+    set_vim_var_string(VV_OPTION_OLD, buf_old, -1);
+    set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
+    apply_autocmds(EVENT_OPTIONSET, (char_u *) options[opt_idx].fullname, NULL, FALSE, NULL);
+    reset_v_option_vars();
+  }
 
   comp_col();                       /* in case 'columns' or 'ls' changed */
   if (curwin->w_curswant != MAXCOL

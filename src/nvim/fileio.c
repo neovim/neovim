@@ -6426,7 +6426,7 @@ apply_autocmds_group (
    * invalid.
    */
   if (fname_io == NULL) {
-    if (event == EVENT_COLORSCHEME)
+    if (event == EVENT_COLORSCHEME || event == EVENT_OPTIONSET)
       autocmd_fname = NULL;
     else if (fname != NULL && *fname != NUL)
       autocmd_fname = fname;
@@ -6476,6 +6476,7 @@ apply_autocmds_group (
     if (event == EVENT_COLORSCHEME
         || event == EVENT_FILETYPE
         || event == EVENT_FUNCUNDEFINED
+        || event == EVENT_OPTIONSET
         || event == EVENT_QUICKFIXCMDPOST
         || event == EVENT_QUICKFIXCMDPRE
         || event == EVENT_REMOTEREPLY

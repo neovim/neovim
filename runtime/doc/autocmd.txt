@@ -258,6 +258,7 @@ Name			triggered by ~
 |Syntax|		when the 'syntax' option has been set
 |EncodingChanged|	after the 'encoding' option has been changed
 |TermChanged|		after the value of 'term' has changed
+|OptionSet|		after setting any option
 
 	Startup and exit
 |VimEnter|		after doing all the startup stuff
@@ -745,6 +746,24 @@ MenuPopup			Just before showing the popup menu (under the
 					o	Operator-pending
 					i	Insert
 					c	Command line
+							*OptionSet*
+OptionSet			After setting an option.  The pattern is
+				matched against the long option name.
+				The |v:option_old| variable indicates the
+				old option value, |v:option_new| variable
+				indicates the newly set value, the
+				|v:option_type| variable indicates whether
+				it's global or local scoped and |<amatch>|
+				indicates what option has been set.
+
+				Note: It's a bad idea, to reset an option
+				during this autocommand, since this will
+				probably break plugins. You can always use
+				|noa| to prevent triggering this autocommand.
+				Could be used, to check for existence of the
+				'backupdir' and 'undodir' options and create
+				directories, if they don't exist yet.
+
 							*QuickFixCmdPre*
 QuickFixCmdPre			Before a quickfix command is run (|:make|,
 				|:lmake|, |:grep|, |:lgrep|, |:grepadd|,
