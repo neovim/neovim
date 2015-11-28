@@ -7,7 +7,8 @@
     - [Documentation](https://github.com/neovim/neovim/labels/documentation)
       improvements are also much appreciated.
 - Look at [Waffle][waffle] to see who is working on what issues.
-- If needed, refer to [the wiki][wiki-contributing] for guidance.
+
+Refer to [the wiki][wiki-contributing] for further guidance.
 
 ## Reporting problems
 
@@ -31,14 +32,12 @@ If your issue isn't mentioned there:
 Include as much detail as possible; we generally need to know:
 
 - What operating system you're using.
-- Which version of Neovim you're using. To get this, run `nvim --version` from
-  a shell, or run `:version` from inside `nvim`.
+- Which version of Neovim you're using; run `nvim --version` to get this.
+- What commit introduced the issue for you (see [`git bisect`][git-bisect]).
 - Whether the bug is present in Vim (not Neovim), and if so which version of
   Vim. It's fine to report Vim bugs on the Neovim bug tracker, but it saves
   everyone time if we know from the start that the bug is not a regression
   caused by Neovim.
-- This isn't required, but what commit introduced the issue for you. You can
-  use [`git bisect`][git-bisect] for this.
 
 ## Submitting contributions
 
@@ -106,10 +105,9 @@ happen to be modifying anyway. Fix anything that looks outright
 [barbarous](http://www.orwell.ru/library/essays/politics/english/e_polit), but
 otherwise prefer to leave things as they are.
 
-For new code, run `make lint` (which runs [clint.py][clint]) to detect style
-errors. It's not perfect, so some warnings may be false positives/negatives.
-To have `clint.py` ignore certain cases, put `// NOLINT` at the end of the
-line.
+For new code, run `make lint` to detect style errors. It's not perfect, so
+some warnings may be false positives;  to have the linter ignore such cases
+put `// NOLINT` at the end of the line.
 
 We also provide a configuration file for [`clang-format`][clang-format], which
 can be used to format code according to the style guidelines. Be aware that
@@ -169,7 +167,6 @@ You may find it easier to instead use an interactive program for code reviews,
 such as [`tig`][tig].
 
 [clang-format]: http://clang.llvm.org/docs/ClangFormat.html
-[clint]: clint.py
 [entry-level]: https://github.com/neovim/neovim/issues?labels=entry-level&state=open
 [gcc-warnings]: https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
 [git-bisect]: http://git-scm.com/book/tr/v2/Git-Tools-Debugging-with-Git
