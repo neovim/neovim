@@ -21250,9 +21250,8 @@ void ex_oldfiles(exarg_T *eap)
   }
 }
 
-/* reset v:option_new, v:option_old and v:option_type */
-void
-reset_v_option_vars(void)
+// reset v:option_new, v:option_old and v:option_type
+void reset_v_option_vars(void)
 {
   set_vim_var_string(VV_OPTION_NEW,  NULL, -1);
   set_vim_var_string(VV_OPTION_OLD,  NULL, -1);
