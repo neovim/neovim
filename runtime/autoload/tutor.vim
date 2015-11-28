@@ -2,7 +2,7 @@
 
 " Setup: {{{1
 function! tutor#SetupVim()
-    if &col < 90
+    if &columns < 90
         set columns=90
     endif
     if !exists('g:did_load_ftplugin') || g:did_load_ftplugin != 1
