@@ -1798,8 +1798,8 @@ do_set (
             if (saved_origval != NULL) {
               char_u buf_type[7];
 
-              sprintf((char *)buf_type, "%s",
-                      (opt_flags & OPT_LOCAL) ? "local" : "global");
+              vim_snprintf((char *)buf_type, 7, "%s",
+                           (opt_flags & OPT_LOCAL) ? "local" : "global");
               set_vim_var_string(VV_OPTION_NEW,
                                  *(char_u **)varp, -1);
               set_vim_var_string(VV_OPTION_OLD, saved_origval, -1);
@@ -2385,8 +2385,8 @@ set_string_option (
   // call autocommand after handling side effects
   if (saved_oldval != NULL) {
     char_u buf_type[7];
-    sprintf((char *)buf_type, "%s",
-            (opt_flags & OPT_LOCAL) ? "local" : "global");
+    vim_snprintf((char *)buf_type, 7, "%s",
+                 (opt_flags & OPT_LOCAL) ? "local" : "global");
     set_vim_var_string(VV_OPTION_NEW, *varp, -1);
     set_vim_var_string(VV_OPTION_OLD, saved_oldval, -1);
     set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
