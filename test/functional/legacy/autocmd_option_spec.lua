@@ -1,144 +1,128 @@
--- Test for option autocommand
-
 local helpers = require('test.functional.helpers')
-local feed, source = helpers.feed, helpers.source
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local clear, nvim, eq = helpers.clear, helpers.nvim, helpers.eq
+local source, execute = helpers.source, helpers.execute
 
-describe('autocmd_option', function()
+describe('au OptionSet', function()
   setup(clear)
 
-  it('is working', function()
-    execute('so small.vim')
+  describe('with * as <amatch>', function()
+    describe('matches when being set any option', function()
 
-    source([[
-      fu! AutoCommand(match)
-        let c=g:testcase
-        let item=remove(g:options, 0)
-        let c.=printf("Expected: Name: <%s>, Oldval: <%s>, NewVal: <%s>, Scope: <%s>\n",
-                      \item[0], item[1], item[2], item[3])
-        let c.=printf("Autocmd Option: <%s>,", a:match)
-        let c.=printf(" OldVal: <%s>,", v:option_old)
-        let c.=printf(" NewVal: <%s>,", v:option_new)
-        let c.=printf(" Scope: <%s>\n", v:option_type)
-        call setreg('r', printf("%s\n%s", getreg('r'), c))
-      endfu
-    ]])
+      local function expected_str(option, oldval, newval, scope)
+        return ''
+          .. string.format('Autocmd Option: <%s>,', option)
+          .. string.format(' OldVal: <%s>,', oldval)
+          .. string.format(' NewVal: <%s>,', newval)
+          .. string.format(' Scope: <%s>', scope)
+      end
 
-    execute('au OptionSet * :call AutoCommand(expand("<amatch>"))')
+      local function get_result()
+        return nvim('get_var', 'ret')
+      end
 
-    source([=[
-      let g:testcase="1: Setting number option\n"
-      let g:options=[['number', 0, 1, 'global']]
-      set nu
-      let g:testcase="2: Setting local number option\n"
-      let g:options=[['number', 1, 0, 'local']]
-      setlocal nonu
-      let g:testcase="3: Setting global number option\n"
-      let g:options=[['number', 1, 0, 'global']]
-      setglobal nonu
-      let g:testcase="4: Setting local autoindent option\n"
-      let g:options=[['autoindent', 0, 1, 'local']]
-      setlocal ai
-      let g:testcase="5: Setting global autoindent option\n"
-      let g:options=[['autoindent', 0, 1, 'global']]
-      setglobal ai
-      let g:testcase="6: Setting global autoindent option\n"
-      let g:options=[['autoindent', 1, 0, 'global']]
-      set ai!
-    ]=])
+      local function expected_combination(option, oldval, newval, scope)
+        eq(expected_str(option, oldval, newval, scope), get_result())
+      end
 
-    -- Should not print anything, use :noa.
-    source([=[
-      noa :set nonu
-      let g:testcase="7: Setting several global list and number option\n"
-      let g:options=[['list', 0, 1, 'global'], ['number', 0, 1, 'global']]
-      set list nu
-      noa set nolist nonu
-      let g:testcase="8: Setting global acd\n"
-      let g:options=[['autochdir', 0, 1, 'global']]
-      setlocal acd
-      let g:testcase="9: Setting global autoread\n"
-      let g:options=[['autoread', 1, 0, 'global']]
-      set noar
-      let g:testcase="10: Setting local autoread\n"
-      let g:options=[['autoread', 0, 1, 'local']]
-      setlocal ar
-      let g:testcase="11: Setting global autoread\n"
-      let g:options=[['autoread', 0, 1, 'global']]
-      setglobal invar
-      let g:testcase="12: Setting option backspace through :let\n"
-      let g:options=[['backspace', 'indent,eol,start', '', 'global']]
-      let &bs=""
-      let g:testcase="13: Setting option backspace through setbufvar()\n"
-      let g:options=[['backup', '', '1', 'local']]
-    ]=])
+      local function expected_empty()
+        eq('', get_result())
+      end
 
-    -- Try twice, first time, shouldn't trigger because option name is invalid, second time, it should trigger.
-    execute('call setbufvar(1, "&l:bk", 1)')
-    -- Should trigger, use correct option name.
-    execute('call setbufvar(1, "&backup", 1)')
-    -- Write register now
-    execute('$put! r')
+      setup(function()
 
-    -- Remove the first and last blank lines.
-    feed('ggddGdd')
+        source([[
+          fu! AutoCommand(match)
+            let g:ret.=printf('Autocmd Option: <%s>,', a:match)
+            let g:ret.=printf(' OldVal: <%s>,', v:option_old)
+            let g:ret.=printf(' NewVal: <%s>,', v:option_new)
+            let g:ret.=printf(' Scope: <%s>', v:option_type)
+          endfu
+          
+          au OptionSet * :call AutoCommand(expand("<amatch>"))
+        ]])
+      end)
 
-    -- Assert buffer contents.
-    expect([=[
-      1: Setting number option
-      Expected: Name: <number>, Oldval: <0>, NewVal: <1>, Scope: <global>
-      Autocmd Option: <number>, OldVal: <0>, NewVal: <1>, Scope: <global>
-      
-      2: Setting local number option
-      Expected: Name: <number>, Oldval: <1>, NewVal: <0>, Scope: <local>
-      Autocmd Option: <number>, OldVal: <1>, NewVal: <0>, Scope: <local>
-      
-      3: Setting global number option
-      Expected: Name: <number>, Oldval: <1>, NewVal: <0>, Scope: <global>
-      Autocmd Option: <number>, OldVal: <1>, NewVal: <0>, Scope: <global>
-      
-      4: Setting local autoindent option
-      Expected: Name: <autoindent>, Oldval: <0>, NewVal: <1>, Scope: <local>
-      Autocmd Option: <autoindent>, OldVal: <0>, NewVal: <1>, Scope: <local>
-      
-      5: Setting global autoindent option
-      Expected: Name: <autoindent>, Oldval: <0>, NewVal: <1>, Scope: <global>
-      Autocmd Option: <autoindent>, OldVal: <0>, NewVal: <1>, Scope: <global>
-      
-      6: Setting global autoindent option
-      Expected: Name: <autoindent>, Oldval: <1>, NewVal: <0>, Scope: <global>
-      Autocmd Option: <autoindent>, OldVal: <1>, NewVal: <0>, Scope: <global>
-      
-      7: Setting several global list and number option
-      Expected: Name: <list>, Oldval: <0>, NewVal: <1>, Scope: <global>
-      Autocmd Option: <list>, OldVal: <0>, NewVal: <1>, Scope: <global>
-      
-      7: Setting several global list and number option
-      Expected: Name: <number>, Oldval: <0>, NewVal: <1>, Scope: <global>
-      Autocmd Option: <number>, OldVal: <0>, NewVal: <1>, Scope: <global>
-      
-      8: Setting global acd
-      Expected: Name: <autochdir>, Oldval: <0>, NewVal: <1>, Scope: <global>
-      Autocmd Option: <autochdir>, OldVal: <0>, NewVal: <1>, Scope: <local>
-      
-      9: Setting global autoread
-      Expected: Name: <autoread>, Oldval: <1>, NewVal: <0>, Scope: <global>
-      Autocmd Option: <autoread>, OldVal: <1>, NewVal: <0>, Scope: <global>
-      
-      10: Setting local autoread
-      Expected: Name: <autoread>, Oldval: <0>, NewVal: <1>, Scope: <local>
-      Autocmd Option: <autoread>, OldVal: <0>, NewVal: <1>, Scope: <local>
-      
-      11: Setting global autoread
-      Expected: Name: <autoread>, Oldval: <0>, NewVal: <1>, Scope: <global>
-      Autocmd Option: <autoread>, OldVal: <0>, NewVal: <1>, Scope: <global>
-      
-      12: Setting option backspace through :let
-      Expected: Name: <backspace>, Oldval: <indent,eol,start>, NewVal: <>, Scope: <global>
-      Autocmd Option: <backspace>, OldVal: <indent,eol,start>, NewVal: <>, Scope: <global>
-      
-      13: Setting option backspace through setbufvar()
-      Expected: Name: <backup>, Oldval: <>, NewVal: <1>, Scope: <local>
-      Autocmd Option: <backup>, OldVal: <0>, NewVal: <1>, Scope: <local>]=])
+      before_each(function()
+        execute([[let g:ret = '']])
+      end)
+
+      it('should set number option', function()
+        execute('set nu')
+        expected_combination('number', 0, 1, 'global')
+      end)
+
+      it('should set local nonumber option',function()
+        execute('setlocal nonu')
+        expected_combination('number', 1, 0, 'local')
+      end)
+
+      it('should set global nonumber option',function()
+        execute('setglobal nonu')
+        expected_combination('number', 1, 0, 'global')
+      end)
+
+      it('should set local autoindent option',function()
+        execute('setlocal ai')
+        expected_combination('autoindent', 0, 1, 'local')
+      end)
+
+      it('should set global autoindent option',function()
+        execute('setglobal ai')
+        expected_combination('autoindent', 0, 1, 'global')
+      end)
+
+      it('should invert global autoindent option',function()
+        execute('set ai!')
+        expected_combination('autoindent', 1, 0, 'global')
+      end)
+
+      it('should set several global list and number option',function()
+        execute('set list nu')
+        eq(expected_str('list', 0, 1, 'global') .. expected_str('number', 0, 1, 'global'),
+          get_result())
+      end)
+
+      it('should not print anything, use :noa.', function()
+        execute('noa set nolist nonu')
+        expected_empty()
+      end)
+
+      it('should set global acd', function()
+        execute('setlocal acd')
+        expected_combination('autochdir', 0, 1, 'local')
+      end)
+
+      it('should set global noautoread', function()
+        execute('set noar')
+        expected_combination('autoread', 1, 0, 'global')
+      end)
+
+      it('should set local autoread', function()
+        execute('setlocal ar')
+        expected_combination('autoread', 0, 1, 'local')
+      end)
+
+      it('should invert global autoread', function()
+        execute('setglobal invar')
+        expected_combination('autoread', 0, 1, 'global')
+      end)
+
+      it('should set option backspace through :let', function()
+        execute('let &bs=""')
+        expected_combination('backspace', 'indent,eol,start', '', 'global')
+      end)
+
+      describe('setting option through setbufvar()', function()
+        it('shouldn\'t trigger because option name is invalid', function()
+          execute('call setbufvar(1, "&l:bk", 1)')
+          expected_empty()
+        end)
+
+        it('should trigger, use correct option name.', function()
+          execute('call setbufvar(1, "&backup", 1)')
+          expected_combination('backup', 0, 1, 'local')
+        end)
+      end)
+    end)
   end)
 end)
