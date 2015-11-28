@@ -1806,7 +1806,7 @@ do_set (
               set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
               apply_autocmds(EVENT_OPTIONSET,
                              (char_u *)options[opt_idx].fullname,
-                             NULL, FALSE, NULL);
+                             NULL, false, NULL);
               reset_v_option_vars();
               xfree(saved_origval);
             }
