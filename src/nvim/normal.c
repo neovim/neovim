@@ -1,11 +1,4 @@
 /*
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.md for an overview of the Vim source code.
- */
-/*
  * normal.c:	Contains the main routine for processing characters in command
  *		mode.  Communicates closely with the code in ops.c to handle
  *		the operators.

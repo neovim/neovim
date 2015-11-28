@@ -1,14 +1,6 @@
 /*
- * VIM - Vi IMproved		by Bram Moolenaar
- *				GUI/Motif support by Robert Webb
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.md for an overview of the Vim source code.
- */
-
-/*
  * Code for menus.  Used for the GUI and 'wildmenu'.
+ * GUI/Motif support by Robert Webb
  */
 
 #include <assert.h>

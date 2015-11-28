@@ -1,12 +1,4 @@
 /*
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.md for an overview of the Vim source code.
- */
-
-/*
  * ops.c: implementation of various operators: op_shift, op_delete, op_tilde,
  *	  op_change, op_yank, do_put, do_join
  */

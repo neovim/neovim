@@ -1,4 +1,4 @@
-/************************************************************************
+/*
  * functions that use lookup tables for various things, generally to do with
  * special key codes.
  */

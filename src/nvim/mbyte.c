@@ -1,13 +1,6 @@
 /*
- * VIM - Vi IMproved	by Bram Moolenaar
- * Multibyte extensions partly by Sung-Hoon Baek
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.md for an overview of the Vim source code.
- */
-/*
  * mbyte.c: Code specifically for handling multi-byte characters.
+ * Multibyte extensions partly by Sung-Hoon Baek
  *
  * The encoding used in the core is set with 'encoding'.  When 'encoding' is
  * changed, the following four variables are set (for speed).
