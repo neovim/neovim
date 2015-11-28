@@ -3,11 +3,8 @@ local clear, nvim, eq = helpers.clear, helpers.nvim, helpers.eq
 local source, execute = helpers.source, helpers.execute
 
 describe('au OptionSet', function()
-  setup(clear)
-
   describe('with * as <amatch>', function()
     describe('matches when being set any option', function()
-
       local function expected_str(option, oldval, newval, scope)
         return ''
           .. string.format('Autocmd Option: <%s>,', option)
@@ -22,13 +19,15 @@ describe('au OptionSet', function()
 
       local function expected_combination(option, oldval, newval, scope)
         eq(expected_str(option, oldval, newval, scope), get_result())
+        execute([[let g:ret = '']])
       end
 
       local function expected_empty()
         eq('', get_result())
       end
 
-      setup(function()
+      before_each(function()
+        clear()
 
         source([[
           fu! AutoCommand(match)
@@ -40,40 +39,35 @@ describe('au OptionSet', function()
           
           au OptionSet * :call AutoCommand(expand("<amatch>"))
         ]])
-      end)
 
-      before_each(function()
         execute([[let g:ret = '']])
       end)
 
       it('should set number option', function()
         execute('set nu')
         expected_combination('number', 0, 1, 'global')
-      end)
 
-      it('should set local nonumber option',function()
         execute('setlocal nonu')
         expected_combination('number', 1, 0, 'local')
-      end)
 
-      it('should set global nonumber option',function()
         execute('setglobal nonu')
         expected_combination('number', 1, 0, 'global')
       end)
 
-      it('should set local autoindent option',function()
+      it('should set autoindent option',function()
         execute('setlocal ai')
         expected_combination('autoindent', 0, 1, 'local')
-      end)
 
-      it('should set global autoindent option',function()
         execute('setglobal ai')
         expected_combination('autoindent', 0, 1, 'global')
+
+        execute('set noai')
+        expected_combination('autoindent', 1, 0, 'global')
       end)
 
       it('should invert global autoindent option',function()
         execute('set ai!')
-        expected_combination('autoindent', 1, 0, 'global')
+        expected_combination('autoindent', 0, 1, 'global')
       end)
 
       it('should set several global list and number option',function()
@@ -92,19 +86,17 @@ describe('au OptionSet', function()
         expected_combination('autochdir', 0, 1, 'local')
       end)
 
-      it('should set global noautoread', function()
+      it('should set autoread', function()
         execute('set noar')
         expected_combination('autoread', 1, 0, 'global')
-      end)
 
-      it('should set local autoread', function()
         execute('setlocal ar')
         expected_combination('autoread', 0, 1, 'local')
       end)
 
       it('should invert global autoread', function()
         execute('setglobal invar')
-        expected_combination('autoread', 0, 1, 'global')
+        expected_combination('autoread', 1, 0, 'global')
       end)
 
       it('should set option backspace through :let', function()
