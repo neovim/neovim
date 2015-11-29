@@ -649,7 +649,9 @@ static int insert_execute(VimState *state, int key)
   s->c = key;
 
   // Don't want K_EVENT with cursorhold for the second key, e.g., after CTRL-V.
-  did_cursorhold = true;
+  if (key != K_EVENT) {
+    did_cursorhold = true;
+  }
 
   if (p_hkmap && KeyTyped) {
     s->c = hkmap(s->c);  // Hebrew mode mapping
