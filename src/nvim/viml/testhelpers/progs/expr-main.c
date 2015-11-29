@@ -106,12 +106,8 @@ char *xstrndup(const char *string, size_t len)
   return strndup(string, len);  // NOLINT: runtime/memory_fn
 }
 
-int parse_one_cmd(const char **pp,
-                  CommandNode **node,
-                  CommandParserOptions o,
-                  CommandPosition position,
-                  VimlLineGetter fgetline,
-                  void *cookie)
+int parse_one_cmd(CommandParserState *const state,
+                  CommandParserResult *const ret_parsed)
 {
   return 0;
 }
@@ -121,10 +117,8 @@ void free_cmd(CommandNode *cmd)
   return;
 }
 
-CommandNode *parse_cmd_sequence(CommandParserOptions o,
-                                CommandPosition position,
-                                VimlLineGetter fgetline,
-                                void *cookie, bool can_free)
+CommandNode *parse_cmd_sequence(CommandParserState *const state,
+                                CommandParserResult *const ret_parsed)
 {
   return NULL;
 }
@@ -160,6 +154,28 @@ char_u *skipdigits(char_u *q)
     ++p;
   }
   return p;
+}
+
+/// Get next line
+///
+/// @param[in,out]  state  Where to get next line from. Line is saved into
+///                        ->s and ->p, also adjusts ->position.lnr and zeroes
+///                        ->position.col.
+/// @param[in]  ch  First argument to state->line.get.
+/// @param[in]  indent  Third argument to state->line.get.
+///
+/// @return true unless EOF. In case of EOF state is not touched.
+bool nextline(CommandParserState *const state, const int ch, const int indent)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  char *const line = state->line.get(ch, state->line.cookie, indent);
+  if (line == NULL) {
+    return false;
+  }
+  state->cmdp = state->s = line;
+  state->position.lnr++;
+  state->position.col = 0;
+  return true;
 }
 
 /// Duplicates a chunk of memory using xmalloc

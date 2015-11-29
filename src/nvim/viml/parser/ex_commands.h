@@ -16,6 +16,8 @@
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/regexp_defs.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/garray.h"
+#include "nvim/func_attr.h"
 
 // FIXME
 typedef int AuEvent;
@@ -395,7 +397,6 @@ typedef struct command_node {
   CommandType type;               ///< Command type. For built-in commands it
                                   ///< replaces name.
   char *name;                     ///< Name of the user command, unresolved.
-  struct command_node *prev;      ///< Previous command of the same level.
   struct command_node *next;      ///< Next command of the same level.
   struct command_node *children;  ///< Block (if/while/for/try/function),
                                   ///< modifier (like leftabove or silent) or
@@ -409,7 +410,7 @@ typedef struct command_node {
                                   ///< column number).
   size_t skips_count;             ///< Number of items in the above array.
   CommandPosition position;       ///< Position of the start of the command.
-  size_t end_col;                 ///< Last column occupied by this command.
+  CommandPosition end_position;   ///< Last position occupied by this command.
   bool has_count;                 ///< True if there is a count.
   int count;                      ///< Count.
   Register reg;                   ///< Register.
@@ -469,8 +470,9 @@ typedef struct {
 typedef struct command_argument CommandArg;
 typedef struct command_subargs  CommandSubArgs;
 
+/// Parser options.
 typedef struct {
-  uint_least16_t flags;
+  uint_least16_t flags;  ///< See CommandParserFlags enum.
   bool early_return;
 } CommandParserOptions;
 
@@ -480,14 +482,6 @@ typedef struct {
 } CommandParserError;
 
 typedef char *(*VimlLineGetter)(int, void *, int);
-
-typedef int (*CommandArgsParser)(const char **,
-                                 CommandNode *,
-                                 CommandParserError *,
-                                 CommandParserOptions,
-                                 CommandPosition,
-                                 VimlLineGetter,
-                                 void *);
 
 /// Definition of a single highlight attribute
 ///
@@ -501,18 +495,49 @@ typedef struct {
 /// Table that maps attribute names to corresponding binary flags
 extern const HighlightAttrDef hl_attr_table[];
 
-// flags for parse_one_cmd
-#define FLAG_POC_EXMODE      0x01
-#define FLAG_POC_CPO_STAR    0x02
-#define FLAG_POC_CPO_BSLASH  0x04
-#define FLAG_POC_CPO_SPECI   0x08
-#define FLAG_POC_CPO_KEYCODE 0x10
-#define FLAG_POC_CPO_BAR     0x20
-#define FLAG_POC_CPO_SUBPC   0x40
-#define FLAG_POC_ALTKEYMAP   0x80
-#define FLAG_POC_RL         0x100
-#define FLAG_POC_MAGIC      0x200
-#define FLAG_POC_ED         0x400
+/// Flags for parse_one_cmd
+typedef enum {
+  FLAG_POC_EXMODE      =  0x01,  ///< Parser is called for Ex mode.
+  FLAG_POC_CPO_STAR    =  0x02,  ///< CPO_STAR flag is present in &cpo.
+  FLAG_POC_CPO_BSLASH  =  0x04,  ///< CPO_BSLASH is present in &cpo.
+  FLAG_POC_CPO_SPECI   =  0x08,  ///< CPO_SPECI flag is present in &cpo.
+  FLAG_POC_CPO_KEYCODE =  0x10,  ///< CPO_KEYCODE flag is present in &cpo.
+  FLAG_POC_CPO_BAR     =  0x20,  ///< CPO_BAR flag is present in &cpo.
+  FLAG_POC_CPO_SUBPC   =  0x40,  ///< CPO_SUBPERCENT flag is present in &cpo.
+  FLAG_POC_ALTKEYMAP   =  0x80,  ///< &altkeymap option is set.
+  FLAG_POC_RL          = 0x100,  ///< &rl option is set.
+  FLAG_POC_MAGIC       = 0x200,  ///< &magic option is set.
+  FLAG_POC_ED          = 0x400,  ///< &edcompatible option is set.
+} CommandParserFlags;
+
+/// Structure where current parser state is saved
+typedef struct {
+  const char *cmdp;  ///< Pointer to currently parsed position.
+  const char *s;  ///< Position pointed by .position attribute.
+  CommandPosition position;  ///< Position used for error reporting.
+  CommandParserOptions o;  ///< Parser options.
+  struct line_getter_options {
+    VimlLineGetter get;  ///< Function used to get next line.
+    void *cookie;  ///< Argument to .get function.
+    bool can_free;  ///< True if .get result may be freed.
+  } line;
+} CommandParserState;
+
+typedef struct line_getter_options LineGetterOptions;
+
+typedef struct {
+  CommandNode **cur_node;  ///< Last node where results are saved.
+  CommandNode *node;  ///< Node to which results are saved.
+                      ///< Normally *cur_node == node.
+  CommandParserError error;  ///< Error description.
+  CommandNode *main_node;  ///< First node that is not a modifier.
+                           ///< Only touched by parse_one_cmd.
+} CommandParserResult;
+
+/// Type of the function used to parse one’s command arguments
+typedef int (*CommandArgsParser)(CommandParserState *const,
+                                 CommandParserResult *const)
+  REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
 
 #define FLAG_POC_TO_FLAG_CPO(flags) ((flags >> 3)&0x06)
 
@@ -544,9 +569,6 @@ extern const char *const empty_string;
 /// @return CommandDefinition structure with the definition of the given
 ///         command.
 #define CMDDEF(type) cmddefs[type - 1]
-
-/// Command node that is used to represent absense of command
-const CommandNode nocmd;
 
 /// Maximum nesting level for :for/:while/:if/:try blocks
 #define MAX_NEST_BLOCKS   CSTACK_LEN * 3

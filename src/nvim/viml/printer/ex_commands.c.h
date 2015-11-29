@@ -759,7 +759,7 @@ static FDEC(print_plus_cmd, const CommandNode *const node)
   // vim_isspace:              ^9  ^10 ^11 ^12 ^13 ^  | ||
   // ENDS_EXCMD:                                      ^ ^^
 #endif
-  F_ESCAPED(print_node, escapes, node, 0, true);
+  F_ESCAPED(print_node, escapes, node, 0, true, false);
   FUNCTION_END;
 }
 
@@ -932,7 +932,7 @@ static FDEC(print_block_children,
   } else {
     W_NL;
   }
-  F(print_node, node, indent, barnext);
+  F(print_node, node, indent, barnext, false);
   FUNCTION_END;
 }
 
@@ -1279,7 +1279,7 @@ static CMD_FDEC(print_do)
   FUNCTION_START;
   if (node->children) {
     W(DO_CMD_SEPARATOR);
-    F(print_node, node->children, indent, true);
+    F(print_node, node->children, indent, true, false);
   }
   FUNCTION_END;
 }
@@ -1289,9 +1289,8 @@ static CMD_FDEC(print_modifier)
 {
   FUNCTION_START;
   if (node->children) {
-    assert(node->children->next == NULL);
     WC(' ');
-    F(print_node, node->children, 0, true);
+    F(print_node, node->children, indent, false, true);
   }
   FUNCTION_END;
 }
@@ -1315,7 +1314,7 @@ static CMD_FDEC(print_autocmd)
   }
   if (node->children) {
     W(AU_CMD_SEPARATOR);
-    F(print_node, node->children, indent, true);
+    F(print_node, node->children, indent, true, false);
   }
   FUNCTION_END;
 }
@@ -1773,7 +1772,7 @@ static CMD_FDEC(print_global)
   }
   if (node->children) {
     W(G_CMD_SEPARATOR);
-    F(print_node, node->children, indent, true);
+    F(print_node, node->children, indent, true, false);
   }
   FUNCTION_END;
 }
@@ -2899,7 +2898,8 @@ static CMD_FDEC(print_syntax)
 static FDEC(print_node,
             const CommandNode *const node,
             const size_t indent,
-            const bool barnext)
+            const bool barnext,
+            const bool ignore_first_indent)
 {
   FUNCTION_START;
 #define CMD_F(f) F(f, node, indent, barnext)
@@ -2907,7 +2907,7 @@ static FDEC(print_node,
     EARLY_RETURN;
   }
 
-  if (!barnext) {
+  if (!barnext && !ignore_first_indent) {
     WINDENT(indent);
   }
 
@@ -3045,7 +3045,7 @@ static FDEC(print_node,
     } else {
       W_NL;
     }
-    F(print_node, node->next, indent, barnext);
+    F(print_node, node->next, indent, barnext, false);
   }
 
 #undef CMD_F

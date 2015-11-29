@@ -470,7 +470,13 @@ return describe('parse_cmd_sequence errors', function()
     t, itn = _obj_0.t, _obj_0.itn
   end
   return describe('missing block ends', function()
-    t('\n    if 1\n    \\ error: E171: Missing :endif:     endfor!!!\n    \\ error: E588: :endfor without :for:     endfor!!!\n    ', '\n    if 1\n    endfor')
+    t([[
+    if 1
+    \ error: E171: Missing :endif:     endfor!!!
+    \ error: E588: :endfor without :for:     endfor!!!
+    ]], [[
+    if 1
+    endfor]])
     t('\n    if 1\n    endif\n    \\ error: E580: :endif without :if:     endif!!!\n    ', '\n    if 1\n    endif\n    endif')
     t('\n    if 1\n    endif\n    \\ error: E580: :endif without :if:     endif !!|!! if 1 | endif\n    if 1\n    endif\n    ', '\n    if 1\n    endif\n    endif | if 1 | endif')
     t('\n    \\ error: E606: :finally without :try:     finally!!!\n    \\ error: E602: :endtry without :try:     endtry!!!\n    ', '\n    finally\n    endtry\n    ')

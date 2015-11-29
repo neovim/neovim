@@ -34,28 +34,31 @@ char *parse_cmd_test(const char *arg, const uint_least16_t flags,
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   CommandNode *node = NULL;
-  CommandPosition position = {1, 1};
-  CommandParserOptions o = {flags, false};
-  char *repr;
   char *r;
-  size_t len;
-  char **pp;
-
-  pp = (char **) &arg;
+  CommandParserState state = {
+    .s = NULL,
+    .cmdp = NULL,
+    .line = {
+      .get = (VimlLineGetter) &fgetline_string,
+      .cookie = &arg,
+      .can_free = true,
+    },
+    .position = { 0, 0 },
+    .o = { flags, false },
+  };
+  CommandParserResult ret_parsed;
+  memset(&ret_parsed, 0, sizeof(ret_parsed));
+  ret_parsed.cur_node = &node;
 
   if (one) {
-    char *p;
-    char *line;
-    line = fgetline_string(0, pp, 0);
-    p = line;
-    if (parse_one_cmd((const char **) &p, &node, o, position,
-                      (VimlLineGetter) fgetline_string, (void *) pp) == FAIL)
+    if (!nextline(&state, 0, 0)) {
+      assert(false);
+    }
+    if (parse_one_cmd(&state, &ret_parsed) == FAIL) {
       return NULL;
-    xfree(line);
+    }
   } else {
-    if ((node = parse_cmd_sequence(o, position,
-                                   (VimlLineGetter) fgetline_string,
-                                   (void *) pp, true)) == NULL) {
+    if ((node = parse_cmd_sequence(&state, &ret_parsed)) == NULL) {
       return NULL;
     }
   }
@@ -64,11 +67,12 @@ char *parse_cmd_test(const char *arg, const uint_least16_t flags,
   po.magic = (bool) (flags & FLAG_POC_MAGIC);
   po.command.glob.ast_glob = true;
 
+  char *repr;
   if (out) {
     print_cmd(&po, node, (Writer) fwrite, stdout);
     repr = (char *) out_str;
   } else {
-    len = sprint_cmd_len(&po, node);
+    const size_t len = sprint_cmd_len(&po, node);
 
     repr = xcalloc(len + 1, sizeof(char));
 
