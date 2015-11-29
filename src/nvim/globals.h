@@ -117,12 +117,13 @@
 #define DFLT_COLS       80              /* default value for 'columns' */
 #define DFLT_ROWS       24              /* default value for 'lines' */
 
-EXTERN long Rows                        /* nr of rows in the screen */
 #ifdef DO_INIT
-  = DFLT_ROWS
+  EXTERN long Rows = DFLT_ROWS;          // nr of rows in the screen
+#else
+  EXTERN long Rows;
 #endif
-;
-EXTERN long Columns INIT(= DFLT_COLS);         /* nr of columns in the screen */
+
+EXTERN long Columns INIT(= DFLT_COLS);  // nr of columns in the screen
 
 /*
  * The characters and attributes cached for the screen.
@@ -299,9 +300,9 @@ EXTERN int didset_vimruntime INIT(= FALSE);        /* idem for $VIMRUNTIME */
  * Lines left before a "more" message.	Ex mode needs to be able to reset this
  * after you type something.
  */
-EXTERN long lines_left INIT(= -1);           /* lines left for listing */
-EXTERN int msg_no_more INIT(= FALSE);       /* don't use more prompt, truncate
-                                               messages */
+EXTERN long lines_left INIT(= -1);          // lines left for listing
+EXTERN bool msg_no_more INIT(= false);      // don't use more prompt, truncate
+                                            // messages
 
 EXTERN char_u   *sourcing_name INIT( = NULL); /* name of error message source */
 EXTERN linenr_T sourcing_lnum INIT(= 0);    /* line number of the source file */

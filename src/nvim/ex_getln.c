@@ -2218,11 +2218,11 @@ void putcmdline(int c, int shift)
 {
   if (cmd_silent)
     return;
-  msg_no_more = TRUE;
+  msg_no_more = true;
   msg_putchar(c);
   if (shift)
     draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
-  msg_no_more = FALSE;
+  msg_no_more = false;
   cursorcmd();
 }
 
@@ -2233,7 +2233,7 @@ void unputcmdline(void)
 {
   if (cmd_silent)
     return;
-  msg_no_more = TRUE;
+  msg_no_more = true;
   if (ccline.cmdlen == ccline.cmdpos)
     msg_putchar(' ');
   else if (has_mbyte)
@@ -2241,7 +2241,7 @@ void unputcmdline(void)
         (*mb_ptr2len)(ccline.cmdbuff + ccline.cmdpos));
   else
     draw_cmdline(ccline.cmdpos, 1);
-  msg_no_more = FALSE;
+  msg_no_more = false;
   cursorcmd();
 }
 
@@ -2329,14 +2329,14 @@ void put_on_cmdline(char_u *str, int len, int redraw)
   }
 
   if (redraw && !cmd_silent) {
-    msg_no_more = TRUE;
+    msg_no_more = true;
     i = cmdline_row;
     cursorcmd();
     draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
     /* Avoid clearing the rest of the line too often. */
     if (cmdline_row != i || ccline.overstrike)
       msg_clr_eos();
-    msg_no_more = FALSE;
+    msg_no_more = false;
   }
   /*
    * If we are in Farsi command mode, the character input must be in
@@ -2601,10 +2601,10 @@ void redrawcmd(void)
   redrawcmdprompt();
 
   /* Don't use more prompt, truncate the cmdline if it doesn't fit. */
-  msg_no_more = TRUE;
+  msg_no_more = true;
   draw_cmdline(0, ccline.cmdlen);
   msg_clr_eos();
-  msg_no_more = FALSE;
+  msg_no_more = false;
 
   set_cmdspos_cursor();
 

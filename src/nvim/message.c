@@ -77,37 +77,37 @@ static int verbose_did_open = FALSE;
 /*
  * When writing messages to the screen, there are many different situations.
  * A number of variables is used to remember the current state:
- * msg_didany	    TRUE when messages were written since the last time the
- *		    user reacted to a prompt.
- *		    Reset: After hitting a key for the hit-return prompt,
- *		    hitting <CR> for the command line or input().
- *		    Set: When any message is written to the screen.
- * msg_didout	    TRUE when something was written to the current line.
- *		    Reset: When advancing to the next line, when the current
- *		    text can be overwritten.
- *		    Set: When any message is written to the screen.
- * msg_nowait	    No extra delay for the last drawn message.
- *		    Used in normal_cmd() before the mode message is drawn.
+ * msg_didany       TRUE when messages were written since the last time the
+ *                  user reacted to a prompt.
+ *                  Reset: After hitting a key for the hit-return prompt,
+ *                  hitting <CR> for the command line or input().
+ *                  Set: When any message is written to the screen.
+ * msg_didout       TRUE when something was written to the current line.
+ *                  Reset: When advancing to the next line, when the current
+ *                  text can be overwritten.
+ *                  Set: When any message is written to the screen.
+ * msg_nowait       No extra delay for the last drawn message.
+ *                  Used in normal_cmd() before the mode message is drawn.
  * emsg_on_display  There was an error message recently.  Indicates that there
- *		    should be a delay before redrawing.
- * msg_scroll	    The next message should not overwrite the current one.
- * msg_scrolled	    How many lines the screen has been scrolled (because of
- *		    messages).  Used in update_screen() to scroll the screen
- *		    back.  Incremented each time the screen scrolls a line.
+ *                  should be a delay before redrawing.
+ * msg_scroll       The next message should not overwrite the current one.
+ * msg_scrolled     How many lines the screen has been scrolled (because of
+ *                  messages).  Used in update_screen() to scroll the screen
+ *                  back.  Incremented each time the screen scrolls a line.
  * msg_scrolled_ign  TRUE when msg_scrolled is non-zero and msg_puts_attr()
- *		    writes something without scrolling should not make
- *		    need_wait_return to be set.  This is a hack to make ":ts"
- *		    work without an extra prompt.
- * lines_left	    Number of lines available for messages before the
- *		    more-prompt is to be given.  -1 when not set.
+ *                  writes something without scrolling should not make
+ *                  need_wait_return to be set.  This is a hack to make ":ts"
+ *                  work without an extra prompt.
+ * lines_left       Number of lines available for messages before the
+ *                  more-prompt is to be given.  -1 when not set.
  * need_wait_return TRUE when the hit-return prompt is needed.
- *		    Reset: After giving the hit-return prompt, when the user
- *		    has answered some other prompt.
- *		    Set: When the ruler or typeahead display is overwritten,
- *		    scrolling the screen for some message.
- * keep_msg	    Message to be displayed after redrawing the screen, in
- *		    main_loop().
- *		    This is an allocated string or NULL when not used.
+ *                  Reset: After giving the hit-return prompt, when the user
+ *                  has answered some other prompt.
+ *                  Set: When the ruler or typeahead display is overwritten,
+ *                  scrolling the screen for some message.
+ * keep_msg         Message to be displayed after redrawing the screen, in
+ *                  main_loop().
+ *                  This is an allocated string or NULL when not used.
  */
 
 /*
@@ -139,8 +139,7 @@ int msg_attr(char_u *s, int attr) FUNC_ATTR_NONNULL_ARG(1)
   return msg_attr_keep(s, attr, FALSE);
 }
 
-int
-msg_attr_keep (
+int msg_attr_keep(
     char_u *s,
     int attr,
     int keep                   /* TRUE: set keep_msg if it doesn't scroll */
@@ -156,7 +155,7 @@ msg_attr_keep (
 
   /*
    * It is possible that displaying a messages causes a problem (e.g.,
-   * when redrawing the window), which causes another message, etc..	To
+   * when redrawing the window), which causes another message, etc..    To
    * break this loop, limit the recursiveness to 3 levels.
    */
   if (entered >= 3)
@@ -200,8 +199,7 @@ msg_attr_keep (
  * Truncate a string such that it can be printed without causing a scroll.
  * Returns an allocated string or NULL when no truncating is done.
  */
-char_u *
-msg_strtrunc (
+char_u *msg_strtrunc(
     char_u *s,
     int force                  /* always truncate */
 )
@@ -667,8 +665,7 @@ char_u *msg_may_trunc(int force, char_u *s)
   return s;
 }
 
-static void
-add_msg_hist (
+static void add_msg_hist(
     char_u *s,
     int len,                        /* -1 for undetermined length */
     int attr
@@ -1220,8 +1217,7 @@ void msg_make(char_u *arg)
  * This function is used to show mappings, where we want to see how to type
  * the character/string -- webb
  */
-int
-msg_outtrans_special (
+int msg_outtrans_special(
     char_u *strstart,
     int from               /* TRUE for lhs of a mapping */
 )
@@ -1254,8 +1250,7 @@ msg_outtrans_special (
  * Return the lhs or rhs of a mapping, with the key codes turned into printable
  * strings, in an allocated string.
  */
-char_u *
-str2special_save (
+char_u *str2special_save(
     char_u *str,
     int is_lhs          /* TRUE for lhs, FALSE for rhs */
 )
@@ -1275,8 +1270,7 @@ str2special_save (
  * Used for translating the lhs or rhs of a mapping to printable chars.
  * Advances "sp" to the next code.
  */
-char_u *
-str2special (
+char_u *str2special(
     char_u **sp,
     int from               /* TRUE for lhs of mapping */
 )
@@ -1607,24 +1601,16 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
      * - When outputting a newline.
      * - When outputting a character in the last column.
      */
-    if (!recurse && msg_row >= Rows - 1 && (*s == '\n' || (
-                                              cmdmsg_rl
-                                              ? (
-                                                msg_col <= 1
-                                                || (*s == TAB && msg_col <= 7)
-                                                || (has_mbyte &&
-                                                    (*mb_ptr2cells)(s) > 1 &&
-                                                    msg_col <= 2)
-                                                )
-                                              :
-                                              (msg_col + t_col >= Columns - 1
-                                               || (*s == TAB && msg_col +
-                                                   t_col >= ((Columns - 1) & ~7))
-                                               || (has_mbyte &&
-                                                   (*mb_ptr2cells)(s) > 1
-                                                   && msg_col + t_col >=
-                                                   Columns - 2)
-                                              )))) {
+    if (!recurse && msg_row >= Rows - 1
+        && (*s == '\n'
+            || (cmdmsg_rl
+                ? (msg_col <= 1
+                   || (*s == TAB && msg_col <= 7)
+                   || (has_mbyte && (*mb_ptr2cells)(s) > 1 && msg_col <= 2))
+                : (msg_col + t_col >= Columns - 1
+                   || (*s == TAB && msg_col + t_col >= ((Columns - 1) & ~7))
+                   || (has_mbyte && (*mb_ptr2cells)(s) > 1
+                       && msg_col + t_col >= Columns - 2))))) {
       /*
        * The screen is scrolled up when at the last row (some terminals
        * scroll automatically, some don't.  To avoid problems we scroll
@@ -1710,7 +1696,7 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
       store_sb_text(&sb_str, s, attr, &sb_col, true);
 
     if (*s == '\n') {               /* go to next line */
-      msg_didout = FALSE;           /* remember that line is empty */
+      msg_didout = false;           /* remember that line is empty */
       if (cmdmsg_rl) {
         assert(Columns <= INT_MAX);
         msg_col = (int)Columns - 1;
@@ -1795,9 +1781,9 @@ static void inc_msg_scrolled(void)
 
     /* v:scrollstart is empty, set it to the script/function name and line
      * number */
-    if (p == NULL)
+    if (p == NULL) {
       p = (char_u *)_("Unknown");
-    else {
+    } else {
       len = STRLEN(p) + 40;
       tofree = xmalloc(len);
       vim_snprintf((char *)tofree, len, _("%s line %" PRId64),
@@ -1818,8 +1804,7 @@ static int do_clear_sb_text = FALSE;    /* clear text on next msg */
 /*
  * Store part of a printed message for displaying when scrolling back.
  */
-static void
-store_sb_text (
+static void store_sb_text(
     char_u **sb_str,           /* start of string */
     char_u *s,                 /* just after string */
     int attr,
@@ -1851,8 +1836,9 @@ store_sb_text (
       last_msgchunk = mp;
     }
     mp->sb_next = NULL;
-  } else if (finish && last_msgchunk != NULL)
+  } else if (finish && last_msgchunk != NULL) {
     last_msgchunk->sb_eol = true;
+  }
 
   *sb_str = s;
   *sb_col = 0;
@@ -2026,7 +2012,7 @@ static int do_more_prompt(int typed_char)
   int used_typed_char = typed_char;
   int oldState = State;
   int c;
-  int retval = FALSE;
+  bool retval = false;
   long toscroll;
   msgchunk_T  *mp_last = NULL;
   msgchunk_T  *mp;
@@ -2043,7 +2029,7 @@ static int do_more_prompt(int typed_char)
   State = ASKMORE;
   setmouse();
   if (typed_char == NUL)
-    msg_moremsg(FALSE);
+    msg_moremsg(false);
   for (;; ) {
     /*
      * Get a typed character directly from the user.
@@ -2107,8 +2093,8 @@ static int do_more_prompt(int typed_char)
         typeahead_noflush(':');
         assert(Rows <= INT_MAX);
         cmdline_row = (int)Rows - 1;            // put ':' on this line
-        skip_redraw = TRUE;                     /* skip redraw once */
-        need_wait_return = FALSE;               /* don't wait in main() */
+        skip_redraw = true;                     // skip redraw once
+        need_wait_return = false;               // don't wait in main()
       }
     /*FALLTHROUGH*/
     case 'q':                   /* quit */
@@ -2116,7 +2102,7 @@ static int do_more_prompt(int typed_char)
     case ESC:
       if (confirm_msg_used) {
         /* Jump to the choices of the dialog. */
-        retval = TRUE;
+        retval = true;
       } else {
         got_int = TRUE;
         quit_more = TRUE;
@@ -2127,7 +2113,7 @@ static int do_more_prompt(int typed_char)
       break;
 
     default:                    /* no valid response */
-      msg_moremsg(TRUE);
+      msg_moremsg(true);
       continue;
     }
 
@@ -2189,7 +2175,7 @@ static int do_more_prompt(int typed_char)
         /* displayed the requested text, more prompt again */
         screen_fill((int)Rows - 1, (int)Rows, 0,
             (int)Columns, ' ', ' ', 0);
-        msg_moremsg(FALSE);
+        msg_moremsg(false);
         continue;
       }
 
@@ -2316,7 +2302,7 @@ static void msg_screen_putchar(int c, int attr)
   }
 }
 
-void msg_moremsg(int full)
+void msg_moremsg(bool full)
 {
   int attr;
   char_u      *s = (char_u *)_("-- More --");
@@ -2336,7 +2322,7 @@ void msg_moremsg(int full)
 void repeat_message(void)
 {
   if (State == ASKMORE) {
-    msg_moremsg(TRUE);          /* display --more-- message again */
+    msg_moremsg(true);          /* display --more-- message again */
     assert(Rows <= INT_MAX);
     msg_row = (int)Rows - 1;
   } else if (State == CONFIRM) {
@@ -2626,7 +2612,7 @@ void msg_advance(int col)
  * versions, get this generic handler which uses the command line.
  *
  * type  = one of:
- *	   VIM_QUESTION, VIM_INFO, VIM_WARNING, VIM_ERROR or VIM_GENERIC
+ *         VIM_QUESTION, VIM_INFO, VIM_WARNING, VIM_ERROR or VIM_GENERIC
  * title = title string (can be NULL for default)
  * (neither used in console dialogs at the moment)
  *
@@ -2638,8 +2624,7 @@ void msg_advance(int col)
  * A '&' in a button name becomes a shortcut, so each '&' should be before a
  * different letter.
  */
-int
-do_dialog (
+int do_dialog(
     int type,
     char_u *title,
     char_u *message,
@@ -2730,8 +2715,7 @@ do_dialog (
  * Copy one character from "*from" to "*to", taking care of multi-byte
  * characters.  Return the length of the character in bytes.
  */
-static int
-copy_char (
+static int copy_char(
     char_u *from,
     char_u *to,
     int lowercase                  /* make character lower case */
@@ -3048,7 +3032,7 @@ static double tv_float(typval_T *tvs, int *idxp)
  * by Mark Martinec <mark.martinec@ijs.si>, Version 2.2, 2000-10-06.
  * Included with permission.  It was heavily modified to fit in Vim.
  * The original code, including useful comments, can be found here:
- *	http://www.ijs.si/software/snprintf/
+ *      http://www.ijs.si/software/snprintf/
  *
  * This snprintf() only supports the following conversion specifiers:
  * s, c, d, u, o, x, X, p  (and synonyms: i, D, U, O - see below)
@@ -3190,9 +3174,9 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
       if (*p == '*') {
         p++;
         long j = tvs ? tv_nr(tvs, &arg_idx) : va_arg(ap, int);
-        if (j >= 0)
+        if (j >= 0) {
           min_field_width = (size_t)j;
-        else {
+        } else {
           min_field_width = (size_t)(-j);
           justify_left = 1;
         }
@@ -3214,9 +3198,9 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
         if (*p == '*') {
           long j = tvs ? tv_nr(tvs, &arg_idx) : va_arg(ap, int);
           p++;
-          if (j >= 0)
+          if (j >= 0) {
             precision = (size_t)j;
-          else {
+          } else {
             precision_specified = 0;
             precision = 0;
           }
@@ -3445,9 +3429,9 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
           f[f_l++] = fmt_spec;
           f[f_l++] = '\0';
 
-          if (fmt_spec == 'p')
+          if (fmt_spec == 'p') {
             str_arg_l += (size_t)sprintf(tmp + str_arg_l, f, ptr_arg);
-          else if (fmt_spec == 'd') {
+          } else if (fmt_spec == 'd') {
             // signed
             switch (length_modifier) {
             case '\0':
@@ -3458,7 +3442,7 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
                                                    long_arg);
                       break;
             case '2': str_arg_l += (size_t)sprintf(tmp + str_arg_l, f,
-                                                   long_long_arg);
+                                                  long_long_arg);
                       break;
             }
           } else {
