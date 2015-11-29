@@ -44,7 +44,7 @@ typedef struct msgchunk_S msgchunk_T;
 struct msgchunk_S {
   msgchunk_T  *sb_next;
   msgchunk_T  *sb_prev;
-  char sb_eol;                  /* TRUE when line ends after this text */
+  bool sb_eol;                  // TRUE when line ends after this text
   int sb_msg_col;               /* column in which text starts */
   int sb_attr;                  /* text attributes */
   char_u sb_text[1];            /* text to be displayed, actually longer */
@@ -207,8 +207,8 @@ msg_strtrunc (
 )
 {
   char_u      *buf = NULL;
-  int len;
-  int room;
+  long len;
+  long room;
 
   /* May truncate message to avoid a hit-return prompt */
   if ((!msg_scroll && !need_wait_return && shortmess(SHM_TRUNCALL)
@@ -216,10 +216,10 @@ msg_strtrunc (
     len = vim_strsize(s);
     if (msg_scrolled != 0)
       /* Use all the columns. */
-      room = (int)(Rows - msg_row) * Columns - 1;
+      room = (Rows - msg_row) * Columns - 1;
     else
       /* Use up to 'showcmd' column. */
-      room = (int)(Rows - msg_row - 1) * Columns + sc_col - 1;
+      room = (Rows - msg_row - 1) * Columns + sc_col - 1;
     if (len > room && room > 0) {
       if (enc_utf8)
         /* may have up to 18 bytes per cell (6 per char, up to two
@@ -230,7 +230,8 @@ msg_strtrunc (
         len = (room + 2) * 2;
       else
         len = room + 2;
-      buf = xmalloc(len);
+      assert(len >= 0);
+      buf = xmalloc((size_t)len);
       trunc_string(s, buf, room, len);
     }
   }
@@ -241,12 +242,12 @@ msg_strtrunc (
  * Truncate a string "s" to "buf" with cell width "room".
  * "s" and "buf" may be equal.
  */
-void trunc_string(char_u *s, char_u *buf, int room, int buflen)
+void trunc_string(char_u *s, char_u *buf, long room, long buflen)
 {
-  int half;
-  int len;
+  long half;
+  long len;
+  long i;
   int e;
-  int i;
   int n;
 
   room -= 3;
@@ -286,7 +287,7 @@ void trunc_string(char_u *s, char_u *buf, int room, int buflen)
     }
   } else if (enc_utf8) {
     /* For UTF-8 we can go backwards easily. */
-    half = i = (int)STRLEN(s);
+    half = i = (long)STRLEN(s);
     for (;; ) {
       do
         half = half - (*mb_head_off)(s, s + half - 1) - 1;
@@ -298,17 +299,18 @@ void trunc_string(char_u *s, char_u *buf, int room, int buflen)
       i = half;
     }
   } else {
-    for (i = (int)STRLEN(s); len + (n = ptr2cells(s + i - 1)) <= room; --i)
+    for (i = (long)STRLEN(s); len + (n = ptr2cells(s + i - 1)) <= room; --i)
       len += n;
   }
 
   /* Set the middle and copy the last part. */
   if (e + 3 < buflen) {
-    memmove(buf + e, "...", (size_t)3);
-    len = (int)STRLEN(s + i) + 1;
+    memmove(buf + e, "...", 3);
+    len = (long)STRLEN(s + i) + 1;
     if (len >= buflen - e - 3)
       len = buflen - e - 3 - 1;
-    memmove(buf + e + 3, s + i, len);
+    assert(len >= 0);
+    memmove(buf + e + 3, s + i, (size_t)len);
     buf[e + 3 + len - 1] = NUL;
   } else {
     buf[e - 1] = NUL;      /* make sure it is truncated */
@@ -344,7 +346,7 @@ int smsg_attr(int attr, char *s, ...)
  * Remember the last sourcing name/lnum used in an error message, so that it
  * isn't printed each time when it didn't change.
  */
-static int last_sourcing_lnum = 0;
+static linenr_T last_sourcing_lnum = 0;
 static char_u   *last_sourcing_name = NULL;
 
 /*
@@ -640,12 +642,12 @@ char_u *msg_trunc_attr(char_u *s, int force, int attr)
  */
 char_u *msg_may_trunc(int force, char_u *s)
 {
-  int n;
-  int room;
+  long n;
+  long room;
 
-  room = (int)(Rows - cmdline_row - 1) * Columns + sc_col - 1;
+  room = (Rows - cmdline_row - 1) * Columns + sc_col - 1;
   if ((force || (shortmess(SHM_TRUNC) && !exmode_active))
-      && (n = (int)STRLEN(s) - room) > 0) {
+      && (n = (long)STRLEN(s) - room) > 0) {
     if (has_mbyte) {
       int size = vim_strsize(s);
 
@@ -690,7 +692,7 @@ add_msg_hist (
   }
   while (len > 0 && s[len - 1] == '\n')
     --len;
-  p->msg = vim_strnsave(s, len);
+  p->msg = vim_strnsave(s, (size_t)len);
   p->next = NULL;
   p->attr = attr;
   if (last_msg_hist != NULL)
@@ -864,9 +866,7 @@ void wait_return(int redraw)
           else {
             msg_didout = FALSE;
             c = K_IGNORE;
-            msg_col =
-              cmdmsg_rl ? Columns - 1 :
-              0;
+            msg_col = (int)(cmdmsg_rl ? Columns - 1 : 0);
           }
           if (quit_more) {
             c = CAR;                            /* just pretend CR was hit */
@@ -1006,9 +1006,7 @@ void msg_start(void)
 
   if (!msg_scroll && full_screen) {     /* overwrite last message */
     msg_row = cmdline_row;
-    msg_col =
-      cmdmsg_rl ? Columns - 1 :
-      0;
+    msg_col = (int)(cmdmsg_rl ? Columns - 1 : 0);
   } else if (msg_didout) {                /* start message on next line */
     msg_putchar('\n');
     did_return = TRUE;
@@ -1046,8 +1044,8 @@ void msg_putchar_attr(int c, int attr)
 
   if (IS_SPECIAL(c)) {
     buf[0] = K_SPECIAL;
-    buf[1] = K_SECOND(c);
-    buf[2] = K_THIRD(c);
+    buf[1] = (char_u)K_SECOND(c);
+    buf[2] = (char_u)K_THIRD(c);
     buf[3] = NUL;
   } else {
     buf[(*mb_char2bytes)(c, buf)] = NUL;
@@ -1336,7 +1334,7 @@ str2special (
    * Use <Space> only for lhs of a mapping. */
   if (special || char2cells(c) > 1 || (from && c == ' '))
     return get_special_key_name(c, modifiers);
-  buf[0] = c;
+  buf[0] = (char_u)c;
   buf[1] = NUL;
   return buf;
 }
@@ -1363,7 +1361,7 @@ void msg_prt_line(char_u *s, int list)
 {
   int c;
   int col = 0;
-  int n_extra = 0;
+  long n_extra = 0;
   int c_extra = 0;
   char_u      *p_extra = NULL;              /* init to make SASC shut up */
   int n;
@@ -1478,7 +1476,8 @@ static char_u *screen_puts_mbyte(char_u *s, int l, int attr)
   if (cmdmsg_rl) {
     msg_col -= cw;
     if (msg_col == 0) {
-      msg_col = Columns;
+      assert(Columns <= INT_MAX);
+      msg_col = (int)Columns;
       ++msg_row;
     }
   } else {
@@ -1520,7 +1519,8 @@ void msg_puts_long_len_attr(char_u *longstr, int len, int attr)
   int slen = len;
   int room;
 
-  room = Columns - msg_col;
+  assert(Columns <= INT_MAX);
+  room = (int)Columns - msg_col;
   if (len > room && room >= 20) {
     slen = (room - 3) / 2;
     msg_outtrans_len_attr(longstr, slen, attr);
@@ -1641,9 +1641,10 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
       /* Scroll the screen up one line. */
       msg_scroll_up();
 
-      msg_row = Rows - 2;
+      assert(Rows <= INT_MAX);
+      msg_row = (int)Rows - 2;
       if (msg_col >= Columns)           /* can happen after screen resize */
-        msg_col = Columns - 1;
+        msg_col = (int)Columns - 1;
 
       /* Display char in last column before showing more-prompt. */
       if (*s >= ' '
@@ -1664,7 +1665,7 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
 
       if (p_more)
         /* store text for scrolling back */
-        store_sb_text(&sb_str, s, attr, &sb_col, TRUE);
+        store_sb_text(&sb_str, s, attr, &sb_col, true);
 
       inc_msg_scrolled();
       need_wait_return = TRUE;       /* may need wait_return in main() */
@@ -1706,16 +1707,18 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
 
     if (wrap && p_more && !recurse)
       /* store text for scrolling back */
-      store_sb_text(&sb_str, s, attr, &sb_col, TRUE);
+      store_sb_text(&sb_str, s, attr, &sb_col, true);
 
     if (*s == '\n') {               /* go to next line */
       msg_didout = FALSE;           /* remember that line is empty */
-      if (cmdmsg_rl)
-        msg_col = Columns - 1;
-      else
+      if (cmdmsg_rl) {
+        assert(Columns <= INT_MAX);
+        msg_col = (int)Columns - 1;
+      } else {
         msg_col = 0;
+      }
       if (++msg_row >= Rows)        /* safety check */
-        msg_row = Rows - 1;
+        msg_row = (int)Rows - 1;
     } else if (*s == '\r') {      /* go to column 0 */
       msg_col = 0;
     } else if (*s == '\b') {      /* go to previous char */
@@ -1766,7 +1769,7 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
   if (t_col > 0)
     t_puts(&t_col, t_s, s, attr);
   if (p_more && !recurse)
-    store_sb_text(&sb_str, s, attr, &sb_col, FALSE);
+    store_sb_text(&sb_str, s, attr, &sb_col, false);
 
   msg_check();
 }
@@ -1788,14 +1791,14 @@ static void inc_msg_scrolled(void)
   if (*get_vim_var_str(VV_SCROLLSTART) == NUL) {
     char_u      *p = sourcing_name;
     char_u      *tofree = NULL;
-    int len;
+    size_t len;
 
     /* v:scrollstart is empty, set it to the script/function name and line
      * number */
     if (p == NULL)
       p = (char_u *)_("Unknown");
     else {
-      len = (int)STRLEN(p) + 40;
+      len = STRLEN(p) + 40;
       tofree = xmalloc(len);
       vim_snprintf((char *)tofree, len, _("%s line %" PRId64),
           p, (int64_t)sourcing_lnum);
@@ -1821,7 +1824,7 @@ store_sb_text (
     char_u *s,                 /* just after string */
     int attr,
     int *sb_col,
-    int finish                     /* line ends */
+    bool finish                 // line ends
 )
 {
   msgchunk_T  *mp;
@@ -1832,11 +1835,11 @@ store_sb_text (
   }
 
   if (s > *sb_str) {
-    mp = xmalloc((sizeof(msgchunk_T) + (s - *sb_str)));
+    mp = xmalloc((sizeof(msgchunk_T) + (size_t)(s - *sb_str)));
     mp->sb_eol = finish;
     mp->sb_msg_col = *sb_col;
     mp->sb_attr = attr;
-    memcpy(mp->sb_text, *sb_str, s - *sb_str);
+    memcpy(mp->sb_text, *sb_str, (size_t)(s - *sb_str));
     mp->sb_text[s - *sb_str] = NUL;
 
     if (last_msgchunk == NULL) {
@@ -1849,7 +1852,7 @@ store_sb_text (
     }
     mp->sb_next = NULL;
   } else if (finish && last_msgchunk != NULL)
-    last_msgchunk->sb_eol = TRUE;
+    last_msgchunk->sb_eol = true;
 
   *sb_str = s;
   *sb_col = 0;
@@ -1914,7 +1917,7 @@ static msgchunk_T *msg_sb_start(msgchunk_T *mps)
 void msg_sb_eol(void)
 {
   if (last_msgchunk != NULL)
-    last_msgchunk->sb_eol = TRUE;
+    last_msgchunk->sb_eol = true;
 }
 
 /*
@@ -1993,10 +1996,12 @@ static void msg_puts_printf(char_u *str, int maxlen)
 
     /* primitive way to compute the current column */
     if (cmdmsg_rl) {
-      if (*s == '\r' || *s == '\n')
-        msg_col = Columns - 1;
-      else
+      if (*s == '\r' || *s == '\n') {
+        assert(Columns <= INT_MAX);
+        msg_col = (int)Columns - 1;
+      } else {
         --msg_col;
+      }
     } else {
       if (*s == '\r' || *s == '\n')
         msg_col = 0;
@@ -2022,7 +2027,7 @@ static int do_more_prompt(int typed_char)
   int oldState = State;
   int c;
   int retval = FALSE;
-  int toscroll;
+  long toscroll;
   msgchunk_T  *mp_last = NULL;
   msgchunk_T  *mp;
   int i;
@@ -2100,7 +2105,8 @@ static int do_more_prompt(int typed_char)
         /* Since got_int is set all typeahead will be flushed, but we
          * want to keep this ':', remember that in a special way. */
         typeahead_noflush(':');
-        cmdline_row = Rows - 1;                 /* put ':' on this line */
+        assert(Rows <= INT_MAX);
+        cmdline_row = (int)Rows - 1;            // put ':' on this line
         skip_redraw = TRUE;                     /* skip redraw once */
         need_wait_return = FALSE;               /* don't wait in main() */
       }
@@ -2199,10 +2205,13 @@ static int do_more_prompt(int typed_char)
   State = oldState;
   setmouse();
   if (quit_more) {
-    msg_row = Rows - 1;
+    assert(Rows <= INT_MAX);
+    msg_row = (int)Rows - 1;
     msg_col = 0;
-  } else if (cmdmsg_rl)
-    msg_col = Columns - 1;
+  } else if (cmdmsg_rl) {
+    assert(Columns <= INT_MAX);
+    msg_col = (int)Columns - 1;
+  }
 
   return retval;
 }
@@ -2295,7 +2304,8 @@ static void msg_screen_putchar(int c, int attr)
   screen_putchar(c, msg_row, msg_col, attr);
   if (cmdmsg_rl) {
     if (--msg_col == 0) {
-      msg_col = Columns;
+      assert(Columns <= INT_MAX);
+      msg_col = (int)Columns;
       ++msg_row;
     }
   } else {
@@ -2327,10 +2337,12 @@ void repeat_message(void)
 {
   if (State == ASKMORE) {
     msg_moremsg(TRUE);          /* display --more-- message again */
-    msg_row = Rows - 1;
+    assert(Rows <= INT_MAX);
+    msg_row = (int)Rows - 1;
   } else if (State == CONFIRM) {
     display_confirm_msg();      /* display ":confirm" message again */
-    msg_row = Rows - 1;
+    assert(Rows <= INT_MAX);
+    msg_row = (int)Rows - 1;
   } else if (State == EXTERNCMD) {
     ui_cursor_goto(msg_row, msg_col);     /* put cursor back */
   } else if (State == HITRETURN || State == SETWSIZE) {
@@ -2343,7 +2355,8 @@ void repeat_message(void)
       msg_clr_eos();
     }
     hit_return_msg();
-    msg_row = Rows - 1;
+    assert(Rows <= INT_MAX);
+    msg_row = (int)Rows - 1;
   }
 }
 
@@ -2596,8 +2609,9 @@ void msg_advance(int col)
     msg_col = col;              /* for redirection, may fill it up later */
     return;
   }
-  if (col >= Columns)           /* not enough room */
-    col = Columns - 1;
+  if (col >= Columns) {         // not enough room
+    col = (int)Columns - 1;
+  }
   if (cmdmsg_rl)
     while (msg_col > Columns - col)
       msg_putchar(' ');
@@ -2763,11 +2777,11 @@ static char_u * console_dialog_alloc(const char_u *message,
                                      char_u *buttons,
                                      bool has_hotkey[])
 {
-  int lenhotkey = HOTK_LEN;  // count first button
+  size_t lenhotkey = HOTK_LEN;  // count first button
   has_hotkey[0] = false;
 
   // Compute the size of memory to allocate.
-  int len = 0;
+  size_t len = 0;
   int idx = 0;
   char_u *r = buttons;
   while (*r) {
@@ -2789,11 +2803,11 @@ static char_u * console_dialog_alloc(const char_u *message,
     mb_ptr_adv(r);
   }
 
-  len += (int)(STRLEN(message)
-                + 2                          // for the NL's
-                + STRLEN(buttons)
-                + 3);                        // for the ": " and NUL
-  lenhotkey++;                               // for the NUL
+  len += (STRLEN(message)
+          + 2                          // for the NL's
+          + STRLEN(buttons)
+          + 3);                        // for the ": " and NUL
+  lenhotkey++;                         // for the NUL
 
   // If no hotkey is specified, first char is used.
   if (!has_hotkey[0]) {
@@ -3175,17 +3189,18 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
       // parse field width
       if (*p == '*') {
         p++;
-        int j = tvs ? tv_nr(tvs, &arg_idx) : va_arg(ap, int);
+        long j = tvs ? tv_nr(tvs, &arg_idx) : va_arg(ap, int);
         if (j >= 0)
-          min_field_width = j;
+          min_field_width = (size_t)j;
         else {
-          min_field_width = -j;
+          min_field_width = (size_t)(-j);
           justify_left = 1;
         }
       } else if (ascii_isdigit((int)(*p))) {
         // size_t could be wider than unsigned int; make sure we treat
         // argument like common implementations do
-        unsigned int uj = *p++ - '0';
+        assert(*p + 1 - '0' >= 0);
+        unsigned int uj = (unsigned)(*p++ - '0');
 
         while (ascii_isdigit((int)(*p)))
           uj = 10 * uj + (unsigned int)(*p++ - '0');
@@ -3197,10 +3212,10 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
         p++;
         precision_specified = 1;
         if (*p == '*') {
-          int j = tvs ? tv_nr(tvs, &arg_idx) : va_arg(ap, int);
+          long j = tvs ? tv_nr(tvs, &arg_idx) : va_arg(ap, int);
           p++;
           if (j >= 0)
-            precision = j;
+            precision = (size_t)j;
           else {
             precision_specified = 0;
             precision = 0;
@@ -3208,7 +3223,8 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
         } else if (ascii_isdigit((int)(*p))) {
           // size_t could be wider than unsigned int; make sure we
           // treat argument like common implementations do
-          unsigned int uj = *p++ - '0';
+          assert(*p + 1 - '0' >= 0);
+          unsigned int uj = (unsigned)(*p++ - '0');
 
           while (ascii_isdigit((int)(*p)))
             uj = 10 * uj + (unsigned int)(*p++ - '0');
@@ -3249,7 +3265,7 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
           break;
 
         case 'c': {
-          int j = tvs ? tv_nr(tvs, &arg_idx) : va_arg(ap, int);
+          long j = tvs ? tv_nr(tvs, &arg_idx) : va_arg(ap, int);
           // standard demands unsigned char
           uchar_arg = (unsigned char)j;
           str_arg = (char *)&uchar_arg;
@@ -3285,7 +3301,8 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
               char_u *p1 = (char_u *)str_arg;
               for (size_t i = 0; i < precision && *p1; i++)
                 p1 += mb_ptr2len(p1);
-              str_arg_l = precision = p1 - (char_u *)str_arg;
+              assert(p1 - (char_u *)str_arg >= 0);
+              str_arg_l = precision = (size_t)(p1 - (char_u *)str_arg);
             }
           }
           break;
@@ -3333,7 +3350,7 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
           case '\0':
           case 'h':
             // char and short arguments are passed as int
-            int_arg = tvs ? tv_nr(tvs, &arg_idx) : va_arg(ap, int);
+            int_arg = (int)(tvs ? tv_nr(tvs, &arg_idx) : va_arg(ap, int));
             if (int_arg > 0)
               arg_sign =  1;
             else if (int_arg < 0)
@@ -3429,29 +3446,36 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
           f[f_l++] = '\0';
 
           if (fmt_spec == 'p')
-            str_arg_l += sprintf(tmp + str_arg_l, f, ptr_arg);
+            str_arg_l += (size_t)sprintf(tmp + str_arg_l, f, ptr_arg);
           else if (fmt_spec == 'd') {
             // signed
             switch (length_modifier) {
             case '\0':
-            case 'h': str_arg_l += sprintf(tmp + str_arg_l, f, int_arg);
+            case 'h': str_arg_l += (size_t)sprintf(tmp + str_arg_l, f,
+                                                   int_arg);
                       break;
-            case 'l': str_arg_l += sprintf(tmp + str_arg_l, f, long_arg);
+            case 'l': str_arg_l += (size_t)sprintf(tmp + str_arg_l, f,
+                                                   long_arg);
                       break;
-            case '2': str_arg_l += sprintf(tmp + str_arg_l, f, long_long_arg);
+            case '2': str_arg_l += (size_t)sprintf(tmp + str_arg_l, f,
+                                                   long_long_arg);
                       break;
             }
           } else {
             // unsigned
             switch (length_modifier) {
             case '\0':
-            case 'h': str_arg_l += sprintf(tmp + str_arg_l, f, uint_arg);
+            case 'h': str_arg_l += (size_t)sprintf(tmp + str_arg_l, f,
+                                                   uint_arg);
                       break;
-            case 'l': str_arg_l += sprintf(tmp + str_arg_l, f, ulong_arg);
+            case 'l': str_arg_l += (size_t)sprintf(tmp + str_arg_l, f,
+                                                   ulong_arg);
                       break;
-            case '2': str_arg_l += sprintf(tmp + str_arg_l, f, ulong_long_arg);
+            case '2': str_arg_l += (size_t)sprintf(tmp + str_arg_l, f,
+                                                   ulong_long_arg);
                       break;
-            case 'z': str_arg_l += sprintf(tmp + str_arg_l, f, size_t_arg);
+            case 'z': str_arg_l += (size_t)sprintf(tmp + str_arg_l, f,
+                                                   size_t_arg);
                       break;
             }
           }
@@ -3490,10 +3514,11 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
         }
         // zero padding to specified minimal field width?
         if (!justify_left && zero_padding) {
-          int n = (int)(min_field_width - (str_arg_l
-                                           + number_of_zeros_to_pad));
-          if (n > 0)
-            number_of_zeros_to_pad += n;
+          int n = (int)min_field_width
+                  - (int)(str_arg_l + number_of_zeros_to_pad);
+          if (n > 0) {
+            number_of_zeros_to_pad += (size_t)n;
+          }
         }
         break;
       }
@@ -3540,7 +3565,7 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
           }
           format[l] = fmt_spec;
           format[l + 1] = NUL;
-          str_arg_l = sprintf(tmp, format, f);
+          str_arg_l = (size_t)sprintf(tmp, format, f);
 
           if (remove_trailing_zeroes) {
             int i;

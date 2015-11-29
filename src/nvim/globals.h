@@ -299,7 +299,7 @@ EXTERN int didset_vimruntime INIT(= FALSE);        /* idem for $VIMRUNTIME */
  * Lines left before a "more" message.	Ex mode needs to be able to reset this
  * after you type something.
  */
-EXTERN int lines_left INIT(= -1);           /* lines left for listing */
+EXTERN long lines_left INIT(= -1);           /* lines left for listing */
 EXTERN int msg_no_more INIT(= FALSE);       /* don't use more prompt, truncate
                                                messages */
 

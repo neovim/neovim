@@ -84,7 +84,6 @@ set(CONV_SOURCES
   getchar.c
   mbyte.c
   memline.c
-  message.c
   misc1.c
   ops.c
   path.c
