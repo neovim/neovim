@@ -337,7 +337,7 @@ int main(int argc, char **argv)
     // Do this before syntax/syntax.vim (which calls `:filetype on`).
     force_enable_filetype();
     // Enable syntax highlighting.
-    do_source((char_u *)SYNTAX_FILE, false, DOSO_NONE);
+    syn_cmd("syntax");  // sources syntax/syntax.vim
   }
 
   /*
