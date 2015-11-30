@@ -3283,8 +3283,6 @@ static void syn_cmd_off(exarg_T *eap, int syncing)
 static void syn_cmd_onoff(exarg_T *eap, char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  char buf[100];
-
   eap->nextcmd = check_nextcmd(eap->arg);
   if (!eap->skip) {
     syn_cmd(name);
