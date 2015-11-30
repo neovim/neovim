@@ -39,32 +39,6 @@
 # define MAXPATHL 1024
 #endif
 
-#ifndef FILETYPE_FILE
-# define FILETYPE_FILE  "filetype.vim"
-#endif
-
-#ifndef FTPLUGIN_FILE
-# define FTPLUGIN_FILE  "ftplugin.vim"
-#endif
-
-#ifndef INDENT_FILE
-# define INDENT_FILE    "indent.vim"
-#endif
-
-#ifndef FTOFF_FILE
-# define FTOFF_FILE     "ftoff.vim"
-#endif
-
-#ifndef FTPLUGOF_FILE
-# define FTPLUGOF_FILE  "ftplugof.vim"
-#endif
-
-#ifndef INDOFF_FILE
-# define INDOFF_FILE    "indoff.vim"
-#endif
-
-#define DFLT_ERRORFILE          "errors.err"
-
 // Command-processing buffer. Use large buffers for all platforms.
 #define CMDBUFFSIZE 1024
 

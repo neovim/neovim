@@ -6,17 +6,6 @@
 #define TEMP_DIR_NAMES {"$TMP", "$TEMP", "$USERPROFILE", ""}
 #define TEMP_FILE_PATH_MAXLEN _MAX_PATH
 
-// Defines needed to fix the build on Windows:
-// - DFLT_DIR
-// - DFLT_BDIR
-// - DFLT_VDIR
-// - EXRC_FILE
-// - VIMRC_FILE
-// - SYNTAX_FNAME
-// - DFLT_HELPFILE
-// - SYS_VIMRC_FILE
-// - SPECIAL_WILDCHAR
-
 #define USE_CRNL
 
 #ifdef _MSC_VER
