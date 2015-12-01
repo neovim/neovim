@@ -1561,8 +1561,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	1		Each block of concealed text is replaced with one
 			character.  If the syntax item does not have a custom
 			replacement character defined (see |:syn-cchar|) the
-			character defined in 'listchars' is used (default is a
-			space).
+			character defined in 'listchars' is used.
 			It is highlighted with the "Conceal" highlight group.
 	2		Concealed text is completely hidden unless it has a
 			custom replacement character defined (see
@@ -4076,7 +4075,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			visible in the first column.
 							*lcs-conceal*
 	  conceal:c	Character to show in place of concealed text, when
-			'conceallevel' is set to 1.
+			'conceallevel' is set to 1.  A space when omitted.
 							*lcs-nbsp*
 	  nbsp:c	Character to show for a non-breakable space (character
 			0xA0, 160).  Left blank when omitted.

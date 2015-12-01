@@ -1042,7 +1042,7 @@ EXTERN int lcs_space INIT(= NUL);
 EXTERN int lcs_tab1 INIT(= NUL);
 EXTERN int lcs_tab2 INIT(= NUL);
 EXTERN int lcs_trail INIT(= NUL);
-EXTERN int lcs_conceal INIT(= '-');
+EXTERN int lcs_conceal INIT(= ' ');
 
 /* Characters from 'fillchars' option */
 EXTERN int fill_stl INIT(= ' ');
