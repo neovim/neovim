@@ -2114,6 +2114,11 @@ describe('In plugin/shada.vim', function()
     os.remove(fname_tmp)
   end)
 
+  teardown(function()
+    os.remove(fname)
+    os.remove(fname_tmp)
+  end)
+
   local shada_eq = function(expected, fname_)
     local fd = io.open(fname_)
     local mpack_result = fd:read('*a')
