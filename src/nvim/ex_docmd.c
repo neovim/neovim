@@ -3446,6 +3446,7 @@ static linenr_T get_address(char_u **ptr,
       }
       if (addr_type != ADDR_LINES) {
         EMSG(_(e_invaddr));
+        cmd = NULL;
         goto error;
       }
       if (skip)
@@ -3473,6 +3474,7 @@ static linenr_T get_address(char_u **ptr,
       c = *cmd++;
       if (addr_type != ADDR_LINES) {
         EMSG(_(e_invaddr));
+        cmd = NULL;
         goto error;
       }
       if (skip) {                       /* skip "/pat/" */
@@ -3516,6 +3518,7 @@ static linenr_T get_address(char_u **ptr,
       ++cmd;
       if (addr_type != ADDR_LINES) {
         EMSG(_(e_invaddr));
+        cmd = NULL;
         goto error;
       }
       if (*cmd == '&')
@@ -3587,7 +3590,8 @@ static linenr_T get_address(char_u **ptr,
       else
         n = getdigits(&cmd);
       if (addr_type == ADDR_LOADED_BUFFERS || addr_type == ADDR_BUFFERS)
-        lnum = compute_buffer_local_count(addr_type, lnum, (i == '-') ? -1 * n : n);
+        lnum = compute_buffer_local_count(
+            addr_type, lnum, (i == '-') ? -1 * n : n);
       else if (i == '-')
         lnum -= n;
       else
@@ -3655,7 +3659,8 @@ static char_u *invalid_range(exarg_T *eap)
         }
         break;
       case ADDR_ARGUMENTS:
-        if (eap->line2 > ARGCOUNT + (!ARGCOUNT)) {  // add 1 if ARGCOUNT is 0
+        // add 1 if ARGCOUNT is 0
+        if (eap->line2 > ARGCOUNT + (!ARGCOUNT)) {
           return (char_u *)_(e_invrange);
         }
         break;
