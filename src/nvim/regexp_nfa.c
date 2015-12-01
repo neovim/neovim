@@ -1897,9 +1897,10 @@ static int nfa_regpiece(void)
       return OK;
     }
 
-    // The engine is very inefficient (uses too many states) when the maximum is
-    // much larger than the minimum. Bail out if we can use the other engine.
-    if ((nfa_re_flags & RE_AUTO) && maxval > minval + 200) {
+    // The engine is very inefficient (uses too many states) when the maximum
+    // is much larger than the minimum and when the maximum is large. Bail out
+    // if we can use the other engine.
+    if ((nfa_re_flags & RE_AUTO) && (maxval > minval + 200 || maxval > 500)) {
       return FAIL;
     }
 
