@@ -94,7 +94,7 @@ func! HtmlIndent_CheckUserSettings()
     let autotags = g:html_indent_autotags
   endif
   let b:hi_removed_tags = {}
-  if autotags
+  if autotags != ''
     call s:RemoveITags(b:hi_removed_tags, split(autotags, ","))
   endif
 
