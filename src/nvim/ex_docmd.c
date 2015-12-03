@@ -1531,9 +1531,12 @@ static char_u * do_one_cmd(char_u **cmdlinep,
         lnum = CURRENT_TAB_NR;
         ea.line2 = lnum;
         break;
+      case ADDR_QUICKFIX:
+        ea.line2 = qf_get_cur_valid_idx(&ea);
+        break;
     }
     ea.cmd = skipwhite(ea.cmd);
-    lnum = get_address(&ea.cmd, ea.addr_type, ea.skip, ea.addr_count == 0);
+    lnum = get_address(&ea, &ea.cmd, ea.addr_type, ea.skip, ea.addr_count == 0);
     if (ea.cmd == NULL)                     /* error detected */
       goto doend;
     if (lnum == MAXLNUM) {
@@ -1580,6 +1583,13 @@ static char_u * do_one_cmd(char_u **cmdlinep,
             } else {
               ea.line1 = 1;
               ea.line2 = ARGCOUNT;
+            }
+            break;
+          case ADDR_QUICKFIX:
+            ea.line1 = 1;
+            ea.line2 = qf_get_size(&ea);
+            if (ea.line2 == 0) {
+              ea.line2 = 1;
             }
             break;
         }
@@ -1960,6 +1970,12 @@ static char_u * do_one_cmd(char_u **cmdlinep,
           ea.line1 = ea.line2 = 0;
         } else {
           ea.line2 = ARGCOUNT;
+        }
+        break;
+      case ADDR_QUICKFIX:
+        ea.line2 = qf_get_size(&ea);
+        if (ea.line2 == 0) {
+          ea.line2 = 1;
         }
         break;
     }
@@ -2945,6 +2961,8 @@ set_one_cmd_context (
   case CMD_botright:
   case CMD_browse:
   case CMD_bufdo:
+  case CMD_cdo:
+  case CMD_cfdo:
   case CMD_confirm:
   case CMD_debug:
   case CMD_folddoclosed:
@@ -2954,7 +2972,9 @@ set_one_cmd_context (
   case CMD_keepjumps:
   case CMD_keepmarks:
   case CMD_keeppatterns:
+  case CMD_ldo:
   case CMD_leftabove:
+  case CMD_lfdo:
   case CMD_lockmarks:
   case CMD_noautocmd:
   case CMD_noswapfile:
@@ -3367,7 +3387,8 @@ skip_range (
  *
  * Return MAXLNUM when no Ex address was found.
  */
-static linenr_T get_address(char_u **ptr,
+static linenr_T get_address(exarg_T *eap,
+                            char_u **ptr,
                             int addr_type,  // flag: one of ADDR_LINES, ...
                             int skip,  // only skip the address, don't use it
                             int to_other_file  // flag: may jump to other file
@@ -3405,6 +3426,9 @@ static linenr_T get_address(char_u **ptr,
         case ADDR_TABS:
           lnum = CURRENT_TAB_NR;
           break;
+        case ADDR_QUICKFIX:
+          lnum = qf_get_cur_valid_idx(eap);
+          break;
       }
       break;
 
@@ -3435,6 +3459,12 @@ static linenr_T get_address(char_u **ptr,
           break;
         case ADDR_TABS:
           lnum = LAST_TAB_NR;
+          break;
+        case ADDR_QUICKFIX:
+          lnum = qf_get_size(eap);
+          if (lnum == 0) {
+            lnum = 1;
+          }
           break;
       }
       break;
@@ -3578,6 +3608,9 @@ static linenr_T get_address(char_u **ptr,
           case ADDR_TABS:
             lnum = CURRENT_TAB_NR;
             break;
+          case ADDR_QUICKFIX:
+            lnum = qf_get_cur_valid_idx(eap);
+            break;
         }
       }
 
@@ -3699,6 +3732,12 @@ static char_u *invalid_range(exarg_T *eap)
         break;
       case ADDR_TABS:
         if (eap->line2 > LAST_TAB_NR) {
+          return (char_u *)_(e_invrange);
+        }
+        break;
+      case ADDR_QUICKFIX:
+        assert(eap->line2 >= 0);
+        if (eap->line2 != 1 && (size_t)eap->line2 > qf_get_size(eap)) {
           return (char_u *)_(e_invrange);
         }
         break;
@@ -4589,6 +4628,7 @@ static struct {
   {ADDR_TABS, "tabs"},
   {ADDR_BUFFERS, "buffers"},
   {ADDR_WINDOWS, "windows"},
+  {ADDR_QUICKFIX, "quickfix"},
   {-1, NULL}
 };
 
@@ -7013,9 +7053,7 @@ static void ex_put(exarg_T *eap)
  */
 static void ex_copymove(exarg_T *eap)
 {
-  long n;
-
-  n = get_address(&eap->arg, eap->addr_type, FALSE, FALSE);
+  long n = get_address(eap, &eap->arg, eap->addr_type, false, false);
   if (eap->arg == NULL) {           /* error detected */
     eap->nextcmd = NULL;
     return;

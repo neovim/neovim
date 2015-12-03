@@ -1128,6 +1128,8 @@ tag	      command	      action ~
 |:cc|		:cc		go to specific error
 |:cclose|	:ccl[ose]	close quickfix window
 |:cd|		:cd		change directory
+|:cdo|		:cdo		execute command in each valid error list entry
+|:cfdo|		:cfdo		execute command in each file in error list
 |:center|	:ce[nter]	format lines at the center
 |:cexpr|	:cex[pr]	read errors from expr and jump to first
 |:cfile|	:cf[ile]	read file with error messages and jump to first
@@ -1285,6 +1287,8 @@ tag	      command	      action ~
 |:lchdir|	:lch[dir]	change directory locally
 |:lclose|	:lcl[ose]	close location window
 |:lcscope|	:lcs[cope]      like ":cscope" but uses location list
+|:ldo|		:ld[o]		execute command in valid location list entries
+|:lfdo|		:lfd[o]		execute command in each file in location list
 |:left|		:le[ft]		left align lines
 |:leftabove|	:lefta[bove]	make split window appear left or above
 |:let|		:let		assign a value to a variable or option

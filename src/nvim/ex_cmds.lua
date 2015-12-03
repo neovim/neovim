@@ -34,6 +34,7 @@ local ADDR_ARGUMENTS        =  2
 local ADDR_LOADED_BUFFERS   =  3
 local ADDR_BUFFERS          =  4
 local ADDR_TABS             =  5
+local ADDR_QUICKFIX         =  6
 
 -- The following table is described in ex_cmds_defs.h file.
 return {
@@ -374,6 +375,12 @@ return {
     func='ex_cd',
   },
   {
+    command='cdo',
+    flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, RANGE, NOTADR, DFLALL),
+    addr_type=ADDR_QUICKFIX,
+    func='ex_listdo',
+  },
+  {
     command='center',
     flags=bit.bor(TRLBAR, RANGE, WHOLEFOLD, EXTRA, CMDWIN, MODIFY),
     addr_type=ADDR_LINES,
@@ -390,6 +397,14 @@ return {
     flags=bit.bor(TRLBAR, FILE1, BANG),
     addr_type=ADDR_LINES,
     func='ex_cfile',
+  },
+  -- Even though 'cfdo' is alphabetically lower than 'cfile', it is after
+  -- 'cfile' in this cmd list to support the existing ":cf" abbreviation.
+  {
+    command='cfdo',
+    flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, RANGE, NOTADR, DFLALL),
+    addr_type=ADDR_QUICKFIX,
+    func='ex_listdo',
   },
   {
     command='cfirst',
@@ -1286,6 +1301,12 @@ return {
     func='do_cscope',
   },
   {
+    command='ldo',
+    flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, RANGE, NOTADR, DFLALL),
+    addr_type=ADDR_QUICKFIX,
+    func='ex_listdo',
+  },
+  {
     command='left',
     flags=bit.bor(TRLBAR, RANGE, WHOLEFOLD, EXTRA, CMDWIN, MODIFY),
     addr_type=ADDR_LINES,
@@ -1314,6 +1335,14 @@ return {
     flags=bit.bor(TRLBAR, FILE1, BANG),
     addr_type=ADDR_LINES,
     func='ex_cfile',
+  },
+  -- Even though 'lfdo' is alphabetically lower than 'lfile', it is after
+  -- 'lfile' in this cmd list to support the existing ":lf" abbreviation.
+  {
+    command='lfdo',
+    flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, RANGE, NOTADR, DFLALL),
+    addr_type=ADDR_QUICKFIX,
+    func='ex_listdo',
   },
   {
     command='lfirst',
