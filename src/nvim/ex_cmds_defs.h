@@ -72,6 +72,7 @@
 #define ADDR_LOADED_BUFFERS     3
 #define ADDR_BUFFERS            4
 #define ADDR_TABS               5
+#define ADDR_QUICKFIX           6
 
 typedef struct exarg exarg_T;
 

@@ -795,7 +795,8 @@ USING THE ARGUMENT LIST
 			autocommand event is disabled by adding it to
 			'eventignore'.  This considerably speeds up editing
 			each file.
-			Also see |:windo|, |:tabdo| and |:bufdo|.
+			Also see |:windo|, |:tabdo|, |:bufdo|, |:cdo|, |:ldo|,
+			|:cfdo| and |:lfdo|.
 
 Example: >
 	:args *.c
