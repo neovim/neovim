@@ -1,33 +1,33 @@
-# Spanish translation for Vim
-#
-# Translation project homepage:
-# vim-doc-es http://www.assembla.com/wiki/show/vim-doc-es
-#
+# Spanish translation for Neovim
+
+# Copyright (C) 2014 Neovim contributors. All rights reserved.
+# This file is distributed under the same license as the PACKAGE package.
+
 # Last translators:
-# Pedro A. López-Valencia <vorbote@users.sourceforge.net>, 2003-06,2009
+# Pedro A. López-Valencia <vorbote@users.sourceforge.net> 2003,2009
 # Omar Campagne Polaino <ocampagne@gmail.com> 2009
-#
+# Kevin Hernandez <kernan373@gmail.com> 2014
+
 msgid ""
 msgstr ""
-"Project-Id-Version: Vim 7.2.284 (rev 1692)\n"
+"Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-05-26 14:21+0200\n"
-"PO-Revision-Date: 2009-12-04 18:52+0100\n"
-"Last-Translator: Omar Campagne <ocampagne@gmail.com>\n"
-"Language-Team: vim-doc-es http://www.assembla.com/wiki/show/vim-doc-es\n"
-"Language: \n"
+"PO-Revision-Date: 2014-06-27 13:33+0200\n"
+"Last-Translator: XXXXXXXX XXXXXXXX <kernan373@gmail.com>\n"
+"Language-Team: \n"
+"Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: octect-stream\n"
 
 #: ../api/private/helpers.c:201
-#, fuzzy
 msgid "Unable to get option value"
-msgstr "Basura después de la opción"
+msgstr "Incapaz de obtener valor de esa opción"
 
 #: ../api/private/helpers.c:204
 msgid "internal error: unknown option type"
-msgstr ""
+msgstr "error interno: tipo de opción desconocida"
 
 #: ../buffer.c:92
 msgid "[Location List]"
@@ -38,90 +38,89 @@ msgid "[Quickfix List]"
 msgstr "[Lista de cambios rápidos]"
 
 #: ../buffer.c:94
-#, fuzzy
 msgid "E855: Autocommands caused command to abort"
-msgstr "E812: *Filtro* Las auto-órdenes no deben cambiar el búfer en uso"
+msgstr "E855: Auto-órdenes causaron la orden a abortar"
 
 #: ../buffer.c:135
 msgid "E82: Cannot allocate any buffer, exiting..."
-msgstr "E82: No se pudo asignar memoria para ningún búfer, saliendo..."
+msgstr "E82: No se pudo asignar memoria para ningún buffer, saliendo..."
 
 #: ../buffer.c:138
 msgid "E83: Cannot allocate buffer, using other one..."
-msgstr "E83: No se pudo asignar memoria para el búfer, usando otro..."
+msgstr "E83: No se pudo asignar memoria para el buffer, usando otro..."
 
 #: ../buffer.c:763
 msgid "E515: No buffers were unloaded"
-msgstr "E515: No se descargó ningún búfer"
+msgstr "E515: No se descargó ningún buffer"
 
 #: ../buffer.c:765
 msgid "E516: No buffers were deleted"
-msgstr "E516: No se borró ningún búfer"
+msgstr "E516: No se borró ningún buffer"
 
 #: ../buffer.c:767
 msgid "E517: No buffers were wiped out"
-msgstr "E517: No se eliminó ningún búfer"
+msgstr "E517: No se eliminó ningún buffer"
 
 #: ../buffer.c:772
 msgid "1 buffer unloaded"
-msgstr "Se descargó un (1) búfer"
+msgstr "Se descargó un (1) buffer"
 
 #: ../buffer.c:774
 #, c-format
 msgid "%d buffers unloaded"
-msgstr "Se descargaron %d búfers"
+msgstr "Se descargaron %d buffers"
 
 #: ../buffer.c:777
 msgid "1 buffer deleted"
-msgstr "Se suprimió un (1) búfer"
+msgstr "Se suprimió un (1) buffer"
 
 #: ../buffer.c:779
 #, c-format
 msgid "%d buffers deleted"
-msgstr "Se suprimieron %d búfers"
+msgstr "Se suprimieron %d buffers"
 
 #: ../buffer.c:782
 msgid "1 buffer wiped out"
-msgstr "Se eliminó un (1) búfer"
+msgstr "Se eliminó un (1) buffer"
 
 #: ../buffer.c:784
 #, c-format
 msgid "%d buffers wiped out"
-msgstr "Se eliminaron %d búfers"
+msgstr "Se eliminaron %d buffers"
 
 #: ../buffer.c:806
 msgid "E90: Cannot unload last buffer"
-msgstr "E90: No se pudo descargar el último búfer"
+msgstr "E90: No se pudo descargar el último buffer"
 
 #: ../buffer.c:874
 msgid "E84: No modified buffer found"
-msgstr "E84: No se encontró ningún búfer modificado"
+msgstr "E84: No se encontró ningún buffer modificado"
 
 # back where we started, didn't find anything.
 #. back where we started, didn't find anything.
 #: ../buffer.c:903
 msgid "E85: There is no listed buffer"
-msgstr "E85: No hay búfers en la lista"
+msgstr "E85: No hay buffers en la lista"
 
 #: ../buffer.c:913
 #, c-format
 msgid "E86: Buffer %<PRId64> does not exist"
-msgstr "E86: El búfer %<PRId64> no existe"
+msgstr "E86: El buffer %<PRId64> no existe"
 
 #: ../buffer.c:915
 msgid "E87: Cannot go beyond last buffer"
-msgstr "E87: No se pudo ir más allá del último búfer"
+msgstr "E87: No se pudo ir más allá del último buffer"
 
 #: ../buffer.c:917
 msgid "E88: Cannot go before first buffer"
-msgstr "E88: No se pudo regresar antes del primer búfer"
+msgstr "E88: No se pudo regresar antes del primer buffer"
 
 #: ../buffer.c:945
 #, c-format
 msgid ""
 "E89: No write since last change for buffer %<PRId64> (add ! to override)"
 msgstr ""
-"E89: No se guardó el archivo desde el último cambio del búfer %<PRId64> "
+"E89: No se guardó el archivo desde el último cambio del buffer %<PRId64> "
 "(añada \"!\" para forzar)"
 
 #. wrap around (may cause duplicates)
@@ -132,7 +131,7 @@ msgstr "W14: Advertencia: La lista de nombres de archivos es muy larga"
 #: ../buffer.c:1555 ../quickfix.c:3361
 #, c-format
 msgid "E92: Buffer %<PRId64> not found"
-msgstr "E92: No se encontró el búfer %<PRId64>"
+msgstr "E92: No se encontró el buffer %<PRId64>"
 
 #: ../buffer.c:1798
 #, c-format
@@ -142,7 +141,7 @@ msgstr "E93: Hay más de una coincidencia con %s"
 #: ../buffer.c:1800
 #, c-format
 msgid "E94: No matching buffer for %s"
-msgstr "E94: No hay un búfer que coincida con %s"
+msgstr "E94: No hay un buffer que coincida con %s"
 
 #: ../buffer.c:2161
 #, c-format
@@ -151,7 +150,7 @@ msgstr "línea %<PRId64>"
 
 #: ../buffer.c:2233
 msgid "E95: Buffer with this name already exists"
-msgstr "E95: Ya existe un búfer con este nombre"
+msgstr "E95: Ya existe un buffer con este nombre"
 
 #: ../buffer.c:2498
 msgid " [Modified]"
@@ -228,7 +227,7 @@ msgid ""
 "# Buffer list:\n"
 msgstr ""
 "\n"
-"# Lista de búfers:\n"
+"# Lista de buffers:\n"
 
 #: ../buffer.c:4289
 msgid "[Scratch]"
@@ -271,7 +270,7 @@ msgstr "E549: Porcentaje ilegal"
 #: ../diff.c:146
 #, c-format
 msgid "E96: Can not diff more than %<PRId64> buffers"
-msgstr "E96: No se puede usar \"diff\" con más de %<PRId64> búfers"
+msgstr "E96: No se puede usar \"diff\" con más de %<PRId64> buffers"
 
 #: ../diff.c:753
 msgid "E810: Cannot read or write temp files"
@@ -291,33 +290,33 @@ msgstr "E98: No se pudo leer la salida de \"diff\""
 
 #: ../diff.c:2081
 msgid "E99: Current buffer is not in diff mode"
-msgstr "E99: El búfer actual no está en modo de diferencias"
+msgstr "E99: El buffer actual no está en modo de diferencias"
 
 #: ../diff.c:2100
 msgid "E793: No other buffer in diff mode is modifiable"
-msgstr "E793: Ningún otro búfer está en modo de diferencias"
+msgstr "E793: Ningún otro buffer está en modo de diferencias"
 
 #: ../diff.c:2102
 msgid "E100: No other buffer in diff mode"
-msgstr "E100: Ningún otro búfer está en modo de diferencias"
+msgstr "E100: Ningún otro buffer está en modo de diferencias"
 
 #: ../diff.c:2112
 msgid "E101: More than two buffers in diff mode, don't know which one to use"
-msgstr "E101: Más de dos búfers en modo de diferencias, no se cual usar"
+msgstr "E101: Más de dos buffers en modo de diferencias, no se cual usar"
 
 #: ../diff.c:2141
 #, c-format
 msgid "E102: Can't find buffer \"%s\""
-msgstr "E102: No se pudo encontrar el búfer %s"
+msgstr "E102: No se pudo encontrar el buffer %s"
 
 #: ../diff.c:2152
 #, c-format
 msgid "E103: Buffer \"%s\" is not in diff mode"
-msgstr "E103: El búfer \"%s\" no está en modo de diferencias"
+msgstr "E103: El buffer \"%s\" no está en modo de diferencias"
 
 #: ../diff.c:2193
 msgid "E787: Buffer changed unexpectedly"
-msgstr "E787: El búfer cambió inesperadamente"
+msgstr "E787: El buffer cambió inesperadamente"
 
 #: ../digraph.c:1598
 msgid "E104: Escape not allowed in digraph"
@@ -400,13 +399,12 @@ msgid "Hit end of paragraph"
 msgstr "Se llegó al final del párrafo"
 
 #: ../edit.c:101
-#, fuzzy
 msgid "E839: Completion function changed window"
-msgstr "E813: No se puede cerrar la ventana de autocmd"
+msgstr "E839: Función de completado cambió la ventana"
 
 #: ../edit.c:102
 msgid "E840: Completion function deleted text"
-msgstr ""
+msgstr "E840: Función de completado elimino texto."
 
 #: ../edit.c:1847
 msgid "'dictionary' option is empty"
@@ -852,9 +850,8 @@ msgid "E702: Sort compare function failed"
 msgstr "E702: Fallo al ordenar funciones comparadas"
 
 #: ../eval.c:13806
-#, fuzzy
 msgid "E882: Uniq compare function failed"
-msgstr "E702: Fallo al ordenar funciones comparadas"
+msgstr "E882: Fallo la función de comparación Uniq"
 
 #: ../eval.c:14085
 msgid "(Invalid)"
@@ -943,9 +940,8 @@ msgid "E124: Missing '(': %s"
 msgstr "E124: Falta un \"(\": %s"
 
 #: ../eval.c:17293
-#, fuzzy
 msgid "E862: Cannot use g: here"
-msgstr "E284: No se pudo fijar los valores IC"
+msgstr "E862: No se pudo usar \"g:\" aqui"
 
 #: ../eval.c:17312
 #, c-format
@@ -953,9 +949,9 @@ msgid "E125: Illegal argument: %s"
 msgstr "E125: Argumento ilegal: %s"
 
 #: ../eval.c:17323
-#, fuzzy, c-format
+#, c-format
 msgid "E853: Duplicate argument name: %s"
-msgstr "E125: Argumento ilegal: %s"
+msgstr "E853: Nombre argumento duplicado: %s"
 
 #: ../eval.c:17416
 msgid "E126: Missing :endfunction"
@@ -981,18 +977,17 @@ msgid "E129: Function name required"
 msgstr "E129: Se requiere el nombre de la función"
 
 #: ../eval.c:17824
-#, fuzzy, c-format
+#, c-format
 msgid "E128: Function name must start with a capital or \"s:\": %s"
 msgstr ""
 "E128: El nombre de una función debe empezar con mayúscula o contener el "
-"signo de dos puntos: %s"
+"signo de dos puntos \"s:\": %s"
 
 #: ../eval.c:17833
-#, fuzzy, c-format
+#, c-format
 msgid "E884: Function name cannot contain a colon: %s"
 msgstr ""
-"E128: El nombre de una función debe empezar con mayúscula o contener el "
-"signo de dos puntos: %s"
+"E128: Nombre de función no puede contener signo de dos puntos: %s"
 
 #: ../eval.c:18336
 #, c-format
@@ -1090,7 +1085,7 @@ msgstr "%<PRId64> líneas filtradas"
 
 #: ../ex_cmds.c:1194
 msgid "E135: *Filter* Autocommands must not change current buffer"
-msgstr "E135: *Filtro* Las auto-órdenes no deben cambiar el búfer en uso"
+msgstr "E135: *Filtro* Las auto-órdenes no deben cambiar el buffer en uso"
 
 #: ../ex_cmds.c:1244
 msgid "[No write since last change]\n"
@@ -1171,7 +1166,7 @@ msgstr "¿Escribir un archivo parcial?"
 
 #: ../ex_cmds.c:2166
 msgid "E140: Use ! to write partial buffer"
-msgstr "E140: Use \"!\" para escribir un búfer parcial"
+msgstr "E140: Use \"!\" para escribir un buffer parcial"
 
 #: ../ex_cmds.c:2281
 #, c-format
@@ -1192,7 +1187,7 @@ msgstr ""
 #: ../ex_cmds.c:2381
 #, c-format
 msgid "E141: No file name for buffer %<PRId64>"
-msgstr "E141: No existe un nombre de archivo para el búfer %<PRId64>"
+msgstr "E141: No existe un nombre de archivo para el buffer %<PRId64>"
 
 #: ../ex_cmds.c:2412
 msgid "E142: File not written: Writing is disabled by 'write' option"
@@ -1228,7 +1223,7 @@ msgstr "E505: \"%s\" es de solo lectura (añada ! para sobreescribir)"
 #: ../ex_cmds.c:3120
 #, c-format
 msgid "E143: Autocommands unexpectedly deleted new buffer %s"
-msgstr "E143: Las auto-órdenes han eliminado al nuevo búfer %s"
+msgstr "E143: Las auto-órdenes han eliminado al nuevo buffer %s"
 
 #: ../ex_cmds.c:3313
 msgid "E144: non-numeric argument to :z"
@@ -1292,9 +1287,9 @@ msgid "Pattern found in every line: %s"
 msgstr "Patrón encontrado en cada línea: %s"
 
 #: ../ex_cmds.c:4510
-#, fuzzy, c-format
+#, c-format
 msgid "Pattern not found: %s"
-msgstr "No se encontró el patrón de búsqueda"
+msgstr "No se encontró el patrón de búsqueda: %s"
 
 #: ../ex_cmds.c:4587
 msgid ""
@@ -1381,7 +1376,7 @@ msgstr "E159: Falta el número del signo"
 #: ../ex_cmds.c:5971
 #, c-format
 msgid "E158: Invalid buffer name: %s"
-msgstr "E158: El nombre del búfer no es válido: %s"
+msgstr "E158: El nombre del buffer no es válido: %s"
 
 #: ../ex_cmds.c:6008
 #, c-format
@@ -1430,9 +1425,8 @@ msgid "%3d  %s %s  line %<PRId64>"
 msgstr "%3d  %s %s  línea %<PRId64>"
 
 #: ../ex_cmds2.c:942
-#, fuzzy
 msgid "E750: First use \":profile start {fname}\""
-msgstr "E750: Primero use \":profile start <nombre_de_archivo>\""
+msgstr "E750: Primero use \":profile start [nombre_de_archivo]\""
 
 #: ../ex_cmds2.c:1269
 #, c-format
@@ -1446,12 +1440,12 @@ msgstr "Sin título"
 #: ../ex_cmds2.c:1421
 #, c-format
 msgid "E162: No write since last change for buffer \"%s\""
-msgstr "E162: No se ha grabado nada desde el último cambio en el búfer \"%s\""
+msgstr "E162: No se ha grabado nada desde el último cambio en el buffer \"%s\""
 
 #: ../ex_cmds2.c:1480
 msgid "Warning: Entered other buffer unexpectedly (check autocommands)"
 msgstr ""
-"Advertencia: se ha entrado en otro búfer de forma inesperada (verifique las "
+"Advertencia: se ha entrado en otro buffer de forma inesperada (verifique las "
 "auto-órdenes)"
 
 #: ../ex_cmds2.c:1826
@@ -1688,9 +1682,9 @@ msgstr ""
 "E183: Las órdenes definidas por el usuario deben comenzar con mayúscula"
 
 #: ../ex_docmd.c:4696
-#, fuzzy
 msgid "E841: Reserved name, cannot be used for user defined command"
-msgstr "E464: Uso ambiguo de una orden definida por el usuario"
+msgstr "E841: Nombre reservado, no se puede usar como orden definida por "
+"el usuario"
 
 #: ../ex_docmd.c:4751
 #, c-format
@@ -1715,9 +1709,9 @@ msgstr ""
 "de función"
 
 #: ../ex_docmd.c:5257
-#, fuzzy, c-format
+#, c-format
 msgid "E185: Cannot find color scheme '%s'"
-msgstr "E185: No se pudo encontrar el esquema de colores %s"
+msgstr "E185: No pudo encontrar el esquema de colores %s"
 
 #: ../ex_docmd.c:5263
 msgid "Greetings, Vim user!"
@@ -1743,7 +1737,7 @@ msgstr "No hay archivo de intercambio"
 #: ../ex_docmd.c:6478
 msgid "E747: Cannot change directory, buffer is modified (add ! to override)"
 msgstr ""
-"E747: No se pudo cambiar de directorio, el búfer fue modificado (añada ! "
+"E747: No se pudo cambiar de directorio, el buffer fue modificado (añada ! "
 "para forzar la orden)"
 
 #: ../ex_docmd.c:6485
@@ -1807,12 +1801,12 @@ msgstr ""
 
 #: ../ex_docmd.c:7850
 msgid "E496: no autocommand buffer number to substitute for \"<abuf>\""
-msgstr "E496: No existe un búfer de auto-órdenes para sustituir por \"<abuf>\""
+msgstr "E496: No existe un buffer de auto-órdenes para sustituir por \"<abuf>\""
 
 #: ../ex_docmd.c:7861
 msgid "E497: no autocommand match name to substitute for \"<amatch>\""
 msgstr ""
-"E497: Ningún nombre de auto-orden concuerda para sustituir \"<amatch>\""
+"E497: Ningún nombre de auto-comandos concuerda para sustituir \"<amatch>\""
 
 #: ../ex_docmd.c:7870
 msgid "E498: no :source file name to substitute for \"<sfile>\""
@@ -1820,17 +1814,14 @@ msgstr ""
 "E498: No hay un nombre de archivo \":source\" que sustituya a \"<sfile>\""
 
 #: ../ex_docmd.c:7876
-#, fuzzy
 msgid "E842: no line number to use for \"<slnum>\""
-msgstr ""
-"E498: No hay un nombre de archivo \":source\" que sustituya a \"<sfile>\""
+msgstr "E842: No hay un numero de linea para usar \"<slnum>\""
 
 #: ../ex_docmd.c:7903
-#, fuzzy, c-format
+#, c-format
 msgid "E499: Empty file name for '%' or '#', only works with \":p:h\""
 msgstr ""
-"E499: Un nombre de archivo vacío para \"%\" o \"#\" solo funciona con \":p:h"
-"\""
+"E499: Nombre de archivo vacío para \"%\" o \"#\" solo funciona con \":p:h\""
 
 #: ../ex_docmd.c:7905
 msgid "E500: Evaluates to an empty string"
@@ -1987,11 +1978,11 @@ msgstr "E193: ¡\":endfunction\" no está dentro de una función!"
 
 #: ../ex_getln.c:1643
 msgid "E788: Not allowed to edit another buffer now"
-msgstr "E788: No se permite editar otro búfer en este momento"
+msgstr "E788: No se permite editar otro buffer en este momento"
 
 #: ../ex_getln.c:1656
 msgid "E811: Not allowed to change buffer information now"
-msgstr "E811: No se permite cambiar la información del búfer en este momento"
+msgstr "E811: No se permite cambiar la información del buffer en este momento"
 
 #: ../ex_getln.c:3178
 msgid "tagname"
@@ -2036,7 +2027,7 @@ msgstr "E198: \"cmd_pchar\" más allá de la longitud de la orden"
 
 #: ../ex_getln.c:5279
 msgid "E199: Active window or buffer deleted"
-msgstr "E199: Se borró la ventana o el búfer activo"
+msgstr "E199: Se borró la ventana o el buffer activo"
 
 #: ../file_search.c:203
 msgid "E854: path too long for completion"
@@ -2073,7 +2064,7 @@ msgstr "E347: No se han encontrado mas archivos \"%s\" en la ruta"
 
 #: ../fileio.c:137
 msgid "E812: Autocommands changed buffer or buffer name"
-msgstr "E812: *Filtro* Las auto-órdenes no deben cambiar el búfer en uso"
+msgstr "E812: *Filtro* Las auto-órdenes no deben cambiar el buffer en uso"
 
 #: ../fileio.c:368
 msgid "Illegal file name"
@@ -2109,7 +2100,7 @@ msgstr "E200: Las auto-órdenes \"*ReadPre\" hicieron ilegible el archivo"
 
 #: ../fileio.c:655
 msgid "E201: *ReadPre autocommands must not change current buffer"
-msgstr "E201: Las auto-órdenes \"*ReadPre\" no deben cambiar el búfer en uso"
+msgstr "E201: Las auto-órdenes \"*ReadPre\" no deben cambiar el buffer en uso"
 
 #: ../fileio.c:672
 msgid "Nvim: Reading from stdin...\n"
@@ -2185,18 +2176,17 @@ msgstr "No se pudo leer el resultado de 'charconvert'"
 
 #: ../fileio.c:2437
 msgid "E676: No matching autocommands for acwrite buffer"
-msgstr "E676: No coincide ninguna auto-orden para \"acwrite\"en el búfer"
+msgstr "E676: No coincide ningun auto-comando para \"acwrite\"en el buffer"
 
 #: ../fileio.c:2466
 msgid "E203: Autocommands deleted or unloaded buffer to be written"
 msgstr ""
-"E203: Las auto-órdenes fueron suprimidas o el búfer se descargó para ser "
+"E203: Las auto-órdenes fueron suprimidas o el buffer se descargó para ser "
 "grabado en disco"
 
 #: ../fileio.c:2486
 msgid "E204: Autocommand changed number of lines in unexpected way"
-msgstr ""
-"E204: La auto-orden ha cambiado el número de líneas en forma inesperada"
+msgstr "E204: El auto-comando ha cambiado el número de líneas en forma inesperada"
 
 #: ../fileio.c:2548 ../fileio.c:2565
 msgid "is not a file or writable device"
@@ -2419,7 +2409,7 @@ msgstr "E210: Error al leer \"%s\""
 
 #: ../fileio.c:4883
 msgid "E246: FileChangedShell autocommand deleted buffer"
-msgstr "E246: La auto-orden \"FileChangedShell\" ha borrado el búfer"
+msgstr "E246: El auto-comando \"FileChangedShell\" ha borrado el buffer"
 
 #: ../fileio.c:4894
 #, c-format
@@ -2432,7 +2422,7 @@ msgid ""
 "W12: Warning: File \"%s\" has changed and the buffer was changed in Vim as "
 "well"
 msgstr ""
-"W12: Advertencia: el archivo \"%s\" ha cambiado y el búfer se modificó "
+"W12: Advertencia: el archivo \"%s\" ha cambiado y el buffer se modificó "
 "también en Vim"
 
 #: ../fileio.c:4907
@@ -2496,7 +2486,7 @@ msgstr "--Suprimido--"
 #: ../fileio.c:5732
 #, c-format
 msgid "auto-removing autocommand: %s <buffer=%d>"
-msgstr "Auto-removiendo autocomando: %s <búfer=%d>"
+msgstr "Auto-removiendo autocomando: %s <buffer=%d>"
 
 # the group doesn't exist
 #. the group doesn't exist
@@ -2533,7 +2523,7 @@ msgstr ""
 #: ../fileio.c:6293
 #, c-format
 msgid "E680: <buffer=%d>: invalid buffer number "
-msgstr "E680: número de <búfer=%d> no válido"
+msgstr "E680: número de <buffer=%d> no válido"
 
 #: ../fileio.c:6370
 msgid "E217: Can't execute autocommands for ALL events"
@@ -2541,11 +2531,11 @@ msgstr "E217: No se pueden ejecutar las auto-órdenes para TODOS los eventos"
 
 #: ../fileio.c:6393
 msgid "No matching autocommands"
-msgstr "No coincide ninguna auto-orden"
+msgstr "No coincide ningun auto-comando"
 
 #: ../fileio.c:6831
 msgid "E218: autocommand nesting too deep"
-msgstr "E218: La auto-orden se anida en exceso"
+msgstr "E218: El auto-comando se anida en exceso"
 
 #: ../fileio.c:7143
 #, c-format
@@ -2561,7 +2551,7 @@ msgstr "Ejecutando %s"
 #: ../fileio.c:7211
 #, c-format
 msgid "autocommand %s"
-msgstr "auto-orden %s"
+msgstr "auto-commando %s"
 
 #: ../fileio.c:7795
 msgid "E219: Missing {."
@@ -2591,7 +2581,7 @@ msgstr "+--%3ld líneas plegadas"
 #. buffer has already been read
 #: ../getchar.c:273
 msgid "E222: Add to read buffer"
-msgstr "E222: Añadir al búfer de lectura"
+msgstr "E222: Añadir al buffer de lectura"
 
 #: ../getchar.c:2040
 msgid "E223: recursive mapping"
@@ -2634,7 +2624,7 @@ msgstr "E228: \"makemap\": modo ilegal"
 #. result of cmdline window or 0
 #: ../globals.h:924
 msgid "--No lines in buffer--"
-msgstr "--No hay líneas en el búfer--"
+msgstr "--No hay líneas en el buffer--"
 
 #
 # * The error messages that can be shared are included here.
@@ -2740,18 +2730,17 @@ msgid "E17: \"%s\" is a directory"
 msgstr "E17: \"%s\" es un directorio"
 
 #: ../globals.h:1020
-#, fuzzy
 msgid "E900: Invalid job id"
-msgstr "E49: La longitud de desplazamiento no es válida"
+msgstr "E900: La id de trabajo (job) es inválida"
 
 #: ../globals.h:1021
 msgid "E901: Job table is full"
-msgstr ""
+msgstr "E901: Tabla de trabajos esta llena"
 
 #: ../globals.h:1022
 #, c-format
 msgid "E902: \"%s\" is not an executable"
-msgstr ""
+msgstr "E902: \"%s\" no es ejecutable"
 
 #: ../globals.h:1024
 #, c-format
@@ -2867,9 +2856,8 @@ msgstr ""
 "E37: No guardó el archivo desde el último cambio (añada \"!\" para forzar)"
 
 #: ../globals.h:1055
-#, fuzzy
 msgid "E37: No write since last change"
-msgstr "[No se ha escrito nada al disco desde el último cambio]\n"
+msgstr "E37: No se ha escrito nada al disco desde el último cambio"
 
 #: ../globals.h:1056
 msgid "E38: Null argument"
@@ -3030,7 +3018,7 @@ msgstr "E363: El patrón usa más memoria que 'maxmempattern'"
 
 #: ../globals.h:1105
 msgid "E749: empty buffer"
-msgstr "E749: Búfer vacío"
+msgstr "E749: buffer vacío"
 
 #: ../globals.h:1108
 msgid "E682: Invalid search pattern or delimiter"
@@ -3040,7 +3028,7 @@ msgstr "E682: Patrón de búsqueda o delimitador no válido"
 # * good idea.
 #: ../globals.h:1109
 msgid "E139: File is loaded in another buffer"
-msgstr "E139: El archivo ya se ha cargado en otro búfer"
+msgstr "E139: El archivo ya se ha cargado en otro buffer"
 
 #: ../globals.h:1110
 #, c-format
@@ -3048,9 +3036,8 @@ msgid "E764: Option '%s' is not set"
 msgstr "E764: No se ha definido la opción '%s'"
 
 #: ../globals.h:1111
-#, fuzzy
 msgid "E850: Invalid register name"
-msgstr "E354: Nombre de registro no válido: '%s'"
+msgstr "E850: Nombre de registro no válido"
 
 #: ../globals.h:1114
 msgid "search hit TOP, continuing at BOTTOM"
@@ -3303,7 +3290,6 @@ msgid "%-5s: %s%*s (Usage: %s)"
 msgstr "%-5s: %s%*s (Modo de uso: %s)"
 
 #: ../if_cscope.c:1155
-#, fuzzy
 msgid ""
 "\n"
 "       c: Find functions calling this function\n"
@@ -3316,14 +3302,14 @@ msgid ""
 "       t: Find this text string\n"
 msgstr ""
 "\n"
-"       c: Encontrar funciones que invocan esta función\n"
-"       d: Encontrar funciones invocados por esta función\n"
-"       e: Encontrar este patrón egrep\n"
-"       f: Encontrar este archivo\n"
-"       g: Encontrar esta definición\n"
-"       i: Encontrar archivos #incluyendo este archivo\n"
-"       s: Encontrar este símbolo de C\n"
-"       t: Encontrar asignaciones a\n"
+"       c: Buscar funciones que invocan esta función\n"
+"       d: Buscar funciones invocadas por esta función\n"
+"       e: Buscar este patrón egrep\n"
+"       f: Buscar este archivo\n"
+"       g: Buscar esta definición\n"
+"       i: Buscar archivos #incluyendo este archivo\n"
+"       s: Buscar  este símbolo de C\n"
+"       t: buscar asignaciones a\n"
 
 #: ../if_cscope.c:1226
 msgid "E568: duplicate cscope database not added"
@@ -3956,23 +3942,21 @@ msgstr ""
 "(Podría querer guardar este archivo con otro nombre\n"
 
 #: ../memline.c:1252
-#, fuzzy
 msgid "and run diff with the original file to check for changes)"
 msgstr ""
-"y ejecutar \"diff\" con el archivo original para comprobar los cambios)\n"
+"y ejecutar \"diff\" con el archivo original para verificar cambios)\n"
 
 #: ../memline.c:1254
 msgid "Recovery completed. Buffer contents equals file contents."
 msgstr ""
 
 #: ../memline.c:1255
-#, fuzzy
 msgid ""
 "\n"
 "You may want to delete the .swp file now.\n"
 "\n"
 msgstr ""
-"Elimine el archivo .swp después de terminar.\n"
+"Ya puede eliminar el archivo .swp.\n"
 "\n"
 
 # use msg() to start the scrolling properly
@@ -4186,7 +4170,6 @@ msgstr "     MÁS NUEVO que el archivo de intercambio!\n"
 # Some of these messages are long to allow translation to
 # * other languages.
 #: ../memline.c:3244
-#, fuzzy
 msgid ""
 "\n"
 "(1) Another program may be editing the same file.  If this is the case,\n"
@@ -4194,21 +4177,17 @@ msgid ""
 "    file when making changes."
 msgstr ""
 "\n"
-"(1) Puede que otro programa esté editando el mismo archivo.\n"
-"    De ser así, tenga cuidado de no acabar con dos\n"
-"    ejemplares diferentes del mismo archivo al hacer cambios.\n"
+"(1) Puede ser que otro programa esté editando el mismo archivo.\n"
+"    Si este es el caso, tenga cuidado de no acabar con dos\n"
+"    copias diferentes del mismo archivo al hacer cambios.\n"
 
 #: ../memline.c:3245
-#, fuzzy
 msgid "  Quit, or continue with caution.\n"
 msgstr "    Salga del programa o continúe con precaución.\n"
 
 #: ../memline.c:3246
-#, fuzzy
 msgid "(2) An edit session for this file crashed.\n"
-msgstr ""
-"\n"
-"(2) Falló una sesión de edición de este archivo.\n"
+msgstr "(2) Falló una sesión de edición para este archivo.\n"
 
 #: ../memline.c:3247
 msgid "    If this is the case, use \":recover\" or \"vim -r "
@@ -4982,7 +4961,7 @@ msgstr "No se pudo abrir el archivo %s"
 
 #: ../quickfix.c:3429
 msgid "E681: Buffer is not loaded"
-msgstr "E681: El búfer no está cargado"
+msgstr "E681: El buffer no está cargado"
 
 #: ../quickfix.c:3487
 msgid "E777: String or List expected"
@@ -5155,42 +5134,42 @@ msgid "E872: (NFA regexp) Too many '('"
 msgstr ""
 
 #: ../regexp_nfa.c:2042
-#, fuzzy
 msgid "E879: (NFA regexp) Too many \\z("
-msgstr "E50: Demasiados \\z("
+msgstr "E879: (Expresión regular (regexp) AFN) Hay demasiadas \\z("
 
 #: ../regexp_nfa.c:2066
 msgid "E873: (NFA regexp) proper termination error"
-msgstr ""
+msgstr "E873: (Expresion regular AFN) error de terminacion propia"
 
 #: ../regexp_nfa.c:2599
 msgid "E874: (NFA) Could not pop the stack !"
-msgstr ""
+msgstr "E874: (AFN) No se pudo sacar de la pila ! "
 
 #: ../regexp_nfa.c:3298
 msgid ""
 "E875: (NFA regexp) (While converting from postfix to NFA), too many states "
 "left on stack"
-msgstr ""
+msgstr "(Expresion regular AFN) (Mientras convirtiendo de postfix a AFN), demasiados estados "
+"quedaron en la pila"
 
 #: ../regexp_nfa.c:3302
 msgid "E876: (NFA regexp) Not enough space to store the whole NFA "
-msgstr ""
+msgstr "E876: (AFN expresion regular) No hay suficiente espacio en memoria para la AFN"
 
 #: ../regexp_nfa.c:4571 ../regexp_nfa.c:4869
 msgid ""
 "Could not open temporary log file for writing, displaying on stderr ... "
-msgstr ""
+msgstr "" 
+"No se pudo abrir el archivo de registro, viendo en stderr ..."
 
 #: ../regexp_nfa.c:4840
 #, c-format
 msgid "(NFA) COULD NOT OPEN %s !"
-msgstr ""
+msgstr "(AFN) NO SE PUDO ABRIR %s !"
 
 #: ../regexp_nfa.c:6049
-#, fuzzy
 msgid "Could not open temporary log file for writing "
-msgstr "E214: No se pudo encontrar el archivo temporal para escribir en él"
+msgstr "No se pudo abrir el archivo de registro temporal para escribir"
 
 #: ../screen.c:7435
 msgid " VREPLACE"
@@ -5737,14 +5716,14 @@ msgid "E765: 'spellfile' does not have %<PRId64> entries"
 msgstr "E765: 'spellfile' no tiene entradas %<PRId64>"
 
 #: ../spell.c:8074
-#, fuzzy, c-format
+#, c-format
 msgid "Word '%.*s' removed from %s"
-msgstr "Eliminando palabra de %s"
+msgstr "Palabra \"%.*s\" fue eliminada de %s"
 
 #: ../spell.c:8117
-#, fuzzy, c-format
+#, c-format
 msgid "Word '%.*s' added to %s"
-msgstr "Añadiendo palabra en \"%s\""
+msgstr "Añadiendo palabra \"%.*s\" a \"%s\""
 
 #: ../spell.c:8381
 msgid "E763: Word characters differ between spell files"
@@ -5814,7 +5793,7 @@ msgstr "E783: carácter duplicado en entrada MAP"
 
 #: ../syntax.c:266
 msgid "No Syntax items defined for this buffer"
-msgstr "No hay elementos sintácticos definidos para este búfer"
+msgstr "No hay elementos sintácticos definidos para este buffer"
 
 #: ../syntax.c:3083 ../syntax.c:3104 ../syntax.c:3127
 #, c-format
@@ -5892,9 +5871,8 @@ msgid "E395: contains argument not accepted here"
 msgstr "E395: el contenido del argumento no se acepta aquí"
 
 #: ../syntax.c:4096
-#, fuzzy
 msgid "E844: invalid cchar value"
-msgstr "E474: El argumento no es válido"
+msgstr "E844: El valor de cchar no es válido"
 
 #: ../syntax.c:4107
 msgid "E393: group[t]here not accepted here"
@@ -5910,9 +5888,8 @@ msgid "E397: Filename required"
 msgstr "E397: Debe proporcionar un nombre de archivo"
 
 #: ../syntax.c:4221
-#, fuzzy
 msgid "E847: Too many syntax includes"
-msgstr "E77: Hay demasiados nombres de archivos"
+msgstr "E847: Hay demasiadas inclusiones de sintaxis"
 
 #: ../syntax.c:4303
 #, c-format
@@ -5930,9 +5907,8 @@ msgid "E399: Not enough arguments: syntax region %s"
 msgstr "E399: Argumentos insuficientes: región de sintaxis %s"
 
 #: ../syntax.c:4870
-#, fuzzy
 msgid "E848: Too many syntax clusters"
-msgstr "E391: No existe tal agrupamiento sintáctico: %s"
+msgstr "E848: Hay demasiados grupos de sintáxis"
 
 #: ../syntax.c:4954
 msgid "E400: No cluster specified"
@@ -6187,9 +6163,9 @@ msgid "E435: Couldn't find tag, just guessing!"
 msgstr "E435: No se pudo encontrar la etiqueta. ¡Estoy adivinando!"
 
 #: ../tag.c:2797
-#, fuzzy, c-format
+#, c-format
 msgid "Duplicate field name: %s"
-msgstr "Afijo duplicado en %s línea %d: %s"
+msgstr "Nombre de campo duplicado: %s"
 
 #: ../term.c:1442
 msgid "' not known. Available builtin terminals are:"
@@ -6237,79 +6213,78 @@ msgstr "Vim: error al leer la entrada, saliendo...\n"
 #. This happens when the FileChangedRO autocommand changes the
 #. * file in a way it becomes shorter.
 #: ../undo.c:379
-#, fuzzy
 msgid "E881: Line count changed unexpectedly"
-msgstr "E787: El búfer cambió inesperadamente"
+msgstr "E881: La cuenta de lineas cambió inesperadamente"
 
 #: ../undo.c:627
-#, fuzzy, c-format
+#, c-format
 msgid "E828: Cannot open undo file for writing: %s"
-msgstr "E212: No se pudo abrir el archivo para escribir en él"
+msgstr "E828: No se pudo abrir el archivo de deshacer para escribir: %s"
 
 #: ../undo.c:717
 #, c-format
 msgid "E825: Corrupted undo file (%s): %s"
-msgstr ""
+msgstr "E825: Archivo de deshacer fue corrupto (%s): %s"
 
 #: ../undo.c:1039
 msgid "Cannot write undo file in any directory in 'undodir'"
-msgstr ""
+msgstr "No se pudo escribir al archivo de deshacer en ningun directorio en \"undodir\""
 
 #: ../undo.c:1074
 #, c-format
 msgid "Will not overwrite with undo file, cannot read: %s"
-msgstr ""
+msgstr "No se va a escribir el archivo de deshacer, no se puede leer: %s"
 
 #: ../undo.c:1092
 #, c-format
 msgid "Will not overwrite, this is not an undo file: %s"
-msgstr ""
+msgstr "No se va a actualizar el archivo de deshacer, esto no es archivo de deshacer: %s"
 
 #: ../undo.c:1108
 msgid "Skipping undo file write, nothing to undo"
-msgstr ""
+msgstr "Saltando la escritura al archivo de deshacer, nada que deshacer"
 
 #: ../undo.c:1121
-#, fuzzy, c-format
+#, c-format
 msgid "Writing undo file: %s"
-msgstr "Escribiendo archivo \"viminfo\" \"%s\""
+msgstr "Escribiendo archivo de deshacer: \"%s\""
 
 #: ../undo.c:1213
-#, fuzzy, c-format
+#, c-format
 msgid "E829: write error in undo file: %s"
-msgstr "E297: Error de escritura en el archivo de intercambio"
+msgstr "E829: Error de escritura en el archivo de deshacer: %s"
 
 #: ../undo.c:1280
 #, c-format
 msgid "Not reading undo file, owner differs: %s"
-msgstr ""
+msgstr "No se va a leer el archivo de deshacer, differente propietario: %s"
 
 #: ../undo.c:1292
-#, fuzzy, c-format
+#, c-format
 msgid "Reading undo file: %s"
-msgstr "Leyendo archivo de palabras \"%s\" ..."
+msgstr "Leyendo archivo de deshacer: \"%s\""
 
 #: ../undo.c:1299
-#, fuzzy, c-format
+#, c-format
 msgid "E822: Cannot open undo file for reading: %s"
-msgstr "E195: No se pudo abrir el archivo \"viminfo\" para lectura"
+msgstr "E822: No se pudo abrir el archivo de deshacer para leer: %s"
 
 #: ../undo.c:1308
-#, fuzzy, c-format
+#, c-format
 msgid "E823: Not an undo file: %s"
-msgstr "E753: No se encontró: %s"
+msgstr "E823: No es archivo para deshacer: %s"
 
 #: ../undo.c:1313
-#, fuzzy, c-format
+#, c-format
 msgid "E824: Incompatible undo file: %s"
-msgstr "E484: No se pudo abrir el archivo \"%s\""
+msgstr "E824: Archivo para deshacer no es compatible: \"%s\""
 
 #: ../undo.c:1328
 msgid "File contents changed, cannot use undo info"
-msgstr ""
+msgstr "Contenido del archivo cambiaron, no se puede usar informacion del archivo para deshacer"
 
 #: ../undo.c:1497
-#, fuzzy, c-format
+#, c-format
 msgid "Finished reading undo file %s"
 msgstr "La ejecución de %s ha terminado"
 
@@ -6322,9 +6297,9 @@ msgid "Already at newest change"
 msgstr "Este es el cambio más nuevo"
 
 #: ../undo.c:1806
-#, fuzzy, c-format
+#, c-format
 msgid "E830: Undo number %<PRId64> not found"
-msgstr "No se encontró el número de \"deshacer\" %<PRId64>"
+msgstr "E830: No se encontró el número de deshacer %<PRId64>"
 
 #: ../undo.c:1979
 msgid "E438: u_undo: line numbers wrong"
@@ -6661,10 +6636,10 @@ msgstr "E446: No hay un nombre de archivo bajo el cursor"
 #~ msgstr "[cifrado]"
 
 #~ msgid "NetBeans disallows writes of unmodified buffers"
-#~ msgstr "NetBeans no permite que se escriba sobre búfers sin modificar"
+#~ msgstr "NetBeans no permite que se escriba sobre buffers sin modificar"
 
 #~ msgid "Partial writes disallowed for NetBeans buffers"
-#~ msgstr "No se permite la escritura parcial de los búfers de NetBeans"
+#~ msgstr "No se permite la escritura parcial de los buffers de NetBeans"
 
 #~ msgid "writing to device disabled with 'opendevice' option"
 #~ msgstr ""
@@ -6969,7 +6944,7 @@ msgstr "E446: No hay un nombre de archivo bajo el cursor"
 #~ msgstr "indice de ventana fuera del rango"
 
 #~ msgid "couldn't open buffer"
-#~ msgstr "No se pudo abrir el búfer"
+#~ msgstr "No se pudo abrir el buffer"
 
 #~ msgid "cannot save undo information"
 #~ msgstr "No se pudo guardar la información para deshacer"
@@ -6993,7 +6968,7 @@ msgstr "E446: No hay un nombre de archivo bajo el cursor"
 #~ msgstr "Error de Vim"
 
 #~ msgid "buffer is invalid"
-#~ msgstr "El búfer no es valido"
+#~ msgstr "El buffer no es valido"
 
 #~ msgid "window is invalid"
 #~ msgstr "La ventana no es válida"
@@ -7030,19 +7005,19 @@ msgstr "E446: No hay un nombre de archivo bajo el cursor"
 #~ msgstr "E264: Python: error de iniciación de los objetos de I/O"
 
 #~ msgid "attempt to refer to deleted buffer"
-#~ msgstr "Intento de referirse a un búfer suprimido"
+#~ msgstr "Intento de referirse a un buffer suprimido"
 
 #~ msgid "line number out of range"
 #~ msgstr "El número de la línea está fuera del rango"
 
 #~ msgid "<buffer object (deleted) at %p>"
-#~ msgstr "<objeto de búfer (suprimido) en %p>"
+#~ msgstr "<objeto de buffer (suprimido) en %p>"
 
 #~ msgid "invalid mark name"
 #~ msgstr "Nombre de marca no válido"
 
 #~ msgid "no such buffer"
-#~ msgstr "No existe tal búfer"
+#~ msgstr "No existe tal buffer"
 
 #~ msgid "attempt to refer to deleted window"
 #~ msgstr "Intento de referirse a una ventana suprimida"
@@ -7051,7 +7026,7 @@ msgstr "E446: No hay un nombre de archivo bajo el cursor"
 #~ msgstr "Atributo de solo lectura"
 
 #~ msgid "cursor position outside buffer"
-#~ msgstr "Posición del cursor fuera del búfer"
+#~ msgstr "Posición del cursor fuera del buffer"
 
 #~ msgid "<window object (deleted) at %p>"
 #~ msgstr "<objeto ventana (suprimido) en %p>"
@@ -7180,13 +7155,13 @@ msgstr "E446: No hay un nombre de archivo bajo el cursor"
 #~ msgstr "E278: SNiFF+ no está conectado"
 
 #~ msgid "E279: Not a SNiFF+ buffer"
-#~ msgstr "E279: No es un búfer de SNiFF+"
+#~ msgstr "E279: No es un buffer de SNiFF+"
 
 #~ msgid "Sniff: Error during write. Disconnected"
 #~ msgstr "Sniff: error al escribir. Desconectado"
 
 #~ msgid "invalid buffer number"
-#~ msgstr "Número de búfer no válido"
+#~ msgstr "Número de buffer no válido"
 
 #~ msgid "not implemented yet"
 #~ msgstr "Aún no implementado"
@@ -7217,12 +7192,12 @@ msgstr "E446: No hay un nombre de archivo bajo el cursor"
 #~ msgstr "Error de Vim"
 
 #~ msgid "cannot create buffer/window command: object is being deleted"
-#~ msgstr "No se pudo crear la orden de búfer/ventana: el objeto se suprimirá"
+#~ msgstr "No se pudo crear la orden de buffer/ventana: el objeto se suprimirá"
 
 #~ msgid ""
 #~ "cannot register callback command: buffer/window is already being deleted"
 #~ msgstr ""
-#~ "No se pudo registrar el orden \"callback\": El búfer o la ventana ya se \n"
+#~ "No se pudo registrar el orden \"callback\": El buffer o la ventana ya se \n"
 #~ "eliminó"
 
 # This should never happen.  Famous last word?
@@ -7237,7 +7212,7 @@ msgstr "E446: No hay un nombre de archivo bajo el cursor"
 #~ msgstr ""
 #~ "No se pudo registrar la orden de retorno de llamada: No se pudo "
 #~ "encontrar\n"
-#~ "la referencia al búfer o la ventana"
+#~ "la referencia al buffer o la ventana"
 
 #~ msgid ""
 #~ "E571: Sorry, this command is disabled: the Tcl library could not be "
@@ -7624,7 +7599,7 @@ msgstr "E446: No hay un nombre de archivo bajo el cursor"
 #~ msgstr "leído del socket NetBeans"
 
 #~ msgid "E658: NetBeans connection lost for buffer %<PRId64>"
-#~ msgstr "E658: Se perdió la conexión NetBeans para el búfer %<PRId64>"
+#~ msgstr "E658: Se perdió la conexión NetBeans para el buffer %<PRId64>"
 
 #~ msgid "E505: "
 #~ msgstr "E505: "
