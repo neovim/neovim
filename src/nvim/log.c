@@ -4,19 +4,21 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "nvim/log.h"
 #include "nvim/types.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
+#include "nvim/path.h"
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
 
-#define USR_LOG_FILE "$HOME/.nvimlog"
-
 static uv_mutex_t mutex;
+static char log_file_dir[MAXPATHL +1];
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "log.c.generated.h"
@@ -25,6 +27,20 @@ static uv_mutex_t mutex;
 void log_init(void)
 {
   uv_mutex_init(&mutex);
+  const char * envdir = os_getenv("NVIM_LOG_FILE");
+  // TODO(5pacetoast): add checks to see if NVIM_LOG_FILE is a valid path
+  if (envdir == NULL) {
+      char * pathdir = stdpaths_user_data_subpath("log", 0);
+      char pathdir_glob[MAXPATHL+1];
+      if(strcmp(pathdir, pathdir_glob) == 0) {
+          // expand_env seems to always fail here
+          printf("expand_env failed!\n");
+      }
+      xfree(pathdir);
+      strncpy(log_file_dir, (char *)pathdir_glob, MAXPATHL);
+  } else {
+      strncpy(log_file_dir, envdir, MAXPATHL);
+  }
 }
 
 void log_lock(void)
@@ -64,7 +80,7 @@ end:
 
 /// Open the log file for appending.
 ///
-/// @return The FILE* specified by the USR_LOG_FILE path or stderr in case of
+/// @return The FILE* to log into or stderr in case of
 ///         error
 FILE *open_log_file(void)
 {
@@ -77,20 +93,11 @@ FILE *open_log_file(void)
     return stderr;
   }
 
-  // expand USR_LOG_FILE and open the file
+  // get log file location and open the file
   FILE *log_file;
   opening_log_file = true;
   {
-    static char expanded_log_file_path[MAXPATHL + 1];
-
-    expand_env((char_u *)USR_LOG_FILE, (char_u *)expanded_log_file_path,
-               MAXPATHL);
-    // if the log file path expansion failed then fall back to stderr
-    if (strcmp(USR_LOG_FILE, expanded_log_file_path) == 0) {
-      goto open_log_file_error;
-    }
-
-    log_file = fopen(expanded_log_file_path, "a");
+    log_file = fopen(log_file_dir, "a");
     if (log_file == NULL) {
       goto open_log_file_error;
     }
@@ -103,7 +110,7 @@ open_log_file_error:
   opening_log_file = false;
 
   do_log_to_file(stderr, ERROR_LOG_LEVEL, __func__, __LINE__, true,
-                 "Couldn't open USR_LOG_FILE, logging to stderr! This may be "
+                 "Couldn't open log file, logging to stderr! This may be "
                  "caused by attempting to LOG() before initialization "
                  "functions are called (e.g. init_homedir()).");
   return stderr;
