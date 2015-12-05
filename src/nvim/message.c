@@ -1777,7 +1777,7 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
 static void msg_scroll_up(void)
 {
   /* scrolling up always works */
-  screen_del_lines(0, 0, 1, (int)Rows, NULL);
+  screen_del_lines(0, 0, 1, Rows, NULL);
 }
 
 /*
@@ -2153,7 +2153,7 @@ static int do_more_prompt(int typed_char)
           }
 
           if (toscroll == -1 && screen_ins_lines(0, 0, 1,
-                  (int)Rows, NULL) == OK) {
+                  Rows, NULL) == OK) {
             /* display line at top */
             (void)disp_sb_line(0, mp);
           } else {
@@ -2172,18 +2172,16 @@ static int do_more_prompt(int typed_char)
           /* scroll up, display line at bottom */
           msg_scroll_up();
           inc_msg_scrolled();
-          screen_fill((int)Rows - 2, (int)Rows - 1, 0,
-              (int)Columns, ' ', ' ', 0);
-          mp_last = disp_sb_line((int)Rows - 2, mp_last);
+          screen_fill(Rows - 2, Rows - 1, 0, Columns, ' ', ' ', 0);
+          mp_last = disp_sb_line(Rows - 2, mp_last);
           --toscroll;
         }
       }
 
       if (toscroll <= 0) {
         /* displayed the requested text, more prompt again */
-        screen_fill((int)Rows - 1, (int)Rows, 0,
-            (int)Columns, ' ', ' ', 0);
-        msg_moremsg(FALSE);
+        screen_fill(Rows - 1, Rows, 0, Columns, ' ', ' ', 0);
+        msg_moremsg(false);
         continue;
       }
 
@@ -2195,7 +2193,7 @@ static int do_more_prompt(int typed_char)
   }
 
   /* clear the --more-- message */
-  screen_fill((int)Rows - 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
+  screen_fill(Rows - 1, Rows, 0, Columns, ' ', ' ', 0);
   State = oldState;
   setmouse();
   if (quit_more) {
@@ -2312,11 +2310,11 @@ void msg_moremsg(int full)
   char_u      *s = (char_u *)_("-- More --");
 
   attr = hl_attr(HLF_M);
-  screen_puts(s, (int)Rows - 1, 0, attr);
+  screen_puts(s, Rows - 1, 0, attr);
   if (full)
     screen_puts((char_u *)
         _(" SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "),
-        (int)Rows - 1, vim_strsize(s), attr);
+        Rows - 1, vim_strsize(s), attr);
 }
 
 /*
@@ -2366,10 +2364,10 @@ void msg_clr_eos_force(void)
 {
   if (cmdmsg_rl) {
     screen_fill(msg_row, msg_row + 1, 0, msg_col + 1, ' ', ' ', 0);
-    screen_fill(msg_row + 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
+    screen_fill(msg_row + 1, Rows, 0, Columns, ' ', ' ', 0);
   } else {
-    screen_fill(msg_row, msg_row + 1, msg_col, (int)Columns, ' ', ' ', 0);
-    screen_fill(msg_row + 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
+    screen_fill(msg_row, msg_row + 1, msg_col, Columns, ' ', ' ', 0);
+    screen_fill(msg_row + 1, Rows, 0, Columns, ' ', ' ', 0);
   }
 }
 

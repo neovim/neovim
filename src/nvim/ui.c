@@ -250,9 +250,9 @@ void ui_set_scroll_region(win_T *wp, int off)
 void ui_reset_scroll_region(void)
 {
   sr.top = 0;
-  sr.bot = (int)Rows - 1;
+  sr.bot = Rows - 1;
   sr.left = 0;
-  sr.right = (int)Columns - 1;
+  sr.right = Columns - 1;
   UI_CALL(set_scroll_region, sr.top, sr.bot, sr.left, sr.right);
 }
 

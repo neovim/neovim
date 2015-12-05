@@ -8442,8 +8442,8 @@ void spell_suggest(int count)
 
   // Get the list of suggestions.  Limit to 'lines' - 2 or the number in
   // 'spellsuggest', whatever is smaller.
-  if (sps_limit > (int)Rows - 2)
-    limit = (int)Rows - 2;
+  if (sps_limit > Rows - 2)
+    limit = Rows - 2;
   else
     limit = sps_limit;
   spell_find_suggest(line + curwin->w_cursor.col, badlen, &sug, limit,
@@ -12890,7 +12890,7 @@ void ex_spellinfo(exarg_T *eap)
 void ex_spelldump(exarg_T *eap)
 {
   char_u  *spl;
-  long dummy;
+  int dummy;
 
   if (no_spell_checking(curwin))
     return;

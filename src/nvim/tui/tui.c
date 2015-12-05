@@ -686,10 +686,8 @@ static void update_size(UI *ui)
 
   // 1 - look for non-default 'columns' and 'lines' options during startup
   if (starting != 0 && (Columns != DFLT_COLS || Rows != DFLT_ROWS)) {
-    assert(Columns >= INT_MIN && Columns <= INT_MAX);
-    assert(Rows >= INT_MIN && Rows <= INT_MAX);
-    width = (int)Columns;
-    height = (int)Rows;
+    width = Columns;
+    height = Rows;
     goto end;
   }
 

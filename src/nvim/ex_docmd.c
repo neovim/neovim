@@ -5953,7 +5953,7 @@ static void ex_stop(exarg_T *eap)
     if (!eap->forceit) {
       autowrite_all();
     }
-    ui_cursor_goto((int)Rows - 1, 0);
+    ui_cursor_goto(Rows - 1, 0);
     ui_putc('\n');
     ui_flush();
     ui_suspend();               /* call machine specific function */
@@ -6286,15 +6286,15 @@ void ex_splitview(exarg_T *eap)
           && !cmdmod.keepalt)
         old_curwin->w_alt_fnum = curbuf->b_fnum;
     }
-  } else if (win_split(eap->addr_count > 0 ? (int)eap->line2 : 0,
-                 *eap->cmd == 'v' ? WSP_VERT : 0) != FAIL) {
-    /* Reset 'scrollbind' when editing another file, but keep it when
-     * doing ":split" without arguments. */
-    if (*eap->arg != NUL
-        ) {
+  } else if (win_split(eap->addr_count > 0 ? eap->line2 : 0,
+                       *eap->cmd == 'v' ? WSP_VERT : 0) != FAIL) {
+    // Reset 'scrollbind' when editing another file, but keep it when
+    // doing ":split" without arguments.
+    if (*eap->arg != NUL) {
       RESET_BINDING(curwin);
-    } else
-      do_check_scrollbind(FALSE);
+    } else {
+      do_check_scrollbind(false);
+    }
     do_exedit(eap, old_curwin);
   }
 

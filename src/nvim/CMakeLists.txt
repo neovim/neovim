@@ -94,8 +94,7 @@ set(CONV_SOURCES
   search.c
   spell.c
   syntax.c
-  tag.c
-  window.c)
+  tag.c)
 
 foreach(sfile ${CONV_SOURCES})
   if(NOT EXISTS "${PROJECT_SOURCE_DIR}/src/nvim/${sfile}")

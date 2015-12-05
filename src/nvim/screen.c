@@ -303,8 +303,8 @@ void update_screen(int type)
     if (msg_scrolled > Rows - 5)            /* clearing is faster */
       type = CLEAR;
     else if (type != CLEAR) {
-      check_for_delay(FALSE);
-      if (screen_ins_lines(0, 0, msg_scrolled, (int)Rows, NULL) == FAIL)
+      check_for_delay(false);
+      if (screen_ins_lines(0, 0, msg_scrolled, Rows, NULL) == FAIL)
         type = CLEAR;
       FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
         if (wp->w_winrow < msg_scrolled) {
@@ -4117,7 +4117,7 @@ win_line (
                                      LineOffset[screen_row] + screen_Columns)
                      == 2
                      || (*mb_off2cells)(LineOffset[screen_row - 1]
-                                        + (int)Columns - 2,
+                                        + Columns - 2,
                                         LineOffset[screen_row] + screen_Columns)
                      == 2))
             ) {
@@ -4702,7 +4702,7 @@ win_redr_status_matches (
         /* Put the wildmenu just above the command line.  If there is
          * no room, scroll the screen one line up. */
         if (cmdline_row == Rows - 1) {
-          screen_del_lines(0, 0, 1, (int)Rows, NULL);
+          screen_del_lines(0, 0, 1, Rows, NULL);
           ++msg_scrolled;
         } else {
           ++cmdline_row;
@@ -4730,7 +4730,7 @@ win_redr_status_matches (
       screen_puts(selstart, row, selstart_col, hl_attr(HLF_WM));
     }
 
-    screen_fill(row, row + 1, clen, (int)Columns, fillchar, fillchar, attr);
+    screen_fill(row, row + 1, clen, Columns, fillchar, fillchar, attr);
   }
 
   win_redraw_last_status(topframe);
@@ -6188,8 +6188,8 @@ static void screenclear2(void)
 
   /* blank out ScreenLines */
   for (i = 0; i < Rows; ++i) {
-    lineclear(LineOffset[i], (int)Columns);
-    LineWraps[i] = FALSE;
+    lineclear(LineOffset[i], Columns);
+    LineWraps[i] = false;
   }
 
   ui_clear();  // clear the display
@@ -6304,8 +6304,8 @@ int win_ins_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
   did_delete = FALSE;
   if (wp->w_next != NULL || wp->w_status_height) {
     if (screen_del_lines(0, wp->w_winrow + wp->w_height - line_count,
-            line_count, (int)Rows, NULL) == OK)
-      did_delete = TRUE;
+            line_count, Rows, NULL) == OK)
+      did_delete = true;
     else if (wp->w_next)
       return FAIL;
   }
@@ -6324,7 +6324,7 @@ int win_ins_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
                 ' ', ' ', 0);
   }
 
-  if (screen_ins_lines(0, wp->w_winrow + row, line_count, (int)Rows, NULL)
+  if (screen_ins_lines(0, wp->w_winrow + row, line_count, Rows, NULL)
       == FAIL) {
     /* deletion will have messed up other windows */
     if (did_delete) {
@@ -6358,8 +6358,8 @@ int win_del_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
   if (retval != MAYBE)
     return retval;
 
-  if (screen_del_lines(0, wp->w_winrow + row, line_count,
-          (int)Rows, NULL) == FAIL) {
+  if (screen_del_lines(0, wp->w_winrow + row, line_count, Rows, NULL)
+      == FAIL) {
     return FAIL;
   }
 
@@ -6369,8 +6369,8 @@ int win_del_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
    */
   if (wp->w_next || wp->w_status_height || cmdline_row < Rows - 1) {
     if (screen_ins_lines(0, wp->w_winrow + wp->w_height - line_count,
-            line_count, (int)Rows, NULL) == FAIL) {
-      wp->w_redr_status = TRUE;
+            line_count, Rows, NULL) == FAIL) {
+      wp->w_redr_status = true;
       win_rest_invalid(wp->w_next);
     }
   }
@@ -6489,8 +6489,8 @@ int screen_ins_lines (
         LineWraps[j + line_count] = LineWraps[j];
       }
       LineOffset[j + line_count] = temp;
-      LineWraps[j + line_count] = FALSE;
-      lineclear(temp, (int)Columns);
+      LineWraps[j + line_count] = false;
+      lineclear(temp, Columns);
     }
   }
 
@@ -6544,8 +6544,8 @@ int screen_del_lines (
         LineWraps[j - line_count] = LineWraps[j];
       }
       LineOffset[j - line_count] = temp;
-      LineWraps[j - line_count] = FALSE;
-      lineclear(temp, (int)Columns);
+      LineWraps[j - line_count] = false;
+      lineclear(temp, Columns);
     }
   }
 
@@ -6884,11 +6884,11 @@ static void draw_tabline(void)
       c = '_';
     else
       c = ' ';
-    screen_fill(0, 1, col, (int)Columns, c, c, attr_fill);
+    screen_fill(0, 1, col, Columns, c, c, attr_fill);
 
     /* Put an "X" for closing the current tab if there are several. */
     if (first_tabpage->tp_next != NULL) {
-      screen_putchar('X', 0, (int)Columns - 1, attr_nosel);
+      screen_putchar('X', 0, Columns - 1, attr_nosel);
       TabPageIdxs[Columns - 1] = -999;
     }
   }

@@ -340,7 +340,7 @@ static char *(p_cb_values[]) = {"unnamed", "unnamedplus", NULL};
 # define CB_UNNAMEDPLUS         0x002
 # define CB_UNNAMEDMASK         (CB_UNNAMED | CB_UNNAMEDPLUS)
 EXTERN long p_cwh;              /* 'cmdwinheight' */
-EXTERN long p_ch;               /* 'cmdheight' */
+EXTERN int p_ch;                /* 'cmdheight' */
 EXTERN int p_confirm;           /* 'confirm' */
 EXTERN int p_cp;                /* 'compatible' */
 EXTERN char_u   *p_cot;         /* 'completeopt' */
@@ -386,7 +386,7 @@ EXTERN char_u   *p_fencs;       /* 'fileencodings' */
 EXTERN char_u   *p_ffs;         /* 'fileformats' */
 EXTERN bool p_fic;              ///< 'fileignorecase'
 EXTERN char_u   *p_fcl;         /* 'foldclose' */
-EXTERN long p_fdls;             /* 'foldlevelstart' */
+EXTERN int p_fdls;              /* 'foldlevelstart' */
 EXTERN char_u   *p_fdo;         /* 'foldopen' */
 EXTERN unsigned fdo_flags;
 # ifdef IN_OPTION_C
@@ -485,7 +485,7 @@ EXTERN long p_rdt;              /* 'redrawtime' */
 EXTERN int p_remap;             /* 'remap' */
 EXTERN long p_re;               /* 'regexpengine' */
 EXTERN long p_report;           /* 'report' */
-EXTERN long p_pvh;              /* 'previewheight' */
+EXTERN int p_pvh;               /* 'previewheight' */
 EXTERN int p_ari;               /* 'allowrevins' */
 EXTERN int p_ri;                /* 'revins' */
 EXTERN int p_ru;                /* 'ruler' */
@@ -548,7 +548,7 @@ EXTERN long p_siso;             /* 'sidescrolloff' */
 EXTERN int p_scs;               /* 'smartcase' */
 EXTERN int p_sta;               /* 'smarttab' */
 EXTERN int p_sb;                /* 'splitbelow' */
-EXTERN long p_tpm;              /* 'tabpagemax' */
+EXTERN int p_tpm;               /* 'tabpagemax' */
 EXTERN char_u   *p_tal;         /* 'tabline' */
 EXTERN char_u   *p_sps;         /* 'spellsuggest' */
 EXTERN int p_spr;               /* 'splitright' */
@@ -580,9 +580,9 @@ EXTERN char_u   *p_titleold;    /* 'titleold' */
 EXTERN char_u   *p_titlestring; /* 'titlestring' */
 EXTERN char_u   *p_tsr;         /* 'thesaurus' */
 EXTERN int p_ttimeout;          /* 'ttimeout' */
-EXTERN long p_ttm;              /* 'ttimeoutlen' */
+EXTERN int p_ttm;               /* 'ttimeoutlen' */
 EXTERN char_u   *p_udir;        /* 'undodir' */
-EXTERN long p_ul;               /* 'undolevels' */
+EXTERN int p_ul;                /* 'undolevels' */
 EXTERN long p_ur;               /* 'undoreload' */
 EXTERN long p_uc;               /* 'updatecount' */
 EXTERN long p_ut;               /* 'updatetime' */
@@ -618,10 +618,10 @@ EXTERN long p_wcm;              /* 'wildcharm' */
 EXTERN bool p_wic;              ///< 'wildignorecase'
 EXTERN char_u   *p_wim;         /* 'wildmode' */
 EXTERN int p_wmnu;              /* 'wildmenu' */
-EXTERN long p_wh;               /* 'winheight' */
-EXTERN long p_wmh;              /* 'winminheight' */
-EXTERN long p_wmw;              /* 'winminwidth' */
-EXTERN long p_wiw;              /* 'winwidth' */
+EXTERN int p_wh;                /* 'winheight' */
+EXTERN int p_wmh;               /* 'winminheight' */
+EXTERN int p_wmw;               /* 'winminwidth' */
+EXTERN int p_wiw;               /* 'winwidth' */
 EXTERN bool p_ws;               /* 'wrapscan' */
 EXTERN int p_write;             /* 'write' */
 EXTERN int p_wa;                /* 'writeany' */

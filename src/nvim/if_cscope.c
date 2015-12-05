@@ -1707,7 +1707,7 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
     (void)sprintf(buf, cntxformat, context);
 
     /* print the context only if it fits on the same line */
-    if (msg_col + (int)strlen(buf) >= (int)Columns)
+    if (msg_col + (int)strlen(buf) >= Columns)
       msg_putchar('\n');
     msg_advance(12);
     MSG_PUTS_LONG(buf);

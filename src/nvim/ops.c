@@ -3197,7 +3197,7 @@ void ex_display(exarg_T *eap)
       msg_putchar(name);
       MSG_PUTS("   ");
 
-      n = (int)Columns - 6;
+      n = Columns - 6;
       for (j = 0; j < yb->y_size && n > 1; ++j) {
         if (j) {
           MSG_PUTS_ATTR("^J", attr);
@@ -3288,7 +3288,7 @@ dis_msg (
   int n;
   int l;
 
-  n = (int)Columns - 6;
+  n = Columns - 6;
   while (*p != NUL
          && !(*p == ESC && skip_esc && *(p + 1) == NUL)
          && (n -= ptr2cells(p)) >= 0) {
