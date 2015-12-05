@@ -53,8 +53,7 @@ endif()
 #   - If not in a git repo (e.g. a tarball) these tokens set the version string.
 set(NVIM_VERSION_MAJOR 0)
 set(NVIM_VERSION_MINOR 1)
-set(NVIM_VERSION_PATCH 0)
-set(NVIM_VERSION_PRERELEASE "-dev")
+set(NVIM_VERSION_PATCH 1)
 
 file(TO_CMAKE_PATH ${CMAKE_CURRENT_LIST_DIR}/.git FORCED_GIT_DIR)
 include(GetGitRevisionDescription)
