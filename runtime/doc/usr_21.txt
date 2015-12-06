@@ -70,9 +70,7 @@ difference.  Without it executes the program normally, with the range a number
 of text lines is filtered through the program.
 
 Executing a whole row of programs this way is possible.  But a shell is much
-better at it.  You can start a new shell this way: >
-
-	:shell
+better at it.  You can start a new shell with |:terminal|.
 
 This is similar to using CTRL-Z to suspend Vim.  The difference is that a new
 shell is started.
