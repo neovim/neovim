@@ -169,7 +169,7 @@ int msg_attr_keep(
           && last_msg_hist != NULL
           && last_msg_hist->msg != NULL
           && STRCMP(s, last_msg_hist->msg)))
-    add_msg_hist(s, -1, attr);
+    add_msg_hist(s, STRLEN(s), attr);
 
   /* When displaying keep_msg, don't let msg_start() free it, caller must do
    * that. */
@@ -205,19 +205,21 @@ char_u *msg_strtrunc(
 )
 {
   char_u      *buf = NULL;
-  long len;
-  long room;
+  size_t len;
+  size_t room;
 
   /* May truncate message to avoid a hit-return prompt */
   if ((!msg_scroll && !need_wait_return && shortmess(SHM_TRUNCALL)
        && !exmode_active && msg_silent == 0) || force) {
-    len = vim_strsize(s);
-    if (msg_scrolled != 0)
+    len = (size_t)vim_strsize(s);
+    assert(Rows > msg_row);
+    if (msg_scrolled != 0) {
       /* Use all the columns. */
-      room = (Rows - msg_row) * Columns - 1;
-    else
+      room = (size_t)((Rows - msg_row) * Columns - 1);
+    } else {
       /* Use up to 'showcmd' column. */
-      room = (Rows - msg_row - 1) * Columns + sc_col - 1;
+      room = (size_t)((Rows - msg_row - 1) * Columns + sc_col - 1);
+    }
     if (len > room && room > 0) {
       if (enc_utf8)
         /* may have up to 18 bytes per cell (6 per char, up to two
@@ -228,26 +230,24 @@ char_u *msg_strtrunc(
         len = (room + 2) * 2;
       else
         len = room + 2;
-      assert(len >= 0);
-      buf = xmalloc((size_t)len);
+      buf = xmalloc(len);
       trunc_string(s, buf, room, len);
     }
   }
   return buf;
 }
 
-/*
- * Truncate a string "s" to "buf" with cell width "room".
- * "s" and "buf" may be equal.
- */
-void trunc_string(char_u *s, char_u *buf, long room, long buflen)
+/// Truncate a string "s" to "buf" with cell width "room".
+/// "s" and "buf" may be equal.
+void trunc_string(char_u *s, char_u *buf, size_t room, size_t buflen)
 {
-  long half;
-  long len;
-  long i;
-  int e;
-  int n;
+  size_t half;
+  size_t len;
+  size_t i;
+  size_t e;
+  size_t n;
 
+  assert(room >= 3);
   room -= 3;
   half = room / 2;
   len = 0;
@@ -259,13 +259,13 @@ void trunc_string(char_u *s, char_u *buf, long room, long buflen)
       buf[e] = NUL;
       return;
     }
-    n = ptr2cells(s + e);
+    n = (size_t)ptr2cells(s + e);
     if (len + n >= half)
       break;
     len += n;
     buf[e] = s[e];
     if (has_mbyte)
-      for (n = (*mb_ptr2len)(s + e); --n > 0; ) {
+      for (n = (size_t)(*mb_ptr2len)(s + e); --n > 0; ) {
         if (++e == buflen)
           break;
         buf[e] = s[e];
@@ -278,37 +278,38 @@ void trunc_string(char_u *s, char_u *buf, long room, long buflen)
     /* For DBCS going backwards in a string is slow, but
      * computing the cell width isn't too slow: go forward
      * until the rest fits. */
-    n = vim_strsize(s + i);
+    n = (size_t)vim_strsize(s + i);
     while (len + n > room) {
-      n -= ptr2cells(s + i);
-      i += (*mb_ptr2len)(s + i);
+      n -= (size_t)ptr2cells(s + i);
+      i += (size_t)(*mb_ptr2len)(s + i);
     }
   } else if (enc_utf8) {
     /* For UTF-8 we can go backwards easily. */
-    half = i = (long)STRLEN(s);
+    half = i = STRLEN(s);
     for (;; ) {
-      do
-        half = half - (*mb_head_off)(s, s + half - 1) - 1;
-      while (utf_iscomposing(utf_ptr2char(s + half)) && half > 0);
-      n = ptr2cells(s + half);
+      do {
+        half = half - (size_t)(*mb_head_off)(s, s + half - 1) - 1;
+      } while (utf_iscomposing(utf_ptr2char(s + half)) && half > 0);
+      n = (size_t)ptr2cells(s + half);
       if (len + n > room)
         break;
       len += n;
       i = half;
     }
   } else {
-    for (i = (long)STRLEN(s); len + (n = ptr2cells(s + i - 1)) <= room; --i)
+    for (i = STRLEN(s);
+         len + (n = (size_t)ptr2cells(s + i - 1)) <= room; i--) {
       len += n;
+    }
   }
 
   /* Set the middle and copy the last part. */
   if (e + 3 < buflen) {
     memmove(buf + e, "...", 3);
-    len = (long)STRLEN(s + i) + 1;
+    len = STRLEN(s + i) + 1;
     if (len >= buflen - e - 3)
       len = buflen - e - 3 - 1;
-    assert(len >= 0);
-    memmove(buf + e + 3, s + i, (size_t)len);
+    memmove(buf + e + 3, s + i, len);
     buf[e + 3 + len - 1] = NUL;
   } else {
     buf[e - 1] = NUL;      /* make sure it is truncated */
@@ -620,7 +621,7 @@ char_u *msg_trunc_attr(char_u *s, int force, int attr)
   int n;
 
   /* Add message to history before truncating */
-  add_msg_hist(s, -1, attr);
+  add_msg_hist(s, STRLEN(s), attr);
 
   s = msg_may_trunc(force, s);
 
@@ -640,12 +641,12 @@ char_u *msg_trunc_attr(char_u *s, int force, int attr)
  */
 char_u *msg_may_trunc(int force, char_u *s)
 {
-  long n;
-  long room;
+  int n;
+  int room;
 
   room = (Rows - cmdline_row - 1) * Columns + sc_col - 1;
   if ((force || (shortmess(SHM_TRUNC) && !exmode_active))
-      && (n = (long)STRLEN(s) - room) > 0) {
+      && (n = (int)STRLEN(s) - room) > 0) {
     if (has_mbyte) {
       int size = vim_strsize(s);
 
@@ -665,11 +666,7 @@ char_u *msg_may_trunc(int force, char_u *s)
   return s;
 }
 
-static void add_msg_hist(
-    char_u *s,
-    int len,                        /* -1 for undetermined length */
-    int attr
-)
+static void add_msg_hist(char_u *s, size_t len, int attr)
 {
   if (msg_hist_off || msg_silent != 0)
     return;
@@ -680,8 +677,6 @@ static void add_msg_hist(
 
   /* allocate an entry and add the message at the end of the history */
   struct msg_hist *p = xmalloc(sizeof(struct msg_hist));
-  if (len < 0)
-    len = (int)STRLEN(s);
   /* remove leading and trailing newlines */
   while (len > 0 && *s == '\n') {
     ++s;
@@ -689,7 +684,7 @@ static void add_msg_hist(
   }
   while (len > 0 && s[len - 1] == '\n')
     --len;
-  p->msg = vim_strnsave(s, (size_t)len);
+  p->msg = vim_strnsave(s, len);
   p->next = NULL;
   p->attr = attr;
   if (last_msg_hist != NULL)
@@ -1090,10 +1085,10 @@ int msg_outtrans(char_u *str)
 
 int msg_outtrans_attr(char_u *str, int attr)
 {
-  return msg_outtrans_len_attr(str, (int)STRLEN(str), attr);
+  return msg_outtrans_len_attr(str, STRLEN(str), attr);
 }
 
-int msg_outtrans_len(char_u *str, int len)
+int msg_outtrans_len(char_u *str, size_t len)
 {
   return msg_outtrans_len_attr(str, len, 0);
 }
@@ -1104,9 +1099,9 @@ int msg_outtrans_len(char_u *str, int len)
  */
 char_u *msg_outtrans_one(char_u *p, int attr)
 {
-  int l;
+  size_t l;
 
-  if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1) {
+  if (has_mbyte && (l = (size_t)(*mb_ptr2len)(p)) > 1) {
     msg_outtrans_len_attr(p, l, attr);
     return p + l;
   }
@@ -1114,7 +1109,7 @@ char_u *msg_outtrans_one(char_u *p, int attr)
   return p + 1;
 }
 
-int msg_outtrans_len_attr(char_u *msgstr, int len, int attr)
+int msg_outtrans_len_attr(char_u *msgstr, size_t len, int attr)
 {
   int retval = 0;
   char_u      *str = msgstr;
@@ -1138,14 +1133,16 @@ int msg_outtrans_len_attr(char_u *msgstr, int len, int attr)
    * Go over the string.  Special characters are translated and printed.
    * Normal characters are printed several at a time.
    */
-  while (--len >= 0) {
-    if (enc_utf8)
+  while (len-- > 0) {
+    if (enc_utf8) {
       /* Don't include composing chars after the end. */
-      mb_l = utfc_ptr2len_len(str, len + 1);
-    else if (has_mbyte)
+      assert(len <= INT_MAX);
+      mb_l = utfc_ptr2len_len(str, (int)len + 1);
+    } else if (has_mbyte) {
       mb_l = (*mb_ptr2len)(str);
-    else
+    } else {
       mb_l = 1;
+    }
     if (has_mbyte && mb_l > 1) {
       c = (*mb_ptr2char)(str);
       if (vim_isprintc(c))
@@ -1161,7 +1158,8 @@ int msg_outtrans_len_attr(char_u *msgstr, int len, int attr)
         msg_puts_attr(transchar(c), attr == 0 ? hl_attr(HLF_8) : attr);
         retval += char2cells(c);
       }
-      len -= mb_l - 1;
+      assert(mb_l >= 0);
+      len -= (size_t)mb_l - 1;
       str += mb_l;
     } else {
       s = transchar_byte(*str);
@@ -1355,7 +1353,7 @@ void msg_prt_line(char_u *s, int list)
 {
   int c;
   int col = 0;
-  long n_extra = 0;
+  int n_extra = 0;
   int c_extra = 0;
   char_u      *p_extra = NULL;              /* init to make SASC shut up */
   int n;
@@ -1470,8 +1468,7 @@ static char_u *screen_puts_mbyte(char_u *s, int l, int attr)
   if (cmdmsg_rl) {
     msg_col -= cw;
     if (msg_col == 0) {
-      assert(Columns <= INT_MAX);
-      msg_col = (int)Columns;
+      msg_col = Columns;
       ++msg_row;
     }
   } else {
@@ -1505,16 +1502,16 @@ void msg_puts_title(char_u *s)
  */
 void msg_puts_long_attr(char_u *longstr, int attr)
 {
-  msg_puts_long_len_attr(longstr, (int)STRLEN(longstr), attr);
+  msg_puts_long_len_attr(longstr, STRLEN(longstr), attr);
 }
 
-void msg_puts_long_len_attr(char_u *longstr, int len, int attr)
+void msg_puts_long_len_attr(char_u *longstr, size_t len, int attr)
 {
-  int slen = len;
-  int room;
+  size_t slen = len;
+  size_t room;
 
-  assert(Columns <= INT_MAX);
-  room = (int)Columns - msg_col;
+  assert(Columns - msg_col >= 0);
+  room = (size_t)( Columns - msg_col );
   if (len > room && room >= 20) {
     slen = (room - 3) / 2;
     msg_outtrans_len_attr(longstr, slen, attr);
@@ -1551,7 +1548,7 @@ static void msg_puts_attr_len(char_u *str, int maxlen, int attr)
 
   /* if MSG_HIST flag set, add message to history */
   if ((attr & MSG_HIST) && maxlen < 0) {
-    add_msg_hist(str, -1, attr);
+    add_msg_hist(str, STRLEN(str), attr);
     attr &= ~MSG_HIST;
   }
 
@@ -1627,10 +1624,10 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
       /* Scroll the screen up one line. */
       msg_scroll_up();
 
-      assert(Rows <= INT_MAX);
-      msg_row = (int)Rows - 2;
-      if (msg_col >= Columns)           /* can happen after screen resize */
-        msg_col = (int)Columns - 1;
+      msg_row = Rows - 2;
+      if (msg_col >= Columns) {  // can happen after screen resize
+        msg_col = Columns - 1;
+      }
 
       /* Display char in last column before showing more-prompt. */
       if (*s >= ' '
@@ -1777,14 +1774,13 @@ static void inc_msg_scrolled(void)
   if (*get_vim_var_str(VV_SCROLLSTART) == NUL) {
     char_u      *p = sourcing_name;
     char_u      *tofree = NULL;
-    size_t len;
 
     /* v:scrollstart is empty, set it to the script/function name and line
      * number */
     if (p == NULL) {
       p = (char_u *)_("Unknown");
     } else {
-      len = STRLEN(p) + 40;
+      size_t len = STRLEN(p) + 40;
       tofree = xmalloc(len);
       vim_snprintf((char *)tofree, len, _("%s line %" PRId64),
           p, (int64_t)sourcing_lnum);
@@ -2013,7 +2009,7 @@ static int do_more_prompt(int typed_char)
   int oldState = State;
   int c;
   bool retval = false;
-  long toscroll;
+  int toscroll;
   msgchunk_T  *mp_last = NULL;
   msgchunk_T  *mp;
   int i;
@@ -2091,10 +2087,9 @@ static int do_more_prompt(int typed_char)
         /* Since got_int is set all typeahead will be flushed, but we
          * want to keep this ':', remember that in a special way. */
         typeahead_noflush(':');
-        assert(Rows <= INT_MAX);
-        cmdline_row = (int)Rows - 1;            // put ':' on this line
-        skip_redraw = true;                     // skip redraw once
-        need_wait_return = false;               // don't wait in main()
+        cmdline_row = Rows - 1;            // put ':' on this line
+        skip_redraw = true;                // skip redraw once
+        need_wait_return = false;          // don't wait in main()
       }
     /*FALLTHROUGH*/
     case 'q':                   /* quit */
@@ -2191,12 +2186,10 @@ static int do_more_prompt(int typed_char)
   State = oldState;
   setmouse();
   if (quit_more) {
-    assert(Rows <= INT_MAX);
-    msg_row = (int)Rows - 1;
+    msg_row = Rows - 1;
     msg_col = 0;
   } else if (cmdmsg_rl) {
-    assert(Columns <= INT_MAX);
-    msg_col = (int)Columns - 1;
+    msg_col = Columns - 1;
   }
 
   return retval;
@@ -2290,8 +2283,7 @@ static void msg_screen_putchar(int c, int attr)
   screen_putchar(c, msg_row, msg_col, attr);
   if (cmdmsg_rl) {
     if (--msg_col == 0) {
-      assert(Columns <= INT_MAX);
-      msg_col = (int)Columns;
+      msg_col = Columns;
       ++msg_row;
     }
   } else {
@@ -2308,11 +2300,11 @@ void msg_moremsg(bool full)
   char_u      *s = (char_u *)_("-- More --");
 
   attr = hl_attr(HLF_M);
-  screen_puts(s, (int)Rows - 1, 0, attr);
+  screen_puts(s, Rows - 1, 0, attr);
   if (full)
     screen_puts((char_u *)
         _(" SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "),
-        (int)Rows - 1, vim_strsize(s), attr);
+        Rows - 1, vim_strsize(s), attr);
 }
 
 /*
@@ -2323,12 +2315,10 @@ void repeat_message(void)
 {
   if (State == ASKMORE) {
     msg_moremsg(true);          /* display --more-- message again */
-    assert(Rows <= INT_MAX);
-    msg_row = (int)Rows - 1;
+    msg_row = Rows - 1;
   } else if (State == CONFIRM) {
     display_confirm_msg();      /* display ":confirm" message again */
-    assert(Rows <= INT_MAX);
-    msg_row = (int)Rows - 1;
+    msg_row = Rows - 1;
   } else if (State == EXTERNCMD) {
     ui_cursor_goto(msg_row, msg_col);     /* put cursor back */
   } else if (State == HITRETURN || State == SETWSIZE) {
@@ -2341,8 +2331,7 @@ void repeat_message(void)
       msg_clr_eos();
     }
     hit_return_msg();
-    assert(Rows <= INT_MAX);
-    msg_row = (int)Rows - 1;
+    msg_row = Rows - 1;
   }
 }
 
@@ -2595,8 +2584,8 @@ void msg_advance(int col)
     msg_col = col;              /* for redirection, may fill it up later */
     return;
   }
-  if (col >= Columns) {         // not enough room
-    col = (int)Columns - 1;
+  if (col >= Columns) {         /* not enough room */
+    col = Columns - 1;
   }
   if (cmdmsg_rl)
     while (msg_col > Columns - col)
@@ -3183,7 +3172,7 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
       } else if (ascii_isdigit((int)(*p))) {
         // size_t could be wider than unsigned int; make sure we treat
         // argument like common implementations do
-        assert(*p + 1 - '0' >= 0);
+        assert(*p - '0' >= 0);
         unsigned int uj = (unsigned)(*p++ - '0');
 
         while (ascii_isdigit((int)(*p)))
