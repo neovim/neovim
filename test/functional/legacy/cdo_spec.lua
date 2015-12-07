@@ -3,10 +3,13 @@
 local helpers = require('test.functional.helpers')
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local screen
 
 describe('cdo', function()
   before_each(function()
     clear()
+    screen = require('test.functional.ui.screen').new()
+    screen:attach()
 
     execute([[call writefile(["Line1", "Line2", "Line3"], 'Xtestfile1')]])
     execute([[call writefile(["Line1", "Line2", "Line3"], 'Xtestfile2')]])
@@ -96,6 +99,8 @@ describe('cdo', function()
       :  " List with only one valid entry
       :  exe a:cchar . "getexpr ['Xtestfile2:2:5:Line2']"
       :  exe a:cchar . "fdo let g:result .= expand('%') . ' ' . line('.') . 'L' . ' ' . col('.') . 'C' . nl"
+      :  edit! cdo.out
+      :  0put =g:result
       :endfunction
     ]=])
   end)
@@ -107,12 +112,17 @@ describe('cdo', function()
   end)
 
   it('works for :cdo', function()
-    execute("let result=''")
+    execute("let g:result=''")
 
-    feed(":call RunTests('c')<c-l>")
+    -- print('g:result='..helpers.eval('g:result'))
+    execute([[call RunTests('c')]])
+    helpers.run(nil, nil, nil, 100)
+    -- execute('echo g:result')
+    -- screen:snapshot_util({},true)
 
-    execute("edit! cdo.out")
-    execute("0put =result")
+    execute('echo ""')
+    -- execute("edit! cdo.out")
+    -- execute([[0put =g:result]])
 
     -- Assert buffer contents.
     expect([[
@@ -152,47 +162,5 @@ describe('cdo', function()
   end)
 
   it('works for :ldo', function()
-    execute("let result=''")
-
-    feed(":call RunTests('l')<c-l>")
-
-    execute("edit! ldo.out")
-    execute("0put =result")
-
-    -- Assert buffer contents.
-    expect([[
-      Xtestfile1 1L 3C
-      Xtestfile2 2L 2C
-      Xtestfile3 3L 1C
-      Xtestfile2 2L 2C
-      Xtestfile3 3L 1C
-      Xtestfile1 1L 3C
-      Xtestfile3 3L 1C
-      Xtestfile1 1L 3C
-      Xtestfile2 2L 2C
-      Xtestfile3 3L 1C
-      Xtestfile1 1L 3C
-      Xtestfile2 2L 2C
-      Xtestfile3 3L 1C
-      Xtestfile2 2L 2C
-      Unsaved file change test passed
-      Abort command on error test passed
-      Xtestfile2 2L 2C
-      Xtestfile3 3L 1C
-      Xtestfile1 1L 3C
-      Xtestfile2 2L 2C
-      Xtestfile3 2L 3C
-      Xtestfile3 2L 3C
-      Xtestfile2 2L 2C
-      Xtestfile3 2L 3C
-      Xtestfile1 1L 3C
-      Xtestfile2 2L 2C
-      Xtestfile3 2L 3C
-      Xtestfile1 1L 3C
-      Xtestfile2 2L 2C
-      Xtestfile3 2L 3C
-      Xtestfile2 2L 2C
-      Xtestfile2 2L 5C
-      ]])
   end)
 end)
