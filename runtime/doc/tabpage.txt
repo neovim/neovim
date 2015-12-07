@@ -234,7 +234,8 @@ LOOPING OVER TAB PAGES:
 		current tab page.
 		{cmd} can contain '|' to concatenate several commands.
 		{cmd} must not open or close tab pages or reorder them.
-		Also see |:windo|, |:argdo| and |:bufdo|.
+		Also see |:windo|, |:argdo|, |:bufdo|, |:cdo|, |:ldo|, |:cfdo|
+		and |:lfdo|.
 
 ==============================================================================
 3. Other items						*tab-page-other*
