@@ -286,6 +286,14 @@ static struct key_name_entry {
   {K_PASTE,           (char_u *)"Paste"},
   {K_FOCUSGAINED,     (char_u *)"FocusGained"},
   {K_FOCUSLOST,       (char_u *)"FocusLost"},
+  {K_SHIFT,           (char_u *)"Shift"},
+  {K_SHIFTRELEASE,    (char_u *)"ShiftRelease"},
+  {K_CTRL,            (char_u *)"Ctrl"},
+  {K_CTRLRELEASE,     (char_u *)"CtrlRelease"},
+  {K_ALT,             (char_u *)"Alt"},
+  {K_ALTRELEASE,      (char_u *)"AltRelease"},
+  {K_META,            (char_u *)"Meta"},
+  {K_METARELEASE,     (char_u *)"MetaRelease"},
   {0,                 NULL}
 };
 

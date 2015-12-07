@@ -241,6 +241,14 @@ enum key_extra {
   , KE_EVENT            // event
   , KE_PASTE            // special key to toggle the 'paste' option.
                         // sent only by UIs
+  , KE_SHIFT
+  , KE_SHIFTRELEASE
+  , KE_CTRL
+  , KE_CTRLRELEASE
+  , KE_ALT
+  , KE_ALTRELEASE
+  , KE_META
+  , KE_METARELEASE
 };
 
 /*
@@ -431,6 +439,15 @@ enum key_extra {
 
 #define K_EVENT         TERMCAP2KEY(KS_EXTRA, KE_EVENT)
 #define K_PASTE         TERMCAP2KEY(KS_EXTRA, KE_PASTE)
+
+#define K_SHIFT         TERMCAP2KEY(KS_EXTRA, KE_SHIFT)
+#define K_SHIFTRELEASE  TERMCAP2KEY(KS_EXTRA, KE_SHIFTRELEASE)
+#define K_CTRL          TERMCAP2KEY(KS_EXTRA, KE_CTRL)
+#define K_CTRLRELEASE   TERMCAP2KEY(KS_EXTRA, KE_CTRLRELEASE)
+#define K_ALT           TERMCAP2KEY(KS_EXTRA, KE_ALT)
+#define K_ALTRELEASE    TERMCAP2KEY(KS_EXTRA, KE_ALTRELEASE)
+#define K_META          TERMCAP2KEY(KS_EXTRA, KE_META)
+#define K_METARELEASE   TERMCAP2KEY(KS_EXTRA, KE_METARELEASE)
 
 /* Bits for modifier mask */
 /* 0x01 cannot be used, because the modifier must be 0x02 or higher */
