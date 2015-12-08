@@ -2311,8 +2311,6 @@ def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
               'Extra space before [')
 
     # You shouldn't have a space before a semicolon at the end of the line.
-    # There's a special case for "for" since the style guide allows space before
-    # the semicolon there.
     if Search(r':\s*;\s*$', line):
         error(filename, linenum, 'whitespace/semicolon', 5,
               'Semicolon defining empty statement. Use {} instead.')
@@ -2320,8 +2318,7 @@ def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
         error(filename, linenum, 'whitespace/semicolon', 5,
               'Line contains only semicolon. If this should be an empty'
               ' statement, use {} instead.')
-    elif (Search(r'\s+;\s*$', line) and
-          not Search(r'\bfor\b', line)):
+    elif Search(r'\s+;\s*$', line):
         error(filename, linenum, 'whitespace/semicolon', 5,
               'Extra space before last semicolon. If this should be an empty '
               'statement, use {} instead.')
