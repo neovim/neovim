@@ -923,19 +923,21 @@ def CleanseComments(line):
 
 class CleansedLines(object):
 
-    """Holds 3 copies of all lines with different preprocessing applied to them.
+    """Holds 4 copies of all lines with different preprocessing applied to them.
 
     1) elided member contains lines without strings and comments,
     2) lines member contains lines without comments, and
-    3) raw_lines member contains all the lines without processing.
+    3) raw_lines member contains all the lines with multiline comments replaced.
+    4) init_lines member contains all the lines without processing.
     All these three members are of <type 'list'>, and of the same length.
     """
 
-    def __init__(self, lines):
+    def __init__(self, lines, init_lines):
         self.elided = []
         self.lines = []
         self.raw_lines = lines
         self.num_lines = len(lines)
+        self.init_lines = init_lines
         self.lines_without_raw_strings = lines
         for linenum in range(len(self.lines_without_raw_strings)):
             self.lines.append(CleanseComments(
@@ -1298,6 +1300,23 @@ def CheckForMultilineCommentsAndStrings(filename, clean_lines, linenum, error):
               'Multi-line string ("...") found.  This lint script doesn\'t '
               'do well with such strings, and may give bogus warnings.  '
               'Use C++11 raw strings or concatenation instead.')
+
+
+def CheckForOldStyleComments(filename, line, linenum, error):
+    """Logs an error if we see /*-style comment
+
+    Args:
+      filename: The name of the current file.
+      line: The text of the line to check.
+      linenum: The number of the line to check.
+      error: The function to call with any errors found.
+    """
+    if line.find('/*') >= 0 and line[-1] != '\\':
+        error(filename, linenum, 'readability/old_style_comment', 5,
+              '/*-style comment found, it should be replaced with //-style.  '
+              '/*-style comments are only allowed inside macros.  '
+              'Note that you should not use /*-style comments to document '
+              'macros itself, use doxygen-style comments for this.')
 
 
 threading_list = (
@@ -3042,12 +3061,14 @@ def ProcessLine(filename, file_extension, clean_lines, line,
                               arguments : filename, clean_lines, line, error
     """
     raw_lines = clean_lines.raw_lines
+    init_lines = clean_lines.init_lines
     ParseNolintSuppressions(filename, raw_lines[line], line, error)
     nesting_state.Update(filename, clean_lines, line, error)
     if nesting_state.stack and nesting_state.stack[-1].inline_asm != _NO_ASM:
         return
     CheckForFunctionLengths(filename, clean_lines, line, function_state, error)
     CheckForMultilineCommentsAndStrings(filename, clean_lines, line, error)
+    CheckForOldStyleComments(filename, init_lines[line], line, error)
     CheckStyle(
         filename, clean_lines, line, file_extension, nesting_state, error)
     CheckLanguage(filename, clean_lines, line, file_extension, include_state,
@@ -3088,12 +3109,12 @@ def ProcessFileData(filename, file_extension, lines, error,
     for line in range(1, len(lines)):
         ParseKnownErrorSuppressions(filename, lines, line)
 
-    if _cpplint_state.record_errors_file:
-        raw_lines = lines[:]
+    init_lines = lines[:]
 
+    if _cpplint_state.record_errors_file:
         def RecordedError(filename, linenum, category, confidence, message):
             if not IsErrorSuppressedByNolint(category, linenum):
-                key = raw_lines[linenum - 1 if linenum else 0:linenum + 2]
+                key = init_lines[linenum - 1 if linenum else 0:linenum + 2]
                 err = [filename, key, category]
                 json.dump(err, _cpplint_state.record_errors_file)
                 _cpplint_state.record_errors_file.write('\n')
@@ -3105,7 +3126,7 @@ def ProcessFileData(filename, file_extension, lines, error,
         CheckForHeaderGuard(filename, lines, error)
 
     RemoveMultiLineComments(filename, lines, error)
-    clean_lines = CleansedLines(lines)
+    clean_lines = CleansedLines(lines, init_lines)
     for line in range(clean_lines.NumLines()):
         ProcessLine(filename, file_extension, clean_lines, line,
                     include_state, function_state, nesting_state, error,
