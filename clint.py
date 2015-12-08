@@ -2361,11 +2361,27 @@ def CheckBraces(filename, clean_lines, linenum, error):
                       ' of the previous line')
 
     # An else clause should be on the same line as the preceding closing brace.
+    # If there is no preceding closing brace, there should be one.
     if Match(r'\s*else\s*', line):
         prevline = GetPreviousNonBlankLine(clean_lines, linenum)[0]
         if Match(r'\s*}\s*$', prevline):
             error(filename, linenum, 'whitespace/newline', 4,
                   'An else should appear on the same line as the preceding }')
+        else:
+            error(filename, linenum, 'readability/braces', 5,
+                  'An else should always have braces before it')
+
+    # If should always have a brace
+    for blockstart in ('if', 'while', 'for'):
+        if Match(r'\s*{0}[^{{]*$'.format(blockstart), line):
+            pos = line.find(blockstart)
+            pos = line.find('(', pos)
+            if pos > 0:
+                (endline, _, endpos) = CloseExpression(
+                    clean_lines, linenum, pos)
+                if endline[endpos:].find('{') == -1:
+                    error(filename, linenum, 'readability/braces', 5,
+                          '{0} should always use braces'.format(blockstart))
 
     # If braces come on one side of an else, they should be on both.
     # However, we have to worry about "else if" that spans multiple lines!
