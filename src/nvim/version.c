@@ -35,8 +35,14 @@
 
 char *Version = VIM_VERSION_SHORT;
 char *longVersion = NVIM_VERSION_LONG;
+#ifdef NVIM_VERSION_BUILD_DATE
+char *longVersionWithDate = NVIM_VERSION_LONG \
+                            " (compiled " NVIM_VERSION_BUILD_DATE ")";
+#else
 char *longVersionWithDate = NVIM_VERSION_LONG \
                             " (compiled " __DATE__ " " __TIME__ ")";
+#endif
+
 #ifdef NVIM_VERSION_COMMIT
 char *version_commit = "Commit: " NVIM_VERSION_COMMIT;
 #endif
