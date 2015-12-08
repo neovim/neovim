@@ -1994,7 +1994,8 @@ def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
     if/for/while/switch, no spaces around parens in function calls, two
     spaces between code and comment, don't start a block with a blank
     line, don't end a function with a blank line, don't add a blank line
-    after public/protected/private, don't have too many blank lines in a row.
+    after public/protected/private, don't have too many blank lines in a row,
+    spaces after {, spaces before }.
 
     Args:
       filename: The name of the current file.
@@ -2322,6 +2323,13 @@ def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
         error(filename, linenum, 'whitespace/semicolon', 5,
               'Extra space before last semicolon. If this should be an empty '
               'statement, use {} instead.')
+
+    if Search(r'\{(?!\})\S', line):
+        error(filename, linenum, 'whitespace/braces', 5,
+              'Missing space after {')
+    if Search(r'\S(?<!\{)\}', line):
+        error(filename, linenum, 'whitespace/braces', 5,
+              'Missing space before }')
 
 
 def GetPreviousNonBlankLine(clean_lines, linenum):
