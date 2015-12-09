@@ -205,11 +205,11 @@ enum SRNIFlags {
   kSDReadHeader = (1 << kSDItemHeader),  ///< Determines whether header should
                                          ///< be read (it is usually ignored).
   kSDReadUndisableableData = (
-    (1 << kSDItemSearchPattern)
-    | (1 << kSDItemSubString)
-    | (1 << kSDItemJump)),  ///< Data reading which cannot be disabled by &shada
-                            ///< or other options except for disabling reading
-                            ///< ShaDa as a whole.
+      (1 << kSDItemSearchPattern)
+      | (1 << kSDItemSubString)
+      | (1 << kSDItemJump)),  ///< Data reading which cannot be disabled by
+                              ///< &shada or other options except for disabling
+                              ///< reading ShaDa as a whole.
   kSDReadRegisters = (1 << kSDItemRegister),  ///< Determines whether registers
                                               ///< should be read (may only be
                                               ///< disabled when writing, but
@@ -446,7 +446,7 @@ typedef struct sd_write_def {
         .attr = { __VA_ARGS__ } \
       } \
     }
-#define DEFAULT_POS {1, 0, 0}
+#define DEFAULT_POS { 1, 0, 0 }
 static const pos_T default_pos = DEFAULT_POS;
 static const ShadaEntry sd_default_values[] = {
   [kSDItemMissing] = { .type = kSDItemMissing, .timestamp = 0 },
@@ -533,11 +533,14 @@ static inline void hmll_init(HMLList *const hmll, const size_t size)
 ///
 /// @param  hmll       Pointer to the list.
 /// @param  cur_entry  Name of the variable to iterate over.
+/// @param  code       Code to execute on each iteration.
 ///
 /// @return `for` cycle header (use `HMLL_FORALL(hmll, cur_entry) {body}`).
-#define HMLL_FORALL(hmll, cur_entry) \
+#define HMLL_FORALL(hmll, cur_entry, code) \
     for (HMLListEntry *cur_entry = (hmll)->first; cur_entry != NULL; \
-         cur_entry = cur_entry->next)
+         cur_entry = cur_entry->next) { \
+      code \
+    } \
 
 /// Remove entry from the linked list
 ///
@@ -633,11 +636,14 @@ static inline void hmll_insert(HMLList *const hmll,
 /// @param  hmll       Pointer to the list.
 /// @param  cur_entry  Name of the variable to iterate over, must be already
 ///                    defined.
+/// @param  code       Code to execute on each iteration.
 ///
 /// @return `for` cycle header (use `HMLL_FORALL(hmll, cur_entry) {body}`).
-#define HMLL_ITER_BACK(hmll, cur_entry) \
+#define HMLL_ITER_BACK(hmll, cur_entry, code) \
     for (cur_entry = (hmll)->last; cur_entry != NULL; \
-         cur_entry = cur_entry->prev)
+         cur_entry = cur_entry->prev) { \
+      code \
+    }
 
 /// Free linked list
 ///
@@ -959,11 +965,11 @@ static int shada_read_file(const char *const file, const int flags)
   if (p_verbose > 0) {
     verbose_enter();
     smsg(_("Reading ShaDa file \"%s\"%s%s%s"),
-        fname,
-        (flags & kShaDaWantInfo) ? _(" info") : "",
-        (flags & kShaDaWantMarks) ? _(" marks") : "",
-        (flags & kShaDaGetOldfiles) ? _(" oldfiles") : "",
-        of_ret != 0 ? _(" FAILED") : "");
+         fname,
+         (flags & kShaDaWantInfo) ? _(" info") : "",
+         (flags & kShaDaWantMarks) ? _(" marks") : "",
+         (flags & kShaDaGetOldfiles) ? _(" oldfiles") : "",
+         of_ret != 0 ? _(" FAILED") : "");
     verbose_leave();
   }
 
@@ -1011,8 +1017,8 @@ static const void *shada_hist_iter(const void *const iter,
           .histtype = history_type,
           .string = (char *) hist_he.hisstr,
           .sep = (char) (history_type == HIST_SEARCH
-                        ? (char) hist_he.hisstr[STRLEN(hist_he.hisstr) + 1]
-                        : 0),
+                         ? (char) hist_he.hisstr[STRLEN(hist_he.hisstr) + 1]
+                         : 0),
           .additional_elements = hist_he.additional_elements,
         }
       }
@@ -1074,11 +1080,11 @@ static void hms_insert(HistoryMergerState *const hms_p, const ShadaEntry entry,
     }
   }
   HMLListEntry *insert_after;
-  HMLL_ITER_BACK(hmll, insert_after) {
+  HMLL_ITER_BACK(hmll, insert_after, {
     if (insert_after->data.timestamp <= entry.timestamp) {
       break;
     }
-  }
+  })
   hmll_insert(hmll, insert_after, entry, can_free_entry);
 }
 
@@ -1136,14 +1142,14 @@ static inline void hms_to_he_array(const HistoryMergerState *const hms_p,
   FUNC_ATTR_NONNULL_ALL
 {
   histentry_T *hist = hist_array;
-  HMLL_FORALL(&hms_p->hmll, cur_entry) {
+  HMLL_FORALL(&hms_p->hmll, cur_entry,  {
     hist->timestamp = cur_entry->data.timestamp;
     hist->hisnum = (int) (hist - hist_array) + 1;
     hist->hisstr = (char_u *) cur_entry->data.data.history_item.string;
     hist->additional_elements =
         cur_entry->data.data.history_item.additional_elements;
     hist++;
-  }
+  })
   *new_hisnum = (int) (hist - hist_array);
   *new_hisidx = *new_hisnum - 1;
 }
@@ -1161,10 +1167,11 @@ static inline void hms_dealloc(HistoryMergerState *const hms_p)
 ///
 /// @param[in]   hms_p      Merger structure to iterate over.
 /// @param[out]  cur_entry  Name of the iterator variable.
+/// @param       code       Code to execute on each iteration.
 ///
 /// @return for cycle header. Use `HMS_ITER(hms_p, cur_entry) {body}`.
-#define HMS_ITER(hms_p, cur_entry) \
-    HMLL_FORALL(&((hms_p)->hmll), cur_entry)
+#define HMS_ITER(hms_p, cur_entry, code) \
+    HMLL_FORALL(&((hms_p)->hmll), cur_entry, code)
 
 /// Find buffer for given buffer name (cached)
 ///
@@ -1341,18 +1348,18 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
         (cur_entry.data.search_pattern.is_substitute_pattern
          ? &set_substitute_pattern
          : &set_search_pattern)((SearchPattern) {
-          .magic = cur_entry.data.search_pattern.magic,
-          .no_scs = !cur_entry.data.search_pattern.smartcase,
-          .off = {
-            .dir = cur_entry.data.search_pattern.search_backward ? '?' : '/',
-            .line = cur_entry.data.search_pattern.has_line_offset,
-            .end = cur_entry.data.search_pattern.place_cursor_at_end,
-            .off = cur_entry.data.search_pattern.offset,
-          },
-          .pat = (char_u *) cur_entry.data.search_pattern.pat,
-          .additional_data = cur_entry.data.search_pattern.additional_data,
-          .timestamp = cur_entry.timestamp,
-        });
+           .magic = cur_entry.data.search_pattern.magic,
+           .no_scs = !cur_entry.data.search_pattern.smartcase,
+           .off = {
+             .dir = cur_entry.data.search_pattern.search_backward ? '?' : '/',
+             .line = cur_entry.data.search_pattern.has_line_offset,
+             .end = cur_entry.data.search_pattern.place_cursor_at_end,
+             .off = cur_entry.data.search_pattern.offset,
+           },
+           .pat = (char_u *) cur_entry.data.search_pattern.pat,
+           .additional_data = cur_entry.data.search_pattern.additional_data,
+           .timestamp = cur_entry.timestamp,
+         });
         if (cur_entry.data.search_pattern.is_last_used) {
           set_last_used_pattern(
               cur_entry.data.search_pattern.is_substitute_pattern);
@@ -2430,13 +2437,13 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   }
 
   const unsigned srni_flags = (unsigned) (
-    kSDReadUndisableableData
-    | kSDReadUnknown
-    | (dump_history ? kSDReadHistory : 0)
-    | (dump_registers ? kSDReadRegisters : 0)
-    | (dump_global_vars ? kSDReadVariables : 0)
-    | (dump_global_marks ? kSDReadGlobalMarks : 0)
-    | (num_marked_files ? kSDReadLocalMarks | kSDReadChanges : 0));
+      kSDReadUndisableableData
+      | kSDReadUnknown
+      | (dump_history ? kSDReadHistory : 0)
+      | (dump_registers ? kSDReadRegisters : 0)
+      | (dump_global_vars ? kSDReadVariables : 0)
+      | (dump_global_marks ? kSDReadGlobalMarks : 0)
+      | (num_marked_files ? kSDReadLocalMarks | kSDReadChanges : 0));
 
   msgpack_packer *const packer = msgpack_packer_new(sd_writer,
                                                     &msgpack_sd_writer_write);
@@ -2895,16 +2902,16 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
     for (size_t i = 0; i < HIST_COUNT; i++) {
       if (dump_one_history[i]) {
         hms_insert_whole_neovim_history(&wms->hms[i]);
-        HMS_ITER(&wms->hms[i], cur_entry) {
+        HMS_ITER(&wms->hms[i], cur_entry, {
           if (!shada_pack_encoded_entry(
-                  packer, &sd_writer->sd_conv, (PossiblyFreedShadaEntry) {
-                    .data = cur_entry->data,
-                    .can_free_entry = cur_entry->can_free_entry,
-                  }, max_kbyte)) {
+              packer, &sd_writer->sd_conv, (PossiblyFreedShadaEntry) {
+                .data = cur_entry->data,
+                .can_free_entry = cur_entry->can_free_entry,
+              }, max_kbyte)) {
             ret = kSDWriteFailed;
             break;
           }
-        }
+        })
         hms_dealloc(&wms->hms[i]);
         if (ret == kSDWriteFailed) {
           goto shada_write_exit;
@@ -3355,8 +3362,8 @@ static inline char *get_converted_string(const vimconv_T *const sd_conv,
     entry_name " entry at position %" PRIu64 " " \
     error_desc
 #define CHECK_KEY(key, expected) ( \
-  key.via.str.size == sizeof(expected) - 1 \
-  && STRNCMP(key.via.str.ptr, expected, sizeof(expected) - 1) == 0)
+    key.via.str.size == sizeof(expected) - 1 \
+    && STRNCMP(key.via.str.ptr, expected, sizeof(expected) - 1) == 0)
 #define CLEAR_GA_AND_ERROR_OUT(ga) \
     do { \
       ga_clear(&ga); \
@@ -3379,18 +3386,17 @@ static inline char *get_converted_string(const vimconv_T *const sd_conv,
     tgt = proc(obj.via.attr); \
   } while (0)
 #define CHECK_KEY_IS_STR(entry_name) \
-  do { \
-    if (unpacked.data.via.map.ptr[i].key.type != MSGPACK_OBJECT_STR) { \
-      emsgu(_(READERR(entry_name, "has key which is not a string")), \
-            initial_fpos); \
-      CLEAR_GA_AND_ERROR_OUT(ad_ga); \
-    } else if (unpacked.data.via.map.ptr[i].key.via.str.size == 0) { \
-      emsgu(_(READERR(entry_name, "has empty key")), initial_fpos); \
-      CLEAR_GA_AND_ERROR_OUT(ad_ga); \
-    } \
-  } while (0)
+  if (unpacked.data.via.map.ptr[i].key.type != MSGPACK_OBJECT_STR) { \
+    emsgu(_(READERR(entry_name, "has key which is not a string")), \
+          initial_fpos); \
+    CLEAR_GA_AND_ERROR_OUT(ad_ga); \
+  } else if (unpacked.data.via.map.ptr[i].key.via.str.size == 0) { \
+    emsgu(_(READERR(entry_name, "has empty key")), initial_fpos); \
+    CLEAR_GA_AND_ERROR_OUT(ad_ga); \
+  }
 #define CHECKED_KEY(entry_name, name, error_desc, tgt, condition, attr, proc) \
-  if (CHECK_KEY(unpacked.data.via.map.ptr[i].key, name)) { \
+  else if (CHECK_KEY( /* NOLINT(readability/braces) */ \
+      unpacked.data.via.map.ptr[i].key, name)) { \
     CHECKED_ENTRY( \
         condition, "has " name " key value " error_desc, \
         entry_name, unpacked.data.via.map.ptr[i].val, \
@@ -3410,17 +3416,17 @@ static inline char *get_converted_string(const vimconv_T *const sd_conv,
 #define INT_KEY(entry_name, name, tgt, proc) \
   CHECKED_KEY( \
       entry_name, name, "which is not an integer", tgt, \
-      (unpacked.data.via.map.ptr[i].val.type \
-              == MSGPACK_OBJECT_POSITIVE_INTEGER \
-       || unpacked.data.via.map.ptr[i].val.type \
-              == MSGPACK_OBJECT_NEGATIVE_INTEGER), \
+      ((unpacked.data.via.map.ptr[i].val.type \
+        == MSGPACK_OBJECT_POSITIVE_INTEGER) \
+       || (unpacked.data.via.map.ptr[i].val.type \
+           == MSGPACK_OBJECT_NEGATIVE_INTEGER)), \
       i64, proc)
 #define INTEGER_KEY(entry_name, name, tgt) \
   INT_KEY(entry_name, name, tgt, TOINT)
 #define LONG_KEY(entry_name, name, tgt) \
   INT_KEY(entry_name, name, tgt, TOLONG)
 #define ADDITIONAL_KEY \
-  { \
+  else { /* NOLINT(readability/braces) */ \
     ga_grow(&ad_ga, 1); \
     memcpy(((char *)ad_ga.ga_data) + ((size_t) ad_ga.ga_len \
                                       * sizeof(*unpacked.data.via.map.ptr)), \
@@ -3429,9 +3435,9 @@ static inline char *get_converted_string(const vimconv_T *const sd_conv,
     ad_ga.ga_len++; \
   }
 #define CONVERTED(str, len) ( \
-  sd_reader->sd_conv.vc_type != CONV_NONE \
-  ? get_converted_string(&sd_reader->sd_conv, (str), (len)) \
-  : xmemdupz((str), (len)))
+    sd_reader->sd_conv.vc_type != CONV_NONE \
+    ? get_converted_string(&sd_reader->sd_conv, (str), (len)) \
+    : xmemdupz((str), (len)))
 #define BIN_CONVERTED(b) CONVERTED(b.ptr, b.size)
 #define SET_ADDITIONAL_DATA(tgt, name) \
       do { \
@@ -3625,38 +3631,28 @@ shada_read_next_item_start:
       garray_T ad_ga;
       ga_init(&ad_ga, sizeof(*(unpacked.data.via.map.ptr)), 1);
       for (size_t i = 0; i < unpacked.data.via.map.size; i++) {
-        CHECK_KEY_IS_STR("search pattern");
+        CHECK_KEY_IS_STR("search pattern")
         BOOLEAN_KEY("search pattern", SEARCH_KEY_MAGIC,
                     entry->data.search_pattern.magic)
-        else
-          BOOLEAN_KEY("search pattern", SEARCH_KEY_SMARTCASE,
-                      entry->data.search_pattern.smartcase)
-        else
-          BOOLEAN_KEY("search pattern", SEARCH_KEY_HAS_LINE_OFFSET,
-                      entry->data.search_pattern.has_line_offset)
-        else
-          BOOLEAN_KEY("search pattern", SEARCH_KEY_PLACE_CURSOR_AT_END,
-                      entry->data.search_pattern.place_cursor_at_end)
-        else
-          BOOLEAN_KEY("search pattern", SEARCH_KEY_IS_LAST_USED,
-                      entry->data.search_pattern.is_last_used)
-        else
-          BOOLEAN_KEY("search pattern", SEARCH_KEY_IS_SUBSTITUTE_PATTERN,
-                      entry->data.search_pattern.is_substitute_pattern)
-        else
-          BOOLEAN_KEY("search pattern", SEARCH_KEY_HIGHLIGHTED,
-                      entry->data.search_pattern.highlighted)
-        else
-          BOOLEAN_KEY("search pattern", SEARCH_KEY_BACKWARD,
-                      entry->data.search_pattern.search_backward)
-        else
-          INTEGER_KEY("search pattern", SEARCH_KEY_OFFSET,
-                      entry->data.search_pattern.offset)
-        else
-          CONVERTED_STRING_KEY("search pattern", SEARCH_KEY_PAT,
-                               entry->data.search_pattern.pat)
-        else
-          ADDITIONAL_KEY
+        BOOLEAN_KEY("search pattern", SEARCH_KEY_SMARTCASE,
+                    entry->data.search_pattern.smartcase)
+        BOOLEAN_KEY("search pattern", SEARCH_KEY_HAS_LINE_OFFSET,
+                    entry->data.search_pattern.has_line_offset)
+        BOOLEAN_KEY("search pattern", SEARCH_KEY_PLACE_CURSOR_AT_END,
+                    entry->data.search_pattern.place_cursor_at_end)
+        BOOLEAN_KEY("search pattern", SEARCH_KEY_IS_LAST_USED,
+                    entry->data.search_pattern.is_last_used)
+        BOOLEAN_KEY("search pattern", SEARCH_KEY_IS_SUBSTITUTE_PATTERN,
+                    entry->data.search_pattern.is_substitute_pattern)
+        BOOLEAN_KEY("search pattern", SEARCH_KEY_HIGHLIGHTED,
+                    entry->data.search_pattern.highlighted)
+        BOOLEAN_KEY("search pattern", SEARCH_KEY_BACKWARD,
+                    entry->data.search_pattern.search_backward)
+        INTEGER_KEY("search pattern", SEARCH_KEY_OFFSET,
+                    entry->data.search_pattern.offset)
+        CONVERTED_STRING_KEY("search pattern", SEARCH_KEY_PAT,
+                             entry->data.search_pattern.pat)
+        ADDITIONAL_KEY
       }
       if (entry->data.search_pattern.pat == NULL) {
         emsgu(_(READERR("search pattern", "has no pattern")), initial_fpos);
@@ -3677,7 +3673,7 @@ shada_read_next_item_start:
       garray_T ad_ga;
       ga_init(&ad_ga, sizeof(*(unpacked.data.via.map.ptr)), 1);
       for (size_t i = 0; i < unpacked.data.via.map.size; i++) {
-        CHECK_KEY_IS_STR("mark");
+        CHECK_KEY_IS_STR("mark")
         if (CHECK_KEY(unpacked.data.via.map.ptr[i].key, KEY_NAME_CHAR)) {
           if (type_u64 == kSDItemJump || type_u64 == kSDItemChange) {
             emsgu(_(READERR("mark", "has n key which is only valid for "
@@ -3690,15 +3686,11 @@ shada_read_next_item_start:
               "has n key value which is not an unsigned integer",
               "mark", unpacked.data.via.map.ptr[i].val,
               entry->data.filemark.name, u64, TOCHAR);
-        } else {
-          LONG_KEY("mark", KEY_LNUM, entry->data.filemark.mark.lnum)
-          else
-            INTEGER_KEY("mark", KEY_COL, entry->data.filemark.mark.col)
-          else
-            STRING_KEY("mark", KEY_FILE, entry->data.filemark.fname)
-          else
-            ADDITIONAL_KEY
         }
+        LONG_KEY("mark", KEY_LNUM, entry->data.filemark.mark.lnum)
+        INTEGER_KEY("mark", KEY_COL, entry->data.filemark.mark.col)
+        STRING_KEY("mark", KEY_FILE, entry->data.filemark.fname)
+        ADDITIONAL_KEY
       }
       if (entry->data.filemark.fname == NULL) {
         emsgu(_(READERR("mark", "is missing file name")), initial_fpos);
@@ -3723,48 +3715,44 @@ shada_read_next_item_start:
       garray_T ad_ga;
       ga_init(&ad_ga, sizeof(*(unpacked.data.via.map.ptr)), 1);
       for (size_t i = 0; i < unpacked.data.via.map.size; i++) {
-        CHECK_KEY_IS_STR("register");
+        CHECK_KEY_IS_STR("register")
+        if (CHECK_KEY(unpacked.data.via.map.ptr[i].key,
+                      REG_KEY_CONTENTS)) {
+          if (unpacked.data.via.map.ptr[i].val.type != MSGPACK_OBJECT_ARRAY) {
+            emsgu(_(READERR("register",
+                            "has " REG_KEY_CONTENTS
+                            " key with non-array value")),
+                  initial_fpos);
+            CLEAR_GA_AND_ERROR_OUT(ad_ga);
+          }
+          if (unpacked.data.via.map.ptr[i].val.via.array.size == 0) {
+            emsgu(_(READERR("register",
+                            "has " REG_KEY_CONTENTS " key with empty array")),
+                  initial_fpos);
+            CLEAR_GA_AND_ERROR_OUT(ad_ga);
+          }
+          const msgpack_object_array arr =
+              unpacked.data.via.map.ptr[i].val.via.array;
+          for (size_t i = 0; i < arr.size; i++) {
+            if (arr.ptr[i].type != MSGPACK_OBJECT_BIN) {
+              emsgu(_(READERR("register", "has " REG_KEY_CONTENTS " array "
+                              "with non-binary value")), initial_fpos);
+              CLEAR_GA_AND_ERROR_OUT(ad_ga);
+            }
+          }
+          entry->data.reg.contents_size = arr.size;
+          entry->data.reg.contents = xmalloc(arr.size * sizeof(char *));
+          for (size_t i = 0; i < arr.size; i++) {
+            entry->data.reg.contents[i] = BIN_CONVERTED(arr.ptr[i].via.bin);
+          }
+        }
         TYPED_KEY("register", REG_KEY_TYPE, "an unsigned integer",
                   entry->data.reg.type, POSITIVE_INTEGER, u64, TOU8)
-        else
-          TYPED_KEY("register", KEY_NAME_CHAR, "an unsigned integer",
-                    entry->data.reg.name, POSITIVE_INTEGER, u64, TOCHAR)
-        else
-          TYPED_KEY("register", REG_KEY_WIDTH, "an unsigned integer",
-                    entry->data.reg.width, POSITIVE_INTEGER, u64, TOSIZE)
-        else
-          if (CHECK_KEY(unpacked.data.via.map.ptr[i].key,
-                        REG_KEY_CONTENTS)) {
-            if (unpacked.data.via.map.ptr[i].val.type != MSGPACK_OBJECT_ARRAY) {
-              emsgu(_(READERR(
-                          "register",
-                          "has " REG_KEY_CONTENTS " key with non-array value")),
-                      initial_fpos);
-              CLEAR_GA_AND_ERROR_OUT(ad_ga);
-            }
-            if (unpacked.data.via.map.ptr[i].val.via.array.size == 0) {
-              emsgu(_(READERR("register",
-                              "has " REG_KEY_CONTENTS " key with empty array")),
-                    initial_fpos);
-              CLEAR_GA_AND_ERROR_OUT(ad_ga);
-            }
-            const msgpack_object_array arr =
-                unpacked.data.via.map.ptr[i].val.via.array;
-            for (size_t i = 0; i < arr.size; i++) {
-              if (arr.ptr[i].type != MSGPACK_OBJECT_BIN) {
-                emsgu(_(READERR("register", "has " REG_KEY_CONTENTS " array "
-                                "with non-binary value")), initial_fpos);
-                CLEAR_GA_AND_ERROR_OUT(ad_ga);
-              }
-            }
-            entry->data.reg.contents_size = arr.size;
-            entry->data.reg.contents = xmalloc(arr.size * sizeof(char *));
-            for (size_t i = 0; i < arr.size; i++) {
-              entry->data.reg.contents[i] = BIN_CONVERTED(arr.ptr[i].via.bin);
-            }
-          } else {
-            ADDITIONAL_KEY
-          }
+        TYPED_KEY("register", KEY_NAME_CHAR, "an unsigned integer",
+                  entry->data.reg.name, POSITIVE_INTEGER, u64, TOCHAR)
+        TYPED_KEY("register", REG_KEY_WIDTH, "an unsigned integer",
+                  entry->data.reg.width, POSITIVE_INTEGER, u64, TOSIZE)
+        ADDITIONAL_KEY
       }
       if (entry->data.reg.contents == NULL) {
         emsgu(_(READERR("register", "has missing " REG_KEY_CONTENTS " array")),
@@ -3832,8 +3820,8 @@ shada_read_next_item_hist_no_conv:
             + 1);  // Separator character
         entry->data.history_item.string = xmalloc(strsize);
         memcpy(entry->data.history_item.string,
-              unpacked.data.via.array.ptr[1].via.bin.ptr,
-              unpacked.data.via.array.ptr[1].via.bin.size);
+               unpacked.data.via.array.ptr[1].via.bin.ptr,
+               unpacked.data.via.array.ptr[1].via.bin.size);
       } else {
         size_t len = unpacked.data.via.array.ptr[1].via.bin.size;
         char *const converted = string_convert(
@@ -3953,17 +3941,14 @@ shada_read_next_item_hist_no_conv:
             const size_t j = i;
             {
               for (size_t i = 0; i < unpacked.data.via.map.size; i++) {
-                CHECK_KEY_IS_STR("buffer list entry");
+                CHECK_KEY_IS_STR("buffer list entry")
                 LONG_KEY("buffer list entry", KEY_LNUM,
-                        entry->data.buffer_list.buffers[j].pos.lnum)
-                else
-                  INTEGER_KEY("buffer list entry", KEY_COL,
-                              entry->data.buffer_list.buffers[j].pos.col)
-                else
-                  STRING_KEY("buffer list entry", KEY_FILE,
-                             entry->data.buffer_list.buffers[j].fname)
-                else
-                  ADDITIONAL_KEY
+                         entry->data.buffer_list.buffers[j].pos.lnum)
+                INTEGER_KEY("buffer list entry", KEY_COL,
+                            entry->data.buffer_list.buffers[j].pos.col)
+                STRING_KEY("buffer list entry", KEY_FILE,
+                           entry->data.buffer_list.buffers[j].fname)
+                ADDITIONAL_KEY
               }
             }
           }
