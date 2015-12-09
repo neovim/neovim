@@ -116,7 +116,7 @@ struct interval {
  * Bytes which are illegal when used as the first byte have a 1.
  * The NUL byte has length 1.
  */
-static char utf8len_tab[256] =
+static uint8_t utf8len_tab[256] =
 {
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -400,7 +400,7 @@ int enc_canon_props(const char_u *name)
 char_u * mb_init(void)
 {
   int idx;
-  int n;
+  uint8_t num_bytes = 0;
   int enc_dbcs_new = 0;
 #if defined(USE_ICONV) && !defined(WIN3264) && !defined(WIN32UNIX) \
   && !defined(MACOS)
@@ -516,13 +516,13 @@ char_u * mb_init(void)
     /* Our own function to reliably check the length of UTF-8 characters,
      * independent of mblen(). */
     if (enc_utf8)
-      n = utf8len_tab[i];
+      num_bytes = utf8len_tab[i];
     else if (enc_dbcs == 0)
-      n = 1;
+      num_bytes = 1;
     else {
       uint8_t buf[MB_MAXBYTES + 1];
       if (i == NUL)             /* just in case mblen() can't handle "" */
-        n = 1;
+        num_bytes = 1;
       else {
         buf[0] = i;
         buf[1] = 0;
@@ -535,9 +535,9 @@ char_u * mb_init(void)
           p = string_convert(&vimconv, (char_u *)buf, NULL);
           if (p != NULL) {
             xfree(p);
-            n = 1;
+            num_bytes = 1;
           } else
-            n = 2;
+            num_bytes = 2;
         } else
 #endif
         {
@@ -547,15 +547,15 @@ char_u * mb_init(void)
            * where mblen() returns 0 for invalid character.
            * Therefore, following condition includes 0.
            */
-          ignored = mblen(NULL, 0);             /* First reset the state. */
-          if (mblen(buf, (size_t)1) <= 0)
-            n = 2;
+          ignored = MBLEN(NULL, 0);             /* First reset the state. */
+          if (MBLEN(buf, 1) <= 0)
+            num_bytes = 2;
           else
-            n = 1;
+            num_bytes = 1;
         }
       }
     }
-    mb_bytelen_tab[i] = n;
+    mb_bytelen_tab[i] = num_bytes;
   } while (i++ != 255);
 
 #ifdef LEN_FROM_CONV
