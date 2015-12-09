@@ -198,6 +198,8 @@ _ERROR_CATEGORIES = [
     'runtime/printf',
     'runtime/printf_format',
     'runtime/threadsafe_fn',
+    'syntax/parenthesis',
+    'whitespace/alignment',
     'whitespace/blank_line',
     'whitespace/braces',
     'whitespace/comma',
@@ -213,7 +215,7 @@ _ERROR_CATEGORIES = [
     'whitespace/parens',
     'whitespace/semicolon',
     'whitespace/tab',
-    'whitespace/todo'
+    'whitespace/todo',
 ]
 
 # The default state of the category filter. This is overrided by the --filter=
@@ -826,9 +828,9 @@ def Error(filename, linenum, category, confidence, message):
 _RE_PATTERN_CLEANSE_LINE_ESCAPES = re.compile(
     r'\\([abfnrtv?"\\\']|\d+|x[0-9a-fA-F]+)')
 # Matches strings.  Escape codes should already be removed by ESCAPES.
-_RE_PATTERN_CLEANSE_LINE_DOUBLE_QUOTES = re.compile(r'"[^"]*"')
+_RE_PATTERN_CLEANSE_LINE_DOUBLE_QUOTES = re.compile(r'"([^"]*)"')
 # Matches characters.  Escape codes should already be removed by ESCAPES.
-_RE_PATTERN_CLEANSE_LINE_SINGLE_QUOTES = re.compile(r"'.'")
+_RE_PATTERN_CLEANSE_LINE_SINGLE_QUOTES = re.compile(r"'(.)'")
 # Matches multi-line C++ comments.
 # This RE is a little bit more complicated than one might expect, because we
 # have to take care of space removals tools so we can handle comments inside
@@ -923,12 +925,14 @@ def CleanseComments(line):
 
 class CleansedLines(object):
 
-    """Holds 4 copies of all lines with different preprocessing applied to them.
+    """Holds 5 copies of all lines with different preprocessing applied to them.
 
     1) elided member contains lines without strings and comments,
     2) lines member contains lines without comments, and
     3) raw_lines member contains all the lines with multiline comments replaced.
     4) init_lines member contains all the lines without processing.
+    5) elided_with_space_strings is like elided, but with string literals
+       looking like `"   "`.
     All these three members are of <type 'list'>, and of the same length.
     """
 
@@ -939,25 +943,30 @@ class CleansedLines(object):
         self.num_lines = len(lines)
         self.init_lines = init_lines
         self.lines_without_raw_strings = lines
+        self.elided_with_space_strings = []
         for linenum in range(len(self.lines_without_raw_strings)):
             self.lines.append(CleanseComments(
                 self.lines_without_raw_strings[linenum]))
             elided = self._CollapseStrings(
                 self.lines_without_raw_strings[linenum])
             self.elided.append(CleanseComments(elided))
+            elided = CleanseComments(self._CollapseStrings(
+                self.lines_without_raw_strings[linenum], True))
+            self.elided_with_space_strings.append(elided)
 
     def NumLines(self):
         """Returns the number of lines represented."""
         return self.num_lines
 
     @staticmethod
-    def _CollapseStrings(elided):
+    def _CollapseStrings(elided, keep_spaces=False):
         """Collapses strings and chars on a line to simple "" or '' blocks.
 
         We nix strings first so we're not fooled by text like '"http://"'
 
         Args:
           elided: The line being processed.
+          keep_spaces: If true, collapse to
 
         Returns:
           The line with collapsed strings.
@@ -966,10 +975,73 @@ class CleansedLines(object):
             # Remove escaped characters first to make quote/single quote
             # collapsing basic.  Things that look like escaped characters
             # shouldn't occur outside of strings and chars.
-            elided = _RE_PATTERN_CLEANSE_LINE_ESCAPES.sub('', elided)
-            elided = _RE_PATTERN_CLEANSE_LINE_SINGLE_QUOTES.sub("''", elided)
-            elided = _RE_PATTERN_CLEANSE_LINE_DOUBLE_QUOTES.sub('""', elided)
+            elided = _RE_PATTERN_CLEANSE_LINE_ESCAPES.sub(
+                '' if not keep_spaces else lambda m: ' ' * len(m.group(0)),
+                elided)
+            elided = _RE_PATTERN_CLEANSE_LINE_SINGLE_QUOTES.sub(
+                "''" if not keep_spaces
+                else lambda m: "'" + (' ' * len(m.group(1))) + "'",
+                elided)
+            elided = _RE_PATTERN_CLEANSE_LINE_DOUBLE_QUOTES.sub(
+                '""' if not keep_spaces
+                else lambda m: '"' + (' ' * len(m.group(1))) + '"',
+                elided)
         return elided
+
+
+BRACES = {
+    '(': ')',
+    '{': '}',
+    '[': ']',
+    # '<': '>',  C++-specific pair removed
+}
+
+
+CLOSING_BRACES = dict(((v, k) for k, v in BRACES.items()))
+
+
+def GetExprBracesPosition(clean_lines, linenum, pos):
+    """List positions of all kinds of braces
+
+    If input points to ( or { or [ then function proceeds until finding the
+    position which closes it.
+
+    Args:
+      clean_lines: A CleansedLines instance containing the file.
+      linenum: Current line number.
+      pos: A position on the line.
+
+    Yields:
+      A tuple (linenum, pos, brace, depth) that points to each brace.
+      Additionally each new line (linenum, pos, 's', depth) is yielded, for each
+      line end (linenum, pos, 'e', depth) is yielded and at the very end it
+      yields (linenum, pos, None, None).
+    """
+    depth = 0
+    yielded_line_start = True
+    startpos = pos
+    while linenum < clean_lines.NumLines() - 1:
+        line = clean_lines.elided_with_space_strings[linenum]
+        if not line.startswith('#') or yielded_line_start:
+            # Ignore #ifdefs, but not if it is macros that are checked
+            for i, brace in enumerate(line[startpos:]):
+                pos = i + startpos
+                if brace != ' ' and not yielded_line_start:
+                    yield (linenum, pos, 's', depth)
+                    yielded_line_start = True
+                if brace in BRACES:
+                    depth += 1
+                    yield (linenum, pos, brace, depth)
+                elif brace in CLOSING_BRACES:
+                    yield (linenum, pos, brace, depth)
+                    depth -= 1
+                if depth == 0:
+                    yield (linenum, pos, None, None)
+                    return
+            yield (linenum, len(line) - 1, 'e', depth)
+        yielded_line_start = False
+        startpos = 0
+        linenum += 1
 
 
 def FindEndOfExpressionInLine(line, startpos, depth, startchar, endchar):
@@ -997,9 +1069,9 @@ def FindEndOfExpressionInLine(line, startpos, depth, startchar, endchar):
 
 
 def CloseExpression(clean_lines, linenum, pos):
-    """If input points to ( or { or [ or <, finds the position that closes it.
+    """If input points to ( or { or [, finds the position that closes it.
 
-    If lines[linenum][pos] points to a '(' or '{' or '[' or '<', finds the
+    If lines[linenum][pos] points to a '(' or '{' or '[', finds the
     linenum/pos that correspond to the closing of the expression.
 
     Args:
@@ -1016,16 +1088,9 @@ def CloseExpression(clean_lines, linenum, pos):
 
     line = clean_lines.elided[linenum]
     startchar = line[pos]
-    if startchar not in '({[<':
+    if startchar not in BRACES:
         return (line, clean_lines.NumLines(), -1)
-    if startchar == '(':
-        endchar = ')'
-    if startchar == '[':
-        endchar = ']'
-    if startchar == '{':
-        endchar = '}'
-    if startchar == '<':
-        endchar = '>'
+    endchar = BRACES[startchar]
 
     # Check first line
     (end_pos, num_open) = FindEndOfExpressionInLine(
@@ -1987,6 +2052,92 @@ def FindPreviousMatchingAngleBracket(clean_lines, linenum, init_prefix):
     return False
 
 
+def CheckExpressionAlignment(filename, clean_lines, linenum, error, startpos=0):
+    """Checks for the correctness of alignment inside expressions
+
+    Args:
+      filename: The name of the current file.
+      clean_lines: A CleansedLines instance containing the file.
+      linenum: The number of the line to check.
+      error: The function to call with any errors found.
+      startpos: Position where to start searching for expression start.
+    """
+    level_starts = {}
+    line = clean_lines.elided_with_space_strings[linenum]
+    prev_line_start = Search(r'\S', line).start()
+    depth_line_starts = {}
+    pos = min([
+        idx
+        for idx in (
+            line.find(k, startpos)
+            for k in BRACES
+            if k != '{'
+        )
+        if idx >= 0
+    ] + [len(line) + 1])
+    if pos == len(line) + 1:
+        return
+    ignore_error_levels = set()
+    firstlinenum = linenum
+    for linenum, pos, brace, depth in GetExprBracesPosition(
+        clean_lines, linenum, pos
+    ):
+        line = clean_lines.elided_with_space_strings[linenum]
+        if depth is None:
+            if pos < len(line) - 1:
+                CheckExpressionAlignment(filename, clean_lines, linenum, error,
+                                         pos + 1)
+            return
+        elif depth <= 0:
+            error(filename, linenum, 'syntax/parenthesis', 4,
+                  'Unbalanced parenthesis')
+            return
+        if brace == 's':
+            assert firstlinenum != linenum
+            if level_starts[depth][1]:
+                if line[pos] == BRACES[depth_line_starts[depth][1]]:
+                    if pos != depth_line_starts[depth][0]:
+                        if depth not in ignore_error_levels:
+                            error(filename, linenum, 'whitespace/indent', 2,
+                                  'End of the inner expression should have '
+                                  'the same indent as start')
+                else:
+                    if (pos != depth_line_starts[depth][0] + 4
+                        and not (depth_line_starts[depth][1] == '{'
+                                 and pos == depth_line_starts[depth][0] + 2)):
+                        if depth not in ignore_error_levels:
+                            error(filename, linenum, 'whitespace/indent', 2,
+                                  'Inner expression indentation should be 4')
+            else:
+                if (pos != level_starts[depth][0] + 1
+                    + (level_starts[depth][2] == '{')):
+                    if depth not in ignore_error_levels:
+                        error(filename, linenum, 'whitespace/alignment', 2,
+                              'Inner expression should be aligned '
+                              'as opening brace + 1 (+ 2 in case of {)')
+            prev_line_start = pos
+        elif brace == 'e':
+            pass
+        else:
+            opening = brace in BRACES
+            if opening:
+                # Only treat {} as part of the expression if it is preceded by
+                # "=" (brace initializer) or "(type)" (construct like (struct
+                # foo) { ... }).
+                if brace == '{' and not (Search(
+                    r'(?:= *|\((?:struct )?\w+(\s*\[\w*\])?\)) *$',
+                    line[:pos])
+                ):
+                    ignore_error_levels.add(depth)
+                line_ended_with_opening = (
+                    pos == len(line) - 2 * (line.endswith(' \\')) - 1)
+                level_starts[depth] = (pos, line_ended_with_opening, brace)
+                if line_ended_with_opening:
+                    depth_line_starts[depth] = (prev_line_start, brace)
+            else:
+                del level_starts[depth]
+
+
 def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
     """Checks for the correctness of various spacing issues in the code.
 
@@ -2255,6 +2406,10 @@ def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
 
     # Next we will look for issues with function calls.
     CheckSpacingForFunctionCall(filename, line, linenum, error)
+
+    # Check whether everything inside expressions is aligned correctly
+    if any((line.find(k) >= 0 for k in BRACES if k != '{')):
+        CheckExpressionAlignment(filename, clean_lines, linenum, error)
 
     # Except after an opening paren, or after another opening brace (in case of
     # an initializer list, for instance), you should have spaces before your
