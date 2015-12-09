@@ -168,10 +168,15 @@ function! s:UpdateRemotePlugins()
   let hosts = keys(s:hosts)
   for host in hosts
     if has_key(s:plugin_patterns, host)
-      let commands = commands
-            \ + ['" '.host.' plugins']
-            \ + s:RegistrationCommands(host)
-            \ + ['', '']
+      try
+        let commands +=
+              \   ['" '.host.' plugins']
+              \ + s:RegistrationCommands(host)
+              \ + ['', '']
+      catch
+        echomsg v:throwpoint
+        echomsg v:exception
+      endtry
     endif
   endfor
   call writefile(commands, s:remote_plugins_manifest)
@@ -212,9 +217,11 @@ function! s:RequirePythonHost(host)
       return channel_id
     endif
   catch
+    echomsg v:throwpoint
     echomsg v:exception
   endtry
-  throw 'Failed to load Python host. You can try to see what happened '.
+  throw 'Failed to load '. a:host.orig_name . ' host. '.
+    \ 'You can try to see what happened '.
     \ 'by starting Neovim with the environment variable '.
     \ '$NVIM_PYTHON_LOG_FILE set to a file and opening '.
     \ 'the generated log file. Also, the host stderr will be available '.
