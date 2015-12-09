@@ -399,7 +399,6 @@ int enc_canon_props(const char_u *name)
  */
 char_u * mb_init(void)
 {
-  int i;
   int idx;
   int n;
   int enc_dbcs_new = 0;
@@ -412,7 +411,7 @@ char_u * mb_init(void)
 
   if (p_enc == NULL) {
     /* Just starting up: set the whole table to one's. */
-    for (i = 0; i < 256; ++i)
+    for (int i = 0; i < 256; ++i)
       mb_bytelen_tab[i] = 1;
     return NULL;
   } else if (STRNCMP(p_enc, "8bit-", 5) == 0
@@ -424,17 +423,17 @@ char_u * mb_init(void)
     /* Unix: accept any "2byte-" name, assume current locale. */
     enc_dbcs_new = DBCS_2BYTE;
   } else if ((idx = enc_canon_search(p_enc)) >= 0) {
-    i = enc_canon_table[idx].prop;
-    if (i & ENC_UNICODE) {
+    int encoding_properties = enc_canon_table[idx].prop;
+    if (encoding_properties & ENC_UNICODE) {
       /* Unicode */
       enc_utf8 = true;
-      if (i & (ENC_2BYTE | ENC_2WORD))
+      if (encoding_properties & (ENC_2BYTE | ENC_2WORD))
         enc_unicode = 2;
-      else if (i & ENC_4BYTE)
+      else if (encoding_properties & ENC_4BYTE)
         enc_unicode = 4;
       else
         enc_unicode = 0;
-    } else if (i & ENC_DBCS) {
+    } else if (encoding_properties & ENC_DBCS) {
       /* 2byte, handle below */
       enc_dbcs_new = enc_canon_table[idx].codepage;
     } else {
@@ -512,7 +511,8 @@ char_u * mb_init(void)
   }
 #endif
 
-  for (i = 0; i < 256; ++i) {
+  uint8_t i = 0;  // Loop counter over utf8len_tab
+  do {
     /* Our own function to reliably check the length of UTF-8 characters,
      * independent of mblen(). */
     if (enc_utf8)
@@ -520,7 +520,7 @@ char_u * mb_init(void)
     else if (enc_dbcs == 0)
       n = 1;
     else {
-      char buf[MB_MAXBYTES + 1];
+      uint8_t buf[MB_MAXBYTES + 1];
       if (i == NUL)             /* just in case mblen() can't handle "" */
         n = 1;
       else {
@@ -556,7 +556,7 @@ char_u * mb_init(void)
       }
     }
     mb_bytelen_tab[i] = n;
-  }
+  } while (i++ != 255);
 
 #ifdef LEN_FROM_CONV
   convert_setup(&vimconv, NULL, NULL);
