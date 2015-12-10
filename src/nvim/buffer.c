@@ -3745,8 +3745,10 @@ int build_stl_str_hl(
       // Put a `<` to mark where we truncated at
       *trunc_p = '<';
 
-      // Advance the pointer to the end of the string
-      trunc_p = trunc_p + STRLEN(trunc_p);
+      if (width + 1 < maxwidth) {
+        // Advance the pointer to the end of the string
+        trunc_p = trunc_p + STRLEN(trunc_p);
+      }
 
       // Fill up for half a double-wide character.
       while (++width < maxwidth) {
