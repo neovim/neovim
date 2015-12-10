@@ -14,7 +14,7 @@
 # include <unistd.h>
 #endif
 
-#define USR_LOG_FILE "$HOME/.nvimlog"
+#define USR_LOG_FILE "$HOME" _PATHSEPSTR ".nvimlog"
 
 static uv_mutex_t mutex;
 
