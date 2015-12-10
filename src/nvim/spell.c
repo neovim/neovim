@@ -8244,7 +8244,7 @@ static bool spell_iswordp_w(int *p, win_T *wp)
       return spell_mb_isword_class(utf_class(*s), wp);
     if (enc_dbcs)
       return spell_mb_isword_class(
-          dbcs_class((unsigned)*s >> 8, *s & 0xff), wp);
+          dbcs_class((uint8_t)*s >> 8, (uint8_t)*s & 0xff), wp);
     return false;
   }
   return spelltab.st_isw[*s];

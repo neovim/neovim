@@ -660,7 +660,7 @@ int mb_get_class_buf(const char_u *p, buf_T *buf)
     return 1;
   }
   if (enc_dbcs != 0 && p[0] != NUL && p[1] != NUL)
-    return dbcs_class(p[0], p[1]);
+    return dbcs_class((uint8_t)p[0], (uint8_t)p[1]);
   if (enc_utf8)
     return utf_class(utf_ptr2char(p));
   return 0;
@@ -670,7 +670,7 @@ int mb_get_class_buf(const char_u *p, buf_T *buf)
  * Get class of a double-byte character.  This always returns 3 or bigger.
  * TODO: Should return 1 for punctuation.
  */
-int dbcs_class(unsigned lead, unsigned trail)
+int dbcs_class(uint8_t lead, uint8_t trail)
 {
   switch (enc_dbcs) {
     /* please add classify routine for your language in here */
@@ -679,8 +679,8 @@ int dbcs_class(unsigned lead, unsigned trail)
     case DBCS_JPN:
       {
         /* JIS code classification */
-        unsigned char lb = lead;
-        unsigned char tb = trail;
+        uint8_t lb = lead;
+        uint8_t tb = trail;
 
         /* convert process code to JIS */
         /*
@@ -741,8 +741,8 @@ int dbcs_class(unsigned lead, unsigned trail)
     case DBCS_KOR:
       {
         /* KS code classification */
-        unsigned char c1 = lead;
-        unsigned char c2 = trail;
+        uint8_t c1 = lead;
+        uint8_t c2 = trail;
 
         /*
          * 20 : Hangul

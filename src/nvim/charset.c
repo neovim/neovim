@@ -828,7 +828,7 @@ int vim_iswordc_buf(int c, buf_T *buf)
 {
   if (c >= 0x100) {
     if (enc_dbcs != 0) {
-      return dbcs_class((unsigned)c >> 8, (unsigned)(c & 0xff)) >= 2;
+      return dbcs_class((uint8_t)c >> 8, (uint8_t)(c & 0xff)) >= 2;
     }
 
     if (enc_utf8) {
