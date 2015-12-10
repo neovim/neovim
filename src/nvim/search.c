@@ -2358,7 +2358,7 @@ static int cls(void)
       return 1;
 
     /* process code leading/trailing bytes */
-    return dbcs_class(((uint8_t)c >> 8), ((uint8_t)c & 0xFF));
+    return dbcs_class((uint8_t)(c >> 8), (uint8_t)c);
   }
   if (enc_utf8) {
     c = utf_class(c);
