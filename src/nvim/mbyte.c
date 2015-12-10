@@ -116,7 +116,7 @@ struct interval {
  * Bytes which are illegal when used as the first byte have a 1.
  * The NUL byte has length 1.
  */
-static char utf8len_tab[256] =
+static uint8_t utf8len_tab[256] =
 {
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -399,9 +399,8 @@ int enc_canon_props(const char_u *name)
  */
 char_u * mb_init(void)
 {
-  int i;
   int idx;
-  int n;
+  uint8_t num_bytes = 0;
   int enc_dbcs_new = 0;
 #if defined(USE_ICONV) && !defined(WIN3264) && !defined(WIN32UNIX) \
   && !defined(MACOS)
@@ -412,7 +411,7 @@ char_u * mb_init(void)
 
   if (p_enc == NULL) {
     /* Just starting up: set the whole table to one's. */
-    for (i = 0; i < 256; ++i)
+    for (int i = 0; i < 256; ++i)
       mb_bytelen_tab[i] = 1;
     return NULL;
   } else if (STRNCMP(p_enc, "8bit-", 5) == 0
@@ -424,17 +423,17 @@ char_u * mb_init(void)
     /* Unix: accept any "2byte-" name, assume current locale. */
     enc_dbcs_new = DBCS_2BYTE;
   } else if ((idx = enc_canon_search(p_enc)) >= 0) {
-    i = enc_canon_table[idx].prop;
-    if (i & ENC_UNICODE) {
+    int encoding_properties = enc_canon_table[idx].prop;
+    if (encoding_properties & ENC_UNICODE) {
       /* Unicode */
       enc_utf8 = true;
-      if (i & (ENC_2BYTE | ENC_2WORD))
+      if (encoding_properties & (ENC_2BYTE | ENC_2WORD))
         enc_unicode = 2;
-      else if (i & ENC_4BYTE)
+      else if (encoding_properties & ENC_4BYTE)
         enc_unicode = 4;
       else
         enc_unicode = 0;
-    } else if (i & ENC_DBCS) {
+    } else if (encoding_properties & ENC_DBCS) {
       /* 2byte, handle below */
       enc_dbcs_new = enc_canon_table[idx].codepage;
     } else {
@@ -512,17 +511,18 @@ char_u * mb_init(void)
   }
 #endif
 
-  for (i = 0; i < 256; ++i) {
+  uint8_t i = 0;  // Loop counter over utf8len_tab
+  do {
     /* Our own function to reliably check the length of UTF-8 characters,
      * independent of mblen(). */
     if (enc_utf8)
-      n = utf8len_tab[i];
+      num_bytes = utf8len_tab[i];
     else if (enc_dbcs == 0)
-      n = 1;
+      num_bytes = 1;
     else {
-      char buf[MB_MAXBYTES + 1];
+      uint8_t buf[MB_MAXBYTES + 1];
       if (i == NUL)             /* just in case mblen() can't handle "" */
-        n = 1;
+        num_bytes = 1;
       else {
         buf[0] = i;
         buf[1] = 0;
@@ -535,9 +535,9 @@ char_u * mb_init(void)
           p = string_convert(&vimconv, (char_u *)buf, NULL);
           if (p != NULL) {
             xfree(p);
-            n = 1;
+            num_bytes = 1;
           } else
-            n = 2;
+            num_bytes = 2;
         } else
 #endif
         {
@@ -547,16 +547,16 @@ char_u * mb_init(void)
            * where mblen() returns 0 for invalid character.
            * Therefore, following condition includes 0.
            */
-          ignored = mblen(NULL, 0);             /* First reset the state. */
-          if (mblen(buf, (size_t)1) <= 0)
-            n = 2;
+          ignored = MBLEN(NULL, 0);             /* First reset the state. */
+          if (MBLEN(buf, 1) <= 0)
+            num_bytes = 2;
           else
-            n = 1;
+            num_bytes = 1;
         }
       }
     }
-    mb_bytelen_tab[i] = n;
-  }
+    mb_bytelen_tab[i] = num_bytes;
+  } while (i++ != 255);
 
 #ifdef LEN_FROM_CONV
   convert_setup(&vimconv, NULL, NULL);
@@ -660,7 +660,7 @@ int mb_get_class_buf(const char_u *p, buf_T *buf)
     return 1;
   }
   if (enc_dbcs != 0 && p[0] != NUL && p[1] != NUL)
-    return dbcs_class(p[0], p[1]);
+    return dbcs_class((uint8_t)p[0], (uint8_t)p[1]);
   if (enc_utf8)
     return utf_class(utf_ptr2char(p));
   return 0;
@@ -670,7 +670,7 @@ int mb_get_class_buf(const char_u *p, buf_T *buf)
  * Get class of a double-byte character.  This always returns 3 or bigger.
  * TODO: Should return 1 for punctuation.
  */
-int dbcs_class(unsigned lead, unsigned trail)
+int dbcs_class(uint8_t lead, uint8_t trail)
 {
   switch (enc_dbcs) {
     /* please add classify routine for your language in here */
@@ -679,8 +679,8 @@ int dbcs_class(unsigned lead, unsigned trail)
     case DBCS_JPN:
       {
         /* JIS code classification */
-        unsigned char lb = lead;
-        unsigned char tb = trail;
+        uint8_t lb = lead;
+        uint8_t tb = trail;
 
         /* convert process code to JIS */
         /*
@@ -741,8 +741,8 @@ int dbcs_class(unsigned lead, unsigned trail)
     case DBCS_KOR:
       {
         /* KS code classification */
-        unsigned char c1 = lead;
-        unsigned char c2 = trail;
+        uint8_t c1 = lead;
+        uint8_t c2 = trail;
 
         /*
          * 20 : Hangul

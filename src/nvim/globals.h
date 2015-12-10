@@ -802,7 +802,7 @@ EXTERN int has_mbyte INIT(= 0);                 /* any multi-byte encoding */
  * To speed up BYTELEN() we fill a table with the byte lengths whenever
  * enc_utf8 or enc_dbcs changes.
  */
-EXTERN char mb_bytelen_tab[256];
+EXTERN uint8_t mb_bytelen_tab[256];
 
 /*
  * Function pointers, used to quickly get to the right function.  Each has

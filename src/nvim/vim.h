@@ -251,6 +251,7 @@ enum {
 #define STRLCPY(d, s, n)    xstrlcpy((char *)(d), (char *)(s), (size_t)(n))
 #define STRCMP(d, s)        strcmp((char *)(d), (char *)(s))
 #define STRNCMP(d, s, n)    strncmp((char *)(d), (char *)(s), (size_t)(n))
+#define MBLEN(pmb, max)      mblen((const char*)(pmb), (size_t)(max))
 #ifdef HAVE_STRCASECMP
 # define STRICMP(d, s)      strcasecmp((char *)(d), (char *)(s))
 #else
