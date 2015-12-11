@@ -2380,7 +2380,7 @@ set_string_option (
     saved_oldval = vim_strsave(oldval);
   }
 
-  if ((r = did_set_string_option(opt_idx, varp, TRUE, oldval, NULL,
+  if ((r = did_set_string_option(opt_idx, varp, (int)true, oldval, NULL,
           opt_flags)) == NULL)
     did_set_option(opt_idx, opt_flags, TRUE);
 
