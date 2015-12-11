@@ -352,8 +352,9 @@ static void free_complete(CmdComplete *compl)
 
 static void free_menu_item(MenuItem *menu_item)
 {
-  if (menu_item == NULL)
+  if (menu_item == NULL) {
     return;
+  }
 
   free_menu_item(menu_item->subitem);
   xfree(menu_item->name);
@@ -362,8 +363,9 @@ static void free_menu_item(MenuItem *menu_item)
 
 static void free_regex(Regex *regex)
 {
-  if (regex == NULL)
+  if (regex == NULL) {
     return;
+  }
 
   vim_regfree(regex->prog);
   xfree(regex);
@@ -404,8 +406,9 @@ static void free_replacement(Replacement *rep)
 
 static void free_patterns(Patterns *pats)
 {
-  if (pats == NULL)
+  if (pats == NULL) {
     return;
+  }
   free_pattern(pats->pat);
   xfree(pats->pat);
   free_patterns(pats->next);
@@ -434,8 +437,9 @@ static void free_modifiers(FilenameModifier *mod)
 
 static void free_pattern(Pattern *pat)
 {
-  if (pat == NULL)
+  if (pat == NULL) {
     return;
+  }
 
   switch (pat->type) {
     case kPatFnameMod:
@@ -493,8 +497,9 @@ static void free_pattern(Pattern *pat)
 
 static void free_glob(Glob *glob)
 {
-  if (glob == NULL)
+  if (glob == NULL) {
     return;
+  }
 
   free_pattern(&glob->pat);
   free_glob(glob->next);
@@ -503,8 +508,9 @@ static void free_glob(Glob *glob)
 
 static void free_address_data(Address *address)
 {
-  if (address == NULL)
+  if (address == NULL) {
     return;
+  }
 
   switch (address->type) {
     case kAddrMissing:
@@ -528,8 +534,9 @@ static void free_address_data(Address *address)
 
 static void free_address_followup(AddressFollowup *followup)
 {
-  if (followup == NULL)
+  if (followup == NULL) {
     return;
+  }
 
   switch (followup->type) {
     case kAddressFollowupMissing:
@@ -548,8 +555,9 @@ static void free_address_followup(AddressFollowup *followup)
 
 static void free_range_data(Range *range)
 {
-  if (range == NULL)
+  if (range == NULL) {
     return;
+  }
 
   free_address_data(&range->address);
   free_range(range->next);
@@ -557,8 +565,9 @@ static void free_range_data(Range *range)
 
 static void free_range(Range *range)
 {
-  if (range == NULL)
+  if (range == NULL) {
     return;
+  }
 
   free_range_data(range);
   xfree(range);
@@ -943,8 +952,8 @@ static int get_pattern_collection(CMD_P_ARGS,
             state->cmdp++;
             literal_char =
                 (u8char_T) pattern_collection_escape_chars[
-                  strchr(pattern_collection_escapes, *state->cmdp) -
-                  pattern_collection_escapes];
+                    strchr(pattern_collection_escapes, *state->cmdp)
+                    - pattern_collection_escapes];
             state->cmdp++;
             goto get_pattern_collection_process_literal_character;
           } else if (state->cmdp[1] == 'd' && ascii_isdigit(state->cmdp[2])) {
@@ -1208,22 +1217,24 @@ static int get_glob_pattern(CMD_P_ARGS,
     PatternType type = kPatMissing;
     switch (*state->cmdp) {
       case '`': {
-        if (!is_glob)
+        if (!is_glob) {
           type = kPatLiteral;
         // FIXME Not compatible
-        else if (is_branch)
+        } else if (is_branch) {
           type = kPatLiteral;
-        else if (state->cmdp[1] == '=')
+        } else if (state->cmdp[1] == '=') {
           type = kGlobExpression;
-        else
+        } else {
           type = kGlobShell;
+        }
         break;
       }
       case '*': {
-        if (state->cmdp[1] == '*')
+        if (state->cmdp[1] == '*') {
           type = kPatAnyRecurse;
-        else
+        } else {
           type = kPatAnything;
+        }
         break;
       }
       case '?': {
@@ -1249,10 +1260,11 @@ static int get_glob_pattern(CMD_P_ARGS,
             break;
           }
           case '<': {
-            if (ascii_isdigit(state->cmdp[2]))
+            if (ascii_isdigit(state->cmdp[2])) {
               type = kPatOldFile;
-            else
+            } else {
               type = kPatLiteral;
+            }
             break;
           }
           case '#': {
@@ -1378,8 +1390,9 @@ static int get_glob_pattern(CMD_P_ARGS,
         literal_length = 0;
         next = &((*next)->next);
       }
-      if (type == kPatMissing)
+      if (type == kPatMissing) {
         break;
+      }
       assert(*next == NULL);
       *next = pattern_alloc(type);
       bool parse_fmods = false;
@@ -1387,11 +1400,13 @@ static int get_glob_pattern(CMD_P_ARGS,
         case kGlobExpression: {
           ExpressionParserError expr_error;
           state->cmdp += 2;
-          if (((*next)->data.expr = parse_one_expression(
-                      &state->cmdp, &expr_error, &parse0_err, COL(state)))
-                  == NULL) {
-            if (expr_error.message == NULL)
+          if (((*next)->data.expr = parse_one_expression(&state->cmdp,
+                                                         &expr_error,
+                                                         &parse0_err,
+                                                         COL(state))) == NULL) {
+            if (expr_error.message == NULL) {
               goto get_glob_error_return;
+            }
             ret_parsed->error.message = expr_error.message;
             ret_parsed->error.position = expr_error.position;
             ret = NOTDONE;
@@ -1472,8 +1487,9 @@ static int get_glob_pattern(CMD_P_ARGS,
           const char *const init_p = state->cmdp;
           state->cmdp++;
           int pcret;
-          if ((pcret = get_pattern_collection(
-                      state, ret_parsed, &((*next)->data.collection))) != OK) {
+          if ((pcret = get_pattern_collection(state, ret_parsed,
+                                              &((*next)->data.collection)))
+              != OK) {
             ret = pcret;
             goto get_glob_error_return;
           }
@@ -1655,10 +1671,11 @@ static int get_regex(CMD_P_ARGS,
     state->cmdp += STRLEN(state->cmdp);
   } else {
     while (*state->cmdp != NUL && *state->cmdp != endch) {
-      if (*state->cmdp == '\\' && state->cmdp[1] != NUL)
+      if (*state->cmdp == '\\' && state->cmdp[1] != NUL) {
         state->cmdp += 2;
-      else
+      } else {
         state->cmdp++;
+      }
     }
   }
 
@@ -1756,11 +1773,13 @@ static int set_node_rhs(CMD_P_ARGS, const char *rhs, const size_t rhs_idx,
 
   new_rhs = replace_termcodes(rhs, strlen(rhs), &rhs_buf, false, true, special,
                               FLAG_POC_TO_FLAG_CPO(state->o.flags));
-  if (rhs_buf == NULL)
+  if (rhs_buf == NULL) {
     return FAIL;
+  }
 
-  if ((state->o.flags&FLAG_POC_ALTKEYMAP) && (state->o.flags&FLAG_POC_RL))
+  if ((state->o.flags&FLAG_POC_ALTKEYMAP) && (state->o.flags&FLAG_POC_RL)) {
     lrswap(new_rhs);
+  }
 
   if (is_expr) {
     ExpressionParserError expr_error;
@@ -1920,8 +1939,9 @@ static int do_parse_map(CMD_P_ARGS, bool unmap)
     lhs = replace_termcodes(lhs, (size_t) (lhs_end - lhs), &lhs_buf, true, true,
                             map_flags&FLAG_MAP_SPECIAL,
                             FLAG_POC_TO_FLAG_CPO(state->o.flags));
-    if (lhs_buf == NULL)
+    if (lhs_buf == NULL) {
       return FAIL;
+    }
     ret_parsed->node->args[ARG_MAP_LHS].arg.str = (char *) lhs;
   }
 
@@ -1975,8 +1995,9 @@ static CMD_P_DEF(parse_mapclear)
 static void str_unescape(char *p, bool unctrlv)
 {
   while (*p) {
-    if ((*p == '\\' || (*p == Ctrl_V && unctrlv)) && p[1] != NUL)
+    if ((*p == '\\' || (*p == Ctrl_V && unctrlv)) && p[1] != NUL) {
       STRMOVE(p, p + 1);
+    }
     p++;
   }
 }
@@ -2470,8 +2491,9 @@ static bool check_lval(const char *const s, ExpressionNode *node,
         }
 
         while (item != NULL) {
-          if (check_lval(s, item, ret_parsed, false, allow_lower, allow_env))
+          if (check_lval(s, item, ret_parsed, false, allow_lower, allow_env)) {
             return true;
+          }
           item = item->next;
         }
       } else {
@@ -2812,7 +2834,7 @@ static CMD_P_DEF(parse_let)
     if (expr->node->type == kExprList) {
       ret_parsed->error.message =
           N_("E474: To list multiple variables use \":let var|let var2\", "
-                   "not \":let [var, var2]\"");
+             "not \":let [var, var2]\"");
       ret_parsed->error.position = state->cmdp;
       return NOTDONE;
     }
@@ -2989,9 +3011,9 @@ static CMD_P_DEF(parse_autocmd)
   }
   int pgeret;
   if ((pgeret = parse_group_and_event(
-              state, ret_parsed,
-              &ret_parsed->node->args[ARG_AU_EVENTS].arg.events,
-              &ret_parsed->node->args[ARG_AU_GROUP].arg.str)) != OK) {
+      state, ret_parsed,
+      &ret_parsed->node->args[ARG_AU_EVENTS].arg.events,
+      &ret_parsed->node->args[ARG_AU_GROUP].arg.str)) != OK) {
     return pgeret;
   }
   state->cmdp = skipwhite(state->cmdp);
@@ -3034,8 +3056,8 @@ static CMD_P_DEF(parse_doautocmd)
       (uint_least32_t) (!check_nomodeline(&state->cmdp));
   state->cmdp = skipwhite(state->cmdp);
   if ((pgeret = parse_group_and_event(
-              state, ret_parsed, &events,
-              &ret_parsed->node->args[ARG_DOAU_GROUP].arg.str)) != OK) {
+      state, ret_parsed, &events,
+      &ret_parsed->node->args[ARG_DOAU_GROUP].arg.str)) != OK) {
     return pgeret;
   }
   ret_parsed->node->args[ARG_DOAU_EVENTS].arg.events = events;
@@ -3462,7 +3484,7 @@ static CMD_P_DEF(parse_command)
           ret_parsed->error.position = state->cmdp + attrlen;
           goto parse_command_error_return;
         }
-        compl = xcalloc(1, sizeof(*compl));
+        (compl) = xcalloc(1, sizeof(*compl));
         int cret;
         if ((cret = parse_completion_argument(val, vallen, ret_parsed, compl))
             != OK) {
@@ -3828,10 +3850,9 @@ static CMD_P_DEF(parse_history)
   }
   ret_parsed->node->args[ARG_HIST_FIRST].arg.number = 1;
   ret_parsed->node->args[ARG_HIST_LAST].arg.number = -1;
-  if (get_list_range(
-          &state->cmdp,
-          &ret_parsed->node->args[ARG_HIST_FIRST].arg.number,
-          &ret_parsed->node->args[ARG_HIST_LAST].arg.number) != OK) {
+  if (get_list_range(&state->cmdp,
+                     &ret_parsed->node->args[ARG_HIST_FIRST].arg.number,
+                     &ret_parsed->node->args[ARG_HIST_LAST].arg.number) != OK) {
     ret_parsed->error.message = N_("E488: Expected valid history lines range");
     ret_parsed->error.position = state->cmdp;
     return NOTDONE;
@@ -4020,10 +4041,9 @@ static CMD_P_DEF(parse_open)
   if (*state->cmdp == '/') {
     state->cmdp++;
     int rret;
-    if ((rret = get_regex(
-                state, ret_parsed,
-                &ret_parsed->node->args[ARG_OPEN_REGEX].arg.reg, '/',
-                NULL)) != OK) {
+    if ((rret = get_regex(state, ret_parsed,
+                          &ret_parsed->node->args[ARG_OPEN_REGEX].arg.reg, '/',
+                          NULL)) != OK) {
       return rret;
     }
     // Ignore any other arguments
@@ -4361,9 +4381,9 @@ static CMD_P_DEF(parse_set)
       }
 
       if (nextchar == '?' || (
-              ((*next)->flags & (FLAG_SET_UNSET|FLAG_SET_INVERT)) == 0
-              && (!nextchar || strchr("=:&<", nextchar) == NULL)
-              && !(properties & GOP_BOOLEAN))) {
+          ((*next)->flags & (FLAG_SET_UNSET|FLAG_SET_INVERT)) == 0
+          && (!nextchar || strchr("=:&<", nextchar) == NULL)
+          && !(properties & GOP_BOOLEAN))) {
         (*next)->flags |= FLAG_SET_SHOW;
         if (nextchar == '?') {
           state->cmdp++;
@@ -4793,21 +4813,19 @@ static CMD_P_DEF(parse_sub)
       delim = *state->cmdp;
       state->cmdp++;
       int rret;
-      if ((rret = get_regex(
-                  state, ret_parsed,
-                  &ret_parsed->node->args[ARG_S_REG].arg.reg, delim,
-                  NULL)) != OK) {
+      if ((rret = get_regex(state, ret_parsed,
+                            &ret_parsed->node->args[ARG_S_REG].arg.reg, delim,
+                            NULL)) != OK) {
         return rret;
       }
     }
     int pr_ret;
-    if ((pr_ret = parse_replacement(
-                state, ret_parsed,
-                &ret_parsed->node->args[ARG_S_REP].arg.rep,
-                delim,
-                (ret_parsed->node->type == kCmdSubstitute
-                 ? MAGIC(state)
-                 : ret_parsed->node->type == kCmdSmagic)))
+    if ((pr_ret = parse_replacement(state, ret_parsed,
+                                    &ret_parsed->node->args[ARG_S_REP].arg.rep,
+                                    delim,
+                                    (ret_parsed->node->type == kCmdSubstitute
+                                     ? MAGIC(state)
+                                     : ret_parsed->node->type == kCmdSmagic)))
         != OK) {
       return pr_ret;
     }
@@ -4941,9 +4959,8 @@ static CMD_P_DEF(parse_sort)
           flags |= FLAG_SORT_RE_SEARCH;
           state->cmdp++;
         } else if ((rret = get_regex(
-                    state, ret_parsed,
-                    &ret_parsed->node->args[ARG_SORT_REG].arg.reg,
-                    delim, (char *) e_invalpat)) != OK) {
+            state, ret_parsed, &ret_parsed->node->args[ARG_SORT_REG].arg.reg,
+            delim, (char *) e_invalpat)) != OK) {
           return rret;
         }
         break;
@@ -5257,7 +5274,7 @@ static CMD_P_DEF(parse_help)
   const char *const s = state->cmdp;
   const char *end = state->cmdp;
   while (*end && *end != '\n' && *end != '\r'
-        && !(*end == '|' && end[1] && end[1] != '|')) {
+         && !(*end == '|' && end[1] && end[1] != '|')) {
     end++;
   }
   state->cmdp = end;
@@ -5487,10 +5504,9 @@ static CMD_P_DEF(parse_menutranslate)
 
     state->cmdp = from;
     if ((pnmret = parse_menu_name(
-                state, ret_parsed, kMenuDefaults,
-                &ret_parsed->node->args[ARG_MT_FROM_ITEM].arg.menu_item,
-                &ret_parsed->node->args[ARG_MT_FROM_TEXT].arg.str))
-        != OK) {
+        state, ret_parsed, kMenuDefaults,
+        &ret_parsed->node->args[ARG_MT_FROM_ITEM].arg.menu_item,
+        &ret_parsed->node->args[ARG_MT_FROM_TEXT].arg.str)) != OK) {
       return pnmret;
     }
     if (state->cmdp != from_end) {
@@ -5508,10 +5524,9 @@ static CMD_P_DEF(parse_menutranslate)
 
     state->cmdp = to;
     if ((pnmret = parse_menu_name(
-                state, ret_parsed, kMenuDefaults,
-                &ret_parsed->node->args[ARG_MT_TO_ITEM].arg.menu_item,
-                &ret_parsed->node->args[ARG_MT_TO_TEXT].arg.str))
-        != OK) {
+        state, ret_parsed, kMenuDefaults,
+        &ret_parsed->node->args[ARG_MT_TO_ITEM].arg.menu_item,
+        &ret_parsed->node->args[ARG_MT_TO_TEXT].arg.str)) != OK) {
       return pnmret;
     }
     if (state->cmdp != to_end) {
@@ -5969,16 +5984,17 @@ static CMD_P_DEF(parse_highlight)
           ret_parsed->node->args[prop_idx].arg.color.type = kHiColorIdx;
           ret_parsed->node->args[prop_idx].arg.color.data.idx =
               (uint8_t) atoi(arg_start);
-        } else if (*arg_start == '#' && arg_len == 7
-                 && (prop_idx == ARG_HI_GUIFG
-                     || prop_idx == ARG_HI_GUIBG
-                     || prop_idx == ARG_HI_GUISP)
-                 && ascii_isxdigit(arg_start[1])
-                 && ascii_isxdigit(arg_start[2])
-                 && ascii_isxdigit(arg_start[3])
-                 && ascii_isxdigit(arg_start[4])
-                 && ascii_isxdigit(arg_start[5])
-                 && ascii_isxdigit(arg_start[6])) {
+        } else if (*arg_start == '#'
+                   && arg_len == 7
+                   && (prop_idx == ARG_HI_GUIFG
+                       || prop_idx == ARG_HI_GUIBG
+                       || prop_idx == ARG_HI_GUISP)
+                   && ascii_isxdigit(arg_start[1])
+                   && ascii_isxdigit(arg_start[2])
+                   && ascii_isxdigit(arg_start[3])
+                   && ascii_isxdigit(arg_start[4])
+                   && ascii_isxdigit(arg_start[5])
+                   && ascii_isxdigit(arg_start[6])) {
           ret_parsed->node->args[prop_idx].arg.color.type = kHiColorRGB;
           union {
             struct {
@@ -7391,10 +7407,11 @@ static int get_address(CMD_P_ARGS, Address *address)
     case '?': {
       const char c = *state->cmdp;
       state->cmdp++;
-      if (c == '/')
+      if (c == '/') {
         address->type = kAddrForwardSearch;
-      else
+      } else {
         address->type = kAddrBackwardSearch;
+      }
       int rret;
       if ((rret = get_regex(state, ret_parsed, &address->data.regex, c, NULL))
           != OK) {
@@ -8000,8 +8017,9 @@ static int parse_argopt(CMD_P_ARGS)
     char *e;
     ret_parsed->node->enc =
         xmemdupz(arg_start, (size_t) (state->cmdp - arg_start));
-    for (e = ret_parsed->node->enc; *e != NUL; e++)
+    for (e = ret_parsed->node->enc; *e != NUL; e++) {
       *e = (char) TOLOWER_ASC(*e);
+    }
   } else if (do_bad) {
     size_t len = (size_t) (state->cmdp - arg_start);
     if (STRNICMP(arg_start, "keep", len) == 0) {
@@ -8095,8 +8113,9 @@ int parse_range(CMD_P_ARGS, const char **range_start)
     }
     state->cmdp = skipwhite(state->cmdp);
     if (current_range.address.followups != NULL) {
-      if (current_range.address.type == kAddrMissing)
+      if (current_range.address.type == kAddrMissing) {
         current_range.address.type = kAddrCurrent;
+      }
     } else if (ret_parsed->node->range.address.type == kAddrMissing
                && current_range.address.type == kAddrMissing) {
       if (*state->cmdp == '%') {
@@ -8121,8 +8140,9 @@ int parse_range(CMD_P_ARGS, const char **range_start)
     current_range.setpos = (*state->cmdp == ';');
     if (ret_parsed->node->range.address.type != kAddrMissing) {
       Range **target = &ret_parsed->node->range.next;
-      while (*target != NULL)
+      while (*target != NULL) {
         target = &((*target)->next);
+      }
       *target = xcalloc(1, sizeof(**target));
       **target = current_range;
     } else {
@@ -8501,8 +8521,9 @@ int parse_one_cmd(CMD_P_ARGS)
         cmd_arg = cmd_arg_start = new_cmd_arg;
         ExpressionParserError expr_error;
         node.reg.name = '=';
-        if ((node.reg.expr = parse_one_expression(
-                    &cmd_arg, &expr_error, &parse0_err, node.position.col))
+        if ((node.reg.expr = parse_one_expression(&cmd_arg, &expr_error,
+                                                  &parse0_err,
+                                                  node.position.col))
             == NULL) {
           ret_parsed->error.message = expr_error.message;
           ret_parsed->error.position = expr_error.position;
