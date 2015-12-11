@@ -1792,9 +1792,12 @@ do_set (
             errmsg = did_set_string_option(opt_idx, (char_u **)varp,
                 new_value_alloced, oldval, errbuf, opt_flags);
 
-            /* If error detected, print the error message. */
-            if (errmsg != NULL)
+            // If error detected, print the error message.
+            if (errmsg != NULL) {
+              xfree(saved_origval);
               goto skip;
+            }
+
             if (saved_origval != NULL) {
               char_u buf_type[7];
               vim_snprintf((char *)buf_type, ARRAY_SIZE(buf_type), "%s",
