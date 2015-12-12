@@ -4331,8 +4331,6 @@ void shorten_fnames(int force)
 /// @return [allocated] - A new filename, made up from:
 ///                       * fname + ext, if fname not NULL.
 ///                       * current dir + ext, if fname is NULL.
-///                         On Windows, and if ext starts with ".", a "_" is
-///                         preprended to ext (for filename to be valid).
 ///                       Result is guaranteed to:
 ///                       * be ended by <ext>.
 ///                       * have a basename with at most BASENAMELEN chars:
@@ -4385,15 +4383,6 @@ char *modname(const char *fname, const char *ext, bool prepend_dot)
 
   char *s;
   s = ptr + strlen(ptr);
-
-#if defined(WIN3264)
-  // If there is no file name, and the extension starts with '.', put a
-  // '_' before the dot, because just ".ext" may be invalid if it's on a
-  // FAT partition, and on HPFS it doesn't matter.
-  else if ((fname == NULL || *fname == NUL) && *ext == '.') {
-    *s++ = '_';
-  }
-#endif
 
   // Append the extension.
   // ext can start with '.' and cannot exceed 3 more characters.
