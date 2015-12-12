@@ -2465,8 +2465,6 @@ utility is recommended.
 For utmost portability use Vim itself to pack scripts together.  This can be
 done with the Vimball utility.  See |vimball|.
 
-It's good if you add a line to allow automatic updating.  See |glvs-plugins|.
-
 ==============================================================================
 
 Next chapter: |usr_42.txt|  Add new menus

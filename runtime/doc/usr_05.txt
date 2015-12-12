@@ -285,7 +285,6 @@ Where can you find plugins?
 - You could write one yourself, see |write-plugin|.
 
 Some plugins come as a vimball archive, see |vimball|.
-Some plugins can be updated automatically, see |getscript|.
 
 
 USING A GLOBAL PLUGIN
