@@ -49,6 +49,9 @@ To use Vim Python 2/3 plugins with Nvim, do the following:
 >
     $ pip3 install --user neovim
 <
+Note: If you previously installed the package, get the latest version by
+      appending the `--upgrade` flag to the commands above.
+
 ==============================================================================
 							   *g:python_host_prog*
 
