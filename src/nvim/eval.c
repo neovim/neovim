@@ -373,6 +373,9 @@ static struct vimvar {
   {VV_NAME("progpath",         VAR_STRING), VV_RO},
   {VV_NAME("command_output",   VAR_STRING), 0},
   {VV_NAME("completed_item",   VAR_DICT), VV_RO},
+  {VV_NAME("option_new",       VAR_STRING), VV_RO},
+  {VV_NAME("option_old",       VAR_STRING), VV_RO},
+  {VV_NAME("option_type",      VAR_STRING), VV_RO},
   {VV_NAME("msgpack_types",    VAR_DICT), VV_RO},
 };
 
@@ -21238,9 +21241,13 @@ void ex_oldfiles(exarg_T *eap)
   }
 }
 
-
-
-
+// reset v:option_new, v:option_old and v:option_type
+void reset_v_option_vars(void)
+{
+  set_vim_var_string(VV_OPTION_NEW,  NULL, -1);
+  set_vim_var_string(VV_OPTION_OLD,  NULL, -1);
+  set_vim_var_string(VV_OPTION_TYPE, NULL, -1);
+}
 
 /*
  * Adjust a filename, according to a string of modifiers.
