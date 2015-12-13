@@ -5,7 +5,20 @@ local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 
 describe('fixeol', function()
-  setup(clear)
+  local function rmtestfiles()
+    os.remove('test.out')
+    os.remove('XXEol')
+    os.remove('XXNoEol')
+    os.remove('XXTestEol')
+    os.remove('XXTestNoEol')
+  end
+  setup(function()
+    clear()
+    rmtestfiles()
+  end)
+  teardown(function()
+    rmtestfiles()
+  end)
 
   it('is working', function()
     -- First write two test files – with and without trailing EOL.
