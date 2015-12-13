@@ -46,27 +46,15 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Dev" CACHE STRING "Choose the type of build." FORCE)
 endif()
 
-# Version tokens
-#   - In a git repo, these tokens are _ignored_.
-#     - If the current HEAD is tagged, the tag name is used.
-#     - Otherwise the result of `git describe` is used.
-#   - If not in a git repo (e.g. a tarball) these tokens set the version string.
+# If not in a git repo (e.g., a tarball) these tokens set the version string,
+# otherwise the result of `git describe` is used.
 set(NVIM_VERSION_MAJOR 0)
 set(NVIM_VERSION_MINOR 1)
 set(NVIM_VERSION_PATCH 1)
 
 file(TO_CMAKE_PATH ${CMAKE_CURRENT_LIST_DIR}/.git FORCED_GIT_DIR)
 include(GetGitRevisionDescription)
-get_git_head_revision(GIT_REFSPEC NVIM_VERSION_COMMIT)
-if(NVIM_VERSION_COMMIT)    # is a git repo
-  git_get_exact_tag(NVIM_VERSION_MEDIUM)
-  if(NVIM_VERSION_MEDIUM)  # is a tagged release
-    unset(NVIM_VERSION_COMMIT)
-  else()                   # is a dev build
-    git_describe(NVIM_VERSION_MEDIUM)
-    get_git_head_revision(GIT_REFSPEC NVIM_VERSION_COMMIT)
-  endif()
-endif()
+git_describe(NVIM_VERSION_MEDIUM)
 
 set(NVIM_VERSION_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
 # NVIM_VERSION_CFLAGS set further below.
