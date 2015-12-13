@@ -901,6 +901,23 @@ describe('cindent', function()
       {
         111111111111111111;
       }
+      void getstring() {
+      /* Raw strings */
+      const char* s = R"(
+        test {
+          # comment
+          field: 123
+        }
+       )";
+           }
+      void getstring() {
+      const char* s = R"foo(
+        test {
+          # comment
+          field: 123
+        }
+          )foo";
+           }
       
       /* end of AUTO */
       ]=])
@@ -1789,6 +1806,23 @@ describe('cindent', function()
       namespace111111111
       {
       	111111111111111111;
+      }
+      void getstring() {
+      	/* Raw strings */
+      	const char* s = R"(
+        test {
+          # comment
+          field: 123
+        }
+       )";
+      }
+      void getstring() {
+      	const char* s = R"foo(
+        test {
+          # comment
+          field: 123
+        }
+          )foo";
       }
       
       /* end of AUTO */
@@ -4210,6 +4244,323 @@ describe('cindent', function()
       		}, options||{}));
       	}
       })(jQuery);
+      JSEND
+      ]=])
+  end)
+
+  it('javascript indent / vim-patch 7.4.670', function()
+    insert_([=[
+      
+      JSSTART
+      // Results of JavaScript indent
+      // 1
+      (function(){
+      var a = [
+      'a',
+      'b',
+      'c',
+      'd',
+      'e',
+      'f',
+      'g',
+      'h',
+      'i'
+      ];
+      }())
+      
+      // 2
+      (function(){
+      var a = [
+      0 +
+      5 *
+      9 *
+      'a',
+      'b',
+      0 +
+      5 *
+      9 *
+      'c',
+      'd',
+      'e',
+      'f',
+      'g',
+      'h',
+      'i'
+      ];
+      }())
+      
+      // 3
+      (function(){
+      var a = [
+      0 +
+      // comment 1
+      5 *
+      /* comment 2 */
+      9 *
+      'a',
+      'b',
+      0 +
+      5 *
+      9 *
+      'c',
+      'd',
+      'e',
+      'f',
+      'g',
+      'h',
+      'i'
+      ];
+      }())
+      
+      // 4
+      {
+      var a = [
+      0,
+      1
+      ];
+      var b;
+      var c;
+      }
+      
+      // 5
+      {
+      var a = [
+      [
+      0
+      ],
+      2,
+      3
+      ];
+      }
+      
+      // 6
+      {
+      var a = [
+      [
+      0,
+      1
+      ],
+      2,
+      3
+      ];
+      }
+      
+      // 7
+      {
+      var a = [
+      // [
+      0,
+      // 1
+      // ],
+      2,
+      3
+      ];
+      }
+      
+      // 8
+      var x = [
+      (function(){
+      var a,
+      b,
+      c,
+      d,
+      e,
+      f,
+      g,
+      h,
+      i;
+      })
+      ];
+      
+      // 9
+      var a = [
+      0 +
+      5 *
+      9 *
+      'a',
+      'b',
+      0 +
+      5 *
+      9 *
+      'c',
+      'd',
+      'e',
+      'f',
+      'g',
+      'h',
+      'i'
+      ];
+      
+      // 10
+      var a,
+      b,
+      c,
+      d,
+      e,
+      f,
+      g,
+      h,
+      i;
+      JSEND
+      ]=])
+
+    -- :set cino=j1,J1,+2
+    execute('set cino=j1,J1,+2')
+    execute('/^JSSTART')
+    feed('=/^JSEND<cr>')
+
+    expect([=[
+      
+      JSSTART
+      // Results of JavaScript indent
+      // 1
+      (function(){
+      	var a = [
+      	  'a',
+      	  'b',
+      	  'c',
+      	  'd',
+      	  'e',
+      	  'f',
+      	  'g',
+      	  'h',
+      	  'i'
+      	];
+      }())
+      
+      // 2
+      (function(){
+      	var a = [
+      	  0 +
+      		5 *
+      		9 *
+      		'a',
+      	  'b',
+      	  0 +
+      		5 *
+      		9 *
+      		'c',
+      	  'd',
+      	  'e',
+      	  'f',
+      	  'g',
+      	  'h',
+      	  'i'
+      	];
+      }())
+      
+      // 3
+      (function(){
+      	var a = [
+      	  0 +
+      		// comment 1
+      		5 *
+      		/* comment 2 */
+      		9 *
+      		'a',
+      	  'b',
+      	  0 +
+      		5 *
+      		9 *
+      		'c',
+      	  'd',
+      	  'e',
+      	  'f',
+      	  'g',
+      	  'h',
+      	  'i'
+      	];
+      }())
+      
+      // 4
+      {
+      	var a = [
+      	  0,
+      	  1
+      	];
+      	var b;
+      	var c;
+      }
+      
+      // 5
+      {
+      	var a = [
+      	  [
+      		0
+      	  ],
+      	  2,
+      	  3
+      	];
+      }
+      
+      // 6
+      {
+      	var a = [
+      	  [
+      		0,
+      		1
+      	  ],
+      	  2,
+      	  3
+      	];
+      }
+      
+      // 7
+      {
+      	var a = [
+      	  // [
+      	  0,
+      	  // 1
+      	  // ],
+      	  2,
+      	  3
+      	];
+      }
+      
+      // 8
+      var x = [
+        (function(){
+      	  var a,
+      	  b,
+      	  c,
+      	  d,
+      	  e,
+      	  f,
+      	  g,
+      	  h,
+      	  i;
+        })
+      ];
+      
+      // 9
+      var a = [
+        0 +
+        5 *
+        9 *
+        'a',
+        'b',
+        0 +
+        5 *
+        9 *
+        'c',
+        'd',
+        'e',
+        'f',
+        'g',
+        'h',
+        'i'
+      ];
+      
+      // 10
+      var a,
+      	b,
+      	c,
+      	d,
+      	e,
+      	f,
+      	g,
+      	h,
+      	i;
       JSEND
       ]=])
   end)
