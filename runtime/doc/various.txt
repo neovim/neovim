@@ -272,19 +272,15 @@ g8			Print the hex values of the bytes used in the
 :!!			Repeat last ":!{cmd}".
 
 							*:ve* *:version*
-:ve[rsion]		Print the version number of the editor.  If the
-			compiler used understands "__DATE__" the compilation
-			date is mentioned.  Otherwise a fixed release-date is
-			shown.
-			The following lines contain information about which
-			features were enabled when Vim was compiled.  When
-			there is a preceding '+', the feature is included,
-			when there is a '-' it is excluded.  To change this,
-			you have to edit feature.h and recompile Vim.
-			To check for this in an expression, see |has()|.
-			Here is an overview of the features.
-			The first column shows the smallest version in which
-			they are included:
+:ve[rsion]		Print the version number of the editor.  The following
+			lines contain information about which features were
+			enabled when Vim was compiled.  When there is a
+			preceding '+', the feature is included, when there is
+			a '-' it is excluded.  To change this, you have to
+			edit feature.h and recompile Vim.  To check for this
+			in an expression, see |has()|.  Here is an overview of
+			the features.  The first column shows the smallest
+			version in which they are included:
 			   T	tiny
 			   S	small
 			   N	normal

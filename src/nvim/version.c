@@ -35,8 +35,6 @@
 
 char *Version = VIM_VERSION_SHORT;
 char *longVersion = NVIM_VERSION_LONG;
-char *longVersionWithDate = NVIM_VERSION_LONG \
-                            " (compiled " __DATE__ " " __TIME__ ")";
 char *version_buildtype = "Build type: " NVIM_VERSION_BUILD_TYPE;
 char *version_cflags = "Compilation: " NVIM_VERSION_CFLAGS;
 
@@ -1173,7 +1171,7 @@ void list_version(void)
 {
   // When adding features here, don't forget to update the list of
   // internal variables in eval.c!
-  MSG(longVersionWithDate);
+  MSG(longVersion);
   MSG(version_buildtype);
   MSG(version_cflags);
 
