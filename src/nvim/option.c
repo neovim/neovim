@@ -1019,12 +1019,9 @@ void set_init_2(void)
  */
 void set_init_3(void)
 {
-#if defined(UNIX) || defined(WIN3264)
-  /*
-   * Set 'shellpipe' and 'shellredir', depending on the 'shell' option.
-   * This is done after other initializations, where 'shell' might have been
-   * set, but only if they have not been set before.
-   */
+  // Set 'shellpipe' and 'shellredir', depending on the 'shell' option.
+  // This is done after other initializations, where 'shell' might have been
+  // set, but only if they have not been set before.
   int idx_srr;
   int do_srr;
   int idx_sp;
@@ -1081,8 +1078,6 @@ void set_init_3(void)
     }
     xfree(p);
   }
-#endif
-
 
   set_title_defaults();
 }
