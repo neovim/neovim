@@ -76,7 +76,7 @@ endfor
 
 if fail == 0
   " Success, create the .res file so that make knows it's done.
-  split %:r.res
+  exe 'split ' . fnamemodify(testname, ':r') . '.res'
   write
 endif
 
