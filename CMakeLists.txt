@@ -12,6 +12,17 @@ set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${DEPS_PREFIX}/lib/pkgconfig")
 # used for check_c_compiler_flag
 include(CheckCCompilerFlag)
 
+if(UNIX)
+  if(DEFINED ENV{SOURCE_DATE_EPOCH})
+    set(ENV{DATE_FMT} "%b %d %Y %H:%M:%S")
+    execute_process(
+      COMMAND "sh" "-c" "date -u -d '@$ENV{SOURCE_DATE_EPOCH}' '+$ENV{DATE_FMT}' 2>/dev/null || date -u -r '@$ENV{SOURCE_DATE_EPOCH}' '+$ENV{DATE_FMT}' 2>/dev/null || date -u '+$ENV{DATE_FMT}'"
+      OUTPUT_VARIABLE NVIM_VERSION_BUILD_DATE
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    unset(ENV{DATE_FMT})
+  endif()
+endif()
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   # CMake tries to treat /sw and /opt/local as extension of the system path, but
   # that doesn't really work out very well.  Once you have a dependency that
