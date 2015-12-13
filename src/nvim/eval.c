@@ -7101,9 +7101,9 @@ static struct fst {
   {"arglistid",       0, 2, f_arglistid},
   {"argv",            0, 1, f_argv},
   {"asin",            1, 1, f_asin},    // WJMc
-  {"assertEqual",     2, 3, f_assertEqual},
-  {"assertFalse",     1, 2, f_assertFalse},
-  {"assertTrue",      1, 2, f_assertTrue},
+  {"assert_equal",    2, 3, f_assert_equal},
+  {"assert_false",    1, 2, f_assert_false},
+  {"assert_true",     1, 2, f_assert_true},
   {"atan",            1, 1, f_atan},
   {"atan2",           2, 2, f_atan2},
   {"browse",          4, 4, f_browse},
@@ -7985,8 +7985,47 @@ static void f_argv(typval_T *argvars, typval_T *rettv)
   }
 }
 
+// Prepare "gap" for an assert error and add the sourcing position.
+static void prepare_assert_error(garray_T *gap)
+{
+  char buf[NUMBUFLEN];
+
+  ga_init(gap, 1, 100);
+  ga_concat(gap, sourcing_name);
+  vim_snprintf(buf, ARRAY_SIZE(buf), " line %ld", (long)sourcing_lnum);
+  ga_concat(gap, (char_u *)buf);
+  ga_concat(gap, (char_u *)": ");
+}
+
+// Fill "gap" with information about an assert error.
+static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv,
+                              char_u *exp_str, typval_T *exp_tv,
+                              typval_T *got_tv)
+{
+  char_u *tofree;
+
+  if (opt_msg_tv->v_type != VAR_UNKNOWN) {
+    tofree = (char_u *) tv2string(opt_msg_tv, NULL);
+    ga_concat(gap, tofree);
+    xfree(tofree);
+  } else {
+    ga_concat(gap, (char_u *)"Expected ");
+    if (exp_str == NULL) {
+      tofree = (char_u *) tv2string(exp_tv, NULL);
+      ga_concat(gap, tofree);
+      xfree(tofree);
+    } else {
+      ga_concat(gap, exp_str);
+    }
+    tofree = (char_u *) tv2string(got_tv, NULL);
+    ga_concat(gap, (char_u *)" but got ");
+    ga_concat(gap, tofree);
+    xfree(tofree);
+  }
+}
+
 // Add an assert error to v:errors.
-static void assertError(garray_T *gap)
+static void assert_error(garray_T *gap)
 {
   struct vimvar *vp = &vimvars[VV_ERRORS];
 
@@ -7998,71 +8037,47 @@ static void assertError(garray_T *gap)
                      gap->ga_data, gap->ga_len);
 }
 
-static void prepareForAssertError(garray_T *gap)
-{
-  char buf[NUMBUFLEN];
-
-  ga_init(gap, 1, 100);
-  ga_concat(gap, sourcing_name);
-  vim_snprintf(buf, ARRAY_SIZE(buf), " line %ld", (long)sourcing_lnum);
-  ga_concat(gap, (char_u *)buf);
-}
-
-// "assertEqual(expected, actual[, msg])" function
-static void f_assertEqual(typval_T *argvars, typval_T *rettv)
+// "assert_equal(expected, actual[, msg])" function
+static void f_assert_equal(typval_T *argvars, typval_T *rettv)
 {
   garray_T ga;
-  char_u *tofree;
 
   if (!tv_equal(&argvars[0], &argvars[1], false, false)) {
-    prepareForAssertError(&ga);
-    ga_concat(&ga, (char_u *)": Expected ");
-    tofree = (char_u *) tv2string(&argvars[0], NULL);
-    ga_concat(&ga, tofree);
-    xfree(tofree);
-    ga_concat(&ga, (char_u *)" but got ");
-    tofree = (char_u *) tv2string(&argvars[1], NULL);
-    ga_concat(&ga, tofree);
-    xfree(tofree);
-    assertError(&ga);
+    prepare_assert_error(&ga);
+    fill_assert_error(&ga, &argvars[2], NULL,
+                      &argvars[0], &argvars[1]);
+    assert_error(&ga);
     ga_clear(&ga);
   }
 }
 
-static void assertBool(typval_T *argvars, bool isTrue)
+// Common for assert_true() and assert_false().
+static void assert_bool(typval_T *argvars, bool isTrue)
 {
   int error = (int)false;
   garray_T ga;
-  char_u *tofree;
 
   if (argvars[0].v_type != VAR_NUMBER ||
       (get_tv_number_chk(&argvars[0], &error) == 0) == isTrue || error) {
-    prepareForAssertError(&ga);
-    ga_concat(&ga, (char_u *)": Expected ");
-    if (isTrue) {
-      ga_concat(&ga, (char_u *)"True ");
-    } else {
-      ga_concat(&ga, (char_u *)"False ");
-    }
-    ga_concat(&ga, (char_u *)"but got ");
-    tofree = (char_u *) tv2string(&argvars[0], NULL);
-    ga_concat(&ga, tofree);
-    xfree(tofree);
-    assertError(&ga);
+    prepare_assert_error(&ga);
+    fill_assert_error(&ga, &argvars[1],
+                      (char_u *)(isTrue ? "True " : "False "),
+                      NULL, &argvars[0]);
+    assert_error(&ga);
     ga_clear(&ga);
   }
 }
 
-// "assertFalse(actual[, msg])" function
-static void f_assertFalse(typval_T *argvars, typval_T *rettv)
+// "assert_false(actual[, msg])" function
+static void f_assert_false(typval_T *argvars, typval_T *rettv)
 {
-  assertBool(argvars, false);
+  assert_bool(argvars, false);
 }
 
-// "assertTrue(actual[, msg])" function
-static void f_assertTrue(typval_T *argvars, typval_T *rettv)
+// "assert_true(actual[, msg])" function
+static void f_assert_true(typval_T *argvars, typval_T *rettv)
 {
-  assertBool(argvars, true);
+  assert_bool(argvars, true);
 }
 
 /*
