@@ -174,6 +174,7 @@ char_u* ga_concat_strings(const garray_T *gap) FUNC_ATTR_NONNULL_RET
 }
 
 /// Concatenate a string to a growarray which contains characters.
+/// When "s" is NULL does not do anything.
 ///
 /// WARNING:
 /// - Does NOT copy the NUL at the end!
@@ -183,6 +184,10 @@ char_u* ga_concat_strings(const garray_T *gap) FUNC_ATTR_NONNULL_RET
 /// @param s
 void ga_concat(garray_T *gap, const char_u *restrict s)
 {
+  if (s == NULL) {
+    return;
+  }
+
   int len = (int)strlen((char *) s);
   if (len) {
     ga_grow(gap, len);

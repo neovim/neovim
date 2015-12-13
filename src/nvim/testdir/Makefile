@@ -31,6 +31,8 @@ SCRIPTS := test_eval.out                                               \
            test_command_count.out                                      \
            test_cdo.out                                                \
 
+NEW_TESTS = test_assert.res
+
 SCRIPTS_GUI := test16.out
 
 
@@ -62,9 +64,9 @@ ifdef TESTNUM
 	SCRIPTS := test$(TESTNUM).out
 endif
 
-nongui: nolog $(SCRIPTS) report
+nongui: nolog $(SCRIPTS) newtests report
 
-gui:    nolog $(SCRIPTS) $(SCRIPTS_GUI) report
+gui:    nolog $(SCRIPTS) $(SCRIPTS_GUI) newtests report
 
 .gdbinit:
 	echo 'set $$_exitcode = -1\nrun\nif $$_exitcode != -1\n  quit\nend' > .gdbinit
@@ -91,6 +93,7 @@ RUN_VIM     := VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(TOOL) $(VIMPROG)
 clean:
 	-rm -rf *.out          \
 	        *.failed       \
+	        *.res          \
 	        *.rej          \
 	        *.orig         \
 	        test.log       \
@@ -147,3 +150,14 @@ test49.out: test49.vim
 
 nolog:
 	-rm -f test.log
+
+
+# New style of tests uses Vim script with assert calls.  These are easier
+# to write and a lot easier to read and debug.
+# Limitation: Only works with the +eval feature.
+RUN_VIMTEST = VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(VALGRIND) $(VIMPROG) -u unix.vim -U NONE --noplugin
+
+newtests: $(NEW_TESTS)
+
+%.res: %.vim .gdbinit
+	$(RUN_VIMTEST) -u runtest.vim $*.vim
