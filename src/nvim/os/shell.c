@@ -418,7 +418,8 @@ static void read_input(DynamicBuffer *buf)
       // Finished a line, add a NL, unless this line should not have one.
       // FIXME need to make this more readable
       if (lnum != curbuf->b_op_end.lnum
-          || !curbuf->b_p_bin
+          || (!curbuf->b_p_bin
+            && curbuf->b_p_fixeol)
           || (lnum != curbuf->b_no_eol_lnum
             && (lnum !=
               curbuf->b_ml.ml_line_count
