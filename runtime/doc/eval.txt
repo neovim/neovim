@@ -1,4 +1,4 @@
-*eval.txt*	For Vim version 7.4.  Last change: 2015 Nov 29
+*eval.txt*	For Vim version 7.4.  Last change: 2015 Nov 30
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -1376,7 +1376,7 @@ v:errmsg	Last given error message.  It's allowed to set this variable.
 <		"errmsg" also works, for backwards compatibility.
 
 					*v:errors* *errors-variable*
-v:errors	Errors found by assert functions, such as |assertTrue()|.
+v:errors	Errors found by assert functions, such as |assert_true()|.
 		This is a list of strings.
 		The assert functions append an item when an assert fails.
 		To remove old results make it empty: >
@@ -1737,13 +1737,13 @@ append( {lnum}, {string})	Number	append {string} below line {lnum}
 append( {lnum}, {list})		Number	append lines {list} below line {lnum}
 argc()				Number	number of files in the argument list
 argidx()			Number	current index in the argument list
-arglistid( [{winnr}, [ {tabnr}]])
+arglistid( [{winnr} [, {tabnr}]])
 				Number	argument list id
 argv( {nr})			String	{nr} entry of the argument list
 argv( )				List	the argument list
-assertEqual( {exp}, {act})  	none    assert that {exp} equals {act}
-assertFalse( {actual})		none    assert that {actual} is false
-assertTrue( {actual})		none    assert that {actual} is true
+assert_equal( {exp}, {act} [, {msg}]) none    assert that {exp} equals {act}
+assert_false( {actual} [, {msg}])     none    assert that {actual} is false
+assert_true( {actual} [, {msg}])      none    assert that {actual} is true
 asin( {expr})			Float	arc sine of {expr}
 atan( {expr})			Float	arc tangent of {expr}
 atan2( {expr}, {expr})		Float   arc tangent of {expr1} / {expr2}
@@ -2173,30 +2173,36 @@ argv([{nr}])	The result is the {nr}th file in the argument list of the
 <		Without the {nr} argument a |List| with the whole |arglist| is
 		returned.
 
-							*assertEqual()*
-assertEqual({expected}, {actual})
+							*assert_equal()*
+assert_equal({expected}, {actual}, [, {msg}])
 		When {expected} and {actual} are not equal an error message is
 		added to |v:errors|.
 		There is no automatic conversion, the String "4" is different
 		from the Number 4.  And the number 4 is different from the
 		Float 4.0.  The value of 'ignorecase' is not used here, case
 		always matters.
+		When {msg} is omitted an error in the form "Expected
+		{expected} but got {actual}" is produced.
 		Example: >
-	assertEqual('foo', 'bar')
+	assert_equal('foo', 'bar')
 <		Will result in a string to be added to |v:errors|:
 	test.vim line 12: Expected 'foo' but got 'bar' ~
 
-assertFalse({actual})					*assertFalse()*
+assert_false({actual}, [, {msg}])				*assert_false()*
 		When {actual} is not false an error message is added to
-		|v:errors|, like with |assertEqual()|..
+		|v:errors|, like with |assert_equal()|..
 		A value is false when it is zero. When "{actual}" is not a
 		number the assert fails.
+		When {msg} is omitted an error in the form "Expected False but
+		got {actual}" is produced.
 
-assertTrue({actual})					*assertTrue()*
+assert_true({actual}, [, {msg}])				*assert_true()*
 		When {actual} is not true an error message is added to
-		|v:errors|, like with |assertEqual()|..
+		|v:errors|, like with |assert_equal()|..
 		A value is true when it is a non-zeron number.  When {actual}
 		is not a number the assert fails.
+		When {msg} is omitted an error in the form "Expected True but
+		got {actual}" is produced.
 
 asin({expr})						*asin()*
 		Return the arc sine of {expr} measured in radians, as a |Float|
