@@ -46,7 +46,19 @@ bool os_env_exists(const char *name)
 int os_setenv(const char *name, const char *value, int overwrite)
   FUNC_ATTR_NONNULL_ALL
 {
+#ifdef HAVE_SETENV
   return setenv(name, value, overwrite);
+#elif defined(HAVE_PUTENV_S)
+  if (!overwrite && os_getenv(name) != NULL) {
+    return 0;
+  }
+  if (_putenv_s(name, value) == 0) {
+    return 0;
+  }
+  return -1;
+#else
+# error "This system has no implementation available for os_setenv()"
+#endif
 }
 
 /// Unset environment variable
