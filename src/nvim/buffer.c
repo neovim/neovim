@@ -1414,7 +1414,6 @@ buflist_new (
       return NULL;
     if (aborting())             /* autocmds may abort script processing */
       return NULL;
-    /* buf->b_nwindows = 0; why was this here? */
     free_buffer_stuff(buf, FALSE);      /* delete local variables et al. */
 
     /* Init the options. */
@@ -1475,6 +1474,9 @@ buflist_new (
   fmarks_check_names(buf);              /* check file marks for this file */
   buf->b_p_bl = (flags & BLN_LISTED) ? TRUE : FALSE;    /* init 'buflisted' */
   if (!(flags & BLN_DUMMY)) {
+    // Tricky: these autocommands may change the buffer list.  They could also
+    // split the window with re-using the one empty buffer. This may result in
+    // unexpectedly losing the empty buffer.
     apply_autocmds(EVENT_BUFNEW, NULL, NULL, FALSE, buf);
     if (!buf_valid(buf)) {
       return NULL;
