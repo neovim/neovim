@@ -1544,6 +1544,11 @@ rewind_retry:
         /* First try finding a NL, for Dos and Unix */
         if (try_dos || try_unix) {
           for (p = ptr; p < ptr + size; ++p) {
+            // Reset the carriage return counter.
+            if (try_mac) {
+              try_mac = 1;
+            }
+
             if (*p == NL) {
               if (!try_unix
                   || (try_dos && p > ptr && p[-1] == CAR))
@@ -1551,6 +1556,8 @@ rewind_retry:
               else
                 fileformat = EOL_UNIX;
               break;
+            } else if (*p == CAR && try_mac) {
+              try_mac++;
             }
           }
 
@@ -1571,6 +1578,10 @@ rewind_retry:
               if (try_mac > try_unix)
                 fileformat = EOL_MAC;
             }
+          } else if (fileformat == EOL_UNKNOWN && try_mac == 1) {
+            // Looking for CR but found no end-of-line markers at all:
+            // use the default format.
+            fileformat = default_fileformat();
           }
         }
 
