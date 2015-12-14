@@ -6,6 +6,8 @@
 #define TEMP_DIR_NAMES {"$TMP", "$TEMP", "$USERPROFILE", ""}
 #define TEMP_FILE_PATH_MAXLEN _MAX_PATH
 
+#define FNAME_ILLEGAL "\"*?><|"
+
 #define USE_CRNL
 
 #ifdef _MSC_VER
