@@ -2,6 +2,7 @@
 #define NVIM_OS_WIN_DEFS_H
 
 #include <windows.h>
+#include <sys/stat.h>
 
 #define TEMP_DIR_NAMES {"$TMP", "$TEMP", "$USERPROFILE", ""}
 #define TEMP_FILE_PATH_MAXLEN _MAX_PATH
@@ -16,6 +17,9 @@
 # endif
 # ifndef restrict
 #  define restrict __restrict
+# endif
+# ifndef S_IXUSR
+#  define S_IXUSR S_IEXEC
 # endif
 #endif
 
