@@ -3323,16 +3323,15 @@ win_line (
          * Found last space before word: check for line break.
          */
         if (wp->w_p_lbr && vim_isbreak(c) && !vim_isbreak(*ptr)) {
-          char_u *p = ptr - (
-              has_mbyte ? mb_l :
-              1);
+          int mb_off = has_mbyte ? (*mb_head_off)(line, ptr - 1) : 0;
+          char_u *p = ptr - (mb_off + 1);
           // TODO: is passing p for start of the line OK?
           n_extra = win_lbr_chartabsize(wp, line, p, (colnr_T)vcol, NULL) - 1;
           if (c == TAB && n_extra + col > wp->w_width) {
             n_extra = (int)wp->w_buffer->b_p_ts
                       - vcol % (int)wp->w_buffer->b_p_ts - 1;
           }
-          c_extra = ' ';
+          c_extra = mb_off > 0 ? MB_FILLER_CHAR : ' ';
           if (ascii_iswhite(c)) {
             if (c == TAB)
               /* See "Tab alignment" below. */
