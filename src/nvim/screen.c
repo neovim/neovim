@@ -2934,14 +2934,16 @@ win_line (
         }
       }
 
-      /* Decide which of the highlight attributes to use. */
-      attr_pri = TRUE;
-      if (area_attr != 0)
-        char_attr = area_attr;
-      else if (search_attr != 0)
-        char_attr = search_attr;
-      /* Use line_attr when not in the Visual or 'incsearch' area
-       * (area_attr may be 0 when "noinvcur" is set). */
+      // Decide which of the highlight attributes to use.
+      attr_pri = true;
+
+      if (area_attr != 0) {
+        char_attr = hl_combine_attr(line_attr, area_attr);
+      } else if (search_attr != 0) {
+        char_attr = hl_combine_attr(line_attr, search_attr);
+      }
+      // Use line_attr when not in the Visual or 'incsearch' area
+      // (area_attr may be 0 when "noinvcur" is set).
       else if (line_attr != 0 && ((fromcol == -10 && tocol == MAXCOL)
                                   || vcol < fromcol || vcol_prev < fromcol_prev
                                   || vcol >= tocol))
