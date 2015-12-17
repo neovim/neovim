@@ -161,22 +161,20 @@ ${vim_diff}
 list_vim_patches() {
   get_vim_sources
 
-  echo
-  echo "Vim patches missing from Neovim:"
+  printf "\nVim patches missing from Neovim:\n"
 
   # Get tags since 7.4.442.
-  local vim_tags=$(cd "${VIM_SOURCE_DIR}" && \
-    git tag --contains v7.4.442)
+  local vim_tags=$(cd "${VIM_SOURCE_DIR}" && git tag --contains v7.4.442)
 
   # Get non-versioned commits since e2719096.
   if git log -1 --grep='.' --invert-grep > /dev/null 2>&1 ; then
     local vim_runtime_commits=$(cd "${VIM_SOURCE_DIR}" && \
-      git log --format='%H' --grep='^patch' --grep='^updated for version' --invert-grep e2719096250a19ecdd9a35d13702879f163d2a50..HEAD)
-  else
-    # --invert-grep requires git 2.4+
+      git log --reverse --format='%H' --grep='^patch' --grep='^updated for version' \
+        --invert-grep e2719096250a19ecdd9a35d13702879f163d2a50..HEAD)
+  else # --invert-grep requires git 2.4+
     echo "Warning: some runtime updates may not be listed (requires git 2.4+)."
     local vim_runtime_commits=$(cd "${VIM_SOURCE_DIR}" && \
-      git log --format='%H' --grep='Updated' e2719096250a19ecdd9a35d13702879f163d2a50..HEAD)
+      git log --reverse --format='%H' --grep='Updated' e2719096250a19ecdd9a35d13702879f163d2a50..HEAD)
   fi
 
   local vim_commit
@@ -191,7 +189,7 @@ list_vim_patches() {
     else
       # Untagged Vim patch (e.g. runtime updates), check the Neovim git log:
       is_missing="$(cd "${NEOVIM_SOURCE_DIR}" &&
-        git log -1 --no-merges --grep="vim\-patch:${vim_commit:0:7}" --pretty=format:"false")"
+        git log -1 --no-merges --grep="vim\-patch:${vim_commit:0:7}" --pretty=format:false)"
     fi
 
     if [[ ${is_missing} != "false" ]]; then
