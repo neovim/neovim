@@ -1,4 +1,4 @@
-*eval.txt*	For Vim version 7.4.  Last change: 2014 Nov 27
+*eval.txt*	For Vim version 7.4.  Last change: 2015 Jan 29
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -4972,6 +4972,7 @@ printf({fmt}, {expr1} ...)				*printf()*
 		s	The text of the String argument is used.  If a
 			precision is specified, no more bytes than the number
 			specified are used.
+							*printf-S*
 		S	The text of the String argument is used.  If a
 			precision is specified, no more display cells than the
 			number specified are used.  Without the |+multi_byte|

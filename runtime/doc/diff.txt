@@ -1,4 +1,4 @@
-*diff.txt*      For Vim version 7.4.  Last change: 2015 Jan 19
+*diff.txt*      For Vim version 7.4.  Last change: 2015 Feb 03
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -305,6 +305,19 @@ name or a part of a buffer name.  Examples:
 5. Diff options						*diff-options*
 
 Also see |'diffopt'| and the "diff" item of |'fillchars'|.
+
+					    *diff-slow* *diff_translations*
+For very long lines, the diff syntax highlighting might be slow, especially
+since it tries to match all different kind of localisations. To disable
+localisations and speed up the syntax highlighting, set the global variable
+g:diff_translations to zero: >
+
+    let g:diff_translations = 0
+<
+After setting this variable, Reload the syntax script: >
+
+    set syntax=diff
+<
 
 
 FINDING THE DIFFERENCES					*diff-diffexpr*
