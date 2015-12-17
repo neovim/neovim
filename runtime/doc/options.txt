@@ -1194,6 +1194,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	nofile only:	The buffer name is fixed, it is not handled like a
 			file name.  It is not modified in response to a |:cd|
 			command.
+	nofile only:	When using ":e bufname" and already editing "bufname"
+			nothing changes, since there is no file to edit.
 							*E676*
 	"acwrite" implies that the buffer name is not related to a file, like
 	"nofile", but it will be written.  Thus, in contrast to "nofile" and

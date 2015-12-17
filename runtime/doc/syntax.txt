@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 7.4.  Last change: 2015 Jan 07
+*syntax.txt*	For Vim version 7.4.  Last change: 2015 Feb 03
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -1129,6 +1129,8 @@ The diff highlighting normally finds translated headers.  This can be slow if
 there are very long lines in the file.  To disable translations: >
 
 	:let diff_translations = 0
+
+Also see |diff-slow|.
 
 
 DIRCOLORS			       *dircolors.vim* *ft-dircolors-syntax*

@@ -1,4 +1,4 @@
-*windows.txt*   For Vim version 7.4.  Last change: 2014 Dec 05
+*windows.txt*   For Vim version 7.4.  Last change: 2015 Jan 31
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -984,8 +984,8 @@ list of buffers. |unlisted-buffer|
 		(the term "unlisted" is a bit confusing then...).
 
 		Each buffer has a unique number.  That number will not change,
-		so you can always go to a specific buffer with ":buffer N" or
-		"N CTRL-^", where N is the buffer number.
+		thus you can always go to a specific buffer with ":buffer N"
+		or "N CTRL-^", where N is the buffer number.
 
 		Indicators (chars in the same column are mutually exclusive):
 		u	an unlisted buffer (only displayed when [!] is used)

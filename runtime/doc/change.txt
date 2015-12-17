@@ -1063,11 +1063,12 @@ There are nine types of registers:			*registers* *E354*
 2. 10 numbered registers "0 to "9
 3. The small delete register "-
 4. 26 named registers "a to "z or "A to "Z
-5. four read-only registers ":, "., "% and "#
-6. the expression register "=
-7. The selection and drop registers "*, "+ and "~ 
-8. The black hole register "_
-9. Last search pattern register "/
+5. three read-only registers ":, "., "%
+6. alternate buffer register "#
+7. the expression register "=
+8. The selection and drop registers "*, "+ and "~ 
+9. The black hole register "_
+10. Last search pattern register "/
 
 1. Unnamed register ""				*quote_quote* *quotequote*
 Vim fills this register with text deleted with the "d", "c", "s", "x" commands
