@@ -7992,10 +7992,19 @@ static void prepare_assert_error(garray_T *gap)
   char buf[NUMBUFLEN];
 
   ga_init(gap, 1, 100);
-  ga_concat(gap, sourcing_name);
-  vim_snprintf(buf, ARRAY_SIZE(buf), " line %ld", (long)sourcing_lnum);
-  ga_concat(gap, (char_u *)buf);
-  ga_concat(gap, (char_u *)": ");
+  if (sourcing_name != NULL) {
+    ga_concat(gap, sourcing_name);
+    if (sourcing_lnum > 0) {
+      ga_concat(gap, (char_u *)" ");
+    }
+  }
+  if (sourcing_lnum > 0) {
+    vim_snprintf(buf, ARRAY_SIZE(buf), "line %ld", (long)sourcing_lnum);
+    ga_concat(gap, (char_u *)buf);
+  }
+  if (sourcing_name != NULL || sourcing_lnum > 0) {
+    ga_concat(gap, (char_u *)": ");
+  }
 }
 
 // Fill "gap" with information about an assert error.
@@ -8062,7 +8071,7 @@ static void assert_bool(typval_T *argvars, bool isTrue)
       (get_tv_number_chk(&argvars[0], &error) == 0) == isTrue || error) {
     prepare_assert_error(&ga);
     fill_assert_error(&ga, &argvars[1],
-                      (char_u *)(isTrue ? "True " : "False "),
+                      (char_u *)(isTrue ? "True" : "False"),
                       NULL, &argvars[0]);
     assert_error(&ga);
     ga_clear(&ga);
