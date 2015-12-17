@@ -2,7 +2,7 @@
 " Language:	J
 " Maintainer:	David Bürgin <676c7473@gmail.com>
 " URL:		https://github.com/glts/vim-j
-" Last Change:	2014-10-05
+" Last Change:	2015-01-11
 
 if exists('b:current_syntax')
   finish
@@ -23,12 +23,12 @@ syntax match jControl /\<\%(for\|goto\|label\)_\a\k*\./
 " Standard library names. A few names need to be defined with ":syntax match"
 " because they would otherwise take precedence over the corresponding jControl
 " and jDefineExpression items.
-syntax keyword jStdlibNoun ARGV BINPATH CR CRLF DEL Debug EAV EMPTY FF FHS IF64 IFIOS IFJCDROID IFJHS IFQT IFRASPI IFUNIX IFWIN IFWINCE IFWINE IFWOW64 JB01 JBOXED JCHAR JCMPX JFL JINT JPTR JSIZES JSTR JTYPES JVERSION LF LF2 TAB UNAME UNXLIB andurl dbhelp libjqt
-syntax keyword jStdlibAdverb define each every fapplylines inv inverse items leaf rows table
+syntax keyword jStdlibNoun ARGV BINPATH CR CRLF DEL Debug EAV EMPTY FF FHS IF64 IFIOS IFJCDROID IFJHS IFQT IFRASPI IFUNIX IFWIN IFWINCE IFWINE IFWOW64 JB01 JBOXED JCHAR JCMPX JFL JINT JPTR JSIZES JSTR JTYPES JVERSION LF LF2 TAB UNAME UNXLIB dbhelp libjqt
+syntax keyword jStdlibAdverb define each every fapplylines inv inverse items leaf rows rxapply rxmerge table
 syntax keyword jStdlibConjunction bind cuts def on
-syntax keyword jStdlibVerb AND Endian IFDEF Note OR XOR alpha17 alpha27 anddf android_exec_host andunzip apply boxopen boxxopen bx calendar cd cdcb cder cderx cdf charsub chopstring clear coclass cocreate cocurrent codestroy coerase cofind cofindv cofullname coinfo coinsert coname conames conew conl conouns conounsx copath copathnl copathnlx coreset costate cut cutLF cutopen cutpara datatype dbctx dberm dberr dbg dbjmp dblocals dblxq dblxs dbnxt dbq dbr dbret dbrr dbrrx dbrun dbs dbsig dbsq dbss dbst dbstack dbstk dbstop dbstopme dbstopnext dbstops dbtrace dbview deb debc delstring detab dfh dir dircompare dircompares dirfind dirpath dirss dirssrplc dirtree dirused dlb dltb dltbs dquote drop dropafter dropto dtb dtbs echo empty endian erase evtloop exit expand f2utf8 fappend fappends fboxname fc fcopynew fdir ferase fetch fexist fexists fgets file2url fixdotdot fliprgb fmakex foldpara foldtext fpathcreate fpathname fputs fread freadblock freadr freads frename freplace fsize fss fssrplc fstamp fstringreplace ftype fview fwrite fwritenew fwrites getargs getdate getenv getqtbin hfd hostpathsep ic install iospath isatty isotimestamp isutf8 jcwdpath joinstring jpathsep jsystemdefs list ljust load loadd mema memf memr memw nameclass namelist names nc nl pick quote require rjust rplc script scriptd setbreak show sign sminfo smoutput sort split splitnostring splitstring ss startupandroid startupconsole startupide stderr stdin stdout stringreplace symdat symget symset take takeafter taketo timespacex timestamp timex tmoutput toCRLF toHOST toJ todate todayno tolower topara toupper tsdiff tsrep tstamp type ucp ucpcount unxlib usleep utf8 uucp valdate wcsize weekday weeknumber weeksinyear winpathsep
+syntax keyword jStdlibVerb AND Endian IFDEF OR XOR anddf android_exec_am android_exec_host andunzip apply boxopen boxxopen bx calendar cd cdcb cder cderx cdf charsub chopstring cleartags clear coclass cocreate cocurrent codestroy coerase cofind cofindv cofullname coinfo coinsert compare coname conames conew conl conouns conounsx copath copathnl copathnlx coreset costate cut cutLF cutopen cutpara datatype dbctx dberm dberr dbg dbjmp dblocals dblxq dblxs dbnxt dbq dbr dbret dbrr dbrrx dbrun dbs dbsig dbsq dbss dbst dbstack dbstk dbstop dbstopme dbstopnext dbstops dbtrace dbview deb debc delstring detab dfh dir dircompare dircompares dirfind dirpath dirss dirssrplc dirtree dirused dlb dltb dltbs dquote drop dropafter dropto dtb dtbs echo empty endian erase evtloop exit expand f2utf8 fappend fappends fboxname fc fcompare fcompares fcopynew fdir ferase fetch fexist fexists fgets file2url fixdotdot fliprgb fmakex foldpara foldtext fpathcreate fpathname fputs fread freadblock freadr freads frename freplace fsize fss fssrplc fstamp fstringreplace ftype fview fwrite fwritenew fwrites getalpha getargs getdate getenv getqtbin hfd hostpathsep ic install iospath isatty isotimestamp isutf8 jcwdpath joinstring jpath jpathsep jsystemdefs launch list ljust load loadd loadtags mema memf memr memw nameclass namelist names nc nl pick quote require rjust rplc rxE rxall rxcomp rxcut rxeq rxerror rxfirst rxfree rxfrom rxhandles rxin rxindex rxinfo rxmatch rxmatches rxrplc rxutf8 script scriptd scripts setalpha setbreak shell show sign sminfo smoutput sort split splitnostring splitstring ss startupandroid startupconsole startupide stderr stdin stdout stringreplace symdat symget symset ta tagcp tagopen tagselect take takeafter taketo timespacex timestamp timex tmoutput toCRLF toHOST toJ todate todayno tolower topara toupper tsdiff tsrep tstamp type ucp ucpcount unxlib usleep utf8 uucp valdate wcsize weekday weeknumber weeksinyear winpathsep xedit
 syntax match jStdlibNoun /\<\%(adverb\|conjunction\|dyad\|monad\|noun\|verb\)\>/
-syntax match jStdlibVerb /\<\%(assert\|break\|do\)\>\.\@!/
+syntax match jStdlibVerb /\<\%(Note\|\%(assert\|break\|do\)\.\@!\)\>/
 
 " Numbers. Matching J numbers is difficult. In fact, the job cannot be done
 " with regular expressions alone. Below is a sketch of the pattern used. It
@@ -75,12 +75,12 @@ syntax match jConjunction /;\.\|\^:\|![.:]/
 " the next line. The trick is to split the problem into two regions and link
 " them with "nextgroup=". The fold wrapper provides syntax folding.
 syntax region jNounDefineFold
-    \ matchgroup=NONE start=/\<\%(\%(0\|noun\)\s\+\%(\:\s*0\|def\s\+0\|define\)\>\)\@=/
+    \ matchgroup=NONE start=/\%(\%(\%(^\s*Note\)\|\<\%(0\|noun\)\s\+\%(\:\s*0\|def\s\+0\|define\)\)\>\)\@=/
     \ keepend matchgroup=NONE end=/^\s*)\s*$/
     \ contains=jNounDefineStart
     \ fold
 syntax region jNounDefineStart
-    \ matchgroup=jDefineExpression start=/\<\%(0\|noun\)\s\+\%(\:\s*0\|def\s\+0\|define\)\>/
+    \ matchgroup=jDefineExpression start=/\%(\%(^\s*Note\)\|\<\%(0\|noun\)\s\+\%(\:\s*0\|def\s\+0\|define\)\)\>/
     \ keepend matchgroup=NONE end=/$/
     \ contains=@jStdlibItems,@jPrimitiveItems,jNumber,jString,jParenGroup,jParen,jComment
     \ contained oneline skipempty nextgroup=jDefineEnd,jNounDefine
@@ -112,7 +112,7 @@ syntax region jParenGroup
     \ oneline transparent
 
 syntax keyword jTodo contained TODO FIXME XXX
-syntax match jComment /NB\..*$/ contains=jTodo,@Spell
+syntax match jComment /\<NB\..*$/ contains=jTodo,@Spell
 
 syntax match jSharpBang /\%^#!.*$/
 
