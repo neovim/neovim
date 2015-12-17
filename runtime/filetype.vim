@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2015 Jan 07
+" Last Change:	2015 Jan 14
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -2030,6 +2030,10 @@ func! s:FTRules()
   endif
   if path =~ '^/etc/ufw/'
     setf conf  " Better than hog
+    return
+  endif
+  if path =~ '^/\(etc\|usr/share\)/polkit-1/rules\.d'
+    setf javascript
     return
   endif
   try
