@@ -2,7 +2,7 @@
 " Header: "{{{
 " Maintainer:	Bram Moolenaar
 " Original Author: Andy Wokula <anwoku@yahoo.de>
-" Last Change:	2014 Aug 23
+" Last Change:	2015 Jan 11
 " Version:	1.0
 " Description:	HTML indent script with cached state for faster indenting on a
 "		range of lines.
@@ -883,7 +883,7 @@ endfunc "}}}
 " THE MAIN INDENT FUNCTION. Return the amount of indent for v:lnum.
 func! HtmlIndent()
   "{{{
-  if prevnonblank(v:lnum - 1) <= 1
+  if prevnonblank(v:lnum - 1) < 1
     " First non-blank line has no indent.
     return 0
   endif
