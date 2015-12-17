@@ -31,8 +31,7 @@ SCRIPTS := test_eval.out                                               \
            test_command_count.out                                      \
            test_cdo.out                                                \
 
-NEW_TESTS = test_assert.res \
-	    test_undolevels.res
+NEW_TESTS = test_undolevels.res
 
 SCRIPTS_GUI := test16.out
 
