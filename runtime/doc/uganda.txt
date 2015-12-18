@@ -190,7 +190,7 @@ child, you should have the intention to do this for at least one year.
 
 How do you know that the money will be spent right?  First of all you have my
 personal guarantee as the author of Vim.  I trust the people that are working
-at the centre, I know them personally.  Further more, the centre has been
+at the centre, I know them personally.  Furthermore, the centre has been
 co-sponsored and inspected by World Vision, Save the Children Fund and is now
 under the supervision of Pacific Academy Outreach Society.  The centre is
 visited about once a year to check the progress (at our own cost).  I have

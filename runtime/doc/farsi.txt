@@ -215,7 +215,7 @@ o  Keyboard
 Note:
 	¡  stands for Farsi PSP (break without space)
 
-	¢  stands for Farsi PCN (for HAMZE attribute )
+	¢  stands for Farsi PCN (for HAMZE attribute)
 
 Restrictions
 ------------

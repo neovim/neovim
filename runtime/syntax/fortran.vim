@@ -1,15 +1,15 @@
 " Vim syntax file
 " Language:	Fortran 2008 (and earlier versions: 2003, 95, 90, and 77)
-" Version:	0.94
-" Last Change:	2012 June 18
-" Maintainer:	Ajit J. Thakkar (ajit AT unb.ca); <http://www.unb.ca/chem/ajit/>
+" Version:	0.95
+" Last Change:	2015 Jan. 15
+" Maintainer:	Ajit J. Thakkar <ajit@unb.ca>; <http://www2.unb.ca/~ajit/>
 " Usage:	For instructions, do :help fortran-syntax from Vim
 " Credits:
 "  Version 0.1 was based on the fortran 77 syntax file by Mario Eusebio and
 "  Preben Guldberg. Useful suggestions were made by: Andrej Panjkov,
 "  Bram Moolenaar, Thomas Olsen, Michael Sternberg, Christian Reile,
 "  Walter Dieudonné, Alexander Wagner, Roman Bertle, Charles Rendleman,
-"  Andrew Griffiths, Joe Krahn, and Hendrik Merx.
+"  Andrew Griffiths, Joe Krahn, Hendrik Merx, and Matt Thompson.
 
 if exists("b:current_syntax")
   finish
@@ -298,6 +298,41 @@ if b:fortran_dialect == "f08"
   syn keyword fortranIntrinsic        bge bgt ble blt dshiftl dshiftr findloc iall iany iparity image_index lcobound ucobound maskl maskr num_images parity popcnt poppar shifta shiftl shiftr this_image
   syn keyword fortranIO               newunit
   syn keyword fortranType             contiguous
+
+" CUDA fortran
+  syn match fortranTypeCUDA           "\<attributes\>"
+  syn keyword fortranTypeCUDA         host global device value
+  syn keyword fortranTypeCUDA         shared constant pinned texture
+  syn keyword fortranTypeCUDA         dim1 dim2 dim3 dim4
+  syn keyword fortranTypeCUDA         cudadeviceprop cuda_count_kind cuda_stream_kind
+  syn keyword fortranTypeCUDA         cudaEvent cudaFuncAttributes cudaArrayPtr
+  syn keyword fortranTypeCUDA         cudaSymbol cudaChannelFormatDesc cudaPitchedPtr
+  syn keyword fortranTypeCUDA         cudaExtent cudaMemcpy3DParms
+  syn keyword fortranTypeCUDA         cudaFuncCachePreferNone cudaFuncCachePreferShared
+  syn keyword fortranTypeCUDA         cudaFuncCachePreferL1 cudaLimitStackSize
+  syn keyword fortranTypeCUDA         cudaLimitPrintfSize cudaLimitMallocHeapSize
+  syn keyword fortranTypeCUDA         cudaSharedMemBankSizeDefault cudaSharedMemBankSizeFourByte cudaSharedMemBankSizeEightByte
+  syn keyword fortranTypeCUDA         cudaEventDefault cudaEventBlockingSync cudaEventDisableTiming
+  syn keyword fortranTypeCUDA         cudaMemcpyHostToDevice cudaMemcpyDeviceToHost
+  syn keyword fortranTypeCUDA         cudaMemcpyDeviceToDevice
+  syn keyword fortranTypeCUDA         cudaErrorNotReady cudaSuccess cudaErrorInvalidValue
+  syn keyword fortranTypeCUDA         c_devptr
+
+  syn match fortranStringCUDA         "blockidx%[xyz]"
+  syn match fortranStringCUDA         "blockdim%[xyz]"
+  syn match fortranStringCUDA         "griddim%[xyz]"
+  syn match fortranStringCUDA         "threadidx%[xyz]"
+
+  syn keyword fortranIntrinsicCUDA    warpsize syncthreads syncthreads_and syncthreads_count syncthreads_or threadfence threadfence_block threadfence_system gpu_time allthreads anythread ballot
+  syn keyword fortranIntrinsicCUDA    atomicadd atomicsub atomicmax atomicmin atomicand atomicor atomicxor atomicexch atomicinc atomicdec atomiccas sizeof __shfl __shfl_up __shfl_down __shfl_xor
+  syn keyword fortranIntrinsicCUDA    cudaChooseDevice cudaDeviceGetCacheConfig cudaDeviceGetLimit cudaDeviceGetSharedMemConfig cudaDeviceReset cudaDeviceSetCacheConfig cudaDeviceSetLimit cudaDeviceSetSharedMemConfig cudaDeviceSynchronize cudaGetDevice cudaGetDeviceCount cudaGetDeviceProperties cudaSetDevice cudaSetDeviceFlags cudaSetValidDevices
+  syn keyword fortranIntrinsicCUDA    cudaThreadExit cudaThreadSynchronize cudaGetLastError cudaGetErrorString cudaPeekAtLastError cudaStreamCreate cudaStreamDestroy cudaStreamQuery cudaStreamSynchronize cudaStreamWaitEvent cudaEventCreate cudaEventCreateWithFlags cudaEventDestroy cudaEventElapsedTime cudaEventQuery cudaEventRecord cudaEventSynchronize
+  syn keyword fortranIntrinsicCUDA    cudaFuncGetAttributes cudaFuncSetCacheConfig cudaFuncSetSharedMemConfig cudaSetDoubleForDevice cudaSetDoubleForHost cudaFree cudaFreeArray cudaFreeHost cudaGetSymbolAddress cudaGetSymbolSize
+  syn keyword fortranIntrinsicCUDA    cudaHostAlloc cudaHostGetDevicePointer cudaHostGetFlags cudaHostRegister cudaHostUnregister cudaMalloc cudaMallocArray cudaMallocHost cudaMallocPitch cudaMalloc3D cudaMalloc3DArray
+  syn keyword fortranIntrinsicCUDA    cudaMemcpy cudaMemcpyArraytoArray cudaMemcpyAsync cudaMemcpyFromArray cudaMemcpyFromSymbol cudaMemcpyFromSymbolAsync cudaMemcpyPeer cudaMemcpyPeerAsync cudaMemcpyToArray cudaMemcpyToSymbol cudaMemcpyToSymbolAsync cudaMemcpy2D cudaMemcpy2DArrayToArray cudaMemcpy2DAsync cudaMemcpy2DFromArray cudaMemcpy2DToArray cudaMemcpy3D cudaMemcpy3DAsync
+  syn keyword fortranIntrinsicCUDA    cudaMemGetInfo cudaMemset cudaMemset2D cudaMemset3D cudaDeviceCanAccessPeer cudaDeviceDisablePeerAccess cudaDeviceEnablePeerAccess cudaPointerGetAttributes cudaDriverGetVersion cudaRuntimeGetVersion
+
+  syn region none matchgroup=fortranType start="<<<" end=">>>" contains=ALLBUT,none
 endif
 
 syn cluster fortranCommentGroup contains=fortranTodo
@@ -452,6 +487,11 @@ else
   hi! def link fortranStringR	        fortranString
   hi! def link fortranConditionalR	fortranConditional
 endif
+
+" CUDA
+hi def link fortranIntrinsicCUDA        fortranIntrinsic
+hi def link fortranTypeCUDA             fortranType
+hi def link fortranStringCUDA           fortranString
 
 hi def link fortranFormatSpec	Identifier
 hi def link fortranFloat	Float

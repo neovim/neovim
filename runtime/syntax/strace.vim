@@ -1,9 +1,8 @@
 " Vim syntax file
 " This is a GENERATED FILE. Please always refer to source file at the URI below.
 " Language: strace output
-" Maintainer: David Ne\v{c}as (Yeti) <yeti@physics.muni.cz>
-" Last Change: 2002-10-10
-" URL: http://trific.ath.cx/Ftp/vim/syntax/strace.vim
+" Maintainer: David Necas (Yeti) <yeti@physics.muni.cz>
+" Last Change: 2015-01-16
 
 " Setup
 if version >= 600
@@ -17,7 +16,7 @@ endif
 syn case match
 
 " Parse the line
-syn match straceSpecialChar "\\\d\d\d\|\\." contained
+syn match straceSpecialChar "\\\o\{1,3}\|\\." contained
 syn region straceString start=+"+ skip=+\\\\\|\\"+ end=+"+ contains=straceSpecialChar oneline
 syn match straceNumber "\W[+-]\=\(\d\+\)\=\.\=\d\+\([eE][+-]\=\d\+\)\="lc=1
 syn match straceNumber "\W0x\x\+"lc=1

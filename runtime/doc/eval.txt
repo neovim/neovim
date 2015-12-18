@@ -953,7 +953,7 @@ Decimal, Hexadecimal (starting with 0x or 0X), or Octal (starting with 0).
 Floating point numbers can be written in two forms:
 
 	[-+]{N}.{M}
-	[-+]{N}.{M}e[-+]{exp}
+	[-+]{N}.{M}[eE][-+]{exp}
 
 {N} and {M} are numbers.  Both {N} and {M} must be present and can only
 contain digits.
@@ -7597,7 +7597,7 @@ This does NOT work: >
 				:unlet v
 <							*E741*
 			If you try to change a locked variable you get an
-			error message: "E741: Value of {name} is locked"
+			error message: "E741: Value is locked: {name}"
 
 			[depth] is relevant when locking a |List| or
 			|Dictionary|.  It specifies how deep the locking goes:

@@ -357,7 +357,7 @@ adjust the various t_ codes.  This avoids the problem that the xterm can
 produce different codes, depending on the mode it is in (8-bit, VT102,
 VT220, etc.).  The result is that codes like <xF1> are no longer needed.
 Note: This is only done on startup.  If the xterm options are changed after
-Vim has started, the escape sequences may not be recognized any more.
+Vim has started, the escape sequences may not be recognized anymore.
 
 							*xterm-resize*
 Window resizing with xterm only works if the allowWindowOps resource is

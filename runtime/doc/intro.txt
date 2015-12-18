@@ -1,4 +1,4 @@
-*intro.txt*     For Vim version 7.4.  Last change: 2014 May 24
+*intro.txt*     For Vim version 7.4.  Last change: 2015 Jan 20
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -131,7 +131,7 @@ http://www.vim.org/maillist.php
 
 Bug reports:				*bugs* *bug-reports* *bugreport.vim*
 
-Send bug reports to: Vim Developers <vim_dev@vim.org>
+Send bug reports to: Vim Developers <vim-dev@vim.org>
 This is a maillist, you need to become a member first and many people will see
 the message.  If you don't want that, e.g. because it is a security issue,
 send it to <bugs@vim.org>, this only goes to the Vim maintainer (that's Bram).

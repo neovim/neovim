@@ -677,7 +677,7 @@ It is possible to achieve a poor man's version of duplex printing using the PS
 utility psselect.  This utility has options -e and -o for printing just the
 even or odd pages of a PS file respectively.
 
-First generate a PS file with the 'hardcopy' command, then generate a new
+First generate a PS file with the 'hardcopy' command, then generate new
 files with all the odd and even numbered pages with: >
 
 	psselect -o test.ps odd.ps
