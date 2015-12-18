@@ -122,7 +122,7 @@ KHASH_SET_INIT_STR(strset)
 //   E576: Missing '>'
 //   E577: Illegal register name
 //   E886: Can't rename viminfo file to %s!
-// Now only five of them are used:
+// Now only six of them are used:
 //   E137: ShaDa file is not writeable (for pre-open checks)
 //   E138: All %s.tmp.X files exist, cannot write ShaDa file!
 //   RCERR (E576) for critical read errors.
@@ -130,6 +130,7 @@ KHASH_SET_INIT_STR(strset)
 //   RERR (E575) for various errors inside read ShaDa file.
 //   SERR (E886) for various “system” errors (always contains output of
 //   strerror)
+//   WERR (E574) for various ignorable write errors
 
 /// Common prefix for all errors inside ShaDa file
 ///
@@ -147,6 +148,9 @@ KHASH_SET_INIT_STR(strset)
 
 /// Common prefix for all “rename” errors
 #define RNERR "E136: "
+
+/// Common prefix for all ignorable “write” errors
+#define WERR "E574: "
 
 /// Flags for shada_read_file and children
 typedef enum {
@@ -198,6 +202,9 @@ typedef enum {
                          ///< a ShaDa file.
   kSDWriteFailed,        ///< Writing was not successfull (e.g. because there
                          ///< was no space left on device).
+  kSDWriteIgnError,      ///< Writing resulted in a error which can be ignored
+                         ///< (e.g. when trying to dump a function reference or
+                         ///< self-referencing container in a variable).
 } ShaDaWriteResult;
 
 /// Flags for shada_read_next_item
@@ -1666,11 +1673,14 @@ static char *shada_filename(const char *file)
 /// @param[in]  entry      Entry written.
 /// @param[in]  max_kbyte  Maximum size of an item in KiB. Zero means no
 ///                        restrictions.
-static bool shada_pack_entry(msgpack_packer *const packer,
-                             ShadaEntry entry,
-                             const size_t max_kbyte)
+///
+/// @return kSDWriteSuccessfull, kSDWriteFailed or kSDWriteIgnError.
+static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
+                                         ShadaEntry entry,
+                                         const size_t max_kbyte)
   FUNC_ATTR_NONNULL_ALL
 {
+  ShaDaWriteResult ret = kSDWriteFailed;
   msgpack_sbuffer sbuf;
   msgpack_sbuffer_init(&sbuf);
   msgpack_packer *spacker = msgpack_packer_new(&sbuf, &msgpack_sbuffer_write);
@@ -1742,6 +1752,9 @@ static bool shada_pack_entry(msgpack_packer *const packer,
       msgpack_pack_array(spacker, arr_size);
       PACK_BIN(cstr_as_string(entry.data.global_var.name));
       if (vim_to_msgpack(spacker, &entry.data.global_var.value) == FAIL) {
+        ret = kSDWriteIgnError;
+        EMSG2(_(WERR "Failed to write variable %s"),
+              entry.data.global_var.name);
         goto shada_pack_entry_error;
       }
       DUMP_ADDITIONAL_ELEMENTS(entry.data.global_var.additional_elements);
@@ -1946,11 +1959,11 @@ static bool shada_pack_entry(msgpack_packer *const packer,
   }
   msgpack_packer_free(spacker);
   msgpack_sbuffer_destroy(&sbuf);
-  return true;
+  return kSDWriteSuccessfull;
 shada_pack_entry_error:
   msgpack_packer_free(spacker);
   msgpack_sbuffer_destroy(&sbuf);
-  return false;
+  return ret;
 }
 #undef PACK_STRING
 
@@ -1965,13 +1978,13 @@ shada_pack_entry_error:
 ///                        is assumed that entry was already converted.
 /// @param[in]  max_kbyte  Maximum size of an item in KiB. Zero means no
 ///                        restrictions.
-static bool shada_pack_encoded_entry(msgpack_packer *const packer,
-                                     const vimconv_T *const sd_conv,
-                                     PossiblyFreedShadaEntry entry,
-                                     const size_t max_kbyte)
+static ShaDaWriteResult shada_pack_encoded_entry(msgpack_packer *const packer,
+                                                 const vimconv_T *const sd_conv,
+                                                 PossiblyFreedShadaEntry entry,
+                                                 const size_t max_kbyte)
   FUNC_ATTR_NONNULL_ALL
 {
-  bool ret = true;
+  ShaDaWriteResult ret = kSDWriteSuccessfull;
   if (entry.can_free_entry) {
     ret = shada_pack_entry(packer, entry.data, max_kbyte);
     shada_free_shada_entry(&entry.data);
@@ -2244,9 +2257,7 @@ static inline ShaDaWriteResult shada_read_when_writing(
         assert(false);
       }
       case kSDItemUnknown: {
-        if (!shada_pack_entry(packer, entry, 0)) {
-          ret = kSDWriteFailed;
-        }
+        ret = shada_pack_entry(packer, entry, 0);
         shada_free_shada_entry(&entry);
         break;
       }
@@ -2262,9 +2273,7 @@ static inline ShaDaWriteResult shada_read_when_writing(
       }
       case kSDItemHistoryEntry: {
         if (entry.data.history_item.histtype >= HIST_COUNT) {
-          if (!shada_pack_entry(packer, entry, 0)) {
-            ret = kSDWriteFailed;
-          }
+          ret = shada_pack_entry(packer, entry, 0);
           shada_free_shada_entry(&entry);
           break;
         }
@@ -2275,9 +2284,7 @@ static inline ShaDaWriteResult shada_read_when_writing(
       case kSDItemRegister: {
         const int idx = op_reg_index(entry.data.reg.name);
         if (idx < 0) {
-          if (!shada_pack_entry(packer, entry, 0)) {
-            ret = kSDWriteFailed;
-          }
+          ret = shada_pack_entry(packer, entry, 0);
           shada_free_shada_entry(&entry);
           break;
         }
@@ -2286,9 +2293,7 @@ static inline ShaDaWriteResult shada_read_when_writing(
       }
       case kSDItemVariable: {
         if (!in_strset(&wms->dumped_variables, entry.data.global_var.name)) {
-          if (!shada_pack_entry(packer, entry, 0)) {
-            ret = kSDWriteFailed;
-          }
+          ret = shada_pack_entry(packer, entry, 0);
         }
         shada_free_shada_entry(&entry);
         break;
@@ -2296,9 +2301,7 @@ static inline ShaDaWriteResult shada_read_when_writing(
       case kSDItemGlobalMark: {
         const int idx = mark_global_index(entry.data.filemark.name);
         if (idx < 0) {
-          if (!shada_pack_entry(packer, entry, 0)) {
-            ret = kSDWriteFailed;
-          }
+          ret = shada_pack_entry(packer, entry, 0);
           shada_free_shada_entry(&entry);
           break;
         }
@@ -2465,7 +2468,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   }
 
   // Write header
-  if (!shada_pack_entry(packer, (ShadaEntry) {
+  if (shada_pack_entry(packer, (ShadaEntry) {
     .type = kSDItemHeader,
     .timestamp = os_time(),
     .data = {
@@ -2486,7 +2489,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
         }),
       }
     }
-  }, 0)) {
+  }, 0) == kSDWriteFailed) {
     ret = kSDWriteFailed;
     goto shada_write_exit;
   }
@@ -2526,7 +2529,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
       };
       i++;
     }
-    if (!shada_pack_entry(packer, buflist_entry, 0)) {
+    if (shada_pack_entry(packer, buflist_entry, 0) == kSDWriteFailed) {
       xfree(buflist_entry.data.buffer_list.buffers);
       ret = kSDWriteFailed;
       goto shada_write_exit;
@@ -2552,7 +2555,8 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
       } else {
         copy_tv(&vartv, &tgttv);
       }
-      if (!shada_pack_entry(packer, (ShadaEntry) {
+      ShaDaWriteResult spe_ret;
+      if ((spe_ret = shada_pack_entry(packer, (ShadaEntry) {
         .type = kSDItemVariable,
         .timestamp = cur_timestamp,
         .data = {
@@ -2562,7 +2566,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
             .additional_elements = NULL,
           }
         }
-      }, max_kbyte)) {
+      }, max_kbyte)) == kSDWriteFailed) {
         clear_tv(&vartv);
         clear_tv(&tgttv);
         ret = kSDWriteFailed;
@@ -2570,8 +2574,10 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
       }
       clear_tv(&vartv);
       clear_tv(&tgttv);
-      int kh_ret;
-      (void) kh_put(strset, &wms->dumped_variables, name, &kh_ret);
+      if (spe_ret == kSDWriteSuccessfull) {
+        int kh_ret;
+        (void) kh_put(strset, &wms->dumped_variables, name, &kh_ret);
+      }
     } while (var_iter != NULL);
   }
 
@@ -2828,9 +2834,9 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   do { \
     for (size_t i_ = 0; i_ < ARRAY_SIZE(wms_array); i_++) { \
       if (wms_array[i_].data.type != kSDItemMissing) { \
-        if (!shada_pack_encoded_entry(packer, &sd_writer->sd_conv, \
-                                      wms_array[i_], \
-                                      max_kbyte)) { \
+        if (shada_pack_encoded_entry(packer, &sd_writer->sd_conv, \
+                                     wms_array[i_], \
+                                     max_kbyte) == kSDWriteFailed) { \
           ret = kSDWriteFailed; \
           goto shada_write_exit; \
         } \
@@ -2840,8 +2846,8 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   PACK_WMS_ARRAY(wms->global_marks);
   PACK_WMS_ARRAY(wms->registers);
   for (size_t i = 0; i < wms->jumps_size; i++) {
-    if (!shada_pack_encoded_entry(packer, &sd_writer->sd_conv, wms->jumps[i],
-                                  max_kbyte)) {
+    if (shada_pack_encoded_entry(packer, &sd_writer->sd_conv, wms->jumps[i],
+                                 max_kbyte) == kSDWriteFailed) {
       ret = kSDWriteFailed;
       goto shada_write_exit;
     }
@@ -2849,8 +2855,8 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
 #define PACK_WMS_ENTRY(wms_entry) \
   do { \
     if (wms_entry.data.type != kSDItemMissing) { \
-      if (!shada_pack_encoded_entry(packer, &sd_writer->sd_conv, wms_entry, \
-                                    max_kbyte)) { \
+      if (shada_pack_encoded_entry(packer, &sd_writer->sd_conv, wms_entry, \
+                                   max_kbyte) == kSDWriteFailed) { \
         ret = kSDWriteFailed; \
         goto shada_write_exit; \
       } \
@@ -2877,16 +2883,16 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   for (size_t i = 0; i < file_markss_to_dump; i++) {
     PACK_WMS_ARRAY(all_file_markss[i]->marks);
     for (size_t j = 0; j < all_file_markss[i]->changes_size; j++) {
-      if (!shada_pack_encoded_entry(packer, &sd_writer->sd_conv,
-                                    all_file_markss[i]->changes[j],
-                                    max_kbyte)) {
+      if (shada_pack_encoded_entry(packer, &sd_writer->sd_conv,
+                                   all_file_markss[i]->changes[j],
+                                   max_kbyte) == kSDWriteFailed) {
         ret = kSDWriteFailed;
         goto shada_write_exit;
       }
     }
     for (size_t j = 0; j < all_file_markss[i]->additional_marks_size; j++) {
-      if (!shada_pack_entry(packer, all_file_markss[i]->additional_marks[j],
-                            0)) {
+      if (shada_pack_entry(packer, all_file_markss[i]->additional_marks[j],
+                           0) == kSDWriteFailed) {
         shada_free_shada_entry(&all_file_markss[i]->additional_marks[j]);
         ret = kSDWriteFailed;
         goto shada_write_exit;
@@ -2903,16 +2909,15 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
       if (dump_one_history[i]) {
         hms_insert_whole_neovim_history(&wms->hms[i]);
         HMS_ITER(&wms->hms[i], cur_entry, {
-          if (!shada_pack_encoded_entry(
+          if (shada_pack_encoded_entry(
               packer, &sd_writer->sd_conv, (PossiblyFreedShadaEntry) {
                 .data = cur_entry->data,
                 .can_free_entry = cur_entry->can_free_entry,
-              }, max_kbyte)) {
+              }, max_kbyte) == kSDWriteFailed) {
             ret = kSDWriteFailed;
             break;
           }
         })
-        hms_dealloc(&wms->hms[i]);
         if (ret == kSDWriteFailed) {
           goto shada_write_exit;
         }
@@ -2921,6 +2926,11 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   }
 
 shada_write_exit:
+  for (size_t i = 0; i < HIST_COUNT; i++) {
+    if (dump_one_history[i]) {
+      hms_dealloc(&wms->hms[i]);
+    }
+  }
   kh_dealloc(file_marks, &wms->file_marks);
   kh_dealloc(bufset, &removable_bufs);
   msgpack_packer_free(packer);
@@ -3043,6 +3053,7 @@ shada_write_file_nomerge: {}
   const ShaDaWriteResult sw_ret = shada_write(&sd_writer, (nomerge
                                                            ? NULL
                                                            : &sd_reader));
+  assert(sw_ret != kSDWriteIgnError);
 #ifndef UNIX
   sd_writer.close(&sd_writer);
 #endif
