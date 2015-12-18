@@ -6,11 +6,20 @@
 local helpers = require('test.functional.helpers')
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local eq, eval = helpers.eq, helpers.eval
+
+local function expect_line(text)
+  return eq(text, eval('getline(".")'))
+end
+
+local function expect_line_above(text)
+  return eq(text, eval('getline(line(".")-1)'))
+end
 
 describe('string and html objects, cursor past end-of-line, match(), matchstr(), repeating gn', function()
-  setup(clear)
+  before_each(clear)
 
-  it('are working', function()
+  it('quote objects', function()
     insert([[
       start: "wo\"rd\\" foo
       'foo' 'bar' 'piep'
@@ -18,8 +27,54 @@ describe('string and html objects, cursor past end-of-line, match(), matchstr(),
       out " in "noXno"
       "'" 'blah' rep 'buh'
       bla `s*`d-`+++`l**` b`la
-      voo "nah" sdf " asdf" sdf " sdf" sd
-      
+      voo "nah" sdf " asdf" sdf " sdf" sd]])
+    execute('/^start:/')
+    feed('da"<cr>')
+    feed("0va'a'rx<cr>")
+    feed('02f`da`<cr>')
+    feed('0fXdi"<cr>')
+    feed("03f'vi'ry<cr>")
+    execute('set quoteescape=+*-')
+    feed('di`<cr>')
+    feed('$F"va"oha"i"rz<cr>')
+    expect([[
+      start: foo
+      xxxxxxxxxxxx'piep'
+      bla bla blah
+      out " in ""
+      "'" 'blah'yyyyy'buh'
+      bla `` b`la
+      voo "zzzzzzzzzzzzzzzzzzzzzzzzzzzzsd]])
+  end)
+
+  it('html objects', function()
+    insert([[
+      <begin>
+      -<b>asdf<i>Xasdf</i>asdf</b>-
+      -<b>asdX<i>a<i />sdf</i>asdf</b>-
+      -<b>asdf<i>Xasdf</i>asdf</b>-
+      -<b>asdX<i>as<b />df</i>asdf</b>-
+      -<b>
+      innertext object
+      </b>
+      </begin>]])
+    execute('/^<begin')
+    feed('jfXdit<cr>')
+    feed('0fXdit<cr>')
+    feed('fXdat<cr>')
+    feed('0fXdat<cr>')
+    feed('dit<cr>')
+    expect([[
+      <begin>
+      -<b>asdf<i></i>asdf</b>-
+      -<b></b>-
+      -<b>asdfasdf</b>-
+      --
+      -<b></b>
+      </begin>]])
+  end)
+  it('are working', function()
+    insert([[
       <begin>
       -<b>asdf<i>Xasdf</i>asdf</b>-
       -<b>asdX<i>a<i />sdf</i>asdf</b>-
@@ -59,18 +114,6 @@ describe('string and html objects, cursor past end-of-line, match(), matchstr(),
       Depp
       --5
       end:]])
-
-    execute('/^start:/')
-
-    feed('da"<cr>')
-    feed("0va'a'rx<cr>")
-    feed('02f`da`<cr>')
-
-    feed('0fXdi"<cr>')
-    feed("03f'vi'ry<cr>")
-    execute('set quoteescape=+*-')
-    feed('di`<cr>')
-    feed('$F"va"oha"i"rz<cr>')
 
     execute('/^<begin')
     feed('jfXdit<cr>')
@@ -140,14 +183,6 @@ describe('string and html objects, cursor past end-of-line, match(), matchstr(),
 
     -- Assert buffer contents.
     expect([[
-      start: foo
-      xxxxxxxxxxxx'piep'
-      bla bla blah
-      out " in ""
-      "'" 'blah'yyyyy'buh'
-      bla `` b`la
-      voo "zzzzzzzzzzzzzzzzzzzzzzzzzzzzsd
-      
       <begin>
       -<b>asdf<i></i>asdf</b>-
       -<b></b>-
