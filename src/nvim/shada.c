@@ -2918,7 +2918,6 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
             break;
           }
         })
-        hms_dealloc(&wms->hms[i]);
         if (ret == kSDWriteFailed) {
           goto shada_write_exit;
         }
@@ -2927,6 +2926,11 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   }
 
 shada_write_exit:
+  for (size_t i = 0; i < HIST_COUNT; i++) {
+    if (dump_one_history[i]) {
+      hms_dealloc(&wms->hms[i]);
+    }
+  }
   kh_dealloc(file_marks, &wms->file_marks);
   kh_dealloc(bufset, &removable_bufs);
   msgpack_packer_free(packer);
