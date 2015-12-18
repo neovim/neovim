@@ -178,14 +178,14 @@ Hurrah for VIM!! It is "at your fingertips" like vi, and has the extensions
 that vi sorely needs: highlighting for executing commands on blocks, an easily
 navigable and digestible help screen, and more.  (Paul Pax)
 
-The reason WHY I don't have this amazingly useful macro any more, is that I
+The reason WHY I don't have this amazingly useful macro anymore, is that I
 now use VIM - and this is built in!! (Stephen Riehm, Germany)
 
 I am a user of VIM and I love it.  I use it to do all my programming, C,
 C++, HTML what ever.  (Tim Allwine)
 
 I discovered VIM after years of struggling with the original vi, and I just
-can't live without it any more.  (Emmanuel Mogenet, USA)
+can't live without it anymore.  (Emmanuel Mogenet, USA)
 
 Emacs has not a bit of chance to survive so long as VIM is around.  Besides,
 it also has the most detailed software documentation I have ever seen---much

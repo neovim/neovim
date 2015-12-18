@@ -528,7 +528,7 @@ MATCHING ANY SINGLE CHARACTER
 
 The . (dot) character matches any existing character.  For example, the
 pattern "c.m" matches a string whose first character is a c, whose second
-character is anything, and whose the third character is m.  Example:
+character is anything, and whose third character is m.  Example:
 
 	We use a computer that became the cummin winter. ~
 		 xxx		 xxx	  xxx

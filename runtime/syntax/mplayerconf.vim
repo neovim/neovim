@@ -1,7 +1,8 @@
 " Vim syntax file
-" Language:         mplayer(1) configuration file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2007-06-17
+" Language:             mplayer(1) configuration file
+" Maintainer:           Dmitri Vereshchagin <dmitri.vereshchagin@gmail.com>
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2015-01-24
 
 if exists("b:current_syntax")
   finish
@@ -19,7 +20,7 @@ syn region mplayerconfComment   display oneline start='#' end='$'
 
 syn keyword mplayerconfPreProc  include
 
-syn keyword mplayerconfBoolean  yes no
+syn keyword mplayerconfBoolean  yes no true false
 
 syn match   mplayerconfNumber   '\<\d\+\>'
 
@@ -68,7 +69,49 @@ syn keyword mplayerconfOption   hardframedrop nomouseinput bandwidth dumpstream
                                 \ audio-delay audio-preload endpos ffourcc
                                 \ include info noautoexpand noskip o oac of
                                 \ ofps ovc skiplimit v vobsubout vobsuboutid
-                                \ lameopts lavcopts nuvopts xvidencopts
+                                \ lameopts lavcopts nuvopts xvidencopts a52drc
+                                \ adapter af-add af-clr af-del af-pre
+                                \ allow-dangerous-playlist-parsing ass
+                                \ ass-border-color ass-bottom-margin ass-color
+                                \ ass-font-scale ass-force-style ass-hinting
+                                \ ass-line-spacing ass-styles ass-top-margin
+                                \ ass-use-margins ausid bluray-angle
+                                \ bluray-device border border-pos-x border-pos-y
+                                \ cache-min cache-seek-min capture codecpath
+                                \ codecs-file correct-pts crash-debug
+                                \ doubleclick-time dvd-speed edl-backward-delay
+                                \ edl-start-pts embeddedfonts fafmttag
+                                \ field-dominance fontconfig force-avi-aspect
+                                \ force-key-frames frameno-file fullscreen gamma
+                                \ gui gui-include gui-wid heartbeat-cmd
+                                \ heartbeat-interval hr-edl-seek
+                                \ http-header-fields idle ignore-start
+                                \ key-fifo-size list-properties menu-chroot
+                                \ menu-keepdir menu-startup mixer-channel
+                                \ monitor-orientation monitorpixelaspect
+                                \ mouse-movements msgcharset msgcolor msglevel
+                                \ msgmodule name noar nocache noconfig
+                                \ noconsolecontrols nocorrect-pts nodouble
+                                \ noedl-start-pts noencodedups
+                                \ noflip-hebrew-commas nogui noidx noodml
+                                \ nostop-xscreensaver nosub noterm-osd
+                                \ osd-duration osd-fractions panscanrange
+                                \ pausing playing-msg priority profile
+                                \ progbar-align psprobe pvr radio referrer
+                                \ refreshrate reuse-socket rtc rtc-device
+                                \ rtsp-destination rtsp-port
+                                \ rtsp-stream-over-http screenh show-profile
+                                \ softvol softvol-max sub-paths subfont
+                                \ term-osd-esc title tvscan udp-ip udp-master
+                                \ udp-port udp-seek-threshold udp-slave
+                                \ unrarexec use-filedir-conf use-filename-title
+                                \ vf-add vf-clr vf-del vf-pre volstep volume
+                                \ zrhdec zrydoff
+
+syn region  mplayerconfString   display oneline start=+"+ end=+"+
+syn region  mplayerconfString   display oneline start=+'+ end=+'+
+
+syn region  mplayerconfProfile  display oneline start='^\s*\[' end='\]'
 
 hi def link mplayerconfTodo     Todo
 hi def link mplayerconfComment  Comment
@@ -76,6 +119,8 @@ hi def link mplayerconfPreProc  PreProc
 hi def link mplayerconfBoolean  Boolean
 hi def link mplayerconfNumber   Number
 hi def link mplayerconfOption   Keyword
+hi def link mplayerconfString   String
+hi def link mplayerconfProfile  Special
 
 let b:current_syntax = "mplayerconf"
 

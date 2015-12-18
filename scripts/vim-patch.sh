@@ -38,11 +38,10 @@ check_executable() {
 get_vim_sources() {
   check_executable git
 
-  echo "Retrieving Vim sources."
+  cd "${VIM_SOURCE_DIR}"
   if [[ ! -d ${VIM_SOURCE_DIR} ]]; then
     echo "Cloning Vim sources into '${VIM_SOURCE_DIR}'."
     git clone --depth=1000 https://github.com/vim/vim.git "${VIM_SOURCE_DIR}"
-    cd "${VIM_SOURCE_DIR}"
   else
     if [[ ! -d "${VIM_SOURCE_DIR}/.git" ]]; then
       echo "✘ ${VIM_SOURCE_DIR} does not appear to be a git repository."
@@ -50,7 +49,6 @@ get_vim_sources() {
       exit 1
     fi
     echo "Updating Vim sources in '${VIM_SOURCE_DIR}'."
-    cd "${VIM_SOURCE_DIR}"
     git pull &&
       echo "✔ Updated Vim sources." ||
       echo "✘ Could not update Vim sources; ignoring error."
@@ -58,11 +56,8 @@ get_vim_sources() {
 }
 
 commit_message() {
-  echo "vim-patch:${vim_version}
-
-${vim_message}
-
-${vim_commit_url}"
+  printf 'vim-patch:%s\n\n%s\n\n%s' "${vim_version}" \
+    "${vim_message}" "${vim_commit_url}"
 }
 
 assign_commit_details() {
@@ -102,8 +97,10 @@ get_vim_patch() {
 
   # Collect patch details and store into variables.
   vim_full="$(git show -1 --pretty=medium "${vim_commit}")"
+  # Patch surgery: preprocess the patch.
+  #   - transform src/ paths to src/nvim/
   vim_diff="$(git show -1 "${vim_commit}" \
-    | sed -e 's/\( [ab]\/src\)/\1\/nvim/g')" # Change directory to src/nvim.
+    | LC_ALL=C sed -e 's/\( [ab]\/src\)/\1\/nvim/g')"
   neovim_message="$(commit_message)"
   neovim_pr="
 \`\`\`
@@ -256,8 +253,6 @@ review_pr() {
   echo "✔ Saved full pull request commit details to '${NEOVIM_SOURCE_DIR}/n${base_name}.patch'."
   git show "${vim_commit}" > "${NEOVIM_SOURCE_DIR}/${base_name}.diff"
   echo "✔ Saved Vim diff to '${NEOVIM_SOURCE_DIR}/${base_name}.diff'."
-  git show "${vim_commit}" > "${NEOVIM_SOURCE_DIR}/${base_name}.patch"
-  echo "✔ Saved full Vim commit details to '${NEOVIM_SOURCE_DIR}/${base_name}.patch'."
   echo "You can use 'git clean' to remove these files when you're done."
 
   echo
