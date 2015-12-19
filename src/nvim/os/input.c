@@ -19,6 +19,7 @@
 #include "nvim/getchar.h"
 #include "nvim/main.h"
 #include "nvim/misc1.h"
+#include "nvim/misc2.h"
 
 #define READ_BUFFER_SIZE 0xfff
 #define INPUT_BUFFER_SIZE (READ_BUFFER_SIZE * 4)
@@ -357,7 +358,7 @@ static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
 
 static void process_interrupts(void)
 {
-  if (mapped_ctrl_c) {
+  if ((mapped_ctrl_c | curbuf->b_mapped_ctrl_c) & get_real_state()) {
     return;
   }
 
