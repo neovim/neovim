@@ -174,3 +174,11 @@ add_custom_target(clean-shared-libraries
 add_custom_target(third-party ALL
   COMMAND ${CMAKE_COMMAND} -E touch .third-party
   DEPENDS clean-shared-libraries)
+
+if(WIN32)
+  set(WIN32YANK_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.2/win32yank.zip)
+  set(WIN32YANK_SHA256 78869bf68565607cda1b6a3d549e2487d59d6f0f16f9b003e123c0086f90309d)
+
+  include(GetWindowsTools)
+endif()
+
