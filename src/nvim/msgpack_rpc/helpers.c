@@ -94,10 +94,9 @@ bool msgpack_rpc_to_string(msgpack_object *obj, String *arg)
   FUNC_ATTR_NONNULL_ALL
 {
   if (obj->type == MSGPACK_OBJECT_BIN || obj->type == MSGPACK_OBJECT_STR) {
-    if (obj->via.bin.ptr == NULL) {
-      return false;
-    }
-    arg->data = xmemdupz(obj->via.bin.ptr, obj->via.bin.size);
+    arg->data = obj->via.bin.ptr != NULL
+                    ? xmemdupz(obj->via.bin.ptr, obj->via.bin.size)
+                    : NULL;
     arg->size = obj->via.bin.size;
     return true;
   }
