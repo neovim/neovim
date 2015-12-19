@@ -79,7 +79,7 @@ typedef struct terminal_state {
   Terminal *term;
   int save_state;           // saved value of State
   int save_rd;              // saved value of RedrawingDisabled
-  bool save_mapped_ctrl_c;  // saved value of mapped_ctrl_c;
+  int save_mapped_ctrl_c;   // saved value of mapped_ctrl_c;
   bool close;
   bool got_bs;              // if the last input was <C-\>
 } TerminalState;
@@ -367,7 +367,7 @@ void terminal_enter(void)
   State = TERM_FOCUS;
   RedrawingDisabled = false;
   s->save_mapped_ctrl_c = mapped_ctrl_c;
-  mapped_ctrl_c = true;
+  mapped_ctrl_c = MAP_ALL_MODES;
   // go to the bottom when the terminal is focused
   adjust_topline(s->term, buf, false);
   // erase the unfocused cursor
