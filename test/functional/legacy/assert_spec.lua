@@ -1,3 +1,4 @@
+local ffi = require('ffi')
 local helpers = require('test.functional.helpers')
 local nvim, call = helpers.meths, helpers.call
 local clear, eq = helpers.clear, helpers.eq
@@ -13,6 +14,11 @@ end
 
 local function source(code)
   local tmpname = os.tmpname()
+
+  if ffi.os == 'OSX' and string.match(tmpname, '^/tmp') then
+   tmpname = '/private'..tmpname
+  end
+
   write_file(tmpname, code)
   nvim.command('source '..tmpname)
   os.remove(tmpname)
