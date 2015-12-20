@@ -31,12 +31,14 @@ static void walk_cb(uv_handle_t *handle, void *arg) {
   }
 }
 
+#ifndef WIN32
 static void sigwinch_handler(int signum)
 {
   int width, height;
   uv_tty_get_winsize(&tty, &width, &height);
   fprintf(stderr, "rows: %d, cols: %d\n", height, width);
 }
+#endif
 
 // static void sigwinch_cb(uv_signal_t *handle, int signum)
 // {
@@ -135,6 +137,7 @@ int main(int argc, char **argv)
   uv_tty_set_mode(&tty, UV_TTY_MODE_RAW);
   tty.data = &interrupted;
   uv_read_start((uv_stream_t *)&tty, alloc_cb, read_cb);
+#ifndef WIN32
   struct sigaction sa;
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = 0;
@@ -144,6 +147,7 @@ int main(int argc, char **argv)
   // uv_signal_init(uv_default_loop(), &sigwinch_watcher);
   // sigwinch_watcher.data = &tty;
   // uv_signal_start(&sigwinch_watcher, sigwinch_cb, SIGWINCH);
+#endif
   uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 
   return 0;
