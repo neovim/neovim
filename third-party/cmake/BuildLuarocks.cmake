@@ -46,11 +46,9 @@ endfunction()
 set(LUAROCKS_BINARY ${HOSTDEPS_BIN_DIR}/luarocks)
 
 # Arguments for calls to 'luarocks build'
-if(MSVC)
-  # In native Win32 don't pass the compiler/linker to luarocks, the bundled
+if(NOT MSVC)
+  # In MSVC don't pass the compiler/linker to luarocks, the bundled
   # version already knows, and passing them here breaks the build
-  set(LUAROCKS_BUILDARGS CFLAGS=/MT)
-else()
   set(LUAROCKS_BUILDARGS CC=${HOSTDEPS_C_COMPILER} LD=${HOSTDEPS_C_COMPILER})
 endif()
 
