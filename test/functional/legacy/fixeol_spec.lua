@@ -1,7 +1,7 @@
 -- Tests for 'fixeol'
 
 local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
+local feed = helpers.feed
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 
 describe('fixeol', function()
