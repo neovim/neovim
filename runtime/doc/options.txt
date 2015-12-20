@@ -6016,10 +6016,20 @@ A jump table for the options with a short description can be found at |Q_op|.
 	X N   For 'tabline': start of close tab N label.  Use %X or %T to end 
 	      the label, e.g.: %3Xclose%X.  Use %999X for a "close current 
 	      tab" mark.  This information is used for mouse clicks.
-	[ -   For 'tabline': start of execute command label. Use %X or %T to 
-	      end the label, e.g.: %[buffer 10]foo.c%X.  This information is 
-	      used for mouse clicks: in the example when clicking on "foo.c" 
-	      "buffer 10" command will be run.
+	@ N   For 'tabline': start of execute function label. Use %X or %T to 
+	      end the label, e.g.: %10@SwitchBuffer@foo.c%X.  This information 
+	      is used for mouse clicks: in the example when clicking once 
+	      using left mouse button on "foo.c" "SwitchBuffer(10, 1, 'l', 
+	      '    ')" expression will be run.  Function receives the 
+	      following arguments in order: minwid field value, number of 
+	      mouse clicks (to detect double clicks), mouse button used: "l" 
+	      or "r" for left and right button respectively, modifiers 
+	      pressed: string which contains "s" if shift modifier was 
+	      pressed, "c" for control, "a" for alt and "m" for meta.  
+	      Currently if modifier is not pressed string contains space 
+	      instead, but one should not rely on presence of spaces and 
+	      specific order of modifiers: use |stridx()| to test whether some 
+	      modifier is present.
 	< -   Where to truncate line if too long.  Default is at the start.
 	      No width fields allowed.
 	= -   Separation point between left and right aligned items.

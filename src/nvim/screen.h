@@ -19,13 +19,13 @@
 /// Status line click definition
 typedef struct {
   enum {
-    kStlClickDisabled = 0,   ///< Clicks to this area are ignored.
-    kStlClickTabSwitch,      ///< Switch to the given tab.
-    kStlClickTabClose,       ///< Close given tab.
-    kStlClickCmd,            ///< Run VimL command.
-  } type;     ///< Type of the click.
-  int tabnr;  ///< Tab page number.
-  char *cmd;  ///< Command to execute.
+    kStlClickDisabled = 0,  ///< Clicks to this area are ignored.
+    kStlClickTabSwitch,     ///< Switch to the given tab.
+    kStlClickTabClose,      ///< Close given tab.
+    kStlClickFuncRun,       ///< Run user function.
+  } type;      ///< Type of the click.
+  int tabnr;   ///< Tab page number.
+  char *func;  ///< Function to run.
 } StlClickDefinition;
 
 /// Used for tabline clicks

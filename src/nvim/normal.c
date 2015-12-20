@@ -2400,8 +2400,64 @@ do_mouse (
           }
           break;
         }
-        case kStlClickCmd: {
-          do_cmdline_cmd(tab_page_click_defs[mouse_col].cmd);
+        case kStlClickFuncRun: {
+          typval_T argv[] = {
+            {
+              .v_lock = VAR_FIXED,
+              .v_type = VAR_NUMBER,
+              .vval = {
+                .v_number = (varnumber_T) tab_page_click_defs[mouse_col].tabnr
+              },
+            },
+            {
+              .v_lock = VAR_FIXED,
+              .v_type = VAR_NUMBER,
+              .vval = {
+                .v_number = (((mod_mask & MOD_MASK_MULTI_CLICK)
+                              == MOD_MASK_4CLICK)
+                             ? 4
+                             : ((mod_mask & MOD_MASK_MULTI_CLICK)
+                                == MOD_MASK_3CLICK)
+                             ? 3
+                             : ((mod_mask & MOD_MASK_MULTI_CLICK)
+                                == MOD_MASK_2CLICK)
+                             ? 2
+                             : 1)
+              },
+            },
+            {
+              .v_lock = VAR_FIXED,
+              .v_type = VAR_STRING,
+              .vval = { .v_string = (char_u *) (which_button == MOUSE_LEFT
+                                                ? "l"
+                                                : which_button == MOUSE_RIGHT
+                                                ? "r"
+                                                : which_button == MOUSE_MIDDLE
+                                                ? "m"
+                                                : "?") },
+            },
+            {
+              .v_lock = VAR_FIXED,
+              .v_type = VAR_STRING,
+              .vval = {
+                .v_string = (char_u[]) {
+                  (char_u) (mod_mask & MOD_MASK_SHIFT ? 's' : ' '),
+                  (char_u) (mod_mask & MOD_MASK_CTRL ? 'c' : ' '),
+                  (char_u) (mod_mask & MOD_MASK_ALT ? 'a' : ' '),
+                  (char_u) (mod_mask & MOD_MASK_META ? 'm' : ' '),
+                  NUL
+                }
+              },
+            }
+          };
+          typval_T rettv;
+          int doesrange;
+          (void) call_func((char_u *) tab_page_click_defs[mouse_col].func,
+                           (int) strlen(tab_page_click_defs[mouse_col].func),
+                           &rettv, ARRAY_SIZE(argv), argv,
+                           curwin->w_cursor.lnum, curwin->w_cursor.lnum,
+                           &doesrange, true, NULL);
+          clear_tv(&rettv);
           break;
         }
       }

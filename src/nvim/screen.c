@@ -6218,8 +6218,8 @@ void clear_tab_page_click_defs(StlClickDefinition *const tpcd,
 {
   if (tpcd != NULL) {
     for (long i = 0; i < tpcd_size; i++) {
-      if (i == 0 || tpcd[i].cmd != tpcd[i - 1].cmd) {
-        xfree(tpcd[i].cmd);
+      if (i == 0 || tpcd[i].func != tpcd[i - 1].func) {
+        xfree(tpcd[i].func);
       }
     }
   }
@@ -6938,7 +6938,7 @@ static void draw_tabline(void)
         tab_page_click_defs[scol++] = (StlClickDefinition) {
           .type = kStlClickTabSwitch,
           .tabnr = tabcount,
-          .cmd = NULL,
+          .func = NULL,
         };
       }
     }
@@ -6955,7 +6955,7 @@ static void draw_tabline(void)
       tab_page_click_defs[Columns - 1] = (StlClickDefinition) {
         .type = kStlClickTabClose,
         .tabnr = 999,
-        .cmd = NULL,
+        .func = NULL,
       };
     }
   }
