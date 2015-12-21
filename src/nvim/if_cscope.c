@@ -1146,22 +1146,6 @@ static void clear_csinfo(size_t i)
   csinfo[i].to_fp  = NULL;
 }
 
-#ifndef UNIX
-static char *GetWin32Error(void)
-{
-  char *msg = NULL;
-  FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,
-      NULL, GetLastError(), 0, (LPSTR)&msg, 0, NULL);
-  if (msg != NULL) {
-    /* remove trailing \r\n */
-    char *pcrlf = strstr(msg, "\r\n");
-    if (pcrlf != NULL)
-      *pcrlf = '\0';
-  }
-  return msg;
-}
-#endif
-
 /*
  * PRIVATE: cs_insert_filelist
  *
