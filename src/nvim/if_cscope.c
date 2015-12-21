@@ -861,17 +861,16 @@ err_closing:
     csinfo[i].hProc = pi.hProcess;
     CloseHandle(pi.hThread);
 
-    /* TODO - tidy up after failure to create files on pipe handles. */
-    if (((fd = _open_osfhandle((OPEN_OH_ARGTYPE)stdin_wr,
-              _O_TEXT|_O_APPEND)) < 0)
-        || ((csinfo[i].to_fp = _fdopen(fd, "w")) == NULL))
+    // TODO(neovim): tidy up after failure to create files on pipe handles.
+    if (((fd = _open_osfhandle((intptr_t)stdin_wr, _O_TEXT|_O_APPEND)) < 0)
+        || ((csinfo[i].to_fp = _fdopen(fd, "w")) == NULL)) {
       PERROR(_("cs_create_connection: fdopen for to_fp failed"));
-    if (((fd = _open_osfhandle((OPEN_OH_ARGTYPE)stdout_rd,
-              _O_TEXT|_O_RDONLY)) < 0)
-        || ((csinfo[i].fr_fp = _fdopen(fd, "r")) == NULL))
+    }
+    if (((fd = _open_osfhandle((intptr_t)stdout_rd,  _O_TEXT|_O_RDONLY)) < 0)
+        || ((csinfo[i].fr_fp = _fdopen(fd, "r")) == NULL)) {
       PERROR(_("cs_create_connection: fdopen for fr_fp failed"));
-
-    /* Close handles for file descriptors inherited by the cscope process */
+    }
+    // Close handles for file descriptors inherited by the cscope process.
     CloseHandle(stdin_rd);
     CloseHandle(stdout_wr);
 
