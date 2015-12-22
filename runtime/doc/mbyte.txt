@@ -43,16 +43,6 @@ features.  Unfortunately, every system has its own way to deal with multibyte
 languages and it is quite complicated.
 
 
-COMPILING
-
-If you already have a compiled Vim program, check if the |+multi_byte| feature
-is included.  The |:version| command can be used for this.
-
-If +multi_byte is not included, you should compile Vim with "normal", "big" or
-"huge" features.  You can further tune what features are included.  See the
-INSTALL files in the source directory.
-
-
 LOCALE
 
 First of all, you must make sure your current locale is set correctly.  If
@@ -628,52 +618,6 @@ highlighting: >
 If you use a wrong "font" argument you will get an error message.
 Also make sure that you set 'guifontset' before setting fonts for highlight
 groups.
-
-
-USING RESOURCE FILES
-
-Instead of specifying 'guifontset', you can set X11 resources and Vim will
-pick them up.  This is only for people who know how X resource files work.
-
-For Motif insert these three lines in your $HOME/.Xdefaults file:
-
-	Vim.font: |base_font_name_list|
-	Vim*fontSet: |base_font_name_list|
-	Vim*fontList: your_language_font
-
-Note: Vim.font is for text area.
-      Vim*fontSet is for menu.
-      Vim*fontList is for menu (for Motif GUI)
-
-For example, when you are using Japanese and a 14 dots font, >
-
-	Vim.font: -misc-fixed-medium-r-normal--14-*
-	Vim*fontSet: -misc-fixed-medium-r-normal--14-*
-	Vim*fontList: -misc-fixed-medium-r-normal--14-*
-<
-or: >
-
-	Vim*font: k14,r14
-	Vim*fontSet: k14,r14
-	Vim*fontList: k14,r14
-<
-To have them take effect immediately you will have to do >
-
-	xrdb -merge ~/.Xdefaults
-
-Otherwise you will have to stop and restart the X server before the changes
-take effect.
-
-
-The GTK+ version of GUI Vim does not use .Xdefaults, use ~/.gtkrc instead.
-The default mostly works OK.  But for the menus you might have to change
-it.  Example: >
-
-	style "default"
-	{
-		fontset="-*-*-medium-r-normal--14-*-*-*-c-*-*-*"
-	}
-	widget_class "*" style "default"
 
 ==============================================================================
 6.  Fonts on MS-Windows				*mbyte-fonts-MSwin*
