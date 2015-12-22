@@ -208,18 +208,6 @@ takes too much time or you don't like the cursor jumping to another line,
 include the 'h' flag in 'guioptions'.  Then the scrolling is limited by the
 text of the current cursor line.
 
-							*athena-intellimouse*
-If you have an Intellimouse and an X server that supports using the wheel,
-then you can use the wheel to scroll the text up and down in gvim.  This works
-with XFree86 4.0 and later, and with some older versions when you add patches.
-See |scroll-mouse-wheel|.
-
-For older versions of XFree86 you must patch your X server.  The following
-page has a bit of information about using the Intellimouse on Linux as well as
-links to the patches and X server binaries (may not have the one you need
-though):
-    http://www.inria.fr/koala/colas/mouse-wheel-scroll/
-
 ==============================================================================
 3. Mouse Control					*gui-mouse*
 

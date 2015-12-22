@@ -4678,7 +4678,7 @@ font={font-name}					*highlight-font*
 	When setting the font for the "Normal" group, this becomes the default
 	font (until the 'guifont' option is changed; the last one set is
 	used).
-	The following only works with Motif and Athena, not with other GUIs:
+	The following only works with Motif not with other GUIs:
 	When setting the font for the "Menu" group, the menus will be changed.
 	When setting the font for the "Tooltip" group, the tooltips will be
 	changed.
@@ -4866,11 +4866,6 @@ Menu		Current font, background and foreground colors of the menus.
 		Also used for the toolbar.
 		Applicable highlight arguments: font, guibg, guifg.
 
-		NOTE: For Motif and Athena the font argument actually
-		specifies a fontset at all times, no matter if 'guifontset' is
-		empty, and as such it is tied to the current |:language| when
-		set.
-
 							*hl-Scrollbar*
 Scrollbar	Current background and foreground of the main window's
 		scrollbars.
@@ -4879,11 +4874,6 @@ Scrollbar	Current background and foreground of the main window's
 							*hl-Tooltip*
 Tooltip		Current font, background and foreground of the tooltips.
 		Applicable highlight arguments: font, guibg, guifg.
-
-		NOTE: For Motif and Athena the font argument actually
-		specifies a fontset at all times, no matter if 'guifontset' is
-		empty, and as such it is tied to the current |:language| when
-		set.
 
 ==============================================================================
 13. Linking groups		*:hi-link* *:highlight-link* *E412* *E413*
