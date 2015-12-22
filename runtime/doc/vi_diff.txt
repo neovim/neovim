@@ -57,10 +57,9 @@ argument when starting Vim.
 
 Support for different systems.
 	Vim can be used on:
-	- All Unix systems (it works on all systems it was tested on, although
-	  the GUI and Perl interface may not work everywhere).
-	- Windows 95 and Windows NT, with support for long file names.
-	- Macintosh
+	- Modern Unix systems (*BSD, Linux, etc.)
+	- Windows (XP SP 2 or greater)
+	- OS X
 
 Multi level undo.					|undo|
 	'u' goes backward in time, 'CTRL-R' goes forward again.  Set option
