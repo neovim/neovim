@@ -1110,8 +1110,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'browsedir'* *'bsdir'*
 'browsedir' 'bsdir'	string	(default: "last")
 			global
-			{only for Motif, Athena, GTK, Mac and
-			Win32 GUI}
+			{only for Motif, GTK, Mac and Win32 GUI}
 	Which directory to use for the file browser:
 	   last		Use same directory as with last file browser, where a
 			file was opened or saved.
@@ -3102,7 +3101,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'guioptions'* *'go'*
 'guioptions' 'go'	string	(default "egmrLT"   (MS-Windows),
-					 "aegimrLT" (GTK, Motif and Athena))
+					 "aegimrLT" (GTK and Motif))
 			global
 			{only available when compiled with GUI enabled}
 	This option only has an effect in the GUI version of Vim.  It is a
@@ -3163,10 +3162,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 								*'go-g'*
 	  'g'	Grey menu items: Make menu items that are not active grey.  If
 		'g' is not included inactive menu items are not shown at all.
-		Exception: Athena will always use grey menu items.
 								*'go-T'*
-	  'T'	Include Toolbar.  Currently only in Win32, GTK+, Motif,
-		and Athena GUIs.
+	  'T'	Include Toolbar.  Currently only in Win32, GTK+, and
+		Motif GUIs.
 								*'go-r'*
 	  'r'	Right-hand scrollbar is always present.
 								*'go-R'*
@@ -3541,8 +3539,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|i_CTRL-^|.
 	The value is set to 1 when setting 'keymap' to a valid keymap name.
 	It is also used for the argument of commands like "r" and "f".
-	The value 0 may not work correctly with Athena and Motif with some XIM
-	methods.  Use 'imdisable' to disable XIM then.
 
 						*'imsearch'* *'ims'*
 'imsearch' 'ims'	number (default 0, 2 when an input method is supported)
@@ -3558,8 +3554,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|c_CTRL-^|.
 	The value is set to 1 when it is not -1 and setting the 'keymap'
 	option to a valid keymap name.
-	The value 0 may not work correctly with Athena and Motif with some XIM
-	methods.  Use 'imdisable' to disable XIM then.
 
 						*'imstatusfunc'* *'imsf'*
 'imstatusfunc' 'imsf'	string (default "")

@@ -245,7 +245,7 @@ dragging the scrollbar of the current window.  How many lines are scrolled
 depends on your mouse driver.  If the scroll action causes input focus
 problems, see |intellimouse-wheel-problems|.
 
-For the X11 GUIs (Motif, Athena and GTK) scrolling the wheel generates key
+For the X11 GUIs (Motif and GTK) scrolling the wheel generates key
 presses <ScrollWheelUp>, <ScrollWheelDown>, <ScrollWheelLeft> and
 <ScrollWheelRight>.  For example, if you push the scroll wheel upwards a
 <ScrollWheelUp> key press is generated causing the window to scroll upwards

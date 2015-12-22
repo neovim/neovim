@@ -78,7 +78,7 @@ Graphical User Interface (GUI).				|gui|
 	Included support for GUI: menu's, mouse, scrollbars, etc.  You can
 	define your own menus.  Better support for CTRL/SHIFT/ALT keys in
 	combination with special keys and mouse.  Supported for various
-	platforms, such as X11 (with Motif and Athena interfaces), GTK, Win32
+	platforms, such as X11 (with a Motif interface), GTK, Win32
 	(Windows 95 and later), and Macintosh.
 
 Multiple windows and buffers.				|windows.txt|

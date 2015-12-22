@@ -635,7 +635,7 @@ USING RESOURCE FILES
 Instead of specifying 'guifontset', you can set X11 resources and Vim will
 pick them up.  This is only for people who know how X resource files work.
 
-For Motif and Athena insert these three lines in your $HOME/.Xdefaults file:
+For Motif insert these three lines in your $HOME/.Xdefaults file:
 
 	Vim.font: |base_font_name_list|
 	Vim*fontSet: |base_font_name_list|
@@ -1201,7 +1201,7 @@ internally.
 
 Vim has comprehensive UTF-8 support.  It works well in:
 - xterm with utf-8 support enabled
-- Athena, Motif and GTK GUI
+- Motif and GTK GUI
 - MS-Windows GUI
 - several other platforms
 

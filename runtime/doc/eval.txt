@@ -3232,7 +3232,7 @@ foreground()	Move the Vim window to the foreground.	Useful when sent from
 		On Win32 systems this might not work, the OS does not always
 		allow a window to bring itself to the foreground.  Use
 		|remote_foreground()| instead.
-		{only in the Win32, Athena, Motif and GTK GUI versions and the
+		{only in the Win32, Motif and GTK GUI versions and the
 		Win32 console version}
 
 
@@ -5161,7 +5161,7 @@ remote_foreground({server})				*remote_foreground()*
 		Note: This does not restore the window if it was minimized,
 		like foreground() does.
 		This function is not available in the |sandbox|.
-		{only in the Win32, Athena, Motif and GTK GUI versions and the
+		{only in the Win32, Motif and GTK GUI versions and the
 		Win32 console version}
 
 
@@ -6945,7 +6945,6 @@ folding			Compiled with |folding| support.
 footer			Compiled with GUI footer support. |gui-footer|
 gettext			Compiled with message translation |multi-lang|
 gui			Compiled with GUI enabled.
-gui_athena		Compiled with Athena GUI.
 gui_gnome		Compiled with Gnome support (gui_gtk is also defined).
 gui_gtk			Compiled with GTK+ GUI (any version).
 gui_gtk2		Compiled with GTK+ 2 GUI (gui_gtk is also defined).
