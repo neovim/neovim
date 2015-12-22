@@ -59,8 +59,6 @@ Support for different systems.
 	Vim can be used on:
 	- All Unix systems (it works on all systems it was tested on, although
 	  the GUI and Perl interface may not work everywhere).
-	- MS-DOS in real-mode (no additional drivers required).
-	- In protected mode on Windows 3.1 and MS-DOS (DPMI driver required).
 	- Windows 95 and Windows NT, with support for long file names.
 	- Macintosh
 	Note that on some systems features need to be disabled to reduce
