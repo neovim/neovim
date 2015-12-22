@@ -47,10 +47,6 @@ If you want Vim to start with a maximized window, add this command to your
 vimrc or gvimrc file: >
 	au GUIEnter * simalt ~x
 <
-								*gui-w32s*
-There is a specific version of gvim.exe that runs under the Win32s subsystem
-of Windows 3.1 or 3.11.  See |win32s|.
-
 ==============================================================================
 2. Vim as default editor				*vim-default-editor*
 
@@ -281,10 +277,6 @@ syntax on W95 & NT: >
 	:!start [/min] {command}
 The optional "/min" causes the window to be minimized.
 
-On Win32s, you will have to go to another window instead.  Don't forget that
-you must tell Windows 3.1x to keep executing a DOS command in the background
-while you switch back to Vim.
-
 ==============================================================================
 5. Special colors					*win32-colors*
 
@@ -293,7 +285,7 @@ On Win32, the normal DOS colors can be used.  See |dos-colors|.
 Additionally the system configured colors can also be used.  These are known
 by the names Sys_XXX, where XXX is the appropriate system color name, from the
 following list (see the Win32 documentation for full descriptions).  Case is
-ignored.  Note: On Win32s not all of these colors are supported.
+ignored.
 
 Sys_3DDKShadow		Sys_3DFace			Sys_BTNFace
 Sys_3DHilight		Sys_3DHighlight			Sys_BTNHilight
