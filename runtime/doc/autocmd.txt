@@ -759,7 +759,7 @@ OptionSet			After setting an option.  The pattern is
 				Note: It's a bad idea, to reset an option
 				during this autocommand, since this will
 				probably break plugins. You can always use
-				|noa| to prevent triggering this autocommand.
+				|:noa| to prevent triggering this autocommand.
 				Could be used, to check for existence of the
 				'backupdir' and 'undodir' options and create
 				directories, if they don't exist yet.
