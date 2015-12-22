@@ -628,16 +628,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 	those characters are solely based on how many octets they take in
 	legacy/traditional CJK encodings.  In those encodings, Euro,
 	Registered sign, Greek/Cyrillic letters are represented by two octets,
-	therefore those fonts have "wide" glyphs for them.  This is also
-	true of some line drawing characters used to make tables in text
-	file.  Therefore, when a CJK font is used for GUI Vim or
-	Vim is running inside a terminal (emulators) that uses a CJK font
-	(or Vim is run inside an xterm invoked with "-cjkwidth" option.),
-	this option should be set to "double" to match the width perceived
-	by Vim with the width of glyphs in the font.  Perhaps it also has
-	to be set to "double" under CJK Windows 9x/ME or Windows 2k/XP
-	when the system locale is set to one of CJK locales.  See Unicode
-	Standard Annex #11 (http://www.unicode.org/reports/tr11).
+	therefore those fonts have "wide" glyphs for them.  This is also true
+	of some line drawing characters used to make tables in text file.
+	Therefore, when a CJK font is used for GUI Vim or Vim is running
+	inside a terminal (emulators) that uses a CJK font (or Vim is run
+	inside an xterm invoked with "-cjkwidth" option.), this option should
+	be set to "double" to match the width perceived by Vim with the width
+	of glyphs in the font.  Perhaps it also has to be set to "double"
+	under CJK Windows XP and greater when the system locale is set to one
+	of CJK locales.  See Unicode Standard Annex #11
+	(http://www.unicode.org/reports/tr11).
 
 	Vim may set this option automatically at startup time when Vim is
 	compiled with the |+termresponse| feature and if |t_u7| is set to the
