@@ -59,13 +59,8 @@ Support for different systems.
 	Vim can be used on:
 	- All Unix systems (it works on all systems it was tested on, although
 	  the GUI and Perl interface may not work everywhere).
-	- MS-DOS in real-mode (no additional drivers required).
-	- In protected mode on Windows 3.1 and MS-DOS (DPMI driver required).
 	- Windows 95 and Windows NT, with support for long file names.
 	- Macintosh
-	Note that on some systems features need to be disabled to reduce
-	resource usage, esp. on MS-DOS.  For some outdated systems you need to
-	use an older Vim version.
 
 Multi level undo.					|undo|
 	'u' goes backward in time, 'CTRL-R' goes forward again.  Set option
@@ -347,9 +342,8 @@ Printing.						|printing|
 
 Mouse support.						|mouse-using|
 	The mouse is supported in the GUI version, in an xterm for Unix, for
-	BSDs with sysmouse, for Linux with gpm, for MS-DOS, and Win32.  It
-	can be used to position the cursor, select the visual area, paste a
-	register, etc.
+	BSDs with sysmouse, for Linux with gpm, and for Win32.  It can be used
+	to position the cursor, select the visual area, paste a register, etc.
 
 Usage of key names.					|<>| |key-notation|
 	Special keys now all have a name like <Up>, <End>, etc.
