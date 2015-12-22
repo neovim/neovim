@@ -47,10 +47,6 @@ If you want Vim to start with a maximized window, add this command to your
 vimrc or gvimrc file: >
 	au GUIEnter * simalt ~x
 <
-								*gui-w32s*
-There is a specific version of gvim.exe that runs under the Win32s subsystem
-of Windows 3.1 or 3.11.  See |win32s|.
-
 ==============================================================================
 2. Vim as default editor				*vim-default-editor*
 

@@ -6953,7 +6953,6 @@ gui_mac			Compiled with Macintosh GUI.
 gui_motif		Compiled with Motif GUI.
 gui_running		Vim is running in the GUI, or it will start soon.
 gui_win32		Compiled with MS Windows Win32 GUI.
-gui_win32s		idem, and Win32s system being used (Windows 3.1)
 iconv			Can use iconv() for conversion.
 insert_expand		Compiled with support for CTRL-X expansion commands in
 			Insert mode.

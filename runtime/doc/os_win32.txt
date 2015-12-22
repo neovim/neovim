@@ -16,8 +16,7 @@ The 32 bit version also runs on 64 bit MS-Windows systems.
 2. Startup			|win32-startup|
 3. Restore screen contents	|win32-restore|
 4. Using the mouse		|win32-mouse|
-5. Running under Windows 3.1	|win32-win3.1|
-6. Win32 mini FAQ		|win32-faq|
+5. Win32 mini FAQ	        |win32-faq|
 
 Additionally, there are a number of common Win32 and DOS items:
 File locations			|dos-locations|
@@ -98,35 +97,7 @@ When the mouse doesn't work, try disabling the "Quick Edit Mode" feature of
 the console.
 
 ==============================================================================
-5. Running under Windows 3.1				*win32-win3.1*
-
-						*win32s* *windows-3.1*
-There is a special version of Gvim that runs under Windows 3.1 and 3.11.  You
-need the gvim.exe that was compiled with Visual C++ 4.1.
-
-To run the Win32 version under Windows 3.1, you need to install Win32s.  You
-might have it already from another Win32 application which you have installed.
-If Vim doesn't seem to be running properly, get the latest version: 1.30c.
-You can find it at:
-
-	http://support.microsoft.com/download/support/mslfiles/pw1118.exe
-
-(Microsoft moved it again, we don't know where it is now :-( ).
-
-The reason for having two versions of gvim.exe is that the Win32s version was
-compiled with VC++ 4.1.  This is the last version of VC++ that supports Win32s
-programs.  VC++ 5.0 is better, so that one was used for the Win32 version.
-Apart from that, there is no difference between the programs.  If you are in a
-mixed environment, you can use the gvim.exe for Win32s on both.
-
-The Win32s version works the same way as the Win32 version under 95/NT.  When
-running under Win32s the following differences apply:
-- You cannot use long file names, because Windows 3.1 doesn't support them!
-- When executing an external command, it doesn't return an exit code.  After
-  doing ":make" you have to do ":cn" yourself.
-
-==============================================================================
-6. Win32 mini FAQ					*win32-faq*
+5. Win32 mini FAQ					*win32-faq*
 
 Q. How do I change the font?
 A. In the GUI version, you can use the 'guifont' option.  Example: >
@@ -239,22 +210,6 @@ A. You have two possible solutions depending on what you want:
         :!start /b notepad
 <  The first command runs notepad minimized and the second one runs it
    normally.
-
-Q. I'm using Win32s, and when I try to run an external command like "make",
-   Vim doesn't wait for it to finish!  Help!
-A. The problem is that a 32-bit application (Vim) can't get notification from
-   Windows that a 16-bit application (your DOS session) has finished.  Vim
-   includes a work-around for this, but you must set up your DOS commands to
-   run in a window, not full-screen.  Unfortunately the default when you
-   install Windows is full-screen.  To change this:
-   1) Start PIF editor (in the Main program group).
-   2) Open the file "_DEFAULT.PIF" in your Windows directory.
-   3) Changes the display option from "Full Screen" to "Windowed".
-   4) Save and exit.
-
-   To test, start Vim and type >
-	:!dir C:\<CR>".
-<  You should see a DOS box window appear briefly with the directory listing.
 
 Q. I use Vim under Win32s and NT.  In NT, I can define the console to default to
    50 lines, so that I get a 80x50 shell when I ':sh'.  Can I do the same in
