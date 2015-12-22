@@ -635,9 +635,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	(or Vim is run inside an xterm invoked with "-cjkwidth" option.),
 	this option should be set to "double" to match the width perceived
 	by Vim with the width of glyphs in the font.  Perhaps it also has
-	to be set to "double" under CJK Windows 9x/ME or Windows 2k/XP
-	when the system locale is set to one of CJK locales.  See Unicode
-	Standard Annex #11 (http://www.unicode.org/reports/tr11).
+	to be set to "double" under CJK Windows XP when the system locale is
+	set to one of CJK locales.
+	See Unicode Standard Annex #11 (http://www.unicode.org/reports/tr11).
 
 	Vim may set this option automatically at startup time when Vim is
 	compiled with the |+termresponse| feature and if |t_u7| is set to the
