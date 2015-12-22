@@ -333,7 +333,6 @@ N  *+find_in_path*	include file searches: |[I|, |:isearch|,
 N  *+folding*		|folding|
    *+footer*		|gui-footer|
 N  *+gettext*		message translations |multi-lang|
-   *+GUI_neXtaw*	Unix only: neXtaw |GUI|
    *+GUI_GTK*		Unix only: GTK+ |GUI|
    *+GUI_Motif*		Unix only: Motif |GUI|
    *+iconv*		Compiled with the |iconv()| function
