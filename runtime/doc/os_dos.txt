@@ -52,12 +52,9 @@ Will find "c:\user\piet\_vimrc" and the runtime files in "e:\vim\vim54".
 
 See |$VIM| and |$VIMRUNTIME| for more information.
 
-Under Windows 95, you can set $VIM in your C:\autoexec.bat file.  For
-example: >
-  set VIM=D:\vim
-Under Windows NT, you can set environment variables for each user separately
-under "Start/Settings/Control Panel->System", or through the properties in the
-menu of "My Computer", under the Environment Tab.
+You can set environment variables for each user separately under
+"Start/Settings/Control Panel->System", or through the properties in the menu
+of "My Computer", under the Environment Tab.
 
 ==============================================================================
 2. Using backslashes					*dos-backslash*
@@ -246,16 +243,6 @@ the CTRL-C until it tries to read a key.
 ==============================================================================
 8. Temp files						*dos-temp-files*
 
-Only for the 16 bit and 32 bit DOS version:
-Vim puts temporary files (for filtering) in the first of these directories
-that exists and in which Vim can create a file:
-	$TMP
-	$TEMP
-	C:\TMP
-	C:\TEMP
-	current directory
-
-For the Win32 version (both console and GUI):
 Vim uses standard Windows functions to obtain a temporary file name (for
 filtering).  The first of these directories that exists and in which Vim can
 create a file is used:
@@ -266,10 +253,10 @@ create a file is used:
 ==============================================================================
 9. Shell option default					*dos-shell*
 
-The default for the 'sh' ('shell') option is "command.com" on Windows 95 and
-"cmd.exe" on Windows NT.  If SHELL is defined, Vim uses SHELL instead, and if
-SHELL is not defined but COMSPEC is, Vim uses COMSPEC.  Vim starts external
-commands with "<shell> /c <command_name>".  Typing CTRL-Z starts a new command
+The default for the 'sh' ('shell') option is "cmd.exe" on Windows.
+If SHELL is defined, Vim uses SHELL instead, and if SHELL is not defined
+but COMSPEC is, Vim uses COMSPEC.  Vim starts external commands with
+"<shell> /c <command_name>".  Typing CTRL-Z starts a new command
 subshell.  Return to Vim with "exit".	|'shell'| |CTRL-Z|
 
 If you are running a third-party shell, you may need to set the
