@@ -211,12 +211,6 @@ A. You have two possible solutions depending on what you want:
 <  The first command runs notepad minimized and the second one runs it
    normally.
 
-Q. I use Vim under Win32s and NT.  In NT, I can define the console to default to
-   50 lines, so that I get a 80x50 shell when I ':sh'.  Can I do the same in
-   W3.1x, or am I stuck with 80x25?
-A. Edit SYSTEM.INI and add 'ScreenLines=50' to the [NonWindowsApp] section.  DOS
-   prompts and external DOS commands will now run in a 50-line window.
-
 						*windows-icon*
 Q. I don't like the Vim icon, can I change it?
 A. Yes, place your favorite icon in bitmaps/vim.ico in a directory of
