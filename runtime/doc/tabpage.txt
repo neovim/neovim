@@ -48,8 +48,8 @@ A double click with the mouse in the non-GUI tab pages line opens a new, empty
 tab page.  It is placed left of the position of the click.  The first click
 may select another tab page first, causing an extra screen update.
 
-This also works in a few GUI versions, esp. Win32 and Motif.  But only when
-clicking right of the labels.
+This also works in a few GUI versions, esp. Win32.  But only when clicking
+right of the labels.
 
 In the GUI tab pages line you can use the right mouse button to open menu.
 |tabline-menu|.
