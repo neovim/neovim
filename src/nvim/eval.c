@@ -4001,12 +4001,22 @@ eval6 (
        * When either side is a float the result is a float.
        */
       if (use_float) {
-        if (op == '*')
+        if (op == '*') {
           f1 = f1 * f2;
-        else if (op == '/') {
-          /* We rely on the floating point library to handle divide
-           * by zero to result in "inf" and not a crash. */
-          f1 = f2 != 0 ? f1 / f2 : INFINITY;
+        } else if (op == '/') {
+          // Division by zero triggers error from AddressSanitizer
+          f1 = (f2 == 0
+                ? (
+#ifdef NAN
+                    f1 == 0
+                    ? NAN
+                    :
+#endif
+                    (f1 > 0
+                     ? INFINITY
+                     : -INFINITY)
+                )
+                : f1 / f2);
         } else {
           EMSG(_("E804: Cannot use '%' with Float"));
           return FAIL;
