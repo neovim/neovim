@@ -6839,9 +6839,25 @@ vim_to_msgpack_error_ret: \
 
 #define CONV_FLOAT(flt) \
     do { \
-      char numbuf[NUMBUFLEN]; \
-      vim_snprintf(numbuf, NUMBUFLEN - 1, "%g", (flt)); \
-      ga_concat(gap, (char_u *) numbuf); \
+      const float_T flt_ = (flt); \
+      switch (fpclassify(flt_)) { \
+        case FP_NAN: { \
+          ga_concat(gap, (char_u *) "str2float('nan')"); \
+          break; \
+        } \
+        case FP_INFINITE: { \
+          if (flt_ < 0) { \
+            ga_append(gap, '-'); \
+          } \
+          ga_concat(gap, (char_u *) "str2float('inf')"); \
+          break; \
+        } \
+        default: { \
+          char numbuf[NUMBUFLEN]; \
+          vim_snprintf(numbuf, NUMBUFLEN - 1, "%g", flt_); \
+          ga_concat(gap, (char_u *) numbuf); \
+        } \
+      } \
     } while (0)
 
 #define CONV_FUNC(fun) \
