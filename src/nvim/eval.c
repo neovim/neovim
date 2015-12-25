@@ -10930,6 +10930,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
 #if !defined(UNIX)
     "system",  // TODO(SplinterOfChaos): This IS defined for UNIX!
 #endif
+    "tablineat",
     "tag_binary",
     "tag_old_static",
     "termresponse",

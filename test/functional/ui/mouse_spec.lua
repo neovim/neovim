@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')
 local Screen = require('test.functional.ui.screen')
 local clear, feed, meths = helpers.clear, helpers.feed, helpers.meths
 local insert, execute = helpers.insert, helpers.execute
-local eq = helpers.eq
+local eq, funcs = helpers.eq, helpers.funcs
 
 describe('Mouse input', function()
   local screen
@@ -167,6 +167,7 @@ describe('Mouse input', function()
       local test_click = function(name, click_str, click_num, mouse_button,
                                   modifiers)
         it(name .. ' works', function()
+          eq(1, funcs.has('tablineat'))
           feed(click_str .. '<3,0>')
           check_reply({0, click_num, mouse_button, modifiers})
           feed(click_str .. '<4,0>')
