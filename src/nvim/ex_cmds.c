@@ -1989,7 +1989,7 @@ do_ecmd (
   char_u      *free_fname = NULL;
   int retval = FAIL;
   long n;
-  linenr_T lnum;
+  pos_T orig_pos;
   linenr_T topline = 0;
   int newcol = -1;
   int solcol = -1;
@@ -2351,7 +2351,7 @@ do_ecmd (
      * Careful: open_buffer() and apply_autocmds() may change the current
      * buffer and window.
      */
-      lnum = curwin->w_cursor.lnum;
+    orig_pos = curwin->w_cursor;
     topline = curwin->w_topline;
     if (!oldbuf) {                          /* need to read the file */
       swap_exists_action = SEA_DIALOG;
@@ -2379,11 +2379,9 @@ do_ecmd (
     }
     check_arg_idx(curwin);
 
-    /*
-     * If autocommands change the cursor position or topline, we should
-     * keep it.
-     */
-    if (curwin->w_cursor.lnum != lnum) {
+    // If autocommands change the cursor position or topline, we should keep
+    // it.  Also when it moves within a line.
+    if (!equalpos(curwin->w_cursor, orig_pos)) {
       newlnum = curwin->w_cursor.lnum;
       newcol = curwin->w_cursor.col;
     }
