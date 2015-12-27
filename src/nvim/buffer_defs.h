@@ -592,17 +592,17 @@ struct file_buffer {
 
   int b_p_scriptID[BV_COUNT];           /* SIDs for buffer-local options */
 
-  int b_p_ai;                   /* 'autoindent' */
-  int b_p_ai_nopaste;           /* b_p_ai saved for paste mode */
+  bool b_p_ai;                   /* 'autoindent' */
+  bool b_p_ai_nopaste;           /* b_p_ai saved for paste mode */
   char_u      *b_p_bkc;         ///< 'backupcopy'
   unsigned int b_bkc_flags;     ///< flags for 'backupcopy'
-  int b_p_ci;                   /* 'copyindent' */
-  int b_p_bin;                  /* 'binary' */
-  int b_p_bomb;                 /* 'bomb' */
+  bool b_p_ci;                   /* 'copyindent' */
+  bool b_p_bin;                  /* 'binary' */
+  bool b_p_bomb;                 /* 'bomb' */
   char_u      *b_p_bh;          /* 'bufhidden' */
   char_u      *b_p_bt;          /* 'buftype' */
-  int b_p_bl;                   /* 'buflisted' */
-  int b_p_cin;                  /* 'cindent' */
+  bool b_p_bl;                   /* 'buflisted' */
+  bool b_p_cin;                  /* 'cindent' */
   char_u      *b_p_cino;        /* 'cinoptions' */
   char_u      *b_p_cink;        /* 'cinkeys' */
   char_u      *b_p_cinw;        /* 'cinwords' */
@@ -611,16 +611,16 @@ struct file_buffer {
   char_u      *b_p_cpt;         /* 'complete' */
   char_u      *b_p_cfu;         /* 'completefunc' */
   char_u      *b_p_ofu;         /* 'omnifunc' */
-  int b_p_eol;                  /* 'endofline' */
-  int b_p_fixeol;               /* 'fixendofline' */
-  int b_p_et;                   /* 'expandtab' */
-  int b_p_et_nobin;             /* b_p_et saved for binary mode */
+  bool b_p_eol;                  /* 'endofline' */
+  bool b_p_fixeol;               /* 'fixendofline' */
+  bool b_p_et;                   /* 'expandtab' */
+  bool b_p_et_nobin;             /* b_p_et saved for binary mode */
   char_u      *b_p_fenc;        /* 'fileencoding' */
   char_u      *b_p_ff;          /* 'fileformat' */
   char_u      *b_p_ft;          /* 'filetype' */
   char_u      *b_p_fo;          /* 'formatoptions' */
   char_u      *b_p_flp;         /* 'formatlistpat' */
-  int b_p_inf;                  /* 'infercase' */
+  bool b_p_inf;                  /* 'infercase' */
   char_u      *b_p_isk;         /* 'iskeyword' */
   char_u      *b_p_def;         /* 'define' local value */
   char_u      *b_p_inc;         /* 'include' */
@@ -632,17 +632,17 @@ struct file_buffer {
   char_u      *b_p_fex;         /* 'formatexpr' */
   uint32_t b_p_fex_flags;       /* flags for 'formatexpr' */
   char_u      *b_p_kp;          /* 'keywordprg' */
-  int b_p_lisp;                 /* 'lisp' */
+  bool b_p_lisp;                 /* 'lisp' */
   char_u      *b_p_mps;         /* 'matchpairs' */
-  int b_p_ml;                   /* 'modeline' */
-  int b_p_ml_nobin;             /* b_p_ml saved for binary mode */
-  int b_p_ma;                   /* 'modifiable' */
+  bool b_p_ml;                   /* 'modeline' */
+  bool b_p_ml_nobin;             /* b_p_ml saved for binary mode */
+  bool b_p_ma;                   /* 'modifiable' */
   char_u      *b_p_nf;          /* 'nrformats' */
-  int b_p_pi;                   /* 'preserveindent' */
+  bool b_p_pi;                   /* 'preserveindent' */
   char_u      *b_p_qe;          /* 'quoteescape' */
-  int b_p_ro;                   /* 'readonly' */
+  bool b_p_ro;                   /* 'readonly' */
   long b_p_sw;                  /* 'shiftwidth' */
-  int b_p_si;                   /* 'smartindent' */
+  bool b_p_si;                   /* 'smartindent' */
   long b_p_sts;                 /* 'softtabstop' */
   long b_p_sts_nopaste;         /* b_p_sts saved for paste mode */
   char_u      *b_p_sua;         /* 'suffixesadd' */
@@ -669,7 +669,7 @@ struct file_buffer {
   char_u      *b_p_dict;        /* 'dictionary' local value */
   char_u      *b_p_tsr;         /* 'thesaurus' local value */
   long b_p_ul;                  /* 'undolevels' local value */
-  int b_p_udf;                  /* 'undofile' */
+  bool b_p_udf;                  /* 'undofile' */
   char_u      *b_p_lw;          // 'lispwords' local value
 
   /* end of buffer options */

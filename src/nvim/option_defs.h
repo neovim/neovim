@@ -268,7 +268,7 @@
 EXTERN long p_aleph;            /* 'aleph' */
 EXTERN bool p_acd;              /* 'autochdir' */
 EXTERN char_u   *p_ambw;        /* 'ambiwidth' */
-EXTERN int p_ar;                /* 'autoread' */
+EXTERN bool p_ar;                /* 'autoread' */
 EXTERN int p_aw;                /* 'autowrite' */
 EXTERN int p_awa;               /* 'autowriteall' */
 EXTERN char_u   *p_bs;          /* 'backspace' */

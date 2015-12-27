@@ -105,14 +105,14 @@ typedef enum {
  * These are the global values for options which are also local to a buffer.
  * Only to be used in option.c!
  */
-static int p_ai;
-static int p_bin;
-static int p_bomb;
+static bool p_ai;
+static bool p_bin;
+static bool p_bomb;
 static char_u   *p_bh;
 static char_u   *p_bt;
-static int p_bl;
-static int p_ci;
-static int p_cin;
+static bool p_bl;
+static bool p_ci;
+static bool p_cin;
 static char_u   *p_cink;
 static char_u   *p_cino;
 static char_u   *p_cinw;
@@ -121,9 +121,9 @@ static char_u   *p_cms;
 static char_u   *p_cpt;
 static char_u   *p_cfu;
 static char_u   *p_ofu;
-static int p_eol;
-static int p_fixeol;
-static int p_et;
+static bool p_eol;
+static bool p_fixeol;
+static bool p_et;
 static char_u   *p_fenc;
 static char_u   *p_ff;
 static char_u   *p_fo;
@@ -135,22 +135,22 @@ static char_u   *p_inex;
 static char_u   *p_inde;
 static char_u   *p_indk;
 static char_u   *p_fex;
-static int p_inf;
+static bool p_inf;
 static char_u   *p_isk;
-static int p_lisp;
-static int p_ml;
-static int p_ma;
-static int p_mod;
+static bool p_lisp;
+static bool p_ml;
+static bool p_ma;
+static bool p_mod;
 static char_u   *p_mps;
 static char_u   *p_nf;
-static int p_pi;
+static bool p_pi;
 static char_u   *p_qe;
-static int p_ro;
-static int p_si;
+static bool p_ro;
+static bool p_si;
 static long p_sts;
 static char_u   *p_sua;
 static long p_sw;
-static int p_swf;
+static bool p_swf;
 static long p_smc;
 static char_u   *p_syn;
 static char_u   *p_spc;
@@ -158,7 +158,7 @@ static char_u   *p_spf;
 static char_u   *p_spl;
 static long p_ts;
 static long p_tw;
-static int p_udf;
+static bool p_udf;
 static long p_wm;
 static char_u   *p_keymap;
 
@@ -3548,7 +3548,7 @@ set_bool_option (
     return e_unsupportedoption;
   }
   /* 'undofile' */
-  else if ((int *)varp == &curbuf->b_p_udf || (int *)varp == &p_udf) {
+  else if ((bool *)varp == &curbuf->b_p_udf || (bool *)varp == &p_udf) {
     /* Only take action when the option was set. When reset we do not
      * delete the undo file, the option may be set again without making
      * any changes in between. */
@@ -3570,7 +3570,7 @@ set_bool_option (
       }
       curbuf = save_curbuf;
     }
-  } else if ((int *)varp == &curbuf->b_p_ro) {
+  } else if ((bool *)varp == &curbuf->b_p_ro) {
     /* when 'readonly' is reset globally, also reset readonlymode */
     if (!curbuf->b_p_ro && (opt_flags & OPT_LOCAL) == 0)
       readonlymode = FALSE;
@@ -3582,32 +3582,32 @@ set_bool_option (
     redraw_titles();
   }
   /* when 'modifiable' is changed, redraw the window title */
-  else if ((int *)varp == &curbuf->b_p_ma) {
+  else if ((bool *)varp == &curbuf->b_p_ma) {
     redraw_titles();
   }
   /* when 'endofline' is changed, redraw the window title */
-  else if ((int *)varp == &curbuf->b_p_eol) {
+  else if ((bool *)varp == &curbuf->b_p_eol) {
     redraw_titles();
-  } else if ((int *)varp == &curbuf->b_p_fixeol) {
+  } else if ((bool *)varp == &curbuf->b_p_fixeol) {
     // when 'fixeol' is changed, redraw the window title
     redraw_titles();
   }
   /* when 'bomb' is changed, redraw the window title and tab page text */
-  else if ((int *)varp == &curbuf->b_p_bomb) {
+  else if ((bool *)varp == &curbuf->b_p_bomb) {
     redraw_titles();
   }
   /* when 'bin' is set also set some other options */
-  else if ((int *)varp == &curbuf->b_p_bin) {
+  else if ((bool *)varp == &curbuf->b_p_bin) {
     set_options_bin(old_value, curbuf->b_p_bin, opt_flags);
     redraw_titles();
   }
   /* when 'buflisted' changes, trigger autocommands */
-  else if ((int *)varp == &curbuf->b_p_bl && old_value != curbuf->b_p_bl) {
+  else if ((bool *)varp == &curbuf->b_p_bl && old_value != curbuf->b_p_bl) {
     apply_autocmds(curbuf->b_p_bl ? EVENT_BUFADD : EVENT_BUFDELETE,
         NULL, NULL, TRUE, curbuf);
   }
   /* when 'swf' is set, create swapfile, when reset remove swapfile */
-  else if ((int *)varp == (int *)&curbuf->b_p_swf) {
+  else if ((bool *)varp == &curbuf->b_p_swf) {
     if (curbuf->b_p_swf && p_uc)
       ml_open_file(curbuf);                     /* create the swap file */
     else
