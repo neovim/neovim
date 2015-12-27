@@ -1319,10 +1319,10 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
 /// @retujrn The virtual cursor column.
 colnr_T getvcol_nolist(pos_T *posp)
 {
-  int list_save = curwin->w_p_list;
+  bool list_save = curwin->w_p_list;
   colnr_T vcol;
 
-  curwin->w_p_list = FALSE;
+  curwin->w_p_list = false;
   getvcol(curwin, posp, NULL, &vcol, NULL);
   curwin->w_p_list = list_save;
   return vcol;

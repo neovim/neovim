@@ -1451,16 +1451,15 @@ void ins_char_bytes(char_u *buf, int charlen)
     if (State & VREPLACE_FLAG) {
       colnr_T new_vcol = 0;             /* init for GCC */
       colnr_T vcol;
-      int old_list;
 
       /*
        * Disable 'list' temporarily, unless 'cpo' contains the 'L' flag.
        * Returns the old value of list, so when finished,
        * curwin->w_p_list should be set back to this.
        */
-      old_list = curwin->w_p_list;
+      bool old_list = curwin->w_p_list;
       if (old_list && vim_strchr(p_cpo, CPO_LISTWM) == NULL)
-        curwin->w_p_list = FALSE;
+        curwin->w_p_list = false;
 
       /*
        * In virtual replace mode each character may replace one or more

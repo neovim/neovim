@@ -143,7 +143,7 @@
 # define MB_CHAR2LEN(c)     (has_mbyte ? mb_char2len(c) : 1)
 # define PTR2CHAR(p)        (has_mbyte ? mb_ptr2char(p) : (int)*(p))
 
-# define RESET_BINDING(wp)  (wp)->w_p_scb = FALSE; (wp)->w_p_crb = FALSE
+# define RESET_BINDING(wp)  (wp)->w_p_scb = false; (wp)->w_p_crb = false
 
 /// Calculate the length of a C array.
 ///

@@ -4986,7 +4986,7 @@ static int ex_window(void)
   set_option_value((char_u *)"bt", 0L, (char_u *)"nofile", OPT_LOCAL);
   set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
   curbuf->b_p_ma = TRUE;
-  curwin->w_p_fen = FALSE;
+  curwin->w_p_fen = false;
   curwin->w_p_rl = cmdmsg_rl;
   cmdmsg_rl = FALSE;
   RESET_BINDING(curwin);

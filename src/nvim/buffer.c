@@ -3302,9 +3302,9 @@ int build_stl_str_hl(
       // In list mode virtcol needs to be recomputed
       colnr_T virtcol = wp->w_virtcol;
       if (wp->w_p_list && lcs_tab1 == NUL) {
-        wp->w_p_list = FALSE;
+        wp->w_p_list = false;
         getvcol(wp, &wp->w_cursor, NULL, &virtcol, NULL);
-        wp->w_p_list = TRUE;
+        wp->w_p_list = true;
       }
       ++virtcol;
       // Don't display %V if it's the same as %c.

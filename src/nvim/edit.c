@@ -1584,7 +1584,7 @@ change_indent (
 
   /* for the following tricks we don't want list mode */
   save_p_list = curwin->w_p_list;
-  curwin->w_p_list = FALSE;
+  curwin->w_p_list = false;
   vc = getvcol_nolist(&curwin->w_cursor);
   vcol = vc;
 
@@ -8089,7 +8089,7 @@ static int ins_tab(void)
 
     /* When 'L' is not in 'cpoptions' a tab always takes up 'ts' spaces. */
     if (vim_strchr(p_cpo, CPO_LISTWM) == NULL)
-      curwin->w_p_list = FALSE;
+      curwin->w_p_list = false;
 
     /* Find first white before the cursor */
     fpos = curwin->w_cursor;

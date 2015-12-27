@@ -1014,7 +1014,7 @@ void ex_diffsplit(exarg_T *eap)
   if (win_split(0, (diff_flags & DIFF_VERTICAL) ? WSP_VERT : 0) != FAIL) {
     // Pretend it was a ":split fname" command
     eap->cmdidx = CMD_split;
-    curwin->w_p_diff = TRUE;
+    curwin->w_p_diff = true;
     do_exedit(eap, old_curwin);
 
     // split must have worked
@@ -1045,23 +1045,23 @@ void diff_win_options(win_T *wp, int addbuf)
   newFoldLevel();
   curwin = old_curwin;
 
-  wp->w_p_diff = TRUE;
+  wp->w_p_diff = true;
 
   // Use 'scrollbind' and 'cursorbind' when available
   if (!wp->w_p_diff_saved) {
     wp->w_p_scb_save = wp->w_p_scb;
   }
-  wp->w_p_scb = TRUE;
+  wp->w_p_scb = true;
 
   if (!wp->w_p_diff_saved) {
     wp->w_p_crb_save = wp->w_p_crb;
   }
-  wp->w_p_crb = TRUE;
+  wp->w_p_crb = true;
 
   if (!wp->w_p_diff_saved) {
     wp->w_p_wrap_save = wp->w_p_wrap;
   }
-  wp->w_p_wrap = FALSE;
+  wp->w_p_wrap = false;
   curwin = wp;
   curbuf = curwin->w_buffer;
 
@@ -1079,7 +1079,7 @@ void diff_win_options(win_T *wp, int addbuf)
     wp->w_p_fdl_save = wp->w_p_fdl;
   }
   wp->w_p_fdc = diff_foldcolumn;
-  wp->w_p_fen = TRUE;
+  wp->w_p_fen = true;
   wp->w_p_fdl = 0;
   foldUpdateAll(wp);
 
@@ -1090,7 +1090,7 @@ void diff_win_options(win_T *wp, int addbuf)
   }
 
   // Saved the current values, to be restored in ex_diffoff().
-  wp->w_p_diff_saved = TRUE;
+  wp->w_p_diff_saved = true;
 
   if (addbuf) {
     diff_buf_add(wp->w_buffer);
@@ -1111,18 +1111,18 @@ void ex_diffoff(exarg_T *eap)
     if (eap->forceit ? wp->w_p_diff : (wp == curwin)) {
       // Set 'diff', 'scrollbind' off and 'wrap' on. If option values
       // were saved in diff_win_options() restore them.
-      wp->w_p_diff = FALSE;
+      wp->w_p_diff = false;
 
       if (wp->w_p_scb) {
-        wp->w_p_scb = wp->w_p_diff_saved ? wp->w_p_scb_save : FALSE;
+        wp->w_p_scb = wp->w_p_diff_saved ? wp->w_p_scb_save : false;
       }
 
       if (wp->w_p_crb) {
-        wp->w_p_crb = wp->w_p_diff_saved ? wp->w_p_crb_save : FALSE;
+        wp->w_p_crb = wp->w_p_diff_saved ? wp->w_p_crb_save : false;
       }
 
       if (!wp->w_p_wrap) {
-        wp->w_p_wrap = wp->w_p_diff_saved ? wp->w_p_wrap_save : TRUE;
+        wp->w_p_wrap = wp->w_p_diff_saved ? wp->w_p_wrap_save : true;
       }
       curwin = wp;
       curbuf = curwin->w_buffer;
@@ -1151,7 +1151,7 @@ void ex_diffoff(exarg_T *eap)
         // Only restore 'foldenable' when 'foldmethod' is not
         // "manual", otherwise we continue to show the diff folds.
         if (foldmethodIsManual(wp) || !wp->w_p_diff_saved) {
-          wp->w_p_fen = FALSE;
+          wp->w_p_fen = false;
         } else {
           wp->w_p_fen = wp->w_p_fen_save;
         }
@@ -1165,7 +1165,7 @@ void ex_diffoff(exarg_T *eap)
       // Note: 'sbo' is not restored, it's a global option.
       diff_buf_adjust(wp);
 
-      wp->w_p_diff_saved = FALSE;
+      wp->w_p_diff_saved = false;
     }
     diffwin |= wp->w_p_diff;
   }

@@ -364,7 +364,7 @@ int main(int argc, char **argv)
 
   if (curwin->w_p_rl && p_altkeymap) {
     p_hkmap = FALSE;              /* Reset the Hebrew keymap mode */
-    curwin->w_p_arab = FALSE;       /* Reset the Arabic keymap mode */
+    curwin->w_p_arab = true;       /* Reset the Arabic keymap mode */
     p_fkmap = TRUE;               /* Set the Farsi keymap mode */
   }
 
