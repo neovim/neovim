@@ -3659,18 +3659,18 @@ set_bool_option (
   }
   /* when 'scrollbind' is set: snapshot the current position to avoid a jump
    * at the end of normal_cmd() */
-  else if ((int *)varp == &curwin->w_p_scb) {
+  else if ((bool *)varp == &curwin->w_p_scb) {
     if (curwin->w_p_scb) {
       do_check_scrollbind(FALSE);
       curwin->w_scbind_pos = curwin->w_topline;
     }
   }
   /* There can be only one window with 'previewwindow' set. */
-  else if ((int *)varp == &curwin->w_p_pvw) {
+  else if ((bool *)varp == &curwin->w_p_pvw) {
     if (curwin->w_p_pvw) {
       FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
         if (win->w_p_pvw && win != curwin) {
-          curwin->w_p_pvw = FALSE;
+          curwin->w_p_pvw = false;
           return (char_u *)N_("E590: A preview window already exists");
         }
       }
@@ -3716,7 +3716,7 @@ set_bool_option (
 #endif
 
   /* If 'wrap' is set, set w_leftcol to zero. */
-  else if ((int *)varp == &curwin->w_p_wrap) {
+  else if ((bool *)varp == &curwin->w_p_wrap) {
     if (curwin->w_p_wrap)
       curwin->w_leftcol = 0;
   } else if ((bool *)varp == &p_ea) {
@@ -3727,7 +3727,7 @@ set_bool_option (
     do_autochdir();
   }
   /* 'diff' */
-  else if ((int *)varp == &curwin->w_p_diff) {
+  else if ((bool *)varp == &curwin->w_p_diff) {
     /* May add or remove the buffer from the list of diff buffers. */
     diff_buf_adjust(curwin);
     if (foldmethodIsDiff(curwin))
@@ -3736,7 +3736,7 @@ set_bool_option (
 
 
   /* 'spell' */
-  else if ((int *)varp == &curwin->w_p_spell) {
+  else if ((bool *)varp == &curwin->w_p_spell) {
     if (curwin->w_p_spell) {
       char_u      *errmsg = did_set_spelllang(curwin);
       if (errmsg != NULL)
@@ -3765,7 +3765,7 @@ set_bool_option (
    */
   if ((p_hkmap || p_fkmap) && p_altkeymap) {
     p_altkeymap = p_fkmap;
-    curwin->w_p_arab = FALSE;
+    curwin->w_p_arab = false;
     (void)init_chartab();
   }
 
@@ -3775,7 +3775,7 @@ set_bool_option (
   if (p_hkmap && p_altkeymap) {
     p_altkeymap = 0;
     p_fkmap = 0;
-    curwin->w_p_arab = FALSE;
+    curwin->w_p_arab = false;
     (void)init_chartab();
   }
 
@@ -3785,11 +3785,11 @@ set_bool_option (
   if (p_fkmap && !p_altkeymap) {
     p_altkeymap = 1;
     p_hkmap = 0;
-    curwin->w_p_arab = FALSE;
+    curwin->w_p_arab = false;
     (void)init_chartab();
   }
 
-  if ((int *)varp == &curwin->w_p_arab) {
+  if ((bool *)varp == &curwin->w_p_arab) {
     if (curwin->w_p_arab) {
       /*
        * 'arabic' is set, handle various sub-settings.
@@ -3797,7 +3797,7 @@ set_bool_option (
       if (!p_tbidi) {
         /* set rightleft mode */
         if (!curwin->w_p_rl) {
-          curwin->w_p_rl = TRUE;
+          curwin->w_p_rl = true;
           changed_window_setting();
         }
 
@@ -3836,7 +3836,7 @@ set_bool_option (
       if (!p_tbidi) {
         /* reset rightleft mode */
         if (curwin->w_p_rl) {
-          curwin->w_p_rl = FALSE;
+          curwin->w_p_rl = false;
           changed_window_setting();
         }
 
