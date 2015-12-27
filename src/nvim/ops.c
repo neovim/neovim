@@ -703,18 +703,16 @@ char_u *get_expr_line_src(void)
 /// @param writing allow only writable registers
 bool valid_yank_reg(int regname, bool writing)
 {
-  if (       (regname > 0 && ASCII_ISALNUM(regname))
-             || (!writing && vim_strchr((char_u *)
-                     "/.%:="
-                     , regname) != NULL)
-             || regname == '#'
-             || regname == '"'
-             || regname == '-'
-             || regname == '_'
-             || regname == '*'
-             || regname == '+'
-             )
+  if ((regname > 0 && ASCII_ISALNUM(regname))
+      || (!writing && vim_strchr((char_u *) "/.%:=" , regname) != NULL)
+      || regname == '#'
+      || regname == '"'
+      || regname == '-'
+      || regname == '_'
+      || regname == '*'
+      || regname == '+') {
     return true;
+  }
   return false;
 }
 
@@ -4666,11 +4664,12 @@ void write_reg_contents_ex(int name,
       int num = atoi((char *)str);
 
       buf = buflist_findnr(num);
-      if (buf == NULL)
+      if (buf == NULL) {
         EMSGN(_(e_nobufnr), (long)num);
+      }
     } else {
       buf = buflist_findnr(buflist_findpat(str, str + STRLEN(str),
-                           true, false, false));
+                                           true, false, false));
     }
     if (buf == NULL) {
       return;

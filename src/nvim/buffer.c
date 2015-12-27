@@ -918,13 +918,15 @@ do_buffer (
 
   if (buf == NULL) {        /* could not find it */
     if (start == DOBUF_FIRST) {
-      /* don't warn when deleting */
-      if (!unload)
+      // don't warn when deleting
+      if (!unload) {
         EMSGN(_(e_nobufnr), count);
-    } else if (dir == FORWARD)
+      }
+    } else if (dir == FORWARD) {
       EMSG(_("E87: Cannot go beyond last buffer"));
-    else
+    } else {
       EMSG(_("E88: Cannot go before first buffer"));
+    }
     return FAIL;
   }
 
@@ -1711,18 +1713,15 @@ static buf_T *buflist_findname_file_id(char_u *ffname, FileID *file_id,
   return NULL;
 }
 
-/*
- * Find file in buffer list by a regexp pattern.
- * Return fnum of the found buffer.
- * Return < 0 for error.
- */
-int 
-buflist_findpat (
-    char_u *pattern,
-    char_u *pattern_end,       /* pointer to first char after pattern */
-    int unlisted,                   /* find unlisted buffers */
-    int diffmode,             /* find diff-mode buffers only */
-    int curtab_only                /* find buffers in current tab only */
+/// Find file in buffer list by a regexp pattern.
+/// Return fnum of the found buffer.
+/// Return < 0 for error.
+int buflist_findpat(
+    const char_u *pattern,
+    const char_u *pattern_end,  // pointer to first char after pattern
+    int unlisted,               // find unlisted buffers
+    int diffmode,               // find diff-mode buffers only
+    int curtab_only             // find buffers in current tab only
 )
 {
   int match = -1;

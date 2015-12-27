@@ -7096,26 +7096,23 @@ int match_file_list(char_u *list, char_u *sfname, char_u *ffname)
   return FALSE;
 }
 
-/*
- * Convert the given pattern "pat" which has shell style wildcards in it, into
- * a regular expression, and return the result in allocated memory.  If there
- * is a directory path separator to be matched, then TRUE is put in
- * allow_dirs, otherwise FALSE is put there -- webb.
- * Handle backslashes before special characters, like "\*" and "\ ".
- *
- * Returns NULL on failure.
- */
-char_u *
-file_pat_to_reg_pat (
-    char_u *pat,
-    char_u *pat_end,           /* first char after pattern or NULL */
-    char *allow_dirs,        /* Result passed back out in here */
-    int no_bslash             /* Don't use a backward slash as pathsep */
+/// Convert the given pattern "pat" which has shell style wildcards in it, into
+/// a regular expression, and return the result in allocated memory.  If there
+/// is a directory path separator to be matched, then TRUE is put in
+/// allow_dirs, otherwise FALSE is put there -- webb.
+/// Handle backslashes before special characters, like "\*" and "\ ".
+///
+/// Returns NULL on failure.
+char_u * file_pat_to_reg_pat(
+    const char_u *pat,
+    const char_u *pat_end,   // first char after pattern or NULL
+    char *allow_dirs,        // Result passed back out in here
+    int no_bslash            // Don't use a backward slash as pathsep
 )
 {
-  char_u      *endp;
+  const char_u *endp;
   char_u      *reg_pat;
-  char_u      *p;
+  const char_u *p;
   int nested = 0;
   int add_dollar = TRUE;
 
