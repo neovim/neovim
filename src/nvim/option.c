@@ -3538,13 +3538,13 @@ set_bool_option (
     *(bool *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = value;
 
   // Ensure that options set to p_force_on cannot be disabled.
-  if ((int *)varp == &p_force_on && p_force_on == FALSE) {
-    p_force_on = TRUE;
+  if ((bool *)varp == &p_force_on && p_force_on == false) {
+    p_force_on = true;
     return e_unsupportedoption;
   }
   // Ensure that options set to p_force_off cannot be enabled.
-  else if ((int *)varp == &p_force_off && p_force_off == TRUE) {
-    p_force_off = FALSE;
+  else if ((bool *)varp == &p_force_off && p_force_off == true) {
+    p_force_off = false;
     return e_unsupportedoption;
   }
   /* 'undofile' */
@@ -3616,7 +3616,7 @@ set_bool_option (
       mf_close_file(curbuf, true);              /* remove the swap file */
   }
   /* when 'terse' is set change 'shortmess' */
-  else if ((int *)varp == &p_terse) {
+  else if ((bool *)varp == &p_terse) {
     char_u  *p;
 
     p = vim_strchr(p_shm, SHM_SEARCH);
@@ -3632,11 +3632,11 @@ set_bool_option (
       STRMOVE(p, p + 1);
   }
   /* when 'paste' is set or reset also change other options */
-  else if ((int *)varp == &p_paste) {
+  else if ((bool *)varp == &p_paste) {
     paste_option_changed();
   }
   /* when 'insertmode' is set from an autocommand need to do work here */
-  else if ((int *)varp == &p_im) {
+  else if ((bool *)varp == &p_im) {
     if (p_im) {
       if ((State & INSERT) == 0)
         need_start_insertmode = TRUE;
@@ -3650,11 +3650,11 @@ set_bool_option (
     }
   }
   /* when 'ignorecase' is set or reset and 'hlsearch' is set, redraw */
-  else if ((int *)varp == &p_ic && p_hls) {
+  else if ((bool *)varp == &p_ic && p_hls) {
     redraw_all_later(SOME_VALID);
   }
   /* when 'hlsearch' is set or reset: reset no_hlsearch */
-  else if ((int *)varp == &p_hls) {
+  else if ((bool *)varp == &p_hls) {
     SET_NO_HLSEARCH(FALSE);
   }
   /* when 'scrollbind' is set: snapshot the current position to avoid a jump
@@ -3685,9 +3685,9 @@ set_bool_option (
     (void)buf_init_chartab(curbuf, FALSE);          /* ignore errors */
   }
   /* when 'title' changed, may need to change the title; same for 'icon' */
-  else if ((int *)varp == &p_title) {
+  else if ((bool *)varp == &p_title) {
     did_set_title(FALSE);
-  } else if ((int *)varp == &p_icon) {
+  } else if ((bool *)varp == &p_icon) {
     did_set_title(TRUE);
   } else if ((bool *)varp == &curbuf->b_changed) {
     if (!value)
@@ -3697,7 +3697,7 @@ set_bool_option (
   }
 
 #ifdef BACKSLASH_IN_FILENAME
-  else if ((int *)varp == &p_ssl) {
+  else if ((bool *)varp == &p_ssl) {
     if (p_ssl) {
       psepc = '/';
       psepcN = '\\';
@@ -3742,7 +3742,7 @@ set_bool_option (
       if (errmsg != NULL)
         EMSG(_(errmsg));
     }
-  } else if ((int *)varp == &p_altkeymap) {
+  } else if ((bool *)varp == &p_altkeymap) {
     if (old_value != p_altkeymap) {
       if (!p_altkeymap) {
         p_hkmap = p_fkmap;
@@ -3803,7 +3803,7 @@ set_bool_option (
 
         /* Enable Arabic shaping (major part of what Arabic requires) */
         if (!p_arshape) {
-          p_arshape = TRUE;
+          p_arshape = true;
           redraw_later_clear();
         }
       }
@@ -3820,7 +3820,7 @@ set_bool_option (
       }
 
       /* set 'delcombine' */
-      p_deco = TRUE;
+      p_deco = true;
 
       /* Force-set the necessary keymap for arabic */
       set_option_value((char_u *)"keymap", 0L, (char_u *)"arabic",
