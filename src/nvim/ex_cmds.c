@@ -1616,7 +1616,7 @@ int do_write(exarg_T *eap)
       apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, FALSE, curbuf);
       apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, FALSE, alt_buf);
       if (!alt_buf->b_p_bl) {
-        alt_buf->b_p_bl = TRUE;
+        alt_buf->b_p_bl = true;
         apply_autocmds(EVENT_BUFADD, NULL, NULL, FALSE, alt_buf);
       }
       if (curbuf != was_curbuf || aborting()) {
@@ -1644,7 +1644,7 @@ int do_write(exarg_T *eap)
     /* After ":saveas fname" reset 'readonly'. */
     if (eap->cmdidx == CMD_saveas) {
       if (retval == OK) {
-        curbuf->b_p_ro = FALSE;
+        curbuf->b_p_ro = false;
         redraw_tabline = TRUE;
       }
       /* Change directories when the 'acd' option is set. */
@@ -2875,7 +2875,7 @@ void do_sub(exarg_T *eap)
   int endcolumn = FALSE;                /* cursor in last column when done */
   pos_T old_cursor = curwin->w_cursor;
   int start_nsubs;
-  int save_ma = 0;
+  bool save_ma = false;
 
   cmd = eap->arg;
   if (!global_busy) {
@@ -3442,7 +3442,7 @@ void do_sub(exarg_T *eap)
         if (do_count) {
           /* prevent accidentally changing the buffer by a function */
           save_ma = curbuf->b_p_ma;
-          curbuf->b_p_ma = FALSE;
+          curbuf->b_p_ma = false;
           sandbox++;
         }
         /* get length of substitution part */

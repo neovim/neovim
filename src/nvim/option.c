@@ -5528,7 +5528,7 @@ void buf_copy_options(buf_T *buf, int flags)
        */
       if (!buf->b_p_initialized) {
         free_buf_options(buf, TRUE);
-        buf->b_p_ro = FALSE;                    /* don't copy readonly */
+        buf->b_p_ro = false;                    /* don't copy readonly */
         buf->b_p_fenc = vim_strsave(p_fenc);
         buf->b_p_ff = vim_strsave(p_ff);
         buf->b_p_bh = empty_option;
@@ -5654,7 +5654,7 @@ void reset_modifiable(void)
 {
   int opt_idx;
 
-  curbuf->b_p_ma = FALSE;
+  curbuf->b_p_ma = true;
   p_ma = FALSE;
   opt_idx = findoption((char_u *)"ma");
   if (opt_idx >= 0)

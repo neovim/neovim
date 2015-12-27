@@ -608,7 +608,7 @@ static int pum_set_selected(int n, int repeat)
           }
 
           curbuf->b_changed = false;
-          curbuf->b_p_ma = FALSE;
+          curbuf->b_p_ma = false;
           curwin->w_cursor.lnum = 1;
           curwin->w_cursor.col = 0;
 

@@ -4985,7 +4985,7 @@ static int ex_window(void)
   (void)setfname(curbuf, (char_u *)"[Command Line]", NULL, TRUE);
   set_option_value((char_u *)"bt", 0L, (char_u *)"nofile", OPT_LOCAL);
   set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
-  curbuf->b_p_ma = TRUE;
+  curbuf->b_p_ma = true;
   curwin->w_p_fen = false;
   curwin->w_p_rl = cmdmsg_rl;
   cmdmsg_rl = FALSE;

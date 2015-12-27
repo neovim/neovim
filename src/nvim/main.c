@@ -870,7 +870,7 @@ static void command_line_scan(mparm_T *parmp)
 
         case 'R':                 /* "-R" readonly mode */
           readonlymode = TRUE;
-          curbuf->b_p_ro = TRUE;
+          curbuf->b_p_ro = true;
           p_uc = 10000;                           /* don't update very often */
           break;
 

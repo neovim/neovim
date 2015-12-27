@@ -112,7 +112,7 @@ open_line (
   int first_char = NUL;                 /* init for GCC */
   int vreplace_mode;
   int did_append;                       /* appended a new line */
-  int saved_pi = curbuf->b_p_pi;           /* copy of preserveindent setting */
+  bool saved_pi = curbuf->b_p_pi;           /* copy of preserveindent setting */
 
   /*
    * make a copy of the current line so we can mess with it
@@ -802,7 +802,7 @@ open_line (
        * with the line doesn't entirely destroy our efforts to preserve
        * it.  It gets restored at the function end.
        */
-      curbuf->b_p_pi = TRUE;
+      curbuf->b_p_pi = true;
     } else
       (void)set_indent(newindent, SIN_INSERT);
     less_cols -= curwin->w_cursor.col;

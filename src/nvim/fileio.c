@@ -460,7 +460,7 @@ readfile (
    */
   check_readonly = (newfile && (curbuf->b_flags & BF_CHECK_RO));
   if (check_readonly && !readonlymode)
-    curbuf->b_p_ro = FALSE;
+    curbuf->b_p_ro = false;
 
   if (newfile && !read_stdin && !read_buffer) {
     /* Remember time of file. */
@@ -521,7 +521,7 @@ readfile (
     perm = os_getperm(fname);      /* check if the file exists */
     if (os_isdir(fname)) {
       filemess(curbuf, sfname, (char_u *)_("is a directory"), 0);
-      curbuf->b_p_ro = TRUE;            /* must use "w!" now */
+      curbuf->b_p_ro = true;            /* must use "w!" now */
     } else
 #endif
     if (!newfile) {
@@ -577,7 +577,7 @@ readfile (
             (fd == -EOVERFLOW) ? _("[File too big]") :
 # endif
             _("[Permission Denied]")), 0);
-      curbuf->b_p_ro = TRUE;                  /* must use "w!" now */
+      curbuf->b_p_ro = true;                  /* must use "w!" now */
     }
 
     return FAIL;
@@ -588,16 +588,16 @@ readfile (
    * loaded.	Help files always get readonly mode
    */
   if ((check_readonly && file_readonly) || curbuf->b_help)
-    curbuf->b_p_ro = TRUE;
+    curbuf->b_p_ro = true;
 
   if (set_options) {
     /* Don't change 'eol' if reading from buffer as it will already be
      * correctly set when reading stdin. */
     if (!read_buffer) {
-      curbuf->b_p_eol = TRUE;
+      curbuf->b_p_eol = true;
       curbuf->b_start_eol = TRUE;
     }
-    curbuf->b_p_bomb = FALSE;
+    curbuf->b_p_bomb = false;
     curbuf->b_start_bomb = FALSE;
   }
 
@@ -673,7 +673,7 @@ readfile (
     if (aborting()) {       /* autocmds may abort script processing */
       --no_wait_return;
       msg_scroll = msg_save;
-      curbuf->b_p_ro = TRUE;            /* must use "w!" now */
+      curbuf->b_p_ro = true;            /* must use "w!" now */
       return FAIL;
     }
     /*
@@ -693,7 +693,7 @@ readfile (
         EMSG(_("E200: *ReadPre autocommands made the file unreadable"));
       else
         EMSG(_("E201: *ReadPre autocommands must not change current buffer"));
-      curbuf->b_p_ro = TRUE;            /* must use "w!" now */
+      curbuf->b_p_ro = true;            /* must use "w!" now */
       return FAIL;
     }
   }
@@ -822,8 +822,8 @@ retry:
       ml_delete(lnum--, FALSE);
     file_rewind = FALSE;
     if (set_options) {
-      curbuf->b_p_bomb = FALSE;
-      curbuf->b_start_bomb = FALSE;
+      curbuf->b_p_bomb = false;
+      curbuf->b_start_bomb = false;
     }
     conv_error = 0;
   }
@@ -1188,7 +1188,7 @@ retry:
           size -= blen;
           memmove(ptr, ptr + blen, (size_t)size);
           if (set_options) {
-            curbuf->b_p_bomb = TRUE;
+            curbuf->b_p_bomb = true;
             curbuf->b_start_bomb = TRUE;
           }
         }
@@ -1713,7 +1713,7 @@ failed:
            && ptr == line_start + 1)) {
     /* remember for when writing */
     if (set_options)
-      curbuf->b_p_eol = FALSE;
+      curbuf->b_p_eol = false;
     *ptr = NUL;
     len = (colnr_T)(ptr - line_start + 1);
     if (ml_append(lnum, line_start, len, newfile) == FAIL)
@@ -1803,7 +1803,7 @@ failed:
       if (!(flags & READ_DUMMY)) {
         filemess(curbuf, sfname, (char_u *)_(e_interr), 0);
         if (newfile)
-          curbuf->b_p_ro = TRUE;                /* must use "w!" now */
+          curbuf->b_p_ro = true;                /* must use "w!" now */
       }
       msg_scroll = msg_save;
       check_marks_read();
@@ -1901,7 +1901,7 @@ failed:
                     || conv_error != 0
                     || (illegal_byte > 0 && bad_char_behavior != BAD_KEEP)
                     ))
-      curbuf->b_p_ro = TRUE;
+      curbuf->b_p_ro = true;
 
     u_clearline();          /* cannot use "U" command after adding lines */
 
@@ -3043,7 +3043,7 @@ nobackup:
   /* When using ":w!" and writing to the current file, 'readonly' makes no
    * sense, reset it, unless 'Z' appears in 'cpoptions'.  */
   if (forceit && overwriting && vim_strchr(p_cpo, CPO_KEEPRO) == NULL) {
-    buf->b_p_ro = FALSE;
+    buf->b_p_ro = false;
     need_maketitle = TRUE;          /* set window title later */
     status_redraw_all();            /* redraw status lines later */
   }

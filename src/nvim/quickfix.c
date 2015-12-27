@@ -2354,7 +2354,7 @@ static void qf_fill_buffer(qf_info_T *qi)
    * resembles reading a file into a buffer, it's more logical when using
    * autocommands. */
   set_option_value((char_u *)"ft", 0L, (char_u *)"qf", OPT_LOCAL);
-  curbuf->b_p_ma = FALSE;
+  curbuf->b_p_ma = false;
 
   keep_filetype = TRUE;                 /* don't detect 'filetype' */
   apply_autocmds(EVENT_BUFREADPOST, (char_u *)"quickfix", NULL,

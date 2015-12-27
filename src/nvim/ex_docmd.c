@@ -6604,7 +6604,7 @@ do_exedit (
        * but the previous value is kept.  With ":view" and ":sview" we
        * want the  file to be readonly, except when another window is
        * editing the same buffer. */
-      curbuf->b_p_ro = TRUE;
+      curbuf->b_p_ro = true;
     }
     readonlymode = n;
   } else {
