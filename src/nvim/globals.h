@@ -2,6 +2,7 @@
 #define NVIM_GLOBALS_H
 
 #include <stdbool.h>
+#include <inttypes.h>
 
 // EXTERN is only defined in main.c. That's where global variables are
 // actually defined and initialized.
@@ -1239,6 +1240,7 @@ EXTERN char_u e_intern2[] INIT(= N_("E685: Internal error: %s"));
 EXTERN char_u e_maxmempat[] INIT(= N_(
         "E363: pattern uses more memory than 'maxmempattern'"));
 EXTERN char_u e_emptybuf[] INIT(= N_("E749: empty buffer"));
+EXTERN char_u e_nobufnr[] INIT(= N_("E86: Buffer %" PRId64 " does not exist"));
 
 EXTERN char_u e_invalpat[] INIT(= N_(
         "E682: Invalid search pattern or delimiter"));

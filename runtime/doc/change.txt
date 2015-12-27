@@ -1,4 +1,4 @@
-*change.txt*    For Vim version 7.4.  Last change: 2014 Jun 26
+*change.txt*    For Vim version 7.4.  Last change: 2015 Jan 27
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -1110,7 +1110,7 @@ letters to replace their previous contents or as uppercase letters to append
 to their previous contents.  When the '>' flag is present in 'cpoptions' then
 a line break is inserted before the appended text.
 
-5. Read-only registers ":, "., "% and "#
+5. Read-only registers ":, ". and "%
 These are '%', '#', ':' and '.'.  You can use them only with the "p", "P",
 and ":put" commands and with CTRL-R.
 						*quote_.* *quote.* *E29*
@@ -1121,8 +1121,6 @@ and ":put" commands and with CTRL-R.
 		('textwidth' and other options affect what is inserted).
 							*quote_%* *quote%*
 	"%	Contains the name of the current file.
-							*quote_#* *quote#*
-	"#	Contains the name of the alternate file.
 						*quote_:* *quote:* *E30*
 	":	Contains the most recent executed command-line.  Example: Use
 		"@:" to repeat the previous command-line command.
@@ -1130,7 +1128,23 @@ and ":put" commands and with CTRL-R.
 		one character of it was typed.  Thus it remains unchanged if
 		the command was completely from a mapping.
 
-6. Expression register "=			*quote_=* *quote=* *@=*
+							*quote_#* *quote#*
+6. Alternate file register "#
+Contains the name of the alternate file for the current window.  It will
+change how the |CTRL-^| command works.
+This register is writable, mainly to allow for restoring it after a plugin has
+changed it.  It accepts buffer number: >
+    let altbuf = bufnr(@#)
+    ...
+    let @# = altbuf
+It will give error |E86| if you pass buffer number and this buffer does not
+exist.
+It can also accept a match with an existing buffer name: >
+    let @# = 'buffer_name'
+Error |E93| if there is more than one buffer matching the given name or |E94|
+if none of buffers matches the given name.
+
+7. Expression register "=			*quote_=* *quote=* *@=*
 This is not really a register that stores text, but is a way to use an
 expression in commands which use a register.  The expression register is
 read-only; you cannot put text into it.  After the '=', the cursor moves to
@@ -1151,7 +1165,7 @@ If the "= register is used for the "p" command, the String is split up at <NL>
 characters.  If the String ends in a <NL>, it is regarded as a linewise
 register.
 
-7. Selection and drop registers "*, "+ and "~ 
+8. Selection and drop registers "*, "+ and "~ 
 Use these registers for storing and retrieving the selected text for the GUI.
 See |quotestar| and |quoteplus|.  When the clipboard is not available or not
 working, the unnamed register is used instead.  For Unix systems and Mac OS X,
@@ -1169,12 +1183,12 @@ GTK GUI}
 Note: The "~ register is only used when dropping plain text onto Vim.
 Drag'n'drop of URI lists is handled internally.
 
-8. Black hole register "_				*quote_*
+9. Black hole register "_				*quote_*
 When writing to this register, nothing happens.  This can be used to delete
 text without affecting the normal registers.  When reading from this register,
 nothing is returned.
 
-9. Last search pattern register	"/			*quote_/* *quote/*
+10. Last search pattern register	"/		*quote_/* *quote/*
 Contains the most recent search-pattern.  This is used for "n" and 'hlsearch'.
 It is writable with `:let`, you can change it to have 'hlsearch' highlight
 other matches without actually searching.  You can't yank or delete into this

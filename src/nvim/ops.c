@@ -705,8 +705,9 @@ bool valid_yank_reg(int regname, bool writing)
 {
   if (       (regname > 0 && ASCII_ISALNUM(regname))
              || (!writing && vim_strchr((char_u *)
-                     "/.%#:="
+                     "/.%:="
                      , regname) != NULL)
+             || regname == '#'
              || regname == '"'
              || regname == '-'
              || regname == '_'
@@ -4655,6 +4656,26 @@ void write_reg_contents_ex(int name,
   /* Special case: '/' search pattern */
   if (name == '/') {
     set_last_search_pat(str, RE_SEARCH, TRUE, TRUE);
+    return;
+  }
+
+  if (name == '#') {
+    buf_T *buf;
+
+    if (ascii_isdigit(*str)) {
+      int num = atoi((char *)str);
+
+      buf = buflist_findnr(num);
+      if (buf == NULL)
+        EMSGN(_(e_nobufnr), (long)num);
+    } else {
+      buf = buflist_findnr(buflist_findpat(str, str + STRLEN(str),
+                           true, false, false));
+    }
+    if (buf == NULL) {
+      return;
+    }
+    curwin->w_alt_fnum = buf->b_fnum;
     return;
   }
 

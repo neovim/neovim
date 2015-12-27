@@ -920,7 +920,7 @@ do_buffer (
     if (start == DOBUF_FIRST) {
       /* don't warn when deleting */
       if (!unload)
-        EMSGN(_("E86: Buffer %" PRId64 " does not exist"), count);
+        EMSGN(_(e_nobufnr), count);
     } else if (dir == FORWARD)
       EMSG(_("E87: Cannot go beyond last buffer"));
     else
