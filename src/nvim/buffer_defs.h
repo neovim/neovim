@@ -664,7 +664,8 @@ struct file_buffer {
   char_u      *b_p_efm;         /* 'errorformat' local value */
   char_u      *b_p_ep;          /* 'equalprg' local value */
   char_u      *b_p_path;        /* 'path' local value */
-  int b_p_ar;                   /* 'autoread' local value */
+  bool b_p_ar;                  // 'autoread' local value, when present
+  bool has_b_p_ar;              // whether buffer has an 'autoread' local value
   char_u      *b_p_tags;        /* 'tags' local value */
   char_u      *b_p_dict;        /* 'dictionary' local value */
   char_u      *b_p_tsr;         /* 'thesaurus' local value */

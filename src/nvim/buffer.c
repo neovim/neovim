@@ -1546,7 +1546,7 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   clear_string_option(&buf->b_p_dict);
   clear_string_option(&buf->b_p_tsr);
   clear_string_option(&buf->b_p_qe);
-  buf->b_p_ar = -1;
+  buf->has_b_p_ar = false;
   buf->b_p_ul = NO_LOCAL_UNDOLEVEL;
   clear_string_option(&buf->b_p_lw);
   clear_string_option(&buf->b_p_bkc);

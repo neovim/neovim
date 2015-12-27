@@ -698,7 +698,7 @@ void set_init_1(void)
 
 
   curbuf->b_p_initialized = true;
-  curbuf->b_p_ar = -1;          /* no local 'autoread' value */
+  curbuf->has_b_p_ar = false;          /* no local 'autoread' value */
   curbuf->b_p_ul = NO_LOCAL_UNDOLEVEL;
   check_buf_options(curbuf);
   check_win_options(curwin);
@@ -1409,13 +1409,15 @@ do_set (
               ((flags & P_VI_DEF) || cp_val)
               ?  VI_DEFAULT : VIM_DEFAULT];
           else if (nextchar == '<') {
-            /* For 'autoread' -1 means to use global value. */
-            if ((int *)varp == &curbuf->b_p_ar
-                && opt_flags == OPT_LOCAL)
-              value = -1;
-            else
+            // mark buffer local 'autoread' as invalid
+            if ((bool *)varp == &curbuf->b_p_ar
+                && opt_flags == OPT_LOCAL) {
+                curbuf->has_b_p_ar = false;
+                goto skip;
+            } else {
               value = *(bool *)get_varp_scope(&(options[opt_idx]),
                   OPT_GLOBAL);
+            }
           } else {
             /*
              * ":set invopt": invert
@@ -3615,6 +3617,15 @@ set_bool_option (
        * buf->b_p_swf */
       mf_close_file(curbuf, true);              /* remove the swap file */
   }
+  else if ((bool *)varp == &curbuf->b_p_ar) {
+      // if buffer local value wasn't set
+      // the previous effective value was the global one
+      if (!curbuf->has_b_p_ar) {
+        old_value = p_ar;
+      }
+      // use buffer local value when set
+      curbuf->has_b_p_ar = true;
+  }
   /* when 'terse' is set change 'shortmess' */
   else if ((bool *)varp == &p_terse) {
     char_u  *p;
@@ -4840,7 +4851,7 @@ showoneopt (
   if ((p->flags & P_BOOL) && ((bool *)varp == &curbuf->b_changed
                               ? !curbufIsChanged() : !*(bool *)varp))
     MSG_PUTS("no");
-  else if ((p->flags & P_BOOL) && *(int *)varp < 0)
+  else if ((p->flags & P_BOOL) && ((bool *)varp == &curbuf->b_p_ar) && !curbuf->has_b_p_ar)
     MSG_PUTS("--");
   else
     MSG_PUTS("  ");
@@ -5129,7 +5140,7 @@ void unset_global_local_option(char *name, void *from)
       clear_string_option(&buf->b_p_path);
       break;
     case PV_AR:
-      buf->b_p_ar = -1;
+      buf->has_b_p_ar = false;
       break;
     case PV_BKC:
       clear_string_option(&buf->b_p_bkc);
@@ -5224,7 +5235,7 @@ static char_u *get_varp(vimoption_T *p)
            ? (char_u *)&curbuf->b_p_kp : p->var;
   case PV_PATH:   return *curbuf->b_p_path != NUL
            ? (char_u *)&(curbuf->b_p_path) : p->var;
-  case PV_AR:     return curbuf->b_p_ar >= 0
+  case PV_AR:     return curbuf->has_b_p_ar
            ? (char_u *)&(curbuf->b_p_ar) : p->var;
   case PV_TAGS:   return *curbuf->b_p_tags != NUL
            ? (char_u *)&(curbuf->b_p_tags) : p->var;
@@ -5595,7 +5606,7 @@ void buf_copy_options(buf_T *buf, int flags)
 
       /* options that are normally global but also have a local value
        * are not copied, start using the global value */
-      buf->b_p_ar = -1;
+      buf->has_b_p_ar = false;
       buf->b_p_ul = NO_LOCAL_UNDOLEVEL;
       buf->b_p_bkc = empty_option;
       buf->b_bkc_flags = 0;

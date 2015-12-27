@@ -4782,7 +4782,7 @@ buf_check_timestamp (
      * exists, reload the buffer.  Use the buffer-local option value if it
      * was set, the global option value otherwise.
      */
-    else if ((buf->b_p_ar >= 0 ? buf->b_p_ar : p_ar)
+    else if ((buf->has_b_p_ar ? buf->b_p_ar : p_ar)
              && !bufIsChanged(buf) && file_info_ok)
       reload = TRUE;
     else {
